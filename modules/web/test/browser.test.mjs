@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { appendFileSync } from 'node:fs';
 import { engineName, isChromium, isFirefox, launch, launchChromiumWithout, launchSoftwareChromium, wantsGpu } from './engine.mjs';
-import { fullLoad, routeFullLoad } from './perf-fixtures.mjs';
+import { fullLoad, routeFixtures, routeFullLoad } from './perf-fixtures.mjs';
 import { fullLoadView, motionTrace } from './perf-paths.mjs';
 import { quiet, trackRequests } from './perf-lib.mjs';
 import { routeTiles } from './tile-fixtures.mjs';
@@ -102,6 +102,12 @@ async function hoverForCard(page, selector, card) {
       await page.mouse.move(5, 5);
     }
   }
+}
+
+/** The layers panel open (a wide screen: on a phone its controls are the map & tools drawer's). */
+async function openLayers(page) {
+  const btn = page.locator('#layers-btn');
+  if (await btn.isVisible() && !(await page.locator('#layers-panel').isVisible())) await btn.click();
 }
 
 async function synchronizedSize(page) {
@@ -322,22 +328,23 @@ test('#1521: the top bar stays on one line above the filters, which stay one blo
       if (await page.locator('#f-more').isHidden()) await page.locator('#f-more-toggle').click();
       const boxes = await page.evaluate(() => {
         const rects = sel => [...document.querySelectorAll(sel)].filter(e => e.offsetParent)
-          .map(e => { const r = e.getBoundingClientRect(); return { top: r.top, bottom: r.bottom }; });
+          .map(e => { const r = e.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, left: r.left }; });
         return {
           bar: rects('.top-bar'),
           places: rects('.top-bar .place-tab'),
-          main: rects('.fbar .frow-main .frow-filters > *'),
+          panel: rects('.fbar .filter-body > *'),
           more: rects('.fbar #f-more > *'),
         };
       });
       assert.equal(boxes.places.length, 4, `four places at ${width}`);
       assert.equal(new Set(boxes.places.map(b => Math.round(b.top))).size, 1, `the places on one line at ${width}`);
-      assert.equal(boxes.main.length, 3, `place, more/fewer, clear all at ${width}`);
-      assert.ok(boxes.more.length >= 5, `expanded filters at ${width}`);
-      const filters = [...boxes.main, ...boxes.more];
+      assert.ok(boxes.panel.length >= 6, `words, place, period, topic, more filters, the active ones at ${width}`);
+      assert.ok(boxes.more.length >= 4, `expanded filters at ${width}`);
+      const filters = [...boxes.panel, ...boxes.more];
       assert.ok(boxes.bar[0].bottom <= Math.min(...filters.map(b => b.top)) + 1, `the bar above the filters at ${width}`);
-      assert.ok(Math.min(...boxes.more.map(b => b.top)) >= Math.max(...boxes.main.map(b => b.bottom)) - 1,
-        `expanded filters above the main row at ${width}`);
+      // one block: one column, each part under the one before
+      assert.equal(new Set(boxes.panel.map(b => Math.round(b.left))).size, 1, `one column at ${width}`);
+      boxes.panel.slice(1).forEach((b, i) => assert.ok(b.top >= boxes.panel[i].bottom - 1, `in order at ${width}`));
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     });
   }
@@ -537,9 +544,9 @@ test('a dot inside a region opens the dot, not the region, whatever was drawn la
     await page.evaluate(() => window.__testMap.closePopup());
     await page.waitForFunction(() => !document.querySelector('.hd-popup'));   // it fades out first
     // the boundaries switched off and on: every shape is added again, after the dots
-    await page.locator('.viewport-toggle button[title="Boundaries"]').click();
+    await openLayers(page); await page.locator('.viewport-toggle button[title="Boundaries"]').click();
     await page.waitForFunction(() => window.__testMap.shapes('polities').length === 0);
-    await page.locator('.viewport-toggle button[title="Boundaries"]').click();
+    await openLayers(page); await page.locator('.viewport-toggle button[title="Boundaries"]').click();
     await page.waitForFunction(() => window.__testMap.shapes('polities').includes('zz_realm'));
     await check();
     // the region is still a target of its own
@@ -732,7 +739,7 @@ test('#1449: event markers show their kind icon, the tier, a card with sources a
     // the kind menu narrows the feed to natural events
     await page.mouse.move(5, 5);
     const before = asked.length;
-    await page.locator('.icon-select-button[aria-label="event kind"]').click();
+    await openLayers(page); await page.locator('.icon-select-button[aria-label="event kind"]').click();
     await page.locator('.icon-select-list[aria-label="event kind"] [role="option"][data-value="natural"]').click();
     await page.waitForTimeout(400);
     assert.ok(asked.slice(before).some(u => u.searchParams.get('kind') === 'natural'), 'kind=natural was asked for');
@@ -956,6 +963,8 @@ test('cards stay inside the viewport: near an edge, taller than it when pinned, 
     await page.goto(new URL('/explore#from=-1300&to=-1200', baseURL).href);
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
+    // the credits, shown at first, would lie over the low event: folded to their (i), as after a first pan
+    await page.locator('.map-foot.is-open .map-foot-toggle').click();
     const mapTop = await page.evaluate(() => document.getElementById('map').getBoundingClientRect().top);
     // put the first event 14 px under the map's top edge
     await page.evaluate(([top]) => { const m = window.__testMap; m.setView([38.0, 32.0], 7, { animate: false });
@@ -1289,7 +1298,7 @@ for (const viewport of [{ width: 1920, height: 1080 }, { width: 390, height: 844
         // the note: only while following the system and the system asks for reduced motion (on a phone the map's
         // tools are in their drawer)
         if (viewport.width < 760) await page.locator('.mb-maptools').click();
-        await page.locator('.map-options-btn').click();
+        await openLayers(page); await page.locator('.map-options-btn').click();
         await page.locator('.map-motion-select').waitFor();
         assert.equal(await page.locator('.map-motion-select').inputValue(), motion ?? 'system');
         const note = page.locator('.map-motion-note');
@@ -1319,7 +1328,7 @@ test('map motion: the control is reached by the keyboard, applies at once, follo
     const attr = () => page.evaluate(() => document.documentElement.dataset.mapMotion);
     assert.equal(await attr(), 'still', 'follows the system: still');
     // the options button opens the menu from the keyboard on any base map; its first control takes the focus
-    await page.locator('.map-options-btn').focus();
+    await openLayers(page); await page.locator('.map-options-btn').focus();
     await page.keyboard.press('Enter');
     await page.locator('.map-motion-select').waitFor();
     const online = await page.evaluate(() => !document.getElementById('map').classList.contains('basemap-vector'));
@@ -1345,7 +1354,7 @@ test('map motion: the control is reached by the keyboard, applies at once, follo
     await page.waitForFunction(() => window.__testMap);
     assert.equal(await attr(), 'animate');
     assert.ok(!page.url().includes('mapMotion'));
-    await page.locator('.map-options-btn').click();
+    await openLayers(page); await page.locator('.map-options-btn').click();
     assert.equal(await page.locator('.map-motion-select').inputValue(), 'always');
     await page.locator('.map-motion-select').selectOption('never');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
@@ -1396,15 +1405,15 @@ test('a mixed cluster counts what is shown, splits on zoom-in, and lists every k
     await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '5');
     assert.deepEqual(await bubble(), { n: 5, says: '2 findings · 2 sites · 1 event', mixed: true, withEvents: true });
     // a layer switched off leaves the bubble at once; back on, it returns
-    await page.locator('.viewport-toggle button[title="Sites"]').click();
+    await openLayers(page); await page.locator('.viewport-toggle button[title="Sites"]').click();
     await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '3');
     assert.equal((await bubble()).says, '2 findings · 1 event');
-    await page.locator('.viewport-toggle button[title="Sites"]').click();
+    await openLayers(page); await page.locator('.viewport-toggle button[title="Sites"]').click();
     await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '5');
-    await page.locator('.viewport-toggle button[title="Sources"]').click();
+    await openLayers(page); await page.locator('.viewport-toggle button[title="Sources"]').click();
     await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '3');
     assert.equal((await bubble()).says, '2 sites · 1 event');
-    await page.locator('.viewport-toggle button[title="Sources"]').click();
+    await openLayers(page); await page.locator('.viewport-toggle button[title="Sources"]').click();
     await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '5');
     // the year window moves past the findings: they leave the bubble
     await page.goto(new URL('/explore#from=-1200&to=-1100', baseURL).href);
@@ -1449,11 +1458,11 @@ test('the icon menus: icons per option, keyboard choice updates the filter; the 
     await page.waitForFunction(() => window.__testMap);
     // the toolbar: each layer switch's icon is its marker shape, named
     for (const name of ['Sources', 'Boundaries', 'Sites', 'Media', 'Events']) {
-      const b = page.locator(`.viewport-toggle button[title="${name}"]`);
+      await openLayers(page); const b = page.locator(`.viewport-toggle button[title="${name}"]`);
       assert.equal(await b.locator('svg.icon').count(), 1, name);
       assert.equal((await b.innerText()).trim(), name);
     }
-    const kind = page.locator('.icon-select-button[aria-label="event kind"]');
+    await openLayers(page); const kind = page.locator('.icon-select-button[aria-label="event kind"]');
     assert.equal(await kind.getAttribute('aria-haspopup'), 'listbox');
     assert.equal(await kind.getAttribute('aria-expanded'), 'false');
     await kind.focus();
@@ -1504,7 +1513,7 @@ test('the icon menus: icons per option, keyboard choice updates the filter; the 
     await page.keyboard.press('Escape');
     await page.waitForFunction(() => document.querySelector('.icon-select-list[aria-label="event kind"]').classList.contains('is-hidden'));
     assert.match(await kind.innerText(), /siege/);
-    await page.locator('.icon-select-button[aria-label="site type"]').click();
+    await openLayers(page); await page.locator('.icon-select-button[aria-label="site type"]').click();
     await page.locator('.icon-select-list[aria-label="site type"]').waitFor();
     assert.ok(await page.locator('.icon-select-list[aria-label="site type"] [role="option"] .hd-badge--circle').count() >= 14);
     await page.mouse.click(700, 500);
@@ -1783,7 +1792,9 @@ test('articles: the review badge on each row with its meaning, and a linked goal
     // the colour comes from the stylesheet: a red badge, not the grey of an unstyled one
     const colours = await badges.evaluateAll(els => els.map(e => getComputedStyle(e).color));
     assert.notEqual(colours[0], colours[1], `each state its own colour (${colours})`);
+    // a plain click shows the article's detail in the results; "Pin as window" opens its window
     await page.locator('.articles-list .article-link').first().click();
+    await page.locator('.result-detail .detail-pin').click();
     const goal = page.locator('.wm-content .article-review-line a.goal-ref');
     await goal.waitFor();
     await goal.click();
@@ -1859,12 +1870,8 @@ test('every sidebar tab: one count line and one "show N more (M left)" button', 
     assert.ok(asked.some(([k, o]) => k === 'events' && o === 25), `the next page was fetched (${JSON.stringify(asked)})`);
     assert.match(await count('.events-pane'), /^showing 1–50 of 60 events/);
 
-    // by time: every source is in the tree — the same line, no button
-    await page.goto(new URL('/explore#tab=bytime', baseURL).href);
-    await page.reload();
-    await page.waitForFunction(() => /47 sources · 1 period/.test(document.querySelector('#tree-count')?.innerText || ''));
-    assert.match(await page.locator('#tree-count').innerText(), /^47 sources · 1 period · .* → /);
-    assert.equal(await page.locator('#tree-count').getAttribute('class'), 'count');
+    // each tab says its count in its name
+    assert.match(await page.locator('.tabs .tab[data-tab="events"]').innerText(), /Events\s*60/);
   });
 });
 
@@ -2295,7 +2302,7 @@ const baseMapState = () => ({
 /** Choose a base map in the menu and wait until it is drawn whole. */
 async function chooseBaseMap(page, value) {
   const before = await page.evaluate(() => window.__testMap.baseMapsDrawn());
-  await page.locator('.map-base-select').selectOption(value);
+  await openLayers(page); await page.locator('.map-base-select').selectOption(value);
   await page.waitForFunction(n => window.__testMap.baseMapsDrawn() > n, before, { timeout: 20000 });
 }
 
@@ -2318,7 +2325,7 @@ test('the base map: Readable and Physical drawn from the server\'s extract (the 
   await withPage({ width: 1440, height: 900 }, async page => {
     assert.deepEqual((await page.evaluate(baseMapState)).options, ['readable', 'physical', 'standard', 'muted', 'dark']);
     // an online map: the options hold the map's motion alone (#4718), the vector styles' own options hidden
-    await page.locator('.map-options-btn').click();
+    await openLayers(page); await page.locator('.map-options-btn').click();
     await page.locator('.map-motion-select').waitFor();
     assert.ok(!(await page.locator('.map-option-names').isVisible()), 'no vector options on an online map');
     assert.ok(await page.locator('.map-options-online').isVisible());
@@ -2348,16 +2355,16 @@ test('the base map: Readable and Physical drawn from the server\'s extract (the 
     // kept like every choice
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
-    await page.locator('.terrain-notice').waitFor();
+    await page.locator('.terrain-notice').waitFor({ state: 'attached' });
     assert.equal(await page.locator('.map-base-select').inputValue(), 'physical');
     // an online map: no notice, its own credit, no options
-    await page.locator('.map-base-select').selectOption('dark');
+    await openLayers(page); await page.locator('.map-base-select').selectOption('dark');
     await page.waitForFunction(() => !document.querySelector('.terrain-notice') && !document.getElementById('map').classList.contains('basemap-vector'));
     assert.ok(await page.evaluate(() => document.getElementById('map').classList.contains('map-tone-dark')));
-    await page.locator('.map-options-btn').click();
+    await openLayers(page); await page.locator('.map-options-btn').click();
     assert.ok(!(await page.locator('.map-option-names').isVisible()) && await page.locator('.map-motion-select').isVisible());
     await page.keyboard.press('Escape');
-    await page.locator('.map-base-select').selectOption('standard');
+    await openLayers(page); await page.locator('.map-base-select').selectOption('standard');
     // an online map's credits: the box holds them alone
     await page.waitForFunction(() => /OpenStreetMap/.test(document.querySelector('.map-foot .map-credits')?.textContent ?? '') &&
       !document.querySelector('.terrain-notice'));
@@ -2450,7 +2457,7 @@ test('the base maps\' names read at 4.5:1 against what lies under them, through 
         assert.ok(labels.length >= 3, `${style} z${zoom}: names are placed (${labels.length})`);
         // the background: the same view drawn without names
         let n = await page.evaluate(() => window.__testMap.baseMapsDrawn());
-        await page.locator('.map-options-btn').click();
+        await openLayers(page); await page.locator('.map-options-btn').click();
         await page.locator('.map-option-names').uncheck();
         await page.waitForFunction(k => window.__testMap.baseMapsDrawn() > k && window.__testMap.isDrawn(), n, { timeout: 20000 });
         await page.locator('.map-options-close').click();
@@ -2481,7 +2488,7 @@ test('the base maps\' names read at 4.5:1 against what lies under them, through 
           assert.ok(r10 >= 4.5, `${style} z${zoom}: "${l.text}" (${l.layer}) reads at ${r10.toFixed(1)}:1`);
         }
         n = await page.evaluate(() => window.__testMap.baseMapsDrawn());
-        await page.locator('.map-options-btn').click();
+        await openLayers(page); await page.locator('.map-options-btn').click();
         await page.locator('.map-option-names').check();
         await page.waitForFunction(k => window.__testMap.baseMapsDrawn() > k, n, { timeout: 20000 });
         await page.locator('.map-options-close').click();
@@ -2523,7 +2530,7 @@ test('map options: names off and on, their language, contours only where Physica
     await chooseBaseMap(page, 'readable');
     await page.waitForFunction(() => window.__testMap.names().length > 3, null, { timeout: 15000 });
     assert.ok(!(await page.evaluate(() => window.__testMap.names())).some(n => /[Ͱ-Ͽ]/.test(n)), 'English by default');
-    await page.locator('.map-options-btn').click();
+    await openLayers(page); await page.locator('.map-options-btn').click();
     await page.locator('.map-options').waitFor();
     // the names in their own script: the Greek ones in Greek
     let before = await page.evaluate(() => window.__testMap.baseMapsDrawn());
@@ -2541,7 +2548,7 @@ test('map options: names off and on, their language, contours only where Physica
     // kept: across a reload; reset brings the names back in English
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
-    await page.locator('.map-options-btn').click();
+    await openLayers(page); await page.locator('.map-options-btn').click();
     assert.ok(!(await page.locator('.map-option-names').isChecked()));
     await page.locator('.map-options-reset').click();
     assert.ok(await page.locator('.map-option-names').isChecked());
@@ -2552,7 +2559,7 @@ test('map options: names off and on, their language, contours only where Physica
     assert.equal(await page.evaluate(() => document.activeElement?.id), 'map-options-button');
     await page.evaluate(() => window.__testMap.setView([37.73, 22.756], 12));
     await chooseBaseMap(page, 'physical');
-    await page.locator('.map-options-btn').click();
+    await openLayers(page); await page.locator('.map-options-btn').click();
     assert.ok(status.layers.find(l => l.layer === 'terrain')?.focus?.length > 0, 'the fixture has the Argolid focus region');
     assert.ok(await page.locator('.map-option-contours').isEnabled() && await page.locator('.map-option-contours').isChecked());
     assert.equal(await page.locator('.map-option-contours-why').count(), 0, 'drawn here: no line');
@@ -2573,7 +2580,7 @@ test('contours: a line saying why none are drawn here (zoomed out, outside the d
     // inside the Argolid but zoomed out: enabled, none yet
     await page.evaluate(() => window.__testMap.setView([37.73, 22.756], 9));
     await chooseBaseMap(page, 'physical');
-    await page.locator('.map-options-btn').click();
+    await openLayers(page); await page.locator('.map-options-btn').click();
     assert.ok(await page.locator('.map-option-contours').isEnabled());
     assert.match(await why(page).innerText(), /zoom in to see contours \(from zoom 11\)/);
     // closer in: drawn, and the line goes
@@ -2599,7 +2606,7 @@ test('contours: a line saying why none are drawn here (zoomed out, outside the d
       await page.waitForFunction(() => window.__testMap);
       await page.evaluate(() => window.__testMap.setView([37.73, 22.756], 12));
       await chooseBaseMap(page, 'physical');
-      await page.locator('.map-options-btn').click();
+      await openLayers(page); await page.locator('.map-options-btn').click();
       if (onDemand) {
         assert.ok(await page.locator('.map-option-contours').isEnabled() && await page.locator('.map-option-contours').isChecked());
         assert.equal(await why(page).count(), 0);
@@ -2629,7 +2636,7 @@ test('the sea\'s depth: an option of both styles, on in Physical and off in Read
     await page.evaluate(() => window.__testMap.setView([37.6, 25.0], 7));
     // Physical: on by default, the depth layer drawn; off and on again
     await chooseBaseMap(page, 'physical');
-    await page.locator('.map-options-btn').click();
+    await openLayers(page); await page.locator('.map-options-btn').click();
     assert.ok(await depth(page).isEnabled() && await depth(page).isChecked());
     assert.equal(await seaDepth(page), 'visible');
     await toggle(page, false);
@@ -2640,7 +2647,7 @@ test('the sea\'s depth: an option of both styles, on in Physical and off in Read
     // Readable: off by default (Carto's flat water), on when asked
     await page.keyboard.press('Escape');
     await chooseBaseMap(page, 'readable');
-    await page.locator('.map-options-btn').click();
+    await openLayers(page); await page.locator('.map-options-btn').click();
     assert.ok(await depth(page).isEnabled() && !(await depth(page).isChecked()));
     assert.equal(await seaDepth(page), 'none');
     const flat = await mapColours(page);
@@ -2650,10 +2657,10 @@ test('the sea\'s depth: an option of both styles, on in Physical and off in Read
     // kept per style across a reload: Readable's choice, Physical's default untouched
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
-    await page.locator('.terrain-notice').waitFor();
+    await page.locator('.terrain-notice').waitFor({ state: 'attached' });
     assert.equal(await page.locator('.map-base-select').inputValue(), 'readable');
     await page.waitForFunction(() => window.__testMap.layerVisibility('sea-depth') === 'visible', null, { timeout: 15000 });
-    await page.locator('.map-options-btn').click();
+    await openLayers(page); await page.locator('.map-options-btn').click();
     assert.ok(await depth(page).isChecked());
     await page.locator('.map-options-reset').click();
     await page.waitForFunction(() => window.__testMap.layerVisibility('sea-depth') === 'none', null, { timeout: 15000 });
@@ -2674,7 +2681,7 @@ test('map options: an option whose data is not downloaded is disabled, its line 
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await chooseBaseMap(page, 'physical');
-    await page.locator('.map-options-btn').click();
+    await openLayers(page); await page.locator('.map-options-btn').click();
     assert.ok(await page.locator('.map-option-contours').isDisabled());
     assert.match(await page.locator('.map-option-contours-why').innerText(), /no relief downloaded — `histmersion basemap fetch --layer terrain`/);
     assert.ok(await page.locator('.map-option-depth').isDisabled());
@@ -2809,10 +2816,14 @@ test('the past-landscape notice never lies under the credits or the map key, wid
       await page.reload();
       await page.waitForFunction(() => window.__testMap);
       await page.locator('.terrain-notice').waitFor({ state: 'attached' });
-      // on a phone it is folded to its button (#4292): the button, then the notice opened
-      const folded = await page.locator('.map-foot-toggle').isVisible();
-      for (const open of folded ? [false, true] : [true]) {
-        if (open && folded) await page.locator('.map-foot-toggle').click();
+      // the credits at first; then folded to the (i) button (wide or narrow), then opened by it with the notice
+      for (const state of ['first', 'folded', 'open']) {
+        const open = state !== 'folded';
+        if (state === 'folded') {
+          await page.locator('.map-foot-toggle').click();
+          await page.waitForFunction(() => !document.querySelector('.map-foot').classList.contains('is-open'));
+        }
+        if (state === 'open') await page.locator('.map-foot-toggle').click();
         await page.waitForTimeout(800);
         const hits = await page.evaluate(() => {
           const n = document.querySelector('.map-foot').getBoundingClientRect();
@@ -2848,6 +2859,9 @@ test('on a phone the legend and the notice fold to buttons; the opened key fits 
       await page.reload();
       await page.waitForFunction(() => window.__testMap && document.querySelector('.hd-legend .hd-key'));
       if (status.available) await page.locator('.map-foot .terrain-notice').waitFor({ state: 'attached' });
+      // the foot is drawn again as the base map's status and style come in: let it settle before tapping it
+      await page.waitForFunction(() => !document.querySelector('.map-foot.is-missing'), null, { timeout: 5000 }).catch(() => {});
+      await page.waitForTimeout(600);
       const box = sel => page.evaluate(s => {
         const e = document.querySelector(s);
         if (!e) return null;
@@ -2871,8 +2885,13 @@ test('on a phone the legend and the notice fold to buttons; the opened key fits 
         assert.equal((await box('.hd-legend-body')).shown, false, `${at}: the legend starts folded`);
         assert.ok(lg.h <= 64 && lg.w <= viewport.width / 2 && lg.r <= viewport.width - G + 1, `${at}: a small button: ${JSON.stringify(lg)}`);
         if (status.available) {
+          // the credits start shown (they must be seen without any interaction); its button folds them
+          if ((await box('.map-foot-body')).shown) {
+            await page.locator('.map-foot-toggle').click();
+            await page.waitForFunction(() => !document.querySelector('.map-foot').classList.contains('is-open'));
+          }
           const ft = await box('.map-foot');
-          assert.equal((await box('.map-foot-body')).shown, false, `${at}: the notice starts folded`);
+          assert.equal((await box('.map-foot-body')).shown, false, `${at}: folded by its button`);
           assert.ok(ft.h <= 64 && ft.w <= 64 && ft.l >= G - 1, `${at}: the notice's button: ${JSON.stringify(ft)}`);
         }
         await page.locator('.hd-legend-toggle').click();
@@ -2915,7 +2934,7 @@ test('on a phone the legend and the notice fold to buttons; the opened key fits 
         if (status.available) {
           // the notice opened: all of it, inside the gutters, clear of the legend's button
           await page.locator('.map-foot-toggle').click();
-          await page.locator('.map-foot .terrain-notice').waitFor();
+          await page.locator('.map-foot .terrain-notice').waitFor({ state: 'attached' });
           await page.waitForTimeout(100);
           const ft = await box('.map-foot'), lb = await box('.hd-legend');
           assert.ok(ft.l >= G - 1 && ft.r <= viewport.width - G + 1 && ft.t >= map.t && ft.b <= viewport.height,
@@ -2999,7 +3018,7 @@ test('#4431: at tablet widths the map keeps most of the screen, and every panel 
       assert.ok(await reachable('.viewport-toggle .map-base-select'), `${at}: the base map's menu in the drawer`);
       assert.equal(await page.evaluate(() => scrollY), 0, `${at}: the page itself does not scroll`);
       // the map options, with Map motion (#4718), by keyboard: inside the screen, whole enough to use, Escape closes
-      await page.locator('.map-options-btn').focus();
+      await openLayers(page); await page.locator('.map-options-btn').focus();
       await page.keyboard.press('Enter');
       await page.locator('.map-motion-select').waitFor();
       const opts = await box('.map-options');
@@ -3068,10 +3087,10 @@ test('without a GPU the map says so and draws its cheapest form; the app still w
     await page.waitForFunction(() => window.histmersionMap);
     const caps = await page.evaluate(() => window.histmersionMap.capabilities());
     if (!caps.software) { t.skip(`this machine's headless Chromium draws WebGL on a GPU (${caps.renderer})`); return; }
-    await page.locator('.map-base-select').selectOption('physical');
-    await page.locator('.terrain-notice').waitFor();
+    await openLayers(page); await page.locator('.map-base-select').selectOption('physical');
+    await page.locator('.terrain-notice').waitFor({ state: 'attached' });
     assert.match(await page.locator('.terrain-notice').textContent(), /without a GPU/);
-    await page.locator('.map-options-btn').click();
+    await openLayers(page); await page.locator('.map-options-btn').click();
     assert.ok(await page.locator('.map-option-contours').isDisabled());
     assert.deepEqual(errors, []);
   } finally { await soft.close(); }
@@ -3164,8 +3183,8 @@ test('the map neither refetches nor rebuilds when the filters fold or the sideba
     await routeTiles(page, { sites: fullLoad.sites.features, media: fullLoad.media, events: fullLoad.events, asked: tiles });
     const held = await fullLoadView(page, baseURL);
     assert.ok(held.held >= 300 && held.drawn > 50, `the full load is drawn: ${JSON.stringify(held)}`);
-    // "only sources in view": a moved view refetches the list, a resized one must not
-    await page.locator('button[title="Only sources in view"]').click();
+    // "On the map": a moved view refetches the list, a resized one must not
+    await page.locator('#results-on-map').click();
     await quiet(page, 800);
     await page.waitForFunction(() => !document.querySelector('#count.is-loading'));
     await page.waitForTimeout(500);
@@ -3185,8 +3204,18 @@ test('the map neither refetches nor rebuilds when the filters fold or the sideba
       await page.waitForTimeout(400);
       changes.push({ what, from: size, to: await page.evaluate(() => window.__testMap.getSize()) });
     };
-    await step('filters folded', () => page.locator('#f-more-toggle').click());
-    await step('filters unfolded', () => page.locator('#f-more-toggle').click());
+    // the filter panel lies over the map: folding and opening it leave the map as it is, not even resized
+    const still = async (what, act) => {
+      const size = await page.evaluate(() => window.__testMap.getSize());
+      await act();
+      await page.waitForTimeout(400);
+      assert.deepEqual(await page.evaluate(() => window.__testMap.getSize()), size, `${what} leaves the map's size`);
+    };
+    await still('filters folded', () => page.locator('#f-fold').click());
+    await still('filters unfolded', () => page.locator('#f-unfold').click());
+    await still('more filters', () => page.locator('#f-more-toggle').click());
+    const unchanged = await page.evaluate(() => ({ ...window.__glCalls }));
+    assert.equal((unchanged.resize ?? 0) - (before.calls.resize ?? 0), 0, 'the filter panel never resizes the map');
     const back = await markersInView(page);
     const handle = await page.locator('.sidebar-resize').boundingBox();
     const x = handle.x + handle.width / 2, y = handle.y + handle.height / 2;
@@ -3799,4 +3828,226 @@ test('a backlog item links its goals, and a goal\'s linked item leads to it in i
     await api('/api/goals/zz-pw-linked', { method: 'DELETE' });
     await api(`/api/queue/items/${item.id}`, { method: 'DELETE' });
   }
+});
+
+// ── Explore, phase 3: the filter panel, the layers panel, the undated places, the credits, the results ─────
+
+test('the filter panel folds to a rail that counts the active filters, is remembered, and never resizes or rebuilds the map', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await countGlCalls(page);
+    await routeFullLoad(page);
+    await page.goto(new URL('/explore#topic=zz_topic&from=-1600&to=-1100', baseURL).href);
+    await page.waitForFunction(() => window.__testMap);
+    await synchronizedSize(page);
+    await quiet(page, 800);
+    const asked = [];
+    page.on('request', r => asked.push(new URL(r.url())));
+    const before = await page.evaluate(() => ({ calls: { ...window.__glCalls }, size: window.__testMap.getSize() }));
+    // two active filters: the topic and the period (away from the default span)
+    assert.match(await page.locator('.filter-active-title').innerText(), /Active filters · 2/);
+    await page.locator('#f-fold').click();
+    await page.locator('#f-unfold').waitFor();
+    assert.equal(await page.locator('.filter-rail .rail-count').innerText(), '2');
+    const railWidth = await page.locator('.fbar').evaluate(e => e.getBoundingClientRect().width);
+    assert.ok(railWidth <= 49, `the rail is 48 px: ${railWidth}`);
+    await page.waitForTimeout(400);
+    const folded = await page.evaluate(() => window.__testMap.getSize());
+    assert.deepEqual(folded, before.size, 'folding leaves the map its size');
+    // the map's left-hand controls move clear of the panel
+    const zoomLeft = await page.locator('.maplibregl-ctrl-top-left').evaluate(e => e.getBoundingClientRect().left);
+    assert.ok(zoomLeft >= 48, `the zoom buttons clear the rail: ${zoomLeft}`);
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    await page.locator('#f-unfold').waitFor();
+    await countGlCalls(page);
+    await synchronizedSize(page);
+    await quiet(page, 800);
+    const again = await page.evaluate(() => ({ calls: { ...window.__glCalls }, size: window.__testMap.getSize() }));
+    asked.length = 0;
+    await page.locator('#f-unfold').click();
+    await page.locator('#f-fold').waitFor();
+    await page.waitForTimeout(500);
+    const after = await page.evaluate(() => ({ calls: { ...window.__glCalls }, size: window.__testMap.getSize() }));
+    assert.deepEqual(after.size, again.size, 'opening leaves the map its size');
+    for (const k of ['resize', 'setStyle', 'addSource', 'removeSource', 'addLayer', 'removeLayer', 'jumpTo', 'easeTo', 'fitBounds'])
+      assert.equal((after.calls[k] ?? 0) - (again.calls[k] ?? 0), 0, `${k} on opening the panel`);
+    const feeds = asked.filter(u => u.pathname.startsWith('/api/') && !u.pathname.startsWith('/api/tiles/') && !u.pathname.startsWith('/api/basemap/'));
+    assert.deepEqual(feeds.map(u => u.pathname), [], 'no feed is asked for again');
+    // a chip's remove button clears that filter; Clear all clears the rest
+    await page.locator('.filter-chips .chip', { hasText: 'zz topic' }).locator('.chip-x').click();
+    await page.waitForFunction(() => !location.hash.includes('topic='));
+    await page.locator('#f-clear').click();
+    await page.waitForFunction(() => document.querySelector('.filter-active-title').textContent === 'No active filters');
+  });
+});
+
+test('the layers panel: one button says how many are on; a layer\'s options show only while it is on', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await routeFullLoad(page);
+    const btn = page.locator('#layers-btn');
+    assert.match(await btn.innerText(), /Layers · \d of 5 on/);
+    assert.equal(await page.locator('#layers-panel').isVisible(), false, 'the panel starts closed');
+    await btn.click();
+    await page.locator('#layers-panel').waitFor();
+    const sites = page.locator('#layers-panel [data-layer="sites"]');
+    if (await sites.locator('.layer-options').count()) await sites.locator('button[title="Sites"]').click();
+    assert.equal(await sites.locator('.layer-options').count(), 0, 'no options while Sites is off');
+    const n0 = Number((await btn.innerText()).match(/(\d) of/)[1]);
+    await sites.locator('button[title="Sites"]').click();
+    await sites.locator('.layer-options .icon-select').waitFor();
+    assert.equal(await sites.locator('#undated-sites').isChecked(), false, 'undated sites are off by default');
+    assert.equal(Number((await btn.innerText()).match(/(\d) of/)[1]), n0 + 1);
+    await sites.locator('button[title="Sites"]').click();
+    await page.waitForFunction(() => !document.querySelector('#layers-panel [data-layer="sites"] .layer-options'));
+    // the background map and the map's settings are in the panel
+    await page.locator('#layers-panel .map-base-select').waitFor();
+    assert.equal(await page.locator('#layers-panel a.layers-settings').getAttribute('href'), '/settings/data');
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => !document.querySelector('#layers-panel').classList.contains('is-open'));
+  });
+});
+
+test('sites of no known date: asked for only when switched on, drawn dashed beneath the dated, keyed in the legend', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    const asked = [];
+    const sites = [
+      { type: 'Feature', geometry: { type: 'Point', coordinates: [23.0, 38.0] },
+        properties: { id: 'zz_dated', label: 'Zz dated', kind: 'site', periodStart: -1500, periodEnd: -1200, siteType: 'palace' } },
+      { type: 'Feature', geometry: { type: 'Point', coordinates: [25.0, 38.5] },
+        properties: { id: 'zz_undated', label: 'Zz undated', kind: 'site', siteType: 'tower', undated: true } }];
+    await routeTiles(page, { sites, asked });
+    await page.evaluate(() => localStorage.setItem('histmersion.ui.layers', JSON.stringify(['sites'])));
+    await page.goto(new URL('/explore#from=-1600&to=-1100', baseURL).href);
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    await page.evaluate(() => window.__testMap.setView([38.2, 24], 7));
+    await page.locator('.hd-site-marker').first().waitFor();
+    assert.equal(await page.locator('.hd-undated').count(), 0, 'no undated site while the switch is off');
+    assert.ok(asked.filter(u => u.pathname.includes('/sites/')).every(u => !u.searchParams.has('undated')), 'never asked for');
+    assert.equal(await page.locator('.hd-legend-undated').count(), 0);
+    await page.locator('#layers-btn').click();
+    await page.locator('#undated-sites').check();
+    await page.locator('.hd-point.hd-undated').waitFor();
+    assert.ok(asked.some(u => u.pathname.includes('/sites/') && u.searchParams.get('undated') === 'true'), 'asked with undated=true');
+    const looks = await page.evaluate(() => {
+      const u = document.querySelector('.hd-point.hd-undated'), d = document.querySelector('.hd-site-marker:not(.hd-undated)');
+      const cs = e => getComputedStyle(e);
+      const z = e => Number(getComputedStyle(e.closest('.hd-marker')).zIndex) || 0;
+      return { uStyle: cs(u).borderTopStyle, dStyle: cs(d).borderTopStyle, uSize: u.getBoundingClientRect().width,
+        dSize: d.getBoundingClientRect().width, uZ: z(u), dZ: z(d), uShape: cs(u).borderRadius, dShape: cs(d).borderRadius };
+    });
+    assert.equal(looks.uStyle, 'dashed', JSON.stringify(looks));
+    assert.equal(looks.dStyle, 'solid', JSON.stringify(looks));
+    assert.equal(looks.uSize, looks.dSize, 'the same size');
+    assert.equal(looks.uShape, looks.dShape, 'the same shape');
+    assert.ok(looks.uZ < looks.dZ, `beneath the dated: ${JSON.stringify(looks)}`);
+    await page.locator('.hd-legend-undated').waitFor({ state: 'attached' });
+    assert.match(await page.locator('.hd-legend-undated').textContent(), /date unknown/);
+    await page.locator('#undated-sites').uncheck();
+    await page.waitForFunction(() => !document.querySelector('.hd-point.hd-undated') && !document.querySelector('.hd-legend-undated'));
+  });
+});
+
+test('the map\'s credits: shown at first, folded to (i) after the first pan, opened again by it with the notice', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await page.locator('.map-foot .map-credits').waitFor();
+    assert.ok(await page.locator('.map-foot .map-credits').isVisible(), 'the credit line is visible at first');
+    assert.ok(await page.locator('.map-foot .map-credits-all').isVisible(), 'with a link to every data source');
+    if (await page.locator('.map-foot .terrain-notice').count())
+      assert.equal(await page.locator('.map-foot .terrain-notice').isVisible(), false, 'the terrain notice waits behind (i)');
+    // a pan by the reader
+    const m = await page.locator('#map').boundingBox();
+    await page.mouse.move(m.x + m.width / 2, m.y + m.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(m.x + m.width / 2 - 120, m.y + m.height / 2 - 40, { steps: 8 });
+    await page.mouse.up();
+    await page.waitForFunction(() => !document.querySelector('.map-foot').classList.contains('is-open'));
+    assert.equal(await page.locator('.map-foot .map-credits').isVisible(), false, 'folded after the first pan');
+    await page.locator('.map-foot-toggle').click();
+    await page.waitForFunction(() => document.querySelector('.map-foot').classList.contains('is-open'));
+    assert.ok(await page.locator('.map-foot .map-credits').isVisible(), '(i) opens the credits again');
+    if (await page.locator('.map-foot .terrain-notice').count())
+      assert.ok(await page.locator('.map-foot .terrain-notice').isVisible(), 'and the terrain notice');
+    await page.locator('.map-credits-all').click();
+    await page.waitForFunction(() => location.pathname === '/settings/credits');
+    await page.locator('.credits-table').waitFor();
+    assert.match(await page.locator('.credits-table').innerText(), /ESA WorldCover[\s\S]*CC BY 4\.0/);
+    assert.match(await page.locator('.credits-table tr', { hasText: 'Cliopatria' }).innerText(), /CC BY 4\.0/);
+  });
+});
+
+test('on a phone the credits start visible too', async () => {
+  await withPage({ width: 390, height: 844 }, async page => {
+    await page.locator('.map-foot .map-credits').waitFor({ state: 'attached' });
+    await page.waitForFunction(() => document.querySelector('.map-foot').classList.contains('is-open'));
+    assert.ok(await page.locator('.map-foot .map-credits').isVisible(), 'the credit line is visible without any interaction');
+  });
+});
+
+test('results: real links with a new-tab action; a row shows its detail in their place, ← Results goes back', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await routeFixtures(page);
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    const row = page.locator('#list .hit').first();
+    await row.waitFor();
+    assert.match(await page.locator('.tabs .tab[data-tab="sources"]').innerText(), /Sources\s*40/);
+    for (const t of ['sources', 'articles', 'events', 'places', 'pictures'])
+      await page.locator(`.tabs .tab[data-tab="${t}"]`).waitFor();
+    const link = row.locator('a.title');
+    assert.equal(await link.getAttribute('href'), '/source/zz_src_0');
+    const tab = row.locator('a.new-tab');
+    assert.equal(await tab.getAttribute('href'), '/source/zz_src_0');
+    assert.equal(await tab.getAttribute('target'), '_blank');
+    await link.click();
+    await page.locator('.result-detail').waitFor();
+    assert.equal(await page.locator('.results-lists').isVisible(), false, 'the detail replaces the results');
+    assert.equal(await page.locator('.result-detail .detail-tab').getAttribute('href'), '/source/zz_src_0');
+    assert.equal(await page.locator('.result-detail .detail-tab').getAttribute('target'), '_blank');
+    await page.locator('.result-detail .detail-card').waitFor();
+    await page.locator('#detail-back').click();
+    await page.waitForFunction(() => !document.querySelector('.result-detail'));
+    assert.ok(await page.locator('#list .hit').first().isVisible(), 'back to the results');
+    // "Pin as window" keeps a source open over the map
+    await link.click();
+    await page.locator('.result-detail .detail-pin').click();
+    await page.locator('.wm-window').first().waitFor();
+    // the articles' rows are links with a new-tab action too
+    await page.locator('#detail-back').click();
+    await page.locator('.tabs .tab[data-tab="articles"]').click();
+    const art = page.locator('.article-row').first();
+    await art.waitFor();
+    assert.equal(await art.locator('a.new-tab').getAttribute('href'), '/article/zz_art_0');
+  });
+});
+
+test('results "On the map" follow the view; "Everywhere" does not', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await routeFixtures(page);
+    await page.locator('#results-on-map').click();
+    await page.waitForFunction(() => location.hash.includes('inView=true') && location.hash.includes('bbox='));
+    assert.equal(await page.locator('#results-on-map').getAttribute('aria-pressed'), 'true');
+    await page.locator('#results-everywhere').click();
+    await page.waitForFunction(() => !location.hash.includes('inView=true'));
+  });
+});
+
+test('the timeline: Play with its label, speeds in words, text buttons for the span, folded to one line and kept', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    assert.match(await page.locator('#tl-play').innerText(), /Play/);
+    const speeds = await page.locator('.tl-play-speed option').allInnerTexts();
+    assert.deepEqual(speeds, ['Very slow', 'Slow', 'Normal speed', 'Fast', 'Very fast']);
+    assert.equal(await page.locator('#tl-zoom-period').innerText(), 'Zoom to period ▾');
+    await page.locator('#tl-all-time').click();
+    await page.waitForFunction(() => /from=-?\d+/.test(location.hash));
+    const tall = await page.locator('.tl').evaluate(e => e.getBoundingClientRect().height);
+    await page.locator('#tl-fold').click();
+    const short = await page.locator('.tl').evaluate(e => e.getBoundingClientRect().height);
+    assert.ok(short < tall && short <= 60, `folded to one line: ${tall} → ${short}`);
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    assert.ok(await page.locator('.tl.is-folded').count(), 'kept folded');
+    await page.locator('#tl-fold').click();
+    assert.equal(await page.locator('.tl.is-folded').count(), 0);
+  });
 });

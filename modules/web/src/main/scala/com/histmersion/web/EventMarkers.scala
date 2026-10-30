@@ -44,14 +44,16 @@ object EventMarkers:
 
   /** Pure: the tiles' query for the events of `tiles` (a span) under `filter`, by kind and tier — the
     * filter's paging and its sort left out, which every tile of a span shares. */
-  def query(filter: Filter, tiles: (Long, Long), kind: Option[String], tier: Option[String]): TilesApi.TileQuery =
+  def query(filter: Filter, tiles: (Long, Long), kind: Option[String], tier: Option[String],
+      undated: Boolean = false): TilesApi.TileQuery =
     TilesApi.TileQuery(TileLayer.Events.wire, 0, 0, 0,
       filter.copy(period = Some(Period(tiles._1, tiles._2)), limit = Filter().limit, offset = 0, sort = Filter().sort),
-      kind = kind, tier = tier, context = Some(true))
+      kind = kind, tier = tier, context = Some(true), undated = Option.when(undated)(true))
 
   /** Load the events of `tiles` (a span, playback's widened to its bucket), drawn for `span`. */
   def load(tiles: (Long, Long), span: (Long, Long)): Unit =
-    layer.load(ApiClient.tileTemplate(query(UiState.toFilter(), tiles, UiState.eventKind.now(), UiState.eventTier.now())), span)
+    layer.load(ApiClient.tileTemplate(query(UiState.toFilter(), tiles, UiState.eventKind.now(), UiState.eventTier.now(),
+      UiState.eventsUndated.now())), span)
 
 /** The map's KEY to its shapes and icons (#1449): what each shape is, the findings' source kinds, and —
   * while their layers are on — the event kinds (natural, human) and site types, each icon with its name.
@@ -95,6 +97,11 @@ object MapKey:
       s"""<div class="hd-key-group"><div class="hd-key-title">findings, by source</div><ul class="hd-key-list">${list(kinds)}</ul></div>"""
 
   /** The key's markup: the shapes, then the icons of the layers on. */
-  def html(events: Boolean, sites: Boolean): String =
+  def html(events: Boolean, sites: Boolean, undated: Boolean = false): String =
     val body = shapesHtml + (if events then eventsHtml else "") + (if sites then sitesHtml else "")
-    s"""<details class="hd-key"><summary>key</summary>$body</details>"""
+    (if undated then undatedHtml else "") + s"""<details class="hd-key"><summary>key</summary>$body</details>"""
+
+  /** The legend's entry while the sites or events of no known date are drawn: their dashed outline. */
+  val undatedHtml: String =
+    """<div class="hd-legend-undated"><span class="hd-badge hd-badge--circle hd-key-badge hd-undated-swatch" aria-hidden="true"></span>""" +
+      """<span>date unknown (dashed outline)</span></div>"""

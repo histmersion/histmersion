@@ -86,6 +86,10 @@ object BaseMaps:
     s"This map also draws ${missing.mkString(", ")}, which the download on this server left out. Run " +
       s"`${Basemap.KeepAllCommand}` on the machine that runs it, then choose the map again."
 
+  /** The credit line's link to every dataset's credit (Settings › Credits): the places, boundaries and events
+    * drawn over the base map are credited there. */
+  val allCreditsLink: String = s"""<a class="map-credits-all" href="${Route.Settings(SettingsSection.Credits).path}">Data sources</a>"""
+
   /** Pure: the credits line — each source's credit once, in order, separated by a middle dot. */
   def creditsHtml(credits: Seq[String]): String = credits.map(_.trim).filter(_.nonEmpty).distinct.mkString(" · ")
 
@@ -156,6 +160,8 @@ object BaseMaps:
     software.set(m.capabilities.software)
     view.set(Some((m.zoom, m.bounds)))
     val _ = m.on(MapEventKind.MoveEnd)(_ => view.set(Some((m.zoom, m.bounds))))
+    // the credits are shown at first; the reader's first pan or zoom folds them to their (i) button
+    val _ = m.on(MapEventKind.MoveStart) { e => if e.native.isDefined && !moved then { moved = true; foldAfterMove() } }
     // a base map drawn: its credits are known (they follow its sources and the layers drawn)
     val _ = m.on(MapEventKind.BaseMapReady)(_ => if m.credits != drawnCredits then drawFoot())
     refresh()
@@ -188,10 +194,27 @@ object BaseMaps:
   // credits drawn with it
   private var notice: Option[(String, Boolean, Boolean)] = None
   private var drawnCredits: Seq[String] = Nil
-  // whether the reader opened the folded foot (the narrow layout): kept when it is drawn again; how far the
-  // foot's corner is lifted now
+  // whether the reader opened (or closed) the foot with its (i) button: kept when it is drawn again; whether the
+  // reader has moved the map yet; how far the foot's corner is lifted now
   private var footOpen: Option[Boolean] = None
+  private var moved = false
   private var noticeLifted = 0.0
+
+  /** Pure: is the foot open — the reader's choice, else open until the first pan or zoom, and open whenever it
+    * says the map is not (wholly) downloaded. */
+  def footOpenNow(chosen: Option[Boolean], moved: Boolean, warns: Boolean): Boolean = chosen.getOrElse(warns || !moved)
+
+  /** Pure: does the folded foot keep a credit in sight? The online OpenStreetMap tiles (and OSM France's)
+    * require theirs to stay visible on the map. */
+  def keepsOsmCredit(b: BaseMap): Boolean = b.online
+
+  /** The first pan or zoom: the credits fold to the (i) button, unless the reader chose otherwise. */
+  private def foldAfterMove(): Unit =
+    noticeEl.foreach { box =>
+      if footOpen.isEmpty && !notice.exists(_._2) then
+        MapFold.set(box, false)
+        dom.window.requestAnimationFrame((_: Double) => fitNotice())
+    }
 
   private def drawFoot(): Unit =
     noticeEl.foreach(_.remove())
@@ -201,13 +224,20 @@ object BaseMaps:
     if notice.nonEmpty || credits.nonEmpty then
       val box = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
       box.className = if notice.exists(_._2) then "map-foot is-missing hd-map-control" else "map-foot hd-map-control"
-      // folded to its button in the narrow layout (MapFold) as the reader last left it — open, until then,
-      // when it says the map is not (wholly) downloaded
-      val open = footOpen.getOrElse(notice.exists(_._2))
+      // open at first (the credits must be seen without any interaction), folded to its (i) button after the
+      // reader's first pan or zoom; opened with the button it shows the notice about the past landscape too
+      val open = footOpenNow(footOpen, moved, notice.exists(_._2))
       box.innerHTML = MapFold.toggleHtml("btn--icon map-foot-toggle", "map-foot-body",
         if notice.nonEmpty then "about this map: its terrain and credits" else "map credits", Icon.html(Icon.Info), open)
       MapFold.set(box, open)
-      MapFold.wire(box, o => { footOpen = Some(o); fitNotice() })
+      box.classList.toggle("is-expanded", footOpen.contains(true))
+      // the online OpenStreetMap tiles' credit stays in sight, folded or not
+      if keepsOsmCredit(shown.now()) then
+        val osm = dom.document.createElement("span").asInstanceOf[dom.HTMLElement]
+        osm.className = "map-credits-keep"
+        osm.innerHTML = "© <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>"
+        box.appendChild(osm)
+      MapFold.wire(box, o => { footOpen = Some(o); box.classList.toggle("is-expanded", o); fitNotice() })
       val body = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
       body.className = "map-foot-body"
       body.id = "map-foot-body"
@@ -232,7 +262,10 @@ object BaseMaps:
         val c = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
         c.className = "map-credits"
         // the sources' own credit lines (their links included), as the map library showed them
-        c.innerHTML = creditsHtml(credits)
+        c.innerHTML = creditsHtml(credits) + " · " + allCreditsLink
+        Option(c.querySelector(".map-credits-all")).foreach(_.addEventListener("click", { (e: dom.MouseEvent) =>
+          if Router.plain(e) then { e.preventDefault(); Router.go(Route.Settings(SettingsSection.Credits)) }
+        }))
         body.appendChild(c)
       surface.corner(Corner.BottomLeft).appendChild(box)
       noticeEl = Some(box)

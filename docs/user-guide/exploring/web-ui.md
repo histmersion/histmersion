@@ -3,7 +3,17 @@
 Open <http://localhost:8000>. The **top bar** leads to the four places — **Explore** (the map and the
 timeline), **Library** (the lists of sources and articles, and adding sources), **Research** (goals,
 agents, decisions, activity, the lists) and **Settings** — and holds the search field. Explore has the
-**filters** and the **timeline**, the **map**, and the **side panel** with the lists.
+**filter panel** on the left, the **map** with its **Layers** button, the **timeline** under the map, and
+the **results** on the right.
+
+## The filters
+
+The filter panel holds the **words**, the **place**, the **period** (the timeline's range, which you can
+also type: `1200 BCE`, `-1200`) and the **topic**; **More filters** opens the authors, statuses, tags and
+publication years. Every filter in use is listed as a chip under *Active filters* — remove one with its ✕,
+or all of them with **Clear all**. The panel folds to a narrow rail on the side (the « button) that still
+counts the filters in use; your browser remembers whether it is folded. It lies over the map's edge, so
+folding or opening it never redraws the map. Library uses the same filters.
 
 <figure markdown="span">
   ![The web page at 1440 by 900 pixels: toolbar buttons across the top, the search and filter fields, the timeline with its bars, the layer switches, the map of the eastern Mediterranean, and the list of sources on the right](../assets/screenshots/home-light.png){ loading=lazy }
@@ -30,7 +40,22 @@ as a few hundred bubbles. Click a bubble to zoom in on what it holds (a small on
 far enough, every marker stands on its own. The bubbles' colour spans the dates of what they hold.
 
 Hover over a marker for a short card; click it (or press Enter on it) for the details — a site
-click also filters the lists by that place.
+click also filters the lists by that place and shows the place in the results panel.
+
+**Layers · N of 5 on**, at the map's top right, opens the layers: findings, boundaries, sites, pictures and
+events, each switched on or off. A layer's own options (site type, event kind and tier, picture provider and
+licence, which states are drawn) appear only while it is on, and the background map and a link to the map's
+settings sit at the bottom.
+
+**Places with no known date.** Most gazetteer sites (GeoNames, Wikidata) state no date, so a map of a period
+leaves them out. Under Sites (and Events), **Also show sites with no known date** adds them, whatever the
+period: drawn beneath the dated ones with a **dashed outline** (the same shape, icon, colour and size), keyed
+*date unknown* in the legend, and counted in a bubble's tooltip ("12 sites, 5 with no known date").
+
+**Credits.** The map's credit line shows when the page opens; your first pan or zoom folds it to an (i)
+button at the map's bottom left, which opens it again with the note about the present-day landscape. Its
+**Data sources** link leads to Settings › Credits, which lists every dataset with its licence. The online
+OpenStreetMap maps keep their credit in sight at all times.
 
 ### The base map
 
@@ -129,16 +154,18 @@ base map drawn are in the box at its lower left corner, under the note on today'
 ## The timeline
 
 The strip under the map is the **time window**: the range of years you are looking at. Drag its
-handles to change the range, drag the middle to move it, and zoom in or out. Years before the common
-era are negative (1200 BCE is −1200).
+handles to change the range, drag the middle to move it, and zoom in or out with the wheel. Years before
+the common era are negative (1200 BCE is −1200).
 
-- **Period presets** set the window to a named period, such as the Late Bronze Age *as one authority
+- **Zoom to period** sets the window to a named period, such as the Late Bronze Age *as one authority
   dates it for one region* — there is no single Bronze Age; dates differ between regions and between
-  scholars. See [Places, periods and the map](places-and-periods.md).
-- **Playback** animates the map through time; events appear and fade as the play head passes them.
-  Choose the speed, stop and reset.
-- The bars above the strip show **when the evidence is**: how many sources fall into each stretch of
+  scholars. See [Places, periods and the map](places-and-periods.md). **Show all time** shows every year
+  the timeline holds.
+- **Play** animates the map through time; events appear and fade as the play head passes them. Choose
+  the speed (very slow to very fast); **Stop** — or the end — shows the whole range again.
+- The curve above the strip shows **when the evidence is**: how many sources fall into each stretch of
   time.
+- **Fold timeline** leaves only its line of buttons, giving the map the room; your browser remembers it.
 
 <figure markdown="span">
   ![The timeline with its period presets menu open: groups by region, Anatolia unfolded, each period with its years and the authority that dates it](../assets/screenshots/timeline-presets.png){ loading=lazy }
@@ -146,26 +173,26 @@ era are negative (1200 BCE is −1200).
   map shows first.</figcaption>
 </figure>
 
-## The side panel
+## The results
 
-At the top is one **title box** that narrows every list. Below it are the **filters** — words,
-tags, authors, places, topics, statuses — shown as chips you can remove. The tabs:
+**On the map** lists only what lies in the map's view (and follows it as you pan); **Everywhere** lists
+what the filters select wherever it is. One **title box** narrows every list. The tabs, each with its count:
 
 | tab | shows |
 |---|---|
-| **sources** | the sources that match, with the findings that matched and why |
-| **articles** | the compiled articles |
-| **events** | the events in the window |
-| **by time** | counts grouped by period, nested |
-| **by region** | counts grouped by region, nested (a continent, its regions, their places) |
+| **Sources** | the sources that match, with the findings that matched and why (sorted as you choose) |
+| **Articles** | the compiled articles |
+| **Events** | the events in the window |
+| **Places** | the sites the map shows in its view (zoom in to list those it only counts); everywhere, the places named like the words |
+| **Pictures** | the pictures the map shows in its view; everywhere, every picture of the period |
 
-Every tab starts with the same count line — *showing 1–20 of 285 sources · 491 findings · 1475 BCE →
-1465 BCE* — with what that tab adds: the findings for sources, the count of each kind for articles, the
-number of periods or regions for the two trees. Lists end with one **show 20 more (265 left)** button
-that brings the next rows.
+Every row is a link: a click shows the item's **detail** in place of the results (**← Results** goes
+back), from where **Pin as window** keeps it open over the map and **New tab** opens its own page; the ↗ on
+a row, or a ⌘/Ctrl click, opens that page in a new tab straight away. A place's detail also shows where its
+dates come from, its heritage designations and the registers that list it, when its record has them.
 
-A count in *by time* and *by region* counts a source in **every** group it overlaps, so the numbers
-do not add up to the total. That is expected.
+Every list starts with the same count line — *showing 1–20 of 285 sources · 491 findings · 1475 BCE →
+1465 BCE* — and ends with one **show 20 more (265 left)** button that brings the next rows.
 
 ## Windows
 

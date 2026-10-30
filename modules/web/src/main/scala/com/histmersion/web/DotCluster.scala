@@ -24,7 +24,8 @@ final case class DotEntry(kind: DotKind, id: String, label: String, icon: String
   * ([[Certainty.NoSay]] for a dot that is not a finding), and what its bubble's list shows — the findings
   * themselves, or the dot's row. */
 final case class Member(kind: DotKind, n: Int, mids: List[Double], certainty: Certainty,
-    findings: List[GeoHit] = Nil, entry: Option[DotEntry] = None, cell: Option[com.histmersion.web.map.GeoBounds] = None):
+    findings: List[GeoHit] = Nil, entry: Option[DotEntry] = None, cell: Option[com.histmersion.web.map.GeoBounds] = None,
+    undated: Int = 0):
   /** A CELL of a server tile ([[TileCellPoint]]): `n` items counted there, none of them to list — their
     * box (`cell`) is where a click zooms. */
   def aggregate: Boolean = cell.isDefined
@@ -56,13 +57,20 @@ object DotCluster:
     def counted: Boolean = members.exists(_.aggregate)
     /** The boxes of its cells. */
     def cells: List[com.histmersion.web.map.GeoBounds] = members.flatMap(_.cell)
+    /** How many of what it holds have no known date. */
+    def undated: Int = members.map(_.undated).sum
 
   /** Pure: what a bubble holds, in words — "12 findings · 3 sites · 2 events", the kinds in a fixed
     * order, those it has none of left out. */
   def summary(counts: Map[DotKind, Int]): String =
     DotKind.values.toList.flatMap(k => counts.get(k).filter(_ > 0).map(n => Plural.count(n, k.one, k.many))).mkString(" · ")
 
-  def summary(c: Contents): String = summary(c.counts)
+  /** Pure: the same, then how many of them have no known date — "12 sites, 5 with no known date". */
+  def summary(counts: Map[DotKind, Int], undated: Int): String =
+    val all = summary(counts)
+    if undated <= 0 then all else s"$all, $undated with no known date"
+
+  def summary(c: Contents): String = summary(c.counts, c.undated)
 
   /** Is it a bubble of more than one kind? */
   def mixed(c: Contents): Boolean = c.counts.count(_._2 > 0) > 1

@@ -333,13 +333,17 @@ object MapView:
         // the events layer (#1449): its kind/tier menus reload it; the key follows the layers
         UiState.eventKind.signal.combineWith(UiState.eventTier.signal).changes
           .foreach(_ => if layerSync.attached(MapLayer.Events) then loadEvents(currentSpan))(using ctx.owner)
-        UiState.siteType.signal.changes
+        UiState.siteType.signal.combineWith(UiState.sitesUndated.signal).changes
           .foreach(_ => if layerSync.attached(MapLayer.Sites) then loadSites(currentSpan))(using ctx.owner)
+        UiState.eventsUndated.signal.changes
+          .foreach(_ => if layerSync.attached(MapLayer.Events) then loadEvents(currentSpan))(using ctx.owner)
         // the "States shown" menu: the boundaries (the sites, events and pictures are every one of the span)
         UiState.areaPick.signal.changes.foreach { _ =>
           if layerSync.attached(MapLayer.Boundaries) then loadOverlay(currentSpan)
         }(using ctx.owner)
-        UiState.layers.signal.foreach(ls => updateKey(ls(MapLayer.Events), ls(MapLayer.Sites)))(using ctx.owner)
+        UiState.layers.signal.combineWith(UiState.sitesUndated.signal, UiState.eventsUndated.signal)
+          .foreach((ls, su, eu) => updateKey(ls(MapLayer.Events), ls(MapLayer.Sites),
+            (ls(MapLayer.Sites) && su) || (ls(MapLayer.Events) && eu)))(using ctx.owner)
         // the finding markers follow their switch the same way; `render` keeps their content current
         // while they are off, so switching them back on shows the current span at once
         UiState.sources.signal.foreach(showSources)(using ctx.owner)
@@ -400,9 +404,9 @@ object MapView:
     corner.insertBefore(legendEl, corner.firstChild)
 
   /** The legend's key to the icons (#1449), for the layers that draw them. */
-  private def updateKey(events: Boolean, sites: Boolean): Unit =
+  private def updateKey(events: Boolean, sites: Boolean, undated: Boolean): Unit =
     if legendEl != null then
-      Option(legendEl.querySelector(".hd-key-slot")).foreach(_.innerHTML = MapKey.html(events, sites))
+      Option(legendEl.querySelector(".hd-key-slot")).foreach(_.innerHTML = MapKey.html(events, sites, undated))
 
   private def loadEvents(span: (Long, Long)): Unit = EventMarkers.load(tileSpan(span), span)
 
@@ -639,6 +643,9 @@ object MapView:
 
   val ByFindingsClass = "hd-by-findings"
 
+  /** A site or an event with no known date (drawn only when asked for): outlined dashed, beneath the dated. */
+  val UndatedClass = "hd-undated"
+
   /** The year a place's card reads the gazetteer at: the middle of the span the map shows. */
   private[web] def spanMid(): Option[Long] = Some((currentSpan._1 + currentSpan._2) / 2)
 
@@ -653,7 +660,7 @@ object MapView:
   /** Every site of the span, of the type the site-type menu (#1449) keeps. */
   private def loadSites(span: (Long, Long)): Unit =
     sitesLayer.load(ApiClient.tileTemplate(TilesApi.TileQuery(TileLayer.Sites.wire, 0, 0, 0, tileFilter(tileSpan(span)),
-      siteType = UiState.siteType.now())), span)
+      siteType = UiState.siteType.now(), undated = Option.when(UiState.sitesUndated.now())(true))), span)
 
 /** Keeps the overlays attached to a map equal to a WANTED set. Idempotent — applying the same set
   * twice attaches nothing twice — which is what lets the map subscribe to `UiState.layers` and a

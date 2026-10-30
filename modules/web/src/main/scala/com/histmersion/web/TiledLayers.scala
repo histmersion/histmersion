@@ -11,7 +11,7 @@ import scala.scalajs.js
   * alone (`ui.map-tiles`, docs/map-layers.md) — at the items' mean point, with the least and the
   * greatest middle of their dates and their box. */
 final case class TileCellPoint(key: String, kind: DotKind, lat: Double, lon: Double, n: Int,
-    midLo: Option[Double], midHi: Option[Double], box: GeoBounds)
+    midLo: Option[Double], midHi: Option[Double], box: GeoBounds, undated: Int = 0)
 
 /** The pure half of the tiled layers: a tile feature as the app's own point records. */
 object TileDecode:
@@ -30,14 +30,14 @@ object TileDecode:
     val box = (for w <- num(p, P.West); s <- num(p, P.South); e <- num(p, P.East); n <- num(p, P.North)
       yield GeoBounds(s, w, n, e)).getOrElse(GeoBounds(f.at.lat, f.at.lon, f.at.lat, f.at.lon))
     TileCellPoint(str(p, P.Key).getOrElse(s"${f.at.lat}|${f.at.lon}"), kind, f.at.lat, f.at.lon,
-      num(p, P.Count).fold(1)(_.toInt), num(p, P.MidLo), num(p, P.MidHi), box)
+      num(p, P.Count).fold(1)(_.toInt), num(p, P.MidLo), num(p, P.MidHi), box, num(p, P.Undated).fold(0)(_.toInt))
 
   def site(f: TilePointFeature): Option[SitePoint] =
     val p = f.props
     str(p, P.Id).map { id =>
       val period = for a <- num(p, P.PeriodStart); b <- num(p, P.PeriodEnd) yield (a, b)
       SitePoint(Some(id), str(p, P.Label).getOrElse(""), str(p, P.Kind).getOrElse(com.histmersion.values.PlaceKind.Site),
-        str(p, P.SiteType), str(p, P.Basis), f.at.lat, f.at.lon, period)
+        str(p, P.SiteType), str(p, P.Basis), f.at.lat, f.at.lon, period, undated = num(p, P.Undated).exists(_ > 0))
     }
 
   def event(f: TilePointFeature): Option[EventGeo] =
@@ -92,8 +92,10 @@ final class CellKind(val dot: DotKind) extends PointKind[TileCellPoint]:
   def at(c: TileCellPoint): (Double, Double) = (c.lat, c.lon)
   def inner(c: TileCellPoint): String = c.n.toString
   def fill(c: TileCellPoint, span: (Long, Long)): String = MapView.rampEnds(c.midLo.toList ++ c.midHi, span, Certainty.NoSay)._1
-  def member(c: TileCellPoint): Member = Member(dot, c.n, (c.midLo.toList ++ c.midHi).distinct, Certainty.NoSay, cell = Some(c.box))
-  def label(c: TileCellPoint): String = Plural.count(c.n, dot.one, dot.many)
+  def member(c: TileCellPoint): Member =
+    Member(dot, c.n, (c.midLo.toList ++ c.midHi).distinct, Certainty.NoSay, cell = Some(c.box), undated = c.undated)
+  override def classes(c: TileCellPoint): String = if c.undated == c.n then MapView.UndatedClass else ""
+  def label(c: TileCellPoint): String = DotCluster.summary(Map(dot -> c.n), c.undated)
   def action(c: TileCellPoint): String = "zoom in"
   def target(c: TileCellPoint, asOf: Option[Long]): Option[Preview.Target] = None
   def activate(c: TileCellPoint, how: Activation): Unit = MapView.zoomInto(List(c.box))
@@ -140,6 +142,7 @@ final class TiledPoints[A](layer: TileLayer, val items: PointLayer[A], dot: DotK
       tiles.foreach(_.setTiles(None))
       items.detach()
       cells.detach()
+      changed.update(_ + 1)
 
   /** The tiles of `url` (the span and options in it), drawn for `s`. */
   def load(url: String, s: (Long, Long)): Unit =
@@ -174,7 +177,21 @@ final class TiledPoints[A](layer: TileLayer, val items: PointLayer[A], dot: DotK
       readAt = Some(at)
       items.show(shown._1, span)
       cells.show(shown._2, span)
+      changed.update(_ + 1)
     }
+
+  /** Ticks whenever what is shown changes (a tile read, the layer switched off): the lists of what is on the
+    * map follow it. */
+  val changed: com.raquo.laminar.api.L.Var[Int] = com.raquo.laminar.api.L.Var(0)
+
+  /** What is shown in the map's view now: the items drawn as themselves, and how many more its cells there
+    * count. Nothing while the layer is off. */
+  def inViewNow(): (Seq[A], Int) =
+    if !on || !TheMap.isUp then (Nil, 0)
+    else
+      val s = TheMap.surface
+      def seen(p: (Double, Double)) = Clustering.inView(s, LatLon(p._1, p._2), 0)
+      (shown._1.filter(a => seen(items.kind.at(a))), shown._2.filter(c => seen((c.lat, c.lon))).map(_.n).sum)
 
   /** How many items and cells are shown, and the items the cells count (diagnostics). */
   def counts: (Int, Int, Int) = (shown._1.size, shown._2.size, shown._2.map(_.n).sum)

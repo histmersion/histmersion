@@ -10,140 +10,188 @@ import scala.scalajs.js
 
 import com.raquo.laminar.codecs.StringAsIsCodec
 
-/** Filter bar with search box, place input, chip inputs for tags/authors/topics/status, publication
-  * year range, sort dropdown, "more filters" toggle, "clear all" button. Ported from filters.js
-  * (141 lines). */
+/** The filter panel on Explore's left (shared with Library: one filter state, [[UiState]]): the words, the
+  * place, the period (the timeline's span, echoed and editable) and the topic in view; authors, status, tags
+  * and the publication years behind "More filters"; every active filter as a chip, and "Clear all". It folds
+  * to a rail that counts the active filters — remembered by this browser — and lies OVER the map, so neither
+  * folding nor opening it resizes the map. On a phone it is the filters drawer. */
 object FilterBar:
 
   /** One chip filter: the UiState field it edits (no fallback — an unknown key is not a field) and
     * the facet dimension its suggestions come from. */
   private final case class ChipField(state: Field[List[String]], facet: String, label: String, placeholder: String)
 
-  /** In the order the row shows them: authors, topics, status, tags (then "published between", "sort by"). */
-  private val chipFields = List(
+  private val topicField = ChipField(UiState.topics, "topics", "Topic", "e.g. bronze age collapse")
+
+  /** Behind "More filters", in this order (then "Published between"). */
+  private val moreFields = List(
     ChipField(UiState.authors, "authors", "Authors", "e.g. Reich"),
-    ChipField(UiState.topics, "topics", "Topics", "e.g. bronze age collapse"),
     ChipField(UiState.status, "status", "Status", "e.g. foundational"),
     ChipField(UiState.tags, "tags", "Tags", "e.g. sea peoples")
   )
 
-  private val sorts = List("relevance", "cited", "period", "year", "title")
-  private val moreKey = "histmersion.moreFilters"
+  private val moreKey   = "histmersion.moreFilters"
+  private val foldedKey = "histmersion.filtersFolded"
 
   private val moreOpen = Var(false)
 
+  /** Whether the panel is folded to its rail (a wide screen; a phone's drawer never folds). */
+  val folded: Var[Boolean] = Var(false)
+
   def ensureMoreVisible(): Unit = moreOpen.set(true)
 
-  /** Pure: is the "more filters" row open at start-up? Open by default — only an explicit collapse
-    * the browser remembers (`stored` = "0") keeps it closed, and even then a filter set in that row
-    * (from a shared link, say) opens it, so nothing that filters is hidden. */
+  /** Pure: is "More filters" open at start-up? Closed unless it was left open — or a filter in it is set
+    * (from a shared link, say), so nothing that filters is hidden. */
   def moreOpenInitially(stored: Option[String], someMoreSet: Boolean, narrow: Boolean = false): Boolean =
-    // a phone has no room to spare: there the rows start closed unless they were opened before
-    if narrow then stored.contains("1") || someMoreSet
-    else !stored.contains("0") || someMoreSet
+    stored.contains("1") || someMoreSet
+
+  /** Pure: is the panel folded at start-up? Only when this browser left it folded. */
+  def foldedInitially(stored: Option[String]): Boolean = stored.contains("1")
+
+  private def stored(key: String): Option[String] =
+    try Option(dom.window.localStorage.getItem(key))
+    catch case _: Exception => None
+
+  private def keep(key: String, on: Boolean): Unit =
+    try dom.window.localStorage.setItem(key, if on then "1" else "0")
+    catch case _: Exception => ()
+
+  def setFolded(on: Boolean): Unit =
+    folded.set(on)
+    keep(foldedKey, on)
+
+  private def chipInput(c: ChipField, config: UiConfig): HtmlElement =
+    val chipConfig = ChipInput.Config(
+      field = c.facet,
+      label = c.label,
+      placeholder = c.placeholder,
+      debounceMs = config.debounce.suggestMs,
+      getSuggestions = prefix =>
+        ApiClient.facets(c.facet, Some(prefix), UiState.toFilter(except = Set(c.state.key)))
+          .map(_.take(config.facetSuggestions)),
+      onChange = values => UiState.set(c.state := values)(),
+      onPreview = v => UiState.setPreview(v.map(UiState.Preview(c.state.key, _))),
+      // a status reads as the status code: its mark and its word
+      display = if c.state.key == UiState.status.key then Wording.statusOf else Label.display,
+      mark = v => Option.when(c.state.key == UiState.status.key)(s"st-${v.trim.toLowerCase}")
+    )
+    div(cls := "f", label(c.label), ChipInput(chipConfig, c.state.signal))
+
+  /** The period's two ends: the timeline's span, written as years (`500 BCE`, `-500`, `1200`). */
+  private def periodField(config: UiConfig): HtmlElement =
+    def end(name: String, field: Field[Option[Long]], dflt: Long, other: () => Long, valid: (Long, Long) => Boolean) =
+      val bad = Var(false)
+      input(
+        typ := "text",
+        cls := "field f-year",
+        idAttr := s"f-period-$name",
+        aria.label := s"Period $name",
+        inputMode := "numeric",
+        aria.invalid <-- bad.signal.map(_.toString),
+        value <-- field.signal.map(v => Fmt.yr(v.getOrElse(dflt))),
+        onChange.mapToValue --> { raw =>
+          Fmt.parseYear(raw).filter(y => valid(y, other())) match
+            case Some(y) =>
+              bad.set(false)
+              UiState.set(field := Some(y))(push = true)
+            case None => bad.set(true)
+        }
+      )
+    div(
+      cls := "f f-period",
+      label(forId := "f-period-from", "Period"),
+      div(cls := "f-period-ends",
+        end("from", UiState.from, config.time.defaultFrom, () => UiState.to.now().getOrElse(config.time.defaultTo), _ <= _),
+        span(cls := "dash", "to"),
+        end("to", UiState.to, config.time.defaultTo, () => UiState.from.now().getOrElse(config.time.defaultFrom), _ >= _)),
+      span(cls := "f-hint muted", "Also set by dragging on the timeline")
+    )
 
   def init(config: UiConfig): HtmlElement =
-    val someMoreSet = chipFields.exists(_.state.now().nonEmpty) ||
+    val someMoreSet = moreFields.exists(_.state.now().nonEmpty) ||
       UiState.yearFrom.now().isDefined || UiState.yearTo.now().isDefined
-    val stored =
-      try Option(dom.window.localStorage.getItem(moreKey))
-      catch case _: Exception => None
-    moreOpen.set(moreOpenInitially(stored, someMoreSet, Viewport.narrowNow))
-
-    // build chip inputs
-    val chipInputElements = chipFields.map { c =>
-      val chipConfig = ChipInput.Config(
-        field = c.facet,
-        label = c.label,
-        placeholder = c.placeholder,
-        debounceMs = config.debounce.suggestMs,
-        getSuggestions = prefix =>
-          ApiClient.facets(c.facet, Some(prefix), UiState.toFilter(except = Set(c.state.key)))
-            .map(_.take(config.facetSuggestions)),
-        onChange = values => UiState.set(c.state := values)(),
-        onPreview = v => UiState.setPreview(v.map(UiState.Preview(c.state.key, _))),
-        // a status reads as the status code: its mark and its word
-        display = if c.state.key == UiState.status.key then Wording.statusOf else Label.display,
-        mark = v => Option.when(c.state.key == UiState.status.key)(s"st-${v.trim.toLowerCase}")
-      )
-
-      div(
-        cls := "f",
-        label(c.label),
-        ChipInput(chipConfig, c.state.signal)
-      )
-    }
+    moreOpen.set(moreOpenInitially(stored(moreKey), someMoreSet, Viewport.narrowNow))
+    folded.set(foldedInitially(stored(foldedKey)))
+    val active = UiState.signal.map(_ => FilterChips.countNow(config))
 
     div(
-      cls := "fbar",
-      // on a phone this bar is the filters drawer, and this its heading
+      cls := "fbar filter-panel",
+      cls("is-folded") <-- folded.signal,
+      role := "search",
+      aria.label := "Filters",
+      // on a phone this panel is the filters drawer, and this its heading
       MobileChrome.drawerHead("filters"),
-      // main row: the filters as ONE block, then the toolbar. When the row runs out of room the
-      // toolbar wraps ABOVE the block (`flex-wrap:wrap-reverse` in the stylesheet), so the buttons stay
-      // on top and the filters stay together underneath, never interleaved with them (#1521)
-      div(
-        cls := "frow frow-main",
-        div(
-          cls := "frow-filters",
-          // place input
-          div(
-            cls := "f f-gazetteer",
-            label(forId := "f-place-search", "Place"),
-            PlacesInput.init(config)
-          ),
-          // more filters toggle
-          button(
-            typ := "button",
-            cls := "btn btn--ghost f-more",
-            idAttr := "f-more-toggle",
-            aria.expanded <-- moreOpen.signal,
-            htmlAttr("aria-controls", StringAsIsCodec) := "f-more",
-            child.text <-- moreOpen.signal.map(o =>
-              if o then "Fewer filters ▴" else "More filters ▾"
-            ),
-            onClick --> { _ =>
-              val next = !moreOpen.now()
-              moreOpen.set(next)
-              try dom.window.localStorage.setItem(moreKey, if next then "1" else "0")
-              catch case _: Exception => ()
-            }
-          ),
-          // clear all
-          button(
-            typ := "button",
-            cls := "btn btn--ghost f-clear",
-            idAttr := "f-clear",
-            "Clear all",
-            onClick --> { _ =>
-              UiState.clearFilters()
-              PlacesInput.sync()
-              Option(dom.document.getElementById("f-q")).foreach(_.asInstanceOf[dom.HTMLElement].focus())
-            }
-          )
-        )
+      // folded: the rail, which counts the active filters and opens the panel
+      button(
+        typ := "button",
+        cls := "btn btn--bare filter-rail",
+        idAttr := "f-unfold",
+        aria.expanded := false,
+        aria.label <-- active.map(n => s"Show the filters ($n active)"),
+        title := "Show the filters",
+        Icon(Icon.Filter),
+        child.maybe <-- active.map(n => Option.when(n > 0)(span(cls := "rail-count", n.toString))),
+        onClick --> (_ => setFolded(false))
       ),
-      // more filters row
       div(
-        cls := "frow frow-more",
-        idAttr := "f-more",
-        // folded away on a wide screen until "more filters"; in the phone's filters drawer, always shown
-        hidden <-- moreOpen.signal.combineWith(Viewport.narrow).map((open, narrow) => !open && !narrow),
-        chipInputElements,
-        yearRangeSlider(),
-        // sort
+        cls := "filter-body",
+        div(cls := "filter-head",
+          h2(cls := "filter-title", "Filters"),
+          button(typ := "button", cls := "btn btn--bare btn--icon filter-fold", idAttr := "f-fold",
+            aria.expanded := true, aria.label := "Fold the filters", title := "Fold the filters to the side",
+            Icon(Icon.FoldLeft), onClick --> (_ => setFolded(true)))),
         div(
-          cls := "f",
-          label(forId := "f-sort", "Sort by"),
-          select(
+          cls := "f f-words",
+          label(forId := "f-words", "Words"),
+          input(
+            typ := "search",
             cls := "field",
-            idAttr := "f-sort",
-            controlled(
-              value <-- UiState.sort.signal.map(_.filter(sorts.contains).getOrElse(sorts.head)),
-              onChange.mapToValue --> { v => UiState.set(UiState.sort := Some(v))() }
-            ),
-            sorts.map(v => option(value := v, Wording.capitalize(v)))
+            idAttr := "f-words",
+            placeholder := "words in the sources",
+            // the same state as the top bar's search: typing in either is typing in both
+            controlled(value <-- UiState.q.signal.map(_.getOrElse("")), onInput.mapToValue --> UiState.setSearch)
           )
-        )
+        ),
+        div(cls := "f f-gazetteer", label(forId := "f-place-search", "Place"), PlacesInput.init(config)),
+        periodField(config),
+        chipInput(topicField, config),
+        button(
+          typ := "button",
+          cls := "btn btn--ghost btn--block f-more",
+          idAttr := "f-more-toggle",
+          aria.expanded <-- moreOpen.signal,
+          htmlAttr("aria-controls", StringAsIsCodec) := "f-more",
+          child.text <-- moreOpen.signal.map(o => if o then "Fewer filters ▴" else "More filters ▾"),
+          onClick --> { _ =>
+            val next = !moreOpen.now()
+            moreOpen.set(next)
+            keep(moreKey, next)
+          }
+        ),
+        div(
+          cls := "frow-more",
+          idAttr := "f-more",
+          // in the phone's filters drawer, always shown
+          hidden <-- moreOpen.signal.combineWith(Viewport.narrow).map((open, narrow) => !open && !narrow),
+          moreFields.map(chipInput(_, config)),
+          yearRangeSlider()
+        ),
+        div(cls := "filter-active",
+          div(cls := "filter-active-head",
+            span(cls := "filter-active-title", child.text <-- active.map(n => if n == 0 then "No active filters" else s"Active filters · $n")),
+            button(
+              typ := "button",
+              cls := "btn btn--ghost btn--sm f-clear",
+              idAttr := "f-clear",
+              disabled <-- active.map(_ == 0),
+              "Clear all",
+              onClick --> { _ =>
+                UiState.clearFilters()
+                UiState.set(UiState.from := Some(config.time.defaultFrom), UiState.to := Some(config.time.defaultTo))()
+                PlacesInput.sync()
+              }
+            )),
+          FilterChips.list(config))
       )
     )
   end init

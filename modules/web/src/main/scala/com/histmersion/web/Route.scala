@@ -39,6 +39,7 @@ enum ActivityTab(val slug: String, val label: String, val agents: Boolean):
 enum SettingsSection(val slug: String, val label: String):
   case Data  extends SettingsSection("data", "Data and downloads")
   case Keys  extends SettingsSection("keys", "Keys")
+  case Credits extends SettingsSection("credits", "Credits")
   case About extends SettingsSection("about", "About Histmersion")
 
 /** A page of the web UI, by its address. Every page and every item has a real path, so each can be

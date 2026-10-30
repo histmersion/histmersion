@@ -198,13 +198,10 @@ class UiStateSuite extends munit.FunSuite:
     assertEquals(UiState.articleQuery().text, None)
   }
 
-  test("more filters: open by default; only a remembered collapse closes it, unless a filter in it is set") {
-    assert(FilterBar.moreOpenInitially(None, someMoreSet = false))
+  test("more filters: closed by default (the filter panel shows words, place, period and topic); open when left open or one of its filters is set") {
+    assert(!FilterBar.moreOpenInitially(None, someMoreSet = false))
     assert(FilterBar.moreOpenInitially(Some("1"), someMoreSet = false))
     assert(!FilterBar.moreOpenInitially(Some("0"), someMoreSet = false))
     assert(FilterBar.moreOpenInitially(Some("0"), someMoreSet = true))
-    // on a phone the rows start closed, unless they were opened before or one of their filters is set
-    assert(!FilterBar.moreOpenInitially(None, someMoreSet = false, narrow = true))
-    assert(FilterBar.moreOpenInitially(Some("1"), someMoreSet = false, narrow = true))
     assert(FilterBar.moreOpenInitially(None, someMoreSet = true, narrow = true))
   }

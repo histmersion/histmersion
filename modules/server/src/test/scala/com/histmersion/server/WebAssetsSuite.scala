@@ -144,15 +144,15 @@ class WebAssetsSuite extends munit.FunSuite:
     assert(sep.contains("border-left:1px solid var(--line)") && sep.contains("padding-left:var(--gap-group)"), sep)
     val group = ruleOf(".btn-group")
     assert(group.contains("gap:var(--gap-inline)") && group.contains("padding:0") && group.contains("margin:0"), group)
-    // every bar pads both of its ends the same: the filter bar had no padding at all
-    assert(css.linesIterator.filter(_.startsWith(".fbar {")).exists(_.contains("padding:var(--bar-py) var(--bar-px)")),
-      "the filter bar pads its ends")
-    assert(block(".viewport-toggle").contains("padding:var(--bar-py) var(--bar-px)"))
+    // every bar pads both of its ends the same (the filters and the layers are panels now, padded as panels)
     assert(block(".tl-ctl").contains("padding:var(--bar-py) var(--bar-px)"))
+    assert(block(".filter-body").contains("padding:var(--space-5) var(--space-6)"))
 
-  test("the timeline's playback group sits in the middle of its bar"):
+  test("the timeline's bar: playback at its start, the span shown in the middle, the span's buttons at its end"):
     val ctl = block(".tl-ctl")
     assert(ctl.contains("display:grid") && ctl.contains("grid-template-columns:1fr auto 1fr"), ctl)
+    assert(block(".tl-ctl-span").contains("justify-self:center"))
+    assert(block(".tl-ctl-end").contains("justify-self:end"))
 
   test("the one-off widget styles the shared classes replaced are gone, from the CSS and the code"):
     val gone = List("layer-btn", "tl-btn", "action-btn", "text-input", "item-btn", "hd-layers-btn", "tl-play-active",

@@ -22,7 +22,16 @@ object TimelinePlayback:
   /** The playback speeds offered, slowest first; 1× plays the shown span in `Layout.playbackDuration`. */
   private[web] val Speeds: List[Double] = List(0.25, 0.5, 1.0, 2.0, 4.0)
 
-  /** `0.25×`, `1×`: how a speed reads in the menu (and its option value). Pure. */
+  /** How a speed reads in the menu: in plain words. Pure. */
+  private[web] def speedWords(s: Double): String = s match
+    case 0.25 => "Very slow"
+    case 0.5  => "Slow"
+    case 1.0  => "Normal speed"
+    case 2.0  => "Fast"
+    case 4.0  => "Very fast"
+    case _    => speedLabel(s)
+
+  /** `0.25×`, `1×`: a speed's option value. Pure. */
   private[web] def speedLabel(s: Double): String =
     val n = if s == math.rint(s) then s.toLong.toString else BigDecimal(s).bigDecimal.stripTrailingZeros.toPlainString
     s"$n×"
@@ -48,10 +57,11 @@ object TimelinePlayback:
       aria.label := "playback",
       button(
         typ := "button",
-        cls := "btn btn--icon btn--toggle",
+        cls := "btn btn--toggle tl-play",
+        idAttr := "tl-play",
         aria.pressed <-- playing.signal.map(_.toString),
-        child.text <-- playing.signal.map(p => if p then "⏸" else "▶"),
-        title <-- playing.signal.map(p => if p then "pause" else "play"),
+        child.text <-- playing.signal.combineWith(paused.signal).map((p, held) => if p then "⏸ Pause" else if held then "▶ Resume" else "▶ Play"),
+        title <-- playing.signal.map(p => if p then "Pause the playback" else "Play the span year by year"),
         aria.label <-- playing.signal.map(p => if p then "pause" else "play"),
         onClick --> { _ =>
           if playing.now() then
@@ -67,10 +77,10 @@ object TimelinePlayback:
       ),
       button(
         typ := "button",
-        cls := "btn btn--icon",
+        cls := "btn tl-stop",
         cls("is-hidden") <-- playheadPos.signal.map(_.isEmpty),
-        "⏹",
-        title := "stop and reset",
+        "⏹ Stop",
+        title := "Stop and show the whole span again",
         aria.label := "stop and reset",
         onClick --> { _ =>
           paused.set(false)
@@ -85,7 +95,7 @@ object TimelinePlayback:
           value <-- speed.signal.map(speedLabel),
           onChange.mapToValue --> { v => parseSpeed(v).foreach(speed.set) }
         ),
-        Speeds.map(s => option(value := speedLabel(s), speedLabel(s)))
+        Speeds.map(s => option(value := speedLabel(s), speedWords(s)))
       ),
       htmlTag("span")(
         cls := "tl-play-year",

@@ -24,6 +24,9 @@ object EventsTab:
 
   def pane: HtmlElement = tab.pane
 
+  /** How many the list holds, once it has an answer (its tab's count). */
+  val total: Signal[Option[Int]] = tab.state.signal.map(s => Option.when(s.loaded)(math.max(s.total, s.rows.size)))
+
   /** Pure: a row's date — the stated dating where there is one (`250 CE ± 2500 (tephrochronology)`),
     * else its four-point span. */
   def when(e: EventSummary): String = e.datingNote.getOrElse(YearFmt.span(e.timeSpan))
@@ -31,8 +34,10 @@ object EventsTab:
   private def renderEvent(evt: EventSummary): HtmlElement =
     li(
       cls := "event-row",
-      // its card on hover (Preview: the event's picture and credit, #1446)
-      div(cls := "event-label", dataAttr("event") := evt.id,
+      NewTabLink(Route.Event(evt.id).path, evt.label),
+      // its card on hover (Preview: the event's picture and credit, #1446); a plain click shows its detail
+      a(cls := "event-label row-link", href := Route.Event(evt.id).path, dataAttr("event") := evt.id,
+        onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); ResultsPanel.show(Preview.Target.Event(evt.id)) } },
         // its kind's icon and its tier, as on the map (#1449)
         span(cls := s"event-icon hd-badge hd-ev hd-ev--${EventMarker.tierClass(evt.tier)} hd-ev--${EventTaxonomy.group(evt.kind)}",
           title := s"${EventTaxonomy.of(evt.kind).label} · ${if evt.tier == EventTier.Catalogue then "catalogue only" else "attested"}",

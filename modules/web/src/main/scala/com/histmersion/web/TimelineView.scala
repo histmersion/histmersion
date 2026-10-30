@@ -89,6 +89,16 @@ object TimelineView:
 
   def currentSpan: (Long, Long) = (spanFrom, spanTo)
 
+  private val foldedKey = "histmersion.timelineFolded"
+
+  /** Whether the timeline is folded to its one line of controls (kept by this browser). */
+  val folded: Var[Boolean] = Var(
+    try Option(dom.window.localStorage.getItem(foldedKey)).contains("1") catch case _: Exception => false)
+
+  def setFolded(on: Boolean): Unit =
+    folded.set(on)
+    try dom.window.localStorage.setItem(foldedKey, if on then "1" else "0") catch case _: Exception => ()
+
   // ── span algebra ──────────────────────────────────────────────────────────────────────────────
 
   private def clamp(a0: Long, b0: Long): (Long, Long) =
@@ -627,6 +637,8 @@ object TimelineView:
       cls := "tl",
       // the detail strip is folded away in the narrow layout until asked for
       cls("tl-detail-open") <-- detailOpen.signal,
+      // folded to its line of controls (a wide screen), as this browser left it
+      cls("is-folded") <-- folded.signal,
       // ── Overview bar (full range, draggable handles) ──────────────────────────────────────
       div(
         cls := "tl-overview-wrap",
@@ -868,12 +880,16 @@ object TimelineView:
           detailLatest.cancel()
         }
       ),
-      // ── Controls: the span (presets, zoom, reset) · playback, centred · the narrow layout's extras
+      // ── Controls: playback · the span shown · zoom to a period, show all time, fold
       div(cls := "tl-ctl",
-        div(cls := "btn-group tl-ctl-start", role := "group", aria.label := "time span",
+        TimelinePlayback.element(config),
+        div(cls := "tl-ctl-span", span(cls := "tl-span-label", aria.live := "polite",
+          child.text <-- renderTick.signal.map(_ => Fmt.periodStr(spanFrom, spanTo)))),
+        div(cls := "btn-group tl-ctl-end", role := "group", aria.label := "time span",
           div(cls := "tl-preset-wrap",
-            button(typ := "button", cls := "btn btn--icon tl-btn-presets", title := "period presets",
-              aria.label := "period presets", aria.expanded <-- showPresets.signal, "⏱",
+            button(typ := "button", cls := "btn btn--ghost tl-btn-presets", idAttr := "tl-zoom-period",
+              title := "Choose a named period (as an authority dates it for a region) and show its years",
+              aria.expanded <-- showPresets.signal, "Zoom to period ▾",
               onClick --> { _ =>
                 presetView.set(ViewportToggle.viewBox)
                 loadPresets()
@@ -882,29 +898,19 @@ object TimelineView:
             ),
             presetsDropdown
           ),
-          button(typ := "button", cls := "btn btn--icon", title := "zoom in ×2", aria.label := "zoom in", "+",
-            onClick --> { _ =>
-              val sf = spanFrom.toDouble; val st = spanTo.toDouble
-              val mid = (sf + st) / 2; val half = (st - sf) / 4
-              setSpan(Math.round(mid - half), Math.round(mid + half))
-            }),
-          button(typ := "button", cls := "btn btn--icon", title := "zoom out ×2", aria.label := "zoom out", "−",
-            onClick --> { _ =>
-              val sf = spanFrom.toDouble; val st = spanTo.toDouble
-              val mid = (sf + st) / 2; val half = (st - sf)
-              setSpan(Math.round(mid - half), Math.round(mid + half))
-            }),
-          button(typ := "button", cls := "btn btn--icon", title := "reset to default span", aria.label := "reset", "⟲",
-            onClick --> { _ => setSpan(config.time.defaultFrom, config.time.defaultTo) })
-        ),
-        TimelinePlayback.element(config),
-        div(cls := "btn-group tl-ctl-end",
+          button(typ := "button", cls := "btn btn--ghost tl-all-time", idAttr := "tl-all-time",
+            title := "Show every year the timeline holds", "Show all time",
+            onClick --> { _ => setSpan(limits.min, limits.max) }),
           // shown in the narrow layout only, where the detail strip starts folded
           button(cls := "btn tl-detail-btn", typ := "button",
             aria.expanded <-- detailOpen.signal,
             title <-- detailOpen.signal.map(o => if o then "hide the detail strip" else "show the detail strip"),
             child.text <-- detailOpen.signal.map(o => if o then "detail ▴" else "detail ▾"),
             onClick --> (_ => detailOpen.update(!_))),
+          button(typ := "button", cls := "btn btn--ghost tl-fold", idAttr := "tl-fold",
+            aria.expanded <-- folded.signal.map(!_),
+            child.text <-- folded.signal.map(f => if f then "Show timeline ▴" else "Fold timeline ▾"),
+            onClick --> (_ => setFolded(!folded.now()))),
           badgeEl)
       )
     )

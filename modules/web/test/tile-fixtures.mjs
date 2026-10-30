@@ -62,7 +62,8 @@ const overlaps = (a, b, lo, hi) => lo === null || ((a ?? -Infinity) <= hi && (b 
 /** A site of the places feed (a GeoJSON point feature) as a sites tile carries it. */
 const site = f => ({ at: [f.geometry.coordinates[1], f.geometry.coordinates[0]], a: f.properties.periodStart, b: f.properties.periodEnd,
   props: { k: f.properties.id, id: f.properties.id, label: f.properties.label, kind: f.properties.kind ?? 'site',
-    siteType: f.properties.siteType, basis: f.properties.basis ?? 'dated', periodStart: f.properties.periodStart, periodEnd: f.properties.periodEnd } });
+    siteType: f.properties.siteType, basis: f.properties.basis ?? 'dated', periodStart: f.properties.periodStart, periodEnd: f.properties.periodEnd,
+    ...(f.properties.undated ? { u: 1 } : {}) }, undated: !!f.properties.undated });
 /** An event of the events feed (`EventGeo`). */
 const event = e => {
   const ts = e.timeSpan ?? {};
@@ -89,7 +90,9 @@ export async function routeTiles(page, { sites = [], events = [], media = [], as
     const lo = from === null ? null : Math.min(from, to), hi = from === null ? null : Math.max(from, to);
     const of = v => (typeof v === 'function' ? v(u) : v);
     let items = [];
-    if (layer === 'sites') items = of(sites).filter(f => !u.searchParams.get('siteType') || f.properties.siteType === u.searchParams.get('siteType')).map(site);
+    // a site of no known date (`properties.undated`) only when asked for (`undated=true`), whatever the span
+    if (layer === 'sites') items = of(sites).filter(f => (!u.searchParams.get('siteType') || f.properties.siteType === u.searchParams.get('siteType'))
+      && (!f.properties.undated || u.searchParams.get('undated') === 'true')).map(site);
     if (layer === 'events') items = of(events).filter(e => !u.searchParams.get('tier') || e.tier === u.searchParams.get('tier')).map(event);
     if (layer === 'media') items = of(media).filter(h => (!u.searchParams.get('provider') || h.provider === u.searchParams.get('provider'))
       && (!u.searchParams.get('license') || h.license === u.searchParams.get('license'))).map(picture);
