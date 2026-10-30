@@ -269,6 +269,7 @@ object FilterSql:
     case Sort.Relevance | Sort.Cited => "ORDER BY s.cited_by_count DESC NULLS LAST, s.citekey"
     case Sort.PeriodStart            => s"ORDER BY ${PeriodSql.start("s.period")} ASC NULLS LAST, s.citekey"
     case Sort.Year                   => "ORDER BY s.year DESC NULLS LAST, s.citekey"
+    case Sort.Oldest                 => "ORDER BY s.year ASC NULLS LAST, s.citekey"
     case Sort.Title                  => "ORDER BY lower(s.title) ASC, s.citekey"
 
   /** The ORDER BY as a fragment: `Sort.Relevance` + a text query ranks by FTS relevance
@@ -460,7 +461,7 @@ object FilterSql:
     /** The WIRE shape: arrays as proper lists. */
     def toHit: SearchHit =
       SearchHit(citekey, title, year, status, topics, regions, periodStart, periodEnd,
-        summary, snippet, matchedHeading, doi)
+        summary, snippet, matchedHeading, doi, authors)
 
   private def ci(a: String, b: String)                = a.equalsIgnoreCase(b)
   private def has(values: List[String], v: String)    = values.exists(ci(_, v))

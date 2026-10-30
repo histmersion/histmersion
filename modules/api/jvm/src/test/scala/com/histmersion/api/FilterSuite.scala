@@ -34,6 +34,8 @@ class FilterSuite extends munit.FunSuite:
     assertEquals(Sort.parse("period"), Some(Sort.PeriodStart))
     assertEquals(Sort.parse("PERIOD_START"), Some(Sort.PeriodStart))
     assertEquals(Sort.parse("nonsense"), None)
+    assertEquals(Sort.parse("newest"), Some(Sort.Year))
+    assertEquals(Sort.parse("oldest"), Some(Sort.Oldest))
     Sort.values.foreach(s => assertEquals(Sort.parse(Sort.label(s)), Some(s)))
     assertEquals(Filter.of(sort = Some("nonsense")).sort, Sort.Relevance)
 
