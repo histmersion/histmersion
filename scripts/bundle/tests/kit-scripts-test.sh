@@ -48,7 +48,7 @@ done
 install -m 0644 "$src/kit-common.sh" "$install/libexec/kit-common.sh"
 echo 25.0.4.1.1 > "$install/kit/graalvm-version"
 printf 'b.jar\na.jar\n' > "$install/kit/classpath"
-echo com.histmersion.server.Main > "$install/kit/main-class"
+echo com.histmersion.server.histmersionServer > "$install/kit/main-class"
 
 # ── histmersion-server-jvm ────────────────────────────────────────────────────────────────────────
 echo "server-jvm"
@@ -56,11 +56,11 @@ jdk="$tmp/jdk"; mkdir -p "$jdk/bin"; echo 'JAVA_VERSION="25.0.2"' > "$jdk/releas
 cat > "$jdk/bin/java" <<'SH'
 #!/bin/bash
 case " $* " in
-  *"PluginTool plugin-set "*) set -- "$@"; while [ "$1" != plugin-set ]; do shift; done
+  *"pluginTool plugin-set "*) set -- "$@"; while [ "$1" != plugin-set ]; do shift; done
                               [ "$2" = --lib ] && shift 2
                               echo jar > "$2"; echo '{"digest":"dd","mode":"jvm"}' > "$3"; echo dd; exit 0 ;;
   # the resolver: one dependency, x-dep-1.0.jar, for any plugin set
-  *"PluginResolver resolve "*) set -- "$@"; while [ "$1" != --lib ]; do shift; done
+  *"pluginResolver resolve "*) set -- "$@"; while [ "$1" != --lib ]; do shift; done
                                mkdir -p "$2"; echo dep > "$2/x-dep-1.0.jar"; echo x-dep-1.0.jar > "$2/classpath"
                                echo resolved >> "$OUT.resolver"; exit 0 ;;
 esac
@@ -70,7 +70,7 @@ chmod +x "$jdk/bin/java"
 export OUT="$tmp/jvm.out"
 HISTMERSION_JAVA_HOME="$jdk" "$install/bin/histmersion-server-jvm" --self-check
 check "no plugins: the kit's class path in its order, the main class, the arguments passed on" \
-  'grep -qx "arg=$install/kit/lib/b.jar:$install/kit/lib/a.jar" "$OUT" && grep -qx "arg=com.histmersion.server.Main" "$OUT" && grep -qx "arg=--self-check" "$OUT"'
+  'grep -qx "arg=$install/kit/lib/b.jar:$install/kit/lib/a.jar" "$OUT" && grep -qx "arg=com.histmersion.server.histmersionServer" "$OUT" && grep -qx "arg=--self-check" "$OUT"'
 check "the bundle's runtime is found from HISTMERSION_HOME (the process is java)" \
   'grep -qx "HOME_ENV=$install" "$OUT" && grep -qx "RUNTIME=true" "$OUT"'
 mkdir -p "$HISTMERSION_DATA_DIR/plugins"; echo p > "$HISTMERSION_DATA_DIR/plugins/hello-0.1.0.jar"

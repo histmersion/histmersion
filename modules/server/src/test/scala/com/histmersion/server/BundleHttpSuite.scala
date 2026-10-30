@@ -35,7 +35,7 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
   private def withServer(body: String => Unit): Unit =
     Migrate.run(testPool(cfg.db))
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }
@@ -290,7 +290,7 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
     val own = cfg.copy(db = cfg.db.copy(url = testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1")))
     def serve(body: String => Unit): Unit =
       supervised {
-        val b = Main.server(own, "127.0.0.1", 0).start()
+        val b = Composition.server(own, "127.0.0.1", 0).start()
         try body(s"http://127.0.0.1:${b.port}")
         finally b.stop()
       }

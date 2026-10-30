@@ -7,16 +7,16 @@ budgets and the documentation screenshots — a test server started with
 | file | what | region, zooms | size |
 |---|---|---|---|
 | `vector.pmtiles` | everything, unfiltered (a `--keep-all` extract): earth, water with its names, land cover, land use, natural points, and the roads, places and boundaries the local street maps draw | 22.5,35,28.5,40.5 · 0–9 | 5.6 MB |
-| `terrain.pmtiles` | terrarium-encoded elevation, 512-pixel WebP — the vector layer's whole region (re-cut 2026-10-20: `BasemapExtractTool relief 22.5,35,28.5,40.5 0 6`) | 22.5,35,28.5,40.5 · 0–6 | 1.4 MB |
+| `terrain.pmtiles` | terrarium-encoded elevation, 512-pixel WebP — the vector layer's whole region (re-cut 2026-10-20: `basemapExtract relief 22.5,35,28.5,40.5 0 6`) | 22.5,35,28.5,40.5 · 0–6 | 1.4 MB |
 | `labels.pmtiles` | the physical names (Natural Earth: ranges, peninsulas, island groups, lakes, rivers, peaks) | 20,34,30,42 · 0–8 | 0.06 MB |
 | `bathymetry.pmtiles` | the sea floor: terrarium PNG tiles whose sea is ETOPO1's depth | 22.5,35,28.5,40.5 · 0–7 | 1.7 MB |
 | `terrain-focus/argolid.pmtiles` | a focus region: the relief around Mycenae deeper than the extract (the Natural style's contours, the close-up screenshots) | 22.48,37.61,23.03,37.85 · 9–11 | 2.3 MB |
 
 The vector layer was cut on 2026-10-20 from a complete `--keep-all` zoom-10 extract of the default
-region (Protomaps' newest build that day; `BasemapExtractTool extract latest -12,20,90,62 10 v.pmtiles
-keep-all`, then `BasemapExtractTool subset v.pmtiles 22.5,35,28.5,40.5 9 vector.pmtiles`); the
+region (Protomaps' newest build that day; `basemapExtract extract latest -12,20,90,62 10 v.pmtiles
+keep-all`, then `basemapExtract subset v.pmtiles 22.5,35,28.5,40.5 9 vector.pmtiles`); the
 terrain on 2026-10-19 from Mapterhorn's `planet.pmtiles` (`BasemapFetch`), the names from Natural Earth
-5.1.2's GeoJSON label layers (`BasemapLabelsTool <dir> 20,34,30,42 8 labels.pmtiles`) — the tools are
+5.1.2's GeoJSON label layers (`basemapLabels <dir> 20,34,30,42 8 labels.pmtiles`) — the tools are
 in the server's test sources. The sea floor and the focus region on 2026-10-20, with `histmersion basemap
 fetch --layer bathymetry --bbox 22.5,35,28.5,40.5` and `--layer terrain --focus argolid --bbox
 22.48,37.61,23.03,37.85 --terrain-max-zoom 11` against a throwaway server. A test server serving it

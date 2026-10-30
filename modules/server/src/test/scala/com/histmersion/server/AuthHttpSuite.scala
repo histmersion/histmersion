@@ -54,7 +54,7 @@ class AuthHttpSuite extends munit.FunSuite:
     val base = AppConfig.load()
     val cfg = base.copy(db = base.db.copy(url = testDb.get), auth = base.auth.copy(apiKey = apiKey))
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0, converter).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0, converter).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }

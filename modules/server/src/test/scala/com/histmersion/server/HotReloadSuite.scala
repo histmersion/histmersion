@@ -165,7 +165,7 @@ class HotReloadSuite extends DbSuite:
     val conv = GatedConverter()
     val l = loaded
     supervised {
-      val b = Main.server(l.config, "127.0.0.1", 0, conv, source = Some((l, source))).start()
+      val b = Composition.server(l.config, "127.0.0.1", 0, conv, source = Some((l, source))).start()
       val url = s"http://127.0.0.1:${b.port}"
       assertEquals(database(url), DbA)
 
@@ -226,7 +226,7 @@ class HotReloadSuite extends DbSuite:
     write(DbB)
     val l = loaded
     supervised {
-      val b = Main.server(l.config, "127.0.0.1", 0, OfflineConverter(), source = Some((l, source))).start()
+      val b = Composition.server(l.config, "127.0.0.1", 0, OfflineConverter(), source = Some((l, source))).start()
       val url = s"http://127.0.0.1:${b.port}"
       assertEquals(database(url), DbB)
 
@@ -260,7 +260,9 @@ class HotReloadSuite extends DbSuite:
     val gen = Plugins.load(l)
     supervised {
       val b =
-        Main.server(l.config, "127.0.0.1", 0, OfflineConverter(), plugins = gen, source = Some((l, source))).start()
+        Composition
+          .server(l.config, "127.0.0.1", 0, OfflineConverter(), plugins = gen, source = Some((l, source)))
+          .start()
       val url = s"http://127.0.0.1:${b.port}"
       write(DbB, "plugins.pmc.enabled = false\n  limits.search = 7\n  server.port = 1")
       val (s, r) = post(s"$url/api/config/reload")
@@ -288,7 +290,9 @@ class HotReloadSuite extends DbSuite:
     val gen = Plugins.load(l)
     supervised {
       val b =
-        Main.server(l.config, "127.0.0.1", 0, OfflineConverter(), plugins = gen, source = Some((l, source))).start()
+        Composition
+          .server(l.config, "127.0.0.1", 0, OfflineConverter(), plugins = gen, source = Some((l, source)))
+          .start()
       val url = s"http://127.0.0.1:${b.port}"
       val Off = "switched off (histmersion.plugins.ai-local.enabled = false)"
       val (s0, m0) = get(s"$url/api/agents/models")

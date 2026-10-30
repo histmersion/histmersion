@@ -3,7 +3,7 @@ package com.histmersion.server.basemap
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.server.Main
+import com.histmersion.server.Composition
 import ox.supervised
 
 import java.net.URI
@@ -43,7 +43,7 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
       )
     )
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       try body(s"http://127.0.0.1:${b.port}/api/basemap")
       finally b.stop()
     }

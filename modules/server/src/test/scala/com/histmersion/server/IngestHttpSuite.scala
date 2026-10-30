@@ -136,7 +136,7 @@ class IngestHttpSuite extends munit.FunSuite:
   test("ingest → job → body + assets → served bytes → lazy <img> → absolute MCP URLs"):
     val conv = FakeConverter()
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0, conv).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0, conv).start()
       val url = s"http://127.0.0.1:${b.port}"
       val pdf = tempPdf("one")
 
@@ -193,7 +193,7 @@ class IngestHttpSuite extends munit.FunSuite:
 
   test("a duplicate upload is refused with the citekey that already holds it, unless forced"):
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0, FakeConverter()).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0, FakeConverter()).start()
       val url = s"http://127.0.0.1:${b.port}"
       val pdf = tempPdf("dupe")
 
@@ -216,7 +216,7 @@ class IngestHttpSuite extends munit.FunSuite:
 
   test("re-OCR replaces body and figures but preserves enrichment"):
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0, FakeConverter()).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0, FakeConverter()).start()
       val url = s"http://127.0.0.1:${b.port}"
       val pdf = tempPdf("reocr")
 
@@ -244,7 +244,8 @@ class IngestHttpSuite extends munit.FunSuite:
 
   test("a converter failure fails the job with the reason, and lists under status=failed"):
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0, FakeConverter(Some("converter at http://x is unreachable"))).start()
+      val b =
+        Composition.server(cfg, "127.0.0.1", 0, FakeConverter(Some("converter at http://x is unreachable"))).start()
       val url = s"http://127.0.0.1:${b.port}"
       val pdf = tempPdf("boom")
 
@@ -302,7 +303,7 @@ class IngestHttpSuite extends munit.FunSuite:
         converting.countDown()
         if !release.await(30, TimeUnit.SECONDS) then throw IllegalStateException("test converter was not released")
       })
-      val b = Main.server(cfg, "127.0.0.1", 0, conv).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0, conv).start()
       val url = s"http://127.0.0.1:${b.port}"
       val pdf = tempPdf("fulfil")
       val id = addItem(url, "zzfulfil Killen, The New Documents")
@@ -347,7 +348,7 @@ class IngestHttpSuite extends munit.FunSuite:
 
   test("a failed OCR leaves the acquisition item open"):
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0, FakeConverter(Some("converter exploded"))).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0, FakeConverter(Some("converter exploded"))).start()
       val url = s"http://127.0.0.1:${b.port}"
       val pdf = tempPdf("fulfil-fail")
       val id = addItem(url, "zzfulfil a book whose scan fails")
@@ -367,7 +368,7 @@ class IngestHttpSuite extends munit.FunSuite:
   test("an upload naming an item it cannot fulfil is refused before a job is created"):
     supervised {
       val conv = FakeConverter()
-      val b = Main.server(cfg, "127.0.0.1", 0, conv).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0, conv).start()
       val url = s"http://127.0.0.1:${b.port}"
       val pdf = tempPdf("fulfil-refused")
       val done = addItem(url, "zzfulfil already got")
@@ -392,7 +393,8 @@ class IngestHttpSuite extends munit.FunSuite:
 
   test("empty and oversized uploads are refused before a job is created"):
     supervised {
-      val b = Main.server(cfg.copy(limits = cfg.limits.copy(uploadBytes = 4)), "127.0.0.1", 0, FakeConverter()).start()
+      val b =
+        Composition.server(cfg.copy(limits = cfg.limits.copy(uploadBytes = 4)), "127.0.0.1", 0, FakeConverter()).start()
       val url = s"http://127.0.0.1:${b.port}"
       val empty = Files.createTempFile("histmersion-empty-", ".pdf")
       val big = tempPdf("far too long for a four byte limit")
@@ -421,7 +423,7 @@ class IngestHttpSuite extends munit.FunSuite:
         Right(ConvertedDoc(markdown = "# Busy\n", pages = 1, images = Nil, filename = Some(filename)))
     val c = cfg.copy(converter = cfg.converter.copy(healthCacheMs = 0))
     supervised {
-      val b = Main.server(c, "127.0.0.1", 0, conv).start()
+      val b = Composition.server(c, "127.0.0.1", 0, conv).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val (_, idle) = get(s"$url/api/health")
@@ -449,7 +451,7 @@ class IngestHttpSuite extends munit.FunSuite:
   // #652: `calibre push --replace` takes the file the server stored at ingest
   test("GET /api/sources/{ck}/original serves the stored original, named <citekey>.<ext>"):
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0, FakeConverter()).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0, FakeConverter()).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val pdf = tempPdf("original")

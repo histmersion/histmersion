@@ -6,7 +6,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.{Db, EventRepo, Migrate}
-import com.histmersion.server.Main
+import com.histmersion.server.Composition
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
 import io.circe.parser.decode
 import java.net.{InetSocketAddress, URI, URLDecoder}
@@ -162,7 +162,7 @@ class MediaImportJobSuite extends com.histmersion.db.DbSuite:
 
   test("a 300-event import: the request answers at once with a job, progress is n/total, failures are collected"):
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         // the synchronous endpoint keeps the dry run and ONE place/event; many is a job

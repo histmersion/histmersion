@@ -37,9 +37,9 @@ class PluginResolverSuite extends munit.FunSuite:
   private def run(s: Setup, extra: String*): (Int, List[String], List[String]) =
     val out = List.newBuilder[String]
     val err = List.newBuilder[String]
-    val rc = PluginResolver.parse(s.args(extra*).tail :+ s.plugins.resolve("hello-deps-0.1.0.jar").toString) match
+    val rc = DependencyResolver.parse(s.args(extra*).tail :+ s.plugins.resolve("hello-deps-0.1.0.jar").toString) match
       case Left(e)  => fail(e)
-      case Right(r) => PluginResolver.resolve(r.copy(cache = Some(s.cache)), out += _, err += _)
+      case Right(r) => DependencyResolver.resolve(r.copy(cache = Some(s.cache)), out += _, err += _)
     (rc, out.result(), err.result())
 
   private def lines(p: Path): List[String] = Files.readAllLines(p, UTF_8).asScala.toList
@@ -109,14 +109,14 @@ class PluginResolverSuite extends munit.FunSuite:
   test("the repositories of earlier runs are kept, and used when a run names none"):
     val s = setup(Nil)
     assertEquals(run(s)._1, 0)
-    val again = PluginResolver
+    val again = DependencyResolver
       .parse(List("--kit", s.kit.toString, "--lib", s.lib.toString, s.plugins.resolve("hello-deps-0.1.0.jar").toString))
       .fold(e => fail(e), identity)
-    assertEquals(PluginResolver.resolve(again.copy(cache = Some(s.cache)), _ => (), _ => ()), 0)
+    assertEquals(DependencyResolver.resolve(again.copy(cache = Some(s.cache)), _ => (), _ => ()), 0)
     assertEquals(lines(s.lib.resolve(LibDirectory.Repositories)), List(fixtures.toUri.toString))
     val other = RepositoryUrl.fromArgument(s.kit.resolve("other-repo").toString).fold(e => fail(e), identity)
     assertEquals(
-      PluginResolver.resolve(again.copy(cache = Some(s.cache), repositories = List(other)), _ => (), _ => ()),
+      DependencyResolver.resolve(again.copy(cache = Some(s.cache), repositories = List(other)), _ => (), _ => ()),
       0
     )
     assertEquals(lines(s.lib.resolve(LibDirectory.Repositories)), List(other.value, fixtures.toUri.toString))
@@ -142,9 +142,9 @@ class PluginResolverSuite extends munit.FunSuite:
     )
 
   test("usage: the kit and lib are required, an unknown option is named"):
-    assert(PluginResolver.parse(List("x.jar")).isLeft)
+    assert(DependencyResolver.parse(List("x.jar")).isLeft)
     assertEquals(
-      PluginResolver.parse(List("--kit", "k", "--lib", "l", "--nope")).left.toOption,
+      DependencyResolver.parse(List("--kit", "k", "--lib", "l", "--nope")).left.toOption,
       Some("unknown option --nope")
     )
-    assertEquals(PluginResolver.run(List("nothing"), _ => (), _ => ()), 1)
+    assertEquals(DependencyResolver.run(List("nothing"), _ => (), _ => ()), 1)

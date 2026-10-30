@@ -10,9 +10,9 @@ import java.nio.file.{Files, Path}
   * tool definitions (as `/mcp/agent/<role>` lists them) and the typed answer's schema (Claude Code's `StructuredOutput`
   * tool). Pure and offline:
   *
-  * sbt "server/Test/runMain com.histmersion.server.agents.PromptBudget" the table sbt "server/Test/runMain
-  * com.histmersion.server.agents.PromptBudget export <dir>" sbt "server/Test/runMain
-  * com.histmersion.server.agents.PromptBudget codex <dir>" the Codex tree
+  * sbt "server/Test/runMain com.histmersion.server.agents.promptBudgetReport" the table sbt "server/Test/runMain
+  * com.histmersion.server.agents.promptBudgetReport export <dir>" sbt "server/Test/runMain
+  * com.histmersion.server.agents.promptBudgetReport codex <dir>" the Codex tree
   *
   * `export` writes what `scripts/agents/claude-overhead.sh --from <dir>` launches: the generated Claude Code tree
   * (`claude-code/`), each role's MCP tool list (`mcp-tools/<agent>.json`, the `tools/list` result) and its answer
@@ -22,6 +22,8 @@ import java.nio.file.{Files, Path}
   * Tokens are an estimate: characters / 2.7, the ratio the live first-call counts of the review panel show (the
   * skeptic's and the cold reader's prompts differ by ~27,100 characters and ~9,990 tokens).
   */
+@main def promptBudgetReport(args: String*): Unit = PromptBudget.run(args.toList)
+
 object PromptBudget:
 
   final case class Row(agent: String, system: Int, tools: Map[String, Int], answer: Int):
@@ -93,9 +95,9 @@ object PromptBudget:
       runs.map(a => s"mcp-tools/${a.name}.json" -> Json.obj("tools" -> a.tools.map(toolJson).asJson).spaces2) ++
       runs.flatMap(a => answers.get(a.name).map(s => s"answer-schemas/${a.name}.json" -> ClaudeCode.schemaJson(s)))
 
-  def main(args: Array[String]): Unit =
+  def run(args: List[String]): Unit =
     val d = Generated.defs()
-    args.toList match
+    args match
       case "codex" :: dir :: Nil => // the generated Codex home (lean base prompt, 6000-token outputs), for `codex debug prompt-input`
         val root = Path.of(dir).toAbsolutePath
         val s = GenSettings(

@@ -7,7 +7,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.PlanQuota.*
 import com.histmersion.db.{AgentRepo, Db, Migrate, PlanQuotaRepo}
-import com.histmersion.server.{Deps, Handlers, Main}
+import com.histmersion.server.{Composition, Deps, Handlers}
 import sttp.ai.core.agent.*
 
 import java.net.URI
@@ -304,7 +304,7 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite:
     val keyed = baseCfg.copy(auth = baseCfg.auth.copy(apiKey = "zz-key"), agents = baseCfg.agents.copy(enabled = false))
     @volatile var hs: Option[Handlers] = None // the started server's handlers, for a run token
     ox.supervised {
-      val b = Main
+      val b = Composition
         .server(
           keyed,
           "127.0.0.1",

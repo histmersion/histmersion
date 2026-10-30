@@ -46,7 +46,7 @@ class HardeningHttpSuite extends munit.FunSuite:
     val base = AppConfig.load()
     val cfg = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       try f(s"http://127.0.0.1:${b.port}", cfg)
       finally b.stop()
     }
@@ -149,7 +149,7 @@ class HardeningHttpSuite extends munit.FunSuite:
       ui = base.ui.copy(maxBuckets = 5, time = base.ui.time.copy(min = -1000000L, max = 1000000L))
     )
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val started = System.nanoTime()
@@ -201,7 +201,7 @@ class HardeningHttpSuite extends munit.FunSuite:
       converter = base.converter.copy(url = "http://192.0.2.1:1")
     )
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0, ConverterClient.fromConfig(cfg.converter)).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0, ConverterClient.fromConfig(cfg.converter)).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val started = System.nanoTime()
@@ -227,7 +227,7 @@ class HardeningHttpSuite extends munit.FunSuite:
     val base = AppConfig.load()
     val cfg = base.copy(db = base.db.copy(url = testDb.get), corpus = base.corpus.copy(dir = corpus.toString))
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         // …inside is fine (an empty corpus seeds nothing, which is a 200)

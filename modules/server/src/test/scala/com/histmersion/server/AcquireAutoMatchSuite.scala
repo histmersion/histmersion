@@ -102,7 +102,7 @@ class AcquireAutoMatchSuite extends com.histmersion.db.DbSuite:
 
   test("the DOI closes; a similar title — even the published version of a preprint — is only proposed"):
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0, Stub).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0, Stub).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val exact = addItem(
@@ -151,7 +151,7 @@ class AcquireAutoMatchSuite extends com.histmersion.db.DbSuite:
 
   test("an explicit acquireItem is the one ticked off; DOI matching is not run on top of it"):
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0, Stub).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0, Stub).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val named = addItem(url, "zzauto the item the import names")

@@ -352,6 +352,6 @@ object Article:
     """<script>try{var t=localStorage.getItem("histmersion.theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>"""
 
   /** The Scala.js bundle — the same file the web UI's `index.html` loads, which carries every page's entry point
-    * (`web.Main` dispatches on the path).
+    * (`histmersionWeb` dispatches on the path).
     */
   val BundlePath = "/web/app.bundle.js?v=2"

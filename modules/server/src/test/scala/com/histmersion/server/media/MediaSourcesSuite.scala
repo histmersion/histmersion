@@ -8,7 +8,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.{AssetRepo, Db, JobRepo, MediaRepo, Migrate, PlaceRepo}
-import com.histmersion.server.{ConverterClient, Deps, Main}
+import com.histmersion.server.{Composition, ConverterClient, Deps}
 import io.circe.parser.decode
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
@@ -163,7 +163,7 @@ class MediaSourcesSuite extends com.histmersion.db.DbSuite:
 
   test("the server: a Calibre cover uploaded is the source's card picture, before its illustration"):
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0, ThumbConverter()).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0, ThumbConverter()).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val (bad, bb) = send(
@@ -226,7 +226,7 @@ class MediaSourcesSuite extends com.histmersion.db.DbSuite:
     )
     MediaRepo.link(ds, uid, "place", "zqms_dup", MediaRole.Image, Some("P18"), Some("Q90000077"), 0)
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val (ps, pb) = get(s"$url/api/places/zqms_site?counts=true")

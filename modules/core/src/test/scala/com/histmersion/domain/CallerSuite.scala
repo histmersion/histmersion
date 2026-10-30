@@ -9,7 +9,9 @@ class CallerSuite extends munit.FunSuite:
     assert(Caller.Role.values.forall(Caller.Local.role.includes))
 
   test("each role includes the ones before it and none after"):
-    assert(Caller.Role.Researcher.includes(Caller.Role.Contributor) && Caller.Role.Researcher.includes(Caller.Role.Reader))
+    assert(
+      Caller.Role.Researcher.includes(Caller.Role.Contributor) && Caller.Role.Researcher.includes(Caller.Role.Reader)
+    )
     assert(!Caller.Role.Contributor.includes(Caller.Role.Researcher) && Caller.Role.Reader.includes(Caller.Role.Reader))
 
   test("an automated caller names its run"):

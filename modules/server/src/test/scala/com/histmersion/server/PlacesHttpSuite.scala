@@ -73,7 +73,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
     val base = AppConfig.load()
     val cfg = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
 
       val (is, ib) = post(s"$url/api/places/import", doc)
@@ -117,7 +117,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
     val base = AppConfig.load()
     val cfg = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       // no findings were ever materialised into zzh_land, so filtering by it must return nothing —
       // and must NOT fall back to matching the id as a region-name substring
@@ -163,7 +163,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
     val base = AppConfig.load()
     val cfg = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       assertEquals(post(s"$url/api/places/import", countsDoc)._1, 200)
       // a source write materialises its findings into the places that cover them (odd years: the
@@ -193,7 +193,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
     val base = AppConfig.load()
     val cfg = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0, OfflineConverter()).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0, OfflineConverter()).start()
       val url = s"http://127.0.0.1:${b.port}"
       assertEquals(post(s"$url/api/places/import", countsDoc)._1, 200)
       val (as, ab) = get(s"$url/api/about")
@@ -228,7 +228,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
       storage = base.storage.copy(waitMillis = 30000)
     )
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0, OfflineConverter()).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0, OfflineConverter()).start()
       val url = s"http://127.0.0.1:${b.port}"
       val (as, ab) = get(s"$url/api/about")
       assertEquals(as, 200, ab)
@@ -252,7 +252,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
     val base = AppConfig.load()
     val cfg = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       val clean = testPool(cfg.db)
       def wipe() = com.augustnagro.magnum.connect(clean):
@@ -337,7 +337,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
     val base = AppConfig.load()
     val cfg = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       val clean = testPool(cfg.db)
       def wipe() = com.augustnagro.magnum.connect(clean):
@@ -486,7 +486,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
     val base = AppConfig.load()
     val cfg = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       val (ss, sb) = get(s"$url/api/places/sources")
       assertEquals(ss, 200, sb)

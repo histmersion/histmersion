@@ -51,7 +51,7 @@ class SettingsHttpSuite extends DbSuite:
     Files.writeString(file, text)
     val l = AppConfig.loadWithUserFile(env, Some(file)).fold(e => fail(e), identity)
     supervised {
-      val b = Main
+      val b = Composition
         .server(
           l.config,
           "127.0.0.1",

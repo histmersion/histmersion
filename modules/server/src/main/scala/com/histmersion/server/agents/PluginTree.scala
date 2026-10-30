@@ -9,10 +9,12 @@ import scala.jdk.CollectionConverters.*
 /** The repository's checked-in copy of the interactive Claude Code plugin — `plugin/` and the root
   * `.claude-plugin/marketplace.json` — for people without a running server. A generator output like the rest;
   * `PluginTreeSuite` fails when it is out of date. Regenerate with `just plugin` (`sbt "server/Test/runMain
-  * com.histmersion.server.agents.GeneratePlugin <repo root>"` — the test classpath runs it in process, outside the
+  * com.histmersion.server.agents.generatePlugin <repo root>"` — the test classpath runs it in process, outside the
   * native-image tracing agent).
   */
-object GeneratePlugin:
+@main def generatePlugin(root: String): Unit = PluginTree.write(Path.of(root).toAbsolutePath.normalize)
+
+object PluginTree:
 
   /** The tree from the bundled definitions (no server, no override directory). */
   def tree(): Either[String, Map[String, String]] =
@@ -26,8 +28,8 @@ object GeneratePlugin:
   /** The generated directories the tree owns: anything else in them is stale. */
   val Owned: List[String] = List("plugin/agents", "plugin/skills")
 
-  def main(args: Array[String]): Unit =
-    val root = Path.of(args.headOption.getOrElse(".")).toAbsolutePath.normalize
+  /** Writes the tree under `root`, removing what it no longer holds from the directories it owns. */
+  def write(root: Path): Unit =
     tree() match
       case Left(m)  => System.err.println(s"cannot generate the plugin: $m"); sys.exit(1)
       case Right(t) =>

@@ -15,8 +15,10 @@ import java.security.MessageDigest
   *   - `sizes <keep-all.pmtiles>` — per zoom, what an unfiltered extract stores against the default drop list and the
   *     pre-2026-10-19 keep list (distinct contents, gzip as stored).
   *
-  * `sbt "server/Test/runMain com.histmersion.server.basemap.BasemapExtractTool extract latest 22.5,35,28.5,40.5 9 /tmp/v.pmtiles"`
+  * `sbt "server/Test/runMain com.histmersion.server.basemap.basemapExtract extract latest 22.5,35,28.5,40.5 9 /tmp/v.pmtiles"`
   */
+@main def basemapExtract(args: String*): Unit = BasemapExtractTool.run(args.toList)
+
 object BasemapExtractTool:
 
   /** The keep list the extract used before the drop list (earth, water, natural land cover). */
@@ -26,7 +28,7 @@ object BasemapExtractTool:
     "landcover" -> Mvt.Rule(keep = Set("forest", "grassland", "scrub", "barren", "glacier"))
   )
 
-  def main(args: Array[String]): Unit = args.toList match
+  def run(args: List[String]): Unit = args match
     case "extract" :: build :: bbox :: z :: out :: rest =>
       extract(build, bbox, z.toInt, Path.of(out), rest.headOption.contains("keep-all"))
     case "sizes" :: file :: Nil                     => sizes(Path.of(file))

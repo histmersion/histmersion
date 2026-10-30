@@ -253,6 +253,6 @@ object AcquireCmd:
     archiveSearch orElse archiveInfo orElse archiveImport
   }
 
-  /** Everything this stream adds to `histmersion`, in one value so `Main` gains a single line. */
+  /** Everything this stream adds to `histmersion`, in one value so `Cli` gains a single line. */
   val all: Opts[Client => Either[CliError, Unit]] =
     discover orElse refs orElse assess orElse followups orElse ingest orElse archive

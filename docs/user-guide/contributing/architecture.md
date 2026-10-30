@@ -53,7 +53,7 @@ Adding an operation therefore touches, in order: `api/<Type>.scala` (input and o
 `api/Api.scala` (the endpoint, added to `Api.all`), `api/Markdown.scala` (how it renders), the
 repo in `db` if it needs the database, `server/Handlers.scala` (the one implementation),
 `server/HttpApi.scala` **and** `server/McpTools.scala` (both wired), then `cli/Client.scala` and
-`cli/Main.scala`. Details in {{ repo_file("AGENTS.md") }}.
+`cli/Cli.scala`. Details in {{ repo_file("AGENTS.md") }}.
 
 ```mermaid
 flowchart LR

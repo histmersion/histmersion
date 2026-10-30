@@ -46,7 +46,7 @@ else
   [ -n "$cpfile" ] || { echo "error: sbt cli/writeClasspath wrote no classpath.txt under target/ — cannot run this tree's CLI" >&2; exit 1; }
   java_bin="${JAVA_HOME:+$JAVA_HOME/bin/}java"
   command -v "$java_bin" >/dev/null 2>&1 || { echo "error: no java to run this tree's CLI with (set JAVA_HOME)" >&2; exit 1; }
-  CLI_CMD=("$java_bin" -cp "$(cat "$cpfile")" com.histmersion.cli.Main); CLI_DESC="the JVM build ($cpfile)"
+  CLI_CMD=("$java_bin" -cp "$(cat "$cpfile")" com.histmersion.cli.histmersionCli); CLI_DESC="the JVM build ($cpfile)"
 fi
 
 # decline's help goes to STDERR (cli/Main.scala prints it with System.err.println) and exits 1, and

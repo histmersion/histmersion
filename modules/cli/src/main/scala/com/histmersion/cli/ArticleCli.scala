@@ -420,7 +420,7 @@ object ArticleCli:
     }
   }
 
-  /** The `article` command group, added to `histmersion`'s subcommands by [[Main]]. */
+  /** The `article` command group, added to `histmersion`'s subcommands by [[Cli]]. */
   val command: Opts[Client => Either[CliError, Unit]] =
     Opts.subcommand(
       "article",

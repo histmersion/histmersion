@@ -726,7 +726,7 @@ Disk:
 | Binary does not start | `--self-check`, then `/api/health` after the swap | roll back to `.prev` |
 
 **JVM mode** runs `bin/histmersion-server-jvm`, which execs
-`graalvm/bin/java -cp kit/lib/*:plugin-set.jar:plugins/* com.histmersion.server.Main`. The same
+`graalvm/bin/java -cp kit/lib/*:plugin-set.jar:plugins/* com.histmersion.server.histmersionServer`. The same
 kit and the same plugins are discovered at run time, with no relink. The cost is the JVM's heap and
 start-up, which I have not measured for the server. The LaunchAgent's `ProgramArguments` points at
 whichever launcher is active.
@@ -1436,7 +1436,7 @@ links — 133 jars, all jars (sbt 2 exports the modules as jars; a class directo
 fail the task) — with its order (`kit/classpath`), the native-image flags (`kit/native-image.args`,
 `serverNativeOpts` (`--no-fallback` until #3752), now ONE list in build.sbt for both), the main class, and Sloth with
 its verifier (`kit/tools/`). `scripts/bundle/server.sh` copies it into the bundle, adds
-`kit/graalvm-version` (the pinned version: `.sdkmanrc` until 2026-10-23, `scripts/bundle/graalvm-pins.txt` since) and runs `PluginTool kit-manifest`: `kit/kit.json` (format,
+`kit/graalvm-version` (the pinned version: `.sdkmanrc` until 2026-10-23, `scripts/bundle/graalvm-pins.txt` since) and runs `pluginTool kit-manifest`: `kit/kit.json` (format,
 version, commit, GraalVM version, plugin SPI, main class, every file's SHA-256) and `kit/SHA256SUMS` (the
 same sums in the format `shasum -c` reads, which is what the relink checks — never with the kit's own
 code). The server's reachability metadata is inside its jar, as every module's is. Beside the binary:
@@ -1453,7 +1453,7 @@ resource — as a plugin jar would; the host build is not involved. `Plugins.loa
 (`plugin set: <digest> · 1 jar (native): hello-0.1.0.jar`, or `first-party plugins only`) and
 `--self-check` (`plugin-set digest: <sha256>` — what the relink compares).
 
-**`PluginTool`** (server, a JVM main never reached from `Main`, so not in the image), run with the kit
+**`pluginTool`** (server, a JVM main never reached from `histmersionServer`, so not in the image), run with the kit
 on the class path:
 
 - `describe <jar>…` — instantiates each provider loaded FROM that jar (code source checked), then
@@ -1472,7 +1472,7 @@ on the class path:
 (`<data>/plugins/.relink.lock`, a stale one taken over) → kit checksums (and no jar the manifest lacks) →
 toolchain (GraalVM CE of exactly the kit's version with `native-image`; Xcode's clang / `cc`; memory ≥
 `HISTMERSION_RELINK_MIN_MEMORY_GB`, default 12, else refused naming JVM mode, `--ignore-memory`; 1 GB of
-disk) → GPG provenance when set up → **pre-flight on the JVM**: `PluginTool check`, then the server's own
+disk) → GPG provenance when set up → **pre-flight on the JVM**: `pluginTool check`, then the server's own
 `Main --self-check` over kit + plugin-set jar + plugins with the user's config, which must load (exit 3
 refuses), report the expected digest and every new plugin registered — so a decode error stops the
 relink in seconds, before 12 GB are spent → Sloth over copies of the plugin jars + `SlothVerify` →
@@ -1489,7 +1489,7 @@ undoes the first), `--describe`, `--jvm`.
 
 **JVM mode (§8.5).** `bin/histmersion-server-jvm` builds the plugin-set jar for this start (mode `jvm`),
 verifies the plugins directory when GPG provenance is on, and execs `java -cp kit/lib/<in order>:
-plugin-set.jar:plugins/*.jar com.histmersion.server.Main "$@"` with `HISTMERSION_HOME=<install>` and
+plugin-set.jar:plugins/*.jar com.histmersion.server.histmersionServer "$@"` with `HISTMERSION_HOME=<install>` and
 `HISTMERSION_RUNTIME=true` — the process is `java`, so the bundle cannot be found from the executable's
 location (`Supervisor.bundled`) — and `argv[0]` set to the launcher (`exec -a`), so `pgrep -f
 <install>/bin/histmersion-server` still finds it. **Deviation:** §8.5 kept the LaunchAgent pointing at
@@ -1931,7 +1931,7 @@ publisher's page (`acquire.landing.deny-*`, #1580), so it would add requests and
   unchanged), `/api/about`, `/api/config`, `histmersion about`, the web About window;
 - a reload whose changed key is under `histmersion.plugins.oa-index` rebuilds the four (`Plugins.carried`
   expands the id);
-- `oa-index` is reserved: `PluginTool.hostIds` names it, so a third-party plugin cannot take it (its
+- `oa-index` is reserved: `RelinkPlugins.hostIds` names it, so a third-party plugin cannot take it (its
   settings would be read as the successors').
 
 The live config has no `plugins.*` key, so for it nothing is mapped and nothing is warned.
@@ -2407,7 +2407,7 @@ none = no dependencies):
 **Where it runs.** `histmersion-relink --resolve [--lib] [--repo]… [--check] [<jar>…]` (kit-common
 `hk_resolve`, with the install's `maven/` first). `plugin add` fetches the POM with the jar (Maven: required
 and checksum-checked; a path or URL: the `.pom` beside it when there is one), resolves the staged plugin
-into a staging `lib/`, describes it with that `lib/` on its class loader (PluginTool `describe --lib`),
+into a staging `lib/`, describes it with that `lib/` on its class loader (pluginTool `describe --lib`),
 shows the dependency lines, and after installing (the POM beside the jar) resolves the whole directory into
 `plugins/lib`; `plugin rm` resolves again. The relink's pre-flight resolves first, then `check --lib`
 (duplicate classes across kit, dependencies and plugins), `plugin-set --lib`, the JVM self-check with
@@ -2420,7 +2420,7 @@ build record's plugin fingerprint covers the POMs; the signed plugins manifest c
 `LinkageError` that `NonFatal` does not catch: discovery, config decoding and `register` let it escape.
 They catch it now, and the plugin fails alone with "class X is missing: the plugin uses a library that is
 neither part of Histmersion nor installed with it — install the plugin with `histmersion plugin add`
-from a jar published with its POM" (`PluginHost.failure`; PluginTool's describe uses it too).
+from a jar published with its POM" (`PluginHost.failure`; pluginTool's describe uses it too).
 
 **Tests.** `pluginResolver` suites resolve offline from a fixture repository (`pluginHelloDeps/fixturesRepo`:
 `hello-deps`, whose POM lists `hello-lib` and plugin-api as `provided`); PluginToolSuite describes

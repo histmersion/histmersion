@@ -94,7 +94,7 @@ node docs/demo/converter-stub.mjs "$stub_port" & stub_pid=$!
   # local maps are in the menu all the same, and their own shots choose them
   export HISTMERSION_UI_BASE_MAP_SOURCE=online
   unset ANTHROPIC_API_KEY OPENAI_API_KEY HISTMERSION_AGENTS_LOCAL_API_KEY
-  exec "$jh/bin/java" -Duser.home="$tmp/home" -cp "$(cat "$classpath_file")" com.histmersion.server.Main
+  exec "$jh/bin/java" -Duser.home="$tmp/home" -cp "$(cat "$classpath_file")" com.histmersion.server.histmersionServer
 ) >"$tmp/server.log" 2>&1 & server_pid=$!
 for _ in $(seq 1 120); do
   curl -fsS "$url/api/health" >/dev/null 2>&1 && break

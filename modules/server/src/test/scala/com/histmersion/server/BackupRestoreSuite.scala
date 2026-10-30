@@ -172,7 +172,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
     assertEquals(before, 2)
 
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         // 1. POST /api/backup writes an archive and reports its size + checksum

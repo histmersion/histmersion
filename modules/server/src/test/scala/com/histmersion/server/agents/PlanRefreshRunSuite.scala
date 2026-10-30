@@ -7,7 +7,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.PlanQuota.*
 import com.histmersion.db.{AgentRepo, AutopilotRepo, Db, Migrate, PlanQuotaRepo}
-import com.histmersion.server.{Deps, Handlers, Main}
+import com.histmersion.server.{Composition, Deps, Handlers}
 import io.circe.parser
 import sttp.ai.core.agent.*
 
@@ -493,7 +493,9 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite:
     )
     ox.supervised {
       val b =
-        Main.server(keyed, "127.0.0.1", 0, com.histmersion.server.ConverterClient.fromConfig(keyed.converter)).start()
+        Composition
+          .server(keyed, "127.0.0.1", 0, com.histmersion.server.ConverterClient.fromConfig(keyed.converter))
+          .start()
       try
         val url = s"http://127.0.0.1:${b.port}/api/agents/quota"
         assertEquals(

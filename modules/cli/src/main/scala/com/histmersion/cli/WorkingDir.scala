@@ -5,8 +5,8 @@ package com.histmersion.cli
   * access; a deleted working directory fails the same way. The native image then throws
   * `Properties init: Could not determine current working directory` on the first read of `user.dir` — a stack trace
   * that says nothing about the fix. This turns it into one plain message. The property is read lazily, by the commands
-  * that resolve a local path, so `Main` catches the failure rather than probing up front (which would fail every
-  * command there). Pure.
+  * that resolve a local path, so `Cli` catches the failure rather than probing up front (which would fail every command
+  * there). Pure.
   */
 object WorkingDir:
 

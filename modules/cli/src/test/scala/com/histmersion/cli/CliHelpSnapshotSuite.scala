@@ -13,7 +13,7 @@ class CliHelpSnapshotSuite extends munit.FunSuite:
   private val file = Path.of("modules/cli/src/test/resources/contract/cli-help.txt")
 
   private def help(path: List[String]): String =
-    Main.command.parse(path :+ "--help", Map.empty).fold(_.toString, _ => s"(no help for ${path.mkString(" ")})")
+    Cli.command.parse(path :+ "--help", Map.empty).fold(_.toString, _ => s"(no help for ${path.mkString(" ")})")
 
   private def subcommands(text: String): List[String] =
     text.linesIterator

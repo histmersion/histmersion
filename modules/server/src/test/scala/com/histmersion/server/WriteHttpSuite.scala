@@ -31,7 +31,7 @@ class WriteHttpSuite extends munit.FunSuite:
     val base = AppConfig.load()
     val cfg = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
 
       // ── put: a full source, with omitted optional keys defaulting rather than failing to decode ──
@@ -117,7 +117,7 @@ class WriteHttpSuite extends munit.FunSuite:
     val k = "zz_http_patch_rules"
     val dst = "zz_http_patch_dst"
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         assertEquals(put(s"$url/api/sources/$dst", """{"title":"Target","authors":["B"]}""")._1, 200)
@@ -169,7 +169,7 @@ class WriteHttpSuite extends munit.FunSuite:
     val cfg = base.copy(db = base.db.copy(url = testDb.get))
     val k = "zz_http_strict"
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         assertEquals(put(s"$url/api/sources/$k", """{"title":"Strict","authors":["A"],"tags":["keep"]}""")._1, 200)
@@ -212,7 +212,7 @@ class WriteHttpSuite extends munit.FunSuite:
     val cfg = base.copy(db = base.db.copy(url = testDb.get))
     val k = "zz_http_attest"
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         assertEquals(put(s"$url/api/sources/$k", """{"title":"Attested"}""")._1, 200)
@@ -241,7 +241,7 @@ class WriteHttpSuite extends munit.FunSuite:
     val k = "zz_http_put_edges"
     val dst = "zz_http_put_edges_dst"
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         assertEquals(put(s"$url/api/sources/$dst", """{"title":"Target"}""")._1, 200)

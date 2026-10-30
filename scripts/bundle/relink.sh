@@ -88,8 +88,8 @@ need_java() {
   jh="$(hk_find_java "$graalvm_version")" \
     || hk_die 2 "no JDK ${graalvm_version%%.*} found — run histmersion-toolchain install (or set HISTMERSION_JAVA_HOME)"
 }
-tool() { # PluginTool <args…> on the kit's class path
-  "$jh/bin/java" -cp "$kit/lib/*" com.histmersion.server.plugins.PluginTool "$@"
+tool() { # pluginTool <args…> on the kit's class path
+  "$jh/bin/java" -cp "$kit/lib/*" com.histmersion.server.plugins.pluginTool "$@"
 }
 jars=()
 while IFS= read -r j; do jars+=("$j"); done < <(hk_plugin_jars "$plugins")

@@ -53,7 +53,7 @@ class UiNoticesHttpSuite extends com.histmersion.db.DbSuite:
     val base = AppConfig.load()
     val cfg = base.copy(db = base.db.copy(url = testDb.get), auth = base.auth.copy(apiKey = "s3cret"))
     supervised {
-      val b = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}/api"
       // `var`: the fixture's row, removed whatever the assertions did
       var added = Option.empty[Int]

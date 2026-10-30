@@ -9,7 +9,7 @@
 #   scripts/agents/claude-overhead.sh --live [--role …] [--model haiku]      (spends your plan: asks first)
 #
 # --from [label=]<dir> (repeatable) launches the role, with the tuned switches, from a tree PromptBudget
-# exported (`sbt "server/Test/runMain com.histmersion.server.agents.PromptBudget export <dir>"`): its
+# exported (`sbt "server/Test/runMain com.histmersion.server.agents.promptBudgetReport export <dir>"`): its
 # Claude Code plugin, its MCP tools served by a stand-in MCP server on loopback (`tools/list` only,
 # nothing is called) and its real answer schema — the WHOLE first call, one arm per tree.
 #
