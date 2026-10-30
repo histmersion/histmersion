@@ -16,7 +16,7 @@ object OpsRoutes:
     OpsApi.queueDelete.serverLogic[Identity](id => ops.queueDelete(id)),
     OpsApi.queueExport.serverLogic[Identity](list => ops.queueExport(list)),
     OpsApi.queueImport.serverLogic[Identity]((list, req) => ops.queueImport(list, req)),
-    OpsApi.queueList.serverLogic[Identity]((list, all, goal) => ops.queueList(list, all, goal)),
+    OpsApi.queueList.serverLogic[Identity]((list, all, goal, job) => ops.queueList(list, all, goal, job)),
     OpsApi.queueAdd.serverLogic[Identity]((list, in) => ops.queueAdd(list, in)),
     OpsApi.goalsExport.serverLogicSuccess[Identity](_ => ops.goalsExport()),
     OpsApi.query.serverLogic[Identity](req => ops.query(req)),

@@ -43,6 +43,12 @@
   --edge-superseded_by:#8E2A1E; --edge-supersedes:#8E2A1E; --edge-confirms:#25683A; --edge-cites:#7A8494;
   --edge-foundational_for:#4338A8; --edge-compilation_of:#8B3FA8; --edge-review_of:#0E7490;
   --edge-verifies:#25683A; --edge-default:#7A8494;
+  /* a research goal's stage (Palette.goalStage): the mark's colour and the badge's ground — ONE code with a
+     shape and a word each (.goal-status): planned a dashed ring, seeding a half-filled circle, compiled a
+     square, reviewed a diamond, done a filled dot */
+  --stage-planned:#5C6878; --stage-planned-soft:#ECEEF2; --stage-seeding:#8A5208; --stage-seeding-soft:#F5EAD9;
+  --stage-compiled:#4338A8; --stage-compiled-soft:#E8E6F8; --stage-reviewed:#0B6680; --stage-reviewed-soft:#DDF1F5;
+  --stage-done:#25683A; --stage-done-soft:#E1F0E5;
 }
 :root[data-theme="dark"] {
   color-scheme:dark;
@@ -63,6 +69,9 @@
   --edge-superseded_by:#E0776E; --edge-supersedes:#E0776E; --edge-confirms:#86C79A; --edge-cites:#98A2AF;
   --edge-foundational_for:#A39CF4; --edge-compilation_of:#C890E0; --edge-review_of:#60B0D0;
   --edge-verifies:#86C79A; --edge-default:#98A2AF;
+  --stage-planned:#98A2AF; --stage-planned-soft:#0D1115; --stage-seeding:#E3A75A; --stage-seeding-soft:#34281A;
+  --stage-compiled:#A39CF4; --stage-compiled-soft:#26234A; --stage-reviewed:#60B0D0; --stage-reviewed-soft:#12303A;
+  --stage-done:#86C79A; --stage-done-soft:#1A3022;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -84,6 +93,9 @@
     --edge-superseded_by:#E0776E; --edge-supersedes:#E0776E; --edge-confirms:#86C79A; --edge-cites:#98A2AF;
     --edge-foundational_for:#A39CF4; --edge-compilation_of:#C890E0; --edge-review_of:#60B0D0;
     --edge-verifies:#86C79A; --edge-default:#98A2AF;
+    --stage-planned:#98A2AF; --stage-planned-soft:#0D1115; --stage-seeding:#E3A75A; --stage-seeding-soft:#34281A;
+    --stage-compiled:#A39CF4; --stage-compiled-soft:#26234A; --stage-reviewed:#60B0D0; --stage-reviewed-soft:#12303A;
+    --stage-done:#86C79A; --stage-done-soft:#1A3022;
   }
 }
 /* ── the type, radii and states, named from the theme's colours ─────────────────────────────────────
@@ -210,6 +222,9 @@ select.field { padding-right:var(--space-2); cursor:pointer; }
 .field::placeholder, .chip-input::placeholder { color:var(--ink3); opacity:1; }
 html, body { margin:0; height:100%; font:var(--fs-md)/1.45 var(--font-ui); font-weight:var(--fw-normal); color:var(--ink); background:var(--bg); }
 button, input, select, textarea { font-family:inherit; }
+/* every link is the accent (zero specificity: a control or a widget styles its own); a visited link too, so no
+   page shows the browser's own purple — pink on a dark ground */
+:where(a) { color:var(--accent); }
 code, kbd, pre, samp { font-family:var(--font-mono); }
 :focus-visible { outline-color:var(--accent); }
 #app { height:100%; }
@@ -1220,11 +1235,20 @@ a.chip:hover { border-color:var(--accent); }
 .job-state.state-dry-run { background:var(--sunk); color:var(--ink2); margin-left:var(--gap-inline); }
 /* a research goal's stage (the autopilot's table in the managers window) */
 /* a research goal's stage: planned (neutral) → seeding, compiled (being worked on) → reviewed, done (done) */
-.job-state.goal-status.state-planned { background:var(--sunk); color:var(--ink2); }
-.job-state.goal-status.state-seeding { background:var(--accent-soft); color:var(--accent); }
-.job-state.goal-status.state-compiled { background:var(--accent-soft); color:var(--accent); }
-.job-state.goal-status.state-reviewed { background:var(--ok-soft); color:var(--ok); }
+.job-state.goal-status { display:inline-flex; align-items:center; justify-content:center; gap:5px; }
+.job-state.goal-status::before { content:""; display:inline-block; flex:none; box-sizing:border-box; width:9px; height:9px;
+  border-radius:50%; background:var(--stage-planned); }
+.job-state.goal-status.state-planned { background:var(--stage-planned-soft); color:var(--ink2); }
+.job-state.goal-status.state-planned::before { background:transparent; border:2px dashed var(--stage-planned); }
+.job-state.goal-status.state-seeding { background:var(--stage-seeding-soft); color:var(--stage-seeding); }
+.job-state.goal-status.state-seeding::before { background:linear-gradient(90deg, var(--stage-seeding) 50%, transparent 50%);
+  border:2px solid var(--stage-seeding); }
+.job-state.goal-status.state-compiled { background:var(--stage-compiled-soft); color:var(--stage-compiled); }
+.job-state.goal-status.state-compiled::before { background:var(--stage-compiled); border-radius:1px; }
+.job-state.goal-status.state-reviewed { background:var(--stage-reviewed-soft); color:var(--stage-reviewed); }
+.job-state.goal-status.state-reviewed::before { background:var(--stage-reviewed); border-radius:1px; transform:rotate(45deg) scale(.82); }
 .job-state.goal-status.state-done { background:var(--ok-soft); color:var(--ok); }
+.job-state.goal-status.state-done::before { background:var(--stage-done); }
 /* an article's review state (ArticlesTab, the article page): not reviewed and queued (neutral) · in review
    (active) · passed (done) · major findings open (problem) · stopped (a person decides) */
 .job-state.review-state { display:inline-block; margin-top:0; }
@@ -2010,4 +2034,91 @@ img.is-zoomable { cursor:zoom-in; }
   .lib-row.is-chosen { background:var(--accent-soft); }
   .reading-body { padding:var(--space-6) var(--space-5) 24px; }
   .reading-acts .btn { flex:1 1 auto; }
+}
+
+/* ── Research: the overview, the activity list, a goal's page ────────────────────────────────────────── */
+.card { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius-lg); min-width:0; }
+.card .ch { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-3) 10px; padding:var(--space-5) var(--space-6);
+  border-bottom:1px solid var(--line); }
+.card .ch h2 { margin:0; font-size:var(--fs-lg); font-weight:var(--fw-strong); }
+.card .ch .ch-link { margin-left:auto; font-size:var(--fs-sm); }
+.card .row { padding:10px var(--space-6); border-bottom:1px solid var(--line); }
+.card .row:last-child { border-bottom:0; }
+.research-overview { display:flex; flex-direction:column; gap:20px; max-width:1240px; }
+.research-columns { display:grid; grid-template-columns:minmax(0, 1.7fr) minmax(0, 1fr); gap:20px; align-items:start; }
+.research-agents { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-5) 18px; padding:14px var(--space-6); }
+.research-agents-text { flex:1 1 320px; min-width:0; }
+.research-agents-head { font-size:var(--fs-xl); font-weight:var(--fw-strong); }
+.seg { display:inline-flex; flex-wrap:wrap; border:1px solid var(--line2); border-radius:var(--radius); overflow:hidden; }
+.seg .seg-option { min-height:var(--control-h); padding:0 var(--space-5); border:0; border-right:1px solid var(--line2);
+  background:var(--panel); color:var(--ink2); font:inherit; font-size:var(--fs-sm); font-weight:var(--fw-strong); cursor:pointer; }
+.seg .seg-option:last-child { border-right:0; }
+.seg .seg-option.on { background:var(--ok-soft); color:var(--ok); }
+.seg .seg-option.seg-Paused.on { background:var(--attn-soft); color:var(--attn); }
+.seg .seg-option.seg-Finishing.on { background:var(--time-soft); color:var(--time); }
+.seg .seg-option:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+.decision-question { font-weight:var(--fw-strong); overflow-wrap:anywhere; }
+.decision-reason { margin-top:var(--space-1); overflow-wrap:anywhere; }
+.decision-actions { margin-top:var(--space-4); }
+.goal-progress { display:flex; flex-direction:column; gap:var(--space-3); }
+.goal-progress-head { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-2) var(--space-4); }
+.goal-progress-title { font-weight:var(--fw-strong); }
+.goal-steps { margin-left:auto; }
+.bar { height:6px; border-radius:3px; background:var(--sunk); overflow:hidden; }
+.bar i { display:block; width:var(--done, 0%); height:100%; background:var(--accent); }
+.activity-chips { display:flex; flex-wrap:wrap; gap:var(--space-3); margin:0 0 var(--space-5); }
+.card .ch .activity-chips { margin:0; }
+.fchip { display:inline-flex; align-items:center; min-height:var(--control-h-sm); padding:0 10px; border:1px solid var(--line2);
+  border-radius:var(--radius-pill); background:var(--panel); color:var(--ink2); font-size:var(--fs-xs);
+  font-weight:var(--fw-strong); text-decoration:none; }
+.fchip:hover { border-color:var(--accent); color:var(--ink); text-decoration:none; }
+.fchip.on { background:var(--accent-soft); border-color:var(--accent); color:var(--ink); }
+.activity-list { list-style:none; margin:0; padding:0; }
+.activity-pane .activity-list, .activity-detail .activity-list { background:var(--panel); border:1px solid var(--line);
+  border-radius:var(--radius-lg); }
+.activity-row { display:flex; gap:var(--space-5); align-items:flex-start; padding:10px var(--space-6); border-bottom:1px solid var(--line); }
+.activity-row:last-child { border-bottom:0; }
+.activity-when { flex:none; width:118px; padding-top:2px; font-size:var(--fs-xs); font-weight:var(--fw-strong); color:var(--ink3); }
+.activity-row.is-problem .activity-when { color:var(--attn); }
+.activity-main { flex:1 1 auto; min-width:0; overflow-wrap:anywhere; }
+.activity-refs { margin-top:var(--space-1); }
+.activity-error { color:var(--danger); font-size:var(--fs-sm); margin-top:var(--space-1); }
+.activity-actions { flex:none; }
+.activity-older { margin-top:var(--space-4); }
+.activity-details, .activity-goal, .queue-goal { margin:var(--space-5) 0; }
+.activity-short .activity-row { padding-left:var(--space-6); }
+.goal-page { display:flex; flex-direction:column; gap:var(--space-6); max-width:1240px; }
+.goal-head { display:flex; flex-wrap:wrap; align-items:flex-start; gap:var(--space-6); }
+.goal-head-text { flex:1 1 420px; min-width:0; }
+.goal-question { margin:var(--space-2) 0 var(--space-3); max-width:70ch; color:var(--ink2); font-size:var(--fs-lg); }
+.goal-state { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-2); }
+.goal-columns { display:grid; grid-template-columns:minmax(0, 1.25fr) minmax(0, 1fr); gap:var(--space-6); align-items:start; }
+.goal-side { display:flex; flex-direction:column; gap:var(--space-6); min-width:0; }
+.goal-steps-list { list-style:none; margin:0; padding:0; }
+.step { display:grid; grid-template-columns:24px minmax(0, 1fr) auto; gap:10px; align-items:start; padding:10px var(--space-6);
+  border-bottom:1px solid var(--line); }
+.step:last-child { border-bottom:0; }
+.step-mark { display:grid; place-items:center; width:20px; height:20px; border-radius:50%; font-size:var(--fs-xs);
+  font-weight:var(--fw-strong); }
+.step-mark-done { background:var(--ok-soft); color:var(--ok); }
+.step-mark-going { background:var(--accent-soft); color:var(--accent); }
+.step-mark-todo { border:1.5px solid var(--line2); color:var(--ink3); }
+.step-mark-stopped { background:var(--attn-soft); color:var(--attn); }
+.step-main { min-width:0; overflow-wrap:anywhere; }
+.goal-produced .li { display:flex; flex-wrap:wrap; gap:var(--space-4); padding:var(--space-4) var(--space-6);
+  border-bottom:1px solid var(--line); }
+.goal-produced .li:last-child { border-bottom:0; }
+.goal-produced .li-what { flex:1 1 auto; }
+.goal-history .activity-row { padding-left:var(--space-6); }
+.goal-edit { padding:var(--space-5) var(--space-6); }
+.item-provenance { margin-top:var(--space-1); }
+.job-items h4 { margin:var(--space-6) 0 var(--space-2); }
+.job-items-list { margin:0; padding-left:18px; }
+.research-managers > summary { cursor:pointer; font-weight:var(--fw-strong); }
+@media (max-width: 1100px) {
+  .research-columns, .goal-columns { grid-template-columns:minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+  .activity-row { flex-wrap:wrap; }
+  .activity-when { width:auto; flex:1 1 100%; }
 }

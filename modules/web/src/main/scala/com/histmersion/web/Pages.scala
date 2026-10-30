@@ -16,14 +16,16 @@ object Pages:
   private val currentAttr = htmlAttr("aria-current", StringAsIsCodec)
 
   def element(ui: UiConfig): HtmlElement =
-    val shown = Router.route.combineWith(Router.missingSignal).distinct
+    // a Research page's query (`?goal=`) is part of what it shows
+    val shown = Router.route.combineWith(Router.missingSignal, Router.search)
+      .map((r, missing, s) => (r, missing, if r.place == PlaceTab.Research then s else "")).distinct
     div(
       cls := "place-page",
-      cls("is-hidden") <-- shown.map((r, missing) => r == Route.Explore && !missing),
-      child <-- shown.map((r, missing) => if missing then notFound else page(ui, r))
+      cls("is-hidden") <-- shown.map((r, missing, _) => r == Route.Explore && !missing),
+      child <-- shown.map((r, missing, s) => if missing then notFound else page(ui, r, s))
     )
 
-  private def page(ui: UiConfig, r: Route): HtmlElement = r match
+  private def page(ui: UiConfig, r: Route, search: String): HtmlElement = r match
     case Route.Explore                => div()
     case Route.Library(s)             => libraryPage(ui, s)
     case Route.Settings(s)            => layout("Settings sections", settingsSide(s), Some(s.label), settings(ui, s))
@@ -31,7 +33,7 @@ object Pages:
     case Route.Event(id)              => single(eventPage(id))
     case Route.Source(_) | Route.Article(_) => single(p(cls := "muted", "Loading…"))
     case _                            =>
-      layout("Research sections", researchSide(ui, r), None, research(ui, r))
+      layout("Research sections", researchSide(ui, r), None, research(ui, r, ActivityView.param(search, "goal")))
 
   // ── the frame ───────────────────────────────────────────────────────────────────────────────────
 
@@ -81,8 +83,7 @@ object Pages:
   private def researchSide(ui: UiConfig, r: Route): List[Modifier[HtmlElement]] =
     val on = r.researchSection
     def item(s: ResearchSection, mods: Modifier[HtmlElement]*) =
-      val to = if s == ResearchSection.Activity then Route.Activity(ActivityTab.Runs) else Route.Research(s)
-      val target = if s == ResearchSection.Activity && !ui.agentsEnabled then Route.Activity(ActivityTab.Jobs) else to
+      val target = if s == ResearchSection.Activity then Route.Activity(ActivityTab.Everything) else Route.Research(s)
       sideLink(target, s.label, on.contains(s), mods)
     ResearchSection.values.toList.filter(s => ui.agentsEnabled || !s.agents).map { s =>
       s match
@@ -95,20 +96,19 @@ object Pages:
     } :+ p(cls := "side-note muted",
       "The backlog holds the agents' next steps. “To acquire” holds books and papers only you can get.")
 
-  private def research(ui: UiConfig, r: Route): HtmlElement = r match
+  private def research(ui: UiConfig, r: Route, goal: Option[String]): HtmlElement = r match
     case Route.Research(s) =>
       val body = s match
-        case ResearchSection.Overview  =>
-          if ui.agentsEnabled then ManagersView.pane else agentsOff("Research agents are off on this server.")
+        case ResearchSection.Overview  => ResearchOverview.pane(ui)
         case ResearchSection.Decisions => if ui.agentsEnabled then ApprovalsView.pane else agentsOff("Nothing waits for a decision: the research agents are off on this server.")
         case ResearchSection.Goals     => GoalsView.pane
-        case ResearchSection.Backlog   => QueueView.pane(Queue.Kind.Tasks)
-        case ResearchSection.Acquire   => QueueView.pane(Queue.Kind.Acquire)
+        case ResearchSection.Backlog   => QueueView.pane(Queue.Kind.Tasks, goal)
+        case ResearchSection.Acquire   => QueueView.pane(Queue.Kind.Acquire, goal)
         case ResearchSection.Models    => if ui.agentsEnabled then ModelsView.pane else agentsOff("No AI models are used: the research agents are off on this server.")
         case ResearchSection.Activity  => RunsView.pane
       section(Router.title(r), body)
-    case Route.Activity(t) => section("Activity", div(activityTabs(ui, t), activity(ui, t)))
-    case Route.Goal(slug)  => item(r, GoalsView.goalPane(slug))
+    case Route.Activity(t) => section("Activity", activity(ui, t, goal))
+    case Route.Goal(slug)  => item(r, GoalPage.pane(ui, slug))
     case Route.Run(id)     => item(r, RunsView.runPane(id))
     case Route.Manager(id) => item(r, ManagersView.managerPane(id))
     case Route.Job(id)     => item(r, jobPage(id))
@@ -119,16 +119,18 @@ object Pages:
   private def agentsOff(text: String): HtmlElement =
     p(cls := "muted", text, " Their settings are ", code("agents.enabled"), " in the server's configuration.")
 
-  private def activityTabs(ui: UiConfig, on: ActivityTab): HtmlElement =
-    navTag(cls := "page-tabs", aria.label := "Activity",
-      ActivityTab.values.toList.filter(t => ui.agentsEnabled || !t.agents).map(t =>
-        RouteLink(Route.Activity(t), cls := "page-tab", cls("on") := t == on,
-          currentAttr := (if t == on then "page" else "false"), t.label)))
-
-  private def activity(ui: UiConfig, t: ActivityTab): HtmlElement = t match
-    case ActivityTab.Runs    => RunsView.pane
-    case ActivityTab.Jobs    => JobsView.pane
-    case ActivityTab.Worklog => QueueView.pane(Queue.Kind.Log)
+  /** The merged list through one of its chips — or one of the detailed lists it sums up, under the chips
+    * and a way back to the list. */
+  private def activity(ui: UiConfig, t: ActivityTab, goal: Option[String]): HtmlElement =
+    if t.isChip then ActivityView.pane(ui, t, goal)
+    else
+      div(cls := "activity-detail",
+        ActivityView.chips(ui, None, None, Val(com.histmersion.api.Activity.Counts())),
+        p(cls := "muted", RouteLink(Route.Activity(ActivityTab.Everything), "← The whole activity list"), s" · ${t.label}"),
+        t match
+          case ActivityTab.Runs    => if ui.agentsEnabled then RunsView.pane else agentsOff("No agent runs: the research agents are off on this server.")
+          case ActivityTab.Worklog => QueueView.pane(Queue.Kind.Log)
+          case _                   => JobsView.pane)
 
   /** One item's page: its name, "pin as window" (it floats over whatever is shown next; the page goes back
     * to its list), and its view. */
@@ -153,7 +155,7 @@ object Pages:
   private def parent(r: Route): Route = r match
     case Route.Goal(_)    => Route.Research(ResearchSection.Goals)
     case Route.Manager(_) => Route.Research(ResearchSection.Overview)
-    case _                => Route.Activity(ActivityTab.Runs)
+    case _                => Route.Activity(ActivityTab.Everything)
 
   /** A job's page: an agent run is its run's page; any other job, its row of the jobs list. */
   private def jobPage(id: String): HtmlElement =
@@ -168,10 +170,17 @@ object Pages:
           p(cls := "muted", "Loading…")
         case Some(Right(j))                               =>
           Router.retitle(Route.Job(id), Wording.jobKindOf(j.kind))
-          ul(cls := "job-list", JobsView.row(j, mine = false))
+          div(ul(cls := "job-list", JobsView.row(j, mine = false)), jobControls(j), QueueView.ofJob(j.id))
       },
-      p(RouteLink(Route.Activity(ActivityTab.Jobs), "All background jobs"))
+      p(RouteLink(Route.Activity(ActivityTab.JobList), "All background jobs"))
     )
+
+  /** Pause, resume and cancel of a long background job, on its page. */
+  private def jobControls(j: JobInfo): HtmlElement =
+    val e = com.histmersion.api.Activity.Entry(s"job:${j.id}", "job", j.createdAt, state = j.status, what = j.kind, job = Some(j.id))
+    ActivityView.actions(e) match
+      case Nil => div()
+      case _   => ul(cls := "activity-list job-controls", ActivityView.row(e, () => Router.go(Route.Job(j.id), push = false)))
 
   // ── Settings ────────────────────────────────────────────────────────────────────────────────────
 

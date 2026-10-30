@@ -44,11 +44,12 @@ object FilterDocs:
     "Skip this many results — the next page's offset is in the list's footer (`next: offset=N`)",
     "The next page's offset, from the listing's footer")
   val title  = Param("title", "title", "Case-insensitive substring of the listed item's title", "A substring of the title")
+  val goal   = Param("goal", "goal", "Only the sources a research goal links (its slug)", "A research goal's slug")
 
   /** Every parameter, in the REST order. */
   val all: List[Param] =
     List(query, tags, authors, places, topics, status, yearFrom, yearTo, from, to, minLon, minLat, maxLon, maxLat,
-      sort, limit, offset, title)
+      sort, limit, offset, title, goal)
 
   /** `schema` with each filter field it has described ([[Param.doc]], by its MCP name); fields it does
     * not have are left alone, and so is everything else. */

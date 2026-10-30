@@ -63,10 +63,12 @@ object OpsApi:
       .errorOut(opsErrors).out(jsonBody[QueueItem])
 
   /** `GET /api/queue/{list}` — open items (`?all=true` for done and note rows too); `?goal=` only the
-    * items that serve that research goal (their own goal, or a goal link naming them). */
-  lazy val queueList: PublicEndpoint[(String, Boolean, Option[String]), ApiError, QueueListing, Any] =
+    * items that serve that research goal (their own goal, or a goal link naming them); `?job=` those a run or
+    * job wrote or ticked off (every status). */
+  lazy val queueList: PublicEndpoint[(String, Boolean, Option[String], Option[String]), ApiError, QueueListing, Any] =
     endpoint.get.in("api" / "queue" / path[String]("list")).in(sttp.tapir.query[Boolean]("all").default(false))
       .in(sttp.tapir.query[Option[String]]("goal").description("only the items serving this research goal (its slug)"))
+      .in(sttp.tapir.query[Option[String]]("job").description("only the items this agent run or background job wrote or ticked off (its id)"))
       .errorOut(opsErrors).out(jsonBody[QueueListing])
 
   lazy val queueAdd: PublicEndpoint[(String, QueueAdd), ApiError, QueueItem, Any] =

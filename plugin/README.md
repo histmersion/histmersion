@@ -6,7 +6,7 @@ runs adversarial reviews — all through one plugin install.
 
 | component | what |
 |---|---|
-| MCP server `histmersion` | **75 tools**, all returning Markdown — listed below |
+| MCP server `histmersion` | **77 tools**, all returning Markdown — listed below |
 | agents | the four review subagents `article-rules-reviewer`, `article-cold-reader`, `article-skeptic`, `article-fixer` — the `review-article` panel |
 
 ### Skills — core
@@ -116,6 +116,8 @@ curl -s -X POST "$HISTMERSION_PUBLIC_URL/mcp" \
 | `ingest_doi` | by identifier: metadata → legal OA PDF (Unpaywall → CORE → OpenAlex OA → Europe PMC/PMC → arXiv → repository landing pages; else PMC's JATS full text) → OCR job → reference edges → assessment |
 | `ingest` | OCR a PDF/EPUB into a source, keeping its figures; returns a job id |
 | `job_status` | where an OCR job got to (`queued\|running\|done\|failed`) |
+| `job_control` | pause, resume or cancel a job (a long background job stops after the part it is on) |
+| `activity` | runs, jobs, worklog lines and the person's decisions in one list, newest first |
 | `assets` | the figures stored with a source and the URLs they are served at |
 | `archive` | Internet Archive: search, inspect, import **public** texts only |
 | `candidates` | new sources found for the goals without a model: list the unseen, mark decisions, sweep a goal's watches |

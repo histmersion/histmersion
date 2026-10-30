@@ -219,8 +219,16 @@ class IngestSuite extends munit.FunSuite:
     assertEquals(JobState.parse(" DONE "), Some(JobState.Done))
     assertEquals(JobState.parse("nonsense"), None)
 
-  test("only done and failed are terminal"):
-    assertEquals(JobState.values.filter(_.isTerminal).toSet, Set(JobState.Done, JobState.Failed))
+  test("only done, failed and cancelled are terminal; a paused job goes on"):
+    assertEquals(JobState.values.filter(_.isTerminal).toSet, Set(JobState.Done, JobState.Failed, JobState.Cancelled))
+
+  test("a person's pause and cancel: a running job pauses and resumes; a paused, queued or running one is cancelled"):
+    import JobState.*
+    assertEquals(JobState.next(Running, Paused), Some(Paused))
+    assertEquals(JobState.next(Paused, Running), Some(Running))
+    List(Queued, Running, Paused).foreach(s => assertEquals(JobState.next(s, Cancelled), Some(Cancelled), s.toString))
+    List(Done, Failed, Cancelled).foreach(s => assertEquals(JobState.next(s, Running), None, s.toString))
+    assertEquals(JobState.next(Queued, Paused), None)
 
   test("JobInfo exposes the state its status names"):
     val j = JobInfo("i", Ingest.KindIngest, "running", Some("ck"))

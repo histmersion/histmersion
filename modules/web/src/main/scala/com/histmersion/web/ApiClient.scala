@@ -100,9 +100,18 @@ object ApiClient:
     call(UiApi.markSeen)((board, UiNotices.SeenMark(Some(at))))
 
   def queueList(list: String, all: Boolean = false): Future[Queue.QueueListing] =
-    call(OpsApi.queueList)((list, all, None))
+    call(OpsApi.queueList)((list, all, None, None))
   def queueForGoal(list: String, goal: String, all: Boolean = false): Future[Queue.QueueListing] =
-    call(OpsApi.queueList)((list, all, Some(goal)))
+    call(OpsApi.queueList)((list, all, Some(goal), None))
+  def queueOfJob(list: String, job: String): Future[Queue.QueueListing] =
+    call(OpsApi.queueList)((list, true, None, Some(job)))
+  def activity(show: Option[String], since: Option[String], goal: Option[String], limit: Option[Int],
+      before: Option[String]): Future[Activity.Page] = call(Api.activity)((show, since, goal, limit, before))
+  def jobControl(id: String, action: String): Future[JobInfo] = call(Api.jobControl)((id, action))
+  def setAgentMode(mode: AgentMode): Future[Autopilot.AutopilotStatus] =
+    call(ManagersApi.setMode)(AgentMode.ModeSet(mode.wire, Some("web")))
+  def acquireRecheck(in: AcquireChecks.RecheckRequest): Future[AcquireChecks.RecheckResult] =
+    call(ManagersApi.acquireRecheck)(in)
   def queuePatch(id: Int, p: Queue.QueuePatch): Future[Queue.QueueItem] =
     call(OpsApi.queuePatch)((id, p))
   def queueAdd(list: String, in: Queue.QueueAdd): Future[Queue.QueueItem] =

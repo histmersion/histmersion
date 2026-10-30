@@ -32,19 +32,21 @@ final case class Filter(
     sort: Sort = Sort.Relevance,
     limit: Int = 0,                    // <= 0 → server default (config `limits.search`)
     offset: Int = 0,
-    title: Option[String] = None       // case-insensitive substring of the LISTED item's own title:
+    title: Option[String] = None,      // case-insensitive substring of the LISTED item's own title:
                                        // a source's title, an article's title, an event's label
+    goal: Option[String] = None        // the sources a research goal links (its slug)
 ) derives KindlingsCodecAsObject:
 
   /** True when nothing at all is being filtered (only paging/sorting). */
   def isEmpty: Boolean =
     q.forall(_.trim.isEmpty) && tags.isEmpty && authors.isEmpty && places.isEmpty && topics.isEmpty &&
-      status.isEmpty && years.isEmpty && period.isEmpty && bbox.isEmpty && title.forall(_.trim.isEmpty)
+      status.isEmpty && years.isEmpty && period.isEmpty && bbox.isEmpty && title.forall(_.trim.isEmpty) &&
+      goal.forall(_.trim.isEmpty)
 
   /** The filter as it selects SOURCES for a list of something else (articles, events): `title` is
     * dropped, because there it names the listed item's own title, not the source's; sort and
     * paging are dropped because they belong to the list, not to the set. */
-  def sourceSet: Filter = Filter(q, tags, authors, places, topics, status, years, period, bbox)
+  def sourceSet: Filter = Filter(q, tags, authors, places, topics, status, years, period, bbox, goal = goal)
 
   /** The criteria a *finding* can satisfy on its source's behalf. */
   def hasFindingCriteria: Boolean = period.isDefined || bbox.isDefined || places.nonEmpty || tags.nonEmpty
@@ -108,7 +110,8 @@ object Filter:
       sort: Option[String] = None,
       limit: Option[Int] = None,
       offset: Option[Int] = None,
-      title: Option[String] = None
+      title: Option[String] = None,
+      goal: Option[String] = None
   ): Filter =
     def clean(xs: List[String]) = xs.flatMap(_.split(",")).map(_.trim).filter(_.nonEmpty)
     Filter(
@@ -124,7 +127,8 @@ object Filter:
       sort = sort.flatMap(Sort.parse).getOrElse(Sort.Relevance),
       limit = limit.getOrElse(0),
       offset = offset.getOrElse(0).max(0),
-      title = title.map(_.trim).filter(_.nonEmpty)
+      title = title.map(_.trim).filter(_.nonEmpty),
+      goal = goal.map(_.trim).filter(_.nonEmpty)
     )
 
 /** A lon/lat viewport (WGS84). `minLon > maxLon` means the box crosses the antimeridian and is
@@ -218,11 +222,12 @@ final case class FilterQuery(
     sort: Option[String],
     limit: Option[Int],
     offset: Option[Int],
-    title: Option[String] = None
+    title: Option[String] = None,
+    goal: Option[String] = None
 ):
   def toFilter: Filter =
     Filter.of(q, tag, author, place, topic, status, yearFrom, yearTo, from, to,
-      minLon, minLat, maxLon, maxLat, sort, limit, offset, title)
+      minLon, minLat, maxLon, maxLat, sort, limit, offset, title, goal)
 
 object FilterQuery:
   /** Inverse of [[FilterQuery.toFilter]] — needed so the CLI's derived sttp client can send a
@@ -248,5 +253,6 @@ object FilterQuery:
       sort = Some(Sort.label(f.sort)),
       limit = Option(f.limit).filter(_ > 0),
       offset = Option(f.offset).filter(_ > 0),
-      title = f.title
+      title = f.title,
+      goal = f.goal
     )

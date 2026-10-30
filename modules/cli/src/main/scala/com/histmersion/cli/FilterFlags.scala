@@ -27,9 +27,10 @@ object FilterFlags:
     Opts.option[String](FilterDocs.sort.rest, FilterDocs.sort.doc).orNone,
     Opts.option[Int](FilterDocs.limit.rest, FilterDocs.limit.doc).orNone,
     Opts.option[Int](FilterDocs.offset.rest, FilterDocs.offset.doc).orNone,
-    Opts.option[String](FilterDocs.title.rest, FilterDocs.title.doc).orNone
-  ).mapN { (tags, authors, places, topics, status, yearFrom, yearTo, from, to, bbox, sort, limit, offset, title) =>
+    Opts.option[String](FilterDocs.title.rest, FilterDocs.title.doc).orNone,
+    Opts.option[String](FilterDocs.goal.rest, FilterDocs.goal.doc).orNone
+  ).mapN { (tags, authors, places, topics, status, yearFrom, yearTo, from, to, bbox, sort, limit, offset, title, goal) =>
     val b = bbox.flatMap(BBox.parse)
     Filter.of(None, tags, authors, places, topics, status, yearFrom, yearTo, from, to,
-      b.map(_.minLon), b.map(_.minLat), b.map(_.maxLon), b.map(_.maxLat), sort, limit, offset, title)
+      b.map(_.minLon), b.map(_.minLat), b.map(_.maxLon), b.map(_.maxLat), sort, limit, offset, title, goal)
   }

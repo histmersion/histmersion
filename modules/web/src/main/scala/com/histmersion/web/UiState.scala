@@ -258,6 +258,8 @@ object UiState:
     * title, an article's title, an event's label). A filter the user typed, so "clear all" clears
     * it; not a chip, because the input showing it is always on screen. */
   val title    = Field[Option[String]]("title", "title", None, Persist.Hash, Role.Filter, Some("title"), chip = false)
+  /** A research goal's sources only (its goal page's "sources brought in", in Library or on the map). */
+  val goal     = Field[Option[String]]("goal", "goal", None, Persist.Hash, Role.Filter, Some("goal"))
   val from     = Field[Option[Long]]("from", "from", None, Persist.Hash, Role.Span)
   val to       = Field[Option[Long]]("to", "to", None, Persist.Hash, Role.Span)
   val bbox     = Field[Option[String]]("bbox", "bbox", None, Persist.Hash, Role.Span)
@@ -339,7 +341,7 @@ object UiState:
   val apiKey   = Field[Option[String]]("apiKey", "apiKey", None, Persist.Local, Role.View)
 
   private val fields: List[Field[?]] =
-    List(q, tags, authors, places, placeIds, topics, status, yearFrom, yearTo, sort, title, from, to, bbox,
+    List(q, tags, authors, places, placeIds, topics, status, yearFrom, yearTo, sort, title, goal, from, to, bbox,
       inView, open, librarySort, tab, layers, sources, baseMap, mapOptions, mediaProvider, mediaLicense, eventKind, eventTier, siteType, sitesUndated, eventsUndated, areaPick, mapMotion, sheet, jobStatus, jobKinds, jobSince, jobUntil, jobSubject,
       runStatus, runPipelines, runOrigins, runManager, runProvider, runModel, runGoal, runSince, runUntil, runSubject,
       approvalState, approvalKinds, approvalBy, approvalSubject, schedTypes, schedCodes, schedSubject, acquireDone, tasksDone,
@@ -456,7 +458,8 @@ object UiState:
       sort = sort.now(),
       limit = None,
       offset = None,
-      title = if keep("title") then title.now() else None
+      title = if keep("title") then title.now() else None,
+      goal = if keep("goal") then goal.now() else None
     )
     val p = f.period
     val corrected =

@@ -87,6 +87,8 @@ object JobsView:
     case JobState.Running => "A worker is doing it now; its progress line says how far it got."
     case JobState.Done    => "Finished without an error; an ingest's source is stored now."
     case JobState.Failed  => "Ended with the error shown on its row, was cancelled before it started, or was interrupted by a server restart."
+    case JobState.Paused    => "A person paused it after one of its parts; resumed, it goes on with the parts it had not done."
+    case JobState.Cancelled => "A person cancelled it; it stopped after the part it was on."
 
   /** What a job without a citekey is about, from its stored [[JobDetail]] (#770): an init job names
     * what it imports. `None` for a job that has a citekey, or no detail. */

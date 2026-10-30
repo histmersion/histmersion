@@ -147,6 +147,10 @@ object FilterSql:
     // the global title quick-filter: a case-insensitive substring of the source's own title
     titleLike(f).foreach(t => ps += Sql.of(s"s.title ILIKE ?$Esc", S(contains(t))))
 
+    // a research goal's sources: those it links
+    f.goal.map(_.trim).filter(_.nonEmpty).foreach(g =>
+      ps += Sql.of("s.citekey IN (SELECT ref FROM goal_links WHERE goal_slug = ? AND kind = 'source')", S(g)))
+
     val parts = ps.result()
     if parts.isEmpty then Sql.raw("TRUE") else join(" AND ", parts)
 

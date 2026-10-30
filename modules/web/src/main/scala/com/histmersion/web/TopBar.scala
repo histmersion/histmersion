@@ -111,7 +111,7 @@ object TopBar:
   /** What the agents are doing, linked to their activity; nothing where the server runs no agents. */
   private def agentsPill(inApp: Boolean): Modifier[HtmlElement] =
     child.maybe <-- Notices.agents.map(_.map { g =>
-      link(Route.Activity(ActivityTab.Runs), inApp,
+      link(Route.Activity(ActivityTab.Everything), inApp,
         cls := "pill agent-pill",
         cls("is-working") := g.on && g.running > 0,
         cls("is-paused") := !g.on || (g.draining && g.running == 0),

@@ -6,13 +6,7 @@ import com.histmersion.api.{JobInfo, JobKind, JobState}
   * Pure. */
 object JobControlRules:
 
-  /** The long jobs that report between their parts (a batch of pictures, a catalogue's records, a layer of
-    * the base map, one acquisition item, a batch of a gazetteer in the init job's loads) and so stop cleanly
-    * there; each skips, when run again, the parts it had done. */
-  val Stoppable: Set[String] = Set(JobKind.MediaImport, JobKind.MediaCovers, JobKind.EventsImport, JobKind.BasemapFetch,
-    JobKind.AcquireRecheck, JobKind.Init).map(_.wire)
-
-  def stoppable(kind: String): Boolean = Stoppable.contains(kind)
+  def stoppable(kind: String): Boolean = com.histmersion.api.JobActions.Stoppable.contains(kind)
 
   /** The step that answers `action` on `job`; `Left` says why it cannot be done. `resumable`: this server
     * holds the paused job's way to go on (a restart loses it). */

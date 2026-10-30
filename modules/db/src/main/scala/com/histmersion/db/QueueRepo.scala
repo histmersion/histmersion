@@ -46,6 +46,13 @@ object QueueRepo:
               AND (goal_slug = $goal OR id::text IN (SELECT ref FROM goal_links WHERE goal_slug = $goal AND kind = 'queue-item'))
             ORDER BY id""".query[QueueItem].run()
 
+  /** The items of `kind` (any status but notes) that agent run or background job `job` wrote or ticked off. */
+  def forJob(ds: DataSource, kind: Kind, job: String): Vector[QueueItem] =
+    connect(ds):
+      sql"""SELECT $Cols FROM queue_items
+            WHERE list = ${kind.label} AND status <> $Note AND (created_job = $job OR closed_job = $job)
+            ORDER BY id""".query[QueueItem].run()
+
   def get(ds: DataSource, id: Int): Option[QueueItem] =
     connect(ds)(sql"SELECT $Cols FROM queue_items WHERE id = $id".query[QueueItem].run().headOption)
 
