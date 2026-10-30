@@ -88,23 +88,38 @@ share (recorded, permanent edges); `docs/research-module-layout.md` lists them, 
 
 ## One implementation per operation
 
-Every operation is implemented **once**, in `Handlers`. REST routes (`HttpApi`) and MCP tools
-(`McpTools`) both call that one implementation; the CLI reaches it over HTTP. This is what makes
-"the CLI and the MCP tools agree" a mechanical fact rather than a promise.
+Every operation is implemented **once**. REST routes (`HttpApi`) and MCP tools (`McpTools`) both call that one
+implementation; the CLI reaches it over HTTP. This is what makes "the CLI and the MCP tools agree" a mechanical
+fact rather than a promise.
 
-Adding an operation:
+A feature in its own package (`domain.<domain>.<feature>`; `domain.personal` and `domain.settings` are the
+models) implements it in a service its controllers call. A feature not moved yet still implements it in
+`Handlers`; follow the shape the feature has, and move it only as its slice of the refactor does
+(`docs/research-domain-model.md` §9).
 
-1. `api/<Type>.scala` — the input and output case classes, one per file, `derives KindlingsCodecAsObject` plus a
-   `given Schema` from `KindlingsSchema.derived`.
-2. `api/Api.scala` — the Tapir endpoint definition, added to `Api.all`.
-3. `api/Markdown.scala` — how the output renders as Markdown. Every surface returns Markdown.
-4. `db/…` — the repo function, if it touches the database.
-5. `server/Handlers.scala` — the single implementation.
-6. `server/HttpApi.scala` + `server/McpTools.scala` — wire the same handler into both.
-7. `cli/Client.scala` + `cli/Main.scala` — the client call and the decline subcommand.
+Adding an operation to a feature in its own package:
 
-Skipping step 6's second half (an operation exposed as REST but not MCP, or vice versa) is a bug
-unless there is a written reason.
+1. `values` — a newtype for every new kind of value (rule 1). Its JSON, schema, column, setting and CLI argument
+   come from the generic instances (`util.json.NewtypeCodecs`, `util.database.NewtypeColumns`,
+   `config.NewtypeReaders`, `cli.NewtypeArguments`); add a round-trip test.
+2. `api.<domain>.<feature>` — the input and output records, one per file, `derives KindlingsCodecAsObject,
+   KindlingsSchema`; the Tapir endpoint in the feature's endpoints object, added to `Api.all` in its place (route
+   matching and `tools/list` depend on the order); how the output renders as Markdown. Every surface returns
+   Markdown.
+3. `domain.<domain>.<feature>` — the pure rules (in `core` when another module needs them); the service trait's
+   method, its `Implementation` over a `Transactor` and its `InMemory` over the feature's state; the repository
+   method (`private[<feature>]`, `(using DbCon)`); the service contract suite, run on both.
+4. `<Feature>Controllers` — parse the raw inputs into domain values (the one parse boundary), the maintenance
+   guard for a write, the service call with the `Caller`, the conversion to the wire record (Chimney).
+5. `<Feature>Routes` + `<Feature>Tools` — the same controller method bound to its REST endpoint and its MCP tool,
+   listed in `HttpApi` and `McpTools`.
+6. `cli` — the client call and the decline subcommand (`Cli`).
+7. The contract snapshots (`ContractSnapshotSuite`, `CliHelpSnapshotSuite`) fail on the new endpoint, tool and
+   command: rewrite them with `HISTMERSION_UPDATE_CONTRACT=1` and check that the diff holds only the addition.
+   Update the reference pages (`docs/user-guide/reference/`) in the same commit.
+
+Skipping step 5's second half (an operation exposed as REST but not MCP, or vice versa) is a bug unless there
+is a written reason.
 
 ## Scala style
 
@@ -284,11 +299,12 @@ one file make the incremental compiler recompile every use site of all of them w
 
 ### 10. Package by feature, not by layer
 
-- Types shared across the whole application: `com.histmersion.domain`.
-- Each subdomain (a functionality of the core): `com.histmersion.domain.<subdomain>`, e.g.
-  `domain.backup`, `domain.export`.
-- Supporting areas (database, files, JSON, …): `com.histmersion.util.<area>`, e.g. `util.database`,
-  `util.json`.
+- Types shared across the whole application (the shared kernel: `Caller`, `Licence`, …):
+  `com.histmersion.domain`.
+- Each domain and its features: `com.histmersion.domain.<domain>.<feature>` (the pure part in `core`, services,
+  repositories and controllers in `server`), with `api.<domain>.<feature>` and `config.<domain>` beside them.
+- Supporting areas (mechanisms with no research meaning): `com.histmersion.util.<area>`, e.g. `util.database`,
+  `util.json`, `util.storage`.
 - What is shared only inside a (sub)domain is package-private, not public. A service and its repository
   live in the same package, and the repository is invisible outside it.
 - Subdomains follow functionality, not the shape of endpoints, MCP tools or CLI commands: one endpoint may
@@ -297,15 +313,41 @@ one file make the incremental compiler recompile every use site of all of them w
   owns the data.
 - Shared API types and API-specific types live apart.
 
+The places and what each may depend on (`docs/research-domain-model.md` §3):
+
+| place | about | may depend on |
+|---|---|---|
+| `util.<area>` (`database`, `json`, `storage`, `data`, `jobs`, `identity`, `plugins`, `settings`, `basemap`, `ocr`, `process`, …) | a mechanism: no research words | other supporting areas, the shared kernel, `values` — never a domain |
+| `domain.automation` | the workflow engine: runs, steps, schedules, managers, approvals, agents, goals, work lists | supporting areas |
+| `domain.catalogue` | places, periods, events and what attests them | supporting areas, automation |
+| `domain.media` | pictures and their rights | supporting areas, automation, catalogue |
+| `domain.library` | sources, findings, citations, acquisition, ingest | supporting areas, automation, catalogue, media |
+| `domain.research` | research results: articles, their review | supporting areas, automation, catalogue, media, library |
+| `domain.personal` | one person's bookmarks, notes, read marks | supporting areas only |
+| `server` (composition root, `server.views`, `server.instance`) | wiring; pages that join several domains | everything |
+
+A lower domain reaches a higher one only through an interface the lower one owns and the higher one implements
+(a workflow the library registers into the engine, a data contribution a domain registers into `util.data`).
+Files and directories are reached through `util.storage`, processes launched through `util.process`, and a
+repository is used only inside its feature. `ArchitectureSuite` (server tests) enforces the table, the file and
+process rule and the repository rule. A file not in its feature package yet has its destination in
+`architecture/places.tsv`; a new file goes in its feature package, or gets a row there. Today's violations are
+listed in `architecture/exceptions.tsv`, exactly: a change removes rows and adds none
+(`HISTMERSION_UPDATE_ARCHITECTURE=1` rewrites the list; the diff must only delete lines).
+
 ### 11. Services own transactions
 
 A repository method takes the transaction it runs in; it never opens one. The service opens the
-transaction, so several repository calls are atomic together.
+transaction, so several repository calls are atomic together, through `util.database.Transactor`:
+`db.read(…)` on one connection, `db.transact(…)` in one transaction an exception rolls back.
 
 ### 12. No globals
 
 Nothing reads the environment, system properties, the clock or the working directory directly
-(`System.getenv`, `sys.props`, `Instant.now()` …). Values come from configuration, or are passed in.
+(`System.getenv`, `sys.props`, `Instant.now()` …). Values come from configuration, or are passed in. The
+entry point reads them once: the server's builds a `SystemContext` (a `java.time.Clock`, the `Environment`
+the settings were loaded with, the `UserPaths` that follow from it) and the composition hands it on
+(`Deps.clock`, `Deps.environment`, `Deps.userPaths`); a test passes `Clock.fixed` or `SystemContext.isolated`.
 
 ### 13. Services are traits; controllers depend on them
 
@@ -330,9 +372,33 @@ implementation does. Where the real services share data, the in-memory ones shar
 a test seeds them by calling the `InMemory` services themselves. No mocking library.
 
 Endpoint logic lives in `…Controllers` (not `…Handlers`) that take services as dependencies, so a
-controller is unit-tested with `InMemory` services and no server.
+controller is unit-tested with `InMemory` services and no server. Each controller method and each writing
+service method takes the `Caller` (`domain.Caller`: a `Person` with a `Role`, or an `Automation` run); until
+accounts exist every request is `Caller.Local`.
 
-Rules 7–13 bind new code from 2026-10-30. Existing code is migrated by two planned jobs (a style sweep and
+### 14. No free-standing helper objects
+
+A function about a type is a method of the type or a member of its companion — an extension where the type's
+module must not know the function's dependencies. A closed set of strings is an `enum`. A top-level object
+without a same-named type is one of: a repository, a group of endpoints, CLI commands or views, a holder of
+givens, a codec of an external format, or a facade that names a composition. Entry points are `@main def`s.
+
+```scala
+// no: object ApprovalModes { def configured(raw: String): ApprovalMode = … }
+enum ApprovalMode:
+  case Manual, Auto
+object ApprovalMode:
+  def configured(raw: String): ApprovalMode = parse(raw).getOrElse(Manual)
+
+@main def histmersionServer(args: String*): Unit = …          // not object Main { def main(…) }
+```
+
+The entry points are `com.histmersion.server.histmersionServer`, `cli.histmersionCli`, `web.histmersionWeb`,
+`server.plugins.pluginTool` (the relink kit's tool), `server.agents.generatePlugin` (`just plugin`) and
+`pluginresolver.pluginResolver`. A `@main def` must not share its name, ignoring case, with a type of its
+package: on a case-insensitive file system their class files overwrite each other.
+
+Rules 7–14 bind new code from 2026-10-30. Existing code is migrated by two planned jobs (a style sweep and
 a restructure by feature), not piecemeal; until then, follow the surrounding code where the two conflict
 only to keep one file consistent.
 
