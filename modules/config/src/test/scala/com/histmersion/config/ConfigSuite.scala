@@ -110,13 +110,13 @@ class ConfigSuite extends munit.FunSuite:
     val c = AppConfig.load(env()).acquire.core
     assertEquals(
       (
-        c.perMinute,
-        c.dailyTokens,
-        c.searchDailyTokens,
-        c.lookupCost,
-        c.searchCost,
-        c.exhaustedPauseSeconds,
-        c.maxWaitSeconds
+        c.perMinute.value: Int,
+        c.dailyTokens.value: Int,
+        c.searchDailyTokens.value: Int,
+        c.lookupCost.value: Int,
+        c.searchCost.value: Int,
+        c.exhaustedPauseSeconds.value: Int,
+        c.maxWaitSeconds.value: Int
       ),
       (20, 900, 600, 1, 1, 60, 30)
     )
@@ -132,7 +132,10 @@ class ConfigSuite extends munit.FunSuite:
       )
       .acquire
       .core
-    assertEquals((e.dailyTokens, e.searchDailyTokens, e.perMinute, e.key), (4500, 3000, 8, Some("k")))
+    assertEquals(
+      (e.dailyTokens.value: Int, e.searchDailyTokens.value: Int, e.perMinute.value: Int, e.key),
+      (4500, 3000, 8, Some("k"))
+    )
 
   test("the autopilot's focus: defaults, the environment and the file"):
     val a = AppConfig.load(env()).agents.autopilot

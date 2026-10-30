@@ -484,7 +484,7 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient, afterStore: S
     try
       SourceRepo.load(ds, citekey).toList.flatMap { s =>
         val items = QueueRepo.list(ds, Queue.Kind.Acquire, all = false).toList
-        AcquireMatch.decide(items, s.doi, s.title, s.authors, cfg.acquire.defaults.titleMatchAt).map { d =>
+        AcquireMatch.decide(items, s.doi, s.title, s.authors, cfg.acquire.defaults.titleMatchAt.value).map { d =>
           AcquireMatch.describe(
             d,
             id =>

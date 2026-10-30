@@ -8,10 +8,10 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   */
 final case class RecheckConfig(
     enabled: Boolean,
-    everyDays: Int,
-    perDay: Int,
-    perPass: Int,
-    passMinutes: Int,
-    sharePercent: Int,
-    retryHours: Int
+    everyDays: Days,
+    perDay: ItemCount,
+    perPass: ItemCount,
+    passMinutes: Minutes,
+    sharePercent: Percent,
+    retryHours: Hours
 ) derives ConfigReader

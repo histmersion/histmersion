@@ -23,14 +23,14 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   *   leaves CORE out)
   */
 final case class CoreServiceConfig(
-    url: String,
-    apiKey: String,
-    perMinute: Int,
-    dailyTokens: Int,
-    searchDailyTokens: Int,
-    lookupCost: Int,
-    searchCost: Int,
-    exhaustedPauseSeconds: Int,
-    maxWaitSeconds: Int
+    url: ServiceUrl,
+    apiKey: ApiKey,
+    perMinute: ItemCount,
+    dailyTokens: TokenCount,
+    searchDailyTokens: TokenCount,
+    lookupCost: TokenCount,
+    searchCost: TokenCount,
+    exhaustedPauseSeconds: Seconds,
+    maxWaitSeconds: Seconds
 ) derives ConfigReader:
-  def key: Option[String] = Option(apiKey).map(_.trim).filter(_.nonEmpty)
+  def key: Option[String] = Option(apiKey.value: String).map(_.trim).filter(_.nonEmpty)

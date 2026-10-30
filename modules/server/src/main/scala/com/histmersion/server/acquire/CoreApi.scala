@@ -17,7 +17,7 @@ final class CoreApi(cfg: AcquireConfig, http: Http, budget: CoreBudget):
   def unavailable(purpose: CoreQuota.Purpose): Option[String] = budget.unavailable(limits, purpose).map(_.describe)
 
   def searchWorks(key: String, query: String, limit: Int, purpose: CoreQuota.Purpose): Either[CoreFailure, Json] =
-    val url = Url(cfg.core.url, "/search/works/", "q" -> query, "limit" -> limit.toString)
+    val url = Url(cfg.core.url.value, "/search/works/", "q" -> query, "limit" -> limit.toString)
     budget.call(limits, purpose)(http.once(url, Map("Authorization" -> s"Bearer $key"))) match
       case Left(refusal)                    => Left(CoreFailure.Skipped(refusal.describe))
       case Right(Left(e))                   => Left(CoreFailure.Failed(e))

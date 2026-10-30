@@ -165,7 +165,7 @@ class BuiltinFetchersSuite extends munit.FunSuite:
 
   test("oa-core without a key of its own uses acquire.core.api-key; with none, CORE is never asked"):
     val rec = Recording()
-    fetch(generation(acquire = cfg.copy(core = cfg.core.copy(apiKey = "k-host")), http = rec), "core")
+    fetch(generation(acquire = cfg.copy(core = cfg.core.copy(apiKey = ApiKey("k-host"))), http = rec), "core")
     assertEquals(rec.asked.flatMap(_._2.get("Authorization")), List("Bearer k-host"))
     val none = Recording()
     assert(fetch(generation(http = none), "core").isInstanceOf[Fetch.Miss])

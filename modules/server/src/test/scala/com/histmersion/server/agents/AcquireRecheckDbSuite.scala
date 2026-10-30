@@ -194,7 +194,9 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite:
 
   test("the caps: per pass, per day; a status line with what is due"):
     val (a, h, up) = setup(
-      baseCfg.copy(acquire = baseCfg.acquire.copy(recheck = baseCfg.acquire.recheck.copy(perPass = 2, perDay = 3)))
+      baseCfg.copy(acquire =
+        baseCfg.acquire.copy(recheck = baseCfg.acquire.recheck.copy(perPass = ItemCount(2), perDay = ItemCount(3)))
+      )
     )
     (1 to 5).foreach(i => item(h, s"c$i"))
     val first = passNow(a, RecheckRequest()).toOption.get
@@ -213,7 +215,9 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite:
   test("under the autopilot's shared allowance: the watchers' backlog first, then at most share-percent of it"):
     val cfg = baseCfg.copy(
       agents = baseCfg.agents.copy(autopilot = baseCfg.agents.autopilot.copy(ingestPerDay = 8)),
-      acquire = baseCfg.acquire.copy(recheck = baseCfg.acquire.recheck.copy(perPass = 10, sharePercent = 25))
+      acquire = baseCfg.acquire.copy(recheck =
+        baseCfg.acquire.recheck.copy(perPass = ItemCount(10), sharePercent = Percent(25))
+      )
     )
     val (a, h, up) = setup(cfg)
     connect(ds)(sql"UPDATE agent_autopilot SET enabled = true".update.run())
@@ -358,7 +362,9 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite:
 
   private val tightCfg = baseCfg.copy(
     agents = baseCfg.agents.copy(autopilot = baseCfg.agents.autopilot.copy(ingestPerDay = 4)),
-    acquire = baseCfg.acquire.copy(recheck = baseCfg.acquire.recheck.copy(perPass = 1, perDay = 2, sharePercent = 0))
+    acquire = baseCfg.acquire.copy(recheck =
+      baseCfg.acquire.recheck.copy(perPass = ItemCount(1), perDay = ItemCount(2), sharePercent = Percent(0))
+    )
   )
 
   test(
@@ -443,7 +449,9 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite:
 
   test("a person's capped pass of more than one item is a job too; one item answers at once"):
     val (a, h, up) = setup(
-      baseCfg.copy(acquire = baseCfg.acquire.copy(recheck = baseCfg.acquire.recheck.copy(perPass = 3, perDay = 40)))
+      baseCfg.copy(acquire =
+        baseCfg.acquire.copy(recheck = baseCfg.acquire.recheck.copy(perPass = ItemCount(3), perDay = ItemCount(40)))
+      )
     )
     (1 to 5).foreach(i => item(h, s"l$i"))
     val one = a.acquireRecheck.run(RecheckRequest(limit = Some(1))).fold(e => fail(e.message), identity)

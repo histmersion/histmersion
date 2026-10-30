@@ -178,7 +178,7 @@ final class OaIndex(
         .flatMap(_._2)
         // a publisher's page is never read, and does not use up the pages a work may read
         .filter(c => RepositoryLanding.zenodoRecordId(c.url).isDefined || !publisherPage(c, rules))
-        .take(math.max(0, cfg.landing.maxPages))
+        .take(math.max(0, cfg.landing.maxPages.value))
       pages.map(resolvePage(_, rules)).collectFirst { case Some(f) => f }
 
   /** An OA index calls it a publisher's location, or its host is denied (`acquire.landing.deny-*`) — and it is not an

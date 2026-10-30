@@ -18,7 +18,7 @@ final class OpenAlexCrossref(cfg: AcquireConfig, http: Http) extends DiscoveryCl
     // work. `cited_by_count` comes back either way, so a caller can re-rank the relevant set.
     val order = if sort.map(_.trim.toLowerCase).contains("cited") then "cited_by_count:desc"
     else "relevance_score:desc"
-    val from = since.getOrElse(cfg.defaults.minYear)
+    val from = since.getOrElse(cfg.defaults.minYear.value)
     http
       .json(
         Url(
