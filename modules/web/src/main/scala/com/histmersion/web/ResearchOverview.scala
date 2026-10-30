@@ -194,5 +194,7 @@ object ResearchOverview:
         goalsCard(status.signal, managers.signal)),
       activityCard(ui),
       if ui.agentsEnabled then
-        htmlTag("details")(cls := "research-managers", htmlTag("summary")("Agent managers, in detail"), ManagersView.pane)
+        // open, as the managers were this page before: folding them away is the reader's choice
+        htmlTag("details")(cls := "research-managers", htmlAttr("open", com.raquo.laminar.codecs.BooleanAsAttrPresenceCodec) := true,
+          htmlTag("summary")("Agent managers, in detail"), ManagersView.pane)
       else emptyNode)

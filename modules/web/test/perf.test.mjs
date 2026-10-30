@@ -266,7 +266,7 @@ test('a page left stops polling, and a window\'s page reloaded in place keeps on
     let polls = 0;
     page.on('request', r => { if (/\/api\/jobs(\?|$)/.test(new URL(r.url()).pathname + new URL(r.url()).search)) polls++; });
     // the jobs are Research › Activity › Background jobs: shown, then left for Explore
-    await page.goto(new URL('/research/activity/jobs', baseURL).href);
+    await page.goto(new URL('/research/activity/all-jobs', baseURL).href);
     await page.locator('.jobs-pane').waitFor();
     await page.locator('.places a[data-nav="explore"]').click();
     await page.waitForFunction(() => !document.querySelector('.jobs-pane'));

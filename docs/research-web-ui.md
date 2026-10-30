@@ -271,3 +271,28 @@ period, read and bookmark one, approve an agent decision, download pictures, set
 first-click tests on the new navigation; an icon recognition test (target ≥ 85 % correct, as in
 ANSI Z535.3) for every map glyph; 2–3 rounds of think-aloud with 5 people each, including
 non-technical users; SUS and NASA-TLX before and after. Details in the evidence review, § 13.
+
+## 10. As built: phase 5, Research as one system (2026-10-30)
+
+- **Overview** (`/research`): one three-way control over the two switches (`AgentMode`: working = the
+  autopilot on; finish = on and draining; pause = off), with the running and waiting counts and each plan's
+  weekly limit left; the three oldest open decisions, each with its reason and the link to what to read
+  first placed before Accept (no bulk accept here — the decisions page keeps it); the top-level goals with
+  their managers' steps done of all and what blocks them (the focus's reason, a decision, a starved or held
+  manager); the latest six activity entries; the managers in a disclosure.
+- **Activity** (`/research/activity[/running|agents|jobs|yours|problems]`): `GET /api/activity` merges the
+  jobs (agent runs among them), the worklog and a person's decisions in SQL (`ActivityService`, one
+  `UNION ALL`, keyset-paged by time then key in byte order), the same rules in memory for tests
+  (`ActivityRules`); MCP `activity`, `histmersion activity [--kind] [--running] [--since] [--goal]`.
+- **Links in the data**: V108 gives `queue_items` `goal_slug`, `created_job`, `closed_job` (back-filled
+  from goal links, `goal <slug>` topics and the ingest jobs that ticked items off); agents and jobs write
+  them from now on; `?goal=` and `?job=` list a goal's or a run's items; Filter gains `goal` (a goal's
+  sources, in Library and on the map).
+- **Pause and cancel of long jobs**: `POST /api/jobs/{id}/{pause|resume|cancel}` (MCP `job_control`,
+  `histmersion jobs pause|resume|cancel`). The media and events imports, the base-map download, the
+  acquisition re-check and the init job's gazetteer loads stop at the next progress report (a part
+  boundary), keep their progress and resume on the same row, skipping what they did; a restart fails a
+  paused one as interrupted. `JobState` gains `paused` and `cancelled`.
+- **A goal's page** (`/research/goals/<slug>`), **Backlog / To acquire** with goals, provenance and the
+  re-check buttons, and **#7381**: goal stages each with their own colour, shape and word (tokens in both
+  themes, AA), and every link the accent.

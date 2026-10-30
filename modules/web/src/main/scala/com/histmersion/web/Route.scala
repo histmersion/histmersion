@@ -201,7 +201,6 @@ object Route:
     case Research(ResearchSection.Backlog)   => Some(WindowKey.Tasks)
     case Research(ResearchSection.Acquire)   => Some(WindowKey.Acquire)
     case Activity(ActivityTab.Worklog)       => Some(WindowKey.Log)
-    case Activity(ActivityTab.Everything)    => Some(WindowKey.Log)
     case _                                   => None
 
   /** Where a link to `key` points: the item's own page, the page that took over its window, else the
