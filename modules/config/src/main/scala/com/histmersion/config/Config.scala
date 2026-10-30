@@ -28,7 +28,7 @@ given ConfigReader[Boolean] = lenient("boolean", ConfigReader.booleanReader, _.t
   * so every stop with a client still connected waited the whole time; the test suites set it to 0. */
 /** `sourceUrl`: the repository the About window and `histmersion about` link as this program's source. */
 final case class ServerConfig(host: String, port: Int, publicUrl: String, requestTimeoutSeconds: Int,
-    shutdownGraceSeconds: Int, sourceUrl: String)
+    shutdownGraceSeconds: Int, sourceUrl: String, restartExitCode: Int = 75)
     derives ConfigReader
 /** `pool.max` sizes the HikariCP pool behind every [[com.histmersion.db.Db]] DataSource. Pooling is not a
   * micro-optimisation here: without it every repo call opened a fresh TCP connection and did the
@@ -183,6 +183,9 @@ final case class PassageLimits(limit: Int, maxLimit: Int, context: Int, maxConte
 
 /** The timeline's span (`ui.time`): the earliest and latest year it reaches, and the years it opens on. */
 final case class UiTimeSettings(min: Long, max: Long, defaultFrom: Long, defaultTo: Long) derives ConfigReader
+/** Where the map opens (`ui.map-start`): `mode` "last" (where the browser left it; here the first time) or
+  * "place" (always here). */
+final case class UiMapStartSettings(mode: String, lat: Double, lon: Double, zoom: Double, label: String) derives ConfigReader
 
 /** `ui.debounce`: the quiet periods before the page acts on typing and state changes; `previewMs` is the one
   * before a HOVERED suggestion's preview reloads the lists. */
@@ -222,7 +225,8 @@ final case class UiSettings(
     jobPollMs: Int = 1000,
     tilesTone: String = "light",
     docsUrl: String = "",
-    baseMapSource: String = "auto"
+    baseMapSource: String = "auto",
+    mapStart: UiMapStartSettings = UiMapStartSettings("last", 37.0, 30.0, 5, "Anatolia")
 ) derives ConfigReader
 
 /** `histmersion query` (plan §5.2 stream 2.8): the read-only SQL escape hatch's safety rails.
@@ -402,6 +406,8 @@ final case class BasemapBathymetryConfig(url: String, maxZoom: Int, requestGapMs
 final case class BasemapGebcoConfig(url: String, tileDegrees: Int, maxZoom: Int, attribution: String) derives ConfigReader
 
 final case class ConfigReloadConfig(watch: Boolean, watchDebounceMs: Int, drainSeconds: Int) derives ConfigReader
+/** The first-run setup (`setup`): `completed` once it was finished or skipped. */
+final case class SetupConfig(completed: Boolean) derives ConfigReader
 
 /** The native bundle: when `enabled`, the server itself runs the bundled PostgreSQL and
   * OCR converter as child processes (`com.histmersion.server.Supervisor`). `home` is the bundle root holding
@@ -563,7 +569,8 @@ final case class AppConfig(
     media: MediaConfig,
     events: EventsConfig,
     config: ConfigReloadConfig,
-    basemap: BasemapConfig
+    basemap: BasemapConfig,
+    setup: SetupConfig = SetupConfig(completed = false)
 ) derives ConfigReader
 
 object AppConfig:
