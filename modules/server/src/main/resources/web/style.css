@@ -307,7 +307,7 @@ code, kbd, pre, samp { font-family:var(--font-mono); }
 .tab-count { margin-left:var(--space-2); color:var(--ink3); font-weight:var(--fw-normal); font-variant-numeric:tabular-nums; }
 .hit { position:relative; }
 /* a list row's own actions (bookmark, new tab): a column of the row itself, at its right and as tall as it,
-   lit with the row's hover and focus — never floated into the next row (#7781) */
+   lit with the row's hover and focus — never floated into the next row, where it looked like the next row's */
 .has-actions { display:grid; grid-template-columns:minmax(0, 1fr) auto; column-gap:var(--space-2); align-items:start; }
 .has-actions > :not(.row-actions) { grid-column:1; min-width:0; }
 .has-actions > .row-actions { grid-column:2; grid-row:1 / span 24; align-self:stretch; display:flex; flex-direction:column;
@@ -1616,7 +1616,7 @@ img.is-zoomable { cursor:zoom-in; }
   --tap:44px; --pad:10px; --fs:15px; --fs-small:13px;
   --sheet-w:min(var(--sidebar-w, 480px), 100vw);
 }
-/* five tabs and their counts across the side sheet (#7780): the tablet's touch height, the desktop's type */
+/* five tabs and their counts across the side sheet: the tablet's touch height, the desktop's type */
 [data-layout="narrow"][data-tablet] .results-panel .tabs .tab { font-size:var(--fs-sm); padding:0 var(--space-3); }
 [data-layout="narrow"][data-tablet] .sidebar-resize { display:block; }
 [data-layout="narrow"][data-tablet] .mb-search { flex:0 1 420px; width:auto; }

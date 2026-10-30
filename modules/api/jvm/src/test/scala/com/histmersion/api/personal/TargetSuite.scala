@@ -18,7 +18,7 @@ class TargetSuite extends munit.FunSuite:
     assert(Target.check(Target(ItemKind.View, view = Some(ViewState("#a=1"))), ItemKind.Notable, "note").isLeft)
     assertEquals(Target.check(Target(ItemKind.View, view = Some(ViewState("#a=1"))), ItemKind.Bookmarkable, "bookmark")
       .map(_.view.map(v => v.value: String)), Right(Some("a=1")))
-    assert(Target.check(Target(ItemKind.View, view = Some(ViewState("a" * 8001))), ItemKind.Bookmarkable, "bookmark").isLeft)
+    assert(Target.check(Target(ItemKind.View, view = Some(ViewState("a" * 8193))), ItemKind.Bookmarkable, "bookmark").isLeft)
 
   test("where a target is, in words"):
     assertEquals(Target.where(point), "37.73° N, 22.75° W · 1300 BCE–1100 BCE")

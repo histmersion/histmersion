@@ -3042,7 +3042,7 @@ test('#4431: at tablet widths the map keeps most of the screen, and every panel 
       await page.locator('.wm-window').waitFor({ state: 'detached' });
       // the list: a sheet at the side, pulled up by its handle and back down
       const peek = await box('.sidebar');
-      // as wide as the results column (#7780: its five tabs and their counts fit), never two thirds of the screen
+      // as wide as the results column (its five tabs and their counts fit), never two thirds of the screen
       assert.ok(peek.r >= viewport.width - 1 && peek.w <= Math.min(500, viewport.width * 0.65),
         `${at}: the list's sheet at the right: ${JSON.stringify(peek)}`);
       await page.locator('.sheet-handle').click();
