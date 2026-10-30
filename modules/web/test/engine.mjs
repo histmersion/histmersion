@@ -41,6 +41,10 @@ export function launchChromiumWithout(...switches) {
   * setup NOT due, so a test server with an empty settings file opens on the page a test asks for, not on the
   * setup. `target`: a page or a context (register it after a catch-all route: the newest route answers first). */
 export async function configOverride(target, over = {}) {
+  // and, unless a test asks for the setup, this tab "left the setup" (the app's own sessionStorage mark): a route a
+  // test adds later for /api/config answers with the server's setupDue, and still no page is sent to the setup
+  if (over.setupDue !== true)
+    await target.addInitScript(() => { try { sessionStorage.setItem('histmersion.setupLeft', '1'); } catch { /* none */ } });
   await target.route(url => new URL(url).pathname === '/api/config', async route => {
     const res = await route.fetch();
     await route.fulfill({ response: res, json: { ...(await res.json()), setupDue: false, ...over } });
