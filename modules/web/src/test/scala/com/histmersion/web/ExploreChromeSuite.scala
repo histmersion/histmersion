@@ -6,9 +6,10 @@ import com.histmersion.web.ui.SidebarTab
 
 import scala.scalajs.js
 
-/** Explore's chrome (the redesign's phase 3), its pure parts: the filter panel's fold and count, the layers
-  * button, the timeline's speeds in words, the results' tabs, the detail's page and kind, the credits' fold,
-  * the places list's lines, and the sites and events of no known date as the tiles mark them. */
+/** Explore's chrome (the redesign's phase 3), its pure parts: the filter panel's fold and count, the layers button, the
+  * timeline's speeds in words, the results' tabs, the detail's page and kind, the credits' fold, the places list's
+  * lines, and the sites and events of no known date as the tiles mark them.
+  */
 class ExploreChromeSuite extends munit.FunSuite:
 
   private def feature(lat: Double, lon: Double, props: (String, js.Any)*): TilePointFeature =
@@ -34,8 +35,10 @@ class ExploreChromeSuite extends munit.FunSuite:
     assertEquals(ViewportToggle.layersLabel(2, ViewportToggle.LayerCount), "Layers · 2 of 6 on")
 
   test("playback speeds read in plain words"):
-    assertEquals(TimelinePlayback.Speeds.map(TimelinePlayback.speedWords),
-      List("Very slow", "Slow", "Normal speed", "Fast", "Very fast"))
+    assertEquals(
+      TimelinePlayback.Speeds.map(TimelinePlayback.speedWords),
+      List("Very slow", "Slow", "Normal speed", "Fast", "Very fast")
+    )
 
   test("the results' tabs: five, a kept key back to its tab, an old tree tab to the sources"):
     assertEquals(SidebarTab.values.toList.map(_.label), List("Sources", "Articles", "Events", "Places", "Pictures"))
@@ -64,7 +67,10 @@ class ExploreChromeSuite extends munit.FunSuite:
 
   test("the places list: the count line on the map and everywhere; a site's note says when its date is unknown"):
     assertEquals(MapLists.countLine(3, 3, "place", "places", onMap = true), "3 places on the map")
-    assertEquals(MapLists.countLine(40, 312, "place", "places", onMap = true), "312 places on the map · 40 listed, zoom in to list the rest")
+    assertEquals(
+      MapLists.countLine(40, 312, "place", "places", onMap = true),
+      "312 places on the map · 40 listed, zoom in to list the rest"
+    )
     assertEquals(MapLists.countLine(1, 1, "picture", "pictures", onMap = false), "1 picture")
     val site = SitePoint(Some("s1"), "Tower", "site", Some("tower"), None, 37, 22, None, undated = true)
     assert(MapLists.siteNote(site).endsWith("date unknown"), MapLists.siteNote(site))
@@ -76,9 +82,15 @@ class ExploreChromeSuite extends munit.FunSuite:
     assert(PointKinds.Sites.zIndex(s) < PointKinds.Sites.zIndex(s.copy(undated = false)))
     assertEquals(PointKinds.Sites.member(s).undated, 1)
     assert(!TileDecode.site(feature(37, 22, "id" -> "s2", "label" -> "Dated")).get.undated)
-    val c = TileDecode.cell(feature(10, 20, "k" -> "c4/1/2", "n" -> 12, "u" -> 5, "w" -> 19, "s" -> 9, "e" -> 21, "nn" -> 11), DotKind.Site)
+    val c = TileDecode.cell(
+      feature(10, 20, "k" -> "c4/1/2", "n" -> 12, "u" -> 5, "w" -> 19, "s" -> 9, "e" -> 21, "nn" -> 11),
+      DotKind.Site
+    )
     assertEquals(c.undated, 5)
-    assertEquals(DotCluster.summary(DotCluster.Contents(List(CellKind(DotKind.Site).member(c)))), "12 sites, 5 with no known date")
+    assertEquals(
+      DotCluster.summary(DotCluster.Contents(List(CellKind(DotKind.Site).member(c)))),
+      "12 sites, 5 with no known date"
+    )
     assertEquals(DotCluster.summary(Map(DotKind.Site -> 3), 0), "3 sites")
 
   test("an event with no known date is drawn undated, beneath the dated"):

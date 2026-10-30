@@ -16,21 +16,26 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 import scala.jdk.CollectionConverters.*
 
-/** CORE's two uses — the acquisition chain's `core` step and the new-source search's `core` index — over
-  * ONE key and ONE budget, against a stub CORE on a loopback port (never the real one): a 429 with its
-  * retry time, `X-RateLimit-Remaining: 0`, the per-minute pace, the daily budget and the searches' share,
-  * the budget kept across a restart, and the key resolved from a (fake) vault reference. */
+/** CORE's two uses — the acquisition chain's `core` step and the new-source search's `core` index — over ONE key and
+  * ONE budget, against a stub CORE on a loopback port (never the real one): a 429 with its retry time,
+  * `X-RateLimit-Remaining: 0`, the per-minute pace, the daily budget and the searches' share, the budget kept across a
+  * restart, and the key resolved from a (fake) vault reference.
+  */
 class CoreBudgetSuite extends munit.FunSuite:
 
   private val t0 = Instant.parse("2026-10-26T18:50:00Z")
 
-  /** What the stub CORE answers to the next `search/works` request; an empty script answers 200 with
-    * no results. */
-  private final case class Reply(code: Int, headers: Map[String, String] = Map.empty, body: String = """{"results":[]}""")
+  /** What the stub CORE answers to the next `search/works` request; an empty script answers 200 with no results.
+    */
+  final private case class Reply(
+      code: Int,
+      headers: Map[String, String] = Map.empty,
+      body: String = """{"results":[]}"""
+  )
 
-  private final class StubCore:
-    val script  = ConcurrentLinkedQueue[Reply]()
-    val asked   = ConcurrentLinkedQueue[(String, String)]() // (q, Authorization) of each search/works request
+  final private class StubCore:
+    val script = ConcurrentLinkedQueue[Reply]()
+    val asked = ConcurrentLinkedQueue[(String, String)]() // (q, Authorization) of each search/works request
     private val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
     private def reply(ex: HttpExchange, r: Reply): Unit =
       r.headers.foreach((k, v) => ex.getResponseHeaders.add(k, v))
@@ -38,32 +43,62 @@ class CoreBudgetSuite extends munit.FunSuite:
       ex.sendResponseHeaders(r.code, b.length.toLong)
       ex.getResponseBody.write(b)
       ex.close()
-    server.createContext("/v3/search/works/", (ex: HttpExchange) =>
-      val q = ex.getRequestURI.getRawQuery.split("&").collectFirst { case p if p.startsWith("q=") =>
-        java.net.URLDecoder.decode(p.drop(2), "UTF-8") }.getOrElse("")
-      asked.add(q -> Option(ex.getRequestHeaders.getFirst("Authorization")).getOrElse(""))
-      reply(ex, Option(script.poll()).getOrElse(Reply(200))))
-    server.createContext("/files/paper.pdf", (ex: HttpExchange) => reply(ex, Reply(200, body = "%PDF-1.4 a stub paper " + "x" * 2048)))
+    server.createContext(
+      "/v3/search/works/",
+      (ex: HttpExchange) =>
+        val q = ex.getRequestURI.getRawQuery
+          .split("&")
+          .collectFirst {
+            case p if p.startsWith("q=") =>
+              java.net.URLDecoder.decode(p.drop(2), "UTF-8")
+          }
+          .getOrElse("")
+        asked.add(q -> Option(ex.getRequestHeaders.getFirst("Authorization")).getOrElse(""))
+        reply(ex, Option(script.poll()).getOrElse(Reply(200)))
+    )
+    server.createContext(
+      "/files/paper.pdf",
+      (ex: HttpExchange) => reply(ex, Reply(200, body = "%PDF-1.4 a stub paper " + "x" * 2048))
+    )
     server.start()
     val base: String = s"http://127.0.0.1:${server.getAddress.getPort}"
     def stop(): Unit = server.stop(0)
-    def found: Reply = Reply(200, Map("X-RateLimit-Limit" -> "25", "X-RateLimit-Remaining" -> "20"),
-      s"""{"results":[{"doi":"10.1/x","title":"A paper","yearPublished":2026,"downloadUrl":"$base/files/paper.pdf"}]}""")
+    def found: Reply = Reply(
+      200,
+      Map("X-RateLimit-Limit" -> "25", "X-RateLimit-Remaining" -> "20"),
+      s"""{"results":[{"doi":"10.1/x","title":"A paper","yearPublished":2026,"downloadUrl":"$base/files/paper.pdf"}]}"""
+    )
 
   private def withCore(body: StubCore => Unit): Unit =
     val core = StubCore()
-    try body(core) finally core.stop()
+    try body(core)
+    finally core.stop()
 
   private val base = AppConfig.load().acquire
 
-  private def acquire(core: StubCore, key: String = "", perMinute: Int = 20, daily: Int = 900, searches: Int = 600,
-      maxWait: Int = 30): AcquireConfig =
-    base.copy(core = base.core.copy(url = s"${core.base}/v3", apiKey = key, perMinute = perMinute, dailyTokens = daily,
-      searchDailyTokens = searches, maxWaitSeconds = maxWait, exhaustedPauseSeconds = 60))
+  private def acquire(
+      core: StubCore,
+      key: String = "",
+      perMinute: Int = 20,
+      daily: Int = 900,
+      searches: Int = 600,
+      maxWait: Int = 30
+  ): AcquireConfig =
+    base.copy(core =
+      base.core.copy(
+        url = s"${core.base}/v3",
+        apiKey = key,
+        perMinute = perMinute,
+        dailyTokens = daily,
+        searchDailyTokens = searches,
+        maxWaitSeconds = maxWait,
+        exhaustedPauseSeconds = 60
+      )
+    )
 
   /** A clock the test moves; `sleep` moves it too (and is recorded), so nothing waits. */
-  private final class Clock:
-    val now   = AtomicReference(t0)
+  final private class Clock:
+    val now = AtomicReference(t0)
     val slept = ConcurrentLinkedQueue[Long]()
     def advance(seconds: Long): Unit = now.updateAndGet(_.plusSeconds(seconds))
     def budget(): CoreBudget = CoreBudget(() => now.get, ms => { slept.add(ms); now.updateAndGet(_.plusMillis(ms)) })
@@ -73,20 +108,40 @@ class CoreBudgetSuite extends munit.FunSuite:
     def memo[A](key: String)(compute: => A): A = m.getOrElseUpdate(key, compute).asInstanceOf[A]
     val log: PluginLog = new PluginLog { def info(message: String) = (); def warn(message: String) = () }
 
-  private def generation(cfg: AcquireConfig, budget: CoreBudget, user: String = "", env: Map[String, String] = Map.empty,
-      extra: List[com.histmersion.plugin.Plugin] = Nil): Generation =
+  private def generation(
+      cfg: AcquireConfig,
+      budget: CoreBudget,
+      user: String = "",
+      env: Map[String, String] = Map.empty,
+      extra: List[com.histmersion.plugin.Plugin] = Nil
+  ): Generation =
     val http = SttpHttp(cfg, tries = 1)
-    val plugins = extra ++ BuiltinFetchers.plugins(cfg, () => http, () => fail("openalex asked"), () => fail("archive asked"), budget)
-    PluginHost.build(plugins, ConfigFactory.parseString(user), ConfigFactory.parseMap(env.asJava),
-      Plugins.services(() => new PluginHttp { def get(u: String, h: Map[String, String]) = Left("offline") },
-        ConfigFactory.parseMap(env.asJava)))
+    val plugins = extra ++ BuiltinFetchers.plugins(
+      cfg,
+      () => http,
+      () => fail("openalex asked"),
+      () => fail("archive asked"),
+      budget
+    )
+    PluginHost.build(
+      plugins,
+      ConfigFactory.parseString(user),
+      ConfigFactory.parseMap(env.asJava),
+      Plugins.services(
+        () => new PluginHttp { def get(u: String, h: Map[String, String]) = Left("offline") },
+        ConfigFactory.parseMap(env.asJava)
+      )
+    )
 
   private val work = WorkKey(doi = Some(Doi("10.1/x")))
 
   private def lookup(g: Generation): Fetch = g.registries.sourceFetchers("core").fetch(work, Ctx)
 
   private def coreIndex(cfg: AcquireConfig, g: Generation, budget: CoreBudget): Option[ScholarlyIndex] =
-    Indexes.of(cfg, SttpHttp(cfg, tries = 1), CoreFetcher.key(g.registries.sourceFetchers), budget)._1.find(_.name == "core")
+    Indexes
+      .of(cfg, SttpHttp(cfg, tries = 1), CoreFetcher.key(g.registries.sourceFetchers), budget)
+      ._1
+      .find(_.name == "core")
 
   private def missWhy(f: Fetch): String = f match
     case Fetch.Miss(why) => why
@@ -94,12 +149,21 @@ class CoreBudgetSuite extends munit.FunSuite:
 
   test("a 429 with X-RateLimit-Retry-After: the chain goes on without core, which is not asked again until that time"):
     withCore { core =>
-      val clock  = Clock()
+      val clock = Clock()
       val budget = clock.budget()
-      val cfg    = acquire(core, key = "k-host")
-      val g      = generation(cfg, budget)
-      core.script.add(Reply(429, Map("X-RateLimit-Limit" -> "25", "X-RateLimit-Remaining" -> "0",
-        "X-RateLimit-Retry-After" -> "2026-10-26T18:52:11+0000"), """{"message":"Too many requests"}"""))
+      val cfg = acquire(core, key = "k-host")
+      val g = generation(cfg, budget)
+      core.script.add(
+        Reply(
+          429,
+          Map(
+            "X-RateLimit-Limit" -> "25",
+            "X-RateLimit-Remaining" -> "0",
+            "X-RateLimit-Retry-After" -> "2026-10-26T18:52:11+0000"
+          ),
+          """{"message":"Too many requests"}"""
+        )
+      )
       val next = new SourceFetcher:
         val access = com.histmersion.plugin.Access.Open
         def fetch(w: WorkKey, ctx: FetchContext) = Fetch.Miss("nothing here either")
@@ -107,8 +171,10 @@ class CoreBudgetSuite extends munit.FunSuite:
       val out = chain.fetchWorkExplained(work, legalOnly = true)
       // the job's report says why core had nothing, and the next step was asked
       assertEquals(out.answers.map(_.fetcher), List("core", "next"))
-      assert(out.answers.head.why.startsWith("CORE not asked: CORE answered HTTP 429; not asked until 2026-10-26T18:52:11Z"),
-        out.answers.head.why)
+      assert(
+        out.answers.head.why.startsWith("CORE not asked: CORE answered HTTP 429; not asked until 2026-10-26T18:52:11Z"),
+        out.answers.head.why
+      )
       assertEquals(core.asked.size, 1)
       // until then neither use asks CORE
       clock.advance(60)
@@ -130,10 +196,10 @@ class CoreBudgetSuite extends munit.FunSuite:
 
   test("X-RateLimit-Remaining 0 on an answer: CORE is not asked for exhausted-pause-seconds"):
     withCore { core =>
-      val clock  = Clock()
+      val clock = Clock()
       val budget = clock.budget()
-      val cfg    = acquire(core, key = "k-host")
-      val g      = generation(cfg, budget)
+      val cfg = acquire(core, key = "k-host")
+      val g = generation(cfg, budget)
       core.script.add(Reply(200, Map("X-RateLimit-Limit" -> "25", "X-RateLimit-Remaining" -> "0")))
       assertEquals(missWhy(lookup(g)), "core has no copy of 10.1/x")
       assert(missWhy(lookup(g)).contains("X-RateLimit-Remaining 0 of 25"))
@@ -145,9 +211,9 @@ class CoreBudgetSuite extends munit.FunSuite:
 
   test("pacing: at most per-minute calls in 60 s — a call waits its slot, or is not made when that is too long"):
     withCore { core =>
-      val clock  = Clock()
+      val clock = Clock()
       val budget = clock.budget()
-      val g      = generation(acquire(core, key = "k", perMinute = 2, maxWait = 30), budget)
+      val g = generation(acquire(core, key = "k", perMinute = 2, maxWait = 30), budget)
       lookup(g); clock.advance(5); lookup(g); clock.advance(5)
       assert(missWhy(lookup(g)).contains("acquire.core.max-wait-seconds"))
       assertEquals(core.asked.size, 2)
@@ -160,11 +226,11 @@ class CoreBudgetSuite extends munit.FunSuite:
 
   test("the daily budget: searches stop at their share, PDF lookups keep the rest; both stop at daily-tokens"):
     withCore { core =>
-      val clock  = Clock()
+      val clock = Clock()
       val budget = clock.budget()
-      val cfg    = acquire(core, key = "k", daily = 3, searches = 1)
-      val g      = generation(cfg, budget)
-      val idx    = coreIndex(cfg, g, budget).get
+      val cfg = acquire(core, key = "k", daily = 3, searches = 1)
+      val g = generation(cfg, budget)
+      val idx = coreIndex(cfg, g, budget).get
       assert(idx.search("bronze age", LocalDate.of(2026, 1, 1), 10).isRight)
       assert(idx.unavailable.exists(_.contains("search-daily-tokens")), idx.unavailable.toString)
       assert(idx.search("bronze age", LocalDate.of(2026, 1, 1), 10).left.exists(_.contains("search-daily-tokens")))
@@ -192,7 +258,10 @@ class CoreBudgetSuite extends munit.FunSuite:
       core.script.add(Reply(429, Map("X-RateLimit-Retry-After" -> "2026-10-26T19:30:00+0000")))
       lookup(generation(cfg, first))
       lookup(generation(cfg, first))
-      assertEquals(saved.get.map(s => (s.lookupTokens, s.block.map(_.until))), Some((2, Some(Instant.parse("2026-10-26T19:30:00Z")))))
+      assertEquals(
+        saved.get.map(s => (s.lookupTokens, s.block.map(_.until))),
+        Some((2, Some(Instant.parse("2026-10-26T19:30:00Z"))))
+      )
       // a new process: a fresh budget, the same store
       val second = clock.budget()
       second.persistTo(store)
@@ -204,10 +273,14 @@ class CoreBudgetSuite extends munit.FunSuite:
   test("ONE setting enables both uses: oa-core's api-key as a vault reference keys the lookup AND the search"):
     withCore { core =>
       val budget = Clock().budget()
-      val cfg    = acquire(core) // no acquire.core.api-key
-      val g = generation(cfg, budget, extra = List(MakerPlugin()),
+      val cfg = acquire(core) // no acquire.core.api-key
+      val g = generation(
+        cfg,
+        budget,
+        extra = List(MakerPlugin()),
         user = """histmersion.plugins.maker { enabled = true, vault = "fakevault" }
-                 |histmersion.plugins.oa-core.api-key = "fakevault:Work/Histmersion/CORE#password"""".stripMargin)
+                 |histmersion.plugins.oa-core.api-key = "fakevault:Work/Histmersion/CORE#password"""".stripMargin
+      )
       assert(g.report.ok, g.report.toString)
       assertEquals(CoreFetcher.key(g.registries.sourceFetchers), Some("v(Work/Histmersion/CORE#password)"))
       lookup(g)
@@ -220,8 +293,8 @@ class CoreBudgetSuite extends munit.FunSuite:
   test("the plain acquire.core.api-key still enables both; with no key at all neither asks CORE"):
     withCore { core =>
       val budget = Clock().budget()
-      val keyed  = acquire(core, key = "k-plain")
-      val g      = generation(keyed, budget)
+      val keyed = acquire(core, key = "k-plain")
+      val g = generation(keyed, budget)
       lookup(g)
       coreIndex(keyed, g, budget).getOrElse(fail("no core index")).search("q", LocalDate.of(2026, 1, 1), 10)
       assertEquals(core.asked.asScala.toList.map(_._2), List("Bearer k-plain", "Bearer k-plain"))

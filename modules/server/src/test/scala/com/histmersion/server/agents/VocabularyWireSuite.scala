@@ -5,9 +5,10 @@ import com.histmersion.domain.CompileArticle.SourceFact
 import com.histmersion.values.{DraftMode, GoalLinkKind, ScheduleKind, SourceStatus}
 import io.circe.syntax.*
 
-/** The vocabularies live in `values` with no codec; their wire instances are api's `VocabularyCodecs`. A
-  * record the server derives a codec for must find those — a vocabulary encoded any other way (by case
-  * name, as an object) would change what a checkpointed run reads back. */
+/** The vocabularies live in `values` with no codec; their wire instances are api's `VocabularyCodecs`. A record the
+  * server derives a codec for must find those — a vocabulary encoded any other way (by case name, as an object) would
+  * change what a checkpointed run reads back.
+  */
 class VocabularyWireSuite extends munit.FunSuite:
 
   test("a checkpointed record spells a vocabulary as the wire does"):

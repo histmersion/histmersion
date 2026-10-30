@@ -6,12 +6,12 @@ import com.histmersion.domain.*
 import com.histmersion.config.given
 import com.histmersion.domain.given
 
-
 import io.circe.parser.decode
 import io.circe.syntax.*
 
-/** An event's scale (#1440): parsing, the defaults from the kind, the sub-event rule, the place's kind
-  * and the geometry; the point an event can be given; the years it covers on the map; the Markdown. */
+/** An event's scale (#1440): parsing, the defaults from the kind, the sub-event rule, the place's kind and the
+  * geometry; the point an event can be given; the years it covers on the map; the Markdown.
+  */
 class EventScaleSuite extends munit.FunSuite:
 
   test("parse: local and regional are stored, auto clears, anything else is refused"):
@@ -23,10 +23,22 @@ class EventScaleSuite extends munit.FunSuite:
 
   test("the kind decides first: battle, siege, destruction local; migration, change, era, war regional"):
     List("battle", "siege", "destruction", "Destruction", "construction", "founding").foreach(k =>
-      assertEquals(EventScale.ofKind(k), Some(EventScale.Local), k))
-    List("migration", "technological_change", "Technological change", "cultural-shift", "era", "diplomatic_era",
-      "war", "invasion", "collapse", "polity_formation", "period", "reign").foreach(k =>
-      assertEquals(EventScale.ofKind(k), Some(EventScale.Regional), k))
+      assertEquals(EventScale.ofKind(k), Some(EventScale.Local), k)
+    )
+    List(
+      "migration",
+      "technological_change",
+      "Technological change",
+      "cultural-shift",
+      "era",
+      "diplomatic_era",
+      "war",
+      "invasion",
+      "collapse",
+      "polity_formation",
+      "period",
+      "reign"
+    ).foreach(k => assertEquals(EventScale.ofKind(k), Some(EventScale.Regional), k))
     List("event", "natural_disaster", "treaty", "").foreach(k => assertEquals(EventScale.ofKind(k), None, k))
 
   test("the place's kind: a site or feature is local, a region, polity or people regional"):
@@ -41,18 +53,29 @@ class EventScaleSuite extends munit.FunSuite:
     assertEquals(EventScale.ofGeometry("LINESTRING"), None)
 
   test("effective: stated, then kind, then own geometry, then place kind, then sub-event, then local"):
-    def eff(stated: Option[String] = None, kind: String = "event", parent: Boolean = false,
-        place: Option[String] = None, geom: Option[String] = None) =
+    def eff(
+        stated: Option[String] = None,
+        kind: String = "event",
+        parent: Boolean = false,
+        place: Option[String] = None,
+        geom: Option[String] = None
+    ) =
       EventScale.effective(stated, kind, parent, place, geom)
     assertEquals(eff(stated = Some("regional"), kind = "battle"), "regional")
     assertEquals(eff(stated = Some("nonsense"), kind = "battle"), "local", "an unparsable stated value is ignored")
     assertEquals(eff(kind = "battle", place = Some("region")), "local", "a battle at a region is still local")
     assertEquals(eff(kind = "war", place = Some("site")), "regional", "a war at its capital is still regional")
     assertEquals(eff(kind = "event", parent = true), "local", "a part of a larger event, nothing else said")
-    assertEquals(eff(kind = "natural_disaster", parent = true, place = Some("region")), "regional",
-      "a drought within a collapse, at a region, is regional")
-    assertEquals(eff(kind = "event", place = Some("region"), geom = Some("POINT")), "local",
-      "its own point is what the map draws it at")
+    assertEquals(
+      eff(kind = "natural_disaster", parent = true, place = Some("region")),
+      "regional",
+      "a drought within a collapse, at a region, is regional"
+    )
+    assertEquals(
+      eff(kind = "event", place = Some("region"), geom = Some("POINT")),
+      "local",
+      "its own point is what the map draws it at"
+    )
     assertEquals(eff(kind = "natural_disaster", place = Some("site")), "local")
     assertEquals(eff(kind = "natural_disaster", place = Some("region")), "regional")
     assertEquals(eff(kind = "event", geom = Some("POLYGON")), "regional")
@@ -107,20 +130,53 @@ class EventScaleSuite extends munit.FunSuite:
     val s = EventSummary("e", "E", "battle", TimeSpan(), "attested", scale = "local", scaleStated = true)
     assertEquals(decode[EventSummary](s.asJson.noSpaces), Right(s))
     // an older client's summary without the fields still reads
-    assertEquals(decode[EventSummary]("""{"id":"e","label":"E","kind":"battle","timeSpan":{},"historicity":"attested"}""")
-      .map(_.scale), Right("local"))
+    assertEquals(
+      decode[EventSummary]("""{"id":"e","label":"E","kind":"battle","timeSpan":{},"historicity":"attested"}""")
+        .map(_.scale),
+      Right("local")
+    )
 
   test("Markdown: the list line and the detail show the scale and whether it is stated"):
-    val e = EventSummary("kadesh", "Battle of Kadesh", "battle", TimeSpan(Some(-1274), None, None, Some(-1274)), "attested",
-      scale = "local", scaleStated = false)
+    val e = EventSummary(
+      "kadesh",
+      "Battle of Kadesh",
+      "battle",
+      TimeSpan(Some(-1274), None, None, Some(-1274)),
+      "attested",
+      scale = "local",
+      scaleStated = false
+    )
     assert(Markdown.eventList(EventList(1, List(e))).contains("_(battle · local · attested ·"))
     assert(Markdown.event(EventDetail(e)).contains("**Scale:** local (derived)"))
-    assert(Markdown.event(EventDetail(e.copy(scale = "regional", scaleStated = true))).contains("**Scale:** regional (stated)"))
+    assert(
+      Markdown
+        .event(EventDetail(e.copy(scale = "regional", scaleStated = true)))
+        .contains("**Scale:** regional (stated)")
+    )
 
   test("a bundle event that states no scale has the rev it had before V078"):
-    val ev = BundleEvent(java.util.UUID.fromString("00000000-0000-0000-0000-000000000001"),
-      java.util.UUID.fromString("00000000-0000-0000-0000-000000000002"), "e", "E", "battle", None, None, None, None,
-      "attested", None, None, None, None, None, None, Nil, Nil, Nil, "2026-01-01T00:00:00Z")
+    val ev = BundleEvent(
+      java.util.UUID.fromString("00000000-0000-0000-0000-000000000001"),
+      java.util.UUID.fromString("00000000-0000-0000-0000-000000000002"),
+      "e",
+      "E",
+      "battle",
+      None,
+      None,
+      None,
+      None,
+      "attested",
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      Nil,
+      Nil,
+      Nil,
+      "2026-01-01T00:00:00Z"
+    )
     val line = BundleFormat.stamp(ev).line
     assert(!line.contains("scale"), line)
     assert(BundleFormat.stamp(ev.copy(scale = Some("regional"))).line.contains("\"scale\":\"regional\""))

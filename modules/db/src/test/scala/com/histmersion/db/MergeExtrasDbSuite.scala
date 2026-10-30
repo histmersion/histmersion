@@ -12,23 +12,27 @@ import javax.sql.DataSource
 import com.histmersion.values.{IssueKind, PlaceKind, SourceStatus}
 import io.scalaland.chimney.dsl.*
 
-/** What a bundle carries and a merge decides beyond M5, against real Postgres
-  * (docs/research-merge-import.md §7.8): a collection's own places and named periods (V052) and not
-  * its seeds, a goal's plan, links and schedules (#881, V054), old article slugs, events matched across
-  * two ids, label renames that keep an alias (V053), and what `merge list | show | ledger` read back.
-  * Two databases of their own per case, as `MergeSuite`. Skipped without HISTMERSION_TEST_DB_URL. */
+/** What a bundle carries and a merge decides beyond M5, against real Postgres (docs/research-merge-import.md §7.8): a
+  * collection's own places and named periods (V052) and not its seeds, a goal's plan, links and schedules (#881, V054),
+  * old article slugs, events matched across two ids, label renames that keep an alias (V053), and what
+  * `merge list | show | ledger` read back. Two databases of their own per case, as `MergeSuite`. Skipped without
+  * HISTMERSION_TEST_DB_URL.
+  */
 class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
-  private val testDb                = TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
-  private lazy val cfg              = AppConfig.load()
-  private lazy val merge            = cfg.merge.transformInto[MergeSettings]
-  private lazy val admin            = testPool(cfg.db.copy(url = testDb.get))
-  private val tmp                   = Files.createTempDirectory("histmersion-merge-extras")
+  private lazy val cfg = AppConfig.load()
+  private lazy val merge = cfg.merge.transformInto[MergeSettings]
+  private lazy val admin = testPool(cfg.db.copy(url = testDb.get))
+  private val tmp = Files.createTempDirectory("histmersion-merge-extras")
 
   private def exec(ds: DataSource, stmt: String): Unit =
     val c = ds.getConnection
-    try { val st = c.createStatement(); try { val _ = st.execute(stmt) } finally st.close() }
-    finally c.close()
+    try {
+      val st = c.createStatement();
+      try { val _ = st.execute(stmt) }
+      finally st.close()
+    } finally c.close()
 
   private def fresh(n: String): DataSource =
     val ds = scratch(n)
@@ -51,35 +55,81 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
   private def entitiesOf(bundle: Path): BundleEntities =
     MergeState.withFile(bundle)(BundleReader.read(_, hashBlobs = false)).entities
 
-  private def planIn(ds: DataSource, bundle: Path, originals: Path, res: MergeResolutions = MergeResolutions()): MergePlan =
-    MergeState.planFile(ds, bundle, res, merge, Originals.inDir(originals), cfg.limits.chunkChars).fold(e => fail(e), identity)
+  private def planIn(
+      ds: DataSource,
+      bundle: Path,
+      originals: Path,
+      res: MergeResolutions = MergeResolutions()
+  ): MergePlan =
+    MergeState
+      .planFile(ds, bundle, res, merge, Originals.inDir(originals), cfg.limits.chunkChars)
+      .fold(e => fail(e), identity)
 
   private def importInto(ds: DataSource, bundle: Path, originals: Path): BundleImportResult =
-    BundleImport.run(ds, bundle, BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
-      BundleImport.Options(false, cfg.limits.chunkChars, cfg.places.pointToleranceKm), Originals.inDir(originals),
-      MergeResolutions(), merge).fold(e => fail(e), identity)
+    BundleImport
+      .run(
+        ds,
+        bundle,
+        BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
+        BundleImport.Options(false, cfg.limits.chunkChars, cfg.places.pointToleranceKm),
+        Originals.inDir(originals),
+        MergeResolutions(),
+        merge
+      )
+      .fold(e => fail(e), identity)
 
-  private def applyIn(ds: DataSource, bundle: Path, originals: Path, res: MergeResolutions = MergeResolutions()): MergeApplyResult =
+  private def applyIn(
+      ds: DataSource,
+      bundle: Path,
+      originals: Path,
+      res: MergeResolutions = MergeResolutions()
+  ): MergeApplyResult =
     val hash = planIn(ds, bundle, originals, res).planHash
-    BundleImport.apply(ds, bundle, BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
-      BundleImport.Options(dryRun = false, cfg.limits.chunkChars, cfg.places.pointToleranceKm), Originals.inDir(originals),
-      res, merge, hash, () => Right("stub.dump")).fold(e => fail(e), identity)
+    BundleImport
+      .apply(
+        ds,
+        bundle,
+        BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
+        BundleImport.Options(dryRun = false, cfg.limits.chunkChars, cfg.places.pointToleranceKm),
+        Originals.inDir(originals),
+        res,
+        merge,
+        hash,
+        () => Right("stub.dump")
+      )
+      .fold(e => fail(e), identity)
 
   private def count(ds: DataSource, q: String): Int = connect(ds)(Sql.raw(q).frag.query[Int].run().head)
-  private def text(ds: DataSource, q: String): Option[String] = connect(ds)(Sql.raw(q).frag.query[Option[String]].run().headOption.flatten)
+  private def text(ds: DataSource, q: String): Option[String] =
+    connect(ds)(Sql.raw(q).frag.query[Option[String]].run().headOption.flatten)
 
   private def site(id: String, label: String, lon: Double, lat: Double): PlaceInput =
-    PlaceInput(Place(id, label, PlaceKind.Site, Some(s"""{"type":"Point","coordinates":[$lon,$lat]}"""), Some(Period(-1650, -1180))),
-      List(PlaceName(label)))
+    PlaceInput(
+      Place(
+        id,
+        label,
+        PlaceKind.Site,
+        Some(s"""{"type":"Point","coordinates":[$lon,$lat]}"""),
+        Some(Period(-1650, -1180))
+      ),
+      List(PlaceName(label))
+    )
 
   test("places and periods: the collection's own travel and import; the seeds do not; the dataset marks which"):
     val (work, home) = (fresh("pw"), fresh("ph"))
-    val (sw, sh)     = (spool("pw"), spool("ph"))
+    val (sw, sh) = (spool("pw"), spool("ph"))
     val _ = PlaceRepo.upsertPlaces(work, List(site("zz_seed_site", "A seed site", 30.0, 39.0)), Dataset.Seed)
     val _ = PlaceRepo.upsertPlaces(work, List(site("zz_my_site", "My site", 34.6, 40.0)), Dataset.Local)
-    val _ = PeriodRepo.upsert(work, List(HistoricalPeriod("zz_my_period", "My period", Some("me"), Period(-1400, -1200))), Dataset.Local)
-    EventRepo.put(work, "zz_at_my_site", EventPut("At my site", "battle", TimeSpan(Some(-1300), None, None, Some(-1290)),
-      placeId = Some("zz_my_site")))
+    val _ = PeriodRepo.upsert(
+      work,
+      List(HistoricalPeriod("zz_my_period", "My period", Some("me"), Period(-1400, -1200))),
+      Dataset.Local
+    )
+    EventRepo.put(
+      work,
+      "zz_at_my_site",
+      EventPut("At my site", "battle", TimeSpan(Some(-1300), None, None, Some(-1290)), placeId = Some("zz_my_site"))
+    )
     val bundle = exportOf(work, sw)
     val es = entitiesOf(bundle)
     assertEquals(es.places.map(_.id), List("zz_my_site"))
@@ -104,11 +154,17 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
 
   test("places: one id with two geometries asks, and keep-right takes the bundle's; one place under another id folds"):
     val (work, home) = (fresh("qw"), fresh("qh"))
-    val (sw, sh)     = (spool("qw"), spool("qh"))
-    val _ = PlaceRepo.upsertPlaces(work, List(site("zz_ugarit", "Ugarit", 35.78, 35.60), site("work_troy", "Troy", 26.2389, 39.9575)),
-      Dataset.Local)
-    EventRepo.put(work, "zz_troy_burns", EventPut("Troy burns", "destruction", TimeSpan(Some(-1190), None, None, Some(-1180)),
-      placeId = Some("work_troy")))
+    val (sw, sh) = (spool("qw"), spool("qh"))
+    val _ = PlaceRepo.upsertPlaces(
+      work,
+      List(site("zz_ugarit", "Ugarit", 35.78, 35.60), site("work_troy", "Troy", 26.2389, 39.9575)),
+      Dataset.Local
+    )
+    EventRepo.put(
+      work,
+      "zz_troy_burns",
+      EventPut("Troy burns", "destruction", TimeSpan(Some(-1190), None, None, Some(-1180)), placeId = Some("work_troy"))
+    )
     val _ = PlaceRepo.upsertPlaces(home, List(site("zz_ugarit", "Ugarit", 35.70, 35.50)), Dataset.Local)
     val _ = PlaceRepo.upsertPlaces(home, List(site("pleiades_550595", "Troy", 26.2390, 39.9576)), Dataset.Seed)
     val bundle = exportOf(work, sw)
@@ -126,15 +182,43 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
 
   test("goals (#881): the plan, its approval time, the run cap, links and schedules travel; ours are kept on a merge"):
     val (work, home) = (fresh("gw"), fresh("gh"))
-    val (sw, sh)     = (spool("gw"), spool("gh"))
-    SourceRepo.upsert(work, Source("zzgoal2020_src", "Linked", List("A"), None, Some(2020), None, SourceStatus.Current,
-      Nil, Nil, Nil, None, None, None, None, None, None), cfg.limits.chunkChars)
+    val (sw, sh) = (spool("gw"), spool("gh"))
+    SourceRepo.upsert(
+      work,
+      Source(
+        "zzgoal2020_src",
+        "Linked",
+        List("A"),
+        None,
+        Some(2020),
+        None,
+        SourceStatus.Current,
+        Nil,
+        Nil,
+        Nil,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None
+      ),
+      cfg.limits.chunkChars
+    )
     GoalRepo.put(work, "zz_goal", GoalPut("A goal"))
     GoalLinkRepo.setPlan(work, "zz_goal", """{"goal":"zz_goal","rationale":"work's plan"}""")
     GoalLinkRepo.setBudget(work, "zz_goal", Some(BigDecimal("2.5")))
     assert(GoalLinkRepo.link(work, "zz_goal", LinkKind.Source, "zzgoal2020_src", Some("why")))
     assert(GoalLinkRepo.link(work, "zz_goal", LinkKind.Query, "hittite storm god", None))
-    GoalLinkRepo.setSchedule(work, "zz_goal", ScheduleKind.Currency, "@weekly", true, None, Some(java.time.Instant.now()))
+    GoalLinkRepo.setSchedule(
+      work,
+      "zz_goal",
+      ScheduleKind.Currency,
+      "@weekly",
+      true,
+      None,
+      Some(java.time.Instant.now())
+    )
     val bundle = exportOf(work, sw)
     val g = entitiesOf(bundle).goals.find(_.slug == "zz_goal").getOrElse(fail("no goal"))
     assert(g.planApprovedAt.isDefined && g.budgetUsd.contains(2.5), g.toString)
@@ -158,31 +242,62 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(p.info.exists(_.contains("its currency schedule differs")), p.info.mkString("\n"))
     val a = applyIn(home, again, sh)
     assert(a.applied, (a.problems ++ a.issues.map(_.title)).mkString("\n"))
-    assertEquals(GoalLinkRepo.refs(home, "zz_goal", LinkKind.Query).toSet, Set("hittite storm god", "ahhiyawa", "mycenae"))
+    assertEquals(
+      GoalLinkRepo.refs(home, "zz_goal", LinkKind.Query).toSet,
+      Set("hittite storm god", "ahhiyawa", "mycenae")
+    )
     assertEquals(GoalLinkRepo.schedule(home, "zz_goal", ScheduleKind.Currency).map(_.cron), Some("@daily"))
     assertEquals(a.replanChanges, Some(0))
 
   test("goals (phase 3): a watcher's sweeps travel as the goal's schedules (cron, budget); its state stays home"):
     val (work, sw) = (fresh("ww"), spool("ww"))
     GoalRepo.put(work, "zz_goal", GoalPut("A watched goal"))
-    assert(ManagerRepo.create(work, "watch:zz_goal", com.histmersion.api.Managers.Kind.Watch, Some("zz_goal"),
-      com.histmersion.api.Managers.State.Paused,
-      com.histmersion.api.Managers.ManagerConfig(sweeps = Some(List("acquisition")), budgetUsd = Some(0.3)), Some("@weekly"), None))
+    assert(
+      ManagerRepo.create(
+        work,
+        "watch:zz_goal",
+        com.histmersion.api.Managers.Kind.Watch,
+        Some("zz_goal"),
+        com.histmersion.api.Managers.State.Paused,
+        com.histmersion.api.Managers.ManagerConfig(sweeps = Some(List("acquisition")), budgetUsd = Some(0.3)),
+        Some("@weekly"),
+        None
+      )
+    )
     val g = entitiesOf(exportOf(work, sw)).goals.find(_.slug == "zz_goal").getOrElse(fail("no goal"))
-    assertEquals(g.schedules.map(_.map(x => (x.kind, x.cron, x.enabled, x.budgetUsd))),
-      Some(List(("acquisition", "@weekly", true, Some(0.3)))))
+    assertEquals(
+      g.schedules.map(_.map(x => (x.kind, x.cron, x.enabled, x.budgetUsd))),
+      Some(List(("acquisition", "@weekly", true, Some(0.3))))
+    )
 
   test("old article slugs travel; events under two ids that are one fold; merge list/show/ledger read it back"):
     val (work, home) = (fresh("aw"), fresh("ah"))
-    val (sw, sh)     = (spool("aw"), spool("ah"))
+    val (sw, sh) = (spool("aw"), spool("ah"))
     val _ = ArticleRepo.put(work, Article("zz_first_slug", "An article", "concept", "Text."))
     val _ = ArticleRepo.rename(work, "zz_first_slug", "zz_second_slug").fold(e => fail(e.message), identity)
     val _ = PlaceRepo.upsertPlaces(work, List(site("zz_kadesh", "Kadesh", 36.51, 34.56)), Dataset.Seed)
     val _ = PlaceRepo.upsertPlaces(home, List(site("zz_kadesh", "Kadesh", 36.51, 34.56)), Dataset.Seed)
-    EventRepo.put(work, "work_kadesh", EventPut("Battle of Kadesh", "battle", TimeSpan(Some(-1274), None, None, Some(-1274)),
-      placeId = Some("zz_kadesh"), description = Some("work's account")))
-    EventRepo.put(home, "kadesh_1274", EventPut("Battle of Kadesh", "battle", TimeSpan(Some(-1275), None, None, Some(-1274)),
-      placeId = Some("zz_kadesh")))
+    EventRepo.put(
+      work,
+      "work_kadesh",
+      EventPut(
+        "Battle of Kadesh",
+        "battle",
+        TimeSpan(Some(-1274), None, None, Some(-1274)),
+        placeId = Some("zz_kadesh"),
+        description = Some("work's account")
+      )
+    )
+    EventRepo.put(
+      home,
+      "kadesh_1274",
+      EventPut(
+        "Battle of Kadesh",
+        "battle",
+        TimeSpan(Some(-1275), None, None, Some(-1274)),
+        placeId = Some("zz_kadesh")
+      )
+    )
     val bundle = exportOf(work, sw)
     assertEquals(entitiesOf(bundle).articleAliases.map(_.alias), List("zz_first_slug"))
     val a = applyIn(home, bundle, sh)
@@ -226,10 +341,13 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
   // bundle's events that name the new id pointed at nothing
   test("a place renamed over there is followed: the new id here, the old one an alias, events and names follow"):
     val (work, home) = (fresh("prw"), fresh("prh"))
-    val (sw, sh)     = (spool("prw"), spool("prh"))
+    val (sw, sh) = (spool("prw"), spool("prh"))
     val _ = PlaceRepo.upsertPlaces(work, List(site("zz_old_site", "My site", 34.6, 40.0)), Dataset.Local)
-    EventRepo.put(work, "zz_at_site", EventPut("At my site", "battle", TimeSpan(Some(-1300), None, None, Some(-1290)),
-      placeId = Some("zz_old_site")))
+    EventRepo.put(
+      work,
+      "zz_at_site",
+      EventPut("At my site", "battle", TimeSpan(Some(-1300), None, None, Some(-1290)), placeId = Some("zz_old_site"))
+    )
     val first = importInto(home, exportOf(work, sw), sh)
     assert(first.applied, first.problems.mkString("\n"))
     // work renames the place: its event follows by key (V055)
@@ -250,14 +368,22 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
 
   test("a place renamed over there onto an id another place has here keeps ours; the bundle's events point at it"):
     val (work, home) = (fresh("pkw"), fresh("pkh"))
-    val (sw, sh)     = (spool("pkw"), spool("pkh"))
+    val (sw, sh) = (spool("pkw"), spool("pkh"))
     val _ = PlaceRepo.upsertPlaces(work, List(site("zz_old_site", "My site", 34.6, 40.0)), Dataset.Local)
     val first = importInto(home, exportOf(work, sw), sh)
     assert(first.applied, first.problems.mkString("\n"))
     val _ = PlaceRepo.upsertPlaces(home, List(site("zz_taken", "A seed site", 30.0, 39.0)), Dataset.Seed)
     assert(PlaceRepo.rename(work, "zz_old_site", "zz_taken").isRight)
-    EventRepo.put(work, "zz_at_taken", EventPut("At the renamed site", "battle", TimeSpan(Some(-1300), None, None, Some(-1290)),
-      placeId = Some("zz_taken")))
+    EventRepo.put(
+      work,
+      "zz_at_taken",
+      EventPut(
+        "At the renamed site",
+        "battle",
+        TimeSpan(Some(-1300), None, None, Some(-1290)),
+        placeId = Some("zz_taken")
+      )
+    )
     val bundle = exportOf(work, sw)
     val p = planIn(home, bundle, sh)
     assert(!p.issues.exists(_.kind == IssueKind.PlaceDiffers), p.issues.map(_.title).mkString("\n"))
@@ -271,7 +397,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
   // #890: the old labels of events, goals and places travel as the old article slugs do
   test("old event ids, goal slugs and place ids travel in a bundle, are written here, and keep resolving"):
     val (work, home) = (fresh("alw"), fresh("alh"))
-    val (sw, sh)     = (spool("alw"), spool("alh"))
+    val (sw, sh) = (spool("alw"), spool("alh"))
     val _ = PlaceRepo.upsertPlaces(work, List(site("zz_pl_before", "My site", 34.6, 40.0)), Dataset.Local)
     EventRepo.put(work, "zz_ev_before", EventPut("E", "battle"))
     GoalRepo.put(work, "zz_goal_before", GoalPut("G"))
@@ -303,7 +429,11 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
 
   test("place renames keep the old id as an alias: refused when taken, dropped when renamed back"):
     val ds = fresh("prn")
-    val _ = PlaceRepo.upsertPlaces(ds, List(site("zz_pl_a", "A", 30.0, 39.0), site("zz_pl_other", "Other", 31.0, 39.0)), Dataset.Local)
+    val _ = PlaceRepo.upsertPlaces(
+      ds,
+      List(site("zz_pl_a", "A", 30.0, 39.0), site("zz_pl_other", "Other", 31.0, 39.0)),
+      Dataset.Local
+    )
     assert(PlaceRepo.rename(ds, "zz_pl_a", "zz_pl_b").isRight)
     assertEquals(PlaceRepo.renamedTo(ds, "zz_pl_a"), Some("zz_pl_b"))
     assertEquals(PlaceRepo.get(ds, "zz_pl_b").map(_.place.label), Some("A"))
@@ -315,24 +445,35 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
 
   // #888: the apply jobs were kept in memory and lost on a restart
   test("merge apply jobs are rows: running, then done with the report; a restart turns a running one interrupted"):
-    val ds  = fresh("job")
-    val res = MergeApplyResult(java.util.UUID.randomUUID(), BundleInstance(java.util.UUID.randomUUID(), Some("work")),
-      applied = true, "abc123", notes = List("a note"))
+    val ds = fresh("job")
+    val res = MergeApplyResult(
+      java.util.UUID.randomUUID(),
+      BundleInstance(java.util.UUID.randomUUID(), Some("work")),
+      applied = true,
+      "abc123",
+      notes = List("a note")
+    )
     val a = JobRepo.startMergeApply(ds, "a" * 64, "abc123")
     assert(JobRepo.mergeApplyRunning(ds))
-    assertEquals(JobRepo.mergeApply(ds, a).map(j => (j.state, j.bundle, j.planHash)), Some((MergeJobState.Running, "a" * 64, "abc123")))
+    assertEquals(
+      JobRepo.mergeApply(ds, a).map(j => (j.state, j.bundle, j.planHash)),
+      Some((MergeJobState.Running, "a" * 64, "abc123"))
+    )
     JobRepo.finishMergeApply(ds, a, Right(res))
     assert(!JobRepo.mergeApplyRunning(ds))
     assertEquals(JobRepo.mergeApply(ds, a).map(j => (j.state, j.result)), Some((MergeJobState.Done, Some(res))))
     val b = JobRepo.startMergeApply(ds, "b" * 64, "def456")
-    assertEquals(JobRepo.failInterrupted(ds), 1)   // the startup reconciliation
+    assertEquals(JobRepo.failInterrupted(ds), 1) // the startup reconciliation
     assertEquals(JobRepo.mergeApply(ds, b).map(_.state), Some(MergeJobState.Interrupted))
     // the thread that outlived nothing cannot overwrite it; a crash is failed with its reason
     JobRepo.finishMergeApply(ds, b, Right(res))
     assertEquals(JobRepo.mergeApply(ds, b).map(_.state), Some(MergeJobState.Interrupted))
     val c = JobRepo.startMergeApply(ds, "c" * 64, "0")
     JobRepo.finishMergeApply(ds, c, Left("merge apply crashed: boom"))
-    assertEquals(JobRepo.mergeApply(ds, c).map(j => (j.state, j.error)), Some((MergeJobState.Failed, Some("merge apply crashed: boom"))))
+    assertEquals(
+      JobRepo.mergeApply(ds, c).map(j => (j.state, j.error)),
+      Some((MergeJobState.Failed, Some("merge apply crashed: boom")))
+    )
     // not a merge apply, or nothing: no answer
     assertEquals(JobRepo.mergeApply(ds, "no-such-job"), None)
     val ocr = JobRepo.create(ds, Ingest.KindIngest, Some("zz2020_x"), None)

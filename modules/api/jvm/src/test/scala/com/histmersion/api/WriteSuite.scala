@@ -2,26 +2,49 @@ package com.histmersion.api
 
 import com.histmersion.values.{Confidence, EdgeKind, SourceStatus}
 
-
-/** Pure tests for the patch-merge (plan §1.9a). No database: `applyPatch` is a total function of
-  * (existing, patch), which is exactly why the merge rules live in `core`. */
+/** Pure tests for the patch-merge (plan §1.9a). No database: `applyPatch` is a total function of (existing, patch),
+  * which is exactly why the merge rules live in `core`.
+  */
 class WriteSuite extends munit.FunSuite:
 
   private val ck = "haak2015_massive"
 
   private def finding(n: Int, claim: String) =
-    Finding(Write.findingId(ck, n), ck, claim, Some("Anatolia"), Some(GeoPoint(32.0, 39.0)),
-      Some(Period(-2000, -1500)), Some("EBA"), List("steppe"), Some(Confidence.High))
+    Finding(
+      Write.findingId(ck, n),
+      ck,
+      claim,
+      Some("Anatolia"),
+      Some(GeoPoint(32.0, 39.0)),
+      Some(Period(-2000, -1500)),
+      Some("EBA"),
+      List("steppe"),
+      Some(Confidence.High)
+    )
 
   private val existing = Source(
-    citekey = ck, title = "Massive migration", authors = List("Haak", "Reich"), doi = Some("10.1038/x"),
-    year = Some(2015), venue = Some("Nature"), status = SourceStatus.Foundational,
-    topics = List("ancient_dna"), regions = List("Eurasian Steppe"), tags = List("adna", "yamnaya"),
-    period = Some(Period(-8000, -900)), summary = Some("original summary"), citedByCount = Some(2038),
-    influentialCitations = None, provenance = Some("unpaywall"), calibreId = None,
-    ocrMarkdown = Some("the whole paper"), findings = List(finding(0, "first"), finding(1, "second")),
-    edges = List(Edge(ck, "anthony2007_horse", "references")), notes = Some("# article"),
-    updatedAt = Some("2026-08-25T10:00:00.000000Z"))
+    citekey = ck,
+    title = "Massive migration",
+    authors = List("Haak", "Reich"),
+    doi = Some("10.1038/x"),
+    year = Some(2015),
+    venue = Some("Nature"),
+    status = SourceStatus.Foundational,
+    topics = List("ancient_dna"),
+    regions = List("Eurasian Steppe"),
+    tags = List("adna", "yamnaya"),
+    period = Some(Period(-8000, -900)),
+    summary = Some("original summary"),
+    citedByCount = Some(2038),
+    influentialCitations = None,
+    provenance = Some("unpaywall"),
+    calibreId = None,
+    ocrMarkdown = Some("the whole paper"),
+    findings = List(finding(0, "first"), finding(1, "second")),
+    edges = List(Edge(ck, "anthony2007_horse", "references")),
+    notes = Some("# article"),
+    updatedAt = Some("2026-08-25T10:00:00.000000Z")
+  )
 
   // ── absent parts are untouched ───────────────────────────────────────────────────────────────
   test("a tags-only patch leaves findings, body, notes and everything else untouched"):
@@ -39,7 +62,7 @@ class WriteSuite extends munit.FunSuite:
 
   // ── tags: add / remove / replace ─────────────────────────────────────────────────────────────
   test("tags: remove drops, add appends, both dedupe and keep order"):
-    val p   = ListPatch(add = List("sea-peoples", "adna"), remove = List("yamnaya"))
+    val p = ListPatch(add = List("sea-peoples", "adna"), remove = List("yamnaya"))
     val out = Write.applyList(existing.tags, p)
     assertEquals(out, List("adna", "sea-peoples"))
 
@@ -52,35 +75,53 @@ class WriteSuite extends munit.FunSuite:
 
   // ── findings: ids are stable and distinct ────────────────────────────────────────────────────
   test("findings: two successive adds get two distinct ids"):
-    val add   = FindingsPatch(add = List(FindingInput(claim = "third")))
-    val once  = Write.applyPatch(existing, SourcePatch(findings = Some(add))).toOption.get
-    val twice = Write.applyPatch(once, SourcePatch(findings = Some(FindingsPatch(add = List(FindingInput(claim = "fourth")))))).toOption.get
+    val add = FindingsPatch(add = List(FindingInput(claim = "third")))
+    val once = Write.applyPatch(existing, SourcePatch(findings = Some(add))).toOption.get
+    val twice = Write
+      .applyPatch(once, SourcePatch(findings = Some(FindingsPatch(add = List(FindingInput(claim = "fourth"))))))
+      .toOption
+      .get
     assertEquals(once.findings.map(_.id), List(s"$ck#0", s"$ck#1", s"$ck#2"))
     assertEquals(twice.findings.map(_.id), List(s"$ck#0", s"$ck#1", s"$ck#2", s"$ck#3"))
     assertEquals(twice.findings.map(_.claim), List("first", "second", "third", "fourth"))
 
   test("findings: an add reuses the lowest FREE id after a removal, never a duplicate"):
-    val gapped = Write.applyPatch(existing, SourcePatch(findings = Some(FindingsPatch(remove = List(s"$ck#0"))))).toOption.get
+    val gapped =
+      Write.applyPatch(existing, SourcePatch(findings = Some(FindingsPatch(remove = List(s"$ck#0"))))).toOption.get
     assertEquals(gapped.findings.map(_.id), List(s"$ck#1"))
-    val refilled = Write.applyPatch(gapped, SourcePatch(findings = Some(FindingsPatch(add = List(FindingInput("new")))))).toOption.get
+    val refilled = Write
+      .applyPatch(gapped, SourcePatch(findings = Some(FindingsPatch(add = List(FindingInput("new"))))))
+      .toOption
+      .get
     assertEquals(refilled.findings.map(_.id), List(s"$ck#1", s"$ck#0"))
     assertEquals(refilled.findings.map(_.id).distinct.size, 2)
 
   test("findings: several adds in ONE patch still get distinct ids"):
-    val p   = FindingsPatch(add = List(FindingInput("a"), FindingInput("b"), FindingInput("c")))
+    val p = FindingsPatch(add = List(FindingInput("a"), FindingInput("b"), FindingInput("c")))
     val out = Write.applyPatch(existing, SourcePatch(findings = Some(p))).toOption.get
     assertEquals(out.findings.map(_.id), List(s"$ck#0", s"$ck#1", s"$ck#2", s"$ck#3", s"$ck#4"))
 
   test("findings: a confidence outside the vocabulary is refused, never dropped or read as high (#1798)"):
     val bad = FindingsPatch(add = List(FindingInput("x", confidence = Some("certain"))))
-    val r   = Write.applyPatch(existing, SourcePatch(findings = Some(bad)))
-    assert(r.left.exists(m => m.contains("confidence 'certain'") && m.contains("high|medium|low|contested")), r.toString)
-    val ok = Write.applyPatch(existing, SourcePatch(findings = Some(FindingsPatch(add =
-      List(FindingInput("y", confidence = Some(" Medium ")), FindingInput("z", confidence = Some("")))))))
+    val r = Write.applyPatch(existing, SourcePatch(findings = Some(bad)))
+    assert(
+      r.left.exists(m => m.contains("confidence 'certain'") && m.contains("high|medium|low|contested")),
+      r.toString
+    )
+    val ok = Write.applyPatch(
+      existing,
+      SourcePatch(findings =
+        Some(
+          FindingsPatch(add =
+            List(FindingInput("y", confidence = Some(" Medium ")), FindingInput("z", confidence = Some("")))
+          )
+        )
+      )
+    )
     assertEquals(ok.map(_.findings.takeRight(2).map(_.confidence)), Right(List(Some(Confidence.Medium), None)))
 
   test("findings: replace renumbers from 0 and drops the old ones"):
-    val p   = FindingsPatch(replace = Some(List(FindingInput("only one"))))
+    val p = FindingsPatch(replace = Some(List(FindingInput("only one"))))
     val out = Write.applyPatch(existing, SourcePatch(findings = Some(p))).toOption.get
     assertEquals(out.findings.map(_.id), List(s"$ck#0"))
     assertEquals(out.findings.map(_.claim), List("only one"))
@@ -90,7 +131,7 @@ class WriteSuite extends munit.FunSuite:
     assertEquals(out.map(_.findings), Right(existing.findings))
 
   test("findings: geo needs BOTH lon and lat; period needs both bounds"):
-    val p   = FindingsPatch(add = List(FindingInput("half", lat = Some(39.0), periodStart = None, periodEnd = None)))
+    val p = FindingsPatch(add = List(FindingInput("half", lat = Some(39.0), periodStart = None, periodEnd = None)))
     val out = Write.applyPatch(existing, SourcePatch(findings = Some(p))).toOption.get
     assertEquals(out.findings.last.geo, None)
     assertEquals(out.findings.last.period, None)
@@ -102,9 +143,10 @@ class WriteSuite extends munit.FunSuite:
 
   // ── metadata / scalars ───────────────────────────────────────────────────────────────────────
   test("metadata: present fields replace, absent fields are left alone"):
-    val p   = SourcePatch(
+    val p = SourcePatch(
       metadata = Some(MetadataPatch(status = Some(SourceStatus.Superseded), year = Some(2016))),
-      edges = Some(EdgesPatch(add = List(EdgeInput("newer2020_source", EdgeKind.SupersededBy)))))
+      edges = Some(EdgesPatch(add = List(EdgeInput("newer2020_source", EdgeKind.SupersededBy))))
+    )
     val out = Write.applyPatch(existing, p).toOption.get
     assertEquals(out.status, SourceStatus.Superseded)
     assertEquals(out.year, Some(2016))
@@ -127,8 +169,12 @@ class WriteSuite extends munit.FunSuite:
   // ── edges ────────────────────────────────────────────────────────────────────────────────────
   test("edges: add and remove, always rooted at this citekey, deduped"):
     val p = EdgesPatch(
-      add = List(EdgeInput("cline2014_1177", EdgeKind.Supersedes), EdgeInput("anthony2007_horse", EdgeKind.References, Some(ck))),
-      remove = List(EdgeInput("anthony2007_horse", EdgeKind.References)))
+      add = List(
+        EdgeInput("cline2014_1177", EdgeKind.Supersedes),
+        EdgeInput("anthony2007_horse", EdgeKind.References, Some(ck))
+      ),
+      remove = List(EdgeInput("anthony2007_horse", EdgeKind.References))
+    )
     val out = Write.applyEdges(ck, existing.edges, p).toOption.get
     assertEquals(out, List(Edge(ck, "cline2014_1177", "supersedes")))
     assert(out.forall(_.src == ck))
@@ -145,7 +191,8 @@ class WriteSuite extends munit.FunSuite:
     assert(Write.applyEdges(ck, existing.edges, rm).swap.toOption.get.contains("edges.remove"))
 
   test("edges: src is optional and defaults to the patched citekey; a self-edge is refused"):
-    val p = io.circe.parser.decode[SourcePatch]("""{"edges":{"add":[{"dst":"x2020_y","kind":"challenges"}]}}""").toOption.get
+    val p =
+      io.circe.parser.decode[SourcePatch]("""{"edges":{"add":[{"dst":"x2020_y","kind":"challenges"}]}}""").toOption.get
     assertEquals(Write.applyPatch(existing, p).map(_.edges.last), Right(Edge(ck, "x2020_y", "challenges")))
     val self = EdgesPatch(add = List(EdgeInput(ck, EdgeKind.Challenges)))
     assert(Write.applyEdges(ck, existing.edges, self).isLeft)
@@ -162,7 +209,8 @@ class WriteSuite extends munit.FunSuite:
   // ── ifUpdatedAt precondition ─────────────────────────────────────────────────────────────────
   test("ifUpdatedAt: matching token passes, stale token fails with an actionable message"):
     assertEquals(Write.precondition(existing, SourcePatch(ifUpdatedAt = existing.updatedAt)), Right(()))
-    val e = Write.precondition(existing, SourcePatch(ifUpdatedAt = Some("2026-01-01T00:00:00.000000Z"))).swap.toOption.get
+    val e =
+      Write.precondition(existing, SourcePatch(ifUpdatedAt = Some("2026-01-01T00:00:00.000000Z"))).swap.toOption.get
     assert(e.contains("has moved on"), e)
     assert(e.contains(ck), e)
 
@@ -173,8 +221,11 @@ class WriteSuite extends munit.FunSuite:
 
   // ── put ──────────────────────────────────────────────────────────────────────────────────────
   test("put: numbers findings from 0, roots edges at the citekey, defaults status to unassessed"):
-    val in  = SourcePut(title = "T", findings = List(FindingInput("a"), FindingInput("b")),
-      edges = List(EdgeInput("x", EdgeKind.References), EdgeInput("y", EdgeKind.Refutes, Some(ck))))
+    val in = SourcePut(
+      title = "T",
+      findings = List(FindingInput("a"), FindingInput("b")),
+      edges = List(EdgeInput("x", EdgeKind.References), EdgeInput("y", EdgeKind.Refutes, Some(ck)))
+    )
     val out = Write.applyPut(ck, in).toOption.get
     assertEquals(out.findings.map(_.id), List(s"$ck#0", s"$ck#1"))
     assertEquals(out.edges, List(Edge(ck, "x", "references"), Edge(ck, "y", "refutes")))
@@ -182,9 +233,11 @@ class WriteSuite extends munit.FunSuite:
 
   // #766: put rewrote any edge src to the citekey, the pattern #698 fixed for patch only
   test("put: a src naming another source is refused, never rewritten"):
-    val in = io.circe.parser.decode[SourcePut](
-      """{"title":"T","edges":[{"src":"kassian2024_rebuttal","dst":"x2020_y","kind":"refutes"}]}""").toOption.get
-    val e  = Write.applyPut(ck, in).swap.toOption.get
+    val in = io.circe.parser
+      .decode[SourcePut]("""{"title":"T","edges":[{"src":"kassian2024_rebuttal","dst":"x2020_y","kind":"refutes"}]}""")
+      .toOption
+      .get
+    val e = Write.applyPut(ck, in).swap.toOption.get
     assert(e.contains("src 'kassian2024_rebuttal' is not the source being put"), e)
 
   test("put: a self-edge is refused, including one to an old citekey of this source"):
@@ -206,36 +259,53 @@ class WriteSuite extends munit.FunSuite:
 
   test("a period bound outside [Earliest, Latest] is a 400, not a stored sentinel"):
     val put = SourcePut(title = "T", periodStart = Some(Long.MinValue + 1), periodEnd = Some(-1200))
-    val e   = Write.applyPut("zz_range", put).swap.toOption.get
+    val e = Write.applyPut("zz_range", put).swap.toOption.get
     assert(e.contains("outside the representable range"), e)
-    assert(Write.applyPut("zz_range",
-      SourcePut(title = "T", periodStart = Some(-1200), periodEnd = Some(Long.MaxValue))).isLeft)
+    assert(
+      Write
+        .applyPut("zz_range", SourcePut(title = "T", periodStart = Some(-1200), periodEnd = Some(Long.MaxValue)))
+        .isLeft
+    )
 
   test("the sentinels themselves are the boundary, and are allowed"):
-    assert(Write.applyPut("zz_range",
-      SourcePut(title = "T", periodStart = Some(Filter.Earliest), periodEnd = Some(Filter.Latest)))
-      .isRight)
+    assert(
+      Write
+        .applyPut(
+          "zz_range",
+          SourcePut(title = "T", periodStart = Some(Filter.Earliest), periodEnd = Some(Filter.Latest))
+        )
+        .isRight
+    )
 
   test("ordinary deep time still passes"):
     assertEquals(
-      Write.applyPut("zz_range", SourcePut(title = "T", periodStart = Some(-3300),
-        periodEnd = Some(-1200))).map(_.period),
-      Right(Some(Period(-3300, -1200))))
+      Write
+        .applyPut("zz_range", SourcePut(title = "T", periodStart = Some(-3300), periodEnd = Some(-1200)))
+        .map(_.period),
+      Right(Some(Period(-3300, -1200)))
+    )
 
   test("a finding's period is range-checked too"):
-    val put = SourcePut(title = "T", findings = List(
-      FindingInput(claim = "c", periodStart = Some(-1200), periodEnd = Some(Long.MaxValue))))
+    val put = SourcePut(
+      title = "T",
+      findings = List(FindingInput(claim = "c", periodStart = Some(-1200), periodEnd = Some(Long.MaxValue)))
+    )
     assert(Write.applyPut("zz_range", put).isLeft)
 
   // #395: status was a free String — an unknown value silently became "unassessed"
   test("a status in a write must be one the store knows; the wire spelling round-trips"):
     import io.circe.parser.decode
     import io.circe.syntax.*
-    assertEquals(decode[SourcePatch]("""{"metadata":{"status":"superseded"}}""").map(_.metadata.flatMap(_.status)),
-      Right(Some(SourceStatus.Superseded)))
+    assertEquals(
+      decode[SourcePatch]("""{"metadata":{"status":"superseded"}}""").map(_.metadata.flatMap(_.status)),
+      Right(Some(SourceStatus.Superseded))
+    )
     assert(decode[SourcePatch]("""{"metadata":{"status":"supersceded"}}""").isLeft, "a misspelling is refused")
     assert(decode[SourcePut]("""{"title":"T","status":"bogus"}""").isLeft)
-    assertEquals(SourcePut("T", status = Some(SourceStatus.Contested)).asJson.noSpaces.contains("\"status\":\"contested\""), true)
+    assertEquals(
+      SourcePut("T", status = Some(SourceStatus.Contested)).asJson.noSpaces.contains("\"status\":\"contested\""),
+      true
+    )
 
   // a split left a volume record with doi = "" — neither a DOI nor "none"
   test("a blank DOI or venue is stored as none; in a patch, \"\" clears the field"):
@@ -248,13 +318,13 @@ class WriteSuite extends munit.FunSuite:
     val kept = decode[SourcePatch]("""{"metadata":{"title":"T2"}}""").toOption.get
     assertEquals(Write.applyPatch(existing, kept).map(s => (s.doi, s.venue)), Right((Some("10.1/x"), Some("V"))))
 
-
   // #745: {"doi":null} decoded to "absent" and was silently ignored
   test("metadata: an explicit null clears a nullable field; absent leaves it alone"):
     import io.circe.parser.decode
     val ex = existing.copy(calibreId = Some("1805"))
-    val p  = decode[SourcePatch](
-      """{"metadata":{"doi":null,"venue":null,"year":null,"provenance":null,"calibreId":null}}""").toOption.get
+    val p = decode[SourcePatch](
+      """{"metadata":{"doi":null,"venue":null,"year":null,"provenance":null,"calibreId":null}}"""
+    ).toOption.get
     assertEquals(p.metadata.map(_.clear.toSet), Some(MetadataField.values.toSet))
     val out = Write.applyPatch(ex, p).toOption.get
     assertEquals((out.doi, out.venue, out.year, out.provenance, out.calibreId), (None, None, None, None, None))
@@ -273,7 +343,7 @@ class WriteSuite extends munit.FunSuite:
   test("metadata: the encoder omits absent fields, so a round trip never turns absent into a clear"):
     import io.circe.parser.decode
     import io.circe.syntax.*
-    val m    = MetadataPatch(title = Some("T"), clear = List(MetadataField.Doi))
+    val m = MetadataPatch(title = Some("T"), clear = List(MetadataField.Doi))
     val json = SourcePatch(metadata = Some(m)).asJson.noSpaces
     assert(!json.contains("\"venue\""), json)
     assertEquals(decode[SourcePatch](json).map(_.metadata), Right(Some(m)))
@@ -330,10 +400,13 @@ class WriteSuite extends munit.FunSuite:
     import io.circe.syntax.*
     val p = SourcePatch(
       metadata = Some(MetadataPatch(title = Some("T"), clear = List(MetadataField.Doi))),
-      summary = Some("s"), tags = Some(ListPatch(add = List("a"), replace = Some(List("b")))),
+      summary = Some("s"),
+      tags = Some(ListPatch(add = List("a"), replace = Some(List("b")))),
       findings = Some(FindingsPatch(add = List(FindingInput("c", lat = Some(1.0), lon = Some(2.0))))),
       edges = Some(EdgesPatch(add = List(EdgeInput("d", EdgeKind.Refutes)))),
-      period = Some(PeriodInput(-10, 10)), ifUpdatedAt = Some("t"))
+      period = Some(PeriodInput(-10, 10)),
+      ifUpdatedAt = Some("t")
+    )
     assertEquals(decode[SourcePatch](p.asJson.noSpaces), Right(p))
     val put = SourcePut.of(existing)
     assertEquals(decode[SourcePut](put.asJson.noSpaces), Right(put))
@@ -342,9 +415,13 @@ class WriteSuite extends munit.FunSuite:
 
   test("strict: metadata null-clears still work alongside the key check"):
     import io.circe.parser.decode
-    assertEquals(decode[SourcePatch]("""{"metadata":{"doi":null}}""").map(_.metadata.map(_.clear)),
-      Right(Some(List(MetadataField.Doi))))
-    assert(decode[SourcePatch]("""{"metadata":{"isbn":null}}""").swap.toOption.get.getMessage.contains("unknown key 'isbn'"))
+    assertEquals(
+      decode[SourcePatch]("""{"metadata":{"doi":null}}""").map(_.metadata.map(_.clear)),
+      Right(Some(List(MetadataField.Doi)))
+    )
+    assert(
+      decode[SourcePatch]("""{"metadata":{"isbn":null}}""").swap.toOption.get.getMessage.contains("unknown key 'isbn'")
+    )
 
   test("ApiError.hasCode selects an error output by its code, and nothing else (#829)"):
     val notFound = ApiError.hasCode(Write.CodeNotFound)

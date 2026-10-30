@@ -47,28 +47,52 @@ object View:
     val (w, h) = s.size
     View(s, s.center.lon, w, h)
 
-/** One pane of DOM markers over the map: each at its map point, moved every frame the map moves (one
-  * `transform` write per marker in view; one far outside the view is hidden, not moved). */
+/** One pane of DOM markers over the map: each at its map point, moved every frame the map moves (one `transform` write
+  * per marker in view; one far outside the view is hidden, not moved).
+  */
 final class MarkerPane(val el: dom.HTMLElement, surface: MapSurface):
   private val markers = js.Set[DomMarker]()
 
   // the pointer and the keyboard, for every marker of the pane at once (one set of listeners, not one per
   // marker: a few thousand points are drawn and re-drawn as the map zooms)
   private def markerOf(t: dom.EventTarget): Option[DomMarker] =
-    Option(t).collect { case e: dom.Element => e }.flatMap(e => Option(e.closest(".hd-marker")))
-      .flatMap(e => Option(e.asInstanceOf[js.Dynamic].hdMarker).filterNot(js.isUndefined).map(_.asInstanceOf[DomMarker]))
+    Option(t)
+      .collect { case e: dom.Element => e }
+      .flatMap(e => Option(e.closest(".hd-marker")))
+      .flatMap(e =>
+        Option(e.asInstanceOf[js.Dynamic].hdMarker).filterNot(js.isUndefined).map(_.asInstanceOf[DomMarker])
+      )
   private def related(e: dom.MouseEvent): Option[DomMarker] = markerOf(e.relatedTarget)
-  el.addEventListener("mouseover", { (e: dom.MouseEvent) =>
-    markerOf(e.target).filter(m => !related(e).contains(m)).foreach(m => Option(m.handlers).foreach(_.over(e)))
-  })
-  el.addEventListener("mouseout", { (e: dom.MouseEvent) =>
-    markerOf(e.target).filter(m => !related(e).contains(m)).foreach(m => Option(m.handlers).foreach(_.out(e)))
-  })
-  el.addEventListener("mousemove", { (e: dom.MouseEvent) => markerOf(e.target).foreach(m => Option(m.handlers).foreach(_.move(e))) })
-  el.addEventListener("click", { (e: dom.MouseEvent) => markerOf(e.target).foreach(m => Option(m.handlers).foreach(_.click(e))) })
-  el.addEventListener("focusin", { (e: dom.FocusEvent) => markerOf(e.target).foreach(m => Option(m.handlers).foreach(_.focus(e))) })
-  el.addEventListener("focusout", { (e: dom.FocusEvent) => markerOf(e.target).foreach(m => Option(m.handlers).foreach(_.blur(e))) })
-  el.addEventListener("keydown", { (e: dom.KeyboardEvent) => markerOf(e.target).foreach(m => Option(m.handlers).foreach(_.key(e))) })
+  el.addEventListener(
+    "mouseover",
+    (e: dom.MouseEvent) =>
+      markerOf(e.target).filter(m => !related(e).contains(m)).foreach(m => Option(m.handlers).foreach(_.over(e)))
+  )
+  el.addEventListener(
+    "mouseout",
+    (e: dom.MouseEvent) =>
+      markerOf(e.target).filter(m => !related(e).contains(m)).foreach(m => Option(m.handlers).foreach(_.out(e)))
+  )
+  el.addEventListener(
+    "mousemove",
+    (e: dom.MouseEvent) => markerOf(e.target).foreach(m => Option(m.handlers).foreach(_.move(e)))
+  )
+  el.addEventListener(
+    "click",
+    (e: dom.MouseEvent) => markerOf(e.target).foreach(m => Option(m.handlers).foreach(_.click(e)))
+  )
+  el.addEventListener(
+    "focusin",
+    (e: dom.FocusEvent) => markerOf(e.target).foreach(m => Option(m.handlers).foreach(_.focus(e)))
+  )
+  el.addEventListener(
+    "focusout",
+    (e: dom.FocusEvent) => markerOf(e.target).foreach(m => Option(m.handlers).foreach(_.blur(e)))
+  )
+  el.addEventListener(
+    "keydown",
+    (e: dom.KeyboardEvent) => markerOf(e.target).foreach(m => Option(m.handlers).foreach(_.key(e)))
+  )
 
   def add(m: DomMarker): Unit =
     if !markers.contains(m) then
@@ -83,8 +107,9 @@ final class MarkerPane(val el: dom.HTMLElement, surface: MapSurface):
       if m.el.parentNode == el then { val _ = el.removeChild(m.el) }
       m.removed()
 
-  /** Take `m` off the pane now (it no longer follows the map, answers the pointer or counts), but leave its
-    * element drawn for `ms` more — a marker merging into a bubble flies into it first. */
+  /** Take `m` off the pane now (it no longer follows the map, answers the pointer or counts), but leave its element
+    * drawn for `ms` more — a marker merging into a bubble flies into it first.
+    */
   def retire(m: DomMarker, ms: Int): Unit =
     if markers.contains(m) then
       markers.remove(m)
@@ -98,12 +123,16 @@ final class MarkerPane(val el: dom.HTMLElement, surface: MapSurface):
 
   def reposition(v: View): Unit = markers.foreach(_.place(v))
 
-/** A DOM marker at (`lat`, `lon`): its element's top-left at the point, or — `box` given — the box
-  * centred on it. `.hd-marker` is the stylesheet's hook for every marker (and the map's sign that a
-  * pointer event is the marker's, [[MapEvent.overMarker]]); the element answers the pointer and the
-  * keyboard itself (its kind binds them). */
-final class DomMarker(private var latV: Double, private var lonV: Double, val el: dom.HTMLElement,
-    box: Option[(Int, Int)] = None):
+/** A DOM marker at (`lat`, `lon`): its element's top-left at the point, or — `box` given — the box centred on it.
+  * `.hd-marker` is the stylesheet's hook for every marker (and the map's sign that a pointer event is the marker's,
+  * [[MapEvent.overMarker]]); the element answers the pointer and the keyboard itself (its kind binds them).
+  */
+final class DomMarker(
+    private var latV: Double,
+    private var lonV: Double,
+    val el: dom.HTMLElement,
+    box: Option[(Int, Int)] = None
+):
   // `var`s: the last position written, whether it is hidden off screen, and the handlers of being shown
   private var lastX = Double.NaN
   private var lastY = Double.NaN
@@ -113,6 +142,7 @@ final class DomMarker(private var latV: Double, private var lonV: Double, val el
 
   el.classList.add("hd-marker")
   el.asInstanceOf[js.Dynamic].hdMarker = this.asInstanceOf[js.Any]
+
   /** What it does with the pointer and the keyboard (its pane dispatches to it); `null`: nothing. */
   var handlers: MarkerHandlers = null
   // its box as data (`.hd-marker.has-box` centres it); its place is `--tx`/`--ty` (`.hd-marker`'s transform)
@@ -164,8 +194,9 @@ final class DomMarker(private var latV: Double, private var lonV: Double, val el
   /** Its stacking among the markers of its pane. */
   def setZ(z: Int): Unit = el.style.setProperty("--z", z.toString)
 
-/** A marker's answers to the pointer and the keyboard, dispatched by its pane: `over`/`out` once per
-  * entering and leaving the marker (not its children), `focus`/`blur` for anything in it. */
+/** A marker's answers to the pointer and the keyboard, dispatched by its pane: `over`/`out` once per entering and
+  * leaving the marker (not its children), `focus`/`blur` for anything in it.
+  */
 trait MarkerHandlers:
   def over(e: dom.MouseEvent): Unit = ()
   def out(e: dom.MouseEvent): Unit = ()

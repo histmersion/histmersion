@@ -11,12 +11,12 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** The MCP half of stream 2.6. Every tool returns Markdown and delegates to the same
-  * [[AcquireHandlers]] the REST routes call, so the two surfaces cannot drift.
+/** The MCP half of stream 2.6. Every tool returns Markdown and delegates to the same [[AcquireHandlers]] the REST
+  * routes call, so the two surfaces cannot drift.
   *
   * `calibre` is deliberately absent: Calibre lives on the USER'S machine, not next to the server, so
-  * `histmersion calibre …` is a host-side CLI command and there is nothing the MCP server could do with
-  * it. Everything else in the toolset is here.
+  * `histmersion calibre …` is a host-side CLI command and there is nothing the MCP server could do with it. Everything
+  * else in the toolset is here.
   */
 final class AcquireMcp(h: AcquireHandlers):
   import AcquireMcp.*
@@ -34,12 +34,15 @@ final class AcquireMcp(h: AcquireHandlers):
           "article cites — SUPPLEMENTARY only, to catch a gap after the database searches and the citation " +
           "graph (`refs`, `followups`), never the starting point or the main channel. Each result carries the citekey it WOULD get and whether the corpus " +
           "already has it, so `notInDb: true` gives you exactly the delta to ingest. Use the `search` " +
-          "tool instead when you want what we already hold; this one goes out to the internet.")
+          "tool instead when you want what we already hold; this one goes out to the internet."
+      )
       .input[DiscoverInput]
       .handle { in =>
-        (in.query.map(_.trim).filter(_.nonEmpty),
-         in.doi.map(_.trim).filter(_.nonEmpty),
-         in.wikipediaUrl.map(_.trim).filter(_.nonEmpty)) match
+        (
+          in.query.map(_.trim).filter(_.nonEmpty),
+          in.doi.map(_.trim).filter(_.nonEmpty),
+          in.wikipediaUrl.map(_.trim).filter(_.nonEmpty)
+        ) match
           case (_, _, Some(url)) => render(h.wikirefs(url))(AcquireMarkdown.wikirefs)
           case (_, Some(doi), _) => render(h.meta(doi))(AcquireMarkdown.work)
           case (Some(q), _, _)   =>
@@ -52,7 +55,8 @@ final class AcquireMcp(h: AcquireHandlers):
       .description(
         "The reference list a paper DEPOSITED with Crossref, with each entry resolved to a stored " +
           "source where we have it. Use it to see what a paper builds on, and with `apply: true` to " +
-          "record those as `references` edges so `neighbors` can walk them. Input is a citekey or a DOI.")
+          "record those as `references` edges so `neighbors` can walk them. Input is a citekey or a DOI."
+      )
       .input[RefsInput]
       .handle(in => render(h.refs(RefsRequest(in.id, in.apply)))(AcquireMarkdown.refs))
 
@@ -68,7 +72,8 @@ final class AcquireMcp(h: AcquireHandlers):
           "unless `forceStatus: true`; a retraction is always written. Input is a citekey or a DOI. " +
           "`updateRetractions: true` instead starts a refresh of the whole Retraction Watch mirror " +
           "(it runs in the background — call again to see whether it has finished); do that " +
-          "periodically, not per paper.")
+          "periodically, not per paper."
+      )
       .input[AssessInput]
       .handle { in =>
         if in.updateRetractions then render(h.updateRetractions())(AcquireMarkdown.retractionsUpdate)
@@ -76,8 +81,10 @@ final class AcquireMcp(h: AcquireHandlers):
         else
           in.id.map(_.trim).filter(_.nonEmpty) match
             case Some(id) => render(h.assess(AssessRequest(id, in.apply, in.forceStatus)))(AcquireMarkdown.assessment)
-            case None     => ToolResult.text(
-              "_give an `id` (citekey or DOI), or `updateRetractions: true` / `retractionsStatus: true`_")
+            case None     =>
+              ToolResult.text(
+                "_give an `id` (citekey or DOI), or `updateRetractions: true` / `retractionsStatus: true`_"
+              )
       }
 
   private val followups =
@@ -88,10 +95,12 @@ final class AcquireMcp(h: AcquireHandlers):
           "contexts, plus a proposed edge kind for each (confirms | challenges | refutes | supersedes | " +
           "cites) read from those contexts. This is how you answer \"is this still accepted?\" and " +
           "\"has it been debunked?\". `apply: true` records the proposed edges for the citing papers " +
-          "that are already in the corpus. `since` limits to papers published from that year on.")
+          "that are already in the corpus. `since` limits to papers published from that year on."
+      )
       .input[FollowupsInput]
       .handle(in =>
-        render(h.followups(FollowupsRequest(in.id, in.since, in.limit, in.apply)))(AcquireMarkdown.followups))
+        render(h.followups(FollowupsRequest(in.id, in.since, in.limit, in.apply)))(AcquireMarkdown.followups)
+      )
 
   private val ingestDoi =
     tool("ingest_doi")
@@ -105,10 +114,12 @@ final class AcquireMcp(h: AcquireHandlers):
           "fetched and converted, one that has its original keeps it unless `refetch: true`. When no open-access copy exists the source " +
           "is still created from metadata and the report tells you where to drop the file in by hand. " +
           "`legalOnly: true` asks the legal chain alone (never a fetcher the config marks unauthorised). " +
-          "Input is a DOI or `arxiv:<id>`.")
+          "Input is a DOI or `arxiv:<id>`."
+      )
       .input[IngestInput]
       .handle(in =>
-        render(h.ingest(IngestRequest(in.id, in.citekey, in.arxiv, in.refetch, in.legalOnly)))(AcquireMarkdown.ingest))
+        render(h.ingest(IngestRequest(in.id, in.citekey, in.arxiv, in.refetch, in.legalOnly)))(AcquireMarkdown.ingest)
+      )
 
   private val archive =
     tool("archive")
@@ -116,15 +127,16 @@ final class AcquireMcp(h: AcquireHandlers):
         "Internet Archive — for the out-of-print scholarly books the open-access pipeline cannot " +
           "reach. `query` searches, `id` shows one item's files, and `id` with `import: true` fetches " +
           "it. PUBLIC items only: a lending-only scan is reported and refused, because borrowing it " +
-          "on archive.org is the only legitimate way to read it.")
+          "on archive.org is the only legitimate way to read it."
+      )
       .input[ArchiveInput]
       .handle { in =>
         (in.query.map(_.trim).filter(_.nonEmpty), in.id.map(_.trim).filter(_.nonEmpty)) match
           case (_, Some(id)) if in.`import` =>
             render(h.archiveImport(ArchiveImportRequest(id, in.citekey, in.format)))(AcquireMarkdown.ingest)
-          case (_, Some(id))  => render(h.archiveInfo(id))(AcquireMarkdown.archiveItem)
-          case (Some(q), _)   => render(h.archiveSearch(q, in.rows))(AcquireMarkdown.archiveSearch)
-          case _              => ToolResult.text("_give a `query` to search, or an `id`_")
+          case (_, Some(id)) => render(h.archiveInfo(id))(AcquireMarkdown.archiveItem)
+          case (Some(q), _)  => render(h.archiveSearch(q, in.rows))(AcquireMarkdown.archiveSearch)
+          case _             => ToolResult.text("_give a `query` to search, or an `id`_")
       }
 
   private val candidates =
@@ -136,7 +148,8 @@ final class AcquireMcp(h: AcquireHandlers):
           "the corpus and the acquisition list. Default: the `new` (unseen) candidates of every goal, or of `goal`; " +
           "`state` = new, seen, queued or dismissed. Filter them yourself: `mark` (candidate ids) with `as` = seen, " +
           "queued or dismissed records your decision; `sweep: true` (with `goal`) reads the goal's watches now " +
-          "(`dryRun: true` stores nothing). Queue what is worth acquiring with the `queue` tool or `ingest_doi`.")
+          "(`dryRun: true` stores nothing). Queue what is worth acquiring with the `queue` tool or `ingest_doi`."
+      )
       .input[CandidatesInput]
       .handle { in =>
         if in.sweep then
@@ -144,15 +157,18 @@ final class AcquireMcp(h: AcquireHandlers):
             case Some(g) => render(h.sweepCandidates(CandidateSweepRequest(g, in.dryRun)))(CandidatesMarkdown.sweep)
             case None    => ToolResult.text("_give `goal` to sweep_")
         else if in.mark.nonEmpty then
-          render(h.markCandidates(CandidateMark(in.mark, in.as.getOrElse(Candidates.State.Seen.wire))))(CandidatesMarkdown.marked)
+          render(h.markCandidates(CandidateMark(in.mark, in.as.getOrElse(Candidates.State.Seen.wire))))(
+            CandidatesMarkdown.marked
+          )
         else render(h.candidates(in.goal, in.state, in.limit, in.offset))(CandidatesMarkdown.list)
       }
 
   val tools = List(discover, refs, assess, followups, ingestDoi, archive, candidates)
 
 object AcquireMcp:
-  /** Honour Scala defaults when decoding tool arguments, as `McpTools` does — otherwise every
-    * optional field would be required in the JSON. */
+  /** Honour Scala defaults when decoding tool arguments, as `McpTools` does — otherwise every optional field would be
+    * required in the JSON.
+    */
   given hearth.kindlings.circederivation.Configuration =
     hearth.kindlings.circederivation.Configuration.default.withDefaults.withStrictDecoding
 
@@ -212,8 +228,12 @@ object AcquireMcp:
       legalOnly: Boolean = false
   ) derives KindlingsCodecAsObject
   object IngestInput:
-    given Schema[IngestInput] = KindlingsSchema.derived[IngestInput].schema
-      .modify(_.legalOnly)(_.description("Ask the legal open-access chain only — never a fetcher the config marks unauthorised"))
+    given Schema[IngestInput] = KindlingsSchema
+      .derived[IngestInput]
+      .schema
+      .modify(_.legalOnly)(
+        _.description("Ask the legal open-access chain only — never a fetcher the config marks unauthorised")
+      )
 
   final case class ArchiveInput(
       query: Option[String] = None,

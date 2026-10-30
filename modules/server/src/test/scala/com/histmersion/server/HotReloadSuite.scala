@@ -14,27 +14,30 @@ import java.nio.file.{Files, Path}
 import java.util.concurrent.{CompletableFuture, CountDownLatch, TimeUnit}
 import javax.sql.DataSource
 
-/** A config reload against a running server (docs/research-plugins.md §3.5, §3.6): the database swapped
-  * between two test databases on the same Postgres, with a request and an OCR job that started on the
-  * old one finishing there and new work going to the new one, the new one migrated, the old pool closed
-  * once drained; a broken config changing nothing; a plugin block rebuilding that plugin only.
-  * Skipped without HISTMERSION_TEST_DB_URL. */
+/** A config reload against a running server (docs/research-plugins.md §3.5, §3.6): the database swapped between two
+  * test databases on the same Postgres, with a request and an OCR job that started on the old one finishing there and
+  * new work going to the new one, the new one migrated, the old pool closed once drained; a broken config changing
+  * nothing; a plugin block rebuilding that plugin only. Skipped without HISTMERSION_TEST_DB_URL.
+  */
 class HotReloadSuite extends DbSuite:
-  private val testDb                = TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
-  override val munitTimeout         = scala.concurrent.duration.Duration(180, "s")
+  override val munitTimeout = scala.concurrent.duration.Duration(180, "s")
 
   private val DbA = "histmersion_hota_test"
   private val DbB = "histmersion_hotb_test"
 
-  private lazy val base  = AppConfig.load()
+  private lazy val base = AppConfig.load()
   private lazy val admin = testPool(base.db.copy(url = testDb.get))
   private def urlOf(name: String) = testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1")
 
   private def exec(ds: DataSource, stmt: String): Unit =
     val c = ds.getConnection
-    try { val st = c.createStatement(); try { val _ = st.execute(stmt) } finally st.close() }
-    finally c.close()
+    try {
+      val st = c.createStatement();
+      try { val _ = st.execute(stmt) }
+      finally st.close()
+    } finally c.close()
 
   private def scalar(ds: DataSource, q: String): Long =
     val c = ds.getConnection
@@ -55,27 +58,32 @@ class HotReloadSuite extends DbSuite:
       }
 
   override def afterSuite(): Unit =
-    if testDb.isDefined then List(DbA, DbB, "histmersion_hotmissing_test").foreach(n =>
-      exec(admin, s"DROP DATABASE IF EXISTS $n WITH (FORCE)"))
+    if testDb.isDefined then
+      List(DbA, DbB, "histmersion_hotmissing_test").foreach(n =>
+        exec(admin, s"DROP DATABASE IF EXISTS $n WITH (FORCE)")
+      )
 
   // ── the config file and the server ─────────────────────────────────────────────────────────────
 
-  private val dir   = Files.createTempDirectory("histmersion-hot")
-  private val file  = dir.resolve("histmersion.conf")
+  private val dir = Files.createTempDirectory("histmersion-hot")
+  private val file = dir.resolve("histmersion.conf")
   private val spool = Files.createDirectories(dir.resolve("spool"))
-  /** No environment: the test's settings come from the file alone (a HISTMERSION_DB_URL in the
-    * shell must not beat it). */
+
+  /** No environment: the test's settings come from the file alone (a HISTMERSION_DB_URL in the shell must not beat it).
+    */
   private val env = ConfigFactory.empty
 
   private def write(db: String, extra: String = ""): Unit =
-    val _ = Files.writeString(file,
+    val _ = Files.writeString(
+      file,
       s"""histmersion {
          |  db.url = "${urlOf(db)}"
          |  converter.spool-dir = "$spool"
          |  config.drain-seconds = 10
          |  $extra
          |}
-         |""".stripMargin)
+         |""".stripMargin
+    )
 
   private def loaded: LoadedConfig = AppConfig.loadWithUserFile(env, Some(file)).fold(e => fail(e), identity)
   private val source = ConfigSource(() => AppConfig.loadWithUserFile(env, Some(file)))
@@ -86,20 +94,33 @@ class HotReloadSuite extends DbSuite:
     (r.statusCode, r.body)
   private def get(url: String) = send(HttpRequest.newBuilder(URI.create(url)).build())
   private def post(url: String, body: String = "") =
-    send(HttpRequest.newBuilder(URI.create(url)).header("content-type", "application/json")
-      .POST(HttpRequest.BodyPublishers.ofString(body)).build())
+    send(
+      HttpRequest
+        .newBuilder(URI.create(url))
+        .header("content-type", "application/json")
+        .POST(HttpRequest.BodyPublishers.ofString(body))
+        .build()
+    )
   private def upload(url: String, f: Path) =
-    send(HttpRequest.newBuilder(URI.create(url)).header("content-type", "application/octet-stream")
-      .POST(HttpRequest.BodyPublishers.ofFile(f)).build())
+    send(
+      HttpRequest
+        .newBuilder(URI.create(url))
+        .header("content-type", "application/octet-stream")
+        .POST(HttpRequest.BodyPublishers.ofFile(f))
+        .build()
+    )
   private def field(json: String, name: String): Option[String] =
     s""""$name"\\s*:\\s*"([^"]*)"""".r.findFirstMatchIn(json).map(_.group(1))
   private def list(json: String, name: String): List[String] =
-    s""""$name"\\s*:\\s*\\[([^\\]]*)\\]""".r.findFirstMatchIn(json).toList
+    s""""$name"\\s*:\\s*\\[([^\\]]*)\\]""".r
+      .findFirstMatchIn(json)
+      .toList
       .flatMap(m => """"([^"]*)"""".r.findAllMatchIn(m.group(1)).map(_.group(1)))
 
   /** Which database answers a query, asked through the server's read-only hatch. */
   private def database(url: String, sleep: Int = 0): String =
-    val sql = if sleep > 0 then s"select current_database() as db from pg_sleep($sleep)" else "select current_database() as db"
+    val sql =
+      if sleep > 0 then s"select current_database() as db from pg_sleep($sleep)" else "select current_database() as db"
     val (s, b) = post(s"$url/api/query", s"""{"sql":"$sql"}""")
     assertEquals(s, 200, b)
     List(DbA, DbB).find(b.contains).getOrElse(fail(s"no test database in $b"))
@@ -107,7 +128,7 @@ class HotReloadSuite extends DbSuite:
   private def await(url: String, id: String): String =
     def go(n: Int): String =
       val (_, b) = get(s"$url/api/jobs/$id")
-      val st     = field(b, "status").getOrElse("")
+      val st = field(b, "status").getOrElse("")
       if st == "done" || st == "failed" || n > 600 then b
       else
         Thread.sleep(100)
@@ -115,9 +136,9 @@ class HotReloadSuite extends DbSuite:
     go(0)
 
   /** A converter that holds each conversion until the test lets it go. */
-  private final class GatedConverter extends ConverterClient:
+  final private class GatedConverter extends ConverterClient:
     val entered = java.util.concurrent.Semaphore(0)
-    val gate    = CountDownLatch(1)
+    val gate = CountDownLatch(1)
     def health = Right("ok")
     def convert(file: Path, filename: String, quality: Boolean) =
       entered.release()
@@ -136,14 +157,15 @@ class HotReloadSuite extends DbSuite:
       rs.next(); rs.getLong(1)
     finally c.close()
 
-  private def sourceIn(db: String, citekey: String): Long = on(db, s"SELECT count(*) FROM sources WHERE citekey = '$citekey'")
+  private def sourceIn(db: String, citekey: String): Long =
+    on(db, s"SELECT count(*) FROM sources WHERE citekey = '$citekey'")
 
   test("swap the database: in-flight work finishes on the old one, new work goes to the new one, the old pool closes"):
     write(DbA)
     val conv = GatedConverter()
-    val l    = loaded
+    val l = loaded
     supervised {
-      val b   = Main.server(l.config, "127.0.0.1", 0, conv, source = Some((l, source))).start()
+      val b = Main.server(l.config, "127.0.0.1", 0, conv, source = Some((l, source))).start()
       val url = s"http://127.0.0.1:${b.port}"
       assertEquals(database(url), DbA)
 
@@ -204,7 +226,7 @@ class HotReloadSuite extends DbSuite:
     write(DbB)
     val l = loaded
     supervised {
-      val b   = Main.server(l.config, "127.0.0.1", 0, OfflineConverter(), source = Some((l, source))).start()
+      val b = Main.server(l.config, "127.0.0.1", 0, OfflineConverter(), source = Some((l, source))).start()
       val url = s"http://127.0.0.1:${b.port}"
       assertEquals(database(url), DbB)
 
@@ -234,10 +256,11 @@ class HotReloadSuite extends DbSuite:
 
   test("a plugin block rebuilds that plugin only; a hot key applies; a restart-only key is reported, not applied"):
     write(DbB)
-    val l   = loaded
+    val l = loaded
     val gen = Plugins.load(l)
     supervised {
-      val b   = Main.server(l.config, "127.0.0.1", 0, OfflineConverter(), plugins = gen, source = Some((l, source))).start()
+      val b =
+        Main.server(l.config, "127.0.0.1", 0, OfflineConverter(), plugins = gen, source = Some((l, source))).start()
       val url = s"http://127.0.0.1:${b.port}"
       write(DbB, "plugins.pmc.enabled = false\n  limits.search = 7\n  server.port = 1")
       val (s, r) = post(s"$url/api/config/reload")
@@ -252,22 +275,29 @@ class HotReloadSuite extends DbSuite:
       assert(about.matches("(?s).*\"id\"\\s*:\\s*\"pmc\".*?\"state\"\\s*:\\s*\"disabled\".*"), about.take(2000))
       // the same reload over MCP's surface is a no-op now (nothing differs)
       val (_, again) = post(s"$url/api/config/reload")
-      assert(again.contains("\"published\":false") && list(again, "restartOnly") == List("histmersion.server.port"), again)
+      assert(
+        again.contains("\"published\":false") && list(again, "restartOnly") == List("histmersion.server.port"),
+        again
+      )
       b.stop()
     }
 
   test("an AI provider switched off by a reload is out of every chain at once; switched on again, it is back"):
     write(DbB, "agents.roles.extractor = \"local:zzhot\"\n  agents.prices = \"zzhot=0/0\"")
-    val l   = loaded
+    val l = loaded
     val gen = Plugins.load(l)
     supervised {
-      val b   = Main.server(l.config, "127.0.0.1", 0, OfflineConverter(), plugins = gen, source = Some((l, source))).start()
+      val b =
+        Main.server(l.config, "127.0.0.1", 0, OfflineConverter(), plugins = gen, source = Some((l, source))).start()
       val url = s"http://127.0.0.1:${b.port}"
       val Off = "switched off (histmersion.plugins.ai-local.enabled = false)"
       val (s0, m0) = get(s"$url/api/agents/models")
       assertEquals(s0, 200, m0)
       assert(m0.contains("local:zzhot") && !m0.contains(Off), m0.take(2000))
-      write(DbB, "agents.roles.extractor = \"local:zzhot\"\n  agents.prices = \"zzhot=0/0\"\n  plugins.ai-local.enabled = false")
+      write(
+        DbB,
+        "agents.roles.extractor = \"local:zzhot\"\n  agents.prices = \"zzhot=0/0\"\n  plugins.ai-local.enabled = false"
+      )
       val (_, r) = post(s"$url/api/config/reload")
       assert(r.contains("\"published\":true"), r)
       assertEquals(list(r, "plugins"), List("ai-local"), "the one plugin whose block changed")

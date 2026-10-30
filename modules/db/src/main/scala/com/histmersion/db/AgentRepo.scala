@@ -9,32 +9,72 @@ import com.histmersion.api.ApprovalDigest
 import javax.sql.DataSource
 import com.histmersion.values.{EdgeKind, SourceStatus}
 
-/** The store of embedded agent runs (migrations V035, V040, V041): a run is a `jobs` row with kind
-  * `agent` (its options in `params`), its steps are `agent_steps` (one row per attempt; a `done` row
-  * is the checkpoint a resume replays), its trace is `agent_messages`, and what it proposed for a
-  * person to decide is `approvals`. Token and cost totals are sums over the steps, never a second
-  * copy. */
+/** The store of embedded agent runs (migrations V035, V040, V041): a run is a `jobs` row with kind `agent` (its options
+  * in `params`), its steps are `agent_steps` (one row per attempt; a `done` row is the checkpoint a resume replays),
+  * its trace is `agent_messages`, and what it proposed for a person to decide is `approvals`. Token and cost totals are
+  * sums over the steps, never a second copy.
+  */
 object AgentRepo:
 
-  /** `jobs.params`: `{}` (and anything a later version wrote that this one cannot read) is every
-    * option's default ([[Jsonb]]). */
+  /** `jobs.params`: `{}` (and anything a later version wrote that this one cannot read) is every option's default
+    * ([[Jsonb]]).
+    */
   private given DbCodec[RunParams] = Jsonb.codec(RunParams(), dropNulls = true)
 
-  private final case class RunRow(
-      id: String, pipeline: Option[String], target: Option[String], status: String, progress: Option[String],
-      error: Option[String], model: Option[String], budgetUsd: Option[BigDecimal], budgetTokens: Option[Long],
-      warnings: List[String], createdAt: String, updatedAt: String,
-      tin: Long, tout: Long, tcr: Long, tcw: Long, cost: BigDecimal,
-      targetKind: Option[String], params: RunParams, acquireItem: Option[Int],
-      goal: Option[String], parent: Option[String], origin: Option[String], resumeAt: Option[String],
-      dryRun: Boolean, managerId: Option[String], managerItem: Option[Long], heartbeatAt: Option[String])
+  final private case class RunRow(
+      id: String,
+      pipeline: Option[String],
+      target: Option[String],
+      status: String,
+      progress: Option[String],
+      error: Option[String],
+      model: Option[String],
+      budgetUsd: Option[BigDecimal],
+      budgetTokens: Option[Long],
+      warnings: List[String],
+      createdAt: String,
+      updatedAt: String,
+      tin: Long,
+      tout: Long,
+      tcr: Long,
+      tcw: Long,
+      cost: BigDecimal,
+      targetKind: Option[String],
+      params: RunParams,
+      acquireItem: Option[Int],
+      goal: Option[String],
+      parent: Option[String],
+      origin: Option[String],
+      resumeAt: Option[String],
+      dryRun: Boolean,
+      managerId: Option[String],
+      managerItem: Option[Long],
+      heartbeatAt: Option[String]
+  )
   private given DbCodec[RunRow] = DbCodec.derived
 
-  private final case class StepRow(
-      seq: Int, name: String, kind: String, attempt: Int, status: String, model: Option[String],
-      promptHash: Option[String], tin: Long, tout: Long, tcr: Long, tcw: Long, cost: BigDecimal,
-      error: Option[String], output: Option[String], startedAt: String, finishedAt: String,
-      actualModel: Option[String], wouldWrite: Option[String], firstCallTokens: Option[Long], turns: Option[Int])
+  final private case class StepRow(
+      seq: Int,
+      name: String,
+      kind: String,
+      attempt: Int,
+      status: String,
+      model: Option[String],
+      promptHash: Option[String],
+      tin: Long,
+      tout: Long,
+      tcr: Long,
+      tcw: Long,
+      cost: BigDecimal,
+      error: Option[String],
+      output: Option[String],
+      startedAt: String,
+      finishedAt: String,
+      actualModel: Option[String],
+      wouldWrite: Option[String],
+      firstCallTokens: Option[Long],
+      turns: Option[Int]
+  )
   private given DbCodec[StepRow] = DbCodec.derived
 
   private given DbCodec[MessageInfo] = DbCodec.derived
@@ -42,8 +82,8 @@ object AgentRepo:
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
 
   /** ONE projection of a run with its usage totals, then (in [[runSelect]]) the runs among the jobs. */
-  private val runFrom = Sql.raw(
-    s"""SELECT j.id, j.pipeline, j.target_id, j.status, j.progress, j.error, j.model, j.budget_usd,
+  private val runFrom =
+    Sql.raw(s"""SELECT j.id, j.pipeline, j.target_id, j.status, j.progress, j.error, j.model, j.budget_usd,
               j.budget_tokens, j.warnings,
               to_char(j.created_at AT TIME ZONE 'UTC', $ts), to_char(j.updated_at AT TIME ZONE 'UTC', $ts),
               coalesce(u.tin, 0), coalesce(u.tout, 0), coalesce(u.tcr, 0), coalesce(u.tcw, 0), coalesce(u.cost, 0),
@@ -56,38 +96,86 @@ object AgentRepo:
                 sum(tokens_cache_read)::bigint AS tcr, sum(tokens_cache_write)::bigint AS tcw,
                 sum(cost_usd) AS cost
          FROM agent_steps s WHERE s.job_id = j.id) u ON true""")
-  private val runsOnly  = s" WHERE j.kind = '$JobKind'"
+  private val runsOnly = s" WHERE j.kind = '$JobKind'"
   private val runSelect = runFrom ++ runsOnly
 
   private def toInfo(r: RunRow): RunInfo =
-    RunInfo(r.id, r.pipeline.getOrElse(""), r.target.getOrElse(""), r.status, r.progress, r.error, r.model,
-      Usage(r.tin, r.tout, r.tcr, r.tcw), r.cost.toDouble, r.budgetUsd.map(_.toDouble).getOrElse(0),
-      r.budgetTokens.getOrElse(0L), r.warnings, r.createdAt, r.updatedAt, r.targetKind.getOrElse(""),
-      r.params, r.acquireItem, r.goal, r.parent, r.origin, r.resumeAt, r.dryRun,
-      r.managerId, r.managerItem, r.heartbeatAt)
+    RunInfo(
+      r.id,
+      r.pipeline.getOrElse(""),
+      r.target.getOrElse(""),
+      r.status,
+      r.progress,
+      r.error,
+      r.model,
+      Usage(r.tin, r.tout, r.tcr, r.tcw),
+      r.cost.toDouble,
+      r.budgetUsd.map(_.toDouble).getOrElse(0),
+      r.budgetTokens.getOrElse(0L),
+      r.warnings,
+      r.createdAt,
+      r.updatedAt,
+      r.targetKind.getOrElse(""),
+      r.params,
+      r.acquireItem,
+      r.goal,
+      r.parent,
+      r.origin,
+      r.resumeAt,
+      r.dryRun,
+      r.managerId,
+      r.managerItem,
+      r.heartbeatAt
+    )
 
-  /** A `queued` run. `goal` is the goal it works for, `parent` the run that started it, `origin` who;
-    * `dryRun` is fixed here, once — a resumed dry run is still one. */
-  def create(ds: DataSource, p: Pipeline, target: String, model: Option[String], budgetUsd: BigDecimal,
-      budgetTokens: Long, params: RunParams = RunParams(), acquireItem: Option[Int] = None,
-      goal: Option[String] = None, parent: Option[String] = None, origin: Origin = Origin.Person,
-      dryRun: Boolean = false): RunInfo =
-    val id = transact(ds)(createIn(p, target, model, budgetUsd, budgetTokens, params, acquireItem, goal, parent, origin, dryRun))
+  /** A `queued` run. `goal` is the goal it works for, `parent` the run that started it, `origin` who; `dryRun` is fixed
+    * here, once — a resumed dry run is still one.
+    */
+  def create(
+      ds: DataSource,
+      p: Pipeline,
+      target: String,
+      model: Option[String],
+      budgetUsd: BigDecimal,
+      budgetTokens: Long,
+      params: RunParams = RunParams(),
+      acquireItem: Option[Int] = None,
+      goal: Option[String] = None,
+      parent: Option[String] = None,
+      origin: Origin = Origin.Person,
+      dryRun: Boolean = false
+  ): RunInfo =
+    val id = transact(ds)(
+      createIn(p, target, model, budgetUsd, budgetTokens, params, acquireItem, goal, parent, origin, dryRun)
+    )
     get(ds, id).get
 
-  /** [[create]] inside the caller's transaction (a manager's dispatch: the run, its item's CAS and the
-    * event commit together). `managerId`/`managerItem`: the manager and work item it is for. Returns
-    * the new run's id. */
-  def createIn(p: Pipeline, target: String, model: Option[String], budgetUsd: BigDecimal, budgetTokens: Long,
-      params: RunParams, acquireItem: Option[Int], goal: Option[String], parent: Option[String], origin: Origin,
-      dryRun: Boolean, managerId: Option[String] = None, managerItem: Option[Long] = None)(using DbCon): String =
-    val id   = java.util.UUID.randomUUID().toString
+  /** [[create]] inside the caller's transaction (a manager's dispatch: the run, its item's CAS and the event commit
+    * together). `managerId`/`managerItem`: the manager and work item it is for. Returns the new run's id.
+    */
+  def createIn(
+      p: Pipeline,
+      target: String,
+      model: Option[String],
+      budgetUsd: BigDecimal,
+      budgetTokens: Long,
+      params: RunParams,
+      acquireItem: Option[Int],
+      goal: Option[String],
+      parent: Option[String],
+      origin: Origin,
+      dryRun: Boolean,
+      managerId: Option[String] = None,
+      managerItem: Option[Long] = None
+  )(using DbCon): String =
+    val id = java.util.UUID.randomUUID().toString
     sql"""INSERT INTO jobs (id, kind, citekey, status, pipeline, pipeline_version, target_kind, target_id,
                             model, budget_usd, budget_tokens, params, acquire_item, goal_slug, parent_job, origin,
                             dry_run, manager_id, manager_item)
           VALUES ($id, $JobKind, ${Option.when(p.targetKind == TargetKind.Source)(target)}, ${RunState.Queued.wire},
                   ${p.wire}, ${p.version}, ${p.targetKind.wire}, $target, $model, $budgetUsd, $budgetTokens,
-                  $params::jsonb, $acquireItem, $goal, $parent, ${origin.wire}, $dryRun, $managerId, $managerItem)""".update.run()
+                  $params::jsonb, $acquireItem, $goal, $parent, ${origin.wire}, $dryRun, $managerId, $managerItem)""".update
+      .run()
     id
 
   def get(ds: DataSource, id: String): Option[RunInfo] =
@@ -99,18 +187,36 @@ object AgentRepo:
 
   def list(ds: DataSource, status: Option[String], limit: Int, goal: Option[String] = None): Vector[RunInfo] =
     connect(ds):
-      (runSelect ++ runStatus(status) ++ runGoal(goal) ++ Keyset.orderBy("j.") ++ Sql.of(" LIMIT ?", Param.I(math.max(1, limit))))
-        .frag.query[RunRow].run().map(toInfo)
+      (runSelect ++ runStatus(status) ++ runGoal(goal) ++ Keyset.orderBy("j.") ++ Sql.of(
+        " LIMIT ?",
+        Param.I(math.max(1, limit))
+      )).frag.query[RunRow].run().map(toInfo)
 
-  /** One page of the newest-first runs ([[com.histmersion.api.Paging]]), `status` and `goal` as in
-    * [[list]]; `before` / `upTo` are run ids. Left: a cursor that names no job. */
-  def page(ds: DataSource, status: Option[String], limit: Int, goal: Option[String] = None,
-      before: Option[String] = None, upTo: Option[String] = None): Either[String, (Vector[RunInfo], Boolean)] =
-    page(ds, RunQuery(status = status.map(_.trim.toLowerCase).filter(_.nonEmpty).toList, goal = goal.map(_.trim).filter(_.nonEmpty)),
-      limit, before, upTo)
+  /** One page of the newest-first runs ([[com.histmersion.api.Paging]]), `status` and `goal` as in [[list]]; `before` /
+    * `upTo` are run ids. Left: a cursor that names no job.
+    */
+  def page(
+      ds: DataSource,
+      status: Option[String],
+      limit: Int,
+      goal: Option[String] = None,
+      before: Option[String] = None,
+      upTo: Option[String] = None
+  ): Either[String, (Vector[RunInfo], Boolean)] =
+    page(
+      ds,
+      RunQuery(
+        status = status.map(_.trim.toLowerCase).filter(_.nonEmpty).toList,
+        goal = goal.map(_.trim).filter(_.nonEmpty)
+      ),
+      limit,
+      before,
+      upTo
+    )
 
-  /** What the runs list is filtered by (core `ListFilters.RunFilter`, validated): the lists match any
-    * of their values; `since` / `until` bound `created_at` (until exclusive); `q` = text in the target. */
+  /** What the runs list is filtered by (core `ListFilters.RunFilter`, validated): the lists match any of their values;
+    * `since` / `until` bound `created_at` (until exclusive); `q` = text in the target.
+    */
   final case class RunQuery(
       status: List[String] = Nil,
       pipelines: List[String] = Nil,
@@ -121,58 +227,88 @@ object AgentRepo:
       origins: List[String] = Nil,
       since: Option[java.time.Instant] = None,
       until: Option[java.time.Instant] = None,
-      q: Option[String] = None)
+      q: Option[String] = None
+  )
 
   /** A run that predates `jobs.origin` was started by a person. */
   private val originExpr = s"coalesce(j.origin, '${Origin.Person.wire}')"
 
-  /** ` AND (j.model is one of them OR a step of the run used one of them)` — `expr` maps a model to
-    * what is matched (itself, or its provider). */
+  /** ` AND (j.model is one of them OR a step of the run used one of them)` — `expr` maps a model to what is matched
+    * (itself, or its provider).
+    */
   private def usedModel(vs: List[String], expr: String => String): Sql =
     if vs.isEmpty then Sql.empty
-    else Sql.of(s" AND (${expr("j.model")} = ANY(?::text[]) OR EXISTS (SELECT 1 FROM agent_steps ms " +
-      s"WHERE ms.job_id = j.id AND ${expr("ms.model")} = ANY(?::text[])))", Param.A(vs), Param.A(vs))
+    else
+      Sql.of(
+        s" AND (${expr("j.model")} = ANY(?::text[]) OR EXISTS (SELECT 1 FROM agent_steps ms " +
+          s"WHERE ms.job_id = j.id AND ${expr("ms.model")} = ANY(?::text[])))",
+        Param.A(vs),
+        Param.A(vs)
+      )
 
   private def provider(col: String): String = s"split_part($col, ':', 1)"
 
-  private def runConds(q: RunQuery): ListSql.Conds = ListSql.Conds(List(
-    "status"   -> ListSql.anyOf("j.status", q.status),
-    "pipeline" -> ListSql.anyOf("j.pipeline", q.pipelines),
-    "manager"  -> ListSql.anyOf("j.manager_id", q.managers),
-    "goal"     -> ListSql.equal("j.goal_slug", q.goal),
-    "model"    -> usedModel(q.models, identity),
-    "provider" -> usedModel(q.providers, provider),
-    "origin"   -> ListSql.anyOf(originExpr, q.origins),
-    "time"     -> ListSql.between("j.created_at", q.since, q.until),
-    "q"        -> q.q.fold(Sql.empty)(t => Sql.of(" AND j.target_id ILIKE ?", Param.S(ListSql.contains(t))))))
+  private def runConds(q: RunQuery): ListSql.Conds = ListSql.Conds(
+    List(
+      "status" -> ListSql.anyOf("j.status", q.status),
+      "pipeline" -> ListSql.anyOf("j.pipeline", q.pipelines),
+      "manager" -> ListSql.anyOf("j.manager_id", q.managers),
+      "goal" -> ListSql.equal("j.goal_slug", q.goal),
+      "model" -> usedModel(q.models, identity),
+      "provider" -> usedModel(q.providers, provider),
+      "origin" -> ListSql.anyOf(originExpr, q.origins),
+      "time" -> ListSql.between("j.created_at", q.since, q.until),
+      "q" -> q.q.fold(Sql.empty)(t => Sql.of(" AND j.target_id ILIKE ?", Param.S(ListSql.contains(t))))
+    )
+  )
 
   /** One page of the runs that match `q`, newest first. Left: a cursor that names no job. */
-  def page(ds: DataSource, q: RunQuery, limit: Int, before: Option[String], upTo: Option[String])
-      : Either[String, (Vector[RunInfo], Boolean)] =
+  def page(
+      ds: DataSource,
+      q: RunQuery,
+      limit: Int,
+      before: Option[String],
+      upTo: Option[String]
+  ): Either[String, (Vector[RunInfo], Boolean)] =
     (before.toList ++ upTo.toList).find(c => !Keyset.exists(ds, "jobs", Param.S(c))) match
       case Some(c) => Left(s"No agent run '$c' to page from")
-      case None =>
-        val (rows, more) = Keyset.page[RunRow](ds, runFrom, Sql.raw(runsOnly) ++ runConds(q).all,
-          "j.", "jobs", math.max(1, limit), before.map(Param.S(_)), upTo.map(Param.S(_)), r => Param.S(r.id))
+      case None    =>
+        val (rows, more) = Keyset.page[RunRow](
+          ds,
+          runFrom,
+          Sql.raw(runsOnly) ++ runConds(q).all,
+          "j.",
+          "jobs",
+          math.max(1, limit),
+          before.map(Param.S(_)),
+          upTo.map(Param.S(_)),
+          r => Param.S(r.id)
+        )
         Right((rows.map(toInfo), more))
 
-  /** The counts that go with a filtered page of runs: per state, and the pipeline, origin, manager,
-    * model and provider facets — each under every filter but its own. A run's models are the one it
-    * was started with and every one its steps reported; the provider is a model's `provider:` part. */
+  /** The counts that go with a filtered page of runs: per state, and the pipeline, origin, manager, model and provider
+    * facets — each under every filter but its own. A run's models are the one it was started with and every one its
+    * steps reported; the provider is a model's `provider:` part.
+    */
   def runFacets(ds: DataSource, q: RunQuery): (List[(String, Int)], List[(String, List[(String, Int)])]) =
     val c = runConds(q)
     def from(except: String) = Sql.raw(" FROM jobs j") ++ Sql.raw(runsOnly) ++ c.except(except)
     def used(except: String): Sql =
-      Sql.raw(" FROM (SELECT DISTINCT j.id, x.m FROM jobs j CROSS JOIN LATERAL (SELECT j.model AS m UNION " +
-        "SELECT s.model FROM agent_steps s WHERE s.job_id = j.id) x") ++ Sql.raw(runsOnly) ++ c.except(except) ++
+      Sql.raw(
+        " FROM (SELECT DISTINCT j.id, x.m FROM jobs j CROSS JOIN LATERAL (SELECT j.model AS m UNION " +
+          "SELECT s.model FROM agent_steps s WHERE s.job_id = j.id) x"
+      ) ++ Sql.raw(runsOnly) ++ c.except(except) ++
         Sql.raw(" AND x.m IS NOT NULL) u WHERE true")
-    (Keyset.counts(ds, from("status"), "j.status"),
+    (
+      Keyset.counts(ds, from("status"), "j.status"),
       List(
         "pipeline" -> ListSql.facet(ds, from("pipeline"), "j.pipeline"),
-        "origin"   -> ListSql.facet(ds, from("origin"), originExpr),
-        "manager"  -> ListSql.facet(ds, from("manager"), "j.manager_id"),
-        "model"    -> ListSql.facet(ds, used("model"), "u.m"),
-        "provider" -> ListSql.facet(ds, used("provider"), provider("u.m"), "count(DISTINCT u.id)")))
+        "origin" -> ListSql.facet(ds, from("origin"), originExpr),
+        "manager" -> ListSql.facet(ds, from("manager"), "j.manager_id"),
+        "model" -> ListSql.facet(ds, used("model"), "u.m"),
+        "provider" -> ListSql.facet(ds, used("provider"), provider("u.m"), "count(DISTINCT u.id)")
+      )
+    )
 
   /** How many runs are in each state — of one goal, when given. */
   def stateCounts(ds: DataSource, goal: Option[String] = None): List[(String, Int)] =
@@ -187,23 +323,33 @@ object AgentRepo:
   /** Every run of `p` on `target`, newest first (what auto-enrich asks before queueing another). */
   def forTarget(ds: DataSource, p: Pipeline, target: String): Vector[RunInfo] =
     connect(ds):
-      (runSelect ++ Sql.of(" AND j.pipeline = ? AND j.target_id = ? ORDER BY j.created_at DESC, j.id",
-        Param.S(p.wire), Param.S(target))).frag.query[RunRow].run().map(toInfo)
+      (runSelect ++ Sql.of(
+        " AND j.pipeline = ? AND j.target_id = ? ORDER BY j.created_at DESC, j.id",
+        Param.S(p.wire),
+        Param.S(target)
+      )).frag.query[RunRow].run().map(toInfo)
 
-  /** The runs a manager dispatched, newest first (`active` = only those not settled yet: queued,
-    * running, paused or waiting). */
+  /** The runs a manager dispatched, newest first (`active` = only those not settled yet: queued, running, paused or
+    * waiting).
+    */
   def forManager(ds: DataSource, managerId: String, active: Boolean = false, limit: Int = 200): Vector[RunInfo] =
     val open = if active then Sql.of(" AND j.status IN ('queued', 'running', 'paused', 'waiting')") else Sql.empty
     connect(ds):
       (runSelect ++ Sql.of(" AND j.manager_id = ?", Param.S(managerId)) ++ open ++
-        Sql.of(" ORDER BY j.created_at DESC, j.id DESC LIMIT ?", Param.I(math.max(1, limit)))).frag.query[RunRow].run().map(toInfo)
+        Sql.of(" ORDER BY j.created_at DESC, j.id DESC LIMIT ?", Param.I(math.max(1, limit)))).frag
+        .query[RunRow]
+        .run()
+        .map(toInfo)
 
-  /** Every run on an article or source `target` that has not settled (any pipeline, any origin): a
-    * manager does not start a second writer on it. */
+  /** Every run on an article or source `target` that has not settled (any pipeline, any origin): a manager does not
+    * start a second writer on it.
+    */
   def unsettledOn(ds: DataSource, target: String): Vector[RunInfo] =
     connect(ds):
-      (runSelect ++ Sql.of(" AND j.target_id = ? AND j.status IN ('queued', 'running', 'paused', 'waiting')", Param.S(target)))
-        .frag.query[RunRow].run().map(toInfo)
+      (runSelect ++ Sql.of(
+        " AND j.target_id = ? AND j.status IN ('queued', 'running', 'paused', 'waiting')",
+        Param.S(target)
+      )).frag.query[RunRow].run().map(toInfo)
 
   /** The stall watchdog's sign of life, persisted (the in-memory one is checked; this one is shown). */
   def heartbeat(ds: DataSource, id: String): Unit =
@@ -215,11 +361,19 @@ object AgentRepo:
     connect(ds)(sql"""SELECT count(*)::int FROM jobs WHERE kind = $JobKind
                       AND status IN (${RunState.Queued.wire}, ${RunState.Running.wire})""".query[Int].run().head)
 
-  /** Compare-and-set state change through [[RunState.next]]: `None` when refused or when the row had
-    * already moved on (another worker, a concurrent cancel). `resumeAt` is when a run paused for an
-    * allowance may go on; every transition sets it (None clears it). */
-  def transition(ds: DataSource, id: String, from: RunState, to: RunState, error: Option[String] = None,
-      progress: Option[String] = None, resumeAt: Option[java.time.Instant] = None): Option[RunState] =
+  /** Compare-and-set state change through [[RunState.next]]: `None` when refused or when the row had already moved on
+    * (another worker, a concurrent cancel). `resumeAt` is when a run paused for an allowance may go on; every
+    * transition sets it (None clears it).
+    */
+  def transition(
+      ds: DataSource,
+      id: String,
+      from: RunState,
+      to: RunState,
+      error: Option[String] = None,
+      progress: Option[String] = None,
+      resumeAt: Option[java.time.Instant] = None
+  ): Option[RunState] =
     RunState.next(from, to).flatMap { target =>
       val at = resumeAt.map(_.toString)
       val n = transact(ds):
@@ -237,10 +391,15 @@ object AgentRepo:
                                   AND resume_at IS NOT NULL AND resume_at <= $at::timestamptz
             ORDER BY resume_at, created_at""".query[String].run()
 
-  /** Paused runs whose pause names `reason` (`<reason>: …`) and that do not resume by themselves
-    * before `now` (no `resume_at`, or a later one): (id, pipeline, the run's own model, the pause). The
-    * allowance check asks whether a fresh reading lets them go on early. */
-  def pausedFor(ds: DataSource, reason: PauseReason, now: java.time.Instant): Vector[(String, String, Option[String], String)] =
+  /** Paused runs whose pause names `reason` (`<reason>: …`) and that do not resume by themselves before `now` (no
+    * `resume_at`, or a later one): (id, pipeline, the run's own model, the pause). The allowance check asks whether a
+    * fresh reading lets them go on early.
+    */
+  def pausedFor(
+      ds: DataSource,
+      reason: PauseReason,
+      now: java.time.Instant
+  ): Vector[(String, String, Option[String], String)] =
     val (at, like) = (now.toString, s"${reason.wire}:%")
     connect(ds):
       sql"""SELECT id, coalesce(pipeline, ''), model, coalesce(error, '') FROM jobs
@@ -263,10 +422,11 @@ object AgentRepo:
       sql"""UPDATE jobs SET budget_usd = coalesce($usd, budget_usd), budget_tokens = coalesce($tokens, budget_tokens),
                             updated_at = now() WHERE id = $id AND kind = $JobKind""".update.run()
 
-  /** Startup: a run that was `running` when the process died is RESUMABLE — `paused: interrupted`,
-    * not failed (its finished steps are checkpointed). Queued runs stay queued; the caller re-enqueues
-    * them. Returns (the ids of the runs paused now, with their origin; the ids to re-enqueue). `except`: the runs this
-    * process is running or holding queued (a config reload swapping back to a database). */
+  /** Startup: a run that was `running` when the process died is RESUMABLE — `paused: interrupted`, not failed (its
+    * finished steps are checkpointed). Queued runs stay queued; the caller re-enqueues them. Returns (the ids of the
+    * runs paused now, with their origin; the ids to re-enqueue). `except`: the runs this process is running or holding
+    * queued (a config reload swapping back to a database).
+    */
   def reconcile(ds: DataSource, except: List[String] = Nil): (Vector[(String, Option[String])], Vector[String]) =
     transact(ds):
       val paused = sql"""UPDATE jobs SET status = ${RunState.Paused.wire}, error = ${PauseReason.Interrupted.wire},
@@ -293,28 +453,58 @@ object AgentRepo:
     connect(ds):
       sql"""SELECT name, output::text FROM agent_steps
             WHERE job_id = $jobId AND seq = $seq AND status = ${StepStatus.Done.wire}
-            ORDER BY attempt DESC LIMIT 1""".query[(String, Option[String])].run().headOption
+            ORDER BY attempt DESC LIMIT 1"""
+        .query[(String, Option[String])]
+        .run()
+        .headOption
         .map((n, o) => (n, o.getOrElse("null")))
 
-  /** How many attempts step `seq` already has (failed ones included) — a resumed step continues the
-    * count rather than restarting it, so `max-retries` holds across a restart. */
+  /** How many attempts step `seq` already has (failed ones included) — a resumed step continues the count rather than
+    * restarting it, so `max-retries` holds across a restart.
+    */
   def attempts(ds: DataSource, jobId: String, seq: Int): Int =
-    connect(ds)(sql"SELECT coalesce(max(attempt), 0) FROM agent_steps WHERE job_id = $jobId AND seq = $seq"
-      .query[Int].run().head)
+    connect(ds)(
+      sql"SELECT coalesce(max(attempt), 0) FROM agent_steps WHERE job_id = $jobId AND seq = $seq"
+        .query[Int]
+        .run()
+        .head
+    )
 
-  /** One attempt. `actualModel`: what the provider reported serving; `wouldWrite`: a dry run's skipped
-    * writes (JSON array of [[WouldWrite]]); `firstCallTokens`: the input of the attempt's first model
-    * call; `turns`: the model turns it took. */
-  final case class StepRecord(seq: Int, attempt: Int, name: String, kind: StepKind, status: StepStatus,
-      output: Option[String], promptHash: Option[String], model: Option[String], usage: Usage, costUsd: BigDecimal,
-      error: Option[String], startedAt: java.time.Instant, actualModel: Option[String] = None,
-      wouldWrite: List[WouldWrite] = Nil, firstCallTokens: Option[Long] = None, turns: Option[Int] = None)
+  /** One attempt. `actualModel`: what the provider reported serving; `wouldWrite`: a dry run's skipped writes (JSON
+    * array of [[WouldWrite]]); `firstCallTokens`: the input of the attempt's first model call; `turns`: the model turns
+    * it took.
+    */
+  final case class StepRecord(
+      seq: Int,
+      attempt: Int,
+      name: String,
+      kind: StepKind,
+      status: StepStatus,
+      output: Option[String],
+      promptHash: Option[String],
+      model: Option[String],
+      usage: Usage,
+      costUsd: BigDecimal,
+      error: Option[String],
+      startedAt: java.time.Instant,
+      actualModel: Option[String] = None,
+      wouldWrite: List[WouldWrite] = Nil,
+      firstCallTokens: Option[Long] = None,
+      turns: Option[Int] = None
+  )
 
-  final case class MessageRecord(n: Int, role: String, content: Option[String], toolName: Option[String],
-      toolInput: Option[String], toolResult: Option[String], latencyMs: Option[Int])
+  final case class MessageRecord(
+      n: Int,
+      role: String,
+      content: Option[String],
+      toolName: Option[String],
+      toolInput: Option[String],
+      toolResult: Option[String],
+      latencyMs: Option[Int]
+  )
 
-  /** One attempt and its trace, in ONE transaction (a checkpoint without its trace, or the reverse,
-    * is never visible). */
+  /** One attempt and its trace, in ONE transaction (a checkpoint without its trace, or the reverse, is never visible).
+    */
   def record(ds: DataSource, jobId: String, s: StepRecord, messages: List[MessageRecord]): Unit =
     val started = s.startedAt.toString
     transact(ds):
@@ -342,10 +532,25 @@ object AgentRepo:
                    to_char(finished_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}), actual_model, would_write::text,
                    first_call_tokens, turns
             FROM agent_steps WHERE job_id = $jobId ORDER BY seq, attempt""".query[StepRow].run().toList.map { r =>
-        StepInfo(r.seq, r.name, r.kind, r.attempt, r.status, r.model, r.promptHash,
-          Usage(r.tin, r.tout, r.tcr, r.tcw), r.cost.toDouble, r.error, r.output, r.startedAt, r.finishedAt,
-          r.actualModel, r.wouldWrite.flatMap(Jsonb.read[List[WouldWrite]]).getOrElse(Nil),
-          r.firstCallTokens, r.turns)
+        StepInfo(
+          r.seq,
+          r.name,
+          r.kind,
+          r.attempt,
+          r.status,
+          r.model,
+          r.promptHash,
+          Usage(r.tin, r.tout, r.tcr, r.tcw),
+          r.cost.toDouble,
+          r.error,
+          r.output,
+          r.startedAt,
+          r.finishedAt,
+          r.actualModel,
+          r.wouldWrite.flatMap(Jsonb.read[List[WouldWrite]]).getOrElse(Nil),
+          r.firstCallTokens,
+          r.turns
+        )
       }
 
   def messages(ds: DataSource, jobId: String): List[MessageInfo] =
@@ -371,37 +576,70 @@ object AgentRepo:
                    coalesce(sum(cost_usd) FILTER (WHERE finished_at >= date_trunc('month', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'), 0)
             FROM agent_steps
             WHERE finished_at >= date_trunc('month', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'"""
-        .query[(BigDecimal, BigDecimal)].run().head
+        .query[(BigDecimal, BigDecimal)]
+        .run()
+        .head
 
   // ── trace retention ────────────────────────────────────────────────────────────────────────────
 
-  /** Delete traced messages older than `days` (0 or less = keep everything). The steps — checkpoints,
-    * tokens, cost — are never pruned: a resume and the budget sums need them. Returns how many rows
-    * went. */
+  /** Delete traced messages older than `days` (0 or less = keep everything). The steps — checkpoints, tokens, cost —
+    * are never pruned: a resume and the budget sums need them. Returns how many rows went.
+    */
   def pruneMessages(ds: DataSource, days: Int): Int =
     if days <= 0 then 0
-    else transact(ds):
-      sql"""DELETE FROM agent_messages WHERE created_at < now() - make_interval(days => $days)""".update.run()
+    else
+      transact(ds):
+        sql"""DELETE FROM agent_messages WHERE created_at < now() - make_interval(days => $days)""".update.run()
 
   // ── approvals ──────────────────────────────────────────────────────────────────────────────────
 
-  private final case class ApprovalRow(
-      id: Long, jobId: Option[String], kind: String, citekey: Option[String], status: Option[String],
-      current: Option[String], edgeKind: Option[String], target: Option[String], proposal: String, state: String,
-      note: Option[String], result: Option[String], createdAt: String, decidedAt: Option[String],
-      subject: Option[String], seq: Option[Int])
+  final private case class ApprovalRow(
+      id: Long,
+      jobId: Option[String],
+      kind: String,
+      citekey: Option[String],
+      status: Option[String],
+      current: Option[String],
+      edgeKind: Option[String],
+      target: Option[String],
+      proposal: String,
+      state: String,
+      note: Option[String],
+      result: Option[String],
+      createdAt: String,
+      decidedAt: Option[String],
+      subject: Option[String],
+      seq: Option[Int]
+  )
   private given DbCodec[ApprovalRow] = DbCodec.derived
 
   private val approvalSelect = Sql.raw(
     s"""SELECT id, job_id, kind, citekey, status, current_status, edge_kind, target, proposal::text, state, note,
               result, to_char(created_at AT TIME ZONE 'UTC', $ts), to_char(decided_at AT TIME ZONE 'UTC', $ts),
               subject, seq
-       FROM approvals""")
+       FROM approvals"""
+  )
 
   /** The payload decides how a row reads: a source proposal, a goal's plan, or an article draft. */
   private def toApproval(r: ApprovalRow): ApprovalInfo =
-    val base = ApprovalInfo(r.id, r.jobId, r.kind, r.citekey.getOrElse(""), r.status, r.current, r.edgeKind, r.target,
-      "", None, r.state, r.note, r.result, r.createdAt, r.decidedAt, r.subject)
+    val base = ApprovalInfo(
+      r.id,
+      r.jobId,
+      r.kind,
+      r.citekey.getOrElse(""),
+      r.status,
+      r.current,
+      r.edgeKind,
+      r.target,
+      "",
+      None,
+      r.state,
+      r.note,
+      r.result,
+      r.createdAt,
+      r.decidedAt,
+      r.subject
+    )
     ApprovalKind.parse(r.kind) match
       case Some(ApprovalKind.GoalPlan) =>
         val p = Jsonb.read[GoalPlans.Plan](r.proposal)
@@ -417,16 +655,25 @@ object AgentRepo:
         base.copy(articles = p, evidence = p.map(_.rationale).getOrElse(""))
       case Some(ApprovalKind.HintEffect) =>
         val p = Jsonb.read[com.histmersion.api.Managers.HintProposal](r.proposal)
-        base.copy(hintEffect = p, evidence = p.map(x => Option(x.why).filter(_.nonEmpty).getOrElse(x.text)).getOrElse(""))
+        base.copy(
+          hintEffect = p,
+          evidence = p.map(x => Option(x.why).filter(_.nonEmpty).getOrElse(x.text)).getOrElse("")
+        )
       case _ =>
         val p = Jsonb.read[AgentProposals.Proposal](r.proposal)
         base.copy(evidence = p.map(_.evidence).getOrElse(""), quote = p.flatMap(_.quote))
 
-  /** Record a proposal. `state` is `open` for a person to decide, or `approved` with its `result` when
-    * it was applied at once (an `auto` mode). An identical OPEN proposal already there is not doubled:
-    * `None` then. */
-  def propose(ds: DataSource, jobId: Option[String], p: AgentProposals.Proposal, current: Option[SourceStatus],
-      state: ApprovalState = ApprovalState.Open, result: Option[String] = None): Option[ApprovalInfo] =
+  /** Record a proposal. `state` is `open` for a person to decide, or `approved` with its `result` when it was applied
+    * at once (an `auto` mode). An identical OPEN proposal already there is not doubled: `None` then.
+    */
+  def propose(
+      ds: DataSource,
+      jobId: Option[String],
+      p: AgentProposals.Proposal,
+      current: Option[SourceStatus],
+      state: ApprovalState = ApprovalState.Open,
+      result: Option[String] = None
+  ): Option[ApprovalInfo] =
     val json = Jsonb.write(p)
     val decided = Option.when(state != ApprovalState.Open)(java.time.Instant.now().toString)
     connect(ds):
@@ -438,8 +685,9 @@ object AgentRepo:
             ON CONFLICT DO NOTHING RETURNING id""".query[Long].run().headOption
     .flatMap(approval(ds, _))
 
-  /** Was this change ever proposed (in any state)? A scheduled check does not ask a person twice
-    * about an edge they already rejected. */
+  /** Was this change ever proposed (in any state)? A scheduled check does not ask a person twice about an edge they
+    * already rejected.
+    */
   def proposedBefore(ds: DataSource, p: AgentProposals.Proposal): Boolean =
     connect(ds):
       sql"""SELECT 1 FROM approvals WHERE kind = ${p.kind.wire} AND citekey = ${p.citekey}
@@ -448,8 +696,13 @@ object AgentRepo:
             AND coalesce(target, '') = ${p.target.getOrElse("")} LIMIT 1""".query[Int].run().nonEmpty
 
   def approval(ds: DataSource, id: Long): Option[ApprovalInfo] =
-    connect(ds)((approvalSelect ++ Sql.of(" WHERE id = ?", Param.L(id))).frag.query[ApprovalRow].run().headOption
-      .map(toApproval))
+    connect(ds)(
+      (approvalSelect ++ Sql.of(" WHERE id = ?", Param.L(id))).frag
+        .query[ApprovalRow]
+        .run()
+        .headOption
+        .map(toApproval)
+    )
 
   /** The verified proposal behind an approval. */
   def proposal(ds: DataSource, id: Long): Option[AgentProposals.Proposal] =
@@ -460,27 +713,38 @@ object AgentRepo:
   def approvals(ds: DataSource, state: Option[ApprovalState], limit: Int): List[ApprovalInfo] =
     val where = state.fold(Sql.empty)(s => Sql.of(" WHERE state = ?", Param.S(s.wire)))
     connect(ds):
-      (approvalSelect ++ where ++ Sql.of(" ORDER BY created_at DESC, id DESC LIMIT ?", Param.I(math.max(1, limit))))
-        .frag.query[ApprovalRow].run().toList.map(toApproval)
+      (approvalSelect ++ where ++ Sql.of(
+        " ORDER BY created_at DESC, id DESC LIMIT ?",
+        Param.I(math.max(1, limit))
+      )).frag.query[ApprovalRow].run().toList.map(toApproval)
 
-  /** One page of the newest-first approvals ([[com.histmersion.api.Paging]]), `state` as in
-    * [[approvals]]; `before` / `upTo` are approval ids. Left: a cursor that is not one. */
-  def approvalPage(ds: DataSource, state: Option[ApprovalState], limit: Int, before: Option[String] = None,
-      upTo: Option[String] = None): Either[String, (List[ApprovalInfo], Boolean)] =
+  /** One page of the newest-first approvals ([[com.histmersion.api.Paging]]), `state` as in [[approvals]]; `before` /
+    * `upTo` are approval ids. Left: a cursor that is not one.
+    */
+  def approvalPage(
+      ds: DataSource,
+      state: Option[ApprovalState],
+      limit: Int,
+      before: Option[String] = None,
+      upTo: Option[String] = None
+  ): Either[String, (List[ApprovalInfo], Boolean)] =
     approvalPage(ds, ApprovalQuery(state), limit, before, upTo)
 
-  /** What the approvals list is filtered by (core `ListFilters.ApprovalFilter`, validated): `state`
-    * None = every state; the lists match any of their values. */
+  /** What the approvals list is filtered by (core `ListFilters.ApprovalFilter`, validated): `state` None = every state;
+    * the lists match any of their values.
+    */
   final case class ApprovalQuery(
       state: Option[ApprovalState] = None,
       kinds: List[ApprovalKind] = Nil,
       subject: Option[String] = None,
       goal: Option[String] = None,
-      decidedBy: List[ListFilters.DecidedBy] = Nil)
+      decidedBy: List[ListFilters.DecidedBy] = Nil
+  )
 
-  /** Who decided an approval, in SQL — `ListFilters.DecidedBy.of`, the same rules. The two prefixes are
-    * the code's own constants (no quote, `%` or `_` in them — `ListFiltersSuite` holds that), so they are
-    * written in, not bound: the expression is used both to filter and to count. */
+  /** Who decided an approval, in SQL — `ListFilters.DecidedBy.of`, the same rules. The two prefixes are the code's own
+    * constants (no quote, `%` or `_` in them — `ListFiltersSuite` holds that), so they are written in, not bound: the
+    * expression is used both to filter and to count.
+    */
   val decidedByExpr: String =
     import ListFilters.DecidedBy
     s"""(CASE WHEN state = '${ApprovalState.Open.wire}' THEN NULL
@@ -491,50 +755,86 @@ object AgentRepo:
   private def approvalConds(q: ApprovalQuery): ListSql.Conds =
     val subject = q.subject.fold(Sql.empty) { t =>
       val p = Param.S(ListSql.contains(t))
-      Sql.of(" AND (subject ILIKE ? OR citekey ILIKE ? OR target ILIKE ? OR EXISTS (SELECT 1 FROM jobs sj " +
-        "WHERE sj.id = approvals.job_id AND (sj.goal_slug ILIKE ? OR sj.manager_id ILIKE ?)))", p, p, p, p, p)
+      Sql.of(
+        " AND (subject ILIKE ? OR citekey ILIKE ? OR target ILIKE ? OR EXISTS (SELECT 1 FROM jobs sj " +
+          "WHERE sj.id = approvals.job_id AND (sj.goal_slug ILIKE ? OR sj.manager_id ILIKE ?)))",
+        p,
+        p,
+        p,
+        p,
+        p
+      )
     }
-    val goal = q.goal.fold(Sql.empty)(g => Sql.of(" AND (subject = ? OR EXISTS (SELECT 1 FROM jobs gj " +
-      "WHERE gj.id = approvals.job_id AND gj.goal_slug = ?))", Param.S(g), Param.S(g)))
-    ListSql.Conds(List(
-      "state"     -> q.state.fold(Sql.empty)(s => Sql.of(" AND state = ?", Param.S(s.wire))),
-      "kind"      -> ListSql.anyOf("kind", q.kinds.map(_.wire)),
-      "subject"   -> subject,
-      "goal"      -> goal,
-      "decidedBy" -> ListSql.anyOf(decidedByExpr, q.decidedBy.map(_.wire))))
+    val goal = q.goal.fold(Sql.empty)(g =>
+      Sql.of(
+        " AND (subject = ? OR EXISTS (SELECT 1 FROM jobs gj " +
+          "WHERE gj.id = approvals.job_id AND gj.goal_slug = ?))",
+        Param.S(g),
+        Param.S(g)
+      )
+    )
+    ListSql.Conds(
+      List(
+        "state" -> q.state.fold(Sql.empty)(s => Sql.of(" AND state = ?", Param.S(s.wire))),
+        "kind" -> ListSql.anyOf("kind", q.kinds.map(_.wire)),
+        "subject" -> subject,
+        "goal" -> goal,
+        "decidedBy" -> ListSql.anyOf(decidedByExpr, q.decidedBy.map(_.wire))
+      )
+    )
 
   /** One page of the approvals that match `q`, newest first ([[com.histmersion.api.Paging]]). */
-  def approvalPage(ds: DataSource, q: ApprovalQuery, limit: Int, before: Option[String],
-      upTo: Option[String]): Either[String, (List[ApprovalInfo], Boolean)] =
+  def approvalPage(
+      ds: DataSource,
+      q: ApprovalQuery,
+      limit: Int,
+      before: Option[String],
+      upTo: Option[String]
+  ): Either[String, (List[ApprovalInfo], Boolean)] =
     def cursor(c: String): Either[String, Param] =
-      c.trim.toLongOption.map(Param.L(_)).filter(Keyset.exists(ds, "approvals", _))
+      c.trim.toLongOption
+        .map(Param.L(_))
+        .filter(Keyset.exists(ds, "approvals", _))
         .toRight(s"No approval '$c' to page from")
     for
       b <- before.fold(Right(None))(cursor(_).map(Some(_)))
       u <- upTo.fold(Right(None))(cursor(_).map(Some(_)))
     yield
       val where = Sql.raw(" WHERE true") ++ approvalConds(q).all
-      val (rows, more) = Keyset.page[ApprovalRow](ds, approvalSelect, where, "", "approvals", math.max(1, limit),
-        b, u, r => Param.L(r.id))
+      val (rows, more) = Keyset
+        .page[ApprovalRow](ds, approvalSelect, where, "", "approvals", math.max(1, limit), b, u, r => Param.L(r.id))
       (rows.toList.map(toApproval), more)
 
-  /** The counts that go with a filtered page: per state (under every filter but the state) and the
-    * `kind` and `decidedBy` facets (each under every filter but its own). */
+  /** The counts that go with a filtered page: per state (under every filter but the state) and the `kind` and
+    * `decidedBy` facets (each under every filter but its own).
+    */
   def approvalFacets(ds: DataSource, q: ApprovalQuery): (List[(String, Int)], List[(String, List[(String, Int)])]) =
     val c = approvalConds(q)
     def from(except: String) = Sql.raw(" FROM approvals WHERE true") ++ c.except(except)
-    (Keyset.counts(ds, from("state"), "state"),
-      List("kind" -> ListSql.facet(ds, from("kind"), "kind"),
-        "decidedBy" -> ListSql.facet(ds, from("decidedBy"), decidedByExpr)))
+    (
+      Keyset.counts(ds, from("state"), "state"),
+      List(
+        "kind" -> ListSql.facet(ds, from("kind"), "kind"),
+        "decidedBy" -> ListSql.facet(ds, from("decidedBy"), decidedByExpr)
+      )
+    )
 
   /** How many approvals are in each state. */
   def approvalCounts(ds: DataSource): List[(String, Int)] = Keyset.counts(ds, Sql.raw(" FROM approvals"), "state")
 
-  /** The approval step `seq` of run `jobId` waits on, opened if it is not there yet (a resumed run
-    * finds the one it opened before, never a second). `state` = approved with a `result` records one
-    * applied at once (an `auto` mode). */
-  def openForStep(ds: DataSource, jobId: String, seq: Int, kind: ApprovalKind, subject: String, payload: String,
-      state: ApprovalState = ApprovalState.Open, result: Option[String] = None): ApprovalInfo =
+  /** The approval step `seq` of run `jobId` waits on, opened if it is not there yet (a resumed run finds the one it
+    * opened before, never a second). `state` = approved with a `result` records one applied at once (an `auto` mode).
+    */
+  def openForStep(
+      ds: DataSource,
+      jobId: String,
+      seq: Int,
+      kind: ApprovalKind,
+      subject: String,
+      payload: String,
+      state: ApprovalState = ApprovalState.Open,
+      result: Option[String] = None
+  ): ApprovalInfo =
     val decided = Option.when(state != ApprovalState.Open)(java.time.Instant.now().toString)
     connect(ds):
       sql"""INSERT INTO approvals (job_id, seq, kind, subject, proposal, state, result, decided_at)
@@ -542,11 +842,19 @@ object AgentRepo:
             ON CONFLICT (job_id, seq) WHERE seq IS NOT NULL DO NOTHING""".update.run()
     forStep(ds, jobId, seq).get
 
-  /** A proposal about a goal or an article (`subject`) that the run does NOT wait for (an inferred
-    * filter, a plan of articles): recorded `open` for a person, or `approved` with its `result` when it
-    * was applied at once (an `auto` mode). */
-  def openSubject(ds: DataSource, jobId: Option[String], kind: ApprovalKind, subject: String, payload: String,
-      state: ApprovalState = ApprovalState.Open, result: Option[String] = None): ApprovalInfo =
+  /** A proposal about a goal or an article (`subject`) that the run does NOT wait for (an inferred filter, a plan of
+    * articles): recorded `open` for a person, or `approved` with its `result` when it was applied at once (an `auto`
+    * mode).
+    */
+  def openSubject(
+      ds: DataSource,
+      jobId: Option[String],
+      kind: ApprovalKind,
+      subject: String,
+      payload: String,
+      state: ApprovalState = ApprovalState.Open,
+      result: Option[String] = None
+  ): ApprovalInfo =
     val decided = Option.when(state != ApprovalState.Open)(java.time.Instant.now().toString)
     val id = connect(ds):
       sql"""INSERT INTO approvals (job_id, kind, subject, proposal, state, result, decided_at)
@@ -558,44 +866,63 @@ object AgentRepo:
   def approvalsOf(ds: DataSource, jobId: String, kind: Option[ApprovalKind] = None): List[ApprovalInfo] =
     connect(ds):
       (approvalSelect ++ Sql.of(" WHERE job_id = ?", Param.S(jobId)) ++
-        kind.fold(Sql.empty)(k => Sql.of(" AND kind = ?", Param.S(k.wire))) ++ Sql.of(" ORDER BY id"))
-        .frag.query[ApprovalRow].run().toList.map(toApproval)
+        kind.fold(Sql.empty)(k => Sql.of(" AND kind = ?", Param.S(k.wire))) ++ Sql
+          .of(" ORDER BY id")).frag.query[ApprovalRow].run().toList.map(toApproval)
 
-  /** The approvals of `kind` the autopilot APPROVED since `since` (their note starts with
-    * `autopilot: approved`) — what its daily caps count. */
+  /** The approvals of `kind` the autopilot APPROVED since `since` (their note starts with `autopilot: approved`) — what
+    * its daily caps count.
+    */
   def autoApprovedSince(ds: DataSource, kind: ApprovalKind, since: java.time.Instant): List[ApprovalInfo] =
     val t = since.toString
     connect(ds):
-      (approvalSelect ++ Sql.of(" WHERE kind = ? AND note LIKE 'autopilot: approved%' AND decided_at >= ?::timestamptz ORDER BY id",
-        Param.S(kind.wire), Param.S(t))).frag.query[ApprovalRow].run().toList.map(toApproval)
+      (approvalSelect ++ Sql.of(
+        " WHERE kind = ? AND note LIKE 'autopilot: approved%' AND decided_at >= ?::timestamptz ORDER BY id",
+        Param.S(kind.wire),
+        Param.S(t)
+      )).frag.query[ApprovalRow].run().toList.map(toApproval)
 
   /** The OPEN approvals of the given kinds, oldest first (what the supervisor's checks look at). */
   def openOfKinds(ds: DataSource, kinds: List[ApprovalKind], limit: Int): List[ApprovalInfo] =
     connect(ds):
-      (approvalSelect ++ Sql.of(" WHERE state = 'open' AND kind = ANY(?::text[]) ORDER BY id LIMIT ?",
-        Param.A(kinds.map(_.wire)), Param.I(math.max(1, limit)))).frag.query[ApprovalRow].run().toList.map(toApproval)
+      (approvalSelect ++ Sql.of(
+        " WHERE state = 'open' AND kind = ANY(?::text[]) ORDER BY id LIMIT ?",
+        Param.A(kinds.map(_.wire)),
+        Param.I(math.max(1, limit))
+      )).frag.query[ApprovalRow].run().toList.map(toApproval)
 
   /** Every OPEN approval, light (id, kind, subject, created), oldest first — what the digest groups. */
   def openLight(ds: DataSource): List[ApprovalDigest.Open] =
     connect(ds):
       sql"""SELECT id, kind, subject, to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
-            FROM approvals WHERE state = 'open' ORDER BY id""".query[(Long, String, Option[String], String)].run().toList
+            FROM approvals WHERE state = 'open' ORDER BY id"""
+        .query[(Long, String, Option[String], String)]
+        .run()
+        .toList
         .map((i, k, s, c) => ApprovalDigest.Open(i, k, s, c))
 
   /** How many approvals of `kind` are open (the backlog a scaled daily cap reads). */
   def openCount(ds: DataSource, kind: ApprovalKind): Int =
-    connect(ds)(sql"SELECT count(*)::int FROM approvals WHERE state = 'open' AND kind = ${kind.wire}".query[Int].run().head)
+    connect(ds)(
+      sql"SELECT count(*)::int FROM approvals WHERE state = 'open' AND kind = ${kind.wire}".query[Int].run().head
+    )
 
   /** Open approvals per subject (a goal or an article slug). */
   def openBySubject(ds: DataSource): Map[String, Int] =
     connect(ds):
       sql"""SELECT subject, count(*)::int FROM approvals WHERE state = 'open' AND subject IS NOT NULL GROUP BY subject"""
-        .query[(String, Int)].run().toMap
+        .query[(String, Int)]
+        .run()
+        .toMap
 
   /** The approval step `seq` of run `jobId` opened, if it did. */
   def forStep(ds: DataSource, jobId: String, seq: Int): Option[ApprovalInfo] =
-    connect(ds)((approvalSelect ++ Sql.of(" WHERE job_id = ? AND seq = ?", Param.S(jobId), Param.I(seq)))
-      .frag.query[ApprovalRow].run().headOption.map(toApproval))
+    connect(ds)(
+      (approvalSelect ++ Sql.of(" WHERE job_id = ? AND seq = ?", Param.S(jobId), Param.I(seq))).frag
+        .query[ApprovalRow]
+        .run()
+        .headOption
+        .map(toApproval)
+    )
 
   /** A cancelled run's open approvals: rejected, so nobody decides for a run that is gone. */
   def closeForRun(ds: DataSource, jobId: String, why: String): Int =
@@ -621,4 +948,6 @@ object AgentRepo:
 
   /** The newest saved version of an article: after a patch, the row holding the text it replaced. */
   def latestArticleVersion(ds: DataSource, slug: String): Option[Long] =
-    connect(ds)(sql"SELECT max(id) FROM article_versions WHERE slug = $slug".query[Option[Long]].run().headOption.flatten)
+    connect(ds)(
+      sql"SELECT max(id) FROM article_versions WHERE slug = $slug".query[Option[Long]].run().headOption.flatten
+    )

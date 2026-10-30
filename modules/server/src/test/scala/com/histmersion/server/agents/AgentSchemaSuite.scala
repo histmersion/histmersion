@@ -8,8 +8,9 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.ai.core.agent.{AgentTool, ResponseSchema}
 import sttp.tapir.Schema
 
-/** The JSON schemas sttp-ai sends to a provider come from the same Kindlings-derived Tapir schemas the
-  * MCP tools advertise — no second schema stack. */
+/** The JSON schemas sttp-ai sends to a provider come from the same Kindlings-derived Tapir schemas the MCP tools
+  * advertise — no second schema stack.
+  */
 class AgentSchemaSuite extends munit.FunSuite:
 
   test("a typed answer's response schema renders from its Kindlings schema"):
@@ -30,18 +31,28 @@ class AgentSchemaSuite extends munit.FunSuite:
     assert(skeptic.contains("\"proposals\"") && skeptic.contains("superseded_by"), skeptic)
     val fixer = js(ResponseSchema.derived[FixerAnswer]())
     // the fixer answers with edits, never a whole body
-    assert(fixer.contains("\"edits\"") && fixer.contains("\"anchor\"") && fixer.contains("insertAfter") && fixer.contains("copied EXACTLY"), fixer)
+    assert(
+      fixer.contains("\"edits\"") && fixer.contains("\"anchor\"") && fixer.contains("insertAfter") && fixer.contains(
+        "copied EXACTLY"
+      ),
+      fixer
+    )
     assert(!fixer.contains("\"body\""), fixer)
     val cold = js(ResponseSchema.derived[ColdReaderAnswer]())
-    assert(cold.contains("\"explainBack\"") && !cold.contains("\"evidence\""), "the cold reader cites no records: " + cold)
+    assert(
+      cold.contains("\"explainBack\"") && !cold.contains("\"evidence\""),
+      "the cold reader cites no records: " + cold
+    )
     val rules = js(ResponseSchema.derived[RulesAnswer]())
     assert(rules.contains("\"spotChecks\"") && rules.contains("\"recordQuote\""))
     // a rules or skeptic finding carries its records: citekey, offset, quote
-    for s <- List(rules, skeptic) do assert(s.contains("\"evidence\"") && s.contains("\"offset\"") && s.contains("\"citekey\""), s)
+    for s <- List(rules, skeptic) do
+      assert(s.contains("\"evidence\"") && s.contains("\"offset\"") && s.contains("\"citekey\""), s)
 
   test("#981: the findings answer carries placeKind, with the kinds the geocoder understands"):
-    val js = sttp.apispec.circe.encoderSchema(
-      ResponseSchema.derived[com.histmersion.domain.EnrichSource.Findings]().schema).noSpaces
+    val js = sttp.apispec.circe
+      .encoderSchema(ResponseSchema.derived[com.histmersion.domain.EnrichSource.Findings]().schema)
+      .noSpaces
     assert(js.contains("\"placeKind\""), js)
     assert(List("site (", "region (", "polity (", "water (").forall(js.contains), js)
 
@@ -58,7 +69,10 @@ class AgentSchemaSuite extends munit.FunSuite:
   test("#958: the fixer and the compile writer answer coverage reasons; article_coverage takes a slug"):
     def js[A](s: ResponseSchema[A]) = sttp.apispec.circe.encoderSchema(s.schema).noSpaces
     val fixer = js(ResponseSchema.derived[com.histmersion.domain.ReviewArticle.FixerAnswer]())
-    assert(fixer.contains("\"reasons\"") && fixer.contains("\"citekey\"") && fixer.contains("an empty reason removes one"), fixer)
+    assert(
+      fixer.contains("\"reasons\"") && fixer.contains("\"citekey\"") && fixer.contains("an empty reason removes one"),
+      fixer
+    )
     val draft = js(ResponseSchema.derived[com.histmersion.domain.CompileArticle.DraftAnswer]())
     assert(draft.contains("\"reasons\"") && draft.contains("you do NOT cite"), draft)
     val t = Toolbox(null, () => AgentUpstream.Offline).tool(ToolName.ArticleCoverage)
@@ -87,9 +101,19 @@ class AgentSchemaSuite extends munit.FunSuite:
     val search = schema(ToolName.Search)
     List("\"query\"", "\"topics\"", "\"status\"", "\"limit\"", "\"offset\"").foreach(k => assert(search.contains(k), k))
     List("groupBy", "minLon", "samples", "verbose", "asOf").foreach(k => assert(!search.contains(k), k))
-    val f = AgentSearchInput(query = Some("Hittite"), topics = List("a,b"), status = List("contested"), from = Some(-1600),
-      to = Some(-1200), limit = Some(30), offset = Some(30)).toFilter
-    assertEquals((f.q, f.topics, f.status, f.limit, f.offset), (Some("Hittite"), List("a", "b"), List("contested"), 30, 30))
+    val f = AgentSearchInput(
+      query = Some("Hittite"),
+      topics = List("a,b"),
+      status = List("contested"),
+      from = Some(-1600),
+      to = Some(-1200),
+      limit = Some(30),
+      offset = Some(30)
+    ).toFilter
+    assertEquals(
+      (f.q, f.topics, f.status, f.limit, f.offset),
+      (Some("Hittite"), List("a", "b"), List("contested"), 30, 30)
+    )
     assert(f.period.isDefined && f.bbox.isEmpty && f.places.isEmpty)
     assert(!schema(ToolName.Facets).contains("minLon") && schema(ToolName.Facets).contains("\"prefix\""))
     assert(!schema(ToolName.GetSource).contains("fullText"))
@@ -100,14 +124,18 @@ class AgentSchemaSuite extends munit.FunSuite:
   test("an agent's arguments may leave out what has a default, and a stray one costs no turn (2026-10-16)"):
     import io.circe.parser.decode
     // a Codex skeptic spent ~3 calls a step on "DecodingFailure at .tags: Missing required field"
-    assertEquals(decode[AgentSearchInput]("""{"topics":["dragon_slaying_myth"],"limit":50}"""),
-      Right(AgentSearchInput(topics = List("dragon_slaying_myth"), limit = Some(50))))
+    assertEquals(
+      decode[AgentSearchInput]("""{"topics":["dragon_slaying_myth"],"limit":50}"""),
+      Right(AgentSearchInput(topics = List("dragon_slaying_myth"), limit = Some(50)))
+    )
     assertEquals(decode[AgentGetSourceInput]("""{"citekey":"x","fullText":true}"""), Right(AgentGetSourceInput("x")))
     assertEquals(decode[AgentFacetsInput]("""{"field":"tags"}"""), Right(AgentFacetsInput("tags")))
     assertEquals(decode[FollowupsInput]("""{"id":"x"}"""), Right(FollowupsInput("x")))
     val t = box.tool(ToolName.Search)
-    assert(t.codec.decodeJson(io.circe.Json.obj("topics" -> io.circe.Json.arr(io.circe.Json.fromString("a")))).isRight,
-      "the codec the agent endpoints decode with")
+    assert(
+      t.codec.decodeJson(io.circe.Json.obj("topics" -> io.circe.Json.arr(io.circe.Json.fromString("a")))).isRight,
+      "the codec the agent endpoints decode with"
+    )
 
 object AgentSchemaSuite:
   final case class Titled(title: String) derives KindlingsCodecAsObject

@@ -7,18 +7,19 @@ import com.histmersion.domain.HttpPolicy
 import com.histmersion.server.acquire.SttpHttp
 
 import java.nio.file.{Files, Path}
-import java.security.cert.{CertPathValidator, CertificateFactory, PKIXParameters, TrustAnchor, X509Certificate}
+import java.security.cert.{CertificateFactory, CertPathValidator, PKIXParameters, TrustAnchor, X509Certificate}
 import scala.jdk.CollectionConverters.*
 
-/** `acquire.tls` (#1568): more roots than the JDK's, never less verification. The fixtures are public
-  * CA certificates: HARICA TLS RSA Root CA 2021 (not in the JDK's cacerts) and GEANT TLS RSA 1, the
-  * intermediate archiv.ub.uni-heidelberg.de chains through to it. */
+/** `acquire.tls` (#1568): more roots than the JDK's, never less verification. The fixtures are public CA certificates:
+  * HARICA TLS RSA Root CA 2021 (not in the JDK's cacerts) and GEANT TLS RSA 1, the intermediate
+  * archiv.ub.uni-heidelberg.de chains through to it.
+  */
 class OutboundTlsSuite extends munit.FunSuite:
 
   private def resource(name: String): String =
     new String(getClass.getResourceAsStream(s"/tls/$name").readAllBytes(), "US-ASCII")
 
-  private val rootPem         = resource("harica-tls-rsa-root-2021.pem")
+  private val rootPem = resource("harica-tls-rsa-root-2021.pem")
   private val intermediatePem = resource("geant-tls-rsa-1.pem")
 
   private def subject(c: X509Certificate) = c.getSubjectX500Principal.getName
@@ -32,14 +33,17 @@ class OutboundTlsSuite extends munit.FunSuite:
 
   test("PEM blocks parse into certificates; junk around them is skipped"):
     val cs = OutboundTls.certificates("keychain: \"/x\"\n" + rootPem + "\nnot a cert\n" + intermediatePem)
-    assertEquals(cs.map(subject).map(_.takeWhile(_ != ',')), List("CN=HARICA TLS RSA Root CA 2021", "CN=GEANT TLS RSA 1"))
+    assertEquals(
+      cs.map(subject).map(_.takeWhile(_ != ',')),
+      List("CN=HARICA TLS RSA Root CA 2021", "CN=GEANT TLS RSA 1")
+    )
     assertEquals(OutboundTls.certificates("-----BEGIN CERTIFICATE-----\nnot base64!\n-----END CERTIFICATE-----"), Nil)
 
   test("the merged store keeps every JDK root and adds the extra one; the chain then validates"):
-    val root  = OutboundTls.certificates(rootPem).head
+    val root = OutboundTls.certificates(rootPem).head
     val inter = OutboundTls.certificates(intermediatePem).head
-    val jdk   = OutboundTls.trustManager(Nil).getAcceptedIssuers
-    val more  = OutboundTls.trustManager(List(root)).getAcceptedIssuers
+    val jdk = OutboundTls.trustManager(Nil).getAcceptedIssuers
+    val more = OutboundTls.trustManager(List(root)).getAcceptedIssuers
     assert(!jdk.exists(_ == root), "the premise: the JDK does not ship HARICA TLS RSA Root CA 2021")
     assertEquals(more.length, jdk.length + 1)
     assert(jdk.forall(c => more.contains(c)), "no JDK root is lost")
@@ -53,7 +57,7 @@ class OutboundTlsSuite extends munit.FunSuite:
 
   test("system trust on macOS reads the system keychains with `security`"):
     val seen = collection.mutable.Buffer.empty[List[String]]
-    val got  = OutboundTls.configure(TlsConfig(systemTrust = true, extraCaFile = ""), "Mac OS X", fakeRun(seen))
+    val got = OutboundTls.configure(TlsConfig(systemTrust = true, extraCaFile = ""), "Mac OS X", fakeRun(seen))
     val (_, line) = got.getOrElse(fail("configured"))
     assertEquals(seen.headOption.map(_.take(4)), Some(List("/usr/bin/security", "find-certificate", "-a", "-p")))
     assert(line.contains("macOS system keychains: 1 root(s)"), line)
@@ -82,11 +86,14 @@ class OutboundTlsSuite extends munit.FunSuite:
     assert(got.isLeft)
 
   test("live: archiv.ub.uni-heidelberg.de with the system's roots (HISTMERSION_LIVE_APIS=1, macOS)"):
-    assume(sys.env.get("HISTMERSION_LIVE_APIS").contains("1") &&
-      System.getProperty("os.name", "").toLowerCase.contains("mac"), "live, macOS only")
-    val cfg   = AppConfig.load().acquire
+    assume(
+      sys.env.get("HISTMERSION_LIVE_APIS").contains("1") &&
+        System.getProperty("os.name", "").toLowerCase.contains("mac"),
+      "live, macOS only"
+    )
+    val cfg = AppConfig.load().acquire
     val plain = SttpHttp(cfg, tries = 1).bytes("https://archiv.ub.uni-heidelberg.de/", Map.empty)
     assert(plain.isLeft, s"premise: with the JDK's roots alone the handshake fails, got $plain")
-    val tls   = OutboundTls.configure(cfg.tls.copy(systemTrust = true)).map(_._1)
+    val tls = OutboundTls.configure(cfg.tls.copy(systemTrust = true)).map(_._1)
     val fixed = SttpHttp(cfg, tries = 1, tls = tls).bytes("https://archiv.ub.uni-heidelberg.de/", Map.empty)
     assert(fixed.isRight, s"with the system's roots: $fixed")

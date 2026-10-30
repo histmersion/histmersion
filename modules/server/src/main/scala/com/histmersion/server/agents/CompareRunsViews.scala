@@ -6,11 +6,13 @@ import com.histmersion.domain.CompareRuns
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl.*
 
-/** `agent compare` at the server's edge: the recorded runs, as the store reads them, into what the domain
-  * compares; the domain's comparison into what the wire shows. */
+/** `agent compare` at the server's edge: the recorded runs, as the store reads them, into what the domain compares; the
+  * domain's comparison into what the wire shows.
+  */
 object CompareRunsViews:
   private given Transformer[RunInfo, CompareRuns.RunHead] =
-    Transformer.define[RunInfo, CompareRuns.RunHead]
+    Transformer
+      .define[RunInfo, CompareRuns.RunHead]
       .withFieldComputed(_.modelFor, _.params.overrides.map(_.transformInto[CompareRuns.ModelChoice]))
       .buildTransformer
 

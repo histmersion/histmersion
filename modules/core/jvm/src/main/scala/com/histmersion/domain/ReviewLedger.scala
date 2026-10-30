@@ -10,23 +10,26 @@ import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewArticle.Finding
 import com.histmersion.values.WireEnumValues
 
-/** The review ledger of one article (docs/research-review-convergence.md §6): every finding the
-  * `review-article` panel ever raised on it, under an id that never changes, with what became of it —
-  * open, fixed (verified by the reviewer that raised it), rejected (with the record's sentence) or won't
-  * fix — and the lessons learned from rejections and failed fixes. It persists across runs, so a later
-  * run starts from it; the reviewers and the fixer read it in their prompts.
+/** The review ledger of one article (docs/research-review-convergence.md §6): every finding the `review-article` panel
+  * ever raised on it, under an id that never changes, with what became of it — open, fixed (verified by the reviewer
+  * that raised it), rejected (with the record's sentence) or won't fix — and the lessons learned from rejections and
+  * failed fixes. It persists across runs, so a later run starts from it; the reviewers and the fixer read it in their
+  * prompts.
   *
-  * Everything here is pure: the pipeline loads the ledger, threads it through its passes as a value
-  * (each pass's new ledger is a checkpointed step output) and writes it back through the run's gate. */
+  * Everything here is pure: the pipeline loads the ledger, threads it through its passes as a value (each pass's new
+  * ledger is a checkpointed step output) and writes it back through the run's gate.
+  */
 object ReviewLedger:
 
   enum Status(val wire: String):
-    case Open     extends Status("open")
-    case Fixed    extends Status("fixed")
+    case Open extends Status("open")
+    case Fixed extends Status("fixed")
     case Rejected extends Status("rejected")
-    case WontFix  extends Status("wont-fix")
-    /** A missing-critique finding the fixer answered with a stored critique reason (§6.8): the critique
-      * exists, and does not bear on what the article cites the source for. */
+    case WontFix extends Status("wont-fix")
+
+    /** A missing-critique finding the fixer answered with a stored critique reason (§6.8): the critique exists, and
+      * does not bear on what the article cites the source for.
+      */
     case SetAside extends Status("set-aside")
 
   object Status:
@@ -41,7 +44,7 @@ object ReviewLedger:
   /** Where a lesson came from: a rejection the fixer proved, or a reviewer's re-check. */
   enum LessonSource(val wire: String):
     case Rejection extends LessonSource("rejection")
-    case Recheck   extends LessonSource("recheck")
+    case Recheck extends LessonSource("recheck")
 
   object LessonSource:
     def parse(s: String): Option[LessonSource] = values.find(_.wire == s.trim.toLowerCase)
@@ -52,19 +55,26 @@ object ReviewLedger:
     given Encoder[LessonSource] = WireEnum.encoder
     given Decoder[LessonSource] = WireEnum.decoder
 
-  /** How a finding was closed: by whom (a reviewer's wire name, `fixer`, or `mechanical` for code),
-    * in which pass of which run, and the evidence — the quote of the fixed text, or the record's
-    * sentence of a rejection (with its citekey), or the reason a minor one is declined. */
-  final case class Closure(by: String, round: Int, run: String, note: String = "", quote: String = "",
-      citekey: Option[String] = None) derives KindlingsCodecAsObject
+  /** How a finding was closed: by whom (a reviewer's wire name, `fixer`, or `mechanical` for code), in which pass of
+    * which run, and the evidence — the quote of the fixed text, or the record's sentence of a rejection (with its
+    * citekey), or the reason a minor one is declined.
+    */
+  final case class Closure(
+      by: String,
+      round: Int,
+      run: String,
+      note: String = "",
+      quote: String = "",
+      citekey: Option[String] = None
+  ) derives KindlingsCodecAsObject
 
-  /** One finding in the ledger. `claimed`: the fixer lists it as applied, and its reviewer has not
-    * checked it yet. `notFixed`: the last check's word that it is not (or the rejection it was raised
-    * again after); `notFixedCount`: how often it was found not fixed — by its reviewer, or because the
-    * fixer left it unanswered or claimed it without the change code checks for (§6.9). `reopened`: how
-    * often a fixed finding came back. `deferred`: the run whose FINAL pass raised it (or raised it to
-    * MAJOR) as a new finding — it does not make that run's verdict MAJOR, stays open, and is the next
-    * run's work (§6.9). */
+  /** One finding in the ledger. `claimed`: the fixer lists it as applied, and its reviewer has not checked it yet.
+    * `notFixed`: the last check's word that it is not (or the rejection it was raised again after); `notFixedCount`:
+    * how often it was found not fixed — by its reviewer, or because the fixer left it unanswered or claimed it without
+    * the change code checks for (§6.9). `reopened`: how often a fixed finding came back. `deferred`: the run whose
+    * FINAL pass raised it (or raised it to MAJOR) as a new finding — it does not make that run's verdict MAJOR, stays
+    * open, and is the next run's work (§6.9).
+    */
   final case class Entry(
       finding: Finding,
       run: String,
@@ -77,21 +87,27 @@ object ReviewLedger:
       notFixedCount: Int = 0,
       deferred: Option[String] = None
   ) derives KindlingsCodecAsObject:
-    def id: String       = finding.id
-    def open: Boolean    = status == Status.Open
-    def major: Boolean   = finding.major
+    def id: String = finding.id
+    def open: Boolean = status == Status.Open
+    def major: Boolean = finding.major
     def reviewer: Reviewer = finding.reviewer
+
     /** Deferred by `run`'s final pass: not part of that run's verdict. */
     def deferredIn(run: String): Boolean = open && deferred.contains(run)
 
   final case class Lesson(text: String, source: LessonSource, run: String, round: Int) derives KindlingsCodecAsObject
 
   /** `task`: the article's one backlog item (#934), while it has one. */
-  final case class Ledger(slug: String, entries: List[Entry] = Nil, lessons: List[Lesson] = Nil, task: Option[Int] = None)
-      derives KindlingsCodecAsObject:
-    def open: List[Entry]       = entries.filter(_.open)
+  final case class Ledger(
+      slug: String,
+      entries: List[Entry] = Nil,
+      lessons: List[Lesson] = Nil,
+      task: Option[Int] = None
+  ) derives KindlingsCodecAsObject:
+    def open: List[Entry] = entries.filter(_.open)
     def openMajors: List[Entry] = open.filter(_.major)
     def entry(id: String): Option[Entry] = entries.find(_.id == id)
+
     /** The open findings the fixer claims, of one reviewer: what its re-check verifies. */
     def claimed(r: Reviewer): List[Entry] = open.filter(e => e.claimed && e.reviewer == r)
     def verdict: Verdict = Verdict.of(open.map(_.finding))
@@ -101,16 +117,23 @@ object ReviewLedger:
 
   // ── matching ───────────────────────────────────────────────────────────────────────────────────
 
-  /** A mechanical finding is the same one when code says the same thing about the same passage: its
-    * kind, its place, its problem up to the first colon (a coverage count changes as reasons are
-    * given; the passage does not) and its quote. */
+  /** A mechanical finding is the same one when code says the same thing about the same passage: its kind, its place,
+    * its problem up to the first colon (a coverage count changes as reasons are given; the passage does not) and its
+    * quote.
+    */
   private def mechanicalKey(f: Finding): (String, String, String, String) =
-    (f.kind, AgentVerify.normalise(f.where), AgentVerify.normalise(f.problem.takeWhile(_ != ':')), AgentVerify.normalise(f.quote))
+    (
+      f.kind,
+      AgentVerify.normalise(f.where),
+      AgentVerify.normalise(f.problem.takeWhile(_ != ':')),
+      AgentVerify.normalise(f.quote)
+    )
 
-  /** Is `b` the finding `a` again? The same reviewer, and the same passage (quotes equal, or one inside
-    * the other when both are at least 20 characters), or the same `where` and a problem that shares at
-    * least half its words ([[CompareRuns.similarity]]). Mechanical findings compare by [[mechanicalKey]];
-    * the cold reader's term-count findings ([[TermCount]]) are one finding whatever the count or wording. */
+  /** Is `b` the finding `a` again? The same reviewer, and the same passage (quotes equal, or one inside the other when
+    * both are at least 20 characters), or the same `where` and a problem that shares at least half its words
+    * ([[CompareRuns.similarity]]). Mechanical findings compare by [[mechanicalKey]]; the cold reader's term-count
+    * findings ([[TermCount]]) are one finding whatever the count or wording.
+    */
   def same(a: Finding, b: Finding): Boolean =
     a.reviewer == b.reviewer && {
       if a.reviewer == Reviewer.Mechanical then mechanicalKey(a) == mechanicalKey(b)
@@ -133,11 +156,12 @@ object ReviewLedger:
   private def update(l: Ledger, id: String)(f: Entry => Entry): Ledger =
     l.copy(entries = l.entries.map(e => if e.id == id then f(e) else e))
 
-  /** Record a pass's findings (ids per pass, as the reviewers' answers were numbered). A finding the
-    * ledger has already: an open one keeps its id (and is no longer "claimed": it was raised again); a
-    * fixed one is RE-OPENED (a regression); a rejected one is re-opened and flagged escalated; a declined
-    * minor stays declined unless it comes back MAJOR. Anything else is a new entry with the next id.
-    * Returns the ledger and the findings under their ledger ids, in the order given. */
+  /** Record a pass's findings (ids per pass, as the reviewers' answers were numbered). A finding the ledger has
+    * already: an open one keeps its id (and is no longer "claimed": it was raised again); a fixed one is RE-OPENED (a
+    * regression); a rejected one is re-opened and flagged escalated; a declined minor stays declined unless it comes
+    * back MAJOR. Anything else is a new entry with the next id. Returns the ledger and the findings under their ledger
+    * ids, in the order given.
+    */
   def absorb(l: Ledger, fs: List[Finding], run: String, round: Int): (Ledger, List[Finding]) =
     fs.foldLeft((l, Vector.empty[Finding], Set.empty[String])) { case ((led, out, seen), f) =>
       led.entries.find(e => !seen(e.id) && same(e.finding, f)) match
@@ -147,82 +171,174 @@ object ReviewLedger:
             case Status.Open =>
               e.copy(finding = f.copy(id = id, escalated = f.escalated || e.finding.escalated), claimed = false)
             case Status.Fixed =>
-              e.copy(finding = f.copy(id = id), status = Status.Open, claimed = false,
+              e.copy(
+                finding = f.copy(id = id),
+                status = Status.Open,
+                claimed = false,
                 notFixed = Some(s"fixed in pass ${e.closed.fold(0)(_.round)}, raised again in pass $round"),
-                reopened = e.reopened + 1, closed = None)
+                reopened = e.reopened + 1,
+                closed = None
+              )
             case Status.Rejected =>
-              e.copy(finding = f.copy(id = id, escalated = true), status = Status.Open, claimed = false,
-                notFixed = e.closed.map(c => s"rejected before${c.citekey.fold("")(ck => s" ([[$ck]])")}: ${c.note}".take(300)),
-                closed = None)
+              e.copy(
+                finding = f.copy(id = id, escalated = true),
+                status = Status.Open,
+                claimed = false,
+                notFixed =
+                  e.closed.map(c => s"rejected before${c.citekey.fold("")(ck => s" ([[$ck]])")}: ${c.note}".take(300)),
+                closed = None
+              )
             case Status.WontFix | Status.SetAside if f.major =>
-              e.copy(finding = f.copy(id = id), status = Status.Open, claimed = false,
-                notFixed = e.closed.filter(_ => e.status == Status.SetAside).map(c => s"set aside before: ${c.note}".take(300)),
-                closed = None)
+              e.copy(
+                finding = f.copy(id = id),
+                status = Status.Open,
+                claimed = false,
+                notFixed =
+                  e.closed.filter(_ => e.status == Status.SetAside).map(c => s"set aside before: ${c.note}".take(300)),
+                closed = None
+              )
             case Status.WontFix | Status.SetAside => e
           (update(led, id)(_ => next), out :+ next.finding, seen + id)
         case None =>
           val id = nextId(led, f.reviewer)
-          val g  = f.copy(id = id)
+          val g = f.copy(id = id)
           (led.copy(entries = led.entries :+ Entry(g, run, round)), out :+ g, seen + id)
     } match
       case (led, out, _) => (led, out.toList)
 
-  /** A reviewer's checks of its own findings: fixed → closed by that reviewer in this pass (with the
-    * quote of the fixed text); not fixed → open, unclaimed, with the reviewer's note. A check of
-    * another reviewer's finding, or of a closed one, changes nothing. */
+  /** A reviewer's checks of its own findings: fixed → closed by that reviewer in this pass (with the quote of the fixed
+    * text); not fixed → open, unclaimed, with the reviewer's note. A check of another reviewer's finding, or of a
+    * closed one, changes nothing.
+    */
   def applyChecks(l: Ledger, r: Reviewer, checks: List[Check], run: String, round: Int): Ledger =
     checks.foldLeft(l) { (led, c) =>
       led.entry(c.id).filter(e => e.open && e.reviewer == r).fold(led) { _ =>
         update(led, c.id) { e =>
-          if c.fixed then e.copy(status = Status.Fixed, claimed = false, notFixed = None,
-            closed = Some(Closure(r.wire, round, run, c.note, c.quote)))
-          else e.copy(claimed = false, notFixed = Some(Option(c.note).filter(_.nonEmpty).getOrElse("not fixed")),
-            notFixedCount = e.notFixedCount + 1)
+          if c.fixed then
+            e.copy(
+              status = Status.Fixed,
+              claimed = false,
+              notFixed = None,
+              closed = Some(Closure(r.wire, round, run, c.note, c.quote))
+            )
+          else
+            e.copy(
+              claimed = false,
+              notFixed = Some(Option(c.note).filter(_.nonEmpty).getOrElse("not fixed")),
+              notFixedCount = e.notFixedCount + 1
+            )
         }
       }
     }
 
-  /** The mechanical re-check, by code: an open mechanical finding that no longer recurs is fixed; one
-    * that recurs stays open (unclaimed); a new one is opened. */
+  /** The mechanical re-check, by code: an open mechanical finding that no longer recurs is fixed; one that recurs stays
+    * open (unclaimed); a new one is opened.
+    */
   def recheckMechanical(l: Ledger, now: List[Finding], run: String, round: Int): (Ledger, List[Finding]) =
     val gone = l.open.filter(_.reviewer == Reviewer.Mechanical).filterNot(e => now.exists(same(e.finding, _)))
-    val closed = gone.foldLeft(l)((led, e) => update(led, e.id)(_.copy(status = Status.Fixed, claimed = false,
-      notFixed = None, closed = Some(Closure(Reviewer.Mechanical.wire, round, run, "no longer found by the checks")))))
+    val closed = gone.foldLeft(l)((led, e) =>
+      update(led, e.id)(
+        _.copy(
+          status = Status.Fixed,
+          claimed = false,
+          notFixed = None,
+          closed = Some(Closure(Reviewer.Mechanical.wire, round, run, "no longer found by the checks"))
+        )
+      )
+    )
     absorb(closed, now, run, round)
 
-  /** The term count after a full panel, by code: the cold reader's count is the whole of that finding,
-    * so an open count entry the pass did not raise again (8 terms or fewer now) is fixed. One it did
-    * raise again is matched by [[absorb]], which replaces it — a MAJOR stored by an earlier run becomes the
-    * pass's minor one under the same id. */
+  /** The term count after a full panel, by code: the cold reader's count is the whole of that finding, so an open count
+    * entry the pass did not raise again (8 terms or fewer now) is fixed. One it did raise again is matched by
+    * [[absorb]], which replaces it — a MAJOR stored by an earlier run becomes the pass's minor one under the same id.
+    */
   def recheckTermCount(l: Ledger, cold: List[Finding], run: String, round: Int): Ledger =
     if cold.exists(TermCount.is) then l
-    else l.open.filter(e => TermCount.is(e.finding)).foldLeft(l)((led, e) => update(led, e.id)(_.copy(
-      status = Status.Fixed, claimed = false, notFixed = None,
-      closed = Some(Closure(Reviewer.Mechanical.wire, round, run, "the cold reader's count is no longer above the threshold")))))
+    else
+      l.open
+        .filter(e => TermCount.is(e.finding))
+        .foldLeft(l)((led, e) =>
+          update(led, e.id)(
+            _.copy(
+              status = Status.Fixed,
+              claimed = false,
+              notFixed = None,
+              closed = Some(
+                Closure(
+                  Reviewer.Mechanical.wire,
+                  round,
+                  run,
+                  "the cold reader's count is no longer above the threshold"
+                )
+              )
+            )
+          )
+        )
 
-  /** The fixer's verified revision: what it applied is claimed (its reviewer re-checks it), a rejection
-    * code verified closes the finding with the record's sentence (and teaches a lesson), a declined
-    * minor is closed as won't fix. */
+  /** The fixer's verified revision: what it applied is claimed (its reviewer re-checks it), a rejection code verified
+    * closes the finding with the record's sentence (and teaches a lesson), a declined minor is closed as won't fix.
+    */
   def applyFix(l: Ledger, f: Fix, run: String, round: Int): Ledger =
     // what the fixer applied, and what code's pairing repair answered (§6.9): both re-checked by the reviewer
-    val claimed = (f.applied ++ f.repaired).distinct.foldLeft(l)((led, id) => led.entry(id).filter(_.open).fold(led)(_ =>
-      update(led, id)(_.copy(claimed = true))))
+    val claimed = (f.applied ++ f.repaired).distinct.foldLeft(l)((led, id) =>
+      led.entry(id).filter(_.open).fold(led)(_ => update(led, id)(_.copy(claimed = true)))
+    )
     // what the fixer neither applied nor rejected, or claimed without the change: not fixed, with why
-    val unanswered = f.notFixed.foldLeft(claimed)((led, w) => led.entry(w.id).filter(e => e.open && !e.claimed).fold(led)(_ =>
-      update(led, w.id)(e => e.copy(notFixed = Some(s"pass $round: ${w.reason}".take(300)), notFixedCount = e.notFixedCount + 1))))
-    val rejected = f.rejected.foldLeft(unanswered)((led, r) => led.entry(r.id).filter(_.open).fold(led)(_ =>
-      update(led, r.id)(_.copy(status = Status.Rejected, claimed = false,
-        closed = Some(Closure("fixer", round, run, r.reason, r.quote, Some(r.citekey)))))))
-    val declined = f.wontFix.foldLeft(rejected)((led, w) => led.entry(w.id).filter(e => e.open && !e.major).fold(led)(_ =>
-      update(led, w.id)(_.copy(status = Status.WontFix, claimed = false, closed = Some(Closure("fixer", round, run, w.reason))))))
+    val unanswered = f.notFixed.foldLeft(claimed)((led, w) =>
+      led
+        .entry(w.id)
+        .filter(e => e.open && !e.claimed)
+        .fold(led)(_ =>
+          update(led, w.id)(e =>
+            e.copy(notFixed = Some(s"pass $round: ${w.reason}".take(300)), notFixedCount = e.notFixedCount + 1)
+          )
+        )
+    )
+    val rejected = f.rejected.foldLeft(unanswered)((led, r) =>
+      led
+        .entry(r.id)
+        .filter(_.open)
+        .fold(led)(_ =>
+          update(led, r.id)(
+            _.copy(
+              status = Status.Rejected,
+              claimed = false,
+              closed = Some(Closure("fixer", round, run, r.reason, r.quote, Some(r.citekey)))
+            )
+          )
+        )
+    )
+    val declined = f.wontFix.foldLeft(rejected)((led, w) =>
+      led
+        .entry(w.id)
+        .filter(e => e.open && !e.major)
+        .fold(led)(_ =>
+          update(led, w.id)(
+            _.copy(status = Status.WontFix, claimed = false, closed = Some(Closure("fixer", round, run, w.reason)))
+          )
+        )
+    )
     // a critique set aside: closed with the reason stored with the article and the pair it is about
-    val setAside = f.setAside.foldLeft(declined)((led, a) => led.entry(a.id).filter(_.open).fold(led)(_ =>
-      update(led, a.id)(e => e.copy(finding = e.finding.copy(pair = Some(a.pair)), status = Status.SetAside, claimed = false,
-        closed = Some(Closure("fixer", round, run, a.reason, a.pair.wire))))))
+    val setAside = f.setAside.foldLeft(declined)((led, a) =>
+      led
+        .entry(a.id)
+        .filter(_.open)
+        .fold(led)(_ =>
+          update(led, a.id)(e =>
+            e.copy(
+              finding = e.finding.copy(pair = Some(a.pair)),
+              status = Status.SetAside,
+              claimed = false,
+              closed = Some(Closure("fixer", round, run, a.reason, a.pair.wire))
+            )
+          )
+        )
+    )
     learn(setAside, f.rejected.map(r => s"[[${r.citekey}]]: ${r.reason}"), LessonSource.Rejection, run, round)
 
-  /** Add lessons: trimmed, at most [[LessonChars]] each, a lesson already held (normalised) not twice,
-    * the newest [[MaxLessons]] kept. */
+  /** Add lessons: trimmed, at most [[LessonChars]] each, a lesson already held (normalised) not twice, the newest
+    * [[MaxLessons]] kept.
+    */
   def learn(l: Ledger, texts: List[String], source: LessonSource, run: String, round: Int): Ledger =
     val fresh = texts.map(_.trim.replaceAll("\\s+", " ").take(LessonChars)).filter(_.nonEmpty)
     val all = fresh.foldLeft(l.lessons.toVector) { (acc, t) =>
@@ -238,22 +354,36 @@ object ReviewLedger:
 
   // ── what the steps read ────────────────────────────────────────────────────────────────────────
 
-  /** The open findings as one pass's merged result — the fixer's input and the pass's verdict: the
-    * mechanical ones first, then rules, cold reader, skeptic, each by id. `explainBack`, `emptySlots`
-    * and `proposals` are the pass's own. */
-  def merged(l: Ledger, round: Int, explainBack: Option[String] = None, emptySlots: List[String] = Nil,
-      proposals: List[AgentProposals.Proposal] = Nil, run: Option[String] = None): Merged =
-    val fs = l.open.map(_.finding).sortBy(f => (f.reviewer.ordinal, f.id.drop(f.reviewer.prefix.length).toIntOption.getOrElse(0)))
+  /** The open findings as one pass's merged result — the fixer's input and the pass's verdict: the mechanical ones
+    * first, then rules, cold reader, skeptic, each by id. `explainBack`, `emptySlots` and `proposals` are the pass's
+    * own.
+    */
+  def merged(
+      l: Ledger,
+      round: Int,
+      explainBack: Option[String] = None,
+      emptySlots: List[String] = Nil,
+      proposals: List[AgentProposals.Proposal] = Nil,
+      run: Option[String] = None
+  ): Merged =
+    val fs = l.open
+      .map(_.finding)
+      .sortBy(f => (f.reviewer.ordinal, f.id.drop(f.reviewer.prefix.length).toIntOption.getOrElse(0)))
     // a MAJOR the run's final pass deferred is the next run's: it counts as minor in this verdict
     val deferred = run.toList.flatMap(r => l.open.filter(e => e.major && e.deferredIn(r)).map(_.id))
-    val counted  = fs.map(f => if deferred.contains(f.id) then f.copy(severity = Severity.Minor) else f)
+    val counted = fs.map(f => if deferred.contains(f.id) then f.copy(severity = Severity.Minor) else f)
     Merged(round, Verdict.of(counted), fs, explainBack, emptySlots, proposals, deferred)
 
-  /** The notes the fixer reads under an open finding: a fix claimed before that its reviewer found
-    * wanting, a regression, a rejection it was raised again after. */
+  /** The notes the fixer reads under an open finding: a fix claimed before that its reviewer found wanting, a
+    * regression, a rejection it was raised again after.
+    */
   def notes(l: Ledger): Map[String, String] =
-    l.open.flatMap(e => e.notFixed.map(n =>
-      e.id -> s"not fixed yet${if e.notFixedCount > 1 then s" (${e.notFixedCount} times)" else ""} — $n")).toMap
+    l.open
+      .flatMap(e =>
+        e.notFixed
+          .map(n => e.id -> s"not fixed yet${if e.notFixedCount > 1 then s" (${e.notFixedCount} times)" else ""} — $n")
+      )
+      .toMap
 
   /** One line of a closed finding. */
   def closedLine(e: Entry): String =
@@ -270,21 +400,26 @@ object ReviewLedger:
   enum OpenStyle:
     case Full, Lines, Omit
 
-  /** The ledger as a prompt shows it (inside `<review-ledger>`): the open findings (`style`; with
-    * `only`, just that reviewer's), the newest `closedMax` closed ones as one line each, and the lessons.
-    * Empty when there is nothing to show. */
+  /** The ledger as a prompt shows it (inside `<review-ledger>`): the open findings (`style`; with `only`, just that
+    * reviewer's), the newest `closedMax` closed ones as one line each, and the lessons. Empty when there is nothing to
+    * show.
+    */
   def promptText(l: Ledger, style: OpenStyle, closedMax: Int, only: Option[Reviewer] = None): String =
-    val mine   = (e: Entry) => only.forall(_ == e.reviewer)
-    val open   = l.open.filter(mine)
+    val mine = (e: Entry) => only.forall(_ == e.reviewer)
+    val open = l.open.filter(mine)
     val closed = l.entries.filterNot(_.open).filter(mine).takeRight(math.max(0, closedMax))
     val openPart = style match
-      case OpenStyle.Omit => ""
+      case OpenStyle.Omit    => ""
       case _ if open.isEmpty => ""
-      case OpenStyle.Lines =>
-        "Open findings:\n" + open.map(e => s"- ${e.id} ${e.finding.severity.wire}: ${e.finding.problem.trim.take(160)}").mkString("\n")
+      case OpenStyle.Lines   =>
+        "Open findings:\n" + open
+          .map(e => s"- ${e.id} ${e.finding.severity.wire}: ${e.finding.problem.trim.take(160)}")
+          .mkString("\n")
       case OpenStyle.Full =>
         "Open findings:\n" + findingsText(merged(l.copy(entries = open), 0), notes(l)) +
-          (if open.exists(_.claimed) then "\n(The fixer claims to have fixed: " + open.filter(_.claimed).map(_.id).mkString(", ") + ".)" else "")
+          (if open.exists(_.claimed) then
+             "\n(The fixer claims to have fixed: " + open.filter(_.claimed).map(_.id).mkString(", ") + ".)"
+           else "")
     val closedPart =
       if closed.isEmpty then ""
       else "Closed findings (one line each):\n" + closed.map(e => s"- ${closedLine(e)}").mkString("\n")
@@ -293,17 +428,21 @@ object ReviewLedger:
 
   // ── the edited passages ────────────────────────────────────────────────────────────────────────
 
-  /** A run of changed paragraphs of the new body (with its margin), under the heading it sits in, and
-    * the paragraphs of the old body that are gone. */
+  /** A run of changed paragraphs of the new body (with its margin), under the heading it sits in, and the paragraphs of
+    * the old body that are gone.
+    */
   final case class Passage(heading: Option[String], text: String) derives KindlingsCodecAsObject
   final case class Edited(passages: List[Passage], removed: List[String]) derives KindlingsCodecAsObject:
     def isEmpty: Boolean = passages.isEmpty && removed.isEmpty
+
     /** The text a finding's quote is looked up in (to scope it). */
     def text: String = passages.map(_.text).mkString("\n\n")
+
     /** As a prompt shows it. */
     def render: String =
       val ps = passages.map(p => p.heading.fold("")(h => s"[under: $h]\n") + p.text).mkString("\n\n---\n\n")
-      val rs = if removed.isEmpty then "" else "\n\n---\n\nRemoved:\n" + removed.map(r => s"- ${r.take(300)}").mkString("\n")
+      val rs =
+        if removed.isEmpty then "" else "\n\n---\n\nRemoved:\n" + removed.map(r => s"- ${r.take(300)}").mkString("\n")
       ps + rs
 
   private def paragraphs(body: String): Vector[String] =
@@ -311,10 +450,10 @@ object ReviewLedger:
 
   private val Heading = "^#{1,6}\\s+(.+?)\\s*#*\\s*$".r
 
-  /** The passages a fix changed: a paragraph-level diff of `before` and `after` (longest common
-    * subsequence of whitespace-normalised paragraphs), each changed paragraph of `after` widened by
-    * `margin` paragraphs on each side, adjacent ones joined; plus the paragraphs of `before` that are
-    * gone. */
+  /** The passages a fix changed: a paragraph-level diff of `before` and `after` (longest common subsequence of
+    * whitespace-normalised paragraphs), each changed paragraph of `after` widened by `margin` paragraphs on each side,
+    * adjacent ones joined; plus the paragraphs of `before` that are gone.
+    */
   def editedPassages(before: String, after: String, margin: Int = 1): Edited =
     val a = paragraphs(before)
     val b = paragraphs(after)
@@ -334,28 +473,36 @@ object ReviewLedger:
     val changed = b.indices.filterNot(keptB)
     val m = math.max(0, margin)
     val shown = changed.flatMap(i => (i - m) to (i + m)).filter(b.indices.contains).distinct.sorted
-    val runs = shown.foldLeft(List.empty[List[Int]]) {
-      case (cur :: rest, i) if cur.head == i - 1 => (i :: cur) :: rest
-      case (acc, i)                               => List(i) :: acc
-    }.reverse.map(_.reverse)
-    def headingOf(i: Int): Option[String] =
-      (i to 0 by -1).iterator.map(b(_)).collectFirst { case p if p.linesIterator.nextOption().exists(Heading.matches) =>
-        p.linesIterator.next() match { case Heading(h) => h.trim; case h => h }
+    val runs = shown
+      .foldLeft(List.empty[List[Int]]) {
+        case (cur :: rest, i) if cur.head == i - 1 => (i :: cur) :: rest
+        case (acc, i)                              => List(i) :: acc
       }
-    Edited(runs.map(r => Passage(headingOf(r.head), r.map(b(_)).mkString("\n\n"))), a.indices.filterNot(keptA).map(a(_)).toList)
+      .reverse
+      .map(_.reverse)
+    def headingOf(i: Int): Option[String] =
+      (i to 0 by -1).iterator.map(b(_)).collectFirst {
+        case p if p.linesIterator.nextOption().exists(Heading.matches) =>
+          p.linesIterator.next() match { case Heading(h) => h.trim; case h => h }
+      }
+    Edited(
+      runs.map(r => Passage(headingOf(r.head), r.map(b(_)).mkString("\n\n"))),
+      a.indices.filterNot(keptA).map(a(_)).toList
+    )
 
   // ── convergence (docs/research-review-convergence.md §6.9) ──────────────────────────────────────
 
-  /** THE FINAL PASS VERIFIES, IT DOES NOT DISCOVER. After the run's confirming panel (`after`, absorbed
-    * from `before`): every open MAJOR that is NEW in it — an entry `before` did not have, or an open
-    * minor it raised to MAJOR — is deferred to the next run (`deferred = run`), unless `regression`
-    * says the run itself broke it (a pair it had addressed is open again; a factual error in text it
-    * wrote). A fixed finding raised again (reopened), a rejected or set-aside one raised again, and an
-    * open MAJOR raised again are not new: they stand. Deferred entries stay open and MAJOR — logged, in
-    * the backlog item, and the next run's pass 1 hands them to the fixer — but this run's verdict
-    * ([[merged]] with the run) counts them as minor. Returns the ledger and the deferred ids. */
+  /** THE FINAL PASS VERIFIES, IT DOES NOT DISCOVER. After the run's confirming panel (`after`, absorbed from `before`):
+    * every open MAJOR that is NEW in it — an entry `before` did not have, or an open minor it raised to MAJOR — is
+    * deferred to the next run (`deferred = run`), unless `regression` says the run itself broke it (a pair it had
+    * addressed is open again; a factual error in text it wrote). A fixed finding raised again (reopened), a rejected or
+    * set-aside one raised again, and an open MAJOR raised again are not new: they stand. Deferred entries stay open and
+    * MAJOR — logged, in the backlog item, and the next run's pass 1 hands them to the fixer — but this run's verdict
+    * ([[merged]] with the run) counts them as minor. Returns the ledger and the deferred ids.
+    */
   def deferFinal(before: Ledger, after: Ledger, run: String, regression: Finding => Boolean): (Ledger, List[String]) =
-    val fresh = after.open.filter(e => e.major && before.entry(e.id).forall(b => b.open && !b.major))
+    val fresh = after.open
+      .filter(e => e.major && before.entry(e.id).forall(b => b.open && !b.major))
       .filterNot(e => regression(e.finding))
     val ids = fresh.map(_.id)
     (after.copy(entries = after.entries.map(e => if ids.contains(e.id) then e.copy(deferred = Some(run)) else e)), ids)
@@ -364,32 +511,48 @@ object ReviewLedger:
   final case class Regression(id: String, why: String) derives KindlingsCodecAsObject:
     def line: String = s"$id (closed): $why"
 
-  /** THE REGRESSION GUARD: what a revision (`before` → `after`) does to the findings the ledger has
-    * closed as fixed — checked by code, before any reviewer reads it:
-    *   - a finding with a critique pair (a missing critique) whose pair was answered in `before`
-    *     (both cited in one paragraph, or a stored reason: `answered`) and is not in `after`;
-    *   - a finding whose problem text (its quote, ≥ 12 characters) was gone from `before` and is back
-    *     in `after`;
-    *   - a citation the fix rests on (a `[[citekey]]` of the reviewer's quote of the fixed text) cited
-    *     in `before` and nowhere in `after`.
-    * `cites(body, ck)`: does the body cite the source `ck` (aliases resolved). */
-  def guard(l: Ledger, before: String, after: String, answered: (String, CritiqueRef) => Boolean,
-      cites: (String, String) => Boolean, minRatio: Double): List[Regression] =
+  /** THE REGRESSION GUARD: what a revision (`before` → `after`) does to the findings the ledger has closed as fixed —
+    * checked by code, before any reviewer reads it:
+    *   - a finding with a critique pair (a missing critique) whose pair was answered in `before` (both cited in one
+    *     paragraph, or a stored reason: `answered`) and is not in `after`;
+    *   - a finding whose problem text (its quote, ≥ 12 characters) was gone from `before` and is back in `after`;
+    *   - a citation the fix rests on (a `[[citekey]]` of the reviewer's quote of the fixed text) cited in `before` and
+    *     nowhere in `after`.
+    * `cites(body, ck)`: does the body cite the source `ck` (aliases resolved).
+    */
+  def guard(
+      l: Ledger,
+      before: String,
+      after: String,
+      answered: (String, CritiqueRef) => Boolean,
+      cites: (String, String) => Boolean,
+      minRatio: Double
+  ): List[Regression] =
     def in(q: String, body: String) = AgentVerify.findQuote(q, body, minRatio).accepted
     l.entries.filter(_.status == Status.Fixed).flatMap { e =>
-      val pair = e.finding.pair.filter(r => answered(before, r) && !answered(after, r)).map(r =>
-        Regression(e.id, s"[[${r.src}]] and [[${r.dst}]] are no longer cited in one paragraph — the critique it answered is open again"))
+      val pair = e.finding.pair
+        .filter(r => answered(before, r) && !answered(after, r))
+        .map(r =>
+          Regression(
+            e.id,
+            s"[[${r.src}]] and [[${r.dst}]] are no longer cited in one paragraph — the critique it answered is open again"
+          )
+        )
       val q = Option(e.finding.quote).map(_.trim).getOrElse("")
       val back = Option.when(q.length >= 12 && !in(q, before) && in(q, after))(
-        Regression(e.id, s"the text it fixed is back: \"${q.take(100)}\""))
-      val lost = e.closed.toList.flatMap(c => AgentVerify.wikilinks(c.quote)).distinct
-        .filter(ck => cites(before, ck) && !cites(after, ck)).map(ck =>
-          Regression(e.id, s"[[$ck]], which its fix cites, is cited nowhere any more"))
+        Regression(e.id, s"the text it fixed is back: \"${q.take(100)}\"")
+      )
+      val lost = e.closed.toList
+        .flatMap(c => AgentVerify.wikilinks(c.quote))
+        .distinct
+        .filter(ck => cites(before, ck) && !cites(after, ck))
+        .map(ck => Regression(e.id, s"[[$ck]], which its fix cites, is cited nowhere any more"))
       (pair.toList ++ back.toList ++ lost).take(1)
     }
 
-  /** Open missing-critique findings found not fixed at least `times` times whose pair is still open:
-    * the ones that get code's pairing repair, else a precise instruction (§6.9). */
+  /** Open missing-critique findings found not fixed at least `times` times whose pair is still open: the ones that get
+    * code's pairing repair, else a precise instruction (§6.9).
+    */
   def stubborn(l: Ledger, times: Int = 2): List[Entry] =
     l.open.filter(e => e.finding.pair.isDefined && e.notFixedCount >= times)
 
@@ -402,7 +565,7 @@ object ReviewLedger:
       val lines = majors.map { e =>
         val esc = (if e.finding.escalated then " [raised again after a rejection]" else "") +
           (if e.deferredIn(runId) then " [new in the final pass: deferred to the next run]" else "")
-        val at  = Option(e.finding.where).map(_.trim).filter(_.nonEmpty).fold("")(w => s" (${w.take(60)})")
+        val at = Option(e.finding.where).map(_.trim).filter(_.nonEmpty).fold("")(w => s" (${w.take(60)})")
         s"${e.id}$at: ${e.finding.problem.trim.take(160)}$esc"
       }
       val head = s"review-article [[${l.slug}]]: ${majors.size} open ${Plural.noun(majors.size, "MAJOR")} — "
@@ -412,14 +575,15 @@ object ReviewLedger:
       head + (if body.length <= room then body else body.take(room - 1) + "…") + tail
     }
 
-  /** The text of the article's one collapsed item — as [[taskText]] writes it, or as the interactive
-    * skill does (`review-article <slug>: 2 open MAJORs — …`) — so a run whose ledger lost the item's id
-    * rewrites the open one instead of adding a second. Not a [[legacyTask]] (those are closed). */
+  /** The text of the article's one collapsed item — as [[taskText]] writes it, or as the interactive skill does
+    * (`review-article <slug>: 2 open MAJORs — …`) — so a run whose ledger lost the item's id rewrites the open one
+    * instead of adding a second. Not a [[legacyTask]] (those are closed).
+    */
   def articleTask(slug: String, text: String): Boolean =
     val t = text.trim
     !legacyTask(slug, t) &&
-      (t.startsWith(s"review-article [[$slug]]: ") || t.startsWith(s"review-article $slug: ")) &&
-      "^review-article \\S+: \\d+ open MAJORs?\\b".r.findPrefixOf(t).isDefined
+    (t.startsWith(s"review-article [[$slug]]: ") || t.startsWith(s"review-article $slug: ")) &&
+    "^review-article \\S+: \\d+ open MAJORs?\\b".r.findPrefixOf(t).isDefined
 
   /** The text of the per-finding items earlier runs left for the article (before #934). */
   def legacyTask(slug: String, text: String): Boolean =

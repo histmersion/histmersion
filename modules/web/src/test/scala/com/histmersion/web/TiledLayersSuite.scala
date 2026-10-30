@@ -5,47 +5,141 @@ import com.histmersion.web.map.{GeoBounds, LatLon, TilePointFeature}
 
 import scala.scalajs.js
 
-/** The tiled layers' pure half: a tile feature read back as the app's records (an item, a cell), the
-  * playback buckets, the tile URL template, and what a cell counts for in a bubble. */
+/** The tiled layers' pure half: a tile feature read back as the app's records (an item, a cell), the playback buckets,
+  * the tile URL template, and what a cell counts for in a bubble.
+  */
 class TiledLayersSuite extends munit.FunSuite:
 
   private def feature(lat: Double, lon: Double, props: (String, js.Any)*): TilePointFeature =
     TilePointFeature(LatLon(lat, lon), js.Dictionary(props*))
 
   test("a site feature is the site the places feed gave: its type, basis and dates"):
-    val f = feature(37.6, 22.7, "k" -> "pleiades_1", "z" -> 9, "id" -> "pleiades_1", "label" -> "Mycenae", "kind" -> "site",
-      "siteType" -> "fortification", "basis" -> "dated", "periodStart" -> -1600, "periodEnd" -> -1100)
-    assertEquals(TileDecode.site(f), Some(SitePoint(Some("pleiades_1"), "Mycenae", "site", Some("fortification"),
-      Some("dated"), 37.6, 22.7, Some((-1600.0, -1100.0)))))
+    val f = feature(
+      37.6,
+      22.7,
+      "k" -> "pleiades_1",
+      "z" -> 9,
+      "id" -> "pleiades_1",
+      "label" -> "Mycenae",
+      "kind" -> "site",
+      "siteType" -> "fortification",
+      "basis" -> "dated",
+      "periodStart" -> -1600,
+      "periodEnd" -> -1100
+    )
+    assertEquals(
+      TileDecode.site(f),
+      Some(
+        SitePoint(
+          Some("pleiades_1"),
+          "Mycenae",
+          "site",
+          Some("fortification"),
+          Some("dated"),
+          37.6,
+          22.7,
+          Some((-1600.0, -1100.0))
+        )
+      )
+    )
     assert(!TileDecode.isCell(f))
     // an open end: no period on the ramp, as the feed's
-    assertEquals(TileDecode.site(feature(1, 2, "id" -> "x", "label" -> "X", "periodStart" -> -10)).flatMap(_.period), None)
+    assertEquals(
+      TileDecode.site(feature(1, 2, "id" -> "x", "label" -> "X", "periodStart" -> -10)).flatMap(_.period),
+      None
+    )
 
   test("an event feature carries everything its marker, label and card read"):
-    val f = feature(40.0, 26.2, "id" -> "ev1", "label" -> "Fall of Troy", "kind" -> "destruction", "scale" -> "local",
-      "historicity" -> "legendary", "notBefore" -> -1190, "notAfter" -> -1180, "anchor" -> "place", "placeId" -> "p1",
-      "placeLabel" -> "Troy", "tier" -> "catalogue", "precision" -> "approximate", "dating" -> "c. 1185 BCE")
+    val f = feature(
+      40.0,
+      26.2,
+      "id" -> "ev1",
+      "label" -> "Fall of Troy",
+      "kind" -> "destruction",
+      "scale" -> "local",
+      "historicity" -> "legendary",
+      "notBefore" -> -1190,
+      "notAfter" -> -1180,
+      "anchor" -> "place",
+      "placeId" -> "p1",
+      "placeLabel" -> "Troy",
+      "tier" -> "catalogue",
+      "precision" -> "approximate",
+      "dating" -> "c. 1185 BCE"
+    )
     val e = TileDecode.event(f).get
-    assertEquals((e.id, e.label, e.kind, e.tier, e.precision), ("ev1", "Fall of Troy", "destruction", "catalogue", "approximate"))
+    assertEquals(
+      (e.id, e.label, e.kind, e.tier, e.precision),
+      ("ev1", "Fall of Troy", "destruction", "catalogue", "approximate")
+    )
     assertEquals(e.timeSpan, TimeSpan(Some(-1190L), None, None, Some(-1180L)))
-    assertEquals((e.lat, e.lon, e.placeLabel, e.dating, e.outline), (40.0, 26.2, Some("Troy"), Some("c. 1185 BCE"), None))
+    assertEquals(
+      (e.lat, e.lon, e.placeLabel, e.dating, e.outline),
+      (40.0, 26.2, Some("Troy"), Some("c. 1185 BCE"), None)
+    )
 
   test("a picture feature is the media layer's hit"):
-    val f = feature(41.9, 12.5, "uid" -> "u1", "assetName" -> "Forum", "kind" -> "photo", "periodStart" -> -50,
-      "periodEnd" -> 300, "provider" -> "met", "license" -> "CC0-1.0", "credit" -> "The Met", "thumbUrl" -> "/api/media/u1/thumb",
-      "sourceUrl" -> "https://www.metmuseum.org/art/collection/search/1", "licenseUrl" -> "https://creativecommons.org/publicdomain/zero/1.0/",
-      "author" -> "Unknown maker")
+    val f = feature(
+      41.9,
+      12.5,
+      "uid" -> "u1",
+      "assetName" -> "Forum",
+      "kind" -> "photo",
+      "periodStart" -> -50,
+      "periodEnd" -> 300,
+      "provider" -> "met",
+      "license" -> "CC0-1.0",
+      "credit" -> "The Met",
+      "thumbUrl" -> "/api/media/u1/thumb",
+      "sourceUrl" -> "https://www.metmuseum.org/art/collection/search/1",
+      "licenseUrl" -> "https://creativecommons.org/publicdomain/zero/1.0/",
+      "author" -> "Unknown maker"
+    )
     // its full size is this server's file of the uid (not carried per picture); the provider's page and the licence's
-    assertEquals(TileDecode.media(f), Some(MediaGeoHit(None, "Forum", Some("photo"), 41.9, 12.5, Some(-50L), Some(300L), None,
-      "u1", Some("met"), Some("CC0-1.0"), Some("The Met"), Some("/api/media/u1/thumb"), fileUrl = Some("/media/u1/file"),
-      sourceUrl = Some("https://www.metmuseum.org/art/collection/search/1"),
-      licenseUrl = Some("https://creativecommons.org/publicdomain/zero/1.0/"), author = Some("Unknown maker"))))
+    assertEquals(
+      TileDecode.media(f),
+      Some(
+        MediaGeoHit(
+          None,
+          "Forum",
+          Some("photo"),
+          41.9,
+          12.5,
+          Some(-50L),
+          Some(300L),
+          None,
+          "u1",
+          Some("met"),
+          Some("CC0-1.0"),
+          Some("The Met"),
+          Some("/api/media/u1/thumb"),
+          fileUrl = Some("/media/u1/file"),
+          sourceUrl = Some("https://www.metmuseum.org/art/collection/search/1"),
+          licenseUrl = Some("https://creativecommons.org/publicdomain/zero/1.0/"),
+          author = Some("Unknown maker")
+        )
+      )
+    )
 
   test("a cell: its count, dates' range and box; it counts for all of them in a bubble and is not listed"):
-    val f = feature(10, 20, "k" -> "c4/1/2", "n" -> 37, "lo" -> -1500.5, "hi" -> -200, "w" -> 19, "s" -> 9, "e" -> 21, "nn" -> 11)
+    val f = feature(
+      10,
+      20,
+      "k" -> "c4/1/2",
+      "n" -> 37,
+      "lo" -> -1500.5,
+      "hi" -> -200,
+      "w" -> 19,
+      "s" -> 9,
+      "e" -> 21,
+      "nn" -> 11
+    )
     assert(TileDecode.isCell(f))
     val c = TileDecode.cell(f, DotKind.Site)
-    assertEquals(c, TileCellPoint("c4/1/2", DotKind.Site, 10, 20, 37, Some(-1500.5), Some(-200.0), GeoBounds(9, 19, 11, 21)))
+    assertEquals(
+      c,
+      TileCellPoint("c4/1/2", DotKind.Site, 10, 20, 37, Some(-1500.5), Some(-200.0), GeoBounds(9, 19, 11, 21))
+    )
     val m = CellKind(DotKind.Site).member(c)
     assertEquals((m.kind, m.n, m.mids, m.aggregate), (DotKind.Site, 37, List(-1500.5, -200.0), true))
     val held = DotCluster.Contents(List(m, Member(DotKind.Event, 1, Nil, Certainty.NoSay)))

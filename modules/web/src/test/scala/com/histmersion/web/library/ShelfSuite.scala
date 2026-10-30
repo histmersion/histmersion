@@ -10,18 +10,30 @@ class ShelfSuite extends munit.FunSuite:
     assertEquals(LibraryAddress.shelf("?shelf=notes&item=x"), Shelf.Notes)
     assertEquals(LibraryAddress.shelf("?shelf=nonsense"), Shelf.Everything)
     assertEquals(LibraryAddress.search(Some("a b"), Shelf.Unread), "?shelf=unread&item=a%20b")
-    assertEquals(LibraryAddress.href(LibrarySection.Articles, None, Shelf.Bookmarks), "/library/articles?shelf=bookmarks")
+    assertEquals(
+      LibraryAddress.href(LibrarySection.Articles, None, Shelf.Bookmarks),
+      "/library/articles?shelf=bookmarks"
+    )
     assertEquals(LibraryAddress.search(None), "")
 
   private val bid = BookmarkId.parse("0190f3c2-1111-7000-8000-000000000001").toOption.get
 
   test("a bookmark's row: its name, the item's title when renamed, a dot while a source is not read"):
-    val b = Bookmark(bid, Target.item(ItemKind.Source, "zz"), "Zz title", Some(BookmarkLabel("mine")), "2026-10-30T12:00:00Z")
+    val b =
+      Bookmark(bid, Target.item(ItemKind.Source, "zz"), "Zz title", Some(BookmarkLabel("mine")), "2026-10-30T12:00:00Z")
     val r = ShelfRow.of(b, _ => false, _ => "now")
     assertEquals((r.name, r.kind, r.line, r.unread), ("mine", "Source", "Zz title", true))
     assertEquals(ShelfRow.of(b, _ == "source:zz", _ => "now").unread, false)
-    val p = Bookmark(bid, Target(ItemKind.Period, from = Some(Year(-1200)), to = Some(Year(-1150))), "Period", Some(BookmarkLabel("crisis")))
-    assertEquals((ShelfRow.of(p, _ => false, _ => "").line, ShelfRow.of(p, _ => false, _ => "").unread), ("1200 BCE–1150 BCE", false))
+    val p = Bookmark(
+      bid,
+      Target(ItemKind.Period, from = Some(Year(-1200)), to = Some(Year(-1150))),
+      "Period",
+      Some(BookmarkLabel("crisis"))
+    )
+    assertEquals(
+      (ShelfRow.of(p, _ => false, _ => "").line, ShelfRow.of(p, _ => false, _ => "").unread),
+      ("1200 BCE–1150 BCE", false)
+    )
 
   test("recently opened: the opened ones, last first"):
     val a = ReadMark(ItemKind.Source, ItemKey("a"), "A", openedAt = Some("2026-10-30T10:00:00Z"))

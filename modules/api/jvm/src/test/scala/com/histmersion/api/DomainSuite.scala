@@ -2,7 +2,6 @@ package com.histmersion.api
 
 import com.histmersion.values.{Confidence, EdgeKind, SourceStatus, WireEnumValues}
 
-
 class DomainSuite extends munit.FunSuite:
 
   // ── Label ──────────────────────────────────────────────────────────────────────────────────────
@@ -75,8 +74,7 @@ class DomainSuite extends munit.FunSuite:
 
   test("EdgeKind.fromWire round-trips"):
     for e <- EdgeKind.values do
-      assertEquals(EdgeKind.fromWire(EdgeKind.wireOf(e)), Some(e),
-        s"EdgeKind round-trip failed for $e")
+      assertEquals(EdgeKind.fromWire(EdgeKind.wireOf(e)), Some(e), s"EdgeKind round-trip failed for $e")
 
   test("EdgeKind.allWire contains all values"):
     assertEquals(EdgeKind.allWire.size, EdgeKind.values.length)
@@ -117,7 +115,8 @@ class DomainSuite extends munit.FunSuite:
     assertEquals(SourceRef.shortAuthors(Nil), "")
 
   test("SourceRef.shortCite combines authors and year"):
-    val r = SourceRef("haak2015", None, List("Haak, Wolfgang", "Lazaridis, Iosif"), Some(2015), "Title", SourceStatus.Current)
+    val r =
+      SourceRef("haak2015", None, List("Haak, Wolfgang", "Lazaridis, Iosif"), Some(2015), "Title", SourceStatus.Current)
     assertEquals(r.shortCite, "Haak & Lazaridis 2015")
 
   // ── the shared HTML atoms ─────────────────────────────────────────────────────────────────────
@@ -128,10 +127,14 @@ class DomainSuite extends munit.FunSuite:
     assertEquals(HtmlAtoms.segment("ł"), "%C5%82")
 
   test("HtmlAtoms.sourceLink is the one anchor shape; the DOI attribute only when there is one"):
-    assertEquals(HtmlAtoms.sourceLink("a2020_b", Some("10.1/x"), "10.1/x"),
-      """<a class="src-ref" data-ck="a2020_b" data-doi="10.1/x" href="/source/a2020_b">10.1/x</a>""")
-    assertEquals(HtmlAtoms.sourceLink("a2020_b", Some(" "), "a2020_b"),
-      """<a class="src-ref" data-ck="a2020_b" href="/source/a2020_b">a2020_b</a>""")
+    assertEquals(
+      HtmlAtoms.sourceLink("a2020_b", Some("10.1/x"), "10.1/x"),
+      """<a class="src-ref" data-ck="a2020_b" data-doi="10.1/x" href="/source/a2020_b">10.1/x</a>"""
+    )
+    assertEquals(
+      HtmlAtoms.sourceLink("a2020_b", Some(" "), "a2020_b"),
+      """<a class="src-ref" data-ck="a2020_b" href="/source/a2020_b">a2020_b</a>"""
+    )
 
   test("every confidence level has a distinct icon, drawn in currentColor"):
     val icons = Confidence.values.toList.map(ConfidenceStyle.icon)

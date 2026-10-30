@@ -14,25 +14,28 @@ object Frontmatter:
 
   def parseFile(p: Path): Option[Source] = parseFile(p, None)
 
-  /** `confineTo` is `corpus.dir` when it is configured: `md_path` is a path out of a note's
-    * frontmatter — content an AGENT writes — and it used to be resolved and read with no bound at
-    * all. `None` keeps the old behaviour, for the host-side workflow where the server legitimately
-    * sees the user's own tree. */
+  /** `confineTo` is `corpus.dir` when it is configured: `md_path` is a path out of a note's frontmatter — content an
+    * AGENT writes — and it used to be resolved and read with no bound at all. `None` keeps the old behaviour, for the
+    * host-side workflow where the server legitimately sees the user's own tree.
+    */
   def parseFile(p: Path, confineTo: Option[String]): Option[Source] =
-    val text            = Files.readString(p)
+    val text = Files.readString(p)
     val fallbackCitekey = p.getFileName.toString.stripSuffix(".md")
-    parseNote(text, fallbackCitekey).map(src =>
-      src.copy(ocrMarkdown = fullText(p, yamlMap(text), confineTo)))
+    parseNote(text, fallbackCitekey).map(src => src.copy(ocrMarkdown = fullText(p, yamlMap(text), confineTo)))
 
-  /** Parse a note's text (frontmatter + body). Pure: no file access, `ocrMarkdown` left empty.
-    * The BODY becomes [[Source.notes]] — the agent-written article about the source — which is what
-    * makes [[Export.note]] a true inverse of this function. */
+  /** Parse a note's text (frontmatter + body). Pure: no file access, `ocrMarkdown` left empty. The BODY becomes
+    * [[Source.notes]] — the agent-written article about the source — which is what makes [[Export.note]] a true inverse
+    * of this function.
+    */
   def parseNote(text: String, fallbackCitekey: String): Option[Source] =
     extractYaml(text).map { y =>
-      val m   = parse(y)
+      val m = parse(y)
       val src = toSource(m, fallbackCitekey)
-      src.copy(edges = edgesOf(src.citekey, m, text), notes = bodyOf(text),
-        topics = withLinkedTopics(src.topics, src.citekey, text))
+      src.copy(
+        edges = edgesOf(src.citekey, m, text),
+        notes = bodyOf(text),
+        topics = withLinkedTopics(src.topics, src.citekey, text)
+      )
     }
 
   private def yamlMap(text: String): Map[String, Any] = extractYaml(text).map(parse).getOrElse(Map.empty)
@@ -41,18 +44,24 @@ object Frontmatter:
   private val RelTag = """^(refutes|challenges|updates|supersedes)_(.+)$""".r
 
   /** The `[[…]]` targets of a note, split by what they name: a year-bearing target is a CITATION
-    * (`Lint.looksLikeCitekey`, the rule V026 migrated the stored edges by), anything else — a topic
-    * slug like `[[bronze_age_collapse]]` — is a TOPIC. Topic slugs used to become `references`
-    * edges to things that are not sources. */
+    * (`Lint.looksLikeCitekey`, the rule V026 migrated the stored edges by), anything else — a topic slug like
+    * `[[bronze_age_collapse]]` — is a TOPIC. Topic slugs used to become `references` edges to things that are not
+    * sources.
+    */
   private def linkTargets(citekey: String, noteText: String): (List[String], List[String]) =
-    CkLink.findAllMatchIn(noteText).map(_.group(1)).filter(_ != citekey).toList.distinct
+    CkLink
+      .findAllMatchIn(noteText)
+      .map(_.group(1))
+      .filter(_ != citekey)
+      .toList
+      .distinct
       .partition(Lint.looksLikeCitekey)
 
   /** Typed, directed reference edges out of this note. */
   private def edgesOf(citekey: String, m: Map[String, Any], noteText: String): List[Edge] =
     val superseded = str(m, "superseded_by").map(d => Edge(citekey, d, "superseded_by")).toList
-    val rel        = list(m, "topics").collect { case RelTag(kind, dst) => Edge(citekey, dst, kind) }
-    val links      = linkTargets(citekey, noteText)._1.map(dst => Edge(citekey, dst, "references"))
+    val rel = list(m, "topics").collect { case RelTag(kind, dst) => Edge(citekey, dst, kind) }
+    val links = linkTargets(citekey, noteText)._1.map(dst => Edge(citekey, dst, "references"))
     (superseded ++ rel ++ links).distinct
 
   /** The note's topics plus the topic slugs its body links to, without case-insensitive duplicates. */
@@ -60,8 +69,9 @@ object Frontmatter:
     val have = topics.map(_.toLowerCase).toSet
     topics ++ linkTargets(citekey, noteText)._2.filterNot(t => have(t.toLowerCase))
 
-  /** Read the converted body `md/<citekey>/paper.md` (path in `md_path`, relative to the repo root =
-    * three parents up from `wiki/sources/<ck>.md`). None if absent. */
+  /** Read the converted body `md/<citekey>/paper.md` (path in `md_path`, relative to the repo root = three parents up
+    * from `wiki/sources/<ck>.md`). None if absent.
+    */
   private def fullText(notePath: Path, m: Map[String, Any], confineTo: Option[String]): Option[String] =
     str(m, "md_path").flatMap { rel =>
       Option(notePath.getParent)
@@ -86,12 +96,12 @@ object Frontmatter:
     if !t.startsWith("---") then None
     else
       val rest = t.drop(3)
-      val end  = rest.indexOf("\n---")
+      val end = rest.indexOf("\n---")
       if end < 0 then None
       else
         // after the closing fence: skip the remainder of that line (it may carry trailing spaces/CR)
         val after = rest.substring(end + "\n---".length)
-        val body  = after.indexOf('\n') match
+        val body = after.indexOf('\n') match
           case -1 => ""
           case i  => after.substring(i + 1)
         Some((rest.substring(0, end), body))
@@ -122,10 +132,11 @@ object Frontmatter:
     case Some(n: java.lang.Number) => Some(n.doubleValue)
     case Some(o)                   => o.toString.toDoubleOption
     case None                      => None
-  /** ORDERED, like [[ArticleNote.parse]] does. A hand-written note with `period_start: -1200` and
-    * `period_end: -1400` (an easy slip when both are negative) used to build an inverted `Period`,
-    * which Postgres rejects on the way in — so importing that one note failed the whole request with
-    * a 500 instead of reading what the author obviously meant. */
+
+  /** ORDERED, like [[ArticleNote.parse]] does. A hand-written note with `period_start: -1200` and `period_end: -1400`
+    * (an easy slip when both are negative) used to build an inverted `Period`, which Postgres rejects on the way in —
+    * so importing that one note failed the whole request with a 500 instead of reading what the author obviously meant.
+    */
   private def period(m: Map[String, Any]): Option[Period] =
     (long(m, "period_start"), long(m, "period_end")) match
       case (Some(a), Some(b)) if a <= b => Some(Period(a, b))
@@ -158,7 +169,7 @@ object Frontmatter:
     raw(m, "findings") match
       case Some(l: java.util.List[?]) =>
         l.asScala.toList.map(_.asMatchable).zipWithIndex.collect { case (fm: java.util.Map[?, ?], i) =>
-          val f   = fm.asScala.toMap.map((k, v) => k.toString -> v)
+          val f = fm.asScala.toMap.map((k, v) => k.toString -> v)
           val geo = (double(f, "lon"), double(f, "lat")) match
             case (Some(x), Some(y)) => Some(GeoPoint(x, y))
             case _                  => None

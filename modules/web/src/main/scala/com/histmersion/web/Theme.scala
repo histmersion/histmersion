@@ -7,12 +7,13 @@ import org.scalajs.dom
 import scala.scalajs.js
 import scala.util.Try
 
-/** The colour theme a reader picked: follow the system's setting (the default), always light, or always
-  * dark. One button cycles them in that order, as the documentation site's does. */
+/** The colour theme a reader picked: follow the system's setting (the default), always light, or always dark. One
+  * button cycles them in that order, as the documentation site's does.
+  */
 enum ThemeChoice(val wire: String, val label: String, val icon: Icon):
   case System extends ThemeChoice("system", "Theme: follows the system", Icon.ThemeSystem)
-  case Light  extends ThemeChoice("light", "Theme: light", Icon.ThemeLight)
-  case Dark   extends ThemeChoice("dark", "Theme: dark", Icon.ThemeDark)
+  case Light extends ThemeChoice("light", "Theme: light", Icon.ThemeLight)
+  case Dark extends ThemeChoice("dark", "Theme: dark", Icon.ThemeDark)
 
 object ThemeChoice:
   /** A stored or attribute value; anything unknown (nothing stored, an old value) is the system's. */
@@ -29,27 +30,30 @@ object ThemeChoice:
     s"${c.label}. Click for ${next(c) match
         case System => "the system's setting"
         case Light  => "light"
-        case Dark   => "dark"}."
+        case Dark   => "dark"
+      }."
 
-/** THE theme (the stylesheet's two token sets). The choice is kept per browser in `localStorage` under
-  * [[StorageKey]] and written to `<html data-theme>`, which the stylesheet reads; "system" leaves the
-  * choice to its `prefers-color-scheme` rule. The pages' `<head>` applies a stored choice before the
-  * stylesheet paints (no flash of the other theme); this keeps it in step afterwards — a press of the
-  * button, another tab or window of the same server choosing (a `storage` event), the system switching
-  * (a `matchMedia` listener) — and tells [[changes]] so that what draws with a token's VALUE (the graph's
-  * canvas: [[ThemeTokens]]) draws again. */
+/** THE theme (the stylesheet's two token sets). The choice is kept per browser in `localStorage` under [[StorageKey]]
+  * and written to `<html data-theme>`, which the stylesheet reads; "system" leaves the choice to its
+  * `prefers-color-scheme` rule. The pages' `<head>` applies a stored choice before the stylesheet paints (no flash of
+  * the other theme); this keeps it in step afterwards — a press of the button, another tab or window of the same server
+  * choosing (a `storage` event), the system switching (a `matchMedia` listener) — and tells [[changes]] so that what
+  * draws with a token's VALUE (the graph's canvas: [[ThemeTokens]]) draws again.
+  */
 object Theme:
   /** The `localStorage` key; the pages' inline `<head>` script reads the same one. */
   val StorageKey = "histmersion.theme"
-  val Attribute  = "data-theme"
+  val Attribute = "data-theme"
   private val DarkQuery = "(prefers-color-scheme: dark)"
 
   private val chosen = Var(ThemeChoice.System)
+
   /** The reader's choice, as it changes. */
   val choice: Signal[ThemeChoice] = chosen.signal
 
   // `var`: each change of what the tokens resolve to bumps it, so subscribers redraw
   private val tick = Var(0)
+
   /** Fires whenever the tokens' values may have changed: the choice, or the system's setting under "system". */
   val changes: EventStream[Unit] = tick.signal.changes.mapToUnit
 
@@ -61,9 +65,10 @@ object Theme:
       installed = true
       apply(ThemeChoice.fromWire(Store.Browser.get(StorageKey).orNull))
       Try {
-        dom.window.addEventListener("storage", { (e: dom.StorageEvent) =>
-          if e.key == StorageKey then apply(ThemeChoice.fromWire(e.newValue))
-        })
+        dom.window.addEventListener(
+          "storage",
+          (e: dom.StorageEvent) => if e.key == StorageKey then apply(ThemeChoice.fromWire(e.newValue))
+        )
       }
       if js.typeOf(dom.window.asInstanceOf[js.Dynamic].matchMedia) == "function" then
         Try(dom.window.matchMedia(DarkQuery)).toOption.filter(_ != null).foreach { mq =>

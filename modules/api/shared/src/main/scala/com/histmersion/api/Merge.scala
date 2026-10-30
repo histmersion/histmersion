@@ -6,26 +6,37 @@ import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 
 import java.util.UUID
-import com.histmersion.values.{BundleKind, DecidedBy, DecisionKind, EditionsPolicy, IssueKind, IssueSeverity, MatchMethod, MatchOutcome, WireEnumValues}
+import com.histmersion.values.{
+  BundleKind,
+  DecidedBy,
+  DecisionKind,
+  EditionsPolicy,
+  IssueKind,
+  IssueSeverity,
+  MatchMethod,
+  MatchOutcome,
+  WireEnumValues
+}
 
-/** `merge plan` (docs/research-merge-import.md §5–§6, milestone M3): what importing a bundle into this
-  * collection would do, and every question it raises, in ONE run.
+/** `merge plan` (docs/research-merge-import.md §5–§6, milestone M3): what importing a bundle into this collection would
+  * do, and every question it raises, in ONE run.
   *
-  * Sides: **left** is always HERE (this collection), **right** is always the BUNDLE (the other one) —
-  * JabRef's vocabulary (`keep-left`, `keep-right`, `both`), as the resolution file uses it.
+  * Sides: **left** is always HERE (this collection), **right** is always the BUNDLE (the other one) — JabRef's
+  * vocabulary (`keep-left`, `keep-right`, `both`), as the resolution file uses it.
   *
-  * A plan is pure: computed from the bundle, this collection's state and the resolutions, and
-  * deterministic. Issue ids are stable while the records they name do not change (§6.1), so a
-  * resolution file can be written once and reused; an id that is no longer in the plan is reported
-  * as stale, never silently re-applied. */
+  * A plan is pure: computed from the bundle, this collection's state and the resolutions, and deterministic. Issue ids
+  * are stable while the records they name do not change (§6.1), so a resolution file can be written once and reused; an
+  * id that is no longer in the plan is reported as stale, never silently re-applied.
+  */
 
-/** One decision: its kind and, for the kinds that take one, the argument (a citekey, a path). On the
-  * wire and in the resolution file it is one string — `keep-left`, `map:guterbock1997_hittite`. */
+/** One decision: its kind and, for the kinds that take one, the argument (a citekey, a path). On the wire and in the
+  * resolution file it is one string — `keep-left`, `map:guterbock1997_hittite`.
+  */
 final case class MergeDecision(kind: DecisionKind, argument: Option[String] = None):
   def wire: String = DecisionKind.wireOf(kind) + argument.fold("")(a => s":$a")
 
 object MergeDecision:
-  def of(kind: DecisionKind): MergeDecision                = MergeDecision(kind, None)
+  def of(kind: DecisionKind): MergeDecision = MergeDecision(kind, None)
   def withArg(kind: DecisionKind, arg: String): MergeDecision = MergeDecision(kind, Some(arg))
 
   /** Parse `kind[:argument]`; the argument is required exactly by the kinds that take one. Pure. */
@@ -45,34 +56,42 @@ object MergeDecision:
   // the string form IS the value (the resolution file's spelling), so it crosses the wire as one
   given Encoder[MergeDecision] = Encoder.encodeString.contramap(_.wire)
   given Decoder[MergeDecision] = Decoder.decodeString.emap(parse)
-  given Schema[MergeDecision]  = Schema.string[MergeDecision]
+  given Schema[MergeDecision] = Schema.string[MergeDecision]
 
 /** One side of an issue: the record's label, its uid, and a few lines describing it. */
 final case class IssueSide(label: String, uid: UUID, lines: List[String] = Nil) derives KindlingsCodecAsObject
 object IssueSide:
   given Schema[IssueSide] = KindlingsSchema.derived[IssueSide].schema
 
-/** An issue that exists only under one alternative of another, still open, issue: `if S-3c1e7a2b = map`.
-  * It is listed now so that no new issue appears after the other one is decided (§6.1). */
+/** An issue that exists only under one alternative of another, still open, issue: `if S-3c1e7a2b = map`. It is listed
+  * now so that no new issue appears after the other one is decided (§6.1).
+  */
 final case class IssueCondition(issue: String, when: DecisionKind) derives KindlingsCodecAsObject
 object IssueCondition:
   given Schema[IssueCondition] = KindlingsSchema.derived[IssueCondition].schema
 
-/** One field of the two records an issue is about, as the review screen's three-column table shows
-  * it (here | result | bundle). `None` = the record says nothing. */
+/** One field of the two records an issue is about, as the review screen's three-column table shows it (here | result |
+  * bundle). `None` = the record says nothing.
+  */
 final case class IssueField(field: String, left: Option[String], right: Option[String]) derives KindlingsCodecAsObject
 object IssueField:
   given Schema[IssueField] = KindlingsSchema.derived[IssueField].schema
 
-/** One region of a three-way merge of two article texts: agreed lines, or a conflict between this
-  * collection's lines and the bundle's over the common version's. */
-final case class IssueHunk(conflict: Boolean, base: List[String] = Nil, left: List[String] = Nil, right: List[String] = Nil)
-    derives KindlingsCodecAsObject
+/** One region of a three-way merge of two article texts: agreed lines, or a conflict between this collection's lines
+  * and the bundle's over the common version's.
+  */
+final case class IssueHunk(
+    conflict: Boolean,
+    base: List[String] = Nil,
+    left: List[String] = Nil,
+    right: List[String] = Nil
+) derives KindlingsCodecAsObject
 object IssueHunk:
   given Schema[IssueHunk] = KindlingsSchema.derived[IssueHunk].schema
 
-/** The texts of an article question: the common version (when the histories share one), both
-  * sides', and the merge's regions — what the review screen's diff3 view and its editor start from. */
+/** The texts of an article question: the common version (when the histories share one), both sides', and the merge's
+  * regions — what the review screen's diff3 view and its editor start from.
+  */
 final case class IssueText(base: Option[String], left: String, right: String, hunks: List[IssueHunk] = Nil)
     derives KindlingsCodecAsObject
 object IssueText:
@@ -83,22 +102,31 @@ final case class IssueSpan(start: Option[Long], end: Option[Long]) derives Kindl
 object IssueSpan:
   given Schema[IssueSpan] = KindlingsSchema.derived[IssueSpan].schema
 
-/** Where and when the two records of a place or event question are: GeoJSON geometries (the review
-  * screen draws both on a map) and their spans. */
-final case class IssuePlace(leftGeometry: Option[String] = None, rightGeometry: Option[String] = None,
-    leftSpan: Option[IssueSpan] = None, rightSpan: Option[IssueSpan] = None) derives KindlingsCodecAsObject
+/** Where and when the two records of a place or event question are: GeoJSON geometries (the review screen draws both on
+  * a map) and their spans.
+  */
+final case class IssuePlace(
+    leftGeometry: Option[String] = None,
+    rightGeometry: Option[String] = None,
+    leftSpan: Option[IssueSpan] = None,
+    rightSpan: Option[IssueSpan] = None
+) derives KindlingsCodecAsObject
 object IssuePlace:
   given Schema[IssuePlace] = KindlingsSchema.derived[IssuePlace].schema
 
 /** What the review screen shows beside an issue; not part of the issue's id or of the plan hash. */
-final case class IssueDetail(fields: List[IssueField] = Nil, text: Option[IssueText] = None,
-    place: Option[IssuePlace] = None) derives KindlingsCodecAsObject
+final case class IssueDetail(
+    fields: List[IssueField] = Nil,
+    text: Option[IssueText] = None,
+    place: Option[IssuePlace] = None
+) derives KindlingsCodecAsObject
 object IssueDetail:
   given Schema[IssueDetail] = KindlingsSchema.derived[IssueDetail].schema
 
 final case class MergeIssue(
-    /** `<letter>-<8 hex>`: the letter names the entity (S source, O OCR body, F finding, A article, …),
-      * the hex is a hash of the issue's kind and the uids and revs it is about. */
+    /** `<letter>-<8 hex>`: the letter names the entity (S source, O OCR body, F finding, A article, …), the hex is a
+      * hash of the issue's kind and the uids and revs it is about.
+      */
     id: String,
     kind: IssueKind,
     severity: IssueSeverity,
@@ -160,12 +188,17 @@ final case class MergePolicy(editions: Option[EditionsPolicy] = None) derives Ki
 object MergePolicy:
   given Schema[MergePolicy] = KindlingsSchema.derived[MergePolicy].schema
 
-/** One line of a resolution file: an issue id and the decision, as the user wrote it (checked by the
-  * plan, which reports every bad one at once). */
-final case class MergeResolution(issue: String, decision: String,
-    /** The merged text of a `file:<path>` decision: the CLI reads the file and sends it, since the
-      * server cannot read the user's files. */
-    text: Option[String] = None) derives KindlingsCodecAsObject
+/** One line of a resolution file: an issue id and the decision, as the user wrote it (checked by the plan, which
+  * reports every bad one at once).
+  */
+final case class MergeResolution(
+    issue: String,
+    decision: String,
+    /** The merged text of a `file:<path>` decision: the CLI reads the file and sends it, since the server cannot read
+      * the user's files.
+      */
+    text: Option[String] = None
+) derives KindlingsCodecAsObject
 object MergeResolution:
   given Schema[MergeResolution] = KindlingsSchema.derived[MergeResolution].schema
 
@@ -179,13 +212,17 @@ final case class MergeResolutions(
   /** `later` wins per issue (flags over the file); its policy where it sets one. */
   def overriddenBy(later: MergeResolutions): MergeResolutions =
     val ids = later.resolve.map(_.issue).toSet
-    MergeResolutions(resolve.filterNot(r => ids(r.issue)) ++ later.resolve,
-      MergePolicy(later.policy.editions.orElse(policy.editions)), later.bundle.orElse(bundle))
+    MergeResolutions(
+      resolve.filterNot(r => ids(r.issue)) ++ later.resolve,
+      MergePolicy(later.policy.editions.orElse(policy.editions)),
+      later.bundle.orElse(bundle)
+    )
 object MergeResolutions:
   given Schema[MergeResolutions] = KindlingsSchema.derived[MergeResolutions].schema
 
-/** `POST /api/bundle/upload`: a bundle kept on the server under its sha256, so it can be planned
-  * and imported (with resolutions) by name, and an MCP client can plan it without sending a file. */
+/** `POST /api/bundle/upload`: a bundle kept on the server under its sha256, so it can be planned and imported (with
+  * resolutions) by name, and an MCP client can plan it without sending a file.
+  */
 final case class BundleUpload(sha256: String, bytes: Long, manifest: Option[BundleManifest], problems: List[String])
     derives KindlingsCodecAsObject
 object BundleUpload:
@@ -198,8 +235,11 @@ object MergePlanRequest:
   given Schema[MergePlanRequest] = KindlingsSchema.derived[MergePlanRequest].schema
 
 /** `POST /api/merge/import`: import an uploaded bundle, taking the resolutions into account. */
-final case class MergeImportRequest(bundle: String, resolutions: MergeResolutions = MergeResolutions(),
-    dryRun: Boolean = false) derives KindlingsCodecAsObject
+final case class MergeImportRequest(
+    bundle: String,
+    resolutions: MergeResolutions = MergeResolutions(),
+    dryRun: Boolean = false
+) derives KindlingsCodecAsObject
 object MergeImportRequest:
   given Schema[MergeImportRequest] = KindlingsSchema.derived[MergeImportRequest].schema
 
@@ -211,8 +251,9 @@ final case class MergePlan(
     formatVersion: Int,
     schemaVersion: String,
     asOf: Option[String],
-    /** A hash of the outcome — every match, every issue id and every decision in force. The same
-      * inputs give the same hash; `merge apply` (M5) re-plans and compares it. */
+    /** A hash of the outcome — every match, every issue id and every decision in force. The same inputs give the same
+      * hash; `merge apply` (M5) re-plans and compares it.
+      */
     planHash: String,
     matches: MatchCounts,
     /** Every source of the bundle that is not simply the same record here. */
@@ -222,13 +263,15 @@ final case class MergePlan(
     info: List[String],
     /** What makes the bundle impossible to import whatever is decided (a missing blob, a newer schema). */
     problems: List[String],
-    /** Resolutions that could not be used: an id not in this plan (stale — the records changed since
-      * — or never one), or a decision the issue does not allow. Errors, never ignored. */
+    /** Resolutions that could not be used: an id not in this plan (stale — the records changed since — or never one),
+      * or a decision the issue does not allow. Errors, never ignored.
+      */
     resolutionErrors: List[String],
     /** How many resolutions were used. */
     resolved: Int,
-    /** How many rows `merge apply` would write (insert, update, fold or delete) as decided now. After
-      * an apply, planning the same bundle again gives 0. */
+    /** How many rows `merge apply` would write (insert, update, fold or delete) as decided now. After an apply,
+      * planning the same bundle again gives 0.
+      */
     changes: Int = 0
 ) derives KindlingsCodecAsObject:
   def open: List[MergeIssue] = issues.filter(_.open)
@@ -239,9 +282,10 @@ object MergePlan:
 
 // ── merge apply (§6.1, §6.4; milestone M5) ────────────────────────────────────────────────────────
 
-/** `POST /api/merge/apply`: carry out the plan of an uploaded bundle. `planHash` is the hash of the
-  * plan the user reviewed: the server plans again and refuses when the hash differs (the collection,
-  * the bundle or the resolutions changed since). */
+/** `POST /api/merge/apply`: carry out the plan of an uploaded bundle. `planHash` is the hash of the plan the user
+  * reviewed: the server plans again and refuses when the hash differs (the collection, the bundle or the resolutions
+  * changed since).
+  */
 final case class MergeApplyRequest(bundle: String, planHash: String, resolutions: MergeResolutions = MergeResolutions())
     derives KindlingsCodecAsObject
 object MergeApplyRequest:
@@ -273,16 +317,17 @@ final case class MergeTally(
     queueMerged: Int = 0,
     /** Redirects written (`uid_aliases`): one per folded record. */
     redirects: Int = 0,
-    /** Places and named periods of the bundle that are one with one here (by id, or by label and
-      * where/when). */
+    /** Places and named periods of the bundle that are one with one here (by id, or by label and where/when).
+      */
     placesMerged: Int = 0,
     periodsMerged: Int = 0
 ) derives KindlingsCodecAsObject
 object MergeTally:
   given Schema[MergeTally] = KindlingsSchema.derived[MergeTally].schema
 
-/** `POST /api/merge/apply` (§6.4). `problems` are blocking — when there are any nothing was written
-  * (and no backup taken); among them every open issue and the stale plan hash. */
+/** `POST /api/merge/apply` (§6.4). `problems` are blocking — when there are any nothing was written (and no backup
+  * taken); among them every open issue and the stale plan hash.
+  */
 final case class MergeApplyResult(
     bundleId: UUID,
     from: BundleInstance,
@@ -297,8 +342,9 @@ final case class MergeApplyResult(
     reviews: List[String] = Nil,
     /** The `log` queue entry recording the merge. */
     logEntry: Option[Int] = None,
-    /** What planning the same bundle again (with the same resolutions) would change — 0 after a
-      * successful apply: the merge is idempotent. */
+    /** What planning the same bundle again (with the same resolutions) would change — 0 after a successful apply: the
+      * merge is idempotent.
+      */
     replanChanges: Option[Int] = None,
     problems: List[String] = Nil,
     issues: List[MergeIssue] = Nil,
@@ -310,27 +356,35 @@ object MergeApplyResult:
 
 // ── merge apply as a job (§7.7 open question 3) ───────────────────────────────────────────────────
 
-/** Where an apply is. On the wire as its lower-case name. `Interrupted`: the server stopped while it
-  * ran — its transaction committed or rolled back as a whole, never half (`merge list` says which). */
+/** Where an apply is. On the wire as its lower-case name. `Interrupted`: the server stopped while it ran — its
+  * transaction committed or rolled back as a whole, never half (`merge list` says which).
+  */
 enum MergeJobState:
   case Running, Done, Failed, Interrupted
 
 object MergeJobState:
   given WireEnumValues[MergeJobState]:
-    def all: Array[MergeJobState]                  = MergeJobState.values
-    def wire(e: MergeJobState): String             = e.toString.toLowerCase(java.util.Locale.ROOT)
+    def all: Array[MergeJobState] = MergeJobState.values
+    def wire(e: MergeJobState): String = e.toString.toLowerCase(java.util.Locale.ROOT)
     def fromWire(s: String): Option[MergeJobState] = MergeJobState.values.find(_.toString.equalsIgnoreCase(s.trim))
   given Encoder[MergeJobState] = WireEnum.encoder
   given Decoder[MergeJobState] = WireEnum.decoder
-  given Schema[MergeJobState]  = WireEnum.schema
+  given Schema[MergeJobState] = WireEnum.schema
 
-/** `POST /api/merge/apply` and `GET /api/merge/apply/{job}`: the apply runs in the background (its
-  * backup can take minutes on a large collection); the request waits up to `merge.apply-wait-seconds`
-  * and answers where it is. `result` once it is done — refused or applied, both are `done`; `error`
-  * when it crashed or was interrupted. The job is a `jobs` row (kind [[MergeApplyJob.JobKind]]), so it
-  * outlives a restart (#888). */
-final case class MergeApplyJob(job: String, state: MergeJobState, bundle: String, planHash: String, elapsedMs: Long,
-    result: Option[MergeApplyResult] = None, error: Option[String] = None) derives KindlingsCodecAsObject
+/** `POST /api/merge/apply` and `GET /api/merge/apply/{job}`: the apply runs in the background (its backup can take
+  * minutes on a large collection); the request waits up to `merge.apply-wait-seconds` and answers where it is. `result`
+  * once it is done — refused or applied, both are `done`; `error` when it crashed or was interrupted. The job is a
+  * `jobs` row (kind [[MergeApplyJob.JobKind]]), so it outlives a restart (#888).
+  */
+final case class MergeApplyJob(
+    job: String,
+    state: MergeJobState,
+    bundle: String,
+    planHash: String,
+    elapsedMs: Long,
+    result: Option[MergeApplyResult] = None,
+    error: Option[String] = None
+) derives KindlingsCodecAsObject
 object MergeApplyJob:
   given Schema[MergeApplyJob] = KindlingsSchema.derived[MergeApplyJob].schema
 
@@ -344,16 +398,32 @@ object MergeApplyJob:
       "shows what is left"
 
   /** A stored apply as the API answers it: the `jobs` row's state (a `failed` row whose error is
-    * [[JobState.Interrupted]] was cut short by a restart), its bundle and plan, and the result it
-    * recorded. Pure. */
-  def of(id: String, status: JobState, bundle: String, planHash: String, elapsedMs: Long,
-      error: Option[String], result: Option[MergeApplyResult]): MergeApplyJob =
+    * [[JobState.Interrupted]] was cut short by a restart), its bundle and plan, and the result it recorded. Pure.
+    */
+  def of(
+      id: String,
+      status: JobState,
+      bundle: String,
+      planHash: String,
+      elapsedMs: Long,
+      error: Option[String],
+      result: Option[MergeApplyResult]
+  ): MergeApplyJob =
     status match
       case JobState.Queued | JobState.Running => MergeApplyJob(id, MergeJobState.Running, bundle, planHash, elapsedMs)
-      case JobState.Done =>
-        result.fold(MergeApplyJob(id, MergeJobState.Failed, bundle, planHash, elapsedMs,
-          error = Some("the merge apply finished but its result was not recorded — `histmersion merge list` shows what was applied")))(
-          r => MergeApplyJob(id, MergeJobState.Done, bundle, planHash, elapsedMs, result = Some(r)))
+      case JobState.Done                      =>
+        result.fold(
+          MergeApplyJob(
+            id,
+            MergeJobState.Failed,
+            bundle,
+            planHash,
+            elapsedMs,
+            error = Some(
+              "the merge apply finished but its result was not recorded — `histmersion merge list` shows what was applied"
+            )
+          )
+        )(r => MergeApplyJob(id, MergeJobState.Done, bundle, planHash, elapsedMs, result = Some(r)))
       case JobState.Failed if error.contains(JobState.Interrupted) =>
         MergeApplyJob(id, MergeJobState.Interrupted, bundle, planHash, elapsedMs, error = Some(InterruptedText))
       // a merge apply is never paused or cancelled: one in either state did not apply
@@ -362,10 +432,14 @@ object MergeApplyJob:
 
 // ── the review screen's draft (`merge_sessions`, V051) ───────────────────────────────────────────
 
-/** The decisions made so far on the review screen for one uploaded bundle: kept on the server, so a
-  * reload or another browser picks up where the review was, and exported as the resolution file. */
-final case class MergeSession(bundle: String, resolutions: MergeResolutions = MergeResolutions(),
-    updatedAt: Option[String] = None) derives KindlingsCodecAsObject
+/** The decisions made so far on the review screen for one uploaded bundle: kept on the server, so a reload or another
+  * browser picks up where the review was, and exported as the resolution file.
+  */
+final case class MergeSession(
+    bundle: String,
+    resolutions: MergeResolutions = MergeResolutions(),
+    updatedAt: Option[String] = None
+) derives KindlingsCodecAsObject
 object MergeSession:
   given Schema[MergeSession] = KindlingsSchema.derived[MergeSession].schema
 
@@ -389,8 +463,9 @@ final case class MergeInfo(
 object MergeInfo:
   given Schema[MergeInfo] = KindlingsSchema.derived[MergeInfo].schema
 
-/** `GET /api/merges/{id}`: the row, its report as it was written (an apply's or an import's), the
-  * resolutions it was given and the decisions it left to remember. */
+/** `GET /api/merges/{id}`: the row, its report as it was written (an apply's or an import's), the resolutions it was
+  * given and the decisions it left to remember.
+  */
 final case class MergeDetail(
     merge: MergeInfo,
     applied: Option[MergeApplyResult] = None,
@@ -401,8 +476,9 @@ final case class MergeDetail(
 object MergeDetail:
   given Schema[MergeDetail] = KindlingsSchema.derived[MergeDetail].schema
 
-/** One row of `merge_ledger`: the bundle's uid, the record here it maps to (and its label now), the
-  * revs merged, and the decision. */
+/** One row of `merge_ledger`: the bundle's uid, the record here it maps to (and its label now), the revs merged, and
+  * the decision.
+  */
 final case class LedgerRow(
     foreignUid: UUID,
     kind: String,
@@ -418,12 +494,14 @@ object LedgerRow:
   given Schema[LedgerRow] = KindlingsSchema.derived[LedgerRow].schema
 
 /** A merged-away uid and the record here it redirects to (`uid_aliases`). */
-final case class UidRedirect(aliasUid: UUID, uid: UUID, kind: String, mergeId: Option[UUID]) derives KindlingsCodecAsObject
+final case class UidRedirect(aliasUid: UUID, uid: UUID, kind: String, mergeId: Option[UUID])
+    derives KindlingsCodecAsObject
 object UidRedirect:
   given Schema[UidRedirect] = KindlingsSchema.derived[UidRedirect].schema
 
-/** `GET /api/merges/ledger?uid=&merge=&limit=`: the ledger rows (of one record — a uid, here or
-  * merged away, or a citekey — or of one merge, or the latest) and the redirects that name it. */
+/** `GET /api/merges/ledger?uid=&merge=&limit=`: the ledger rows (of one record — a uid, here or merged away, or a
+  * citekey — or of one merge, or the latest) and the redirects that name it.
+  */
 final case class MergeLedger(query: Option[String], entries: List[LedgerRow], redirects: List[UidRedirect] = Nil)
     derives KindlingsCodecAsObject
 object MergeLedger:

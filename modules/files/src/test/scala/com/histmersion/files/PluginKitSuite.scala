@@ -30,7 +30,8 @@ class PluginKitSuite extends munit.FunSuite:
     val s = pluginSet(List(PluginJar("hello-0.1.0.jar", "11")), 1, "native", None, None)
     assert(PluginSet.describe(Some(s)).contains("1 jar (native): hello-0.1.0.jar"), PluginSet.describe(Some(s)))
 
-  private def set(entries: List[(String, String)]) = pluginSet(entries.map((f, h) => PluginJar(f, h)), 1, "native", None, None)
+  private def set(entries: List[(String, String)]) =
+    pluginSet(entries.map((f, h) => PluginJar(f, h)), 1, "native", None, None)
 
   test("status: up to date, relink needed (added/removed/changed), restart needed, unknown"):
     val linked = set(a)
@@ -48,15 +49,22 @@ class PluginKitSuite extends munit.FunSuite:
     // a stock install: empty directory, empty record, a server reporting no set
     assertEquals(status(Nil, Some(set(Nil)), None, true).verdict, Verdict.UpToDate)
 
-  test("status: a changed POM or lib/ jar beside the same jars needs a rebuild; a record without them compares the jars"):
+  test(
+    "status: a changed POM or lib/ jar beside the same jars needs a rebuild; a record without them compares the jars"
+  ):
     val deps = List("a.pom" -> "p1", "lib/x-1.0.jar" -> "x1")
     val linked = pluginSet(a.map((f, h) => PluginJar(f, h)), 1, "native", None, None, deps)
     assertEquals(status(a, Some(linked), Some(linked), true, deps).verdict, Verdict.UpToDate)
     val pom = status(a, Some(linked), Some(linked), true, List("a.pom" -> "p2", "lib/x-1.0.jar" -> "x1"))
     assertEquals((pom.verdict, pom.changed), (Verdict.RelinkNeeded, List("a.pom")))
     val lib = status(a, Some(linked), Some(linked), true, List("a.pom" -> "p1", "lib/x-1.1.jar" -> "x2"))
-    assertEquals((lib.verdict, lib.added, lib.removed), (Verdict.RelinkNeeded, List("lib/x-1.1.jar"), List("lib/x-1.0.jar")))
-    assert(statusLines(lib, true).mkString("\n").contains("REBUILD NEEDED: the plugins directory (its jars, POMs or lib/)"))
+    assertEquals(
+      (lib.verdict, lib.added, lib.removed),
+      (Verdict.RelinkNeeded, List("lib/x-1.1.jar"), List("lib/x-1.0.jar"))
+    )
+    assert(
+      statusLines(lib, true).mkString("\n").contains("REBUILD NEEDED: the plugins directory (its jars, POMs or lib/)")
+    )
     // a record written before the POMs and lib/ were recorded: the jars alone decide, as they did
     val old = linked.copy(dependencies = None)
     assertEquals(status(a, Some(old), Some(old), true, List("a.pom" -> "p2")).verdict, Verdict.UpToDate)
@@ -68,13 +76,18 @@ class PluginKitSuite extends munit.FunSuite:
     assert(text.contains("added since the link: a.jar"), text)
 
   test("coordinates: g:a:v, g::a:v (Scala 3), refused shapes; the jar URL"):
-    assertEquals(parseCoordinates("org.example:portal-plugin:1.2.0"), Right(Coordinates("org.example", "portal-plugin", "1.2.0")))
+    assertEquals(
+      parseCoordinates("org.example:portal-plugin:1.2.0"),
+      Right(Coordinates("org.example", "portal-plugin", "1.2.0"))
+    )
     assertEquals(parseCoordinates("org.example::portal:1.2.0"), Right(Coordinates("org.example", "portal_3", "1.2.0")))
     assert(parseCoordinates("org.example:portal").isLeft)
     assert(parseCoordinates("a:b:c:d").isLeft)
     assert(parseCoordinates("a b:c:d").isLeft)
-    assertEquals(Coordinates("org.example", "portal_3", "1.2.0").jarUrl("https://repo.example/maven2/"),
-      "https://repo.example/maven2/org/example/portal_3/1.2.0/portal_3-1.2.0.jar")
+    assertEquals(
+      Coordinates("org.example", "portal_3", "1.2.0").jarUrl("https://repo.example/maven2/"),
+      "https://repo.example/maven2/org/example/portal_3/1.2.0/portal_3-1.2.0.jar"
+    )
 
   test("origin: URL, path, coordinates"):
     val none = (_: String) => false
@@ -92,12 +105,20 @@ class PluginKitSuite extends munit.FunSuite:
 
   test("isLoopback: the plugin commands act on this machine only"):
     List("http://localhost:8000", "http://127.0.0.1:18000/", "http://[::1]:8000", "http://LOCALHOST").foreach(u =>
-      assert(isLoopback(u), u))
+      assert(isLoopback(u), u)
+    )
     List("http://192.168.1.4:8000", "https://histmersion.example.org", "not a url", "").foreach(u =>
-      assert(!isLoopback(u), u))
+      assert(!isLoopback(u), u)
+    )
 
   test("index: put replaces by file, drop, ids of a jar, render/parse"):
-    val h = Installed("hello-0.1.0.jar", "11", "/tmp/h.jar", "2026-10-18T00:00:00Z", List(PluginDescription("hello", "0.1.0", 1)))
+    val h = Installed(
+      "hello-0.1.0.jar",
+      "11",
+      "/tmp/h.jar",
+      "2026-10-18T00:00:00Z",
+      List(PluginDescription("hello", "0.1.0", 1))
+    )
     val i = Index().put(h).put(h.copy(sha256 = "12"))
     assertEquals(i.jars.map(_.sha256), List("12"))
     assertEquals(parseIndex(renderIndex(i)), Right(i))
@@ -117,8 +138,10 @@ class PluginKitSuite extends munit.FunSuite:
     assertEquals(refusals(ok, 1, Map.empty), Nil)
     assert(refusals(PluginJar("e.jar", "1"), 1, Map.empty).head.contains("holds no plugin"))
     assert(refusals(ok, 2, Map.empty).head.contains("SPI 1; this Histmersion speaks SPI 2"))
-    assert(refusals(PluginJar("b.jar", "1", List(PluginDescription("", "", 0, error = Some("boom")))), 0, Map.empty)
-      .exists(_.contains("could not be loaded: boom")))
+    assert(
+      refusals(PluginJar("b.jar", "1", List(PluginDescription("", "", 0, error = Some("boom")))), 0, Map.empty)
+        .exists(_.contains("could not be loaded: boom"))
+    )
     assert(refusals(ok, 1, Map("p" -> "other.jar")).head.contains("already provided by other.jar"))
 
   test("refusals: a provider that could not be loaded is refused for its own reason alone, never for an SPI 0"):
@@ -126,7 +149,10 @@ class PluginKitSuite extends munit.FunSuite:
     val broken = PluginJar("b.jar", "1", List(PluginDescription("", "", 0, error = Some(foreign))))
     assertEquals(refusals(broken, 2, Map.empty), List(s"a provider in b.jar could not be loaded: $foreign"))
     val missing = PluginJar("m.jar", "1", List(PluginDescription("", "", 0, error = Some("class x.Y is missing"))))
-    assertEquals(refusals(missing, 2, Map("" -> "other.jar")), List("a provider in m.jar could not be loaded: class x.Y is missing"))
+    assertEquals(
+      refusals(missing, 2, Map("" -> "other.jar")),
+      List("a provider in m.jar could not be loaded: class x.Y is missing")
+    )
 
   test("kit manifest: SHA256SUMS round trip; verify names missing, changed and extra files"):
     val files = List(KitFile("lib/b.jar", "b" * 64), KitFile("classpath", "c" * 64))
@@ -135,8 +161,10 @@ class PluginKitSuite extends munit.FunSuite:
     assertEquals(parseSha256sums(sums).map(_.sortBy(_.file)), Right(files.sortBy(_.file)))
     assert(parseSha256sums("zz  x\n").isLeft)
     assertEquals(verifyKit(files, Map("lib/b.jar" -> "b" * 64, "classpath" -> "c" * 64)), Nil)
-    assertEquals(verifyKit(files, Map("lib/b.jar" -> "d" * 64, "lib/x.jar" -> "e" * 64)),
-      List("missing: classpath", "changed: lib/b.jar", "not in the manifest: lib/x.jar"))
+    assertEquals(
+      verifyKit(files, Map("lib/b.jar" -> "d" * 64, "lib/x.jar" -> "e" * 64)),
+      List("missing: classpath", "changed: lib/b.jar", "not in the manifest: lib/x.jar")
+    )
     val k = KitManifest(KitFormat, "0.1.0", Some("abc"), "25.0.4.1.1", 1, "com.histmersion.server.Main", files)
     assertEquals(parseKit(renderKit(k)), Right(k))
     assert(parseKit(renderKit(k.copy(format = KitFormat + 1))).isLeft, "a newer kit format is refused")

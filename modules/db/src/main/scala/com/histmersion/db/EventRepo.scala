@@ -9,50 +9,110 @@ import javax.sql.DataSource
 
 // ── row types ──────────────────────────────────────────────────────────────────────────────────
 
-private[db] final case class EventRow(
-    id: String, label: String, kind: String,
-    notBefore: Option[Long], beginBy: Option[Long], endFrom: Option[Long], notAfter: Option[Long],
-    historicity: String, placeId: Option[String], parentId: Option[String],
-    description: Option[String], citekey: Option[String],
-    scale: Option[String], placeKind: Option[String], geometryType: Option[String], tier: String,
-    central: Option[Long], plusMinus: Option[Long], datingMethod: Option[String], uncertainty: Option[Long]):
+final private[db] case class EventRow(
+    id: String,
+    label: String,
+    kind: String,
+    notBefore: Option[Long],
+    beginBy: Option[Long],
+    endFrom: Option[Long],
+    notAfter: Option[Long],
+    historicity: String,
+    placeId: Option[String],
+    parentId: Option[String],
+    description: Option[String],
+    citekey: Option[String],
+    scale: Option[String],
+    placeKind: Option[String],
+    geometryType: Option[String],
+    tier: String,
+    central: Option[Long],
+    plusMinus: Option[Long],
+    datingMethod: Option[String],
+    uncertainty: Option[Long]
+):
   def toSummary: EventSummary =
-    EventSummary(id, label, kind,
+    EventSummary(
+      id,
+      label,
+      kind,
       TimeSpan(notBefore, beginBy, endFrom, notAfter),
-      historicity, placeId, parentId, description, citekey,
-      EventScale.effective(scale, kind, parentId.isDefined, placeKind, geometryType), scale.isDefined, tier,
-      EventPrecision.of(uncertainty), central, plusMinus, datingMethod)
+      historicity,
+      placeId,
+      parentId,
+      description,
+      citekey,
+      EventScale.effective(scale, kind, parentId.isDefined, placeKind, geometryType),
+      scale.isDefined,
+      tier,
+      EventPrecision.of(uncertainty),
+      central,
+      plusMinus,
+      datingMethod
+    )
 
-private[db] final case class EventDetailRow(row: EventRow, geometry: Option[String]):
+final private[db] case class EventDetailRow(row: EventRow, geometry: Option[String]):
   def toSummary: EventSummary = row.toSummary
 
 /** One event on the map before its outline is read ([[EventRepo.geo]]). */
-private[db] final case class EventGeoRow(row: EventRow, lat: Double, lon: Double, anchor: String,
-    placeLabel: Option[String], hasArea: Boolean, vei: Option[Int], magnitude: Option[Double]):
+final private[db] case class EventGeoRow(
+    row: EventRow,
+    lat: Double,
+    lon: Double,
+    anchor: String,
+    placeLabel: Option[String],
+    hasArea: Boolean,
+    vei: Option[Int],
+    magnitude: Option[Double]
+):
   /** The event as the map draws it, without its outline. */
   def toGeo: EventGeo =
     val e = row.toSummary
-    EventGeo(e.id, e.label, e.kind, e.scale, e.historicity, e.timeSpan, lat, lon, anchor,
-      e.placeId, placeLabel, e.parentId, None, e.tier, EventLeads.size(vei, magnitude), e.precision, e.datingNote)
+    EventGeo(
+      e.id,
+      e.label,
+      e.kind,
+      e.scale,
+      e.historicity,
+      e.timeSpan,
+      lat,
+      lon,
+      anchor,
+      e.placeId,
+      placeLabel,
+      e.parentId,
+      None,
+      e.tier,
+      EventLeads.size(vei, magnitude),
+      e.precision,
+      e.datingNote
+    )
 
-private[db] final case class EventDatingRow(
-    eventId: String, citekey: String,
-    notBefore: Option[Long], beginBy: Option[Long], endFrom: Option[Long], notAfter: Option[Long],
-    method: Option[String], note: Option[String]):
+final private[db] case class EventDatingRow(
+    eventId: String,
+    citekey: String,
+    notBefore: Option[Long],
+    beginBy: Option[Long],
+    endFrom: Option[Long],
+    notAfter: Option[Long],
+    method: Option[String],
+    note: Option[String]
+):
   def toDto: EventDating =
     EventDating(eventId, citekey, TimeSpan(notBefore, beginBy, endFrom, notAfter), method, note)
 
-given DbCodec[EventRow]        = DbCodec.derived
-given DbCodec[EventDetailRow]  = DbCodec.derived
-given DbCodec[EventGeoRow]     = DbCodec.derived
-given DbCodec[EventDatingRow]  = DbCodec.derived
-given DbCodec[EventEdge]       = DbCodec.derived
-given DbCodec[EventParticipant]= DbCodec.derived
+given DbCodec[EventRow] = DbCodec.derived
+given DbCodec[EventDetailRow] = DbCodec.derived
+given DbCodec[EventGeoRow] = DbCodec.derived
+given DbCodec[EventDatingRow] = DbCodec.derived
+given DbCodec[EventEdge] = DbCodec.derived
+given DbCodec[EventParticipant] = DbCodec.derived
 
 object EventRepo:
 
-  /** The columns of an [[EventRow]]: the event's own, and what its scale is derived from — its place's
-    * kind and its own geometry's type — over [[fromEvents]]. */
+  /** The columns of an [[EventRow]]: the event's own, and what its scale is derived from — its place's kind and its own
+    * geometry's type — over [[fromEvents]].
+    */
   private val summaryCols =
     "e.id, e.label, e.kind, e.not_before, e.begin_by, e.end_from, e.not_after, " +
       "e.historicity, e.place_id, e.parent_id, e.description, e.citekey, " +
@@ -64,30 +124,51 @@ object EventRepo:
 
   // ── reads ───────────────────────────────────────────────────────────────────────────────────
 
-  /** `GET /api/events` — the events related to the filter's sources ([[FilterSql.eventWhere]]: its
-    * source among them, its own span in the period, its label containing the title), narrowed by
-    * the event's own `text` (label/description substring), kind, historicity and place. */
-  def list(ds: DataSource, filter: Filter, scope: PlaceScope, text: Option[String],
-      kind: Option[String], historicity: Option[String], placeId: Option[String],
-      limit: Int, offset: Int, more: Narrow = Narrow()): EventList =
+  /** `GET /api/events` — the events related to the filter's sources ([[FilterSql.eventWhere]]: its source among them,
+    * its own span in the period, its label containing the title), narrowed by the event's own `text` (label/description
+    * substring), kind, historicity and place.
+    */
+  def list(
+      ds: DataSource,
+      filter: Filter,
+      scope: PlaceScope,
+      text: Option[String],
+      kind: Option[String],
+      historicity: Option[String],
+      placeId: Option[String],
+      limit: Int,
+      offset: Int,
+      more: Narrow = Narrow()
+  ): EventList =
     val where = listWhere(filter, scope, text, kind, historicity, placeId, more)
     connect(ds):
-      val total = (Sql.raw(s"SELECT count(*)::int FROM $fromEvents WHERE ") ++ where)
-        .frag.query[Int].run().head
+      val total = (Sql.raw(s"SELECT count(*)::int FROM $fromEvents WHERE ") ++ where).frag.query[Int].run().head
       val rows = (Sql.raw(s"SELECT $summaryCols FROM $fromEvents WHERE ") ++ where ++
         Sql.raw(" ORDER BY coalesce(e.not_before, e.begin_by), e.label") ++
-        Sql.of(" LIMIT ? OFFSET ?", Param.I(limit.max(1)), Param.I(offset.max(0))))
-        .frag.query[EventRow].run().toList.map(_.toSummary)
+        Sql.of(" LIMIT ? OFFSET ?", Param.I(limit.max(1)), Param.I(offset.max(0)))).frag
+        .query[EventRow]
+        .run()
+        .toList
+        .map(_.toSummary)
       EventList.of(total, rows, offset.max(0))
 
-  /** What only the catalogue work (#1449) narrows events by: the tier, the catalogue context of the
-    * map's layer ([[Api.EventQuery]]), and the area the anchor lies in. */
+  /** What only the catalogue work (#1449) narrows events by: the tier, the catalogue context of the map's layer
+    * ([[Api.EventQuery]]), and the area the anchor lies in.
+    */
   final case class Narrow(tier: Option[String] = None, context: Boolean = false, area: Option[BBox] = None)
 
-  /** The WHERE of [[list]], as a value — pure, unit-tested without a database. Over `events e` with
-    * its place `ep` (the area reads the anchor). */
-  def listWhere(filter: Filter, scope: PlaceScope, text: Option[String], kind: Option[String],
-      historicity: Option[String], placeId: Option[String], more: Narrow = Narrow()): Sql =
+  /** The WHERE of [[list]], as a value — pure, unit-tested without a database. Over `events e` with its place `ep` (the
+    * area reads the anchor).
+    */
+  def listWhere(
+      filter: Filter,
+      scope: PlaceScope,
+      text: Option[String],
+      kind: Option[String],
+      historicity: Option[String],
+      placeId: Option[String],
+      more: Narrow = Narrow()
+  ): Sql =
     def clean(o: Option[String]) = o.map(_.trim).filter(_.nonEmpty)
     val ps = List.newBuilder[Sql]
     val related = FilterSql.eventWhere(filter, scope)
@@ -113,15 +194,24 @@ object EventRepo:
     if parts.isEmpty then Sql.raw("TRUE")
     else Sql(parts.map(_.text).mkString(" AND "), parts.flatMap(_.params))
 
-  /** `GET /api/events/geo` — the events [[list]] selects that have a position, for the map's playback
-    * (#1440). The anchor is the event's own geometry, else its place's: the point itself, or the
-    * point-on-surface of an area (always inside it, unlike a centroid). A REGIONAL event whose anchor
-    * is an area gets that area's outline, simplified to `tolerance` degrees (a polity's land-clipped
-    * shape, as the map draws it); a local one, or an area known only by a point, none. Two
-    * statements: the rows with their scale, then the outlines of the regional ones alone. */
-  def geo(ds: DataSource, filter: Filter, scope: PlaceScope, text: Option[String],
-      kind: Option[String], historicity: Option[String], placeId: Option[String],
-      limit: Int, tolerance: Double, more: Narrow = Narrow()): EventGeoList =
+  /** `GET /api/events/geo` — the events [[list]] selects that have a position, for the map's playback (#1440). The
+    * anchor is the event's own geometry, else its place's: the point itself, or the point-on-surface of an area (always
+    * inside it, unlike a centroid). A REGIONAL event whose anchor is an area gets that area's outline, simplified to
+    * `tolerance` degrees (a polity's land-clipped shape, as the map draws it); a local one, or an area known only by a
+    * point, none. Two statements: the rows with their scale, then the outlines of the regional ones alone.
+    */
+  def geo(
+      ds: DataSource,
+      filter: Filter,
+      scope: PlaceScope,
+      text: Option[String],
+      kind: Option[String],
+      historicity: Option[String],
+      placeId: Option[String],
+      limit: Int,
+      tolerance: Double,
+      more: Narrow = Narrow()
+  ): EventGeoList =
     val listed = listWhere(filter, scope, text, kind, historicity, placeId, more)
     // drawn at a year only when dated, and well enough (core.EventPrecision.mapped): the imprecise are
     // counted; an undated one (its outer span unbounded) would otherwise stand in every period
@@ -129,11 +219,13 @@ object EventRepo:
     connect(ds):
       val rows = (geoSelect ++ where ++
         Sql.raw(" ORDER BY coalesce(e.not_before, e.begin_by), e.label") ++
-        Sql.of(" LIMIT ?", Param.I(limit.max(1))))
-        .frag.query[EventGeoRow].run().toList
-      val unplaced = (Sql.raw(s"SELECT count(*)::int FROM $fromEvents WHERE e.geom IS NULL AND ep.geom IS NULL AND ") ++ where)
-        .frag.query[Int].run().head
-      val imprecise = (Sql.raw(s"SELECT count(*)::int FROM $fromEvents WHERE coalesce(e.geom, ep.geom) IS NOT NULL AND ") ++
+        Sql.of(" LIMIT ?", Param.I(limit.max(1)))).frag.query[EventGeoRow].run().toList
+      val unplaced = (Sql.raw(
+        s"SELECT count(*)::int FROM $fromEvents WHERE e.geom IS NULL AND ep.geom IS NULL AND "
+      ) ++ where).frag.query[Int].run().head
+      val imprecise = (Sql.raw(
+        s"SELECT count(*)::int FROM $fromEvents WHERE coalesce(e.geom, ep.geom) IS NOT NULL AND "
+      ) ++
         listed ++ Sql.of(" AND e.uncertainty > ?", Param.L(EventPrecision.ApproximateUpTo))).frag.query[Int].run().head
       val items = rows.map(r => (r, r.toGeo))
       val wanted = items.collect { case (r, g) if r.hasArea && g.scale == EventScale.Regional => g.id }
@@ -143,19 +235,28 @@ object EventRepo:
           sql"""SELECT e.id, ST_AsGeoJSON(ST_SimplifyPreserveTopology(
                          coalesce(e.geom, ep.geom_clipped, ep.geom), $tolerance), 4)
                 FROM ${SqlLiteral(fromEvents)} WHERE e.id = ANY($wanted::text[])"""
-            .query[(String, Option[String])].run().collect { case (id, Some(g)) => id -> g }.toMap
+            .query[(String, Option[String])]
+            .run()
+            .collect { case (id, Some(g)) => id -> g }
+            .toMap
       EventGeoList(items.map((_, g) => g.copy(outline = outlines.get(g.id))), unplaced, imprecise)
 
-  /** The events of `ids` as the map's tiles draw one ([[geo]]'s rows, without an outline), by id;
-    * an id with no position, or dated too loosely, is left out as [[geo]] leaves it out. */
+  /** The events of `ids` as the map's tiles draw one ([[geo]]'s rows, without an outline), by id; an id with no
+    * position, or dated too loosely, is left out as [[geo]] leaves it out.
+    */
   def geoOf(ds: DataSource, ids: List[String]): Map[String, EventGeo] =
     if ids.isEmpty then Map.empty
-    else connect(ds):
-      (geoSelect ++ Sql.of("e.id = ANY(?) AND e.uncertainty <= ?", Param.A(ids), Param.L(EventPrecision.ApproximateUpTo)))
-        .frag.query[EventGeoRow].run().map(r => r.row.id -> r.toGeo).toMap
+    else
+      connect(ds):
+        (geoSelect ++ Sql.of(
+          "e.id = ANY(?) AND e.uncertainty <= ?",
+          Param.A(ids),
+          Param.L(EventPrecision.ApproximateUpTo)
+        )).frag.query[EventGeoRow].run().map(r => r.row.id -> r.toGeo).toMap
 
-  /** An event's ANCHOR over `events e` with its place `ep`: its own geometry, else its place's
-    * (`s.g`, `s.src`), as a point — the point itself, or the point-on-surface of an area (`a.pt`). */
+  /** An event's ANCHOR over `events e` with its place `ep`: its own geometry, else its place's (`s.g`, `s.src`), as a
+    * point — the point itself, or the point-on-surface of an area (`a.pt`).
+    */
   private[db] val anchorJoins: String =
     """CROSS JOIN LATERAL (SELECT coalesce(e.geom, ep.geom) AS g,
                                  CASE WHEN e.geom IS NOT NULL THEN 'event' ELSE 'place' END AS src) s
@@ -170,8 +271,9 @@ object EventRepo:
             FROM $fromEvents $anchorJoins
             WHERE s.g IS NOT NULL AND """)
 
-  /** The map's events as [[TileRepo]] selects them: the anchor's id, place and dates, for [[geo]]'s
-    * selection (`where`, over `events e` with `ep`), in the tile's box `envelope`. */
+  /** The map's events as [[TileRepo]] selects them: the anchor's id, place and dates, for [[geo]]'s selection (`where`,
+    * over `events e` with `ep`), in the tile's box `envelope`.
+    */
   private[db] def tileCandidates(where: Sql, envelope: Sql): Sql =
     Sql.raw(s"""SELECT e.id AS key, ST_X(a.pt) AS lon, ST_Y(a.pt) AS lat,
                   ${PeriodSql.start("e.outer_span")} AS ps, ${PeriodSql.end("e.outer_span")} AS pe, false AS ub
@@ -182,8 +284,9 @@ object EventRepo:
   /** An event with no known date: its outer span open on both sides. */
   private[db] val UndatedSql = "(lower_inf(e.outer_span) AND upper_inf(e.outer_span))"
 
-  /** [[tileCandidates]] and, beside them, the events `undatedWhere` selects that have no known date (whatever
-    * the span: `undatedWhere` is the selection without it), each marked (`ub`). */
+  /** [[tileCandidates]] and, beside them, the events `undatedWhere` selects that have no known date (whatever the span:
+    * `undatedWhere` is the selection without it), each marked (`ub`).
+    */
   private[db] def tileCandidatesWithUndated(where: Sql, undatedWhere: Sql, envelope: Sql): Sql =
     Sql.raw(s"""SELECT e.id AS key, ST_X(a.pt) AS lon, ST_Y(a.pt) AS lat,
                   ${PeriodSql.start("e.outer_span")} AS ps, ${PeriodSql.end("e.outer_span")} AS pe, $UndatedSql AS ub
@@ -198,48 +301,75 @@ object EventRepo:
             FROM ${SqlLiteral(fromEvents)} WHERE e.id = $id""".query[EventDetailRow].run().headOption.map { r =>
         val parent = r.toSummary.parentId.flatMap { pid =>
           sql"""SELECT ${SqlLiteral(summaryCols)} FROM ${SqlLiteral(fromEvents)} WHERE e.id = $pid"""
-            .query[EventRow].run().headOption.map(_.toSummary)
+            .query[EventRow]
+            .run()
+            .headOption
+            .map(_.toSummary)
         }
         val children = sql"""SELECT ${SqlLiteral(summaryCols)} FROM ${SqlLiteral(fromEvents)}
               WHERE e.parent_id = $id ORDER BY coalesce(e.not_before, e.begin_by), e.label"""
-          .query[EventRow].run().toList.map(_.toSummary)
+          .query[EventRow]
+          .run()
+          .toList
+          .map(_.toSummary)
         val datings = sql"""SELECT event_id, citekey, not_before, begin_by, end_from, not_after,
                                    method, note
                             FROM event_datings WHERE event_id = $id ORDER BY citekey"""
-          .query[EventDatingRow].run().toList.map(_.toDto)
+          .query[EventDatingRow]
+          .run()
+          .toList
+          .map(_.toDto)
         val edges = sql"""SELECT src_id, dst_id, kind, citekey, note
                           FROM event_edges WHERE src_id = $id OR dst_id = $id
                           ORDER BY kind, src_id, dst_id"""
-          .query[EventEdge].run().toList
+          .query[EventEdge]
+          .run()
+          .toList
         val participants = sql"""SELECT event_id, actor, role, citekey
                                 FROM event_participants WHERE event_id = $id
                                 ORDER BY role, actor"""
-          .query[EventParticipant].run().toList
+          .query[EventParticipant]
+          .run()
+          .toList
         val wikidata = sql"SELECT wikidata FROM events WHERE id = $id".query[Option[String]].run().headOption.flatten
-        EventDetail(r.toSummary, r.geometry, parent, children, datings, edges, participants, wikidata,
+        EventDetail(
+          r.toSummary,
+          r.geometry,
+          parent,
+          children,
+          datings,
+          edges,
+          participants,
+          wikidata,
           MediaRepo.thumbsIn(MediaRepo.Event, id),
-          corrections = CorrectionRepo.of(CorrectionTarget.Event, id).map(_.toDto()))
+          corrections = CorrectionRepo.of(CorrectionTarget.Event, id).map(_.toDto())
+        )
       }
 
   // ── writes ──────────────────────────────────────────────────────────────────────────────────
 
   /** SQL, in an `ON CONFLICT` update of `events`: the four-point span is the one stored. */
-  private val sameSpan = SqlLiteral("(events.not_before, events.begin_by, events.end_from, events.not_after) " +
-    "IS NOT DISTINCT FROM (EXCLUDED.not_before, EXCLUDED.begin_by, EXCLUDED.end_from, EXCLUDED.not_after)")
+  private val sameSpan = SqlLiteral(
+    "(events.not_before, events.begin_by, events.end_from, events.not_after) " +
+      "IS NOT DISTINCT FROM (EXCLUDED.not_before, EXCLUDED.begin_by, EXCLUDED.end_from, EXCLUDED.not_after)"
+  )
 
-  /** A person changed `fields` of an event an IMPORT created: each that now differs from what the
-    * catalogue's record says is recorded as a correction (V088), so the next import keeps it; one set
-    * back to the catalogue's value drops its correction. An event compiled from sources (no
-    * catalogue) is never refreshed by an import: nothing to record. */
+  /** A person changed `fields` of an event an IMPORT created: each that now differs from what the catalogue's record
+    * says is recorded as a correction (V088), so the next import keeps it; one set back to the catalogue's value drops
+    * its correction. An event compiled from sources (no catalogue) is never refreshed by an import: nothing to record.
+    */
   private def recordCorrections(id: String, fields: Map[String, io.circe.Json])(using DbCon): Unit =
     if fields.nonEmpty then
       EventCatalogRepo.upstreamOf(id).foreach { (provider, rec) =>
         val up = EventFields.upstream(rec)
-        fields.foreach((f, v) => up.get(f).foreach(u => CorrectionRepo.record(CorrectionTarget.Event, id, f, v, u, Some(provider))))
+        fields.foreach((f, v) =>
+          up.get(f).foreach(u => CorrectionRepo.record(CorrectionTarget.Event, id, f, v, u, Some(provider)))
+        )
       }
 
-  /** Why PostGIS cannot read `geojson` as a geometry, in its own words — `None` when it can (#2554).
-    * Asked before a write, so a bad geometry is a 400 rather than a failed statement. */
+  /** Why PostGIS cannot read `geojson` as a geometry, in its own words — `None` when it can (#2554). Asked before a
+    * write, so a bad geometry is a 400 rather than a failed statement.
+    */
   def geometryError(ds: DataSource, geojson: String): Option[String] =
     val c = ds.getConnection
     try
@@ -251,12 +381,17 @@ object EventRepo:
       finally st.close()
     catch
       case e: java.sql.SQLException =>
-        Some(Option(e.getMessage).map(_.linesIterator.next().trim).filter(_.nonEmpty)
-          .getOrElse(e.getClass.getSimpleName))
+        Some(
+          Option(e.getMessage)
+            .map(_.linesIterator.next().trim)
+            .filter(_.nonEmpty)
+            .getOrElse(e.getClass.getSimpleName)
+        )
     finally c.close()
 
-  /** Create or replace one event. On an event an import created, the fields that differ from its
-    * catalogue's are recorded as corrections ([[recordCorrections]]) — they survive a re-import. */
+  /** Create or replace one event. On an event an import created, the fields that differ from its catalogue's are
+    * recorded as corrections ([[recordCorrections]]) — they survive a re-import.
+    */
   def put(ds: DataSource, id: String, in: EventPut): Unit =
     transact(ds):
       val geom = in.geometry.map(_.trim).filter(_.nonEmpty)
@@ -267,8 +402,8 @@ object EventRepo:
                     ${in.timeSpan.notBefore}, ${in.timeSpan.beginBy},
                     ${in.timeSpan.endFrom}, ${in.timeSpan.notAfter},
                     ${in.historicity},
-                    CASE WHEN ${geom}::text IS NULL THEN NULL
-                         ELSE ST_SetSRID(ST_GeomFromGeoJSON(${geom}::text), 4326) END,
+                    CASE WHEN $geom::text IS NULL THEN NULL
+                         ELSE ST_SetSRID(ST_GeomFromGeoJSON($geom::text), 4326) END,
                     ${in.placeId}, ${in.parentId}, ${in.description}, ${in.citekey}, $scale)
             ON CONFLICT (id) DO UPDATE SET
               label = EXCLUDED.label, kind = EXCLUDED.kind,
@@ -310,9 +445,10 @@ object EventRepo:
               ON CONFLICT (event_id, actor, role) DO UPDATE SET citekey = EXCLUDED.citekey""".update
       }
 
-  /** Change the fields `p` sets. On an event an import created, each changed field is recorded as a
-    * correction ([[recordCorrections]]): the next import of its catalogue keeps it (and retires it once
-    * the catalogue agrees, or flags a conflict when the catalogue changes to something else). */
+  /** Change the fields `p` sets. On an event an import created, each changed field is recorded as a correction
+    * ([[recordCorrections]]): the next import of its catalogue keeps it (and retires it once the catalogue agrees, or
+    * flags a conflict when the catalogue changes to something else).
+    */
   def patch(ds: DataSource, id: String, p: EventPatch): Either[ApiError, Unit] =
     transact(ds):
       val exists = sql"SELECT 1 FROM events WHERE id = $id".query[Int].run().nonEmpty
@@ -335,8 +471,8 @@ object EventRepo:
         // `""` clears the geometry; anything else [[Handlers]] checked with [[geometryError]]
         p.geometry.map(_.trim).foreach { raw =>
           val g = Option(raw).filter(_.nonEmpty)
-          sql"""UPDATE events SET geom = CASE WHEN ${g}::text IS NULL THEN NULL
-                ELSE ST_SetSRID(ST_GeomFromGeoJSON(${g}::text), 4326) END WHERE id = $id""".update.run()
+          sql"""UPDATE events SET geom = CASE WHEN $g::text IS NULL THEN NULL
+                ELSE ST_SetSRID(ST_GeomFromGeoJSON($g::text), 4326) END WHERE id = $id""".update.run()
         }
         p.timeSpan.foreach { ts =>
           sql"""UPDATE events SET not_before = ${ts.notBefore}, begin_by = ${ts.beginBy},
@@ -367,24 +503,31 @@ object EventRepo:
         }
         // a span set by hand replaces the catalogue's dating: its stated year and ± no longer explain it
         p.timeSpan.foreach(_ =>
-          sql"UPDATE events SET central = NULL, plus_minus = NULL, dating_method = NULL WHERE id = $id".update.run())
+          sql"UPDATE events SET central = NULL, plus_minus = NULL, dating_method = NULL WHERE id = $id".update.run()
+        )
         recordCorrections(id, EventFields.ofPatch(p))
         Right(())
 
-  /** Rename an event (V042), inside the caller's transaction: the id moves with one UPDATE (its
-    * datings, participants, edges and children cascade), and the attestations and asset links that
-    * name it follow. What a bundle import does when an event was renamed on the other side. */
+  /** Rename an event (V042), inside the caller's transaction: the id moves with one UPDATE (its datings, participants,
+    * edges and children cascade), and the attestations and asset links that name it follow. What a bundle import does
+    * when an event was renamed on the other side.
+    */
   private[db] def renameIn(oldId: String, newId: String)(using DbCon): Either[ApiError, Unit] =
     def exists(i: String) = sql"SELECT 1 FROM events WHERE id = $i".query[Int].run().nonEmpty
     val aliasOf = sql"SELECT event_id FROM event_aliases WHERE alias = $newId".query[String].run().headOption
     if !exists(oldId) then Left(ApiError(s"No event '$oldId'", Some(Write.CodeNotFound)))
     else if exists(newId) then Left(ApiError(s"'$newId' is already the id of another event", Some(Write.CodeInvalid)))
     else if aliasOf.exists(_ != oldId) then
-      Left(ApiError(s"'$newId' is an old id of '${aliasOf.get}' and still resolves to it — pick another", Some(Write.CodeInvalid)))
+      Left(
+        ApiError(
+          s"'$newId' is an old id of '${aliasOf.get}' and still resolves to it — pick another",
+          Some(Write.CodeInvalid)
+        )
+      )
     else
       // renaming back to an old id: that alias goes (V053)
       sql"DELETE FROM event_aliases WHERE alias = $newId".update.run()
-      sql"UPDATE events SET id = $newId WHERE id = $oldId".update.run()   // its corrections follow (V088's trigger)
+      sql"UPDATE events SET id = $newId WHERE id = $oldId".update.run() // its corrections follow (V088's trigger)
       sql"UPDATE attestations SET target_id = $newId WHERE target_type = 'event' AND target_id = $oldId".update.run()
       sql"UPDATE asset_links SET target_id = $newId WHERE target_type = 'event' AND target_id = $oldId".update.run()
       sql"""INSERT INTO event_aliases (alias, event_id) VALUES ($oldId, $newId)
@@ -400,4 +543,4 @@ object EventRepo:
 
   def delete(ds: DataSource, id: String): Boolean =
     transact(ds):
-      sql"DELETE FROM events WHERE id = $id".update.run() > 0   // its corrections go (V088's trigger)
+      sql"DELETE FROM events WHERE id = $id".update.run() > 0 // its corrections go (V088's trigger)

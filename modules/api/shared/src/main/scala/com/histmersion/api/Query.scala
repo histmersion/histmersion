@@ -6,24 +6,24 @@ import sttp.tapir.Schema
 
 /** `histmersion query "<SQL>"` — the read-only SQL escape hatch (plan §5.1 row `report`, §5.2 stream 2.8).
   *
-  * The old workflow reached for `sync_db.py --query` whenever a question did not fit `search` /
-  * `facets` / `aggregate`. This is that, against the live store.
+  * The old workflow reached for `sync_db.py --query` whenever a question did not fit `search` / `facets` / `aggregate`.
+  * This is that, against the live store.
   *
   * **Read-only is enforced in THREE layers, because no single one of them holds.**
   *
-  *  1. [[check]] (here, pure): exactly ONE top-level statement, and it may not start with a
-  *     transaction- or session-control keyword. This layer exists because pgjdbc happily splits a
-  *     `;`-separated batch and sends each part — so `SET TRANSACTION READ WRITE; DELETE …` used to
-  *     run BOTH parts, the first of which undid the guard the second was supposed to hit.
-  *  2. a dedicated **`histmersion_query` login role** (migration `V011__query_role.sql`) that is
-  *     `NOSUPERUSER` and holds nothing but `SELECT`, with `default_transaction_read_only = on`
-  *     baked into the role. This is the layer that actually contains a statement: the application
-  *     role is typically a superuser, for which `pg_read_file()` and friends are wide open.
-  *  3. `SET TRANSACTION READ ONLY` + `SET LOCAL statement_timeout` per statement — belt and braces,
-  *     and the only layer that still applies if the role could not be provisioned.
+  *   1. [[check]] (here, pure): exactly ONE top-level statement, and it may not start with a transaction- or
+  *      session-control keyword. This layer exists because pgjdbc happily splits a `;`-separated batch and sends each
+  *      part — so `SET TRANSACTION READ WRITE; DELETE …` used to run BOTH parts, the first of which undid the guard the
+  *      second was supposed to hit.
+  *   2. a dedicated **`histmersion_query` login role** (migration `V011__query_role.sql`) that is `NOSUPERUSER` and
+  *      holds nothing but `SELECT`, with `default_transaction_read_only = on` baked into the role. This is the layer
+  *      that actually contains a statement: the application role is typically a superuser, for which `pg_read_file()`
+  *      and friends are wide open.
+  *   3. `SET TRANSACTION READ ONLY` + `SET LOCAL statement_timeout` per statement — belt and braces, and the only layer
+  *      that still applies if the role could not be provisioned.
   *
-  * Everything in this file is pure: the DTOs, the statement check, the Markdown table, and the
-  * schema blurb that becomes the MCP tool description. `db.QueryRepo` does the executing.
+  * Everything in this file is pure: the DTOs, the statement check, the Markdown table, and the schema blurb that
+  * becomes the MCP tool description. `db.QueryRepo` does the executing.
   */
 object Query:
 
@@ -32,9 +32,9 @@ object Query:
   object QueryRequest:
     given Schema[QueryRequest] = KindlingsSchema.derived[QueryRequest].schema
 
-  /** Column names plus rows of stringified cells (NULL = absent), which is the only shape that
-    * survives an arbitrary projection through one static JSON schema. `truncated` says the row cap
-    * (`query.max-rows`) cut the result short. */
+  /** Column names plus rows of stringified cells (NULL = absent), which is the only shape that survives an arbitrary
+    * projection through one static JSON schema. `truncated` says the row cap (`query.max-rows`) cut the result short.
+    */
   final case class QueryResult(
       columns: List[String],
       rows: List[List[Option[String]]],
@@ -45,48 +45,60 @@ object Query:
   object QueryResult:
     given Schema[QueryResult] = KindlingsSchema.derived[QueryResult].schema
 
-  final case class SchemaColumn(name: String, dataType: String, nullable: Boolean)
-      derives KindlingsCodecAsObject
+  final case class SchemaColumn(name: String, dataType: String, nullable: Boolean) derives KindlingsCodecAsObject
   object SchemaColumn:
     given Schema[SchemaColumn] = KindlingsSchema.derived[SchemaColumn].schema
 
-  final case class SchemaTable(name: String, kind: String, columns: List[SchemaColumn])
-      derives KindlingsCodecAsObject
+  final case class SchemaTable(name: String, kind: String, columns: List[SchemaColumn]) derives KindlingsCodecAsObject
   object SchemaTable:
     given Schema[SchemaTable] = KindlingsSchema.derived[SchemaTable].schema
 
-  /** `GET /api/schema/tables` — read from `information_schema` at request time, never a hand-written
-    * list, so it cannot go stale as migrations land. */
+  /** `GET /api/schema/tables` — read from `information_schema` at request time, never a hand-written list, so it cannot
+    * go stale as migrations land.
+    */
   final case class SchemaTables(tables: List[SchemaTable]) derives KindlingsCodecAsObject
   object SchemaTables:
     given Schema[SchemaTables] = KindlingsSchema.derived[SchemaTables].schema
 
   // ── the statement check (pure) ───────────────────────────────────────────────────────────────
 
-  /** Statements that must never reach the database through this hatch: they change the SESSION or
-    * the TRANSACTION rather than reading, and one of them (`SET TRANSACTION READ WRITE`) is exactly
-    * how a batch used to disarm the read-only guard before the first `SELECT` ran. `DO`/`CALL` run
-    * arbitrary procedural code, which is not a read however it is dressed up. */
+  /** Statements that must never reach the database through this hatch: they change the SESSION or the TRANSACTION
+    * rather than reading, and one of them (`SET TRANSACTION READ WRITE`) is exactly how a batch used to disarm the
+    * read-only guard before the first `SELECT` ran. `DO`/`CALL` run arbitrary procedural code, which is not a read
+    * however it is dressed up.
+    */
   private val Forbidden = Set(
-    "SET", "RESET", "BEGIN", "START", "COMMIT", "ROLLBACK", "ABORT", "END",
-    "SAVEPOINT", "RELEASE", "DISCARD", "DO", "CALL")
+    "SET",
+    "RESET",
+    "BEGIN",
+    "START",
+    "COMMIT",
+    "ROLLBACK",
+    "ABORT",
+    "END",
+    "SAVEPOINT",
+    "RELEASE",
+    "DISCARD",
+    "DO",
+    "CALL"
+  )
 
-  /** Split SQL into top-level statements, honouring everything that can legally contain a `;`:
-    * `'…'` strings (with `''` escapes), `"…"` identifiers, `$tag$…$tag$` dollar quoting, `--` line
-    * comments and nestable slash-star block comments (Postgres nests them; Scala does too, which
-    * is why this sentence does not spell one out).
+  /** Split SQL into top-level statements, honouring everything that can legally contain a `;`: `'…'` strings (with `''`
+    * escapes), `"…"` identifiers, `$tag$…$tag$` dollar quoting, `--` line comments and nestable slash-star block
+    * comments (Postgres nests them; Scala does too, which is why this sentence does not spell one out).
     *
-    * A naive `split(";")` gets `select ';' as x` wrong in the permissive direction, which is the
-    * direction that matters here — so this scanner, and not that.
+    * A naive `split(";")` gets `select ';' as x` wrong in the permissive direction, which is the direction that matters
+    * here — so this scanner, and not that.
     *
-    * Trailing empty parts (a statement politely terminated with `;`) are dropped, so
-    * `select 1;` is ONE statement and `select 1; select 2` is two. */
+    * Trailing empty parts (a statement politely terminated with `;`) are dropped, so `select 1;` is ONE statement and
+    * `select 1; select 2` is two.
+    */
   def statements(sql: String): List[String] =
-    val out   = List.newBuilder[String]
-    val cur   = StringBuilder()
-    var i     = 0
-    val n     = sql.length
-    var depth = 0                                   // /* */ nesting level (Postgres nests them)
+    val out = List.newBuilder[String]
+    val cur = StringBuilder()
+    var i = 0
+    val n = sql.length
+    var depth = 0 // /* */ nesting level (Postgres nests them)
     def at(k: Int): Char = if k >= 0 && k < n then sql.charAt(k) else 0.toChar
     while i < n do
       val c = sql.charAt(i)
@@ -110,7 +122,7 @@ object Query:
         dollarTag(sql, i) match
           case Some(tag) =>
             val end = sql.indexOf(tag, i + tag.length)
-            val to  = if end < 0 then n else end + tag.length
+            val to = if end < 0 then n else end + tag.length
             cur.append(sql.substring(i, to)); i = to
           case None => { cur.append(c); i += 1 }
       else if c == ';' then { out += cur.toString; cur.clear(); i += 1 }
@@ -140,50 +152,82 @@ object Query:
       else go = false
     s.takeWhile(c => c.isLetter).toUpperCase
 
-  /** The gate every statement passes before it reaches Postgres. `Right` carries the single trimmed
-    * statement to execute; `Left` is the reason, phrased for whoever (or whatever) wrote the SQL. */
+  /** The gate every statement passes before it reaches Postgres. `Right` carries the single trimmed statement to
+    * execute; `Left` is the reason, phrased for whoever (or whatever) wrote the SQL.
+    */
   def check(sql: String): Either[String, String] =
     val text = sql.trim
     if text.isEmpty then Left("empty statement")
     else
       statements(text) match
-        case Nil => Left("empty statement")
+        case Nil        => Left("empty statement")
         case one :: Nil =>
           val kw = leadingKeyword(one)
           if Forbidden.contains(kw) then
-            Left(s"'$kw' is not allowed here — `query` runs ONE read-only statement (SELECT, or a " +
-              "WITH that only reads); transaction and session control are refused")
+            Left(
+              s"'$kw' is not allowed here — `query` runs ONE read-only statement (SELECT, or a " +
+                "WITH that only reads); transaction and session control are refused"
+            )
           else Right(one)
         case many =>
-          Left(s"${many.size} statements were given — `query` runs exactly ONE; " +
-            "drop the ';'-separated batch and ask again")
+          Left(
+            s"${many.size} statements were given — `query` runs exactly ONE; " +
+              "drop the ';'-separated batch and ask again"
+          )
 
   // ── rendering (pure) ─────────────────────────────────────────────────────────────────────────
 
   private def cell(v: Option[String]): String =
     v.getOrElse("NULL").replace("|", "\\|").linesIterator.mkString(" ").trim
 
-  /** A GitHub-flavoured Markdown table. Empty columns (a statement that returned nothing) render as
-    * a note rather than a broken table, because an LLM reading `| |\n|---|` learns nothing. */
+  /** A GitHub-flavoured Markdown table. Empty columns (a statement that returned nothing) render as a note rather than
+    * a broken table, because an LLM reading `| |\n|---|` learns nothing.
+    */
   def markdownTable(columns: List[String], rows: List[List[Option[String]]]): String =
     if columns.isEmpty then "_(no columns)_"
     else
       val header = columns.map(_.replace("|", "\\|")).mkString("| ", " | ", " |")
-      val rule   = columns.map(_ => "---").mkString("|", "|", "|")
-      val body   = rows.map(r => columns.indices.map(i => cell(r.lift(i).flatten)).mkString("| ", " | ", " |"))
+      val rule = columns.map(_ => "---").mkString("|", "|", "|")
+      val body = rows.map(r => columns.indices.map(i => cell(r.lift(i).flatten)).mkString("| ", " | ", " |"))
       // NB: no stripMargin — every row starts with '|', which stripMargin would eat.
       (List(header, rule) ++ body).mkString("\n")
 
   def markdown(r: QueryResult): String =
-    val head = s"### ${r.rowCount} row(s)${if r.truncated then " (truncated by the row cap)" else ""} · ${r.elapsedMs} ms"
+    val head =
+      s"### ${r.rowCount} row(s)${if r.truncated then " (truncated by the row cap)" else ""} · ${r.elapsedMs} ms"
     if r.rows.isEmpty then s"$head\n\n_no rows_"
     else s"$head\n\n${markdownTable(r.columns, r.rows)}"
 
-  /** The columns worth naming in a tool description: the identity/join columns an LLM needs to write
-    * a correct query, not all 24 of `sources`. Everything else is one `GET /api/schema/tables` away. */
-  private val Key = Set("id", "citekey", "src", "dst", "kind", "list", "status", "title", "doi",
-    "year", "topics", "regions", "tags", "period", "claim", "region_name", "geom", "ord", "topic",
-    "slug", "created_at", "done_at", "text", "name", "label")
+  /** The columns worth naming in a tool description: the identity/join columns an LLM needs to write a correct query,
+    * not all 24 of `sources`. Everything else is one `GET /api/schema/tables` away.
+    */
+  private val Key = Set(
+    "id",
+    "citekey",
+    "src",
+    "dst",
+    "kind",
+    "list",
+    "status",
+    "title",
+    "doi",
+    "year",
+    "topics",
+    "regions",
+    "tags",
+    "period",
+    "claim",
+    "region_name",
+    "geom",
+    "ord",
+    "topic",
+    "slug",
+    "created_at",
+    "done_at",
+    "text",
+    "name",
+    "label"
+  )
 
   def schemaMarkdown(s: SchemaTables): String =
     if s.tables.isEmpty then "_(no tables)_"
@@ -194,8 +238,9 @@ object Query:
       }
       s"### ${s.tables.size} table(s)\n\n${rows.mkString("\n")}"
 
-  /** The `query` MCP tool description, generated from the live schema so it lists the tables that
-    * actually exist (and their key columns) instead of a list that rots as migrations land. */
+  /** The `query` MCP tool description, generated from the live schema so it lists the tables that actually exist (and
+    * their key columns) instead of a list that rots as migrations land.
+    */
   def toolDescription(s: SchemaTables): String =
     val tables =
       if s.tables.isEmpty then "(schema unavailable — call the schema endpoint)"

@@ -1,6 +1,5 @@
 package com.histmersion.api
 
-
 class AboutSuite extends munit.FunSuite:
 
   test("#718: a converter text maps to ok / busy / down, and wording never seen is unknown, not an error"):
@@ -9,7 +8,10 @@ class AboutSuite extends munit.FunSuite:
     assertEquals(ServiceState.of(Some("busy: 2 jobs converting")), ServiceState.Busy)
     assertEquals(ServiceState.of(Some("converter busy")), ServiceState.Busy)
     assertEquals(ServiceState.of(Some("degraded: no answer from the converter within 2000 ms")), ServiceState.Down)
-    assertEquals(ServiceState.of(Some("converter at http://x is unreachable (ConnectException: refused)")), ServiceState.Down)
+    assertEquals(
+      ServiceState.of(Some("converter at http://x is unreachable (ConnectException: refused)")),
+      ServiceState.Down
+    )
     assertEquals(ServiceState.of(Some("error: relation does not exist")), ServiceState.Down)
     assertEquals(ServiceState.of(Some("warming up")), ServiceState.Unknown)
     assertEquals(ServiceState.of(Some("unknown")), ServiceState.Unknown)
@@ -17,8 +19,9 @@ class AboutSuite extends munit.FunSuite:
     assertEquals(ServiceState.of(None), ServiceState.Unknown)
 
   test("job counts fold the status rows; a status that is no job state is dropped"):
-    val c = JobCounts.of(List("queued" -> 2, "running" -> 1, "done" -> 40, "failed" -> 3, "weird" -> 9, "paused" -> 1,
-      "cancelled" -> 4))
+    val c = JobCounts.of(
+      List("queued" -> 2, "running" -> 1, "done" -> 40, "failed" -> 3, "weird" -> 9, "paused" -> 1, "cancelled" -> 4)
+    )
     assertEquals(c, JobCounts(2, 1, 40, 3, 1, 4))
     assertEquals(JobState.values.toList.map(c.of), List(2, 1, 40, 3, 1, 4))
     assertEquals(JobCounts.of(Nil), JobCounts())
@@ -38,7 +41,8 @@ class AboutSuite extends munit.FunSuite:
     counts = Some(CorpusCounts(10, 200, 5, 7, 15000, 40, 12)),
     lastBackup = Some(BackupInfo("histmersion-20261001.dump", 2_500_000, "2026-10-01T08:00:00Z")),
     lastBackupAgeSeconds = Some(7200),
-    problems = List("backups: cannot list /x"))
+    problems = List("backups: cannot list /x")
+  )
 
   test("histmersion about renders every part, and says what could not be read"):
     val md = AboutMarkdown.render(about)
@@ -51,8 +55,16 @@ class AboutSuite extends munit.FunSuite:
     assert(md.contains("- corpus: 10 sources · 200 findings · 5 articles · 7 events"), md)
     assert(md.contains("- reference data: 15000 places · 40 periods · 12 presets"), md)
     assert(md.contains("Problems:\n- backups: cannot list /x"), md)
-    val bare = AboutMarkdown.render(about.copy(build = BuildStamp("1.2.3"), counts = None, lastBackup = None,
-      lastBackupAgeSeconds = None, problems = Nil, health = Health("ok", "ok", None, Some("ok"))))
+    val bare = AboutMarkdown.render(
+      about.copy(
+        build = BuildStamp("1.2.3"),
+        counts = None,
+        lastBackup = None,
+        lastBackupAgeSeconds = None,
+        problems = Nil,
+        health = Health("ok", "ok", None, Some("ok"))
+      )
+    )
     assert(bare.contains("- commit: unknown"), bare)
     assert(bare.contains("- converter: ok\n"), bare)
     assert(bare.contains("- last backup: none"), bare)
@@ -67,8 +79,9 @@ class AboutSuite extends munit.FunSuite:
     assertEquals(CorrespondingSource.url(repo, Some("")), repo)
 
   test("histmersion about names the licence and links the source; an older server says unknown"):
-    val src = about.copy(build = about.build.copy(licence = Some("AGPL-3.0-or-later"),
-      sourceUrl = Some("https://example.org/h/tree/abc123def456")))
+    val src = about.copy(build =
+      about.build.copy(licence = Some("AGPL-3.0-or-later"), sourceUrl = Some("https://example.org/h/tree/abc123def456"))
+    )
     val md = AboutMarkdown.render(src)
     assert(md.contains("- licence: AGPL-3.0-or-later\n- source: https://example.org/h/tree/abc123def456"), md)
     val old = AboutMarkdown.render(about)
@@ -86,8 +99,13 @@ class AboutSuite extends munit.FunSuite:
     assertEquals(json.as[About].map(_.configFile), Right(ConfigFileInfo()))
 
   test("every count agrees with its noun: 1 article, not 1 articles"):
-    val one = AboutMarkdown.render(about.copy(counts = about.counts.map(_.copy(sources = 1, findings = 0,
-      articles = 1, events = 1, places = 1, periods = 1, presets = 1))))
+    val one = AboutMarkdown.render(
+      about.copy(counts =
+        about.counts.map(
+          _.copy(sources = 1, findings = 0, articles = 1, events = 1, places = 1, periods = 1, presets = 1)
+        )
+      )
+    )
     assert(one.contains("- corpus: 1 source · 0 findings · 1 article · 1 event"), one)
     assert(one.contains("- reference data: 1 place · 1 period · 1 preset"), one)
     assertEquals(Plural.count(2, "entry", "entries"), "2 entries")
@@ -95,8 +113,12 @@ class AboutSuite extends munit.FunSuite:
 
   test("About renders the config file line"):
     assertEquals(ConfigFileInfo.describe(ConfigFileInfo(Some("/c/h.conf"), loaded = true)), "/c/h.conf (read)")
-    assertEquals(ConfigFileInfo.describe(ConfigFileInfo(Some("/c/h.conf"))),
-      "/c/h.conf (not found: defaults and environment only)")
-    assertEquals(ConfigFileInfo.describe(ConfigFileInfo(Some("/c/h.conf"), loaded = true, List("histmersion.x"))),
-      "/c/h.conf (read; ignored unknown key: histmersion.x)")
+    assertEquals(
+      ConfigFileInfo.describe(ConfigFileInfo(Some("/c/h.conf"))),
+      "/c/h.conf (not found: defaults and environment only)"
+    )
+    assertEquals(
+      ConfigFileInfo.describe(ConfigFileInfo(Some("/c/h.conf"), loaded = true, List("histmersion.x"))),
+      "/c/h.conf (read; ignored unknown key: histmersion.x)"
+    )
     assertEquals(ConfigFileInfo.describe(ConfigFileInfo()), "none (no location: HOME is unset)")

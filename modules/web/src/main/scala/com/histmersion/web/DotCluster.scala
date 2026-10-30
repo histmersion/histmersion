@@ -5,38 +5,58 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 
-/** What a dot on the map stands for. Every kind but the areas (regions, polities: shapes, never dots)
-  * joins the one cluster group of the map ([[MapView]]), so dots near each other are drawn as one
-  * bubble whatever layer they come from. */
+/** What a dot on the map stands for. Every kind but the areas (regions, polities: shapes, never dots) joins the one
+  * cluster group of the map ([[MapView]]), so dots near each other are drawn as one bubble whatever layer they come
+  * from.
+  */
 enum DotKind(val one: String, val many: String):
   case Finding extends DotKind("finding", "findings")
-  case Site    extends DotKind("site", "sites")
-  case Event   extends DotKind("event", "events")
-  case Media   extends DotKind("picture", "pictures")
+  case Site extends DotKind("site", "sites")
+  case Event extends DotKind("event", "events")
+  case Media extends DotKind("picture", "pictures")
 
-/** A clustered dot that is not a finding — a site, an event, a picture: what the bubble counts and
-  * colours, and the row its list shows (its kind's icon, its name, a note, `mid` the middle of its
-  * dated span on the period ramp). A finding's dot carries its [[GeoHit]]s instead. */
-final case class DotEntry(kind: DotKind, id: String, label: String, icon: String, mid: Option[Double], note: String = "")
+/** A clustered dot that is not a finding — a site, an event, a picture: what the bubble counts and colours, and the row
+  * its list shows (its kind's icon, its name, a note, `mid` the middle of its dated span on the period ramp). A
+  * finding's dot carries its [[GeoHit]]s instead.
+  */
+final case class DotEntry(
+    kind: DotKind,
+    id: String,
+    label: String,
+    icon: String,
+    mid: Option[Double],
+    note: String = ""
+)
 
-/** What one clustered marker holds, for the bubble it may be drawn in: its kind, how many things it
-  * counts for (a findings' point counts its findings), their dated mids and least certainty
-  * ([[Certainty.NoSay]] for a dot that is not a finding), and what its bubble's list shows — the findings
-  * themselves, or the dot's row. */
-final case class Member(kind: DotKind, n: Int, mids: List[Double], certainty: Certainty,
-    findings: List[GeoHit] = Nil, entry: Option[DotEntry] = None, cell: Option[com.histmersion.web.map.GeoBounds] = None,
-    undated: Int = 0):
-  /** A CELL of a server tile ([[TileCellPoint]]): `n` items counted there, none of them to list — their
-    * box (`cell`) is where a click zooms. */
+/** What one clustered marker holds, for the bubble it may be drawn in: its kind, how many things it counts for (a
+  * findings' point counts its findings), their dated mids and least certainty ([[Certainty.NoSay]] for a dot that is
+  * not a finding), and what its bubble's list shows — the findings themselves, or the dot's row.
+  */
+final case class Member(
+    kind: DotKind,
+    n: Int,
+    mids: List[Double],
+    certainty: Certainty,
+    findings: List[GeoHit] = Nil,
+    entry: Option[DotEntry] = None,
+    cell: Option[com.histmersion.web.map.GeoBounds] = None,
+    undated: Int = 0
+):
+  /** A CELL of a server tile ([[TileCellPoint]]): `n` items counted there, none of them to list — their box (`cell`) is
+    * where a click zooms.
+    */
   def aggregate: Boolean = cell.isDefined
 
-/** A bubble's OUTLINE (#1647): the shape grammar's event square carried over to the clusters, so a
-  * cluster of events reads apart from one of findings at a glance (docs/visualization-guide.md §2a). */
+/** A bubble's OUTLINE (#1647): the shape grammar's event square carried over to the clusters, so a cluster of events
+  * reads apart from one of findings at a glance (docs/visualization-guide.md §2a).
+  */
 enum BubbleForm(val cls: String):
   /** No events in it: the round count. */
-  case Round      extends BubbleForm("")
+  case Round extends BubbleForm("")
+
   /** Events only: the count on a rounded SQUARE, its rings squares about the same centre. */
-  case Events     extends BubbleForm("hd-cluster--events")
+  case Events extends BubbleForm("hd-cluster--events")
+
   /** Events among other kinds: the round count with a small square tab at its upper right. */
   case WithEvents extends BubbleForm("hd-cluster--with-events")
 
@@ -49,21 +69,29 @@ object DotCluster:
     def counts: Map[DotKind, Int] = members.groupMapReduce(_.kind)(_.n)(_ + _)
     def findings: List[GeoHit] = members.flatMap(_.findings)
     def entries: List[DotEntry] = members.flatMap(_.entry)
+
     /** The middle of every dated member's span: the bubble's colour is their range. */
     def mids: List[Double] = members.flatMap(_.mids)
+
     /** The least certain member's certainty (only findings carry one other than [[Certainty.NoSay]]). */
     def certainty: Certainty = Certainty.worst(members.map(_.certainty))
+
     /** Some of it is only counted (a tile's cells): it cannot all be listed. */
     def counted: Boolean = members.exists(_.aggregate)
+
     /** The boxes of its cells. */
     def cells: List[com.histmersion.web.map.GeoBounds] = members.flatMap(_.cell)
+
     /** How many of what it holds have no known date. */
     def undated: Int = members.map(_.undated).sum
 
-  /** Pure: what a bubble holds, in words — "12 findings · 3 sites · 2 events", the kinds in a fixed
-    * order, those it has none of left out. */
+  /** Pure: what a bubble holds, in words — "12 findings · 3 sites · 2 events", the kinds in a fixed order, those it has
+    * none of left out.
+    */
   def summary(counts: Map[DotKind, Int]): String =
-    DotKind.values.toList.flatMap(k => counts.get(k).filter(_ > 0).map(n => Plural.count(n, k.one, k.many))).mkString(" · ")
+    DotKind.values.toList
+      .flatMap(k => counts.get(k).filter(_ > 0).map(n => Plural.count(n, k.one, k.many)))
+      .mkString(" · ")
 
   /** Pure: the same, then how many of them have no known date — "12 sites, 5 with no known date". */
   def summary(counts: Map[DotKind, Int], undated: Int): String =
@@ -78,8 +106,9 @@ object DotCluster:
   /** How far a bubble's rings reach outside its disc, px: a dark line, the white coin ring, a dark line. */
   val Ring: Int = 5
 
-  /** Pure: a bubble's outline (#1647) — square when it holds events only, tabbed when events are among
-    * other kinds, round otherwise. */
+  /** Pure: a bubble's outline (#1647) — square when it holds events only, tabbed when events are among other kinds,
+    * round otherwise.
+    */
   def form(c: Contents): BubbleForm =
     val events = c.counts.getOrElse(DotKind.Event, 0)
     if events == 0 then BubbleForm.Round
@@ -92,18 +121,25 @@ object DotCluster:
   /** The side of the square tab of a bubble with events among other kinds, px. */
   val Tab: Int = 8
 
-  /** Pure: a bubble's markup — its count on a disc of diameter `d` in its colour (`ends`: the colours of
-    * the oldest and the newest of its dates, the same when they agree), ringed by a dark line, a white coin
-    * ring and a dark line, and (`says`) what it holds, to the pointer and to assistive tech. The disc and
-    * the rings are ONE inline SVG, every circle about the same centre: drawn as box-shadows round a CSS
-    * background they were rasterised apart — the background snapped to the device pixel grid, the shadows
-    * not — so wherever a marker landed off that grid (a fractional device-pixel ratio or page zoom, a map
-    * under a toolbar of fractional height) the disc sat up to a pixel off-centre in its rings. `id` names
-    * the disc's gradient; it must be unique on the page. `form` is its outline ([[BubbleForm]]): an events
-    * bubble's disc and rings are rounded squares about the same centre, and one with events among other
-    * kinds carries a small square tab. */
-  def bubbleHtml(n: Int, d: Int, ends: (String, String), id: String, extraClass: String, says: Option[String],
-      form: BubbleForm = BubbleForm.Round): String =
+  /** Pure: a bubble's markup — its count on a disc of diameter `d` in its colour (`ends`: the colours of the oldest and
+    * the newest of its dates, the same when they agree), ringed by a dark line, a white coin ring and a dark line, and
+    * (`says`) what it holds, to the pointer and to assistive tech. The disc and the rings are ONE inline SVG, every
+    * circle about the same centre: drawn as box-shadows round a CSS background they were rasterised apart — the
+    * background snapped to the device pixel grid, the shadows not — so wherever a marker landed off that grid (a
+    * fractional device-pixel ratio or page zoom, a map under a toolbar of fractional height) the disc sat up to a pixel
+    * off-centre in its rings. `id` names the disc's gradient; it must be unique on the page. `form` is its outline
+    * ([[BubbleForm]]): an events bubble's disc and rings are rounded squares about the same centre, and one with events
+    * among other kinds carries a small square tab.
+    */
+  def bubbleHtml(
+      n: Int,
+      d: Int,
+      ends: (String, String),
+      id: String,
+      extraClass: String,
+      says: Option[String],
+      form: BubbleForm = BubbleForm.Round
+  ): String =
     val label = if n > 1 then n.toString else ""
     val words = says.fold("")(w => s""" role="img" title="${Fmt.esc(w)}" aria-label="${Fmt.esc(w)}"""")
     val s = d + 2 * Ring
@@ -118,7 +154,8 @@ object DotCluster:
       case _ => s"""<circle class="$cls" cx="$c" cy="$c" r="${r + out}"$extra/>"""
     // events among other kinds: a small square tab in the upper right corner, clear of the round rings
     val tab =
-      if form == BubbleForm.WithEvents then s"""<rect class="hd-bubble-tab" x="${s - Tab - 0.5}" y="0.5" width="$Tab" height="$Tab" rx="1.5"/>"""
+      if form == BubbleForm.WithEvents then
+        s"""<rect class="hd-bubble-tab" x="${s - Tab - 0.5}" y="0.5" width="$Tab" height="$Tab" rx="1.5"/>"""
       else ""
     val svg =
       s"""<svg class="hd-bubble" viewBox="0 0 $s $s" aria-hidden="true" focusable="false">""" +
@@ -148,10 +185,17 @@ object DotCluster:
   def ordered(others: List[(DotEntry, dom.Element => Unit)]): List[(DotEntry, dom.Element => Unit)] =
     others.sortBy((e, _) => (e.kind.ordinal, e.label.toLowerCase, e.id))
 
-  /** A card pinned under a list row (`row`): the row is its owner, so the click that pinned it does not
-    * count as a click outside it. */
+  /** A card pinned under a list row (`row`): the row is its owner, so the click that pinned it does not count as a
+    * click outside it.
+    */
   def pinUnder(t: Preview.Target, row: dom.Element, keyboard: Boolean = false): Unit =
-    Preview.pin(t, () => Option.when(row.isConnected) {
-      val r = row.getBoundingClientRect()
-      Preview.Anchor.Under(r.left, r.top, r.bottom, r.width)
-    }, owner = Some(row), keyboard = keyboard)
+    Preview.pin(
+      t,
+      () =>
+        Option.when(row.isConnected) {
+          val r = row.getBoundingClientRect()
+          Preview.Anchor.Under(r.left, r.top, r.bottom, r.width)
+        },
+      owner = Some(row),
+      keyboard = keyboard
+    )

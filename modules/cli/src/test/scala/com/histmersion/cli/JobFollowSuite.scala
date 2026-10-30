@@ -3,8 +3,9 @@ package com.histmersion.cli
 import com.histmersion.api.*
 import com.histmersion.config.*
 
-/** [[JobFollow]] (#1798 item 14): a followed job or backup that ends badly exits 2 (the server said
-  * no), never 0 or 1; one that succeeds is `Right`. No server, no clock: the fetch and sleep are fakes. */
+/** [[JobFollow]] (#1798 item 14): a followed job or backup that ends badly exits 2 (the server said no), never 0 or 1;
+  * one that succeeds is `Right`. No server, no clock: the fetch and sleep are fakes.
+  */
 class JobFollowSuite extends munit.FunSuite:
 
   private def job(status: String, error: Option[String] = None) =
@@ -27,7 +28,13 @@ class JobFollowSuite extends munit.FunSuite:
     assertEquals(slept, 2)
 
   test("a job that fails exits 2 with its error"):
-    val r = JobFollow.job(_ => Right(job("failed", Some("pdf is encrypted"))), "j1", sleep = _ => (), progress = quiet, clear = () => ())
+    val r = JobFollow.job(
+      _ => Right(job("failed", Some("pdf is encrypted"))),
+      "j1",
+      sleep = _ => (),
+      progress = quiet,
+      clear = () => ()
+    )
     assertEquals(r.left.map(_.exitCode), Left(ExitCode.Refused))
     assert(r.left.exists(_.message.contains("pdf is encrypted")))
 
@@ -36,7 +43,8 @@ class JobFollowSuite extends munit.FunSuite:
     assertEquals(r.left.map(_.exitCode), Left(ExitCode.Refused))
 
   test("an unreachable server keeps its own exit code"):
-    val r = JobFollow.job(_ => Left(CliError("cannot reach")), "j1", sleep = _ => (), progress = quiet, clear = () => ())
+    val r =
+      JobFollow.job(_ => Left(CliError("cannot reach")), "j1", sleep = _ => (), progress = quiet, clear = () => ())
     assertEquals(r.left.map(_.exitCode), Left(ExitCode.Unreachable))
 
   private def backup(state: String, error: Option[String] = None, sha: Option[String] = None) =
@@ -49,8 +57,14 @@ class JobFollowSuite extends munit.FunSuite:
     assert(r.left.exists(_.message.contains("permission denied")))
 
   test("a backup done without a checksum exits 2; done with one is Right"):
-    val noSum = JobFollow.backup(() => Right(backup("done")), backup("done"), pollMs = 0, sleep = _ => (), progress = quiet)
+    val noSum =
+      JobFollow.backup(() => Right(backup("done")), backup("done"), pollMs = 0, sleep = _ => (), progress = quiet)
     assertEquals(noSum.left.map(_.exitCode), Left(ExitCode.Refused))
-    val ok = JobFollow.backup(() => Right(backup("done", sha = Some("ab"))), backup("running"), pollMs = 0,
-      sleep = _ => (), progress = quiet)
+    val ok = JobFollow.backup(
+      () => Right(backup("done", sha = Some("ab"))),
+      backup("running"),
+      pollMs = 0,
+      sleep = _ => (),
+      progress = quiet
+    )
     assertEquals(ok.map(_.sha256), Right("ab"))

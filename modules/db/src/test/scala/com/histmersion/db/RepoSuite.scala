@@ -11,17 +11,41 @@ class RepoSuite extends com.histmersion.db.DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val ds =
     val base = AppConfig.load().db
-    val d    = testPool(base.copy(url = testDb.get))
+    val d = testPool(base.copy(url = testDb.get))
     Migrate.run(d); d
 
   private val src = Source(
-    citekey = "zz_test_source", title = "Test", authors = List("A", "B"), doi = None, year = Some(2020),
-    venue = None, status = SourceStatus.Current, topics = List("t"), regions = List("Anatolia"),
-    tags = List("x"), period = Some(Period(-2000, -1500)), summary = Some("sum"), citedByCount = Some(1),
-    influentialCitations = None, provenance = None, calibreId = None,
-    findings = List(Finding("zz_test_source#0", "zz_test_source", "claim", Some("Anatolia"),
-      Some(GeoPoint(32.0, 39.0)), Some(Period(-1800, -1700)), None, List("f"), Some(Confidence.High))),
-    edges = List(Edge("zz_test_source", "zz_other", "references")))
+    citekey = "zz_test_source",
+    title = "Test",
+    authors = List("A", "B"),
+    doi = None,
+    year = Some(2020),
+    venue = None,
+    status = SourceStatus.Current,
+    topics = List("t"),
+    regions = List("Anatolia"),
+    tags = List("x"),
+    period = Some(Period(-2000, -1500)),
+    summary = Some("sum"),
+    citedByCount = Some(1),
+    influentialCitations = None,
+    provenance = None,
+    calibreId = None,
+    findings = List(
+      Finding(
+        "zz_test_source#0",
+        "zz_test_source",
+        "claim",
+        Some("Anatolia"),
+        Some(GeoPoint(32.0, 39.0)),
+        Some(Period(-1800, -1700)),
+        None,
+        List("f"),
+        Some(Confidence.High)
+      )
+    ),
+    edges = List(Edge("zz_test_source", "zz_other", "references"))
+  )
 
   test("upsert → get round-trip, int8range bounds inclusive"):
     SourceRepo.upsert(ds, src, AppConfig.load().limits.chunkChars)
@@ -33,8 +57,8 @@ class RepoSuite extends com.histmersion.db.DbSuite:
 
   test("findingsFor (the map feed): period overlap + bbox"):
     SourceRepo.upsert(ds, src, AppConfig.load().limits.chunkChars)
-    val box  = Filter(bbox = Some(BBox(30.0, 38.0, 34.0, 40.0)), limit = 10)
-    val hit  = SourceRepo.findingsFor(ds, box.copy(period = Some(Period(-1750, -1750))))
+    val box = Filter(bbox = Some(BBox(30.0, 38.0, 34.0, 40.0)), limit = 10)
+    val hit = SourceRepo.findingsFor(ds, box.copy(period = Some(Period(-1750, -1750))))
     val miss = SourceRepo.findingsFor(ds, box.copy(period = Some(Period(-1000, -900))))
     assert(hit.exists(_.citekey == "zz_test_source")); assert(!miss.exists(_.citekey == "zz_test_source"))
 
@@ -50,5 +74,8 @@ class RepoSuite extends com.histmersion.db.DbSuite:
 
   test("neighbors lists an outgoing edge to an unknown target, classified as unresolved"):
     SourceRepo.upsert(ds, src, AppConfig.load().limits.chunkChars)
-    assert(SourceRepo.neighbors(ds, "zz_test_source").exists(n =>
-      n.direction == "out" && n.citekey == "zz_other" && n.target == NeighborTarget.Unresolved))
+    assert(
+      SourceRepo
+        .neighbors(ds, "zz_test_source")
+        .exists(n => n.direction == "out" && n.citekey == "zz_other" && n.target == NeighborTarget.Unresolved)
+    )

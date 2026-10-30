@@ -10,17 +10,18 @@ import com.augustnagro.magnum.*
 
 import java.time.Instant
 
-/** The server-side filters of the approvals, agent-runs and jobs lists and their facet counts (core
-  * `ListFilters`) against a real Postgres (HISTMERSION_TEST_DB_URL; skipped otherwise). Other suites
-  * write the same tables at the same time, so every fixture carries this run's tag in what the text
-  * filter (`subject`) matches, and every assertion is made under that filter. */
+/** The server-side filters of the approvals, agent-runs and jobs lists and their facet counts (core `ListFilters`)
+  * against a real Postgres (HISTMERSION_TEST_DB_URL; skipped otherwise). Other suites write the same tables at the same
+  * time, so every fixture carries this run's tag in what the text filter (`subject`) matches, and every assertion is
+  * made under that filter.
+  */
 class ListFilterRepoSuite extends com.histmersion.db.DbSuite:
-  private val testDb                = TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
     val base = AppConfig.load().db
-    val d    = testPool(base.copy(url = testDb.get))
+    val d = testPool(base.copy(url = testDb.get))
     Migrate.run(d); d
 
   private val tag = s"zzlf${System.nanoTime().toHexString.takeRight(8)}"
@@ -32,20 +33,37 @@ class ListFilterRepoSuite extends com.histmersion.db.DbSuite:
         sql"DELETE FROM jobs WHERE id LIKE ${tag + "%"}".update.run()
       ()
 
-  private def approval(kind: String, state: String, subject: Option[String], citekey: Option[String] = None,
-      note: Option[String] = None, result: Option[String] = None, job: Option[String] = None): Long =
+  private def approval(
+      kind: String,
+      state: String,
+      subject: Option[String],
+      citekey: Option[String] = None,
+      note: Option[String] = None,
+      result: Option[String] = None,
+      job: Option[String] = None
+  ): Long =
     transact(ds):
       sql"""INSERT INTO approvals (job_id, kind, citekey, subject, proposal, state, note, result, decided_at)
             VALUES ($job, $kind, $citekey, $subject, '{}'::jsonb, $state, $note, $result,
                     ${Option.when(state != "open")("2026-10-01T00:00:00Z")}::timestamptz)
             RETURNING id""".query[Long].run().head
 
-  private def job(id: String, kind: String, status: String, at: String, citekey: Option[String] = None,
-      pipeline: Option[String] = None, target: Option[String] = None, goal: Option[String] = None,
-      manager: Option[String] = None, origin: Option[String] = None): String =
+  private def job(
+      id: String,
+      kind: String,
+      status: String,
+      at: String,
+      citekey: Option[String] = None,
+      pipeline: Option[String] = None,
+      target: Option[String] = None,
+      goal: Option[String] = None,
+      manager: Option[String] = None,
+      origin: Option[String] = None
+  ): String =
     transact(ds):
       sql"""INSERT INTO jobs (id, kind, status, created_at, citekey, pipeline, target_id, goal_slug, manager_id, origin)
-            VALUES ($id, $kind, $status, $at::timestamptz, $citekey, $pipeline, $target, $goal, $manager, $origin)""".update.run()
+            VALUES ($id, $kind, $status, $at::timestamptz, $citekey, $pipeline, $target, $goal, $manager, $origin)""".update
+        .run()
     id
 
   private def step(jobId: String, seq: Int, model: String): Unit =
@@ -54,13 +72,22 @@ class ListFilterRepoSuite extends com.histmersion.db.DbSuite:
             VALUES ($jobId, $seq, 1, 'x', 'llm', 'done', $model)""".update.run()
     ()
 
-  test("approvals: kind, state, subject, goal and decider filter on the server; each facet is counted under the others"):
+  test(
+    "approvals: kind, state, subject, goal and decider filter on the server; each facet is counted under the others"
+  ):
     val g = s"$tag-goal"
     val run = job(s"$tag-run-a", Agents.JobKind, RunState.Done.wire, "2026-10-01T00:00:00Z", goal = Some(g))
     val gp1 = approval("goal-plan", "open", Some(g))
-    val gp2 = approval("goal-plan", "approved", Some(s"$tag-other"), note = Some(s"${DecidedBy.AutopilotNote} approved — fine"))
+    val gp2 =
+      approval("goal-plan", "approved", Some(s"$tag-other"), note = Some(s"${DecidedBy.AutopilotNote} approved — fine"))
     val pub = approval("article-publish", "open", Some(s"$tag-article"), job = Some(run))
-    val edg = approval("edge", "approved", None, citekey = Some(s"${tag}_src"), result = Some(s"${DecidedBy.AutoResult}: added"))
+    val edg = approval(
+      "edge",
+      "approved",
+      None,
+      citekey = Some(s"${tag}_src"),
+      result = Some(s"${DecidedBy.AutoResult}: added")
+    )
     val rej = approval("edge", "rejected", None, citekey = Some(s"${tag}_src2"), note = Some("not the critic"))
     def ids(q: AgentRepo.ApprovalQuery) = AgentRepo.approvalPage(ds, q, 50, None, None).toOption.get._1.map(_.id).toSet
     val mine = AgentRepo.ApprovalQuery(subject = Some(tag))
@@ -74,9 +101,10 @@ class ListFilterRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(ids(mine.copy(decidedBy = List(DecidedBy.Auto))), Set(edg))
     assertEquals(ids(mine.copy(decidedBy = List(DecidedBy.Person))), Set(rej))
     // a text filter takes `%` and `_` literally
-    assertEquals(ids(AgentRepo.ApprovalQuery(subject = Some(s"${tag}%"))), Set.empty[Long])
+    assertEquals(ids(AgentRepo.ApprovalQuery(subject = Some(s"$tag%"))), Set.empty[Long])
     // the counts: per state over the kind filter; per kind over the state filter, not the kind filter
-    val (states, facets) = AgentRepo.approvalFacets(ds, mine.copy(state = Some(ApprovalState.Open), kinds = List(ApprovalKind.GoalPlan)))
+    val (states, facets) =
+      AgentRepo.approvalFacets(ds, mine.copy(state = Some(ApprovalState.Open), kinds = List(ApprovalKind.GoalPlan)))
     assertEquals(states.toMap, Map("open" -> 1, "approved" -> 1))
     assertEquals(facets.toMap.apply("kind").toMap, Map("goal-plan" -> 1, "article-publish" -> 1))
     val (_, every) = AgentRepo.approvalFacets(ds, mine)
@@ -85,12 +113,35 @@ class ListFilterRepoSuite extends com.histmersion.db.DbSuite:
 
   test("agent runs: pipeline, status, manager, origin, model, provider, dates and target text; the facets"):
     val t = s"$tag-t"
-    val a = job(s"$tag-r1", Agents.JobKind, "done", "2026-09-01T10:00:00Z", pipeline = Some("review-article"),
-      target = Some(s"$t-one"), manager = Some("review"), origin = Some("manager"))
-    val b = job(s"$tag-r2", Agents.JobKind, "failed", "2026-09-15T10:00:00Z", pipeline = Some("enrich-source"),
-      target = Some(s"$t-two"), origin = None)
-    val c = job(s"$tag-r3", Agents.JobKind, "done", "2026-10-01T10:00:00Z", pipeline = Some("review-article"),
-      target = Some(s"$t-three"), manager = Some("seed:x"), origin = Some("manager"))
+    val a = job(
+      s"$tag-r1",
+      Agents.JobKind,
+      "done",
+      "2026-09-01T10:00:00Z",
+      pipeline = Some("review-article"),
+      target = Some(s"$t-one"),
+      manager = Some("review"),
+      origin = Some("manager")
+    )
+    val b = job(
+      s"$tag-r2",
+      Agents.JobKind,
+      "failed",
+      "2026-09-15T10:00:00Z",
+      pipeline = Some("enrich-source"),
+      target = Some(s"$t-two"),
+      origin = None
+    )
+    val c = job(
+      s"$tag-r3",
+      Agents.JobKind,
+      "done",
+      "2026-10-01T10:00:00Z",
+      pipeline = Some("review-article"),
+      target = Some(s"$t-three"),
+      manager = Some("seed:x"),
+      origin = Some("manager")
+    )
     // an OCR job is not a run, whatever it is about
     job(s"$tag-o1", "ingest", "done", "2026-10-01T10:00:00Z", citekey = Some(s"$t-four"))
     step(a, 1, "codex:gpt-a"); step(a, 2, "codex:gpt-b"); step(b, 1, "claude-code:opus")
@@ -122,8 +173,14 @@ class ListFilterRepoSuite extends com.histmersion.db.DbSuite:
     val i1 = job(s"$tag-j1", "ingest", "done", "2026-09-01T00:00:00Z", citekey = Some(s"${t}_a"))
     val i2 = job(s"$tag-j2", "ingest", "failed", "2026-09-02T00:00:00Z", citekey = Some(s"${t}_b"))
     val m1 = job(s"$tag-j3", "media-import", "done", "2026-09-03T00:00:00Z", citekey = Some(s"${t}_c"))
-    val r1 = job(s"$tag-j4", Agents.JobKind, "done", "2026-09-04T00:00:00Z", pipeline = Some("enrich-source"),
-      target = Some(s"${t}_d"))
+    val r1 = job(
+      s"$tag-j4",
+      Agents.JobKind,
+      "done",
+      "2026-09-04T00:00:00Z",
+      pipeline = Some("enrich-source"),
+      target = Some(s"${t}_d")
+    )
     def ids(q: JobRepo.JobQuery) = JobRepo.page(ds, q, 50, None, None).toOption.get._1.map(_.id).toSet
     val mine = JobRepo.JobQuery(q = Some(t))
     assertEquals(ids(mine), Set(i1, i2, m1, r1))

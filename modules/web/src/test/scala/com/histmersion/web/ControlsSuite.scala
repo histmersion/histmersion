@@ -2,8 +2,8 @@ package com.histmersion.web
 
 import com.histmersion.api.*
 
-/** The pure halves of the shared controls: the playback speed menu, and the period-preset menu's grouping
-  * by region. */
+/** The pure halves of the shared controls: the playback speed menu, and the period-preset menu's grouping by region.
+  */
 class ControlsSuite extends munit.FunSuite:
 
   // ── playback speed ─────────────────────────────────────────────────────────────────────────────
@@ -12,22 +12,31 @@ class ControlsSuite extends munit.FunSuite:
     assertEquals(TimelinePlayback.Speeds.map(TimelinePlayback.speedLabel), List("0.25×", "0.5×", "1×", "2×", "4×"))
     assertEquals(TimelinePlayback.Speeds, TimelinePlayback.Speeds.sorted)
     TimelinePlayback.Speeds.foreach(s =>
-      assertEquals(TimelinePlayback.parseSpeed(TimelinePlayback.speedLabel(s)), Some(s)))
+      assertEquals(TimelinePlayback.parseSpeed(TimelinePlayback.speedLabel(s)), Some(s))
+    )
     assertEquals(TimelinePlayback.parseSpeed("3×"), None)
     assertEquals(TimelinePlayback.parseSpeed(" 2× "), Some(2.0))
 
   // ── the period-preset menu ─────────────────────────────────────────────────────────────────────
 
   private def preset(id: String, label: String, start: Long, r: PresetRegion, where: String) =
-    HistoricalPeriod(id, label, Some(s"PeriodO $id · Some authority (2021)"), Period(start, start + 800),
-      Some(where), None, Some(r))
+    HistoricalPeriod(
+      id,
+      label,
+      Some(s"PeriodO $id · Some authority (2021)"),
+      Period(start, start + 800),
+      Some(where),
+      None,
+      Some(r)
+    )
 
   private val presets = List(
     preset("p1", "Bronze Age", -3600, PresetRegion.LevantMesopotamia, "Levant"),
     preset("p2", "Bronze Age", -1700, PresetRegion.Scandinavia, "Denmark"),
     preset("p3", "Neolithic", -3900, PresetRegion.Scandinavia, "Denmark"),
     preset("p4", "Bronze Age", -3200, PresetRegion.Aegean, "Greece"),
-    HistoricalPeriod("p5", "Bronze Age", Some("PeriodO p5 · ROAD"), Period(-3300, -1500), Some("Eurasia")))
+    HistoricalPeriod("p5", "Bronze Age", Some("PeriodO p5 · ROAD"), Period(-3300, -1500), Some("Eurasia"))
+  )
 
   test("presets are grouped by region, each region oldest first; a period without a heading is not offered"):
     val gs = PresetMenu.groups(presets)
@@ -37,8 +46,10 @@ class ControlsSuite extends munit.FunSuite:
 
   test("the same age is a different span in each region, and each row says where and who"):
     val bronze = PresetMenu.groups(presets).flatMap(_.presets).filter(_.label == "Bronze Age")
-    assertEquals(bronze.map(p => p.region.get -> p.period.start).toSet,
-      Set("Greece" -> -3200L, "Levant" -> -3600L, "Denmark" -> -1700L))
+    assertEquals(
+      bronze.map(p => p.region.get -> p.period.start).toSet,
+      Set("Greece" -> -3200L, "Levant" -> -3600L, "Denmark" -> -1700L)
+    )
     bronze.foreach(p => assertEquals(PresetMenu.source(p), Some("Some authority (2021)")))
 
   test("looking at Denmark puts Scandinavia first, and only it is unfolded"):

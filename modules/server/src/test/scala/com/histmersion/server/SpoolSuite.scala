@@ -3,17 +3,22 @@ package com.histmersion.server
 import com.histmersion.server.acquire.Spool
 import java.nio.file.{Files, Path}
 
-/** `Spool.write` resolves `<dir>/<citekey>` on the server's disk. Defence in depth: the citekey must
-  * parse, AND the resolved directory must still be under the base — a path-traversal guard should
-  * not rest on one regex being read correctly. Pure filesystem, no database. */
+/** `Spool.write` resolves `<dir>/<citekey>` on the server's disk. Defence in depth: the citekey must parse, AND the
+  * resolved directory must still be under the base — a path-traversal guard should not rest on one regex being read
+  * correctly. Pure filesystem, no database.
+  */
 class SpoolSuite extends munit.FunSuite:
 
   private val tmp = FunFixture[Path](
     setup = _ => Files.createTempDirectory("histmersion-spool-test"),
     teardown = d =>
       if Files.exists(d) then
-        Files.walk(d).sorted(java.util.Comparator.reverseOrder())
-          .forEach(p => { val _ = Files.deleteIfExists(p) })
+        Files
+          .walk(d)
+          .sorted(java.util.Comparator.reverseOrder())
+          .forEach { p =>
+            val _ = Files.deleteIfExists(p)
+          }
   )
 
   private val bytes = "%PDF-1.4".getBytes("UTF-8")

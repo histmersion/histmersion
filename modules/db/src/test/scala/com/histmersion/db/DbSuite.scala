@@ -6,14 +6,15 @@ import com.zaxxer.hikari.HikariDataSource
 import javax.sql.DataSource
 import scala.util.Try
 
-/** A suite that owns the connection pools it opens: one per database and role it asks for
-  * ([[testPool]], [[testQueryPool]]), opened on first use and closed when the suite is done — after
-  * its own clean-up ([[afterSuite]]), which may still need them.
+/** A suite that owns the connection pools it opens: one per database and role it asks for ([[testPool]],
+  * [[testQueryPool]]), opened on first use and closed when the suite is done — after its own clean-up ([[afterSuite]]),
+  * which may still need them.
   *
-  * There is no process-wide pool any more ([[Db]] builds a new one per call; docs/research-plugins.md
-  * §3.6), so a pool a suite did not close would keep its connections until the JVM ends, and every
-  * suite of a run shares the test database's `max_connections`. The suites run one at a time, so a
-  * run holds one suite's pools (and those of the servers it starts, which close with their scope). */
+  * There is no process-wide pool any more ([[Db]] builds a new one per call; docs/research-plugins.md §3.6), so a pool
+  * a suite did not close would keep its connections until the JVM ends, and every suite of a run shares the test
+  * database's `max_connections`. The suites run one at a time, so a run holds one suite's pools (and those of the
+  * servers it starts, which close with their scope).
+  */
 abstract class DbSuite extends munit.FunSuite:
   private val owned = scala.collection.mutable.LinkedHashMap.empty[(String, String), HikariDataSource]
 
@@ -27,19 +28,23 @@ abstract class DbSuite extends munit.FunSuite:
     owned.getOrElseUpdate((db.url, q.user), Db.queryPool(db, q))
   }
 
-  /** Fresh, migrated, EMPTY databases for this suite, named `<prefix>_<n>_test` beside `cfg`'s database:
-    * each a copy (`CREATE DATABASE … TEMPLATE`) of one database migrated once per suite (#3765). The
-    * suites that compare whole databases (bundles, merges) made dozens, each running every migration —
-    * ~1.5 s apiece, a third of the db module's test time. The template is `<prefix>_template_test`, the
-    * suite's own (groups share the cluster); [[dropAll]] removes it and every copy. */
-  protected final class ScratchDatabases(prefix: String, cfg: DbConfig):
+  /** Fresh, migrated, EMPTY databases for this suite, named `<prefix>_<n>_test` beside `cfg`'s database: each a copy
+    * (`CREATE DATABASE … TEMPLATE`) of one database migrated once per suite (#3765). The suites that compare whole
+    * databases (bundles, merges) made dozens, each running every migration — ~1.5 s apiece, a third of the db module's
+    * test time. The template is `<prefix>_template_test`, the suite's own (groups share the cluster); [[dropAll]]
+    * removes it and every copy.
+    */
+  final protected class ScratchDatabases(prefix: String, cfg: DbConfig):
     private lazy val admin = testPool(cfg)
     private val made = scala.collection.mutable.ListBuffer.empty[String]
 
     private def exec(stmt: String): Unit =
       val c = admin.getConnection
-      try { val st = c.createStatement(); try { val _ = st.execute(stmt) } finally st.close() }
-      finally c.close()
+      try {
+        val st = c.createStatement();
+        try { val _ = st.execute(stmt) }
+        finally st.close()
+      } finally c.close()
 
     /** The URL of database `name` on `cfg`'s server. */
     def urlOf(name: String): String = cfg.url.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1")
@@ -51,7 +56,8 @@ abstract class DbSuite extends munit.FunSuite:
       made += t
       // its own pool, closed before it is copied: a template must have no session
       val p = Db.pool(cfg.copy(url = urlOf(t)))
-      try Migrate.run(p) finally p.close()
+      try Migrate.run(p)
+      finally p.close()
       t
 
     /** A new copy of the migrated template, named `<prefix>_<n>_test`, and the suite's pool on it. */
@@ -64,9 +70,10 @@ abstract class DbSuite extends munit.FunSuite:
       renew(ds)
       ds
 
-    /** A copy is a new collection, as a database migrated anew is: an instance id of its own, the rows the
-      * migrations wrote under it (their `origin`), and new row uids — two copies must never look like one
-      * instance to a bundle or a merge. */
+    /** A copy is a new collection, as a database migrated anew is: an instance id of its own, the rows the migrations
+      * wrote under it (their `origin`), and new row uids — two copies must never look like one instance to a bundle or
+      * a merge.
+      */
     private def renew(ds: DataSource): Unit =
       val c = ds.getConnection
       try
@@ -94,9 +101,10 @@ abstract class DbSuite extends munit.FunSuite:
     // a closed pool's sessions may take a moment to leave the template ("being accessed by other users")
     private def copyOf(t: String, name: String, attempts: Int): Unit =
       try exec(s"CREATE DATABASE $name TEMPLATE $t")
-      catch case e: java.sql.SQLException if attempts > 1 && Option(e.getMessage).exists(_.contains("being accessed")) =>
-        Thread.sleep(100)
-        copyOf(t, name, attempts - 1)
+      catch
+        case e: java.sql.SQLException if attempts > 1 && Option(e.getMessage).exists(_.contains("being accessed")) =>
+          Thread.sleep(100)
+          copyOf(t, name, attempts - 1)
 
     /** Drop every database it made (the template too). */
     def dropAll(): Unit = made.reverse.foreach(n => exec(s"DROP DATABASE IF EXISTS $n WITH (FORCE)"))

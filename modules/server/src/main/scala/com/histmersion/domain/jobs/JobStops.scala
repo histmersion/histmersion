@@ -2,12 +2,13 @@ package com.histmersion.domain.jobs
 
 import java.util.concurrent.ConcurrentHashMap
 
-/** The person's requests to stop running background jobs, and how each paused job goes on. Held in memory by
-  * the server for its lifetime: a stop is asked of a job running in this process, and a restart loses every
-  * paused job's way to go on (the startup reconciliation fails those as interrupted). */
+/** The person's requests to stop running background jobs, and how each paused job goes on. Held in memory by the server
+  * for its lifetime: a stop is asked of a job running in this process, and a restart loses every paused job's way to go
+  * on (the startup reconciliation fails those as interrupted).
+  */
 final class JobStops:
   private val requested = ConcurrentHashMap[String, JobStop]()
-  private val resumers  = ConcurrentHashMap[String, () => Either[String, Unit]]()
+  private val resumers = ConcurrentHashMap[String, () => Either[String, Unit]]()
 
   /** Ask job `id` to stop at its next part boundary. */
   def request(id: String, stop: JobStop): Unit = { val _ = requested.put(id, stop) }

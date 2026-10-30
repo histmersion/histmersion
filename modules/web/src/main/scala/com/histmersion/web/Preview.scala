@@ -12,27 +12,31 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.util.{Failure, Success}
 import com.histmersion.values.{MediaRole, SourceStatus}
 
-/** THE link preview. One delegated hover handler on the document answers for every element that
-  * carries `data-ck` (a source) or `data-slug` (an article) — server-rendered anchors in a window or
-  * on a standalone page, and the web UI's own [[SourceLink]]s alike — so nothing has to be wired per
-  * link, and a link added later previews too.
+/** THE link preview. One delegated hover handler on the document answers for every element that carries `data-ck` (a
+  * source) or `data-slug` (an article) — server-rendered anchors in a window or on a standalone page, and the web UI's
+  * own [[SourceLink]]s alike — so nothing has to be wired per link, and a link added later previews too.
   *
-  * Data comes TYPED through [[ApiClient]] (no DOM scraping, no `js.Dynamic`), once per id: the cache
-  * holds the `Future`, so ten hovers over the same citation cost one request. */
+  * Data comes TYPED through [[ApiClient]] (no DOM scraping, no `js.Dynamic`), once per id: the cache holds the
+  * `Future`, so ten hovers over the same citation cost one request.
+  */
 object Preview:
 
   /** What an element asks to preview. */
   enum Target:
     case Source(citekey: String)
     case Article(slug: String)
+
     /** A gazetteer place on the map, with its hierarchy read as of `asOf` (the map's year). */
     case Place(id: String, asOf: Option[Long])
+
     /** A historical event (its row in the events list). */
     case Event(id: String)
 
   /** Pure: which preview the attributes ask for. A source wins when both are present. */
   def targetOf(ck: Option[String], slug: Option[String]): Option[Target] =
-    ck.map(_.trim).filter(_.nonEmpty).map(Target.Source(_))
+    ck.map(_.trim)
+      .filter(_.nonEmpty)
+      .map(Target.Source(_))
       .orElse(slug.map(_.trim).filter(_.nonEmpty).map(Target.Article(_)))
 
   /** The preview card of a source, as data — pure, so what it shows is a unit test. */
@@ -50,23 +54,31 @@ object Preview:
       links: List[(String, String)] = Nil,
       /** The picture a place or event card shows, with its credit and licence (#1446). */
       media: Option[MediaThumb] = None,
-      /** What the card is about before anything is read — an icon of [[Glyphs]] chosen by [[CardIcons]]
-        * (an event's kind, a site's type, a region, a source's type…) — and an event's TIER
-        * (`attested` | `catalogue`, #1449). */
+      /** What the card is about before anything is read — an icon of [[Glyphs]] chosen by [[CardIcons]] (an event's
+        * kind, a site's type, a region, a source's type…) — and an event's TIER (`attested` | `catalogue`, #1449).
+        */
       icon: Option[String] = None,
       tier: Option[String] = None,
-      /** An event's sections (#1449): the sources attesting it, the articles citing them, the findings
-        * near it, the sources that may discuss it (unconfirmed), its catalogues, its leads. */
+      /** An event's sections (#1449): the sources attesting it, the articles citing them, the findings near it, the
+        * sources that may discuss it (unconfirmed), its catalogues, its leads.
+        */
       sections: List[Preview.Section] = Nil
   )
 
   /** One titled list on a card. */
   final case class Section(title: String, items: List[Item], note: Option[String] = None, kind: String = "")
 
-  /** One line: text, optionally a source (`citekey` → a source link with its own card), an article
-    * (`slug`), a page elsewhere (`href`), a command to copy, a literature query to run. */
-  final case class Item(text: String, citekey: Option[String] = None, slug: Option[String] = None,
-      href: Option[String] = None, command: Option[String] = None, query: Option[String] = None)
+  /** One line: text, optionally a source (`citekey` → a source link with its own card), an article (`slug`), a page
+    * elsewhere (`href`), a command to copy, a literature query to run.
+    */
+  final case class Item(
+      text: String,
+      citekey: Option[String] = None,
+      slug: Option[String] = None,
+      href: Option[String] = None,
+      command: Option[String] = None,
+      query: Option[String] = None
+  )
 
   private val SummaryChars = 300
 
@@ -75,53 +87,78 @@ object Preview:
     Card(
       title = s.title,
       byline = List(s.authors.mkString(", "), s.year.fold("")(_.toString), s.venue.getOrElse(""))
-        .filter(_.trim.nonEmpty).mkString(" · "),
+        .filter(_.trim.nonEmpty)
+        .mkString(" · "),
       identifier = ref.idLabel,
       status = Some(ref.status),
       chips = s.topics.map("topic" -> _) ++ s.tags.map("tag" -> _),
       where = List(s.regions.map(Label.display).mkString(", "), YearFmt.period(s.periodStart, s.periodEnd))
-        .filter(_.nonEmpty).mkString(" · "),
-      summary = s.summary.map(_.trim).filter(_.nonEmpty)
+        .filter(_.nonEmpty)
+        .mkString(" · "),
+      summary = s.summary
+        .map(_.trim)
+        .filter(_.nonEmpty)
         .map(t => if t.length > SummaryChars then t.take(SummaryChars - 1) + "…" else t),
-      icon = Some(CardIcons.source(s)))
+      icon = Some(CardIcons.source(s))
+    )
 
   /** A source's card with its picture — a book's cover, else a paper's illustration (#1446). */
   def card(sw: SourceWithFindings): Card =
-    card(sw.source).copy(media = sw.illustration,
-      icon = Some(CardIcons.source(sw.source, hasCover = sw.illustration.exists(_.role == MediaRole.Cover))))
+    card(sw.source).copy(
+      media = sw.illustration,
+      icon = Some(CardIcons.source(sw.source, hasCover = sw.illustration.exists(_.role == MediaRole.Cover)))
+    )
 
   def card(a: ArticleView): Card =
-    Card(a.article.title, Label.display(a.article.kind), a.article.slug, None, Nil,
+    Card(
+      a.article.title,
+      Label.display(a.article.kind),
+      a.article.slug,
+      None,
+      Nil,
       YearFmt.period(a.article.periodStart, a.article.periodEnd),
-      a.article.summary.map(_.trim).filter(_.nonEmpty), icon = Some(CardIcons.Article))
+      a.article.summary.map(_.trim).filter(_.nonEmpty),
+      icon = Some(CardIcons.Article)
+    )
 
   private def plural(n: Int, one: String): String = s"$n $one${if n == 1 then "" else "s"}"
 
-  /** Where a place comes from, in words: the external source that brought it in, else the seed's own
-    * source line ("Pleiades (pleiades.stoa.org), CC-BY"). */
+  /** Where a place comes from, in words: the external source that brought it in, else the seed's own source line
+    * ("Pleiades (pleiades.stoa.org), CC-BY").
+    */
   private[web] def datasetOf(p: PlaceSummary): Option[String] =
-    p.importSource.map { k =>
-      if k.startsWith("lpf:") then s"LPF dataset ${k.drop(4)}" else PlaceLink.schemeTitle(k)
-    }.orElse(p.source).map(_.trim).filter(_.nonEmpty)
+    p.importSource
+      .map { k =>
+        if k.startsWith("lpf:") then s"LPF dataset ${k.drop(4)}" else PlaceLink.schemeTitle(k)
+      }
+      .orElse(p.source)
+      .map(_.trim)
+      .filter(_.nonEmpty)
 
-  /** A place's card: what it is (name, kind, its period as the source states it — "end 1769 CE,
-    * start unknown" — its description), whether a region has a boundary yet, where it comes from
-    * with a link to that page, the places it is part of, and what the corpus holds for it (the counts
-    * are what clicking it selects). */
+  /** A place's card: what it is (name, kind, its period as the source states it — "end 1769 CE, start unknown" — its
+    * description), whether a region has a boundary yet, where it comes from with a link to that page, the places it is
+    * part of, and what the corpus holds for it (the counts are what clicking it selects).
+    */
   def card(d: PlaceDetail): Card =
     val p = d.place
     val contested = Option.when(d.contested && !p.label.toLowerCase.contains("contested"))("contested extent")
     val description = d.descriptions match
-      case Nil => None
+      case Nil           => None
       case first :: rest =>
-        val other = rest.find(_.lang != first.lang).map(o => s" · ${o.text}" + (if o.lang.nonEmpty then s" (${o.lang})" else ""))
+        val other =
+          rest.find(_.lang != first.lang).map(o => s" · ${o.text}" + (if o.lang.nonEmpty then s" (${o.lang})" else ""))
         Some(first.text + other.getOrElse(""))
-    val links = d.links.flatMap(l => PlaceLink.url(l.scheme, l.externalId).map(u =>
-      s"${PlaceLink.schemeTitle(l.scheme)} ${l.externalId}" -> u)).distinct.take(4)
+    val links = d.links
+      .flatMap(l =>
+        PlaceLink.url(l.scheme, l.externalId).map(u => s"${PlaceLink.schemeTitle(l.scheme)} ${l.externalId}" -> u)
+      )
+      .distinct
+      .take(4)
     Card(
       title = p.label,
       byline = (List(Label.display(p.kind).capitalize, p.when) ++ contested)
-        .filter(_.nonEmpty).mkString(" · "),
+        .filter(_.nonEmpty)
+        .mkString(" · "),
       identifier = p.id,
       status = None,
       chips = Nil,
@@ -131,11 +168,17 @@ object Preview:
         d.shapeNotes ++
         datasetOf(p).map(s => s"source: $s").toList ++
         d.counts.toList.map(c =>
-          List(plural(c.sources, "source"), plural(c.findings, "finding"), plural(c.articles, "article"),
-            plural(c.events, "event")).mkString(" · ")),
+          List(
+            plural(c.sources, "source"),
+            plural(c.findings, "finding"),
+            plural(c.articles, "article"),
+            plural(c.events, "event")
+          ).mkString(" · ")
+        ),
       links = links,
       media = d.media.headOption,
-      icon = Some(CardIcons.place(p.kind, d.siteType)))
+      icon = Some(CardIcons.place(p.kind, d.siteType))
+    )
 
   /** An event's card: what it is, when, how sure, its description, and its picture (#1446). */
   def card(d: EventDetail): Card =
@@ -144,57 +187,103 @@ object Preview:
     Card(
       title = e.label,
       byline = List(Label.display(e.kind).capitalize, e.datingNote.getOrElse(years), Label.display(e.historicity))
-        .filter(_.nonEmpty).mkString(" · "),
+        .filter(_.nonEmpty)
+        .mkString(" · "),
       identifier = e.id,
       status = None,
       chips = Nil,
       where = d.parent.fold("")(p => s"part of ${p.label}"),
-      summary = e.description.map(_.trim).filter(_.nonEmpty)
+      summary = e.description
+        .map(_.trim)
+        .filter(_.nonEmpty)
         .map(t => if t.length > SummaryChars then t.take(SummaryChars - 1) + "…" else t),
       links = d.wikidata.flatMap(q => PlaceLink.url("wikidata", q).map(u => s"Wikidata $q" -> u)).toList,
       facts = eventFacts(d, years),
       media = d.media.headOption,
       icon = Some(CardIcons.event(e.kind)),
       tier = Some(d.tier),
-      sections = eventSections(d))
+      sections = eventSections(d)
+    )
 
-  /** Pure: an event card's facts — the span a stated dating covers, how precisely it is dated
-    * ([[EventPrecision]]: an imprecise one is not on the map at a year), and the fields corrected by
-    * hand (kept over the catalogue's on a re-import). */
+  /** Pure: an event card's facts — the span a stated dating covers, how precisely it is dated ([[EventPrecision]]: an
+    * imprecise one is not on the map at a year), and the fields corrected by hand (kept over the catalogue's on a
+    * re-import).
+    */
   def eventFacts(d: EventDetail, years: String): List[String] =
     val e = d.event
     Option.when(e.datingNote.isDefined)(s"window: $years").toList ++
-      EventPrecision.label(e.precision).map(l =>
-        if e.precision == EventPrecision.Imprecise then s"$l — listed, not drawn on the map at a year" else l).toList ++
+      EventPrecision
+        .label(e.precision)
+        .map(l => if e.precision == EventPrecision.Imprecise then s"$l — listed, not drawn on the map at a year" else l)
+        .toList ++
       d.corrections.map(c => s"corrected by hand — ${Corrections.describe(c)}")
 
-  /** Pure: an event card's sections (#1449), in the order a reader asks: who attests it, where it is
-    * written about, what the corpus holds around it, what may discuss it, where the catalogue record is
-    * from, and what to do next. Empty sections are left out. */
+  /** Pure: an event card's sections (#1449), in the order a reader asks: who attests it, where it is written about,
+    * what the corpus holds around it, what may discuss it, where the catalogue record is from, and what to do next.
+    * Empty sections are left out.
+    */
   def eventSections(d: EventDetail): List[Section] =
     def km(x: Double) = s"${math.round(x)} km"
     List(
-      Section("Attested by", d.sources.map(s => Item(s.title.getOrElse(s.citekey) + s.quote.fold("")(q => s" — “$q”"),
-        citekey = Some(s.citekey))), kind = "sources"),
-      Section("Articles citing those sources", d.articles.map(a => Item(a.title, slug = Some(a.slug))), kind = "articles"),
-      Section("Findings near it", d.findings.map(f => Item(
-        s"${km(f.km)}, ${if f.yearGap == 0 then "same time" else s"${f.yearGap} yrs apart"}: ${Fmt.clip(f.claim, 90)}",
-        citekey = Some(f.citekey))), kind = "findings"),
-      Section("Possibly discussed in", d.candidates.map(c => Item(
-        c.title.getOrElse(c.citekey) + (if c.reasons.isEmpty then "" else s" — ${c.reasons.mkString("; ")}"),
-        citekey = Some(c.citekey))), note = Some("unconfirmed — proposed from findings near it and passages naming it"),
-        kind = "candidates"),
-      Section("Catalogue", d.catalogue.map(c => Item(
-        s"${c.title} ${c.providerId}" + EventLeads.size(c.vei, c.magnitude).fold("")(s => s" ($s)") +
-          s" · ${c.licence} · cite: ${c.citation}", href = Some(c.url).filter(_.nonEmpty))),
+      Section(
+        "Attested by",
+        d.sources.map(s =>
+          Item(s.title.getOrElse(s.citekey) + s.quote.fold("")(q => s" — “$q”"), citekey = Some(s.citekey))
+        ),
+        kind = "sources"
+      ),
+      Section(
+        "Articles citing those sources",
+        d.articles.map(a => Item(a.title, slug = Some(a.slug))),
+        kind = "articles"
+      ),
+      Section(
+        "Findings near it",
+        d.findings.map(f =>
+          Item(
+            s"${km(f.km)}, ${if f.yearGap == 0 then "same time" else s"${f.yearGap} yrs apart"}: ${Fmt.clip(f.claim, 90)}",
+            citekey = Some(f.citekey)
+          )
+        ),
+        kind = "findings"
+      ),
+      Section(
+        "Possibly discussed in",
+        d.candidates.map(c =>
+          Item(
+            c.title.getOrElse(c.citekey) + (if c.reasons.isEmpty then "" else s" — ${c.reasons.mkString("; ")}"),
+            citekey = Some(c.citekey)
+          )
+        ),
+        note = Some("unconfirmed — proposed from findings near it and passages naming it"),
+        kind = "candidates"
+      ),
+      Section(
+        "Catalogue",
+        d.catalogue.map(c =>
+          Item(
+            s"${c.title} ${c.providerId}" + EventLeads.size(c.vei, c.magnitude).fold("")(s => s" ($s)") +
+              s" · ${c.licence} · cite: ${c.citation}",
+            href = Some(c.url).filter(_.nonEmpty)
+          )
+        ),
         note = Option.when(d.tier == EventTier.Catalogue)("known only from a catalogue: a research lead, not evidence"),
-        kind = "catalogue"),
-      Section("Leads", d.leads.flatMap(l => Item(l.text) :: l.actions.map(a =>
-        Item(a.label, command = Some(a.command), query = a.query.filter(_ => a.kind == "discover")))), kind = "leads")
+        kind = "catalogue"
+      ),
+      Section(
+        "Leads",
+        d.leads.flatMap(l =>
+          Item(l.text) :: l.actions.map(a =>
+            Item(a.label, command = Some(a.command), query = a.query.filter(_ => a.kind == "discover"))
+          )
+        ),
+        kind = "leads"
+      )
     ).filter(_.items.nonEmpty)
 
-  /** Pure: the line under a card's picture — its credit and licence (the licence a link when it has a
-    * page), as the licence asks for it to be shown. */
+  /** Pure: the line under a card's picture — its credit and licence (the licence a link when it has a page), as the
+    * licence asks for it to be shown.
+    */
   def creditLine(t: MediaThumb): (String, Option[(String, String)]) =
     val lic = t.license.map(l => l -> t.licenseUrl.orElse(LicenseName.url(l)).orElse(t.sourceUrl).getOrElse(""))
     (t.credit, lic.map((l, u) => (l, u)))
@@ -202,31 +291,38 @@ object Preview:
   // ── typed, cached fetches ────────────────────────────────────────────────────────────────────
 
   // one per kind, each bounded (#1949): a long session hovers thousands of links
-  private val sourceCache  = BoundedCache[String, Future[Card]](Layout.cardCacheSize)
+  private val sourceCache = BoundedCache[String, Future[Card]](Layout.cardCacheSize)
   private val articleCache = BoundedCache[String, Future[Card]](Layout.cardCacheSize)
-  private val placeCache   = BoundedCache[String, Future[Card]](Layout.cardCacheSize)
-  private val eventCache   = BoundedCache[String, Future[Card]](Layout.cardCacheSize)
+  private val placeCache = BoundedCache[String, Future[Card]](Layout.cardCacheSize)
+  private val eventCache = BoundedCache[String, Future[Card]](Layout.cardCacheSize)
 
   /** The card caches' figures, for [[Diagnostics]]. */
   def cacheStats: List[(String, BoundedCache.Stats)] =
-    List("cards.source" -> sourceCache, "cards.article" -> articleCache, "cards.place" -> placeCache,
-      "cards.event" -> eventCache).map((n, c) => n -> BoundedCache.stats(c))
+    List(
+      "cards.source" -> sourceCache,
+      "cards.article" -> articleCache,
+      "cards.place" -> placeCache,
+      "cards.event" -> eventCache
+    ).map((n, c) => n -> BoundedCache.stats(c))
 
   /** A failed fetch is forgotten, so the next hover tries again. */
-  private def cached(cache: BoundedCache[String, Future[Card]], key: String)(
-      fetch: => Future[Card]): Future[Card] =
-    cache.getOrElseUpdate(key, {
-      val f = fetch
-      f.onComplete { case Failure(_) => if cache.peek(key).contains(f) then { val _ = cache.remove(key) }; case _ => () }
-      f
-    })
+  private def cached(cache: BoundedCache[String, Future[Card]], key: String)(fetch: => Future[Card]): Future[Card] =
+    cache.getOrElseUpdate(
+      key, {
+        val f = fetch
+        f.onComplete {
+          case Failure(_) => if cache.peek(key).contains(f) then { val _ = cache.remove(key) }; case _ => ()
+        }
+        f
+      }
+    )
 
   /** Drop a source's cached card — it was just edited, and the next hover must show the edit. */
   def forget(ck: String): Unit = { val _ = sourceCache.remove(ck) }
 
   def fetch(t: Target): Future[Card] = t match
-    case Target.Source(ck)    => cached(sourceCache, ck)(ApiClient.getSource(ck, body = false).map(card))
-    case Target.Article(slug) => cached(articleCache, slug)(ApiClient.getArticle(slug, brief = true).map(card))
+    case Target.Source(ck)      => cached(sourceCache, ck)(ApiClient.getSource(ck, body = false).map(card))
+    case Target.Article(slug)   => cached(articleCache, slug)(ApiClient.getArticle(slug, brief = true).map(card))
     case Target.Place(id, asOf) =>
       cached(placeCache, s"$id@${asOf.getOrElse("")}")(ApiClient.place(id, asOf, counts = true).map(card))
     case Target.Event(id) => cached(eventCache, id)(ApiClient.getEvent(id).map(card))
@@ -244,13 +340,23 @@ object Preview:
     targetOf(ck, slug).orElse(place.map(_.trim).filter(_.nonEmpty).map(Target.Place(_, asOf)))
 
   /** Pure: the same, an event's id last. */
-  def targetOf(ck: Option[String], slug: Option[String], place: Option[String], event: Option[String],
-      asOf: => Option[Long]): Option[Target] =
+  def targetOf(
+      ck: Option[String],
+      slug: Option[String],
+      place: Option[String],
+      event: Option[String],
+      asOf: => Option[Long]
+  ): Option[Target] =
     targetOf(ck, slug, place, asOf).orElse(event.map(_.trim).filter(_.nonEmpty).map(Target.Event(_)))
 
   private def targetOfElement(el: dom.Element): Option[Target] =
-    targetOf(Option(el.getAttribute("data-ck")), Option(el.getAttribute("data-slug")),
-      Option(el.getAttribute("data-place")), Option(el.getAttribute("data-event")), placeAsOf())
+    targetOf(
+      Option(el.getAttribute("data-ck")),
+      Option(el.getAttribute("data-slug")),
+      Option(el.getAttribute("data-place")),
+      Option(el.getAttribute("data-event")),
+      placeAsOf()
+    )
 
   private def placeAnchorOf(t: dom.EventTarget): Option[dom.Element] = t match
     case el: dom.Element => Option(el.closest("[data-place]"))
@@ -264,11 +370,12 @@ object Preview:
   private def onDocClick(e: dom.MouseEvent): Unit =
     placeAnchorOf(e.target) match
       case Some(el) if !e.defaultPrevented => pinUnder(el, keyboard = false)
-      case _ =>
+      case _                               =>
         // a click anywhere else in the page, away from the pinned card and what pinned it, lets it go
         // (a click on the map is the map's to judge: it may land on another place, [[PlaceHover]])
         val inside = e.target match
-          case n: dom.Node => pinned.exists(p => p.box.contains(n) || p.owner.exists(_.contains(n))) ||
+          case n: dom.Node =>
+            pinned.exists(p => p.box.contains(n) || p.owner.exists(_.contains(n))) ||
             n.isInstanceOf[dom.Element] && n.asInstanceOf[dom.Element].closest(".map-container") != null
           case _ => false
         if !inside then unpin(restoreFocus = false)
@@ -277,14 +384,21 @@ object Preview:
     targetOfElement(el).foreach { t =>
       if isPinned(t) && !keyboard then unpin(restoreFocus = false)
       else
-        pin(t, () => Option.when(el.isConnected) {
-          val r = el.getBoundingClientRect()
-          Anchor.Under(r.left, r.top, r.bottom, r.width)
-        }, owner = Some(el), keyboard = keyboard)
+        pin(
+          t,
+          () =>
+            Option.when(el.isConnected) {
+              val r = el.getBoundingClientRect()
+              Anchor.Under(r.left, r.top, r.bottom, r.width)
+            },
+          owner = Some(el),
+          keyboard = keyboard
+        )
     }
 
-  /** The element the tooltip is currently for, and the tooltip itself. A single floating element,
-    * re-rendered in place — only one preview is ever visible. */
+  /** The element the tooltip is currently for, and the tooltip itself. A single floating element, re-rendered in place
+    * — only one preview is ever visible.
+    */
   private var current: Option[dom.Element] = None
   private var tip: Option[(dom.HTMLElement, RootNode)] = None
   // `var`: installing twice (the app and a page entry point both call it) must not double-bind
@@ -301,23 +415,33 @@ object Preview:
       document.addEventListener("scroll", (_: dom.Event) => { hide(); repositionSoon() }, useCapture = true)
       window.addEventListener("resize", (_: dom.Event) => reposition())
       // the pinned card takes Escape first (the window manager's Escape runs after, on `window`)
-      document.addEventListener("keydown", { (e: dom.KeyboardEvent) =>
-        if PinRules.dismisses(e.key) && !e.defaultPrevented && pinned.isDefined then
-          e.preventDefault()
-          unpin()
-      })
+      document.addEventListener(
+        "keydown",
+        (e: dom.KeyboardEvent) =>
+          if PinRules.dismisses(e.key) && !e.defaultPrevented && pinned.isDefined then
+            e.preventDefault()
+            unpin()
+      )
       // a place chip ([data-place]) answers like a place on the map: a click or Enter pins its card
       document.addEventListener("click", (e: dom.MouseEvent) => onDocClick(e))
-      document.addEventListener("keydown", { (e: dom.KeyboardEvent) =>
-        if PinRules.activates(e.key) then chipItself(e.target).foreach { el =>
-          e.preventDefault()
-          pinUnder(el, keyboard = true)
-        }
-      })
-      document.addEventListener("focusin", (e: dom.FocusEvent) =>
-        chipItself(e.target).filterNot(current.contains).foreach(el => targetOfElement(el).foreach(show(el, _))))
-      document.addEventListener("focusout", (e: dom.FocusEvent) =>
-        chipItself(e.target).filter(current.contains).foreach(_ => hide()))
+      document.addEventListener(
+        "keydown",
+        (e: dom.KeyboardEvent) =>
+          if PinRules.activates(e.key) then
+            chipItself(e.target).foreach { el =>
+              e.preventDefault()
+              pinUnder(el, keyboard = true)
+            }
+      )
+      document.addEventListener(
+        "focusin",
+        (e: dom.FocusEvent) =>
+          chipItself(e.target).filterNot(current.contains).foreach(el => targetOfElement(el).foreach(show(el, _)))
+      )
+      document.addEventListener(
+        "focusout",
+        (e: dom.FocusEvent) => chipItself(e.target).filter(current.contains).foreach(_ => hide())
+      )
 
   private def anchorOf(t: dom.EventTarget): Option[dom.Element] = t match
     case el: dom.Element => Option(el.closest(Selector))
@@ -357,7 +481,9 @@ object Preview:
     }
 
   def hide(): Unit =
-    tipObserver.foreach(o => { val _ = o.disconnect() })
+    tipObserver.foreach { o =>
+      val _ = o.disconnect()
+    }
     tipObserver = None
     tip.foreach { (box, root) => root.unmount(); box.remove() }
     tip = None
@@ -372,11 +498,12 @@ object Preview:
   /** Is the card at the pointer showing `t`? */
   def showingAt(t: Target): Boolean = atPoint.contains(t) && tip.isDefined
 
-  /** Float `t`'s card beside the viewport point (`x`, `y`) — the same card, the same cache. A second
-    * call for the target already showing only moves it. */
+  /** Float `t`'s card beside the viewport point (`x`, `y`) — the same card, the same cache. A second call for the
+    * target already showing only moves it.
+    */
   def showAt(t: Target, x: Double, y: Double): Unit =
     if showingAt(t) then moveTo(x, y)
-    else if isPinned(t) then hide()   // its card is already up, pinned: no second, moving copy
+    else if isPinned(t) then hide() // its card is already up, pinned: no second, moving copy
     else
       hide()
       atPoint = Some(t)
@@ -385,7 +512,8 @@ object Preview:
       box.setAttribute("role", "tooltip")
       document.body.appendChild(box)
       val content = Var[Option[Card]](None)
-      val root = render(box, div(child <-- content.signal.map(_.fold(div(cls := "cite-tip-meta", "loading…"))(cardView))))
+      val root =
+        render(box, div(child <-- content.signal.map(_.fold(div(cls := "cite-tip-meta", "loading…"))(cardView))))
       tip = Some(box -> root)
       moveTo(x, y)
       watch(box)(() => if atPoint.contains(t) then lastPoint.foreach((px, py) => moveTo(px, py)))
@@ -400,8 +528,9 @@ object Preview:
   /** Hide the card at the pointer if it is `t`'s — a card for another target stays. */
   def hideAt(t: Target): Unit = if atPoint.contains(t) then hide()
 
-  /** Beside the pointer, below and to the right; flipped to the other side when it would leave the
-    * viewport. The position is data for `.cite-tooltip`. */
+  /** Beside the pointer, below and to the right; flipped to the other side when it would leave the viewport. The
+    * position is data for `.cite-tooltip`.
+    */
   def moveTo(x: Double, y: Double): Unit =
     lastPoint = Some((x, y))
     tip.filter(_ => atPoint.isDefined).foreach { (box, _) =>
@@ -416,10 +545,13 @@ object Preview:
   private var lastPoint: Option[(Double, Double)] = None
   private var tipObserver: Option[js.Dynamic] = None
 
-  /** Re-run `f` whenever the card's content changes size — a picture arriving, a section filling in
-    * after the card was placed — so it never grows past an edge from where it was put. */
+  /** Re-run `f` whenever the card's content changes size — a picture arriving, a section filling in after the card was
+    * placed — so it never grows past an edge from where it was put.
+    */
   private def watch(box: dom.HTMLElement)(f: () => Unit): Unit =
-    tipObserver.foreach(o => { val _ = o.disconnect() })
+    tipObserver.foreach { o =>
+      val _ = o.disconnect()
+    }
     tipObserver = observe(box, f)
 
   private def observe(box: dom.HTMLElement, f: () => Unit): Option[js.Dynamic] =
@@ -427,7 +559,9 @@ object Preview:
     else
       val cb: js.Function1[js.Any, Unit] = _ => f()
       val o = js.Dynamic.newInstance(js.Dynamic.global.ResizeObserver)(cb)
-      Option(box.firstElementChild).foreach(c => { val _ = o.observe(c) })
+      Option(box.firstElementChild).foreach { c =>
+        val _ = o.observe(c)
+      }
       Some(o)
 
   /** The card's width, and the height its content wants — not the height a cap gave it last time. */
@@ -435,8 +569,9 @@ object Preview:
     val b = box.getBoundingClientRect()
     (b.width, box.scrollHeight.toDouble + (box.offsetHeight - box.clientHeight))
 
-  /** Put the card where `fit` says; a card taller than its room is capped there and scrolls (once
-    * pinned), and a capped hover card fades out at the bottom to say there is more. */
+  /** Put the card where `fit` says; a card taller than its room is capped there and scrolls (once pinned), and a capped
+    * hover card fades out at the bottom to say there is more.
+    */
   private def apply(box: dom.HTMLElement, fit: Fit, natural: Double): Unit =
     box.style.setProperty("--tip-x", s"${fit.x}px")
     box.style.setProperty("--tip-y", s"${fit.y}px")
@@ -446,14 +581,16 @@ object Preview:
   /** Where a card goes: its top-left corner, and the most height it may take there. */
   final case class Fit(x: Double, y: Double, maxH: Double)
 
-  /** The margin a card keeps from every viewport edge, and the least room worth placing it in beside
-    * its anchor; with less on both sides it uses the whole height and covers the anchor instead. */
-  private val Margin  = 10.0
+  /** The margin a card keeps from every viewport edge, and the least room worth placing it in beside its anchor; with
+    * less on both sides it uses the whole height and covers the anchor instead.
+    */
+  private val Margin = 10.0
   private val MinRoom = 160.0
 
-  /** Pure: the vertical half of a placement — below the anchor (`top`…`bottom`) when the card fits
-    * there, else above it when it fits there, else on the roomier side, capped to that room so the
-    * content scrolls; with less than `MinRoom` either side, the full viewport height. */
+  /** Pure: the vertical half of a placement — below the anchor (`top`…`bottom`) when the card fits there, else above it
+    * when it fits there, else on the roomier side, capped to that room so the content scrolls; with less than `MinRoom`
+    * either side, the full viewport height.
+    */
   def verticalFit(top: Double, bottom: Double, gap: Double, h: Double, vh: Double): (Double, Double) =
     val below = vh - Margin - (bottom + gap)
     val above = top - gap - Margin
@@ -463,20 +600,30 @@ object Preview:
     else if below >= above then (bottom + gap, below)
     else (Margin, above)
 
-  /** Pure: beside a pointer at (`x`, `y`) — 14 px below-right of it, on the other side of the
-    * pointer when an edge would be crossed, shifted to stay ≥ 10 px inside the viewport, and capped in
-    * height when neither side has room for all of it. */
+  /** Pure: beside a pointer at (`x`, `y`) — 14 px below-right of it, on the other side of the pointer when an edge
+    * would be crossed, shifted to stay ≥ 10 px inside the viewport, and capped in height when neither side has room for
+    * all of it.
+    */
   def pointFit(x: Double, y: Double, w: Double, h: Double, vw: Double, vh: Double): Fit =
     val gap = 14.0
     val left0 = if x + gap + w > vw - Margin then x - gap - w else x + gap
-    val left  = math.max(Margin, math.min(left0, vw - w - Margin))
+    val left = math.max(Margin, math.min(left0, vw - w - Margin))
     val (top, maxH) = verticalFit(y, y, gap, h, vh)
     Fit(left, top, maxH)
 
-  /** Pure: centred 6 px under an element spanning (`left`, `top`)–(`left + width`, `bottom`), above
-    * it when there is no room below, capped in height when neither side has room. */
-  def underFit(left: Double, top: Double, bottom: Double, width: Double, w: Double, h: Double,
-      vw: Double, vh: Double): Fit =
+  /** Pure: centred 6 px under an element spanning (`left`, `top`)–(`left + width`, `bottom`), above it when there is no
+    * room below, capped in height when neither side has room.
+    */
+  def underFit(
+      left: Double,
+      top: Double,
+      bottom: Double,
+      width: Double,
+      w: Double,
+      h: Double,
+      vw: Double,
+      vh: Double
+  ): Fit =
     val x = math.max(Margin, math.min(left + width / 2 - w / 2, vw - w - Margin))
     val (y, maxH) = verticalFit(top, bottom, 6.0, h, vh)
     Fit(x, y, maxH)
@@ -487,8 +634,16 @@ object Preview:
     (f.x, f.y)
 
   /** Pure: the corner [[underFit]] picks. */
-  def underPlacement(left: Double, top: Double, bottom: Double, width: Double, w: Double, h: Double,
-      vw: Double, vh: Double): (Double, Double) =
+  def underPlacement(
+      left: Double,
+      top: Double,
+      bottom: Double,
+      width: Double,
+      w: Double,
+      h: Double,
+      vw: Double,
+      vh: Double
+  ): (Double, Double) =
     val f = underFit(left, top, bottom, width, w, h, vw, vh)
     (f.x, f.y)
 
@@ -498,14 +653,22 @@ object Preview:
   enum Anchor:
     /** Beside a point — a place on the map, where its hover card was. */
     case At(x: Double, y: Double)
+
     /** Under an element — a place chip — flipped above it when there is no room. */
     case Under(left: Double, top: Double, bottom: Double, width: Double)
 
-  /** The pinned card: what it shows, its element, where it is anchored (`None` while the anchor is out
-    * of view: the card waits, hidden), what pinned it (a click there is not "outside"), and where the
-    * focus goes back to when it closes. */
-  private final class Pinned(val target: Target, val box: dom.HTMLElement, val root: RootNode,
-      val anchor: () => Option[Anchor], val owner: Option[dom.Element], val returnFocus: Option[dom.HTMLElement]):
+  /** The pinned card: what it shows, its element, where it is anchored (`None` while the anchor is out of view: the
+    * card waits, hidden), what pinned it (a click there is not "outside"), and where the focus goes back to when it
+    * closes.
+    */
+  final private class Pinned(
+      val target: Target,
+      val box: dom.HTMLElement,
+      val root: RootNode,
+      val anchor: () => Option[Anchor],
+      val owner: Option[dom.Element],
+      val returnFocus: Option[dom.HTMLElement]
+  ):
     // `var`: the card's size, measured when its content arrives — a pan re-places it every frame
     // and must not force a layout each time
     var size: (Double, Double) = (0, 0)
@@ -517,15 +680,17 @@ object Preview:
 
   def isPinned(t: Target): Boolean = pinned.exists(p => sameCard(p.target, t))
 
-  /** Pure: do two targets show the same card? A place is the same place whichever layer read it, at
-    * whichever year (the map's span and the filter round its middle differently). */
+  /** Pure: do two targets show the same card? A place is the same place whichever layer read it, at whichever year (the
+    * map's span and the filter round its middle differently).
+    */
   def sameCard(a: Target, b: Target): Boolean = (a, b) match
     case (Target.Place(x, _), Target.Place(y, _)) => x == y
     case _                                        => a == b
   def pinnedTarget: Option[Target] = pinned.map(_.target)
 
-  /** Pin `t`'s card at `anchor` — replacing any pinned card and the hover card. From the keyboard the
-    * focus moves into the card (its ✕ first, then its links), and back to `owner` when it closes. */
+  /** Pin `t`'s card at `anchor` — replacing any pinned card and the hover card. From the keyboard the focus moves into
+    * the card (its ✕ first, then its links), and back to `owner` when it closes.
+    */
   def pin(t: Target, anchor: () => Option[Anchor], owner: Option[dom.Element] = None, keyboard: Boolean = false): Unit =
     unpin(restoreFocus = false)
     hide()
@@ -535,10 +700,16 @@ object Preview:
     box.setAttribute("aria-label", "place")
     document.body.appendChild(box)
     val content = Var[Option[Card]](None)
-    val close = button(typ := "button", cls := "btn btn--bare btn--icon btn--sm cite-tip-close",
-      aria.label := "close the card", title := "Close (Escape)", "✕", onClick --> (_ => unpin()))
-    val root = render(box, div(close,
-      child <-- content.signal.map(_.fold(div(cls := "cite-tip-meta", "loading…"))(cardView))))
+    val close = button(
+      typ := "button",
+      cls := "btn btn--bare btn--icon btn--sm cite-tip-close",
+      aria.label := "close the card",
+      title := "Close (Escape)",
+      "✕",
+      onClick --> (_ => unpin())
+    )
+    val root =
+      render(box, div(close, child <-- content.signal.map(_.fold(div(cls := "cite-tip-meta", "loading…"))(cardView))))
     val focusBack = if keyboard then owner.collect { case h: dom.HTMLElement => h } else None
     val p = Pinned(t, box, root, anchor, owner, focusBack)
     pinned = Some(p)
@@ -560,7 +731,9 @@ object Preview:
   def unpin(restoreFocus: Boolean = true): Unit =
     pinned.foreach { p =>
       pinned = None
-      p.observer.foreach(o => { val _ = o.disconnect() })
+      p.observer.foreach { o =>
+        val _ = o.disconnect()
+      }
       val hadFocus = Option(document.activeElement).exists(a => p.box.contains(a))
       p.root.unmount()
       p.box.remove()
@@ -578,24 +751,24 @@ object Preview:
   private def repositionSoon(): Unit =
     if pinned.isDefined && !repositionAsked then
       repositionAsked = true
-      val _ = window.requestAnimationFrame(_ => { repositionAsked = false; reposition() })
+      val _ = window.requestAnimationFrame { _ => repositionAsked = false; reposition() }
 
   def reposition(): Unit =
     pinned.foreach { p =>
       p.anchor() match
-        case None => p.box.classList.add("is-offscreen")
+        case None    => p.box.classList.add("is-offscreen")
         case Some(a) =>
           p.box.classList.remove("is-offscreen")
           val (w, h) = p.size
           val fit = a match
-            case Anchor.At(ax, ay) => pointFit(ax, ay, w, h, window.innerWidth, window.innerHeight)
+            case Anchor.At(ax, ay)         => pointFit(ax, ay, w, h, window.innerWidth, window.innerHeight)
             case Anchor.Under(l, t, b, wd) => underFit(l, t, b, wd, w, h, window.innerWidth, window.innerHeight)
           apply(p.box, fit, h)
     }
 
   /** Under the link, flipped above it when it would leave the viewport, capped when it fits neither. */
   private def place(anchor: dom.Element, box: dom.HTMLElement): Unit =
-    val r    = anchor.getBoundingClientRect()
+    val r = anchor.getBoundingClientRect()
     val maxW = math.min(440.0, window.innerWidth - 20)
     // the position is data for `.cite-tooltip`, not a style of its own
     box.style.setProperty("--tip-maxw", s"${maxW}px")
@@ -604,104 +777,184 @@ object Preview:
 
   private[web] def cardView(c: Card): HtmlElement =
     div(
-      div(cls := "cite-tip-title",
-        c.icon.map(i => span(cls := "cite-tip-icon", onMountCallback(ctx => ctx.thisNode.ref.innerHTML = Glyphs.svg(i)))),
+      div(
+        cls := "cite-tip-title",
+        c.icon.map(i =>
+          span(cls := "cite-tip-icon", onMountCallback(ctx => ctx.thisNode.ref.innerHTML = Glyphs.svg(i)))
+        ),
         c.title,
-        c.tier.map(t => span(cls := s"cite-tip-tier tier-$t", if t == EventTier.Catalogue then "catalogue only" else "attested"))),
+        c.tier.map(t =>
+          span(cls := s"cite-tip-tier tier-$t", if t == EventTier.Catalogue then "catalogue only" else "attested")
+        )
+      ),
       Option.when(c.byline.nonEmpty)(div(cls := "cite-tip-meta", c.byline)),
       c.media.map(mediaView),
       div(cls := "cite-tip-ident", c.identifier),
-      Option.when(c.chips.nonEmpty)(div(cls := "cite-tip-chips",
-        c.chips.map((_, v) => Chip.value(v)))),
+      Option.when(c.chips.nonEmpty)(div(cls := "cite-tip-chips", c.chips.map((_, v) => Chip.value(v)))),
       Option.when(c.where.nonEmpty)(div(cls := "cite-tip-geo", c.where)),
       c.status.map(s => div(cls := "cite-tip-status", StatusBadge(s))),
       c.facts.map(f => div(cls := "cite-tip-fact", f)),
-      Option.when(c.links.nonEmpty)(div(cls := "cite-tip-links",
-        c.links.map((t, href) => a(cls := "cite-tip-link", com.raquo.laminar.api.L.href := href,
-          target := "_blank", rel := "noopener", t + " ↗")))),
+      Option.when(c.links.nonEmpty)(
+        div(
+          cls := "cite-tip-links",
+          c.links.map((t, href) =>
+            a(
+              cls := "cite-tip-link",
+              com.raquo.laminar.api.L.href := href,
+              target := "_blank",
+              rel := "noopener",
+              t + " ↗"
+            )
+          )
+        )
+      ),
       c.summary.map(s => div(cls := "cite-tip-summary", s)),
       c.sections.map(sectionView)
     )
 
-  /** One section of an event card: a source line is a source link (its own card on hover, its window
-    * on click); a lead's discover action asks the existing literature search and lists what it found;
-    * a command can be copied. */
+  /** One section of an event card: a source line is a source link (its own card on hover, its window on click); a
+    * lead's discover action asks the existing literature search and lists what it found; a command can be copied.
+    */
   private def sectionView(sec: Section): HtmlElement =
-    div(cls := s"cite-tip-section section-${sec.kind}",
+    div(
+      cls := s"cite-tip-section section-${sec.kind}",
       div(cls := "cite-tip-section-title", sec.title),
       sec.note.map(n => div(cls := "cite-tip-section-note", n)),
-      ul(cls := "cite-tip-items", sec.items.map(itemView)))
+      ul(cls := "cite-tip-items", sec.items.map(itemView))
+    )
 
   private def itemView(it: Item): HtmlElement =
-    li(cls := "cite-tip-item",
+    li(
+      cls := "cite-tip-item",
       it.citekey.map(ck => SourceLink(ck)),
       // a discover action is its button alone; anything else says what it is
-      Option.when(it.query.isEmpty)(it.slug.map(slug => com.histmersion.web.ArticleLink(slug, it.text): HtmlElement)
-        .getOrElse(span(if it.citekey.isDefined then s" ${it.text}" else it.text))),
+      Option.when(it.query.isEmpty)(
+        it.slug
+          .map(slug => com.histmersion.web.ArticleLink(slug, it.text): HtmlElement)
+          .getOrElse(span(if it.citekey.isDefined then s" ${it.text}" else it.text))
+      ),
       it.href.map(u => a(cls := "cite-tip-link", href := u, target := "_blank", rel := "noopener", " ↗")),
       it.query.map(q => discoverButton(q)),
-      it.command.filter(_ => it.query.isEmpty).map(cmd => commandView(cmd)))
+      it.command.filter(_ => it.query.isEmpty).map(cmd => commandView(cmd))
+    )
 
   private def commandView(cmd: String): HtmlElement =
-    span(cls := "cite-tip-command",
+    span(
+      cls := "cite-tip-command",
       code(cmd),
-      button(typ := "button", cls := "btn btn--bare btn--sm", title := "copy the command", "copy",
-        onClick --> { _ => scala.util.Try(dom.window.navigator.clipboard.writeText(cmd)) }))
+      button(
+        typ := "button",
+        cls := "btn btn--bare btn--sm",
+        title := "copy the command",
+        "copy",
+        onClick --> { _ => scala.util.Try(dom.window.navigator.clipboard.writeText(cmd)) }
+      )
+    )
 
-  /** Ask the literature search (`/api/discover`, OpenAlex) for `q`, works not in the corpus yet, and
-    * list the first few under the button. */
+  /** Ask the literature search (`/api/discover`, OpenAlex) for `q`, works not in the corpus yet, and list the first few
+    * under the button.
+    */
   private def discoverButton(q: String): HtmlElement =
     val found = Var[Option[Either[String, DiscoverResult]]](None)
-    span(cls := "cite-tip-discover",
-      button(typ := "button", cls := "btn btn--sm", "search the literature",
+    span(
+      cls := "cite-tip-discover",
+      button(
+        typ := "button",
+        cls := "btn btn--sm",
+        "search the literature",
         onClick --> { _ =>
           found.set(Some(Left("searching…")))
           ApiClient.discover(q, 5).onComplete {
             case Success(r) => found.set(Some(Right(r)))
             case Failure(e) => found.set(Some(Left(s"no answer: ${e.getMessage}")))
           }
-        }),
+        }
+      ),
       child <-- found.signal.map {
-        case None => emptyNode
-        case Some(Left(m)) => div(cls := "cite-tip-meta", m)
+        case None           => emptyNode
+        case Some(Left(m))  => div(cls := "cite-tip-meta", m)
         case Some(Right(r)) =>
           if r.works.isEmpty then div(cls := "cite-tip-meta", s"nothing found for “$q”")
-          else ul(cls := "cite-tip-items", r.works.map(w => li(cls := "cite-tip-item",
-            w.title.getOrElse(w.doi.getOrElse("untitled")) + w.year.fold("")(y => s" ($y)"),
-            w.doi.map(d => a(cls := "cite-tip-link", href := s"https://doi.org/$d", target := "_blank", rel := "noopener", " ↗")))))
-      })
+          else
+            ul(
+              cls := "cite-tip-items",
+              r.works.map(w =>
+                li(
+                  cls := "cite-tip-item",
+                  w.title.getOrElse(w.doi.getOrElse("untitled")) + w.year.fold("")(y => s" ($y)"),
+                  w.doi.map(d =>
+                    a(
+                      cls := "cite-tip-link",
+                      href := s"https://doi.org/$d",
+                      target := "_blank",
+                      rel := "noopener",
+                      " ↗"
+                    )
+                  )
+                )
+              )
+            )
+      }
+    )
 
-  /** A card's picture: the local thumbnail (never the provider's URL — a hover stays on this server),
-    * and under it the credit line and the licence, linked to the licence's page. Its size is the
-    * stored thumbnail's, as `--w`/`--h`, so the card does not jump when the image arrives. */
+  /** A card's picture: the local thumbnail (never the provider's URL — a hover stays on this server), and under it the
+    * credit line and the licence, linked to the licence's page. Its size is the stored thumbnail's, as `--w`/`--h`, so
+    * the card does not jump when the image arrives.
+    */
   private def mediaView(t: MediaThumb): HtmlElement =
     val (credit, lic) = creditLine(t)
     figure(
       cls := "cite-tip-media",
       // a book's cover is shown whole (a portrait), a photograph of a place fills the card's width
       cls("is-cover") := t.role == MediaRole.Cover,
-      onMountCallback(ctx => sizeOf(t).foreach { (w, h) =>
-        ctx.thisNode.ref.style.setProperty("--w", w.toString)
-        ctx.thisNode.ref.style.setProperty("--h", h.toString)
-      }),
-      img(cls := "cite-tip-thumb is-zoomable", src := t.url, alt := credit, loadingAttr := "lazy", title := "open full size",
+      onMountCallback(ctx =>
+        sizeOf(t).foreach { (w, h) =>
+          ctx.thisNode.ref.style.setProperty("--w", w.toString)
+          ctx.thisNode.ref.style.setProperty("--h", h.toString)
+        }
+      ),
+      img(
+        cls := "cite-tip-thumb is-zoomable",
+        src := t.url,
+        alt := credit,
+        loadingAttr := "lazy",
+        title := "open full size",
         // a click opens the stored picture full size, with its credit, licence and provider's page (Lightbox)
-        onMountCallback(ctx => fullAttrs(t).foreach((k, v) => ctx.thisNode.ref.setAttribute(k, v)))),
-      figCaption(cls := "cite-tip-credit",
+        onMountCallback(ctx => fullAttrs(t).foreach((k, v) => ctx.thisNode.ref.setAttribute(k, v)))
+      ),
+      figCaption(
+        cls := "cite-tip-credit",
         span(credit),
         lic.map((l, u) =>
           val name = LicenseName.label(l)
           if u.isEmpty then span(" · ", name)
-          else span(" · ", a(cls := "cite-tip-link", href := u, target := "_blank", rel := "noopener license", name))))
+          else span(" · ", a(cls := "cite-tip-link", href := u, target := "_blank", rel := "noopener license", name))
+        )
+      )
     )
 
-  /** Pure: the attributes that open a card's picture full size ([[Lightbox]]): the stored file, its
-    * credit, licence and the provider's page. */
+  /** Pure: the attributes that open a card's picture full size ([[Lightbox]]): the stored file, its credit, licence and
+    * the provider's page.
+    */
   def fullAttrs(t: MediaThumb): List[(String, String)] =
-    val item = Lightbox.Item(MediaThumb.filePath(t.uid), t.credit, None, Some(t.credit).filter(_.nonEmpty), None,
-      t.license, t.licenseUrl, t.sourceUrl, None)
-    val vals = List("data-full" -> Some(item.src), "data-lb-credit" -> item.credit, "data-lb-license" -> item.license,
-      "data-lb-license-url" -> item.licenseUrl, "data-lb-source-url" -> item.sourceUrl)
+    val item = Lightbox.Item(
+      MediaThumb.filePath(t.uid),
+      t.credit,
+      None,
+      Some(t.credit).filter(_.nonEmpty),
+      None,
+      t.license,
+      t.licenseUrl,
+      t.sourceUrl,
+      None
+    )
+    val vals = List(
+      "data-full" -> Some(item.src),
+      "data-lb-credit" -> item.credit,
+      "data-lb-license" -> item.license,
+      "data-lb-license-url" -> item.licenseUrl,
+      "data-lb-source-url" -> item.sourceUrl
+    )
     vals.collect { case (k, Some(v)) if v.nonEmpty => k -> v }
 
   /** Pure: the thumbnail's stored size (`--w`/`--h` for `.cite-tip-media`), when it is known. */

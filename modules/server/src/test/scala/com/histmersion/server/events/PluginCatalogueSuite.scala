@@ -1,6 +1,6 @@
 package com.histmersion.server.events
 
-import com.histmersion.pluginhost.{PluginHost, Generation}
+import com.histmersion.pluginhost.{Generation, PluginHost}
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.*
@@ -14,19 +14,20 @@ import com.histmersion.server.plugins.Plugins
 import com.histmersion.api.VocabularyCodecs.given
 import org.ekrich.config.ConfigFactory
 
-/** A THIRD-PARTY plugin's event catalogue (docs/research-plugins.md §6) read by `events import` through
-  * the registries, against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): its parts in
-  * order, a paged part followed, a failed part reported and left to read again, a record the host's
-  * checks refuse reported (the others stored as catalogue events under the catalogue's id), a second
-  * import reading only what is left, the catalogue listed with its terms and named on the event's card.
-  * No socket: the plugin's requests are answered by a fake. Fixtures: catalogue `zq-quakes`. */
+/** A THIRD-PARTY plugin's event catalogue (docs/research-plugins.md §6) read by `events import` through the registries,
+  * against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): its parts in order, a paged part followed, a
+  * failed part reported and left to read again, a record the host's checks refuse reported (the others stored as
+  * catalogue events under the catalogue's id), a second import reading only what is left, the catalogue listed with its
+  * terms and named on the event's card. No socket: the plugin's requests are answered by a fake. Fixtures: catalogue
+  * `zq-quakes`.
+  */
 class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
-  private val testDb                = TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val Catalogue = "zq-quakes"
 
-  private final class ZqPlugin extends spi.Plugin:
+  final private class ZqPlugin extends spi.Plugin:
     type Config = ZqCatalogueConfig
     val info = spi.PluginInfo("zq-plugin", "0.1.0", spi.Spi.Version)
     override def defaultsResource = "zq-none.conf"
@@ -36,30 +37,55 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
   @volatile private var p2Up = false
 
   private object ZqQuakes extends spi.EventCatalogue:
-    val title = "Zq battle catalogue"; val licence = spi.Licence("CC0-1.0"); val citation = "Zq et al. (2026)"; val home = "https://zq.example"
+    val title = "Zq battle catalogue"; val licence = spi.Licence("CC0-1.0"); val citation = "Zq et al. (2026)";
+    val home = "https://zq.example"
     override val requestIntervalMs = 0
     def parts(q: spi.CatalogueQuery) = List("p1", "p2")
     private def ev(id: String, label: String, year: Int) =
-      spi.CatalogueEvent(id, s"https://zq.example/$id", label, "Battle", Some(spi.Year(year)), Some(spi.Year(year)),
-        lat = Some(spi.Latitude(37.9)), lon = Some(spi.Longitude(23.7)),
-        names = List(s"$label (alt)"))
+      spi.CatalogueEvent(
+        id,
+        s"https://zq.example/$id",
+        label,
+        "Battle",
+        Some(spi.Year(year)),
+        Some(spi.Year(year)),
+        lat = Some(spi.Latitude(37.9)),
+        lon = Some(spi.Longitude(23.7)),
+        names = List(s"$label (alt)")
+      )
     def read(part: String, q: spi.CatalogueQuery, http: spi.PluginHttp) =
       http.get(s"https://zq.example/api/$part", Map.empty).flatMap { _ =>
         part match
-          case "p1"  => Right(spi.CataloguePage(List(ev("b1", "Zq Battle One", -1200),
-                          ev("bad", "Zq Backwards", -1200).copy(notBefore = Some(spi.Year(-1000)))), next = Some("p1b")))
+          case "p1" =>
+            Right(
+              spi.CataloguePage(
+                List(
+                  ev("b1", "Zq Battle One", -1200),
+                  ev("bad", "Zq Backwards", -1200).copy(notBefore = Some(spi.Year(-1000)))
+                ),
+                next = Some("p1b")
+              )
+            )
           case "p1b" => Right(spi.CataloguePage(List(ev("b2", "Zq Battle Two", -1150))))
-          case "p2"  => if p2Up then Right(spi.CataloguePage(List(ev("b3", "Zq Battle Three", -1100)))) else Left("upstream down")
+          case "p2"  =>
+            if p2Up then Right(spi.CataloguePage(List(ev("b3", "Zq Battle Three", -1100)))) else Left("upstream down")
           case other => Left(s"no part $other")
       }
 
   private def fake = FakeMediaHttp(url =>
-    if url.startsWith("https://zq.example/api/") then FakeMediaHttp.json("{}") else Left(s"unexpected $url"))
+    if url.startsWith("https://zq.example/api/") then FakeMediaHttp.json("{}") else Left(s"unexpected $url")
+  )
 
   private def generation: Generation =
-    PluginHost.build(Plugins.providers :+ ZqPlugin(), ConfigFactory.parseString("histmersion.plugins.zq-plugin.enabled = true"),
-      ConfigFactory.empty, Plugins.services(() => new spi.PluginHttp { def get(u: String, h: Map[String, String]) = Left("no") },
-        ConfigFactory.empty))
+    PluginHost.build(
+      Plugins.providers :+ ZqPlugin(),
+      ConfigFactory.parseString("histmersion.plugins.zq-plugin.enabled = true"),
+      ConfigFactory.empty,
+      Plugins.services(
+        () => new spi.PluginHttp { def get(u: String, h: Map[String, String]) = Left("no") },
+        ConfigFactory.empty
+      )
+    )
 
   private lazy val base = AppConfig.load()
   private lazy val ds =
@@ -91,16 +117,20 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
     assert(r.failed.contains("p2: upstream down"), r.failed.toString)
     assertEquals((r.licence, r.citation), ("CC0-1.0", "Zq et al. (2026)"))
     assertEquals(r.pending, 1, "p2 is still to read")
-    assertEquals(http.requests.map(_._1).toList,
-      List("https://zq.example/api/p1", "https://zq.example/api/p1b", "https://zq.example/api/p2"))
+    assertEquals(
+      http.requests.map(_._1).toList,
+      List("https://zq.example/api/p1", "https://zq.example/api/p1b", "https://zq.example/api/p2")
+    )
     assert(http.requests.forall(_._2.get("User-Agent").contains(HttpPolicy.userAgent(cfg.media.userAgent))))
     assertEquals(EventCatalogRepo.partsDone(ds, Catalogue).map(_.split(" @ ").head), Set("p1", "p1b"))
     val e = EventRepo.get(ds, "zq_quakes_b1").getOrElse(fail("not stored"))
     assertEquals((e.event.label, e.event.kind), ("Zq Battle One", "battle"))
     // the card names the plugin's catalogue with its terms
     val card = h.context(e)
-    assertEquals(card.catalogue.map(c => (c.provider, c.providerId, c.title, c.licence)),
-      List((Catalogue, "b1", "Zq battle catalogue", "CC0-1.0")))
+    assertEquals(
+      card.catalogue.map(c => (c.provider, c.providerId, c.title, c.licence)),
+      List((Catalogue, "b1", "Zq battle catalogue", "CC0-1.0"))
+    )
     assert(card.names.contains("Zq Battle One (alt)"), card.names.toString)
 
   test("a second import reads only the part left; the catalogue is listed beside the built-ins"):
@@ -116,10 +146,21 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
     assert(job.left.exists(_.message.contains(s"one of: gvp, noaa, wikidata, $Catalogue")), job.toString)
 
   test("the plugin switched off: its catalogue is out of the import; its events stay on the map"):
-    val off = PluginHost.build(Plugins.providers :+ ZqPlugin(), ConfigFactory.empty, ConfigFactory.empty,
-      Plugins.services(() => new spi.PluginHttp { def get(u: String, hs: Map[String, String]) = Left("no") }, ConfigFactory.empty))
+    val off = PluginHost.build(
+      Plugins.providers :+ ZqPlugin(),
+      ConfigFactory.empty,
+      ConfigFactory.empty,
+      Plugins.services(
+        () => new spi.PluginHttp { def get(u: String, hs: Map[String, String]) = Left("no") },
+        ConfigFactory.empty
+      )
+    )
     val h = EventCatalogHandlers(Deps(cfg, ds, ds, plugins = off), fake)
-    assert(h.importJob(EventImportRequest(Catalogue, dryRun = true)).left.exists(_.message.contains("unknown event catalogue")))
+    assert(
+      h.importJob(EventImportRequest(Catalogue, dryRun = true))
+        .left
+        .exists(_.message.contains("unknown event catalogue"))
+    )
     assert(!h.catalogues.exists(_.id == Catalogue))
     val e = EventRepo.get(ds, "zq_quakes_b1").getOrElse(fail("gone"))
     assertEquals(h.context(e).catalogue.map(_.provider), List(Catalogue))
@@ -128,38 +169,66 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
 
   private val Floods = "zq-floods"
 
-  /** A catalogue of floods from 3000 BCE (its floor) whose records reach past both ends of what may be,
-    * and one dated only by its stated year ±. */
+  /** A catalogue of floods from 3000 BCE (its floor) whose records reach past both ends of what may be, and one dated
+    * only by its stated year ±.
+    */
   private object ZqFloods extends spi.EventCatalogue:
-    val title = "Zq flood catalogue"; val licence = spi.Licence("CC0-1.0"); val citation = "Zq (2026)"; val home = "https://zq.example"
+    val title = "Zq flood catalogue"; val licence = spi.Licence("CC0-1.0"); val citation = "Zq (2026)";
+    val home = "https://zq.example"
     override val requestIntervalMs = 0
     override val floorYear = Some(spi.Year(-3000))
     def parts(q: spi.CatalogueQuery) = List("all")
     private def ev(id: String, nb: Option[Int], na: Option[Int]) =
-      spi.CatalogueEvent(id, s"https://zq.example/$id", s"Zq Flood $id", "flood", nb.map(spi.Year(_)), na.map(spi.Year(_)),
-        lat = Some(spi.Latitude(30.0)), lon = Some(spi.Longitude(31.0)))
+      spi.CatalogueEvent(
+        id,
+        s"https://zq.example/$id",
+        s"Zq Flood $id",
+        "flood",
+        nb.map(spi.Year(_)),
+        na.map(spi.Year(_)),
+        lat = Some(spi.Latitude(30.0)),
+        lon = Some(spi.Longitude(31.0))
+      )
     def read(part: String, q: spi.CatalogueQuery, http: spi.PluginHttp) =
-      http.get("https://zq.example/api/floods", Map.empty).map(_ => spi.CataloguePage(List(
-        ev("future", Some(2000), Some(2500)),                                            // past the present
-        ev("early", Some(-3500), Some(-2900)).copy(beginBy = Some(spi.Year(-3100))),       // before the floor
-        ev("stated", None, None).copy(central = Some(spi.Year(-1000)), plusMinus = Some(50L)), // a year ± only
-        ev("plain", Some(-1200), Some(-1200)))))                                          // nothing to hold
+      http
+        .get("https://zq.example/api/floods", Map.empty)
+        .map(_ =>
+          spi.CataloguePage(
+            List(
+              ev("future", Some(2000), Some(2500)), // past the present
+              ev("early", Some(-3500), Some(-2900)).copy(beginBy = Some(spi.Year(-3100))), // before the floor
+              ev("stated", None, None).copy(central = Some(spi.Year(-1000)), plusMinus = Some(50L)), // a year ± only
+              ev("plain", Some(-1200), Some(-1200))
+            )
+          )
+        ) // nothing to hold
 
-  private final class FloodsPlugin extends spi.Plugin:
+  final private class FloodsPlugin extends spi.Plugin:
     type Config = ZqCatalogueConfig
     val info = spi.PluginInfo("zq-floods-plugin", "0.1.0", spi.Spi.Version)
     override def defaultsResource = "zq-none.conf"
     def register(c: ZqCatalogueConfig, ctx: spi.PluginContext) = ctx.eventCatalogues.add(Floods, ZqFloods)
 
   private def floodsGeneration: Generation =
-    PluginHost.build(Plugins.providers :+ FloodsPlugin(), ConfigFactory.parseString("histmersion.plugins.zq-floods-plugin.enabled = true"),
-      ConfigFactory.empty, Plugins.services(() => new spi.PluginHttp { def get(u: String, h: Map[String, String]) = Left("no") },
-        ConfigFactory.empty))
+    PluginHost.build(
+      Plugins.providers :+ FloodsPlugin(),
+      ConfigFactory.parseString("histmersion.plugins.zq-floods-plugin.enabled = true"),
+      ConfigFactory.empty,
+      Plugins.services(
+        () => new spi.PluginHttp { def get(u: String, h: Map[String, String]) = Left("no") },
+        ConfigFactory.empty
+      )
+    )
 
   private def storedFloods: Map[String, (TimeSpan, TimeSpan, Option[Long], Option[Long])] =
     val events = EventCatalogRepo.stored(ds).map(e => e.id -> e.timeSpan).toMap
-    EventCatalogRepo.records(ds, Some(Floods))._1.map((id, _, r) =>
-      r.providerId -> (r.timeSpan, events.getOrElse(id, fail(s"no event $id")), r.central, r.plusMinus)).toMap
+    EventCatalogRepo
+      .records(ds, Some(Floods))
+      ._1
+      .map((id, _, r) =>
+        r.providerId -> (r.timeSpan, events.getOrElse(id, fail(s"no event $id")), r.central, r.plusMinus)
+      )
+      .toMap
 
   test("a plugin's records are held inside the present and its floor AT THE IMPORT; rederive then changes nothing"):
     val h = EventCatalogHandlers(Deps(cfg, ds, ds, plugins = floodsGeneration), fake2, () => 2026L)
@@ -182,7 +251,8 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
     assertEquals(off.runRederive(Some(Floods), dryRun = true, _ => ()).changed, 0)
 
   private def fake2 = FakeMediaHttp(url =>
-    if url == "https://zq.example/api/floods" then FakeMediaHttp.json("{}") else Left(s"unexpected $url"))
+    if url == "https://zq.example/api/floods" then FakeMediaHttp.json("{}") else Left(s"unexpected $url")
+  )
 
 /** The fixture plugin's (empty) settings. */
 final case class ZqCatalogueConfig() derives hearth.kindlings.sconfigderivation.ConfigReader

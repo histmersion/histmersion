@@ -6,9 +6,10 @@ import java.nio.file.{Files, Path}
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 
-/** A retention pass over a TEMPORARY Codex home (#2582) — never the live one: old transcripts go, new
-  * ones and the login stay, the SQLite files are vacuumed through the configured command, and nothing
-  * happens while a run holds the home. */
+/** A retention pass over a TEMPORARY Codex home (#2582) — never the live one: old transcripts go, new ones and the
+  * login stay, the SQLite files are vacuumed through the configured command, and nothing happens while a run holds the
+  * home.
+  */
 class CodexHomeSuite extends munit.FunSuite:
 
   private val Day = 24L * 60 * 60 * 1000
@@ -33,7 +34,11 @@ class CodexHomeSuite extends munit.FunSuite:
 
   private def cleanup(h: Path): Unit =
     val s = Files.walk(h)
-    try s.sorted(java.util.Comparator.reverseOrder()).forEach(p => { val _ = Files.deleteIfExists(p) }) finally s.close()
+    try
+      s.sorted(java.util.Comparator.reverseOrder()).forEach { p =>
+        val _ = Files.deleteIfExists(p)
+      }
+    finally s.close()
 
   test("a pass deletes old transcripts and their empty folders, vacuums the SQLite files, keeps the login"):
     val h = home()
@@ -47,9 +52,13 @@ class CodexHomeSuite extends munit.FunSuite:
       assert(Files.isDirectory(h.resolve("archived_sessions")), "the transcript folders themselves stay")
       assertEquals(Files.readString(h.resolve("auth.json")), """{"tokens":"secret"}""")
       assert(Files.exists(h.resolve("extractor.config.toml")))
-      assertEquals(ran.toList, List(
-        List("sqlite3", h.resolve("state_5.sqlite").toString, "VACUUM;"),
-        List("sqlite3", h.resolve("thread_history_1.sqlite").toString, "VACUUM;")))
+      assertEquals(
+        ran.toList,
+        List(
+          List("sqlite3", h.resolve("state_5.sqlite").toString, "VACUUM;"),
+          List("sqlite3", h.resolve("thread_history_1.sqlite").toString, "VACUUM;")
+        )
+      )
       assertEquals(r.vacuumed.map(_._1), List("state_5.sqlite", "thread_history_1.sqlite"))
       assert(r.summary.startsWith("2 transcripts deleted"), r.summary)
     finally cleanup(h)
@@ -58,7 +67,7 @@ class CodexHomeSuite extends munit.FunSuite:
     val h = home()
     try
       val inRun = CountDownLatch(1)
-      val done  = CountDownLatch(1)
+      val done = CountDownLatch(1)
       val t = Thread.ofVirtual().start { () =>
         CodexHome.using(h) { inRun.countDown(); val _ = done.await(10, TimeUnit.SECONDS) }
       }

@@ -5,14 +5,16 @@ import io.circe.parser
 
 import java.nio.file.Files
 
-/** Reading the plan pools without spending anything: Claude's `rate_limit_event`, a mod's report, and
-  * Codex's `account/rateLimits/read` — the last through a STUB `codex app-server` answering the
-  * response captured on 2026-10-05 (docs/research-agent-runtimes.md §1.2), which also proves that
-  * nothing but initialize / initialized / the read is ever sent (never a reset-credit consume). */
+/** Reading the plan pools without spending anything: Claude's `rate_limit_event`, a mod's report, and Codex's
+  * `account/rateLimits/read` — the last through a STUB `codex app-server` answering the response captured on 2026-10-05
+  * (docs/research-agent-runtimes.md §1.2), which also proves that nothing but initialize / initialized / the read is
+  * ever sent (never a reset-credit consume).
+  */
 class PlanPoolsSuite extends munit.FunSuite:
 
-  /** The read captured on 2026-10-05: the weekly Codex window spent, no 5-hour window on this plan,
-    * a second bucket for a fallback model, ordinary usage not allowed, a reset credit on offer. */
+  /** The read captured on 2026-10-05: the weekly Codex window spent, no 5-hour window on this plan, a second bucket for
+    * a fallback model, ordinary usage not allowed, a reset credit on offer.
+    */
   val Captured: String =
     """{"ordinaryUsageAllowed":false,
       | "rateLimits":{"limitId":"codex","limitName":null,"normalModelSlug":null,
@@ -50,7 +52,8 @@ class PlanPoolsSuite extends munit.FunSuite:
     val resp = dir.resolve("resp.json")
     Files.writeString(resp, s"""{"jsonrpc":"2.0","id":2,"result":${Captured.replace("\n", "")}}""")
     val script = dir.resolve("codex")
-    Files.writeString(script,
+    Files.writeString(
+      script,
       s"""#!/bin/bash
          |[ "$$1" = "app-server" ] || exit 9
          |echo "CODEX_HOME=$$CODEX_HOME" > '$dir/env'
@@ -61,7 +64,8 @@ class PlanPoolsSuite extends munit.FunSuite:
          |    *'account/rateLimits/read'*) cat '$resp'; echo ;;
          |  esac
          |done
-         |""".stripMargin)
+         |""".stripMargin
+    )
     script.toFile.setExecutable(true)
     val home = Files.createDirectories(dir.resolve("home"))
     val r = PlanPools.readCodex(script.toString, home, 10)
@@ -83,8 +87,15 @@ class PlanPoolsSuite extends munit.FunSuite:
     assert((System.nanoTime() - t0) / 1000000000L < 15)
 
   test("a mod's report: percentUsed and the ISO reset"):
-    val rs = PlanPools.modReadings(List(ModWindow("five_hour", 12, Some("2026-10-05T21:40:00.000Z")),
-      ModWindow("seven_day", 42, None)), Source.Mod, 5L)
-    assertEquals(rs.map(r => (r.kind, r.usedPct, r.resetsAt, r.source)),
-      List(("five_hour", 12.0, Some(java.time.Instant.parse("2026-10-05T21:40:00Z").toEpochMilli), Source.Mod),
-        ("seven_day", 42.0, None, Source.Mod)))
+    val rs = PlanPools.modReadings(
+      List(ModWindow("five_hour", 12, Some("2026-10-05T21:40:00.000Z")), ModWindow("seven_day", 42, None)),
+      Source.Mod,
+      5L
+    )
+    assertEquals(
+      rs.map(r => (r.kind, r.usedPct, r.resetsAt, r.source)),
+      List(
+        ("five_hour", 12.0, Some(java.time.Instant.parse("2026-10-05T21:40:00Z").toEpochMilli), Source.Mod),
+        ("seven_day", 42.0, None, Source.Mod)
+      )
+    )

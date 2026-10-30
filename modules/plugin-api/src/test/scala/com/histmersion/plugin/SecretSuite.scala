@@ -17,10 +17,14 @@ class SecretSuite extends munit.FunSuite:
   test("the three reference forms parse"):
     assertEquals(SecretRef.parse("value:hunter2"), Right(SecretRef.Value("hunter2")))
     assertEquals(SecretRef.parse("env:PORTAL_TOKEN"), Right(SecretRef.Env("PORTAL_TOKEN")))
-    assertEquals(SecretRef.parse(" keepassxc:Histmersion/Portal#password "),
-      Right(SecretRef.Vault("keepassxc", "Histmersion/Portal#password")))
-    assertEquals(SecretRef.parse("1password:op://Private/Portal/password"),
-      Right(SecretRef.Vault("1password", "op://Private/Portal/password")))
+    assertEquals(
+      SecretRef.parse(" keepassxc:Histmersion/Portal#password "),
+      Right(SecretRef.Vault("keepassxc", "Histmersion/Portal#password"))
+    )
+    assertEquals(
+      SecretRef.parse("1password:op://Private/Portal/password"),
+      Right(SecretRef.Vault("1password", "op://Private/Portal/password"))
+    )
     // a literal keeps its colons and its spaces inside
     assertEquals(SecretRef.parse("value:a:b c"), Right(SecretRef.Value("a:b c")))
 
@@ -45,13 +49,17 @@ class SecretSuite extends munit.FunSuite:
     assertEquals(Secret.parse("env:A"), Secret.parse("env:A"))
 
   test("the reader parses references inside a derived config; numbers and booleans may be strings"):
-    val c = ConfigFactory.parseString(
-      "token = \"env:PORTAL_TOKEN\"\npassword = null\nretries = \"3\"\nverbose = \"true\"")
-    assertEquals(ConfigReader[WithSecrets].from(c.root),
-      Right(WithSecrets(Secret(SecretRef.Env("PORTAL_TOKEN")), None, 3, true)))
+    val c =
+      ConfigFactory.parseString("token = \"env:PORTAL_TOKEN\"\npassword = null\nretries = \"3\"\nverbose = \"true\"")
+    assertEquals(
+      ConfigReader[WithSecrets].from(c.root),
+      Right(WithSecrets(Secret(SecretRef.Env("PORTAL_TOKEN")), None, 3, true))
+    )
     val withPw = c.withValue("password", org.ekrich.config.ConfigValueFactory.fromAnyRef("keepassxc:a#b"))
-    assertEquals(ConfigReader[WithSecrets].from(withPw.root).map(_.password),
-      Right(Some(Secret(SecretRef.Vault("keepassxc", "a#b")))))
+    assertEquals(
+      ConfigReader[WithSecrets].from(withPw.root).map(_.password),
+      Right(Some(Secret(SecretRef.Vault("keepassxc", "a#b"))))
+    )
 
   test("a bare string where a secret belongs is a decoding error that does not repeat the value"):
     val c = ConfigFactory.parseString("token = hunter2\npassword = null\nretries = 1\nverbose = false")

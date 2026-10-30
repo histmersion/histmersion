@@ -6,7 +6,9 @@ class AiProviderSpiSuite extends munit.FunSuite:
   private object Echo extends AiProvider:
     val title = "Echo"
     def turn(r: AiTurnRequest, http: AiHttp) =
-      r.messages.collectFirst { case AiMessage.User(t) => t }.toRight(AiFailure.Error("no user message"))
+      r.messages
+        .collectFirst { case AiMessage.User(t) => t }
+        .toRight(AiFailure.Error("no user message"))
         .map(t => AiTurn(t, usage = Some(AiUsage(10, 2))))
 
   test("a provider's defaults: tools, no native structured output, no personal plan, nothing to check or list"):

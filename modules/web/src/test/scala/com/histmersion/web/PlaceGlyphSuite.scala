@@ -2,9 +2,10 @@ package com.histmersion.web
 
 import com.histmersion.values.PlaceKind
 
-/** How a place is drawn (2026-10-09): a region or polity is a SHAPE, so one known only by a point is
-  * its name marked "no boundary yet" — never a dot like a site — hidden when zoomed far out; and a
-  * chosen place is named by its label and kind in every chip, never by its id. */
+/** How a place is drawn (2026-10-09): a region or polity is a SHAPE, so one known only by a point is its name marked
+  * "no boundary yet" — never a dot like a site — hidden when zoomed far out; and a chosen place is named by its label
+  * and kind in every chip, never by its id.
+  */
 class PlaceGlyphSuite extends munit.FunSuite:
 
   test("a polygon is an area; a point region or polity is a label; a point site is a dot"):

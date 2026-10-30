@@ -11,12 +11,12 @@ import ox.supervised
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 
-/** `GET /api/tiles/{layer}/{z}/{x}/{y}` through the wire: a vector tile of the layer, its ETag and the
-  * browser's revalidation (304), a write that makes the kept tile stale, a filter that changes the
-  * tile, and a bad layer or tile refused. Fixtures `zztilehttp` at 100°E 70°S. Skipped without
-  * HISTMERSION_TEST_DB_URL. */
+/** `GET /api/tiles/{layer}/{z}/{x}/{y}` through the wire: a vector tile of the layer, its ETag and the browser's
+  * revalidation (304), a write that makes the kept tile stale, a filter that changes the tile, and a bad layer or tile
+  * refused. Fixtures `zztilehttp` at 100°E 70°S. Skipped without HISTMERSION_TEST_DB_URL.
+  */
 class TilesHttpSuite extends munit.FunSuite:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()
@@ -31,17 +31,19 @@ class TilesHttpSuite extends munit.FunSuite:
 
   private def withServer(f: (String, javax.sql.DataSource) => Unit): Unit =
     val base = AppConfig.load()
-    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.copy(db = base.db.copy(url = testDb.get))
     val ds = com.histmersion.db.Db.pool(cfg.db)
     try
       Migrate.run(ds)
       connect(ds):
         val _ = sql"DELETE FROM places WHERE id LIKE 'zztilehttp%'".update.run()
         val _ = sql"""INSERT INTO places (id, label, kind, period, geom) VALUES
-                      ('zztilehttp_a', 'Zztilehttp A', 'site', int8range(-2000, -1500, '[]'), ST_SetSRID(ST_MakePoint($lon, $lat), 4326))""".update.run()
+                      ('zztilehttp_a', 'Zztilehttp A', 'site', int8range(-2000, -1500, '[]'), ST_SetSRID(ST_MakePoint($lon, $lat), 4326))""".update
+          .run()
       supervised {
         val b = Main.server(cfg, "127.0.0.1", 0).start()
-        try f(s"http://127.0.0.1:${b.port}", ds) finally b.stop()
+        try f(s"http://127.0.0.1:${b.port}", ds)
+        finally b.stop()
       }
     finally
       connect(ds)(sql"DELETE FROM places WHERE id LIKE 'zztilehttp%'".update.run())

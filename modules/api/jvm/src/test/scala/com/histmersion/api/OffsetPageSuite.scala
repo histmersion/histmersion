@@ -1,8 +1,8 @@
 package com.histmersion.api
 
-
-/** [[OffsetPage]] (#1798 item 8): one page shape — total, offset, next — and one Markdown header and
-  * footer for every offset-paged list, so a list that is cut says how to get the rest. */
+/** [[OffsetPage]] (#1798 item 8): one page shape — total, offset, next — and one Markdown header and footer for every
+  * offset-paged list, so a list that is cut says how to get the rest.
+  */
 class OffsetPageSuite extends munit.FunSuite:
 
   test("next: the offset after this page, none on the last page or past the end"):
@@ -18,13 +18,23 @@ class OffsetPageSuite extends munit.FunSuite:
 
   test("footer: empty for the whole list; the range and the next offset otherwise"):
     assertEquals(OffsetPage.footer(OffsetPage(7, 0, 7)), "")
-    assertEquals(OffsetPage.footer(OffsetPage(412, 50, 50)), "\n\n_showing 51–100 of 412 — next: offset=100 — full set: limit=412_")
+    assertEquals(
+      OffsetPage.footer(OffsetPage(412, 50, 50)),
+      "\n\n_showing 51–100 of 412 — next: offset=100 — full set: limit=412_"
+    )
     assertEquals(OffsetPage.footer(OffsetPage(412, 400, 12)), "\n\n_showing 401–412 of 412 — full set: limit=412_")
     assert(!OffsetPage.footer(OffsetPage(9000, 0, 50)).contains("full set"))
 
   test("markdown: the empty text, and past the end says so"):
-    assertEquals(OffsetPage.markdown(OffsetPage(0, 0, 0), "goal(s)", "_No goals._", Nil)((_: Int).toString), "_No goals._")
-    assert(OffsetPage.markdown(OffsetPage(3, 10, 0), "goal(s)", "_No goals._", Nil)((_: Int).toString).contains("past the end"))
+    assertEquals(
+      OffsetPage.markdown(OffsetPage(0, 0, 0), "goal(s)", "_No goals._", Nil)((_: Int).toString),
+      "_No goals._"
+    )
+    assert(
+      OffsetPage
+        .markdown(OffsetPage(3, 10, 0), "goal(s)", "_No goals._", Nil)((_: Int).toString)
+        .contains("past the end")
+    )
 
   private val g = Goal("g1", "A goal", "planned")
   private def ev(i: Int) = EventSummary(s"e$i", s"Event $i", "battle", TimeSpan(), "attested")

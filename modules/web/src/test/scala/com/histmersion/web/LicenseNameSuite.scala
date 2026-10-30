@@ -32,9 +32,17 @@ class LicenseNameSuite extends munit.FunSuite:
   }
 
   test("the record's own link wins; the HTML is the name linked, escaped") {
-    assertEquals(LicenseName.link("CC-BY-4.0", Some("https://example.org/lic")), ("CC BY 4.0", Some("https://example.org/lic")))
-    assertEquals(LicenseName.link("CC-BY-4.0", Some(" ")), ("CC BY 4.0", Some("https://creativecommons.org/licenses/by/4.0/")))
-    assertEquals(LicenseName.html("CC0", None),
-      """<a class="media-license" href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener license">CC0 1.0</a>""")
+    assertEquals(
+      LicenseName.link("CC-BY-4.0", Some("https://example.org/lic")),
+      ("CC BY 4.0", Some("https://example.org/lic"))
+    )
+    assertEquals(
+      LicenseName.link("CC-BY-4.0", Some(" ")),
+      ("CC BY 4.0", Some("https://creativecommons.org/licenses/by/4.0/"))
+    )
+    assertEquals(
+      LicenseName.html("CC0", None),
+      """<a class="media-license" href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener license">CC0 1.0</a>"""
+    )
     assertEquals(LicenseName.html("<b>odd</b>", None), """<span class="media-license">&lt;b&gt;odd&lt;/b&gt;</span>""")
   }

@@ -8,11 +8,11 @@ import com.histmersion.config.given
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 
-/** The web map's abstraction holds (docs/user-guide/contributing/architecture.md, "The map"): only the
-  * adapter package `web.map.maplibre` names the map library — its facade types, its global, its
-  * stylesheet classes, its style-document vocabulary. Everything else speaks `web.map.MapSurface`, so a
-  * change of map library is a new adapter, not a rewrite of the app. `Engines.scala` is the one place
-  * that picks the adapter. */
+/** The web map's abstraction holds (docs/user-guide/contributing/architecture.md, "The map"): only the adapter package
+  * `web.map.maplibre` names the map library — its facade types, its global, its stylesheet classes, its style-document
+  * vocabulary. Everything else speaks `web.map.MapSurface`, so a change of map library is a new adapter, not a rewrite
+  * of the app. `Engines.scala` is the one place that picks the adapter.
+  */
 class MapEngineBoundarySuite extends munit.FunSuite:
 
   private val root = Path.of(sys.props.getOrElse("histmersion.repoRoot", "."))
@@ -25,9 +25,24 @@ class MapEngineBoundarySuite extends munit.FunSuite:
 
   /** What only the adapter may say: its package, the library's global and names, Leaflet's. */
   private val forbidden = List(
-    "web.map.maplibre", "maplibregl", "maplibre-gl", "GlMap", "GlPopup", "GlEvent", "RenderedFeature",
-    "queryRenderedFeatures", "setFeatureState", "addLayer(", "addSource(", "\"raster-dem\"", "leaflet", "Leaflet",
-    "protomaps", "markerClusterGroup", "mlcontour")
+    "web.map.maplibre",
+    "maplibregl",
+    "maplibre-gl",
+    "GlMap",
+    "GlPopup",
+    "GlEvent",
+    "RenderedFeature",
+    "queryRenderedFeatures",
+    "setFeatureState",
+    "addLayer(",
+    "addSource(",
+    "\"raster-dem\"",
+    "leaflet",
+    "Leaflet",
+    "protomaps",
+    "markerClusterGroup",
+    "mlcontour"
+  )
 
   test("no map library type or name outside the adapter package"):
     assert(Files.isDirectory(adapter), s"the adapter is at $adapter")

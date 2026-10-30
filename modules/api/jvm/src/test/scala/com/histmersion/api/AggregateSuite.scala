@@ -1,6 +1,5 @@
 package com.histmersion.api
 
-
 /** Pure tests for the timeline bucketing (plan §1.6 sizes, §1.7 strip). No DB involved. */
 class AggregateSuite extends munit.FunSuite:
 
@@ -55,8 +54,7 @@ class AggregateSuite extends munit.FunSuite:
   // ── overlap counting ──────────────────────────────────────────────────────────────────────
   test("a row counts in EVERY bucket its period overlaps"):
     val h = Aggregate.histogram(List(row(-1550, -1350)), -1600, -1200, 100)
-    assertEquals(h.map(b => (b.start, b.count)),
-      List((-1600L, 1), (-1500L, 1), (-1400L, 1), (-1300L, 0), (-1200L, 0)))
+    assertEquals(h.map(b => (b.start, b.count)), List((-1600L, 1), (-1500L, 1), (-1400L, 1), (-1300L, 0), (-1200L, 0)))
 
   test("a point-in-time row hits exactly one bucket (the §1.7 acceptance case)"):
     val h = Aggregate.histogram(List(row(-1250, -1250)), -1600, -1200, 100)
@@ -76,9 +74,8 @@ class AggregateSuite extends munit.FunSuite:
 
   test("undated rows are ignored; half-dated rows collapse to a point"):
     val rows = List(PeriodRow(None, None), PeriodRow(Some(-1250), None), PeriodRow(None, Some(-1450)))
-    val h    = Aggregate.histogram(rows, -1600, -1200, 100)
-    assertEquals(h.map(b => (b.start, b.count)),
-      List((-1600L, 0), (-1500L, 1), (-1400L, 0), (-1300L, 1), (-1200L, 0)))
+    val h = Aggregate.histogram(rows, -1600, -1200, 100)
+    assertEquals(h.map(b => (b.start, b.count)), List((-1600L, 0), (-1500L, 1), (-1400L, 0), (-1300L, 1), (-1200L, 0)))
 
   test("a row with inverted bounds is normalised, not dropped"):
     assertEquals(Aggregate.histogram(List(row(-1350, -1550)), -1600, -1200, 100).map(_.count), List(1, 1, 1, 0, 0))
@@ -96,7 +93,7 @@ class AggregateSuite extends munit.FunSuite:
 
   // ── Markdown rendering (CLI + MCP surface) ────────────────────────────────────────────────
   test("Markdown.histogram renders a table with a bar per non-empty bucket"):
-    val h  = TimeHistogram(-1600, -1200, 100, Aggregate.histogram(List(row(-1250, -1250)), -1600, -1200, 100))
+    val h = TimeHistogram(-1600, -1200, 100, Aggregate.histogram(List(row(-1250, -1250)), -1600, -1200, 100))
     val md = Markdown.histogram(h, "sources")
     assert(md.contains("| period | sources | |"), md)
     // every table row must keep its leading pipe (a stripMargin here would silently eat them)
@@ -105,7 +102,8 @@ class AggregateSuite extends munit.FunSuite:
     assert(md.contains("1 non-empty bucket(s); each source is counted"), md)
 
   test("Markdown.histogram survives an all-empty histogram"):
-    val md = Markdown.histogram(TimeHistogram(-1600, -1200, 100, Aggregate.histogram(Nil, -1600, -1200, 100)), "sources")
+    val md =
+      Markdown.histogram(TimeHistogram(-1600, -1200, 100, Aggregate.histogram(Nil, -1600, -1200, 100)), "sources")
     assert(md.contains("0 non-empty bucket(s)"), md)
 
   // ── unbounded windows and Long overflow ──────────────────────────────────────────────────────
@@ -115,15 +113,13 @@ class AggregateSuite extends munit.FunSuite:
     assertEquals(Aggregate.bucketCount(0, 0, 10), BigInt(1))
     assertEquals(Aggregate.bucketCount(-3500, -500, 100), BigInt(31))
     // …and it answers, exactly, for a window nobody could ever build
-    assertEquals(Aggregate.bucketCount(-1000000000000000L, 1000000000000000L, 5000),
-      BigInt("400000000001"))
+    assertEquals(Aggregate.bucketCount(-1000000000000000L, 1000000000000000L, 5000), BigInt("400000000001"))
     assert(Aggregate.bucketCount(-Long.MaxValue, Long.MaxValue, 10) > BigInt(10).pow(17))
 
   test("bucketCount agrees with buckets on windows small enough to build"):
     List((-1000L, -1L, 100L), (-3500L, -500L, 10L), (7L, 7L, 5L), (-20L, 20L, 3L))
       .foreach { (f, t, s) =>
-        assertEquals(BigInt(Aggregate.buckets(f, t, s).size), Aggregate.bucketCount(f, t, s),
-          s"($f, $t, $s)")
+        assertEquals(BigInt(Aggregate.buckets(f, t, s).size), Aggregate.bucketCount(f, t, s), s"($f, $t, $s)")
       }
 
   test("to = Long.MaxValue terminates instead of looping on overflow"):
@@ -148,14 +144,14 @@ class AggregateStartsSuite extends munit.FunSuite:
   test("Starts counts a long-range source ONCE, where it begins"):
     val rows = List(row(-3300, -1200))
     val over = Aggregate.histogram(rows, -3300, -1200, 100, Counting.Overlap)
-    val st   = Aggregate.histogram(rows, -3300, -1200, 100, Counting.Starts)
+    val st = Aggregate.histogram(rows, -3300, -1200, 100, Counting.Starts)
     assertEquals(over.count(_.count > 0), over.size, "overlap fills every bar")
     assertEquals(st.count(_.count > 0), 1)
     assertEquals(st.find(_.count > 0).map(_.start), Some(-3300L))
 
   test("Starts bars sum to the number of dated rows in the window"):
     val rows = List(row(-2000, -1000), row(-1950, -1900), row(-1200, -1100), row(-1150, -900))
-    val st   = Aggregate.histogram(rows, -2000, -900, 100, Counting.Starts)
+    val st = Aggregate.histogram(rows, -2000, -900, 100, Counting.Starts)
     assertEquals(st.map(_.count).sum, 4)
 
   test("a source starting before the window is not counted into the first bar"):
@@ -168,8 +164,10 @@ class AggregateStartsSuite extends munit.FunSuite:
 
   test("Overlap stays the default, byte for byte"):
     val rows = List(row(-2000, -1500), row(-1600, -1000))
-    assertEquals(Aggregate.histogram(rows, -2000, -1000, 100),
-      Aggregate.histogram(rows, -2000, -1000, 100, Counting.Overlap))
+    assertEquals(
+      Aggregate.histogram(rows, -2000, -1000, 100),
+      Aggregate.histogram(rows, -2000, -1000, 100, Counting.Overlap)
+    )
 
   test("the wire spelling parses, and nothing else does"):
     assertEquals(Counting.parse("starts"), Some(Counting.Starts))

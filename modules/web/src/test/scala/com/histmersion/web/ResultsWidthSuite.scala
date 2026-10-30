@@ -7,7 +7,10 @@ class ResultsWidthSuite extends munit.FunSuite:
     assertEquals(ResultsWidth.max(1440), 800)
     assertEquals(ResultsWidth.max(820), 492)
     assertEquals(ResultsWidth.clamp(9999, 820), 492)
-    assert(ui.Layout.sidebarDefault.value >= 462, "the default fits the five tabs with five-digit counts (measured: 462 px)")
+    assert(
+      ui.Layout.sidebarDefault.value >= 462,
+      "the default fits the five tabs with five-digit counts (measured: 462 px)"
+    )
 
   test("the keys: ← wider, → narrower, Shift four times as far, Home and End the ends"):
     assertEquals(ResultsWidth.step(480, "ArrowLeft", shift = false, 1440), Some(496))

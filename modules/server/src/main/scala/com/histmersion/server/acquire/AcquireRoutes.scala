@@ -7,13 +7,15 @@ import com.histmersion.domain.*
 import sttp.tapir.server.ServerEndpoint
 import sttp.shared.Identity
 
-/** The REST wiring of [[AcquireApi]] — every route delegates to the single [[AcquireHandlers]]
-  * implementation the MCP tools also call. */
+/** The REST wiring of [[AcquireApi]] — every route delegates to the single [[AcquireHandlers]] implementation the MCP
+  * tools also call.
+  */
 final class AcquireRoutes(h: AcquireHandlers):
 
   val endpoints: List[ServerEndpoint[Any, Identity]] = List(
     AcquireApi.discover.serverLogic[Identity]((q, since, sort, limit, notInDb) =>
-      h.discover(q, since, sort, limit, notInDb)),
+      h.discover(q, since, sort, limit, notInDb)
+    ),
     AcquireApi.meta.serverLogic[Identity](id => h.meta(id)),
     AcquireApi.wikirefs.serverLogic[Identity](url => h.wikirefs(url)),
     AcquireApi.refs.serverLogic[Identity](req => h.refs(req)),

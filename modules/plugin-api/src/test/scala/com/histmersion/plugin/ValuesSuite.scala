@@ -1,7 +1,8 @@
 package com.histmersion.plugin
 
-/** The SPI's own newtypes: what each accepts, at compile time for a literal and at run time for a value
-  * read from a provider; and the SPI generation compiled into the plugin. */
+/** The SPI's own newtypes: what each accepts, at compile time for a literal and at run time for a value read from a
+  * provider; and the SPI generation compiled into the plugin.
+  */
 class ValuesSuite extends munit.FunSuite:
 
   test("a year is any integer, BCE negative"):
@@ -21,18 +22,24 @@ class ValuesSuite extends munit.FunSuite:
 
   test("a DOI is 10.<registrant>/<suffix>, without a resolver"):
     assertEquals(Doi("10.1038/nature14317").value, "10.1038/nature14317")
-    assertEquals(List("10.1234/abc", "https://doi.org/10.1234/abc", "10.1234/", "doi:10.1/x").map(Doi.option(_).isDefined),
-      List(true, false, false, false))
+    assertEquals(
+      List("10.1234/abc", "https://doi.org/10.1234/abc", "10.1234/", "doi:10.1/x").map(Doi.option(_).isDefined),
+      List(true, false, false, false)
+    )
     assert(Doi.either("nature14317").isLeft)
 
   test("a Wikidata item is Q and its number"):
     assertEquals(WikidataId("Q5788").value, "Q5788")
-    assertEquals(List("Q1", "Q0", "q5788", "P31", "Q12x").map(WikidataId.option(_).isDefined),
-      List(true, false, false, false, false))
+    assertEquals(
+      List("Q1", "Q0", "q5788", "P31", "Q12x").map(WikidataId.option(_).isDefined),
+      List(true, false, false, false, false)
+    )
 
   test("a licence is the provider's statement, whatever it says: the host judges it"):
-    assertEquals(List("CC-BY-4.0", "Public domain", "", "all rights reserved").map(Licence(_).value),
-      List("CC-BY-4.0", "Public domain", "", "all rights reserved"))
+    assertEquals(
+      List("CC-BY-4.0", "Public domain", "", "all rights reserved").map(Licence(_).value),
+      List("CC-BY-4.0", "Public domain", "", "all rights reserved")
+    )
 
   test("the SPI generation is compiled into the plugin: the host keeps no member a plugin could read it from"):
     assertEquals(Spi.Version, 2)

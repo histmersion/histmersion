@@ -3,9 +3,10 @@ package com.histmersion.web
 import com.histmersion.api.*
 import com.histmersion.values.{Confidence, PlaceKind}
 
-/** The four kinds of point are four descriptors of ONE layer (docs/map-layers.md): the same assertions
-  * run over every one of them, so they cannot drift apart — the marker's shape, glyph, fill and accessible
-  * name, what a bubble counts, its row in a bubble's list. Pure. */
+/** The four kinds of point are four descriptors of ONE layer (docs/map-layers.md): the same assertions run over every
+  * one of them, so they cannot drift apart — the marker's shape, glyph, fill and accessible name, what a bubble counts,
+  * its row in a bubble's list. Pure.
+  */
 class PointKindsSuite extends munit.FunSuite:
 
   override def beforeAll(): Unit = TestTokens.install()
@@ -13,20 +14,53 @@ class PointKindsSuite extends munit.FunSuite:
   private val span = (-1700L, -1200L)
 
   /** One sample of each kind, of a KNOWN type, and one of an unknown type where a kind has types. */
-  private final case class Sample[A](kind: PointKind[A], known: A, unknown: Option[A])
+  final private case class Sample[A](kind: PointKind[A], known: A, unknown: Option[A])
 
-  private val finding = GeoHit("zz2020_x", "Zz paper", "a claim", None, Some(31.0), Some(37.0), Some(-1300L), Some(-1250L),
-    Some(Confidence.High), sourceKind = Some(SourceKinds.Paper))
-  private val site = SitePoint(Some("zz_fort"), "Zz fort", PlaceKind.Site, Some("fortification"), None, 37.5, 32.0, Some((-1400.0, -1300.0)))
-  private val event = EventGeo("zz_b", "Zz battle", "battle", "local", "attested", TimeSpan(Some(-1274), None, None, Some(-1274)),
-    37.5, 32, "event")
+  private val finding = GeoHit(
+    "zz2020_x",
+    "Zz paper",
+    "a claim",
+    None,
+    Some(31.0),
+    Some(37.0),
+    Some(-1300L),
+    Some(-1250L),
+    Some(Confidence.High),
+    sourceKind = Some(SourceKinds.Paper)
+  )
+  private val site = SitePoint(
+    Some("zz_fort"),
+    "Zz fort",
+    PlaceKind.Site,
+    Some("fortification"),
+    None,
+    37.5,
+    32.0,
+    Some((-1400.0, -1300.0))
+  )
+  private val event = EventGeo(
+    "zz_b",
+    "Zz battle",
+    "battle",
+    "local",
+    "attested",
+    TimeSpan(Some(-1274), None, None, Some(-1274)),
+    37.5,
+    32,
+    "event"
+  )
   private val picture = MediaGeoHit(None, "zz.jpg", Some("photo"), 37.0, 22.0, Some(-1500L), Some(-1400L), None, "u1")
 
   private val samples: List[Sample[?]] = List(
-    Sample(PointKinds.Findings, Spot(37.0, 31.0, List(finding)), Some(Spot(37.0, 31.0, List(finding.copy(sourceKind = None))))),
+    Sample(
+      PointKinds.Findings,
+      Spot(37.0, 31.0, List(finding)),
+      Some(Spot(37.0, 31.0, List(finding.copy(sourceKind = None))))
+    ),
     Sample(PointKinds.Sites, site, Some(site.copy(siteType = None))),
     Sample(PointKinds.Events, event, None),
-    Sample(PointKinds.Media, picture, None))
+    Sample(PointKinds.Media, picture, None)
+  )
 
   test("every kind is listed once, each with its own shape and cluster noun"):
     assertEquals(PointKinds.all.map(_.dot), DotKind.values.toList)
@@ -80,7 +114,10 @@ class PointKindsSuite extends munit.FunSuite:
     assertEquals(PointKinds.Sites.target(site, Some(-1300L)), Some(Preview.Target.Place("zz_fort", Some(-1300L))))
     assertEquals(PointKinds.Events.target(event, None), Some(Preview.Target.Event("zz_b")))
     assertEquals(PointKinds.Media.target(picture, None), None)
-    assertEquals(PointKinds.Media.target(picture.copy(citekey = Some("zz2019")), None), Some(Preview.Target.Source("zz2019")))
+    assertEquals(
+      PointKinds.Media.target(picture.copy(citekey = Some("zz2019")), None),
+      Some(Preview.Target.Source("zz2019"))
+    )
 
   test("the client-side filter: the site-type menu keeps its type; every other kind is filtered by the server"):
     assert(PointKinds.Sites.keeps(site, None))

@@ -8,14 +8,12 @@ import com.histmersion.api.Queue.{QueueAdd, QueueImport, QueuePatch}
 
 import java.nio.file.{Files, Path}
 
-/** The CLI commands of stream 2.8 — `lint`, `queue`, `query`, `schema` — plus the pure argument
-  * parsing they need. Like every other command they are HTTP clients of the server; the host never
-  * touches Postgres.
+/** The CLI commands of stream 2.8 — `lint`, `queue`, `query`, `schema` — plus the pure argument parsing they need. Like
+  * every other command they are HTTP clients of the server; the host never touches Postgres.
   *
-  * `queue` deliberately keeps the grammar the plan specifies (`queue acquire add "…"`,
-  * `queue tasks`, `queue done 3`, `queue export <dir>`), which does not fit decline's
-  * subcommand-per-verb shape — so the positional arguments are dispatched by [[QueueArgs.parse]],
-  * a pure function with its own tests, rather than by a nest of subcommands.
+  * `queue` deliberately keeps the grammar the plan specifies (`queue acquire add "…"`, `queue tasks`, `queue done 3`,
+  * `queue export <dir>`), which does not fit decline's subcommand-per-verb shape — so the positional arguments are
+  * dispatched by [[QueueArgs.parse]], a pure function with its own tests, rather than by a nest of subcommands.
   */
 object Ops:
 
@@ -30,8 +28,10 @@ object Ops:
     case Rm(id: Int)
     case Export(dir: String)
     case Import(dir: String)
-    /** `queue acquire recheck`: the acquisition list's legal re-check now — of every open item (`all`) or
-      * the due ones the caps allow; a pass of more than one item is a server job, followed unless `noWait`. */
+
+    /** `queue acquire recheck`: the acquisition list's legal re-check now — of every open item (`all`) or the due ones
+      * the caps allow; a pass of more than one item is a server job, followed unless `noWait`.
+      */
     case Recheck(dryRun: Boolean, limit: Option[Int], id: Option[Int], all: Boolean = false, noWait: Boolean = false)
 
   object QueueArgs:
@@ -40,21 +40,33 @@ object Ops:
         "queue done <id> | queue edit <id> \"<text>\" | queue rm <id> | queue export <dir> | queue import <dir> | " +
         "queue acquire recheck [--all] [--dry-run] [--limit n] [--id <item>] [--no-wait]"
 
-    /** Pure: positional words + flags → a command, or the usage line. `--dry-run`, `--limit`, `--id` and
-      * `--no-wait` belong to `acquire recheck` alone; `--all` there means every open item. */
-    def parse(args: List[String], topic: Option[String], reason: Option[String], all: Boolean, dryRun: Boolean = false,
-        limit: Option[Int] = None, item: Option[Int] = None, noWait: Boolean = false): Either[String, QueueCmd] =
+    /** Pure: positional words + flags → a command, or the usage line. `--dry-run`, `--limit`, `--id` and `--no-wait`
+      * belong to `acquire recheck` alone; `--all` there means every open item.
+      */
+    def parse(
+        args: List[String],
+        topic: Option[String],
+        reason: Option[String],
+        all: Boolean,
+        dryRun: Boolean = false,
+        limit: Option[Int] = None,
+        item: Option[Int] = None,
+        noWait: Boolean = false
+    ): Either[String, QueueCmd] =
       def id(s: String): Either[String, Int] =
         s.toIntOption.toRight(s"'$s' is not an item id — $usage")
       val recheckFlags = dryRun || limit.isDefined || item.isDefined || noWait
       args match
         case "acquire" :: "recheck" :: Nil =>
           if limit.exists(_ < 0) then Left(s"--limit is 0 or more — $usage")
-          else if all && item.isDefined then Left(s"--all re-checks every open item, --id one of them — not both — $usage")
-          else if all && limit.isDefined then Left(s"--all re-checks every open item, past every cap; --limit caps a pass — not both — $usage")
+          else if all && item.isDefined then
+            Left(s"--all re-checks every open item, --id one of them — not both — $usage")
+          else if all && limit.isDefined then
+            Left(s"--all re-checks every open item, past every cap; --limit caps a pass — not both — $usage")
           else Right(QueueCmd.Recheck(dryRun, limit, item, all, noWait))
-        case _ if recheckFlags => Left(s"--dry-run, --limit, --id and --no-wait go with `queue acquire recheck` — $usage")
-        case "done" :: i :: Nil     => id(i).map(QueueCmd.Done.apply)
+        case _ if recheckFlags =>
+          Left(s"--dry-run, --limit, --id and --no-wait go with `queue acquire recheck` — $usage")
+        case "done" :: i :: Nil         => id(i).map(QueueCmd.Done.apply)
         case "edit" :: i :: text :: Nil =>
           if text.trim.isEmpty then Left(s"edit needs the new text — $usage") else id(i).map(QueueCmd.Edit(_, text))
         case "edit" :: _            => Left(s"edit takes an item id and the new text — $usage")
@@ -72,8 +84,9 @@ object Ops:
 
   // ── the meta files on disk ────────────────────────────────────────────────────────────────────────
 
-  /** Write `ACQUIRE.md` / `TASKS.md` / `LOG.md` and `GOALS.md` into `dir`, rendered by the server
-    * from the rows. Used by `queue export` and by `histmersion export`, so both produce identical files. */
+  /** Write `ACQUIRE.md` / `TASKS.md` / `LOG.md` and `GOALS.md` into `dir`, rendered by the server from the rows. Used
+    * by `queue export` and by `histmersion export`, so both produce identical files.
+    */
   def writeMeta(c: Client, dir: Path): Either[CliError, List[String]] =
     val _ = Files.createDirectories(dir)
     val files: List[(String, () => Either[CliError, String])] =
@@ -88,8 +101,9 @@ object Ops:
       }
     }
 
-  /** Read the three queue files back. A missing file is skipped, not an error: a workspace may only
-    * keep some of them. `GOALS.md` is never read: it is an export only (see [[GoalsExport]]). */
+  /** Read the three queue files back. A missing file is skipped, not an error: a workspace may only keep some of them.
+    * `GOALS.md` is never read: it is an export only (see [[GoalsExport]]).
+    */
   def readMeta(c: Client, dir: Path, replace: Boolean): Either[CliError, List[String]] =
     if !Files.isDirectory(dir) then Left(CliError(s"not a directory: $dir", exitCode = ExitCode.Usage))
     else
@@ -105,51 +119,70 @@ object Ops:
 
   // ── commands ─────────────────────────────────────────────────────────────────────────────────
 
-
-  /** `lint --fix` applies the server-side repairs and then loops while sources remain to re-chunk
-    * (or point-only imported areas to remove), because a whole-corpus pass is far longer than one
-    * HTTP request. */
+  /** `lint --fix` applies the server-side repairs and then loops while sources remain to re-chunk (or point-only
+    * imported areas to remove), because a whole-corpus pass is far longer than one HTTP request.
+    */
   @annotation.tailrec
-  private def fixLoop(c: Client, rules: List[String], sources: Int, chunks: Int, edges: Int,
-      moved: Option[Int] = None, placed: Option[Int] = None,
-      places: Option[List[String]] = None, areas: Int = 0): Either[CliError, List[String]] =
+  private def fixLoop(
+      c: Client,
+      rules: List[String],
+      sources: Int,
+      chunks: Int,
+      edges: Int,
+      moved: Option[Int] = None,
+      placed: Option[Int] = None,
+      places: Option[List[String]] = None,
+      areas: Int = 0
+  ): Either[CliError, List[String]] =
     c.lintFix(rules) match
-      case Left(e) => Left(e)
+      case Left(e)  => Left(e)
       case Right(r) =>
         val (s, ch, ed) = (sources + r.sourcesReindexed, chunks + r.chunksWritten, edges + r.edgesResolved)
         // the geocode repair is not bounded: the first call made every move there was
-        val mv = moved.orElse(Option.when(rules.exists(_.trim.equalsIgnoreCase(Lint.FindingGeocode)))(r.findingsRegeocoded))
+        val mv =
+          moved.orElse(Option.when(rules.exists(_.trim.equalsIgnoreCase(Lint.FindingGeocode)))(r.findingsRegeocoded))
         // …and neither is the fill of unplaced findings
-        val pl = placed.orElse(Option.when(rules.exists(_.trim.equalsIgnoreCase(Lint.FindingUnplaced)))(r.findingsPlaced))
+        val pl =
+          placed.orElse(Option.when(rules.exists(_.trim.equalsIgnoreCase(Lint.FindingUnplaced)))(r.findingsPlaced))
         // …nor the gazetteer clean-up (place-kind, place-grid-point): its lines are the first call's
-        val pc = places.orElse(Some(r.applied.filter(l =>
-          l.startsWith(Lint.PlaceKindRule + ":") || l.startsWith(Lint.PlaceGridPoint + ":"))))
+        val pc = places.orElse(
+          Some(r.applied.filter(l => l.startsWith(Lint.PlaceKindRule + ":") || l.startsWith(Lint.PlaceGridPoint + ":")))
+        )
         val ar = areas + r.pointAreasRemoved
         val asksAreas = rules.exists(_.trim.equalsIgnoreCase(Lint.PlaceImportedPointArea))
         // a call that removed nothing while some remain is not progress (they are being changed
         // under it): stop rather than loop
         val moreAreas = asksAreas && r.pointAreasRemaining > 0 && r.pointAreasRemoved > 0
         if r.remaining > 0 || moreAreas then
-          Console.err.print(
-            if moreAreas then s"\rfixing… $ar point-only area(s) removed, ${r.pointAreasRemaining} to go"
-            else s"\rfixing… $s source(s) reindexed, ${r.remaining} to go")
+          Console.err.print(if moreAreas then
+            s"\rfixing… $ar point-only area(s) removed, ${r.pointAreasRemaining} to go"
+          else s"\rfixing… $s source(s) reindexed, ${r.remaining} to go")
           fixLoop(c, rules, s, ch, ed, mv, pl, pc, ar)
         else
           if sources > 0 || ar > 0 then Console.err.print("\r" + " " * 70 + "\r")
-          Right(List(s"resolve-edges: $ed edge target(s) rewritten",
-            s"reindex: $s source(s) → $ch chunk(s)") ++
-            mv.map(n => s"${Lint.FindingGeocode}: $n finding(s) moved to the place the current geocoder chooses").toList ++
-            pl.map(n => s"${Lint.FindingUnplaced}: $n finding(s) given the point of the place they name").toList ++
-            pc.getOrElse(Nil) ++
-            Option.when(asksAreas)(s"${Lint.PlaceImportedPointArea}: $ar point-only imported area(s) removed" +
-              (if r.pointAreasRemaining > 0 then s", ${r.pointAreasRemaining} left (named by evidence, or changing — run again)" else "")).toList)
+          Right(
+            List(s"resolve-edges: $ed edge target(s) rewritten", s"reindex: $s source(s) → $ch chunk(s)") ++
+              mv.map(n => s"${Lint.FindingGeocode}: $n finding(s) moved to the place the current geocoder chooses")
+                .toList ++
+              pl.map(n => s"${Lint.FindingUnplaced}: $n finding(s) given the point of the place they name").toList ++
+              pc.getOrElse(Nil) ++
+              Option
+                .when(asksAreas)(
+                  s"${Lint.PlaceImportedPointArea}: $ar point-only imported area(s) removed" +
+                    (if r.pointAreasRemaining > 0 then
+                       s", ${r.pointAreasRemaining} left (named by evidence, or changing — run again)"
+                     else "")
+                )
+                .toList
+          )
 
-  /** `lint --file x.md`: the server checks the text (it has the renderer); with `--fix` the repaired
-    * text is written back over the file. A note file's frontmatter is the note's own and is not sent. */
+  /** `lint --file x.md`: the server checks the text (it has the renderer); with `--fix` the repaired text is written
+    * back over the file. A note file's frontmatter is the note's own and is not sent.
+    */
   private def lintFile(c: Client, p: java.nio.file.Path, fix: Boolean): Either[CliError, FormatReport] =
     if !java.nio.file.Files.isRegularFile(p) then Left(CliError(s"no such file: $p", exitCode = ExitCode.Usage))
     else
-      val raw          = java.nio.file.Files.readString(p)
+      val raw = java.nio.file.Files.readString(p)
       val (head, body) = FileFormat.splitFrontmatter(raw)
       c.lintMarkdown(FormatCheck(body, FormatField.Body, fix)).map { r =>
         r.text.filter(t => fix && t != body).foreach(t => java.nio.file.Files.writeString(p, head + t))
@@ -160,10 +193,22 @@ object Ops:
     Opts.subcommand("lint", s"Health-check the corpus (${Lint.all.size} rules: ${Lint.names.mkString(", ")})") {
       (
         Opts.options[String]("rule", "Run only this rule (repeatable)").orEmpty,
-        Opts.flag("fix", "First apply the safe repairs: resolve short edge targets, reindex stale chunks; with --rule finding-geocode also move the findings it lists, with --rule finding-unplaced give a point to the findings it lists, with --rule place-kind reclassify and merge the places it lists, with --rule place-grid-point move the places it lists, with --rule place-imported-point-area remove the places it lists (with --article/--source/--file: the formatting repairs)").orFalse,
+        Opts
+          .flag(
+            "fix",
+            "First apply the safe repairs: resolve short edge targets, reindex stale chunks; with --rule finding-geocode also move the findings it lists, with --rule finding-unplaced give a point to the findings it lists, with --rule place-kind reclassify and merge the places it lists, with --rule place-grid-point move the places it lists, with --rule place-imported-point-area remove the places it lists (with --article/--source/--file: the formatting repairs)"
+          )
+          .orFalse,
         Opts.option[String]("article", "Check only this article's formatting (a slug)").orNone,
-        Opts.option[String]("source", "Check only this source's summary and notes for formatting problems (a citekey)").orNone,
-        Opts.option[String]("file", "Check a local Markdown file's formatting before it is stored (--fix rewrites the file)").orNone,
+        Opts
+          .option[String]("source", "Check only this source's summary and notes for formatting problems (a citekey)")
+          .orNone,
+        Opts
+          .option[String](
+            "file",
+            "Check a local Markdown file's formatting before it is stored (--fix rewrites the file)"
+          )
+          .orNone,
         Output.jsonFlag
       ).mapN { (rules, fix, article, source, file, json) => (c: Client) =>
         def show(r: FormatReport) = Output.emit(json, r)(FormatMarkdown.report)
@@ -171,10 +216,10 @@ object Ops:
           case (Some(slug), _, _) => (if fix then c.fixArticleFormat(slug) else c.lintArticle(slug)).map(show)
           case (_, Some(ck), _)   => (if fix then c.fixSourceFormat(ck) else c.lintSource(ck)).map(show)
           case (_, _, Some(f))    => lintFile(c, java.nio.file.Path.of(f), fix).map(show)
-          case _ =>
+          case _                  =>
             for
               fixed <- if fix then fixLoop(c, rules, 0, 0, 0) else Right(Nil)
-              rep   <- c.lint(rules)
+              rep <- c.lint(rules)
             yield
               val full = rep.copy(fixed = fixed)
               Output.emit(json, full)(Lint.markdown)
@@ -198,14 +243,26 @@ object Ops:
   val queue: Opts[Client => Either[CliError, Unit]] =
     // NB: no `|` in the description — `tools/gen-cli-docs.sh` pastes it into a Markdown TABLE cell.
     // The full grammar (which needs pipes to read well) is `QueueArgs.usage`, printed on a bad call.
-    Opts.subcommand("queue", "Bookkeeping queues: acquire / tasks / log — show, add, done, edit, rm, export (with the goals as GOALS.md), import; acquire recheck: the legal re-check of the acquisition list (more than one item, or --all for every item past the caps, as a server job it follows)") {
+    Opts.subcommand(
+      "queue",
+      "Bookkeeping queues: acquire / tasks / log — show, add, done, edit, rm, export (with the goals as GOALS.md), import; acquire recheck: the legal re-check of the acquisition list (more than one item, or --all for every item past the caps, as a server job it follows)"
+    ) {
       (
         Opts.arguments[String]("args").orEmpty,
         Opts.option[String]("topic", "Group the added item under this heading").orNone,
         Opts.option[String]("reason", "Why this item is on the list / what research direction it serves").orNone,
-        Opts.flag("all", "Include done items and the file's prose blocks; acquire recheck: every open item with a DOI, due or not, past the caps (a server job)").orFalse,
-        Opts.flag("dry-run", "acquire recheck: list what it would close and try; no fetcher is asked, nothing stored").orFalse,
-        Opts.option[Int]("limit", "acquire recheck: try at most this many due items (default acquire.recheck.per-pass)").orNone,
+        Opts
+          .flag(
+            "all",
+            "Include done items and the file's prose blocks; acquire recheck: every open item with a DOI, due or not, past the caps (a server job)"
+          )
+          .orFalse,
+        Opts
+          .flag("dry-run", "acquire recheck: list what it would close and try; no fetcher is asked, nothing stored")
+          .orFalse,
+        Opts
+          .option[Int]("limit", "acquire recheck: try at most this many due items (default acquire.recheck.per-pass)")
+          .orNone,
         Opts.option[Int]("id", "acquire recheck: this acquisition item only, due or not").orNone,
         Opts.flag("no-wait", "acquire recheck: print the job id and return instead of following the job").orFalse,
         Output.jsonFlag
@@ -218,14 +275,19 @@ object Ops:
 
   private def run(c: Client, cmd: QueueCmd, json: Boolean): Either[CliError, Unit] = cmd match
     case QueueCmd.Show(list, all) =>
-      c.queueList(list, all).map(l =>
-        Output.emit(json, l)(l => Queue.Kind.parse(l.list).map(k => Queue.markdown(k, l.items, l.checks)).getOrElse("")))
+      c.queueList(list, all)
+        .map(l =>
+          Output.emit(json, l)(l =>
+            Queue.Kind.parse(l.list).map(k => Queue.markdown(k, l.items, l.checks)).getOrElse("")
+          )
+        )
     case QueueCmd.Add(list, text, topic, reason) =>
-      c.queueAdd(list, QueueAdd(text, topic, reason = reason)).map(i =>
-        Output.emit(json, i)(i => s"added #${i.id} to ${i.list}${i.topic.map(t => s" · $t").getOrElse("")}"))
+      c.queueAdd(list, QueueAdd(text, topic, reason = reason))
+        .map(i => Output.emit(json, i)(i => s"added #${i.id} to ${i.list}${i.topic.map(t => s" · $t").getOrElse("")}"))
     // the item as it now stands, with --json like `show` and `add` (it printed only the line before)
     case QueueCmd.Done(id) =>
-      c.queuePatch(id, QueuePatch(status = Some(Queue.Done))).map(i => Output.emit(json, i)(i => s"done #${i.id}: ${i.text}"))
+      c.queuePatch(id, QueuePatch(status = Some(Queue.Done)))
+        .map(i => Output.emit(json, i)(i => s"done #${i.id}: ${i.text}"))
     case QueueCmd.Edit(id, text) =>
       c.queuePatch(id, QueuePatch(text = Some(text))).map(i => Output.emit(json, i)(i => s"edited #${i.id}: ${i.text}"))
     case QueueCmd.Rm(id) =>
@@ -235,19 +297,20 @@ object Ops:
     case QueueCmd.Import(dir) =>
       readMeta(c, Path.of(dir), replace = true).map(_.foreach(l => println(s"  $l")))
     case QueueCmd.Recheck(dryRun, limit, id, all, noWait) =>
-      c.call(ManagersApi.acquireRecheck)(AcquireChecks.RecheckRequest(dryRun, limit, id, Some("cli"), all)).flatMap { r =>
-        Output.emit(json, r)(AcquireChecksMarkdown.result)
-        r.job match
-          case Some(j) if !noWait && !json => IngestCmd.pollJob(c, j.id, 0)
-          case _                           => Right(())
+      c.call(ManagersApi.acquireRecheck)(AcquireChecks.RecheckRequest(dryRun, limit, id, Some("cli"), all)).flatMap {
+        r =>
+          Output.emit(json, r)(AcquireChecksMarkdown.result)
+          r.job match
+            case Some(j) if !noWait && !json => IngestCmd.pollJob(c, j.id, 0)
+            case _                           => Right(())
       }
 
 /** Pure helpers for `lint --file`. */
 object FileFormat:
 
-  /** `(frontmatter, body)`: a note file opens with its OWN `---` YAML block (what `article put`
-    * sends as metadata) — that is not pasted frontmatter, so only the body is checked. A file
-    * without one is all body. */
+  /** `(frontmatter, body)`: a note file opens with its OWN `---` YAML block (what `article put` sends as metadata) —
+    * that is not pasted frontmatter, so only the body is checked. A file without one is all body.
+    */
   def splitFrontmatter(text: String): (String, String) =
     val lines = text.split("\n", -1).toList
     if lines.headOption.map(_.trim).contains("---") then

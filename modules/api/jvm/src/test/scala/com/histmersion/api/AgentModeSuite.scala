@@ -21,15 +21,25 @@ class AgentModeSuite extends munit.FunSuite:
       }
       assertEquals(AgentMode.of(on2, drain2), to, s"$on/$draining → $to: $steps")
       assertEquals(steps.distinct, steps)
-      if AgentMode.of(on, draining) == to && !(to == AgentMode.Paused && draining) then assertEquals(steps, Nil, s"$on/$draining → $to")
+      if AgentMode.of(on, draining) == to && !(to == AgentMode.Paused && draining) then
+        assertEquals(steps, Nil, s"$on/$draining → $to")
 
   test("pausing lifts a drain before turning the autopilot off; working lifts it before turning it on"):
-    assertEquals(AgentMode.steps(autopilotOn = true, draining = true, AgentMode.Paused), List(Step.Drain(false), Step.Autopilot(false)))
-    assertEquals(AgentMode.steps(autopilotOn = false, draining = true, AgentMode.Working), List(Step.Drain(false), Step.Autopilot(true)))
+    assertEquals(
+      AgentMode.steps(autopilotOn = true, draining = true, AgentMode.Paused),
+      List(Step.Drain(false), Step.Autopilot(false))
+    )
+    assertEquals(
+      AgentMode.steps(autopilotOn = false, draining = true, AgentMode.Working),
+      List(Step.Drain(false), Step.Autopilot(true))
+    )
     assertEquals(AgentMode.steps(autopilotOn = true, draining = false, AgentMode.Finishing), List(Step.Drain(true)))
 
   test("the words: the control's three choices and the card's heading"):
-    assertEquals(AgentMode.values.toList.map(Wording.agentMode), List("Working", "Finish current work, then pause", "Pause now"))
+    assertEquals(
+      AgentMode.values.toList.map(Wording.agentMode),
+      List("Working", "Finish current work, then pause", "Pause now")
+    )
     assertEquals(Wording.agentsHeading(AgentMode.Finishing), "Research agents are finishing current work, then pausing")
     assertEquals(AgentMode.parse("finish"), Some(AgentMode.Finishing))
     assertEquals(AgentMode.parse("Paused"), Some(AgentMode.Paused))

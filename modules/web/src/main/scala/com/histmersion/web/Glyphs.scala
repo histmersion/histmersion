@@ -1,13 +1,14 @@
 package com.histmersion.web
 
-/** THE icon registry of the map (#1449): monochrome inline SVG, drawn with `currentColor`, so a marker
-  * keeps the colour its dot has (the period ramp, the confidence desaturation) and only its SHAPE says
-  * what it is — an event's kind ([[com.histmersion.api.EventTaxonomy]]), a site's type
-  * ([[com.histmersion.api.SiteTypes]]). Inline, so a marker costs no request and a hover stays local.
+/** THE icon registry of the map (#1449): monochrome inline SVG, drawn with `currentColor`, so a marker keeps the colour
+  * its dot has (the period ramp, the confidence desaturation) and only its SHAPE says what it is — an event's kind
+  * ([[com.histmersion.api.EventTaxonomy]]), a site's type ([[com.histmersion.api.SiteTypes]]). Inline, so a marker
+  * costs no request and a hover stays local.
   *
-  * The icons are Lucide's (https://lucide.dev, v0.460.0), vendored — only the ones used — under the ISC
-  * licence (portions MIT, from Feather); the notice is `web/vendor/lucide/LICENSE.txt`. Generated from the
-  * package's `icons` directory (one `.svg` per icon): the elements inside each `<svg>`, unchanged. */
+  * The icons are Lucide's (https://lucide.dev, v0.460.0), vendored — only the ones used — under the ISC licence
+  * (portions MIT, from Feather); the notice is `web/vendor/lucide/LICENSE.txt`. Generated from the package's `icons`
+  * directory (one `.svg` per icon): the elements inside each `<svg>`, unchanged.
+  */
 object Glyphs:
 
   /** Name → the SVG elements of a 24×24 Lucide icon. */
@@ -68,17 +69,19 @@ object Glyphs:
     "zap" -> """<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" />"""
   )
 
-  /** Pure: an icon as an inline `<svg>` (`.glyph`: size and stroke in the stylesheet; colour
-    * `currentColor`), or empty for an unknown name. */
+  /** Pure: an icon as an inline `<svg>` (`.glyph`: size and stroke in the stylesheet; colour `currentColor`), or empty
+    * for an unknown name.
+    */
   def svg(name: String, extraClass: String = ""): String =
     inner.get(name).fold("") { body =>
       val cls = if extraClass.isEmpty then "glyph" else s"glyph $extraClass"
       s"""<svg class="$cls" viewBox="0 0 24 24" aria-hidden="true" focusable="false">$body</svg>"""
     }
 
-  /** Pure: an icon as a map BADGE draws it (`.glyph.glyph--badge`): the strokes twice — a wider, dark
-    * halo under the light ink — so a white line stays readable on a pale period colour. Two strokes, no
-    * CSS filter: thousands of markers draw it. Empty for an unknown name. */
+  /** Pure: an icon as a map BADGE draws it (`.glyph.glyph--badge`): the strokes twice — a wider, dark halo under the
+    * light ink — so a white line stays readable on a pale period colour. Two strokes, no CSS filter: thousands of
+    * markers draw it. Empty for an unknown name.
+    */
   def badge(name: String): String = badges.getOrElseUpdate(name, badgeOf(name))
 
   // one string per icon, built once: thousands of markers share it

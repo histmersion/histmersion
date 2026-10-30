@@ -3,9 +3,10 @@ package com.histmersion.web
 import com.histmersion.api.*
 import com.histmersion.values.PlaceKind
 
-/** #1449, the web's pure half: the one icon registry covers every kind and site type, an event marker
-  * carries its kind's icon, its tier and its card's attribute, a typed site's icon its colour, the key
-  * names every icon, the menus list the vocabularies, and an event card's sections. */
+/** #1449, the web's pure half: the one icon registry covers every kind and site type, an event marker carries its
+  * kind's icon, its tier and its card's attribute, a typed site's icon its colour, the key names every icon, the menus
+  * list the vocabularies, and an event card's sections.
+  */
 class EventMarkersSuite extends munit.FunSuite:
 
   test("the registry has an icon for every event kind and every site type, each a currentColor SVG"):
@@ -24,12 +25,35 @@ class EventMarkersSuite extends munit.FunSuite:
     assertEquals(dupes(SiteTypes.all.map(_.icon) :+ CardIcons.Unknown), Nil)
     assertEquals(dupes(SourceKinds.all.map(CardIcons.sourceKind(_, marker = true))), Nil)
     // the glyphs that blurred at ~15 px are gone from the markers: they are no longer vendored at all
-    List("biohazard", "wheat-off", "handshake", "theater", "newspaper", "cog").foreach(n => assert(!Glyphs.inner.contains(n), n))
+    List("biohazard", "wheat-off", "handshake", "theater", "newspaper", "cog").foreach(n =>
+      assert(!Glyphs.inner.contains(n), n)
+    )
 
-  private val battle = EventGeo("zz_b", "Zz <battle>", "battle", "local", "attested",
-    TimeSpan(Some(-1274), None, None, Some(-1274)), 37.5, 32, "event", tier = EventTier.Attested)
-  private val eruption = EventGeo("zz_e", "Eruption of Zz", "eruption", "local", "attested",
-    TimeSpan(Some(-1630), None, None, Some(-1600)), 37, 33, "event", tier = EventTier.Catalogue, size = Some("VEI 6"))
+  private val battle = EventGeo(
+    "zz_b",
+    "Zz <battle>",
+    "battle",
+    "local",
+    "attested",
+    TimeSpan(Some(-1274), None, None, Some(-1274)),
+    37.5,
+    32,
+    "event",
+    tier = EventTier.Attested
+  )
+  private val eruption = EventGeo(
+    "zz_e",
+    "Eruption of Zz",
+    "eruption",
+    "local",
+    "attested",
+    TimeSpan(Some(-1630), None, None, Some(-1600)),
+    37,
+    33,
+    "event",
+    tier = EventTier.Catalogue,
+    size = Some("VEI 6")
+  )
 
   test("an event marker: its kind's icon, its tier and group as classes, its card's attribute, the colour as --c"):
     val h = EventMarker.html(battle, "rgb(1,2,3)")
@@ -40,7 +64,9 @@ class EventMarkersSuite extends munit.FunSuite:
     assertEquals(EventMarker.describe(battle), "Zz <battle> · battle · 1274 BCE · attested")
     val c = EventMarker.html(eruption, "rgb(1,2,3)")
     assert(c.contains("hd-ev--catalogue") && c.contains("hd-ev--natural"), c)
-    assert(EventMarker.describe(eruption).contains("VEI 6") && EventMarker.describe(eruption).contains("catalogue only"))
+    assert(
+      EventMarker.describe(eruption).contains("VEI 6") && EventMarker.describe(eruption).contains("catalogue only")
+    )
 
   test("an event's place on the ramp is the middle of its span within the span shown"):
     assertEquals(EventMarker.rampAt(eruption, (-1700L, -1500L)), 0.425)
@@ -50,12 +76,20 @@ class EventMarkersSuite extends munit.FunSuite:
   test("a site's marker is a circle badge: its type's icon and colour; the exclamation mark when untyped"):
     val fort = SitePoint(Some("zz_f"), "Zz fort", PlaceKind.Site, Some("fortification"), None, 37, 32, None)
     val h = PointMarker.html(PointKinds.Sites, fort, "rgb(9,9,9)")
-    assert(h.contains("""data-site-type="fortification"""") && h.contains("--c:rgb(9,9,9)") && h.contains(Glyphs.badge("castle")), h)
+    assert(
+      h.contains("""data-site-type="fortification"""") && h.contains("--c:rgb(9,9,9)") && h.contains(
+        Glyphs.badge("castle")
+      ),
+      h
+    )
     assert(h.contains("hd-badge hd-badge--circle"), h)
     val plain = fort.copy(siteType = None, label = "Zz plain")
     val u = PointMarker.html(PointKinds.Sites, plain, "rgb(9,9,9)")
     assert(u.contains(Glyphs.badge("alert-mark")) && !u.contains("data-site-type"), u)
-    assertEquals(PointMarker.ariaLabel(PointKinds.Sites, plain), "Zz plain · site — show only this place and pin its card")
+    assertEquals(
+      PointMarker.ariaLabel(PointKinds.Sites, plain),
+      "Zz plain · site — show only this place and pin its card"
+    )
 
   test("a badge's icon is drawn twice: a dark halo under the white ink; the same string for every marker"):
     val b = Glyphs.badge("castle")
@@ -64,14 +98,18 @@ class EventMarkersSuite extends munit.FunSuite:
     assert(Glyphs.badge("castle") eq b, "cached")
     assertEquals(Glyphs.badge("no-such-icon"), "")
 
-  test("the key names every shape and source kind; every kind, both tiers and every site type — only for the layers on"):
+  test(
+    "the key names every shape and source kind; every kind, both tiers and every site type — only for the layers on"
+  ):
     val k = MapKey.html(events = true, sites = true)
     EventTaxonomy.kinds.foreach(x => assert(k.contains(x.label), x.label))
     SiteTypes.all.foreach(x => assert(k.contains(Fmt.esc(x.label)), x.label))
     assert(k.contains("catalogue only (a lead)"))
     assert(!MapKey.html(events = false, sites = true).contains("natural events"))
     val bare = MapKey.html(events = false, sites = false)
-    List("a finding (a source", "a site", "an event", "a picture", "a region or polity", "several nearby").foreach(w => assert(bare.contains(w), w))
+    List("a finding (a source", "a site", "an event", "a picture", "a region or polity", "several nearby").foreach(w =>
+      assert(bare.contains(w), w)
+    )
     // the shapes are the toolbar's own layer icons
     (PointKinds.all.map(_.icon) :+ Icon.Region).foreach(i => assert(bare.contains(Icon.html(i)), i.toString))
     assert(bare.contains("hd-cluster") && bare.contains("hd-badge--diamond"))
@@ -97,7 +135,9 @@ class EventMarkersSuite extends munit.FunSuite:
       assert(o.icon.contains("hd-badge--square") && o.icon.contains(Glyphs.badge(k.icon)), o.icon)
     }
     assertEquals(LayerFilters.tiers.map(_.value), List("", "attested", "catalogue"))
-    assert(LayerFilters.tiers(1).icon.contains("hd-ev--attested") && LayerFilters.tiers(2).icon.contains("hd-ev--catalogue"))
+    assert(
+      LayerFilters.tiers(1).icon.contains("hd-ev--attested") && LayerFilters.tiers(2).icon.contains("hd-ev--catalogue")
+    )
     assertEquals(LayerFilters.siteTypes.size, 1 + SiteTypes.all.size)
     assert(LayerFilters.siteTypes.tail.forall(_.icon.contains("hd-badge--circle")))
     assertEquals(LayerFilters.siteTypes.head.icon, Icon.html(PointKinds.Sites.icon))
@@ -123,18 +163,48 @@ class EventMarkersSuite extends munit.FunSuite:
   test("an open-ended event's card dates it at the end it states and says the other is not recorded (#1768)"):
     val start = Preview.card(EventDetail(EventSummary("e", "E", "war", TimeSpan(notBefore = Some(-1200)), "attested")))
     assert(start.byline.contains("1200 BCE (end not recorded)"), start.byline)
-    val both = Preview.card(EventDetail(EventSummary("e", "E", "war", TimeSpan(Some(-431), None, None, Some(-404)), "attested")))
+    val both =
+      Preview.card(EventDetail(EventSummary("e", "E", "war", TimeSpan(Some(-431), None, None, Some(-404)), "attested")))
     assert(!both.byline.contains("not recorded"), both.byline)
-    assertEquals(EventPlayback.playable(List(EventGeo("e", "E", "war", "regional", "attested", TimeSpan(notBefore = Some(-1200)),
-      0, 0, "event"))).map(_._2), Vector((-1200L, -1200L)), "playback holds it at its start, then fades")
+    assertEquals(
+      EventPlayback
+        .playable(
+          List(EventGeo("e", "E", "war", "regional", "attested", TimeSpan(notBefore = Some(-1200)), 0, 0, "event"))
+        )
+        .map(_._2),
+      Vector((-1200L, -1200L)),
+      "playback holds it at its start, then fades"
+    )
 
   test("an event card: attesting sources as source links, the catalogue as provenance, leads with their actions"):
-    val d = EventDetail(EventSummary("e", "E", "eruption", TimeSpan(Some(-1600), None, None, Some(-1600)), "attested"),
+    val d = EventDetail(
+      EventSummary("e", "E", "eruption", TimeSpan(Some(-1600), None, None, Some(-1600)), "attested"),
       tier = EventTier.Catalogue,
       sources = Nil,
-      catalogue = List(EventCatalogueRef("gvp", "1", "https://volcano.si.edu/volcano.cfm?vn=1", "GVP", "Smithsonian Terms of Use", "cite GVP", vei = Some(6))),
+      catalogue = List(
+        EventCatalogueRef(
+          "gvp",
+          "1",
+          "https://volcano.si.edu/volcano.cfm?vn=1",
+          "GVP",
+          "Smithsonian Terms of Use",
+          "cite GVP",
+          vei = Some(6)
+        )
+      ),
       candidates = List(EventLinkCandidate("e", "x2020", 0.9, title = Some("X"), reasons = List("names it 1 time"))),
-      leads = List(EventLead("e", "E", "eruption", "catalogue", "1600 BCE", "No source…", EventLeads.actions("e", "E", "1600 BCE", 1))))
+      leads = List(
+        EventLead(
+          "e",
+          "E",
+          "eruption",
+          "catalogue",
+          "1600 BCE",
+          "No source…",
+          EventLeads.actions("e", "E", "1600 BCE", 1)
+        )
+      )
+    )
     val secs = Preview.eventSections(d)
     assertEquals(secs.map(_.kind), List("candidates", "catalogue", "leads"))
     assertEquals(secs.head.note, Some("unconfirmed — proposed from findings near it and passages naming it"))
@@ -143,16 +213,24 @@ class EventMarkersSuite extends munit.FunSuite:
     assert(secs(1).note.exists(_.contains("research lead, not evidence")))
     val leads = secs(2).items
     assertEquals(leads.head.text, "No source…")
-    assertEquals(leads.find(_.query.isDefined).flatMap(_.query), Some("E"), "the discover action asks the literature search")
+    assertEquals(
+      leads.find(_.query.isDefined).flatMap(_.query),
+      Some("E"),
+      "the discover action asks the literature search"
+    )
     assert(leads.exists(_.command.exists(_.startsWith("histmersion queue acquire add"))))
     val card = Preview.card(d)
     assertEquals((card.icon, card.tier), (Some("mountain"), Some("catalogue")))
 
   // ── how precisely an event is dated (the data-source assessment's P0) ─────────────────────────
 
-  private val hekla = eruption.copy(id = "gvp_12724", label = "Eruption of Hekla",
-    timeSpan = TimeSpan(Some(-2251), None, None, Some(2026)), precision = EventPrecision.Imprecise,
-    dating = Some("250 CE ± 2500 (tephrochronology)"))
+  private val hekla = eruption.copy(
+    id = "gvp_12724",
+    label = "Eruption of Hekla",
+    timeSpan = TimeSpan(Some(-2251), None, None, Some(2026)),
+    precision = EventPrecision.Imprecise,
+    dating = Some("250 CE ± 2500 (tephrochronology)")
+  )
   private val approx = eruption.copy(id = "zz_a", precision = EventPrecision.Approximate)
 
   test("an imprecisely dated event is not drawn at a year — neither as a marker nor in playback"):
@@ -167,15 +245,40 @@ class EventMarkersSuite extends munit.FunSuite:
     assert(EventMarker.describe(approx).contains("approximate date"))
 
   test("the card of an imprecisely dated event: its stated year, ± and method, the window, and why it is off the map"):
-    val d = EventDetail(EventSummary("gvp_12724", "Eruption of Hekla", "eruption", hekla.timeSpan, "attested",
-      precision = EventPrecision.Imprecise, central = Some(250), plusMinus = Some(2500), datingMethod = Some("Tephrochronology")),
+    val d = EventDetail(
+      EventSummary(
+        "gvp_12724",
+        "Eruption of Hekla",
+        "eruption",
+        hekla.timeSpan,
+        "attested",
+        precision = EventPrecision.Imprecise,
+        central = Some(250),
+        plusMinus = Some(2500),
+        datingMethod = Some("Tephrochronology")
+      ),
       tier = EventTier.Catalogue,
-      corrections = List(Correction(1, "event", "gvp_12724", "label", "\"Hekla 3\"", "\"Eruption of Hekla\"",
-        CorrectionStatus.Conflict, Some("gvp"), Some("\"Eruption of Hekla volcano\""))))
+      corrections = List(
+        Correction(
+          1,
+          "event",
+          "gvp_12724",
+          "label",
+          "\"Hekla 3\"",
+          "\"Eruption of Hekla\"",
+          CorrectionStatus.Conflict,
+          Some("gvp"),
+          Some("\"Eruption of Hekla volcano\"")
+        )
+      )
+    )
     val card = Preview.card(d)
     assertEquals(card.byline, "Eruption · 250 CE ± 2500 (tephrochronology) · attested")
     assert(card.facts.contains("window: 2251 BCE–2026 CE"), card.facts.toString)
     assert(card.facts.contains("imprecise date — listed, not drawn on the map at a year"), card.facts.toString)
-    assert(card.facts.exists(f => f.startsWith("corrected by hand — label: “Hekla 3”") && f.contains("CONFLICT")), card.facts.toString)
+    assert(
+      card.facts.exists(f => f.startsWith("corrected by hand — label: “Hekla 3”") && f.contains("CONFLICT")),
+      card.facts.toString
+    )
     // the events list shows the stated dating and marks it
     assertEquals(EventsTab.when(d.event), "250 CE ± 2500 (tephrochronology)")

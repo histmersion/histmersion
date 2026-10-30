@@ -1,7 +1,8 @@
 package com.histmersion.api.personal
 
-/** Bookmarks and notes as Markdown: what `histmersion bookmarks|notes` print and the `bookmarks` and `notes`
-  * tools answer. */
+/** Bookmarks and notes as Markdown: what `histmersion bookmarks|notes` print and the `bookmarks` and `notes` tools
+  * answer.
+  */
 object PersonalMarkdown:
 
   /** `2026-10-30T12:40:00.123456Z` → `2026-10-30 12:40`. Pure. */
@@ -16,7 +17,9 @@ object PersonalMarkdown:
 
   def bookmarkLine(b: Bookmark): String =
     val label = b.label.map(_.value).filter(l => b.target.kind.isItem && l.trim.nonEmpty && l != b.title)
-    s"- **${b.name}**" + label.fold("")(_ => s" (${b.title})") + s" — ${targetLine(b.target)} · ${minute(b.createdAt)} · id `${b.id.value}`"
+    s"- **${b.name}**" + label.fold("")(_ =>
+      s" (${b.title})"
+    ) + s" — ${targetLine(b.target)} · ${minute(b.createdAt)} · id `${b.id.value}`"
 
   def bookmarks(bs: List[Bookmark]): String =
     if bs.isEmpty then "_No bookmarks._"
@@ -35,13 +38,20 @@ object PersonalMarkdown:
     else (s"**Notes** — ${ns.size}" :: "" :: ns.map(noteLine)).mkString("\n")
 
   def note(n: Note): String =
-    List(s"## Note on ${n.title}", "", s"_${targetLine(n.target)} · written ${minute(n.createdAt)}" +
-      (if n.updatedAt != n.createdAt then s", changed ${minute(n.updatedAt)}" else "") + s" · id `${n.id.value}`_",
-      "", n.text.value).mkString("\n")
+    List(
+      s"## Note on ${n.title}",
+      "",
+      s"_${targetLine(n.target)} · written ${minute(n.createdAt)}" +
+        (if n.updatedAt != n.createdAt then s", changed ${minute(n.updatedAt)}" else "") + s" · id `${n.id.value}`_",
+      "",
+      n.text.value
+    ).mkString("\n")
 
   def readLine(m: ReadMark): String =
     val state = if m.read then s"read ${m.readAt.fold("")(minute)}" else "not read yet"
-    s"- **${m.title}** — ${m.kind.label.toLowerCase} `${m.id.value}` · $state" + m.openedAt.fold("")(o => s" · opened ${minute(o)}")
+    s"- **${m.title}** — ${m.kind.label.toLowerCase} `${m.id.value}` · $state" + m.openedAt.fold("")(o =>
+      s" · opened ${minute(o)}"
+    )
 
   def reading(ms: List[ReadMark]): String =
     if ms.isEmpty then "_Nothing marked._" else ms.map(readLine).mkString("\n")

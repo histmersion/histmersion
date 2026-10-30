@@ -6,11 +6,12 @@ import com.histmersion.domain.*
 import com.augustnagro.magnum.*
 import com.histmersion.values.SourceStatus
 
-/** Full-text search against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise.
-  * Covers the point of plan §1.4: bodies far bigger than tsvector's 1 MB per-row limit are searchable
-  * because they are chunked, and every hit carries the passage that matched. */
+/** Full-text search against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. Covers the point of plan
+  * §1.4: bodies far bigger than tsvector's 1 MB per-row limit are searchable because they are chunked, and every hit
+  * carries the passage that matched.
+  */
 class FtsSuite extends com.histmersion.db.DbSuite:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
@@ -20,14 +21,28 @@ class FtsSuite extends com.histmersion.db.DbSuite:
     d
 
   private def chunkChars = cfg.limits.chunkChars
-  private def words      = cfg.limits.snippetWords
+  private def words = cfg.limits.snippetWords
 
   private def source(ck: String, title: String, summary: String, body: String) =
     Source(
-      citekey = ck, title = title, authors = List("Tester"), doi = None, year = Some(1999), venue = None,
-      status = SourceStatus.Current, topics = Nil, regions = Nil, tags = Nil, period = None,
-      summary = Some(summary), citedByCount = Some(0), influentialCitations = None,
-      provenance = None, calibreId = None, ocrMarkdown = Some(body))
+      citekey = ck,
+      title = title,
+      authors = List("Tester"),
+      doi = None,
+      year = Some(1999),
+      venue = None,
+      status = SourceStatus.Current,
+      topics = Nil,
+      regions = Nil,
+      tags = Nil,
+      period = None,
+      summary = Some(summary),
+      citedByCount = Some(0),
+      influentialCitations = None,
+      provenance = None,
+      calibreId = None,
+      ocrMarkdown = Some(body)
+    )
 
   /** ~0.75 MB of prose per call — two of them put the body past the ~1 MB a tsvector can hold. */
   private def filler(marker: String): String =
@@ -44,14 +59,35 @@ class FtsSuite extends com.histmersion.db.DbSuite:
       "\n\n## Ugarit destruction\n\nThe sea peoples burned the harbour quarter in the twelfth century.\n\n" +
       filler("omega")
     assert(big.length > 1_100_000, big.length)
-    SourceRepo.upsert(ds, source("zz_fts_big", "Aegean stratigraphy", "A summary with no query terms.", big), chunkChars)
-    SourceRepo.upsert(ds, source("zz_fts_egypt", "Delta excavations", "Another summary.",
-      "## Medinet Habu\n\nThe sea peoples are named in Egypt, in the reliefs of Ramesses III."), chunkChars)
-    SourceRepo.upsert(ds, source("zz_fts_title", "The Sea Peoples reconsidered", "Historiography.",
-      "## Body\n\nThis body never mentions the raiders by name; it discusses pottery."), chunkChars)
+    SourceRepo.upsert(
+      ds,
+      source("zz_fts_big", "Aegean stratigraphy", "A summary with no query terms.", big),
+      chunkChars
+    )
+    SourceRepo.upsert(
+      ds,
+      source(
+        "zz_fts_egypt",
+        "Delta excavations",
+        "Another summary.",
+        "## Medinet Habu\n\nThe sea peoples are named in Egypt, in the reliefs of Ramesses III."
+      ),
+      chunkChars
+    )
+    SourceRepo.upsert(
+      ds,
+      source(
+        "zz_fts_title",
+        "The Sea Peoples reconsidered",
+        "Historiography.",
+        "## Body\n\nThis body never mentions the raiders by name; it discusses pottery."
+      ),
+      chunkChars
+    )
 
-  /** The ONE query path: `/api/sources` (`Filter.q` is the FTS predicate, relevance is `ts_rank_cd`,
-    * and the hit carries the snippet of the best-matching chunk). */
+  /** The ONE query path: `/api/sources` (`Filter.q` is the FTS predicate, relevance is `ts_rank_cd`, and the hit
+    * carries the snippet of the best-matching chunk).
+    */
   private def search(q: String): Vector[SearchHit] = listing(Filter(q = Some(q), limit = 20))
   private def listing(f: Filter): Vector[SearchHit] =
     SourceRepo.sources(ds, f, words).hits.map(_.source).toVector
@@ -59,17 +95,17 @@ class FtsSuite extends com.histmersion.db.DbSuite:
   test("a >1 MB body is indexed and a body-only phrase is found, with snippet and heading"):
     fixture
     val hits = search("\"sea peoples\"")
-    val big  = hits.find(_.citekey == "zz_fts_big")
+    val big = hits.find(_.citekey == "zz_fts_big")
     assert(big.isDefined, hits.map(_.citekey))
     assertEquals(big.get.matchedHeading, Some("Ugarit destruction"))
     val snip = big.get.snippet.getOrElse("")
-    assert(snip.contains("**"), snip)                        // ts_headline StartSel/StopSel
+    assert(snip.contains("**"), snip) // ts_headline StartSel/StopSel
     assert(snip.toLowerCase.contains("peoples"), snip)
-    assert(snip.length < 2000, snip.length)                  // a fragment, not the whole chunk
+    assert(snip.length < 2000, snip.length) // a fragment, not the whole chunk
 
   test("-not excludes a source whose body carries the excluded term"):
     fixture
-    val all      = search("\"sea peoples\"").map(_.citekey)
+    val all = search("\"sea peoples\"").map(_.citekey)
     val excluded = search("\"sea peoples\" -egypt").map(_.citekey)
     assert(all.contains("zz_fts_egypt"), all)
     assert(!excluded.contains("zz_fts_egypt"), excluded)
@@ -104,7 +140,7 @@ class FtsSuite extends com.histmersion.db.DbSuite:
 
 /** Planner/statistics upkeep against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. */
 class PlannerUpkeepSuite extends com.histmersion.db.DbSuite:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
@@ -122,27 +158,34 @@ class PlannerUpkeepSuite extends com.histmersion.db.DbSuite:
   test("V023: the database carries the SSD page cost for every new session"):
     val cfg = one(
       "SELECT array_to_string(setconfig, ',') FROM pg_db_role_setting" +
-        " WHERE setrole = 0 AND setdatabase = (SELECT oid FROM pg_database WHERE datname = current_database())")
+        " WHERE setrole = 0 AND setdatabase = (SELECT oid FROM pg_database WHERE datname = current_database())"
+    )
     assert(cfg.split(',').contains("random_page_cost=1.1"), cfg)
 
   test("ensureDatabaseSettings restores the page cost after a restore dropped it"):
     val c = ds.getConnection()
-    try c.createStatement().execute("DO $$ BEGIN EXECUTE format('ALTER DATABASE %I RESET random_page_cost', current_database()); END $$")
+    try
+      c.createStatement()
+        .execute("DO $$ BEGIN EXECUTE format('ALTER DATABASE %I RESET random_page_cost', current_database()); END $$")
     finally c.close()
     Db.ensureDatabaseSettings(ds)
     val cfg = one(
       "SELECT array_to_string(setconfig, ',') FROM pg_db_role_setting" +
-        " WHERE setrole = 0 AND setdatabase = (SELECT oid FROM pg_database WHERE datname = current_database())")
+        " WHERE setrole = 0 AND setdatabase = (SELECT oid FROM pg_database WHERE datname = current_database())"
+    )
     assert(cfg.split(',').contains("random_page_cost=1.1"), cfg)
 
   test("every session plans a prepared statement for its own values (no generic plan after 5 uses)"):
     val c = ds.getConnection()
-    try c.createStatement().execute("DO $$ BEGIN EXECUTE format('ALTER DATABASE %I RESET plan_cache_mode', current_database()); END $$")
+    try
+      c.createStatement()
+        .execute("DO $$ BEGIN EXECUTE format('ALTER DATABASE %I RESET plan_cache_mode', current_database()); END $$")
     finally c.close()
     Db.ensureDatabaseSettings(ds)
     val cfg = one(
       "SELECT array_to_string(setconfig, ',') FROM pg_db_role_setting" +
-        " WHERE setrole = 0 AND setdatabase = (SELECT oid FROM pg_database WHERE datname = current_database())")
+        " WHERE setrole = 0 AND setdatabase = (SELECT oid FROM pg_database WHERE datname = current_database())"
+    )
     assert(cfg.split(',').contains("plan_cache_mode=force_custom_plan"), cfg)
     // a NEW session sees it: the pool's old connections are evicted by Main after the call
     val pg = org.postgresql.ds.PGSimpleDataSource()

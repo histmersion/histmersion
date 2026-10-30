@@ -8,8 +8,9 @@ import com.histmersion.config.given
 import io.circe.parser.parse as json
 import com.histmersion.values.MediaRole
 
-/** The pure half of the media providers (#1446): licences, credit lines, and the Wikidata and
-  * Commons answers — no network, no database. */
+/** The pure half of the media providers (#1446): licences, credit lines, and the Wikidata and Commons answers — no
+  * network, no database.
+  */
 class MediaProvidersSuite extends munit.FunSuite:
 
   import MediaLicence.*
@@ -60,8 +61,10 @@ class MediaProvidersSuite extends munit.FunSuite:
   // ── text ─────────────────────────────────────────────────────────────────────────────────────
 
   test("plain text out of Commons' HTML author fields"):
-    assertEquals(MediaText.plain("""<a href="//commons.wikimedia.org/wiki/User:X" title="User:X">David  Monniaux</a>"""),
-      "David Monniaux")
+    assertEquals(
+      MediaText.plain("""<a href="//commons.wikimedia.org/wiki/User:X" title="User:X">David  Monniaux</a>"""),
+      "David Monniaux"
+    )
     assertEquals(MediaText.plain("Tom &amp; Jerry &#233;&#x20AC; &nbsp;x"), "Tom & Jerry é€ x")
     assertEquals(MediaText.plain("a" * 400, max = 10).length, 10)
     assertEquals(MediaText.plain(null), "")
@@ -78,8 +81,10 @@ class MediaProvidersSuite extends munit.FunSuite:
   // ── roles and counts (shared) ────────────────────────────────────────────────────────────────
 
   test("the statement → role map parses, dropping malformed and repeated entries"):
-    assertEquals(MediaRoles.parse("P18:image, P242:locator-map,bogus,P1:nope,P18:plan,P3311:plan"),
-      List("P18" -> "image", "P242" -> "locator-map", "P3311" -> "plan"))
+    assertEquals(
+      MediaRoles.parse("P18:image, P242:locator-map,bogus,P1:nope,P18:plan,P3311:plan"),
+      List("P18" -> "image", "P242" -> "locator-map", "P3311" -> "plan")
+    )
     assertEquals(MediaRoles.parse(""), Nil)
 
   test("the card's role order puts the item's own image first, unknown roles last"):
@@ -87,8 +92,10 @@ class MediaProvidersSuite extends munit.FunSuite:
     assertEquals(MediaRole.order("other"), MediaRole.all.size)
 
   test("counts: most frequent first, then by key, with the allowed flag"):
-    assertEquals(MediaCount.of(List("b", "a", "b", "c"), _ != "c"),
-      List(MediaCount("b", 2), MediaCount("a", 1), MediaCount("c", 1, allowed = false)))
+    assertEquals(
+      MediaCount.of(List("b", "a", "b", "c"), _ != "c"),
+      List(MediaCount("b", 2), MediaCount("a", 1), MediaCount("c", 1, allowed = false))
+    )
 
   // ── Wikidata ─────────────────────────────────────────────────────────────────────────────────
 
@@ -108,8 +115,10 @@ class MediaProvidersSuite extends munit.FunSuite:
     val items = Wikidata.items(entities, Set("P18", "P242")).toOption.get
     assertEquals(items.keySet, Set("Q1"), "a missing item is left out")
     val q1 = items("Q1")
-    assertEquals(q1.statements.map(s => (s.property, s.file, s.preferred)),
-      List(("P18", "B.jpg", false), ("P18", "A.jpg", true), ("P242", "Map.svg", false)))
+    assertEquals(
+      q1.statements.map(s => (s.property, s.file, s.preferred)),
+      List(("P18", "B.jpg", false), ("P18", "A.jpg", true), ("P242", "Map.svg", false))
+    )
     assertEquals(q1.commonsCategory, Some("Mycenae"))
 
   test("best: the preferred statements when there are any, else the normal ones, capped"):
@@ -131,7 +140,10 @@ class MediaProvidersSuite extends munit.FunSuite:
 
   test("the wbgetentities URL: ids joined and encoded, maxlag only when set"):
     val u = Wikidata.entitiesUrl("https://wd/w/api.php", List("Q1", "Q2"), 5)
-    assert(u.startsWith("https://wd/w/api.php?action=wbgetentities&format=json&formatversion=2&props=claims&ids=Q1%7CQ2"), u)
+    assert(
+      u.startsWith("https://wd/w/api.php?action=wbgetentities&format=json&formatversion=2&props=claims&ids=Q1%7CQ2"),
+      u
+    )
     assert(u.endsWith("&maxlag=5"), u)
     assert(!Wikidata.entitiesUrl("https://wd/w/api.php", List("Q1"), 0).contains("maxlag"))
 
@@ -149,15 +161,16 @@ class MediaProvidersSuite extends munit.FunSuite:
     val t = Commons.imageInfoUrl("https://c/w/api.php", List("File:A.jpg"), 330, 0, meta = false)
     assert(!t.contains("extmetadata") && !t.contains("maxlag"), t)
 
-  private val imageinfo = json("""{"query":{
+  private val imageinfo = json(
+    """{"query":{
     "normalized":[{"from":"File:a.jpg","to":"File:A.jpg"}],
     "pages":[
       {"title":"File:Gone.jpg","missing":true},
       {"title":"File:A.jpg","imageinfo":[{"size":5,"width":3000,"height":2000,
         "thumburl":"https://up/t/1280px-A.jpg?utm_source=x","thumbwidth":1280,"thumbheight":853,
         "url":"https://up/A.jpg?utm_source=x","descriptionurl":"https://commons/wiki/File:A.jpg","mime":"image/jpeg",
-        "extmetadata":{"License":{"value":"cc-by-sa-4.0"},"Artist":{"value":"<b>Ann</b>"},"Flag":{"value":true}}}]}]}}""")
-    .toOption.get
+        "extmetadata":{"License":{"value":"cc-by-sa-4.0"},"Artist":{"value":"<b>Ann</b>"},"Flag":{"value":true}}}]}]}}"""
+  ).toOption.get
 
   test("imageinfo: files by the title asked (normalised too), missing files as Left, URLs untracked"):
     val m = Commons.imageInfo(imageinfo).toOption.get
@@ -171,9 +184,18 @@ class MediaProvidersSuite extends munit.FunSuite:
     assertEquals(a.meta.get("Flag"), Some("true"))
 
   test("rights: licence, author and Commons' credit form read from extmetadata"):
-    val r = Commons.rights(Map("License" -> "cc-by-sa-3.0", "LicenseShortName" -> "CC BY-SA 3.0",
-      "Artist" -> """<a href="//commons.wikimedia.org/wiki/User:D">David Monniaux</a>""",
-      "LicenseUrl" -> "//creativecommons.org/licenses/by-sa/3.0/", "AttributionRequired" -> "true")).toOption.get
+    val r = Commons
+      .rights(
+        Map(
+          "License" -> "cc-by-sa-3.0",
+          "LicenseShortName" -> "CC BY-SA 3.0",
+          "Artist" -> """<a href="//commons.wikimedia.org/wiki/User:D">David Monniaux</a>""",
+          "LicenseUrl" -> "//creativecommons.org/licenses/by-sa/3.0/",
+          "AttributionRequired" -> "true"
+        )
+      )
+      .toOption
+      .get
     assertEquals(r.licence, Licence("CC-BY-SA-3.0", CcBySa))
     assertEquals(r.credit, "David Monniaux, CC BY-SA 3.0, via Wikimedia Commons")
     assertEquals(r.licenceUrl, Some("https://creativecommons.org/licenses/by-sa/3.0/"))
@@ -184,14 +206,23 @@ class MediaProvidersSuite extends munit.FunSuite:
     assertEquals(r.map(_.credit), Right("Photo: Jane Roe, CC-BY-4.0, via Wikimedia Commons"))
 
   test("rights: public domain with no author credits Commons alone"):
-    assertEquals(Commons.rights(Map("License" -> "pd", "LicenseShortName" -> "Public domain")).map(_.credit),
-      Right("Public domain, via Wikimedia Commons"))
+    assertEquals(
+      Commons.rights(Map("License" -> "pd", "LicenseShortName" -> "Public domain")).map(_.credit),
+      Right("Public domain, via Wikimedia Commons")
+    )
 
   test("rights refused: non-free, unreadable, all rights reserved, attribution with no author"):
-    assertEquals(Commons.rights(Map("License" -> "cc-by-4.0", "Artist" -> "x", "NonFree" -> "true")),
-      Left("marked non-free on Commons"))
+    assertEquals(
+      Commons.rights(Map("License" -> "cc-by-4.0", "Artist" -> "x", "NonFree" -> "true")),
+      Left("marked non-free on Commons")
+    )
     assertEquals(Commons.rights(Map("Artist" -> "x")), Left("no licence stated"))
-    assert(Commons.rights(Map("LicenseShortName" -> "Some custom terms", "Artist" -> "x")).left.exists(_.contains("not recognised")))
+    assert(
+      Commons
+        .rights(Map("LicenseShortName" -> "Some custom terms", "Artist" -> "x"))
+        .left
+        .exists(_.contains("not recognised"))
+    )
     assertEquals(Commons.rights(Map("LicenseShortName" -> "Copyrighted", "Artist" -> "x")), Left("all rights reserved"))
     assertEquals(Commons.rights(Map("License" -> "cc-by-4.0")), Left("no author to credit"))
     assertEquals(Commons.rights(Map("License" -> "cc0", "AttributionRequired" -> "true")), Left("no author to credit"))
@@ -208,14 +239,27 @@ class MediaProvidersSuite extends munit.FunSuite:
   // ── the report ───────────────────────────────────────────────────────────────────────────────
 
   test("the import report prints the counts per provider and licence as a table, refusals and failures after"):
-    val r = MediaImportReport(MediaProvider.Commons, dryRun = true, targets = 20, items = 9, statements = 19, files = 10,
+    val r = MediaImportReport(
+      MediaProvider.Commons,
+      dryRun = true,
+      targets = 20,
+      items = 9,
+      statements = 19,
+      files = 10,
       byLicence = List(MediaCount("CC-BY-SA-3.0", 5), MediaCount("CC-BY-NC-4.0", 1, allowed = false)),
       byRole = List(MediaCount("locator-map", 16), MediaCount("image", 3)),
-      rejected = List(MediaCount("licence cc-by-nc not allowed for wikimedia-commons", 1)), failed = List("x: y"))
+      rejected = List(MediaCount("licence cc-by-nc not allowed for wikimedia-commons", 1)),
+      failed = List("x: y")
+    )
     val md = Markdown.mediaImportReport(r)
     assert(md.startsWith("# Media import · Wikimedia Commons (dry run — nothing stored)"), md)
     assert(md.contains("**By provider:** Wikimedia Commons 10"), md)
-    assert(md.contains("| licence | files | allowed |\n|---|---|---|\n| `CC-BY-SA-3.0` | 5 | yes |\n| `CC-BY-NC-4.0` | 1 | **no** |"), md)
+    assert(
+      md.contains(
+        "| licence | files | allowed |\n|---|---|---|\n| `CC-BY-SA-3.0` | 5 | yes |\n| `CC-BY-NC-4.0` | 1 | **no** |"
+      ),
+      md
+    )
     assert(md.contains("**Not stored**\n- licence cc-by-nc not allowed for wikimedia-commons: 1"), md)
     assert(md.contains("**Failed**\n- x: y"), md)
     assert(!md.contains("**Stored:**"), "a dry run stores nothing")

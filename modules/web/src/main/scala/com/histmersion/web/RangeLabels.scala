@@ -1,14 +1,13 @@
 package com.histmersion.web
 
-/** Where the timeline overview's two years go — the selection's "from" and "to" under its handles — so
-  * they never overlap and never leave the bar. Pure, so the placement is a unit test and
-  * [[TimelineView]] only applies the answer.
+/** Where the timeline overview's two years go — the selection's "from" and "to" under its handles — so they never
+  * overlap and never leave the bar. Pure, so the placement is a unit test and [[TimelineView]] only applies the answer.
   *
   *   - inside the selection (each next to its own handle, facing the other) while both fit there;
-  *   - outside it when the handles are too close — "from" left of the left handle, "to" right of the
-  *     right one — pushed back into the bar at its ends (the other year then moves on past it, so
-  *     "from" stays left of "to");
-  *   - one label "from – to" centred on the selection (kept inside the bar) when even that does not fit. */
+  *   - outside it when the handles are too close — "from" left of the left handle, "to" right of the right one — pushed
+  *     back into the bar at its ends (the other year then moves on past it, so "from" stays left of "to");
+  *   - one label "from – to" centred on the selection (kept inside the bar) when even that does not fit.
+  */
 object RangeLabels:
 
   /** The gap between a year and its handle, and the least gap between the two years. */
@@ -37,7 +36,7 @@ object RangeLabels:
       // outside the handles, each pushed back into the bar at its end — and the other one pushed on
       // past it (still on its own side) when that end pushed them together
       val fromX0 = math.max(0.0, x0 - Pad - wf)
-      val toX0   = math.min(barW - wt, x1 + Pad)
+      val toX0 = math.min(barW - wt, x1 + Pad)
       val (fromX, toX) =
         if fromX0 + wf + Gap <= toX0 then (fromX0, toX0)
         else if fromX0 == 0.0 then (fromX0, fromX0 + wf + Gap)
@@ -46,6 +45,6 @@ object RangeLabels:
         Placement.Outside(Label(fromText, fromX, wf), Label(toText, toX, wt))
       else
         val text = s"$fromText – $toText"
-        val w    = width(text)
-        val x    = ((x0 + x1) / 2 - w / 2).max(0.0).min(math.max(0.0, barW - w))
+        val w = width(text)
+        val x = ((x0 + x1) / 2 - w / 2).max(0.0).min(math.max(0.0, barW - w))
         Placement.Joined(Label(text, x, w))

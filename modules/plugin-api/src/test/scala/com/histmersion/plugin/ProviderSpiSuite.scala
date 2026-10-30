@@ -7,7 +7,7 @@ class ProviderSpiSuite extends munit.FunSuite:
 
   private object Portal extends MediaCollection:
     val title = "Portal objects"
-    val role  = MediaCollection.Object
+    val role = MediaCollection.Object
     def search(place: MediaPlace, http: PluginHttp) =
       Right(List(Right(MediaItem("k", place.label, "https://portal.example/k", None, Left("not open access")))))
 
@@ -17,8 +17,10 @@ class ProviderSpiSuite extends munit.FunSuite:
     def read(part: String, q: CatalogueQuery, http: PluginHttp) = Right(CataloguePage(Nil))
 
   test("a collection's defaults: the museum rule, three per place, a second between requests, complete = as is"):
-    assertEquals((Portal.matchRule, Portal.perPlace, Portal.requestIntervalMs, Portal.description),
-      (MediaMatchRule.Museum, 3, 1000, ""))
+    assertEquals(
+      (Portal.matchRule, Portal.perPlace, Portal.requestIntervalMs, Portal.description),
+      (MediaMatchRule.Museum, 3, 1000, "")
+    )
     val item = Portal.search(MediaPlace("p", "Mycenae"), offline).toOption.get.head.toOption.get
     assertEquals(Portal.complete(item, offline), Right(item))
     assertEquals(item.rights, Left("not open access"))

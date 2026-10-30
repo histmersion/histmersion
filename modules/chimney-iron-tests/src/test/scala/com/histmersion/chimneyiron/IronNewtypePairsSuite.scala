@@ -13,6 +13,8 @@ class IronNewtypePairsSuite extends munit.FunSuite:
       IronNewtypePairs.withoutPackageObjects("scala.Predef.String :| com.histmersion.constraints$package.CitekeyRule"),
       "String :| com.histmersion.CitekeyRule"
     )
-    assertEquals(IronNewtypePairs.withoutPackageObjects("io.github.iltotore.iron.constraint.collection.MinLength[3]"),
-      "io.github.iltotore.iron.constraint.collection.MinLength[3]")
+    assertEquals(
+      IronNewtypePairs.withoutPackageObjects("io.github.iltotore.iron.constraint.collection.MinLength[3]"),
+      "io.github.iltotore.iron.constraint.collection.MinLength[3]"
+    )
   }

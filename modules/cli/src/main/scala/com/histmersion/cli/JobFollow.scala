@@ -3,20 +3,23 @@ package com.histmersion.cli
 import com.histmersion.api.*
 import com.histmersion.config.*
 
-/** The CLI's exit codes (AGENTS.md), spelled once: `main` turns a `Left(CliError)` into one of these.
-  * Success is 0. */
+/** The CLI's exit codes (AGENTS.md), spelled once: `main` turns a `Left(CliError)` into one of these. Success is 0.
+  */
 object ExitCode:
   /** The command line itself is wrong (a missing file, a bad flag value, "aborted"). */
   val Usage: Int = 1
+
   /** The server said no — a refused write, a failed job, a failed backup. */
   val Refused: Int = 2
+
   /** The server could not be reached, or the CLI could not start. */
   val Unreachable: Int = 3
 
-/** ONE way the CLI follows server work to its end (#1798 item 14): a background job (`jobs`) and a
-  * backup. A run that ends badly is ALWAYS `ExitCode.Refused` (2) — a script that follows a job must
-  * not read a failure as success, nor as a usage error (a failed backup used to exit 1). The fetch and
-  * the clock are parameters, so the rule is tested without a server. */
+/** ONE way the CLI follows server work to its end (#1798 item 14): a background job (`jobs`) and a backup. A run that
+  * ends badly is ALWAYS `ExitCode.Refused` (2) — a script that follows a job must not read a failure as success, nor as
+  * a usage error (a failed backup used to exit 1). The fetch and the clock are parameters, so the rule is tested
+  * without a server.
+  */
 object JobFollow:
 
   /** How often a job is asked for. This process's own cadence, not a server tunable. */
@@ -29,18 +32,23 @@ object JobFollow:
   object Progress:
     val Width = 72
     def line(text: String): Unit = Console.err.print(s"\r${" " * Width}\r$text")
-    def clear(): Unit            = Console.err.print("\r" + " " * Width + "\r")
+    def clear(): Unit = Console.err.print("\r" + " " * Width + "\r")
 
   def failed(what: String, why: Option[String]): CliError =
     CliError(s"$what failed: ${why.filter(_.nonEmpty).getOrElse("unknown reason")}", ExitCode.Refused)
 
   /** Poll job `id` until it is done or failed; `Right(job)` only when it succeeded. */
   @annotation.tailrec
-  def job(fetch: String => Either[CliError, JobInfo], id: String, waited: Long = 0,
-      sleep: Long => Unit = Thread.sleep, progress: String => Unit = Progress.line,
-      clear: () => Unit = () => Progress.clear()): Either[CliError, JobInfo] =
+  def job(
+      fetch: String => Either[CliError, JobInfo],
+      id: String,
+      waited: Long = 0,
+      sleep: Long => Unit = Thread.sleep,
+      progress: String => Unit = Progress.line,
+      clear: () => Unit = () => Progress.clear()
+  ): Either[CliError, JobInfo] =
     fetch(id) match
-      case Left(e) => clear(); Left(e)
+      case Left(e)  => clear(); Left(e)
       case Right(j) =>
         val detail = j.progress.orElse(j.error).map(t => s" — $t").getOrElse("")
         progress(s"job $id: ${j.status}$detail (${waited / 1000}s)")
@@ -51,11 +59,17 @@ object JobFollow:
           clear()
           if j.succeeded then Right(j) else Left(failed(s"job $id", j.error))
 
-  /** Poll a backup the server answered `running` until its archive is written; a failure, or a
-    * "done" without a checksum, is `ExitCode.Refused`. */
+  /** Poll a backup the server answered `running` until its archive is written; a failure, or a "done" without a
+    * checksum, is `ExitCode.Refused`.
+    */
   @annotation.tailrec
-  def backup(fetch: () => Either[CliError, BackupStatus], s: BackupStatus, pollMs: Long = BackupPollMs,
-      sleep: Long => Unit = Thread.sleep, progress: String => Unit = l => System.err.println(l)): Either[CliError, BackupResult] =
+  def backup(
+      fetch: () => Either[CliError, BackupStatus],
+      s: BackupStatus,
+      pollMs: Long = BackupPollMs,
+      sleep: Long => Unit = Thread.sleep,
+      progress: String => Unit = l => System.err.println(l)
+  ): Either[CliError, BackupResult] =
     s.stateOf match
       case Some(BackupState.Running) =>
         progress(s"backup ${s.file} running for ${s.durationMs / 1000} s…")

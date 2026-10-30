@@ -2,9 +2,10 @@ package com.histmersion.web
 
 import com.histmersion.api.{Queue, WebPaths}
 
-/** The web UI's addresses: every page has a path that reads back as the same page, sits under one of the
-  * four places, and is one the server serves the app for; the old toolbar's windows each have exactly one
-  * page now; old addresses land on their new pages. */
+/** The web UI's addresses: every page has a path that reads back as the same page, sits under one of the four places,
+  * and is one the server serves the app for; the old toolbar's windows each have exactly one page now; old addresses
+  * land on their new pages.
+  */
 class RouteSuite extends munit.FunSuite:
 
   private val pages: List[Route] =
@@ -14,8 +15,16 @@ class RouteSuite extends munit.FunSuite:
       ActivityTab.values.map(Route.Activity(_)) ++
       SettingsSection.values.map(Route.Settings(_)) ++
       List(Route.Setup) ++
-      List(Route.Goal("bronze-age"), Route.Run("3f2a-77"), Route.Manager("watch:bronze-age"), Route.Job("10ed4471"),
-        Route.Place("pleiades:579885"), Route.Event("ev-1"), Route.Source("cline2014_year"), Route.Article("sea-peoples"))
+      List(
+        Route.Goal("bronze-age"),
+        Route.Run("3f2a-77"),
+        Route.Manager("watch:bronze-age"),
+        Route.Job("10ed4471"),
+        Route.Place("pleiades:579885"),
+        Route.Event("ev-1"),
+        Route.Source("cline2014_year"),
+        Route.Article("sea-peoples")
+      )
 
   test("every page's path reads back as that page"):
     pages.foreach(r => assertEquals(Route.parse(r.path), Some(r), r.path))
@@ -47,8 +56,17 @@ class RouteSuite extends munit.FunSuite:
     assertEquals(Route.Place("pleiades:579885").path, "/place/pleiades%3A579885")
 
   test("an address the web UI does not know is no page"):
-    List("/nope", "/research/nope", "/research/activity/nope", "/library/x/y", "/settings/data/x", "/run",
-      "/run/a/b", "/research/goals/a/b", "/explore/x").foreach(p => assertEquals(Route.parse(p), None, p))
+    List(
+      "/nope",
+      "/research/nope",
+      "/research/activity/nope",
+      "/library/x/y",
+      "/settings/data/x",
+      "/run",
+      "/run/a/b",
+      "/research/goals/a/b",
+      "/explore/x"
+    ).foreach(p => assertEquals(Route.parse(p), None, p))
     // a trailing slash is the same page
     assertEquals(Route.parse("/research/activity/"), Some(Route.Activity(ActivityTab.Everything)))
 
@@ -69,15 +87,35 @@ class RouteSuite extends munit.FunSuite:
     PlaceTab.values.foreach(p => assertEquals(Route.front(p).place, p))
 
   test("every window of the old toolbar has exactly one page now, in the place the plan gives it"):
-    val toolbar = List(WindowKey.Goals, WindowKey.Tasks, WindowKey.Runs, WindowKey.Managers, WindowKey.Approvals,
-      WindowKey.Acquire, WindowKey.Upload, WindowKey.Merge, WindowKey.Jobs, WindowKey.Log, WindowKey.About,
-      WindowKey.Models)
+    val toolbar = List(
+      WindowKey.Goals,
+      WindowKey.Tasks,
+      WindowKey.Runs,
+      WindowKey.Managers,
+      WindowKey.Approvals,
+      WindowKey.Acquire,
+      WindowKey.Upload,
+      WindowKey.Merge,
+      WindowKey.Jobs,
+      WindowKey.Log,
+      WindowKey.About,
+      WindowKey.Models
+    )
     val homes = toolbar.map(k => k -> Route.ofWindow(k))
     homes.foreach((k, r) => assert(r.isDefined, k.toString))
     assertEquals(homes.flatMap(_._2).distinct.size, toolbar.size, "two windows share a page")
     def placeOf(k: WindowKey) = Route.ofWindow(k).get.place
-    List(WindowKey.Goals, WindowKey.Approvals, WindowKey.Managers, WindowKey.Runs, WindowKey.Models, WindowKey.Tasks,
-      WindowKey.Log, WindowKey.Jobs, WindowKey.Acquire).foreach(k => assertEquals(placeOf(k), PlaceTab.Research, k.toString))
+    List(
+      WindowKey.Goals,
+      WindowKey.Approvals,
+      WindowKey.Managers,
+      WindowKey.Runs,
+      WindowKey.Models,
+      WindowKey.Tasks,
+      WindowKey.Log,
+      WindowKey.Jobs,
+      WindowKey.Acquire
+    ).foreach(k => assertEquals(placeOf(k), PlaceTab.Research, k.toString))
     List(WindowKey.Upload, WindowKey.Merge).foreach(k => assertEquals(placeOf(k), PlaceTab.Library, k.toString))
     assertEquals(placeOf(WindowKey.About), PlaceTab.Settings)
     // the key's prompt stays a window (a write opens it); its home is Settings › Keys
@@ -108,18 +146,32 @@ class RouteSuite extends munit.FunSuite:
     assertEquals(Route.legacy("/about", Nil), Some(Route.Landing(Route.Settings(SettingsSection.About), Nil)))
     assertEquals(Route.legacy("/storage", Nil), Some(Route.Landing(Route.Settings(SettingsSection.Data), Nil)))
     assertEquals(Route.legacy("/settings/storage", Nil), Some(Route.Landing(Route.Settings(SettingsSection.Data), Nil)))
-    assertEquals(Route.legacy("/", List(WindowKey.About)), Some(Route.Landing(Route.Settings(SettingsSection.About), Nil)))
-    assertEquals(Route.legacy("/", List(WindowKey.Goals)), Some(Route.Landing(Route.Research(ResearchSection.Goals), Nil)))
-    assertEquals(Route.legacy("/", List(WindowKey.Run("r1"), WindowKey.Jobs, WindowKey.About)),
-      Some(Route.Landing(Route.Activity(ActivityTab.JobList), List(WindowKey.Run("r1")))))
-    assertEquals(Route.legacy("/", List(WindowKey.Source("a2020_b"))),
-      Some(Route.Landing(Route.Explore, List(WindowKey.Source("a2020_b")))))
+    assertEquals(
+      Route.legacy("/", List(WindowKey.About)),
+      Some(Route.Landing(Route.Settings(SettingsSection.About), Nil))
+    )
+    assertEquals(
+      Route.legacy("/", List(WindowKey.Goals)),
+      Some(Route.Landing(Route.Research(ResearchSection.Goals), Nil))
+    )
+    assertEquals(
+      Route.legacy("/", List(WindowKey.Run("r1"), WindowKey.Jobs, WindowKey.About)),
+      Some(Route.Landing(Route.Activity(ActivityTab.JobList), List(WindowKey.Run("r1"))))
+    )
+    assertEquals(
+      Route.legacy("/", List(WindowKey.Source("a2020_b"))),
+      Some(Route.Landing(Route.Explore, List(WindowKey.Source("a2020_b"))))
+    )
     // an old list address wins over a window named in its hash
-    assertEquals(Route.legacy("/tasks", List(WindowKey.Approvals)),
-      Some(Route.Landing(Route.Research(ResearchSection.Backlog), Nil)))
+    assertEquals(
+      Route.legacy("/tasks", List(WindowKey.Approvals)),
+      Some(Route.Landing(Route.Research(ResearchSection.Backlog), Nil))
+    )
     // on a new page, a toolbar window in the hash is that window's page
-    assertEquals(Route.legacy("/explore", List(WindowKey.Approvals, WindowKey.Goal("g"))),
-      Some(Route.Landing(Route.Research(ResearchSection.Decisions), List(WindowKey.Goal("g")))))
+    assertEquals(
+      Route.legacy("/explore", List(WindowKey.Approvals, WindowKey.Goal("g"))),
+      Some(Route.Landing(Route.Research(ResearchSection.Decisions), List(WindowKey.Goal("g"))))
+    )
     // a new address with nothing old in it is left alone
     assertEquals(Route.legacy("/research/goals", List(WindowKey.Run("r1"))), None)
     assertEquals(Route.legacy("/explore", Nil), None)
@@ -136,10 +188,12 @@ class RouteSuite extends munit.FunSuite:
 
   test("the search filters as it is typed where results are shown; elsewhere Enter goes to Library"):
     assertEquals(TopBar.showsResults(Route.Explore), Some(Route.Explore))
-    assertEquals(TopBar.showsResults(Route.Library(LibrarySection.Articles)), Some(Route.Library(LibrarySection.Articles)))
+    assertEquals(
+      TopBar.showsResults(Route.Library(LibrarySection.Articles)),
+      Some(Route.Library(LibrarySection.Articles))
+    )
     assertEquals(TopBar.showsResults(Route.Library(LibrarySection.Upload)), None)
     assertEquals(TopBar.showsResults(Route.Research(ResearchSection.Goals)), None)
 
   test("page titles are words, never identifiers"):
     pages.foreach(r => assert(!Router.title(r).contains("_") && Router.title(r).head.isUpper, r.toString))
-

@@ -50,8 +50,8 @@ class AgentVerifySuite extends munit.FunSuite:
     assert(toSignedYear(0, YearUnit.BCE).isLeft)
 
   test("calBP converts as astronomical 1950 − BP, mapped to historical reckoning"):
-    assertEquals(toSignedYear(1949, YearUnit.CalBP), Right(1L))     // astronomical 1 = 1 CE
-    assertEquals(toSignedYear(1950, YearUnit.CalBP), Right(-1L))    // astronomical 0 = 1 BCE
+    assertEquals(toSignedYear(1949, YearUnit.CalBP), Right(1L)) // astronomical 1 = 1 CE
+    assertEquals(toSignedYear(1950, YearUnit.CalBP), Right(-1L)) // astronomical 0 = 1 BCE
     assertEquals(toSignedYear(3950, YearUnit.CalBP), Right(-2001L)) // astronomical -2000 = 2001 BCE
     assertEquals(toSignedYear(0, YearUnit.CalBP), Right(1950L))
 

@@ -7,20 +7,19 @@ import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
 
-/** `histmersion ingest <file>` · `reocr` · `assets` · `jobs` — OCR that keeps the figures, as a job
-  * (plan §1.8).
+/** `histmersion ingest <file>` · `reocr` · `assets` · `jobs` — OCR that keeps the figures, as a job (plan §1.8).
   *
-  * The upload half is exposed as [[upload]] rather than as its own subcommand, because the name
-  * `ingest` is shared with stream 2.6's acquisition-by-identifier: ONE command takes either a file
-  * (upload → convert here) or a DOI/arXiv id (fetch upstream, then the same job), and
-  * [[AcquireCmd.ingest]] is the single place that dispatches between them. Everything else lives
-  * here.
+  * The upload half is exposed as [[upload]] rather than as its own subcommand, because the name `ingest` is shared with
+  * stream 2.6's acquisition-by-identifier: ONE command takes either a file (upload → convert here) or a DOI/arXiv id
+  * (fetch upstream, then the same job), and [[AcquireCmd.ingest]] is the single place that dispatches between them.
+  * Everything else lives here.
   */
 object IngestCmd:
 
-  /** Poll one job until it reaches a terminal state ([[JobFollow.job]]: one rewritten progress line),
-    * then print it. The exit code is the point: a failed conversion must not look like success in a
-    * script — it exits [[ExitCode.Refused]]. */
+  /** Poll one job until it reaches a terminal state ([[JobFollow.job]]: one rewritten progress line), then print it.
+    * The exit code is the point: a failed conversion must not look like success in a script — it exits
+    * [[ExitCode.Refused]].
+    */
   def pollJob(c: Client, id: String, waited: Int): Either[CliError, Unit] =
     JobFollow.job(c.job, id, waited * 1000L).map(j => println(IngestMarkdown.job(j)))
 
@@ -49,19 +48,33 @@ object IngestCmd:
     else
       val prov = provenance.orElse(Some("manual"))
       val params =
-        IngestParams(citekey.trim, Some(file.getFileName.toString), quality, force, title, authors, year, doi, prov,
-          acquireItem)
+        IngestParams(
+          citekey.trim,
+          Some(file.getFileName.toString),
+          quality,
+          force,
+          title,
+          authors,
+          year,
+          doi,
+          prov,
+          acquireItem
+        )
       c.ingest(params, file.toFile).flatMap { a =>
-        println(s"queued job ${a.jobId} for ${a.citekey}" +
-          acquireItem.fold("")(i => s" — acquisition item $i is ticked off when it succeeds"))
+        println(
+          s"queued job ${a.jobId} for ${a.citekey}" +
+            acquireItem.fold("")(i => s" — acquisition item $i is ticked off when it succeeds")
+        )
         if noWait then Right(()) else pollJob(c, a.jobId, 0)
       }
 
   private val reocr =
     Opts.subcommand("reocr", "Convert a source's stored original again (e.g. under the slow, accurate OCR path)") {
-      (Opts.argument[String]("citekey"),
+      (
+        Opts.argument[String]("citekey"),
         Opts.flag("quality", "Slow, accurate OCR (docling)").orFalse,
-        Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse)
+        Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse
+      )
         .mapN { (ck, quality, noWait) => (c: Client) =>
           c.reocr(ck, quality).flatMap { a =>
             println(s"queued job ${a.jobId} for ${a.citekey}")
@@ -72,8 +85,9 @@ object IngestCmd:
 
   private val assets =
     Opts.subcommand("assets", "The figures stored with a source, and the URLs they are served at") {
-      Opts.argument[String]("citekey").map(ck => (c: Client) =>
-        c.assets(ck).map(rows => println(IngestMarkdown.assets(ck, rows.toVector))))
+      Opts
+        .argument[String]("citekey")
+        .map(ck => (c: Client) => c.assets(ck).map(rows => println(IngestMarkdown.assets(ck, rows.toVector))))
     }
 
   /** `histmersion jobs pause|resume|cancel <id>`. */
@@ -85,24 +99,41 @@ object IngestCmd:
     }
 
   private val controls =
-    control("pause", "Pause a long background job (a picture or event import, a base-map download, an acquisition " +
-      "re-check, the init job's gazetteer loads) after the part it is on — or an agent run; it keeps what it did") orElse
+    control(
+      "pause",
+      "Pause a long background job (a picture or event import, a base-map download, an acquisition " +
+        "re-check, the init job's gazetteer loads) after the part it is on — or an agent run; it keeps what it did"
+    ) orElse
       control("resume", "Resume a paused job: it goes on with the parts it had not done") orElse
       control("cancel", "Cancel a job: a background job stops after the part it is on and is recorded as cancelled")
 
-  private val jobs = Opts.subcommand("jobs", "Recent background jobs (OCR, imports, agent runs, …), filtered on the server, " +
-      "or one job by id; `jobs pause|resume|cancel <id>` controls one") {
-    controls orElse (Opts.argument[String]("id").orNone, ListOpts.jobs,
+  private val jobs = Opts.subcommand(
+    "jobs",
+    "Recent background jobs (OCR, imports, agent runs, …), filtered on the server, " +
+      "or one job by id; `jobs pause|resume|cancel <id>` controls one"
+  ) {
+    controls orElse (
+      Opts.argument[String]("id").orNone,
+      ListOpts.jobs,
       Opts.option[Int]("limit", "Max rows").orNone,
-      Opts.option[String]("before", "The next older page: the id of the last job shown (the listing prints the command)").orNone,
-      Output.jsonFlag)
+      Opts
+        .option[String]("before", "The next older page: the id of the last job shown (the listing prints the command)")
+        .orNone,
+      Output.jsonFlag
+    )
       .mapN { (id, f, limit, before, json) => (c: Client) =>
         id match
           case Some(i) => c.job(i).map(j => Output.emit(json, j)(IngestMarkdown.job))
           case None    =>
             c.jobs(f, limit, before).map { (js, page) =>
-              Output.emit(json, js)(js => IngestMarkdown.jobs(js.toVector, page, f.qualifier,
-                PageCmd.older(page, "jobs", f.options ++ List("limit" -> limit.map(_.toString)))))
+              Output.emit(json, js)(js =>
+                IngestMarkdown.jobs(
+                  js.toVector,
+                  page,
+                  f.qualifier,
+                  PageCmd.older(page, "jobs", f.options ++ List("limit" -> limit.map(_.toString)))
+                )
+              )
             }
       }
   }

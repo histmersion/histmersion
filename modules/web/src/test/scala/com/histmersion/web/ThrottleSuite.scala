@@ -5,7 +5,7 @@ import scala.collection.mutable
 class ThrottleSuite extends munit.FunSuite:
 
   /** A fake clock: `later` queues callbacks, `advance` runs the ones that are due. */
-  private final class Clock:
+  final private class Clock:
     var t: Double = 0
     private val queue = mutable.ListBuffer.empty[(Double, Int, () => Unit)]
     private var ids = 0
@@ -60,10 +60,10 @@ class ThrottleSuite extends munit.FunSuite:
 class LatestOnlySuite extends munit.FunSuite:
 
   /** Runs that complete only when the test says so. */
-  private final class Runs:
+  final private class Runs:
     val started = mutable.ListBuffer.empty[Int]
     private val done = mutable.Queue.empty[() => Unit]
-    val latest = LatestOnly[Int]((a, d) => { started += a; done.enqueue(d) })
+    val latest = LatestOnly[Int] { (a, d) => started += a; done.enqueue(d) }
     def finish(): Unit = done.dequeue()()
 
   test("idle: a value runs at once") {
@@ -91,7 +91,7 @@ class LatestOnlySuite extends munit.FunSuite:
 
 class DebounceSuite extends munit.FunSuite:
 
-  private final class Clock:
+  final private class Clock:
     var t: Double = 0
     private val queue = mutable.ListBuffer.empty[(Double, Int, () => Unit)]
     private var ids = 0

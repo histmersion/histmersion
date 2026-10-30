@@ -10,20 +10,20 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.security.MessageDigest
 import java.util.UUID
 
-/** The pure half of the `.hmx` bundle (docs/research-merge-import.md §4): canonical JSON, record
-  * revisions, the deterministic bundle id, and the checks a manifest must pass. The tar stream is
-  * [[BundleTar]]; reading the database is `db.BundleExport`/`db.BundleImport`.
+/** The pure half of the `.hmx` bundle (docs/research-merge-import.md §4): canonical JSON, record revisions, the
+  * deterministic bundle id, and the checks a manifest must pass. The tar stream is [[BundleTar]]; reading the database
+  * is `db.BundleExport`/`db.BundleImport`.
   *
   * ==Canonical JSON==
-  * One line per record: keys sorted, no whitespace, absent (`None`) fields left out rather than
-  * written as `null`. That is RFC 8785 (JCS) in spirit — the same value always prints to the same
-  * bytes — though numbers print as circe prints them, not by JCS's ECMAScript rule; both ends of a
-  * bundle are this code, so they agree.
+  * One line per record: keys sorted, no whitespace, absent (`None`) fields left out rather than written as `null`. That
+  * is RFC 8785 (JCS) in spirit — the same value always prints to the same bytes — though numbers print as circe prints
+  * them, not by JCS's ECMAScript rule; both ends of a bundle are this code, so they agree.
   *
   * ==rev==
-  * `rev` is the sha256 of a record's canonical JSON without `rev` and `updatedAt`: two records with
-  * the same content have the same rev whatever their timestamps, which is what lets an import say
-  * "unchanged" and the merge ledger remember what was merged. */
+  * `rev` is the sha256 of a record's canonical JSON without `rev` and `updatedAt`: two records with the same content
+  * have the same rev whatever their timestamps, which is what lets an import say "unchanged" and the merge ledger
+  * remember what was merged.
+  */
 object BundleFormat:
 
   val printer: Printer = Printer.noSpaces.copy(sortKeys = true, dropNullValues = true)
@@ -48,8 +48,9 @@ object BundleFormat:
   def revOf(obj: JsonObject): String =
     sha256Hex(printer.print(Json.fromJsonObject(obj.filterKeys(k => !Unrevved(k)))))
 
-  /** A record as its NDJSON line (no newline) and its rev. The record's own `rev` field, whatever it
-    * holds, is replaced by the computed one. */
+  /** A record as its NDJSON line (no newline) and its rev. The record's own `rev` field, whatever it holds, is replaced
+    * by the computed one.
+    */
   def stamp[A](a: A)(using enc: Encoder.AsObject[A]): Stamped =
     val obj = enc.encodeObject(a)
     val rev = revOf(obj)
@@ -68,44 +69,49 @@ object BundleFormat:
         else
           json.asObject.toRight("not a JSON object").flatMap { obj =>
             obj("rev").flatMap(_.asString) match
-              case None                          => Left("no rev")
-              case Some(r) if r == revOf(obj)    => Right(())
-              case Some(r)                       => Left(s"rev $r does not match its content (${revOf(obj)})")
+              case None                       => Left("no rev")
+              case Some(r) if r == revOf(obj) => Right(())
+              case Some(r)                    => Left(s"rev $r does not match its content (${revOf(obj)})")
           }
       revOk.flatMap(_ => dec.decodeJson(json).left.map(e => s"${e.message} at ${e.pathToRootString.getOrElse("")}"))
     }
 
   // ── the bundle id ──────────────────────────────────────────────────────────────────────────
 
-  /** A UUID (version 8, RFC 9562 "custom") made from the sha256 of `parts`: the same content from the
-    * same instance always gets the same id, so the manifest — and with it the whole file — stays
-    * deterministic. */
+  /** A UUID (version 8, RFC 9562 "custom") made from the sha256 of `parts`: the same content from the same instance
+    * always gets the same id, so the manifest — and with it the whole file — stays deterministic.
+    */
   def contentUuid(parts: Seq[String]): UUID =
     val d = MessageDigest.getInstance("SHA-256").digest(parts.mkString("\n").getBytes(UTF_8))
-    d(6) = ((d(6) & 0x0f) | 0x80).toByte  // version 8
-    d(8) = ((d(8) & 0x3f) | 0x80).toByte  // variant 10
+    d(6) = ((d(6) & 0x0f) | 0x80).toByte // version 8
+    d(8) = ((d(8) & 0x3f) | 0x80).toByte // variant 10
     val bb = java.nio.ByteBuffer.wrap(d, 0, 16)
     UUID(bb.getLong, bb.getLong)
 
   def bundleId(instance: UUID, since: Option[String], files: List[BundleFileInfo], blobs: Seq[String]): UUID =
-    contentUuid(Seq(Bundle.Format, instance.toString, since.getOrElse("")) ++
-      files.map(f => s"${f.path} ${f.sha256}") ++ blobs)
+    contentUuid(
+      Seq(Bundle.Format, instance.toString, since.getOrElse("")) ++
+        files.map(f => s"${f.path} ${f.sha256}") ++ blobs
+    )
 
   // ── the manifest ───────────────────────────────────────────────────────────────────────────
 
-  def manifestBytes(m: BundleManifest): Array[Byte] = (printer.print(Encoder.AsObject[BundleManifest].apply(m)) + "\n").getBytes(UTF_8)
+  def manifestBytes(m: BundleManifest): Array[Byte] =
+    (printer.print(Encoder.AsObject[BundleManifest].apply(m)) + "\n").getBytes(UTF_8)
 
   def parseManifest(bytes: Array[Byte]): Either[String, BundleManifest] =
     parser.decode[BundleManifest](String(bytes, UTF_8)).left.map(e => s"manifest.json: ${e.getMessage}")
 
-  /** Can THIS server read `m`? A newer format or a newer schema is refused (the importer only ever
-    * upgrades older ones); every reason is returned. `serverSchema` is the Flyway version, numeric. */
+  /** Can THIS server read `m`? A newer format or a newer schema is refused (the importer only ever upgrades older
+    * ones); every reason is returned. `serverSchema` is the Flyway version, numeric.
+    */
   def compatible(m: BundleManifest, serverSchema: Option[String]): List[String] =
     def num(v: String) = v.trim.toIntOption
     List(
       Option.when(m.format != Bundle.Format)(s"not a Histmersion bundle (format '${m.format}')"),
       Option.when(m.formatVersion > Bundle.FormatVersion)(
-        s"bundle format ${m.formatVersion} is newer than this server reads (${Bundle.FormatVersion}) — upgrade Histmersion"),
+        s"bundle format ${m.formatVersion} is newer than this server reads (${Bundle.FormatVersion}) — upgrade Histmersion"
+      ),
       (num(m.schemaVersion), serverSchema.flatMap(num)) match
         case (Some(b), Some(s)) if b > s =>
           Some(s"bundle schema V$b is newer than this server's V$s — upgrade Histmersion")
@@ -116,14 +122,20 @@ object BundleFormat:
   /** The manifest's file list against what the tar holds: missing, unexpected and mismatching files. */
   def checkFiles(m: BundleManifest, seen: Map[String, BundleFileInfo]): List[String] =
     val listed = m.files.map(f => f.path -> f).toMap
-    val missing    = m.files.filterNot(f => seen.contains(f.path)).map(f => s"${f.path}: listed in the manifest, missing from the bundle")
-    val unexpected = seen.keys.toList.sorted.filterNot(listed.contains).map(p => s"$p: in the bundle, not in the manifest")
-    val differ = m.files.flatMap(f => seen.get(f.path).toList.flatMap { s =>
-      List(
-        Option.when(s.sha256 != f.sha256)(s"${f.path}: sha256 ${s.sha256} ≠ manifest ${f.sha256}"),
-        Option.when(s.bytes != f.bytes)(s"${f.path}: ${s.bytes} bytes ≠ manifest ${f.bytes}"),
-        Option.when(s.lines != f.lines)(s"${f.path}: ${s.lines} lines ≠ manifest ${f.lines}")).flatten
-    })
+    val missing = m.files
+      .filterNot(f => seen.contains(f.path))
+      .map(f => s"${f.path}: listed in the manifest, missing from the bundle")
+    val unexpected =
+      seen.keys.toList.sorted.filterNot(listed.contains).map(p => s"$p: in the bundle, not in the manifest")
+    val differ = m.files.flatMap(f =>
+      seen.get(f.path).toList.flatMap { s =>
+        List(
+          Option.when(s.sha256 != f.sha256)(s"${f.path}: sha256 ${s.sha256} ≠ manifest ${f.sha256}"),
+          Option.when(s.bytes != f.bytes)(s"${f.path}: ${s.bytes} bytes ≠ manifest ${f.bytes}"),
+          Option.when(s.lines != f.lines)(s"${f.path}: ${s.lines} lines ≠ manifest ${f.lines}")
+        ).flatten
+      }
+    )
     missing ++ unexpected ++ differ
 
   /** The NDJSON payload of a list of lines: one per line, each ending in `\n`. */

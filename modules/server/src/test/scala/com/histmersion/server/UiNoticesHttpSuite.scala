@@ -7,10 +7,11 @@ import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 
 /** The toolbar's notices over HTTP: `GET /api/ui/counters` counts what waits and says what is new,
-  * `POST /api/ui/seen/{board}` marks a window read — without the API key, which every other write
-  * still needs — and the mark only moves forward. Skipped without HISTMERSION_TEST_DB_URL. */
+  * `POST /api/ui/seen/{board}` marks a window read — without the API key, which every other write still needs — and the
+  * mark only moves forward. Skipped without HISTMERSION_TEST_DB_URL.
+  */
 class UiNoticesHttpSuite extends com.histmersion.db.DbSuite:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()
@@ -20,13 +21,16 @@ class UiNoticesHttpSuite extends com.histmersion.db.DbSuite:
   private def get(url: String) = send(HttpRequest.newBuilder(URI.create(url)).build())
   private def post(url: String, body: String, key: Option[String] = None) =
     val b = HttpRequest.newBuilder(URI.create(url)).header("content-type", "application/json")
-    send(key.fold(b)(k => b.header("Authorization", s"Bearer $k")).POST(HttpRequest.BodyPublishers.ofString(body)).build())
+    send(
+      key.fold(b)(k => b.header("Authorization", s"Bearer $k")).POST(HttpRequest.BodyPublishers.ofString(body)).build()
+    )
 
   private def decode(body: String): Counters =
     io.circe.parser.decode[Counters](body).fold(e => fail(s"$e: $body"), identity)
 
-  /** The queue tables are shared with QueueRepoSuite and OpsHttpSuite (which wipe them): the same
-    * advisory lock serialises the three. `var`: the connection outlives `beforeAll`. */
+  /** The queue tables are shared with QueueRepoSuite and OpsHttpSuite (which wipe them): the same advisory lock
+    * serialises the three. `var`: the connection outlives `beforeAll`.
+    */
   private var lock: java.sql.Connection = null
   private val LockKey = 2808
 
@@ -34,20 +38,22 @@ class UiNoticesHttpSuite extends com.histmersion.db.DbSuite:
     if testDb.isDefined then
       lock = testPool(AppConfig.load().db.copy(url = testDb.get)).getConnection
       val st = lock.createStatement()
-      try { val _ = st.execute(s"SELECT pg_advisory_lock($LockKey)") } finally st.close()
+      try { val _ = st.execute(s"SELECT pg_advisory_lock($LockKey)") }
+      finally st.close()
 
   override def afterSuite(): Unit =
     if lock != null then
       val st = lock.createStatement()
-      try { val _ = st.execute(s"SELECT pg_advisory_unlock($LockKey)") } finally st.close()
+      try { val _ = st.execute(s"SELECT pg_advisory_unlock($LockKey)") }
+      finally st.close()
       lock.close()
       lock = null
 
   test("counts, news, marking read without the key, and the mark only moving forward"):
     val base = AppConfig.load()
-    val cfg  = base.copy(db = base.db.copy(url = testDb.get), auth = base.auth.copy(apiKey = "s3cret"))
+    val cfg = base.copy(db = base.db.copy(url = testDb.get), auth = base.auth.copy(apiKey = "s3cret"))
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Main.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}/api"
       // `var`: the fixture's row, removed whatever the assertions did
       var added = Option.empty[Int]
@@ -90,8 +96,13 @@ class UiNoticesHttpSuite extends com.histmersion.db.DbSuite:
         assertEquals(post(s"$url/ui/seen/tasks/x", "{}")._1, 401)
       finally
         added.foreach { i =>
-          val _ = send(HttpRequest.newBuilder(URI.create(s"$url/queue/items/$i"))
-            .header("Authorization", "Bearer s3cret").DELETE().build())
+          val _ = send(
+            HttpRequest
+              .newBuilder(URI.create(s"$url/queue/items/$i"))
+              .header("Authorization", "Bearer s3cret")
+              .DELETE()
+              .build()
+          )
         }
         b.stop()
     }

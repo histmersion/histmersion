@@ -10,10 +10,11 @@ import com.histmersion.values.{Confidence, SourceStatus}
 
 /** Every lint rule, against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise.
   *
-  * The fixtures are deliberately one source per defect, all under a `zzlint_` prefix, so the
-  * assertions can ignore whatever else the test database happens to hold. */
+  * The fixtures are deliberately one source per defect, all under a `zzlint_` prefix, so the assertions can ignore
+  * whatever else the test database happens to hold.
+  */
 class LintRepoSuite extends com.histmersion.db.DbSuite:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
@@ -38,29 +39,55 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
       findings: List[Finding] = Nil,
       edges: List[Edge] = Nil
   ) = Source(
-    citekey = citekey, title = s"Fixture $citekey", authors = List("A"), doi = doi, year = Some(2020),
-    venue = None, status = status, topics = List("t"), regions = regions, tags = Nil, period = period,
-    summary = summary, citedByCount = None, influentialCitations = None, provenance = None,
-    calibreId = None, ocrMarkdown = body, findings = findings, edges = edges)
+    citekey = citekey,
+    title = s"Fixture $citekey",
+    authors = List("A"),
+    doi = doi,
+    year = Some(2020),
+    venue = None,
+    status = status,
+    topics = List("t"),
+    regions = regions,
+    tags = Nil,
+    period = period,
+    summary = summary,
+    citedByCount = None,
+    influentialCitations = None,
+    provenance = None,
+    calibreId = None,
+    ocrMarkdown = body,
+    findings = findings,
+    edges = edges
+  )
 
-  private def finding(id: String, ck: String, period: Option[Period], region: Option[String],
-      geo: Option[GeoPoint]) =
+  private def finding(id: String, ck: String, period: Option[Period], region: Option[String], geo: Option[GeoPoint]) =
     Finding(id, ck, "a claim", region, geo, period, None, Nil, Some(Confidence.High))
 
-  /** Fresh fixtures for every test — the rules are order-independent, but a half-written corpus from
-    * a previous failure must not leak into the next assertion. */
+  /** Fresh fixtures for every test — the rules are order-independent, but a half-written corpus from a previous failure
+    * must not leak into the next assertion.
+    */
   override def beforeEach(context: BeforeEach): Unit =
     connect(ds)(sql"DELETE FROM sources WHERE citekey LIKE ${Prefix + "%"}".update.run())
     connect(ds)(sql"DELETE FROM edges WHERE src LIKE ${Prefix + "%"}".update.run())
 
   private def put(s: Source): Unit = SourceRepo.upsert(ds, s, cfg.limits.chunkChars)
 
-  /** A stand-in for the server's flexmark check (the db module has no renderer): every `**` is a
-    * problem, so the formatting rules' SQL and wiring are tested here, the check in `MarkdownLintSuite`. */
+  /** A stand-in for the server's flexmark check (the db module has no renderer): every `**` is a problem, so the
+    * formatting rules' SQL and wiring are tested here, the check in `MarkdownLintSuite`.
+    */
   private val checker: FormatChecker = (text, field, article) =>
     if text.contains("**") then
-      List(FormatIssue(FormatRule.Emphasis, FormatSeverity.Error, field, 1, text.indexOf("**") + 1,
-        if article then "article" else "not an article", "unpaired"))
+      List(
+        FormatIssue(
+          FormatRule.Emphasis,
+          FormatSeverity.Error,
+          field,
+          1,
+          text.indexOf("**") + 1,
+          if article then "article" else "not an article",
+          "unpaired"
+        )
+      )
     else Nil
 
   private def run(rule: String): List[LintItem] =
@@ -77,10 +104,21 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(rep.rules.map(_.rule), Lint.names)
 
   test("no-findings / no-period / no-regions / empty-summary / unassessed-status"):
-    put(source(Prefix + "bare", status = SourceStatus.Unassessed, regions = Nil, period = None,
-      summary = Some("   ")))
-    put(source(Prefix + "full", findings = List(finding(Prefix + "full#0", Prefix + "full",
-      Some(Period(-1800, -1700)), Some("Anatolia"), Some(GeoPoint(32.0, 39.0))))))
+    put(source(Prefix + "bare", status = SourceStatus.Unassessed, regions = Nil, period = None, summary = Some("   ")))
+    put(
+      source(
+        Prefix + "full",
+        findings = List(
+          finding(
+            Prefix + "full#0",
+            Prefix + "full",
+            Some(Period(-1800, -1700)),
+            Some("Anatolia"),
+            Some(GeoPoint(32.0, 39.0))
+          )
+        )
+      )
+    )
     List(NoFindings, NoPeriod, NoRegions, EmptySummary, UnassessedStatus).foreach { rule =>
       assertEquals(keys(rule), List(Prefix + "bare"), s"$rule")
     }
@@ -90,10 +128,16 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
     assert(run(NoFindings).head.detail.contains("Fixture"), run(NoFindings).head.detail)
 
   test("dangling-edges finds targets that are not citekeys and suggests the closest"):
-    put(source(Prefix + "src", edges = List(
-      Edge(Prefix + "src", Prefix + "target_full", "references"), // resolves
-      Edge(Prefix + "src", Prefix + "target", "cites"),           // short form
-      Edge(Prefix + "src", Prefix + "vanished", "refutes"))))     // dead
+    put(
+      source(
+        Prefix + "src",
+        edges = List(
+          Edge(Prefix + "src", Prefix + "target_full", "references"), // resolves
+          Edge(Prefix + "src", Prefix + "target", "cites"), // short form
+          Edge(Prefix + "src", Prefix + "vanished", "refutes")
+        )
+      )
+    ) // dead
     put(source(Prefix + "target_full"))
     val items = run(DanglingEdges)
     assertEquals(items.size, 2)
@@ -152,10 +196,16 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
 
   test("undated-findings and unlocated-findings, named by finding id"):
     val ck = Prefix + "f"
-    put(source(ck, findings = List(
-      finding(s"$ck#0", ck, None, Some("Anatolia"), Some(GeoPoint(32.0, 39.0))),  // undated
-      finding(s"$ck#1", ck, Some(Period(-1800, -1700)), None, None),              // unlocated
-      finding(s"$ck#2", ck, Some(Period(-1800, -1700)), Some("Anatolia"), Some(GeoPoint(32.0, 39.0))))))
+    put(
+      source(
+        ck,
+        findings = List(
+          finding(s"$ck#0", ck, None, Some("Anatolia"), Some(GeoPoint(32.0, 39.0))), // undated
+          finding(s"$ck#1", ck, Some(Period(-1800, -1700)), None, None), // unlocated
+          finding(s"$ck#2", ck, Some(Period(-1800, -1700)), Some("Anatolia"), Some(GeoPoint(32.0, 39.0)))
+        )
+      )
+    )
     assertEquals(run(UndatedFindings).map(_.detail).filter(_.startsWith(s"$ck#0")).size, 1)
     assertEquals(run(UnlocatedFindings).map(_.detail).filter(_.startsWith(s"$ck#1")).size, 1)
     assert(!run(UnlocatedFindings).exists(_.detail.startsWith(s"$ck#2")))
@@ -164,7 +214,8 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
 
   test("the item cap trims the list but never the count"):
     (1 to 5).foreach(i => put(source(s"${Prefix}many$i", findings = Nil)))
-    val rep = LintRepo.run(ds, List(Lint.rule(NoFindings).get), maxItems = 2, suggestions = 3, format = checker, geocode = geo)
+    val rep =
+      LintRepo.run(ds, List(Lint.rule(NoFindings).get), maxItems = 2, suggestions = 3, format = checker, geocode = geo)
     assertEquals(rep.rules.head.items.size, 2)
     assert(rep.rules.head.count >= 5, rep.rules.head.count.toString)
 

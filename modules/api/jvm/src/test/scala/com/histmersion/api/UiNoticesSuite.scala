@@ -1,6 +1,5 @@
 package com.histmersion.api
 
-
 import UiNotices.*
 
 class UiNoticesSuite extends munit.FunSuite:
@@ -22,7 +21,10 @@ class UiNoticesSuite extends munit.FunSuite:
     assertEquals(ts.sorted, ts.sortBy(java.time.Instant.parse))
 
   test("a counter carries a count only for a counted board"):
-    assertEquals(counter(Board.Tasks, Some(3), Some(t2), Some(t1)), Counter("tasks", Some(3), Some(t2), Some(t1), fresh = true))
+    assertEquals(
+      counter(Board.Tasks, Some(3), Some(t2), Some(t1)),
+      Counter("tasks", Some(3), Some(t2), Some(t1), fresh = true)
+    )
     assertEquals(counter(Board.Goals, Some(26), Some(t1), Some(t1)).count, None)
     assertEquals(counter(Board.Log, Some(9), None, None), Counter("log", None, None, None, fresh = false))
 

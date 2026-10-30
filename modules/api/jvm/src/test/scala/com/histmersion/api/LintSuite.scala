@@ -1,15 +1,19 @@
 package com.histmersion.api
 
-
 import com.histmersion.api.Lint.*
 
-/** The lint classifiers (plan §5.2 stream 2.8) — everything that decides whether a row offends and
-  * what the report says about it, with no database in sight. */
+/** The lint classifiers (plan §5.2 stream 2.8) — everything that decides whether a row offends and what the report says
+  * about it, with no database in sight.
+  */
 class LintSuite extends munit.FunSuite:
 
   private val corpus = Set(
-    "heggarty2023_language", "anthony2015_ringe", "kassian2025_critique",
-    "knapp2016_collapse", "knapp2016_seapeoples")
+    "heggarty2023_language",
+    "anthony2015_ringe",
+    "kassian2025_critique",
+    "knapp2016_collapse",
+    "knapp2016_seapeoples"
+  )
 
   private def edge(src: String, dst: String, kind: String = "references") = Edge(src, dst, kind)
 
@@ -21,7 +25,8 @@ class LintSuite extends munit.FunSuite:
   test("a subset is honoured, deduplicated, and blanks are ignored"):
     assertEquals(
       Lint.select(List("no-findings", " ", "no-findings", "no-period")).map(_.map(_.name)),
-      Right(List(NoFindings, NoPeriod)))
+      Right(List(NoFindings, NoPeriod))
+    )
 
   test("an unknown rule is an error, never a silently clean report"):
     val e = Lint.select(List("no-findings", "no-vibes")).left.getOrElse("")
@@ -55,14 +60,16 @@ class LintSuite extends munit.FunSuite:
   test("dangling-edges lists only targets that are not citekeys, with their closest matches"):
     val edges = List(
       edge("anthony2015_ringe", "heggarty2023_language"), // fine
-      edge("anthony2015_ringe", "heggarty2023"),          // short form
-      edge("kassian2025_critique", "gone2001_missing"))   // truly dead
+      edge("anthony2015_ringe", "heggarty2023"), // short form
+      edge("kassian2025_critique", "gone2001_missing")
+    ) // truly dead
     val items = Lint.danglingEdges(edges, corpus, 3)
     assertEquals(items.size, 2)
-    assert(items.exists(i => i.citekey == "anthony2015_ringe" && i.detail.contains("heggarty2023_language")),
-      items.toString)
-    assert(items.exists(i => i.citekey == "kassian2025_critique" && !i.detail.contains("closest")),
-      items.toString)
+    assert(
+      items.exists(i => i.citekey == "anthony2015_ringe" && i.detail.contains("heggarty2023_language")),
+      items.toString
+    )
+    assert(items.exists(i => i.citekey == "kassian2025_critique" && !i.detail.contains("closest")), items.toString)
 
   test("a target with a four-digit year is a source reference; a slug is an article link"):
     assert(Lint.looksLikeCitekey("gray_atkinson_2003"))
@@ -86,21 +93,20 @@ class LintSuite extends munit.FunSuite:
 
   test("unresolved-short-citekeys covers only prefixes of real citekeys, and flags the fixable ones"):
     val edges = List(
-      edge("a", "heggarty2023"),      // exactly one expansion → fixable
-      edge("b", "knapp2016"),         // two expansions → needs a human
-      edge("c", "gone2001_missing"))  // not a short form at all
+      edge("a", "heggarty2023"), // exactly one expansion → fixable
+      edge("b", "knapp2016"), // two expansions → needs a human
+      edge("c", "gone2001_missing")
+    ) // not a short form at all
     val items = Lint.unresolvedShortCitekeys(edges, corpus, 3)
     assertEquals(items.map(_.citekey), List("a", "b"))
     assert(items.head.detail.contains("resolves to heggarty2023_language"), items.head.detail)
     assert(items.head.detail.contains("lint --fix"))
-    assert(items(1).detail.contains("ambiguous between knapp2016_collapse, knapp2016_seapeoples"),
-      items(1).detail)
+    assert(items(1).detail.contains("ambiguous between knapp2016_collapse, knapp2016_seapeoples"), items(1).detail)
 
   // ── duplicates ───────────────────────────────────────────────────────────────────────────────
 
   test("duplicates groups case- and whitespace-insensitively, naming the partners"):
-    val items = Lint.duplicates(
-      List("a" -> "10.1/X", "b" -> " 10.1/x ", "c" -> "10.2/y"), "doi")
+    val items = Lint.duplicates(List("a" -> "10.1/X", "b" -> " 10.1/x ", "c" -> "10.2/y"), "doi")
     assertEquals(items.map(_.citekey), List("a", "b"))
     assert(items.head.detail.contains("also on b"), items.head.detail)
     assert(items(1).detail.contains("also on a"), items(1).detail)
@@ -121,14 +127,17 @@ class LintSuite extends munit.FunSuite:
 
   test("count is the true total; items are capped"):
     val items = (1 to 10).toList.map(i => LintItem(s"s$i", "no findings"))
-    val r     = Lint.report(rule, items, 3)
+    val r = Lint.report(rule, items, 3)
     assertEquals(r.count, 10)
     assertEquals(r.items.size, 3)
 
   test("Markdown groups by rule, shows counts and folds the clean rules into one line"):
-    val rep = LintReport(List(
-      Lint.report(rule, List(LintItem("a", "x"), LintItem("b", "y")), 1),
-      Lint.report(Lint.rule(NoPeriod).get, Nil, 50)))
+    val rep = LintReport(
+      List(
+        Lint.report(rule, List(LintItem("a", "x"), LintItem("b", "y")), 1),
+        Lint.report(Lint.rule(NoPeriod).get, Nil, 50)
+      )
+    )
     val md = Lint.markdown(rep)
     assert(md.contains("### Lint: 2 finding(s) across 1 of 2 rule(s)"), md)
     assert(md.contains("#### no-findings (2)"), md)
@@ -146,7 +155,9 @@ class LintSuite extends munit.FunSuite:
 
   // ── wave 3 rules ─────────────────────────────────────────────────────────────────────────────
 
-  test("the catalog now has 34 rules (13 original + 6 wave-3 + 2 UX + superseded-without-edge + article-critique-pairing + 2 formatting + finding-geocode + finding-unplaced + place-kind + place-grid-point + place-imported-point-area + finding-placeholder + media-licence + event-correction-conflict) with no duplicates"):
+  test(
+    "the catalog now has 34 rules (13 original + 6 wave-3 + 2 UX + superseded-without-edge + article-critique-pairing + 2 formatting + finding-geocode + finding-unplaced + place-kind + place-grid-point + place-imported-point-area + finding-placeholder + media-licence + event-correction-conflict) with no duplicates"
+  ):
     assertEquals(Lint.names.distinct.size, Lint.names.size)
     assertEquals(Lint.all.size, 34)
     assert(Lint.all.forall(_.description.trim.nonEmpty))
@@ -167,37 +178,41 @@ class LintSuite extends munit.FunSuite:
     assertEquals(Lint.normaliseTag("sea_peoples"), "sea_peoples")
 
   test("nonCanonicalTags flags tags not in lowercase_snake_case"):
-    val items = Lint.nonCanonicalTags(List(
-      ("a", List("sea_peoples", "Bronze-Age")),
-      ("b", List("good_tag")),
-      ("c", List("BAD TAG"))))
+    val items = Lint.nonCanonicalTags(
+      List(("a", List("sea_peoples", "Bronze-Age")), ("b", List("good_tag")), ("c", List("BAD TAG")))
+    )
     assertEquals(items.map(_.citekey), List("a", "c"))
     assert(items.head.detail.contains("Bronze-Age"))
     assert(items.head.detail.contains("bronze_age"))
 
   test("yearCitekeyMismatch flags when citekey year != stored year"):
-    val items = Lint.yearCitekeyMismatch(List(
-      ("heggarty2023_language", Some(2023)), // fine
-      ("gray2003_language", Some(2004)),     // mismatch
-      ("noyr_book", Some(2010)),             // no year in citekey
-      ("chang2015", None)))                  // no stored year
+    val items = Lint.yearCitekeyMismatch(
+      List(
+        ("heggarty2023_language", Some(2023)), // fine
+        ("gray2003_language", Some(2004)), // mismatch
+        ("noyr_book", Some(2010)), // no year in citekey
+        ("chang2015", None)
+      )
+    ) // no stored year
     assertEquals(items.size, 1)
     assertEquals(items.head.citekey, "gray2003_language")
     assert(items.head.detail.contains("2003"))
     assert(items.head.detail.contains("2004"))
 
   test("authorPipe flags authors with pipe characters"):
-    val items = Lint.authorPipe(List(
-      ("a", List("Eric H. Cline")),
-      ("b", List("Cline| Eric H.")),
-      ("c", List("Good Author", "Bad| Author"))))
+    val items = Lint.authorPipe(
+      List(("a", List("Eric H. Cline")), ("b", List("Cline| Eric H.")), ("c", List("Good Author", "Bad| Author")))
+    )
     assertEquals(items.map(_.citekey), List("b", "c"))
     assert(items.head.detail.contains("Cline| Eric H."))
 
   test("articleFiller flags banned phrases"):
-    val items = Lint.articleFiller(List(
-      ("clean", "The sources agree on this point."),
-      ("bad", "It is worth noting that the evidence is clear. Interestingly, this sheds light on...")))
+    val items = Lint.articleFiller(
+      List(
+        ("clean", "The sources agree on this point."),
+        ("bad", "It is worth noting that the evidence is clear. Interestingly, this sheds light on...")
+      )
+    )
     assertEquals(items.size, 1)
     assertEquals(items.head.citekey, "bad")
     assert(items.head.detail.contains("filler:"))
@@ -238,7 +253,9 @@ class LintSuite extends munit.FunSuite:
     assert(paras.head.contains("Prose paragraph one"))
     assert(paras(1).contains("Prose paragraph two"))
 
-  test("extractParagraphs: a short lead-in ending in ':' before a list is not a paragraph; anything else ending in ':' is"):
+  test(
+    "extractParagraphs: a short lead-in ending in ':' before a list is not a paragraph; anything else ending in ':' is"
+  ):
     // the fixer's Not-used intro on theseus_origins (run dd1de366), rejected twice as uncited
     val leadIn = "These sources mention Theseus only in their full text, and their records carry no finding on him:"
     def paras(b: String) = Lint.extractParagraphs(b)
@@ -271,10 +288,16 @@ class LintSuite extends munit.FunSuite:
     assert(!Lint.isListLeadIn("A claim. The sources not used:"))
 
   test("article-thin-summary flags missing, stand-in and label-length summaries, not real ones"):
-    val real = "Hephaestus, the lame divine smith, has no Indo-European etymology and is the only major Olympian absent from Linear B."
-    val items = Lint.articleThinSummary(List(
-      "a_missing" -> "", "b_placeholder" -> "placeholder",
-      "c_chatter" -> "Origin article for the Greek god origins program.", "d_real" -> real))
+    val real =
+      "Hephaestus, the lame divine smith, has no Indo-European etymology and is the only major Olympian absent from Linear B."
+    val items = Lint.articleThinSummary(
+      List(
+        "a_missing" -> "",
+        "b_placeholder" -> "placeholder",
+        "c_chatter" -> "Origin article for the Greek god origins program.",
+        "d_real" -> real
+      )
+    )
     assertEquals(items.map(_.citekey), List("a_missing", "b_placeholder", "c_chatter"))
     assert(items(1).detail.contains("stand-in"), items(1).detail)
     assert(items(2).detail.contains("49 chars"), items(2).detail)
@@ -288,11 +311,15 @@ class LintSuite extends munit.FunSuite:
       if text.contains("**") then
         List(FormatIssue(FormatRule.Emphasis, FormatSeverity.Error, field, 2, 5, "a ** b", "unpaired", Some("trim")))
       else Nil
-    val items = Lint.formatItems(List(
-      ("zeta", FormatField.Summary, "fine"),
-      ("alpha", FormatField.Summary, "x ** y"),
-      ("alpha", FormatField.Body, "a ** b"),
-      ("beta", FormatField.Notes, "   ")), check)
+    val items = Lint.formatItems(
+      List(
+        ("zeta", FormatField.Summary, "fine"),
+        ("alpha", FormatField.Summary, "x ** y"),
+        ("alpha", FormatField.Body, "a ** b"),
+        ("beta", FormatField.Notes, "   ")
+      ),
+      check
+    )
     assertEquals(items.map(_.citekey), List("alpha", "alpha"))
     assert(items.head.detail.startsWith("body L2:5 error emphasis — unpaired"), items.head.detail)
     assert(items(1).detail.startsWith("summary L2:5"), items(1).detail)

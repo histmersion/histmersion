@@ -8,13 +8,13 @@ import com.histmersion.values.PlaceKind
 
 /** Imports named historical periods from ChronOntology (DAI).
   *
-  * Source: https://chronontology.dainst.org
-  * License: open access
-  * Coverage: ~14K named periods worldwide, from prehistory to modern.
+  * Source: https://chronontology.dainst.org License: open access Coverage: ~14K named periods worldwide, from
+  * prehistory to modern.
   *
-  * Each period has multilingual names, a four-point time span (notBefore/notAfter/at), types
-  * (material_culture, political, geological, etc.) and region associations. We map each to a
-  * `PlaceInput` with kind derived from the period type and the time span as a `Period`. */
+  * Each period has multilingual names, a four-point time span (notBefore/notAfter/at), types (material_culture,
+  * political, geological, etc.) and region associations. We map each to a `PlaceInput` with kind derived from the
+  * period type and the time span as a `Period`.
+  */
 object ChronOntologyImporter extends GazetteerImporter:
 
   val name = "chronontology"
@@ -25,7 +25,10 @@ object ChronOntologyImporter extends GazetteerImporter:
 
   def transform(rawJson: String): Either[String, List[PlaceInput]] =
     io.circe.parser.parse(rawJson).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>
-      val results = doc.asObject.flatMap(_("results")).flatMap(_.asArray).map(_.toList)
+      val results = doc.asObject
+        .flatMap(_("results"))
+        .flatMap(_.asArray)
+        .map(_.toList)
         .toRight("expected {results: [...]}")
       results.map(_.flatMap(r => readResult(r).toOption))
     }
@@ -46,7 +49,7 @@ object ChronOntologyImporter extends GazetteerImporter:
 
           val props = JsonObject.fromIterable(
             List("chronontologyId" -> Json.fromString(id)) ++
-            regions.headOption.map(r => "region" -> Json.fromString(r)).toList
+              regions.headOption.map(r => "region" -> Json.fromString(r)).toList
           )
 
           val place = Place(
@@ -65,8 +68,7 @@ object ChronOntologyImporter extends GazetteerImporter:
     val names = res("names").flatMap(_.asObject).getOrElse(JsonObject.empty)
     val en = names("en").flatMap(_.asArray).flatMap(_.headOption).flatMap(_.asString)
     en.getOrElse {
-      names.toIterable.flatMap((_, v) => v.asArray.flatMap(_.headOption).flatMap(_.asString))
-        .headOption.getOrElse("")
+      names.toIterable.flatMap((_, v) => v.asArray.flatMap(_.headOption).flatMap(_.asString)).headOption.getOrElse("")
     }
 
   private def allNames(res: JsonObject): List[(String, String)] =
@@ -86,9 +88,9 @@ object ChronOntologyImporter extends GazetteerImporter:
       val endYear = parseYear(end, "at").orElse(parseYear(end, "notAfter"))
       (startYear, endYear) match
         case (Some(s), Some(e)) => Some(Period(s, e))
-        case (Some(s), None) => Some(Period(s, s))
-        case (None, Some(e)) => Some(Period(e, e))
-        case _ => None
+        case (Some(s), None)    => Some(Period(s, s))
+        case (None, Some(e))    => Some(Period(e, e))
+        case _                  => None
 
   private def parseYear(obj: JsonObject, key: String): Option[Long] =
     obj(key).flatMap(_.asString).flatMap { s =>
@@ -98,8 +100,11 @@ object ChronOntologyImporter extends GazetteerImporter:
     }
 
   private def extractKind(res: JsonObject): String =
-    val types = res("types").flatMap(_.asArray).getOrElse(Vector.empty)
-      .flatMap(_.asString).map(_.toLowerCase)
+    val types = res("types")
+      .flatMap(_.asArray)
+      .getOrElse(Vector.empty)
+      .flatMap(_.asString)
+      .map(_.toLowerCase)
     if types.contains("political") then PlaceKind.Polity
     else if types.contains("geological") || types.contains("climatological") then PlaceKind.Feature
     else PlaceKind.Region

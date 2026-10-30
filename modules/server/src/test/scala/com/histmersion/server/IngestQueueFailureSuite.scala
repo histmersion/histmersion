@@ -6,8 +6,9 @@ import com.histmersion.domain.*
 import com.histmersion.db.{Db, Migrate, QueueRepo, SourceRepo, TestDb}
 import java.nio.file.{Files, Path}
 
-/** A real queue write can throw instead of returning Left. Never turn stored OCR into a failed job
-  * because its optional acquisition bookkeeping failed. Uses only the disposable *_test database. */
+/** A real queue write can throw instead of returning Left. Never turn stored OCR into a failed job because its optional
+  * acquisition bookkeeping failed. Uses only the disposable *_test database.
+  */
 class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
   override def munitIgnore: Boolean = TestDb.url.isEmpty
 
@@ -15,7 +16,8 @@ class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
     val base = AppConfig.load()
     val cfg = base.copy(
       db = base.db.copy(url = TestDb.url.get),
-      converter = base.converter.copy(spoolDir = Files.createTempDirectory("ingest-queue-spool").toString))
+      converter = base.converter.copy(spoolDir = Files.createTempDirectory("ingest-queue-spool").toString)
+    )
     val ds = testPool(cfg.db)
     Migrate.run(ds)
     val converter = new ConverterClient:
@@ -41,9 +43,10 @@ class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
         FOR EACH ROW WHEN (NEW.text = 'zz_ingest_queue_failure')
         EXECUTE FUNCTION zz_ingest_reject_done()""")
       handler.start()
-      val accepted = handler.ingest(
-        IngestParams(key, Some("fixture.pdf"), force = true, acquireItem = Some(item.id)),
-        pdf.toFile).toOption.get
+      val accepted = handler
+        .ingest(IngestParams(key, Some("fixture.pdf"), force = true, acquireItem = Some(item.id)), pdf.toFile)
+        .toOption
+        .get
       var job = handler.job(accepted.jobId).toOption.get
       var attempts = 0
       while !job.isTerminal && attempts < 500 do

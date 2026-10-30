@@ -1,6 +1,6 @@
 package com.histmersion.server
 
-import com.histmersion.pluginhost.{PluginHost, Generation, HostServices}
+import com.histmersion.pluginhost.{Generation, HostServices, PluginHost}
 
 import ox.supervised
 import com.histmersion.config.AppConfig
@@ -12,10 +12,11 @@ import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import scala.jdk.CollectionConverters.*
 
-/** `/api/about` and `/api/config` report the plugins the server started with — their state and their
-  * settings, a secret as its REFERENCE and never its value. Skipped without HISTMERSION_TEST_DB_URL. */
+/** `/api/about` and `/api/config` report the plugins the server started with — their state and their settings, a secret
+  * as its REFERENCE and never its value. Skipped without HISTMERSION_TEST_DB_URL.
+  */
 class PluginsHttpSuite extends munit.FunSuite:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()
@@ -26,22 +27,24 @@ class PluginsHttpSuite extends munit.FunSuite:
   private def generation(): Generation =
     val got = scala.collection.mutable.Buffer.empty[String]
     val (found, _) = PluginHost.discover(getClass.getClassLoader)
-    val user = ConfigFactory.parseString(
-      """histmersion.plugins {
+    val user = ConfigFactory.parseString("""histmersion.plugins {
         |  maker.enabled = true
         |  consumer { enabled = true, token = "fake:portal", extra = ["value:hunter2", "env:PLUGINS_HTTP_TOKEN"] }
         |  typo { enabled = true }
         |}""".stripMargin)
     val env = ConfigFactory.parseMap(Map("PLUGINS_HTTP_TOKEN" -> "env-secret-value").asJava)
-    val services = HostServices(() => new PluginHttp { def get(u: String, h: Map[String, String]) = Left("offline") },
-      env, (_, _, _) => ())
+    val services = HostServices(
+      () => new PluginHttp { def get(u: String, h: Map[String, String]) = Left("offline") },
+      env,
+      (_, _, _) => ()
+    )
     val g = PluginHost.build(found ++ List(MakerPlugin(), ConsumerPlugin(got)), user, env, services)
     assertEquals(got.toList, List("v(portal)", "hunter2", "env-secret-value"))
     g
 
   test("about and config list the plugins; a secret shows as its reference, never as its value"):
     val base = AppConfig.load()
-    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
       val b = Main.server(cfg, "127.0.0.1", 0, OfflineConverter(), plugins = generation()).start()
       try

@@ -7,13 +7,14 @@ import com.histmersion.domain.*
 import com.augustnagro.magnum.*
 import com.histmersion.values.{Confidence, EventLinkStatus, PlaceKind, SourceStatus}
 
-/** #1449 against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): V085's kinds and
-  * tables, writing placed catalogue records (a compiled event matched, never overwritten), the tier and
-  * the kind-group / tier / area / catalogue-context filters of the events feed, findings near an event,
-  * the sources naming it, stored candidates and their statuses, lead facts, an article's catalogue
-  * events, and site types in the places feed. Fixtures sit at 150–152°E, 40°S; ids start with `zqec`. */
+/** #1449 against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): V085's kinds and tables, writing placed
+  * catalogue records (a compiled event matched, never overwritten), the tier and the kind-group / tier / area /
+  * catalogue-context filters of the events feed, findings near an event, the sources naming it, stored candidates and
+  * their statuses, lead facts, an article's catalogue events, and site types in the places feed. Fixtures sit at
+  * 150–152°E, 40°S; ids start with `zqec`.
+  */
 class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
-  private val testDb                = TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
@@ -25,21 +26,63 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
   private val Lat = -40.0
 
   private val src = Source(
-    citekey = "zqec_src2020", title = "Zqec volcanology", authors = List("A"), doi = None, year = Some(2020),
-    venue = None, status = SourceStatus.Current, topics = Nil, regions = Nil, tags = List("zqec"),
-    period = Some(Period(-1700, -1500)), summary = None, citedByCount = None, influentialCitations = None,
-    provenance = None, calibreId = None,
+    citekey = "zqec_src2020",
+    title = "Zqec volcanology",
+    authors = List("A"),
+    doi = None,
+    year = Some(2020),
+    venue = None,
+    status = SourceStatus.Current,
+    topics = Nil,
+    regions = Nil,
+    tags = List("zqec"),
+    period = Some(Period(-1700, -1500)),
+    summary = None,
+    citedByCount = None,
+    influentialCitations = None,
+    provenance = None,
+    calibreId = None,
     findings = List(
-      Finding("zqec_src2020#0", "zqec_src2020", "ash layer", None, Some(GeoPoint(150.2, Lat)), Some(Period(-1620, -1600)),
-        None, Nil, Some(Confidence.High)),
-      Finding("zqec_src2020#1", "zqec_src2020", "far away", None, Some(GeoPoint(170.0, Lat)), Some(Period(-1620, -1600)),
-        None, Nil, Some(Confidence.High))),
+      Finding(
+        "zqec_src2020#0",
+        "zqec_src2020",
+        "ash layer",
+        None,
+        Some(GeoPoint(150.2, Lat)),
+        Some(Period(-1620, -1600)),
+        None,
+        Nil,
+        Some(Confidence.High)
+      ),
+      Finding(
+        "zqec_src2020#1",
+        "zqec_src2020",
+        "far away",
+        None,
+        Some(GeoPoint(170.0, Lat)),
+        Some(Period(-1620, -1600)),
+        None,
+        Nil,
+        Some(Confidence.High)
+      )
+    ),
     edges = Nil,
-    ocrMarkdown = Some("# Zqec\n\nThe Zqecian eruption buried the town. Later the Zqecian eruption was dated."))
+    ocrMarkdown = Some("# Zqec\n\nThe Zqecian eruption buried the town. Later the Zqecian eruption was dated.")
+  )
 
   private def rec(p: String, id: String, kind: String, y: Long, lon: Double, vei: Option[Int] = None) =
-    CatalogRecord(p, id, s"https://example.org/$id", s"Zqec $kind $id", kind, TimeSpan(Some(y), Some(y), Some(y), Some(y)),
-      Some(Lat), Some(lon), vei = vei, names = List("Zqecian eruption"))
+    CatalogRecord(
+      p,
+      id,
+      s"https://example.org/$id",
+      s"Zqec $kind $id",
+      kind,
+      TimeSpan(Some(y), Some(y), Some(y), Some(y)),
+      Some(Lat),
+      Some(lon),
+      vei = vei,
+      names = List("Zqecian eruption")
+    )
 
   private def clean(): Unit = connect(ds):
     val _ = sql"DELETE FROM events WHERE id LIKE 'zqec%' OR id LIKE 'zztest_%'".update.run()
@@ -53,43 +96,73 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
       clean()
       SourceRepo.upsert(ds, src, cfg.limits.chunkChars)
       // a compiled event: a source names it
-      EventRepo.put(ds, "zqec_compiled", EventPut("Zqec compiled eruption", "natural_disaster",
-        TimeSpan(Some(-1615), None, None, Some(-1605)),
-        geometry = Some(s"""{"type":"Point","coordinates":[150.0,$Lat]}"""), citekey = Some("zqec_src2020")))
+      EventRepo.put(
+        ds,
+        "zqec_compiled",
+        EventPut(
+          "Zqec compiled eruption",
+          "natural_disaster",
+          TimeSpan(Some(-1615), None, None, Some(-1605)),
+          geometry = Some(s"""{"type":"Point","coordinates":[150.0,$Lat]}"""),
+          citekey = Some("zqec_src2020")
+        )
+      )
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   test("V085: the tables are there and the compiled event's kind is refined only on migration"):
-    val tables = connect(ds)(sql"""SELECT table_name FROM information_schema.tables
+    val tables = connect(ds)(
+      sql"""SELECT table_name FROM information_schema.tables
         WHERE table_name IN ('event_catalogue', 'event_import_parts', 'event_link_candidates', 'event_link_checks')"""
-      .query[String].run().toSet)
+        .query[String]
+        .run()
+        .toSet
+    )
     assertEquals(tables.size, 4)
-    val cols = connect(ds)(sql"""SELECT column_name FROM information_schema.columns
-        WHERE table_name = 'places' AND column_name IN ('site_type', 'site_type_checked_at')""".query[String].run().toSet)
+    val cols = connect(ds)(
+      sql"""SELECT column_name FROM information_schema.columns
+        WHERE table_name = 'places' AND column_name IN ('site_type', 'site_type_checked_at')"""
+        .query[String]
+        .run()
+        .toSet
+    )
     assertEquals(cols, Set("site_type", "site_type_checked_at"))
 
   test("saving placed records: new events created, a compiled one matched and never overwritten"):
     val stored = EventCatalogRepo.stored(ds).filter(_.id.startsWith("zqec"))
     val records = List(
-      rec("zztest", "a", "natural_disaster", -1610, 150.01, Some(6)),   // the compiled event's kind is not eruption: new
-      rec("zztest", "b", "eruption", -1200, 151.0, Some(4)))
+      rec("zztest", "a", "natural_disaster", -1610, 150.01, Some(6)), // the compiled event's kind is not eruption: new
+      rec("zztest", "b", "eruption", -1200, 151.0, Some(4))
+    )
     val placed = CatalogMerge.place(records, stored, CatalogMerge.Tolerance(60, 30))
     // the first is natural_disaster like the compiled one, at its place and time: matched
     assertEquals(placed.map(_._2.eventId), List("zqec_compiled", "zztest_b"))
     val saved = EventCatalogRepo.save(ds, placed)
     assertEquals((saved.created, saved.rows), (1, 2))
     val compiled = EventRepo.get(ds, "zqec_compiled").get.event
-    assertEquals((compiled.label, compiled.kind, compiled.citekey), ("Zqec compiled eruption", "natural_disaster", Some("zqec_src2020")))
+    assertEquals(
+      (compiled.label, compiled.kind, compiled.citekey),
+      ("Zqec compiled eruption", "natural_disaster", Some("zqec_src2020"))
+    )
     assertEquals(EventCatalogRepo.catalogueRefs(ds, "zqec_compiled").map(_.providerId), List("a"))
     assert(EventCatalogRepo.tierAndNames(ds, "zqec_compiled").get._2.contains("Zqecian eruption"), "names added")
     val created = EventRepo.get(ds, "zztest_b").get.event
     assertEquals((created.kind, created.tier), ("eruption", EventTier.Catalogue))
     // a second save of the same records changes nothing
-    assertEquals(EventCatalogRepo.save(ds, CatalogMerge.place(records, EventCatalogRepo.stored(ds), CatalogMerge.Tolerance(60, 30))).created, 0)
+    assertEquals(
+      EventCatalogRepo
+        .save(ds, CatalogMerge.place(records, EventCatalogRepo.stored(ds), CatalogMerge.Tolerance(60, 30)))
+        .created,
+      0
+    )
 
   test("the events feed: tier, kind groups, the catalogue context and the area"):
     def ids(f: Filter = Filter(), kind: Option[String] = None, more: EventRepo.Narrow = EventRepo.Narrow()) =
-      EventRepo.list(ds, f, PlaceScope.empty, None, kind, None, None, 500, 0, more).events.map(_.id).filter(i =>
-        i.startsWith("zqec") || i.startsWith("zztest")).toSet
+      EventRepo
+        .list(ds, f, PlaceScope.empty, None, kind, None, None, 500, 0, more)
+        .events
+        .map(_.id)
+        .filter(i => i.startsWith("zqec") || i.startsWith("zztest"))
+        .toSet
     assertEquals(ids(more = EventRepo.Narrow(tier = Some("catalogue"))), Set("zztest_b"))
     assertEquals(ids(more = EventRepo.Narrow(tier = Some("attested"))), Set("zqec_compiled"))
     assertEquals(ids(kind = Some("natural")), Set("zqec_compiled", "zztest_b"))
@@ -99,8 +172,18 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(ids(bySource), Set("zqec_compiled"))
     assertEquals(ids(bySource, more = EventRepo.Narrow(context = true)), Set("zqec_compiled", "zztest_b"))
     assertEquals(ids(more = EventRepo.Narrow(area = BBox.parse("150.5,-41,151.5,-39"))), Set("zztest_b"))
-    val geo = EventRepo.geo(ds, Filter(), PlaceScope.empty, Some("Zqec"), None, None, None, 100, 0.01,
-      EventRepo.Narrow(tier = Some("catalogue")))
+    val geo = EventRepo.geo(
+      ds,
+      Filter(),
+      PlaceScope.empty,
+      Some("Zqec"),
+      None,
+      None,
+      None,
+      100,
+      0.01,
+      EventRepo.Narrow(tier = Some("catalogue"))
+    )
     assertEquals(geo.events.find(_.id == "zztest_b").map(g => (g.tier, g.size)), Some(("catalogue", Some("VEI 4"))))
 
   test("findings near an event: within the distance and years, nearest first, the far one left out"):
@@ -112,22 +195,42 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
 
   test("the full-text index finds the sources naming an event; candidates keep their status"):
     assertEquals(EventCatalogRepo.sourcesNaming(ds, "Zqecian eruption", 10), List("zqec_src2020"))
-    val c = EventLinkCandidate("zztest_b", "zqec_src2020", 1.1, findings = Nil,
-      passages = List(EventPassage(10, 26, "Zqecian eruption", "Zqecian eruption")), reasons = List("names it"))
+    val c = EventLinkCandidate(
+      "zztest_b",
+      "zqec_src2020",
+      1.1,
+      findings = Nil,
+      passages = List(EventPassage(10, 26, "Zqecian eruption", "Zqecian eruption")),
+      reasons = List("names it")
+    )
     EventCatalogRepo.saveCandidates(ds, "zztest_b", List(c))
     assert(EventCatalogRepo.isChecked(ds, "zztest_b"))
-    assertEquals(EventCatalogRepo.candidates(ds, "zztest_b").map(x => (x.citekey, x.status, x.passages.head.start)),
-      List(("zqec_src2020", "proposed", 10)))
+    assertEquals(
+      EventCatalogRepo.candidates(ds, "zztest_b").map(x => (x.citekey, x.status, x.passages.head.start)),
+      List(("zqec_src2020", "proposed", 10))
+    )
     assert(EventCatalogRepo.setStatus(ds, "zztest_b", "zqec_src2020", EventLinkStatus.Rejected))
-    EventCatalogRepo.saveCandidates(ds, "zztest_b", List(c))   // a recompute keeps the rejection
+    EventCatalogRepo.saveCandidates(ds, "zztest_b", List(c)) // a recompute keeps the rejection
     assertEquals(EventCatalogRepo.candidates(ds, "zztest_b"), Nil)
     assertEquals(EventCatalogRepo.candidates(ds, "zztest_b", withRejected = true).map(_.status), List("rejected"))
 
   test("an attestation makes a catalogue event attested"):
-    val _ = AttestationRepo.create(ds, AttestationPut("zqec_src2020", AttestationTarget.Event, "zztest_b",
-      quote = Some("Zqecian eruption"), charStart = Some(10), charEnd = Some(26)))
+    val _ = AttestationRepo.create(
+      ds,
+      AttestationPut(
+        "zqec_src2020",
+        AttestationTarget.Event,
+        "zztest_b",
+        quote = Some("Zqecian eruption"),
+        charStart = Some(10),
+        charEnd = Some(26)
+      )
+    )
     assertEquals(EventCatalogRepo.tierAndNames(ds, "zztest_b").map(_._1), Some(EventTier.Attested))
-    assertEquals(EventCatalogRepo.attestingSources(ds, "zztest_b").map(s => (s.citekey, s.via)), List(("zqec_src2020", "attestation")))
+    assertEquals(
+      EventCatalogRepo.attestingSources(ds, "zztest_b").map(s => (s.citekey, s.via)),
+      List(("zqec_src2020", "attestation"))
+    )
     val _ = connect(ds)(sql"DELETE FROM attestations WHERE target_id = 'zztest_b'".update.run())
     assertEquals(EventCatalogRepo.tierAndNames(ds, "zztest_b").map(_._1), Some(EventTier.Catalogue))
 
@@ -138,8 +241,11 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
   test("an article's catalogue events: in its period, near its sources' findings, large enough"):
     val got = EventCatalogRepo.articleCandidates(ds, List("zqec_src2020"), Some((-1700, -1100)), 300, 4, 7.0, 10)
     assertEquals(got.map(_._1), List("zztest_b"))
-    assertEquals(EventCatalogRepo.articleCandidates(ds, List("zqec_src2020"), Some((-1700, -1100)), 300, 5, 7.0, 10), Nil,
-      "VEI 4 is below 5")
+    assertEquals(
+      EventCatalogRepo.articleCandidates(ds, List("zqec_src2020"), Some((-1700, -1100)), 300, 5, 7.0, 10),
+      Nil,
+      "VEI 4 is below 5"
+    )
 
   test("parts read are recorded and cleared"):
     EventCatalogRepo.markPart(ds, "zztest", "class:Q1", 3)
@@ -149,13 +255,22 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
 
   test("the places feed carries a site's type: stored, else from its gazetteer's fields"):
     val pt = Some(s"""{"type":"Point","coordinates":[152.0,$Lat]}""")
-    val _ = PlaceRepo.upsertPlaces(ds, List(
-      PlaceInput(Place("zqec_site", "Zqec site", PlaceKind.Site, pt), List(PlaceName("Zqec site")))))
+    val _ = PlaceRepo.upsertPlaces(
+      ds,
+      List(PlaceInput(Place("zqec_site", "Zqec site", PlaceKind.Site, pt), List(PlaceName("Zqec site"))))
+    )
     connect(ds):
-      val _ = sql"""UPDATE places SET properties = '{"feature_types":"settlement,temple-2"}'::jsonb WHERE id = 'zqec_site'""".update.run()
+      val _ =
+        sql"""UPDATE places SET properties = '{"feature_types":"settlement,temple-2"}'::jsonb WHERE id = 'zqec_site'""".update
+          .run()
     def siteType: Option[String] =
       val json = io.circe.parser.parse(PlaceRepo.geoJson(ds, Some("site"), None, 5000)).toOption.get
-      json.hcursor.downField("features").focus.flatMap(_.asArray).toList.flatten
+      json.hcursor
+        .downField("features")
+        .focus
+        .flatMap(_.asArray)
+        .toList
+        .flatten
         .map(_.hcursor.downField("properties"))
         .find(_.get[String]("id").toOption.contains("zqec_site"))
         .flatMap(_.get[String]("siteType").toOption)

@@ -13,4 +13,4 @@ object BookmarkId extends RefinedType[String, Match[PersonalIds.UuidRule]]:
     either(Option(raw).fold("")(_.trim.toLowerCase)).left.map(_ => s"not a bookmark id: '$raw'")
   given Encoder[BookmarkId] = Encoder.encodeString.contramap(_.value)
   given Decoder[BookmarkId] = Decoder.decodeString.emap(parse)
-  given Schema[BookmarkId]  = Schema.string[BookmarkId]
+  given Schema[BookmarkId] = Schema.string[BookmarkId]

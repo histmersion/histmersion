@@ -1,13 +1,13 @@
 package com.histmersion.api
 
-/** Markdown renderings of the acquisition & assessment results — the wire format of every surface:
-  * the MCP tools return these strings, the CLI prints them, and they read the same either way. Pure
-  * functions of a DTO, like [[Markdown]]. */
+/** Markdown renderings of the acquisition & assessment results — the wire format of every surface: the MCP tools return
+  * these strings, the CLI prints them, and they read the same either way. Pure functions of a DTO, like [[Markdown]].
+  */
 object AcquireMarkdown:
 
   private def esc(s: String): String = s.replace("|", "\\|").replace("\n", " ").trim
   private def cell(s: Option[String]): String = esc(s.getOrElse("—"))
-  private def num(n: Option[Int]): String     = n.map(_.toString).getOrElse("—")
+  private def num(n: Option[Int]): String = n.map(_.toString).getOrElse("—")
 
   /** `10.1038/nature14317` → a resolver link, so a reader can open it from the terminal or the chat. */
   private def doiLink(doi: Option[String]): String =
@@ -74,7 +74,7 @@ object AcquireMarkdown:
     if r.dois.isEmpty && r.arxiv.isEmpty then s"_No DOIs cited by **${esc(r.article)}**._"
     else
       val known = r.known.toSet
-      val rows  = r.dois.map(d => List(doiLink(Some(d)), if known.contains(d) then "in db" else "—"))
+      val rows = r.dois.map(d => List(doiLink(Some(d)), if known.contains(d) then "in db" else "—"))
       s"### ${r.article} — ${r.doiCount} DOI(s), ${r.arxiv.size} arXiv id(s)\n\n" +
         table(List("doi", "status"), rows) +
         (if r.arxiv.isEmpty then "" else s"\n\n**arXiv:** ${r.arxiv.mkString(", ")}") +
@@ -83,8 +83,7 @@ object AcquireMarkdown:
   // ── refs ────────────────────────────────────────────────────────────────────────────────────
 
   def refs(r: RefsResult): String =
-    if r.references.isEmpty then
-      s"_No reference list deposited for **${esc(r.target)}** (backend: ${r.backend})._"
+    if r.references.isEmpty then s"_No reference list deposited for **${esc(r.target)}** (backend: ${r.backend})._"
     else
       val rows = r.references.map { x =>
         List(
@@ -116,36 +115,45 @@ object AcquireMarkdown:
       s"**DOI:** ${doiLink(a.doi)}  ",
       a.citekey.map(k => s"**Citekey:** `$k`  ").getOrElse(""),
       s"**Cited by:** ${num(a.citedByCount)}" +
-        a.influentialCitations.map(i => s" (${i} influential)").getOrElse("") + "  ",
+        a.influentialCitations.map(i => s" ($i influential)").getOrElse("") + "  ",
       s"**Recommendation:** ${a.recommendation}"
     ).filter(_.nonEmpty).mkString("\n")
 
     val rw =
       if a.retractionWatch.isEmpty then ""
       else
-        "\n\n**Retraction Watch**\n" + a.retractionWatch.map { n =>
-          s"- ${n.nature.getOrElse("notice")}${n.date.map(d => s" ($d)").getOrElse("")}" +
-            n.reason.map(r => s" — $r").getOrElse("")
-        }.mkString("\n")
+        "\n\n**Retraction Watch**\n" + a.retractionWatch
+          .map { n =>
+            s"- ${n.nature.getOrElse("notice")}${n.date.map(d => s" ($d)").getOrElse("")}" +
+              n.reason.map(r => s" — $r").getOrElse("")
+          }
+          .mkString("\n")
 
     val cr =
       if a.crossrefUpdates.isEmpty then ""
       else
-        "\n\n**Crossref update notices**\n" + a.crossrefUpdates.map { u =>
-          s"- ${u.kind.getOrElse("update")}: ${u.label.getOrElse("")} ${doiLink(u.doi)}"
-        }.mkString("\n")
+        "\n\n**Crossref update notices**\n" + a.crossrefUpdates
+          .map { u =>
+            s"- ${u.kind.getOrElse("update")}: ${u.label.getOrElse("")} ${doiLink(u.doi)}"
+          }
+          .mkString("\n")
 
-    val applied = a.applied.map(s => s"\n\n_Stored `status` set to **$s**._").orElse(
-      a.kept.map(k => s"\n\n_Kept **${k.wire}** (set by hand) — pass `--force-status` (`forceStatus: true`) to " +
-        "overwrite it with this verdict._")).getOrElse(
-      if Acquire.statusFor(a.verdict).isDefined && a.citekey.isDefined then
+    val applied = a.applied
+      .map(s => s"\n\n_Stored `status` set to **$s**._")
+      .orElse(
+        a.kept.map(k =>
+          s"\n\n_Kept **${k.wire}** (set by hand) — pass `--force-status` (`forceStatus: true`) to " +
+            "overwrite it with this verdict._"
+        )
+      )
+      .getOrElse(if Acquire.statusFor(a.verdict).isDefined && a.citekey.isDefined then
         "\n\n_Re-run with `--apply` to write this verdict to the source's `status`._"
       else "")
     head + rw + cr + applied
 
   def retractionsUpdate(r: RetractionsUpdate): String =
     r.error match
-      case Some(e) => s"Retraction Watch refresh FAILED: $e (the mirror still holds ${r.rows} row(s))."
+      case Some(e)           => s"Retraction Watch refresh FAILED: $e (the mirror still holds ${r.rows} row(s))."
       case None if r.running =>
         s"Retraction Watch refresh running in the background; the mirror holds **${r.rows}** row(s) " +
           "so far. Ask again to see whether it has finished."
@@ -189,8 +197,13 @@ object AcquireMarkdown:
     if r.items.isEmpty then s"_Nothing on archive.org for **${esc(r.query)}**._"
     else
       val rows = r.items.map(i =>
-        List(s"`${i.identifier}`", esc(i.title.getOrElse("?")).take(80), num(i.year),
-          esc(i.creator.mkString(", ")).take(40)))
+        List(
+          s"`${i.identifier}`",
+          esc(i.title.getOrElse("?")).take(80),
+          num(i.year),
+          esc(i.creator.mkString(", ")).take(40)
+        )
+      )
       s"### ${r.count} archive.org item(s) for “${esc(r.query)}”\n\n" +
         table(List("identifier", "title", "year", "creator"), rows) +
         "\n\n_Check one with `histmersion archive info <id>` before importing._"
@@ -198,12 +211,15 @@ object AcquireMarkdown:
   def archiveItem(i: ArchiveItem): String =
     val files =
       if i.files.isEmpty then "_no epub/pdf files_"
-      else table(List("file", "format", "MB"),
-        i.files.map(f => List(esc(f.name), cell(f.format), f.megabytes.toString)))
+      else
+        table(List("file", "format", "MB"), i.files.map(f => List(esc(f.name), cell(f.format), f.megabytes.toString)))
     val restriction =
       if i.lendingOnly then
-        List("", "> ⛔ **Lending-only item.** It must be BORROWED on archive.org; it is never " +
-          "downloaded here (no DRM circumvention).")
+        List(
+          "",
+          "> ⛔ **Lending-only item.** It must be BORROWED on archive.org; it is never " +
+            "downloaded here (no DRM circumvention)."
+        )
       else Nil
     // NB: no stripMargin — every table row starts with '|', which stripMargin would eat.
     (List(
@@ -221,10 +237,11 @@ object AcquireMarkdown:
   def ingest(r: IngestReport): String =
     val steps = r.steps.map(s => s"- ${if s.ok then "✓" else "✗"} **${s.step}** — ${s.detail}")
     val pdf = r.pdf match
-      case Some(p) => s"**PDF:** ${p.source}${p.url.map(u => s" — $u").getOrElse("")} (${Plural.count(p.bytes, "byte")})"
+      case Some(p) =>
+        s"**PDF:** ${p.source}${p.url.map(u => s" — $u").getOrElse("")} (${Plural.count(p.bytes, "byte")})"
       case None if r.steps.exists(s => s.step == "fetch" && s.ok) =>
         "**PDF:** not fetched — the source already has its original"
-      case None    => "**PDF:** none found through legal open access"
+      case None => "**PDF:** none found through legal open access"
     // no stripMargin here either: `assessment` embeds tables and quote lines
     (List(
       s"### ${if r.created then "Ingested" else "Updated"} `${r.citekey}`",
@@ -245,9 +262,15 @@ object AcquireMarkdown:
       // the original column only when the server said (an older server's listing has no such field)
       val said = g.gaps.exists(_.storedOriginal.isDefined)
       val rows = g.gaps.map(x =>
-        List(s"`${x.citekey}`", esc(x.title).take(70), num(x.year),
-          esc(x.authors.take(2).mkString(", ")), cell(x.provenance)) ++
-          Option.when(said)(x.storedOriginal.fold("?")(if _ then "stored" else "none")).toList)
+        List(
+          s"`${x.citekey}`",
+          esc(x.title).take(70),
+          num(x.year),
+          esc(x.authors.take(2).mkString(", ")),
+          cell(x.provenance)
+        ) ++
+          Option.when(said)(x.storedOriginal.fold("?")(if _ then "stored" else "none")).toList
+      )
       s"### ${g.count} source(s) not in Calibre\n\n" +
         table(List("citekey", "title", "year", "authors", "provenance") ++ Option.when(said)("original").toList, rows) +
         "\n\n_Push them with `histmersion calibre sync --apply`: the file is the original the server stored " +

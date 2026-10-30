@@ -2,13 +2,14 @@ package com.histmersion.web.library
 
 import com.histmersion.api.Sort
 
-/** How Library's table of sources is ordered — its own choice, kept in the address (`lsort=`), apart from
-  * Explore's: the reader names an order of publication here, not a ranking of the map's results. */
+/** How Library's table of sources is ordered — its own choice, kept in the address (`lsort=`), apart from Explore's:
+  * the reader names an order of publication here, not a ranking of the map's results.
+  */
 enum LibrarySort(val wire: String, val label: String, val sort: Sort):
-  case Relevance   extends LibrarySort("relevance", "Relevance", Sort.Relevance)
-  case Newest      extends LibrarySort("newest", "Newest publication", Sort.Year)
-  case Oldest      extends LibrarySort("oldest", "Oldest publication", Sort.Oldest)
-  case Title       extends LibrarySort("title", "Title", Sort.Title)
+  case Relevance extends LibrarySort("relevance", "Relevance", Sort.Relevance)
+  case Newest extends LibrarySort("newest", "Newest publication", Sort.Year)
+  case Oldest extends LibrarySort("oldest", "Oldest publication", Sort.Oldest)
+  case Title extends LibrarySort("title", "Title", Sort.Title)
   case PeriodStart extends LibrarySort("period", "Period start", Sort.PeriodStart)
 
 object LibrarySort:

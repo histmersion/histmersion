@@ -71,7 +71,10 @@ class ConfigFileWriterSuite extends munit.FunSuite:
     val after = ConfigFactory.parseFile(f.toFile)
     assertEquals(after.getString("histmersion.acquire.contact-email"), "someone@example.org")
     assertEquals(after.getInt("histmersion.backups.keep"), 3)
-    assert(read(f).startsWith("# my settings — keep this line\nhistmersion {\n  # the converter: two workers\n"), read(f))
+    assert(
+      read(f).startsWith("# my settings — keep this line\nhistmersion {\n  # the converter: two workers\n"),
+      read(f)
+    )
     ok(f, unset("acquire.contact-email"))
     val back = ConfigFactory.parseFile(f.toFile)
     assert(!back.hasPath("histmersion.acquire.contact-email"))
@@ -79,12 +82,16 @@ class ConfigFileWriterSuite extends munit.FunSuite:
     // the round trip: what the file says is what it said before, setting for setting
     def leaves(c: Config) = c.entrySet.asScala.map(e => e.getKey -> e.getValue.unwrapped).toMap
     assertEquals(leaves(back), leaves(ConfigFactory.parseString(Commented)))
-    assert(read(f).contains("# trailing note") && read(f).contains("// C++-style note") && read(f).contains("# the end"))
+    assert(
+      read(f).contains("# trailing note") && read(f).contains("// C++-style note") && read(f).contains("# the end")
+    )
 
   test("a file that is not there is made, with a header and the setting; its first write keeps no .bak"):
     val d = dir().resolve("deeper")
     val f = d.resolve("histmersion.conf")
-    val o = writer(f).write(List(set("backups.keep", num(9))), None, literalConsent = false).fold(e => fail(e.message), identity)
+    val o = writer(f)
+      .write(List(set("backups.keep", num(9))), None, literalConsent = false)
+      .fold(e => fail(e.message), identity)
     assert(o.created)
     assertEquals(o.backup, None)
     assert(read(f).startsWith(ConfigFileWriter.NewFileHeader))
@@ -102,7 +109,9 @@ class ConfigFileWriterSuite extends munit.FunSuite:
     val f = fileWith(written)
     assert(refused(f, set("ui.tiles", text("x"))).isInstanceOf[SettingError.Substitution])
     assert(refused(f, unset("ui.tiles")).isInstanceOf[SettingError.Substitution])
-    assert(refused(f, set("acquire.candidates.indexes", SettingValue.Items(Nil))).isInstanceOf[SettingError.Substitution])
+    assert(
+      refused(f, set("acquire.candidates.indexes", SettingValue.Items(Nil))).isInstanceOf[SettingError.Substitution]
+    )
     assertEquals(read(f), written)
     // the rest of the file can still be changed, and the substitution stays exactly as written
     ok(f, set("backups.keep", num(4)))
@@ -124,7 +133,8 @@ class ConfigFileWriterSuite extends munit.FunSuite:
     val written = "include \"shared.conf\"\nhistmersion {\n  converter.parallelism = 2\n}\n"
     val f = fileWith(written, d)
     refused(f, set("backups.keep", num(3))) match
-      case SettingError.FromInclude(k, file) => assertEquals(k.relative, "backups.keep"); assert(file.endsWith("shared.conf"), file)
+      case SettingError.FromInclude(k, file) =>
+        assertEquals(k.relative, "backups.keep"); assert(file.endsWith("shared.conf"), file)
       case other => fail(s"$other")
     assert(refused(f, unset("ui.page-size")).isInstanceOf[SettingError.FromInclude])
     ok(f, set("converter.parallelism", num(3)), set("lint.max-items", num(9)))
@@ -156,7 +166,10 @@ class ConfigFileWriterSuite extends munit.FunSuite:
     assert(e.isInstanceOf[SettingError.Invalid], s"$e")
     assert(e.message.contains("could not") || e.message.contains("cannot"), e.message)
     assertEquals(read(f), Commented)
-    assert(!Files.list(f.getParent).iterator.asScala.exists(_.getFileName.toString.endsWith(".tmp")), "no temporary file left")
+    assert(
+      !Files.list(f.getParent).iterator.asScala.exists(_.getFileName.toString.endsWith(".tmp")),
+      "no temporary file left"
+    )
 
   test("a file that does not read is not rewritten"):
     val f = fileWith("histmersion { backups { keep = 3 \n")
@@ -167,7 +180,10 @@ class ConfigFileWriterSuite extends munit.FunSuite:
     val w = writer(f)
     val v = w.read().toOption.get.version
     Files.writeString(f, Commented + "\n# edited by hand\n")
-    assertEquals(w.write(List(set("backups.keep", num(8))), Some(v), literalConsent = false), Left(SettingError.Changed))
+    assertEquals(
+      w.write(List(set("backups.keep", num(8))), Some(v), literalConsent = false),
+      Left(SettingError.Changed)
+    )
     val now = w.read().toOption.get.version
     assert(w.write(List(set("backups.keep", num(8))), Some(now), literalConsent = false).isRight)
 
@@ -175,11 +191,17 @@ class ConfigFileWriterSuite extends munit.FunSuite:
     val f = fileWith(Commented)
     assert(refused(f, set("auth.api-key", text("s3cret"))).message.contains("HISTMERSION_API_KEY"))
     assert(refused(f, set("plugins.oa-core.api-key", text("s3cret"))).message.contains("reference"))
-    assert(refused(f, set("plugins.oa-core.api-key", text("value:s3cret"))).isInstanceOf[SettingError.LiteralNeedsConsent])
+    assert(
+      refused(f, set("plugins.oa-core.api-key", text("value:s3cret"))).isInstanceOf[SettingError.LiteralNeedsConsent]
+    )
     assert(!read(f).contains("s3cret"))
     ok(f, set("plugins.oa-core.api-key", text("keepassxc:Histmersion/CORE#password")))
-    assertEquals(ConfigFactory.parseFile(f.toFile).getString("histmersion.plugins.oa-core.api-key"), "keepassxc:Histmersion/CORE#password")
-    val lit = writer(f).write(List(set("plugins.oa-core.api-key", text("value:s3cret"))), None, literalConsent = true)
+    assertEquals(
+      ConfigFactory.parseFile(f.toFile).getString("histmersion.plugins.oa-core.api-key"),
+      "keepassxc:Histmersion/CORE#password"
+    )
+    val lit = writer(f)
+      .write(List(set("plugins.oa-core.api-key", text("value:s3cret"))), None, literalConsent = true)
       .fold(e => fail(e.message), identity)
     assert(lit.warnings.exists(_.contains("anyone who can read")), s"${lit.warnings}")
 
@@ -192,14 +214,19 @@ class ConfigFileWriterSuite extends munit.FunSuite:
   test("a restart-only setting and an environment variable that overrides the file are said"):
     val f = fileWith(Commented)
     val env = ConfigFactory.parseMap(java.util.Map.of("HISTMERSION_BACKUPS_KEEP", "1"))
-    val o = writer(f, env).write(List(set("server.port", num(8123)), set("backups.keep", num(6))), None, literalConsent = false)
+    val o = writer(f, env)
+      .write(List(set("server.port", num(8123)), set("backups.keep", num(6))), None, literalConsent = false)
       .fold(e => fail(e.message), identity)
     assertEquals(o.restart.map(_._1.relative), List("server.port"))
     assert(o.warnings.exists(_.contains("HISTMERSION_BACKUPS_KEEP")), s"${o.warnings}")
 
   test("a plugin's own key and a quoted plugin id"):
     val f = fileWith(Commented)
-    ok(f, set("plugins.1password.enabled", SettingValue.Flag(true)), set("plugins.media-europeana.enabled", SettingValue.Flag(false)))
+    ok(
+      f,
+      set("plugins.1password.enabled", SettingValue.Flag(true)),
+      set("plugins.media-europeana.enabled", SettingValue.Flag(false))
+    )
     val c = ConfigFactory.parseFile(f.toFile)
     assert(c.getBoolean("histmersion.plugins.\"1password\".enabled"))
     assert(!c.getBoolean("histmersion.plugins.media-europeana.enabled"))
@@ -208,7 +235,9 @@ class ConfigFileWriterSuite extends munit.FunSuite:
     val d = dir()
     val real = fileWith(Commented, Files.createDirectories(d.resolve("real")))
     val link = Files.createSymbolicLink(d.resolve("histmersion.conf"), real)
-    writer(link).write(List(set("backups.keep", num(12))), None, literalConsent = false).fold(e => fail(e.message), identity)
+    writer(link)
+      .write(List(set("backups.keep", num(12))), None, literalConsent = false)
+      .fold(e => fail(e.message), identity)
     assert(Files.isSymbolicLink(link))
     assert(read(real).contains("keep = 12"))
 
@@ -217,7 +246,12 @@ class ConfigFileWriterSuite extends munit.FunSuite:
     ok(f, set("backups.keep", num(4)), set("acquire.contact-email", text("someone@example.org")))
     val added = read(f)
     assert(added.startsWith("# mine\n"), added)
-    assert(added.contains("histmersion {") && added.contains("keep = 4") && added.contains("contact-email = \"someone@example.org\""), added)
+    assert(
+      added.contains("histmersion {") && added.contains("keep = 4") && added.contains(
+        "contact-email = \"someone@example.org\""
+      ),
+      added
+    )
     assert(!added.contains(" : "), s"no sconfig-style colons: $added")
     ok(f, unset("backups.keep"), unset("acquire.contact-email"))
     assertEquals(read(f).trim, "# mine")

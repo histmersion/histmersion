@@ -10,16 +10,16 @@ import com.histmersion.server.media.FakeMediaHttp
 import com.augustnagro.magnum.*
 import com.histmersion.values.SourceStatus
 
-/** #1449 end to end against FAKE catalogues (recorded answers, no socket) and a real PostGIS
-  * (HISTMERSION_TEST_DB_URL; skipped otherwise): a dry run stores nothing; GVP then NOAA merge the same
-  * eruption into one event; a second run resumes (no part read twice); Wikidata adds labels and
-  * aliases; a source naming an event is proposed, confirmed into an attestation from its passage, and a
-  * source no passage of which names it is refused. The P0 fixes: a GVP eruption dated ± 2500 years is
-  * held inside the present with its year, ± and method kept; `--refresh` reads again and refreshes the
-  * event; `rederive` recomputes a pre-V088 row from what is stored with NO request, a correction by
-  * hand kept. */
+/** #1449 end to end against FAKE catalogues (recorded answers, no socket) and a real PostGIS (HISTMERSION_TEST_DB_URL;
+  * skipped otherwise): a dry run stores nothing; GVP then NOAA merge the same eruption into one event; a second run
+  * resumes (no part read twice); Wikidata adds labels and aliases; a source naming an event is proposed, confirmed into
+  * an attestation from its passage, and a source no passage of which names it is refused. The P0 fixes: a GVP eruption
+  * dated ± 2500 years is held inside the present with its year, ± and method kept; `--refresh` reads again and
+  * refreshes the event; `rederive` recomputes a pre-V088 row from what is stored with NO request, a correction by hand
+  * kept.
+  */
 class EventImportSuite extends com.histmersion.db.DbSuite:
-  private val testDb                = TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private def fixture(name: String): String =
@@ -27,7 +27,8 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
 
   private val emptyGvp = """{"type":"FeatureCollection","features":[],"numberMatched":0}"""
   private val emptySparql = """{"head":{"vars":[]},"results":{"bindings":[]}}"""
-  private val names = """{"entities":{"Q131386":{"labels":{"en":{"value":"Battle of Alesia"},"fr":{"value":"Siège d'Alésia"}},
+  private val names =
+    """{"entities":{"Q131386":{"labels":{"en":{"value":"Battle of Alesia"},"fr":{"value":"Siège d'Alésia"}},
     "aliases":{"en":[{"value":"Siege of Alesia"}]}}}}"""
 
   /** The three catalogues, answering from the fixtures; every request recorded. */
@@ -36,8 +37,10 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
       FakeMediaHttp.json(if url.contains("StartDateYear%3E%3D-2000+") then fixture("gvp.json") else emptyGvp)
     else if url.contains("hazard-service") then
       val ds = List("earthquakes", "volcanoes", "tsunamis").find(d => url.contains(s"/$d")).get
-      FakeMediaHttp.json(fixture(if ds == "tsunamis" then "noaa_tsunamis_events.json" else s"noaa_$ds.json")
-        .replaceAll("\"totalPages\":\\d+", "\"totalPages\":1"))
+      FakeMediaHttp.json(
+        fixture(if ds == "tsunamis" then "noaa_tsunamis_events.json" else s"noaa_$ds.json")
+          .replaceAll("\"totalPages\":\\d+", "\"totalPages\":1")
+      )
     else if url.contains("query.wikidata.org") then
       FakeMediaHttp.json(if url.contains("Q188055") then fixture("wikidata_siege.json") else emptySparql)
     else if url.contains("wbgetentities") && url.contains("props=claims") then
@@ -46,7 +49,9 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
         if url.contains("Q9100001") || url.contains("Q9100002") then
           """{"entities":{"Q9100001":{"claims":{"P31":[{"rank":"normal","mainsnak":{"datavalue":{"value":{"id":"Q755017"}}}}]}},
              "Q9100002":{"claims":{"P31":[{"rank":"normal","mainsnak":{"datavalue":{"value":{"id":"Q9199999"}}}}]}}}}"""
-        else """{"entities":{"Q9199999":{"claims":{"P279":[{"rank":"normal","mainsnak":{"datavalue":{"value":{"id":"Q34023"}}}}]}}}}""")
+        else
+          """{"entities":{"Q9199999":{"claims":{"P279":[{"rank":"normal","mainsnak":{"datavalue":{"value":{"id":"Q34023"}}}}]}}}}"""
+      )
     else if url.contains("wbgetentities") then FakeMediaHttp.json(names)
     else Left(s"unexpected $url")
   }
@@ -61,7 +66,9 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
     events = base.events.copy(
       gvp = base.events.gvp.copy(requestIntervalMs = 0),
       noaa = base.events.noaa.copy(requestIntervalMs = 0),
-      wikidata = base.events.wikidata.copy(requestIntervalMs = 0, apiIntervalMs = 0, classes = "Q188055:siege")))
+      wikidata = base.events.wikidata.copy(requestIntervalMs = 0, apiIntervalMs = 0, classes = "Q188055:siege")
+    )
+  )
 
   private def clean(): Unit = connect(ds):
     val _ = sql"DELETE FROM events WHERE catalogue IS NOT NULL OR id LIKE 'zqei%'".update.run()
@@ -94,7 +101,8 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
     val r = run(EventCatalogHandlers(Deps(cfg, ds), f), "gvp", dry = false)
     assertEquals((r.records, f.requests.size), (0, 0), "every window was read: nothing is asked again")
     // #6561: a wider region (here: a lower VEI floor) judged differently — every window is read again
-    val wider = cfg.copy(events = cfg.events.copy(gvp = cfg.events.gvp.copy(regionMinVei = cfg.events.gvp.regionMinVei + 1)))
+    val wider =
+      cfg.copy(events = cfg.events.copy(gvp = cfg.events.gvp.copy(regionMinVei = cfg.events.gvp.regionMinVei + 1)))
     val f2 = http
     val r2 = run(EventCatalogHandlers(Deps(wider, ds), f2), "gvp", dry = false)
     assert(f2.requests.nonEmpty && r2.records > 0, s"thresholds changed: the windows are due again ($r2)")
@@ -109,17 +117,42 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
 
   test("links: a source naming the event is proposed; confirmed from its passage; one without a passage refused"):
     val chunk = AppConfig.load().limits.chunkChars
-    def src(ck: String, body: String, lon: Double) = Source(ck, s"Zqei $ck", List("A"), None, Some(2020), None,
-      SourceStatus.Current, Nil, Nil, Nil, Some(Period(-60, -40)), None, None, None, None, None,
+    def src(ck: String, body: String, lon: Double) = Source(
+      ck,
+      s"Zqei $ck",
+      List("A"),
+      None,
+      Some(2020),
+      None,
+      SourceStatus.Current,
+      Nil,
+      Nil,
+      Nil,
+      Some(Period(-60, -40)),
+      None,
+      None,
+      None,
+      None,
+      None,
       ocrMarkdown = Some(body),
-      findings = List(Finding(s"$ck#0", ck, "a claim", None, Some(GeoPoint(lon, 47.53)), Some(Period(-55, -50)), None, Nil, None)))
-    SourceRepo.upsert(ds, src("zqei_named2020", "# Gaul\n\nCaesar's victory at the Siege of Alesia ended the war.", 4.5), chunk)
+      findings = List(
+        Finding(s"$ck#0", ck, "a claim", None, Some(GeoPoint(lon, 47.53)), Some(Period(-55, -50)), None, Nil, None)
+      )
+    )
+    SourceRepo.upsert(
+      ds,
+      src("zqei_named2020", "# Gaul\n\nCaesar's victory at the Siege of Alesia ended the war.", 4.5),
+      chunk
+    )
     SourceRepo.upsert(ds, src("zqei_near2020", "# Gaul\n\nA hillfort was excavated nearby.", 4.6), chunk)
     val h = EventCatalogHandlers(Deps(cfg, ds), http)
     val links = h.links("wikidata_q131386").toOption.get
     assertEquals(links.candidates.map(_.citekey).take(2), List("zqei_named2020", "zqei_near2020"))
     assert(links.candidates.head.passages.exists(_.quote == "Siege of Alesia"))
-    val r = h.applyLinks("wikidata_q131386", EventLinksRequest(confirm = List("zqei_named2020", "zqei_near2020"))).toOption.get
+    val r = h
+      .applyLinks("wikidata_q131386", EventLinksRequest(confirm = List("zqei_named2020", "zqei_near2020")))
+      .toOption
+      .get
     assertEquals(r.attested.map(a => (a.citekey, a.quote)), List(("zqei_named2020", Some("Siege of Alesia"))))
     val a = r.attested.head
     val body = SourceRepo.bodyText(ds, "zqei_named2020")
@@ -135,19 +168,45 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
                       VALUES ($id, $id, 'site', ST_SetSRID(ST_MakePoint($lon, 45.0), 4326), 'wikidata',
                               '{"class":"Q839954"}'::jsonb)""".update.run()
     val chunk = AppConfig.load().limits.chunkChars
-    SourceRepo.upsert(ds, Source("zqei_sites2020", "Zqei sites", List("A"), None, Some(2020), None, SourceStatus.Current,
-      Nil, Nil, Nil, None, None, None, None, None, None), chunk)
+    SourceRepo.upsert(
+      ds,
+      Source(
+        "zqei_sites2020",
+        "Zqei sites",
+        List("A"),
+        None,
+        Some(2020),
+        None,
+        SourceStatus.Current,
+        Nil,
+        Nil,
+        Nil,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None
+      ),
+      chunk
+    )
     connect(ds):
       val _ = sql"""INSERT INTO findings (id, citekey, claim, geom) VALUES
-                      ('zqei_sites2020#0', 'zqei_sites2020', 'x', ST_SetSRID(ST_MakePoint(10.0, 45.0), 4326))""".update.run()
+                      ('zqei_sites2020#0', 'zqei_sites2020', 'x', ST_SetSRID(ST_MakePoint(10.0, 45.0), 4326))""".update
+        .run()
       val _ = sql"""INSERT INTO finding_places (finding_id, place_id) VALUES
-                      ('zqei_sites2020#0', 'wikidata_q9100001'), ('zqei_sites2020#0', 'wikidata_q9100002')""".update.run()
+                      ('zqei_sites2020#0', 'wikidata_q9100001'), ('zqei_sites2020#0', 'wikidata_q9100002')""".update
+        .run()
     val h = EventCatalogHandlers(Deps(cfg, ds), http)
     assertEquals(h.runSiteTypes(SiteTypesRequest(dryRun = true), _ => ()).pending, 2)
     val r = h.runSiteTypes(SiteTypesRequest(), _ => ())
     assertEquals((r.asked, r.pending), (2, 0))
-    val types = connect(ds)(sql"""SELECT id, site_type FROM places WHERE id LIKE 'wikidata_q91%' ORDER BY id"""
-      .query[(String, Option[String])].run().toList)
+    val types = connect(ds)(
+      sql"""SELECT id, site_type FROM places WHERE id LIKE 'wikidata_q91%' ORDER BY id"""
+        .query[(String, Option[String])]
+        .run()
+        .toList
+    )
     assertEquals(types, List("wikidata_q9100001" -> Some("settlement"), "wikidata_q9100002" -> Some("burial")))
     assertEquals(h.runSiteTypes(SiteTypesRequest(), _ => ()).asked, 0, "asked once")
 
@@ -161,7 +220,8 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
 
   /** Only the window 0…499 holds an eruption: Hekla's 250 ± 2500. */
   private def heklaHttp = FakeMediaHttp { url =>
-    if url.contains("GVP-VOTW") then FakeMediaHttp.json(if url.contains("StartDateYear%3E%3D0+") then hekla else emptyGvp)
+    if url.contains("GVP-VOTW") then
+      FakeMediaHttp.json(if url.contains("StartDateYear%3E%3D0+") then hekla else emptyGvp)
     else Left(s"unexpected $url")
   }
 
@@ -174,8 +234,10 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
     assert(f.requests.nonEmpty && r.created == 1, r.toString)
     val e = event("gvp_12724")
     assertEquals(e.timeSpan, TimeSpan(Some(-2251), None, None, Some(2026)))
-    assertEquals((e.central, e.plusMinus, e.datingMethod, e.precision), (Some(250L), Some(2500L), Some("Tephrochronology"),
-      EventPrecision.Imprecise))
+    assertEquals(
+      (e.central, e.plusMinus, e.datingMethod, e.precision),
+      (Some(250L), Some(2500L), Some("Tephrochronology"), EventPrecision.Imprecise)
+    )
     assertEquals(e.datingNote, Some("250 CE ± 2500 (tephrochronology)"))
     // a refresh refreshes the event (from its own record), not only the catalogue row
     connect(ds)(sql"UPDATE events SET not_after = 9999 WHERE id = 'gvp_12724'".update.run())
@@ -211,6 +273,15 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
     // Thera (± 14, from its raw record) is precise and unchanged
     assertEquals(event("gvp_13879").precision, EventPrecision.Precise)
     // the card's text, the list's and the map's feed agree: imprecise, off the map
-    val geo = EventRepo.geo(ds, Filter(period = Some(Period(-500, 500))), com.histmersion.db.PlaceScope.empty,
-      Some("Hekla"), None, None, None, 100, 0.01)
+    val geo = EventRepo.geo(
+      ds,
+      Filter(period = Some(Period(-500, 500))),
+      com.histmersion.db.PlaceScope.empty,
+      Some("Hekla"),
+      None,
+      None,
+      None,
+      100,
+      0.01
+    )
     assert(!geo.events.exists(_.id == "gvp_12724") && geo.imprecise >= 1, geo.toString)

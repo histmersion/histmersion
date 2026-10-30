@@ -1,27 +1,27 @@
 package com.histmersion.api
 
-
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 
-/** Styling lives in `style.css`, not in Scala: the web UI's look must be adjustable by media queries
-  * and swappable as a theme without touching code. What code may still put on an element is DATA —
-  * a size, a position, a colour computed from a period — and only as a CSS custom property
-  * (`--d:12px`), which a stylesheet rule then uses.
+/** Styling lives in `style.css`, not in Scala: the web UI's look must be adjustable by media queries and swappable as a
+  * theme without touching code. What code may still put on an element is DATA — a size, a position, a colour computed
+  * from a period — and only as a CSS custom property (`--d:12px`), which a stylesheet rule then uses.
   *
-  * The same kind of grep as [[ConfigSuite]]'s "no hardcoded ports" test, over the sources that build
-  * the UI (the Scala.js front end, and `core`, which renders the server's HTML atoms). */
+  * The same kind of grep as [[ConfigSuite]]'s "no hardcoded ports" test, over the sources that build the UI (the
+  * Scala.js front end, and `core`, which renders the server's HTML atoms).
+  */
 class StyleLintSuite extends munit.FunSuite:
 
   private val root = Path.of(sys.props.getOrElse("histmersion.repoRoot", "."))
 
   private val sources: List[Path] =
-    List("modules/web/src/main/scala", "modules/api/shared/src/main/scala").map(root.resolve)
+    List("modules/web/src/main/scala", "modules/api/shared/src/main/scala")
+      .map(root.resolve)
       .filter(Files.isDirectory(_))
       .flatMap(d => Files.walk(d).iterator.asScala.filter(_.toString.endsWith(".scala")).toList)
 
   /** A finding: where, and the offending text. */
-  private final case class Hit(file: String, line: Int, text: String):
+  final private case class Hit(file: String, line: Int, text: String):
     override def toString = s"$file:$line  $text"
 
   /** Known exceptions: (file name, a fragment of the offending line, why). */
@@ -46,19 +46,22 @@ class StyleLintSuite extends munit.FunSuite:
     "display|left|top|right|bottom|width|height|zIndex|color|background|backgroundColor|opacity|cursor|" +
       "visibility|position|fontSize|padding|margin|transform|maxWidth|maxHeight|minWidth|minHeight|boxShadow"
   private val LaminarStyle = s"""(?<![.\\w])($StyleProps)\\s*(<--|:=)""".r
-  private val StyleAttr    = """styleAttr\s*(<--|:=)""".r
+  private val StyleAttr = """styleAttr\s*(<--|:=)""".r
   private val FirstLiteral = """s?"([^"]*)"""".r
-  private val HtmlStyle    = """style=\\?"([^"]*)"""".r
-  private val DomStyle     = """\.style\.(?!setProperty\("--)\w+|cssText""".r
+  private val HtmlStyle = """style=\\?"([^"]*)"""".r
+  private val DomStyle = """\.style\.(?!setProperty\("--)\w+|cssText""".r
+
   /** A colour VALUE: quoted hex, or rgb()/rgba() with numbers — not a function that formats one. */
-  private val ColourLit    = """"#[0-9a-fA-F]{3,8}"|#[0-9a-fA-F]{6}\b|rgba?\(\s*\d""".r
+  private val ColourLit = """"#[0-9a-fA-F]{3,8}"|#[0-9a-fA-F]{6}\b|rgba?\(\s*\d""".r
 
   private def findings: List[Hit] = sources.flatMap { p =>
     scan(p) { (line, i, all) =>
       val code = line
       if code.trim.startsWith("//") || code.trim.startsWith("*") then None
       else
-        LaminarStyle.findFirstIn(code).map(_ => code)
+        LaminarStyle
+          .findFirstIn(code)
+          .map(_ => code)
           .orElse(StyleAttr.findFirstIn(code).flatMap { _ =>
             // the value may start on a following line (`styleAttr <-- a.map { … =>` then the string)
             val window = code.drop(code.indexOf("styleAttr")) + "\n" + all.slice(i + 1, i + 6).mkString("\n")
@@ -73,8 +76,11 @@ class StyleLintSuite extends munit.FunSuite:
   test("the UI's Scala sets no styles, only data as CSS custom properties (and no colour literals)"):
     assert(sources.nonEmpty, s"no sources found under $root")
     val offenders = findings.filterNot(isAllowed)
-    assertEquals(offenders.map(_.toString), Nil,
-      "move the styling into modules/server/src/main/resources/web/style.css; pass data as --custom-properties")
+    assertEquals(
+      offenders.map(_.toString),
+      Nil,
+      "move the styling into modules/server/src/main/resources/web/style.css; pass data as --custom-properties"
+    )
 
   test("every error line is announced: a `form-error` carries role=alert (or is web.ErrorLine) — #1798"):
     val unannounced = sources.filter(_.toString.contains("modules/web")).flatMap { p =>

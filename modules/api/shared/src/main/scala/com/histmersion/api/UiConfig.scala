@@ -4,24 +4,24 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-final case class TimeConfig(min: Long, max: Long, defaultFrom: Long, defaultTo: Long)
-    derives KindlingsCodecAsObject
+final case class TimeConfig(min: Long, max: Long, defaultFrom: Long, defaultTo: Long) derives KindlingsCodecAsObject
 object TimeConfig:
   given Schema[TimeConfig] = KindlingsSchema.derived[TimeConfig].schema
 
-/** `previewMs`: the quiet period before a HOVERED suggestion's preview reloads the lists — shorter
-  * than `reloadMs`, because a preview is read while the pointer rests and the answer takes ~20 ms. */
+/** `previewMs`: the quiet period before a HOVERED suggestion's preview reloads the lists — shorter than `reloadMs`,
+  * because a preview is read while the pointer rests and the answer takes ~20 ms.
+  */
 final case class DebounceConfig(suggestMs: Int, searchMs: Int, reloadMs: Int, previewMs: Int)
     derives KindlingsCodecAsObject
 object DebounceConfig:
   given Schema[DebounceConfig] = KindlingsSchema.derived[DebounceConfig].schema
 
-/** The events on the map in playback (#1440). A LOCAL event shows while the playhead is inside its
-  * span and fades out over `localFadeSeconds` of playback after it ends; a REGIONAL one shows its
-  * label and the region's faint outline for its span and fades over `regionalFadeSeconds`. Seconds of
-  * PLAYBACK (at the speed playing), so a fade takes as long at 1× over 3000 years as over 300 —
-  * paused, it holds. The feed returns at most `mapLimit` events, each area outline simplified to
-  * `outlineToleranceDeg` degrees. */
+/** The events on the map in playback (#1440). A LOCAL event shows while the playhead is inside its span and fades out
+  * over `localFadeSeconds` of playback after it ends; a REGIONAL one shows its label and the region's faint outline for
+  * its span and fades over `regionalFadeSeconds`. Seconds of PLAYBACK (at the speed playing), so a fade takes as long
+  * at 1× over 3000 years as over 300 — paused, it holds. The feed returns at most `mapLimit` events, each area outline
+  * simplified to `outlineToleranceDeg` degrees.
+  */
 final case class EventsUiConfig(
     localFadeSeconds: Double,
     regionalFadeSeconds: Double,
@@ -31,17 +31,24 @@ final case class EventsUiConfig(
 object EventsUiConfig:
   given Schema[EventsUiConfig] = KindlingsSchema.derived[EventsUiConfig].schema
 
-/** The map's point layers as vector tiles (`ui.map-tiles`, [[TilesApi]]): the deepest tile the server
-  * cuts (MapLibre's zoom: the app's minus one), and how many seconds of playback one time bucket of the
-  * layers covers. */
+/** The map's point layers as vector tiles (`ui.map-tiles`, [[TilesApi]]): the deepest tile the server cuts (MapLibre's
+  * zoom: the app's minus one), and how many seconds of playback one time bucket of the layers covers.
+  */
 final case class MapTilesUiConfig(maxZoom: Int = 11, playbackBucketSeconds: Double = 1.0) derives KindlingsCodecAsObject
 object MapTilesUiConfig:
   given Schema[MapTilesUiConfig] = KindlingsSchema.derived[MapTilesUiConfig].schema
 
-/** Where the map opens (`ui.map-start`, [[MapStartMode]]): where this browser left it, or always at
-  * the centre and zoom given; `label` names the place for a person. */
-final case class MapStartConfig(mode: String = MapStartMode.Last.wire, lat: Double = 37.0, lon: Double = 30.0,
-    zoom: Double = 5, label: String = "") derives KindlingsCodecAsObject, KindlingsSchema
+/** Where the map opens (`ui.map-start`, [[MapStartMode]]): where this browser left it, or always at the centre and zoom
+  * given; `label` names the place for a person.
+  */
+final case class MapStartConfig(
+    mode: String = MapStartMode.Last.wire,
+    lat: Double = 37.0,
+    lon: Double = 30.0,
+    zoom: Double = 5,
+    label: String = ""
+) derives KindlingsCodecAsObject,
+      KindlingsSchema
 
 final case class UiConfig(
     tiles: String,
@@ -59,45 +66,53 @@ final case class UiConfig(
     narrowMaxWidthPx: Int,
     /** …or, on a touch screen, at or below this height (a phone held sideways). */
     narrowMaxHeightPx: Int,
-    /** Wider than the phone layout but at or below this width (CSS px): the same map-first layout at
-      * tablet size — floating windows, the list a sheet at the side. */
+    /** Wider than the phone layout but at or below this width (CSS px): the same map-first layout at tablet size —
+      * floating windows, the list a sheet at the side.
+      */
     tabletMaxWidthPx: Int,
     /** The events layer of the map's playback (#1440). */
     events: EventsUiConfig,
     /** The map's sites, events and pictures as vector tiles. */
     mapTiles: MapTilesUiConfig = MapTilesUiConfig(),
-    /** How often the page re-reads the toolbar's counts and "something new" marks (`GET
-      * /api/ui/counters`), in seconds; it also re-reads them after its own changes and when the tab
-      * comes back into view. */
+    /** How often the page re-reads the toolbar's counts and "something new" marks (`GET /api/ui/counters`), in seconds;
+      * it also re-reads them after its own changes and when the tab comes back into view.
+      */
     countersPollSeconds: Int = 30,
     /** How often a window following a background job (a base-map download) asks for its progress, in ms. */
     jobPollMs: Int = 1000,
-    /** Whether the server gates writes behind `Authorization: Bearer <key>` (`auth.api-key` is set).
-      * NOT a configuration key of its own: the server fills it in from `auth` when it answers
-      * `/api/config`, so the page can hide its write controls until the reader has entered a key. */
+    /** Whether the server gates writes behind `Authorization: Bearer <key>` (`auth.api-key` is set). NOT a
+      * configuration key of its own: the server fills it in from `auth` when it answers `/api/config`, so the page can
+      * hide its write controls until the reader has entered a key.
+      */
     writeKeyRequired: Boolean = false,
-    /** Whether the server runs embedded agents (`agents.enabled`); like `writeKeyRequired`, filled in
-      * by the server, so the page offers the agent runs and approvals windows only when they work. */
+    /** Whether the server runs embedded agents (`agents.enabled`); like `writeKeyRequired`, filled in by the server, so
+      * the page offers the agent runs and approvals windows only when they work.
+      */
     agentsEnabled: Boolean = false,
-    /** Whether the configured `tiles` are a light or a dark map (`ui.tiles-tone`: "light" or "dark"):
-      * the map's place names are drawn dark on a light halo over light tiles, and the inverse over dark. */
+    /** Whether the configured `tiles` are a light or a dark map (`ui.tiles-tone`: "light" or "dark"): the map's place
+      * names are drawn dark on a light halo over light tiles, and the inverse over dark.
+      */
     tilesTone: String = "light",
-    /** The server's plugins (`histmersion.plugins`), filled in by the server like `writeKeyRequired` —
-      * NOT a configuration key of its own. Secret settings show their reference, never the value. */
+    /** The server's plugins (`histmersion.plugins`), filled in by the server like `writeKeyRequired` — NOT a
+      * configuration key of its own. Secret settings show their reference, never the value.
+      */
     plugins: PluginsReport = PluginsReport(),
     /** The user guide's root URL (`ui.docs-url`): the page links into it (the base map's notice). */
     docsUrl: String = "",
-    /** Which base maps the page offers (`ui.base-map-source`, [[BaseMapSource]]): `local` (only those
-      * drawn from the server's extracts — no request to any other host), `online` (the online raster
-      * maps too), or `auto`. The server answers it resolved: `local` or `online`. */
+    /** Which base maps the page offers (`ui.base-map-source`, [[BaseMapSource]]): `local` (only those drawn from the
+      * server's extracts — no request to any other host), `online` (the online raster maps too), or `auto`. The server
+      * answers it resolved: `local` or `online`.
+      */
     baseMapSource: String = "auto",
-    /** The language of the base map's names unless a viewer chooses another (`basemap.labels.language`):
-      * filled in by the server like `writeKeyRequired` — NOT a `ui` key of its own. */
+    /** The language of the base map's names unless a viewer chooses another (`basemap.labels.language`): filled in by
+      * the server like `writeKeyRequired` — NOT a `ui` key of its own.
+      */
     mapLanguage: String = "en",
     /** Where the map opens (`ui.map-start`). */
     mapStart: MapStartConfig = MapStartConfig(),
-    /** Whether the first-run setup is due — filled in by the server from `setup.completed` and whether the
-      * config file sets anything, NOT a `ui` key of its own. */
+    /** Whether the first-run setup is due — filled in by the server from `setup.completed` and whether the config file
+      * sets anything, NOT a `ui` key of its own.
+      */
     setupDue: Boolean = false
 ) derives KindlingsCodecAsObject
 object UiConfig:

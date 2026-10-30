@@ -4,8 +4,9 @@ import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.util.zip.{CRC32, Deflater, Inflater}
 
-/** Elevation tiles as Terrarium PNGs (the encoding MapLibre's `raster-dem` reads as `terrarium`): metres
-  * + 32768 spread over red (×256), green (×1) and blue (×1/256), one 8-bit RGB pixel a sample. */
+/** Elevation tiles as Terrarium PNGs (the encoding MapLibre's `raster-dem` reads as `terrarium`): metres + 32768 spread
+  * over red (×256), green (×1) and blue (×1/256), one 8-bit RGB pixel a sample.
+  */
 object TerrariumPng:
 
   private val Signature = Array[Byte](0x89.toByte, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n')
@@ -32,8 +33,20 @@ object TerrariumPng:
       while i > row + 3 do { raw(i) = (raw(i) - raw(i - 3)).toByte; i -= 1 }
     val out = ByteArrayOutputStream()
     out.write(Signature)
-    chunk(out, "IHDR", ByteBuffer.allocate(13).putInt(size).putInt(size).put(8.toByte).put(RgbColourType.toByte)
-      .put(0.toByte).put(0.toByte).put(0.toByte).array())
+    chunk(
+      out,
+      "IHDR",
+      ByteBuffer
+        .allocate(13)
+        .putInt(size)
+        .putInt(size)
+        .put(8.toByte)
+        .put(RgbColourType.toByte)
+        .put(0.toByte)
+        .put(0.toByte)
+        .put(0.toByte)
+        .array()
+    )
     chunk(out, "IDAT", deflate(raw))
     chunk(out, "IEND", Array.emptyByteArray)
     out.toByteArray
@@ -49,7 +62,8 @@ object TerrariumPng:
         case RgbColourType  => 3
         case RgbaColourType => 4
         case _              => 0
-      if depth != 8 || channels == 0 || interlace != 0 then Left(s"a PNG of colour type $colour, depth $depth, interlace $interlace")
+      if depth != 8 || channels == 0 || interlace != 0 then
+        Left(s"a PNG of colour type $colour, depth $depth, interlace $interlace")
       else
         val idat = ByteArrayOutputStream()
         var at = 8 // the next chunk
@@ -70,28 +84,30 @@ object TerrariumPng:
   private def unfilter(raw: Array[Byte], width: Int, height: Int, bpp: Int): Either[String, Array[Byte]] =
     val stride = width * bpp
     val out = new Array[Byte](stride * height)
-    (0 until height).foldLeft[Either[String, Unit]](Right(())) { (acc, y) =>
-      acc.flatMap { _ =>
-        val f = raw(y * (stride + 1))
-        val src = y * (stride + 1) + 1
-        val dst = y * stride
-        def left(i: Int) = if i >= bpp then out(dst + i - bpp) & 0xff else 0
-        def up(i: Int)   = if y > 0 then out(dst - stride + i) & 0xff else 0
-        def upLeft(i: Int) = if y > 0 && i >= bpp then out(dst - stride + i - bpp) & 0xff else 0
-        if f < 0 || f > 4 then Left(s"PNG filter $f")
-        else
-          for i <- 0 until stride do
-            val x = raw(src + i) & 0xff
-            val p = f match
-              case 0 => 0
-              case 1 => left(i)
-              case 2 => up(i)
-              case 3 => (left(i) + up(i)) / 2
-              case _ => paeth(left(i), up(i), upLeft(i))
-            out(dst + i) = (x + p).toByte
-          Right(())
+    (0 until height)
+      .foldLeft[Either[String, Unit]](Right(())) { (acc, y) =>
+        acc.flatMap { _ =>
+          val f = raw(y * (stride + 1))
+          val src = y * (stride + 1) + 1
+          val dst = y * stride
+          def left(i: Int) = if i >= bpp then out(dst + i - bpp) & 0xff else 0
+          def up(i: Int) = if y > 0 then out(dst - stride + i) & 0xff else 0
+          def upLeft(i: Int) = if y > 0 && i >= bpp then out(dst - stride + i - bpp) & 0xff else 0
+          if f < 0 || f > 4 then Left(s"PNG filter $f")
+          else
+            for i <- 0 until stride do
+              val x = raw(src + i) & 0xff
+              val p = f match
+                case 0 => 0
+                case 1 => left(i)
+                case 2 => up(i)
+                case 3 => (left(i) + up(i)) / 2
+                case _ => paeth(left(i), up(i), upLeft(i))
+              out(dst + i) = (x + p).toByte
+            Right(())
+        }
       }
-    }.map(_ => out)
+      .map(_ => out)
 
   private def paeth(a: Int, b: Int, c: Int): Int =
     val p = a + b - c

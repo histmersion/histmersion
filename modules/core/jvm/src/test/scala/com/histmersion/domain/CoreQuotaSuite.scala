@@ -4,12 +4,20 @@ import com.histmersion.domain.CoreQuota.*
 
 import java.time.{Instant, LocalDate}
 
-/** CORE's budget, pure: CORE's blocks (429, `Remaining` 0, its retry time), the per-minute pace, the
-  * daily budget and the searches' share of it, and the day's rollover. */
+/** CORE's budget, pure: CORE's blocks (429, `Remaining` 0, its retry time), the per-minute pace, the daily budget and
+  * the searches' share of it, and the day's rollover.
+  */
 class CoreQuotaSuite extends munit.FunSuite:
 
-  private val limits = Limits(perMinute = 3, dailyTokens = 10, searchDailyTokens = 6, lookupCost = 1, searchCost = 1,
-    exhaustedPauseSeconds = 60, maxWaitSeconds = 0)
+  private val limits = Limits(
+    perMinute = 3,
+    dailyTokens = 10,
+    searchDailyTokens = 6,
+    lookupCost = 1,
+    searchCost = 1,
+    exhaustedPauseSeconds = 60,
+    maxWaitSeconds = 0
+  )
   private val t0 = Instant.parse("2026-10-26T18:50:00Z")
   private val fresh = State.fresh(LocalDate.of(2026, 10, 26))
 
@@ -26,8 +34,17 @@ class CoreQuotaSuite extends munit.FunSuite:
     assertEquals(retryAt(None, t0), None)
 
   test("a 429 with X-RateLimit-Retry-After blocks every use until that time, then CORE is asked again"):
-    val s = observe(granted(fresh), limits, 429,
-      Map("x-ratelimit-limit" -> "25", "x-ratelimit-remaining" -> "0", "x-ratelimit-retry-after" -> "2026-10-26T18:52:11+0000"), t0)
+    val s = observe(
+      granted(fresh),
+      limits,
+      429,
+      Map(
+        "x-ratelimit-limit" -> "25",
+        "x-ratelimit-remaining" -> "0",
+        "x-ratelimit-retry-after" -> "2026-10-26T18:52:11+0000"
+      ),
+      t0
+    )
     val until = Instant.parse("2026-10-26T18:52:11Z")
     assertEquals(s.block, Some(Block(until, "HTTP 429")))
     assertEquals(s.window.map(w => (w.limit, w.remaining)), Some((Some(25), Some(0))))
@@ -44,7 +61,10 @@ class CoreQuotaSuite extends munit.FunSuite:
     val plain429 = observe(fresh, limits, 429, Map.empty, t0)
     assertEquals(plain429.block.map(_.until), Some(t0.plusSeconds(60)))
     // the standard Retry-After header counts when CORE's own is missing
-    assertEquals(observe(fresh, limits, 429, Map("retry-after" -> "120"), t0).block.map(_.until), Some(t0.plusSeconds(120)))
+    assertEquals(
+      observe(fresh, limits, 429, Map("retry-after" -> "120"), t0).block.map(_.until),
+      Some(t0.plusSeconds(120))
+    )
 
   test("an answer with tokens left blocks nothing and records the window; a later answer never shortens a block"):
     val ok = observe(fresh, limits, 200, Map("x-ratelimit-limit" -> "25", "x-ratelimit-remaining" -> "18"), t0)
@@ -56,7 +76,9 @@ class CoreQuotaSuite extends munit.FunSuite:
     // an answer without the headers keeps the window last reported
     assertEquals(observe(ok, limits, 200, Map.empty, t0.plusSeconds(5)).window, ok.window)
 
-  test("pacing: at most per-minute calls in any 60 s — a call that would wait longer than max-wait-seconds is not made"):
+  test(
+    "pacing: at most per-minute calls in any 60 s — a call that would wait longer than max-wait-seconds is not made"
+  ):
     val three = (1 to 3).foldLeft(fresh)((s, i) => granted(s, at = t0.plusSeconds(i.toLong)))
     reserve(three, limits, Purpose.Lookup, t0.plusSeconds(10)) match
       case Left(Refusal.Paced(ms)) => assertEquals(ms, 51_000L) // the first slot (t0+1 s) leaves the window at t0+61 s
@@ -70,22 +92,30 @@ class CoreQuotaSuite extends munit.FunSuite:
     assert(reserve(three, limits, Purpose.Lookup, t0.plusSeconds(62)).isRight)
 
   test("pacing follows CORE's reported window when it is smaller than per-minute"):
-    val roomy  = limits.copy(perMinute = 20)
+    val roomy = limits.copy(perMinute = 20)
     val window = observe(fresh, roomy, 200, Map("x-ratelimit-limit" -> "2", "x-ratelimit-remaining" -> "2"), t0)
-    val two    = (1 to 2).foldLeft(window)((s, i) => granted(s, at = t0.plusSeconds(i.toLong), l = roomy))
+    val two = (1 to 2).foldLeft(window)((s, i) => granted(s, at = t0.plusSeconds(i.toLong), l = roomy))
     assert(reserve(two, roomy, Purpose.Lookup, t0.plusSeconds(10)).left.exists(_.isInstanceOf[Refusal.Paced]))
     // a reported window larger than per-minute changes nothing
     val wide = observe(fresh, limits, 200, Map("x-ratelimit-limit" -> "25", "x-ratelimit-remaining" -> "25"), t0)
     val three = (1 to 3).foldLeft(wide)((s, i) => granted(s, at = t0.plusSeconds(i.toLong)))
     assert(reserve(three, limits, Purpose.Lookup, t0.plusSeconds(10)).isLeft)
 
-  test("the daily budget: searches stop at search-daily-tokens, the rest stays for PDF lookups; together at daily-tokens"):
+  test(
+    "the daily budget: searches stop at search-daily-tokens, the rest stays for PDF lookups; together at daily-tokens"
+  ):
     val free = limits.copy(perMinute = 1000)
     val searches = (1 to 6).foldLeft(fresh)((s, _) => granted(s, Purpose.Search, l = free))
-    assertEquals(reserve(searches, free, Purpose.Search, t0).left.toOption, Some(Refusal.OverBudget(Purpose.Search, 6, 6)))
+    assertEquals(
+      reserve(searches, free, Purpose.Search, t0).left.toOption,
+      Some(Refusal.OverBudget(Purpose.Search, 6, 6))
+    )
     val lookups = (1 to 4).foldLeft(searches)((s, _) => granted(s, Purpose.Lookup, l = free))
     assertEquals((lookups.lookupTokens, lookups.searchTokens, lookups.spent), (4, 6, 10))
-    assertEquals(reserve(lookups, free, Purpose.Lookup, t0).left.toOption, Some(Refusal.OverBudget(Purpose.Lookup, 10, 10)))
+    assertEquals(
+      reserve(lookups, free, Purpose.Lookup, t0).left.toOption,
+      Some(Refusal.OverBudget(Purpose.Lookup, 10, 10))
+    )
     // lookups may use what searches left: ten lookups, no searches
     val allLookups = (1 to 10).foldLeft(fresh)((s, _) => granted(s, Purpose.Lookup, l = free))
     assertEquals(allLookups.lookupTokens, 10)
@@ -105,16 +135,32 @@ class CoreQuotaSuite extends munit.FunSuite:
     val next = onDay(blocked, midnight)
     assertEquals((next.day, next.spent), (LocalDate.of(2026, 10, 27), 0))
     assert(reserve(blocked, limits, Purpose.Lookup, midnight).left.toOption.exists(_.isInstanceOf[Refusal.Blocked]))
-    assertEquals(reserve(blocked, limits, Purpose.Lookup, Instant.parse("2026-10-27T00:31:00Z")).map(_.state.lookupTokens), Right(1))
+    assertEquals(
+      reserve(blocked, limits, Purpose.Lookup, Instant.parse("2026-10-27T00:31:00Z")).map(_.state.lookupTokens),
+      Right(1)
+    )
 
   test("the view: today's spending under the limits, the block only while it lasts"):
-    val s = observe(granted(granted(fresh), Purpose.Search, at = t0.plusSeconds(1)), limits, 429,
-      Map("x-ratelimit-limit" -> "25", "x-ratelimit-remaining" -> "0", "x-ratelimit-retry-after" -> "2026-10-26T18:52:11+0000"), t0)
+    val s = observe(
+      granted(granted(fresh), Purpose.Search, at = t0.plusSeconds(1)),
+      limits,
+      429,
+      Map(
+        "x-ratelimit-limit" -> "25",
+        "x-ratelimit-remaining" -> "0",
+        "x-ratelimit-retry-after" -> "2026-10-26T18:52:11+0000"
+      ),
+      t0
+    )
     val v = view(s, limits, t0)
-    assertEquals((v.upstream, v.day, v.lookupTokens, v.searchTokens, v.dailyTokens, v.searchDailyTokens, v.perMinute),
-      ("core", "2026-10-26", 1, 1, 10, 6, 3))
-    assertEquals((v.blockedUntil, v.blockedWhy, v.rateLimit, v.rateRemaining),
-      (Some("2026-10-26T18:52:11Z"), Some("HTTP 429"), Some(25), Some(0)))
+    assertEquals(
+      (v.upstream, v.day, v.lookupTokens, v.searchTokens, v.dailyTokens, v.searchDailyTokens, v.perMinute),
+      ("core", "2026-10-26", 1, 1, 10, 6, 3)
+    )
+    assertEquals(
+      (v.blockedUntil, v.blockedWhy, v.rateLimit, v.rateRemaining),
+      (Some("2026-10-26T18:52:11Z"), Some("HTTP 429"), Some(25), Some(0))
+    )
     assertEquals(view(s, limits, Instant.parse("2026-10-26T19:00:00Z")).blockedUntil, None)
     assertEquals(view(s, limits, Instant.parse("2026-10-27T09:00:00Z")).lookupTokens, 0)
 

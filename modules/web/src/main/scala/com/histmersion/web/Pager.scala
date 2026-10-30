@@ -2,9 +2,10 @@ package com.histmersion.web
 
 import com.raquo.laminar.api.L.*
 
-/** A small OFFSET pager: "Items 26–50 of 112" with previous / next — for a list ordered by something
-  * other than time (the manager window's items, most urgent first), where [[ListPaging]]'s newest-first
-  * keyset cursor does not apply. The manager's events use [[ListPaging]]. */
+/** A small OFFSET pager: "Items 26–50 of 112" with previous / next — for a list ordered by something other than time
+  * (the manager window's items, most urgent first), where [[ListPaging]]'s newest-first keyset cursor does not apply.
+  * The manager's events use [[ListPaging]].
+  */
 object Pager:
 
   /** The line a page shows: `a–b of n`, or `none` for an empty one. Pure. */
@@ -21,11 +22,25 @@ object Pager:
   def apply(label: String, offset: Var[Int], limit: Int, shown: Signal[Int], total: Signal[Int]): HtmlElement =
     div(
       cls := "toolbar pager",
-      span(cls := "muted pager-range", child.text <-- offset.signal.combineWith(shown, total).map((o, s, t) => s"$label ${range(o, s, t)}")),
-      div(cls := "btn-group",
-        button(typ := "button", cls := "btn btn--sm", "previous", disabled <-- offset.signal.map(_ <= 0),
-          onClick --> (_ => offset.update(previous(_, limit)))),
-        button(typ := "button", cls := "btn btn--sm", "next",
+      span(
+        cls := "muted pager-range",
+        child.text <-- offset.signal.combineWith(shown, total).map((o, s, t) => s"$label ${range(o, s, t)}")
+      ),
+      div(
+        cls := "btn-group",
+        button(
+          typ := "button",
+          cls := "btn btn--sm",
+          "previous",
+          disabled <-- offset.signal.map(_ <= 0),
+          onClick --> (_ => offset.update(previous(_, limit)))
+        ),
+        button(
+          typ := "button",
+          cls := "btn btn--sm",
+          "next",
           disabled <-- offset.signal.combineWith(total).map((o, t) => next(o, limit, t).isEmpty),
-          onClick --> (_ => offset.update(o => o + limit))))
+          onClick --> (_ => offset.update(o => o + limit))
+        )
+      )
     )

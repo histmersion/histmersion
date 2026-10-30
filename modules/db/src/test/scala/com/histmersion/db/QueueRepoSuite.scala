@@ -9,11 +9,12 @@ import com.augustnagro.magnum.*
 
 /** The bookkeeping queues against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise.
   *
-  * The parser and renderer are pure and covered by `core/QueueSuite` on the REAL `meta` files; what is
-  * tested here is that a row survives the database unchanged — multi-line text, unicode headings,
-  * status transitions and the insertion order the export depends on. */
+  * The parser and renderer are pure and covered by `core/QueueSuite` on the REAL `meta` files; what is tested here is
+  * that a row survives the database unchanged — multi-line text, unicode headings, status transitions and the insertion
+  * order the export depends on.
+  */
 class QueueRepoSuite extends com.histmersion.db.DbSuite:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
@@ -21,12 +22,12 @@ class QueueRepoSuite extends com.histmersion.db.DbSuite:
     Migrate.run(d)
     d
 
-
-  /** `queue_items` is a small, GLOBAL table and this suite rewrites whole lists, while the server
-    * module's HTTP suite does the same against the SAME test database — and sbt runs the two module
-    * test tasks in parallel. A Postgres advisory lock (held on its own connection for the life of the
-    * suite) serialises them; without it one suite's `DELETE` pulls the row out from under the other.
-    * `var` because the connection must outlive `beforeAll` and be closed in `afterAll`. */
+  /** `queue_items` is a small, GLOBAL table and this suite rewrites whole lists, while the server module's HTTP suite
+    * does the same against the SAME test database — and sbt runs the two module test tasks in parallel. A Postgres
+    * advisory lock (held on its own connection for the life of the suite) serialises them; without it one suite's
+    * `DELETE` pulls the row out from under the other. `var` because the connection must outlive `beforeAll` and be
+    * closed in `afterAll`.
+    */
   private var lock: java.sql.Connection = null
   private val LockKey = 2808 // stream 2.8
 
@@ -34,12 +35,14 @@ class QueueRepoSuite extends com.histmersion.db.DbSuite:
     if testDb.isDefined then
       lock = ds.getConnection
       val st = lock.createStatement()
-      try { val _ = st.execute(s"SELECT pg_advisory_lock($LockKey)") } finally st.close()
+      try { val _ = st.execute(s"SELECT pg_advisory_lock($LockKey)") }
+      finally st.close()
 
   override def afterSuite(): Unit =
     if lock != null then
       val st = lock.createStatement()
-      try { val _ = st.execute(s"SELECT pg_advisory_unlock($LockKey)") } finally st.close()
+      try { val _ = st.execute(s"SELECT pg_advisory_unlock($LockKey)") }
+      finally st.close()
       lock.close()
       lock = null
 
@@ -131,14 +134,19 @@ class QueueRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(QueueRepo.get(ds, i.id), None)
 
   test("patching or deleting an unknown id is a not_found value, not an exception"):
-    assertEquals(QueueRepo.patch(ds, 987654321, QueuePatch(status = Some(Done))).left.map(_.code),
-      Left(Some(Write.CodeNotFound)))
+    assertEquals(
+      QueueRepo.patch(ds, 987654321, QueuePatch(status = Some(Done))).left.map(_.code),
+      Left(Some(Write.CodeNotFound))
+    )
     assertEquals(QueueRepo.delete(ds, 987654321).left.map(_.code), Left(Some(Write.CodeNotFound)))
 
   test("the three lists are independent"):
-    Kind.values.foreach(k => { val _ = QueueRepo.add(ds, k, QueueAdd(s"item for ${k.label}")) })
-    Kind.values.foreach(k => assertEquals(QueueRepo.list(ds, k, all = true).map(_.text),
-      Vector(s"item for ${k.label}")))
+    Kind.values.foreach { k =>
+      val _ = QueueRepo.add(ds, k, QueueAdd(s"item for ${k.label}"))
+    }
+    Kind.values.foreach(k =>
+      assertEquals(QueueRepo.list(ds, k, all = true).map(_.text), Vector(s"item for ${k.label}"))
+    )
 
   test("the CHECK constraint refuses a list name that is not one of the three"):
     intercept[Exception]:
@@ -160,23 +168,23 @@ class QueueRepoSuite extends com.histmersion.db.DbSuite:
     assert(stored.exists(_.createdAt.exists(_.startsWith("2026-06-22"))), "the range's first day is stored")
 
   test("importing twice replaces rather than doubling"):
-    val _              = importFile(Kind.Acquire, acquireFile)
-    val before         = QueueRepo.list(ds, Kind.Acquire, all = true).size
-    val (_, removed)   = importFile(Kind.Acquire, acquireFile)
+    val _ = importFile(Kind.Acquire, acquireFile)
+    val before = QueueRepo.list(ds, Kind.Acquire, all = true).size
+    val (_, removed) = importFile(Kind.Acquire, acquireFile)
     assertEquals(removed, before)
     assertEquals(QueueRepo.list(ds, Kind.Acquire, all = true).size, before)
     assertEquals(exported(Kind.Acquire), acquireFile)
 
   test("replace = false appends instead"):
-    val _            = importFile(Kind.Acquire, acquireFile)
-    val before       = QueueRepo.list(ds, Kind.Acquire, all = true).size
+    val _ = importFile(Kind.Acquire, acquireFile)
+    val before = QueueRepo.list(ds, Kind.Acquire, all = true).size
     val (_, removed) = QueueRepo.replaceAll(ds, Kind.Acquire, Queue.parse(Kind.Acquire, acquireFile), replace = false)
     assertEquals(removed, 0)
     assertEquals(QueueRepo.list(ds, Kind.Acquire, all = true).size, before * 2)
 
   test("an item added after an import lands in its topic group and re-exports cleanly"):
     val _ = importFile(Kind.Acquire, acquireFile)
-    val topic = s"🟡 Outstanding${Sep}Historiography${Sep}**Highest value**"
+    val topic = s"🟡 Outstanding${Sep}Historiography$Sep**Highest value**"
     val _ = QueueRepo.add(ds, Kind.Acquire, QueueAdd("**J.Z. Smith**, *Drudgery Divine* (1990)", Some(topic)))
     val out = exported(Kind.Acquire)
     assertEquals(out.linesIterator.count(_ == "**Highest value**"), 1, out)
@@ -191,27 +199,37 @@ class QueueRepoSuite extends com.histmersion.db.DbSuite:
     assert(exported(Kind.Log).contains(s"## $today\n- ran the lint"), exported(Kind.Log))
 
   test("an item keeps its goal and the run that wrote it; the job that ticks it off is recorded, reopening forgets it"):
-    val added = QueueRepo.add(ds, Kind.Acquire, QueueAdd("Drake 2012", goal = Some("zz-links-goal"), job = Some("zz-run-1")))
+    val added =
+      QueueRepo.add(ds, Kind.Acquire, QueueAdd("Drake 2012", goal = Some("zz-links-goal"), job = Some("zz-run-1")))
     assertEquals((added.goal, added.createdBy, added.closedBy), (Some("zz-links-goal"), Some("zz-run-1"), None))
-    val done = QueueRepo.patch(ds, added.id, Queue.fulfil(added, "drake2012", Some("zz-job-9"))).fold(e => fail(e.message), identity)
+    val done = QueueRepo
+      .patch(ds, added.id, Queue.fulfil(added, "drake2012", Some("zz-job-9")))
+      .fold(e => fail(e.message), identity)
     assertEquals((done.status, done.closedBy, done.createdBy), (Done, Some("zz-job-9"), Some("zz-run-1")))
     assertEquals(QueueRepo.patch(ds, added.id, QueuePatch(status = Some(Open))).map(_.closedBy), Right(None))
 
   test("a goal's items: its own, and those a goal link names; open only unless all"):
     val _ = GoalRepo.put(ds, "zz-links-goal", GoalPut("Zz links"))
-    val own    = QueueRepo.add(ds, Kind.Tasks, QueueAdd("own item", goal = Some("zz-links-goal")))
+    val own = QueueRepo.add(ds, Kind.Tasks, QueueAdd("own item", goal = Some("zz-links-goal")))
     val linked = QueueRepo.add(ds, Kind.Tasks, QueueAdd("linked item"))
-    val other  = QueueRepo.add(ds, Kind.Tasks, QueueAdd("someone else's"))
-    val closed = QueueRepo.add(ds, Kind.Tasks, QueueAdd("closed item", goal = Some("zz-links-goal"), status = Some(Done)))
+    val other = QueueRepo.add(ds, Kind.Tasks, QueueAdd("someone else's"))
+    val closed =
+      QueueRepo.add(ds, Kind.Tasks, QueueAdd("closed item", goal = Some("zz-links-goal"), status = Some(Done)))
     val _ = GoalLinkRepo.link(ds, "zz-links-goal", GoalPlans.LinkKind.QueueItem, linked.id.toString, None)
-    assertEquals(QueueRepo.forGoal(ds, Kind.Tasks, "zz-links-goal", all = false).map(_.id).toList, List(own.id, linked.id))
-    assertEquals(QueueRepo.forGoal(ds, Kind.Tasks, "zz-links-goal", all = true).map(_.id).toList, List(own.id, linked.id, closed.id))
+    assertEquals(
+      QueueRepo.forGoal(ds, Kind.Tasks, "zz-links-goal", all = false).map(_.id).toList,
+      List(own.id, linked.id)
+    )
+    assertEquals(
+      QueueRepo.forGoal(ds, Kind.Tasks, "zz-links-goal", all = true).map(_.id).toList,
+      List(own.id, linked.id, closed.id)
+    )
     assert(!QueueRepo.forGoal(ds, Kind.Tasks, "zz-links-goal", all = true).exists(_.id == other.id))
     assertEquals(QueueRepo.forGoal(ds, Kind.Acquire, "zz-links-goal", all = true).toList, Nil)
     val _ = connect(ds)(sql"DELETE FROM goals WHERE slug = 'zz-links-goal'".update.run())
 
   test("a run's or job's items: those it wrote and those it ticked off"):
-    val wrote  = QueueRepo.add(ds, Kind.Tasks, QueueAdd("wrote", job = Some("zz-run-7")))
+    val wrote = QueueRepo.add(ds, Kind.Tasks, QueueAdd("wrote", job = Some("zz-run-7")))
     val ticked = QueueRepo.add(ds, Kind.Tasks, QueueAdd("ticked"))
     val _ = QueueRepo.patch(ds, ticked.id, QueuePatch(status = Some(Done), closedBy = Some("zz-run-7")))
     val _ = QueueRepo.add(ds, Kind.Tasks, QueueAdd("another run's", job = Some("zz-run-8")))

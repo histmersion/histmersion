@@ -5,11 +5,12 @@ import com.histmersion.config.AppConfig
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 
-/** The write surface over real HTTP: status codes are part of the contract (412 on a failed
-  * `ifUpdatedAt` precondition, 404 on an unknown citekey), so they are asserted through the wire and
-  * not just through the repo. Skipped without HISTMERSION_TEST_DB_URL. */
+/** The write surface over real HTTP: status codes are part of the contract (412 on a failed `ifUpdatedAt` precondition,
+  * 404 on an unknown citekey), so they are asserted through the wire and not just through the repo. Skipped without
+  * HISTMERSION_TEST_DB_URL.
+  */
 class WriteHttpSuite extends munit.FunSuite:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()
@@ -18,9 +19,9 @@ class WriteHttpSuite extends munit.FunSuite:
     (r.statusCode, r.body)
 
   private def json(url: String) = HttpRequest.newBuilder(URI.create(url)).header("content-type", "application/json")
-  private def get(url: String)  = send(HttpRequest.newBuilder(URI.create(url)).build())
-  private def put(url: String, body: String)   = send(json(url).PUT(HttpRequest.BodyPublishers.ofString(body)).build())
-  private def post(url: String, body: String)  = send(json(url).POST(HttpRequest.BodyPublishers.ofString(body)).build())
+  private def get(url: String) = send(HttpRequest.newBuilder(URI.create(url)).build())
+  private def put(url: String, body: String) = send(json(url).PUT(HttpRequest.BodyPublishers.ofString(body)).build())
+  private def post(url: String, body: String) = send(json(url).POST(HttpRequest.BodyPublishers.ofString(body)).build())
   private def patch(url: String, body: String) =
     send(json(url).method("PATCH", HttpRequest.BodyPublishers.ofString(body)).build())
 
@@ -28,16 +29,18 @@ class WriteHttpSuite extends munit.FunSuite:
 
   test("put → get → patch → export over HTTP, with 412 on a stale precondition"):
     val base = AppConfig.load()
-    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Main.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
 
       // ── put: a full source, with omitted optional keys defaulting rather than failing to decode ──
-      val (ps, pb) = put(s"$url/api/sources/$ck",
+      val (ps, pb) = put(
+        s"$url/api/sources/$ck",
         s"""{"title":"HTTP writes","authors":["A"],"year":2020,"status":"current",
             |"tags":["adna"],"summary":"s","notes":"# article",
-            |"findings":[{"claim":"one","lon":32.0,"lat":39.0,"periodStart":-1800,"periodEnd":-1700}]}""".stripMargin)
+            |"findings":[{"claim":"one","lon":32.0,"lat":39.0,"periodStart":-1800,"periodEnd":-1700}]}""".stripMargin
+      )
       assertEquals(ps, 200, pb)
       assert(pb.contains("HTTP writes"), pb)
 
@@ -79,8 +82,7 @@ class WriteHttpSuite extends munit.FunSuite:
       // mtime 1 (1970) is always older than the row this write creates, so the guard has something
       // to bite on; the first call is forced so the suite is re-runnable against a dirty database.
       val note = "---\ncitekey: zz_http_import\ntitle: Imported\n---\nthe article\n"
-      val (is, ib) = post(s"$url/api/sources/import",
-        s"""{"text":${quote(note)},"mtime":1,"force":true}""")
+      val (is, ib) = post(s"$url/api/sources/import", s"""{"text":${quote(note)},"mtime":1,"force":true}""")
       assertEquals(is, 200, ib)
       assert(ib.contains("\"imported\":1"), ib)
 
@@ -111,20 +113,24 @@ class WriteHttpSuite extends munit.FunSuite:
   // #698 / #745 / #721 through the wire: what a JSON caller (the MCP tool, `patch --json`) sends
   test("patch over HTTP: a foreign edge src is a 400, null clears metadata, calibreId re-links"):
     val base = AppConfig.load()
-    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
-    val k    = "zz_http_patch_rules"
-    val dst  = "zz_http_patch_dst"
+    val cfg = base.copy(db = base.db.copy(url = testDb.get))
+    val k = "zz_http_patch_rules"
+    val dst = "zz_http_patch_dst"
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Main.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         assertEquals(put(s"$url/api/sources/$dst", """{"title":"Target","authors":["B"]}""")._1, 200)
-        val (ps, pb) = put(s"$url/api/sources/$k",
-          """{"title":"Rules","authors":["A"],"year":2001,"doi":"10.1/zzrules","venue":"V","calibreId":"1805"}""")
+        val (ps, pb) = put(
+          s"$url/api/sources/$k",
+          """{"title":"Rules","authors":["A"],"year":2001,"doi":"10.1/zzrules","venue":"V","calibreId":"1805"}"""
+        )
         assertEquals(ps, 200, pb)
 
-        val (es, eb) = patch(s"$url/api/sources/$k",
-          s"""{"edges":{"add":[{"src":"zz_someone_else","dst":"$dst","kind":"refutes"}]}}""")
+        val (es, eb) = patch(
+          s"$url/api/sources/$k",
+          s"""{"edges":{"add":[{"src":"zz_someone_else","dst":"$dst","kind":"refutes"}]}}"""
+        )
         assertEquals(es, 400, eb)
         assert(eb.contains("is not the patched source"), eb)
 
@@ -147,18 +153,23 @@ class WriteHttpSuite extends munit.FunSuite:
     }
 
   private def mcp(url: String, tool: String, args: String): (Int, String) =
-    send(json(s"$url/mcp").header("accept", "application/json, text/event-stream")
-      .POST(HttpRequest.BodyPublishers.ofString(
-        s"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"$tool","arguments":$args}}"""))
-      .build())
+    send(
+      json(s"$url/mcp")
+        .header("accept", "application/json, text/event-stream")
+        .POST(
+          HttpRequest.BodyPublishers
+            .ofString(s"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"$tool","arguments":$args}}""")
+        )
+        .build()
+    )
 
   // #813: a misplaced or unknown key used to be dropped and the write reported success
   test("strict writes over HTTP and MCP: an unknown or misplaced key is a 400 naming it, and nothing is written"):
     val base = AppConfig.load()
-    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
-    val k    = "zz_http_strict"
+    val cfg = base.copy(db = base.db.copy(url = testDb.get))
+    val k = "zz_http_strict"
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Main.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         assertEquals(put(s"$url/api/sources/$k", """{"title":"Strict","authors":["A"],"tags":["keep"]}""")._1, 200)
@@ -173,7 +184,8 @@ class WriteHttpSuite extends munit.FunSuite:
         val (s3, b3) = put(s"$url/api/sources/$k", """{"title":"Strict","tag":["x"]}""")
         assertEquals(s3, 400, b3)
         assert(b3.contains("unknown key 'tag'"), b3)
-        val (s4, b4) = put(s"$url/api/articles/zz-http-strict", """{"title":"T","kind":"concept","body":"b","tagz":[]}""")
+        val (s4, b4) =
+          put(s"$url/api/articles/zz-http-strict", """{"title":"T","kind":"concept","body":"b","tagz":[]}""")
         assertEquals(s4, 400, b4)
         assert(b4.contains("unknown key 'tagz'"), b4)
 
@@ -182,7 +194,8 @@ class WriteHttpSuite extends munit.FunSuite:
         assert(!gb.contains("\"x\""), gb.take(300))
 
         // the same through the MCP tool, whose input wraps the same DTO
-        val (_, m1) = mcp(url, "patch_source", s"""{"citekey":"$k","patch":{"findings":{"add":[{"claim":"c","date":1}]}}}""")
+        val (_, m1) =
+          mcp(url, "patch_source", s"""{"citekey":"$k","patch":{"findings":{"add":[{"claim":"c","date":1}]}}}""")
         assert(m1.contains("unknown key 'date'"), m1)
         val (_, m2) = mcp(url, "patch_source", s"""{"citekey":"$k","patch":{},"tags":{"add":["x"]}}""")
         assert(m2.contains("unknown key 'tags'"), m2)
@@ -192,19 +205,22 @@ class WriteHttpSuite extends munit.FunSuite:
     }
 
   // #3770: put_attestation with an unknown target type (or a missing source) answered 500, the constraint's
-  test("an attestation with an unknown target type is a 400 naming the five, a missing source a 404 — over HTTP and MCP"):
+  test(
+    "an attestation with an unknown target type is a 400 naming the five, a missing source a 404 — over HTTP and MCP"
+  ):
     val base = AppConfig.load()
-    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
-    val k    = "zz_http_attest"
+    val cfg = base.copy(db = base.db.copy(url = testDb.get))
+    val k = "zz_http_attest"
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Main.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         assertEquals(put(s"$url/api/sources/$k", """{"title":"Attested"}""")._1, 200)
         val (s1, b1) = post(s"$url/api/attestations", s"""{"citekey":"$k","targetType":"bogus","targetId":"x"}""")
         assertEquals(s1, 400, b1)
         assert(b1.contains("unknown target type 'bogus' (finding, event, event_dating, place, edge)"), b1)
-        val (s2, b2) = post(s"$url/api/attestations", """{"citekey":"zz_http_attest_none","targetType":"event","targetId":"x"}""")
+        val (s2, b2) =
+          post(s"$url/api/attestations", """{"citekey":"zz_http_attest_none","targetType":"event","targetId":"x"}""")
         assertEquals(s2, 404, b2)
         val (m1s, m1) = mcp(url, "put_attestation", s"""{"citekey":"$k","targetType":"bogus","targetId":"x"}""")
         assertEquals(m1s, 200, m1)
@@ -221,22 +237,25 @@ class WriteHttpSuite extends munit.FunSuite:
   // #766: put_source rewrote a foreign edge src to the citekey (the #698 pattern, fixed for patch only)
   test("put over HTTP: a foreign edge src is a 400; an omitted src or an old citekey of the source is accepted"):
     val base = AppConfig.load()
-    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
-    val k    = "zz_http_put_edges"
-    val dst  = "zz_http_put_edges_dst"
+    val cfg = base.copy(db = base.db.copy(url = testDb.get))
+    val k = "zz_http_put_edges"
+    val dst = "zz_http_put_edges_dst"
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Main.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         assertEquals(put(s"$url/api/sources/$dst", """{"title":"Target"}""")._1, 200)
-        val (s1, b1) = put(s"$url/api/sources/$k",
-          s"""{"title":"P","edges":[{"src":"zz_someone_else","dst":"$dst","kind":"refutes"}]}""")
+        val (s1, b1) = put(
+          s"$url/api/sources/$k",
+          s"""{"title":"P","edges":[{"src":"zz_someone_else","dst":"$dst","kind":"refutes"}]}"""
+        )
         assertEquals(s1, 400, b1)
         assert(b1.contains("is not the source being put"), b1)
         val (s2, b2) = put(s"$url/api/sources/$k", s"""{"title":"P","edges":[{"dst":"$k","kind":"refutes"}]}""")
         assertEquals(s2, 400, b2)
         assert(b2.contains("self-edge"), b2)
-        val (s3, b3) = put(s"$url/api/sources/$k", s"""{"title":"P","edges":[{"src":"$k","dst":"$dst","kind":"refutes"}]}""")
+        val (s3, b3) =
+          put(s"$url/api/sources/$k", s"""{"title":"P","edges":[{"src":"$k","dst":"$dst","kind":"refutes"}]}""")
         assertEquals(s3, 200, b3)
         val (_, nb) = get(s"$url/api/neighbors/$k?kind=refutes")
         assert(nb.contains(dst), nb)
@@ -245,9 +264,10 @@ class WriteHttpSuite extends munit.FunSuite:
         val k2 = k + "_renamed"
         get(s"$url/api/sources/$k2") match
           case (200, _) => () // a re-run: already renamed
-          case _ =>
+          case _        =>
             assertEquals(post(s"$url/api/sources/$k/rename", s"""{"newCitekey":"$k2"}""")._1, 200)
-        val (s4, b4) = put(s"$url/api/sources/$k2", s"""{"title":"P2","edges":[{"src":"$k","dst":"$dst","kind":"challenges"}]}""")
+        val (s4, b4) =
+          put(s"$url/api/sources/$k2", s"""{"title":"P2","edges":[{"src":"$k","dst":"$dst","kind":"challenges"}]}""")
         assertEquals(s4, 200, b4)
         val (_, nb2) = get(s"$url/api/neighbors/$k2?kind=challenges")
         assert(nb2.contains(dst), nb2)

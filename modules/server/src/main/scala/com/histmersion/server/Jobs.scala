@@ -8,36 +8,44 @@ import java.util.concurrent.LinkedBlockingQueue
 
 /** The bounded OCR worker pool (plan §1.8).
   *
-  * OCR is a JOB, not a request: docling on a 500-page scan runs for tens of minutes, far past any
-  * sane HTTP timeout. `POST /api/ingest` therefore stores the upload, writes a `jobs` row and
-  * returns its id; `converter.parallelism` workers drain an in-memory queue and move the row through
-  * `queued → running → done|failed`.
+  * OCR is a JOB, not a request: docling on a 500-page scan runs for tens of minutes, far past any sane HTTP timeout.
+  * `POST /api/ingest` therefore stores the upload, writes a `jobs` row and returns its id; `converter.parallelism`
+  * workers drain an in-memory queue and move the row through `queued → running → done|failed`.
   *
-  * Nothing survives the process, and the design leans on that rather than pretending otherwise:
-  * [[start]] first marks every unfinished row `failed: interrupted`, so a restart never leaves a job
-  * claiming to be in progress. Re-running is idempotent — the same file has the same sha256.
+  * Nothing survives the process, and the design leans on that rather than pretending otherwise: [[start]] first marks
+  * every unfinished row `failed: interrupted`, so a restart never leaves a job claiming to be in progress. Re-running
+  * is idempotent — the same file has the same sha256.
   *
-  * Structured concurrency is Ox's: the workers are `forkUser`s inside one `supervised` scope, which
-  * lives on a single daemon thread so that binding the HTTP port is not blocked by it. */
-final class Jobs(ds: DataSource, parallelism: Int, run: String => Unit,
-    pins: com.histmersion.server.hot.Pinning = com.histmersion.server.hot.Pinning.none):
+  * Structured concurrency is Ox's: the workers are `forkUser`s inside one `supervised` scope, which lives on a single
+  * daemon thread so that binding the HTTP port is not blocked by it.
+  */
+final class Jobs(
+    ds: DataSource,
+    parallelism: Int,
+    run: String => Unit,
+    pins: com.histmersion.server.hot.Pinning = com.histmersion.server.hot.Pinning.none
+):
 
-  /** A job id and the generation it was submitted on: it runs there — on the database its row is in,
-    * even after a config reload swapped the database (docs/research-plugins.md §3.6). */
-  private final case class Queued(id: String, work: com.histmersion.server.hot.Carried[Unit])
+  /** A job id and the generation it was submitted on: it runs there — on the database its row is in, even after a
+    * config reload swapped the database (docs/research-plugins.md §3.6).
+    */
+  final private case class Queued(id: String, work: com.histmersion.server.hot.Carried[Unit])
   private val queue = LinkedBlockingQueue[Queued]()
 
-  /** The jobs this pool holds — queued in memory or running: a reconciliation never fails them (a
-    * config reload that swapped back to their database runs one, §3.6). */
+  /** The jobs this pool holds — queued in memory or running: a reconciliation never fails them (a config reload that
+    * swapped back to their database runs one, §3.6).
+    */
   private val held = java.util.concurrent.ConcurrentHashMap.newKeySet[String]()
 
-  /** The thread hosting the Ox scope. A `var` because the pool is started by the composition root
-    * AFTER construction (no side effects in initialisers) and stopped by tests. */
+  /** The thread hosting the Ox scope. A `var` because the pool is started by the composition root AFTER construction
+    * (no side effects in initialisers) and stopped by tests.
+    */
   private var scope: Option[Thread] = None
 
-  /** The pause gate, held while a RESTORE runs (plan §1.10): a job that writes a source while
-    * `pg_restore --clean` is dropping the tables writes into a schema that is being replaced. A
-    * `var` guarded by `gate`'s monitor, because a worker must BLOCK on it rather than spin. */
+  /** The pause gate, held while a RESTORE runs (plan §1.10): a job that writes a source while `pg_restore --clean` is
+    * dropping the tables writes into a schema that is being replaced. A `var` guarded by `gate`'s monitor, because a
+    * worker must BLOCK on it rather than spin.
+    */
   private val gate = Object()
   private var paused = false
 
@@ -48,10 +56,11 @@ final class Jobs(ds: DataSource, parallelism: Int, run: String => Unit,
 
   def isPaused: Boolean = gate.synchronized(paused)
 
-  private def awaitResume(): Unit = gate.synchronized { while paused do gate.wait() }
+  private def awaitResume(): Unit = gate.synchronized(while paused do gate.wait())
 
-  /** Reconcile interrupted jobs, then start `parallelism` workers. Returns how many rows the restart
-    * had to fail. Idempotent: calling it twice does not start a second pool. */
+  /** Reconcile interrupted jobs, then start `parallelism` workers. Returns how many rows the restart had to fail.
+    * Idempotent: calling it twice does not start a second pool.
+    */
   def start(): Int =
     import scala.jdk.CollectionConverters.*
     val interrupted = JobRepo.failInterrupted(ds, held.asScala.toList)
@@ -61,23 +70,34 @@ final class Jobs(ds: DataSource, parallelism: Int, run: String => Unit,
       t.start()
     interrupted
 
-  /** Hand a job id to the pool. The queue is unbounded on purpose: admission control is the `jobs`
-    * table (a duplicate upload is refused before it ever gets here), and dropping an accepted job
-    * would strand a row in `queued` forever. */
+  /** Hand a job id to the pool. The queue is unbounded on purpose: admission control is the `jobs` table (a duplicate
+    * upload is refused before it ever gets here), and dropping an accepted job would strand a row in `queued` forever.
+    */
   def submit(jobId: String): Unit =
     val _ = held.add(jobId)
-    queue.put(Queued(jobId, pins.carry(try runOne(jobId) finally { val _ = held.remove(jobId) })))
+    queue.put(
+      Queued(
+        jobId,
+        pins.carry(try runOne(jobId)
+        finally { val _ = held.remove(jobId) })
+      )
+    )
 
   /** One job, its unexpected failure recorded — both on the job's own generation. */
   private def runOne(id: String): Unit =
     try run(id)
     catch
       case e: InterruptedException => throw e
-      case e: Throwable =>
+      case e: Throwable            =>
         // a worker must outlive one bad job: record the failure and take the next id
         scribe.error(s"job $id failed unexpectedly: ${e.getMessage}", e)
-        val _ = JobRepo.transition(ds, id, JobState.Running, JobState.Failed,
-          error = Some(s"${e.getClass.getSimpleName}: ${e.getMessage}"))
+        val _ = JobRepo.transition(
+          ds,
+          id,
+          JobState.Running,
+          JobState.Failed,
+          error = Some(s"${e.getClass.getSimpleName}: ${e.getMessage}")
+        )
 
   /** Stop the pool (tests, shutdown). Interrupting the scope thread cancels every fork. */
   def stop(): Unit =
@@ -91,21 +111,23 @@ final class Jobs(ds: DataSource, parallelism: Int, run: String => Unit,
   private def pool(): Unit =
     try
       ox.supervised {
-        (1 to math.max(1, parallelism)).foreach(_ => { val _ = ox.forkUser(worker()) })
+        (1 to math.max(1, parallelism)).foreach { _ =>
+          val _ = ox.forkUser(worker())
+        }
         ()
       }
     catch
-      case _: InterruptedException => ()             // stop() — expected
+      case _: InterruptedException => () // stop() — expected
       case e: Throwable            => scribe.error(s"job pool died: ${e.getMessage}", e)
 
   private def worker(): Unit =
-    var running = true                               // the loop's exit flag; interruption clears it
+    var running = true // the loop's exit flag; interruption clears it
     while running do
       try
         val q = queue.take()
-        awaitResume()                                // a restore holds the pool here
+        awaitResume() // a restore holds the pool here
         try q.work.run()
         catch
           case e: InterruptedException => throw e
-          case e: Throwable => scribe.error(s"job ${q.id}: recording its failure failed: ${e.getMessage}", e)
+          case e: Throwable            => scribe.error(s"job ${q.id}: recording its failure failed: ${e.getMessage}", e)
       catch case _: InterruptedException => running = false

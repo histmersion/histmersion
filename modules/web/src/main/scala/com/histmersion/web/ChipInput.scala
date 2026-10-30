@@ -12,9 +12,10 @@ import com.raquo.laminar.codecs.StringAsIsCodec
 
 /** Reusable autocomplete + chip component. Ported from chips.js (137 lines).
   *
-  * Shows a text input with removable chips (tags displayed as pills) and a dropdown suggestion list
-  * that appears on typing. Keyboard: arrow-up/arrow-down to move, Enter to pick, Esc to close,
-  * Backspace on an empty input removes the last chip. */
+  * Shows a text input with removable chips (tags displayed as pills) and a dropdown suggestion list that appears on
+  * typing. Keyboard: arrow-up/arrow-down to move, Enter to pick, Esc to close, Backspace on an empty input removes the
+  * last chip.
+  */
 object ChipInput:
 
   private var seq: Int = 0
@@ -34,19 +35,20 @@ object ChipInput:
       mark: String => Option[String] = _ => None
   )
 
-  /** A CONTROLLED chip input: it shows `values` (a UiState field's signal) and reports every change
-    * through `config.onChange` — it keeps no list of its own, so it cannot drift from the state. */
+  /** A CONTROLLED chip input: it shows `values` (a UiState field's signal) and reports every change through
+    * `config.onChange` — it keeps no list of its own, so it cannot drift from the state.
+    */
   def apply(config: Config, values: StrictSignal[List[String]]): HtmlElement =
     seq += 1
     val id = s"chips-${config.field}-$seq"
 
-    val items      = Var(List.empty[Facet])
-    val active     = Var(-1)
+    val items = Var(List.empty[Facet])
+    val active = Var(-1)
     val menuHidden = Var(true)
 
-    var timer: Int     = 0
+    var timer: Int = 0
     // the suggestions request a late answer must belong to
-    val latest         = Latest()
+    val latest = Latest()
     var inputEl: dom.HTMLInputElement = null
     var previewValue: Option[String] = None
 
@@ -97,7 +99,6 @@ object ChipInput:
       if timer != 0 then dom.window.clearTimeout(timer)
       timer = dom.window.setTimeout(() => suggest(), config.debounceMs.toDouble).toInt
 
-
     def add(raw: String): Unit =
       val v = Option(raw).getOrElse("").trim
       if inputEl != null then inputEl.value = ""
@@ -121,10 +122,15 @@ object ChipInput:
         cls := "chips-list",
         children <-- values.map { vs =>
           vs.zipWithIndex.map { (v, i) =>
-            Chip(config.display(v), remove = Some { () =>
-              removeAt(i)
-              if inputEl != null then inputEl.focus()
-            }, extraCls = config.mark(v).fold("")(m => s"has-mark $m"), tip = Option.when(config.display(v) != v)(v))
+            Chip(
+              config.display(v),
+              remove = Some { () =>
+                removeAt(i)
+                if inputEl != null then inputEl.focus()
+              },
+              extraCls = config.mark(v).fold("")(m => s"has-mark $m"),
+              tip = Option.when(config.display(v) != v)(v)
+            )
           }
         }
       ),
@@ -148,7 +154,8 @@ object ChipInput:
             timer = 0
             latest.cancel()
             inputEl = null
-          }),
+          }
+        ),
         onInput --> { _ => schedule() },
         onFocus --> { _ =>
           if inputEl != null && inputEl.value.trim.nonEmpty then schedule()
@@ -223,9 +230,9 @@ object ChipInput:
     )
   end apply
 
-  /** What a suggestion shows: the display form (`_` as a space), as a plain text node — Laminar
-    * escapes it, so it must NOT be HTML-escaped first (that shows `&amp;` literally). The value
-    * itself is what gets committed. */
+  /** What a suggestion shows: the display form (`_` as a space), as a plain text node — Laminar escapes it, so it must
+    * NOT be HTML-escaped first (that shows `&amp;` literally). The value itself is what gets committed.
+    */
   private[web] def hintLabel(value: String): String = Fmt.display(value)
 
 end ChipInput

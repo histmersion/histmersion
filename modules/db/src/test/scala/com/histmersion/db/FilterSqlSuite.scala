@@ -6,8 +6,9 @@ import com.histmersion.domain.*
 import com.histmersion.db.Param.*
 import com.histmersion.values.SourceStatus
 
-/** `Filter → SQL` is a pure function (plan §1.0), so it is tested WITHOUT a database: the SQL text
-  * and the bound parameters are asserted directly. */
+/** `Filter → SQL` is a pure function (plan §1.0), so it is tested WITHOUT a database: the SQL text and the bound
+  * parameters are asserted directly.
+  */
 class FilterSqlSuite extends munit.FunSuite:
 
   private def where(f: Filter, scope: PlaceScope = PlaceScope.empty): Sql = FilterSql.where(f, scope)
@@ -21,7 +22,7 @@ class FilterSqlSuite extends munit.FunSuite:
     assertEquals(s, Search.ftsPredicate("collapse"))
     assert(s.text.contains("s.tsv @@ websearch_to_tsquery('english', ?)"), s.text)
     assert(s.text.contains("FROM source_chunks fts_p WHERE fts_p.citekey = s.citekey"), s.text)
-    assertEquals(s.params, List(S("collapse"), S("collapse")))   // one per tsquery occurrence
+    assertEquals(s.params, List(S("collapse"), S("collapse"))) // one per tsquery occurrence
 
   test("a blank q is not a filter"):
     assertEquals(where(Filter(q = Some("   "))), Sql("TRUE", Nil))
@@ -40,7 +41,8 @@ class FilterSqlSuite extends munit.FunSuite:
     assertEquals(
       s.text,
       "(EXISTS (SELECT 1 FROM unnest(s.authors) x WHERE x ILIKE ? ESCAPE '\\')" +
-        " OR EXISTS (SELECT 1 FROM unnest(s.authors) x WHERE x ILIKE ? ESCAPE '\\'))")
+        " OR EXISTS (SELECT 1 FROM unnest(s.authors) x WHERE x ILIKE ? ESCAPE '\\'))"
+    )
     assertEquals(s.params, List(S("%cline%"), S("%anthony%")))
 
   test("a single author is not parenthesised (any-of of one)"):
@@ -53,7 +55,9 @@ class FilterSqlSuite extends munit.FunSuite:
     assert(s.text.contains("pn.name ILIKE ?"), s.text)
     assertEquals(s.params, List(S("%Anatolia%"), S("%Anatolia%"), S("%Anatolia%")))
 
-  test("places: a resolved gazetteer id matches through finding_places alone, never its id as a name (hover counts took 3-20 s)"):
+  test(
+    "places: a resolved gazetteer id matches through finding_places alone, never its id as a name (hover counts took 3-20 s)"
+  ):
     val scope = PlaceScope(Map("pleiades_570577" -> List("pleiades_570577", "pleiades_1")))
     val s = where(Filter(places = List("pleiades_570577")), scope)
     assert(s.text.contains("fp.place_id = ANY(?::text[])"), s.text)
@@ -64,25 +68,38 @@ class FilterSqlSuite extends munit.FunSuite:
     val scope = PlaceScope(Map("zz_region" -> List("zz_region", "zz_child", "zz_grandchild")))
     val s = FilterSql.where(Filter(places = List("zz_region")), scope)
     // computed once (a hashed sub-plan), never re-run per source or per article link
-    assert(s.text.contains("s.citekey IN (SELECT f.citekey FROM findings f JOIN finding_places fp" +
-      " ON fp.finding_id = f.id WHERE fp.place_id = ANY(?::text[]))"), s.text)
+    assert(
+      s.text.contains(
+        "s.citekey IN (SELECT f.citekey FROM findings f JOIN finding_places fp" +
+          " ON fp.finding_id = f.id WHERE fp.place_id = ANY(?::text[]))"
+      ),
+      s.text
+    )
     assert(!s.text.contains("f.citekey = s.citekey AND fp.place_id"), s.text)
     assertEquals(s.params.head, A(List("zz_region", "zz_child", "zz_grandchild")))
     // a 451-place scope is still ONE parameter (a generic plan of 451 `?`s went bad; JDBC caps at 32 767)
     val big = PlaceScope(Map("zz_big" -> (1 to 451).map(i => s"zz_$i").toList))
     assertEquals(FilterSql.where(Filter(places = List("zz_big")), big).params.count(_.isInstanceOf[A]), 1)
     val f = FilterSql.findingPlaceWhere(Filter(places = List("zz_region")), scope = scope)
-    assert(f.text.contains("f.id IN (SELECT fp.finding_id FROM finding_places fp WHERE fp.place_id = ANY(?::text[]))"), f.text)
+    assert(
+      f.text.contains("f.id IN (SELECT fp.finding_id FROM finding_places fp WHERE fp.place_id = ANY(?::text[]))"),
+      f.text
+    )
 
   test("selectionCountsQuery: the four lists' own predicates, as one statement"):
     val f = Filter(tags = List("x"), period = Some(Period(-1300, -1100)))
     val s = FilterSql.selectionCountsQuery(f)
-    assertEquals(s.text,
+    assertEquals(
+      s.text,
       "SELECT (" + FilterSql.countQuery(f).text + "), (" + FilterSql.findingsCountQuery(f).text +
         "), (SELECT count(*)::int FROM articles a WHERE " + FilterSql.articleWhere(f).text +
-        "), (SELECT count(*)::int FROM events e WHERE " + FilterSql.eventWhere(f).text + ")")
-    assertEquals(s.params, FilterSql.countQuery(f).params ++ FilterSql.findingsCountQuery(f).params ++
-      FilterSql.articleWhere(f).params ++ FilterSql.eventWhere(f).params)
+        "), (SELECT count(*)::int FROM events e WHERE " + FilterSql.eventWhere(f).text + ")"
+    )
+    assertEquals(
+      s.params,
+      FilterSql.countQuery(f).params ++ FilterSql.findingsCountQuery(f).params ++
+        FilterSql.articleWhere(f).params ++ FilterSql.eventWhere(f).params
+    )
 
   test("topics: AND semantics, sources only"):
     val s = where(Filter(topics = List("indo-european")))
@@ -105,7 +122,8 @@ class FilterSqlSuite extends munit.FunSuite:
       s.text,
       "(s.period && int8range(?::bigint, ?::bigint, '[]')" +
         " OR EXISTS (SELECT 1 FROM findings f WHERE f.citekey = s.citekey" +
-        " AND f.period && int8range(?::bigint, ?::bigint, '[]')))")
+        " AND f.period && int8range(?::bigint, ?::bigint, '[]')))"
+    )
     assertEquals(s.params, List(L(-1300), L(-1100), L(-1300), L(-1100)))
 
   test("bbox: one ST_MakeEnvelope, matched through the source's findings"):
@@ -113,7 +131,8 @@ class FilterSqlSuite extends munit.FunSuite:
     assertEquals(
       s.text,
       "EXISTS (SELECT 1 FROM findings f WHERE f.citekey = s.citekey AND f.geom IS NOT NULL" +
-        " AND f.geom && ST_MakeEnvelope(?, ?, ?, ?, 4326))")
+        " AND f.geom && ST_MakeEnvelope(?, ?, ?, ?, 4326))"
+    )
     assertEquals(s.params, List(D(25.0), D(30.0), D(45.0), D(42.0)))
 
   test("bbox across the antimeridian (minLon > maxLon) splits into two OR'ed envelopes"):
@@ -122,10 +141,9 @@ class FilterSqlSuite extends munit.FunSuite:
       s.text,
       "EXISTS (SELECT 1 FROM findings f WHERE f.citekey = s.citekey AND f.geom IS NOT NULL" +
         " AND (f.geom && ST_MakeEnvelope(?, ?, ?, ?, 4326)" +
-        " OR f.geom && ST_MakeEnvelope(?, ?, ?, ?, 4326)))")
-    assertEquals(
-      s.params,
-      List(D(170.0), D(-20.0), D(180.0), D(-5.0), D(-180.0), D(-20.0), D(-170.0), D(-5.0)))
+        " OR f.geom && ST_MakeEnvelope(?, ?, ?, ?, 4326)))"
+    )
+    assertEquals(s.params, List(D(170.0), D(-20.0), D(180.0), D(-5.0), D(-180.0), D(-20.0), D(-170.0), D(-5.0)))
 
   test("predicates combine with AND, in Filter field order"):
     val s = where(Filter(q = Some("x"), tags = List("t"), status = List("current")))
@@ -193,7 +211,10 @@ class FilterSqlSuite extends munit.FunSuite:
     assert(s.text.contains("ts_headline('english', sc.body,"), s.text)
     assert(s.text.contains("INNER JOIN ("), s.text)
     assert(s.text.contains("best.citekey = sc.citekey AND best.ord = sc.ord"), s.text)
-    assert(s.params.contains(S("MaxFragments=1, MaxWords=30, MinWords=8, StartSel=**, StopSel=**, HighlightAll=false")), s.params.toString)
+    assert(
+      s.params.contains(S("MaxFragments=1, MaxWords=30, MinWords=8, StartSel=**, StopSel=**, HighlightAll=false")),
+      s.params.toString
+    )
     // inner: tsv match + two rank occurrences (3 tsquery); outer: one tsquery for ts_headline
     assertEquals(s.params.count(_ == S("collapse")), 4)
 
@@ -207,16 +228,18 @@ class FilterSqlSuite extends munit.FunSuite:
     val ranked = FilterSql.orderBySql(Filter(q = Some("collapse")))
     assert(ranked.text.startsWith("ORDER BY (ts_rank_cd(s.tsv, websearch_to_tsquery"), ranked.text)
     assert(ranked.text.endsWith(" DESC, s.cited_by_count DESC NULLS LAST, s.citekey"), ranked.text)
-    assertEquals(ranked.params, List.fill(3)(S("collapse")))  // one per tsquery in rankExpr
+    assertEquals(ranked.params, List.fill(3)(S("collapse"))) // one per tsquery in rankExpr
     // CTE path: uses precomputed rank
     val ctePath = FilterSql.orderBySql(Filter(q = Some("collapse")), useCte = true)
     assert(ctePath.text.contains("coalesce(bc.rank, 0)"), ctePath.text)
     assert(!ctePath.text.contains("source_chunks"), ctePath.text)
-    assertEquals(ctePath.params, List(S("collapse")))  // one tsquery for ts_rank_cd on source
+    assertEquals(ctePath.params, List(S("collapse"))) // one tsquery for ts_rank_cd on source
     assertEquals(FilterSql.orderBySql(Filter()), Sql(FilterSql.orderBy(Sort.Relevance), Nil))
     // an explicit sort always wins over relevance ranking
-    assertEquals(FilterSql.orderBySql(Filter(q = Some("x"), sort = Sort.Title)),
-      Sql(FilterSql.orderBy(Sort.Title), Nil))
+    assertEquals(
+      FilterSql.orderBySql(Filter(q = Some("x"), sort = Sort.Title)),
+      Sql(FilterSql.orderBy(Sort.Title), Nil)
+    )
 
   test("FilterSql.text trims the query and treats blank as absent"):
     assertEquals(FilterSql.text(Filter(q = Some("  x "))), Some("x"))
@@ -230,7 +253,7 @@ class FilterSqlSuite extends munit.FunSuite:
 
   test("facetsQuery matches the prefix as displayed: an underscore and a space are the same"):
     val spaced = FilterSql.facetsQuery(FacetField.Topics, Some("bronze age"), Filter(), 10)
-    val under  = FilterSql.facetsQuery(FacetField.Topics, Some("bronze_age"), Filter(), 10)
+    val under = FilterSql.facetsQuery(FacetField.Topics, Some("bronze_age"), Filter(), 10)
     assert(spaced.text.contains("replace(v, '_', ' ') ILIKE ?"), spaced.text)
     assertEquals(spaced.params, List(S("bronze age%"), I(10)))
     assertEquals(under.params, spaced.params)
@@ -254,9 +277,17 @@ class FilterSqlSuite extends munit.FunSuite:
   // ── the finding-level predicate (map feed + histogram) ──────────────────────────────────────
 
   test("sourceOnly drops every finding-level criterion, keeping the source-level ones"):
-    val f = Filter(q = Some("x"), authors = List("a"), topics = List("t"), status = List("current"),
-      years = Some(Period(2000, 2020)), tags = List("tag"), places = List("p"),
-      period = Some(Period(-100, -50)), bbox = Some(BBox(1, 2, 3, 4)))
+    val f = Filter(
+      q = Some("x"),
+      authors = List("a"),
+      topics = List("t"),
+      status = List("current"),
+      years = Some(Period(2000, 2020)),
+      tags = List("tag"),
+      places = List("p"),
+      period = Some(Period(-100, -50)),
+      bbox = Some(BBox(1, 2, 3, 4))
+    )
     val s = FilterSql.sourceOnly(f)
     assertEquals((s.tags, s.places, s.period, s.bbox), (Nil, Nil, None, None))
     assertEquals((s.q, s.authors, s.topics, s.status, s.years), (f.q, f.authors, f.topics, f.status, f.years))
@@ -268,14 +299,16 @@ class FilterSqlSuite extends munit.FunSuite:
     assertEquals(
       s.text,
       "(EXISTS (SELECT 1 FROM unnest(f.tags) x WHERE lower(x) = lower(?))" +
-        " OR EXISTS (SELECT 1 FROM unnest(s.tags) x WHERE lower(x) = lower(?)))")
+        " OR EXISTS (SELECT 1 FROM unnest(s.tags) x WHERE lower(x) = lower(?)))"
+    )
     assertEquals(s.params, List(S("steppe"), S("steppe")))
     assertEquals(FilterSql.findingPlaceWhere(Filter(tags = List("a", "b"))).text.split(" AND ").length, 2)
 
   test("findingPlaceWhere: places are any-of on region_name, escaped"):
     assertEquals(
       FilterSql.findingPlaceWhere(Filter(places = List("Anatolia"))),
-      Sql("f.region_name ILIKE ? ESCAPE '\\'", List(S("%Anatolia%"))))
+      Sql("f.region_name ILIKE ? ESCAPE '\\'", List(S("%Anatolia%")))
+    )
     assert(FilterSql.findingPlaceWhere(Filter(places = List("a", "b"))).text.contains(" OR "))
 
   test("findingPlaceWhere: the viewport splits at the antimeridian"):
@@ -283,20 +316,21 @@ class FilterSqlSuite extends munit.FunSuite:
     assertEquals(
       s.text,
       "(f.geom IS NOT NULL AND (f.geom && ST_MakeEnvelope(?, ?, ?, ?, 4326)" +
-        " OR f.geom && ST_MakeEnvelope(?, ?, ?, ?, 4326)))")
-    assertEquals(s.params,
-      List(D(170.0), D(-60.0), D(180.0), D(60.0), D(-180.0), D(-60.0), D(-170.0), D(60.0)))
+        " OR f.geom && ST_MakeEnvelope(?, ?, ?, ?, 4326)))"
+    )
+    assertEquals(s.params, List(D(170.0), D(-60.0), D(180.0), D(60.0), D(-180.0), D(-60.0), D(-170.0), D(60.0)))
 
   test("findingPeriodWhere is the finding's own overlap; TRUE without a period"):
-    assertEquals(FilterSql.findingPeriodWhere(Filter(period = Some(Period(-1300, -1100)))),
-      Sql("f.period && int8range(?::bigint, ?::bigint, '[]')", List(L(-1300), L(-1100))))
+    assertEquals(
+      FilterSql.findingPeriodWhere(Filter(period = Some(Period(-1300, -1100)))),
+      Sql("f.period && int8range(?::bigint, ?::bigint, '[]')", List(L(-1300), L(-1100)))
+    )
     assertEquals(FilterSql.findingPeriodWhere(Filter()), Sql("TRUE", Nil))
 
   test("findingWhere ANDs period with the rest and is TRUE for an empty filter"):
     assertEquals(FilterSql.findingWhere(Filter()), Sql("TRUE", Nil))
     val s = FilterSql.findingWhere(Filter(period = Some(Period(-1300, -1100)), places = List("Ugarit")))
-    assertEquals(s.text,
-      "f.period && int8range(?::bigint, ?::bigint, '[]') AND f.region_name ILIKE ? ESCAPE '\\'")
+    assertEquals(s.text, "f.period && int8range(?::bigint, ?::bigint, '[]') AND f.region_name ILIKE ? ESCAPE '\\'")
     assertEquals(s.params, List(L(-1300), L(-1100), S("%Ugarit%")))
 
   test("hasFindingPlaceCriteria is true only for tag/place/bbox"):
@@ -309,8 +343,8 @@ class FilterSqlSuite extends munit.FunSuite:
     val s = FilterSql.findingsFeedQuery(Filter(q = Some("collapse"), tags = List("steppe"), limit = 7))
     assert(s.text.startsWith("SELECT f.citekey, s.title, f.claim, f.region_name"), s.text)
     assert(s.text.contains("FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE"), s.text)
-    assert(s.text.contains("s.tsv @@ websearch_to_tsquery"), s.text)   // source-level q (FTS)
-    assert(s.text.contains("unnest(f.tags)"), s.text)          // finding-level tag
+    assert(s.text.contains("s.tsv @@ websearch_to_tsquery"), s.text) // source-level q (FTS)
+    assert(s.text.contains("unnest(f.tags)"), s.text) // finding-level tag
     assert(s.text.endsWith("ORDER BY lower(f.period) NULLS LAST, f.citekey, f.id LIMIT ? OFFSET ?"), s.text)
     assertEquals(s.params, List(S("collapse"), S("collapse"), S("steppe"), S("steppe"), I(7), I(0)))
 
@@ -319,10 +353,13 @@ class FilterSqlSuite extends munit.FunSuite:
     assertEquals(FilterSql.findingsFeedQuery(Filter(limit = 50, offset = 100)).params, List(I(50), I(100)))
 
   test("#716: findingsCountQuery counts exactly what the map feed selects, uncapped"):
-    val f    = Filter(q = Some("collapse"), tags = List("steppe"), limit = 7)
+    val f = Filter(q = Some("collapse"), tags = List("steppe"), limit = 7)
     val feed = FilterSql.findingsFeedQuery(f)
-    val n    = FilterSql.findingsCountQuery(f)
-    assert(n.text.startsWith("SELECT count(*)::int FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE"), n.text)
+    val n = FilterSql.findingsCountQuery(f)
+    assert(
+      n.text.startsWith("SELECT count(*)::int FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE"),
+      n.text
+    )
     // the same WHERE, word for word, and no ORDER BY / LIMIT
     val where = (s: String) => s.substring(s.indexOf(" WHERE "))
     assert(feed.text.contains(where(n.text)), s"${n.text}\n${feed.text}")
@@ -338,11 +375,19 @@ class FilterSqlSuite extends munit.FunSuite:
   // the columns arrive as `text[]` lists, so a value containing a comma still matches exactly
   private def j(vs: String*) = vs.toList
   private val row = FilterSql.SourceRow(
-    citekey = "cline2014_collapse", title = "1177 BC: The Year Civilization Collapsed",
-    year = Some(2014), status = SourceStatus.Current, topics = j("collapse", "trade"),
+    citekey = "cline2014_collapse",
+    title = "1177 BC: The Year Civilization Collapsed",
+    year = Some(2014),
+    status = SourceStatus.Current,
+    topics = j("collapse", "trade"),
     regions = j("Levant", "Aegean"),
-    periodStart = Some(-1300), periodEnd = Some(-1100), summary = Some("Systems collapse."),
-    tags = j("sea-peoples", "bronze-age"), authors = j("Eric H. Cline"), bodyHit = false)
+    periodStart = Some(-1300),
+    periodEnd = Some(-1100),
+    summary = Some("Systems collapse."),
+    tags = j("sea-peoples", "bronze-age"),
+    authors = j("Eric H. Cline"),
+    bodyHit = false
+  )
 
   test("overlaps is inclusive on both bounds and false for an undated row"):
     assert(FilterSql.overlaps(Some(-1300), Some(-1100), Period(-1100, -900)))
@@ -351,13 +396,29 @@ class FilterSqlSuite extends munit.FunSuite:
     assert(!FilterSql.overlaps(None, None, Period(-1300, -1100)))
 
   test("sourceWhy explains every source-level criterion"):
-    val f = Filter(q = Some("Collapsed"), tags = List("sea-peoples"), authors = List("cline"),
-      places = List("levant"), topics = List("collapse"), status = List("current"),
-      years = Some(Period(2000, 2020)), period = Some(Period(-1200, -1000)))
+    val f = Filter(
+      q = Some("Collapsed"),
+      tags = List("sea-peoples"),
+      authors = List("cline"),
+      places = List("levant"),
+      topics = List("collapse"),
+      status = List("current"),
+      years = Some(Period(2000, 2020)),
+      period = Some(Period(-1200, -1000))
+    )
     assertEquals(
       FilterSql.sourceWhy(f, row),
-      List("title matches 'Collapsed'", "tag: sea-peoples", "author: Eric H. Cline", "region: Levant",
-        "topic: collapse", "status: current", "year: 2014", "period: 1300 BCE–1100 BCE"))
+      List(
+        "title matches 'Collapsed'",
+        "tag: sea-peoples",
+        "author: Eric H. Cline",
+        "region: Levant",
+        "topic: collapse",
+        "status: current",
+        "year: 2014",
+        "period: 1300 BCE–1100 BCE"
+      )
+    )
 
   test("sourceWhy reports a body-only text match"):
     val f = Filter(q = Some("Ugarit"))
@@ -375,8 +436,10 @@ class FilterSqlSuite extends munit.FunSuite:
     // every word must be there: a half-match is not claimed as a title match
     assertEquals(FilterSql.sourceWhy(Filter(q = Some("civilization pottery")), row), Nil)
     // an excluded term is not something the source "matches"
-    assertEquals(FilterSql.sourceWhy(Filter(q = Some("collapsed -pottery")), row),
-      List("title matches 'collapsed -pottery'"))
+    assertEquals(
+      FilterSql.sourceWhy(Filter(q = Some("collapsed -pottery")), row),
+      List("title matches 'collapsed -pottery'")
+    )
 
   test("an empty filter explains nothing"):
     assertEquals(FilterSql.sourceWhy(Filter(), row), Nil)
@@ -385,31 +448,62 @@ class FilterSqlSuite extends munit.FunSuite:
     // "Stocker, Sharon R." is ONE author and "trade, long-distance" is ONE tag; splitting the
     // column on ',' turned each into two values that matched nothing.
     val r = row.copy(tags = j("trade, long-distance"), authors = j("Stocker, Sharon R.", "Davis, J."))
-    assertEquals(FilterSql.sourceWhy(Filter(tags = List("trade, long-distance")), r),
-      List("tag: trade, long-distance"))
-    assertEquals(FilterSql.sourceWhy(Filter(authors = List("stocker")), r),
-      List("author: Stocker, Sharon R."))
+    assertEquals(FilterSql.sourceWhy(Filter(tags = List("trade, long-distance")), r), List("tag: trade, long-distance"))
+    assertEquals(FilterSql.sourceWhy(Filter(authors = List("stocker")), r), List("author: Stocker, Sharon R."))
     // …and a tag that is merely a PIECE of one does not match
     assertEquals(FilterSql.sourceWhy(Filter(tags = List("trade")), r), Nil)
     // the wire shape is now a proper list
     assertEquals(r.toHit.topics, List("collapse", "trade"))
 
   test("findingWhy compares exact tag values"):
-    val m = FindingMatch("x#0", "claim", None, None, None, Some(-1190), Some(-1185), None,
-      List("trade, long-distance", "destruction"), Nil, List("Ugarit, Syria"))
-    assertEquals(FilterSql.findingWhy(Filter(tags = List("trade, long-distance")), m),
-      List("tag: trade, long-distance"))
+    val m = FindingMatch(
+      "x#0",
+      "claim",
+      None,
+      None,
+      None,
+      Some(-1190),
+      Some(-1185),
+      None,
+      List("trade, long-distance", "destruction"),
+      Nil,
+      List("Ugarit, Syria")
+    )
+    assertEquals(
+      FilterSql.findingWhy(Filter(tags = List("trade, long-distance")), m),
+      List("tag: trade, long-distance")
+    )
     assertEquals(FilterSql.findingWhy(Filter(tags = List("trade")), m), Nil)
 
-  private def fm(region: Option[String], lon: Option[Double], lat: Option[Double],
-                 start: Option[Long], end: Option[Long], tags: String) =
-    FindingMatch("x#0", "claim", region, lon, lat, start, end, None,
-      if tags.isEmpty then Nil else tags.split(",").map(_.trim).toList, Nil)
+  private def fm(
+      region: Option[String],
+      lon: Option[Double],
+      lat: Option[Double],
+      start: Option[Long],
+      end: Option[Long],
+      tags: String
+  ) =
+    FindingMatch(
+      "x#0",
+      "claim",
+      region,
+      lon,
+      lat,
+      start,
+      end,
+      None,
+      if tags.isEmpty then Nil else tags.split(",").map(_.trim).toList,
+      Nil
+    )
 
   test("findingWhy names the criteria a finding satisfies"):
     val m = fm(Some("Ugarit, Syria"), Some(35.8), Some(35.6), Some(-1190), Some(-1185), "destruction")
-    val f = Filter(tags = List("destruction"), places = List("ugarit"),
-      period = Some(Period(-1200, -1100)), bbox = Some(BBox(30.0, 30.0, 40.0, 40.0)))
+    val f = Filter(
+      tags = List("destruction"),
+      places = List("ugarit"),
+      period = Some(Period(-1200, -1100)),
+      bbox = Some(BBox(30.0, 30.0, 40.0, 40.0))
+    )
     assertEquals(FilterSql.findingWhy(f, m), List("period", "bbox", "place: ugarit", "tag: destruction"))
 
   test("findingWhy is empty when nothing matches → the finding is not evidence"):
@@ -445,7 +539,10 @@ class FilterSqlSuite extends munit.FunSuite:
     val f = Filter(period = Some(Period(-1300, -1100)))
     val s = FilterSql.articleWhere(f)
     // the source set is an ARRAY init-plan, computed once per statement (never per article link)
-    assert(s.text.contains("al.target = ANY(ARRAY(SELECT s.citekey FROM sources s WHERE " + where(f).text + "))"), s.text)
+    assert(
+      s.text.contains("al.target = ANY(ARRAY(SELECT s.citekey FROM sources s WHERE " + where(f).text + "))"),
+      s.text
+    )
     assertEquals(s.params, where(f).params)
 
   test("eventWhere: the period is the EVENT's own span, the rest selects its source — its own or an attesting one"):
@@ -453,11 +550,13 @@ class FilterSqlSuite extends munit.FunSuite:
     val s = FilterSql.eventWhere(f)
     val src = where(Filter(status = List("current")))
     val set = "ARRAY(SELECT s.citekey FROM sources s WHERE " + src.text + ")"
-    assertEquals(s.text,
+    assertEquals(
+      s.text,
       s"(e.citekey = ANY($set) OR EXISTS (SELECT 1 FROM attestations ea WHERE ea.target_type = 'event' " +
         s"AND ea.target_id = e.id AND ea.citekey = ANY($set)))" +
         " AND e.outer_span && int8range(?::bigint, ?::bigint, '[]')" +
-        " AND e.label ILIKE ? ESCAPE '\\'")
+        " AND e.label ILIKE ? ESCAPE '\\'"
+    )
     assertEquals(s.params, src.params ++ src.params ++ List(L(-1300), L(-1100), S("%kadesh%")))
 
   test("eventWhere: a period alone puts no condition on the source (events without one stay listed)"):
@@ -470,12 +569,18 @@ class FilterSqlSuite extends munit.FunSuite:
   test("no repo spells the LIKE escape clause in a form that loses its backslash"):
     import java.nio.file.{Files, Path}
     import scala.jdk.CollectionConverters.*
-    val dir    = Path.of(sys.props.getOrElse("histmersion.repoRoot", ".")).resolve("modules/db/src/main/scala")
+    val dir = Path.of(sys.props.getOrElse("histmersion.repoRoot", ".")).resolve("modules/db/src/main/scala")
     val broken = "ESCAPE '\\'" // as written in source: ESCAPE, a quote, ONE backslash, a quote
     assert(Files.isDirectory(dir), s"no $dir")
-    val bad = Files.walk(dir).iterator.asScala.filter(_.toString.endsWith(".scala")).flatMap { f =>
-      Files.readAllLines(f).asScala.zipWithIndex.collect {
-        case (l, i) if l.contains(broken) => s"${f.getFileName}:${i + 1}"
+    val bad = Files
+      .walk(dir)
+      .iterator
+      .asScala
+      .filter(_.toString.endsWith(".scala"))
+      .flatMap { f =>
+        Files.readAllLines(f).asScala.zipWithIndex.collect {
+          case (l, i) if l.contains(broken) => s"${f.getFileName}:${i + 1}"
+        }
       }
-    }.toList
+      .toList
     assertEquals(bad, Nil)

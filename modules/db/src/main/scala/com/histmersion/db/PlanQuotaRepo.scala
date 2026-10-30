@@ -17,7 +17,7 @@ object PlanQuotaRepo:
       val _ = transact(ds):
         rs.foreach { r =>
           val reset = r.resetsAt.map(_.toDouble / 1000)
-          val seen  = r.observedAt.toDouble / 1000
+          val seen = r.observedAt.toDouble / 1000
           val model = r.model.getOrElse("")
           sql"""INSERT INTO plan_quota_readings (pool, limit_id, kind, model, used_pct, resets_at, rejected, observed_at, source)
                 VALUES (${pool.wire}, ${r.limit}, ${r.kind}, $model, ${r.usedPct}, to_timestamp($reset::float8), ${r.rejected},
@@ -33,14 +33,21 @@ object PlanQuotaRepo:
       sql"""SELECT limit_id, kind, model, used_pct, (extract(epoch FROM resets_at) * 1000)::bigint, rejected,
                    (extract(epoch FROM observed_at) * 1000)::bigint, source
             FROM plan_quota_readings WHERE pool = ${pool.wire} ORDER BY limit_id, kind"""
-        .query[(String, String, String, Double, Option[Long], Boolean, Long, String)].run().toList
+        .query[(String, String, String, Double, Option[Long], Boolean, Long, String)]
+        .run()
+        .toList
         .map { (l, k, m, u, r, rej, o, s) =>
           Reading(l, k, u, r, rej, o, Source.parse(s).getOrElse(Source.Run), Option(m).filter(_.nonEmpty))
         }
 
   /** What a person set on a pool and what the provider refused. */
-  final case class Pool(held: Boolean, floors: Option[String], refusal: Option[String], refusalUntil: Option[Long],
-      planType: Option[String])
+  final case class Pool(
+      held: Boolean,
+      floors: Option[String],
+      refusal: Option[String],
+      refusalUntil: Option[Long],
+      planType: Option[String]
+  )
 
   val NoPool: Pool = Pool(false, None, None, None, None)
 
@@ -48,8 +55,11 @@ object PlanQuotaRepo:
     connect(ds):
       sql"""SELECT held, floors, refusal, (extract(epoch FROM refusal_until) * 1000)::bigint, plan_type
             FROM plan_pools WHERE pool = ${p.wire}"""
-        .query[(Boolean, Option[String], Option[String], Option[Long], Option[String])].run().headOption
-        .map((h, f, r, u, t) => Pool(h, f, r, u, t)).getOrElse(NoPool)
+        .query[(Boolean, Option[String], Option[String], Option[Long], Option[String])]
+        .run()
+        .headOption
+        .map((h, f, r, u, t) => Pool(h, f, r, u, t))
+        .getOrElse(NoPool)
 
   def setHold(ds: DataSource, p: PoolId, held: Boolean): Unit =
     val _ = transact(ds):
@@ -63,7 +73,13 @@ object PlanQuotaRepo:
             ON CONFLICT (pool) DO UPDATE SET floors = EXCLUDED.floors, updated_at = now()""".update.run()
 
   /** The provider's own refusal (None lifts it) and its plan type, as last read. */
-  def setRefusal(ds: DataSource, p: PoolId, refusal: Option[String], until: Option[Long], planType: Option[String]): Unit =
+  def setRefusal(
+      ds: DataSource,
+      p: PoolId,
+      refusal: Option[String],
+      until: Option[Long],
+      planType: Option[String]
+  ): Unit =
     val u = until.map(_.toDouble / 1000)
     val _ = transact(ds):
       sql"""INSERT INTO plan_pools (pool, refusal, refusal_until, plan_type) VALUES (${p.wire}, $refusal, to_timestamp($u::float8), $planType)
@@ -95,5 +111,8 @@ object PlanQuotaRepo:
                     WHERE pool = ${p.wire} AND at >= to_timestamp($since::float8)""".query[Int].run().head
       val last = sql"""SELECT to_char(at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), mode, trigger, ok, detail
                        FROM plan_quota_refreshes WHERE pool = ${p.wire} ORDER BY at DESC, id DESC LIMIT 1"""
-        .query[(String, String, String, Boolean, String)].run().headOption.map((a, m, t, ok, d) => RefreshInfo(a, m, t, ok, d))
+        .query[(String, String, String, Boolean, String)]
+        .run()
+        .headOption
+        .map((a, m, t, ok, d) => RefreshInfo(a, m, t, ok, d))
       (n, last)

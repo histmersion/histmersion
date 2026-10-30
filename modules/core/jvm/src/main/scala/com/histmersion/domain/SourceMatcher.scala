@@ -8,18 +8,18 @@ import MergeText.{AuthorAgreement, MinHash}
 import java.util.UUID
 import com.histmersion.values.EditionsPolicy
 
-/** Is a bundle's source the same work as one here? (docs/research-merge-import.md §5.2, stages B–D.)
-  * Pure.
+/** Is a bundle's source the same work as one here? (docs/research-merge-import.md §5.2, stages B–D.) Pure.
   *
-  *  - **B, strong keys** decide: the same DOI, the same original file (sha256) or a shared ISBN is a
-  *    match whatever the score. A DOI on one side only is neutral; two different DOIs are a hard flag.
-  *  - **C, blocking**: only pairs that share a title key, a first-author surname key, a citekey stem
-  *    or a label (citekey or alias) are scored.
-  *  - **D, score**: a weight per field comparison ([[MatchWeights]]), plus one when a citekey of one
-  *    side is an old citekey (alias) of the other.
+  *   - **B, strong keys** decide: the same DOI, the same original file (sha256) or a shared ISBN is a match whatever
+  *     the score. A DOI on one side only is neutral; two different DOIs are a hard flag.
+  *   - **C, blocking**: only pairs that share a title key, a first-author surname key, a citekey stem or a label
+  *     (citekey or alias) are scored.
+  *   - **D, score**: a weight per field comparison ([[MatchWeights]]), plus one when a citekey of one side is an old
+  *     citekey (alias) of the other.
   *
-  * Then each bundle source is assigned at most one source here, best first (strong keys, then the
-  * highest score), and classified: auto-merge, needs-decision, or new. */
+  * Then each bundle source is assigned at most one source here, best first (strong keys, then the highest score), and
+  * classified: auto-merge, needs-decision, or new.
+  */
 object SourceMatcher:
 
   /** A source with the old citekeys (aliases) that still name it. */
@@ -64,9 +64,9 @@ object SourceMatcher:
       s.labels.map("k:" + _) ++
       doi(src).map("d:" + _) ++ sha(src).map("h:" + _) ++ isbns(src).map("i:" + _)
 
-  private def doi(s: BundleSource): Option[String]   = s.doi.flatMap(MergeText.doiKey)
-  private def sha(s: BundleSource): Option[String]   = s.originalSha256.map(_.trim.toLowerCase).filter(_.nonEmpty)
-  private def isbns(s: BundleSource): Set[String]    = s.isbns.getOrElse(Nil).flatMap(MergeText.isbn13).toSet
+  private def doi(s: BundleSource): Option[String] = s.doi.flatMap(MergeText.doiKey)
+  private def sha(s: BundleSource): Option[String] = s.originalSha256.map(_.trim.toLowerCase).filter(_.nonEmpty)
+  private def isbns(s: BundleSource): Set[String] = s.isbns.getOrElse(Nil).flatMap(MergeText.isbn13).toSet
 
   // ── stage B + D ─────────────────────────────────────────────────────────────────────────────
 
@@ -76,16 +76,18 @@ object SourceMatcher:
   private def years(s: Side): Set[Int] =
     s.labels.flatMap(l => Year.findAllIn(l).map(_.toInt))
 
-  /** One side says the other year: its citekey or an alias carries it, or the title/notes/venue speak
-    * of a reprint, an edition or a translation. */
+  /** One side says the other year: its citekey or an alias carries it, or the title/notes/venue speak of a reprint, an
+    * edition or a translation.
+    */
   private def reprintHint(a: Side, b: Side): Boolean =
     def says(s: Side) =
       val text = MergeText.fold(List(Some(s.source.title), s.source.venue, s.source.notes).flatten.mkString(" "))
       reprintWords.exists(text.contains)
     b.source.year.exists(years(a)) || a.source.year.exists(years(b)) || says(a) || says(b)
 
-  /** The evidence about `right` (the bundle's) and `left` (this collection's). `sketches` are the
-    * MinHash signatures of OCR bodies by their sha256, when they were computed. */
+  /** The evidence about `right` (the bundle's) and `left` (this collection's). `sketches` are the MinHash signatures of
+    * OCR bodies by their sha256, when they were computed.
+    */
   def evidence(right: Side, left: Side, sketches: Map[String, MinHash], w: MatchWeights): Evidence =
     val (r, l) = (right.source, left.source)
     val strong =
@@ -96,12 +98,14 @@ object SourceMatcher:
 
     // title
     val (fr, fl) = (MergeText.fingerprint(r.title), MergeText.fingerprint(l.title))
-    val (mr, ml) = (MergeText.fingerprint(MergeText.mainTitle(r.title)), MergeText.fingerprint(MergeText.mainTitle(l.title)))
-    val jw       = MergeText.jaroWinkler(MergeText.tokens(r.title).mkString(" "), MergeText.tokens(l.title).mkString(" "))
-    val tj       = MergeText.jaccard(MergeText.tokens(r.title).toSet, MergeText.tokens(l.title).toSet)
+    val (mr, ml) =
+      (MergeText.fingerprint(MergeText.mainTitle(r.title)), MergeText.fingerprint(MergeText.mainTitle(l.title)))
+    val jw = MergeText.jaroWinkler(MergeText.tokens(r.title).mkString(" "), MergeText.tokens(l.title).mkString(" "))
+    val tj = MergeText.jaccard(MergeText.tokens(r.title).toSet, MergeText.tokens(l.title).toSet)
     val title: (String, Double) =
       if fr.nonEmpty && fr == fl then "title the same" -> w.titleFingerprint
-      else if mr.nonEmpty && (mr == ml || mr == fl || fr == ml) then "main title the same, the subtitle differs" -> w.titleMain
+      else if mr.nonEmpty && (mr == ml || mr == fl || fr == ml) then
+        "main title the same, the subtitle differs" -> w.titleMain
       else if jw >= w.titleSimilarAtLeast then s"titles similar (Jaro-Winkler ${fixed(jw, 2)})" -> w.titleSimilar
       else if tj >= w.titleTokensAtLeast then s"title words overlap (Jaccard ${fixed(tj, 2)})" -> w.titleTokens
       else "titles differ" -> w.titleDiffers
@@ -118,25 +122,30 @@ object SourceMatcher:
     // year
     val gap = r.year.zip(l.year).map((a, b) => math.abs(a - b))
     val year: Option[(String, Double)] = gap.map {
-      case 0                            => "year the same" -> w.yearEqual
-      case 1                            => "years one apart" -> w.yearNear
-      case _ if reprintHint(right, left) => s"years ${r.year.get} and ${l.year.get}, a reprint or edition" -> w.yearReprint
-      case _                            => s"years ${r.year.get} and ${l.year.get}" -> w.yearFar
+      case 0                             => "year the same" -> w.yearEqual
+      case 1                             => "years one apart" -> w.yearNear
+      case _ if reprintHint(right, left) =>
+        s"years ${r.year.get} and ${l.year.get}, a reprint or edition" -> w.yearReprint
+      case _ => s"years ${r.year.get} and ${l.year.get}" -> w.yearFar
     }
 
     // venue
     val venue: Option[(String, Double)] =
-      r.venue.map(MergeText.fingerprint).filter(_.nonEmpty).zip(l.venue.map(MergeText.fingerprint).filter(_.nonEmpty))
+      r.venue
+        .map(MergeText.fingerprint)
+        .filter(_.nonEmpty)
+        .zip(l.venue.map(MergeText.fingerprint).filter(_.nonEmpty))
         .map((a, b) => if a == b then "venue the same" -> w.venueEqual else "venues differ" -> w.venueDiffers)
 
     // body
     val body: Option[(String, Double)] =
       (r.bodySha256, l.bodySha256) match
         case (Some(a), Some(b)) if a == b => Some("the same OCR body" -> w.bodySame)
-        case (Some(a), Some(b)) =>
+        case (Some(a), Some(b))           =>
           sketches.get(a).zip(sketches.get(b)).map((x, y) => x.similarity(y)).flatMap { j =>
             if j >= w.bodySameAtLeast then Some(s"OCR bodies alike (MinHash ${fixed(j, 2)})" -> w.bodySame)
-            else if j >= w.bodyEditionAtLeast then Some(s"OCR bodies partly alike (MinHash ${fixed(j, 2)})" -> w.bodyEdition)
+            else if j >= w.bodyEditionAtLeast then
+              Some(s"OCR bodies partly alike (MinHash ${fixed(j, 2)})" -> w.bodyEdition)
             else if j < w.bodyDiffersBelow then Some(s"OCR bodies differ (MinHash ${fixed(j, 2)})" -> w.bodyDiffers)
             else None
           }
@@ -147,26 +156,43 @@ object SourceMatcher:
       val shared = (right.aliases.intersect(left.labels) ++ left.aliases.intersect(right.labels)).toList.sorted
       shared.headOption.map(a => s"'$a' is an old citekey of the other" -> w.alias)
 
-    Evidence(strong, doiConflict, gap.exists(_ > 1), title._2 < 0, ag,
-      List(Some(title), authors, year, venue, body, alias).flatten)
+    Evidence(
+      strong,
+      doiConflict,
+      gap.exists(_ > 1),
+      title._2 < 0,
+      ag,
+      List(Some(title), authors, year, venue, body, alias).flatten
+    )
 
   // ── assignment ──────────────────────────────────────────────────────────────────────────────
 
   enum Outcome:
     case AutoMerge, NeedsDecision
 
-  final case class Pair(right: Side, left: Side, evidence: Evidence, outcome: Outcome,
+  final case class Pair(
+      right: Side,
+      left: Side,
+      evidence: Evidence,
+      outcome: Outcome,
       /** Hard flags that make it a question whatever the score. */
       flags: List[String],
       /** Other sources here this one also resembles (best first), for the record. */
-      alsoLike: List[(String, Double)])
+      alsoLike: List[(String, Double)]
+  )
 
   final case class Matching(pairs: List[Pair], unmatched: List[Side])
 
-  /** Pair every `right` with at most one `left`. `editions` answers the year-gap question for all:
-    * `Merge` drops the flag, `Separate` makes such a pair two works. */
-  def assign(rights: List[Side], lefts: List[Side], sketches: Map[String, MinHash], cfg: MergeSettings,
-      editions: Option[EditionsPolicy]): Matching =
+  /** Pair every `right` with at most one `left`. `editions` answers the year-gap question for all: `Merge` drops the
+    * flag, `Separate` makes such a pair two works.
+    */
+  def assign(
+      rights: List[Side],
+      lefts: List[Side],
+      sketches: Map[String, MinHash],
+      cfg: MergeSettings,
+      editions: Option[EditionsPolicy]
+  ): Matching =
     val byKey: Map[String, List[Side]] =
       lefts.flatMap(l => blockingKeys(l).map(_ -> l)).groupMap(_._1)(_._2)
     final case class Scored(right: Side, left: Side, ev: Evidence, rank: Int, flags: List[String])
@@ -176,8 +202,16 @@ object SourceMatcher:
         val ev = evidence(r, l, sketches, cfg.weights)
         val yearFlag = ev.yearGap && !ev.strongKey && editions.isEmpty
         val flags =
-          (if ev.doiConflict && !ev.strongKey then List(s"two different DOIs: ${l.source.doi.getOrElse("")} here, ${r.source.doi.getOrElse("")} in the bundle") else Nil) ++
-            (if yearFlag then List(s"years ${l.source.year.getOrElse(0)} here and ${r.source.year.getOrElse(0)} in the bundle: another edition?") else Nil)
+          (if ev.doiConflict && !ev.strongKey then
+             List(
+               s"two different DOIs: ${l.source.doi.getOrElse("")} here, ${r.source.doi.getOrElse("")} in the bundle"
+             )
+           else Nil) ++
+            (if yearFlag then
+               List(
+                 s"years ${l.source.year.getOrElse(0)} here and ${r.source.year.getOrElse(0)} in the bundle: another edition?"
+               )
+             else Nil)
         val separate = ev.yearGap && !ev.strongKey && editions.contains(EditionsPolicy.Separate)
         val rank =
           if ev.strongKey then 0
@@ -195,7 +229,8 @@ object SourceMatcher:
         else (s :: acc, rs + s.right.uid, ls + s.left.uid)
     }
     val pairs = taken.reverse.map { s =>
-      val others = order.filter(o => o.right.uid == s.right.uid && o.left.uid != s.left.uid)
+      val others = order
+        .filter(o => o.right.uid == s.right.uid && o.left.uid != s.left.uid)
         .map(o => o.left.source.citekey -> o.ev.score)
       Pair(s.right, s.left, s.ev, if s.rank <= 1 then Outcome.AutoMerge else Outcome.NeedsDecision, s.flags, others)
     }

@@ -6,8 +6,9 @@ import java.net.InetSocketAddress
 import java.nio.file.Files
 import java.time.Duration
 
-/** A whole book legitimately converts for far longer than an article: the client asks the sidecar
-  * for the page count and allows `pages × seconds-per-page` when that beats the configured timeout. */
+/** A whole book legitimately converts for far longer than an article: the client asks the sidecar for the page count
+  * and allows `pages × seconds-per-page` when that beats the configured timeout.
+  */
 class ConverterClientSuite extends munit.FunSuite:
 
   private val base = AppConfig.load().converter
@@ -24,8 +25,15 @@ class ConverterClientSuite extends munit.FunSuite:
   test("scanned pages get the scanned rate: the 155-page scan that failed at 600 s now gets 2325 s"):
     val c = base.copy(timeoutSeconds = 600, secondsPerPage = 2, secondsPerPageQuality = 8, secondsPerScannedPage = 15)
     assertEquals(ConverterClient.timeoutFor(c, pc(155, scanned = 155), quality = false), Duration.ofSeconds(2325))
-    assertEquals(ConverterClient.timeoutFor(c, pc(400, scanned = 100), quality = false), Duration.ofSeconds(300 * 2 + 100 * 15))
-    assertEquals(ConverterClient.timeoutFor(c, pc(10, scanned = 99), quality = false), Duration.ofSeconds(600), "scanned is capped at pages")
+    assertEquals(
+      ConverterClient.timeoutFor(c, pc(400, scanned = 100), quality = false),
+      Duration.ofSeconds(300 * 2 + 100 * 15)
+    )
+    assertEquals(
+      ConverterClient.timeoutFor(c, pc(10, scanned = 99), quality = false),
+      Duration.ofSeconds(600),
+      "scanned is capped at pages"
+    )
 
   /** A stand-in sidecar: `/inspect` reports `pages`, `/convert` answers after `convertMs`. */
   private def withSidecar(pages: Option[Int], convertMs: Long)(f: String => Unit): Unit =
@@ -34,15 +42,24 @@ class ConverterClientSuite extends munit.FunSuite:
       val _ = ex.getRequestBody.readAllBytes()
       val b = body.getBytes("UTF-8")
       ex.sendResponseHeaders(code, b.length.toLong); ex.getResponseBody.write(b); ex.close()
-    srv.createContext("/inspect", ex => pages.fold(answer(ex, 404, "no such route"))(n => answer(ex, 200, s"""{"pages":$n,"scanned":0}""")))
-    srv.createContext("/convert", ex => { Thread.sleep(convertMs); answer(ex, 200, """{"markdown":"# ok","pages":3,"images":[]}""") })
+    srv.createContext(
+      "/inspect",
+      ex => pages.fold(answer(ex, 404, "no such route"))(n => answer(ex, 200, s"""{"pages":$n,"scanned":0}"""))
+    )
+    srv.createContext(
+      "/convert",
+      ex => { Thread.sleep(convertMs); answer(ex, 200, """{"markdown":"# ok","pages":3,"images":[]}""") }
+    )
     srv.setExecutor(java.util.concurrent.Executors.newCachedThreadPool())
     srv.start()
-    try f(s"http://127.0.0.1:${srv.getAddress.getPort}") finally srv.stop(0)
+    try f(s"http://127.0.0.1:${srv.getAddress.getPort}")
+    finally srv.stop(0)
 
   private def convert(url: String) =
     val file = Files.createTempFile("book", ".pdf")
-    try HttpConverterClient(base.copy(url = url, timeoutSeconds = 1, secondsPerPage = 3)).convert(file, "book.pdf", quality = false)
+    try
+      HttpConverterClient(base.copy(url = url, timeoutSeconds = 1, secondsPerPage = 3))
+        .convert(file, "book.pdf", quality = false)
     finally Files.deleteIfExists(file)
 
   test("a long document gets the scaled time: a 2 s conversion of 1 page at 3 s/page succeeds past a 1 s timeout"):

@@ -3,45 +3,72 @@ package com.histmersion.server.agents
 import io.circe.{Json, JsonObject}
 import com.histmersion.api.VocabularyCodecs.given
 
-/** A step's answer schema in OpenAI's STRICT structured-output form — the only form the Codex CLI's
-  * `--output-schema` is accepted in. Codex sends the file as `text.format` with `strict: true`, and
-  * the Responses API refuses anything else outright (400 `invalid_json_schema`: "'additionalProperties'
-  * is required to be supplied and to be false"), before the model generates a token. The schemas the
-  * server derives (Kindlings → Tapir → JSON Schema) are ordinary JSON Schema: optional fields are left
-  * out of `required`, objects are open, integers carry Tapir's `int32`/`int64` formats.
+/** A step's answer schema in OpenAI's STRICT structured-output form — the only form the Codex CLI's `--output-schema`
+  * is accepted in. Codex sends the file as `text.format` with `strict: true`, and the Responses API refuses anything
+  * else outright (400 `invalid_json_schema`: "'additionalProperties' is required to be supplied and to be false"),
+  * before the model generates a token. The schemas the server derives (Kindlings → Tapir → JSON Schema) are ordinary
+  * JSON Schema: optional fields are left out of `required`, objects are open, integers carry Tapir's `int32`/`int64`
+  * formats.
   *
   * The conversion (pure, applied once, in [[Codex.outputSchemaJson]]):
-  *  - every object schema — the root, nested, in `items`, `$defs`, `anyOf` branches — gets
-  *    `additionalProperties: false`, and `required` lists every property;
-  *  - a property that was optional becomes nullable instead (`type: [T, "null"]` for a scalar or an
-  *    array; `anyOf: [<it>, {type: null}]` for a `$ref`, an enum, an object or an `anyOf`), so the
-  *    model answers `null` where it would have left the field out — the decode side
-  *    ([[CliOutcomes.result]]) drops those nulls, so a null decodes exactly like an absent field;
-  *  - keywords strict mode does not support are dropped (an allowlist: `default`, `minLength`,
-  *    `uniqueItems`, … and `format` on anything but a string). What they constrained is the step's
-  *    `validate`'s job, on the decoded answer, never the schema's;
-  *  - a `$ref` with sibling keywords (strict mode takes a bare `$ref`) is replaced by its definition,
-  *    with the siblings on top.
+  *   - every object schema — the root, nested, in `items`, `$defs`, `anyOf` branches — gets
+  *     `additionalProperties: false`, and `required` lists every property;
+  *   - a property that was optional becomes nullable instead (`type: [T, "null"]` for a scalar or an array;
+  *     `anyOf: [<it>, {type: null}]` for a `$ref`, an enum, an object or an `anyOf`), so the model answers `null` where
+  *     it would have left the field out — the decode side ([[CliOutcomes.result]]) drops those nulls, so a null decodes
+  *     exactly like an absent field;
+  *   - keywords strict mode does not support are dropped (an allowlist: `default`, `minLength`, `uniqueItems`, … and
+  *     `format` on anything but a string). What they constrained is the step's `validate`'s job, on the decoded answer,
+  *     never the schema's;
+  *   - a `$ref` with sibling keywords (strict mode takes a bare `$ref`) is replaced by its definition, with the
+  *     siblings on top.
   *
-  * The Claude paths keep the derived schema unchanged: they accept it as it is. */
+  * The Claude paths keep the derived schema unchanged: they accept it as it is.
+  */
 object StrictJsonSchema:
 
   /** The keywords strict mode supports (OpenAI "Structured Outputs — supported schemas"). */
   val Keywords: Set[String] = Set(
-    "type", "description", "title", "properties", "required", "additionalProperties", "items", "anyOf",
-    "enum", "const", "$ref", "$defs", "definitions",
-    "pattern", "format",                                                               // strings
-    "multipleOf", "minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum",          // numbers
-    "minItems", "maxItems")                                                            // arrays
+    "type",
+    "description",
+    "title",
+    "properties",
+    "required",
+    "additionalProperties",
+    "items",
+    "anyOf",
+    "enum",
+    "const",
+    "$ref",
+    "$defs",
+    "definitions",
+    "pattern",
+    "format", // strings
+    "multipleOf",
+    "minimum",
+    "maximum",
+    "exclusiveMinimum",
+    "exclusiveMaximum", // numbers
+    "minItems",
+    "maxItems"
+  ) // arrays
 
   /** The string `format`s strict mode supports. */
-  val StringFormats: Set[String] = Set("date-time", "time", "date", "duration", "email", "hostname", "ipv4", "ipv6", "uuid")
+  val StringFormats: Set[String] =
+    Set("date-time", "time", "date", "duration", "email", "hostname", "ipv4", "ipv6", "uuid")
 
   /** `schema` (a root object schema) in strict form. */
   def apply(schema: Json): Json =
     val root = schema.asObject.getOrElse(JsonObject.empty)
-    val defs = List("$defs", "definitions").flatMap(k => root(k).flatMap(_.asObject).toList.flatMap(_.toList)
-      .map((n, d) => s"#/$k/$n" -> d)).toMap
+    val defs = List("$defs", "definitions")
+      .flatMap(k =>
+        root(k)
+          .flatMap(_.asObject)
+          .toList
+          .flatMap(_.toList)
+          .map((n, d) => s"#/$k/$n" -> d)
+      )
+      .toMap
     convert(schema, defs, Set.empty)
 
   private def types(o: JsonObject): List[String] =

@@ -7,11 +7,12 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 
-/** The results on Explore's right: "On the map" (what the map's view holds) or "Everywhere", the tabs —
-  * sources, articles, events, places, pictures, each with its count —, the sort, and the rows, every one a
-  * real link (a plain click shows its detail here, a modifier click or ↗ opens its page in a tab). An item
-  * chosen — in a list or on the map — replaces the results with its detail ([[ResultDetail]]) until "← Results".
-  * Its width is dragged; on a phone it is the bottom sheet. */
+/** The results on Explore's right: "On the map" (what the map's view holds) or "Everywhere", the tabs — sources,
+  * articles, events, places, pictures, each with its count —, the sort, and the rows, every one a real link (a plain
+  * click shows its detail here, a modifier click or ↗ opens its page in a tab). An item chosen — in a list or on the
+  * map — replaces the results with its detail ([[ResultDetail]]) until "← Results". Its width is dragged; on a phone it
+  * is the bottom sheet.
+  */
 object ResultsPanel:
 
   /** The width, px: the one this browser kept, else the default. */
@@ -53,23 +54,45 @@ object ResultsPanel:
     case SidebarTab.Pictures => MapLists.pictures.signal.map(s => Some(s.total))
 
   private def scope: HtmlElement =
-    div(cls := "btn-group results-scope", role := "group", aria.label := "Which results",
-      button(typ := "button", cls := "btn btn--toggle btn--sm", idAttr := "results-on-map",
-        aria.pressed <-- UiState.inView.signal.map(_.toString), "On the map",
-        title := "Only what lies in the map's view", onClick --> (_ => ViewportToggle.setInView(true))),
-      button(typ := "button", cls := "btn btn--toggle btn--sm", idAttr := "results-everywhere",
-        aria.pressed <-- UiState.inView.signal.map(v => (!v).toString), "Everywhere",
-        title := "Wherever it is", onClick --> (_ => ViewportToggle.setInView(false))))
+    div(
+      cls := "btn-group results-scope",
+      role := "group",
+      aria.label := "Which results",
+      button(
+        typ := "button",
+        cls := "btn btn--toggle btn--sm",
+        idAttr := "results-on-map",
+        aria.pressed <-- UiState.inView.signal.map(_.toString),
+        "On the map",
+        title := "Only what lies in the map's view",
+        onClick --> (_ => ViewportToggle.setInView(true))
+      ),
+      button(
+        typ := "button",
+        cls := "btn btn--toggle btn--sm",
+        idAttr := "results-everywhere",
+        aria.pressed <-- UiState.inView.signal.map(v => (!v).toString),
+        "Everywhere",
+        title := "Wherever it is",
+        onClick --> (_ => ViewportToggle.setInView(false))
+      )
+    )
 
   private def sortSelect: HtmlElement =
-    label(cls := "results-sort", cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Sources),
+    label(
+      cls := "results-sort",
+      cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Sources),
       span(cls := "muted", "Sort by "),
-      select(cls := "field", idAttr := "f-sort",
+      select(
+        cls := "field",
+        idAttr := "f-sort",
         controlled(
           value <-- UiState.sort.signal.map(_.filter(sorts.contains).getOrElse(sorts.head)),
           onChange.mapToValue --> { v => UiState.set(UiState.sort := Some(v))() }
         ),
-        sorts.map(v => option(value := v, Wording.capitalize(v)))))
+        sorts.map(v => option(value := v, Wording.capitalize(v)))
+      )
+    )
 
   def element(ui: UiConfig): HtmlElement =
     val detail = selected.signal.map(_.isDefined)
@@ -108,7 +131,11 @@ object ResultsPanel:
             ResultsWidth.keep(width.now())
           }: js.Function1[dom.PointerEvent, Unit]
           target.addEventListener("pointermove", move)
-          target.addEventListener("pointerup", up, js.Dynamic.literal(once = true).asInstanceOf[dom.EventListenerOptions])
+          target.addEventListener(
+            "pointerup",
+            up,
+            js.Dynamic.literal(once = true).asInstanceOf[dom.EventListenerOptions]
+          )
         }
       ),
       div(
@@ -136,30 +163,38 @@ object ResultsPanel:
         div(cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Articles), ArticlesTab.pane),
         div(cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Events), EventsTab.pane),
         div(cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Places), MapLists.pane(MapLists.places, "places")),
-        div(cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Pictures), MapLists.pane(MapLists.pictures, "pictures"))
+        div(
+          cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Pictures),
+          MapLists.pane(MapLists.pictures, "pictures")
+        )
       ),
       child.maybe <-- selected.signal.map(_.map(ResultDetail.element))
     )
 
-  /** The bottom sheet's grab handle (shown only in the narrow layout): a tap moves the sheet one step
-    * up (from full back to the strip); a vertical drag lets go at the nearest of the three. */
+  /** The bottom sheet's grab handle (shown only in the narrow layout): a tap moves the sheet one step up (from full
+    * back to the strip); a vertical drag lets go at the nearest of the three.
+    */
   private def sheetHandle: HtmlElement =
     // `var`s: the drag in progress — where it started, and whether it moved enough to be a drag
-    var startY  = 0.0
+    var startY = 0.0
     var dragged = false
     def h = dom.window.innerHeight.toDouble
-    /** A length token of the stylesheet's, in px. Measured, not parsed: the tokens are `clamp()` and
-      * `calc()` of the screen's size, which only layout resolves. */
+
+    /** A length token of the stylesheet's, in px. Measured, not parsed: the tokens are `clamp()` and `calc()` of the
+      * screen's size, which only layout resolves.
+      */
     def px(name: String) =
-      scala.util.Try {
-        val probe = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
-        probe.className = "length-probe"
-        probe.style.setProperty("--probe", s"var($name)")
-        dom.document.body.appendChild(probe)
-        val v = probe.getBoundingClientRect().height
-        probe.remove()
-        v
-      }.getOrElse(0.0)
+      scala.util
+        .Try {
+          val probe = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
+          probe.className = "length-probe"
+          probe.style.setProperty("--probe", s"var($name)")
+          dom.document.body.appendChild(probe)
+          val v = probe.getBoundingClientRect().height
+          probe.remove()
+          v
+        }
+        .getOrElse(0.0)
     def sheetOf(ev: dom.PointerEvent) = Option(ev.target.asInstanceOf[dom.Element].closest(".sidebar"))
       .map(_.asInstanceOf[dom.HTMLElement])
     button(
@@ -174,13 +209,15 @@ object ResultsPanel:
         ev.target.asInstanceOf[dom.HTMLElement].setPointerCapture(ev.pointerId)
       },
       onPointerMove --> { ev =>
-        if ev.buttons != 0 then   // pressed: a mouse hovering over the handle is not a drag
+        if ev.buttons != 0
+        then // pressed: a mouse hovering over the handle is not a drag
           if math.abs(ev.clientY - startY) > 12 then dragged = true
           // the sheet follows the finger; the stylesheet uses the height while `sheet-dragging` is on
-          if dragged then sheetOf(ev).foreach { el =>
-            el.classList.add("sheet-dragging")
-            el.style.setProperty("--sheet-live", s"${math.max(px("--sheet-peek"), h - ev.clientY)}px")
-          }
+          if dragged then
+            sheetOf(ev).foreach { el =>
+              el.classList.add("sheet-dragging")
+              el.style.setProperty("--sheet-live", s"${math.max(px("--sheet-peek"), h - ev.clientY)}px")
+            }
       },
       onPointerUp --> { ev =>
         sheetOf(ev).foreach(_.classList.remove("sheet-dragging"))
@@ -191,8 +228,9 @@ object ResultsPanel:
       }
     )
 
-  /** The ONE title quick-filter, above the tab strip: it narrows every tab (sources by title,
-    * articles by title, events by label) through [[UiState.title]]. */
+  /** The ONE title quick-filter, above the tab strip: it narrows every tab (sources by title, articles by title, events
+    * by label) through [[UiState.title]].
+    */
   private def titleFilter: HtmlElement =
     div(
       cls := "title-filter",
@@ -208,4 +246,3 @@ object ResultsPanel:
         )
       )
     )
-

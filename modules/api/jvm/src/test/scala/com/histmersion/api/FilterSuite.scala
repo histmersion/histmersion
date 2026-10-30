@@ -2,9 +2,9 @@ package com.histmersion.api
 
 import com.histmersion.values.SourceStatus
 
-
-/** The `Filter` contract (plan §1.0): the flat wire shape, its interpretation, and the Markdown that
-  * shows a human/LLM *why* each source matched. All pure. */
+/** The `Filter` contract (plan §1.0): the flat wire shape, its interpretation, and the Markdown that shows a human/LLM
+  * *why* each source matched. All pure.
+  */
 class FilterSuite extends munit.FunSuite:
 
   test("Filter.of trims, splits comma lists and drops blanks"):
@@ -24,7 +24,8 @@ class FilterSuite extends munit.FunSuite:
     assertEquals(Filter.of(minLon = Some(1), minLat = Some(2), maxLon = Some(3)).bbox, None)
     assertEquals(
       Filter.of(minLon = Some(1), minLat = Some(2), maxLon = Some(3), maxLat = Some(4)).bbox,
-      Some(BBox(1, 2, 3, 4)))
+      Some(BBox(1, 2, 3, 4))
+    )
 
   test("limit <= 0 means 'server default'; offset is never negative"):
     assertEquals(Filter.of().limit, 0)
@@ -60,11 +61,26 @@ class FilterSuite extends munit.FunSuite:
     assert(BBox(25, 30, 45, 42).contains(35, 39))
 
   test("FilterQuery round-trips a Filter (so the CLI's derived client cannot drift)"):
-    val f = Filter.of(q = Some("collapse"), tags = List("sea-peoples"), authors = List("cline"),
-      places = List("Levant"), topics = List("collapse"), status = List("current"),
-      yearFrom = Some(2000), yearTo = Some(2020), from = Some(-1300), to = Some(-1100),
-      minLon = Some(25), minLat = Some(30), maxLon = Some(45), maxLat = Some(42),
-      sort = Some("cited"), limit = Some(5), offset = Some(10), title = Some("troy"))
+    val f = Filter.of(
+      q = Some("collapse"),
+      tags = List("sea-peoples"),
+      authors = List("cline"),
+      places = List("Levant"),
+      topics = List("collapse"),
+      status = List("current"),
+      yearFrom = Some(2000),
+      yearTo = Some(2020),
+      from = Some(-1300),
+      to = Some(-1100),
+      minLon = Some(25),
+      minLat = Some(30),
+      maxLon = Some(45),
+      maxLat = Some(42),
+      sort = Some("cited"),
+      limit = Some(5),
+      offset = Some(10),
+      title = Some("troy")
+    )
     assertEquals(FilterQuery.from(f).toFilter, f)
     assertEquals(f.title, Some("troy"))
 
@@ -91,11 +107,33 @@ class FilterSuite extends munit.FunSuite:
 
   // ── Markdown: every hit must show the evidence ─────────────────────────────────────────────
   private val hit = Hit(
-    SearchHit("cline2014_collapse", "1177 BC", Some(2014), SourceStatus.Current, List("collapse"), List("Levant"),
-      Some(-1300), Some(-1100), Some("Systems collapse.")),
-    List(FindingMatch("cline2014_collapse#0", "Ugarit destroyed", Some("Ugarit"), Some(35.8),
-      Some(35.6), Some(-1190), Some(-1185), None, List("destruction"), List("period", "bbox"))),
-    List("tag: sea-peoples"))
+    SearchHit(
+      "cline2014_collapse",
+      "1177 BC",
+      Some(2014),
+      SourceStatus.Current,
+      List("collapse"),
+      List("Levant"),
+      Some(-1300),
+      Some(-1100),
+      Some("Systems collapse.")
+    ),
+    List(
+      FindingMatch(
+        "cline2014_collapse#0",
+        "Ugarit destroyed",
+        Some("Ugarit"),
+        Some(35.8),
+        Some(35.6),
+        Some(-1190),
+        Some(-1185),
+        None,
+        List("destruction"),
+        List("period", "bbox")
+      )
+    ),
+    List("tag: sea-peoples")
+  )
 
   test("searchResults renders a matches: sub-list with claim, place, period and why"):
     val md = Markdown.searchResults(SearchResult(1, List(hit)))
@@ -118,7 +156,8 @@ class FilterSuite extends munit.FunSuite:
   test("facets render value (count)"):
     assertEquals(
       Markdown.facets("tags", Vector(Facet("sea-peoples", 12), Facet("steppe", 3))),
-      "### tags (2)\n\n- sea-peoples (12)\n- steppe (3)")
+      "### tags (2)\n\n- sea-peoples (12)\n- steppe (3)"
+    )
     assertEquals(Markdown.facets("tags", Vector.empty), "_No tags in the current filter._")
 
   test("periodLabel is shared by the renderers and the SQL layer's explanations"):
@@ -167,8 +206,10 @@ class FilterSuite extends munit.FunSuite:
     assertEquals(p, Period(Filter.Earliest, Filter.Earliest))
 
   test("both bounds are clamped, and a reversed pair is still ordered"):
-    assertEquals(Filter.periodOf(Some(Long.MaxValue), Some(Long.MinValue)),
-      Some(Period(Filter.Earliest, Filter.Latest)))
+    assertEquals(
+      Filter.periodOf(Some(Long.MaxValue), Some(Long.MinValue)),
+      Some(Period(Filter.Earliest, Filter.Latest))
+    )
     assertEquals(Filter.periodOf(Some(-1100), Some(-1300)), Some(Period(-1300, -1100)))
 
   test("ordinary deep time is untouched by the clamp"):

@@ -2,16 +2,21 @@ package com.histmersion.api
 
 import com.histmersion.values.{ApprovalKind, ApprovalState, ManagerKind, Pipeline, RunState, SourceStatus}
 
-/** The label dictionary covers every identifier the UI shows: a pipeline, an approval kind or a job kind
-  * added without wording fails here, not in front of a reader. */
+/** The label dictionary covers every identifier the UI shows: a pipeline, an approval kind or a job kind added without
+  * wording fails here, not in front of a reader.
+  */
 class WordingSuite extends munit.FunSuite:
 
   /** A label a person reads: sentence case, words, never the identifier it stands for. */
   private def readable(label: String, wire: String): Unit =
     assert(label.nonEmpty && label.head.isUpper, s"'$label' ($wire) is not sentence case")
     assert(label != wire, s"'$wire' is shown as itself")
-    assert(!label.matches(""".*\b[a-z0-9]+[-_][a-z0-9]+([-_][a-z0-9]+)*\b.*""") || label.contains("-hour") || label.contains("-day"),
-      s"'$label' ($wire) still reads as an identifier")
+    assert(
+      !label.matches(""".*\b[a-z0-9]+[-_][a-z0-9]+([-_][a-z0-9]+)*\b.*""") || label.contains("-hour") || label.contains(
+        "-day"
+      ),
+      s"'$label' ($wire) still reads as an identifier"
+    )
 
   test("every pipeline has wording"):
     Pipeline.values.foreach(p => readable(Wording.pipeline(p), p.wire))
@@ -32,8 +37,18 @@ class WordingSuite extends munit.FunSuite:
     assertEquals(Wording.jobKind(JobKind.EventsImport), "Import events")
     assertEquals(Wording.jobKind(JobKind.MediaImport), "Fetch pictures")
     // the constants the api module names are the enum's wires
-    assertEquals(List(Ingest.KindIngest, Ingest.KindReocr, InitPlan.JobKind, Vacuum.JobKind, Agents.JobKind, MergeApplyJob.JobKind,
-      AcquireChecks.RecheckJob.JobKind).filterNot(k => JobKind.parse(k).isDefined), Nil)
+    assertEquals(
+      List(
+        Ingest.KindIngest,
+        Ingest.KindReocr,
+        InitPlan.JobKind,
+        Vacuum.JobKind,
+        Agents.JobKind,
+        MergeApplyJob.JobKind,
+        AcquireChecks.RecheckJob.JobKind
+      ).filterNot(k => JobKind.parse(k).isDefined),
+      Nil
+    )
 
   test("every state, status and manager kind has wording"):
     RunState.values.foreach(s => readable(Wording.runState(s), s.wire))
@@ -58,7 +73,10 @@ class WordingSuite extends munit.FunSuite:
     assertEquals(Wording.pool("claude-plan"), "Claude plan")
     assertEquals(Wording.pool("chatgpt-plan"), "ChatGPT plan")
     assertEquals(Wording.agentsState(autopilotOn = true, draining = false), "Agents: working")
-    assertEquals(Wording.agentsState(autopilotOn = true, draining = true), "Agents: finishing current work, then pausing")
+    assertEquals(
+      Wording.agentsState(autopilotOn = true, draining = true),
+      "Agents: finishing current work, then pausing"
+    )
     assertEquals(Wording.Drain, "Finish current work, then pause")
     val glance = UiNotices.AgentsGlance(running = 3, queued = 12, on = true)
     assertEquals(Wording.agentsGlance(glance), "Agents working · 3 runs")

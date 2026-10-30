@@ -8,23 +8,39 @@ import java.nio.file.Files
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 import java.util.concurrent.atomic.AtomicInteger
 
-/** A fresh reading of a plan pool (#989) without a database or a real CLI: the probe's argument
-  * vector and environment, its output read into readings, the single-flight gate, the login checks
-  * — and the probe end to end against a FAKE `claude`. Nothing is spent. */
+/** A fresh reading of a plan pool (#989) without a database or a real CLI: the probe's argument vector and environment,
+  * its output read into readings, the single-flight gate, the login checks — and the probe end to end against a FAKE
+  * `claude`. Nothing is spent.
+  */
 class PlanRefreshSuite extends munit.FunSuite:
 
-  private val Cfg = ClaudeCodeConfig(command = "claude", configDir = "", extraArgs = "", useApiKey = false,
-    allowNonLoopback = false, mcpUrl = "", timeoutSeconds = 30, limitCooldownMinutes = 60,
-    disableSlashCommands = false, env = Map.empty)
+  private val Cfg = ClaudeCodeConfig(
+    command = "claude",
+    configDir = "",
+    extraArgs = "",
+    useApiKey = false,
+    allowNonLoopback = false,
+    mcpUrl = "",
+    timeoutSeconds = 30,
+    limitCooldownMinutes = 60,
+    disableSlashCommands = false,
+    env = Map.empty
+  )
 
   /** The `rate_limit_event` of §3a P1 (2026-10-05). */
   val Event: String =
     """{"type":"rate_limit_event","rate_limit_info":{"status":"allowed","resetsAt":1791236400,"rateLimitType":"five_hour",
       |"overageStatus":"rejected","isUsingOverage":false,"unifiedWindows":{"five_hour":{"utilization":0.12,"resetsAt":1791236400},
-      |"seven_day":{"utilization":0.42,"resetsAt":1791522000}}},"uuid":"u","session_id":"s"}""".stripMargin.replace("\n", "")
-  val Init   = """{"type":"system","subtype":"init","model":"claude-haiku-4-5-20251001","apiKeySource":"none","mcp_servers":[]}"""
-  val Answer = """{"type":"assistant","message":{"content":[{"type":"text","text":"Quota."}]},"parent_tool_use_id":null}"""
-  val Result = """{"type":"result","subtype":"success","is_error":false,"result":"Quota.","num_turns":1,"usage":{"input_tokens":9,"output_tokens":3}}"""
+      |"seven_day":{"utilization":0.42,"resetsAt":1791522000}}},"uuid":"u","session_id":"s"}""".stripMargin.replace(
+      "\n",
+      ""
+    )
+  val Init =
+    """{"type":"system","subtype":"init","model":"claude-haiku-4-5-20251001","apiKeySource":"none","mcp_servers":[]}"""
+  val Answer =
+    """{"type":"assistant","message":{"content":[{"type":"text","text":"Quota."}]},"parent_tool_use_id":null}"""
+  val Result =
+    """{"type":"result","subtype":"success","is_error":false,"result":"Quota.","num_turns":1,"usage":{"input_tokens":9,"output_tokens":3}}"""
 
   test("the probe's argv: the probe model, ONE turn, no tools, no MCP server, no skills or settings, no session"):
     val a = ClaudeCode.probeArgv(Cfg, "haiku")
@@ -37,36 +53,56 @@ class PlanRefreshSuite extends munit.FunSuite:
     assertEquals(after("--output-format"), "stream-json")
     assert(a.contains("--strict-mcp-config") && !a.contains("--mcp-config"), "no MCP server at all")
     assert(a.contains("--disable-slash-commands") && a.contains("--no-session-persistence"), a)
-    assert(!a.contains("--plugin-dir") && !a.contains("--agent") && !a.contains("--json-schema"), "no plugin, no mod, no schema turn")
+    assert(
+      !a.contains("--plugin-dir") && !a.contains("--agent") && !a.contains("--json-schema"),
+      "no plugin, no mod, no schema turn"
+    )
     assertEquals(after("--system-prompt"), "Reply with one word.", "Claude Code's long system prompt is replaced")
-    assertEquals(ClaudeCode.probeArgv(Cfg.copy(extraArgs = " --effort low "), "haiku").takeRight(2), List("--effort", "low"))
+    assertEquals(
+      ClaudeCode.probeArgv(Cfg.copy(extraArgs = " --effort low "), "haiku").takeRight(2),
+      List("--effort", "low")
+    )
 
   test("the probe's environment: output capped, no API key, no run token or quota URL"):
-    val env = new java.util.HashMap[String, String](java.util.Map.of("ANTHROPIC_API_KEY", "sk-x", "HISTMERSION_RUN_TOKEN", "t"))
+    val env =
+      new java.util.HashMap[String, String](java.util.Map.of("ANTHROPIC_API_KEY", "sk-x", "HISTMERSION_RUN_TOKEN", "t"))
     ClaudeCode.probeEnvironment(Cfg, 16, env)
     assertEquals(env.get("CLAUDE_CODE_MAX_OUTPUT_TOKENS"), "16")
-    assert(!env.containsKey("ANTHROPIC_API_KEY") && !env.containsKey("HISTMERSION_RUN_TOKEN") && !env.containsKey("HISTMERSION_QUOTA_URL"), env)
+    assert(
+      !env.containsKey("ANTHROPIC_API_KEY") && !env.containsKey("HISTMERSION_RUN_TOKEN") && !env.containsKey(
+        "HISTMERSION_QUOTA_URL"
+      ),
+      env
+    )
     assertEquals(env.get("ENABLE_CLAUDEAI_MCP_SERVERS"), "false")
 
   test("the probe's output: its rate_limit_event is the reading (source probe, observed now)"):
-    val rs = PlanPools.probeReadings(CliProcess.Run(List(Init, Answer, Event, Result), 0, "", None), 5000L, 60)
+    val rs = PlanPools
+      .probeReadings(CliProcess.Run(List(Init, Answer, Event, Result), 0, "", None), 5000L, 60)
       .fold(fail(_), identity)
-    assertEquals(rs.map(r => (r.kind, r.usedPct, r.source, r.observedAt, r.rejected)).toSet,
-      Set(("five_hour", 12.0, Source.Probe, 5000L, false), ("seven_day", 42.0, Source.Probe, 5000L, false)))
+    assertEquals(
+      rs.map(r => (r.kind, r.usedPct, r.source, r.observedAt, r.rejected)).toSet,
+      Set(("five_hour", 12.0, Source.Probe, 5000L, false), ("seven_day", 42.0, Source.Probe, 5000L, false))
+    )
     assertEquals(rs.find(_.kind == "seven_day").flatMap(_.resetsAt), Some(1791522000000L))
     assertEquals(PlanPools.summary(rs, 5000L), "five_hour 12% used, seven_day 42% used")
 
   test("a probe the plan refuses records a refused window; a rejected rate_limit_event is read as it is"):
-    val limit = """{"type":"result","subtype":"error_during_execution","is_error":true,"result":"Claude AI usage limit reached|1791236400"}"""
+    val limit =
+      """{"type":"result","subtype":"error_during_execution","is_error":true,"result":"Claude AI usage limit reached|1791236400"}"""
     val rs = PlanPools.probeReadings(CliProcess.Run(List(Init, limit), 1, "", None), 5000L, 60).fold(fail(_), identity)
     assertEquals(rs.map(r => (r.kind, r.rejected, r.resetsAt)), List(("usage_limit", true, Some(1791236400000L))))
     val rejected = Event.replace("\"status\":\"allowed\"", "\"status\":\"rejected\"")
-    val rr = PlanPools.probeReadings(CliProcess.Run(List(Init, rejected, limit), 1, "", None), 5000L, 60).fold(fail(_), identity)
+    val rr = PlanPools
+      .probeReadings(CliProcess.Run(List(Init, rejected, limit), 1, "", None), 5000L, 60)
+      .fold(fail(_), identity)
     assertEquals(rr.filter(_.rejected).map(_.kind), List("five_hour"))
     // no reset in the message: the cool-down
     val noReset = limit.replace("|1791236400", "")
-    assertEquals(PlanPools.probeReadings(CliProcess.Run(List(noReset), 1, "", None), 5000L, 60).toOption.get.head.resetsAt,
-      Some(5000L + 3600000L))
+    assertEquals(
+      PlanPools.probeReadings(CliProcess.Run(List(noReset), 1, "", None), 5000L, 60).toOption.get.head.resetsAt,
+      Some(5000L + 3600000L)
+    )
 
   test("a probe that says nothing about the plan is no reading (and says why)"):
     val r = PlanPools.probeReadings(CliProcess.Run(List(Init, Result), 0, "", None), 5000L, 60)
@@ -86,9 +122,10 @@ class PlanRefreshSuite extends munit.FunSuite:
         inside.countDown()
         release.await(10, TimeUnit.SECONDS)
         Right(n)
-    val first  = java.util.concurrent.CompletableFuture.supplyAsync(() => gate.exclusive(PoolId.ClaudePlan, 1000L)(body))
+    val first = java.util.concurrent.CompletableFuture.supplyAsync(() => gate.exclusive(PoolId.ClaudePlan, 1000L)(body))
     assert(inside.await(10, TimeUnit.SECONDS))
-    val second = java.util.concurrent.CompletableFuture.supplyAsync(() => gate.exclusive(PoolId.ClaudePlan, 1000L)(body))
+    val second =
+      java.util.concurrent.CompletableFuture.supplyAsync(() => gate.exclusive(PoolId.ClaudePlan, 1000L)(body))
     Thread.sleep(200)
     assert(!second.isDone, "the second waits while the first reads")
     // another pool is not held up
@@ -105,8 +142,10 @@ class PlanRefreshSuite extends munit.FunSuite:
     assertEquals(gate.lastAttempt(PoolId.ClaudePlan), None)
 
   test("logins: claude auth status read like the doctor; a codex home's login is a file that exists (never read)"):
-    assertEquals(PlanPools.claudeLogin("""{"loggedIn":true,"authMethod":"claude.ai","subscriptionType":"max"}""", false),
-      Login.Present("logged in (claude.ai, plan max)"))
+    assertEquals(
+      PlanPools.claudeLogin("""{"loggedIn":true,"authMethod":"claude.ai","subscriptionType":"max"}""", false),
+      Login.Present("logged in (claude.ai, plan max)")
+    )
     assert(PlanPools.claudeLogin("""{"loggedIn":false}""", false).isInstanceOf[Login.Missing])
     assert(PlanPools.claudeLogin("""{"loggedIn":true,"authMethod":"api_key"}""", false).isInstanceOf[Login.Missing])
     assert(PlanPools.claudeLogin("Error: timeout", false).isInstanceOf[Login.Unknown], "not an answer: not known")
@@ -119,16 +158,26 @@ class PlanRefreshSuite extends munit.FunSuite:
     assert(PlanPools.codexLogin(Some(home), "codex").isInstanceOf[Login.Present])
 
   test("the role a plan-quota pause names, so a paused run is asked about that role again"):
-    assertEquals(ModelPicker.pausedRole("plan-quota: enrich: all models for role extractor are below their plan floor or allowance; …"),
-      Some(Role.Extractor))
-    assertEquals(ModelPicker.pausedRole("plan-quota: review: all models for role cold-reader are below their allowance"), Some(Role.ColdReader))
+    assertEquals(
+      ModelPicker.pausedRole(
+        "plan-quota: enrich: all models for role extractor are below their plan floor or allowance; …"
+      ),
+      Some(Role.Extractor)
+    )
+    assertEquals(
+      ModelPicker.pausedRole("plan-quota: review: all models for role cold-reader are below their allowance"),
+      Some(Role.ColdReader)
+    )
     assertEquals(ModelPicker.pausedRole("plan-quota: something else"), None)
 
   // 2026-10-08: the Claude plan's five_hour window at its floor (reset 00:20Z) and the ChatGPT plan
   // held read as "no window frees by itself", and the run kept no resume time
   test("#1827: only a reading OBSERVED after the reported limit, with a usable verdict, lifts a cool-down"):
     assert(ModelPicker.lifts(since = 1000L, observed = Some(1001L), usable = true))
-    assert(!ModelPicker.lifts(1000L, Some(1000L), usable = true), "the reading the limit came with says nothing about a reset")
+    assert(
+      !ModelPicker.lifts(1000L, Some(1000L), usable = true),
+      "the reading the limit came with says nothing about a reset"
+    )
     assert(!ModelPicker.lifts(1000L, Some(999L), usable = true))
     assert(!ModelPicker.lifts(1000L, Some(2000L), usable = false), "still below its floor")
     assert(!ModelPicker.lifts(1000L, None, usable = true), "no reading at all")
@@ -144,7 +193,10 @@ class PlanRefreshSuite extends munit.FunSuite:
     assert(!text.contains("no window frees by itself"), text)
     // the earliest of several resets; a model that never frees (a reserve as large as its limit) does not hide them
     val later = reset + 3600000L
-    assertEquals(ModelPicker.whenFrees(List((gpt, Some(later), None), (opus, None, None), (opus, Some(reset), None)))._1, Some(reset))
+    assertEquals(
+      ModelPicker.whenFrees(List((gpt, Some(later), None), (opus, None, None), (opus, Some(reset), None)))._1,
+      Some(reset)
+    )
     // only held pools: nothing frees by itself, and it says which pool to release
     val (none, heldOnly) = ModelPicker.whenFrees(List((gpt, None, Some(PoolId.ChatgptPlan))))
     assertEquals(none, None)
@@ -154,8 +206,14 @@ class PlanRefreshSuite extends munit.FunSuite:
   test("the probe end to end against a FAKE claude: argv, stdin 'quota', capped output, the reading"):
     val fake = FakeCli("claude", List(Init, Answer, Event, Result))
     val cc = Cfg.copy(command = fake.script.toString)
-    val run = PlanPools.runProbe(ClaudeCode.probeArgv(cc, "haiku"), env => ClaudeCode.probeEnvironment(cc, 16, env),
-      ClaudeCode.ProbePrompt, 30).fold(fail(_), identity)
+    val run = PlanPools
+      .runProbe(
+        ClaudeCode.probeArgv(cc, "haiku"),
+        env => ClaudeCode.probeEnvironment(cc, 16, env),
+        ClaudeCode.ProbePrompt,
+        30
+      )
+      .fold(fail(_), identity)
     assertEquals(fake.stdin, "quota")
     assertEquals(fake.after("--max-turns"), "1")
     assertEquals(fake.after("--model"), "haiku")

@@ -4,7 +4,10 @@ class SettingKeySuite extends munit.FunSuite:
 
   test("a key with or without histmersion. is the same key"):
     assertEquals(SettingKey.parse("backups.keep").map(k => k.value: String), Right("histmersion.backups.keep"))
-    assertEquals(SettingKey.parse(" histmersion.backups.keep ").map(k => k.value: String), Right("histmersion.backups.keep"))
+    assertEquals(
+      SettingKey.parse(" histmersion.backups.keep ").map(k => k.value: String),
+      Right("histmersion.backups.keep")
+    )
     assert(SettingKey.parse("").isLeft)
     assert(SettingKey.parse("histmersion").isLeft)
     assert(SettingKey.parse("backups..keep").isLeft)

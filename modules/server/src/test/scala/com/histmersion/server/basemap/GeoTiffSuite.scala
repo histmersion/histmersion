@@ -4,16 +4,18 @@ import com.histmersion.api.BBox
 
 import java.nio.{ByteBuffer, ByteOrder}
 
-/** The GeoTIFF reader over grids written the way GEBCO writes its own (little-endian, one band of
-  * uncompressed signed 16-bit rows in strips, a tie point and a pixel scale), and the ones it refuses. */
+/** The GeoTIFF reader over grids written the way GEBCO writes its own (little-endian, one band of uncompressed signed
+  * 16-bit rows in strips, a tie point and a pixel scale), and the ones it refuses.
+  */
 class GeoTiffSuite extends munit.FunSuite:
   import GeoTiffSuite.*
 
   private def parsed(b: Array[Byte]) = GeoTiffGrid.parse(b.take(64), (o, l) => Right(b.slice(o.toInt, o.toInt + l)))
 
   test("a GEBCO-shaped grid: where it lies, its rows, its no-data value (the strip offsets read past the head)"):
-    val g = parsed(tiff(width = 8, height = 6, west = 10, north = 50, step = 0.5, value = (r, c) => (-100 * r - c).toShort))
-      .fold(e => fail(e), identity)
+    val g =
+      parsed(tiff(width = 8, height = 6, west = 10, north = 50, step = 0.5, value = (r, c) => (-100 * r - c).toShort))
+        .fold(e => fail(e), identity)
     assertEquals((g.west.value, g.north.value, g.stepX.value, g.width.value, g.height.value), (10.0, 50.0, 0.5, 8, 6))
     assertEquals((g.east, g.south), (14.0, 47.0))
     assertEquals(g.noData, Some(-32768.toShort))
@@ -34,7 +36,10 @@ class GeoTiffSuite extends munit.FunSuite:
   test("row runs: whole rows that follow each other share a request, at most the size asked"):
     val g = parsed(tiff(8, 6, west = 10, north = 50, step = 0.5)).fold(e => fail(e), identity)
     val w = GridWindow(1, 5, 2, 3)
-    assertEquals(g.runs(w, 1 << 20).map(r => (r.firstRow, r.rows, r.offset.value, r.length)), List((1, 5, DataAt + 16L, 80L)))
+    assertEquals(
+      g.runs(w, 1 << 20).map(r => (r.firstRow, r.rows, r.offset.value, r.length)),
+      List((1, 5, DataAt + 16L, 80L))
+    )
     assertEquals(g.runs(w, 32).map(r => (r.firstRow, r.rows)), List((1, 2), (3, 2), (5, 1)))
     assertEquals(g.runs(w, 1).map(_.rows), List(1, 1, 1, 1, 1), "a request holds a row at least")
 
@@ -52,11 +57,22 @@ object GeoTiffSuite:
   /** Where the samples begin in [[tiff]]'s files. */
   val DataAt = 1024
 
-  /** A little-endian GeoTIFF of `width` × `height` signed 16-bit samples, one row a strip: the directory
-    * first, the samples from [[DataAt]], the directory's arrays after them. */
-  def tiff(width: Int, height: Int, west: Double, north: Double, step: Double, value: (Int, Int) => Short = (_, _) => 0,
-      point: Boolean = false, compression: Int = 1, sampleFormat: Int = 2, tiled: Boolean = false,
-      georeferenced: Boolean = true): Array[Byte] =
+  /** A little-endian GeoTIFF of `width` × `height` signed 16-bit samples, one row a strip: the directory first, the
+    * samples from [[DataAt]], the directory's arrays after them.
+    */
+  def tiff(
+      width: Int,
+      height: Int,
+      west: Double,
+      north: Double,
+      step: Double,
+      value: (Int, Int) => Short = (_, _) => 0,
+      point: Boolean = false,
+      compression: Int = 1,
+      sampleFormat: Int = 2,
+      tiled: Boolean = false,
+      georeferenced: Boolean = true
+  ): Array[Byte] =
     val dataBytes = width * height * 2
     val buf = ByteBuffer.allocate(DataAt + dataBytes + height * 8 + 256).order(ByteOrder.LITTLE_ENDIAN)
     buf.put("II".getBytes).putShort(42).putInt(8)
@@ -64,14 +80,26 @@ object GeoTiffSuite:
     var at = DataAt + dataBytes // the next free byte for an array
     def array(write: ByteBuffer => Unit, size: Int): Int = { val o = at; buf.position(o); write(buf); at += size; o }
     val offsets = array(b => (0 until height).foreach(r => b.putInt(DataAt + r * width * 2)), height * 4)
-    val counts  = array(b => (0 until height).foreach(_ => b.putInt(width * 2)), height * 4)
-    val scale   = array(b => { b.putDouble(step); b.putDouble(step); b.putDouble(0) }, 24)
-    val tie     = array(b => { b.putDouble(0); b.putDouble(0); b.putDouble(0); b.putDouble(west); b.putDouble(north); b.putDouble(0) }, 48)
-    val keys    = array(b => List(1, 1, 0, 1, 1025, 0, 1, if point then 2 else 1).foreach(k => b.putShort(k.toShort)), 16)
-    val noData  = array(b => b.put("-32768\u0000".getBytes), 8)
+    val counts = array(b => (0 until height).foreach(_ => b.putInt(width * 2)), height * 4)
+    val scale = array(b => { b.putDouble(step); b.putDouble(step); b.putDouble(0) }, 24)
+    val tie = array(
+      b => { b.putDouble(0); b.putDouble(0); b.putDouble(0); b.putDouble(west); b.putDouble(north); b.putDouble(0) },
+      48
+    )
+    val keys = array(b => List(1, 1, 0, 1, 1025, 0, 1, if point then 2 else 1).foreach(k => b.putShort(k.toShort)), 16)
+    val noData = array(b => b.put("-32768\u0000".getBytes), 8)
     val entries = List[(Int, Int, Int, Int)](
-      (256, 3, 1, width), (257, 3, 1, height), (258, 3, 1, 16), (259, 3, 1, compression), (273, 4, height, offsets),
-      (277, 3, 1, 1), (278, 3, 1, 1), (279, 4, height, counts), (284, 3, 1, 1), (339, 3, 1, sampleFormat)) ++
+      (256, 3, 1, width),
+      (257, 3, 1, height),
+      (258, 3, 1, 16),
+      (259, 3, 1, compression),
+      (273, 4, height, offsets),
+      (277, 3, 1, 1),
+      (278, 3, 1, 1),
+      (279, 4, height, counts),
+      (284, 3, 1, 1),
+      (339, 3, 1, sampleFormat)
+    ) ++
       (if tiled then List((322, 3, 1, 256)) else Nil) ++
       (if georeferenced then List((33550, 12, 3, scale), (33922, 12, 6, tie), (34735, 3, 8, keys)) else Nil) ++
       List((42113, 2, 7, noData))

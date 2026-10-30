@@ -3,8 +3,9 @@ package com.histmersion.web
 import com.histmersion.api.*
 import com.histmersion.values.Confidence
 
-/** [[Certainty]] (#1946): a finding that states no confidence is drawn in its own neutral look — grey,
-  * dashed, its own legend pip — never as high, and never lets a bubble look high. Pure. */
+/** [[Certainty]] (#1946): a finding that states no confidence is drawn in its own neutral look — grey, dashed, its own
+  * legend pip — never as high, and never lets a bubble look high. Pure.
+  */
 class CertaintySuite extends munit.FunSuite:
 
   override def beforeAll(): Unit = TestTokens.install()
@@ -12,8 +13,8 @@ class CertaintySuite extends munit.FunSuite:
   private val span = (-3500L, -500L)
   private def hit(conf: Option[Confidence]) =
     GeoHit("zz2020_x", "Zz", "a claim", None, Some(30.0), Some(37.0), Some(-2100L), Some(-1900L), conf)
-  private val high      = Certainty.Stated(Confidence.High)
-  private val low       = Certainty.Stated(Confidence.Low)
+  private val high = Certainty.Stated(Confidence.High)
+  private val low = Certainty.Stated(Confidence.Low)
   private val contested = Certainty.Stated(Confidence.Contested)
 
   test("a missing confidence is unstated, not high"):
@@ -43,12 +44,21 @@ class CertaintySuite extends munit.FunSuite:
     assert(!stated.contains(unstated), s"$unstated among $stated")
     val parts = "\\d+".r.findAllIn(unstated).toList
     assertEquals(parts.distinct.size, 1, s"a grey: $unstated")
-    assertEquals(Certainty.desaturate("rgb(33,145,140)", Certainty.Unstated), "rgb(111,111,111)",
-      "the stylesheet's --conf-unstated is the ramp's midpoint drawn this way")
+    assertEquals(
+      Certainty.desaturate("rgb(33,145,140)", Certainty.Unstated),
+      "rgb(111,111,111)",
+      "the stylesheet's --conf-unstated is the ramp's midpoint drawn this way"
+    )
     assertEquals(Certainty.desaturate("var(--x)", Certainty.Unstated), "var(--x)")
     assertEquals(Certainty.desaturate("rgb(33,145,140)", high), "rgb(33,145,140)")
     // the older and the newer still differ in lightness
-    assert(MapView.colorFor(Some(-3400.0), span, Certainty.Unstated) != MapView.colorFor(Some(-600.0), span, Certainty.Unstated))
+    assert(
+      MapView.colorFor(Some(-3400.0), span, Certainty.Unstated) != MapView.colorFor(
+        Some(-600.0),
+        span,
+        Certainty.Unstated
+      )
+    )
 
   test("the marker: an unstated finding carries the dashed class; a stated one does not"):
     assert(PointKinds.Findings.classes(Spot(37.0, 30.0, List(hit(None)))).split(' ').contains("hd-unstated"))

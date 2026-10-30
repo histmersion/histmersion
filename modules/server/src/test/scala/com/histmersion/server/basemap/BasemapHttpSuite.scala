@@ -10,12 +10,12 @@ import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.file.{Files, Path}
 
-/** The terrain base map over HTTP, on a server whose `basemap.dir` holds a fixture extract: the
-  * status, a tile as stored (gzip-encoded vector, image terrain), 204 outside the extract, 404 for an
-  * unknown layer, the fetch's refusals, and the removal (behind the API key, as every write). Skipped
-  * without HISTMERSION_TEST_DB_URL. */
+/** The terrain base map over HTTP, on a server whose `basemap.dir` holds a fixture extract: the status, a tile as
+  * stored (gzip-encoded vector, image terrain), 204 outside the extract, 404 for an unknown layer, the fetch's
+  * refusals, and the removal (behind the API key, as every write). Skipped without HISTMERSION_TEST_DB_URL.
+  */
 class BasemapHttpSuite extends com.histmersion.db.DbSuite:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()
@@ -23,17 +23,25 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
     http.send(HttpRequest.newBuilder(URI.create(url)).build(), HttpResponse.BodyHandlers.ofByteArray())
   private def send(method: String, url: String, key: Option[String]): (Int, String) =
     val b = HttpRequest.newBuilder(URI.create(url)).method(method, HttpRequest.BodyPublishers.noBody())
-    val r = http.send(key.fold(b)(k => b.header("Authorization", s"Bearer $k")).build(), HttpResponse.BodyHandlers.ofString())
+    val r =
+      http.send(key.fold(b)(k => b.header("Authorization", s"Bearer $k")).build(), HttpResponse.BodyHandlers.ofString())
     (r.statusCode, r.body)
 
   private def withServer(dir: Path, onDemand: Boolean = true)(body: String => Unit): Unit =
     val base = AppConfig.load()
-    val cfg  = base.copy(db = base.db.copy(url = testDb.get), auth = base.auth.copy(apiKey = "k3y"),
-      basemap = base.basemap.copy(dir = dir.toString,
-        terrain = base.basemap.terrain.copy(onDemand = base.basemap.terrain.onDemand.copy(enabled = onDemand && base.basemap.terrain.onDemand.enabled)),
+    val cfg = base.copy(
+      db = base.db.copy(url = testDb.get),
+      auth = base.auth.copy(apiKey = "k3y"),
+      basemap = base.basemap.copy(
+        dir = dir.toString,
+        terrain = base.basemap.terrain.copy(onDemand =
+          base.basemap.terrain.onDemand.copy(enabled = onDemand && base.basemap.terrain.onDemand.enabled)
+        ),
         // the map and the sea floor outside the extract are read from the network: never in this suite (#3760)
         vector = base.basemap.vector.copy(onDemand = base.basemap.vector.onDemand.copy(enabled = false)),
-        bathymetry = base.basemap.bathymetry.copy(onDemand = base.basemap.bathymetry.onDemand.copy(enabled = false))))
+        bathymetry = base.basemap.bathymetry.copy(onDemand = base.basemap.bathymetry.onDemand.copy(enabled = false))
+      )
+    )
     supervised {
       val b = Main.server(cfg, "127.0.0.1", 0).start()
       try body(s"http://127.0.0.1:${b.port}/api/basemap")
@@ -87,34 +95,52 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
       assertEquals(get(s"$url/vector/0/0/0").statusCode, 200)
     }
 
-  test("ui.base-map-source auto: online until the extract can draw a vector style whole, then local; a cut's properties"):
+  test(
+    "ui.base-map-source auto: online until the extract can draw a vector style whole, then local; a cut's properties"
+  ):
     val dir = Files.createTempDirectory("basemap-http")
     withServer(dir) { url =>
       val config = url.stripSuffix("/basemap") + "/config"
-      def source() = io.circe.parser.decode[UiConfig](String(get(config).body)).fold(e => fail(e.toString), _.baseMapSource)
+      def source() =
+        io.circe.parser.decode[UiConfig](String(get(config).body)).fold(e => fail(e.toString), _.baseMapSource)
       assertEquals(source(), "online", "nothing downloaded")
-      BasemapFixtures.vectorArchive(dir.resolve("vector.pmtiles"), maxZoom = 3,
-        io.circe.Json.obj("histmersion" -> io.circe.Json.obj("drop" -> io.circe.Json.fromString("roads; places; boundaries"))))
+      BasemapFixtures.vectorArchive(
+        dir.resolve("vector.pmtiles"),
+        maxZoom = 3,
+        io.circe.Json.obj(
+          "histmersion" -> io.circe.Json.obj("drop" -> io.circe.Json.fromString("roads; places; boundaries"))
+        )
+      )
       val st = io.circe.parser.decode[BasemapStatus](String(get(url).body)).fold(e => fail(e.toString), identity)
       assertEquals(st.missing("readable"), List("boundaries", "places", "roads"))
       assertEquals(st.missing("physical"), Nil)
       assertEquals(source(), "local", "Physical draws nothing the default drop list leaves out")
-      Thread.sleep(5)   // a new stamp: the archive is opened again
-      BasemapFixtures.vectorArchive(dir.resolve("vector.pmtiles"), maxZoom = 3,
-        io.circe.Json.obj("histmersion" -> io.circe.Json.obj("keepAll" -> io.circe.Json.True)))
+      Thread.sleep(5) // a new stamp: the archive is opened again
+      BasemapFixtures.vectorArchive(
+        dir.resolve("vector.pmtiles"),
+        maxZoom = 3,
+        io.circe.Json.obj("histmersion" -> io.circe.Json.obj("keepAll" -> io.circe.Json.True))
+      )
       assertEquals(source(), "local", "a --keep-all extract: the page asks no other host")
       // the page's cut: only the kinds and properties it reads
       val t = get(s"$url/vector/3/4/3?layers=water:p~sea&keys=kind,name")
       assertEquals(t.statusCode, 200)
       val fs = Mvt.features(PmTiles.gunzip(t.body).toOption.get).fold(fail(_), identity)
-      assert(fs.nonEmpty && fs.forall((l, g, p) => l == "water" && g == 1 && p.get("kind").contains("sea") && p.keySet.subsetOf(Set("kind", "name"))),
-        fs.toString)
+      assert(
+        fs.nonEmpty && fs.forall((l, g, p) =>
+          l == "water" && g == 1 && p.get("kind").contains("sea") && p.keySet.subsetOf(Set("kind", "name"))
+        ),
+        fs.toString
+      )
     }
 
   /** The browser fixture's base map (modules/web/test/fixtures/basemap). */
   private def fixture: Path =
-    Iterator.iterate(Path.of(sys.props("user.dir")).toAbsolutePath)(_.getParent).takeWhile(_ != null)
-      .map(_.resolve("modules/web/test/fixtures/basemap")).find(d => Files.isRegularFile(d.resolve("terrain.pmtiles")))
+    Iterator
+      .iterate(Path.of(sys.props("user.dir")).toAbsolutePath)(_.getParent)
+      .takeWhile(_ != null)
+      .map(_.resolve("modules/web/test/fixtures/basemap"))
+      .find(d => Files.isRegularFile(d.resolve("terrain.pmtiles")))
       .getOrElse(fail("the browser fixture is not in the repository"))
 
   test("the status names the relief deeper than the extract on the wire: each focus region and the on-demand relief"):
@@ -157,9 +183,15 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
       val st = io.circe.parser.decode[BasemapStatus](String(get(url).body)).fold(e => fail(e.toString), identity)
       val t = st.layers.find(_.layer == "terrain").get
       assertEquals((t.maxZoom, t.deepest), (Some(6), Some(11)))
-      def tile(z: Int, lon: Double, lat: Double) = get(s"$url/terrain/$z/${Basemap.tileX(lon, z)}/${Basemap.tileY(lat, z)}")
+      def tile(z: Int, lon: Double, lat: Double) =
+        get(s"$url/terrain/$z/${Basemap.tileX(lon, z)}/${Basemap.tileY(lat, z)}")
       def heights(r: HttpResponse[Array[Byte]]) =
-        TerrainResample.decode(r.body).fold(e => fail(e), i => { assertEquals((i.width, i.height), (512, 512)); i.pixels.map(TerrainResample.metres) })
+        TerrainResample
+          .decode(r.body)
+          .fold(
+            e => fail(e),
+            i => { assertEquals((i.width, i.height), (512, 512)); i.pixels.map(TerrainResample.metres) }
+          )
       // zoom 8 over Naxos (no focus region there): from the extract's zoom-6 tile, a PNG
       val naxos = tile(8, 25.45, 37.05)
       assertEquals(naxos.statusCode, 200)

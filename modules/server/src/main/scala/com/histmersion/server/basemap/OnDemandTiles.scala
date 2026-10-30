@@ -10,12 +10,13 @@ import java.nio.file.attribute.FileTime
 import java.util.concurrent.{CompletableFuture, ConcurrentHashMap, Semaphore, TimeUnit}
 import scala.util.Using
 
-/** A directory of tiles bounded in bytes, least recently used dropped first — an on-demand layer's
-  * cache. A tile is a file `<z>/<x>/<y>.<ext>`; a tile the provider does not have is an empty
-  * `<z>/<x>/<y>.none`, so it is not asked for again. Use is the file's modification time (set on each
-  * read), so the order survives a restart; the index is read from the disk on first use.
+/** A directory of tiles bounded in bytes, least recently used dropped first — an on-demand layer's cache. A tile is a
+  * file `<z>/<x>/<y>.<ext>`; a tile the provider does not have is an empty `<z>/<x>/<y>.none`, so it is not asked for
+  * again. Use is the file's modification time (set on each read), so the order survives a restart; the index is read
+  * from the disk on first use.
   *
-  * Thread-safe: every operation holds the instance's lock (they are file operations of a few KB). */
+  * Thread-safe: every operation holds the instance's lock (they are file operations of a few KB).
+  */
 final class DiskLru(val root: Path, maxBytes: () => Long, ext: String = "webp"):
 
   // the index (access-ordered: the eldest is the least recently used) and its byte total, loaded once;
@@ -59,11 +60,12 @@ final class DiskLru(val root: Path, maxBytes: () => Long, ext: String = "webp"):
         scala.util.Try(Files.setLastModifiedTime(f, FileTime.fromMillis(System.currentTimeMillis())))
         Some(Some(Files.readAllBytes(f)))
       else if Files.isRegularFile(file(key, absent = true)) then Some(None)
-      else { total -= index.remove(key); None }   // removed behind our back
+      else { total -= index.remove(key); None } // removed behind our back
   }
 
-  /** Keep `bytes` (`None`: the provider has no such tile) as `key`, then drop the least recently used
-    * until the cache is within its ceiling. */
+  /** Keep `bytes` (`None`: the provider has no such tile) as `key`, then drop the least recently used until the cache
+    * is within its ceiling.
+    */
   def put(key: String, bytes: Option[Array[Byte]]): Unit = synchronized {
     load()
     val f = file(key, bytes.isEmpty)
@@ -77,7 +79,7 @@ final class DiskLru(val root: Path, maxBytes: () => Long, ext: String = "webp"):
   }
 
   def entries: Long = synchronized { load(); index.size.toLong }
-  def bytes: Long   = synchronized { load(); total }
+  def bytes: Long = synchronized { load(); total }
 
   /** Everything removed; answers the bytes it held. */
   def clear(): Long = synchronized {
@@ -87,23 +89,31 @@ final class DiskLru(val root: Path, maxBytes: () => Long, ext: String = "webp"):
   }
 
 /** A layer's tiles read when a page shows them, beyond what was downloaded (docs/research-terrain-basemap.md,
-  * "On-demand relief"; #3760 for the map and the sea floor): the server reads just those tiles from the
-  * provider — by HTTP range requests from its planet archive ([[OnDemandTiles.Source.Planet]], the access
-  * its documentation shows for extracts), or one GET a tile from a tile URL ([[OnDemandTiles.Source.Template]])
-  * — `transform`s each (the vector layer drops what the download drops) and keeps it in a bounded cache
-  * ([[DiskLru]], files `.<ext>`) next to the extract, so an area seen once shows again offline.
+  * "On-demand relief"; #3760 for the map and the sea floor): the server reads just those tiles from the provider — by
+  * HTTP range requests from its planet archive ([[OnDemandTiles.Source.Planet]], the access its documentation shows for
+  * extracts), or one GET a tile from a tile URL ([[OnDemandTiles.Source.Template]]) — `transform`s each (the vector
+  * layer drops what the download drops) and keeps it in a bounded cache ([[DiskLru]], files `.<ext>`) next to the
+  * extract, so an area seen once shows again offline.
   *
-  * A planet's header, root and the leaf directories read (11 KB each, 4 096 tiles) are kept on the disk
-  * too, under `remote/`, with the file's size and ETag: when the provider replaces the file (another
-  * ETag), they are read again; the tiles kept stay.
+  * A planet's header, root and the leaf directories read (11 KB each, 4 096 tiles) are kept on the disk too, under
+  * `remote/`, with the file's size and ETag: when the provider replaces the file (another ETag), they are read again;
+  * the tiles kept stay.
   *
-  * Politeness: at most `concurrency` requests at a time and `requestsPerSecond` begun each second; one
-  * request per tile (two when its leaf directory is new); a tile asked for twice at once is read once.
-  * After a failed request (offline) none is made for `retryAfterSeconds` — the page gets no tile there,
-  * quickly, and asks again later. `http`, `now` and `sleep` are the seams a test substitutes. */
-final class OnDemandTiles(val dir: Path, cfg: () => BasemapOnDemandConfig, source: OnDemandTiles.Source, http: () => RangeHttp,
-    now: () => Long = () => System.currentTimeMillis(), sleep: Long => Unit = ms => Thread.sleep(ms), ext: String = "webp",
-    transform: Array[Byte] => Either[String, Option[Array[Byte]]] = b => Right(Some(b))):
+  * Politeness: at most `concurrency` requests at a time and `requestsPerSecond` begun each second; one request per tile
+  * (two when its leaf directory is new); a tile asked for twice at once is read once. After a failed request (offline)
+  * none is made for `retryAfterSeconds` — the page gets no tile there, quickly, and asks again later. `http`, `now` and
+  * `sleep` are the seams a test substitutes.
+  */
+final class OnDemandTiles(
+    val dir: Path,
+    cfg: () => BasemapOnDemandConfig,
+    source: OnDemandTiles.Source,
+    http: () => RangeHttp,
+    now: () => Long = () => System.currentTimeMillis(),
+    sleep: Long => Unit = ms => Thread.sleep(ms),
+    ext: String = "webp",
+    transform: Array[Byte] => Either[String, Option[Array[Byte]]] = b => Right(Some(b))
+):
 
   private def url(): String = source match
     case OnDemandTiles.Source.Planet(u)   => u()
@@ -113,7 +123,7 @@ final class OnDemandTiles(val dir: Path, cfg: () => BasemapOnDemandConfig, sourc
   private val remoteDir = dir.resolve("remote")
 
   /** What the planet file is: its header and root, the leaves read, its size and ETag. */
-  private final case class Remote(url: String, header: PmTiles.Header, root: Vector[PmTiles.Entry], file: RemoteFile)
+  final private case class Remote(url: String, header: PmTiles.Header, root: Vector[PmTiles.Entry], file: RemoteFile)
 
   // the open remote description (re-read when the file changes) and when requests may start again; under the lock
   @volatile private var remote: Option[Remote] = None
@@ -125,8 +135,15 @@ final class OnDemandTiles(val dir: Path, cfg: () => BasemapOnDemandConfig, sourc
 
   def status: BasemapOnDemand =
     val c = cfg()
-    BasemapOnDemand(c.enabled, c.maxZoom, dir.toString, cache.entries, cache.bytes, (c.cacheGb * 1e9).toLong,
-      Option.when(offlineUntil > now())(java.time.Instant.ofEpochMilli(offlineUntil).toString))
+    BasemapOnDemand(
+      c.enabled,
+      c.maxZoom,
+      dir.toString,
+      cache.entries,
+      cache.bytes,
+      (c.cacheGb * 1e9).toLong,
+      Option.when(offlineUntil > now())(java.time.Instant.ofEpochMilli(offlineUntil).toString)
+    )
 
   /** Whether `z` is one this serves (deeper than the extract's `extractMax`, to the configured depth). */
   def serves(z: Int, extractMax: Int): Boolean = cfg().enabled && z > extractMax && z <= cfg().maxZoom
@@ -149,43 +166,58 @@ final class OnDemandTiles(val dir: Path, cfg: () => BasemapOnDemandConfig, sourc
         f
       finally gate.release()
 
-  private def remoteJson(r: Remote) = Json.obj("url" -> Json.fromString(r.url), "size" -> Json.fromLong(r.file.size),
-    "etag" -> r.file.etag.fold(Json.Null)(Json.fromString))
+  private def remoteJson(r: Remote) = Json.obj(
+    "url" -> Json.fromString(r.url),
+    "size" -> Json.fromLong(r.file.size),
+    "etag" -> r.file.etag.fold(Json.Null)(Json.fromString)
+  )
 
   /** The planet's description: in memory, else from `remote/` (when it names the same URL), else read. */
   private def described(): Either[String, Remote] =
     val u = url()
-    remote.filter(_.url == u).map(Right(_)).getOrElse(synchronized {
-      remote.filter(_.url == u).map(Right(_)).getOrElse {
-        val fromDisk = scala.util.Try {
-          val j = io.circe.parser.parse(Files.readString(remoteDir.resolve("remote.json"))).toOption.get.hcursor
-          val head = Files.readAllBytes(remoteDir.resolve("head.bin"))
-          (j.get[String]("url").toOption.get, j.get[Long]("size").toOption.get, j.get[Option[String]]("etag").toOption.flatten, head)
-        }.toOption.filter(_._1 == u)
-        val head: Either[String, (Array[Byte], RemoteFile)] = fromDisk match
-          case Some((_, size, etag, h)) => Right((h, RemoteFile(size, etag)))
-          case None =>
-            BasemapService.deleteTree(remoteDir)
-            leaves.clear()
-            request(http().bytes(u, 0, PmTiles.RootBytes)).map { (b, f) =>
-              Files.createDirectories(remoteDir)
-              Files.write(remoteDir.resolve("head.bin"), b)
-              (b, f)
+    remote
+      .filter(_.url == u)
+      .map(Right(_))
+      .getOrElse(synchronized {
+        remote.filter(_.url == u).map(Right(_)).getOrElse {
+          val fromDisk = scala.util
+            .Try {
+              val j = io.circe.parser.parse(Files.readString(remoteDir.resolve("remote.json"))).toOption.get.hcursor
+              val head = Files.readAllBytes(remoteDir.resolve("head.bin"))
+              (
+                j.get[String]("url").toOption.get,
+                j.get[Long]("size").toOption.get,
+                j.get[Option[String]]("etag").toOption.flatten,
+                head
+              )
             }
-        for
-          hf   <- head
-          (b, f) = hf
-          h    <- PmTiles.parseHeader(b)
-          _    <- Either.cond(h.rootOffset + h.rootLength <= b.length, (), "root directory outside the first 16 KiB")
-          root <- PmTiles.decompress(b.slice(h.rootOffset.toInt, (h.rootOffset + h.rootLength).toInt), h.internalCompression)
-                    .flatMap(PmTiles.decodeDirectory)
-        yield
-          val r = Remote(u, h, root, f)
-          if fromDisk.isEmpty then Files.writeString(remoteDir.resolve("remote.json"), remoteJson(r).noSpaces)
-          remote = Some(r)
-          r
-      }
-    })
+            .toOption
+            .filter(_._1 == u)
+          val head: Either[String, (Array[Byte], RemoteFile)] = fromDisk match
+            case Some((_, size, etag, h)) => Right((h, RemoteFile(size, etag)))
+            case None                     =>
+              BasemapService.deleteTree(remoteDir)
+              leaves.clear()
+              request(http().bytes(u, 0, PmTiles.RootBytes)).map { (b, f) =>
+                Files.createDirectories(remoteDir)
+                Files.write(remoteDir.resolve("head.bin"), b)
+                (b, f)
+              }
+          for
+            hf <- head
+            (b, f) = hf
+            h <- PmTiles.parseHeader(b)
+            _ <- Either.cond(h.rootOffset + h.rootLength <= b.length, (), "root directory outside the first 16 KiB")
+            root <- PmTiles
+              .decompress(b.slice(h.rootOffset.toInt, (h.rootOffset + h.rootLength).toInt), h.internalCompression)
+              .flatMap(PmTiles.decodeDirectory)
+          yield
+            val r = Remote(u, h, root, f)
+            if fromDisk.isEmpty then Files.writeString(remoteDir.resolve("remote.json"), remoteJson(r).noSpaces)
+            remote = Some(r)
+            r
+        }
+      })
 
   /** The provider replaced its file: forget what was read of it (the tiles kept stay). */
   private def forget(): Unit = synchronized {
@@ -199,13 +231,14 @@ final class OnDemandTiles(val dir: Path, cfg: () => BasemapOnDemandConfig, sourc
       val f = remoteDir.resolve(s"leaf-${e.offset}-${e.length}.bin")
       val raw =
         if Files.isRegularFile(f) && Files.size(f) == e.length then Right(Files.readAllBytes(f))
-        else request(http().bytes(r.url, r.header.leafOffset + e.offset, e.length)).flatMap { (b, got) =>
-          if got.etag != r.file.etag || got.size != r.file.size then Left(OnDemandTiles.Changed)
-          else
-            Files.createDirectories(remoteDir)
-            Files.write(f, b)
-            Right(b)
-        }
+        else
+          request(http().bytes(r.url, r.header.leafOffset + e.offset, e.length)).flatMap { (b, got) =>
+            if got.etag != r.file.etag || got.size != r.file.size then Left(OnDemandTiles.Changed)
+            else
+              Files.createDirectories(remoteDir)
+              Files.write(f, b)
+              Right(b)
+          }
       raw.flatMap(b => PmTiles.decompress(b, r.header.internalCompression)).flatMap(PmTiles.decodeDirectory).map { d =>
         if leaves.size > 512 then leaves.clear()
         leaves.put(e.offset, d)
@@ -237,36 +270,42 @@ final class OnDemandTiles(val dir: Path, cfg: () => BasemapOnDemandConfig, sourc
         r <- described()
         e <- entry(r, z, x, y)
         b <- e.fold(Right(None)) { e =>
-               request(http().bytes(r.url, r.header.dataOffset + e.offset, e.length)).flatMap { (b, got) =>
-                 if got.etag != r.file.etag || got.size != r.file.size then Left(OnDemandTiles.Changed) else Right(Some(b))
-               }
-             }
+          request(http().bytes(r.url, r.header.dataOffset + e.offset, e.length)).flatMap { (b, got) =>
+            if got.etag != r.file.etag || got.size != r.file.size then Left(OnDemandTiles.Changed) else Right(Some(b))
+          }
+        }
       yield b
     once() match
       case Left(OnDemandTiles.Changed) => forget(); once()
-      case other                         => other
+      case other                       => other
 
-  /** The tile `z/x/y`: from the cache, else from the provider (then cached). `Right(None)`: there is none
-    * (outside the configured zooms, or the provider has none); `Left`: it could not be read now. */
+  /** The tile `z/x/y`: from the cache, else from the provider (then cached). `Right(None)`: there is none (outside the
+    * configured zooms, or the provider has none); `Left`: it could not be read now.
+    */
   def tile(z: Int, x: Long, y: Long): Either[String, Option[Array[Byte]]] =
     val c = cfg()
     if !c.enabled || z > c.maxZoom || x < 0 || y < 0 || x >= (1L << z) || y >= (1L << z) then Right(None)
     else
       val key = s"$z/$x/$y"
       cache.get(key) match
-        case Some(hit) => Right(hit)
+        case Some(hit)                    => Right(hit)
         case None if offlineUntil > now() => Left("the provider was unreachable a moment ago; not asked again yet")
-        case None =>
+        case None                         =>
           val mine = CompletableFuture[Either[String, Option[Array[Byte]]]]()
           Option(inflight.putIfAbsent(key, mine)) match
             case Some(other) =>
-              scala.util.Try(other.get(120, TimeUnit.SECONDS)).toEither.left.map(e => s"tile $key: ${e.getMessage}").flatten
+              scala.util
+                .Try(other.get(120, TimeUnit.SECONDS))
+                .toEither
+                .left
+                .map(e => s"tile $key: ${e.getMessage}")
+                .flatten
             case None =>
               try
                 val r = read(z, x, y)
                 r match
                   case Right(b) => cache.put(key, b)
-                  case Left(e) =>
+                  case Left(e)  =>
                     offlineUntil = now() + c.retryAfterSeconds * 1000L
                     scribe.warn(s"basemap: on-demand tile $key (${dir.getFileName}) not read: $e")
                 mine.complete(r)
@@ -281,8 +320,9 @@ object OnDemandTiles:
   /** The provider's file changed under a read (another ETag or size). */
   val Changed = "the provider's file changed"
 
-  /** Where tiles are read from: a PMTiles planet archive (range requests), or a tile URL with `{z}/{x}/{y}`
-    * (one GET a tile; a 404 is "none"). */
+  /** Where tiles are read from: a PMTiles planet archive (range requests), or a tile URL with `{z}/{x}/{y}` (one GET a
+    * tile; a 404 is "none").
+    */
   enum Source:
     case Planet(url: () => String)
     case Template(url: () => String)

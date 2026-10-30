@@ -6,12 +6,12 @@ import io.circe.{Codec, Decoder, Encoder}
 import sttp.tapir.Schema
 import com.histmersion.values.WireEnumValues
 
-/** What a person approves before a P3 pipeline creates anything (docs/research-embedded-agents.md
-  * §14): a goal's PLAN (sub-goals, search queries, candidate works — each DOI already looked up
-  * upstream by code) and an article DRAFT (a new article, or a section to append to one, with the
-  * code self-check's remaining problems). They travel inside an approval ([[Agents.ApprovalInfo]]),
-  * are stored as the approval's payload, and the run that proposed them applies exactly this value
-  * when it resumes. Wire types only; the logic is in `core/jvm` and the server. */
+/** What a person approves before a P3 pipeline creates anything (docs/research-embedded-agents.md §14): a goal's PLAN
+  * (sub-goals, search queries, candidate works — each DOI already looked up upstream by code) and an article DRAFT (a
+  * new article, or a section to append to one, with the code self-check's remaining problems). They travel inside an
+  * approval ([[Agents.ApprovalInfo]]), are stored as the approval's payload, and the run that proposed them applies
+  * exactly this value when it resumes. Wire types only; the logic is in `core/jvm` and the server.
+  */
 object GoalPlans:
 
   /** A sub-goal a plan proposes (created as a child of the planned goal when approved). */
@@ -20,30 +20,45 @@ object GoalPlans:
   object PlannedGoal:
     given Schema[PlannedGoal] = KindlingsSchema.derived[PlannedGoal].schema
 
-  /** A work a plan proposes to read, as code found it upstream: `inCorpus` works are linked to the
-    * goal, the others become acquisition items. `why` is the planner's reason. */
-  final case class PlannedWork(doi: String, title: Option[String] = None, year: Option[Int] = None,
-      authors: List[String] = Nil, citekey: Option[String] = None, inCorpus: Boolean = false, isOa: Boolean = false,
-      why: String = "") derives KindlingsCodecAsObject
+  /** A work a plan proposes to read, as code found it upstream: `inCorpus` works are linked to the goal, the others
+    * become acquisition items. `why` is the planner's reason.
+    */
+  final case class PlannedWork(
+      doi: String,
+      title: Option[String] = None,
+      year: Option[Int] = None,
+      authors: List[String] = Nil,
+      citekey: Option[String] = None,
+      inCorpus: Boolean = false,
+      isOa: Boolean = false,
+      why: String = ""
+  ) derives KindlingsCodecAsObject
   object PlannedWork:
     given Schema[PlannedWork] = KindlingsSchema.derived[PlannedWork].schema
 
-  /** A verified plan. `dropped` says what code removed from the planner's answer, and why (a DOI
-    * that does not resolve, a sub-goal slug already taken…), so a person sees the whole story. */
-  final case class Plan(goal: String, rationale: String = "", subGoals: List[PlannedGoal] = Nil,
-      queries: List[String] = Nil, works: List[PlannedWork] = Nil, dropped: List[String] = Nil)
-      derives KindlingsCodecAsObject:
+  /** A verified plan. `dropped` says what code removed from the planner's answer, and why (a DOI that does not resolve,
+    * a sub-goal slug already taken…), so a person sees the whole story.
+    */
+  final case class Plan(
+      goal: String,
+      rationale: String = "",
+      subGoals: List[PlannedGoal] = Nil,
+      queries: List[String] = Nil,
+      works: List[PlannedWork] = Nil,
+      dropped: List[String] = Nil
+  ) derives KindlingsCodecAsObject:
     def isEmpty: Boolean = subGoals.isEmpty && queries.isEmpty && works.isEmpty
   object Plan:
     given Schema[Plan] = KindlingsSchema.derived[Plan].schema
 
   export com.histmersion.values.{DraftMode, GoalLinkKind as LinkKind, ScheduleKind}
 
-  /** An article a compile run drafted, as a person approves it. `text` is the whole body (create) or
-    * the section to append (extend, under the heading `section` when given, else at the end).
-    * `problems` are what the code self-check still found after the writer's last attempt; `cited`
-    * the citekeys the text cites, `notUsed` the filter's sources it leaves out, with why (for the
-    * person; `reasons` is what is stored, and the page lists them under its generated Not used). */
+  /** An article a compile run drafted, as a person approves it. `text` is the whole body (create) or the section to
+    * append (extend, under the heading `section` when given, else at the end). `problems` are what the code self-check
+    * still found after the writer's last attempt; `cited` the citekeys the text cites, `notUsed` the filter's sources
+    * it leaves out, with why (for the person; `reasons` is what is stored, and the page lists them under its generated
+    * Not used).
+    */
   final case class ArticleDraft(
       slug: String,
       mode: DraftMode,
@@ -64,11 +79,18 @@ object GoalPlans:
 
   // ── goal links and schedules ───────────────────────────────────────────────────────────────────
 
-  /** One link of a goal. `title` is the source's or article's title (or the item's text) when the
-    * target still exists; `None` marks a dangling link. `queue`: the list a linked queue item is on
-    * (`acquire`, `tasks`), so a link can lead to it. */
-  final case class GoalLink(kind: LinkKind, ref: String, note: Option[String] = None, title: Option[String] = None,
-      createdAt: String = "", queue: Option[String] = None) derives KindlingsCodecAsObject
+  /** One link of a goal. `title` is the source's or article's title (or the item's text) when the target still exists;
+    * `None` marks a dangling link. `queue`: the list a linked queue item is on (`acquire`, `tasks`), so a link can lead
+    * to it.
+    */
+  final case class GoalLink(
+      kind: LinkKind,
+      ref: String,
+      note: Option[String] = None,
+      title: Option[String] = None,
+      createdAt: String = "",
+      queue: Option[String] = None
+  ) derives KindlingsCodecAsObject
   object GoalLink:
     given Schema[GoalLink] = KindlingsSchema.derived[GoalLink].schema
 
@@ -76,14 +98,24 @@ object GoalPlans:
   final case class LinkAdd(kind: LinkKind, ref: String, note: Option[String] = None)
   object LinkAdd:
     given Schema[LinkAdd] = KindlingsSchema.derived[LinkAdd].schema
+
     /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
     given Codec.AsObject[LinkAdd] = StrictJson.codec(KindlingsCodecAsObject.derived[LinkAdd])
 
-  /** One schedule of a goal. `cron` is five fields in UTC (or `@daily`…); `lastNote` says what the
-    * scheduler last did (started run X, or skipped: why). */
-  final case class GoalSchedule(goal: String, kind: ScheduleKind, cron: String, enabled: Boolean,
-      budgetUsd: Option[Double] = None, nextRunAt: Option[String] = None, lastRunAt: Option[String] = None,
-      lastRun: Option[String] = None, lastNote: Option[String] = None) derives KindlingsCodecAsObject
+  /** One schedule of a goal. `cron` is five fields in UTC (or `@daily`…); `lastNote` says what the scheduler last did
+    * (started run X, or skipped: why).
+    */
+  final case class GoalSchedule(
+      goal: String,
+      kind: ScheduleKind,
+      cron: String,
+      enabled: Boolean,
+      budgetUsd: Option[Double] = None,
+      nextRunAt: Option[String] = None,
+      lastRunAt: Option[String] = None,
+      lastRun: Option[String] = None,
+      lastNote: Option[String] = None
+  ) derives KindlingsCodecAsObject
   object GoalSchedule:
     given Schema[GoalSchedule] = KindlingsSchema.derived[GoalSchedule].schema
 
@@ -91,6 +123,7 @@ object GoalPlans:
   final case class ScheduleSet(cron: String, enabled: Boolean = true, budgetUsd: Option[Double] = None)
   object ScheduleSet:
     given Schema[ScheduleSet] = KindlingsSchema.derived[ScheduleSet].schema
+
     /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
     given Codec.AsObject[ScheduleSet] = StrictJson.codec(KindlingsCodecAsObject.derived[ScheduleSet])
 
@@ -100,8 +133,13 @@ object GoalPlans:
     given Schema[Removed] = KindlingsSchema.derived[Removed].schema
 
   /** `GET /api/goals/{slug}/view` — a goal with what hangs off it. */
-  final case class GoalView(goal: Goal, children: List[Goal] = Nil, links: List[GoalLink] = Nil,
-      schedules: List[GoalSchedule] = Nil, plan: Option[Plan] = None, budgetUsd: Option[Double] = None)
-      derives KindlingsCodecAsObject
+  final case class GoalView(
+      goal: Goal,
+      children: List[Goal] = Nil,
+      links: List[GoalLink] = Nil,
+      schedules: List[GoalSchedule] = Nil,
+      plan: Option[Plan] = None,
+      budgetUsd: Option[Double] = None
+  ) derives KindlingsCodecAsObject
   object GoalView:
     given Schema[GoalView] = KindlingsSchema.derived[GoalView].schema

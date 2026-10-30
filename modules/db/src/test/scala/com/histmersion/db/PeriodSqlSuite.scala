@@ -6,8 +6,9 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 
-/** [[PeriodSql]] (#1798 item 9): the pure literal/merge rules, and — on a test database — a goal or
-  * an asset patched with ONE bound (it used to be silently ignored), read back through [[PeriodSql.cols]]. */
+/** [[PeriodSql]] (#1798 item 9): the pure literal/merge rules, and — on a test database — a goal or an asset patched
+  * with ONE bound (it used to be silently ignored), read back through [[PeriodSql.cols]].
+  */
 class PeriodSqlSuite extends com.histmersion.db.DbSuite:
 
   // ── pure ───────────────────────────────────────────────────────────────────────────────────────
@@ -43,7 +44,10 @@ class PeriodSqlSuite extends com.histmersion.db.DbSuite:
 
   test("merge: a result that starts after it ends is refused, naming both years"):
     val r = PeriodSql.merge((Some(-1200L), Some(-1000L)), Some(-900), None, "goal 'g'")
-    assert(r.exists(_.left.exists(e => e.message.contains("900 BCE") && e.code.contains(Write.CodeInvalid))), r.toString)
+    assert(
+      r.exists(_.left.exists(e => e.message.contains("900 BCE") && e.code.contains(Write.CodeInvalid))),
+      r.toString
+    )
 
   test("period: closed only when both bounds are known"):
     assertEquals(PeriodSql.period(Some(-5), Some(5)), Some(Period(-5, 5)))
@@ -61,7 +65,10 @@ class PeriodSqlSuite extends com.histmersion.db.DbSuite:
 
   dbTest("a goal patched with one bound changes that bound (#1798)"):
     connect(ds)(sql"DELETE FROM goals WHERE slug = 'zz_period_goal'".update.run())
-    assertEquals(GoalRepo.put(ds, "zz_period_goal", GoalPut("Period goal", periodStart = Some(-1200), periodEnd = Some(-1000))), Right(()))
+    assertEquals(
+      GoalRepo.put(ds, "zz_period_goal", GoalPut("Period goal", periodStart = Some(-1200), periodEnd = Some(-1000))),
+      Right(())
+    )
     assertEquals(GoalRepo.patch(ds, "zz_period_goal", GoalPatch(periodStart = Some(-1300))), Right(()))
     val g = GoalRepo.get(ds, "zz_period_goal").get
     assertEquals((g.periodStart, g.periodEnd), (Some(-1300L), Some(-1000L)))
@@ -70,7 +77,10 @@ class PeriodSqlSuite extends com.histmersion.db.DbSuite:
     assertEquals((g2.periodStart, g2.periodEnd), (Some(-1300L), Some(-1100L)))
     // inverted: refused, stored period unchanged
     assert(GoalRepo.patch(ds, "zz_period_goal", GoalPatch(periodStart = Some(-1000))).isLeft)
-    assertEquals(GoalRepo.get(ds, "zz_period_goal").map(x => (x.periodStart, x.periodEnd)), Some((Some(-1300L), Some(-1100L))))
+    assertEquals(
+      GoalRepo.get(ds, "zz_period_goal").map(x => (x.periodStart, x.periodEnd)),
+      Some((Some(-1300L), Some(-1100L)))
+    )
     connect(ds)(sql"DELETE FROM goals WHERE slug = 'zz_period_goal'".update.run())
 
   dbTest("a goal put with one bound stores an open period; an inverted one is refused"):

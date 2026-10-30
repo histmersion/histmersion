@@ -13,7 +13,7 @@ class PlaceHoverSuite extends munit.FunSuite:
     UiState.loadHash("")
 
   /** A fake clock, as in ThrottleSuite: `later` queues, `advance` runs what is due. */
-  private final class Clock:
+  final private class Clock:
     var t: Double = 0
     private val queue = mutable.ListBuffer.empty[(Double, Int, () => Unit)]
     private var ids = 0
@@ -45,7 +45,7 @@ class PlaceHoverSuite extends munit.FunSuite:
     val c = Clock(); val fired = mutable.ListBuffer.empty[String]
     val i = HoverIntent[String](100, fired += _, c.later, c.cancel)
     i.enter("a")
-    i.leave("b")          // a mouseout from another shape arriving late
+    i.leave("b") // a mouseout from another shape arriving late
     assert(i.isPending("a"))
     c.advance(100)
     assertEquals(fired.toList, List("a"))
@@ -60,8 +60,11 @@ class PlaceHoverSuite extends munit.FunSuite:
       place = summary("hatti", "Hittite Empire", "polity", Some(-1650), Some(-1180)),
       geometry = None,
       parents = List(summary("anatolia", "Anatolia", "region"), summary("near_east", "Near East", "region")),
-      children = Nil, findings = 3, asOf = Some(-1300),
-      counts = Some(PlaceCounts(sources = 12, findings = 1, articles = 0, events = 2)))
+      children = Nil,
+      findings = 3,
+      asOf = Some(-1300),
+      counts = Some(PlaceCounts(sources = 12, findings = 1, articles = 0, events = 2))
+    )
     val c = Preview.card(d)
     assertEquals(c.title, "Hittite Empire")
     assertEquals(c.byline, "Polity · 1650 BCE–1180 BCE")
@@ -69,14 +72,16 @@ class PlaceHoverSuite extends munit.FunSuite:
     assertEquals(c.facts, List("12 sources · 1 finding · 0 articles · 2 events"))
     assertEquals(c.identifier, "hatti")
     // a disputed shape says so; no counts asked for, none shown; a site with no parents and no period
-    val bare = Preview.card(d.copy(place = summary("troy", "Troy", "site"), parents = Nil, counts = None,
-      contested = true))
+    val bare =
+      Preview.card(d.copy(place = summary("troy", "Troy", "site"), parents = Nil, counts = None, contested = true))
     assertEquals(bare.byline, "Site · contested extent")
     assertEquals(bare.where, "")
     assertEquals(bare.facts, Nil)
     // CE years too
-    assertEquals(Preview.card(d.copy(place = summary("x", "X", "polity", Some(-30), Some(476)))).byline,
-      "Polity · 30 BCE–476 CE")
+    assertEquals(
+      Preview.card(d.copy(place = summary("x", "X", "polity", Some(-30), Some(476)))).byline,
+      "Polity · 30 BCE–476 CE"
+    )
   }
 
   test("#716: the card sits beside the pointer and flips at the viewport's edges") {
@@ -110,13 +115,12 @@ class PlaceHoverSuite extends munit.FunSuite:
     // every fit stays inside, for any pointer and size
     for x <- 0 to 1200 by 150; y <- 0 to 800 by 100; h <- List(50, 400, 790, 2000) do
       val f = Preview.pointFit(x, y, 300, h, 1200, 800)
-      assert(f.x >= 10 && f.x + 300 <= 1190 && f.y >= 10 && f.y + math.min(h.toDouble, f.maxH) <= 790,
-        s"$x,$y,$h → $f")
+      assert(f.x >= 10 && f.x + 300 <= 1190 && f.y >= 10 && f.y + math.min(h.toDouble, f.maxH) <= 790, s"$x,$y,$h → $f")
   }
 
   test("#717: a click makes a place THE place filter; a second click on it clears it") {
     assertEquals(UiState.toggledPlace(Nil, "hatti"), List("hatti"))
-    assertEquals(UiState.toggledPlace(List("anatolia"), "hatti"), List("hatti"))   // narrows, never widens
+    assertEquals(UiState.toggledPlace(List("anatolia"), "hatti"), List("hatti")) // narrows, never widens
     assertEquals(UiState.toggledPlace(List("hatti"), "hatti"), Nil)
     assertEquals(UiState.toggledPlace(List("anatolia", "hatti"), "hatti"), List("anatolia"))
   }
@@ -150,7 +154,8 @@ class PlaceHoverSuite extends munit.FunSuite:
     jobs = JobCounts(1, 2, 3, 4),
     counts = Some(CorpusCounts(10, 200, 5, 7, 15000, 40, 12)),
     lastBackup = Some(BackupInfo("histmersion-20261001.dump", 2_500_000, "2026-10-01T08:00:00Z")),
-    lastBackupAgeSeconds = Some(90000))
+    lastBackupAgeSeconds = Some(90000)
+  )
 
   test("#718: the About panel shows build, health with states, jobs, backup age and store counts") {
     val s = AboutView.sections(about)
@@ -169,19 +174,33 @@ class PlaceHoverSuite extends munit.FunSuite:
     assertEquals(row("Store", "periods").value, "40")
     assertEquals(row("Store", "period presets").value, "12") // #904: presets counted apart from all periods
     assertEquals(row("Server", "config file").value, "none")
-    val withFile = AboutView.sections(about.copy(configFile = ConfigFileInfo(Some("/c/histmersion.conf"), loaded = true)))
+    val withFile =
+      AboutView.sections(about.copy(configFile = ConfigFileInfo(Some("/c/histmersion.conf"), loaded = true)))
     val cf = withFile.head.rows.find(_.label == "config file").get
     assertEquals((cf.value, cf.detail), ("read", Some("/c/histmersion.conf")))
   }
 
-  test("#2018: the About panel lists the plugins — state badge, version, what each registered, settings as references") {
-    val report = PluginsReport(1, List(
-      PluginStatus("media-met", "1.0.0", 1, enabled = true, "registered", List("media-collection:met")),
-      PluginStatus("portal", "0.2.0", 1, enabled = true, "registered", List("media-collection:portal", "event-catalogue:portal"),
-        List(PluginSetting("token", "env:PORTAL_TOKEN"), PluginSetting("key", "value:***"))),
-      PluginStatus("1password", "1.0.0", 1, enabled = false, "disabled"),
-      PluginStatus("broken", "0.1.0", 1, enabled = true, "failed", error = Some("histmersion.plugins.broken.x: bad"))),
-      List("histmersion.plugins.helo configures no plugin in this binary — ignored"))
+  test(
+    "#2018: the About panel lists the plugins — state badge, version, what each registered, settings as references"
+  ) {
+    val report = PluginsReport(
+      1,
+      List(
+        PluginStatus("media-met", "1.0.0", 1, enabled = true, "registered", List("media-collection:met")),
+        PluginStatus(
+          "portal",
+          "0.2.0",
+          1,
+          enabled = true,
+          "registered",
+          List("media-collection:portal", "event-catalogue:portal"),
+          List(PluginSetting("token", "env:PORTAL_TOKEN"), PluginSetting("key", "value:***"))
+        ),
+        PluginStatus("1password", "1.0.0", 1, enabled = false, "disabled"),
+        PluginStatus("broken", "0.1.0", 1, enabled = true, "failed", error = Some("histmersion.plugins.broken.x: bad"))
+      ),
+      List("histmersion.plugins.helo configures no plugin in this binary — ignored")
+    )
     val s = AboutView.sections(about.copy(plugins = report))
     assertEquals(s.map(_.title), List("Server", "Health", "Job queue", "Backups", "Store", "Plugins"))
     val rows = s.find(_.title == "Plugins").get.rows
@@ -189,22 +208,36 @@ class PlaceHoverSuite extends munit.FunSuite:
     assertEquals((row("media-met").value, row("media-met").state), ("Registered", Some(ServiceState.Ok)))
     assertEquals(row("media-met").label, "Pictures: Met")
     assertEquals(row("media-met").detail, Some("media-met · v1.0.0 · media-collection:met"))
-    assertEquals(row("portal").detail,
-      Some("portal · v0.2.0 · media-collection:portal, event-catalogue:portal · token = env:PORTAL_TOKEN, key = value:***"))
+    assertEquals(
+      row("portal").detail,
+      Some(
+        "portal · v0.2.0 · media-collection:portal, event-catalogue:portal · token = env:PORTAL_TOKEN, key = value:***"
+      )
+    )
     assertEquals(row("1password").state, Some(ServiceState.Unknown))
-    assertEquals((row("broken").state, row("broken").detail),
-      (Some(ServiceState.Down), Some("broken · v0.1.0 · histmersion.plugins.broken.x: bad")))
+    assertEquals(
+      (row("broken").state, row("broken").detail),
+      (Some(ServiceState.Down), Some("broken · v0.1.0 · histmersion.plugins.broken.x: bad"))
+    )
     assertEquals(rows.last, AboutView.Row("", "histmersion.plugins.helo configures no plugin in this binary — ignored"))
     assertEquals(AboutView.plugins(PluginsReport()), None)
   }
 
   test("#718: an unknown converter wording renders as unknown with its text; missing parts are said") {
-    val odd = about.copy(health = about.health.copy(converter = Some("calibrating flux")), counts = None,
-      lastBackup = None, lastBackupAgeSeconds = None, build = BuildStamp("1.2.3"),
-      problems = List("store counts: connection refused"))
+    val odd = about.copy(
+      health = about.health.copy(converter = Some("calibrating flux")),
+      counts = None,
+      lastBackup = None,
+      lastBackupAgeSeconds = None,
+      build = BuildStamp("1.2.3"),
+      problems = List("store counts: connection refused")
+    )
     val s = AboutView.sections(odd)
     val conv = s.find(_.title == "Health").get.rows.find(_.label == "converter").get
-    assertEquals((conv.value, conv.state, conv.detail), ("unknown", Some(ServiceState.Unknown), Some("calibrating flux")))
+    assertEquals(
+      (conv.value, conv.state, conv.detail),
+      ("unknown", Some(ServiceState.Unknown), Some("calibrating flux"))
+    )
     assertEquals(s.map(_.title), List("Server", "Health", "Job queue", "Backups", "Problem"))
     assertEquals(s.find(_.title == "Backups").get.rows.head.value, "none yet")
     assertEquals(s.find(_.title == "Server").get.rows.find(_.label == "commit").get.value, "unknown")

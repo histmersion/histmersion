@@ -8,8 +8,8 @@ import sttp.tapir.Schema
 import java.util.UUID
 import com.histmersion.values.{BundleKind, Confidence, SourceStatus}
 
-/** The portable bundle (`.hmx`, docs/research-merge-import.md §4): a lossless, logical,
-  * identity-carrying export of one collection, built to be imported into another.
+/** The portable bundle (`.hmx`, docs/research-merge-import.md §4): a lossless, logical, identity-carrying export of one
+  * collection, built to be imported into another.
   *
   * A bundle is a gzip-compressed tar of
   * {{{
@@ -17,18 +17,19 @@ import com.histmersion.values.{BundleKind, Confidence, SourceStatus}
   * entities/<kind>.ndjson     one JSON object per line, sorted by uid (or by the owner's uid)
   * blobs/sha256/ab/abcdef…    OCR bodies, article-version bodies, asset bytes, stored originals
   * }}}
-  * Every entity line carries its `uid`, its `origin` (the instance that created it), its `rev` (the
-  * sha256 of the line's canonical JSON without `rev` and `updatedAt`, see `BundleFormat.stamp`) and
-  * its label (citekey, slug, id); other entities are referenced BY UID. Calibre is not part of a
-  * bundle (§3a): `calibre_id` is a per-machine pointer and is never exported.
+  * Every entity line carries its `uid`, its `origin` (the instance that created it), its `rev` (the sha256 of the
+  * line's canonical JSON without `rev` and `updatedAt`, see `BundleFormat.stamp`) and its label (citekey, slug, id);
+  * other entities are referenced BY UID. Calibre is not part of a bundle (§3a): `calibre_id` is a per-machine pointer
+  * and is never exported.
   *
-  * The types here are the FILE format. They have circe codecs (one line = one value) but no tapir
-  * schemas: no endpoint takes or returns them, except the manifest and the reports at the bottom. */
+  * The types here are the FILE format. They have circe codecs (one line = one value) but no tapir schemas: no endpoint
+  * takes or returns them, except the manifest and the reports at the bottom.
+  */
 object Bundle:
-  val Format        = "histmersion-bundle"
+  val Format = "histmersion-bundle"
   val FormatVersion = 1
-  val Extension     = ".hmx"
-  val ManifestPath  = "manifest.json"
+  val Extension = ".hmx"
+  val ManifestPath = "manifest.json"
 
   /** Where a blob lives in the tar: content-addressed, fanned out on its first byte. */
   def blobPath(sha256: String): String = s"blobs/sha256/${sha256.take(2)}/$sha256"
@@ -36,41 +37,65 @@ object Bundle:
   /** The sha256 named by a blob path, when `path` is one. */
   def blobSha(path: String): Option[String] =
     val prefix = "blobs/sha256/"
-    Option.when(path.startsWith(prefix)) {
-      val rest = path.drop(prefix.length)
-      rest.drop(3)
-    }.filter(s => s.length == 64 && s.forall(c => c.isDigit || ('a' to 'f').contains(c)) &&
-      path == blobPath(s))
+    Option
+      .when(path.startsWith(prefix)) {
+        val rest = path.drop(prefix.length)
+        rest.drop(3)
+      }
+      .filter(s =>
+        s.length == 64 && s.forall(c => c.isDigit || ('a' to 'f').contains(c)) &&
+          path == blobPath(s)
+      )
 
-/** The files of a bundle besides the blobs, in the order they are written. The entity files of
-  * [[BundleKind]] come first; the owned sets that have no uid of their own follow. */
+/** The files of a bundle besides the blobs, in the order they are written. The entity files of [[BundleKind]] come
+  * first; the owned sets that have no uid of their own follow.
+  */
 object BundleFiles:
-  val Edges           = "entities/edges.ndjson"
+  val Edges = "entities/edges.ndjson"
   val UnresolvedEdges = "entities/unresolved-edges.ndjson"
-  val Assessments     = "entities/assessments.ndjson"
-  val Aliases         = "entities/aliases.ndjson"
+  val Assessments = "entities/assessments.ndjson"
+  val Aliases = "entities/aliases.ndjson"
+
   /** Old article slugs (`article_aliases`), as old citekeys are [[Aliases]]. */
-  val ArticleAliases  = "entities/article-aliases.ndjson"
+  val ArticleAliases = "entities/article-aliases.ndjson"
+
   /** Old event ids, goal slugs (V053) and place ids (V055) — the same rule as an old article slug. */
-  val EventAliases    = "entities/event-aliases.ndjson"
-  val GoalAliases     = "entities/goal-aliases.ndjson"
-  val PlaceAliases    = "entities/place-aliases.ndjson"
-  /** The event catalogues' records, the event-link candidates and checks, the corrections by hand and
-    * the site types (V085, V088; #1647) — absent from an older bundle, which reads as empty. */
-  val EventCatalogue  = "entities/event-catalogue.ndjson"
+  val EventAliases = "entities/event-aliases.ndjson"
+  val GoalAliases = "entities/goal-aliases.ndjson"
+  val PlaceAliases = "entities/place-aliases.ndjson"
+
+  /** The event catalogues' records, the event-link candidates and checks, the corrections by hand and the site types
+    * (V085, V088; #1647) — absent from an older bundle, which reads as empty.
+    */
+  val EventCatalogue = "entities/event-catalogue.ndjson"
   val EventCandidates = "entities/event-candidates.ndjson"
-  val EventChecks     = "entities/event-checks.ndjson"
-  val Corrections     = "entities/corrections.ndjson"
-  val SiteTypes       = "entities/site-types.ndjson"
-  val Tombstones      = "entities/tombstones.ndjson"
+  val EventChecks = "entities/event-checks.ndjson"
+  val Corrections = "entities/corrections.ndjson"
+  val SiteTypes = "entities/site-types.ndjson"
+  val Tombstones = "entities/tombstones.ndjson"
 
   val all: List[String] =
     BundleKind.values.toList.map(_.file) ++
-      List(Edges, UnresolvedEdges, Assessments, Aliases, ArticleAliases, EventAliases, GoalAliases, PlaceAliases,
-        EventCatalogue, EventCandidates, EventChecks, Corrections, SiteTypes, Tombstones)
+      List(
+        Edges,
+        UnresolvedEdges,
+        Assessments,
+        Aliases,
+        ArticleAliases,
+        EventAliases,
+        GoalAliases,
+        PlaceAliases,
+        EventCatalogue,
+        EventCandidates,
+        EventChecks,
+        Corrections,
+        SiteTypes,
+        Tombstones
+      )
 
-/** A nullable `int8range` read losslessly: `None` bounds are unbounded, both are INCLUSIVE (the
-  * `upper − 1` of AGENTS.md is applied on the way out and undone on the way in). */
+/** A nullable `int8range` read losslessly: `None` bounds are unbounded, both are INCLUSIVE (the `upper − 1` of
+  * AGENTS.md is applied on the way out and undone on the way in).
+  */
 final case class BundleRange(start: Option[Long] = None, end: Option[Long] = None) derives KindlingsCodecAsObject
 
 final case class BundleSource(
@@ -97,13 +122,15 @@ final case class BundleSource(
     bodySha256: Option[String],
     /** `sources.sha256`: the digest of the uploaded original. */
     originalSha256: Option[String],
-    /** The extension the server stored the original under — present iff the original is a blob of
-      * the bundle (a source ingested elsewhere has a digest but no stored file). */
+    /** The extension the server stored the original under — present iff the original is a blob of the bundle (a source
+      * ingested elsewhere has a digest but no stored file).
+      */
     originalExt: Option[String],
     updatedAt: String,
     rev: String = "",
-    /** ISBN-13s recorded for the source (`source_identifiers`); absent when there are none, so a
-      * line written before the field existed keeps its rev. A strong key of the matcher (M3). */
+    /** ISBN-13s recorded for the source (`source_identifiers`); absent when there are none, so a line written before
+      * the field existed keeps its rev. A strong key of the matcher (M3).
+      */
     isbns: Option[List[String]] = None
 ) derives KindlingsCodecAsObject
 
@@ -233,15 +260,26 @@ final case class BundleAttestation(
 ) derives KindlingsCodecAsObject
 
 final case class BundleEventDating(
-    citekey: String, sourceUid: Option[UUID], notBefore: Option[Long], beginBy: Option[Long],
-    endFrom: Option[Long], notAfter: Option[Long], method: Option[String], note: Option[String]
+    citekey: String,
+    sourceUid: Option[UUID],
+    notBefore: Option[Long],
+    beginBy: Option[Long],
+    endFrom: Option[Long],
+    notAfter: Option[Long],
+    method: Option[String],
+    note: Option[String]
 ) derives KindlingsCodecAsObject
 
-final case class BundleEventEdge(dstUid: UUID, kind: String, citekey: String, sourceUid: Option[UUID],
-    note: Option[String]) derives KindlingsCodecAsObject
+final case class BundleEventEdge(
+    dstUid: UUID,
+    kind: String,
+    citekey: String,
+    sourceUid: Option[UUID],
+    note: Option[String]
+) derives KindlingsCodecAsObject
 
-final case class BundleEventParticipant(actor: String, role: String, citekey: Option[String],
-    sourceUid: Option[UUID]) derives KindlingsCodecAsObject
+final case class BundleEventParticipant(actor: String, role: String, citekey: Option[String], sourceUid: Option[UUID])
+    derives KindlingsCodecAsObject
 
 final case class BundleEvent(
     uid: UUID,
@@ -267,13 +305,14 @@ final case class BundleEvent(
     participants: List[BundleEventParticipant],
     updatedAt: String,
     rev: String = "",
-    /** The STATED scale (V078), `local` | `regional`; absent = derived — and absent from the JSON, so
-      * the rev of an event that states none is what it was before the column. */
+    /** The STATED scale (V078), `local` | `regional`; absent = derived — and absent from the JSON, so the rev of an
+      * event that states none is what it was before the column.
+      */
     scale: Option[String] = None,
-    /** The catalogue an import created it from (V085: `gvp`, `noaa`, `wikidata`), its other names, its
-      * Wikidata item (V082), and the dating its catalogue STATES (V088: the year, its ±, the method).
-      * Each is absent when empty, so the rev of an event compiled from sources is what it was before
-      * the fields travelled (#1647). */
+    /** The catalogue an import created it from (V085: `gvp`, `noaa`, `wikidata`), its other names, its Wikidata item
+      * (V082), and the dating its catalogue STATES (V088: the year, its ±, the method). Each is absent when empty, so
+      * the rev of an event compiled from sources is what it was before the fields travelled (#1647).
+      */
     catalogue: Option[String] = None,
     names: Option[List[String]] = None,
     wikidata: Option[String] = None,
@@ -282,9 +321,10 @@ final case class BundleEvent(
     datingMethod: Option[String] = None
 ) derives KindlingsCodecAsObject
 
-/** What a CATALOGUE says about an event (`event_catalogue`, V085), one line per (provider, provider id).
-  * Not an entity of its own: it travels beside its event, by the event's uid, and an import keeps the
-  * newer read of a record (`retrievedAt`). */
+/** What a CATALOGUE says about an event (`event_catalogue`, V085), one line per (provider, provider id). Not an entity
+  * of its own: it travels beside its event, by the event's uid, and an import keeps the newer read of a record
+  * (`retrievedAt`).
+  */
 final case class BundleEventCatalogue(
     eventUid: UUID,
     provider: String,
@@ -306,9 +346,10 @@ final case class BundleEventCatalogue(
     retrievedAt: String
 ) derives KindlingsCodecAsObject
 
-/** A source that POSSIBLY discusses an event (`event_link_candidates`, V085), with its evidence and the
-  * person's decision. An import keeps the newer evidence (`computedAt`), and a decision (`confirmed`,
-  * `rejected`) over a proposal — never a proposal over a decision ([[BundleEventSets.candidateStatus]]). */
+/** A source that POSSIBLY discusses an event (`event_link_candidates`, V085), with its evidence and the person's
+  * decision. An import keeps the newer evidence (`computedAt`), and a decision (`confirmed`, `rejected`) over a
+  * proposal — never a proposal over a decision ([[BundleEventSets.candidateStatus]]).
+  */
 final case class BundleEventCandidate(
     eventUid: UUID,
     sourceUid: UUID,
@@ -324,10 +365,11 @@ final case class BundleEventCandidate(
 /** When an event's candidates were last computed (`event_link_checks`, V085). */
 final case class BundleEventCheck(eventUid: UUID, checkedAt: String) derives KindlingsCodecAsObject
 
-/** A person's correction of one field of something an importer wrote (`corrections`, V088). The JSON
-  * values travel as Postgres's text of them, so a JSON `null` (a cleared field) and an absent refresh
-  * stay apart. `targetUid` is the event's uid, so the correction follows a rename; a place is named by
-  * its gazetteer id. An import keeps the newer (`updatedAt`). */
+/** A person's correction of one field of something an importer wrote (`corrections`, V088). The JSON values travel as
+  * Postgres's text of them, so a JSON `null` (a cleared field) and an absent refresh stay apart. `targetUid` is the
+  * event's uid, so the correction follows a rename; a place is named by its gazetteer id. An import keeps the newer
+  * (`updatedAt`).
+  */
 final case class BundleCorrection(
     targetKind: String,
     targetId: String,
@@ -343,9 +385,10 @@ final case class BundleCorrection(
     checkedAt: Option[String]
 ) derives KindlingsCodecAsObject
 
-/** What a SITE is (`places.site_type`, V085), refined from outside, and when it was last asked — for any
-  * place, the gazetteer's seeds included (they are not carried; their ids are the same everywhere). An
-  * import keeps the newer answer (`checkedAt`). */
+/** What a SITE is (`places.site_type`, V085), refined from outside, and when it was last asked — for any place, the
+  * gazetteer's seeds included (they are not carried; their ids are the same everywhere). An import keeps the newer
+  * answer (`checkedAt`).
+  */
 final case class BundleSiteType(placeId: String, siteType: Option[String], checkedAt: Option[String])
     derives KindlingsCodecAsObject
 
@@ -355,21 +398,29 @@ object BundleEventSets:
   def candidateStatus(here: String, there: String): String =
     if here == "proposed" then there else here
 
-  /** Whether the bundle's version of a timestamped row replaces the one here: only when it is newer
-    * (timestamps share one fixed-width UTC format, so text order is time order). */
+  /** Whether the bundle's version of a timestamped row replaces the one here: only when it is newer (timestamps share
+    * one fixed-width UTC format, so text order is time order).
+    */
   def newer(here: Option[String], there: Option[String]): Boolean = (here, there) match
     case (None, Some(_))    => true
     case (Some(h), Some(t)) => t > h
     case _                  => false
 
-/** What a goal is linked to (`goal_links`, V046). `ref` is the label (a citekey, a slug, the query
-  * text); a queue item's serial id is local, so its `ref` is the item's uid. `refUid` is the uid of a
-  * linked source, article or queue item, so the link follows a rename or a merge. */
-final case class BundleGoalLink(kind: String, ref: String, refUid: Option[UUID], note: Option[String], createdAt: String)
-    derives KindlingsCodecAsObject
+/** What a goal is linked to (`goal_links`, V046). `ref` is the label (a citekey, a slug, the query text); a queue
+  * item's serial id is local, so its `ref` is the item's uid. `refUid` is the uid of a linked source, article or queue
+  * item, so the link follows a rename or a merge.
+  */
+final case class BundleGoalLink(
+    kind: String,
+    ref: String,
+    refUid: Option[UUID],
+    note: Option[String],
+    createdAt: String
+) derives KindlingsCodecAsObject
 
-/** A goal's schedule (`goal_schedules`, V049): what it runs and when. The run-time state (next and
-  * last run, the last note) is this machine's and is not carried. */
+/** A goal's schedule (`goal_schedules`, V049): what it runs and when. The run-time state (next and last run, the last
+  * note) is this machine's and is not carried.
+  */
 final case class BundleGoalSchedule(kind: String, cron: String, enabled: Boolean, budgetUsd: Option[Double])
     derives KindlingsCodecAsObject
 
@@ -387,8 +438,9 @@ final case class BundleGoal(
     createdAt: String,
     updatedAt: String,
     rev: String = "",
-    /** The approved plan (V046) and when it was approved (V054). The four fields below are absent when
-      * empty, so a line written before they existed keeps its rev. */
+    /** The approved plan (V046) and when it was approved (V054). The four fields below are absent when empty, so a line
+      * written before they existed keeps its rev.
+      */
     plan: Option[Json] = None,
     planApprovedAt: Option[String] = None,
     /** The goal's default run cap in USD. */
@@ -425,10 +477,12 @@ final case class BundleGoalAlias(alias: String, goalUid: UUID, createdAt: String
 final case class BundlePlaceAlias(alias: String, placeUid: UUID, createdAt: String) derives KindlingsCodecAsObject
 
 /** One name of a place (`place_names`). */
-final case class BundlePlaceName(name: String, lang: Option[String], period: Option[BundleRange]) derives KindlingsCodecAsObject
+final case class BundlePlaceName(name: String, lang: Option[String], period: Option[BundleRange])
+    derives KindlingsCodecAsObject
 
 /** A parent of a place (`place_relations`, this place the child), by the parent's gazetteer id. */
-final case class BundlePlaceRelation(parentId: String, kind: String, period: Option[BundleRange]) derives KindlingsCodecAsObject
+final case class BundlePlaceRelation(parentId: String, kind: String, period: Option[BundleRange])
+    derives KindlingsCodecAsObject
 
 /** An external identifier of a place (`place_links`: Pleiades, Wikidata…). */
 final case class BundlePlaceLink(scheme: String, externalId: String, relation: String) derives KindlingsCodecAsObject
@@ -437,8 +491,9 @@ final case class BundlePlaceLink(scheme: String, externalId: String, relation: S
 final case class BundlePlaceType(typeLabel: String, period: Option[BundleRange], citekey: Option[String])
     derives KindlingsCodecAsObject
 
-/** A place added here (`places.dataset = 'local'`), with the sets it owns. Events point at places by
-  * `id`, so a place matched to another one here under a different id has its events re-pointed. */
+/** A place added here (`places.dataset = 'local'`), with the sets it owns. Events point at places by `id`, so a place
+  * matched to another one here under a different id has its events re-pointed.
+  */
 final case class BundlePlace(
     uid: UUID,
     origin: UUID,
@@ -490,17 +545,19 @@ final case class BundleBlobs(count: Int, bytes: Long) derives KindlingsCodecAsOb
 object BundleBlobs:
   given Schema[BundleBlobs] = KindlingsSchema.derived[BundleBlobs].schema
 
-/** The reference data a bundle does NOT carry, fingerprinted: the gazetteer and the named periods
-  * come from the same bundled seeds on every instance (`histmersion init`), so events point into them
-  * by id. A differing fingerprint is reported on import, never fatal. */
+/** The reference data a bundle does NOT carry, fingerprinted: the gazetteer and the named periods come from the same
+  * bundled seeds on every instance (`histmersion init`), so events point into them by id. A differing fingerprint is
+  * reported on import, never fatal.
+  */
 final case class BundleReference(places: Int, placesDigest: String, periods: Int, periodsDigest: String)
     derives KindlingsCodecAsObject
 object BundleReference:
   given Schema[BundleReference] = KindlingsSchema.derived[BundleReference].schema
 
-/** `manifest.json`. Deterministic: there is no wall-clock export time — `asOf` is the newest change
-  * the bundle carries (the value to pass as the next `--since`), and `bundleId` is derived from the
-  * instance and the content, so two exports of an unchanged database are byte-identical. */
+/** `manifest.json`. Deterministic: there is no wall-clock export time — `asOf` is the newest change the bundle carries
+  * (the value to pass as the next `--since`), and `bundleId` is derived from the instance and the content, so two
+  * exports of an unchanged database are byte-identical.
+  */
 final case class BundleManifest(
     format: String,
     formatVersion: Int,
@@ -555,10 +612,11 @@ final case class BundleKindCounts(
 object BundleKindCounts:
   given Schema[BundleKindCounts] = KindlingsSchema.derived[BundleKindCounts].schema
 
-/** `POST /api/bundle/import`. `problems` are blocking — when there are any nothing was written;
-  * among them every open issue of the merge plan (`issues` has them whole, to render as `merge plan`
-  * does) and every decision only `merge apply` can carry out. `conflicts` are rows changed on BOTH
-  * sides since the last import that a resolution decided; `notes` are informational. */
+/** `POST /api/bundle/import`. `problems` are blocking — when there are any nothing was written; among them every open
+  * issue of the merge plan (`issues` has them whole, to render as `merge plan` does) and every decision only
+  * `merge apply` can carry out. `conflicts` are rows changed on BOTH sides since the last import that a resolution
+  * decided; `notes` are informational.
+  */
 final case class BundleImportResult(
     bundleId: UUID,
     from: BundleInstance,
@@ -570,8 +628,8 @@ final case class BundleImportResult(
     conflicts: List[String],
     notes: List[String],
     mergeId: Option[UUID] = None,
-    /** The plan's issues that hold this import up (open, or decided in a way only `merge apply` can
-      * carry out). */
+    /** The plan's issues that hold this import up (open, or decided in a way only `merge apply` can carry out).
+      */
     issues: List[MergeIssue] = Nil,
     planHash: Option[String] = None
 ) derives KindlingsCodecAsObject:

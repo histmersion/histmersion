@@ -2,26 +2,29 @@ package com.histmersion.web
 
 import scala.collection.mutable
 
-/** A cache with a ceiling (#1949): at most `maxEntries` entries and at most `maxWeight` of their
-  * summed weight, the least recently used going first. Every cache the page keeps for its life is one
-  * of these — a hover card per source, place GeoJSON per year, a label per gazetteer id — so a long
-  * session costs a bounded amount of memory, however much it hovers, drags or types.
+/** A cache with a ceiling (#1949): at most `maxEntries` entries and at most `maxWeight` of their summed weight, the
+  * least recently used going first. Every cache the page keeps for its life is one of these — a hover card per source,
+  * place GeoJSON per year, a label per gazetteer id — so a long session costs a bounded amount of memory, however much
+  * it hovers, drags or types.
   *
-  * A value's weight is `weigh(value)` when it is put; a value whose size is known only later (a
-  * `Future` still on its way) is weighed again with [[reweigh]]. One entry heavier than the whole
-  * budget is still kept — it is what was just asked for — and alone. Not thread-safe: the page has one
-  * thread. Pure apart from its own state; no browser API. */
-final class BoundedCache[K, V](val maxEntries: Int, val maxWeight: Long = Long.MaxValue,
-    weigh: V => Long = (_: V) => 0L):
+  * A value's weight is `weigh(value)` when it is put; a value whose size is known only later (a `Future` still on its
+  * way) is weighed again with [[reweigh]]. One entry heavier than the whole budget is still kept — it is what was just
+  * asked for — and alone. Not thread-safe: the page has one thread. Pure apart from its own state; no browser API.
+  */
+final class BoundedCache[K, V](
+    val maxEntries: Int,
+    val maxWeight: Long = Long.MaxValue,
+    weigh: V => Long = (_: V) => 0L
+):
   require(maxEntries > 0, "a cache holds at least one entry")
   // insertion order is recency: an entry read or written moves to the end
   private val entries = mutable.LinkedHashMap.empty[K, (V, Long)]
   // `var`: the summed weight of `entries`, kept with every change
   private var total = 0L
 
-  def size: Int      = entries.size
-  def weight: Long   = total
-  def keys: List[K]  = entries.keys.toList
+  def size: Int = entries.size
+  def weight: Long = total
+  def keys: List[K] = entries.keys.toList
   def contains(k: K): Boolean = entries.contains(k)
 
   /** The value of `k`, now the most recently used. */
@@ -44,7 +47,7 @@ final class BoundedCache[K, V](val maxEntries: Int, val maxWeight: Long = Long.M
   def getOrElseUpdate(k: K, v: => V): V =
     get(k) match
       case Some(x) => x
-      case None =>
+      case None    =>
         val x = v
         put(k, x)
         x

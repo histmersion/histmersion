@@ -6,8 +6,9 @@ import com.augustnagro.magnum.*
 import java.time.{Instant, LocalDate}
 import javax.sql.DataSource
 
-/** A metered upstream's budget (migration V103), one row per upstream. Stateless. The recent call slots
-  * (pacing within a minute) are not kept: see [[CoreQuota.State]]. */
+/** A metered upstream's budget (migration V103), one row per upstream. Stateless. The recent call slots (pacing within
+  * a minute) are not kept: see [[CoreQuota.State]].
+  */
 object UpstreamQuotaRepo:
 
   // Times cross as epoch milliseconds (no timestamp codec in the native image), a day as its ISO text.
@@ -17,20 +18,26 @@ object UpstreamQuotaRepo:
       sql"""SELECT day::text, lookup_tokens, search_tokens, (extract(epoch FROM blocked_until) * 1000)::bigint, blocked_why,
                    rate_limit, rate_remaining, (extract(epoch FROM observed_at) * 1000)::bigint
             FROM upstream_quota WHERE upstream = $upstream"""
-        .query[(String, Int, Int, Option[Long], Option[String], Option[Int], Option[Int], Option[Long])].run().headOption
+        .query[(String, Int, Int, Option[Long], Option[String], Option[Int], Option[Int], Option[Long])]
+        .run()
+        .headOption
         .map { (day, lookups, searches, until, why, limit, remaining, at) =>
-          CoreQuota.State(LocalDate.parse(day), lookups, searches,
+          CoreQuota.State(
+            LocalDate.parse(day),
+            lookups,
+            searches,
             until.map(u => CoreQuota.Block(Instant.ofEpochMilli(u), why.getOrElse("asked to wait"))),
-            at.map(t => CoreQuota.Window(limit, remaining, Instant.ofEpochMilli(t))))
+            at.map(t => CoreQuota.Window(limit, remaining, Instant.ofEpochMilli(t)))
+          )
         }
 
   def save(ds: DataSource, upstream: String, s: CoreQuota.State): Unit =
-    val day       = s.day.toString
-    val until     = s.block.map(_.until.toEpochMilli.toDouble / 1000)
-    val why       = s.block.map(_.why)
-    val limit     = s.window.flatMap(_.limit)
+    val day = s.day.toString
+    val until = s.block.map(_.until.toEpochMilli.toDouble / 1000)
+    val why = s.block.map(_.why)
+    val limit = s.window.flatMap(_.limit)
     val remaining = s.window.flatMap(_.remaining)
-    val at        = s.window.map(_.at.toEpochMilli.toDouble / 1000)
+    val at = s.window.map(_.at.toEpochMilli.toDouble / 1000)
     val _ = transact(ds):
       sql"""INSERT INTO upstream_quota (upstream, day, lookup_tokens, search_tokens, blocked_until, blocked_why, rate_limit,
                                         rate_remaining, observed_at, updated_at)

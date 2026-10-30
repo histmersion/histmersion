@@ -22,7 +22,7 @@ final class IronNewtypeToNewtypeExtension extends ChimneyMacroExtension:
           withQuotes { quotes ?=>
             val pairs: IronNewtypePairs = IronNewtypePairs(using quotes)
             given scala.quoted.Type[From] = quotedType(From)
-            given scala.quoted.Type[To]   = quotedType(To)
+            given scala.quoted.Type[To] = quotedType(To)
             pairs.pair[From, To] match
               case pairs.NewtypePair.SameRefinedType(from, to) =>
                 pairs.rewrap[To](from, to, quotedExpr(sourceOf(using context))) match
@@ -38,9 +38,8 @@ final class IronNewtypeToNewtypeExtension extends ChimneyMacroExtension:
         withQuotes { quotes ?=>
           val pairs: IronNewtypePairs = IronNewtypePairs(using quotes)
           given scala.quoted.Type[From] = quotedType(From)
-          given scala.quoted.Type[To]   = quotedType(To)
+          given scala.quoted.Type[To] = quotedType(To)
           pairs.pair[From, To] match
             case pairs.NewtypePair.NotSameNamedNewtypes => None
             case _                                      => Some(rewrapNewtype[From, To])
-        }
-    )
+        })

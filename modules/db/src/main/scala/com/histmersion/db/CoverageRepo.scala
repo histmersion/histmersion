@@ -8,12 +8,13 @@ import com.augustnagro.magnum.*
 import javax.sql.DataSource
 
 given DbCodec[CoverageSource] = DbCodec.derived
-given DbCodec[CoverageEdge]   = DbCodec.derived
+given DbCodec[CoverageEdge] = DbCodec.derived
 
-/** What an article's coverage (#958) reads from the corpus: the whole source set of its filter (not
-  * a ranked page — no FTS ranking, no snippets), which of a set of citekeys the filter returns, and
-  * the disagreement edges touching the cited sources. Every predicate is [[FilterSql.where]], THE
-  * source predicate `/api/sources` uses, so "the filter returns N" here and `search` agree. Stateless. */
+/** What an article's coverage (#958) reads from the corpus: the whole source set of its filter (not a ranked page — no
+  * FTS ranking, no snippets), which of a set of citekeys the filter returns, and the disagreement edges touching the
+  * cited sources. Every predicate is [[FilterSql.where]], THE source predicate `/api/sources` uses, so "the filter
+  * returns N" here and `search` agree. Stateless.
+  */
 object CoverageRepo:
 
   import Param.*
@@ -23,8 +24,8 @@ object CoverageRepo:
     connect(ds):
       val total = FilterSql.countQuery(f, scope).frag.query[Int].run().headOption.getOrElse(0)
       val rows = (Sql.raw("SELECT s.citekey, s.title, s.year, s.status, s.authors FROM sources s WHERE ") ++
-        FilterSql.where(f, scope) ++ Sql.of(" ORDER BY s.citekey LIMIT ?", I(math.max(0, cap))))
-        .frag.query[CoverageSource].run().toList
+        FilterSql.where(f, scope) ++ Sql
+          .of(" ORDER BY s.citekey LIMIT ?", I(math.max(0, cap)))).frag.query[CoverageSource].run().toList
       (total, rows)
 
   /** How many sources `f` selects, and which of `citekeys` are among them (exact, whatever their number). */
@@ -44,6 +45,6 @@ object CoverageRepo:
     else
       connect(ds):
         sql"""SELECT e.src, e.kind, e.dst FROM edges e
-              WHERE e.kind = ANY(${kinds}::text[])
+              WHERE e.kind = ANY($kinds::text[])
                 AND (e.src = ANY(${citekeys.distinct}::text[]) OR e.dst = ANY(${citekeys.distinct}::text[]))
               ORDER BY 1, 2, 3""".query[CoverageEdge].run().toList

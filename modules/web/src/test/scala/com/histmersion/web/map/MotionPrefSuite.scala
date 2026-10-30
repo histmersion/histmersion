@@ -2,9 +2,10 @@ package com.histmersion.web.map
 
 import com.histmersion.web.{Store, UiState}
 
-/** The reader's "Map motion" (#4718): what each choice decides with and without the system's reduced-motion
-  * setting, what MapLibre is told, the stylesheet's attribute, when the menu's note shows — and the choice
-  * kept per device. Runs in Node: no `matchMedia`, so the system's setting is set by hand. */
+/** The reader's "Map motion" (#4718): what each choice decides with and without the system's reduced-motion setting,
+  * what MapLibre is told, the stylesheet's attribute, when the menu's note shows — and the choice kept per device. Runs
+  * in Node: no `matchMedia`, so the system's setting is set by hand.
+  */
 class MotionPrefSuite extends munit.FunSuite:
 
   override def afterEach(context: AfterEach): Unit =
@@ -55,7 +56,11 @@ class MotionPrefSuite extends munit.FunSuite:
     assert(!MapLibreSurface.eases(false))
     val o = MapLibreSurface.motion(true, scala.scalajs.js.Dynamic.literal()).asInstanceOf[scala.scalajs.js.Dynamic]
     assertEquals(o.animate.asInstanceOf[Boolean], true)
-    assertEquals(o.essential.asInstanceOf[Boolean], true, "essential: MapLibre does not drop it for the system's setting")
+    assertEquals(
+      o.essential.asInstanceOf[Boolean],
+      true,
+      "essential: MapLibre does not drop it for the system's setting"
+    )
     MotionPref.choose(MapMotion.Never)
     val n = MapLibreSurface.motion(true, scala.scalajs.js.Dynamic.literal()).asInstanceOf[scala.scalajs.js.Dynamic]
     assertEquals(n.animate.asInstanceOf[Boolean], false)

@@ -7,10 +7,11 @@ import com.histmersion.db.{AgentRepo, JobRepo}
 
 import java.time.Instant
 
-/** The list filters a client sent (core [[ListFilters]]), checked and turned into the repos' queries:
-  * a value outside a closed vocabulary (a state, a kind of approval, a pipeline, an origin) is a 400
-  * naming the words that are allowed, and a time bound is read once, here, against `now`. Free
-  * vocabularies (job kinds, managers, models) pass as they are. Pure. */
+/** The list filters a client sent (core [[ListFilters]]), checked and turned into the repos' queries: a value outside a
+  * closed vocabulary (a state, a kind of approval, a pipeline, an origin) is a 400 naming the words that are allowed,
+  * and a time bound is read once, here, against `now`. Free vocabularies (job kinds, managers, models) pass as they
+  * are. Pure.
+  */
 object ListQueries:
 
   private def bad(m: String): ApiError = ApiError(m)
@@ -20,14 +21,22 @@ object ListQueries:
     val n = f.normalized
     for
       state <- n.state match
-                 case None        => Right(Some(ApprovalState.Open))
-                 case Some("all") => Right(None)
-                 case Some(s) =>
-                   ApprovalState.parse(s).map(Some(_))
-                     .toRight(bad(s"unknown state '$s' (one of: ${(ApprovalState.values.map(_.wire) :+ "all").mkString(", ")})"))
+        case None        => Right(Some(ApprovalState.Open))
+        case Some("all") => Right(None)
+        case Some(s)     =>
+          ApprovalState
+            .parse(s)
+            .map(Some(_))
+            .toRight(bad(s"unknown state '$s' (one of: ${(ApprovalState.values.map(_.wire) :+ "all").mkString(", ")})"))
       kinds <- ListFilters.known("kind", n.kind, ApprovalKind.values.map(_.wire).toSeq).left.map(bad)
-      by    <- ListFilters.known("decidedBy", n.decidedBy, DecidedBy.values.map(_.wire).toSeq).left.map(bad)
-    yield AgentRepo.ApprovalQuery(state, kinds.flatMap(ApprovalKind.parse), n.subject, n.goal, by.flatMap(DecidedBy.parse))
+      by <- ListFilters.known("decidedBy", n.decidedBy, DecidedBy.values.map(_.wire).toSeq).left.map(bad)
+    yield AgentRepo.ApprovalQuery(
+      state,
+      kinds.flatMap(ApprovalKind.parse),
+      n.subject,
+      n.goal,
+      by.flatMap(DecidedBy.parse)
+    )
 
   def runs(f: RunFilter, now: Instant): Either[ApiError, AgentRepo.RunQuery] =
     val n = f.normalized

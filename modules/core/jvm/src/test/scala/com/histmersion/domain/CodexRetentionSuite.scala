@@ -21,15 +21,20 @@ class CodexRetentionSuite extends munit.FunSuite:
       FileInfo("auth.json", 1, now - 400 * Day),
       FileInfo("state_5.sqlite", 1, now - 400 * Day),
       FileInfo("extractor.config.toml", 1, now - 400 * Day),
-      FileInfo("sessions", 1, now - 400 * Day))
-    assertEquals(CodexRetention.stale(files, now, 14).map(_.rel),
-      List("archived_sessions/rollout-c.jsonl", "sessions/2026/09/01/rollout-a.jsonl"))
+      FileInfo("sessions", 1, now - 400 * Day)
+    )
+    assertEquals(
+      CodexRetention.stale(files, now, 14).map(_.rel),
+      List("archived_sessions/rollout-c.jsonl", "sessions/2026/09/01/rollout-a.jsonl")
+    )
     assertEquals(CodexRetention.stale(files, now, 0), Nil, "0 keeps every transcript")
     assert(!CodexRetention.inSessions("sessions/../auth.json"))
 
   test("the SQLite files at the top of the home, not their journals; a pass is due once per interval"):
-    assertEquals(CodexRetention.sqliteFiles(List("state_5.sqlite-wal", "thread_history_1.sqlite", "state_5.sqlite", "auth.json")),
-      List("state_5.sqlite", "thread_history_1.sqlite"))
+    assertEquals(
+      CodexRetention.sqliteFiles(List("state_5.sqlite-wal", "thread_history_1.sqlite", "state_5.sqlite", "auth.json")),
+      List("state_5.sqlite", "thread_history_1.sqlite")
+    )
     assert(CodexRetention.due(None, now, 24))
     assert(!CodexRetention.due(Some(now - Day + 1), now, 24))
     assert(CodexRetention.due(Some(now - Day), now, 24))

@@ -8,12 +8,12 @@ import com.histmersion.values.PlaceKind
 
 /** The restore lock (plan §1.10) must cover EVERY write, not the handful it started with.
   *
-  * A restore drops and recreates every table; a write that slips past the lock writes into a schema
-  * that is about to be replaced, and the writer is told it succeeded. This drives the handlers
-  * directly rather than over HTTP: the point is that no write path forgets the guard, and the route
-  * layer only translates the answer into a 503. */
+  * A restore drops and recreates every table; a write that slips past the lock writes into a schema that is about to be
+  * replaced, and the writer is told it succeeded. This drives the handlers directly rather than over HTTP: the point is
+  * that no write path forgets the guard, and the route layer only translates the answer into a 503.
+  */
 class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = { val b = AppConfig.load(); b.copy(db = b.db.copy(url = testDb.get)) }
@@ -26,8 +26,9 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
 
   private object NoConverter extends ConverterClient:
     def health: Either[String, String] = Right("ok")
-    def convert(file: java.nio.file.Path, filename: String, quality: Boolean)
-        : Either[String, ConvertedDoc] = Left("not used")
+    def convert(file: java.nio.file.Path, filename: String, quality: Boolean): Either[String, ConvertedDoc] = Left(
+      "not used"
+    )
 
   /** Run `f` while the maintenance lock is held, exactly as a restore holds it. */
   private def underLock[A](f: => Either[ApiError, A]): Either[ApiError, A] =
@@ -40,8 +41,8 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
     val e = r.swap.toOption.getOrElse(fail(s"$name was NOT refused while a restore held the lock"))
     assertEquals(e.code, Some(Backup.CodeMaintenance), s"$name: ${e.message}")
 
-  private val png = AssetInput("f.png", "image/png",
-    java.util.Base64.getEncoder.encodeToString(Array[Byte](1, 2, 3)), None, None, None)
+  private val png =
+    AssetInput("f.png", "image/png", java.util.Base64.getEncoder.encodeToString(Array[Byte](1, 2, 3)), None, None, None)
 
   test("every source write is refused while a restore holds the lock"):
     refused("put_source")(h.putSource("zzlock_src", SourcePut(title = "T")))

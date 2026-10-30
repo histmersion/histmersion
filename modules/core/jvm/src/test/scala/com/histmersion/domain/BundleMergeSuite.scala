@@ -7,27 +7,97 @@ import com.histmersion.files.*
 import java.util.UUID
 import com.histmersion.values.BundleKind
 
-/** The merge's side of the `.hmx` bundle: localizing the event-catalogue sets, folding two events, and the
-  * import decisions. */
+/** The merge's side of the `.hmx` bundle: localizing the event-catalogue sets, folding two events, and the import
+  * decisions.
+  */
 class BundleMergeSuite extends munit.FunSuite:
 
   private val U1 = UUID.fromString("01920000-0000-7000-8000-000000000001")
   private val U2 = UUID.fromString("01920000-0000-7000-8000-000000000002")
   private val U3 = UUID.fromString("01920000-0000-7000-8000-000000000003")
-  private val I  = UUID.fromString("01910000-0000-7000-8000-0000000000aa")
+  private val I = UUID.fromString("01910000-0000-7000-8000-0000000000aa")
   // ── the event-catalogue sets (#1647) ─────────────────────────────────────────────────────────
 
-  private def event(extra: BundleEvent => BundleEvent = identity) = extra(BundleEvent(U1, I, "e1", "Eruption", "eruption",
-    Some(-1600), None, None, Some(-1500), "attested", None, None, None, None, None, None, Nil, Nil, Nil,
-    "2026-10-03T00:00:00.000000Z"))
+  private def event(extra: BundleEvent => BundleEvent = identity) = extra(
+    BundleEvent(
+      U1,
+      I,
+      "e1",
+      "Eruption",
+      "eruption",
+      Some(-1600),
+      None,
+      None,
+      Some(-1500),
+      "attested",
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      Nil,
+      Nil,
+      Nil,
+      "2026-10-03T00:00:00.000000Z"
+    )
+  )
 
   test("the event-catalogue sets localize: a matched event's uid is replaced by the local one"):
-    val es = BundleEntities(eventCatalogue = List(BundleEventCatalogue(U1, "gvp", "1", None, "x", "eruption", None, None,
-        None, None, None, None, None, None, None, "attested", io.circe.Json.obj(), "2026-10-05T00:00:00.000000Z")),
-      eventCandidates = List(BundleEventCandidate(U1, U2, "ck", 1.0, "proposed", Nil, io.circe.Json.arr(), Nil, "2026-10-05T00:00:00.000000Z")),
+    val es = BundleEntities(
+      eventCatalogue = List(
+        BundleEventCatalogue(
+          U1,
+          "gvp",
+          "1",
+          None,
+          "x",
+          "eruption",
+          None,
+          None,
+          None,
+          None,
+          None,
+          None,
+          None,
+          None,
+          None,
+          "attested",
+          io.circe.Json.obj(),
+          "2026-10-05T00:00:00.000000Z"
+        )
+      ),
+      eventCandidates = List(
+        BundleEventCandidate(
+          U1,
+          U2,
+          "ck",
+          1.0,
+          "proposed",
+          Nil,
+          io.circe.Json.arr(),
+          Nil,
+          "2026-10-05T00:00:00.000000Z"
+        )
+      ),
       eventChecks = List(BundleEventCheck(U1, "2026-10-05T00:00:00.000000Z")),
-      corrections = List(BundleCorrection("event", "e1", Some(U1), "label", "1", None, "2", None, "active",
-        "2026-10-05T00:00:00.000000Z", "2026-10-05T00:00:00.000000Z", None)))
+      corrections = List(
+        BundleCorrection(
+          "event",
+          "e1",
+          Some(U1),
+          "label",
+          "1",
+          None,
+          "2",
+          None,
+          "active",
+          "2026-10-05T00:00:00.000000Z",
+          "2026-10-05T00:00:00.000000Z",
+          None
+        )
+      )
+    )
     val l = MergePlanner.localize(es, Map(U1 -> U3, U2 -> U1), Map.empty)
     assertEquals(l.eventCatalogue.map(_.eventUid), List(U3))
     assertEquals(l.eventCandidates.map(c => (c.eventUid, c.sourceUid)), List((U3, U1)))
@@ -36,15 +106,22 @@ class BundleMergeSuite extends munit.FunSuite:
 
   test("folding two events keeps one stated dating whole and both sets of names"):
     val w = event(_.copy(names = Some(List("Thera")), catalogue = None))
-    val o = event(_.copy(uid = U2, names = Some(List("Santorini", "Thera")), catalogue = Some("gvp"), central = Some(-1560),
-      plusMinus = Some(10), datingMethod = Some("radiocarbon")))
+    val o = event(
+      _.copy(
+        uid = U2,
+        names = Some(List("Santorini", "Thera")),
+        catalogue = Some("gvp"),
+        central = Some(-1560),
+        plusMinus = Some(10),
+        datingMethod = Some("radiocarbon")
+      )
+    )
     val f = MergeFold.foldEvent(w, o)
     assertEquals(f.names, Some(List("Thera", "Santorini")))
     assertEquals(f.catalogue, Some("gvp"))
     assertEquals((f.central, f.plusMinus, f.datingMethod), (Some(-1560L), Some(10L), Some("radiocarbon")))
     val w2 = w.copy(plusMinus = Some(50))
     assertEquals(MergeFold.foldEvent(w2, o).central, None, "the winner's own statement is not mixed with the other's")
-
 
   import BundlePlan.{Decision, Ledger, Local}
 
@@ -55,10 +132,10 @@ class BundleMergeSuite extends munit.FunSuite:
     assertEquals(d(None, tomb = true), Decision.SkipDeleted)
     assertEquals(d(Some("F")), Decision.Unchanged)
     assertEquals(d(Some("L"), own = true), Decision.KeepLocal)
-    assertEquals(d(Some("L"), ledger = Some(Ledger("F", Some("X")))), Decision.KeepLocal)     // theirs unchanged
-    assertEquals(d(Some("L"), ledger = Some(Ledger("E", Some("L")))), Decision.FastForward)   // ours unchanged
-    assertEquals(d(Some("L"), ledger = Some(Ledger("E", Some("X")))), Decision.Conflict)      // both changed
-    assertEquals(d(Some("L")), Decision.Conflict)                                             // never merged
+    assertEquals(d(Some("L"), ledger = Some(Ledger("F", Some("X")))), Decision.KeepLocal) // theirs unchanged
+    assertEquals(d(Some("L"), ledger = Some(Ledger("E", Some("L")))), Decision.FastForward) // ours unchanged
+    assertEquals(d(Some("L"), ledger = Some(Ledger("E", Some("X")))), Decision.Conflict) // both changed
+    assertEquals(d(Some("L")), Decision.Conflict) // never merged
 
   test("tombstones: delete only what is still as the last merge left it; record the rest"):
     def t(local: Option[String], tomb: Boolean = false, ledger: Option[Ledger] = None) =
@@ -80,9 +157,13 @@ class BundleMergeSuite extends munit.FunSuite:
     val refs = List(
       BundleEntities.Reference(BundleKind.Source, src, asset, "asset", required = true),
       BundleEntities.Reference(BundleKind.Asset, asset, link, "link", required = true),
-      BundleEntities.Reference(BundleKind.Event, src, ev, "parent", required = false))
-    val out = BundlePlan.cascade(Map(src -> Decision.SkipDeleted, asset -> Decision.Insert, link -> Decision.Insert,
-      ev -> Decision.Insert), refs, _ => false)
+      BundleEntities.Reference(BundleKind.Event, src, ev, "parent", required = false)
+    )
+    val out = BundlePlan.cascade(
+      Map(src -> Decision.SkipDeleted, asset -> Decision.Insert, link -> Decision.Insert, ev -> Decision.Insert),
+      refs,
+      _ => false
+    )
     assertEquals(out(asset), Decision.SkipDeleted)
     assertEquals(out(link), Decision.SkipDeleted)
     assertEquals(out(ev), Decision.Insert)
@@ -90,7 +171,9 @@ class BundleMergeSuite extends munit.FunSuite:
     assertEquals(BundlePlan.cascade(Map(asset -> Decision.Insert), refs.take(1), _ == src)(asset), Decision.SkipDeleted)
 
   test("counts tally every decision under its kind"):
-    val c = BundlePlan.counts(BundleKind.Goal, List(Decision.Insert, Decision.Insert, Decision.Conflict,
-      Decision.RecordTombstone, Decision.Delete))
+    val c = BundlePlan.counts(
+      BundleKind.Goal,
+      List(Decision.Insert, Decision.Insert, Decision.Conflict, Decision.RecordTombstone, Decision.Delete)
+    )
     assertEquals(c, BundleKindCounts(BundleKind.Goal, inserted = 2, conflicts = 1, unchanged = 1, deleted = 1))
     assertEquals(c.changed, 3)

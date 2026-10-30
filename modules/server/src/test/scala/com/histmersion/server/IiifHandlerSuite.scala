@@ -8,8 +8,9 @@ import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 
-/** Unit tests for [[IiifHandler]]'s pure image processing: region cropping, size scaling, and
-  * format encoding. No database — a synthetic test image is used. */
+/** Unit tests for [[IiifHandler]]'s pure image processing: region cropping, size scaling, and format encoding. No
+  * database — a synthetic test image is used.
+  */
 class IiifHandlerSuite extends munit.FunSuite:
 
   /** A 100x80 red PNG. */

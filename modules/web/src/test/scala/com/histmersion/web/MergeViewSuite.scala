@@ -5,32 +5,78 @@ import com.histmersion.api.*
 import java.util.UUID
 import com.histmersion.values.{BundleKind, DecisionKind, IssueKind, IssueSeverity}
 
-/** The pure parts of the merge review screen: grouping and counting the issues, the filter, keeping a
-  * decision, the field table's result column, the diff3 editor's starting text, the span bars. */
+/** The pure parts of the merge review screen: grouping and counting the issues, the filter, keeping a decision, the
+  * field table's result column, the diff3 editor's starting text, the span bars.
+  */
 class MergeViewSuite extends munit.FunSuite:
 
   private val U = UUID.fromString("0191a2f0-0000-7000-8000-000000000001")
 
-  private def issue(id: String, sev: IssueSeverity = IssueSeverity.Blocking, decision: Option[String] = None,
-      cond: Option[IssueCondition] = None, kind: IssueKind = IssueKind.StatusDiffers): MergeIssue =
-    MergeIssue(id, kind, sev, BundleKind.Source, s"title of $id", Some(IssueSide(s"left_$id", U)), Some(IssueSide(s"right_$id", U)),
-      options = List(DecisionKind.KeepLeft, DecisionKind.KeepRight), condition = cond,
-      decision = decision.map(d => MergeDecision.parse(d).toOption.get))
+  private def issue(
+      id: String,
+      sev: IssueSeverity = IssueSeverity.Blocking,
+      decision: Option[String] = None,
+      cond: Option[IssueCondition] = None,
+      kind: IssueKind = IssueKind.StatusDiffers
+  ): MergeIssue =
+    MergeIssue(
+      id,
+      kind,
+      sev,
+      BundleKind.Source,
+      s"title of $id",
+      Some(IssueSide(s"left_$id", U)),
+      Some(IssueSide(s"right_$id", U)),
+      options = List(DecisionKind.KeepLeft, DecisionKind.KeepRight),
+      condition = cond,
+      decision = decision.map(d => MergeDecision.parse(d).toOption.get)
+    )
 
   private def plan(is: List[MergeIssue], changes: Int = 3): MergePlan =
-    MergePlan(U, BundleInstance(U, Some("work")), BundleInstance(U, Some("home")), 1, "54", None, "cafe0123",
-      MatchCounts(), Nil, is, Nil, Nil, Nil, 0, changes)
+    MergePlan(
+      U,
+      BundleInstance(U, Some("work")),
+      BundleInstance(U, Some("home")),
+      1,
+      "54",
+      None,
+      "cafe0123",
+      MatchCounts(),
+      Nil,
+      is,
+      Nil,
+      Nil,
+      Nil,
+      0,
+      changes
+    )
 
   test("issues are grouped open, decided, conditional, defaults, info — empty groups left out"):
-    val is = List(issue("S-1"), issue("S-2", decision = Some("keep-left")),
-      issue("S-3", cond = Some(IssueCondition("S-9", DecisionKind.Map))), issue("O-4", IssueSeverity.Default, Some("keep-left")))
-    assertEquals(MergeView.grouped(is).map((g, xs) => g -> xs.map(_.id)), List(
-      MergeView.Group.Open -> List("S-1"), MergeView.Group.Decided -> List("S-2"),
-      MergeView.Group.Conditional -> List("S-3"), MergeView.Group.Defaults -> List("O-4")))
+    val is = List(
+      issue("S-1"),
+      issue("S-2", decision = Some("keep-left")),
+      issue("S-3", cond = Some(IssueCondition("S-9", DecisionKind.Map))),
+      issue("O-4", IssueSeverity.Default, Some("keep-left"))
+    )
+    assertEquals(
+      MergeView.grouped(is).map((g, xs) => g -> xs.map(_.id)),
+      List(
+        MergeView.Group.Open -> List("S-1"),
+        MergeView.Group.Decided -> List("S-2"),
+        MergeView.Group.Conditional -> List("S-3"),
+        MergeView.Group.Defaults -> List("O-4")
+      )
+    )
 
   test("the counter: open blocking questions of all that apply; conditional ones do not count yet"):
-    val p = plan(List(issue("S-1"), issue("S-2", decision = Some("keep-left")),
-      issue("S-3", cond = Some(IssueCondition("S-9", DecisionKind.Map))), issue("O-4", IssueSeverity.Default)))
+    val p = plan(
+      List(
+        issue("S-1"),
+        issue("S-2", decision = Some("keep-left")),
+        issue("S-3", cond = Some(IssueCondition("S-9", DecisionKind.Map))),
+        issue("O-4", IssueSeverity.Default)
+      )
+    )
     assertEquals(MergeView.counter(p), (1, 2))
     assert(!MergeView.applicable(p))
     assert(MergeView.applicable(plan(List(issue("S-2", decision = Some("keep-left"))))))
@@ -52,25 +98,46 @@ class MergeViewSuite extends munit.FunSuite:
     assertEquals(MergeView.decide(r2, "S-1", None).resolve.map(_.issue), List("S-2"))
     assertEquals(MergeView.chosen(r2, "S-2").map(_.kind), Some(DecisionKind.File))
 
-  test("the result column: the row the issue is about follows the decision (to decide until then); the others are the server's"):
+  test(
+    "the result column: the row the issue is about follows the decision (to decide until then); the others are the server's"
+  ):
     val i = issue("S-1")
     val f = IssueField("status", Some("current"), Some("contested"))
     assertEquals(MergeView.resultOf(i, f, None), Some(Left("to decide")))
     assertEquals(MergeView.resultOf(i, f, Some(MergeDecision.of(DecisionKind.KeepRight))), Some(Right("contested")))
-    assertEquals(MergeView.resultOf(i, IssueField("title", Some("a"), Some("b")), Some(MergeDecision.of(DecisionKind.KeepRight))), None)
+    assertEquals(
+      MergeView.resultOf(i, IssueField("title", Some("a"), Some("b")), Some(MergeDecision.of(DecisionKind.KeepRight))),
+      None
+    )
     val notes = issue("S-2", kind = IssueKind.NotesDiffers)
-    assertEquals(MergeView.resultOf(notes, IssueField("notes", Some("a"), Some("b")), Some(MergeDecision.of(DecisionKind.Concat))),
-      Some(Right("a\n\nb")))
+    assertEquals(
+      MergeView.resultOf(notes, IssueField("notes", Some("a"), Some("b")), Some(MergeDecision.of(DecisionKind.Concat))),
+      Some(Right("a\n\nb"))
+    )
     val gate = issue("S-3", kind = IssueKind.SameWork)
-    assertEquals(MergeView.resultOf(gate, IssueField("citekey", Some("a"), Some("b")), Some(MergeDecision.withArg(DecisionKind.Map, "b"))),
-      Some(Right("b")))
+    assertEquals(
+      MergeView.resultOf(
+        gate,
+        IssueField("citekey", Some("a"), Some("b")),
+        Some(MergeDecision.withArg(DecisionKind.Map, "b"))
+      ),
+      Some(Right("b"))
+    )
     // the rows that differ come first; empty rows go
     val rows = MergeView.rows(List(IssueField("year", Some("1"), Some("1")), f, IssueField("doi", None, None)))
     assertEquals(rows.map((x, d) => x.field -> d), List("status" -> true, "year" -> false))
 
   test("the editor starts from the agreed text with every conflict marked; markers left mean not merged"):
-    val t = IssueText(Some("a\nb\nc"), "a\nB\nc", "a\nβ\nc",
-      List(IssueHunk(false, left = List("a")), IssueHunk(true, List("b"), List("B"), List("β")), IssueHunk(false, left = List("c"))))
+    val t = IssueText(
+      Some("a\nb\nc"),
+      "a\nB\nc",
+      "a\nβ\nc",
+      List(
+        IssueHunk(false, left = List("a")),
+        IssueHunk(true, List("b"), List("B"), List("β")),
+        IssueHunk(false, left = List("c"))
+      )
+    )
     val m = MergeView.markedText(t)
     assertEquals(m, "a\n<<<<<<< here\nB\n||||||| common version\nb\n=======\nβ\n>>>>>>> bundle\nc")
     assert(MergeView.hasMarkers(m))

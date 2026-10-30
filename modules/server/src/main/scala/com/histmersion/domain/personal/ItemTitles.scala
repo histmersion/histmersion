@@ -5,9 +5,10 @@ import com.histmersion.db.{Param, Sql}
 
 import com.augustnagro.magnum.*
 
-/** How a bookmark's, a note's or a read mark's row (`r`) is joined to its item, for the item's key and title
-  * as they are now: by the item's uid where its table has one (a renamed source keeps its bookmarks), by its
-  * id for a place. Takes the connection it runs on. */
+/** How a bookmark's, a note's or a read mark's row (`r`) is joined to its item, for the item's key and title as they
+  * are now: by the item's uid where its table has one (a renamed source keeps its bookmarks), by its id for a place.
+  * Takes the connection it runs on.
+  */
 private[personal] object ItemTitles:
 
   private val Iso = """'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'"""
@@ -20,20 +21,23 @@ private[personal] object ItemTitles:
          LEFT JOIN goals tg ON $r.target_kind = 'goal' AND tg.uid = $r.target_uid
          LEFT JOIN places tp ON $r.target_kind = 'place' AND tp.id = $r.target_id """
 
-  def key(r: String): String   = s"coalesce(ts.citekey, ta.slug, te.id, tg.slug, $r.target_id)"
+  def key(r: String): String = s"coalesce(ts.citekey, ta.slug, te.id, tg.slug, $r.target_id)"
   def title(r: String): String = s"coalesce(ts.title, ta.title, te.label, tg.title, tp.label, $r.target_label)"
 
   /** The table and key column of the items that have a uid. */
   private val Keyed: Map[ItemKind, (String, String)] = Map(
-    ItemKind.Source -> ("sources", "citekey"), ItemKind.Article -> ("articles", "slug"),
-    ItemKind.Event -> ("events", "id"), ItemKind.Goal -> ("goals", "slug"))
+    ItemKind.Source -> ("sources", "citekey"),
+    ItemKind.Article -> ("articles", "slug"),
+    ItemKind.Event -> ("events", "id"),
+    ItemKind.Goal -> ("goals", "slug")
+  )
 
   /** The item's uid, when the collection holds it. */
   def uidOf(kind: ItemKind, key: Option[String])(using DbCon): Option[String] =
     for
-      k        <- key
+      k <- key
       (tb, col) <- Keyed.get(kind)
-      uid      <- Sql.of(s"SELECT uid::text FROM $tb WHERE $col = ?", Param.S(k)).frag.query[String].run().headOption
+      uid <- Sql.of(s"SELECT uid::text FROM $tb WHERE $col = ?", Param.S(k)).frag.query[String].run().headOption
     yield uid
 
   /** `AND` every word in `texts` (case ignored). */

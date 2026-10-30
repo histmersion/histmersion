@@ -2,26 +2,27 @@ package com.histmersion.web
 
 import scala.collection.mutable
 
-/** Where a region's or polity's NAME goes on the map, and which names are shown — all pure, so the
-  * placement is a unit test and the map only applies the answer ([[MapLabels]]).
+/** Where a region's or polity's NAME goes on the map, and which names are shown — all pure, so the placement is a unit
+  * test and the map only applies the answer ([[MapLabels]]).
   *
-  * Coordinates are Web-Mercator pixels at zoom 0 (a 256 px world, `y` down), the plane the map draws
-  * on: a distance there times `2^zoom` is screen pixels, so whatever does not depend on the viewport
-  * (the anchor, the size, the thinned outline, the hull) is computed ONCE per shape ([[shape]]) and
-  * every zoom and pan after that is arithmetic plus, near the screen edge, one small clip.
+  * Coordinates are Web-Mercator pixels at zoom 0 (a 256 px world, `y` down), the plane the map draws on: a distance
+  * there times `2^zoom` is screen pixels, so whatever does not depend on the viewport (the anchor, the size, the
+  * thinned outline, the hull) is computed ONCE per shape ([[shape]]) and every zoom and pan after that is arithmetic
+  * plus, near the screen edge, one small clip.
   *
-  *   - [[shape]]: the name's home, the pole of inaccessibility (Mapbox's polylabel) — the point
-  *     inside the shape farthest from its edge. A shape whose largest part is most of its land is
-  *     named in that part (a crescent or a coastline-hugging polity inside itself, never at a centroid
-  *     in the sea); an ARCHIPELAGO (no part is half of the land) is named at the middle of the hull
-  *     of all its parts, among its islands, and is as big as that hull — the sea between them counts;
-  *   - [[place]]: where the name goes in THIS viewport — at its home when the whole name fits on
-  *     screen there (so it never moves while the home stays visible), else at the pole of the part
-  *     of the shape still on screen, inset by half the name so all of it stays visible, else nowhere;
-  *   - [[tier]]: how big the name is drawn at a zoom, from the whole shape's on-screen size; only a
-  *     shape a few pixels across has no name at all;
-  *   - [[cull]]: which names survive collisions — the ONLY other reason a name is hidden. Events
-  *     first, then larger shapes. */
+  *   - [[shape]]: the name's home, the pole of inaccessibility (Mapbox's polylabel) — the point inside the shape
+  *     farthest from its edge. A shape whose largest part is most of its land is named in that part (a crescent or a
+  *     coastline-hugging polity inside itself, never at a centroid in the sea); an ARCHIPELAGO (no part is half of the
+  *     land) is named at the middle of the hull of all its parts, among its islands, and is as big as that hull — the
+  *     sea between them counts;
+  *   - [[place]]: where the name goes in THIS viewport — at its home when the whole name fits on screen there (so it
+  *     never moves while the home stays visible), else at the pole of the part of the shape still on screen, inset by
+  *     half the name so all of it stays visible, else nowhere;
+  *   - [[tier]]: how big the name is drawn at a zoom, from the whole shape's on-screen size; only a shape a few pixels
+  *     across has no name at all;
+  *   - [[cull]]: which names survive collisions — the ONLY other reason a name is hidden. Events first, then larger
+  *     shapes.
+  */
 object LabelPlacement:
 
   /** A point in the zoom-0 Mercator plane. */
@@ -38,8 +39,10 @@ object LabelPlacement:
     def contains(p: Pt): Boolean = p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY
     def intersects(o: Rect): Boolean = minX <= o.maxX && o.minX <= maxX && minY <= o.maxY && o.minY <= maxY
     def within(o: Rect): Boolean = minX >= o.minX && maxX <= o.maxX && minY >= o.minY && maxY <= o.maxY
+
     /** Shrunk by `dx` left and right and `dy` top and bottom (empty when that leaves nothing). */
     def inset(dx: Double, dy: Double): Rect = Rect(minX + dx, minY + dy, maxX - dx, maxY - dy)
+
     /** The nearest point of the rectangle to `p`. */
     def clamp(p: Pt): Pt = Pt(math.max(minX, math.min(maxX, p.x)), math.max(minY, math.min(maxY, p.y)))
 
@@ -89,8 +92,9 @@ object LabelPlacement:
   def polyArea(p: Poly): Double =
     p.headOption.fold(0.0)(ringArea) - p.drop(1).map(ringArea).sum
 
-  /** Pure: the convex hull of some points (Andrew's monotone chain), counter-clockwise in the plane,
-    * without a repeated first point; fewer than three distinct points come back as they are. */
+  /** Pure: the convex hull of some points (Andrew's monotone chain), counter-clockwise in the plane, without a repeated
+    * first point; fewer than three distinct points come back as they are.
+    */
   def hull(pts: Seq[Pt]): Vector[Pt] =
     val ps = pts.distinct.sortBy(p => (p.x, p.y)).toVector
     if ps.length < 3 then ps
@@ -107,32 +111,44 @@ object LabelPlacement:
       h.remove(h.length - 1)
       h.toVector
 
-  /** One part of a shape as the viewport placement uses it: its rings, thinned to
-    * [[ViewRingPoints]], and its bounding box — so a part off screen is skipped without a clip. */
+  /** One part of a shape as the viewport placement uses it: its rings, thinned to [[ViewRingPoints]], and its bounding
+    * box — so a part off screen is skipped without a clip.
+    */
   final case class Part(rings: Poly, bbox: Rect)
 
   /** What the map needs to know about one shape, computed once (nothing here depends on the viewport):
     *   - `lat`/`lon` and `home` (the same point, zoom-0): where its name goes when that is on screen;
-    *   - `size0`: its area at zoom 0 — all its land, or for an archipelago the hull around its islands;
-    *     what sets the name's size and its rank in a collision;
+    *   - `size0`: its area at zoom 0 — all its land, or for an archipelago the hull around its islands; what sets the
+    *     name's size and its rank in a collision;
     *   - `bbox0`: the box around every part;
-    *   - `parts`: the outline the name may move within when its home is off screen (an archipelago's:
-    *     its hull);
-    *   - `archipelago`: no part holds [[DominantShare]] of the land, so the hull stands for the shape. */
-  final case class Shape(lat: Double, lon: Double, home: Pt, size0: Double, bbox0: Rect, parts: Vector[Part],
-      archipelago: Boolean):
+    *   - `parts`: the outline the name may move within when its home is off screen (an archipelago's: its hull);
+    *   - `archipelago`: no part holds [[DominantShare]] of the land, so the hull stands for the shape.
+    */
+  final case class Shape(
+      lat: Double,
+      lon: Double,
+      home: Pt,
+      size0: Double,
+      bbox0: Rect,
+      parts: Vector[Part],
+      archipelago: Boolean
+  ):
     /** The shape's larger side at zoom 0. */
     def extent0: Double = math.max(bbox0.w, bbox0.h)
 
-  /** A part that holds at least this share of a shape's land names it; below that the shape is an
-    * archipelago and is named, and sized, by the hull of all its parts. */
+  /** A part that holds at least this share of a shape's land names it; below that the shape is an archipelago and is
+    * named, and sized, by the hull of all its parts.
+    */
   val DominantShare = 0.5
 
-  /** Pure: the label home and size of a (multi)polygon given in (lat, lon) rings — `None` for an
-    * empty one. */
+  /** Pure: the label home and size of a (multi)polygon given in (lat, lon) rings — `None` for an empty one.
+    */
   def shape(polys: Seq[Seq[Seq[(Double, Double)]]]): Option[Shape] =
-    val projected = polys.map(_.map(_.map((la, lo) => project(la, lo)).toVector).toVector).filter(_.nonEmpty)
-      .filter(_.head.length >= 3).toVector
+    val projected = polys
+      .map(_.map(_.map((la, lo) => project(la, lo)).toVector).toVector)
+      .filter(_.nonEmpty)
+      .filter(_.head.length >= 3)
+      .toVector
     if projected.isEmpty then None
     else
       val areas = projected.map(polyArea)
@@ -151,9 +167,9 @@ object LabelPlacement:
     val rings = p.map(thin(_, ViewRingPoints))
     Part(rings, Rect.of(rings.head))
 
-  /** At most this many points of a ring are used to place a name: a label needs the shape's room, not
-    * its coastline, and a 20 000-point Cliopatria outline would otherwise cost every probe 20 000
-    * segment distances. */
+  /** At most this many points of a ring are used to place a name: a label needs the shape's room, not its coastline,
+    * and a 20 000-point Cliopatria outline would otherwise cost every probe 20 000 segment distances.
+    */
   val MaxRingPoints = 400
 
   /** Pure: every `k`-th point, so the ring keeps at most `max` (its first point always). */
@@ -169,10 +185,11 @@ object LabelPlacement:
   /** The first grid of [[anchor]] has at most this many cells along a shape's longer side. */
   val MaxGridCells = 32.0
 
-  /** Pure: the pole of inaccessibility of `poly` (polylabel, Agafonkin 2016): a best-first quadtree
-    * search for the interior point farthest from every edge, to within `precision` (default 1% of the
-    * shape's size), probing at most `maxProbes` cells. The first grid has at most [[MaxGridCells]] cells
-    * along the longer side, so a sliver (a shape clipped to a screen edge) costs no more than a square. */
+  /** Pure: the pole of inaccessibility of `poly` (polylabel, Agafonkin 2016): a best-first quadtree search for the
+    * interior point farthest from every edge, to within `precision` (default 1% of the shape's size), probing at most
+    * `maxProbes` cells. The first grid has at most [[MaxGridCells]] cells along the longer side, so a sliver (a shape
+    * clipped to a screen edge) costs no more than a square.
+    */
   def anchor(poly: Poly, precision: Double = 0.0, maxProbes: Int = MaxProbes): Pt =
     val rings = poly.map(thin(_))
     val outer = rings.head
@@ -191,7 +208,7 @@ object LabelPlacement:
       // ~600 ms of the load's one task (#1949)
       val flat = flatten(rings)
       final case class Cell(x: Double, y: Double, half: Double):
-        val d: Double   = signedDistanceFlat(x, y, flat)
+        val d: Double = signedDistanceFlat(x, y, flat)
         val max: Double = d + half * math.sqrt(2)
       val queue = mutable.PriorityQueue.empty[Cell](using Ordering.by[Cell, Double](_.max))
       var cx = minX
@@ -291,15 +308,16 @@ object LabelPlacement:
     case M extends Tier("hd-map-label--m")
     case L extends Tier("hd-map-label--l")
 
-  /** A shape whose larger side is under this many screen pixels is not named at that zoom: a name on a
-    * dot names nothing anyone can see. Everything larger is named unless it collides. */
+  /** A shape whose larger side is under this many screen pixels is not named at that zoom: a name on a dot names
+    * nothing anyone can see. Everything larger is named unless it collides.
+    */
   val MinExtentPx = 6.0
   val MediumSidePx = 150.0
   val LargeSidePx = 340.0
 
-  /** Pure: the size of a shape's name at `zoom`, from the side of a square of its on-screen size
-    * ([[Shape.size0]]: all its land, an archipelago's hull) — `None` only when the whole shape is a
-    * few pixels across ([[MinExtentPx]]). */
+  /** Pure: the size of a shape's name at `zoom`, from the side of a square of its on-screen size ([[Shape.size0]]: all
+    * its land, an archipelago's hull) — `None` only when the whole shape is a few pixels across ([[MinExtentPx]]).
+    */
   def tier(size0: Double, extent0: Double, zoom: Double): Option[Tier] =
     val scale = math.pow(2, zoom)
     val side = math.sqrt(size0) * scale
@@ -312,8 +330,9 @@ object LabelPlacement:
 
   // ── where, in this viewport ──────────────────────────────────────────────────────────────────────
 
-  /** Points of a ring kept for the viewport placement: it runs at the end of every pan, so it works on
-    * a coarser outline than the home does (a few pixels of coastline never move a name). */
+  /** Points of a ring kept for the viewport placement: it runs at the end of every pan, so it works on a coarser
+    * outline than the home does (a few pixels of coastline never move a name).
+    */
   val ViewRingPoints = 96
 
   /** Cells probed at most when a name moves into the visible part of its shape. */
@@ -325,27 +344,28 @@ object LabelPlacement:
   /** Room kept between a name and the screen edge, px. */
   val EdgePadPx = 4.0
 
-  /** When no part of a shape is left inside the inset viewport (a sliver, or a small island in the
-    * band along the screen edge), its name is pulled on screen and may then sit at most this many
-    * pixels beside what is left of the shape — overlapping it is fine, floating off is not. */
+  /** When no part of a shape is left inside the inset viewport (a sliver, or a small island in the band along the
+    * screen edge), its name is pulled on screen and may then sit at most this many pixels beside what is left of the
+    * shape — overlapping it is fine, floating off is not.
+    */
   val NearPx = 24.0
 
-  /** A name moved off its home stays where it was after the next pan while it keeps at least this share
-    * of the room the new best place would give it — no jitter for a small pan. */
+  /** A name moved off its home stays where it was after the next pan while it keeps at least this share of the room the
+    * new best place would give it — no jitter for a small pan.
+    */
   val KeepShare = 0.5
 
-  /** Pure: where the name of `s` goes in a viewport `view` (zoom-0 plane) drawn at `scale` (`2^zoom`),
-    * for a name `halfW` × `halfH` screen pixels from its centre to its sides — `None` when no place
-    * keeps the whole name on screen and on (or right beside) its shape. `prev` is where the name was
-    * after the last pass.
+  /** Pure: where the name of `s` goes in a viewport `view` (zoom-0 plane) drawn at `scale` (`2^zoom`), for a name
+    * `halfW` × `halfH` screen pixels from its centre to its sides — `None` when no place keeps the whole name on screen
+    * and on (or right beside) its shape. `prev` is where the name was after the last pass.
     *
     *   1. its home, when the whole name fits on screen there — it never moves while that holds;
-    *   2. else the pole of the part of the shape inside the viewport inset by half the name (the
-    *      largest such piece), or `prev` while that is still on that piece with [[KeepShare]] of the
-    *      room;
-    *   3. else (only a sliver along the edge) the middle of the shape's on-screen box pulled inside the
-    *      inset viewport, while the name then still touches that box or sits within [[NearPx]] of it;
-    *   4. else nowhere. */
+    *   2. else the pole of the part of the shape inside the viewport inset by half the name (the largest such piece),
+    *      or `prev` while that is still on that piece with [[KeepShare]] of the room;
+    *   3. else (only a sliver along the edge) the middle of the shape's on-screen box pulled inside the inset viewport,
+    *      while the name then still touches that box or sits within [[NearPx]] of it;
+    *   4. else nowhere.
+    */
   def place(s: Shape, view: Rect, scale: Double, halfW: Double, halfH: Double, prev: Option[Pt] = None): Option[Pt] =
     val inner = view.inset((halfW + EdgePadPx) / scale, (halfH + EdgePadPx) / scale)
     if inner.isEmpty || !s.bbox0.intersects(view) then None
@@ -356,11 +376,12 @@ object LabelPlacement:
           val p = anchor(piece, ViewPrecisionPx / scale, ViewProbes)
           prev.filter(q => inner.contains(q) && q != s.home) match
             case Some(q) if signedDistance(q.x, q.y, piece) >= KeepShare * signedDistance(p.x, p.y, piece) => Some(q)
-            case _ => Some(p)
+            case _                                                                                         => Some(p)
         case None => edgePlace(visibleBox(s, view), inner, scale, halfW, halfH)
 
-  /** Pure: the box around the parts of `s` inside `r` (each part's box cut to `r`) — the cheap
-    * stand-in for the visible part, used every frame of a pan. Empty when nothing is inside. */
+  /** Pure: the box around the parts of `s` inside `r` (each part's box cut to `r`) — the cheap stand-in for the visible
+    * part, used every frame of a pan. Empty when nothing is inside.
+    */
   def visibleBox(s: Shape, r: Rect): Rect =
     var x0 = Double.PositiveInfinity
     var y0 = Double.PositiveInfinity
@@ -376,8 +397,9 @@ object LabelPlacement:
     }
     Rect(x0, y0, x1, y1)
 
-  /** Pure: step 3 of [[place]] — the middle of `box` (what is on screen of a shape) pulled into
-    * `inner`, kept while the name there touches `box` or is at most [[NearPx]] beside it. */
+  /** Pure: step 3 of [[place]] — the middle of `box` (what is on screen of a shape) pulled into `inner`, kept while the
+    * name there touches `box` or is at most [[NearPx]] beside it.
+    */
   def edgePlace(box: Rect, inner: Rect, scale: Double, halfW: Double, halfH: Double): Option[Pt] =
     if box.isEmpty || inner.isEmpty then None
     else
@@ -386,18 +408,23 @@ object LabelPlacement:
       val gy = math.max(0.0, math.max(box.minY - q.y, q.y - box.maxY) * scale - halfH)
       Option.when(math.hypot(gx, gy) <= NearPx)(q)
 
-  /** Pure: where a name heads on a frame of a pan or zoom — cheap, from what is cached per shape: its
-    * home while the whole name fits on screen there, else `last` (the [[place]] of the last settled
-    * view, or the home) pulled into the inset viewport and the on-screen box of the shape, else as in
-    * step 3 of [[place]]. `None`: no place on screen, the name fades out. */
+  /** Pure: where a name heads on a frame of a pan or zoom — cheap, from what is cached per shape: its home while the
+    * whole name fits on screen there, else `last` (the [[place]] of the last settled view, or the home) pulled into the
+    * inset viewport and the on-screen box of the shape, else as in step 3 of [[place]]. `None`: no place on screen, the
+    * name fades out.
+    */
   def glide(s: Shape, view: Rect, scale: Double, halfW: Double, halfH: Double, last: Option[Pt]): Option[Pt] =
     val inner = view.inset((halfW + EdgePadPx) / scale, (halfH + EdgePadPx) / scale)
     if inner.isEmpty || !s.bbox0.intersects(view) then None
     else if inner.contains(s.home) then Some(s.home)
     else
       val box = visibleBox(s, view)
-      val room = Rect(math.max(inner.minX, box.minX), math.max(inner.minY, box.minY),
-        math.min(inner.maxX, box.maxX), math.min(inner.maxY, box.maxY))
+      val room = Rect(
+        math.max(inner.minX, box.minX),
+        math.max(inner.minY, box.minY),
+        math.min(inner.maxX, box.maxX),
+        math.min(inner.maxY, box.maxY)
+      )
       if room.isEmpty || box.isEmpty then edgePlace(box, inner, scale, halfW, halfH)
       else Some(room.clamp(last.getOrElse(s.home)))
 
@@ -416,9 +443,10 @@ object LabelPlacement:
     }
     Option.when(bestArea > 0)(best)
 
-  /** Pure: a polygon clipped to a rectangle (Sutherland–Hodgman, ring by ring): the outer ring and the
-    * holes that keep three points or more; empty when the outer ring is gone. A concave shape may come
-    * back joined by zero-width seams along the rectangle's edge — its area and its pole are unaffected. */
+  /** Pure: a polygon clipped to a rectangle (Sutherland–Hodgman, ring by ring): the outer ring and the holes that keep
+    * three points or more; empty when the outer ring is gone. A concave shape may come back joined by zero-width seams
+    * along the rectangle's edge — its area and its pole are unaffected.
+    */
   def clip(poly: Poly, r: Rect): Poly =
     val outer = clipRing(poly.head, r)
     if outer.length < 3 then Vector.empty
@@ -451,22 +479,24 @@ object LabelPlacement:
 
   // ── collisions ───────────────────────────────────────────────────────────────────────────────────
 
-  /** A label as the culling sees it: its key, its centre in screen (or layer) pixels, its size, and
-    * its rank — higher wins a collision. */
+  /** A label as the culling sees it: its key, its centre in screen (or layer) pixels, its size, and its rank — higher
+    * wins a collision.
+    */
   final case class Box(key: String, cx: Double, cy: Double, w: Double, h: Double, rank: Double)
 
   /** Room kept between two names, px. */
   val PadPx = 3.0
 
-  /** A name that is NOT shown yet must clear every shown one by this much more than [[PadPx]] to
-    * appear: two names drifting together hide one when they touch, and it comes back only once they
-    * are clearly apart — never a flicker at the boundary. */
+  /** A name that is NOT shown yet must clear every shown one by this much more than [[PadPx]] to appear: two names
+    * drifting together hide one when they touch, and it comes back only once they are clearly apart — never a flicker
+    * at the boundary.
+    */
   val AppearPadPx = 10.0
 
-  /** Pure: which labels are drawn — greedily, highest rank first (ties by key, so the answer is
-    * stable), a label is kept unless its box (padded by [[PadPx]], or by [[PadPx]] +
-    * [[AppearPadPx]] when it is not in `shown`) overlaps one already kept. A grid of `cell`-pixel
-    * buckets keeps it near-linear: 400 labels are a few thousand box tests. */
+  /** Pure: which labels are drawn — greedily, highest rank first (ties by key, so the answer is stable), a label is
+    * kept unless its box (padded by [[PadPx]], or by [[PadPx]] + [[AppearPadPx]] when it is not in `shown`) overlaps
+    * one already kept. A grid of `cell`-pixel buckets keeps it near-linear: 400 labels are a few thousand box tests.
+    */
   def cull(boxes: Seq[Box], cell: Double = 128.0, shown: String => Boolean = _ => true): Set[String] =
     val grid = mutable.HashMap.empty[(Int, Int), mutable.ArrayBuffer[Box]]
     val kept = mutable.Set.empty[String]

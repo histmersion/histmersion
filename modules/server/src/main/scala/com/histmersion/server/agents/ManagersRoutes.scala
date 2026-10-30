@@ -4,8 +4,9 @@ import sttp.tapir.server.ServerEndpoint
 import sttp.shared.Identity
 import com.histmersion.api.ManagersApi
 
-/** REST wiring of the process managers — every route delegates to [[ManagersHandlers]]. The fixed
-  * paths come before `{id}/{action}`. */
+/** REST wiring of the process managers — every route delegates to [[ManagersHandlers]]. The fixed paths come before
+  * `{id}/{action}`.
+  */
 object ManagersRoutes:
 
   def apply(m: ManagersHandlers): List[ServerEndpoint[Any, Identity]] = List(

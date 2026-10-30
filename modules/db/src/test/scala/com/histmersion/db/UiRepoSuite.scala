@@ -7,12 +7,13 @@ import com.histmersion.api.UiNotices.Board
 
 import com.augustnagro.magnum.*
 
-/** The toolbar's notices against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise: an
-  * approval's proposal and its decision both count as a change, a goal's edit does, the open ones are
-  * counted, V083 left a baseline mark for every board, and a mark only moves forward. Assertions are
-  * about this suite's own rows (other suites write approvals and goals at the same time). */
+/** The toolbar's notices against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise: an approval's proposal
+  * and its decision both count as a change, a goal's edit does, the open ones are counted, V083 left a baseline mark
+  * for every board, and a mark only moves forward. Assertions are about this suite's own rows (other suites write
+  * approvals and goals at the same time).
+  */
 class UiRepoSuite extends com.histmersion.db.DbSuite:
-  private val testDb                = TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
@@ -20,7 +21,7 @@ class UiRepoSuite extends com.histmersion.db.DbSuite:
     Migrate.run(d)
     d
 
-  private val ck   = "zz_ui_notice_src"
+  private val ck = "zz_ui_notice_src"
   private val goal = "zz-ui-notice-goal"
 
   private def tidy(): Unit =
@@ -29,12 +30,14 @@ class UiRepoSuite extends com.histmersion.db.DbSuite:
       sql"DELETE FROM goals WHERE slug = $goal".update.run()
 
   override def beforeEach(context: BeforeEach): Unit = if testDb.isDefined then tidy()
-  override def afterEach(context: AfterEach): Unit   = if testDb.isDefined then tidy()
+  override def afterEach(context: AfterEach): Unit = if testDb.isDefined then tidy()
 
   private def board(b: Board) = UiRepo.counters(ds).boards.find(_.key == b.wire).getOrElse(fail(s"no ${b.wire}"))
 
   private def now(): String =
-    connect(ds)(sql"""SELECT to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')""".query[String].run().head)
+    connect(ds)(
+      sql"""SELECT to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')""".query[String].run().head
+    )
 
   test("every board is listed in order; the counted ones carry a count"):
     val cs = UiRepo.counters(ds).boards
@@ -44,17 +47,24 @@ class UiRepoSuite extends com.histmersion.db.DbSuite:
 
   test("the agents at a glance count the agent runs running and queued, and read the autopilot's switch"):
     final class Rollback extends RuntimeException
-    val autopilot = connect(ds)(sql"SELECT enabled, drain_since IS NOT NULL FROM agent_autopilot WHERE id"
-      .query[(Boolean, Boolean)].run().headOption.getOrElse((false, false)))
+    val autopilot = connect(ds)(
+      sql"SELECT enabled, drain_since IS NOT NULL FROM agent_autopilot WHERE id"
+        .query[(Boolean, Boolean)]
+        .run()
+        .headOption
+        .getOrElse((false, false))
+    )
     // inside a transaction that is rolled back: no other suite's agent worker ever sees these runs
-    try transact(ds) {
-      sql"""INSERT INTO jobs (id, kind, status) VALUES ('zz-ui-glance-r', 'agent', 'running'),
+    try
+      transact(ds) {
+        sql"""INSERT INTO jobs (id, kind, status) VALUES ('zz-ui-glance-r', 'agent', 'running'),
               ('zz-ui-glance-q', 'agent', 'queued'), ('zz-ui-glance-i', 'ingest', 'running')""".update.run()
-      val g = UiRepo.agentsGlance
-      assert(g.running >= 1 && g.queued >= 1, g.toString)
-      assertEquals((g.on, g.draining), autopilot)
-      throw Rollback()
-    } catch case _: Rollback => ()
+        val g = UiRepo.agentsGlance
+        assert(g.running >= 1 && g.queued >= 1, g.toString)
+        assertEquals((g.on, g.draining), autopilot)
+        throw Rollback()
+      }
+    catch case _: Rollback => ()
     assertEquals(connect(ds)(sql"SELECT count(*) FROM jobs WHERE id LIKE 'zz-ui-glance-%'".query[Long].run().head), 0L)
 
   test("V083 left a mark for every board, so an upgraded corpus does not light up at once"):
@@ -67,7 +77,8 @@ class UiRepoSuite extends com.histmersion.db.DbSuite:
     val before = board(Board.Approvals).count.get
     val id = connect(ds)(
       sql"""INSERT INTO approvals (kind, citekey, status, proposal) VALUES ('status-change', $ck, 'contested', '{}'::jsonb)
-            RETURNING id""".query[Long].run().head)
+            RETURNING id""".query[Long].run().head
+    )
     val proposed = board(Board.Approvals)
     assert(proposed.count.get >= before + 1, proposed.toString)
     assert(proposed.fresh, proposed.toString)

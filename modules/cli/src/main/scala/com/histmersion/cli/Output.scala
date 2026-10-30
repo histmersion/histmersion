@@ -4,11 +4,11 @@ import com.monovore.decline.*
 import io.circe.Encoder
 import io.circe.syntax.*
 
-/** The one way a command prints its answer (#1946): the shared Markdown rendering — for people and
-  * LLMs — or, with `--json`, the response as the server sent it, for scripts. Every command that
-  * offers JSON takes [[jsonFlag]] (one name, one help line) and prints through [[emit]], so the JSON
-  * is always the wire DTO's own codec, pretty-printed the same way, and never a hand-built object
-  * that could drift from it. */
+/** The one way a command prints its answer (#1946): the shared Markdown rendering — for people and LLMs — or, with
+  * `--json`, the response as the server sent it, for scripts. Every command that offers JSON takes [[jsonFlag]] (one
+  * name, one help line) and prints through [[emit]], so the JSON is always the wire DTO's own codec, pretty-printed the
+  * same way, and never a hand-built object that could drift from it.
+  */
 object Output:
 
   /** `--json` — the same flag, with the same help, on every command that has one. */

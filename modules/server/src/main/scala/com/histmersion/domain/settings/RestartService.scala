@@ -2,8 +2,9 @@ package com.histmersion.domain.settings
 
 import java.util.concurrent.atomic.AtomicInteger
 
-/** Restarting the server for the settings only a restart applies: the process ends, and the service it runs
-  * under (the LaunchAgent, the systemd unit) starts it again. */
+/** Restarting the server for the settings only a restart applies: the process ends, and the service it runs under (the
+  * LaunchAgent, the systemd unit) starts it again.
+  */
 trait RestartService:
   /** A restart is possible: this server runs under such a service. */
   def available: Boolean
@@ -21,7 +22,7 @@ object RestartService:
   /** `stop` ends the process (`None`: nothing runs this server again, so no restart is offered). */
   def apply(stop: Option[() => Unit]): RestartService = Implementation(stop)
 
-  private final class Implementation(stop: Option[() => Unit]) extends RestartService:
+  final private class Implementation(stop: Option[() => Unit]) extends RestartService:
     def available: Boolean = stop.isDefined
     def restart(): Either[String, String] = stop.toRight(NotHere).map { s => s(); Started }
 

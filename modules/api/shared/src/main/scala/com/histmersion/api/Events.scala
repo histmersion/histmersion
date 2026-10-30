@@ -6,51 +6,75 @@ import sttp.tapir.Schema
 import io.circe.Codec
 import com.histmersion.values.PlaceKind
 
-/** The EVENTS database (plan §1.2): CIDOC-CRM compatible events with four-point time-spans,
-  * hierarchical composition, causal/temporal edges and participant roles.
+/** The EVENTS database (plan §1.2): CIDOC-CRM compatible events with four-point time-spans, hierarchical composition,
+  * causal/temporal edges and participant roles.
   *
-  * A four-point time-span records both the certain and the uncertain bounds of an event's
-  * temporal extent: `notBefore` / `beginBy` / `endFrom` / `notAfter`. The outer span
-  * (notBefore..notAfter) covers every possible moment; the inner span (beginBy..endFrom)
-  * covers only the certain core. Either bound may be absent (unknown). */
+  * A four-point time-span records both the certain and the uncertain bounds of an event's temporal extent: `notBefore`
+  * / `beginBy` / `endFrom` / `notAfter`. The outer span (notBefore..notAfter) covers every possible moment; the inner
+  * span (beginBy..endFrom) covers only the certain core. Either bound may be absent (unknown).
+  */
 
 // ── vocabulary ─────────────────────────────────────────────────────────────────────────────────
 
 object EventKind:
-  val Event        = "event"
-  val Battle       = "battle"
-  val Migration    = "migration"
+  val Event = "event"
+  val Battle = "battle"
+  val Migration = "migration"
   val Construction = "construction"
-  val Destruction  = "destruction"
-  val Founding     = "founding"
-  val Treaty       = "treaty"
-  val Reign        = "reign"
-  val EventPeriod  = "period"
-  val all: List[String] = List(Event, Battle, Migration, Construction, Destruction,
-    Founding, Treaty, Reign, EventPeriod)
+  val Destruction = "destruction"
+  val Founding = "founding"
+  val Treaty = "treaty"
+  val Reign = "reign"
+  val EventPeriod = "period"
+  val all: List[String] =
+    List(Event, Battle, Migration, Construction, Destruction, Founding, Treaty, Reign, EventPeriod)
 
-/** An event's SCALE (#1440): LOCAL — it happened at one place (a battle, a siege, a destruction); or
-  * REGIONAL — it happened across a region (a migration, a technological change, an era, a war, whose
-  * battles are its local sub-events). The map's playback draws a local event as a point and label at
-  * its site, fading after it ends, and a regional one as a label at the region's centre with the
-  * region's outline for its span.
+/** An event's SCALE (#1440): LOCAL — it happened at one place (a battle, a siege, a destruction); or REGIONAL — it
+  * happened across a region (a migration, a technological change, an era, a war, whose battles are its local
+  * sub-events). The map's playback draws a local event as a point and label at its site, fading after it ends, and a
+  * regional one as a label at the region's centre with the region's outline for its span.
   *
-  * The stored value is optional; [[effective]] derives the scale of an event that states none. */
+  * The stored value is optional; [[effective]] derives the scale of an event that states none.
+  */
 object EventScale:
-  val Local    = "local"
+  val Local = "local"
   val Regional = "regional"
+
   /** On a patch: forget the stated scale, derive it again. Never stored. */
-  val Auto     = "auto"
+  val Auto = "auto"
   val all: List[String] = List(Local, Regional)
 
   /** Kinds that happen at ONE place. */
-  val localKinds: Set[String] = Set("battle", "naval_battle", "siege", "destruction", "construction", "founding",
-    "eruption", "earthquake", "tsunami", "flood")
+  val localKinds: Set[String] = Set(
+    "battle",
+    "naval_battle",
+    "siege",
+    "destruction",
+    "construction",
+    "founding",
+    "eruption",
+    "earthquake",
+    "tsunami",
+    "flood"
+  )
 
   /** Kinds that happen across a region (`*_era` too: `diplomatic_era`). */
-  val regionalKinds: Set[String] = Set("migration", "technological_change", "cultural_shift", "era",
-    "period", "reign", "war", "invasion", "collapse", "polity_formation", "drought", "climate_event", "epidemic",
-    "famine")
+  val regionalKinds: Set[String] = Set(
+    "migration",
+    "technological_change",
+    "cultural_shift",
+    "era",
+    "period",
+    "reign",
+    "war",
+    "invasion",
+    "collapse",
+    "polity_formation",
+    "drought",
+    "climate_event",
+    "epidemic",
+    "famine"
+  )
 
   /** Pure: `local`/`regional` as stored, `auto` as `Some(None)` (clear), anything else `None`. */
   def parse(s: String): Option[Option[String]] =
@@ -70,28 +94,37 @@ object EventScale:
     else if regionalKinds(k) || k.endsWith("_era") then Some(Regional)
     else None
 
-  /** Pure: the scale a PLACE's kind implies — a site or feature is a place where something happens, a
-    * region, polity or people an area. */
+  /** Pure: the scale a PLACE's kind implies — a site or feature is a place where something happens, a region, polity or
+    * people an area.
+    */
   def ofPlaceKind(placeKind: String): Option[String] =
     placeKind.trim.toLowerCase match
-      case PlaceKind.Site | PlaceKind.Feature                       => Some(Local)
-      case PlaceKind.Region | PlaceKind.Polity | PlaceKind.People   => Some(Regional)
-      case _                                                         => None
+      case PlaceKind.Site | PlaceKind.Feature                     => Some(Local)
+      case PlaceKind.Region | PlaceKind.Polity | PlaceKind.People => Some(Regional)
+      case _                                                      => None
 
-  /** Pure: what an event's own geometry implies (a GeoJSON or PostGIS geometry type): a point is a
-    * place, a polygon an area. */
+  /** Pure: what an event's own geometry implies (a GeoJSON or PostGIS geometry type): a point is a place, a polygon an
+    * area.
+    */
   def ofGeometry(geometryType: String): Option[String] =
     geometryType.trim.toLowerCase.replace("st_", "") match
-      case "point"                      => Some(Local)
-      case "polygon" | "multipolygon"   => Some(Regional)
-      case _                            => None
+      case "point"                    => Some(Local)
+      case "polygon" | "multipolygon" => Some(Regional)
+      case _                          => None
 
-  /** Pure: the scale an event has. In order: the STATED one; its kind's (a war is regional, its
-    * battles local); its own geometry's (what the map draws it at, when it has one); its place's
-    * kind's; `local` for a sub-event that says nothing else (a part of a larger event); else `local`. */
-  def effective(stated: Option[String], kind: String, hasParent: Boolean,
-      placeKind: Option[String], geometryType: Option[String]): String =
-    stated.flatMap(s => parse(s).flatten)
+  /** Pure: the scale an event has. In order: the STATED one; its kind's (a war is regional, its battles local); its own
+    * geometry's (what the map draws it at, when it has one); its place's kind's; `local` for a sub-event that says
+    * nothing else (a part of a larger event); else `local`.
+    */
+  def effective(
+      stated: Option[String],
+      kind: String,
+      hasParent: Boolean,
+      placeKind: Option[String],
+      geometryType: Option[String]
+  ): String =
+    stated
+      .flatMap(s => parse(s).flatten)
       .orElse(ofKind(kind))
       .orElse(geometryType.flatMap(ofGeometry))
       .orElse(placeKind.flatMap(ofPlaceKind))
@@ -99,8 +132,7 @@ object EventScale:
       .getOrElse(Local)
 
 object DatingMethod:
-  val all: List[String] = List("dendrochronology", "radiocarbon", "stratigraphy",
-    "textual", "astronomical")
+  val all: List[String] = List("dendrochronology", "radiocarbon", "stratigraphy", "textual", "astronomical")
 
 // ── DTOs ───────────────────────────────────────────────────────────────────────────────────────
 
@@ -189,8 +221,9 @@ final case class EventDetail(
     wikidata: Option[String] = None,
     /** Pictures of the event from outside providers, the card's first (#1446). */
     media: List[MediaThumb] = Nil,
-    /** `attested` (a source in the corpus attests it) or `catalogue` (a catalogue alone knows it) —
-      * [[EventTier]], #1449. */
+    /** `attested` (a source in the corpus attests it) or `catalogue` (a catalogue alone knows it) — [[EventTier]],
+      * #1449.
+      */
     tier: String = EventTier.Attested,
     /** Its other names (a catalogue's labels and aliases), searched for in the sources' text. */
     names: List[String] = Nil,
@@ -212,16 +245,29 @@ final case class EventDetail(
 object EventDetail:
   given Schema[EventDetail] = KindlingsSchema.derived[EventDetail].schema
 
-/** A source attesting an event: through the event's own `citekey` (`via = "citekey"`) or an
-  * attestation (`via = "attestation"`, with its quote). */
-final case class EventSourceRef(citekey: String, title: Option[String] = None, year: Option[Int] = None,
-    via: String = "citekey", quote: Option[String] = None) derives KindlingsCodecAsObject
+/** A source attesting an event: through the event's own `citekey` (`via = "citekey"`) or an attestation (`via =
+  * "attestation"`, with its quote).
+  */
+final case class EventSourceRef(
+    citekey: String,
+    title: Option[String] = None,
+    year: Option[Int] = None,
+    via: String = "citekey",
+    quote: Option[String] = None
+) derives KindlingsCodecAsObject
 object EventSourceRef:
   given Schema[EventSourceRef] = KindlingsSchema.derived[EventSourceRef].schema
 
 /** A finding near an event: how far (km) and how many years from its span (0 = overlapping). */
-final case class EventFindingRef(id: String, citekey: String, claim: String, km: Double, yearGap: Long,
-    periodStart: Option[Long] = None, periodEnd: Option[Long] = None) derives KindlingsCodecAsObject
+final case class EventFindingRef(
+    id: String,
+    citekey: String,
+    claim: String,
+    km: Double,
+    yearGap: Long,
+    periodStart: Option[Long] = None,
+    periodEnd: Option[Long] = None
+) derives KindlingsCodecAsObject
 object EventFindingRef:
   given Schema[EventFindingRef] = KindlingsSchema.derived[EventFindingRef].schema
 
@@ -249,6 +295,7 @@ final case class EventPut(
 )
 object EventPut:
   given Schema[EventPut] = KindlingsSchema.derived[EventPut].schema
+
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[EventPut] = StrictJson.codec(KindlingsCodecAsObject.derived[EventPut])
 
@@ -273,11 +320,13 @@ final case class EventPatch(
 )
 object EventPatch:
   given Schema[EventPatch] = KindlingsSchema.derived[EventPatch].schema
+
   /** Strict (#813): an unknown key is refused, not dropped — see [[StrictJson]]. */
   given Codec.AsObject[EventPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[EventPatch])
 
-/** An event's own geometry from a point — what the CLI's `--lat/--lon` and the `patch_event` tool's
-  * `lat`/`lon` write (GeoJSON, longitude first). */
+/** An event's own geometry from a point — what the CLI's `--lat/--lon` and the `patch_event` tool's `lat`/`lon` write
+  * (GeoJSON, longitude first).
+  */
 object EventGeometry:
   /** Pure: the GeoJSON Point at (`lat`, `lon`), or why it is not one. */
   def point(lat: Double, lon: Double): Either[String, String] =
@@ -285,15 +334,15 @@ object EventGeometry:
     else if lon.isNaN || lon < -180 || lon > 180 then Left(s"lon $lon is not between -180 and 180")
     else Right(s"""{"type":"Point","coordinates":[${fmt(lon)},${fmt(lat)}]}""")
 
-  /** Pure: the geometry a patch carries — `geometry` as given, or the point `lat`/`lon` (both or
-    * neither). */
+  /** Pure: the geometry a patch carries — `geometry` as given, or the point `lat`/`lon` (both or neither).
+    */
   def of(geometry: Option[String], lat: Option[Double], lon: Option[Double]): Either[String, Option[String]] =
     (geometry.map(_.trim).filter(_.nonEmpty), lat, lon) match
       case (Some(_), Some(_), _) | (Some(_), _, Some(_)) => Left("give geometry or lat/lon, not both")
-      case (g @ Some(_), None, None)                      => Right(g)
-      case (None, Some(a), Some(o))                       => point(a, o).map(Some(_))
-      case (None, None, None)                             => Right(None)
-      case _                                              => Left("lat and lon go together")
+      case (g @ Some(_), None, None)                     => Right(g)
+      case (None, Some(a), Some(o))                      => point(a, o).map(Some(_))
+      case (None, None, None)                            => Right(None)
+      case _                                             => Left("lat and lon go together")
 
   /** The GeoJSON geometry types (RFC 7946 §3.1) — a Feature is not one. */
   val GeometryTypes: Set[String] =
@@ -304,18 +353,19 @@ object EventGeometry:
 
   private val Example = """{"type":"Point","coordinates":[<lon>,<lat>]}"""
 
-  /** Pure (#2554): `g`, trimmed, when it has the shape of a GeoJSON geometry — the form an event's
-    * geometry is written and read back in — or why not. WKT is named as such, with the GeoJSON to
-    * write instead. Whether the coordinates make a geometry is PostGIS's to say. */
+  /** Pure (#2554): `g`, trimmed, when it has the shape of a GeoJSON geometry — the form an event's geometry is written
+    * and read back in — or why not. WKT is named as such, with the GeoJSON to write instead. Whether the coordinates
+    * make a geometry is PostGIS's to say.
+    */
   def check(g: String): Either[String, String] =
     val t = g.trim
     if WktShape.matches(t) then Left(s"geometry is GeoJSON, not WKT: write $Example (or give lat/lon)")
     else
       io.circe.parser.parse(t) match
-        case Left(_) => Left(s"geometry is not GeoJSON: expected an object such as $Example")
+        case Left(_)  => Left(s"geometry is not GeoJSON: expected an object such as $Example")
         case Right(j) =>
           j.asObject.flatMap(_("type")).flatMap(_.asString) match
-            case Some(tp) if GeometryTypes(tp) => Right(t)
+            case Some(tp) if GeometryTypes(tp)                => Right(t)
             case Some(tp @ ("Feature" | "FeatureCollection")) =>
               Left(s"geometry is a GeoJSON geometry, not a $tp: give its \"geometry\" member")
             case Some(tp) => Left(s"geometry type '$tp' is not one of ${GeometryTypes.toList.sorted.mkString(", ")}")
@@ -343,11 +393,12 @@ object EventList:
   def of(total: Int, rows: List[EventSummary], offset: Int): EventList =
     EventList(total, rows, offset, OffsetPage(total, offset, rows.size).next)
 
-/** One event on the map (`GET /api/events/geo`, the playback layer): where to draw it and how.
-  * `lat`/`lon` is its ANCHOR — its own point, else the point-on-surface of its own area, else its
-  * place's point or the point-on-surface of the place's area. `outline` is the GeoJSON geometry of
-  * the area a REGIONAL event covers (simplified for drawing), absent for a local event and for an
-  * area known only by a point. `anchor` says where the position came from: `event` | `place`. */
+/** One event on the map (`GET /api/events/geo`, the playback layer): where to draw it and how. `lat`/`lon` is its
+  * ANCHOR — its own point, else the point-on-surface of its own area, else its place's point or the point-on-surface of
+  * the place's area. `outline` is the GeoJSON geometry of the area a REGIONAL event covers (simplified for drawing),
+  * absent for a local event and for an area known only by a point. `anchor` says where the position came from: `event` |
+  * `place`.
+  */
 final case class EventGeo(
     id: String,
     label: String,
@@ -374,30 +425,33 @@ final case class EventGeo(
 object EventGeo:
   given Schema[EventGeo] = KindlingsSchema.derived[EventGeo].schema
 
-  /** Pure: the years an event covers in every time view — its outer span (`notBefore` else `beginBy`,
-    * to `notAfter` else `endFrom`). An OPEN-ENDED event (one end known, #1768) covers the end it states
-    * alone — an event with only a start is an event at its start (its start window when `notBefore` and
-    * `beginBy` are both known), as the domain's `CatalogDating.span` writes a catalogue's — never every year after
-    * it: an event still going on states an end (the present year); nothing is inferred from its kind.
-    * An undated one, nothing. The database's generated `events.outer_span` (V089) is the same rule
-    * (`EventOuterSpanSuite` checks the two agree), so the map's feed and the web draw the same years. */
+  /** Pure: the years an event covers in every time view — its outer span (`notBefore` else `beginBy`, to `notAfter`
+    * else `endFrom`). An OPEN-ENDED event (one end known, #1768) covers the end it states alone — an event with only a
+    * start is an event at its start (its start window when `notBefore` and `beginBy` are both known), as the domain's
+    * `CatalogDating.span` writes a catalogue's — never every year after it: an event still going on states an end (the
+    * present year); nothing is inferred from its kind. An undated one, nothing. The database's generated
+    * `events.outer_span` (V089) is the same rule (`EventOuterSpanSuite` checks the two agree), so the map's feed and
+    * the web draw the same years.
+    */
   def outer(ts: TimeSpan): Option[(Long, Long)] =
     val start = ts.notBefore.orElse(ts.beginBy).orElse(ts.endFrom).orElse(ts.notAfter)
-    val end   = ts.notAfter.orElse(ts.endFrom).orElse(ts.beginBy).orElse(ts.notBefore)
+    val end = ts.notAfter.orElse(ts.endFrom).orElse(ts.beginBy).orElse(ts.notBefore)
     for a <- start; b <- end yield (a.min(b), a.max(b))
 
-  /** Pure: what a card says of an open-ended event's missing side ([[outer]] drew it at the side it
-    * states): `end not recorded`, `start not recorded`, or nothing (both known, or undated). */
+  /** Pure: what a card says of an open-ended event's missing side ([[outer]] drew it at the side it states):
+    * `end not recorded`, `start not recorded`, or nothing (both known, or undated).
+    */
   def missingEnd(ts: TimeSpan): Option[String] =
     val hasStart = ts.notBefore.isDefined || ts.beginBy.isDefined
-    val hasEnd   = ts.endFrom.isDefined || ts.notAfter.isDefined
+    val hasEnd = ts.endFrom.isDefined || ts.notAfter.isDefined
     if hasStart && !hasEnd then Some("end not recorded")
     else if hasEnd && !hasStart then Some("start not recorded")
     else None
 
-/** The map's events: those with a position, how many of the listed ones have none, and how many are
-  * too imprecisely dated to be drawn at a year (`imprecise`: [[EventPrecision]] — the events list
-  * shows them). */
-final case class EventGeoList(events: List[EventGeo], unplaced: Int = 0, imprecise: Int = 0) derives KindlingsCodecAsObject
+/** The map's events: those with a position, how many of the listed ones have none, and how many are too imprecisely
+  * dated to be drawn at a year (`imprecise`: [[EventPrecision]] — the events list shows them).
+  */
+final case class EventGeoList(events: List[EventGeo], unplaced: Int = 0, imprecise: Int = 0)
+    derives KindlingsCodecAsObject
 object EventGeoList:
   given Schema[EventGeoList] = KindlingsSchema.derived[EventGeoList].schema

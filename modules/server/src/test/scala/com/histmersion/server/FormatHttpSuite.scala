@@ -9,13 +9,14 @@ import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.values.{BundleKind, PlaceKind}
 
-/** The formatting lint over real HTTP and MCP: an article write answers with its formatting problems
-  * (and `?strict=true` refuses one with an error), `GET …/lint` and `POST …/lint/fix` for an article
-  * and a source, `POST /api/lint/markdown`, the corpus rules in `/api/lint`, the `lint` MCP tool on one
-  * article, the notice on the rendered page — and `POST /api/places/{id}/rename` (#890), whose old id
-  * keeps resolving. Skipped without HISTMERSION_TEST_DB_URL. */
+/** The formatting lint over real HTTP and MCP: an article write answers with its formatting problems (and
+  * `?strict=true` refuses one with an error), `GET …/lint` and `POST …/lint/fix` for an article and a source,
+  * `POST /api/lint/markdown`, the corpus rules in `/api/lint`, the `lint` MCP tool on one article, the notice on the
+  * rendered page — and `POST /api/places/{id}/rename` (#890), whose old id keeps resolving. Skipped without
+  * HISTMERSION_TEST_DB_URL.
+  */
 class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db.Bounded:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()
@@ -23,25 +24,31 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
     val r = http.send(req, HttpResponse.BodyHandlers.ofString())
     (r.statusCode, r.body)
   private def json(url: String) = HttpRequest.newBuilder(URI.create(url)).header("content-type", "application/json")
-  private def get(url: String)  = send(HttpRequest.newBuilder(URI.create(url)).build())
-  private def put(url: String, body: String)   = send(json(url).PUT(HttpRequest.BodyPublishers.ofString(body)).build())
-  private def post(url: String, body: String)  = send(json(url).POST(HttpRequest.BodyPublishers.ofString(body)).build())
+  private def get(url: String) = send(HttpRequest.newBuilder(URI.create(url)).build())
+  private def put(url: String, body: String) = send(json(url).PUT(HttpRequest.BodyPublishers.ofString(body)).build())
+  private def post(url: String, body: String) = send(json(url).POST(HttpRequest.BodyPublishers.ofString(body)).build())
   private def patch(url: String, body: String) =
     send(json(url).method("PATCH", HttpRequest.BodyPublishers.ofString(body)).build())
   private def delete(url: String) = send(HttpRequest.newBuilder(URI.create(url)).DELETE().build())
   private def mcp(url: String, tool: String, args: String): (Int, String) =
-    send(json(s"$url/mcp").header("accept", "application/json, text/event-stream")
-      .POST(HttpRequest.BodyPublishers.ofString(
-        s"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"$tool","arguments":$args}}"""))
-      .build())
+    send(
+      json(s"$url/mcp")
+        .header("accept", "application/json, text/event-stream")
+        .POST(
+          HttpRequest.BodyPublishers
+            .ofString(s"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"$tool","arguments":$args}}""")
+        )
+        .build()
+    )
   private def decode[A: io.circe.Decoder](s: String): A = parser.decode[A](s).fold(e => fail(s"$e in $s"), identity)
   private def esc(s: String) = s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
 
   private val slug = "zz_fmt_article"
-  private val ck   = "zz_fmt2020_source"
+  private val ck = "zz_fmt2020_source"
 
-  /** The user's examples in one body: a table glued to its paragraph, bold with a space inside, a
-    * link with a space before `(`, an escaped wikilink. */
+  /** The user's examples in one body: a table glued to its paragraph, bold with a space inside, a link with a space
+    * before `(`, an escaped wikilink.
+    */
   private val broken =
     """# Formatting
       |
@@ -55,7 +62,7 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
 
   private def withServer(body: String => Unit): Unit =
     val base = AppConfig.load()
-    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
       val b = Main.server(cfg, "127.0.0.1", 0).start()
       try body(s"http://127.0.0.1:${b.port}")
@@ -68,18 +75,23 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       assertEquals(put(s"$url/api/sources/$ck", """{"title":"Fmt source","year":2020}""")._1, 200)
 
       // strict: refused, and nothing written
-      val (ss, sb) = put(s"$url/api/articles/$slug?strict=true",
-        s"""{"title":"Formatting","kind":"concept","body":"${esc(broken)}"}""")
+      val (ss, sb) = put(
+        s"$url/api/articles/$slug?strict=true",
+        s"""{"title":"Formatting","kind":"concept","body":"${esc(broken)}"}"""
+      )
       assertEquals(ss, 400, sb)
       assert(sb.contains("refused (strict)") && sb.contains("table-not-rendered"), sb)
       assertEquals(get(s"$url/api/articles/$slug")._1, 404)
 
       // not strict: written, and the answer lists every problem with its position
-      val (ps, pb) = put(s"$url/api/articles/$slug", s"""{"title":"Formatting","kind":"concept","body":"${esc(broken)}"}""")
+      val (ps, pb) =
+        put(s"$url/api/articles/$slug", s"""{"title":"Formatting","kind":"concept","body":"${esc(broken)}"}""")
       assertEquals(ps, 200, pb)
       val v = decode[ArticleView](pb)
-      assertEquals(v.formatting.map(_.rule).toSet,
-        Set(FormatRule.TableNotRendered, FormatRule.Emphasis, FormatRule.LinkSyntax, FormatRule.Wikilink))
+      assertEquals(
+        v.formatting.map(_.rule).toSet,
+        Set(FormatRule.TableNotRendered, FormatRule.Emphasis, FormatRule.LinkSyntax, FormatRule.Wikilink)
+      )
       assertEquals(v.formatting.find(_.rule == FormatRule.TableNotRendered).map(i => (i.line, i.column)), Some((4, 1)))
       // a read says the same
       assertEquals(decode[ArticleView](get(s"$url/api/articles/$slug")._2).formatting, v.formatting)
@@ -95,7 +107,8 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       assert(!page.contains("<table>"), "the glued table is still text before the fix")
 
       // a strict patch is judged on the merged article; a non-strict one goes through
-      val (sp, spb) = patch(s"$url/api/articles/$slug?strict=true", """{"append":"\n\nMore ** text [[zz_fmt2020_source]].\n"}""")
+      val (sp, spb) =
+        patch(s"$url/api/articles/$slug?strict=true", """{"append":"\n\nMore ** text [[zz_fmt2020_source]].\n"}""")
       assertEquals(sp, 400, spb)
 
       // fix: the wording-safe repairs, written as one guarded patch; the table now renders
@@ -105,8 +118,11 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       assertEquals(fixed.fixed.size, 4, fixed.fixed.mkString("\n"))
       assertEquals(fixed.issues, Nil)
       val body = decode[ArticleView](get(s"$url/api/articles/$slug")._2).article.body
-      assert(body.contains("**reliefs**") && body.contains("[the letters](https://example.org/x)") &&
-        body.contains("and [[zz_fmt2020_source]].") && body.contains(":\n\n| Festival"), body)
+      assert(
+        body.contains("**reliefs**") && body.contains("[the letters](https://example.org/x)") &&
+          body.contains("and [[zz_fmt2020_source]].") && body.contains(":\n\n| Festival"),
+        body
+      )
       val after = get(s"$url/article/$slug?fragment=true")._2
       assert(after.contains("<table>") && !after.contains("format-notice"), after.take(800))
       // the history keeps the text before the repair
@@ -122,10 +138,14 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
 
       // the corpus rule sees it too
       val corpus = decode[Lint.LintReport](get(s"$url/api/lint?rule=article-markdown")._2)
-      assert(corpus.rules.head.items.exists(i => i.citekey == slug && i.detail.contains("heading-syntax")), corpus.toString)
+      assert(
+        corpus.rules.head.items.exists(i => i.citekey == slug && i.detail.contains("heading-syntax")),
+        corpus.toString
+      )
 
       // a Markdown text not stored yet
-      val (ts, tb) = post(s"$url/api/lint/markdown", s"""{"text":"${esc("Intro\n| a | b |\n|---|---|\n| 1 | 2 |\n")}","fix":true}""")
+      val (ts, tb) =
+        post(s"$url/api/lint/markdown", s"""{"text":"${esc("Intro\n| a | b |\n|---|---|\n| 1 | 2 |\n")}","fix":true}""")
       assertEquals(ts, 200, tb)
       val tr = decode[FormatReport](tb)
       assertEquals(tr.fixed.size, 1)
@@ -143,8 +163,10 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       val (ps, pb) = patch(s"$url/api/sources/$ck", s"""{"notes":"${esc(notes)}"}""")
       assertEquals(ps, 200, pb)
       val sw = decode[SourceWithFindings](pb)
-      assertEquals(sw.formatting.map(i => (i.field, i.rule)).toSet,
-        Set((FormatField.Notes, FormatRule.Wikilink), (FormatField.Notes, FormatRule.HtmlEntity)))
+      assertEquals(
+        sw.formatting.map(i => (i.field, i.rule)).toSet,
+        Set((FormatField.Notes, FormatRule.Wikilink), (FormatField.Notes, FormatRule.HtmlEntity))
+      )
       // a strict patch of something else is not refused for the notes already there
       assertEquals(patch(s"$url/api/sources/$ck?strict=true", """{"tags":{"add":["zz_fmt"]}}""")._1, 200)
       val page = get(s"$url/source/$ck?fragment=true")._2
@@ -164,9 +186,23 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
         import com.augustnagro.magnum.*
         sql"DELETE FROM place_aliases WHERE alias LIKE 'zz_fmt_place%'".update.run()
         sql"DELETE FROM places WHERE id LIKE 'zz_fmt_place%'".update.run()
-      val geo = Lpf.render(List(
-        PlaceInput(Place("zz_fmt_place_a", "Fmt A", PlaceKind.Site, Some("""{"type":"Point","coordinates":[30.0,39.0]}""")), List(PlaceName("Fmt A"))),
-        PlaceInput(Place("zz_fmt_place_other", "Fmt Other", PlaceKind.Site, Some("""{"type":"Point","coordinates":[31.0,39.0]}""")), List(PlaceName("Fmt Other")))))
+      val geo = Lpf.render(
+        List(
+          PlaceInput(
+            Place("zz_fmt_place_a", "Fmt A", PlaceKind.Site, Some("""{"type":"Point","coordinates":[30.0,39.0]}""")),
+            List(PlaceName("Fmt A"))
+          ),
+          PlaceInput(
+            Place(
+              "zz_fmt_place_other",
+              "Fmt Other",
+              PlaceKind.Site,
+              Some("""{"type":"Point","coordinates":[31.0,39.0]}""")
+            ),
+            List(PlaceName("Fmt Other"))
+          )
+        )
+      )
       val (is, ib) = post(s"$url/api/places/import", geo)
       assertEquals(is, 200, ib)
       val (rs, rb) = post(s"$url/api/places/zz_fmt_place_a/rename", """{"to":"zz_fmt_place_b"}""")

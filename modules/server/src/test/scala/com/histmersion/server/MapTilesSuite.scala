@@ -3,8 +3,9 @@ package com.histmersion.server
 import com.histmersion.api.*
 import com.histmersion.domain.TileCoord
 
-/** The tile service's pure half: what a request's key reads (and what it leaves out), its ETag and the
-  * browser's revalidation, and the cache's bound. */
+/** The tile service's pure half: what a request's key reads (and what it leaves out), its ETag and the browser's
+  * revalidation, and the cache's bound.
+  */
 class MapTilesSuite extends munit.FunSuite:
 
   private val c = TileCoord.of(4, 9, 5, 11).toOption.get
@@ -22,10 +23,14 @@ class MapTilesSuite extends munit.FunSuite:
     // another layer's options and a filter's paging do not split a tile
     assertEquals(MapTiles.key(TileLayer.Sites, c, q().copy(provider = Some("met"), tier = Some("attested")), v), k)
     val ev = q(layer = "events")
-    assertEquals(MapTiles.key(TileLayer.Events, c, ev.copy(filter = ev.filter.copy(limit = 50, offset = 10)), v),
-      MapTiles.key(TileLayer.Events, c, ev, v))
-    assertNotEquals(MapTiles.key(TileLayer.Events, c, ev.copy(filter = ev.filter.copy(tags = List("x"))), v),
-      MapTiles.key(TileLayer.Events, c, ev, v))
+    assertEquals(
+      MapTiles.key(TileLayer.Events, c, ev.copy(filter = ev.filter.copy(limit = 50, offset = 10)), v),
+      MapTiles.key(TileLayer.Events, c, ev, v)
+    )
+    assertNotEquals(
+      MapTiles.key(TileLayer.Events, c, ev.copy(filter = ev.filter.copy(tags = List("x"))), v),
+      MapTiles.key(TileLayer.Events, c, ev, v)
+    )
     assertNotEquals(MapTiles.key(TileLayer.Sites, c, q().copy(siteType = Some("burial")), v), k)
 
   test("an ETag is the key's, quoted; If-None-Match names it, weak or in a list"):

@@ -5,8 +5,12 @@ import com.histmersion.api.IngestRequest
 class DoiIngestSuite extends munit.FunSuite:
 
   test("a DOI, as typed or as a doi.org link, asks the legal chain only"):
-    List("10.1017/S0003598X00000001", " https://doi.org/10.1017/S0003598X00000001 ", "doi:10.1017/S0003598X00000001",
-      "http://dx.doi.org/10.1017/S0003598X00000001").foreach { t =>
+    List(
+      "10.1017/S0003598X00000001",
+      " https://doi.org/10.1017/S0003598X00000001 ",
+      "doi:10.1017/S0003598X00000001",
+      "http://dx.doi.org/10.1017/S0003598X00000001"
+    ).foreach { t =>
       assertEquals(DoiIngest.request(t), Right(IngestRequest("10.1017/S0003598X00000001", legalOnly = true)), t)
     }
 
@@ -16,7 +20,8 @@ class DoiIngestSuite extends munit.FunSuite:
     assertEquals(DoiIngest.request("hep-th/9901001"), Right(IngestRequest("arxiv:hep-th/9901001", legalOnly = true)))
 
   test("every request the form can send is legal-only"):
-    List("10.1/x", "10.12345/abc.def", "2101.01234").flatMap(DoiIngest.request(_).toOption)
+    List("10.1/x", "10.12345/abc.def", "2101.01234")
+      .flatMap(DoiIngest.request(_).toOption)
       .foreach(r => assert(r.legalOnly, r.toString))
 
   test("anything else is refused with what to type"):

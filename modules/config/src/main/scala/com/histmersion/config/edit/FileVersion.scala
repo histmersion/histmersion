@@ -6,8 +6,9 @@ import io.github.iltotore.iron.constraint.string.Match
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 
-/** Which text of the config file a change was made against: the SHA-256 of its bytes (`none` for a file that
-  * is not there yet). A write that names a version the file no longer has is refused. */
+/** Which text of the config file a change was made against: the SHA-256 of its bytes (`none` for a file that is not
+  * there yet). A write that names a version the file no longer has is refused.
+  */
 type FileVersionRule = Match["none|[0-9a-f]{64}"]
 
 type FileVersion = FileVersion.T

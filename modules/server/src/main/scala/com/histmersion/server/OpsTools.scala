@@ -10,11 +10,11 @@ import com.histmersion.domain.*
 import com.histmersion.api.Queue.{QueueAdd, QueuePatch}
 import com.histmersion.api.VocabularyCodecs.given
 
-/** The MCP half of stream 2.8: `lint`, `queue`, `query` — the three tools that replace the research
-  * workspace's `lint-wiki`, `bookkeeping` and "just run DuckDB SQL" habits (plan §5.1).
+/** The MCP half of stream 2.8: `lint`, `queue`, `query` — the three tools that replace the research workspace's
+  * `lint-wiki`, `bookkeeping` and "just run DuckDB SQL" habits (plan §5.1).
   *
-  * Same rule as the rest of the server: a tool is a thin wrapper over [[OpsHandlers]] and returns
-  * Markdown, so the MCP output and the CLI output are the same bytes.
+  * Same rule as the rest of the server: a tool is a thin wrapper over [[OpsHandlers]] and returns Markdown, so the MCP
+  * output and the CLI output are the same bytes.
   */
 object OpsTools:
   import McpTools.given // honour Scala defaults when decoding tool arguments
@@ -36,7 +36,8 @@ object OpsTools:
             "yet) instead to check just that one for FORMATTING problems, each with line, column, " +
             "excerpt and what goes wrong; with `fix: true` the wording-safe repairs are applied to it " +
             "(for `text`, the repaired text is returned). Use after ingestion, after writing an " +
-            "article, or to diagnose data integrity — not for searching.")
+            "article, or to diagnose data integrity — not for searching."
+        )
         .input[LintInput]
         .handle { in =>
           val subject = (in.article.map(_.trim).filter(_.nonEmpty), in.source.map(_.trim).filter(_.nonEmpty), in.text)
@@ -49,7 +50,9 @@ object OpsTools:
                 .fold(McpOut.error, r => ToolResult.text(FormatMarkdown.report(r)))
             case (_, _, Some(text)) =>
               val r = h.lintText(FormatCheck(text, in.field.getOrElse(FormatField.Body), in.fix))
-              ToolResult.text(FormatMarkdown.report(r) + r.text.fold("")(t => s"\n\n### Repaired text\n\n````markdown\n$t\n````"))
+              ToolResult.text(
+                FormatMarkdown.report(r) + r.text.fold("")(t => s"\n\n### Repaired text\n\n````markdown\n$t\n````")
+              )
             case _ =>
               ops.lintWithFix(in.rules, in.fix) match
                 case Right(rep) => ToolResult.text(Lint.markdown(rep))
@@ -69,7 +72,8 @@ object OpsTools:
             "due or not, past the daily caps; `dryRun: true` only lists what it would close and try; a pass of more " +
             "than one item runs as a job — follow it with job_status). This is where a queue/tracker/changelog belongs — never write " +
             "one as a new file. `topic` groups items under a heading; on `log` it defaults to today's " +
-            "date, so an added line lands in today's entry.")
+            "date, so an added line lands in today's entry."
+        )
         .input[QueueInput]
         .handle(in => ToolResult.text(runQueue(ops, h, in)))
 
@@ -90,7 +94,8 @@ object OpsTools:
         .description(
           "List the tables, columns and types that `query` can read (from the live " +
             "information_schema). Use to check column names before writing SQL — not for " +
-            "searching the corpus.")
+            "searching the corpus."
+        )
         .input[SchemaInput]
         .handle(_ => ToolResult.text(Query.schemaMarkdown(ops.schemaTables)))
 
@@ -99,7 +104,8 @@ object OpsTools:
         .description(
           "List the backup archives on the server (pg_dump -Fc), newest first: filename, size and " +
             "timestamp. Read-only — use it to check whether a backup exists before a bulk operation. " +
-            "Creating a backup is the `backup` tool; restoring is `histmersion restore` (human only).")
+            "Creating a backup is the `backup` tool; restoring is `histmersion restore` (human only)."
+        )
         .input[BackupsInput]
         .handle { _ =>
           ops.backups match
@@ -135,7 +141,8 @@ object OpsTools:
               case Left(e)  => McpOut.refusal(e)
           case None => "_done needs an `id` (run action=list to see them)_"
       case "recheck" =>
-        h.agents.managing.acquireRecheck(AcquireChecks.RecheckRequest(in.dryRun, in.limit, in.id, Some("mcp"), in.all))
+        h.agents.managing
+          .acquireRecheck(AcquireChecks.RecheckRequest(in.dryRun, in.limit, in.id, Some("mcp"), in.all))
           .fold(McpOut.refusal, AcquireChecksMarkdown.result)
       case other =>
         s"_unknown action '$other' — use list, add, done or recheck_"
@@ -150,9 +157,15 @@ object OpsTools:
       field: Option[FormatField] = None
   ) derives KindlingsCodecAsObject
   object LintInput:
-    given Schema[LintInput] = KindlingsSchema.derived[LintInput].schema
+    given Schema[LintInput] = KindlingsSchema
+      .derived[LintInput]
+      .schema
       .modify(_.rules)(_.description("Run only these rules (omit for all); an unknown rule is a 400"))
-      .modify(_.fix)(_.description("First apply safe repairs (resolve short edge targets, reindex stale chunks), then report; with article/source/text, apply the wording-safe formatting repairs to it"))
+      .modify(_.fix)(
+        _.description(
+          "First apply safe repairs (resolve short edge targets, reindex stale chunks), then report; with article/source/text, apply the wording-safe formatting repairs to it"
+        )
+      )
       .modify(_.article)(_.description("Check one article's body and summary for formatting problems (a slug)"))
       .modify(_.source)(_.description("Check one source's summary and notes for formatting problems (a citekey)"))
       .modify(_.text)(_.description("Check Markdown that is not stored yet (e.g. an article body before put_article)"))
@@ -170,21 +183,37 @@ object OpsTools:
       limit: Option[Int] = None
   ) derives KindlingsCodecAsObject
   object QueueInput:
-    given Schema[QueueInput] = KindlingsSchema.derived[QueueInput].schema
-      .modify(_.action)(_.description("What to do: list | add | done | recheck (the acquisition list's legal re-check)"))
+    given Schema[QueueInput] = KindlingsSchema
+      .derived[QueueInput]
+      .schema
+      .modify(_.action)(
+        _.description("What to do: list | add | done | recheck (the acquisition list's legal re-check)")
+      )
       .modify(_.list)(_.description("Which queue: acquire | tasks | log"))
       .modify(_.text)(_.description("The item text (for action=add)"))
       .modify(_.topic)(_.description("Group the item under this heading (defaults to today's date for log)"))
-      .modify(_.reason)(_.description("Why this item is on the list / what research direction it serves (for action=add)"))
+      .modify(_.reason)(
+        _.description("Why this item is on the list / what research direction it serves (for action=add)")
+      )
       .modify(_.id)(_.description("The item id (for action=done; for action=recheck: that acquisition item only)"))
-      .modify(_.all)(_.description("Include done items and prose blocks (for action=list); for action=recheck: every open " +
-        "acquisition item with a DOI, due or not, past the caps (a job)"))
-      .modify(_.dryRun)(_.description("action=recheck: list what it would close and try; no fetcher is asked, nothing stored"))
-      .modify(_.limit)(_.description("action=recheck: try at most this many due items (default acquire.recheck.per-pass)"))
+      .modify(_.all)(
+        _.description(
+          "Include done items and prose blocks (for action=list); for action=recheck: every open " +
+            "acquisition item with a DOI, due or not, past the caps (a job)"
+        )
+      )
+      .modify(_.dryRun)(
+        _.description("action=recheck: list what it would close and try; no fetcher is asked, nothing stored")
+      )
+      .modify(_.limit)(
+        _.description("action=recheck: try at most this many due items (default acquire.recheck.per-pass)")
+      )
 
   final case class QueryInput(sql: String) derives KindlingsCodecAsObject
   object QueryInput:
-    given Schema[QueryInput] = KindlingsSchema.derived[QueryInput].schema
+    given Schema[QueryInput] = KindlingsSchema
+      .derived[QueryInput]
+      .schema
       .modify(_.sql)(_.description("One read-only SQL statement (Postgres refuses writes)"))
 
   final case class SchemaInput() derives KindlingsCodecAsObject

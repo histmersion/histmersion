@@ -1,7 +1,7 @@
 package com.histmersion.web.marks
 
-/** When something was written, as a person says it: "just now", "5 minutes ago", "3 days ago", or the date.
-  * Pure. */
+/** When something was written, as a person says it: "just now", "5 minutes ago", "3 days ago", or the date. Pure.
+  */
 object Ago:
 
   def apply(thenMs: Double, nowMs: Double, isoDate: String): String =

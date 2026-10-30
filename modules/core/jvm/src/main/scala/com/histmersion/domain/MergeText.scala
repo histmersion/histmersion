@@ -5,9 +5,10 @@ import com.histmersion.api.given
 
 import java.text.Normalizer
 
-/** The normalisers the source matcher compares with (docs/research-merge-import.md §5.2): folding,
-  * OpenRefine fingerprints, title keys, personal names, Jaro-Winkler, token Jaccard and MinHash.
-  * All pure; JVM-only because of `java.text.Normalizer`. */
+/** The normalisers the source matcher compares with (docs/research-merge-import.md §5.2): folding, OpenRefine
+  * fingerprints, title keys, personal names, Jaro-Winkler, token Jaccard and MinHash. All pure; JVM-only because of
+  * `java.text.Normalizer`.
+  */
 object MergeText:
 
   // ── folding ──────────────────────────────────────────────────────────────────────────────────
@@ -15,9 +16,9 @@ object MergeText:
   /** Typographic quotes, folded to the ASCII apostrophe. */
   private val quotes: Map[Char, String] = Map('’' -> "'", '‘' -> "'")
 
-  /** Lower case, diacritics removed (`Güterbock` → `guterbock`, `López` → `lopez`): the shared
-    * [[LatinFold]] table first (it also maps the letters NFD does not decompose — `ß`, `ł`, `ø`, `þ`),
-    * then NFD for every other script. */
+  /** Lower case, diacritics removed (`Güterbock` → `guterbock`, `López` → `lopez`): the shared [[LatinFold]] table
+    * first (it also maps the letters NFD does not decompose — `ß`, `ł`, `ø`, `þ`), then NFD for every other script.
+    */
   def fold(s: String): String =
     val pre = LatinFold.fold(s).flatMap(c => quotes.getOrElse(c, c.toString))
     Normalizer.normalize(pre, Normalizer.Form.NFD).replaceAll("\\p{M}+", "").toLowerCase(java.util.Locale.ROOT)
@@ -30,10 +31,57 @@ object MergeText:
   def fingerprint(s: String): String = tokens(s).distinct.sorted.mkString(" ")
 
   private val stopwords: Set[String] = Set(
-    "a", "an", "the", "of", "and", "or", "in", "on", "at", "to", "for", "from", "by", "with", "as",
-    "into", "its", "their", "his", "her", "is", "are", "be", "was", "le", "la", "les", "de", "des", "du",
-    "del", "della", "der", "die", "das", "den", "und", "von", "zu", "et", "el", "los", "las", "il",
-    "un", "une", "ein", "eine", "y", "e")
+    "a",
+    "an",
+    "the",
+    "of",
+    "and",
+    "or",
+    "in",
+    "on",
+    "at",
+    "to",
+    "for",
+    "from",
+    "by",
+    "with",
+    "as",
+    "into",
+    "its",
+    "their",
+    "his",
+    "her",
+    "is",
+    "are",
+    "be",
+    "was",
+    "le",
+    "la",
+    "les",
+    "de",
+    "des",
+    "du",
+    "del",
+    "della",
+    "der",
+    "die",
+    "das",
+    "den",
+    "und",
+    "von",
+    "zu",
+    "et",
+    "el",
+    "los",
+    "las",
+    "il",
+    "un",
+    "une",
+    "ein",
+    "eine",
+    "y",
+    "e"
+  )
 
   def significant(ts: List[String]): List[String] = ts.filterNot(stopwords)
 
@@ -49,9 +97,10 @@ object MergeText:
 
   // ── personal names ───────────────────────────────────────────────────────────────────────────
 
-  /** A name as compared: folded surname tokens, folded forename tokens (an initial is one letter),
-    * and whether the surname is known (`Surname, Given`) or guessed (`Given Surname`, where a
-    * multi-word surname cannot be told from a middle name). */
+  /** A name as compared: folded surname tokens, folded forename tokens (an initial is one letter), and whether the
+    * surname is known (`Surname, Given`) or guessed (`Given Surname`, where a multi-word surname cannot be told from a
+    * middle name).
+    */
   final case class Person(surname: List[String], forenames: List[String], surnameKnown: Boolean):
     /** The surname as one key (`lopezruiz`). */
     def key: String = surname.mkString
@@ -59,48 +108,74 @@ object MergeText:
 
   /** Words that belong to a surname when they come before it (`van`, `de la`). */
   private val particles: Set[String] =
-    Set("van", "von", "der", "den", "de", "del", "della", "di", "da", "du", "la", "le", "ter", "ten", "bin", "ibn",
-      "al", "el", "dos", "das", "zu", "vom", "st")
+    Set(
+      "van",
+      "von",
+      "der",
+      "den",
+      "de",
+      "del",
+      "della",
+      "di",
+      "da",
+      "du",
+      "la",
+      "le",
+      "ter",
+      "ten",
+      "bin",
+      "ibn",
+      "al",
+      "el",
+      "dos",
+      "das",
+      "zu",
+      "vom",
+      "st"
+    )
 
   private val suffixes: Set[String] = Set("jr", "sr", "ii", "iii", "iv")
 
   private def nameTokens(s: String): List[String] =
     tokens(s).filterNot(t => t.forall(_.isDigit)).filterNot(suffixes)
 
-  /** Parse `Surname, Given, 1850-1928`, `Given Surname`, `H. G. Guterbock`, `Lopez-Ruiz, Carolina`.
-    * Life dates and Jr./Sr. are dropped; hyphens split a double surname into its words, so
-    * `López-Ruiz` and `Lopez Ruiz` compare equal. `None` for an empty name. */
+  /** Parse `Surname, Given, 1850-1928`, `Given Surname`, `H. G. Guterbock`, `Lopez-Ruiz, Carolina`. Life dates and
+    * Jr./Sr. are dropped; hyphens split a double surname into its words, so `López-Ruiz` and `Lopez Ruiz` compare
+    * equal. `None` for an empty name.
+    */
   def person(raw: String): Option[Person] =
     val parts = raw.split(",").toList.map(_.trim).filter(_.nonEmpty)
     parts match
-      case Nil => None
+      case Nil                                                       => None
       case first :: rest if rest.exists(p => nameTokens(p).nonEmpty) =>
         val surname = nameTokens(first)
-        val forenames   = rest.flatMap(nameTokens)
+        val forenames = rest.flatMap(nameTokens)
         Option.when(surname.nonEmpty)(Person(surname, forenames, surnameKnown = true))
       case _ =>
         val ts = nameTokens(raw)
         ts match
-          case Nil         => None
-          case List(one)   => Some(Person(List(one), Nil, surnameKnown = true))
-          case _ =>
+          case Nil       => None
+          case List(one) => Some(Person(List(one), Nil, surnameKnown = true))
+          case _         =>
             // the best guess: the last word, with any particles right before it — a guess still
             // (`Carolina Lopez Ruiz`), so `samePerson` tries every trailing run
             val (front, last) = (ts.init, ts.last)
-            val parts         = front.reverse.takeWhile(particles).reverse
-            val forenames         = front.dropRight(parts.length)
+            val parts = front.reverse.takeWhile(particles).reverse
+            val forenames = front.dropRight(parts.length)
             Some(Person(parts :+ last, forenames, surnameKnown = false))
 
-  /** Given names compatible: pairwise, the same initial, and where both are written out, the same
-    * name (or one a prefix of the other). Missing forenames are compatible with anything. */
+  /** Given names compatible: pairwise, the same initial, and where both are written out, the same name (or one a prefix
+    * of the other). Missing forenames are compatible with anything.
+    */
   def givenCompatible(a: List[String], b: List[String]): Boolean =
     a.zip(b).forall { (x, y) =>
       x.head == y.head && (x.length == 1 || y.length == 1 || x.startsWith(y) || y.startsWith(x))
     }
 
-  /** Two names the same person: the surnames agree (for a guessed surname, any trailing run of its
-    * words may be the surname — `Carolina Lopez Ruiz` against `López-Ruiz, Carolina`), and the forenames
-    * names that are left are compatible. Pure. */
+  /** Two names the same person: the surnames agree (for a guessed surname, any trailing run of its words may be the
+    * surname — `Carolina Lopez Ruiz` against `López-Ruiz, Carolina`), and the forenames names that are left are
+    * compatible. Pure.
+    */
   def samePerson(a: Person, b: Person): Boolean =
     def splits(p: Person): List[(List[String], List[String])] =
       if p.surnameKnown then List(p.surname -> p.forenames)
@@ -125,11 +200,13 @@ object MergeText:
     if pa.isEmpty || pb.isEmpty then AuthorAgreement.Unknown
     else
       // a greedy one-to-one pairing; author lists are short
-      val matched = pa.foldLeft((0, pb)) { case ((n, left), p) =>
-        left.indexWhere(samePerson(p, _)) match
-          case -1 => (n, left)
-          case i  => (n + 1, left.patch(i, Nil, 1))
-      }._1
+      val matched = pa
+        .foldLeft((0, pb)) { case ((n, left), p) =>
+          left.indexWhere(samePerson(p, _)) match
+            case -1 => (n, left)
+            case i  => (n + 1, left.patch(i, Nil, 1))
+        }
+        ._1
       if matched == pa.length && matched == pb.length then AuthorAgreement.Same
       else if samePerson(pa.head, pb.head) then AuthorAgreement.FirstAuthor
       else if matched * 2 >= math.max(pa.length, pb.length) then AuthorAgreement.Overlap
@@ -144,8 +221,8 @@ object MergeText:
     else if s1.isEmpty || s2.isEmpty then 0.0
     else
       val range = math.max(0, math.max(s1.length, s2.length) / 2 - 1)
-      val m1    = Array.fill(s1.length)(false)
-      val m2    = Array.fill(s2.length)(false)
+      val m1 = Array.fill(s1.length)(false)
+      val m2 = Array.fill(s2.length)(false)
       val matches = s1.indices.count { i =>
         val lo = math.max(0, i - range)
         val hi = math.min(s2.length - 1, i + range)
@@ -170,8 +247,11 @@ object MergeText:
 
   /** A DOI as a key — as V032's `histmersion_doi_key`: no resolver prefix, no `doi:`, lower case. */
   def doiKey(doi: String): Option[String] =
-    Option(doi.trim.toLowerCase(java.util.Locale.ROOT)
-      .replaceFirst("^(https?://(dx\\.)?doi\\.org/|doi:\\s*)", "")).filter(_.nonEmpty)
+    Option(
+      doi.trim
+        .toLowerCase(java.util.Locale.ROOT)
+        .replaceFirst("^(https?://(dx\\.)?doi\\.org/|doi:\\s*)", "")
+    ).filter(_.nonEmpty)
 
   /** An ISBN as ISBN-13 digits; an ISBN-10 is converted. `None` when it is not a valid ISBN. */
   def isbn13(raw: String): Option[String] =
@@ -184,7 +264,7 @@ object MergeText:
       val ok = s.zipWithIndex.map((c, i) => (if c == 'X' then 10 else c - '0') * (10 - i)).sum % 11 == 0
       Option.when(ok) {
         val core = "978" + s.init
-        val sum  = core.zipWithIndex.map((c, i) => (c - '0') * (if i % 2 == 0 then 1 else 3)).sum
+        val sum = core.zipWithIndex.map((c, i) => (c - '0') * (if i % 2 == 0 then 1 else 3)).sum
         core + ((10 - sum % 10) % 10).toString
       }
     else None
@@ -198,8 +278,9 @@ object MergeText:
       if mins.isEmpty || mins.length != o.mins.length then 0.0
       else mins.zip(o.mins).count((a, b) => a == b).toDouble / mins.length
 
-  /** Signature of a text: folded word 5-shingles, `k` seeded MurmurHash3 functions. A text shorter
-    * than one shingle is hashed as one. Pure and deterministic. */
+  /** Signature of a text: folded word 5-shingles, `k` seeded MurmurHash3 functions. A text shorter than one shingle is
+    * hashed as one. Pure and deterministic.
+    */
   def minHash(text: String, k: Int = 64, shingle: Int = 5): MinHash =
     val ws = tokens(text)
     val shingles: Iterator[String] =

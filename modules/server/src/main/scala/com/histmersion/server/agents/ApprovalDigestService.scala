@@ -11,11 +11,17 @@ import com.histmersion.db.{AgentRepo, AutopilotRepo, ManagerRepo}
 import java.time.Instant
 import javax.sql.DataSource
 
-/** The approval digest (#3762 proposal 3): everything waiting for a person in one view ([[digest]]), ONE
-  * worklog line a UTC day after `agents.autopilot.digest-hour` ([[tick]], from the managers' tick), and a
-  * whole group decided at once ([[decideAll]]) — each approval through [[AgentsHandlers.decide]], the very
-  * decision a person's click takes (a waiting run is woken, a plan applied). */
-final class ApprovalDigestService(ds: DataSource, cfg: => AgentsConfig, h: com.histmersion.server.Handlers, agents: AgentsHandlers):
+/** The approval digest (#3762 proposal 3): everything waiting for a person in one view ([[digest]]), ONE worklog line a
+  * UTC day after `agents.autopilot.digest-hour` ([[tick]], from the managers' tick), and a whole group decided at once
+  * ([[decideAll]]) — each approval through [[AgentsHandlers.decide]], the very decision a person's click takes (a
+  * waiting run is woken, a plan applied).
+  */
+final class ApprovalDigestService(
+    ds: DataSource,
+    cfg: => AgentsConfig,
+    h: com.histmersion.server.Handlers,
+    agents: AgentsHandlers
+):
 
   /** Does code decide an approval of kind `k` now (the autopilot's checks)? */
   private def checked(k: String): Boolean =
@@ -25,14 +31,20 @@ final class ApprovalDigestService(ds: DataSource, cfg: => AgentsConfig, h: com.h
   def digest(now: Instant = Instant.now()): Digest =
     val open = AgentRepo.openLight(ds)
     val wait = agents.focus.goalPlansWait()
-    Digest(now.toString, open.size, ApprovalDigest.group(open, checked, wait.fold(Set.empty)(_ => Set(ApprovalKind.GoalPlan.wire))),
-      ManagerRepo.forPerson(ds), AutopilotRepo.lastDigest(ds), wait)
+    Digest(
+      now.toString,
+      open.size,
+      ApprovalDigest.group(open, checked, wait.fold(Set.empty)(_ => Set(ApprovalKind.GoalPlan.wire))),
+      ManagerRepo.forPerson(ds),
+      AutopilotRepo.lastDigest(ds),
+      wait
+    )
 
   /** From the managers' tick: once a UTC day, after `digest-hour`, the digest's line goes to the worklog. */
   def tick(now: Instant): List[String] =
     val hour = cfg.autopilot.digestHour
-    val day  = ManagerPolicy.dayStart(now)
-    val due  = hour >= 0 && !now.isBefore(day.plusSeconds(math.min(23, hour).toLong * 3600L)) &&
+    val day = ManagerPolicy.dayStart(now)
+    val due = hour >= 0 && !now.isBefore(day.plusSeconds(math.min(23, hour).toLong * 3600L)) &&
       AutopilotRepo.lastDigest(ds).flatMap(ManagerPolicy.parseInstant).forall(_.isBefore(day))
     if !due then Nil
     else
@@ -42,29 +54,43 @@ final class ApprovalDigestService(ds: DataSource, cfg: => AgentsConfig, h: com.h
       scribe.info(line)
       List("approval digest written")
 
-  /** Decide every open approval `b` matches (a kind, a subject, ids), oldest first; a refused one does not
-    * stop the rest. */
+  /** Decide every open approval `b` matches (a kind, a subject, ids), oldest first; a refused one does not stop the
+    * rest.
+    */
   def decideAll(b: BulkDecide): Either[ApiError, BulkResult] =
     for
       d <- Decision.parse(b.decision).toRight(ApiError(s"unknown decision '${b.decision}' (approve or reject)"))
-      _ <- Either.cond(b.kind.exists(_.trim.nonEmpty) || b.subject.exists(_.trim.nonEmpty) || b.ids.nonEmpty, (),
-             ApiError("give a kind, a subject or ids: a bulk decision never takes every open approval"))
-      _ <- b.kind.map(_.trim).filter(_.nonEmpty).fold[Either[ApiError, Unit]](Right(()))(k =>
-             ApprovalKind.parse(k).toRight(ApiError(s"unknown approval kind '$k' (${ApprovalKind.values.map(_.wire).mkString(", ")})")).map(_ => ()))
+      _ <- Either.cond(
+        b.kind.exists(_.trim.nonEmpty) || b.subject.exists(_.trim.nonEmpty) || b.ids.nonEmpty,
+        (),
+        ApiError("give a kind, a subject or ids: a bulk decision never takes every open approval")
+      )
+      _ <- b.kind
+        .map(_.trim)
+        .filter(_.nonEmpty)
+        .fold[Either[ApiError, Unit]](Right(()))(k =>
+          ApprovalKind
+            .parse(k)
+            .toRight(ApiError(s"unknown approval kind '$k' (${ApprovalKind.values.map(_.wire).mkString(", ")})"))
+            .map(_ => ())
+        )
     yield
       val open = AgentRepo.openLight(ds)
-      val ms   = ApprovalDigest.matching(open, b)
+      val ms = ApprovalDigest.matching(open, b)
       if b.dryRun then BulkResult(d.wire, dryRun = true, ms.size, ms.map(_.id), Nil, open.size)
       else
-        val by   = b.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")
+        val by = b.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")
         val note = Some((b.note.map(_.trim).filter(_.nonEmpty).getOrElse("") + s" (decided in bulk by $by)").trim)
         val done = ms.map(o => o.id -> agents.decide(o.id, d.wire, DecisionRequest(note)))
-        val ok   = done.collect { case (id, Right(_)) => id }
-        val bad  = done.collect { case (id, Left(e)) => BulkFailed(id, e.message.take(300)) }
+        val ok = done.collect { case (id, Right(_)) => id }
+        val bad = done.collect { case (id, Left(e)) => BulkFailed(id, e.message.take(300)) }
         val left = AgentRepo.openLight(ds).size
         if ok.nonEmpty then
-          val what = List(b.kind.map(k => s"kind $k"), b.subject.map(s => s"about $s"), Option.when(b.ids.nonEmpty)(s"${b.ids.size} ids"))
-            .flatten.mkString(", ")
+          val what = List(
+            b.kind.map(k => s"kind $k"),
+            b.subject.map(s => s"about $s"),
+            Option.when(b.ids.nonEmpty)(s"${b.ids.size} ids")
+          ).flatten.mkString(", ")
           val line = s"approvals ${if d == Decision.Approve then "approved" else "rejected"} in bulk by $by ($what): " +
             s"${ok.size} of ${ms.size}" + (if bad.nonEmpty then s", ${bad.size} refused" else "") + s"; $left open left"
           val _ = h.ops.queueAdd("log", QueueAdd(line.take(1000)))

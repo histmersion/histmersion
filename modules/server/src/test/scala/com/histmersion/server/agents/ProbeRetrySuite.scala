@@ -11,25 +11,28 @@ import sttp.ai.core.agent.*
 
 import java.nio.file.Files
 
-/** `agent probe` against a `*_test` database with a scripted model: an answer that leaves the title
-  * empty and the year null (2026-10-08, codex:gpt-6-luna: `{"citekey":"huxley1956_catalogue",
-  * "title":"","year":null}`) is not an answer — the probe asks again with the problems stated, and
-  * says so if the model never fills them. An answer in prose (#915, claude-code:haiku) is asked again
-  * the same way — through the real `claude-code` client on a fake `claude`. Skipped without
-  * HISTMERSION_TEST_DB_URL. */
+/** `agent probe` against a `*_test` database with a scripted model: an answer that leaves the title empty and the year
+  * null (2026-10-08, codex:gpt-6-luna: `{"citekey":"huxley1956_catalogue", "title":"","year":null}`) is not an answer —
+  * the probe asks again with the problems stated, and says so if the model never fills them. An answer in prose (#915,
+  * claude-code:haiku) is asked again the same way — through the real `claude-code` client on a fake `claude`. Skipped
+  * without HISTMERSION_TEST_DB_URL.
+  */
 class ProbeRetrySuite extends com.histmersion.db.DbSuite:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(60, "s")
 
-  private val Ck    = "zzprobe1956_catalogue"
+  private val Ck = "zzprobe1956_catalogue"
   private val Model = ModelRef(ProviderKind.Local, "zzProbe")
   private val Usage1 = Some(TokenUsage(Tokens(100), Tokens(10), Tokens.Zero, Tokens.Zero))
 
   private lazy val cfg =
     val b = AppConfig.load()
-    b.copy(db = b.db.copy(url = testDb.get), server = b.server.copy(host = "127.0.0.1"),
-      agents = b.agents.copy(enabled = true, prices = "zzProbe=0/0", enrich = b.agents.enrich.copy(upstream = false)))
+    b.copy(
+      db = b.db.copy(url = testDb.get),
+      server = b.server.copy(host = "127.0.0.1"),
+      agents = b.agents.copy(enabled = true, prices = "zzProbe=0/0", enrich = b.agents.enrich.copy(upstream = false))
+    )
 
   private lazy val ds = testPool(cfg.db)
 
@@ -38,7 +41,7 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite:
     connect(ds)(sql"DELETE FROM sources WHERE citekey LIKE 'zzprobe%'".update.run())
 
   override def beforeEach(context: BeforeEach): Unit = clean()
-  override def afterEach(context: AfterEach): Unit   = clean()
+  override def afterEach(context: AfterEach): Unit = clean()
 
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
   private val Empty = s"""{"citekey":"$Ck","title":"","year":null}"""
@@ -72,17 +75,24 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite:
 
   private val Haiku = ModelRef(ProviderKind.ClaudeCode, "haiku")
   private def result(text: String, structured: String) =
-    s"""{"type":"result","subtype":"success","is_error":false,"num_turns":2,"result":${io.circe.Json.fromString(text).noSpaces},""" +
+    s"""{"type":"result","subtype":"success","is_error":false,"num_turns":2,"result":${io.circe.Json
+        .fromString(text)
+        .noSpaces},""" +
       s""""structured_output":$structured,"usage":{"input_tokens":100,"output_tokens":10},"permission_denials":[]}"""
   private val Prose = result("The source is A Catalogue of Fishes, published in 1956.", "null")
   private val Typed = result("Done.", Right_)
 
-  /** The real `claude-code` client on the generated tree, running `fake` (the picker sees the scripted
-    * local model, so no plan pool is read). */
+  /** The real `claude-code` client on the generated tree, running `fake` (the picker sees the scripted local model, so
+    * no plan pool is read).
+    */
   private def claudeHandlers(fake: FakeCli.Fake): AgentsHandlers =
     val rt = CliRuntime(FakeCli.app(Files.createTempDirectory("hm-agents-")))
     assert(rt.trees.generate(Generated.known(rt.definitions), List(AgentRuntime.ClaudeCode)).isRight)
-    val client = ClaudeCodeClient(Haiku, cfg.agents.providers.claudeCode.copy(command = fake.script.toString, timeoutSeconds = 30), rt)
+    val client = ClaudeCodeClient(
+      Haiku,
+      cfg.agents.providers.claudeCode.copy(command = fake.script.toString, timeoutSeconds = 30),
+      rt
+    )
     val deps = Deps(cfg, ds)
     val h = Handlers(deps)
     assert(h.putSource(Ck, SourcePut(title = "A Catalogue of Fishes", year = Some(1956))).isRight)
@@ -94,8 +104,13 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite:
     assertEquals((r.model, r.attempts, r.problems, r.matchesRecord), ("claude-code:haiku", 2, Nil, true), r)
     assertEquals(FakeCli.invocations(fake), 2)
     val retry = FakeCli.stdinOf(fake, 2)
-    assert(retry.contains("rejected by validation") && retry.contains("there is no JSON object in the answer (it is prose)") &&
-      retry.contains("A Catalogue of Fishes, published in 1956"), retry)
+    assert(
+      retry.contains("rejected by validation") && retry.contains(
+        "there is no JSON object in the answer (it is prose)"
+      ) &&
+        retry.contains("A Catalogue of Fishes, published in 1956"),
+      retry
+    )
     assert(!FakeCli.stdinOf(fake, 1).contains("rejected"), "the first ask is the plain one")
     // the probe goes through the same typed-answer path as a panel step (0aaea92): the schema and the answer tool
     assert(fake.args.contains("--json-schema"), fake.args)
@@ -109,4 +124,9 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite:
     assertEquals(FakeCli.invocations(fake), r.attempts)
     assert(r.answer.isEmpty && !r.matchesRecord)
     val md = AgentsMarkdown.probe(r)
-    assert(md.contains("**no typed answer**: the answer is not valid JSON: there is no JSON object in the answer (it is prose)"), md)
+    assert(
+      md.contains(
+        "**no typed answer**: the answer is not valid JSON: there is no JSON object in the answer (it is prose)"
+      ),
+      md
+    )

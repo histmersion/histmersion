@@ -6,11 +6,13 @@ import com.histmersion.db.JobRepo
 import java.util.concurrent.atomic.AtomicReference
 import javax.sql.DataSource
 
-/** Pause, resume and cancel a job: a long background job cooperatively (it stops at its next part boundary,
-  * keeping what it did; resumed, it skips that), an agent run by its own control. */
+/** Pause, resume and cancel a job: a long background job cooperatively (it stops at its next part boundary, keeping
+  * what it did; resumed, it skips that), an agent run by its own control.
+  */
 trait JobControlService:
-  /** Answer `action` on job `id`, with the job as it stands after it. A pause or cancel of a running
-    * background job is asked of it: the answer is still `running`, and the job stops after its current part. */
+  /** Answer `action` on job `id`, with the job as it stands after it. A pause or cancel of a running background job is
+    * asked of it: the answer is still `running`, and the job stops after its current part.
+    */
   def control(id: String, action: JobAction): Either[ApiError, JobInfo]
 
 object JobControlService:
@@ -22,8 +24,11 @@ object JobControlService:
   def apply(ds: DataSource, stops: JobStops, runs: (String, JobAction) => Either[ApiError, Unit]): JobControlService =
     Implementation(ds, stops, runs)
 
-  private final class Implementation(ds: DataSource, stops: JobStops, runs: (String, JobAction) => Either[ApiError, Unit])
-      extends JobControlService:
+  final private class Implementation(
+      ds: DataSource,
+      stops: JobStops,
+      runs: (String, JobAction) => Either[ApiError, Unit]
+  ) extends JobControlService:
 
     def control(id: String, action: JobAction): Either[ApiError, JobInfo] =
       def current = JobRepo.get(ds, id).toRight(notFound(id))
@@ -34,15 +39,21 @@ object JobControlService:
           case JobControlStep.Resume         => stops.resume(id).left.map(conflict).flatMap(_ => current)
           case JobControlStep.CancelNow      =>
             stops.forget(id)
-            JobRepo.transition(ds, id, job.state, JobState.Cancelled, job.progress, Some(JobControlRules.CancelledByPerson))
-              .toRight(conflict(s"job $id moved on; look again")).flatMap(_ => current)
+            JobRepo
+              .transition(ds, id, job.state, JobState.Cancelled, job.progress, Some(JobControlRules.CancelledByPerson))
+              .toRight(conflict(s"job $id moved on; look again"))
+              .flatMap(_ => current)
         }
       }
 
   /** The same answers over jobs held in memory (tests). A running job's body is the test's: it asks
-    * [[JobStops.requestedFor]] between its parts and reports how it stopped with [[stopped]]. */
-  final class InMemory(jobs: AtomicReference[Map[String, JobInfo]], stops: JobStops,
-      runs: (String, JobAction) => Either[ApiError, Unit] = (_, _) => Right(())) extends JobControlService:
+    * [[JobStops.requestedFor]] between its parts and reports how it stopped with [[stopped]].
+    */
+  final class InMemory(
+      jobs: AtomicReference[Map[String, JobInfo]],
+      stops: JobStops,
+      runs: (String, JobAction) => Either[ApiError, Unit] = (_, _) => Right(())
+  ) extends JobControlService:
 
     /** A job, as the store would hold it. */
     def put(job: JobInfo): Unit = jobs.updateAndGet(_ + (job.id -> job)): Unit
@@ -59,8 +70,16 @@ object JobControlService:
       }
 
     private def move(id: String, to: JobState, progress: Option[String]): Unit =
-      jobs.updateAndGet(m => m.get(id).fold(m)(j => m + (id -> j.copy(status = to.wire, progress = progress.orElse(j.progress),
-        error = Option.when(to == JobState.Cancelled)(JobControlRules.CancelledByPerson).orElse(j.error))))): Unit
+      jobs.updateAndGet(m =>
+        m.get(id)
+          .fold(m)(j =>
+            m + (id -> j.copy(
+              status = to.wire,
+              progress = progress.orElse(j.progress),
+              error = Option.when(to == JobState.Cancelled)(JobControlRules.CancelledByPerson).orElse(j.error)
+            ))
+          )
+      ): Unit
 
     def control(id: String, action: JobAction): Either[ApiError, JobInfo] =
       def current = get(id).toRight(notFound(id))

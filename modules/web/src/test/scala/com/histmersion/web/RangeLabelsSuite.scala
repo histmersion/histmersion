@@ -53,5 +53,5 @@ class RangeLabelsSuite extends munit.FunSuite:
   test("every handle position keeps the years readable"):
     for x0 <- 0 to 600 by 7; d <- List(0, 1, 5, 20, 60, 120) do
       val x1 = math.min(bar, x0 + d.toDouble)
-      val p  = place("12500 BCE", "12480 BCE", x0.toDouble, x1, bar)
+      val p = place("12500 BCE", "12480 BCE", x0.toDouble, x1, bar)
       assertReadable(p)

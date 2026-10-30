@@ -51,17 +51,25 @@ class FrontmatterSuite extends munit.FunSuite:
 
   test("edges: relation tags and wikilinks (aliased or not), never self"):
     val es = Frontmatter.parseNote(note, "x").get.edges.toSet
-    assertEquals(es, Set(
-      Edge("heggarty2023_language", "anthony2007", "refutes"),
-      Edge("heggarty2023_language", "anthony2007_horse", "references"),
-      Edge("heggarty2023_language", "bouckaert2012_mapping", "references")))
+    assertEquals(
+      es,
+      Set(
+        Edge("heggarty2023_language", "anthony2007", "refutes"),
+        Edge("heggarty2023_language", "anthony2007_horse", "references"),
+        Edge("heggarty2023_language", "bouckaert2012_mapping", "references")
+      )
+    )
 
   test("a topic-slug wikilink becomes a TOPIC, not a references edge to something that is not a source"):
-    val withTopic = note.replace("and [[bouckaert2012_mapping]].",
-      "and [[bouckaert2012_mapping]], see [[bronze_age_collapse]] and [[Indo_European]].")
+    val withTopic = note.replace(
+      "and [[bouckaert2012_mapping]].",
+      "and [[bouckaert2012_mapping]], see [[bronze_age_collapse]] and [[Indo_European]]."
+    )
     val s = Frontmatter.parseNote(withTopic, "x").get
-    assertEquals(s.edges.filter(_.kind == "references").map(_.dst).toSet,
-      Set("anthony2007_horse", "bouckaert2012_mapping"))
+    assertEquals(
+      s.edges.filter(_.kind == "references").map(_.dst).toSet,
+      Set("anthony2007_horse", "bouckaert2012_mapping")
+    )
     // appended after the declared topics; `Indo_European` is not citekey-shaped (upper case) so the
     // link pattern never sees it
     assertEquals(s.topics, List("indo-european", "refutes_anthony2007", "bronze_age_collapse"))

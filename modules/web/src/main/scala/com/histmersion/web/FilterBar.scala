@@ -10,16 +10,18 @@ import scala.scalajs.js
 
 import com.raquo.laminar.codecs.StringAsIsCodec
 
-/** The filter panel on Explore's left (shared with Library: one filter state, [[UiState]]): the words, the
-  * place, the period (the timeline's span, echoed and editable) and the topic in view; authors, status, tags
-  * and the publication years behind "More filters"; every active filter as a chip, and "Clear all". It folds
-  * to a rail that counts the active filters — remembered by this browser — and lies OVER the map, so neither
-  * folding nor opening it resizes the map. On a phone it is the filters drawer. */
+/** The filter panel on Explore's left (shared with Library: one filter state, [[UiState]]): the words, the place, the
+  * period (the timeline's span, echoed and editable) and the topic in view; authors, status, tags and the publication
+  * years behind "More filters"; every active filter as a chip, and "Clear all". It folds to a rail that counts the
+  * active filters — remembered by this browser — and lies OVER the map, so neither folding nor opening it resizes the
+  * map. On a phone it is the filters drawer.
+  */
 object FilterBar:
 
-  /** One chip filter: the UiState field it edits (no fallback — an unknown key is not a field) and
-    * the facet dimension its suggestions come from. */
-  private final case class ChipField(state: Field[List[String]], facet: String, label: String, placeholder: String)
+  /** One chip filter: the UiState field it edits (no fallback — an unknown key is not a field) and the facet dimension
+    * its suggestions come from.
+    */
+  final private case class ChipField(state: Field[List[String]], facet: String, label: String, placeholder: String)
 
   private val topicField = ChipField(UiState.topics, "topics", "Topic", "e.g. bronze age collapse")
 
@@ -30,7 +32,7 @@ object FilterBar:
     ChipField(UiState.tags, "tags", "Tags", "e.g. sea peoples")
   )
 
-  private val moreKey   = "histmersion.moreFilters"
+  private val moreKey = "histmersion.moreFilters"
   private val foldedKey = "histmersion.filtersFolded"
 
   private val moreOpen = Var(false)
@@ -40,8 +42,9 @@ object FilterBar:
 
   def ensureMoreVisible(): Unit = moreOpen.set(true)
 
-  /** Pure: is "More filters" open at start-up? Closed unless it was left open — or a filter in it is set
-    * (from a shared link, say), so nothing that filters is hidden. */
+  /** Pure: is "More filters" open at start-up? Closed unless it was left open — or a filter in it is set (from a shared
+    * link, say), so nothing that filters is hidden.
+    */
   def moreOpenInitially(stored: Option[String], someMoreSet: Boolean, narrow: Boolean = false): Boolean =
     stored.contains("1") || someMoreSet
 
@@ -67,7 +70,8 @@ object FilterBar:
       placeholder = c.placeholder,
       debounceMs = config.debounce.suggestMs,
       getSuggestions = prefix =>
-        ApiClient.facets(c.facet, Some(prefix), UiState.toFilter(except = Set(c.state.key)))
+        ApiClient
+          .facets(c.facet, Some(prefix), UiState.toFilter(except = Set(c.state.key)))
           .map(_.take(config.facetSuggestions)),
       onChange = values => UiState.set(c.state := values)(),
       onPreview = v => UiState.setPreview(v.map(UiState.Preview(c.state.key, _))),
@@ -100,16 +104,35 @@ object FilterBar:
     div(
       cls := "f f-period",
       label(forId := "f-period-from", "Period"),
-      div(cls := "f-period-ends",
-        end("from", UiState.from, config.time.defaultFrom, () => UiState.to.now().getOrElse(config.time.defaultTo), _ <= _),
+      div(
+        cls := "f-period-ends",
+        end(
+          "from",
+          UiState.from,
+          config.time.defaultFrom,
+          () => UiState.to.now().getOrElse(config.time.defaultTo),
+          _ <= _
+        ),
         span(cls := "dash", "to"),
-        end("to", UiState.to, config.time.defaultTo, () => UiState.from.now().getOrElse(config.time.defaultFrom), _ >= _)),
+        end(
+          "to",
+          UiState.to,
+          config.time.defaultTo,
+          () => UiState.from.now().getOrElse(config.time.defaultFrom),
+          _ >= _
+        )
+      ),
       span(cls := "f-hint muted", "Also set by dragging on the timeline")
     )
 
-  /** `top` and `foot`: what a page that lists by these filters adds above and under them (Library's "My
-    * library" and "Show these on the map"). */
-  def init(config: UiConfig, top: Modifier[HtmlElement] = emptyMod, foot: Modifier[HtmlElement] = emptyMod): HtmlElement =
+  /** `top` and `foot`: what a page that lists by these filters adds above and under them (Library's "My library" and
+    * "Show these on the map").
+    */
+  def init(
+      config: UiConfig,
+      top: Modifier[HtmlElement] = emptyMod,
+      foot: Modifier[HtmlElement] = emptyMod
+  ): HtmlElement =
     val someMoreSet = moreFields.exists(_.state.now().nonEmpty) ||
       UiState.yearFrom.now().isDefined || UiState.yearTo.now().isDefined
     moreOpen.set(moreOpenInitially(stored(moreKey), someMoreSet, Viewport.narrowNow))
@@ -138,11 +161,20 @@ object FilterBar:
       div(
         cls := "filter-body",
         top,
-        div(cls := "filter-head",
+        div(
+          cls := "filter-head",
           h2(cls := "filter-title", "Filters"),
-          button(typ := "button", cls := "btn btn--bare btn--icon filter-fold", idAttr := "f-fold",
-            aria.expanded := true, aria.label := "Fold the filters", title := "Fold the filters to the side",
-            Icon(Icon.FoldLeft), onClick --> (_ => setFolded(true)))),
+          button(
+            typ := "button",
+            cls := "btn btn--bare btn--icon filter-fold",
+            idAttr := "f-fold",
+            aria.expanded := true,
+            aria.label := "Fold the filters",
+            title := "Fold the filters to the side",
+            Icon(Icon.FoldLeft),
+            onClick --> (_ => setFolded(true))
+          )
+        ),
         div(
           cls := "f f-words",
           label(forId := "f-words", "Words"),
@@ -179,9 +211,14 @@ object FilterBar:
           moreFields.map(chipInput(_, config)),
           yearRangeSlider()
         ),
-        div(cls := "filter-active",
-          div(cls := "filter-active-head",
-            span(cls := "filter-active-title", child.text <-- active.map(n => if n == 0 then "No active filters" else s"Active filters · $n")),
+        div(
+          cls := "filter-active",
+          div(
+            cls := "filter-active-head",
+            span(
+              cls := "filter-active-title",
+              child.text <-- active.map(n => if n == 0 then "No active filters" else s"Active filters · $n")
+            ),
             button(
               typ := "button",
               cls := "btn btn--ghost btn--sm f-clear",
@@ -193,8 +230,10 @@ object FilterBar:
                 UiState.set(UiState.from := Some(config.time.defaultFrom), UiState.to := Some(config.time.defaultTo))()
                 PlacesInput.sync()
               }
-            )),
-          FilterChips.list(config)),
+            )
+          ),
+          FilterChips.list(config)
+        ),
         foot
       )
     )
@@ -206,7 +245,7 @@ object FilterBar:
   private def yearRangeSlider(): HtmlElement =
     // the handles show UiState.yearFrom/yearTo directly; a drag commits every step
     val sliderFrom = UiState.yearFrom.signal
-    val sliderTo   = UiState.yearTo.signal
+    val sliderTo = UiState.yearTo.signal
     var dragTarget: String = ""
     var trackEl: dom.Element = null
 
@@ -216,7 +255,6 @@ object FilterBar:
 
     def yearToPct(y: Long): Double =
       ((y - YEAR_MIN).toDouble / (YEAR_MAX - YEAR_MIN).toDouble * 100).max(0).min(100)
-
 
     def handlePointer(ev: dom.PointerEvent, start: Boolean): Unit =
       if trackEl == null then ()
@@ -231,8 +269,7 @@ object FilterBar:
           dragTarget = if fromDist <= toDist then "from" else "to"
         if dragTarget == "from" then
           UiState.set(UiState.yearFrom := Some(Math.min(yr, sliderTo.now().getOrElse(YEAR_MAX))))()
-        else
-          UiState.set(UiState.yearTo := Some(Math.max(yr, sliderFrom.now().getOrElse(YEAR_MIN))))()
+        else UiState.set(UiState.yearTo := Some(Math.max(yr, sliderFrom.now().getOrElse(YEAR_MIN))))()
 
     div(
       cls := "f f-years",
@@ -281,8 +318,7 @@ object FilterBar:
         ),
         onPointerDown --> { ev =>
           val target = ev.target.asInstanceOf[dom.Element]
-          if !target.classList.contains("year-range-handle") then
-            handlePointer(ev, start = true)
+          if !target.classList.contains("year-range-handle") then handlePointer(ev, start = true)
         }
       ),
       htmlTag("span")(

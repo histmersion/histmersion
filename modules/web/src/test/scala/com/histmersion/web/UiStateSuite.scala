@@ -3,9 +3,9 @@ package com.histmersion.web
 import com.raquo.laminar.api.L.*
 import com.raquo.airstream.ownership.ManualOwner
 
-/** The typed UiState: codecs, the hash round trip, merging a filter link, local persistence — and
-  * the reported layer bug (#383). Runs in Node: no `location`, no `localStorage`, so the hash is not
-  * mirrored and the store is in memory. */
+/** The typed UiState: codecs, the hash round trip, merging a filter link, local persistence — and the reported layer
+  * bug (#383). Runs in Node: no `location`, no `localStorage`, so the hash is not mirrored and the store is in memory.
+  */
 class UiStateSuite extends munit.FunSuite:
 
   override def beforeEach(context: BeforeEach): Unit =
@@ -21,14 +21,20 @@ class UiStateSuite extends munit.FunSuite:
     assertEquals(summon[FieldCodec[Option[Long]]].decode(List("x")), Some(None))
     assertEquals(summon[FieldCodec[Option[Long]]].decode(List("-1200")), Some(Some(-1200L)))
     assertEquals(summon[FieldCodec[List[String]]].decode(List(" a", "", "a", "b")), Some(List("a", "b")))
-    assertEquals(summon[FieldCodec[Set[MapLayer]]].encode(Set(MapLayer.Media, MapLayer.Boundaries)),
-      List("boundaries", "media"))
+    assertEquals(
+      summon[FieldCodec[Set[MapLayer]]].encode(Set(MapLayer.Media, MapLayer.Boundaries)),
+      List("boundaries", "media")
+    )
     assertEquals(summon[FieldCodec[BaseMap]].decode(List("nope")), None)
   }
 
   test("the hash round-trips every hash field, and a field it omits returns to its default") {
-    UiState.set(UiState.tags := List("sea_peoples", "trade, long-distance"), UiState.q := Some("collapse"),
-      UiState.inView := true, UiState.open := List(WindowKey.Source("a2020_b"), WindowKey.Jobs))()
+    UiState.set(
+      UiState.tags := List("sea_peoples", "trade, long-distance"),
+      UiState.q := Some("collapse"),
+      UiState.inView := true,
+      UiState.open := List(WindowKey.Source("a2020_b"), WindowKey.Jobs)
+    )()
     val h = UiState.hashString
     UiState.loadHash("")
     assertEquals(UiState.tags.now(), Nil)
@@ -85,7 +91,7 @@ class UiStateSuite extends munit.FunSuite:
 
     // the map: a LayerSync following UiState.layers, exactly as MapView subscribes it
     val onMap = scala.collection.mutable.Set.empty[MapLayer]
-    val sync  = LayerSync(attach = onMap += _, detach = onMap -= _)
+    val sync = LayerSync(attach = onMap += _, detach = onMap -= _)
     // the toggle button: shows UiState.layerOn(l), clicks set(!shown)
     var shown = false
     val owner = new ManualOwner
@@ -188,8 +194,12 @@ class UiStateSuite extends munit.FunSuite:
   }
 
   test("the Articles and Events tabs ask for the GLOBAL filter, title included") {
-    UiState.set(UiState.status := List("current"), UiState.title := Some("troy"), UiState.from := Some(-1300L),
-      UiState.to := Some(-1100L))()
+    UiState.set(
+      UiState.status := List("current"),
+      UiState.title := Some("troy"),
+      UiState.from := Some(-1300L),
+      UiState.to := Some(-1100L)
+    )()
     val f = UiState.toFilter()
     assertEquals(UiState.articleQuery().filter, f.copy(limit = ui.Layout.tabFetch))
     assertEquals(UiState.eventQuery().filter, f.copy(limit = ui.Layout.tabFetch))
@@ -198,7 +208,9 @@ class UiStateSuite extends munit.FunSuite:
     assertEquals(UiState.articleQuery().text, None)
   }
 
-  test("more filters: closed by default (the filter panel shows words, place, period and topic); open when left open or one of its filters is set") {
+  test(
+    "more filters: closed by default (the filter panel shows words, place, period and topic); open when left open or one of its filters is set"
+  ) {
     assert(!FilterBar.moreOpenInitially(None, someMoreSet = false))
     assert(FilterBar.moreOpenInitially(Some("1"), someMoreSet = false))
     assert(!FilterBar.moreOpenInitially(Some("0"), someMoreSet = false))

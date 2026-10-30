@@ -3,10 +3,11 @@ package com.histmersion.server
 import chimp.server.{NoStructuredOutput, ToolResult}
 import com.histmersion.api.ApiError
 
-/** The one way an MCP tool answers (#1946): Markdown, and a refusal (a value the handler returned as
-  * `Left`) as its message in italics — `_No source 'x'…_`. Every tool used to spell the refusal
-  * itself (`ToolResult.text(s"_${e.message}_")`, 40-odd times, four shapes). A refusal stays a
-  * text result, not an MCP error: the agent reads why and tries again, as it always has. */
+/** The one way an MCP tool answers (#1946): Markdown, and a refusal (a value the handler returned as `Left`) as its
+  * message in italics — `_No source 'x'…_`. Every tool used to spell the refusal itself
+  * (`ToolResult.text(s"_${e.message}_")`, 40-odd times, four shapes). A refusal stays a text result, not an MCP error:
+  * the agent reads why and tries again, as it always has.
+  */
 object McpOut:
 
   /** A refusal's text: the reason in italics. Pure. */

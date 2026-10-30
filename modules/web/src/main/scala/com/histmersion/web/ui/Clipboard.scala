@@ -5,12 +5,14 @@ import org.scalajs.dom
 import scala.scalajs.js
 import scala.util.Try
 
-/** Copying text for a person: the browser's clipboard, else the older copy command; what happened is said
-  * ([[Flash]]). */
+/** Copying text for a person: the browser's clipboard, else the older copy command; what happened is said ([[Flash]]).
+  */
 object Clipboard:
 
   def copy(text: String, what: String): Unit =
-    val clip = Try(dom.window.navigator.asInstanceOf[js.Dynamic].clipboard).toOption.filterNot(c => js.isUndefined(c) || c == null)
+    val clip = Try(dom.window.navigator.asInstanceOf[js.Dynamic].clipboard).toOption.filterNot(c =>
+      js.isUndefined(c) || c == null
+    )
     clip match
       case Some(c) =>
         val p = c.writeText(text).asInstanceOf[js.Promise[Unit]]

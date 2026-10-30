@@ -2,15 +2,33 @@ package com.histmersion.web
 
 import com.histmersion.api.*
 
-/** The events in playback (#1440): when an event shows and how strongly — 0 before its span, 1 inside
-  * it, a linear fade after it measured in seconds of PLAYBACK — and the label it is drawn with: the
-  * point-only region label of [[PlaceGlyph]], local (with a dot) or regional. */
+/** The events in playback (#1440): when an event shows and how strongly — 0 before its span, 1 inside it, a linear fade
+  * after it measured in seconds of PLAYBACK — and the label it is drawn with: the point-only region label of
+  * [[PlaceGlyph]], local (with a dot) or regional.
+  */
 class EventPlaybackSuite extends munit.FunSuite:
 
-  private val kadesh = EventGeo("kadesh", "Battle <of> Kadesh", "battle", EventScale.Local, "attested",
-    TimeSpan(Some(-1274), None, None, Some(-1274)), 34.55, 36.5, "place", Some("p"), Some("Kadesh"))
-  private val migration = kadesh.copy(id = "m", label = "Yamnaya expansion", kind = "migration",
-    scale = EventScale.Regional, timeSpan = TimeSpan(Some(-3300), None, None, Some(-2200)), placeLabel = None)
+  private val kadesh = EventGeo(
+    "kadesh",
+    "Battle <of> Kadesh",
+    "battle",
+    EventScale.Local,
+    "attested",
+    TimeSpan(Some(-1274), None, None, Some(-1274)),
+    34.55,
+    36.5,
+    "place",
+    Some("p"),
+    Some("Kadesh")
+  )
+  private val migration = kadesh.copy(
+    id = "m",
+    label = "Yamnaya expansion",
+    kind = "migration",
+    scale = EventScale.Regional,
+    timeSpan = TimeSpan(Some(-3300), None, None, Some(-2200)),
+    placeLabel = None
+  )
 
   test("alpha: nothing before the span, full inside it, a linear fade after it, then nothing"):
     val span = (-1274L, -1274L)
@@ -63,7 +81,7 @@ class EventPlaybackSuite extends munit.FunSuite:
   test("rank: every event name outranks every area and point name; local over regional; later first"):
     val world = 256.0 * 256.0 // an area name's rank is its zoom-0 area: at most the whole world
     val battle = EventPlayback.rank(kadesh, -1274)
-    val era    = EventPlayback.rank(migration, -3300)
+    val era = EventPlayback.rank(migration, -3300)
     assert(era > world && era > -1.0, s"$era")
     assert(battle > era)
     assert(EventPlayback.rank(migration, -1000) > EventPlayback.rank(migration, -3300))
@@ -71,11 +89,13 @@ class EventPlaybackSuite extends munit.FunSuite:
     assert(EventPlayback.rank(kadesh, 2000) < EventPlayback.rank(kadesh, 2001))
     assert(EventPlayback.rank(migration, 3000) < EventPlayback.rank(kadesh, -4000), "local over regional at any year")
 
-  test("cull: an event name over a large area's name keeps the event, drops the area; two events at nearby sites do not overlap"):
+  test(
+    "cull: an event name over a large area's name keeps the event, drops the area; two events at nearby sites do not overlap"
+  ):
     import LabelPlacement.Box
     val area = Box("a|greece", 100, 100, 120, 16, 30000)
     val mycenae = Box("e|mycenae", 110, 102, 90, 24, EventPlayback.rank(kadesh, -1190))
-    val tiryns  = Box("e|tiryns", 115, 110, 80, 24, EventPlayback.rank(kadesh, -1180))
-    val pylos   = Box("e|pylos", 20, 200, 70, 24, EventPlayback.rank(kadesh, -1180))
+    val tiryns = Box("e|tiryns", 115, 110, 80, 24, EventPlayback.rank(kadesh, -1180))
+    val pylos = Box("e|pylos", 20, 200, 70, 24, EventPlayback.rank(kadesh, -1180))
     val kept = LabelPlacement.cull(Seq(area, mycenae, tiryns, pylos))
     assertEquals(kept, Set("e|tiryns", "e|pylos"))

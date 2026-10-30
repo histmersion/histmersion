@@ -4,9 +4,10 @@ import com.monovore.decline.Command
 import com.histmersion.api.*
 import com.histmersion.config.*
 
-/** The formatting-lint commands parse (`article lint <slug> [--fix]`, `lint --source/--article/--file`,
-  * `--strict` on the writes, `places rename`), and `lint --file` checks a note's BODY: its own
-  * frontmatter is the metadata `article put` sends, not pasted text. */
+/** The formatting-lint commands parse (`article lint <slug> [--fix]`, `lint --source/--article/--file`, `--strict` on
+  * the writes, `places rename`), and `lint --file` checks a note's BODY: its own frontmatter is the metadata
+  * `article put` sends, not pasted text.
+  */
 class FormatCmdSuite extends munit.FunSuite:
 
   private def parses(cmd: com.monovore.decline.Opts[?], args: String*): Boolean =
@@ -40,11 +41,24 @@ class FormatCmdSuite extends munit.FunSuite:
     assertEquals(FileFormat.splitFrontmatter("---\nnot closed\n"), ("", "---\nnot closed\n"))
 
   test("the Markdown rendering of a report: counts, one line per problem, the fix"):
-    val i = FormatIssue(FormatRule.TableNotRendered, FormatSeverity.Error, FormatField.Body, 4, 1, "| a | b |",
-      "no blank line", Some("insert a blank line before the table"))
+    val i = FormatIssue(
+      FormatRule.TableNotRendered,
+      FormatSeverity.Error,
+      FormatField.Body,
+      4,
+      1,
+      "| a | b |",
+      "no blank line",
+      Some("insert a blank line before the table")
+    )
     val md = FormatMarkdown.report(FormatReport("sea_peoples", List(i)))
     assert(md.startsWith("### sea_peoples: 1 formatting problem (1 error(s), 0 warning(s))"), md)
-    assert(md.contains("- body L4:1 error table-not-rendered — no blank line · `| a | b |` · fix: insert a blank line"), md)
+    assert(
+      md.contains("- body L4:1 error table-not-rendered — no blank line · `| a | b |` · fix: insert a blank line"),
+      md
+    )
     assertEquals(FormatMarkdown.report(FormatReport("x", Nil)), "### x: no formatting problems")
     assertEquals(FormatMarkdown.notice(Nil), "")
-    assert(FormatMarkdown.notice(List(i)).contains("## Formatting: 1 formatting problem (1 will not display as intended)"))
+    assert(
+      FormatMarkdown.notice(List(i)).contains("## Formatting: 1 formatting problem (1 will not display as intended)")
+    )

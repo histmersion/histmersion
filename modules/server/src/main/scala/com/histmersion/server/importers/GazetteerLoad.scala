@@ -17,41 +17,51 @@ import javax.sql.DataSource
 import scala.jdk.CollectionConverters.*
 import scala.util.Using
 
-/** The gazetteer's external sources (#1064) — the `geonames`, `wikidata`, `tgn` (#1403) and `lpf` steps of the
-  * one-time gazetteer import job ([[com.histmersion.server.Bootstrap]]'s init job, the same that
-  * imports the bundled seed and fetches Cliopatria or PeriodO).
+/** The gazetteer's external sources (#1064) — the `geonames`, `wikidata`, `tgn` (#1403) and `lpf` steps of the one-time
+  * gazetteer import job ([[com.histmersion.server.Bootstrap]]'s init job, the same that imports the bundled seed and
+  * fetches Cliopatria or PeriodO).
   *
-  *   - `geonames`, `wikidata`, `tgn`: a PINNED extract (`db/gazetteer/extracts.json`: file, version,
-  *     sha256), Linked Places Format with one feature per line, gzip. Looked for in
-  *     `places.sources.dir`; when missing and its pin names a `url`, downloaded there first. Its
-  *     sha256 is checked BEFORE anything is read — a mismatch is refused.
-  *   - `lpf`: every `*.json` / `*.jsonld` / `*.geojson` (a FeatureCollection, read whole up to
-  *     `max-lpf-mb`), `*.ndjson` / `*.jsonl` (a feature per line, optionally `.gz`) and `*.tsv`
-  *     (LP-TSV) in `places.sources.lpf-dir` — the World Historical Gazetteer downloads a person puts
-  *     there. Each file is a dataset (`lpf:<file name>`), its version the file's sha256; its title,
-  *     citation, licence and time span come from the file or a `<file>.meta.json` beside it.
+  *   - `geonames`, `wikidata`, `tgn`: a PINNED extract (`db/gazetteer/extracts.json`: file, version, sha256), Linked
+  *     Places Format with one feature per line, gzip. Looked for in `places.sources.dir`; when missing and its pin
+  *     names a `url`, downloaded there first. Its sha256 is checked BEFORE anything is read — a mismatch is refused.
+  *   - `lpf`: every `*.json` / `*.jsonld` / `*.geojson` (a FeatureCollection, read whole up to `max-lpf-mb`),
+  *     `*.ndjson` / `*.jsonl` (a feature per line, optionally `.gz`) and `*.tsv` (LP-TSV) in `places.sources.lpf-dir` —
+  *     the World Historical Gazetteer downloads a person puts there. Each file is a dataset (`lpf:<file name>`), its
+  *     version the file's sha256; its title, citation, licence and time span come from the file or a `<file>.meta.json`
+  *     beside it.
   *
-  * Each source is read in batches into [[GazetteerRepo.Session]] on one connection; `apply = false`
-  * is a dry run that rolls every batch back and reports what it would have done. After a real run the
-  * source is recorded in `gazetteer_sources` and `finding_places` is re-materialised. */
+  * Each source is read in batches into [[GazetteerRepo.Session]] on one connection; `apply = false` is a dry run that
+  * rolls every batch back and reports what it would have done. After a real run the source is recorded in
+  * `gazetteer_sources` and `finding_places` is re-materialised.
+  */
 object GazetteerLoad:
 
-  /** Where things are, resolved once from the config. `legacy` is where the extracts lived before
-    * they moved to the cache directory (`<data dir>/gazetteer`, until 2026-10-17): a pinned extract
-    * found there and not in `extracts` is moved over once ([[extract]]). */
+  /** Where things are, resolved once from the config. `legacy` is where the extracts lived before they moved to the
+    * cache directory (`<data dir>/gazetteer`, until 2026-10-17): a pinned extract found there and not in `extracts` is
+    * moved over once ([[extract]]).
+    */
   final case class Paths(extracts: Path, lpf: Path, manifest: Path, legacy: Option[Path] = None)
 
   def paths(cfg: AppConfig, env: String => Option[String] = sys.env.get): Paths =
-    val data = UserPaths.dataDir(cfg.runtime.dataDir, env, System.getProperty("os.name", ""))
-      .getOrElse(Path.of(cfg.init.dataDir)).resolve("gazetteer")
+    val data = UserPaths
+      .dataDir(cfg.runtime.dataDir, env, System.getProperty("os.name", ""))
+      .getOrElse(Path.of(cfg.init.dataDir))
+      .resolve("gazetteer")
     // the extracts are a CACHE (rebuilt or copied, pinned by sha256): the XDG cache directory
     val cache = UserPaths.cacheDir(env).map(_.resolve("gazetteer")).getOrElse(data)
     def or(configured: String, fallback: Path): Path =
-      Option(configured).map(_.trim).filter(_.nonEmpty)
-        .map(p => Path.of(p.replaceFirst("^~", System.getProperty("user.home")))).getOrElse(fallback)
+      Option(configured)
+        .map(_.trim)
+        .filter(_.nonEmpty)
+        .map(p => Path.of(p.replaceFirst("^~", System.getProperty("user.home"))))
+        .getOrElse(fallback)
     val extracts = or(cfg.places.sources.dir, cache)
-    Paths(extracts, or(cfg.places.sources.lpfDir, data.resolve("lpf")),
-      Path.of(cfg.init.dataDir).resolve(cfg.places.sources.manifest), Option.when(data != extracts)(data))
+    Paths(
+      extracts,
+      or(cfg.places.sources.lpfDir, data.resolve("lpf")),
+      Path.of(cfg.init.dataDir).resolve(cfg.places.sources.manifest),
+      Option.when(data != extracts)(data)
+    )
 
   /** Where a pinned file is: in `extracts`, else at the legacy place, else `None`. */
   def locate(p: Paths, file: String): Option[Path] =
@@ -63,12 +73,20 @@ object GazetteerLoad:
   // ── the manifest ───────────────────────────────────────────────────────────────────────────────
 
   def manifest(p: Paths): Either[String, GazetteerManifest] =
-    if !Files.isRegularFile(p.manifest) then Left(s"no gazetteer manifest at ${p.manifest} (set places.sources.manifest)")
-    else io.circe.parser.decode[GazetteerManifest](Files.readString(p.manifest)).left.map(e => s"${p.manifest}: ${e.getMessage}")
+    if !Files.isRegularFile(p.manifest) then
+      Left(s"no gazetteer manifest at ${p.manifest} (set places.sources.manifest)")
+    else
+      io.circe.parser
+        .decode[GazetteerManifest](Files.readString(p.manifest))
+        .left
+        .map(e => s"${p.manifest}: ${e.getMessage}")
 
   private def pin(p: Paths, kind: GazetteerKind): Either[String, GazetteerExtract] =
-    manifest(p).flatMap(_.extracts.find(_.name == kind.wire)
-      .toRight(s"${p.manifest} pins no '${kind.wire}' extract"))
+    manifest(p).flatMap(
+      _.extracts
+        .find(_.name == kind.wire)
+        .toRight(s"${p.manifest} pins no '${kind.wire}' extract")
+    )
 
   // ── checksums and downloads ────────────────────────────────────────────────────────────────────
 
@@ -84,15 +102,19 @@ object GazetteerLoad:
     }
     md.digest().map(b => f"$b%02x").mkString
 
-  /** Is `f` the pinned file? `Left` says why not — a missing file or a checksum mismatch, which is
-    * REFUSED: an extract that is not the pinned one is never imported. */
+  /** Is `f` the pinned file? `Left` says why not — a missing file or a checksum mismatch, which is REFUSED: an extract
+    * that is not the pinned one is never imported.
+    */
   def verify(f: Path, x: GazetteerExtract): Either[String, Unit] =
     if !Files.isRegularFile(f) then Left(s"$f is missing")
     else
       val got = sha256(f)
       if got.equalsIgnoreCase(x.sha256) then Right(())
-      else Left(s"$f has sha256 $got, but ${x.name} ${x.version} is pinned at ${x.sha256} — refused " +
-        "(rebuild it with db/gazetteer/build.py and re-pin, or fetch the pinned file)")
+      else
+        Left(
+          s"$f has sha256 $got, but ${x.name} ${x.version} is pinned at ${x.sha256} — refused " +
+            "(rebuild it with db/gazetteer/build.py and re-pin, or fetch the pinned file)"
+        )
 
   /** The download seam: url → file. A generic User-Agent, never a personal one. */
   type Download = (String, Path, Int) => Either[String, Unit]
@@ -113,9 +135,10 @@ object GazetteerLoad:
         Right(())
     catch case e: Exception => Left(s"download of $url failed: ${e.getMessage}")
 
-  /** Why a pinned extract cannot be read, and what to do: a pin with no checksum is not built yet; a
-    * missing file whose pin has no download url (the extracts are not hosted) must be PUT at the exact
-    * path the import reads — named here with its checksum and size, and the setting that moves it. */
+  /** Why a pinned extract cannot be read, and what to do: a pin with no checksum is not built yet; a missing file whose
+    * pin has no download url (the extracts are not hosted) must be PUT at the exact path the import reads — named here
+    * with its checksum and size, and the setting that moves it.
+    */
   def missing(p: Paths, x: GazetteerExtract): String =
     val f = p.extracts.resolve(x.file)
     if x.sha256.trim.isEmpty || x.file.trim.isEmpty then
@@ -128,9 +151,10 @@ object GazetteerLoad:
         s"places.sources.dir (HISTMERSION_GAZETTEER_DIR; by default the XDG cache directory, " +
         s"$$XDG_CACHE_HOME/histmersion/gazetteer or ~/.cache/histmersion/gazetteer). Then run the load again."
 
-  /** A pinned extract at the legacy place (not in `extracts`), VERIFIED, moved over once and logged —
-    * so an install that kept its extracts in `<data dir>/gazetteer` keeps them. When the move fails it
-    * is read where it is. Importing is idempotent either way: what was imported stays imported. */
+  /** A pinned extract at the legacy place (not in `extracts`), VERIFIED, moved over once and logged — so an install
+    * that kept its extracts in `<data dir>/gazetteer` keeps them. When the move fails it is read where it is. Importing
+    * is idempotent either way: what was imported stays imported.
+    */
   private def adopt(p: Paths, x: GazetteerExtract, old: Path): Either[String, Path] =
     verify(old, x).map { _ =>
       val f = p.extracts.resolve(x.file)
@@ -139,28 +163,33 @@ object GazetteerLoad:
         val _ = Files.move(old, f)
         scribe.info(s"gazetteer: moved the ${x.name} extract $old → $f (the extracts live in the cache directory now)")
         f
-      catch case e: Exception =>
-        scribe.warn(s"gazetteer: could not move $old to $f (${e.getMessage}); reading it where it is")
-        old
+      catch
+        case e: Exception =>
+          scribe.warn(s"gazetteer: could not move $old to $f (${e.getMessage}); reading it where it is")
+          old
     }
 
-  /** The pinned extract on disk (moved over from the legacy place once), fetched first when it is
-    * missing and its pin names a url. */
+  /** The pinned extract on disk (moved over from the legacy place once), fetched first when it is missing and its pin
+    * names a url.
+    */
   def extract(p: Paths, x: GazetteerExtract, download: Download, timeoutSeconds: Int): Either[String, Path] =
     val f = p.extracts.resolve(x.file)
     if x.sha256.trim.isEmpty || x.file.trim.isEmpty then Left(missing(p, x))
     else if Files.isRegularFile(f) then verify(f, x).map(_ => f)
     else if locate(p, x.file).isDefined then adopt(p, x, locate(p, x.file).get)
-    else x.url.map(_.trim).filter(_.nonEmpty) match
-      case None => Left(missing(p, x))
-      case Some(url) =>
-        Files.createDirectories(p.extracts)
-        download(url, f, timeoutSeconds).flatMap { _ =>
-          verify(f, x).left.map { e =>
-            val _ = Files.deleteIfExists(f)
-            e
-          }.map(_ => f)
-        }
+    else
+      x.url.map(_.trim).filter(_.nonEmpty) match
+        case None      => Left(missing(p, x))
+        case Some(url) =>
+          Files.createDirectories(p.extracts)
+          download(url, f, timeoutSeconds).flatMap { _ =>
+            verify(f, x).left
+              .map { e =>
+                val _ = Files.deleteIfExists(f)
+                e
+              }
+              .map(_ => f)
+          }
 
   // ── reading ────────────────────────────────────────────────────────────────────────────────────
 
@@ -180,14 +209,14 @@ object GazetteerLoad:
     }
 
   /** Feed the records of one file to `sink` in batches; a malformed record is skipped and named. */
-  private final class Batcher(size: Int, sink: List[GazRecord] => GazetteerLoadCounts):
-    private val buf  = List.newBuilder[GazRecord] // the batch being filled
-    private var n    = 0 // its size
+  final private class Batcher(size: Int, sink: List[GazRecord] => GazetteerLoadCounts):
+    private val buf = List.newBuilder[GazRecord] // the batch being filled
+    private var n = 0 // its size
     var total: GazetteerLoadCounts = GazetteerLoadCounts("", "") // the running sum
     var span: Span = Span.always // the widest known years of the records, for an LPF dataset that states none
 
     def add(r: Either[String, GazRecord]): Unit = r match
-      case Left(e) => total = total.copy(skipped = (total.skipped :+ e).take(20))
+      case Left(e)    => total = total.copy(skipped = (total.skipped :+ e).take(20))
       case Right(rec) =>
         span = Span((span.from ++ rec.span.from).minOption, (span.to ++ rec.span.to).maxOption)
         buf += rec
@@ -202,24 +231,43 @@ object GazetteerLoad:
 
   // ── a run ──────────────────────────────────────────────────────────────────────────────────────
 
-  /** `rebuild`: re-materialise `finding_places` after a real run that changed something (a test
-    * turns it off: a full rebuild touches every other suite's findings). */
-  final case class Settings(paths: Paths, batch: Int, maxLpfBytes: Long, downloadTimeoutSeconds: Int, toleranceKm: Double,
-      rebuild: Boolean = true, openStartWindowYears: Int = Gazetteer.DefaultOpenStartWindowYears,
-      pointAreaKinds: Set[String] = Gazetteer.DefaultPointAreaKinds.toSet)
+  /** `rebuild`: re-materialise `finding_places` after a real run that changed something (a test turns it off: a full
+    * rebuild touches every other suite's findings).
+    */
+  final case class Settings(
+      paths: Paths,
+      batch: Int,
+      maxLpfBytes: Long,
+      downloadTimeoutSeconds: Int,
+      toleranceKm: Double,
+      rebuild: Boolean = true,
+      openStartWindowYears: Int = Gazetteer.DefaultOpenStartWindowYears,
+      pointAreaKinds: Set[String] = Gazetteer.DefaultPointAreaKinds.toSet
+  )
 
   def settings(cfg: AppConfig): Settings =
-    Settings(paths(cfg), math.max(1, cfg.places.sources.batch), cfg.places.sources.maxLpfMb.toLong * 1024 * 1024,
-      cfg.places.sources.downloadTimeoutSeconds, cfg.places.pointToleranceKm,
+    Settings(
+      paths(cfg),
+      math.max(1, cfg.places.sources.batch),
+      cfg.places.sources.maxLpfMb.toLong * 1024 * 1024,
+      cfg.places.sources.downloadTimeoutSeconds,
+      cfg.places.pointToleranceKm,
       openStartWindowYears = cfg.places.sources.openStartWindowYears,
-      pointAreaKinds = cfg.places.sources.pointAreaKindSet)
+      pointAreaKinds = cfg.places.sources.pointAreaKindSet
+    )
 
   /** Import (or, `apply = false`, dry-run) one source kind. `note` reports progress on the job. */
-  def load(ds: DataSource, s: Settings, kind: GazetteerKind, apply: Boolean, note: String => Unit,
-      download: Download = httpDownload): Either[String, List[GazetteerLoadCounts]] =
+  def load(
+      ds: DataSource,
+      s: Settings,
+      kind: GazetteerKind,
+      apply: Boolean,
+      note: String => Unit,
+      download: Download = httpDownload
+  ): Either[String, List[GazetteerLoadCounts]] =
     val result = kind match
       case GazetteerKind.Lpf => loadLpf(ds, s, apply, note)
-      case k =>
+      case k                 =>
         for
           x <- pin(s.paths, k)
           f <- extract(s.paths, x, download, s.downloadTimeoutSeconds)
@@ -228,8 +276,20 @@ object GazetteerLoad:
             lines(f)((line, n) => b.add(parseLine(line, n, "", None)))
           }
           if apply then
-            connect(ds)(GazetteerRepo.recordSource(Gazetteer.sourceKey(k), k, x.title, x.version, x.sha256, x.file,
-              x.url, Some(x.licence), x.attribution, Span.always))
+            connect(ds)(
+              GazetteerRepo.recordSource(
+                Gazetteer.sourceKey(k),
+                k,
+                x.title,
+                x.version,
+                x.sha256,
+                x.file,
+                x.url,
+                Some(x.licence),
+                x.attribution,
+                Span.always
+              )
+            )
           List(c)
     result.map { cs =>
       if apply && s.rebuild && cs.exists(!_.unchanged) then
@@ -239,26 +299,43 @@ object GazetteerLoad:
     }
 
   private def parseLine(line: String, n: Int, dataset: String, source: Option[String]): Either[String, GazRecord] =
-    io.circe.parser.parse(line).left.map(e => s"line $n: ${e.getMessage}")
+    io.circe.parser
+      .parse(line)
+      .left
+      .map(e => s"line $n: ${e.getMessage}")
       .flatMap(Gazetteer.fromFeature(_, dataset, n, source).left.map(e => s"line $n: $e"))
 
   /** One source through one session: batches, then (when every line was read) the sweep. */
-  private def run(ds: DataSource, s: Settings, key: String, version: String, apply: Boolean, note: String => Unit,
-      label: String)(feed: Batcher => Unit): (GazetteerLoadCounts, Span) =
+  private def run(
+      ds: DataSource,
+      s: Settings,
+      key: String,
+      version: String,
+      apply: Boolean,
+      note: String => Unit,
+      label: String
+  )(feed: Batcher => Unit): (GazetteerLoadCounts, Span) =
     connect(ds):
       val session = GazetteerRepo.session(key, version, apply, s.openStartWindowYears, s.pointAreaKinds)
-      val pruned  = session.prune(s.batch)
+      val pruned = session.prune(s.batch)
       if pruned > 0 then note(s"$key: $pruned point-only area place(s) removed")
       var batches = 0 // progress
-      val b = Batcher(s.batch, rs => {
-        batches += 1
-        if batches % 10 == 1 then note(s"$key: $label, batch $batches")
-        session.batch(rs)
-      })
+      val b = Batcher(
+        s.batch,
+        rs => {
+          batches += 1
+          if batches % 10 == 1 then note(s"$key: $label, batch $batches")
+          session.batch(rs)
+        }
+      )
       feed(b)
       b.flush()
       val swept = session.sweep()
-      ((b.total + swept + GazetteerLoadCounts(key, version, placesRemoved = pruned)).copy(source = key, version = version), b.span)
+      (
+        (b.total + swept + GazetteerLoadCounts(key, version, placesRemoved = pruned))
+          .copy(source = key, version = version),
+        b.span
+      )
 
   // ── LPF ────────────────────────────────────────────────────────────────────────────────────────
 
@@ -268,18 +345,27 @@ object GazetteerLoad:
   def lpfFiles(dir: Path): List[Path] =
     if !Files.isDirectory(dir) then Nil
     else
-      Using.resource(Files.list(dir))(_.iterator.asScala.toList)
-        .filter(f => Files.isRegularFile(f) && LpfFile.matches(f.getFileName.toString)
-          && !f.getFileName.toString.toLowerCase.endsWith(".meta.json"))
+      Using
+        .resource(Files.list(dir))(_.iterator.asScala.toList)
+        .filter(f =>
+          Files.isRegularFile(f) && LpfFile.matches(f.getFileName.toString)
+            && !f.getFileName.toString.toLowerCase.endsWith(".meta.json")
+        )
         .sortBy(_.getFileName.toString)
 
   private def sidecar(f: Path): Option[JsonObject] =
     val name = f.getFileName.toString.replaceAll("(?i)\\.(jsonld|json|geojson|ndjson|jsonl|tsv)(\\.gz)?$", "")
     val meta = f.resolveSibling(name + ".meta.json")
-    Option.when(Files.isRegularFile(meta))(meta)
+    Option
+      .when(Files.isRegularFile(meta))(meta)
       .flatMap(m => io.circe.parser.parse(Files.readString(m)).toOption.flatMap(_.asObject))
 
-  private def loadLpf(ds: DataSource, s: Settings, apply: Boolean, note: String => Unit): Either[String, List[GazetteerLoadCounts]] =
+  private def loadLpf(
+      ds: DataSource,
+      s: Settings,
+      apply: Boolean,
+      note: String => Unit
+  ): Either[String, List[GazetteerLoadCounts]] =
     val files = lpfFiles(s.paths.lpf)
     if files.isEmpty then Left(s"no LPF files in ${s.paths.lpf} (put World Historical Gazetteer downloads there)")
     else
@@ -287,15 +373,21 @@ object GazetteerLoad:
         acc.flatMap(done => loadLpfFile(ds, s, f, apply, note).map(done :+ _))
       }
 
-  private def loadLpfFile(ds: DataSource, s: Settings, f: Path, apply: Boolean, note: String => Unit): Either[String, GazetteerLoadCounts] =
-    val name    = f.getFileName.toString
-    val slug    = Gazetteer.datasetSlug(name)
-    val key     = Gazetteer.sourceKey(GazetteerKind.Lpf, Some(slug))
-    val sha     = sha256(f)
+  private def loadLpfFile(
+      ds: DataSource,
+      s: Settings,
+      f: Path,
+      apply: Boolean,
+      note: String => Unit
+  ): Either[String, GazetteerLoadCounts] =
+    val name = f.getFileName.toString
+    val slug = Gazetteer.datasetSlug(name)
+    val key = Gazetteer.sourceKey(GazetteerKind.Lpf, Some(slug))
+    val sha = sha256(f)
     val version = sha.take(12)
-    val side    = sidecar(f)
-    val lower   = name.toLowerCase
-    val isTsv   = lower.endsWith(".tsv") || lower.endsWith(".tsv.gz")
+    val side = sidecar(f)
+    val lower = name.toLowerCase
+    val isTsv = lower.endsWith(".tsv") || lower.endsWith(".tsv.gz")
     val isLines = lower.matches(".*\\.(ndjson|jsonl)(\\.gz)?$")
     val parsed: Either[String, (LpfDataset, Batcher => Unit)] =
       if isTsv then
@@ -304,56 +396,100 @@ object GazetteerLoad:
           var header: List[String] = Nil // the first line
           lines(f) { (line, n) =>
             if header.isEmpty then header = Gazetteer.tsvCells(line)
-            else b.add(Gazetteer.fromTsvRow(header, Gazetteer.tsvCells(line), slug, n, meta.citation)
-              .map(Gazetteer.inDataset(_, meta)))
+            else
+              b.add(
+                Gazetteer
+                  .fromTsvRow(header, Gazetteer.tsvCells(line), slug, n, meta.citation)
+                  .map(Gazetteer.inDataset(_, meta))
+              )
           }
         })
       else if isLines then
         val meta = Gazetteer.dataset(JsonObject.empty, side)
-        Right(meta -> ((b: Batcher) => lines(f)((line, n) =>
-          b.add(parseLine(line, n, slug, meta.citation).map(Gazetteer.inDataset(_, meta))))))
+        Right(
+          meta -> ((b: Batcher) =>
+            lines(f)((line, n) => b.add(parseLine(line, n, slug, meta.citation).map(Gazetteer.inDataset(_, meta))))
+          )
+        )
       else if Files.size(f) > s.maxLpfBytes then
-        Left(s"$name is ${Files.size(f) / (1024 * 1024)} MB, over places.sources.max-lpf-mb — convert it to one feature per line (.ndjson)")
+        Left(
+          s"$name is ${Files.size(f) / (1024 * 1024)} MB, over places.sources.max-lpf-mb — convert it to one feature per line (.ndjson)"
+        )
       else
-        io.circe.parser.parse(Using.resource(open(f))(in => new String(in.readAllBytes(), StandardCharsets.UTF_8)))
-          .left.map(e => s"$name: invalid JSON: ${e.getMessage}")
+        io.circe.parser
+          .parse(Using.resource(open(f))(in => new String(in.readAllBytes(), StandardCharsets.UTF_8)))
+          .left
+          .map(e => s"$name: invalid JSON: ${e.getMessage}")
           .flatMap { doc =>
             val top = doc.asObject.getOrElse(JsonObject.empty)
             val feats = doc.asArray.map(_.toList).orElse(top("features").flatMap(_.asArray).map(_.toList))
             feats.toRight(s"$name: not a FeatureCollection").map { fs =>
               val meta = Gazetteer.dataset(top, side)
-              meta -> ((b: Batcher) => fs.zipWithIndex.foreach((j, i) =>
-                b.add(Gazetteer.fromFeature(j, slug, i, meta.citation).map(Gazetteer.inDataset(_, meta)))))
+              meta -> ((b: Batcher) =>
+                fs.zipWithIndex.foreach((j, i) =>
+                  b.add(Gazetteer.fromFeature(j, slug, i, meta.citation).map(Gazetteer.inDataset(_, meta)))
+                )
+              )
             }
           }
     parsed.map { (meta, feed) =>
       val (c, seen) = run(ds, s, key, version, apply, note, name)(feed)
       if apply then
         val span = if !meta.span.isEmpty then meta.span else seen
-        connect(ds)(GazetteerRepo.recordSource(key, GazetteerKind.Lpf, meta.title.getOrElse(name), version, sha, name,
-          None, meta.licence, meta.citation, span))
+        connect(ds)(
+          GazetteerRepo.recordSource(
+            key,
+            GazetteerKind.Lpf,
+            meta.title.getOrElse(name),
+            version,
+            sha,
+            name,
+            None,
+            meta.licence,
+            meta.citation,
+            span
+          )
+        )
       c
     }
 
   // ── what is there ──────────────────────────────────────────────────────────────────────────────
 
-  /** `GET /api/places/sources`: the pinned extracts, the LPF files in the drop folder, and what the
-    * store last imported from each. */
+  /** `GET /api/places/sources`: the pinned extracts, the LPF files in the drop folder, and what the store last imported
+    * from each.
+    */
   def list(ds: DataSource, s: Settings): List[GazetteerSourceInfo] =
     val stored = GazetteerRepo.sources(ds).map(r => r.key -> r).toMap
     def withStored(i: GazetteerSourceInfo): GazetteerSourceInfo =
-      stored.get(i.key).fold(i)(r => i.copy(importedVersion = Some(r.version), importedAt = Some(r.importedAt),
-        places = Some(r.places), names = Some(r.names), links = Some(r.links),
-        licence = i.licence.orElse(r.licence), citation = i.citation.orElse(r.citation),
-        periodStart = r.periodStart, periodEnd = r.periodEnd))
+      stored
+        .get(i.key)
+        .fold(i)(r =>
+          i.copy(
+            importedVersion = Some(r.version),
+            importedAt = Some(r.importedAt),
+            places = Some(r.places),
+            names = Some(r.names),
+            links = Some(r.links),
+            licence = i.licence.orElse(r.licence),
+            citation = i.citation.orElse(r.citation),
+            periodStart = r.periodStart,
+            periodEnd = r.periodEnd
+          )
+        )
     val pinned = manifest(s.paths).toOption.toList.flatMap(_.extracts).flatMap { x =>
       GazetteerKind.parse(x.name).filter(_ != GazetteerKind.Lpf).map { k =>
         val built = x.file.trim.nonEmpty && x.sha256.trim.nonEmpty // a pin not built yet names no file
-        val at    = Option.when(built)(locate(s.paths, x.file)).flatten
-        GazetteerSourceInfo(Gazetteer.sourceKey(k), k, x.title,
-          Option.when(built)(at.getOrElse(s.paths.extracts.resolve(x.file)).toString), at.isDefined,
-          Option.when(built)(x.version), licence = Some(x.licence),
-          citation = x.attribution)
+        val at = Option.when(built)(locate(s.paths, x.file)).flatten
+        GazetteerSourceInfo(
+          Gazetteer.sourceKey(k),
+          k,
+          x.title,
+          Option.when(built)(at.getOrElse(s.paths.extracts.resolve(x.file)).toString),
+          at.isDefined,
+          Option.when(built)(x.version),
+          licence = Some(x.licence),
+          citation = x.attribution
+        )
       }
     }
     val lpf = lpfFiles(s.paths.lpf).map { f =>

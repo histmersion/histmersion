@@ -20,10 +20,15 @@ class ConfigSchemaSuite extends munit.FunSuite:
     assert(keep.contains("0 keeps every one"), keep)
     val narrow = field("ui.narrow-max-width-px").doc
     assertEquals(narrow, "at or below this viewport width the web UI switches to its phone layout (map first, drawers)")
-    assertEquals(field("ui.marker-radius").doc,
-      "drawn radius of a finding dot, px; clustering joins dots whose centres are closer than 2 x this (they overlap)")
+    assertEquals(
+      field("ui.marker-radius").doc,
+      "drawn radius of a finding dot, px; clustering joins dots whose centres are closer than 2 x this (they overlap)"
+    )
     assertEquals(field("ui.viewport-debounce-ms").doc, "\"only papers in view\": delay after moveend/zoomend")
-    assert(field("ui.base-map-source").doc.startsWith("which base maps the page offers"), field("ui.base-map-source").doc)
+    assert(
+      field("ui.base-map-source").doc.startsWith("which base maps the page offers"),
+      field("ui.base-map-source").doc
+    )
     assertEquals(field("ui.debounce.reload-ms").doc, "State change → /api/findings + /api/sources")
 
   test("each environment variable is the one reference.conf names under the key"):
@@ -40,7 +45,11 @@ class ConfigSchemaSuite extends munit.FunSuite:
     val plugin = field("plugins.oa-core.api-key")
     assertEquals(plugin.kind, SettingKind.Any)
     assertEquals(plugin.secret, SecretRule.Reference)
-    assertEquals(schema.field(key("plugins.whatever.enabled")).map(_.kind), Some(SettingKind.Flag), "a plugin's block is open; enabled is a flag")
+    assertEquals(
+      schema.field(key("plugins.whatever.enabled")).map(_.kind),
+      Some(SettingKind.Flag),
+      "a plugin's block is open; enabled is a flag"
+    )
     assert(schema.field(key("backups.kep")).isEmpty)
     assert(schema.isBlock(key("backups")))
     assertEquals(schema.closest(key("backups.kep")).map(_.relative).headOption, Some("backups.keep"))

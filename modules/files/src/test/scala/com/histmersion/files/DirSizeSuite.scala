@@ -10,7 +10,15 @@ class DirSizeSuite extends munit.FunSuite:
 
   private val tmp = FunFixture[Path](
     _ => Files.createTempDirectory("histmersion-dirsize"),
-    d => { val s = Files.walk(d); try s.sorted(Comparator.reverseOrder()).forEach(p => { val _ = Files.deleteIfExists(p) }) finally s.close() })
+    d => {
+      val s = Files.walk(d);
+      try
+        s.sorted(Comparator.reverseOrder()).forEach { p =>
+          val _ = Files.deleteIfExists(p)
+        }
+      finally s.close()
+    }
+  )
 
   private def file(p: Path, bytes: Int): Path =
     Files.createDirectories(p.getParent)

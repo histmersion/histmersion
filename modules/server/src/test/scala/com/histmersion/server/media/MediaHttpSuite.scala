@@ -12,12 +12,13 @@ import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.values.PlaceKind
 
-/** Media from outside providers (#1446) through the server: an import against a FAKE provider into the
-  * test database (HISTMERSION_TEST_DB_URL; skipped otherwise), then what the web UI and the CLI read —
-  * the place card's thumbnail, the thumbnail bytes served locally, the list, facets and one picture,
-  * an event's Wikidata item, the import's refusals, the figure-licence count. No live network. */
+/** Media from outside providers (#1446) through the server: an import against a FAKE provider into the test database
+  * (HISTMERSION_TEST_DB_URL; skipped otherwise), then what the web UI and the CLI read — the place card's thumbnail,
+  * the thumbnail bytes served locally, the list, facets and one picture, an event's Wikidata item, the import's
+  * refusals, the figure-licence count. No live network.
+  */
 class MediaHttpSuite extends com.histmersion.db.DbSuite:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg =
@@ -36,15 +37,23 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
     val r = http.send(HttpRequest.newBuilder(URI.create(url)).build(), HttpResponse.BodyHandlers.ofByteArray())
     (r.statusCode, r.headers().firstValue("content-type").map(Option(_)).orElse(None), r.body)
   private def send(method: String, url: String, body: String): (Int, String) =
-    val r = http.send(HttpRequest.newBuilder(URI.create(url)).header("content-type", "application/json")
-      .method(method, HttpRequest.BodyPublishers.ofString(body)).build(), HttpResponse.BodyHandlers.ofString())
+    val r = http.send(
+      HttpRequest
+        .newBuilder(URI.create(url))
+        .header("content-type", "application/json")
+        .method(method, HttpRequest.BodyPublishers.ofString(body))
+        .build(),
+      HttpResponse.BodyHandlers.ofString()
+    )
     (r.statusCode, r.body)
 
   private val PlaceId = "zqmh_mycenae"
   private val EventId = "zqmh_battle"
 
   private def clean(): Unit = connect(ds):
-    val _ = sql"DELETE FROM assets WHERE provider_key IN ('File:Lions-Gate-Mycenae.jpg', 'File:Mycenae plan NC.png')".update.run()
+    val _ =
+      sql"DELETE FROM assets WHERE provider_key IN ('File:Lions-Gate-Mycenae.jpg', 'File:Mycenae plan NC.png')".update
+        .run()
     val _ = sql"DELETE FROM media_checks WHERE target_id LIKE 'zqmh%'".update.run()
     val _ = sql"DELETE FROM events WHERE id LIKE 'zqmh%'".update.run()
     val _ = sql"DELETE FROM places WHERE id LIKE 'zqmh%'".update.run()
@@ -52,21 +61,44 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
   override def beforeAll(): Unit =
     if testDb.isDefined then
       clean()
-      val _ = PlaceRepo.upsertPlaces(ds, List(
-        PlaceInput(Place("zqmh_mycenae", "Zqmh Mycenae", PlaceKind.Site, Some("""{"type":"Point","coordinates":[22.75,37.73]}"""),
-          Some(Period(-1600, -1100))), List(PlaceName("Zqmh Mycenae"))),
-        PlaceInput(Place("zqmh_nolink", "Zqmh no link", PlaceKind.Site, Some("""{"type":"Point","coordinates":[22.0,37.0]}""")),
-          List(PlaceName("Zqmh no link")))))
+      val _ = PlaceRepo.upsertPlaces(
+        ds,
+        List(
+          PlaceInput(
+            Place(
+              "zqmh_mycenae",
+              "Zqmh Mycenae",
+              PlaceKind.Site,
+              Some("""{"type":"Point","coordinates":[22.75,37.73]}"""),
+              Some(Period(-1600, -1100))
+            ),
+            List(PlaceName("Zqmh Mycenae"))
+          ),
+          PlaceInput(
+            Place(
+              "zqmh_nolink",
+              "Zqmh no link",
+              PlaceKind.Site,
+              Some("""{"type":"Point","coordinates":[22.0,37.0]}""")
+            ),
+            List(PlaceName("Zqmh no link"))
+          )
+        )
+      )
       connect(ds)(sql"""INSERT INTO place_links (place_id, scheme, external_id, relation, import_source, import_ref)
             VALUES ($PlaceId, 'wikidata', 'Q132564', 'exact_match', 'test', 'zqmh')""".update.run())
-      EventRepo.put(ds, EventId, EventPut("Zqmh battle", "battle", TimeSpan(Some(-1200), None, None, Some(-1190)),
-        placeId = Some(PlaceId)))
+      EventRepo.put(
+        ds,
+        EventId,
+        EventPut("Zqmh battle", "battle", TimeSpan(Some(-1200), None, None, Some(-1190)), placeId = Some(PlaceId))
+      )
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private def fakeProvider: FakeMediaHttp = FakeMediaHttp { url =>
     if url.contains("action=wbgetentities") then FakeMediaHttp.json(FakeMediaHttp.fixture("wbgetentities.json"))
     else if url.contains("iiurlwidth=1280") then FakeMediaHttp.json(FakeMediaHttp.fixture("imageinfo.json"))
-    else if url.contains("prop=imageinfo") then FakeMediaHttp.json(FakeMediaHttp.fixture("imageinfo.json").replace("1280px-", "330px-"))
+    else if url.contains("prop=imageinfo") then
+      FakeMediaHttp.json(FakeMediaHttp.fixture("imageinfo.json").replace("1280px-", "330px-"))
     else if url.startsWith("https://upload.example/") then
       FakeMediaHttp.bytes(Array[Byte](-1, -40, -1) ++ url.getBytes("UTF-8"), "image/jpeg")
     else Left(s"unexpected $url")
@@ -79,7 +111,8 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
     assert(dry.dryRun)
     assertEquals(dry.byLicence.map(c => (c.key, c.allowed)), List(("CC-BY-NC-SA-4.0", false), ("CC-BY-SA-2.5", true)))
     assertEquals(MediaRepo.thumbs(ds, "place", PlaceId), Nil)
-    val done = h.importMedia(MediaImportRequest(dryRun = false, place = Some(PlaceId))).fold(e => fail(e.message), identity)
+    val done =
+      h.importMedia(MediaImportRequest(dryRun = false, place = Some(PlaceId))).fold(e => fail(e.message), identity)
     assertEquals((done.stored, done.linked, done.categories), (1, 1, 1))
     assertEquals(MediaRepo.thumbs(ds, "place", PlaceId).map(_.license), List(Some("CC-BY-SA-2.5")))
     assert(fake.requests.forall(_._2 == Map("User-Agent" -> cfg.media.userAgent)))
@@ -88,22 +121,33 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
 
   test("refusals: an unknown provider, a place with no Wikidata link, an event with no item"):
     val h = MediaHandlers(Deps(cfg, ds), fakeProvider)
-    assert(h.importMedia(MediaImportRequest(provider = "flickr")).left.exists(_.message.contains("unknown media provider")))
-    assert(h.importMedia(MediaImportRequest(place = Some("zqmh_nolink"))).left.exists(_.message.contains("no Wikidata link")))
+    assert(
+      h.importMedia(MediaImportRequest(provider = "flickr")).left.exists(_.message.contains("unknown media provider"))
+    )
+    assert(
+      h.importMedia(MediaImportRequest(place = Some("zqmh_nolink"))).left.exists(_.message.contains("no Wikidata link"))
+    )
     assert(h.importMedia(MediaImportRequest(event = Some(EventId))).left.exists(_.message.contains("events patch")))
 
   test("the server: the place card carries the thumbnail, served locally with its type; list, show, facets"):
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Main.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val (ps, pb) = get(s"$url/api/places/$PlaceId?counts=true")
         assertEquals(ps, 200, pb)
         val d = decode[PlaceDetail](pb).fold(e => fail(e.getMessage), identity)
         val t = d.media.headOption.getOrElse(fail(pb))
-        assertEquals((t.role, t.license, t.credit), ("image", Some("CC-BY-SA-2.5"), "Andreas Trepte, CC BY-SA 2.5, via Wikimedia Commons"))
+        assertEquals(
+          (t.role, t.license, t.credit),
+          ("image", Some("CC-BY-SA-2.5"), "Andreas Trepte, CC BY-SA 2.5, via Wikimedia Commons")
+        )
         assert(d.links.exists(l => l.scheme == "commons" && l.externalId == "Mycenae"), d.links.toString)
-        assertEquals(decode[PlaceDetail](get(s"$url/api/places/$PlaceId")._2).map(_.media), Right(Nil), "only the card asks")
+        assertEquals(
+          decode[PlaceDetail](get(s"$url/api/places/$PlaceId")._2).map(_.media),
+          Right(Nil),
+          "only the card asks"
+        )
 
         val (ts, tm, tb) = getBytes(s"$url${t.url}")
         assertEquals((ts, tm), (200, Some("image/jpeg")))
@@ -133,7 +177,7 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
 
   test("the server: an event's Wikidata item is patched (and checked), and its card reads it"):
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Main.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val (bad, bb) = send("PATCH", s"$url/api/events/$EventId", """{"wikidata":"132564"}""")
@@ -142,7 +186,8 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
         val (ok, ob) = send("PATCH", s"$url/api/events/$EventId", """{"wikidata":"Q132564"}""")
         assertEquals(ok, 200, ob)
         assertEquals(decode[EventDetail](get(s"$url/api/events/$EventId")._2).map(_.wikidata), Right(Some("Q132564")))
-        val (ds2, db2) = send("POST", s"$url/api/media/import", s"""{"event":"$EventId","dryRun":true,"provider":"bogus"}""")
+        val (ds2, db2) =
+          send("POST", s"$url/api/media/import", s"""{"event":"$EventId","dryRun":true,"provider":"bogus"}""")
         assertEquals(ds2, 400, db2)
       finally b.stop()
     }

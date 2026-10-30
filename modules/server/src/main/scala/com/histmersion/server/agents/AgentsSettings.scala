@@ -1,25 +1,35 @@
 package com.histmersion.server.agents
 
 import com.histmersion.api.{Geocode, Period, PlanQuota}
-import com.histmersion.config.{AgentApprovalsConfig, AgentEnrichGuardsConfig, AgentInferFilterConfig, AgentPlanConfig,
-  AgentProviderConfig, AgentsConfig, ScheduledRefresh}
+import com.histmersion.config.{
+  AgentApprovalsConfig,
+  AgentEnrichGuardsConfig,
+  AgentInferFilterConfig,
+  AgentPlanConfig,
+  AgentProviderConfig,
+  AgentsConfig,
+  ScheduledRefresh
+}
 import com.histmersion.domain.{ApprovalModes, EnrichSource, FilterInference, PlanGoal, ReadSchedule}
 import com.histmersion.values.{AgentRole, ApprovalKind, ApprovalMode, ProviderKind}
 
 import java.time.Duration
 
 extension (c: AgentApprovalsConfig)
-  def statusMode: ApprovalMode  = ApprovalModes.configured(c.statusChange)
-  def edgeMode: ApprovalMode    = ApprovalModes.configured(c.edges)
+  def statusMode: ApprovalMode = ApprovalModes.configured(c.statusChange)
+  def edgeMode: ApprovalMode = ApprovalModes.configured(c.edges)
+
   /** `compile-article`: `manual` (the default) waits for a person before the article is written. */
   def publishMode: ApprovalMode = ApprovalModes.configured(c.articlePublish)
-  /** `infer-filter`: `manual` (the default) records the filter only once a person approves it. */
-  def filterMode: ApprovalMode  = ApprovalModes.configured(c.articleFilter)
 
-  /** Whether the managers' supervisor decides an open approval of `kind` by its code checks (the
-    * autopilot's auto approvals): `article-plan` and `goal-plan` = `auto` (or `checked`);
-    * `article-publish` = `checked` — its `auto` approves in the run at once, unchecked, and the supervisor
-    * only decides what was left open. Any other kind, or any other value, is a person's. */
+  /** `infer-filter`: `manual` (the default) records the filter only once a person approves it. */
+  def filterMode: ApprovalMode = ApprovalModes.configured(c.articleFilter)
+
+  /** Whether the managers' supervisor decides an open approval of `kind` by its code checks (the autopilot's auto
+    * approvals): `article-plan` and `goal-plan` = `auto` (or `checked`); `article-publish` = `checked` — its `auto`
+    * approves in the run at once, unchecked, and the supervisor only decides what was left open. Any other kind, or any
+    * other value, is a person's.
+    */
   def checked(kind: ApprovalKind): Boolean = kind match
     case ApprovalKind.ArticlePlan    => AgentApprovalsConfig.isChecked(c.articlePlan)
     case ApprovalKind.GoalPlan       => AgentApprovalsConfig.isChecked(c.goalPlan)
@@ -29,9 +39,9 @@ extension (c: AgentApprovalsConfig)
 extension (c: AgentsConfig)
   /** The HTTP provider block for a kind; the CLI providers have none. */
   def provider(k: ProviderKind): Option[AgentProviderConfig] = k match
-    case ProviderKind.Anthropic  => Some(c.providers.anthropic)
-    case ProviderKind.OpenAI     => Some(c.providers.openai)
-    case ProviderKind.Local      => Some(c.providers.local)
+    case ProviderKind.Anthropic => Some(c.providers.anthropic)
+    case ProviderKind.OpenAI    => Some(c.providers.openai)
+    case ProviderKind.Local     => Some(c.providers.local)
     case ProviderKind.ClaudeCode | ProviderKind.Codex | ProviderKind.Opencode | ProviderKind.Plugin(_) => None
 
   /** The configured `provider:model` of a role, as written (empty = unset). */
@@ -50,10 +60,14 @@ extension (c: AgentsConfig)
     PlanQuota.Logins(c.providers.claudeCode.useApiKey, c.providers.codex.useApiKey, c.providers.opencode.chatgptLogin)
 
 extension (c: AgentInferFilterConfig)
-  def limits: FilterInference.Limits = FilterInference.Limits(math.max(1, c.minHits), math.max(c.minHits, c.maxHits),
-    math.min(1.0, math.max(0.0, c.minCitedShare)))
+  def limits: FilterInference.Limits = FilterInference.Limits(
+    math.max(1, c.minHits),
+    math.max(c.minHits, c.maxHits),
+    math.min(1.0, math.max(0.0, c.minCitedShare))
+  )
 
-extension (c: AgentPlanConfig) def caps: PlanGoal.Caps = PlanGoal.Caps(c.maxSubGoals, c.maxQueries, c.maxWorks, c.queryChars)
+extension (c: AgentPlanConfig)
+  def caps: PlanGoal.Caps = PlanGoal.Caps(c.maxSubGoals, c.maxQueries, c.maxWorks, c.queryChars)
 
 extension (c: AgentEnrichGuardsConfig)
   def guards(resolves: (String, Geocode.KindHint, Option[Period]) => Boolean): EnrichSource.FindingGuards =

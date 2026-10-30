@@ -4,8 +4,9 @@ import sttp.tapir.*
 import sttp.tapir.json.circe.*
 import sttp.model.StatusCode
 
-/** The REST contract of the process managers (docs/research-process-managers.md §5): its own file
-  * next to [[AgentsApi]] (which [[Api]] appends, like this one). Definitions only. */
+/** The REST contract of the process managers (docs/research-process-managers.md §5): its own file next to [[AgentsApi]]
+  * (which [[Api]] appends, like this one). Definitions only.
+  */
 object ManagersApi:
   import Managers.*
 
@@ -18,7 +19,7 @@ object ManagersApi:
     )
 
   private lazy val base = endpoint.in("api" / "agents" / "managers").errorOut(errors)
-  private lazy val one  = base.in(path[String]("id"))
+  private lazy val one = base.in(path[String]("id"))
 
   /** `GET /api/agents/managers` — every manager with its counts, runs in flight and last event. */
   lazy val list: PublicEndpoint[Unit, ApiError, List[ManagerInfo], Any] =
@@ -42,15 +43,20 @@ object ManagersApi:
 
   /** `GET /api/agents/managers/{id}/items[?status=&offset=&limit=]` — the most urgent first. */
   lazy val items: PublicEndpoint[(String, Option[String], Option[Int], Option[Int]), ApiError, ItemPage, Any] =
-    one.get.in("items").in(query[Option[String]]("status")).in(query[Option[Int]]("offset"))
-      .in(query[Option[Int]]("limit")).out(jsonBody[ItemPage])
+    one.get
+      .in("items")
+      .in(query[Option[String]]("status"))
+      .in(query[Option[Int]]("offset"))
+      .in(query[Option[Int]]("limit"))
+      .out(jsonBody[ItemPage])
 
   /** `POST /api/agents/managers/{id}/items` — add a target, or bring a settled one back. */
   lazy val addItem: PublicEndpoint[(String, EnqueueRequest), ApiError, ManagerItem, Any] =
     one.post.in("items").in(jsonBody[EnqueueRequest]).out(jsonBody[ManagerItem])
 
-  /** `PATCH /api/agents/managers/{id}/items/{item}` — hold, release, priority, skip, reopen (`item` =
-    * its id or its target). */
+  /** `PATCH /api/agents/managers/{id}/items/{item}` — hold, release, priority, skip, reopen (`item` = its id or its
+    * target).
+    */
   lazy val patchItem: PublicEndpoint[(String, String, ItemPatch), ApiError, ManagerItem, Any] =
     one.patch.in("items" / path[String]("item")).in(jsonBody[ItemPatch]).out(jsonBody[ManagerItem])
 
@@ -74,103 +80,169 @@ object ManagersApi:
   lazy val action: PublicEndpoint[(String, String, Option[Boolean]), ApiError, ManagerInfo, Any] =
     one.post.in(path[String]("action")).in(query[Option[Boolean]]("runs")).out(jsonBody[ManagerInfo])
 
-  /** `POST /api/agents/enqueue` — a page button: `review` or `extend` an article (the review manager),
-    * `enrich` a source, or the unenriched sources an article cites or a goal links (the enrich
-    * manager), `seed` a goal (its seeding manager proposes its next articles). A manager that does not
-    * exist yet is created paused. */
+  /** `POST /api/agents/enqueue` — a page button: `review` or `extend` an article (the review manager), `enrich` a
+    * source, or the unenriched sources an article cites or a goal links (the enrich manager), `seed` a goal (its
+    * seeding manager proposes its next articles). A manager that does not exist yet is created paused.
+    */
   lazy val enqueue: PublicEndpoint[EnqueueRequest, ApiError, EnqueueResult, Any] =
-    endpoint.post.in("api" / "agents" / "enqueue").errorOut(errors).in(jsonBody[EnqueueRequest]).out(jsonBody[EnqueueResult])
+    endpoint.post
+      .in("api" / "agents" / "enqueue")
+      .errorOut(errors)
+      .in(jsonBody[EnqueueRequest])
+      .out(jsonBody[EnqueueResult])
 
-  /** `GET /api/agents/autopilot` — the switch, and per research goal its stage, managers, counts, open
-    * approvals, last activity and pace (docs/research-process-managers.md "As built: the autopilot"). */
+  /** `GET /api/agents/autopilot` — the switch, and per research goal its stage, managers, counts, open approvals, last
+    * activity and pace (docs/research-process-managers.md "As built: the autopilot").
+    */
   lazy val autopilot: PublicEndpoint[Unit, ApiError, Autopilot.AutopilotStatus, Any] =
     endpoint.get.in("api" / "agents" / "autopilot").errorOut(errors).out(jsonBody[Autopilot.AutopilotStatus])
 
-  /** `POST /api/agents/autopilot {on}` — turn it on (every goal gets its managers, at once) or off (the
-    * seeding managers and watchers it runs are paused). Idempotent; answers the status with what it did. */
+  /** `POST /api/agents/autopilot {on}` — turn it on (every goal gets its managers, at once) or off (the seeding
+    * managers and watchers it runs are paused). Idempotent; answers the status with what it did.
+    */
   lazy val setAutopilot: PublicEndpoint[Autopilot.AutopilotSet, ApiError, Autopilot.AutopilotStatus, Any] =
-    endpoint.post.in("api" / "agents" / "autopilot").errorOut(errors).in(jsonBody[Autopilot.AutopilotSet])
+    endpoint.post
+      .in("api" / "agents" / "autopilot")
+      .errorOut(errors)
+      .in(jsonBody[Autopilot.AutopilotSet])
       .out(jsonBody[Autopilot.AutopilotStatus])
 
-  /** `POST /api/agents/autopilot/mode {mode}` — the agents' state as one choice ([[AgentMode]]): `working`,
-    * `finish` (finish current work, then pause: the drain) or `pause` (now: the autopilot off). Answers the
-    * status. */
+  /** `POST /api/agents/autopilot/mode {mode}` — the agents' state as one choice ([[AgentMode]]): `working`, `finish`
+    * (finish current work, then pause: the drain) or `pause` (now: the autopilot off). Answers the status.
+    */
   lazy val setMode: PublicEndpoint[AgentMode.ModeSet, ApiError, Autopilot.AutopilotStatus, Any] =
-    endpoint.post.in("api" / "agents" / "autopilot" / "mode").errorOut(errors).in(jsonBody[AgentMode.ModeSet])
+    endpoint.post
+      .in("api" / "agents" / "autopilot" / "mode")
+      .errorOut(errors)
+      .in(jsonBody[AgentMode.ModeSet])
       .out(jsonBody[Autopilot.AutopilotStatus])
 
-  /** `POST /api/agents/autopilot/repair-acquire {dryRun}` — the one-shot repair: the open acquisition
-    * items a watcher's sweep created for a legal open-access work move into that watcher's ingest backlog
-    * (and leave the list); the ones already in the corpus leave it; nothing a person added is touched.
-    * `dryRun` lists what it would do. */
+  /** `POST /api/agents/autopilot/repair-acquire {dryRun}` — the one-shot repair: the open acquisition items a watcher's
+    * sweep created for a legal open-access work move into that watcher's ingest backlog (and leave the list); the ones
+    * already in the corpus leave it; nothing a person added is touched. `dryRun` lists what it would do.
+    */
   lazy val repairAcquire: PublicEndpoint[RepairAcquire.RepairRequest, ApiError, RepairAcquire.RepairResult, Any] =
-    endpoint.post.in("api" / "agents" / "autopilot" / "repair-acquire").errorOut(errors)
-      .in(jsonBody[RepairAcquire.RepairRequest]).out(jsonBody[RepairAcquire.RepairResult])
+    endpoint.post
+      .in("api" / "agents" / "autopilot" / "repair-acquire")
+      .errorOut(errors)
+      .in(jsonBody[RepairAcquire.RepairRequest])
+      .out(jsonBody[RepairAcquire.RepairResult])
 
-  /** `POST /api/queue/acquire/recheck {dryRun?, limit?, id?}` — the acquisition list's legal re-check, now:
-    * the open items the corpus holds with their original are closed, a few due ones are tried through the
-    * legal chain only (or item `id`, due or not). `dryRun` lists what it would close and try, asking no
-    * fetcher. Refused while the autopilot drains (not a dry run). */
+  /** `POST /api/queue/acquire/recheck {dryRun?, limit?, id?}` — the acquisition list's legal re-check, now: the open
+    * items the corpus holds with their original are closed, a few due ones are tried through the legal chain only (or
+    * item `id`, due or not). `dryRun` lists what it would close and try, asking no fetcher. Refused while the autopilot
+    * drains (not a dry run).
+    */
   lazy val acquireRecheck: PublicEndpoint[AcquireChecks.RecheckRequest, ApiError, AcquireChecks.RecheckResult, Any] =
-    endpoint.post.in("api" / "queue" / "acquire" / "recheck").errorOut(errors)
-      .in(jsonBody[AcquireChecks.RecheckRequest]).out(jsonBody[AcquireChecks.RecheckResult])
+    endpoint.post
+      .in("api" / "queue" / "acquire" / "recheck")
+      .errorOut(errors)
+      .in(jsonBody[AcquireChecks.RecheckRequest])
+      .out(jsonBody[AcquireChecks.RecheckResult])
 
-  /** `GET /api/agents/autopilot/focus` — the focus (docs/research-process-managers.md "As built: the
-    * focus"): the active goals (why each was chosen, what it does or waits for, its pace), the queue in the
-    * order the next become active, and the goals that cannot use a slot now. Readable with the autopilot
-    * off (what it would focus on). */
+  /** `GET /api/agents/autopilot/focus` — the focus (docs/research-process-managers.md "As built: the focus"): the
+    * active goals (why each was chosen, what it does or waits for, its pace), the queue in the order the next become
+    * active, and the goals that cannot use a slot now. Readable with the autopilot off (what it would focus on).
+    */
   lazy val focus: PublicEndpoint[Unit, ApiError, Autopilot.FocusInfo, Any] =
     endpoint.get.in("api" / "agents" / "autopilot" / "focus").errorOut(errors).out(jsonBody[Autopilot.FocusInfo])
 
-  /** `POST /api/agents/autopilot/focus {action, goal?, value?}` — `pin` / `unpin` a goal, its `priority`,
-    * or the cap (`max`; no value: back to agents.autopilot.max-active-goals). Answers the focus as it is
-    * then (the next managers' tick applies it). */
+  /** `POST /api/agents/autopilot/focus {action, goal?, value?}` — `pin` / `unpin` a goal, its `priority`, or the cap
+    * (`max`; no value: back to agents.autopilot.max-active-goals). Answers the focus as it is then (the next managers'
+    * tick applies it).
+    */
   lazy val setFocus: PublicEndpoint[Autopilot.FocusSet, ApiError, Autopilot.FocusInfo, Any] =
-    endpoint.post.in("api" / "agents" / "autopilot" / "focus").errorOut(errors).in(jsonBody[Autopilot.FocusSet])
+    endpoint.post
+      .in("api" / "agents" / "autopilot" / "focus")
+      .errorOut(errors)
+      .in(jsonBody[Autopilot.FocusSet])
       .out(jsonBody[Autopilot.FocusInfo])
 
   private lazy val sched = endpoint.in("api" / "agents" / "scheduler").errorOut(errors)
 
-  /** `GET /api/agents/scheduler[?limit=]` — the central scheduler (docs/research-goal-advancement.md "As
-    * built"): the strategy, the resources, the last pass's starts and the queue — the first `limit` waiting
-    * items (default 50), each with why it waits and what it waits behind. Readable with agents off (what a
-    * pass would do now). */
+  /** `GET /api/agents/scheduler[?limit=]` — the central scheduler (docs/research-goal-advancement.md "As built"): the
+    * strategy, the resources, the last pass's starts and the queue — the first `limit` waiting items (default 50), each
+    * with why it waits and what it waits behind. Readable with agents off (what a pass would do now).
+    */
   lazy val scheduler: PublicEndpoint[Option[Int], ApiError, AgentScheduler.SchedulerStatus, Any] =
     sched.get.in(query[Option[Int]]("limit")).out(jsonBody[AgentScheduler.SchedulerStatus])
 
-  /** `POST /api/agents/scheduler {strategy}` — switch the strategy live (kept in the database; `default`
-    * goes back to agents.scheduler.strategy). Answers the status as the next pass will decide it. */
+  /** `POST /api/agents/scheduler {strategy}` — switch the strategy live (kept in the database; `default` goes back to
+    * agents.scheduler.strategy). Answers the status as the next pass will decide it.
+    */
   lazy val setScheduler: PublicEndpoint[AgentScheduler.SchedulerSet, ApiError, AgentScheduler.SchedulerStatus, Any] =
     sched.post.in(jsonBody[AgentScheduler.SchedulerSet]).out(jsonBody[AgentScheduler.SchedulerStatus])
 
-  /** `GET /api/agents/scheduler/why/{item}` — why one manager item (its id, or a target among the open
-    * items) is where it is: waiting (behind what), running, waiting for a person, held, settled. */
+  /** `GET /api/agents/scheduler/why/{item}` — why one manager item (its id, or a target among the open items) is where
+    * it is: waiting (behind what), running, waiting for a person, held, settled.
+    */
   lazy val schedulerWhy: PublicEndpoint[String, ApiError, AgentScheduler.WhyInfo, Any] =
     sched.get.in("why" / path[String]("item")).out(jsonBody[AgentScheduler.WhyInfo])
 
-  /** `GET /api/agents/approvals/digest` — everything waiting for a person: the open approvals by kind (how
-    * many, the oldest, who decides them now, the subjects, the ids) and the items held for a person. */
+  /** `GET /api/agents/approvals/digest` — everything waiting for a person: the open approvals by kind (how many, the
+    * oldest, who decides them now, the subjects, the ids) and the items held for a person.
+    */
   lazy val digest: PublicEndpoint[Unit, ApiError, ApprovalDigest.Digest, Any] =
     endpoint.get.in("api" / "agents" / "approvals" / "digest").errorOut(errors).out(jsonBody[ApprovalDigest.Digest])
 
-  /** `POST /api/agents/approvals/decide {decision, kind?, subject?, ids?, note?, dryRun?, limit?}` — decide every
-    * open approval that matches at once, each through the single decision (a refused one does not stop the rest). */
+  /** `POST /api/agents/approvals/decide {decision, kind?, subject?, ids?, note?, dryRun?, limit?}` — decide every open
+    * approval that matches at once, each through the single decision (a refused one does not stop the rest).
+    */
   lazy val decideAll: PublicEndpoint[ApprovalDigest.BulkDecide, ApiError, ApprovalDigest.BulkResult, Any] =
-    endpoint.post.in("api" / "agents" / "approvals" / "decide").errorOut(errors).in(jsonBody[ApprovalDigest.BulkDecide])
+    endpoint.post
+      .in("api" / "agents" / "approvals" / "decide")
+      .errorOut(errors)
+      .in(jsonBody[ApprovalDigest.BulkDecide])
       .out(jsonBody[ApprovalDigest.BulkResult])
 
-  /** `POST /api/agents/autopilot/drain {on}` — drain: nothing new starts while the runs in flight finish (the
-    * status says when it is drained: safe to stop the server); `on: false` lifts it. */
+  /** `POST /api/agents/autopilot/drain {on}` — drain: nothing new starts while the runs in flight finish (the status
+    * says when it is drained: safe to stop the server); `on: false` lifts it.
+    */
   lazy val drain: PublicEndpoint[Autopilot.DrainSet, ApiError, Autopilot.AutopilotStatus, Any] =
-    endpoint.post.in("api" / "agents" / "autopilot" / "drain").errorOut(errors).in(jsonBody[Autopilot.DrainSet])
+    endpoint.post
+      .in("api" / "agents" / "autopilot" / "drain")
+      .errorOut(errors)
+      .in(jsonBody[Autopilot.DrainSet])
       .out(jsonBody[Autopilot.AutopilotStatus])
 
   /** `GET /api/agents/stalls[?days=]` — the unfinished goals with no progress in `days` days (default
-    * agents.autopilot.stall-days), each with the reason it stands still and the action that unblocks it. */
+    * agents.autopilot.stall-days), each with the reason it stands still and the action that unblocks it.
+    */
   lazy val stalls: PublicEndpoint[Option[Int], ApiError, Stalls.StallReport, Any] =
-    endpoint.get.in("api" / "agents" / "stalls").errorOut(errors).in(query[Option[Int]]("days")).out(jsonBody[Stalls.StallReport])
+    endpoint.get
+      .in("api" / "agents" / "stalls")
+      .errorOut(errors)
+      .in(query[Option[Int]]("days"))
+      .out(jsonBody[Stalls.StallReport])
 
   /** The fixed-path endpoints come before `action`, whose last segment is a parameter. */
-  lazy val all: List[AnyEndpoint] = List(list, create, get, update, delete, items, addItem, patchItem, hints, addHint,
-    removeHint, events, action, enqueue, autopilot, setAutopilot, setMode, repairAcquire, acquireRecheck, focus, setFocus, scheduler, setScheduler,
-    schedulerWhy, digest, decideAll, drain, stalls)
+  lazy val all: List[AnyEndpoint] = List(
+    list,
+    create,
+    get,
+    update,
+    delete,
+    items,
+    addItem,
+    patchItem,
+    hints,
+    addHint,
+    removeHint,
+    events,
+    action,
+    enqueue,
+    autopilot,
+    setAutopilot,
+    setMode,
+    repairAcquire,
+    acquireRecheck,
+    focus,
+    setFocus,
+    scheduler,
+    setScheduler,
+    schedulerWhy,
+    digest,
+    decideAll,
+    drain,
+    stalls
+  )

@@ -11,7 +11,10 @@ class ListSqlSuite extends munit.FunSuite:
 
   test("a list condition binds ONE array; none is nothing"):
     assertEquals(ListSql.anyOf("kind", Nil), Sql.empty)
-    assertEquals(ListSql.anyOf("kind", List("edge", "goal-plan")), Sql(" AND kind = ANY(?::text[])", List(Param.A(List("edge", "goal-plan")))))
+    assertEquals(
+      ListSql.anyOf("kind", List("edge", "goal-plan")),
+      Sql(" AND kind = ANY(?::text[])", List(Param.A(List("edge", "goal-plan"))))
+    )
     assertEquals(ListSql.equal("j.goal_slug", Some("g")), Sql(" AND j.goal_slug = ?", List(Param.S("g"))))
 
   test("a time range is bound as instants; either side may be open"):

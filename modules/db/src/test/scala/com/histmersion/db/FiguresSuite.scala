@@ -12,13 +12,12 @@ class FiguresSuite extends munit.FunSuite:
 
   test("dirFor puts figures next to the converted body named by md_path"):
     val note = Path.of("/corpus/wiki/sources/haak2015.md")
-    val dir  = Figures.dirFor(note, "---\nmd_path: md/haak2015/paper.md\n---\n", "haak2015")
+    val dir = Figures.dirFor(note, "---\nmd_path: md/haak2015/paper.md\n---\n", "haak2015")
     assertEquals(dir.map(_.toString), Some("/corpus/md/haak2015/figures"))
 
   test("dirFor falls back to the md/<citekey>/figures convention"):
     val note = Path.of("/corpus/wiki/sources/x.md")
-    assertEquals(Figures.dirFor(note, "---\ntitle: t\n---\n", "x").map(_.toString),
-      Some("/corpus/md/x/figures"))
+    assertEquals(Figures.dirFor(note, "---\ntitle: t\n---\n", "x").map(_.toString), Some("/corpus/md/x/figures"))
 
   test("dirFor gives up when the note is not three levels deep"):
     assertEquals(Figures.dirFor(Path.of("x.md"), "", "x"), None)
@@ -37,7 +36,7 @@ class FiguresSuite extends munit.FunSuite:
     val dir = Files.createTempDirectory("histmersion-figs-size")
     val png = new Array[Byte](24)
     Array[Byte](0x89.toByte, 'P', 'N', 'G', 13, 10, 26, 10).copyToArray(png)
-    png(19) = 40; png(23) = 30                      // width = 40, height = 30 (big-endian)
+    png(19) = 40; png(23) = 30 // width = 40, height = 30 (big-endian)
     Files.write(dir.resolve("a.png"), png)
     val a = Figures.load(dir, 1024).head
     assertEquals((a.width, a.height), (Some(40), Some(30)))

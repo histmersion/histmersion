@@ -1,6 +1,14 @@
 package com.histmersion.server
 
-import com.histmersion.api.{ConfigFileInfo, DebounceConfig, EventsUiConfig, MapTilesUiConfig, PluginsReport, TimeConfig, UiConfig}
+import com.histmersion.api.{
+  ConfigFileInfo,
+  DebounceConfig,
+  EventsUiConfig,
+  MapTilesUiConfig,
+  PluginsReport,
+  TimeConfig,
+  UiConfig
+}
 import com.histmersion.config.{AppConfig, UserConfigFile}
 
 import java.nio.file.Path
@@ -8,20 +16,54 @@ import java.nio.file.Path
 class ConfigViewsSuite extends munit.FunSuite:
 
   test("the page's settings: every `ui` setting as read, and what the server adds"):
-    val ui   = AppConfig.load().ui
-    val page = ConfigViews.page(ui, writeKeyRequired = true, agentsEnabled = true, plugins = PluginsReport(),
-      baseMapSource = "local", mapLanguage = "de", setupDue = true)
-    assertEquals(page, UiConfig(ui.tiles, ui.tilesMaxZoom, ui.markerRadius, ui.viewportDebounceMs, ui.pageSize,
-      ui.facetSuggestions, ui.treeDepth, ui.treeSamples, ui.maxBuckets,
-      DebounceConfig(ui.debounce.suggestMs, ui.debounce.searchMs, ui.debounce.reloadMs, ui.debounce.previewMs),
-      TimeConfig(ui.time.min, ui.time.max, ui.time.defaultFrom, ui.time.defaultTo),
-      ui.narrowMaxWidthPx, ui.narrowMaxHeightPx, ui.tabletMaxWidthPx,
-      EventsUiConfig(ui.events.localFadeSeconds, ui.events.regionalFadeSeconds, ui.events.mapLimit,
-        ui.events.outlineToleranceDeg),
-      MapTilesUiConfig(ui.mapTiles.maxZoom, ui.mapTiles.playbackBucketSeconds),
-      ui.countersPollSeconds, ui.jobPollMs, writeKeyRequired = true, agentsEnabled = true, ui.tilesTone,
-      PluginsReport(), ui.docsUrl, baseMapSource = "local", mapLanguage = "de",
-      com.histmersion.api.MapStartConfig(ui.mapStart.mode, ui.mapStart.lat, ui.mapStart.lon, ui.mapStart.zoom, ui.mapStart.label), setupDue = true))
+    val ui = AppConfig.load().ui
+    val page = ConfigViews.page(
+      ui,
+      writeKeyRequired = true,
+      agentsEnabled = true,
+      plugins = PluginsReport(),
+      baseMapSource = "local",
+      mapLanguage = "de",
+      setupDue = true
+    )
+    assertEquals(
+      page,
+      UiConfig(
+        ui.tiles,
+        ui.tilesMaxZoom,
+        ui.markerRadius,
+        ui.viewportDebounceMs,
+        ui.pageSize,
+        ui.facetSuggestions,
+        ui.treeDepth,
+        ui.treeSamples,
+        ui.maxBuckets,
+        DebounceConfig(ui.debounce.suggestMs, ui.debounce.searchMs, ui.debounce.reloadMs, ui.debounce.previewMs),
+        TimeConfig(ui.time.min, ui.time.max, ui.time.defaultFrom, ui.time.defaultTo),
+        ui.narrowMaxWidthPx,
+        ui.narrowMaxHeightPx,
+        ui.tabletMaxWidthPx,
+        EventsUiConfig(
+          ui.events.localFadeSeconds,
+          ui.events.regionalFadeSeconds,
+          ui.events.mapLimit,
+          ui.events.outlineToleranceDeg
+        ),
+        MapTilesUiConfig(ui.mapTiles.maxZoom, ui.mapTiles.playbackBucketSeconds),
+        ui.countersPollSeconds,
+        ui.jobPollMs,
+        writeKeyRequired = true,
+        agentsEnabled = true,
+        ui.tilesTone,
+        PluginsReport(),
+        ui.docsUrl,
+        baseMapSource = "local",
+        mapLanguage = "de",
+        com.histmersion.api
+          .MapStartConfig(ui.mapStart.mode, ui.mapStart.lat, ui.mapStart.lon, ui.mapStart.zoom, ui.mapStart.label),
+        setupDue = true
+      )
+    )
 
   test("the config file's line: its path as text, whether it was read, the keys it ignored"):
     val f = UserConfigFile(Some(Path.of("/c/histmersion.conf")), loaded = true, List("histmersion.x"))

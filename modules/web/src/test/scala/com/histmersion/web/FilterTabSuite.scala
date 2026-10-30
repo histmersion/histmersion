@@ -3,9 +3,10 @@ package com.histmersion.web
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Promise}
 
-/** [[Latest]] and [[TabState]] (#1798 item 5): an older answer never overwrites a newer query's, a
-  * failed request ends "Loading…" with an error, and "show more" reaches the rows past the first page
-  * by asking the server for the next one. No browser, no server: promises complete by hand. */
+/** [[Latest]] and [[TabState]] (#1798 item 5): an older answer never overwrites a newer query's, a failed request ends
+  * "Loading…" with an error, and "show more" reaches the rows past the first page by asking the server for the next
+  * one. No browser, no server: promises complete by hand.
+  */
 class FilterTabSuite extends munit.FunSuite:
 
   // answers are applied the moment a promise completes
@@ -38,7 +39,8 @@ class FilterTabSuite extends munit.FunSuite:
     val latest = Latest()
     val (a, b, c) = (Promise[Int](), Promise[Int](), Promise[Int]())
     val got = mutable.ListBuffer.empty[String]
-    def note(tag: String)(r: scala.util.Try[Int]): Unit = got += r.fold(e => s"$tag failed ${e.getMessage}", n => s"$tag ok $n")
+    def note(tag: String)(r: scala.util.Try[Int]): Unit =
+      got += r.fold(e => s"$tag failed ${e.getMessage}", n => s"$tag ok $n")
     latest.onCurrent(a.future)(note("a"))
     latest.onCurrent(b.future)(note("b"))
     a.success(1) // superseded by b: dropped

@@ -33,11 +33,21 @@ class SettingsWebSuite extends munit.FunSuite:
     import KeysSection.Form
     assertEquals(KeysSection.reference(Form.Env, " HISTMERSION_CORE_KEY "), Right("env:HISTMERSION_CORE_KEY"))
     assert(KeysSection.reference(Form.Env, "not a name").isLeft)
-    assertEquals(KeysSection.reference(Form.Keepassxc, "Histmersion/CORE#password"), Right("keepassxc:Histmersion/CORE#password"))
+    assertEquals(
+      KeysSection.reference(Form.Keepassxc, "Histmersion/CORE#password"),
+      Right("keepassxc:Histmersion/CORE#password")
+    )
     assert(KeysSection.reference(Form.Bitwarden, "  ").isLeft)
     assertEquals(KeysSection.state(ConfigEdit.Credential("reference", "unset")), "Not set")
-    assertEquals(KeysSection.state(ConfigEdit.Credential("reference", "vault", Some("keepassxc:X"))), "Set · from KeePassXC")
-    assert(KeysSection.state(ConfigEdit.Credential("reference", "value", Some("value:***"))).contains("written in the settings file"))
+    assertEquals(
+      KeysSection.state(ConfigEdit.Credential("reference", "vault", Some("keepassxc:X"))),
+      "Set · from KeePassXC"
+    )
+    assert(
+      KeysSection
+        .state(ConfigEdit.Credential("reference", "value", Some("value:***")))
+        .contains("written in the settings file")
+    )
 
   test("the advanced filter finds a setting by its key or its words"):
     val f = ConfigEdit.Field("histmersion.backups.keep", "backups", "number", doc = "archives left after a dump")
@@ -53,19 +63,42 @@ class SettingsWebSuite extends munit.FunSuite:
     assertEquals(StartPlace.zoomFor(GeoBounds(37.6, 22.7, 37.6, 22.7)), 9.0)
     assert(StartPlace.zoomFor(GeoBounds(-60, -180, 80, 180)) >= 2.0)
     val c = MapStartConfig("place", 39.123456, 35.5, 5, "Anatolia")
-    assertEquals(StartPlace.changes(c).toMap, Map("ui.map-start.mode" -> "place", "ui.map-start.lat" -> "39.1235",
-      "ui.map-start.lon" -> "35.5", "ui.map-start.zoom" -> "5", "ui.map-start.label" -> "Anatolia"))
+    assertEquals(
+      StartPlace.changes(c).toMap,
+      Map(
+        "ui.map-start.mode" -> "place",
+        "ui.map-start.lat" -> "39.1235",
+        "ui.map-start.lon" -> "35.5",
+        "ui.map-start.zoom" -> "5",
+        "ui.map-start.label" -> "Anatolia"
+      )
+    )
     assert(StartPlace.describe(c).contains("Anatolia"))
     assert(StartPlace.describe(c.copy(mode = "last")).startsWith("The first time"))
 
   test("a plugin's state in words"):
     assertEquals(PluginsSection.state(PluginStatus("x", "1", 2, enabled = true, state = "registered")), "Working")
     assertEquals(PluginsSection.state(PluginStatus("x", "1", 2, enabled = false, state = "disabled")), "Turned off")
-    assert(PluginsSection.state(PluginStatus("x", "1", 2, enabled = true, state = "failed", error = Some("no key"))).contains("no key"))
+    assert(
+      PluginsSection
+        .state(PluginStatus("x", "1", 2, enabled = true, state = "failed", error = Some("no key")))
+        .contains("no key")
+    )
 
   test("what a plugin adds, in words"):
-    assertEquals(PluginsSection.provides(PluginStatus("oa-core", "1", 2, enabled = true, state = "registered",
-      provides = List("source-fetcher:oa-core", "source-fetcher:core-index"))), List("Finds papers"))
+    assertEquals(
+      PluginsSection.provides(
+        PluginStatus(
+          "oa-core",
+          "1",
+          2,
+          enabled = true,
+          state = "registered",
+          provides = List("source-fetcher:oa-core", "source-fetcher:core-index")
+        )
+      ),
+      List("Finds papers")
+    )
 
   test("each section's lead"):
     assert(SettingsPages.lead(com.histmersion.web.SettingsSection.Keys).exists(_.contains("Never the key itself")))

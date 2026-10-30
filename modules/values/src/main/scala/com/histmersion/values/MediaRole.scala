@@ -1,27 +1,36 @@
 package com.histmersion.values
 
-/** What a provider's picture is OF, for its place or event: the item's own image, a locator map, a
-  * plan, an aerial view, a route map. The card shows the first by this order. */
+/** What a provider's picture is OF, for its place or event: the item's own image, a locator map, a plan, an aerial
+  * view, a route map. The card shows the first by this order.
+  */
 object MediaRole:
-  val Image      = "image"
+  val Image = "image"
   val LocatorMap = "locator-map"
-  val Plan       = "plan"
+  val Plan = "plan"
   val AerialView = "aerial-view"
-  val RouteMap   = "route-map"
+  val RouteMap = "route-map"
+
   /** A book's cover (a source's picture). */
-  val Cover        = "cover"
+  val Cover = "cover"
+
   /** One of a paper's own figures, chosen to illustrate it (the domain's `FigurePick`). */
   val Illustration = "illustration"
+
   /** A picture that depicts an event (Commons' `P180 depicts`, Wikidata's `P1299 depicted by`). */
-  val Depiction    = "depiction"
+  val Depiction = "depiction"
+
   /** A museum object found at (or made in) a place, of the place's period. */
-  val Object       = "object"
+  val Object = "object"
+
   /** A historical map that shows a place or region (a shape reference; not georeferenced). */
-  val Map          = "map"
+  val Map = "map"
+
   /** The roles a place's or event's picture can have — what `media.wikidata.*-properties` may name. */
   val placeRoles: List[String] = List(Image, AerialView, Plan, LocatorMap, RouteMap)
-  /** Every role, in card order: a place's own picture before an object found there and a map of it;
-    * a source shows its cover before an illustration. */
+
+  /** Every role, in card order: a place's own picture before an object found there and a map of it; a source shows its
+    * cover before an illustration.
+    */
   val all: List[String] = placeRoles ++ List(Depiction, Object, Map, Cover, Illustration)
 
   /** Pure: the rank of a role on a card (unknown roles last). */

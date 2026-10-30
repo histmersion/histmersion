@@ -3,22 +3,21 @@ package com.histmersion.api
 import com.histmersion.api.GoalPlans.{GoalLink, GoalSchedule, GoalView}
 import com.histmersion.values.{GoalLinkKind, GoalStatus}
 
-/** `meta/GOALS.md` — the research goals as a read-only Markdown projection, written next to the three
-  * bookkeeping files by `histmersion queue export <dir>` and `histmersion export <dir>`.
+/** `meta/GOALS.md` — the research goals as a read-only Markdown projection, written next to the three bookkeeping files
+  * by `histmersion queue export <dir>` and `histmersion export <dir>`.
   *
-  * Unlike ACQUIRE/TASKS/LOG this file is NOT importable, and `queue import` never reads it: a goal is
-  * a row with typed links into other tables (articles, sources, queue-item ids), schedules whose cron
-  * state the scheduler owns, and an approved plan stored as JSON. The Markdown flattens all of that
-  * into prose, so parsing it back could only guess — and a guess that re-links the wrong queue item
-  * or drops a schedule is worse than no import. Goals move between instances losslessly in a bundle
-  * (`histmersion bundle export`); this file is for reading in Obsidian and for git history.
+  * Unlike ACQUIRE/TASKS/LOG this file is NOT importable, and `queue import` never reads it: a goal is a row with typed
+  * links into other tables (articles, sources, queue-item ids), schedules whose cron state the scheduler owns, and an
+  * approved plan stored as JSON. The Markdown flattens all of that into prose, so parsing it back could only guess —
+  * and a guess that re-links the wrong queue item or drops a schedule is worse than no import. Goals move between
+  * instances losslessly in a bundle (`histmersion bundle export`); this file is for reading in Obsidian and for git
+  * history.
   *
   * ==Determinism==
-  * The output is a pure function of the rows, ordered so it diffs small: goals by slug at every level
-  * of the tree, links by kind (articles, sources, searches, queue items) and then by ref (queue items
-  * by numeric id), schedules by kind. Values that change on their own — a goal's `updated_at`, a
-  * schedule's next/last firing and its last note — are left out, so a scheduler tick or a no-op
-  * patch does not rewrite the file.
+  * The output is a pure function of the rows, ordered so it diffs small: goals by slug at every level of the tree,
+  * links by kind (articles, sources, searches, queue items) and then by ref (queue items by numeric id), schedules by
+  * kind. Values that change on their own — a goal's `updated_at`, a schedule's next/last firing and its last note — are
+  * left out, so a scheduler tick or a no-op patch does not rewrite the file.
   */
 object GoalsExport:
 
@@ -33,45 +32,50 @@ object GoalsExport:
       "Do not edit: the next export overwrites this file. The source of truth is Histmersion " +
       "(`histmersion goals …`)._"
 
-  /** Render every goal as one file. `views` carries each goal with its links, schedules, approved
-    * plan and run cap (its `children` are not used: the tree is rebuilt from `parentSlug`, so a
-    * goal is shown exactly once). `itemStatus` maps a linked queue item's id to its status
-    * (`open`/`done`); an id absent from it is a link to an item that no longer exists. */
+  /** Render every goal as one file. `views` carries each goal with its links, schedules, approved plan and run cap (its
+    * `children` are not used: the tree is rebuilt from `parentSlug`, so a goal is shown exactly once). `itemStatus`
+    * maps a linked queue item's id to its status (`open`/`done`); an id absent from it is a link to an item that no
+    * longer exists.
+    */
   def render(views: List[GoalView], itemStatus: Map[Int, String]): String =
     val goals = views.map(_.goal)
-    val head  = List(Header, Notice, summary(goals), "---")
+    val head = List(Header, Notice, summary(goals), "---")
     val known = goals.map(_.slug).toSet
-    val body  = if views.isEmpty then List("_No goals._") else tree(views).map((v, depth) => block(v, depth, known, itemStatus))
+    val body =
+      if views.isEmpty then List("_No goals._") else tree(views).map((v, depth) => block(v, depth, known, itemStatus))
     (head ++ body).mkString("\n\n") + "\n"
 
-  /** `26 goal(s): 5 top-level, 21 sub-goals · compiled 11 · seeding 12 · reviewed 3`. Statuses in
-    * their lifecycle order, then any other value alphabetically. */
+  /** `26 goal(s): 5 top-level, 21 sub-goals · compiled 11 · seeding 12 · reviewed 3`. Statuses in their lifecycle
+    * order, then any other value alphabetically.
+    */
   private[api] def summary(goals: List[Goal]): String =
-    val slugs    = goals.map(_.slug).toSet
+    val slugs = goals.map(_.slug).toSet
     val topLevel = goals.count(g => g.parentSlug.forall(p => !slugs.contains(p)))
-    val counts   = goals.groupBy(_.status).view.mapValues(_.size).toMap
-    val order    = GoalStatus.all.filter(counts.contains) ++ counts.keys.toList.filterNot(GoalStatus.all.contains).sorted
+    val counts = goals.groupBy(_.status).view.mapValues(_.size).toMap
+    val order = GoalStatus.all.filter(counts.contains) ++ counts.keys.toList.filterNot(GoalStatus.all.contains).sorted
     val byStatus = order.map(s => s" · $s ${counts(s)}").mkString
     s"${goals.size} goal(s): $topLevel top-level, ${goals.size - topLevel} sub-goal(s)$byStatus"
 
-  /** Depth-first, slug order at every level. A goal whose parent is not among `views` is shown at the
-    * top level (with its parent named); goals caught in a parent cycle, unreachable from any root,
-    * are appended at the top level too, so no goal is ever dropped from the file. */
+  /** Depth-first, slug order at every level. A goal whose parent is not among `views` is shown at the top level (with
+    * its parent named); goals caught in a parent cycle, unreachable from any root, are appended at the top level too,
+    * so no goal is ever dropped from the file.
+    */
   private[api] def tree(views: List[GoalView]): List[(GoalView, Int)] =
-    val bySlug   = views.map(v => v.goal.slug -> v).toMap
+    val bySlug = views.map(v => v.goal.slug -> v).toMap
     val children = views.groupBy(_.goal.parentSlug).view.mapValues(_.sortBy(_.goal.slug)).toMap
-    val roots    = views.filter(v => v.goal.parentSlug.forall(p => !bySlug.contains(p))).sortBy(_.goal.slug)
+    val roots = views.filter(v => v.goal.parentSlug.forall(p => !bySlug.contains(p))).sortBy(_.goal.slug)
     def walk(v: GoalView, depth: Int, seen: Set[String]): List[(GoalView, Int)] =
-      (v, depth) :: children.getOrElse(Some(v.goal.slug), Nil)
+      (v, depth) :: children
+        .getOrElse(Some(v.goal.slug), Nil)
         .filterNot(c => seen.contains(c.goal.slug))
         .flatMap(c => walk(c, depth + 1, seen + c.goal.slug))
-    val placed  = roots.flatMap(r => walk(r, 0, Set(r.goal.slug)))
-    val shown   = placed.map(_._1.goal.slug).toSet
-    val strays  = views.filterNot(v => shown.contains(v.goal.slug)).sortBy(_.goal.slug).map(_ -> 0)
+    val placed = roots.flatMap(r => walk(r, 0, Set(r.goal.slug)))
+    val shown = placed.map(_._1.goal.slug).toSet
+    val strays = views.filterNot(v => shown.contains(v.goal.slug)).sortBy(_.goal.slug).map(_ -> 0)
     placed ++ strays
 
   private def block(v: GoalView, depth: Int, known: Set[String], itemStatus: Map[Int, String]): String =
-    val g       = v.goal
+    val g = v.goal
     val heading = s"${"#" * math.min(depth + 2, 6)} ${oneLine(g.title)}"
     val facts = List(
       Some(s"`${g.slug}` · ${g.status}"),
@@ -84,9 +88,12 @@ object GoalsExport:
     ).flatten.mkString("  \n")
     val notes = g.notes.map(_.trim).filter(_.nonEmpty).toList
     val links = linkSections(v.links, itemStatus)
-    val sch   = if v.schedules.isEmpty then Nil
-                else List("**Schedules**\n" + v.schedules.sortBy(_.kind.ordinal).map(s => s"- ${scheduleLine(s)}").mkString("\n"))
-    val plan  = v.plan.filter(p => !p.isEmpty || p.rationale.trim.nonEmpty).map(p => s"**Approved plan**\n\n${AgentsMarkdown.planBlock(p)}").toList
+    val sch = if v.schedules.isEmpty then Nil
+    else List("**Schedules**\n" + v.schedules.sortBy(_.kind.ordinal).map(s => s"- ${scheduleLine(s)}").mkString("\n"))
+    val plan = v.plan
+      .filter(p => !p.isEmpty || p.rationale.trim.nonEmpty)
+      .map(p => s"**Approved plan**\n\n${AgentsMarkdown.planBlock(p)}")
+      .toList
     (List(heading + "\n\n" + facts) ++ notes ++ links ++ sch ++ plan).mkString("\n\n")
 
   /** One labelled list per link kind, in a fixed order; an empty kind is left out. */
@@ -95,8 +102,8 @@ object GoalsExport:
       links.filter(_.kind == kind).sortBy(key) match
         case Nil => None
         case ls  => Some(s"**$label**\n" + ls.map(l => s"- ${line(l)}").mkString("\n"))
-    val byRef   = (l: GoalLink) => (0L, l.ref)
-    val byId    = (l: GoalLink) => (l.ref.toLongOption.getOrElse(Long.MaxValue), l.ref)
+    val byRef = (l: GoalLink) => (0L, l.ref)
+    val byId = (l: GoalLink) => (l.ref.toLongOption.getOrElse(Long.MaxValue), l.ref)
     List(
       section(GoalLinkKind.Article, "Articles", l => s"[[${l.ref}]]${titled(l)}${noted(l)}", byRef),
       section(GoalLinkKind.Source, "Sources", l => s"[[${l.ref}]]${titled(l)}${noted(l)}", byRef),
@@ -105,10 +112,11 @@ object GoalsExport:
     ).flatten
 
   private def titled(l: GoalLink): String = l.title.fold(" — (not found)")(t => s" — ${oneLine(t)}")
-  private def noted(l: GoalLink): String  = l.note.map(oneLine).filter(_.nonEmpty).fold("")(n => s" · $n")
+  private def noted(l: GoalLink): String = l.note.map(oneLine).filter(_.nonEmpty).fold("")(n => s" · $n")
 
-  /** `- [x] #495 Ingest …` — the checkbox is the item's state in its own list; an item that no
-    * longer exists keeps its id, so the link can still be found and removed. */
+  /** `- [x] #495 Ingest …` — the checkbox is the item's state in its own list; an item that no longer exists keeps its
+    * id, so the link can still be found and removed.
+    */
   private def queueLine(l: GoalLink, itemStatus: Map[Int, String]): String =
     l.ref.toIntOption.flatMap(itemStatus.get) match
       case Some(st) =>
@@ -118,7 +126,7 @@ object GoalsExport:
 
   /** A schedule without the fields the scheduler rewrites on every tick. */
   private def scheduleLine(s: GoalSchedule): String =
-    val state  = if s.enabled then "on" else "off"
+    val state = if s.enabled then "on" else "off"
     val budget = s.budgetUsd.fold("")(b => s" · cap ${AgentsMarkdown.usd(b)} USD")
     s"${s.kind.wire} · `${s.cron}` · $state$budget"
 

@@ -1,13 +1,14 @@
 package com.histmersion.domain
 
-/** A line-based three-way merge (diff3; Khanna, Kunal & Pierce 2007), for article bodies that changed
-  * on both sides since a common base (docs/research-merge-import.md §5.4). Pure.
+/** A line-based three-way merge (diff3; Khanna, Kunal & Pierce 2007), for article bodies that changed on both sides
+  * since a common base (docs/research-merge-import.md §5.4). Pure.
   *
-  * Both sides are matched against the base by a longest common subsequence of lines. A base line
-  * matched on BOTH sides is stable; between stable lines lie the chunks where something changed: a
-  * chunk changed on one side only takes that side, a chunk changed the same way on both takes it once,
-  * and a chunk changed differently on each side is a conflict. A merge with no conflict is clean and
-  * applied automatically; one with conflicts is a decision for the user. */
+  * Both sides are matched against the base by a longest common subsequence of lines. A base line matched on BOTH sides
+  * is stable; between stable lines lie the chunks where something changed: a chunk changed on one side only takes that
+  * side, a chunk changed the same way on both takes it once, and a chunk changed differently on each side is a
+  * conflict. A merge with no conflict is clean and applied automatically; one with conflicts is a decision for the
+  * user.
+  */
 object Diff3:
 
   /** One region of the merge: agreed text, or a conflict between the two sides over a base. */
@@ -29,10 +30,12 @@ object Diff3:
       }
 
     private def render(conflict: Hunk.Conflict => Vector[String]): String =
-      hunks.flatMap {
-        case Hunk.Agreed(ls)     => ls
-        case c: Hunk.Conflict    => conflict(c)
-      }.mkString("\n")
+      hunks
+        .flatMap {
+          case Hunk.Agreed(ls)  => ls
+          case c: Hunk.Conflict => conflict(c)
+        }
+        .mkString("\n")
 
   /** Lines of a text; a final newline is not an extra empty line. */
   private def lines(s: String): Vector[String] = s.split("\n", -1).toVector
@@ -79,9 +82,9 @@ object Diff3:
     flushAgreed()
     Result(out.result())
 
-  /** For each line of `o`, the index of the line of `x` it is matched to by a longest common
-    * subsequence, or −1. The common prefix and suffix are matched directly, so only the middle
-    * (where the edits are) costs the quadratic table. */
+  /** For each line of `o`, the index of the line of `x` it is matched to by a longest common subsequence, or −1. The
+    * common prefix and suffix are matched directly, so only the middle (where the edits are) costs the quadratic table.
+    */
   private def matching(o: Vector[String], x: Vector[String]): Array[Int] =
     val m = Array.fill(o.length)(-1)
     val pre = o.iterator.zip(x.iterator).takeWhile((p, q) => p == q).length

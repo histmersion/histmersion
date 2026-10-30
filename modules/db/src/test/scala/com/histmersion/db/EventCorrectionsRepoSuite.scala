@@ -8,14 +8,15 @@ import com.augustnagro.magnum.*
 import scala.util.Random
 import com.histmersion.values.Historicity
 
-/** The data-source assessment's P0 fixes against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped
-  * otherwise): V088's generated uncertainty agrees with core.EventPrecision; the map's feed leaves the
-  * imprecise events out (and counts them) while the list keeps them; the merge against stored rows does
-  * not depend on their order; corrections by hand survive a re-import — kept while the catalogue is
-  * unchanged, retired once it agrees, flagged when it changes to something else — follow a rename, go
-  * with a delete, and a conflict is a lint item. Ids start with `zqcr` (provider `zzcr`). */
+/** The data-source assessment's P0 fixes against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): V088's
+  * generated uncertainty agrees with core.EventPrecision; the map's feed leaves the imprecise events out (and counts
+  * them) while the list keeps them; the merge against stored rows does not depend on their order; corrections by hand
+  * survive a re-import — kept while the catalogue is unchanged, retired once it agrees, flagged when it changes to
+  * something else — follow a rename, go with a delete, and a conflict is a lint item. Ids start with `zqcr` (provider
+  * `zzcr`).
+  */
 class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
-  private val testDb                = TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
@@ -35,7 +36,11 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private def put(id: String, ts: TimeSpan, lon: Double = 160.0) =
-    EventRepo.put(ds, id, EventPut(s"Zqcr $id", "eruption", ts, geometry = Some(s"""{"type":"Point","coordinates":[$lon,-45.0]}""")))
+    EventRepo.put(
+      ds,
+      id,
+      EventPut(s"Zqcr $id", "eruption", ts, geometry = Some(s"""{"type":"Point","coordinates":[$lon,-45.0]}"""))
+    )
 
   test("V088: the generated uncertainty is core.EventPrecision.uncertainty"):
     val spans = List(
@@ -47,11 +52,13 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
       TimeSpan(Some(-431), Some(-431), Some(-404), Some(-404)) -> Some(3L),
       TimeSpan(None, Some(-50), None, None) -> None,
       TimeSpan(Some(-10), None, Some(5), Some(30)) -> None,
-      TimeSpan() -> None)
+      TimeSpan() -> None
+    )
     spans.zipWithIndex.foreach { case ((ts, pm), i) =>
       put(s"zqcr_u$i", ts)
       val _ = connect(ds)(sql"UPDATE events SET plus_minus = $pm WHERE id = ${s"zqcr_u$i"}".update.run())
-      val got = connect(ds)(sql"SELECT uncertainty FROM events WHERE id = ${s"zqcr_u$i"}".query[Option[Long]].run().head)
+      val got =
+        connect(ds)(sql"SELECT uncertainty FROM events WHERE id = ${s"zqcr_u$i"}".query[Option[Long]].run().head)
       assertEquals(got, EventPrecision.uncertainty(ts, pm), s"$ts ± $pm")
     }
 
@@ -61,11 +68,16 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
     put("zqcr_imprecise", TimeSpan(Some(-4000), None, None, Some(1000)))
     val f = Filter(period = Some(Period(-1700, -1500)))
     val geo = EventRepo.geo(ds, f, PlaceScope.empty, Some("Zqcr zqcr_"), None, None, None, 100, 0.01)
-    assertEquals(geo.events.map(g => g.id -> g.precision).toSet,
-      Set("zqcr_precise" -> EventPrecision.Precise, "zqcr_approx" -> EventPrecision.Approximate))
+    assertEquals(
+      geo.events.map(g => g.id -> g.precision).toSet,
+      Set("zqcr_precise" -> EventPrecision.Precise, "zqcr_approx" -> EventPrecision.Approximate)
+    )
     assert(geo.imprecise >= 1, geo.imprecise.toString)
-    val listed = EventRepo.list(ds, f, PlaceScope.empty, Some("Zqcr zqcr_"), None, None, None, 100, 0).events
-      .map(e => e.id -> e.precision).toMap
+    val listed = EventRepo
+      .list(ds, f, PlaceScope.empty, Some("Zqcr zqcr_"), None, None, None, 100, 0)
+      .events
+      .map(e => e.id -> e.precision)
+      .toMap
     assertEquals(listed.get("zqcr_imprecise"), Some(EventPrecision.Imprecise), "listed, not drawn")
 
   test("the merge reads stored rows in id order and places shuffled inputs identically"):
@@ -74,46 +86,99 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
     val stored = EventCatalogRepo.stored(ds)
     assertEquals(stored.map(_.id), stored.map(_.id).sorted)
     val mine = stored.filter(_.id.startsWith("zqcr_m"))
-    val recs = (1 to 4).map(i => CatalogRecord(P, s"r$i", "", s"r$i", "eruption",
-      TimeSpan(Some(-900L + i), Some(-900L + i), Some(-900L + i), Some(-900L + i)), Some(-45.0), Some(161.01))).toList
+    val recs = (1 to 4)
+      .map(i =>
+        CatalogRecord(
+          P,
+          s"r$i",
+          "",
+          s"r$i",
+          "eruption",
+          TimeSpan(Some(-900L + i), Some(-900L + i), Some(-900L + i), Some(-900L + i)),
+          Some(-45.0),
+          Some(161.01)
+        )
+      )
+      .toList
     val tol = CatalogMerge.Tolerance(60, 30)
     val expected = CatalogMerge.place(recs, mine, tol).map((r, p) => r.key -> p.eventId).toMap
-    assertEquals(expected.values.toSet, Set("zqcr_m1"), "the narrowest overlapping event (its span centred nearest) wins for all")
+    assertEquals(
+      expected.values.toSet,
+      Set("zqcr_m1"),
+      "the narrowest overlapping event (its span centred nearest) wins for all"
+    )
     val rnd = Random(88)
     (1 to 10).foreach { _ =>
-      assertEquals(CatalogMerge.place(rnd.shuffle(recs), rnd.shuffle(mine), tol).map((r, p) => r.key -> p.eventId).toMap, expected)
+      assertEquals(
+        CatalogMerge.place(rnd.shuffle(recs), rnd.shuffle(mine), tol).map((r, p) => r.key -> p.eventId).toMap,
+        expected
+      )
     }
 
   // ── corrections ────────────────────────────────────────────────────────────────────────────
 
-  private val upstream0 = CatalogRecord(P, "c1", "https://example.org/c1", "Eruption of Zqcr", "eruption",
-    TimeSpan(Some(-2251), None, None, Some(2026)), Some(-45.0), Some(162.0), description = Some("Confirmed Eruption at Zqcr"),
-    central = Some(250), plusMinus = Some(2500), datingMethod = Some("Tephrochronology"))
+  private val upstream0 = CatalogRecord(
+    P,
+    "c1",
+    "https://example.org/c1",
+    "Eruption of Zqcr",
+    "eruption",
+    TimeSpan(Some(-2251), None, None, Some(2026)),
+    Some(-45.0),
+    Some(162.0),
+    description = Some("Confirmed Eruption at Zqcr"),
+    central = Some(250),
+    plusMinus = Some(2500),
+    datingMethod = Some("Tephrochronology")
+  )
   private val Id = "zzcr_c1"
 
   private def reimport(r: CatalogRecord): EventCatalogRepo.Saved =
     EventCatalogRepo.save(ds, CatalogMerge.place(List(r), EventCatalogRepo.stored(ds), CatalogMerge.Tolerance(60, 30)))
   private def event = EventRepo.get(ds, Id).get
-  private def corrections = CorrectionRepo.list(ds, CorrectionTarget.Event, Some(Id), Some("active"), 50, 0).corrections ++
-    CorrectionRepo.list(ds, CorrectionTarget.Event, Some(Id), Some("conflict"), 50, 0).corrections ++
-    CorrectionRepo.list(ds, CorrectionTarget.Event, Some(Id), Some("agreed"), 50, 0).corrections
+  private def corrections =
+    CorrectionRepo.list(ds, CorrectionTarget.Event, Some(Id), Some("active"), 50, 0).corrections ++
+      CorrectionRepo.list(ds, CorrectionTarget.Event, Some(Id), Some("conflict"), 50, 0).corrections ++
+      CorrectionRepo.list(ds, CorrectionTarget.Event, Some(Id), Some("agreed"), 50, 0).corrections
 
   test("corrections: a patch on a catalogue event is kept by a re-import while the catalogue is unchanged"):
     val first = reimport(upstream0)
     assertEquals(first.created, 1)
     val e0 = event.event
-    assertEquals((e0.central, e0.plusMinus, e0.datingMethod, e0.precision), (Some(250L), Some(2500L), Some("Tephrochronology"),
-      EventPrecision.Imprecise))
+    assertEquals(
+      (e0.central, e0.plusMinus, e0.datingMethod, e0.precision),
+      (Some(250L), Some(2500L), Some("Tephrochronology"), EventPrecision.Imprecise)
+    )
     assertEquals(e0.datingNote, Some("250 CE ± 2500 (tephrochronology)"))
-    assert(EventRepo.patch(ds, Id, EventPatch(label = Some("Hekla 3 (Zqcr)"), description = Some("my note"),
-      historicity = Some(Historicity.Attested))).isRight)
+    assert(
+      EventRepo
+        .patch(
+          ds,
+          Id,
+          EventPatch(
+            label = Some("Hekla 3 (Zqcr)"),
+            description = Some("my note"),
+            historicity = Some(Historicity.Attested)
+          )
+        )
+        .isRight
+    )
     // historicity equals the catalogue's: no correction for it
-    assertEquals(corrections.map(c => c.field -> c.status).toSet,
-      Set(EventFields.Label -> CorrectionStatus.Active, EventFields.Description -> CorrectionStatus.Active))
-    assertEquals(corrections.find(_.field == EventFields.Label).map(c => Corrections.show(c.upstreamValue)), Some("Eruption of Zqcr"))
+    assertEquals(
+      corrections.map(c => c.field -> c.status).toSet,
+      Set(EventFields.Label -> CorrectionStatus.Active, EventFields.Description -> CorrectionStatus.Active)
+    )
+    assertEquals(
+      corrections.find(_.field == EventFields.Label).map(c => Corrections.show(c.upstreamValue)),
+      Some("Eruption of Zqcr")
+    )
     val again = reimport(upstream0)
     assertEquals((again.created, again.updated, again.corrections), (0, 1, CorrectionCounts(kept = 2)))
-    assertEquals((event.event.label, event.event.description), ("Hekla 3 (Zqcr)", Some("my note")), "kept over the catalogue's")
+    assertEquals(
+      (event.event.label, event.event.description),
+      ("Hekla 3 (Zqcr)", Some("my note")),
+      "kept over the catalogue's"
+    )
     assertEquals(event.corrections.size, 2, "the card lists them")
 
   test("corrections: retired once the catalogue agrees; flagged when it changes to something else"):
@@ -122,15 +187,22 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(corrections.find(_.field == EventFields.Label).map(_.status), Some(CorrectionStatus.Agreed))
     assertEquals(event.event.label, "Hekla 3 (Zqcr)")
     // the catalogue now says something else about the description: the person's stays, flagged
-    val changed = upstream0.copy(label = "Hekla 3 (Zqcr)", description = Some("Confirmed Eruption at Zqcr; area: SW flank"))
+    val changed =
+      upstream0.copy(label = "Hekla 3 (Zqcr)", description = Some("Confirmed Eruption at Zqcr; area: SW flank"))
     val c = reimport(changed)
     assertEquals(c.corrections, CorrectionCounts(conflicts = 1))
     assertEquals(event.event.description, Some("my note"))
-    val conflict = CorrectionRepo.list(ds, CorrectionTarget.Event, None, Some("conflict"), 50, 0).corrections.filter(_.targetId == Id)
-    assertEquals(conflict.map(x => (x.field, x.upstreamNow.map(Corrections.show))),
-      List(EventFields.Description -> Some("Confirmed Eruption at Zqcr; area: SW flank")))
+    val conflict = CorrectionRepo
+      .list(ds, CorrectionTarget.Event, None, Some("conflict"), 50, 0)
+      .corrections
+      .filter(_.targetId == Id)
+    assertEquals(
+      conflict.map(x => (x.field, x.upstreamNow.map(Corrections.show))),
+      List(EventFields.Description -> Some("Confirmed Eruption at Zqcr; area: SW flank"))
+    )
     assertEquals(conflict.head.label, Some("Hekla 3 (Zqcr)"))
-    val geo = Geocoder.Settings(cfg.places.geocodePlaceholderMin, cfg.places.geocodeRepairKm, cfg.places.pointToleranceKm)
+    val geo =
+      Geocoder.Settings(cfg.places.geocodePlaceholderMin, cfg.places.geocodeRepairKm, cfg.places.pointToleranceKm)
     val lint = LintRepo.run(ds, List(Lint.rule(Lint.EventCorrectionConflict).get), 1000, 3, (_, _, _) => Nil, geo)
     assert(lint.rules.head.items.exists(i => i.citekey == Id && i.detail.startsWith("description:")), lint.toString)
     // still a conflict on the next import (the catalogue unchanged since), and back to active if it reverts
@@ -143,17 +215,26 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
   test("corrections: a span set by hand drops the stated year and ±, and survives; a rename and a delete carry them"):
     val mine = TimeSpan(Some(1104), Some(1104), Some(1104), Some(1104))
     assert(EventRepo.patch(ds, Id, EventPatch(timeSpan = Some(mine))).isRight)
-    assertEquals((event.event.central, event.event.plusMinus, event.event.precision), (None, None, EventPrecision.Precise))
+    assertEquals(
+      (event.event.central, event.event.plusMinus, event.event.precision),
+      (None, None, EventPrecision.Precise)
+    )
     val _ = reimport(upstream0.copy(label = "Hekla 3 (Zqcr)"))
-    assertEquals((event.event.timeSpan, event.event.central), (mine, None), "the person's span, not the catalogue's ± window")
+    assertEquals(
+      (event.event.timeSpan, event.event.central),
+      (mine, None),
+      "the person's span, not the catalogue's ± window"
+    )
     // an event compiled from sources records nothing: no import rewrites it
     put("zqcr_compiled", TimeSpan(Some(1), Some(1), Some(1), Some(1)))
     assert(EventRepo.patch(ds, "zqcr_compiled", EventPatch(label = Some("x"))).isRight)
     assertEquals(CorrectionRepo.list(ds, CorrectionTarget.Event, Some("zqcr_compiled"), None, 10, 0).total, 0)
     // rename: the corrections follow the event
     assert(EventRepo.rename(ds, Id, "zzcr_renamed").isRight)
-    assertEquals(CorrectionRepo.list(ds, CorrectionTarget.Event, Some("zzcr_renamed"), None, 10, 0).corrections.map(_.field),
-      List(EventFields.Span))
+    assertEquals(
+      CorrectionRepo.list(ds, CorrectionTarget.Event, Some("zzcr_renamed"), None, 10, 0).corrections.map(_.field),
+      List(EventFields.Span)
+    )
     // the renamed event is still refreshed from its owner record, the correction applied
     val _ = reimport(upstream0)
     assertEquals(EventRepo.get(ds, "zzcr_renamed").map(_.event.timeSpan), Some(mine))

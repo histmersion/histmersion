@@ -10,10 +10,10 @@ import com.histmersion.domain.*
 import com.histmersion.server.{Handlers, McpOut, McpTools}
 import com.histmersion.api.VocabularyCodecs.given
 
-/** The MCP half of #1449: `event_links` — the sources that may discuss an event, their confirmation
-  * (an attestation from a passage that names it), and the leads catalogue events raise. The import is
-  * not a tool, on purpose (as the media import): it is an operator's decision that sends traffic to a
-  * third party — `histmersion events import`. */
+/** The MCP half of #1449: `event_links` — the sources that may discuss an event, their confirmation (an attestation
+  * from a passage that names it), and the leads catalogue events raise. The import is not a tool, on purpose (as the
+  * media import): it is an operator's decision that sends traffic to a third party — `histmersion events import`.
+  */
 object EventCatalogTools:
   import McpTools.given // honour Scala defaults when decoding tool arguments
 
@@ -28,10 +28,16 @@ object EventCatalogTools:
       limit: Option[Int] = None
   ) derives KindlingsCodecAsObject
   object EventLinksInput:
-    given Schema[EventLinksInput] = KindlingsSchema.derived[EventLinksInput].schema
+    given Schema[EventLinksInput] = KindlingsSchema
+      .derived[EventLinksInput]
+      .schema
       .modify(_.id)(_.description("The event; omit to list LEADS (catalogue events no source discusses)"))
       .modify(_.recompute)(_.description("Recompute the event's proposed sources first"))
-      .modify(_.confirm)(_.description("Citekeys to confirm: each becomes an attestation from a passage of its text naming the event (refused when none does)"))
+      .modify(_.confirm)(
+        _.description(
+          "Citekeys to confirm: each becomes an attestation from a passage of its text naming the event (refused when none does)"
+        )
+      )
       .modify(_.reject)(_.description("Citekeys to stop proposing"))
       .modify(_.from)(_.description("Leads: events overlapping from this signed year"))
       .modify(_.to)(_.description("Leads: events overlapping up to this signed year"))
@@ -43,8 +49,12 @@ object EventCatalogTools:
       limit: Option[Int] = None
   ) derives KindlingsCodecAsObject
   object EventCorrectionsInput:
-    given Schema[EventCorrectionsInput] = KindlingsSchema.derived[EventCorrectionsInput].schema
-      .modify(_.status)(_.description("active | agreed (retired: the catalogue now agrees) | conflict; default: all but agreed"))
+    given Schema[EventCorrectionsInput] = KindlingsSchema
+      .derived[EventCorrectionsInput]
+      .schema
+      .modify(_.status)(
+        _.description("active | agreed (retired: the catalogue now agrees) | conflict; default: all but agreed")
+      )
       .modify(_.id)(_.description("Only this event's corrections"))
 
   def apply(h: Handlers) =
@@ -58,10 +68,13 @@ object EventCatalogTools:
             "correction is retired automatically (`agreed`) once the catalogue says the same; when the " +
             "catalogue changes the field to something else it stays applied and is flagged `conflict` for " +
             "review (conflicts are listed first). Each line: the field, the person's value, what the " +
-            "catalogue said then and, in conflict, what it says now.")
+            "catalogue said then and, in conflict, what it says now."
+        )
         .input[EventCorrectionsInput]
         .handle { in =>
-          ToolResult.text(h.catalog.corrections(in.status, in.id, in.limit, None).fold(McpOut.refusal, Corrections.markdown))
+          ToolResult.text(
+            h.catalog.corrections(in.status, in.id, in.limit, None).fold(McpOut.refusal, Corrections.markdown)
+          )
         }
 
     val links =
@@ -74,14 +87,17 @@ object EventCatalogTools:
             "`reject` stops proposing one. Without `id`: LEADS — catalogue events (eruptions, earthquakes, " +
             "battles… from the Smithsonian GVP, NOAA NCEI, Wikidata) that no source in the corpus discusses, " +
             "with the corpus's findings around them counted and the commands to search the literature. A " +
-            "catalogue event is a research lead, never evidence: do not cite it in prose.")
+            "catalogue event is a research lead, never evidence: do not cite it in prose."
+        )
         .input[EventLinksInput]
         .handle { in =>
           in.id.map(_.trim).filter(_.nonEmpty) match
             case Some(id) =>
               val r =
                 if in.recompute || in.confirm.nonEmpty || in.reject.nonEmpty then
-                  h.catalog.applyLinks(id, EventLinksRequest(in.recompute, in.confirm, in.reject)).map(EventLinksMarkdown.result)
+                  h.catalog
+                    .applyLinks(id, EventLinksRequest(in.recompute, in.confirm, in.reject))
+                    .map(EventLinksMarkdown.result)
                 else h.catalog.links(id).map(EventLinksMarkdown.list)
               ToolResult.text(r.fold(McpOut.refusal, identity))
             case None =>

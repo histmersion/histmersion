@@ -13,4 +13,4 @@ object NoteId extends RefinedType[String, Match[PersonalIds.UuidRule]]:
     either(Option(raw).fold("")(_.trim.toLowerCase)).left.map(_ => s"not a note id: '$raw'")
   given Encoder[NoteId] = Encoder.encodeString.contramap(_.value)
   given Decoder[NoteId] = Decoder.decodeString.emap(parse)
-  given Schema[NoteId]  = Schema.string[NoteId]
+  given Schema[NoteId] = Schema.string[NoteId]

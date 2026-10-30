@@ -5,34 +5,66 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.SourceStatus
 
-/** #406 against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. The Articles and Events
-  * lists are the items RELATED to the sources the global filter selects: an article that cites a
-  * matching source is listed, one citing none is not; an event is listed when its source matches and
-  * its own span overlaps the period; the title filter narrows each list by the item's own title. */
+/** #406 against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. The Articles and Events lists are the
+  * items RELATED to the sources the global filter selects: an article that cites a matching source is listed, one
+  * citing none is not; an event is listed when its source matches and its own span overlaps the period; the title
+  * filter narrows each list by the item's own title.
+  */
 class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
-  private val testDb                = TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val ds =
     val base = AppConfig.load().db
-    val d    = testPool(base.copy(url = testDb.get))
+    val d = testPool(base.copy(url = testDb.get))
     Migrate.run(d); d
 
   private val Tag = "zz-rel-tag"
 
   private def source(ck: String, tags: List[String], status: SourceStatus, period: Period, author: String) =
-    SourceRepo.put(ds, Source(
-      citekey = ck, title = s"Source title $ck", authors = List(author), doi = None, year = Some(2010),
-      venue = None, status = status, topics = Nil, regions = Nil, tags = tags, period = Some(period),
-      summary = None, citedByCount = None, influentialCitations = None, provenance = None,
-      calibreId = None), 4000)
+    SourceRepo.put(
+      ds,
+      Source(
+        citekey = ck,
+        title = s"Source title $ck",
+        authors = List(author),
+        doi = None,
+        year = Some(2010),
+        venue = None,
+        status = status,
+        topics = Nil,
+        regions = Nil,
+        tags = tags,
+        period = Some(period),
+        summary = None,
+        citedByCount = None,
+        influentialCitations = None,
+        provenance = None,
+        calibreId = None
+      ),
+      4000
+    )
 
   private def article(slug: String, title: String, body: String) =
-    ArticleRepo.put(ds, Article(slug = slug, title = title, kind = "concept", body = body,
-      summary = None, tags = Nil, regions = Nil, period = None))
+    ArticleRepo.put(
+      ds,
+      Article(
+        slug = slug,
+        title = title,
+        kind = "concept",
+        body = body,
+        summary = None,
+        tags = Nil,
+        regions = Nil,
+        period = None
+      )
+    )
 
   private def event(id: String, label: String, year: Long, citekey: Option[String]) =
-    EventRepo.put(ds, id, EventPut(label = label, timeSpan = TimeSpan(Some(year), None, None, Some(year)),
-      citekey = citekey))
+    EventRepo.put(
+      ds,
+      id,
+      EventPut(label = label, timeSpan = TimeSpan(Some(year), None, None, Some(year)), citekey = citekey)
+    )
 
   override def beforeAll(): Unit =
     if testDb.isDefined then
@@ -49,15 +81,25 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
   override def afterSuite(): Unit =
     if testDb.isDefined then
       List("zz_rel_cites_match", "zz_rel_cites_other", "zz_rel_cites_none").foreach(s => ArticleRepo.delete(ds, s))
-      List("zz_rel_ev_match", "zz_rel_ev_late", "zz_rel_ev_other", "zz_rel_ev_nosrc").foreach(e => EventRepo.delete(ds, e))
+      List("zz_rel_ev_match", "zz_rel_ev_late", "zz_rel_ev_other", "zz_rel_ev_nosrc").foreach(e =>
+        EventRepo.delete(ds, e)
+      )
 
   private def articles(f: Filter): Set[String] =
-    ArticleRepo.list(ds, f, PlaceScope.empty, None, None, 500, 0).articles.map(_.slug)
-      .filter(_.startsWith("zz_rel_")).toSet
+    ArticleRepo
+      .list(ds, f, PlaceScope.empty, None, None, 500, 0)
+      .articles
+      .map(_.slug)
+      .filter(_.startsWith("zz_rel_"))
+      .toSet
 
   private def events(f: Filter, text: Option[String] = None): Set[String] =
-    EventRepo.list(ds, f, PlaceScope.empty, text, None, None, None, 500, 0).events.map(_.id)
-      .filter(_.startsWith("zz_rel_")).toSet
+    EventRepo
+      .list(ds, f, PlaceScope.empty, text, None, None, None, 500, 0)
+      .events
+      .map(_.id)
+      .filter(_.startsWith("zz_rel_"))
+      .toSet
 
   test("an empty filter lists every article and every event"):
     assertEquals(articles(Filter()), Set("zz_rel_cites_match", "zz_rel_cites_other", "zz_rel_cites_none"))
@@ -81,8 +123,10 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(events(Filter(tags = List(Tag), period = Some(Period(-1300, -1200)))), Set("zz_rel_ev_match"))
 
   test("events: a period alone matches the event's own span, with or without a source"):
-    assertEquals(events(Filter(period = Some(Period(-1300, -1200)))),
-      Set("zz_rel_ev_match", "zz_rel_ev_other", "zz_rel_ev_nosrc"))
+    assertEquals(
+      events(Filter(period = Some(Period(-1300, -1200)))),
+      Set("zz_rel_ev_match", "zz_rel_ev_other", "zz_rel_ev_nosrc")
+    )
 
   test("events: title narrows the label; text still searches label and description"):
     assertEquals(events(Filter(title = Some("KADESH"))), Set("zz_rel_ev_match"))

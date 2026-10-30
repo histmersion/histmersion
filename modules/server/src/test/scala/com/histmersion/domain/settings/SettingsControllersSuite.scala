@@ -7,16 +7,24 @@ import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 
 class SettingsControllersSuite extends munit.FunSuite:
 
-  private final class Fixture(text: Option[String], restartable: Boolean = false, env: Map[String, String] = Map.empty):
-    val file     = AtomicReference(text)
-    val reloads  = AtomicInteger(0)
-    val settings = SettingsService.InMemory(file, ConfigFactory.parseMap(scala.jdk.CollectionConverters.MapHasAsJava(env).asJava))
+  final private class Fixture(text: Option[String], restartable: Boolean = false, env: Map[String, String] = Map.empty):
+    val file = AtomicReference(text)
+    val reloads = AtomicInteger(0)
+    val settings =
+      SettingsService.InMemory(file, ConfigFactory.parseMap(scala.jdk.CollectionConverters.MapHasAsJava(env).asJava))
     val restarts = RestartService.InMemory(restartable)
-    val c = SettingsControllers(settings, restarts, () => { reloads.incrementAndGet(); ReloadReport(published = true, generation = 2) })
+    val c = SettingsControllers(
+      settings,
+      restarts,
+      () => { reloads.incrementAndGet(); ReloadReport(published = true, generation = 2) }
+    )
 
   private val Commented = "# mine\nhistmersion {\n  backups.keep = 3   # three\n}\n"
 
-  private def write(f: Fixture, changes: (String, Option[String])*): Either[com.histmersion.api.ApiError, ConfigEdit.Written] =
+  private def write(
+      f: Fixture,
+      changes: (String, Option[String])*
+  ): Either[com.histmersion.api.ApiError, ConfigEdit.Written] =
     f.c.write(ConfigEdit.Write(changes.toList.map((k, v) => ConfigEdit.Change(k, v))))
 
   test("the page: every setting with what the file says, what applies and from where"):
@@ -33,8 +41,10 @@ class SettingsControllersSuite extends munit.FunSuite:
     assert(f.c.page(Some("not a key!")).isLeft)
 
   test("a credential's value never crosses: not what the file writes, not what applies, not the default"):
-    val f = Fixture(Some("histmersion.plugins.media-europeana.api-key = \"value:hunter2\"\n"),
-      env = Map("HISTMERSION_API_KEY" -> "s3cret-key"))
+    val f = Fixture(
+      Some("histmersion.plugins.media-europeana.api-key = \"value:hunter2\"\n"),
+      env = Map("HISTMERSION_API_KEY" -> "s3cret-key")
+    )
     val p = f.c.page(None).fold(e => fail(e.message), identity)
     val europeana = p.field("plugins.media-europeana.api-key").get
     assertEquals(europeana.credential, Some(ConfigEdit.Credential("reference", "value", Some("value:***"))))
@@ -75,7 +85,10 @@ class SettingsControllersSuite extends munit.FunSuite:
   test("a credential as a reference; value: only when confirmed, with a warning"):
     val f = Fixture(None)
     assert(write(f, "plugins.oa-core.api-key" -> Some("value:x")).isLeft)
-    val w = f.c.write(ConfigEdit.Write(List(ConfigEdit.Change("plugins.oa-core.api-key", Some("value:x"))), literalConsent = true))
+    val w = f.c
+      .write(
+        ConfigEdit.Write(List(ConfigEdit.Change("plugins.oa-core.api-key", Some("value:x"))), literalConsent = true)
+      )
       .fold(e => fail(e.message), identity)
     assert(w.warnings.exists(_.contains("anyone who can read")), s"${w.warnings}")
     assert(w.created)

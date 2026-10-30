@@ -13,9 +13,10 @@ import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import javax.sql.DataSource
 
-/** The tiles a server keeps, by key, the least recently asked for going first once they hold more
-  * than `maxBytes`. A tile's key carries the versions of what it was cut from, so a write makes the
-  * tiles it touched unreachable at once; they age out. Thread-safe. */
+/** The tiles a server keeps, by key, the least recently asked for going first once they hold more than `maxBytes`. A
+  * tile's key carries the versions of what it was cut from, so a write makes the tiles it touched unreachable at once;
+  * they age out. Thread-safe.
+  */
 final class TileCache(maxBytes: () => Long):
   private val tiles = new java.util.LinkedHashMap[String, Array[Byte]](256, 0.75f, true)
   // `var`: the bytes held
@@ -39,26 +40,36 @@ final class TileCache(maxBytes: () => Long):
   def stats: (Int, Long) = synchronized((tiles.size, held))
 
 object MapTiles:
-  /** A tile's caching rule: the browser asks again each time and the server answers 304 while the
-    * data's version is unchanged — never a stale tile after a write, a few bytes when nothing changed. */
+  /** A tile's caching rule: the browser asks again each time and the server answers 304 while the data's version is
+    * unchanged — never a stale tile after a write, a few bytes when nothing changed.
+    */
   val CacheControl = "no-cache"
 
   /** A group's change rows above which they are folded into one ([[TileRepo.compact]]). */
   val CompactAbove = 256
 
-  /** Pure: what a tile request is, as a cache key and an ETag: the layer, the tile, every parameter
-    * the layer reads (the rest — a filter's paging, another layer's options — left out, so they never
-    * split one tile into many) and the versions of the groups it reads. */
+  /** Pure: what a tile request is, as a cache key and an ETag: the layer, the tile, every parameter the layer reads
+    * (the rest — a filter's paging, another layer's options — left out, so they never split one tile into many) and the
+    * versions of the groups it reads.
+    */
   def key(layer: TileLayer, c: TileCoord, q: TilesApi.TileQuery, versions: Map[String, Long]): String =
     val f = q.filter
     val time = f.period.fold("")(p => s"${p.start}..${p.end}")
     val undated = if q.withUndated then "undated" else ""
     val params = layer match
-      case TileLayer.Sites => List(time, q.siteType.getOrElse(""), undated)
-      case TileLayer.Media => List(time, q.kind.getOrElse(""), q.provider.getOrElse(""), q.license.getOrElse(""))
+      case TileLayer.Sites  => List(time, q.siteType.getOrElse(""), undated)
+      case TileLayer.Media  => List(time, q.kind.getOrElse(""), q.provider.getOrElse(""), q.license.getOrElse(""))
       case TileLayer.Events =>
-        List(f.copy(limit = 0, offset = 0, sort = Filter().sort).toString, q.kind.getOrElse(""), q.tier.getOrElse(""),
-          q.historicity.getOrElse(""), q.context.fold("")(_.toString), q.text.getOrElse(""), q.placeId.getOrElse(""), undated)
+        List(
+          f.copy(limit = 0, offset = 0, sort = Filter().sort).toString,
+          q.kind.getOrElse(""),
+          q.tier.getOrElse(""),
+          q.historicity.getOrElse(""),
+          q.context.fold("")(_.toString),
+          q.text.getOrElse(""),
+          q.placeId.getOrElse(""),
+          undated
+        )
     val v = TileRepo.Groups(layer).map(g => s"$g=${versions.getOrElse(g, 0L)}")
     (List(layer.wire, s"${c.z}/${c.x}/${c.y}") ++ params ++ v).mkString("|")
 
@@ -71,10 +82,16 @@ object MapTiles:
   def matches(ifNoneMatch: Option[String], tag: String): Boolean =
     ifNoneMatch.exists(h => h.split(",").map(_.trim.stripPrefix("W/")).exists(t => t == tag || t == "*"))
 
-/** `GET /api/tiles/{layer}/{z}/{x}/{y}` ([[TilesApi]]): a layer's tile cut from the database, kept
-  * ([[TileCache]]) under the versions of what it reads, and answered 304 when the browser holds it. */
-final class MapTileService(ds: DataSource, settings: () => UiMapTilesSettings, modernFrom: () => Long,
-    scopeOf: Filter => PlaceScope, undatedSites: UndatedSites):
+/** `GET /api/tiles/{layer}/{z}/{x}/{y}` ([[TilesApi]]): a layer's tile cut from the database, kept ([[TileCache]])
+  * under the versions of what it reads, and answered 304 when the browser holds it.
+  */
+final class MapTileService(
+    ds: DataSource,
+    settings: () => UiMapTilesSettings,
+    modernFrom: () => Long,
+    scopeOf: Filter => PlaceScope,
+    undatedSites: UndatedSites
+):
   import MapTiles.*
 
   val cache: TileCache = TileCache(() => settings().cacheMb.toLong.max(1) * 1024 * 1024)
@@ -82,7 +99,9 @@ final class MapTileService(ds: DataSource, settings: () => UiMapTilesSettings, m
   def tile(q: TilesApi.TileQuery): Either[ApiError, TilesApi.TileAnswer] =
     val s = settings()
     for
-      layer <- TileLayer.parse(q.layer).toRight(ApiError(s"unknown layer '${q.layer}': one of ${TileLayer.values.map(_.wire).mkString(", ")}"))
+      layer <- TileLayer
+        .parse(q.layer)
+        .toRight(ApiError(s"unknown layer '${q.layer}': one of ${TileLayer.values.map(_.wire).mkString(", ")}"))
       coord <- TileCoord.of(q.z, q.x, q.y, s.maxZoom).left.map(ApiError(_))
     yield
       val versions = currentVersions()
@@ -105,10 +124,16 @@ final class MapTileService(ds: DataSource, settings: () => UiMapTilesSettings, m
 
   private def window(f: Filter): Option[(Long, Long)] = f.period.map(p => (p.start.min(p.end), p.start.max(p.end)))
 
-  /** A sites tile with the sites of no known date: the dated ones of the span and the undated ones (an undated
-    * one the span shows by its findings counted once, as dated), each alone when the tile keeps that many,
-    * else counted by its grid's squares together ([[UndatedCells]]). */
-  private def sitesWithUndated(c: TileCoord, grid: TileGrid, window: (Long, Long), siteType: Option[String]): List[TileCell] =
+  /** A sites tile with the sites of no known date: the dated ones of the span and the undated ones (an undated one the
+    * span shows by its findings counted once, as dated), each alone when the tile keeps that many, else counted by its
+    * grid's squares together ([[UndatedCells]]).
+    */
+  private def sitesWithUndated(
+      c: TileCoord,
+      grid: TileGrid,
+      window: (Long, Long),
+      siteType: Option[String]
+  ): List[TileCell] =
     val dated = TileRepo.datedSites(c, window, siteType, modernFrom())
     val datedCounts = com.augustnagro.magnum.connect(ds)(TileRepo.gridCells(dated, c, grid))
     val undatedCounts = undatedSites.counted(c, grid, siteType)
@@ -130,8 +155,15 @@ final class MapTileService(ds: DataSource, settings: () => UiMapTilesSettings, m
         TileFeatures.of(c.z, cells, records.get, TileFeatures.site)
       case TileLayer.Events =>
         val f = q.filter
-        def where(f: Filter) = EventRepo.listWhere(f, scopeOf(f), q.text, q.kind, q.historicity, q.placeId,
-          EventRepo.Narrow(q.tier.map(_.trim).filter(_.nonEmpty), q.context.getOrElse(false), None))
+        def where(f: Filter) = EventRepo.listWhere(
+          f,
+          scopeOf(f),
+          q.text,
+          q.kind,
+          q.historicity,
+          q.placeId,
+          EventRepo.Narrow(q.tier.map(_.trim).filter(_.nonEmpty), q.context.getOrElse(false), None)
+        )
         val cells =
           if q.withUndated then TileRepo.eventCellsWithUndated(ds, c, grid, where(f), where(f.copy(period = None)))
           else TileRepo.eventCells(ds, c, grid, where(f))

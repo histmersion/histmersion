@@ -2,48 +2,68 @@ package com.histmersion.web
 
 import com.histmersion.api.Queue
 
-/** What a window shows — the typed form of an entry of [[UiState.open]]. The wire spelling
-  * (`source:ck`, `jobs`, …) is what the URL hash carries, so a reload or a shared link reopens the
-  * same windows; everything else in the UI works with the enum. */
+/** What a window shows — the typed form of an entry of [[UiState.open]]. The wire spelling (`source:ck`, `jobs`, …) is
+  * what the URL hash carries, so a reload or a shared link reopens the same windows; everything else in the UI works
+  * with the enum.
+  */
 enum WindowKey:
   /** The server-rendered page of a source. */
   case Source(citekey: String)
+
   /** The server-rendered page of a compiled article. */
   case Article(slug: String)
+
   /** The citation graph around a source. */
   case Graph(citekey: String)
+
   /** The metadata editor of a source. */
   case EditSource(citekey: String)
+
   /** The background (OCR) jobs. */
   case Jobs
+
   /** Upload a document for OCR ingest. */
   case Upload
+
   /** The acquisition queue — what to buy, borrow or download. */
   case Acquire
+
   /** The agent's backlog — the `tasks` queue. */
   case Tasks
+
   /** The dated worklog — the `log` queue. */
   case Log
+
   /** Enter the API key that writes need. */
   case ApiKey
+
   /** The server's build, health, job queue, last backup and store counts. */
   case About
+
   /** The embedded agent runs (only offered when the server runs agents). */
   case Runs
+
   /** One agent run: its steps, tokens, cost, trace and controls. */
   case Run(id: String)
+
   /** The agents' model chains and allowances, and the provider check. */
   case Models
+
   /** Changes agent runs proposed, for a person to approve or reject. */
   case Approvals
+
   /** The research goals, as a tree. */
   case Goals
+
   /** One goal: its links, schedules, plan and runs. */
   case Goal(slug: String)
+
   /** The merge review screen: another collection's bundle, its plan, and the decisions. */
   case Merge
+
   /** The persistent process managers (docs/research-process-managers.md). */
   case Managers
+
   /** One manager: its state, items in flight, items, hints, events and settings. */
   case Manager(id: String)
 
@@ -77,33 +97,34 @@ enum WindowKey:
     case EditSource(ck) => Some(ck)
     case _              => None
 
-  /** A title to show before the content has told us a better one (the item's own title: the window retitles
-    * itself once it is loaded, `WindowManager.retitle`). Sentence case; never an identifier, which the title's
-    * tooltip carries. */
+  /** A title to show before the content has told us a better one (the item's own title: the window retitles itself once
+    * it is loaded, `WindowManager.retitle`). Sentence case; never an identifier, which the title's tooltip carries.
+    */
   def initialTitle: String = this match
-    case Source(_)      => "Source"
-    case Article(_)     => "Article"
-    case Graph(_)       => "Citation graph"
-    case EditSource(_)  => "Edit a source"
-    case Jobs           => "Background jobs"
-    case Upload         => "Upload for OCR"
-    case Acquire        => "To acquire"
-    case Tasks          => "Backlog"
-    case Log            => "Worklog"
-    case ApiKey         => "API key"
-    case About          => "About Histmersion"
-    case Runs           => "Agent runs"
-    case Run(_)         => "Agent run"
-    case Models         => "AI models and limits"
-    case Approvals      => "Approvals"
-    case Goals          => "Research goals"
-    case Goal(slug)     => s"Goal · ${com.histmersion.api.Wording.humanize(slug)}"
-    case Merge          => "Merge another collection"
-    case Managers       => "Agent managers"
-    case Manager(id)    => com.histmersion.api.Wording.manager(id)
+    case Source(_)     => "Source"
+    case Article(_)    => "Article"
+    case Graph(_)      => "Citation graph"
+    case EditSource(_) => "Edit a source"
+    case Jobs          => "Background jobs"
+    case Upload        => "Upload for OCR"
+    case Acquire       => "To acquire"
+    case Tasks         => "Backlog"
+    case Log           => "Worklog"
+    case ApiKey        => "API key"
+    case About         => "About Histmersion"
+    case Runs          => "Agent runs"
+    case Run(_)        => "Agent run"
+    case Models        => "AI models and limits"
+    case Approvals     => "Approvals"
+    case Goals         => "Research goals"
+    case Goal(slug)    => s"Goal · ${com.histmersion.api.Wording.humanize(slug)}"
+    case Merge         => "Merge another collection"
+    case Managers      => "Agent managers"
+    case Manager(id)   => com.histmersion.api.Wording.manager(id)
 
-  /** The page this window mirrors, for "open in a new tab": a source's or an article's standalone page,
-    * a run's, a goal's or a manager's page of the web UI. */
+  /** The page this window mirrors, for "open in a new tab": a source's or an article's standalone page, a run's, a
+    * goal's or a manager's page of the web UI.
+    */
   def pageHref: Option[String] = Route.ofItem(this).map(_.path)
 
 object WindowKey:

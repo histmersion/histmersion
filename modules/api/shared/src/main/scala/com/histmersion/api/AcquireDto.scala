@@ -5,21 +5,23 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.values.SourceStatus
 
-/** Wire DTOs of the acquisition & assessment surface (plan §5.2 stream 2.6) — the ports of
-  * `discover.py`, `refs.py`, `assess.py`, `followups.py`, `fetch_oa.py`, `archive_org.py` and the
-  * Calibre tools. Circe codec and tapir Schema are both derived from each case class, so the REST
-  * body, the MCP tool schema and the CLI's `--json` output are the same shape by construction.
+/** Wire DTOs of the acquisition & assessment surface (plan §5.2 stream 2.6) — the ports of `discover.py`, `refs.py`,
+  * `assess.py`, `followups.py`, `fetch_oa.py`, `archive_org.py` and the Calibre tools. Circe codec and tapir Schema are
+  * both derived from each case class, so the REST body, the MCP tool schema and the CLI's `--json` output are the same
+  * shape by construction.
   *
-  * These are DTOs only — every rule that operates on them is a pure function in [[Acquire]], and
-  * every network call sits behind a trait in the server module.
+  * These are DTOs only — every rule that operates on them is a pure function in [[Acquire]], and every network call
+  * sits behind a trait in the server module.
   */
 
 // ── discover (OpenAlex / Crossref / Wikipedia) ────────────────────────────────────────────────
 
 /** One work as OpenAlex/Crossref describe it, normalised the way `discover.py normalize_work` did.
   *
-  * @param citekey the citekey this work WOULD get (`Acquire.citekey`), so a caller can queue it
-  * @param inDb    whether a source with that DOI (or citekey) is already stored
+  * @param citekey
+  *   the citekey this work WOULD get (`Acquire.citekey`), so a caller can queue it
+  * @param inDb
+  *   whether a source with that DOI (or citekey) is already stored
   */
 final case class WorkRef(
     doi: Option[String] = None,
@@ -45,8 +47,7 @@ final case class WorkRef(
 object WorkRef:
   given Schema[WorkRef] = KindlingsSchema.derived[WorkRef].schema
 
-final case class DiscoverResult(query: String, count: Int, works: List[WorkRef])
-    derives KindlingsCodecAsObject
+final case class DiscoverResult(query: String, count: Int, works: List[WorkRef]) derives KindlingsCodecAsObject
 object DiscoverResult:
   given Schema[DiscoverResult] = KindlingsSchema.derived[DiscoverResult].schema
 
@@ -102,8 +103,10 @@ final case class UpdateNotice(kind: Option[String], label: Option[String], doi: 
 object UpdateNotice:
   given Schema[UpdateNotice] = KindlingsSchema.derived[UpdateNotice].schema
 
-/** @param verdict  one of [[Acquire.Verdicts]]: retracted|corrected|current|low-impact|unassessed
-  * @param applied  the `status` written back to the source, when `--apply` was used
+/** @param verdict
+  *   one of [[Acquire.Verdicts]]: retracted|corrected|current|low-impact|unassessed
+  * @param applied
+  *   the `status` written back to the source, when `--apply` was used
   */
 final case class Assessment(
     target: String,
@@ -128,9 +131,9 @@ object Assessment:
 
 /** The state of the local Retraction Watch mirror.
   *
-  * The refresh downloads ~30 MB and rewrites ~60 000 rows — far longer than one HTTP request may take
-  * (the same problem `reindex` has), so `POST` STARTS it and returns immediately with `running = true`;
-  * poll `GET` until `running` is false. `rows` is what the table holds right now.
+  * The refresh downloads ~30 MB and rewrites ~60 000 rows — far longer than one HTTP request may take (the same problem
+  * `reindex` has), so `POST` STARTS it and returns immediately with `running = true`; poll `GET` until `running` is
+  * false. `rows` is what the table holds right now.
   */
 final case class RetractionsUpdate(
     rows: Int,
@@ -143,8 +146,9 @@ object RetractionsUpdate:
 
 // ── followups (Semantic Scholar citation graph, OpenAlex fallback) ────────────────────────────
 
-/** One citing paper. `proposedKind` is [[Acquire.classify]]'s reading of the citation contexts and
-  * intents — `confirms|challenges|refutes|supersedes|cites` — the edge kind `--apply` would add. */
+/** One citing paper. `proposedKind` is [[Acquire.classify]]'s reading of the citation contexts and intents —
+  * `confirms|challenges|refutes|supersedes|cites` — the edge kind `--apply` would add.
+  */
 final case class FollowupRow(
     title: Option[String] = None,
     year: Option[Int] = None,
@@ -173,14 +177,14 @@ object FollowupsResult:
 
 // ── archive.org ────────────────────────────────────────────────────────────────────────────────
 
-final case class ArchiveFile(name: String, format: Option[String], megabytes: Double)
-    derives KindlingsCodecAsObject
+final case class ArchiveFile(name: String, format: Option[String], megabytes: Double) derives KindlingsCodecAsObject
 object ArchiveFile:
   given Schema[ArchiveFile] = KindlingsSchema.derived[ArchiveFile].schema
 
-/** @param lendingOnly the item is access-restricted: it must be BORROWED on archive.org and is never
-  *                    downloaded here (no DRM circumvention — the Python tool stopped at exactly this
-  *                    point and so do we). */
+/** @param lendingOnly
+  *   the item is access-restricted: it must be BORROWED on archive.org and is never downloaded here (no DRM
+  *   circumvention — the Python tool stopped at exactly this point and so do we).
+  */
 final case class ArchiveItem(
     identifier: String,
     title: Option[String] = None,
@@ -194,8 +198,7 @@ final case class ArchiveItem(
 object ArchiveItem:
   given Schema[ArchiveItem] = KindlingsSchema.derived[ArchiveItem].schema
 
-final case class ArchiveSearchResult(query: String, count: Int, items: List[ArchiveItem])
-    derives KindlingsCodecAsObject
+final case class ArchiveSearchResult(query: String, count: Int, items: List[ArchiveItem]) derives KindlingsCodecAsObject
 object ArchiveSearchResult:
   given Schema[ArchiveSearchResult] = KindlingsSchema.derived[ArchiveSearchResult].schema
 
@@ -206,7 +209,9 @@ final case class IngestStep(step: String, ok: Boolean, detail: String) derives K
 object IngestStep:
   given Schema[IngestStep] = KindlingsSchema.derived[IngestStep].schema
 
-/** Where the PDF came from. `source` is `unpaywall|core|openalex|europepmc|pmc|arxiv|zenodo|repository|archive_org`, or the channel a fetcher plugin names. */
+/** Where the PDF came from. `source` is `unpaywall|core|openalex|europepmc|pmc|arxiv|zenodo|repository|archive_org`, or
+  * the channel a fetcher plugin names.
+  */
 final case class PdfInfo(source: String, url: Option[String], bytes: Long, spoolPath: Option[String])
     derives KindlingsCodecAsObject
 object PdfInfo:
@@ -214,7 +219,8 @@ object PdfInfo:
 
 /** The result of `histmersion ingest <doi|arxiv:id>`.
   *
-  * @param dropIn the manual instruction to print when no PDF could be fetched legally
+  * @param dropIn
+  *   the manual instruction to print when no PDF could be fetched legally
   */
 final case class IngestReport(
     citekey: String,
@@ -247,9 +253,10 @@ final case class CalibreGap(
     calibreId: Option[String] = None,
     /** An ISBN the corpus knows for the work (`source_identifiers`), for the Calibre identifiers. */
     isbn: Option[String] = None,
-    /** Whether the server stores the source's original (`GET /api/sources/{ck}/original` serves it),
-      * which is where a host-side `calibre push`/`sync` takes the file from. Set by the gaps listing;
-      * None where the server does not say (the push metadata, an older server): the push then tries. */
+    /** Whether the server stores the source's original (`GET /api/sources/{ck}/original` serves it), which is where a
+      * host-side `calibre push`/`sync` takes the file from. Set by the gaps listing; None where the server does not say
+      * (the push metadata, an older server): the push then tries.
+      */
     storedOriginal: Option[Boolean] = None
 ) derives KindlingsCodecAsObject
 object CalibreGap:
@@ -265,8 +272,9 @@ final case class RefsRequest(id: String, apply: Boolean = false) derives Kindlin
 object RefsRequest:
   given Schema[RefsRequest] = KindlingsSchema.derived[RefsRequest].schema
 
-/** `forceStatus`: with `apply`, write the verdict's status even over one that is already set (by
-  * default only `unassessed` is overwritten — and a retraction always is). */
+/** `forceStatus`: with `apply`, write the verdict's status even over one that is already set (by default only
+  * `unassessed` is overwritten — and a retraction always is).
+  */
 final case class AssessRequest(id: String, apply: Boolean = false, forceStatus: Boolean = false)
     derives KindlingsCodecAsObject
 object AssessRequest:
@@ -281,20 +289,25 @@ final case class FollowupsRequest(
 object FollowupsRequest:
   given Schema[FollowupsRequest] = KindlingsSchema.derived[FollowupsRequest].schema
 
-/** @param id      a DOI, `arxiv:<id>`, or a bare arXiv id
-  * @param citekey override the generated citekey
-  * @param arxiv   an explicit arXiv id to try when the DOI has no OA copy */
+/** @param id
+  *   a DOI, `arxiv:<id>`, or a bare arXiv id
+  * @param citekey
+  *   override the generated citekey
+  * @param arxiv
+  *   an explicit arXiv id to try when the DOI has no OA copy
+  */
 final case class IngestRequest(
     id: String,
     citekey: Option[String] = None,
     arxiv: Option[String] = None,
-    /** Fetch and convert again although the source already has its original (a stored file or a
-      * converted body) — the new conversion replaces the body. Without it such a source only has its
-      * metadata and edges refreshed; one with no original is always fetched. */
+    /** Fetch and convert again although the source already has its original (a stored file or a converted body) — the
+      * new conversion replaces the body. Without it such a source only has its metadata and edges refreshed; one with
+      * no original is always fetched.
+      */
     refetch: Boolean = false,
-    /** Ask the legal chain only: no fetcher the config marks unauthorised runs, whatever
-      * `acquire.allow-unauthorised` says. Otherwise a person's ingest as usual — with no legal copy the
-      * source is still created from its metadata. */
+    /** Ask the legal chain only: no fetcher the config marks unauthorised runs, whatever `acquire.allow-unauthorised`
+      * says. Otherwise a person's ingest as usual — with no legal copy the source is still created from its metadata.
+      */
     legalOnly: Boolean = false
 ) derives KindlingsCodecAsObject
 object IngestRequest:
@@ -305,8 +318,7 @@ final case class CalibrePushRequest(citekey: String, calibreId: String) derives 
 object CalibrePushRequest:
   given Schema[CalibrePushRequest] = KindlingsSchema.derived[CalibrePushRequest].schema
 
-final case class CalibrePushResult(citekey: String, calibreId: String, ok: Boolean)
-    derives KindlingsCodecAsObject
+final case class CalibrePushResult(citekey: String, calibreId: String, ok: Boolean) derives KindlingsCodecAsObject
 object CalibrePushResult:
   given Schema[CalibrePushResult] = KindlingsSchema.derived[CalibrePushResult].schema
 

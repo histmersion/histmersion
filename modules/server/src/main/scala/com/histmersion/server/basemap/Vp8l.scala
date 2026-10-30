@@ -1,15 +1,15 @@
 package com.histmersion.server.basemap
 
-/** A decoder of LOSSLESS WebP (the `VP8L` bitstream, RFC 9649) to ARGB pixels — the format the relief's
-  * terrarium tiles are stored in (Mapterhorn's 512-pixel tiles, a focus region's, the on-demand cache's).
-  * The server reads elevation out of them to answer a relief tile deeper than any it holds
-  * ([[TerrainResample]]); `javax.imageio` has no WebP reader (and is a native-image liability), so this
-  * is pure Scala over the bytes: no AWT, no reflection, no native code.
+/** A decoder of LOSSLESS WebP (the `VP8L` bitstream, RFC 9649) to ARGB pixels — the format the relief's terrarium tiles
+  * are stored in (Mapterhorn's 512-pixel tiles, a focus region's, the on-demand cache's). The server reads elevation
+  * out of them to answer a relief tile deeper than any it holds ([[TerrainResample]]); `javax.imageio` has no WebP
+  * reader (and is a native-image liability), so this is pure Scala over the bytes: no AWT, no reflection, no native
+  * code.
   *
-  * Pure: bytes in, pixels out (`Left` with the reason for anything it does not read: a lossy `VP8 `
-  * tile, a corrupt stream). Only what the format defines is implemented: the four transforms
-  * (predictor, colour, subtract-green, colour-indexing), the colour cache, meta prefix codes and LZ77
-  * backward references. */
+  * Pure: bytes in, pixels out (`Left` with the reason for anything it does not read: a lossy `VP8 ` tile, a corrupt
+  * stream). Only what the format defines is implemented: the four transforms (predictor, colour, subtract-green,
+  * colour-indexing), the colour cache, meta prefix codes and LZ77 backward references.
+  */
 object Vp8l:
 
   /** A decoded image: `pixels` row-major, each `0xAARRGGBB`. */
@@ -20,16 +20,17 @@ object Vp8l:
     vp8lChunk(bytes).flatMap { (off, len) =>
       try Right(Decoder(bytes, off, off + len).image())
       catch
-        case e: Vp8lError                  => Left(e.getMessage)
+        case e: Vp8lError                      => Left(e.getMessage)
         case e: ArrayIndexOutOfBoundsException => Left(s"corrupt VP8L stream (${e.getMessage})")
     }
 
-  private final class Vp8lError(msg: String) extends Exception(msg)
+  final private class Vp8lError(msg: String) extends Exception(msg)
 
   private def fail(msg: String): Nothing = throw Vp8lError(msg)
 
-  /** Where the `VP8L` payload is: inside a RIFF container (its chunk, after any `VP8X`), or the whole
-    * input when it starts with the VP8L signature. Pure. */
+  /** Where the `VP8L` payload is: inside a RIFF container (its chunk, after any `VP8X`), or the whole input when it
+    * starts with the VP8L signature. Pure.
+    */
   private[basemap] def vp8lChunk(b: Array[Byte]): Either[String, (Int, Int)] =
     def le32(i: Int) = (b(i) & 0xff) | (b(i + 1) & 0xff) << 8 | (b(i + 2) & 0xff) << 16 | (b(i + 3) & 0xff) << 24
     def tag(i: Int) = new String(b, i, 4, "US-ASCII")
@@ -51,7 +52,7 @@ object Vp8l:
 
   // ── the bit reader: least significant bit first ──────────────────────────────────────────────
 
-  private[basemap] final class Bits(b: Array[Byte], from: Int, until: Int):
+  final private[basemap] class Bits(b: Array[Byte], from: Int, until: Int):
     // `var`s: the reader's buffer, its valid bits and the next byte — a hot loop's state
     private var buf: Long = 0L
     private var nbits: Int = 0
@@ -85,11 +86,11 @@ object Vp8l:
 
   // ── prefix (Huffman) codes ───────────────────────────────────────────────────────────────────
 
-  /** A canonical prefix code as a two-level lookup over the next bits (LSB first, codes bit-reversed
-    * as in deflate): `root` holds `symbol << 4 | length` for codes of up to [[Root]] bits, or a
-    * negative index into `subs` whose table is read with the bits after the root ones. A code of one
-    * symbol takes no bits. */
-  private[basemap] final class Code(root: Array[Int], subs: Array[Array[Int]], subBits: Array[Int], val single: Int):
+  /** A canonical prefix code as a two-level lookup over the next bits (LSB first, codes bit-reversed as in deflate):
+    * `root` holds `symbol << 4 | length` for codes of up to [[Root]] bits, or a negative index into `subs` whose table
+    * is read with the bits after the root ones. A code of one symbol takes no bits.
+    */
+  final private[basemap] class Code(root: Array[Int], subs: Array[Array[Int]], subBits: Array[Int], val single: Int):
     def read(r: Bits): Int =
       if single >= 0 then single
       else
@@ -143,7 +144,7 @@ object Vp8l:
         if kraft != (1L << 15) then Left("an incomplete or over-subscribed prefix code")
         else
           val root = Array.fill(1 << Root)(Int.MinValue)
-          val subLen = scala.collection.mutable.HashMap.empty[Int, Int]   // root prefix → deepest code under it
+          val subLen = scala.collection.mutable.HashMap.empty[Int, Int] // root prefix → deepest code under it
           val codes = used.map { s =>
             val len = lengths(s)
             val c = next(len)
@@ -179,25 +180,13 @@ object Vp8l:
   private val CodeLengthOrder = Array(17, 18, 0, 1, 2, 3, 4, 5, 16, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
 
   /** The distance codes 1–120: (dx, dy) of the pixel referred to, nearest first (RFC 9649 §4.2.2). */
-  private val DistanceMap: Array[Int] = Array(
-    0, 1, 1, 0, 1, 1, -1, 1, 0, 2, 2, 0, 1, 2,
-    -1, 2, 2, 1, -2, 1, 2, 2, -2, 2, 0, 3, 3, 0,
-    1, 3, -1, 3, 3, 1, -3, 1, 2, 3, -2, 3, 3, 2,
-    -3, 2, 0, 4, 4, 0, 1, 4, -1, 4, 4, 1, -4, 1,
-    3, 3, -3, 3, 2, 4, -2, 4, 4, 2, -4, 2, 0, 5,
-    3, 4, -3, 4, 4, 3, -4, 3, 5, 0, 1, 5, -1, 5,
-    5, 1, -5, 1, 2, 5, -2, 5, 5, 2, -5, 2, 4, 4,
-    -4, 4, 3, 5, -3, 5, 5, 3, -5, 3, 0, 6, 6, 0,
-    1, 6, -1, 6, 6, 1, -6, 1, 2, 6, -2, 6, 6, 2,
-    -6, 2, 4, 5, -4, 5, 5, 4, -5, 4, 3, 6, -3, 6,
-    6, 3, -6, 3, 0, 7, 7, 0, 1, 7, -1, 7, 5, 5,
-    -5, 5, 7, 1, -7, 1, 4, 6, -4, 6, 6, 4, -6, 4,
-    2, 7, -2, 7, 7, 2, -7, 2, 3, 7, -3, 7, 7, 3,
-    -7, 3, 5, 6, -5, 6, 6, 5, -6, 5, 8, 0, 4, 7,
-    -4, 7, 7, 4, -7, 4, 8, 1, 8, 2, 6, 6, -6, 6,
-    8, 3, 5, 7, -5, 7, 7, 5, -7, 5, 8, 4, 6, 7,
-    -6, 7, 7, 6, -7, 6, 8, 5, 7, 7, -7, 7, 8, 6,
-    8, 7)
+  private val DistanceMap: Array[Int] = Array(0, 1, 1, 0, 1, 1, -1, 1, 0, 2, 2, 0, 1, 2, -1, 2, 2, 1, -2, 1, 2, 2, -2,
+    2, 0, 3, 3, 0, 1, 3, -1, 3, 3, 1, -3, 1, 2, 3, -2, 3, 3, 2, -3, 2, 0, 4, 4, 0, 1, 4, -1, 4, 4, 1, -4, 1, 3, 3, -3,
+    3, 2, 4, -2, 4, 4, 2, -4, 2, 0, 5, 3, 4, -3, 4, 4, 3, -4, 3, 5, 0, 1, 5, -1, 5, 5, 1, -5, 1, 2, 5, -2, 5, 5, 2, -5,
+    2, 4, 4, -4, 4, 3, 5, -3, 5, 5, 3, -5, 3, 0, 6, 6, 0, 1, 6, -1, 6, 6, 1, -6, 1, 2, 6, -2, 6, 6, 2, -6, 2, 4, 5, -4,
+    5, 5, 4, -5, 4, 3, 6, -3, 6, 6, 3, -6, 3, 0, 7, 7, 0, 1, 7, -1, 7, 5, 5, -5, 5, 7, 1, -7, 1, 4, 6, -4, 6, 6, 4, -6,
+    4, 2, 7, -2, 7, 7, 2, -7, 2, 3, 7, -3, 7, 7, 3, -7, 3, 5, 6, -5, 6, 6, 5, -6, 5, 8, 0, 4, 7, -4, 7, 7, 4, -7, 4, 8,
+    1, 8, 2, 6, 6, -6, 6, 8, 3, 5, 7, -5, 7, 7, 5, -7, 5, 8, 4, 6, 7, -6, 7, 7, 6, -7, 6, 8, 5, 7, 7, -7, 7, 8, 6, 8, 7)
 
   /** The distance in pixels of distance code `code` in an image `width` wide. Pure. */
   private[basemap] def distance(code: Int, width: Int): Int =
@@ -207,18 +196,18 @@ object Vp8l:
       if d < 1 then 1 else d
 
   /** One group of prefix codes: green (with lengths and the cache), red, blue, alpha, distance. */
-  private final class Group(val green: Code, val red: Code, val blue: Code, val alpha: Code, val dist: Code)
+  final private class Group(val green: Code, val red: Code, val blue: Code, val alpha: Code, val dist: Code)
 
-  private final case class Transform(kind: Int, width: Int, bits: Int, data: Array[Int])
+  final private case class Transform(kind: Int, width: Int, bits: Int, data: Array[Int])
 
-  private final class Decoder(b: Array[Byte], from: Int, until: Int):
+  final private class Decoder(b: Array[Byte], from: Int, until: Int):
     private val r = Bits(b, from, until)
 
     def image(): Image =
       if r.read(8) != 0x2f then fail("not a VP8L stream")
       val w = r.read(14) + 1
       val h = r.read(14) + 1
-      val _ = r.read(1)   // alpha is used: the pixels say so themselves
+      val _ = r.read(1) // alpha is used: the pixels say so themselves
       if r.read(3) != 0 then fail("an unknown VP8L version")
       // the transforms, in the order they were applied (undone in reverse)
       var width = w
@@ -251,8 +240,8 @@ object Vp8l:
 
     private def sub(size: Int, bits: Int): Int = (size + (1 << bits) - 1) >> bits
 
-    /** An entropy-coded image: the main one (`top`: it may have meta prefix codes) or a transform's
-      * or prefix image's. */
+    /** An entropy-coded image: the main one (`top`: it may have meta prefix codes) or a transform's or prefix image's.
+      */
     private def entropyImage(w: Int, h: Int, top: Boolean): Array[Int] =
       val cacheBits = if r.read(1) == 1 then
         val c = r.read(4)
@@ -266,8 +255,8 @@ object Vp8l:
         else (0, Array.emptyIntArray)
       val groupCount = if meta.isEmpty then 1 else meta.iterator.map(m => (m >> 8) & 0xffff).max + 1
       val cacheSize = if cacheBits > 0 then 1 << cacheBits else 0
-      val groups = Array.tabulate(groupCount)(_ =>
-        Group(code(256 + 24 + cacheSize), code(256), code(256), code(256), code(40)))
+      val groups =
+        Array.tabulate(groupCount)(_ => Group(code(256 + 24 + cacheSize), code(256), code(256), code(256), code(40)))
       pixels(w, h, groups, metaBits, meta, cacheBits)
 
     /** One prefix code of an alphabet of `size` symbols. */
@@ -330,14 +319,21 @@ object Vp8l:
         val offset = (2 + (symbol & 1)) << extra
         offset + r.read(extra) + 1
 
-    private def pixels(w: Int, h: Int, groups: Array[Group], metaBits: Int, meta: Array[Int], cacheBits: Int): Array[Int] =
+    private def pixels(
+        w: Int,
+        h: Int,
+        groups: Array[Group],
+        metaBits: Int,
+        meta: Array[Int],
+        cacheBits: Int
+    ): Array[Int] =
       val out = new Array[Int](w * h)
       val cache = if cacheBits > 0 then new Array[Int](1 << cacheBits) else null
       val cacheShift = 32 - cacheBits
       val metaW = if metaBits > 0 then sub(w, metaBits) else 0
       val total = w * h
       var pos = 0
-      var cached = 0   // pixels before this one are in the cache
+      var cached = 0 // pixels before this one are in the cache
       def groupAt(p: Int): Group =
         if meta.isEmpty then groups(0)
         else
@@ -449,7 +445,7 @@ object Vp8l:
     case 11 => select(l, t, tl)
     case 12 => clampFull(l, t, tl)
     case 13 => clampHalf(average2(l, t), tl)
-    case _  => 0xff000000   // modes 14 and 15 are not used; as 0
+    case _  => 0xff000000 // modes 14 and 15 are not used; as 0
 
   private def predict(t: Transform, px: Array[Int], h: Int): Unit =
     val w = t.width

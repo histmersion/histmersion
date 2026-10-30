@@ -12,10 +12,15 @@ class MarksPureSuite extends munit.FunSuite:
   test("an item copied as text, as Markdown and as a link"):
     assertEquals(ItemMenu.link("https://h.example.org/", src), "https://h.example.org/source/cline2014_year")
     assertEquals(ItemMenu.text(src, "Eric H. Cline, 2014"), "1177 B.C. [revised] — Eric H. Cline, 2014")
-    assertEquals(ItemMenu.markdown("https://h.example.org", src, ""),
-      "[1177 B.C. \\[revised\\]](https://h.example.org/source/cline2014_year) [[cline2014_year]]")
+    assertEquals(
+      ItemMenu.markdown("https://h.example.org", src, ""),
+      "[1177 B.C. \\[revised\\]](https://h.example.org/source/cline2014_year) [[cline2014_year]]"
+    )
     val art = ItemRef.article("sea-peoples", "Sea Peoples")
-    assertEquals(ItemMenu.markdown("https://h.example.org", art, "Concept"), "[Sea Peoples](https://h.example.org/article/sea-peoples) — Concept")
+    assertEquals(
+      ItemMenu.markdown("https://h.example.org", art, "Concept"),
+      "[Sea Peoples](https://h.example.org/article/sea-peoples) — Concept"
+    )
 
   test("where a target opens: its own page, and back where it was left"):
     assertEquals(ItemRef.back(src.target), "/library?item=cline2014_year")
@@ -29,12 +34,22 @@ class MarksPureSuite extends munit.FunSuite:
     assertEquals(MapMenu.wrap(190), -170.0)
     assertEquals(MapMenu.wrap(-185), 175.0)
     val p = MapMenu.point(LatLon(37.123, 382.75), 6.04, Some((-1300L, -1100L)))
-    assertEquals((p.lat.map(_.value.toDouble), p.lon.map(_.value.toDouble), p.zoom.map(_.value.toDouble), p.from.map(_.value.toInt)),
-      (Some(37.123), Some(22.75), Some(6.0), Some(-1300)))
+    assertEquals(
+      (
+        p.lat.map(_.value.toDouble),
+        p.lon.map(_.value.toDouble),
+        p.zoom.map(_.value.toDouble),
+        p.from.map(_.value.toInt)
+      ),
+      (Some(37.123), Some(22.75), Some(6.0), Some(-1300))
+    )
 
   test("my periods and the timeline's start"):
     assertEquals(PeriodMarks.target(-1100, -1300).from.map(_.value.toInt), Some(-1300))
-    assertEquals(PeriodMarks.startChanges(-500, -3500), List("ui.time.default-from" -> "-3500", "ui.time.default-to" -> "-500"))
+    assertEquals(
+      PeriodMarks.startChanges(-500, -3500),
+      List("ui.time.default-from" -> "-3500", "ui.time.default-to" -> "-500")
+    )
 
   test("a saved view's suggested name"):
     assertEquals(SavedViews.suggestedName(Some(" tin "), Some(-1300), Some(-1100)), "“tin”, 1300 BCE–1100 BCE")
@@ -43,7 +58,10 @@ class MarksPureSuite extends munit.FunSuite:
   test("a draft is the note's own, or what it is being left on"):
     assertEquals(NoteDrafts.key(src.target, Some("n1")), "note:n1")
     assertEquals(NoteDrafts.key(src.target, None), "source:cline2014_year")
-    assertEquals(NoteDrafts.key(Target(ItemKind.Point, lat = Some(Latitude(1.5)), lon = Some(Longitude(2))), None), "point:1.5,2")
+    assertEquals(
+      NoteDrafts.key(Target(ItemKind.Point, lat = Some(Latitude(1.5)), lon = Some(Longitude(2))), None),
+      "point:1.5,2"
+    )
     val was = NoteDrafts.store
     NoteDrafts.store = Store.Memory()
     try
@@ -63,6 +81,7 @@ class MarksPureSuite extends munit.FunSuite:
 
   test("the notes a map layer draws: those left at a point"):
     val id = NoteId.parse("0190f3c2-1111-7000-8000-000000000002").toOption.get
-    val atPoint = Note(id, Target(ItemKind.Point, lat = Some(Latitude(1)), lon = Some(Longitude(2))), NoteText("x"), "p")
-    val onItem  = atPoint.copy(target = src.target)
+    val atPoint =
+      Note(id, Target(ItemKind.Point, lat = Some(Latitude(1)), lon = Some(Longitude(2))), NoteText("x"), "p")
+    val onItem = atPoint.copy(target = src.target)
     assertEquals(NoteMarkers.placed(List(atPoint, onItem)), List(atPoint))

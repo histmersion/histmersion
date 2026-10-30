@@ -21,8 +21,16 @@ class ColorsSuite extends munit.FunSuite:
   test("the token list names every family, its default and the ramp"):
     val all = Palette.allTokens
     assertEquals(all.distinct, all)
-    List("--edge-default", "--status-default", "--media-default", "--ramp-0", "--ramp-4", "--conf-contested",
-      "--graph-hover", "--place-pick").foreach(t => assert(all.contains(t), t))
+    List(
+      "--edge-default",
+      "--status-default",
+      "--media-default",
+      "--ramp-0",
+      "--ramp-4",
+      "--conf-contested",
+      "--graph-hover",
+      "--place-pick"
+    ).foreach(t => assert(all.contains(t), t))
 
   test("a token's value is read once and cached until a refresh"):
     var reads = 0

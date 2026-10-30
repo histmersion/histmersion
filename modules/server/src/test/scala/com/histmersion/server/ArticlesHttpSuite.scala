@@ -5,11 +5,12 @@ import com.histmersion.config.AppConfig
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 
-/** The article surface over real HTTP (plan §5.2 stream 2.7): the REST contract including its status
-  * codes, and the rendered `/article/{slug}` page — whose whole point is that a `[[citekey]]` and a
-  * `[[slug]]` resolve to DIFFERENT places. Skipped without HISTMERSION_TEST_DB_URL. */
+/** The article surface over real HTTP (plan §5.2 stream 2.7): the REST contract including its status codes, and the
+  * rendered `/article/{slug}` page — whose whole point is that a `[[citekey]]` and a `[[slug]]` resolve to DIFFERENT
+  * places. Skipped without HISTMERSION_TEST_DB_URL.
+  */
 class ArticlesHttpSuite extends munit.FunSuite:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()
@@ -18,21 +19,21 @@ class ArticlesHttpSuite extends munit.FunSuite:
     (r.statusCode, r.body)
 
   private def json(url: String) = HttpRequest.newBuilder(URI.create(url)).header("content-type", "application/json")
-  private def get(url: String)  = send(HttpRequest.newBuilder(URI.create(url)).build())
-  private def put(url: String, body: String)   = send(json(url).PUT(HttpRequest.BodyPublishers.ofString(body)).build())
-  private def post(url: String, body: String)  = send(json(url).POST(HttpRequest.BodyPublishers.ofString(body)).build())
+  private def get(url: String) = send(HttpRequest.newBuilder(URI.create(url)).build())
+  private def put(url: String, body: String) = send(json(url).PUT(HttpRequest.BodyPublishers.ofString(body)).build())
+  private def post(url: String, body: String) = send(json(url).POST(HttpRequest.BodyPublishers.ofString(body)).build())
   private def patch(url: String, body: String) =
     send(json(url).method("PATCH", HttpRequest.BodyPublishers.ofString(body)).build())
   private def delete(url: String) = send(HttpRequest.newBuilder(URI.create(url)).DELETE().build())
 
   private val slug = "zz_http_article"
-  private val ck   = "zz_http_cited"
+  private val ck = "zz_http_cited"
 
   test("put → get → patch → page → export → delete over HTTP"):
     val base = AppConfig.load()
-    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
-      val b   = Main.server(cfg, "127.0.0.1", 0).start()
+      val b = Main.server(cfg, "127.0.0.1", 0).start()
       val url = s"http://127.0.0.1:${b.port}"
 
       // a previous (failed) run may have left the fixtures behind, and the first assertion below is
@@ -40,15 +41,16 @@ class ArticlesHttpSuite extends munit.FunSuite:
       List(slug, "zz_http_other", "bronze_age_collapse").foreach(s => delete(s"$url/api/articles/$s"))
 
       // a source to cite, so the page has one link of each kind to resolve
-      val (ss, sb) = put(s"$url/api/sources/$ck",
-        """{"title":"The Cited Paper","year":2014,"status":"foundational"}""")
+      val (ss, sb) = put(s"$url/api/sources/$ck", """{"title":"The Cited Paper","year":2014,"status":"foundational"}""")
       assertEquals(ss, 200, sb)
 
       // ── put: an article citing that source and pointing at another article ──────────────────
-      val (ps, pb) = put(s"$url/api/articles/$slug",
+      val (ps, pb) = put(
+        s"$url/api/articles/$slug",
         s"""{"title":"HTTP article","kind":"concept","summary":"a lede",
             |"tags":["sea-peoples"],"regions":["Levant"],"periodStart":-1220,"periodEnd":-1100,
-            |"body":"# HTTP article\\n\\nMedinet Habu [[$ck]] and [[bronze_age_collapse]]."}""".stripMargin)
+            |"body":"# HTTP article\\n\\nMedinet Habu [[$ck]] and [[bronze_age_collapse]]."}""".stripMargin
+      )
       assertEquals(ps, 200, pb)
       assert(pb.contains("\"sourcesCited\""), pb)
       assert(pb.contains(ck), pb)
@@ -95,33 +97,48 @@ class ArticlesHttpSuite extends munit.FunSuite:
       assertEquals(get(s"$url/api/articles/zz_nope/export")._1, 404)
       assertEquals(delete(s"$url/api/articles/zz_nope")._1, 404)
       // 400 for an invalid write
-      assertEquals(put(s"$url/api/articles/$slug", """{"title":"T","kind":"concept","body":"b",
-                                                     |"periodStart":-100,"periodEnd":-900}""".stripMargin)._1, 400)
+      assertEquals(
+        put(
+          s"$url/api/articles/$slug",
+          """{"title":"T","kind":"concept","body":"b",
+                                                     |"periodStart":-100,"periodEnd":-900}""".stripMargin
+        )._1,
+        400
+      )
 
       // ── the rendered page: a citekey links to /source, an EXISTING slug to /article, and a
       //    slug nothing answers to is plain text rather than a link to a 404 (item 5) ──────────
       val (hs0, hb0) = get(s"$url/article/$slug")
       assertEquals(hs0, 200)
       // …and its label is readable: no underscores reach the reader
-      assert(hb0.contains("""<span class="dangling" title="unresolved link">bronze age collapse</span>"""),
-        "an article that does not exist is not a link: " + hb0)
+      assert(
+        hb0.contains("""<span class="dangling" title="unresolved link">bronze age collapse</span>"""),
+        "an article that does not exist is not a link: " + hb0
+      )
 
-      val (cs, cb) = put(s"$url/api/articles/bronze_age_collapse",
-        """{"title":"The Bronze Age Collapse","kind":"concept","body":"# The Bronze Age Collapse\n\nprose"}""")
+      val (cs, cb) = put(
+        s"$url/api/articles/bronze_age_collapse",
+        """{"title":"The Bronze Age Collapse","kind":"concept","body":"# The Bronze Age Collapse\n\nprose"}"""
+      )
       assertEquals(cs, 200, cb)
 
       val (hs, hb) = get(s"$url/article/$slug")
       assertEquals(hs, 200)
       // ONE anchor shape per kind: data-ck / data-slug are what the web UI's preview hooks on
       assert(hb.contains(s"""<a class="src-ref" data-ck="$ck" href="/source/$ck">"""), hb)
-      assert(hb.contains("""<a class="art-ref" data-slug="bronze_age_collapse" href="/article/bronze_age_collapse">"""), hb)
+      assert(
+        hb.contains("""<a class="art-ref" data-slug="bronze_age_collapse" href="/article/bronze_age_collapse">"""),
+        hb
+      )
       assert(hb.contains("""href="#cite-1">[1]</a>"""), "prose citations are numbered: " + hb)
       assert(hb.contains("Sources cited"), hb)
       assert(hb.contains("The Cited Paper"), "the footer carries title · year · status: " + hb)
       assert(hb.contains("2014"), hb)
       assert(hb.contains("<html"), "the standalone page is a whole document")
-      assert(hb.contains("/web/app.bundle.js") && !hb.contains("/web/article.js"),
-        "the standalone page loads the Scala.js bundle that exists, not the deleted scripts")
+      assert(
+        hb.contains("/web/app.bundle.js") && !hb.contains("/web/article.js"),
+        "the standalone page loads the Scala.js bundle that exists, not the deleted scripts"
+      )
 
       // the modal fragment is the same HTML without the document chrome
       val (frs, frb) = get(s"$url/article/$slug?fragment=true")
@@ -141,8 +158,10 @@ class ArticlesHttpSuite extends munit.FunSuite:
       assert(nb2.contains("No article"), nb2.take(300))
 
       // ── backlinks: another article that points here shows up on this page ───────────────────
-      val (bs, bb) = put(s"$url/api/articles/zz_http_other",
-        s"""{"title":"Other","kind":"concept","body":"# Other\\n\\nsee [[$slug]]"}""")
+      val (bs, bb) = put(
+        s"$url/api/articles/zz_http_other",
+        s"""{"title":"Other","kind":"concept","body":"# Other\\n\\nsee [[$slug]]"}"""
+      )
       assertEquals(bs, 200, bb)
       val (h2s, h2b) = get(s"$url/article/$slug")
       assertEquals(h2s, 200)

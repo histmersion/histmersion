@@ -2,19 +2,26 @@ package com.histmersion.server
 
 import com.histmersion.domain.Highlight
 
-/** The `?q=` article surface (plan §1.4): links keep the query, the match control appears only when
-  * something matched, and highlighting survives the flexmark output (links included). */
+/** The `?q=` article surface (plan §1.4): links keep the query, the match control appears only when something matched,
+  * and highlighting survives the flexmark output (links included).
+  */
 class ArticleQuerySuite extends munit.FunSuite:
 
   test("the full-text toggle carries ?q= through, url-encoded"):
-    assertEquals(Article.toggle("abc_d", false, Some("sea peoples")),
-      """<p class="toggle"><a href="/source/abc_d?full=true&amp;q=sea+peoples">▼ show full text (whole paper)</a></p>""")
-    assertEquals(Article.toggle("abc_d", true, Some("q&a")),
-      """<p class="toggle"><a href="/source/abc_d?q=q%26a">▲ hide full text</a></p>""")
+    assertEquals(
+      Article.toggle("abc_d", false, Some("sea peoples")),
+      """<p class="toggle"><a href="/source/abc_d?full=true&amp;q=sea+peoples">▼ show full text (whole paper)</a></p>"""
+    )
+    assertEquals(
+      Article.toggle("abc_d", true, Some("q&a")),
+      """<p class="toggle"><a href="/source/abc_d?q=q%26a">▲ hide full text</a></p>"""
+    )
 
   test("without a query the toggle is exactly what it was before"):
-    assertEquals(Article.toggle("abc_d", false),
-      """<p class="toggle"><a href="/source/abc_d?full=true">▼ show full text (whole paper)</a></p>""")
+    assertEquals(
+      Article.toggle("abc_d", false),
+      """<p class="toggle"><a href="/source/abc_d?full=true">▼ show full text (whole paper)</a></p>"""
+    )
 
   test("match control: hidden at zero, singular at one, points at the first mark"):
     assertEquals(Article.matchNav(0), "")

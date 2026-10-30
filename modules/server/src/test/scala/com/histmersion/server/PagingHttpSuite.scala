@@ -8,11 +8,11 @@ import io.circe.parser
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 
-/** Offset paging over real HTTP and MCP (#1798 item 8): a cut list's JSON carries `offset` and `next`,
-  * its Markdown says `next: offset=N`, and `geo_when` pages (`GET /api/findings/page`). Skipped
-  * without HISTMERSION_TEST_DB_URL. */
+/** Offset paging over real HTTP and MCP (#1798 item 8): a cut list's JSON carries `offset` and `next`, its Markdown
+  * says `next: offset=N`, and `geo_when` pages (`GET /api/findings/page`). Skipped without HISTMERSION_TEST_DB_URL.
+  */
 class PagingHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val http = HttpClient.newHttpClient()
@@ -20,18 +20,23 @@ class PagingHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
     val r = http.send(req, HttpResponse.BodyHandlers.ofString())
     (r.statusCode, r.body)
   private def json(url: String) = HttpRequest.newBuilder(URI.create(url)).header("content-type", "application/json")
-  private def get(url: String)  = send(HttpRequest.newBuilder(URI.create(url)).build())
+  private def get(url: String) = send(HttpRequest.newBuilder(URI.create(url)).build())
   private def put(url: String, body: String) = send(json(url).PUT(HttpRequest.BodyPublishers.ofString(body)).build())
   private def mcp(url: String, tool: String, args: String): (Int, String) =
-    send(json(s"$url/mcp").header("accept", "application/json, text/event-stream")
-      .POST(HttpRequest.BodyPublishers.ofString(
-        s"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"$tool","arguments":$args}}"""))
-      .build())
+    send(
+      json(s"$url/mcp")
+        .header("accept", "application/json, text/event-stream")
+        .POST(
+          HttpRequest.BodyPublishers
+            .ofString(s"""{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"$tool","arguments":$args}}""")
+        )
+        .build()
+    )
   private def decode[A: io.circe.Decoder](s: String): A = parser.decode[A](s).fold(e => fail(s"$e in $s"), identity)
 
   private def withServer(body: String => Unit): Unit =
     val base = AppConfig.load()
-    val cfg  = base.copy(db = base.db.copy(url = testDb.get))
+    val cfg = base.copy(db = base.db.copy(url = testDb.get))
     supervised {
       val b = Main.server(cfg, "127.0.0.1", 0).start()
       try body(s"http://127.0.0.1:${b.port}")
@@ -40,7 +45,9 @@ class PagingHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
 
   test("goals: the JSON says where the page starts and where the next one does; the Markdown too"):
     withServer { url =>
-      (1 to 3).foreach(i => assertEquals(put(s"$url/api/goals/zz-page-goal-$i", s"""{"title":"Paged $i","status":"planned"}""")._1, 200))
+      (1 to 3).foreach(i =>
+        assertEquals(put(s"$url/api/goals/zz-page-goal-$i", s"""{"title":"Paged $i","status":"planned"}""")._1, 200)
+      )
       val (s, b) = get(s"$url/api/goals?status=planned&limit=2")
       assertEquals(s, 200, b)
       val l = decode[GoalList](b)

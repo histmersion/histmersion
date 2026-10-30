@@ -2,11 +2,11 @@ package com.histmersion.web
 
 import com.histmersion.api.TimeBucket
 
-/** The timeline's count curve, pure: buckets a few pixels wide, each one point at its middle, joined by
-  * a MONOTONE cubic (Fritsch–Carlson, the rule of d3's `curveMonotoneX`). Between two points the curve
-  * never leaves the band their counts span — it does not overshoot a peak, and never dips under the
-  * baseline (a count below zero) — and it is smooth through each point. One bucket a pixel drawn with an
-  * S-curve per step was a staircase of 1-px risers. */
+/** The timeline's count curve, pure: buckets a few pixels wide, each one point at its middle, joined by a MONOTONE
+  * cubic (Fritsch–Carlson, the rule of d3's `curveMonotoneX`). Between two points the curve never leaves the band their
+  * counts span — it does not overshoot a peak, and never dips under the baseline (a count below zero) — and it is
+  * smooth through each point. One bucket a pixel drawn with an S-curve per step was a staircase of 1-px risers.
+  */
 object TimelineCurve:
 
   /** How wide one bucket is drawn, px: coarse enough for a smooth line, fine enough for a peak. */
@@ -15,8 +15,9 @@ object TimelineCurve:
   /** A bucket's point on the strip: `x`, `y` in the strip's pixels (y down), and the bucket it draws. */
   final case class Pt(x: Double, y: Double, bucket: TimeBucket)
 
-  /** Pure: each bucket's point over `[from, to]` drawn `w` px wide — at its middle year, its height
-    * its share of the largest count between `baseY` (none) and `top` (the largest). */
+  /** Pure: each bucket's point over `[from, to]` drawn `w` px wide — at its middle year, its height its share of the
+    * largest count between `baseY` (none) and `top` (the largest).
+    */
   def points(bs: Seq[TimeBucket], from: Long, to: Long, w: Double, baseY: Double, top: Double): Vector[Pt] =
     val maxCount = bs.iterator.map(_.count).maxOption.getOrElse(0)
     if maxCount <= 0 then Vector.empty
@@ -28,8 +29,9 @@ object TimelineCurve:
         Pt(x, baseY - b.count.toDouble / maxCount * (baseY - top), b)
       }.toVector
 
-  /** Pure: the tangent (dy/dx) at each point of a monotone cubic through them (`xs` increasing). Where
-    * the neighbouring slopes differ in sign (a peak or a valley) or one is flat, it is flat. */
+  /** Pure: the tangent (dy/dx) at each point of a monotone cubic through them (`xs` increasing). Where the neighbouring
+    * slopes differ in sign (a peak or a valley) or one is flat, it is flat.
+    */
   def tangents(xs: IndexedSeq[Double], ys: IndexedSeq[Double]): Array[Double] =
     val n = xs.length
     val t = new Array[Double](n)
@@ -82,9 +84,18 @@ object TimelineCurve:
   def curve(pts: IndexedSeq[Pt]): String =
     val sb = new StringBuilder
     segments(pts).foreach { s =>
-      sb.append(" C ").append(num(s.c1x)).append(' ').append(num(s.c1y)).append(' ')
-        .append(num(s.c2x)).append(' ').append(num(s.c2y)).append(' ')
-        .append(num(s.x)).append(' ').append(num(s.y))
+      sb.append(" C ")
+        .append(num(s.c1x))
+        .append(' ')
+        .append(num(s.c1y))
+        .append(' ')
+        .append(num(s.c2x))
+        .append(' ')
+        .append(num(s.c2y))
+        .append(' ')
+        .append(num(s.x))
+        .append(' ')
+        .append(num(s.y))
     }
     sb.toString
 

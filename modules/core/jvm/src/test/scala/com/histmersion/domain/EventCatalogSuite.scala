@@ -5,14 +5,14 @@ import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
-
 import io.circe.Json
 import io.circe.parser.parse
 import com.histmersion.values.Historicity
 
-/** #1449, the pure half: the kind taxonomy, the datings (BCE, uncertainty, Wikidata precision), the
-  * three catalogues' answers read from RECORDED fixtures (captured 2026-10-14, trimmed), the thresholds,
-  * and the merge of records into one event per thing. */
+/** #1449, the pure half: the kind taxonomy, the datings (BCE, uncertainty, Wikidata precision), the three catalogues'
+  * answers read from RECORDED fixtures (captured 2026-10-14, trimmed), the thresholds, and the merge of records into
+  * one event per thing.
+  */
 class EventCatalogSuite extends munit.FunSuite:
 
   private def fixture(name: String): Json =
@@ -21,8 +21,19 @@ class EventCatalogSuite extends munit.FunSuite:
   // ── taxonomy ────────────────────────────────────────────────────────────────────────────────
 
   test("every kind of the first fifty events is in the taxonomy, with a group and an icon"):
-    val first = List("destruction", "migration", "technological_change", "polity_formation", "natural_disaster",
-      "battle", "war", "cultural_shift", "collapse", "diplomatic_era", "invasion")
+    val first = List(
+      "destruction",
+      "migration",
+      "technological_change",
+      "polity_formation",
+      "natural_disaster",
+      "battle",
+      "war",
+      "cultural_shift",
+      "collapse",
+      "diplomatic_era",
+      "invasion"
+    )
     first.foreach { k =>
       val e = EventTaxonomy.of(k)
       assert(EventTaxonomy.kinds.exists(_.kind == e.kind), s"$k → ${e.kind} is not a kind of the table")
@@ -75,7 +86,10 @@ class EventCatalogSuite extends munit.FunSuite:
     assertEquals(CatalogDating.wikidata(-51, 9), CatalogDating.Bound(-52, -52))
     assertEquals(CatalogDating.wikidata(-51, 11), CatalogDating.Bound(-52, -52), "a day is its year")
     // a decade: the one the year is in (-60…-51 astronomical), widened by one decade each way
-    assertEquals(CatalogDating.wikidata(-51, 8), CatalogDating.Bound(Years.fromAstronomical(-70), Years.fromAstronomical(-41)))
+    assertEquals(
+      CatalogDating.wikidata(-51, 8),
+      CatalogDating.Bound(Years.fromAstronomical(-70), Years.fromAstronomical(-41))
+    )
     val c = CatalogDating.wikidata(-450, 7)
     assert(c.lo <= -551 && c.hi >= -450, c.toString)
 
@@ -114,8 +128,16 @@ class EventCatalogSuite extends munit.FunSuite:
     assertEquals(santorini.group, Some("volcano:212040"))
     assertEquals(santorini.vei, Some(7))
     val (ts, _) = EventProviders.Noaa.parse("tsunamis", fixture("noaa_tsunamis_events.json")).toOption.get
-    assertEquals(ts.find(_.providerId == "tsunami:1").map(_.historicity), Some(Historicity.Contested), "validity 1: very doubtful")
-    assertEquals(ts.find(_.providerId == "tsunami:3").map(_.historicity), Some(Historicity.Attested), "validity 4: definite")
+    assertEquals(
+      ts.find(_.providerId == "tsunami:1").map(_.historicity),
+      Some(Historicity.Contested),
+      "validity 1: very doubtful"
+    )
+    assertEquals(
+      ts.find(_.providerId == "tsunami:3").map(_.historicity),
+      Some(Historicity.Attested),
+      "validity 4: definite"
+    )
     assert(ts.forall(t => t.magnitude.isEmpty && t.vei.isEmpty), "a tsunami is not sized by its earthquake's magnitude")
 
   test("Wikidata: one record per item, BCE years from astronomical ones, own coordinates before the location's"):
@@ -135,34 +157,67 @@ class EventCatalogSuite extends munit.FunSuite:
       "date":{"type":"literal","value":"-1183-01-01T00:00:00Z"},"datePrec":{"type":"literal","value":"9"},
       "coord":{"type":"literal","value":"Point(26.24 39.95)"},
       "legend":{"type":"uri","value":"http://www.wikidata.org/entity/$legend"}}]}}""").toOption.get
-    assertEquals(EventProviders.WikidataEvents.parse(row("Q26913948"), "siege").toOption.get.head.historicity, Historicity.Legendary)
-    assertEquals(EventProviders.WikidataEvents.parse(row("Q24336466"), "siege").toOption.get.head.historicity, Historicity.Mythic)
+    assertEquals(
+      EventProviders.WikidataEvents.parse(row("Q26913948"), "siege").toOption.get.head.historicity,
+      Historicity.Legendary
+    )
+    assertEquals(
+      EventProviders.WikidataEvents.parse(row("Q24336466"), "siege").toOption.get.head.historicity,
+      Historicity.Mythic
+    )
 
   test("Wikidata: the class table from config, the query asks for the class and its subclasses"):
-    assertEquals(EventProviders.WikidataEvents.classes("Q178561:battle, bad, Q188055:Siege,Q178561:war"),
-      List("Q178561" -> "battle", "Q188055" -> "siege"))
+    assertEquals(
+      EventProviders.WikidataEvents.classes("Q178561:battle, bad, Q188055:Siege,Q178561:war"),
+      List("Q178561" -> "battle", "Q188055" -> "siege")
+    )
     val q = EventProviders.WikidataEvents.sparql("Q188055", None, 499, "en")
     assert(q.contains("wdt:P31/wdt:P279* wd:Q188055") && q.contains("YEAR(?t) <= 499"), q)
-    assert(EventProviders.WikidataEvents.sparql("Q1", Some(-3000), -1, "en").contains("YEAR(?t) <= 0 && YEAR(?t) >= -2999"),
-      "historical years become astronomical")
+    assert(
+      EventProviders.WikidataEvents.sparql("Q1", Some(-3000), -1, "en").contains("YEAR(?t) <= 0 && YEAR(?t) >= -2999"),
+      "historical years become astronomical"
+    )
 
   test("thresholds: all inside the region, large ones outside, nothing without a position"):
     val region = BBox.parse("-25,20,90,70")
     val t = EventProviders.Thresholds(region, 0, 4, 0, 6.5)
     def erup(lat: Double, lon: Double, vei: Option[Int]) =
-      CatalogRecord("gvp", "1", "", "x", "eruption", TimeSpan(Some(-1), None, None, Some(-1)), Some(lat), Some(lon), vei = vei)
+      CatalogRecord(
+        "gvp",
+        "1",
+        "",
+        "x",
+        "eruption",
+        TimeSpan(Some(-1), None, None, Some(-1)),
+        Some(lat),
+        Some(lon),
+        vei = vei
+      )
     assert(EventProviders.keep(erup(37, 25, Some(1)), t).isRight)
     assert(EventProviders.keep(erup(-10, 120, Some(3)), t).isLeft)
     assert(EventProviders.keep(erup(-10, 120, Some(4)), t).isRight)
     assert(EventProviders.keep(erup(-10, 120, None), t).isLeft)
     assertEquals(EventProviders.keep(erup(37, 25, None).copy(lat = None), t), Left("no position"))
-    assertEquals(EventProviders.keep(erup(37, 25, Some(5)), t.copy(area = BBox.parse("0,0,10,10"))), Left("outside --bbox"))
+    assertEquals(
+      EventProviders.keep(erup(37, 25, Some(5)), t.copy(area = BBox.parse("0,0,10,10"))),
+      Left("outside --bbox")
+    )
 
   test("thresholds over the default region, the world: a small eruption or quake anywhere is kept"):
     val world = EventProviders.Thresholds(BBox.parse("-180,-90,180,90"), 0, 4, 0, 6.5)
     def at(kind: String, lat: Double, lon: Double) =
-      CatalogRecord("x", "1", "", "x", kind, TimeSpan(Some(-1), None, None, Some(-1)), Some(lat), Some(lon),
-        vei = Some(1), magnitude = Some(4.0))
+      CatalogRecord(
+        "x",
+        "1",
+        "",
+        "x",
+        kind,
+        TimeSpan(Some(-1), None, None, Some(-1)),
+        Some(lat),
+        Some(lon),
+        vei = Some(1),
+        magnitude = Some(4.0)
+      )
     for (lat, lon) <- List((-39.3, -71.9), (19.4, -155.3), (-6.1, 105.4), (35.4, 138.7), (-3.1, 37.4), (64.0, -19.0))
     do
       assert(EventProviders.keep(at("eruption", lat, lon), world).isRight, s"eruption at $lat,$lon")
@@ -171,10 +226,28 @@ class EventCatalogSuite extends munit.FunSuite:
   // ── merging ─────────────────────────────────────────────────────────────────────────────────
 
   private val tol = CatalogMerge.Tolerance(60, 30)
-  private def rec(p: String, id: String, kind: String, y: Long, lat: Double, lon: Double, wd: Option[String] = None,
-      group: Option[String] = None) =
-    CatalogRecord(p, id, "", s"$p $id", kind, TimeSpan(Some(y), Some(y), Some(y), Some(y)), Some(lat), Some(lon),
-      wikidata = wd, group = group)
+  private def rec(
+      p: String,
+      id: String,
+      kind: String,
+      y: Long,
+      lat: Double,
+      lon: Double,
+      wd: Option[String] = None,
+      group: Option[String] = None
+  ) =
+    CatalogRecord(
+      p,
+      id,
+      "",
+      s"$p $id",
+      kind,
+      TimeSpan(Some(y), Some(y), Some(y), Some(y)),
+      Some(lat),
+      Some(lon),
+      wikidata = wd,
+      group = group
+    )
 
   test("merge: one catalogue's two records are two events; another catalogue's record of the same thing joins"):
     val a = rec("gvp", "1", "eruption", -1610, 36.4, 25.4, group = Some("volcano:212040"))
@@ -185,24 +258,61 @@ class EventCatalogSuite extends munit.FunSuite:
     assert(placed(2)._2.isInstanceOf[CatalogMerge.Placement.New])
 
   test("merge: a stored event is matched by key, by Wikidata item, or by kind+time+space — never by another kind"):
-    val compiled = StoredEvent("thera_eruption", "eruption", TimeSpan(Some(-1620), None, None, Some(-1600)),
-      Some(36.4), Some(25.4), None, Set.empty, catalogue = false)
-    val battle = StoredEvent("alesia", "battle", TimeSpan(Some(-52), None, None, Some(-52)), Some(47.5), Some(4.5),
-      Some("Q131386"), Set.empty, catalogue = false)
-    val known = StoredEvent("gvp_9", "eruption", TimeSpan(Some(-79), None, None, Some(-79)), Some(40.8), Some(14.4),
-      None, Set("gvp" -> "9"), catalogue = true)
+    val compiled = StoredEvent(
+      "thera_eruption",
+      "eruption",
+      TimeSpan(Some(-1620), None, None, Some(-1600)),
+      Some(36.4),
+      Some(25.4),
+      None,
+      Set.empty,
+      catalogue = false
+    )
+    val battle = StoredEvent(
+      "alesia",
+      "battle",
+      TimeSpan(Some(-52), None, None, Some(-52)),
+      Some(47.5),
+      Some(4.5),
+      Some("Q131386"),
+      Set.empty,
+      catalogue = false
+    )
+    val known = StoredEvent(
+      "gvp_9",
+      "eruption",
+      TimeSpan(Some(-79), None, None, Some(-79)),
+      Some(40.8),
+      Some(14.4),
+      None,
+      Set("gvp" -> "9"),
+      catalogue = true
+    )
     val stored = List(compiled, battle, known)
-    val placed = CatalogMerge.place(List(
-      rec("gvp", "1", "eruption", -1610, 36.41, 25.39),
-      rec("wikidata", "Q131386", "siege", -52, 10, 10, wd = Some("Q131386")),
-      rec("gvp", "9", "eruption", -79, 0, 0),
-      rec("noaa", "earthquake:5", "earthquake", -1610, 36.4, 25.4)), stored, tol)
+    val placed = CatalogMerge.place(
+      List(
+        rec("gvp", "1", "eruption", -1610, 36.41, 25.39),
+        rec("wikidata", "Q131386", "siege", -52, 10, 10, wd = Some("Q131386")),
+        rec("gvp", "9", "eruption", -79, 0, 0),
+        rec("noaa", "earthquake:5", "earthquake", -1610, 36.4, 25.4)
+      ),
+      stored,
+      tol
+    )
     assertEquals(placed.map(_._2.eventId), List("thera_eruption", "alesia", "gvp_9", "noaa_earthquake_5"))
     assert(placed.take(3).forall(_._2.isInstanceOf[CatalogMerge.Placement.Existing]))
 
   test("merge: a stored event that a record of the SAME catalogue made is no match for another of its records"):
-    val g1 = StoredEvent("gvp_1", "eruption", TimeSpan(Some(-1610), None, None, Some(-1610)), Some(36.4), Some(25.4),
-      None, Set("gvp" -> "1"), catalogue = true)
+    val g1 = StoredEvent(
+      "gvp_1",
+      "eruption",
+      TimeSpan(Some(-1610), None, None, Some(-1610)),
+      Some(36.4),
+      Some(25.4),
+      None,
+      Set("gvp" -> "1"),
+      catalogue = true
+    )
     val placed = CatalogMerge.place(List(rec("gvp", "2", "eruption", -1605, 36.4, 25.4)), List(g1), tol)
     assertEquals(placed.head._2.eventId, "gvp_2")
 
@@ -211,9 +321,19 @@ class EventCatalogSuite extends munit.FunSuite:
     assertEquals(CatalogRecord.eventId(rec("wikidata", "Q131386", "battle", 0, 0, 0)), "wikidata_q131386")
 
   test("an import report adds up and reads as one line"):
-    val a = EventImportReport("gvp", dryRun = true, records = 10, kept = 4, created = 3, merged = 1,
-      byKind = List(EventCount("eruption", 4)), skipped = List(EventCount("no position", 6)), parts = 1)
-    val b = a.copy(records = 5, kept = 5, created = 5, merged = 0, byKind = List(EventCount("eruption", 5)), skipped = Nil)
+    val a = EventImportReport(
+      "gvp",
+      dryRun = true,
+      records = 10,
+      kept = 4,
+      created = 3,
+      merged = 1,
+      byKind = List(EventCount("eruption", 4)),
+      skipped = List(EventCount("no position", 6)),
+      parts = 1
+    )
+    val b =
+      a.copy(records = 5, kept = 5, created = 5, merged = 0, byKind = List(EventCount("eruption", 5)), skipped = Nil)
     val c = EventImportReport.combine(a, b)
     assertEquals((c.records, c.kept, c.created, c.merged, c.parts), (15, 9, 8, 1, 2))
     assertEquals(c.byKind, List(EventCount("eruption", 9)))

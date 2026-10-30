@@ -5,64 +5,166 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.{Confidence, SourceStatus}
 
-/** `sources(filter)` / `facets(...)` against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped
-  * otherwise. Three synthetic sources exercise the plan §1.0 rules: the SOURCE is the unit, a source
-  * matches through its own metadata OR its findings, and every count is DISTINCT sources. */
+/** `sources(filter)` / `facets(...)` against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise.
+  * Three synthetic sources exercise the plan §1.0 rules: the SOURCE is the unit, a source matches through its own
+  * metadata OR its findings, and every count is DISTINCT sources.
+  */
 class FilterRepoSuite extends com.histmersion.db.DbSuite:
-  private val testDb                = com.histmersion.db.TestDb.url
+  private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
     val base = AppConfig.load().db
-    val d    = testPool(base.copy(url = testDb.get))
+    val d = testPool(base.copy(url = testDb.get))
     Migrate.run(d)
     seed(d)
     d
 
-  private def finding(ck: String, n: Int, claim: String, region: String, lon: Double, lat: Double,
-                      from: Long, to: Long, tags: List[String]) =
-    Finding(s"$ck#$n", ck, claim, Some(region), Some(GeoPoint(lon, lat)), Some(Period(from, to)),
-      None, tags, Some(Confidence.High))
+  private def finding(
+      ck: String,
+      n: Int,
+      claim: String,
+      region: String,
+      lon: Double,
+      lat: Double,
+      from: Long,
+      to: Long,
+      tags: List[String]
+  ) =
+    Finding(
+      s"$ck#$n",
+      ck,
+      claim,
+      Some(region),
+      Some(GeoPoint(lon, lat)),
+      Some(Period(from, to)),
+      None,
+      tags,
+      Some(Confidence.High)
+    )
 
-  private def source(ck: String, title: String, authors: List[String], year: Int, status: SourceStatus,
-                     topics: List[String], regions: List[String], tags: List[String],
-                     period: Option[Period], cited: Int, findings: List[Finding]) =
-    Source(ck, title, authors, None, Some(year), None, status, topics, regions, tags, period,
-      Some(s"summary of $title"), Some(cited), None, None, None, None, findings, Nil)
+  private def source(
+      ck: String,
+      title: String,
+      authors: List[String],
+      year: Int,
+      status: SourceStatus,
+      topics: List[String],
+      regions: List[String],
+      tags: List[String],
+      period: Option[Period],
+      cited: Int,
+      findings: List[Finding]
+  ) =
+    Source(
+      ck,
+      title,
+      authors,
+      None,
+      Some(year),
+      None,
+      status,
+      topics,
+      regions,
+      tags,
+      period,
+      Some(s"summary of $title"),
+      Some(cited),
+      None,
+      None,
+      None,
+      None,
+      findings,
+      Nil
+    )
 
   // A: Levantine collapse, dated; two findings, only one inside the LBA window.
-  private val alpha = source("zzf_alpha", "Collapse of the Bronze Age", List("Eric H. Cline"), 2014,
-    SourceStatus.Current, List("collapse"), List("Levant"), List("sea-peoples"),
-    Some(Period(-1300, -1100)), 100,
+  private val alpha = source(
+    "zzf_alpha",
+    "Collapse of the Bronze Age",
+    List("Eric H. Cline"),
+    2014,
+    SourceStatus.Current,
+    List("collapse"),
+    List("Levant"),
+    List("sea-peoples"),
+    Some(Period(-1300, -1100)),
+    100,
     List(
       finding("zzf_alpha", 0, "Ugarit destroyed", "Ugarit", 35.78, 35.60, -1200, -1180, List("destruction")),
-      finding("zzf_alpha", 1, "Cypriot trade revives", "Cyprus", 33.00, 35.00, -800, -700, List("trade"))))
+      finding("zzf_alpha", 1, "Cypriot trade revives", "Cyprus", 33.00, 35.00, -800, -700, List("trade"))
+    )
+  )
 
   // B: steppe, far older, no overlap with A.
-  private val beta = source("zzf_beta", "Steppe horses", List("David W. Anthony"), 2007,
-    SourceStatus.Foundational, List("migration"), List("Pontic Steppe"), List("steppe"),
-    Some(Period(-4000, -3000)), 500,
-    List(finding("zzf_beta", 0, "Yamnaya expansion", "Pontic Steppe", 40.0, 47.0, -3300, -2600,
-      List("steppe", "migration"))))
+  private val beta = source(
+    "zzf_beta",
+    "Steppe horses",
+    List("David W. Anthony"),
+    2007,
+    SourceStatus.Foundational,
+    List("migration"),
+    List("Pontic Steppe"),
+    List("steppe"),
+    Some(Period(-4000, -3000)),
+    500,
+    List(
+      finding(
+        "zzf_beta",
+        0,
+        "Yamnaya expansion",
+        "Pontic Steppe",
+        40.0,
+        47.0,
+        -3300,
+        -2600,
+        List("steppe", "migration")
+      )
+    )
+  )
 
   // C: UNDATED source whose findings straddle the antimeridian — matches only through them.
-  private val gamma = source("zzf_gamma", "Pacific island chronology", List("Pacific Author"), 2020,
-    SourceStatus.Unassessed, List("chronology"), List("Oceania"), List("sea-peoples"), None, 5,
+  private val gamma = source(
+    "zzf_gamma",
+    "Pacific island chronology",
+    List("Pacific Author"),
+    2020,
+    SourceStatus.Unassessed,
+    List("chronology"),
+    List("Oceania"),
+    List("sea-peoples"),
+    None,
+    5,
     List(
       finding("zzf_gamma", 0, "Lapita site west of the line", "Fiji", 178.0, -17.7, -1000, -900, List("island")),
-      finding("zzf_gamma", 1, "Site east of the line", "Samoa", -172.0, -13.8, -1000, -900, List("island"))))
+      finding("zzf_gamma", 1, "Site east of the line", "Samoa", -172.0, -13.8, -1000, -900, List("island"))
+    )
+  )
 
   // Case-fold fixtures (plan §1.3): the same vocabulary spelled two ways. Prefixed `zzc_` so the
   // `zzf_` assertions are untouched, and the words are unique to this suite so the shared test DB
   // cannot pollute the counts. "Zzftolia" is on two sources, "zzftolia" on one → it is the label.
   private def cased(ck: String, region: String, tag: String) =
-    source(ck, s"Case study $ck", List("Case Author"), 2021, SourceStatus.Current, Nil,
-      List(region), List(tag), None, 0,
-      List(finding(ck, 0, s"cased finding $ck", region, 1.0, 1.0, -500, -400, List(tag))))
+    source(
+      ck,
+      s"Case study $ck",
+      List("Case Author"),
+      2021,
+      SourceStatus.Current,
+      Nil,
+      List(region),
+      List(tag),
+      None,
+      0,
+      List(finding(ck, 0, s"cased finding $ck", region, 1.0, 1.0, -500, -400, List(tag)))
+    )
 
   private val cases =
-    List(cased("zzc_one", "Zzftolia", "Zzftag"), cased("zzc_two", "Zzftolia", "Zzftag"),
-      cased("zzc_three", "zzftolia", "zzftag"))
+    List(
+      cased("zzc_one", "Zzftolia", "Zzftag"),
+      cased("zzc_two", "Zzftolia", "Zzftag"),
+      cased("zzc_three", "zzftolia", "zzftag")
+    )
 
   private def seed(d: javax.sql.DataSource): Unit =
     (List(alpha, beta, gamma) ++ cases).foreach(SourceRepo.upsert(d, _, 4000))
@@ -104,8 +206,7 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
 
   test("authors are any-of and case-insensitive substrings"):
     assertEquals(keys(run(Filter(authors = List("cline")))), List("zzf_alpha"))
-    assertEquals(keys(run(Filter(authors = List("cline", "anthony")))).sorted,
-      List("zzf_alpha", "zzf_beta"))
+    assertEquals(keys(run(Filter(authors = List("cline", "anthony")))).sorted, List("zzf_alpha", "zzf_beta"))
     assertEquals(find(run(Filter(authors = List("cline"))), "zzf_alpha").why, List("author: Eric H. Cline"))
     // the row carries its authors, for a table of sources
     assertEquals(find(run(Filter(authors = List("cline"))), "zzf_alpha").source.authors, List("Eric H. Cline"))
@@ -146,26 +247,36 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
 
   test("sorting: by publication year, newest or oldest first"):
     val f = Filter(places = List("Levant", "Pontic", "Oceania"))
-    assertEquals(keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.Year), words)),
-      List("zzf_gamma", "zzf_alpha", "zzf_beta"))
-    assertEquals(keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.Oldest), words)),
-      List("zzf_beta", "zzf_alpha", "zzf_gamma"))
+    assertEquals(
+      keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.Year), words)),
+      List("zzf_gamma", "zzf_alpha", "zzf_beta")
+    )
+    assertEquals(
+      keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.Oldest), words)),
+      List("zzf_beta", "zzf_alpha", "zzf_gamma")
+    )
 
   test("sorting: by title, by citations, by period start"):
     val f = Filter(places = List("Levant", "Pontic", "Oceania"))
-    assertEquals(keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.Title), words)),
-      List("zzf_alpha", "zzf_gamma", "zzf_beta"))
-    assertEquals(keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.Cited), words)),
-      List("zzf_beta", "zzf_alpha", "zzf_gamma"))
+    assertEquals(
+      keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.Title), words)),
+      List("zzf_alpha", "zzf_gamma", "zzf_beta")
+    )
+    assertEquals(
+      keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.Cited), words)),
+      List("zzf_beta", "zzf_alpha", "zzf_gamma")
+    )
     // undated sources sort last on period
-    assertEquals(keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.PeriodStart), words)),
-      List("zzf_beta", "zzf_alpha", "zzf_gamma"))
+    assertEquals(
+      keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.PeriodStart), words)),
+      List("zzf_beta", "zzf_alpha", "zzf_gamma")
+    )
 
   test("facets count DISTINCT sources, not findings"):
     val tags = facetMap(FacetField.Tags)
-    assertEquals(tags.get("sea-peoples"), Some(2))  // alpha + gamma
-    assertEquals(tags.get("island"), Some(1))       // two findings, ONE source
-    assertEquals(tags.get("steppe"), Some(1))       // source tag and finding tag, one source
+    assertEquals(tags.get("sea-peoples"), Some(2)) // alpha + gamma
+    assertEquals(tags.get("island"), Some(1)) // two findings, ONE source
+    assertEquals(tags.get("steppe"), Some(1)) // source tag and finding tag, one source
     assertEquals(tags.get("destruction"), Some(1))
 
   test("facets are computed inside the current filter"):
@@ -189,7 +300,8 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(facetMap(FacetField.Status).get("foundational"), Some(1))
 
   test("facets are ordered by count desc, then value"):
-    val rows = SourceRepo.facets(ds, FacetField.Tags, None, Filter(limit = 200), 200)
+    val rows = SourceRepo
+      .facets(ds, FacetField.Tags, None, Filter(limit = 200), 200)
       .filter(f => Set("sea-peoples", "destruction", "island")(f.value))
     assertEquals(rows.map(_.value).toList, List("sea-peoples", "destruction", "island"))
 
@@ -205,13 +317,13 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
   // ── the map feed: `/api/findings` through the SAME filter (plan §1.0) ────────────────────────
   /** Findings of THIS suite's fixtures only (the test DB is shared with other suites' rows). */
   private def feed(f: Filter) =
-    SourceRepo.findingsFor(ds, f.copy(limit = if f.limit <= 0 then 200 else f.limit))
+    SourceRepo
+      .findingsFor(ds, f.copy(limit = if f.limit <= 0 then 200 else f.limit))
       .filter(_.citekey.startsWith("zzf_"))
 
   test("map feed: a wrapping bbox returns only findings east of 170 or west of -170"):
     val hits = feed(Filter(bbox = Some(BBox(170.0, -60.0, -170.0, 60.0))))
-    assertEquals(hits.map(_.claim).toList.sorted,
-      List("Lapita site west of the line", "Site east of the line"))
+    assertEquals(hits.map(_.claim).toList.sorted, List("Lapita site west of the line", "Site east of the line"))
     assertEquals(hits.flatMap(_.lon).toList.sorted, List(-172.0, 178.0))
     // the Levantine/steppe findings (lon 35.78, 33.0, 40.0) are NOT in a box that wraps the Pacific
     assert(!hits.exists(_.citekey == "zzf_alpha"), hits.toString)
@@ -220,22 +332,21 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(feed(Filter(tags = List("destruction"))).map(_.claim).toList, List("Ugarit destroyed"))
     // a SOURCE tag qualifies every finding of that source
     assertEquals(feed(Filter(tags = List("steppe"))).map(_.claim).toList, List("Yamnaya expansion"))
-    assertEquals(feed(Filter(tags = List("sea-peoples"))).map(_.citekey).toList.distinct.sorted,
-      List("zzf_alpha", "zzf_gamma"))
+    assertEquals(
+      feed(Filter(tags = List("sea-peoples"))).map(_.citekey).toList.distinct.sorted,
+      List("zzf_alpha", "zzf_gamma")
+    )
     assertEquals(feed(Filter(tags = List("no-such-tag"))).toList, Nil)
 
   test("map feed: q= restricts it to the findings of sources whose text matches"):
     assertEquals(feed(Filter(q = Some("Steppe horses"))).map(_.claim).toList, List("Yamnaya expansion"))
-    assertEquals(feed(Filter(q = Some("Collapse of the Bronze Age"))).map(_.citekey).toList.distinct,
-      List("zzf_alpha"))
+    assertEquals(feed(Filter(q = Some("Collapse of the Bronze Age"))).map(_.citekey).toList.distinct, List("zzf_alpha"))
     assertEquals(feed(Filter(q = Some("zzz no such text anywhere"))).toList, Nil)
 
   test("map feed: period and place are judged per FINDING, not per source"):
     // alpha itself is dated -1300…-1100, but only its Ugarit finding lies in this window
-    assertEquals(feed(Filter(period = Some(Period(-1200, -1180)))).map(_.claim).toList,
-      List("Ugarit destroyed"))
-    assertEquals(feed(Filter(places = List("cyprus"))).map(_.claim).toList,
-      List("Cypriot trade revives"))
+    assertEquals(feed(Filter(period = Some(Period(-1200, -1180)))).map(_.claim).toList, List("Ugarit destroyed"))
+    assertEquals(feed(Filter(places = List("cyprus"))).map(_.claim).toList, List("Cypriot trade revives"))
 
   test("map feed: the limit is honoured"):
     assertEquals(SourceRepo.findingsFor(ds, Filter(tags = List("sea-peoples"), limit = 1)).size, 1)

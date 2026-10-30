@@ -1,7 +1,8 @@
 package com.histmersion.web.library
 
-/** The start of an article's body as plain reading text: its first paragraph of prose (no heading, list,
-  * table or quotation), its Markdown and links reduced to their words, cut at a word near `limit`. Pure. */
+/** The start of an article's body as plain reading text: its first paragraph of prose (no heading, list, table or
+  * quotation), its Markdown and links reduced to their words, cut at a word near `limit`. Pure.
+  */
 object ArticleOpening:
 
   def of(body: String, limit: Int): Option[String] =
@@ -12,8 +13,9 @@ object ArticleOpening:
     !p.startsWith("#") && !p.startsWith("|") && !p.startsWith(">") && !p.startsWith("- ") && !p.startsWith("* ") &&
       !p.startsWith("```") && !p.startsWith("<") && !p.matches("""(?s)^\d+\.\s.*""") && !p.startsWith("_")
 
-  /** Links read as their words: `[[ck|words]]` → words, `[[ck]]` → nothing (a citation), `[words](url)` →
-    * words; emphasis and code marks dropped; lines joined. */
+  /** Links read as their words: `[[ck|words]]` → words, `[[ck]]` → nothing (a citation), `[words](url)` → words;
+    * emphasis and code marks dropped; lines joined.
+    */
   def plain(s: String): String =
     s.replaceAll("""\[\[[^\]|]+\|([^\]]+)\]\]""", "$1")
       .replaceAll("""\s*\[\[[^\]]+\]\]""", "")
@@ -27,5 +29,5 @@ object ArticleOpening:
     if s.length <= limit then s
     else
       val head = s.take(limit)
-      val at   = head.lastIndexOf(' ')
+      val at = head.lastIndexOf(' ')
       (if at > limit / 2 then head.take(at) else head).stripSuffix(",").stripSuffix(";") + "…"

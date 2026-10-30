@@ -9,7 +9,8 @@ class PgRelocationSuite extends munit.FunSuite:
   private val from = b("/build/env/default")
 
   test("text: every occurrence is replaced"):
-    val (out, tooLong) = PgRelocation.patch(b("prefix=/build/env/default\nlibdir=/build/env/default/lib\n"), from, b("/app/pg"))
+    val (out, tooLong) =
+      PgRelocation.patch(b("prefix=/build/env/default\nlibdir=/build/env/default/lib\n"), from, b("/app/pg"))
     assertEquals(String(out, UTF_8), "prefix=/app/pg\nlibdir=/app/pg/lib\n")
     assertEquals(tooLong, 0)
 
@@ -40,7 +41,10 @@ class PgRelocationSuite extends munit.FunSuite:
     try
       val bin = Files.createDirectories(pg.resolve("bin"))
       Files.writeString(pg.resolve(PgRelocation.Marker), "/build/env/default")
-      Files.write(bin.resolve("pg_config"), b("x") ++ Array[Byte](0) ++ b("/build/env/default/share") ++ Array.fill[Byte](236)(0)) // a 260-byte slot, as conda pads them
+      Files.write(
+        bin.resolve("pg_config"),
+        b("x") ++ Array[Byte](0) ++ b("/build/env/default/share") ++ Array.fill[Byte](236)(0)
+      ) // a 260-byte slot, as conda pads them
       Files.writeString(bin.resolve("tool-config"), "prefix=/build/env/default\n")
       Files.writeString(bin.resolve("unrelated"), "nothing to see")
       val here = pg.toRealPath().toString
@@ -59,5 +63,8 @@ class PgRelocationSuite extends munit.FunSuite:
 
   private def deleteTree(p: Path): Unit =
     val w = Files.walk(p)
-    try w.sorted(java.util.Comparator.reverseOrder()).forEach(f => { val _ = Files.deleteIfExists(f) })
+    try
+      w.sorted(java.util.Comparator.reverseOrder()).forEach { f =>
+        val _ = Files.deleteIfExists(f)
+      }
     finally w.close()

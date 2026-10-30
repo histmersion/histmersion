@@ -9,60 +9,98 @@ import scala.scalajs.js
 /** The pure half of the map's EVENT markers (#1449). */
 object EventMarker:
 
-  /** Pure: the marker's markup ([[PointKinds.Events]]): its kind's icon on a square whose fill
-    * is the event's date on the period ramp (`--c`), as every point's. The TIER is the badge's style:
-    * `hd-ev--attested` filled; `hd-ev--catalogue` paler and dashed — a research lead, not evidence
-    * (docs/visualization-guide.md §1). */
+  /** Pure: the marker's markup ([[PointKinds.Events]]): its kind's icon on a square whose fill is the event's date on
+    * the period ramp (`--c`), as every point's. The TIER is the badge's style: `hd-ev--attested` filled;
+    * `hd-ev--catalogue` paler and dashed — a research lead, not evidence (docs/visualization-guide.md §1).
+    */
   def html(e: EventGeo, color: String): String = PointMarker.html(PointKinds.Events, e, color)
 
   /** Pure: an event in words — its name, kind and years, size, place and tier (its accessible name). */
   def describe(e: EventGeo): String =
-    List(Some(e.label), Some(EventPlayback.note(e)), e.dating, EventPrecision.label(e.precision), e.size, e.placeLabel,
-      Some(if e.tier == EventTier.Catalogue then "catalogue only" else "attested")).flatten.mkString(" · ")
+    List(
+      Some(e.label),
+      Some(EventPlayback.note(e)),
+      e.dating,
+      EventPrecision.label(e.precision),
+      e.size,
+      e.placeLabel,
+      Some(if e.tier == EventTier.Catalogue then "catalogue only" else "attested")
+    ).flatten.mkString(" · ")
 
   /** Pure: the tier's class name — anything but `catalogue` is drawn attested. */
   def tierClass(tier: String): String = if tier == EventTier.Catalogue then "catalogue" else "attested"
 
-  /** Pure: where an event sits on the period ramp of the span shown (0 = its start, 1 = its end): the
-    * middle of its outer span. */
+  /** Pure: where an event sits on the period ramp of the span shown (0 = its start, 1 = its end): the middle of its
+    * outer span.
+    */
   def rampAt(e: EventGeo, span: (Long, Long)): Double =
     val (lo, hi) = (span._1.min(span._2).toDouble, span._1.max(span._2).toDouble)
     EventGeo.outer(e.timeSpan).fold(0.5) { (a, b) =>
       if hi == lo then 0.5 else (((a + b) / 2.0 - lo) / (hi - lo)).max(0).min(1)
     }
 
-/** The EVENTS layer (#1449): every event of the span shown — the corpus's and the catalogues' — read
-  * from the server's tiles (`/api/tiles/events/…`, the filter's selection: its sources, the span, the
-  * kind and tier menus); the points are [[PointKinds.Events]], the crowded tiles' cells bubbles. */
+/** The EVENTS layer (#1449): every event of the span shown — the corpus's and the catalogues' — read from the server's
+  * tiles (`/api/tiles/events/…`, the filter's selection: its sources, the span, the kind and tier menus); the points
+  * are [[PointKinds.Events]], the crowded tiles' cells bubbles.
+  */
 object EventMarkers:
 
-  /** The markers — a [[TiledPoints]] of [[PointKinds.Events]], attached and detached by the map with its
-    * other overlays ([[MapView]]). */
-  val layer: TiledPoints[EventGeo] = TiledPoints(TileLayer.Events,
-    PointLayer(PointKinds.Events, () => MapView.dots, () => MapView.spanMid()), DotKind.Event, TileDecode.event,
-    () => MapView.tilesConfig.maxZoom)
+  /** The markers — a [[TiledPoints]] of [[PointKinds.Events]], attached and detached by the map with its other overlays
+    * ([[MapView]]).
+    */
+  val layer: TiledPoints[EventGeo] = TiledPoints(
+    TileLayer.Events,
+    PointLayer(PointKinds.Events, () => MapView.dots, () => MapView.spanMid()),
+    DotKind.Event,
+    TileDecode.event,
+    () => MapView.tilesConfig.maxZoom
+  )
 
-  /** Pure: the tiles' query for the events of `tiles` (a span) under `filter`, by kind and tier — the
-    * filter's paging and its sort left out, which every tile of a span shares. */
-  def query(filter: Filter, tiles: (Long, Long), kind: Option[String], tier: Option[String],
-      undated: Boolean = false): TilesApi.TileQuery =
-    TilesApi.TileQuery(TileLayer.Events.wire, 0, 0, 0,
+  /** Pure: the tiles' query for the events of `tiles` (a span) under `filter`, by kind and tier — the filter's paging
+    * and its sort left out, which every tile of a span shares.
+    */
+  def query(
+      filter: Filter,
+      tiles: (Long, Long),
+      kind: Option[String],
+      tier: Option[String],
+      undated: Boolean = false
+  ): TilesApi.TileQuery =
+    TilesApi.TileQuery(
+      TileLayer.Events.wire,
+      0,
+      0,
+      0,
       filter.copy(period = Some(Period(tiles._1, tiles._2)), limit = Filter().limit, offset = 0, sort = Filter().sort),
-      kind = kind, tier = tier, context = Some(true), undated = Option.when(undated)(true))
+      kind = kind,
+      tier = tier,
+      context = Some(true),
+      undated = Option.when(undated)(true)
+    )
 
   /** Load the events of `tiles` (a span, playback's widened to its bucket), drawn for `span`. */
   def load(tiles: (Long, Long), span: (Long, Long)): Unit =
-    layer.load(ApiClient.tileTemplate(query(UiState.toFilter(), tiles, UiState.eventKind.now(), UiState.eventTier.now(),
-      UiState.eventsUndated.now())), span)
+    layer.load(
+      ApiClient.tileTemplate(
+        query(UiState.toFilter(), tiles, UiState.eventKind.now(), UiState.eventTier.now(), UiState.eventsUndated.now())
+      ),
+      span
+    )
 
-/** The map's KEY to its shapes and icons (#1449): what each shape is, the findings' source kinds, and —
-  * while their layers are on — the event kinds (natural, human) and site types, each icon with its name.
-  * Pure markup. */
+/** The map's KEY to its shapes and icons (#1449): what each shape is, the findings' source kinds, and — while their
+  * layers are on — the event kinds (natural, human) and site types, each icon with its name. Pure markup.
+  */
 object MapKey:
   def eventsHtml: String =
     EventTaxonomy.groups.map { g =>
-      val items = EventTaxonomy.kinds.filter(_.group == g).map(k =>
-        s"""<li><span class="hd-badge hd-badge--square hd-key-badge">${Glyphs.badge(k.icon)}</span><span>${Fmt.esc(k.label)}</span></li>""").mkString
+      val items = EventTaxonomy.kinds
+        .filter(_.group == g)
+        .map(k =>
+          s"""<li><span class="hd-badge hd-badge--square hd-key-badge">${Glyphs.badge(k.icon)}</span><span>${Fmt.esc(
+              k.label
+            )}</span></li>"""
+        )
+        .mkString
       s"""<div class="hd-key-group"><div class="hd-key-title">$g events</div><ul class="hd-key-list">$items</ul></div>"""
     }.mkString +
       """<div class="hd-key-group"><ul class="hd-key-list hd-key-tiers">""" +
@@ -70,13 +108,19 @@ object MapKey:
       """<li><span class="hd-badge hd-ev hd-ev--catalogue hd-key-swatch"></span><span>catalogue only (a lead)</span></li></ul></div>"""
 
   def sitesHtml: String =
-    val items = (SiteTypes.all.map(t => t.icon -> t.label) :+ (CardIcons.Unknown -> "site of unknown type")).map((icon, label) =>
-      s"""<li><span class="hd-badge hd-badge--circle hd-key-badge">${Glyphs.badge(icon)}</span><span>${Fmt.esc(label)}</span></li>""").mkString
+    val items = (SiteTypes.all.map(t => t.icon -> t.label) :+ (CardIcons.Unknown -> "site of unknown type"))
+      .map((icon, label) =>
+        s"""<li><span class="hd-badge hd-badge--circle hd-key-badge">${Glyphs.badge(icon)}</span><span>${Fmt.esc(
+            label
+          )}</span></li>"""
+      )
+      .mkString
     s"""<div class="hd-key-group"><div class="hd-key-title">sites</div><ul class="hd-key-list">$items</ul></div>"""
 
-  /** The shape grammar (docs/visualization-guide.md §2): the SHAPE says what kind of thing a marker is,
-    * the icon its type, the fill its date, the outline its tier — and the findings' icons, by what their
-    * source is. Shown whatever layers are on: the findings always are. */
+  /** The shape grammar (docs/visualization-guide.md §2): the SHAPE says what kind of thing a marker is, the icon its
+    * type, the fill its date, the outline its tier — and the findings' icons, by what their source is. Shown whatever
+    * layers are on: the findings always are.
+    */
   def shapesHtml: String =
     def badge(shape: String, inner: String) = s"""<span class="hd-badge hd-badge--$shape hd-key-badge">$inner</span>"""
     // the same icons as the toolbar's layer switches
@@ -85,16 +129,39 @@ object MapKey:
       DotCluster.bubbleHtml(5, 20, ("var(--accent)", "var(--accent)"), "hdb-key", "hd-key-cluster", None) ->
         "several nearby (click to list)",
       // the clusters of events keep the event's square (#1647)
-      DotCluster.bubbleHtml(5, 20, ("var(--accent)", "var(--accent)"), "hdb-key-ev", "hd-key-cluster", None, BubbleForm.Events) ->
+      DotCluster.bubbleHtml(
+        5,
+        20,
+        ("var(--accent)", "var(--accent)"),
+        "hdb-key-ev",
+        "hd-key-cluster",
+        None,
+        BubbleForm.Events
+      ) ->
         "several events nearby",
-      DotCluster.bubbleHtml(5, 20, ("var(--accent)", "var(--accent)"), "hdb-key-mix", "hd-key-cluster", None, BubbleForm.WithEvents) ->
-        "several nearby, events among them")
-    val kinds = SourceKinds.all.map(k => badge("diamond", Glyphs.badge(CardIcons.sourceKind(k, marker = true))) ->
-      (if k == SourceKinds.Unknown then "source of unknown kind" else k))
+      DotCluster.bubbleHtml(
+        5,
+        20,
+        ("var(--accent)", "var(--accent)"),
+        "hdb-key-mix",
+        "hd-key-cluster",
+        None,
+        BubbleForm.WithEvents
+      ) ->
+        "several nearby, events among them"
+    )
+    val kinds = SourceKinds.all.map(k =>
+      badge("diamond", Glyphs.badge(CardIcons.sourceKind(k, marker = true))) ->
+        (if k == SourceKinds.Unknown then "source of unknown kind" else k)
+    )
     def list(items: List[(String, String)]) =
       items.map((m, label) => s"""<li>$m<span>${Fmt.esc(label)}</span></li>""").mkString
-    s"""<div class="hd-key-group"><div class="hd-key-title">shapes</div><ul class="hd-key-list">${list(shapes)}</ul></div>""" +
-      s"""<div class="hd-key-group"><div class="hd-key-title">findings, by source</div><ul class="hd-key-list">${list(kinds)}</ul></div>"""
+    s"""<div class="hd-key-group"><div class="hd-key-title">shapes</div><ul class="hd-key-list">${list(
+        shapes
+      )}</ul></div>""" +
+      s"""<div class="hd-key-group"><div class="hd-key-title">findings, by source</div><ul class="hd-key-list">${list(
+          kinds
+        )}</ul></div>"""
 
   /** The key's markup: the shapes, then the icons of the layers on. */
   def html(events: Boolean, sites: Boolean, undated: Boolean = false): String =

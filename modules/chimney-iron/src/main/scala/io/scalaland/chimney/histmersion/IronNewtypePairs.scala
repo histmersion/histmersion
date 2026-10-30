@@ -14,7 +14,7 @@ final class IronNewtypePairs(using val quotes: Quotes):
   import quotes.reflect.*
 
   final case class IronNewtype(companion: Symbol, base: TypeRepr, constraint: TypeRepr):
-    def name: String     = companion.name
+    def name: String = companion.name
     def fullName: String = withoutPackageObjects(companion.fullName)
     def refinedTypeShown: String =
       s"${withoutPackageObjects(base.show)} :| ${withoutPackageObjects(constraint.show)}"

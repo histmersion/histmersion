@@ -4,8 +4,9 @@ import com.histmersion.api.*
 
 import scala.scalajs.js
 
-/** The map layer's own logic on the fake engine ([[FakeSurface]]): clustering, what is drawn in view,
-  * the projection's round trip, geometry bounds, and the software-renderer test. */
+/** The map layer's own logic on the fake engine ([[FakeSurface]]): clustering, what is drawn in view, the projection's
+  * round trip, geometry bounds, and the software-renderer test.
+  */
 class MapLayerSuite extends munit.FunSuite:
 
   test("clustering: a point joins the nearest group whose first point is within the radius, else starts one"):
@@ -29,7 +30,8 @@ class MapLayerSuite extends munit.FunSuite:
   test("what is drawn: the groups in view and a margin; a bubble's id is its first point and size"):
     val s = FakeSurface()
     s.setView(LatLon(37.5, 32), 7)
-    val gs = Clustering.groups(List("a" -> LatLon(37.5, 32.0), "b" -> LatLon(37.51, 32.0), "far" -> LatLon(-30, -100)), 7, 50)
+    val gs =
+      Clustering.groups(List("a" -> LatLon(37.5, 32.0), "b" -> LatLon(37.51, 32.0), "far" -> LatLon(-30, -100)), 7, 50)
     val (singles, bubbles) = Clustering.drawn(gs, s)
     assertEquals((singles, bubbles), (Set.empty[String], Map("a|2" -> Vector("a", "b"))))
     s.setView(LatLon(-30, -100), 7)
@@ -49,19 +51,32 @@ class MapLayerSuite extends munit.FunSuite:
     assert(s.center.lon > 24 && moved == 1)
 
   test("a geometry's bounds, any nesting; none for an empty one"):
-    val poly = js.JSON.parse("""{"type":"Polygon","coordinates":[[[30,36],[34,36],[34,39],[30,39],[30,36]]]}""").asInstanceOf[js.Dynamic]
+    val poly = js.JSON
+      .parse("""{"type":"Polygon","coordinates":[[[30,36],[34,36],[34,39],[30,39],[30,36]]]}""")
+      .asInstanceOf[js.Dynamic]
     assertEquals(GeoBounds.ofGeometry(poly), Some(GeoBounds(36, 30, 39, 34)))
     val pt = js.JSON.parse("""{"type":"Point","coordinates":[22.75,37.73]}""").asInstanceOf[js.Dynamic]
     assertEquals(GeoBounds.ofGeometry(pt), Some(GeoBounds(37.73, 22.75, 37.73, 22.75)))
-    assertEquals(GeoBounds.ofGeometry(js.JSON.parse("""{"type":"MultiPolygon","coordinates":[]}""").asInstanceOf[js.Dynamic]), None)
+    assertEquals(
+      GeoBounds.ofGeometry(js.JSON.parse("""{"type":"MultiPolygon","coordinates":[]}""").asInstanceOf[js.Dynamic]),
+      None
+    )
     assert(GeoBounds(36, 30, 39, 34).extend(GeoBounds(10, 40, 11, 41)) == GeoBounds(10, 30, 39, 41))
 
   test("a software renderer is named by its WebGL renderer string"):
-    for r <- List("ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
-      "llvmpipe (LLVM 15.0.7, 256 bits)", "Microsoft Basic Render Driver", "Mesa OffScreen") do
-      assert(Capabilities.isSoftware(r), r)
-    for r <- List("ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Pro, Unspecified Version)", "Mali-G78", "NVIDIA GeForce RTX 3060") do
-      assert(!Capabilities.isSoftware(r), r)
+    for r <- List(
+        "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "llvmpipe (LLVM 15.0.7, 256 bits)",
+        "Microsoft Basic Render Driver",
+        "Mesa OffScreen"
+      )
+    do assert(Capabilities.isSoftware(r), r)
+    for r <- List(
+        "ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Pro, Unspecified Version)",
+        "Mali-G78",
+        "NVIDIA GeForce RTX 3060"
+      )
+    do assert(!Capabilities.isSoftware(r), r)
     // Firefox names the GPU in RENDERER; Chromium and Safari answer a generic name there
     assert(!Capabilities.genericRenderer("Apple M1, or similar"))
     for r <- List("WebKit WebGL", "", "Mozilla") do assert(Capabilities.genericRenderer(r), r)

@@ -7,24 +7,24 @@ import java.util.regex.{Matcher, Pattern, PatternSyntaxException}
 
 /** Finds passages inside ONE source's converted body (#954) — pure, no I/O.
   *
-  * The body is the one `get_source` slices: the source's chunks joined by a blank line ([[body]]),
-  * so an offset reported here is an offset `get_source {offset}` continues from.
+  * The body is the one `get_source` slices: the source's chunks joined by a blank line ([[body]]), so an offset
+  * reported here is an offset `get_source {offset}` continues from.
   *
   * Matching:
-  *   - case-insensitive, and accent-insensitive in the way [[LatinFold]] is: `Hattusa` finds
-  *     `Ḫattuša`, `Guterbock` finds `Güterbock`. The body and the query are folded the same way, plus
-  *     the typography OCR leaves behind: curly quotes match straight ones, every dash matches `-`,
-  *     a no-break space matches a space, `ﬁ`/`ﬂ` ligatures match `fi`/`fl`, soft hyphens vanish.
-  *     Other scripts (Greek accents, …) are matched as written.
-  *   - by default the query is LITERAL text (no stemming, no operators); its words may be separated
-  *     by any run of whitespace in the body, so a phrase matches across a line break.
-  *   - `regex` makes it a Java regular expression, MULTILINE (`^`/`$` are line ends, as in grep).
-  *     A malformed one is a `Left`, and one that runs longer than `timeoutMs` over the body is
-  *     refused rather than left to hold a request thread.
+  *   - case-insensitive, and accent-insensitive in the way [[LatinFold]] is: `Hattusa` finds `Ḫattuša`, `Guterbock`
+  *     finds `Güterbock`. The body and the query are folded the same way, plus the typography OCR leaves behind: curly
+  *     quotes match straight ones, every dash matches `-`, a no-break space matches a space, `ﬁ`/`ﬂ` ligatures match
+  *     `fi`/`fl`, soft hyphens vanish. Other scripts (Greek accents, …) are matched as written.
+  *   - by default the query is LITERAL text (no stemming, no operators); its words may be separated by any run of
+  *     whitespace in the body, so a phrase matches across a line break.
+  *   - `regex` makes it a Java regular expression, MULTILINE (`^`/`$` are line ends, as in grep). A malformed one is a
+  *     `Left`, and one that runs longer than `timeoutMs` over the body is refused rather than left to hold a request
+  *     thread.
   *
-  * A passage is the match plus up to `context` characters around it (half before, half after),
-  * widened to whole lines when a line break is in reach, else to whole words. Matches whose passage
-  * would overlap the previous one are merged into it. */
+  * A passage is the match plus up to `context` characters around it (half before, half after), widened to whole lines
+  * when a line break is in reach, else to whole words. Matches whose passage would overlap the previous one are merged
+  * into it.
+  */
 object PassageFinder:
 
   /** The body `get_source` reads — chunks in order, joined by a blank line (`SourceRepo.bodyText`). */
@@ -32,27 +32,42 @@ object PassageFinder:
 
   private val Separator = "\n\n"
 
-  def find(citekey: String, segments: Seq[Chunk], query: String, regex: Boolean, limit: Int,
-      context: Int, maxMatches: Int, timeoutMs: Long): Either[String, PassageResult] =
+  def find(
+      citekey: String,
+      segments: Seq[Chunk],
+      query: String,
+      regex: Boolean,
+      limit: Int,
+      context: Int,
+      maxMatches: Int,
+      timeoutMs: Long
+  ): Either[String, PassageResult] =
     val q = Option(query).getOrElse("").trim
     if q.isEmpty then Left("the query is empty — give the words to find")
     else
       compile(q, regex).flatMap { pattern =>
-        val text   = body(segments)
+        val text = body(segments)
         val folded = Folded(text)
-        val until  = System.nanoTime() + timeoutMs.max(1L) * 1_000_000L
+        val until = System.nanoTime() + timeoutMs.max(1L) * 1_000_000L
         try
           val (spans, capped) = matches(pattern, folded, text, maxMatches.max(1), until)
-          val ranges          = merge(spans, text, context.max(0))
-          val headings        = Headings(segments, text)
+          val ranges = merge(spans, text, context.max(0))
+          val headings = Headings(segments, text)
           val shown = ranges.take(limit.max(1)).map { r =>
-            PassageHit(r.start, headings.at(r.firstMatch), text.substring(r.start, r.end),
-              r.spans.reverse.map((s, e) => MatchSpan(s - r.start, e - r.start)))
+            PassageHit(
+              r.start,
+              headings.at(r.firstMatch),
+              text.substring(r.start, r.end),
+              r.spans.reverse.map((s, e) => MatchSpan(s - r.start, e - r.start))
+            )
           }
           Right(PassageResult(citekey, q, regex, spans.size, capped, ranges.size, shown.toList, text.length))
-        catch case _: TimedOut =>
-          Left(s"the regex ran longer than ${timeoutMs} ms over this body — make it more specific " +
-            "(anchor it, avoid nested repetition like (a+)+)")
+        catch
+          case _: TimedOut =>
+            Left(
+              s"the regex ran longer than $timeoutMs ms over this body — make it more specific " +
+                "(anchor it, avoid nested repetition like (a+)+)"
+            )
       }
 
   /** The query as a pattern over the FOLDED body. */
@@ -60,9 +75,12 @@ object PassageFinder:
     val flags = Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE | Pattern.MULTILINE
     if regex then
       try Right(Pattern.compile(fold(q), flags))
-      catch case e: PatternSyntaxException =>
-        val at = if e.getIndex >= 0 then s" at position ${e.getIndex}" else ""
-        Left(s"not a valid regex: ${e.getDescription}$at in `${e.getPattern}` (leave regex off to match the text literally)")
+      catch
+        case e: PatternSyntaxException =>
+          val at = if e.getIndex >= 0 then s" at position ${e.getIndex}" else ""
+          Left(
+            s"not a valid regex: ${e.getDescription}$at in `${e.getPattern}` (leave regex off to match the text literally)"
+          )
     else
       val words = fold(q).split("\\s+").toList.filter(_.nonEmpty)
       Right(Pattern.compile(words.map(Pattern.quote).mkString("\\s+"), flags))
@@ -72,24 +90,26 @@ object PassageFinder:
     if c < '\u0080' then c.toString
     else
       c match
-        case '‘' | '’' | '‚' | '‛' | '′' => "'"
-        case '“' | '”' | '„' | '‟' | '″' => "\""
+        case '‘' | '’' | '‚' | '‛' | '′'             => "'"
+        case '“' | '”' | '„' | '‟' | '″'             => "\""
         case '‐' | '‑' | '‒' | '–' | '—' | '―' | '−' => "-"
-        case ' ' | ' ' | ' ' | ' ' => " "
-        case '­' => ""
-        case 'ﬀ' => "ff"
-        case 'ﬁ' => "fi"
-        case 'ﬂ' => "fl"
-        case 'ﬃ' => "ffi"
-        case 'ﬄ' => "ffl"
-        case _ => LatinFold.foldChar(c)
+        case ' ' | ' ' | ' ' | ' '                   => " "
+        case '­'                                     => ""
+        case 'ﬀ'                                     => "ff"
+        case 'ﬁ'                                     => "fi"
+        case 'ﬂ'                                     => "fl"
+        case 'ﬃ'                                     => "ffi"
+        case 'ﬄ'                                     => "ffl"
+        case _                                       => LatinFold.foldChar(c)
 
   private[domain] def fold(s: String): String = Folded(s).text
 
-  /** `source` folded, with the index of the source character every folded character came from
-    * (`back(folded.length) == source.length`), so a match maps back to the original offsets. */
-  private[domain] final class Folded(val text: String, back: Array[Int]):
+  /** `source` folded, with the index of the source character every folded character came from (`back(folded.length) ==
+    * source.length`), so a match maps back to the original offsets.
+    */
+  final private[domain] class Folded(val text: String, back: Array[Int]):
     def start(i: Int): Int = back(i)
+
     /** The original end of a match ending (exclusive) at folded index `i`. */
     def end(i: Int, source: String): Int =
       if i <= 0 then 0
@@ -101,7 +121,7 @@ object PassageFinder:
 
   private[domain] object Folded:
     def apply(source: String): Folded =
-      val sb   = new java.lang.StringBuilder(source.length) // local accumulators
+      val sb = new java.lang.StringBuilder(source.length) // local accumulators
       val back = new scala.collection.mutable.ArrayBuilder.ofInt
       back.sizeHint(source.length + 1)
       // index loops over a body of up to several MB: no per-character closure or tuple
@@ -117,11 +137,12 @@ object PassageFinder:
 
   private def isMark(c: Char): Boolean = c >= '̀' && c <= 'ͯ'
 
-  private final class TimedOut extends RuntimeException(null, null, false, false)
+  final private class TimedOut extends RuntimeException(null, null, false, false)
 
-  /** A view of the folded body that gives up once `until` (System.nanoTime) has passed: the regex
-    * engine reads every character through `charAt`, so a pathological pattern is stopped mid-scan. */
-  private final class Bounded(s: CharSequence, until: Long) extends CharSequence:
+  /** A view of the folded body that gives up once `until` (System.nanoTime) has passed: the regex engine reads every
+    * character through `charAt`, so a pathological pattern is stopped mid-scan.
+    */
+  final private class Bounded(s: CharSequence, until: Long) extends CharSequence:
     // a counter, so the clock is read once per 64 Ki characters rather than on every one
     private var reads = 0
     def length: Int = s.length
@@ -149,12 +170,12 @@ object PassageFinder:
     (out.result(), capped)
 
   /** A passage being built: `spans` in reverse order of discovery. */
-  private final case class Range(start: Int, end: Int, firstMatch: Int, spans: List[(Int, Int)])
+  final private case class Range(start: Int, end: Int, firstMatch: Int, spans: List[(Int, Int)])
 
-  /** Matches → passages. A match that starts inside the previous passage joins it (the passage then
-    * ends no earlier than the match does); any other starts a passage of its own, which begins no
-    * earlier than where the previous one ended — so no text is shown twice, and dense matches do not
-    * snowball into one enormous passage. */
+  /** Matches → passages. A match that starts inside the previous passage joins it (the passage then ends no earlier
+    * than the match does); any other starts a passage of its own, which begins no earlier than where the previous one
+    * ended — so no text is shown twice, and dense matches do not snowball into one enormous passage.
+    */
   private def merge(spans: Vector[(Int, Int)], text: String, context: Int): Vector[Range] =
     val half = context / 2
     spans.foldLeft(Vector.empty[Range]) { case (acc, (s, e)) =>
@@ -166,9 +187,9 @@ object PassageFinder:
           acc :+ Range(skipBlanks(text, startOf(text, s, half).max(floor), s), endOf(text, e, half), s, List((s, e)))
     }
 
-  /** Where a passage around a match starting at `s` begins: the first line start within `half`
-    * characters before it, else the first word start, else exactly `half` before; leading blanks
-    * dropped. */
+  /** Where a passage around a match starting at `s` begins: the first line start within `half` characters before it,
+    * else the first word start, else exactly `half` before; leading blanks dropped.
+    */
   private[domain] def startOf(text: String, s: Int, half: Int): Int =
     val lo = (s - half).max(0)
     val begin =
@@ -185,8 +206,9 @@ object PassageFinder:
   private def skipBlanks(text: String, from: Int, upTo: Int): Int =
     if from < upTo && text.charAt(from).isWhitespace then skipBlanks(text, from + 1, upTo) else from
 
-  /** Where a passage around a match ending at `e` ends: the last line end within `half` characters
-    * after it, else the last word end, else exactly `half` after; trailing blanks dropped. */
+  /** Where a passage around a match ending at `e` ends: the last line end within `half` characters after it, else the
+    * last word end, else exactly `half` after; trailing blanks dropped.
+    */
   private[domain] def endOf(text: String, e: Int, half: Int): Int =
     val hi = (e + half).min(text.length)
     val finish =
@@ -203,9 +225,10 @@ object PassageFinder:
   private def dropBlanks(text: String, to: Int, downTo: Int): Int =
     if to > downTo && text.charAt(to - 1).isWhitespace then dropBlanks(text, to - 1, downTo) else to
 
-  /** The heading a body offset sits under: its chunk's breadcrumb, or — for a body stored without
-    * chunks, whose heading lines are still in the text — the nearest Markdown heading above it. */
-  private final class Headings(segments: Seq[Chunk], text: String):
+  /** The heading a body offset sits under: its chunk's breadcrumb, or — for a body stored without chunks, whose heading
+    * lines are still in the text — the nearest Markdown heading above it.
+    */
+  final private class Headings(segments: Seq[Chunk], text: String):
     private val starts: Array[Int] =
       segments.iterator.scanLeft(0)((at, c) => at + c.body.length + Separator.length).take(segments.size).toArray
 

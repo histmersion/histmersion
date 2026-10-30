@@ -5,22 +5,21 @@ import com.histmersion.api.given
 
 import java.nio.file.Paths
 
-/** Three surfaces take a SERVER-side path from the caller (`seed {dir}`, MCP `ingest {path}`, a
-  * note's `md_path`). Confinement to `corpus.dir` is what stops them being a file-read primitive. */
+/** Three surfaces take a SERVER-side path from the caller (`seed {dir}`, MCP `ingest {path}`, a note's `md_path`).
+  * Confinement to `corpus.dir` is what stops them being a file-read primitive.
+  */
 class SafePathSuite extends munit.FunSuite:
 
   private val base = Some("/srv/corpus")
 
   test("a path inside the corpus resolves"):
-    assertEquals(SafePath.confine(base, "/srv/corpus/sources").map(_.toString),
-      Right("/srv/corpus/sources"))
+    assertEquals(SafePath.confine(base, "/srv/corpus/sources").map(_.toString), Right("/srv/corpus/sources"))
 
   test("a RELATIVE path is resolved against the corpus, not the process's cwd"):
     assertEquals(SafePath.confine(base, "sources").map(_.toString), Right("/srv/corpus/sources"))
 
   test("escaping is refused, however it is spelled"):
-    List("/etc/passwd", "../../etc/passwd", "/srv/corpus/../etc", "/srv/corpus/a/../../etc",
-      "/srv/corpusevil")
+    List("/etc/passwd", "../../etc/passwd", "/srv/corpus/../etc", "/srv/corpus/a/../../etc", "/srv/corpusevil")
       .foreach(p => assert(SafePath.confine(base, p).isLeft, s"'$p' MUST be refused"))
 
   test("the refusal names the configured directory, so it is actionable"):

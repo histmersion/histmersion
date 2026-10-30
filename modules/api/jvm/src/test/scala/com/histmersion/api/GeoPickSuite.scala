@@ -1,8 +1,8 @@
 package com.histmersion.api
 
-
-/** How `GET /api/places/geo` reads its time parameters ([[GeoPick.resolve]]) — the map's "States
-  * shown" menu over a range. */
+/** How `GET /api/places/geo` reads its time parameters ([[GeoPick.resolve]]) — the map's "States shown" menu over a
+  * range.
+  */
 class GeoPickSuite extends munit.FunSuite:
   import GeoTime.*
 

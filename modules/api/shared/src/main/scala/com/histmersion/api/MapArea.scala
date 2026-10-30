@@ -1,7 +1,8 @@
 package com.histmersion.api
 
-/** An area of the background map the setup and Settings offer to download (`basemap.setup-areas`): what it is,
-  * its box (`world`, or `minLon,minLat,maxLon,maxLat`) and about how big its download is. */
+/** An area of the background map the setup and Settings offer to download (`basemap.setup-areas`): what it is, its box
+  * (`world`, or `minLon,minLat,maxLon,maxLat`) and about how big its download is.
+  */
 final case class MapArea(label: String, bbox: String, approxGb: Double)
 
 object MapArea:

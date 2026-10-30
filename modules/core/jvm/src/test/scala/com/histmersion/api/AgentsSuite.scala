@@ -5,7 +5,6 @@ import com.histmersion.domain.*
 import com.histmersion.config.given
 import com.histmersion.domain.given
 
-
 import com.histmersion.api.Agents.*
 
 class AgentsSuite extends munit.FunSuite:
@@ -21,13 +20,23 @@ class AgentsSuite extends munit.FunSuite:
     assert(ModelRef.parse("qwen").left.exists(_.contains("provider:model")))
 
   test("ModelRef: a plugin provider's name parses only while it is registered (known), never a host name"):
-    assert(ModelRef.parse("gemini:pro").left.exists(e => e.contains("unknown provider 'gemini'") && !e.contains("gemini,")))
+    assert(
+      ModelRef.parse("gemini:pro").left.exists(e => e.contains("unknown provider 'gemini'") && !e.contains("gemini,"))
+    )
     assertEquals(ModelRef.parse("gemini:pro", Set("gemini")), Right(ModelRef(ProviderKind.Plugin("gemini"), "pro")))
     assertEquals(ModelRef.parse(" Gemini:pro:v2 ", Set("gemini")).map(_.wire), Right("gemini:pro:v2"))
     // a host name stays the host's, whatever a plugin claims
     assertEquals(ModelRef.parse("local:x", Set("local")), Right(ModelRef(ProviderKind.Local, "x")))
-    assert(ModelRef.parse("ollama:x", Set("gemini")).left.exists(_.contains("one of: anthropic, openai, local, claude-code, codex, opencode, gemini")))
-    assertEquals(ProviderKind.values.map(_.wire), List("anthropic", "openai", "local", "claude-code", "codex", "opencode"))
+    assert(
+      ModelRef
+        .parse("ollama:x", Set("gemini"))
+        .left
+        .exists(_.contains("one of: anthropic, openai, local, claude-code, codex, opencode, gemini"))
+    )
+    assertEquals(
+      ProviderKind.values.map(_.wire),
+      List("anthropic", "openai", "local", "claude-code", "codex", "opencode")
+    )
     assert(!ProviderKind.Plugin("gemini").isCli)
 
   test("a plugin provider's model is metered: no plan pool, paid, needs a price"):
@@ -35,8 +44,10 @@ class AgentsSuite extends munit.FunSuite:
     assertEquals(PlanQuota.poolOf(m, PlanQuota.Logins()), None)
     assert(PlanQuota.paid(m, PlanQuota.Logins()))
     assert(Prices.billing(Map.empty, m, None).left.exists(_.contains("model 'pro' has no price")))
-    assertEquals(Prices.billing(Map("pro" -> Price(BigDecimal(1), BigDecimal(2))), m, None),
-      Right(Billing.Metered(Price(BigDecimal(1), BigDecimal(2)))))
+    assertEquals(
+      Prices.billing(Map("pro" -> Price(BigDecimal(1), BigDecimal(2))), m, None),
+      Right(Billing.Metered(Price(BigDecimal(1), BigDecimal(2))))
+    )
 
   test("Prices: two or four numbers per model, ; separated"):
     val p = Prices.parse("qwen2.5-coder:32b=0/0; claude-x=3/15/0.3/3.75").toOption.get
@@ -66,9 +77,13 @@ class AgentsSuite extends munit.FunSuite:
     assertEquals(b.map(_.cost(Usage(1000000, 1000000))), Right(BigDecimal(0)))
     assertEquals(b.map(_.describe), Right("plan pool: claude-plan"))
     // a price in the table does not make a plan model metered
-    assert(Prices.billing(Map("sonnet" -> Price(BigDecimal(3), BigDecimal(15))), plan, Some(PlanQuota.PoolId.ClaudePlan))
-      .exists(_.isInstanceOf[Billing.Plan]))
-    val m = Prices.billing(Map("m" -> Price(BigDecimal(3), BigDecimal(15))), ModelRef(ProviderKind.Anthropic, "m"), None)
+    assert(
+      Prices
+        .billing(Map("sonnet" -> Price(BigDecimal(3), BigDecimal(15))), plan, Some(PlanQuota.PoolId.ClaudePlan))
+        .exists(_.isInstanceOf[Billing.Plan])
+    )
+    val m =
+      Prices.billing(Map("m" -> Price(BigDecimal(3), BigDecimal(15))), ModelRef(ProviderKind.Anthropic, "m"), None)
     assertEquals(m.map(_.cost(Usage(1000000, 0))), Right(BigDecimal(3)))
     assertEquals(m.map(_.describe), Right("price: 3/15 USD per million tokens"))
 
@@ -80,7 +95,10 @@ class AgentsSuite extends munit.FunSuite:
 
   test("price text: two or four numbers, trailing zeros dropped"):
     assertEquals(Price(BigDecimal("3.00"), BigDecimal(15)).text, "3/15")
-    assertEquals(Price(BigDecimal(3), BigDecimal(15), Some(BigDecimal("0.3")), Some(BigDecimal("3.75"))).text, "3/15/0.3/3.75")
+    assertEquals(
+      Price(BigDecimal(3), BigDecimal(15), Some(BigDecimal("0.3")), Some(BigDecimal("3.75"))).text,
+      "3/15/0.3/3.75"
+    )
 
   test("RunState: legal transitions only; resume is paused → queued"):
     import RunState.*
@@ -141,45 +159,102 @@ class AgentsSuite extends munit.FunSuite:
 
   test("Markdown: a plan and a draft as a person reads them before approving; a goal with its links and schedules"):
     import GoalPlans.*
-    val plan = Plan("g", "covers it", List(PlannedGoal("g-sub", "Sub")), List("tin isotopes"),
+    val plan = Plan(
+      "g",
+      "covers it",
+      List(PlannedGoal("g-sub", "Sub")),
+      List("tin isotopes"),
       List(PlannedWork("10.1000/x", Some("X"), Some(2020), citekey = Some("x2020_y"), inCorpus = true, why = "core")),
-      List("10.1000/z: not verified upstream"))
-    val a = ApprovalInfo(7, Some("run12345"), "goal-plan", "", evidence = "covers it", subject = Some("g"), plan = Some(plan))
+      List("10.1000/z: not verified upstream")
+    )
+    val a =
+      ApprovalInfo(7, Some("run12345"), "goal-plan", "", evidence = "covers it", subject = Some("g"), plan = Some(plan))
     val md = AgentsMarkdown.approvals(List(a))
     assert(md.contains("plan for goal **g**: 1 sub-goal(s), 1 query(ies), 1 work(s)"), md)
     assert(md.contains("in the corpus as [[x2020_y]]: core") && md.contains("dropped: 10.1000/z"), md)
     assertEquals(md.split("covers it", -1).length - 1, 1, "the rationale is shown once")
-    val d = ArticleDraft("tin", DraftMode.Extend, "Tin", "concept", "New text [[x2020_y]].", section = Some("## Disagreements"),
-      problems = List("a paragraph with no [[citekey]]"))
+    val d = ArticleDraft(
+      "tin",
+      DraftMode.Extend,
+      "Tin",
+      "concept",
+      "New text [[x2020_y]].",
+      section = Some("## Disagreements"),
+      problems = List("a paragraph with no [[citekey]]")
+    )
     val pub = ApprovalInfo(8, None, "article-publish", "", subject = Some("tin"), article = Some(d))
     val md2 = AgentsMarkdown.approvals(List(pub))
-    assert(md2.contains("publish a section appended to [[tin]]") && md2.contains("under '## Disagreements'") &&
-      md2.contains("- self-check: a paragraph with no [[citekey]]") && md2.contains("New text [[x2020_y]]."), md2)
-    val s = GoalSchedule("g", ScheduleKind.Currency, "@daily", enabled = false, Some(0.5), None, None, Some("abcdef123"), Some("skipped: x"))
-    assertEquals(AgentsMarkdown.scheduleLine(s), "g · currency · `@daily` · off · cap 0.5000 USD · last run abcdef12 · skipped: x")
-    val v = GoalView(Goal("g", "G", "planned"), links = List(GoalLink(LinkKind.Source, "gone2020_x"), GoalLink(LinkKind.Query, "q")),
-      schedules = List(s))
+    assert(
+      md2.contains("publish a section appended to [[tin]]") && md2.contains("under '## Disagreements'") &&
+        md2.contains("- self-check: a paragraph with no [[citekey]]") && md2.contains("New text [[x2020_y]]."),
+      md2
+    )
+    val s = GoalSchedule(
+      "g",
+      ScheduleKind.Currency,
+      "@daily",
+      enabled = false,
+      Some(0.5),
+      None,
+      None,
+      Some("abcdef123"),
+      Some("skipped: x")
+    )
+    assertEquals(
+      AgentsMarkdown.scheduleLine(s),
+      "g · currency · `@daily` · off · cap 0.5000 USD · last run abcdef12 · skipped: x"
+    )
+    val v = GoalView(
+      Goal("g", "G", "planned"),
+      links = List(GoalLink(LinkKind.Source, "gone2020_x"), GoalLink(LinkKind.Query, "q")),
+      schedules = List(s)
+    )
     val md3 = AgentsMarkdown.goalView(v)
-    assert(md3.contains("- source: [[gone2020_x]] (missing)") && md3.contains("- query: \"q\"") && md3.contains("## Schedules"), md3)
+    assert(
+      md3.contains("- source: [[gone2020_x]] (missing)") && md3.contains("- query: \"q\"") && md3.contains(
+        "## Schedules"
+      ),
+      md3
+    )
 
   // ── #992 ───────────────────────────────────────────────────────────────────────────────────────
 
   test("ModelOverride: role=provider:model, only the first = separates; a missing role or model is an error"):
-    assertEquals(ModelOverride.parse(" Skeptic = claude-code:haiku "), Right(ModelOverride("skeptic", "claude-code:haiku")))
-    assertEquals(ModelOverride.parse("fixer=local:a > anthropic:b"), Right(ModelOverride("fixer", "local:a > anthropic:b")))
+    assertEquals(
+      ModelOverride.parse(" Skeptic = claude-code:haiku "),
+      Right(ModelOverride("skeptic", "claude-code:haiku"))
+    )
+    assertEquals(
+      ModelOverride.parse("fixer=local:a > anthropic:b"),
+      Right(ModelOverride("fixer", "local:a > anthropic:b"))
+    )
     assert(ModelOverride.parse("skeptic").left.exists(_.contains("<role>=<provider:model>")))
     assert(ModelOverride.parse("=local:x").left.exists(_.contains("names no role")))
     assert(ModelOverride.parse("skeptic=").left.exists(_.contains("names no model")))
 
   test("a run's model for a role: its --model-for, else its --model, else none (the role's chain)"):
-    val r = RunInfo("r", "review-article", "x", "queued", model = Some("anthropic:all"),
-      params = RunParams(modelFor = Some(List(ModelOverride("skeptic", "claude-code:haiku")))))
+    val r = RunInfo(
+      "r",
+      "review-article",
+      "x",
+      "queued",
+      model = Some("anthropic:all"),
+      params = RunParams(modelFor = Some(List(ModelOverride("skeptic", "claude-code:haiku"))))
+    )
     assertEquals(r.modelFor(Role.Skeptic), Some("claude-code:haiku"))
     assertEquals(r.modelFor(Role.Reviewer), Some("anthropic:all"))
     assertEquals(RunInfo("r", "p", "x", "queued").modelFor(Role.Fixer), None)
 
   test("a step's model: the configured ref, and the provider's id when it said another"):
-    val s = StepInfo(1, "skeptic-1", "llm", 1, "done", model = Some("claude-code:haiku"), actualModel = Some("claude-haiku-5-5"))
+    val s = StepInfo(
+      1,
+      "skeptic-1",
+      "llm",
+      1,
+      "done",
+      model = Some("claude-code:haiku"),
+      actualModel = Some("claude-haiku-5-5")
+    )
     assertEquals(s.modelText, "claude-code:haiku → claude-haiku-5-5")
     assertEquals(s.copy(actualModel = Some("haiku")).modelText, "claude-code:haiku")
     assertEquals(s.copy(actualModel = None).modelText, "claude-code:haiku")
@@ -187,20 +262,66 @@ class AgentsSuite extends munit.FunSuite:
     assertEquals(StepInfo(1, "load", "code", 1, "done").modelText, "")
 
   test("agent show: an LLM step's tokens carry its first call's input and its turns (V072); older steps show neither"):
-    val s = StepInfo(2, "notes", "llm", 1, "done", model = Some("claude-code:sonnet"), usage = Usage(41000, 900),
-      firstCallTokens = Some(6963), turns = Some(9))
-    val d = RunDetail(RunInfo("r1", "enrich-source", "x2020", "done"), List(s, s.copy(seq = 3, firstCallTokens = None, turns = None)), Nil)
+    val s = StepInfo(
+      2,
+      "notes",
+      "llm",
+      1,
+      "done",
+      model = Some("claude-code:sonnet"),
+      usage = Usage(41000, 900),
+      firstCallTokens = Some(6963),
+      turns = Some(9)
+    )
+    val d = RunDetail(
+      RunInfo("r1", "enrich-source", "x2020", "done"),
+      List(s, s.copy(seq = 3, firstCallTokens = None, turns = None)),
+      Nil
+    )
     val md = AgentsMarkdown.run(d, withMessages = false)
-    assert(md.contains("| 2 | notes | llm | 1 | done | claude-code:sonnet | 41000/900 · first call 6963 tok · 9 turns | "), md)
+    assert(
+      md.contains("| 2 | notes | llm | 1 | done | claude-code:sonnet | 41000/900 · first call 6963 tok · 9 turns | "),
+      md
+    )
     assert(md.contains("| 3 | notes | llm | 1 | done | claude-code:sonnet | 41000/900 | "), md)
 
   test("a dry run is marked in the run line and the run, and each skipped write is shown with its payload"):
-    val r = RunInfo("r1", "enrich-source", "x2020", "done", dryRun = true,
-      params = RunParams(modelFor = Some(List(ModelOverride("extractor", "local:h")))))
-    assert(AgentsMarkdown.runLine(r).contains("(dry run, writes nothing, extractor=local:h)"), AgentsMarkdown.runLine(r))
-    val d = RunDetail(r, List(StepInfo(8, "patch", "code", 1, "done", wouldWrite = List(WouldWrite("patch [[x2020]]: summary", """{"summary":"S"}""")))), Nil)
+    val r = RunInfo(
+      "r1",
+      "enrich-source",
+      "x2020",
+      "done",
+      dryRun = true,
+      params = RunParams(modelFor = Some(List(ModelOverride("extractor", "local:h"))))
+    )
+    assert(
+      AgentsMarkdown.runLine(r).contains("(dry run, writes nothing, extractor=local:h)"),
+      AgentsMarkdown.runLine(r)
+    )
+    val d = RunDetail(
+      r,
+      List(
+        StepInfo(
+          8,
+          "patch",
+          "code",
+          1,
+          "done",
+          wouldWrite = List(WouldWrite("patch [[x2020]]: summary", """{"summary":"S"}"""))
+        )
+      ),
+      Nil
+    )
     val md = AgentsMarkdown.run(d, withMessages = false)
     assert(md.startsWith("# Agent run r1 (dry run)"), md)
-    assert(md.contains("| 8 | patch | code | 1 | done |  | 0/0 | 0.0000 | dry run: not written: patch [[x2020]]: summary |"), md)
-    assert(md.contains("### patch: patch [[x2020]]: summary — dry run: not written\n\n```json\n{\"summary\":\"S\"}\n```"), md)
-    assert(!AgentsMarkdown.run(d.copy(run = r.copy(dryRun = false), steps = Nil), withMessages = false).contains("dry run"))
+    assert(
+      md.contains("| 8 | patch | code | 1 | done |  | 0/0 | 0.0000 | dry run: not written: patch [[x2020]]: summary |"),
+      md
+    )
+    assert(
+      md.contains("### patch: patch [[x2020]]: summary — dry run: not written\n\n```json\n{\"summary\":\"S\"}\n```"),
+      md
+    )
+    assert(
+      !AgentsMarkdown.run(d.copy(run = r.copy(dryRun = false), steps = Nil), withMessages = false).contains("dry run")
+    )

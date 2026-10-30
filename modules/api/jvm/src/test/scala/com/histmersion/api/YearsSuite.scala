@@ -1,17 +1,35 @@
 package com.histmersion.api
 
-
-/** The one year module (#1798 item 4): parsing what a person types, the astronomical conversion, and
-  * every formatter agreeing on BCE/CE and on year 0 (shown as 1 BCE, never "0 CE"). */
+/** The one year module (#1798 item 4): parsing what a person types, the astronomical conversion, and every formatter
+  * agreeing on BCE/CE and on year 0 (shown as 1 BCE, never "0 CE").
+  */
 class YearsSuite extends munit.FunSuite:
 
   // ── parse: a table of what a person types ─────────────────────────────────────────────────────
   private val accepted: List[(String, Long)] = List(
-    "1300 BCE" -> -1300, "1300 BC" -> -1300, "1300bce" -> -1300, "1300 b.c." -> -1300, "1300 B.C.E." -> -1300,
-    "c. 1200 BCE" -> -1200, "ca 1200 BC" -> -1200, "circa 3300 BCE" -> -3300, "1,200 BCE" -> -1200,
-    "-1300" -> -1300, "-1300 BCE" -> -1300, "+530" -> 530, "530" -> 530, "530 CE" -> 530, "530 AD" -> 530,
-    "AD 530" -> 530, "A.D. 530" -> 530, "530ce" -> 530, "1 BCE" -> -1, "1 CE" -> 1, "  2026  " -> 2026,
-    "-3300000" -> -3300000)
+    "1300 BCE" -> -1300,
+    "1300 BC" -> -1300,
+    "1300bce" -> -1300,
+    "1300 b.c." -> -1300,
+    "1300 B.C.E." -> -1300,
+    "c. 1200 BCE" -> -1200,
+    "ca 1200 BC" -> -1200,
+    "circa 3300 BCE" -> -3300,
+    "1,200 BCE" -> -1200,
+    "-1300" -> -1300,
+    "-1300 BCE" -> -1300,
+    "+530" -> 530,
+    "530" -> 530,
+    "530 CE" -> 530,
+    "530 AD" -> 530,
+    "AD 530" -> 530,
+    "A.D. 530" -> 530,
+    "530ce" -> 530,
+    "1 BCE" -> -1,
+    "1 CE" -> 1,
+    "  2026  " -> 2026,
+    "-3300000" -> -3300000
+  )
 
   accepted.foreach { (in, want) =>
     test(s"parse '$in' = $want"):
@@ -83,7 +101,10 @@ class YearsSuite extends munit.FunSuite:
 
   test("goal periods print in BCE/CE, not as raw signed years (#1798)"):
     val g = Goal("g", "A goal", "active", None, Nil, Nil, Some(-1200), Some(-1000), None, None)
-    assert(Markdown.goalList(GoalList(1, List(g))).contains("(1200 BCE–1000 BCE)"), Markdown.goalList(GoalList(1, List(g))))
+    assert(
+      Markdown.goalList(GoalList(1, List(g))).contains("(1200 BCE–1000 BCE)"),
+      Markdown.goalList(GoalList(1, List(g)))
+    )
     assert(Markdown.goal(g).contains("**Period:** 1200 BCE–1000 BCE"), Markdown.goal(g))
     assert(!Markdown.goal(g).contains("-1200"))
     val open = g.copy(periodEnd = None)

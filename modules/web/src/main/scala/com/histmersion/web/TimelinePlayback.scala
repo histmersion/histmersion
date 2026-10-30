@@ -9,9 +9,9 @@ import scala.scalajs.js
 
 object TimelinePlayback:
 
-  private val playing   = Var(false)
-  private val playhead  = Var(0L)
-  private val speed     = Var(1.0)
+  private val playing = Var(false)
+  private val playhead = Var(0L)
+  private val speed = Var(1.0)
   private val windowHalf = Var(Layout.playbackWindowHalf)
 
   private var frameId: Int = 0
@@ -60,7 +60,9 @@ object TimelinePlayback:
         cls := "btn btn--toggle tl-play",
         idAttr := "tl-play",
         aria.pressed <-- playing.signal.map(_.toString),
-        child.text <-- playing.signal.combineWith(paused.signal).map((p, held) => if p then "⏸ Pause" else if held then "▶ Resume" else "▶ Play"),
+        child.text <-- playing.signal
+          .combineWith(paused.signal)
+          .map((p, held) => if p then "⏸ Pause" else if held then "▶ Resume" else "▶ Play"),
         title <-- playing.signal.map(p => if p then "Pause the playback" else "Play the span year by year"),
         aria.label <-- playing.signal.map(p => if p then "pause" else "play"),
         onClick --> { _ =>
@@ -101,7 +103,7 @@ object TimelinePlayback:
         cls := "tl-play-year",
         child.text <-- playheadPos.signal.map {
           case Some(ph) => Fmt.yr(ph)
-          case None => ""
+          case None     => ""
         }
       )
     )
@@ -120,8 +122,7 @@ object TimelinePlayback:
     MapView.setPlaybackMode(true)
     // the filter's events over the span played, fetched once; each frame then draws them locally
     if eventsConfig != null then
-      EventLayer.start(eventsConfig,
-        Api.EventQuery(UiState.toFilter().copy(period = Some(Period(sf, st)))))
+      EventLayer.start(eventsConfig, Api.EventQuery(UiState.toFilter().copy(period = Some(Period(sf, st)))))
     playing.set(true)
     lastTs = 0.0
     tick(0.0)
@@ -165,11 +166,12 @@ object TimelinePlayback:
         feed.frame(next, yearsPerSecond)
         frameId = dom.window.requestAnimationFrame((t: Double) => tick(t))
 
-  /** The map follows the playhead from findings fetched ahead ([[PlaybackFeed]], #3764): it asked for
-    * each frame's window (~60 requests a second) and re-drew the map whenever an answer came, so the map
-    * changed at the rate answers arrived. Now one request covers [[Layout.playbackFetchSeconds]] of
-    * playback, and every frame draws its window from what is held — the first frames wait for the
-    * first answer. A frame's answer that arrives after playback stopped is not kept. */
+  /** The map follows the playhead from findings fetched ahead ([[PlaybackFeed]], #3764): it asked for each frame's
+    * window (~60 requests a second) and re-drew the map whenever an answer came, so the map changed at the rate answers
+    * arrived. Now one request covers [[Layout.playbackFetchSeconds]] of playback, and every frame draws its window from
+    * what is held — the first frames wait for the first answer. A frame's answer that arrives after playback stopped is
+    * not kept.
+    */
   private object feed:
     import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
     // `var`s: what is held and up to which year it covers; whether a request is out (and, after a
@@ -203,7 +205,8 @@ object TimelinePlayback:
     private def ask(f: Filter, period: (Long, Long)): Unit =
       asking = true
       val mine = generation
-      val q = Api.FindingsQuery.of(f.copy(period = Some(Period(period._1, period._2)), limit = Layout.playbackFetchLimit))
+      val q =
+        Api.FindingsQuery.of(f.copy(period = Some(Period(period._1, period._2)), limit = Layout.playbackFetchLimit))
       ApiClient.findings(q).onComplete { r =>
         if mine == generation then
           asking = false

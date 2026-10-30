@@ -22,15 +22,22 @@ object ConfigEditMarkdown:
       Option.when(f.credential.isEmpty)(f.default.map(v => s"- default: `$v`")).flatten,
       f.envVar.map(v => s"- environment variable: `$v`"),
       f.restart.map(w => s"- takes effect after a restart ($w)"),
-      f.locked.map(w => s"- **not changed from Settings:** $w"))
+      f.locked.map(w => s"- **not changed from Settings:** $w")
+    )
     lines.flatten.mkString("\n")
 
   def page(p: Page): String =
-    val head = List(s"# Settings", "", s"File: ${p.file.fold("none")(f => s"`$f`" + (if p.exists then "" else " (not there yet)"))}")
+    val head = List(
+      s"# Settings",
+      "",
+      s"File: ${p.file.fold("none")(f => s"`$f`" + (if p.exists then "" else " (not there yet)"))}"
+    )
     val problems = if p.problems.isEmpty then Nil else "" :: "**Problems:**" :: p.problems.map(x => s"- $x")
     val body = p.sections.flatMap { s =>
-      "" :: s"## ${s.id}" :: s.fields.map(f => s"- `${f.relative}` = ${shown(f)}" +
-        (if f.source == Source.Default.wire then "" else s" (${Source.parse(f.source).fold(f.source)(_.label)})"))
+      "" :: s"## ${s.id}" :: s.fields.map(f =>
+        s"- `${f.relative}` = ${shown(f)}" +
+          (if f.source == Source.Default.wire then "" else s" (${Source.parse(f.source).fold(f.source)(_.label)})")
+      )
     }
     (head ++ problems ++ body).mkString("\n")
 
@@ -46,4 +53,5 @@ object ConfigEditMarkdown:
       list("Warnings", w.warnings) ++
       w.reload.toList.flatMap(r => List("", ReloadMarkdown.report(r).replaceFirst("^# ", "### ")))).mkString("\n")
 
-  def restart(r: Restart): String = if r.accepted then s"# Restarting\n\n${r.message}" else s"# Not restarted\n\n${r.message}"
+  def restart(r: Restart): String =
+    if r.accepted then s"# Restarting\n\n${r.message}" else s"# Not restarted\n\n${r.message}"

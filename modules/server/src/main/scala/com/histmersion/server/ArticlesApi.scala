@@ -14,19 +14,17 @@ import com.histmersion.domain.*
 // never named here — the handlers hand back `ArticleView`.
 import com.histmersion.server.Article
 
-
-/** ARTICLES over HTTP (plan §5.2 stream 2.7): the REST routes of the compiled wiki plus the rendered
-  * page at `/article/{slug}`.
+/** ARTICLES over HTTP (plan §5.2 stream 2.7): the REST routes of the compiled wiki plus the rendered page at
+  * `/article/{slug}`.
   *
-  * The page is the twin of `/source/{citekey}` — same stylesheet, same modal fragment protocol
-  * (`?fragment=true`), same `?q=` term highlighting — but its wikilinks resolve BOTH ways:
-  * `[[citekey]]` → `/source/citekey` for the sources the article cites, `[[slug]]` → `/article/slug`
-  * for everything else, and neither when nothing in the corpus answers to the name.
+  * The page is the twin of `/source/{citekey}` — same stylesheet, same modal fragment protocol (`?fragment=true`), same
+  * `?q=` term highlighting — but its wikilinks resolve BOTH ways: `[[citekey]]` → `/source/citekey` for the sources the
+  * article cites, `[[slug]]` → `/article/slug` for everything else, and neither when nothing in the corpus answers to
+  * the name.
   *
-  * Resolution is [[Handlers.pageLinks]], NOT the article's own `sourcesCited` list: the wiki
-  * writes citekey ALIASES (`[[allentoft2015]]` for `allentoft2015_population`), which never appear
-  * in `article_links` verbatim and used to fall through to `/article/allentoft2015` — a 404 on every
-  * citation in the corpus.
+  * Resolution is [[Handlers.pageLinks]], NOT the article's own `sourcesCited` list: the wiki writes citekey ALIASES
+  * (`[[allentoft2015]]` for `allentoft2015_population`), which never appear in `article_links` verbatim and used to
+  * fall through to `/article/allentoft2015` — a 404 on every citation in the corpus.
   */
 final class ArticlesApi(h: Handlers):
 
@@ -66,12 +64,15 @@ final class ArticlesApi(h: Handlers):
             (sttp.model.StatusCode.Ok, if fragment then inner else Article.page(title, inner, PageKind.Article))
           case None =>
             val body = s"<p>No article <code>${Article.esc(slug)}</code>.</p>"
-            (sttp.model.StatusCode.NotFound,
-              if fragment then body else Article.page("Not found", body, PageKind.Article))
+            (
+              sttp.model.StatusCode.NotFound,
+              if fragment then body else Article.page("Not found", body, PageKind.Article)
+            )
       }
 
-  /** `/articles` — the address people guess for "the wiki"; it is the `index` article (the compiled
-    * map of content), so redirect rather than keep a second listing page in sync. */
+  /** `/articles` — the address people guess for "the wiki"; it is the `index` article (the compiled map of content), so
+    * redirect rather than keep a second listing page in sync.
+    */
   private val listRedirect: ServerEndpoint[Any, Identity] =
     endpoint.get
       .in("articles")

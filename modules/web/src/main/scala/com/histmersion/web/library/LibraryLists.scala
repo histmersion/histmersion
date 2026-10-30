@@ -9,20 +9,21 @@ import org.scalajs.dom
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
-/** Library's two lists, a page at a time: the sources and the articles the filter panel selects (the
-  * map's view never narrows them: Library lists everywhere), the sources in [[LibrarySort]]'s order. Both
-  * are read whenever the filter changes, so both tabs show their counts; a page of one is read when it is
-  * turned to. A list read for the same filter, order and page is not read again. */
+/** Library's two lists, a page at a time: the sources and the articles the filter panel selects (the map's view never
+  * narrows them: Library lists everywhere), the sources in [[LibrarySort]]'s order. Both are read whenever the filter
+  * changes, so both tabs show their counts; a page of one is read when it is turned to. A list read for the same
+  * filter, order and page is not read again.
+  */
 object LibraryLists:
 
-  val sources: Var[ListPage[Hit]]             = Var(ListPage())
+  val sources: Var[ListPage[Hit]] = Var(ListPage())
   val articles: Var[ListPage[ArticleSummary]] = Var(ListPage())
 
-  private val latestSources  = Latest()
+  private val latestSources = Latest()
   private val latestArticles = Latest()
   // `var`s: what the lists were last read for (the filter and the order), the pending reread
   private var readFor: Option[String] = None
-  private var timer: Int              = 0
+  private var timer: Int = 0
 
   def sort: LibrarySort = LibrarySort.of(UiState.librarySort.now())
 
@@ -58,16 +59,20 @@ object LibraryLists:
     val page = f.copy(sort = sort.sort, limit = Layout.libraryPage, offset = offset)
     latestSources(ApiClient.sources(page))(
       r => sources.set(ListPage(r.hits, r.offset, r.total, loaded = true)),
-      m => sources.update(_.copy(loading = false, loaded = true, error = Some(m))))
+      m => sources.update(_.copy(loading = false, loaded = true, error = Some(m)))
+    )
 
   private def readArticles(f: Filter, offset: Int): Unit =
     articles.update(_.copy(loading = true, error = None))
     val page = f.copy(limit = Layout.libraryPage, offset = offset)
     latestArticles(ApiClient.articles(Api.ArticleQuery(page)))(
       r => articles.set(ListPage(r.articles, r.offset, r.total, loaded = true)),
-      m => articles.update(_.copy(loading = false, loaded = true, error = Some(m))))
+      m => articles.update(_.copy(loading = false, loaded = true, error = Some(m)))
+    )
 
   /** How many sources and articles the collection holds, whatever the filter: "Everything"'s count. */
   def everything(): Future[Int] =
-    ApiClient.sources(Filter(limit = 1)).zip(ApiClient.articles(Api.ArticleQuery(Filter(limit = 1))))
+    ApiClient
+      .sources(Filter(limit = 1))
+      .zip(ApiClient.articles(Api.ArticleQuery(Filter(limit = 1))))
       .map((s, a) => s.total + a.total)

@@ -9,7 +9,7 @@ class TimelineCurveSuite extends munit.FunSuite:
     counts.toList.zipWithIndex.map((c, i) => TimeBucket(i * 10L, i * 10L + 9, c))
 
   private val base = 40.0
-  private val top  = 4.0
+  private val top = 4.0
 
   test("a point per bucket at its middle year, the largest count at the top, none on the baseline") {
     val pts = points(buckets(0, 5, 10), 0L, 30L, 300.0, base, top)
@@ -26,10 +26,10 @@ class TimelineCurveSuite extends munit.FunSuite:
     val pts = points(buckets(1, 4, 2, 9, 3, 3, 7, 0, 5), 0L, 90L, 450.0, base, top)
     val segs = segments(pts)
     assertEquals(segs.length, pts.length - 1)
-    segs.zip(pts.tail).foreach((s, p) => { assertEqualsDouble(s.x, p.x, 1e-9); assertEqualsDouble(s.y, p.y, 1e-9) })
+    segs.zip(pts.tail).foreach { (s, p) => assertEqualsDouble(s.x, p.x, 1e-9); assertEqualsDouble(s.y, p.y, 1e-9) }
     // C1: the control points either side of an inner point are collinear with it
     segs.zip(segs.tail).foreach { (a, b) =>
-      val inSlope  = (a.y - a.c2y) / (a.x - a.c2x)
+      val inSlope = (a.y - a.c2y) / (a.x - a.c2x)
       val outSlope = (b.c1y - a.y) / (b.c1x - a.x)
       assertEqualsDouble(inSlope, outSlope, 1e-9)
     }
@@ -55,8 +55,8 @@ class TimelineCurveSuite extends munit.FunSuite:
   test("a flat run is drawn flat, and a peak is a level top") {
     val pts = points(buckets(3, 3, 3, 9, 3), 0L, 50L, 250.0, base, top)
     val t = tangents(pts.map(_.x), pts.map(_.y))
-    assertEqualsDouble(t(1), 0.0, 1e-12)   // inside the plateau
-    assertEqualsDouble(t(3), 0.0, 1e-12)   // the peak
+    assertEqualsDouble(t(1), 0.0, 1e-12) // inside the plateau
+    assertEqualsDouble(t(3), 0.0, 1e-12) // the peak
   }
 
   test("the paths: an area closed on the baseline, a line through the points; one point is a sliver") {
@@ -70,7 +70,7 @@ class TimelineCurveSuite extends munit.FunSuite:
   }
 
   test("nearest: the point closest to a screen x, either side") {
-    val pts = points(buckets(1, 2, 3, 4), 0L, 40L, 400.0, base, top)   // x = 45, 145, 245, 345
+    val pts = points(buckets(1, 2, 3, 4), 0L, 40L, 400.0, base, top) // x = 45, 145, 245, 345
     assertEquals(nearest(pts, -10).map(_.x), Some(45.0))
     assertEquals(nearest(pts, 94).map(_.x), Some(45.0))
     assertEquals(nearest(pts, 96).map(_.x), Some(145.0))
@@ -88,7 +88,10 @@ class TimelineCurveSuite extends munit.FunSuite:
   }
 
   test("the hover says the bucket's years and its exact count") {
-    assertEquals(TimelineView.hoverText(TimeBucket(-1200L, -1151L, 12)), s"${Fmt.yr(-1200L)}–${Fmt.yr(-1151L)}: 12 sources")
+    assertEquals(
+      TimelineView.hoverText(TimeBucket(-1200L, -1151L, 12)),
+      s"${Fmt.yr(-1200L)}–${Fmt.yr(-1151L)}: 12 sources"
+    )
     assertEquals(TimelineView.hoverText(TimeBucket(500L, 500L, 1)), s"${Fmt.yr(500L)}: 1 source")
   }
 

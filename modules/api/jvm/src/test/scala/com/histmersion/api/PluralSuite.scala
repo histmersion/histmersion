@@ -1,6 +1,5 @@
 package com.histmersion.api
 
-
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 
@@ -16,10 +15,18 @@ class PluralSuite extends munit.FunSuite:
   test("no count picks its noun's ending by hand"):
     val root = Path.of(sys.props.getOrElse("histmersion.repoRoot", ".")).resolve("modules")
     val handRolled = List("""== 1 then "" else "s"""", """== 1 then "y" else "ies"""")
-    val offenders = Files.walk(root).iterator.asScala
+    val offenders = Files
+      .walk(root)
+      .iterator
+      .asScala
       // the web module's three are the web stream's to move (#1946 left them to it)
-      .filter(p => p.toString.endsWith(".scala") && p.toString.contains("/src/main/") && !p.toString.contains("/modules/web/"))
-      .flatMap(p => Files.readAllLines(p).asScala.zipWithIndex.collect {
-        case (l, i) if handRolled.exists(l.contains) => s"$p:${i + 1}: ${l.trim}"
-      }).toList
+      .filter(p =>
+        p.toString.endsWith(".scala") && p.toString.contains("/src/main/") && !p.toString.contains("/modules/web/")
+      )
+      .flatMap(p =>
+        Files.readAllLines(p).asScala.zipWithIndex.collect {
+          case (l, i) if handRolled.exists(l.contains) => s"$p:${i + 1}: ${l.trim}"
+        }
+      )
+      .toList
     assertEquals(offenders, Nil, "use Plural.noun / Plural.count")

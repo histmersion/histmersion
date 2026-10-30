@@ -7,21 +7,22 @@ import java.io.{EOFException, FilterInputStream, InputStream, OutputStream}
 import java.nio.charset.StandardCharsets.{US_ASCII, UTF_8}
 import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 
-/** The container of a `.hmx` bundle: a POSIX ustar archive, gzip-compressed — written and read as a
-  * STREAM, so 1.6 GB of assets never sit in memory, and DETERMINISTIC, so two exports of an
-  * unchanged database are byte-identical: every header has mode 0644, owner 0/0, mtime 0 and no user
-  * names, entries come in the order the writer is given them, and gzip's own header carries no
-  * timestamp (`GZIPOutputStream` writes MTIME 0).
+/** The container of a `.hmx` bundle: a POSIX ustar archive, gzip-compressed — written and read as a STREAM, so 1.6 GB
+  * of assets never sit in memory, and DETERMINISTIC, so two exports of an unchanged database are byte-identical: every
+  * header has mode 0644, owner 0/0, mtime 0 and no user names, entries come in the order the writer is given them, and
+  * gzip's own header carries no timestamp (`GZIPOutputStream` writes MTIME 0).
   *
-  * Hand-written rather than a dependency: ustar is 512-byte blocks of fixed-width ASCII fields, and
-  * a new library would bring its own native-image metadata. Only what a bundle needs is supported —
-  * regular files, names up to 100 bytes (a blob path is 80), sizes under 8 GiB.
+  * Hand-written rather than a dependency: ustar is 512-byte blocks of fixed-width ASCII fields, and a new library would
+  * bring its own native-image metadata. Only what a bundle needs is supported — regular files, names up to 100 bytes (a
+  * blob path is 80), sizes under 8 GiB.
   *
-  * zstd (which the design named) would need a JNI library; gzip is in the JDK. */
+  * zstd (which the design named) would need a JNI library; gzip is in the JDK.
+  */
 object BundleTar:
 
-  val Block      = 512
-  val MaxName    = 100
+  val Block = 512
+  val MaxName = 100
+
   /** 11 octal digits. */
   val MaxSize: Long = (1L << 33) - 1
 
@@ -36,15 +37,15 @@ object BundleTar:
         val b = s.getBytes(US_ASCII)
         System.arraycopy(b, 0, h, off, b.length)
       System.arraycopy(nameBytes, 0, h, 0, nameBytes.length)
-      put(100, "0000644\u0000")             // mode
-      put(108, "0000000\u0000")             // uid
-      put(116, "0000000\u0000")             // gid
-      put(124, f"$size%011o\u0000")         // size
-      put(136, "00000000000\u0000")         // mtime
-      put(148, "        ")                  // checksum, as spaces while it is summed
-      h(156) = '0'.toByte                   // typeflag: regular file
-      put(257, "ustar\u0000")               // magic
-      put(263, "00")                        // version
+      put(100, "0000644\u0000") // mode
+      put(108, "0000000\u0000") // uid
+      put(116, "0000000\u0000") // gid
+      put(124, f"$size%011o\u0000") // size
+      put(136, "00000000000\u0000") // mtime
+      put(148, "        ") // checksum, as spaces while it is summed
+      h(156) = '0'.toByte // typeflag: regular file
+      put(257, "ustar\u0000") // magic
+      put(263, "00") // version
       val sum = h.foldLeft(0)((acc, b) => acc + (b & 0xff))
       put(148, f"$sum%06o\u0000 ")
       Right(h)
@@ -63,10 +64,11 @@ object BundleTar:
         if s.isEmpty then Some(0L) else scala.util.Try(java.lang.Long.parseLong(s, 8)).toOption
       val stored = octal(148, 8)
       val actual = h.zipWithIndex.foldLeft(0L) { case (acc, (b, i)) =>
-        acc + (if i >= 148 && i < 156 then ' '.toInt else b & 0xff) }
+        acc + (if i >= 148 && i < 156 then ' '.toInt else b & 0xff)
+      }
       val typeflag = h(156).toChar
-      val prefix   = field(345, 155)
-      val name     = if prefix.isEmpty then field(0, 100) else s"$prefix/${field(0, 100)}"
+      val prefix = field(345, 155)
+      val name = if prefix.isEmpty then field(0, 100) else s"$prefix/${field(0, 100)}"
       if !stored.contains(actual) then Left(s"$name: header checksum mismatch")
       else if typeflag != '0' && typeflag != '\u0000' then Left(s"$name: not a regular file (type '$typeflag')")
       else octal(124, 12).toRight(s"$name: unreadable size").map(size => Some(Entry(name, size)))
@@ -100,7 +102,7 @@ object BundleTar:
       gz.flush()
 
   /** Counts what passes through, and never closes the stream underneath. */
-  private final class Counting(underlying: OutputStream) extends OutputStream:
+  final private class Counting(underlying: OutputStream) extends OutputStream:
     // a var: the running byte count of a stream, read once after the body has written
     var count: Long = 0L
     override def write(b: Int): Unit = { underlying.write(b); count += 1 }
@@ -109,28 +111,33 @@ object BundleTar:
 
   // ── reading ────────────────────────────────────────────────────────────────────────────────
 
-  /** A tar.gz being read from `in`, entry by entry. `next` skips whatever the previous entry's
-    * reader left unread. */
+  /** A tar.gz being read from `in`, entry by entry. `next` skips whatever the previous entry's reader left unread.
+    */
   final class Reader(in: InputStream):
     private val gz = GZIPInputStream(in, 1 << 16)
     // the entry being read and how much of it (plus padding) is still ahead
     private var remaining: Long = 0L
-    private var pad: Int        = 0
+    private var pad: Int = 0
 
     def next(): Either[String, Option[Entry]] =
-      scala.util.Try {
-        skipFully(remaining + pad)
-        remaining = 0L; pad = 0
-        val h = readBlock()
-        h
-      }.toEither.left.map(e => s"truncated bundle: ${e.getMessage}").flatMap {
-        case None    => Right(None)   // the stream ended without the end blocks — tolerated as EOF
-        case Some(h) =>
-          parseHeader(h).map(_.map { e =>
-            remaining = e.size; pad = padding(e.size)
-            e
-          })
-      }
+      scala.util
+        .Try {
+          skipFully(remaining + pad)
+          remaining = 0L; pad = 0
+          val h = readBlock()
+          h
+        }
+        .toEither
+        .left
+        .map(e => s"truncated bundle: ${e.getMessage}")
+        .flatMap {
+          case None    => Right(None) // the stream ended without the end blocks — tolerated as EOF
+          case Some(h) =>
+            parseHeader(h).map(_.map { e =>
+              remaining = e.size; pad = padding(e.size)
+              e
+            })
+        }
 
     /** The current entry's bytes. Closing it does not close the archive. */
     def stream: InputStream = new FilterInputStream(gz):

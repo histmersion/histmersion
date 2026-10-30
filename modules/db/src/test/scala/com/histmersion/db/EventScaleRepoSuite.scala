@@ -7,14 +7,14 @@ import com.histmersion.domain.*
 import com.augustnagro.magnum.*
 import com.histmersion.values.PlaceKind
 
-/** An event's scale (V078, #1440) and the map's events feed against a real PostGIS
-  * (HISTMERSION_TEST_DB_URL; skipped otherwise): the column and its check, the scale derived from the
-  * kind, the sub-event rule, the place's kind and the event's own geometry, a stated scale and its
-  * `auto` reset, and `EventRepo.geo` — each event's anchor (a point, or the point-on-surface of an
-  * area), the outline of a REGIONAL event's area only, the unplaced count — and the bundle carrying a
-  * stated scale. Fixtures sit at 120–125°E, 50°S, ids start with `zqes`. */
+/** An event's scale (V078, #1440) and the map's events feed against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped
+  * otherwise): the column and its check, the scale derived from the kind, the sub-event rule, the place's kind and the
+  * event's own geometry, a stated scale and its `auto` reset, and `EventRepo.geo` — each event's anchor (a point, or
+  * the point-on-surface of an area), the outline of a REGIONAL event's area only, the unplaced count — and the bundle
+  * carrying a stated scale. Fixtures sit at 120–125°E, 50°S, ids start with `zqes`.
+  */
 class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
-  private val testDb                = TestDb.url
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
@@ -26,17 +26,40 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
   private val Lat = -50.0
   private def pt(lon: Double) = Some(s"""{"type":"Point","coordinates":[$lon,$Lat]}""")
   // a 2°×2° square west of the sites; its point-on-surface is inside it
-  private val Square = Some("""{"type":"Polygon","coordinates":[[[120,-51],[122,-51],[122,-49],[120,-49],[120,-51]]]}""")
+  private val Square = Some(
+    """{"type":"Polygon","coordinates":[[[120,-51],[122,-51],[122,-49],[120,-49],[120,-51]]]}"""
+  )
 
   private val places = List(
     PlaceInput(Place("zqes_site", "Zqes site", PlaceKind.Site, pt(124.0)), List(PlaceName("Zqes site"))),
     PlaceInput(Place("zqes_area", "Zqes area", PlaceKind.Region, Square), List(PlaceName("Zqes area"))),
-    PlaceInput(Place("zqes_ptregion", "Zqes point region", PlaceKind.Region, pt(125.0)), List(PlaceName("Zqes point region"))))
+    PlaceInput(
+      Place("zqes_ptregion", "Zqes point region", PlaceKind.Region, pt(125.0)),
+      List(PlaceName("Zqes point region"))
+    )
+  )
 
-  private def ev(id: String, kind: String, place: Option[String] = None, parent: Option[String] = None,
-      geometry: Option[String] = None, scale: Option[String] = None) =
-    EventRepo.put(ds, id, EventPut(s"Zqes $id", kind, TimeSpan(Some(-1300), None, None, Some(-1250)),
-      geometry = geometry, placeId = place, parentId = parent, scale = scale))
+  private def ev(
+      id: String,
+      kind: String,
+      place: Option[String] = None,
+      parent: Option[String] = None,
+      geometry: Option[String] = None,
+      scale: Option[String] = None
+  ) =
+    EventRepo.put(
+      ds,
+      id,
+      EventPut(
+        s"Zqes $id",
+        kind,
+        TimeSpan(Some(-1300), None, None, Some(-1250)),
+        geometry = geometry,
+        placeId = place,
+        parentId = parent,
+        scale = scale
+      )
+    )
 
   private def clean(): Unit = connect(ds):
     val _ = sql"DELETE FROM events WHERE id LIKE 'zqes%'".update.run()
@@ -46,16 +69,16 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     if testDb.isDefined then
       clean()
       val _ = PlaceRepo.upsertPlaces(ds, places)
-      ev("zqes_battle_area", "battle", place = Some("zqes_area"))          // kind: local, at an area
-      ev("zqes_migration", "migration", place = Some("zqes_area"))         // kind: regional, with an outline
-      ev("zqes_event_site", "event", place = Some("zqes_site"))            // place kind: local
-      ev("zqes_event_area", "event", place = Some("zqes_area"))            // place kind: regional
+      ev("zqes_battle_area", "battle", place = Some("zqes_area")) // kind: local, at an area
+      ev("zqes_migration", "migration", place = Some("zqes_area")) // kind: regional, with an outline
+      ev("zqes_event_site", "event", place = Some("zqes_site")) // place kind: local
+      ev("zqes_event_area", "event", place = Some("zqes_area")) // place kind: regional
       ev("zqes_drought", "natural_disaster", place = Some("zqes_ptregion")) // regional, point only: no outline
-      ev("zqes_sub", "event", parent = Some("zqes_migration"))           // a sub-event, nothing else: local
+      ev("zqes_sub", "event", parent = Some("zqes_migration")) // a sub-event, nothing else: local
       ev("zqes_sub_area", "event", place = Some("zqes_area"), parent = Some("zqes_migration")) // the area decides
-      ev("zqes_own_point", "event", geometry = pt(123.5))                  // its own point: local
-      ev("zqes_own_area", "event", geometry = Square)                      // its own area: regional
-      ev("zqes_unplaced", "battle")                                        // nowhere
+      ev("zqes_own_point", "event", geometry = pt(123.5)) // its own point: local
+      ev("zqes_own_area", "event", geometry = Square) // its own area: regional
+      ev("zqes_unplaced", "battle") // nowhere
       ev("zqes_stated", "battle", place = Some("zqes_area"), scale = Some("regional"))
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
@@ -69,25 +92,49 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     val cols = connect(ds)(sql"""SELECT data_type FROM information_schema.columns
                                  WHERE table_name = 'events' AND column_name = 'scale'""".query[String].run())
     assertEquals(cols, Vector("text"))
-    val refused = intercept[Exception](connect(ds)(
-      sql"UPDATE events SET scale = 'global' WHERE id = 'zqes_unplaced'".update.run()))
+    val refused =
+      intercept[Exception](connect(ds)(sql"UPDATE events SET scale = 'global' WHERE id = 'zqes_unplaced'".update.run()))
     assert(refused.getMessage.contains("events_scale_check"), refused.getMessage)
     // nothing was backfilled: the derived ones stay NULL, so a changed kind still decides
-    val stored = connect(ds)(sql"SELECT id, scale FROM events WHERE id LIKE 'zqes%'".query[(String, Option[String])].run().toMap)
+    val stored =
+      connect(ds)(sql"SELECT id, scale FROM events WHERE id LIKE 'zqes%'".query[(String, Option[String])].run().toMap)
     assertEquals(stored.collect { case (id, Some(s)) => id -> s }, Map("zqes_stated" -> "regional"))
 
   test("a scale not stated is derived: kind, then own geometry, then the place's kind, then sub-event"):
-    val got = List("zqes_battle_area", "zqes_migration", "zqes_event_site", "zqes_event_area", "zqes_drought",
-      "zqes_sub", "zqes_sub_area", "zqes_own_point", "zqes_own_area", "zqes_unplaced").map(id => id -> summary(id).scale).toMap
-    assertEquals(got, Map(
-      "zqes_battle_area" -> "local", "zqes_migration" -> "regional", "zqes_event_site" -> "local",
-      "zqes_event_area" -> "regional", "zqes_drought" -> "regional", "zqes_sub" -> "local",
-      "zqes_sub_area" -> "regional", "zqes_own_point" -> "local", "zqes_own_area" -> "regional",
-      "zqes_unplaced" -> "local"))
+    val got = List(
+      "zqes_battle_area",
+      "zqes_migration",
+      "zqes_event_site",
+      "zqes_event_area",
+      "zqes_drought",
+      "zqes_sub",
+      "zqes_sub_area",
+      "zqes_own_point",
+      "zqes_own_area",
+      "zqes_unplaced"
+    ).map(id => id -> summary(id).scale).toMap
+    assertEquals(
+      got,
+      Map(
+        "zqes_battle_area" -> "local",
+        "zqes_migration" -> "regional",
+        "zqes_event_site" -> "local",
+        "zqes_event_area" -> "regional",
+        "zqes_drought" -> "regional",
+        "zqes_sub" -> "local",
+        "zqes_sub_area" -> "regional",
+        "zqes_own_point" -> "local",
+        "zqes_own_area" -> "regional",
+        "zqes_unplaced" -> "local"
+      )
+    )
     assert(!summary("zqes_migration").scaleStated)
     // the list carries the same
-    val listed = EventRepo.list(ds, Filter(), PlaceScope.empty, Some("Zqes"), None, None, None, 100, 0).events
-      .map(e => e.id -> e.scale).toMap
+    val listed = EventRepo
+      .list(ds, Filter(), PlaceScope.empty, Some("Zqes"), None, None, None, 100, 0)
+      .events
+      .map(e => e.id -> e.scale)
+      .toMap
     assertEquals(listed("zqes_event_area"), "regional")
     assertEquals(listed("zqes_stated"), "regional")
 
@@ -134,6 +181,7 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(perCall < 150, s"$perCall ms per /api/events/geo")
 
   test("a bundle carries a stated scale, and leaves a derived one out"):
-    val events = connect(ds)(BundleRepo.events(BundleScope.All)).filter(_.id.startsWith("zqes")).map(e => e.id -> e.scale).toMap
+    val events =
+      connect(ds)(BundleRepo.events(BundleScope.All)).filter(_.id.startsWith("zqes")).map(e => e.id -> e.scale).toMap
     assertEquals(events("zqes_stated"), Some("regional"))
     assertEquals(events("zqes_migration"), None)
