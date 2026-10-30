@@ -1,0 +1,750 @@
+# rule	file	detail	count — the known violations; a slice removes rows and adds none
+direction	api:api/Acquire.scala	library -> server: UpdateNotice	1
+direction	api:api/Activity.scala	automation -> server: Jobs	1
+direction	api:api/Agents.scala	automation -> library: Ingest	1
+direction	api:api/Agents.scala	automation -> research: ArticlePlans	1
+direction	api:api/AgentsMarkdown.scala	automation -> library: Edge	1
+direction	api:api/AgentsMarkdown.scala	automation -> library: Query	1
+direction	api:api/AgentsMarkdown.scala	automation -> research: ArticleFilter	1
+direction	api:api/AgentsMarkdown.scala	automation -> research: ArticlePlans	1
+direction	api:api/AliasKind.scala	util.identity -> automation: Goal	1
+direction	api:api/AliasKind.scala	util.identity -> catalogue: Place	1
+direction	api:api/Assessment.scala	library -> server: UpdateNotice	1
+direction	api:api/AssetLinkTarget.scala	media -> library: Finding	1
+direction	api:api/AttestationTarget.scala	catalogue -> library: Edge	1
+direction	api:api/AttestationTarget.scala	catalogue -> library: Finding	1
+direction	api:api/Autopilot.scala	automation -> library: AcquireChecks	1
+direction	api:api/Autopilot.scala	automation -> library: UpstreamQuota	1
+direction	api:api/BundleFiles.scala	util.data -> catalogue: Corrections	1
+direction	api:api/BundleFiles.scala	util.data -> catalogue: SiteTypes	1
+direction	api:api/EventDetail.scala	catalogue -> media: MediaThumb	1
+direction	api:api/FormatSeverity.scala	util.data -> library: Frontmatter	1
+direction	api:api/GoalPlans.scala	automation -> research: CoverageReason	1
+direction	api:api/GoalsExport.scala	automation -> library: Query	1
+direction	api:api/JobActions.scala	util.jobs -> library: AcquireRecheck	1
+direction	api:api/JobDetail.scala	util.jobs -> catalogue: EventImportReport	1
+direction	api:api/JobDetail.scala	util.jobs -> catalogue: EventRederiveReport	1
+direction	api:api/JobDetail.scala	util.jobs -> catalogue: SkippedPeriod	1
+direction	api:api/JobDetail.scala	util.jobs -> library: AcquireChecks	1
+direction	api:api/JobKind.scala	util.jobs -> catalogue: SiteTypes	1
+direction	api:api/JobKind.scala	util.jobs -> library: AcquireRecheck	1
+direction	api:api/JobKind.scala	util.jobs -> library: Ingest	1
+direction	api:api/Lint.scala	util.data -> library: Edge	1
+direction	api:api/Lint.scala	util.data -> research: Articles	1
+direction	api:api/Lint.scala	util.data -> research: CoverageEdge	1
+direction	api:api/Lint.scala	util.data -> research: CritiquePairing	1
+direction	api:api/Managers.scala	automation -> library: Ingest	1
+direction	api:api/Managers.scala	automation -> research: ArticleFilter	1
+direction	api:api/ManagersApi.scala	automation -> library: AcquireChecks	1
+direction	api:api/ManagersApi.scala	automation -> library: RepairAcquire	1
+direction	api:api/Markdown.scala	util.common -> automation: AgentStateEntry	1
+direction	api:api/Markdown.scala	util.common -> automation: Goal	1
+direction	api:api/Markdown.scala	util.common -> automation: GoalList	1
+direction	api:api/Markdown.scala	util.common -> catalogue: Attestation	1
+direction	api:api/Markdown.scala	util.common -> catalogue: AttestationList	1
+direction	api:api/Markdown.scala	util.common -> catalogue: EventDetail	1
+direction	api:api/Markdown.scala	util.common -> catalogue: EventLinksMarkdown	1
+direction	api:api/Markdown.scala	util.common -> catalogue: EventList	1
+direction	api:api/Markdown.scala	util.common -> catalogue: EventPrecision	1
+direction	api:api/Markdown.scala	util.common -> catalogue: EventSummary	1
+direction	api:api/Markdown.scala	util.common -> catalogue: GazetteerSourceInfo	1
+direction	api:api/Markdown.scala	util.common -> catalogue: Geocode	1
+direction	api:api/Markdown.scala	util.common -> catalogue: ManualPlaceName	1
+direction	api:api/Markdown.scala	util.common -> catalogue: PlaceDating	1
+direction	api:api/Markdown.scala	util.common -> catalogue: PlaceDetail	1
+direction	api:api/Markdown.scala	util.common -> catalogue: PlaceGone	1
+direction	api:api/Markdown.scala	util.common -> catalogue: PlaceHit	1
+direction	api:api/Markdown.scala	util.common -> catalogue: PlaceImportResult	1
+direction	api:api/Markdown.scala	util.common -> catalogue: PlaceLink	1
+direction	api:api/Markdown.scala	util.common -> catalogue: PlaceNameChanged	1
+direction	api:api/Markdown.scala	util.common -> catalogue: PlaceOverride	1
+direction	api:api/Markdown.scala	util.common -> catalogue: PlaceOverrideChanged	1
+direction	api:api/Markdown.scala	util.common -> catalogue: PlaceOverrides	1
+direction	api:api/Markdown.scala	util.common -> catalogue: PlaceRebuildResult	1
+direction	api:api/Markdown.scala	util.common -> catalogue: PlaceSummary	1
+direction	api:api/Markdown.scala	util.common -> catalogue: PlaceTreeRow	1
+direction	api:api/Markdown.scala	util.common -> catalogue: SiteTypes	1
+direction	api:api/Markdown.scala	util.common -> catalogue: Tree	1
+direction	api:api/Markdown.scala	util.common -> library: Aggregate	1
+direction	api:api/Markdown.scala	util.common -> library: Bucket	1
+direction	api:api/Markdown.scala	util.common -> library: ContradictionsResult	1
+direction	api:api/Markdown.scala	util.common -> library: Facet	1
+direction	api:api/Markdown.scala	util.common -> library: FindingRow	1
+direction	api:api/Markdown.scala	util.common -> library: GeoHit	1
+direction	api:api/Markdown.scala	util.common -> library: GeoHitPage	1
+direction	api:api/Markdown.scala	util.common -> library: NeighborRow	1
+direction	api:api/Markdown.scala	util.common -> library: NeighborTarget	1
+direction	api:api/Markdown.scala	util.common -> library: SearchHit	1
+direction	api:api/Markdown.scala	util.common -> library: SearchResult	1
+direction	api:api/Markdown.scala	util.common -> library: SourceDetail	1
+direction	api:api/Markdown.scala	util.common -> library: SourceGraph	1
+direction	api:api/Markdown.scala	util.common -> library: SourceRenamed	1
+direction	api:api/Markdown.scala	util.common -> library: TimeBucket	1
+direction	api:api/Markdown.scala	util.common -> library: TimeHistogram	1
+direction	api:api/Markdown.scala	util.common -> media: AssetDetail	1
+direction	api:api/Markdown.scala	util.common -> media: AssetLink	1
+direction	api:api/Markdown.scala	util.common -> media: AssetLinkList	1
+direction	api:api/Markdown.scala	util.common -> media: Commons	1
+direction	api:api/Markdown.scala	util.common -> media: FigureLicenceFill	1
+direction	api:api/Markdown.scala	util.common -> media: MediaCount	1
+direction	api:api/Markdown.scala	util.common -> media: MediaCoversReport	1
+direction	api:api/Markdown.scala	util.common -> media: MediaFacets	1
+direction	api:api/Markdown.scala	util.common -> media: MediaImportReport	1
+direction	api:api/Markdown.scala	util.common -> media: MediaItem	1
+direction	api:api/Markdown.scala	util.common -> media: MediaList	1
+direction	api:api/Markdown.scala	util.common -> media: MediaProvider	1
+direction	api:api/Markdown.scala	util.common -> media: MediaProviderInfo	1
+direction	api:api/Markdown.scala	util.common -> media: MediaSample	1
+direction	api:api/Markdown.scala	util.common -> media: MediaThumb	1
+direction	api:api/Markdown.scala	util.common -> research: Backlink	1
+direction	api:api/Markdown.scala	util.common -> research: TocEntry	1
+direction	api:api/MergeIssueDetail.scala	util.data -> automation: GoalPlans	1
+direction	api:api/MergeLedger.scala	util.data -> research: LedgerRow	1
+direction	api:api/MergeMarkdown.scala	util.data -> catalogue: Place	1
+direction	api:api/MergeMarkdown.scala	util.data -> library: LabelRenamed	1
+direction	api:api/MergeMarkdown.scala	util.data -> library: SourceMatch	1
+direction	api:api/MergePlan.scala	util.data -> catalogue: MatchCounts	1
+direction	api:api/MergePlan.scala	util.data -> library: SourceMatch	1
+direction	api:api/PlaceDetail.scala	catalogue -> media: MediaThumb	1
+direction	api:api/Queue.scala	automation -> library: Acquire	1
+direction	api:api/Queue.scala	automation -> library: AcquireChecks	1
+direction	api:api/Queue.scala	automation -> personal: Note	1
+direction	api:api/Rename.scala	library -> research: ArticleLinks	1
+direction	api:api/ResolvedId.scala	util.identity -> library: ResolvedSource	1
+direction	api:api/ResolvedId.scala	util.identity -> research: ResolvedArticle	1
+direction	api:api/SourceDelete.scala	library -> research: ArticleLinks	1
+direction	api:api/Tree.scala	catalogue -> library: Aggregate	1
+direction	api:api/Tree.scala	catalogue -> library: Bucket	1
+direction	api:api/Tree.scala	catalogue -> library: BucketSample	1
+direction	api:api/VacuumRequest.scala	util.data -> automation: StrictJson	1
+direction	api:api/Wording.scala	util.common -> automation: Activity	1
+direction	api:api/Wording.scala	util.common -> automation: AgentMode	1
+direction	api:api/Wording.scala	util.common -> automation: AgentScheduler	1
+direction	api:api/Wording.scala	util.common -> automation: PlanGoal	1
+direction	api:api/Wording.scala	util.common -> catalogue: SiteTypes	1
+direction	api:api/Wording.scala	util.common -> library: AcquireRecheck	1
+direction	api:api/Wording.scala	util.common -> library: Edge	1
+direction	api:api/Wording.scala	util.common -> library: EnrichSource	1
+direction	api:api/Wording.scala	util.common -> library: Ingest	1
+direction	api:api/Wording.scala	util.common -> research: ArticleFilter	1
+direction	api:api/Wording.scala	util.common -> research: CompileArticle	1
+direction	api:api/Wording.scala	util.common -> research: ReviewArticle	1
+direction	api:api/Wording.scala	util.common -> server: UiNotices	1
+direction	api:api/Write.scala	util.common -> library: Edge	1
+direction	api:api/Write.scala	util.common -> library: EdgeInput	1
+direction	api:api/Write.scala	util.common -> library: EdgesPatch	1
+direction	api:api/Write.scala	util.common -> library: Finding	1
+direction	api:api/Write.scala	util.common -> library: FindingInput	1
+direction	api:api/Write.scala	util.common -> library: FindingsPatch	1
+direction	api:api/Write.scala	util.common -> library: MetadataField	1
+direction	api:api/Write.scala	util.common -> library: MetadataPatch	1
+direction	api:api/Write.scala	util.common -> library: Provenance	1
+direction	api:api/Write.scala	util.common -> library: SourcePatch	1
+direction	api:api/Write.scala	util.common -> library: SourcePut	1
+direction	api:api/YearFmt.scala	util.common -> catalogue: EventGeo	1
+direction	api:api/personal/ItemKind.scala	personal -> automation: Goal	1
+direction	api:api/personal/ItemKind.scala	personal -> catalogue: Place	1
+direction	config:config/AcquireDefaults.scala	library -> research: CitationCount	1
+direction	config:config/AgentManagersConfig.scala	automation -> library: WatchManagerConfig	1
+direction	config:config/AgentManagersConfig.scala	automation -> research: ReviewManagerConfig	1
+direction	config:config/AgentsConfig.scala	automation -> library: AgentEnrichConfig	1
+direction	config:config/AgentsConfig.scala	automation -> library: AgentSeedConfig	1
+direction	config:config/AgentsConfig.scala	automation -> library: AgentVerifyConfig	1
+direction	config:config/AgentsConfig.scala	automation -> research: AgentCompileConfig	1
+direction	config:config/AgentsConfig.scala	automation -> research: AgentInferFilterConfig	1
+direction	config:config/AgentsConfig.scala	automation -> research: AgentReviewConfig	1
+direction	config:config/BasemapBathymetryConfig.scala	util.basemap -> library: SeaFloorSource	1
+direction	config:config/MaintenanceConfig.scala	util.data -> catalogue: PeriodsConfig	1
+direction	core:domain/BrowserDownload.scala	library -> research: Citation	1
+direction	core:domain/Chunker.scala	util.ocr -> library: Chunk	1
+direction	core:domain/CompareRuns.scala	automation -> library: AgentVerify	1
+direction	core:domain/CompareRuns.scala	automation -> library: EnrichSource	1
+direction	core:domain/CompareRuns.scala	automation -> library: Finding	1
+direction	core:domain/CompareRuns.scala	automation -> research: ReviewArticle	1
+direction	core:domain/Europeana.scala	media -> library: ExternalIds	1
+direction	core:domain/ManagerDefaults.scala	automation -> library: WatchManagerDefaults	1
+direction	core:domain/ManagerDefaults.scala	automation -> research: ReviewManagerDefaults	1
+direction	core:domain/ManagerPolicy.scala	automation -> library: SeedPlanDefaults	1
+direction	core:domain/ManagerPolicy.scala	automation -> research: ReviewArticle	1
+direction	core:domain/ManagerPolicy.scala	automation -> research: ReviewLedger	1
+direction	core:domain/ManagerPolicy.scala	automation -> research: ReviewManagerDefaults	1
+direction	core:domain/MergeFold.scala	util.data -> automation: Queue	1
+direction	core:domain/MergeFold.scala	util.data -> library: FindingMatch	1
+direction	core:domain/MergeFold.scala	util.data -> library: MergeText	1
+direction	core:domain/MergeFold.scala	util.data -> media: AssetLinks	1
+direction	core:domain/MergePlanner.scala	util.data -> automation: Goal	1
+direction	core:domain/MergePlanner.scala	util.data -> automation: Queue	1
+direction	core:domain/MergePlanner.scala	util.data -> catalogue: Attestation	1
+direction	core:domain/MergePlanner.scala	util.data -> catalogue: MatchCounts	1
+direction	core:domain/MergePlanner.scala	util.data -> catalogue: Place	1
+direction	core:domain/MergePlanner.scala	util.data -> library: Citekeys	1
+direction	core:domain/MergePlanner.scala	util.data -> library: Finding	1
+direction	core:domain/MergePlanner.scala	util.data -> library: FindingMatch	1
+direction	core:domain/MergePlanner.scala	util.data -> library: MergeText	1
+direction	core:domain/MergePlanner.scala	util.data -> library: SourceMatch	1
+direction	core:domain/MergePlanner.scala	util.data -> library: SourceMatcher	1
+direction	core:domain/MergePlanner.scala	util.data -> media: AssetLink	1
+direction	core:domain/MergePlanner.scala	util.data -> media: AssetLinks	1
+direction	core:domain/MergePlanner.scala	util.data -> research: ArticleLinks	1
+direction	core:domain/MergePlanner.scala	util.data -> research: ArticleVersion	1
+direction	core:domain/MergePlanner.scala	util.data -> research: TextAnchor	1
+direction	core:domain/MergeSettings.scala	util.data -> catalogue: MatchWeights	1
+direction	core:domain/OpenContext.scala	media -> library: ExternalIds	1
+direction	core:domain/PlanGoal.scala	automation -> library: Acquire	1
+direction	core:domain/PlanGoal.scala	automation -> library: WorkRef	1
+direction	core:domain/PlanGoal.scala	automation -> research: Articles	1
+direction	core:domain/Scheduling.scala	automation -> library: Acquire	1
+direction	core:domain/Scheduling.scala	automation -> library: AgentProposals	1
+direction	core:domain/Scheduling.scala	automation -> library: Edge	1
+direction	core:domain/Scheduling.scala	automation -> library: FollowupRow	1
+direction	core:domain/Scheduling.scala	automation -> library: WorkRef	1
+direction	core:domain/TileFeatures.scala	catalogue -> media: MediaGeoHit	1
+direction	core:domain/activity/ActivityRules.scala	automation -> server: Jobs	1
+direction	db:db/AgentRepo.scala	automation -> library: AgentProposals	1
+direction	db:db/AgentRepo.scala	automation -> research: ArticleFilter	1
+direction	db:db/AgentRepo.scala	automation -> research: ArticlePlans	1
+direction	db:db/AliasRepo.scala	util.identity -> automation: Goal	1
+direction	db:db/AliasRepo.scala	util.identity -> catalogue: Place	1
+direction	db:db/BundleExport.scala	util.data -> library: Originals	1
+direction	db:db/BundleImport.scala	util.data -> automation: Decided	1
+direction	db:db/BundleImport.scala	util.data -> automation: Goal	1
+direction	db:db/BundleImport.scala	util.data -> automation: GoalRepo	1
+direction	db:db/BundleImport.scala	util.data -> automation: Queue	1
+direction	db:db/BundleImport.scala	util.data -> automation: QueueRepo	1
+direction	db:db/BundleImport.scala	util.data -> catalogue: Attestation	1
+direction	db:db/BundleImport.scala	util.data -> catalogue: EventRepo	1
+direction	db:db/BundleImport.scala	util.data -> catalogue: PeriodSql	1
+direction	db:db/BundleImport.scala	util.data -> catalogue: Place	1
+direction	db:db/BundleImport.scala	util.data -> catalogue: PlaceRepo	1
+direction	db:db/BundleImport.scala	util.data -> library: Edge	1
+direction	db:db/BundleImport.scala	util.data -> library: Finding	1
+direction	db:db/BundleImport.scala	util.data -> library: Originals	1
+direction	db:db/BundleImport.scala	util.data -> library: SourceRepo	1
+direction	db:db/BundleImport.scala	util.data -> media: AssetLink	1
+direction	db:db/BundleImport.scala	util.data -> research: ArticleRepo	1
+direction	db:db/BundleImport.scala	util.data -> research: ArticleVersion	1
+direction	db:db/BundleRepo.scala	util.data -> library: Originals	1
+direction	db:db/Codecs.scala	util.common -> catalogue: GridCell	1
+direction	db:db/Codecs.scala	util.common -> catalogue: PlaceDating	1
+direction	db:db/Codecs.scala	util.common -> catalogue: PlaceTimeBasis	1
+direction	db:db/Codecs.scala	util.common -> library: NeighborTarget	1
+direction	db:db/Db.scala	util.common -> library: QueryConfig	1
+direction	db:db/EventRepo.scala	catalogue -> library: FilterSql	1
+direction	db:db/EventRepo.scala	catalogue -> media: MediaRepo	1
+direction	db:db/GoalRepo.scala	automation -> catalogue: PeriodSql	1
+direction	db:db/LintRepo.scala	util.data -> catalogue: Gazetteer	1
+direction	db:db/LintRepo.scala	util.data -> catalogue: Geocoder	1
+direction	db:db/LintRepo.scala	util.data -> catalogue: PlaceRepo	1
+direction	db:db/LintRepo.scala	util.data -> catalogue: PlaceReviewRepo	1
+direction	db:db/LintRepo.scala	util.data -> catalogue: PointAreaRepo	1
+direction	db:db/LintRepo.scala	util.data -> library: Edge	1
+direction	db:db/LintRepo.scala	util.data -> library: Hit	1
+direction	db:db/LintRepo.scala	util.data -> library: SourceRepo	1
+direction	db:db/LintRepo.scala	util.data -> research: CoverageEdge	1
+direction	db:db/LintRepo.scala	util.data -> research: CritiquePairing	1
+direction	db:db/ListSql.scala	util.database -> automation: ListFilters	1
+direction	db:db/MediaRepo.scala	media -> library: ExternalIds	1
+direction	db:db/MergeRepo.scala	util.data -> research: LedgerRow	1
+direction	db:db/MergeState.scala	util.data -> catalogue: PlaceRepo	1
+direction	db:db/MergeState.scala	util.data -> library: MergeText	1
+direction	db:db/MergeState.scala	util.data -> library: Originals	1
+direction	db:db/Migrate.scala	util.common -> media: Collection	1
+direction	db:db/PlaceRepo.scala	catalogue -> library: FilterSql	1
+direction	db:db/PlaceRepo.scala	catalogue -> library: GeoTime	1
+direction	db:db/SourceDeleteRepo.scala	library -> research: ArticleLinks	1
+direction	db:db/SourceRepo.scala	library -> research: ArticleLinks	1
+direction	db:db/SourceRepo.scala	library -> research: ArticleRepo	1
+direction	db:db/SourceRepo.scala	library -> research: TocEntry	1
+direction	db:db/StatsRepo.scala	util.data -> server: CorpusCounts	1
+direction	db:db/TileRepo.scala	catalogue -> media: MediaRepo	1
+direction	db:db/TreeRepo.scala	catalogue -> library: FilterSql	1
+direction	files:files/BundleEntities.scala	util.data -> automation: Goal	1
+direction	files:files/BundleEntities.scala	util.data -> catalogue: Attestation	1
+direction	files:files/BundleEntities.scala	util.data -> catalogue: Corrections	1
+direction	files:files/BundleEntities.scala	util.data -> catalogue: Place	1
+direction	files:files/BundleEntities.scala	util.data -> catalogue: SiteTypes	1
+direction	files:files/BundleEntities.scala	util.data -> library: Finding	1
+direction	files:files/BundleEntities.scala	util.data -> media: AssetLink	1
+direction	files:files/BundleEntities.scala	util.data -> research: ArticleVersion	1
+direction	server:domain/activity/ActivityRepo.scala	automation -> server: Jobs	1
+direction	server:domain/personal/ItemTitles.scala	personal -> automation: Goal	1
+direction	server:domain/personal/PersonalTools.scala	personal -> server: McpOut	1
+direction	server:domain/personal/PersonalTools.scala	personal -> server: McpTools	1
+direction	server:server/BackgroundJob.scala	util.jobs -> server: Pinning	1
+direction	server:server/BackupJobs.scala	util.data -> server: Pinning	1
+direction	server:server/BundleHandlers.scala	util.data -> library: InstanceLabel	1
+direction	server:server/BundleHandlers.scala	util.data -> library: Originals	1
+direction	server:server/BundleHandlers.scala	util.data -> server: Deps	1
+direction	server:server/ConfigViews.scala	util.settings -> server: UiConfig	1
+direction	server:server/ConfigViews.scala	util.settings -> server: UiSettings	1
+direction	server:server/ConverterClient.scala	util.ocr -> library: ConverterConfig	1
+direction	server:server/HttpConverterClient.scala	util.ocr -> library: ConverterConfig	1
+direction	server:server/HttpConverterClient.scala	util.ocr -> server: Version	1
+direction	server:server/IngestHandlers.scala	library -> server: Deps	1
+direction	server:server/IngestHandlers.scala	library -> server: Jobs	1
+direction	server:server/JatsConverter.scala	util.ocr -> library: Jats	1
+direction	server:server/MapTileService.scala	catalogue -> media: MediaRepo	1
+direction	server:server/MergeApplyJobs.scala	util.data -> server: Pinning	1
+direction	server:server/PageBuilder.scala	research -> split: Handlers	1
+direction	server:server/StorageProbe.scala	util.data -> automation: AgentTrees	1
+direction	server:server/StorageProbe.scala	util.data -> catalogue: GazetteerLoad	1
+direction	server:server/StorageProbe.scala	util.data -> server: Supervisor	1
+direction	server:server/VacuumJobs.scala	util.data -> server: Pinning	1
+direction	server:server/acquire/AcquireHandlers.scala	library -> server: Deps	1
+direction	server:server/acquire/AcquireHandlers.scala	library -> server: UpdateNotice	1
+direction	server:server/acquire/AcquireMcp.scala	library -> server: McpOut	1
+direction	server:server/acquire/CandidateSearch.scala	library -> research: ArticleRepo	1
+direction	server:server/acquire/DiscoveryClient.scala	library -> server: UpdateNotice	1
+direction	server:server/acquire/OpenAlexCrossref.scala	library -> server: UpdateNotice	1
+direction	server:server/acquire/fetchers/Builtin.scala	library -> server: Version	1
+direction	server:server/acquire/fetchers/BuiltinFetchers.scala	library -> server: Version	1
+direction	server:server/acquire/fetchers/BuiltinWith.scala	library -> server: Version	1
+direction	server:server/agents/AcquireRecheckService.scala	library -> split: Handlers	1
+direction	server:server/agents/AcquisitionSweepPipeline.scala	library -> split: Handlers	1
+direction	server:server/agents/AgentDoctor.scala	automation -> server: Version	1
+direction	server:server/agents/AgentGenerator.scala	automation -> library: Search	1
+direction	server:server/agents/AgentsHandlers.scala	automation -> library: AcquireRecheckService	1
+direction	server:server/agents/AgentsHandlers.scala	automation -> library: AcquisitionSweepPipeline	1
+direction	server:server/agents/AgentsHandlers.scala	automation -> library: AgentUpstream	1
+direction	server:server/agents/AgentsHandlers.scala	automation -> library: AgentVerify	1
+direction	server:server/agents/AgentsHandlers.scala	automation -> library: AutoEnrich	1
+direction	server:server/agents/AgentsHandlers.scala	automation -> library: CurrencyCheckPipeline	1
+direction	server:server/agents/AgentsHandlers.scala	automation -> library: EnrichSource	1
+direction	server:server/agents/AgentsHandlers.scala	automation -> library: EnrichSourcePipeline	1
+direction	server:server/agents/AgentsHandlers.scala	automation -> library: Ingest	1
+direction	server:server/agents/AgentsHandlers.scala	automation -> library: OaBacklog	1
+direction	server:server/agents/AgentsHandlers.scala	automation -> library: Query	1
+direction	server:server/agents/AgentsHandlers.scala	automation -> library: SeedService	1
+direction	server:server/agents/AgentsHandlers.scala	automation -> library: SourceDetail	1
+direction	server:server/agents/AgentsHandlers.scala	automation -> research: Articles	1
+direction	server:server/agents/AgentsHandlers.scala	automation -> research: CompileArticle	1
+direction	server:server/agents/AgentsHandlers.scala	automation -> research: CompileArticlePipeline	1
+direction	server:server/agents/AgentsHandlers.scala	automation -> research: InferFilterPipeline	1
+direction	server:server/agents/AgentsHandlers.scala	automation -> research: ProposeArticlesPipeline	1
+direction	server:server/agents/AgentsHandlers.scala	automation -> research: ReviewArticle	1
+direction	server:server/agents/AgentsHandlers.scala	automation -> research: ReviewArticlePipeline	1
+direction	server:server/agents/AgentsHandlers.scala	automation -> server: Deps	1
+direction	server:server/agents/AgentsHandlers.scala	automation -> server: Pinning	1
+direction	server:server/agents/AgentsHandlers.scala	automation -> split: Handlers	1
+direction	server:server/agents/AgentsSettings.scala	automation -> catalogue: Geocode	1
+direction	server:server/agents/AgentsSettings.scala	automation -> library: AgentEnrichGuardsConfig	1
+direction	server:server/agents/AgentsSettings.scala	automation -> library: EnrichSource	1
+direction	server:server/agents/AgentsSettings.scala	automation -> research: AgentInferFilterConfig	1
+direction	server:server/agents/AgentsSettings.scala	automation -> research: FilterInference	1
+direction	server:server/agents/AgentsTools.scala	automation -> library: RepairAcquire	1
+direction	server:server/agents/AgentsTools.scala	automation -> server: McpOut	1
+direction	server:server/agents/AgentsTools.scala	automation -> server: McpTools	1
+direction	server:server/agents/AnswerSchemas.scala	automation -> library: EnrichSource	1
+direction	server:server/agents/AnswerSchemas.scala	automation -> research: CompileArticle	1
+direction	server:server/agents/AnswerSchemas.scala	automation -> research: FilterInference	1
+direction	server:server/agents/AnswerSchemas.scala	automation -> research: PlanArticles	1
+direction	server:server/agents/AnswerSchemas.scala	automation -> research: ReviewArticle	1
+direction	server:server/agents/ApprovalDigestService.scala	automation -> split: Handlers	1
+direction	server:server/agents/Approvals.scala	automation -> library: AgentProposals	1
+direction	server:server/agents/Approvals.scala	automation -> research: ArticleFilter	1
+direction	server:server/agents/Approvals.scala	automation -> research: InferFilterPipeline	1
+direction	server:server/agents/Approvals.scala	automation -> split: Handlers	1
+direction	server:server/agents/AutoApprovals.scala	automation -> research: CompileArticlePipeline	1
+direction	server:server/agents/AutoApprovals.scala	automation -> split: Handlers	1
+direction	server:server/agents/AutopilotService.scala	automation -> library: Query	1
+direction	server:server/agents/AutopilotService.scala	automation -> split: Handlers	1
+direction	server:server/agents/BuiltinAi.scala	automation -> library: Builtin	1
+direction	server:server/agents/CliProcess.scala	automation -> catalogue: Tree	1
+direction	server:server/agents/CompileArticlePipeline.scala	research -> split: Handlers	1
+direction	server:server/agents/CurrencyCheckPipeline.scala	library -> split: Handlers	1
+direction	server:server/agents/DrainService.scala	automation -> split: Handlers	1
+direction	server:server/agents/Engine.scala	automation -> library: Ingest	1
+direction	server:server/agents/Engine.scala	automation -> server: Carried	1
+direction	server:server/agents/EnrichSourcePipeline.scala	library -> split: Handlers	1
+direction	server:server/agents/GoalFocusService.scala	automation -> split: Handlers	1
+direction	server:server/agents/GoalSweep.scala	automation -> split: Handlers	1
+direction	server:server/agents/HintEffectPipeline.scala	automation -> split: Handlers	1
+direction	server:server/agents/InferFilterPipeline.scala	research -> split: Handlers	1
+direction	server:server/agents/LlmClient.scala	automation -> server: Version	1
+direction	server:server/agents/ManagerDefaultsViews.scala	automation -> library: AgentSeedConfig	1
+direction	server:server/agents/ManagerDefaultsViews.scala	automation -> library: SeedPlanDefaults	1
+direction	server:server/agents/ManagerSupervisor.scala	automation -> library: AcquisitionSweepPipeline	1
+direction	server:server/agents/ManagerSupervisor.scala	automation -> library: AutoEnrich	1
+direction	server:server/agents/ManagerSupervisor.scala	automation -> library: CandidateSweep	1
+direction	server:server/agents/ManagerSupervisor.scala	automation -> library: EnrichSource	1
+direction	server:server/agents/ManagerSupervisor.scala	automation -> library: IngestBacklog	1
+direction	server:server/agents/ManagerSupervisor.scala	automation -> research: ArticleFilter	1
+direction	server:server/agents/ManagerSupervisor.scala	automation -> research: ArticleRepo	1
+direction	server:server/agents/ManagerSupervisor.scala	automation -> research: CompileArticle	1
+direction	server:server/agents/ManagerSupervisor.scala	automation -> research: CompileArticlePipeline	1
+direction	server:server/agents/ManagerSupervisor.scala	automation -> research: ReviewArticle	1
+direction	server:server/agents/ManagerSupervisor.scala	automation -> research: ReviewLedger	1
+direction	server:server/agents/ManagerSupervisor.scala	automation -> research: ReviewLedgerRepo	1
+direction	server:server/agents/ManagerSupervisor.scala	automation -> split: Handlers	1
+direction	server:server/agents/ManagersHandlers.scala	automation -> library: Acquire	1
+direction	server:server/agents/ManagersHandlers.scala	automation -> library: AcquireChecks	1
+direction	server:server/agents/ManagersHandlers.scala	automation -> library: AutoEnrich	1
+direction	server:server/agents/ManagersHandlers.scala	automation -> library: EnrichSource	1
+direction	server:server/agents/ManagersHandlers.scala	automation -> library: Ingest	1
+direction	server:server/agents/ManagersHandlers.scala	automation -> library: OaBacklog	1
+direction	server:server/agents/ManagersHandlers.scala	automation -> library: RepairAcquire	1
+direction	server:server/agents/ManagersHandlers.scala	automation -> research: ArticleRepo	1
+direction	server:server/agents/ManagersHandlers.scala	automation -> split: Handlers	1
+direction	server:server/agents/OaBacklog.scala	library -> split: Handlers	1
+direction	server:server/agents/Pipelines.scala	automation -> split: Handlers	1
+direction	server:server/agents/PlanGoalPipeline.scala	automation -> library: AgentUpstream	1
+direction	server:server/agents/PlanGoalPipeline.scala	automation -> library: Query	1
+direction	server:server/agents/PlanGoalPipeline.scala	automation -> split: Handlers	1
+direction	server:server/agents/ProposeArticlesPipeline.scala	research -> split: Handlers	1
+direction	server:server/agents/ReviewArticlePipeline.scala	research -> split: Handlers	1
+direction	server:server/agents/RunCtx.scala	automation -> library: AgentVerify	1
+direction	server:server/agents/SchedulerService.scala	automation -> split: Handlers	1
+direction	server:server/agents/SeedService.scala	library -> split: Handlers	1
+direction	server:server/agents/ToolName.scala	automation -> library: Query	1
+direction	server:server/agents/ToolName.scala	automation -> library: Search	1
+direction	server:server/agents/ToolName.scala	automation -> research: ArticleCoverage	1
+direction	server:server/agents/ToolName.scala	automation -> split: Handlers	1
+direction	server:server/agents/ToolResultCap.scala	automation -> library: Query	1
+direction	server:server/agents/Toolbox.scala	automation -> library: AcquireMarkdown	1
+direction	server:server/agents/Toolbox.scala	automation -> library: AgentFacetsInput	1
+direction	server:server/agents/Toolbox.scala	automation -> library: AgentGetSourceInput	1
+direction	server:server/agents/Toolbox.scala	automation -> library: AgentSearchInput	1
+direction	server:server/agents/Toolbox.scala	automation -> library: AgentUpstream	1
+direction	server:server/agents/Toolbox.scala	automation -> library: FollowupsInput	1
+direction	server:server/agents/Toolbox.scala	automation -> library: Query	1
+direction	server:server/agents/Toolbox.scala	automation -> library: Search	1
+direction	server:server/agents/Toolbox.scala	automation -> research: ArticleCoverage	1
+direction	server:server/agents/Toolbox.scala	automation -> research: ArticleMarkdown	1
+direction	server:server/agents/Toolbox.scala	automation -> server: McpTools	1
+direction	server:server/agents/Toolbox.scala	automation -> split: Handlers	1
+direction	server:server/agents/Toolbox.scala	automation -> split: OpsTools	1
+direction	server:server/agents/WebAccess.scala	automation -> library: Search	1
+direction	server:server/basemap/BasemapService.scala	util.basemap -> library: SeaFloorSource	1
+direction	server:server/basemap/BasemapService.scala	util.basemap -> server: Deps	1
+direction	server:server/basemap/JavaRangeHttp.scala	util.basemap -> library: HttpPolicy	1
+direction	server:server/basemap/JavaRangeHttp.scala	util.basemap -> server: Version	1
+direction	server:server/events/BuiltinCatalogues.scala	catalogue -> library: Builtin	1
+direction	server:server/events/EventCatalogHandlers.scala	catalogue -> library: Chunk	1
+direction	server:server/events/EventCatalogHandlers.scala	catalogue -> library: PassageFinder	1
+direction	server:server/events/EventCatalogHandlers.scala	catalogue -> library: SourceRepo	1
+direction	server:server/events/EventCatalogHandlers.scala	catalogue -> server: Deps	1
+direction	server:server/events/EventCatalogRoutes.scala	catalogue -> split: Handlers	1
+direction	server:server/events/EventCatalogTools.scala	catalogue -> server: McpOut	1
+direction	server:server/events/EventCatalogTools.scala	catalogue -> server: McpTools	1
+direction	server:server/events/EventCatalogTools.scala	catalogue -> split: Handlers	1
+direction	server:server/importers/GazetteerLoad.scala	catalogue -> library: HttpPolicy	1
+direction	server:server/importers/ImportRunner.scala	catalogue -> library: CliopatriaImporter	1
+direction	server:server/importers/ImportRunner.scala	catalogue -> library: GazetteerImporter	1
+direction	server:server/importers/ImportRunner.scala	catalogue -> library: HttpPolicy	1
+direction	server:server/media/BuiltinMedia.scala	media -> library: Builtin	1
+direction	server:server/media/BuiltinMedia.scala	media -> library: BuiltinWith	1
+direction	server:server/media/BuiltinMedia.scala	media -> server: Deps	1
+direction	server:server/media/HostMediaCollection.scala	media -> server: Deps	1
+direction	server:server/media/KeyedEntry.scala	media -> server: Deps	1
+direction	server:server/media/MediaHandlers.scala	media -> library: SourceCoverParams	1
+direction	server:server/media/MediaHandlers.scala	media -> server: Deps	1
+direction	server:server/media/MediaImporter.scala	media -> server: Deps	1
+direction	server:server/media/MediaImporters.scala	media -> server: Deps	1
+direction	server:server/media/SourcePictures.scala	media -> library: SourceCoverParams	1
+direction	server:server/plugins/LegacyPlugins.scala	util.plugins -> library: BuiltinFetchers	1
+direction	server:server/plugins/LegacyPlugins.scala	util.plugins -> library: OaIndex	1
+direction	server:server/plugins/PluginTool.scala	util.plugins -> server: Version	1
+direction	server:server/plugins/Plugins.scala	util.plugins -> automation: BuiltinAi	1
+direction	server:server/plugins/Plugins.scala	util.plugins -> catalogue: BuiltinCatalogues	1
+direction	server:server/plugins/Plugins.scala	util.plugins -> library: ArchiveOrg	1
+direction	server:server/plugins/Plugins.scala	util.plugins -> library: BuiltinFetchers	1
+direction	server:server/plugins/Plugins.scala	util.plugins -> library: CoreBudget	1
+direction	server:server/plugins/Plugins.scala	util.plugins -> library: Http	1
+direction	server:server/plugins/Plugins.scala	util.plugins -> library: HttpPlugin	1
+direction	server:server/plugins/Plugins.scala	util.plugins -> library: OpenAlexCrossref	1
+direction	server:server/plugins/Plugins.scala	util.plugins -> library: SttpHttp	1
+direction	server:server/plugins/Plugins.scala	util.plugins -> media: BuiltinMedia	1
+filesystem	config:config/UserConfigFile.scala	java.nio.file	1
+filesystem	config:config/edit/ConfigFileState.scala	Path.of	1
+filesystem	config:config/edit/ConfigFileState.scala	java.nio.file	1
+filesystem	config:config/edit/ConfigFileWriter.scala	.toFile	1
+filesystem	config:config/edit/ConfigFileWriter.scala	Files.*	13
+filesystem	config:config/edit/ConfigFileWriter.scala	StandardCopyOption	6
+filesystem	config:config/edit/ConfigFileWriter.scala	java.nio.file	2
+filesystem	config:config/edit/WriteOutcome.scala	java.nio.file	1
+filesystem	db:db/BundleExport.scala	Files.*	2
+filesystem	db:db/BundleExport.scala	java.nio.file	2
+filesystem	db:db/BundleImport.scala	Files.*	1
+filesystem	db:db/BundleImport.scala	java.nio.file	1
+filesystem	db:db/Figures.scala	Files.*	4
+filesystem	db:db/Figures.scala	java.nio.file	1
+filesystem	db:db/Importer.scala	Files.*	2
+filesystem	db:db/Importer.scala	java.nio.file	1
+filesystem	db:db/MergeState.scala	Files.*	3
+filesystem	db:db/MergeState.scala	java.nio.file	1
+filesystem	db:db/Originals.scala	Files.*	6
+filesystem	db:db/Originals.scala	StandardCopyOption	2
+filesystem	db:db/Originals.scala	java.nio.file	1
+filesystem	files:files/DirSize.scala	Files.*	8
+filesystem	files:files/DirSize.scala	java.nio.file	2
+filesystem	files:files/Frontmatter.scala	Files.*	3
+filesystem	files:files/Frontmatter.scala	java.nio.file	1
+filesystem	files:files/PlaceSeed.scala	Files.*	3
+filesystem	files:files/PlaceSeed.scala	java.nio.file	1
+filesystem	files:files/PluginKit.scala	File(	1
+filesystem	files:files/SafePath.scala	Paths.get	4
+filesystem	files:files/SafePath.scala	java.nio.file	1
+filesystem	server:domain/settings/SettingsService.scala	Path.of	1
+filesystem	server:domain/settings/SettingsService.scala	java.nio.file	1
+filesystem	server:domain/settings/SettingsSnapshot.scala	java.nio.file	1
+filesystem	server:server/BackupService.scala	.toFile	1
+filesystem	server:server/BackupService.scala	Files.*	18
+filesystem	server:server/BackupService.scala	Path.of	3
+filesystem	server:server/BackupService.scala	StandardCopyOption	2
+filesystem	server:server/BackupService.scala	java.io.File	1
+filesystem	server:server/BackupService.scala	java.nio.file	1
+filesystem	server:server/BundleHandlers.scala	.toFile	2
+filesystem	server:server/BundleHandlers.scala	Files.*	14
+filesystem	server:server/BundleHandlers.scala	Path.of	2
+filesystem	server:server/BundleHandlers.scala	StandardCopyOption	5
+filesystem	server:server/BundleHandlers.scala	java.nio.file	2
+filesystem	server:server/ConfigViews.scala	java.nio.file	1
+filesystem	server:server/ConverterClient.scala	java.nio.file	1
+filesystem	server:server/HttpConverterClient.scala	java.nio.file	1
+filesystem	server:server/IngestHandlers.scala	.toFile	3
+filesystem	server:server/IngestHandlers.scala	Files.*	11
+filesystem	server:server/IngestHandlers.scala	Path.of	1
+filesystem	server:server/IngestHandlers.scala	StandardCopyOption	2
+filesystem	server:server/IngestHandlers.scala	java.io.File	3
+filesystem	server:server/IngestHandlers.scala	java.nio.file	1
+filesystem	server:server/JatsConverter.scala	Files.*	1
+filesystem	server:server/JatsConverter.scala	java.nio.file	1
+filesystem	server:server/PgRelocation.scala	Files.*	8
+filesystem	server:server/PgRelocation.scala	java.nio.file	1
+filesystem	server:server/StorageProbe.scala	Files.*	3
+filesystem	server:server/StorageProbe.scala	Path.of	2
+filesystem	server:server/StorageProbe.scala	java.nio.file	1
+filesystem	server:server/StoredOriginals.scala	Files.*	6
+filesystem	server:server/StoredOriginals.scala	java.nio.file	1
+filesystem	server:server/acquire/AcquireHandlers.scala	Path.of	1
+filesystem	server:server/acquire/AcquireHandlers.scala	java.nio.file	2
+filesystem	server:server/acquire/IngestJobs.scala	java.nio.file	1
+filesystem	server:server/acquire/QueuedIngest.scala	.toFile	1
+filesystem	server:server/acquire/QueuedIngest.scala	java.nio.file	1
+filesystem	server:server/acquire/SkeletonIngest.scala	java.nio.file	1
+filesystem	server:server/acquire/Spool.scala	Files.*	2
+filesystem	server:server/acquire/Spool.scala	Path.of	2
+filesystem	server:server/acquire/Spool.scala	java.nio.file	1
+filesystem	server:server/agents/AgentDoctor.scala	Files.*	2
+filesystem	server:server/agents/AgentDoctor.scala	java.nio.file	2
+filesystem	server:server/agents/AgentTrees.scala	Files.*	14
+filesystem	server:server/agents/AgentTrees.scala	Path.of	2
+filesystem	server:server/agents/AgentTrees.scala	StandardCopyOption	3
+filesystem	server:server/agents/AgentTrees.scala	java.nio.file	1
+filesystem	server:server/agents/AgentsHandlers.scala	Path.of	1
+filesystem	server:server/agents/AgentsHandlers.scala	java.nio.file	1
+filesystem	server:server/agents/ClaudeCodeClient.scala	Files.*	4
+filesystem	server:server/agents/ClaudeCodeClient.scala	java.nio.file	1
+filesystem	server:server/agents/CliProcess.scala	.toFile	1
+filesystem	server:server/agents/CliProcess.scala	Files.*	10
+filesystem	server:server/agents/CliProcess.scala	Path.of	3
+filesystem	server:server/agents/CliProcess.scala	java.io.File	1
+filesystem	server:server/agents/CliProcess.scala	java.nio.file	2
+filesystem	server:server/agents/CodexExecClient.scala	Files.*	4
+filesystem	server:server/agents/CodexExecClient.scala	java.nio.file	2
+filesystem	server:server/agents/CodexHome.scala	.toFile	1
+filesystem	server:server/agents/CodexHome.scala	Files.*	14
+filesystem	server:server/agents/CodexHome.scala	java.nio.file	1
+filesystem	server:server/agents/OpencodeRunClient.scala	.toFile	1
+filesystem	server:server/agents/PlanPools.scala	Files.*	1
+filesystem	server:server/agents/PlanPools.scala	java.nio.file	5
+filesystem	server:server/agents/Prompts.scala	Files.*	2
+filesystem	server:server/agents/Prompts.scala	Path.of	1
+filesystem	server:server/agents/Prompts.scala	java.nio.file	1
+filesystem	server:server/basemap/BasemapFetch.scala	FileChannel	3
+filesystem	server:server/basemap/BasemapFetch.scala	Files.*	10
+filesystem	server:server/basemap/BasemapFetch.scala	java.nio.file	1
+filesystem	server:server/basemap/BasemapLabels.scala	java.nio.file	1
+filesystem	server:server/basemap/BasemapService.scala	Files.*	30
+filesystem	server:server/basemap/BasemapService.scala	Path.of	2
+filesystem	server:server/basemap/BasemapService.scala	java.nio.file	1
+filesystem	server:server/basemap/DiskLru.scala	Files.*	14
+filesystem	server:server/basemap/DiskLru.scala	StandardCopyOption	3
+filesystem	server:server/basemap/DiskLru.scala	java.nio.file	2
+filesystem	server:server/basemap/GebcoPart.scala	java.nio.file	1
+filesystem	server:server/basemap/GebcoSeaFloor.scala	FileChannel	3
+filesystem	server:server/basemap/GebcoSeaFloor.scala	Files.*	6
+filesystem	server:server/basemap/GebcoSeaFloor.scala	StandardCopyOption	1
+filesystem	server:server/basemap/GebcoSeaFloor.scala	java.nio.file	2
+filesystem	server:server/basemap/JavaRangeHttp.scala	Files.*	3
+filesystem	server:server/basemap/JavaRangeHttp.scala	StandardCopyOption	2
+filesystem	server:server/basemap/JavaRangeHttp.scala	java.nio.file	1
+filesystem	server:server/basemap/OnDemandTiles.scala	Files.*	10
+filesystem	server:server/basemap/OnDemandTiles.scala	java.nio.file	1
+filesystem	server:server/basemap/PmTilesFile.scala	FileChannel	7
+filesystem	server:server/basemap/PmTilesFile.scala	java.nio.file	1
+filesystem	server:server/basemap/PmTilesWriter.scala	FileChannel	1
+filesystem	server:server/basemap/PmTilesWriter.scala	Files.*	4
+filesystem	server:server/basemap/PmTilesWriter.scala	StandardCopyOption	3
+filesystem	server:server/basemap/PmTilesWriter.scala	java.nio.file	2
+filesystem	server:server/basemap/RangeHttp.scala	java.nio.file	1
+filesystem	server:server/importers/GazetteerLoad.scala	Files.*	19
+filesystem	server:server/importers/GazetteerLoad.scala	Path.of	3
+filesystem	server:server/importers/GazetteerLoad.scala	StandardCopyOption	3
+filesystem	server:server/importers/GazetteerLoad.scala	java.nio.file	1
+filesystem	server:server/media/MediaHandlers.scala	java.nio.file	1
+filesystem	server:server/plugins/PluginSetResource.scala	Files.*	2
+filesystem	server:server/plugins/PluginSetResource.scala	StandardCopyOption	3
+filesystem	server:server/plugins/PluginSetResource.scala	java.nio.file	1
+process	server:server/BackupService.scala	ProcessBuilder	2
+process	server:server/PgRelocation.scala	ProcessBuilder	2
+process	server:server/Supervisor.scala	ProcessBuilder	4
+process	server:server/agents/AgentDoctor.scala	ProcessBuilder	1
+process	server:server/agents/CliProcess.scala	ProcessBuilder	2
+process	server:server/agents/CodexHome.scala	ProcessBuilder	2
+process	server:server/agents/PlanPools.scala	ProcessBuilder	2
+repository	db:db/AcquireRepo.scala	PlaceRepo of catalogue.places	1
+repository	db:db/AcquireRepo.scala	SourceRepo of library.sources	1
+repository	db:db/ArticleRepo.scala	SourceRepo of library.sources	1
+repository	db:db/BundleImport.scala	ArticleRepo of research.articles	1
+repository	db:db/BundleImport.scala	EventRepo of catalogue.events	1
+repository	db:db/BundleImport.scala	GoalRepo of automation.goals	1
+repository	db:db/BundleImport.scala	PlaceRepo of catalogue.places	1
+repository	db:db/BundleImport.scala	QueueRepo of automation.worklists	1
+repository	db:db/BundleImport.scala	SourceRepo of library.sources	1
+repository	db:db/CritiqueRepo.scala	SourceRepo of library.sources	1
+repository	db:db/EventRepo.scala	AliasRepo of util.identity	1
+repository	db:db/EventRepo.scala	MediaRepo of media	1
+repository	db:db/FocusRepo.scala	AutopilotRepo of automation.autopilot	1
+repository	db:db/GoalRepo.scala	AliasRepo of util.identity	1
+repository	db:db/Importer.scala	AssetRepo of media	1
+repository	db:db/Importer.scala	PlaceRepo of catalogue.places	1
+repository	db:db/Importer.scala	SourceRepo of library.sources	1
+repository	db:db/LintRepo.scala	PlaceRepo of catalogue.places	1
+repository	db:db/LintRepo.scala	PlaceReviewRepo of catalogue.places	1
+repository	db:db/LintRepo.scala	PointAreaRepo of catalogue.places	1
+repository	db:db/LintRepo.scala	SourceRepo of library.sources	1
+repository	db:db/MergeState.scala	PlaceRepo of catalogue.places	1
+repository	db:db/PlaceRepo.scala	AliasRepo of util.identity	1
+repository	db:db/SourceDeleteRepo.scala	QueueRepo of automation.worklists	1
+repository	db:db/SourceRepo.scala	ArticleRepo of research.articles	1
+repository	db:db/SourceRepo.scala	PlaceRepo of catalogue.places	1
+repository	db:db/TileRepo.scala	EventRepo of catalogue.events	1
+repository	db:db/TileRepo.scala	MediaRepo of media	1
+repository	db:db/TileRepo.scala	PlaceRepo of catalogue.places	1
+repository	db:db/UndatedSiteRepo.scala	PlaceRepo of catalogue.places	1
+repository	server:domain/activity/ActivityRepo.scala	AgentRepo of automation.agents	1
+repository	server:server/Bootstrap.scala	JobRepo of util.jobs	1
+repository	server:server/Bootstrap.scala	PeriodRepo of catalogue.periods	1
+repository	server:server/Bootstrap.scala	PlaceRepo of catalogue.places	1
+repository	server:server/Handlers.scala	AgentStateRepo of automation.agents	1
+repository	server:server/Handlers.scala	AggregateRepo of library.search	1
+repository	server:server/Handlers.scala	AliasRepo of util.identity	1
+repository	server:server/Handlers.scala	ArticleRepo of research.articles	1
+repository	server:server/Handlers.scala	ArticleReviewRepo of research.articles.review	1
+repository	server:server/Handlers.scala	AssetLinkRepo of media	1
+repository	server:server/Handlers.scala	AssetMetaRepo of media	1
+repository	server:server/Handlers.scala	AttestationRepo of catalogue.evidence	1
+repository	server:server/Handlers.scala	BackupRepo of util.data.backup	1
+repository	server:server/Handlers.scala	CoverageRepo of research.articles	1
+repository	server:server/Handlers.scala	CritiqueRepo of research.articles	1
+repository	server:server/Handlers.scala	EventRepo of catalogue.events	1
+repository	server:server/Handlers.scala	GoalRepo of automation.goals	1
+repository	server:server/Handlers.scala	MediaRepo of media	1
+repository	server:server/Handlers.scala	PlaceOverrideRepo of catalogue.places	1
+repository	server:server/Handlers.scala	PlaceRepo of catalogue.places	1
+repository	server:server/Handlers.scala	ReviewLedgerRepo of research.workflows	1
+repository	server:server/Handlers.scala	SourceDeleteRepo of library.sources	1
+repository	server:server/Handlers.scala	SourceRepo of library.sources	1
+repository	server:server/Handlers.scala	StatsRepo of util.data.storage	1
+repository	server:server/Handlers.scala	TreeRepo of catalogue.places	1
+repository	server:server/Handlers.scala	UiRepo of server.instance	1
+repository	server:server/Handlers.scala	UpstreamQuotaRepo of library.acquisition	1
+repository	server:server/IngestHandlers.scala	AssetRepo of media	1
+repository	server:server/IngestHandlers.scala	JobRepo of util.jobs	1
+repository	server:server/IngestHandlers.scala	QueueRepo of automation.worklists	1
+repository	server:server/IngestHandlers.scala	SourceRepo of library.sources	1
+repository	server:server/Jobs.scala	JobRepo of util.jobs	1
+repository	server:server/ListQueries.scala	AgentRepo of automation.agents	1
+repository	server:server/ListQueries.scala	JobRepo of util.jobs	1
+repository	server:server/MapTileService.scala	EventRepo of catalogue.events	1
+repository	server:server/MapTileService.scala	MediaRepo of media	1
+repository	server:server/MergeApplyJobs.scala	JobRepo of util.jobs	1
+repository	server:server/OpsHandlers.scala	AcquireCheckRepo of library.acquisition	1
+repository	server:server/OpsHandlers.scala	ArticleRepo of research.articles	1
+repository	server:server/OpsHandlers.scala	GoalLinkRepo of automation.goals	1
+repository	server:server/OpsHandlers.scala	GoalRepo of automation.goals	1
+repository	server:server/OpsHandlers.scala	LintRepo of util.data.checks	1
+repository	server:server/OpsHandlers.scala	PlaceReviewRepo of catalogue.places	1
+repository	server:server/OpsHandlers.scala	PointAreaRepo of catalogue.places	1
+repository	server:server/OpsHandlers.scala	QueryRepo of library.search	1
+repository	server:server/OpsHandlers.scala	QueueRepo of automation.worklists	1
+repository	server:server/OpsHandlers.scala	SourceRepo of library.sources	1
+repository	server:server/StorageProbe.scala	StatsRepo of util.data.storage	1
+repository	server:server/acquire/AcquireHandlers.scala	AssetRepo of media	1
+repository	server:server/acquire/AcquireHandlers.scala	QueueRepo of automation.worklists	1
+repository	server:server/acquire/AcquireHandlers.scala	SourceRepo of library.sources	1
+repository	server:server/acquire/CandidateSearch.scala	ArticleRepo of research.articles	1
+repository	server:server/acquire/CandidateSearch.scala	GoalLinkRepo of automation.goals	1
+repository	server:server/acquire/CandidateSearch.scala	GoalRepo of automation.goals	1
+repository	server:server/acquire/CandidateSearch.scala	QueueRepo of automation.worklists	1
+repository	server:server/acquire/CandidateSearch.scala	SourceRepo of library.sources	1
+repository	server:server/acquire/QueuedIngest.scala	PlaceRepo of catalogue.places	1
+repository	server:server/acquire/SkeletonIngest.scala	PlaceRepo of catalogue.places	1
+repository	server:server/acquire/SkeletonIngest.scala	SourceRepo of library.sources	1
+repository	server:server/agents/AcquireRecheckService.scala	JobRepo of util.jobs	1
+repository	server:server/agents/AcquireRecheckService.scala	ManagerRepo of automation.managers	1
+repository	server:server/agents/AcquireRecheckService.scala	QueueRepo of automation.worklists	1
+repository	server:server/agents/AcquisitionSweepPipeline.scala	GoalLinkRepo of automation.goals	1
+repository	server:server/agents/AcquisitionSweepPipeline.scala	ManagerRepo of automation.managers	1
+repository	server:server/agents/AgentLease.scala	ManagerRepo of automation.managers	1
+repository	server:server/agents/AgentsHandlers.scala	GoalLinkRepo of automation.goals	1
+repository	server:server/agents/AgentsHandlers.scala	GoalRepo of automation.goals	1
+repository	server:server/agents/AgentsHandlers.scala	ManagerRepo of automation.managers	1
+repository	server:server/agents/AgentsHandlers.scala	QueueRepo of automation.worklists	1
+repository	server:server/agents/ApprovalDigestService.scala	AgentRepo of automation.agents	1
+repository	server:server/agents/ApprovalDigestService.scala	AutopilotRepo of automation.autopilot	1
+repository	server:server/agents/ApprovalDigestService.scala	ManagerRepo of automation.managers	1
+repository	server:server/agents/Approvals.scala	AgentRepo of automation.agents	1
+repository	server:server/agents/AutoApprovals.scala	AgentRepo of automation.agents	1
+repository	server:server/agents/AutoApprovals.scala	FocusRepo of automation.goals	1
+repository	server:server/agents/AutoApprovals.scala	GoalRepo of automation.goals	1
+repository	server:server/agents/AutoApprovals.scala	ManagerRepo of automation.managers	1
+repository	server:server/agents/AutopilotService.scala	AgentRepo of automation.agents	1
+repository	server:server/agents/AutopilotService.scala	GoalLinkRepo of automation.goals	1
+repository	server:server/agents/AutopilotService.scala	GoalRepo of automation.goals	1
+repository	server:server/agents/AutopilotService.scala	ManagerRepo of automation.managers	1
+repository	server:server/agents/CompileArticlePipeline.scala	AgentRepo of automation.agents	1
+repository	server:server/agents/CompileArticlePipeline.scala	ArticleRepo of research.articles	1
+repository	server:server/agents/CompileArticlePipeline.scala	GoalLinkRepo of automation.goals	1
+repository	server:server/agents/CurrencyCheckPipeline.scala	AgentRepo of automation.agents	1
+repository	server:server/agents/DrainService.scala	AgentRepo of automation.agents	1
+repository	server:server/agents/DrainService.scala	AutopilotRepo of automation.autopilot	1
+repository	server:server/agents/Engine.scala	QueueRepo of automation.worklists	1
+repository	server:server/agents/EnrichSourcePipeline.scala	AgentRepo of automation.agents	1
+repository	server:server/agents/EnrichSourcePipeline.scala	QueueRepo of automation.worklists	1
+repository	server:server/agents/GoalFocusService.scala	ManagerRepo of automation.managers	1
+repository	server:server/agents/GoalSweep.scala	QueueRepo of automation.worklists	1
+repository	server:server/agents/HintEffectPipeline.scala	AgentRepo of automation.agents	1
+repository	server:server/agents/InferFilterPipeline.scala	AgentRepo of automation.agents	1
+repository	server:server/agents/InferFilterPipeline.scala	ArticleRepo of research.articles	1
+repository	server:server/agents/ManagerSupervisor.scala	AgentRepo of automation.agents	1
+repository	server:server/agents/ManagerSupervisor.scala	ArticleRepo of research.articles	1
+repository	server:server/agents/ManagerSupervisor.scala	GoalLinkRepo of automation.goals	1
+repository	server:server/agents/ManagerSupervisor.scala	GoalRepo of automation.goals	1
+repository	server:server/agents/ManagerSupervisor.scala	QueueRepo of automation.worklists	1
+repository	server:server/agents/ManagerSupervisor.scala	ReviewLedgerRepo of research.workflows	1
+repository	server:server/agents/ManagersHandlers.scala	AgentRepo of automation.agents	1
+repository	server:server/agents/ManagersHandlers.scala	ArticleRepo of research.articles	1
+repository	server:server/agents/ManagersHandlers.scala	GoalLinkRepo of automation.goals	1
+repository	server:server/agents/OaBacklog.scala	GoalLinkRepo of automation.goals	1
+repository	server:server/agents/OaBacklog.scala	ManagerRepo of automation.managers	1
+repository	server:server/agents/OaBacklog.scala	QueueRepo of automation.worklists	1
+repository	server:server/agents/ProposeArticlesPipeline.scala	AgentRepo of automation.agents	1
+repository	server:server/agents/ProposeArticlesPipeline.scala	ArticleRepo of research.articles	1
+repository	server:server/agents/ProposeArticlesPipeline.scala	GoalLinkRepo of automation.goals	1
+repository	server:server/agents/ProposeArticlesPipeline.scala	GoalRepo of automation.goals	1
+repository	server:server/agents/ProposeArticlesPipeline.scala	ManagerRepo of automation.managers	1
+repository	server:server/agents/ReviewArticlePipeline.scala	AgentRepo of automation.agents	1
+repository	server:server/agents/ReviewArticlePipeline.scala	QueueRepo of automation.worklists	1
+repository	server:server/agents/SchedulerService.scala	AgentRepo of automation.agents	1
+repository	server:server/agents/SchedulerService.scala	AutopilotRepo of automation.autopilot	1
+repository	server:server/agents/SchedulerService.scala	FocusRepo of automation.goals	1
+repository	server:server/agents/SchedulerService.scala	GoalLinkRepo of automation.goals	1
+repository	server:server/agents/SchedulerService.scala	ManagerRepo of automation.managers	1
+repository	server:server/agents/SeedService.scala	CandidateRepo of library.acquisition	1
+repository	server:server/agents/SeedService.scala	FocusRepo of automation.goals	1
+repository	server:server/agents/SeedService.scala	ManagerRepo of automation.managers	1
+repository	server:server/events/EventCatalogHandlers.scala	AttestationRepo of catalogue.evidence	1
+repository	server:server/events/EventCatalogHandlers.scala	JobRepo of util.jobs	1
+repository	server:server/events/EventCatalogHandlers.scala	SourceRepo of library.sources	1

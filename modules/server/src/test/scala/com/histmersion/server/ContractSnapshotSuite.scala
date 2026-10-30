@@ -93,7 +93,9 @@ class ContractSnapshotSuite extends munit.FunSuite:
         "tools" -> a.tools.map(_.wire).asJson,
         "answer" -> PromptBudget.answers
           .get(a.name)
-          .fold(Json.Null)(s => io.circe.parser.parse(agents.ClaudeCode.schemaJson(s)).fold(e => Json.fromString(e.toString), identity))
+          .fold(Json.Null)(s =>
+            io.circe.parser.parse(agents.ClaudeCode.schemaJson(s)).fold(e => Json.fromString(e.toString), identity)
+          )
       )
     }*)
     check("toolbox.json", Json.obj("tools" -> tools, "roles" -> roles).spaces2)
