@@ -206,9 +206,9 @@ object Supervisor:
     * that points at them. Throws with an actionable message when the bundle is incomplete — the server cannot run
     * without its database.
     */
-  def start(cfg: AppConfig): AppConfig =
+  def start(cfg: AppConfig, paths: UserPaths): AppConfig =
     val exe = currentExecutable
-    val l = layout(cfg.runtime, exe, k => Option(System.getenv(k)), System.getProperty("os.name", ""))
+    val l = layout(cfg.runtime, exe, paths.environment.lookup, paths.osName)
       .fold(e => throw IllegalStateException(e), identity)
     if !Files.isExecutable(l.pgBin.resolve("pg_ctl")) then
       throw IllegalStateException(
@@ -217,7 +217,7 @@ object Supervisor:
     List(l.data, l.logs, l.backups, l.uploads, l.bundles).foreach(d => Files.createDirectories(d))
     scribe.info(s"runtime: bundle ${l.home}, data ${l.data}")
     PgRelocation
-      .relocate(l.pgBin.getParent, System.getProperty("os.name", "").toLowerCase.contains("mac"))
+      .relocate(l.pgBin.getParent, paths.isMac)
       .foreach(r =>
         scribe.info(
           s"runtime: relocated PostgreSQL to ${l.pgBin.getParent} " +
@@ -230,7 +230,7 @@ object Supervisor:
     if run(List(l.pgBin.resolve("pg_ctl").toString, "-D", l.cluster.toString, "status"), l)._1 == 0 then
       scribe.info("runtime: postgres already running on this cluster — adopting it")
     else
-      val settings = pgSettings(cfg.runtime.postgres, physicalMemory(System.getProperty("os.name", "")))
+      val settings = pgSettings(cfg.runtime.postgres, physicalMemory(paths.osName))
       scribe.info(s"runtime: postgres memory ${settings.map((k, v) => s"$k=$v").mkString(", ")}")
       val (rc, out) = run(pgStart(l, cfg.runtime.pgPort, settings), l)
       if rc != 0 then
@@ -238,7 +238,7 @@ object Supervisor:
           s"postgres did not start (exit $rc): ${out.takeRight(5).mkString("; ")} — see ${l.logs.resolve("postgres.log")}"
         )
       scribe.info(s"runtime: postgres up on 127.0.0.1:${cfg.runtime.pgPort}")
-    val configured = configure(cfg, l, Option(System.getenv("HISTMERSION_BIND")))
+    val configured = configure(cfg, l, paths.environment.get("HISTMERSION_BIND"))
     ensureDatabase(configured)
 
     if Files.isExecutable(l.python) then superviseConverter(l, cfg.runtime.converterPort)
@@ -252,10 +252,10 @@ object Supervisor:
     * `runtime.*`, are restart-only), and a database the reload names is created in the bundled cluster before a pool
     * opens on it. `started` is the config [[start]] was given.
     */
-  def reloadSource(started: AppConfig, read: () => Either[String, LoadedConfig]): ConfigSource =
-    val l = layout(started.runtime, currentExecutable, k => Option(System.getenv(k)), System.getProperty("os.name", ""))
+  def reloadSource(started: AppConfig, read: () => Either[String, LoadedConfig], paths: UserPaths): ConfigSource =
+    val l = layout(started.runtime, currentExecutable, paths.environment.lookup, paths.osName)
       .fold(e => throw IllegalStateException(e), identity)
-    val bind = Option(System.getenv("HISTMERSION_BIND"))
+    val bind = paths.environment.get("HISTMERSION_BIND")
     ConfigSource(
       read,
       c => configure(c, l, bind),

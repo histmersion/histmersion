@@ -6,8 +6,8 @@ import io.github.iltotore.iron.RefinedType
 import java.sql.{PreparedStatement, ResultSet, SQLException}
 
 /** The column codec of every newtype, from its base type's. A value its constraint refuses fails the read, naming the
-  * column and the value: the stored data breaks a rule the code relies on, and that should be loud. NULL passes through,
-  * for `Option`'s codec to read as `None`.
+  * column and the value: the stored data breaks a rule the code relies on, and that should be loud. NULL passes
+  * through, for `Option`'s codec to read as `None`.
   */
 object NewtypeColumns:
   given column: [T] => (m: RefinedType.Mirror[T]) => (base: DbCodec[m.BaseType]) => DbCodec[T] = new DbCodec[T]:
