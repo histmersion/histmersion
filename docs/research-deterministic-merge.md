@@ -1,6 +1,6 @@
 # Research: deterministic, order-independent merging of reference data
 
-Status: design and audit, 2026-10-28. No code has changed. Line numbers refer to `master` at
+Status: design and audit, 2026-10-28; questions 1–11 decided 2026-10-30 (§ 8). No code has changed. Line numbers refer to `master` at
 `93331581`. Live counts come from read-only queries against the running server on 2026-10-28.
 
 Scope: the **reference data**: places and sites, their names, links, types and shapes; events
@@ -972,3 +972,29 @@ World OSM historic and heritage POIs add perhaps 3 to 5 M, for ≈ 6 to 7 M memb
     `keep-left`/`keep-right` decisions are themselves asymmetric (A into B ≠ B into A). Should the
     same edit model (HLC, based-on) replace those decisions later, or does a person always decide
     there?
+
+### Decisions (2026-10-30)
+
+Questions 1–11 are answered as recommended:
+
+1. The authority ranks stand as listed; a national register outranks Wikidata for a monument's
+   period and kind.
+2. A one-time rename of the ids that rank-then-key changes is accepted, every old id kept as an
+   alias; step 3 reports the number before the rename runs.
+3. Records that carry strong ids of different schemes join by id only, never by fuzzy matching.
+4. The rules live in a versioned, stored profile; a database may override it, and lint warns that
+   its derived state then differs from its peers'.
+5. OSM (ODbL) is exchanged by reference by default — each side fetches the extract; attributed
+   datasets (CC BY, ODC-By) travel with their release rows.
+6. Tombstones and edit history are kept forever until a peer registry exists.
+7. Concurrent edits: last writer wins and is shown; lint reports the conflict; nothing blocks.
+8. A person's same-as may join two Wikidata items; T0 ranks above C2 and lint reports it.
+9. Point-only observations of area kinds are hidden (derived visibility), not dropped; their names
+   stay searchable.
+10. Live-API datasets carry the upstream revision id where the API gives one; otherwise the
+    retrieval instant is the version.
+11. A bundle from a newer rules version is accepted; its derived state is marked stale until the
+    server is upgraded.
+
+Question 12 (scholarly content: sources, findings, articles) stays open; until it is decided, a
+person decides those merges through the merge planner.
