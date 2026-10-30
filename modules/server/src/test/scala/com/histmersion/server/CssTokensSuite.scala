@@ -137,7 +137,8 @@ class CssTokensSuite extends munit.FunSuite:
     val themed = List("--bg", "--panel", "--sunk", "--ink", "--ink2", "--ink3", "--line", "--line2", "--control-line",
       "--accent", "--on-accent", "--accent-soft", "--time", "--time-soft", "--time-fill", "--attn", "--attn-soft",
       "--ok", "--ok-soft", "--danger", "--danger-soft", "--mark-bg", "--sh-pop", "--sh-win", "--scrim") ++
-      Palette.statuses.map(Palette.status) ++ Palette.edgeKinds.map(Palette.edge)
+      Palette.statuses.map(Palette.status) ++ Palette.edgeKinds.map(Palette.edge) ++
+      Palette.goalStages.flatMap(s => List(Palette.goalStage(s), Palette.goalStageSoft(s)))
     assertEquals(themed.filterNot(darkChosen.contains), Nil)
     assertEquals(themed.filterNot(rootTokens.contains), Nil)
 
@@ -148,12 +149,15 @@ class CssTokensSuite extends munit.FunSuite:
       List("--on-accent" -> "--accent", "--time" -> "--panel", "--time" -> "--bg", "--time" -> "--time-soft",
         "--attn" -> "--panel", "--attn" -> "--attn-soft", "--ok" -> "--panel", "--ok" -> "--ok-soft",
         "--danger" -> "--panel", "--danger" -> "--danger-soft", "--ink" -> "--time-soft", "--ink" -> "--attn-soft",
-        "--ink" -> "--ok-soft", "--ink" -> "--danger-soft", "--mark-ink" -> "--mark-bg", "--ink2" -> "--accent-soft")
+        "--ink" -> "--ok-soft", "--ink" -> "--danger-soft", "--mark-ink" -> "--mark-bg", "--ink2" -> "--accent-soft") ++
+      // a goal stage's word on its badge (planned's word is the secondary ink, done's the green of done)
+      List("--ink2" -> "--stage-planned-soft", "--stage-seeding" -> "--stage-seeding-soft",
+        "--stage-compiled" -> "--stage-compiled-soft", "--stage-reviewed" -> "--stage-reviewed-soft", "--ok" -> "--ok-soft")
 
   /** A control's edge, the focus ring and the source-status marks against what they sit on: 3:1. */
   private val componentPairs: List[(String, String)] =
     for
-      fg <- List("--control-line", "--accent") ++ Palette.statuses.map(Palette.status)
+      fg <- List("--control-line", "--accent") ++ Palette.statuses.map(Palette.status) ++ Palette.goalStages.map(Palette.goalStage)
       bg <- List("--bg", "--panel", "--sunk")
     yield fg -> bg
 
@@ -234,3 +238,35 @@ class CssTokensSuite extends munit.FunSuite:
     done.foreach(d => assert(d.contains("background:var(--ok-soft); color:var(--ok)"), d))
     val seeding = decl(".job-state.goal-status.state-seeding")
     assert(!seeding.contains("danger") && !seeding.contains("health-down"), seeding)
+
+  /** The colours a goal stage's badge is drawn with: its ground, its word and its mark, from its rules. */
+  private def stageLook(stage: String): (String, String, String) =
+    def rule(sel: String) = ("""(?s)""" + java.util.regex.Pattern.quote(sel) + """ \{([^}]*)\}""").r.findFirstMatchIn(css)
+      .map(_.group(1)).getOrElse(fail(s"no rule $sel"))
+    val badge = rule(s".job-state.goal-status.state-$stage")
+    val mark  = rule(s".job-state.goal-status.state-$stage::before")
+    def value(decl: String, prop: String) = s"""$prop:([^;]+);?""".r.findFirstMatchIn(decl).map(_.group(1).trim).getOrElse("")
+    (value(badge, "background"), value(badge, "color"), mark)
+
+  test("#7381: every goal stage has its own ground, word colour and mark shape — seeding and compiled no longer share one"):
+    val looks = Palette.goalStages.map(s => s -> stageLook(s)).toMap
+    assertEquals(looks.values.map(_._1).toSet.size, Palette.goalStages.size, s"grounds: $looks")
+    assertEquals(looks.values.map(_._2).toSet.size, Palette.goalStages.size, s"words: $looks")
+    assertNotEquals(looks("seeding"), looks("compiled"))
+    // the shape: a dashed ring, a half-filled circle, a square, a diamond, a dot
+    assert(looks("planned")._3.contains("dashed"), looks("planned")._3)
+    assert(looks("seeding")._3.contains("linear-gradient"), looks("seeding")._3)
+    assert(looks("compiled")._3.contains("border-radius:1px") && !looks("compiled")._3.contains("rotate"), looks("compiled")._3)
+    assert(looks("reviewed")._3.contains("rotate(45deg)"), looks("reviewed")._3)
+    assert(looks("done")._3.contains("var(--stage-done)"), looks("done")._3)
+    for (name, theme) <- List("light" -> light, "dark" -> dark); s <- Palette.goalStages do
+      val (bg, fg, _) = looks(s)
+      def tokenOf(v: String) = v.stripPrefix("var(").stripSuffix(")")
+      val c = Wcag.contrast(colour(theme, tokenOf(fg)), colour(theme, tokenOf(bg)))
+      assert(c >= Wcag.AaText, f"$name: $s's word on its ground is $c%.2f")
+
+  test("#7381: a link is the accent in both themes, visited or not — never the browser's purple or pink"):
+    assert(css.contains(":where(a) { color:var(--accent); }"), "every link takes the accent")
+    assert(""":visited\s*\{""".r.findFirstIn(rules).isEmpty, "no rule gives visited links a colour of their own")
+    for (name, theme) <- List("light" -> light, "dark" -> dark); bg <- List("--bg", "--panel", "--sunk") do
+      assert(Wcag.contrast(colour(theme, "--accent"), colour(theme, bg)) >= Wcag.AaText, s"$name: the link on $bg")

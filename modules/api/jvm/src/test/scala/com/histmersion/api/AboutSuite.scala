@@ -17,9 +17,10 @@ class AboutSuite extends munit.FunSuite:
     assertEquals(ServiceState.of(None), ServiceState.Unknown)
 
   test("job counts fold the status rows; a status that is no job state is dropped"):
-    val c = JobCounts.of(List("queued" -> 2, "running" -> 1, "done" -> 40, "failed" -> 3, "weird" -> 9))
-    assertEquals(c, JobCounts(2, 1, 40, 3))
-    assertEquals(JobState.values.toList.map(c.of), List(2, 1, 40, 3))
+    val c = JobCounts.of(List("queued" -> 2, "running" -> 1, "done" -> 40, "failed" -> 3, "weird" -> 9, "paused" -> 1,
+      "cancelled" -> 4))
+    assertEquals(c, JobCounts(2, 1, 40, 3, 1, 4))
+    assertEquals(JobState.values.toList.map(c.of), List(2, 1, 40, 3, 1, 4))
     assertEquals(JobCounts.of(Nil), JobCounts())
 
   test("ages are coarse and never negative"):

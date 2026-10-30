@@ -183,8 +183,10 @@ object QueueView:
     case Idle, Editing, ConfirmDelete, Linking
 
   /** One window's pane. Its state lives with the pane, so each window loads its own list. */
-  def pane(kind: Queue.Kind): HtmlElement =
+  /** A list's page; with `goal`, only the items that serve that research goal. */
+  def pane(kind: Queue.Kind, goal: Option[String] = None): HtmlElement =
     val sp      = spec(kind)
+    val recheck = Var(Option.empty[Either[String, AcquireChecks.RecheckResult]])
     val items   = Var(List.empty[Queue.QueueItem])
     val checks  = Var(Map.empty[Int, AcquireChecks.AcquireCheck])
     val goals   = Var(Map.empty[Int, List[Queue.GoalRef]])
@@ -198,7 +200,8 @@ object QueueView:
 
     // a list without a done state is listed whole; the others follow their "show done" switch
     def load(): Unit =
-      ApiClient.queueList(kind.label, sp.showDone.fold(true)(_.now())).onComplete { r =>
+      val all = sp.showDone.fold(true)(_.now())
+      goal.fold(ApiClient.queueList(kind.label, all))(g => ApiClient.queueForGoal(kind.label, g, all)).onComplete { r =>
         r.fold(
           e => failure.set(Some(s"Could not load the list: ${e.getMessage}")),
           l =>
@@ -235,8 +238,18 @@ object QueueView:
       delete = item => write(s"delete item ${item.id}", ApiClient.queueDelete(item.id))(),
       fulfil = (item, ck) =>
         val (id, p) = fulfil(item, ck)
-        write(s"tick item $id off", ApiClient.queuePatch(id, p))()
+        write(s"tick item $id off", ApiClient.queuePatch(id, p))(),
+      recheck = item =>
+        write(s"re-check item ${item.id}", ApiClient.acquireRecheck(AcquireChecks.RecheckRequest(id = Some(item.id), by = Some("web"))))(
+          r => recheck.set(Some(Right(r))))
     )
+
+    def recheckAll(): Unit =
+      if !Auth.writableNow then WindowManager.open(WindowKey.ApiKey)
+      else ApiClient.acquireRecheck(AcquireChecks.RecheckRequest(all = true, by = Some("web"))).onComplete { r =>
+        recheck.set(Some(r.toEither.left.map(_.getMessage)))
+        load()
+      }
 
     div(
       cls := s"tool-pane queue-pane ${kind.label}-pane",
@@ -251,8 +264,21 @@ object QueueView:
         cls := "pane-bar",
         sp.showDone.map(f => LayerToggle(sp.icon, "show done", f.signal, v => UiState.set(f := v)())),
         LayerToggle(Icon.Edit, if sp.editable then "add item" else "add entry", adding.signal, adding.set),
+        Option.when(sp.fulfils && goal.isEmpty)(button(typ := "button", cls := "btn recheck-all", "Re-check all",
+          title := "Look for a legal open copy of every open item naming a DOI, now (a background job)",
+          onClick --> (_ => recheckAll()))),
         span(cls := "muted", child.text <-- items.signal.map(summary(sp, _)))
       ),
+      goal.map(g => p(cls := "muted queue-goal", "Only the items of the goal ", RouteLink(Route.Goal(g), Wording.humanize(g)), " · ",
+        RouteLink(if kind == Queue.Kind.Acquire then Route.Research(ResearchSection.Acquire) else Route.Research(ResearchSection.Backlog),
+          "show every item"))),
+      child.maybe <-- recheck.signal.map(_.map {
+        case Left(m)  => p(cls := "form-error", role := "alert", s"Could not re-check: $m")
+        case Right(r) => p(cls := "muted recheck-note", role := "status",
+          r.job.fold[Modifier[HtmlElement]](span(s"Re-checked: ${r.closed} closed, ${r.fetched} found, ${r.noCopy} with no legal copy yet."))(j =>
+            span("Re-check running as ", RouteLink(Route.Job(j.id), s"job ${j.id.take(8)}"), " — it closes what it finds; ",
+              RouteLink(Route.Activity(ActivityTab.Jobs), "follow it in Activity"), ".")))
+      }),
       child.maybe <-- Auth.writable.map(w =>
         Option.when(!w)(div(cls := "pane-note", Auth.keyNeeded(if sp.editable then "change the list" else "add entries")))),
       child.maybe <-- adding.signal.map(Option.when(_)(addForm(sp, items.signal, topicsId,
@@ -271,7 +297,8 @@ object QueueView:
       setDone: (Queue.QueueItem, Boolean) => Unit,
       edit: (Queue.QueueItem, Queue.QueuePatch, () => Unit) => Unit,
       delete: Queue.QueueItem => Unit,
-      fulfil: (Queue.QueueItem, String) => Unit
+      fulfil: (Queue.QueueItem, String) => Unit,
+      recheck: Queue.QueueItem => Unit
   )
 
   /** A topic path as the suggestion list shows it: readable, the levels joined by `›`. */
@@ -362,6 +389,7 @@ object QueueView:
           if goals.size == 1 then "Goal: " else "Goals: ",
           goals.map(g => WinLink(WindowKey.Goal(g.slug), title := g.slug, Option(g.title).filter(_.trim.nonEmpty)
             .getOrElse(Wording.humanize(g.slug)))).flatMap(l => List[Modifier[HtmlElement]](", ", l)).drop(1))),
+        provenance(item),
         if !sp.editable then emptyNode
         else
           child <-- mode.signal.map {
@@ -378,12 +406,44 @@ object QueueView:
                 actionButton("delete", () => mode.set(Mode.ConfirmDelete)),
                 if sp.fulfils && !done then
                   List(
+                    actionButton("Re-check now", () => ops.recheck(item)).amend(cls := "recheck-one",
+                      title := "Look for a legal open copy of this one, now"),
                     actionButton("Upload…", () => UploadView.prefill(QueueItemRef.uploadDraft(item))),
                     actionButton("Link existing source…", () => mode.set(Mode.Linking)))
                 else List.empty[HtmlElement])
           }
       )
     )
+
+  /** A list as Research's side navigation names it. */
+  def listName(kind: Queue.Kind): String = kind match
+    case Queue.Kind.Acquire => "To acquire"
+    case Queue.Kind.Tasks   => "Backlog"
+    case Queue.Kind.Log     => "Worklog"
+
+  /** Who wrote an item and who ticked it off: the agent run or background job, each a link to its page. */
+  private def provenance(item: Queue.QueueItem): Option[HtmlElement] =
+    val parts = item.createdBy.map(id => span("Written by ", RouteLink(Route.Job(id), s"agent work or job ${id.take(8)}"))).toList ++
+      item.closedBy.map(id => span("ticked off by ", RouteLink(Route.Job(id), s"agent work or job ${id.take(8)}"))).toList
+    Option.when(parts.nonEmpty)(div(cls := "item-provenance muted",
+      parts.flatMap(p => List[Modifier[HtmlElement]](" · ", p)).drop(1)))
+
+  /** What one agent run or background job wrote to the lists and ticked off — its page's side of the links. */
+  def ofJob(jobId: String): HtmlElement =
+    val found = Var(Option.empty[List[Queue.QueueItem]])
+    div(cls := "job-items",
+      onMountCallback(_ => scala.concurrent.Future.sequence(Queue.Kind.values.toList.map(k => ApiClient.queueOfJob(k.label, jobId)))
+        .onComplete(r => found.set(Some(r.toOption.toList.flatten.flatMap(_.items))))),
+      child <-- found.signal.map {
+        case None | Some(Nil) => emptyNode
+        case Some(is) =>
+          div(h4("In the lists"),
+            ul(cls := "job-items-list", is.map { i =>
+              val kind = Queue.Kind.parse(i.list).getOrElse(Queue.Kind.Log)
+              li(span(cls := "muted", if i.closedBy.contains(jobId) then "ticked off · " else "wrote · "),
+                QueueItemLink(kind, i.id, s"${listName(kind)}: ${i.text.take(120)}"))
+            }))
+      })
 
   /** The id of an item's row, which a link to it scrolls to. */
   def itemAnchor(id: Int): String = s"queue-item-$id"

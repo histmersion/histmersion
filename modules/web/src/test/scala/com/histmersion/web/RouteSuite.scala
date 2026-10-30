@@ -25,8 +25,12 @@ class RouteSuite extends munit.FunSuite:
     assertEquals(Route.Research(ResearchSection.Overview).path, "/research")
     assertEquals(Route.Research(ResearchSection.Goals).path, "/research/goals")
     assertEquals(Route.Goal("bronze-age").path, "/research/goals/bronze-age")
-    assertEquals(Route.Activity(ActivityTab.Runs).path, "/research/activity")
+    assertEquals(Route.Activity(ActivityTab.Everything).path, "/research/activity")
+    assertEquals(Route.Activity(ActivityTab.Running).path, "/research/activity/running")
     assertEquals(Route.Activity(ActivityTab.Jobs).path, "/research/activity/jobs")
+    assertEquals(Route.Activity(ActivityTab.Problems).path, "/research/activity/problems")
+    assertEquals(Route.Activity(ActivityTab.Runs).path, "/research/activity/runs")
+    assertEquals(Route.Activity(ActivityTab.Worklog).path, "/research/activity/worklog")
     assertEquals(Route.Research(ResearchSection.Backlog).path, "/research/backlog")
     assertEquals(Route.Research(ResearchSection.Acquire).path, "/research/acquire")
     assertEquals(Route.Research(ResearchSection.Decisions).path, "/research/decisions")
@@ -41,7 +45,7 @@ class RouteSuite extends munit.FunSuite:
     List("/nope", "/research/nope", "/research/activity/nope", "/library/x/y", "/settings/data/x", "/run",
       "/run/a/b", "/research/goals/a/b", "/explore/x").foreach(p => assertEquals(Route.parse(p), None, p))
     // a trailing slash is the same page
-    assertEquals(Route.parse("/research/activity/"), Some(Route.Activity(ActivityTab.Runs)))
+    assertEquals(Route.parse("/research/activity/"), Some(Route.Activity(ActivityTab.Everything)))
 
   test("every page the web UI draws is an address the server serves it for; the server's pages are not"):
     pages.foreach { r =>
@@ -97,7 +101,7 @@ class RouteSuite extends munit.FunSuite:
     assertEquals(Route.legacy("/log", Nil), Some(Route.Landing(Route.Activity(ActivityTab.Worklog), Nil)))
     assertEquals(Route.legacy("/", List(WindowKey.Goals)), Some(Route.Landing(Route.Research(ResearchSection.Goals), Nil)))
     assertEquals(Route.legacy("/", List(WindowKey.Run("r1"), WindowKey.Jobs, WindowKey.About)),
-      Some(Route.Landing(Route.Activity(ActivityTab.Jobs), List(WindowKey.Run("r1")))))
+      Some(Route.Landing(Route.Activity(ActivityTab.JobList), List(WindowKey.Run("r1")))))
     assertEquals(Route.legacy("/", List(WindowKey.Source("a2020_b"))),
       Some(Route.Landing(Route.Explore, List(WindowKey.Source("a2020_b")))))
     // an old list address wins over a window named in its hash
@@ -128,3 +132,4 @@ class RouteSuite extends munit.FunSuite:
 
   test("page titles are words, never identifiers"):
     pages.foreach(r => assert(!Router.title(r).contains("_") && Router.title(r).head.isUpper, r.toString))
+

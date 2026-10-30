@@ -4,6 +4,7 @@ import { appendFileSync } from 'node:fs';
 import { engineName, isChromium, isFirefox, launch, launchChromiumWithout, launchSoftwareChromium, wantsGpu } from './engine.mjs';
 import { fullLoad, routeFixtures, routeFullLoad } from './perf-fixtures.mjs';
 import { LIBRARY_SOURCES, routeLibrary } from './library-fixtures.mjs';
+import { goal as researchGoal, routeResearch } from './research-fixtures.mjs';
 import { fullLoadView, motionTrace } from './perf-paths.mjs';
 import { quiet, trackRequests } from './perf-lib.mjs';
 import { routeTiles } from './tile-fixtures.mjs';
@@ -1550,7 +1551,7 @@ test('the jobs window says latest N of M, counts every state, and loads an older
     });
     await page.locator('.places a[data-nav="research"]').click();
     await page.locator('.side-nav a', { hasText: 'Activity' }).click();
-    await page.locator('.page-tabs a', { hasText: 'Background jobs' }).click();
+    await page.locator('.activity-details a', { hasText: 'Every background job' }).click();
     const pane = page.locator('.jobs-pane');
     const heading = pane.locator('.list-heading');
     await heading.waitFor();
@@ -3517,10 +3518,12 @@ test('every page renders under its place, with the top bar, from its own address
     ['/explore', 'Explore', null], ['/library', 'Library', '.library-sources-pane'],
     ['/library/articles', 'Library', '.library-articles-pane'], ['/library/upload', 'Library', '.upload-pane'],
     ['/library/merge', 'Library', '.merge-pane'], ['/library/doi', 'Library', '.doi-pane'],
-    ['/research', 'Research', '.managers-pane'],
+    ['/research', 'Research', '.research-overview'],
     ['/research/decisions', 'Research', '.approvals-pane'], ['/research/goals', 'Research', '.goals-pane'],
-    ['/research/goals/zz-pw-nogoal', 'Research', '.goal-pane'], ['/research/activity', 'Research', '.runs-pane'],
-    ['/research/activity/jobs', 'Research', '.jobs-pane'], ['/research/activity/worklog', 'Research', '.log-pane'],
+    ['/research/goals/zz-pw-nogoal', 'Research', '.goal-page'], ['/research/activity', 'Research', '.activity-pane'],
+    ['/research/activity/jobs', 'Research', '.activity-pane'], ['/research/activity/problems', 'Research', '.activity-pane'],
+    ['/research/activity/runs', 'Research', '.runs-pane'], ['/research/activity/all-jobs', 'Research', '.jobs-pane'],
+    ['/research/activity/worklog', 'Research', '.log-pane'],
     ['/research/backlog', 'Research', '.tasks-pane'], ['/research/acquire', 'Research', '.acquire-pane'],
     ['/research/models', 'Research', '.models-pane'], ['/run/zz-pw-norun', 'Research', '.place-page .item-page'],
     ['/manager/zz-pw-nomanager', 'Research', '.place-page .item-page'], ['/settings', 'Settings', '.map-regions'],
@@ -3558,23 +3561,25 @@ test('every window of the old toolbar is reachable from the new navigation, each
         await page.locator('#add-sources-btn').click();
         await page.locator('.add-sources-menu a', { hasText: side }).click();
       } else if (side) await page.locator('.side-nav a', { hasText: side }).first().click();
-      if (tab) await page.locator('.page-tabs a', { hasText: tab }).click();
+      // Activity's detailed lists are linked under its one list; the managers sit in a disclosure of the overview
+      if (tab === 'managers') await page.locator('.research-managers > summary').click();
+      else if (tab) await page.locator('.activity-details a', { hasText: tab }).click();
       await page.locator(`.place-page ${pane}`).waitFor();
       return new URL(page.url()).pathname;
     };
     const found = {
       'Research goals': await via('research', 'Goals', null, '.goals-pane'),
       'Backlog': await via('research', 'Backlog', null, '.tasks-pane'),
-      'Agent runs': await via('research', 'Activity', 'Agent runs', '.runs-pane'),
-      'Agent managers': await via('research', 'Overview', null, '.managers-pane'),
+      'Agent runs': await via('research', 'Activity', 'Every agent run', '.runs-pane'),
+      'Agent managers': await via('research', 'Overview', 'managers', '.managers-pane'),
       'Approvals': await via('research', 'Needs your decision', null, '.approvals-pane'),
       'AI models and limits': await via('research', 'AI models and limits', null, '.models-pane'),
       'To acquire': await via('research', 'To acquire', null, '.acquire-pane'),
       'Upload': await via('library', 'Upload a file', null, '.upload-pane'),
       'Merge another collection': await via('library', 'Merge another collection', null, '.merge-pane'),
       'Add by DOI': await via('library', 'Add by DOI', null, '.doi-pane'),
-      'Jobs': await via('research', 'Activity', 'Background jobs', '.jobs-pane'),
-      'Worklog': await via('research', 'Activity', 'Worklog', '.log-pane'),
+      'Jobs': await via('research', 'Activity', 'Every background job', '.jobs-pane'),
+      'Worklog': await via('research', 'Activity', 'The worklog, by day', '.log-pane'),
       'API key': await via('settings', 'Keys', null, '.key-pane'),
       'About': await via('settings', 'About Histmersion', null, '.about-pane'),
       'Map regions': await via('settings', 'Data and downloads', null, '.map-regions'),
@@ -3617,7 +3622,7 @@ test('moving between pages is history: back and forward walk it, and the map kee
 test('old addresses land on their new pages: #open= toolbar windows, /acquire, /tasks, /log, /merge', async () => {
   await withPage({ width: 1440, height: 900 }, async page => {
     const cases = [
-      ['/#open=goals', '/research/goals', '.goals-pane'], ['/#open=jobs', '/research/activity/jobs', '.jobs-pane'],
+      ['/#open=goals', '/research/goals', '.goals-pane'], ['/#open=jobs', '/research/activity/all-jobs', '.jobs-pane'],
       ['/#open=about', '/settings/about', '.about-pane'], ['/#open=upload', '/library/upload', '.upload-pane'],
       ['/acquire', '/research/acquire', '.acquire-pane'], ['/tasks', '/research/backlog', '.tasks-pane'],
       ['/log', '/research/activity/worklog', '.log-pane'], ['/merge', '/library/merge', '.merge-pane'],
@@ -3818,8 +3823,12 @@ test('a backlog item links its goals, and a goal\'s linked item leads to it in i
       await row.waitFor();
       const goal = row.locator('.item-goals a', { hasText: 'Zz PW linked goal' });
       assert.equal(await goal.getAttribute('href'), '/research/goals/zz-pw-linked');
-      // the goal's page lists the item as a link into the backlog, which marks it
+      // the goal's page counts it among its open backlog items, and its editor lists it as a link into the backlog
       await page.goto(new URL('/research/goals/zz-pw-linked', baseURL).href);
+      const count = page.locator('.goal-produced a', { hasText: '1 item' }).first();
+      await count.waitFor();
+      assert.equal(await count.getAttribute('href'), '/research/backlog?goal=zz-pw-linked');
+      await page.locator('.goal-edit-btn').click();
       const link = page.locator('.goal-links a', { hasText: `#${item.id}` });
       await link.waitFor();
       assert.equal(await link.getAttribute('href'), `/research/backlog?item=${item.id}`);
@@ -4299,4 +4308,199 @@ test('Library in a narrow window: the reading pane alone with "← Back to list"
     await page.locator('.reading-title', { hasText: 'Zz library source 0' }).waitFor();
     assert.ok(await noSideways(page));
   });
+});
+
+// ── Research, phase 5: the overview, one activity list, a goal's page, the lists' links, the stage colours ──────
+
+test('Research overview: ONE three-way control of the agents, what runs, the weekly allowance', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    const writes = await routeResearch(page);
+    await page.goto(new URL('/research', baseURL).href);
+    const card = page.locator('.research-agents');
+    await card.locator('.research-agents-head', { hasText: 'Research agents are working' }).waitFor();
+    const radios = card.locator('[role="radiogroup"] [role="radio"]');
+    assert.deepEqual(await radios.allInnerTexts(), ['Working', 'Finish current work, then pause', 'Pause now']);
+    assert.equal(await radios.nth(0).getAttribute('aria-checked'), 'true');
+    await card.locator('.muted', { hasText: '3 running now · 12 waiting their turn' }).waitFor();
+    await card.locator('.muted', { hasText: "Claude plan: 61% of this week's limit left" }).waitFor();
+    await radios.nth(1).click();
+    await card.locator('.research-agents-head', { hasText: 'finishing current work, then pausing' }).waitFor();
+    assert.equal(await radios.nth(1).getAttribute('aria-checked'), 'true');
+    await radios.nth(2).click();
+    await card.locator('.research-agents-head', { hasText: 'Research agents are paused' }).waitFor();
+    await radios.nth(0).click();
+    await card.locator('.research-agents-head', { hasText: 'Research agents are working' }).waitFor();
+    assert.deepEqual(writes.mode, ['finish', 'pause', 'working']);
+  });
+});
+
+test('Needs your decision: the oldest first, each with its reason and what to read BEFORE the accept button; no bulk accept', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    const writes = await routeResearch(page);
+    await page.goto(new URL('/research', baseURL).href);
+    const rows = page.locator('.research-decisions .decision-row');
+    await rows.first().waitFor();
+    assert.deepEqual(await rows.evaluateAll(rs => rs.map(r => r.dataset.approval)), ['901', '902'], 'the oldest first');
+    await page.locator('.research-decisions .ch', { hasText: 'oldest waiting 5 hours' }).waitFor();
+    for (const row of [rows.nth(0), rows.nth(1)]) {
+      assert.match(await row.locator('.decision-reason').innerText(), /Reason given: Zz/);
+      // in reading order the evidence comes first, and it stands before the button
+      const order = await row.evaluate(r => [...r.querySelectorAll('.decision-evidence, .decision-accept')].map(e => e.className.includes('accept') ? 'accept' : 'evidence'));
+      assert.equal(order.at(-1), 'accept', `evidence before accept: ${order}`);
+      const ev = await row.locator('.decision-evidence').first().boundingBox(), ok = await row.locator('.decision-accept').boundingBox();
+      assert.ok(ev.x + ev.width <= ok.x + 1 || ev.y + ev.height <= ok.y + 1, 'the evidence link is placed before the accept button');
+    }
+    assert.equal(await rows.nth(0).locator('.decision-evidence').first().getAttribute('href'), '/source/zz_drake_2012');
+    assert.equal(await rows.nth(0).locator('.decision-evidence', { hasText: 'Compare the two' }).getAttribute('href'), '/source/zz_kaniewski_2013');
+    assert.equal(await rows.nth(1).locator('.decision-evidence').getAttribute('href'), '/article/zz-hittite-storm-god');
+    assert.equal(await page.locator('.research-decisions input[type="checkbox"]').count(), 0, 'no bulk selection on the overview');
+    await rows.nth(0).locator('.decision-accept').click();
+    await page.waitForFunction(() => true);
+    await new Promise(r => setTimeout(r, 300));
+    assert.deepEqual(writes.decide, ['901:approve']);
+  });
+});
+
+test('Research overview: goals with their steps and what blocks them; the latest activity links to the whole list', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await routeResearch(page);
+    await page.goto(new URL('/research', baseURL).href);
+    const g = page.locator('.goal-progress[data-goal="zz-collapse"]');
+    await g.locator('.goal-steps', { hasText: '8 of 12 steps' }).waitFor();
+    assert.equal(await g.locator('.goal-progress-title').getAttribute('href'), '/research/goals/zz-collapse');
+    assert.equal(await g.locator('.bar').getAttribute('aria-valuenow'), '66');
+    await page.locator('.goal-progress[data-goal="zz-anatolia"] .goal-blocker', { hasText: 'Blocked: zz an approval only you decide' }).waitFor();
+    const act = page.locator('.research-activity');
+    await act.locator('.activity-row').first().waitFor();
+    assert.equal(await act.locator('.activity-row').count(), 6);
+    assert.equal(await act.locator('.ch-link', { hasText: 'Full history' }).getAttribute('href'), '/research/activity');
+    assert.ok(await act.locator('.fchip', { hasText: 'Running now · 2' }).isVisible());
+  });
+});
+
+test('Activity: one time-ordered list with chips, paging, each entry linked to what it touched, Pause and Cancel in place', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    const writes = await routeResearch(page, { total: 45 });
+    await page.goto(new URL('/research/activity', baseURL).href);
+    const list = page.locator('.activity-pane .activity-list');
+    await list.locator('.activity-row').first().waitFor();
+    assert.deepEqual(await page.locator('.activity-chips .fchip').allInnerTexts(),
+      ['Everything', 'Running now · 2', 'Agent work', 'Background jobs', 'Your actions', 'Problems · 1 this week']);
+    assert.equal(await list.locator('.activity-row').count(), 30, 'one page');
+    const run = list.locator('.activity-row[data-key="run:zz-run-review"]');
+    assert.equal(await run.locator('.activity-when').innerText(), 'Running');
+    assert.equal(await run.locator('.activity-refs a.goal-ref').getAttribute('href'), '/research/goals/zz-collapse');
+    assert.equal(await run.locator('.activity-refs a', { hasText: 'see what it did' }).getAttribute('href'), '/run/zz-run-review');
+    assert.equal(await run.locator('.activity-refs a.art-ref').getAttribute('href'), '/article/zz-sea-peoples');
+    const media = list.locator('.activity-row[data-key="job:zz-job-media"]');
+    assert.deepEqual(await media.locator('.activity-actions button').allInnerTexts(), ['Pause', 'Cancel']);
+    const note = list.locator('.activity-row[data-key="log:9001"]');
+    assert.equal(await note.locator('.activity-refs a', { hasText: 'job zz-job-f' }).getAttribute('href'), '/job/zz-job-fetch');
+    const fail = list.locator('.activity-row[data-key="job:zz-job-fail"]');
+    assert.ok((await fail.getAttribute('class')).includes('is-problem'));
+    assert.match(await fail.locator('.activity-when').innerText(), /^Problem · /);
+    assert.equal(await list.locator('.activity-row[data-key="job:zz-job-010"] .activity-actions').count(), 0, 'an OCR has no controls');
+    const decision = list.locator('.activity-row[data-key="decision:880"]');
+    assert.match(await decision.locator('.activity-when').innerText(), /^You decided · /);
+    // Pause in place: the job's control, then the list again
+    await media.locator('button', { hasText: 'Pause' }).click();
+    await page.waitForFunction(() => true);
+    await new Promise(r => setTimeout(r, 300));
+    assert.deepEqual(writes.control, ['zz-job-media:pause']);
+    // the next page appends, asked for by the last entry's cursor
+    await page.locator('.activity-older').click();
+    await page.waitForFunction(() => document.querySelectorAll('.activity-pane .activity-row').length === 45);
+    assert.ok(writes.activity.some(q => q.before?.endsWith('~job:zz-job-029')), JSON.stringify(writes.activity.at(-1)));
+    assert.equal(await page.locator('.activity-older').count(), 0, 'no more pages');
+    // a chip is a page of its own; the goal rides along
+    await page.goto(new URL('/research/activity/running?goal=zz-collapse', baseURL).href);
+    await page.locator('.activity-goal', { hasText: 'Only what concerns the goal' }).waitFor();
+    await page.locator('.activity-pane .activity-row').first().waitFor();
+    assert.equal(await page.locator('.activity-chips .fchip.on').innerText(), 'Running now · 2');
+    assert.equal(await page.locator('.activity-chips .fchip', { hasText: 'Problems' }).getAttribute('href'), '/research/activity/problems?goal=zz-collapse');
+    await page.locator('.activity-pane .activity-row').first().waitFor();
+    assert.deepEqual(writes.activity.at(-1), { show: 'running', goal: 'zz-collapse', limit: '30' });
+  });
+});
+
+test('a goal\'s page: its question, state and schedule, its actions, the plan linked to the work that did it, what it produced, its history', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    await routeResearch(page);
+    await page.goto(new URL(`/research/goals/${researchGoal.slug}`, baseURL).href);
+    const pg = page.locator('.goal-page');
+    await pg.locator('.goal-question', { hasText: 'palace societies' }).waitFor();
+    await pg.locator('.goal-state', { hasText: '8 of 12 steps done' }).waitFor();
+    assert.match(await pg.locator('.goal-state').innerText(), /checked for new publications 3 days ago · next check in 2 days/);
+    assert.deepEqual(await pg.locator('.goal-actions button').allInnerTexts(), ['Check for new publications now', 'Pause this goal', 'Edit']);
+    const steps = pg.locator('.goal-plan .step');
+    await steps.first().waitFor();
+    assert.deepEqual(await steps.evaluateAll(s => s.map(x => x.className.match(/step-(going|todo|done|stopped)/)[1])), ['going', 'todo', 'done']);
+    assert.equal(await steps.nth(0).locator('a', { hasText: 'see what it did' }).getAttribute('href'), '/run/zz-run-review');
+    assert.equal(await steps.nth(0).locator('button', { hasText: 'Pause' }).count(), 1);
+    assert.match(await steps.nth(1).innerText(), /Waiting: zz waiting for 2 papers/);
+    assert.equal(await steps.nth(2).locator('a', { hasText: 'see what it did' }).getAttribute('href'), '/run/zz-run-compile');
+    const made = pg.locator('.goal-produced');
+    assert.equal(await made.locator('a.art-ref').getAttribute('href'), '/article/zz-late-bronze-age-collapse');
+    assert.equal(await made.locator('a', { hasText: '61 sources' }).getAttribute('href'), '/library#goal=zz-collapse');
+    assert.equal(await made.locator('a', { hasText: 'on the map' }).getAttribute('href'), '/explore#goal=zz-collapse');
+    await made.locator('a', { hasText: '4 items' }).waitFor();
+    assert.equal(await made.locator('a', { hasText: '4 items' }).getAttribute('href'), '/research/backlog?goal=zz-collapse');
+    assert.equal(await made.locator('a', { hasText: '9 items' }).getAttribute('href'), '/research/acquire?goal=zz-collapse');
+    const history = pg.locator('.goal-history');
+    await history.locator('.activity-row').first().waitFor();
+    assert.ok((await history.locator('.activity-row').count()) >= 1);
+    assert.equal(await history.locator('.ch-link').getAttribute('href'), '/research/activity?goal=zz-collapse');
+    // the sources brought in: Library filtered to the goal, as a chip
+    await made.locator('a', { hasText: '61 sources' }).click();
+    await page.waitForFunction(() => location.pathname === '/library' && location.hash.includes('goal=zz-collapse'));
+  });
+});
+
+test('a list item names its goal and the run or job that wrote and closed it; To acquire re-checks one item or all', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    const writes = await routeResearch(page);
+    await page.route(/\/api\/queue\/acquire(\?|$)/, r => r.request().url().includes('goal=') ? r.fallback() : r.fulfill({ json: { list: 'acquire',
+      items: [{ id: 7101, list: 'acquire', text: 'zz Drake 2012 doi:10.9999/zz.1', topic: null, status: 'open', goal: 'zz-collapse',
+        createdBy: 'zz-run-plan' }], checks: [], goals: [{ item: 7101, goals: [{ slug: 'zz-collapse', title: 'Zz Bronze Age collapse' }] }] } }));
+    await page.goto(new URL('/research/acquire', baseURL).href);
+    const row = page.locator('#queue-item-7101');
+    await row.waitFor();
+    assert.equal(await row.locator('.item-goals a').getAttribute('href'), '/research/goals/zz-collapse');
+    assert.equal(await row.locator('.item-provenance a').getAttribute('href'), '/job/zz-run-plan');
+    await row.locator('button.recheck-one').click();
+    await page.locator('.recheck-note').waitFor();
+    await page.locator('button.recheck-all').click();
+    await page.locator('.recheck-note a', { hasText: 'job zz-reche' }).waitFor();
+    assert.deepEqual(writes.recheck.map(r => r.all ? 'all' : r.id), [7101, 'all']);
+    // a goal's own slice of the list
+    await page.goto(new URL('/research/backlog?goal=zz-collapse', baseURL).href);
+    await page.locator('.queue-goal', { hasText: 'Only the items of the goal' }).waitFor();
+    await page.locator('.queue-item').first().waitFor();
+    assert.equal(await page.locator('.queue-item').count(), 4);
+  });
+});
+
+test('#7381: every goal stage has its own colour, shape and word in both themes, and links are never the browser\'s pink', async () => {
+  for (const scheme of ['light', 'dark']) {
+    const context = await browser.newContext({ viewport: { width: 1200, height: 800 }, colorScheme: scheme });
+    try {
+      const page = await context.newPage();
+      await page.goto(new URL('/research/goals', baseURL).href);
+      await page.locator('.goals-pane .goal-legend .goal-status').first().waitFor();
+      const looks = await page.evaluate(() => [...document.querySelectorAll('.goal-legend .goal-status')].map(b => {
+        const s = getComputedStyle(b), m = getComputedStyle(b, '::before');
+        return { word: b.textContent, bg: s.backgroundColor, fg: s.color, mark: m.backgroundImage + m.backgroundColor + m.borderStyle + m.borderRadius + m.transform };
+      }));
+      assert.equal(looks.length, 5, JSON.stringify(looks));
+      for (const k of ['word', 'bg', 'fg', 'mark']) assert.equal(new Set(looks.map(l => l[k])).size, 5, `${scheme}: ${k} ${JSON.stringify(looks.map(l => l[k]))}`);
+      // a visited link takes the accent like any other: a page's plain link has the link colour of the theme
+      const linkColours = await page.evaluate(() => {
+        const a = document.createElement('a'); a.href = location.href; a.textContent = 'zz'; document.body.append(a);
+        const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+        const probe = document.createElement('span'); probe.style.color = accent; document.body.append(probe);
+        return [getComputedStyle(a).color, getComputedStyle(probe).color];
+      });
+      assert.equal(linkColours[0], linkColours[1], `${scheme}: a plain link is the accent`);
+    } finally { await context.close(); }
+  }
 });

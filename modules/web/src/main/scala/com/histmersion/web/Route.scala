@@ -33,11 +33,22 @@ enum ResearchSection(val slug: String, val label: String, val agents: Boolean):
   case Acquire   extends ResearchSection("acquire", "To acquire", agents = false)
   case Models    extends ResearchSection("models", "AI models and limits", agents = true)
 
-/** The tabs of Research › Activity: what the agents did, what the server did, and what was logged. */
-enum ActivityTab(val slug: String, val label: String, val agents: Boolean):
-  case Runs    extends ActivityTab("", "Agent runs", agents = true)
-  case Jobs    extends ActivityTab("jobs", "Background jobs", agents = false)
-  case Worklog extends ActivityTab("worklog", "Worklog", agents = false)
+/** Research › Activity: ONE list of what the agents, the server and the person did, shown through one of its
+  * filter chips (`show`: [[com.histmersion.api.Activity.Show]]) — or one of the detailed lists it sums up
+  * (every agent run with its costs, every background job, the worklog by day). */
+enum ActivityTab(val slug: String, val label: String, val agents: Boolean, val show: Option[com.histmersion.api.Activity.Show]):
+  case Everything extends ActivityTab("", "Everything", agents = false, Some(com.histmersion.api.Activity.Show.Everything))
+  case Running    extends ActivityTab("running", "Running now", agents = false, Some(com.histmersion.api.Activity.Show.Running))
+  case Agents     extends ActivityTab("agents", "Agent work", agents = true, Some(com.histmersion.api.Activity.Show.Agents))
+  case Jobs       extends ActivityTab("jobs", "Background jobs", agents = false, Some(com.histmersion.api.Activity.Show.Jobs))
+  case Yours      extends ActivityTab("yours", "Your actions", agents = true, Some(com.histmersion.api.Activity.Show.Yours))
+  case Problems   extends ActivityTab("problems", "Problems", agents = false, Some(com.histmersion.api.Activity.Show.Problems))
+  case Runs       extends ActivityTab("runs", "Every agent run", agents = true, None)
+  case JobList    extends ActivityTab("all-jobs", "Every background job", agents = false, None)
+  case Worklog    extends ActivityTab("worklog", "The worklog, by day", agents = false, None)
+
+  /** One of the merged list's filter chips (not a detailed list). */
+  def isChip: Boolean = show.isDefined
 
 /** Settings' sections. */
 enum SettingsSection(val slug: String, val label: String):
@@ -128,7 +139,7 @@ object Route:
         case _         => None
       case List("research", "goals", slug)         => Some(Goal(slug))
       case "research" :: "activity" :: rest        => rest match
-        case Nil       => Some(Activity(ActivityTab.Runs))
+        case Nil       => Some(Activity(ActivityTab.Everything))
         case List(t)   => ActivityTab.values.find(x => x.slug == t && t.nonEmpty).map(Activity(_))
         case _         => None
       case "research" :: rest                      => rest match
@@ -159,7 +170,7 @@ object Route:
     case WindowKey.Models    => Some(Research(ResearchSection.Models))
     case WindowKey.Tasks     => Some(Research(ResearchSection.Backlog))
     case WindowKey.Log       => Some(Activity(ActivityTab.Worklog))
-    case WindowKey.Jobs      => Some(Activity(ActivityTab.Jobs))
+    case WindowKey.Jobs      => Some(Activity(ActivityTab.JobList))
     case WindowKey.Acquire   => Some(Research(ResearchSection.Acquire))
     case WindowKey.Upload    => Some(Library(LibrarySection.Upload))
     case WindowKey.Merge     => Some(Library(LibrarySection.Merge))
@@ -190,6 +201,7 @@ object Route:
     case Research(ResearchSection.Backlog)   => Some(WindowKey.Tasks)
     case Research(ResearchSection.Acquire)   => Some(WindowKey.Acquire)
     case Activity(ActivityTab.Worklog)       => Some(WindowKey.Log)
+    case Activity(ActivityTab.Everything)    => Some(WindowKey.Log)
     case _                                   => None
 
   /** Where a link to `key` points: the item's own page, the page that took over its window, else the

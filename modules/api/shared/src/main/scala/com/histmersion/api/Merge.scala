@@ -356,7 +356,8 @@ object MergeApplyJob:
           r => MergeApplyJob(id, MergeJobState.Done, bundle, planHash, elapsedMs, result = Some(r)))
       case JobState.Failed if error.contains(JobState.Interrupted) =>
         MergeApplyJob(id, MergeJobState.Interrupted, bundle, planHash, elapsedMs, error = Some(InterruptedText))
-      case JobState.Failed =>
+      // a merge apply is never paused or cancelled: one in either state did not apply
+      case JobState.Failed | JobState.Paused | JobState.Cancelled =>
         MergeApplyJob(id, MergeJobState.Failed, bundle, planHash, elapsedMs, error = error)
 
 // ── the review screen's draft (`merge_sessions`, V051) ───────────────────────────────────────────

@@ -26,7 +26,7 @@ class FilterDocsSuite extends munit.FunSuite:
 
   test("every parameter is a REST filter parameter, named once, and says something"):
     val rest = List("q", "tag", "author", "place", "topic", "status", "yearFrom", "yearTo", "from", "to", "minLon",
-      "minLat", "maxLon", "maxLat", "sort", "limit", "offset", "title")
+      "minLat", "maxLon", "maxLat", "sort", "limit", "offset", "title", "goal")
     assertEquals(FilterDocs.all.map(_.rest), rest)
     assertEquals(FilterDocs.all.map(_.mcp).distinct.size, FilterDocs.all.size)
     assert(FilterDocs.all.forall(p => p.doc.nonEmpty && p.brief.nonEmpty && p.brief.length <= p.doc.length + 10))

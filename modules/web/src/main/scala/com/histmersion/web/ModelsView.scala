@@ -225,7 +225,7 @@ object ModelsView:
       a.note.map(n => div(cls := "muted", n)),
       a.limits.map { l =>
         div(cls := "allowance-limit",
-          span(cls := "allowance-name", l.limit),
+          span(cls := "allowance-name", title := l.limit, Wording.allowanceWindow(l.limit)),
           div(cls := s"allowance-bar ${if l.usable then "" else "is-over"}", styleAttr := s"--pct:${usedPct(l)}%",
             role := "img", aria.label := s"${usedPct(l)} % used"),
           span(cls := "muted", s"${amount(l.used, l.measure)} used · ${amount(l.remaining, l.measure)} left" +

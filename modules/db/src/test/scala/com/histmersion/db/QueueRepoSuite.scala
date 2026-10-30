@@ -209,3 +209,10 @@ class QueueRepoSuite extends com.histmersion.db.DbSuite:
     assert(!QueueRepo.forGoal(ds, Kind.Tasks, "zz-links-goal", all = true).exists(_.id == other.id))
     assertEquals(QueueRepo.forGoal(ds, Kind.Acquire, "zz-links-goal", all = true).toList, Nil)
     val _ = connect(ds)(sql"DELETE FROM goals WHERE slug = 'zz-links-goal'".update.run())
+
+  test("a run's or job's items: those it wrote and those it ticked off"):
+    val wrote  = QueueRepo.add(ds, Kind.Tasks, QueueAdd("wrote", job = Some("zz-run-7")))
+    val ticked = QueueRepo.add(ds, Kind.Tasks, QueueAdd("ticked"))
+    val _ = QueueRepo.patch(ds, ticked.id, QueuePatch(status = Some(Done), closedBy = Some("zz-run-7")))
+    val _ = QueueRepo.add(ds, Kind.Tasks, QueueAdd("another run's", job = Some("zz-run-8")))
+    assertEquals(QueueRepo.forJob(ds, Kind.Tasks, "zz-run-7").map(_.id).toList, List(wrote.id, ticked.id))

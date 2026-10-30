@@ -128,9 +128,12 @@ final class OpsHandlers(deps: Deps):
   private def kindOf(list: String): Either[ApiError, Kind] =
     Kind.parse(list).toRight(ApiError(s"unknown queue list '$list' — one of: ${Kind.all.mkString(", ")}"))
 
-  def queueList(list: String, all: Boolean, goal: Option[String] = None): Either[ApiError, QueueListing] =
+  def queueList(list: String, all: Boolean, goal: Option[String] = None, job: Option[String] = None): Either[ApiError, QueueListing] =
     kindOf(list).map { k =>
-      val items = goal.map(_.trim).filter(_.nonEmpty).fold(QueueRepo.list(ds, k, all))(g => QueueRepo.forGoal(ds, k, g, all)).toList
+      val items = (goal.map(_.trim).filter(_.nonEmpty), job.map(_.trim).filter(_.nonEmpty)) match
+        case (_, Some(j))    => QueueRepo.forJob(ds, k, j).toList
+        case (Some(g), None) => QueueRepo.forGoal(ds, k, g, all).toList
+        case (None, None)    => QueueRepo.list(ds, k, all).toList
       val checks =
         if k != Kind.Acquire then Nil
         else AcquireCheckRepo.of(ds, items.map(_.id)).values.toList.sortBy(_.item).map(r =>

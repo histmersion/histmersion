@@ -59,6 +59,7 @@ object Api:
       .and(q[Option[Int]](D.limit))
       .and(q[Option[Int]](D.offset))
       .and(q[Option[String]](D.title))
+      .and(q[Option[String]](D.goal))
       .mapTo[FilterQuery]
       .map(_.toFilter)(FilterQuery.from)
 

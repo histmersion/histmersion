@@ -343,6 +343,7 @@ object RunsView:
         case None    => p(cls := "muted", "Loading…")
         case Some(d) => runBody(d, busy.signal, raise, act)
       },
+      QueueView.ofJob(id),
       run.item.changes.collect { case Some(d) => d.run.pipeline } --> (pl =>
         WindowManager.retitle(WindowKey.Run(id), s"Agent run · ${pipelineLabel(pl)}"))
     )
