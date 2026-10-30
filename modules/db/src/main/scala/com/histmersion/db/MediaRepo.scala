@@ -61,14 +61,6 @@ final private[db] case class MediaGeoRow(
     author: Option[String]
 ) derives DbCodec
 
-final private[db] case class MediaTargetRow(
-    targetType: String,
-    targetId: String,
-    role: String,
-    label: String,
-    item: String
-) derives DbCodec
-
 /** Pictures from outside providers (#1446, V082): one `assets` row each, with `provider` set instead of a `citekey`,
   * linked to the places and events they show through `media_links`; and the read paths every stored picture shares —
   * the media list and facets, the media layer, the cards' thumbnails. Repos are stateless: the `DataSource` is a

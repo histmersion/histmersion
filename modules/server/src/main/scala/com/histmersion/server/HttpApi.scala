@@ -299,13 +299,6 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
       .ManagersRoutes(h.agents.managing) ++ acquireRoutes ++
       List(iiifInfoRoute, iiifImageRoute, sourcePage, static, apiNotFound, index)
 
-/** Which standalone page a document is — the web bundle's page entry point reads it from `<body data-page>` to wire
-  * that page's behaviour (link previews, match navigation).
-  */
-enum PageKind(val wire: String):
-  case Source extends PageKind("source")
-  case Article extends PageKind("article")
-
 /** Pure helpers for the article pages. */
 object Article:
   /** HTML-escape a value destined for an attribute or text node. */
@@ -362,10 +355,3 @@ object Article:
     * (`web.Main` dispatches on the path).
     */
   val BundlePath = "/web/app.bundle.js?v=2"
-
-object Static:
-  def read(path: String): String =
-    val is = Option(classOf[HttpApi].getClassLoader.getResourceAsStream(path))
-      .getOrElse(throw new IllegalStateException(s"missing resource $path"))
-    try scala.io.Source.fromInputStream(is, "UTF-8").mkString
-    finally is.close()

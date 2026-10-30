@@ -7,22 +7,6 @@ import org.scalajs.dom
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
-/** The polling schedule of every polled window (jobs, agent runs, a manager): a quick first look, then slower while
-  * nothing changes, and none once nothing is live. Pure.
-  */
-object Poll:
-  val FirstMs = 1000
-  val MaxMs = 15000
-  val Factor = 1.6
-
-  /** The delay before the next poll, or `None` to stop: nothing left to wait for. A change (a row moved on, or one was
-    * started from this page) goes back to the quick delay.
-    */
-  def next(previous: Option[Int], live: Boolean, changed: Boolean): Option[Int] =
-    if !live then None
-    else if changed then Some(FirstMs)
-    else Some(previous.fold(FirstMs)(p => math.min(MaxMs, math.round(p * Factor).toInt)))
-
 /** ONE controller for the newest-first list windows — jobs, agent runs, approvals (#1798 item 6): the rows
   * ([[ListPaging]]: keyset pages, "Show older", a poll that keeps the pages loaded), the poll ([[Poll]], none for a
   * list with nothing `live`), the `mounted` guard (an answer that lands after the window closed is dropped), the
@@ -166,10 +150,3 @@ object PolledList:
       later = later,
       cancel = cancel
     )
-
-/** The ONE error line of a window: always announced (`role="alert"`), always the `form-error` look. */
-object ErrorLine:
-  def text(message: String): HtmlElement = p(cls := "form-error", role := "alert", message)
-
-  /** The line for an optional message (nothing while there is none). */
-  def apply(message: Signal[Option[String]]): Modifier[HtmlElement] = child.maybe <-- message.map(_.map(text))

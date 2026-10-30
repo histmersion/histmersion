@@ -319,9 +319,6 @@ final class Client(val serverUrl: String, token: Option[String] = None):
   def mediaProviders: Either[CliError, List[MediaProviderInfo]] = call(Api.mediaProviders)(())
   def fillFigureLicences(apply: Boolean): Either[CliError, FigureLicenceFill] = call(Api.fillFigureLicences)(apply)
 
-/** A user-facing failure: message + process exit code (1 = usage, 2 = server said no, 3 = unreachable). */
-final case class CliError(message: String, exitCode: Int = ExitCode.Unreachable)
-
 object Client:
   /** POST/PUT/PATCH/DELETE change the corpus; anything else (a GET download) only reads it. */
   def isWrite(m: sttp.model.Method): Boolean =

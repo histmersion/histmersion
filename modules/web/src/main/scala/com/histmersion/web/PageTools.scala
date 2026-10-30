@@ -3,17 +3,6 @@ package com.histmersion.web
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
-/** How wide a source's or an article's own page sets its text: at a reading width, or across the page. Kept per
-  * browser.
-  */
-enum PageWidth(val wire: String, val label: String):
-  case Reading extends PageWidth("reading", "Reading width")
-  case Wide extends PageWidth("wide", "Page wide")
-
-object PageWidth:
-  /** A stored value; anything else is the reading width. Pure. */
-  def fromWire(s: String): PageWidth = values.find(_.wire == Option(s).fold("")(_.trim.toLowerCase)).getOrElse(Reading)
-
 /** The tools of a source's or an article's own page: the width of its text and the theme, at the top of the page — also
   * where the top bar has no room for its theme button. The width is kept in the browser's storage (and read back with
   * care: a private window may have none).

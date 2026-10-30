@@ -6,66 +6,6 @@ import com.histmersion.config.CalibreCliConfig
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 
-/** One book as Calibre holds it — the shape both readers below produce (`calibredb list --for-machine` and the
-  * `sqlite3 -readonly` fallback normalise to this same record).
-  */
-final case class CalibreBook(
-    id: Int,
-    title: String,
-    authors: List[String],
-    pubdate: Option[String],
-    publisher: Option[String],
-    tags: List[String],
-    comments: Option[String],
-    identifiers: Map[String, String],
-    formats: List[String],
-    /** The cover Calibre keeps beside the book (`<book dir>/cover.jpg`), absolute — `None` when the entry has none.
-      * Read-only: `media covers` uploads a copy, the file stays as it is.
-      */
-    cover: Option[String] = None
-):
-  /** Calibre writes `0101-01-01` for "no date"; a year below [[Acquire.MinCitekeyYear]] is that placeholder, not a
-    * publication year (#714).
-    */
-  def year: Option[Int] = pubdate
-    .map(_.take(4))
-    .filter(_.forall(_.isDigit))
-    .flatMap(_.toIntOption)
-    .filter(_ >= Acquire.MinCitekeyYear)
-  def doi: Option[String] = identifiers.get("doi")
-  def isbn: Option[String] = identifiers.get("isbn")
-
-  /** The file to import: the requested format, else PDF, else EPUB (both carry a text layer). */
-  def pick(format: Option[String]): Option[String] =
-    val wanted = format.map(_.toLowerCase).toList ++ List("pdf", "epub")
-    wanted.iterator.map(ext => formats.find(_.toLowerCase.endsWith("." + ext))).collectFirst { case Some(f) =>
-      f
-    }
-
-/** Running an external program. Behind a trait so the parsers and the guards can be tested without a Calibre
-  * installation.
-  */
-trait Shell:
-  def run(cmd: List[String]): Either[String, String]
-  def isRunning(processMatch: String): Boolean
-
-object Shell:
-  /** The real one: `java.lang.ProcessBuilder`, stdout captured, stderr folded into the error. */
-  object System extends Shell:
-    def run(cmd: List[String]): Either[String, String] =
-      scala.util
-        .Try {
-          val p = new ProcessBuilder(cmd.asJava).redirectErrorStream(false).start()
-          val out = new String(p.getInputStream.readAllBytes, "UTF-8")
-          val err = new String(p.getErrorStream.readAllBytes, "UTF-8")
-          val rc = p.waitFor()
-          if rc == 0 then Right(out) else Left(s"${cmd.head} exited $rc: ${err.trim.take(400)}")
-        }
-        .fold(e => Left(s"${cmd.headOption.getOrElse("command")} could not be run: ${e.getMessage}"), identity)
-
-    def isRunning(processMatch: String): Boolean =
-      run(List("pgrep", "-f", processMatch)).exists(_.trim.nonEmpty)
-
 /** Host-side Calibre integration — the ONE local integration the CLI is allowed, because the Calibre library lives on
   * the user's machine and the server (possibly a container) cannot see it.
   *
@@ -232,63 +172,6 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
       val cmd = List(cfg.calibredb, "set_metadata") ++ libArgs ++ List(id.toString) ++
         fields.flatMap(f => List("--field", f))
       shell.run(cmd).map(_ => ()).left.map(e => s"added as $id but metadata was not set: $e")
-
-/** Where `calibre import` writes, once the citekey is known (#714). */
-enum ImportTarget:
-  /** No record has this citekey yet. */
-  case Create
-
-  /** The record exists; enrich it and link it to the imported entry. `previous` is the Calibre id it was linked to
-    * before, when that was a different one.
-    */
-  case Update(previous: Option[String])
-
-/** What `calibre push` sends into Calibre for one source. */
-final case class CalibrePush(
-    title: String,
-    authors: List[String],
-    doi: Option[String] = None,
-    isbn: Option[String] = None,
-    year: Option[Int] = None,
-    publisher: Option[String] = None,
-    summary: Option[String] = None,
-    tags: List[String] = Nil
-)
-
-/** A field `calibre update` writes, by its `calibredb set_metadata --field` name. */
-enum CalibreField(val name: String):
-  case Title extends CalibreField("title")
-  case Authors extends CalibreField("authors")
-  case Pubdate extends CalibreField("pubdate")
-  case Identifiers extends CalibreField("identifiers")
-  case Tags extends CalibreField("tags")
-  case Publisher extends CalibreField("publisher")
-  case Comments extends CalibreField("comments")
-
-/** One field `calibre update` changes: what Calibre has now and what it writes. */
-final case class CalibreChange(field: CalibreField, from: String, to: String)
-
-/** A source linked to a Calibre entry, with what the corpus would send there. */
-final case class LinkedRecord(citekey: String, calibreId: Int, meta: CalibrePush)
-
-/** What `calibre update --all` does, or did, to one Calibre entry. */
-enum UpdateOutcome:
-  /** Dry run: these fields would change. */
-  case Change(changes: List[CalibreChange])
-  case Applied(changes: List[CalibreChange])
-  case Failed(changes: List[CalibreChange], reason: String)
-  case UpToDate
-
-  /** Linked from more than one record — which one it should show is a person's decision. */
-  case Shared
-
-  /** No such entry in Calibre. */
-  case Missing
-
-  /** The record itself fails the metadata guard. */
-  case Refused(reason: String)
-
-final case class UpdateEntry(calibreId: Int, citekeys: List[String], outcome: UpdateOutcome)
 
 /** The PURE half: parsing what the two readers print, the metadata guard, and SQL assembly. */
 object Calibre:

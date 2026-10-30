@@ -1,91 +1,10 @@
 package com.histmersion.pluginresolver
 
 import java.nio.charset.StandardCharsets.UTF_8
-import java.nio.file.{Files, Path, StandardCopyOption}
-import java.security.MessageDigest
+import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
 import scala.util.control.NonFatal
-
-/** What one `resolve` run is asked.
-  *
-  * @param kit
-  *   the relink kit: its `modules` and `excludes` are what the server provides
-  * @param lib
-  *   the plugins directory's `lib/`, written unless `check`
-  * @param histmersionRepo
-  *   the install's Maven repository (the plugin API and platform), looked up first
-  * @param repositories
-  *   the repositories named for this run, looked up before the ones `lib/repositories` keeps from earlier runs (and
-  *   kept with them); none named and none kept = Maven Central
-  * @param check
-  *   resolve and report only: `lib/` is left as it is
-  * @param cache
-  *   coursier's cache, when not its default
-  */
-final case class ResolveRequest(
-    kit: Path,
-    lib: Path,
-    histmersionRepo: Option[Path],
-    repositories: List[RepositoryUrl],
-    check: Boolean,
-    jars: List[Path],
-    cache: Option[Path] = None
-)
-
-/** The plugins directory's `lib/`: the dependency jars of the installed plugins, and three files. `classpath` lists the
-  * jars in class-path order, `inputs` the plugin jars and POMs they were resolved from (`<sha256> <file>`), and
-  * `repositories` the repositories they were resolved from.
-  */
-object LibDirectory:
-  val Classpath = "classpath"
-  val Inputs = "inputs"
-  val Repositories = "repositories"
-
-  def storedRepositories(lib: Path): Either[String, List[RepositoryUrl]] =
-    val f = lib.resolve(Repositories)
-    if !Files.isRegularFile(f) then Right(Nil)
-    else
-      traverse(Files.readAllLines(f, UTF_8).asScala.toList.map(_.trim).filter(_.nonEmpty))(r =>
-        RepositoryUrl.either(r).left.map(e => s"$f: '$r': $e")
-      )
-
-  /** Replace what `lib/` holds with `deps`: a jar already there with the same content is kept, every other jar removed.
-    */
-  def write(
-      lib: Path,
-      deps: List[Dependency],
-      inputs: List[(String, String)],
-      repositories: List[RepositoryUrl]
-  ): Unit =
-    Files.createDirectories(lib)
-    val wanted = deps.map(_.libName).toSet
-    jarsIn(lib).filterNot(p => wanted(p.getFileName.toString)).foreach(Files.delete)
-    deps.foreach { d =>
-      val target = lib.resolve(d.libName)
-      if !Files.isRegularFile(target) || sha256(target) != sha256(d.file) then
-        val partial = lib.resolve(d.libName + ".part")
-        Files.copy(d.file, partial, StandardCopyOption.REPLACE_EXISTING)
-        Files.move(partial, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
-    }
-    Files.writeString(lib.resolve(Classpath), Resolution.classpathFile(deps), UTF_8)
-    Files.writeString(lib.resolve(Inputs), Resolution.inputsFile(inputs), UTF_8)
-    if repositories.nonEmpty then
-      Files.writeString(lib.resolve(Repositories), repositories.map(_.value + "\n").mkString, UTF_8)
-
-  private def jarsIn(dir: Path): List[Path] =
-    val s = Files.list(dir)
-    try s.iterator().asScala.filter(p => Files.isRegularFile(p) && p.getFileName.toString.endsWith(".jar")).toList
-    finally s.close()
-
-  def sha256(p: Path): String =
-    val md = MessageDigest.getInstance("SHA-256")
-    val in = Files.newInputStream(p)
-    try
-      val buf = new Array[Byte](1 << 16)
-      Iterator.continually(in.read(buf)).takeWhile(_ >= 0).foreach(n => md.update(buf, 0, n))
-    finally in.close()
-    md.digest().map(b => f"$b%02x").mkString
 
 /** The dependencies of user plugins, resolved together with what the server ships — run from the relink kit by
   * `histmersion-relink --resolve` (which `histmersion plugin add` and `rm`, the relink's pre-flight and the JVM

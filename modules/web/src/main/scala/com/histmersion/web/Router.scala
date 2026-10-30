@@ -106,36 +106,3 @@ object Router:
     case Route.Event(_)    => "Event"
     case Route.Source(_)   => "Source"
     case Route.Article(_)  => "Article"
-
-/** A link to a page of the web UI: a real `<a href>`, so ⌘/Ctrl/Shift/middle click opens it in a new tab; a plain click
-  * moves there without reloading.
-  */
-object RouteLink:
-  def apply(r: Route, mods: Modifier[HtmlElement]*): HtmlElement =
-    a(href := r.path, mods, onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); Router.go(r) } })
-
-/** A link to something that opens as a window (a run, a goal, a manager) or as a page that took over an old toolbar
-  * window (the backlog, the approvals): the address of its page, so it can be opened in a new tab, and a plain click
-  * does what it always did — open the window, or show the page.
-  */
-object WinLink:
-  def apply(key: WindowKey, mods: Modifier[HtmlElement]*): HtmlElement =
-    a(
-      cls := "link-btn",
-      href := Route.hrefOf(key),
-      mods,
-      onClick --> { ev =>
-        if Router.plain(ev) then { ev.preventDefault(); ev.stopPropagation(); WindowManager.open(key) }
-      }
-    )
-
-/** A link to one item of a list (a backlog item, something to acquire): its list's page, scrolled to it. */
-object QueueItemLink:
-  def apply(kind: com.histmersion.api.Queue.Kind, id: Int, mods: Modifier[HtmlElement]*): HtmlElement =
-    val to = Route.queueItem(kind, id)
-    a(
-      cls := "link-btn",
-      href := to,
-      mods,
-      onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); ev.stopPropagation(); Router.goHref(to) } }
-    )

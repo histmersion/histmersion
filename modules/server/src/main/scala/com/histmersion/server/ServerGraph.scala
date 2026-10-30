@@ -2,49 +2,17 @@ package com.histmersion.server
 
 import com.histmersion.pluginhost.Generation
 
-import com.histmersion.config.{AppConfig, ConfigReload, LoadedConfig, UserConfigFile}
+import com.histmersion.config.{AppConfig, ConfigReload}
 import com.histmersion.api.ReloadReport
 import com.histmersion.db.{Db, Migrate}
 import com.histmersion.server.hot.{Hot, HotDataSource, HotGraph}
 import com.histmersion.server.plugins.Plugins
-import com.zaxxer.hikari.HikariDataSource
 import ox.{forkDiscard, useInScope}
 
 import java.nio.file.{FileSystems, Path, StandardWatchEventKinds}
 import javax.sql.DataSource
 import scala.concurrent.duration.*
 import scala.util.control.NonFatal
-
-/** The config a hot generation is built from: the decoded settings the server runs on (fitted to this process — the
-  * bundled runtime's endpoints) and the load they came from (the file, the user's plugin blocks, the environment read
-  * at startup, the merged settings a reload compares).
-  */
-final case class HotConfig(app: AppConfig, loaded: LoadedConfig)
-
-object HotConfig:
-  /** A config with no file behind it (a test's): it can be built from, not reloaded. */
-  def fixed(cfg: AppConfig): HotConfig = HotConfig(cfg, LoadedConfig(cfg, UserConfigFile(None, loaded = false)))
-
-/** Where a reload reads the config again and how it fits it to this process.
-  *
-  * @param read
-  *   the config file read again — with the environment read once at startup (a native image reads the environment
-  *   through StackValue, on the main thread only)
-  * @param adjust
-  *   the bundled runtime's rewrite (its Postgres, converter, directories), or nothing
-  * @param prepare
-  *   what must exist before a pool can open on a database (the bundle creates it)
-  */
-final case class ConfigSource(
-    read: () => Either[String, LoadedConfig],
-    adjust: AppConfig => AppConfig = identity,
-    prepare: AppConfig => Either[String, Unit] = _ => Right(())
-)
-
-/** The read-only role's pool: its own, or — when that role cannot connect — the application pool, which this node then
-  * does not own.
-  */
-final case class ReadOnlyPool(ds: DataSource, own: Option[HikariDataSource])
 
 /** The server's hot components (docs/research-plugins.md §3.6) and the config reload over them (§3.5):
   *

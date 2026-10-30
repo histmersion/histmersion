@@ -2,32 +2,6 @@ package com.histmersion.cli
 
 import java.text.Normalizer
 
-/** A corpus source as the audit sees it: the Calibre entry it names and what the corpus says. */
-final case class AuditRecord(citekey: String, calibreId: Int, title: String, authors: List[String], year: Option[Int])
-
-/** What can be wrong with a linked Calibre entry, worst first. */
-enum AuditIssue(val label: String):
-  case Missing extends AuditIssue("no such Calibre entry")
-  case Junk extends AuditIssue("Calibre's title or author is blank, Unknown or scraped")
-  case Title extends AuditIssue("titles differ")
-  case Authors extends AuditIssue("no author in common")
-  case Year extends AuditIssue("years differ")
-
-/** One Calibre entry that disagrees with the corpus, judged against the record it matches best (an entry shared by a
-  * chapter and its volume is fine when it matches either).
-  */
-final case class AuditFinding(
-    calibreId: Int,
-    citekeys: List[String],
-    issues: List[AuditIssue],
-    calibre: Option[CalibreBook],
-    record: AuditRecord
-):
-  /** What `calibre update` fixes: everything but a missing entry. The year included — Calibre shows the record's year,
-    * not the printing on the shelf (the user's decision of 2026-10-03, #831).
-    */
-  def fixable: Boolean = !issues.contains(AuditIssue.Missing)
-
 /** The PURE half of `histmersion calibre audit`: compare every linked entry with its record. */
 object CalibreAudit:
 

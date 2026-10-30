@@ -3,18 +3,6 @@ package com.histmersion.cli
 import com.histmersion.api.*
 import com.histmersion.config.*
 
-/** The CLI's exit codes (AGENTS.md), spelled once: `main` turns a `Left(CliError)` into one of these. Success is 0.
-  */
-object ExitCode:
-  /** The command line itself is wrong (a missing file, a bad flag value, "aborted"). */
-  val Usage: Int = 1
-
-  /** The server said no — a refused write, a failed job, a failed backup. */
-  val Refused: Int = 2
-
-  /** The server could not be reached, or the CLI could not start. */
-  val Unreachable: Int = 3
-
 /** ONE way the CLI follows server work to its end (#1798 item 14): a background job (`jobs`) and a backup. A run that
   * ends badly is ALWAYS `ExitCode.Refused` (2) — a script that follows a job must not read a failure as success, nor as
   * a usage error (a failed backup used to exit 1). The fetch and the clock are parameters, so the rule is tested

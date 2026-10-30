@@ -11,26 +11,6 @@ import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import javax.sql.DataSource
 
-/** A model chosen for one LLM call: the client, how it is paid for (a plan pool or a price), what it may spend before
-  * an allowance covering it reaches its reserve (tokens, USD; None = not limited), and the chain's earlier models it
-  * passed over, with why.
-  */
-final case class Picked(
-    client: LlmClient,
-    billing: Billing,
-    headroomTokens: Option[Long],
-    headroomUsd: Option[BigDecimal],
-    skipped: List[String]
-)
-
-/** Why no model of a role's chain can take the next call. `Exhausted` pauses the run until `freesAt` (resumed by itself
-  * then); `Unavailable` is a configuration problem (no chain, no priced or buildable model) and fails the step as
-  * before chains existed.
-  */
-enum PickFailure:
-  case Unavailable(message: String)
-  case Exhausted(message: String, freesAt: Option[Instant], reason: PauseReason = PauseReason.Allowance)
-
 /** The model chains and allowances in effect — config (`agents.roles.*`, `agents.allowances`) with what was saved in
   * the database over it — and the choice the engine makes before every LLM call (docs/research-embedded-agents.md §15):
   * the FIRST model of the role's chain that can be built, is priced, and has more than its reserve left under every

@@ -2,14 +2,6 @@ package com.histmersion.domain
 
 import java.time.{Duration, Instant}
 
-enum ReadSchedule:
-  case Off
-  case Every(interval: Duration)
-
-enum ScheduledRead:
-  case Due
-  case NotDue(why: String)
-
 object PlanReadSchedule:
   /** Whether the schedule takes a fresh reading of a pool now: its schedule is on, the autopilot is on, queued work
     * wants the pool, and neither its newest reading (whoever took it) nor the last attempt to take one is younger than

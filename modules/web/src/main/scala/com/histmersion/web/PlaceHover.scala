@@ -4,53 +4,6 @@ import com.histmersion.web.map.*
 import com.histmersion.web.ui.Layout
 import org.scalajs.dom
 
-/** A hover that waits: `enter(k)` fires `k` only after `delayMs` without a `leave(k)` or another `enter`, so sweeping
-  * the pointer across twenty polygons fetches nothing and the one it rests on fetches once. `later`/`cancel` are
-  * injectable so the timing is a unit test, like [[Throttle]].
-  */
-final class HoverIntent[K](
-    delayMs: Int,
-    fire: K => Unit,
-    later: (Double, () => Unit) => Int = (ms, g) => dom.window.setTimeout(() => g(), ms),
-    cancel: Int => Unit = id => dom.window.clearTimeout(id)
-):
-  // `var`: the one pending hover and its timer
-  private var pending: Option[(K, Int)] = None
-
-  def isPending(k: K): Boolean = pending.exists(_._1 == k)
-
-  def enter(k: K): Unit =
-    if !isPending(k) then
-      cancelPending()
-      val id = later(delayMs.toDouble, () => { pending = None; fire(k) })
-      pending = Some(k -> id)
-
-  /** The pointer left `k`: its pending card is dropped (a pending card for another target stays). */
-  def leave(k: K): Unit = if isPending(k) then cancelPending()
-
-  def cancelPending(): Unit =
-    pending.foreach((_, id) => cancel(id))
-    pending = None
-
-/** The pure rules of a pinned place card (#1441). */
-object PinRules:
-  /** Does this key close a pinned card? */
-  def dismisses(key: String): Boolean = key == "Escape" || key == "Esc"
-
-  /** Does this key pin a focused place's card (and, on the map, choose the place)? */
-  def activates(key: String): Boolean = key == "Enter" || key == " "
-
-  /** After a click (or Enter) on a map place that leaves it chosen as the filter or not: its card is pinned while it is
-    * chosen; the click that unchooses it closes the card too.
-    */
-  def pinAfterClick(chosenNow: Boolean): Boolean = chosenNow
-
-  /** Pure: a point in the map container (`x`, `y`, from its top-left) as a viewport point, when it is inside the
-    * container's `w`×`h` box at (`left`, `top`) — `None` while it is panned out of view.
-    */
-  def inView(x: Double, y: Double, left: Double, top: Double, w: Double, h: Double): Option[(Double, Double)] =
-    Option.when(x >= 0 && y >= 0 && x <= w && y <= h)((left + x, top + y))
-
 /** The map's places — sites, polities, peoples, point labels, the chosen place's outline — answer the pointer the way
   * the app's links do, with the same card ([[Preview]]):
   *   - hovering one (after [[Layout.hoverDelayMs]] at rest) floats its card at the pointer — a card that follows the

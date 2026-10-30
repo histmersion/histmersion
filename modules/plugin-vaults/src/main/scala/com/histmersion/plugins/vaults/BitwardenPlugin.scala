@@ -1,0 +1,21 @@
+package com.histmersion.plugins.vaults
+
+import scala.annotation.tailrec
+import com.histmersion.plugin.*
+import com.histmersion.plugin.PluginConfig.given
+
+import scala.concurrent.duration.*
+
+final class BitwardenPlugin extends Plugin:
+  type Config = BitwardenConfig
+  val info = PluginInfo("bitwarden", Vaults.Version, Spi.Version)
+
+  def register(c: BitwardenConfig, ctx: PluginContext): Either[String, Unit] =
+    for
+      exe <- Subprocess.locate(c.cli, ctx.env("PATH"))
+      session <- Vaults.optional(c.session, ctx)
+      _ <- ctx.secretVaults.add(
+        info.id,
+        BitwardenVault(info.id, exe, session, c.field, Vaults.timeout(c.timeoutSeconds))
+      )
+    yield ()

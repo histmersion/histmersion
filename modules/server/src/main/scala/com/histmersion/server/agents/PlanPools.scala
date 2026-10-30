@@ -11,45 +11,8 @@ import io.circe.{parser, Json}
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.{ConcurrentHashMap, Semaphore, TimeUnit}
 import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.locks.ReentrantLock
 import javax.sql.DataSource
 import scala.jdk.CollectionConverters.*
-
-/** What a CLI client reports its readings to and asks mid-step: the plan pools ([[PlanPools]]), or a test's stand-in.
-  */
-trait PoolSink:
-  def record(p: PoolId, rs: List[Reading]): Unit
-
-  /** Why `p` may not take another call now, and when it frees; None = it may. */
-  def blocked(p: PoolId, model: Option[String]): Option[(String, Option[Long])]
-
-  /** Read the ChatGPT plan from the app-server when the last read is old enough (throttled). */
-  def refresh(now: Long): Unit
-
-/** One refresh at a time per pool, and the time of its last attempt: a second caller WAITS for the one in flight and
-  * then sees what it recorded (single flight), instead of reading again.
-  */
-final class RefreshGate:
-  private val locks = ConcurrentHashMap[PoolId, ReentrantLock]()
-  private val last = ConcurrentHashMap[PoolId, java.lang.Long]()
-
-  /** Run `body` alone for `p`, given the pool's last attempt. A `Right` is an attempt (successful or not), stamped `at`
-    * for the throttle; a `Left` is "not taken", and leaves the stamp alone.
-    */
-  def exclusive[A](p: PoolId, at: => Long)(body: Option[Long] => Either[String, A]): Either[String, A] =
-    val lock = locks.computeIfAbsent(p, _ => ReentrantLock())
-    lock.lockInterruptibly()
-    try
-      val r = body(Option(last.get(p)).map(_.longValue))
-      if r.isRight then { val _ = last.put(p, at) }
-      r
-    finally lock.unlock()
-
-  def lastAttempt(p: PoolId): Option[Long] = Option(last.get(p)).map(_.longValue)
-
-/** What one refresh did: how (`probe`, `app-server`), whether a reading came back, and what. */
-final case class Refreshed(mode: String, ok: Boolean, detail: String):
-  def text: String = s"$mode: $detail"
 
 /** The subscription pools in effect (docs/research-plan-quotas.md §5): the readings every source writes, the floors
   * (saved over config), the hold switch, the provider's own refusals — and the verdict the model pick asks before every

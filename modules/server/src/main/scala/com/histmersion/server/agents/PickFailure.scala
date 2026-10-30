@@ -1,0 +1,17 @@
+package com.histmersion.server.agents
+
+import com.histmersion.api.*
+import com.histmersion.config.*
+import com.histmersion.domain.*
+import com.histmersion.api.Agents.*
+import com.histmersion.api.ModelChains.*
+
+import java.time.Instant
+
+/** Why no model of a role's chain can take the next call. `Exhausted` pauses the run until `freesAt` (resumed by itself
+  * then); `Unavailable` is a configuration problem (no chain, no priced or buildable model) and fails the step as
+  * before chains existed.
+  */
+enum PickFailure:
+  case Unavailable(message: String)
+  case Exhausted(message: String, freesAt: Option[Instant], reason: PauseReason = PauseReason.Allowance)

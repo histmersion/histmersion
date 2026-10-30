@@ -2,11 +2,6 @@ package com.histmersion.plugin.testkit
 
 import com.histmersion.plugin.{AiHttp, AiHttpResponse, WorkKey}
 
-/** One request an AI provider sent through a [[ScriptedAiHttp]]. Header values whose names suggest a credential
-  * (`authorization`, `*key*`, `*token*`, `*secret*`) are shown as `***`.
-  */
-final case class AiHttpRequest(method: String, url: String, headers: Map[String, String], body: Option[String])
-
 /** An [[AiHttp]] that sends nothing: it answers each request with the next of `answers` (once they run out, with
   * `Left("no scripted answer")`) and keeps every request, to assert on what the provider sent.
   */

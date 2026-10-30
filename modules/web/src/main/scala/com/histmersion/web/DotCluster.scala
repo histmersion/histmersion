@@ -5,61 +5,6 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 
-/** What a dot on the map stands for. Every kind but the areas (regions, polities: shapes, never dots) joins the one
-  * cluster group of the map ([[MapView]]), so dots near each other are drawn as one bubble whatever layer they come
-  * from.
-  */
-enum DotKind(val one: String, val many: String):
-  case Finding extends DotKind("finding", "findings")
-  case Site extends DotKind("site", "sites")
-  case Event extends DotKind("event", "events")
-  case Media extends DotKind("picture", "pictures")
-
-/** A clustered dot that is not a finding — a site, an event, a picture: what the bubble counts and colours, and the row
-  * its list shows (its kind's icon, its name, a note, `mid` the middle of its dated span on the period ramp). A
-  * finding's dot carries its [[GeoHit]]s instead.
-  */
-final case class DotEntry(
-    kind: DotKind,
-    id: String,
-    label: String,
-    icon: String,
-    mid: Option[Double],
-    note: String = ""
-)
-
-/** What one clustered marker holds, for the bubble it may be drawn in: its kind, how many things it counts for (a
-  * findings' point counts its findings), their dated mids and least certainty ([[Certainty.NoSay]] for a dot that is
-  * not a finding), and what its bubble's list shows — the findings themselves, or the dot's row.
-  */
-final case class Member(
-    kind: DotKind,
-    n: Int,
-    mids: List[Double],
-    certainty: Certainty,
-    findings: List[GeoHit] = Nil,
-    entry: Option[DotEntry] = None,
-    cell: Option[com.histmersion.web.map.GeoBounds] = None,
-    undated: Int = 0
-):
-  /** A CELL of a server tile ([[TileCellPoint]]): `n` items counted there, none of them to list — their box (`cell`) is
-    * where a click zooms.
-    */
-  def aggregate: Boolean = cell.isDefined
-
-/** A bubble's OUTLINE (#1647): the shape grammar's event square carried over to the clusters, so a cluster of events
-  * reads apart from one of findings at a glance (docs/visualization-guide.md §2a).
-  */
-enum BubbleForm(val cls: String):
-  /** No events in it: the round count. */
-  case Round extends BubbleForm("")
-
-  /** Events only: the count on a rounded SQUARE, its rings squares about the same centre. */
-  case Events extends BubbleForm("hd-cluster--events")
-
-  /** Events among other kinds: the round count with a small square tab at its upper right. */
-  case WithEvents extends BubbleForm("hd-cluster--with-events")
-
 /** The pure half of the mixed clusters: what a bubble holds, says and looks like. */
 object DotCluster:
 

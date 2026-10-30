@@ -9,25 +9,6 @@ import com.augustnagro.magnum.*
 import io.circe.Json
 import javax.sql.DataSource
 
-/** One row of `gazetteer_sources` (V071). */
-final case class GazetteerSourceRow(
-    key: String,
-    kind: String,
-    title: String,
-    version: String,
-    sha256: String,
-    file: String,
-    url: Option[String],
-    licence: Option[String],
-    citation: Option[String],
-    periodStart: Option[Long],
-    periodEnd: Option[Long],
-    places: Int,
-    names: Int,
-    links: Int,
-    importedAt: String
-) derives DbCodec
-
 /** The gazetteer's external sources in the store (#1064, V071): joining a batch of [[GazRecord]]s to the places already
   * here BY IDENTIFIER, writing what each record says (its place, if it is the first to bring it; its names and links,
   * always) with its provenance, and removing what a source no longer says.

@@ -1,63 +1,6 @@
 package com.histmersion.api
 
-import com.histmersion.values.{BundleKind, Citekey}
-
-import hearth.kindlings.circederivation.KindlingsCodecAsObject
-import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import sttp.tapir.Schema
-
-/** Body of `POST /api/sources/{citekey}/rename`. */
-final case class RenameRequest(newCitekey: String) derives KindlingsCodecAsObject, KindlingsSchema
-object RenameRequest:
-  given Schema[RenameRequest] = summon[KindlingsSchema[RenameRequest]].schema
-
-/** How many rows of one table/column a rename rewrote — for the columns that hold a citekey (or a finding id) WITHOUT a
-  * foreign key, which the cascade cannot reach.
-  */
-final case class RenameCount(table: String, rows: Int) derives KindlingsCodecAsObject, KindlingsSchema
-object RenameCount:
-  given Schema[RenameCount] = summon[KindlingsSchema[RenameCount]].schema
-
-/** What a rename changed, as counted inside its transaction. */
-final case class RenameCounts(
-    /** Findings whose id moved from `<old>#<n>` to `<new>#<n>`. */
-    findings: Int,
-    /** Articles whose body or summary linked the old citekey (or a short form of it) and was rewritten — each through
-      * the article write path, so each has a new entry in its history.
-      */
-    articles: List[String],
-    /** Sources whose notes or summary linked the old citekey and were rewritten. */
-    sources: List[String],
-    /** `[[…]]` links rewritten across those articles and sources. */
-    links: Int,
-    /** Rows of the columns without a foreign key (events, jobs, place types, attestations…). */
-    columns: List[RenameCount],
-    /** Parked edges (`unresolved_edges`) that named the NEW citekey and became real edges. */
-    edgesPromoted: Int
-) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object RenameCounts:
-  given Schema[RenameCounts] = summon[KindlingsSchema[RenameCounts]].schema
-
-/** The answer of a rename: the source under its new citekey (without its body) and the counts. */
-final case class SourceRenamed(
-    oldCitekey: String,
-    newCitekey: String,
-    source: SourceDetail,
-    counts: RenameCounts,
-    /** The Calibre book id, when the original is in Calibre. Calibre never stores our citekey, so nothing there changes
-      * — but the host-side originals directory is keyed by citekey.
-      */
-    calibreId: Option[String] = None
-) derives KindlingsCodecAsObject,
-      KindlingsSchema
-object SourceRenamed:
-  given Schema[SourceRenamed] = summon[KindlingsSchema[SourceRenamed]].schema
-
-/** An old citekey and the source it now names (`GET /api/source-aliases`). */
-final case class SourceAlias(alias: String, citekey: String) derives KindlingsCodecAsObject, KindlingsSchema
-object SourceAlias:
-  given Schema[SourceAlias] = summon[KindlingsSchema[SourceAlias]].schema
+import com.histmersion.values.Citekey
 
 /** The pure rules of a citekey rename. The database half (existence, aliases, the rewrite itself) is
   * `SourceRepo.rename`, one transaction.
@@ -102,37 +45,3 @@ object Rename:
   def replaceToken(text: String, oldCk: String, newCk: String): String =
     val token = s"(?<![a-z0-9_.-])${java.util.regex.Pattern.quote(oldCk)}(?![a-z0-9_.-])".r
     token.replaceAllIn(text, java.util.regex.Matcher.quoteReplacement(newCk))
-
-/** Body of `POST /api/articles/{slug}/rename`, `/api/events/{id}/rename`, `/api/goals/{slug}/rename`,
-  * `/api/places/{id}/rename`: the new label.
-  */
-final case class LabelRename(to: String) derives KindlingsCodecAsObject, KindlingsSchema
-object LabelRename:
-  given Schema[LabelRename] = summon[KindlingsSchema[LabelRename]].schema
-
-/** What renaming an article, an event or a goal did: the old label is kept as an alias (it keeps resolving, as an old
-  * citekey does), and `rewritten` names the articles whose `[[old]]` links were rewritten (an article rename only).
-  */
-final case class LabelRenamed(entity: BundleKind, from: String, to: String, rewritten: List[String] = Nil)
-    derives KindlingsCodecAsObject,
-      KindlingsSchema
-object LabelRenamed:
-  given Schema[LabelRenamed] = summon[KindlingsSchema[LabelRenamed]].schema
-
-/** The pure rule of a label rename (article slug, event id, goal slug): the shape every one of them already has to
-  * have.
-  */
-object LabelRenames:
-  private val Shape = "^[a-z0-9][a-z0-9_.-]*$".r
-
-  def validate(kind: BundleKind, from: String, raw: String): Either[ApiError, String] =
-    val to = raw.trim
-    val what = kind match
-      case BundleKind.Article => "article slug"
-      case BundleKind.Event   => "event id"
-      case BundleKind.Place   => "place id"
-      case _                  => "goal slug"
-    if !Shape.matches(to) then
-      Left(ApiError(s"'$to' is not an $what (lower-case letters, digits, '_', '.' and '-')", Some(Write.CodeInvalid)))
-    else if to == from.trim then Left(ApiError(s"'$to' is already that $what", Some(Write.CodeInvalid)))
-    else Right(to)
