@@ -168,8 +168,9 @@ object ResearchOverview:
             href := to,
             label,
             onClick --> { ev =>
-              if Router.plain(ev) && !to.startsWith("/source/") && !to.startsWith("/article/") then ev.preventDefault()
-              Router.goHref(to)
+              if Router.plain(ev) && !to.startsWith("/source/") && !to.startsWith("/article/") then
+                ev.preventDefault()
+                Router.goHref(to)
             }
           )
         ),
