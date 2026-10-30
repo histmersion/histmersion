@@ -3,7 +3,6 @@
 // `nativeImage` task in build.sbt that shells out to GraalVM's `native-image` directly.
 
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.22.0")
-addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "1.4.0")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.6.2")
 
 // The meta-build's own sbt 2 disk cache: this checkout's target/sbt-cache, as for the build itself

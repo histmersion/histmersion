@@ -46,6 +46,11 @@ chimney-iron ── a Chimney macro extension (newtype → newtype); compile-tim
 chimney-iron-tests ─ its proof suites, compiled as a consumer compiles them
 ```
 
+`values`, `api` and `core` are sbt 2 `projectMatrix` rows (`build.sbt`): the JVM row keeps the module's
+name (`values`, `api`, `core`), the Scala.js row adds `JS` (`valuesJS`, `apiJS`; core has none). Shared
+sources are in `src/main/scala` (and `src/test/scala`); a platform's own in `src/main/scalajvm` or
+`src/main/scalajs`. A plain project names a row as `api.jvm(scala3)` or `api.js(scala3)`.
+
 A plugin — first-party or not — compiles against `plugin-api` alone and never sees `values`, `api`,
 `config`, `core`, `db` or `server`; the server discovers it through ServiceLoader (`PluginHost`, in `plugin-host`, which the testkit runs too). See
 `docs/research-plugins.md` (§15: as built). The one exception is the built-in acquisition plugins

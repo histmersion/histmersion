@@ -63,3 +63,6 @@ db/gazetteer/*.ndjson.gz
 /docs/.venv/
 /docs/site/
 /docs/.cache/
+
+# sbt projectMatrix: the base directories of its generated projects
+/.sbt/

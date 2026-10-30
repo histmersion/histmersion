@@ -20,16 +20,16 @@ import sys
 # TEST resources (the hello / hello-ai plugin jars, the hello-deps fixture repository). web → server (the bundle) is a BUILD
 # edge only: no server suite tests the Scala.js code, so a web change does not re-run the server.
 DEPS = {
-    "valuesJVM": [],
+    "values": [],
     "valuesJS": [],
-    "apiJVM": ["valuesJVM"],
+    "api": ["values"],
     "apiJS": ["valuesJS"],
-    "config": ["valuesJVM", "apiJVM"],
-    "files": ["apiJVM"],
-    "coreJVM": ["valuesJVM", "apiJVM", "config", "files"],
+    "config": ["values", "api"],
+    "files": ["api"],
+    "core": ["values", "api", "config", "files"],
     "pluginApi": [],
     "pluginVaults": ["pluginApi"],
-    "pluginHost": ["coreJVM", "config", "pluginApi"],
+    "pluginHost": ["core", "config", "pluginApi"],
     "pluginTestkit": ["pluginHost"],
     "pluginHello": ["pluginApi"],
     "pluginHelloAi": ["pluginApi"],
@@ -38,12 +38,12 @@ DEPS = {
     "pluginResolver": ["pluginHelloDeps"],
     "chimneyIron": [],
     "chimneyIronTests": ["chimneyIron"],
-    "db": ["config", "coreJVM"],
-    "cli": ["apiJVM", "config", "files"],
+    "db": ["config", "core"],
+    "cli": ["api", "config", "files"],
     "web": ["apiJS"],
-    "server": ["coreJVM", "db", "pluginApi", "pluginHost", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloDeps"],
+    "server": ["core", "db", "pluginApi", "pluginHost", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloDeps"],
 }
-ORDER = ["valuesJVM", "valuesJS", "apiJVM", "apiJS", "config", "files", "coreJVM", "pluginApi", "pluginHost", "pluginTestkit", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloLib",
+ORDER = ["values", "valuesJS", "api", "apiJS", "config", "files", "core", "pluginApi", "pluginHost", "pluginTestkit", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloLib",
          "pluginHelloDeps", "pluginResolver", "chimneyIron", "chimneyIronTests", "db", "cli", "web", "server"]
 # modules with no test sources of their own
 NO_TESTS = {"pluginHello", "pluginHelloAi", "pluginHelloLib", "pluginHelloDeps", "chimneyIron"}
@@ -57,13 +57,15 @@ RULES = [
     ("project/", [ALL]),
     (".sdkmanrc", [ALL]),
     (".jvmopts", [ALL]),
-    ("modules/values/", ["valuesJVM", "valuesJS"]),
-    ("modules/api/shared/", ["apiJVM", "apiJS"]),
-    ("modules/api/jvm/", ["apiJVM"]),
-    ("modules/api/js/", ["apiJS"]),
+    ("modules/values/", ["values", "valuesJS"]),
+    ("modules/api/src/main/scalajvm/", ["api"]),
+    ("modules/api/src/test/scalajvm/", ["api"]),
+    ("modules/api/src/main/scalajs/", ["apiJS"]),
+    ("modules/api/src/test/scalajs/", ["apiJS"]),
+    ("modules/api/", ["api", "apiJS"]),
     ("modules/config/", ["config"]),
     ("modules/files/", ["files"]),
-    ("modules/core/", ["coreJVM"]),
+    ("modules/core/", ["core"]),
     ("modules/db/", ["db"]),
     ("modules/server/", ["server"]),
     ("modules/cli/", ["cli"]),
@@ -85,14 +87,14 @@ RULES = [
     ("modules/chimney-iron/", ["chimneyIron"]),
     # repository files the suites read: agents and skills (server resources, AgentsSuite), the
     # reference pages (ApiSurfaceSuite, OpsHttpSuite), the seed data (PeriodsSuite, place seeds)
-    ("agents/", ["coreJVM", "server"]),
-    ("skills/", ["coreJVM", "server"]),
+    ("agents/", ["core", "server"]),
+    ("skills/", ["core", "server"]),
     ("plugin/", ["server"]),
     (".claude-plugin/", ["server"]),
     ("docs/writing-guide.md", ["server"]),
-    ("docs/user-guide/reference/", ["coreJVM", "server"]),
+    ("docs/user-guide/reference/", ["core", "server"]),
     ("docs/", []),
-    ("db/", ["apiJVM", "db", "server"]),
+    ("db/", ["api", "db", "server"]),
     ("runtime/", ["server"]),
     ("scripts/", []),
     ("converter/", []),
@@ -110,7 +112,7 @@ INERT_TOP = {"README.md", "AGENTS.md", "CLAUDE.md", ".gitignore", ".env.example"
 # the lint suites read the other modules' main sources: api's StyleLintSuite the web page's and api's own,
 # PluralSuite every module's Scala; config's ConfigSuite every module's Scala; core's MapEngineBoundarySuite
 # the web page's (#3765: a web change passed test-quick and failed test-it)
-LINT_READERS = ["apiJVM", "config", "coreJVM"]
+LINT_READERS = ["api", "config", "core"]
 
 
 def read_by_lints(path):

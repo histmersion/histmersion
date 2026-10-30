@@ -239,7 +239,7 @@ cli-docs:
 # Regenerate the index of every REST endpoint (docs/user-guide/reference/rest-api.md) from Api.all
 [group('dev')]
 api-docs:
-    {{sbt}} "apiJVM/runMain com.histmersion.api.generateApiIndex {{justfile_directory()}}"
+    {{sbt}} "api/runMain com.histmersion.api.generateApiIndex {{justfile_directory()}}"
 
 # ── documentation ────────────────────────────────────────────────────────────────────────────
 

@@ -28,7 +28,7 @@ class JobKindsSuite extends munit.FunSuite:
 
   test("no job kind is spelled as a literal outside the dictionary (a new one starts as a JobKind)"):
     val root = Path.of(sys.props.getOrElse("histmersion.repoRoot", "."))
-    val dirs = List("modules/server/src/main/scala", "modules/api/shared/src/main/scala")
+    val dirs = List("modules/server/src/main/scala", "modules/api/src/main/scala")
       .map(root.resolve)
       .filter(Files.isDirectory(_))
     assert(dirs.nonEmpty, s"no sources under $root")

@@ -4,9 +4,9 @@
 // pinned in scripts/bundle/graalvm-pins.txt; sbt 2.0.11, also in project/build.properties.
 
 import Dependencies.*
-import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
-ThisBuild / scalaVersion := "3.10.0"
+val scala3 = "3.10.0"
+ThisBuild / scalaVersion := scala3
 ThisBuild / organization := "com.histmersion"
 ThisBuild / version := "0.1.0-SNAPSHOT"
 
@@ -433,21 +433,18 @@ def dbTestGroups(
 // ── values: the newtypes every layer speaks of (citekeys, years, periods, DOIs, Wikidata ids,
 //    coordinates) and the vocabularies domain, wire and store share (source statuses, edge kinds, place
 //    kinds, …), with no codec — Iron only, JVM and JS. Opaque, so the newtypes erase to their base types.
-lazy val values = crossProject(JVMPlatform, JSPlatform)
-  .crossType(CrossType.Pure)
+lazy val values = projectMatrix
   .in(file("modules/values"))
   .settings(name := "histmersion-values")
   .settings(commonDeps)
   .settings(libraryDependencies += "io.github.iltotore" %% "iron" % V.iron)
-
-lazy val valuesJVM = values.jvm
-lazy val valuesJS = values.js
+  .jvmPlatform(scalaVersions = Seq(scala3))
+  .jsPlatform(scalaVersions = Seq(scala3))
 
 // ── api: what crosses the wire — the wire records, the Tapir endpoints with their circe codecs and
 //    schemas (Kindlings), the Markdown every surface renders, and the helpers they need. JVM and JS: the
 //    Scala.js frontend derives its client from the same endpoints. Depends on values only.
-lazy val api = crossProject(JVMPlatform, JSPlatform)
-  .crossType(CrossType.Full)
+lazy val api = projectMatrix
   .in(file("modules/api"))
   .dependsOn(values)
   .settings(name := "histmersion-api")
@@ -464,21 +461,18 @@ lazy val api = crossProject(JVMPlatform, JSPlatform)
       "io.github.iltotore" %% "iron" % V.iron
     )
   )
-  .jsSettings(
-    libraryDependencies ++= Seq(
-      "io.github.cquiroz" %% "scala-java-time" % V.scalaJavaTime
-    )
+  .jvmPlatform(scalaVersions = Seq(scala3))
+  .jsPlatform(
+    scalaVersions = Seq(scala3),
+    settings = Seq(libraryDependencies += "io.github.cquiroz" %% "scala-java-time" % V.scalaJavaTime)
   )
-
-lazy val apiJVM = api.jvm
-lazy val apiJS = api.js
 
 // ── config: AppConfig and its readers — HOCON modelled as case classes (Kindlings sconfig derivation) over
 //    reference.conf, the user's file and the environment. JVM only. Depends on values only: the server
 //    converts what it hands to the wire (the page's `ui` block, the config file's line in /api/about).
 lazy val config = project
   .in(file("modules/config"))
-  .dependsOn(valuesJVM)
+  .dependsOn(values.jvm(scala3))
   .settings(name := "histmersion-config")
   .settings(commonDeps)
   .settings(
@@ -495,7 +489,7 @@ lazy val config = project
 //    commands need no domain. Depends on api only.
 lazy val files = project
   .in(file("modules/files"))
-  .dependsOn(apiJVM % "compile->compile;test->test")
+  .dependsOn(api.jvm(scala3) % "compile->compile;test->test")
   .settings(name := "histmersion-files")
   .settings(commonDeps)
   .settings(libraryDependencies += "org.yaml" % "snakeyaml" % V.snakeyaml)
@@ -505,11 +499,10 @@ lazy val files = project
 //    share, and the instances its own derived codecs need). Never on config: the domain takes settings
 //    records of its own, which the server converts from config. Its tests read reference.conf. NO
 //    database code.
-lazy val core = crossProject(JVMPlatform)
-  .crossType(CrossType.Full)
+lazy val core = projectMatrix
   .in(file("modules/core"))
   .dependsOn(values, api % "compile->compile;test->test")
-  .jvmConfigure(_.dependsOn(config % "test->test", files))
+  .dependsOn(config % "test->test", files)
   .settings(name := "histmersion-core")
   .settings(commonDeps)
   .settings(
@@ -521,14 +514,13 @@ lazy val core = crossProject(JVMPlatform)
       "io.github.iltotore" %% "iron" % V.iron
     )
   )
-  .jvmSettings(
+  .settings(
     // the build's pure helper is tested with the other suites (BuildTestGroupsSuite)
     Test / unmanagedSources += (ThisBuild / baseDirectory).value / "project" / "TestGroups.scala",
     // the fixtures convert reference.conf's records into the domain's settings, as the server does
     libraryDependencies += "io.scalaland" %% "chimney" % V.chimney % Test
   )
-
-lazy val coreJVM = core.jvm
+  .jvmPlatform(scalaVersions = Seq(scala3))
 
 // ── plugin-api: the SPI a plugin compiles against (docs/research-plugins.md §2, decision D1). ──
 //    Interfaces, the `Secret` reference type, the lenient config readers and the SPI's own newtypes
@@ -554,7 +546,7 @@ lazy val pluginApi = project
 //    test sees what the server would. No database, no listener: core, config and plugin-api only.
 lazy val pluginHost = project
   .in(file("modules/plugin-host"))
-  .dependsOn(coreJVM % "compile->compile;test->test", config, pluginApi)
+  .dependsOn(core.jvm(scala3) % "compile->compile;test->test", config, pluginApi)
   .settings(name := "histmersion-plugin-host")
   .settings(commonDeps)
   .settings(
@@ -703,7 +695,7 @@ lazy val chimneyIronTests = project
 // ── db: the store — Magnum repos over Postgres/PostGIS, Flyway migrations, the seed importer. ────
 lazy val db = project
   .in(file("modules/db"))
-  .dependsOn(config, coreJVM % "compile->compile;test->test")
+  .dependsOn(config, core.jvm(scala3) % "compile->compile;test->test")
   .settings(name := "histmersion-db")
   .settings(commonDeps)
   // Inside a group the suites run one at a time on purpose: several rewrite source_chunks/finding_places
@@ -767,7 +759,7 @@ def buildMetaSource(base: File): String = {
 // ── server: MCP (Chimp) + REST (Tapir/netty-sync) + web UI; the only DB client. Native image. ───
 lazy val server = project
   .in(file("modules/server"))
-  .dependsOn(coreJVM, db % "compile->compile;test->test", pluginApi, pluginHost, pluginVaults)
+  .dependsOn(core.jvm(scala3), db % "compile->compile;test->test", pluginApi, pluginHost, pluginVaults)
   .settings(name := "histmersion-server", Compile / mainClass := Some("com.histmersion.server.Main"))
   .settings(commonDeps)
   // Inside a group the suites run one at a time on purpose, for two reasons: the backup/restore suite
@@ -844,10 +836,10 @@ lazy val server = project
       val conv = fileConverter.value
       val repo = target.value / "plugin-repo"
       IO.delete(repo)
-      val api = (pluginApi / projectID).value
+      val pluginApiId = (pluginApi / projectID).value
       writeMavenArtifact(
         repo,
-        api,
+        pluginApiId,
         (pluginApi / scalaBinaryVersion).value,
         conv.toPath((pluginApi / makePom).value).toFile,
         Seq(
@@ -873,10 +865,10 @@ lazy val server = project
         conv.toPath((pluginHost / Compile / packageSrc).value).toFile
       )
       module(
-        (coreJVM / projectID).value,
-        conv.toPath((coreJVM / makePom).value).toFile,
-        conv.toPath((coreJVM / Compile / packageBin).value).toFile,
-        conv.toPath((coreJVM / Compile / packageSrc).value).toFile
+        (core.jvm(scala3) / projectID).value,
+        conv.toPath((core.jvm(scala3) / makePom).value).toFile,
+        conv.toPath((core.jvm(scala3) / Compile / packageBin).value).toFile,
+        conv.toPath((core.jvm(scala3) / Compile / packageSrc).value).toFile
       )
       module(
         (files / projectID).value,
@@ -891,29 +883,35 @@ lazy val server = project
         conv.toPath((config / Compile / packageSrc).value).toFile
       )
       module(
-        (apiJVM / projectID).value,
-        conv.toPath((apiJVM / makePom).value).toFile,
-        conv.toPath((apiJVM / Compile / packageBin).value).toFile,
-        conv.toPath((apiJVM / Compile / packageSrc).value).toFile
+        (api.jvm(scala3) / projectID).value,
+        conv.toPath((api.jvm(scala3) / makePom).value).toFile,
+        conv.toPath((api.jvm(scala3) / Compile / packageBin).value).toFile,
+        conv.toPath((api.jvm(scala3) / Compile / packageSrc).value).toFile
       )
       module(
-        (valuesJVM / projectID).value,
-        conv.toPath((valuesJVM / makePom).value).toFile,
-        conv.toPath((valuesJVM / Compile / packageBin).value).toFile,
-        conv.toPath((valuesJVM / Compile / packageSrc).value).toFile
+        (values.jvm(scala3) / projectID).value,
+        conv.toPath((values.jvm(scala3) / makePom).value).toFile,
+        conv.toPath((values.jvm(scala3) / Compile / packageBin).value).toFile,
+        conv.toPath((values.jvm(scala3) / Compile / packageSrc).value).toFile
       )
       val platformName = s"histmersion-plugin-platform_${scalaBinaryVersion.value}"
       val pom = PluginRepo.platformPom(
-        api.organization,
+        pluginApiId.organization,
         platformName,
-        api.revision,
+        pluginApiId.revision,
         "The libraries Histmersion provides to plugins, at the versions it ships: depend on it compile-only",
         licenses.value.headOption.map(l => l.spdxId -> l.uri.toString).getOrElse("AGPL-3.0-or-later" -> ""),
         pluginPlatform.value
       )
       val pomFile = target.value / "plugin-platform.pom"
       IO.write(pomFile, pom)
-      writeMavenArtifact(repo, api.withName("histmersion-plugin-platform"), scalaBinaryVersion.value, pomFile, Nil)
+      writeMavenArtifact(
+        repo,
+        pluginApiId.withName("histmersion-plugin-platform"),
+        scalaBinaryVersion.value,
+        pomFile,
+        Nil
+      )
       streams.value.log.info(s"plugin repository → $repo")
       repo
     },
@@ -1022,7 +1020,7 @@ lazy val server = project
 // ── cli: host-run, PURE HTTP CLIENT of the server (sttp client derived from api's endpoints). ────
 lazy val cli = project
   .in(file("modules/cli"))
-  .dependsOn(apiJVM, config, files)
+  .dependsOn(api.jvm(scala3), config, files)
   .settings(name := "histmersion-cli", Compile / mainClass := Some("com.histmersion.cli.Main"))
   .settings(commonDeps)
   .settings(writeClasspathSetting)
@@ -1062,7 +1060,7 @@ lazy val cli = project
 lazy val web = project
   .in(file("modules/web"))
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(apiJS)
+  .dependsOn(api.js(scala3))
   .settings(name := "histmersion-web")
   .settings(commonDeps)
   .settings(
@@ -1078,13 +1076,11 @@ lazy val web = project
 lazy val root = project
   .in(file("."))
   .aggregate(
-    valuesJVM,
-    valuesJS,
-    apiJVM,
-    apiJS,
+    (values.projectRefs ++ api.projectRefs ++ core.projectRefs)*
+  )
+  .aggregate(
     config,
     files,
-    coreJVM,
     pluginApi,
     pluginHost,
     pluginTestkit,
