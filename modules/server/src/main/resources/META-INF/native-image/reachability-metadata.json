@@ -7495,6 +7495,65 @@
       ]
     },
     {
+      "type": "com.histmersion.api.ValueCodecs$",
+      "fields": [
+        {
+          "name": "given_Decoder_Citekey$lzy1"
+        },
+        {
+          "name": "given_Decoder_Doi$lzy1"
+        },
+        {
+          "name": "given_Decoder_Latitude$lzy1"
+        },
+        {
+          "name": "given_Decoder_Longitude$lzy1"
+        },
+        {
+          "name": "given_Decoder_WikidataId$lzy1"
+        },
+        {
+          "name": "given_Decoder_Year$lzy1"
+        },
+        {
+          "name": "given_Encoder_Citekey$lzy1"
+        },
+        {
+          "name": "given_Encoder_Doi$lzy1"
+        },
+        {
+          "name": "given_Encoder_Latitude$lzy1"
+        },
+        {
+          "name": "given_Encoder_Longitude$lzy1"
+        },
+        {
+          "name": "given_Encoder_WikidataId$lzy1"
+        },
+        {
+          "name": "given_Encoder_Year$lzy1"
+        },
+        {
+          "name": "given_Schema_Citekey$lzy1"
+        },
+        {
+          "name": "given_Schema_Doi$lzy1"
+        },
+        {
+          "name": "given_Schema_Latitude$lzy1"
+        },
+        {
+          "name": "given_Schema_Longitude$lzy1"
+        },
+        {
+          "name": "given_Schema_WikidataId$lzy1"
+        },
+        {
+          "name": "given_Schema_Year$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.api.VersionInfo$",
       "fields": [
         {
@@ -7684,6 +7743,333 @@
       "fields": [
         {
           "name": "given_Configuration$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.personal.Bookmark$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_Bookmark$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.personal.BookmarkEdit$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_BookmarkEdit$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.personal.BookmarkId$package$BookmarkId$",
+      "fields": [
+        {
+          "name": "given_Decoder_BookmarkId$lzy1"
+        },
+        {
+          "name": "given_Encoder_BookmarkId$lzy1"
+        },
+        {
+          "name": "given_Schema_BookmarkId$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.personal.BookmarkLabel$package$BookmarkLabel$",
+      "fields": [
+        {
+          "name": "given_Decoder_BookmarkLabel$lzy1"
+        },
+        {
+          "name": "given_Encoder_BookmarkLabel$lzy1"
+        },
+        {
+          "name": "given_Schema_BookmarkLabel$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.personal.BookmarkNew$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_BookmarkNew$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.personal.ItemKey$package$ItemKey$",
+      "fields": [
+        {
+          "name": "given_Decoder_ItemKey$lzy1"
+        },
+        {
+          "name": "given_Encoder_ItemKey$lzy1"
+        },
+        {
+          "name": "given_Schema_ItemKey$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.personal.ItemKind$",
+      "fields": [
+        {
+          "name": "given_Decoder_ItemKind$lzy1"
+        },
+        {
+          "name": "given_Encoder_ItemKind$lzy1"
+        },
+        {
+          "name": "given_Schema_ItemKind$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.personal.MapZoom$package$MapZoom$",
+      "fields": [
+        {
+          "name": "given_Decoder_MapZoom$lzy1"
+        },
+        {
+          "name": "given_Encoder_MapZoom$lzy1"
+        },
+        {
+          "name": "given_Schema_MapZoom$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.personal.Note$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_Note$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.personal.NoteEdit$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_NoteEdit$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.personal.NoteId$package$NoteId$",
+      "fields": [
+        {
+          "name": "given_Decoder_NoteId$lzy1"
+        },
+        {
+          "name": "given_Encoder_NoteId$lzy1"
+        },
+        {
+          "name": "given_Schema_NoteId$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.personal.NoteNew$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_NoteNew$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.personal.NoteText$package$NoteText$",
+      "fields": [
+        {
+          "name": "given_Decoder_NoteText$lzy1"
+        },
+        {
+          "name": "given_Encoder_NoteText$lzy1"
+        },
+        {
+          "name": "given_Schema_NoteText$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.personal.PersonalApi$",
+      "fields": [
+        {
+          "name": "addBookmark$lzy1"
+        },
+        {
+          "name": "addNote$lzy1"
+        },
+        {
+          "name": "all$lzy1"
+        },
+        {
+          "name": "bookmarks$lzy1"
+        },
+        {
+          "name": "editBookmark$lzy1"
+        },
+        {
+          "name": "editNote$lzy1"
+        },
+        {
+          "name": "note$lzy1"
+        },
+        {
+          "name": "notes$lzy1"
+        },
+        {
+          "name": "opened$lzy1"
+        },
+        {
+          "name": "reading$lzy1"
+        },
+        {
+          "name": "removeBookmark$lzy1"
+        },
+        {
+          "name": "removeNote$lzy1"
+        },
+        {
+          "name": "setRead$lzy1"
+        },
+        {
+          "name": "unread$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.personal.ReadMark$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_ReadMark$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.personal.ReadMarkSet$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_ReadMarkSet$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.personal.ReadOpened$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_ReadOpened$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.personal.Target$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_Target$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.personal.UnreadPage$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_UnreadPage$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.personal.UnreadRow$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_UnreadRow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.personal.ViewState$package$ViewState$",
+      "fields": [
+        {
+          "name": "given_Decoder_ViewState$lzy1"
+        },
+        {
+          "name": "given_Encoder_ViewState$lzy1"
+        },
+        {
+          "name": "given_Schema_ViewState$lzy1"
         }
       ]
     },
@@ -10837,6 +11223,60 @@
       ]
     },
     {
+      "type": "com.histmersion.domain.personal.BookmarkRow$",
+      "fields": [
+        {
+          "name": "derived$DbCodec$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.personal.MarkRow$",
+      "fields": [
+        {
+          "name": "derived$DbCodec$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.personal.NoteRow$",
+      "fields": [
+        {
+          "name": "derived$DbCodec$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.personal.PersonalTools$BookmarksInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_BookmarksInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.personal.PersonalTools$NotesInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        },
+        {
+          "name": "given_Schema_NotesInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.personal.UnreadDbRow$",
+      "fields": [
+        {
+          "name": "derived$DbCodec$lzy2"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.plugin.PluginConfig$",
       "fields": [
         {
@@ -10933,6 +11373,9 @@
       "fields": [
         {
           "name": "jobControl$lzy1"
+        },
+        {
+          "name": "personal$lzy1"
         },
         {
           "name": "settings$lzy1"
