@@ -5,9 +5,9 @@ import com.histmersion.db.{Param, Sql}
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
 
-/** Where an owner keeps a kind's records and their old identifiers: the table and its identifier column, the alias table
-  * and its column naming the record. ONE resolution of an old identifier for every kind, so the rule cannot differ
-  * between them. The names are the owner's constants, never input.
+/** Where an owner keeps a kind's records and their old identifiers: the table and its identifier column, the alias
+  * table and its column naming the record. ONE resolution of an old identifier for every kind, so the rule cannot
+  * differ between them. The names are the owner's constants, never input.
   */
 final case class AliasTable(kind: AliasKind, table: String, idColumn: String, aliasTable: String, targetColumn: String):
 

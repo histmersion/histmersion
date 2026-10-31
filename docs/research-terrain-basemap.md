@@ -64,7 +64,7 @@ its documented, dated public builds and its `landcover` layer (satellite-derived
 *Superseded the same day by the drop list (below, "Styles, names and the broad extract").* The first
 build kept only `earth`; `water` without canals, ditches, drains, docks, pools, fountains and basins;
 `landcover` forest, grassland, scrub, barren, glacier (`basemap.vector.layers`). The thinning keeps or
-drops whole layers and features by their `kind` without decoding geometry (`server/basemap/Mvt`), so
+drops whole layers and features by their `kind` without decoding geometry (`util/basemap/Mvt`), so
 what is kept is byte-identical to the source.
 
 OSM's `landuse` layer was measured and dropped from that default: at zoom 7–10 it is 80–90 % of the
@@ -98,7 +98,7 @@ downloaded, ~0.63 GB kept.
 
 ## How it is built
 
-- `server/basemap/PmTiles`, `PmTilesFile`, `PmTilesWriter`: the PMTiles v3 codec (header, Hilbert
+- `util/basemap/PmTiles`, `PmTilesFile`, `PmTilesWriter`: the PMTiles v3 codec (header, Hilbert
   tile ids, varint directories), a thread-safe reader with a leaf cache, and a writer that dedups
   identical tiles, run-length encodes them and reserves the first 16 KiB for the header and root —
   metadata and leaves follow the tile data, so an extract is written once, never copied.
@@ -139,7 +139,7 @@ answer's `warnings`, `/api/health` (`warnings`) and `/api/about` (`problems`). B
 (the former look), *Terrain + vegetation* (stronger tints, OSM land use's woods, scrub and
 wetlands), *Relief only*, *Parchment* (light).
 
-**Hot, without a watcher.** `server/basemap/BasemapStyles` keys its answer on (file path, size,
+**Hot, without a watcher.** `util/basemap/BasemapStyles` keys its answer on (file path, size,
 mtime, language, check interval): each `GET /api/basemap/styles` costs one `stat`, the parse happens
 once per change, and a config reload naming another file or language applies at the next read
 (`deps.cfg` is read per call). The page asks every `basemap.style-check-seconds` (5) while it shows
@@ -163,7 +163,7 @@ GeoJSON label layers (public domain): `geography_regions_polys` (a polygon's nam
 widest stretch of the line through its largest part's centre of area — a crescent range's centroid
 falls outside it), `geography_regions_points`, `geography_regions_elevation_points`, `lakes` (not
 reservoirs) and `rivers_lake_centerlines` (rivers as lines, simplified to about a pixel per zoom and
-clipped per tile; not canals). `server/basemap/BasemapLabels` keeps their names in every language NE
+clipped per tile; not canals). `util/basemap/BasemapLabels` keeps their names in every language NE
 has (as `name:<code>`, Chinese as `zh-Hans`/`zh-Hant` like Protomaps), their label zoom (`min_label`,
 else `min_zoom`, else `scalerank`), and writes `labels.pmtiles` (layers `physical`, `rivers`) — a
 third base-map layer, `histmersion basemap fetch --layer labels` (part of `all`). No settlement,
@@ -284,7 +284,7 @@ overlapping (two lines of one name over each other), a better font, the sea floo
 language switch, and a base-map control in two steps.
 
 **The relief to zoom 12, without downloading it all.** The extract stops at zoom 8 (0.5 GB); zoom 12 for
-the default region would be ~170 GB. So (`server/basemap/OnDemandTiles`):
+the default region would be ~170 GB. So (`util/basemap/OnDemandTiles`):
 
 - *On demand*: a terrain tile deeper than the extract is read, when a page asks for it, from Mapterhorn's
   planet file by range request — its header and root once, the 11 KB leaf directory of 4 096 tiles once,
@@ -425,13 +425,13 @@ Grid**: 15 arc-seconds (~460 m) against ETOPO1's 1 arc-minute (~1.8 km), zooms 0
   21 600 × 21 600 signed 16-bit samples, **uncompressed, one row a strip**, a GeoTIFF tie point and pixel
   scale, no-data −32768 (read from the files' own headers, 2026-10-24). CEDA answers range requests
   (206). So the fetch reads only the rows a region needs.
-- **The reader** (`server/basemap/GeoTiff`, pure): a little-endian classic TIFF, one band of
+- **The reader** (`util/basemap/GeoTiff`, pure): a little-endian classic TIFF, one band of
   uncompressed signed 16-bit samples in strips, georeferenced by `ModelTiepoint` + `ModelPixelScale`
   (pixel-is-point shifted to the area), GDAL's no-data tag. Anything else — BigTIFF, compression, tiles,
   other sample types — is refused with what it is (WorldCover's COGs would need DEFLATE and tiles, below).
   It gives the window of a box and the range requests of its rows: rows that follow one another in the
   file share a request of at most `basemap.max-request-mb`.
-- **The job** (`server/basemap/GebcoSeaFloor`): the headers of the GeoTIFFs that meet the region
+- **The job** (`util/basemap/GebcoSeaFloor`): the headers of the GeoTIFFs that meet the region
   (256 KB each), the plan, then the rows into `.bathymetry.part/` (a file a request; an interrupted fetch
   resumes), then every tile of zooms 0…max over the region: each pixel the mean of the grid's samples under
   four points spread over it, written as a Terrarium PNG (`TerrariumPng`, our own encoder: RGB, the Sub
@@ -484,7 +484,7 @@ blend with the relief and query (`areasAt`).
 2. *Classes to polygons.* Per output tile (zoom 6–11): majority-filter the class raster (mode over 3×3,
    removing single-pixel speckle), trace each class's regions into polygons (marching squares over the
    class mask), simplify (Douglas–Peucker at half a pixel), clip to the tile with a buffer — then MVT
-   (`server/basemap/Mvt` already writes MVT) in a `landcover-wc` layer with `class`.
+   (`util/basemap/Mvt` already writes MVT) in a `landcover-wc` layer with `class`.
 3. *Store and style.* A `worldcover.pmtiles` extract beside the others, a new `BasemapLayer`, its credit in
    the style's source; Physical draws it in place of (or under) Protomaps' coarser `landcover`, whose
    classes it maps onto (tree cover → forest, shrubland, grassland, cropland, built-up, bare/sparse,

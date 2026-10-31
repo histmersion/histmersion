@@ -385,10 +385,6 @@ direction	server:server/agents/Toolbox.scala	automation -> server: McpTools	1
 direction	server:server/agents/Toolbox.scala	automation -> split: Handlers	1
 direction	server:server/agents/Toolbox.scala	automation -> split: OpsTools	1
 direction	server:server/agents/WebAccess.scala	automation -> library: Search	1
-direction	server:server/basemap/BasemapService.scala	util.basemap -> library: SeaFloorSource	1
-direction	server:server/basemap/BasemapService.scala	util.basemap -> server: Deps	1
-direction	server:server/basemap/JavaRangeHttp.scala	util.basemap -> library: HttpPolicy	1
-direction	server:server/basemap/JavaRangeHttp.scala	util.basemap -> server: Version	1
 direction	server:server/events/EventCatalogHandlers.scala	catalogue -> library: Chunk	1
 direction	server:server/events/EventCatalogHandlers.scala	catalogue -> library: PassageFinder	1
 direction	server:server/events/EventCatalogHandlers.scala	catalogue -> library: SourceRepo	1
@@ -504,33 +500,6 @@ filesystem	server:server/agents/PlanPools.scala	java.nio.file	5
 filesystem	server:server/agents/Prompts.scala	Files.*	2
 filesystem	server:server/agents/Prompts.scala	Path.of	1
 filesystem	server:server/agents/Prompts.scala	java.nio.file	1
-filesystem	server:server/basemap/BasemapFetch.scala	FileChannel	3
-filesystem	server:server/basemap/BasemapFetch.scala	Files.*	10
-filesystem	server:server/basemap/BasemapFetch.scala	java.nio.file	1
-filesystem	server:server/basemap/BasemapLabels.scala	java.nio.file	1
-filesystem	server:server/basemap/BasemapService.scala	Files.*	30
-filesystem	server:server/basemap/BasemapService.scala	Path.of	2
-filesystem	server:server/basemap/BasemapService.scala	java.nio.file	1
-filesystem	server:server/basemap/DiskLru.scala	Files.*	14
-filesystem	server:server/basemap/DiskLru.scala	StandardCopyOption	3
-filesystem	server:server/basemap/DiskLru.scala	java.nio.file	2
-filesystem	server:server/basemap/GebcoPart.scala	java.nio.file	1
-filesystem	server:server/basemap/GebcoSeaFloor.scala	FileChannel	3
-filesystem	server:server/basemap/GebcoSeaFloor.scala	Files.*	6
-filesystem	server:server/basemap/GebcoSeaFloor.scala	StandardCopyOption	1
-filesystem	server:server/basemap/GebcoSeaFloor.scala	java.nio.file	2
-filesystem	server:server/basemap/JavaRangeHttp.scala	Files.*	3
-filesystem	server:server/basemap/JavaRangeHttp.scala	StandardCopyOption	2
-filesystem	server:server/basemap/JavaRangeHttp.scala	java.nio.file	1
-filesystem	server:server/basemap/OnDemandTiles.scala	Files.*	10
-filesystem	server:server/basemap/OnDemandTiles.scala	java.nio.file	1
-filesystem	server:server/basemap/PmTilesFile.scala	FileChannel	7
-filesystem	server:server/basemap/PmTilesFile.scala	java.nio.file	1
-filesystem	server:server/basemap/PmTilesWriter.scala	FileChannel	1
-filesystem	server:server/basemap/PmTilesWriter.scala	Files.*	4
-filesystem	server:server/basemap/PmTilesWriter.scala	StandardCopyOption	3
-filesystem	server:server/basemap/PmTilesWriter.scala	java.nio.file	2
-filesystem	server:server/basemap/RangeHttp.scala	java.nio.file	1
 filesystem	server:server/importers/GazetteerLoad.scala	Files.*	19
 filesystem	server:server/importers/GazetteerLoad.scala	Path.of	3
 filesystem	server:server/importers/GazetteerLoad.scala	StandardCopyOption	3

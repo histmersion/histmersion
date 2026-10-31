@@ -17069,15 +17069,7 @@
       ]
     },
     {
-      "type": "com.histmersion.server.basemap.BasemapStyles",
-      "fields": [
-        {
-          "name": "builtIn$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.server.basemap.OnDemandTiles",
+      "type": "com.histmersion.util.basemap.OnDemandTiles",
       "fields": [
         {
           "name": "gate$lzy1"
@@ -17085,7 +17077,7 @@
       ]
     },
     {
-      "type": "com.histmersion.server.basemap.Vp8l$Group[]"
+      "type": "com.histmersion.util.basemap.Vp8l$Group[]"
     },
     {
       "type": "com.histmersion.server.events.EventCatalogTools$EventCorrectionsInput$",

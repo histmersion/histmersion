@@ -12,7 +12,7 @@ class JobKindsSuite extends munit.FunSuite:
 
   test("the server's job kinds are the dictionary's"):
     val kinds = List(
-      basemap.BasemapService.JobKind,
+      com.histmersion.util.basemap.BasemapService.JobKind,
       Handlers.PlacesFetchJobKind,
       Handlers.PlacesHierarchyJobKind,
       events.EventCatalogHandlers.ImportJobKind,
