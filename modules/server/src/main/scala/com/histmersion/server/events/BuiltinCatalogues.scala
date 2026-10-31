@@ -5,24 +5,27 @@ import com.histmersion.pluginhost.{PluginEvents, SpiValues}
 import com.histmersion.api.CatalogProviderInfo
 import com.histmersion.domain.CatalogProvider
 import com.histmersion.plugin.*
-import com.histmersion.util.plugins.HostProvided
 
 import scala.collection.immutable.ListMap
 
-/** Today's event catalogues as BUILT-IN plugins: in every binary, each enabled by default and switched off by
-  * `histmersion.plugins.events-<catalogue>.enabled = false`; their settings stay `events.<catalogue>.*`.
+/** Histmersion's own event catalogues — first-party plugins (`events-gvp`, `events-noaa`, `events-wikidata`), each
+  * enabled by default and switched off by `histmersion.plugins.events-<catalogue>.enabled = false`, its settings
+  * Histmersion's own `events.<catalogue>.*` — by the names they are imported under, which a plugin's catalogue may not
+  * take. The records of one switched off since are still on the map.
   */
 object BuiltinCatalogues:
 
-  val entries: List[HostEventCatalogue] = List(
-    HostEventCatalogue("events-gvp", CatalogProvider.Gvp),
-    HostEventCatalogue("events-noaa", CatalogProvider.Noaa),
-    HostEventCatalogue("events-wikidata", CatalogProvider.Wikidata)
+  /** A first-party catalogue: its plugin and the name it registers. */
+  final case class Entry(plugin: String, name: String):
+    def title: String = CatalogProvider.info(name).fold(name)(_.title)
+
+  val entries: List[Entry] = List(
+    Entry("events-gvp", CatalogProvider.Gvp),
+    Entry("events-noaa", CatalogProvider.Noaa),
+    Entry("events-wikidata", CatalogProvider.Wikidata)
   )
 
   val pluginIds: Set[String] = entries.map(_.plugin).toSet
-
-  def plugins: List[Plugin] = entries.map(e => HostProvided(e.plugin, _.eventCatalogues.add(e.name, e)))
 
   /** The other names `events import` takes for a built-in catalogue. */
   val aliases: Map[String, String] = Map(
@@ -54,13 +57,13 @@ object BuiltinCatalogues:
         case None    =>
           Left(s"unknown event catalogue '${asked.trim}' (one of: ${ordered(catalogues.keys.toList).mkString(", ")})")
 
-  /** A catalogue's terms as the card and the list show them: a registered one's, else a built-in's (records of a
+  /** A catalogue's terms as the card and the list show them: a registered one's, else a first-party one's (records of a
     * catalogue switched off since are still on the map).
     */
   def info(name: String, catalogues: ListMap[String, EventCatalogue]): Option[CatalogProviderInfo] =
     catalogues.get(name) match
-      case Some(_: HostEventCatalogue) | None => CatalogProvider.info(name)
-      case Some(c)                            =>
+      case None    => CatalogProvider.info(name)
+      case Some(c) =>
         PluginEvents.safe(CatalogProviderInfo(name, c.title, SpiValues.licenceOf(c.licence), c.citation, c.home))
 
   def infos(catalogues: ListMap[String, EventCatalogue]): List[CatalogProviderInfo] =

@@ -1,7 +1,25 @@
 package com.histmersion.plugins.fetchers
 
-import com.histmersion.plugin.{Fetch, FetchContext, FetchedFile, PluginHttp, PluginLog, SourceFetcher, UpstreamQuota, WorkKey}
-import com.histmersion.upstreams.{json, AcquireParse, CoreApi, CoreFailure, OpenAlexCrossref, RepositoryLanding, UpstreamSettings, Url}
+import com.histmersion.plugin.{
+  Fetch,
+  FetchContext,
+  FetchedFile,
+  PluginHttp,
+  PluginLog,
+  SourceFetcher,
+  UpstreamQuota,
+  WorkKey
+}
+import com.histmersion.upstreams.{
+  json,
+  AcquireParse,
+  CoreApi,
+  CoreFailure,
+  OpenAlexCrossref,
+  RepositoryLanding,
+  UpstreamSettings,
+  Url
+}
 import io.circe.Json
 
 /** The fetchers of the four open-access index plugins, all by DOI: Unpaywall's best OA location (`oa-unpaywall`),
@@ -98,8 +116,8 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => PluginHttp, log: Plu
     * Zenodo DOI, the OA indexes' repository and landing locations, then the page a DataCite DOI resolves to. A
     * `doi.org` link is never followed blind (it may land on a publisher): a Zenodo DOI goes to Zenodo's API, any other
     * is replaced by where DataCite says it resolves, and a DOI DataCite does not know is skipped — unless the location
-    * is OPEN and the DOI handle API says it resolves to an open-access publisher's page (`oa-publisher-hosts`), which is
-    * read like a repository's. `unpaywall` is Unpaywall's record (`None` when its plugin is off); `openalex` says
+    * is OPEN and the DOI handle API says it resolves to an open-access publisher's page (`oa-publisher-hosts`), which
+    * is read like a repository's. `unpaywall` is Unpaywall's record (`None` when its plugin is off); `openalex` says
     * whether OpenAlex's record may be read (its plugin on).
     */
   private def landingPdf(
@@ -147,7 +165,11 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => PluginHttp, log: Plu
   /** An OA index calls it a publisher's location, or its host is denied (`acquire.landing.deny-*`) — and it is not an
     * open-access publisher's open location (`oa-publisher-hosts`).
     */
-  private def publisherPage(ctx: FetchContext, c: RepositoryLanding.Candidate, rules: RepositoryLanding.Rules): Boolean =
+  private def publisherPage(
+      ctx: FetchContext,
+      c: RepositoryLanding.Candidate,
+      rules: RepositoryLanding.Rules
+  ): Boolean =
     val no = !RepositoryLanding.oaPublisherPage(c, rules) &&
       (c.publisher || RepositoryLanding.host(c.url).exists(rules.denied))
     if no then ctx.log.info(s"landing: ${c.url} is a publisher's page — not read")

@@ -1,11 +1,22 @@
 package com.histmersion.plugins.fetchers
 
 import com.histmersion.plugin.{FetchContext, FetchedFile, PluginHttp, SourceFetcher}
-import com.histmersion.upstreams.{json, text, AcquireParse, EuropePmcHit, Jats, PmcObject, PmcRecord, UpstreamSettings, Url}
+import com.histmersion.upstreams.{
+  json,
+  text,
+  AcquireParse,
+  EuropePmcHit,
+  Jats,
+  PmcObject,
+  PmcRecord,
+  UpstreamSettings,
+  Url
+}
 
 /** The `pmc` plugin's two fetchers, by DOI: `pmc`, the PDF — Europe PMC's free links, else the one NCBI's PMC Article
-  * Datasets publish — and `pmc-text`, the record's JATS full text when there is no PDF anywhere (the chain runs it after
-  * every PDF source). Both read one Europe PMC search and one dataset record per work, shared through the fetch's memo.
+  * Datasets publish — and `pmc-text`, the record's JATS full text when there is no PDF anywhere (the chain runs it
+  * after every PDF source). Both read one Europe PMC search and one dataset record per work, shared through the fetch's
+  * memo.
   */
 final class Pmc(cfg: UpstreamSettings, client: () => PluginHttp):
 
@@ -20,8 +31,8 @@ final class Pmc(cfg: UpstreamSettings, client: () => PluginHttp):
     *      (europepmc.org may answer with a bot-protection challenge, which is no copy).
     *   2. NCBI's PMC Article Datasets record for that PMCID names the PDF it publishes (the open-access subset and most
     *      author manuscripts), verified against the record's MD5.
-    *   3. With no PDF anywhere, the record's JATS XML — the article's own full text — is the copy; the ingest renders it
-    *      to Markdown instead of OCR.
+    *   3. With no PDF anywhere, the record's JATS XML — the article's own full text — is the copy; the ingest renders
+    *      it to Markdown instead of OCR.
     */
   final private class PmcLookup(doi: String, ctx: FetchContext):
     lazy val hit: Option[EuropePmcHit] =

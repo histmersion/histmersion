@@ -72,11 +72,10 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
   private def registered = deps.plugins.registries.eventCatalogues
 
   /** The limits of `provider`'s dating, the ONE rule of the import and of rederive: the present for every catalogue,
-    * the Holocene floor for the GVP's, a plugin catalogue's own floor for its.
+    * and the catalogue's own floor (the GVP's Holocene one) while it is registered.
     */
-  private def limitsOf(provider: String, present: Long): CatalogDating.Limits =
-    if CatalogProvider.all.contains(provider) then EventProviders.limits(provider, present, ec.gvp.floorYear)
-    else PluginEvents.limits(registered.get(provider), present)
+  private def limitsOf(provider: String, present: Long): com.histmersion.upstreams.CatalogDating.Limits =
+    PluginEvents.limits(registered.get(provider), present)
 
   /** A catalogue's terms: a registered one's, else a built-in's (its records outlive its plugin). */
   private def infoOf(provider: String): Option[CatalogProviderInfo] = BuiltinCatalogues.info(provider, registered)
@@ -146,11 +145,10 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
       fetched match
         case Left(why)   => report = report.modify(_.failed).using(_ :+ s"$part: $why")
         case Right(read) =>
-          // a catalogue's dating held inside the present (and the GVP's Holocene floor, a plugin's own);
-          // a plugin's record dated from its stated year when it gives no span — as rederive does
+          // a catalogue's dating held inside the present (and its own floor, the GVP's Holocene one); a
+          // record dated from its stated year when it gives no span — as rederive does
           val lim = limitsOf(provider, presentYear())
-          val date: CatalogRecord => CatalogRecord =
-            if CatalogProvider.all.contains(provider) then CatalogDating.clamp(_, lim) else PluginEvents.derive(_, lim)
+          val date: CatalogRecord => CatalogRecord = PluginEvents.derive(_, lim)
           // an item read again in a later (less specific) class keeps the kind it was stored with
           val kinds = if provider == CatalogProvider.Wikidata && !req.dryRun then
             EventCatalogRepo.storedKinds(ds, provider)
@@ -235,67 +233,22 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
 
     def full = report.kept >= limit || deps.maintenance.active
 
-    /** One of the host's own catalogues, read as it always was. */
-    def runHost(name: String): Unit = name match
-      case CatalogProvider.Gvp =>
-        val c = client(ec.gvp.requestIntervalMs)
-        EventProviders.Gvp.windows(from.getOrElse(ec.minYear), to, ec.gvp.windowYears).foreach { (a, b) =>
-          val part = s"years:$a..$b"
-          if !full && !done(part) then
-            handle(
-              part,
-              c.json(EventProviders.Gvp.url(ec.gvp.url, a, b, ec.gvp.pageSize))
-                .flatMap(EventProviders.Gvp.parse)
-                .flatMap((rs, total) =>
-                  Either.cond(
-                    total.forall(_ <= rs.size),
-                    rs,
-                    s"${total.getOrElse(0)} eruptions in $a..$b, more than one request takes (events.gvp.page-size)"
-                  )
-                )
-            )
-        }
-      case CatalogProvider.Noaa =>
-        val c = client(ec.noaa.requestIntervalMs)
-        ec.noaa.datasetList.foreach { dataset =>
-          var page = 1
-          var pages = 1
-          while page <= pages && !full do
-            val got = c
-              .json(EventProviders.Noaa.url(ec.noaa.url, dataset, from, to, page, ec.noaa.pageSize))
-              .flatMap(EventProviders.Noaa.parse(dataset, _))
-            got.foreach((_, n) => pages = n)
-            handle(s"$dataset:$page", got.map(_._1))
-            if got.isLeft then pages = 0
-            page += 1
-        }
-      case _ =>
-        val c = client(ec.wikidata.requestIntervalMs)
-        val lang = (ec.wikidata.languageList :+ "en").distinct.mkString(",")
-        ec.wikidata.classList.foreach { (qid, kind) =>
-          val part = s"class:$qid"
-          if !full && !done(part) then
-            val q = EventProviders.WikidataEvents.sparql(qid, from, to, lang)
-            handle(
-              part,
-              c.json(EventProviders.WikidataEvents.sparqlUrl(ec.wikidata.sparqlUrl, q))
-                .flatMap(EventProviders.WikidataEvents.parse(_, kind))
-            )
-        }
-
-    /** A plugin's catalogue: its parts in its order, each read once (a part read before is skipped, as the built-ins'
-      * are), a paged part followed to its last page; every record checked by the host ([[PluginEvents.record]]) before
-      * the same thresholds, merge and store as the built-ins'.
+    /** A catalogue — Histmersion's own or a third party's, alike: its parts in its order, each read once (a part read
+      * before is skipped, unless the catalogue's parts are pages of a list that changes), a paged part followed to its
+      * last page; every record checked by the host ([[PluginEvents.record]]) before the thresholds, the merge and the
+      * store.
       */
-    def runPlugin(cat: com.histmersion.plugin.EventCatalogue): Unit =
+    def run(cat: com.histmersion.plugin.EventCatalogue): Unit =
       val c = client(PluginEvents.safe(cat.requestIntervalMs).getOrElse(1000))
       val h = PluginEvents.http(c)
       val q = PluginEvents.query(from, to, area)
+      val read: String => Boolean =
+        if PluginEvents.safe(cat.everyPartEachImport).contains(true) then _ => false else done
       PluginEvents.guard(Right(cat.parts(q))) match
         case Left(why)    => report = report.modify(_.failed).using(_ :+ s"parts: $why")
         case Right(parts) =>
           parts.distinct.foreach { first =>
-            PluginEvents.readPart(cat, first, q, h, done, full) { (part, got) =>
+            PluginEvents.readPart(cat, first, q, h, read, full) { (part, got) =>
               val recs = got.map(_.events.map(PluginEvents.record(provider, _)))
               recs.foreach(rs =>
                 if rs.exists(_.isLeft) then
@@ -310,26 +263,16 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
         report = report.copy(failed =
           report.failed :+ BuiltinCatalogues.resolve(provider, registered).fold(identity, _ => provider)
         )
-      case Some(c: HostEventCatalogue) => runHost(c.name)
-      case Some(c)                     => runPlugin(c)
+      case Some(c) => run(c)
 
+    // the parts still to read: none for a catalogue whose parts are all read at every import
     val pending = catalogue match
-      case Some(cat) if !req.dryRun && !cat.isInstanceOf[HostEventCatalogue] =>
+      case Some(cat) if !req.dryRun && !PluginEvents.safe(cat.everyPartEachImport).contains(true) =>
         val now = EventProviders.partsIn(EventCatalogRepo.partsDone(ds, provider), scope)
         PluginEvents
           .guard(Right(cat.parts(PluginEvents.query(from, to, area))))
           .fold(_ => 0, _.distinct.count(p => !now(p)))
-      case _ =>
-        provider match
-          case CatalogProvider.Gvp if !req.dryRun =>
-            val now = EventProviders.partsIn(EventCatalogRepo.partsDone(ds, provider), scope)
-            EventProviders.Gvp
-              .windows(from.getOrElse(ec.minYear), to, ec.gvp.windowYears)
-              .count((a, b) => !now(s"years:$a..$b"))
-          case CatalogProvider.Wikidata if !req.dryRun =>
-            val now = EventProviders.partsIn(EventCatalogRepo.partsDone(ds, provider), scope)
-            ec.wikidata.classList.count((q, _) => !now(s"class:$q"))
-          case _ => 0
+      case _ => 0
     val out = report.copy(pending = pending, requests = clients.map(_.requests).sum + report.requests)
     scribe.info(s"events import: ${EventImportReport.summary(out)}")
     out
@@ -360,9 +303,10 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
     yield job
 
   /** Re-derive, blocking (the job runs it): every stored record of `provider` (all catalogues') read back, its dating
-    * computed again ([[EventProviders.rederive]]: from the catalogue's own record where it keeps one), and — not a dry
-    * run — written with the events their catalogue created refreshed ([[EventCatalogRepo.save]], corrections by hand
-    * applied), `rederive-batch` records a transaction.
+    * computed again (read again by its catalogue from the catalogue's own record where it keeps one, while the
+    * catalogue is registered — [[com.histmersion.plugin.EventCatalogue.reread]]), and — not a dry run — written with
+    * the events their catalogue created refreshed ([[EventCatalogRepo.save]], corrections by hand applied),
+    * `rederive-batch` records a transaction.
     */
   private[events] def runRederive(
       provider: Option[String],
@@ -373,17 +317,17 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
     val present = presentYear()
     def prec(r: CatalogRecord) = EventPrecision.of(r.timeSpan, r.plusMinus)
     val again = rows.map { (eventId, eventKind, r) =>
-      // a built-in's record re-parsed from its own; a plugin's derived from the stored one as at the import
-      val d =
-        if CatalogProvider.all.contains(r.provider) then EventProviders.rederive(r, limitsOf(r.provider, present))
-        else PluginEvents.derive(r, limitsOf(r.provider, present))
+      // read again by its catalogue where it re-reads (from the catalogue's own record), else derived from the
+      // stored one as at the import
+      val reread = registered.get(r.provider).flatMap(PluginEvents.reread(_, r.provider, r))
+      val d = PluginEvents.derive(reread.getOrElse(r), limitsOf(r.provider, present))
       // a Wikidata item read in two classes keeps the more specific kind (V085 stored the last class's)
       val k = if r.provider == CatalogProvider.Wikidata then
         EventProviders.WikidataEvents.moreSpecific(classOrder, d.kind, eventKind)
       else d.kind
-      (eventId, r, d.copy(kind = k))
+      (eventId, r, d.copy(kind = k), reread.isDefined)
     }
-    val changed = again.filter((_, a, b) =>
+    val changed = again.filter((_, a, b, _) =>
       (a.timeSpan, a.central, a.plusMinus, a.datingMethod, a.kind) != (
         b.timeSpan,
         b.central,
@@ -398,12 +342,12 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
     if !dryRun then
       again.grouped(ec.rederiveBatch.max(1)).zipWithIndex.foreach { (batch, i) =>
         val s =
-          EventCatalogRepo.save(ds, batch.map((id, _, b) => b -> CatalogMerge.Placement.Existing(id, "re-derived")))
+          EventCatalogRepo.save(ds, batch.map((id, _, b, _) => b -> CatalogMerge.Placement.Existing(id, "re-derived")))
         updated += s.updated
         counts = counts + s.corrections
         progress(s"${(i + 1) * ec.rederiveBatch.max(1) min again.size} of ${again.size} record(s) re-derived")
       }
-    val examples = changed.take(5).map { (id, a, b) =>
+    val examples = changed.take(5).map { (id, a, b, _) =>
       def years(r: CatalogRecord) = EventGeo.outer(r.timeSpan).fold("undated")((x, y) => s"${YearFmt(x)}…${YearFmt(y)}")
       s"$id: ${years(a)} → ${years(b)}${EventPrecision.note(b.central, b.plusMinus, b.datingMethod).fold("")(n => s" ($n)")}, ${prec(b)}"
     } ++ Option.when(undecodable > 0)(s"$undecodable stored record(s) no longer decode — left alone").toList
@@ -412,11 +356,11 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
       provider.toList.ifEmpty((CatalogProvider.all ++ registered.keys).distinct),
       again.size,
       changed.size,
-      again.count((_, a, _) => a.raw.isDefined && CatalogProvider.all.contains(a.provider)),
+      again.count((_, a, _, reread) => a.raw.isDefined && reread),
       updated,
-      EventCount.of(again.map((_, a, _) => prec(a))),
-      EventCount.of(again.map((_, _, b) => prec(b))),
-      again.count((_, _, b) => !EventPrecision.mapped(prec(b))),
+      EventCount.of(again.map((_, a, _, _) => prec(a))),
+      EventCount.of(again.map((_, _, b, _) => prec(b))),
+      again.count((_, _, b, _) => !EventPrecision.mapped(prec(b))),
       examples,
       counts
     )

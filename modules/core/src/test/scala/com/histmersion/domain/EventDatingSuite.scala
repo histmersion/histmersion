@@ -10,51 +10,15 @@ import io.circe.syntax.*
 
 import scala.util.Random
 
-/** The data-source assessment's P0 fixes, the pure half: GVP datings (the five records of §4) keep their central year,
-  * ± and method and are held inside the present and the Holocene; the precision classes; re-derivation from a stored
-  * record (raw, and a record stored before V088); the corrections' reconcile table and the event fields compared; and a
-  * merge that does not depend on the order of its inputs.
+/** The data-source assessment's P0 fixes, the host's pure half: the precision classes and the dating note; the
+  * corrections' reconcile table and the event fields compared; and a merge that does not depend on the order of its
+  * inputs. The catalogues' datings and re-reading are their plugins' suites'.
   */
 class EventDatingSuite extends munit.FunSuite:
 
-  private val limits = CatalogDating.Limits(present = 2026, floor = Some(-9700))
-
-  /** A GVP WFS feature as the service answers (2026-10-16), `EndDateYear` null. */
-  private def feature(num: Int, volcano: String, year: Long, pm: Long, method: String): Json =
-    io.circe.parser
-      .parse(s"""{"type":"Feature","id":"Smithsonian_VOTW_Holocene_Eruptions.fid-$num","geometry":{"type":"Point","coordinates":[-19.7,63.98]},
-         |"properties":{"Volcano_Number":372070,"Volcano_Name":"$volcano","Eruption_Number":$num,"Activity_Type":"Confirmed Eruption",
-         |"ExplosivityIndexMax":null,"StartEvidenceMethod":"$method","StartDateYearModifier":null,"StartDateYear":$year,
-         |"StartDateYearUncertainty":$pm,"EndDateYear":null,"EndDateYearUncertainty":null}}""".stripMargin)
-      .toOption
-      .get
-
-  private val samples = List(
-    // eruption, volcano, year, ±, method, the span expected once clamped
-    (12724, "Hekla", 250L, 2500L, "Tephrochronology", (-2251L, 2026L)),
-    (12725, "Hekla", 350L, 1500L, "Tephrochronology", (-1151L, 1850L)),
-    (12693, "Katla", -4950L, 2500L, "Tephrochronology", (-7450L, -2450L)),
-    (13048, "La Palma", -4050L, 3000L, "Isotopic: K/Ar", (-7050L, -1050L)),
-    (18283, "Hachijojima", -8020L, 2640L, "Tephrochronology", (-9700L, -5380L))
-  )
-
-  test(
-    "GVP: the five records of §4 keep their year, ± and method; the span is held inside the present and the Holocene"
-  ):
-    samples.foreach { case (num, volcano, year, pm, method, (lo, hi)) =>
-      val r = CatalogDating.clamp(EventProviders.Gvp.record(feature(num, volcano, year, pm, method)).get, limits)
-      assertEquals((r.central, r.plusMinus, r.datingMethod), (Some(year), Some(pm), Some(method)), s"$num")
-      assertEquals(r.timeSpan, TimeSpan(Some(lo), None, None, Some(hi)), s"$num: no certain core is invented")
-      assert(r.timeSpan.notAfter.forall(_ <= 2026), s"$num ends after today")
-      assertEquals(EventPrecision.of(r.timeSpan, r.plusMinus), EventPrecision.Imprecise, s"$num")
-      assert(
-        r.raw.isDefined && !r.description.exists(_.contains("dated by")),
-        s"$num: the method is a field, not prose"
-      )
-    }
-    val hekla = EventProviders.Gvp.record(feature(12724, "Hekla", 250, 2500, "Tephrochronology")).get
+  test("a dating note: the stated year, ± and method as the card shows them"):
     assertEquals(
-      EventPrecision.note(hekla.central, hekla.plusMinus, hekla.datingMethod),
+      EventPrecision.note(Some(250), Some(2500), Some("Tephrochronology")),
       Some("250 CE ± 2500 (tephrochronology)")
     )
     assertEquals(
@@ -66,15 +30,6 @@ class EventDatingSuite extends munit.FunSuite:
       EventPrecision.note(None, None, Some("Historical Observations")),
       Some("dated by historical observations")
     )
-
-  test("clamp: the present for every catalogue, the Holocene floor for the GVP only; monotone"):
-    val wide = TimeSpan(Some(-11000), Some(-10000), Some(1990), Some(2100))
-    assertEquals(CatalogDating.clamp(wide, limits), TimeSpan(Some(-9700), Some(-9700), Some(1990), Some(2026)))
-    assertEquals(
-      CatalogDating.clamp(wide, EventProviders.limits(CatalogProvider.Noaa, 2026, -9700)),
-      TimeSpan(Some(-11000), Some(-10000), Some(1990), Some(2026))
-    )
-    assertEquals(EventProviders.limits(CatalogProvider.Gvp, 2026, -9700), limits)
 
   test("precision: ± ≤ 50 precise, ≤ 500 approximate, more imprecise; the stated ± or the widest window"):
     def p(ts: TimeSpan, pm: Option[Long] = None) = EventPrecision.of(ts, pm)
@@ -111,71 +66,6 @@ class EventDatingSuite extends munit.FunSuite:
       List(true, true, false, false)
     )
     assertEquals(EventPrecision.label(EventPrecision.Imprecise), Some("imprecise date"))
-
-  test("re-derive: from the catalogue's own record, and from a record stored before V088 (its span read back)"):
-    val parsed = EventProviders.Gvp.record(feature(12724, "Hekla", 250, 2500, "Tephrochronology")).get
-    // a record as V085 stored it: the whole ± window, the method in the description, no raw
-    val legacy = parsed.copy(
-      timeSpan = TimeSpan(Some(-2251), None, None, Some(2750)),
-      central = None,
-      plusMinus = None,
-      datingMethod = None,
-      raw = None,
-      description = Some("Confirmed Eruption at Hekla; dated by Tephrochronology")
-    )
-    val fromLegacy = EventProviders.rederive(legacy, limits)
-    assertEquals(
-      (fromLegacy.central, fromLegacy.plusMinus, fromLegacy.datingMethod),
-      (Some(250L), Some(2500L), Some("Tephrochronology"))
-    )
-    assertEquals(fromLegacy.timeSpan, TimeSpan(Some(-2251), None, None, Some(2026)))
-    assertEquals(fromLegacy.description, Some("Confirmed Eruption at Hekla"))
-    val fromRaw = EventProviders.rederive(
-      parsed.copy(timeSpan = TimeSpan(Some(0), None, None, Some(0)), names = List("Hekla tephra")),
-      limits
-    )
-    assertEquals(
-      fromRaw.timeSpan,
-      TimeSpan(Some(-2251), None, None, Some(2026)),
-      "parsed again: the stored span is not trusted"
-    )
-    assert(fromRaw.names.contains("Hekla tephra") && fromRaw.names.contains("Hekla eruption"), fromRaw.names.toString)
-    // exact years read back as exact; a cored start window centred
-    assertEquals(CatalogDating.centralOf(TimeSpan(Some(79), Some(79), Some(79), Some(79))), Some((79L, 0L)))
-    assertEquals(CatalogDating.centralOf(TimeSpan(Some(-510), Some(-490), Some(-460), Some(-440))), Some((-500L, 10L)))
-    // a NOAA record is only clamped
-    val noaa = CatalogRecord(
-      "noaa",
-      "earthquake:1",
-      "",
-      "Earthquake",
-      "earthquake",
-      TimeSpan(Some(-464), Some(-464), Some(-464), Some(-464)),
-      None,
-      None
-    )
-    assertEquals(EventProviders.rederive(noaa, EventProviders.limits("noaa", 2026, -9700)), noaa)
-
-  test("re-derive: NOAA and Wikidata records parse again from their raw record"):
-    val (eq, _) = EventProviders.Noaa.parse("earthquakes", fixture("noaa_earthquakes.json")).toOption.get
-    val one = eq.head
-    assert(one.raw.isDefined && one.central.isDefined)
-    assertEquals(
-      EventProviders.rederive(one.copy(timeSpan = TimeSpan()), EventProviders.limits("noaa", 2026, -9700)).timeSpan,
-      one.timeSpan
-    )
-    val wd = EventProviders.WikidataEvents.parse(fixture("wikidata_siege.json"), "siege").toOption.get.head
-    assert(wd.raw.isDefined)
-    assertEquals(
-      EventProviders.rederive(wd.copy(timeSpan = TimeSpan()), EventProviders.limits("wikidata", 2026, -9700)).timeSpan,
-      wd.timeSpan
-    )
-
-  private def fixture(name: String): Json =
-    io.circe.parser
-      .parse(scala.io.Source.fromResource(s"events/$name")(using scala.io.Codec.UTF8).mkString)
-      .toOption
-      .get
 
   // ── corrections ────────────────────────────────────────────────────────────────────────────
 

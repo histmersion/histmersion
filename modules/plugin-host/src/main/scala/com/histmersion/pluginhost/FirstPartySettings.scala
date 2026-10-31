@@ -12,8 +12,8 @@ import scala.util.Try
   * keys and their `HISTMERSION_*` variables; the plugin's report shows only its own block.
   *
   * ONE table drives both the settings and the reload rule: a first-party plugin is rebuilt when its own block or one of
-  * its paths changes. A plugin the table does not name — a third party's, a vault — is rebuilt when its block changes or
-  * a key that shapes the HTTP client every plugin is lent ([[FirstPartySettings.ClientKeys]]) does.
+  * its paths changes. A plugin the table does not name — a third party's, a vault — is rebuilt when its block changes
+  * or a key that shapes the HTTP client every plugin is lent ([[FirstPartySettings.ClientKeys]]) does.
   *
   * @param plugin
   *   the first-party plugin's id

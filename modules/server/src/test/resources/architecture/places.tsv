@@ -752,7 +752,6 @@ core:domain/AutoEnrich.scala	library.workflows
 core:domain/AutopilotPolicy.scala	automation.autopilot
 core:domain/BrowserDownload.scala	library.acquisition
 core:domain/BundlePlan.scala	util.data.exchange
-core:domain/CatalogDating.scala	catalogue.events
 core:domain/CatalogMerge.scala	catalogue.events
 core:domain/CatalogProvider.scala	catalogue.events
 core:domain/Chunk.scala	library.sources
@@ -1158,7 +1157,6 @@ server:server/events/EventCatalogHandlers.scala	catalogue.events
 server:server/events/EventCatalogRoutes.scala	catalogue.events
 server:server/events/EventCatalogTools.scala	catalogue.events
 server:server/events/EventsSettings.scala	catalogue.events
-server:server/events/HostEventCatalogue.scala	catalogue.events
 server:server/hot/Carried.scala	server
 server:server/hot/Hot.scala	server
 server:server/hot/HotDataSource.scala	server

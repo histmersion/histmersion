@@ -17,7 +17,6 @@ import org.ekrich.config.{ConfigFactory, ConfigUtil}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.plugin.{Plugin, PluginHttp}
 import com.histmersion.server.acquire.{CoreBudget, HttpPlugin, SttpHttp}
-import com.histmersion.server.events.BuiltinCatalogues
 import com.histmersion.server.media.BuiltinMedia
 import com.histmersion.server.agents.BuiltinAi
 
@@ -178,24 +177,25 @@ object Plugins:
   private val CorePlugin = "oa-core"
 
   /** The first-party plugins the host still supplies itself: the media collections (`media-wikidata`, `media-depicts`,
-    * `media-met`, … — [[BuiltinMedia]]), the event catalogues (`events-gvp`, `events-noaa`, `events-wikidata` —
-    * [[BuiltinCatalogues]]) and the AI providers (`ai-anthropic`, `ai-openai`, `ai-local`, `ai-claude-code`,
-    * `ai-codex`, `ai-opencode` — [[BuiltinAi]]). They read nothing at registration.
+    * `media-met`, … — [[BuiltinMedia]]) and the AI providers (`ai-anthropic`, `ai-openai`, `ai-local`,
+    * `ai-claude-code`, `ai-codex`, `ai-opencode` — [[BuiltinAi]]). They read nothing at registration.
     */
-  def providers: List[Plugin] = BuiltinMedia.plugins ++ BuiltinCatalogues.plugins ++ BuiltinAi.plugins
+  def providers: List[Plugin] = BuiltinMedia.plugins ++ BuiltinAi.plugins
 
   /** The generation of a server or a `Deps` built without a config to load plugins from (a test's): the plugins on the
     * class path but the source fetchers, and the host's own media collections and AI providers, registered through the
     * plugin host with an empty user config over `reference.conf` — so nothing is fetched (offline).
     */
-  def offline: Generation =
+  def offline: Generation = offlineWith(Nil, ConfigFactory.empty)
+
+  /** [[offline]] with `extra` plugins (a test's) beside the class path's, under the user block `user`. */
+  def offlineWith(extra: List[Plugin], user: org.ekrich.config.Config): Generation =
     val (found, errors) = PluginHost.discover(getClass.getClassLoader)
-    val all = found.filterNot(p => Fetchers(p.info.id)) ++ providers
-    val host =
-      FirstPartySettings.hostView(referenceSettings(ConfigFactory.empty), ConfigFactory.empty, ConfigFactory.empty, all)
+    val all = found.filterNot(p => Fetchers(p.info.id)) ++ providers ++ extra
+    val host = FirstPartySettings.hostView(referenceSettings(ConfigFactory.empty), user, ConfigFactory.empty, all)
     PluginHost.build(
       all,
-      ConfigFactory.empty,
+      user,
       ConfigFactory.empty,
       services(
         () => new PluginHttp { def get(u: String, h: Map[String, String]) = Left("offline") },
