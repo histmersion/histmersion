@@ -1,10 +1,9 @@
 package com.histmersion.server.acquire.fetchers
 
-import com.histmersion.pluginhost.{FetchChain, Url}
+import com.histmersion.pluginhost.FetchChain
 
 import com.histmersion.config.AcquireConfig
-import com.histmersion.pluginhost.{AcquireParse, EuropePmcHit, PmcObject, PmcRecord}
-import com.histmersion.domain.Jats
+import com.histmersion.upstreams.{AcquireParse, EuropePmcHit, Jats, PmcObject, PmcRecord, Url}
 import com.histmersion.plugin.{Fetch, FetchContext, SourceFetcher, WorkKey}
 import com.histmersion.server.acquire.{FetchedFile, Http, OaFetch}
 

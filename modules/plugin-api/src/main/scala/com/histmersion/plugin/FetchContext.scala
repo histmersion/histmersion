@@ -10,3 +10,9 @@ trait FetchContext:
 
   /** The host's log, with the fetcher's id on every line. */
   def log: PluginLog
+
+  /** Whether the plugin `pluginId` is registered in the generation this fetch runs in: a fetcher that reads, on another
+    * plugin's behalf, what that plugin's upstream holds asks it only while that plugin is on. `false` from a host that
+    * does not say.
+    */
+  def registered(pluginId: String): Boolean = false

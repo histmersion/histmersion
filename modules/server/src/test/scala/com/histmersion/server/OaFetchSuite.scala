@@ -24,7 +24,7 @@ class OaFetchSuite extends munit.FunSuite:
   private def asked(email: String): List[String] =
     val cfg = acquire(email)
     val http = RecordingHttp()
-    val _ = OaFetch(cfg, http, OpenAlexCrossref(cfg, http)).fetch(Some("10.1038/nature14317"), None)
+    val _ = OaFetch(cfg, http).fetch(Some("10.1038/nature14317"), None)
     http.urls
 
   test("the repository default has no contact e-mail"):

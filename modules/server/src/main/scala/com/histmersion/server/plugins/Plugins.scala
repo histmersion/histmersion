@@ -7,7 +7,8 @@ import com.histmersion.api.{PluginState, PluginStatus}
 import org.ekrich.config.{ConfigFactory, ConfigUtil}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.plugin.{Plugin, PluginHttp}
-import com.histmersion.server.acquire.{ArchiveOrg, CoreBudget, Http, HttpPlugin, OpenAlexCrossref, SttpHttp}
+import com.histmersion.server.acquire.{CoreBudget, Http, HttpPlugin, SttpHttp}
+import com.histmersion.pluginhost.{upstreamSettings, HostLog}
 import com.histmersion.server.acquire.fetchers.BuiltinFetchers
 import com.histmersion.server.events.BuiltinCatalogues
 import com.histmersion.server.media.BuiltinMedia
@@ -111,6 +112,19 @@ object Plugins:
       case Some("histmersion" :: "plugins" :: id :: _) if id != PluginHost.OrderKey => Some(id)
       case _                                                                        => None
 
+  /** CORE's key as the generation's `oa-core` plugin resolved it (its `api-key` secret reference, else `hostKey`,
+    * `acquire.core.api-key`): the new-source search's `core` index asks with it too. `None` when the plugin is off.
+    */
+  def coreKey(g: Generation, hostKey: Option[String]): Option[String] =
+    Option
+      .when(g.registered(CorePlugin))(
+        g.secret(CorePlugin, "api-key").fold(hostKey)(v => Option(v).map(_.trim).filter(_.nonEmpty))
+      )
+      .flatten
+
+  /** The plugin that keys CORE: its `api-key` serves the new-source search too. */
+  private val CorePlugin = "oa-core"
+
   /** The plugins the host itself supplies, each its own plugin, enabled by default and switched off like any other:
     * today's acquisition steps (`archive-org`, the open-access indexes `oa-unpaywall`, `oa-core`, `oa-openalex`,
     * `oa-landing`, then `pmc`, `arxiv`), media collections (`media-wikidata`, `media-depicts`, `media-met`, … —
@@ -119,8 +133,10 @@ object Plugins:
     * [[BuiltinAi]]).
     */
   def builtins(cfg: AppConfig, http: () => Http, core: CoreBudget = CoreBudget()): List[Plugin] =
-    lazy val openalex = OpenAlexCrossref(cfg.acquire, http())
-    lazy val archive = ArchiveOrg(cfg.acquire, http())
+    lazy val openalex =
+      com.histmersion.upstreams
+        .OpenAlexCrossref(cfg.acquire.upstreamSettings, HttpPlugin(http()), HostLog.scribe.plugin)
+    lazy val archive = com.histmersion.upstreams.ArchiveOrg(cfg.acquire.upstreamSettings.archiveOrg, HttpPlugin(http()))
     BuiltinFetchers.plugins(cfg.acquire, http, () => openalex, () => archive, core) ++ providers
 
   /** The built-in media collections, event catalogues and AI providers: they read nothing at registration. */

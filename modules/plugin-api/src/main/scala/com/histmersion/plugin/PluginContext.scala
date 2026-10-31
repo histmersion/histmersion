@@ -51,3 +51,9 @@ trait PluginContext:
     * answers one model call at a time.
     */
   def aiProviders: Registry[AiProvider] = Registry.refusing("this host has no AI providers")
+
+  /** The host's budget for the metered upstream `upstream` (`core`: CORE's API), shared with the host's own calls to it
+    * and kept for the whole server. An upstream the host keeps no budget for gets [[UpstreamQuota.Unlimited]] — the
+    * default, so a context written before budgets existed still compiles.
+    */
+  def quota(upstream: String): UpstreamQuota = UpstreamQuota.Unlimited

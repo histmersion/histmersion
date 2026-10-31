@@ -20,8 +20,12 @@ import scala.util.control.NonFatal
   *     `acquire: <id>: no copy — <why>`), so a fetch that found nothing says which steps ran and why each missed; a
   *     refusal is not asked again; an exception is a miss.
   */
-final class FetchChain(steps: List[FetchChain.Step], allowUnauthorised: Boolean, log: HostLog = HostLog.scribe)
-    extends OaFetcher:
+final class FetchChain(
+    steps: List[FetchChain.Step],
+    allowUnauthorised: Boolean,
+    log: HostLog = HostLog.scribe,
+    registered: String => Boolean = _ => false
+) extends OaFetcher:
 
   /** The fetchers in the order they run, with their access — what `--self-check` and the log show. */
   def plan: List[(String, Access)] = steps.map(s => s.id -> s.fetcher.access)
@@ -66,6 +70,7 @@ final class FetchChain(steps: List[FetchChain.Step], allowUnauthorised: Boolean,
       val log: PluginLog = new PluginLog:
         def info(message: String) = FetchChain.this.log.info(s"acquire: ${s.id}: $message")
         def warn(message: String) = FetchChain.this.log.warn(s"acquire: ${s.id}: $message")
+      override def registered(pluginId: String): Boolean = FetchChain.this.registered(pluginId)
     val answer =
       try s.fetcher.fetch(work, ctx)
       catch case NonFatal(e) => Fetch.Miss(s"${s.id} failed: ${e.getClass.getSimpleName}: ${e.getMessage}")
@@ -105,22 +110,27 @@ object FetchChain:
     */
   final case class Outcome(file: Either[String, FetchedFile], answers: List[Answer], foundBy: Option[String] = None)
 
-  /** A chain over these fetchers, in this order. */
+  /** A chain over these fetchers, in this order. `registered` answers [[FetchContext.registered]]: the plugins of the
+    * generation the fetch runs in.
+    */
   def apply(
       steps: List[(String, SourceFetcher)],
       allowUnauthorised: Boolean = false,
-      log: HostLog = HostLog.scribe
+      log: HostLog = HostLog.scribe,
+      registered: String => Boolean = _ => false
   ): FetchChain =
-    new FetchChain(steps.map(Step(_, _)), allowUnauthorised, log)
+    new FetchChain(steps.map(Step(_, _)), allowUnauthorised, log, registered)
 
   /** The chain over a generation's registered fetchers, in `acquire.chain` order — with the log lines saying what will
-    * run (a chain entry no enabled plugin registered, an unauthorised fetcher that stays off).
+    * run (a chain entry no enabled plugin registered, an unauthorised fetcher that stays off). `plugins`: the plugins
+    * registered in that generation, which each fetch is told of ([[FetchContext.registered]]).
     */
   def of(
       registered: ListMap[String, SourceFetcher],
       chain: List[String],
       allowUnauthorised: Boolean,
-      log: HostLog = HostLog.scribe
+      log: HostLog = HostLog.scribe,
+      plugins: Set[String] = Set.empty
   ): (FetchChain, List[String]) =
     val (ids, unknown) = order(registered.keys.toList, chain)
     val off = ids
@@ -129,7 +139,7 @@ object FetchChain:
         s"acquire: $id obtains copies without the rights holder's authorisation and stays off " +
           "(acquire.allow-unauthorised = false)"
       )
-    (FetchChain(ids.map(id => id -> registered(id)), allowUnauthorised, log), unknown ++ off)
+    (FetchChain(ids.map(id => id -> registered(id)), allowUnauthorised, log, plugins), unknown ++ off)
 
   /** Pure: the run order — the ids `acquire.chain` names that are registered, as listed, then the other registered ids
     * in registration order; with a note naming the listed ids nothing registered (a disabled plugin's, or a typo).

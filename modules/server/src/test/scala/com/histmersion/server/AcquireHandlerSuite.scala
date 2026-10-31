@@ -625,9 +625,17 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
         ArchiveFile("racesofeurope.epub", Some("EPUB"), 3.0)
       )
     )
-    // the download is the acquisition chain's archive-org fetcher, over the same client
+    // the download is the acquisition chain's: here a fetcher over the same client, by the item's identifier
     val archive = FakeArchive(item)
-    val chain = FetchChain(List("archive-org" -> fetchers.ArchiveOrgFetcher(() => archive)))
+    val byIdentifier = new com.histmersion.plugin.SourceFetcher:
+      val access = com.histmersion.plugin.Access.Open
+      def fetch(work: com.histmersion.plugin.WorkKey, ctx: com.histmersion.plugin.FetchContext) =
+        work.archive.fold(com.histmersion.plugin.Fetch.Miss("no identifier"))(id =>
+          archive
+            .download(id, "racesofeurope.epub")
+            .fold(com.histmersion.plugin.Fetch.Miss(_), com.histmersion.plugin.Fetch.Found(_))
+        )
+    val chain = FetchChain(List("archive-org" -> byIdentifier))
     val r = handlers(archive = archive, oa = chain)
       .archiveImport(ArchiveImportRequest("racesofeurope"))
       .fold(e => fail(e.message), identity)

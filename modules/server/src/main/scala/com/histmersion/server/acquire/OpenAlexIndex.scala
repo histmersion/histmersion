@@ -1,6 +1,8 @@
 package com.histmersion.server.acquire
 
-import com.histmersion.pluginhost.{AcquireParse, Url}
+import com.histmersion.domain.library.acquisition.wire
+
+import com.histmersion.upstreams.{AcquireParse, Url}
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -27,7 +29,7 @@ final class OpenAlexIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex
           ))*
         )
       )
-      .map(AcquireParse.openalexWorks)
+      .map(AcquireParse.openalexWorks(_).map(_.wire))
 
   def search(query: String, since: LocalDate, limit: Int) =
     works(s"from_publication_date:$since,type:article|book|book-chapter", limit, Some(query))

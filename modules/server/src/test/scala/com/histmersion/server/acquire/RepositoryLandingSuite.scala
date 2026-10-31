@@ -1,7 +1,7 @@
 package com.histmersion.server.acquire
 
 import com.histmersion.config.AppConfig
-import com.histmersion.domain.RepositoryLanding
+import com.histmersion.upstreams.RepositoryLanding
 
 import io.circe.parser.parse
 

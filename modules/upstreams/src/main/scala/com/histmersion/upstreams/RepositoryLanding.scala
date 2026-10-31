@@ -1,4 +1,4 @@
-package com.histmersion.domain
+package com.histmersion.upstreams
 
 import io.circe.{ACursor, Json}
 
@@ -92,6 +92,9 @@ object RepositoryLanding:
     e.nonEmpty && (host == e || host.endsWith("." + e))
 
   /** Pure: the lower-case host of an absolute http(s) URL. */
+  /** The host of `url` when it is one of `hosts` or a subdomain of one. */
+  def onHost(url: String, hosts: List[String]): Option[String] = host(url).filter(h => hosts.exists(matchesHost(h, _)))
+
   def host(url: String): Option[String] =
     "(?i)^https?://([^/?#:]+)".r.findFirstMatchIn(url.trim).map(_.group(1).toLowerCase.stripPrefix("www."))
 

@@ -1,12 +1,14 @@
 package com.histmersion.server.acquire
 
-import com.histmersion.pluginhost.{AcquireParse, Url}
+import com.histmersion.domain.library.acquisition.wire
+
+import com.histmersion.upstreams.{AcquireParse, Url}
 
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
-final class SemanticScholar(cfg: AcquireConfig, http: Http, openalex: OpenAlexCrossref) extends CitationsClient:
+final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsClient:
 
   private val Fields =
     "intents,isInfluential,contexts,citingPaper.title,citingPaper.year," +
@@ -45,7 +47,7 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http, openalex: OpenAlexCr
             headers
           )
           .flatMap { j =>
-            val rows = AcquireParse.s2Citations(j)
+            val rows = AcquireParse.s2Citations(j).map(_.wire)
             val kept = acc ++ rows.filter(r => since.forall(y => r.year.forall(_ >= y)))
             AcquireParse.s2Next(j) match
               case Some(next) if rows.nonEmpty && next > offset => page(next, kept)
@@ -70,4 +72,4 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http, openalex: OpenAlexCr
               "mailto" -> cfg.mailto
             )
           )
-          .map(AcquireParse.openalexCitations)
+          .map(AcquireParse.openalexCitations(_).map(_.wire))

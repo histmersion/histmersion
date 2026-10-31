@@ -60,7 +60,7 @@ class PmcFetchSuite extends munit.FunSuite:
     fixture(record).replaceAll("(\\." + ext + "\\?md5=)[0-9a-f]{32}", "$1" + md5)
 
   private def fetch(c: AcquireConfig, http: Http, doi: String, arxiv: Option[String] = None) =
-    OaFetch(c, http, OpenAlexCrossref(c, http)).fetch(Some(doi), arxiv)
+    OaFetch(c, http).fetch(Some(doi), arxiv)
 
   test("Europe PMC's PDF link is a challenge page → the PMC dataset PDF, verified, provenance pmc"):
     val c = cfg

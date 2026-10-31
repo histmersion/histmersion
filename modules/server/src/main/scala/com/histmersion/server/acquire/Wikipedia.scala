@@ -1,6 +1,6 @@
 package com.histmersion.server.acquire
 
-import com.histmersion.pluginhost.{AcquireParse, Url}
+import com.histmersion.upstreams.{AcquireParse, Url}
 
 import com.histmersion.api.*
 import com.histmersion.config.*

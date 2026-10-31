@@ -4,7 +4,7 @@ import com.histmersion.config.{AcquireConfig, ApiKey, AppConfig, ItemCount, Seco
 import com.histmersion.domain.CoreQuota
 import com.histmersion.plugin.{Doi, Fetch, FetchContext, FetchedFile, PluginHttp, PluginLog, SourceFetcher, WorkKey}
 import com.histmersion.pluginhost.{FetchChain, Generation, PluginHost}
-import com.histmersion.server.acquire.fetchers.{BuiltinFetchers, CoreFetcher}
+import com.histmersion.server.acquire.fetchers.BuiltinFetchers
 import com.histmersion.server.plugins.{MakerPlugin, Plugins}
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
 import io.circe.Json
@@ -139,7 +139,7 @@ class CoreBudgetSuite extends munit.FunSuite:
 
   private def coreIndex(cfg: AcquireConfig, g: Generation, budget: CoreBudget): Option[ScholarlyIndex] =
     Indexes
-      .of(cfg, SttpHttp(cfg, tries = 1), CoreFetcher.key(g.registries.sourceFetchers), budget)
+      .of(cfg, SttpHttp(cfg, tries = 1), com.histmersion.server.plugins.Plugins.coreKey(g, cfg.core.key), budget)
       ._1
       .find(_.name == "core")
 
@@ -282,7 +282,10 @@ class CoreBudgetSuite extends munit.FunSuite:
                  |histmersion.plugins.oa-core.api-key = "fakevault:Work/Histmersion/CORE#password"""".stripMargin
       )
       assert(g.report.ok, g.report.toString)
-      assertEquals(CoreFetcher.key(g.registries.sourceFetchers), Some("v(Work/Histmersion/CORE#password)"))
+      assertEquals(
+        com.histmersion.server.plugins.Plugins.coreKey(g, cfg.core.key),
+        Some("v(Work/Histmersion/CORE#password)")
+      )
       lookup(g)
       coreIndex(cfg, g, budget).getOrElse(fail("no core index")).search("bronze age", LocalDate.of(2026, 1, 1), 10)
       assertEquals(core.asked.asScala.toList.map(_._2), List.fill(2)("Bearer v(Work/Histmersion/CORE#password)"))

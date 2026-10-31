@@ -43,3 +43,17 @@ trait EventCatalogue:
 
   /** The records of one part. `http` is the host's polite client of this import. */
   def read(part: String, query: CatalogueQuery, http: PluginHttp): Either[String, CataloguePage]
+
+  /** Whether every part is read at every import, whatever an earlier import read: for a catalogue whose parts are pages
+    * of a list that changes (page 2 of the newest records is other records next week), so a part's key does not stand
+    * for the same records next time. `false` (the default): a part read and recorded is not read again.
+    */
+  def everyPartEachImport: Boolean = false
+
+  /** One stored record read again, without the network, for `histmersion events rederive`: its dating (and what the
+    * catalogue derives with it) computed again from the catalogue's own record ([[CatalogueEvent.raw]]) by today's
+    * rules, as [[read]] would make it now, keeping what an import added to it (other names). `stored` is the record as
+    * the host keeps it, its id, kind and raw text included. `None` (the default): the catalogue does not re-read; the
+    * host derives the stored record's dating as at the import.
+    */
+  def reread(stored: CatalogueEvent): Option[CatalogueEvent] = None

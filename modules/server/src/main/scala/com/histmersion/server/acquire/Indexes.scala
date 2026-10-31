@@ -1,13 +1,17 @@
 package com.histmersion.server.acquire
 
+import com.histmersion.domain.library.acquisition.CoreQuotaLend
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.pluginhost.upstreamSettings
+import com.histmersion.upstreams.CoreApi
 
 object Indexes:
   /** The indexes `acquire.candidates.indexes` names, in its order (an unknown name is left out). `coreKey` is CORE's
-    * key as the plugins resolved it ([[fetchers.CoreFetcher.key]]), else `acquire.core.api-key`; `core` the server's
-    * CORE budget.
+    * key as the plugins resolved it ([[com.histmersion.server.plugins.Plugins.coreKey]]), else `acquire.core.api-key`;
+    * `core` the server's CORE budget.
     */
   def of(
       cfg: AcquireConfig,
@@ -22,7 +26,10 @@ object Indexes:
       "crossref" -> CrossrefIndex(cfg, http),
       "europepmc" -> EuropePmcIndex(cfg, http),
       "arxiv" -> ArxivIndex(cfg, http),
-      "core" -> CoreIndex(CoreApi(cfg, http, core), key)
+      "core" -> {
+        val limits = CoreBudget.limits(cfg.core)
+        CoreIndex(CoreApi(cfg.upstreamSettings.core, HttpPlugin(http), CoreQuotaLend(core, limits)), key, core, limits)
+      }
     )
     // CORE only with its key (its search refuses anonymous use): without one it is not asked at all
     (

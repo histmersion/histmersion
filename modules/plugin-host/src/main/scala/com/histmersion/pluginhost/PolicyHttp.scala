@@ -2,7 +2,7 @@ package com.histmersion.pluginhost
 
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.HttpPolicy
-import com.histmersion.plugin.PluginHttp
+import com.histmersion.plugin.{PluginHttp, PluginHttpResponse}
 import sttp.client4.*
 
 import scala.concurrent.duration.*
@@ -67,9 +67,13 @@ final class PolicyHttp(
         (PolicyHttp.UserAgent -> HttpPolicy.userAgent(ua.getOrElse(userAgent)))
     )
 
-  /** The client as the plugin SPI lends it: plugins get bytes, and parse what they asked for. */
+  /** The client as the plugin SPI lends it: plugins get bytes, and parse what they asked for; a call an upstream's
+    * budget meters is sent [[once]], answered with its status and headers.
+    */
   def plugin: PluginHttp = new PluginHttp:
     def get(url: String, headers: Map[String, String]) = bytes(url, headers)
+    override def fetch(url: String, headers: Map[String, String]) =
+      once(url, headers).map(a => PluginHttpResponse(a.code, a.headers, a.body))
 
 object PolicyHttp:
   val UserAgent = "User-Agent"

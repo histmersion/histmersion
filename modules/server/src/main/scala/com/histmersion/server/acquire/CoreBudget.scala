@@ -2,7 +2,6 @@ package com.histmersion.server.acquire
 
 import com.histmersion.config.CoreServiceConfig
 import com.histmersion.domain.CoreQuota
-import com.histmersion.pluginhost.HttpAnswer
 
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
@@ -52,13 +51,11 @@ final class CoreBudget(clock: () => Instant = () => Instant.now(), sleep: Long =
       case _                          => true
     }
 
-  /** Make one call for `purpose` through the budget: `Left` when it is not made; else what `send` answered, which the
-    * budget reads (a 429, CORE's rate-limit headers). The call is counted before it is sent, and waits its slot under
-    * the per-minute pace first.
+  /** Take one call's share for `purpose`: `Left` when the call is not made (nothing is counted then). The call is
+    * counted before it is sent, and waits its slot under the per-minute pace first; [[observe]] then reads what CORE
+    * answered.
     */
-  def call(limits: CoreQuota.Limits, purpose: CoreQuota.Purpose)(
-      send: => Either[String, HttpAnswer]
-  ): Either[CoreQuota.Refusal, Either[String, HttpAnswer]] =
+  def take(limits: CoreQuota.Limits, purpose: CoreQuota.Purpose): Either[CoreQuota.Refusal, Unit] =
     val granted = lock.synchronized {
       CoreQuota.reserve(current.get, limits, purpose, clock()).map { g =>
         current.set(g.state)
@@ -66,17 +63,14 @@ final class CoreBudget(clock: () => Instant = () => Instant.now(), sleep: Long =
         g.waitMs
       }
     }
-    granted.map { waitMs =>
-      if waitMs > 0 then sleep(waitMs)
-      val answer = send
-      answer.foreach(a =>
-        lock.synchronized {
-          val next = CoreQuota.observe(current.get, limits, a.code, a.headers, clock())
-          current.set(next)
-          save(next)
-        }
-      )
-      answer
+    granted.map(waitMs => if waitMs > 0 then sleep(waitMs))
+
+  /** What CORE answered a call taken: a 429 and its rate-limit headers (names in lower case) block or pace it. */
+  def observe(limits: CoreQuota.Limits, code: Int, headers: Map[String, String]): Unit =
+    lock.synchronized {
+      val next = CoreQuota.observe(current.get, limits, code, headers, clock())
+      current.set(next)
+      save(next)
     }
 
   private def save(s: CoreQuota.State): Unit =

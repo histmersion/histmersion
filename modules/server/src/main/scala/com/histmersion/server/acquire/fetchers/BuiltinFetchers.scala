@@ -2,7 +2,8 @@ package com.histmersion.server.acquire.fetchers
 
 import com.histmersion.config.AcquireConfig
 import com.histmersion.plugin.*
-import com.histmersion.server.acquire.{ArchiveClient, CoreBudget, Http, OpenAlexCrossref}
+import com.histmersion.server.acquire.{CoreBudget, Http}
+import com.histmersion.upstreams.{ArchiveOrg, OpenAlexCrossref}
 
 import com.histmersion.plugin.PluginConfig.given
 import com.histmersion.api.VocabularyCodecs.given
@@ -51,7 +52,7 @@ object BuiltinFetchers:
       cfg: AcquireConfig,
       http: () => Http,
       openalex: () => OpenAlexCrossref,
-      archive: () => ArchiveClient,
+      archive: () => ArchiveOrg,
       core: CoreBudget = CoreBudget()
   ): List[Plugin] =
     val oa = OaIndex(cfg, http, openalex, core)

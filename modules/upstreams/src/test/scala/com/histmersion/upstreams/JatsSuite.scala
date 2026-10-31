@@ -1,9 +1,4 @@
-package com.histmersion.domain
-
-import com.histmersion.api.*
-import com.histmersion.config.*
-import com.histmersion.api.given
-import com.histmersion.config.given
+package com.histmersion.upstreams
 
 /** JATS → Markdown (#1523): the PMC full text an ingest falls back to when no PDF is published. */
 class JatsSuite extends munit.FunSuite:

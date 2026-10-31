@@ -780,7 +780,6 @@ core:domain/Highlight.scala	library.search
 core:domain/HintProposals.scala	automation.managers
 core:domain/HttpPolicy.scala	library.acquisition
 core:domain/IngestBacklog.scala	library.acquisition
-core:domain/Jats.scala	library.ingest
 core:domain/LibraryOfCongress.scala	media
 core:domain/ManagerDefaults.scala	automation.managers
 core:domain/ManagerPolicy.scala	automation.managers
@@ -806,7 +805,6 @@ core:domain/PlanReadSchedule.scala	automation.scheduler
 core:domain/PleiadesLinks.scala	media
 core:domain/PointAreas.scala	catalogue.places
 core:domain/ReadSchedule.scala	automation.scheduler
-core:domain/RepositoryLanding.scala	library.acquisition
 core:domain/ReviewArticle.scala	research.workflows
 core:domain/ReviewLedger.scala	research.workflows
 core:domain/ReviewManagerDefaults.scala	research.workflows
@@ -1002,15 +1000,12 @@ server:server/acquire/AcquireMcp.scala	library.acquisition
 server:server/acquire/AcquireRoutes.scala	library.acquisition
 server:server/acquire/AcquireSettings.scala	library.acquisition
 server:server/acquire/ArchiveClient.scala	library.acquisition
-server:server/acquire/ArchiveOrg.scala	library.acquisition
 server:server/acquire/ArxivIndex.scala	library.acquisition
 server:server/acquire/CandidateSearch.scala	library.acquisition
 server:server/acquire/CitationAlerts.scala	library.acquisition
 server:server/acquire/CitationsClient.scala	library.acquisition
 server:server/acquire/Clients.scala	library.acquisition
-server:server/acquire/CoreApi.scala	library.acquisition
 server:server/acquire/CoreBudget.scala	library.acquisition
-server:server/acquire/CoreFailure.scala	library.acquisition
 server:server/acquire/CoreIndex.scala	library.acquisition
 server:server/acquire/CoreQuotaStore.scala	library.acquisition
 server:server/acquire/CrossrefIndex.scala	library.acquisition
@@ -1025,7 +1020,6 @@ server:server/acquire/IngestMeta.scala	library.acquisition
 server:server/acquire/IngestOutcome.scala	library.acquisition
 server:server/acquire/NoAlerts.scala	library.acquisition
 server:server/acquire/OaFetch.scala	library.acquisition
-server:server/acquire/OpenAlexCrossref.scala	library.acquisition
 server:server/acquire/OpenAlexIndex.scala	library.acquisition
 server:server/acquire/QueuedIngest.scala	library.ingest
 server:server/acquire/RetractionWatch.scala	library.acquisition

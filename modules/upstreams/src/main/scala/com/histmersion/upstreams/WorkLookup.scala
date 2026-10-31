@@ -1,9 +1,6 @@
-package com.histmersion.pluginhost
+package com.histmersion.upstreams
 
-import com.histmersion.config.AcquireConfig
-import com.histmersion.pluginhost.AcquireParse
-import com.histmersion.api.WorkRef
-import com.histmersion.plugin.{WorkKey, Year}
+import com.histmersion.plugin.{Doi, PluginLog, WorkKey, Year}
 import io.circe.Json
 
 /** A work's metadata by its DOI, as an ingest looks it up before asking the acquisition chain: OpenAlex first (richer,
@@ -18,14 +15,14 @@ object WorkLookup:
       "locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works"
 
   /** OpenAlex resolves a DOI as a path segment: `/works/https://doi.org/10.1234/x`. */
-  def workUrl(cfg: AcquireConfig, doi: String): String =
+  def workUrl(cfg: UpstreamSettings, doi: String): String =
     s"${cfg.openalex.url}/works/https://doi.org/$doi"
 
   /** Crossref's record of a DOI. */
-  def crossrefUrl(cfg: AcquireConfig, doi: String): String =
+  def crossrefUrl(cfg: UpstreamSettings, doi: String): String =
     Url(cfg.crossref.url, s"/works/$doi", "mailto" -> cfg.mailto)
 
-  def meta(cfg: AcquireConfig, json: String => Either[String, Json], log: HostLog = HostLog.scribe)(
+  def meta(cfg: UpstreamSettings, json: String => Either[String, Json], log: PluginLog)(
       doi: String
   ): Either[String, WorkRef] =
     json(Url(workUrl(cfg, doi), "", "select" -> WorkFields, "mailto" -> cfg.mailto))
@@ -43,7 +40,7 @@ object WorkLookup:
     * Unpaywall refuses a request without a contact e-mail.
     */
   private def withUnpaywall(
-      cfg: AcquireConfig,
+      cfg: UpstreamSettings,
       json: String => Either[String, Json],
       doi: String,
       w: WorkRef
@@ -58,7 +55,7 @@ object WorkLookup:
     */
   def key(doi: Option[String], arxiv: Option[String], work: Option[WorkRef]): WorkKey =
     WorkKey(
-      doi = doi.flatMap(SpiValues.doi),
+      doi = doi.flatMap(d => Doi.option(d.trim)),
       arxiv = arxiv.orElse(work.flatMap(_.arxivId)),
       title = work.flatMap(_.title),
       authors = work.map(_.authors).getOrElse(Nil),

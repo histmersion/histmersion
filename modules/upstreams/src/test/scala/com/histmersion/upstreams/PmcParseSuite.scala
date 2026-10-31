@@ -1,7 +1,4 @@
-package com.histmersion.pluginhost
-
-import com.histmersion.api.*
-import com.histmersion.api.given
+package com.histmersion.upstreams
 
 import io.circe.parser.parse
 

@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.domain.library.acquisition.OpenAlexDiscovery
+
 import com.histmersion.config.AppConfig
 import com.histmersion.server.acquire.*
 import io.circe.Json
@@ -8,6 +10,15 @@ import io.circe.Json
   * search falls back to Crossref's keyless `works?query=`.
   */
 class DiscoverFallbackSuite extends munit.FunSuite:
+
+  private def discovery(c: com.histmersion.config.AcquireConfig, http: Http): OpenAlexDiscovery =
+    OpenAlexDiscovery(
+      com.histmersion.upstreams.OpenAlexCrossref(
+        com.histmersion.pluginhost.upstreamSettings(c),
+        HttpPlugin(http),
+        com.histmersion.pluginhost.HostLog.scribe.plugin
+      )
+    )
 
   private val cfg = AppConfig.load().acquire
   private val crossrefPage =
@@ -20,11 +31,11 @@ class DiscoverFallbackSuite extends munit.FunSuite:
       urls = urls :+ url
       if url.startsWith(cfg.crossref.url) then Right(crossrefPage) else Left(s"$url failed after 4 attempts: HTTP 503")
     def text(url: String, headers: Map[String, String]) = Left("unused")
-    def bytes(url: String, headers: Map[String, String]) = Left("unused")
+    def bytes(url: String, headers: Map[String, String]) = json(url, headers).map(_.noSpaces.getBytes("UTF-8"))
 
   test("when OpenAlex search is down, Crossref answers with the same kinds of work, from the same year"):
     val http = OpenAlexDown()
-    val r = OpenAlexCrossref(cfg, http).search("Mycenaean religion", Some(2023), None, 5)
+    val r = discovery(cfg, http).search("Mycenaean religion", Some(2023), None, 5)
     assertEquals(r.map(_.size), Right(3))
     val asked = http.urls.find(_.startsWith(cfg.crossref.url)).getOrElse(fail("Crossref was not asked"))
     assert(asked.contains("from-pub-date%3A2023-01-01") || asked.contains("from-pub-date:2023-01-01"), asked)
@@ -34,8 +45,8 @@ class DiscoverFallbackSuite extends munit.FunSuite:
     val dead = new Http:
       def json(url: String, headers: Map[String, String]) = Left(s"$url: HTTP 503")
       def text(url: String, headers: Map[String, String]) = Left("unused")
-      def bytes(url: String, headers: Map[String, String]) = Left("unused")
-    val r = OpenAlexCrossref(cfg, dead).search("x", None, None, 5)
+      def bytes(url: String, headers: Map[String, String]) = json(url, headers).map(_.noSpaces.getBytes("UTF-8"))
+    val r = discovery(cfg, dead).search("x", None, None, 5)
     assert(r.left.exists(e => e.contains("openalex") && e.contains("Crossref")), r.toString)
 
   // ── meta (#599): a gold-OA work read "no OA copy known" whenever OpenAlex's singleton lookup
@@ -65,12 +76,12 @@ class DiscoverFallbackSuite extends munit.FunSuite:
       else if url.startsWith(c.unpaywall.url) then Right(unpaywallGold)
       else Left(s"$url failed after 4 attempts: HTTP 503")
     def text(url: String, headers: Map[String, String]) = Left("unused")
-    def bytes(url: String, headers: Map[String, String]) = Left("unused")
+    def bytes(url: String, headers: Map[String, String]) = json(url, headers).map(_.noSpaces.getBytes("UTF-8"))
 
   test("meta through the Crossref fallback still knows a gold-OA work is open access"):
     val withContact = cfg.copy(contactEmail = "librarian@example.org")
     val http = OpenAlexBusy(withContact)
-    val w = OpenAlexCrossref(withContact, http).meta("10.1038/s41598-022-07284-3").fold(e => fail(e), identity)
+    val w = discovery(withContact, http).meta("10.1038/s41598-022-07284-3").fold(e => fail(e), identity)
     assertEquals(w.venue, Some("Scientific Reports"))
     assert(w.isOa, w.toString)
     assertEquals(w.oaStatus, Some("gold"))
@@ -80,7 +91,7 @@ class DiscoverFallbackSuite extends munit.FunSuite:
   test("meta through the Crossref fallback without a contact leaves the access UNKNOWN, not closed"):
     val noContact = cfg.copy(contactEmail = "")
     val http = OpenAlexBusy(noContact)
-    val w = OpenAlexCrossref(noContact, http).meta("10.1038/s41598-022-07284-3").fold(e => fail(e), identity)
+    val w = discovery(noContact, http).meta("10.1038/s41598-022-07284-3").fold(e => fail(e), identity)
     assert(!w.isOa)
     assertEquals(w.oaStatus, None) // rendered as "OA status unknown", never "no OA copy known"
     assert(!http.urls.exists(_.startsWith(noContact.unpaywall.url)), "Unpaywall refuses a request without an e-mail")

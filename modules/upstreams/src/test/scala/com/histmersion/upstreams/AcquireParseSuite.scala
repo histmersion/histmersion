@@ -1,7 +1,4 @@
-package com.histmersion.pluginhost
-
-import com.histmersion.api.*
-import com.histmersion.api.given
+package com.histmersion.upstreams
 
 import io.circe.parser.parse
 
@@ -15,7 +12,7 @@ class AcquireParseSuite extends munit.FunSuite:
     parse(scala.io.Source.fromResource(s"acquire/$name").mkString).fold(throw _, identity)
 
   // ── OpenAlex ────────────────────────────────────────────────────────────────────────────────
-  test("OpenAlex work → WorkRef, with the citekey the corpus already uses"):
+  test("OpenAlex work → WorkRef"):
     val w = AcquireParse.openalexWork(fixture("openalex_work.json"))
     assertEquals(w.doi, Some("10.1038/nature14317"))
     assertEquals(w.openalexId, Some("W2050876420"))
@@ -23,7 +20,6 @@ class AcquireParseSuite extends munit.FunSuite:
     assertEquals(w.year, Some(2015))
     assertEquals(w.authors.head, "Wolfgang Haak")
     assertEquals(w.venue, Some("Nature"))
-    assertEquals(w.citekey, Some("haak2015_massive"))
     assert(w.isOa)
     assertEquals(w.oaStatus, Some("green"))
     assert(!w.isRetracted)
@@ -60,7 +56,6 @@ class AcquireParseSuite extends munit.FunSuite:
   test("OpenAlex search page → several works"):
     val ws = AcquireParse.openalexWorks(fixture("openalex_search.json"))
     assertEquals(ws.size, 3)
-    assert(ws.forall(_.citekey.isDefined))
     assert(ws.forall(_.title.isDefined))
 
   test("OpenAlex OA locations are offered best-first"):
@@ -79,7 +74,6 @@ class AcquireParseSuite extends munit.FunSuite:
     assertEquals(w.year, Some(2015))
     assertEquals(w.venue, Some("Nature"))
     assertEquals(w.authors.head, "Wolfgang Haak")
-    assertEquals(w.citekey, Some("haak2015_massive"))
     assert(w.citedByCount.exists(_ > 1000))
 
   test("Crossref reference list keeps DOIs, years and the unstructured fallback"):
@@ -94,8 +88,6 @@ class AcquireParseSuite extends munit.FunSuite:
     assert(ups.nonEmpty)
     assertEquals(ups.head.kind, Some("retraction"))
     assertEquals(ups.head.doi, Some("10.1177/1758835919874651"))
-    // and the verdict logic reads it as a retraction
-    assertEquals(Acquire.verdict(Nil, ups, false, Some(5), Some(2019), 50, 3, 2018), Acquire.Verdicts.Retracted)
 
   test("a work with no update-to yields no notices"):
     assertEquals(AcquireParse.crossrefUpdates(fixture("crossref_work.json")), Nil)
@@ -123,11 +115,6 @@ class AcquireParseSuite extends munit.FunSuite:
     assert(rows.forall(_.title.isDefined))
     assert(rows.head.doi.exists(_.startsWith("10.")))
     assertEquals(AcquireParse.s2Next(fixture("s2_citations.json")), Some(5))
-
-  test("classification runs over the real contexts without exploding"):
-    val rows = AcquireParse.s2Citations(fixture("s2_citations.json"))
-    val kinds = rows.map(r => Acquire.classify(r.intents, r.contexts, r.isInfluential, r.year, Some(2015)))
-    assert(kinds.forall(Acquire.EdgeKinds.all.contains), kinds)
 
   // ── archive.org ─────────────────────────────────────────────────────────────────────────────
   test("a public archive.org item lists its downloadable files"):

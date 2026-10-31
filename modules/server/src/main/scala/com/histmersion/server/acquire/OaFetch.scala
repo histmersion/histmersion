@@ -1,6 +1,6 @@
 package com.histmersion.server.acquire
 
-import com.histmersion.pluginhost.{FetchChain, PluginHost}
+import com.histmersion.pluginhost.{upstreamSettings, FetchChain, HostLog, PluginHost}
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -12,9 +12,16 @@ import com.histmersion.domain.*
   * which may hold more fetchers or fewer.
   */
 object OaFetch:
-  def apply(cfg: AcquireConfig, http: Http, openalex: OpenAlexCrossref): FetchChain =
+  def apply(cfg: AcquireConfig, http: Http): FetchChain =
+    val upstream = cfg.upstreamSettings
+    val openalex = com.histmersion.upstreams.OpenAlexCrossref(upstream, HttpPlugin(http), HostLog.scribe.plugin)
     val generation = PluginHost.build(
-      fetchers.BuiltinFetchers.plugins(cfg, () => http, () => openalex, () => ArchiveOrg(cfg, http)),
+      fetchers.BuiltinFetchers.plugins(
+        cfg,
+        () => http,
+        () => openalex,
+        () => com.histmersion.upstreams.ArchiveOrg(upstream.archiveOrg, HttpPlugin(http))
+      ),
       org.ekrich.config.ConfigFactory.empty,
       org.ekrich.config.ConfigFactory.empty,
       com.histmersion.server.plugins.Plugins.services(() => HttpPlugin(http), org.ekrich.config.ConfigFactory.empty)

@@ -1,8 +1,11 @@
 package com.histmersion.server.acquire
 
+import com.histmersion.domain.library.acquisition.{upstream, wire}
+
 import com.histmersion.values.Citekey
 
-import com.histmersion.pluginhost.{AcquireParse, FetchChain, OaFetcher, WorkLookup}
+import com.histmersion.pluginhost.{FetchChain, OaFetcher}
+import com.histmersion.upstreams.{AcquireParse, WorkLookup}
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -440,7 +443,7 @@ final class AcquireHandlers(
 
     // ── the copy: the acquisition chain (the plugins' source fetchers, legal ones first; the legal
     //    ones alone for a watcher's auto-ingest and `--legal-only`) ──
-    val key = WorkLookup.key(doi, arxiv, work)
+    val key = WorkLookup.key(doi, arxiv, work.map(_.upstream))
     val chain = skip match
       case Some(have) =>
         FetchChain.Outcome(
@@ -473,7 +476,14 @@ final class AcquireHandlers(
     val browserOnly = Option
       .when(fetched.isLeft && skip.isEmpty)(work)
       .flatten
-      .flatMap(w => Citekey.parse(citekey).toOption.flatMap(BrowserDownload.of(w, _, acq.landing.refusingHosts)))
+      .flatMap(w =>
+        Citekey
+          .parse(citekey)
+          .toOption
+          .flatMap(
+            BrowserDownload.of(w, _, com.histmersion.upstreams.RepositoryLanding.onHost(_, acq.landing.refusingHosts))
+          )
+      )
     browserOnly.foreach { b =>
       val (id, added) = acquireOnce(b.doi.value, b.text)
       if added then
@@ -643,7 +653,8 @@ final class AcquireHandlers(
         )
       else
         AcquireParse
-          .pickArchiveFile(item.files, req.format)
+          .pickArchiveFile(item.files.map(_.upstream), req.format)
+          .map(_.wire)
           .toRight(err(s"'${item.identifier}' has no epub/pdf file to download"))
           .flatMap { file =>
             val steps = List.newBuilder[IngestStep]

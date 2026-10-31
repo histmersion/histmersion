@@ -1,7 +1,8 @@
 package com.histmersion.server.acquire
 
 import com.histmersion.config.{AcquireConfig, LandingConfig}
-import com.histmersion.domain.{HttpPolicy, RepositoryLanding}
+import com.histmersion.domain.HttpPolicy
+import com.histmersion.upstreams.RepositoryLanding
 
 extension (c: AcquireConfig)
   /** The identifier every acquisition upstream sees: the product, never the contact. */
