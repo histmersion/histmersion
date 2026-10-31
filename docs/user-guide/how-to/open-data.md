@@ -40,6 +40,11 @@ histmersion places fetch land                  # the coastline, used to clip sta
 | `chronontology` | ChronOntology (DAI): ~14 000 named periods with regions | open access, as published by the DAI |
 | `land` | Natural Earth land and minor islands (not places; only for clipping) | public domain |
 
+`cliopatria`, `awmc` and `chronontology` are built-in plugins (`gazetteer-cliopatria`, `gazetteer-awmc`,
+`gazetteer-chronontology`); `histmersion.plugins.gazetteer-<name>.enabled = false` (or
+`HISTMERSION_PLUGIN_GAZETTEER_<NAME>_ENABLED=false`) takes one out of `places fetch` and `init --fetch`, and
+the places it brought stay on the map.
+
 ### Large gazetteers, from your own extracts
 
 GeoNames, Wikidata and the Getty Thesaurus of Geographic Names are too large to bundle and change

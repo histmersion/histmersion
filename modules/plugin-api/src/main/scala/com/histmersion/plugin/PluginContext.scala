@@ -3,10 +3,10 @@ package com.histmersion.plugin
 import scala.compiletime.deferred
 
 /** What the host lends a plugin, and where it plugs in. Each registry is one extension point; a new extension point is
-  * a new registry here, not a new service type, so existing plugin jars keep loading. (Five: [[secretVaults]],
-  * [[sourceFetchers]], [[mediaCollections]], [[eventCatalogues]] and [[aiProviders]]. Each one added after the first
-  * has a default that refuses every addition, so a context written for an earlier extension point — a test's — still
-  * compiles, and adding them changed no `Spi.Version`.)
+  * a new registry here, not a new service type, so existing plugin jars keep loading. (Six: [[secretVaults]],
+  * [[sourceFetchers]], [[mediaCollections]], [[eventCatalogues]], [[aiProviders]] and [[gazetteerSources]]. Each one
+  * added after the first has a default that refuses every addition, so a context written for an earlier extension point
+  * — a test's — still compiles, and adding them changed no `Spi.Version`.)
   */
 trait PluginContext:
   /** The host's outbound HTTP — the one policy (User-Agent without personal data, Retry-After, bot challenges stop the
@@ -63,3 +63,9 @@ trait PluginContext:
     * before it existed still compiles.
     */
   def licences: LicenceReader = LicenceReader.Unread
+
+  /** The gazetteer datasets `histmersion places fetch <id>` imports, each under its own id — the name the import is
+    * asked for. A host that imports no gazetteers refuses every addition — the default, so a context written for an
+    * earlier extension point still compiles.
+    */
+  def gazetteerSources: Registry[GazetteerSource] = Registry.refusing("this host has no gazetteer import")

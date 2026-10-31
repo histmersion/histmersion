@@ -5456,6 +5456,34 @@
           "locked" : null
         },
         {
+          "key" : "histmersion.places.fetch-timeout-seconds",
+          "section" : "places",
+          "kind" : "number",
+          "doc" : "a network gazetteer (`places fetch cliopatria|awmc|chronontology`, init's fetch-sources) is one download (Cliopatria's zip is tens of MB), through the client the host lends its plugin: how long the download waits for the answer",
+          "default" : "120",
+          "value" : null,
+          "effective" : "120",
+          "source" : "default",
+          "envVar" : "HISTMERSION_PLACES_FETCH_TIMEOUT",
+          "restart" : null,
+          "credential" : null,
+          "locked" : null
+        },
+        {
+          "key" : "histmersion.places.fetch-connect-timeout-seconds",
+          "section" : "places",
+          "kind" : "number",
+          "doc" : "how long it waits for the connection",
+          "default" : "30",
+          "value" : null,
+          "effective" : "30",
+          "source" : "default",
+          "envVar" : "HISTMERSION_PLACES_FETCH_CONNECT_TIMEOUT",
+          "restart" : null,
+          "credential" : null,
+          "locked" : null
+        },
+        {
           "key" : "histmersion.places.sources.dir",
           "section" : "places",
           "kind" : "text",

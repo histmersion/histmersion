@@ -33,6 +33,8 @@ import com.histmersion.db.{
   StatsRepo,
   TreeRepo
 }
+import com.histmersion.domain.catalogue.places.BuiltinGazetteers
+import com.histmersion.pluginhost.PluginGazetteers
 import java.nio.file.{Files, Path}
 import java.time.Instant
 
@@ -1388,24 +1390,28 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     maintenance.guard("places/fetch"):
       if source.trim.toLowerCase == importers.NaturalEarthLand.name then fetchLand(dryRun)
       else
-        importers.GazetteerImporter
-          .byName(source.trim.toLowerCase)
-          .toRight(
-            ApiError(
-              s"unknown source '$source' (available: " +
-                s"${(importers.GazetteerImporter.all.map(_.name) :+ importers.NaturalEarthLand.name).mkString(", ")})"
-            )
+        val name = source.trim.toLowerCase
+        val registered = deps.plugins.registries.gazetteerSources
+        BuiltinGazetteers
+          .resolve(
+            name,
+            registered,
+            s"unknown source '$source' (available: " +
+              s"${(BuiltinGazetteers.available(registered) :+ importers.NaturalEarthLand.name).mkString(", ")})"
           )
-          .flatMap { imp =>
+          .left
+          .map(ApiError(_))
+          .flatMap { src =>
+            val http = PluginGazetteers.http(PluginGazetteers.transport(cfg.places))
             if dryRun then
               importers.ImportRunner
-                .fetchAndImport(imp, ds, dryRun = true, cfg.places.pointToleranceKm)
+                .fetchAndImport(src, http, ds, dryRun = true, cfg.places.pointToleranceKm)
                 .left
                 .map(ApiError(_))
             else
-              placesJob(Handlers.PlacesFetchJobKind, s"fetch ${imp.name}")(
+              placesJob(Handlers.PlacesFetchJobKind, s"fetch $name")(
                 importers.ImportRunner
-                  .fetchAndImport(imp, ds, dryRun = false, cfg.places.pointToleranceKm)
+                  .fetchAndImport(src, http, ds, dryRun = false, cfg.places.pointToleranceKm)
                   .map(r =>
                     s"${r.places} places, ${r.names} names, ${r.relations} relations" +
                       (if r.failed.nonEmpty then s", ${r.failed.size} failed" else "")

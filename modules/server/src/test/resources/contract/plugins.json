@@ -227,6 +227,51 @@
       "error" : null
     },
     {
+      "id" : "gazetteer-awmc",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "gazetteer-source:awmc"
+      ],
+      "settings" : [
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "gazetteer-chronontology",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "gazetteer-source:chronontology"
+      ],
+      "settings" : [
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "gazetteer-cliopatria",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "gazetteer-source:cliopatria"
+      ],
+      "settings" : [
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
       "id" : "keepassxc",
       "version" : "1.0.0",
       "spiVersion" : 2,

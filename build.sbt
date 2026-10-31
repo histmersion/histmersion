@@ -390,6 +390,19 @@ lazy val pluginsMedia = projectMatrix
   )
   .jvmPlatform(scalaVersions = Seq(scala3))
 
+// Histmersion's own network gazetteers (gazetteer-cliopatria, gazetteer-awmc, gazetteer-chronontology): plugin-api and
+// the upstreams library alone, run by the host's one gazetteer import as any source; in every image, each switched off
+// by its `enabled`
+lazy val pluginsGazetteers = projectMatrix
+  .in(file("modules/plugins/gazetteers"))
+  .dependsOn(upstreams, pluginTestkit % Test)
+  .settings(
+    name := "histmersion-plugins-gazetteers",
+    description := "Histmersion's own network gazetteers: Seshat Cliopatria, the AWMC's regions, ChronOntology's periods"
+  )
+  .settings(commonDeps)
+  .jvmPlatform(scalaVersions = Seq(scala3))
+
 lazy val pluginHello = project
   .in(file("modules/plugin-fixtures/hello"))
   .dependsOn(pluginApi)
@@ -580,6 +593,7 @@ lazy val server = project
   // the first-party plugins: in every image, found by ServiceLoader at run time; no server code can name their classes
   .dependsOn(pluginsFetchers.jvm(scala3) % "runtime->compile", pluginsEvents.jvm(scala3) % "runtime->compile")
   .dependsOn(pluginsMedia.jvm(scala3) % "runtime->compile")
+  .dependsOn(pluginsGazetteers.jvm(scala3) % "runtime->compile")
   .settings(
     name := "histmersion-server",
     description := "The server: MCP, REST and the web UI over the store; built as a native image",
@@ -920,7 +934,8 @@ lazy val root = project
   .in(file("."))
   .aggregate(
     (values.projectRefs ++ api.projectRefs ++ core.projectRefs ++ pluginsFetchers.projectRefs ++
-      pluginsEvents.projectRefs ++ pluginsMedia.projectRefs)*
+      pluginsEvents.projectRefs ++ pluginsMedia.projectRefs ++
+      pluginsGazetteers.projectRefs)*
   )
   .aggregate(
     config,

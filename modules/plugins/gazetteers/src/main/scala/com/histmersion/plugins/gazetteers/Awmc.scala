@@ -1,12 +1,9 @@
-package com.histmersion.server.importers
+package com.histmersion.plugins.gazetteers
 
-import com.histmersion.api.*
-import com.histmersion.config.*
-import com.histmersion.domain.*
+import com.histmersion.plugin.*
 import io.circe.{Json, JsonObject}
-import com.histmersion.values.PlaceKind
 
-/** Imports classical-world geographic features from the Ancient World Mapping Center (AWMC).
+/** Classical-world geographic features from the Ancient World Mapping Center (AWMC).
   *
   * Source: https://github.com/AWMC/geodata License: ODbL (Open Database License) Coverage: Classical antiquity — 2620
   * regional names with Pleiades IDs, plus political extents.
@@ -15,17 +12,20 @@ import com.histmersion.values.PlaceKind
   * (Pleiades ID). Geometry is MultiLineString (label placement lines), not polygons — but the Pleiades link lets us
   * match to sites with real geometry.
   */
-object AwmcImporter extends GazetteerImporter:
+object Awmc extends DownloadedGazetteer:
 
-  val name = "awmc"
-  val description = "AWMC classical-world regional names and features (ODbL, ~2600 features)"
-  val fetchUrl =
+  val title = "AWMC classical-world regional names and features"
+  override val description = "AWMC classical-world regional names and features (ODbL, ~2600 features)"
+  val url =
     "https://raw.githubusercontent.com/AWMC/geodata/master/Cultural-Data/regional_name_linework/regional_names_linework.geojson"
+  val rights: GazetteerRights = GazetteerRights(
+    Licence("ODbL"),
+    "Ancient World Mapping Center (UNC), ODbL",
+    Some("https://opendatacommons.org/licenses/odbl/1-0/")
+  )
 
-  private val Source = "Ancient World Mapping Center (UNC), ODbL"
-
-  def transform(rawJson: String): Either[String, List[PlaceInput]] =
-    io.circe.parser.parse(rawJson).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>
+  def read(text: String): Either[String, List[GazetteerPlace]] =
+    io.circe.parser.parse(text).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>
       val features = doc.asObject
         .flatMap(_("features"))
         .flatMap(_.asArray)
@@ -35,7 +35,7 @@ object AwmcImporter extends GazetteerImporter:
       features.map(_.zipWithIndex.flatMap((f, i) => readFeature(f, i).toOption))
     }
 
-  private[importers] def readFeature(j: Json, ordinal: Int): Either[String, PlaceInput] =
+  def readFeature(j: Json, ordinal: Int): Either[String, GazetteerPlace] =
     j.asObject.toRight(s"feature #$ordinal is not a JSON object").flatMap { f =>
       val props = f("properties").flatMap(_.asObject).getOrElse(JsonObject.empty)
       val title = str(props, "TITLE", "title", "name", "NAME").getOrElse("")
@@ -45,7 +45,6 @@ object AwmcImporter extends GazetteerImporter:
         val pid = str(props, "PID")
         val slug = slugify(title)
         val id = pid.map(p => s"awmc_pleiades_$p").getOrElse(s"awmc_$slug")
-        val kind = mapKind(pType)
         val geom = f("geometry").filterNot(_.isNull).map(_.noSpaces)
 
         val leftover = JsonObject.fromIterable(
@@ -54,27 +53,24 @@ object AwmcImporter extends GazetteerImporter:
             str(props, "NOTES", "notes").map("notes" -> Json.fromString(_)).toList ++
             str(props, "CREATOR", "creator").map("creator" -> Json.fromString(_)).toList
         )
-
-        val place = Place(
-          id = id,
-          label = title,
-          kind = kind,
-          geometry = geom,
-          source = Some(Source),
-          properties = Some(leftover).filter(_.nonEmpty).map(Json.fromJsonObject(_).noSpaces)
+        Right(
+          GazetteerPlace(
+            id = id,
+            label = title,
+            kind = kindOf(pType),
+            geometry = geom,
+            properties = Some(leftover).filter(_.nonEmpty).map(Json.fromJsonObject(_).noSpaces),
+            names = List(GazetteerName(title))
+          )
         )
-        Right(PlaceInput(place, List(PlaceName(title))))
     }
 
-  private def mapKind(pType: String): String = pType.toLowerCase match
-    case "region"                        => PlaceKind.Region
-    case "people, tribe" | "people"      => PlaceKind.Region
-    case "mountain" | "plain" | "island" => PlaceKind.Feature
-    case "labeled feature"               => PlaceKind.Feature
-    case _                               => PlaceKind.Region
-
-  private def str(o: JsonObject, keys: String*): Option[String] =
-    keys.iterator.flatMap(k => o(k).flatMap(_.asString).filter(_.nonEmpty)).nextOption()
-
-  private def slugify(name: String): String =
-    name.toLowerCase.replaceAll("[^a-z0-9]+", "_").replaceAll("^_|_$", "")
+  /** The map's kind of an AWMC type: a mountain, plain, island or labelled feature is a `feature`, anything else a
+    * `region`.
+    */
+  def kindOf(pType: String): String = pType.toLowerCase match
+    case "region"                        => "region"
+    case "people, tribe" | "people"      => "region"
+    case "mountain" | "plain" | "island" => "feature"
+    case "labeled feature"               => "feature"
+    case _                               => "region"

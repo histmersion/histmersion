@@ -4,36 +4,41 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.PlaceRepo
+import com.histmersion.plugin.{GazetteerSource, PluginHttp}
+import com.histmersion.pluginhost.PluginGazetteers
 import javax.sql.DataSource
 import java.io.{ByteArrayOutputStream, InputStream}
 import java.net.{HttpURLConnection, URI}
 import java.util.zip.ZipInputStream
 
-/** Downloads, transforms and upserts external gazetteer data. Handles zip files (Cliopatria ships as a zip) and plain
-  * JSON. The heavy work is in the importer's `transform` — this class orchestrates fetch → unpack → transform → batch
-  * upsert.
+/** Imports a gazetteer source a plugin registered (Cliopatria, AWMC and ChronOntology are Histmersion's own): the
+  * source downloads and reads its dataset through the client the host lends it, the host checks and converts each place
+  * ([[PluginGazetteers]]), then counts them (a dry run) or upserts them in batches and matches the findings to the
+  * places again. [[download]] is the plain download PeriodO and Natural Earth use.
   */
 object ImportRunner:
 
   private val BatchSize = 1000
 
+  /** The places a run of `source` stores, in order, and the ones refused with the reason. */
+  def places(source: GazetteerSource, http: PluginHttp): Either[String, (List[PlaceInput], List[String])] =
+    PluginGazetteers.places(source, http).map { (items, refused) =>
+      refused.foreach(why => scribe.warn(s"[import] refused $why"))
+      (items, refused)
+    }
+
   def fetchAndImport(
-      imp: GazetteerImporter,
+      source: GazetteerSource,
+      http: PluginHttp,
       ds: DataSource,
       dryRun: Boolean,
-      toleranceKm: Double,
-      from: Option[String] = None
+      toleranceKm: Double
   ): Either[String, PlaceImportResult] =
     for
-      json <- download(from.getOrElse(imp.fetchUrl))
-      items <- imp.transform(json)
-      parents = imp match
-        case c: CliopatriaImporter.type => c.parentConcepts(items)
-        case _                          => Nil
-      all = parents ++ items
+      (all, refused) <- places(source, http)
       result <-
-        if dryRun then Right(PlaceImportResult(all.size, 0, 0, List("dry run")))
-        else batchUpsert(all, ds, toleranceKm)
+        if dryRun then Right(PlaceImportResult(all.size, 0, 0, ("dry run" :: refused).take(20)))
+        else batchUpsert(all, ds, toleranceKm).map(r => r.copy(failed = (refused ++ r.failed).take(20)))
     yield result
 
   private[importers] def download(url: String): Either[String, String] =

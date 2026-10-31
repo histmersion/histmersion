@@ -1,16 +1,19 @@
 package com.histmersion.server.importers
 
 import com.histmersion.api.*
+import com.histmersion.plugin.PluginHttp
+import com.histmersion.pluginhost.{HttpTransport, PluginGazetteers}
+import com.histmersion.server.plugins.Plugins
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 
-/** The recorded traffic and results of the network gazetteers (Cliopatria, AWMC, ChronOntology): each download
-  * answered by a loopback server from a fixture (Cliopatria's zipped, as its upstream ships it) — the request it sent,
-  * every place it made (the parents included, in order) and its dry run; then the failures (an error answer, a zip
-  * with no usable file, a body that is not JSON). No database and no network. The transcript is
-  * `traffic/gazetteers.txt`, compared byte for byte (`HISTMERSION_UPDATE_TRAFFIC=1` rewrites it): moving the
-  * gazetteers into plugins changes no request and no place.
+/** The recorded traffic and results of the network gazetteers (Cliopatria, AWMC, ChronOntology): each download answered
+  * by a loopback server from a fixture (Cliopatria's zipped, as its upstream ships it) — the request it sent, every
+  * place it made (the parents included, in order) and its dry run; then the failures (an error answer, a zip with no
+  * usable file, a body that is not JSON). No database and no network. The transcript is `traffic/gazetteers.txt`,
+  * compared byte for byte (`HISTMERSION_UPDATE_TRAFFIC=1` rewrites it): moving the gazetteers into plugins changes no
+  * request and no place.
   *
   * The headers that only the HTTP client chooses (`Host`, `Connection`, `Accept`, `Content-Length`, an HTTP/2
   * upgrade's) are left out of the transcript; `HISTMERSION_TRAFFIC_RAW=1` prints every request with all of them.
@@ -21,33 +24,39 @@ class GazetteerTrafficSuite extends munit.FunSuite:
   override def afterAll(): Unit = loop.stop()
 
   private def fixture(name: String): Array[Byte] =
-    Files.readAllBytes(Path.of(s"modules/server/src/test/resources/gazetteers/$name"))
+    Files.readAllBytes(Path.of(s"modules/plugins/gazetteers/src/test/resources/gazetteers/$name"))
 
   private val Transport = Set("host", "connection", "accept", "content-length", "upgrade", "http2-settings")
 
-  /** The source's real address. */
-  private def sourceUrl(name: String): String = GazetteerImporter.byName(name).get.fetchUrl
+  private lazy val cfg = com.histmersion.config.AppConfig.load()
 
-  // ── the code under test: today's importers and runner ─────────────────────────────────────────
+  /** The stock generation's gazetteer sources (the first-party plugins, found on the class path as the server finds
+    * them).
+    */
+  private lazy val sources = Plugins.offline.registries.gazetteerSources
+
+  /** The address a source downloads: what it asks a client that answers nothing. */
+  private def sourceUrl(name: String): String =
+    val asked = java.util.concurrent.ConcurrentLinkedQueue[String]()
+    val probe = new HttpTransport:
+      def get(url: String, headers: Map[String, String]) = { asked.add(url); Left("probe") }
+    val _ = ImportRunner.places(sources(name), PluginGazetteers.http(probe))
+    asked.peek()
+
+  // ── the code under test: the plugins' sources run by the host's runner ──────────────────────
+
+  /** The host's gazetteer client, its requests sent to the loopback server instead of the source's host. */
+  private def http: PluginHttp =
+    val wire = PluginGazetteers.transport(cfg.places)
+    PluginGazetteers.http(new HttpTransport:
+      def get(url: String, headers: Map[String, String]) = wire.get(loop.local(url), headers))
 
   /** Every place a download of `name` makes, in the order the runner upserts them. */
   private def places(name: String): Either[String, List[PlaceInput]] =
-    val imp = GazetteerImporter.byName(name).get
-    for
-      json <- ImportRunner.download(loop.local(imp.fetchUrl))
-      items <- imp.transform(json)
-    yield
-      val parents = if name == "cliopatria" then CliopatriaImporter.parentConcepts(items) else Nil
-      parents ++ items
+    ImportRunner.places(sources(name), http).map(_._1)
 
   private def dryRun(name: String): Either[String, PlaceImportResult] =
-    ImportRunner.fetchAndImport(
-      GazetteerImporter.byName(name).get,
-      null,
-      dryRun = true,
-      0.0,
-      Some(loop.local(sourceUrl(name)))
-    )
+    ImportRunner.fetchAndImport(sources(name), http, null, dryRun = true, 0.0)
 
   // ── the transcript ──────────────────────────────────────────────────────────────────────────
 
@@ -58,16 +67,19 @@ class GazetteerTrafficSuite extends munit.FunSuite:
       .replace(Version.version, "<version>")
 
   private def requests(name: String): String =
-    loop.take().map { r =>
-      if sys.env.get("HISTMERSION_TRAFFIC_RAW").contains("1") then
-        println(s"[$name] ${r.method} ${r.target}\n" + r.headers.sorted.map((k, v) => s"    $k: $v").mkString("\n"))
-      s"${r.method} ${r.target}\n" +
-        r.headers
-          .filterNot((k, _) => Transport(k.toLowerCase(java.util.Locale.ROOT)))
-          .sorted
-          .map((k, v) => s"  $k: ${normalised(v, name)}\n")
-          .mkString
-    }.mkString
+    loop
+      .take()
+      .map { r =>
+        if sys.env.get("HISTMERSION_TRAFFIC_RAW").contains("1") then
+          println(s"[$name] ${r.method} ${r.target}\n" + r.headers.sorted.map((k, v) => s"    $k: $v").mkString("\n"))
+        s"${r.method} ${r.target}\n" +
+          r.headers
+            .filterNot((k, _) => Transport(k.toLowerCase(java.util.Locale.ROOT)))
+            .sorted
+            .map((k, v) => s"  $k: ${normalised(v, name)}\n")
+            .mkString
+      }
+      .mkString
 
   private def run(sb: StringBuilder, name: String, served: String, body: Array[Byte]): Unit =
     sb ++= s"## $name: $served\nsource: ${sourceUrl(name)}\n"
