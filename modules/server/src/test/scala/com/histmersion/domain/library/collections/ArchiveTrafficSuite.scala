@@ -1,0 +1,151 @@
+package com.histmersion.domain.library.collections
+
+import com.histmersion.api.*
+import com.histmersion.config.{AcquireConfig, AppConfig, LoadedConfig}
+import com.histmersion.pluginhost.upstreamSettings
+import com.histmersion.pluginhost.{FetchChain, Generation, HttpAnswer, HttpTransport, PolicyHttp}
+import com.histmersion.server.Deps
+import com.histmersion.server.acquire.*
+import com.histmersion.server.plugins.Plugins
+import io.circe.syntax.*
+import org.ekrich.config.ConfigFactory
+
+import java.nio.charset.StandardCharsets.UTF_8
+import java.nio.file.{Files, Path}
+import scala.jdk.CollectionConverters.*
+
+/** The recorded traffic of `archive search|info|import`: every request the server sends to archive.org for them, on the
+  * wire below the outbound policy (URL and every header, in order), and what each answers — the search hits, an item,
+  * the lending-only refusal, an import's report and the stored record. The answers are fixtures; nothing reaches the
+  * network. The transcript is `traffic/archive.txt`, compared byte for byte (`HISTMERSION_UPDATE_TRAFFIC=1` rewrites
+  * it): moving archive.org behind the library's collections changes no request.
+  */
+class ArchiveTrafficSuite extends com.histmersion.db.DbSuite:
+  private val testDb = com.histmersion.db.TestDb.url
+  override def munitIgnore: Boolean = testDb.isEmpty
+
+  private val Transcript = Path.of("modules/server/src/test/resources/traffic/archive.txt")
+
+  private lazy val scratch =
+    val b = AppConfig.load()
+    ScratchDatabases("archive_traffic", b.db.copy(url = testDb.get))
+  override protected def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
+
+  private def json(s: String): Either[String, HttpAnswer] =
+    Right(HttpAnswer(200, Map("content-type" -> "application/json"), s.getBytes(UTF_8)))
+  private val notFound: Either[String, HttpAnswer] =
+    Right(HttpAnswer(404, Map("content-type" -> "text/plain"), "not found".getBytes(UTF_8)))
+
+  final private class Wire(routes: PartialFunction[String, Either[String, HttpAnswer]]) extends HttpTransport:
+    val out = StringBuilder()
+    def get(url: String, headers: Map[String, String]): Either[String, HttpAnswer] =
+      val answer = routes.applyOrElse(url, (_: String) => notFound)
+      out ++= s"GET $url\n"
+      headers.toList.sortBy(_._1.toLowerCase(java.util.Locale.ROOT)).foreach((k, v) => out ++= s"  $k: $v\n")
+      out ++= s"  -> ${answer.fold(e => s"error $e", a => a.code.toString)}\n"
+      answer
+
+  private def routes(c: AcquireConfig): PartialFunction[String, Either[String, HttpAnswer]] =
+    val base = c.archiveOrg.url
+    {
+      case u if u.startsWith(s"$base/advancedsearch.php") =>
+        json("""{"response":{"numFound":3,"docs":[{"identifier":"zqbook"},{"identifier":"zqlent"},{"identifier":"zqgone"}]}}""")
+      case u if u.startsWith(s"$base/metadata/zqbook") =>
+        json(
+          """{"metadata":{"identifier":"zqbook","title":"A Book","creator":["An Author","Another"],"date":"1901",
+            |"publisher":"A Press","description":"About a book."},
+            |"files":[{"name":"zqbook.pdf","format":"Text PDF","size":"40000"},{"name":"zqbook.epub","format":"EPUB","size":"30000"}]}""".stripMargin
+        )
+      case u if u.startsWith(s"$base/metadata/zqlent") =>
+        json(
+          """{"metadata":{"identifier":"zqlent","title":"Lent","access-restricted-item":"true"},
+            |"files":[{"name":"zqlent.pdf","format":"Text PDF","size":"40000"}]}""".stripMargin
+        )
+      case u if u.startsWith(s"$base/metadata/zqnofile") =>
+        json("""{"metadata":{"identifier":"zqnofile","title":"No file"},"files":[{"name":"zqnofile.txt","format":"Text","size":"10"}]}""")
+      case u if u.startsWith(s"$base/download/zqbook/zqbook.epub") =>
+        Right(HttpAnswer(200, Map("content-type" -> "application/epub+zip"), ("PK epub " + ("e" * 20480)).getBytes(UTF_8)))
+      case u if u.startsWith(s"$base/download/zqbook/zqbook.pdf") =>
+        Right(HttpAnswer(200, Map("content-type" -> "application/pdf"), ("%PDF-1.4\n" + ("p" * 20480)).getBytes(UTF_8)))
+    }
+
+  private val Text =
+    """histmersion.acquire.contact-email = "host@example.org"
+      |""".stripMargin
+
+  test("archive search, info and import send the same requests and answer the same"):
+    val loaded: LoadedConfig =
+      AppConfig.loadWithUserText(ConfigFactory.parseMap(Map.empty[String, String].asJava), Text).fold(e => fail(e), identity)
+    val ds = scratch("run")
+    val spool = Files.createTempDirectory("histmersion-archive-spool-")
+    val app = loaded.config.copy(
+      db = loaded.config.db.copy(url = scratch.urlOf("archive_traffic_run_test")),
+      acquire = loaded.config.acquire.copy(spoolDir = spool.toString)
+    )
+    val wire = Wire(routes(app.acquire))
+    val g: Generation = Plugins.load(loaded, transport = _ => wire)
+    val surface = ArchiveTrafficSuite.surface(app, ds, g, wire)
+    val sb = StringBuilder()
+    def step(name: String)(answer: => String): Unit =
+      wire.out.clear()
+      val a = answer
+      sb ++= s"## $name\n" + wire.out.result() + a + "\n\n"
+    def show[A: io.circe.Encoder](r: Either[ApiError, A]): String =
+      r.fold(e => s"refused: ${e.message}", _.asJson.spaces2)
+    step("archive search bronze")(show(surface.search("bronze", None)))
+    step("archive search bronze --rows 2")(show(surface.search("bronze", Some(2))))
+    step("archive search (blank)")(show(surface.search("  ", None)))
+    step("archive info zqbook")(show(surface.info("zqbook")))
+    step("archive info https://archive.org/details/zqbook/page/2")(show(surface.info("https://archive.org/details/zqbook/page/2")))
+    step("archive info zqgone")(show(surface.info("zqgone")))
+    step("archive import zqlent")(show(surface.importItem(ArchiveImportRequest("zqlent"))))
+    step("archive import zqnofile")(show(surface.importItem(ArchiveImportRequest("zqnofile"))))
+    step("archive import zqbook --format pdf --citekey zqarch_book")(
+      show(surface.importItem(ArchiveImportRequest("zqbook", Some("zqarch_book"), Some("pdf"))))
+    )
+    step("archive import zqbook")(show(surface.importItem(ArchiveImportRequest("zqbook"))))
+    sb ++= "## stored\n"
+    com.augustnagro.magnum.connect(ds):
+      import com.augustnagro.magnum.*
+      sql"""SELECT citekey, title, coalesce(source, '-'), array_to_string(authors, '; '), coalesce(year::text, '-')
+            FROM sources ORDER BY citekey""".query[(String, String, String, String, String)].run().foreach(r =>
+        sb ++= r.toList.mkString(" | ") + "\n"
+      )
+    val transcript = sb.result().replace(spool.toString, "<spool>")
+    if sys.env.get("HISTMERSION_UPDATE_TRAFFIC").contains("1") then
+      Files.createDirectories(Transcript.getParent)
+      Files.writeString(Transcript, transcript, UTF_8): Unit
+    else assertEquals(transcript, Files.readString(Transcript, UTF_8))
+
+object ArchiveTrafficSuite:
+
+  /** The archive.org operations as the server runs them, over the generation `g` (built on `wire`). */
+  final case class Surface(
+      search: (String, Option[Int]) => Either[ApiError, ArchiveSearchResult],
+      info: String => Either[ApiError, ArchiveItem],
+      importItem: ArchiveImportRequest => Either[ApiError, IngestReport]
+  )
+
+  def surface(app: AppConfig, ds: javax.sql.DataSource, g: Generation, wire: HttpTransport): Surface =
+    val (chain, _) =
+      FetchChain.of(g.registries.sourceFetchers, app.acquire.chainIds, app.acquire.allowUnauthorised, plugins = g.registered)
+    val host = new SttpHttp(PolicyHttp.acquisition(app, wire))
+    val archive = com.histmersion.domain.library.acquisition.ArchiveOrgClient(
+      com.histmersion.upstreams.ArchiveOrg(app.acquire.upstreamSettings.archiveOrg, HttpPlugin(host))
+    )
+    val none = new DiscoveryClient:
+      def search(q: String, since: Option[Int], sort: Option[String], limit: Int) = Left("not used")
+      def meta(doi: String) = Left("not used")
+      def references(doi: String) = Left("not used")
+      def updates(doi: String) = Left("not used")
+    val h = AcquireHandlers(
+      Deps(app, ds),
+      none,
+      new CitationsClient { def citing(w: WorkRef, s: Option[Int], l: Int) = Left("not used") },
+      chain,
+      new WikiClient { def refs(url: String) = Left("not used") },
+      archive,
+      new RetractionWatchClient { def csv() = Left("not used") },
+      SkeletonIngest(ds, app.limits.chunkChars)
+    )
+    Surface(h.archiveSearch, h.archiveInfo, h.archiveImport)

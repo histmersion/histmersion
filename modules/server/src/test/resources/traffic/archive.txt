@@ -1,0 +1,314 @@
+## archive search bronze
+GET https://archive.org/advancedsearch.php?q=(bronze)+AND+mediatype:texts&fl%5B%5D=identifier&rows=8&output=json&sort%5B%5D=downloads+desc
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://archive.org/metadata/zqbook
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://archive.org/metadata/zqlent
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://archive.org/metadata/zqgone
+  User-Agent: histmersion/0.1
+  -> 404
+{
+  "query" : "bronze",
+  "count" : 3,
+  "items" : [
+    {
+      "identifier" : "zqbook",
+      "title" : "A Book",
+      "creator" : [
+        "An Author",
+        "Another"
+      ],
+      "year" : 1901,
+      "publisher" : "A Press",
+      "description" : "About a book.",
+      "lendingOnly" : false,
+      "files" : [
+        {
+          "name" : "zqbook.pdf",
+          "format" : "Text PDF",
+          "megabytes" : 0.0
+        },
+        {
+          "name" : "zqbook.epub",
+          "format" : "EPUB",
+          "megabytes" : 0.0
+        }
+      ]
+    },
+    {
+      "identifier" : "zqlent",
+      "title" : "Lent",
+      "creator" : [
+      ],
+      "year" : null,
+      "publisher" : null,
+      "description" : null,
+      "lendingOnly" : true,
+      "files" : [
+        {
+          "name" : "zqlent.pdf",
+          "format" : "Text PDF",
+          "megabytes" : 0.0
+        }
+      ]
+    },
+    {
+      "identifier" : "zqgone",
+      "title" : null,
+      "creator" : [
+      ],
+      "year" : null,
+      "publisher" : null,
+      "description" : null,
+      "lendingOnly" : false,
+      "files" : [
+      ]
+    }
+  ]
+}
+
+## archive search bronze --rows 2
+GET https://archive.org/advancedsearch.php?q=(bronze)+AND+mediatype:texts&fl%5B%5D=identifier&rows=2&output=json&sort%5B%5D=downloads+desc
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://archive.org/metadata/zqbook
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://archive.org/metadata/zqlent
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://archive.org/metadata/zqgone
+  User-Agent: histmersion/0.1
+  -> 404
+{
+  "query" : "bronze",
+  "count" : 3,
+  "items" : [
+    {
+      "identifier" : "zqbook",
+      "title" : "A Book",
+      "creator" : [
+        "An Author",
+        "Another"
+      ],
+      "year" : 1901,
+      "publisher" : "A Press",
+      "description" : "About a book.",
+      "lendingOnly" : false,
+      "files" : [
+        {
+          "name" : "zqbook.pdf",
+          "format" : "Text PDF",
+          "megabytes" : 0.0
+        },
+        {
+          "name" : "zqbook.epub",
+          "format" : "EPUB",
+          "megabytes" : 0.0
+        }
+      ]
+    },
+    {
+      "identifier" : "zqlent",
+      "title" : "Lent",
+      "creator" : [
+      ],
+      "year" : null,
+      "publisher" : null,
+      "description" : null,
+      "lendingOnly" : true,
+      "files" : [
+        {
+          "name" : "zqlent.pdf",
+          "format" : "Text PDF",
+          "megabytes" : 0.0
+        }
+      ]
+    },
+    {
+      "identifier" : "zqgone",
+      "title" : null,
+      "creator" : [
+      ],
+      "year" : null,
+      "publisher" : null,
+      "description" : null,
+      "lendingOnly" : false,
+      "files" : [
+      ]
+    }
+  ]
+}
+
+## archive search (blank)
+refused: give a search query
+
+## archive info zqbook
+GET https://archive.org/metadata/zqbook
+  User-Agent: histmersion/0.1
+  -> 200
+{
+  "identifier" : "zqbook",
+  "title" : "A Book",
+  "creator" : [
+    "An Author",
+    "Another"
+  ],
+  "year" : 1901,
+  "publisher" : "A Press",
+  "description" : "About a book.",
+  "lendingOnly" : false,
+  "files" : [
+    {
+      "name" : "zqbook.pdf",
+      "format" : "Text PDF",
+      "megabytes" : 0.0
+    },
+    {
+      "name" : "zqbook.epub",
+      "format" : "EPUB",
+      "megabytes" : 0.0
+    }
+  ]
+}
+
+## archive info https://archive.org/details/zqbook/page/2
+GET https://archive.org/metadata/zqbook
+  User-Agent: histmersion/0.1
+  -> 200
+{
+  "identifier" : "zqbook",
+  "title" : "A Book",
+  "creator" : [
+    "An Author",
+    "Another"
+  ],
+  "year" : 1901,
+  "publisher" : "A Press",
+  "description" : "About a book.",
+  "lendingOnly" : false,
+  "files" : [
+    {
+      "name" : "zqbook.pdf",
+      "format" : "Text PDF",
+      "megabytes" : 0.0
+    },
+    {
+      "name" : "zqbook.epub",
+      "format" : "EPUB",
+      "megabytes" : 0.0
+    }
+  ]
+}
+
+## archive info zqgone
+GET https://archive.org/metadata/zqgone
+  User-Agent: histmersion/0.1
+  -> 404
+refused: https://archive.org/metadata/zqgone: HTTP 404 not found
+
+## archive import zqlent
+GET https://archive.org/metadata/zqlent
+  User-Agent: histmersion/0.1
+  -> 200
+refused: 'zqlent' is a lending-only item — borrow it on archive.org; it is not downloadable here (no DRM circumvention)
+
+## archive import zqnofile
+GET https://archive.org/metadata/zqnofile
+  User-Agent: histmersion/0.1
+  -> 200
+refused: 'zqnofile' has no epub/pdf file to download
+
+## archive import zqbook --format pdf --citekey zqarch_book
+GET https://archive.org/metadata/zqbook
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://archive.org/metadata/zqbook
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://archive.org/download/zqbook/zqbook.pdf
+  User-Agent: histmersion/0.1
+  -> 200
+{
+  "citekey" : "zqarch_book",
+  "doi" : null,
+  "title" : "A Book",
+  "created" : true,
+  "pdf" : {
+    "source" : "archive_org",
+    "url" : null,
+    "bytes" : 20489,
+    "spoolPath" : "<spool>/zqarch_book/paper.pdf"
+  },
+  "edgesAdded" : 0,
+  "assessment" : null,
+  "steps" : [
+    {
+      "step" : "metadata",
+      "ok" : true,
+      "detail" : "A Book (1901)"
+    },
+    {
+      "step" : "fetch",
+      "ok" : true,
+      "detail" : "archive.org: 20489 bytes (zqbook.pdf)"
+    },
+    {
+      "step" : "store",
+      "ok" : true,
+      "detail" : "created skeleton source (0 new edge(s)), file spooled at <spool>/zqarch_book/paper.pdf — the body is converted by the OCR job (§1.8)"
+    }
+  ],
+  "dropIn" : null
+}
+
+## archive import zqbook
+GET https://archive.org/metadata/zqbook
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://archive.org/metadata/zqbook
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://archive.org/download/zqbook/zqbook.epub
+  User-Agent: histmersion/0.1
+  -> 200
+{
+  "citekey" : "author1901_book",
+  "doi" : null,
+  "title" : "A Book",
+  "created" : true,
+  "pdf" : {
+    "source" : "archive_org",
+    "url" : null,
+    "bytes" : 20488,
+    "spoolPath" : "<spool>/author1901_book/paper.epub"
+  },
+  "edgesAdded" : 0,
+  "assessment" : null,
+  "steps" : [
+    {
+      "step" : "metadata",
+      "ok" : true,
+      "detail" : "A Book (1901)"
+    },
+    {
+      "step" : "fetch",
+      "ok" : true,
+      "detail" : "archive.org: 20488 bytes (zqbook.epub)"
+    },
+    {
+      "step" : "store",
+      "ok" : true,
+      "detail" : "created skeleton source (0 new edge(s)), file spooled at <spool>/author1901_book/paper.epub — the body is converted by the OCR job (§1.8)"
+    }
+  ],
+  "dropIn" : null
+}
+
+## stored
+author1901_book | A Book | archive_org | An Author; Another | 1901
+zqarch_book | A Book | archive_org | An Author; Another | 1901

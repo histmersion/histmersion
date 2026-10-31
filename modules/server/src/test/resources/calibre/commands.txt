@@ -1,0 +1,1401 @@
+## histmersion calibre search Bronze
+exit 0
+--- stdout
+### 2 book(s)
+
+| id | title | authors | year | formats |
+|---|---|---|---:|---|
+| 1 | Bronze Age tin and its trade | Sharon R. Stocker | 2019 | PDF |
+| 6 | Bronze Age warfare | Robert Drews | 1993 | EPUB |
+
+_Import one with `histmersion calibre import <id> --citekey <k>`._
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "20" "--search" "Bronze"
+
+## histmersion calibre search Bronze --json
+exit 0
+--- stdout
+[
+  {
+    "id" : 1,
+    "title" : "Bronze Age tin and its trade",
+    "authors" : [
+      "Sharon R. Stocker"
+    ],
+    "year" : 2019,
+    "publisher" : "Hesperia",
+    "tags" : [
+      "tin"
+    ],
+    "identifiers" : {
+      "doi" : "10.1/zzcal.1"
+    },
+    "formats" : [
+      "<library>/Author 1/Book 1 (1)/Book 1.pdf"
+    ]
+  },
+  {
+    "id" : 6,
+    "title" : "Bronze Age warfare",
+    "authors" : [
+      "Robert Drews"
+    ],
+    "year" : 1993,
+    "publisher" : null,
+    "tags" : [
+    ],
+    "identifiers" : {
+      
+    },
+    "formats" : [
+      "<library>/Author 6/Book 6 (6)/Book 6.epub"
+    ]
+  }
+]
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "20" "--search" "Bronze"
+
+## histmersion calibre search "" --limit 2
+exit 0
+--- stdout
+### 2 book(s)
+
+| id | title | authors | year | formats |
+|---|---|---|---:|---|
+| 1 | Bronze Age tin and its trade | Sharon R. Stocker | 2019 | PDF |
+| 2 | The Linear B tablets | Michael Ventris, John Chadwick | 1956 | PDF |
+
+_Import one with `histmersion calibre import <id> --citekey <k>`._
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "2" "--search" ""
+
+## histmersion calibre search nomatch
+exit 0
+--- stdout
+_No matching books in the Calibre library._
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "20" "--search" "nomatch"
+
+## histmersion calibre search
+exit 1
+--- stdout
+--- stderr
+give a query, or --unlinked
+
+Usage: histmersion calibre search [--unlinked] [--limit <integer>] [--json] [<query>]
+
+Search the local Calibre library (read-only); --unlinked lists the entries no source links yet, newest first
+
+Options and flags:
+    --help
+        Display this help text.
+    --unlinked
+        Only entries no source is linked to (the query, if given, narrows them)
+    --limit <integer>
+        Max results
+    --json
+        Print the raw JSON response instead of Markdown
+--- calls
+
+## histmersion calibre search --unlinked
+exit 0
+--- stdout
+### 3 Calibre entries not linked to any source (newest first)
+
+- **8** · Collision of keys (2001) — Jane Zzcal
+  - `<library>/Author 8/Book 8 (8)/Book 8.pdf`
+- **6** · Bronze Age warfare (1993) — Robert Drews
+  - `<library>/Author 6/Book 6 (6)/Book 6.epub`
+- **5** · Hittite Myths, Volume II (1998) — Harry A. Hoffner
+  - `<library>/Author 5/Book 5 (5)/Book 5.pdf`
+  - `<library>/Author 5/Book 5 (5)/Book 5.epub`
+
+_Import one with `histmersion calibre import <id>`, or link it to an existing record with `histmersion calibre link <citekey> <id>`._
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1000000"
+
+## histmersion calibre search --unlinked --json
+exit 0
+--- stdout
+[
+  {
+    "id" : 8,
+    "title" : "Collision of keys",
+    "authors" : [
+      "Jane Zzcal"
+    ],
+    "year" : 2001,
+    "publisher" : null,
+    "tags" : [
+    ],
+    "identifiers" : {
+      
+    },
+    "formats" : [
+      "<library>/Author 8/Book 8 (8)/Book 8.pdf"
+    ]
+  },
+  {
+    "id" : 6,
+    "title" : "Bronze Age warfare",
+    "authors" : [
+      "Robert Drews"
+    ],
+    "year" : 1993,
+    "publisher" : null,
+    "tags" : [
+    ],
+    "identifiers" : {
+      
+    },
+    "formats" : [
+      "<library>/Author 6/Book 6 (6)/Book 6.epub"
+    ]
+  },
+  {
+    "id" : 5,
+    "title" : "Hittite Myths, Volume II",
+    "authors" : [
+      "Harry A. Hoffner"
+    ],
+    "year" : 1998,
+    "publisher" : "Scholars Press",
+    "tags" : [
+      "hittite",
+      "myth"
+    ],
+    "identifiers" : {
+      "isbn" : "9780788504884"
+    },
+    "formats" : [
+      "<library>/Author 5/Book 5 (5)/Book 5.pdf",
+      "<library>/Author 5/Book 5 (5)/Book 5.epub"
+    ]
+  }
+]
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1000000"
+
+## histmersion calibre search Hittite --unlinked --limit 1
+exit 0
+--- stdout
+### 1 Calibre entry not linked to any source (newest first)
+
+- **5** · Hittite Myths, Volume II (1998) — Harry A. Hoffner
+  - `<library>/Author 5/Book 5 (5)/Book 5.pdf`
+  - `<library>/Author 5/Book 5 (5)/Book 5.epub`
+
+_Import one with `histmersion calibre import <id>`, or link it to an existing record with `histmersion calibre link <citekey> <id>`._
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "2147483647" "--search" "Hittite"
+
+## the Calibre GUI holds the library
+
+## histmersion calibre search Bronze
+exit 0
+--- stdout
+### 2 book(s)
+
+| id | title | authors | year | formats |
+|---|---|---|---:|---|
+| 6 | Bronze Age warfare | Robert Drews | 1993 | EPUB |
+| 1 | Bronze Age tin and its trade | Sharon R. Stocker | 2019 | PDF |
+
+_Import one with `histmersion calibre import <id> --citekey <k>`._
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "20" "--search" "Bronze"
+sqlite3 "-readonly" "-json" "<library>/metadata.db" "SELECT b.id AS id, b.title AS title,  (SELECT group_concat(a.name, ' & ') FROM authors a     JOIN books_authors_link l ON l.author = a.id WHERE l.book = b.id) AS authors,  b.pubdate AS pubdate,  (SELECT p.name FROM publishers p     JOIN books_publishers_link l ON l.publisher = p.id WHERE l.book = b.id) AS publisher,  (SELECT group_concat(t.name, ',') FROM tags t     JOIN books_tags_link l ON l.tag = t.id WHERE l.book = b.id) AS tags,  (SELECT text FROM comments WHERE book = b.id) AS comments,  (SELECT group_concat(i.type || ':' || i.val, ',') FROM identifiers i WHERE i.book = b.id) AS identifiers,  (SELECT group_concat(b.path || '/' || d.name || '.' || lower(d.format), '|')     FROM data d WHERE d.book = b.id) AS formats,  CASE WHEN b.has_cover THEN b.path || '/cover.jpg' END AS cover FROM books b WHERE (b.title LIKE '%Bronze%' OR b.author_sort LIKE '%Bronze%') ORDER BY b.id DESC LIMIT 20"
+
+## histmersion calibre search --unlinked
+exit 0
+--- stdout
+### 3 Calibre entries not linked to any source (newest first)
+
+- **8** · Collision of keys (2001) — Jane Zzcal
+  - `<library>/Author 8/Book 8 (8)/Book 8.pdf`
+- **6** · Bronze Age warfare (1993) — Robert Drews
+  - `<library>/Author 6/Book 6 (6)/Book 6.epub`
+- **5** · Hittite Myths, Volume II (1998) — Harry A. Hoffner
+  - `<library>/Author 5/Book 5 (5)/Book 5.pdf`
+  - `<library>/Author 5/Book 5 (5)/Book 5.epub`
+
+_Import one with `histmersion calibre import <id>`, or link it to an existing record with `histmersion calibre link <citekey> <id>`._
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1000000"
+sqlite3 "-readonly" "-json" "<library>/metadata.db" "SELECT b.id AS id, b.title AS title,  (SELECT group_concat(a.name, ' & ') FROM authors a     JOIN books_authors_link l ON l.author = a.id WHERE l.book = b.id) AS authors,  b.pubdate AS pubdate,  (SELECT p.name FROM publishers p     JOIN books_publishers_link l ON l.publisher = p.id WHERE l.book = b.id) AS publisher,  (SELECT group_concat(t.name, ',') FROM tags t     JOIN books_tags_link l ON l.tag = t.id WHERE l.book = b.id) AS tags,  (SELECT text FROM comments WHERE book = b.id) AS comments,  (SELECT group_concat(i.type || ':' || i.val, ',') FROM identifiers i WHERE i.book = b.id) AS identifiers,  (SELECT group_concat(b.path || '/' || d.name || '.' || lower(d.format), '|')     FROM data d WHERE d.book = b.id) AS formats,  CASE WHEN b.has_cover THEN b.path || '/cover.jpg' END AS cover FROM books b WHERE (b.title LIKE '%%' OR b.author_sort LIKE '%%') ORDER BY b.id DESC LIMIT 1000000"
+
+## histmersion calibre audit
+exit 0
+--- stdout
+### 3 of 6 linked Calibre entries disagree with the corpus
+
+| id | citekey(s) | issue | corpus | Calibre | fix |
+|---:|---|---|---|---|---|
+| 3 | zzcal_drift | titles differ; no author in common; years differ | The original title — Original Author (2005) | A drifted title — Someone Else (1999) | `histmersion calibre update zzcal_drift` |
+| 4 | zzcal_junk | Calibre's title or author is blank, Unknown or scraped | Real title — Real Author (2011) | Unknown — Unknown | `histmersion calibre update zzcal_junk` |
+| 99 | zzcal_missing | no such Calibre entry | A lost book — Lost Author (1990) | — | re-push, or clear the source's calibre id |
+
+_`histmersion calibre update --all` lists every change it would make; `--apply` writes them._
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1000000"
+sqlite3 "-readonly" "-json" "<library>/metadata.db" "SELECT b.id AS id, b.title AS title,  (SELECT group_concat(a.name, ' & ') FROM authors a     JOIN books_authors_link l ON l.author = a.id WHERE l.book = b.id) AS authors,  b.pubdate AS pubdate,  (SELECT p.name FROM publishers p     JOIN books_publishers_link l ON l.publisher = p.id WHERE l.book = b.id) AS publisher,  (SELECT group_concat(t.name, ',') FROM tags t     JOIN books_tags_link l ON l.tag = t.id WHERE l.book = b.id) AS tags,  (SELECT text FROM comments WHERE book = b.id) AS comments,  (SELECT group_concat(i.type || ':' || i.val, ',') FROM identifiers i WHERE i.book = b.id) AS identifiers,  (SELECT group_concat(b.path || '/' || d.name || '.' || lower(d.format), '|')     FROM data d WHERE d.book = b.id) AS formats,  CASE WHEN b.has_cover THEN b.path || '/cover.jpg' END AS cover FROM books b WHERE (b.title LIKE '%%' OR b.author_sort LIKE '%%') ORDER BY b.id DESC LIMIT 1000000"
+
+## the Calibre GUI released the library
+
+## histmersion calibre audit
+exit 0
+--- stdout
+### 3 of 6 linked Calibre entries disagree with the corpus
+
+| id | citekey(s) | issue | corpus | Calibre | fix |
+|---:|---|---|---|---|---|
+| 3 | zzcal_drift | titles differ; no author in common; years differ | The original title — Original Author (2005) | A drifted title — Someone Else (1999) | `histmersion calibre update zzcal_drift` |
+| 4 | zzcal_junk | Calibre's title or author is blank, Unknown or scraped | Real title — Real Author (2011) | Unknown — Unknown | `histmersion calibre update zzcal_junk` |
+| 99 | zzcal_missing | no such Calibre entry | A lost book — Lost Author (1990) | — | re-push, or clear the source's calibre id |
+
+_`histmersion calibre update --all` lists every change it would make; `--apply` writes them._
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1000000"
+
+## histmersion calibre audit --json
+exit 0
+--- stdout
+[
+  {
+    "calibreId" : 3,
+    "citekeys" : [
+      "zzcal_drift"
+    ],
+    "issues" : [
+      "Title",
+      "Authors",
+      "Year"
+    ],
+    "fix" : "zzcal_drift"
+  },
+  {
+    "calibreId" : 4,
+    "citekeys" : [
+      "zzcal_junk"
+    ],
+    "issues" : [
+      "Junk"
+    ],
+    "fix" : "zzcal_junk"
+  },
+  {
+    "calibreId" : 99,
+    "citekeys" : [
+      "zzcal_missing"
+    ],
+    "issues" : [
+      "Missing"
+    ],
+    "fix" : null
+  }
+]
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1000000"
+
+## histmersion calibre gaps
+exit 0
+--- stdout
+### 2 source(s) not in Calibre
+
+| citekey | title | year | authors | provenance | original |
+|---|---|---|---|---|---|
+| `zzcal_stored` | Stored paper | 2010 | Ann Store | unpaywall | stored |
+| `zzcal_unknown` | Unknown | 2012 | Ann Other | oa | stored |
+
+_Push them with `histmersion calibre sync --apply`: the file is `<cli.calibre.originals-dir>/<citekey>/paper.*` on this host (`local`), else the original the server stored (`stored`)._
+
+1 record without a fetched file — not counted; see the acquire list (`histmersion queue acquire`); `--json` lists them.
+--- stderr
+--- calls
+
+## histmersion calibre gaps --json
+exit 0
+--- stdout
+{
+  "count" : 2,
+  "uncounted" : 1,
+  "total" : 3,
+  "gaps" : [
+    {
+      "citekey" : "zzcal_nofile",
+      "title" : "Metadata only",
+      "authors" : [
+        "No File"
+      ],
+      "doi" : null,
+      "year" : 2013,
+      "venue" : null,
+      "summary" : null,
+      "topics" : [
+      ],
+      "provenance" : "openalex",
+      "calibreId" : null,
+      "isbn" : null,
+      "storedOriginal" : false,
+      "original" : "none",
+      "counted" : false
+    },
+    {
+      "citekey" : "zzcal_stored",
+      "title" : "Stored paper",
+      "authors" : [
+        "Ann Store"
+      ],
+      "doi" : "10.1/zzcal.stored",
+      "year" : 2010,
+      "venue" : null,
+      "summary" : null,
+      "topics" : [
+        "metal"
+      ],
+      "provenance" : "unpaywall",
+      "calibreId" : null,
+      "isbn" : null,
+      "storedOriginal" : true,
+      "original" : "stored",
+      "counted" : true
+    },
+    {
+      "citekey" : "zzcal_unknown",
+      "title" : "Unknown",
+      "authors" : [
+        "Ann Other"
+      ],
+      "doi" : null,
+      "year" : 2012,
+      "venue" : null,
+      "summary" : null,
+      "topics" : [
+      ],
+      "provenance" : "oa",
+      "calibreId" : null,
+      "isbn" : null,
+      "storedOriginal" : true,
+      "original" : "stored",
+      "counted" : true
+    }
+  ]
+}
+--- stderr
+--- calls
+
+## histmersion calibre gaps --limit 1
+exit 0
+--- stdout
+_Every source with a fetched file is in Calibre._
+
+1 record without a fetched file — not counted; see the acquire list (`histmersion queue acquire`); `--json` lists them.
+--- stderr
+--- calls
+
+## histmersion calibre gaps --quiet
+exit 1
+--- stdout
+--- stderr
+error: 2 source(s) are not in Calibre yet (zzcal_stored, zzcal_unknown) — run `histmersion calibre sync --apply`
+--- calls
+
+## histmersion calibre gaps   [cli.calibre.originals-dir set]
+exit 0
+--- stdout
+### 3 source(s) not in Calibre
+
+| citekey | title | year | authors | provenance | original |
+|---|---|---|---|---|---|
+| `zzcal_nofile` | Metadata only | 2013 | No File | openalex | local |
+| `zzcal_stored` | Stored paper | 2010 | Ann Store | unpaywall | stored |
+| `zzcal_unknown` | Unknown | 2012 | Ann Other | oa | stored |
+
+_Push them with `histmersion calibre sync --apply`: the file is `<cli.calibre.originals-dir>/<citekey>/paper.*` on this host (`local`), else the original the server stored (`stored`)._
+--- stderr
+--- calls
+
+## histmersion calibre gaps --json   [cli.calibre.originals-dir set]
+exit 0
+--- stdout
+{
+  "count" : 3,
+  "uncounted" : 0,
+  "total" : 3,
+  "gaps" : [
+    {
+      "citekey" : "zzcal_nofile",
+      "title" : "Metadata only",
+      "authors" : [
+        "No File"
+      ],
+      "doi" : null,
+      "year" : 2013,
+      "venue" : null,
+      "summary" : null,
+      "topics" : [
+      ],
+      "provenance" : "openalex",
+      "calibreId" : null,
+      "isbn" : null,
+      "storedOriginal" : false,
+      "original" : "local",
+      "counted" : true
+    },
+    {
+      "citekey" : "zzcal_stored",
+      "title" : "Stored paper",
+      "authors" : [
+        "Ann Store"
+      ],
+      "doi" : "10.1/zzcal.stored",
+      "year" : 2010,
+      "venue" : null,
+      "summary" : null,
+      "topics" : [
+        "metal"
+      ],
+      "provenance" : "unpaywall",
+      "calibreId" : null,
+      "isbn" : null,
+      "storedOriginal" : true,
+      "original" : "stored",
+      "counted" : true
+    },
+    {
+      "citekey" : "zzcal_unknown",
+      "title" : "Unknown",
+      "authors" : [
+        "Ann Other"
+      ],
+      "doi" : null,
+      "year" : 2012,
+      "venue" : null,
+      "summary" : null,
+      "topics" : [
+      ],
+      "provenance" : "oa",
+      "calibreId" : null,
+      "isbn" : null,
+      "storedOriginal" : true,
+      "original" : "stored",
+      "counted" : true
+    }
+  ]
+}
+--- stderr
+--- calls
+
+## histmersion calibre sync
+exit 0
+--- stdout
+### 2 source(s) not in Calibre
+
+| citekey | title | year | authors | provenance | original |
+|---|---|---|---|---|---|
+| `zzcal_stored` | Stored paper | 2010 | Ann Store | unpaywall | stored |
+| `zzcal_unknown` | Unknown | 2012 | Ann Other | oa | stored |
+
+_Push them with `histmersion calibre sync --apply`: the file is `<cli.calibre.originals-dir>/<citekey>/paper.*` on this host (`local`), else the original the server stored (`stored`)._
+
+Dry run: 2 source(s) would be pushed · 1 record without a fetched file — not counted; see the acquire list (`histmersion queue acquire`); `--json` lists them. Re-run with --apply.
+--- stderr
+--- calls
+
+## histmersion calibre sync --json
+exit 0
+--- stdout
+{
+  "count" : 2,
+  "uncounted" : 1,
+  "total" : 3,
+  "gaps" : [
+    {
+      "citekey" : "zzcal_nofile",
+      "title" : "Metadata only",
+      "authors" : [
+        "No File"
+      ],
+      "doi" : null,
+      "year" : 2013,
+      "venue" : null,
+      "summary" : null,
+      "topics" : [
+      ],
+      "provenance" : "openalex",
+      "calibreId" : null,
+      "isbn" : null,
+      "storedOriginal" : false,
+      "original" : "none",
+      "counted" : false
+    },
+    {
+      "citekey" : "zzcal_stored",
+      "title" : "Stored paper",
+      "authors" : [
+        "Ann Store"
+      ],
+      "doi" : "10.1/zzcal.stored",
+      "year" : 2010,
+      "venue" : null,
+      "summary" : null,
+      "topics" : [
+        "metal"
+      ],
+      "provenance" : "unpaywall",
+      "calibreId" : null,
+      "isbn" : null,
+      "storedOriginal" : true,
+      "original" : "stored",
+      "counted" : true
+    },
+    {
+      "citekey" : "zzcal_unknown",
+      "title" : "Unknown",
+      "authors" : [
+        "Ann Other"
+      ],
+      "doi" : null,
+      "year" : 2012,
+      "venue" : null,
+      "summary" : null,
+      "topics" : [
+      ],
+      "provenance" : "oa",
+      "calibreId" : null,
+      "isbn" : null,
+      "storedOriginal" : true,
+      "original" : "stored",
+      "counted" : true
+    }
+  ]
+}
+--- stderr
+--- calls
+
+## histmersion calibre sync --apply
+exit 2
+--- stdout
+### 2 source(s) not in Calibre
+
+| citekey | title | year | authors | provenance | original |
+|---|---|---|---|---|---|
+| `zzcal_stored` | Stored paper | 2010 | Ann Store | unpaywall | stored |
+| `zzcal_unknown` | Unknown | 2012 | Ann Other | oa | stored |
+
+_Push them with `histmersion calibre sync --apply`: the file is `<cli.calibre.originals-dir>/<citekey>/paper.*` on this host (`local`), else the original the server stored (`stored`)._
+
+  + zzcal_stored → Calibre id 9
+pushed 1 source(s), 1 failed · 1 record without a fetched file — not counted; see the acquire list (`histmersion queue acquire`); `--json` lists them.
+--- stderr
+  ! zzcal_unknown: empty or Unknown title — fix the metadata first; an untitled / Unknown-Author entry is unfindable and must not be created
+error: 1 of 2 push(es) failed
+--- calls
+calibredb "add" "<tmp>/zzcal_stored.pdf" "--with-library" "<library>" "--title" "Stored paper" "--authors" "Ann Store" "--duplicates" "--identifier" "doi:10.1/zzcal.stored" "--tags" "metal"
+calibredb "set_metadata" "--with-library" "<library>" "9" "--field" "pubdate:2010-01-01"
+
+## PATCH /api/sources/zzcal_unknown {"metadata":{"title":"Now titled"}} -> 200
+
+## histmersion calibre sync --apply --limit 1000
+exit 0
+--- stdout
+### 1 source(s) not in Calibre
+
+| citekey | title | year | authors | provenance | original |
+|---|---|---|---|---|---|
+| `zzcal_unknown` | Now titled | 2012 | Ann Other | oa | stored |
+
+_Push them with `histmersion calibre sync --apply`: the file is `<cli.calibre.originals-dir>/<citekey>/paper.*` on this host (`local`), else the original the server stored (`stored`)._
+
+  + zzcal_unknown → Calibre id 10
+pushed 1 source(s), 0 failed · 1 record without a fetched file — not counted; see the acquire list (`histmersion queue acquire`); `--json` lists them.
+--- stderr
+--- calls
+calibredb "add" "<tmp>/zzcal_unknown.pdf" "--with-library" "<library>" "--title" "Now titled" "--authors" "Ann Other" "--duplicates"
+calibredb "set_metadata" "--with-library" "<library>" "10" "--field" "pubdate:2012-01-01"
+
+## histmersion calibre gaps --quiet
+exit 0
+--- stdout
+--- stderr
+--- calls
+
+## histmersion calibre gaps
+exit 0
+--- stdout
+_Every source with a fetched file is in Calibre._
+
+1 record without a fetched file — not counted; see the acquire list (`histmersion queue acquire`); `--json` lists them.
+--- stderr
+--- calls
+
+## histmersion calibre import 99
+exit 2
+--- stdout
+--- stderr
+error: no Calibre book with id 99
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:99"
+
+## histmersion calibre import 7
+exit 2
+--- stdout
+--- stderr
+error: Calibre id 7 has no pdf/epub (formats: <library>/Author 7/Book 7 (7)/Book 7.mobi); KFX/MOBI must be converted in Calibre first
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:7"
+
+## histmersion calibre import 4
+exit 2
+--- stdout
+--- stderr
+error: Calibre id 4 has empty or Unknown title and author — fix the metadata first; an untitled / Unknown-Author entry is unfindable and must not be created
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:4"
+
+## histmersion calibre import 8
+exit 1
+--- stdout
+--- stderr
+error: the generated citekey 'zzcal2001_collision' is already a record that is not linked to Calibre — importing Calibre id 8 would merge two works into one record. Pass --citekey <another key> for a separate record, or --citekey zzcal2001_collision to import into that record on purpose
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:8"
+
+## histmersion calibre import 8 --citekey zzcal2001_collision --no-convert
+exit 0
+--- stdout
+Imported Calibre id 8 as `zzcal2001_collision` — Collision of keys
+File (left in place, never modified): <library>/Author 8/Book 8 (8)/Book 8.pdf
+Cover: none (no cover file in Calibre, no ISBN)
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:8"
+
+## histmersion calibre import 5 --no-wait
+exit 0
+--- stdout
+Imported Calibre id 5 as `hoffner1998_hittite_v2` — Hittite Myths, Volume II
+File (left in place, never modified): <library>/Author 5/Book 5 (5)/Book 5.pdf
+Cover: from the Calibre library
+queued job <job> for hoffner1998_hittite_v2
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:5"
+
+## histmersion calibre import 5 --no-convert
+exit 0
+--- stdout
+Imported Calibre id 5 as `hoffner1998_hittite_v2` — Hittite Myths, Volume II
+File (left in place, never modified): <library>/Author 5/Book 5 (5)/Book 5.pdf
+Cover: from the Calibre library
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:5"
+
+## histmersion calibre import 6 --json
+exit 0
+--- stdout
+{
+  "source" : {
+    "citekey" : "drews1993_bronze",
+    "title" : "Bronze Age warfare",
+    "authors" : [
+      "Robert Drews"
+    ],
+    "year" : 1993,
+    "venue" : null,
+    "status" : "unassessed",
+    "topics" : [
+    ],
+    "regions" : [
+    ],
+    "tags" : [
+    ],
+    "periodStart" : null,
+    "periodEnd" : null,
+    "summary" : null,
+    "doi" : null,
+    "ocrMarkdown" : null,
+    "notes" : null,
+    "updatedAt" : "<time>",
+    "provenance" : "calibre",
+    "uid" : "<uuid>",
+    "origin" : "<uuid>"
+  },
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null
+}
+queued job <job> for drews1993_bronze
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:6"
+
+## histmersion calibre import 3 --citekey zzcal_relink --no-convert
+exit 0
+--- stdout
+Imported Calibre id 3 as `zzcal_relink` — A drifted title
+Re-linked `zzcal_relink` from Calibre id 7 to 3
+File (left in place, never modified): <library>/Author 3/Book 3 (3)/Book 3.epub
+Cover: none (no cover file in Calibre, no ISBN)
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:3"
+
+## histmersion calibre import 5 --acquire-item 424242
+exit 1
+--- stdout
+--- stderr
+error: no acquisition item 424242
+--- calls
+
+## histmersion calibre import 5 --no-convert --acquire-item 1
+exit 1
+--- stdout
+--- stderr
+--acquire-item is ticked off by the conversion; drop --no-convert, or tick the item off with `histmersion queue done <id>`
+
+Usage: histmersion calibre import [--citekey <string>] [--format <string>] [--no-convert] [--no-wait] [--acquire-item <integer>] [--json] <calibre-id>
+
+Import a purchased book from Calibre into the corpus and convert it (the Calibre original is never touched)
+
+Options and flags:
+    --help
+        Display this help text.
+    --citekey <string>
+        Override the generated citekey
+    --format <string>
+        pdf | epub
+    --no-convert
+        Create or enrich the record only; do not upload the file for OCR
+    --no-wait
+        Queue the conversion and return instead of following it
+    --acquire-item <integer>
+        Id of the acquisition-queue item this book fulfils — ticked off when the conversion succeeds (without it, an open item naming the book's DOI is ticked off, and similar ones are listed)
+    --json
+        Print the raw JSON response instead of Markdown
+--- calls
+
+## histmersion calibre link zzcal_nofile 6
+exit 0
+--- stdout
+linked `zzcal_nofile` to Calibre id 6 — Bronze Age warfare
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:6"
+
+## histmersion calibre link zzcal_nofile 99
+exit 2
+--- stdout
+--- stderr
+error: no Calibre book with id 99
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:99"
+
+## histmersion calibre link zznosuch 6
+exit 2
+--- stdout
+--- stderr
+error: No source 'zznosuch'
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:6"
+
+## histmersion calibre link zzcal_nofile 6 --json
+exit 0
+--- stdout
+{
+  "citekey" : "zzcal_nofile",
+  "calibreId" : 6
+}
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:6"
+
+## histmersion calibre push zzcal_missing
+exit 2
+--- stdout
+--- stderr
+error: no original stored for 'zzcal_missing' — the server keeps uploads in <spool>; pass the file yourself (--file) — or set cli.calibre.originals-dir (HISTMERSION_CALIBRE_ORIGINALS_DIR) to a directory holding <citekey>/paper.pdf
+--- calls
+
+## histmersion calibre push zzcal_pushme
+exit 0
+--- stdout
+added `zzcal_pushme` to Calibre as id 11 — Pushed by hand
+--- stderr
+--- calls
+calibredb "add" "<tmp>/zzcal_pushme.pdf" "--with-library" "<library>" "--title" "Pushed by hand" "--authors" "Push Me" "--duplicates"
+calibredb "set_metadata" "--with-library" "<library>" "11" "--field" "pubdate:2015-01-01"
+
+## histmersion calibre push zzcal_pushme --json
+exit 0
+--- stdout
+{
+  "citekey" : "zzcal_pushme",
+  "calibreId" : 12
+}
+--- stderr
+--- calls
+calibredb "add" "<tmp>/zzcal_pushme.pdf" "--with-library" "<library>" "--title" "Pushed by hand" "--authors" "Push Me" "--duplicates"
+calibredb "set_metadata" "--with-library" "<library>" "12" "--field" "pubdate:2015-01-01"
+
+## histmersion calibre push zzcal_linked --replace
+exit 0
+--- stdout
+replaced the PDF of Calibre id 1 with `zzcal_linked`'s original
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:1"
+calibredb "add_format" "--with-library" "<library>" "1" "<tmp>/zzcal_linked.pdf"
+
+## histmersion calibre push zzcal_linked --replace --json
+exit 0
+--- stdout
+{
+  "citekey" : "zzcal_linked",
+  "calibreId" : 1,
+  "replaced" : "pdf"
+}
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:1"
+calibredb "add_format" "--with-library" "<library>" "1" "<tmp>/zzcal_linked.pdf"
+
+## histmersion calibre push zzcal_missing --replace
+exit 2
+--- stdout
+--- stderr
+error: no original stored for 'zzcal_missing' — the server keeps uploads in <spool>; pass the file yourself (--file)
+--- calls
+
+## histmersion calibre push zzcal_nolink --replace
+exit 2
+--- stdout
+--- stderr
+error: 'zzcal_nolink' is not linked to a Calibre entry — `histmersion calibre push zzcal_nolink` adds one, `histmersion calibre link zzcal_nolink <id>` links an existing one
+--- calls
+
+## histmersion calibre push zzcal_nolink
+exit 2
+--- stdout
+--- stderr
+error: no original stored for 'zzcal_nolink' — the server keeps uploads in <spool>; pass the file yourself (--file) — or set cli.calibre.originals-dir (HISTMERSION_CALIBRE_ORIGINALS_DIR) to a directory holding <citekey>/paper.pdf
+--- calls
+
+## histmersion calibre push zzcal_nolink   [cli.calibre.originals-dir set]
+exit 0
+--- stdout
+added `zzcal_nolink` to Calibre as id 13 — Not linked
+--- stderr
+--- calls
+calibredb "add" "<originals>/zzcal_nolink/paper.pdf" "--with-library" "<library>" "--title" "Not linked" "--authors" "No Link" "--duplicates"
+calibredb "set_metadata" "--with-library" "<library>" "13" "--field" "pubdate:2016-01-01"
+
+## histmersion calibre update zzcal_linked
+exit 0
+--- stdout
+updated Calibre id 1 from `zzcal_linked` (tags) — Bronze Age tin and its trade
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:1"
+calibredb "set_metadata" "--with-library" "<library>" "1" "--field" "tags:tin,trade"
+
+## histmersion calibre update zzcal_linked
+exit 0
+--- stdout
+Calibre id 1 already agrees with `zzcal_linked` — nothing written
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:1"
+
+## histmersion calibre update zzcal_linked --json
+exit 0
+--- stdout
+{
+  "citekey" : "zzcal_linked",
+  "calibreId" : 1,
+  "changed" : [
+  ]
+}
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:1"
+
+## histmersion calibre update zzcal_nolink
+exit 0
+--- stdout
+Calibre id 13 already agrees with `zzcal_nolink` — nothing written
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:13"
+
+## histmersion calibre update --all
+exit 0
+--- stdout
+### 1 Calibre entry would change · 7 up to date
+
+| id | citekey | field | Calibre | record | |
+|---:|---|---|---|---|---|
+| 4 | zzcal_junk | title | Unknown | Real title |  |
+| 4 | zzcal_junk | authors | Unknown | Real Author |  |
+| 4 | zzcal_junk | pubdate |  | 2011-01-01 |  |
+
+**Left alone (4)**
+
+- 2: linked from zzcal_shared_a, zzcal_shared_b — update one by hand (`histmersion calibre update <citekey>`)
+- 3: linked from zzcal_drift, zzcal_relink — update one by hand (`histmersion calibre update <citekey>`)
+- 6: linked from drews1993_bronze, zzcal_nofile — update one by hand (`histmersion calibre update <citekey>`)
+- 99: no such Calibre entry (zzcal_missing) — re-push, or clear the source's calibre id
+
+_Dry run. Re-run with `--apply` (Calibre GUI closed)._
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1000000"
+
+## histmersion calibre update --all --json
+exit 0
+--- stdout
+[
+  {
+    "calibreId" : 1,
+    "citekeys" : [
+      "zzcal_linked"
+    ],
+    "state" : "up-to-date",
+    "changes" : [
+    ],
+    "reason" : null
+  },
+  {
+    "calibreId" : 2,
+    "citekeys" : [
+      "zzcal_shared_a",
+      "zzcal_shared_b"
+    ],
+    "state" : "shared",
+    "changes" : [
+    ],
+    "reason" : null
+  },
+  {
+    "calibreId" : 3,
+    "citekeys" : [
+      "zzcal_drift",
+      "zzcal_relink"
+    ],
+    "state" : "shared",
+    "changes" : [
+    ],
+    "reason" : null
+  },
+  {
+    "calibreId" : 4,
+    "citekeys" : [
+      "zzcal_junk"
+    ],
+    "state" : "would-change",
+    "changes" : [
+      {
+        "field" : "title",
+        "from" : "Unknown",
+        "to" : "Real title"
+      },
+      {
+        "field" : "authors",
+        "from" : "Unknown",
+        "to" : "Real Author"
+      },
+      {
+        "field" : "pubdate",
+        "from" : "",
+        "to" : "2011-01-01"
+      }
+    ],
+    "reason" : null
+  },
+  {
+    "calibreId" : 5,
+    "citekeys" : [
+      "hoffner1998_hittite_v2"
+    ],
+    "state" : "up-to-date",
+    "changes" : [
+    ],
+    "reason" : null
+  },
+  {
+    "calibreId" : 6,
+    "citekeys" : [
+      "drews1993_bronze",
+      "zzcal_nofile"
+    ],
+    "state" : "shared",
+    "changes" : [
+    ],
+    "reason" : null
+  },
+  {
+    "calibreId" : 8,
+    "citekeys" : [
+      "zzcal2001_collision"
+    ],
+    "state" : "up-to-date",
+    "changes" : [
+    ],
+    "reason" : null
+  },
+  {
+    "calibreId" : 9,
+    "citekeys" : [
+      "zzcal_stored"
+    ],
+    "state" : "up-to-date",
+    "changes" : [
+    ],
+    "reason" : null
+  },
+  {
+    "calibreId" : 10,
+    "citekeys" : [
+      "zzcal_unknown"
+    ],
+    "state" : "up-to-date",
+    "changes" : [
+    ],
+    "reason" : null
+  },
+  {
+    "calibreId" : 12,
+    "citekeys" : [
+      "zzcal_pushme"
+    ],
+    "state" : "up-to-date",
+    "changes" : [
+    ],
+    "reason" : null
+  },
+  {
+    "calibreId" : 13,
+    "citekeys" : [
+      "zzcal_nolink"
+    ],
+    "state" : "up-to-date",
+    "changes" : [
+    ],
+    "reason" : null
+  },
+  {
+    "calibreId" : 99,
+    "citekeys" : [
+      "zzcal_missing"
+    ],
+    "state" : "missing",
+    "changes" : [
+    ],
+    "reason" : null
+  }
+]
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1000000"
+
+## histmersion calibre update --all --apply
+exit 0
+--- stdout
+### 1 Calibre entry updated · 7 up to date
+
+| id | citekey | field | Calibre | record | |
+|---:|---|---|---|---|---|
+| 4 | zzcal_junk | title | Unknown | Real title | written |
+| 4 | zzcal_junk | authors | Unknown | Real Author | written |
+| 4 | zzcal_junk | pubdate |  | 2011-01-01 | written |
+
+**Left alone (4)**
+
+- 2: linked from zzcal_shared_a, zzcal_shared_b — update one by hand (`histmersion calibre update <citekey>`)
+- 3: linked from zzcal_drift, zzcal_relink — update one by hand (`histmersion calibre update <citekey>`)
+- 6: linked from drews1993_bronze, zzcal_nofile — update one by hand (`histmersion calibre update <citekey>`)
+- 99: no such Calibre entry (zzcal_missing) — re-push, or clear the source's calibre id
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1000000"
+calibredb "set_metadata" "--with-library" "<library>" "4" "--field" "title:Real title" "--field" "authors:Real Author" "--field" "pubdate:2011-01-01"
+
+## histmersion calibre update --all
+exit 0
+--- stdout
+_No linked Calibre entry needs updating (8 up to date)._
+
+**Left alone (4)**
+
+- 2: linked from zzcal_shared_a, zzcal_shared_b — update one by hand (`histmersion calibre update <citekey>`)
+- 3: linked from zzcal_drift, zzcal_relink — update one by hand (`histmersion calibre update <citekey>`)
+- 6: linked from drews1993_bronze, zzcal_nofile — update one by hand (`histmersion calibre update <citekey>`)
+- 99: no such Calibre entry (zzcal_missing) — re-push, or clear the source's calibre id
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1000000"
+
+## histmersion calibre set 1 --field languages:eng
+exit 0
+--- stdout
+set languages on Calibre id 1
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:1"
+calibredb "set_metadata" "--with-library" "<library>" "1" "--field" "languages:eng"
+
+## histmersion calibre set 1 --field bogus:x
+exit 2
+--- stdout
+--- stderr
+error: cannot set bogus — settable: title, authors, publisher, pubdate, languages, identifiers, tags, comments, series
+--- calls
+
+## histmersion calibre set 1 --field title:Unknown
+exit 2
+--- stdout
+--- stderr
+error: refusing a blank or Unknown title
+--- calls
+
+## histmersion calibre set 1 --field nocolon
+exit 2
+--- stdout
+--- stderr
+error: 'nocolon' is not <name>:<value>
+--- calls
+
+## histmersion calibre set 99 --field tags:x
+exit 2
+--- stdout
+--- stderr
+error: there is no Calibre entry 99
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:99"
+
+## histmersion calibre set 1 --field tags:a,b --field series:S
+exit 0
+--- stdout
+set tags, series on Calibre id 1
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1" "--search" "id:1"
+calibredb "set_metadata" "--with-library" "<library>" "1" "--field" "tags:a,b" "--field" "series:S"
+
+## histmersion calibre audit
+exit 0
+--- stdout
+### 1 of 12 linked Calibre entries disagree with the corpus
+
+| id | citekey(s) | issue | corpus | Calibre | fix |
+|---:|---|---|---|---|---|
+| 99 | zzcal_missing | no such Calibre entry | A lost book — Lost Author (1990) | — | re-push, or clear the source's calibre id |
+
+_`histmersion calibre update --all` lists every change it would make; `--apply` writes them._
+--- stderr
+--- calls
+calibredb "list" "--with-library" "<library>" "--for-machine" "--fields" "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover" "--limit" "1000000"
+
+## the linked sources afterwards
+drews1993_bronze | 6 | calibre | Bronze Age warfare
+hoffner1998_hittite_v2 | 5 | calibre | Hittite Myths, Volume II
+zzcal2001_collision | 8 | calibre | Collision of keys
+zzcal_calprov | - | calibre | From Calibre
+zzcal_drift | 3 | - | The original title
+zzcal_junk | 4 | - | Real title
+zzcal_linked | 1 | unpaywall | Bronze Age tin and its trade
+zzcal_missing | 99 | - | A lost book
+zzcal_nofile | 6 | openalex | Metadata only
+zzcal_nolink | 13 | calibre | Not linked
+zzcal_pushme | 12 | calibre | Pushed by hand
+zzcal_relink | 3 | - | A drifted title
+zzcal_shared_a | 2 | - | The Linear B tablets
+zzcal_shared_b | 2 | - | Linear B, the tablets
+zzcal_stored | 9 | unpaywall | Stored paper
+zzcal_unknown | 10 | oa | Now titled
+## the library afterwards
+[
+ {
+  "authors": "Sharon R. Stocker",
+  "comments": "<p>Tin in the Aegean.</p>",
+  "cover": "<library>/Author 1/Book 1 (1)/cover.jpg",
+  "formats": [
+   "<library>/added/1-format.pdf"
+  ],
+  "id": 1,
+  "identifiers": {
+   "doi": "10.1/zzcal.1"
+  },
+  "languages": "eng",
+  "pubdate": "<time>",
+  "publisher": "Hesperia",
+  "series": "S",
+  "tags": [
+   "a",
+   "b"
+  ],
+  "title": "Bronze Age tin and its trade"
+ },
+ {
+  "authors": "Michael Ventris & John Chadwick",
+  "formats": [
+   "<library>/Author 2/Book 2 (2)/Book 2.pdf"
+  ],
+  "id": 2,
+  "identifiers": {},
+  "pubdate": "<time>",
+  "tags": [],
+  "title": "The Linear B tablets"
+ },
+ {
+  "authors": "Someone Else",
+  "formats": [
+   "<library>/Author 3/Book 3 (3)/Book 3.epub"
+  ],
+  "id": 3,
+  "identifiers": {
+   "google": "g3"
+  },
+  "pubdate": "<time>",
+  "tags": [],
+  "title": "A drifted title"
+ },
+ {
+  "authors": "Real Author",
+  "formats": [
+   "<library>/Author 4/Book 4 (4)/Book 4.pdf"
+  ],
+  "id": 4,
+  "identifiers": {},
+  "pubdate": "2011-01-01",
+  "tags": [],
+  "title": "Real title"
+ },
+ {
+  "authors": "Harry A. Hoffner",
+  "comments": "<b>The myths</b> of Hatti.",
+  "cover": "<library>/Author 5/Book 5 (5)/cover.jpg",
+  "formats": [
+   "<library>/Author 5/Book 5 (5)/Book 5.pdf",
+   "<library>/Author 5/Book 5 (5)/Book 5.epub"
+  ],
+  "id": 5,
+  "identifiers": {
+   "isbn": "9780788504884"
+  },
+  "pubdate": "<time>",
+  "publisher": "Scholars Press",
+  "tags": [
+   "hittite",
+   "myth"
+  ],
+  "title": "Hittite Myths, Volume II"
+ },
+ {
+  "authors": "Robert Drews",
+  "formats": [
+   "<library>/Author 6/Book 6 (6)/Book 6.epub"
+  ],
+  "id": 6,
+  "identifiers": {},
+  "pubdate": "<time>",
+  "tags": [],
+  "title": "Bronze Age warfare"
+ },
+ {
+  "authors": "Kay Format",
+  "formats": [
+   "<library>/Author 7/Book 7 (7)/Book 7.mobi"
+  ],
+  "id": 7,
+  "identifiers": {},
+  "pubdate": "<time>",
+  "tags": [],
+  "title": "A Kindle-only book"
+ },
+ {
+  "authors": "Jane Zzcal",
+  "formats": [
+   "<library>/Author 8/Book 8 (8)/Book 8.pdf"
+  ],
+  "id": 8,
+  "identifiers": {},
+  "pubdate": "<time>",
+  "tags": [],
+  "title": "Collision of keys"
+ },
+ {
+  "authors": "Ann Store",
+  "formats": [
+   "<library>/added/9/book.pdf"
+  ],
+  "id": 9,
+  "identifiers": {
+   "doi": "10.1/zzcal.stored"
+  },
+  "pubdate": "2010-01-01",
+  "tags": [
+   "metal"
+  ],
+  "title": "Stored paper"
+ },
+ {
+  "authors": "Ann Other",
+  "formats": [
+   "<library>/added/10/book.pdf"
+  ],
+  "id": 10,
+  "identifiers": {},
+  "pubdate": "2012-01-01",
+  "tags": [],
+  "title": "Now titled"
+ },
+ {
+  "authors": "Push Me",
+  "formats": [
+   "<library>/added/11/book.pdf"
+  ],
+  "id": 11,
+  "identifiers": {},
+  "pubdate": "2015-01-01",
+  "tags": [],
+  "title": "Pushed by hand"
+ },
+ {
+  "authors": "Push Me",
+  "formats": [
+   "<library>/added/12/book.pdf"
+  ],
+  "id": 12,
+  "identifiers": {},
+  "pubdate": "2015-01-01",
+  "tags": [],
+  "title": "Pushed by hand"
+ },
+ {
+  "authors": "No Link",
+  "formats": [
+   "<library>/added/13/book.pdf"
+  ],
+  "id": 13,
+  "identifiers": {},
+  "pubdate": "2016-01-01",
+  "tags": [],
+  "title": "Not linked"
+ }
+]
