@@ -1,0 +1,33 @@
+d acquire-spool/
+d acquire-spool/zz_data_tree/
+f acquire-spool/zz_data_tree/paper.pdf 16
+d basemap/
+f basemap/bathymetry.pmtiles
+f basemap/labels.pmtiles
+d basemap/terrain-cache/
+d basemap/terrain-cache/remote/
+f basemap/terrain-cache/remote/head.bin 16384
+f basemap/terrain-cache/remote/remote.json 47
+d basemap/terrain-cache/tiles/
+d basemap/terrain-cache/tiles/5/
+d basemap/terrain-cache/tiles/5/0/
+f basemap/terrain-cache/tiles/5/0/0.webp 9
+d basemap/terrain-cache/tiles/5/1/
+f basemap/terrain-cache/tiles/5/1/1.webp 9
+d basemap/terrain-focus/
+f basemap/terrain-focus/bbox-22p5-37p4-23p2-37p9.pmtiles
+f basemap/terrain.pmtiles
+d basemap/vector-cache/
+d basemap/vector-cache/remote/
+f basemap/vector-cache/remote/head.bin 16384
+f basemap/vector-cache/remote/remote.json 65
+d basemap/vector-cache/tiles/
+d basemap/vector-cache/tiles/4/
+d basemap/vector-cache/tiles/4/0/
+f basemap/vector-cache/tiles/4/0/0.mvt 321
+f basemap/vector.pmtiles
+d config/
+f config/histmersion.conf 382
+f config/histmersion.conf.bak 382
+d spool/
+f spool/c01ccf190978644fcee2931633d367223f77bb88a3ca5f5c5747650053b8d08e.bin 18
