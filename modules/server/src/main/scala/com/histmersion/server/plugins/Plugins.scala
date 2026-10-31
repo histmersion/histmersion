@@ -1,6 +1,6 @@
 package com.histmersion.server.plugins
 
-import com.histmersion.pluginhost.{Generation, HostServices, PluginHost, PolicyHttp, Registries}
+import com.histmersion.pluginhost.{Generation, HostServices, HttpTransport, PluginHost, PolicyHttp, Registries}
 
 import com.histmersion.config.{AppConfig, HotPlan, LoadedConfig}
 import com.histmersion.api.{PluginState, PluginStatus}
@@ -34,11 +34,12 @@ object Plugins:
       loaded: LoadedConfig,
       previous: Option[Generation] = None,
       changed: List[String] = Nil,
-      core: CoreBudget = CoreBudget()
+      core: CoreBudget = CoreBudget(),
+      transport: AppConfig => HttpTransport = PolicyHttp.acquisitionTransport
   ): Generation =
     val (found, errors) = PluginHost.discover(getClass.getClassLoader)
     // ONE acquisition client for every plugin and built-in fetcher of this generation, built on first use
-    lazy val http = acquisitionHttp(loaded.config)
+    lazy val http = acquisitionHttp(loaded.config, transport)
     val all = found ++ builtins(loaded.config, () => http, core)
     // a split plugin's former settings (oa-index) mapped onto its successors, with a deprecation warning
     val legacy = LegacyPlugins.migrate(loaded.user, loaded.env, defaultKeys(all))
@@ -145,8 +146,8 @@ object Plugins:
     HostServices(http, env, log)
 
   /** The acquisition client (`acquire.tls` included) under the one outbound policy. */
-  private def acquisitionHttp(cfg: AppConfig): SttpHttp =
-    new SttpHttp(PolicyHttp.acquisition(cfg, PolicyHttp.acquisitionTransport(cfg)))
+  private def acquisitionHttp(cfg: AppConfig, transport: AppConfig => HttpTransport): SttpHttp =
+    new SttpHttp(PolicyHttp.acquisition(cfg, transport(cfg)))
 
   private def log(id: String, warn: Boolean, message: String): Unit =
     val line = if id.isEmpty then s"plugins: $message" else s"plugin $id: $message"
