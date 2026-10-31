@@ -442,7 +442,6 @@ lazy val pluginsCalibre = projectMatrix
   )
   .jvmPlatform(scalaVersions = Seq(scala3))
 
-
 lazy val pluginHello = project
   .in(file("modules/plugin-fixtures/hello"))
   .dependsOn(pluginApi)
