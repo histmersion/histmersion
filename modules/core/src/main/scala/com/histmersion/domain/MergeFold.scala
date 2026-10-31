@@ -1,5 +1,6 @@
 package com.histmersion.domain
 
+import com.histmersion.util.data.exchange.{BundleFormat, Diff3}
 import scala.annotation.tailrec
 import com.histmersion.api.{
   AssetLinks,

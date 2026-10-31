@@ -1,14 +1,34 @@
-package com.histmersion.db
+package com.histmersion.util.data.exchange
 
-import com.histmersion.api.*
-import com.histmersion.config.*
-import com.histmersion.domain.*
+import com.histmersion.api.{
+  ApiError,
+  BundleImportResult,
+  BundleInstance,
+  BundleManifest,
+  MergeApplyResult,
+  MergeDecision,
+  MergeDetail,
+  MergeInfo,
+  MergeLedger,
+  MergeResolution,
+  MergeResolutions,
+  MergeSession,
+  UidRedirect,
+  Write
+}
+import com.histmersion.api.given
+import com.histmersion.db.{BundleRepo, Jsonb, Param, Sql}
+import com.histmersion.db.given
+import com.histmersion.domain.MergePlanner
+import com.histmersion.domain.MergePlanner.Fold
+import com.histmersion.util.data.exchange.BundlePlan.Ledger
+import com.histmersion.values.BundleKind
 
 import com.augustnagro.magnum.*
 import java.util.UUID
 import javax.sql.DataSource
 
-final private[db] case class MergeRow(
+final private[exchange] case class MergeRow(
     id: UUID,
     bundleId: UUID,
     bundleSha256: String,
@@ -21,7 +41,7 @@ final private[db] case class MergeRow(
     redirects: Int
 ) derives DbCodec
 
-final private[db] case class LedgerDbRow(
+final private[exchange] case class LedgerRow(
     foreignUid: UUID,
     kind: String,
     mergeId: UUID,
@@ -124,18 +144,15 @@ object MergeRepo:
   /** The ledger rows of one record (a uid — the bundle's or the one here — or a citekey), of one merge, or the latest
     * `limit`; and the redirects that name the record.
     */
-  def ledger(ds: DataSource, uid: Option[String], merge: Option[String], limit: Int): Either[ApiError, MergeLedger] =
+  def ledger(
+      ds: DataSource,
+      uid: Option[String],
+      merge: Option[String],
+      limit: Int,
+      rules: MergeRuleSet = MergeRuleSet.transition
+  ): Either[ApiError, MergeLedger] =
     connect(ds):
-      val label =
-        """CASE l.kind WHEN 'source' THEN (SELECT citekey FROM sources WHERE uid = l.local_uid)
-                       WHEN 'finding' THEN (SELECT id FROM findings WHERE uid = l.local_uid)
-                       WHEN 'article' THEN (SELECT slug FROM articles WHERE uid = l.local_uid)
-                       WHEN 'asset' THEN (SELECT name FROM assets WHERE uid = l.local_uid)
-                       WHEN 'event' THEN (SELECT id FROM events WHERE uid = l.local_uid)
-                       WHEN 'goal' THEN (SELECT slug FROM goals WHERE uid = l.local_uid)
-                       WHEN 'place' THEN (SELECT id FROM places WHERE uid = l.local_uid)
-                       WHEN 'period' THEN (SELECT id FROM periods WHERE uid = l.local_uid)
-                       WHEN 'queue-item' THEN (SELECT left(text, 60) FROM queue_items WHERE uid = l.local_uid) END"""
+      val label = rules.ledgerLabelSql
       val select = s"""SELECT l.foreign_uid, l.kind, l.merge_id, l.foreign_rev, l.local_uid, $label, l.local_rev_after,
                               l.decision, ${ts("l.recorded_at")} FROM merge_ledger l"""
       def asUid(s: String): Option[UUID] = scala.util.Try(UUID.fromString(s.trim)).toOption
@@ -175,11 +192,11 @@ object MergeRepo:
             )
           case _ => Sql.of(s"$select ORDER BY l.recorded_at DESC, l.foreign_uid LIMIT ?", Param.I(n))
         val entries = rows.frag
-          .query[LedgerDbRow]
+          .query[LedgerRow]
           .run()
           .toList
           .map(r =>
-            LedgerRow(
+            com.histmersion.api.LedgerRow(
               r.foreignUid,
               r.kind,
               r.mergeId,
@@ -223,3 +240,90 @@ object MergeRepo:
 
   def dropSession(ds: DataSource, bundle: String): Unit =
     val _ = transact(ds)(sql"DELETE FROM merge_sessions WHERE bundle = $bundle".update.run())
+
+  // ── what an import and a merge write (in the caller's transaction) ─────────────────────────────
+
+  /** One import at a time per database: two would decide against the same state and both write. */
+  def lockImports()(using DbCon): Unit =
+    val _ = sql"SELECT 1 FROM (SELECT pg_advisory_xact_lock(hashtext('histmersion.bundle-import'))) l".query[Int].run()
+
+  /** While on, rows keep the clocks the bundle gives them: the change-clock triggers stand aside. */
+  def importing(on: Boolean)(using DbCon): Unit =
+    val _ = sql"SELECT set_config('histmersion.importing', ${if on then "on" else "off"}, true)".query[String].run()
+
+  /** Record what was merged — only what changed in the ledger, and a `merges` row only when the import changed anything
+    * at all, so importing the same bundle twice writes nothing. The ledger is keyed by the BUNDLE's uid and names the
+    * local one it maps to.
+    */
+  def record(
+      m: BundleManifest,
+      bundleSha: String,
+      ownBundle: Boolean,
+      decided: List[MergePlanner.Row],
+      report: io.circe.Json,
+      changed: Int,
+      applied: Option[(String, String, String)] = None
+  )(using DbCon): Option[UUID] =
+    val existing = sql"""SELECT foreign_uid, foreign_rev, local_rev_after FROM merge_ledger
+                         WHERE foreign_uid = ANY(${decided.map(_.foreignUid.toString)}::uuid[])"""
+      .query[(UUID, String, Option[String])]
+      .run()
+      .map((u, f, l) => u -> Ledger(f, l))
+      .toMap
+    val rows = if ownBundle then Nil
+    else
+      decided.flatMap { d =>
+        BundlePlan
+          .ledgerAfter(d.decision, d.foreignRev, d.localizedRev, d.localRev, d.tombstone)
+          .filterNot(l => existing.get(d.foreignUid).contains(l))
+          .map(d -> _)
+      }
+    if rows.isEmpty && changed == 0 then None
+    else
+      val (hash, backup, res) = (applied.map(_._1), applied.map(_._2), applied.map(_._3))
+      val id = sql"""INSERT INTO merges (bundle_id, bundle_sha256, from_instance, from_label, report, plan_hash, backup,
+                       resolutions)
+                     VALUES (${m.bundleId}, $bundleSha, ${m.instance.id}, ${m.instance.label},
+                             ${report.noSpaces}::jsonb, $hash, $backup, $res::jsonb)
+                     RETURNING id""".query[UUID].run().head
+      rows.foreach { (d, l) =>
+        sql"""INSERT INTO merge_ledger (foreign_uid, kind, merge_id, foreign_rev, local_uid, local_rev_after, decision)
+              VALUES (${d.foreignUid}, ${d.kind.wire}, $id, ${l.foreignRev}, ${d.uid}, ${l.localRevAfter},
+                      ${d.decision.toString})
+              ON CONFLICT (foreign_uid) DO UPDATE SET kind = EXCLUDED.kind, merge_id = EXCLUDED.merge_id,
+                foreign_rev = EXCLUDED.foreign_rev, local_uid = EXCLUDED.local_uid,
+                local_rev_after = EXCLUDED.local_rev_after, decision = EXCLUDED.decision,
+                recorded_at = now()""".update.run()
+      }
+      Some(id)
+
+  /** The records a merge dropped, as tombstones. */
+  def tombstone(dropped: List[(UUID, BundleKind, UUID)])(using DbCon): Unit =
+    dropped.foreach { (u, k, origin) =>
+      sql"""INSERT INTO tombstones (uid, kind, origin) VALUES ($u, ${k.wire}, $origin)
+            ON CONFLICT (uid) DO NOTHING""".update.run()
+    }
+
+  /** A merge's own change of rows it folded into: their clocks move. */
+  def touch(table: com.histmersion.util.data.TableName, uids: List[UUID])(using DbCon): Unit =
+    Sql
+      .of(s"UPDATE ${table.value} SET updated_at = now() WHERE uid = ANY(?::uuid[])", Param.A(uids.map(_.toString)))
+      .frag
+      .update
+      .run()
+
+  /** One redirect per folded record: the bundle's uid names the survivor here. */
+  def redirect(folds: List[Fold], mergeId: UUID)(using DbCon): Unit =
+    folds.foreach { f =>
+      sql"""INSERT INTO uid_aliases (alias_uid, uid, kind, merge_id) VALUES (${f.foreignUid}, ${f.localUid}, ${f.kind.wire}, $mergeId)
+            ON CONFLICT (alias_uid) DO UPDATE SET uid = EXCLUDED.uid, kind = EXCLUDED.kind, merge_id = EXCLUDED.merge_id""".update
+        .run()
+    }
+
+  /** The decisions a merge leaves to remember, by issue id. */
+  def remember(decisions: List[(String, MergeDecision)], mergeId: UUID)(using DbCon): Unit =
+    decisions.foreach { (id, d) =>
+      sql"""INSERT INTO merge_decisions (issue_id, decision, merge_id) VALUES ($id, ${d.wire}, $mergeId)
+            ON CONFLICT (issue_id) DO UPDATE SET decision = EXCLUDED.decision, merge_id = EXCLUDED.merge_id,
+              decided_at = now()""".update.run()
+    }

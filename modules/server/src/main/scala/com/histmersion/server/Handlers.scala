@@ -121,7 +121,34 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   val basemap: com.histmersion.util.basemap.BasemapService = BasemapWiring.service(deps)
 
   /** The portable bundle — instance identity, export, verify, import (docs/research-merge-import.md). */
-  val bundles: BundleHandlers = BundleHandlers(deps, () => backups.create(Instant.now()).map(_.file))
+  val bundles: com.histmersion.util.data.exchange.BundleControllers =
+    import com.histmersion.util.data.exchange.{
+      BundleControllers,
+      BundleService,
+      CarriedKinds,
+      MergeApplyJobs,
+      MergeRuleSet
+    }
+    val applyJobs = MergeApplyJobs(
+      com.histmersion.util.jobs.MergeApplyRuns(deps.ds),
+      deps.cfg.merge.applyWaitSeconds,
+      deps.pins
+    )
+    BundleControllers(
+      BundleService(
+        BundleService.Wiring(
+          deps.ds,
+          () => deps.cfg,
+          deps.storage,
+          deps.clock,
+          CarriedKinds(Deps.data.carried),
+          MergeRuleSet(Deps.data.mergeRules),
+          applyJobs,
+          () => backups.create(Instant.now()).map(_.file)
+        )
+      ),
+      deps.maintenance
+    )
 
   /** Embedded research agents (docs/research-embedded-agents.md) — off unless `agents.enabled`. Constructing it starts
     * nothing; `Main` starts its run pool after the OCR pool.

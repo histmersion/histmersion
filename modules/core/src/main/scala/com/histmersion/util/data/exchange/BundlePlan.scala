@@ -1,4 +1,4 @@
-package com.histmersion.domain
+package com.histmersion.util.data.exchange
 
 import scala.annotation.tailrec
 import com.histmersion.api.BundleKindCounts

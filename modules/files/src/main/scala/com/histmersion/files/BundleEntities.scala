@@ -7,6 +7,7 @@ import io.circe.{Decoder, Encoder}
 
 import java.util.UUID
 import com.histmersion.values.BundleKind
+import com.histmersion.util.data.exchange.BundleFormat
 
 /** The entity content of a bundle, in memory — every NDJSON file of [[BundleFiles.all]] as its line type. Small by
   * construction: the large things (OCR bodies, version bodies, asset bytes, originals) are blobs, referenced by sha256
@@ -175,6 +176,13 @@ object BundleEntities:
     case Original(sourceUid: UUID, ext: String)
     case VersionBody(versionUid: UUID)
     case AssetBytes(assetUid: UUID)
+
+    /** The uid of the record whose line uses the blob: its import writes it only when the record is written. */
+    def record: UUID = this match
+      case Body(u)        => u
+      case Original(u, _) => u
+      case VersionBody(u) => u
+      case AssetBytes(u)  => u
 
   /** Decode the payloads read from a bundle; every bad line is reported (`<file>:<line>: why`), the good ones kept. A
     * missing file is an empty one.

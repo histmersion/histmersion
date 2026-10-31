@@ -1,4 +1,4 @@
-package com.histmersion.files
+package com.histmersion.util.data.exchange
 
 import com.histmersion.api.*
 import com.histmersion.api.given

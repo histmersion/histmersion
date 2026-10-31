@@ -29,3 +29,10 @@ trait Blob:
 
   /** The whole file, read-only, mapped into memory where the store is on disk. */
   def mapped(): ByteBuffer
+
+  /** The file as bytes to read from the start as often as needed. */
+  final def asSource: ByteSource =
+    val blob = this
+    new ByteSource:
+      def size: Long = blob.size.value
+      def open(): InputStream = blob.open()

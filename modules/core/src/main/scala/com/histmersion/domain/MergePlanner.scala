@@ -1,5 +1,6 @@
 package com.histmersion.domain
 
+import com.histmersion.util.data.exchange.{BundleFormat, BundlePlan, Diff3}
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.{
   ArticleLinks,
