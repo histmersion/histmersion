@@ -10,9 +10,9 @@ import com.histmersion.api.library.collections.{
   CollectionUpdateRow
 }
 
-/** What the host-side `calibre … --json` commands print (#1946). Calibre is read on THIS machine, so these answers have
-  * no server DTO; they are still case classes with derived codecs, printed through [[Output.emit]] like every other
-  * `--json`, never `Json.obj` assembled by hand. The field names are the ones those commands always printed.
+/** What the `calibre … --json` commands print: case classes with derived codecs, printed through [[Output.emit]] like
+  * every other `--json`, never `Json.obj` assembled by hand. The field names are the ones those commands always
+  * printed, whether the server's collection answered (`of` a wire record) or this machine's library did.
   */
 object CalibreJson:
 

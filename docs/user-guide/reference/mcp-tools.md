@@ -4,7 +4,7 @@ The MCP endpoint is `<public-url>/mcp` (by default `http://localhost:8000/mcp`).
 assistant: [Using your AI assistant](../ai-assistant.md). Every tool runs the same handler as the
 matching REST endpoint and CLI command, and returns Markdown.
 
-**79 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
+**80 tools**, wired for Claude Code through `.mcp.json` (`type: http`, `<public-url>/mcp`, written
 by `just mcp-json`, which `just install` runs). Every tool returns Markdown. The table below is refreshed from the server's own
 `tools/list` — that endpoint, not this file, is the authority on what exists.
 
@@ -65,6 +65,7 @@ Deep time everywhere is a **signed integer year**: 1200 BCE → `-1200`.
 | `notes` | **Read only.** The person's own notes (Markdown), last changed first, each with what it was left on (an item, or a place on the map). `id` = one note in full; `kind` + `item` = the notes on one item; `query` = words in the note or the item's title; `limit` (200). The person's thoughts, never evidence to cite. No tool writes a note — only the person, in the web UI or with `histmersion notes`. |
 | `assets` | the figures stored with a source: name, mime, pixel size, and the URL each is served at. |
 | `archive` | Internet Archive for out-of-print books: search, inspect, import. **Public items only** — a lending-only scan is refused. |
+| `collection` | the library's source collections — the user's Calibre library (and archive.org): `list`, `search` (`unlinked`), `import`, `link`, `push` (`replace`), `update` (one, or every linked entry with `apply`), `set`, `audit`, `gaps`, `sync` (`apply`). Writes need the Calibre GUI closed and `plugins.calibre.write-back` on. |
 | `candidates` | **new sources found for the research goals without a model** (#3761): each goal's saved queries on OpenAlex, Crossref, Europe PMC, arXiv (CORE with a key), the works citing its sources and its sources' authors' newer works, read from each watch's watermark and deduplicated by DOI against the corpus and the acquisition list. Lists the `new` candidates (of `goal`, or every goal; `state` for the others); `mark` + `as` records a decision (seen, queued, dismissed); `sweep: true` reads a goal's watches now (`dryRun`). |
 | `refs` | the reference list a paper deposited with Crossref, resolved against the corpus; `apply: true` writes them as `references` edges. |
 | `assess` | **before citing anything unchecked.** Retraction Watch + Crossref amendment notices + citation metrics → `retracted\|corrected\|current\|low-impact\|unassessed`; `apply: true` writes the verdict into `status`. `updateRetractions: true` refreshes the local mirror — **do that first, the mirror starts empty**. |

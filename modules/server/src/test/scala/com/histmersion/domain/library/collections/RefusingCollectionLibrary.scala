@@ -3,7 +3,7 @@ package com.histmersion.domain.library.collections
 import com.histmersion.api.*
 
 /** A library a suite's collections write through that refuses everything; a suite overrides what it uses. */
-class RefusingCollectionLibrary extends CollectionLibrary:
+open class RefusingCollectionLibrary extends CollectionLibrary:
   private def no = Left(ApiError("not used in this suite"))
   def source(citekey: String): Either[ApiError, SourceWithFindings] = no
   def create(citekey: String, put: SourcePut): Either[ApiError, SourceWithFindings] = no

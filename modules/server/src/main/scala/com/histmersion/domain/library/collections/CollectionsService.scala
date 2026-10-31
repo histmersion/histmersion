@@ -28,8 +28,8 @@ import scala.collection.immutable.ListMap
 
 /** The library's source collections — the Calibre library, archive.org — run by the library: searching one, importing
   * an item into the library, linking a source to an item, pushing a source's original into one, rewriting its items
-  * from the records, setting fields, the audit, the gaps (sources whose original is in no collection) and the sync.
-  * The collection is the plugin's; every rule of what the library stores is here.
+  * from the records, setting fields, the audit, the gaps (sources whose original is in no collection) and the sync. The
+  * collection is the plugin's; every rule of what the library stores is here.
   */
 trait CollectionsService:
   def collections(): List[CollectionInfo]
@@ -150,7 +150,10 @@ object CollectionsService:
         for
           c <- linking(name)
           ids = linkedIds()
-          query = q.map(_.trim).filter(_.nonEmpty).fold(CollectionQuery(None))(t => CollectionQuery(Some(t), Some(Int.MaxValue)))
+          query = q
+            .map(_.trim)
+            .filter(_.nonEmpty)
+            .fold(CollectionQuery(None))(t => CollectionQuery(Some(t), Some(Int.MaxValue)))
           items <- c.search(query).left.map(fail)
         yield
           val all = items
@@ -262,7 +265,7 @@ object CollectionsService:
                 MediaCoversRequest(dryRun = false, citekey = Some(ck), illustrations = false, isbn = Some(isbn))
               ) match
                 case Right(r) if r.covers > 0 => CollectionCover(s"Cover: from Open Library (ISBN $isbn)")
-                case _                        => CollectionCover("Cover: none (no cover file in Calibre, none at Open Library)")
+                case _ => CollectionCover("Cover: none (no cover file in Calibre, none at Open Library)")
             case Some(_) => CollectionCover("Cover: none (no cover file in Calibre)")
             case None    => CollectionCover("Cover: none (no cover file in Calibre, no ISBN)")
 
@@ -309,7 +312,8 @@ object CollectionsService:
         s.topics
       )
 
-    /** The stored original of `ck` as a file to hand a collection; `hint` is added to the refusal when there is none. */
+    /** The stored original of `ck` as a file to hand a collection; `hint` is added to the refusal when there is none.
+      */
     private def original(ck: String, hint: String): Either[ApiError, FetchedFile] =
       for
         o <- library.original(ck).left.map(e => if hint.isEmpty then e else e.copy(message = e.message + hint))
@@ -395,7 +399,8 @@ object CollectionsService:
 
     def audit(name: String): Either[ApiError, CollectionAudit] =
       val recs = linked()
-      val records = recs.map(r => CollectionRecord(r.citekey, CollectionId(r.id), r.title, r.authors, r.year.map(Year(_))))
+      val records =
+        recs.map(r => CollectionRecord(r.citekey, CollectionId(r.id), r.title, r.authors, r.year.map(Year(_))))
       for
         c <- linking(name)
         found <- c.audit(records).left.map(fail)

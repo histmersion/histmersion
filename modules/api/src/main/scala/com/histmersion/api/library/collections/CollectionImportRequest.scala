@@ -6,9 +6,9 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-/** Import item `id` of a collection into the library: under `citekey` (else the generated one), its `format`
-  * (else the collection's preference), converted unless `convert` is false, with its cover when `cover`, ticking off
-  * acquisition item `acquireItem` when the conversion succeeds.
+/** Import item `id` of a collection into the library: under `citekey` (else the generated one), its `format` (else the
+  * collection's preference), converted unless `convert` is false, with its cover when `cover`, ticking off acquisition
+  * item `acquireItem` when the conversion succeeds.
   */
 final case class CollectionImportRequest(
     id: String,

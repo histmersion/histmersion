@@ -5,8 +5,7 @@ import com.histmersion.domain.Caller
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
 
-/** The collections' endpoints bound to their controllers. Every request is the local person's until there are
-  * accounts.
+/** The collections' endpoints bound to their controllers. Every request is the local person's until there are accounts.
   */
 object CollectionsRoutes:
   def apply(c: CollectionsControllers): List[ServerEndpoint[Any, Identity]] =

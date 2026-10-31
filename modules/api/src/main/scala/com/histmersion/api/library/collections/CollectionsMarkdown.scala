@@ -143,7 +143,8 @@ object CollectionsMarkdown:
         "| id | citekey(s) | issue | corpus | Calibre | fix |\n|---:|---|---|---|---|---|\n" +
           a.findings
             .map { f =>
-              val todo = f.fix.fold("re-push, or clear the source's calibre id")(ck => s"`histmersion calibre update $ck`")
+              val todo =
+                f.fix.fold("re-push, or clear the source's calibre id")(ck => s"`histmersion calibre update $ck`")
               s"| ${f.id} | ${f.citekeys.mkString(", ")} | ${f.labels.mkString("; ")} | ${cell(view(f.record))} | " +
                 s"${cell(f.entry.fold("—")(view))} | $todo |"
             }

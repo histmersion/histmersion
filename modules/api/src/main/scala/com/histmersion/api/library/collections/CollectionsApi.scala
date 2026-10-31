@@ -53,7 +53,8 @@ object CollectionsApi:
   lazy val sync: PublicEndpoint[(String, CollectionSyncRequest), ApiError, CollectionSync, Any] =
     named.post.in("sync").in(jsonBody[CollectionSyncRequest]).out(jsonBody[CollectionSync])
 
-  lazy val all = List(collections, collection, search, importItem, link, push, updateOne, updateAll, set, audit, gaps, sync)
+  lazy val all =
+    List(collections, collection, search, importItem, link, push, updateOne, updateAll, set, audit, gaps, sync)
 
   /** The error code of an answer that refuses the request itself (a citekey collision, an unknown queue item): the CLI
     * exits 1 for it, as for a bad command line.

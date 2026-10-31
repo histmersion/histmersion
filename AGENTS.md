@@ -27,7 +27,8 @@ core  ── the DOMAIN (package `domain`): the logic server and db run on. JVM 
          NO database code, NO side effects.   depends on values, api, files — never config (its tests only)
 db    ── the STORE: Magnum repos, Flyway migrations, the seed importer.      depends on config, core
 server─ MCP + REST + web UI; the ONLY database client.  depends on core, db, plugin-api, plugin-host (+ plugin-vaults;
-         plugins/fetchers, plugins/events, plugins/media, plugins/gazetteers and plugins/ai-http at run time only)
+         plugins/fetchers, plugins/events, plugins/media, plugins/gazetteers, plugins/ai-http and plugins/calibre
+         at run time only)
          (and through them on values, api and config)
 cli   ── a PURE HTTP CLIENT of the server.         depends on api, config and files — never core, never db
 web   ── the Scala.js page (Laminar) over the sttp client derived from api's endpoints.   depends on api ONLY
@@ -50,6 +51,8 @@ plugins/gazetteers ─ the first-party network gazetteers (gazetteer-cliopatria,
               gazetteer-chronontology).                          upstreams (+ plugin-testkit for tests)
 plugins/ai-http ─ the first-party HTTP AI providers (ai-anthropic, ai-openai, ai-local) over the SPI's AiHttp.
                                        plugin-api (+ circe, sttp core; plugin-testkit for tests)
+plugins/calibre ─ the first-party `calibre` plugin: the local Calibre library as a source collection (calibredb,
+              the sqlite3 fallback, the write-back).        plugin-api + circe (+ plugin-testkit for tests)
 plugin-testkit ─ a plugin's TEST dependency: load and run it as the server does (plugin-host), with
               live/record/replay HTTP; shipped in the install's maven/, its API a contract.  plugin-host
 plugin-vaults ─ the built-in secret-vault plugins.                          depends on plugin-api ONLY

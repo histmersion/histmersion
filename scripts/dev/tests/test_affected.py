@@ -13,10 +13,12 @@ A = affected
 
 
 class AffectedTest(unittest.TestCase):
-    def test_a_leaf_module_tests_itself_only(self):
-        # (and the lint suites of api and core, which read every module's main Scala — not their dependents)
+    def test_a_cli_change_tests_the_cli_and_the_server_that_runs_it(self):
+        # (the server's calibre commands suite runs the CLI; and the lint suites of api and core, which read every
+        # module's main Scala — not their dependents)
         self.assertEqual(A.affected(["modules/cli/src/main/scala/com/histmersion/cli/Main.scala"]),
-                         (["api", "config", "core", "cli"], False, ["modules/cli/src/main/scala/com/histmersion/cli/Main.scala → cli",
+                         (["api", "config", "core", "cli", "server"], True, ["modules/cli/src/main/scala/com/histmersion/cli/Main.scala → cli",
+                          "server: depends on a changed module",
                           "api: its lint suites read modules/cli/src/main/scala/com/histmersion/cli/Main.scala",
                           "config: its lint suites read modules/cli/src/main/scala/com/histmersion/cli/Main.scala",
                           "core: its lint suites read modules/cli/src/main/scala/com/histmersion/cli/Main.scala"]))
@@ -48,7 +50,7 @@ class AffectedTest(unittest.TestCase):
         self.assertIn("core", A.affected(["modules/cli/src/main/scala/com/histmersion/cli/Main.scala"])[0])
         self.assertIn("core", A.affected(["modules/server/src/main/scala/com/histmersion/server/Main.scala"])[0])
         # a test of its own, or a resource, is not
-        self.assertEqual(A.affected(["modules/cli/src/test/scala/X.scala"])[0], ["cli"])
+        self.assertEqual(A.affected(["modules/cli/src/test/scala/X.scala"])[0], ["cli", "server"])
 
     def test_db_reaches_server(self):
         self.assertEqual(A.affected(["modules/db/src/main/resources/db/migration/V099__x.sql"])[0],

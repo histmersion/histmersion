@@ -16,8 +16,7 @@ final case class CollectionEntry(
     year: Option[Int],
     publisher: Option[String],
     tags: List[String],
-    identifiers: Map[String,
-    String],
+    identifiers: Map[String, String],
     formats: List[String]
 ) derives KindlingsCodecAsObject,
       KindlingsSchema
