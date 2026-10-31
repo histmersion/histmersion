@@ -98,8 +98,8 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assert(g.report.ok, g.report.toString)
     assertEquals(
       g.report.plugins.map(_.id).filterNot(Set("1password", "bitwarden", "keepassxc")).size,
-      7 + 10 + 3 + 6 + 3
-    ) // fetchers (four open-access indexes, D4), collections, catalogues, AI providers, gazetteers; the vaults besides
+      7 + 10 + 3 + 6 + 3 + 1
+    ) // fetchers (four open-access indexes, D4), collections, catalogues, AI providers, gazetteers, Calibre; the vaults besides
     assert(!g.report.plugins.exists(_.state == "failed"), g.report.toString)
 
   test("a built-in switched off is out of its registry; the import names the switch"):

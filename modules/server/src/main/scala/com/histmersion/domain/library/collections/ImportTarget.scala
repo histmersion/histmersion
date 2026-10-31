@@ -40,10 +40,10 @@ object ImportTarget:
     */
   def of(ck: String, id: String, explicit: Boolean, existing: Option[Option[String]]): Either[String, ImportTarget] =
     existing match
-      case None                                => Right(Create)
+      case None                               => Right(Create)
       case Some(Some(linked)) if linked == id => Right(Update(None))
-      case Some(linked) if explicit            => Right(Update(linked))
-      case Some(linked)                        =>
+      case Some(linked) if explicit           => Right(Update(linked))
+      case Some(linked)                       =>
         val what = linked.fold("a record that is not linked to Calibre")(l => s"the record of Calibre id $l")
         Left(
           s"the generated citekey '$ck' is already $what — importing Calibre id $id would merge two " +

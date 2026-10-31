@@ -32,7 +32,8 @@ object CollectionsTools:
 
   def apply(c: CollectionsControllers) =
     val me = Caller.Local
-    def answer[A](r: Either[com.histmersion.api.ApiError, A])(f: A => String) = ToolResult.text(r.fold(McpOut.refusal, f))
+    def answer[A](r: Either[com.histmersion.api.ApiError, A])(f: A => String) =
+      ToolResult.text(r.fold(McpOut.refusal, f))
     val collection =
       tool("collection")
         .description(
@@ -50,11 +51,12 @@ object CollectionsTools:
         .handle { in =>
           val name = in.name.map(_.trim).filter(_.nonEmpty).getOrElse(CollectionsService.Calibre)
           in.action.trim.toLowerCase(java.util.Locale.ROOT) match
-            case "list" => answer(c.collections(me))(CollectionsMarkdown.collections)
-            case "info" => answer(c.collection(me, name))(CollectionsMarkdown.collection)
+            case "list"   => answer(c.collections(me))(CollectionsMarkdown.collections)
+            case "info"   => answer(c.collection(me, name))(CollectionsMarkdown.collection)
             case "search" =>
               answer(c.search(me, name, in.query, in.limit, in.unlinked))(s =>
-                if in.unlinked then CollectionsMarkdown.unlinked(s.entries, s.total) else CollectionsMarkdown.search(s.entries)
+                if in.unlinked then CollectionsMarkdown.unlinked(s.entries, s.total)
+                else CollectionsMarkdown.search(s.entries)
               )
             case "import" =>
               in.id.fold(ToolResult.text("_give the entry's `id`_"))(id =>
@@ -89,8 +91,8 @@ object CollectionsTools:
               )
             case "audit" => answer(c.audit(me, name))(CollectionsMarkdown.audit)
             case "gaps"  => answer(c.gaps(me, name, in.limit))(g => CollectionsMarkdown.gaps(g.gaps))
-            case "sync"  => answer(c.sync(me, name, CollectionSyncRequest(in.apply, in.limit)))(CollectionsMarkdown.sync)
-            case other   =>
+            case "sync" => answer(c.sync(me, name, CollectionSyncRequest(in.apply, in.limit)))(CollectionsMarkdown.sync)
+            case other  =>
               ToolResult.text(
                 s"_unknown action '$other' — list, info, search, import, link, push, update, set, audit, gaps, sync_"
               )

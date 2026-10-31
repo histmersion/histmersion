@@ -9414,6 +9414,431 @@
       ]
     },
     {
+      "type": "com.histmersion.api.library.collections.CollectionAudit$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionAudit$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionAuditRow$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionAuditRow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionCover$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionCover$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionEntry$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionEntry$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionFieldChange$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionFieldChange$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionFieldValue$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionFieldValue$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionGapRow$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionGapRow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionGaps$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionGaps$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionImportRequest$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionImportRequest$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionImported$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionImported$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionInfo$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionInfo$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionLinkRequest$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionLinkRequest$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionLinked$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionLinked$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionPushRequest$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionPushRequest$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionPushed$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionPushed$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionRecordView$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionRecordView$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionSearch$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionSearch$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionSetDone$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionSetDone$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionSetRequest$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionSetRequest$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionSync$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionSync$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionSyncPush$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionSyncPush$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionSyncRequest$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionSyncRequest$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionUpdateAll$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionUpdateAll$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionUpdateAllRequest$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionUpdateAllRequest$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionUpdateOne$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionUpdateOne$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionUpdateRow$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionUpdateRow$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionUpdatedOne$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CollectionUpdatedOne$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.collections.CollectionsApi$",
+      "fields": [
+        {
+          "name": "all$lzy1"
+        },
+        {
+          "name": "audit$lzy1"
+        },
+        {
+          "name": "base$lzy1"
+        },
+        {
+          "name": "collection$lzy1"
+        },
+        {
+          "name": "collections$lzy1"
+        },
+        {
+          "name": "gaps$lzy1"
+        },
+        {
+          "name": "importItem$lzy1"
+        },
+        {
+          "name": "link$lzy1"
+        },
+        {
+          "name": "push$lzy1"
+        },
+        {
+          "name": "search$lzy1"
+        },
+        {
+          "name": "set$lzy1"
+        },
+        {
+          "name": "sync$lzy1"
+        },
+        {
+          "name": "updateAll$lzy1"
+        },
+        {
+          "name": "updateOne$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.api.personal.Bookmark$",
       "fields": [
         {

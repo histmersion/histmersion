@@ -985,7 +985,6 @@ server:server/acquire/AcquireHandlers.scala	library.acquisition
 server:server/acquire/AcquireMcp.scala	library.acquisition
 server:server/acquire/AcquireRoutes.scala	library.acquisition
 server:server/acquire/AcquireSettings.scala	library.acquisition
-server:server/acquire/ArchiveClient.scala	library.acquisition
 server:server/acquire/ArxivIndex.scala	library.acquisition
 server:server/acquire/CandidateSearch.scala	library.acquisition
 server:server/acquire/CitationAlerts.scala	library.acquisition

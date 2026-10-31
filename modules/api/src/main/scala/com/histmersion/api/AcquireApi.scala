@@ -56,7 +56,9 @@ object AcquireApi:
   lazy val archiveImport: PublicEndpoint[ArchiveImportRequest, ApiError, IngestReport, Any] =
     base.post.in("archive" / "import").in(jsonBody[ArchiveImportRequest]).out(jsonBody[IngestReport])
 
-  /** The push itself is host-side: Calibre lives on the user's machine, out of the server's reach. */
+  /** The library's Calibre gaps and push metadata, kept for a CLI that runs the push on its own machine; the server's
+    * own push is the collections' (`CollectionsApi`).
+    */
   lazy val calibreGaps: PublicEndpoint[Option[Int], ApiError, CalibreGaps, Any] =
     base.get.in("calibre" / "gaps").in(query[Option[Int]]("limit")).out(jsonBody[CalibreGaps])
 

@@ -86,7 +86,9 @@ object FirstPartySettings:
       // each HTTP AI provider its own `agents.providers.<name>` (base URL, key, strict tools, timeout)
       List("anthropic", "openai", "local").map(n =>
         FirstPartySettings(s"ai-$n", List(s"histmersion.agents.providers.$n"))
-      )
+      ) ++
+      // the Calibre library's settings are its own block's (the CLI's `cli.calibre.*` are the CLI's)
+      List(FirstPartySettings("calibre", Nil))
 
   private val byId: Map[String, FirstPartySettings] = all.map(s => s.plugin -> s).toMap
 
