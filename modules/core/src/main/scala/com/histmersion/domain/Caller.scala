@@ -7,6 +7,11 @@ enum Caller:
   case Person(user: UserId, role: Caller.Role)
   case Automation(run: RunId)
 
+  /** The person asking; none for an automated run, which acts for nobody's own data. */
+  def person: Option[UserId] = this match
+    case Person(user, _) => Some(user)
+    case Automation(_)   => None
+
 object Caller:
 
   /** What a person may do, each role everything the one before it may and more. */

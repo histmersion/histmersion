@@ -17,3 +17,7 @@ class CallerSuite extends munit.FunSuite:
   test("an automated caller names its run"):
     val run = RunId("0b3f6a4e-2c1d-4e5f-8a9b-0c1d2e3f4a5b")
     assertEquals(Caller.Automation(run).run, run)
+
+  test("a person asks for themselves; an automated run for nobody"):
+    assertEquals(Caller.Local.person, Some(UserId("local")))
+    assertEquals(Caller.Automation(RunId("0b3f6a4e-2c1d-4e5f-8a9b-0c1d2e3f4a5b")).person, None)
