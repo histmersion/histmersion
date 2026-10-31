@@ -1,6 +1,8 @@
 package com.histmersion.server
 
-import com.histmersion.pluginhost.{FetchChain, Generation, OutboundTls}
+import com.histmersion.domain.library.acquisition.{ArchiveOrgClient, OpenAlexDiscovery}
+
+import com.histmersion.pluginhost.{upstreamSettings, FetchChain, Generation, HostLog, OutboundTls}
 
 import sttp.tapir.server.netty.sync.{NettySyncServer, NettySyncServerOptions}
 import sttp.tapir.server.netty.NettyConfig
@@ -235,22 +237,25 @@ object Composition:
     val tls = OutboundTls.configure(cfg.tls)
     tls.foreach((_, line) => scribe.info(line))
     val http = SttpHttp(cfg, maxRetryAfterSeconds = app.media.maxRetryAfterSeconds, tls = tls.map(_._1))
-    val openalex = OpenAlexCrossref(cfg, http)
+    val openalex =
+      OpenAlexDiscovery(
+        com.histmersion.upstreams.OpenAlexCrossref(cfg.upstreamSettings, HttpPlugin(http), HostLog.scribe.plugin)
+      )
     val (chain, notes) = FetchChain.of(plugins.registries.sourceFetchers, cfg.chainIds, cfg.allowUnauthorised)
     notes.foreach(n => scribe.info(n))
     scribe.info(chain.plan match
       case Nil  => "acquire: no source fetcher is registered — every fetch is a miss"
       case plan => s"acquire: chain ${plan.map(_._1).mkString(" → ")}")
     // CORE's search with the key the oa-core plugin resolved (its secret reference), on the same budget
-    val coreKey = fetchers.CoreFetcher.key(plugins.registries.sourceFetchers)
+    val coreKey = com.histmersion.server.plugins.Plugins.coreKey(plugins, cfg.core.key)
     val (indexes, alerts) = Indexes.of(cfg, http, coreKey, core)
     val generation = FetcherGeneration.of(chain.plan, plugins.report.plugins, cfg.contact.isDefined, coreKey.isDefined)
     AcquireClients(
       openalex,
-      SemanticScholar(cfg, http, openalex),
+      SemanticScholar(cfg, http),
       chain,
       Wikipedia(cfg, http),
-      ArchiveOrg(cfg, http),
+      ArchiveOrgClient(com.histmersion.upstreams.ArchiveOrg(cfg.upstreamSettings.archiveOrg, HttpPlugin(http))),
       RetractionWatch(cfg, http),
       indexes,
       alerts,

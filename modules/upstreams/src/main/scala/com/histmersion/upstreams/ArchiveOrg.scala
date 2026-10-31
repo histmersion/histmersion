@@ -1,12 +1,9 @@
-package com.histmersion.server.acquire
+package com.histmersion.upstreams
 
-import com.histmersion.pluginhost.{AcquireParse, Url}
+import com.histmersion.plugin.{FetchedFile, PluginHttp}
 
-import com.histmersion.api.*
-import com.histmersion.config.*
-import com.histmersion.domain.*
-
-final class ArchiveOrg(cfg: AcquireConfig, http: Http) extends ArchiveClient:
+/** archive.org's search, an item's metadata and a file of a public item. */
+final class ArchiveOrg(archive: Endpoint, http: PluginHttp):
 
   /** `https://archive.org/details/<id>` or a bare identifier. */
   private def identifier(s: String): String =
@@ -17,7 +14,7 @@ final class ArchiveOrg(cfg: AcquireConfig, http: Http) extends ArchiveClient:
     http
       .json(
         Url(
-          cfg.archiveOrg.url,
+          archive.url,
           "/advancedsearch.php",
           "q" -> s"($query) AND mediatype:texts",
           "fl[]" -> "identifier",
@@ -33,17 +30,17 @@ final class ArchiveOrg(cfg: AcquireConfig, http: Http) extends ArchiveClient:
 
   def info(id: String): Either[String, ArchiveItem] =
     val ident = identifier(id)
-    http.json(Url(cfg.archiveOrg.url, s"/metadata/$ident")).map(AcquireParse.archiveItem(ident, _))
+    http.json(Url(archive.url, s"/metadata/$ident")).map(AcquireParse.archiveItem(ident, _))
 
   def download(id: String, file: String): Either[String, FetchedFile] =
     val ident = identifier(id)
     val url = Url(
-      cfg.archiveOrg.url,
+      archive.url,
       s"/download/$ident/" + java.net.URLEncoder
         .encode(file, "UTF-8")
         .replace("+", "%20")
     )
-    http.bytes(url).flatMap { b =>
+    http.get(url).flatMap { b =>
       if b.length < 10240 then Left(s"archive.org returned only ${b.length} bytes for $file")
       else Right(FetchedFile("archive_org", Some(url), b, file.toLowerCase.split("\\.").lastOption.getOrElse("pdf")))
     }

@@ -1,4 +1,4 @@
-package com.histmersion.server.acquire
+package com.histmersion.upstreams
 
 /** Why a CORE call gave nothing. */
 enum CoreFailure:

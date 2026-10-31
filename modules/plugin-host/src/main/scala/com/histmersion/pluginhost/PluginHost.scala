@@ -177,16 +177,30 @@ object PluginHost:
         .filterNot(k => ids(k) || Reserved(k))
 
   /** Pure: the plugin's effective block — env overrides its defaults declare (`${?VAR}`) > the user's
-    * `histmersion.plugins.<id>` > the plugin's defaults; substitutions resolved against `env` only (never system
-    * properties: AGENTS.md). The environment's own keys are not part of the result.
+    * `histmersion.plugins.<id>` > `host`, the settings the host supplies a first-party plugin from its own keys (keys
+    * relative to the block; empty for any other plugin) > the plugin's defaults; substitutions resolved against `env`
+    * only (never system properties: AGENTS.md). The environment's own keys are not part of the result. The report shows
+    * the block without `host`: a plugin's settings are its own block's.
     */
-  def block(user: Config, defaults: Config, env: Config, id: String): Either[String, Config] =
+  def block(
+      user: Config,
+      defaults: Config,
+      env: Config,
+      id: String,
+      host: Config = ConfigFactory.empty
+  ): Either[String, Config] =
     val path = s"$Root.$id"
     try
       val own = if user.hasPath(path) then user.getConfig(path) else ConfigFactory.empty
-      val keep = defaults.root.keySet.asScala.toSet ++ own.root.keySet.asScala
+      val keep = defaults.root.keySet.asScala.toSet ++ own.root.keySet.asScala ++ host.root.keySet.asScala
       val resolved =
-        EnvOverrides.layer(defaults, env).withFallback(own).withFallback(defaults).withFallback(env).resolve()
+        EnvOverrides
+          .layer(defaults, env)
+          .withFallback(own)
+          .withFallback(host)
+          .withFallback(defaults)
+          .withFallback(env)
+          .resolve()
       val trimmed = resolved.root.keySet.asScala.toList.filterNot(keep).foldLeft(resolved.root)(_.withoutKey(_))
       Right(trimmed.toConfig)
     catch case e: ConfigException => Left(s"$path: ${e.getMessage}")
@@ -416,6 +430,7 @@ object PluginHost:
     def env(name: String) = Option(services.env.root.get(name)).flatMap(v => Option(v.unwrapped)).map(_.toString)
     def secret(s: Secret) = resolved(s)
     def secretVaults = vaults
+    override def quota(upstream: String) = services.quota(upstream)
     override def sourceFetchers = fetchers
     override def mediaCollections = media
     override def eventCatalogues = events
@@ -428,12 +443,12 @@ object PluginHost:
 
   /** A media collection: a kebab-case id; a plugin's may not take a name of the host's own providers (an import's name
     * or an alias of one, or a provider pictures are stored under — its pictures would be mistaken for theirs); its role
-    * is one a collection's pictures may play.
+    * is one a collection's pictures may play. A first-party plugin's is the one the name is reserved for.
     */
-  private def validCollection(id: String, c: MediaCollection): Option[String] =
+  private def validCollection(firstParty: Boolean)(id: String, c: MediaCollection): Option[String] =
     if !id.matches(IdPattern) then Some(s"'$id': a media collection id is $IdPattern")
     else if c == null then Some(s"media collection '$id' is null")
-    else if c.isInstanceOf[HostOwned] then None
+    else if firstParty || c.isInstanceOf[HostOwned] then None
     else if ReservedNames.mediaCollections(id) then
       Some(s"'$id' is the name of one of Histmersion's own media providers")
     else if !MediaCollection.Roles(c.role) then
@@ -442,11 +457,13 @@ object PluginHost:
       )
     else None
 
-  /** An event catalogue: a kebab-case id; a plugin's may not take a name of the host's own catalogues. */
-  private def validCatalogue(id: String, c: EventCatalogue): Option[String] =
+  /** An event catalogue: a kebab-case id; a plugin's may not take a name of the host's own catalogues, unless it is the
+    * first-party plugin the name is reserved for.
+    */
+  private def validCatalogue(firstParty: Boolean)(id: String, c: EventCatalogue): Option[String] =
     if !id.matches(IdPattern) then Some(s"'$id': an event catalogue id is $IdPattern")
     else if c == null then Some(s"event catalogue '$id' is null")
-    else if c.isInstanceOf[HostOwned] then None
+    else if firstParty || c.isInstanceOf[HostOwned] then None
     else if ReservedNames.eventCatalogues(id) then
       Some(s"'$id' is the name of one of Histmersion's own event catalogues")
     else None
@@ -454,10 +471,10 @@ object PluginHost:
   /** An AI provider: its name is the provider half of `provider:model`, so kebab-case; a plugin's may not take the name
     * of one of the host's own providers (its models would be mistaken for theirs).
     */
-  private def validAiProvider(id: String, a: AiProvider): Option[String] =
+  private def validAiProvider(firstParty: Boolean)(id: String, a: AiProvider): Option[String] =
     if !id.matches(IdPattern) then Some(s"'$id': an AI provider name is $IdPattern")
     else if a == null then Some(s"AI provider '$id' is null")
-    else if a.isInstanceOf[HostOwned] then None
+    else if firstParty || a.isInstanceOf[HostOwned] then None
     else if ReservedNames.aiProviders(id) then Some(s"'$id' is the name of one of Histmersion's own AI providers")
     else None
 
@@ -484,7 +501,15 @@ object PluginHost:
         * contributions are taken over as they are — not decoded, resolved or registered again. A registered one goes
         * into the registries in its place in the order.
         */
-      carried: Map[String, (PluginStatus, Registries)] = Map.empty
+      carried: Map[String, (PluginStatus, Registries)] = Map.empty,
+      /** The settings the host supplies a first-party plugin, by id: its fallback block from the host's own keys (keys
+        * relative to the plugin's block), between the user's block and the plugin's defaults ([[block]]).
+        */
+      fallback: String => Config = _ => ConfigFactory.empty,
+      /** The first-party plugins: the ones a reserved name of the host's (a catalogue's, a media provider's, an AI
+        * provider's) is kept for.
+        */
+      firstParty: String => Boolean = _ => false
   ): Generation =
     val infos = plugins.map(_.info)
     val refused = check(infos, Spi.Version)
@@ -545,7 +570,9 @@ object PluginHost:
             conf <- block(user, defs, env, id).left.map(e => status(p, false, PluginState.Failed, error = Some(e)))
             on <- enabled(conf, id).left.map(e => status(p, false, PluginState.Failed, Some(conf), Some(e)))
             _ <- Either.cond(on, (), status(p, false, PluginState.Disabled, Some(conf)))
-            typed <- decode(p, conf).left.map(e => status(p, true, PluginState.Failed, Some(conf), Some(e)))
+            supplied <- block(user, defs, env, id, fallback(id)).left
+              .map(e => status(p, true, PluginState.Failed, Some(conf), Some(e)))
+            typed <- decode(p, supplied).left.map(e => status(p, true, PluginState.Failed, Some(conf), Some(e)))
           yield Prepared(p, conf, secretsIn(typed), ctx => p.register(typed, ctx))
       id -> r
     }
@@ -580,7 +607,7 @@ object PluginHost:
               pr.secrets.map(_.ref).collect { case SecretRef.Vault(v, _) if !rs.secretVaults.contains(v) => v }
             if missing.nonEmpty then pass(tail, rs, ds, left :+ pr, prog)
             else
-              val (st, added) = pr.carried.getOrElse(register(pr, rs, services, secrets))
+              val (st, added) = pr.carried.getOrElse(register(pr, rs, services, secrets, firstParty(pr.p.info.id)))
               pass(tail, rs ++ added, ds.updated(pr.p.info.id, (st, added)), left, true)
       val (rs, ds, left, progressed) = pass(waiting, regs, done, Nil, false)
       if left.isEmpty || !progressed then
@@ -614,12 +641,23 @@ object PluginHost:
     statuses
       .filter(_.state == PluginState.Failed.wire)
       .foreach(s => services.log(s.id, true, s.error.getOrElse("failed")))
+    val live = registered.collect { case (id, (st, regs)) if st.state == PluginState.Registered.wire => id -> regs }
+    val fresh = ready.filter(pr => pr.carried.isEmpty && live.contains(pr.p.info.id))
     Generation(
       registries,
       PluginsReport(Spi.Version, statuses, warnings),
-      registered.collect { case (id, (st, regs)) if st.state == PluginState.Registered.wire => id -> regs },
+      live,
       plugins.map(_.info.id).filterNot(carried.contains),
-      ready.filter(_.secrets.nonEmpty).map(_.p.info.id).toSet
+      ready.filter(_.secrets.nonEmpty).map(_.p.info.id).toSet,
+      fresh.map(pr => pr.p.info.id -> pr.block).toMap,
+      fresh
+        .filter(_.secrets.nonEmpty)
+        .map(pr =>
+          pr.p.info.id -> pr.secrets
+            .flatMap(sec => secrets(sec.ref, registries.secretVaults).toOption.map(sec.ref -> _))
+            .toMap
+        )
+        .toMap
     )
 
   /** Resolve one prepared plugin's secrets and call its `register` with a staged context. */
@@ -627,7 +665,8 @@ object PluginHost:
       pr: Prepared,
       regs: Registries,
       services: HostServices,
-      secrets: GenerationSecrets
+      secrets: GenerationSecrets,
+      firstParty: Boolean
   ): (PluginStatus, Registries) =
     val p = pr.p
     val id = p.info.id
@@ -660,9 +699,10 @@ object PluginHost:
       case None    =>
         val staged = Staged[SecretVault](Registries.SecretVault, regs.secretVaults, validVault)
         val fetchers = Staged[SourceFetcher](Registries.SourceFetcher, regs.sourceFetchers, validFetcher)
-        val media = Staged[MediaCollection](Registries.MediaCollection, regs.mediaCollections, validCollection)
-        val events = Staged[EventCatalogue](Registries.EventCatalogue, regs.eventCatalogues, validCatalogue)
-        val ai = Staged[AiProvider](Registries.AiProvider, regs.aiProviders, validAiProvider)
+        val media =
+          Staged[MediaCollection](Registries.MediaCollection, regs.mediaCollections, validCollection(firstParty))
+        val events = Staged[EventCatalogue](Registries.EventCatalogue, regs.eventCatalogues, validCatalogue(firstParty))
+        val ai = Staged[AiProvider](Registries.AiProvider, regs.aiProviders, validAiProvider(firstParty))
         val ctx = RegistrationContext(id, services, resolved, staged, fetchers, media, events, ai)
         val outcome =
           try pr.call(ctx)

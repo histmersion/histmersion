@@ -37,7 +37,7 @@ class LandingFetchSuite extends munit.FunSuite:
   private def openalexOf(c: AcquireConfig, doi: String) = s"${c.openalex.url}/works/https://doi.org/$doi"
 
   private def fetch(c: AcquireConfig, http: Http, doi: String) =
-    OaFetch(c, http, OpenAlexCrossref(c, http)).fetch(Some(doi), None)
+    OaFetch(c, http).fetch(Some(doi), None)
 
   private def fail2(http: FakeUpstream)(e: String) = fail(e + "\n" + http.asked.mkString("\n"))
 

@@ -245,8 +245,9 @@ lazy val files = project
 lazy val core = projectMatrix
   .in(file("modules/core"))
   .dependsOn(values, api % "compile->compile;test->test")
-  // config for its tests only: the domain takes settings records of its own, which the server converts
-  .dependsOn(config % "test->test", files)
+  // config for its tests only: the domain takes settings records of its own, which the server converts; the
+  // upstreams' host rules for the tests that pass them in as the server does
+  .dependsOn(config % "test->test", files, upstreams % "test->compile")
   .settings(
     name := "histmersion-core",
     description := "The domain logic the server and the store run on, with no database code"
@@ -285,9 +286,33 @@ lazy val pluginApi = project
     )
   )
 
+// The parsers and clients of the public upstreams (OpenAlex, Crossref, Unpaywall, CORE, DataCite, archive.org, Europe
+// PMC, JATS, the landing-page rules, the catalogues' dating) over the SPI's HTTP: ONE copy, used by the first-party
+// plugins and by the host. Plugin platform only (plugin-api, circe, sttp's model): it registers nothing.
+lazy val upstreams = project
+  .in(file("modules/upstreams"))
+  .dependsOn(pluginApi)
+  .settings(
+    name := "histmersion-upstreams",
+    description := "Parsers and clients of the public upstreams over the plugin SPI's HTTP, shared by plugins and host"
+  )
+  .settings(commonDeps)
+  .settings(
+    libraryDependencies ++= Seq(
+      "io.circe" %% "circe-core" % V.circe,
+      "io.circe" %% "circe-parser" % V.circe,
+      "com.softwaremill.sttp.client4" %% "core" % V.sttp
+    ),
+    // the upstreams' captured answers, shared with the suites that read them through the host
+    Test / unmanagedResourceDirectories ++= Seq(
+      (ThisBuild / baseDirectory).value / "modules" / "api" / "src" / "test" / "resources",
+      (ThisBuild / baseDirectory).value / "modules" / "core" / "src" / "test" / "resources"
+    )
+  )
+
 lazy val pluginHost = project
   .in(file("modules/plugin-host"))
-  .dependsOn(core.jvm(scala3) % "compile->compile;test->test", config, pluginApi)
+  .dependsOn(core.jvm(scala3) % "compile->compile;test->test", config, pluginApi, upstreams)
   .settings(
     name := "histmersion-plugin-host",
     description := "The host side of the plugin SPI, shared by the server and the testkit"
@@ -504,7 +529,7 @@ def buildMetaSource(base: File): String = {
 
 lazy val server = project
   .in(file("modules/server"))
-  .dependsOn(core.jvm(scala3), db % "compile->compile;test->test", pluginApi, pluginHost, pluginVaults)
+  .dependsOn(core.jvm(scala3), db % "compile->compile;test->test", pluginApi, upstreams, pluginHost, pluginVaults)
   .settings(
     name := "histmersion-server",
     description := "The server: MCP, REST and the web UI over the store; built as a native image",
@@ -603,8 +628,9 @@ lazy val server = project
         )
       )
       // the testkit a plugin's tests depend on, with what it needs of Histmersion's own modules: the plugin
-      // host it runs, values, api, files, core, and config, whose settings (reference.conf) give it the server's User-Agent, timeouts
-      // and TLS trust. Their other dependencies are ordinary Maven Central libraries their POMs name.
+      // host it runs, the upstreams library it dates and parses with, values, api, files, core, and config, whose settings
+      // (reference.conf) give it the server's User-Agent, timeouts and TLS trust. Their other dependencies are ordinary
+      // Maven Central libraries their POMs name.
       def module(id: ModuleID, pom: File, jar: File, sources: File): Unit =
         writeMavenArtifact(repo, id, scalaBinaryVersion.value, pom, Seq("" -> jar, "sources" -> sources))
       module(
@@ -612,6 +638,12 @@ lazy val server = project
         conv.toPath((pluginTestkit / makePom).value).toFile,
         conv.toPath((pluginTestkit / Compile / packageBin).value).toFile,
         conv.toPath((pluginTestkit / Compile / packageSrc).value).toFile
+      )
+      module(
+        (upstreams / projectID).value,
+        conv.toPath((upstreams / makePom).value).toFile,
+        conv.toPath((upstreams / Compile / packageBin).value).toFile,
+        conv.toPath((upstreams / Compile / packageSrc).value).toFile
       )
       module(
         (pluginHost / projectID).value,
@@ -842,6 +874,7 @@ lazy val root = project
     config,
     files,
     pluginApi,
+    upstreams,
     pluginHost,
     pluginTestkit,
     pluginVaults,

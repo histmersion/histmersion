@@ -1,6 +1,8 @@
 package com.histmersion.server.acquire
 
-import com.histmersion.pluginhost.{AcquireParse, Url}
+import com.histmersion.domain.library.acquisition.wire
+
+import com.histmersion.upstreams.{AcquireParse, Url}
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -26,4 +28,4 @@ final class CrossrefIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex
           "mailto" -> cfg.mailto
         )
       )
-      .map(AcquireParse.crossrefWorks)
+      .map(AcquireParse.crossrefWorks(_).map(_.wire))

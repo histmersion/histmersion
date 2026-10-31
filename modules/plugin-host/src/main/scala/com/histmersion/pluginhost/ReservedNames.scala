@@ -36,5 +36,41 @@ object ReservedNames:
   /** The built-in event catalogues and their aliases. */
   val eventCatalogues: Set[String] = CatalogProvider.all.toSet ++ Set("smithsonian", "volcano", "ncei", "wd")
 
+  /** The first-party plugins: Histmersion's own, in every image. A plugin is first-party when its id is one of these
+    * and it was loaded from the image's own class path, not from the plugin set a relink added; a reserved name of a
+    * catalogue, a media provider or an AI provider is kept for it.
+    */
+  val firstPartyPlugins: Set[String] = Set(
+    "archive-org",
+    "oa-unpaywall",
+    "oa-core",
+    "oa-openalex",
+    "oa-landing",
+    "pmc",
+    "arxiv",
+    "events-gvp",
+    "events-noaa",
+    "events-wikidata",
+    "media-wikidata",
+    "media-depicts",
+    "media-met",
+    "media-cleveland",
+    "media-aic",
+    "media-loc",
+    "media-pleiades",
+    "media-opencontext",
+    "media-smithsonian",
+    "media-europeana",
+    "ai-anthropic",
+    "ai-openai",
+    "ai-local",
+    "ai-claude-code",
+    "ai-codex",
+    "ai-opencode",
+    "keepassxc",
+    "1password",
+    "bitwarden"
+  )
+
   /** The built-in AI providers. */
   val aiProviders: Set[String] = Agents.ProviderKind.values.map(_.wire).toSet

@@ -91,12 +91,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
     if search then
       wire.out.clear()
       val host = new SttpHttp(PolicyHttp.acquisition(l.config, wire))
-      val (indexes, _) = Indexes.of(
-        cfg,
-        host,
-        com.histmersion.server.acquire.fetchers.CoreFetcher.key(g.registries.sourceFetchers),
-        core
-      )
+      val (indexes, _) = Indexes.of(cfg, host, Plugins.coreKey(g, cfg.core.key), core)
       val got = indexes.find(_.name == "core").map(_.search("bronze age", LocalDate.of(2026, 1, 1), 5))
       sb ++= "### core index search\n"
       sb ++= wire.out.result()

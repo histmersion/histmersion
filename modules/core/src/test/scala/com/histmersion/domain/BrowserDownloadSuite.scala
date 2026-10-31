@@ -12,7 +12,8 @@ import com.histmersion.values.Citekey
   */
 class BrowserDownloadSuite extends munit.FunSuite:
 
-  private val Refusing = List("degruyter.com", "mdpi.com", "stockholmuniversitypress.se")
+  private val RefusingHosts = List("degruyter.com", "mdpi.com", "stockholmuniversitypress.se")
+  private val Refusing: String => Option[String] = com.histmersion.upstreams.RepositoryLanding.onHost(_, RefusingHosts)
   private val ck = Citekey.parse("greener2019_archaeology").toOption.get
   private val mdpi = WorkRef(
     doi = Some("10.3390/REL10040258"),
@@ -65,7 +66,7 @@ class BrowserDownloadSuite extends munit.FunSuite:
       ),
       None
     )
-    assertEquals(BrowserDownload.of(mdpi, ck, Nil), None)
+    assertEquals(BrowserDownload.of(mdpi, ck, com.histmersion.upstreams.RepositoryLanding.onHost(_, Nil)), None)
     assertEquals(
       BrowserDownload.of(mdpi.copy(oaUrl = Some("https://notmdpi.com/x")).copy(oaLocations = Nil), ck, Refusing),
       None,

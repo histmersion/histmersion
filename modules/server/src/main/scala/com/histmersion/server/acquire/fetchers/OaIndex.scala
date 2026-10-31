@@ -1,14 +1,15 @@
 package com.histmersion.server.acquire.fetchers
 
-import com.histmersion.pluginhost.{FetchChain, Url}
+import com.histmersion.domain.library.acquisition.CoreQuotaLend
+
+import com.histmersion.pluginhost.{upstreamSettings, FetchChain}
 
 import com.histmersion.config.AcquireConfig
-import com.histmersion.pluginhost.AcquireParse
-import com.histmersion.domain.RepositoryLanding
+import com.histmersion.upstreams.{AcquireParse, CoreApi, CoreFailure, OpenAlexCrossref, RepositoryLanding, Url}
 import com.histmersion.server.acquire.rules
 import com.histmersion.plugin.{Fetch, FetchContext, SourceFetcher, WorkKey}
 import com.histmersion.domain.CoreQuota
-import com.histmersion.server.acquire.{CoreApi, CoreBudget, CoreFailure, FetchedFile, Http, OaFetch, OpenAlexCrossref}
+import com.histmersion.server.acquire.{CoreBudget, FetchedFile, Http, HttpPlugin, OaFetch}
 
 import io.circe.Json
 
@@ -104,7 +105,8 @@ final class OaIndex(
 
   private def corePdf(ctx: FetchContext, doi: String, key: Option[String]): Fetch =
     key.fold[Fetch](Fetch.Miss("core needs CORE's API key (plugins.oa-core.api-key or acquire.core.api-key)")) { key =>
-      CoreApi(cfg, http(), coreBudget).searchWorks(key, s"""doi:"$doi"""", 1, CoreQuota.Purpose.Lookup) match
+      CoreApi(cfg.upstreamSettings.core, HttpPlugin(http()), CoreQuotaLend(coreBudget, CoreBudget.limits(cfg.core)))
+        .searchWorks(key, s"""doi:"$doi"""", 1, CoreQuota.Purpose.Lookup.wire) match
         case Left(skip @ CoreFailure.Skipped(_)) => Fetch.Miss(skip.message)
         case Left(CoreFailure.Failed(why))       =>
           ctx.log.info(s"CORE lookup failed ($why)")

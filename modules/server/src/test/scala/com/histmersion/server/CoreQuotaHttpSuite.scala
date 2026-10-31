@@ -39,20 +39,16 @@ class CoreQuotaHttpSuite extends munit.FunSuite:
         val url = s"http://127.0.0.1:${s.port}"
         assert(!get(s"$url/api/about").contains("\"upstreams\":[{"), "nothing shown before CORE was asked")
         val until = now.get.plusSeconds(3600).truncatedTo(java.time.temporal.ChronoUnit.SECONDS)
-        val answer = first.call(limits, CoreQuota.Purpose.Search)(
-          Right(
-            com.histmersion.pluginhost.HttpAnswer(
-              429,
-              Map(
-                "x-ratelimit-limit" -> "25",
-                "x-ratelimit-remaining" -> "0",
-                "x-ratelimit-retry-after" -> until.toString.replace("Z", "+0000")
-              ),
-              Array.emptyByteArray
-            )
+        assert(first.take(limits, CoreQuota.Purpose.Search).isRight)
+        first.observe(
+          limits,
+          429,
+          Map(
+            "x-ratelimit-limit" -> "25",
+            "x-ratelimit-remaining" -> "0",
+            "x-ratelimit-retry-after" -> until.toString.replace("Z", "+0000")
           )
         )
-        assert(answer.isRight)
         val about = get(s"$url/api/about")
         assert(about.contains("\"upstream\":\"core\"") && about.contains("\"searchTokens\":1"), about)
         assert(about.contains("\"blockedWhy\":\"HTTP 429\""), about)

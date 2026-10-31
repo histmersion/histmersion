@@ -1,10 +1,14 @@
-package com.histmersion.pluginhost
-
-import com.histmersion.api.*
-import com.histmersion.api.given
+package com.histmersion.upstreams
 
 import io.circe.{ACursor, Json}
 
+/** PURE parsers for the JSON the acquisition upstreams return (OpenAlex, Crossref, Unpaywall, CORE, Semantic Scholar,
+  * Europe PMC, PMC Article Datasets, archive.org, Wikipedia).
+  *
+  * Keeping them apart from the HTTP clients is what makes the toolset testable from fixtures: a test feeds real
+  * captured JSON straight into these functions with no network involved. Everything is total: a missing or unexpected
+  * field yields `None`/`Nil`, never an exception, because upstreams do change shape.
+  */
 object AcquireParse:
 
   // ── small cursor helpers ────────────────────────────────────────────────────────────────────
@@ -42,7 +46,7 @@ object AcquireParse:
   def openalexWork(json: Json): WorkRef =
     val c = json.hcursor
     val authors = arr(c, "authorships").flatMap(a => str(a.hcursor, "author", "display_name"))
-    val doi = str(c, "doi").flatMap(Acquire.normalizeDoi)
+    val doi = str(c, "doi").flatMap(Identifiers.doi)
     val title = str(c, "display_name").map(inlineMarkup)
     val year = int(c, "publication_year")
     WorkRef(
@@ -66,7 +70,6 @@ object AcquireParse:
       workType = str(c, "type"),
       abstractText = c.downField("abstract_inverted_index").focus.flatMap(openalexAbstract),
       referencedWorks = strings(c, "referenced_works").map(tail),
-      citekey = Some(Acquire.citekey(authors, year, title)),
       oaLocations = openalexOaLocations(c),
       oaLicence = str(c.downField("best_oa_location"), "license").orElse(
         arr(c, "locations").filter(l => bool(l.hcursor, "is_oa")).flatMap(l => str(l.hcursor, "license")).headOption
@@ -96,11 +99,10 @@ object AcquireParse:
 
   private def arxivIdFromUrl(url: String): Option[String] =
     if !url.toLowerCase.contains("arxiv.org") then None
-    else Acquire.normalizeArxiv(url.split("/").lastOption.getOrElse("").stripSuffix(".pdf"))
+    else Identifiers.arxiv(url.split("/").lastOption.getOrElse("").stripSuffix(".pdf"))
 
   /** Citing works from OpenAlex (`filter=cites:<id>`) — the fallback when Semantic Scholar is down or rate-limited.
-    * OpenAlex has no citation intents, so every row is left for [[Acquire.classify]] to read from an empty context
-    * (i.e. `cites`).
+    * OpenAlex has no citation intents, so every row has an empty context (the host classifies it as `cites`).
     */
   def openalexCitations(json: Json): List[FollowupRow] =
     openalexWorks(json).map { w =>
@@ -135,27 +137,26 @@ object AcquireParse:
       .flatMap(_.asNumber)
       .flatMap(_.toInt)
     WorkRef(
-      doi = str(c, "DOI").flatMap(Acquire.normalizeDoi),
+      doi = str(c, "DOI").flatMap(Identifiers.doi),
       title = title,
       year = year,
       authors = authors,
       venue = strings(c, "container-title").headOption,
       citedByCount = int(c, "is-referenced-by-count"),
       workType = str(c, "type"),
-      abstractText = str(c, "abstract").map(stripTags),
-      citekey = Some(Acquire.citekey(authors, year, title))
+      abstractText = str(c, "abstract").map(stripTags)
     )
 
   /** Titles carry inline markup (`<i>c</i>. 1200 BC`, `H<sub>2</sub>O`): drop the tags WITHOUT a space — they sit
     * inside words — and collapse what is left.
     */
-  private[pluginhost] def inlineMarkup(s: String): String =
+  private[upstreams] def inlineMarkup(s: String): String =
     s.replaceAll("<[^>]+>", "").replaceAll("\\s+", " ").trim
 
   /** Some publishers deposit a chapter title with its first page glued on: "109Writing and Religion in …". Digits
     * running straight into a capitalised word are that page; "1177 B.C." (a space) and "3.2 ka" are left alone.
     */
-  private[pluginhost] def gluedPageNumber(s: String): String =
+  private[upstreams] def gluedPageNumber(s: String): String =
     s.replaceFirst("^\\d{1,4}(?=\\p{Lu}\\p{Ll})", "")
 
   /** A Crossref `works?query=` page → the works on it (the search fallback when OpenAlex is down). */
@@ -176,7 +177,7 @@ object AcquireParse:
         title = str(h, "article-title").orElse(str(h, "volume-title")),
         authors = str(h, "author").toList,
         year = str(h, "year").filter(_.forall(_.isDigit)).map(_.toInt),
-        doi = str(h, "DOI").flatMap(Acquire.normalizeDoi),
+        doi = str(h, "DOI").flatMap(Identifiers.doi),
         raw = str(h, "unstructured").map(_.take(300))
       )
     }
@@ -187,7 +188,7 @@ object AcquireParse:
     val c = if m.succeeded then m else json.hcursor
     arr(c, "update-to").map { u =>
       val h = u.hcursor
-      UpdateNotice(str(h, "type"), str(h, "label"), str(h, "DOI").flatMap(Acquire.normalizeDoi))
+      UpdateNotice(str(h, "type"), str(h, "label"), str(h, "DOI").flatMap(Identifiers.doi))
     }
 
   // ── Unpaywall / CORE ────────────────────────────────────────────────────────────────────────
@@ -221,9 +222,9 @@ object AcquireParse:
     * or a comment that cites it).
     */
   def europepmcHit(json: Json, doi: String): Option[EuropePmcHit] =
-    val want = Acquire.normalizeDoi(doi)
+    val want = Identifiers.doi(doi)
     arr(json.hcursor, "resultList", "result")
-      .find(r => want.isDefined && str(r.hcursor, "doi").flatMap(Acquire.normalizeDoi) == want)
+      .find(r => want.isDefined && str(r.hcursor, "doi").flatMap(Identifiers.doi) == want)
       .map { r =>
         val c = r.hcursor
         val pdfs = arr(c, "fullTextUrlList", "fullTextUrl").flatMap { u =>
@@ -278,7 +279,7 @@ object AcquireParse:
   // ── Semantic Scholar ────────────────────────────────────────────────────────────────────────
 
   /** One page of `/paper/DOI:{doi}/citations`. Each row carries the citing paper plus the citation's `intents`,
-    * `isInfluential` flag and `contexts` — the signals [[Acquire.classify]] reads.
+    * `isInfluential` flag and `contexts` — the signals the host classifies a citation by.
     */
   def s2Citations(json: Json): List[FollowupRow] =
     arr(json.hcursor, "data").map { d =>
@@ -287,8 +288,8 @@ object AcquireParse:
       FollowupRow(
         title = str(cp, "title"),
         year = int(cp, "year"),
-        doi = str(cp, "externalIds", "DOI").flatMap(Acquire.normalizeDoi),
-        arxiv = str(cp, "externalIds", "ArXiv").flatMap(Acquire.normalizeArxiv),
+        doi = str(cp, "externalIds", "DOI").flatMap(Identifiers.doi),
+        arxiv = str(cp, "externalIds", "ArXiv").flatMap(Identifiers.arxiv),
         citedBy = int(cp, "citationCount"),
         isInfluential = bool(h, "isInfluential"),
         intents = strings(h, "intents"),
@@ -374,10 +375,10 @@ object AcquireParse:
     json.hcursor.downField("parse").downField("wikitext").downField("*").as[String].toOption
 
   /** Harvest every DOI and arXiv id cited by a Wikipedia article's wikitext. Citations trail punctuation (`|`, `}}`,
-    * `.`) into the match, so each hit goes through [[Acquire.normalizeDoi]].
+    * `.`) into the match, so each hit goes through [[Identifiers.doi]].
     */
   def wikiRefs(wikitext: String): (List[String], List[String]) =
-    val dois = DoiInText.findAllIn(wikitext).toList.flatMap(Acquire.normalizeDoi).distinct.sorted
+    val dois = DoiInText.findAllIn(wikitext).toList.flatMap(Identifiers.doi).distinct.sorted
     val arxiv = ArxivInText.findAllMatchIn(wikitext).map(_.group(1)).toList.distinct.sorted
     (dois, arxiv)
 

@@ -37,8 +37,8 @@ object PluginMedia:
   /** The run's polite client as the plugin's HTTP: its pace, its User-Agent, Retry-After honoured, a challenge the end
     * of the request.
     */
-  def http(fetch: Polite): PluginHttp = new PluginHttp:
-    def get(url: String, headers: Map[String, String]) = fetch.get(url, headers).map(_.body)
+  def http(polite: Polite): PluginHttp = new PluginHttp:
+    def get(url: String, headers: Map[String, String]) = polite.get(url, headers).map(_.body)
 
   /** A plugin's answer, or what it threw as a failure of that call. */
   def guard[A](a: => Either[String, A]): Either[String, A] =

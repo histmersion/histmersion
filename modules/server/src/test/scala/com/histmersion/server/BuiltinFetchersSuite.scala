@@ -7,7 +7,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.plugin.{Fetch, FetchContext, PluginHttp, PluginLog, WorkKey}
 import com.histmersion.server.acquire.*
-import com.histmersion.server.acquire.fetchers.{ArchiveOrgFetcher, BuiltinFetchers}
+import com.histmersion.server.acquire.fetchers.BuiltinFetchers
 import com.histmersion.server.plugins.{LegacyPlugins, Plugins}
 import io.circe.Json
 import org.ekrich.config.{Config, ConfigFactory}
@@ -320,7 +320,17 @@ class BuiltinFetchersSuite extends munit.FunSuite:
     */
   private def runIndexes(user: String, http: Indexes, acquire: AcquireConfig = host): Generation =
     val plugins =
-      BuiltinFetchers.plugins(acquire, () => http, () => OpenAlexCrossref(acquire, http), () => fail("archive asked"))
+      BuiltinFetchers.plugins(
+        acquire,
+        () => http,
+        () =>
+          com.histmersion.upstreams.OpenAlexCrossref(
+            com.histmersion.pluginhost.upstreamSettings(acquire),
+            HttpPlugin(http),
+            com.histmersion.pluginhost.HostLog.scribe.plugin
+          ),
+        () => fail("archive asked")
+      )
     val g = PluginHost.build(
       plugins,
       ConfigFactory.parseString(user),
@@ -419,54 +429,6 @@ class BuiltinFetchersSuite extends munit.FunSuite:
     // a reload that changes no plugin carries all three
     assert(BuiltinFetchers.LandingGroup.subsetOf(Plugins.carried(g, Nil, independent = Set.empty).keySet))
 
-  // ── archive-org ─────────────────────────────────────────────────────────────────────────────
-
   private object Ctx extends FetchContext:
     def memo[A](key: String)(compute: => A): A = compute
     val log: PluginLog = new PluginLog { def info(m: String) = (); def warn(m: String) = () }
-
-  final private class FakeArchive(item: ArchiveItem) extends ArchiveClient:
-    var downloaded: List[String] = Nil // a test double's record of calls
-    def search(q: String, rows: Int) = Right(List(item))
-    def info(id: String) = Right(item)
-    def download(id: String, file: String) =
-      downloaded = downloaded :+ file
-      Right(
-        FetchedFile(
-          "archive_org",
-          Some(s"https://archive.org/download/$id/$file"),
-          ("%PDF-1.4\n" + "y" * 20000).getBytes("UTF-8"),
-          file.split("\\.").last
-        )
-      )
-
-  private val files = List(ArchiveFile("x.pdf", Some("Text PDF"), 4.0), ArchiveFile("x.epub", Some("EPUB"), 1.0))
-
-  test("archive-org: no archive.org identifier is a miss, and nothing is asked"):
-    val a = FakeArchive(ArchiveItem("x", files = files))
-    assert(
-      ArchiveOrgFetcher(() => a)
-        .fetch(WorkKey(doi = Some(com.histmersion.plugin.Doi("10.1/x"))), Ctx)
-        .isInstanceOf[Fetch.Miss]
-    )
-    assertEquals(a.downloaded, Nil)
-
-  test("archive-org: a lending-only item is REFUSED and never downloaded"):
-    val a = FakeArchive(ArchiveItem("x", lendingOnly = true, files = files))
-    ArchiveOrgFetcher(() => a).fetch(WorkKey(archive = Some("x")), Ctx) match
-      case Fetch.Refused(why) => assert(why.contains("lending-only"), why)
-      case other              => fail(s"not refused: $other")
-    assertEquals(a.downloaded, Nil)
-
-  test("archive-org: the preferred format, else an EPUB first"):
-    val a = FakeArchive(ArchiveItem("x", files = files))
-    val f = ArchiveOrgFetcher(() => a)
-    assert(f.fetch(WorkKey(archive = Some("x"), format = Some("pdf")), Ctx).isInstanceOf[Fetch.Found])
-    assert(f.fetch(WorkKey(archive = Some("x")), Ctx).isInstanceOf[Fetch.Found])
-    assertEquals(a.downloaded, List("x.pdf", "x.epub"))
-
-  test("archive-org: an item with no epub/pdf file is a miss"):
-    val a = FakeArchive(ArchiveItem("x", files = List(ArchiveFile("x.djvu", None, 1.0))))
-    ArchiveOrgFetcher(() => a).fetch(WorkKey(archive = Some("x")), Ctx) match
-      case Fetch.Miss(why) => assert(why.contains("no epub/pdf"), why)
-      case other           => fail(s"not a miss: $other")

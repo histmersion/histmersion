@@ -46,12 +46,12 @@ object BrowserDownload:
   object Citation extends RefinedType[String, Not[Blank]]
 
   /** The work as a browser download, when it is gold (or diamond) open access, has a DOI, and one of its open-access
-    * locations is on a host in `refusingHosts` (that location is where the person downloads it).
+    * locations is on a host that refuses scripts — `refusingHost(url)`, the host of a location when it is one of
+    * `acquire.landing.browser-download-hosts` (that location is where the person downloads it).
     */
-  def of(work: WorkRef, citekey: Citekey, refusingHosts: List[String]): Option[BrowserDownload] =
-    val onRefusingHost = (work.oaLocations ++ work.oaUrl.toList).distinct.flatMap { url =>
-      RepositoryLanding.host(url).filter(h => refusingHosts.exists(RepositoryLanding.matchesHost(h, _))).map(url -> _)
-    }
+  def of(work: WorkRef, citekey: Citekey, refusingHost: String => Option[String]): Option[BrowserDownload] =
+    val onRefusingHost =
+      (work.oaLocations ++ work.oaUrl.toList).distinct.flatMap(url => refusingHost(url).map(url -> _))
     for
       status <- work.oaStatus.flatMap(s => OaStatus.option(s.trim.toLowerCase(java.util.Locale.ROOT)))
       doi <- work.doi.flatMap(d => Doi.option(d.trim.toLowerCase(java.util.Locale.ROOT)))

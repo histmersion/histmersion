@@ -6,6 +6,7 @@ import com.histmersion.api.PluginState
 import com.histmersion.pluginhost.allowed
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.{
+  upstreamSettings,
   FetchChain,
   HostLog,
   HostServices,
@@ -16,9 +17,9 @@ import com.histmersion.pluginhost.{
   PluginMedia,
   PolicyHttp,
   Registries,
-  SpiValues,
-  WorkLookup
+  SpiValues
 }
+import com.histmersion.upstreams.WorkLookup
 import org.ekrich.config.{Config, ConfigFactory, ConfigValueFactory}
 
 import com.histmersion.plugin.testkit.internal.{Lines, Scrubber, TestVaults, Wire}
@@ -109,7 +110,11 @@ final class PluginHarness private (
       .flatMap(b =>
         io.circe.parser.parse(new String(b, UTF_8)).left.map(e => s"$url returned unparseable JSON: ${e.getMessage}")
       )
-    run(WorkLookup.meta(host.acquire, json, hostLog)(clean).map(w => WorkLookup.key(Some(clean), None, Some(w))))._1
+    run(
+      WorkLookup
+        .meta(host.acquire.upstreamSettings, json, hostLog.plugin)(clean)
+        .map(w => WorkLookup.key(Some(clean), None, Some(w)))
+    )._1
 
   /** One fetch of `work` through the plugin's source fetchers, as the server's acquisition chain runs it. With
     * `saveTo`, a copy found is written into that directory (created when missing) as

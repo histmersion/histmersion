@@ -86,8 +86,8 @@ object PluginEvents:
       case _ => ()
     from(Option(first).filter(p => !done(p)))
 
-  def http(fetch: Polite): PluginHttp = new PluginHttp:
-    def get(url: String, headers: Map[String, String]) = fetch.get(url, headers).map(_.body)
+  def http(polite: Polite): PluginHttp = new PluginHttp:
+    def get(url: String, headers: Map[String, String]) = polite.get(url, headers).map(_.body)
 
   def safe[A](a: => A): Option[A] =
     try Option(a)

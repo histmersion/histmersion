@@ -1,4 +1,4 @@
-package com.histmersion.domain
+package com.histmersion.upstreams
 
 /** JATS (the NISO XML that PubMed Central publishes every article in) → Markdown, PURE (#1523).
   *

@@ -1,4 +1,4 @@
-package com.histmersion.pluginhost
+package com.histmersion.upstreams
 
 import sttp.model.Uri
 

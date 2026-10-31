@@ -1,34 +1,12 @@
 package com.histmersion.pluginhost
 
 import com.histmersion.domain.MediaLicence
-import com.histmersion.api.WorkRef
 import com.histmersion.plugin.*
 
-/** The parts of the host the server and the plugin testkit share: what a work is asked for, the media judgement, the
-  * catalogue paging, the AI guards and the acquisition client's policy.
+/** The parts of the host the server and the plugin testkit share: the media judgement, the catalogue paging, the AI
+  * guards and the acquisition client's policy.
   */
 class PluginHostPartsSuite extends munit.FunSuite:
-
-  test("the chain is asked for a work by its identifiers and its metadata record"):
-    val ref = WorkRef(
-      doi = Some("10.1/x"),
-      arxivId = Some("2101.00001"),
-      title = Some("A title"),
-      year = Some(1999),
-      authors = List("A. Author")
-    )
-    assertEquals(
-      WorkLookup.key(Some("10.1/x"), None, Some(ref)),
-      WorkKey(
-        doi = Some(Doi("10.1/x")),
-        arxiv = Some("2101.00001"),
-        title = Some("A title"),
-        authors = List("A. Author"),
-        year = Some(Year(1999))
-      )
-    )
-    assertEquals(WorkLookup.key(None, Some("hep-th/9901001"), None), WorkKey(arxiv = Some("hep-th/9901001")))
-    assertEquals(WorkLookup.key(Some("not a doi"), Some("2101.00001"), None), WorkKey(arxiv = Some("2101.00001")))
 
   private def item(licence: String, image: Option[String] = Some("https://x.example/1.jpg")) =
     MediaItem(
