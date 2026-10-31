@@ -4,6 +4,7 @@ import com.histmersion.util.ocr.ConverterClient
 
 import com.histmersion.util.jobs.BackgroundJob
 import com.histmersion.util.identity.AliasKind
+import com.histmersion.util.data.mirror.{Mirror, MirrorAdapter, TransitionNotes}
 
 import com.histmersion.values.{BundleKind, Citekey, PlaceKind, UserId}
 import com.histmersion.files.*
@@ -806,7 +807,20 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** The note as it would live on disk — frontmatter YAML + the `notes` body. */
   def exportSource(citekey: String): Either[ApiError, String] =
-    SourceRepo.load(ds, canonical(citekey)).map(Export.note).toRight(Write.notFound(citekey))
+    mirror.note(MirrorAdapter.SourceNotes, citekey)(using transitionNotes)
+
+  /** The Markdown mirror over the registered notes, rendered by today's per-kind code below. */
+  private val mirror = Mirror(Deps.data.mirror)
+
+  private val transitionNotes: TransitionNotes = new TransitionNotes:
+    def sourceNote(citekey: String): Either[ApiError, String] =
+      SourceRepo.load(ds, canonical(citekey)).map(Export.note).toRight(Write.notFound(citekey))
+
+    def articleNote(slug: String): Either[ApiError, String] =
+      ArticleRepo
+        .load(ds, current(AliasKindsAdapter.ArticleRecords, norm(slug)))
+        .map(a => ArticleNote.render(a, coverageOf(a).map(ArticleCoverage.exported)))
+        .toRight(Articles.notFound(slug))
 
   def citekeys: List[String] = SourceRepo.citekeys(ds).toList
 
@@ -1865,10 +1879,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * body (between markers an import drops) and its filter and reasons in the frontmatter (#958).
     */
   def exportArticle(slug: String): Either[ApiError, String] =
-    ArticleRepo
-      .load(ds, current(AliasKindsAdapter.ArticleRecords, norm(slug)))
-      .map(a => ArticleNote.render(a, coverageOf(a).map(ArticleCoverage.exported)))
-      .toRight(Articles.notFound(slug))
+    mirror.note(MirrorAdapter.ArticleNotes, slug)(using transitionNotes)
 
   /** The edit history of one article. 404 when the slug itself is unknown (so "no versions yet" and "no such article"
     * are different answers).

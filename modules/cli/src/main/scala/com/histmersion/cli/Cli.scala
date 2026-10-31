@@ -9,6 +9,7 @@ import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
 import com.histmersion.values.{EdgeKind, SourceStatus}
+import com.histmersion.util.data.mirror.MirrorPlacement
 
 /** Histmersion CLI — a pure HTTP client of the server (no DB access on the host). Every command maps to one `Api`
   * endpoint and prints the shared Markdown rendering, so CLI and MCP output agree.
@@ -157,15 +158,15 @@ object Cli:
       Opts.flag("no-meta", "Do not write the bookkeeping queues and the research goals").orFalse
     ).mapN { (dir, only, srcDir, artDir, metaDir, noMeta) => (c: Client) =>
       val out = Path.of(dir)
-      val sources = srcDir.map(Path.of(_)).getOrElse(out.resolve("sources"))
-      val articles = artDir.map(Path.of(_)).getOrElse(out)
+      val sources = srcDir.map(Path.of(_)).getOrElse(placed(out, MirrorPlacement.SourceFiles))
+      val articles = artDir.map(Path.of(_)).getOrElse(placed(out, MirrorPlacement.ArticleFiles))
       val _ = Files.createDirectories(sources)
       (if only.nonEmpty then Right(only) else c.citekeys).flatMap { ks =>
         val total = ks.size
         val failed = ks.zipWithIndex.flatMap { (ck, i) =>
           println(s"${i + 1}/$total $ck")
           c.exportSource(ck) match
-            case Right(text) => val _ = Files.writeString(sources.resolve(s"$ck.md"), text); None
+            case Right(text) => val _ = Files.writeString(sources.resolve(MirrorPlacement.noteFile(ck)), text); None
             case Left(e)     => Some(s"$ck: ${e.message}")
         }
         println(s"exported ${total - failed.size} note(s) to $sources, failed ${failed.size}")
@@ -179,7 +180,7 @@ object Cli:
           if noMeta then Right(())
           else
             Ops
-              .writeMeta(c, metaDir.map(Path.of(_)).getOrElse(out.resolve("meta")))
+              .writeMeta(c, metaDir.map(Path.of(_)).getOrElse(placed(out, MirrorPlacement.MetaFiles)))
               .map(fs => println(s"wrote ${fs.mkString(", ")}"))
         meta.flatMap { _ =>
           if failed.nonEmpty then
@@ -190,6 +191,9 @@ object Cli:
       }
     }
   }
+
+  /** The directory a kind's notes go in under the export's directory, as the mirror's layout places them. */
+  private def placed(out: Path, placement: MirrorPlacement): Path = placement.directory.fold(out)(out.resolve)
 
   /** Delete `<sources>/<alias>.md` for every old citekey (V027). Best effort: a server without the alias endpoint, or a
     * file that cannot be removed, is reported and does not fail the export.

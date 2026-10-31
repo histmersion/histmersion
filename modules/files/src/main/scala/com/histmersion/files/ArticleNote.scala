@@ -3,7 +3,8 @@ package com.histmersion.files
 import com.histmersion.api.*
 import com.histmersion.api.given
 
-import org.yaml.snakeyaml.{DumperOptions, Yaml}
+import com.histmersion.util.data.mirror.Frontmatter as MirrorFrontmatter
+import org.yaml.snakeyaml.Yaml
 import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
 
@@ -24,22 +25,23 @@ object ArticleNote:
     * and reasons they come from travel in the frontmatter.
     */
   def render(a: Article, generated: Option[String] = None): String =
-    val m = new java.util.LinkedHashMap[String, Any]()
-    m.put("type", a.kind)
-    m.put("slug", a.slug)
-    m.put("title", a.title)
-    m.put("summary", a.summary.orNull)
-    m.put("regions", a.regions.asJava)
-    m.put("tags", a.tags.asJava)
-    m.put("period_start", a.period.map(p => Long.box(p.start)).orNull)
-    m.put("period_end", a.period.map(p => Long.box(p.end)).orNull)
-    a.filter.foreach(f => m.put("filter", filterMap(f)))
-    if a.reasons.nonEmpty then
+    val reasons = Option.when(a.reasons.nonEmpty) {
       val r = new java.util.LinkedHashMap[String, Any]()
       a.reasons.toList.sortBy(_._1).foreach((k, v) => r.put(k, v))
-      m.put("reasons", r)
+      "reasons" -> r
+    }
+    val fields = List(
+      "type" -> a.kind,
+      "slug" -> a.slug,
+      "title" -> a.title,
+      "summary" -> a.summary.orNull,
+      "regions" -> a.regions.asJava,
+      "tags" -> a.tags.asJava,
+      "period_start" -> a.period.map(p => Long.box(p.start)).orNull,
+      "period_end" -> a.period.map(p => Long.box(p.end)).orNull
+    ) ++ a.filter.map(f => "filter" -> filterMap(f)).toList ++ reasons.toList
     val body = (a.body.trim :: generated.map(_.trim).filter(_.nonEmpty).toList).filter(_.nonEmpty).mkString("\n\n")
-    s"---\n${dump(m)}---\n" + (if body.isEmpty then "" else s"\n$body\n")
+    MirrorFrontmatter(fields).note(Option.when(body.nonEmpty)(body))
 
   /** The filter as a frontmatter map: only the parts it has, in a fixed order. */
   private def filterMap(f: ArticleFilter): java.util.Map[String, Any] =
@@ -146,10 +148,3 @@ object ArticleNote:
     case Some(n: java.lang.Number) => Some(n.longValue)
     case Some(o)                   => o.toString.toLongOption
     case None                      => None
-
-  /** Block style, no folding — the same dumper settings as [[Export]], so both mirrors diff cleanly. */
-  private def dump(m: java.util.Map[String, Any]): String =
-    val opts = new DumperOptions()
-    opts.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK)
-    opts.setSplitLines(false)
-    new Yaml(opts).dump(m)

@@ -16,7 +16,6 @@ direction	api:api/Autopilot.scala	automation -> library: UpstreamQuota	1
 direction	api:api/BundleFiles.scala	util.data -> catalogue: Corrections	1
 direction	api:api/BundleFiles.scala	util.data -> catalogue: SiteTypes	1
 direction	api:api/EventDetail.scala	catalogue -> media: MediaThumb	1
-direction	api:api/FormatSeverity.scala	util.data -> library: Frontmatter	1
 direction	api:api/GoalPlans.scala	automation -> research: CoverageReason	1
 direction	api:api/GoalsExport.scala	automation -> library: Query	1
 direction	api:api/JobDetail.scala	util.jobs -> catalogue: EventImportReport	1

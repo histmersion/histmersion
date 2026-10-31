@@ -10,6 +10,7 @@ import com.histmersion.config.*
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.values.BundleKind
+import com.histmersion.util.data.mirror.MirrorPlacement
 
 /** `histmersion article …` — the compiled wiki over HTTP (plan §5.2 stream 2.7).
   *
@@ -31,7 +32,7 @@ object ArticleCli:
   final case class WikiLayout(sources: Path, root: Option[Path])
 
   object WikiLayout:
-    val SourcesDir = "sources"
+    val SourcesDir: String = MirrorPlacement.SourcesDirectory
 
     def of(dir: Path): WikiLayout =
       val here = Option(dir.getFileName).map(_.toString).getOrElse("")
@@ -117,7 +118,7 @@ object ArticleCli:
           case Right(text) =>
             val dir = out.resolve(kindOfNote(text))
             val _ = Files.createDirectories(dir)
-            val _ = Files.writeString(dir.resolve(s"$slug.md"), text)
+            val _ = Files.writeString(dir.resolve(MirrorPlacement.noteFile(slug)), text)
             None
           case Left(e) => Some(s"$slug: ${e.message}")
       }
