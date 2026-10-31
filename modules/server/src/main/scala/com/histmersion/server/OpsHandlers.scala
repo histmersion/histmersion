@@ -7,7 +7,8 @@ import com.histmersion.api.Lint.*
 import com.histmersion.api.Query.*
 import com.histmersion.api.Queue.*
 import com.histmersion.api.GoalPlans.{GoalView, LinkKind, Plan}
-import com.histmersion.db.{AcquireCheckRepo, ArticleRepo, GoalLinkRepo, GoalRepo, QueryRepo, QueueRepo}
+import com.histmersion.db.{AcquireCheckRepo, ArticleRepo, GoalLinkRepo, GoalRepo, QueryRepo}
+import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope}
 import com.histmersion.util.data.checks.{CheckContext, CheckRulesAdapter, CheckRunner, GuardedWrite}
 
 /** The ONE implementation of the stream-2.8 operations — lint, the bookkeeping queues and the read-only query (plan
@@ -78,8 +79,7 @@ final class OpsHandlers(deps: Deps):
 
   // ── queue ────────────────────────────────────────────────────────────────────────────────────
 
-  private def kindOf(list: String): Either[ApiError, Kind] =
-    Kind.parse(list).toRight(ApiError(s"unknown queue list '$list' — one of: ${Kind.all.mkString(", ")}"))
+  private def kindOf(list: String): Either[ApiError, Kind] = deps.workLists.kindOf(list)
 
   def queueList(
       list: String,
@@ -88,10 +88,12 @@ final class OpsHandlers(deps: Deps):
       job: Option[String] = None
   ): Either[ApiError, QueueListing] =
     kindOf(list).map { k =>
-      val items = (goal.map(_.trim).filter(_.nonEmpty), job.map(_.trim).filter(_.nonEmpty)) match
-        case (_, Some(j))    => QueueRepo.forJob(ds, k, j).toList
-        case (Some(g), None) => QueueRepo.forGoal(ds, k, g, all).toList
-        case (None, None)    => QueueRepo.list(ds, k, all).toList
+      val scope = (goal.map(_.trim).filter(_.nonEmpty), job.map(_.trim).filter(_.nonEmpty)) match
+        case (_, Some(j))    => QueueScope.ForJob(j)
+        case (Some(g), None) =>
+          QueueScope.ForGoal(g, GoalLinkRepo.refs(ds, g, LinkKind.QueueItem).toSet, withDone = all)
+        case (None, None) => if all then QueueScope.All else QueueScope.Open
+      val items = deps.queues.list(k, scope)
       val checks =
         if k != Kind.Acquire then Nil
         else
@@ -109,58 +111,18 @@ final class OpsHandlers(deps: Deps):
       QueueListing(k.label, items, checks, Queue.itemGoals(own, linked))
     }
 
-  /** A LOG item with no topic joins today's entry (`## 2026-08-25`), which is how an appended worklog line behaves;
-    * ACQUIRE and TASKS items simply have no topic until one is given.
-    */
-  def queueAdd(list: String, in: QueueAdd): Either[ApiError, QueueItem] =
-    maintenance.guard("queue/add")(queueAddNow(list, in))
+  def queueAdd(list: String, in: QueueAdd): Either[ApiError, QueueItem] = deps.workLists.add(list, in)
 
-  private def queueAddNow(list: String, in: QueueAdd): Either[ApiError, QueueItem] =
-    kindOf(list).flatMap { k =>
-      if in.text.trim.isEmpty then Left(ApiError("queue item text is empty"))
-      else
-        val topic = in.topic.map(_.trim).filter(_.nonEmpty) match
-          case some @ Some(_)        => some
-          case None if k == Kind.Log => Some(java.time.LocalDate.now(java.time.ZoneOffset.UTC).toString)
-          case None                  => None
-        // both are 400s, not 500s: `created_at` reaches Postgres as `?::timestamptz` (a malformed
-        // one used to surface as a driver error) and `status` was written unchecked.
-        for
-          status <- Queue.statusOf(in.status).left.map(ApiError(_))
-          createdAt <- Queue.createdAtOf(in.createdAt).left.map(ApiError(_))
-        yield QueueRepo.add(ds, k, in.copy(topic = topic, status = status, createdAt = createdAt))
-    }
+  def queuePatch(id: Int, p: QueuePatch): Either[ApiError, QueueItem] = deps.workLists.patch(id, p)
 
-  def queuePatch(id: Int, p: QueuePatch): Either[ApiError, QueueItem] =
-    maintenance.guard("queue/patch"):
-      val checked =
-        for
-          status <- Queue.statusOf(p.status)
-          _ <- Queue.textOf(p.text)
-        yield p.copy(status = status)
-      checked.left.map(ApiError(_)).flatMap(QueueRepo.patch(ds, id, _))
+  def queueDelete(id: Int): Either[ApiError, QueueItem] = deps.workLists.delete(id)
 
-  def queueDelete(id: Int): Either[ApiError, QueueItem] =
-    maintenance.guard("queue/delete")(QueueRepo.delete(ds, id))
-
-  /** The list rendered as its `meta/<FILE>.md`. Notes are included — they ARE the file's prose. */
-  def queueExport(list: String): Either[ApiError, String] =
-    kindOf(list).map(k => Queue.render(k, QueueRepo.list(ds, k, all = true).toList))
+  def queueExport(list: String): Either[ApiError, String] = deps.workLists.exportText(list)
 
   def queueImport(list: String, req: QueueImport): Either[ApiError, QueueImported] =
-    maintenance.guard("queue/import")(queueImportNow(list, req))
+    deps.workLists.importText(list, req)
 
-  private def queueImportNow(list: String, req: QueueImport): Either[ApiError, QueueImported] =
-    kindOf(list).map { k =>
-      val rows = Queue.parse(k, req.text)
-      val (added, gone) = QueueRepo.replaceAll(ds, k, rows, req.replace)
-      val notes = rows.count(_.status.contains(Queue.Note))
-      QueueImported(k.label, added - notes, notes, gone)
-    }
-
-  /** Every list at once — what `histmersion export <dir>` writes alongside the source notes. */
-  def queueFiles(): List[(String, String)] =
-    Kind.values.toList.map(k => k.file -> Queue.render(k, QueueRepo.list(ds, k, all = true).toList))
+  def queueFiles(): List[(String, String)] = deps.workLists.files()
 
   /** `meta/GOALS.md`: every goal as its view (links, schedules, approved plan, run cap — the same parts
     * `GET /api/goals/{slug}/view` returns), plus the state of each linked queue item so the file can show it done or
@@ -180,7 +142,7 @@ final class OpsHandlers(deps: Deps):
       )
     }
     val itemIds = views.flatMap(_.links).filter(_.kind == LinkKind.QueueItem).flatMap(_.ref.toIntOption).distinct
-    val status = QueueRepo.byIds(ds, itemIds).map(i => i.id -> i.status).toMap
+    val status = deps.queues.byIds(itemIds.map(QueueItemId(_))).map(i => i.id -> i.status).toMap
     GoalsExport.render(views, status)
 
   // ── read-only query + read-only backup listing ────────────────────────────────────────────────

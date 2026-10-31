@@ -5,7 +5,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
-import com.histmersion.db.{AgentRepo, Db, Migrate, QueueRepo}
+import com.histmersion.db.{AgentRepo, Db, Migrate, QueueRows}
 import com.histmersion.util.jobs.JobRepo
 import com.histmersion.server.{Deps, Handlers}
 import sttp.ai.core.agent.*
@@ -394,7 +394,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     import scala.jdk.CollectionConverters.*
     assertEquals(up.calls.asScala.toList, List("meta 10.1/zz", s"refs $Ck", s"assess $Ck"))
     assert(run.warnings.exists(_.contains("year 2019 differs from the upstream record's 2020")), run.warnings)
-    val done = QueueRepo.get(ds, item.id).get
+    val done = QueueRows.get(ds, item.id).get
     assertEquals(done.status, Queue.Done)
     assert(done.reason.exists(_.contains(Ck)), done)
     val log = h.ops.queueList("log", all = true).toOption.get.items.filter(_.text.contains(Ck))

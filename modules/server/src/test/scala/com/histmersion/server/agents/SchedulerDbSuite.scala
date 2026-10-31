@@ -521,4 +521,4 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 /** The worklog, read for an assertion. */
 private object QueueRepoLog:
   def has(ds: javax.sql.DataSource, prefix: String): Boolean =
-    com.histmersion.db.QueueRepo.list(ds, Queue.Kind.Log, all = true).exists(_.text.startsWith(prefix))
+    com.histmersion.db.QueueRows.list(ds, Queue.Kind.Log, all = true).exists(_.text.startsWith(prefix))

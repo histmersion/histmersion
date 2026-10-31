@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope}
+
 import com.augustnagro.magnum.transact
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -8,7 +10,7 @@ import com.histmersion.api.Agents.*
 import com.histmersion.domain.ManagerPolicy.{Candidate, Next, ReviewFacts, ReviewSettings, StepFacts}
 import com.histmersion.api.Managers.*
 import com.histmersion.api.Queue.{QueueAdd, QueuePatch}
-import com.histmersion.db.{AgentRepo, GoalLinkRepo, ManagerRepo, QueueRepo, ReviewLedgerRepo}
+import com.histmersion.db.{AgentRepo, GoalLinkRepo, ManagerRepo, ReviewLedgerRepo}
 
 import java.time.Instant
 import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
@@ -583,12 +585,12 @@ final class ManagerSupervisor(
   private def fileTask(slug: String, ledger: Option[ReviewLedger.Ledger], text: String): Option[Int] =
     val open = ledger
       .flatMap(_.task)
-      .flatMap(QueueRepo.get(ds, _))
+      .flatMap(i => h.queues.get(QueueItemId(i)))
       .filter(i => i.list == Queue.Kind.Tasks.label && i.status == Queue.Open)
       // the article's collapsed item the ledger lost track of (#934)
       .orElse(
-        QueueRepo
-          .list(ds, Queue.Kind.Tasks, all = false)
+        h.queues
+          .list(Queue.Kind.Tasks, QueueScope.Open)
           .filter(i => ReviewLedger.articleTask(slug, i.text))
           .sortBy(_.id)
           .headOption

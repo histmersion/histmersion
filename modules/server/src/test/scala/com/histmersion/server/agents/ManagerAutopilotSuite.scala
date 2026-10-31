@@ -16,7 +16,7 @@ import com.histmersion.db.{
   GoalRepo,
   ManagerRepo,
   Migrate,
-  QueueRepo,
+  QueueRows,
   ReviewLedgerRepo
 }
 import com.histmersion.server.{Deps, Handlers}
@@ -255,7 +255,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
         .events(ds, seedId(Goal), None, 100)
         .exists(e => e.kind == Feed.Approval && e.text.contains("approved by the autopilot"))
     )
-    assert(QueueRepo.list(ds, Queue.Kind.Log, all = true).exists(_.text.startsWith("autopilot: goal-plan")))
+    assert(QueueRows.list(ds, Queue.Kind.Log, all = true).exists(_.text.startsWith("autopilot: goal-plan")))
 
     // 2. propose-articles: the article plan is approved by the checks and becomes a compile item
     c.scripts += Seq(text(articlesJson))
@@ -313,7 +313,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
         .events(ds, seedId(Goal), None, 200)
         .exists(e => e.kind == Feed.Autopilot && e.text.contains("compiled → reviewed"))
     )
-    assert(QueueRepo.list(ds, Queue.Kind.Log, all = true).exists(_.text.contains(s"goal $Goal: compiled → reviewed")))
+    assert(QueueRows.list(ds, Queue.Kind.Log, all = true).exists(_.text.contains(s"goal $Goal: compiled → reviewed")))
     val st = a.managing.autopilot
     note("autopilot, the goal reviewed", AutopilotMarkdown.status(st))
     val g = st.goals.find(_.slug == Goal).get
@@ -596,8 +596,8 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assert(out.contains("lint --fix started"), out)
     assert(AutopilotRepo.get(ds).lastLintAt.isDefined)
     val deadline = System.currentTimeMillis() + 60000
-    while !QueueRepo.list(ds, Queue.Kind.Log, all = true).exists(_.text.startsWith("autopilot: lint --fix")) &&
+    while !QueueRows.list(ds, Queue.Kind.Log, all = true).exists(_.text.startsWith("autopilot: lint --fix")) &&
       System.currentTimeMillis() < deadline
     do Thread.sleep(200)
-    assert(QueueRepo.list(ds, Queue.Kind.Log, all = true).exists(_.text.startsWith("autopilot: lint --fix")))
+    assert(QueueRows.list(ds, Queue.Kind.Log, all = true).exists(_.text.startsWith("autopilot: lint --fix")))
     assert(!a.autopilot.tick(t0.plusSeconds(3600)).exists(_.contains("lint")), "not due again within the day")

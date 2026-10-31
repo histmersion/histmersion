@@ -5,7 +5,7 @@ import com.histmersion.util.ocr.ConverterClient
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{Db, Migrate, QueueRepo, SourceRepo, TestDb}
+import com.histmersion.db.{Db, Migrate, QueueRows, SourceRepo, TestDb}
 import java.nio.file.{Files, Path}
 
 /** A real queue write can throw instead of returning Left. Never turn stored OCR into a failed job because its optional
@@ -28,7 +28,7 @@ class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
         Right(ConvertedDoc(markdown = "# Fixture\n\nOCR succeeded.", pages = 1, images = Nil))
     val handler = IngestHandlers(Deps(cfg, ds), converter)
     val key = "zz_ingest_queue_failure"
-    val item = QueueRepo.add(ds, Queue.Kind.Acquire, Queue.QueueAdd(text = key))
+    val item = QueueRows.add(ds, Queue.Kind.Acquire, Queue.QueueAdd(text = key))
     val pdf = Files.createTempFile("ingest-queue-upload", ".pdf")
     Files.writeString(pdf, "%PDF-1.4 queue failure fixture")
     def sql(statement: String): Unit =
@@ -56,7 +56,7 @@ class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
         job = handler.job(accepted.jobId).toOption.get
         attempts += 1
       assert(SourceRepo.load(ds, key).isDefined, "source must have been stored")
-      assertEquals(QueueRepo.get(ds, item.id).map(_.status), Some(Queue.Open))
+      assertEquals(QueueRows.get(ds, item.id).map(_.status), Some(Queue.Open))
       assertEquals(job.state, JobState.Done, s"stored source but job error: ${job.error}")
       assertEquals(job.error, None)
       assert(job.progress.exists(_.contains(s"acquisition item ${item.id} NOT ticked off")), job.toString)
@@ -64,6 +64,6 @@ class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
       handler.stop()
       sql("DROP TRIGGER IF EXISTS zz_ingest_reject_done ON queue_items")
       sql("DROP FUNCTION IF EXISTS zz_ingest_reject_done()")
-      QueueRepo.delete(ds, item.id)
+      QueueRows.delete(ds, item.id)
       Files.deleteIfExists(pdf)
       // the pool is this suite's own (DbSuite) and closes after it

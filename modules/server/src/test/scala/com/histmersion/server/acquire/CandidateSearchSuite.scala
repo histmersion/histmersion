@@ -4,7 +4,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.GoalPlans.LinkKind
-import com.histmersion.db.{CandidateRepo, GoalLinkRepo, GoalRepo, Migrate, QueueRepo, SourceRepo}
+import com.histmersion.db.{CandidateRepo, GoalLinkRepo, GoalRepo, Migrate, QueueRows, SourceRepo}
 import com.histmersion.server.agents.ManagerSupervisor
 
 import java.time.LocalDate
@@ -49,7 +49,14 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
     assert(GoalLinkRepo.link(ds, Goal, LinkKind.Query, "bronze age collapse", None))
 
   private def search(idx: List[ScholarlyIndex], alerts: CitationAlerts, day: LocalDate) =
-    CandidateSearch(ds, cfg.acquire.candidates, idx, alerts, () => day)
+    CandidateSearch(
+      ds,
+      com.histmersion.domain.automation.worklists.QueueService(com.histmersion.util.database.Transactor(ds)),
+      cfg.acquire.candidates,
+      idx,
+      alerts,
+      () => day
+    )
 
   test("a sweep stores what is new, deduplicated across indexes and against the corpus and the acquisition list"):
     fresh()
@@ -75,7 +82,7 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
       ),
       cfg.limits.chunkChars
     )
-    QueueRepo.add(ds, Queue.Kind.Acquire, Queue.QueueAdd("zzcand queued https://doi.org/10.5555/zzcand.queued"))
+    QueueRows.add(ds, Queue.Kind.Acquire, Queue.QueueAdd("zzcand queued https://doi.org/10.5555/zzcand.queued"))
     val oa = FakeIndex(
       "openalex",
       Right(List(work("10.5555/zzcand.a"), work("10.5555/zzcand.have"), work("10.5555/zzcand.queued")))

@@ -867,7 +867,6 @@ db:db/PlaceScope.scala	catalogue.places
 db:db/PlanQuotaRepo.scala	automation.agents
 db:db/PointAreaRepo.scala	catalogue.places
 db:db/QueryRepo.scala	library.search
-db:db/QueueRepo.scala	automation.worklists
 db:db/ReviewLedgerRepo.scala	research.workflows
 db:db/Search.scala	library.search
 db:db/SiteTypesSql.scala	catalogue.places

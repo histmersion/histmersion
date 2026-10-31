@@ -1,10 +1,12 @@
 package com.histmersion.server.acquire
 
+import com.histmersion.domain.automation.worklists.QueueScope
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.GoalPlans.LinkKind
-import com.histmersion.db.{AcquireRepo, ArticleRepo, CandidateRepo, GoalLinkRepo, GoalRepo, QueueRepo, SourceRepo}
+import com.histmersion.db.{AcquireRepo, ArticleRepo, CandidateRepo, GoalLinkRepo, GoalRepo, SourceRepo}
 
 import java.time.{LocalDate, ZoneOffset}
 import javax.sql.DataSource
@@ -19,6 +21,7 @@ import javax.sql.DataSource
   */
 final class CandidateSearch(
     ds: DataSource,
+    queues: com.histmersion.domain.automation.worklists.QueueService,
     cfg: => CandidatesConfig,
     indexes: => List[ScholarlyIndex],
     alerts: => CitationAlerts,
@@ -96,7 +99,7 @@ final class CandidateSearch(
       }
       // known already: the corpus, the acquisition list (open or done)
       val corpus = AcquireRepo.doiIndex(ds).keySet
-      val queued = QueueRepo.list(ds, Queue.Kind.Acquire, all = true).flatMap(i => Scheduling.dois(i.text)).toSet
+      val queued = queues.list(Queue.Kind.Acquire, QueueScope.All).flatMap(i => Scheduling.dois(i.text)).toSet
       val (fresh, skipped) = Candidates.dedupe(found, corpus ++ queued)
       val earlier = CandidateRepo.dois(ds, g.slug)
       val again = fresh.count((k, _, _) => earlier.contains(k))

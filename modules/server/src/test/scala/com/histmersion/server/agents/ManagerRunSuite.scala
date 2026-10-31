@@ -8,7 +8,7 @@ import com.histmersion.api.Agents.*
 import com.histmersion.api.Managers.*
 import com.histmersion.domain.ReviewArticle.{Finding, Reviewer, Severity}
 import com.histmersion.domain.ReviewLedger.*
-import com.histmersion.db.{AgentRepo, Db, ManagerRepo, Migrate, QueueRepo, ReviewLedgerRepo}
+import com.histmersion.db.{AgentRepo, Db, ManagerRepo, Migrate, QueueRows, ReviewLedgerRepo}
 import com.histmersion.server.{Deps, Handlers}
 import sttp.ai.core.agent.*
 
@@ -195,7 +195,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     assertEquals(stopped.status, "stopped")
     assert(stopped.outcome.exists(o => o.contains("omission churn") && o.contains("task #")), stopped.outcome)
-    val tasks = QueueRepo.list(ds, Queue.Kind.Tasks, all = false).filter(_.text.contains("zzagent_m2"))
+    val tasks = QueueRows.list(ds, Queue.Kind.Tasks, all = false).filter(_.text.contains("zzagent_m2"))
     assertEquals(tasks.size, 1)
     assert(tasks.head.text.contains("review manager stopped: omission churn"), tasks.head.text)
     // the evaluation happened once per run, whatever the ticks
@@ -281,7 +281,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     a.managers.tick(t0.plusSeconds(47 * 60))
     val f3 = item("zzagent_m4")
     assertEquals((f3.status, f3.failures), ("failed", 3))
-    assert(QueueRepo.list(ds, Queue.Kind.Tasks, all = false).exists(_.text.contains("after 3 failed runs")))
+    assert(QueueRows.list(ds, Queue.Kind.Tasks, all = false).exists(_.text.contains("after 3 failed runs")))
 
   test("capacity: the global cap counts a person's runs; maxRuns; another writer on the article waits"):
     val (a, h) = handlers(PanelClient(Model), baseCfg.copy(agents = baseCfg.agents.copy(maxConcurrentRuns = 2)));

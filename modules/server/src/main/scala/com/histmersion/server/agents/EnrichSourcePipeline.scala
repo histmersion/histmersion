@@ -1,11 +1,13 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.worklists.QueueItemId
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.{ApprovalKind, Pipeline, Role}
 import com.histmersion.domain.EnrichSource.*
-import com.histmersion.db.{AgentRepo, QueueRepo}
+import com.histmersion.db.AgentRepo
 import com.histmersion.server.Handlers
 import io.circe.syntax.*
 
@@ -334,7 +336,7 @@ final class EnrichSourcePipeline(
     * an item done or deleted meanwhile is left as it is, and said so.
     */
   private def tickOff(id: Int, ck: String, runId: String): String =
-    Queue.fulfillable(id, QueueRepo.get(ds, id)) match
+    Queue.fulfillable(id, h.queues.get(QueueItemId(id))) match
       case Left(m)     => s"acquisition item $id NOT ticked off: $m"
       case Right(item) =>
         h.ops.queuePatch(id, Queue.fulfil(item, ck, Some(runId))) match

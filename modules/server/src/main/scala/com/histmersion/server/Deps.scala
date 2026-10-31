@@ -52,6 +52,14 @@ final class Deps(
   /** Transactions on the application role ([[ds]]). */
   val transactor: Transactor = Transactor(ds)
 
+  /** The work lists' kernel (ACQUIRE, TASKS, LOG over `queue_items`). */
+  val queues: com.histmersion.domain.automation.worklists.QueueService =
+    com.histmersion.domain.automation.worklists.QueueService(transactor)
+
+  /** The work lists' operations as REST, MCP and the CLI reach them. */
+  val workLists: com.histmersion.domain.automation.worklists.WorkListControllers =
+    com.histmersion.domain.automation.worklists.WorkListControllers(queues, maintenance, clock)
+
   /** The server's files, each named place where today's settings put it. */
   lazy val storage: com.histmersion.util.storage.Storage =
     StorageLocations.storage(() => cfg, () => loaded, environment, userPaths)

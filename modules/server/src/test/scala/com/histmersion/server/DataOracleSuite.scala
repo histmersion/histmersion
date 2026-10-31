@@ -240,9 +240,9 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
         charEnd = Some(10)
       )
     )
-    val _ = QueueRepo.add(ds, Queue.Kind.Tasks, Queue.QueueAdd("check the storm god", topic = Some("oracle")))
-    val _ = QueueRepo.add(ds, Queue.Kind.Log, Queue.QueueAdd("crafted the oracle", topic = Some("oracle")))
-    val _ = QueueRepo.add(ds, Queue.Kind.Acquire, Queue.QueueAdd("Doe, The Lost Book (1900)", topic = Some("oracle")))
+    val _ = QueueRows.add(ds, Queue.Kind.Tasks, Queue.QueueAdd("check the storm god", topic = Some("oracle")))
+    val _ = QueueRows.add(ds, Queue.Kind.Log, Queue.QueueAdd("crafted the oracle", topic = Some("oracle")))
+    val _ = QueueRows.add(ds, Queue.Kind.Acquire, Queue.QueueAdd("Doe, The Lost Book (1900)", topic = Some("oracle")))
 
   /** After home imported work once, both go on. */
   private def editBoth(work: DataSource, home: DataSource): Unit =
@@ -287,7 +287,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
     val _ = GoalRepo.delete(work, "zz_goal_gone")
     // something new at work
     SourceRepo.upsert(work, src("zzdelta2020_new", "A New Book", 2020, findings = List("new at work")), chunk)
-    val _ = QueueRepo.add(work, Queue.Kind.Tasks, Queue.QueueAdd("a task work added", topic = Some("oracle")))
+    val _ = QueueRows.add(work, Queue.Kind.Tasks, Queue.QueueAdd("a task work added", topic = Some("oracle")))
 
   // ── normalisation ──────────────────────────────────────────────────────────────────────────
 

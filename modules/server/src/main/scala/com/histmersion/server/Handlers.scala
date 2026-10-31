@@ -93,6 +93,13 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     */
   val ops: OpsHandlers = OpsHandlers(deps)
 
+  /** The work lists' kernel. */
+  val queues: com.histmersion.domain.automation.worklists.QueueService = deps.queues
+
+  /** The first acquisition item (any status) whose text names `doi`. */
+  def acquisitionItemNaming(doi: String): Option[Int] =
+    queues.naming(com.histmersion.api.Queue.Kind.Acquire, doi).headOption.map(_.id)
+
   /** The ingest/jobs/assets surface (plan §1.8), in its own file but reached only through here — so "one implementation
     * per operation" still holds for REST, MCP and the CLI alike.
     */

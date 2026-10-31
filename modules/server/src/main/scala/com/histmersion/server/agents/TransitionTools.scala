@@ -49,7 +49,7 @@ final class TransitionTools(h: Handlers, upstream: () => AgentUpstream, caps: =>
 
   private def contribution(n: ToolName)(t: => AgentTool[Identity, ?]): ToolContribution = new ToolContribution:
     val name: ToolName = n
-    lazy val agentTool: AgentTool[Identity, ?] = t
+    val agentTool: AgentTool[Identity, ?] = t
 
   /** Every tool, in the order the engine's toolbox has always listed them. */
   def contributions: List[ToolContribution] = List(
@@ -188,8 +188,10 @@ object TransitionTools:
   val CheckEdits: ToolName = ToolName("check_edits")
   val ArticleCoverage: ToolName = ToolName("article_coverage")
 
-  /** The names, in the order of [[TransitionTools.contributions]]: what the definitions may list before a server runs. */
-  val names: List[ToolName] = List(GetSource, Passages, Search, Facets, Neighbors, Query, GetArticle, Followups, CheckEdits, ArticleCoverage)
+  /** The names, in the order of [[TransitionTools.contributions]]: what the definitions may list before a server runs.
+    */
+  val names: List[ToolName] =
+    List(GetSource, Passages, Search, Facets, Neighbors, Query, GetArticle, Followups, CheckEdits, ArticleCoverage)
 
 /** Scala defaults hold when an agent's arguments are decoded — `search {"topics":[…]}` needs no `tags: []` (without it
   * every list was required, and a Codex skeptic step spent ~3 calls a step on "Missing required field", 2026-10-16).

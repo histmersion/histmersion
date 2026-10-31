@@ -1,5 +1,7 @@
 package com.histmersion.server.acquire
 
+import com.histmersion.domain.automation.worklists.QueueScope
+
 import com.histmersion.domain.library.acquisition.{upstream, wire}
 
 import com.histmersion.values.Citekey
@@ -11,7 +13,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Acquire.Ident
-import com.histmersion.db.{AcquireRepo, AssetRepo, CandidateRepo, QueueRepo, SourceRepo}
+import com.histmersion.db.{AcquireRepo, AssetRepo, CandidateRepo, SourceRepo}
 import com.histmersion.server.Deps
 
 import io.circe.Json
@@ -62,7 +64,7 @@ final class AcquireHandlers(
 
   // ── deterministic new-source search (#3761) ──────────────────────────────────────────────────
 
-  private val search = CandidateSearch(ds, deps.cfg.acquire.candidates, indexes, alerts)
+  private val search = CandidateSearch(ds, deps.queues, deps.cfg.acquire.candidates, indexes, alerts)
 
   /** A goal's (or every goal's) candidates in one state (`new` by default), with the counts per state. */
   def candidates(
@@ -416,11 +418,11 @@ final class AcquireHandlers(
 
   /** The acquisition item that names `doi`, else a new browser download with `text`; and whether it is new. */
   private def acquireOnce(doi: String, text: String): (Int, Boolean) =
-    QueueRepo.acquireNaming(ds, doi).headOption match
+    deps.queues.naming(Queue.Kind.Acquire, doi).headOption match
       case Some(existing) => (existing.id, false)
       case None           =>
         (
-          QueueRepo.add(ds, Queue.Kind.Acquire, Queue.QueueAdd(text, topic = Some(Acquire.BrowserDownloadTopic))).id,
+          deps.queues.add(Queue.Kind.Acquire, Queue.QueueAdd(text, topic = Some(Acquire.BrowserDownloadTopic))).id,
           true
         )
 
@@ -555,7 +557,7 @@ final class AcquireHandlers(
             )
           do
             // an item already naming the DOI was reported just above
-            if QueueRepo.acquireNaming(ds, d).isEmpty then
+            if deps.queues.naming(Queue.Kind.Acquire, d).isEmpty then
               val (id, _) = acquireOnce(d, text)
               steps += IngestStep(
                 "acquire",
@@ -608,7 +610,7 @@ final class AcquireHandlers(
       authors: List[String],
       jobId: Option[String]
   ): List[IngestStep] =
-    val items = QueueRepo.list(ds, Queue.Kind.Acquire, all = false).toList
+    val items = deps.queues.list(Queue.Kind.Acquire, QueueScope.Open).toList
     AcquireMatch.decide(items, doi, title, authors, acq.defaults.titleMatchAt.value).map {
       case AcquireMatch.Decision.Close(i) =>
         IngestStep(

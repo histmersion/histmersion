@@ -27,8 +27,8 @@ final class PipelineWorkflow(
 object PipelineWorkflow:
   /** The step agents each pipeline's steps run as. */
   def agentsOf(p: Pipeline): List[StepAgent] = p match
-    case Pipeline.EnrichSource     => List(StepAgent.EnrichClassify, StepAgent.EnrichFindings, StepAgent.EnrichNotes)
-    case Pipeline.ReviewArticle    =>
+    case Pipeline.EnrichSource  => List(StepAgent.EnrichClassify, StepAgent.EnrichFindings, StepAgent.EnrichNotes)
+    case Pipeline.ReviewArticle =>
       List(StepAgent.RulesReviewer, StepAgent.ColdReader, StepAgent.Skeptic, StepAgent.Fixer)
     case Pipeline.PlanGoal         => List(StepAgent.GoalPlanner)
     case Pipeline.CompileArticle   => List(StepAgent.CompileExtractor, StepAgent.CompileWriter)

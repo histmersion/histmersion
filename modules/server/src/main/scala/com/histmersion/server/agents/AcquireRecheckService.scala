@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope}
+
 import com.histmersion.util.jobs.BackgroundJob
 
 import hearth.kindlings.optics.syntax.*
@@ -8,7 +10,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.AcquireChecks.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.{AcquireCheckRepo, ManagerRepo, QueueRepo}
+import com.histmersion.db.{AcquireCheckRepo, ManagerRepo}
 import com.histmersion.util.jobs.JobRepo
 import com.histmersion.domain.AcquireRecheck.{Action, Candidate, Held, JobPlan, Outcome, Settings, Shared, Tally}
 
@@ -78,7 +80,7 @@ final class AcquireRecheckService(
   final private case class Facts(item: Queue.QueueItem, action: Action, last: Option[AcquireCheckRepo.Row])
 
   private def facts(only: Option[Int]): List[Facts] =
-    val items = QueueRepo.list(ds, Queue.Kind.Acquire, all = false).toList.filter(i => only.forall(_ == i.id))
+    val items = h.queues.list(Queue.Kind.Acquire, QueueScope.Open).toList.filter(i => only.forall(_ == i.id))
     val dois = items.map(i => i.id -> orderedDois(i.text)).toMap
     val held = AcquireCheckRepo.heldByDoi(ds, dois.values.flatMap(_.headOption).toList)
     val last = AcquireCheckRepo.of(ds, items.map(_.id))
@@ -152,7 +154,7 @@ final class AcquireRecheckService(
     */
   def run(in: RecheckRequest, now: Instant = Instant.now()): Either[ApiError, RecheckResult] =
     in.id.filter(id =>
-      !QueueRepo.get(ds, id).exists(i => i.list == Queue.Kind.Acquire.label && i.status == Queue.Open)
+      !h.queues.get(QueueItemId(id)).exists(i => i.list == Queue.Kind.Acquire.label && i.status == Queue.Open)
     ) match
       case Some(id)                       => Left(ApiError(s"no open acquisition item #$id", Some(Write.CodeNotFound)))
       case None if in.limit.exists(_ < 0) => Left(ApiError("--limit is 0 or more", Some(Write.CodeInvalid)))
@@ -311,7 +313,7 @@ final class AcquireRecheckService(
             case _ if h.maintenance.active  => (t, rows, Some("a restore started; stopped"))
             case f :: rest                  =>
               if Thread.interrupted() then throw InterruptedException()
-              if !QueueRepo.get(ds, f.item.id).exists(_.status == Queue.Open) then
+              if !h.queues.get(QueueItemId(f.item.id)).exists(_.status == Queue.Open) then
                 loop(rest, t.modify(_.total).using(_ - 1), rows)
               else
                 val tried = attempt(f, gen, Instant.now())

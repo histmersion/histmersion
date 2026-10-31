@@ -5,7 +5,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.GoalPlans.LinkKind
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.{GoalLinkRepo, QueueRepo}
+import com.histmersion.db.GoalLinkRepo
 import com.histmersion.server.Handlers
 import io.circe.syntax.*
 
@@ -49,7 +49,7 @@ private[agents] trait GoalSweep:
       text: String,
       queued: Map[String, Int]
   ): Either[String, Boolean] =
-    queued.get(doi).orElse(QueueRepo.acquireNaming(ds, doi).headOption.map(_.id)) match
+    queued.get(doi).orElse(h.acquisitionItemNaming(doi)) match
       case Some(id) =>
         ctx.write(
           s"link queue item $id to goal $goal",

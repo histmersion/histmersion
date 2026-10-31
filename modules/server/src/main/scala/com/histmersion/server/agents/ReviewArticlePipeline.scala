@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope}
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -9,7 +11,7 @@ import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewArticle.Finding
 import com.histmersion.api.Queue.QueuePatch
 import com.histmersion.domain.ReviewLedger.Ledger
-import com.histmersion.db.{AgentRepo, QueueRepo, ReviewLedgerRepo}
+import com.histmersion.db.{AgentRepo, ReviewLedgerRepo}
 import com.histmersion.server.Handlers
 import io.circe.syntax.*
 
@@ -806,10 +808,10 @@ final class ReviewArticlePipeline(
 
   private def backlog(ctx: RunCtx, slug: String, l: Ledger): Ledger =
     val tasks = Queue.Kind.Tasks.label
-    val open = QueueRepo.list(ds, Queue.Kind.Tasks, all = false)
+    val open = h.queues.list(Queue.Kind.Tasks, QueueScope.Open)
     // the ledger's item, else the article's collapsed item it lost track of (#934: never a second one)
     val current = l.task
-      .flatMap(QueueRepo.get(ds, _))
+      .flatMap(i => h.queues.get(QueueItemId(i)))
       .filter(i => i.list == tasks && i.status == Queue.Open)
       .orElse(open.filter(i => ReviewLedger.articleTask(slug, i.text)).sortBy(_.id).headOption)
     val kept = ReviewLedger.taskText(l, ctx.run.id) match

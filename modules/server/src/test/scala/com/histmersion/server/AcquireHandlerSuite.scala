@@ -5,7 +5,7 @@ import com.histmersion.pluginhost.{FetchChain, OaFetcher}
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{AcquireRepo, Db, Migrate, QueueRepo, SourceRepo}
+import com.histmersion.db.{AcquireRepo, Db, Migrate, QueueRows, SourceRepo}
 import com.histmersion.server.acquire.*
 
 import java.nio.file.Path
@@ -371,7 +371,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
 
   test("an open-access work no script may fetch goes to the acquisition list once, as a browser download (#1581)"):
     import com.augustnagro.magnum.*
-    def items = QueueRepo.acquireNaming(ds, "10.1038/zztest001").filter(_.status == "open")
+    def items = QueueRows.acquireNaming(ds, "10.1038/zztest001").filter(_.status == "open")
     def dropItems(): Unit =
       transact(ds)(items.foreach(i => sql"DELETE FROM queue_items WHERE id = ${i.id}".update.run()))
     wipe("zzacq_ingested"); dropItems()
@@ -398,7 +398,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
   test("a fetcher's refusal goes into the browser-download item: where to download it, under which licence"):
     import com.augustnagro.magnum.*
     import com.histmersion.plugin.{Access, Fetch, FetchContext, SourceFetcher, WorkKey}
-    def items = QueueRepo.acquireNaming(ds, "10.1038/zztest001").filter(_.status == "open")
+    def items = QueueRows.acquireNaming(ds, "10.1038/zztest001").filter(_.status == "open")
     def dropItems(): Unit =
       transact(ds)(items.foreach(i => sql"DELETE FROM queue_items WHERE id = ${i.id}".update.run()))
     wipe("zzacq_ingested"); dropItems()
@@ -425,7 +425,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     "#1581: a gold open-access work on a publisher that refuses scripts goes to the acquisition list, from a watcher's legal path too"
   ):
     import com.augustnagro.magnum.*
-    def items = QueueRepo.acquireNaming(ds, "10.1038/zztest001")
+    def items = QueueRows.acquireNaming(ds, "10.1038/zztest001")
     def dropItems(): Unit =
       transact(ds)(items.foreach(i => sql"DELETE FROM queue_items WHERE id = ${i.id}".update.run()))
     wipe("zzacq_ingested"); dropItems()
