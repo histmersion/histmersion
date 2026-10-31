@@ -341,7 +341,7 @@ The places and what each may depend on (`docs/research-domain-model.md` §3):
 | place | about | may depend on |
 |---|---|---|
 | `util.<area>` (`database`, `json`, `mcp`, `storage`, `data`, `jobs`, `identity`, `plugins`, `settings`, `basemap`, `ocr`, `process`, …) | a mechanism: no research words | other supporting areas, the shared kernel, `values` — never a domain |
-| `domain.automation` | the workflow engine: runs, steps, schedules, managers, approvals, agents, goals, work lists | supporting areas |
+| `domain.automation` | the workflow engine: runs, steps, schedules, managers, approvals, agents, goals, work lists (`worklists`: the ACQUIRE/TASKS/LOG kernel); `workflows` holds what the domains contribute to it (`WorkflowDefinition`, `ToolContribution`, the `Workflows` registry) | supporting areas |
 | `domain.catalogue` | places, periods, events and what attests them | supporting areas, automation |
 | `domain.media` | pictures and their rights | supporting areas, automation, catalogue |
 | `domain.library` | sources, findings, citations, acquisition, ingest | supporting areas, automation, catalogue, media |
@@ -350,7 +350,11 @@ The places and what each may depend on (`docs/research-domain-model.md` §3):
 | `server` (composition root, `server.views`, `server.instance`) | wiring; pages that join several domains | everything |
 
 A lower domain reaches a higher one only through an interface the lower one owns and the higher one implements
-(a workflow the library registers into the engine, a data contribution a domain registers into `util.data`).
+(a workflow the library registers into the engine, a data contribution a domain registers into `util.data`). An
+agent tool is a `ToolContribution` and a workflow a `WorkflowDefinition` registered into the engine's `Workflows`;
+a workflow names the tools each of its roles may use, and the engine offers an agent nothing else. Today's pipelines
+and tools are registered by transition adapters in the composition root (`server/agents/PipelineWorkflow`,
+`TransitionTools`, `TransitionWorkflows`) until their domains define their own.
 Files and directories are reached through `util.storage`, processes launched through `util.process`, and a
 repository is used only inside its feature. `ArchitectureSuite` (server tests) enforces the table, the file and
 process rule and the repository rule. A file not in its feature package yet has its destination in

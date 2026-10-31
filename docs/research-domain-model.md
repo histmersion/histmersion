@@ -1,6 +1,6 @@
 # Domain model, package by feature, first-party plugins out of the server (refactor step 3, design)
 
-Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17.** Written 2026-10-30 on master
+Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18.** Written 2026-10-30 on master
 58de5489 (branch `domain-design`); revised after the user's reviews of §3: domains above features, measured;
 `personal` with its own interface; `library`, `research`, `catalogue`, `media` named; acquisition and OCR
 dissolved (2026-10-30); automation as a generic workflow engine fed by the domains, data management and file
@@ -2136,3 +2136,102 @@ packages shows no other reflective lazy value. No tracing-agent run. To check at
 `merge plan|apply|list|show|ledger`; `lint` and `lint --fix`; `export <dir>`; `maintenance vacuum`; `reindex`.
 
 TESTS-LINE
+
+## 18. Slice 7 as built, part 1 (the automation engine: contributions, the registry, the work lists, 2026-11-01)
+
+Branch `refactor-s7` from master 3a528816: the oracles first, then the registry, then the work lists' kernel. The
+slice is built in two parts (part 2 below); part 1 is green on its own. `ContractSnapshotSuite` (`toolbox.json` and
+`mcp-tools.json` included) and `CliHelpSnapshotSuite` held byte for byte after every commit; no snapshot was rewritten.
+
+**The oracles** (server tests, recorded on the unchanged engine, `HISTMERSION_UPDATE_ORACLE=1` rewrites them):
+
+| oracle | what it records | result |
+|---|---|---|
+| `AutomationOracleSuite` (no database; `oracle/automation/agent-trees.txt`, `workflows.txt`) | the definitions generator run into a scratch directory for every runtime: each of the 206 files' path, size and SHA-256, the manifest (its moment masked), the definitions' fingerprint and the generator's answer; every workflow the engine runs (identifier, version, target, roles, description), every agent definition's tools, every tool | identical |
+| `RunTranscripts` (a fixture mixed into the 17 scripted-model and manager DB suites; `oracle/automation/runs/<suite>.txt`) | per test, every row it inserted or updated in every table but the bulky reference ones (found by transaction id), as JSON with minted ids, clocks, serials, run ids, digests and minute counts masked and long texts as digest and length, rows sorted; plus the texts the scheduler and autopilot suites hand it — the scheduler's status (goal-first, type-balanced, dry), `why` for a waiting, a running and an unknown item, the autopilot's status on drain, drained, undrain, draining with runs in flight and the drain lifted by turning it on, the stalls report, the autopilot with person and checked approvals | identical, 351 tests, twice in a row |
+
+The transcripts are run on demand: `HISTMERSION_ORACLE_RUNS=1 HISTMERSION_TEST_GROUPS_SERVER=1`, a newly created test
+database, `server/testOnly com.histmersion.server.agents.*`. A test's rows depend on what the suites before it left in
+its forked group's database, and the groups change whenever a suite is added anywhere in the server's tests, so the
+record holds for that invocation alone; in ordinary runs the fixture records nothing. The first record was taken
+minutes before a watcher's weekly cron (Saturday 22:30 UTC) fell inside a test's simulated hours; it was recorded
+again on 07f563ce outside that window, then again in the on-demand form, and compared there twice before anything was
+compared on the branch. The manager DB suites themselves are unchanged and pass.
+
+**Contributions and the registry** (`domain.automation.workflows`, server):
+
+| type | what it is |
+|---|---|
+| `WorkflowDefinition` | `id: WorkflowId`, `version`, `target`, `roles`, `describe`, `allowedTools(role): Set[ToolName]`, `run(run: RunCtx): Either[Halt, String]` |
+| `ToolContribution` | `name: ToolName` and the typed `agentTool` (sttp-ai's `AgentTool`: description, input schema, the call) |
+| `Contributions` | the workflows and tools the domains register |
+| `Workflows` | the registry: `of` refuses two workflows with one identifier, two tools with one name, and a workflow whose roles may use a tool nobody contributes; `parse` (a run's recorded pipeline, trimmed, any case), `definition`, `toolNames`, `replaced` |
+| `ToolName`, `WorkflowId` | newtypes (`[a-z][a-z0-9_]*`, `[a-z][a-z0-9-]*`); the engine's `ToolName` enumeration is gone |
+
+The engine dispatches a run to its registered workflow (a run of an unregistered one fails as before, "no pipeline …
+in this build", and a version change is checked against the definition's version); a step offers its agent only the
+tools the workflow lets the agent's role use (`Engine.offered`). `Toolbox` is the mechanism over the contributed
+tools (`names`, `tools(allow)`, `tool(name)`, the input schema `/mcp/agent/<agent>` lists). `AgentDefinitions` is told
+the toolbox's names: a definition may list only those, with today's message; `ClaudeCodeClient` passes the same list
+to `claude -p`; the generator's known names are the toolbox's. Transition adapters, in the composition root
+(`places.tsv`: `server`): `PipelineWorkflow` registers each of the nine pipelines with the step agents its steps run as
+(a role may use what those agents' definitions list in that role), `TransitionTools` the ten read tools (moved whole
+from `Toolbox`), `TransitionWorkflows` builds the contributions, which `Handlers.automationContributions` hands the
+engine as it is built. `generatePlugin` moved to `server/agents/GeneratePluginMain.scala` (same main class).
+
+**The work lists' kernel** (`domain.automation.worklists`). `QueueRepo` (in the db module, package
+`domain.automation.worklists`, as `JobRepo` is in `util.jobs`) runs on the connection it is given;
+`QueueService` (`Implementation` over a `Transactor`, `InMemory` over `WorkListState`, stamping as the database does,
+UTC to the microsecond) with `QueueScope` (`Open`, `All`, `ForJob`, `ForGoal(goal, linked, withDone)`), `QueueItemId`,
+`QueueError`, `ImportMode`, `ImportCounts`; `WorkListControllers` holds add, patch, delete, import, export and the
+files, dating a log item's topic from the composition's clock (`Deps.clock`) instead of `LocalDate.now`.
+`OpsHandlers.queue*` delegate to it; every server caller of the repository goes through `Deps.queues`. The goal scope
+is given the goal's `queue-item` link references instead of joining `goal_links`; the DOI lookup takes its list
+(`naming(list, doi)`). `QueueServiceContract` runs `QueueRepoSuite`'s scenarios and four more (a first done time
+kept, an item made done, `byIds`, the DOI lookup) on `InMemory` and on a scratch database per test;
+`WorkListControllersSuite` runs over `InMemory` with `Clock.fixed`. Other suites seed the lists through the db
+tests' `QueueRows`.
+
+**Architecture.** Deletions only: `exceptions.tsv` 578 → 542 rows — direction 369 → 345 (24: the engine naming the
+seven pipeline classes, `ToolName`'s and `Toolbox`'s references to the tools' inputs, `Handlers`, `McpTools`, `OpsTools`,
+`AcquireMarkdown`, `ArticleMarkdown`, `Query`, `Search`, `ArticleCoverage`), repository 143 → 131 (12: `QueueRepo` named by
+`IngestHandlers`, `OpsHandlers`, `AcquireHandlers`, `CandidateSearch` and eight engine files). `places.tsv`: the four
+adapter files added (`server`), `ToolName` and `db/QueueRepo` gone.
+
+**Deviations.**
+
+- `WorkflowDefinition` runs a workflow as today's pipelines run, steps in a fixed order through `RunCtx`, each
+  checkpointed by the engine, instead of §3.5's `start`/`step`/`settled`: that decomposition is what each domain
+  writes when it replaces its adapters with its own definitions (§6.5 already writes compile-article's steps as pure
+  functions), and the engine's checkpoint replay depends on the fixed order today.
+- `ToolContribution` carries sttp-ai's typed `AgentTool` instead of `call(input: Json, caller)`: the loop decodes a
+  call's arguments with the tool's own codec and answers a bad one with its own text, which the scripted suites pin;
+  the tools are read-only, so no `Caller` is passed yet.
+- A definition's fingerprint (`AgentTrees.sha`) is the text of the definition with each tool named as the old
+  enumeration printed it (`AgentDef.fingerprint`), so installed trees are not regenerated.
+- The work lists' item record is still the wire's `api.Queue.QueueItem` and its list `api.Queue.Kind` (rule 3 allows
+  the reuse); `QueueScope.ForJob` and `ForGoal` take raw text, since the CLI's `--job` and `--goal` list nothing for an
+  unknown value rather than refusing it. The bundle import and the source deletion still write their log lines with
+  `QueueRepo.insert` inside their own transactions (their repository rows stay). `Handlers.acquisitionItemNaming` keeps
+  the acquisition list's DOI lookup out of an engine file until the library's slice owns it.
+- `ManagerAutopilotSuite`'s "approvals a person's" test failed on the unchanged code in the minutes around the weekly
+  cron window above and passed outside it; it is a wall-clock dependence of the test, older than this slice.
+
+**Part 2 (to do).** The remaining scope of §9.2's row 7: `ManagerKind` (the supervisor's review and watch kinds as
+contributions, its loop, holds, retries, cron, approvals settlement and hints left in the engine), `ObjectiveProgress`
+(the goal stages' facts), runs recorded through `util.jobs` (the 36 statements of `AgentRepo` on `jobs`), the
+generator fed by contributed roles as well as tools, checkpoints, approvals, the scheduler and the autopilot moved into
+`domain.automation.*` packages with the rest of `server/agents` (about 100 files) and their exception rows, and the
+design of SPI-9 (Q5).
+
+**Native image.** Renamed: `db.QueueRepo$` → `domain.automation.worklists.QueueRepo$` (`given_DbCodec_QueueItem$lzy1`),
+`server.agents.Toolbox$package$` → `TransitionTools$package$` (`given_Configuration$lzy1`). `javap -p` over every class
+of the new packages and adapters shows no other reflective lazy value (the tools are built eagerly). No tracing-agent
+run. To check at the bundle: `--self-check`; `smoke.sh`; an agent run with tools on a CLI runtime (`/mcp/agent/<agent>`
+`tools/list`); `histmersion queue list|add|done|rm|import|export`; `agent generate`.
+
+**Tests.** After `sbt clean`, `just test-quick` with every module named, on a throwaway database: 4 994 tests, one failed
+(1 skipped, 1 ignored): `DataOracleSuite` (slice 6), whose record holds each source's `addedDate`, the local calendar
+day — it was recorded on 2026-10-31 and fails from 2026-11-01 on the unchanged code (07f563ce) too, with nothing but
+that date different. The transcript oracle ran as above, identical twice; `ContractSnapshotSuite`,
+`CliHelpSnapshotSuite`, `AutomationOracleSuite` and `ArchitectureSuite` passed.
