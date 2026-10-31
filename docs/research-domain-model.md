@@ -1,6 +1,6 @@
 # Domain model, package by feature, first-party plugins out of the server (refactor step 3, design)
 
-Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14.** Written 2026-10-30 on master
+Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15.** Written 2026-10-30 on master
 58de5489 (branch `domain-design`); revised after the user's reviews of §3: domains above features, measured;
 `personal` with its own interface; `library`, `research`, `catalogue`, `media` named; acquisition and OCR
 dissolved (2026-10-30); automation as a generic workflow engine fed by the domains, data management and file
@@ -1719,3 +1719,189 @@ files. Two holders whose lazy values only a fetch reads, `OaRecords` (`openalex`
 `Pmc$PmcLookup` (`hit`, `record`), were carried over by hand from the deleted classes' entries, their field names
 read with `javap`. The server's other new entries are `HostProvided$NoSettings$`'s reader and two givens of the
 import's merge (`CatalogMerge$Fit$`, the `CatalogRecord` schema). The CLI's metadata is unchanged.
+
+## 15. Slice 4 as built (plugins II: media, gazetteers, AI over HTTP, Calibre and archive.org, 2026-10-31)
+
+Branch `refactor-s4` from master a3e86377, built as four streams (media; gazetteers; AI over HTTP; Calibre with
+archive.org), each with its oracle committed first on the unchanged code, then merged. `CliHelpSnapshotSuite` held byte
+for byte after every commit. `ContractSnapshotSuite` changed only by additions, each intended (below); no snapshot or
+transcript was rewritten to make a test pass.
+
+**The oracles.** Recorded before anything moved, compared byte for byte afterwards (`HISTMERSION_UPDATE_TRAFFIC=1`
+rewrites them; never set after the first commit of each stream):
+
+| suite | what it runs (no socket leaves the machine) | transcript | result |
+|---|---|---|---|
+| `MediaTrafficSuite` | the ten collections' dry runs over every place and event of a fixture map, a single-target import of each, two refreshes, a job of each, the switched-off and keyless refusals, the provider lists, on a scratch database; every request with every header, each report, then every stored asset (bytes by digest), link (role, property, item, rank, basis), check and Commons category | `traffic/media.txt` (1 211 lines) | identical |
+| `GazetteerTrafficSuite`, `GazetteerStoreSuite` | Cliopatria (zipped), AWMC and ChronOntology through a loopback server — the three suites' fixtures and edge fixtures (years as strings and floats, undated slices, one-ended spans, a zip with no usable file, a non-JSON body, an HTTP 503); the requests, every `PlaceInput` (parents first) and the dry-run result; then real imports and re-imports into a scratch database, the stored places, names and relations | `traffic/gazetteers.txt`, `traffic/gazetteers-stored.txt` | identical; `java.net.http` sends no `Accept` or `Connection` header, which `HttpURLConnection` did (left out of the transcript) |
+| `AiTrafficSuite` | 46 agent-loop scenarios for anthropic, openai and local against a loopback server set as each `base-url` (tools over several iterations with the iteration notes and the final no-tools call, typed answers, strict tools on and off, token limits, HTTP errors, 429s, malformed bodies, timeouts, nothing listening, no key, bad URLs); every request (method, path, headers, the whole body), then what the loop returned and what the engine made of a failure | `traffic/ai.txt` | bodies, order, results and engine messages identical; two transport headers differ on every request: sttp's backend sent the JDK's `User-agent: Java-http-client/…` and `Accept-encoding: gzip, deflate`, `HostAiHttp` sends the host's User-Agent and no `Accept-Encoding` — the suite maps exactly those two recorded lines before comparing |
+| `CalibreCommandsSuite` | 66 steps of every `calibre` command (search incl. `--unlinked` and the sqlite3 fallback, import incl. the volume refusal and `--no-convert`, link, push, `push --replace`, update one and `--all` dry/`--json`/`--apply`, set and its refusals, audit, sync dry/`--json`/`--apply` with a failure, gaps with and without `--quiet` and its exit codes, `--json`, with `originals-dir`), the CLI as its own process against a test server over a fixture library with a fake `calibredb` and a logging `sqlite3` whose argument logs are in the transcript; writes on a copy | `calibre/commands.txt` | identical; for the server-side steps the CLI's own Calibre tools point at programs that do not exist, so the server did the work |
+| `ArchiveTrafficSuite` | archive search, info and import through a recording transport, with the stored rows | `traffic/archive.txt` | identical |
+
+Normalised in the Calibre and archive transcripts only: scratch paths, the server's port, temp directory names, uids,
+job ids and timestamps.
+
+**SPI additions** (all additive and defaulted; `Spi.Version` stays 2):
+
+| | member | default |
+|---|---|---|
+| SPI-4 | `MediaItem.role`, `MediaCollection.roles`; `MediaCollection.Roles` widened to the stored set (`locator-map`, `plan`, `aerial-view`, `route-map`, `depiction` added); `MediaItem`'s 11-argument constructor and `apply` kept | `None`, `Set(role)` |
+| SPI-5 | `MediaCollection.searchEvent(event, http)`, `MediaEvent(id, label, wikidata, period)`, `MediaCollection.asks: Set[MediaTarget]` | `Right(Nil)`, `Set(Places)` |
+| SPI-6 | `MediaMatchRule.Own` | — |
+| SPI-8 | `AiCapabilities.iterationMarkers` (the host passes sttp-ai's `[Iteration n of m]` entries), `AiCapabilities.verbatimFailures` (a failure is the run's whole error text, unprefixed), `AiTurnRequest.answerSchemaRendered` (the schema as sttp-ai encoded it, `$schema` kept) and `answerDescription`, `AiUsage.reasoning`; the old constructors and `apply`s kept | off, `None`, `0` |
+| SPI-10 | `PluginContext.gazetteerSources`; `GazetteerSource(title, description, rights, fetch(http))`; `GazetteerRights(licence, credit, licenceUrl)`; `GazetteerPlace`/`GazetteerName`/`GazetteerRelation`/`GazetteerOpenSide` in the store's shape | refusing registry |
+| SPI-11 | `PluginContext.sourceCollections`; `SourceCollection` (below) with `CollectionId`, `CollectionCapability` (`Read`, `Add`, `Update`), `CollectionItem`, `CollectionFile`, `CollectionQuery`, `CollectionMetadata`, `CollectionChange`, `CollectionLink`, `CollectionUpdateEntry`/`Outcome`, `CollectionRecord`, `CollectionIssue`, `CollectionFinding` | refusing registry; every write refuses |
+| beyond §8.3 | media: `MediaCollection.searchTargets(places, events, http): MediaFound` and `completeAll(items, http): MediaCompleted` with `MediaUse`, `MediaFound`, `MediaCompleted`, `MediaTargetId`; `MediaItem.rendition: Option[MediaRendition]`; `MediaCollection.check`, `refusalBackoffMs`, `latestYear`, `placesCarrying`; `MediaPlace.ids` (6-argument constructor and `apply` kept); `PluginContext.licences: LicenceReader` → `LicenceRead(id, family, needsAttribution)` | per target / per item; `None`; `Right(())`, `Nil`, `None`, `None`; `Nil`; reads everything as unknown |
+
+`SpiAdditionsSuite` checks every default and every kept constructor; `GazetteerSpiSuite` the gazetteer records.
+
+**`plugins/media`** (`media-wikidata`, `media-depicts`, `media-met`, `media-cleveland`, `media-aic`, `media-loc`,
+`media-pleiades`, `media-opencontext`, `media-smithsonian`, `media-europeana`; the two keyed ones off by default as
+before). The providers' parsers moved from core with them (`MetMuseum`, `ClevelandArt`, `ArtInstitute`,
+`LibraryOfCongress`, `OpenContext`, `Smithsonian`, `Europeana`, `Commons`, `CommonsDepicts`, `PleiadesLinks`,
+`FreeTextDates`, `MediaRoles`) and now produce `MediaItem`s with the licence as the provider states it: an id where
+the provider gives a flag (`CC0-1.0` for the Met's `isPublicDomain`), the URL where it gives one (Open Context,
+Europeana), the machine id or short name Commons gives (M4). `MediaText` and Wikidata's entity reading
+(`WikidataEntities`, `WikidataItem`, `WikidataStatement`) moved to `upstreams`, shared with the host's label lookup.
+Each plugin is supplied `histmersion.media` by `FirstPartySettings` (M6), so a media key now rebuilds the ten plugins
+where the host used to read it at each import; users keep writing `histmersion.media.*`. The host's one import runs
+every registered collection, first-party or not (M1): `MediaImporter.of` chooses the targets from `asks` and
+`placesCarrying`, the pace and the refusal patience from the collection, then `CollectionImport` over `PluginCollection`
+for a collection searched by a place's name, or the new `domain/media/OwnImport` — the former `CommonsFiles` loop,
+generalised — for one of its targets' own pictures (`MediaMatchRule.Own`: Wikidata, depictions, Pleiades), which is
+asked about a whole batch and completes the files to store in one batch, so Wikidata's 50 items and Commons' 50 titles
+a call stay as they were. The host classifies every stated licence with `MediaLicence` and judges it against the
+collection's allowlist: `BuiltinMedia.licencesFor(name)` answers a first-party collection from `media.<provider>.licences`
+(Q13), a third party's from `media.collections`. `BuiltinMedia` is now the table of the ten names: the plugin each
+belongs to, what a refusal calls it, the name its checks are recorded and its pictures stored under
+(`wikimedia-commons` for the three Commons-backed ones), its allowlist, the aliases and the reserved names. Gone:
+`HostMediaCollection`, `KeyedEntry`/`KeyedMeta`/`KeyedConfig`/`KeyRefusal`, the eight per-provider classes,
+`WikidataCommons`, `CommonsDepictions`, `PleiadesImages`, the pluginhost media-settings extensions but the testkit's and
+the illustrations', and `HostProvided` for media. The parser suites moved to the plugin (`CollectionParsersSuite`,
+`PortalParsersSuite`, `KeyedParsersSuite`, `CommonsParsersSuite`, `MediaPluginsKitSuite` through the testkit); the
+match and licence rules' cases stay in core; the server's collection suites run the plugins through the host's new path.
+
+**`plugins/gazetteers`** (`gazetteer-cliopatria`, `gazetteer-awmc`, `gazetteer-chronontology`), each registering one
+source under its old name, now reserved (`ReservedNames.gazetteerSources`, with `land`, `periodo` and the bundled
+extracts' names). A place with no source of its own is stored with the dataset's credit, which reproduces today's
+source lines. `PluginGazetteers` (plugin-host) guards the answer, converts each place to `PlaceInput` and lends each
+download a client of its own: the gazetteer import's User-Agent, asked once (SPI-1 `fetch`), the timeouts of the new
+`places.fetch-timeout-seconds` (120) and `places.fetch-connect-timeout-seconds` (30), which replace two constants.
+`ImportRunner` runs any registered source (G2); Cliopatria's parent concepts now come first in its plugin's `fetch`, so
+the host names no source. `server/domain/catalogue/places/BuiltinGazetteers` keeps the names, titles and order of
+`places fetch` and `init.fetch-sources`, which are unchanged; a source switched off names its switch. `GazetteerLoad`,
+PeriodO and Natural Earth stay host code (Q23). The three fixture suites moved to the plugin with every assertion.
+
+**`plugins/ai-http`** (`ai-anthropic`, `ai-openai`, `ai-local`), over plugin-api, circe and sttp's model (for
+`Uri`'s parsing and its messages). Each implements `AiProvider.turn` itself over the host's `AiHttp`: the Anthropic
+Messages API, and the OpenAI chat-completions API for openai and local, with sttp-ai's own request shapes
+(`ensureObjectType`, `normalizeForStrict`, the 4096 default, the system message, `call_<i>` ids) and decoders (so
+failure texts are the same). The host loop stays sttp-ai's through `PluginAiClient` (A1); the server no longer links
+sttp-ai's `claude` and `openai` modules, only `core`. `FirstPartySettings` supplies each its
+`histmersion.agents.providers.<name>` (A2); `ANTHROPIC_API_KEY`/`OPENAI_API_KEY` work as before, and a change to those
+keys rebuilds that one plugin. `HostAiProvider` and `HostProvided` now cover only the three CLI runtimes, until slice 12
+(SPI-9). `AgentDoctor` keeps its HTTP-provider checks host-side (below). `domain/automation/agents/VerbatimFailure`
+carries a verbatim provider's error.
+
+**Calibre and archive.org as source collections (SPI-11).** `SourceCollection`: `title`, `description`,
+`capabilities`, `readOnlyReason`, `reach`, `search(query)`, `item(id)`, `admits(item)`, `file(item, format)`,
+`original(item, file)`, `cover(item)`, `add(metadata, file)`, `replace(id, key, file)`, `update(id, metadata)`,
+`updateAll(links, apply)`, `set(id, fields)`, `audit(records)`; `HostCollection` (plugin-host) guards every call and
+refuses a write whose capability is not declared. `domain.library.collections` defines and runs it:
+`CollectionsService` (trait, `Implementation` over a `Transactor`, `InMemory`), `CollectionsControllers` (writes behind
+the maintenance lock), `CollectionsRoutes` (twelve `/api/collections/{name}/…` endpoints) and `CollectionsTools` (one
+`collection` MCP tool, not offered to agents), writing through `CollectionLibrary` — the same handlers the endpoints run,
+`AcquireRepo`'s gap and push-metadata queries reused through `AcquireHandlers`. `plugins/calibre` (`calibre`) holds the
+CLI's reader and writer, ported: `calibredb list --for-machine` with the `sqlite3 -readonly` fallback, `add`,
+`set_metadata`, `add_format`, the metadata guard and the GUI refusal. Its settings are its own block:
+`library-path` (`~/Calibre Library`, `${?HISTMERSION_CALIBRE_LIBRARY_DIR}`), `calibredb`
+(`${?HISTMERSION_CALIBRE_CALIBREDB}`), `sqlite` (`${?HISTMERSION_CALIBRE_SQLITE3}`), `write-back`, and `gui-process`
+(the process the GUI check looks for, so a test can make it deterministic). The `archive-org` plugin registers
+archive.org as a read-only collection too, which now runs `archive search|info|import` with the same endpoints, tool,
+output and lending-only refusal; `ArchiveClient`, `ArchiveOrgClient` and `AcquireHandlers.archiveSearch/archiveInfo`
+are gone.
+
+*The CLI.* Every `calibre` command first asks `GET /api/collections/calibre`; when the server answers
+`reachable: true`, the command is an HTTP client of the server, with the same output code (`CollectionsMarkdown` in
+api, the same `--json` shapes). Any other answer — a 404 from an older server, the plugin switched off, an unreachable
+library, no server — runs today's host-side code unchanged (§8.6: kept until slice 13). Always host-side: `push --file`,
+a `push` when `cli.calibre.originals-dir` holds the source's file, and `gaps`/`sync` whenever `originals-dir` is set
+(only the CLI sees that directory). A write the server refuses because write-back is off is not retried on the host.
+
+*Write-back.* The plugin's defaults resource sets `write-back = true` (`${?HISTMERSION_PLUGIN_CALIBRE_WRITE_BACK}`),
+documented there and in the configuration reference: `calibre push`, `sync --apply`, `update` and `set` are this
+install's write path, and the research workspace's hook (`calibre gaps --quiet`, then `calibre sync --apply`) depends
+on them. `write-back = false` makes the collection read-only (`{Read}`), and every write refuses with "Calibre is
+read-only here: write-back is off — set histmersion.plugins.calibre.write-back = true (…) to let the server write to the
+library". This departs from Q41's "off unless configured" in its default only.
+
+*Reach.* `reach` (on `GET /api/collections/{name}` and the tool's `list`/`info`) checks the library folder and
+`metadata.db`, then reads 16 bytes of it. The server runs as the user's LaunchAgent, so it reads `~/Calibre Library`
+as the user does; a library in Documents, Desktop, Downloads, iCloud Drive or on an external volume needs Full Disk
+Access (or Files and Folders) for the server's binary — `libexec/histmersion-server`, or the relinked one — in System
+Settings → Privacy & Security, which the check says when the read fails; a server in a container needs the library
+mounted. The check runs only on request, and `Plugins.offline` leaves `calibre` out, so no test or database-less tool
+reaches a real library. Every library test refuses to run on `~/Calibre Library` or `$HISTMERSION_CALIBRE_LIBRARY_DIR`
+(`CalibreFixture.refuseRealLibrary`, after `~` expansion and `toRealPath`); the fake `calibredb`/`sqlite3` refuse any
+directory without the fixture's marker.
+
+**The contract snapshots.** `cli-help.txt`, `toolbox.json` unchanged. `plugins.json`: the three gazetteer plugins and
+`calibre` added (registered, `gazetteer-source:<name>` / `source-collection:calibre`; calibre's five settings), and
+`archive-org` provides `source-collection:archive-org` beside its fetcher; every other entry unchanged (media, AI:
+same versions, provides and empty settings). `openapi.json`: the twelve collection paths and 27 `Collection*` schemas
+added, nothing changed or removed (compared parsed). `mcp-tools.json`: the `collection` tool added. `settings.json`:
+the two `places.fetch-*` keys added.
+
+**Architecture.** `exceptions.tsv` lost 10 rows: `api/Markdown → Commons`, `core/Europeana → ExternalIds`,
+`core/OpenContext → ExternalIds`, `server/media/BuiltinMedia → Deps`, `HostMediaCollection → Deps`, `KeyedEntry →
+Deps`, `Plugins → BuiltinMedia`, `ImportRunner → CliopatriaImporter` and `→ GazetteerImporter`, and
+`server/agents/LlmClient → Version`. `places.tsv` lost 33: core's twelve moved parsers and `MediaText`, the server's fifteen
+moved or deleted media files, the four gazetteer importers and `server/acquire/ArchiveClient`. The new server
+files are in their feature packages (`domain/media`, `domain/library/collections`, `domain/catalogue/places`,
+`domain/automation/agents`). One rule changed: an `api.<domain>.<feature>` package now has the place
+`<domain>.<feature>`, as a domain package does (the collections' 27 wire records live in `api.library.collections`).
+
+**Deviations from §8.**
+
+- Media: the batch members, `rendition`, `check`, `refusalBackoffMs`, `latestYear`, `placesCarrying`,
+  `MediaPlace.ids` and `PluginContext.licences` are beyond §8.3. Without the batch members a per-target search would
+  have asked Wikidata and Commons once per item instead of 50 at a time; without the lent `LicenceReader` the
+  Commons, Open Context and Europeana parsers could not give today's refusal reasons and credit lines (they decide on
+  the classified family — whom a licence requires to be credited, which of two statements is known, a short name)
+  without a second copy of `MediaLicence` in the plugin. The host still reads every stated licence itself.
+- Media: a refusal Commons decides (non-free, unreadable, all rights reserved, no author to credit) is a `withheld`
+  item with its licence stated, not a `Left`, so the counts keep its licence key as before.
+- Media: `OwnImport` is a second host loop beside `CollectionImport`, chosen by the match rule, because the two kinds
+  report and store differently (declared sizes and Commons' thumbnails against measured ones and made ones, the samples,
+  the category links); a third party may choose either.
+- AI: two SPI-8 members beyond prompt caching and strict tools, which the built-ins did not need as SPI members (strict
+  tools is the plugin's own setting; there is no prompt caching on this path). `AgentDoctor` stays host-side: moving its
+  checks into the plugins' `doctor` would add a plugin section to `agent doctor`'s output.
+- Gazetteers: two settings keys replace constants (`places.fetch-*`), an addition to `settings.json`. A year beyond an
+  `Int` is now read as absent, an inverted period is ordered (it made Postgres reject the batch), a refused place is
+  listed in `failed`; none occurs in the first-party data.
+- Calibre: the SPI is wider than §8.5's signature (`file`/`original` split so the `calibredb` calls stay as they were,
+  `replace`, `updateAll`, `set`, `admits`, `cover`, `reach`, `readOnlyReason`), and `write-back` defaults to `true`
+  (above). Its settings come from its own block with the `HISTMERSION_CALIBRE_*` variables, not from the CLI's
+  `cli.calibre.*` file keys. Linked-source listings are no longer capped by `query.max-rows`. Link-based operations are
+  Calibre-only (sources keep one `calibre_id`). With `archive-org` switched off, `archive search|info` refuse.
+- Calibre: the reader, writer and output code exist twice until slice 13 (the CLI keeps its host-side copy, §8.6);
+  `media covers` still reads Calibre on the host (media covers move with slice 9).
+- Tests: the server's tests depend on the CLI (`test->compile`) so the Calibre oracle can run it, and on
+  `pluginsCalibre`'s tests (`test->test`) for the fixture library. `Plugins.offlineWith` takes an environment and
+  carried plugins, and reads the host's own settings from the user block too, so a test supplies the first-party
+  plugins' settings as text.
+
+**A plugin built against master's SPI.** The `hello` and `hello-ai` jars built from master a3e86377 were put on this
+branch's server class path (`server/writeClasspath`, then `java -cp … --self-check` with both enabled in a scratch
+config, data directory and home): both registered — `hello 0.1.0 — registered (source-fetcher:hello)`, its greeting
+as configured, `hello-ai 0.1.0 — registered (ai-provider:hello-ai)` — beside the 34 first-party plugins, exit 0.
+
+**Native image.** Each new module carries its metadata, as `plugins-fetchers` does:
+`META-INF/native-image/com.histmersion/plugins-media/`, `…/plugins-gazetteers/`, `…/plugins-ai-http/` and
+`…/plugins-calibre/` `reachability-metadata.json`, each with its plugins' `configReader$lzy1`, its settings records'
+`derived$ConfigReader$lzy1` (read with `javap`), its defaults resources and its services file. The server's file lost
+the media, AI and archive defaults resources, `KeyedConfig$`'s reader and sttp-ai's `SchemaSupport$$anon$1`, and
+gained the collections' 27 wire records' lazy fields and `CollectionsTools$CollectionInput$` (the CLI's file the wire
+records too). No tracing agent was run: every path a plugin's new code takes is reached only by a request to an
+upstream or a model, and slice 3's tracing once reached a real service; the entries were written by hand from `javap`.
