@@ -317,7 +317,7 @@ The places and what each may depend on (`docs/research-domain-model.md` §3):
 
 | place | about | may depend on |
 |---|---|---|
-| `util.<area>` (`database`, `json`, `storage`, `data`, `jobs`, `identity`, `plugins`, `settings`, `basemap`, `ocr`, `process`, …) | a mechanism: no research words | other supporting areas, the shared kernel, `values` — never a domain |
+| `util.<area>` (`database`, `json`, `mcp`, `storage`, `data`, `jobs`, `identity`, `plugins`, `settings`, `basemap`, `ocr`, `process`, …) | a mechanism: no research words | other supporting areas, the shared kernel, `values` — never a domain |
 | `domain.automation` | the workflow engine: runs, steps, schedules, managers, approvals, agents, goals, work lists | supporting areas |
 | `domain.catalogue` | places, periods, events and what attests them | supporting areas, automation |
 | `domain.media` | pictures and their rights | supporting areas, automation, catalogue |

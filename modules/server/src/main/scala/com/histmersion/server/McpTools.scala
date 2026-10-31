@@ -10,6 +10,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.{EditionsPolicy, PlaceKind}
 import com.histmersion.api.VocabularyCodecs.given
+import com.histmersion.util.mcp.McpOut
 
 /** MCP tools (Chimp). Every tool returns Markdown and delegates to the same [[Handlers]] as REST. */
 final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.AcquireHandlers):
@@ -1245,12 +1246,7 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
   def toolNames: Set[String] = server.tools.map(_.name).toSet
 
 object McpTools:
-  /** Honour Scala default values when DECODING a tool's arguments — without it Kindlings requires every non-Option
-    * field, so `get_source {"citekey":"x"}` was rejected for a missing `fullText`. (`com.histmersion.api` carries the
-    * same given for the wire DTOs.)
-    */
-  given hearth.kindlings.circederivation.Configuration =
-    hearth.kindlings.circederivation.Configuration.default.withDefaults.withStrictDecoding
+  export com.histmersion.util.mcp.ToolInputs.given
 
   // Circe Codec + tapir Schema both derived from each input by Kindlings → matching by construction.
   final case class PingInput() derives KindlingsCodecAsObject, KindlingsSchema

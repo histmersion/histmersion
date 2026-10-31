@@ -1,5 +1,6 @@
 package com.histmersion.server
 
+import com.histmersion.util.mcp.McpOut
 import chimp.server.*
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -17,7 +18,7 @@ import com.histmersion.api.VocabularyCodecs.given
   * output and the CLI output are the same bytes.
   */
 object OpsTools:
-  import McpTools.given // honour Scala defaults when decoding tool arguments
+  import com.histmersion.util.mcp.ToolInputs.given
 
   def apply(ops: OpsHandlers, h: Handlers) =
     val lint =

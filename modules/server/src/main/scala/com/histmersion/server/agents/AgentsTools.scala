@@ -8,7 +8,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.{DecisionRequest, RunRequest}
-import com.histmersion.server.McpOut
+import com.histmersion.util.mcp.McpOut
 import com.histmersion.api.VocabularyCodecs.given
 
 /** The MCP half of the embedded agents: an external session can hand a whole pipeline to the server with ONE call
@@ -17,7 +17,7 @@ import com.histmersion.api.VocabularyCodecs.given
   * tool: a thin wrapper over [[AgentsHandlers]], Markdown out.
   */
 object AgentsTools:
-  import com.histmersion.server.McpTools.given // honour Scala defaults when decoding tool arguments
+  import com.histmersion.util.mcp.ToolInputs.given
 
   def apply(a: AgentsHandlers) =
     val start =

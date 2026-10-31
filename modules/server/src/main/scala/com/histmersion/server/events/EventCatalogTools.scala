@@ -7,7 +7,8 @@ import sttp.tapir.Schema
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.server.{Handlers, McpOut, McpTools}
+import com.histmersion.server.Handlers
+import com.histmersion.util.mcp.McpOut
 import com.histmersion.api.VocabularyCodecs.given
 
 /** The MCP half of #1449: `event_links` — the sources that may discuss an event, their confirmation (an attestation
@@ -15,7 +16,7 @@ import com.histmersion.api.VocabularyCodecs.given
   * media import): it is an operator's decision that sends traffic to a third party — `histmersion events import`.
   */
 object EventCatalogTools:
-  import McpTools.given // honour Scala defaults when decoding tool arguments
+  import com.histmersion.util.mcp.ToolInputs.given
 
   final case class EventLinksInput(
       id: Option[String] = None,
