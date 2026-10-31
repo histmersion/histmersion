@@ -59,7 +59,9 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       bundles = base.bundles.copy(dir = tmp.resolve(s"$name-bundles").toString),
       converter = base.converter.copy(spoolDir = tmp.resolve(s"$name-spool").toString),
       acquire = base.acquire.copy(spoolDir = tmp.resolve(s"$name-acquire").toString),
-      init = base.init.copy(auto = false)
+      init = base.init.copy(auto = false),
+      runtime = base.runtime.copy(dataDir = tmp.resolve(s"$name-data").toString),
+      basemap = base.basemap.copy(dir = tmp.resolve(s"$name-basemap").toString)
     )
 
   private def withServer[A](name: String)(body: String => A): A =
@@ -293,7 +295,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
     "\\b[A-Z]-[0-9a-f]{8}\\b|[0-9a-f]{64}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}".r
   private val TimeRe =
     "\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}(?::?\\d{2})?)?".r
-  private val StampRe = "\\d{8}T\\d{6}Z".r
+  private val StampRe = "\\d{8}T\\d{6}Z(?:-\\d+)?".r
   private val PlanRe = "plan [0-9a-f]{8}\\b".r
   private val ShortRe = "(?<![-\\w])[0-9a-f]{8}(?![-\\w])".r
 
@@ -327,7 +329,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
     (records ++ instances ++ merges).distinctBy(_._1).toMap
 
   private def normalise(text: String, names: Map[String, String]): String =
-    val roots = List(tmp.toString -> "TMP")
+    val roots = List(tmp.toString -> "TMP", sys.props("user.home") -> "HOME")
     val t1 = roots.foldLeft(text)((t, r) => t.replace(r._1, r._2))
     val t2 = UuidRe.replaceAllIn(
       t1,
@@ -342,6 +344,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
   private val Measured =
     Set(
       "bytes",
+      "files",
       "durationMs",
       "elapsedMs",
       "tookMillis",
