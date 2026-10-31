@@ -1,8 +1,8 @@
 package com.histmersion.plugin
 
 /** The SPI members added within SPI 2 for the first-party plugins — an answer's status and headers, an upstream's
-  * budget, the peers of a fetch, a catalogue's re-reading and its changing parts — and their defaults, which keep a
-  * plugin or a host written before them compiling and linking.
+  * budget, the peers of a fetch, a catalogue's re-reading and its changing parts, an AI provider's request options —
+  * and their defaults, which keep a plugin or a host written before them compiling and linking.
   */
 class SpiAdditionsSuite extends munit.FunSuite:
 
@@ -61,3 +61,39 @@ class SpiAdditionsSuite extends munit.FunSuite:
     val stored = CatalogueEvent("f1", "https://floods.example/f1", "Flood", "flood", Some(Year(-500)), Some(Year(-500)))
     assertEquals(Floods.reread(stored), None)
     assert(!Floods.everyPartEachImport)
+
+  // ── the AI provider's request options (the HTTP built-ins') ──────────────────────────────────
+
+  test("a provider asks for no request option by default: no iteration notes, its failures prefixed as before"):
+    val caps = AiCapabilities()
+    assertEquals((caps.iterationMarkers, caps.verbatimFailures), (false, false))
+    val early = new AiProvider:
+      def title = "Early"
+      def turn(request: AiTurnRequest, http: AiHttp) = Left(AiFailure.Error("none"))
+    assertEquals(early.capabilities, AiCapabilities(tools = true, structuredOutput = false))
+
+  test("the members a provider or host compiled before them used still exist, with their old shapes"):
+    val longs = Array.fill(4)(classOf[Long])
+    assertEquals(new AiUsage(1, 2, 3, 4), AiUsage(1, 2, 3, 4, 0))
+    assertEquals(AiUsage(1, 2, 3, 4).reasoning, 0L)
+    assert(classOf[AiUsage].getConstructor(longs*) != null)
+    assert(AiUsage.getClass.getMethod("apply", longs*) != null)
+    val bools = Array.fill(2)(classOf[Boolean])
+    assertEquals(new AiCapabilities(false, true), AiCapabilities(false, true, false, false))
+    assert(classOf[AiCapabilities].getConstructor(bools*) != null)
+    assert(AiCapabilities.getClass.getMethod("apply", bools*) != null)
+    val old = AiTurnRequest("m", "s", Nil, Nil, Some("{}"), 10, 1, 2)
+    assertEquals((old.answerSchemaRendered, old.answerDescription), (None, None))
+    assertEquals(new AiTurnRequest("m", "s", Nil, Nil, Some("{}"), 10, 1, 2), old)
+    val request = Array[Class[?]](
+      classOf[String],
+      classOf[String],
+      classOf[List[?]],
+      classOf[List[?]],
+      classOf[Option[?]],
+      classOf[Int],
+      classOf[Int],
+      classOf[Int]
+    )
+    assert(classOf[AiTurnRequest].getConstructor(request*) != null)
+    assert(AiTurnRequest.getClass.getMethod("apply", request*) != null)

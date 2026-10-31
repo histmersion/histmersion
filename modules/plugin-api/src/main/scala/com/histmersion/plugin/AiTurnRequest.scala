@@ -20,6 +20,11 @@ package com.histmersion.plugin
   *   this call's place in the step's loop (1-based) …
   * @param maxIterations
   *   … and the most calls the step may make
+  * @param answerSchemaRendered
+  *   the same schema as the host's loop renders it, its `$schema` marker kept (`answerSchema` drops it): for a provider
+  *   that must send it exactly so
+  * @param answerDescription
+  *   what the answer is, when the step's schema says (a provider's structured-output field for it)
   */
 final case class AiTurnRequest(
     model: String,
@@ -29,5 +34,32 @@ final case class AiTurnRequest(
     answerSchema: Option[String],
     maxTokens: Int,
     iteration: Int,
-    maxIterations: Int
-)
+    maxIterations: Int,
+    answerSchemaRendered: Option[String] = None,
+    answerDescription: Option[String] = None
+):
+  /** The constructor of a host or a test compiled before the rendered schema and its description were passed. */
+  def this(
+      model: String,
+      system: String,
+      messages: List[AiMessage],
+      tools: List[AiTool],
+      answerSchema: Option[String],
+      maxTokens: Int,
+      iteration: Int,
+      maxIterations: Int
+  ) = this(model, system, messages, tools, answerSchema, maxTokens, iteration, maxIterations, None, None)
+
+object AiTurnRequest:
+  /** The request as a host or a test compiled before the rendered schema and its description were passed wrote it. */
+  def apply(
+      model: String,
+      system: String,
+      messages: List[AiMessage],
+      tools: List[AiTool],
+      answerSchema: Option[String],
+      maxTokens: Int,
+      iteration: Int,
+      maxIterations: Int
+  ): AiTurnRequest =
+    new AiTurnRequest(model, system, messages, tools, answerSchema, maxTokens, iteration, maxIterations, None, None)
