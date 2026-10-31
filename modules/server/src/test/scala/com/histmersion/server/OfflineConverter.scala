@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.ocr.ConverterClient
+
 import com.histmersion.api.ConvertedDoc
 
 import java.nio.file.Path
@@ -19,6 +21,18 @@ final class OfflineConverter extends ConverterClient:
     seen.asScala.toList
 
   def health: Either[String, String] = Right("ok")
-  def convert(file: Path, filename: String, quality: Boolean): Either[String, ConvertedDoc] =
+  def convert(
+      file: com.histmersion.util.storage.Blob,
+      filename: String,
+      quality: Boolean
+  ): Either[String, ConvertedDoc] =
     seen.add(filename)
     Left("offline: no converter in tests")
+
+object OfflineConverter:
+  /** The file `p` as a converter is handed it. */
+  def blob(p: Path): com.histmersion.util.storage.Blob =
+    com.histmersion.util.storage.Storage
+      .at(com.histmersion.util.storage.Location.Scratch, p.toAbsolutePath.getParent)
+      .get(com.histmersion.util.storage.StoreKey.applyUnsafe(p.getFileName.toString))
+      .getOrElse(throw AssertionError(s"$p is not a file"))

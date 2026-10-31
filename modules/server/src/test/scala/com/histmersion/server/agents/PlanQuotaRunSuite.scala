@@ -309,7 +309,7 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite:
           keyed,
           "127.0.0.1",
           0,
-          com.histmersion.server.ConverterClient.fromConfig(keyed.converter),
+          com.histmersion.server.ConverterWiring.client(keyed.converter),
           onHandlers = h => hs = Some(h)
         )
         .start()

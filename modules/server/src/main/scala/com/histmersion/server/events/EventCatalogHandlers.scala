@@ -1,5 +1,7 @@
 package com.histmersion.server.events
 
+import com.histmersion.util.ocr.Chunk
+
 import com.histmersion.util.jobs.BackgroundJob
 
 import scala.annotation.tailrec
@@ -424,7 +426,7 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
   private def passagesIn(
       citekey: String,
       names: List[String],
-      body: => List[com.histmersion.domain.Chunk]
+      body: => List[com.histmersion.util.ocr.Chunk]
   ): List[EventPassage] =
     lazy val chunks = body
     names

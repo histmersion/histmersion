@@ -20,7 +20,7 @@ trait Processes:
 object Processes:
   def apply(): Processes = Implementation()
 
-  private final class Implementation extends Processes:
+  final private class Implementation extends Processes:
     def start(launch: ProcessLaunch): Either[String, RunningProcess] =
       for
         dir <- directory(launch)
@@ -54,7 +54,7 @@ object Processes:
         ProcessResult(p.waitFor(), lines)
       }
 
-  private final class OsProcess(p: Process) extends RunningProcess:
+  final private class OsProcess(p: Process) extends RunningProcess:
     def pid: Long = p.pid
     def isAlive: Boolean = p.isAlive
     def output: InputStream = p.getInputStream

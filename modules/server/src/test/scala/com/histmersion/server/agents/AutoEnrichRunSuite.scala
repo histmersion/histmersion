@@ -1,12 +1,15 @@
 package com.histmersion.server.agents
 
+import com.histmersion.util.ocr.ConverterClient
+
 import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.db.{AgentRepo, Db, Migrate}
-import com.histmersion.server.{ConverterClient, Deps, Handlers}
+import com.histmersion.server.{Deps, Handlers}
+import com.histmersion.util.ocr.ConverterClient
 
 import java.nio.file.{Files, Path}
 
@@ -25,7 +28,7 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite:
 
   private object Stub extends ConverterClient:
     def health = Right("ok")
-    def convert(file: Path, filename: String, quality: Boolean) =
+    def convert(file: com.histmersion.util.storage.Blob, filename: String, quality: Boolean) =
       Right(
         ConvertedDoc(
           markdown = "# Tin\n\nThe Uluburun ship carried ten tons of copper.\n",

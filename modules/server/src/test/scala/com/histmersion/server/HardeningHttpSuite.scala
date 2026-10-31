@@ -201,7 +201,7 @@ class HardeningHttpSuite extends munit.FunSuite:
       converter = base.converter.copy(url = "http://192.0.2.1:1")
     )
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0, ConverterClient.fromConfig(cfg.converter)).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0, ConverterWiring.client(cfg.converter)).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val started = System.nanoTime()

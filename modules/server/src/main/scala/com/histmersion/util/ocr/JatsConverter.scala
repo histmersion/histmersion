@@ -1,22 +1,19 @@
-package com.histmersion.server
+package com.histmersion.util.ocr
 
 import com.histmersion.upstreams.Jats
 
-import com.histmersion.api.*
-import com.histmersion.config.*
-import com.histmersion.domain.*
-
-import java.nio.file.{Files, Path}
+import com.histmersion.api.ConvertedDoc
+import com.histmersion.util.storage.Blob
 
 /** A JATS article (`*.xml` whose root is `<article>` — PMC's full text, fetched when no PDF exists, #1523) is rendered
   * to Markdown here, by [[Jats]]: it is already text, so OCR would only lose its structure. Everything else goes to the
   * sidecar unchanged.
   */
 final class JatsConverter(sidecar: ConverterClient) extends ConverterClient:
-  def convert(file: Path, filename: String, quality: Boolean): Either[String, ConvertedDoc] =
+  def convert(file: Blob, filename: String, quality: Boolean): Either[String, ConvertedDoc] =
     val jats =
       if !filename.toLowerCase.endsWith(".xml") then None
-      else scala.util.Try(Files.readString(file)).toOption.filter(Jats.isJats)
+      else scala.util.Try(file.text()).toOption.filter(Jats.isJats)
     jats match
       case Some(xml) =>
         val md = Jats.toMarkdown(xml)

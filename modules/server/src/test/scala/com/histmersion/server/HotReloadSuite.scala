@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.ocr.ConverterClient
+
 import com.histmersion.util.settings.ConfigSource
 
 import com.histmersion.api.*
@@ -141,7 +143,7 @@ class HotReloadSuite extends DbSuite:
     val entered = java.util.concurrent.Semaphore(0)
     val gate = CountDownLatch(1)
     def health = Right("ok")
-    def convert(file: Path, filename: String, quality: Boolean) =
+    def convert(file: com.histmersion.util.storage.Blob, filename: String, quality: Boolean) =
       entered.release()
       gate.await(60, TimeUnit.SECONDS)
       Right(ConvertedDoc(markdown = s"# Converted\n\n$filename\n", pages = 1, images = Nil, filename = Some(filename)))

@@ -1,4 +1,4 @@
-package com.histmersion.domain
+package com.histmersion.util.ocr
 
 /** One indexable slice of a source body. `heading` is the breadcrumb of the Markdown headings the slice sits under
   * ("Introduction > Chronology"), `body` the text without those heading lines.

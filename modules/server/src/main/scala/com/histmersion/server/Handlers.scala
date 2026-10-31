@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.ocr.ConverterClient
+
 import com.histmersion.util.jobs.BackgroundJob
 import com.histmersion.util.identity.AliasKind
 
@@ -48,7 +50,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** The ordinary construction: the OCR sidecar client comes from config. The two-argument form is the seam an HTTP
     * test uses to substitute a fake converter (plan §1.8).
     */
-  def this(deps: Deps) = this(deps, ConverterClient.fromConfig(deps.cfg.converter))
+  def this(deps: Deps) = this(deps, ConverterWiring.client(deps.cfg.converter))
 
   private val ds = deps.ds
 

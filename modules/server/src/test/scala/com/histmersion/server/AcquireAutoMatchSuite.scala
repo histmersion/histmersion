@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.ocr.ConverterClient
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -48,7 +50,7 @@ class AcquireAutoMatchSuite extends com.histmersion.db.DbSuite:
 
   private object Stub extends ConverterClient:
     def health = Right("ok")
-    def convert(file: Path, filename: String, quality: Boolean) =
+    def convert(file: com.histmersion.util.storage.Blob, filename: String, quality: Boolean) =
       Right(ConvertedDoc(markdown = "# Converted\n\nBody.\n", pages = 1, filename = Some(filename)))
 
   private lazy val cfg =

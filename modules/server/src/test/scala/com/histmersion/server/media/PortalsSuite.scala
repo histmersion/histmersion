@@ -7,7 +7,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.MediaRepo.{Known, PlaceFacts, ProviderAsset, Rights, Target}
-import com.histmersion.server.ConverterClient
+import com.histmersion.util.ocr.ConverterClient
 import com.histmersion.values.MediaRole
 
 /** The store as a few maps, with the gazetteer facts and ids the keyless portals read. */
@@ -67,7 +67,11 @@ class PortalsSuite extends munit.FunSuite:
 
   final private class ThumbConverter extends ConverterClient:
     val calls = scala.collection.mutable.ListBuffer.empty[String]
-    def convert(file: java.nio.file.Path, filename: String, quality: Boolean): Either[String, ConvertedDoc] = Left(
+    def convert(
+        file: com.histmersion.util.storage.Blob,
+        filename: String,
+        quality: Boolean
+    ): Either[String, ConvertedDoc] = Left(
       "not used"
     )
     def health: Either[String, String] = Right("ok")

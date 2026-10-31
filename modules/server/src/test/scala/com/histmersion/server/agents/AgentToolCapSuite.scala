@@ -1,11 +1,14 @@
 package com.histmersion.server.agents
 
+import com.histmersion.util.ocr.ConverterClient
+
 import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.{Db, Migrate, SourceRepo}
-import com.histmersion.server.{ConverterClient, Deps, Handlers}
+import com.histmersion.server.{Deps, Handlers}
+import com.histmersion.util.ocr.ConverterClient
 import io.circe.Json
 import io.circe.syntax.*
 
@@ -35,7 +38,11 @@ class AgentToolCapSuite extends com.histmersion.db.DbSuite:
 
   private object NoConverter extends ConverterClient:
     def health: Either[String, String] = Right("ok")
-    def convert(file: Path, filename: String, quality: Boolean): Either[String, ConvertedDoc] = Left("not used")
+    def convert(
+        file: com.histmersion.util.storage.Blob,
+        filename: String,
+        quality: Boolean
+    ): Either[String, ConvertedDoc] = Left("not used")
 
   private val Body = (1 to 400).map(i => s"Paragraph $i of the book about serpents and heroes.").mkString("\n\n") +
     "\n\nThe hero slew the serpent at the end."

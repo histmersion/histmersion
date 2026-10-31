@@ -145,7 +145,6 @@ direction	config:config/AgentsConfig.scala	automation -> research: AgentReviewCo
 direction	config:config/BasemapBathymetryConfig.scala	util.basemap -> library: SeaFloorSource	1
 direction	config:config/MaintenanceConfig.scala	util.data -> catalogue: PeriodsConfig	1
 direction	core:domain/BrowserDownload.scala	library -> research: Citation	1
-direction	core:domain/Chunker.scala	util.ocr -> library: Chunk	1
 direction	core:domain/CompareRuns.scala	automation -> library: AgentVerify	1
 direction	core:domain/CompareRuns.scala	automation -> library: EnrichSource	1
 direction	core:domain/CompareRuns.scala	automation -> library: Finding	1
@@ -256,9 +255,6 @@ direction	server:server/BackupJobs.scala	util.data -> server: Pinning	1
 direction	server:server/BundleHandlers.scala	util.data -> library: InstanceLabel	1
 direction	server:server/BundleHandlers.scala	util.data -> library: Originals	1
 direction	server:server/BundleHandlers.scala	util.data -> server: Deps	1
-direction	server:server/ConverterClient.scala	util.ocr -> library: ConverterConfig	1
-direction	server:server/HttpConverterClient.scala	util.ocr -> library: ConverterConfig	1
-direction	server:server/HttpConverterClient.scala	util.ocr -> server: Version	1
 direction	server:server/IngestHandlers.scala	library -> server: Deps	1
 direction	server:server/IngestHandlers.scala	library -> server: Jobs	1
 direction	server:server/MapTileService.scala	catalogue -> media: MediaRepo	1
@@ -383,7 +379,6 @@ direction	server:server/agents/Toolbox.scala	automation -> server: McpTools	1
 direction	server:server/agents/Toolbox.scala	automation -> split: Handlers	1
 direction	server:server/agents/Toolbox.scala	automation -> split: OpsTools	1
 direction	server:server/agents/WebAccess.scala	automation -> library: Search	1
-direction	server:server/events/EventCatalogHandlers.scala	catalogue -> library: Chunk	1
 direction	server:server/events/EventCatalogHandlers.scala	catalogue -> library: PassageFinder	1
 direction	server:server/events/EventCatalogHandlers.scala	catalogue -> library: SourceRepo	1
 direction	server:server/events/EventCatalogHandlers.scala	catalogue -> server: Deps	1
@@ -430,16 +425,12 @@ filesystem	server:server/BundleHandlers.scala	Files.*	14
 filesystem	server:server/BundleHandlers.scala	Path.of	2
 filesystem	server:server/BundleHandlers.scala	StandardCopyOption	5
 filesystem	server:server/BundleHandlers.scala	java.nio.file	2
-filesystem	server:server/ConverterClient.scala	java.nio.file	1
-filesystem	server:server/HttpConverterClient.scala	java.nio.file	1
 filesystem	server:server/IngestHandlers.scala	.toFile	3
 filesystem	server:server/IngestHandlers.scala	Files.*	11
 filesystem	server:server/IngestHandlers.scala	Path.of	1
 filesystem	server:server/IngestHandlers.scala	StandardCopyOption	2
 filesystem	server:server/IngestHandlers.scala	java.io.File	3
 filesystem	server:server/IngestHandlers.scala	java.nio.file	1
-filesystem	server:server/JatsConverter.scala	Files.*	1
-filesystem	server:server/JatsConverter.scala	java.nio.file	1
 filesystem	server:server/PgRelocation.scala	Files.*	8
 filesystem	server:server/PgRelocation.scala	java.nio.file	1
 filesystem	server:server/StorageProbe.scala	Files.*	3
@@ -486,7 +477,6 @@ filesystem	server:server/importers/GazetteerLoad.scala	Files.*	19
 filesystem	server:server/importers/GazetteerLoad.scala	Path.of	3
 filesystem	server:server/importers/GazetteerLoad.scala	StandardCopyOption	3
 filesystem	server:server/importers/GazetteerLoad.scala	java.nio.file	1
-filesystem	server:server/media/MediaHandlers.scala	java.nio.file	1
 process	server:server/agents/AgentDoctor.scala	ProcessBuilder	1
 process	server:server/agents/CliProcess.scala	ProcessBuilder	2
 process	server:server/agents/CodexHome.scala	ProcessBuilder	2

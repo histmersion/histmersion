@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.util.ocr.ConverterClient
+
 import com.histmersion.pluginhost.HttpAnswer
 
 import ox.supervised
@@ -9,7 +11,8 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.{AssetRepo, Db, MediaRepo, Migrate, PlaceRepo}
 import com.histmersion.util.jobs.JobRepo
-import com.histmersion.server.{Composition, ConverterClient, Deps}
+import com.histmersion.server.{Composition, Deps}
+import com.histmersion.util.ocr.ConverterClient
 import io.circe.parser.decode
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
@@ -60,7 +63,11 @@ class MediaSourcesSuite extends com.histmersion.db.DbSuite:
   /** A converter whose only work is thumbnails: a fixed small JPEG, and every call recorded. */
   final private class ThumbConverter extends ConverterClient:
     val calls = scala.collection.mutable.ListBuffer.empty[(String, Int)]
-    def convert(file: java.nio.file.Path, filename: String, quality: Boolean): Either[String, ConvertedDoc] = Left(
+    def convert(
+        file: com.histmersion.util.storage.Blob,
+        filename: String,
+        quality: Boolean
+    ): Either[String, ConvertedDoc] = Left(
       "not used"
     )
     def health: Either[String, String] = Right("ok")

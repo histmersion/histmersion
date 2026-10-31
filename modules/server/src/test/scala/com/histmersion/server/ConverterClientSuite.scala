@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.ocr.{ConverterClient, ConverterState, HttpConverterClient}
+
 import com.histmersion.config.AppConfig
 import com.sun.net.httpserver.HttpServer
 import java.net.InetSocketAddress
@@ -17,20 +19,32 @@ class ConverterClientSuite extends munit.FunSuite:
 
   test("the timeout is the configured one, or pages × seconds-per-page when that is longer"):
     val c = base.copy(timeoutSeconds = 600, secondsPerPage = 2, secondsPerPageQuality = 8, secondsPerScannedPage = 15)
-    assertEquals(ConverterClient.timeoutFor(c, pc(10), quality = false), Duration.ofSeconds(600))
-    assertEquals(ConverterClient.timeoutFor(c, pc(600), quality = false), Duration.ofSeconds(1200))
-    assertEquals(ConverterClient.timeoutFor(c, pc(600), quality = true), Duration.ofSeconds(4800))
-    assertEquals(ConverterClient.timeoutFor(c, None, quality = true), Duration.ofSeconds(600))
+    assertEquals(
+      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(10), quality = false),
+      Duration.ofSeconds(600)
+    )
+    assertEquals(
+      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(600), quality = false),
+      Duration.ofSeconds(1200)
+    )
+    assertEquals(
+      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(600), quality = true),
+      Duration.ofSeconds(4800)
+    )
+    assertEquals(ConverterClient.timeoutFor(ConverterWiring.settings(c), None, quality = true), Duration.ofSeconds(600))
 
   test("scanned pages get the scanned rate: the 155-page scan that failed at 600 s now gets 2325 s"):
     val c = base.copy(timeoutSeconds = 600, secondsPerPage = 2, secondsPerPageQuality = 8, secondsPerScannedPage = 15)
-    assertEquals(ConverterClient.timeoutFor(c, pc(155, scanned = 155), quality = false), Duration.ofSeconds(2325))
     assertEquals(
-      ConverterClient.timeoutFor(c, pc(400, scanned = 100), quality = false),
+      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(155, scanned = 155), quality = false),
+      Duration.ofSeconds(2325)
+    )
+    assertEquals(
+      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(400, scanned = 100), quality = false),
       Duration.ofSeconds(300 * 2 + 100 * 15)
     )
     assertEquals(
-      ConverterClient.timeoutFor(c, pc(10, scanned = 99), quality = false),
+      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(10, scanned = 99), quality = false),
       Duration.ofSeconds(600),
       "scanned is capped at pages"
     )
@@ -58,8 +72,11 @@ class ConverterClientSuite extends munit.FunSuite:
   private def convert(url: String) =
     val file = Files.createTempFile("book", ".pdf")
     try
-      HttpConverterClient(base.copy(url = url, timeoutSeconds = 1, secondsPerPage = 3))
-        .convert(file, "book.pdf", quality = false)
+      HttpConverterClient(
+        ConverterWiring.settings(base.copy(url = url, timeoutSeconds = 1, secondsPerPage = 3)),
+        ConverterWiring.http()
+      )
+        .convert(OfflineConverter.blob(file), "book.pdf", quality = false)
     finally Files.deleteIfExists(file)
 
   test("a long document gets the scaled time: a 2 s conversion of 1 page at 3 s/page succeeds past a 1 s timeout"):

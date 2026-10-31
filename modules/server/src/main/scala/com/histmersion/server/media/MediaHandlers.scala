@@ -9,7 +9,8 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.MediaRepo
-import com.histmersion.server.{ConverterClient, Deps}
+import com.histmersion.server.Deps
+import com.histmersion.util.ocr.ConverterClient
 
 import java.util.concurrent.atomic.AtomicReference
 
@@ -290,7 +291,11 @@ object MediaHandlers:
 
   /** A converter that makes no thumbnails (tests; a server whose sidecar is down still serves cards). */
   object NoThumbnails extends ConverterClient:
-    def convert(file: java.nio.file.Path, filename: String, quality: Boolean): Either[String, ConvertedDoc] =
+    def convert(
+        file: com.histmersion.util.storage.Blob,
+        filename: String,
+        quality: Boolean
+    ): Either[String, ConvertedDoc] =
       Left("no converter")
     def health: Either[String, String] = Left("no converter")
 
