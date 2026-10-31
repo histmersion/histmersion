@@ -1,0 +1,130 @@
+package com.histmersion.util.storage
+
+import com.histmersion.values.{ByteCount, ByteOffset}
+
+import java.nio.charset.StandardCharsets.UTF_8
+import java.nio.file.Files
+import java.time.Instant
+import scala.util.Using
+
+/** What every [[Store]] does, run on a store on disk and on one in memory: the in-memory store is what tests of the
+  * code given a store run on, so it must answer as the disk does.
+  */
+abstract class StoreContractSuite extends munit.FunSuite:
+  def fresh(): Store
+
+  private def key(s: String) = StoreKey.applyUnsafe(s)
+  private def utf(s: String) = s.getBytes(UTF_8)
+
+  test("put, get, stat, list and walk"):
+    val s = fresh()
+    assert(s.put(key("a/b/one.txt"), utf("one")).isRight)
+    assert(s.write(key("a/two.bin"), Array[Byte](1, 2, 3)).isRight)
+    assertEquals(s.get(key("a/b/one.txt")).map(_.text()), Some("one"))
+    assertEquals(s.stat(key("a/two.bin")).map(st => (st.kind, st.size.value: Long)), Some((StoredKind.File, 3L)))
+    assert(s.isDirectory(key("a/b")) && s.isFile(key("a/two.bin")) && !s.exists(key("a/none")))
+    assertEquals(s.list(key("a")).map(st => (st.key.value: String, st.kind)), List("a/b" -> StoredKind.Directory, "a/two.bin" -> StoredKind.File))
+    assertEquals(s.walk().map(st => st.key.value: String), List("a/b/one.txt", "a/two.bin"))
+    assertEquals(s.size.value: Long, 6L)
+    assertEquals(s.get(key("a/none")), None)
+    assertEquals(s.list(key("nowhere")), Nil)
+
+  test("a sub-store sees its keys relative to its prefix"):
+    val s = fresh()
+    val sub = s.sub(key("cache"))
+    assert(sub.put(key("t/1.webp"), utf("x")).isRight)
+    assertEquals(s.walk().map(st => st.key.value: String), List("cache/t/1.webp"))
+    assertEquals(sub.walk().map(st => st.key.value: String), List("t/1.webp"))
+    assertEquals(sub.deleteTree(StoreKey.Root).map(_.value: Long), Some(1L))
+    assertEquals(s.walk(), Nil)
+
+  test("a reservation is invisible until committed, and gone when discarded"):
+    val s = fresh()
+    val r = s.reserve(key("out.pmtiles")).toOption.get
+    Using.resource(r.output())(_.write(utf("0123456789")))
+    r.writeAt(ByteOffset.applyUnsafe(2L), utf("ab"))
+    assertEquals(r.size.value: Long, 10L)
+    assert(!s.exists(key("out.pmtiles")))
+    assert(r.commit().isRight)
+    r.close()
+    assertEquals(s.get(key("out.pmtiles")).map(_.text()), Some("01ab456789"))
+    val d = s.reserve(key("gone")).toOption.get
+    Using.resource(d.output())(_.write(utf("x")))
+    d.close()
+    assertEquals(s.walk().map(st => st.key.value: String), List("out.pmtiles"))
+
+  test("positional reads, streams and digests"):
+    val s = fresh()
+    s.put(key("f"), utf("hello world")): Unit
+    val b = s.get(key("f")).get
+    assertEquals(String(b.readAt(ByteOffset.applyUnsafe(6L), 5), UTF_8), "world")
+    Using.resource(b.reader()) { r =>
+      assertEquals(r.size.value: Long, 11L)
+      assertEquals(String(r.readUpTo(ByteOffset.applyUnsafe(6L), 100), UTF_8), "world")
+      intercept[java.io.EOFException](r.read(ByteOffset.applyUnsafe(6L), 100))
+    }
+    assertEquals(Using.resource(b.open())(in => String(in.readAllBytes(), UTF_8)), "hello world")
+    assertEquals(b.sha256().value: String, "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9")
+    assertEquals(b.mapped().remaining(), 11)
+
+  test("move, copy, delete, touch"):
+    val s = fresh()
+    s.put(key("a"), utf("A")): Unit
+    assert(s.copy(key("a"), key("b")).isRight)
+    assert(s.move(key("b"), key("d/c")).isRight)
+    assertEquals(s.walk().map(st => st.key.value: String), List("a", "d/c"))
+    assert(s.move(key("none"), key("x")).isLeft)
+    val at = Instant.parse("2020-01-01T00:00:00Z")
+    s.touch(key("a"), at)
+    assertEquals(s.stat(key("a")).map(_.modified), Some(at))
+    assert(s.delete(key("a")) && !s.delete(key("a")))
+    assertEquals(s.deleteTree(key("nowhere")), None)
+
+  test("prune: the least recently used first, down to what may be kept; or what is older than a time"):
+    val s = fresh()
+    List("old" -> "2020-01-01T00:00:00Z", "mid" -> "2021-01-01T00:00:00Z", "new" -> "2022-01-01T00:00:00Z").foreach {
+      (k, t) =>
+        s.put(key(k), utf("1234")): Unit
+        s.touch(key(k), Instant.parse(t))
+    }
+    assertEquals(s.prune(PruneRule.LeastRecentlyUsed(ByteCount.applyUnsafe(5L))).removed.map(st => st.key.value: String), List("old", "mid"))
+    assertEquals(s.walk().map(st => st.key.value: String), List("new"))
+    assertEquals(s.prune(PruneRule.OlderThan(Instant.parse("2023-01-01T00:00:00Z"))).freed.value: Long, 4L)
+
+class DiskStoreSuite extends StoreContractSuite:
+  def fresh(): Store = Storage(_ => Some(Files.createTempDirectory("histmersion-store")), () => Files.createTempDirectory("t"))
+    .store(Location.Basemap)
+
+  test("on disk: a key is a path below the root; a symbolic link is written through when asked"):
+    val dir = Files.createTempDirectory("histmersion-store")
+    val s = Storage(_ => Some(dir), () => dir).store(Location.UserConfig)
+    assertEquals(s.where(StoreKey.applyUnsafe("x/y")), dir.resolve("x/y").toString)
+    val real = Files.writeString(dir.resolve("real.conf"), "old")
+    Files.createSymbolicLink(dir.resolve("link.conf"), real)
+    val r = s.reserve(StoreKey.applyUnsafe("link.conf"), TempName.Unique, throughLink = true).toOption.get
+    Using.resource(r.output())(_.write("new".getBytes(UTF_8)))
+    assert(r.onDisk.exists(p => p.getFileName.toString.startsWith(".link.conf.")))
+    assert(r.commit(keepPermissions = true).isRight)
+    assert(Files.isSymbolicLink(dir.resolve("link.conf")))
+    assertEquals(Files.readString(real), "new")
+    assert(s.usableSpace.value > 0)
+
+  test("a scratch store is removed when it closes"):
+    val base = Files.createTempDirectory("histmersion-scratch")
+    val storage = Storage(_ => None, () => base)
+    val scratch = storage.scratch("histmersion-test-")
+    scratch.store.put(StoreKey.applyUnsafe("a/b"), Array[Byte](1)): Unit
+    assertEquals(Files.list(base).count(), 1L)
+    scratch.close()
+    assertEquals(Files.list(base).count(), 0L)
+    assert(storage.find(Location.Plugins).isEmpty)
+    intercept[IllegalStateException](storage.store(Location.Plugins))
+
+class MemoryStoreSuite extends StoreContractSuite:
+  def fresh(): Store = Storage.InMemory().store(Location.Basemap)
+
+  test("in memory: nothing is on disk, and each location is one store for everyone holding the storage"):
+    val storage = Storage.InMemory()
+    storage.store(Location.Spool).put(StoreKey.applyUnsafe("x"), Array[Byte](1)): Unit
+    assert(storage.store(Location.Spool).isFile(StoreKey.applyUnsafe("x")))
+    assert(storage.store(Location.Spool).onDisk(StoreKey.applyUnsafe("x")).isLeft)

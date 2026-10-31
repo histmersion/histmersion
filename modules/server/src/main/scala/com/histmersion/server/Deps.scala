@@ -51,6 +51,10 @@ final class Deps(
   /** Transactions on the application role ([[ds]]). */
   val transactor: Transactor = Transactor(ds)
 
+  /** The server's files, each named place where today's settings put it. */
+  lazy val storage: com.histmersion.util.storage.Storage =
+    StorageLocations.storage(() => cfg, () => loaded, environment, userPaths)
+
   /** Connections of the read-only role ([[queryDs]]), for the `query` escape hatch alone. */
   val queryTransactor: Transactor = Transactor(queryDs)
 
