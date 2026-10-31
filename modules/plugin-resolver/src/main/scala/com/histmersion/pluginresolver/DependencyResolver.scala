@@ -25,13 +25,13 @@ import scala.util.control.NonFatal
 object DependencyResolver:
 
   private val Usage =
-    "usage: PluginResolver resolve --kit <dir> --lib <dir> [--histmersion-repo <dir>] [--repo <url|dir>]… [--check] <plugin jar>…"
+    "usage: pluginResolver resolve --kit <dir> --lib <dir> [--histmersion-repo <dir>] [--repo <url|dir>]… [--check] <plugin jar>…"
 
   def exitCode(args: List[String]): Int =
     try run(args, s => System.out.println(s), s => System.err.println(s))
     catch
       case NonFatal(e) =>
-        System.err.println(s"PluginResolver: ${e.getClass.getSimpleName}: ${e.getMessage}")
+        System.err.println(s"pluginResolver: ${e.getClass.getSimpleName}: ${e.getMessage}")
         3
 
   def run(args: List[String], out: String => Unit, err: String => Unit): Int = args match

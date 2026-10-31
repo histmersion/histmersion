@@ -49,16 +49,16 @@ import scala.util.control.NonFatal
 object RelinkPlugins:
 
   private val Usage =
-    """usage: PluginTool describe [--lib <dir>] <jar>…
-      |       PluginTool check [--lib <dir>] <kit dir> <jar>…
-      |       PluginTool plugin-set [--lib <dir>] <out.jar> <record.json> <native|jvm> <kit dir> <jar>…
-      |       PluginTool kit-manifest <kit dir> <version> <commit|-> <graalvm version>""".stripMargin
+    """usage: pluginTool describe [--lib <dir>] <jar>…
+      |       pluginTool check [--lib <dir>] <kit dir> <jar>…
+      |       pluginTool plugin-set [--lib <dir>] <out.jar> <record.json> <native|jvm> <kit dir> <jar>…
+      |       pluginTool kit-manifest <kit dir> <version> <commit|-> <graalvm version>""".stripMargin
 
   def exitCode(args: List[String]): Int =
     try run(args)
     catch
       case NonFatal(e) =>
-        System.err.println(s"PluginTool: ${e.getClass.getSimpleName}: ${e.getMessage}")
+        System.err.println(s"pluginTool: ${e.getClass.getSimpleName}: ${e.getMessage}")
         3
 
   private def run(args: List[String]): Int = args match
