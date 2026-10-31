@@ -10,7 +10,10 @@ final class CalibrePlugin extends Plugin:
   type Config = CalibreSettings
   val info: PluginInfo = PluginInfo("calibre", CalibrePlugin.Version, Spi.Version)
   def register(c: CalibreSettings, ctx: PluginContext): Either[String, Unit] =
-    ctx.sourceCollections.add("calibre", CalibreCollection(c.library(ctx.env("HOME")), c.writeBack, Shell.System))
+    ctx.sourceCollections.add(
+      "calibre",
+      CalibreCollection(c.library(ctx.env("HOME"), ctx.env("PATH")), c.writeBack, Shell.System)
+    )
 
 object CalibrePlugin:
   val Version = "1.0.0"

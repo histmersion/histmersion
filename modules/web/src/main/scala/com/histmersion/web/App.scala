@@ -2,6 +2,7 @@ package com.histmersion.web
 
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.*
+import com.histmersion.web.library
 import com.histmersion.web.ui.SidebarTab
 import org.scalajs.dom
 
