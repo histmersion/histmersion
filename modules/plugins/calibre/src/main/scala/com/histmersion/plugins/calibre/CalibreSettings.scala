@@ -26,7 +26,7 @@ final case class CalibreSettings(
   /** The settings as the library is reached, `~` read against `home`. */
   def library(home: Option[String]): CalibreLibrary =
     val path = libraryPath.trim match
-      case "~"                                         => home.getOrElse("~")
+      case "~"                                       => home.getOrElse("~")
       case p if p.startsWith("~/") && home.isDefined => home.getOrElse("") + p.drop(1)
-      case p                                           => p
+      case p                                         => p
     CalibreLibrary(path, calibredb, sqlite, guiProcess)

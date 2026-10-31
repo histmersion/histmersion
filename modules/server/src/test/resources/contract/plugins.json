@@ -128,7 +128,8 @@
       "enabled" : true,
       "state" : "registered",
       "provides" : [
-        "source-fetcher:archive-org"
+        "source-fetcher:archive-org",
+        "source-collection:archive-org"
       ],
       "settings" : [
       ],
@@ -175,6 +176,41 @@
         {
           "key" : "timeout-seconds",
           "value" : "10"
+        }
+      ],
+      "warnings" : [
+      ],
+      "error" : null
+    },
+    {
+      "id" : "calibre",
+      "version" : "1.0.0",
+      "spiVersion" : 2,
+      "enabled" : true,
+      "state" : "registered",
+      "provides" : [
+        "source-collection:calibre"
+      ],
+      "settings" : [
+        {
+          "key" : "calibredb",
+          "value" : "calibredb"
+        },
+        {
+          "key" : "gui-process",
+          "value" : "/Applications/calibre.app/Contents/MacOS/calibre"
+        },
+        {
+          "key" : "library-path",
+          "value" : "~/Calibre Library"
+        },
+        {
+          "key" : "sqlite",
+          "value" : "sqlite3"
+        },
+        {
+          "key" : "write-back",
+          "value" : "true"
         }
       ],
       "warnings" : [

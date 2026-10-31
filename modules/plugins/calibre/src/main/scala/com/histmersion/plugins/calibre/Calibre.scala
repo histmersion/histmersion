@@ -81,8 +81,8 @@ final class Calibre(cfg: CalibreLibrary, shell: Shell):
       _ <- setMetadata(id, meta)
     yield id
 
-  /** Bring an EXISTING entry in line with the corpus record — for when a record's title or authors change after
-    * the push (a chapter split out of a volume left the volume's entry titled as the chapter), and to leave the entry
+  /** Bring an EXISTING entry in line with the corpus record — for when a record's title or authors change after the
+    * push (a chapter split out of a volume left the volume's entry titled as the chapter), and to leave the entry
     * complete: identifiers merged, tags = the record's topics, the record's year. What is written is
     * [[Calibre.updatePlan]]; nothing is run when the entry already agrees. Returns what changed.
     */
@@ -95,9 +95,9 @@ final class Calibre(cfg: CalibreLibrary, shell: Shell):
       _ <- write(id, changes)
     yield changes
 
-  /** `calibre update --all`: plan the update of every linked entry against ONE listing of the library; with
-    * `apply`, write the entries that would change. An entry linked from more than one record (a chapter and its volume)
-    * is left alone — which record it should show is a decision for a person, `calibre update <citekey>`.
+  /** `calibre update --all`: plan the update of every linked entry against ONE listing of the library; with `apply`,
+    * write the entries that would change. An entry linked from more than one record (a chapter and its volume) is left
+    * alone — which record it should show is a decision for a person, `calibre update <citekey>`.
     */
   def updateAll(linked: List[LinkedRecord], apply: Boolean): Either[String, List[UpdateEntry]] =
     for
@@ -133,8 +133,8 @@ final class Calibre(cfg: CalibreLibrary, shell: Shell):
       _ <- shell.run(cmd)
     yield ()
 
-  /** Replace the file of an EXISTING entry: `calibredb add_format`, which replaces the entry's format of the
-    * same type. Unlike [[add]] it never creates an entry, so the link stays valid.
+  /** Replace the file of an EXISTING entry: `calibredb add_format`, which replaces the entry's format of the same type.
+    * Unlike [[add]] it never creates an entry, so the link stays valid.
     */
   def replaceFormat(id: Int, file: Path): Either[String, String] =
     for
@@ -291,9 +291,9 @@ object Calibre:
     """(?i)[,\s]+(?:(?:b|d|fl|ca|c)\.\s*)?\d{3,4}\??(?:\s*[-–]\s*(?:\d{3,4}\??)?)?\.?\s*$""".r
   private val Suffix = Set("jr", "jr.", "sr", "sr.", "ii", "iii", "iv")
 
-  /** One author as Calibre should show it: "First Last", without a bracketed role or life span, a trailing role
-    * word or library-style dates. `Clunies Ross, Margaret (ed.)` → `Margaret Clunies Ross`; `King, Martin Luther, Jr.`
-    * → `Martin Luther King Jr.`. A name with more commas than that is not one "Last, First" and is left in its order.
+  /** One author as Calibre should show it: "First Last", without a bracketed role or life span, a trailing role word or
+    * library-style dates. `Clunies Ross, Margaret (ed.)` → `Margaret Clunies Ross`; `King, Martin Luther, Jr.` →
+    * `Martin Luther King Jr.`. A name with more commas than that is not one "Last, First" and is left in its order.
     */
   def normaliseAuthor(raw: String): String =
     val unbracketed = raw.replaceAll("\\([^)]*\\)|\\[[^\\]]*\\]", " ")
@@ -460,4 +460,3 @@ object Calibre:
        | CASE WHEN b.has_cover THEN b.path || '/cover.jpg' END AS cover
        |FROM books b WHERE $where ORDER BY b.id DESC LIMIT ${limit.max(1)}""".stripMargin
       .replace("\n", " ")
-

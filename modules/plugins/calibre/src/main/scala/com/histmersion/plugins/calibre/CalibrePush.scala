@@ -1,6 +1,5 @@
 package com.histmersion.plugins.calibre
 
-
 /** What `calibre push` sends into Calibre for one source. */
 final case class CalibrePush(
     title: String,

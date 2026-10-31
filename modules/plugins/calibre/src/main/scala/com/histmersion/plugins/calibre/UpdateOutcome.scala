@@ -1,6 +1,5 @@
 package com.histmersion.plugins.calibre
 
-
 /** What `calibre update --all` does, or did, to one Calibre entry. */
 enum UpdateOutcome:
   /** Dry run: these fields would change. */

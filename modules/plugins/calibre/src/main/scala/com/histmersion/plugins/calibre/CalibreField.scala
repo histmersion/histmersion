@@ -1,6 +1,5 @@
 package com.histmersion.plugins.calibre
 
-
 /** A field `calibre update` writes, by its `calibredb set_metadata --field` name. */
 enum CalibreField(val name: String):
   case Title extends CalibreField("title")

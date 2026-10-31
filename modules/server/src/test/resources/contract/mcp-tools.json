@@ -3943,6 +3943,60 @@
             }
           }
         }
+      },
+      {
+        "name" : "collection",
+        "description" : "The library's SOURCE COLLECTIONS — the user's Calibre library (`name`: calibre, the default) and archive.org (archive-org; use the `archive` tool for it). `action`: `list` (the collections and whether the server reaches them) · `search` (`query`, `limit`; `unlinked: true` = the entries no source links) · `import` (`id` into the corpus; `citekey`, `format`, `convert: false` = the record only) · `link` (`citekey` to entry `id`) · `push` (`citekey`'s stored original as a new entry; `replace: true` swaps the linked entry's file) · `update` (`citekey`'s entry from its record; without `citekey`, every linked entry — a dry run unless `apply: true`) · `set` (`id`, `fields` as `name:value`) · `audit` · `gaps` (sources with a fetched file not in Calibre) · `sync` (push the gaps; a dry run unless `apply: true`). Writes need the Calibre GUI closed.",
+        "inputSchema" : {
+          "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "title" : "CollectionInput",
+          "type" : "object",
+          "required" : [
+            "action"
+          ],
+          "properties" : {
+            "action" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string"
+            },
+            "query" : {
+              "type" : "string"
+            },
+            "id" : {
+              "type" : "string"
+            },
+            "citekey" : {
+              "type" : "string"
+            },
+            "format" : {
+              "type" : "string"
+            },
+            "limit" : {
+              "type" : "integer",
+              "format" : "int32"
+            },
+            "unlinked" : {
+              "type" : "boolean"
+            },
+            "convert" : {
+              "type" : "boolean"
+            },
+            "replace" : {
+              "type" : "boolean"
+            },
+            "apply" : {
+              "type" : "boolean"
+            },
+            "fields" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            }
+          }
+        }
       }
     ]
   }

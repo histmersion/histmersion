@@ -18806,6 +18806,651 @@
           }
         }
       }
+    },
+    "/api/collections" : {
+      "get" : {
+        "operationId" : "getApiCollections",
+        "responses" : {
+          "200" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/CollectionInfo"
+                  }
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/collections/{name}" : {
+      "get" : {
+        "operationId" : "getApiCollectionsName",
+        "parameters" : [
+          {
+            "name" : "name",
+            "in" : "path",
+            "description" : "the collection's name: calibre, archive-org, …",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CollectionInfo"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/collections/{name}/search" : {
+      "get" : {
+        "operationId" : "getApiCollectionsNameSearch",
+        "parameters" : [
+          {
+            "name" : "name",
+            "in" : "path",
+            "description" : "the collection's name: calibre, archive-org, …",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "name" : "q",
+            "in" : "query",
+            "description" : "words to search for; empty lists everything",
+            "required" : false,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "name" : "limit",
+            "in" : "query",
+            "required" : false,
+            "schema" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          },
+          {
+            "name" : "unlinked",
+            "in" : "query",
+            "description" : "only the items no source is linked to",
+            "required" : false,
+            "schema" : {
+              "default" : false,
+              "type" : "boolean"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CollectionSearch"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Invalid value for: query parameter limit, Invalid value for: query parameter unlinked",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/collections/{name}/import" : {
+      "post" : {
+        "operationId" : "postApiCollectionsNameImport",
+        "parameters" : [
+          {
+            "name" : "name",
+            "in" : "path",
+            "description" : "the collection's name: calibre, archive-org, …",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CollectionImportRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CollectionImported"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Invalid value for: body",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/collections/{name}/link" : {
+      "post" : {
+        "operationId" : "postApiCollectionsNameLink",
+        "parameters" : [
+          {
+            "name" : "name",
+            "in" : "path",
+            "description" : "the collection's name: calibre, archive-org, …",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CollectionLinkRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CollectionLinked"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Invalid value for: body",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/collections/{name}/push" : {
+      "post" : {
+        "operationId" : "postApiCollectionsNamePush",
+        "parameters" : [
+          {
+            "name" : "name",
+            "in" : "path",
+            "description" : "the collection's name: calibre, archive-org, …",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CollectionPushRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CollectionPushed"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Invalid value for: body",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/collections/{name}/update" : {
+      "post" : {
+        "operationId" : "postApiCollectionsNameUpdate",
+        "parameters" : [
+          {
+            "name" : "name",
+            "in" : "path",
+            "description" : "the collection's name: calibre, archive-org, …",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CollectionUpdateOne"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CollectionUpdatedOne"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Invalid value for: body",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/collections/{name}/update-all" : {
+      "post" : {
+        "operationId" : "postApiCollectionsNameUpdate-all",
+        "parameters" : [
+          {
+            "name" : "name",
+            "in" : "path",
+            "description" : "the collection's name: calibre, archive-org, …",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CollectionUpdateAllRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CollectionUpdateAll"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Invalid value for: body",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/collections/{name}/set" : {
+      "post" : {
+        "operationId" : "postApiCollectionsNameSet",
+        "parameters" : [
+          {
+            "name" : "name",
+            "in" : "path",
+            "description" : "the collection's name: calibre, archive-org, …",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CollectionSetRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CollectionSetDone"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Invalid value for: body",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/collections/{name}/audit" : {
+      "get" : {
+        "operationId" : "getApiCollectionsNameAudit",
+        "parameters" : [
+          {
+            "name" : "name",
+            "in" : "path",
+            "description" : "the collection's name: calibre, archive-org, …",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CollectionAudit"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/collections/{name}/gaps" : {
+      "get" : {
+        "operationId" : "getApiCollectionsNameGaps",
+        "parameters" : [
+          {
+            "name" : "name",
+            "in" : "path",
+            "description" : "the collection's name: calibre, archive-org, …",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "name" : "limit",
+            "in" : "query",
+            "required" : false,
+            "schema" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CollectionGaps"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Invalid value for: query parameter limit",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/collections/{name}/sync" : {
+      "post" : {
+        "operationId" : "postApiCollectionsNameSync",
+        "parameters" : [
+          {
+            "name" : "name",
+            "in" : "path",
+            "description" : "the collection's name: calibre, archive-org, …",
+            "required" : true,
+            "schema" : {
+              "type" : "string"
+            }
+          }
+        ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CollectionSyncRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CollectionSync"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Invalid value for: body",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components" : {
@@ -22004,6 +22649,657 @@
             }
           },
           "doi" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CollectionAudit" : {
+        "title" : "CollectionAudit",
+        "type" : "object",
+        "required" : [
+          "checked"
+        ],
+        "properties" : {
+          "findings" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CollectionAuditRow"
+            }
+          },
+          "checked" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "CollectionAuditRow" : {
+        "title" : "CollectionAuditRow",
+        "type" : "object",
+        "required" : [
+          "id",
+          "record"
+        ],
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "citekeys" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "codes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "labels" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "record" : {
+            "$ref" : "#/components/schemas/CollectionRecordView"
+          },
+          "entry" : {
+            "$ref" : "#/components/schemas/CollectionRecordView"
+          },
+          "fix" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CollectionCover" : {
+        "title" : "CollectionCover",
+        "type" : "object",
+        "required" : [
+          "line"
+        ],
+        "properties" : {
+          "line" : {
+            "type" : "string"
+          },
+          "warning" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "CollectionEntry" : {
+        "title" : "CollectionEntry",
+        "type" : "object",
+        "required" : [
+          "id",
+          "title"
+        ],
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "authors" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "year" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "publisher" : {
+            "type" : "string"
+          },
+          "tags" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "identifiers" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
+          "formats" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "CollectionFieldChange" : {
+        "title" : "CollectionFieldChange",
+        "type" : "object",
+        "required" : [
+          "field",
+          "from",
+          "to"
+        ],
+        "properties" : {
+          "field" : {
+            "type" : "string"
+          },
+          "from" : {
+            "type" : "string"
+          },
+          "to" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CollectionFieldValue" : {
+        "title" : "CollectionFieldValue",
+        "type" : "object",
+        "required" : [
+          "name",
+          "value"
+        ],
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "value" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CollectionGapRow" : {
+        "title" : "CollectionGapRow",
+        "type" : "object",
+        "required" : [
+          "citekey",
+          "title",
+          "original",
+          "counted"
+        ],
+        "properties" : {
+          "citekey" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "authors" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "doi" : {
+            "type" : "string"
+          },
+          "year" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "venue" : {
+            "type" : "string"
+          },
+          "summary" : {
+            "type" : "string"
+          },
+          "topics" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "provenance" : {
+            "type" : "string"
+          },
+          "calibreId" : {
+            "type" : "string"
+          },
+          "isbn" : {
+            "type" : "string"
+          },
+          "storedOriginal" : {
+            "type" : "boolean"
+          },
+          "original" : {
+            "type" : "string"
+          },
+          "counted" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "CollectionGaps" : {
+        "title" : "CollectionGaps",
+        "type" : "object",
+        "required" : [
+          "count",
+          "uncounted",
+          "total"
+        ],
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "uncounted" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "gaps" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CollectionGapRow"
+            }
+          }
+        }
+      },
+      "CollectionImportRequest" : {
+        "title" : "CollectionImportRequest",
+        "type" : "object",
+        "required" : [
+          "id"
+        ],
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "citekey" : {
+            "type" : "string"
+          },
+          "format" : {
+            "type" : "string"
+          },
+          "convert" : {
+            "type" : "boolean"
+          },
+          "cover" : {
+            "type" : "boolean"
+          },
+          "acquireItem" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "CollectionImported" : {
+        "title" : "CollectionImported",
+        "type" : "object",
+        "required" : [
+          "citekey",
+          "id",
+          "title",
+          "file",
+          "source"
+        ],
+        "properties" : {
+          "citekey" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "relinkedFrom" : {
+            "type" : "string"
+          },
+          "file" : {
+            "type" : "string"
+          },
+          "source" : {
+            "$ref" : "#/components/schemas/SourceWithFindings"
+          },
+          "cover" : {
+            "$ref" : "#/components/schemas/CollectionCover"
+          },
+          "job" : {
+            "$ref" : "#/components/schemas/IngestAccepted"
+          },
+          "jobError" : {
+            "type" : "string"
+          },
+          "jobErrorCode" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CollectionInfo" : {
+        "title" : "CollectionInfo",
+        "type" : "object",
+        "required" : [
+          "name",
+          "title",
+          "description",
+          "reachable"
+        ],
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "capabilities" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "reachable" : {
+            "type" : "boolean"
+          },
+          "problem" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CollectionLinkRequest" : {
+        "title" : "CollectionLinkRequest",
+        "type" : "object",
+        "required" : [
+          "citekey",
+          "id"
+        ],
+        "properties" : {
+          "citekey" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CollectionLinked" : {
+        "title" : "CollectionLinked",
+        "type" : "object",
+        "required" : [
+          "citekey",
+          "id",
+          "title"
+        ],
+        "properties" : {
+          "citekey" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CollectionPushRequest" : {
+        "title" : "CollectionPushRequest",
+        "type" : "object",
+        "required" : [
+          "citekey"
+        ],
+        "properties" : {
+          "citekey" : {
+            "type" : "string"
+          },
+          "replace" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "CollectionPushed" : {
+        "title" : "CollectionPushed",
+        "type" : "object",
+        "required" : [
+          "citekey",
+          "id",
+          "title"
+        ],
+        "properties" : {
+          "citekey" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "replaced" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CollectionRecordView" : {
+        "title" : "CollectionRecordView",
+        "type" : "object",
+        "required" : [
+          "title"
+        ],
+        "properties" : {
+          "title" : {
+            "type" : "string"
+          },
+          "authors" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "year" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "CollectionSearch" : {
+        "title" : "CollectionSearch",
+        "type" : "object",
+        "required" : [
+          "total"
+        ],
+        "properties" : {
+          "entries" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CollectionEntry"
+            }
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "CollectionSetDone" : {
+        "title" : "CollectionSetDone",
+        "type" : "object",
+        "required" : [
+          "id"
+        ],
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "fields" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "CollectionSetRequest" : {
+        "title" : "CollectionSetRequest",
+        "type" : "object",
+        "required" : [
+          "id"
+        ],
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "fields" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CollectionFieldValue"
+            }
+          }
+        }
+      },
+      "CollectionSync" : {
+        "title" : "CollectionSync",
+        "type" : "object",
+        "required" : [
+          "gaps",
+          "applied"
+        ],
+        "properties" : {
+          "gaps" : {
+            "$ref" : "#/components/schemas/CollectionGaps"
+          },
+          "applied" : {
+            "type" : "boolean"
+          },
+          "pushes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CollectionSyncPush"
+            }
+          }
+        }
+      },
+      "CollectionSyncPush" : {
+        "title" : "CollectionSyncPush",
+        "type" : "object",
+        "required" : [
+          "citekey"
+        ],
+        "properties" : {
+          "citekey" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "error" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CollectionSyncRequest" : {
+        "title" : "CollectionSyncRequest",
+        "type" : "object",
+        "properties" : {
+          "apply" : {
+            "type" : "boolean"
+          },
+          "limit" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "CollectionUpdateAll" : {
+        "title" : "CollectionUpdateAll",
+        "type" : "object",
+        "required" : [
+          "applied"
+        ],
+        "properties" : {
+          "rows" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CollectionUpdateRow"
+            }
+          },
+          "applied" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "CollectionUpdateAllRequest" : {
+        "title" : "CollectionUpdateAllRequest",
+        "type" : "object",
+        "properties" : {
+          "apply" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "CollectionUpdateOne" : {
+        "title" : "CollectionUpdateOne",
+        "type" : "object",
+        "required" : [
+          "citekey"
+        ],
+        "properties" : {
+          "citekey" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CollectionUpdateRow" : {
+        "title" : "CollectionUpdateRow",
+        "type" : "object",
+        "required" : [
+          "id",
+          "state"
+        ],
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "citekeys" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "state" : {
+            "type" : "string"
+          },
+          "changes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CollectionFieldChange"
+            }
+          },
+          "reason" : {
+            "type" : "string"
+          }
+        }
+      },
+      "CollectionUpdatedOne" : {
+        "title" : "CollectionUpdatedOne",
+        "type" : "object",
+        "required" : [
+          "citekey",
+          "id",
+          "title"
+        ],
+        "properties" : {
+          "citekey" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "changed" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "title" : {
             "type" : "string"
           }
         }

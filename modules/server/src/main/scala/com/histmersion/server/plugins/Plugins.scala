@@ -196,7 +196,7 @@ object Plugins:
       carried: Map[String, (PluginStatus, Registries)] = Map.empty
   ): Generation =
     val (found, errors) = PluginHost.discover(getClass.getClassLoader)
-    val all = found.filterNot(p => Fetchers(p.info.id)) ++ providers ++ extra
+    val all = found.filterNot(p => Fetchers(p.info.id) || Offline(p.info.id)) ++ providers ++ extra
     val settings = AppConfig.loadWithUserFile(env, None).fold(_ => ConfigFactory.empty, _.merged)
     val host = FirstPartySettings.hostView(user.withFallback(settings).resolve(), user, env, all)
     PluginHost.build(
@@ -209,6 +209,11 @@ object Plugins:
       fallback = FirstPartySettings.fallback(_, host),
       firstParty = firstParty(None)
     )
+
+  /** The first-party plugins besides the fetchers an offline generation leaves out: the Calibre library is the user's
+    * own, and a test's or a tool's generation must never reach it.
+    */
+  private val Offline: Set[String] = Set("calibre")
 
   /** The first-party source fetchers' plugins, which an offline generation leaves out. */
   private val Fetchers: Set[String] =

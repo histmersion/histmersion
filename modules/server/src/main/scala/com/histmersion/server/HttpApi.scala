@@ -13,7 +13,12 @@ import com.histmersion.domain.*
 /** REST (the `Api` contract) + HTML article pages + the static web UI, all interpreted on the same netty-sync server as
   * MCP.
   */
-final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acquire.AcquireHandlers):
+final class HttpApi(
+    deps: Deps,
+    h: Handlers,
+    acquire: com.histmersion.server.acquire.AcquireHandlers,
+    collections: com.histmersion.domain.library.collections.CollectionsControllers
+):
 
   private val rest: List[ServerEndpoint[Any, Identity]] = List(
     Api.version.serverLogicSuccess[Identity](_ => h.version),
@@ -276,7 +281,8 @@ final class HttpApi(deps: Deps, h: Handlers, acquire: com.histmersion.server.acq
     }
 
   // Articles (2.7), ops (2.8) and acquisition (2.6) live in their own files; their routes are appended here.
-  private val acquireRoutes = com.histmersion.server.acquire.AcquireRoutes(acquire).endpoints
+  private val acquireRoutes = com.histmersion.server.acquire.AcquireRoutes(acquire, collections).endpoints ++
+    com.histmersion.domain.library.collections.CollectionsRoutes(collections)
 
   val endpoints: List[ServerEndpoint[Any, Identity]] =
     com.histmersion.server.events.EventCatalogRoutes(h) ++ rest ++ ArticlesApi(h).endpoints ++ OpsRoutes(

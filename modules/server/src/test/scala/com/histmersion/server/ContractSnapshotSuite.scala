@@ -65,11 +65,19 @@ class ContractSnapshotSuite extends munit.FunSuite:
       citations = ???,
       oa = ???,
       wiki = ???,
-      archive = ???,
       retractionWatch = ???,
       jobs = SkeletonIngest(RefusingDataSource, loaded.config.limits.chunkChars)
     )
-    val mcp = McpTools(h, acq)
+    val collections = com.histmersion.domain.library.collections.CollectionsControllers(
+      com.histmersion.domain.library.collections.CollectionsService.InMemory(
+        java.util.concurrent.atomic.AtomicReference(Nil),
+        com.histmersion.domain.library.collections.RefusingCollectionLibrary(),
+        () => scala.collection.immutable.ListMap.empty,
+        8
+      ),
+      deps.maintenance
+    )
+    val mcp = McpTools(h, acq, collections)
     val body = supervised {
       val b = NettySyncServer().host("127.0.0.1").port(0).addEndpoint(mcp.endpoint).start()
       try

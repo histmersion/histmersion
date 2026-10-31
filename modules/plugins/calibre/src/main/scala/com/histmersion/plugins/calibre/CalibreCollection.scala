@@ -57,10 +57,13 @@ final class CalibreCollection(library: CalibreLibrary, writeBack: Boolean, shell
     item.cover.map(_.trim).filter(p => p.nonEmpty && Files.isRegularFile(Path.of(p))) match
       case None       => Right(None)
       case Some(path) =>
-        CalibreCollection.read(path).map(b => Some(FetchedFile("calibre", Some(path), b, CalibreCollection.extension(path))))
+        CalibreCollection
+          .read(path)
+          .map(b => Some(FetchedFile("calibre", Some(path), b, CalibreCollection.extension(path))))
 
   override def add(metadata: CollectionMetadata, file: FetchedFile): Either[String, CollectionId] =
-    CalibreCollection.staged(metadata.key, file)(p => calibre.add(p, CalibreCollection.push(metadata)))
+    CalibreCollection
+      .staged(metadata.key, file)(p => calibre.add(p, CalibreCollection.push(metadata)))
       .map(id => CollectionId(id.toString))
 
   override def replace(id: CollectionId, key: String, file: FetchedFile): Either[String, String] =
@@ -195,12 +198,14 @@ object CalibreCollection:
         val in = Files.newInputStream(db)
         try in.read(new Array[Byte](16))
         finally in.close()
-      }.toEither.left.map {
-        case _: java.nio.file.NoSuchFileException =>
-          s"there is no metadata.db in $dir — set histmersion.plugins.calibre.library-path to the Calibre library's folder"
-        case e =>
-          s"the server cannot read $db (${e.getClass.getSimpleName}: ${e.getMessage}) — on macOS a library in " +
-            "Documents, Desktop, Downloads, iCloud Drive or on an external volume needs Full Disk Access (or Files " +
-            "and Folders) for the server's binary, granted in System Settings → Privacy & Security; a server in a " +
-            "container needs the library mounted"
-      }.map(_ => ())
+      }.toEither.left
+        .map {
+          case _: java.nio.file.NoSuchFileException =>
+            s"there is no metadata.db in $dir — set histmersion.plugins.calibre.library-path to the Calibre library's folder"
+          case e =>
+            s"the server cannot read $db (${e.getClass.getSimpleName}: ${e.getMessage}) — on macOS a library in " +
+              "Documents, Desktop, Downloads, iCloud Drive or on an external volume needs Full Disk Access (or Files " +
+              "and Folders) for the server's binary, granted in System Settings → Privacy & Security; a server in a " +
+              "container needs the library mounted"
+        }
+        .map(_ => ())

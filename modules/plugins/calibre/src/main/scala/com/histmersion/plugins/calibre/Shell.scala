@@ -2,7 +2,6 @@ package com.histmersion.plugins.calibre
 
 import scala.jdk.CollectionConverters.*
 
-
 /** Running an external program. Behind a trait so the parsers and the guards can be tested without a Calibre
   * installation.
   */

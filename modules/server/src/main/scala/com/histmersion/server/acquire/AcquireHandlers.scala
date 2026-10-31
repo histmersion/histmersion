@@ -33,7 +33,6 @@ final class AcquireHandlers(
     citations: => CitationsClient,
     oa: => OaFetcher,
     wiki: => WikiClient,
-    archive: => ArchiveClient,
     retractionWatch: => RetractionWatchClient,
     jobs: IngestJobs,
     indexes: => List[ScholarlyIndex] = Nil,
@@ -627,99 +626,75 @@ final class AcquireHandlers(
 
   // ── archive.org ─────────────────────────────────────────────────────────────────────────────
 
-  def archiveSearch(q: String, rows: Option[Int]): Either[ApiError, ArchiveSearchResult] =
-    val query = q.trim
-    if query.isEmpty then Left(err("give a search query"))
-    else
-      archive
-        .search(query, rows.filter(_ > 0).getOrElse(acq.defaults.archiveRows.value))
-        .left
-        .map(err)
-        .map(items => ArchiveSearchResult(query, items.size, items))
-
-  def archiveInfo(id: String): Either[ApiError, ArchiveItem] = archive.info(id).left.map(err)
-
-  /** Import a PUBLIC archive.org item. A lending-only scan is refused, not worked around: it must be borrowed on
-    * archive.org, and circumventing that is not something this pipeline does.
+  /** Import `file` of the PUBLIC archive.org item `item` (the library's archive.org collection described it, refused a
+    * lending-only one and picked the file): the download is the chain's `archive-org` fetcher.
     */
-  private def archiveImportNow(req: ArchiveImportRequest): Either[ApiError, IngestReport] =
-    archive.info(req.id).left.map(err).flatMap { item =>
-      if item.lendingOnly then
-        Left(
-          err(
-            s"'${item.identifier}' is a lending-only item — borrow it on archive.org; " +
-              "it is not downloadable here (no DRM circumvention)"
-          )
-        )
-      else
-        AcquireParse
-          .pickArchiveFile(item.files.map(_.upstream), req.format)
-          .map(_.wire)
-          .toRight(err(s"'${item.identifier}' has no epub/pdf file to download"))
-          .flatMap { file =>
-            val steps = List.newBuilder[IngestStep]
-            val rawCitekey = req.citekey
-              .map(_.trim)
-              .filter(_.nonEmpty)
-              .getOrElse(
-                stored(Acquire.citekey(item.creator, item.year, item.title), item.creator, item.year, item.title)
+  private def archiveImportNow(
+      item: ArchiveItem,
+      file: ArchiveFile,
+      req: ArchiveImportRequest
+  ): Either[ApiError, IngestReport] =
+    val steps = List.newBuilder[IngestStep]
+    val rawCitekey = req.citekey
+      .map(_.trim)
+      .filter(_.nonEmpty)
+      .getOrElse(
+        stored(Acquire.citekey(item.creator, item.year, item.title), item.creator, item.year, item.title)
+      )
+    Citekey.of(rawCitekey).flatMap { validCk =>
+      val citekey: String = validCk.value
+      steps += IngestStep(
+        "metadata",
+        true,
+        s"${item.title.getOrElse(item.identifier)} (${item.year.map(_.toString).getOrElse("?")})"
+      )
+      // the download is the chain's `archive-org` fetcher (the legal chain: a public item only)
+      oa.fetchWork(
+        com.histmersion.plugin.WorkKey(
+          archive = Some(item.identifier),
+          format = req.format,
+          title = item.title,
+          authors = item.creator,
+          year = item.year.map(com.histmersion.plugin.Year(_))
+        ),
+        legalOnly = true
+      ).left
+        .map(e => err(s"'${item.identifier}': $e"))
+        .flatMap { f =>
+          steps += IngestStep("fetch", true, s"archive.org: ${f.bytes.length} bytes (${file.name})")
+          val spooled = Spool.write(acq.spoolDir, citekey, f.extension, f.bytes) match
+            case Right(p) => Some(p)
+            case Left(e)  => steps += IngestStep("spool", false, e); None
+          jobs
+            .enqueue(
+              spooled,
+              citekey,
+              IngestMeta(
+                title = item.title.getOrElse(citekey),
+                authors = item.creator,
+                year = item.year,
+                venue = item.publisher,
+                summary = item.description,
+                provenance = "archive_org"
               )
-            Citekey.of(rawCitekey).flatMap { validCk =>
-              val citekey: String = validCk.value
-              steps += IngestStep(
-                "metadata",
-                true,
-                s"${item.title.getOrElse(item.identifier)} (${item.year.map(_.toString).getOrElse("?")})"
+            )
+            .left
+            .map(err)
+            .map { outcome =>
+              steps += IngestStep("store", true, outcome.detail)
+              steps ++= acquireSteps(None, item.title.getOrElse(citekey), item.creator, outcome.jobId)
+              IngestReport(
+                citekey,
+                None,
+                item.title,
+                outcome.created,
+                Some(PdfInfo("archive_org", None, f.bytes.length.toLong, spooled.map(_.toString))),
+                0,
+                None,
+                steps.result()
               )
-              // the download is the chain's `archive-org` fetcher (the legal chain: a public item only)
-              oa.fetchWork(
-                com.histmersion.plugin.WorkKey(
-                  archive = Some(item.identifier),
-                  format = req.format,
-                  title = item.title,
-                  authors = item.creator,
-                  year = item.year.map(com.histmersion.plugin.Year(_))
-                ),
-                legalOnly = true
-              ).left
-                .map(e => err(s"'${item.identifier}': $e"))
-                .flatMap { f =>
-                  steps += IngestStep("fetch", true, s"archive.org: ${f.bytes.length} bytes (${file.name})")
-                  val spooled = Spool.write(acq.spoolDir, citekey, f.extension, f.bytes) match
-                    case Right(p) => Some(p)
-                    case Left(e)  => steps += IngestStep("spool", false, e); None
-                  jobs
-                    .enqueue(
-                      spooled,
-                      citekey,
-                      IngestMeta(
-                        title = item.title.getOrElse(citekey),
-                        authors = item.creator,
-                        year = item.year,
-                        venue = item.publisher,
-                        summary = item.description,
-                        provenance = "archive_org"
-                      )
-                    )
-                    .left
-                    .map(err)
-                    .map { outcome =>
-                      steps += IngestStep("store", true, outcome.detail)
-                      steps ++= acquireSteps(None, item.title.getOrElse(citekey), item.creator, outcome.jobId)
-                      IngestReport(
-                        citekey,
-                        None,
-                        item.title,
-                        outcome.created,
-                        Some(PdfInfo("archive_org", None, f.bytes.length.toLong, spooled.map(_.toString))),
-                        0,
-                        None,
-                        steps.result()
-                      )
-                    }
-                }
             }
-          }
+        }
     }
 
   // ── Calibre gaps (the push itself runs on the host) ─────────────────────────────────────────
@@ -782,8 +757,8 @@ final class AcquireHandlers(
     */
   def fetcherGeneration: String = generation
 
-  def archiveImport(req: ArchiveImportRequest): Either[ApiError, IngestReport] =
-    maintenance.guard("archive/import")(archiveImportNow(req))
+  def archiveImport(item: ArchiveItem, file: ArchiveFile, req: ArchiveImportRequest): Either[ApiError, IngestReport] =
+    maintenance.guard("archive/import")(archiveImportNow(item, file, req))
 
   def updateRetractions(): Either[ApiError, RetractionsUpdate] =
     maintenance.guard("retractions/update")(updateRetractionsNow())

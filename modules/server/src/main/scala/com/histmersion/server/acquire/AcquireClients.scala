@@ -14,7 +14,6 @@ final case class AcquireClients(
     citations: CitationsClient,
     oa: OaFetcher,
     wiki: WikiClient,
-    archive: ArchiveClient,
     retractionWatch: RetractionWatchClient,
     /** The indexes a goal's watches read, and the citation/author alerts (#3761). */
     indexes: List[ScholarlyIndex] = Nil,

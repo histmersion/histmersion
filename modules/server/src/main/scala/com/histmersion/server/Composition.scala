@@ -1,6 +1,6 @@
 package com.histmersion.server
 
-import com.histmersion.domain.library.acquisition.{ArchiveOrgClient, OpenAlexDiscovery}
+import com.histmersion.domain.library.acquisition.OpenAlexDiscovery
 
 import com.histmersion.pluginhost.{upstreamSettings, FetchChain, Generation, HostLog, OutboundTls}
 
@@ -113,7 +113,8 @@ object Composition:
     // the skeptic reads followups); then an interrupted run is PAUSED (resumable), queued ones
     // re-enqueued; no pool at all unless agents.enabled
     h.agents.attach(com.histmersion.server.agents.AgentUpstream.of(acq))
-    val mcp = McpTools(h, acq)
+    val collections = collectionsControllers(sg, deps, h, acq)
+    val mcp = McpTools(h, acq, collections)
     h.agents.attachTools(mcp.toolNames) // what the generated definitions' placeholders may name
     val paused = h.agents.start()
     if paused > 0 then
@@ -149,7 +150,7 @@ object Composition:
       .addEndpoints(
         com.histmersion.server.agents.AgentsTools.agentEndpoints(h.agents)
       ) // one per agent definition, behind run tokens
-      .addEndpoints(HttpApi(deps, h, acq).endpoints)
+      .addEndpoints(HttpApi(deps, h, acq, collections).endpoints)
     if cfg.auth.apiKey.nonEmpty then
       scribe.info("API key authentication enabled — write methods require Authorization: Bearer <key>")
     srv.modifyConfig { nc =>
@@ -218,12 +219,64 @@ object Composition:
       citations = clients.peek.citations,
       oa = clients.peek.oa,
       wiki = clients.peek.wiki,
-      archive = clients.peek.archive,
       retractionWatch = clients.peek.retractionWatch,
       jobs = QueuedIngest(h.ingest, deps.ds, deps.cfg.limits.chunkChars, deps.cfg.places.pointToleranceKm),
       indexes = clients.peek.indexes,
       alerts = clients.peek.alerts,
       generation = clients.peek.generation
+    )
+
+  /** The library's source collections (the Calibre library, archive.org): the service over the plugin generation's
+    * collections, read at each call, and the library it writes through — the same handlers the endpoints run.
+    */
+  private def collectionsControllers(
+      sg: ServerGraph,
+      deps: Deps,
+      h: Handlers,
+      acq: AcquireHandlers
+  ): com.histmersion.domain.library.collections.CollectionsControllers =
+    import com.histmersion.api.*
+    import com.histmersion.domain.library.collections.*
+    val library = new CollectionLibrary:
+      def source(citekey: String) = h.getSource(citekey, body = false)
+      def create(citekey: String, put: SourcePut) = h.putSource(citekey, put)
+      def patch(citekey: String, patch: SourcePatch) = h.patchSource(citekey, patch)
+      def pushMeta(citekey: String) = acq.calibreMeta(citekey)
+      def pushed(req: CalibrePushRequest) = acq.calibrePushed(req)
+      def gaps(limit: Option[Int]) = acq.calibreGaps(limit)
+      def original(citekey: String) =
+        h.ingest.original(citekey).flatMap { (file, disposition) =>
+          scala.util
+            .Try(java.nio.file.Files.readAllBytes(file.toPath))
+            .toEither
+            .left
+            .map(e => ApiError(s"cannot read the original of '$citekey': ${e.getMessage}"))
+            .map(StoredOriginal(_, disposition))
+        }
+      def queueItem(id: Int) = h.ops.queueList(Queue.Kind.Acquire.label, all = true).map(_.items.find(_.id == id))
+      def ingest(params: IngestParams, bytes: Array[Byte]) =
+        val dir = java.nio.file.Files.createTempDirectory("histmersion-collection-")
+        try
+          val f = dir.resolve(params.filename.getOrElse("original"))
+          java.nio.file.Files.write(f, bytes)
+          h.ingest.ingest(params, f.toFile)
+        finally
+          val s = java.nio.file.Files.list(dir)
+          try s.forEach(p => java.nio.file.Files.deleteIfExists(p): Unit)
+          finally s.close()
+          java.nio.file.Files.deleteIfExists(dir): Unit
+      def putCover(params: SourceCoverParams, bytes: Array[Byte]) = h.media.putCover(params, bytes)
+      def openLibraryCover(req: MediaCoversRequest) = h.media.covers(req)
+      def archiveImport(item: ArchiveItem, file: ArchiveFile, req: ArchiveImportRequest) =
+        acq.archiveImport(item, file, req)
+    CollectionsControllers(
+      CollectionsService(
+        deps.transactor,
+        library,
+        () => sg.plugins.peek.registries.sourceCollections,
+        deps.cfg.acquire.defaults.archiveRows.value
+      ),
+      deps.maintenance
     )
 
   /** The acquisition clients for one config and one plugin generation: one HTTP client (`acquire.tls` included), the
@@ -260,7 +313,6 @@ object Composition:
       SemanticScholar(cfg, http),
       chain,
       Wikipedia(cfg, http),
-      ArchiveOrgClient(com.histmersion.upstreams.ArchiveOrg(cfg.upstreamSettings.archiveOrg, HttpPlugin(http))),
       RetractionWatch(cfg, http),
       indexes,
       alerts,

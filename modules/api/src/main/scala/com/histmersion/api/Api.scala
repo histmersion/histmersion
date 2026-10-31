@@ -655,7 +655,8 @@ object Api:
     iiifImage,
     resolveId,
     backupStatus
-  ) ++ OpsApi.all ++ AgentsApi.all ++ ManagersApi.all ++ UiApi.all ++ EventsApi.all ++ AcquireApi.all ++ BasemapApi.all ++ TilesApi.all ++ ConfigEditApi.all ++ personal.PersonalApi.all
+  ) ++ OpsApi.all ++ AgentsApi.all ++ ManagersApi.all ++ UiApi.all ++ EventsApi.all ++ AcquireApi.all ++ BasemapApi.all ++ TilesApi.all ++ ConfigEditApi.all ++ personal.PersonalApi.all ++
+    library.collections.CollectionsApi.all
 
   lazy val places: PublicEndpoint[(Option[String], Option[Long], Option[Int]), ApiError, List[PlaceHit], Any] =
     base.get
