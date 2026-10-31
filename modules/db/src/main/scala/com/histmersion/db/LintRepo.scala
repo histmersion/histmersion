@@ -5,6 +5,8 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Lint.*
 
+import com.histmersion.util.data.checks.{CheckInput, CheckRun}
+
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
 
@@ -175,6 +177,56 @@ object LintRepo:
   private def arrays(sql: String)(using DbCon): List[(String, List[String])] =
     Sql.raw(sql).frag.query[(String, List[String])].run().toList
 
+  /** What the rules read besides the database: how many prefix candidates a dangling target is offered
+    * (`lint.suggestions`), the formatting check, the geocoder's knobs (`finding-geocode`, `finding-unplaced`) and
+    * `places.sources.point-area-kinds` (`place-imported-point-area`).
+    */
+  final case class Context(
+      suggestions: Int,
+      format: FormatChecker,
+      geocode: Geocoder.Settings,
+      pointAreaKinds: List[String]
+  )
+
+  object Context:
+    def of(cfg: AppConfig, format: FormatChecker): Context =
+      Context(cfg.lint.suggestions, format, geocodeOf(cfg), pointAreaOf(cfg).kinds)
+
+  /** The geocoder's knobs (`places.geocode-*`), as `finding-geocode` and its repair use them. */
+  def geocodeOf(cfg: AppConfig): Geocoder.Settings =
+    Geocoder.Settings(cfg.places.geocodePlaceholderMin, cfg.places.geocodeRepairKm, cfg.places.pointToleranceKm)
+
+  /** `place-imported-point-area`'s knobs (`places.sources.point-area-*`). */
+  def pointAreaOf(cfg: AppConfig): PointAreaRepo.Settings =
+    val src = cfg.places.sources
+    PointAreaRepo.Settings(
+      src.pointAreaKindSet.toList.sorted,
+      src.pointAreaFixBatch,
+      src.pointAreaFixSeconds.toLong * 1000L,
+      cfg.places.pointToleranceKm
+    )
+
+  // the graph inputs and the wave 3 fetches several rules classify, read at most once per run
+  private val StoredCitekeys = CheckInput(Sql.raw(citekeysSql).frag.query[String].run().toSet)
+  private val EdgeRows = CheckInput(
+    Sql
+      .raw(edgesSql)
+      .frag
+      .query[(String, String, String)]
+      .run()
+      .map((src, dst, kind) => Edge(src, dst, kind))
+      .toList
+  )
+  private val TagRows = CheckInput(arrays(tagsSql))
+  private val YearRows = CheckInput(
+    pairs(yearsSql).map((ck, y) => (ck, Option(y).flatMap(_.toIntOption)))
+  ) // year is nullable
+  private val AuthorRows = CheckInput(arrays(authorsSql))
+  private val ArticleRows = CheckInput(pairs(articlesSql))
+
+  /** Whether a citekey is stored — what the formatting rules check a bare citekey against, read once per run. */
+  def storedCitekey(using run: CheckRun)(using DbCon): String => Boolean = ck => run(StoredCitekeys).contains(ck)
+
   /** Run the selected rules. One connection for the lot; the graph inputs (citekeys, edges) are fetched at most once
     * even though two rules classify them. `pointAreaKinds` is `places.sources.point-area-kinds`
     * (`place-imported-point-area`).
@@ -189,61 +241,50 @@ object LintRepo:
       pointAreaKinds: List[String] = Gazetteer.DefaultPointAreaKinds
   ): LintReport =
     connect(ds):
-      lazy val citekeys = Sql.raw(citekeysSql).frag.query[String].run().toSet
-      lazy val edgeRows = Sql
-        .raw(edgesSql)
-        .frag
-        .query[(String, String, String)]
-        .run()
-        .map((src, dst, kind) => Edge(src, dst, kind))
-        .toList
-      // wave 3 fetches — lazy, shared across rules that need them
-      lazy val tagRows = arrays(tagsSql)
-      lazy val yearRows = pairs(yearsSql).map((ck, y) => (ck, Option(y).flatMap(_.toIntOption))) // year is nullable
-      lazy val authorRows = arrays(authorsSql)
-      lazy val articleRows = pairs(articlesSql)
+      val run = CheckRun()
+      val context = Context(suggestions, format, geocode, pointAreaKinds)
+      LintReport(rules.map(report(_, context, maxItems)(using run)))
 
-      val reports = rules.map { r =>
-        if r.name == PlaceImportedPointArea then PointAreaRepo.reportIn(r, pointAreaKinds, maxItems)
-        else
-          val items = r.name match
-            case DanglingEdges           => Lint.danglingEdges(edgeRows, citekeys, suggestions)
-            case UnresolvedShortCitekeys => Lint.unresolvedShortCitekeys(edgeRows, citekeys, suggestions)
-            case DuplicateDoi            => Lint.duplicates(pairs(doiSql), "doi")
-            case DuplicateSha256         => Lint.duplicates(pairs(sha256Sql), "sha256")
-            case NonCanonicalTag         => Lint.nonCanonicalTags(tagRows)
-            case YearCitekeyMismatch     => Lint.yearCitekeyMismatch(yearRows)
-            case AuthorPipe              => Lint.authorPipe(authorRows)
-            case ArticleFiller           => Lint.articleFiller(articleRows)
-            case ArticleUncitedParagraph => Lint.articleUncitedParagraphs(articleRows)
-            case ArticleCritiquePairing  =>
-              val c = pairingCorpusIn()
-              Lint.articleCritiquePairing(articleRows, c.resolve, c.edges, c.work)
-            case ArticleThinSummary => Lint.articleThinSummary(pairs(articleSummariesSql))
-            case ArticleFormat      =>
-              Lint.formatItems(
-                triples(articleTextsSql).flatMap((slug, body, summary) =>
-                  List((slug, FormatField.Body, body), (slug, FormatField.Summary, summary))
-                ),
-                format
-              )
-            case NoteFormat =>
-              Lint.formatItems(
-                triples(noteTextsSql).flatMap((ck, summary, notes) =>
-                  List((ck, FormatField.Summary, summary), (ck, FormatField.Notes, notes))
-                ),
-                format
-              )
-            case FindingGeocode     => Geocoder.movesIn(geocode).map(m => LintItem(m.citekey, m.describe))
-            case FindingUnplaced    => Geocoder.placementsIn(geocode).map(p => LintItem(p.citekey, p.describe))
-            case PlaceKindRule      => PlaceReviewRepo.proposalsIn().map(p => LintItem(p.id, p.detail))
-            case PlaceGridPoint     => PlaceReviewRepo.relocationsIn().map(r => LintItem(r.id, r.detail))
-            case FindingPlaceholder => PlaceRepo.unresolvedPlaceholdersIn().map((ck, detail) => LintItem(ck, detail))
-            case name               =>
-              projections.get(name).toList.flatMap(pairs).map((ck, detail) => LintItem(ck, detail))
-          Lint.report(r, items, maxItems)
-      }
-      LintReport(reports)
+  /** One rule's report, on the run's connection. */
+  def report(r: Rule, c: Context, maxItems: Int)(using run: CheckRun)(using DbCon): LintRuleReport =
+    if r.name == PlaceImportedPointArea then PointAreaRepo.reportIn(r, c.pointAreaKinds, maxItems)
+    else
+      val items = r.name match
+        case DanglingEdges           => Lint.danglingEdges(run(EdgeRows), run(StoredCitekeys), c.suggestions)
+        case UnresolvedShortCitekeys => Lint.unresolvedShortCitekeys(run(EdgeRows), run(StoredCitekeys), c.suggestions)
+        case DuplicateDoi            => Lint.duplicates(pairs(doiSql), "doi")
+        case DuplicateSha256         => Lint.duplicates(pairs(sha256Sql), "sha256")
+        case NonCanonicalTag         => Lint.nonCanonicalTags(run(TagRows))
+        case YearCitekeyMismatch     => Lint.yearCitekeyMismatch(run(YearRows))
+        case AuthorPipe              => Lint.authorPipe(run(AuthorRows))
+        case ArticleFiller           => Lint.articleFiller(run(ArticleRows))
+        case ArticleUncitedParagraph => Lint.articleUncitedParagraphs(run(ArticleRows))
+        case ArticleCritiquePairing  =>
+          val p = pairingCorpusIn()
+          Lint.articleCritiquePairing(run(ArticleRows), p.resolve, p.edges, p.work)
+        case ArticleThinSummary => Lint.articleThinSummary(pairs(articleSummariesSql))
+        case ArticleFormat      =>
+          Lint.formatItems(
+            triples(articleTextsSql).flatMap((slug, body, summary) =>
+              List((slug, FormatField.Body, body), (slug, FormatField.Summary, summary))
+            ),
+            c.format
+          )
+        case NoteFormat =>
+          Lint.formatItems(
+            triples(noteTextsSql).flatMap((ck, summary, notes) =>
+              List((ck, FormatField.Summary, summary), (ck, FormatField.Notes, notes))
+            ),
+            c.format
+          )
+        case FindingGeocode     => Geocoder.movesIn(c.geocode).map(m => LintItem(m.citekey, m.describe))
+        case FindingUnplaced    => Geocoder.placementsIn(c.geocode).map(p => LintItem(p.citekey, p.describe))
+        case PlaceKindRule      => PlaceReviewRepo.proposalsIn().map(p => LintItem(p.id, p.detail))
+        case PlaceGridPoint     => PlaceReviewRepo.relocationsIn().map(r => LintItem(r.id, r.detail))
+        case FindingPlaceholder => PlaceRepo.unresolvedPlaceholdersIn().map((ck, detail) => LintItem(ck, detail))
+        case name               =>
+          projections.get(name).toList.flatMap(pairs).map((ck, detail) => LintItem(ck, detail))
+      Lint.report(r, items, maxItems)
 
   // ── article-critique-pairing ─────────────────────────────────────────────────────────────────
 
@@ -335,3 +376,78 @@ object LintRepo:
     }
     val ok = done.collect { case scala.util.Success(n) => n }
     ReindexResult(ok.size, ok.sum, take.lastOption, pending.size - take.size)
+
+  // ── the safe fixes of `lint --fix`, each as the part of the result it reports ─────────────────
+
+  /** `unresolved-short-citekeys`: unify the unambiguous short edge targets. */
+  def resolveEdgesFix(ds: DataSource): LintFixResult =
+    val resolved = SourceRepo.resolveEdges(ds)
+    LintFixResult(List(s"resolve-edges: $resolved edge target(s) rewritten"), resolved, 0, 0, 0)
+
+  /** `stale-chunks`: re-chunk a bounded batch of the sources with a body and no chunks. */
+  def reindexFix(ds: DataSource, cfg: AppConfig): LintFixResult =
+    val r = reindexStale(ds, cfg.limits.chunkChars, cfg.limits.reindexChars)
+    val left = if r.remaining > 0 then s", ${r.remaining} still stale" else ""
+    LintFixResult(
+      List(s"reindex: ${r.sources} source(s) → ${r.chunks} chunk(s)$left"),
+      0,
+      r.sources,
+      r.chunks,
+      r.remaining
+    )
+
+  /** `finding-geocode`: move the findings the rule lists to the place the current geocoder chooses. */
+  def regeocodeFix(ds: DataSource, cfg: AppConfig): LintFixResult =
+    val s = geocodeOf(cfg)
+    val moved = Geocoder.apply(ds, Geocoder.moves(ds, s), s.toleranceKm)
+    LintFixResult(
+      List(s"$FindingGeocode: $moved finding(s) moved to the place the current geocoder chooses"),
+      0,
+      0,
+      0,
+      0,
+      findingsRegeocoded = moved
+    )
+
+  /** `finding-unplaced`: give the findings the rule lists the point of the place they name. */
+  def placeFix(ds: DataSource, cfg: AppConfig): LintFixResult =
+    val s = geocodeOf(cfg)
+    val placed = Geocoder.place(ds, Geocoder.placements(ds, s), s.toleranceKm)
+    LintFixResult(
+      List(s"$FindingUnplaced: $placed finding(s) given the point of the place they name"),
+      0,
+      0,
+      0,
+      0,
+      findingsPlaced = placed
+    )
+
+  /** `place-kind`: reclassify the places the rule lists and merge the withdrawn ones into their replacement. */
+  def reclassifyFix(ds: DataSource, cfg: AppConfig): LintFixResult =
+    val (reclassified, merged) = PlaceReviewRepo.apply(ds, PlaceReviewRepo.proposals(ds), cfg.places.pointToleranceKm)
+    LintFixResult(
+      List(s"$PlaceKindRule: $reclassified place(s) reclassified, $merged merged into their replacement"),
+      0,
+      0,
+      0,
+      0,
+      placesReclassified = reclassified,
+      placesMerged = merged
+    )
+
+  /** `place-grid-point`: move the places the rule lists to their linked record's point. */
+  def relocateFix(ds: DataSource, cfg: AppConfig): LintFixResult =
+    val relocated = PlaceReviewRepo.relocate(ds, PlaceReviewRepo.relocations(ds), cfg.places.pointToleranceKm)
+    LintFixResult(
+      List(s"$PlaceGridPoint: $relocated place(s) moved from a grid square's centre to their linked record's point"),
+      0,
+      0,
+      0,
+      0,
+      placesRelocated = relocated
+    )
+
+  /** `place-imported-point-area`: remove a bounded batch of the places the rule lists. */
+  def removePointAreasFix(ds: DataSource, cfg: AppConfig): LintFixResult =
+    val r = PointAreaRepo.remove(ds, pointAreaOf(cfg))
+    LintFixResult(List(r.line), 0, 0, 0, 0, pointAreasRemoved = r.removed, pointAreasRemaining = r.remaining)
