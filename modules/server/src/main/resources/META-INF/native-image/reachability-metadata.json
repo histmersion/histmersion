@@ -15521,6 +15521,14 @@
       "type": "com.histmersion.server.AuthHandler"
     },
     {
+      "type": "com.histmersion.server.Deps$",
+      "fields": [
+        {
+          "name": "data$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.server.Deps",
       "fields": [
         {
