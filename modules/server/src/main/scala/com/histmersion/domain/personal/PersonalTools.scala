@@ -2,13 +2,15 @@ package com.histmersion.domain.personal
 
 import chimp.server.*
 import com.histmersion.api.personal.PersonalMarkdown
+import com.histmersion.domain.Caller
 import com.histmersion.util.mcp.McpOut
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
 /** The person's bookmarks and notes for agents to READ: there is no tool that makes, changes or removes one — those are
-  * the person's own, written in the web UI and with `histmersion bookmarks|notes`.
+  * the person's own, written in the web UI and with `histmersion bookmarks|notes`. An agent reads them for the local
+  * person, whom it works for.
   */
 object PersonalTools:
   import com.histmersion.util.mcp.ToolInputs.given
@@ -43,7 +45,7 @@ object PersonalTools:
         .input[BookmarksInput]
         .handle(in =>
           personal
-            .listBookmarks(in.kind, in.query, in.limit)
+            .listBookmarks(Caller.Local, in.kind, in.query, in.limit)
             .fold(McpOut.error, bs => ToolResult.text(PersonalMarkdown.bookmarks(bs)))
         )
     val notes =
@@ -58,10 +60,11 @@ object PersonalTools:
         .input[NotesInput]
         .handle { in =>
           in.id.map(_.trim).filter(_.nonEmpty) match
-            case Some(id) => personal.note(id).fold(McpOut.error, n => ToolResult.text(PersonalMarkdown.note(n)))
-            case None     =>
+            case Some(id) =>
+              personal.note(Caller.Local, id).fold(McpOut.error, n => ToolResult.text(PersonalMarkdown.note(n)))
+            case None =>
               personal
-                .listNotes(in.kind, in.item, in.query, in.limit)
+                .listNotes(Caller.Local, in.kind, in.item, in.query, in.limit)
                 .fold(McpOut.error, ns => ToolResult.text(PersonalMarkdown.notes(ns)))
         }
     List(bookmarks, notes)

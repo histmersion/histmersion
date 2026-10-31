@@ -11,4 +11,11 @@ object ArticleReferable:
   val Kind: ItemKind = ItemKind("article")
 
   val Table: RecordTable =
-    RecordTable(Kind, "articles", "t.slug", "t.title", Some("t.uid"), Some(AliasColumns("article_aliases", "alias", "slug")))
+    RecordTable(
+      Kind,
+      "articles",
+      "t.slug",
+      "t.title",
+      Some("t.uid"),
+      Some(AliasColumns("article_aliases", "alias", "slug"))
+    )

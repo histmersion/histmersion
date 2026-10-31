@@ -1,6 +1,6 @@
 package com.histmersion.server
 
-import com.histmersion.values.{BundleKind, Citekey, PlaceKind}
+import com.histmersion.values.{BundleKind, Citekey, PlaceKind, UserId}
 import com.histmersion.files.*
 
 import com.histmersion.api.*
@@ -124,10 +124,41 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     ).map(_ => ())
     JobControlControllers(JobControlService(ds, deps.jobStops, run))
 
+  /** Every domain's records as others point at them: what the person's marks show of what they point at. */
+  lazy val referables: Referables =
+    val db = deps.transactor
+    Referables(
+      List(
+        com.histmersion.domain.library.sources.SourceReferable(db),
+        com.histmersion.domain.research.articles.ArticleReferable(db),
+        com.histmersion.domain.catalogue.CatalogueReferable(db),
+        com.histmersion.domain.media.assets.PictureReferable(db),
+        com.histmersion.domain.automation.goals.GoalReferable(db)
+      )
+    )
+
   /** A person's bookmarks, notes and read marks (the one local user's while the server runs for one person). */
   lazy val personal: com.histmersion.domain.personal.PersonalControllers =
-    import com.histmersion.domain.personal.{BookmarkService, NoteService, PersonalControllers, ReadingService}
-    PersonalControllers(BookmarkService(ds), NoteService(ds), ReadingService(ds), deps.maintenance, () => Instant.now())
+    import com.histmersion.domain.personal.PersonalControllers
+    import com.histmersion.domain.personal.bookmarks.BookmarkService
+    import com.histmersion.domain.personal.notes.NoteService
+    import com.histmersion.domain.personal.reading.ReadingService
+    val db = deps.transactor
+    val readables = List(
+      com.histmersion.domain.library.sources.SourceReadable(db),
+      com.histmersion.domain.research.articles.ArticleReadable(db)
+    )
+    PersonalControllers(
+      BookmarkService(db, referables),
+      NoteService(db, referables),
+      ReadingService(db, referables, readables),
+      deps.maintenance,
+      deps.clock
+    )
+
+  /** How far the person has seen each window's news (the toolbar's notices). */
+  lazy val seenMarks: com.histmersion.domain.personal.seen.SeenService =
+    com.histmersion.domain.personal.seen.SeenService(deps.transactor)
 
   /** Settings: the settings file read and changed (never the database), reloaded into this server; the restart for what
     * only a restart applies.
@@ -244,7 +275,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * agents, what they are doing (the top bar's status).
     */
   def uiCounters: UiNotices.Counters =
-    val counters = com.histmersion.db.UiRepo.counters(ds)
+    val marks = seenMarks.marks(UserId.Local).map((b, at) => (b.value: String) -> at.iso)
+    val counters = com.histmersion.db.UiRepo.counters(ds, marks)
     if cfg.agents.enabled then counters.copy(agents = Some(com.histmersion.db.UiRepo.agents(ds))) else counters
 
   /** `POST /api/ui/seen/{board}` — the reader opened that window, which showed items up to `mark.at`. Answers the
@@ -265,10 +297,10 @@ final class Handlers(deps: Deps, converter: ConverterClient):
           scala.util
             .Try(Instant.parse(s))
             .toOption
-            .map(_ => Some(s))
+            .map(Some(_))
             .toRight(ApiError(s"'at' is not an ISO-8601 instant: $s"))
     yield
-      val _ = com.histmersion.db.UiRepo.markSeen(ds, b, at)
+      val _ = seenMarks.mark(UserId.Local, com.histmersion.domain.personal.seen.SeenBoard(b.wire), at)
       uiCounters
 
   /** The `ui` config block, plus whether writes need a key — never the key itself — and the plugins (their settings

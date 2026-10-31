@@ -54,7 +54,10 @@ final case class RecordTable(
   private def byUids(uids: Set[ItemUid])(using DbCon): Map[ItemUid, (ItemKey, Option[Title])] =
     uid.filter(_ => uids.nonEmpty).fold(Map.empty) { col =>
       Sql
-        .of(s"SELECT $col, $key, $title FROM $table t WHERE $col = ANY(?::uuid[])", Param.A(uids.toList.map(_.toString)))
+        .of(
+          s"SELECT $col, $key, $title FROM $table t WHERE $col = ANY(?::uuid[])",
+          Param.A(uids.toList.map(_.toString))
+        )
         .frag
         .query[(ItemUid, ItemKey, Option[Title])]
         .run()

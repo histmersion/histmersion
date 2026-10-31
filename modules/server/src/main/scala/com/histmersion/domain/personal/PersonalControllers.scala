@@ -1,131 +1,234 @@
 package com.histmersion.domain.personal
 
-import com.histmersion.values.UserId
-
 import com.histmersion.api.{ApiError, Write}
-import com.histmersion.api.personal.*
+import com.histmersion.api.personal.{
+  Bookmark as WireBookmark,
+  BookmarkEdit,
+  BookmarkId,
+  BookmarkLabel,
+  BookmarkNew,
+  ItemKey as WireKey,
+  ItemKind as MarkKind,
+  Note as WireNote,
+  NoteEdit,
+  NoteId,
+  NoteNew,
+  NoteText,
+  PersonalIds,
+  ReadMark as WireReadMark,
+  ReadMarkSet,
+  ReadOpened,
+  Target,
+  UnreadPage,
+  UnreadRow
+}
+import com.histmersion.domain.{Caller, ItemKey}
+import com.histmersion.domain.personal.bookmarks.BookmarkService
+import com.histmersion.domain.personal.notes.{NoteEditRefused, NoteService}
+import com.histmersion.domain.personal.reading.{ReadingService, ReadingShow}
 import com.histmersion.server.Maintenance
+import com.histmersion.values.{Offset, PageSize, UserId}
 
-import java.time.Instant
+import java.time.{Clock, Instant}
+import scala.util.Try
 
 /** The bookmarks', notes' and read marks' endpoints, the `bookmarks` and `notes` tools (reads only) and
-  * `histmersion bookmarks|notes`: what was asked checked, then the person's own (`user`). Writes wait while a restore
-  * holds the maintenance lock.
+  * `histmersion bookmarks|notes`: what was asked checked, then the caller's own. Writes wait while a restore holds the
+  * maintenance lock.
   */
 final class PersonalControllers(
     bookmarks: BookmarkService,
     notes: NoteService,
     reading: ReadingService,
     maintenance: Maintenance,
-    now: () => Instant,
-    user: UserId = UserId.Local
+    clock: Clock
 ):
 
   private def bad(why: String): ApiError = ApiError(why)
   private def missing(what: String): ApiError = ApiError(s"No $what", Some(Write.CodeNotFound))
+  private def now(): MarkTime = MarkTime.at(Instant.now(clock))
 
-  private def kindOf(raw: Option[String], allowed: Set[ItemKind]): Either[ApiError, Option[ItemKind]] =
+  private def person(caller: Caller): Either[ApiError, UserId] =
+    caller.person.toRight(bad("bookmarks, notes and read marks are a person's own; an automated run has none"))
+
+  private def kindOf(raw: Option[String], allowed: Set[MarkKind]): Either[ApiError, Option[MarkKind]] =
     raw.map(_.trim).filter(_.nonEmpty) match
       case None    => Right(None)
       case Some(k) =>
-        ItemKind
+        MarkKind
           .parse(k)
           .filter(allowed)
           .map(Some(_))
-          .toRight(bad(s"kind '$k': one of ${ItemKind.values.filter(allowed).map(_.wire).mkString(", ")}"))
+          .toRight(bad(s"kind '$k': one of ${MarkKind.values.filter(allowed).map(_.wire).mkString(", ")}"))
 
-  private def limit(raw: Option[Int]): Int = PersonalIds.limit(raw)
+  private def size(raw: Option[Int]): PageSize = PageSize.applyUnsafe(PersonalIds.limit(raw))
+
+  private def target(t: Target, allowed: Set[MarkKind], what: String): Either[ApiError, MarkTarget] =
+    Target
+      .check(t, allowed, what)
+      .flatMap(MarkTarget.fromWire(_).toRight(s"a $what on a ${t.kind.label.toLowerCase} names it"))
+      .left
+      .map(bad)
 
   // ── bookmarks ───────────────────────────────────────────────────────────────────────────────────
 
-  def listBookmarks(kind: Option[String], q: Option[String], max: Option[Int]): Either[ApiError, List[Bookmark]] =
-    kindOf(kind, ItemKind.Bookmarkable).map(k => bookmarks.list(user, k, PersonalRules.words(q), limit(max)))
+  def listBookmarks(
+      caller: Caller,
+      kind: Option[String],
+      q: Option[String],
+      max: Option[Int]
+  ): Either[ApiError, List[WireBookmark]] =
+    for
+      user <- person(caller)
+      k <- kindOf(kind, MarkKind.Bookmarkable)
+    yield bookmarks.list(user, k, SearchWords.of(q), size(max)).map(_.wire)
 
-  def addBookmark(in: BookmarkNew): Either[ApiError, Bookmark] =
+  def addBookmark(caller: Caller, in: BookmarkNew): Either[ApiError, WireBookmark] =
     maintenance.guard("add_bookmark"):
       for
-        t <- Target.check(in.target, ItemKind.Bookmarkable, "bookmark").left.map(bad)
-        label <- PersonalRules.label(in.label).left.map(bad)
-      yield bookmarks.add(user, t, label, PersonalRules.storedTitle(in.title), now())
+        user <- person(caller)
+        t <- target(in.target, MarkKind.Bookmarkable, "bookmark")
+        label <- BookmarkLabel.tidy(in.label).left.map(bad)
+      yield bookmarks.add(user, t, label, TargetLabel.tidy(in.title), now()).wire
 
-  def editBookmark(id: String, in: BookmarkEdit): Either[ApiError, Bookmark] =
+  def editBookmark(caller: Caller, id: String, in: BookmarkEdit): Either[ApiError, WireBookmark] =
     maintenance.guard("edit_bookmark"):
       for
+        user <- person(caller)
         bid <- BookmarkId.parse(id).left.map(bad)
-        label <- PersonalRules.label(in.label).left.map(bad)
+        label <- BookmarkLabel.tidy(in.label).left.map(bad)
         b <- bookmarks.rename(user, bid, label, now()).toRight(missing(s"bookmark $id"))
-      yield b
+      yield b.wire
 
-  def removeBookmark(id: String): Either[ApiError, Bookmark] =
+  def removeBookmark(caller: Caller, id: String): Either[ApiError, WireBookmark] =
     maintenance.guard("remove_bookmark"):
-      BookmarkId
-        .parse(id)
-        .left
-        .map(bad)
-        .flatMap(bid => bookmarks.remove(user, bid, now()).toRight(missing(s"bookmark $id")))
+      for
+        user <- person(caller)
+        bid <- BookmarkId.parse(id).left.map(bad)
+        b <- bookmarks.remove(user, bid, now()).toRight(missing(s"bookmark $id"))
+      yield b.wire
 
   // ── notes ───────────────────────────────────────────────────────────────────────────────────────
 
   def listNotes(
+      caller: Caller,
       kind: Option[String],
       itemKey: Option[String],
       q: Option[String],
       max: Option[Int]
-  ): Either[ApiError, List[Note]] =
-    kindOf(kind, ItemKind.Notable).map(k =>
-      notes.list(user, k, itemKey.map(_.trim).filter(_.nonEmpty), PersonalRules.words(q), limit(max))
-    )
+  ): Either[ApiError, List[WireNote]] =
+    for
+      user <- person(caller)
+      k <- kindOf(kind, MarkKind.Notable)
+    yield notes
+      .list(user, k, itemKey.map(_.trim).filter(_.nonEmpty).map(ItemKey(_)), SearchWords.of(q), size(max))
+      .map(_.wire)
 
-  def note(id: String): Either[ApiError, Note] =
-    NoteId.parse(id).left.map(bad).flatMap(nid => notes.get(user, nid).toRight(missing(s"note $id")))
+  def note(caller: Caller, id: String): Either[ApiError, WireNote] =
+    for
+      user <- person(caller)
+      nid <- NoteId.parse(id).left.map(bad)
+      n <- notes.get(user, nid).toRight(missing(s"note $id"))
+    yield n.wire
 
-  def addNote(in: NoteNew): Either[ApiError, Note] =
+  def addNote(caller: Caller, in: NoteNew): Either[ApiError, WireNote] =
     maintenance.guard("add_note"):
       for
-        t <- Target.check(in.target, ItemKind.Notable, "note").left.map(bad)
-        text <- PersonalRules.text(in.text).left.map(bad)
-      yield notes.add(user, t, text, PersonalRules.storedTitle(in.title), now())
+        user <- person(caller)
+        t <- target(in.target, MarkKind.Notable, "note")
+        text <- NoteText.tidy(in.text).left.map(bad)
+      yield notes.add(user, t, text, TargetLabel.tidy(in.title), now()).wire
 
-  def editNote(id: String, in: NoteEdit): Either[ApiError, Note] =
+  def editNote(caller: Caller, id: String, in: NoteEdit): Either[ApiError, WireNote] =
     maintenance.guard("edit_note"):
       for
+        user <- person(caller)
         nid <- NoteId.parse(id).left.map(bad)
-        text <- PersonalRules.text(in.text).left.map(bad)
-        n <- notes.edit(user, nid, text, in.ifUpdatedAt.map(_.trim).filter(_.nonEmpty), now()).left.map {
+        text <- NoteText.tidy(in.text).left.map(bad)
+        n <- edited(user, nid, text, in.ifUpdatedAt.map(_.trim).filter(_.nonEmpty)).left.map {
           case NoteEditRefused.Missing      => missing(s"note $id")
           case NoteEditRefused.Changed(was) =>
-            ApiError(s"the note changed since it was opened (now $was); open it again", Some(Write.CodePrecondition))
+            ApiError(
+              s"the note changed since it was opened (now ${was.iso}); open it again",
+              Some(Write.CodePrecondition)
+            )
         }
-      yield n
+      yield n.wire
 
-  def removeNote(id: String): Either[ApiError, Note] =
+  /** A time last seen that is no time at all never matches the note's: the edit is refused as a stale one. */
+  private def edited(user: UserId, id: NoteId, text: NoteText, seen: Option[String]) =
+    seen.map(s => Try(MarkTime.parse(s)).toOption) match
+      case Some(None) =>
+        notes.get(user, id).toRight(NoteEditRefused.Missing).flatMap(n => Left(NoteEditRefused.Changed(n.updatedAt)))
+      case asked => notes.edit(user, id, text, asked.flatten, now())
+
+  def removeNote(caller: Caller, id: String): Either[ApiError, WireNote] =
     maintenance.guard("remove_note"):
-      NoteId.parse(id).left.map(bad).flatMap(nid => notes.remove(user, nid, now()).toRight(missing(s"note $id")))
+      for
+        user <- person(caller)
+        nid <- NoteId.parse(id).left.map(bad)
+        n <- notes.remove(user, nid, now()).toRight(missing(s"note $id"))
+      yield n.wire
 
   // ── read marks ──────────────────────────────────────────────────────────────────────────────────
 
-  def readMarks(kind: Option[String], show: Option[String], max: Option[Int]): Either[ApiError, List[ReadMark]] =
+  def readMarks(
+      caller: Caller,
+      kind: Option[String],
+      show: Option[String],
+      max: Option[Int]
+  ): Either[ApiError, List[WireReadMark]] =
     for
-      k <- kindOf(kind, ItemKind.Readable)
+      user <- person(caller)
+      k <- kindOf(kind, MarkKind.Readable)
       s <- ReadingShow.parse(show).left.map(bad)
-    yield reading.list(user, k, s, limit(max))
+    yield reading.list(user, k.map(MarkTarget.itemKind), s, size(max)).map(_.wire)
 
-  private def readable(kind: ItemKind, key: ItemKey): Either[ApiError, ItemKey] =
-    if !ItemKind.Readable.contains(kind) then
+  private def readable(kind: MarkKind, key: WireKey): Either[ApiError, ItemKey] =
+    if !MarkKind.Readable.contains(kind) then
       Left(bad(s"only sources and articles are marked read, not a ${kind.label.toLowerCase}"))
     else Option(key.value.trim).filter(_.nonEmpty).map(ItemKey(_)).toRight(bad("which one? (its id)"))
 
-  def setRead(in: ReadMarkSet): Either[ApiError, ReadMark] =
+  def setRead(caller: Caller, in: ReadMarkSet): Either[ApiError, WireReadMark] =
     maintenance.guard("set_read"):
-      readable(in.kind, in.id).map(k =>
-        reading.setRead(user, in.kind, k, in.read, PersonalRules.storedTitle(in.title), now())
-      )
+      for
+        user <- person(caller)
+        key <- readable(in.kind, in.id)
+      yield reading.setRead(user, MarkTarget.itemKind(in.kind), key, in.read, TargetLabel.tidy(in.title), now()).wire
 
-  def opened(in: ReadOpened): Either[ApiError, ReadMark] =
+  def opened(caller: Caller, in: ReadOpened): Either[ApiError, WireReadMark] =
     maintenance.guard("opened"):
-      readable(in.kind, in.id).map(k => reading.opened(user, in.kind, k, PersonalRules.storedTitle(in.title), now()))
+      for
+        user <- person(caller)
+        key <- readable(in.kind, in.id)
+      yield reading.opened(user, MarkTarget.itemKind(in.kind), key, TargetLabel.tidy(in.title), now()).wire
 
-  def unread(kind: Option[String], max: Option[Int], offset: Option[Int]): Either[ApiError, UnreadPage] =
-    kindOf(kind, ItemKind.Readable).map(k =>
-      reading.unread(user, k.getOrElse(ItemKind.Source), limit(max), offset.filter(_ > 0).getOrElse(0))
-    )
+  def unread(
+      caller: Caller,
+      kind: Option[String],
+      max: Option[Int],
+      offset: Option[Int]
+  ): Either[ApiError, UnreadPage] =
+    for
+      user <- person(caller)
+      k <- kindOf(kind, MarkKind.Readable)
+    yield
+      val shown = k.getOrElse(MarkKind.Source)
+      val from = Offset.applyUnsafe(offset.filter(_ > 0).getOrElse(0))
+      val page = reading.unread(user, MarkTarget.itemKind(shown), size(max), from)
+      UnreadPage(
+        page.items.map(i =>
+          UnreadRow(
+            shown,
+            WireKey(i.key.value),
+            i.title.value,
+            i.authors.map(_.value),
+            i.year.map(_.value),
+            i.status.map(_.wire),
+            i.periodStart.map(_.value.toLong),
+            i.periodEnd.map(_.value.toLong)
+          )
+        ),
+        page.total,
+        from.value
+      )

@@ -1,4 +1,4 @@
-package com.histmersion.domain.personal
+package com.histmersion.domain.personal.reading
 
 /** Which read marks a list holds: the items marked read, those opened, or every one kept. */
 enum ReadingShow(val wire: String):

@@ -108,7 +108,6 @@ direction	api:api/MergePlan.scala	util.data -> library: SourceMatch	1
 direction	api:api/PlaceDetail.scala	catalogue -> media: MediaThumb	1
 direction	api:api/Queue.scala	automation -> library: Acquire	1
 direction	api:api/Queue.scala	automation -> library: AcquireChecks	1
-direction	api:api/Queue.scala	automation -> personal: Note	1
 direction	api:api/Rename.scala	library -> research: ArticleLinks	1
 direction	api:api/ResolvedId.scala	util.identity -> library: ResolvedSource	1
 direction	api:api/ResolvedId.scala	util.identity -> research: ResolvedArticle	1
@@ -267,7 +266,6 @@ direction	files:files/BundleEntities.scala	util.data -> library: Finding	1
 direction	files:files/BundleEntities.scala	util.data -> media: AssetLink	1
 direction	files:files/BundleEntities.scala	util.data -> research: ArticleVersion	1
 direction	server:domain/activity/ActivityRepo.scala	automation -> server: Jobs	1
-direction	server:domain/personal/ItemTitles.scala	personal -> automation: Goal	1
 direction	server:server/BackgroundJob.scala	util.jobs -> server: Pinning	1
 direction	server:server/BackupJobs.scala	util.data -> server: Pinning	1
 direction	server:server/BundleHandlers.scala	util.data -> library: InstanceLabel	1

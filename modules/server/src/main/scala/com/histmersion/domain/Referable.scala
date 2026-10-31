@@ -26,7 +26,8 @@ object Referable:
   /** The records of one kind held in memory (tests), resolved and described by the rules the tables keep: a uid that
     * survives a rename, an alias for the old key, a merge's uid redirect, a deletion's tombstone.
     */
-  final class InMemory(kind: ItemKind, records: AtomicReference[Records] = AtomicReference(Records())) extends Referable:
+  final class InMemory(kind: ItemKind, records: AtomicReference[Records] = AtomicReference(Records()))
+      extends Referable:
     val kinds: Set[ItemKind] = Set(kind)
 
     def put(key: ItemKey, title: Title, uid: Option[ItemUid]): Unit =
@@ -94,9 +95,10 @@ object Referable:
               case Some((to, key, rec)) =>
                 Some(Described(key, Some(rec.title), RecordState.MergedInto(ItemRef(ref.kind, key, Some(to)))))
               case None =>
-                (redirected(uid, 0).toList :+ uid).flatMap(tombstones.get).headOption.map(at =>
-                  Described(ref.key, None, RecordState.Deleted(at))
-                )
+                (redirected(uid, 0).toList :+ uid)
+                  .flatMap(tombstones.get)
+                  .headOption
+                  .map(at => Described(ref.key, None, RecordState.Deleted(at)))
       case None =>
         live
           .get(ref.key)

@@ -11,7 +11,11 @@ final class Referables(all: List[Referable]):
 
   /** Each kind's records described by its owner, one call per owner. */
   def describe(refs: Set[ItemRef]): Map[ItemRef, Described] =
-    refs.groupBy(r => byKind.get(r.kind)).toList.flatMap {
-      case (Some(owner), mine) => owner.describe(mine)
-      case (None, _)           => Nil
-    }.toMap
+    refs
+      .groupBy(r => byKind.get(r.kind))
+      .toList
+      .flatMap {
+        case (Some(owner), mine) => owner.describe(mine)
+        case (None, _)           => Nil
+      }
+      .toMap
