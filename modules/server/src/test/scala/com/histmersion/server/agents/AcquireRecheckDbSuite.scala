@@ -265,10 +265,6 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite:
     def citing(work: WorkRef, since: Option[Int], limit: Int) = Right(("stub", Nil))
   private object NoWiki extends WikiClient:
     def refs(url: String) = Left("not used here")
-  private object NoArchive extends ArchiveClient:
-    def search(q: String, rows: Int) = Right(Nil)
-    def info(id: String) = Left("not used here")
-    def download(id: String, file: String) = Left("not used here")
   private object NoRw extends RetractionWatchClient:
     def csv() = Left("not used here")
 
@@ -305,7 +301,6 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite:
       NoCitations,
       chain,
       NoWiki,
-      NoArchive,
       NoRw,
       SkeletonIngest(ds, cfg.limits.chunkChars),
       generation = "real"
@@ -611,7 +606,6 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite:
           NoCitations,
           chain,
           NoWiki,
-          NoArchive,
           NoRw,
           SkeletonIngest(ds, cfg.limits.chunkChars),
           generation = "real"

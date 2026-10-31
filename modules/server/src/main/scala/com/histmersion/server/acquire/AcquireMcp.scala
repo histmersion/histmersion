@@ -14,11 +14,12 @@ import sttp.tapir.Schema
 /** The MCP half of stream 2.6. Every tool returns Markdown and delegates to the same [[AcquireHandlers]] the REST
   * routes call, so the two surfaces cannot drift.
   *
-  * `calibre` is deliberately absent: Calibre lives on the USER'S machine, not next to the server, so
-  * `histmersion calibre …` is a host-side CLI command and there is nothing the MCP server could do with it. Everything
-  * else in the toolset is here.
+  * The Calibre library is the `collection` tool's (the library's collections); `archive` runs archive.org, one of them.
   */
-final class AcquireMcp(h: AcquireHandlers):
+final class AcquireMcp(
+    h: AcquireHandlers,
+    collections: com.histmersion.domain.library.collections.CollectionsControllers
+):
   import AcquireMcp.*
 
   private def render[A](r: Either[ApiError, A])(f: A => String) =
@@ -133,10 +134,13 @@ final class AcquireMcp(h: AcquireHandlers):
       .handle { in =>
         (in.query.map(_.trim).filter(_.nonEmpty), in.id.map(_.trim).filter(_.nonEmpty)) match
           case (_, Some(id)) if in.`import` =>
-            render(h.archiveImport(ArchiveImportRequest(id, in.citekey, in.format)))(AcquireMarkdown.ingest)
-          case (_, Some(id)) => render(h.archiveInfo(id))(AcquireMarkdown.archiveItem)
-          case (Some(q), _)  => render(h.archiveSearch(q, in.rows))(AcquireMarkdown.archiveSearch)
-          case _             => ToolResult.text("_give a `query` to search, or an `id`_")
+            render(collections.archiveImport(Caller.Local, ArchiveImportRequest(id, in.citekey, in.format)))(
+              AcquireMarkdown.ingest
+            )
+          case (_, Some(id)) => render(collections.archiveInfo(Caller.Local, id))(AcquireMarkdown.archiveItem)
+          case (Some(q), _)  =>
+            render(collections.archiveSearch(Caller.Local, q, in.rows))(AcquireMarkdown.archiveSearch)
+          case _ => ToolResult.text("_give a `query` to search, or an `id`_")
       }
 
   private val candidates =

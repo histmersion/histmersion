@@ -13,7 +13,11 @@ import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.util.mcp.McpOut
 
 /** MCP tools (Chimp). Every tool returns Markdown and delegates to the same [[Handlers]] as REST. */
-final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.AcquireHandlers):
+final class McpTools(
+    h: Handlers,
+    acquire: com.histmersion.server.acquire.AcquireHandlers,
+    collections: com.histmersion.domain.library.collections.CollectionsControllers
+):
   import McpTools.*
 
   private val ping =
@@ -1237,7 +1241,8 @@ final class McpTools(h: Handlers, acquire: com.histmersion.server.acquire.Acquir
       ++ com.histmersion.server.events.EventCatalogTools(h) // #1449: event_links (proposed links, leads)
       ++ com.histmersion.server.agents.AgentsTools(h.agents) // embedded agents: start and follow runs
       // stream 2.6: discover / refs / assess / followups / ingest_doi / archive
-      ++ com.histmersion.server.acquire.AcquireMcp(acquire).tools
+      ++ com.histmersion.server.acquire.AcquireMcp(acquire, collections).tools
+      ++ com.histmersion.domain.library.collections.CollectionsTools(collections) // the Calibre library, archive.org
   )
 
   val endpoint = server.endpoint(List("mcp"))

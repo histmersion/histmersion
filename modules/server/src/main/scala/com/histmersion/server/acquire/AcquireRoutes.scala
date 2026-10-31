@@ -8,9 +8,12 @@ import sttp.tapir.server.ServerEndpoint
 import sttp.shared.Identity
 
 /** The REST wiring of [[AcquireApi]] — every route delegates to the single [[AcquireHandlers]] implementation the MCP
-  * tools also call.
+  * tools also call; `archive search|info|import` to the library's collections, which run archive.org.
   */
-final class AcquireRoutes(h: AcquireHandlers):
+final class AcquireRoutes(
+    h: AcquireHandlers,
+    collections: com.histmersion.domain.library.collections.CollectionsControllers
+):
 
   val endpoints: List[ServerEndpoint[Any, Identity]] = List(
     AcquireApi.discover.serverLogic[Identity]((q, since, sort, limit, notInDb) =>
@@ -24,9 +27,9 @@ final class AcquireRoutes(h: AcquireHandlers):
     AcquireApi.retractionsStatus.serverLogicSuccess[Identity](_ => h.retractionsStatus),
     AcquireApi.followups.serverLogic[Identity](req => h.followups(req)),
     AcquireApi.ingest.serverLogic[Identity](req => h.ingest(req)),
-    AcquireApi.archiveSearch.serverLogic[Identity]((q, rows) => h.archiveSearch(q, rows)),
-    AcquireApi.archiveInfo.serverLogic[Identity](id => h.archiveInfo(id)),
-    AcquireApi.archiveImport.serverLogic[Identity](req => h.archiveImport(req)),
+    AcquireApi.archiveSearch.serverLogic[Identity]((q, rows) => collections.archiveSearch(Caller.Local, q, rows)),
+    AcquireApi.archiveInfo.serverLogic[Identity](id => collections.archiveInfo(Caller.Local, id)),
+    AcquireApi.archiveImport.serverLogic[Identity](req => collections.archiveImport(Caller.Local, req)),
     AcquireApi.calibreGaps.serverLogicSuccess[Identity](limit => h.calibreGaps(limit)),
     AcquireApi.calibreMeta.serverLogic[Identity](ck => h.calibreMeta(ck)),
     AcquireApi.calibrePushed.serverLogic[Identity](req => h.calibrePushed(req)),

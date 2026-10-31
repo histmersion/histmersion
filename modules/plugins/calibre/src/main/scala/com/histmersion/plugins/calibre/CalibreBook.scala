@@ -1,7 +1,5 @@
 package com.histmersion.plugins.calibre
 
-
-
 /** One book as Calibre holds it — the shape both readers below produce (`calibredb list --for-machine` and the
   * `sqlite3 -readonly` fallback normalise to this same record).
   */

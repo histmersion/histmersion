@@ -235,10 +235,9 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
               "HOME" -> home.toString,
               "HISTMERSION_CONFIG" -> cliConf.toString,
               "HISTMERSION_SERVER_URL" -> url,
-              "HISTMERSION_CALIBRE_LIBRARY_DIR" -> lib.dir.toString,
-              "HISTMERSION_CALIBRE_CALIBREDB" -> lib.calibredb.toString,
-              "HISTMERSION_CALIBRE_SQLITE3" -> lib.sqlite3.toString
-            ) ++ Option.when(withOriginals)("HISTMERSION_CALIBRE_ORIGINALS_DIR" -> originals.toString)
+              "HISTMERSION_CALIBRE_LIBRARY_DIR" -> lib.dir.toString
+            ) ++ CalibreCommandsSuite.tools(lib, hostSide = withOriginals) ++
+              Option.when(withOriginals)("HISTMERSION_CALIBRE_ORIGINALS_DIR" -> originals.toString)
             val (code, stdout, stderr) = CalibreCommandsSuite.cli(("calibre" :: args), env, home)
             out ++= s"## histmersion calibre ${args.map(CalibreCommandsSuite.shellWord).mkString(" ")}" +
               (if withOriginals then "   [cli.calibre.originals-dir set]" else "") + "\n"
@@ -267,12 +266,92 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
         Files.writeString(work.resolve("commands.actual.txt"), transcript, UTF_8)
         assertEquals(transcript, expected, s"the calibre commands changed — see ${work.resolve("commands.actual.txt")}")
 
+  /** A server without the calibre collection (the plugin off): the CLI reads the library on this machine, as before the
+    * server could, and answers the same.
+    */
+  test("without the server's calibre collection the CLI runs the commands itself, with the same answers"):
+    val work = Files.createDirectories(Path.of("target/calibre-commands").toAbsolutePath)
+    val runDir = Files.createTempDirectory(work, "fallback-")
+    val lib = CalibreFixture.create(runDir.resolve("master")).copyTo(runDir.resolve("library"))
+    val spool = Files.createDirectories(runDir.resolve("spool"))
+    val home = Files.createDirectories(runDir.resolve("home"))
+    val cliConf = Files.writeString(runDir.resolve("cli.conf"), "")
+    val ds = scratch("fallback")
+    val cfg = base.copy(
+      db = base.db.copy(url = scratch.urlOf("calibre_cmds_fallback_test")),
+      converter = base.converter.copy(spoolDir = spool.toString)
+    )
+    seed(ds, spool, cfg.limits.chunkChars)
+    val commands = List(
+      List("search", "Bronze", "--json"),
+      List("search", "--unlinked"),
+      List("audit"),
+      List("gaps"),
+      List("gaps", "--quiet"),
+      List("update", "--all")
+    )
+    def runAll(
+        plugins: com.histmersion.pluginhost.Generation,
+        tools: Map[String, String]
+    ): List[(Int, String, String)] =
+      supervised {
+        val b = Composition.server(cfg, "127.0.0.1", 0, OfflineConverter(), plugins = plugins).start()
+        val url = s"http://127.0.0.1:${b.port}"
+        try
+          commands.map { args =>
+            val env = Map(
+              "PATH" -> "/usr/bin:/bin",
+              "HOME" -> home.toString,
+              "HISTMERSION_CONFIG" -> cliConf.toString,
+              "HISTMERSION_SERVER_URL" -> url,
+              "HISTMERSION_CALIBRE_LIBRARY_DIR" -> lib.dir.toString
+            ) ++ tools
+            val (code, out, err) = CalibreCommandsSuite.cli("calibre" :: args, env, home)
+            (code, out.replace(url, "<server>"), err.replace(url, "<server>"))
+          }
+        finally b.stop()
+      }
+    val onServer = runAll(CalibreCommandsSuite.plugins(lib), CalibreCommandsSuite.tools(lib, hostSide = false))
+    assertEquals(lib.takeLog().size, 4, "the server read the library once per command but the gaps")
+    val onHost =
+      runAll(com.histmersion.server.plugins.Plugins.offline, CalibreCommandsSuite.tools(lib, hostSide = true))
+    assertEquals(lib.takeLog().size, 4, "the CLI read the library once per command but the gaps")
+    assertEquals(onHost, onServer)
+    assertEquals(onServer.map(_._1), List(0, 0, 0, 0, 1, 0))
+
 object CalibreCommandsSuite:
 
-  /** The plugins the test server runs with (none of its own before the server read Calibre). */
+  /** The plugins the test server runs with: the offline generation and the calibre plugin over the fixture library,
+    * with a GUI process that never runs.
+    */
   def plugins(lib: CalibreFixture): com.histmersion.pluginhost.Generation =
     CalibreFixture.refuseRealLibrary(lib.dir)
-    com.histmersion.server.plugins.Plugins.offline
+    val g = com.histmersion.server.plugins.Plugins.offlineWith(
+      List(com.histmersion.plugins.calibre.CalibrePlugin()),
+      org.ekrich.config.ConfigFactory.parseString(
+        s"""histmersion.plugins.calibre {
+           |  library-path = "${lib.dir}"
+           |  calibredb = "${lib.calibredb}"
+           |  sqlite = "${lib.sqlite3}"
+           |  gui-process = "/no/such/calibre-gui-process"
+           |}""".stripMargin
+      )
+    )
+    assert(g.registries.sourceCollections.contains("calibre"), g.report.toString)
+    g
+
+  /** The CLI's own Calibre tools: the fixture's where the command runs on this machine (a host-side original), else
+    * programs that do not exist — the server runs the command, so the CLI never starts one, and the transcript is the
+    * proof.
+    */
+  def tools(lib: CalibreFixture, hostSide: Boolean): Map[String, String] =
+    if hostSide then
+      Map(
+        "HISTMERSION_CALIBRE_CALIBREDB" -> lib.calibredb.toString,
+        "HISTMERSION_CALIBRE_SQLITE3" -> lib.sqlite3.toString
+      )
+    else
+      Map("HISTMERSION_CALIBRE_CALIBREDB" -> "/no/such/calibredb", "HISTMERSION_CALIBRE_SQLITE3" -> "/no/such/sqlite3")
 
   def shellWord(s: String): String = if s.isEmpty then "\"\"" else s
 

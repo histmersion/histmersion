@@ -2,8 +2,8 @@ package com.histmersion.plugins.calibre
 
 import java.nio.file.Path
 
-/** The Calibre plugin's reading and writing: both readers produce the same book, the metadata guard refuses junk, and the
-  * commands assembled for `calibredb` are the ones we mean to run.
+/** The Calibre plugin's reading and writing: both readers produce the same book, the metadata guard refuses junk, and
+  * the commands assembled for `calibredb` are the ones we mean to run.
   *
   * The fixtures are REAL output captured from `calibredb list --for-machine` and from `sqlite3 -readonly -json` against
   * the same book, with the home directory rewritten. No Calibre installation is needed to run this.
@@ -348,7 +348,6 @@ class CalibreSuite extends munit.FunSuite:
     val b = book(1, "Twilight of the Gods", List("Ian Young"), "0101-01-01T00:00:00+00:00")
     assertEquals(b.year, None)
 
-
   private def tmpFile(ext: String) =
     val f = java.nio.file.Files.createTempFile("calibre-suite-", "." + ext)
     f.toFile.deleteOnExit(); f
@@ -413,4 +412,3 @@ class CalibreSuite extends munit.FunSuite:
       None
     )
     assert(Calibre.sqliteQuery("1=1", 1).contains("has_cover"))
-

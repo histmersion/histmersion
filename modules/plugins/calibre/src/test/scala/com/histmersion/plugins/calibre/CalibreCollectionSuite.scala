@@ -38,8 +38,13 @@ class CalibreCollectionSuite extends munit.FunSuite:
     val one = c.item(CollectionId("5")).fold(fail(_), identity).getOrElse(fail("no book 5"))
     assertEquals(
       (one.title, one.authors, one.year.map(y => y.value: Int), one.publisher, one.identifiers),
-      (Option("Hittite Myths, Volume II"), List("Harry A. Hoffner"), Option(1998), Option("Scholars Press"),
-        Map("isbn" -> "9780788504884"))
+      (
+        Option("Hittite Myths, Volume II"),
+        List("Harry A. Hoffner"),
+        Option(1998),
+        Option("Scholars Press"),
+        Map("isbn" -> "9780788504884")
+      )
     )
     assertEquals(c.item(CollectionId("99")), Right(None))
     assertEquals(c.item(CollectionId("not-a-number")), Right(None))
@@ -67,8 +72,8 @@ class CalibreCollectionSuite extends munit.FunSuite:
     val f = master.copyTo(scratch().resolve("writes"))
     val c = collection(f)
     val pdf = FetchedFile("original", None, ("%PDF-1.4\n" + "x" * 2048).getBytes("UTF-8"), "pdf")
-    val meta = CollectionMetadata("zz_new", "A new book", List("Author New"), doi = Some("10.1/new"), year =
-      Some(Year(2001)))
+    val meta =
+      CollectionMetadata("zz_new", "A new book", List("Author New"), doi = Some("10.1/new"), year = Some(Year(2001)))
     val id = c.add(meta, pdf).fold(fail(_), identity)
     assertEquals(id.value, "9")
     assertEquals(c.replace(CollectionId("1"), "zz_linked", pdf), Right("pdf"))
@@ -128,8 +133,13 @@ class CalibreCollectionSuite extends munit.FunSuite:
     val locked = Files.createDirectories(scratch().resolve("unreadable"))
     val db = Files.writeString(locked.resolve("metadata.db"), "SQLite format 3")
     Files.setPosixFilePermissions(db, java.nio.file.attribute.PosixFilePermissions.fromString("-w-------"))
-    try assert(CalibreCollection.reach(locked).left.exists(_.contains("Full Disk Access")), CalibreCollection.reach(locked))
-    finally Files.setPosixFilePermissions(db, java.nio.file.attribute.PosixFilePermissions.fromString("rw-------")): Unit
+    try
+      assert(
+        CalibreCollection.reach(locked).left.exists(_.contains("Full Disk Access")),
+        CalibreCollection.reach(locked)
+      )
+    finally
+      Files.setPosixFilePermissions(db, java.nio.file.attribute.PosixFilePermissions.fromString("rw-------")): Unit
 
   test("the plugin loads with its defaults — on, writing back — and registers the calibre collection"):
     val h = PluginHarness

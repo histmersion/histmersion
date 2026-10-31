@@ -77,11 +77,33 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
   private object NoWiki extends WikiClient:
     def refs(url: String) = Left("not used here")
 
-  private class FakeArchive(item: ArchiveItem) extends ArchiveClient:
-    def search(q: String, rows: Int) = Right(List(item))
-    def info(id: String) = Right(item)
-    def download(id: String, file: String) =
-      Right(FetchedFile("archive_org", None, ("%PDF-1.4\n" + "y" * 20000).getBytes("UTF-8"), "pdf"))
+  /** archive.org as the library's collection, answering `item` alone, its import run by `h`. */
+  private def archiveService(archived: ArchiveItem, h: AcquireHandlers) =
+    import com.histmersion.plugin.{CollectionFile, CollectionId, CollectionItem, CollectionQuery}
+    val collection = new com.histmersion.plugin.SourceCollection:
+      def title = "archive.org"
+      private val one = CollectionItem(
+        CollectionId(archived.identifier),
+        archived.title,
+        archived.creator,
+        archived.year.map(com.histmersion.plugin.Year(_)),
+        publisher = archived.publisher,
+        files = archived.files.map(f => CollectionFile(f.name, f.format, Some(f.megabytes))),
+        restricted = archived.lendingOnly
+      )
+      def search(query: CollectionQuery) = Right(List(one))
+      def item(id: CollectionId) = Right(Some(one))
+      def file(i: CollectionItem, format: Option[String]) =
+        i.files.find(_.name.endsWith(".epub")).orElse(i.files.headOption).toRight("no file")
+      def original(i: CollectionItem, f: CollectionFile) = Left("the chain downloads it")
+    val library = new com.histmersion.domain.library.collections.RefusingCollectionLibrary:
+      override def archiveImport(i: ArchiveItem, f: ArchiveFile, req: ArchiveImportRequest) = h.archiveImport(i, f, req)
+    com.histmersion.domain.library.collections.CollectionsService.InMemory(
+      java.util.concurrent.atomic.AtomicReference(Nil),
+      library,
+      () => scala.collection.immutable.ListMap("archive-org" -> collection),
+      8
+    )
 
   private class FakeRw(text: String) extends RetractionWatchClient:
     def csv(): Either[String, String] = Right(text)
@@ -90,11 +112,10 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       discovery: DiscoveryClient = FakeDiscovery(),
       citations: CitationsClient = FakeCitations(Nil),
       oa: OaFetcher = NoPdf,
-      archive: ArchiveClient = FakeArchive(ArchiveItem("zz")),
       rw: RetractionWatchClient = FakeRw(""),
       app: AppConfig = cfg,
       jobs: IngestJobs = SkeletonIngest(ds, cfg.limits.chunkChars)
-  ) = AcquireHandlers(Deps(app, ds), discovery, citations, oa, NoWiki, archive, rw, jobs)
+  ) = AcquireHandlers(Deps(app, ds), discovery, citations, oa, NoWiki, rw, jobs)
 
   /** The skeleton store, recording whether each ingest handed it a file to convert (the OCR job). */
   final private class RecordingJobs extends IngestJobs:
@@ -607,7 +628,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       lendingOnly = true,
       files = List(ArchiveFile("blackathena.pdf", Some("Text PDF"), 12.0))
     )
-    val r = handlers(archive = FakeArchive(item)).archiveImport(ArchiveImportRequest("blackathena"))
+    val r = archiveService(item, handlers()).archiveImport(Caller.Local, ArchiveImportRequest("blackathena"))
     assert(r.isLeft)
     assert(r.left.exists(_.message.contains("lending-only")), r.toString)
     assert(SourceRepo.load(ds, "zzacqbernal1987_black").isEmpty)
@@ -626,18 +647,17 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       )
     )
     // the download is the acquisition chain's: here a fetcher over the same client, by the item's identifier
-    val archive = FakeArchive(item)
     val byIdentifier = new com.histmersion.plugin.SourceFetcher:
       val access = com.histmersion.plugin.Access.Open
       def fetch(work: com.histmersion.plugin.WorkKey, ctx: com.histmersion.plugin.FetchContext) =
-        work.archive.fold(com.histmersion.plugin.Fetch.Miss("no identifier"))(id =>
-          archive
-            .download(id, "racesofeurope.epub")
-            .fold(com.histmersion.plugin.Fetch.Miss(_), com.histmersion.plugin.Fetch.Found(_))
+        work.archive.fold(com.histmersion.plugin.Fetch.Miss("no identifier"))(_ =>
+          com.histmersion.plugin.Fetch.Found(
+            FetchedFile("archive_org", None, ("%PDF-1.4\n" + "y" * 20000).getBytes("UTF-8"), "pdf")
+          )
         )
     val chain = FetchChain(List("archive-org" -> byIdentifier))
-    val r = handlers(archive = archive, oa = chain)
-      .archiveImport(ArchiveImportRequest("racesofeurope"))
+    val r = archiveService(item, handlers(oa = chain))
+      .archiveImport(Caller.Local, ArchiveImportRequest("racesofeurope"))
       .fold(e => fail(e.message), identity)
     assertEquals(r.citekey, "zzacqcoon1939_races")
     assertEquals(SourceRepo.load(ds, "zzacqcoon1939_races").flatMap(_.provenance), Some("archive_org"))

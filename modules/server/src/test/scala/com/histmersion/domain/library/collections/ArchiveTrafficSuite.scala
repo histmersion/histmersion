@@ -2,7 +2,6 @@ package com.histmersion.domain.library.collections
 
 import com.histmersion.api.*
 import com.histmersion.config.{AcquireConfig, AppConfig, LoadedConfig}
-import com.histmersion.pluginhost.upstreamSettings
 import com.histmersion.pluginhost.{FetchChain, Generation, HttpAnswer, HttpTransport, PolicyHttp}
 import com.histmersion.server.Deps
 import com.histmersion.server.acquire.*
@@ -145,10 +144,6 @@ object ArchiveTrafficSuite:
         app.acquire.allowUnauthorised,
         plugins = g.registered
       )
-    val host = new SttpHttp(PolicyHttp.acquisition(app, wire))
-    val archive = com.histmersion.domain.library.acquisition.ArchiveOrgClient(
-      com.histmersion.upstreams.ArchiveOrg(app.acquire.upstreamSettings.archiveOrg, HttpPlugin(host))
-    )
     val none = new DiscoveryClient:
       def search(q: String, since: Option[Int], sort: Option[String], limit: Int) = Left("not used")
       def meta(doi: String) = Left("not used")
@@ -160,8 +155,20 @@ object ArchiveTrafficSuite:
       new CitationsClient { def citing(w: WorkRef, s: Option[Int], l: Int) = Left("not used") },
       chain,
       new WikiClient { def refs(url: String) = Left("not used") },
-      archive,
       new RetractionWatchClient { def csv() = Left("not used") },
       SkeletonIngest(ds, app.limits.chunkChars)
     )
-    Surface(h.archiveSearch, h.archiveInfo, h.archiveImport)
+    val library = new RefusingCollectionLibrary:
+      override def archiveImport(item: ArchiveItem, file: ArchiveFile, req: ArchiveImportRequest) =
+        h.archiveImport(item, file, req)
+    val service = CollectionsService.InMemory(
+      java.util.concurrent.atomic.AtomicReference(Nil),
+      library,
+      () => g.registries.sourceCollections,
+      app.acquire.defaults.archiveRows.value
+    )
+    Surface(
+      service.archiveSearch,
+      service.archiveInfo,
+      req => service.archiveImport(com.histmersion.domain.Caller.Local, req)
+    )

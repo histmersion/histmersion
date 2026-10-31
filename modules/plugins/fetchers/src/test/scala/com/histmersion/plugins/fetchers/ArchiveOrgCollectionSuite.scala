@@ -53,4 +53,6 @@ class ArchiveOrgCollectionSuite extends munit.FunSuite:
 
   test("read-only: it declares reading alone and refuses every write"):
     assertEquals(collection.capabilities, Set(CollectionCapability.Read))
-    assert(collection.add(CollectionMetadata("k", "T", List("A")), FetchedFile("x", None, Array[Byte](1), "pdf")).isLeft)
+    assert(
+      collection.add(CollectionMetadata("k", "T", List("A")), FetchedFile("x", None, Array[Byte](1), "pdf")).isLeft
+    )

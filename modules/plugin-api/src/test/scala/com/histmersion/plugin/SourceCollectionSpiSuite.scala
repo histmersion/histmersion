@@ -25,7 +25,10 @@ class SourceCollectionSpiSuite extends munit.FunSuite:
     def original(item: CollectionItem, file: CollectionFile) = Left("no files")
 
   test("a context written before source collections refuses one, naming why"):
-    assertEquals(EarlyContext.sourceCollections.add("shelf", Shelf), Left("'shelf': this host has no source collections"))
+    assertEquals(
+      EarlyContext.sourceCollections.add("shelf", Shelf),
+      Left("'shelf': this host has no source collections")
+    )
 
   test("a collection reads only, admits every item, has no cover, is reachable and finds nothing to audit by default"):
     val item = Shelf.item(CollectionId("b1")).toOption.flatten.getOrElse(fail("no item"))

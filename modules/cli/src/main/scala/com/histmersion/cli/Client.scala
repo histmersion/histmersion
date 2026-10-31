@@ -52,8 +52,13 @@ final class Client(val serverUrl: String, token: Option[String] = None):
       case scala.util.Success(resp) =>
         resp.body match
           case sttp.tapir.DecodeResult.Value(Right(o)) => Right(o)
-          case sttp.tapir.DecodeResult.Value(Left(e))  => Left(CliError(e.message, exitCode = ExitCode.Refused))
-          case _                                       =>
+          case sttp.tapir.DecodeResult.Value(Left(e))  =>
+            // a refusal of the request itself (a collection's citekey collision) exits as a bad command line does
+            val code =
+              if e.code.contains(com.histmersion.api.library.collections.CollectionsApi.Usage) then ExitCode.Usage
+              else ExitCode.Refused
+            Left(CliError(e.message, exitCode = code))
+          case _ =>
             Left(
               CliError(
                 Client.unexpected(resp.code.code, serverUrl, Client.isWrite(req.method)),

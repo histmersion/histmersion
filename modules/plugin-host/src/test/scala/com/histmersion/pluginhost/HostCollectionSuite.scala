@@ -5,8 +5,8 @@ import com.histmersion.plugin.PluginConfig.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.ConfigFactory
 
-/** SPI-11 on the host: a plugin registers a source collection (its report says so); a third party may not take the
-  * name of one of Histmersion's own; and every call the host makes is guarded, a write refused unless the collection
+/** SPI-11 on the host: a plugin registers a source collection (its report says so); a third party may not take the name
+  * of one of Histmersion's own; and every call the host makes is guarded, a write refused unless the collection
   * declares it.
   */
 class HostCollectionSuite extends munit.FunSuite:
@@ -54,8 +54,10 @@ class HostCollectionSuite extends munit.FunSuite:
 
   test("the host refuses a write the collection does not declare, and catches what it throws"):
     val c = HostCollection("shelf", Shelf)
-    assertEquals(c.add(CollectionMetadata("k", "T", List("A")), FetchedFile("t", None, Array[Byte](1), "pdf")),
-      Left("Shelf is read-only here: the shelf is full"))
+    assertEquals(
+      c.add(CollectionMetadata("k", "T", List("A")), FetchedFile("t", None, Array[Byte](1), "pdf")),
+      Left("Shelf is read-only here: the shelf is full")
+    )
     assert(c.item(CollectionId("boom")).left.exists(_.contains("source collection 'shelf' failed")))
     assertEquals(c.search(CollectionQuery(None)).map(_.size), Right(1))
     assert(c.updateAll(Nil, apply = false).isLeft, "the collection's own default refusal")
