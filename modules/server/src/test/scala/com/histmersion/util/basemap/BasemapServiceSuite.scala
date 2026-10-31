@@ -4,7 +4,8 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.{JobRepo, Migrate}
-import com.histmersion.server.Deps
+import com.histmersion.server.{BasemapWiring, Deps}
+import com.histmersion.util.storage.Reservation
 
 import java.nio.file.{Files, Path}
 
@@ -71,7 +72,7 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
         else if url == "fake://ne/rivers.geojson" then Right(BasemapServiceSuite.Rivers)
         else v.text(url)
       def bytes(url: String, o: Long, l: Long) = pick(url).bytes(url, o, l)
-      def download(url: String, o: Long, l: Long, to: Path) = pick(url).download(url, o, l, to)
+      def download(url: String, o: Long, l: Long, to: Reservation) = pick(url).download(url, o, l, to)
       // the sea floor's tiles: whole files, one a tile; the bucket has none for x = 0
       override def file(url: String) =
         val Sea = "fake://sea/(\\d+)/(\\d+)/(\\d+).png".r
@@ -79,7 +80,7 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
           case Sea(z, x, y) =>
             BasemapServiceSuite.seaGets.incrementAndGet(); Right(Option.when(x != "0")(s"PNG$z/$x/$y".getBytes))
           case _ => Left(s"$url: unexpected")
-    (BasemapService(Deps(cfg, ds), () => router, _ => free), v, t)
+    (BasemapWiring.service(Deps(cfg, ds), () => router, _ => free), v, t)
 
   test("a dry run reads directories only and reports the sizes; nothing is written"):
     val dir = Files.createTempDirectory("basemap")
@@ -315,7 +316,7 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
         Either.cond(url == "fake://gebco/n90.0_s0.0_w0.0_e90.0.tif", grid, s"$url: unexpected")
       def text(url: String) = Left("unexpected")
       def bytes(url: String, o: Long, l: Long) = mine(url).flatMap(_.bytes(url, o, l))
-      def download(url: String, o: Long, l: Long, to: Path) = mine(url).flatMap(_.download(url, o, l, to))
+      def download(url: String, o: Long, l: Long, to: Reservation) = mine(url).flatMap(_.download(url, o, l, to))
       override def file(url: String) = { etopoAsked.incrementAndGet(); Right(Some(outside)) }
     val base = AppConfig.load()
     val cfg = base.copy(
@@ -333,7 +334,7 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
         )
       )
     )
-    val svc = BasemapService(Deps(cfg, ds), () => router)
+    val svc = BasemapWiring.service(Deps(cfg, ds), () => router)
     val dry = await(svc.fetch(BasemapFetchQuery(layer = "bathymetry", dryRun = true)).fold(e => fail(e.message), _.id))
     assert(dry.succeeded, dry.toString)
     // rows 196–219 (latitudes 41–35) of 720 bytes, in requests of at most 1 MB: one

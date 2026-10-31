@@ -2,9 +2,9 @@ package com.histmersion.util.basemap
 
 import com.histmersion.api.{Backup, Basemap, BBox, Plural}
 import com.histmersion.config.BasemapGebcoConfig
+import com.histmersion.util.storage.{Store, StoreKey}
 
-import java.nio.channels.FileChannel
-import java.nio.file.{Files, Path, StandardOpenOption}
+import java.io.IOException
 import java.nio.{ByteBuffer, ByteOrder}
 import scala.util.Using
 
@@ -56,32 +56,34 @@ final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: String, http: Range
   def needs(p: GebcoPlan): Long = p.readBytes + p.tiles.size * PngGuess
 
   /** Read the rows still missing from `work`. */
-  def download(p: GebcoPlan, work: Path, gapMs: Long, note: String => Unit): Either[String, Unit] =
-    Files.createDirectories(work)
+  def download(p: GebcoPlan, work: Store, gapMs: Long, note: String => Unit): Either[String, Unit] =
+    work.makeDirectory().left.foreach(e => throw IOException(e.message))
     val all = p.parts.flatMap(part => part.runs.map(part -> _))
     all.zipWithIndex.foldLeft[Either[String, Unit]](Right(())) { case (acc, ((part, run), i)) =>
       acc.flatMap { _ =>
-        val f = part.file(work, run)
-        if Files.isRegularFile(f) && Files.size(f) == run.length then Right(())
+        val f = part.key(run)
+        if work.stat(f).exists(s => s.isFile && s.size.value == run.length) then Right(())
         else
           if Thread.interrupted() then throw InterruptedException()
           if i > 0 then Thread.sleep(gapMs)
           note(s"reading GEBCO ${part.name}: part ${i + 1} of ${all.size} (${Backup.humanBytes(run.length)})")
-          val tmp = f.resolveSibling(f.getFileName.toString + ".tmp")
-          http.download(part.url, run.offset.value, run.length, tmp).flatMap { _ =>
-            Either.cond(
-              Files.size(tmp) == run.length, {
-                Files.move(tmp, f, java.nio.file.StandardCopyOption.REPLACE_EXISTING); ()
-              },
-              s"${part.url}: ${Files.size(tmp)} bytes for a range of ${run.length}"
-            )
+          Using.resource(work.reserve(f).fold(e => throw IOException(e.message), identity)) { rows =>
+            http.download(part.url, run.offset.value, run.length, rows).flatMap { _ =>
+              Either
+                .cond(
+                  rows.size.value == run.length,
+                  (),
+                  s"${part.url}: ${rows.size.value} bytes for a range of ${run.length}"
+                )
+                .flatMap(_ => rows.commit().left.map(_.message).map(_ => ()))
+            }
           }
       }
     }
 
   /** Every tile of the plan from the rows in `work`, in tile-id order, handed to `add`. */
-  def build(p: GebcoPlan, work: Path, add: (Long, Array[Byte]) => Unit, note: String => Unit): Either[String, Long] =
-    val samplers = p.parts.map(part => GebcoSeaFloor.Rows(part, part.runs.map(r => r -> map(part.file(work, r)))))
+  def build(p: GebcoPlan, work: Store, add: (Long, Array[Byte]) => Unit, note: String => Unit): Either[String, Long] =
+    val samplers = p.parts.map(part => GebcoSeaFloor.Rows(part, part.runs.map(r => r -> map(work, part.key(r)))))
     var etopoFailures = 0 // ETOPO1 tiles that could not be read: their outside stays at sea level
     p.tiles.zipWithIndex.foreach { case ((id, (z, x, y)), i) =>
       if Thread.interrupted() then throw InterruptedException()
@@ -105,10 +107,8 @@ final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: String, http: Range
     if etopoFailures > 0 then note(s"$etopoFailures edge tile(s) had no ETOPO1 tile: their outside is at sea level")
     Right(p.tiles.size.toLong)
 
-  private def map(f: Path): ByteBuffer =
-    Using
-      .resource(FileChannel.open(f, StandardOpenOption.READ))(_.map(FileChannel.MapMode.READ_ONLY, 0, Files.size(f)))
-      .order(ByteOrder.LITTLE_ENDIAN)
+  private def map(work: Store, f: StoreKey): ByteBuffer =
+    work.get(f).getOrElse(throw IOException(s"${work.where(f)}: no such file")).mapped().order(ByteOrder.LITTLE_ENDIAN)
 
 object GebcoSeaFloor:
 

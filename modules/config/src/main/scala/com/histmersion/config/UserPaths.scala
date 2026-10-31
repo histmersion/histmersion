@@ -57,6 +57,20 @@ object UserPaths:
       .orElse(home(env).map(Path.of(_, ".cache")))
       .map(_.resolve("histmersion").toAbsolutePath.normalize)
 
+  /** Where the base map's extracts and their caches live: `configured` (`basemap.dir`; a leading `~` is the user's home
+    * directory), else `<cache dir>/basemap` ([[cacheDir]]), else `basemap` under `initDataDir` (`init.data-dir`) —
+    * absolute and normalised.
+    */
+  def basemapDir(configured: String, initDataDir: String, env: String => Option[String]): Path =
+    Option(configured)
+      .map(_.trim)
+      .filter(_.nonEmpty)
+      .map(p => Path.of(p.replaceFirst("^~", System.getProperty("user.home"))))
+      .orElse(cacheDir(env).map(_.resolve("basemap")))
+      .getOrElse(Path.of(initDataDir).resolve("basemap"))
+      .toAbsolutePath
+      .normalize
+
   /** Where the user config file is looked for: `$HISTMERSION_CONFIG` when set, else
     * `$XDG_CONFIG_HOME/histmersion/histmersion.conf` (default `~/.config`) — on macOS too. Config is something a person
     * edits, so it lives with their other dotfiles, never in the server-owned data directory, and nothing in the file

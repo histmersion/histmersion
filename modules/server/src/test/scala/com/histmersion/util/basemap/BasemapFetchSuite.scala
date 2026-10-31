@@ -4,6 +4,8 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
+import com.histmersion.util.storage.StoreKey
+
 import java.nio.file.{Files, Path}
 
 /** The base-map extract (plan → download → assemble) against a local archive behind a fake range server — no network —
@@ -166,7 +168,7 @@ class BasemapFetchSuite extends munit.FunSuite:
     assertEquals(plan.maxZoom, 5)
     assertEquals(plan.tiles.size.toLong, Basemap.tileCount(aegean, 0, 5))
     assert(plan.requests.size <= 3, plan.requests.toString)
-    val work = dir.resolve("work")
+    val work = BasemapFixtures.store(dir.resolve("work"))
     BasemapFetch.prepare(work, BasemapFetch.stateOf(plan, "x"))
     BasemapFetch.download(http, plan, work, noPause, _ => (), _ => Right(())).fold(fail(_), identity)
     val out = dir.resolve("vector.pmtiles")
@@ -174,7 +176,8 @@ class BasemapFetchSuite extends munit.FunSuite:
       .assemble(
         plan,
         work,
-        out,
+        BasemapFixtures.store(dir),
+        StoreKey.applyUnsafe("vector.pmtiles"),
         b => BasemapService.thin(b, PmTiles.Compression.Gzip, keep),
         BasemapFetch.localHeader(plan),
         BasemapFetch.localMetadata(
@@ -189,7 +192,7 @@ class BasemapFetchSuite extends munit.FunSuite:
       )
       .fold(fail(_), identity)
     assertEquals(n, plan.tiles.size.toLong)
-    val f = PmTilesFile.open(out).fold(fail(_), identity)
+    val f = BasemapFixtures.open(out).fold(fail(_), identity)
     try
       assertEquals(f.header.maxZoom, 5)
       assertEquals((f.header.minLon, f.header.maxLat), (22.0, 41.0))
@@ -213,7 +216,7 @@ class BasemapFetchSuite extends munit.FunSuite:
     val plan =
       BasemapFetch.plan(http, BasemapFetch.Source("fake://t", "t"), aegean, 6, tiny, _ => ()).fold(fail(_), identity)
     assert(plan.requests.size > 3, plan.requests.toString)
-    val work = dir.resolve("work")
+    val work = BasemapFixtures.store(dir.resolve("work"))
     assertEquals(BasemapFetch.prepare(work, BasemapFetch.stateOf(plan, "")), 0)
     // the first two parts arrive, then the disk check stops the fetch
     var allowed = 2 // the parts the fake disk has room for
@@ -244,7 +247,7 @@ class BasemapFetchSuite extends munit.FunSuite:
     val plan =
       BasemapFetch.plan(http, BasemapFetch.Source("fake://t", "t"), aegean, 5, noPause, _ => ()).fold(fail(_), identity)
     http.etag = "\"v2\""
-    val work = dir.resolve("work")
+    val work = BasemapFixtures.store(dir.resolve("work"))
     BasemapFetch.prepare(work, BasemapFetch.stateOf(plan, ""))
     val r = BasemapFetch.download(http, plan, work, noPause, _ => (), _ => Right(()))
     assert(r.left.exists(_.contains("changed during the download")), r.toString)
@@ -260,11 +263,11 @@ class BasemapFetchSuite extends munit.FunSuite:
   test("the extracts live in the XDG cache unless basemap.dir moves them"):
     val cfg = AppConfig.load()
     assertEquals(
-      BasemapService.dir(cfg, Map("XDG_CACHE_HOME" -> "/x/cache").get),
+      UserPaths.basemapDir(cfg.basemap.dir, cfg.init.dataDir, Map("XDG_CACHE_HOME" -> "/x/cache").get),
       Path.of("/x/cache/histmersion/basemap")
     )
     assertEquals(
-      BasemapService.dir(cfg.copy(basemap = cfg.basemap.copy(dir = "/y/maps")), Map.empty[String, String].get),
+      UserPaths.basemapDir("/y/maps", cfg.init.dataDir, Map.empty[String, String].get),
       Path.of("/y/maps")
     )
 

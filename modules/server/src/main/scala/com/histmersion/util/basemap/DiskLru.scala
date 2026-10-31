@@ -1,17 +1,18 @@
 package com.histmersion.util.basemap
 
-import java.nio.file.{Files, Path, StandardCopyOption}
-import java.nio.file.attribute.FileTime
-import scala.util.Using
+import com.histmersion.util.storage.{Store, StoreError, StoreKey}
 
-/** A directory of tiles bounded in bytes, least recently used dropped first — an on-demand layer's cache. A tile is a
-  * file `<z>/<x>/<y>.<ext>`; a tile the provider does not have is an empty `<z>/<x>/<y>.none`, so it is not asked for
-  * again. Use is the file's modification time (set on each read), so the order survives a restart; the index is read
-  * from the disk on first use.
+import java.io.IOException
+import java.time.Instant
+
+/** A store of tiles bounded in bytes, least recently used dropped first — an on-demand layer's cache. A tile is a file
+  * `<z>/<x>/<y>.<ext>`; a tile the provider does not have is an empty `<z>/<x>/<y>.none`, so it is not asked for again.
+  * Use is the file's modification time (set on each read), so the order survives a restart; the index is read from the
+  * store on first use.
   *
   * Thread-safe: every operation holds the instance's lock (they are file operations of a few KB).
   */
-final class DiskLru(val root: Path, maxBytes: () => Long, ext: String = "webp"):
+final class DiskLru(store: Store, maxBytes: () => Long, ext: String = "webp"):
 
   // the index (access-ordered: the eldest is the least recently used) and its byte total, loaded once;
   // `var`s under the instance lock
@@ -19,17 +20,18 @@ final class DiskLru(val root: Path, maxBytes: () => Long, ext: String = "webp"):
   private var total = 0L
   private var loaded = false
 
-  private def file(key: String, absent: Boolean): Path = root.resolve(key + (if absent then ".none" else s".$ext"))
+  private def file(key: String, absent: Boolean): StoreKey =
+    StoreKey.applyUnsafe(key + (if absent then ".none" else s".$ext"))
+
+  private def done(written: Either[StoreError, ?]): Unit = written.left.foreach(e => throw IOException(e.message))
 
   private def load(): Unit = if !loaded then
     loaded = true
-    if Files.isDirectory(root) then
-      val found = Using.resource(Files.walk(root)) { s =>
-        s.filter(Files.isRegularFile(_)).toArray.toList.map(_.asInstanceOf[Path]).flatMap { p =>
-          val rel = root.relativize(p).toString.replace('\\', '/')
-          val key = rel.stripSuffix(s".$ext").stripSuffix(".none")
-          Option.when(key != rel && !rel.endsWith(".tmp"))((key, Files.size(p), Files.getLastModifiedTime(p).toMillis))
-        }
+    if store.isDirectory(StoreKey.Root) then
+      val found = store.walk().flatMap { s =>
+        val rel = s.key.value
+        val key = rel.stripSuffix(s".$ext").stripSuffix(".none")
+        Option.when(key != rel && !rel.endsWith(".tmp"))((key, s.size.value, s.modified.toEpochMilli))
       }
       found.sortBy(_._3).foreach { (k, n, _) => index.put(k, n); total += n }
       evict()
@@ -40,8 +42,8 @@ final class DiskLru(val root: Path, maxBytes: () => Long, ext: String = "webp"):
       val e = it.next()
       it.remove()
       total -= e.getValue
-      val _ = Files.deleteIfExists(file(e.getKey, absent = false))
-      val _ = Files.deleteIfExists(file(e.getKey, absent = true))
+      val _ = store.delete(file(e.getKey, absent = false))
+      val _ = store.delete(file(e.getKey, absent = true))
 
   /** `Some(Some(bytes))` a cached tile, `Some(None)` one known to be missing, `None` not cached. */
   def get(key: String): Option[Option[Array[Byte]]] = synchronized {
@@ -50,11 +52,12 @@ final class DiskLru(val root: Path, maxBytes: () => Long, ext: String = "webp"):
     else
       val _ = index.get(key) // marks it used
       val f = file(key, absent = false)
-      if Files.isRegularFile(f) then
-        scala.util.Try(Files.setLastModifiedTime(f, FileTime.fromMillis(System.currentTimeMillis())))
-        Some(Some(Files.readAllBytes(f)))
-      else if Files.isRegularFile(file(key, absent = true)) then Some(None)
-      else { total -= index.remove(key); None } // removed behind our back
+      store.get(f) match
+        case Some(b) =>
+          store.touch(f, Instant.ofEpochMilli(System.currentTimeMillis()))
+          Some(Some(b.bytes()))
+        case None if store.isFile(file(key, absent = true)) => Some(None)
+        case None => total -= index.remove(key); None // removed behind our back
   }
 
   /** Keep `bytes` (`None`: the provider has no such tile) as `key`, then drop the least recently used until the cache
@@ -62,11 +65,7 @@ final class DiskLru(val root: Path, maxBytes: () => Long, ext: String = "webp"):
     */
   def put(key: String, bytes: Option[Array[Byte]]): Unit = synchronized {
     load()
-    val f = file(key, bytes.isEmpty)
-    Files.createDirectories(f.getParent)
-    val tmp = f.resolveSibling(f.getFileName.toString + ".tmp")
-    Files.write(tmp, bytes.getOrElse(Array.emptyByteArray))
-    val _ = Files.move(tmp, f, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+    done(store.put(file(key, bytes.isEmpty), bytes.getOrElse(Array.emptyByteArray)))
     Option(index.put(key, bytes.fold(0L)(_.length.toLong))).foreach(total -= _)
     total += bytes.fold(0L)(_.length.toLong)
     evict()
@@ -77,7 +76,7 @@ final class DiskLru(val root: Path, maxBytes: () => Long, ext: String = "webp"):
 
   /** Everything removed; answers the bytes it held. */
   def clear(): Long = synchronized {
-    val was = BasemapService.deleteTree(root).getOrElse(0L)
+    val was = store.deleteTree(StoreKey.Root).fold(0L)(_.value)
     index.clear(); total = 0; loaded = false
     was
   }

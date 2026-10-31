@@ -1,27 +1,26 @@
 package com.histmersion.util.basemap
 
+import com.histmersion.util.storage.{Reservation, Store, StoreKey}
+import com.histmersion.values.ByteOffset
 import hearth.kindlings.optics.syntax.*
 import io.circe.Json
 
-import java.io.{BufferedOutputStream, OutputStream}
-import java.nio.file.{Files, Path, StandardCopyOption}
+import java.io.{BufferedOutputStream, IOException, OutputStream}
 import java.security.MessageDigest
 import scala.collection.mutable
-import scala.util.Using
 
 /** Writes a clustered PMTiles v3 archive: tiles are [[add]]ed in ascending tile-id order, identical contents are stored
   * once (a sea of identical ocean tiles costs one tile), consecutive ids that share a content become one run, and
-  * [[finish]] completes the file at `out`.
+  * [[finish]] completes the file `out` is reserved for, replacing what is at its key in one step.
   *
   * ONE file, written once: the first 16 KiB are reserved for the header and the root directory (where the spec requires
   * them), the tile data follows as tiles arrive, and the metadata and leaf directories go after it — the spec lets
   * those sections lie anywhere. So a multi-gigabyte extract never needs twice its size on disk, and memory holds only
   * the entries and one digest per content.
   */
-final class PmTilesWriter(out: Path):
+final class PmTilesWriter(out: Reservation):
 
-  private val dataPath = out.resolveSibling(out.getFileName.toString + ".tmp")
-  private val data: OutputStream = BufferedOutputStream(Files.newOutputStream(dataPath), 1 << 16)
+  private val data: OutputStream = BufferedOutputStream(out.output(), 1 << 16)
   data.write(new Array[Byte](PmTiles.RootBytes)) // the header and root directory's place
   // `var`s and mutable collections: the writer's running state, never visible outside it
   private var dataLength = 0L
@@ -79,20 +78,19 @@ final class PmTilesWriter(out: Path):
       clustered = true,
       internalCompression = ic
     )
-    Using.resource(java.nio.channels.FileChannel.open(dataPath, java.nio.file.StandardOpenOption.WRITE)) { ch =>
-      val head = java.nio.ByteBuffer.wrap(PmTiles.encodeHeader(header) ++ root)
-      var at = 0L // positional writes may be short
-      while head.hasRemaining do at += ch.write(head, at)
-    }
-    val _ = Files.move(dataPath, out, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
-    Files.size(out)
+    out.writeAt(ByteOffset.applyUnsafe(0L), PmTiles.encodeHeader(header) ++ root)
+    out.commit().fold(e => throw IOException(e.message), _.size.value)
 
   /** Give up: remove what was written. */
   def abort(): Unit =
     scala.util.Try(data.close())
-    val _ = Files.deleteIfExists(dataPath)
+    out.discard()
 
 object PmTilesWriter:
+
+  /** A writer of the archive `key` of `store`, written beside it until [[PmTilesWriter.finish]]. */
+  def apply(store: Store, key: StoreKey): PmTilesWriter =
+    new PmTilesWriter(store.reserve(key).fold(e => throw IOException(e.message), identity))
 
   /** The root directory and the leaf section for `entries`: one root when it fits in the first 16 KiB, else leaves of 4
     * 096 entries (doubled until their index fits). Pure.

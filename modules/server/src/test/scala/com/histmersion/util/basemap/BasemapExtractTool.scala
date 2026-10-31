@@ -4,6 +4,9 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
+import com.histmersion.server.BasemapWiring
+import com.histmersion.util.storage.{Store, StoreKey}
+
 import java.nio.file.{Files, Path}
 import java.security.MessageDigest
 
@@ -28,6 +31,14 @@ object BasemapExtractTool:
     "landcover" -> Mvt.Rule(keep = Set("forest", "grassland", "scrub", "barren", "glacier"))
   )
 
+  /** The store of `p`'s directory and `p`'s name in it. */
+  private def at(p: Path): (Store, StoreKey) =
+    val a = p.toAbsolutePath
+    (BasemapFixtures.store(a.getParent), StoreKey.applyUnsafe(a.getFileName.toString))
+
+  /** The work store of an extract written to `out`: `<out>.work` beside it. */
+  private def workOf(out: Path): (Store, StoreKey) = at(out.resolveSibling(out.getFileName.toString + ".work"))
+
   def run(args: List[String]): Unit = args match
     case "extract" :: build :: bbox :: z :: out :: rest =>
       extract(build, bbox, z.toInt, Path.of(out), rest.headOption.contains("keep-all"))
@@ -41,7 +52,7 @@ object BasemapExtractTool:
 
   /** Every layer's `kind`s at zoom `z` of an archive, counted over its tiles (what a style can select). */
   private def kinds(file: Path, z: Int): Unit =
-    val f = PmTilesFile.open(file).fold(sys.error, identity)
+    val f = BasemapFixtures.open(file).fold(sys.error, identity)
     val h = f.header
     val ((x0, x1), (y0, y1)) = Basemap.tileRange(BBox(h.minLon, h.minLat, h.maxLon, h.maxLat), z)
     val counts = scala.collection.mutable.Map.empty[(String, String), Int].withDefaultValue(0)
@@ -58,7 +69,7 @@ object BasemapExtractTool:
     */
   private def relief(bbox: String, z0: Int, z1: Int, out: Option[Path]): Unit =
     val cfg = AppConfig.load().basemap
-    val http = JavaRangeHttp(cfg.timeoutSeconds, cfg.retries)
+    val http = BasemapWiring.http(cfg)
     val src = BasemapFetch.Source(cfg.terrain.url, cfg.terrain.url)
     val pace = BasemapFetch.Pace(cfg.requestGapMs.toLong, cfg.maxRequestMb.toLong << 20, cfg.overfetch)
     val note = (s: String) => scribe.info(s)
@@ -68,7 +79,8 @@ object BasemapExtractTool:
       s"RELIEF $bbox z$z0-$z1: ${plan.tiles.size} tiles, ${plan.requestBytes} bytes in ${plan.requests.size} requests, contents ${plan.contentBytes}"
     )
     out.foreach { o =>
-      val work = o.resolveSibling(o.getFileName.toString + ".work")
+      val (base, workKey) = workOf(o)
+      val work = base.sub(workKey)
       BasemapFetch.prepare(work, BasemapFetch.stateOf(plan, "relief"))
       BasemapFetch.download(http, plan, work, pace, note, _ => Right(())).fold(sys.error, identity)
       val meta = BasemapFetch.localMetadata(
@@ -78,16 +90,17 @@ object BasemapExtractTool:
         java.time.Instant.now().toString,
         BasemapLayer.Terrain
       )
+      val (outStore, outKey) = at(o)
       val (bytes, tiles) = BasemapFetch
-        .assemble(plan, work, o, b => Right(Some(b)), BasemapFetch.localHeader(plan), meta, note)
+        .assemble(plan, work, outStore, outKey, b => Right(Some(b)), BasemapFetch.localHeader(plan), meta, note)
         .fold(sys.error, identity)
-      BasemapService.deleteTree(work)
+      val _ = base.deleteTree(workKey)
       println(s"RELIEF $o: $tiles tiles, $bytes bytes")
     }
 
   private def extract(build: String, bbox: String, z: Int, out: Path, keepAll: Boolean): Unit =
     val cfg = AppConfig.load().basemap
-    val http = JavaRangeHttp(cfg.timeoutSeconds, cfg.retries)
+    val http = BasemapWiring.http(cfg)
     val key = if build == "latest" then
       http.text(cfg.vector.buildsUrl).flatMap(BasemapService.builds).toOption.get.last._1
     else build
@@ -96,7 +109,8 @@ object BasemapExtractTool:
     val pace = BasemapFetch.Pace(cfg.requestGapMs.toLong, cfg.maxRequestMb.toLong << 20, cfg.overfetch)
     val note = (s: String) => scribe.info(s)
     val plan = BasemapFetch.plan(http, src, b, z, pace, note).fold(sys.error, identity)
-    val work = out.resolveSibling(out.getFileName.toString + ".work")
+    val (base, workKey) = workOf(out)
+    val work = base.sub(workKey)
     BasemapFetch.prepare(work, BasemapFetch.stateOf(plan, if keepAll then "keep-all" else cfg.vector.drop))
     BasemapFetch.download(http, plan, work, pace, note, _ => Right(())).fold(sys.error, identity)
     val drop = Basemap.parseDrop(cfg.vector.drop).fold(sys.error, identity)
@@ -113,18 +127,19 @@ object BasemapExtractTool:
       .assemble(
         plan,
         work,
-        out,
+        at(out)._1,
+        at(out)._2,
         t => BasemapService.thin(t, plan.header.tileCompression, rules),
         BasemapFetch.localHeader(plan),
         meta,
         note
       )
       .fold(sys.error, identity)
-    BasemapService.deleteTree(work)
+    val _ = base.deleteTree(workKey)
     scribe.info(s"$out: $tiles tiles, $bytes bytes, downloaded ${plan.requestBytes} bytes")
 
   private def sizes(file: Path): Unit =
-    val f = PmTilesFile.open(file).fold(sys.error, identity)
+    val f = BasemapFixtures.open(file).fold(sys.error, identity)
     val drop =
       BasemapService.mvtRules(Basemap.parseDrop(AppConfig.load().basemap.vector.drop).fold(sys.error, identity))
     val h = f.header
@@ -162,7 +177,7 @@ object BasemapExtractTool:
     f.close()
 
   private def inspect(file: Path, b: BBox, z: Int): Unit =
-    val f = PmTilesFile.open(file).fold(sys.error, identity)
+    val f = BasemapFixtures.open(file).fold(sys.error, identity)
     val kinds = collection.mutable.TreeMap.empty[String, Int]
     val keys = collection.mutable.TreeMap.empty[String, Int]
     val bytes = collection.mutable.TreeMap.empty[String, Long]
@@ -188,8 +203,8 @@ object BasemapExtractTool:
     f.close()
 
   private def subset(in: Path, b: BBox, maxZoom: Int, out: Path): Unit =
-    val f = PmTilesFile.open(in).fold(sys.error, identity)
-    val w = PmTilesWriter(out)
+    val f = BasemapFixtures.open(in).fold(sys.error, identity)
+    val w = BasemapFixtures.writer(out.toAbsolutePath)
     val ids = (f.header.minZoom to maxZoom.min(f.header.maxZoom)).flatMap { z =>
       val ((x0, x1), (y0, y1)) = Basemap.tileRange(b, z)
       for x <- x0 to x1; y <- y0 to y1 yield PmTiles.tileId(z, x, y)

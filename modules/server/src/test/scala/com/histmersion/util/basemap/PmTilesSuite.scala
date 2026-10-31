@@ -103,12 +103,12 @@ class PmTilesSuite extends munit.FunSuite:
   test("written and read back: tiles, runs of identical tiles, metadata"):
     val dir = Files.createTempDirectory("pmtiles")
     val out = dir.resolve("t.pmtiles")
-    val w = PmTilesWriter(out)
+    val w = BasemapFixtures.writer(out)
     val tiles = for z <- 0 to 3; x <- 0L until (1L << z); y <- 0L until (1L << z)
     yield (PmTiles.tileId(z, x, y), if z == 3 && x > 3 then Array[Byte](9, 9) else s"$z/$x/$y".getBytes)
     tiles.sortBy(_._1).foreach((id, b) => w.add(id, b))
     w.finish(template(3), Json.obj("name" -> Json.fromString("test")))
-    val r = PmTilesFile.open(out).fold(fail(_), identity)
+    val r = BasemapFixtures.open(out).fold(fail(_), identity)
     try
       assertEquals(r.header.maxZoom, 3)
       assertEquals(r.header.addressedTiles, 85L)
@@ -123,13 +123,13 @@ class PmTilesSuite extends munit.FunSuite:
   test("many entries go to leaf directories, and are still found"):
     val dir = Files.createTempDirectory("pmtiles")
     val out = dir.resolve("big.pmtiles")
-    val w = PmTilesWriter(out)
+    val w = BasemapFixtures.writer(out)
     // irregular gaps and lengths: 40 000 entries that do not compress into one root
     val rnd = scala.util.Random(7)
     val ids = Iterator.iterate(0L)(_ + 2 + rnd.nextInt(5)).take(40000).toVector
     ids.foreach(id => w.add(id, java.nio.ByteBuffer.allocate(8 + rnd.nextInt(200)).putLong(id).array()))
     w.finish(template(9), Json.obj())
-    val r = PmTilesFile.open(out).fold(fail(_), identity)
+    val r = BasemapFixtures.open(out).fold(fail(_), identity)
     try
       assert(r.header.leafLength > 0, "leaves were needed")
       List(ids(0), ids(1), ids(20000), ids.last).foreach { id =>
@@ -143,7 +143,7 @@ class PmTilesSuite extends munit.FunSuite:
   test("a read interrupted mid-way (a cancelled tile request) does not break the archive for the other requests"):
     val dir = java.nio.file.Files.createTempDirectory("pmtiles-int")
     val p = BasemapFixtures.vectorArchive(dir.resolve("v.pmtiles"), maxZoom = 3)
-    val f = PmTilesFile.open(p).fold(fail(_), identity)
+    val f = BasemapFixtures.open(p).fold(fail(_), identity)
     try
       val before = f.tile(2, 1, 1).fold(fail(_), identity).get
       // an interrupted thread reading: the JDK closes the shared channel

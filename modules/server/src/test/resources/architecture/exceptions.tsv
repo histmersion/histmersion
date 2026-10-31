@@ -410,15 +410,11 @@ direction	server:server/media/MediaHandlers.scala	media -> server: Deps	1
 direction	server:server/media/MediaImporter.scala	media -> server: Deps	1
 direction	server:server/media/MediaImporters.scala	media -> server: Deps	1
 direction	server:server/media/SourcePictures.scala	media -> library: SourceCoverParams	1
+direction	server:server/plugins/RelinkPlugins.scala	util.plugins -> server: Version	1
 direction	server:server/plugins/Plugins.scala	util.plugins -> automation: BuiltinAi	1
 direction	server:server/plugins/Plugins.scala	util.plugins -> library: CoreBudget	1
 direction	server:server/plugins/Plugins.scala	util.plugins -> library: HttpPlugin	1
 direction	server:server/plugins/Plugins.scala	util.plugins -> library: SttpHttp	1
-direction	server:server/plugins/RelinkPlugins.scala	util.plugins -> server: Version	1
-direction	server:util/basemap/BasemapService.scala	util.basemap -> library: SeaFloorSource	1
-direction	server:util/basemap/BasemapService.scala	util.basemap -> server: Deps	1
-direction	server:util/basemap/JavaRangeHttp.scala	util.basemap -> library: HttpPolicy	1
-direction	server:util/basemap/JavaRangeHttp.scala	util.basemap -> server: Version	1
 filesystem	config:config/UserConfigFile.scala	java.nio.file	1
 filesystem	config:config/edit/ConfigFileState.scala	Path.of	1
 filesystem	config:config/edit/ConfigFileState.scala	java.nio.file	1
@@ -524,33 +520,6 @@ filesystem	server:server/media/MediaHandlers.scala	java.nio.file	1
 filesystem	server:server/plugins/PluginSetResource.scala	Files.*	2
 filesystem	server:server/plugins/PluginSetResource.scala	StandardCopyOption	3
 filesystem	server:server/plugins/PluginSetResource.scala	java.nio.file	1
-filesystem	server:util/basemap/BasemapFetch.scala	FileChannel	3
-filesystem	server:util/basemap/BasemapFetch.scala	Files.*	10
-filesystem	server:util/basemap/BasemapFetch.scala	java.nio.file	1
-filesystem	server:util/basemap/BasemapLabels.scala	java.nio.file	1
-filesystem	server:util/basemap/BasemapService.scala	Files.*	30
-filesystem	server:util/basemap/BasemapService.scala	Path.of	2
-filesystem	server:util/basemap/BasemapService.scala	java.nio.file	1
-filesystem	server:util/basemap/DiskLru.scala	Files.*	14
-filesystem	server:util/basemap/DiskLru.scala	StandardCopyOption	3
-filesystem	server:util/basemap/DiskLru.scala	java.nio.file	2
-filesystem	server:util/basemap/GebcoPart.scala	java.nio.file	1
-filesystem	server:util/basemap/GebcoSeaFloor.scala	FileChannel	3
-filesystem	server:util/basemap/GebcoSeaFloor.scala	Files.*	6
-filesystem	server:util/basemap/GebcoSeaFloor.scala	StandardCopyOption	1
-filesystem	server:util/basemap/GebcoSeaFloor.scala	java.nio.file	2
-filesystem	server:util/basemap/JavaRangeHttp.scala	Files.*	3
-filesystem	server:util/basemap/JavaRangeHttp.scala	StandardCopyOption	2
-filesystem	server:util/basemap/JavaRangeHttp.scala	java.nio.file	1
-filesystem	server:util/basemap/OnDemandTiles.scala	Files.*	10
-filesystem	server:util/basemap/OnDemandTiles.scala	java.nio.file	1
-filesystem	server:util/basemap/PmTilesFile.scala	FileChannel	7
-filesystem	server:util/basemap/PmTilesFile.scala	java.nio.file	1
-filesystem	server:util/basemap/PmTilesWriter.scala	FileChannel	1
-filesystem	server:util/basemap/PmTilesWriter.scala	Files.*	4
-filesystem	server:util/basemap/PmTilesWriter.scala	StandardCopyOption	3
-filesystem	server:util/basemap/PmTilesWriter.scala	java.nio.file	2
-filesystem	server:util/basemap/RangeHttp.scala	java.nio.file	1
 process	server:server/BackupService.scala	ProcessBuilder	2
 process	server:server/PgRelocation.scala	ProcessBuilder	2
 process	server:server/Supervisor.scala	ProcessBuilder	4

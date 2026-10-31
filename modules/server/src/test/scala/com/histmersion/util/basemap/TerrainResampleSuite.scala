@@ -53,7 +53,7 @@ class TerrainResampleSuite extends munit.FunSuite:
 
   test("the fixture's Mapterhorn relief tiles decode as libwebp decodes them") {
     val f = fixture.getOrElse(fail("the browser fixture is not in the repository"))
-    val pm = PmTilesFile.open(f).fold(e => fail(e), identity)
+    val pm = BasemapFixtures.open(f).fold(e => fail(e), identity)
     try
       val zero = pm.tile(0, 0, 0).fold(e => fail(e), identity).getOrElse(fail("no tile 0/0/0"))
       assertEquals(

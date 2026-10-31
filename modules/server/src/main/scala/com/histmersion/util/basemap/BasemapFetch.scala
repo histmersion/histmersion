@@ -4,12 +4,13 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
+import com.histmersion.util.storage.{RandomReader, Store, StoreKey}
+import com.histmersion.values.ByteOffset
 import io.circe.Json
 import io.circe.syntax.*
 
-import java.nio.ByteBuffer
-import java.nio.channels.FileChannel
-import java.nio.file.{Files, Path, StandardOpenOption}
+import java.io.IOException
+import java.nio.charset.StandardCharsets.UTF_8
 import scala.collection.mutable
 import scala.util.Using
 
@@ -19,7 +20,7 @@ import scala.util.Using
   *
   *   1. [[plan]]: the header, the metadata and only the directories that hold the region's tiles; the tiles' byte
   *      ranges merged into few, large requests ([[coalesce]]).
-  *   2. [[download]]: each request into its own file in the work directory, skipped when it is there already — so an
+  *   2. [[download]]: each request into its own file in the work store, skipped when it is there already — so an
   *      interrupted fetch RESUMES. Every answer must carry the planned `Content-Range` and the planned file's size and
   *      `ETag`: a build replaced mid-download is refused, not mixed.
   *   3. [[assemble]]: the tiles in id order, each passed through `transform` (the vector layer drops everything but
@@ -234,12 +235,12 @@ object BasemapFetch:
 
   // ── 2. the download ────────────────────────────────────────────────────────────────────────────
 
-  /** The file request `r` is kept in. */
-  def chunkFile(work: Path, r: (Long, Long)): Path = work.resolve(s"${r._1}-${r._2}.bin")
+  /** The file request `r` is kept in, in the work store. */
+  def chunkKey(r: (Long, Long)): StoreKey = StoreKey.applyUnsafe(s"${r._1}-${r._2}.bin")
 
   /** The requests not downloaded yet. */
-  def pending(p: Plan, work: Path): Vector[(Long, Long)] =
-    p.requests.filterNot(r => Files.isRegularFile(chunkFile(work, r)) && Files.size(chunkFile(work, r)) == r._2)
+  def pending(p: Plan, work: Store): Vector[(Long, Long)] =
+    p.requests.filterNot(r => work.stat(chunkKey(r)).exists(s => s.isFile && s.size.value == r._2))
 
   /** Download every pending request into `work`; `room(bytes)` is asked before each one and stops the fetch (with its
     * reason) when the disk would get too full.
@@ -247,7 +248,7 @@ object BasemapFetch:
   def download(
       http: RangeHttp,
       p: Plan,
-      work: Path,
+      work: Store,
       pace: Pace,
       note: String => Unit,
       room: Long => Either[String, Unit]
@@ -260,18 +261,22 @@ object BasemapFetch:
         room(r._2).flatMap { _ =>
           if i > 0 || p.directoryRequests > 0 then pace.sleep(pace.gapMs)
           if Thread.interrupted() then throw InterruptedException()
-          http.download(p.source.url, p.header.dataOffset + r._1, r._2, chunkFile(work, r)).flatMap { got =>
-            if got.size != p.remote.size || got.etag != p.remote.etag then
-              val _ = Files.deleteIfExists(chunkFile(work, r))
-              Left(
-                s"${p.source.url} changed during the download (size or ETag differ) — run the fetch again for the new build"
-              )
-            else
-              done += r._2
-              note(
-                s"downloaded ${Backup.humanBytes(done)} of ${Backup.humanBytes(total)} (${p.requests.size - todo.size + i + 1}/${p.requests.size} requests)"
-              )
-              Right(n + 1)
+          Using.resource(work.reserve(chunkKey(r)).fold(e => throw IOException(e.message), identity)) { part =>
+            http.download(p.source.url, p.header.dataOffset + r._1, r._2, part).flatMap { got =>
+              if got.size != p.remote.size || got.etag != p.remote.etag then
+                part.discard()
+                Left(
+                  s"${p.source.url} changed during the download (size or ETag differ) — run the fetch again for the new build"
+                )
+              else
+                part.commit().left.map(_.message).map { _ =>
+                  done += r._2
+                  note(
+                    s"downloaded ${Backup.humanBytes(done)} of ${Backup.humanBytes(total)} (${p.requests.size - todo.size + i + 1}/${p.requests.size} requests)"
+                  )
+                  n + 1
+                }
+            }
           }
         }
       }
@@ -279,32 +284,31 @@ object BasemapFetch:
 
   // ── 3. the local archive ───────────────────────────────────────────────────────────────────────
 
-  /** Write the planned tiles from the downloaded requests into `out`: each distinct content passed through `transform`
-    * once (`None` drops the tile), in tile-id order. Answers the size and the number of tiles written.
+  /** Write the planned tiles from the downloaded requests into the archive `key` of `out`: each distinct content passed
+    * through `transform` once (`None` drops the tile), in tile-id order. Answers the size and the number of tiles
+    * written.
     */
   def assemble(
       p: Plan,
-      work: Path,
-      out: Path,
+      work: Store,
+      out: Store,
+      key: StoreKey,
       transform: Array[Byte] => Either[String, Option[Array[Byte]]],
       header: PmTiles.Header,
       metadata: Json,
       note: String => Unit
   ): Either[String, (Long, Long)] =
     val starts = p.requests.map(_._1).toArray
-    val channels = mutable.HashMap.empty[Int, FileChannel]
+    val readers = mutable.HashMap.empty[Int, RandomReader]
     def read(offset: Long, length: Int): Array[Byte] =
       val i = { val k = java.util.Arrays.binarySearch(starts, offset); if k >= 0 then k else -k - 2 }
       val r = p.requests(i)
-      val ch = channels.getOrElseUpdate(i, FileChannel.open(chunkFile(work, r), StandardOpenOption.READ))
-      val buf = ByteBuffer.allocate(length)
-      var at = offset - r._1 // positional reads may return short
-      while buf.hasRemaining do
-        val n = ch.read(buf, at)
-        if n < 0 then throw java.io.EOFException(s"${chunkFile(work, r)} is short")
-        at += n
-      buf.array()
-    val writer = PmTilesWriter(out)
+      val reader = readers.getOrElseUpdate(
+        i,
+        work.get(chunkKey(r)).getOrElse(throw IOException(s"${work.where(chunkKey(r))}: no such file")).reader()
+      )
+      reader.read(ByteOffset.applyUnsafe(offset - r._1), length)
+    val writer = PmTilesWriter(out, key)
     // the transformed bytes of a content seen before (ocean tiles repeat thousands of times); only
     // small ones are kept, a large one is simply read and transformed again
     val small = mutable.HashMap.empty[Long, Option[Array[Byte]]]
@@ -335,7 +339,7 @@ object BasemapFetch:
       case e: Throwable =>
         writer.abort()
         throw e
-    finally channels.values.foreach(_.close())
+    finally readers.values.foreach(_.close())
 
   /** The local archive's header: the source's tile type and compression, the extract's zooms and region. The writer
     * fills in the offsets.
@@ -408,17 +412,16 @@ object BasemapFetch:
     "extra" -> extra.asJson
   )
 
-  /** Make `work` hold only the parts of THIS plan: a work directory left by another download (another build, region or
+  /** Make `work` hold only the parts of THIS plan: a work store left by another download (another build, region or
     * depth) is emptied first. Answers how many parts are already there.
     */
-  def prepare(work: Path, state: Json): Int =
-    val file = work.resolve("state.json")
-    if Files.isDirectory(work) && !(Files
-        .isRegularFile(file) && io.circe.parser.parse(Files.readString(file)).toOption.contains(state))
-    then
-      Using.resource(Files.list(work))(_.forEach { f =>
-        val _ = Files.deleteIfExists(f)
-      })
-    Files.createDirectories(work)
-    Files.writeString(file, state.noSpaces)
-    Using.resource(Files.list(work))(_.filter(_.getFileName.toString.endsWith(".bin")).count().toInt)
+  def prepare(work: Store, state: Json): Int =
+    val file = StoreKey.applyUnsafe("state.json")
+    if work.isDirectory(StoreKey.Root) && !work
+        .get(file)
+        .flatMap(f => io.circe.parser.parse(f.text()).toOption)
+        .contains(state)
+    then work.list().foreach(f => work.delete(f.key))
+    work.makeDirectory().left.foreach(e => throw IOException(e.message))
+    work.write(file, state.noSpaces.getBytes(UTF_8)).left.foreach(e => throw IOException(e.message))
+    work.list().count(_.key.name.endsWith(".bin"))

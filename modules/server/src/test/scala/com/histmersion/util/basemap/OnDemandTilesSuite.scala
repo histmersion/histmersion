@@ -4,6 +4,8 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
+import com.histmersion.util.storage.Reservation
+
 import java.nio.file.{Files, Path}
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -25,7 +27,7 @@ class OnDemandTilesSuite extends munit.FunSuite:
 
   test("the cache keeps tiles to its ceiling, dropping the least recently used first; the order survives a restart"):
     val root = Files.createTempDirectory("lru")
-    val lru = DiskLru(root, () => 30)
+    val lru = DiskLru(BasemapFixtures.store(root), () => 30)
     lru.put("1/0/0", Some(Array.fill(10)(1)))
     Thread.sleep(5)
     lru.put("1/0/1", Some(Array.fill(10)(2)))
@@ -41,7 +43,7 @@ class OnDemandTilesSuite extends munit.FunSuite:
     assertEquals(lru.get("1/1/0"), Some(None))
     assertEquals(lru.bytes, 25L)
     // a restart: the index is read from the disk, in the order of use
-    val again = DiskLru(root, () => 20)
+    val again = DiskLru(BasemapFixtures.store(root), () => 20)
     assertEquals(again.entries, 1L, "over the new ceiling at once: the eldest dropped (the missing 1/1/0, then 1/0/0)")
     assert(again.get("1/1/1").isDefined)
     assertEquals(again.clear(), 15L)
@@ -53,7 +55,7 @@ class OnDemandTilesSuite extends munit.FunSuite:
     @volatile var fail = false
     def text(url: String) = local.text(url)
     def bytes(url: String, o: Long, l: Long) = if fail then Left(s"$url unreachable") else local.bytes(url, o, l)
-    def download(url: String, o: Long, l: Long, to: Path) = local.download(url, o, l, to)
+    def download(url: String, o: Long, l: Long, to: Reservation) = local.download(url, o, l, to)
 
   private def setup(c: BasemapOnDemandConfig = cfg()) =
     val src = Files.createTempDirectory("planet")
@@ -62,7 +64,7 @@ class OnDemandTilesSuite extends munit.FunSuite:
     val clock = AtomicInteger(1000)
     val slept = AtomicInteger(0)
     val od = OnDemandTiles(
-      dir,
+      BasemapFixtures.store(dir),
       () => c,
       OnDemandTiles.Source.Planet(() => "fake://planet"),
       () => p,
@@ -81,7 +83,13 @@ class OnDemandTilesSuite extends munit.FunSuite:
     assertEquals(od.tile(5, 18, 13).map(_.map(String(_))), Right(Some("RIFF5/18/13")))
     assertEquals(p.local.requests.get, first + 1, "the planet's directory is read once: one request a tile")
     p.fail = true
-    val restarted = OnDemandTiles(dir, () => cfg(), OnDemandTiles.Source.Planet(() => "fake://planet"), () => p)
+    val restarted =
+      OnDemandTiles(
+        BasemapFixtures.store(dir),
+        () => cfg(),
+        OnDemandTiles.Source.Planet(() => "fake://planet"),
+        () => p
+      )
     assertEquals(
       restarted.tile(5, 18, 12).map(_.map(String(_))),
       Right(Some("RIFF5/18/12")),
@@ -174,12 +182,12 @@ class OnDemandTilesSuite extends munit.FunSuite:
     val http = new RangeHttp:
       def text(url: String) = Left("no")
       def bytes(url: String, o: Long, l: Long) = Left("no range requests here")
-      def download(url: String, o: Long, l: Long, to: Path) = Left("no")
+      def download(url: String, o: Long, l: Long, to: Reservation) = Left("no")
       override def file(url: String) =
         gets.incrementAndGet()
         Right(Option.when(!url.endsWith("/0/0.png"))(url.getBytes))
     val od = OnDemandTiles(
-      dir,
+      BasemapFixtures.store(dir),
       () => cfg(),
       OnDemandTiles.Source.Template(() => "fake://sea/{z}/{x}/{y}.png"),
       () => http,

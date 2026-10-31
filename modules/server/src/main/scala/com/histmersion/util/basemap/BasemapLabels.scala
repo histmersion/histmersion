@@ -3,6 +3,7 @@ package com.histmersion.util.basemap
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.util.storage.{Store, StoreKey}
 
 import io.circe.Json
 
@@ -324,10 +325,10 @@ object BasemapLabels:
       id -> PmTiles.gzip(Mvt.tile(layers))
     }
 
-  /** Write `labels` as the archive `out` (zooms 0…`maxZoom`, bounds `b`); answers its tiles and bytes. */
-  def write(out: java.nio.file.Path, labels: List[Label], b: BBox, maxZoom: Int, metadata: Json): (Int, Long) =
+  /** Write `labels` as the archive `key` of `store` (zooms 0…`maxZoom`, bounds `b`); answers its tiles and bytes. */
+  def write(store: Store, key: StoreKey, labels: List[Label], b: BBox, maxZoom: Int, metadata: Json): (Int, Long) =
     val ts = tiles(labels, maxZoom)
-    val w = PmTilesWriter(out)
+    val w = PmTilesWriter(store, key)
     val header = PmTiles.Header(
       0,
       0,

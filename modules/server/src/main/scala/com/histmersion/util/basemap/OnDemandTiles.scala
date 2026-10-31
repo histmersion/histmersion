@@ -2,18 +2,20 @@ package com.histmersion.util.basemap
 
 import com.histmersion.api.BasemapOnDemand
 import com.histmersion.config.BasemapOnDemandConfig
+import com.histmersion.util.storage.{Store, StoreError, StoreKey}
 
 import io.circe.Json
 
-import java.nio.file.{Files, Path}
+import java.io.IOException
+import java.nio.charset.StandardCharsets.UTF_8
 import java.util.concurrent.{CompletableFuture, ConcurrentHashMap, Semaphore, TimeUnit}
 
 /** A layer's tiles read when a page shows them, beyond what was downloaded (docs/research-terrain-basemap.md,
   * "On-demand relief"; #3760 for the map and the sea floor): the server reads just those tiles from the provider — by
   * HTTP range requests from its planet archive ([[OnDemandTiles.Source.Planet]], the access its documentation shows for
   * extracts), or one GET a tile from a tile URL ([[OnDemandTiles.Source.Template]]) — `transform`s each (the vector
-  * layer drops what the download drops) and keeps it in a bounded cache ([[DiskLru]], files `.<ext>`) next to the
-  * extract, so an area seen once shows again offline.
+  * layer drops what the download drops) and keeps it in a bounded cache ([[DiskLru]], files `.<ext>`) in `store`, next
+  * to the extract, so an area seen once shows again offline.
   *
   * A planet's header, root and the leaf directories read (11 KB each, 4 096 tiles) are kept on the disk too, under
   * `remote/`, with the file's size and ETag: when the provider replaces the file (another ETag), they are read again;
@@ -25,7 +27,7 @@ import java.util.concurrent.{CompletableFuture, ConcurrentHashMap, Semaphore, Ti
   * `sleep` are the seams a test substitutes.
   */
 final class OnDemandTiles(
-    val dir: Path,
+    val store: Store,
     cfg: () => BasemapOnDemandConfig,
     source: OnDemandTiles.Source,
     http: () => RangeHttp,
@@ -39,8 +41,10 @@ final class OnDemandTiles(
     case OnDemandTiles.Source.Planet(u)   => u()
     case OnDemandTiles.Source.Template(u) => u()
 
-  val cache: DiskLru = DiskLru(dir.resolve("tiles"), () => (cfg().cacheGb * 1e9).toLong, ext)
-  private val remoteDir = dir.resolve("remote")
+  val cache: DiskLru = DiskLru(store.sub(OnDemandTiles.Tiles), () => (cfg().cacheGb * 1e9).toLong, ext)
+  private val remoteFiles = store.sub(OnDemandTiles.Remote)
+
+  private def done(written: Either[StoreError, ?]): Unit = written.left.foreach(e => throw IOException(e.message))
 
   /** What the planet file is: its header and root, the leaves read, its size and ETag. */
   final private case class Remote(url: String, header: PmTiles.Header, root: Vector[PmTiles.Entry], file: RemoteFile)
@@ -58,7 +62,7 @@ final class OnDemandTiles(
     BasemapOnDemand(
       c.enabled,
       c.maxZoom,
-      dir.toString,
+      store.where(),
       cache.entries,
       cache.bytes,
       (c.cacheGb * 1e9).toLong,
@@ -102,8 +106,9 @@ final class OnDemandTiles(
         remote.filter(_.url == u).map(Right(_)).getOrElse {
           val fromDisk = scala.util
             .Try {
-              val j = io.circe.parser.parse(Files.readString(remoteDir.resolve("remote.json"))).toOption.get.hcursor
-              val head = Files.readAllBytes(remoteDir.resolve("head.bin"))
+              val j =
+                io.circe.parser.parse(remoteFiles.get(OnDemandTiles.RemoteJson).get.text()).toOption.get.hcursor
+              val head = remoteFiles.get(OnDemandTiles.Head).get.bytes()
               (
                 j.get[String]("url").toOption.get,
                 j.get[Long]("size").toOption.get,
@@ -116,11 +121,10 @@ final class OnDemandTiles(
           val head: Either[String, (Array[Byte], RemoteFile)] = fromDisk match
             case Some((_, size, etag, h)) => Right((h, RemoteFile(size, etag)))
             case None                     =>
-              BasemapService.deleteTree(remoteDir)
+              val _ = remoteFiles.deleteTree(StoreKey.Root)
               leaves.clear()
               request(http().bytes(u, 0, PmTiles.RootBytes)).map { (b, f) =>
-                Files.createDirectories(remoteDir)
-                Files.write(remoteDir.resolve("head.bin"), b)
+                done(remoteFiles.write(OnDemandTiles.Head, b))
                 (b, f)
               }
           for
@@ -133,7 +137,8 @@ final class OnDemandTiles(
               .flatMap(PmTiles.decodeDirectory)
           yield
             val r = Remote(u, h, root, f)
-            if fromDisk.isEmpty then Files.writeString(remoteDir.resolve("remote.json"), remoteJson(r).noSpaces)
+            if fromDisk.isEmpty then
+              done(remoteFiles.write(OnDemandTiles.RemoteJson, remoteJson(r).noSpaces.getBytes(UTF_8)))
             remote = Some(r)
             r
         }
@@ -143,20 +148,19 @@ final class OnDemandTiles(
   private def forget(): Unit = synchronized {
     remote = None
     leaves.clear()
-    val _ = BasemapService.deleteTree(remoteDir)
+    val _ = remoteFiles.deleteTree(StoreKey.Root)
   }
 
   private def leaf(r: Remote, e: PmTiles.Entry): Either[String, Vector[PmTiles.Entry]] =
     Option(leaves.get(e.offset)).map(Right(_)).getOrElse {
-      val f = remoteDir.resolve(s"leaf-${e.offset}-${e.length}.bin")
-      val raw =
-        if Files.isRegularFile(f) && Files.size(f) == e.length then Right(Files.readAllBytes(f))
-        else
+      val f = StoreKey.applyUnsafe(s"leaf-${e.offset}-${e.length}.bin")
+      val raw = remoteFiles.get(f).filter(_.size.value == e.length) match
+        case Some(kept) => Right(kept.bytes())
+        case None       =>
           request(http().bytes(r.url, r.header.leafOffset + e.offset, e.length)).flatMap { (b, got) =>
             if got.etag != r.file.etag || got.size != r.file.size then Left(OnDemandTiles.Changed)
             else
-              Files.createDirectories(remoteDir)
-              Files.write(f, b)
+              done(remoteFiles.write(f, b))
               Right(b)
           }
       raw.flatMap(b => PmTiles.decompress(b, r.header.internalCompression)).flatMap(PmTiles.decodeDirectory).map { d =>
@@ -227,7 +231,7 @@ final class OnDemandTiles(
                   case Right(b) => cache.put(key, b)
                   case Left(e)  =>
                     offlineUntil = now() + c.retryAfterSeconds * 1000L
-                    scribe.warn(s"basemap: on-demand tile $key (${dir.getFileName}) not read: $e")
+                    scribe.warn(s"basemap: on-demand tile $key (${store.where()}) not read: $e")
                 mine.complete(r)
                 r
               catch
@@ -237,6 +241,11 @@ final class OnDemandTiles(
               finally { val _ = inflight.remove(key, mine) }
 
 object OnDemandTiles:
+  private val Tiles = StoreKey.applyUnsafe("tiles")
+  private val Remote = StoreKey.applyUnsafe("remote")
+  private val RemoteJson = StoreKey.applyUnsafe("remote.json")
+  private val Head = StoreKey.applyUnsafe("head.bin")
+
   /** The provider's file changed under a read (another ETag or size). */
   val Changed = "the provider's file changed"
 

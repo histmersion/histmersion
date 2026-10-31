@@ -1,14 +1,32 @@
 package com.histmersion.util.basemap
 
+import com.histmersion.util.storage.{Location, Reservation, Storage, Store, StoreKey}
 import io.circe.Json
 
 import java.nio.file.{Files, Path}
 import java.util.concurrent.atomic.AtomicInteger
+import scala.util.Using
 
 /** Small PMTiles archives built in a test, and a [[RangeHttp]] that answers from a local file — no network anywhere in
   * the base-map suites.
   */
 object BasemapFixtures:
+
+  /** The base map's store over a test's directory. */
+  def store(dir: Path): Store = Storage.at(Location.Basemap, dir)
+
+  /** A writer of the archive at `out`. */
+  def writer(out: Path): PmTilesWriter =
+    val a = out.toAbsolutePath
+    PmTilesWriter(store(a.getParent), StoreKey.applyUnsafe(a.getFileName.toString))
+
+  /** The archive at `p`, opened. */
+  def open(p: Path): Either[String, PmTilesFile] =
+    val a = p.toAbsolutePath
+    store(a.getParent)
+      .get(StoreKey.applyUnsafe(a.getFileName.toString))
+      .toRight(s"$p: no such file")
+      .flatMap(PmTilesFile.open(_))
 
   /** A square ring over the whole tile (MVT commands: MoveTo, LineTo ×3, ClosePath). */
   private val square = Vector(9, 0, 0, 26, 8192, 0, 0, 8192, 8191, 0, 15)
@@ -78,7 +96,7 @@ object BasemapFixtures:
   def archive(out: Path, maxZoom: Int, t: PmTiles.TileType, c: PmTiles.Compression, extra: Json = Json.obj())(
       tile: (Int, Long, Long) => Array[Byte]
   ): Path =
-    val w = PmTilesWriter(out)
+    val w = writer(out)
     val all = for z <- 0 to maxZoom; x <- 0L until (1L << z); y <- 0L until (1L << z)
     yield (PmTiles.tileId(z, x, y), (z, x, y))
     all.sortBy(_._1).foreach { case (id, (z, x, y)) => w.add(id, PmTiles.compress(tile(z, x, y), c)) }
@@ -114,9 +132,9 @@ object BasemapFixtures:
       val all = Files.readAllBytes(file)
       val end = math.min(all.length.toLong, offset + length)
       Right((all.slice(offset.toInt, end.toInt), RemoteFile(size, Some(etag))))
-    def download(url: String, offset: Long, length: Long, to: Path): Either[String, RemoteFile] =
+    def download(url: String, offset: Long, length: Long, to: Reservation): Either[String, RemoteFile] =
       requests.incrementAndGet()
       downloads.incrementAndGet()
       val all = Files.readAllBytes(file)
-      Files.write(to, all.slice(offset.toInt, (offset + length).toInt))
+      Using.resource(to.output())(_.write(all.slice(offset.toInt, (offset + length).toInt)))
       Right(RemoteFile(size, Some(etag)))

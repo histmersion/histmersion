@@ -3,36 +3,45 @@ package com.histmersion.util.basemap
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.server.{BackgroundJob, Deps}
+import com.histmersion.util.storage.{Location, Storage, Store, StoreError, StoreKey}
 
 import sttp.model.StatusCode
 
-import java.nio.file.{Files, Path}
+import java.io.IOException
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
-import scala.util.Using
 
 /** The terrain base map on this machine (docs/research-terrain-basemap.md): where its two extracts are, the fetch job
   * that downloads them, their removal, and the tiles served to the web page.
   *
-  * The extracts are a CACHE — fetched again at will — so they live in the XDG cache directory (`basemap.dir` moves
-  * them), never in the data directory with the corpus. `http` and `freeSpace` are the seams a test substitutes for the
-  * network and the disk.
+  * The extracts are a CACHE — fetched again at will — so their store ([[Location.Basemap]]) is in the XDG cache
+  * directory (`basemap.dir` moves it), never in the data directory with the corpus. `config` and the store are read at
+  * each use, so a reload is followed; `seaFloor` is the grid the settings choose for the sea floor. `http` and
+  * `freeSpace` are the seams a test substitutes for the network and the disk.
   */
-final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path => Long = BasemapService.usable):
+final class BasemapService(
+    config: () => BasemapConfig,
+    storage: Storage,
+    seaFloor: () => SeaFloorGrid,
+    jobs: BasemapJobs,
+    http: () => RangeHttp,
+    freeSpace: Store => Long = _.usableSpace.value
+):
 
-  private def cfg = deps.cfg.basemap
-  private val slot = BackgroundJob.Slot()
+  private def cfg = config()
 
-  /** The open archives, by file, with the file stamp they were opened at. */
-  private val open = ConcurrentHashMap[Path, (String, PmTilesFile)]()
+  /** The open archives, by where their file is, with the file stamp they were opened at. */
+  private val open = ConcurrentHashMap[String, (String, PmTilesFile)]()
 
-  def dir: Path = BasemapService.dir(deps.cfg)
+  /** The base map's files, where the configuration puts them now. */
+  def files: Store = storage.store(Location.Basemap)
 
-  def path(l: BasemapLayer): Path = dir.resolve(l.file)
+  def key(l: BasemapLayer): StoreKey = StoreKey.applyUnsafe(l.file)
 
   /** The unfinished download of a layer: its range requests, kept until it is assembled. */
-  def work(l: BasemapLayer): Path = dir.resolve(s".${l.wire}.part")
+  def work(l: BasemapLayer): StoreKey = StoreKey.applyUnsafe(s".${l.wire}.part")
+
+  private def done(written: Either[StoreError, ?]): Unit = written.left.foreach(e => throw IOException(e.message))
 
   private def attribution(l: BasemapLayer): String = l match
     case BasemapLayer.Vector     => cfg.vector.attribution
@@ -43,16 +52,17 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
   // ── reading ────────────────────────────────────────────────────────────────────────────────────
 
   /** A stamp of the file as it is now (size, modification time): it changes with each fetch. */
-  private def stamp(p: Path): Option[String] =
-    if !Files.isRegularFile(p) then None
-    else Some(s"${Files.size(p).toHexString}${Files.getLastModifiedTime(p).toMillis.toHexString}")
+  private def stamp(k: StoreKey, store: Store = files): Option[String] =
+    store.stat(k).filter(_.isFile).map(f => s"${f.size.value.toHexString}${f.modified.toEpochMilli.toHexString}")
 
   /** The layer's archive, opened once and again only when the file changed. */
-  def reader(l: BasemapLayer): Either[String, Option[PmTilesFile]] = readerAt(path(l))
+  def reader(l: BasemapLayer): Either[String, Option[PmTilesFile]] = readerAt(key(l))
 
-  /** The archive at `p` (a layer's, a focus region's), opened once and again only when the file changed. */
-  def readerAt(p: Path): Either[String, Option[PmTilesFile]] =
-    stamp(p) match
+  /** The archive `k` (a layer's, a focus region's), opened once and again only when the file changed. */
+  def readerAt(k: StoreKey): Either[String, Option[PmTilesFile]] =
+    val store = files
+    val p = store.where(k)
+    stamp(k, store) match
       case None =>
         Option(open.remove(p)).foreach(_._2.close())
         Right(None)
@@ -64,23 +74,27 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
               Option(open.get(p)) match
                 case Some((at, f)) if at == s => Right(Some(f))
                 case old                      =>
-                  PmTilesFile.open(p).map { f =>
-                    open.put(p, (s, f))
-                    // an archive replaced while a request reads it: the old channel stays readable
-                    // on macOS and Linux until closed; requests that hold it finish first
-                    old.foreach(o => BasemapService.closeLater(o._2))
-                    Some(f)
-                  }
+                  store
+                    .get(k)
+                    .fold[Either[String, Option[PmTilesFile]]](Right(None))(PmTilesFile.open(_).map(Some(_)))
+                    .map { opened =>
+                      opened.foreach(f => open.put(p, (s, f)))
+                      // an archive replaced while a request reads it: the old channel stays readable
+                      // on macOS and Linux until closed; requests that hold it finish first
+                      old.foreach(o => BasemapService.closeLater(o._2))
+                      opened
+                    }
             }
 
   def info(l: BasemapLayer): BasemapLayerInfo =
-    val p = path(l)
-    val base = BasemapLayerInfo(l.wire, present = false, file = p.toString, attribution = attribution(l))
+    val p = key(l)
+    val base = BasemapLayerInfo(l.wire, present = false, file = files.where(p), attribution = attribution(l))
     reader(l) match
       case Left(e) =>
+        val now = files.stat(p)
         base.copy(
-          present = Files.isRegularFile(p),
-          bytes = scala.util.Try(Files.size(p)).getOrElse(0L),
+          present = now.exists(_.isFile),
+          bytes = now.fold(0L)(_.size.value),
           error = Some(e)
         )
       case Right(None)    => base
@@ -124,12 +138,12 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
     val states = BaseStyles.states(vector.map(_.dropped))
     BasemapStatus(
       available = ok(BasemapLayer.Vector),
-      dir = dir.toString,
+      dir = files.where(),
       bbox = cfg.bbox,
       layers = layers,
       fetchCommand = Basemap.FetchCommand,
-      freeBytes = freeSpace(BasemapService.existing(dir)),
-      running = slot.current,
+      freeBytes = freeSpace(files),
+      running = jobs.running,
       mapMaxZoom = cfg.mapMaxZoom,
       hints = BasemapService.hints(
         ok(BasemapLayer.Vector),
@@ -145,24 +159,25 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
   // ── the relief deeper than the extract: focus regions and on demand ────────────────────────────
 
   /** Where the focus regions' relief archives are. */
-  def focusDir: Path = dir.resolve("terrain-focus")
+  def focusDir: StoreKey = BasemapService.FocusDir
+
+  /** The focus region `name`'s archive. */
+  def focusKey(name: String): StoreKey = focusDir.child(s"$name.pmtiles")
 
   /** The focus regions' archives, by name. */
-  def focusFiles: List[(String, Path)] =
-    if !Files.isDirectory(focusDir) then Nil
-    else
-      Using
-        .resource(Files.list(focusDir))(_.toArray.toList.map(_.asInstanceOf[Path]))
-        .filter(p => p.getFileName.toString.endsWith(".pmtiles") && Files.isRegularFile(p))
-        .map(p => (p.getFileName.toString.stripSuffix(".pmtiles"), p))
-        .sortBy(_._1)
+  def focusFiles: List[(String, StoreKey)] =
+    files
+      .list(focusDir)
+      .filter(f => f.isFile && f.key.name.endsWith(".pmtiles"))
+      .map(f => (f.key.name.stripSuffix(".pmtiles"), f.key))
+      .sortBy(_._1)
 
   def focusInfo: List[BasemapFocus] = focusFiles.flatMap { (name, p) =>
     readerAt(p).toOption.flatten.map { f =>
       val h = f.header
       BasemapFocus(
         name,
-        p.toString,
+        files.where(p),
         f.size,
         s"${h.minLon},${h.minLat},${h.maxLon},${h.maxLat}",
         h.minZoom,
@@ -181,13 +196,13 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
   // the on-demand layers of the directory configured now (`basemap.dir` may change with a reload)
   @volatile private var demands = Map.empty[BasemapLayer, OnDemandTiles]
 
-  private def demandAt(l: BasemapLayer, name: String)(make: Path => OnDemandTiles): OnDemandTiles =
-    val at = dir.resolve(name)
+  private def demandAt(l: BasemapLayer, name: String)(make: Store => OnDemandTiles): OnDemandTiles =
+    val at = files.sub(StoreKey.applyUnsafe(name))
     demands
       .get(l)
-      .filter(_.dir == at)
+      .filter(_.store.where() == at.where())
       .getOrElse(synchronized {
-        demands.get(l).filter(_.dir == at).getOrElse {
+        demands.get(l).filter(_.store.where() == at.where()).getOrElse {
           val d = make(at)
           demands = demands.updated(l, d)
           d
@@ -286,14 +301,14 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
     * terrarium PNG; `None` where no ancestor exists (outside every region).
     */
   private def fromAncestor(z: Int, x: Long, y: Long, extract: PmTilesFile): Option[Array[Byte]] =
-    val key = s"${stamp(path(BasemapLayer.Terrain)).getOrElse("")}$focusStamp|$z/$x/$y"
+    val key = s"${stamp(this.key(BasemapLayer.Terrain)).getOrElse("")}$focusStamp|$z/$x/$y"
     Option(resampled.get(key)).orElse {
       val focus = focusFiles.flatMap(f => readerAt(f._2).toOption.flatten.map(f._2 -> _))
       def at(az: Int, ax: Long, ay: Long): Option[(String, Array[Byte])] =
         focus.iterator
           .filter((_, f) => az >= f.header.minZoom && az <= f.header.maxZoom)
           .flatMap((p, f) =>
-            f.tile(az, ax, ay).toOption.flatten.map(b => (s"$p|${stamp(p).getOrElse("")}|$az/$ax/$ay", b))
+            f.tile(az, ax, ay).toOption.flatten.map(b => (s"${f.where}|${stamp(p).getOrElse("")}|$az/$ax/$ay", b))
           )
           .nextOption()
           .orElse(
@@ -420,7 +435,7 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
           Right((b, mime, enc, cache, StatusCode.Ok))
         case (Some(b), Some(rs)) =>
           val key =
-            s"$layer|${stamp(path(l)).getOrElse("")}|$z/$x/$y|${sub.getOrElse("")}|${props.fold("")(_.toList.sorted.mkString(","))}"
+            s"$layer|${stamp(this.key(l)).getOrElse("")}|$z/$x/$y|${sub.getOrElse("")}|${props.fold("")(_.toList.sorted.mkString(","))}"
           Option(cut.get(key))
             .map(Right(_))
             .getOrElse(
@@ -448,7 +463,7 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
           .validFocusName(n)
           .flatMap(n =>
             Either.cond(
-              focusFiles.exists(_._1 == n) || Files.isDirectory(focusWork(n)),
+              focusFiles.exists(_._1 == n) || files.isDirectory(focusWork(n)),
               List(n),
               s"no focus region '$n' (${focusFiles.map(_._1).mkString(", ")})"
             )
@@ -456,31 +471,33 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
       case None if all => Right(focusFiles.map(_._1))
       case None        => Right(Nil)
     layers.flatMap(ls => focus.map((ls, _))).left.map(e => ApiError(e, Some(Write.CodeInvalid))).flatMap { (ls, fs) =>
-      if slot.isRunning then Left(BackgroundJob.busy("a base-map fetch", slot.current, Some(BasemapApi.Busy)))
+      if jobs.running.isDefined then Left(jobs.busy("a base-map fetch", Some(BasemapApi.Busy)))
       else
-        def gone(f: Path, w: Path): List[(String, Long)] =
-          Option(open.remove(f)).foreach(_._2.close())
-          val bytes = if Files.isRegularFile(f) then Files.size(f) else 0L
-          val file = Option.when(Files.deleteIfExists(f))((f.toString, bytes))
-          val parts = BasemapService.deleteTree(w).map(b => (w.toString, b))
+        val store = files
+        def gone(f: StoreKey, w: StoreKey): List[(String, Long)] =
+          Option(open.remove(store.where(f))).foreach(_._2.close())
+          val bytes = store.stat(f).filter(_.isFile).fold(0L)(_.size.value)
+          val file = Option.when(store.delete(f))((store.where(f), bytes))
+          val parts = store.deleteTree(w).map(b => (store.where(w), b.value))
           file.toList ++ parts.toList
-        val files = ls.flatMap(l => gone(path(l), work(l))) ++ fs
-          .flatMap(n => gone(focusDir.resolve(s"$n.pmtiles"), focusWork(n)))
+        val removed = ls.flatMap(l => gone(key(l), work(l))) ++ fs.flatMap(n => gone(focusKey(n), focusWork(n)))
         val cached = Option
           .when(q.cache || all) {
             BasemapLayer.values.toList.flatMap(onDemandOf).flatMap { od =>
-              val c = od.dir
-              Option.when(Files.exists(c))((c.toString, od.cache.clear() + BasemapService.deleteTree(c).getOrElse(0L)))
+              val c = od.store
+              Option.when(c.exists(StoreKey.Root))(
+                (c.where(), od.cache.clear() + c.deleteTree(StoreKey.Root).fold(0L)(_.value))
+              )
             }
           }
           .toList
           .flatten
-        val out = files ++ cached
+        val out = removed ++ cached
         Right(BasemapRemoved(out.map(_._1), out.map(_._2).sum))
     }
 
   /** The unfinished download of a focus region. */
-  def focusWork(name: String): Path = dir.resolve(s".terrain-focus-$name.part")
+  def focusWork(name: String): StoreKey = StoreKey.applyUnsafe(s".terrain-focus-$name.part")
 
   // ── fetching ───────────────────────────────────────────────────────────────────────────────────
 
@@ -530,7 +547,7 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
     )
 
   def fetch(q: BasemapFetchQuery): Either[ApiError, JobInfo] =
-    deps.maintenance.guard("basemap/fetch"):
+    jobs.guarded("basemap/fetch"):
       ask(q).left.map(e => ApiError(e, Some(Write.CodeInvalid))).flatMap { a =>
         val what = a.focus match
           case Some((name, b)) =>
@@ -543,19 +560,10 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
                   case BasemapLayer.Vector     => s"${a.vectorZoom} (vector)"
                   case BasemapLayer.Terrain    => s"${a.terrainZoom} (terrain)"
                   case BasemapLayer.Bathymetry =>
-                    s"${cfg.bathymetry.extractMaxZoom} (sea floor, ${cfg.bathymetry.source.wire})"
+                    s"${cfg.bathymetry.extractMaxZoom} (sea floor, ${seaFloor().wire})"
                 }
                 .mkString(" / ")
-        BackgroundJob.start(
-          deps.ds,
-          BasemapService.JobKind,
-          Some(JobDetail(about = Some(what))),
-          slot,
-          "a base-map fetch",
-          Some(BasemapApi.Busy),
-          deps.pins,
-          Some(deps.jobStops)
-        )((_, note) => BackgroundJob.Outcome.of(run(a, note)))
+        jobs.start(BasemapService.JobKind, what, "a base-map fetch", Some(BasemapApi.Busy))(note => run(a, note))
       }
 
   /** The job: each layer in turn — planned, checked against the free disk, downloaded, assembled. */
@@ -574,7 +582,7 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
       out <-
         if a.dryRun then Right(s"focus '$name': " + BasemapService.describe(BasemapLayer.Terrain, plan, dryRun = true))
         else
-          Files.createDirectories(focusDir)
+          done(files.makeDirectory(focusDir))
           download(
             BasemapLayer.Terrain,
             plan,
@@ -583,7 +591,7 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
             h,
             note,
             keepAll = false,
-            out = Some(focusDir.resolve(s"$name.pmtiles")),
+            out = Some(focusKey(name)),
             workDir = Some(focusWork(name))
           ).map(s => s"focus '$name': $s")
     yield out
@@ -622,18 +630,16 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
 
   /** The source an unfinished download of the same region and depth was reading. */
   private def resumable(l: BasemapLayer, a: Ask, extra: String): Option[BasemapFetch.Source] =
-    val f = work(l).resolve("state.json")
-    Option.when(Files.isRegularFile(f))(Files.readString(f)).flatMap(s => io.circe.parser.parse(s).toOption).flatMap {
-      j =>
-        val c = j.hcursor
-        val same =
-          c.get[Int]("maxZoom").toOption.contains(zoomOf(l, a)) && c.get[String]("extra").toOption.contains(extra) &&
-            c.get[String]("bbox").toOption.flatMap(BBox.parse).exists(b => BasemapService.near(b, a.bbox))
-        for
-          url <- c.get[String]("url").toOption if same
-          label <- c.get[String]("label").toOption.orElse(Some(url))
-          size = c.get[Long]("size").toOption
-        yield BasemapFetch.Source(url, label, size)
+    files.get(work(l).child("state.json")).map(_.text()).flatMap(s => io.circe.parser.parse(s).toOption).flatMap { j =>
+      val c = j.hcursor
+      val same =
+        c.get[Int]("maxZoom").toOption.contains(zoomOf(l, a)) && c.get[String]("extra").toOption.contains(extra) &&
+          c.get[String]("bbox").toOption.flatMap(BBox.parse).exists(b => BasemapService.near(b, a.bbox))
+      for
+        url <- c.get[String]("url").toOption if same
+        label <- c.get[String]("label").toOption.orElse(Some(url))
+        size = c.get[Long]("size").toOption
+      yield BasemapFetch.Source(url, label, size)
     }
 
   private def zoomOf(l: BasemapLayer, a: Ask): Int = l match
@@ -646,9 +652,9 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
     l match
       case BasemapLayer.Labels     => labels(a, note)
       case BasemapLayer.Bathymetry =>
-        cfg.bathymetry.source match
-          case SeaFloorSource.Etopo1 => bathymetry(a, note)
-          case SeaFloorSource.Gebco  => gebco(a, note)
+        seaFloor() match
+          case SeaFloorGrid.Etopo1 => bathymetry(a, note)
+          case SeaFloorGrid.Gebco  => gebco(a, note)
       case _ => ranged(a, l, note)
 
   /** A PMTiles layer (vector, terrain): planned, checked against the free disk, downloaded, assembled. */
@@ -673,12 +679,14 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
       h: RangeHttp,
       note: String => Unit,
       keepAll: Boolean,
-      out: Option[Path] = None,
-      workDir: Option[Path] = None
+      out: Option[StoreKey] = None,
+      workDir: Option[StoreKey] = None
   ): Either[String, String] =
-    Files.createDirectories(dir)
-    val work = workDir.getOrElse(this.work(l))
-    val target = out.getOrElse(path(l))
+    val store = files
+    done(store.makeDirectory())
+    val workKey = workDir.getOrElse(this.work(l))
+    val work = store.sub(workKey)
+    val target = out.getOrElse(key(l))
     val state = BasemapFetch
       .stateOf(plan, extra)
       .deepMerge(io.circe.Json.obj("label" -> io.circe.Json.fromString(plan.source.label)))
@@ -688,12 +696,12 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
     // smaller once thinned); it is written beside the downloaded parts before they are removed
     val outBytes = plan.contentBytes
     def room(next: Long): Either[String, Unit] =
-      val free = freeSpace(dir)
+      val free = freeSpace(store)
       val left = free - next - outBytes
       Either.cond(
         left >= minFree,
         (),
-        s"refused: the ${l.title} layer needs ${Backup.humanBytes(pendingBytes + outBytes)} more on $dir " +
+        s"refused: the ${l.title} layer needs ${Backup.humanBytes(pendingBytes + outBytes)} more on ${store.where()} " +
           s"(${Backup.humanBytes(free)} free), which would leave less than ${Backup.humanBytes(minFree)} (basemap.min-free-gb). " +
           "Free some space, fetch a smaller region (--bbox) or fewer zooms (--max-zoom / --terrain-max-zoom), " +
           "or move the files with basemap.dir."
@@ -715,11 +723,11 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
         l,
         Option.when(l == BasemapLayer.Vector)((keepAll, cfg.vector.drop))
       )
-      done <- BasemapFetch.assemble(plan, work, target, transform, BasemapFetch.localHeader(plan), meta, note)
+      written <- BasemapFetch.assemble(plan, work, store, target, transform, BasemapFetch.localHeader(plan), meta, note)
     yield
-      val _ = BasemapService.deleteTree(work)
+      val _ = store.deleteTree(workKey)
       val _ = readerAt(target)
-      s"${BasemapService.describe(l, plan, dryRun = false)}; stored ${done._2} tiles in ${Backup.humanBytes(done._1)} at $target"
+      s"${BasemapService.describe(l, plan, dryRun = false)}; stored ${written._2} tiles in ${Backup.humanBytes(written._1)} at ${store.where(target)}"
 
   /** The sea floor: every tile of zooms 0…`bathymetry.max-zoom` over the region, one GET each (a public bucket of map
     * tiles: no range requests), kept in a work directory as they come — so an interrupted fetch resumes — then written
@@ -742,40 +750,40 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
       )
     else
       val need = ids.length * each * 2
-      val free = freeSpace(BasemapService.existing(dir))
+      val store = files
+      val free = freeSpace(store)
       if free - need < minFree then
         Left(
-          s"refused: the sea floor needs about ${Backup.humanBytes(need)} on $dir (${Backup.humanBytes(free)} free), " +
+          s"refused: the sea floor needs about ${Backup.humanBytes(need)} on ${store.where()} (${Backup.humanBytes(free)} free), " +
             s"which would leave less than ${Backup.humanBytes(minFree)} (basemap.min-free-gb)"
         )
       else
-        val work = this.work(BasemapLayer.Bathymetry)
-        Files.createDirectories(work)
+        val work = store.sub(this.work(BasemapLayer.Bathymetry))
+        done(work.makeDirectory())
         val h = http()
         val coords = tiles.map(_._2)
         val got = coords.zipWithIndex.foldLeft[Either[String, Int]](Right(0)) { case (acc, ((z, x, y), i)) =>
           acc.flatMap { n =>
-            val f = work.resolve(s"$z-$x-$y.png")
-            val none = work.resolve(s"$z-$x-$y.none")
-            if Files.isRegularFile(f) || Files.isRegularFile(none) then Right(n)
+            val f = StoreKey.applyUnsafe(s"$z-$x-$y.png")
+            val none = StoreKey.applyUnsafe(s"$z-$x-$y.none")
+            if work.isFile(f) || work.isFile(none) then Right(n)
             else
               if n > 0 then pace.sleep(bc.requestGapMs.toLong)
               if Thread.interrupted() then throw InterruptedException()
               if i % 50 == 0 then note(s"downloading ${i + 1} of ${ids.length} tiles")
               h.file(bc.url.replace("{z}", z.toString).replace("{x}", x.toString).replace("{y}", y.toString)).map {
-                case Some(b) => Files.write(f, b); n + 1
-                case None    => Files.write(none, Array.emptyByteArray); n + 1
+                case Some(b) => done(work.write(f, b)); n + 1
+                case None    => done(work.write(none, Array.emptyByteArray)); n + 1
               }
           }
         }
         got.map { _ =>
           note("writing bathymetry.pmtiles")
-          val out = path(BasemapLayer.Bathymetry)
-          val w = PmTilesWriter(out)
+          val out = key(BasemapLayer.Bathymetry)
+          val w = PmTilesWriter(store, out)
           var stored = 0L // tiles written
           ids.zip(coords).foreach { case (id, (z, x, y)) =>
-            val f = work.resolve(s"$z-$x-$y.png")
-            if Files.isRegularFile(f) then { w.add(id, Files.readAllBytes(f)); stored += 1 }
+            work.get(StoreKey.applyUnsafe(s"$z-$x-$y.png")).foreach { f => w.add(id, f.bytes()); stored += 1 }
           }
           val header = PmTiles.Header(
             0,
@@ -817,9 +825,9 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
             )
           )
           val bytes = w.finish(header, meta)
-          val _ = BasemapService.deleteTree(work)
+          val _ = store.deleteTree(this.work(BasemapLayer.Bathymetry))
           val _ = reader(BasemapLayer.Bathymetry)
-          s"bathymetry (zoom 0–${bc.maxZoom}): $stored tiles, ${Backup.humanBytes(bytes)} at $out"
+          s"bathymetry (zoom 0–${bc.maxZoom}): $stored tiles, ${Backup.humanBytes(bytes)} at ${store.where(out)}"
         }
 
   /** The sea floor from the GEBCO grid ([[GebcoSeaFloor]]): the GeoTIFF rows the region needs read by range into the
@@ -833,19 +841,20 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
     sea.plan(a.bbox, bc.gebco.maxZoom).flatMap { plan =>
       if a.dryRun then Right(sea.describe(plan))
       else
-        val free = freeSpace(BasemapService.existing(dir))
+        val store = files
+        val free = freeSpace(store)
         if free - sea.needs(plan) < minFree then
           Left(
-            s"refused: the GEBCO sea floor needs about ${Backup.humanBytes(sea.needs(plan))} on $dir " +
+            s"refused: the GEBCO sea floor needs about ${Backup.humanBytes(sea.needs(plan))} on ${store.where()} " +
               s"(${Backup.humanBytes(free)} free), which would leave less than ${Backup.humanBytes(minFree)} (basemap.min-free-gb). " +
               "Fetch a smaller region (--bbox), or the ETOPO1 sea floor (basemap.bathymetry.source = etopo1)."
           )
         else
-          val work = this.work(BasemapLayer.Bathymetry)
+          val work = store.sub(this.work(BasemapLayer.Bathymetry))
           for
             _ <- sea.download(plan, work, cfg.requestGapMs.toLong, note)
-            out = path(BasemapLayer.Bathymetry)
-            w = PmTilesWriter(out)
+            out = key(BasemapLayer.Bathymetry)
+            w = PmTilesWriter(store, out)
             n <- sea.build(plan, work, w.add, note)
           yield
             val header = PmTiles.Header(
@@ -888,10 +897,10 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
               )
             )
             val bytes = w.finish(header, meta)
-            val _ = BasemapService.deleteTree(work)
+            val _ = store.deleteTree(this.work(BasemapLayer.Bathymetry))
             val _ = reader(BasemapLayer.Bathymetry)
             s"bathymetry from GEBCO (zoom 0–${bc.gebco.maxZoom}): $n tiles from ${Backup.humanBytes(plan.readBytes)} of the grid, " +
-              s"${Backup.humanBytes(bytes)} at $out"
+              s"${Backup.humanBytes(bytes)} at ${store.where(out)}"
     }
 
   /** The physical names: Natural Earth's label files read whole (a few MB each), cut to the region and written as
@@ -906,11 +915,12 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
           "about 20 MB, of which about 1.4 MB is kept"
       )
     else
-      val free = freeSpace(BasemapService.existing(dir))
+      val store = this.files
+      val free = freeSpace(store)
       val need = 64L * 1024 * 1024
       if free - need < minFree then
         Left(
-          s"refused: the physical names need about ${Backup.humanBytes(need)} on $dir (${Backup.humanBytes(free)} free), " +
+          s"refused: the physical names need about ${Backup.humanBytes(need)} on ${store.where()} (${Backup.humanBytes(free)} free), " +
             s"which would leave less than ${Backup.humanBytes(minFree)} (basemap.min-free-gb)"
         )
       else
@@ -928,16 +938,17 @@ final class BasemapService(deps: Deps, http: () => RangeHttp, freeSpace: Path =>
         read.map { all =>
           val kept = all.filter(BasemapLabels.within(_, a.bbox))
           note(s"${kept.size} of ${all.size} names are in the region; writing")
-          Files.createDirectories(dir)
+          done(store.makeDirectory())
           val (tiles, bytes) = BasemapLabels.write(
-            path(BasemapLayer.Labels),
+            store,
+            key(BasemapLayer.Labels),
             kept,
             a.bbox,
             lc.maxZoom,
             BasemapService.labelsMetadata(lc, a.bbox, kept.size, Instant.now().toString)
           )
           val _ = reader(BasemapLayer.Labels)
-          s"labels (Natural Earth): ${kept.size} names in $tiles tiles, ${Backup.humanBytes(bytes)} at ${path(BasemapLayer.Labels)}"
+          s"labels (Natural Earth): ${kept.size} names in $tiles tiles, ${Backup.humanBytes(bytes)} at ${store.where(key(BasemapLayer.Labels))}"
         }
 
 object BasemapService:
@@ -1041,25 +1052,8 @@ object BasemapService:
 
   val JobKind = com.histmersion.api.JobKind.BasemapFetch.wire
 
-  /** Where the extracts live: `basemap.dir`, else `$XDG_CACHE_HOME/histmersion/basemap` (default
-    * `~/.cache/histmersion/basemap`), else under the data directory.
-    */
-  def dir(cfg: AppConfig, env: String => Option[String] = sys.env.get): Path =
-    Option(cfg.basemap.dir)
-      .map(_.trim)
-      .filter(_.nonEmpty)
-      .map(p => Path.of(p.replaceFirst("^~", System.getProperty("user.home"))))
-      .orElse(UserPaths.cacheDir(env).map(_.resolve("basemap")))
-      .getOrElse(Path.of(cfg.init.dataDir).resolve("basemap"))
-      .toAbsolutePath
-      .normalize
-
-  /** Free space for this process on the volume of `p`. */
-  def usable(p: Path): Long = scala.util.Try(Files.getFileStore(existing(p)).getUsableSpace).getOrElse(0L)
-
-  /** `p`, or the nearest of its parents that exists (the directory may not be made yet). */
-  def existing(p: Path): Path =
-    Iterator.iterate(p.toAbsolutePath)(_.getParent).takeWhile(_ != null).find(Files.exists(_)).getOrElse(p)
+  /** Where the focus regions' relief archives are, in the base map's store. */
+  val FocusDir: StoreKey = StoreKey.applyUnsafe("terrain-focus")
 
   /** Whether tile `z/x/y` lies in an archive's bounds (any part of it). Pure. */
   def inside(h: PmTiles.Header, z: Int, x: Long, y: Long): Boolean =
@@ -1131,19 +1125,6 @@ object BasemapService:
       s"${Backup.humanBytes(p.requestBytes)} in ${p.requests.size} requests (+${p.directoryRequests} for the directories)" +
       // a download ahead says what each zoom costs, so a smaller --max-zoom can be chosen (#3760)
       (if dryRun then s"; by zoom — ${BasemapFetch.perZoomLine(BasemapFetch.perZoom(p))}" else "")
-
-  /** Delete a directory tree; answers the bytes it held (`None` when there was none). */
-  def deleteTree(p: Path): Option[Long] =
-    if !Files.exists(p) then None
-    else
-      var bytes = 0L // summed while walking
-      Using.resource(Files.walk(p)) { s =>
-        s.sorted(java.util.Comparator.reverseOrder()).forEach { f =>
-          if Files.isRegularFile(f) then bytes += Files.size(f)
-          val _ = Files.deleteIfExists(f)
-        }
-      }
-      Some(bytes)
 
   /** Close a replaced archive a little later, after the requests reading it are done. */
   private def closeLater(f: PmTilesFile): Unit =

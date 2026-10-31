@@ -1,23 +1,19 @@
 package com.histmersion.util.basemap
 
+import com.histmersion.util.storage.{Blob, RandomReader}
+import com.histmersion.values.ByteOffset
 import io.circe.Json
 
-import java.nio.ByteBuffer
-import java.nio.channels.FileChannel
-import java.nio.file.{Path, StandardOpenOption}
 import java.util.concurrent.ConcurrentHashMap
 
-/** A PMTiles archive on the local disk, opened once and read by many requests at a time: positional reads on one
-  * [[FileChannel]] are thread-safe, and the leaf directories already read are kept (bounded by `maxLeaves`) so a pan
-  * never re-reads the same directory.
-  *
-  * A `FileChannel` is an interruptible channel: a request thread interrupted while it reads (the page cancelled a tile
-  * it no longer needs) CLOSES it for every thread. So a channel closed that way is opened again — the interrupted read
-  * fails, every other request goes on.
+/** A PMTiles archive in a store, opened once and read by many requests at a time: positional reads on one
+  * [[RandomReader]] are thread-safe (one interrupted read fails alone), and the leaf directories already read are kept
+  * (bounded by `maxLeaves`) so a pan never re-reads the same directory.
   */
 final class PmTilesFile private (
-    val path: Path,
-    first: FileChannel,
+    /** Where the archive is, for messages. */
+    val where: String,
+    reader: RandomReader,
     val header: PmTiles.Header,
     root: Vector[PmTiles.Entry],
     val metadata: Json,
@@ -25,30 +21,8 @@ final class PmTilesFile private (
 ) extends AutoCloseable:
 
   private val leaves = ConcurrentHashMap[Long, Vector[PmTiles.Entry]]()
-  // the channel now (replaced when an interrupt closed it) and whether `close` was called
-  @volatile private var ch: FileChannel = first
-  @volatile private var closed = false
 
-  private def reopen(broken: FileChannel): Unit = synchronized {
-    if !closed && (ch eq broken) then ch = FileChannel.open(path, StandardOpenOption.READ)
-  }
-
-  private def read(offset: Long, length: Int): Array[Byte] =
-    def attempt(retry: Boolean): Array[Byte] =
-      val c = ch
-      try
-        val buf = ByteBuffer.allocate(length)
-        var at = offset // positional reads may return short
-        while buf.hasRemaining do
-          val n = c.read(buf, at)
-          if n < 0 then throw java.io.EOFException(s"$path ends before byte ${offset + length}")
-          at += n
-        buf.array()
-      catch
-        case e: java.nio.channels.ClosedChannelException if !closed =>
-          reopen(c)
-          if retry && !Thread.currentThread().isInterrupted then attempt(retry = false) else throw e
-    attempt(retry = true)
+  private def read(offset: Long, length: Int): Array[Byte] = reader.read(ByteOffset.applyUnsafe(offset), length)
 
   private def leaf(e: PmTiles.Entry): Either[String, Vector[PmTiles.Entry]] =
     Option(leaves.get(e.offset)).map(Right(_)).getOrElse {
@@ -71,7 +45,7 @@ final class PmTilesFile private (
         PmTiles.find(dir, id) match
           case None                  => Right(None)
           case Some(e) if !e.isLeaf  => Right(Some(e))
-          case Some(_) if depth >= 3 => Left(s"$path: directories nested too deep")
+          case Some(_) if depth >= 3 => Left(s"$where: directories nested too deep")
           case Some(e)               => leaf(e).flatMap(walk(_, depth + 1))
       walk(root, 0)
 
@@ -81,46 +55,50 @@ final class PmTilesFile private (
   def tile(z: Int, x: Long, y: Long): Either[String, Option[Array[Byte]]] =
     entry(z, x, y).map(_.map(e => read(header.dataOffset + e.offset, e.length)))
 
-  def size: Long =
-    val c = ch
-    try c.size()
-    catch case _: java.nio.channels.ClosedChannelException if !closed => { reopen(c); ch.size() }
+  def size: Long = reader.size.value
 
-  def close(): Unit = synchronized { closed = true; ch.close() }
+  def close(): Unit = reader.close()
 
 object PmTilesFile:
 
-  def open(path: Path, maxLeaves: Int = 256): Either[String, PmTilesFile] =
-    val ch = FileChannel.open(path, StandardOpenOption.READ)
+  def open(blob: Blob, maxLeaves: Int = 256): Either[String, PmTilesFile] =
+    val where = blob.where
     val opened =
       try
-        val first = ByteBuffer.allocate(math.min(PmTiles.RootBytes.toLong, ch.size()).toInt)
-        var at = 0L // positional reads may return short
-        while first.hasRemaining && ch.read(first, at) > 0 do at = first.position().toLong
-        val bytes = first.array()
-        for
-          h <- PmTiles.parseHeader(bytes)
-          _ <- Either.cond(
-            h.rootOffset + h.rootLength <= bytes.length,
-            (),
-            s"$path: root directory outside the first 16 KiB"
-          )
-          root <- PmTiles
-            .decompress(bytes.slice(h.rootOffset.toInt, (h.rootOffset + h.rootLength).toInt), h.internalCompression)
-            .flatMap(PmTiles.decodeDirectory)
-          meta <- metadata(ch, h)
-        yield new PmTilesFile(path, ch, h, root, meta, maxLeaves)
-      catch case e: java.io.IOException => Left(s"$path: ${e.getMessage}")
-    if opened.isLeft then ch.close()
-    opened.left.map(e => if e.startsWith(path.toString) then e else s"$path: $e")
+        val reader = blob.reader()
+        val read =
+          try
+            val bytes = reader.readUpTo(ByteOffset.applyUnsafe(0L), PmTiles.RootBytes)
+            for
+              h <- PmTiles.parseHeader(bytes)
+              _ <- Either.cond(
+                h.rootOffset + h.rootLength <= bytes.length,
+                (),
+                s"$where: root directory outside the first 16 KiB"
+              )
+              root <- PmTiles
+                .decompress(
+                  bytes.slice(h.rootOffset.toInt, (h.rootOffset + h.rootLength).toInt),
+                  h.internalCompression
+                )
+                .flatMap(PmTiles.decodeDirectory)
+              meta <- metadata(reader, h)
+            yield new PmTilesFile(where, reader, h, root, meta, maxLeaves)
+          catch case e: java.io.IOException => Left(s"$where: ${e.getMessage}")
+        if read.isLeft then reader.close()
+        read
+      catch case e: java.io.IOException => Left(s"$where: ${e.getMessage}")
+    opened.left.map(e => if e.startsWith(where) then e else s"$where: $e")
 
-  private def metadata(ch: FileChannel, h: PmTiles.Header): Either[String, Json] =
+  private def metadata(reader: RandomReader, h: PmTiles.Header): Either[String, Json] =
     if h.metadataLength <= 0 then Right(Json.obj())
     else if h.metadataLength > 16L * 1024 * 1024 then Left("metadata over 16 MiB")
     else
-      val buf = ByteBuffer.allocate(h.metadataLength.toInt)
-      var at = h.metadataOffset // positional reads may return short
-      while buf.hasRemaining && ch.read(buf, at) > 0 do at = h.metadataOffset + buf.position()
+      // a file that ends early leaves the rest zeros, as a buffer read up to the end does
+      val bytes = java.util.Arrays.copyOf(
+        reader.readUpTo(ByteOffset.applyUnsafe(h.metadataOffset), h.metadataLength.toInt),
+        h.metadataLength.toInt
+      )
       PmTiles
-        .decompress(buf.array(), h.internalCompression)
+        .decompress(bytes, h.internalCompression)
         .flatMap(b => io.circe.parser.parse(String(b, "UTF-8")).left.map(e => s"metadata is not JSON: ${e.getMessage}"))
