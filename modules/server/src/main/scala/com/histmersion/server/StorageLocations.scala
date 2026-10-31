@@ -8,8 +8,8 @@ import com.histmersion.util.storage.{Location, Storage}
 
 import java.nio.file.Path
 
-/** Where each storage location lives, worked out from today's settings at each call — so the directories are where
-  * they always were, and a reload that moves one is followed.
+/** Where each storage location lives, worked out from today's settings at each call — so the directories are where they
+  * always were, and a reload that moves one is followed.
   */
 object StorageLocations:
 
@@ -24,7 +24,7 @@ object StorageLocations:
     val env = environment.lookup
     def dataDir = UserPaths.dataDir(cfg.runtime.dataDir, env, userPaths.osName)
     location match
-      case Location.IngestOriginals         => Some(Path.of(cfg.converter.spoolDir))
+      case Location.IngestOriginals   => Some(Path.of(cfg.converter.spoolDir))
       case Location.Spool             => Some(spool(cfg.acquire.spoolDir))
       case Location.Basemap           => Some(BasemapService.dir(cfg, env))
       case Location.Backups           => Some(Path.of(cfg.backups.dir))

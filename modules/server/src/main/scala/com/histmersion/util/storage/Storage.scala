@@ -25,7 +25,7 @@ object Storage:
   /** Stores on disk: `roots` says where each location is now, `temp` where scratch stores are made. */
   def apply(roots: Location => Option[Path], temp: () => Path): Storage = Implementation(roots, temp)
 
-  private final class Implementation(roots: Location => Option[Path], temp: () => Path) extends Storage:
+  final private class Implementation(roots: Location => Option[Path], temp: () => Path) extends Storage:
     def find(location: Location): Option[Store] = roots(location).map(DiskStore(location, _))
 
     def scratch(purpose: String): Scratch =
