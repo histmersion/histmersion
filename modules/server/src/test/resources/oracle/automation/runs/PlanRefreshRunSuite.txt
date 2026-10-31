@@ -78,7 +78,7 @@ plan_quota_refreshes {"at":"TS","detail":"five_hour 20% used, seven_day 30% used
 plan_quota_refreshes {"at":"TS","detail":"seven_day 30% used","id":"ID","mode":"probe","ok":true,"pool":"claude-plan","trigger":"schedule"}
 
 === #4035: no scheduled read without a login, with the schedule off, or before the scheduler has left work waiting
-agent_autopilot {"changed_at":"TS","changed_by":"zzrefresh","drain_by":null,"drain_since":null,"drained_at":null,"enabled":false,"id":true,"last_backup_at":null,"last_digest_at":null,"last_ensure_at":null,"last_lint_at":null,"max_active_goals":null,"paused":[],"scheduler_at":"TS","scheduler_by":"person","scheduler_strategy":null}
+agent_autopilot {"changed_at":"TS","changed_by":"zzrefresh","drain_by":null,"drain_since":null,"drained_at":null,"enabled":false,"id":true,"last_backup_at":null,"last_digest_at":"TS","last_ensure_at":null,"last_lint_at":null,"max_active_goals":null,"paused":[],"scheduler_at":null,"scheduler_by":null,"scheduler_strategy":null}
 
 === #1827: a model parked after its plan's limit comes back once a reading taken SINCE says the pool is usable
 plan_quota_readings {"kind":"five_hour","limit_id":"claude","model":"","observed_at":"TS","pool":"claude-plan","rejected":false,"resets_at":"TS","source":"probe","used_pct":0}
