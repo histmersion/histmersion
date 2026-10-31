@@ -1,9 +1,10 @@
 package com.histmersion.server.importers
 
+import com.histmersion.server.ServerPlugins
+
 import com.histmersion.api.*
 import com.histmersion.plugin.PluginHttp
 import com.histmersion.pluginhost.{HttpTransport, PluginGazetteers}
-import com.histmersion.server.plugins.Plugins
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
@@ -33,7 +34,7 @@ class GazetteerTrafficSuite extends munit.FunSuite:
   /** The stock generation's gazetteer sources (the first-party plugins, found on the class path as the server finds
     * them).
     */
-  private lazy val sources = Plugins.offline.registries.gazetteerSources
+  private lazy val sources = ServerPlugins.offline.registries.gazetteerSources
 
   /** The address a source downloads: what it asks a client that answers nothing. */
   private def sourceUrl(name: String): String =

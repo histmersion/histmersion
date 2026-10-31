@@ -1,11 +1,12 @@
 package com.histmersion.domain.library.collections
 
+import com.histmersion.server.ServerPlugins
+
 import com.histmersion.api.*
 import com.histmersion.config.{AcquireConfig, AppConfig, LoadedConfig}
 import com.histmersion.pluginhost.{FetchChain, Generation, HttpAnswer, HttpTransport, PolicyHttp}
 import com.histmersion.server.Deps
 import com.histmersion.server.acquire.*
-import com.histmersion.server.plugins.Plugins
 import io.circe.syntax.*
 import org.ekrich.config.ConfigFactory
 
@@ -90,7 +91,7 @@ class ArchiveTrafficSuite extends com.histmersion.db.DbSuite:
       acquire = loaded.config.acquire.copy(spoolDir = spool.toString)
     )
     val wire = Wire(routes(app.acquire))
-    val g: Generation = Plugins.load(loaded, transport = _ => wire)
+    val g: Generation = ServerPlugins.load(loaded, transport = _ => wire)
     val surface = ArchiveTrafficSuite.surface(app, ds, g, wire)
     val sb = StringBuilder()
     def step(name: String)(answer: => String): Unit =

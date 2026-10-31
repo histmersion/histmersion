@@ -256,8 +256,6 @@ direction	server:server/BackupJobs.scala	util.data -> server: Pinning	1
 direction	server:server/BundleHandlers.scala	util.data -> library: InstanceLabel	1
 direction	server:server/BundleHandlers.scala	util.data -> library: Originals	1
 direction	server:server/BundleHandlers.scala	util.data -> server: Deps	1
-direction	server:server/ConfigViews.scala	util.settings -> server: UiConfig	1
-direction	server:server/ConfigViews.scala	util.settings -> server: UiSettings	1
 direction	server:server/ConverterClient.scala	util.ocr -> library: ConverterConfig	1
 direction	server:server/HttpConverterClient.scala	util.ocr -> library: ConverterConfig	1
 direction	server:server/HttpConverterClient.scala	util.ocr -> server: Version	1
@@ -399,18 +397,7 @@ direction	server:server/media/MediaImporter.scala	media -> server: Deps	1
 direction	server:server/media/MediaImporters.scala	media -> server: Deps	1
 direction	server:server/media/SourcePictures.scala	media -> library: SourceCoverParams	1
 direction	server:server/plugins/RelinkPlugins.scala	util.plugins -> server: Version	1
-direction	server:server/plugins/Plugins.scala	util.plugins -> automation: BuiltinAi	1
-direction	server:server/plugins/Plugins.scala	util.plugins -> library: CoreBudget	1
-direction	server:server/plugins/Plugins.scala	util.plugins -> library: HttpPlugin	1
-direction	server:server/plugins/Plugins.scala	util.plugins -> library: SttpHttp	1
 filesystem	config:config/UserConfigFile.scala	java.nio.file	1
-filesystem	config:config/edit/ConfigFileState.scala	Path.of	1
-filesystem	config:config/edit/ConfigFileState.scala	java.nio.file	1
-filesystem	config:config/edit/ConfigFileWriter.scala	.toFile	1
-filesystem	config:config/edit/ConfigFileWriter.scala	Files.*	13
-filesystem	config:config/edit/ConfigFileWriter.scala	StandardCopyOption	6
-filesystem	config:config/edit/ConfigFileWriter.scala	java.nio.file	2
-filesystem	config:config/edit/WriteOutcome.scala	java.nio.file	1
 filesystem	db:db/BundleExport.scala	Files.*	2
 filesystem	db:db/BundleExport.scala	java.nio.file	2
 filesystem	db:db/BundleImport.scala	Files.*	1
@@ -433,9 +420,6 @@ filesystem	files:files/PlaceSeed.scala	java.nio.file	1
 filesystem	files:files/PluginKit.scala	File(	1
 filesystem	files:files/SafePath.scala	Paths.get	4
 filesystem	files:files/SafePath.scala	java.nio.file	1
-filesystem	server:domain/settings/SettingsService.scala	Path.of	1
-filesystem	server:domain/settings/SettingsService.scala	java.nio.file	1
-filesystem	server:domain/settings/SettingsSnapshot.scala	java.nio.file	1
 filesystem	server:server/BackupService.scala	.toFile	1
 filesystem	server:server/BackupService.scala	Files.*	18
 filesystem	server:server/BackupService.scala	Path.of	3
@@ -447,7 +431,6 @@ filesystem	server:server/BundleHandlers.scala	Files.*	14
 filesystem	server:server/BundleHandlers.scala	Path.of	2
 filesystem	server:server/BundleHandlers.scala	StandardCopyOption	5
 filesystem	server:server/BundleHandlers.scala	java.nio.file	2
-filesystem	server:server/ConfigViews.scala	java.nio.file	1
 filesystem	server:server/ConverterClient.scala	java.nio.file	1
 filesystem	server:server/HttpConverterClient.scala	java.nio.file	1
 filesystem	server:server/IngestHandlers.scala	.toFile	3
@@ -505,9 +488,6 @@ filesystem	server:server/importers/GazetteerLoad.scala	Path.of	3
 filesystem	server:server/importers/GazetteerLoad.scala	StandardCopyOption	3
 filesystem	server:server/importers/GazetteerLoad.scala	java.nio.file	1
 filesystem	server:server/media/MediaHandlers.scala	java.nio.file	1
-filesystem	server:server/plugins/PluginSetResource.scala	Files.*	2
-filesystem	server:server/plugins/PluginSetResource.scala	StandardCopyOption	3
-filesystem	server:server/plugins/PluginSetResource.scala	java.nio.file	1
 process	server:server/BackupService.scala	ProcessBuilder	2
 process	server:server/PgRelocation.scala	ProcessBuilder	2
 process	server:server/Supervisor.scala	ProcessBuilder	4

@@ -1,5 +1,7 @@
 package com.histmersion.server.plugins
 
+import com.histmersion.util.plugins.PluginSetResource
+
 import com.histmersion.api.{PluginJar, PluginSet}
 import com.histmersion.files.*
 import com.histmersion.files.PluginKit
@@ -191,7 +193,7 @@ class PluginToolSuite extends munit.FunSuite:
     val set =
       PluginKit.pluginSet(List(RelinkPlugins.describe(hello, loader)), Spi.Version, "native", Some("0.1.0 (abc)"), None)
     val jar = d.resolve("plugin-set.jar")
-    PluginSetResource.writeJar(jar, set)
+    RelinkPlugins.writePluginSet(jar, set)
     val found = PluginSetResource.load(URLClassLoader(Array(jar.toUri.toURL), null))
     assertEquals(found, Right(Some(set)))
     assertEquals(set.digest, PluginKit.digest(List(hello.getFileName.toString -> RelinkPlugins.sha256(hello))))

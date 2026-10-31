@@ -1,9 +1,10 @@
 package com.histmersion.server
 
+import com.histmersion.util.settings.{info, ConfigSource}
+
 import com.histmersion.api.PluginsMarkdown
 import com.histmersion.config.{AppConfig, Environment, UserPaths}
 import com.histmersion.server.acquire.CoreBudget
-import com.histmersion.server.plugins.Plugins
 import ox.{never, supervised}
 
 /** The server binary: the command line, the config and the plugins on the main thread, the bundled runtime when there
@@ -41,7 +42,7 @@ import ox.{never, supervised}
       // the plugins, also on the main thread and before anything is opened: each block layered over
       // the plugin's defaults, type-checked, decoded, its secrets resolved, registered (staged). A
       // plugin that fails contributes nothing and the server still starts; --self-check says so.
-      (l, Plugins.load(l, core = core))
+      (l, ServerPlugins.load(l, core = core))
     case Left(err) =>
       scribe.error(err)
       sys.exit(3)

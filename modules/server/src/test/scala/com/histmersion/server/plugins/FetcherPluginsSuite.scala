@@ -1,5 +1,8 @@
 package com.histmersion.server.plugins
 
+import com.histmersion.server.ServerPlugins
+import com.histmersion.util.plugins.{LegacyPlugins, Plugins}
+
 import com.histmersion.pluginhost.{FetchChain, Generation}
 
 import com.histmersion.api.*
@@ -33,7 +36,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
     * host's settings supplied.
     */
   private def generation(user: String = "", env: Map[String, String] = Map.empty, http: Http = Offline): Generation =
-    Plugins.fetchers(loaded(user, env), () => HttpPlugin(http))
+    ServerPlugins.fetchers(loaded(user, env), () => HttpPlugin(http))
 
   private def migrated(user: String = "", env: Map[String, String] = Map.empty): Generation = generation(user, env)
 

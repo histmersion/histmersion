@@ -1,12 +1,13 @@
 package com.histmersion.server
 
+import com.histmersion.util.settings.{info, ConfigSource, HotConfig}
+
 import com.histmersion.pluginhost.Generation
 
 import com.histmersion.config.{AppConfig, ConfigReload}
 import com.histmersion.api.ReloadReport
 import com.histmersion.db.{Db, Migrate}
 import com.histmersion.server.hot.{Hot, HotDataSource, HotGraph}
-import com.histmersion.server.plugins.Plugins
 import ox.{forkDiscard, useInScope}
 
 import java.nio.file.{FileSystems, Path, StandardWatchEventKinds}
@@ -189,10 +190,10 @@ object ServerGraph:
         ) { ctx =>
           Right(readOnly(ctx.config.app, ctx(pool)))
         }
-        plug <- graph.node[Generation](Plugins, keys = com.histmersion.server.plugins.Plugins.Keys) { ctx =>
+        plug <- graph.node[Generation](Plugins, keys = com.histmersion.util.plugins.Plugins.Keys) { ctx =>
           Right(ctx.previous match
-            case None => plugins.getOrElse(com.histmersion.server.plugins.Plugins.load(ctx.config.loaded, core = core))
-            case prev => com.histmersion.server.plugins.Plugins.load(ctx.config.loaded, prev, ctx.changed, core))
+            case None => plugins.getOrElse(ServerPlugins.load(ctx.config.loaded, core = core))
+            case prev => ServerPlugins.load(ctx.config.loaded, prev, ctx.changed, core))
         }
       yield ServerGraph(graph, source, pool, mig, q, plug, core)
     built.left.foreach(_ => graph.close())

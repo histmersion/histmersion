@@ -15,3 +15,7 @@ final case class HostServices(
     log: (String, Boolean, String) => Unit, // (plugin id, is a warning, message)
     quota: String => UpstreamQuota = _ => UpstreamQuota.Unlimited
 )
+
+object HostServices:
+  /** The budgets of the metered upstreams the host lends plugins, by upstream name. */
+  type Quotas = String => UpstreamQuota

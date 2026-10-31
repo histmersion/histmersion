@@ -1,4 +1,4 @@
-package com.histmersion.domain.settings
+package com.histmersion.util.settings
 
 import java.util.concurrent.atomic.AtomicInteger
 

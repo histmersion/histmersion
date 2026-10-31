@@ -2,10 +2,9 @@ package com.histmersion.server
 
 import com.histmersion.api.{Api, ConfigEdit, PluginsReport}
 import com.histmersion.config.{AppConfig, LoadedConfig}
-import com.histmersion.domain.settings.{SettingsService, SettingsViews}
+import com.histmersion.util.settings.{SettingsService, SettingsViews}
 import com.histmersion.server.acquire.{AcquireHandlers, SkeletonIngest}
 import com.histmersion.server.agents.{Generated, PromptBudget, ToolName}
-import com.histmersion.server.plugins.Plugins
 import io.circe.Json
 import io.circe.syntax.*
 import org.ekrich.config.ConfigFactory
@@ -109,7 +108,7 @@ class ContractSnapshotSuite extends munit.FunSuite:
     check("toolbox.json", Json.obj("tools" -> tools, "roles" -> roles).spaces2)
 
   test("plugins.json: the plugin report of a stock generation"):
-    val report: PluginsReport = Plugins.load(loaded).report
+    val report: PluginsReport = ServerPlugins.load(loaded).report
     check("plugins.json", report.asJson.spaces2)
 
   test("settings.json: the settings view of reference.conf"):

@@ -15,7 +15,8 @@ class SettingsReaderSuite extends munit.FunSuite:
     val f = d.resolve("histmersion.conf")
     Files.writeString(f, text)
     val e = ConfigFactory.parseMap(env.asJava)
-    val state = ConfigFileWriter(f, e, ConfigSchema.reference).read().fold(x => fail(x.message), identity)
+    val parsed = AppConfig.parseUserFile(f).fold(m => fail(m), _.getOrElse(fail("no file")))
+    val state = ConfigFileState(Some(text), FileVersion.of(Some(text)), parsed, AppConfig.writtenIn(f))
     val merged = AppConfig.loadWithUserFile(e, Some(f)).fold(m => fail(m), _.merged)
     SettingsReader
       .read(ConfigSchema.reference, state, merged, e, prefix.map(key))
@@ -59,3 +60,14 @@ class SettingsReaderSuite extends munit.FunSuite:
     val bad = AppConfig.loadWithUserText(ConfigFactory.empty, "histmersion.backups.keep = lots")
     assert(bad.left.exists(_.contains("backups.keep")), s"$bad")
     assert(AppConfig.loadWithUserText(ConfigFactory.empty, "histmersion { ").isLeft)
+
+  test("the user file as a load parses it: with its includes, its own values told from an included file's"):
+    val d = Files.createTempDirectory("histmersion-settings-parse")
+    Files.writeString(d.resolve("shared.conf"), "histmersion.backups.keep = 11\n")
+    val f = d.resolve("histmersion.conf")
+    Files.writeString(f, "include \"shared.conf\"\nhistmersion.ui.page-size = 30\n")
+    val c = AppConfig.parseUserFile(f).fold(m => fail(m), _.getOrElse(fail("no file")))
+    assertEquals(c.getInt("histmersion.backups.keep"), 11)
+    assert(AppConfig.writtenIn(f)(c.getValue("histmersion.ui.page-size").origin))
+    assert(!AppConfig.writtenIn(f)(c.getValue("histmersion.backups.keep").origin))
+    assertEquals(AppConfig.parseUserFile(d.resolve("none.conf")), Right(None))

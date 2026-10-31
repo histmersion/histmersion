@@ -10,7 +10,7 @@ import com.histmersion.upstreams.CoreApi
 
 object Indexes:
   /** The indexes `acquire.candidates.indexes` names, in its order (an unknown name is left out). `coreKey` is CORE's
-    * key as the plugins resolved it ([[com.histmersion.server.plugins.Plugins.coreKey]]), else `acquire.core.api-key`;
+    * key as the plugins resolved it ([[com.histmersion.util.plugins.Plugins.coreKey]]), else `acquire.core.api-key`;
     * `core` the server's CORE budget.
     */
   def of(
