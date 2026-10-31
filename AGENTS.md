@@ -27,7 +27,7 @@ core  ── the DOMAIN (package `domain`): the logic server and db run on. JVM 
          NO database code, NO side effects.   depends on values, api, files — never config (its tests only)
 db    ── the STORE: Magnum repos, Flyway migrations, the seed importer.      depends on config, core
 server─ MCP + REST + web UI; the ONLY database client.  depends on core, db, plugin-api, plugin-host (+ plugin-vaults;
-         plugins/fetchers and plugins/events at run time only)
+         plugins/fetchers, plugins/events and plugins/gazetteers at run time only)
          (and through them on values, api and config)
 cli   ── a PURE HTTP CLIENT of the server.         depends on api, config and files — never core, never db
 web   ── the Scala.js page (Laminar) over the sttp client derived from api's endpoints.   depends on api ONLY
@@ -43,6 +43,8 @@ plugins/fetchers ─ the first-party acquisition plugins (archive-org, oa-unpayw
               oa-landing, pmc, arxiv).                           upstreams (+ plugin-testkit for tests)
 plugins/events ─ the first-party event catalogues (events-gvp, events-noaa, events-wikidata).
                                                                  upstreams (+ plugin-testkit for tests)
+plugins/gazetteers ─ the first-party network gazetteers (gazetteer-cliopatria, gazetteer-awmc,
+              gazetteer-chronontology).                          upstreams (+ plugin-testkit for tests)
 plugin-testkit ─ a plugin's TEST dependency: load and run it as the server does (plugin-host), with
               live/record/replay HTTP; shipped in the install's maven/, its API a contract.  plugin-host
 plugin-vaults ─ the built-in secret-vault plugins.                          depends on plugin-api ONLY
@@ -62,8 +64,8 @@ sources are in `src/main/scala` (and `src/test/scala`); a platform's own in `src
 A plugin — first-party or not — compiles against `plugin-api` alone (a first-party one also against
 `upstreams`) and never sees `values`, `api`, `config`, `core`, `db` or `server`; the server discovers it
 through ServiceLoader (`PluginHost`, in `plugin-host`, which the testkit runs too). See
-`docs/research-plugins.md` (§15: as built). The acquisition plugins (`plugins/fetchers`) and the event
-catalogues (`plugins/events`) are first-party plugins discovered from the image's own class path; their
+`docs/research-plugins.md` (§15: as built). The acquisition plugins (`plugins/fetchers`), the event
+catalogues (`plugins/events`) and the network gazetteers (`plugins/gazetteers`) are first-party plugins discovered from the image's own class path; their
 names are reserved (`ReservedNames.firstPartyPlugins`), and the host supplies them the paths of its own
 settings that `pluginhost/FirstPartySettings` lists (`histmersion.acquire.*`, `histmersion.events.<catalogue>.*`
 — the user keeps writing those), the same table deciding which plugin a settings change rebuilds; the former

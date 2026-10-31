@@ -409,8 +409,6 @@ direction	server:server/events/EventCatalogHandlers.scala	catalogue -> server: D
 direction	server:server/events/EventCatalogRoutes.scala	catalogue -> split: Handlers	1
 direction	server:server/events/EventCatalogTools.scala	catalogue -> split: Handlers	1
 direction	server:server/importers/GazetteerLoad.scala	catalogue -> library: HttpPolicy	1
-direction	server:server/importers/ImportRunner.scala	catalogue -> library: CliopatriaImporter	1
-direction	server:server/importers/ImportRunner.scala	catalogue -> library: GazetteerImporter	1
 direction	server:server/importers/ImportRunner.scala	catalogue -> library: HttpPolicy	1
 direction	server:server/media/MediaHandlers.scala	media -> library: SourceCoverParams	1
 direction	server:server/media/MediaHandlers.scala	media -> server: Deps	1

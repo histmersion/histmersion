@@ -1,6 +1,7 @@
 package com.histmersion.server.plugins
 
 import com.histmersion.pluginhost.{FirstPartySettings, PluginHost, ReservedNames}
+import com.histmersion.domain.catalogue.places.BuiltinGazetteers
 import com.histmersion.server.agents.BuiltinAi
 import com.histmersion.server.events.BuiltinCatalogues
 import com.histmersion.server.media.BuiltinMedia
@@ -14,6 +15,7 @@ class ReservedNamesSuite extends munit.FunSuite:
     assertEquals(ReservedNames.mediaCollections, BuiltinMedia.reserved)
     assertEquals(ReservedNames.eventCatalogues, BuiltinCatalogues.reserved)
     assertEquals(ReservedNames.aiProviders, BuiltinAi.reserved)
+    assertEquals(ReservedNames.gazetteerSources, BuiltinGazetteers.reserved)
 
   test("the first-party plugins are the ones every image holds: found on its class path or supplied by the host"):
     val ids = PluginHost.discover(getClass.getClassLoader)._1.map(_.info.id) ++ Plugins.providers.map(_.info.id)

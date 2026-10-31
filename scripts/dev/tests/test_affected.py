@@ -23,16 +23,16 @@ class AffectedTest(unittest.TestCase):
 
     def test_api_shared_reaches_every_dependent(self):
         tests, db, _ = A.affected(["modules/api/src/main/scala/X.scala"])
-        self.assertEqual(tests, ["api", "apiJS", "config", "files", "core", "pluginHost", "pluginTestkit", "pluginsFetchers", "pluginsEvents", "db", "cli", "web", "server"])
+        self.assertEqual(tests, ["api", "apiJS", "config", "files", "core", "pluginHost", "pluginTestkit", "pluginsFetchers", "pluginsEvents", "pluginsGazetteers", "db", "cli", "web", "server"])
         self.assertTrue(db)
 
     def test_core_reaches_its_dependents_not_web_nor_cli(self):
         tests, _, _ = A.affected(["modules/core/src/main/scala/X.scala"])
-        self.assertEqual(tests, ["api", "config", "core", "pluginHost", "pluginTestkit", "pluginsFetchers", "pluginsEvents", "db", "server"])
+        self.assertEqual(tests, ["api", "config", "core", "pluginHost", "pluginTestkit", "pluginsFetchers", "pluginsEvents", "pluginsGazetteers", "db", "server"])
 
     def test_files_reach_core_and_cli(self):
         tests, _, _ = A.affected(["modules/files/src/main/scala/X.scala"])
-        self.assertEqual(tests, ["api", "config", "files", "core", "pluginHost", "pluginTestkit", "pluginsFetchers", "pluginsEvents", "db", "cli", "server"])
+        self.assertEqual(tests, ["api", "config", "files", "core", "pluginHost", "pluginTestkit", "pluginsFetchers", "pluginsEvents", "pluginsGazetteers", "db", "cli", "server"])
 
     def test_api_js_reaches_web_not_server(self):
         # (and the lint suites, which read every module's main Scala)
@@ -56,7 +56,7 @@ class AffectedTest(unittest.TestCase):
 
     def test_plugin_api_reaches_vaults_and_server_but_fixtures_have_no_tests(self):
         tests, _, _ = A.affected(["modules/plugin-api/src/main/scala/P.scala"])
-        self.assertEqual(tests, ["api", "config", "core", "pluginApi", "upstreams", "pluginHost", "pluginTestkit", "pluginsFetchers", "pluginsEvents",
+        self.assertEqual(tests, ["api", "config", "core", "pluginApi", "upstreams", "pluginHost", "pluginTestkit", "pluginsFetchers", "pluginsEvents", "pluginsGazetteers",
                                  "pluginVaults", "pluginResolver", "server"])
         self.assertEqual(A.affected(["modules/plugin-fixtures/hello/src/main/scala/H.scala"])[0], ["api", "config", "core", "server"])
         self.assertEqual(A.affected(["modules/plugin-fixtures/hello-ai/src/main/resources/x.conf"])[0], ["server"])
@@ -81,7 +81,7 @@ class AffectedTest(unittest.TestCase):
             self.assertEqual(A.affected([p])[0], [], p)
 
     def test_files_the_suites_read(self):
-        self.assertEqual(A.affected(["skills/histmersion-dev/SKILL.md"])[0], ["core", "pluginHost", "pluginTestkit", "pluginsFetchers", "pluginsEvents", "db", "server"])
+        self.assertEqual(A.affected(["skills/histmersion-dev/SKILL.md"])[0], ["core", "pluginHost", "pluginTestkit", "pluginsFetchers", "pluginsEvents", "pluginsGazetteers", "db", "server"])
         self.assertEqual(A.affected(["docs/writing-guide.md"])[0], ["server"])
         self.assertEqual(A.affected(["docs/user-guide/reference/cli.md"])[0][0], "core")
         self.assertEqual(A.affected(["modules/web/test/fixtures/basemap/terrain.pmtiles"])[0], ["server"])
@@ -93,13 +93,14 @@ class AffectedTest(unittest.TestCase):
 
     def test_dependents_closure_is_transitive(self):
         self.assertEqual(A.dependents({"pluginApi"}),
-                         {"pluginApi", "upstreams", "pluginHost", "pluginTestkit", "pluginsFetchers", "pluginsEvents", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloDeps", "pluginResolver",
+                         {"pluginApi", "upstreams", "pluginHost", "pluginTestkit", "pluginsFetchers", "pluginsEvents", "pluginsGazetteers", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloDeps", "pluginResolver",
                           "server"})
         self.assertEqual(A.dependents(set()), set())
         # the first-party plugins' library reaches the host, the plugins and the server (and the lint suites)
         self.assertEqual(A.affected(["modules/upstreams/src/main/scala/U.scala"])[0],
-                         ["api", "config", "core", "upstreams", "pluginHost", "pluginTestkit", "pluginsFetchers", "pluginsEvents", "server"])
+                         ["api", "config", "core", "upstreams", "pluginHost", "pluginTestkit", "pluginsFetchers", "pluginsEvents", "pluginsGazetteers", "server"])
         self.assertEqual(A.affected(["modules/plugins/events/src/main/scala/E.scala"])[0], ["api", "config", "core", "pluginsEvents", "server"])
+        self.assertEqual(A.affected(["modules/plugins/gazetteers/src/main/scala/G.scala"])[0], ["api", "config", "core", "pluginsGazetteers", "server"])
 
     def test_reasons_name_the_dependents(self):
         _, _, why = A.affected(["modules/db/src/main/scala/D.scala"])

@@ -4,6 +4,7 @@ import com.histmersion.pluginhost.{Generation, PluginEvents, PluginHost, PluginM
 
 import com.histmersion.domain.{MediaLicence, MediaRecord}
 import com.histmersion.plugin.*
+import com.histmersion.domain.catalogue.places.BuiltinGazetteers
 import com.histmersion.server.events.BuiltinCatalogues
 import com.histmersion.server.media.{BuiltinMedia, MediaImporters, PluginCollection}
 import com.histmersion.server.agents.BuiltinAi
@@ -62,7 +63,8 @@ class ProviderPluginsSuite extends munit.FunSuite:
     val vaults = Set("1password", "bitwarden", "keepassxc")
     assertEquals(
       g.report.plugins.map(_.id).toSet -- vaults,
-      BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds
+      BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds ++
+        BuiltinGazetteers.pluginIds
     )
     val keyed = BuiltinMedia.keyed.keySet.flatMap(BuiltinMedia.entry).map(_.plugin)
     assertEquals(keyed, Set("media-smithsonian", "media-europeana"))
@@ -96,8 +98,8 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assert(g.report.ok, g.report.toString)
     assertEquals(
       g.report.plugins.map(_.id).filterNot(Set("1password", "bitwarden", "keepassxc")).size,
-      7 + 10 + 3 + 6
-    ) // fetchers (four open-access indexes, D4), collections, catalogues, AI providers; the vaults besides
+      7 + 10 + 3 + 6 + 3
+    ) // fetchers (four open-access indexes, D4), collections, catalogues, AI providers, gazetteers; the vaults besides
     assert(!g.report.plugins.exists(_.state == "failed"), g.report.toString)
 
   test("a built-in switched off is out of its registry; the import names the switch"):
@@ -321,16 +323,21 @@ class ProviderPluginsSuite extends munit.FunSuite:
     // the secret vaults on the class path, off: a plugin's own block or a media key leaves them as they are
     val vaults = Set("1password", "bitwarden", "keepassxc")
     val carried = Plugins.carried(g1, List("histmersion.acquire.chain"))
-    assertEquals(carried.keySet, BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds)
+    assertEquals(
+      carried.keySet,
+      BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds ++
+        BuiltinGazetteers.pluginIds
+    )
     // their own block rebuilds them alone
     assertEquals(
       Plugins.carried(g1, List("histmersion.plugins.media-met.enabled")).keySet,
-      BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds ++ vaults + "zq-plugin" - "media-met"
+      BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds ++
+        BuiltinGazetteers.pluginIds ++ vaults + "zq-plugin" - "media-met"
     )
     // a media setting rebuilds the media collections, which are supplied it, and nothing else
     assertEquals(
       Plugins.carried(g1, List("histmersion.media.met.licences")).keySet,
-      BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds ++ vaults + "zq-plugin"
+      BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds ++ BuiltinGazetteers.pluginIds ++ vaults + "zq-plugin"
     )
     assertEquals(Plugins.carried(g1, List("histmersion.plugins.order")), Map.empty)
     assertEquals(Plugins.carried(g1, List("histmersion.plugins")), Map.empty)

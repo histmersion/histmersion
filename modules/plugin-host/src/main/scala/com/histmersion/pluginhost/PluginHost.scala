@@ -424,7 +424,8 @@ object PluginHost:
       fetchers: Staged[SourceFetcher],
       media: Staged[MediaCollection],
       events: Staged[EventCatalogue],
-      ai: Staged[AiProvider]
+      ai: Staged[AiProvider],
+      gazetteers: Staged[GazetteerSource]
   ) extends PluginContext:
     lazy val http: PluginHttp = services.http()
     val log: PluginLog = new PluginLog:
@@ -439,6 +440,7 @@ object PluginHost:
     override def mediaCollections = media
     override def eventCatalogues = events
     override def aiProviders = ai
+    override def gazetteerSources = gazetteers
 
   private def validFetcher(id: String, f: SourceFetcher): Option[String] =
     if !id.matches(IdPattern) then Some(s"'$id': a source fetcher id is $IdPattern")
@@ -479,6 +481,17 @@ object PluginHost:
     else if a == null then Some(s"AI provider '$id' is null")
     else if firstParty || a.isInstanceOf[HostOwned] then None
     else if ReservedNames.aiProviders(id) then Some(s"'$id' is the name of one of Histmersion's own AI providers")
+    else None
+
+  /** A gazetteer source: a kebab-case id; a plugin's may not take the name of one of the host's own sources (the
+    * datasets `places fetch` and `init.fetch-sources` name), unless it is the first-party plugin the name is reserved
+    * for.
+    */
+  private def validGazetteer(firstParty: Boolean)(id: String, g: GazetteerSource): Option[String] =
+    if !id.matches(IdPattern) then Some(s"'$id': a gazetteer source id is $IdPattern")
+    else if g == null then Some(s"gazetteer source '$id' is null")
+    else if firstParty then None
+    else if ReservedNames.gazetteerSources(id) then Some(s"'$id' is the name of one of Histmersion's own gazetteers")
     else None
 
   private def validVault(id: String, v: SecretVault): Option[String] =
@@ -706,13 +719,22 @@ object PluginHost:
           Staged[MediaCollection](Registries.MediaCollection, regs.mediaCollections, validCollection(firstParty))
         val events = Staged[EventCatalogue](Registries.EventCatalogue, regs.eventCatalogues, validCatalogue(firstParty))
         val ai = Staged[AiProvider](Registries.AiProvider, regs.aiProviders, validAiProvider(firstParty))
-        val ctx = RegistrationContext(id, services, resolved, staged, fetchers, media, events, ai)
+        val gazetteers =
+          Staged[GazetteerSource](Registries.GazetteerSource, regs.gazetteerSources, validGazetteer(firstParty))
+        val ctx = RegistrationContext(id, services, resolved, staged, fetchers, media, events, ai, gazetteers)
         val outcome =
           try pr.call(ctx)
           catch
             case e: LinkageError => Left(s"register threw ${failure(e)}")
             case NonFatal(e)     => Left(s"register threw ${failure(e)}")
-        val added = Registries(staged.close(), fetchers.close(), media.close(), events.close(), ai.close())
+        val added = Registries(
+          staged.close(),
+          fetchers.close(),
+          media.close(),
+          events.close(),
+          ai.close(),
+          gazetteerSources = gazetteers.close()
+        )
         outcome match
           case Left(e)  => fail(e)
           case Right(_) =>

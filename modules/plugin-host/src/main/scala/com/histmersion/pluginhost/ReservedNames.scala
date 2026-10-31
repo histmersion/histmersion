@@ -67,10 +67,20 @@ object ReservedNames:
     "ai-claude-code",
     "ai-codex",
     "ai-opencode",
+    "gazetteer-cliopatria",
+    "gazetteer-awmc",
+    "gazetteer-chronontology",
     "keepassxc",
     "1password",
     "bitwarden"
   )
+
+  /** The network gazetteers `places fetch` and `init.fetch-sources` name, and the other names they take (the coastline,
+    * PeriodO, the bundled extracts): a plugin's source under one of them would be taken for the host's own.
+    */
+  val gazetteerSources: Set[String] =
+    Set("cliopatria", "awmc", "chronontology", "land", "periodo") ++
+      com.histmersion.api.GazetteerKind.values.map(_.wire).toSet
 
   /** The built-in AI providers. */
   val aiProviders: Set[String] = Agents.ProviderKind.values.map(_.wire).toSet

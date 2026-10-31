@@ -1,0 +1,50 @@
+{
+  "reflection": [
+    {
+      "type": "com.histmersion.plugins.gazetteers.AwmcPlugin",
+      "fields": [
+        {
+          "name": "configReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.gazetteers.ChronOntologyPlugin",
+      "fields": [
+        {
+          "name": "configReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.gazetteers.CliopatriaPlugin",
+      "fields": [
+        {
+          "name": "configReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.gazetteers.GazetteerSettings$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "glob": "META-INF/histmersion/plugins/gazetteer-awmc.conf"
+    },
+    {
+      "glob": "META-INF/histmersion/plugins/gazetteer-chronontology.conf"
+    },
+    {
+      "glob": "META-INF/histmersion/plugins/gazetteer-cliopatria.conf"
+    },
+    {
+      "glob": "META-INF/services/com.histmersion.plugin.Plugin"
+    }
+  ]
+}

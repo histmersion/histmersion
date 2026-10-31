@@ -33,6 +33,31 @@ com.histmersion.plugin.testkit.AcceptedEvent$ class
 com.histmersion.plugin.testkit.AcceptedEvent$ fromProduct(scala.Product): com.histmersion.plugin.testkit.AcceptedEvent
 com.histmersion.plugin.testkit.AcceptedEvent$ toString(): java.lang.String
 com.histmersion.plugin.testkit.AcceptedEvent$ unapply(com.histmersion.plugin.testkit.AcceptedEvent): com.histmersion.plugin.testkit.AcceptedEvent
+com.histmersion.plugin.testkit.AcceptedPlace _1(): com.histmersion.plugin.GazetteerPlace
+com.histmersion.plugin.testkit.AcceptedPlace _2(): scala.Option
+com.histmersion.plugin.testkit.AcceptedPlace apply(com.histmersion.plugin.GazetteerPlace, scala.Option): com.histmersion.plugin.testkit.AcceptedPlace
+com.histmersion.plugin.testkit.AcceptedPlace canEqual(java.lang.Object): boolean
+com.histmersion.plugin.testkit.AcceptedPlace class
+com.histmersion.plugin.testkit.AcceptedPlace copy(com.histmersion.plugin.GazetteerPlace, scala.Option): com.histmersion.plugin.testkit.AcceptedPlace
+com.histmersion.plugin.testkit.AcceptedPlace equals(java.lang.Object): boolean
+com.histmersion.plugin.testkit.AcceptedPlace fromProduct(scala.Product): com.histmersion.plugin.testkit.AcceptedPlace
+com.histmersion.plugin.testkit.AcceptedPlace hashCode(): int
+com.histmersion.plugin.testkit.AcceptedPlace new(com.histmersion.plugin.GazetteerPlace, scala.Option)
+com.histmersion.plugin.testkit.AcceptedPlace place(): com.histmersion.plugin.GazetteerPlace
+com.histmersion.plugin.testkit.AcceptedPlace productArity(): int
+com.histmersion.plugin.testkit.AcceptedPlace productElement(int): java.lang.Object
+com.histmersion.plugin.testkit.AcceptedPlace productElementName(int): java.lang.String
+com.histmersion.plugin.testkit.AcceptedPlace productElementNames(): scala.collection.Iterator
+com.histmersion.plugin.testkit.AcceptedPlace productIterator(): scala.collection.Iterator
+com.histmersion.plugin.testkit.AcceptedPlace productPrefix(): java.lang.String
+com.histmersion.plugin.testkit.AcceptedPlace source(): scala.Option
+com.histmersion.plugin.testkit.AcceptedPlace toString(): java.lang.String
+com.histmersion.plugin.testkit.AcceptedPlace unapply(com.histmersion.plugin.testkit.AcceptedPlace): com.histmersion.plugin.testkit.AcceptedPlace
+com.histmersion.plugin.testkit.AcceptedPlace$ apply(com.histmersion.plugin.GazetteerPlace, scala.Option): com.histmersion.plugin.testkit.AcceptedPlace
+com.histmersion.plugin.testkit.AcceptedPlace$ class
+com.histmersion.plugin.testkit.AcceptedPlace$ fromProduct(scala.Product): com.histmersion.plugin.testkit.AcceptedPlace
+com.histmersion.plugin.testkit.AcceptedPlace$ toString(): java.lang.String
+com.histmersion.plugin.testkit.AcceptedPlace$ unapply(com.histmersion.plugin.testkit.AcceptedPlace): com.histmersion.plugin.testkit.AcceptedPlace
 com.histmersion.plugin.testkit.AiHttpRequest _1(): java.lang.String
 com.histmersion.plugin.testkit.AiHttpRequest _2(): java.lang.String
 com.histmersion.plugin.testkit.AiHttpRequest _3(): scala.collection.immutable.Map
@@ -297,6 +322,37 @@ com.histmersion.plugin.testkit.FetcherAnswer$ class
 com.histmersion.plugin.testkit.FetcherAnswer$ fromProduct(scala.Product): com.histmersion.plugin.testkit.FetcherAnswer
 com.histmersion.plugin.testkit.FetcherAnswer$ toString(): java.lang.String
 com.histmersion.plugin.testkit.FetcherAnswer$ unapply(com.histmersion.plugin.testkit.FetcherAnswer): com.histmersion.plugin.testkit.FetcherAnswer
+com.histmersion.plugin.testkit.GazetteerReport _1(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.GazetteerReport _2(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.GazetteerReport _3(): scala.Option
+com.histmersion.plugin.testkit.GazetteerReport _4(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.GazetteerReport _5(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.GazetteerReport accepted(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.GazetteerReport apply(scala.collection.immutable.List, scala.collection.immutable.List, scala.Option, scala.collection.immutable.List, scala.collection.immutable.List): com.histmersion.plugin.testkit.GazetteerReport
+com.histmersion.plugin.testkit.GazetteerReport canEqual(java.lang.Object): boolean
+com.histmersion.plugin.testkit.GazetteerReport class
+com.histmersion.plugin.testkit.GazetteerReport copy(scala.collection.immutable.List, scala.collection.immutable.List, scala.Option, scala.collection.immutable.List, scala.collection.immutable.List): com.histmersion.plugin.testkit.GazetteerReport
+com.histmersion.plugin.testkit.GazetteerReport equals(java.lang.Object): boolean
+com.histmersion.plugin.testkit.GazetteerReport failure(): scala.Option
+com.histmersion.plugin.testkit.GazetteerReport fromProduct(scala.Product): com.histmersion.plugin.testkit.GazetteerReport
+com.histmersion.plugin.testkit.GazetteerReport hashCode(): int
+com.histmersion.plugin.testkit.GazetteerReport log(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.GazetteerReport new(scala.collection.immutable.List, scala.collection.immutable.List, scala.Option, scala.collection.immutable.List, scala.collection.immutable.List)
+com.histmersion.plugin.testkit.GazetteerReport productArity(): int
+com.histmersion.plugin.testkit.GazetteerReport productElement(int): java.lang.Object
+com.histmersion.plugin.testkit.GazetteerReport productElementName(int): java.lang.String
+com.histmersion.plugin.testkit.GazetteerReport productElementNames(): scala.collection.Iterator
+com.histmersion.plugin.testkit.GazetteerReport productIterator(): scala.collection.Iterator
+com.histmersion.plugin.testkit.GazetteerReport productPrefix(): java.lang.String
+com.histmersion.plugin.testkit.GazetteerReport refused(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.GazetteerReport requests(): scala.collection.immutable.List
+com.histmersion.plugin.testkit.GazetteerReport toString(): java.lang.String
+com.histmersion.plugin.testkit.GazetteerReport unapply(com.histmersion.plugin.testkit.GazetteerReport): com.histmersion.plugin.testkit.GazetteerReport
+com.histmersion.plugin.testkit.GazetteerReport$ apply(scala.collection.immutable.List, scala.collection.immutable.List, scala.Option, scala.collection.immutable.List, scala.collection.immutable.List): com.histmersion.plugin.testkit.GazetteerReport
+com.histmersion.plugin.testkit.GazetteerReport$ class
+com.histmersion.plugin.testkit.GazetteerReport$ fromProduct(scala.Product): com.histmersion.plugin.testkit.GazetteerReport
+com.histmersion.plugin.testkit.GazetteerReport$ toString(): java.lang.String
+com.histmersion.plugin.testkit.GazetteerReport$ unapply(com.histmersion.plugin.testkit.GazetteerReport): com.histmersion.plugin.testkit.GazetteerReport
 com.histmersion.plugin.testkit.HttpMode LiveVariable(): java.lang.String
 com.histmersion.plugin.testkit.HttpMode ModeVariable(): java.lang.String
 com.histmersion.plugin.testkit.HttpMode Offline(): com.histmersion.plugin.testkit.HttpMode
@@ -478,6 +534,7 @@ com.histmersion.plugin.testkit.PluginHarness aiTurn(java.lang.String, com.histme
 com.histmersion.plugin.testkit.PluginHarness class
 com.histmersion.plugin.testkit.PluginHarness contributions(): com.histmersion.plugin.testkit.Contributions
 com.histmersion.plugin.testkit.PluginHarness fetch(com.histmersion.plugin.WorkKey, scala.Option, boolean, boolean): com.histmersion.plugin.testkit.FetchReport
+com.histmersion.plugin.testkit.PluginHarness gazetteerSources(): scala.collection.immutable.List
 com.histmersion.plugin.testkit.PluginHarness http(): com.histmersion.plugin.testkit.HttpMode
 com.histmersion.plugin.testkit.PluginHarness id(): java.lang.String
 com.histmersion.plugin.testkit.PluginHarness liveAiHttp(): com.histmersion.plugin.AiHttp
@@ -486,6 +543,7 @@ com.histmersion.plugin.testkit.PluginHarness log(): scala.collection.immutable.L
 com.histmersion.plugin.testkit.PluginHarness new(java.lang.String, com.histmersion.plugin.Plugin, com.histmersion.pluginhost.Registries, com.histmersion.config.AppConfig, org.ekrich.config.Config, com.histmersion.plugin.testkit.HttpMode, com.histmersion.plugin.testkit.internal.Wire, com.histmersion.plugin.testkit.internal.Lines, com.histmersion.pluginhost.PolicyHttp, scala.collection.immutable.List)
 com.histmersion.plugin.testkit.PluginHarness plugin(): com.histmersion.plugin.Plugin
 com.histmersion.plugin.testkit.PluginHarness readCatalogue(java.lang.String, com.histmersion.plugin.CatalogueQuery): com.histmersion.plugin.testkit.CatalogueReport
+com.histmersion.plugin.testkit.PluginHarness readGazetteer(java.lang.String): com.histmersion.plugin.testkit.GazetteerReport
 com.histmersion.plugin.testkit.PluginHarness requests(): scala.collection.immutable.List
 com.histmersion.plugin.testkit.PluginHarness resolveSecret(java.lang.String, java.lang.String): scala.util.Either
 com.histmersion.plugin.testkit.PluginHarness searchMedia(java.lang.String, com.histmersion.plugin.MediaPlace): com.histmersion.plugin.testkit.MediaReport

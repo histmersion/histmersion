@@ -238,6 +238,8 @@ The settings of backups and portable bundles are listed with them, in
 | `places.placeholder-area-share` | `HISTMERSION_PLACEHOLDER_AREA_SHARE` | `0.25` | a finding whose point is a placeholder (an atlas grid square's centre, or the point the geocoder gives a region's name) belongs to the place its name resolves to and to the areas covering at least this share of that place — never to the sites and features near the point |
 | `places.modern-from` | `HISTMERSION_PLACES_MODERN_FROM` | `1500` | a view at a time (the map at a year, place search and suggestions, children and tree with `asOf`) shows present-day places — the Natural Earth cities, undated GeoNames/Wikidata places — only from this year on |
 | `places.geo-max-limit` | `HISTMERSION_PLACES_GEO_MAX_LIMIT` | `2000` | cap on `/api/places/geo`'s `limit` (instead of `limits.max-page`): over a whole range the area layer draws every state alive in it, each a stored simplified outline |
+| `places.fetch-timeout-seconds` | `HISTMERSION_PLACES_FETCH_TIMEOUT` | `120` | how long a network gazetteer's download (`places fetch cliopatria\|awmc\|chronontology`, init's fetch-sources) waits for the answer |
+| `places.fetch-connect-timeout-seconds` | `HISTMERSION_PLACES_FETCH_CONNECT_TIMEOUT` | `30` | how long it waits for the connection |
 | `places.search-limit` | — | `20` | default rows from `/api/places?q=` |
 | `places.children-limit` | — | `200` | max children listed for one place |
 | `places.tree-limit` / `.tree-depth` | — | `500` / `6` | bounds on one hierarchy walk |

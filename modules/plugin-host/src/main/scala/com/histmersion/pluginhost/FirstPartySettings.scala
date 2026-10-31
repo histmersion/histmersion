@@ -82,7 +82,9 @@ object FirstPartySettings:
         "ai-claude-code",
         "ai-codex",
         "ai-opencode"
-      ).map(FirstPartySettings(_, Nil))
+      ).map(FirstPartySettings(_, Nil)) ++
+      // the gazetteers read no host setting: the host lends each download its own client (places.fetch-*)
+      List("gazetteer-cliopatria", "gazetteer-awmc", "gazetteer-chronontology").map(FirstPartySettings(_, Nil))
 
   private val byId: Map[String, FirstPartySettings] = all.map(s => s.plugin -> s).toMap
 

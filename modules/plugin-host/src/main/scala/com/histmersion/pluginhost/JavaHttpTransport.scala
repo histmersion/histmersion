@@ -7,13 +7,15 @@ import java.util.Locale
 import scala.jdk.CollectionConverters.*
 
 /** The real client: `java.net.http`, following redirects, the URL used exactly as built (the provider URLs are already
-  * percent-encoded).
+  * percent-encoded). `timeoutSeconds` bounds the wait for an answer, `connectSeconds` (when given; else the same) the
+  * connection.
   */
-final class JavaHttpTransport(timeoutSeconds: => Int) extends HttpTransport: // by name: read per request
+final class JavaHttpTransport(timeoutSeconds: => Int, connectSeconds: Option[Int] = None)
+    extends HttpTransport: // by name: read per request
   private val client = HttpClient
     .newBuilder()
     .followRedirects(HttpClient.Redirect.NORMAL)
-    .connectTimeout(Duration.ofSeconds(timeoutSeconds.toLong.max(1)))
+    .connectTimeout(Duration.ofSeconds(connectSeconds.getOrElse(timeoutSeconds).toLong.max(1)))
     .version(HttpClient.Version.HTTP_1_1)
     .build()
 

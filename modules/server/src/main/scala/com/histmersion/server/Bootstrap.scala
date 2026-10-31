@@ -5,7 +5,9 @@ import com.histmersion.files.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.{JobRepo, PeriodRepo, PlaceRepo}
-import com.histmersion.server.importers.{GazetteerImporter, GazetteerLoad, ImportRunner, NaturalEarthLand, PeriodOFetch}
+import com.histmersion.server.importers.{GazetteerLoad, ImportRunner, NaturalEarthLand, PeriodOFetch}
+import com.histmersion.domain.catalogue.places.BuiltinGazetteers
+import com.histmersion.pluginhost.PluginGazetteers
 
 import java.nio.file.{Files, Path}
 import com.histmersion.values.PlaceKind
@@ -299,10 +301,14 @@ final class Bootstrap(
       case NaturalEarthLand.name =>
         NaturalEarthLand.run(ds, dryRun = false).map(r => s"${r.places} polit(y/ies) clipped")
       case other =>
-        GazetteerImporter
-          .byName(other)
-          .toRight(s"unknown source '$other' (available: ${Bootstrap.sources.mkString(", ")})")
-          .flatMap(imp => ImportRunner.fetchAndImport(imp, ds, dryRun = false, cfg.places.pointToleranceKm))
+        val registered = deps.plugins.registries.gazetteerSources
+        val available = Bootstrap.sources ++ BuiltinGazetteers.thirdParty(registered)
+        BuiltinGazetteers
+          .resolve(other, registered, s"unknown source '$other' (available: ${available.mkString(", ")})")
+          .flatMap(src =>
+            val http = PluginGazetteers.http(PluginGazetteers.transport(cfg.places))
+            ImportRunner.fetchAndImport(src, http, ds, dryRun = false, cfg.places.pointToleranceKm)
+          )
           .map(r => s"${r.places} place(s)")
 
 object Bootstrap:
@@ -315,6 +321,6 @@ object Bootstrap:
   /** How many skipped period definitions an import result or a job names one by one (all are counted). */
   val SkippedListed = 50
 
-  /** Every name `init.fetch-sources` may hold. */
+  /** Every name `init.fetch-sources` may hold (and the sources a plugin registers). */
   def sources: List[String] =
-    GazetteerImporter.all.map(_.name) ++ List(NaturalEarthLand.name, PeriodOFetch.name) ++ GazetteerLoad.names
+    BuiltinGazetteers.names ++ List(NaturalEarthLand.name, PeriodOFetch.name) ++ GazetteerLoad.names

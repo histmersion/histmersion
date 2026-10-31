@@ -3,6 +3,9 @@ package com.histmersion.server.importers
 import com.histmersion.api.*
 import com.histmersion.config.AppConfig
 import com.histmersion.db.TestDb
+import com.histmersion.plugin.PluginHttp
+import com.histmersion.pluginhost.{HttpTransport, PluginGazetteers}
+import com.histmersion.server.plugins.Plugins
 import com.histmersion.server.{Bootstrap, Deps, Handlers}
 
 import com.augustnagro.magnum.*
@@ -32,16 +35,23 @@ class GazetteerStoreSuite extends com.histmersion.db.DbSuite:
     if testDb.isDefined then scratch.dropAll()
 
   private def fixture(name: String): Array[Byte] =
-    Files.readAllBytes(Path.of(s"modules/server/src/test/resources/gazetteers/$name"))
+    Files.readAllBytes(Path.of(s"modules/plugins/gazetteers/src/test/resources/gazetteers/$name"))
 
   private def zipped(name: String): Array[Byte] =
     GazetteerLoopback.zip(List("__MACOSX/._x" -> "mac".getBytes(UTF_8), "cliopatria.geojson" -> fixture(name)))
 
-  // ── the code under test: today's runner ─────────────────────────────────────────────────────
+  // ── the code under test: the plugins' sources run by the host's runner ──────────────────────
+
+  private lazy val sources = Plugins.offline.registries.gazetteerSources
+
+  /** The host's gazetteer client, its requests sent to the loopback server instead of the source's host. */
+  private def http: PluginHttp =
+    val wire = PluginGazetteers.transport(cfg.places)
+    PluginGazetteers.http(new HttpTransport:
+      def get(url: String, headers: Map[String, String]) = wire.get(loop.local(url), headers))
 
   private def importOnce(name: String): Either[String, PlaceImportResult] =
-    val imp = GazetteerImporter.byName(name).get
-    ImportRunner.fetchAndImport(imp, ds, dryRun = false, cfg.places.pointToleranceKm, Some(loop.local(imp.fetchUrl)))
+    ImportRunner.fetchAndImport(sources(name), http, ds, dryRun = false, cfg.places.pointToleranceKm)
 
   // ── the transcript ──────────────────────────────────────────────────────────────────────────
 

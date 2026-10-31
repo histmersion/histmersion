@@ -325,8 +325,8 @@ under a licence compatible with the AGPL ([Legal notice](../legal.md)).
 - **`register(config, ctx): Either[String, Unit]`.** Called once per configuration generation, after
   every `Secret` in the decoded config was resolved. What the plugin adds to the context's
   **registries** is staged: a `Left` or an exception discards all of it.
-- **Five registries** on `PluginContext`, one per extension point: `secretVaults`, `sourceFetchers`,
-  `mediaCollections`, `eventCatalogues`, `aiProviders`. A new extension point is a new registry, not a
+- **Six registries** on `PluginContext`, one per extension point: `secretVaults`, `sourceFetchers`,
+  `mediaCollections`, `eventCatalogues`, `aiProviders`, `gazetteerSources`. A new extension point is a new registry, not a
   new service type, so existing jars keep loading.
 - **What the host lends.** `ctx.http` (the host's HTTP client and its politeness policy — a plugin
   never opens its own sockets), `ctx.log` (`info`/`warn`, the plugin's id on every line),

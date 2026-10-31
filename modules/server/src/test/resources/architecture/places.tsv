@@ -1150,10 +1150,6 @@ server:server/hot/HotDataSource.scala	server
 server:server/hot/HotGraph.scala	server
 server:server/hot/PinRequests.scala	server
 server:server/hot/Pinning.scala	server
-server:server/importers/AwmcImporter.scala	library.ingest
-server:server/importers/ChronOntologyImporter.scala	library.ingest
-server:server/importers/CliopatriaImporter.scala	library.ingest
-server:server/importers/GazetteerImporter.scala	library.ingest
 server:server/importers/GazetteerLoad.scala	catalogue.places
 server:server/importers/ImportRunner.scala	catalogue.places
 server:server/importers/NaturalEarthLand.scala	catalogue.places

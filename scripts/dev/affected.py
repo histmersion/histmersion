@@ -35,6 +35,7 @@ DEPS = {
     "pluginsFetchers": ["upstreams", "pluginTestkit"],
     "pluginsEvents": ["upstreams", "pluginTestkit"],
     "pluginsMedia": ["upstreams", "pluginTestkit"],
+    "pluginsGazetteers": ["upstreams", "pluginTestkit"],
     "pluginHello": ["pluginApi"],
     "pluginHelloAi": ["pluginApi"],
     "pluginHelloLib": [],
@@ -46,10 +47,10 @@ DEPS = {
     "cli": ["api", "config", "files"],
     "web": ["apiJS"],
     "server": ["core", "db", "pluginApi", "pluginHost", "pluginVaults", "pluginsFetchers", "pluginsEvents", "pluginsMedia", "pluginHello",
-               "pluginHelloAi", "pluginHelloDeps"],
+               "pluginHelloAi", "pluginHelloDeps", "pluginsGazetteers"],
 }
 ORDER = ["values", "valuesJS", "api", "apiJS", "config", "files", "core", "pluginApi", "upstreams", "pluginHost", "pluginTestkit",
-         "pluginsFetchers", "pluginsEvents", "pluginsMedia", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloLib",
+         "pluginsFetchers", "pluginsEvents", "pluginsMedia", "pluginsGazetteers", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloLib",
          "pluginHelloDeps", "pluginResolver", "chimneyIron", "chimneyIronTests", "db", "cli", "web", "server"]
 # modules with no test sources of their own
 NO_TESTS = {"pluginHello", "pluginHelloAi", "pluginHelloLib", "pluginHelloDeps", "chimneyIron"}
@@ -86,6 +87,7 @@ RULES = [
     ("modules/plugins/fetchers/", ["pluginsFetchers"]),
     ("modules/plugins/events/", ["pluginsEvents"]),
     ("modules/plugins/media/", ["pluginsMedia"]),
+    ("modules/plugins/gazetteers/", ["pluginsGazetteers"]),
     ("modules/plugin-testkit/", ["pluginTestkit"]),
     ("modules/plugin-vaults/", ["pluginVaults"]),
     ("modules/plugin-fixtures/hello-ai/", ["pluginHelloAi"]),

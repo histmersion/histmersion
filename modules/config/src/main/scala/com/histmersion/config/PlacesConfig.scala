@@ -12,7 +12,8 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * finding whose point is a placeholder belongs to the areas covering at least this share of the place its name
   * resolves to (`db.PlaceRepo.insertAssignments`). `geoMaxLimit` caps the map's area and site feed (`/api/places/geo`)
   * apart from `limits.max-page`: over a whole range the area layer draws every state alive in it (1 744 for
-  * -3000..2000), each a stored simplified outline (V090).
+  * -3000..2000), each a stored simplified outline (V090). `fetchTimeoutSeconds` and `fetchConnectTimeoutSeconds` bound
+  * a network gazetteer's download (the answer, the connection).
   */
 final case class PlacesConfig(
     pointToleranceKm: Double,
@@ -27,7 +28,9 @@ final case class PlacesConfig(
     modernFrom: Long,
     sources: PlaceSourcesConfig,
     placeholderAreaShare: Double,
-    geoMaxLimit: Int
+    geoMaxLimit: Int,
+    fetchTimeoutSeconds: Int,
+    fetchConnectTimeoutSeconds: Int
 ) derives ConfigReader:
   /** `/api/places/geo`'s `limit` into `[1, geoMaxLimit]`; absent or `<= 0` is `dflt` (itself capped). */
   def geoLimit(requested: Option[Int], dflt: Int): Int =

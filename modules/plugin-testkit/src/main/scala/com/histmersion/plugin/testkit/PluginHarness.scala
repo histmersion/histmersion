@@ -14,6 +14,7 @@ import com.histmersion.pluginhost.{
   JavaHttpTransport,
   PluginAi,
   PluginEvents,
+  PluginGazetteers,
   PluginHost,
   PluginMedia,
   PolicyHttp,
@@ -83,6 +84,11 @@ final class PluginHarness private (
       registries.aiProviders.keys.toList,
       registries.secretVaults.keys.toList
     )
+
+  /** The gazetteer sources the plugin registered, each under the name `places fetch` takes (`gazetteer-source:<name>`
+    * in the server's list).
+    */
+  def gazetteerSources: List[String] = registries.gazetteerSources.keys.toList
 
   /** Every line logged since the plugin was loaded. */
   def log: List[LogLine] = lines.all
@@ -251,6 +257,32 @@ final class PluginHarness private (
               (parts.distinct, None)
         }
         CatalogueReport(parts, pages.result(), accepted.result(), refused.result(), failure, logged, asked)
+
+  /** One import of the plugin's gazetteer source `name`, as `places fetch` runs it: the download through the server's
+    * gazetteer client (its User-Agent and `places.fetch-*` timeouts), each place checked and converted as the server
+    * stores it — without the store.
+    */
+  def readGazetteer(name: String): GazetteerReport =
+    registries.gazetteerSources.get(name) match
+      case None      => GazetteerReport(Nil, Nil, Some(s"the plugin registered no gazetteer source '$name'"), Nil, Nil)
+      case Some(src) =>
+        val (got, logged, asked) = run {
+          val http = PluginGazetteers.http(wire.transport(PluginGazetteers.transport(host.places)), hostLog)
+          PluginGazetteers.guard(src.fetch(http)).map { places =>
+            val credit = PluginGazetteers.guard(Right(src.rights.credit)).getOrElse("")
+            places.map(p => PluginGazetteers.input(p, credit).map(in => AcceptedPlace(p, in.place.source)))
+          }
+        }
+        got match
+          case Left(why)   => GazetteerReport(Nil, Nil, Some(why), logged, asked)
+          case Right(read) =>
+            GazetteerReport(
+              read.collect { case Right(a) => a },
+              read.collect { case Left(w) => w },
+              None,
+              logged,
+              asked
+            )
 
   /** One model call to the plugin's AI provider `provider`, as the server's agents make it: the provider's check of
     * `request.model` first, then the call. `http` is what the provider sends through — [[ScriptedAiHttp]] in a test,
