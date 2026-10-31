@@ -21,7 +21,7 @@ final case class MergeApplyJob(
 object MergeApplyJob:
   given Schema[MergeApplyJob] = summon[KindlingsSchema[MergeApplyJob]].schema
 
-  val JobKind = com.histmersion.api.JobKind.MergeApply.wire
+  val JobKind = com.histmersion.api.JobKindsAdapter.MergeApply.value
 
   val InterruptedText: String =
     "the server stopped while this merge apply ran — its transaction was committed or rolled back as a whole, " +

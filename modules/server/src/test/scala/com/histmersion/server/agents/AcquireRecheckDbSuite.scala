@@ -7,7 +7,8 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.AcquireChecks.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.{AcquireCheckRepo, AutopilotRepo, JobRepo, Migrate, SourceRepo}
+import com.histmersion.db.{AcquireCheckRepo, AutopilotRepo, Migrate, SourceRepo}
+import com.histmersion.util.jobs.JobRepo
 import com.histmersion.plugin.{Access, Fetch, FetchContext, FetchedFile, SourceFetcher, WorkKey}
 import com.histmersion.pluginhost.FetchChain
 import com.histmersion.server.{Deps, Handlers}

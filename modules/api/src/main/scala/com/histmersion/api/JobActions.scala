@@ -3,13 +3,7 @@ package com.histmersion.api
 object JobActions:
   val all: List[String] = List("pause", "resume", "cancel")
 
-  val Stoppable: Set[String] = Set(
-    JobKind.MediaImport,
-    JobKind.MediaCovers,
-    JobKind.EventsImport,
-    JobKind.BasemapFetch,
-    JobKind.AcquireRecheck,
-    JobKind.Init
-  ).map(_.wire)
+  /** The kinds whose jobs a person may pause and cancel. */
+  val Stoppable: Set[String] = JobKindsAdapter.all.stoppableKinds
 
   val CodeConflict = "conflict"

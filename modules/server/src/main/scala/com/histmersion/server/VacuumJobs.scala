@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.jobs.BackgroundJob
+
 import scala.annotation.tailrec
 import com.histmersion.api.*
 import com.histmersion.config.*

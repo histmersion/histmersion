@@ -3,7 +3,8 @@ package com.histmersion.server.media
 import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.{AppConfig, LoadedConfig}
-import com.histmersion.db.{JobRepo, PlaceRepo, TestDb}
+import com.histmersion.db.{PlaceRepo, TestDb}
+import com.histmersion.util.jobs.JobRepo
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport}
 import com.histmersion.server.{ConverterClient, Deps}
 import com.histmersion.server.plugins.Plugins

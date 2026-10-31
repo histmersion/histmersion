@@ -1,6 +1,6 @@
 package com.histmersion.api
 
-import com.histmersion.values.{ApprovalKind, ApprovalState, ManagerKind, Pipeline, RunState, SourceStatus}
+import com.histmersion.values.{ApprovalKind, ApprovalState, JobKind, ManagerKind, Pipeline, RunState, SourceStatus}
 
 object Wording:
 
@@ -171,25 +171,9 @@ object Wording:
   val Drain = "Finish current work, then pause"
   val Undrain = "Resume"
 
-  def jobKind(k: JobKind): String = k match
-    case JobKind.Ingest           => "Bring in a source"
-    case JobKind.Reocr            => "Read a source's text again"
-    case JobKind.Init             => "Import reference data"
-    case JobKind.MergeApply       => "Merge another collection"
-    case JobKind.Vacuum           => "Clean up the database"
-    case JobKind.Agent            => "Agent run"
-    case JobKind.AcquireRecheck   => "Check what to acquire again"
-    case JobKind.BasemapFetch     => "Download the background map"
-    case JobKind.PlacesFetch      => "Download a gazetteer"
-    case JobKind.PlacesHierarchy  => "Work out which places lie inside which"
-    case JobKind.EventsImport     => "Import events"
-    case JobKind.EventsCandidates => "Find sources for events"
-    case JobKind.EventsRederive   => "Re-date events"
-    case JobKind.SiteTypes        => "Look up site types"
-    case JobKind.MediaImport      => "Fetch pictures"
-    case JobKind.MediaCovers      => "Fetch source covers"
+  def jobKind(k: JobKind): String = JobKindsAdapter.all.get(k).fold(humanize(k.value))(_.name.value)
 
-  def jobKindOf(wire: String): String = JobKind.parse(wire).fold(humanize(wire))(jobKind)
+  def jobKindOf(wire: String): String = JobKindsAdapter.all.parse(wire).fold(humanize(wire))(_.name.value)
 
   def jobState(s: JobState): String = s match
     case JobState.Queued    => "Queued"
@@ -223,7 +207,7 @@ object Wording:
 
   lazy val known: Map[String, String] =
     schedulerJobTypes ++ waitCodes ++ strategies ++
-      JobKind.values.map(k => k.wire -> jobKind(k)) ++
+      JobKindsAdapter.all.entries.map(e => e.kind.value -> e.name.value) ++
       ApprovalKind.values.map(k => k.wire -> approvalKind(k)) ++
       Pipeline.values.map(p => p.wire -> pipeline(p)) ++
       ManagerKind.values.map(k => k.wire -> managerKind(k)) ++

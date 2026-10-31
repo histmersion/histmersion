@@ -1,4 +1,7 @@
-package com.histmersion.db
+package com.histmersion.util.jobs
+
+import com.histmersion.db.*
+import com.histmersion.db.given
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -8,7 +11,7 @@ import com.augustnagro.magnum.*
 import javax.sql.DataSource
 
 /** Flat projection of `jobs` (positional, like the other write-path rows). */
-final private[db] case class JobRow(
+final private[jobs] case class JobRow(
     id: String,
     kind: String,
     status: String,

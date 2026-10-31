@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.jobs.BackgroundJob
+
 import com.histmersion.values.{BundleKind, Citekey, PlaceKind, UserId}
 import com.histmersion.files.*
 
@@ -117,8 +119,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       .ActivityControllers(com.histmersion.domain.activity.ActivityService(ds), () => Instant.now())
 
   /** Pause, resume and cancel a job: a long background job cooperatively, an agent run by its own control. */
-  lazy val jobControl: com.histmersion.domain.jobs.JobControlControllers =
-    import com.histmersion.domain.jobs.{JobAction, JobControlControllers, JobControlService}
+  lazy val jobControl: com.histmersion.util.jobs.JobControlControllers =
+    import com.histmersion.util.jobs.{JobAction, JobControlControllers, JobControlService}
     def run(id: String, a: JobAction): Either[ApiError, Unit] = (a match
       case JobAction.Pause  => agents.engine.pause(id)
       case JobAction.Resume => agents.engine.resume(id, None, None)
@@ -1925,5 +1927,5 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
 object Handlers:
   /** The `jobs.kind` of a `places fetch` (a gazetteer, or the land) and of a hierarchy build (#1946). */
-  val PlacesFetchJobKind = com.histmersion.api.JobKind.PlacesFetch.wire
-  val PlacesHierarchyJobKind = com.histmersion.api.JobKind.PlacesHierarchy.wire
+  val PlacesFetchJobKind = com.histmersion.api.JobKindsAdapter.PlacesFetch.value
+  val PlacesHierarchyJobKind = com.histmersion.api.JobKindsAdapter.PlacesHierarchy.value

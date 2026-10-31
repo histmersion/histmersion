@@ -7,7 +7,8 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{AssetRepo, Db, JobRepo, MediaRepo, Migrate, PlaceRepo}
+import com.histmersion.db.{AssetRepo, Db, MediaRepo, Migrate, PlaceRepo}
+import com.histmersion.util.jobs.JobRepo
 import com.histmersion.server.{Composition, ConverterClient, Deps}
 import io.circe.parser.decode
 import java.net.URI

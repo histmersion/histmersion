@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.util.jobs.JobRepo
+
 import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*

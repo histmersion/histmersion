@@ -9,7 +9,7 @@ import java.time.Instant
 /** The SQL of the list filters (core `ListFilters`): one ` AND …` fragment per filter, named, so a page applies them
   * all and a facet's count applies all but its own. Pure, but for [[facet]].
   */
-private[db] object ListSql:
+private[histmersion] object ListSql:
 
   /** The named conditions of one filtered list, in order. */
   final case class Conds(parts: List[(String, Sql)]):

@@ -69,35 +69,7 @@ object JobsView:
   def kindLabel(kind: String): String = Wording.jobKindOf(kind)
 
   /** What each kind of job does; a tooltip on its filter chip, after its identifier (for the command line). */
-  def kindMeaning(kind: String): Option[String] = JobKind.parse(kind).map {
-    case JobKind.Ingest =>
-      "Brings in a source: fetches its open-access file or takes your upload, converts it to text (OCR) and stores it."
-    case JobKind.Reocr => "Converts a stored source's original file to text (OCR) again."
-    case JobKind.Init  =>
-      "The first-run import of reference data: the bundled gazetteer and period presets, and the sources it fetches."
-    case JobKind.MergeApply => "Merges another collection's bundle into this one, after taking a backup."
-    case JobKind.Vacuum     =>
-      "Database clean-up (VACUUM): frees the space old row versions hold after a re-seed or a gazetteer load."
-    case JobKind.Agent          => "An agent run; the agent runs window shows its steps."
-    case JobKind.AcquireRecheck =>
-      "Checks the to-acquire list again: which items have a legal open copy or are in the library now."
-    case JobKind.BasemapFetch =>
-      "Downloads and assembles base-map layers (vector map, terrain relief, sea floor) for an area."
-    case JobKind.PlacesFetch =>
-      "Downloads an external gazetteer, or Natural Earth land, and updates the places from it."
-    case JobKind.PlacesHierarchy =>
-      "Works out which places lie inside which (spatial containment), for the place hierarchy."
-    case JobKind.EventsImport     => "Imports the events of an external event catalogue."
-    case JobKind.EventsCandidates =>
-      "Looks for the sources that may attest each catalogue event: candidate links for you to confirm or reject."
-    case JobKind.EventsRederive =>
-      "Recomputes the dating of catalogue events from their stored records; nothing is downloaded."
-    case JobKind.SiteTypes   => "Looks up on Wikidata what type of site each Wikidata site on the map is."
-    case JobKind.MediaImport =>
-      "Asks a picture provider (Wikidata, museums, the Library of Congress…) for pictures of places and events."
-    case JobKind.MediaCovers =>
-      "Pictures of sources: Open Library covers by ISBN, and an illustration picked from a source's own figures."
-  }
+  def kindMeaning(kind: String): Option[String] = JobKindsAdapter.all.parse(kind).map(_.meaning.value)
 
   /** What each job state means for a person, and what comes next; a tooltip on its filter button. */
   def stateMeaning(s: JobState): String = s match
@@ -321,7 +293,7 @@ object JobsView:
         div(
           cls := "job-meta muted",
           // an agent run is a job: its row leads to the run; any other job, to its own page
-          if j.kind == JobKind.Agent.wire then
+          if j.kind == JobKindsAdapter.Agent.value then
             WinLink(WindowKey.Run(j.id), title := s"agent run ${j.id}", s"run ${j.id.take(8)}")
           else RouteLink(Route.Job(j.id), cls := "link-btn", title := s"job ${j.id}", s"job ${j.id.take(8)}"),
           Option(j.createdAt).filter(_.nonEmpty).map(c => span(title := c, s" · started ${agoOf(c)}")),

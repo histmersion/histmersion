@@ -125,7 +125,7 @@ object Agents:
       case ProviderKind.Opencode   => " (an opencode model is metered unless it is openai/… on a ChatGPT login)"
       case _                       => ""
 
-  val JobKind = com.histmersion.api.JobKind.Agent.wire
+  val JobKind = com.histmersion.api.JobKindsAdapter.Agent.value
 
   enum PauseReason(val wire: String):
     case Budget extends PauseReason("budget")

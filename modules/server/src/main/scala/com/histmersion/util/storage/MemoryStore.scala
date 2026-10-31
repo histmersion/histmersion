@@ -25,7 +25,8 @@ final class MemoryStore private (
   def this(location: Location, name: String) =
     this(location, name, AtomicReference(MemoryStore.Files(Map.empty, Set.empty)), StoreKey.Root)
 
-  private def full(key: StoreKey): StoreKey = if base.isRoot then key else if key.isRoot then base else base.child(key.value)
+  private def full(key: StoreKey): StoreKey =
+    if base.isRoot then key else if key.isRoot then base else base.child(key.value)
   private def local(key: StoreKey): StoreKey = key.relativeTo(base)
   private def now: Instant = Instant.EPOCH.plusMillis(MemoryStore.ticks.incrementAndGet())
 
@@ -52,7 +53,8 @@ final class MemoryStore private (
       .map(e => Stored(key, StoredKind.File, e.size, e.modified))
       .orElse(Option.when(isDirectory(key))(Stored(key, StoredKind.Directory, ByteCount.zero, Instant.EPOCH)))
 
-  def get(key: StoreKey): Option[Blob] = state.get.files.get(full(key)).map(e => MemoryStore.MemoryBlob(key, where(key), e))
+  def get(key: StoreKey): Option[Blob] =
+    state.get.files.get(full(key)).map(e => MemoryStore.MemoryBlob(key, where(key), e))
 
   def list(prefix: StoreKey): List[Stored] =
     val p = full(prefix)
@@ -103,9 +105,8 @@ final class MemoryStore private (
   def deleteTree(prefix: StoreKey): Option[ByteCount] =
     val p = full(prefix)
     Option.when(exists(prefix)) {
-      val before = state.getAndUpdate(f =>
-        Files(f.files.filterNot((k, _) => k.within(p)), f.directories.filterNot(_.within(p)))
-      )
+      val before =
+        state.getAndUpdate(f => Files(f.files.filterNot((k, _) => k.within(p)), f.directories.filterNot(_.within(p))))
       ByteCount.applyUnsafe(before.files.collect { case (k, e) if k.within(p) => e.size.value }.sum)
     }
 
@@ -120,7 +121,9 @@ final class MemoryStore private (
 
   def prune(rule: PruneRule): PruneReport = PruneReport(DiskStore.pruned(walk(), rule).filter(s => delete(s.key)))
 
-  private[util] def onDisk(key: StoreKey): Either[StoreError, java.nio.file.Path] = Left(StoreError.NotOnDisk(where(key)))
+  private[util] def onDisk(key: StoreKey): Either[StoreError, java.nio.file.Path] = Left(
+    StoreError.NotOnDisk(where(key))
+  )
 
 object MemoryStore:
   /** The modification times of an in-memory store: one later than the last for each write. */

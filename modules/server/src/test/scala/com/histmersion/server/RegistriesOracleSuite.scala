@@ -38,13 +38,13 @@ class RegistriesOracleSuite extends munit.FunSuite:
   )
 
   test("job-kinds.txt: every job kind, its name, its controls and its subjects"):
-    val lines = JobKind.values.toList.flatMap { k =>
-      val head = s"${k.wire}\t${Wording.jobKindOf(k.wire)}\tstoppable=${JobActions.Stoppable.contains(k.wire)}"
+    val lines = JobKindsAdapter.all.kinds.flatMap { k =>
+      val head = s"${k.value}\t${Wording.jobKindOf(k.value)}\tstoppable=${JobActions.Stoppable.contains(k.value)}"
       val subjects = details.map { (name, d) =>
-        val j = JobInfo(id = "j", kind = k.wire, status = "done", detail = Some(d))
+        val j = JobInfo(id = "j", kind = k.value, status = "done", detail = Some(d))
         s"  $name\t${JobDetail.subject(j).getOrElse("-")}"
       }
-      val withCitekey = JobInfo(id = "j", kind = k.wire, status = "done", citekey = Some("hattusa_1990"))
+      val withCitekey = JobInfo(id = "j", kind = k.value, status = "done", citekey = Some("hattusa_1990"))
       head :: subjects ::: List(s"  citekey\t${JobDetail.subject(withCitekey).getOrElse("-")}")
     }
     val unknown = s"unknown\t${Wording.jobKindOf("some-new-kind")}\tstoppable=${JobActions.Stoppable

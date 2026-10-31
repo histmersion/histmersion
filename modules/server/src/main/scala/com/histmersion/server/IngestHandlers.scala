@@ -6,7 +6,8 @@ import com.histmersion.files.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{AssetRepo, JobRepo, QueueRepo, SourceRepo}
+import com.histmersion.db.{AssetRepo, QueueRepo, SourceRepo}
+import com.histmersion.util.jobs.JobRepo
 
 import java.nio.file.{Files, Path, StandardCopyOption}
 import scala.jdk.OptionConverters.*

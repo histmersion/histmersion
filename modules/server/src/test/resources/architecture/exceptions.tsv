@@ -21,14 +21,10 @@ direction	api:api/EventDetail.scala	catalogue -> media: MediaThumb	1
 direction	api:api/FormatSeverity.scala	util.data -> library: Frontmatter	1
 direction	api:api/GoalPlans.scala	automation -> research: CoverageReason	1
 direction	api:api/GoalsExport.scala	automation -> library: Query	1
-direction	api:api/JobActions.scala	util.jobs -> library: AcquireRecheck	1
 direction	api:api/JobDetail.scala	util.jobs -> catalogue: EventImportReport	1
 direction	api:api/JobDetail.scala	util.jobs -> catalogue: EventRederiveReport	1
 direction	api:api/JobDetail.scala	util.jobs -> catalogue: SkippedPeriod	1
 direction	api:api/JobDetail.scala	util.jobs -> library: AcquireChecks	1
-direction	api:api/JobKind.scala	util.jobs -> catalogue: SiteTypes	1
-direction	api:api/JobKind.scala	util.jobs -> library: AcquireRecheck	1
-direction	api:api/JobKind.scala	util.jobs -> library: Ingest	1
 direction	api:api/Lint.scala	util.data -> library: Edge	1
 direction	api:api/Lint.scala	util.data -> research: Articles	1
 direction	api:api/Lint.scala	util.data -> research: CoverageEdge	1
@@ -119,11 +115,8 @@ direction	api:api/Wording.scala	util.common -> automation: Activity	1
 direction	api:api/Wording.scala	util.common -> automation: AgentMode	1
 direction	api:api/Wording.scala	util.common -> automation: AgentScheduler	1
 direction	api:api/Wording.scala	util.common -> automation: PlanGoal	1
-direction	api:api/Wording.scala	util.common -> catalogue: SiteTypes	1
-direction	api:api/Wording.scala	util.common -> library: AcquireRecheck	1
 direction	api:api/Wording.scala	util.common -> library: Edge	1
 direction	api:api/Wording.scala	util.common -> library: EnrichSource	1
-direction	api:api/Wording.scala	util.common -> library: Ingest	1
 direction	api:api/Wording.scala	util.common -> research: ArticleFilter	1
 direction	api:api/Wording.scala	util.common -> research: CompileArticle	1
 direction	api:api/Wording.scala	util.common -> research: ReviewArticle	1
@@ -263,7 +256,6 @@ direction	files:files/BundleEntities.scala	util.data -> library: Finding	1
 direction	files:files/BundleEntities.scala	util.data -> media: AssetLink	1
 direction	files:files/BundleEntities.scala	util.data -> research: ArticleVersion	1
 direction	server:domain/activity/ActivityRepo.scala	automation -> server: Jobs	1
-direction	server:server/BackgroundJob.scala	util.jobs -> server: Pinning	1
 direction	server:server/BackupJobs.scala	util.data -> server: Pinning	1
 direction	server:server/BundleHandlers.scala	util.data -> library: InstanceLabel	1
 direction	server:server/BundleHandlers.scala	util.data -> library: Originals	1

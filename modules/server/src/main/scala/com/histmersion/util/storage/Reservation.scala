@@ -4,8 +4,8 @@ import com.histmersion.values.{ByteCount, ByteOffset}
 
 import java.io.OutputStream
 
-/** A file being written beside its key: written in full (a stream, positional writes), then committed — moved over
-  * the key in one step — or discarded. Nothing reads a half-written file.
+/** A file being written beside its key: written in full (a stream, positional writes), then committed — moved over the
+  * key in one step — or discarded. Nothing reads a half-written file.
   */
 trait Reservation extends AutoCloseable:
   def key: StoreKey

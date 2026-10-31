@@ -1,15 +1,16 @@
-package com.histmersion.domain.jobs
+package com.histmersion.util.jobs
 
-import com.histmersion.api.{JobInfo, JobKind}
+import com.histmersion.api.{JobInfo, JobKindsAdapter}
+import com.histmersion.values.JobKind
 
 class JobControlRulesSuite extends munit.FunSuite:
 
-  private def job(kind: JobKind, status: String) = JobInfo("j1", kind.wire, status, None)
+  private def job(kind: JobKind, status: String) = JobInfo("j1", kind.value, status, None)
 
   test("an agent run takes its own control, whatever it is asked"):
     JobAction.values.foreach(a =>
       assertEquals(
-        JobControlRules.decide(job(JobKind.Agent, "running"), a, resumable = false),
+        JobControlRules.decide(job(JobKindsAdapter.Agent, "running"), a, resumable = false),
         Right(JobControlStep.Run(a))
       )
     )
@@ -17,24 +18,30 @@ class JobControlRulesSuite extends munit.FunSuite:
   test("a job that runs as one piece is refused"):
     assert(
       JobControlRules
-        .decide(job(JobKind.Ingest, "running"), JobAction.Pause, resumable = false)
+        .decide(job(JobKindsAdapter.Ingest, "running"), JobAction.Pause, resumable = false)
         .left
         .exists(_.contains("one piece"))
     )
-    assert(JobControlRules.decide(job(JobKind.Vacuum, "running"), JobAction.Cancel, resumable = false).isLeft)
+    assert(JobControlRules.decide(job(JobKindsAdapter.Vacuum, "running"), JobAction.Cancel, resumable = false).isLeft)
 
   test("the long jobs: pause and cancel are asked of a running one; a paused or queued one is cancelled at once"):
-    List(JobKind.MediaImport, JobKind.EventsImport, JobKind.BasemapFetch, JobKind.AcquireRecheck, JobKind.Init)
+    List(
+      JobKindsAdapter.MediaImport,
+      JobKindsAdapter.EventsImport,
+      JobKindsAdapter.BasemapFetch,
+      JobKindsAdapter.AcquireRecheck,
+      JobKindsAdapter.Init
+    )
       .foreach { k =>
         assertEquals(
           JobControlRules.decide(job(k, "running"), JobAction.Pause, resumable = false),
           Right(JobControlStep.RequestStop(JobStop.Pause)),
-          k.wire
+          k.value
         )
         assertEquals(
           JobControlRules.decide(job(k, "running"), JobAction.Cancel, resumable = false),
           Right(JobControlStep.RequestStop(JobStop.Cancel)),
-          k.wire
+          k.value
         )
         assertEquals(
           JobControlRules.decide(job(k, "paused"), JobAction.Cancel, resumable = true),
@@ -47,12 +54,12 @@ class JobControlRulesSuite extends munit.FunSuite:
       }
 
   test("resume: only a paused job this server can go on with"):
-    val paused = job(JobKind.MediaImport, "paused")
+    val paused = job(JobKindsAdapter.MediaImport, "paused")
     assertEquals(JobControlRules.decide(paused, JobAction.Resume, resumable = true), Right(JobControlStep.Resume))
     assert(JobControlRules.decide(paused, JobAction.Resume, resumable = false).left.exists(_.contains("restarted")))
     assert(
       JobControlRules
-        .decide(job(JobKind.MediaImport, "running"), JobAction.Resume, resumable = true)
+        .decide(job(JobKindsAdapter.MediaImport, "running"), JobAction.Resume, resumable = true)
         .left
         .exists(_.contains("not paused"))
     )
@@ -61,20 +68,23 @@ class JobControlRulesSuite extends munit.FunSuite:
     List("done", "failed", "cancelled").foreach(s =>
       JobAction.values.foreach(a =>
         assert(
-          JobControlRules.decide(job(JobKind.MediaImport, s), a, resumable = true).left.exists(_.contains("ended")),
+          JobControlRules
+            .decide(job(JobKindsAdapter.MediaImport, s), a, resumable = true)
+            .left
+            .exists(_.contains("ended")),
           s"$s $a"
         )
       )
     )
     assert(
       JobControlRules
-        .decide(job(JobKind.MediaImport, "paused"), JobAction.Pause, resumable = true)
+        .decide(job(JobKindsAdapter.MediaImport, "paused"), JobAction.Pause, resumable = true)
         .left
         .exists(_.contains("already"))
     )
     assert(
       JobControlRules
-        .decide(job(JobKind.MediaImport, "queued"), JobAction.Pause, resumable = true)
+        .decide(job(JobKindsAdapter.MediaImport, "queued"), JobAction.Pause, resumable = true)
         .left
         .exists(_.contains("cancel it"))
     )

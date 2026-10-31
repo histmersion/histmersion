@@ -1,10 +1,13 @@
 package com.histmersion.server
 
+import com.histmersion.util.jobs.BackgroundJob
+
 import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{JobRepo, PeriodRepo, PlaceRepo}
+import com.histmersion.db.{PeriodRepo, PlaceRepo}
+import com.histmersion.util.jobs.JobRepo
 import com.histmersion.server.importers.{GazetteerLoad, ImportRunner, NaturalEarthLand, PeriodOFetch}
 import com.histmersion.domain.catalogue.places.BuiltinGazetteers
 import com.histmersion.pluginhost.PluginGazetteers

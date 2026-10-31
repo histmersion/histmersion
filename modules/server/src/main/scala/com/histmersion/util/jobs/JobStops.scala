@@ -1,4 +1,4 @@
-package com.histmersion.domain.jobs
+package com.histmersion.util.jobs
 
 import java.util.concurrent.ConcurrentHashMap
 

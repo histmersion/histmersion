@@ -1,7 +1,7 @@
 package com.histmersion.server
 
 import com.histmersion.api.JobState
-import com.histmersion.db.JobRepo
+import com.histmersion.util.jobs.JobRepo
 
 import javax.sql.DataSource
 import java.util.concurrent.LinkedBlockingQueue

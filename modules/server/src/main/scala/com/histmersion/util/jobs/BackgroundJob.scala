@@ -1,11 +1,9 @@
-package com.histmersion.server
+package com.histmersion.util.jobs
 
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.JobRepo
-
-import com.histmersion.domain.jobs.{JobControlRules, JobStop, JobStopped, JobStops}
+import com.histmersion.util.jobs.JobRepo
 
 import java.util.concurrent.atomic.AtomicReference
 import javax.sql.DataSource
@@ -84,7 +82,7 @@ object BackgroundJob:
       /** The job runs on the generation (database, config) the caller is pinned to, even across a config reload
         * (docs/research-plugins.md §3.6).
         */
-      pins: com.histmersion.server.hot.Pinning = com.histmersion.server.hot.Pinning.none,
+      pins: WorkCarrier = WorkCarrier.none,
       stops: Option[JobStops] = None
   )(body: (JobInfo, String => Unit) => Outcome): Either[ApiError, JobInfo] =
     if !slot.claim("starting") then Left(busy(what, slot.current, busyCode))
@@ -108,13 +106,13 @@ object BackgroundJob:
       slot: Slot,
       what: String,
       busyCode: Option[String],
-      pins: com.histmersion.server.hot.Pinning,
+      pins: WorkCarrier,
       stops: Option[JobStops],
       from: JobState,
       body: (JobInfo, String => Unit) => Outcome
   ): Unit =
     slot.note(s"job ${job.id}")
-    val work = pins.carry {
+    val work = pins.carryWork { () =>
       val last = AtomicReference[Option[String]](None)
       // a report closes a part: what it says is kept, and a stop asked meanwhile takes effect there
       def report(text: String): Unit =
@@ -158,7 +156,7 @@ object BackgroundJob:
             )
       finally slot.free()
     }
-    val t = Thread.ofPlatform().daemon(true).name(s"histmersion-$kind").unstarted(() => work.run())
+    val t = Thread.ofPlatform().daemon(true).name(s"histmersion-$kind").unstarted(() => work())
     t.start()
 
   /** A paused job runs again on its row, in its slot; `Left` when the slot is held by another job now. */
@@ -169,7 +167,7 @@ object BackgroundJob:
       slot: Slot,
       what: String,
       busyCode: Option[String],
-      pins: com.histmersion.server.hot.Pinning,
+      pins: WorkCarrier,
       stops: Option[JobStops],
       body: (JobInfo, String => Unit) => Outcome
   ): Either[String, Unit] =

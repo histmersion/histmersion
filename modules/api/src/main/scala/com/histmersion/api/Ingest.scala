@@ -7,8 +7,8 @@ object Ingest:
 
   val MediaCacheControl = "public, max-age=86400"
 
-  val KindIngest = com.histmersion.api.JobKind.Ingest.wire
-  val KindReocr = com.histmersion.api.JobKind.Reocr.wire
+  val KindIngest = com.histmersion.api.JobKindsAdapter.Ingest.value
+  val KindReocr = com.histmersion.api.JobKindsAdapter.Reocr.value
 
   def originalDisposition(citekey: String, storedName: String): String =
     val ext = storedName.reverse.takeWhile(_ != '.').reverse

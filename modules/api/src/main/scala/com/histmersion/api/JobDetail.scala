@@ -21,12 +21,5 @@ final case class JobDetail(
 object JobDetail:
   given Schema[JobDetail] = summon[KindlingsSchema[JobDetail]].schema
 
-  def subject(j: JobInfo): Option[String] =
-    j.citekey
-      .orElse(j.detail.flatMap(_.init).map(InitPlan.describe))
-      .orElse(j.detail.flatMap(_.planHash).map(h => s"merge plan $h"))
-      .orElse(j.detail.flatMap(_.vacuum).map(Vacuum.describe))
-      .orElse(j.detail.flatMap(_.media))
-      .orElse(j.detail.flatMap(_.events))
-      .orElse(j.detail.flatMap(_.about))
-      .orElse(j.detail.flatMap(_.recheck).map(AcquireChecks.RecheckJob.describe))
+  /** What a job is about: its source, else what its detail says (each kind's owner says how). */
+  def subject(j: JobInfo): Option[String] = JobKindsAdapter.all.subject(j)

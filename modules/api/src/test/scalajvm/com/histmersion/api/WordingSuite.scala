@@ -31,12 +31,12 @@ class WordingSuite extends munit.FunSuite:
     assertEquals(Wording.approvalKind(ApprovalKind.Edge), "Link two sources")
 
   test("every job kind has wording, and the kinds are distinct"):
-    JobKind.values.foreach(k => readable(Wording.jobKind(k), k.wire))
-    assertEquals(JobKind.values.map(_.wire).distinct.length, JobKind.values.length)
-    assertEquals(Wording.jobKind(JobKind.BasemapFetch), "Download the background map")
-    assertEquals(Wording.jobKind(JobKind.EventsImport), "Import events")
-    assertEquals(Wording.jobKind(JobKind.MediaImport), "Fetch pictures")
-    // the constants the api module names are the enum's wires
+    JobKindsAdapter.all.kinds.foreach(k => readable(Wording.jobKind(k), k.value))
+    assertEquals(JobKindsAdapter.all.kinds.map(_.value).distinct.length, JobKindsAdapter.all.kinds.length)
+    assertEquals(Wording.jobKind(JobKindsAdapter.BasemapFetch), "Download the background map")
+    assertEquals(Wording.jobKind(JobKindsAdapter.EventsImport), "Import events")
+    assertEquals(Wording.jobKind(JobKindsAdapter.MediaImport), "Fetch pictures")
+    // the constants the api module names are registered kinds
     assertEquals(
       List(
         Ingest.KindIngest,
@@ -46,7 +46,7 @@ class WordingSuite extends munit.FunSuite:
         Agents.JobKind,
         MergeApplyJob.JobKind,
         AcquireChecks.RecheckJob.JobKind
-      ).filterNot(k => JobKind.parse(k).isDefined),
+      ).filterNot(k => JobKindsAdapter.all.parse(k).isDefined),
       Nil
     )
 
