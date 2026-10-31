@@ -1,0 +1,17 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {"type": "Feature", "properties": {"Name": "Lydia", "FromYear": "-680", "ToYear": "-547", "Wikidata": "Q190011", "Wikipedia": "", "SeshatID": "tr_lydia", "MemberOf": ""},
+     "geometry": {"type": "Polygon", "coordinates": [[[27.0,38.0],[29.0,38.0],[29.0,39.5],[27.0,39.5],[27.0,38.0]]]}},
+    {"type": "Feature", "properties": {"Name": "Lydia", "FromYear": -546.0, "ToYear": -500, "MemberOf": "Achaemenid Empire"},
+     "geometry": null},
+    {"type": "Feature", "properties": {"Name": "Achaemenid Empire", "FromYear": -550, "ToYear": -330, "Wikidata": "Q389688"},
+     "geometry": {"type": "MultiPolygon", "coordinates": [[[[44.0,30.0],[60.0,30.0],[60.0,38.0],[44.0,38.0],[44.0,30.0]]]]}},
+    {"type": "Feature", "properties": {"Name": "Phrygia (undated)"}, "geometry": null},
+    {"type": "Feature", "properties": {"Name": "Ἀθῆναι", "FromYear": -500, "ToYear": -404}, "geometry": null},
+    {"type": "Feature", "properties": {"FromYear": -100, "ToYear": 0}, "geometry": null},
+    "not a feature",
+    {"type": "Feature", "properties": {"Name": "Kingdom of Elam", "FromYear": -2700, "MemberOf": "Sumerian City-States"},
+     "geometry": {"type": "Point", "coordinates": [48.5, 32.0]}}
+  ]
+}

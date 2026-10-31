@@ -1,0 +1,108 @@
+## cliopatria: cliopatria.geojson, zipped
+source: https://github.com/Seshat-Global-History-Databank/cliopatria/raw/main/cliopatria.geojson.zip
+GET /Seshat-Global-History-Databank/cliopatria/raw/main/cliopatria.geojson.zip
+  User-agent: Histmersion/<version> (gazetteer import)
+places: 6
+  PlaceInput(Place(cliopatria_hittite_empire,hittite empire,polity,None,Some(Period(-1650,-1201)),Some(Cliopatria (Seshat Databank), CC BY 4.0),None,None),List(),List())
+  PlaceInput(Place(cliopatria_kingdom_of_elam,kingdom of elam,polity,None,Some(Period(-3200,-2701)),Some(Cliopatria (Seshat Databank), CC BY 4.0),None,None),List(),List())
+  PlaceInput(Place(cliopatria_sumerian_city_states,sumerian city states,polity,None,Some(Period(-3200,-2701)),Some(Cliopatria (Seshat Databank), CC BY 4.0),None,None),List(),List())
+  PlaceInput(Place(cliopatria_hittite_empire_-1650_-1401,Hittite Empire,polity,Some({"type":"Polygon","coordinates":[[[32.0,37.0],[36.0,37.0],[36.0,40.0],[32.0,40.0],[32.0,37.0]]]}),Some(Period(-1650,-1401)),Some(Cliopatria (Seshat Databank), CC BY 4.0),Some({"wikidata":"Q170494","wikipedia":"Hittites","seshatId":"tr_hittite_eg"}),None),List(PlaceName(Hittite Empire,,None,None)),List(PlaceRelation(cliopatria_hittite_empire_-1650_-1401,cliopatria_hittite_empire,part_of,Some(Period(-1650,-1401)),None)))
+  PlaceInput(Place(cliopatria_hittite_empire_-1400_-1201,Hittite Empire,polity,Some({"type":"Polygon","coordinates":[[[30.0,35.0],[38.0,35.0],[38.0,41.0],[30.0,41.0],[30.0,35.0]]]}),Some(Period(-1400,-1201)),Some(Cliopatria (Seshat Databank), CC BY 4.0),Some({"wikidata":"Q170494","wikipedia":"Hittites","seshatId":"tr_hittite_nk"}),None),List(PlaceName(Hittite Empire,,None,None)),List(PlaceRelation(cliopatria_hittite_empire_-1400_-1201,cliopatria_hittite_empire,part_of,Some(Period(-1400,-1201)),None)))
+  PlaceInput(Place(cliopatria_kingdom_of_elam_-3200_-2701,Kingdom of Elam,polity,Some({"type":"Polygon","coordinates":[[[48.0,30.0],[52.0,30.0],[52.0,34.0],[48.0,34.0],[48.0,30.0]]]}),Some(Period(-3200,-2701)),Some(Cliopatria (Seshat Databank), CC BY 4.0),Some({"wikidata":"Q192736","wikipedia":"Elam","memberOf":"Sumerian City-States"}),None),List(PlaceName(Kingdom of Elam,,None,None)),List(PlaceRelation(cliopatria_kingdom_of_elam_-3200_-2701,cliopatria_kingdom_of_elam,part_of,Some(Period(-3200,-2701)),None), PlaceRelation(cliopatria_kingdom_of_elam_-3200_-2701,cliopatria_sumerian_city_states,part_of,Some(Period(-3200,-2701)),None)))
+GET /Seshat-Global-History-Databank/cliopatria/raw/main/cliopatria.geojson.zip
+  User-agent: Histmersion/<version> (gazetteer import)
+dry run: PlaceImportResult(6,0,0,List(dry run),None)
+## cliopatria: cliopatria-more.geojson, zipped
+source: https://github.com/Seshat-Global-History-Databank/cliopatria/raw/main/cliopatria.geojson.zip
+GET /Seshat-Global-History-Databank/cliopatria/raw/main/cliopatria.geojson.zip
+  User-agent: Histmersion/<version> (gazetteer import)
+places: 12
+  PlaceInput(Place(cliopatria_lydia,lydia,polity,None,Some(Period(-680,-500)),Some(Cliopatria (Seshat Databank), CC BY 4.0),None,None),List(),List())
+  PlaceInput(Place(cliopatria_achaemenid_empire,achaemenid empire,polity,None,Some(Period(-550,-330)),Some(Cliopatria (Seshat Databank), CC BY 4.0),None,None),List(),List())
+  PlaceInput(Place(cliopatria_phrygia_undated,phrygia undated,polity,None,None,Some(Cliopatria (Seshat Databank), CC BY 4.0),None,None),List(),List())
+  PlaceInput(Place(cliopatria_,,polity,None,Some(Period(-500,-404)),Some(Cliopatria (Seshat Databank), CC BY 4.0),None,None),List(),List())
+  PlaceInput(Place(cliopatria_kingdom_of_elam,kingdom of elam,polity,None,None,Some(Cliopatria (Seshat Databank), CC BY 4.0),None,None),List(),List())
+  PlaceInput(Place(cliopatria_sumerian_city_states,sumerian city states,polity,None,None,Some(Cliopatria (Seshat Databank), CC BY 4.0),None,None),List(),List())
+  PlaceInput(Place(cliopatria_lydia_-680_-547,Lydia,polity,Some({"type":"Polygon","coordinates":[[[27.0,38.0],[29.0,38.0],[29.0,39.5],[27.0,39.5],[27.0,38.0]]]}),Some(Period(-680,-547)),Some(Cliopatria (Seshat Databank), CC BY 4.0),Some({"wikidata":"Q190011","seshatId":"tr_lydia"}),None),List(PlaceName(Lydia,,None,None)),List(PlaceRelation(cliopatria_lydia_-680_-547,cliopatria_lydia,part_of,Some(Period(-680,-547)),None)))
+  PlaceInput(Place(cliopatria_lydia_-546_-500,Lydia,polity,None,Some(Period(-546,-500)),Some(Cliopatria (Seshat Databank), CC BY 4.0),Some({"memberOf":"Achaemenid Empire"}),None),List(PlaceName(Lydia,,None,None)),List(PlaceRelation(cliopatria_lydia_-546_-500,cliopatria_lydia,part_of,Some(Period(-546,-500)),None), PlaceRelation(cliopatria_lydia_-546_-500,cliopatria_achaemenid_empire,part_of,Some(Period(-546,-500)),None)))
+  PlaceInput(Place(cliopatria_achaemenid_empire_-550_-330,Achaemenid Empire,polity,Some({"type":"MultiPolygon","coordinates":[[[[44.0,30.0],[60.0,30.0],[60.0,38.0],[44.0,38.0],[44.0,30.0]]]]}),Some(Period(-550,-330)),Some(Cliopatria (Seshat Databank), CC BY 4.0),Some({"wikidata":"Q389688"}),None),List(PlaceName(Achaemenid Empire,,None,None)),List(PlaceRelation(cliopatria_achaemenid_empire_-550_-330,cliopatria_achaemenid_empire,part_of,Some(Period(-550,-330)),None)))
+  PlaceInput(Place(cliopatria_phrygia_undated_3,Phrygia (undated),polity,None,None,Some(Cliopatria (Seshat Databank), CC BY 4.0),None,None),List(PlaceName(Phrygia (undated),,None,None)),List(PlaceRelation(cliopatria_phrygia_undated_3,cliopatria_phrygia_undated,part_of,None,None)))
+  PlaceInput(Place(cliopatria__-500_-404,Ἀθῆναι,polity,None,Some(Period(-500,-404)),Some(Cliopatria (Seshat Databank), CC BY 4.0),None,None),List(PlaceName(Ἀθῆναι,,None,None)),List(PlaceRelation(cliopatria__-500_-404,cliopatria_,part_of,Some(Period(-500,-404)),None)))
+  PlaceInput(Place(cliopatria_kingdom_of_elam_7,Kingdom of Elam,polity,Some({"type":"Point","coordinates":[48.5,32.0]}),None,Some(Cliopatria (Seshat Databank), CC BY 4.0),Some({"memberOf":"Sumerian City-States"}),None),List(PlaceName(Kingdom of Elam,,None,None)),List(PlaceRelation(cliopatria_kingdom_of_elam_7,cliopatria_kingdom_of_elam,part_of,None,None), PlaceRelation(cliopatria_kingdom_of_elam_7,cliopatria_sumerian_city_states,part_of,None,None)))
+GET /Seshat-Global-History-Databank/cliopatria/raw/main/cliopatria.geojson.zip
+  User-agent: Histmersion/<version> (gazetteer import)
+dry run: PlaceImportResult(12,0,0,List(dry run),None)
+## awmc: awmc.geojson
+source: https://raw.githubusercontent.com/AWMC/geodata/master/Cultural-Data/regional_name_linework/regional_names_linework.geojson
+GET /AWMC/geodata/master/Cultural-Data/regional_name_linework/regional_names_linework.geojson
+  User-agent: Histmersion/<version> (gazetteer import)
+places: 3
+  PlaceInput(Place(awmc_pleiades_511444,Thynias,region,Some({"type":"MultiLineString","coordinates":[[[28.5,41.5],[29.0,42.0]]]}),None,Some(Ancient World Mapping Center (UNC), ODbL),Some({"pleiadesId":"511444","awmcType":"region"}),None),List(PlaceName(Thynias,,None,None)),List())
+  PlaceInput(Place(awmc_pleiades_511405,Salmydessos,region,Some({"type":"MultiLineString","coordinates":[[[28.0,42.0],[28.5,42.5]]]}),None,Some(Ancient World Mapping Center (UNC), ODbL),Some({"pleiadesId":"511405","awmcType":"region"}),None),List(PlaceName(Salmydessos,,None,None)),List())
+  PlaceInput(Place(awmc_pleiades_511171,Asticus M.,feature,Some({"type":"MultiLineString","coordinates":[[[28.2,41.8],[28.7,42.2]]]}),None,Some(Ancient World Mapping Center (UNC), ODbL),Some({"pleiadesId":"511171","awmcType":"mountain","notes":"Should be 'field'"}),None),List(PlaceName(Asticus M.,,None,None)),List())
+GET /AWMC/geodata/master/Cultural-Data/regional_name_linework/regional_names_linework.geojson
+  User-agent: Histmersion/<version> (gazetteer import)
+dry run: PlaceImportResult(3,0,0,List(dry run),None)
+## awmc: awmc-more.geojson
+source: https://raw.githubusercontent.com/AWMC/geodata/master/Cultural-Data/regional_name_linework/regional_names_linework.geojson
+GET /AWMC/geodata/master/Cultural-Data/regional_name_linework/regional_names_linework.geojson
+  User-agent: Histmersion/<version> (gazetteer import)
+places: 5
+  PlaceInput(Place(awmc_ubii,Ubii,region,Some({"type":"MultiLineString","coordinates":[[[6.5,50.5],[7.5,51.0]]]}),None,Some(Ancient World Mapping Center (UNC), ODbL),Some({"awmcType":"people, tribe","notes":"lower-case keys","creator":"AWMC staff"}),None),List(PlaceName(Ubii,,None,None)),List())
+  PlaceInput(Place(awmc_pleiades_207496,Mons Haemus,feature,Some({"type":"MultiLineString","coordinates":[[[24.0,42.7],[26.0,42.8]]]}),None,Some(Ancient World Mapping Center (UNC), ODbL),Some({"pleiadesId":"207496","awmcType":"Mountain"}),None),List(PlaceName(Mons Haemus,,None,None)),List())
+  PlaceInput(Place(awmc_insula_nova,Insula Nova,feature,None,None,Some(Ancient World Mapping Center (UNC), ODbL),Some({"awmcType":"island"}),None),List(PlaceName(Insula Nova,,None,None)),List())
+  PlaceInput(Place(awmc_campus,Campus,feature,None,None,Some(Ancient World Mapping Center (UNC), ODbL),Some({"awmcType":"labeled feature"}),None),List(PlaceName(Campus,,None,None)),List())
+  PlaceInput(Place(awmc_elsewhere,Elsewhere,region,None,None,Some(Ancient World Mapping Center (UNC), ODbL),Some({"awmcType":"settlement"}),None),List(PlaceName(Elsewhere,,None,None)),List())
+GET /AWMC/geodata/master/Cultural-Data/regional_name_linework/regional_names_linework.geojson
+  User-agent: Histmersion/<version> (gazetteer import)
+dry run: PlaceImportResult(5,0,0,List(dry run),None)
+## chronontology: chronontology.json
+source: https://chronontology.dainst.org/data/period?size=15000&from=0
+GET /data/period?size=15000&from=0
+  User-agent: Histmersion/<version> (gazetteer import)
+places: 3
+  PlaceInput(Place(chrono_NvftiJLCwhhO,Middle Helladic,region,None,Some(Period(-2100,-1700)),Some(ChronOntology (DAI), open access),Some({"chronontologyId":"NvftiJLCwhhO","region":"Southern Aegean"}),None),List(PlaceName(Middle Helladic,en,None,None), PlaceName(Mittelhelladisch,de,None,None)),List())
+  PlaceInput(Place(chrono_abc123def,Ptolemaic Period,polity,None,Some(Period(-305,-30)),Some(ChronOntology (DAI), open access),Some({"chronontologyId":"abc123def","region":"Arab Republic of Egypt"}),None),List(PlaceName(Ptolemaic Period,en,None,None), PlaceName(العصر البطلمي,ar,None,None)),List())
+  PlaceInput(Place(chrono_xyz789,Quartär,feature,None,Some(Period(-2588000,-2588000)),Some(ChronOntology (DAI), open access),Some({"chronontologyId":"xyz789"}),None),List(PlaceName(Quartär,de,None,None)),List())
+GET /data/period?size=15000&from=0
+  User-agent: Histmersion/<version> (gazetteer import)
+dry run: PlaceImportResult(3,0,0,List(dry run),None)
+## chronontology: chronontology-more.json
+source: https://chronontology.dainst.org/data/period?size=15000&from=0
+GET /data/period?size=15000&from=0
+  User-agent: Histmersion/<version> (gazetteer import)
+places: 3
+  PlaceInput(Place(chrono_begin0nly,Late Bronze Age,polity,None,Some(Period(-1600,-1600)),Some(ChronOntology (DAI), open access),Some({"chronontologyId":"begin0nly","region":"Ägäis"}),None),List(PlaceName(Spätbronzezeit,de,None,None), PlaceName(Late Bronze Age,en,None,None)),List())
+  PlaceInput(Place(chrono_endOnly,Età del ferro,feature,None,Some(Period(-500,-500)),Some(ChronOntology (DAI), open access),Some({"chronontologyId":"endOnly"}),None),List(PlaceName(Età del ferro,it,None,None), PlaceName(Ferro,it,None,None), PlaceName(Âge du fer,fr,None,None)),List())
+  PlaceInput(Place(chrono_noTime,Undated period,region,None,None,Some(ChronOntology (DAI), open access),Some({"chronontologyId":"noTime"}),None),List(PlaceName(Undated period,en,None,None)),List())
+GET /data/period?size=15000&from=0
+  User-agent: Histmersion/<version> (gazetteer import)
+dry run: PlaceImportResult(3,0,0,List(dry run),None)
+## cliopatria: a zip with no usable file
+source: https://github.com/Seshat-Global-History-Databank/cliopatria/raw/main/cliopatria.geojson.zip
+GET /Seshat-Global-History-Databank/cliopatria/raw/main/cliopatria.geojson.zip
+  User-agent: Histmersion/<version> (gazetteer import)
+places: failed: zip contains no usable file
+GET /Seshat-Global-History-Databank/cliopatria/raw/main/cliopatria.geojson.zip
+  User-agent: Histmersion/<version> (gazetteer import)
+dry run: failed: zip contains no usable file
+## awmc: a body that is not JSON
+source: https://raw.githubusercontent.com/AWMC/geodata/master/Cultural-Data/regional_name_linework/regional_names_linework.geojson
+GET /AWMC/geodata/master/Cultural-Data/regional_name_linework/regional_names_linework.geojson
+  User-agent: Histmersion/<version> (gazetteer import)
+places: failed: invalid JSON: expected json value got '<html>...' (line 1, column 1)
+GET /AWMC/geodata/master/Cultural-Data/regional_name_linework/regional_names_linework.geojson
+  User-agent: Histmersion/<version> (gazetteer import)
+dry run: failed: invalid JSON: expected json value got '<html>...' (line 1, column 1)
+## chronontology: a JSON body of another shape
+source: https://chronontology.dainst.org/data/period?size=15000&from=0
+GET /data/period?size=15000&from=0
+  User-agent: Histmersion/<version> (gazetteer import)
+places: failed: expected {results: [...]}
+GET /data/period?size=15000&from=0
+  User-agent: Histmersion/<version> (gazetteer import)
+dry run: failed: expected {results: [...]}
+## chronontology: HTTP 503
+GET /data/period?size=15000&from=0
+  User-agent: Histmersion/<version> (gazetteer import)
+places: failed: HTTP 503 from <origin>/data/period?size=15000&from=0
