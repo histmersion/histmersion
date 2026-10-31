@@ -15,7 +15,11 @@ class DiagnosticsServiceSuite extends munit.FunSuite:
     Deps.data,
     Map(LibraryOwner -> DataFigures(List(DataCount("sources", 4), DataCount("findings", 5)))),
     ("histmersion_test", bytes(1000)),
-    List(TableName("sources") -> bytes(300), TableName("not_registered") -> bytes(200), TableName("places") -> bytes(100))
+    List(
+      TableName("sources") -> bytes(300),
+      TableName("not_registered") -> bytes(200),
+      TableName("places") -> bytes(100)
+    )
   )
 
   test("the largest tables are the registered ones, largest first, at most n"):
@@ -26,7 +30,10 @@ class DiagnosticsServiceSuite extends munit.FunSuite:
   test("each owner's tables summed, every owner in the registry's order"):
     val sums = service.ownerTables.toMap
     assertEquals(service.ownerTables.map(_._1), Deps.data.owners)
-    assertEquals((sums(LibraryOwner).value: Long, sums(CatalogueOwner).value: Long, sums(MediaOwner).value: Long), (300L, 100L, 0L))
+    assertEquals(
+      (sums(LibraryOwner).value: Long, sums(CatalogueOwner).value: Long, sums(MediaOwner).value: Long),
+      (300L, 100L, 0L)
+    )
 
   test("an owner's counts, by noun; none for an owner that counts nothing"):
     assertEquals(service.figures(LibraryOwner).count("findings"), Some(5L))

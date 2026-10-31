@@ -126,7 +126,8 @@ class BackupSuite extends munit.FunSuite:
     val _ = fake.toFile.setExecutable(true)
 
     val base = cfgWith(d)
-    val svc = BackupFixtures.service(base.copy(backups = base.backups.copy(pgBinDir = bin.toString, timeoutSeconds = 1)))
+    val svc =
+      BackupFixtures.service(base.copy(backups = base.backups.copy(pgBinDir = bin.toString, timeoutSeconds = 1)))
 
     val started = System.nanoTime()
     val r = svc.create(Instant.now())
@@ -208,7 +209,8 @@ class BackupSuite extends munit.FunSuite:
     val bin = fakeDump(d, sleepS = 0)
     (1 to 7).foreach(i => Files.writeString(d.resolve(f"histmersion-202601$i%02dT000000Z.dump"), "old"))
     val base = cfgWith(d)
-    val r = BackupFixtures.service(base.copy(backups = base.backups.copy(pgBinDir = bin.toString, keep = 0)))
+    val r = BackupFixtures
+      .service(base.copy(backups = base.backups.copy(pgBinDir = bin.toString, keep = 0)))
       .create(Instant.now())
       .fold(e => fail(e.message), identity)
     assertEquals(r.pruned, Nil)

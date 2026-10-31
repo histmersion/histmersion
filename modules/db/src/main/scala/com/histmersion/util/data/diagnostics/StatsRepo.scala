@@ -14,7 +14,9 @@ object StatsRepo:
 
   /** The rows of `table` whose `column` is set. */
   def rowsWith(table: String, column: String)(using DbCon): Long =
-    Sql.raw(s"SELECT count(*)::int FROM ${quoted(table)} WHERE ${quoted(column)} IS NOT NULL").frag
+    Sql
+      .raw(s"SELECT count(*)::int FROM ${quoted(table)} WHERE ${quoted(column)} IS NOT NULL")
+      .frag
       .query[Int]
       .run()
       .head

@@ -15,8 +15,8 @@ import java.nio.file.{
   LinkOption,
   NoSuchFileException,
   Path,
-  StandardCopyOption,
   SimpleFileVisitor,
+  StandardCopyOption,
   StandardOpenOption
 }
 import java.security.MessageDigest
@@ -100,7 +100,7 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
     val dir = target.toAbsolutePath.getParent
     Files.createDirectories(dir)
     val file = temp match
-      case TempName.Fixed  => target.resolveSibling(target.getFileName.toString + ".tmp")
+      case TempName.Fixed          => target.resolveSibling(target.getFileName.toString + ".tmp")
       case TempName.Unique         => Files.createTempFile(dir, s".${asked.getFileName}.", ".tmp")
       case TempName.Suffixed(more) => target.resolveSibling(target.getFileName.toString + more)
     if temp != TempName.Unique then Files.deleteIfExists(file): Unit

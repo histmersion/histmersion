@@ -47,7 +47,7 @@ object StorageLocations:
       case Location.Converter       =>
         Option(cfg.runtime.home).map(_.trim).filter(_.nonEmpty).map(h => Path.of(h).resolve("converter"))
       case Location.Toolchain      => dataDir.map(_.resolve("toolchain"))
-      case Location.CodexSessions      => AgentTrees.codexHome(cfg, env)
+      case Location.CodexSessions  => AgentTrees.codexHome(cfg, env)
       case Location.DataDirectory  => dataDir
       case Location.CacheDirectory => UserPaths.cacheDir(env)
       case Location.Postgres       =>
@@ -97,12 +97,12 @@ object StorageLocations:
       case Location.Toolchain         => data.map(_.resolve("toolchain"))
       case Location.Plugins           => data.map(_.resolve("plugins"))
       case Location.AgentHomes        => AgentTrees.root(cfg, env)
-      case Location.CodexSessions         => AgentTrees.codexHome(cfg, env)
+      case Location.CodexSessions     => AgentTrees.codexHome(cfg, env)
       case Location.Logs              => data.map(_.resolve("logs"))
       case Location.DataDirectory     => data
       case Location.CacheDirectory    => UserPaths.cacheDir(env)
       case Location.UserConfig | Location.Postgres | Location.PostgresTools | Location.Executables => None
-      case Location.Scratch                                                                       => Some(temp)
+      case Location.Scratch                                                                        => Some(temp)
     Storage(l => place(l).map(_.toAbsolutePath.normalize), () => temp)
 
   /** The settings file `loaded` was read from, in the store of its directory ([[Location.UserConfig]]) and named in

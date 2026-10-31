@@ -17,12 +17,25 @@ class StorageFiguresSuite extends munit.FunSuite:
     assertEquals(
       figures.spots(storage, Nil).map(_.key),
       List(
-        "database-cluster", "backups", "originals", "acquire-spool", "corpus", "bundles", "gazetteer",
-        "gazetteer-data", "gazetteer-lpf", "basemap", "agents", "codex-home"
+        "database-cluster",
+        "backups",
+        "originals",
+        "acquire-spool",
+        "corpus",
+        "bundles",
+        "gazetteer",
+        "gazetteer-data",
+        "gazetteer-lpf",
+        "basemap",
+        "agents",
+        "codex-home"
       )
     )
     assertEquals(
-      figures.spots(storage, List(Location.Logs, Location.Install)).map(_.key).filter(k => k == "logs" || k == "install"),
+      figures
+        .spots(storage, List(Location.Logs, Location.Install))
+        .map(_.key)
+        .filter(k => k == "logs" || k == "install"),
       List("install", "logs")
     )
 
@@ -36,5 +49,8 @@ class StorageFiguresSuite extends munit.FunSuite:
     val entry = r.entries.find(_.key == "basemap").getOrElse(fail(r.entries.map(_.key).toString))
     assertEquals(entry.detail, Some("vector 2.0 kB · terrain download unfinished 1.0 kB · map cache 3.0 kB"))
     assertEquals((entry.bytes, entry.files), (Some(6000L), Some(3L)))
-    assertEquals(r.entries.find(_.key == "backups").map(_.shrink), Some(com.histmersion.api.StorageAdvice.shrink("backups", cfg.backups.keep)))
+    assertEquals(
+      r.entries.find(_.key == "backups").map(_.shrink),
+      Some(com.histmersion.api.StorageAdvice.shrink("backups", cfg.backups.keep))
+    )
     assertEquals(r.problems, Nil)
