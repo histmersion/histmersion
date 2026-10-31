@@ -6,8 +6,8 @@ import com.histmersion.util.data.mirror.MirrorExport
 import com.histmersion.util.data.maintenance.{CacheSpec, MaintenanceTask}
 import com.histmersion.util.storage.Location
 
-/** The registry: every owner's contribution, in the order they were registered, which is the order every operation
-  * runs them in. An owner contributes once and a table has one owner.
+/** The registry: every owner's contribution, in the order they were registered, which is the order every operation runs
+  * them in. An owner contributes once and a table has one owner.
   */
 final class DataContributions private (val all: List[DataContribution]):
   def owners: List[DataOwner] = all.map(_.owner)

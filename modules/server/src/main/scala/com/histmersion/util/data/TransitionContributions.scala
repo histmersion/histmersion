@@ -14,7 +14,7 @@ import com.augustnagro.magnum.DbCon
   */
 object TransitionContributions:
 
-  private final class Adapted(val owner: DataOwner) extends DataContribution:
+  final private class Adapted(val owner: DataOwner) extends DataContribution:
     val tables: List[OwnedTable] = TablesAdapter.of(owner)
     override val stores: List[Location] = MaintenanceAdapter.stores(owner)
     override val carried: List[CarriedKind] = CarriedKindsAdapter.of(owner)
