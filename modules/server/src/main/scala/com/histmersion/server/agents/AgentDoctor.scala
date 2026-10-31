@@ -87,7 +87,7 @@ final class AgentDoctor(
     */
   private def plugins(chained: List[ModelRef], online: Boolean): List[ProviderDoctor] =
     registry.toList.flatMap(_.toList).collect {
-      case (name, p) if !p.isInstanceOf[HostAiProvider] =>
+      case (name, p) if !BuiltinAi.reserved(name) =>
         val kind = ProviderKind.Plugin(name)
         val models = chained.filter(_.provider == kind)
         def safe[A](what: String, a: => A, orElse: String => A): A =

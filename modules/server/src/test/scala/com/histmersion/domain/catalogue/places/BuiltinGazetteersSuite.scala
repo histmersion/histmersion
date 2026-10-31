@@ -21,9 +21,12 @@ class BuiltinGazetteersSuite extends munit.FunSuite:
     assertEquals(registered.keys.toSet, Set("cliopatria", "awmc", "chronontology"))
     assertEquals(BuiltinGazetteers.available(registered), List("cliopatria", "awmc", "chronontology"))
     assertEquals(BuiltinGazetteers.thirdParty(registered), Nil)
-    assertEquals(BuiltinGazetteers.resolve("awmc", registered, "unknown").map(_.title), Right(
-      "AWMC classical-world regional names and features"
-    ))
+    assertEquals(
+      BuiltinGazetteers.resolve("awmc", registered, "unknown").map(_.title),
+      Right(
+        "AWMC classical-world regional names and features"
+      )
+    )
 
   test("a source switched off is refused, naming the switch; an unknown one gets the caller's message"):
     val off = Plugins

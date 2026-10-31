@@ -6,8 +6,8 @@ import com.histmersion.plugin.*
 
 import scala.util.control.NonFatal
 
-/** A plugin's gazetteer source as the host reads it: the client its download goes through, its answer guarded, and
-  * each of its places checked and turned into the host's [[PlaceInput]]. Pure but for [[http]].
+/** A plugin's gazetteer source as the host reads it: the client its download goes through, its answer guarded, and each
+  * of its places checked and turned into the host's [[PlaceInput]]. Pure but for [[http]].
   */
 object PluginGazetteers:
 
@@ -15,8 +15,8 @@ object PluginGazetteers:
   val UserAgent: String = s"Histmersion/${Version.version} (gazetteer import)"
 
   /** The wire of a gazetteer download: `java.net.http` over HTTP/1.1, redirects followed within a scheme, the answer
-    * waited for `places.fetch-timeout-seconds` and the connection `places.fetch-connect-timeout-seconds`; the body
-    * read whole (a dataset is one file).
+    * waited for `places.fetch-timeout-seconds` and the connection `places.fetch-connect-timeout-seconds`; the body read
+    * whole (a dataset is one file).
     */
   def transport(places: PlacesConfig): HttpTransport =
     JavaHttpTransport(places.fetchTimeoutSeconds, Some(places.fetchConnectTimeoutSeconds))

@@ -37,9 +37,9 @@ trait DownloadedGazetteer extends GazetteerSource:
 
   /** The period of two years in either order; `None` when one is beyond what a [[Year]] holds. */
   protected def span(a: Long, b: Long): Option[Period] =
-    Option.when(a.isValidInt && b.isValidInt)(()).flatMap(_ =>
-      Period.from(Year(a.min(b).toInt), Year(a.max(b).toInt)).toOption
-    )
+    Option
+      .when(a.isValidInt && b.isValidInt)(())
+      .flatMap(_ => Period.from(Year(a.min(b).toInt), Year(a.max(b).toInt)).toOption)
 
 object DownloadedGazetteer:
   /** The first usable file of a zip archive, as UTF-8 text. */

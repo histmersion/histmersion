@@ -175,8 +175,8 @@ object Plugins:
   /** The plugin that keys CORE: its `api-key` serves the new-source search too. */
   private val CorePlugin = "oa-core"
 
-  /** The first-party plugins the host still supplies itself: the AI providers (`ai-anthropic`, `ai-openai`, `ai-local`,
-    * `ai-claude-code`, `ai-codex`, `ai-opencode` — [[BuiltinAi]]). They read nothing at registration.
+  /** The first-party plugins the host still supplies itself: the command-line AI runtimes (`ai-claude-code`,
+    * `ai-codex`, `ai-opencode` — [[BuiltinAi]]). They read nothing at registration.
     */
   def providers: List[Plugin] = BuiltinAi.plugins
 

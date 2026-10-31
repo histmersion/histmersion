@@ -4,9 +4,9 @@ import com.histmersion.api.Agents.ProviderKind
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.HostOwned
 
-/** An AI provider that is Histmersion's OWN code (the HTTP APIs through sttp-ai, the three CLI runtimes), registered
-  * through the plugin host like any other (docs/research-plugins.md §22, D2) but run by the host's own clients with its
-  * `agents.providers.<name>.*` settings, unchanged and read at each call. The SPI's `turn` is never called for it.
+/** An AI provider that is Histmersion's OWN code (the three CLI runtimes), registered through the plugin host like any
+  * other (docs/research-plugins.md §22, D2) but run by the host's own clients with its `agents.providers.<name>.*`
+  * settings, unchanged and read at each call. The SPI's `turn` is never called for it.
   */
 final case class HostAiProvider(plugin: String, kind: ProviderKind) extends AiProvider, HostOwned:
   def title: String = BuiltinAi.titles.getOrElse(kind, kind.wire)

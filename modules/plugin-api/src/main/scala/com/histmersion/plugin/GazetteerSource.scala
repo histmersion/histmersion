@@ -6,8 +6,8 @@ package com.histmersion.plugin
   *
   * The plugin DOWNLOADS and READS: it returns the dataset's places in the shape the host stores them. The host owns the
   * rest: the client the download goes through (its User-Agent and timeouts), checking every place, the dry run's
-  * counts, merging the places into the store in batches (a place someone removed or merged away is never brought
-  * back), matching the findings to the places again, and the background job.
+  * counts, merging the places into the store in batches (a place someone removed or merged away is never brought back),
+  * matching the findings to the places again, and the background job.
   */
 
 /** One dataset. Called by the host from one import at a time; failures are values (`Left`), an exception is caught by

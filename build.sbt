@@ -403,6 +403,26 @@ lazy val pluginsGazetteers = projectMatrix
   .settings(commonDeps)
   .jvmPlatform(scalaVersions = Seq(scala3))
 
+// Histmersion's own HTTP AI providers (ai-anthropic, ai-openai, ai-local): the Anthropic Messages API and the OpenAI
+// chat-completions API over the SPI's AiHttp, plugin platform only (plugin-api, circe, sttp's model); the host's agent
+// loop runs them as any plugin's provider; in every image, each switched off by its `enabled`
+lazy val pluginsAiHttp = projectMatrix
+  .in(file("modules/plugins/ai-http"))
+  .dependsOn(pluginApi, pluginTestkit % Test)
+  .settings(
+    name := "histmersion-plugins-ai-http",
+    description := "Histmersion's own HTTP AI providers: the Anthropic API, the OpenAI API and OpenAI-compatible servers"
+  )
+  .settings(commonDeps)
+  .settings(
+    libraryDependencies ++= Seq(
+      "io.circe" %% "circe-core" % V.circe,
+      "io.circe" %% "circe-parser" % V.circe,
+      "com.softwaremill.sttp.client4" %% "core" % V.sttp
+    )
+  )
+  .jvmPlatform(scalaVersions = Seq(scala3))
+
 lazy val pluginHello = project
   .in(file("modules/plugin-fixtures/hello"))
   .dependsOn(pluginApi)
@@ -594,6 +614,7 @@ lazy val server = project
   .dependsOn(pluginsFetchers.jvm(scala3) % "runtime->compile", pluginsEvents.jvm(scala3) % "runtime->compile")
   .dependsOn(pluginsMedia.jvm(scala3) % "runtime->compile")
   .dependsOn(pluginsGazetteers.jvm(scala3) % "runtime->compile")
+  .dependsOn(pluginsAiHttp.jvm(scala3) % "runtime->compile")
   .settings(
     name := "histmersion-server",
     description := "The server: MCP, REST and the web UI over the store; built as a native image",
@@ -859,11 +880,10 @@ lazy val server = project
       // GFM pipe tables: the corpus writes Glossary and comparison tables, which core flexmark shows
       // as rows of pipes. Configured once, in `MarkdownFlavor`, for the pages and the formatting lint.
       "com.vladsch.flexmark" % "flexmark-ext-tables" % V.flexmark,
-      // embedded agents (docs/research-embedded-agents.md): provider clients and the tool loop. OFF by
-      // default (`agents.enabled`); the agent's tools are typed wrappers over Handlers, in-process.
+      // embedded agents (docs/research-embedded-agents.md): the tool loop (the HTTP providers are the plugins of
+      // plugins/ai-http). OFF by default (`agents.enabled`); the agent's tools are typed wrappers over Handlers,
+      // in-process.
       "com.softwaremill.sttp.ai" %% "core" % V.sttpAi,
-      "com.softwaremill.sttp.ai" %% "claude" % V.sttpAi,
-      "com.softwaremill.sttp.ai" %% "openai" % V.sttpAi,
       // the real agent loop against a scripted model (its scalatest matchers are not used)
       "com.softwaremill.sttp.ai" %% "agent-testkit" % V.sttpAi % Test,
       // the OpenAPI document ContractSnapshotSuite compares with its snapshot
@@ -935,7 +955,7 @@ lazy val root = project
   .aggregate(
     (values.projectRefs ++ api.projectRefs ++ core.projectRefs ++ pluginsFetchers.projectRefs ++
       pluginsEvents.projectRefs ++ pluginsMedia.projectRefs ++
-      pluginsGazetteers.projectRefs)*
+      pluginsGazetteers.projectRefs ++ pluginsAiHttp.projectRefs)*
   )
   .aggregate(
     config,

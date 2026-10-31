@@ -1,5 +1,6 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.VerbatimFailure
 import com.histmersion.api.Agents.ModelRef
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.PluginAi
@@ -48,14 +49,24 @@ object PluginAiClient:
       PluginAi
         .check(provider, ref.model)
         .left
-        .map(why => s"${ref.wire}: $why")
+        .map(why => if verbatim(provider) then why else s"${ref.wire}: $why")
         .map(_ => PluginAiClient(ref, provider, http))
 
-  /** Pure: the conversation sttp-ai keeps → the provider's messages (iteration markers dropped). */
-  def messages(h: ConversationHistory): List[AiMessage] =
+  /** Whether the provider's failures are whole descriptions ([[AiCapabilities.verbatimFailures]]); a provider whose
+    * capabilities throw is taken as not.
+    */
+  private def verbatim(provider: AiProvider): Boolean =
+    try Option(provider.capabilities).exists(_.verbatimFailures)
+    catch case scala.util.control.NonFatal(_) => false
+
+  /** Pure: the conversation sttp-ai keeps → the provider's messages; the loop's iteration notes kept as user messages
+    * (`[Iteration 2 of 6]`, as sttp-ai's own providers send them) when `markers`, else dropped.
+    */
+  def messages(h: ConversationHistory, markers: Boolean = false): List[AiMessage] =
     h.entries.toList.collect {
-      case ConversationEntry.UserPrompt(t)             => AiMessage.User(t)
-      case ConversationEntry.AssistantResponse(t, tcs) =>
+      case ConversationEntry.IterationMarker(n, of) if markers => AiMessage.User(s"[Iteration $n of $of]")
+      case ConversationEntry.UserPrompt(t)                     => AiMessage.User(t)
+      case ConversationEntry.AssistantResponse(t, tcs)         =>
         AiMessage.Assistant(t, tcs.toList.map(c => AiToolCall(c.id, c.toolName, c.input)))
       case ConversationEntry.ToolResult(id, name, out) => AiMessage.ToolResult(id, name, out)
     }
@@ -67,6 +78,11 @@ object PluginAiClient:
   /** Pure: the answer's JSON Schema (text), the `$schema` marker dropped. */
   def schemaJson(s: ResponseSchema[?]): String =
     s.schema.asJson.deepDropNullValues.mapObject(_.remove("$schema")).noSpaces
+
+  /** Pure: the answer's JSON Schema (text) as sttp-ai's own providers render it, nulls dropped, the `$schema` marker
+    * kept.
+    */
+  def renderedSchema(s: ResponseSchema[?]): String = s.schema.asJson.deepDropNullValues.noSpaces
 
   /** Pure: the provider's answer → sttp-ai's. */
   def response(t: AiTurn, model: ModelRef): AgentResponse =
@@ -80,7 +96,7 @@ object PluginAiClient:
         Tokens(math.max(0L, u.input)),
         Tokens(math.max(0L, u.output)),
         Tokens(math.max(0L, u.cacheRead)),
-        Tokens.Zero,
+        Tokens(math.max(0L, u.reasoning)),
         Tokens(math.max(0L, u.cacheWrite))
       )
     )
@@ -93,8 +109,9 @@ object PluginAiClient:
     )
 
   /** One step's turns: each `sendRequest` is one [[AiProvider.turn]]. A provider's error, exception or `null` is a
-    * provider failure (an `IOException`: the run pauses with `provider`); its plan's own limit is [[ModelLimitReached]]
-    * (the chain's next model takes over).
+    * provider failure (an `IOException`: the run pauses with `provider`; a [[VerbatimFailure]] for a provider whose
+    * failures are whole descriptions); its plan's own limit is [[ModelLimitReached]] (the chain's next model takes
+    * over).
     */
   final private[agents] class Turns(model: ModelRef, provider: AiProvider, http: AiHttp, conf: AgentConfig[Identity])
       extends AgentBackend[Identity]:
@@ -107,19 +124,23 @@ object PluginAiClient:
         includeTools: Boolean,
         iterationInfo: IterationInfo
     ): Identity[AgentResponse] =
-      val offered = if includeTools && provider.capabilities.tools then conf.userTools.toList.map(tool) else Nil
+      val caps = provider.capabilities
+      val offered = if includeTools && caps.tools then conf.userTools.toList.map(tool) else Nil
       val req = AiTurnRequest(
         model.model,
         conf.systemPrompt.getOrElse(""),
-        messages(history),
+        messages(history, caps.iterationMarkers),
         offered,
         conf.responseSchema.map(schemaJson),
         conf.maxTokens.getOrElse(0),
         iterationInfo.iteration,
-        iterationInfo.maxIterations
+        iterationInfo.maxIterations,
+        conf.responseSchema.map(renderedSchema),
+        conf.responseSchema.flatMap(_.description)
       )
       PluginAi.turn(provider, req, http) match
         case Right(t)                               => response(t, model)
         case Left(AiFailure.LimitReached(m, until)) =>
           throw ModelLimitReached(model, until.map(java.time.Instant.ofEpochMilli), s"${model.wire}: $m".take(300))
+        case Left(AiFailure.Error(m)) if caps.verbatimFailures => throw VerbatimFailure(m)
         case Left(AiFailure.Error(m)) => throw java.io.IOException(s"${model.wire}: $m".take(600))

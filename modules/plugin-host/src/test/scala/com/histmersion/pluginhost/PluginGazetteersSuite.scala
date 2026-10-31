@@ -44,7 +44,10 @@ class PluginGazetteersSuite extends munit.FunSuite:
     )
 
   test("a place's own source wins over the credit; no credit and no source stores none; an empty label is kept"):
-    assertEquals(PluginGazetteers.input(slice.copy(source = Some("its own")), "credit").map(_.place.source), Right(Some("its own")))
+    assertEquals(
+      PluginGazetteers.input(slice.copy(source = Some("its own")), "credit").map(_.place.source),
+      Right(Some("its own"))
+    )
     assertEquals(PluginGazetteers.input(slice, "  ").map(_.place.source), Right(None))
     assertEquals(PluginGazetteers.input(slice.copy(label = ""), "c").map(_.place.label), Right(""))
     assertEquals(
@@ -77,7 +80,10 @@ class PluginGazetteersSuite extends munit.FunSuite:
       refusal(slice.copy(relations = List(GazetteerRelation("a", "b", kind = " ")))),
       Some("place 'zz_slice_-1650_-1401': the relation to 'b' has no kind")
     )
-    assertEquals(refusal(slice.copy(names = List(GazetteerName(null)))), Some("place 'zz_slice_-1650_-1401': a name that is null"))
+    assertEquals(
+      refusal(slice.copy(names = List(GazetteerName(null)))),
+      Some("place 'zz_slice_-1650_-1401': a name that is null")
+    )
     assertEquals(refusal(null), Some("a place that is null"))
 
   private def source(answer: => Either[String, List[GazetteerPlace]]): GazetteerSource = new GazetteerSource:
@@ -91,7 +97,9 @@ class PluginGazetteersSuite extends munit.FunSuite:
     val bad = slice.copy(id = "zz_bad", kind = "")
     val other = slice.copy(id = "zz_other")
     assertEquals(
-      PluginGazetteers.places(source(Right(List(slice, bad, other))), offline).map((in, out) => (in.map(_.place.id), out)),
+      PluginGazetteers
+        .places(source(Right(List(slice, bad, other))), offline)
+        .map((in, out) => (in.map(_.place.id), out)),
       Right((List("zz_slice_-1650_-1401", "zz_other"), List("place 'zz_bad': no kind")))
     )
     assertEquals(PluginGazetteers.places(source(Left("HTTP 503 from x")), offline), Left("HTTP 503 from x"))

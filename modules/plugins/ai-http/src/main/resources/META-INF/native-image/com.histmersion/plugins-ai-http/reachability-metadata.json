@@ -1,0 +1,74 @@
+{
+  "reflection": [
+    {
+      "type": "com.histmersion.plugins.ai.AnthropicPlugin",
+      "fields": [
+        {
+          "name": "configReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.ai.HostAgents$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.ai.HostAi$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.ai.HostProviders$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.ai.LocalPlugin",
+      "fields": [
+        {
+          "name": "configReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.ai.OpenAiPlugin",
+      "fields": [
+        {
+          "name": "configReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.ai.ProviderSettings$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "glob": "META-INF/histmersion/plugins/ai-anthropic.conf"
+    },
+    {
+      "glob": "META-INF/histmersion/plugins/ai-local.conf"
+    },
+    {
+      "glob": "META-INF/histmersion/plugins/ai-openai.conf"
+    },
+    {
+      "glob": "META-INF/services/com.histmersion.plugin.Plugin"
+    }
+  ]
+}

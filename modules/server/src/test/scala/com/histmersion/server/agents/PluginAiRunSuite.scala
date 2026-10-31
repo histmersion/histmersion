@@ -1,6 +1,6 @@
 package com.histmersion.server.agents
 
-import com.histmersion.pluginhost.{Generation, PluginHost}
+import com.histmersion.pluginhost.{FirstPartySettings, Generation, PluginHost}
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.*
@@ -80,14 +80,21 @@ class PluginAiRunSuite extends com.histmersion.db.DbSuite:
     val ours = found.filter(_.info.id == "hello-ai")
     assertEquals(ours.size, 1, "the plugin comes from its own jar")
     val env = ConfigFactory.parseString(s"ZZ_HELLO_AI_TOKEN = ${quote(Secret)}")
+    // the six built-ins as the server has them: the HTTP APIs' first-party plugins, supplied the host's settings
+    val builtin = PluginHost.discover(getClass.getClassLoader)._1.filter(p => BuiltinAi.pluginIds(p.info.id))
+    val all = builtin ++ Plugins.providers ++ ours
+    val u = ConfigFactory.parseString(user)
+    val host = FirstPartySettings.hostView(AppConfig.loadWithUserFile(env, None).fold(fail(_), _.merged), u, env, all)
     PluginHost.build(
-      Plugins.providers ++ ours,
-      ConfigFactory.parseString(user),
+      all,
+      u,
       env,
       Plugins.services(
         () => new com.histmersion.plugin.PluginHttp { def get(u: String, h: Map[String, String]) = Left("offline") },
         env
-      )
+      ),
+      fallback = FirstPartySettings.fallback(_, host),
+      firstParty = Plugins.firstParty(None)
     )
 
   private lazy val baseCfg =
