@@ -49,7 +49,9 @@ class ArchiveTrafficSuite extends com.histmersion.db.DbSuite:
     val base = c.archiveOrg.url
     {
       case u if u.startsWith(s"$base/advancedsearch.php") =>
-        json("""{"response":{"numFound":3,"docs":[{"identifier":"zqbook"},{"identifier":"zqlent"},{"identifier":"zqgone"}]}}""")
+        json(
+          """{"response":{"numFound":3,"docs":[{"identifier":"zqbook"},{"identifier":"zqlent"},{"identifier":"zqgone"}]}}"""
+        )
       case u if u.startsWith(s"$base/metadata/zqbook") =>
         json(
           """{"metadata":{"identifier":"zqbook","title":"A Book","creator":["An Author","Another"],"date":"1901",
@@ -62,9 +64,13 @@ class ArchiveTrafficSuite extends com.histmersion.db.DbSuite:
             |"files":[{"name":"zqlent.pdf","format":"Text PDF","size":"40000"}]}""".stripMargin
         )
       case u if u.startsWith(s"$base/metadata/zqnofile") =>
-        json("""{"metadata":{"identifier":"zqnofile","title":"No file"},"files":[{"name":"zqnofile.txt","format":"Text","size":"10"}]}""")
+        json(
+          """{"metadata":{"identifier":"zqnofile","title":"No file"},"files":[{"name":"zqnofile.txt","format":"Text","size":"10"}]}"""
+        )
       case u if u.startsWith(s"$base/download/zqbook/zqbook.epub") =>
-        Right(HttpAnswer(200, Map("content-type" -> "application/epub+zip"), ("PK epub " + ("e" * 20480)).getBytes(UTF_8)))
+        Right(
+          HttpAnswer(200, Map("content-type" -> "application/epub+zip"), ("PK epub " + ("e" * 20480)).getBytes(UTF_8))
+        )
       case u if u.startsWith(s"$base/download/zqbook/zqbook.pdf") =>
         Right(HttpAnswer(200, Map("content-type" -> "application/pdf"), ("%PDF-1.4\n" + ("p" * 20480)).getBytes(UTF_8)))
     }
@@ -75,7 +81,9 @@ class ArchiveTrafficSuite extends com.histmersion.db.DbSuite:
 
   test("archive search, info and import send the same requests and answer the same"):
     val loaded: LoadedConfig =
-      AppConfig.loadWithUserText(ConfigFactory.parseMap(Map.empty[String, String].asJava), Text).fold(e => fail(e), identity)
+      AppConfig
+        .loadWithUserText(ConfigFactory.parseMap(Map.empty[String, String].asJava), Text)
+        .fold(e => fail(e), identity)
     val ds = scratch("run")
     val spool = Files.createTempDirectory("histmersion-archive-spool-")
     val app = loaded.config.copy(
@@ -96,7 +104,9 @@ class ArchiveTrafficSuite extends com.histmersion.db.DbSuite:
     step("archive search bronze --rows 2")(show(surface.search("bronze", Some(2))))
     step("archive search (blank)")(show(surface.search("  ", None)))
     step("archive info zqbook")(show(surface.info("zqbook")))
-    step("archive info https://archive.org/details/zqbook/page/2")(show(surface.info("https://archive.org/details/zqbook/page/2")))
+    step("archive info https://archive.org/details/zqbook/page/2")(
+      show(surface.info("https://archive.org/details/zqbook/page/2"))
+    )
     step("archive info zqgone")(show(surface.info("zqgone")))
     step("archive import zqlent")(show(surface.importItem(ArchiveImportRequest("zqlent"))))
     step("archive import zqnofile")(show(surface.importItem(ArchiveImportRequest("zqnofile"))))
@@ -108,9 +118,10 @@ class ArchiveTrafficSuite extends com.histmersion.db.DbSuite:
     com.augustnagro.magnum.connect(ds):
       import com.augustnagro.magnum.*
       sql"""SELECT citekey, title, coalesce(source, '-'), array_to_string(authors, '; '), coalesce(year::text, '-')
-            FROM sources ORDER BY citekey""".query[(String, String, String, String, String)].run().foreach(r =>
-        sb ++= r.toList.mkString(" | ") + "\n"
-      )
+            FROM sources ORDER BY citekey"""
+        .query[(String, String, String, String, String)]
+        .run()
+        .foreach(r => sb ++= r.toList.mkString(" | ") + "\n")
     val transcript = sb.result().replace(spool.toString, "<spool>")
     if sys.env.get("HISTMERSION_UPDATE_TRAFFIC").contains("1") then
       Files.createDirectories(Transcript.getParent)
@@ -128,7 +139,12 @@ object ArchiveTrafficSuite:
 
   def surface(app: AppConfig, ds: javax.sql.DataSource, g: Generation, wire: HttpTransport): Surface =
     val (chain, _) =
-      FetchChain.of(g.registries.sourceFetchers, app.acquire.chainIds, app.acquire.allowUnauthorised, plugins = g.registered)
+      FetchChain.of(
+        g.registries.sourceFetchers,
+        app.acquire.chainIds,
+        app.acquire.allowUnauthorised,
+        plugins = g.registered
+      )
     val host = new SttpHttp(PolicyHttp.acquisition(app, wire))
     val archive = com.histmersion.domain.library.acquisition.ArchiveOrgClient(
       com.histmersion.upstreams.ArchiveOrg(app.acquire.upstreamSettings.archiveOrg, HttpPlugin(host))

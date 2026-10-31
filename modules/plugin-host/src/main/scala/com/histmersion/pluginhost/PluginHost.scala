@@ -425,7 +425,8 @@ object PluginHost:
       media: Staged[MediaCollection],
       events: Staged[EventCatalogue],
       ai: Staged[AiProvider],
-      gazetteers: Staged[GazetteerSource]
+      gazetteers: Staged[GazetteerSource],
+      collections: Staged[SourceCollection]
   ) extends PluginContext:
     lazy val http: PluginHttp = services.http()
     val log: PluginLog = new PluginLog:
@@ -441,6 +442,7 @@ object PluginHost:
     override def eventCatalogues = events
     override def aiProviders = ai
     override def gazetteerSources = gazetteers
+    override def sourceCollections = collections
 
   private def validFetcher(id: String, f: SourceFetcher): Option[String] =
     if !id.matches(IdPattern) then Some(s"'$id': a source fetcher id is $IdPattern")
@@ -492,6 +494,17 @@ object PluginHost:
     else if g == null then Some(s"gazetteer source '$id' is null")
     else if firstParty then None
     else if ReservedNames.gazetteerSources(id) then Some(s"'$id' is the name of one of Histmersion's own gazetteers")
+    else None
+
+  /** A source collection: a kebab-case id; a plugin's may not take the name of one of Histmersion's own collections
+    * (its items would be taken for theirs), unless it is the first-party plugin the name is reserved for.
+    */
+  private def validSourceCollection(firstParty: Boolean)(id: String, c: SourceCollection): Option[String] =
+    if !id.matches(IdPattern) then Some(s"'$id': a source collection id is $IdPattern")
+    else if c == null then Some(s"source collection '$id' is null")
+    else if firstParty then None
+    else if ReservedNames.sourceCollections(id) then
+      Some(s"'$id' is the name of one of Histmersion's own source collections")
     else None
 
   private def validVault(id: String, v: SecretVault): Option[String] =
@@ -721,7 +734,13 @@ object PluginHost:
         val ai = Staged[AiProvider](Registries.AiProvider, regs.aiProviders, validAiProvider(firstParty))
         val gazetteers =
           Staged[GazetteerSource](Registries.GazetteerSource, regs.gazetteerSources, validGazetteer(firstParty))
-        val ctx = RegistrationContext(id, services, resolved, staged, fetchers, media, events, ai, gazetteers)
+                val collections =
+          Staged[SourceCollection](
+            Registries.SourceCollection,
+            regs.sourceCollections,
+            validSourceCollection(firstParty)
+          )
+        val ctx = RegistrationContext(id, services, resolved, staged, fetchers, media, events, ai, gazetteers, collections)
         val outcome =
           try pr.call(ctx)
           catch
@@ -733,7 +752,8 @@ object PluginHost:
           media.close(),
           events.close(),
           ai.close(),
-          gazetteerSources = gazetteers.close()
+          gazetteerSources = gazetteers.close(),
+          sourceCollections = collections.close()
         )
         outcome match
           case Left(e)  => fail(e)

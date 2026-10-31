@@ -72,7 +72,8 @@ object ReservedNames:
     "gazetteer-chronontology",
     "keepassxc",
     "1password",
-    "bitwarden"
+    "bitwarden",
+    "calibre"
   )
 
   /** The network gazetteers `places fetch` and `init.fetch-sources` name, and the other names they take (the coastline,
@@ -81,6 +82,9 @@ object ReservedNames:
   val gazetteerSources: Set[String] =
     Set("cliopatria", "awmc", "chronontology", "land", "periodo") ++
       com.histmersion.api.GazetteerKind.values.map(_.wire).toSet
+
+  /** Histmersion's own source collections: the Calibre library and archive.org. */
+  val sourceCollections: Set[String] = Set("calibre", "archive-org")
 
   /** The built-in AI providers. */
   val aiProviders: Set[String] = Agents.ProviderKind.values.map(_.wire).toSet

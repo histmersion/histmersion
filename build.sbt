@@ -423,6 +423,26 @@ lazy val pluginsAiHttp = projectMatrix
   )
   .jvmPlatform(scalaVersions = Seq(scala3))
 
+// Histmersion's own Calibre plugin (calibre): the local Calibre library as a source collection, read with calibredb
+// (sqlite3 while the GUI holds it) and written back with it; plugin-api and circe alone, in every image, switched off by
+// its `enabled`. Its suites run a fake calibredb over fixture libraries only.
+lazy val pluginsCalibre = projectMatrix
+  .in(file("modules/plugins/calibre"))
+  .dependsOn(pluginApi, pluginTestkit % Test)
+  .settings(
+    name := "histmersion-plugins-calibre",
+    description := "Histmersion's own Calibre plugin: the local Calibre library as a source collection"
+  )
+  .settings(commonDeps)
+  .settings(
+    libraryDependencies ++= Seq(
+      "io.circe" %% "circe-core" % V.circe,
+      "io.circe" %% "circe-parser" % V.circe
+    )
+  )
+  .jvmPlatform(scalaVersions = Seq(scala3))
+
+
 lazy val pluginHello = project
   .in(file("modules/plugin-fixtures/hello"))
   .dependsOn(pluginApi)
@@ -615,6 +635,7 @@ lazy val server = project
   .dependsOn(pluginsMedia.jvm(scala3) % "runtime->compile")
   .dependsOn(pluginsGazetteers.jvm(scala3) % "runtime->compile")
   .dependsOn(pluginsAiHttp.jvm(scala3) % "runtime->compile")
+  .dependsOn(pluginsCalibre.jvm(scala3) % "runtime->compile;test->test")
   // the calibre commands' suite runs the CLI against a test server, as a person does
   .dependsOn(cli % "test->compile")
   .settings(
@@ -957,7 +978,7 @@ lazy val root = project
   .aggregate(
     (values.projectRefs ++ api.projectRefs ++ core.projectRefs ++ pluginsFetchers.projectRefs ++
       pluginsEvents.projectRefs ++ pluginsMedia.projectRefs ++
-      pluginsGazetteers.projectRefs ++ pluginsAiHttp.projectRefs)*
+      pluginsGazetteers.projectRefs ++ pluginsAiHttp.projectRefs ++ pluginsCalibre.projectRefs)*
   )
   .aggregate(
     config,

@@ -69,3 +69,9 @@ trait PluginContext:
     * earlier extension point still compiles.
     */
   def gazetteerSources: Registry[GazetteerSource] = Registry.refusing("this host has no gazetteer import")
+
+  /** The collections of sources the library searches and imports from, and may write back to, each under its own name —
+    * the name `histmersion calibre …` or `histmersion archive …` runs it by ([[SourceCollection]]). A host that has no
+    * library refuses every addition — the default, so a context written before collections existed still compiles.
+    */
+  def sourceCollections: Registry[SourceCollection] = Registry.refusing("this host has no source collections")

@@ -37,6 +37,7 @@ DEPS = {
     "pluginsMedia": ["upstreams", "pluginTestkit"],
     "pluginsGazetteers": ["upstreams", "pluginTestkit"],
     "pluginsAiHttp": ["pluginApi", "pluginTestkit"],
+    "pluginsCalibre": ["pluginApi", "pluginTestkit"],
     "pluginHello": ["pluginApi"],
     "pluginHelloAi": ["pluginApi"],
     "pluginHelloLib": [],
@@ -47,11 +48,11 @@ DEPS = {
     "db": ["config", "core"],
     "cli": ["api", "config", "files"],
     "web": ["apiJS"],
-    "server": ["core", "db", "pluginApi", "pluginHost", "pluginVaults", "pluginsFetchers", "pluginsEvents", "pluginsMedia", "pluginsAiHttp", "pluginHello",
+    "server": ["core", "db", "pluginApi", "pluginHost", "pluginVaults", "pluginsFetchers", "pluginsEvents", "pluginsMedia", "pluginsAiHttp", "pluginsCalibre", "pluginHello",
                "pluginHelloAi", "pluginHelloDeps", "pluginsGazetteers", "cli"],
 }
 ORDER = ["values", "valuesJS", "api", "apiJS", "config", "files", "core", "pluginApi", "upstreams", "pluginHost", "pluginTestkit",
-         "pluginsFetchers", "pluginsEvents", "pluginsMedia", "pluginsGazetteers", "pluginsAiHttp", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloLib",
+         "pluginsFetchers", "pluginsEvents", "pluginsMedia", "pluginsGazetteers", "pluginsAiHttp", "pluginsCalibre", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloLib",
          "pluginHelloDeps", "pluginResolver", "chimneyIron", "chimneyIronTests", "db", "cli", "web", "server"]
 # modules with no test sources of their own
 NO_TESTS = {"pluginHello", "pluginHelloAi", "pluginHelloLib", "pluginHelloDeps", "chimneyIron"}
@@ -90,6 +91,7 @@ RULES = [
     ("modules/plugins/media/", ["pluginsMedia"]),
     ("modules/plugins/gazetteers/", ["pluginsGazetteers"]),
     ("modules/plugins/ai-http/", ["pluginsAiHttp"]),
+    ("modules/plugins/calibre/", ["pluginsCalibre"]),
     ("modules/plugin-testkit/", ["pluginTestkit"]),
     ("modules/plugin-vaults/", ["pluginVaults"]),
     ("modules/plugin-fixtures/hello-ai/", ["pluginHelloAi"]),
