@@ -48,7 +48,7 @@ DEPS = {
     "cli": ["api", "config", "files"],
     "web": ["apiJS"],
     "server": ["core", "db", "pluginApi", "pluginHost", "pluginVaults", "pluginsFetchers", "pluginsEvents", "pluginsMedia", "pluginsAiHttp", "pluginHello",
-               "pluginHelloAi", "pluginHelloDeps", "pluginsGazetteers"],
+               "pluginHelloAi", "pluginHelloDeps", "pluginsGazetteers", "cli"],
 }
 ORDER = ["values", "valuesJS", "api", "apiJS", "config", "files", "core", "pluginApi", "upstreams", "pluginHost", "pluginTestkit",
          "pluginsFetchers", "pluginsEvents", "pluginsMedia", "pluginsGazetteers", "pluginsAiHttp", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloLib",

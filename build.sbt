@@ -615,6 +615,8 @@ lazy val server = project
   .dependsOn(pluginsMedia.jvm(scala3) % "runtime->compile")
   .dependsOn(pluginsGazetteers.jvm(scala3) % "runtime->compile")
   .dependsOn(pluginsAiHttp.jvm(scala3) % "runtime->compile")
+  // the calibre commands' suite runs the CLI against a test server, as a person does
+  .dependsOn(cli % "test->compile")
   .settings(
     name := "histmersion-server",
     description := "The server: MCP, REST and the web UI over the store; built as a native image",
