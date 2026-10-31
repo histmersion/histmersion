@@ -5,24 +5,12 @@ import com.histmersion.pluginhost.HostAiHttp
 import com.histmersion.config.AgentsConfig
 import com.histmersion.api.Agents
 import com.histmersion.api.Agents.{ModelRef, ProviderKind}
-import sttp.ai.claude.ClaudeClient
-import sttp.ai.claude.agent.ClaudeAgent
-import sttp.ai.claude.config.ClaudeConfig
-import sttp.ai.claude.models.ClaudeModel
 import sttp.ai.core.agent.*
 import sttp.ai.core.model.{AIModel, Capability}
-import sttp.ai.openai.OpenAI
-import sttp.ai.openai.agent.OpenAIAgent
-import sttp.ai.openai.requests.completions.chat.ChatRequestBody.ChatCompletionModel
-import sttp.client4.Backend
-import sttp.client4.httpclient.HttpClientSyncBackend
-import sttp.model.Uri
 import sttp.shared.Identity
 
-import scala.concurrent.duration.*
-
-/** A configured model, ready to run [[LlmCall]]s. The engine never sees a provider type: the three sttp-ai builders are
-  * hidden behind [[run]], so a pinned-but-pre-1.0 library touches one file.
+/** A configured model, ready to run [[LlmCall]]s. The engine never sees a provider type: the loop (sttp-ai's) and its
+  * builders are hidden behind [[run]], so a pinned-but-pre-1.0 library touches few files.
   */
 trait LlmClient:
   def model: ModelRef
@@ -30,8 +18,8 @@ trait LlmClient:
 
 object LlmClient:
 
-  /** Apply an [[LlmCall]] to any sttp-ai builder. Generic in the model type so Claude, OpenAI and the test kit's
-    * scripted model all go through the same configuration.
+  /** Apply an [[LlmCall]] to any sttp-ai builder. Generic in the model type so a plugin's provider and the test kit's
+    * scripted model go through the same configuration.
     */
   def configure[M <: AIModel & Capability.All, Out](
       b: AgentBuilder[Identity, M, String, String],
@@ -45,26 +33,14 @@ object LlmClient:
       .responseSchema(c.schema)
       .build
 
-  /** HTTP/1.1 like every other client in the server (the netty/java.net.http HTTP/2 reuse problem); the per-request
-    * read timeout is the provider's `timeout-seconds`.
-    */
-  private def httpBackend(connectSeconds: Int): Backend[Identity] =
-    HttpClientSyncBackend.usingClient(
-      java.net.http.HttpClient
-        .newBuilder()
-        .version(java.net.http.HttpClient.Version.HTTP_1_1)
-        .connectTimeout(java.time.Duration.ofSeconds(connectSeconds.toLong))
-        .build()
-    )
-
   /** How the engine builds a client for a model (the seam a test fills with sttp-ai's scripted model). */
   type Factory = (AgentsConfig, ModelRef) => Either[String, LlmClient]
 
   /** The server's factory, resolving the provider through `providers` — the AI-provider registry of the plugin
-    * generation the calling thread is pinned to (docs/research-plugins.md §22): a host provider (its built-in plugin
-    * on) runs today's client — the HTTP providers from `agents.providers.*`, the CLI providers (`claude-code`, `codex`,
-    * `opencode`) on the generated trees, run tokens and plan pools of `rt`; a plugin's provider runs through the host's
-    * tool loop ([[PluginAiClient]]); a switched-off or unregistered one is refused, saying which.
+    * generation the calling thread is pinned to (docs/research-plugins.md §22): a command-line runtime (`claude-code`,
+    * `codex`, `opencode`; its built-in plugin on) runs on the generated trees, run tokens and plan pools of `rt`; any
+    * other registered provider — the HTTP APIs' first-party plugins among them — runs through the host's tool loop
+    * ([[PluginAiClient]]); a switched-off or unregistered one is refused, saying which.
     */
   def factory(
       rt: CliRuntime,
@@ -77,57 +53,14 @@ object LlmClient:
         case p                 => PluginAiClient.client(ref, p, http, rt.loopback)
       }
 
-  /** The host's own providers, as before the registry: the CLI runtimes on `rt`, else the HTTP ones. */
+  /** The host's own providers: the command-line runtimes on `rt`. */
   def host(rt: CliRuntime): Factory =
     (cfg, ref) =>
       ref.provider match
         case ProviderKind.ClaudeCode => ClaudeCode.client(cfg.providers.claudeCode, rt, ref)
         case ProviderKind.Codex      => Codex.client(cfg.providers.codex, rt, ref)
         case ProviderKind.Opencode   => Opencode.client(cfg.providers.opencode, rt, ref)
-        case _                       => fromConfig(cfg, ref)
-
-  /** The client for `ref` (an HTTP provider), or why it cannot be built (no key for a hosted provider, a bad URL).
-    */
-  def fromConfig(cfg: AgentsConfig, ref: ModelRef): Either[String, LlmClient] =
-    cfg
-      .provider(ref.provider)
-      .toRight(s"${ref.wire}: the ${ref.provider.wire} provider is not an HTTP provider")
-      .flatMap { p =>
-        val timeout = math.max(1, p.timeoutSeconds).seconds
-        Uri.parse(p.baseUrl).left.map(e => s"agents.providers.${ref.provider.wire}.base-url: $e").flatMap { uri =>
-          ref.provider match
-            case ProviderKind.Anthropic if p.apiKey.isEmpty =>
-              Left("no Anthropic API key — set ANTHROPIC_API_KEY in the server's environment")
-            case ProviderKind.OpenAI if p.apiKey.isEmpty =>
-              Left("no OpenAI API key — set OPENAI_API_KEY in the server's environment")
-            case ProviderKind.Anthropic =>
-              val client = ClaudeClient(ClaudeConfig(apiKey = p.apiKey, baseUrl = uri, timeout = timeout))
-              Right(Claude(ref, client, httpBackend(30)))
-            case ProviderKind.OpenAI | ProviderKind.Local =>
-              // a local server needs no key, but the client always sends the header: send a placeholder
-              val key = if p.apiKey.isEmpty then "none" else p.apiKey
-              Right(OpenAICompatible(ref, new OpenAI(key, uri, timeout = timeout), p.strictTools, httpBackend(30)))
-            case k => Left(s"${ref.wire}: ${k.wire} is not an HTTP provider")
-        }
-      }
-
-  final private class Claude(val model: ModelRef, client: ClaudeClient, backend: Backend[Identity]) extends LlmClient:
-    def run[Out](call: LlmCall[Out]): AgentResult[Either[AgentFailure, Out]] =
-      configure(ClaudeAgent.synchronous(client, ClaudeModel.CustomClaudeModel(model.model)), call)
-        .run(call.user)(backend)
-
-  final private class OpenAICompatible(
-      val model: ModelRef,
-      client: OpenAI,
-      strictTools: Boolean,
-      backend: Backend[Identity]
-  ) extends LlmClient:
-    def run[Out](call: LlmCall[Out]): AgentResult[Either[AgentFailure, Out]] =
-      configure(
-        OpenAIAgent.synchronous(client, ChatCompletionModel.CustomChatCompletionModel(model.model), strictTools),
-        call
-      )
-        .run(call.user)(backend)
+        case k                       => Left(s"${ref.wire}: ${k.wire} is not one of the host's command-line providers")
 
   /** sttp-ai's usage → ours. */
   def usage(u: TokenUsage): Agents.Usage =

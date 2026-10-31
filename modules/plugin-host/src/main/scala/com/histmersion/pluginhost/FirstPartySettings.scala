@@ -51,8 +51,9 @@ object FirstPartySettings:
     */
   private val Media = "histmersion.media"
 
-  /** The first-party plugins and what each reads of the host's settings. The AI providers read their settings at each
-    * use, from the host (until they move into plugins of their own): no path, and a host key never rebuilds them.
+  /** The first-party plugins and what each reads of the host's settings. The command-line AI runtimes read their
+    * settings at each use, from the host (until they move into plugins of their own): no path, and a host key never
+    * rebuilds them.
     */
   val all: List[FirstPartySettings] =
     List("archive-org", "oa-unpaywall", "oa-core", "oa-openalex", "pmc", "arxiv").map(FirstPartySettings(_, fetcher)) ++
@@ -76,15 +77,16 @@ object FirstPartySettings:
         "media-europeana"
       ).map(FirstPartySettings(_, List(Media))) ++
       List(
-        "ai-anthropic",
-        "ai-openai",
-        "ai-local",
         "ai-claude-code",
         "ai-codex",
         "ai-opencode"
       ).map(FirstPartySettings(_, Nil)) ++
       // the gazetteers read no host setting: the host lends each download its own client (places.fetch-*)
-      List("gazetteer-cliopatria", "gazetteer-awmc", "gazetteer-chronontology").map(FirstPartySettings(_, Nil))
+      List("gazetteer-cliopatria", "gazetteer-awmc", "gazetteer-chronontology").map(FirstPartySettings(_, Nil)) ++
+      // each HTTP AI provider its own `agents.providers.<name>` (base URL, key, strict tools, timeout)
+      List("anthropic", "openai", "local").map(n =>
+        FirstPartySettings(s"ai-$n", List(s"histmersion.agents.providers.$n"))
+      )
 
   private val byId: Map[String, FirstPartySettings] = all.map(s => s.plugin -> s).toMap
 

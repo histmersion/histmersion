@@ -1,5 +1,6 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.VerbatimFailure
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.pluginhost.HostAiHttp
 
@@ -1022,10 +1023,8 @@ object AgentsHandlers:
     catch
       case e: InterruptedException => throw e
       case e: Exception            =>
-        scribe.warn(s"agent call to ${model.wire} failed: ${e.getClass.getSimpleName}: ${e.getMessage}")
-        Left(
-          ApiError(
-            s"the call to ${model.wire} failed: ${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}"
-              .take(600)
-          )
-        )
+        val logged = e match
+          case v: VerbatimFailure => v.description
+          case _                  => s"${e.getClass.getSimpleName}: ${e.getMessage}"
+        scribe.warn(s"agent call to ${model.wire} failed: $logged")
+        Left(ApiError(s"the call to ${model.wire} failed: ${VerbatimFailure.describe(e)}".take(600)))

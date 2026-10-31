@@ -3,8 +3,8 @@ package com.histmersion.plugins.gazetteers
 import com.histmersion.plugin.testkit.{HttpMode, PluginHarness, StubAnswer}
 
 /** Histmersion's own network gazetteers run as any plugin author runs theirs: through the plugin testkit, which loads a
-  * plugin from the class path as the server does and runs its source's download through the server's gazetteer
-  * client, answered from canned answers — never the network.
+  * plugin from the class path as the server does and runs its source's download through the server's gazetteer client,
+  * answered from canned answers — never the network.
   */
 class GazetteerPluginsKitSuite extends munit.FunSuite:
 
@@ -15,7 +15,11 @@ class GazetteerPluginsKitSuite extends munit.FunSuite:
     PluginHarness.load(id, http = HttpMode.Stub(stubs), env = Map.empty).fold(e => fail(e), identity)
 
   private val plugins =
-    List("gazetteer-cliopatria" -> "cliopatria", "gazetteer-awmc" -> "awmc", "gazetteer-chronontology" -> "chronontology")
+    List(
+      "gazetteer-cliopatria" -> "cliopatria",
+      "gazetteer-awmc" -> "awmc",
+      "gazetteer-chronontology" -> "chronontology"
+    )
 
   test("each plugin loads from the class path with its defaults and registers its one source"):
     plugins.foreach { (id, source) =>
@@ -39,7 +43,10 @@ class GazetteerPluginsKitSuite extends munit.FunSuite:
     val r = awmc.readGazetteer("awmc")
     assertEquals((r.failure, r.refused), (None, Nil))
     assertEquals(r.requests, List(s"GET ${Awmc.url}"))
-    assertEquals(r.accepted.map(_.place.id), List("awmc_pleiades_511444", "awmc_pleiades_511405", "awmc_pleiades_511171"))
+    assertEquals(
+      r.accepted.map(_.place.id),
+      List("awmc_pleiades_511444", "awmc_pleiades_511405", "awmc_pleiades_511171")
+    )
     assertEquals(r.accepted.map(_.source).distinct, List(Some("Ancient World Mapping Center (UNC), ODbL")))
     val chrono =
       load("gazetteer-chronontology", Map(ChronOntology.url -> StubAnswer.ok(fixture("chronontology.json"))))

@@ -8,8 +8,8 @@ import scala.collection.immutable.ListMap
 
 /** Histmersion's own network gazetteers — first-party plugins (`gazetteer-cliopatria`, `gazetteer-awmc`,
   * `gazetteer-chronontology`), each enabled by default and switched off by
-  * `histmersion.plugins.gazetteer-<source>.enabled = false` — by the names `places fetch` and `init.fetch-sources` take,
-  * which a plugin's source may not take. The places of one switched off since stay on the map.
+  * `histmersion.plugins.gazetteer-<source>.enabled = false` — by the names `places fetch` and `init.fetch-sources`
+  * take, which a plugin's source may not take. The places of one switched off since stay on the map.
   */
 object BuiltinGazetteers:
 
@@ -27,8 +27,8 @@ object BuiltinGazetteers:
   /** The first-party names, in the order they are listed. */
   val names: List[String] = entries.map(_.name)
 
-  /** Names a plugin's source may not take: these, and the other names `places fetch` and `init.fetch-sources` take
-    * (the coastline, PeriodO, the bundled extracts).
+  /** Names a plugin's source may not take: these, and the other names `places fetch` and `init.fetch-sources` take (the
+    * coastline, PeriodO, the bundled extracts).
     */
   val reserved: Set[String] =
     names.toSet ++ Set(NaturalEarthLand.name, PeriodOFetch.name) ++ GazetteerKind.values.map(_.wire)

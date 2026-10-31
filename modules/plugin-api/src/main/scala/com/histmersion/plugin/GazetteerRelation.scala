@@ -1,7 +1,7 @@
 package com.histmersion.plugin
 
-/** One edge of the place hierarchy, with its own validity: a time-slice of a polity is part of the polity, a city
-  * part of a province while it was.
+/** One edge of the place hierarchy, with its own validity: a time-slice of a polity is part of the polity, a city part
+  * of a province while it was.
   *
   * @param childId
   *   the place that is part of the other (usually the place that states the relation)

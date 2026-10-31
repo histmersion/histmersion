@@ -1,6 +1,6 @@
 package com.histmersion.server.agents
 
-import com.histmersion.pluginhost.{Generation, PluginHost}
+import com.histmersion.pluginhost.{FirstPartySettings, Generation, PluginHost}
 
 import com.histmersion.config.AppConfig
 import com.histmersion.api.PlanQuota
@@ -28,13 +28,26 @@ class AiProvidersSuite extends munit.FunSuite:
 
   private val offline = new PluginHttp { def get(u: String, h: Map[String, String]) = Left("offline") }
 
+  /** A generation of `plugins` as the server builds one: the first-party plugins supplied the host's settings
+    * (`reference.conf` under `env`) and allowed their reserved names.
+    */
   private def build(plugins: List[Plugin], user: String = "", env: String = ""): Generation =
+    val (u, e) = (ConfigFactory.parseString(user), ConfigFactory.parseString(env))
+    val reference = AppConfig.loadWithUserFile(e, None).fold(m => fail(m), _.merged)
+    val host = FirstPartySettings.hostView(reference, u, e, plugins)
     PluginHost.build(
       plugins,
-      ConfigFactory.parseString(user),
-      ConfigFactory.parseString(env),
-      Plugins.services(() => offline, ConfigFactory.parseString(env))
+      u,
+      e,
+      Plugins.services(() => offline, e),
+      fallback = FirstPartySettings.fallback(_, host),
+      firstParty = Plugins.firstParty(None)
     )
+
+  /** The six built-in providers' plugins: the HTTP APIs' found on the class path, the command-line runtimes the host's.
+    */
+  private val builtins: List[Plugin] =
+    PluginHost.discover(getClass.getClassLoader)._1.filter(p => BuiltinAi.pluginIds(p.info.id)) ++ Plugins.providers
 
   /** What a scripted provider was asked, turn by turn. */
   final private class Scripted(
@@ -72,18 +85,36 @@ class AiProvidersSuite extends munit.FunSuite:
       BuiltinAi.pluginIds,
       Set("ai-anthropic", "ai-openai", "ai-local", "ai-claude-code", "ai-codex", "ai-opencode")
     )
-    assert(g.registries.aiProviders.values.forall(_.isInstanceOf[HostAiProvider]))
+    // the command-line runtimes are the host's own; the HTTP APIs are the first-party plugins' providers
+    val hostRun = g.registries.aiProviders.collect { case (n, _: HostAiProvider) => n }.toSet
+    assertEquals(hostRun, Set("claude-code", "codex", "opencode"))
+    // in the generation's order (by plugin id), as before
+    assertEquals(
+      g.registries.aiProviders.keys.toList,
+      List("anthropic", "claude-code", "codex", "local", "openai", "opencode")
+    )
+    assertEquals(
+      g.report.plugins.filter(p => BuiltinAi.pluginIds(p.id)).map(p => (p.id, p.version, p.provides)),
+      List(
+        ("ai-anthropic", "1.0.0", List("ai-provider:anthropic")),
+        ("ai-claude-code", "1.0.0", List("ai-provider:claude-code")),
+        ("ai-codex", "1.0.0", List("ai-provider:codex")),
+        ("ai-local", "1.0.0", List("ai-provider:local")),
+        ("ai-openai", "1.0.0", List("ai-provider:openai")),
+        ("ai-opencode", "1.0.0", List("ai-provider:opencode"))
+      )
+    )
     assertEquals(BuiltinAi.known(g.registries.aiProviders), Set.empty[String])
 
   test("a built-in switched off by config or by environment is out of the registry, and the lookup names its switch"):
-    val byFile = build(Plugins.providers, "histmersion.plugins.ai-codex.enabled = false")
+    val byFile = build(builtins, "histmersion.plugins.ai-codex.enabled = false")
     assertEquals(byFile.report.plugins.find(_.id == "ai-codex").map(_.state), Some("disabled"))
     assert(!byFile.registries.aiProviders.contains("codex"))
     assertEquals(
       BuiltinAi.lookup(ProviderKind.Codex, byFile.registries.aiProviders),
       Left("the codex provider is switched off (histmersion.plugins.ai-codex.enabled = false)")
     )
-    val byEnv = build(Plugins.providers, env = "HISTMERSION_PLUGIN_AI_CLAUDE_CODE_ENABLED = false")
+    val byEnv = build(builtins, env = "HISTMERSION_PLUGIN_AI_CLAUDE_CODE_ENABLED = false")
     assert(!byEnv.registries.aiProviders.contains("claude-code") && byEnv.registries.aiProviders.contains("codex"))
     assert(
       BuiltinAi
@@ -94,18 +125,18 @@ class AiProvidersSuite extends munit.FunSuite:
 
   test("a third-party provider registers beside the built-ins; a host provider's name is refused"):
     val p = Scripted(Nil)
-    val g = build(Plugins.providers :+ AiPlugin("gemini", p), on())
+    val g = build(builtins :+ AiPlugin("gemini", p), on())
     assertEquals(g.report.plugins.find(_.id == "zq-ai").map(_.provides), Some(List("ai-provider:gemini")))
     assertEquals(g.registries.aiProviders.keys.toList.last, "gemini")
     assertEquals(BuiltinAi.known(g.registries.aiProviders), Set("gemini"))
-    val taken = build(Plugins.providers :+ AiPlugin("local", p), on())
+    val taken = build(builtins :+ AiPlugin("local", p), on())
     assert(
       taken.report.plugins.find(_.id == "zq-ai").flatMap(_.error).exists(_.contains("'local' is already registered")),
       taken.report.toString
     )
-    assertEquals(taken.registries.aiProviders("local").getClass, classOf[HostAiProvider])
+    assert(taken.registries.aiProviders("local") ne p, "the name stays the built-in plugin's")
     // nor once the host's own is switched off: the name stays the host's
-    val free = build(Plugins.providers :+ AiPlugin("local", p), on() + "\nhistmersion.plugins.ai-local.enabled = false")
+    val free = build(builtins :+ AiPlugin("local", p), on() + "\nhistmersion.plugins.ai-local.enabled = false")
     assert(
       free.report.plugins
         .find(_.id == "zq-ai")
@@ -117,31 +148,40 @@ class AiProvidersSuite extends munit.FunSuite:
     val bad = build(List(AiPlugin("Not_Kebab", p)), on())
     assert(bad.report.plugins.head.error.exists(_.contains("an AI provider name is")), bad.report.toString)
 
-  test("reload: a host key rebuilds no AI built-in; its own block rebuilds it alone"):
-    val g1 = build(Plugins.providers :+ AiPlugin("gemini", Scripted(Nil)), on())
+  test("reload: only an HTTP provider's own agents.providers.<name> rebuilds an AI built-in; so does its own block"):
+    val g1 = build(builtins :+ AiPlugin("gemini", Scripted(Nil)), on())
     assert(BuiltinAi.pluginIds.subsetOf(Plugins.carried(g1, List("histmersion.acquire.chain")).keySet))
     assert(!Plugins.carried(g1, List("histmersion.acquire.chain")).contains("zq-ai"))
     val own = Plugins.carried(g1, List("histmersion.plugins.ai-codex.enabled")).keySet
     assert(!own("ai-codex") && own("ai-local") && own("zq-ai"))
-    // an agents.* setting is no plugin key: nothing is rebuilt (the clients read it at each call)
-    assert(Plugins.carried(g1, List("histmersion.agents.providers.codex.command")).keySet("zq-ai"))
+    // a command-line runtime's agents.* setting is no plugin key: nothing is rebuilt (its client reads it at each call)
+    assertEquals(
+      Plugins.carried(g1, List("histmersion.agents.providers.codex.command")).keySet,
+      Plugins.carried(g1, Nil).keySet
+    )
+    // an HTTP provider's own agents.providers.<name> rebuilds its plugin alone
+    val keyed = Plugins.carried(g1, List("histmersion.agents.providers.openai.api-key")).keySet
+    assert(!keyed("ai-openai") && keyed("ai-anthropic") && keyed("ai-local") && keyed("zq-ai"), keyed.toString)
 
   // ── the factory ────────────────────────────────────────────────────────────────────────────────
 
-  test("the factory: a host provider runs today's client; a switched-off one or an unknown one is refused"):
+  test("the factory: a built-in provider runs its client; a switched-off one or an unknown one is refused"):
     val reg = Plugins.offline.registries.aiProviders
     val f = LlmClient.factory(rt(), () => reg, AiHttp.Offline)
-    assert(f(app.agents, ModelRef(ProviderKind.Local, "qwen")).isRight)
-    // exactly what the host's own factory says for every host provider (no key here: the same refusal)
-    val noKeys = app.agents.copy(providers =
-      app.agents.providers.copy(
-        anthropic = app.agents.providers.anthropic.copy(apiKey = ""),
-        openai = app.agents.providers.openai.copy(apiKey = "")
-      )
+    assert(f(app.agents, ModelRef(ProviderKind.Local, "qwen")).exists(_.isInstanceOf[PluginAiClient]))
+    // the HTTP providers' own checks over the settings the host supplied them (no key in reference.conf), as they read
+    assertEquals(
+      f(app.agents, ModelRef(ProviderKind.Anthropic, "m/x")).left.toOption,
+      Some("no Anthropic API key — set ANTHROPIC_API_KEY in the server's environment")
     )
-    ProviderKind.values.foreach { k =>
+    assertEquals(
+      f(app.agents, ModelRef(ProviderKind.OpenAI, "m/x")).left.toOption,
+      Some("no OpenAI API key — set OPENAI_API_KEY in the server's environment")
+    )
+    // the command-line runtimes: exactly what the host's own factory says
+    BuiltinAi.runtimes.foreach { k =>
       val r = ModelRef(k, "m/x")
-      assertEquals(f(noKeys, r).left.toOption, LlmClient.host(rt())(noKeys, r).left.toOption, k.wire)
+      assertEquals(f(app.agents, r).left.toOption, LlmClient.host(rt())(app.agents, r).left.toOption, k.wire)
     }
     val off = LlmClient.factory(rt(), () => reg - "local", AiHttp.Offline)
     assertEquals(
@@ -270,6 +310,63 @@ class AiProvidersSuite extends munit.FunSuite:
           .addAssistantResponse("a", Nil)
       ),
       List(AiMessage.User("u"), AiMessage.Assistant("a", Nil))
+    )
+    assertEquals(
+      PluginAiClient.messages(ConversationHistory.withInitialPrompt("u").addIterationMarker(2, 3), markers = true),
+      List(AiMessage.User("u"), AiMessage.User("[Iteration 2 of 3]"))
+    )
+
+  /** A provider that asks for the loop's notes and verbatim failures, as the HTTP built-ins do. */
+  final private class Wired(answers: List[AiTurnRequest => Either[AiFailure, AiTurn]], checked: Either[String, Unit])
+      extends AiProvider:
+    val title = "Wired"
+    val asked = scala.collection.mutable.ArrayBuffer.empty[AiTurnRequest]
+    override def capabilities = AiCapabilities(iterationMarkers = true, verbatimFailures = true)
+    override def check(model: String) = checked
+    def turn(r: AiTurnRequest, http: AiHttp) =
+      asked += r
+      answers.lift(asked.size - 1).getOrElse((_: AiTurnRequest) => Left(AiFailure.Error("script exhausted")))(r)
+
+  test("the request options a provider asks for: the loop's notes, the rendered schema, reasoning, verbatim failures"):
+    val p = Wired(
+      List(
+        _ => Right(AiTurn("", List(AiToolCall("c1", "ping", """{"word":"hi"}""")), AiStop.ToolUse, u)),
+        _ => Right(AiTurn("""{"word":"pong"}""", usage = Some(AiUsage(10, 5, reasoning = 3))))
+      ),
+      Right(())
+    )
+    val described = ResponseSchema.derived[Ping](Some("one word back"))
+    val r = PluginAiClient(ref, p, AiHttp.Offline).run(call().copy(schema = described))
+    assertEquals(r.finalAnswer, Right(Ping("pong")))
+    assertEquals(r.usage.reasoningTokens, Tokens(3))
+    // the second turn ends with the loop's note, as sttp-ai's own providers send it
+    assertEquals(p.asked(1).messages.last, AiMessage.User("[Iteration 2 of 4]"))
+    assertEquals(p.asked.head.messages, List(AiMessage.User("USER <article>data</article>")))
+    assertEquals(p.asked.head.answerDescription, Some("one word back"))
+    assert(p.asked.head.answerSchemaRendered.exists(_.startsWith("{\"$schema\":")), p.asked.head.answerSchemaRendered)
+    assert(!p.asked.head.answerSchema.exists(_.contains("$schema")))
+    // a third-party provider that asks for nothing sees neither the notes nor anything else new
+    val plain = Scripted(
+      List(
+        _ => Right(AiTurn("", List(AiToolCall("c1", "ping", """{"word":"hi"}""")), AiStop.ToolUse, u)),
+        _ => Right(AiTurn("""{"citekey":"x","title":"X","year":1}""", usage = u))
+      )
+    )
+    val _ = PluginAiClient(ref, plain, AiHttp.Offline).run(call())
+    assert(!plain.asked(1).messages.exists { case AiMessage.User(t) => t.startsWith("[Iteration"); case _ => false })
+    // a verbatim failure is the run's whole error text; its check's refusal is not prefixed with the model
+    val failing = Wired(List(_ => Left(AiFailure.Error("RuntimeException: Claude API error: Overloaded"))), Right(()))
+    assertEquals(
+      AgentsHandlers.attempt(ref)(PluginAiClient(ref, failing, AiHttp.Offline).run(call())).left.map(_.message),
+      Left("the call to gemini:pro failed: RuntimeException: Claude API error: Overloaded")
+    )
+    val refused = PluginAiClient.client(ref, Wired(Nil, Left("no Gemini key — set GEMINI_KEY")), AiHttp.Offline, true)
+    assertEquals(refused.left.toOption, Some("no Gemini key — set GEMINI_KEY"))
+    // any other provider's error names the model and the exception, as before
+    val other = Scripted(List(_ => Left(AiFailure.Error("HTTP 500"))))
+    assertEquals(
+      AgentsHandlers.attempt(ref)(PluginAiClient(ref, other, AiHttp.Offline).run(call())).left.map(_.message),
+      Left("the call to gemini:pro failed: IOException: gemini:pro: HTTP 500")
     )
 
   test("billing and quota: a plugin provider's model is metered, on no plan pool"):

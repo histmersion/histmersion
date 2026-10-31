@@ -27,7 +27,7 @@ core  ── the DOMAIN (package `domain`): the logic server and db run on. JVM 
          NO database code, NO side effects.   depends on values, api, files — never config (its tests only)
 db    ── the STORE: Magnum repos, Flyway migrations, the seed importer.      depends on config, core
 server─ MCP + REST + web UI; the ONLY database client.  depends on core, db, plugin-api, plugin-host (+ plugin-vaults;
-         plugins/fetchers, plugins/events and plugins/gazetteers at run time only)
+         plugins/fetchers, plugins/events, plugins/media, plugins/gazetteers and plugins/ai-http at run time only)
          (and through them on values, api and config)
 cli   ── a PURE HTTP CLIENT of the server.         depends on api, config and files — never core, never db
 web   ── the Scala.js page (Laminar) over the sttp client derived from api's endpoints.   depends on api ONLY
@@ -45,6 +45,8 @@ plugins/events ─ the first-party event catalogues (events-gvp, events-noaa, ev
                                                                  upstreams (+ plugin-testkit for tests)
 plugins/gazetteers ─ the first-party network gazetteers (gazetteer-cliopatria, gazetteer-awmc,
               gazetteer-chronontology).                          upstreams (+ plugin-testkit for tests)
+plugins/ai-http ─ the first-party HTTP AI providers (ai-anthropic, ai-openai, ai-local) over the SPI's AiHttp.
+                                       plugin-api (+ circe, sttp core; plugin-testkit for tests)
 plugin-testkit ─ a plugin's TEST dependency: load and run it as the server does (plugin-host), with
               live/record/replay HTTP; shipped in the install's maven/, its API a contract.  plugin-host
 plugin-vaults ─ the built-in secret-vault plugins.                          depends on plugin-api ONLY
@@ -69,9 +71,11 @@ catalogues (`plugins/events`) and the network gazetteers (`plugins/gazetteers`) 
 names are reserved (`ReservedNames.firstPartyPlugins`), and the host supplies them the paths of its own
 settings that `pluginhost/FirstPartySettings` lists (`histmersion.acquire.*`, `histmersion.events.<catalogue>.*`
 — the user keeps writing those), the same table deciding which plugin a settings change rebuilds; the former
-`oa-index`'s settings are mapped by `server/plugins/LegacyPlugins`. The media collections and AI providers
-(`server/agents/AiPlugins`: `ai-anthropic` … `ai-opencode`, over `agents.providers.*`, §23) are still host code
-wrapped by `server/util/plugins/HostProvided`, until they move too (`docs/research-domain-model.md` §9.2).
+`oa-index`'s settings are mapped by `server/plugins/LegacyPlugins`. The HTTP AI providers
+(`plugins/ai-http`) are first-party plugins too, supplied `histmersion.agents.providers.<name>.*`. The media
+collections and the command-line AI runtimes (`server/agents/BuiltinAi`: `ai-claude-code`, `ai-codex`, `ai-opencode`,
+§23) are still host code wrapped by `server/util/plugins/HostProvided`, until they move too
+(`docs/research-domain-model.md` §9.2).
 
 A user's own plugins are linked in by `bin/histmersion-relink` from the bundle's relink kit
 (`server/relinkKit`: the Sloth-patched class path and `server/nativeImageOptions`, the ONE list of native-image

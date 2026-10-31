@@ -1,0 +1,3 @@
+com.histmersion.plugins.ai.AnthropicPlugin
+com.histmersion.plugins.ai.OpenAiPlugin
+com.histmersion.plugins.ai.LocalPlugin

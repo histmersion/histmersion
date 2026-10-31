@@ -684,12 +684,29 @@ class AiTrafficSuite extends munit.FunSuite:
 
   private val transcriptFile = Path.of("modules/server/src/test/resources/traffic/ai.txt")
 
+  /** The User-Agent the host's AI client sends (its policy: the project, never an e-mail). */
+  private val hostAgent =
+    com.histmersion.domain.HttpPolicy.userAgent(s"Histmersion/${com.histmersion.api.Version.version} (agents)")
+
+  /** The transcript as the host's AI client sends it: the two headers that belonged to the transport the providers had
+    * before (sttp's java.net.http backend: the JDK's default User-Agent and a gzip `Accept-Encoding`, which it decoded)
+    * are the host client's own — its User-Agent, and no `Accept-Encoding` (it reads bodies as sent). Every other line,
+    * every body included, is compared as recorded.
+    */
+  private def onHostTransport(recorded: String): String =
+    recorded
+      .split("\n", -1)
+      .toList
+      .filterNot(_ == "  Accept-encoding: gzip, deflate")
+      .map(l => if l.startsWith("  User-agent: Java-http-client/") then s"  User-agent: $hostAgent" else l)
+      .mkString("\n")
+
   test("the HTTP AI providers send exactly the recorded requests, in order, and the loop returns the same"):
     val now = transcript
     if sys.env.get("HISTMERSION_UPDATE_TRAFFIC").contains("1") then
       Files.createDirectories(transcriptFile.getParent)
       Files.writeString(transcriptFile, now, UTF_8)
-    val recorded = Files.readString(transcriptFile, UTF_8)
+    val recorded = onHostTransport(Files.readString(transcriptFile, UTF_8))
     if recorded != now then
       val (a, b) = (recorded.linesIterator.toVector, now.linesIterator.toVector)
       val at = a.indices.find(i => b.lift(i) != Some(a(i))).getOrElse(a.size)

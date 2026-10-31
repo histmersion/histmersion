@@ -344,7 +344,6 @@ direction	server:server/agents/GoalFocusService.scala	automation -> split: Handl
 direction	server:server/agents/GoalSweep.scala	automation -> split: Handlers	1
 direction	server:server/agents/HintEffectPipeline.scala	automation -> split: Handlers	1
 direction	server:server/agents/InferFilterPipeline.scala	research -> split: Handlers	1
-direction	server:server/agents/LlmClient.scala	automation -> server: Version	1
 direction	server:server/agents/ManagerDefaultsViews.scala	automation -> library: AgentSeedConfig	1
 direction	server:server/agents/ManagerDefaultsViews.scala	automation -> library: SeedPlanDefaults	1
 direction	server:server/agents/ManagerSupervisor.scala	automation -> library: AcquisitionSweepPipeline	1
