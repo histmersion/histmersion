@@ -6,7 +6,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.StatsRepo
 import com.histmersion.server.agents.AgentTrees
-import com.histmersion.server.basemap.BasemapService
+import com.histmersion.util.basemap.BasemapService
 import com.histmersion.server.importers.GazetteerLoad
 
 import java.nio.file.{Files, Path}

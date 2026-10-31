@@ -3,7 +3,7 @@ package com.histmersion.server
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.db.{DbSuite, JobRepo, Migrate, TestDb}
-import com.histmersion.server.basemap.{BasemapFixtures, BasemapService, BasemapServiceSuite, RangeHttp}
+import com.histmersion.util.basemap.{BasemapFixtures, BasemapService, BasemapServiceSuite, RangeHttp}
 import org.ekrich.config.ConfigFactory
 import ox.supervised
 

@@ -98,9 +98,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** The terrain base map (docs/research-terrain-basemap.md): its extracts, their fetch job and the tiles the web page
     * draws — same arrangement.
     */
-  val basemap: com.histmersion.server.basemap.BasemapService = com.histmersion.server.basemap.BasemapService(
+  val basemap: com.histmersion.util.basemap.BasemapService = com.histmersion.util.basemap.BasemapService(
     deps,
-    () => com.histmersion.server.basemap.JavaRangeHttp(deps.cfg.basemap.timeoutSeconds, deps.cfg.basemap.retries)
+    () => com.histmersion.util.basemap.JavaRangeHttp(deps.cfg.basemap.timeoutSeconds, deps.cfg.basemap.retries)
   )
 
   /** The portable bundle — instance identity, export, verify, import (docs/research-merge-import.md). */
