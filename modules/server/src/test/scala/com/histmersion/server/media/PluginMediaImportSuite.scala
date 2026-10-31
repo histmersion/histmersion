@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.server.ServerPlugins
+
 import com.histmersion.pluginhost.{Generation, HttpTransport, PluginHost}
 
 import ox.supervised
@@ -10,7 +12,6 @@ import com.histmersion.domain.*
 import com.histmersion.db.{MediaRepo, Migrate, PlaceRepo}
 import com.histmersion.plugin as spi
 import com.histmersion.server.{Composition, Deps}
-import com.histmersion.server.plugins.Plugins
 import io.circe.parser.decode
 import org.ekrich.config.ConfigFactory
 
@@ -91,7 +92,10 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
   }
 
   private def generation: Generation =
-    Plugins.offlineWith(List(ZqPlugin()), ConfigFactory.parseString("histmersion.plugins.zq-plugin.enabled = true"))
+    ServerPlugins.offlineWith(
+      List(ZqPlugin()),
+      ConfigFactory.parseString("histmersion.plugins.zq-plugin.enabled = true")
+    )
 
   private lazy val base =
     val b = AppConfig.load()
@@ -220,7 +224,7 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
       "a collection is about places"
     )
     // the plugin switched off: its collection is gone from the import and the list
-    val off = Plugins.offlineWith(List(ZqPlugin()), ConfigFactory.empty)
+    val off = ServerPlugins.offlineWith(List(ZqPlugin()), ConfigFactory.empty)
     val h2 = MediaHandlers(Deps(base, ds, ds, plugins = off), fake)
     assert(!h2.providers.exists(_.name == Collection))
     assert(

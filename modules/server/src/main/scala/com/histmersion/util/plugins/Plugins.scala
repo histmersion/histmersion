@@ -1,29 +1,20 @@
-package com.histmersion.server.plugins
+package com.histmersion.util.plugins
 
-import com.histmersion.pluginhost.{
-  FirstPartySettings,
-  Generation,
-  HostServices,
-  HttpTransport,
-  PluginHost,
-  PolicyHttp,
-  Registries,
-  ReservedNames
-}
+import com.histmersion.pluginhost.{FirstPartySettings, Generation, HostServices, PluginHost, Registries, ReservedNames}
 
 import com.histmersion.config.{AppConfig, HotPlan, LoadedConfig}
 import com.histmersion.api.{PluginSet, PluginState, PluginStatus}
 import org.ekrich.config.{ConfigFactory, ConfigUtil}
+import hearth.kindlings.optics.syntax.*
 import scala.jdk.CollectionConverters.*
 import com.histmersion.plugin.{Plugin, PluginHttp}
-import com.histmersion.server.acquire.{CoreBudget, HttpPlugin, SttpHttp}
-import com.histmersion.server.agents.BuiltinAi
 
-/** The composition root's handle on the plugins: discover the providers on the server's class path — the first-party
-  * fetchers, event catalogues, media collections, gazetteers, HTTP AI providers and vaults among them, as any plugin —
-  * add the command-line AI runtimes the host still supplies itself, and build the generation for a loaded config. Opens
-  * nothing — no database, no listener, no socket (the HTTP client is built only when a plugin or a fetch first asks for
-  * it) — so `--self-check` can call it.
+/** The plugin generations: discover the providers on the server's class path — the first-party fetchers, event
+  * catalogues, media collections, gazetteers, HTTP AI providers and vaults among them, as any plugin — add the plugins
+  * the host supplies itself (`provided`), and build the generation for a loaded config. The composition root says what
+  * the host supplies, which client the plugins are lent and what their upstream quotas are. Opens nothing — no
+  * database, no listener, no socket (the HTTP client is built only when a plugin or a fetch first asks for it) — so
+  * `--self-check` can call it.
   */
 object Plugins:
 
@@ -32,49 +23,42 @@ object Plugins:
     */
   val Keys: List[String] = PluginHost.Root :: FirstPartySettings.hostKeys
 
-  /** Build the generation for `loaded`. On a config reload, `previous` is the running generation and `changed` the keys
-    * that changed: a plugin whose block did not change is carried over as it is (not decoded, resolved or registered
-    * again) — unless it holds a secret (re-resolved on every reload), it failed last time, a secret vault's plugin
-    * changed, `order` changed, or a host key it reads did ([[carried]]). `core` is the server's CORE budget, which
-    * every generation's `ctx.quota("core")` lends and the new-source search spends from too.
+  /** Build the generation for `loaded`, with `provided` beside the class path's plugins. On a config reload, `previous`
+    * is the running generation and `changed` the keys that changed: a plugin whose block did not change is carried over
+    * as it is (not decoded, resolved or registered again) — unless it holds a secret (re-resolved on every reload), it
+    * failed last time, a secret vault's plugin changed, `order` changed, or a host key it reads did ([[carried]]).
+    * `http` lends every plugin of the generation the one acquisition client (built on its first use); `quota` is what
+    * `ctx.quota(<upstream>)` lends.
     */
   def load(
       loaded: LoadedConfig,
+      provided: List[Plugin],
+      http: () => PluginHttp,
+      quota: HostServices.Quotas,
       previous: Option[Generation] = None,
-      changed: List[String] = Nil,
-      core: CoreBudget = CoreBudget(),
-      transport: AppConfig => HttpTransport = PolicyHttp.acquisitionTransport
+      changed: List[String] = Nil
   ): Generation =
     val (found, errors) = PluginHost.discover(getClass.getClassLoader)
-    // ONE acquisition client for every plugin of this generation, built on first use
-    lazy val http = acquisitionHttp(loaded.config, transport)
-    generation(
-      loaded,
-      found ++ providers,
-      errors,
-      () => HttpPlugin(http),
-      core,
-      previous.fold(Map.empty)(carried(_, changed))
-    )
+    generation(loaded, found ++ provided, errors, http, quota, previous.fold(Map.empty)(carried(_, changed)))
 
   /** The generation of the first-party source fetchers alone (and `extra`, a test's) over `http`, for `loaded`: the
-    * chain a test or a one-off caller runs ([[com.histmersion.server.acquire.OaFetch]]).
+    * chain a test or a one-off caller runs.
     */
   def fetchers(
       loaded: LoadedConfig,
       http: () => PluginHttp,
-      core: CoreBudget = CoreBudget(),
+      quota: HostServices.Quotas,
       extra: List[Plugin] = Nil
   ): Generation =
     val (found, errors) = PluginHost.discover(getClass.getClassLoader)
-    generation(loaded, extra ++ found.filter(p => Fetchers(p.info.id)), errors, http, core, Map.empty)
+    generation(loaded, extra ++ found.filter(p => Fetchers(p.info.id)), errors, http, quota, Map.empty)
 
   private def generation(
       loaded: LoadedConfig,
       all: List[Plugin],
       errors: List[String],
       http: () => PluginHttp,
-      core: CoreBudget,
+      quota: HostServices.Quotas,
       carry: Map[String, (PluginStatus, Registries)]
   ): Generation =
     // a split plugin's former settings (oa-index) mapped onto its successors, with a deprecation warning
@@ -88,13 +72,13 @@ object Plugins:
       all,
       legacy.user,
       legacy.env,
-      HostServices(http, loaded.env, log, CoreBudget.quotas(core, CoreBudget.limits(loaded.config.acquire.core))),
+      HostServices(http, loaded.env, log, quota),
       errors ++ legacy.warnings,
       carry,
       fallback = FirstPartySettings.fallback(_, host),
       firstParty = firstParty(set)
     )
-    g.copy(report = g.report.copy(set = set, warnings = g.report.warnings ++ setError))
+    g.modify(_.report.set).setTo(set).modify(_.report.warnings).using(_ ++ setError)
 
   /** The resolved `histmersion` tree a load read; a load made by hand (a test's) has none, and reads `reference.conf`
     * with its environment instead.
@@ -175,28 +159,25 @@ object Plugins:
   /** The plugin that keys CORE: its `api-key` serves the new-source search too. */
   private val CorePlugin = "oa-core"
 
-  /** The first-party plugins the host still supplies itself: the command-line AI runtimes (`ai-claude-code`,
-    * `ai-codex`, `ai-opencode` — [[BuiltinAi]]). They read nothing at registration.
-    */
-  def providers: List[Plugin] = BuiltinAi.plugins
-
   /** The generation of a server or a `Deps` built without a config to load plugins from (a test's): the plugins on the
-    * class path but the source fetchers, and the host's own command-line AI runtimes, registered through the plugin
-    * host with an empty user config over `reference.conf` — so nothing is fetched (offline).
+    * class path but the source fetchers, and the host's own `provided` ones, registered through the plugin host with an
+    * empty user config over `reference.conf` — so nothing is fetched (offline).
     */
-  def offline: Generation = offlineWith(Nil, ConfigFactory.empty)
+  def offline(provided: List[Plugin]): Generation = offlineWith(provided, Nil, ConfigFactory.empty)
 
-  /** [[offline]] with `extra` plugins (a test's) beside the class path's, under the user block `user` (the host's own
-    * settings read from `user` too) and the environment `env`, carrying `carried` over from an earlier generation.
+  /** [[offline]] with `extra` plugins (a test's) beside the class path's and the host's `provided` ones, under the user
+    * block `user` (the host's own settings read from `user` too) and the environment `env`, carrying `carried` over
+    * from an earlier generation.
     */
   def offlineWith(
+      provided: List[Plugin],
       extra: List[Plugin],
       user: org.ekrich.config.Config,
       env: org.ekrich.config.Config = ConfigFactory.empty,
       carried: Map[String, (PluginStatus, Registries)] = Map.empty
   ): Generation =
     val (found, errors) = PluginHost.discover(getClass.getClassLoader)
-    val all = found.filterNot(p => Fetchers(p.info.id) || Offline(p.info.id)) ++ providers ++ extra
+    val all = found.filterNot(p => Fetchers(p.info.id) || Offline(p.info.id)) ++ provided ++ extra
     val settings = AppConfig.loadWithUserFile(env, None).fold(_ => ConfigFactory.empty, _.merged)
     val host = FirstPartySettings.hostView(user.withFallback(settings).resolve(), user, env, all)
     PluginHost.build(
@@ -222,10 +203,6 @@ object Plugins:
   /** The host's services: the one outbound HTTP policy and scribe with the plugin's id on every line. */
   def services(http: () => PluginHttp, env: org.ekrich.config.Config): HostServices =
     HostServices(http, env, log)
-
-  /** The acquisition client (`acquire.tls` included) under the one outbound policy. */
-  private def acquisitionHttp(cfg: AppConfig, transport: AppConfig => HttpTransport): SttpHttp =
-    new SttpHttp(PolicyHttp.acquisition(cfg, transport(cfg)))
 
   private def log(id: String, warn: Boolean, message: String): Unit =
     val line = if id.isEmpty then s"plugins: $message" else s"plugin $id: $message"

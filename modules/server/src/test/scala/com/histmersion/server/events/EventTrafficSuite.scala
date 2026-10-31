@@ -1,12 +1,13 @@
 package com.histmersion.server.events
 
+import com.histmersion.server.ServerPlugins
+
 import com.histmersion.api.*
 import com.histmersion.config.{AppConfig, LoadedConfig}
 import com.histmersion.db.{Migrate, TestDb}
 import com.histmersion.pluginhost.HttpAnswer
 import com.histmersion.server.Deps
 import com.histmersion.server.media.FakeMediaHttp
-import com.histmersion.server.plugins.Plugins
 
 import com.augustnagro.magnum.*
 import io.circe.syntax.*
@@ -106,7 +107,7 @@ class EventTrafficSuite extends com.histmersion.db.DbSuite:
 
   private def transcript: String =
     val sb = StringBuilder()
-    val plugins = Plugins.load(loaded)
+    val plugins = ServerPlugins.load(loaded)
     def handlers(f: FakeMediaHttp) = EventCatalogHandlers(Deps(cfg, ds, ds, plugins = plugins), f, () => 2026L)
     def run(name: String, req: EventImportRequest): Unit =
       val f = FakeMediaHttp(route)

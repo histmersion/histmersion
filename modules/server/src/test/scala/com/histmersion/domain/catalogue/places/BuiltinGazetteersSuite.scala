@@ -1,7 +1,8 @@
 package com.histmersion.domain.catalogue.places
 
+import com.histmersion.server.ServerPlugins
+
 import com.histmersion.plugin.*
-import com.histmersion.server.plugins.Plugins
 import org.ekrich.config.ConfigFactory
 
 import scala.collection.immutable.ListMap
@@ -17,7 +18,7 @@ class BuiltinGazetteersSuite extends munit.FunSuite:
     def fetch(http: PluginHttp) = Right(Nil)
 
   test("the stock generation registers the three first-party sources, listed in today's order"):
-    val registered = Plugins.offline.registries.gazetteerSources
+    val registered = ServerPlugins.offline.registries.gazetteerSources
     assertEquals(registered.keys.toSet, Set("cliopatria", "awmc", "chronontology"))
     assertEquals(BuiltinGazetteers.available(registered), List("cliopatria", "awmc", "chronontology"))
     assertEquals(BuiltinGazetteers.thirdParty(registered), Nil)
@@ -29,7 +30,7 @@ class BuiltinGazetteersSuite extends munit.FunSuite:
     )
 
   test("a source switched off is refused, naming the switch; an unknown one gets the caller's message"):
-    val off = Plugins
+    val off = ServerPlugins
       .offlineWith(Nil, ConfigFactory.parseString("histmersion.plugins.gazetteer-awmc.enabled = false"))
       .registries
       .gazetteerSources

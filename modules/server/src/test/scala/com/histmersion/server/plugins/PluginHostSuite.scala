@@ -1,5 +1,7 @@
 package com.histmersion.server.plugins
 
+import com.histmersion.util.plugins.Plugins
+
 import com.histmersion.pluginhost.{Generation, HostServices, PluginHost, ReservedNames}
 
 import com.histmersion.api.{PluginSetting, PluginState, PluginStatus}

@@ -15,6 +15,11 @@ final class HostProvided[C](id: String, contribute: (C, PluginContext) => Either
   def register(config: C, ctx: PluginContext): Either[String, Unit] = contribute(config, ctx)
 
 object HostProvided:
+  /** The ids of the plugins the host supplies itself: the command-line AI runtimes. The relink tool keeps them from a
+    * user's plugin without loading the runtimes.
+    */
+  val Ids: List[String] = List("ai-claude-code", "ai-codex", "ai-opencode")
+
   /** The version every host-supplied plugin reports. */
   val Release = "1.0.0"
 

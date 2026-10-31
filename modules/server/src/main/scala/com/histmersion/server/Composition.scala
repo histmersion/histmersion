@@ -11,7 +11,6 @@ import com.histmersion.config.{AppConfig, LoadedConfig, UserConfigFile}
 import com.histmersion.api.ConfigFileInfo
 import com.histmersion.server.acquire.*
 import com.histmersion.server.hot.{Hot, PinRequests}
-import com.histmersion.server.plugins.Plugins
 import ox.{releaseAfterScope, Ox}
 
 /** The server's wiring: the hot component graph (pools, migrations, plugins) → Handlers → HTTP (REST + pages + static)
@@ -39,7 +38,7 @@ object Composition:
       autoInit: Boolean = false,
       onHandlers: Handlers => Unit = _ => (),
       configFile: ConfigFileInfo = ConfigFileInfo(),
-      plugins: Generation = Plugins.offline,
+      plugins: Generation = ServerPlugins.offline,
       source: Option[(LoadedConfig, ConfigSource)] = None,
       core: CoreBudget = CoreBudget()
   )(using Ox): NettySyncServer =
@@ -93,7 +92,7 @@ object Composition:
       converter: Option[ConverterClient],
       autoInit: Boolean = false,
       onHandlers: Handlers => Unit = _ => (),
-      plugins: Generation = Plugins.offline,
+      plugins: Generation = ServerPlugins.offline,
       core: CoreBudget = CoreBudget(),
       restart: Option[() => Unit] = None,
       system: SystemContext = SystemContext.isolated
@@ -305,7 +304,7 @@ object Composition:
       case Nil  => "acquire: no source fetcher is registered — every fetch is a miss"
       case plan => s"acquire: chain ${plan.map(_._1).mkString(" → ")}")
     // CORE's search with the key the oa-core plugin resolved (its secret reference), on the same budget
-    val coreKey = com.histmersion.server.plugins.Plugins.coreKey(plugins, cfg.core.key)
+    val coreKey = com.histmersion.util.plugins.Plugins.coreKey(plugins, cfg.core.key)
     val (indexes, alerts) = Indexes.of(cfg, http, coreKey, core)
     val generation = FetcherGeneration.of(chain.plan, plugins.report.plugins, cfg.contact.isDefined, coreKey.isDefined)
     AcquireClients(

@@ -1,12 +1,14 @@
 package com.histmersion.server.agents
 
+import com.histmersion.server.ServerPlugins
+import com.histmersion.util.plugins.Plugins
+
 import com.histmersion.pluginhost.{FirstPartySettings, Generation, PluginHost}
 
 import com.histmersion.config.AppConfig
 import com.histmersion.api.PlanQuota
 import com.histmersion.api.Agents.*
 import com.histmersion.plugin.*
-import com.histmersion.server.plugins.Plugins
 import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -47,7 +49,10 @@ class AiProvidersSuite extends munit.FunSuite:
   /** The six built-in providers' plugins: the HTTP APIs' found on the class path, the command-line runtimes the host's.
     */
   private val builtins: List[Plugin] =
-    PluginHost.discover(getClass.getClassLoader)._1.filter(p => BuiltinAi.pluginIds(p.info.id)) ++ Plugins.providers
+    PluginHost
+      .discover(getClass.getClassLoader)
+      ._1
+      .filter(p => BuiltinAi.pluginIds(p.info.id)) ++ ServerPlugins.providers
 
   /** What a scripted provider was asked, turn by turn. */
   final private class Scripted(
@@ -77,7 +82,7 @@ class AiProvidersSuite extends munit.FunSuite:
   // ── the built-ins ──────────────────────────────────────────────────────────────────────────────
 
   test("the six host providers register as built-in plugins, enabled by default, in their order"):
-    val g = Plugins.offline
+    val g = ServerPlugins.offline
     assert(g.report.ok, g.report.toString)
     assertEquals(g.registries.aiProviders.keySet, ProviderKind.values.map(_.wire).toSet)
     assertEquals(g.report.plugins.find(_.id == "ai-claude-code").map(_.provides), Some(List("ai-provider:claude-code")))
@@ -166,7 +171,7 @@ class AiProvidersSuite extends munit.FunSuite:
   // ── the factory ────────────────────────────────────────────────────────────────────────────────
 
   test("the factory: a built-in provider runs its client; a switched-off one or an unknown one is refused"):
-    val reg = Plugins.offline.registries.aiProviders
+    val reg = ServerPlugins.offline.registries.aiProviders
     val f = LlmClient.factory(rt(), () => reg, AiHttp.Offline)
     assert(f(app.agents, ModelRef(ProviderKind.Local, "qwen")).exists(_.isInstanceOf[PluginAiClient]))
     // the HTTP providers' own checks over the settings the host supplied them (no key in reference.conf), as they read
@@ -192,7 +197,7 @@ class AiProvidersSuite extends munit.FunSuite:
   test("the factory: a plugin provider becomes its client; its own check and the loopback rule apply"):
     val ref = ModelRef(ProviderKind.Plugin("gemini"), "pro")
     def f(p: AiProvider, host: String = "127.0.0.1") =
-      LlmClient.factory(rt(host), () => Plugins.offline.registries.aiProviders + ("gemini" -> p), AiHttp.Offline)(
+      LlmClient.factory(rt(host), () => ServerPlugins.offline.registries.aiProviders + ("gemini" -> p), AiHttp.Offline)(
         app.agents,
         ref
       )
@@ -203,7 +208,7 @@ class AiProvidersSuite extends munit.FunSuite:
     // not registered (its plugin switched off since): refused, naming it
     assert(
       LlmClient
-        .factory(rt(), () => Plugins.offline.registries.aiProviders, AiHttp.Offline)(app.agents, ref)
+        .factory(rt(), () => ServerPlugins.offline.registries.aiProviders, AiHttp.Offline)(app.agents, ref)
         .left
         .exists(_.contains("no AI provider 'gemini' is registered"))
     )

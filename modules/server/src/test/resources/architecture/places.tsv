@@ -971,6 +971,7 @@ server:server/ReadOnlyPool.scala	util.data.maintenance
 server:server/ServerArgs.scala	server
 server:server/ServerGraph.scala	server
 server:server/ServerMode.scala	server
+server:server/ServerPlugins.scala	server
 server:server/SourcePage.scala	research.articles
 server:server/Static.scala	server
 server:server/StorageCache.scala	util.data.maintenance
@@ -1164,10 +1165,7 @@ server:server/media/MediaImporters.scala	media
 server:server/media/MediaStore.scala	media
 server:server/media/PluginCollection.scala	media
 server:server/media/SourcePictures.scala	media
-server:server/plugins/LegacyPlugins.scala	util.plugins
-server:server/plugins/PluginSetResource.scala	util.plugins
 server:server/plugins/RelinkPlugins.scala	util.plugins
-server:server/plugins/Plugins.scala	util.plugins
 config:config/NewtypeReaders.scala	config
 config:config/Environment.scala	config
 server:server/SystemContext.scala	server

@@ -1,11 +1,11 @@
-package com.histmersion.server.plugins
+package com.histmersion.util.plugins
 
 import com.histmersion.files.PluginKit
 import com.histmersion.files.*
 import com.histmersion.api.PluginSet
 
+import java.io.OutputStream
 import java.nio.charset.StandardCharsets.UTF_8
-import java.nio.file.{Files, Path, StandardCopyOption}
 import java.util.jar.{JarEntry, JarOutputStream}
 
 /** The plugin set inside a binary (docs/research-plugins.md §7.3): `META-INF/histmersion/plugin-set.json` in a small
@@ -29,10 +29,11 @@ object PluginSetResource:
         try PluginKit.parseSet(String(in.readAllBytes(), UTF_8)).map(Some(_))
         finally in.close()
 
-  /** Write the plugin-set jar to `out` (through a temporary file beside it, then a rename). */
-  def writeJar(out: Path, set: PluginSet): Unit =
-    val tmp = out.resolveSibling(out.getFileName.toString + ".tmp")
-    val jar = JarOutputStream(Files.newOutputStream(tmp))
+  /** The plugin-set jar written to `out`, which the caller opened and closes (the relink tool writes it beside the file
+    * it replaces, then renames it).
+    */
+  def writeJar(out: OutputStream, set: PluginSet): Unit =
+    val jar = JarOutputStream(out)
     try
       def entry(name: String, text: String): Unit =
         val e = JarEntry(name)
@@ -43,5 +44,4 @@ object PluginSetResource:
       entry("META-INF/MANIFEST.MF", "Manifest-Version: 1.0\r\nCreated-By: Histmersion relink\r\n\r\n")
       entry(PluginSet.Resource, PluginKit.renderSet(set) + "\n")
       entry(MetadataPath, Metadata)
-    finally jar.close()
-    val _ = Files.move(tmp, out, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+    finally jar.finish()

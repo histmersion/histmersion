@@ -5,14 +5,15 @@ import com.histmersion.pluginhost.{HostServices, PluginHost}
 import com.histmersion.files.*
 
 import com.histmersion.config.AppConfig
-import com.histmersion.api.{PluginDescription, PluginJar, PluginState}
+import com.histmersion.api.{PluginDescription, PluginJar, PluginSet, PluginState}
 import com.histmersion.files.PluginKit
 import com.histmersion.plugin.{Plugin, PluginHttp, Spi}
+import com.histmersion.util.plugins.{HostProvided, LegacyPlugins, PluginSetResource}
 import org.ekrich.config.{ConfigFactory, ConfigUtil}
 
 import java.net.URLClassLoader
 import java.nio.charset.StandardCharsets.UTF_8
-import java.nio.file.{Files, Path}
+import java.nio.file.{Files, Path, StandardCopyOption}
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.ServiceLoader
@@ -88,7 +89,7 @@ object RelinkPlugins:
           Some(Instant.now().truncatedTo(ChronoUnit.SECONDS).toString),
           linkedFiles(jars.map(Path.of(_)), deps)
         )
-        PluginSetResource.writeJar(Path.of(out), set)
+        writePluginSet(Path.of(out), set)
         val _ = Files.writeString(Path.of(record), PluginKit.renderSet(set) + "\n")
         System.out.println(set.digest)
         0
@@ -269,11 +270,19 @@ object RelinkPlugins:
     */
   def hostIds(loader: ClassLoader): Map[String, String] =
     val discovered = PluginHost.discover(loader)._1.map(_.info.id)
-    val supplied = Try(Plugins.providers.map(_.info.id)).getOrElse(Nil)
+    val supplied = HostProvided.Ids
     (discovered ++ supplied).map(_ -> "this Histmersion (a first-party plugin)").toMap ++
       LegacyPlugins.All.map(s =>
         s.id -> s"this Histmersion (a former first-party plugin, now ${s.into.mkString(", ")})"
       )
+
+  /** The plugin-set jar written to `out`, through a temporary file beside it and a rename. */
+  def writePluginSet(out: Path, set: PluginSet): Unit =
+    val tmp = out.resolveSibling(out.getFileName.toString + ".tmp")
+    val stream = Files.newOutputStream(tmp)
+    try PluginSetResource.writeJar(stream, set)
+    finally stream.close()
+    val _ = Files.move(tmp, out, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
 
   private def kitClassPath(kit: Path): List[Path] =
     val order = kit.resolve("classpath")

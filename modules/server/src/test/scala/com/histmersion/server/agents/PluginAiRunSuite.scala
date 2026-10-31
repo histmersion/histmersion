@@ -1,5 +1,8 @@
 package com.histmersion.server.agents
 
+import com.histmersion.server.ServerPlugins
+import com.histmersion.util.plugins.Plugins
+
 import com.histmersion.pluginhost.{FirstPartySettings, Generation, PluginHost}
 
 import com.augustnagro.magnum.*
@@ -9,7 +12,6 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.db.{AgentRepo, Migrate}
 import com.histmersion.server.{Deps, Handlers}
-import com.histmersion.server.plugins.Plugins
 import org.ekrich.config.ConfigFactory
 
 import java.net.URLClassLoader
@@ -82,7 +84,7 @@ class PluginAiRunSuite extends com.histmersion.db.DbSuite:
     val env = ConfigFactory.parseString(s"ZZ_HELLO_AI_TOKEN = ${quote(Secret)}")
     // the six built-ins as the server has them: the HTTP APIs' first-party plugins, supplied the host's settings
     val builtin = PluginHost.discover(getClass.getClassLoader)._1.filter(p => BuiltinAi.pluginIds(p.info.id))
-    val all = builtin ++ Plugins.providers ++ ours
+    val all = builtin ++ ServerPlugins.providers ++ ours
     val u = ConfigFactory.parseString(user)
     val host = FirstPartySettings.hostView(AppConfig.loadWithUserFile(env, None).fold(fail(_), _.merged), u, env, all)
     PluginHost.build(
