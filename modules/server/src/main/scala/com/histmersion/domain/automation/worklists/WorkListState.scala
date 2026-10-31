@@ -38,9 +38,7 @@ final case class WorkListState(items: Vector[QueueItem], lastId: Int):
     val d = doi.trim.toLowerCase
     if d.isEmpty then Vector.empty
     else
-      items.filter(i =>
-        i.list == kind.label && i.text.toLowerCase.contains(d) && Scheduling.dois(i.text).contains(d)
-      )
+      items.filter(i => i.list == kind.label && i.text.toLowerCase.contains(d) && Scheduling.dois(i.text).contains(d))
 
   /** `in` added to `kind` at `now`, as the database inserts it. */
   def added(kind: Kind, in: QueueAdd, now: Instant): WorkListState = addedAll(kind, List(in), now)
@@ -48,10 +46,9 @@ final case class WorkListState(items: Vector[QueueItem], lastId: Int):
   /** Each of `ins` added to `kind` at `now`, in order. */
   def addedAll(kind: Kind, ins: List[QueueAdd], now: Instant): WorkListState =
     @tailrec def loop(rest: List[QueueAdd], made: Vector[QueueItem], last: Int): WorkListState = rest match
-      case Nil         => WorkListState(items ++ made, last)
+      case Nil        => WorkListState(items ++ made, last)
       case in :: tail => loop(tail, made :+ WorkListState.item(kind, in, last + 1, now), last + 1)
     loop(ins, Vector.empty, lastId)
-
 
   /** `next` written over its item; a done item keeps its first done time, any other status clears it. */
   def updated(next: QueueItem, now: Instant): WorkListState =

@@ -197,13 +197,15 @@ abstract class QueueServiceContract(name: String) extends com.histmersion.db.DbS
 
   // ── goals and jobs ───────────────────────────────────────────────────────────────────────────
 
-  qtest("an item keeps its goal and the run that wrote it; the job that ticks it off is recorded, reopening forgets it") {
-    q =>
-      val added = q.add(Kind.Acquire, QueueAdd("Drake 2012", goal = Some("zz-links-goal"), job = Some("zz-run-1")))
-      assertEquals((added.goal, added.createdBy, added.closedBy), (Some("zz-links-goal"), Some("zz-run-1"), None))
-      val done = q.patch(id(added), Queue.fulfil(added, "drake2012", Some("zz-job-9"))).fold(e => fail(e.message), identity)
-      assertEquals((done.status, done.closedBy, done.createdBy), (Done, Some("zz-job-9"), Some("zz-run-1")))
-      assertEquals(q.patch(id(added), QueuePatch(status = Some(Open))).map(_.closedBy), Right(None))
+  qtest(
+    "an item keeps its goal and the run that wrote it; the job that ticks it off is recorded, reopening forgets it"
+  ) { q =>
+    val added = q.add(Kind.Acquire, QueueAdd("Drake 2012", goal = Some("zz-links-goal"), job = Some("zz-run-1")))
+    assertEquals((added.goal, added.createdBy, added.closedBy), (Some("zz-links-goal"), Some("zz-run-1"), None))
+    val done =
+      q.patch(id(added), Queue.fulfil(added, "drake2012", Some("zz-job-9"))).fold(e => fail(e.message), identity)
+    assertEquals((done.status, done.closedBy, done.createdBy), (Done, Some("zz-job-9"), Some("zz-run-1")))
+    assertEquals(q.patch(id(added), QueuePatch(status = Some(Open))).map(_.closedBy), Right(None))
   }
 
   qtest("a goal's items: its own, and those its links name; open only unless done ones are asked for") { q =>

@@ -64,7 +64,9 @@ object QueueService:
 
     def replace(list: Kind, items: List[QueueAdd], mode: ImportMode): ImportCounts = db.transact:
       val removed = if mode == ImportMode.Replace then QueueRepo.deleteList(list) else 0
-      items.foreach(i => { val _ = QueueRepo.insert(list, i) })
+      items.foreach { i =>
+        val _ = QueueRepo.insert(list, i)
+      }
       ImportCounts(items.size, removed)
 
   /** The work lists in memory; `clock` stands in for the database's `now()` (an item's made and done times). */
