@@ -43,6 +43,9 @@ plugins/fetchers ─ the first-party acquisition plugins (archive-org, oa-unpayw
               oa-landing, pmc, arxiv).                           upstreams (+ plugin-testkit for tests)
 plugins/events ─ the first-party event catalogues (events-gvp, events-noaa, events-wikidata).
                                                                  upstreams (+ plugin-testkit for tests)
+plugins/media ─ the first-party media collections (media-wikidata, media-depicts, media-met, media-cleveland,
+              media-aic, media-loc, media-pleiades, media-opencontext, media-smithsonian, media-europeana).
+                                                                 upstreams (+ plugin-testkit for tests)
 plugins/gazetteers ─ the first-party network gazetteers (gazetteer-cliopatria, gazetteer-awmc,
               gazetteer-chronontology).                          upstreams (+ plugin-testkit for tests)
 plugins/ai-http ─ the first-party HTTP AI providers (ai-anthropic, ai-openai, ai-local) over the SPI's AiHttp.
@@ -72,9 +75,10 @@ names are reserved (`ReservedNames.firstPartyPlugins`), and the host supplies th
 settings that `pluginhost/FirstPartySettings` lists (`histmersion.acquire.*`, `histmersion.events.<catalogue>.*`
 — the user keeps writing those), the same table deciding which plugin a settings change rebuilds; the former
 `oa-index`'s settings are mapped by `server/plugins/LegacyPlugins`. The HTTP AI providers
-(`plugins/ai-http`) are first-party plugins too, supplied `histmersion.agents.providers.<name>.*`. The media
-collections and the command-line AI runtimes (`server/agents/BuiltinAi`: `ai-claude-code`, `ai-codex`, `ai-opencode`,
-§23) are still host code wrapped by `server/util/plugins/HostProvided`, until they move too
+(`plugins/ai-http`) are first-party plugins too, supplied `histmersion.agents.providers.<name>.*`, and so are the
+media collections (`plugins/media`), supplied `histmersion.media.*` and run by the host's one collection import
+(`server/media/MediaImporter`). The command-line AI runtimes (`server/agents/BuiltinAi`: `ai-claude-code`, `ai-codex`,
+`ai-opencode`, §23) are still host code wrapped by `server/util/plugins/HostProvided`, until they move too
 (`docs/research-domain-model.md` §9.2).
 
 A user's own plugins are linked in by `bin/histmersion-relink` from the bundle's relink kit

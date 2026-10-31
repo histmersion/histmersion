@@ -5,7 +5,7 @@ import com.histmersion.pluginhost.PluginHost
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** A first-party plugin the host still supplies itself, with settings `C` decoded from its block by `C`'s reader: the
-  * media collections and the AI providers, which read the host's own settings at each use. Its defaults resource
+  * command-line AI runtimes, which read the host's own settings at each use. Its defaults resource
   * (`META-INF/histmersion/plugins/<id>.conf`, in the server) names every key and sets `enabled`.
   */
 final class HostProvided[C](id: String, contribute: (C, PluginContext) => Either[String, Unit])(using ConfigReader[C])
