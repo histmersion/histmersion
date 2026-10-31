@@ -19,7 +19,7 @@ import java.time.Instant
   * paused watcher; the `goal_schedules` rows migrated into it once, logged; a scheduled run that pauses still leaves a
   * backlog item). The watcher's own runs and crons: [[ManagerPhase3Suite]]. Skipped without HISTMERSION_TEST_DB_URL.
   */
-class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.db.Bounded:
+class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.db.Bounded with RunTranscripts:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
@@ -38,6 +38,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
     )
 
   private lazy val ds = testPool(baseCfg.db)
+  protected def transcriptDs: javax.sql.DataSource = ds
 
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
 

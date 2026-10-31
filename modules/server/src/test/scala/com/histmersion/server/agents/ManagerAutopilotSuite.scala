@@ -34,7 +34,7 @@ import com.histmersion.values.{GoalStatus, SourceStatus}
   * ([[ScriptedClient]]), a review run is settled by hand; no provider is called. Skipped without
   * HISTMERSION_TEST_DB_URL.
   */
-class ManagerAutopilotSuite extends com.histmersion.db.DbSuite:
+class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(180, "s")
@@ -81,6 +81,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite:
     )
 
   private lazy val ds = testPool(autoCfg.db)
+  protected def transcriptDs: javax.sql.DataSource = ds
 
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
   private def str(s: String) = Json.fromString(s).noSpaces
@@ -314,6 +315,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite:
     )
     assert(QueueRepo.list(ds, Queue.Kind.Log, all = true).exists(_.text.contains(s"goal $Goal: compiled → reviewed")))
     val st = a.managing.autopilot
+    note("autopilot, the goal reviewed", AutopilotMarkdown.status(st))
     val g = st.goals.find(_.slug == Goal).get
     assertEquals((g.status, g.articles, g.openApprovals), (GoalStatus.Reviewed, 1, 0))
     assert(g.doneLast7 >= 3, g)
@@ -351,6 +353,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite:
       a.focus.info().waiting
     )
     assert(!a.approvalsList(Some("all"), None).toOption.get.exists(_.note.exists(_.startsWith("autopilot:"))))
+    note("autopilot, approvals a person's", AutopilotMarkdown.status(a.managing.autopilot))
     assertEquals(a.managing.autopilot.goals.find(_.slug == Goal).map(_.openApprovals), Some(1))
     assert(a.managing.autopilot.approvals.forall(_.mode == "person"), a.managing.autopilot.approvals)
     // a manager's own autoApprove wins over the defaults

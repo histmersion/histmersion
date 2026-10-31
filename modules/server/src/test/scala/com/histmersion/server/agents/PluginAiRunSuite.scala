@@ -27,7 +27,7 @@ import java.nio.file.Path
   * `agent models set` see it — and forget it once the plugin is gone. No network: the provider is scripted. Skipped
   * without HISTMERSION_TEST_DB_URL.
   */
-class PluginAiRunSuite extends com.histmersion.db.DbSuite:
+class PluginAiRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
@@ -113,6 +113,7 @@ class PluginAiRunSuite extends com.histmersion.db.DbSuite:
     )
 
   private lazy val ds = testPool(baseCfg.db)
+  protected def transcriptDs: javax.sql.DataSource = ds
 
   private def clean(): Unit =
     Migrate.run(ds)

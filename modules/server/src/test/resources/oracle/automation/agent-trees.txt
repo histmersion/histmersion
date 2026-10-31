@@ -1,0 +1,367 @@
+definitions	2c7e034f68720e1de68442569c9f67c321ab0d1d7871a10d218549f4d4ccde68
+answer	runtimes=claude-code,codex,opencode files=206 written=206 removed=0
+known tools	archive,article_coverage,assess,check_edits,discover,events,facets,followups,geo_when,get_article,get_source,histogram,ingest,ingest_doi,job_status,lint,list_articles,manager,neighbors,passages,patch_article,patch_source,place_names,place_override,places,put_article,query,queue,refs,run_status,search
+claude-code/
+claude-code/.claude-plugin/
+claude-code/.claude-plugin/marketplace.json	602	6712fc2b87e7a36f8834071d676ee56cb8c27fe09f0111ea3556bcda17addf88
+claude-code/headless/
+claude-code/headless/.claude-plugin/
+claude-code/headless/.claude-plugin/plugin.json	407	cbcb4608d3720464ce3776e07e9cec039f6e961e1b980d417937c51c9587087f
+claude-code/headless/agents/
+claude-code/headless/agents/acquisition-ranker.md	1234	82f939e55cb47389e98169f1a617d315afae5da96ea67eb343fb665542fa921f
+claude-code/headless/agents/article-cold-reader.md	5674	6f27000cd1573ae6401e4aca3a8d16bc38dc0f41afb9d80ddd4893bf9eed3306
+claude-code/headless/agents/article-fixer.md	22334	a9c68e8a48d005aa0fd485349da4166614e9c58d44d13347d75134b6e238e639
+claude-code/headless/agents/article-planner.md	2645	d6f62c65db85715952e9858c224f9278f7f4db0c3de7a8f98f2f2edfbf0d39cb
+claude-code/headless/agents/article-rules-reviewer.md	19824	b9c4181ad714c254bb50d0dbb41c1fb3619747f75002c4e3a4725da74376f85d
+claude-code/headless/agents/article-skeptic.md	20269	1ef34b670d5d54a725630ce14fd6dc6325c3634e497da5605a4aa657551e7930
+claude-code/headless/agents/compile-extractor.md	1775	e87fb86c0157a905c9848d10e02c9097cad9b56b7c6de28c0c18ec044c22b7bb
+claude-code/headless/agents/compile-writer.md	18710	4048befdeee34b9ac493a66997c787f9da4d13f7435bb8cfee21e307dc3bc183
+claude-code/headless/agents/enrich-classify.md	1578	8da7c4021e623741a77973216f0176fbbe52a9471c4602c3e0b35e0fc3a41e6f
+claude-code/headless/agents/enrich-findings.md	1772	9a585562d548748a3ae62fe2747b7aaba10736f3f7e097f0838d36d7a58c479e
+claude-code/headless/agents/enrich-notes.md	747	bdc64aa6acb78a48e67f837e10cd9a3e70f0e54e1803d238283bae0fe7d2ce5f
+claude-code/headless/agents/filter-inferrer.md	2538	98ca7a3b9f4c85ea857de1b88e53147f01d83f25ca4de30471e10b67e29c7e61
+claude-code/headless/agents/goal-planner.md	2321	4a0954276932b3303117870defdd10a45a8fa90e1dcf14237db9fd6b1c22af64
+claude-code/headless/agents/hint-reader.md	2432	5b1d30c3c60c62c596fbf5a53b41b33904b0fb025e0035c5d4b9f937bf74c8ff
+claude-code/headless/agents/probe.md	407	02f9ddf537e0f164a25fe65e16a60db3a5f0296f9d0dce7d8e06f4329282f0a1
+claude-code/headless/hooks/
+claude-code/headless/hooks/hooks.json	36	196d6e44a225f3d9b33e18e89955c01d63f97c3ecf9f9d9dea27508c98d5a871
+claude-code/headless/hooks/quota-guard.ts	1443	0124acc61c9cc0efb2550bb47ab3c945c112255fb948b33814f7459acace0d20
+claude-code/headless/skills/
+claude-code/headless/skills/assess-paper/
+claude-code/headless/skills/assess-paper/SKILL.md	3125	5463b41a0e4226a151f66c26f39312b7ae2cf59d3791176eef0ecbb19e7ea919
+claude-code/headless/skills/bookkeeping/
+claude-code/headless/skills/bookkeeping/SKILL.md	4964	20e2c1434284b331960004c3648bb66876f46554bfbd35c3f04cab9fb1de9bfb
+claude-code/headless/skills/enrich-calibre/
+claude-code/headless/skills/enrich-calibre/SKILL.md	7411	3d7f8a2276cad6826b4d99bea40ac3da940c534a529f3838d6f78050e6b36795
+claude-code/headless/skills/find-followups/
+claude-code/headless/skills/find-followups/SKILL.md	3640	7459cad69314f546be7fdcc0efa0523a4e7403bf3f25797fcd445b6d5a9484fa
+claude-code/headless/skills/histmersion-compile/
+claude-code/headless/skills/histmersion-compile/SKILL.md	9679	d086242d6cae1a03c07c0ed9c961116aaaeef664cc31ea2df76d6c52597b8342
+claude-code/headless/skills/histmersion-currency/
+claude-code/headless/skills/histmersion-currency/SKILL.md	7752	e00170dbdcc3afec32bbf612fbf9a623f9c1356c395f485bb6261c6f43f9ea7a
+claude-code/headless/skills/histmersion-dev/
+claude-code/headless/skills/histmersion-dev/SKILL.md	26066	d656acc50bd94e6f4829405f8f1d6266e131afe4211f5334aceeb4673a0c6995
+claude-code/headless/skills/histmersion-ingest/
+claude-code/headless/skills/histmersion-ingest/SKILL.md	15113	1271f14bfae43eb3401a273d74510e2499859f1c4f4f601a5bab6f78491ac3a1
+claude-code/headless/skills/histmersion-query/
+claude-code/headless/skills/histmersion-query/SKILL.md	15276	2a45902c7e08d26209b2d4e0cd1c46aaa2464efba4e9f9fcd40b8392f449da3b
+claude-code/headless/skills/import-archive/
+claude-code/headless/skills/import-archive/SKILL.md	3877	510f9f87667c99df05d88260ad0561f29ff484d97d214ae7bea86278d2bc6374
+claude-code/headless/skills/import-calibre/
+claude-code/headless/skills/import-calibre/SKILL.md	4540	c41615bb90ff40ab3f6c3f6b5e1c9c4c288d96dccf8a26366cda6fc94ffa8788
+claude-code/headless/skills/import-file/
+claude-code/headless/skills/import-file/SKILL.md	4874	99f96c11aae5c9ef0f959c125708e998f32e36b8cfee3ecc3f0b42e434c3655e
+claude-code/headless/skills/ingest-paper/
+claude-code/headless/skills/ingest-paper/SKILL.md	9271	e31a1a5664804822bd41f85f2e93366c42a5b4ef49c1cf51060f2164c0c962c8
+claude-code/headless/skills/lint-wiki/
+claude-code/headless/skills/lint-wiki/SKILL.md	4600	8495f066d966a1e6177aa397abfed4ee6e62eca7a868c1576a1e0531d36bd6aa
+claude-code/headless/skills/report/
+claude-code/headless/skills/report/SKILL.md	6054	1a18c41718bf5576d5b02b5b12a5199919267d4799b287b7a98e7b991fd68f69
+claude-code/headless/skills/review-article/
+claude-code/headless/skills/review-article/SKILL.md	10256	5e673318c69033bf09b872d347b2236064483bdac38a80300412bcdbf8330799
+claude-code/headless/skills/sync-calibre/
+claude-code/headless/skills/sync-calibre/SKILL.md	4952	2e89f58ed24beca3ed985d40cc5623c209219b61a875ebde34afa9856e81520c
+claude-code/headless/skills/trailhead/
+claude-code/headless/skills/trailhead/SKILL.md	5780	7cf3e69b1315dcbc36c5b9a6fe071836fb17ddee24a1c005f422c2d1ddd04951
+claude-code/headless/skills/update-topic/
+claude-code/headless/skills/update-topic/SKILL.md	4745	d160f2d36b96d317cec2d58c5641191d1a53c863f931a3e4763f1f380c68cff9
+claude-code/histmersion/
+claude-code/histmersion/.claude-plugin/
+claude-code/histmersion/.claude-plugin/plugin.json	502	767de78b80ec6009e10f143b7512a3d56630ddc3b0eebdb8369b1cd53fac2295
+claude-code/histmersion/.mcp.json	116	09a2ac5ff5dba4d58fd4b1675d84ee202c33931b0b74eab808b4913f8096ebd9
+claude-code/histmersion/agents/
+claude-code/histmersion/agents/article-cold-reader.md	5548	b9cdb9b646a27e80f3fa5a7d3eab9bd634644c44e05aca2a0499127bbaa3c6dd
+claude-code/histmersion/agents/article-fixer.md	7800	2dc701e06cb792ccf506b0ef6017d509242ed6f7277dedfe21e64d19c4fa7261
+claude-code/histmersion/agents/article-rules-reviewer.md	7406	c5fcca559006a7fdf599d93058bb3d50bc5a973485c61d46fc6cede0c9a59afd
+claude-code/histmersion/agents/article-skeptic.md	7557	4155fca875d9b1423b35c73ef8b21a5fc50e39034c272e2e07fc8ec32c55dceb
+claude-code/histmersion/skills/
+claude-code/histmersion/skills/assess-paper/
+claude-code/histmersion/skills/assess-paper/SKILL.md	3181	6293030d18c9d58e6fb31418d3bc131ebf8ceb99ba5c9a9526f506814f1c3fbc
+claude-code/histmersion/skills/bookkeeping/
+claude-code/histmersion/skills/bookkeeping/SKILL.md	5020	adf3becb660fcfd63a2a7457db2e4e2d1a939c462b91773dd10f415c767c2a6b
+claude-code/histmersion/skills/enrich-calibre/
+claude-code/histmersion/skills/enrich-calibre/SKILL.md	7459	4b4e0070ede15bc7ae3c6945951cd9ee3a94b7dda27d40ba4a2db75a74021012
+claude-code/histmersion/skills/find-followups/
+claude-code/histmersion/skills/find-followups/SKILL.md	3696	b233db1aa517f9a9e67853668456a8d96e886c99971cd374ae96a7186f1515e2
+claude-code/histmersion/skills/histmersion-compile/
+claude-code/histmersion/skills/histmersion-compile/SKILL.md	9679	d086242d6cae1a03c07c0ed9c961116aaaeef664cc31ea2df76d6c52597b8342
+claude-code/histmersion/skills/histmersion-currency/
+claude-code/histmersion/skills/histmersion-currency/SKILL.md	7752	e00170dbdcc3afec32bbf612fbf9a623f9c1356c395f485bb6261c6f43f9ea7a
+claude-code/histmersion/skills/histmersion-dev/
+claude-code/histmersion/skills/histmersion-dev/SKILL.md	26066	d656acc50bd94e6f4829405f8f1d6266e131afe4211f5334aceeb4673a0c6995
+claude-code/histmersion/skills/histmersion-ingest/
+claude-code/histmersion/skills/histmersion-ingest/SKILL.md	15113	1271f14bfae43eb3401a273d74510e2499859f1c4f4f601a5bab6f78491ac3a1
+claude-code/histmersion/skills/histmersion-query/
+claude-code/histmersion/skills/histmersion-query/SKILL.md	15276	2a45902c7e08d26209b2d4e0cd1c46aaa2464efba4e9f9fcd40b8392f449da3b
+claude-code/histmersion/skills/import-archive/
+claude-code/histmersion/skills/import-archive/SKILL.md	3933	37a4fa703221b9f81103411779d1acb77f642e3a34d577803e60c85e795066e2
+claude-code/histmersion/skills/import-calibre/
+claude-code/histmersion/skills/import-calibre/SKILL.md	4596	22985e02237c9b9af2082feb00fd28cfe18052543da8845ce2a0a8b877f590a7
+claude-code/histmersion/skills/import-file/
+claude-code/histmersion/skills/import-file/SKILL.md	4930	29cd3da9d30354c4108173d50ad01312d6c8c43f1455138ab93746642de9b9d5
+claude-code/histmersion/skills/ingest-paper/
+claude-code/histmersion/skills/ingest-paper/SKILL.md	9334	ac12b2d49c2dd73aefa6a3c851018e1f04cf2fdc73746085c63a4e190ae3d8d0
+claude-code/histmersion/skills/lint-wiki/
+claude-code/histmersion/skills/lint-wiki/SKILL.md	4656	1ad825aa52d66ab85cb1506fef8c03e5a4cf6735aa3267527caea7f2d98a5148
+claude-code/histmersion/skills/report/
+claude-code/histmersion/skills/report/SKILL.md	6130	f549d6eeb02d9b3388a6e8a2346f034c5b2a8c4aa31b1ad3a1d102626db2fd2c
+claude-code/histmersion/skills/review-article/
+claude-code/histmersion/skills/review-article/SKILL.md	10332	6056bfc8ca6cacbf58c9ac5e206d26c46f91f8009d350bffd10943043cc76451
+claude-code/histmersion/skills/sync-calibre/
+claude-code/histmersion/skills/sync-calibre/SKILL.md	5008	8e701c61bac6c65daef7c1d34c3a695b1f32819613fb76910e1cfcf1c8f6eeb2
+claude-code/histmersion/skills/trailhead/
+claude-code/histmersion/skills/trailhead/SKILL.md	5843	0d82cd70d62fa1537a77108daaedd35262e41933d1891d5caeef12738c4590be
+claude-code/histmersion/skills/update-topic/
+claude-code/histmersion/skills/update-topic/SKILL.md	4808	927509a0726bc67235647f9f89587a13a8188ccb67664064bf91a25bbf831141
+claude-code/login/
+claude-code/roles/
+claude-code/roles/acquisition-ranker/
+claude-code/roles/acquisition-ranker/settings.json	277	e30e200b0da554e53c07e54e53c618c89e612436299bc1fa1fc9b22efbd3645e
+claude-code/roles/article-cold-reader/
+claude-code/roles/article-cold-reader/settings.json	277	e30e200b0da554e53c07e54e53c618c89e612436299bc1fa1fc9b22efbd3645e
+claude-code/roles/article-fixer/
+claude-code/roles/article-fixer/settings.json	494	be989a94222feeea11228dce37cb94b79e1ce26ebcf8691fbb1de25b1ba2c398
+claude-code/roles/article-planner/
+claude-code/roles/article-planner/settings.json	466	18d089857d4c86444a1e492b8e9d85e55d4846b75019a5244836873490bb8728
+claude-code/roles/article-rules-reviewer/
+claude-code/roles/article-rules-reviewer/settings.json	499	d9368c2c37d68002e95ae00227dcc5c9e2c18c5010319a906bde27c945ff2e60
+claude-code/roles/article-skeptic/
+claude-code/roles/article-skeptic/settings.json	492	fbcf89a725bde3f2837444653906d465ebcfcf5afecdcd6d17853c1598ad88d6
+claude-code/roles/compile-extractor/
+claude-code/roles/compile-extractor/settings.json	277	e30e200b0da554e53c07e54e53c618c89e612436299bc1fa1fc9b22efbd3645e
+claude-code/roles/compile-writer/
+claude-code/roles/compile-writer/settings.json	316	87daa5f1180cfaee19fed1c92e3b2935a02dc96e36cbc546b2395d6062f5b0cf
+claude-code/roles/enrich-classify/
+claude-code/roles/enrich-classify/settings.json	345	39d2f6b77fb2b092123f0464b1c280b507e558e9a75ea359c8ae48ed8cc9fca7
+claude-code/roles/enrich-findings/
+claude-code/roles/enrich-findings/settings.json	277	e30e200b0da554e53c07e54e53c618c89e612436299bc1fa1fc9b22efbd3645e
+claude-code/roles/enrich-notes/
+claude-code/roles/enrich-notes/settings.json	277	e30e200b0da554e53c07e54e53c618c89e612436299bc1fa1fc9b22efbd3645e
+claude-code/roles/filter-inferrer/
+claude-code/roles/filter-inferrer/settings.json	422	9bdc47f9b9b14ce68e4df9816d1afd4e4ad6d2013909d1b3e8137e69e7883566
+claude-code/roles/goal-planner/
+claude-code/roles/goal-planner/settings.json	383	268dca7853e1bb04c02f34a39ec3f32b5b23a63e4b470bd073ba899cd5840150
+claude-code/roles/hint-reader/
+claude-code/roles/hint-reader/settings.json	277	e30e200b0da554e53c07e54e53c618c89e612436299bc1fa1fc9b22efbd3645e
+claude-code/roles/probe/
+claude-code/roles/probe/settings.json	315	0ec56d455a0113b949b826a30b4a7dc8e6229637cc440409390422e93624c886
+codex/
+codex/home/
+codex/home/acquisition-ranker.config.toml	1248	2feabc58bcd31e6b19b80c0cd2ba8fdf1e684a28fe5d9950fc194c1a12b2749c
+codex/home/agents/
+codex/home/agents/acquisition-ranker.toml	1235	22a3faf464cb32b541e22a57d009968bc741312a222aa368902ada80ee4cd708
+codex/home/agents/article-cold-reader.toml	5744	c886bd2c687242267886a09b28ce62d6163b4250b776f5d7ae042778fedbf34e
+codex/home/agents/article-fixer.toml	22304	2d4b2689cc243a20fcbcd3ddc7a3c6bd5ba82e08af0495f18875b4639d9e8bbd
+codex/home/agents/article-planner.toml	2437	8215ebefda7938321c42b9027bf80d736a0d06440dcfd64a0fa28e71c20cc986
+codex/home/agents/article-rules-reviewer.toml	19742	acd03fcff0b2965ab9b5fbe387d0e67d54566c709056b58968f87d49d3ea2410
+codex/home/agents/article-skeptic.toml	20232	05d539f4380ce7bd9c023aa168af37c0cad36fd6115c8f8cd12342f52121e10b
+codex/home/agents/compile-extractor.toml	1785	4816686422c56d908e524babe6ea88b0ad6427651d330304fe6c0a9c82349060
+codex/home/agents/compile-writer.toml	19026	7a8d9c8f8ebebc07271abe4709ca9404ffaef3e86740111833da9648d12b41e9
+codex/home/agents/enrich-classify.toml	1515	557da2ec8bf6e016dbb02536eedd2c8d5049ce2797f9f2a2716601f495c6037c
+codex/home/agents/enrich-findings.toml	1788	1de44443b36669a11b2eb1b8c22fcf353d56d9c472bc1182b3fc697d4af43596
+codex/home/agents/enrich-notes.toml	744	529cb9291d583df84d98cdd43dadd8832793099b29f3ff7291ff704f5b91ae57
+codex/home/agents/filter-inferrer.toml	2367	595a1968cc57df5725ad43d4b35e19268b8e5d84610d4d1e722c1bae7614ba14
+codex/home/agents/goal-planner.toml	2179	edfce941cecec1dfb92022948be610e712e23765ee59b13190fd89181b712449
+codex/home/agents/hint-reader.toml	2447	63f9334f4bb69bed8efba6b8f90941493824405b146ef1a3da5cbee5ca0b4c4e
+codex/home/agents/probe.toml	346	86f522e7c61d65cd8e5faf51ad58a71ab0cd2d83754ae28b6d53920fb8249d47
+codex/home/article-cold-reader.config.toml	5530	164c07a82505894826be69202ec26560cf738cbe9d1712f128d0ec5d2ee27666
+codex/home/article-fixer.config.toml	22503	e33ed252797f02ec75e4082a9a66cd5e8397bf70af861352e3cc5ad6fe4ebdda
+codex/home/article-planner.config.toml	2785	c39bec2b353a875a1c3fff717807cf1012d8c85afd51e48a2234fa1d466ae8eb
+codex/home/article-rules-reviewer.config.toml	19987	14b5e51f2e12d0c238196b3ec305f07beca41dbc3acac1ecf3f420d21788e34a
+codex/home/article-skeptic.config.toml	20465	abf809ea7ed629db5b590b3e4f3dbefa953ed0ab34ef8a84bd8c234e4c209b80
+codex/home/base-instructions.md	1150	527d2168512fef2888a2a43adcacf3f5bbd82d64463ef061beab30e1f1cc3f28
+codex/home/compile-extractor.config.toml	1803	d7561ae7acc8eecce257569ab4b2068bdd8a791a86031f2af9a04f7917e6a843
+codex/home/compile-writer.config.toml	19091	581c64dc6407eb576ee070838103d25e51ee1c3f6fbf83f83116f8bf5bf9cb40
+codex/home/config.toml	890	b66af1f1dd0c9bed53229daaf2287781da4efe00731085e32f4a0c4dc086c0f8
+codex/home/enrich-classify.config.toml	1634	e45bfec2a896310be8b50c394625005ff83c213d31e549c2b4a202716730f7b6
+codex/home/enrich-findings.config.toml	1798	e4129a926b2009c8e1481c5948637219b6e2ae6b5b46dceb0593012dc511fff8
+codex/home/enrich-notes.config.toml	759	07fbdc9bf4e055954ef9dd52778bec6a7c15b30791a02cc478a3a3d50d69501c
+codex/home/filter-inferrer.config.toml	2605	a02043b82506118283e7e821ec07df097342111cea51cf9bb8c90930baf1520a
+codex/home/goal-planner.config.toml	2394	98d047394d089590d0520a474e2f937ac7bebf9065a08c068e5b80d3267734d5
+codex/home/hint-reader.config.toml	2388	7657d6fd077df77ca75465509a18dab9bd3daafd24310ef8a062e75e26ca0ebe
+codex/home/probe.config.toml	406	5aa6c7fc491754dd9a11b1963d012ea128178204adb7714cf203bd2263301af6
+codex/home/skills/
+codex/home/skills/assess-paper/
+codex/home/skills/assess-paper/SKILL.md	2999	88dc4e382434e491b815f6b4761aaf193060850f3ed099a42bf085f9a0e93997
+codex/home/skills/bookkeeping/
+codex/home/skills/bookkeeping/SKILL.md	4892	cc99b5d1dd6484232d241879935c53d357ad04ae10f84fb36ba0c6990078d478
+codex/home/skills/enrich-calibre/
+codex/home/skills/enrich-calibre/SKILL.md	7411	3d7f8a2276cad6826b4d99bea40ac3da940c534a529f3838d6f78050e6b36795
+codex/home/skills/find-followups/
+codex/home/skills/find-followups/SKILL.md	3550	e552f86a2a046aed523337111ad01b54b266274d6b81c348cb4196fec1ad4840
+codex/home/skills/histmersion-compile/
+codex/home/skills/histmersion-compile/SKILL.md	9679	d086242d6cae1a03c07c0ed9c961116aaaeef664cc31ea2df76d6c52597b8342
+codex/home/skills/histmersion-currency/
+codex/home/skills/histmersion-currency/SKILL.md	7752	e00170dbdcc3afec32bbf612fbf9a623f9c1356c395f485bb6261c6f43f9ea7a
+codex/home/skills/histmersion-dev/
+codex/home/skills/histmersion-dev/SKILL.md	26068	53f04ed9b1ce8374c9d392d557f87f7301652ac12431dd2291bf324d3510138b
+codex/home/skills/histmersion-ingest/
+codex/home/skills/histmersion-ingest/SKILL.md	15095	57b804859829e2bebd2e042720dcc0150c204b7e8585899d221003103ed0613c
+codex/home/skills/histmersion-query/
+codex/home/skills/histmersion-query/SKILL.md	15260	4270274132182a7154aeede09bca2d33b1d4f35fc8121c3d9355b738b45c853d
+codex/home/skills/import-archive/
+codex/home/skills/import-archive/SKILL.md	3751	fe4c062fa18c817336d79536230eeadbad33722e16082ad67876156a9b36b1c2
+codex/home/skills/import-calibre/
+codex/home/skills/import-calibre/SKILL.md	4450	84d12c7c1027337959aa74a90e49862ed75422583cd7735421a3ab61b64e0ad0
+codex/home/skills/import-file/
+codex/home/skills/import-file/SKILL.md	4748	cb4ff04b0d01af6eb00a6c9d84263e35cbbc6db1675d33ed2dd66ecd49da1b4f
+codex/home/skills/ingest-paper/
+codex/home/skills/ingest-paper/SKILL.md	9019	6e8c94c9fcee49ae6f47f9b05d5909e14e039125638bbf0017ff09afe81330a5
+codex/home/skills/lint-wiki/
+codex/home/skills/lint-wiki/SKILL.md	4474	b73e4c5045d769cc0db6c0897fce9597710b174cf896ea82bb989e93081fdf45
+codex/home/skills/report/
+codex/home/skills/report/SKILL.md	5946	2b48d9349cf204a4cc8298590173b9aa09c25b2732961dfeb1ce37318c3126ee
+codex/home/skills/review-article/
+codex/home/skills/review-article/SKILL.md	10256	5e673318c69033bf09b872d347b2236064483bdac38a80300412bcdbf8330799
+codex/home/skills/sync-calibre/
+codex/home/skills/sync-calibre/SKILL.md	4916	af8427de923b808f3636bf98f21c0e4b334fe4c04f507bd45a2d0a48f19351ef
+codex/home/skills/trailhead/
+codex/home/skills/trailhead/SKILL.md	5620	98672d78cb85c7318e47f823bb0df2cf9607cca5a52b19044b661c088040cd14
+codex/home/skills/update-topic/
+codex/home/skills/update-topic/SKILL.md	4583	0754307a6bdd11839bf16562e6edf6009016c7e36c202de7c35d9b985e6a160e
+codex/plugin/
+codex/plugin/.codex-plugin/
+codex/plugin/.codex-plugin/plugin.json	334	921b04047b13b84075b505d45877f8de96dd7bda2328ca417b028e9106d84c0f
+codex/plugin/.mcp.json	116	09a2ac5ff5dba4d58fd4b1675d84ee202c33931b0b74eab808b4913f8096ebd9
+codex/plugin/skills/
+codex/plugin/skills/assess-paper/
+codex/plugin/skills/assess-paper/SKILL.md	2999	88dc4e382434e491b815f6b4761aaf193060850f3ed099a42bf085f9a0e93997
+codex/plugin/skills/bookkeeping/
+codex/plugin/skills/bookkeeping/SKILL.md	4892	cc99b5d1dd6484232d241879935c53d357ad04ae10f84fb36ba0c6990078d478
+codex/plugin/skills/enrich-calibre/
+codex/plugin/skills/enrich-calibre/SKILL.md	7411	3d7f8a2276cad6826b4d99bea40ac3da940c534a529f3838d6f78050e6b36795
+codex/plugin/skills/find-followups/
+codex/plugin/skills/find-followups/SKILL.md	3550	e552f86a2a046aed523337111ad01b54b266274d6b81c348cb4196fec1ad4840
+codex/plugin/skills/histmersion-compile/
+codex/plugin/skills/histmersion-compile/SKILL.md	9679	d086242d6cae1a03c07c0ed9c961116aaaeef664cc31ea2df76d6c52597b8342
+codex/plugin/skills/histmersion-currency/
+codex/plugin/skills/histmersion-currency/SKILL.md	7752	e00170dbdcc3afec32bbf612fbf9a623f9c1356c395f485bb6261c6f43f9ea7a
+codex/plugin/skills/histmersion-dev/
+codex/plugin/skills/histmersion-dev/SKILL.md	26068	53f04ed9b1ce8374c9d392d557f87f7301652ac12431dd2291bf324d3510138b
+codex/plugin/skills/histmersion-ingest/
+codex/plugin/skills/histmersion-ingest/SKILL.md	15095	57b804859829e2bebd2e042720dcc0150c204b7e8585899d221003103ed0613c
+codex/plugin/skills/histmersion-query/
+codex/plugin/skills/histmersion-query/SKILL.md	15260	4270274132182a7154aeede09bca2d33b1d4f35fc8121c3d9355b738b45c853d
+codex/plugin/skills/import-archive/
+codex/plugin/skills/import-archive/SKILL.md	3751	fe4c062fa18c817336d79536230eeadbad33722e16082ad67876156a9b36b1c2
+codex/plugin/skills/import-calibre/
+codex/plugin/skills/import-calibre/SKILL.md	4450	84d12c7c1027337959aa74a90e49862ed75422583cd7735421a3ab61b64e0ad0
+codex/plugin/skills/import-file/
+codex/plugin/skills/import-file/SKILL.md	4748	cb4ff04b0d01af6eb00a6c9d84263e35cbbc6db1675d33ed2dd66ecd49da1b4f
+codex/plugin/skills/ingest-paper/
+codex/plugin/skills/ingest-paper/SKILL.md	9019	6e8c94c9fcee49ae6f47f9b05d5909e14e039125638bbf0017ff09afe81330a5
+codex/plugin/skills/lint-wiki/
+codex/plugin/skills/lint-wiki/SKILL.md	4474	b73e4c5045d769cc0db6c0897fce9597710b174cf896ea82bb989e93081fdf45
+codex/plugin/skills/report/
+codex/plugin/skills/report/SKILL.md	5946	2b48d9349cf204a4cc8298590173b9aa09c25b2732961dfeb1ce37318c3126ee
+codex/plugin/skills/review-article/
+codex/plugin/skills/review-article/SKILL.md	10256	5e673318c69033bf09b872d347b2236064483bdac38a80300412bcdbf8330799
+codex/plugin/skills/sync-calibre/
+codex/plugin/skills/sync-calibre/SKILL.md	4916	af8427de923b808f3636bf98f21c0e4b334fe4c04f507bd45a2d0a48f19351ef
+codex/plugin/skills/trailhead/
+codex/plugin/skills/trailhead/SKILL.md	5620	98672d78cb85c7318e47f823bb0df2cf9607cca5a52b19044b661c088040cd14
+codex/plugin/skills/update-topic/
+codex/plugin/skills/update-topic/SKILL.md	4583	0754307a6bdd11839bf16562e6edf6009016c7e36c202de7c35d9b985e6a160e
+manifest.json	25014	f974556af992244eb49f2cb1caa5f60522de18045328dd099c0cf793a9faa32e
+opencode/
+opencode/config/
+opencode/config/agents/
+opencode/config/agents/acquisition-ranker.md	1220	08eccd2651e2c0e4f47f646319b65cf8d5cdd0b5f8616714f8a8e341baadab5d
+opencode/config/agents/article-cold-reader.md	5659	3125d26bfa6b8c05b3d081abd4705dc3adc46e05c3396b793a30f0af4f729a17
+opencode/config/agents/article-fixer.md	22271	0642a22fce94cb029f994828cac0b69b9a453ccdbfb98fb017c95a773dea0856
+opencode/config/agents/article-planner.md	2630	2bf139fd118903ca313043cabea64e6045f9fb1bd218873b4e12b390767f43d0
+opencode/config/agents/article-rules-reviewer.md	19746	51ff8562ddd5daa505260cced4e778542519cc10dadca7e68c7036bbb4b0893d
+opencode/config/agents/article-skeptic.md	20204	73ce362eedd323cb286c6e6c5828604ba4ff1dd7a5d8e1f65ba4e00cfec343de
+opencode/config/agents/compile-extractor.md	1762	98a604310e40d22a92e5c86b915617e4be3afb98214027f6bb80c7232293edf4
+opencode/config/agents/compile-writer.md	18698	bf16e493ba09343f60c6cf9bc6cf5067069c164107b41776bfbe9533cae52408
+opencode/config/agents/enrich-classify.md	1569	ec5e3507715183e802de55972b0e922dad2e26e9f99a913d47057b5ff1fde76b
+opencode/config/agents/enrich-findings.md	1761	834cedd78b8cee9a8bf3d56deee205cb592acb350852a93e7577e10512ee26cb
+opencode/config/agents/enrich-notes.md	739	5723e63c59bbcb4eedac450b9fb9b3d195c541ea7041dab41ffeb8004396afb0
+opencode/config/agents/filter-inferrer.md	2519	e88f47c3150d86ebf4aef29062b11da78a29b5eaca41f769d5c757ee95c0d976
+opencode/config/agents/goal-planner.md	2301	796ae540ce5a241b45d3b59568c46a3ddbeb54cf5ffeb838dde5e2ddf2b9f587
+opencode/config/agents/hint-reader.md	2425	ae106cfd85f58f30f06ee5013fc0ce49a76c0e1ec2a2e3aa9f80b0878698a1fd
+opencode/config/agents/probe.md	404	6d743f938e05feb563e00387ad3c45f1fd85d50ffa1d08ec3d555e8e2e51635d
+opencode/config/opencode.json	363	5594f5285cd0f1255cff521d711eaa1f908b75a9a58a72e879a49726580237d6
+opencode/config/skills/
+opencode/config/skills/assess-paper/
+opencode/config/skills/assess-paper/SKILL.md	3083	aaec603c346747e647128e6c8cbb304f3a11b4d1e91a5845bfbd3b2a333dae73
+opencode/config/skills/bookkeeping/
+opencode/config/skills/bookkeeping/SKILL.md	4940	8c3ca1f91f74b5b733debff396aebf1495802c3e5f904ed8c6bf37ce773f8857
+opencode/config/skills/enrich-calibre/
+opencode/config/skills/enrich-calibre/SKILL.md	7411	3d7f8a2276cad6826b4d99bea40ac3da940c534a529f3838d6f78050e6b36795
+opencode/config/skills/find-followups/
+opencode/config/skills/find-followups/SKILL.md	3610	88842116de735dbf35ef4cbb69962fd2b8d1683ff5ece106739b56ba080ba8f7
+opencode/config/skills/histmersion-compile/
+opencode/config/skills/histmersion-compile/SKILL.md	9679	d086242d6cae1a03c07c0ed9c961116aaaeef664cc31ea2df76d6c52597b8342
+opencode/config/skills/histmersion-currency/
+opencode/config/skills/histmersion-currency/SKILL.md	7752	e00170dbdcc3afec32bbf612fbf9a623f9c1356c395f485bb6261c6f43f9ea7a
+opencode/config/skills/histmersion-dev/
+opencode/config/skills/histmersion-dev/SKILL.md	26060	202b04b743805df35d2c24e3bc8b5be2dee761f0518eb6eb71d9be63efa4d63b
+opencode/config/skills/histmersion-ingest/
+opencode/config/skills/histmersion-ingest/SKILL.md	15107	1f2fdbba78fe9f9911dc84b2055844b4e3564071c91c9e928bc01f31d9edd8ef
+opencode/config/skills/histmersion-query/
+opencode/config/skills/histmersion-query/SKILL.md	15264	2190f04ef4c11717ed648c7727b48536da8a4343ef035b920f41c8d0e3a6585a
+opencode/config/skills/import-archive/
+opencode/config/skills/import-archive/SKILL.md	3835	2ccd38f7fc6f6b93055a51206783e260be7ae369c89892bf264fc64f30f0e934
+opencode/config/skills/import-calibre/
+opencode/config/skills/import-calibre/SKILL.md	4510	d80b619616e66f9013c517efd803f66cab39ab9c7cf0c90a0ab4f9af1f5ed7c3
+opencode/config/skills/import-file/
+opencode/config/skills/import-file/SKILL.md	4832	6eeb254c2ca5d3053c1b1ca1319c727974d09fcb81799a8619d0bcbbe573ed9c
+opencode/config/skills/ingest-paper/
+opencode/config/skills/ingest-paper/SKILL.md	9187	cf571e164d012acaca786a6957d5db218aea2be1fd6b2919c63d385157ed5dde
+opencode/config/skills/lint-wiki/
+opencode/config/skills/lint-wiki/SKILL.md	4558	369f825e71fa838415c5141f7d5c04e947834518975c203c67e0f5ff423c743a
+opencode/config/skills/report/
+opencode/config/skills/report/SKILL.md	6018	fdc97955e07a26d3c75a7b05da71c590884077175d5fa9e6c137ba0b6cc2ed06
+opencode/config/skills/review-article/
+opencode/config/skills/review-article/SKILL.md	10256	5e673318c69033bf09b872d347b2236064483bdac38a80300412bcdbf8330799
+opencode/config/skills/sync-calibre/
+opencode/config/skills/sync-calibre/SKILL.md	4940	dae52581e1a992a2839f5a6d4f369585fe0ce4bc50569b3b91d803ba136fe5fa
+opencode/config/skills/trailhead/
+opencode/config/skills/trailhead/SKILL.md	5720	c1aac95a11be769689ba922b19281b10f5110eb69ee3dbb180bcb6cd71488251
+opencode/config/skills/update-topic/
+opencode/config/skills/update-topic/SKILL.md	4691	8016fb036374755574e381f15f4394fd293d50b231e82e5e6a0376fd4d2a5b56
+opencode/interactive/
+opencode/interactive/opencode.json	228	510e8bb994565c926dc0624cbf87c8fc7b068d977b20e0ef373393abb3ff123a
+opencode/interactive/skills/
+opencode/interactive/skills/assess-paper/
+opencode/interactive/skills/assess-paper/SKILL.md	3083	aaec603c346747e647128e6c8cbb304f3a11b4d1e91a5845bfbd3b2a333dae73
+opencode/interactive/skills/bookkeeping/
+opencode/interactive/skills/bookkeeping/SKILL.md	4940	8c3ca1f91f74b5b733debff396aebf1495802c3e5f904ed8c6bf37ce773f8857
+opencode/interactive/skills/enrich-calibre/
+opencode/interactive/skills/enrich-calibre/SKILL.md	7411	3d7f8a2276cad6826b4d99bea40ac3da940c534a529f3838d6f78050e6b36795
+opencode/interactive/skills/find-followups/
+opencode/interactive/skills/find-followups/SKILL.md	3610	88842116de735dbf35ef4cbb69962fd2b8d1683ff5ece106739b56ba080ba8f7
+opencode/interactive/skills/histmersion-compile/
+opencode/interactive/skills/histmersion-compile/SKILL.md	9679	d086242d6cae1a03c07c0ed9c961116aaaeef664cc31ea2df76d6c52597b8342
+opencode/interactive/skills/histmersion-currency/
+opencode/interactive/skills/histmersion-currency/SKILL.md	7752	e00170dbdcc3afec32bbf612fbf9a623f9c1356c395f485bb6261c6f43f9ea7a
+opencode/interactive/skills/histmersion-dev/
+opencode/interactive/skills/histmersion-dev/SKILL.md	26060	202b04b743805df35d2c24e3bc8b5be2dee761f0518eb6eb71d9be63efa4d63b
+opencode/interactive/skills/histmersion-ingest/
+opencode/interactive/skills/histmersion-ingest/SKILL.md	15107	1f2fdbba78fe9f9911dc84b2055844b4e3564071c91c9e928bc01f31d9edd8ef
+opencode/interactive/skills/histmersion-query/
+opencode/interactive/skills/histmersion-query/SKILL.md	15264	2190f04ef4c11717ed648c7727b48536da8a4343ef035b920f41c8d0e3a6585a
+opencode/interactive/skills/import-archive/
+opencode/interactive/skills/import-archive/SKILL.md	3835	2ccd38f7fc6f6b93055a51206783e260be7ae369c89892bf264fc64f30f0e934
+opencode/interactive/skills/import-calibre/
+opencode/interactive/skills/import-calibre/SKILL.md	4510	d80b619616e66f9013c517efd803f66cab39ab9c7cf0c90a0ab4f9af1f5ed7c3
+opencode/interactive/skills/import-file/
+opencode/interactive/skills/import-file/SKILL.md	4832	6eeb254c2ca5d3053c1b1ca1319c727974d09fcb81799a8619d0bcbbe573ed9c
+opencode/interactive/skills/ingest-paper/
+opencode/interactive/skills/ingest-paper/SKILL.md	9187	cf571e164d012acaca786a6957d5db218aea2be1fd6b2919c63d385157ed5dde
+opencode/interactive/skills/lint-wiki/
+opencode/interactive/skills/lint-wiki/SKILL.md	4558	369f825e71fa838415c5141f7d5c04e947834518975c203c67e0f5ff423c743a
+opencode/interactive/skills/report/
+opencode/interactive/skills/report/SKILL.md	6018	fdc97955e07a26d3c75a7b05da71c590884077175d5fa9e6c137ba0b6cc2ed06
+opencode/interactive/skills/review-article/
+opencode/interactive/skills/review-article/SKILL.md	10256	5e673318c69033bf09b872d347b2236064483bdac38a80300412bcdbf8330799
+opencode/interactive/skills/sync-calibre/
+opencode/interactive/skills/sync-calibre/SKILL.md	4940	dae52581e1a992a2839f5a6d4f369585fe0ce4bc50569b3b91d803ba136fe5fa
+opencode/interactive/skills/trailhead/
+opencode/interactive/skills/trailhead/SKILL.md	5720	c1aac95a11be769689ba922b19281b10f5110eb69ee3dbb180bcb6cd71488251
+opencode/interactive/skills/update-topic/
+opencode/interactive/skills/update-topic/SKILL.md	4691	8016fb036374755574e381f15f4394fd293d50b231e82e5e6a0376fd4d2a5b56
+opencode/xdg/
+opencode/xdg/opencode/
+opencode/xdg/opencode/opencode.json	51	3a1689520689222b217d5107e8e7becc3fbbd2aae41dc086435cd6a941b650c1

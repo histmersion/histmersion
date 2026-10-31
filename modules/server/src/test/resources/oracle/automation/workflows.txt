@@ -1,0 +1,43 @@
+workflow enrich-source	v2	source	roles=extractor
+  read one source and propose its summary, classification, period, findings (each with a verbatim quote) and notes; code verifies and patches
+workflow review-article	v6	article	roles=reviewer,cold-reader,skeptic,fixer
+  the adversarial review panel on one article (rules reviewer, cold reader, skeptic in parallel), merged by code into the article's review ledger, the skeptic ruling on each open pair of its critique checklist; with fix, a fixer revises it (code adds the citations a paragraph already names and guards closed findings), each reviewer verifies the findings it claims fixed and the edited passages, until no major finding remains — then a full panel confirms, deferring what it finds new to the next run
+workflow plan-goal	v1	goal	roles=planner
+  propose sub-goals, search queries and candidate works (DOIs checked upstream by code) for one goal; nothing is created until a person approves the plan
+workflow compile-article	v2	article	roles=extractor,writer
+  compile a new article, or a section to append to an existing one, from the sources a filter returns: verified claim table, evidence model, draft, code self-check, then a person approves before anything is written, and a review-article run with fix follows
+workflow currency-check	v1	goal	roles=
+  assess and followups over a goal's sources (no model): retractions applied as assess does, disagreement edges to sources in the corpus proposed for approval, citing papers outside it queued for acquisition
+workflow acquisition-sweep	v1	goal	roles=planner
+  discover new works for a goal's queries, a model ranks them against the goal, and the relevant ones become acquisition items — never one already in the corpus or the queue; a watcher that opted in ingests the legal open-access ones (capped per day, legal open access only)
+workflow infer-filter	v1	article	roles=planner
+  propose the coverage filter (query, topics, tags) of an article that records none; code runs it against the corpus and the article's own citations, and a person approves it (agents.approvals.article-filter) before it is recorded
+workflow hint-effect	v1	manager	roles=planner
+  read one hint a person gave a process manager and propose the structured action it asks for (hold, prioritise or skip items, or a settings change); code checks the action names real items and settings, and it is applied only when a person approves it
+workflow propose-articles	v1	goal	roles=planner
+  propose the articles a research area should have, each with a slug, title and filter; code checks every slug is free, every filter returns enough sources and none overlaps an article of the area by half, and a person ALWAYS approves the plan before the seeding manager compiles them
+agent acquisition-ranker	tools=
+agent article-cold-reader	tools=
+agent article-fixer	tools=get_source,passages,neighbors,search,query,check_edits
+agent article-planner	tools=search,facets,get_article,article_coverage,get_source
+agent article-rules-reviewer	tools=get_source,passages,neighbors,search,query,article_coverage
+agent article-skeptic	tools=get_source,passages,neighbors,search,query,followups
+agent compile-extractor	tools=
+agent compile-writer	tools=check_edits
+agent enrich-classify	tools=facets,search
+agent enrich-findings	tools=
+agent enrich-notes	tools=
+agent filter-inferrer	tools=search,facets,get_article,get_source
+agent goal-planner	tools=search,facets,get_source
+agent hint-reader	tools=
+agent probe	tools=get_source
+tool get_source
+tool passages
+tool search
+tool facets
+tool neighbors
+tool query
+tool get_article
+tool followups
+tool check_edits
+tool article_coverage

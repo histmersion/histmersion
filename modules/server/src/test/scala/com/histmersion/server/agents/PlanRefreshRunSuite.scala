@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger
   * unavailable and never offered; a pool with no reading is read before its first use; `agent quota refresh` over HTTP
   * against a FAKE `claude`. Every CLI is a stand-in: nothing is spent. Skipped without HISTMERSION_TEST_DB_URL.
   */
-class PlanRefreshRunSuite extends com.histmersion.db.DbSuite:
+class PlanRefreshRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
@@ -48,6 +48,7 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite:
     )
 
   private lazy val ds = testPool(baseCfg.db)
+  protected def transcriptDs: javax.sql.DataSource = ds
 
   private val now = () => System.currentTimeMillis()
   private val Min = 60000L

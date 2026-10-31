@@ -1,0 +1,11 @@
+=== an empty title and a null year are sent back with the problems; the second answer matches
+sources {"added_date":"DAY","authors":[],"calibre_id":null,"cited_by_count":null,"citekey":"zzprobe1956_catalogue","doi":null,"influential_citations":null,"license":null,"notes":null,"ocr_markdown":null,"origin":"UUID","period":null,"regions":[],"sha256":null,"source":null,"status":"unassessed","summary":null,"tags":[],"title":"A Catalogue of Fishes","topics":[],"tsv":"'catalogu':2A 'fish':4A","uid":"UUID","updated_at":"TS","venue":null,"year":1956}
+
+=== a model that never fills them: the probe reports the answer incomplete, never as matching
+sources {"added_date":"DAY","authors":[],"calibre_id":null,"cited_by_count":null,"citekey":"zzprobe1956_catalogue","doi":null,"influential_citations":null,"license":null,"notes":null,"ocr_markdown":null,"origin":"UUID","period":null,"regions":[],"sha256":null,"source":null,"status":"unassessed","summary":null,"tags":[],"title":"A Catalogue of Fishes","topics":[],"tsv":"'catalogu':2A 'fish':4A","uid":"UUID","updated_at":"TS","venue":null,"year":1956}
+
+=== claude-code: a prose answer is asked again with why; the typed second answer matches (#915)
+sources {"added_date":"DAY","authors":[],"calibre_id":null,"cited_by_count":null,"citekey":"zzprobe1956_catalogue","doi":null,"influential_citations":null,"license":null,"notes":null,"ocr_markdown":null,"origin":"UUID","period":null,"regions":[],"sha256":null,"source":null,"status":"unassessed","summary":null,"tags":[],"title":"A Catalogue of Fishes","topics":[],"tsv":"'catalogu':2A 'fish':4A","uid":"UUID","updated_at":"TS","venue":null,"year":1956}
+
+=== claude-code: prose every time — no typed answer, and the probe says why
+sources {"added_date":"DAY","authors":[],"calibre_id":null,"cited_by_count":null,"citekey":"zzprobe1956_catalogue","doi":null,"influential_citations":null,"license":null,"notes":null,"ocr_markdown":null,"origin":"UUID","period":null,"regions":[],"sha256":null,"source":null,"status":"unassessed","summary":null,"tags":[],"title":"A Catalogue of Fishes","topics":[],"tsv":"'catalogu':2A 'fish':4A","uid":"UUID","updated_at":"TS","venue":null,"year":1956}

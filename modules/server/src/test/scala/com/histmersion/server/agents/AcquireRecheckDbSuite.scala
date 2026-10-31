@@ -24,7 +24,7 @@ import java.time.Instant
   * the autopilot drains. The upstreams are fixtures: nothing reaches the network. Skipped without
   * HISTMERSION_TEST_DB_URL.
   */
-class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite:
+class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
@@ -40,6 +40,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite:
     )
 
   private lazy val ds = testPool(baseCfg.db)
+  protected def transcriptDs: javax.sql.DataSource = ds
 
   private def clean(): Unit =
     Migrate.run(ds)

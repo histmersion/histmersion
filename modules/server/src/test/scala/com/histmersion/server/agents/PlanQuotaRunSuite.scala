@@ -19,7 +19,7 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
   * keeps the newest; the quota-guard endpoint; the REST surface with a run token under an API key. Skipped without
   * HISTMERSION_TEST_DB_URL.
   */
-class PlanQuotaRunSuite extends com.histmersion.db.DbSuite:
+class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
@@ -45,6 +45,7 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite:
     )
 
   private lazy val ds = testPool(baseCfg.db)
+  protected def transcriptDs: javax.sql.DataSource = ds
 
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
   private val Body =

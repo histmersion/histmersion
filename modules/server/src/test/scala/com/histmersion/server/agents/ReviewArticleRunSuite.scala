@@ -72,7 +72,7 @@ final class PanelClient(val model: ModelRef) extends LlmClient:
   * for an open MAJOR, a 412 from a concurrent writer, and a resume that replays the finished parallel steps. Skipped
   * without HISTMERSION_TEST_DB_URL.
   */
-class ReviewArticleRunSuite extends com.histmersion.db.DbSuite:
+class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   // a DB suite driving parallel steps: never let a hang run for hours (#865)
@@ -144,6 +144,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite:
     )
 
   private lazy val ds = testPool(baseCfg.db)
+  protected def transcriptDs: javax.sql.DataSource = ds
 
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
   private def tool(name: String, args: String) =

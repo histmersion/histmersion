@@ -23,7 +23,7 @@ import com.histmersion.values.EdgeKind
   * the skeptic's user message, once-hints retired). Runs are scripted ([[PanelClient]]) or settled by hand; no provider
   * is ever called. Skipped without HISTMERSION_TEST_DB_URL.
   */
-class ManagerRunSuite extends com.histmersion.db.DbSuite:
+class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(180, "s")
@@ -67,6 +67,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite:
     )
 
   private lazy val ds = testPool(baseCfg.db)
+  protected def transcriptDs: javax.sql.DataSource = ds
 
   private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, Handlers) =
     val deps = Deps(cfg, ds)
