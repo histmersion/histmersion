@@ -56,7 +56,10 @@ class StorageProbeSuite extends munit.FunSuite:
   tmp.test("every location comes from the config: data dir, cache dir, backups, originals, bundle"): d =>
     val cfg = config(d, bundled = true)
     val p = StorageLocations.measured(cfg, env(d), "Mac OS X", None)
-    assertEquals(p.find(Location.Install).map(s => Path.of(s.where())), Some(d.resolve("install").toAbsolutePath.normalize))
+    assertEquals(
+      p.find(Location.Install).map(s => Path.of(s.where())),
+      Some(d.resolve("install").toAbsolutePath.normalize)
+    )
     val locs = figures
       .spots(p, StorageLocations.install)
       .map(l => l.key -> l.path.map(x => d.relativize(Path.of(x)).toString))

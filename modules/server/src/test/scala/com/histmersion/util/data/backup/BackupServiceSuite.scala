@@ -20,7 +20,10 @@ class BackupServiceSuite extends munit.FunSuite:
     val first = svc.create(at).fold(e => fail(e.message), identity)
     val second = svc.create(at).fold(e => fail(e.message), identity)
     val third = svc.create(at.plusSeconds(1)).fold(e => fail(e.message), identity)
-    assertEquals((first.file, second.file), ("histmersion-20261031T100000Z.dump", "histmersion-20261031T100000Z-2.dump"))
+    assertEquals(
+      (first.file, second.file),
+      ("histmersion-20261031T100000Z.dump", "histmersion-20261031T100000Z-2.dump")
+    )
     assertEquals(third.pruned, List(first.file))
     assertEquals(svc.list.map(_.map(_.file)), Right(List(third.file, second.file)))
     assert(third.sha256.length == 64, third)

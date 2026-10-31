@@ -4,7 +4,7 @@ import com.histmersion.api.{ApiError, Backup, BackupInfo, BackupResult}
 import com.histmersion.config.AppConfig
 import com.histmersion.util.data.DataContributions
 import com.histmersion.util.database.Transactor
-import com.histmersion.util.process.{ProcessLaunch, ProcessOutput, Processes}
+import com.histmersion.util.process.{Processes, ProcessLaunch, ProcessOutput}
 import com.histmersion.util.storage.{HandedFile, Location, Storage, Store, StoreKey, TempName}
 
 import java.time.{Instant, ZoneOffset}
@@ -118,7 +118,11 @@ object BackupService:
     }
 
   private def usable(store: Store): Either[ApiError, Store] =
-    store.makeDirectory().left.map(e => ApiError(s"backups directory ${store.where()} is not usable: ${e.message}")).map(_ => store)
+    store
+      .makeDirectory()
+      .left
+      .map(e => ApiError(s"backups directory ${store.where()} is not usable: ${e.message}"))
+      .map(_ => store)
 
   final private class Implementation(
       settings: () => AppConfig,
@@ -196,11 +200,13 @@ object BackupService:
           }
       finally scratch.close()
 
-    /** The captured output, bounded: a `pg_restore` complaining about every statement can write megabytes, and only
-      * the last handful of lines ever reaches an error message.
+    /** The captured output, bounded: a `pg_restore` complaining about every statement can write megabytes, and only the
+      * last handful of lines ever reaches an error message.
       */
     private def tail(logs: Store, log: StoreKey): List[String] =
-      scala.util.Try(logs.get(log).fold(List.empty[String])(_.text().linesIterator.toList.takeRight(200))).getOrElse(Nil)
+      scala.util
+        .Try(logs.get(log).fold(List.empty[String])(_.text().linesIterator.toList.takeRight(200)))
+        .getOrElse(Nil)
 
     private def target: Either[ApiError, Backup.PgTarget] =
       Backup.parseJdbc(settings().db.url).left.map(m => ApiError(s"cannot back up: $m"))

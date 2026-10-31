@@ -17,10 +17,10 @@ object MaintenanceAdapter:
     case AutomationOwner => List(Location.AgentHomes, Location.CodexSessions)
     case CatalogueOwner  =>
       List(Location.GazetteerExtracts, Location.GazetteerFolder, Location.GazetteerDrop, Location.Basemap)
-    case LibraryOwner    => List(Location.IngestOriginals, Location.Spool, Location.CorpusFolder)
-    case DataArea        => List(Location.Backups, Location.Bundles)
-    case DatabaseOwner   => List(Location.DatabaseCluster)
-    case _               => Nil
+    case LibraryOwner  => List(Location.IngestOriginals, Location.Spool, Location.CorpusFolder)
+    case DataArea      => List(Location.Backups, Location.Bundles)
+    case DatabaseOwner => List(Location.DatabaseCluster)
+    case _             => Nil
 
   def caches(owner: DataOwner): List[CacheSpec] = owner match
     case CatalogueOwner =>
@@ -38,7 +38,12 @@ object MaintenanceAdapter:
       )
     case MediaOwner =>
       List(
-        CacheSpec(owner, CacheName("thumbnails"), "picture thumbnails", CacheHolding.InTables(List(TableName("assets"))))
+        CacheSpec(
+          owner,
+          CacheName("thumbnails"),
+          "picture thumbnails",
+          CacheHolding.InTables(List(TableName("assets")))
+        )
       )
     case DataArea =>
       List(CacheSpec(owner, CacheName("storage"), "storage figures", CacheHolding.InMemory, List(CacheEvent.Expired)))

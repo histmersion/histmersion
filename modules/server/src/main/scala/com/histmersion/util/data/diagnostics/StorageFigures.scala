@@ -27,40 +27,52 @@ import java.time.Instant
   */
 final class StorageFigures(registry: DataContributions):
 
-  /** Every entry, in the order About lists them: the shown stores, the cache directory's other folders one by one,
-    * then the rest of the data directory together. Reads the disk only to find those leftovers.
+  /** Every entry, in the order About lists them: the shown stores, the cache directory's other folders one by one, then
+    * the rest of the data directory together. Reads the disk only to find those leftovers.
     */
   def spots(storage: Storage, installed: List[Location]): List[StorageSpot] =
     val included = (registry.stores.map(_._2) ++ installed).toSet
     val named = ShownStore.values.toList
       .filter(s => included(s.location))
-      .flatMap(s => storage.find(s.location).map(store => StorageSpot(s.key, s.label, s.group, List(store), Some(store))))
+      .flatMap(s =>
+        storage.find(s.location).map(store => StorageSpot(s.key, s.label, s.group, List(store), Some(store)))
+      )
     val shown = named.flatMap(_.path)
     def covered(child: String) =
       shown.exists(s => StorageReports.under(s, child) || StorageReports.under(child, s))
     def children(location: Location): List[(String, Store)] =
       storage.find(location).toList.flatMap { dir =>
-        dir.names().flatMap(n => StoreKey.of(n).toOption.map(k => n -> dir.sub(k))).filterNot((_, s) => covered(s.where()))
+        dir
+          .names()
+          .flatMap(n => StoreKey.of(n).toOption.map(k => n -> dir.sub(k)))
+          .filterNot((_, s) => covered(s.where()))
       }
-    val caches = children(Location.CacheDirectory).map((n, s) => StorageSpot(s"cache:$n", s"cache: $n", "caches", List(s), Some(s)))
-    val rest = storage.find(Location.DataDirectory).toList.flatMap(data =>
-      children(Location.DataDirectory) match
-        case Nil  => Nil
-        case some =>
-          val names = some.map(_._1)
-          List(
-            StorageSpot(
-              "data-other",
-              "other files in the data directory",
-              "other",
-              some.map(_._2),
-              None,
-              detail = Some(
-                s"${data.where()}: ${names.take(8).mkString(", ")}${if names.size > 8 then s" and ${names.size - 8} more" else ""}"
+    val caches = children(Location.CacheDirectory).map((n, s) =>
+      StorageSpot(s"cache:$n", s"cache: $n", "caches", List(s), Some(s))
+    )
+    val rest = storage
+      .find(Location.DataDirectory)
+      .toList
+      .flatMap(data =>
+        children(Location.DataDirectory) match
+          case Nil  => Nil
+          case some =>
+            val names = some.map(_._1)
+            List(
+              StorageSpot(
+                "data-other",
+                "other files in the data directory",
+                "other",
+                some.map(_._2),
+                None,
+                detail = Some(
+                  s"${data.where()}: ${names.take(8).mkString(", ")}${
+                      if names.size > 8 then s" and ${names.size - 8} more" else ""
+                    }"
+                )
               )
             )
-          )
-    )
+      )
     named ++ caches ++ rest
 
   /** The base-map files, one by one, an unfinished download (`.<layer>.part`), and the registered caches it holds. */

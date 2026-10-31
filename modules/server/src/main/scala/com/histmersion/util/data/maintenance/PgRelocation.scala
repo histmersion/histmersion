@@ -69,7 +69,9 @@ object PgRelocation:
             if macOS && isMachO(out) then
               val file = pg.onDisk(k).fold(e => throw java.io.IOException(e.message), _.toString)
               val rc = processes
-                .start(ProcessLaunch(List("codesign", "--force", "--sign", "-", file), output = ProcessOutput.Discarded))
+                .start(
+                  ProcessLaunch(List("codesign", "--force", "--sign", "-", file), output = ProcessOutput.Discarded)
+                )
                 .fold(e => throw java.io.IOException(e), _.waitFor())
               if rc != 0 then throw IllegalStateException(s"codesign failed on $file (exit $rc)")
               signed += 1

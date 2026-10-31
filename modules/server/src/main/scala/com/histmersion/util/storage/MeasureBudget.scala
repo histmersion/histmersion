@@ -5,7 +5,11 @@ import java.util.concurrent.atomic.AtomicLong
 /** The caps of one measurement of stores: at most `maxEntries` visited entries over all its walks, and no walk past
   * `deadlineNanos` (on `clock`'s scale). Thread-safe; one per measurement.
   */
-final class MeasureBudget(val maxEntries: Long, val deadlineNanos: Long, val clock: () => Long = () => System.nanoTime()):
+final class MeasureBudget(
+    val maxEntries: Long,
+    val deadlineNanos: Long,
+    val clock: () => Long = () => System.nanoTime()
+):
   private val used = AtomicLong(0L)
 
   /** Count one entry; false once either cap is reached. */
