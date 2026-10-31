@@ -2135,7 +2135,10 @@ packages shows no other reflective lazy value. No tracing-agent run. To check at
 (About's storage lines, the relocation); `histmersion backup`, `backups`, `restore`; `bundle export|verify|import`;
 `merge plan|apply|list|show|ledger`; `lint` and `lint --fix`; `export <dir>`; `maintenance vacuum`; `reindex`.
 
-TESTS-LINE
+**Tests.** After `sbt clean`, `just test-quick` with every module named, on a throwaway database: 4 967 tests, none
+failed. Deployed 2026-10-31: lint, settings, the whole Markdown export (1 718 files) and a bundle of what changed in two
+days (2 491 entries, its manifest included) byte-identical before and after the install. `DataOracleSuite` recorded
+each source's `addedDate`, the local day it ran on, and failed from the next day on; since slice 7 it writes `DAY`.
 
 ## 18. Slice 7 as built, part 1 (the automation engine: contributions, the registry, the work lists, 2026-11-01)
 
