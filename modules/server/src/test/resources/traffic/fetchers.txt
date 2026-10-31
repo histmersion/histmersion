@@ -1,0 +1,763 @@
+## the stock chain: each fetcher's own find
+chain: archive-org, unpaywall, core, openalex, pmc, arxiv, landing, pmc-text
+### doi:10.1/up
+GET https://api.unpaywall.org/v2/10.1/up?email=host@example.org
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://repo.example.org/up.pdf
+  User-Agent: histmersion/0.1
+  -> 200
+found by unpaywall: unpaywall pdf https://repo.example.org/up.pdf 4105 bytes
+### doi:10.1/core
+GET https://api.unpaywall.org/v2/10.1/core?email=host@example.org
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.core.ac.uk/v3/search/works/?q=doi:%2210.1/core%22&limit=1
+  Authorization: Bearer k-host
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://core.example.org/core.pdf
+  User-Agent: histmersion/0.1
+  -> 200
+found by core: core pdf https://core.example.org/core.pdf 4105 bytes
+### doi:10.1/oa
+GET https://api.unpaywall.org/v2/10.1/oa?email=host@example.org
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.core.ac.uk/v3/search/works/?q=doi:%2210.1/oa%22&limit=1
+  Authorization: Bearer k-host
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://api.openalex.org/works/https://doi.org/10.1/oa?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=host@example.org
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://oa.example.org/oa.pdf
+  User-Agent: histmersion/0.1
+  -> 200
+found by openalex: openalex pdf https://oa.example.org/oa.pdf 4105 bytes
+### arxiv:2101.00001
+GET https://arxiv.org/pdf/2101.00001
+  User-Agent: histmersion/0.1
+  -> 200
+found by arxiv: arxiv pdf https://arxiv.org/pdf/2101.00001 4105 bytes
+### archive.org:zqbook
+GET https://archive.org/metadata/zqbook
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://archive.org/download/zqbook/zqbook.epub
+  User-Agent: histmersion/0.1
+  -> 200
+found by archive-org: archive_org epub https://archive.org/download/zqbook/zqbook.epub 20488 bytes
+### archive.org:zqbook
+GET https://archive.org/metadata/zqbook
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://archive.org/download/zqbook/zqbook.pdf
+  User-Agent: histmersion/0.1
+  -> 200
+found by archive-org: archive_org pdf https://archive.org/download/zqbook/zqbook.pdf 20489 bytes
+### archive.org:zqlent
+GET https://archive.org/metadata/zqlent
+  User-Agent: histmersion/0.1
+  -> 200
+no copy: no legal open-access PDF found (archive-org: 'zqlent' is a lending-only item — borrow it on archive.org)
+  archive-org: refused — 'zqlent' is a lending-only item — borrow it on archive.org
+  unpaywall: no copy — unpaywall needs a DOI
+  core: no copy — core needs a DOI
+  openalex: no copy — openalex needs a DOI
+  pmc: no copy — pmc needs a DOI
+  arxiv: no copy — arxiv needs an arXiv id
+  landing: no copy — landing needs a DOI
+  pmc-text: no copy — pmc-text needs a DOI
+### doi:10.1/none
+GET https://api.unpaywall.org/v2/10.1/none?email=host@example.org
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.core.ac.uk/v3/search/works/?q=doi:%2210.1/none%22&limit=1
+  Authorization: Bearer k-host
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://api.openalex.org/works/https://doi.org/10.1/none?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=host@example.org
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:%2210.1/none%22&resultType=core&format=json&pageSize=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 404
+GET https://api.datacite.org/dois/10.1/none
+  User-Agent: histmersion/0.1
+  -> 404
+no copy: no legal open-access PDF found
+  archive-org: no copy — archive-org needs an archive.org identifier
+  unpaywall: no copy — unpaywall has no copy of 10.1/none
+  core: no copy — core has no copy of 10.1/none
+  openalex: no copy — openalex has no copy of 10.1/none
+  pmc: no copy — pmc has no copy of 10.1/none
+  arxiv: no copy — arxiv needs an arXiv id
+  landing: no copy — landing has no copy of 10.1/none
+  pmc-text: no copy — pmc-text has no copy of 10.1/none
+budget: lookups 3 searches 0
+
+## pmc: Europe PMC's challenge, then the dataset's PDF
+chain: archive-org, unpaywall, core, openalex, pmc, arxiv, landing, pmc-text
+### doi:10.1038/nature25778
+GET https://api.unpaywall.org/v2/10.1038/nature25778?email=host@example.org
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.core.ac.uk/v3/search/works/?q=doi:%2210.1038/nature25778%22&limit=1
+  Authorization: Bearer k-host
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.openalex.org/works/https://doi.org/10.1038/nature25778?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=host@example.org
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:%2210.1038/nature25778%22&resultType=core&format=json&pageSize=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200
+GET https://europepmc.org/articles/PMC6091220?pdf=render
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 403
+GET https://pmc-oa-opendata.s3.amazonaws.com/?list-type=2&prefix=metadata/PMC6091220.
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200
+GET https://pmc-oa-opendata.s3.amazonaws.com/metadata/PMC6091220.1.json
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200
+GET https://pmc-oa-opendata.s3.amazonaws.com/PMC6091220.1/PMC6091220.1.pdf
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200
+found by pmc: pmc pdf https://pmc-oa-opendata.s3.amazonaws.com/PMC6091220.1/PMC6091220.1.pdf 4105 bytes
+budget: lookups 1 searches 0
+
+## pmc-text: an author manuscript's JATS, after arXiv
+chain: archive-org, unpaywall, core, openalex, pmc, arxiv, landing, pmc-text
+### doi:10.1126/science.aar7711 arxiv:1805.00001
+GET https://api.unpaywall.org/v2/10.1126/science.aar7711?email=host@example.org
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.core.ac.uk/v3/search/works/?q=doi:%2210.1126/science.aar7711%22&limit=1
+  Authorization: Bearer k-host
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.openalex.org/works/https://doi.org/10.1126/science.aar7711?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=host@example.org
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:%2210.1126/science.aar7711%22&resultType=core&format=json&pageSize=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200
+GET https://europepmc.org/articles/PMC6748862?pdf=render
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 404
+GET https://pmc-oa-opendata.s3.amazonaws.com/?list-type=2&prefix=metadata/PMC6748862.
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200
+GET https://pmc-oa-opendata.s3.amazonaws.com/metadata/PMC6748862.1.json
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200
+GET https://arxiv.org/pdf/1805.00001
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.datacite.org/dois/10.1126/science.aar7711
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://pmc-oa-opendata.s3.amazonaws.com/PMC6748862.1/PMC6748862.1.xml
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200
+found by pmc-text: pmc xml https://pmc-oa-opendata.s3.amazonaws.com/PMC6748862.1/PMC6748862.1.xml 3288 bytes
+budget: lookups 1 searches 0
+
+## landing: every index on
+chain: archive-org, unpaywall, core, openalex, pmc, arxiv, landing, pmc-text
+### doi:10.9999/landing.1
+GET https://api.unpaywall.org/v2/10.9999/landing.1?email=host@example.org
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://api.core.ac.uk/v3/search/works/?q=doi:%2210.9999/landing.1%22&limit=1
+  Authorization: Bearer k-host
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.openalex.org/works/https://doi.org/10.9999/landing.1?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=host@example.org
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:%2210.9999/landing.1%22&resultType=core&format=json&pageSize=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 404
+GET https://repo-u.example.org/item/1
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://repo-o.example.org/item/1
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.datacite.org/dois/10.9999/landing.1
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://repo-d.example.org/item/1
+  User-Agent: histmersion/0.1
+  -> 404
+no copy: no legal open-access PDF found
+  archive-org: no copy — archive-org needs an archive.org identifier
+  unpaywall: no copy — unpaywall has no copy of 10.9999/landing.1
+  core: no copy — core has no copy of 10.9999/landing.1
+  openalex: no copy — openalex has no copy of 10.9999/landing.1
+  pmc: no copy — pmc has no copy of 10.9999/landing.1
+  arxiv: no copy — arxiv needs an arXiv id
+  landing: no copy — landing has no copy of 10.9999/landing.1
+  pmc-text: no copy — pmc-text has no copy of 10.9999/landing.1
+budget: lookups 1 searches 0
+
+## landing: oa-unpaywall's own contact
+chain: archive-org, unpaywall, core, openalex, pmc, arxiv, landing, pmc-text
+### doi:10.9999/landing.1
+GET https://api.unpaywall.org/v2/10.9999/landing.1?email=plugin@example.org
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://api.core.ac.uk/v3/search/works/?q=doi:%2210.9999/landing.1%22&limit=1
+  Authorization: Bearer k-host
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.openalex.org/works/https://doi.org/10.9999/landing.1?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=host@example.org
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:%2210.9999/landing.1%22&resultType=core&format=json&pageSize=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 404
+GET https://repo-u.example.org/item/1
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://repo-o.example.org/item/1
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.datacite.org/dois/10.9999/landing.1
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://repo-d.example.org/item/1
+  User-Agent: histmersion/0.1
+  -> 404
+no copy: no legal open-access PDF found
+  archive-org: no copy — archive-org needs an archive.org identifier
+  unpaywall: no copy — unpaywall has no copy of 10.9999/landing.1
+  core: no copy — core has no copy of 10.9999/landing.1
+  openalex: no copy — openalex has no copy of 10.9999/landing.1
+  pmc: no copy — pmc has no copy of 10.9999/landing.1
+  arxiv: no copy — arxiv needs an arXiv id
+  landing: no copy — landing has no copy of 10.9999/landing.1
+  pmc-text: no copy — pmc-text has no copy of 10.9999/landing.1
+budget: lookups 1 searches 0
+
+## landing: oa-unpaywall's contact from the environment
+chain: archive-org, unpaywall, core, openalex, pmc, arxiv, landing, pmc-text
+### doi:10.9999/landing.1
+GET https://api.unpaywall.org/v2/10.9999/landing.1?email=env@example.org
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://api.core.ac.uk/v3/search/works/?q=doi:%2210.9999/landing.1%22&limit=1
+  Authorization: Bearer k-host
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.openalex.org/works/https://doi.org/10.9999/landing.1?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=host@example.org
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:%2210.9999/landing.1%22&resultType=core&format=json&pageSize=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 404
+GET https://repo-u.example.org/item/1
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://repo-o.example.org/item/1
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.datacite.org/dois/10.9999/landing.1
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://repo-d.example.org/item/1
+  User-Agent: histmersion/0.1
+  -> 404
+no copy: no legal open-access PDF found
+  archive-org: no copy — archive-org needs an archive.org identifier
+  unpaywall: no copy — unpaywall has no copy of 10.9999/landing.1
+  core: no copy — core has no copy of 10.9999/landing.1
+  openalex: no copy — openalex has no copy of 10.9999/landing.1
+  pmc: no copy — pmc has no copy of 10.9999/landing.1
+  arxiv: no copy — arxiv needs an arXiv id
+  landing: no copy — landing has no copy of 10.9999/landing.1
+  pmc-text: no copy — pmc-text has no copy of 10.9999/landing.1
+budget: lookups 1 searches 0
+
+## landing: oa-unpaywall off
+chain: archive-org, core, openalex, pmc, arxiv, landing, pmc-text
+### doi:10.9999/landing.1
+GET https://api.core.ac.uk/v3/search/works/?q=doi:%2210.9999/landing.1%22&limit=1
+  Authorization: Bearer k-host
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.openalex.org/works/https://doi.org/10.9999/landing.1?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=host@example.org
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:%2210.9999/landing.1%22&resultType=core&format=json&pageSize=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 404
+GET https://repo-o.example.org/item/1
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.datacite.org/dois/10.9999/landing.1
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://repo-d.example.org/item/1
+  User-Agent: histmersion/0.1
+  -> 404
+no copy: no legal open-access PDF found
+  archive-org: no copy — archive-org needs an archive.org identifier
+  core: no copy — core has no copy of 10.9999/landing.1
+  openalex: no copy — openalex has no copy of 10.9999/landing.1
+  pmc: no copy — pmc has no copy of 10.9999/landing.1
+  arxiv: no copy — arxiv needs an arXiv id
+  landing: no copy — landing has no copy of 10.9999/landing.1
+  pmc-text: no copy — pmc-text has no copy of 10.9999/landing.1
+budget: lookups 1 searches 0
+
+## landing: oa-openalex off
+chain: archive-org, unpaywall, core, pmc, arxiv, landing, pmc-text
+### doi:10.9999/landing.1
+GET https://api.unpaywall.org/v2/10.9999/landing.1?email=host@example.org
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://api.core.ac.uk/v3/search/works/?q=doi:%2210.9999/landing.1%22&limit=1
+  Authorization: Bearer k-host
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:%2210.9999/landing.1%22&resultType=core&format=json&pageSize=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 404
+GET https://repo-u.example.org/item/1
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.datacite.org/dois/10.9999/landing.1
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://repo-d.example.org/item/1
+  User-Agent: histmersion/0.1
+  -> 404
+no copy: no legal open-access PDF found
+  archive-org: no copy — archive-org needs an archive.org identifier
+  unpaywall: no copy — unpaywall has no copy of 10.9999/landing.1
+  core: no copy — core has no copy of 10.9999/landing.1
+  pmc: no copy — pmc has no copy of 10.9999/landing.1
+  arxiv: no copy — arxiv needs an arXiv id
+  landing: no copy — landing has no copy of 10.9999/landing.1
+  pmc-text: no copy — pmc-text has no copy of 10.9999/landing.1
+budget: lookups 1 searches 0
+
+## landing: both indexes off
+chain: archive-org, core, pmc, arxiv, landing, pmc-text
+### doi:10.9999/landing.1
+GET https://api.core.ac.uk/v3/search/works/?q=doi:%2210.9999/landing.1%22&limit=1
+  Authorization: Bearer k-host
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:%2210.9999/landing.1%22&resultType=core&format=json&pageSize=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 404
+GET https://api.datacite.org/dois/10.9999/landing.1
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://repo-d.example.org/item/1
+  User-Agent: histmersion/0.1
+  -> 404
+no copy: no legal open-access PDF found
+  archive-org: no copy — archive-org needs an archive.org identifier
+  core: no copy — core has no copy of 10.9999/landing.1
+  pmc: no copy — pmc has no copy of 10.9999/landing.1
+  arxiv: no copy — arxiv needs an arXiv id
+  landing: no copy — landing has no copy of 10.9999/landing.1
+  pmc-text: no copy — pmc-text has no copy of 10.9999/landing.1
+### doi:10.5281/zenodo.3695551
+GET https://api.core.ac.uk/v3/search/works/?q=doi:%2210.5281/zenodo.3695551%22&limit=1
+  Authorization: Bearer k-host
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:%2210.5281/zenodo.3695551%22&resultType=core&format=json&pageSize=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 404
+GET https://zenodo.org/api/records/3695551
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.datacite.org/dois/10.5281/zenodo.3695551
+  User-Agent: histmersion/0.1
+  -> 404
+no copy: no legal open-access PDF found
+  archive-org: no copy — archive-org needs an archive.org identifier
+  core: no copy — core has no copy of 10.5281/zenodo.3695551
+  pmc: no copy — pmc has no copy of 10.5281/zenodo.3695551
+  arxiv: no copy — arxiv needs an arXiv id
+  landing: no copy — landing has no copy of 10.5281/zenodo.3695551
+  pmc-text: no copy — pmc-text has no copy of 10.5281/zenodo.3695551
+budget: lookups 2 searches 0
+
+## landing: no contact anywhere
+chain: archive-org, unpaywall, core, openalex, pmc, arxiv, landing, pmc-text
+### doi:10.9999/landing.1
+GET https://api.core.ac.uk/v3/search/works/?q=doi:%2210.9999/landing.1%22&limit=1
+  Authorization: Bearer k-host
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.openalex.org/works/https://doi.org/10.9999/landing.1?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:%2210.9999/landing.1%22&resultType=core&format=json&pageSize=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 404
+GET https://repo-o.example.org/item/1
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.datacite.org/dois/10.9999/landing.1
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://repo-d.example.org/item/1
+  User-Agent: histmersion/0.1
+  -> 404
+no copy: no legal open-access PDF found
+  archive-org: no copy — archive-org needs an archive.org identifier
+  unpaywall: no copy — unpaywall has no copy of 10.9999/landing.1
+  core: no copy — core has no copy of 10.9999/landing.1
+  openalex: no copy — openalex has no copy of 10.9999/landing.1
+  pmc: no copy — pmc has no copy of 10.9999/landing.1
+  arxiv: no copy — arxiv needs an arXiv id
+  landing: no copy — landing has no copy of 10.9999/landing.1
+  pmc-text: no copy — pmc-text has no copy of 10.9999/landing.1
+budget: lookups 1 searches 0
+
+## landing: oa-index's former settings
+chain: archive-org, unpaywall, core, openalex, pmc, arxiv, landing, pmc-text
+### doi:10.9999/landing.1
+GET https://api.unpaywall.org/v2/10.9999/landing.1?email=legacy@example.org
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://api.core.ac.uk/v3/search/works/?q=doi:%2210.9999/landing.1%22&limit=1
+  Authorization: Bearer k-host
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.openalex.org/works/https://doi.org/10.9999/landing.1?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=host@example.org
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:%2210.9999/landing.1%22&resultType=core&format=json&pageSize=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 404
+GET https://repo-u.example.org/item/1
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://repo-o.example.org/item/1
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.datacite.org/dois/10.9999/landing.1
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://repo-d.example.org/item/1
+  User-Agent: histmersion/0.1
+  -> 404
+no copy: no legal open-access PDF found
+  archive-org: no copy — archive-org needs an archive.org identifier
+  unpaywall: no copy — unpaywall has no copy of 10.9999/landing.1
+  core: no copy — core has no copy of 10.9999/landing.1
+  openalex: no copy — openalex has no copy of 10.9999/landing.1
+  pmc: no copy — pmc has no copy of 10.9999/landing.1
+  arxiv: no copy — arxiv needs an arXiv id
+  landing: no copy — landing has no copy of 10.9999/landing.1
+  pmc-text: no copy — pmc-text has no copy of 10.9999/landing.1
+budget: lookups 1 searches 0
+
+## landing: Zenodo by its API
+chain: archive-org, unpaywall, core, openalex, pmc, arxiv, landing, pmc-text
+### doi:10.5281/zenodo.3695550
+GET https://api.unpaywall.org/v2/10.5281/zenodo.3695550?email=host@example.org
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.core.ac.uk/v3/search/works/?q=doi:%2210.5281/zenodo.3695550%22&limit=1
+  Authorization: Bearer k-host
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.openalex.org/works/https://doi.org/10.5281/zenodo.3695550?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=host@example.org
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://zenodo.org/record/3695551
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:%2210.5281/zenodo.3695550%22&resultType=core&format=json&pageSize=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 404
+GET https://zenodo.org/api/records/3695550
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://zenodo.org/api/records/3695551
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://zenodo.org/api/records/3695551/files/Oreshko%20Ahhiyawa-Danuna-offprint.pdf/content
+  User-Agent: histmersion/0.1
+  -> 200
+found by landing: zenodo pdf https://zenodo.org/api/records/3695551/files/Oreshko%20Ahhiyawa-Danuna-offprint.pdf/content 4105 bytes
+budget: lookups 1 searches 0
+
+## landing: repositories and an open-access publisher
+chain: archive-org, unpaywall, core, openalex, pmc, arxiv, landing, pmc-text
+### doi:10.17863/CAM.11325
+GET https://api.unpaywall.org/v2/10.17863/CAM.11325?email=host@example.org
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.core.ac.uk/v3/search/works/?q=doi:%2210.17863/CAM.11325%22&limit=1
+  Authorization: Bearer k-host
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.openalex.org/works/https://doi.org/10.17863/CAM.11325?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=host@example.org
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://www.repository.cam.ac.uk/handle/1810/265228
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:%2210.17863/CAM.11325%22&resultType=core&format=json&pageSize=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 404
+GET https://www.repository.cam.ac.uk/handle/1810/265228
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://www.repository.cam.ac.uk/bitstreams/635fb0e4-fed6-4dd0-a369-16067170b87f/download
+  User-Agent: histmersion/0.1
+  -> 200
+found by landing: repository pdf https://www.repository.cam.ac.uk/bitstreams/635fb0e4-fed6-4dd0-a369-16067170b87f/download 4105 bytes
+### doi:10.15496/publikation-14969
+GET https://api.unpaywall.org/v2/10.15496/publikation-14969?email=host@example.org
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.core.ac.uk/v3/search/works/?q=doi:%2210.15496/publikation-14969%22&limit=1
+  Authorization: Bearer k-host
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.openalex.org/works/https://doi.org/10.15496/publikation-14969?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=host@example.org
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://doi.org/10.15496/publikation-14969
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:%2210.15496/publikation-14969%22&resultType=core&format=json&pageSize=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 404
+GET https://api.datacite.org/dois/10.15496/publikation-14969
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://publikationen.uni-tuebingen.de/xmlui/handle/10900/73561
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://publikationen.uni-tuebingen.de/xmlui/bitstream/10900/73561/1/StTrMonograph5_Becks_Blum.pdf
+  User-Agent: histmersion/0.1
+  -> 404
+no copy: no legal open-access PDF found
+  archive-org: no copy — archive-org needs an archive.org identifier
+  unpaywall: no copy — unpaywall has no copy of 10.15496/publikation-14969
+  core: no copy — core has no copy of 10.15496/publikation-14969
+  openalex: no copy — openalex has no copy of 10.15496/publikation-14969
+  pmc: no copy — pmc has no copy of 10.15496/publikation-14969
+  arxiv: no copy — arxiv needs an arXiv id
+  landing: no copy — landing has no copy of 10.15496/publikation-14969
+  pmc-text: no copy — pmc-text has no copy of 10.15496/publikation-14969
+### doi:10.12688/openreseurope.20351.3
+GET https://api.unpaywall.org/v2/10.12688/openreseurope.20351.3?email=host@example.org
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.core.ac.uk/v3/search/works/?q=doi:%2210.12688/openreseurope.20351.3%22&limit=1
+  Authorization: Bearer k-host
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.openalex.org/works/https://doi.org/10.12688/openreseurope.20351.3?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=host@example.org
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://doi.org/10.12688/openreseurope.20351.3
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:%2210.12688/openreseurope.20351.3%22&resultType=core&format=json&pageSize=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 404
+GET https://api.datacite.org/dois/10.12688/openreseurope.20351.3
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://doi.org/api/handles/10.12688/openreseurope.20351.3?type=URL
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://ore.eu/ore/article/view/1056/version/1810
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://ore.eu/ore/article/download/1056/3617
+  User-Agent: histmersion/0.1
+  -> 200
+found by landing: publisher pdf https://ore.eu/ore/article/download/1056/3617 4105 bytes
+budget: lookups 3 searches 0
+
+## landing: acquire.landing.max-pages = 1
+chain: archive-org, unpaywall, core, openalex, pmc, arxiv, landing, pmc-text
+### doi:10.9999/landing.1
+GET https://api.unpaywall.org/v2/10.9999/landing.1?email=host@example.org
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://api.core.ac.uk/v3/search/works/?q=doi:%2210.9999/landing.1%22&limit=1
+  Authorization: Bearer k-host
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.openalex.org/works/https://doi.org/10.9999/landing.1?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=host@example.org
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:%2210.9999/landing.1%22&resultType=core&format=json&pageSize=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 404
+GET https://repo-u.example.org/item/1
+  User-Agent: histmersion/0.1
+  -> 404
+no copy: no legal open-access PDF found
+  archive-org: no copy — archive-org needs an archive.org identifier
+  unpaywall: no copy — unpaywall has no copy of 10.9999/landing.1
+  core: no copy — core has no copy of 10.9999/landing.1
+  openalex: no copy — openalex has no copy of 10.9999/landing.1
+  pmc: no copy — pmc has no copy of 10.9999/landing.1
+  arxiv: no copy — arxiv needs an arXiv id
+  landing: no copy — landing has no copy of 10.9999/landing.1
+  pmc-text: no copy — pmc-text has no copy of 10.9999/landing.1
+budget: lookups 1 searches 0
+
+## core: oa-core's api-key as a secret reference keys the lookup and the search
+chain: archive-org, unpaywall, core, openalex, pmc, arxiv, landing, pmc-text
+### doi:10.1/core
+GET https://api.unpaywall.org/v2/10.1/core?email=host@example.org
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.core.ac.uk/v3/search/works/?q=doi:%2210.1/core%22&limit=1
+  Authorization: Bearer k-plugin
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://core.example.org/core.pdf
+  User-Agent: histmersion/0.1
+  -> 200
+found by core: core pdf https://core.example.org/core.pdf 4105 bytes
+### core index search
+GET https://api.core.ac.uk/v3/search/works/?q=(bronze+age)+AND+yearPublished%3E%3D2026&limit=5
+  Authorization: Bearer k-plugin
+  User-Agent: histmersion/0.1
+  -> 200
+core index: 0 hit(s)
+budget: lookups 1 searches 1
+
+## core: the plain acquire.core.api-key keys both
+chain: archive-org, unpaywall, core, openalex, pmc, arxiv, landing, pmc-text
+### doi:10.1/core
+GET https://api.unpaywall.org/v2/10.1/core?email=host@example.org
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.core.ac.uk/v3/search/works/?q=doi:%2210.1/core%22&limit=1
+  Authorization: Bearer k-host
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://core.example.org/core.pdf
+  User-Agent: histmersion/0.1
+  -> 200
+found by core: core pdf https://core.example.org/core.pdf 4105 bytes
+### core index search
+GET https://api.core.ac.uk/v3/search/works/?q=(bronze+age)+AND+yearPublished%3E%3D2026&limit=5
+  Authorization: Bearer k-host
+  User-Agent: histmersion/0.1
+  -> 200
+core index: 0 hit(s)
+budget: lookups 1 searches 1
+
+## core: oa-core off, the plain key keeps the search
+chain: archive-org, unpaywall, openalex, pmc, arxiv, landing, pmc-text
+### doi:10.1/core
+GET https://api.unpaywall.org/v2/10.1/core?email=host@example.org
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.openalex.org/works/https://doi.org/10.1/core?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=host@example.org
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:%2210.1/core%22&resultType=core&format=json&pageSize=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 404
+GET https://api.datacite.org/dois/10.1/core
+  User-Agent: histmersion/0.1
+  -> 404
+no copy: no legal open-access PDF found
+  archive-org: no copy — archive-org needs an archive.org identifier
+  unpaywall: no copy — unpaywall has no copy of 10.1/core
+  openalex: no copy — openalex has no copy of 10.1/core
+  pmc: no copy — pmc has no copy of 10.1/core
+  arxiv: no copy — arxiv needs an arXiv id
+  landing: no copy — landing has no copy of 10.1/core
+  pmc-text: no copy — pmc-text has no copy of 10.1/core
+### core index search
+GET https://api.core.ac.uk/v3/search/works/?q=(bronze+age)+AND+yearPublished%3E%3D2026&limit=5
+  Authorization: Bearer k-host
+  User-Agent: histmersion/0.1
+  -> 200
+core index: 0 hit(s)
+budget: lookups 0 searches 1
+
+## core: no key at all
+chain: archive-org, unpaywall, core, openalex, pmc, arxiv, landing, pmc-text
+### doi:10.1/core
+GET https://api.unpaywall.org/v2/10.1/core?email=host@example.org
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.openalex.org/works/https://doi.org/10.1/core?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=host@example.org
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:%2210.1/core%22&resultType=core&format=json&pageSize=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 404
+GET https://api.datacite.org/dois/10.1/core
+  User-Agent: histmersion/0.1
+  -> 404
+no copy: no legal open-access PDF found
+  archive-org: no copy — archive-org needs an archive.org identifier
+  unpaywall: no copy — unpaywall has no copy of 10.1/core
+  core: no copy — core needs CORE's API key (plugins.oa-core.api-key or acquire.core.api-key)
+  openalex: no copy — openalex has no copy of 10.1/core
+  pmc: no copy — pmc has no copy of 10.1/core
+  arxiv: no copy — arxiv needs an arXiv id
+  landing: no copy — landing has no copy of 10.1/core
+  pmc-text: no copy — pmc-text has no copy of 10.1/core
+### core index search
+core index: none
+budget: lookups 0 searches 0
+
+## a reordered chain and acquire.user-agent
+chain: openalex, arxiv, archive-org, core, landing, unpaywall, pmc, pmc-text
+### doi:10.1/oa
+GET https://api.openalex.org/works/https://doi.org/10.1/oa?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=host@example.org
+  User-Agent: zq-agent/1
+  -> 200
+GET https://oa.example.org/oa.pdf
+  User-Agent: zq-agent/1
+  -> 200
+found by openalex: openalex pdf https://oa.example.org/oa.pdf 4105 bytes
+budget: lookups 0 searches 0
+
+## arxiv, pmc and archive-org switched off
+chain: unpaywall, core, openalex, landing
+### arxiv:2101.00001
+no copy: no legal open-access PDF found
+  unpaywall: no copy — unpaywall needs a DOI
+  core: no copy — core needs a DOI
+  openalex: no copy — openalex needs a DOI
+  landing: no copy — landing needs a DOI
+### doi:10.1038/nature25778
+GET https://api.unpaywall.org/v2/10.1038/nature25778?email=host@example.org
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.core.ac.uk/v3/search/works/?q=doi:%2210.1038/nature25778%22&limit=1
+  Authorization: Bearer k-host
+  User-Agent: histmersion/0.1
+  -> 200
+GET https://api.openalex.org/works/https://doi.org/10.1038/nature25778?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=host@example.org
+  User-Agent: histmersion/0.1
+  -> 404
+GET https://api.datacite.org/dois/10.1038/nature25778
+  User-Agent: histmersion/0.1
+  -> 404
+no copy: no legal open-access PDF found
+  unpaywall: no copy — unpaywall has no copy of 10.1038/nature25778
+  core: no copy — core has no copy of 10.1038/nature25778
+  openalex: no copy — openalex has no copy of 10.1038/nature25778
+  landing: no copy — landing has no copy of 10.1038/nature25778
+budget: lookups 1 searches 0
