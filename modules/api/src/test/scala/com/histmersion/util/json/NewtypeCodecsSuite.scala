@@ -53,6 +53,14 @@ class NewtypeCodecsSuite extends munit.FunSuite:
     roundTrip(Latitude(41.9), 41.9)
     roundTrip(Longitude(-12.5), -12.5)
 
+  test("titles, authors and paging are their base values on the wire"):
+    roundTrip(Title("The Sea Peoples"), "The Sea Peoples")
+    roundTrip(AuthorName("Kristiansen, K."), "Kristiansen, K.")
+    roundTrip(PageSize(200), 200)
+    roundTrip(Offset.Start, 0)
+    assert(decode[PageSize]("0").isLeft)
+    assert(decode[Offset]("-1").isLeft)
+
   test("a value its constraint refuses does not decode"):
     assert(decode[Slug]("\"Sea Peoples\"").isLeft)
     assert(decode[Slug](Json.fromString("a" * 122).noSpaces).isLeft)
