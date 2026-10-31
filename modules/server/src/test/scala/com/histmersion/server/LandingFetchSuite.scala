@@ -36,8 +36,11 @@ class LandingFetchSuite extends munit.FunSuite:
 
   private def openalexOf(c: AcquireConfig, doi: String) = s"${c.openalex.url}/works/https://doi.org/$doi"
 
-  private def fetch(c: AcquireConfig, http: Http, doi: String) =
-    OaFetch(c, http).fetch(Some(doi), None)
+  private def fetch(c: AcquireConfig, http: Http, doi: String, settings: String = "") =
+    OaFetch(loaded(settings), http).fetch(Some(doi), None)
+
+  private def loaded(text: String): com.histmersion.config.LoadedConfig =
+    AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e), identity)
 
   private def fail2(http: FakeUpstream)(e: String) = fail(e + "\n" + http.asked.mkString("\n"))
 
@@ -237,12 +240,12 @@ class LandingFetchSuite extends munit.FunSuite:
       case u if u.startsWith(openalexOf(c, doi))        => bytes(s"""{"locations":[${locs.mkString(",")}]}""")
       case u if u.startsWith("https://eprints.example") => bytes("<html><head></head></html>")
     }
-    assert(fetch(c.copy(landing = c.landing.copy(maxPages = ItemCount(3))), http, doi).isLeft)
+    assert(fetch(c, http, doi, "histmersion.acquire.landing.max-pages = 3").isLeft)
     assertEquals(http.asked.count(_.startsWith("https://eprints.example")), 3)
     val off = FakeUpstream {
       case u if u.startsWith(openalexOf(c, doi)) => bytes(s"""{"locations":[${locs.mkString(",")}]}""")
     }
-    assert(fetch(c.copy(landing = c.landing.copy(enabled = false)), off, doi).isLeft)
+    assert(fetch(c, off, doi, "histmersion.acquire.landing.enabled = false").isLeft)
     assert(
       !off.asked.exists(u => u.startsWith("https://eprints.example") || u.startsWith(c.datacite.url)),
       off.asked.mkString("\n")

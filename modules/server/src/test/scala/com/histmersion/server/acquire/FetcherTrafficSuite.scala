@@ -74,7 +74,8 @@ class FetcherTrafficSuite extends munit.FunSuite:
     val wire = Wire(routes(cfg))
     val core = budget()
     val g: Generation = Plugins.load(l, core = core, transport = _ => wire)
-    val (chain, _) = FetchChain.of(g.registries.sourceFetchers, cfg.chainIds, cfg.allowUnauthorised)
+    val (chain, _) =
+      FetchChain.of(g.registries.sourceFetchers, cfg.chainIds, cfg.allowUnauthorised, plugins = g.registered)
     val sb = StringBuilder(s"## $name\n")
     sb ++= s"chain: ${chain.plan.map(_._1).mkString(", ")}\n"
     works.foreach { w =>

@@ -12,7 +12,10 @@ class SpiAdditionsSuite extends munit.FunSuite:
 
   test("PluginHttp.fetch from a host that has only bodies: status 200, no headers, or the same Left"):
     val r = Bodies.fetch("https://x.example/a").fold(e => fail(e), identity)
-    assertEquals((r.status, r.headers, String(r.body, "UTF-8")), (200, Map.empty[String, String], "body of https://x.example/a"))
+    assertEquals(
+      (r.status, r.headers, String(r.body, "UTF-8")),
+      (200, Map.empty[String, String], "body of https://x.example/a")
+    )
     assertEquals(Bodies.fetch("https://x.example/missing").map(_.status), Left("https://x.example/missing: HTTP 404"))
 
   test("a response's header is found in any case"):

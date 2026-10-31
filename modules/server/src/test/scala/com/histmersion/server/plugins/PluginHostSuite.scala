@@ -1,6 +1,6 @@
 package com.histmersion.server.plugins
 
-import com.histmersion.pluginhost.{Generation, HostServices, PluginHost}
+import com.histmersion.pluginhost.{Generation, HostServices, PluginHost, ReservedNames}
 
 import com.histmersion.api.{PluginSetting, PluginState, PluginStatus}
 import com.histmersion.plugin.*
@@ -561,11 +561,16 @@ class PluginHostSuite extends munit.FunSuite:
 
   // ── the real thing: the built-in vaults on the server's class path ──────────────────────────
 
+  /** The vault plugins among the first-party ones on the server's class path. */
+  private def vaults(found: List[Plugin]): List[Plugin] =
+    found.filter(p => Set("1password", "bitwarden", "keepassxc")(p.info.id))
+
   test("discovery finds the built-in vault plugins; by default all are disabled and the report is ok"):
     val (found, errs) = PluginHost.discover(getClass.getClassLoader)
     assertEquals(errs, Nil)
-    assertEquals(found.map(_.info.id).sorted, List("1password", "bitwarden", "keepassxc"))
-    val (g, _) = build(found, "")
+    assertEquals(vaults(found).map(_.info.id).sorted, List("1password", "bitwarden", "keepassxc"))
+    assert(found.map(_.info.id).toSet.subsetOf(ReservedNames.firstPartyPlugins), found.map(_.info.id).toString)
+    val (g, _) = build(vaults(found), "")
     assertEquals(
       g.report.plugins.map(p => p.id -> p.state),
       List("1password" -> "disabled", "bitwarden" -> "disabled", "keepassxc" -> "disabled")
@@ -600,7 +605,7 @@ class PluginHostSuite extends munit.FunSuite:
     val (found, _) = PluginHost.discover(getClass.getClassLoader)
     val e = env("PATH" -> d.toString, "KP_PASSWORD" -> "kp-master")
     val (g, logs) = build(
-      found,
+      vaults(found),
       s"""histmersion.plugins {
          |  keepassxc { enabled = true, database = "$db", password = "env:KP_PASSWORD" }
          |  bitwarden { enabled = true, session = "keepassxc:Histmersion/bw#password" }

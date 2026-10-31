@@ -241,7 +241,12 @@ object Composition:
       OpenAlexDiscovery(
         com.histmersion.upstreams.OpenAlexCrossref(cfg.upstreamSettings, HttpPlugin(http), HostLog.scribe.plugin)
       )
-    val (chain, notes) = FetchChain.of(plugins.registries.sourceFetchers, cfg.chainIds, cfg.allowUnauthorised)
+    val (chain, notes) = FetchChain.of(
+      plugins.registries.sourceFetchers,
+      cfg.chainIds,
+      cfg.allowUnauthorised,
+      plugins = plugins.registered
+    )
     notes.foreach(n => scribe.info(n))
     scribe.info(chain.plan match
       case Nil  => "acquire: no source fetcher is registered — every fetch is a miss"

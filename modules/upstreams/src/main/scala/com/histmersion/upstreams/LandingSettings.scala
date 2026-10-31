@@ -3,8 +3,8 @@ package com.histmersion.upstreams
 import com.histmersion.plugin.PluginConfig.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
-/** `histmersion.acquire.landing`: whether a fetch resolves repository landing pages, how many it reads per work, and the
-  * host and platform lists of [[RepositoryLanding.Rules]] (each comma-separated).
+/** `histmersion.acquire.landing`: whether a fetch resolves repository landing pages, how many it reads per work, and
+  * the host and platform lists of [[RepositoryLanding.Rules]] (each comma-separated).
   */
 final case class LandingSettings(
     enabled: Boolean,

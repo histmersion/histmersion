@@ -61,13 +61,17 @@ class ProviderPluginsSuite extends munit.FunSuite:
   ):
     val g = Plugins.offline
     assert(g.report.ok, g.report.toString)
+    val vaults = Set("1password", "bitwarden", "keepassxc")
     assertEquals(
-      g.report.plugins.map(_.id).toSet,
+      g.report.plugins.map(_.id).toSet -- vaults,
       BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds
     )
     val keyed = BuiltinMedia.keyed.map(_.plugin).toSet
     assertEquals(keyed, Set("media-smithsonian", "media-europeana"))
-    assert(g.report.plugins.filterNot(p => keyed(p.id)).forall(_.state == "registered"), g.report.toString)
+    assert(
+      g.report.plugins.filterNot(p => keyed(p.id) || vaults(p.id)).forall(_.state == "registered"),
+      g.report.toString
+    )
     assert(
       g.report.plugins.filter(p => keyed(p.id)).forall(_.state == "disabled"),
       "a key of the user's own: off by default"
@@ -82,13 +86,16 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assert(g.registries.sourceFetchers.isEmpty, "offline: no fetcher")
 
   test("the full built-in set: the fetchers, the collections and the catalogues; no plugin needs a setting"):
-    val all = Plugins.builtins(com.histmersion.config.AppConfig.load(), () => fail("no HTTP at registration"))
-    val g = build(all)
+    val loaded = com.histmersion.config.AppConfig
+      .loadWithUserText(ConfigFactory.empty, "")
+      .fold(e => fail(e), identity)
+    val g = Plugins.load(loaded, transport = _ => fail("no HTTP at registration"))
     assert(g.report.ok, g.report.toString)
     assertEquals(
-      g.report.plugins.size,
+      g.report.plugins.map(_.id).filterNot(Set("1password", "bitwarden", "keepassxc")).size,
       7 + 10 + 3 + 6
-    ) // fetchers (four open-access indexes, D4), collections, catalogues, AI providers
+    ) // fetchers (four open-access indexes, D4), collections, catalogues, AI providers; the vaults besides
+    assert(!g.report.plugins.exists(_.state == "failed"), g.report.toString)
 
   test("a built-in switched off is out of its registry; the import names the switch"):
     val g = build(Plugins.providers, "histmersion.plugins { media-met.enabled = false, events-noaa.enabled = false }")

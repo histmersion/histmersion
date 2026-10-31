@@ -1,12 +1,11 @@
-package com.histmersion.server.acquire.fetchers
+package com.histmersion.plugins.fetchers
 
-import com.histmersion.upstreams.{AcquireParse, ArchiveOrg}
 import com.histmersion.plugin.{Access, Fetch, FetchContext, SourceFetcher, WorkKey}
+import com.histmersion.upstreams.{AcquireParse, ArchiveOrg}
 
 /** The `archive-org` plugin's fetcher: a PUBLIC archive.org item's file, by its identifier — the format the caller
   * prefers (`WorkKey.format`), else an EPUB, a text PDF, a PDF. A lending-only (access-restricted) item is refused,
-  * never worked around: it is borrowed on archive.org, not downloaded here (no DRM circumvention,
-  * docs/research-plugins.md §11).
+  * never worked around: it is borrowed on archive.org, not downloaded here (no DRM circumvention).
   */
 final class ArchiveOrgFetcher(client: () => ArchiveOrg) extends SourceFetcher:
   val access: Access = Access.Open

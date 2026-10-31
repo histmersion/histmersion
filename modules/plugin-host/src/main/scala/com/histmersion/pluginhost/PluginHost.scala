@@ -34,6 +34,9 @@ object PluginHost:
 
   val Root = "histmersion.plugins"
 
+  /** The SPI generation this host speaks: what a plugin the host supplies itself is built against. */
+  val SpiGeneration: Int = Spi.Version
+
   /** Keys of `histmersion.plugins` that are the host's, not a plugin's block. */
   val OrderKey = "order"
   private val Reserved = Set(OrderKey)

@@ -264,16 +264,13 @@ object RelinkPlugins:
     )
     (lines, idProblems ++ dups)
 
-  /** The ids the binary itself has: the plugins on the kit's class path and the host's built-ins. */
+  /** The ids the binary itself has: the plugins on the kit's class path (the first-party ones among them) and the ones
+    * the host supplies itself.
+    */
   def hostIds(loader: ClassLoader): Map[String, String] =
     val discovered = PluginHost.discover(loader)._1.map(_.info.id)
-    val builtins = Try(
-      Plugins
-        .builtins(AppConfig.load(ConfigFactory.empty("plugin-tool")), () => sys.error("no HTTP here"))
-        .map(_.info.id)
-    )
-      .getOrElse(Nil)
-    (discovered ++ builtins).map(_ -> "this Histmersion (a first-party plugin)").toMap ++
+    val supplied = Try(Plugins.providers.map(_.info.id)).getOrElse(Nil)
+    (discovered ++ supplied).map(_ -> "this Histmersion (a first-party plugin)").toMap ++
       LegacyPlugins.All.map(s =>
         s.id -> s"this Histmersion (a former first-party plugin, now ${s.into.mkString(", ")})"
       )
