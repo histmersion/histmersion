@@ -535,7 +535,8 @@ object EventRepo:
     transact(ds)(renameIn(oldId.trim, newId.trim))
 
   /** The id an OLD id was renamed to — `None` when it is a live id, or nothing. */
-  def renamedTo(ds: DataSource, id: String): Option[String] = AliasRepo.renamedTo(ds, AliasKind.Event, id)
+  def renamedTo(ds: DataSource, id: String): Option[String] =
+    com.histmersion.util.identity.AliasTablesAdapter.EventAliases.renamedTo(ds, id)
 
   def delete(ds: DataSource, id: String): Boolean =
     transact(ds):

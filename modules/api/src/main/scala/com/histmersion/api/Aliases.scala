@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.util.identity.AliasKind
+
 object Aliases:
 
   val Rule: String =
@@ -7,11 +9,13 @@ object Aliases:
       "reference) goes to the record under its new one, and the answer names the new one."
 
   def rule(k: AliasKind): String =
-    Rule.replaceFirst("The old one", s"The old ${k.idWord}").replace("new one", s"new ${k.idWord}")
+    Rule.replaceFirst("The old one", s"The old ${k.idWord.value}").replace("new one", s"new ${k.idWord.value}")
 
   def followed(k: AliasKind, asked: String, now: String): Option[String] =
     val a = asked.trim
-    Option.when(a.nonEmpty && a != now)(s"_`$a` is an old ${k.idWord} of this ${k.noun} — it went to `$now`._")
+    Option.when(a.nonEmpty && a != now)(
+      s"_`$a` is an old ${k.idWord.value} of this ${k.noun.value} — it went to `$now`._"
+    )
 
   def note(k: AliasKind, asked: String, now: String)(md: String): String =
     followed(k, asked, now).fold(md)(n => s"$n\n\n$md")
