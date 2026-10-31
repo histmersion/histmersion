@@ -2008,6 +2008,6 @@ tracing-agent run: every new path is a file or process operation, none reflectiv
 `--self-check`; `smoke.sh` (first run, settings, reload, OCR); the base map's fetch and tiles; the settings page with a
 symlinked file; `histmersion config set` natively; a relink.
 
-**Tests.** After `sbt clean`, `just test-quick` with every module named, on a throwaway database: 4 902 tests, none
+**Tests.** After `sbt clean`, `just test-quick` with every module named, on a throwaway database: 4 901 tests, none
 failed (2 skipped, 1 ignored). The DB-gated oracle and the suites of the moved areas ran uncached.
 
