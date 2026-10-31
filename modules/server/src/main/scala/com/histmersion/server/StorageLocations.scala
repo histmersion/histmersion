@@ -35,6 +35,8 @@ object StorageLocations:
       case Location.Plugins           => dataDir.map(_.resolve("plugins"))
       case Location.RelinkKit         =>
         Option(cfg.runtime.home).map(_.trim).filter(_.nonEmpty).map(h => Path.of(h).resolve("kit"))
+      case Location.Install    => Option(cfg.runtime.home).map(_.trim).filter(_.nonEmpty).map(Path.of(_))
+      case Location.Logs       => dataDir.map(_.resolve("logs"))
       case Location.UserConfig =>
         loaded.file.path.orElse(userPaths.configFile).flatMap(p => Option(p.toAbsolutePath.getParent))
       case Location.Scratch => Some(temp)

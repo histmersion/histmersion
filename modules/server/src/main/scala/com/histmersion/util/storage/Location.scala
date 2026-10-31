@@ -32,6 +32,12 @@ enum Location:
   /** The install's relink kit (`<install>/kit`). */
   case RelinkKit
 
+  /** The bundle's install: its binaries, PostgreSQL and the converter (`runtime.home`). */
+  case Install
+
+  /** The bundle's logs (`<data dir>/logs`). */
+  case Logs
+
   /** The directory of the user's settings file. */
   case UserConfig
 

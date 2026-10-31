@@ -6,6 +6,9 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
+import com.histmersion.util.process.{Processes, ProcessLaunch, ProcessOutput, RunningProcess}
+import com.histmersion.util.storage.{Location, Storage, StoreKey}
+
 import java.nio.file.{Files, Path}
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
@@ -121,10 +124,10 @@ object Supervisor:
     scala.util
       .Try {
         if osName.toLowerCase.contains("mac") then
-          val p = ProcessBuilder("/usr/sbin/sysctl", "-n", "hw.memsize").redirectErrorStream(true).start()
-          val out = scala.io.Source.fromInputStream(p.getInputStream).mkString.trim
-          p.waitFor()
-          out.toLongOption
+          processes
+            .run(ProcessLaunch(List("/usr/sbin/sysctl", "-n", "hw.memsize")))
+            .toOption
+            .flatMap(_.lines.mkString("\n").trim.toLongOption)
         else
           Files
             .readAllLines(Path.of("/proc/meminfo"))
@@ -202,7 +205,8 @@ object Supervisor:
   // ── effects ──────────────────────────────────────────────────────────────────────────────────
 
   private val stopping = AtomicBoolean(false)
-  private val converter = AtomicReference[Option[Process]](None)
+  private val converter = AtomicReference[Option[RunningProcess]](None)
+  private val processes: Processes = Processes()
 
   /** Start (or adopt) the bundled Postgres and the converter, register their shutdown, and return the configuration
     * that points at them. Throws with an actionable message when the bundle is incomplete — the server cannot run
@@ -295,16 +299,18 @@ object Supervisor:
     val t = Thread.ofPlatform().daemon(true).name("histmersion-converter").unstarted { () =>
       var backoffMs = 1000L
       while !stopping.get() do
-        val pb = ProcessBuilder(converterCmd(l, port).asJava)
-          .directory(l.converterDir.toFile)
-          .redirectErrorStream(true)
-          .redirectOutput(ProcessBuilder.Redirect.appendTo(l.logs.resolve("converter.log").toFile))
-        val env = pb.environment()
-        env.put("DOCLING_ARTIFACTS_PATH", l.models.toString)
-        env.put("HF_HUB_OFFLINE", "1")
-        env.put("HISTMERSION_CONVERTER_PORT", port.toString)
+        val launch = ProcessLaunch(
+          converterCmd(l, port),
+          workingStore = Some(Storage.at(Location.Install, l.converterDir)),
+          environment = Map(
+            "DOCLING_ARTIFACTS_PATH" -> l.models.toString,
+            "HF_HUB_OFFLINE" -> "1",
+            "HISTMERSION_CONVERTER_PORT" -> port.toString
+          ),
+          output = ProcessOutput.AppendTo(Storage.at(Location.Logs, l.logs), StoreKey("converter.log"))
+        )
         val started = System.nanoTime()
-        val p = pb.start()
+        val p = processes.start(launch).fold(e => throw java.io.IOException(e), identity)
         converter.set(Some(p))
         scribe.info(s"runtime: converter started on 127.0.0.1:$port (pid ${p.pid})")
         val code = p.waitFor()
@@ -330,8 +336,6 @@ object Supervisor:
 
   /** Run a Postgres tool with the bundle's environment; returns (exit code, output lines). */
   private def run(cmd: List[String], l: Layout): (Int, List[String]) =
-    val pb = ProcessBuilder(cmd.asJava).redirectErrorStream(true)
-    pb.environment().put("PROJ_DATA", l.projData.toString)
-    val p = pb.start()
-    val out = scala.io.Source.fromInputStream(p.getInputStream).getLines().toList
-    (p.waitFor(), out)
+    processes
+      .run(ProcessLaunch(cmd, environment = Map("PROJ_DATA" -> l.projData.toString)))
+      .fold(e => throw java.io.IOException(e), r => (r.exitCode, r.lines))

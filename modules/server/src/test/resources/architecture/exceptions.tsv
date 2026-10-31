@@ -420,7 +420,6 @@ filesystem	files:files/PlaceSeed.scala	java.nio.file	1
 filesystem	files:files/PluginKit.scala	File(	1
 filesystem	files:files/SafePath.scala	Paths.get	4
 filesystem	files:files/SafePath.scala	java.nio.file	1
-filesystem	server:server/BackupService.scala	.toFile	1
 filesystem	server:server/BackupService.scala	Files.*	18
 filesystem	server:server/BackupService.scala	Path.of	3
 filesystem	server:server/BackupService.scala	StandardCopyOption	2
@@ -488,9 +487,6 @@ filesystem	server:server/importers/GazetteerLoad.scala	Path.of	3
 filesystem	server:server/importers/GazetteerLoad.scala	StandardCopyOption	3
 filesystem	server:server/importers/GazetteerLoad.scala	java.nio.file	1
 filesystem	server:server/media/MediaHandlers.scala	java.nio.file	1
-process	server:server/BackupService.scala	ProcessBuilder	2
-process	server:server/PgRelocation.scala	ProcessBuilder	2
-process	server:server/Supervisor.scala	ProcessBuilder	4
 process	server:server/agents/AgentDoctor.scala	ProcessBuilder	1
 process	server:server/agents/CliProcess.scala	ProcessBuilder	2
 process	server:server/agents/CodexHome.scala	ProcessBuilder	2

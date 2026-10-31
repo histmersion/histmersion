@@ -1,6 +1,8 @@
 package com.histmersion.server
 
 import java.nio.charset.StandardCharsets.UTF_8
+import com.histmersion.util.process.{Processes, ProcessLaunch, ProcessOutput}
+
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 
@@ -68,11 +70,14 @@ object PgRelocation:
               files += 1
               tooLong += skipped
               if macOS && isMachO(out) then
-                val rc = ProcessBuilder("codesign", "--force", "--sign", "-", p.toString)
-                  .redirectErrorStream(true)
-                  .redirectOutput(ProcessBuilder.Redirect.DISCARD)
-                  .start()
-                  .waitFor()
+                val rc = Processes()
+                  .start(
+                    ProcessLaunch(
+                      List("codesign", "--force", "--sign", "-", p.toString),
+                      output = ProcessOutput.Discarded
+                    )
+                  )
+                  .fold(e => throw java.io.IOException(e), _.waitFor())
                 if rc != 0 then throw IllegalStateException(s"codesign failed on $p (exit $rc)")
                 signed += 1
           }
