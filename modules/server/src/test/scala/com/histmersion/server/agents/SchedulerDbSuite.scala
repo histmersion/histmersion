@@ -23,7 +23,7 @@ import java.time.Instant
   * are scripted and never called (the runs are dispatched, not executed); the acquisition upstream is a fixture.
   * Skipped without HISTMERSION_TEST_DB_URL.
   */
-class SchedulerDbSuite extends com.histmersion.db.DbSuite:
+class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(180, "s")
@@ -53,6 +53,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite:
     )
 
   private lazy val ds = testPool(cfg.db)
+  protected def transcriptDs: javax.sql.DataSource = ds
 
   private def handlers(c: AppConfig = cfg): (AgentsHandlers, Handlers, StubUpstream) =
     val deps = Deps(c, ds)
@@ -167,6 +168,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite:
     assertEquals(ManagerRepo.focusHeldCount(ds), 0)
     assertEquals(item(seedId(g(2)), ProposeArticles, g(2)).status, "pending")
     val st = a.scheduler.status(Some(500))
+    note("scheduler status", AgentSchedulerMarkdown.status(st))
     assertEquals((st.strategy, st.strategyFrom, st.dry), ("goal-first", "config", false))
     assertEquals((st.maxRuns, st.started.size), (3, 3))
     assert(
@@ -184,6 +186,9 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite:
       a.scheduler.why(item(seedId(g(15)), ProposeArticles, g(15)).id.toString).fold(e => fail(e.message), identity)
     assertEquals((w.code, w.position), ("capacity", 1))
     val running = a.scheduler.why(g(20)).fold(e => fail(e.message), identity)
+    note("why waiting", AgentSchedulerMarkdown.why(w))
+    note("why running", AgentSchedulerMarkdown.why(running))
+    note("why unknown", a.scheduler.why("zzfocus-nope").fold(_.message, AgentSchedulerMarkdown.why))
     assertEquals(running.code, AgentScheduler.Code.Running)
     assert(a.scheduler.why("zzfocus-nope").isLeft)
     // the status as Markdown names the strategy and the queue
@@ -211,6 +216,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite:
     )
     assertEquals(next, Set(("review-article", Art), ("propose-articles", g(15)), ("acquisition-sweep", g(15))))
     assertEquals(b.scheduler.status().strategy, "type-balanced")
+    note("scheduler status type-balanced", AgentSchedulerMarkdown.status(b.scheduler.status(Some(500))))
     // back to the config's
     assertEquals(b.scheduler.set(AgentScheduler.SchedulerSet("default")).map(_.strategy), Right("goal-first"))
     assert(b.scheduler.set(AgentScheduler.SchedulerSet("fastest")).isLeft)
@@ -220,6 +226,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite:
     on(a)
     a.autopilot.ensureNow(Instant.now())
     val st = a.scheduler.status()
+    note("dry pass", AgentSchedulerMarkdown.status(st))
     assert(st.dry, st)
     assertEquals(st.started.size, 3)
     assertEquals(runs(), Vector.empty, "a dry pass starts nothing")
@@ -394,21 +401,25 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite:
     val (a, h, up) = handlers(); seed(a, h, up)
     on(a)
     val drained = a.drain.set(Autopilot.DrainSet(on = true, Some("test")))
+    note("drain on, nothing running", AutopilotMarkdown.status(drained))
     assert(drained.drain.exists(_.drained), drained.drain)
     val clock = Clock()
     clock.tick(a)
     assertEquals(runs(), Vector.empty, "nothing starts while draining")
     assert(a.scheduler.status().waiting.forall(_.code == "drain"), a.scheduler.status().waiting.map(_.code).distinct)
+    note("drained: scheduler", AgentSchedulerMarkdown.status(a.scheduler.status(Some(500))))
+    note("drained: autopilot", AutopilotMarkdown.status(a.managing.autopilot))
     assert(AutopilotMarkdown.status(a.managing.autopilot).contains("DRAINED since"))
     assert(QueueRepoLog.has(ds, "autopilot: drained"), "a worklog line")
     // lifted: work starts; drained again while runs are in flight: draining, not drained, nothing new
-    a.drain.set(Autopilot.DrainSet(on = false, Some("test")))
+    note("drain off", AutopilotMarkdown.status(a.drain.set(Autopilot.DrainSet(on = false, Some("test")))))
     clock.tick(a)
     assertEquals(runs().size, 3)
     a.drain.set(Autopilot.DrainSet(on = true, Some("test")))
     clock.tick(a)
     val d = a.managing.autopilot.drain.getOrElse(fail("draining"))
     assertEquals((d.drained, d.inFlight), (false, 3))
+    note("draining, 3 in flight", AutopilotMarkdown.status(a.managing.autopilot))
     assert(AutopilotMarkdown.status(a.managing.autopilot).contains("DRAINING since"))
     // the runs in flight finish (here: cancelled): drained
     runs().foreach(r => a.engine.cancel(r.id))
@@ -417,6 +428,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite:
     assertEquals(runs().count(r => r.status == "queued"), 0, "still nothing new")
     // turning the autopilot on lifts it
     val st = a.managing.setAutopilot(AutopilotSet(on = true, Some("test"))).fold(e => fail(e.message), identity)
+    note("on lifts the drain", AutopilotMarkdown.status(st))
     assert(st.changes.exists(_.contains("drain lifted")) && st.drain.isEmpty, st.changes)
 
   test("stalls: every unfinished goal with no progress, the reason and the action"):
@@ -425,12 +437,14 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite:
     AgentRepo.openSubject(ds, None, ApprovalKind.GoalPlan, g(4), Plan(g(4), "r", Nil, List("q")).asJson.noSpaces)
     Clock().tick(a)
     val r = a.scheduler.stalls(Some(0))
+    note("stalls", StallsMarkdown.report(r))
     assertEquals(r.goals, 20)
     assertEquals(r.stalled.size, 20, "days 0: every goal counts")
     assertEquals(r.stalled.find(_.slug == g(4)).map(_.code), Some(Stalls.Code.Person))
     assert(r.stalled.exists(_.code == Stalls.Code.Queue), r.byReason)
     assertEquals(a.scheduler.stalls(Some(3)).stalled, Nil, "they all started today")
     a.drain.set(Autopilot.DrainSet(on = true))
+    note("stalls while draining", StallsMarkdown.report(a.scheduler.stalls(Some(0))))
     assert(a.scheduler.stalls(Some(0)).stalled.forall(_.code == Stalls.Code.Drain))
 
   test(

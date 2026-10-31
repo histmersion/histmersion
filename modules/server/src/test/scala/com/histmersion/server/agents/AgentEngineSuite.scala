@@ -38,7 +38,7 @@ final class ScriptedClient(val model: ModelRef) extends LlmClient:
   * quotes, gazetteer geocoding, the single patch, budgets, prompt injection, cancellation and restart reconciliation.
   * Skipped without HISTMERSION_TEST_DB_URL.
   */
-class AgentEngineSuite extends com.histmersion.db.DbSuite:
+class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   // a DB suite driving a run pool: never let a hang run for hours (#865)
@@ -64,6 +64,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite:
     )
 
   private lazy val ds = testPool(baseCfg.db)
+  protected def transcriptDs: javax.sql.DataSource = ds
 
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
   private def tool(name: String, args: String) =

@@ -17,7 +17,7 @@ import java.nio.file.Files
   * claude-code:haiku) is asked again the same way — through the real `claude-code` client on a fake `claude`. Skipped
   * without HISTMERSION_TEST_DB_URL.
   */
-class ProbeRetrySuite extends com.histmersion.db.DbSuite:
+class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(60, "s")
@@ -35,6 +35,7 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite:
     )
 
   private lazy val ds = testPool(cfg.db)
+  protected def transcriptDs: javax.sql.DataSource = ds
 
   private def clean(): Unit =
     Migrate.run(ds)

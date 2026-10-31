@@ -22,7 +22,7 @@ import com.histmersion.values.SourceStatus
   * routing of the page buttons. Models are scripted ([[ScriptedClient]]); no provider is called. Skipped without
   * HISTMERSION_TEST_DB_URL.
   */
-class ManagerPhase2Suite extends com.histmersion.db.DbSuite:
+class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(180, "s")
@@ -53,6 +53,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite:
     )
 
   private lazy val ds = testPool(baseCfg.db)
+  protected def transcriptDs: javax.sql.DataSource = ds
 
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
   private def str(s: String) = Json.fromString(s).noSpaces
