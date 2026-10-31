@@ -1,13 +1,14 @@
 package com.histmersion.plugin.testkit
 
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.config.AppConfig
+import com.histmersion.config.{AppConfig, LoadedConfig}
 import com.histmersion.api.PluginState
 import com.histmersion.pluginhost.allowed
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.{
   upstreamSettings,
   FetchChain,
+  FirstPartySettings,
   HostLog,
   HostServices,
   JavaHttpTransport,
@@ -17,6 +18,7 @@ import com.histmersion.pluginhost.{
   PluginMedia,
   PolicyHttp,
   Registries,
+  ReservedNames,
   SpiValues
 }
 import com.histmersion.upstreams.WorkLookup
@@ -132,7 +134,7 @@ final class PluginHarness private (
       allowUnauthorised: Boolean = false
   ): FetchReport =
     val (outcome, logged, asked) = run {
-      val (chain, notes) = FetchChain.of(registries.sourceFetchers, Nil, allowUnauthorised, hostLog)
+      val (chain, notes) = FetchChain.of(registries.sourceFetchers, Nil, allowUnauthorised, hostLog, Set(id))
       notes.foreach(hostLog.info)
       chain.fetchWorkExplained(work, legalOnly)
     }
@@ -418,13 +420,19 @@ object PluginHarness:
       }
 
   /** The server's settings: its defaults and the environment's overrides (or a `histmersion.conf`), with the contact
-    * e-mail left out so that no request of a test carries it.
+    * e-mail left out so that no request of a test carries it — the settings a first-party plugin is supplied from too.
     */
-  private def hostConfig(env: Config, file: Option[Path]): Either[String, AppConfig] =
-    val loaded = file match
-      case None    => scala.util.Try(AppConfig.load(env)).toEither.left.map(_.getMessage)
-      case Some(p) => AppConfig.loadWithUserFile(env, Some(p)).map(_.config)
-    loaded.map(c => c.modify(_.acquire.contactEmail).setTo(""))
+  private def hostConfig(env: Config, file: Option[Path]): Either[String, LoadedConfig] =
+    AppConfig
+      .loadWithUserFile(env, file)
+      .map(l =>
+        l.copy(
+          config = l.config.modify(_.acquire.contactEmail).setTo(""),
+          merged = l.merged.withValue(ContactPath, ConfigValueFactory.fromAnyRef(""))
+        )
+      )
+
+  private val ContactPath = "histmersion.acquire.contact-email"
 
   /** The values of the `env:` and `value:` secret references a config text names. */
   private def referencedValues(text: String, env: Map[String, String]): Set[String] =
@@ -438,17 +446,27 @@ object PluginHarness:
       vaults: Option[Plugin],
       user: Config,
       env: Config,
-      host: AppConfig,
+      loaded: LoadedConfig,
       mode: HttpMode,
       scrub: Scrubber
   ): Either[String, PluginHarness] =
+    val host = loaded.config
     val lines = Lines()
     val wire = Wire(mode, scrub)
     val sleep: Long => Unit = if mode.live then ms => Thread.sleep(ms) else _ => ()
     val acquisition =
       PolicyHttp.acquisition(host, wire.transport(PolicyHttp.acquisitionTransport(host)), sleep, lines.host)
     val services = HostServices(() => acquisition.plugin, env, lines.plugin)
-    val generation = PluginHost.build(plugin :: vaults.toList, user, env, services)
+    // a first-party plugin is supplied the server's own settings it reads, as the server supplies them
+    val supplied = FirstPartySettings.hostView(loaded.merged, user, env, List(plugin))
+    val generation = PluginHost.build(
+      plugin :: vaults.toList,
+      user,
+      env,
+      services,
+      fallback = FirstPartySettings.fallback(_, supplied),
+      firstParty = ReservedNames.firstPartyPlugins
+    )
     val statuses = generation.report.plugins
     val failedVaults = statuses.find(s => s.id == TestVaultsId && s.state != PluginState.Registered.wire)
     statuses.find(_.id == id) match

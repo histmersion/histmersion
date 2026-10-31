@@ -1,23 +1,22 @@
-package com.histmersion.server
+package com.histmersion.server.plugins
 
-import com.histmersion.pluginhost.{FetchChain, Generation, PluginHost}
+import com.histmersion.pluginhost.{FetchChain, Generation}
 
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.plugin.{Fetch, FetchContext, PluginHttp, PluginLog, WorkKey}
 import com.histmersion.server.acquire.*
-import com.histmersion.server.acquire.fetchers.BuiltinFetchers
-import com.histmersion.server.plugins.{LegacyPlugins, Plugins}
 import io.circe.Json
 import org.ekrich.config.{Config, ConfigFactory}
 
 import scala.jdk.CollectionConverters.*
 
-/** Today's acquisition steps as built-in plugins (docs/research-plugins.md §5.3): registered through the plugin host
-  * like any plugin, on by default in today's order, each one switched off by config.
+/** Histmersion's own acquisition plugins, found on the class path and registered through the plugin host like any
+  * plugin, with the host's `histmersion.acquire` settings supplied: on by default in today's order, each one switched
+  * off by config.
   */
-class BuiltinFetchersSuite extends munit.FunSuite:
+class FetcherPluginsSuite extends munit.FunSuite:
 
   private val cfg = AppConfig.load().acquire
 
@@ -27,42 +26,18 @@ class BuiltinFetchersSuite extends munit.FunSuite:
     def text(url: String, headers: Map[String, String]): Either[String, String] = fail(s"asked $url")
     def bytes(url: String, headers: Map[String, String]): Either[String, Array[Byte]] = fail(s"asked $url")
 
-  private def generation(
-      user: String = "",
-      env: Map[String, String] = Map.empty,
-      acquire: AcquireConfig = cfg,
-      http: Http = Offline
-  ): Generation =
-    val plugins =
-      BuiltinFetchers.plugins(acquire, () => http, () => fail("openalex asked"), () => fail("archive asked"))
-    PluginHost.build(
-      plugins,
-      ConfigFactory.parseString(user),
-      ConfigFactory.parseMap(env.asJava),
-      Plugins.services(
-        () => new PluginHttp { def get(u: String, h: Map[String, String]) = Left("offline") },
-        ConfigFactory.parseMap(env.asJava)
-      )
-    )
+  private def loaded(user: String, env: Map[String, String]): LoadedConfig =
+    AppConfig.loadWithUserText(ConfigFactory.parseMap(env.asJava), user).fold(e => fail(e), identity)
 
-  /** As the server builds it: a former plugin's settings (oa-index) mapped first ([[LegacyPlugins]]). */
-  private def migrated(user: String = "", env: Map[String, String] = Map.empty): Generation =
-    val plugins = BuiltinFetchers.plugins(cfg, () => Offline, () => fail("openalex asked"), () => fail("archive asked"))
-    val m = LegacyPlugins.migrate(
-      ConfigFactory.parseString(user),
-      ConfigFactory.parseMap(env.asJava),
-      Plugins.defaultKeys(plugins)
-    )
-    PluginHost.build(
-      plugins,
-      m.user,
-      m.env,
-      Plugins.services(
-        () => new PluginHttp { def get(u: String, h: Map[String, String]) = Left("offline") },
-        ConfigFactory.parseMap(env.asJava)
-      ),
-      m.warnings
-    )
+  /** As the server builds it: discovered, a former plugin's settings (oa-index) mapped first ([[LegacyPlugins]]), the
+    * host's settings supplied.
+    */
+  private def generation(user: String = "", env: Map[String, String] = Map.empty, http: Http = Offline): Generation =
+    Plugins.fetchers(loaded(user, env), () => HttpPlugin(http))
+
+  private def migrated(user: String = "", env: Map[String, String] = Map.empty): Generation = generation(user, env)
+
+  private val HostContact = "histmersion.acquire.contact-email = \"host@example.org\"\n"
 
   private def chain(g: Generation): List[String] =
     FetchChain.of(g.registries.sourceFetchers, cfg.chainIds, cfg.allowUnauthorised)._1.plan.map(_._1)
@@ -91,7 +66,7 @@ class BuiltinFetchersSuite extends munit.FunSuite:
     )
     assertEquals(chain(g), Today)
     assert(g.report.ok, g.report.toString)
-    assertEquals(BuiltinFetchers.OaIndexes, OaPlugins.map(_._1))
+    assertEquals(LegacyPlugins.OaIndex.into, OaPlugins.map(_._1))
 
   test("each open-access index is switched off on its own; the others keep their place in the chain"):
     OaPlugins.foreach { (id, fetcher) =>
@@ -114,7 +89,8 @@ class BuiltinFetchersSuite extends munit.FunSuite:
     def json(url: String, headers: Map[String, String]): Either[String, Json] =
       asked = asked :+ (url -> headers); Right(Json.obj())
     def text(url: String, headers: Map[String, String]): Either[String, String] = Left("no")
-    def bytes(url: String, headers: Map[String, String]): Either[String, Array[Byte]] = Left("no")
+    def bytes(url: String, headers: Map[String, String]): Either[String, Array[Byte]] =
+      asked = asked :+ (url -> headers); Right("{}".getBytes("UTF-8"))
     // CORE is asked once, not retried, through its budget
     override def once(url: String, headers: Map[String, String]) =
       asked = asked :+ (url -> headers);
@@ -130,15 +106,14 @@ class BuiltinFetchersSuite extends munit.FunSuite:
     g.registries.sourceFetchers(fetcher).fetch(WorkKey(doi = Some(com.histmersion.plugin.Doi("10.1/x"))), Ctx)
 
   test("oa-unpaywall asks with its own contact-email, else Histmersion's acquire.contact-email, else not at all"):
-    val host = cfg.copy(contactEmail = "host@example.org")
     val own = Recording()
     fetch(
-      generation("histmersion.plugins.oa-unpaywall.contact-email = \"plugin@example.org\"", acquire = host, http = own),
+      generation(HostContact + "histmersion.plugins.oa-unpaywall.contact-email = \"plugin@example.org\"", http = own),
       "unpaywall"
     )
     assertEquals(own.asked.map(u => emailOf(u._1)), List(Some("plugin@example.org")))
     val fallback = Recording()
-    fetch(generation(acquire = host, http = fallback), "unpaywall")
+    fetch(generation(HostContact, http = fallback), "unpaywall")
     assertEquals(fallback.asked.map(u => emailOf(u._1)), List(Some("host@example.org")))
     val env = Recording()
     fetch(
@@ -165,7 +140,7 @@ class BuiltinFetchersSuite extends munit.FunSuite:
 
   test("oa-core without a key of its own uses acquire.core.api-key; with none, CORE is never asked"):
     val rec = Recording()
-    fetch(generation(acquire = cfg.copy(core = cfg.core.copy(apiKey = ApiKey("k-host"))), http = rec), "core")
+    fetch(generation("histmersion.acquire.core.api-key = \"k-host\"", http = rec), "core")
     assertEquals(rec.asked.flatMap(_._2.get("Authorization")), List("Bearer k-host"))
     val none = Recording()
     assert(fetch(generation(http = none), "core").isInstanceOf[Fetch.Miss])
@@ -254,7 +229,7 @@ class BuiltinFetchersSuite extends munit.FunSuite:
 
   test("reload: a change of an oa-index key rebuilds the four successors, and only them"):
     val g = generation()
-    val carried = Plugins.carried(g, List("histmersion.plugins.oa-index.enabled"), independent = Set.empty)
+    val carried = Plugins.carried(g, List("histmersion.plugins.oa-index.enabled"))
     assertEquals(carried.keySet, Set("archive-org", "pmc", "arxiv"))
 
   test("the shipped default chain names exactly the built-in fetchers, in today's order"):
@@ -289,7 +264,7 @@ class BuiltinFetchersSuite extends munit.FunSuite:
   private val UpPage = "https://repo-u.example.org/item/1" // Unpaywall's repository location
   private val OaPage = "https://repo-o.example.org/item/1" // OpenAlex's
   private val DcPage = "https://repo-d.example.org/item/1" // where DataCite says the DOI resolves
-  private val host = cfg.copy(contactEmail = "host@example.org")
+  private val host = cfg
 
   /** The three indexes answer with one repository location each; every page is a 404, so the chain reads each page it
     * is given and finds no copy — the requests are the whole record.
@@ -318,30 +293,13 @@ class BuiltinFetchersSuite extends munit.FunSuite:
   /** The index steps and the landing step of a generation built over `http`, run in today's order with one memo for the
     * work, as an ingest runs them.
     */
-  private def runIndexes(user: String, http: Indexes, acquire: AcquireConfig = host): Generation =
-    val plugins =
-      BuiltinFetchers.plugins(
-        acquire,
-        () => http,
-        () =>
-          com.histmersion.upstreams.OpenAlexCrossref(
-            com.histmersion.pluginhost.upstreamSettings(acquire),
-            HttpPlugin(http),
-            com.histmersion.pluginhost.HostLog.scribe.plugin
-          ),
-        () => fail("archive asked")
-      )
-    val g = PluginHost.build(
-      plugins,
-      ConfigFactory.parseString(user),
-      ConfigFactory.empty,
-      Plugins.services(
-        () => new PluginHttp { def get(u: String, h: Map[String, String]) = Left("offline") },
-        ConfigFactory.empty
-      )
-    )
+  private def runIndexes(user: String, http: Indexes, hostSettings: String = HostContact): Generation =
+    val g = generation(hostSettings + user, http = http)
     val steps = List("unpaywall", "openalex", "landing").flatMap(id => g.registries.sourceFetchers.get(id).map(id -> _))
-    assertEquals(FetchChain(steps).fetch(Some(LandingDoi), None), Left(FetchChain.NoCopy))
+    assertEquals(
+      FetchChain(steps, registered = g.registered).fetch(Some(LandingDoi), None),
+      Left(FetchChain.NoCopy)
+    )
     g
 
   private def unpaywallAsked(h: Indexes) = h.asked.filter(_.startsWith(s"${host.unpaywall.url}/"))
@@ -386,20 +344,13 @@ class BuiltinFetchersSuite extends munit.FunSuite:
 
   test("landing, both indexes off: a Zenodo DOI still goes to Zenodo's API"):
     val h = Indexes(host)
-    val plugins = BuiltinFetchers.plugins(host, () => h, () => fail("openalex asked"), () => fail("archive asked"))
-    val g = PluginHost.build(
-      plugins,
-      ConfigFactory.parseString(
-        "histmersion.plugins.oa-unpaywall.enabled = false\nhistmersion.plugins.oa-openalex.enabled = false"
-      ),
-      ConfigFactory.empty,
-      Plugins.services(
-        () => new PluginHttp { def get(u: String, hs: Map[String, String]) = Left("offline") },
-        ConfigFactory.empty
-      )
+    val g = generation(
+      HostContact + "histmersion.plugins.oa-unpaywall.enabled = false\nhistmersion.plugins.oa-openalex.enabled = false",
+      http = h
     )
     val got =
-      FetchChain(List("landing" -> g.registries.sourceFetchers("landing"))).fetch(Some("10.5281/zenodo.3695551"), None)
+      FetchChain(List("landing" -> g.registries.sourceFetchers("landing")), registered = g.registered)
+        .fetch(Some("10.5281/zenodo.3695551"), None)
     assertEquals(got, Left(FetchChain.NoCopy))
     assert(h.asked.contains(s"${host.zenodo.url}/api/records/3695551"), h.asked.mkString("\n"))
     assert(!h.asked.exists(u => u.startsWith(s"${host.unpaywall.url}/") || u.startsWith(s"${host.openalex.url}/")))
@@ -410,24 +361,30 @@ class BuiltinFetchersSuite extends munit.FunSuite:
     assertEquals(unpaywallAsked(h).map(emailOf), List(Some("plugin@example.org")))
 
   test("landing with oa-unpaywall on but no contact anywhere: Unpaywall is not asked (it answers 422)"):
-    val noContact = host.copy(contactEmail = "")
-    val h = Indexes(noContact)
-    runIndexes("", h, noContact)
+    val h = Indexes(host)
+    runIndexes("", h, hostSettings = "")
     assertEquals(unpaywallAsked(h), Nil)
     assertEquals(pagesRead(h), List(OaPage, DcPage))
 
-  test("reload: oa-unpaywall, oa-openalex and oa-landing are carried together or rebuilt together"):
+  test("reload: switching an index plugin on or off rebuilds it alone; oa-unpaywall's contact rebuilds oa-landing too"):
     val g = generation()
+    // the landing step asks, fetch by fetch, which index plugins its generation registered
     List("oa-unpaywall", "oa-openalex", "oa-landing").foreach { id =>
-      val carried = Plugins.carried(g, List(s"histmersion.plugins.$id.enabled"), independent = Set.empty)
-      assertEquals(carried.keySet, Set("archive-org", "oa-core", "pmc", "arxiv"), id)
+      val carried = Plugins.carried(g, List(s"histmersion.plugins.$id.enabled"))
+      assertEquals(
+        carried.keySet,
+        Set("archive-org", "oa-unpaywall", "oa-core", "oa-openalex", "oa-landing", "pmc", "arxiv") - id,
+        id
+      )
     }
+    // … but it asks Unpaywall with oa-unpaywall's own contact, which it is supplied at registration
     assertEquals(
-      Plugins.carried(g, List("histmersion.plugins.oa-core.enabled"), independent = Set.empty).keySet,
-      Set("archive-org", "oa-unpaywall", "oa-openalex", "oa-landing", "pmc", "arxiv")
+      Plugins.carried(g, List("histmersion.plugins.oa-unpaywall.contact-email")).keySet,
+      Set("archive-org", "oa-core", "oa-openalex", "pmc", "arxiv")
     )
-    // a reload that changes no plugin carries all three
-    assert(BuiltinFetchers.LandingGroup.subsetOf(Plugins.carried(g, Nil, independent = Set.empty).keySet))
+    // a host key every fetcher reads rebuilds them all; one no fetcher reads, none
+    assertEquals(Plugins.carried(g, List("histmersion.acquire.landing.max-pages")), Map.empty)
+    assertEquals(Plugins.carried(g, Nil).keySet.size, 7)
 
   private object Ctx extends FetchContext:
     def memo[A](key: String)(compute: => A): A = compute

@@ -1,35 +1,44 @@
 package com.histmersion.server.plugins
 
-import com.histmersion.pluginhost.{Generation, HostServices, HttpTransport, PluginHost, PolicyHttp, Registries}
+import com.histmersion.pluginhost.{
+  FirstPartySettings,
+  Generation,
+  HostServices,
+  HttpTransport,
+  PluginHost,
+  PolicyHttp,
+  Registries,
+  ReservedNames
+}
 
 import com.histmersion.config.{AppConfig, HotPlan, LoadedConfig}
-import com.histmersion.api.{PluginState, PluginStatus}
+import com.histmersion.api.{PluginSet, PluginState, PluginStatus}
 import org.ekrich.config.{ConfigFactory, ConfigUtil}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.plugin.{Plugin, PluginHttp}
-import com.histmersion.server.acquire.{CoreBudget, Http, HttpPlugin, SttpHttp}
-import com.histmersion.pluginhost.{upstreamSettings, HostLog}
-import com.histmersion.server.acquire.fetchers.BuiltinFetchers
+import com.histmersion.server.acquire.{CoreBudget, HttpPlugin, SttpHttp}
 import com.histmersion.server.events.BuiltinCatalogues
 import com.histmersion.server.media.BuiltinMedia
 import com.histmersion.server.agents.BuiltinAi
 
-/** The composition root's handle on the plugins: discover the providers on the server's class path, add the host's
-  * built-in ones, and build the generation for a loaded config. Opens nothing — no database, no listener, no socket
-  * (the HTTP client is built only when a plugin or a fetch first asks for it) — so `--self-check` can call it.
+/** The composition root's handle on the plugins: discover the providers on the server's class path — the first-party
+  * fetchers, event catalogues and vaults among them, as any plugin — add the media collections and AI providers the
+  * host still supplies itself, and build the generation for a loaded config. Opens nothing — no database, no listener,
+  * no socket (the HTTP client is built only when a plugin or a fetch first asks for it) — so `--self-check` can call
+  * it.
   */
 object Plugins:
 
-  /** The config keys the plugin generation is built from: every plugin's block (and `order`), and the host settings the
-    * built-in fetchers read (the acquisition endpoints, TLS roots and politeness).
+  /** The config keys the plugin generation is built from: every plugin's block (and `order`), the keys that shape the
+    * client every plugin is lent, and the host settings the first-party plugins read ([[FirstPartySettings]]).
     */
-  val Keys: List[String] = List(PluginHost.Root, "histmersion.acquire", "histmersion.media.max-retry-after-seconds")
+  val Keys: List[String] = PluginHost.Root :: FirstPartySettings.hostKeys
 
   /** Build the generation for `loaded`. On a config reload, `previous` is the running generation and `changed` the keys
     * that changed: a plugin whose block did not change is carried over as it is (not decoded, resolved or registered
-    * again) — unless it holds a secret (re-resolved on every reload, §3.7), it failed last time, a secret vault's
-    * plugin changed, or a host key every plugin reads changed (`order`, `acquire.*`), which rebuilds them all. `core`
-    * is the server's CORE budget, which every generation's `core` fetcher spends from.
+    * again) — unless it holds a secret (re-resolved on every reload), it failed last time, a secret vault's plugin
+    * changed, `order` changed, or a host key it reads did ([[carried]]). `core` is the server's CORE budget, which
+    * every generation's `ctx.quota("core")` lends and the new-source search spends from too.
     */
   def load(
       loaded: LoadedConfig,
@@ -39,24 +48,71 @@ object Plugins:
       transport: AppConfig => HttpTransport = PolicyHttp.acquisitionTransport
   ): Generation =
     val (found, errors) = PluginHost.discover(getClass.getClassLoader)
-    // ONE acquisition client for every plugin and built-in fetcher of this generation, built on first use
+    // ONE acquisition client for every plugin of this generation, built on first use
     lazy val http = acquisitionHttp(loaded.config, transport)
-    val all = found ++ builtins(loaded.config, () => http, core)
-    // a split plugin's former settings (oa-index) mapped onto its successors, with a deprecation warning
-    val legacy = LegacyPlugins.migrate(loaded.user, loaded.env, defaultKeys(all))
-    val g = PluginHost.build(
-      all,
-      legacy.user,
-      legacy.env,
-      services(() => HttpPlugin(http), loaded.env),
-      errors ++ legacy.warnings,
+    generation(
+      loaded,
+      found ++ providers,
+      errors,
+      () => HttpPlugin(http),
+      core,
       previous.fold(Map.empty)(carried(_, changed))
     )
+
+  /** The generation of the first-party source fetchers alone (and `extra`, a test's) over `http`, for `loaded`: the
+    * chain a test or a one-off caller runs ([[com.histmersion.server.acquire.OaFetch]]).
+    */
+  def fetchers(
+      loaded: LoadedConfig,
+      http: () => PluginHttp,
+      core: CoreBudget = CoreBudget(),
+      extra: List[Plugin] = Nil
+  ): Generation =
+    val (found, errors) = PluginHost.discover(getClass.getClassLoader)
+    generation(loaded, extra ++ found.filter(p => Fetchers(p.info.id)), errors, http, core, Map.empty)
+
+  private def generation(
+      loaded: LoadedConfig,
+      all: List[Plugin],
+      errors: List[String],
+      http: () => PluginHttp,
+      core: CoreBudget,
+      carry: Map[String, (PluginStatus, Registries)]
+  ): Generation =
+    // a split plugin's former settings (oa-index) mapped onto its successors, with a deprecation warning
+    val legacy = LegacyPlugins.migrate(loaded.user, loaded.env, defaultKeys(all))
     // the user-added plugin set this binary was linked with (a relink writes it; none in a stock image)
     val (set, setError) = PluginSetResource.load(getClass.getClassLoader) match
       case Right(s) => (s, Nil)
       case Left(e)  => (None, List(e))
+    val host = FirstPartySettings.hostView(hostSettings(loaded), legacy.user, legacy.env, all)
+    val g = PluginHost.build(
+      all,
+      legacy.user,
+      legacy.env,
+      HostServices(http, loaded.env, log, CoreBudget.quotas(core, CoreBudget.limits(loaded.config.acquire.core))),
+      errors ++ legacy.warnings,
+      carry,
+      fallback = FirstPartySettings.fallback(_, host),
+      firstParty = firstParty(set)
+    )
     g.copy(report = g.report.copy(set = set, warnings = g.report.warnings ++ setError))
+
+  /** The resolved `histmersion` tree a load read; a load made by hand (a test's) has none, and reads `reference.conf`
+    * with its environment instead.
+    */
+  private def hostSettings(loaded: LoadedConfig): org.ekrich.config.Config =
+    if !loaded.merged.root.isEmpty then loaded.merged else referenceSettings(loaded.env)
+
+  /** `reference.conf` with `env`'s overrides, as a load without a file resolves it. */
+  private def referenceSettings(env: org.ekrich.config.Config): org.ekrich.config.Config =
+    AppConfig.loadWithUserFile(env, None).fold(_ => ConfigFactory.empty, _.merged)
+
+  /** First-party: one of Histmersion's own ids ([[ReservedNames.firstPartyPlugins]]) loaded from the image's own class
+    * path — not a plugin of the set a relink added under that id.
+    */
+  def firstParty(set: Option[PluginSet])(id: String): Boolean =
+    ReservedNames.firstPartyPlugins(id) && !set.exists(_.jars.exists(_.plugins.exists(_.id == id)))
 
   /** The keys each plugin's defaults resource declares (`enabled` aside): where a former plugin's key goes. */
   def defaultKeys(plugins: List[Plugin]): String => Set[String] =
@@ -70,18 +126,13 @@ object Plugins:
 
   /** The plugins of `previous` a reload that changed `changed` may carry over unchanged. Pure.
     *
-    * A change of `order` or of the whole block, or of a secret vault's plugin, rebuilds them all. A changed HOST key
-    * (`acquire.*`, the media politeness) rebuilds every plugin but the `independent` ones — the built-in media
-    * collections and event catalogues, which read their settings at each import and never the HTTP client a host key
-    * shapes — so a media/events plugin is rebuilt only when its own block changes. `oa-unpaywall`, `oa-openalex` and
-    * `oa-landing` are carried only all together ([[BuiltinFetchers.LandingGroup]]): the landing step reads what the
-    * other two registered.
+    * A change of `order` or of the whole block, or of a secret vault's plugin, rebuilds them all. A plugin's own block
+    * changed rebuilds it. A changed HOST key rebuilds the plugins that read it ([[FirstPartySettings.rebuilds]]): a
+    * first-party plugin the host keys it is supplied from (the fetchers `acquire.*`, an event catalogue its
+    * `events.<catalogue>.*`, the landing step oa-unpaywall's contact; never a media collection or an AI provider, which
+    * read theirs at each use), any other plugin the keys that shape the client it is lent.
     */
-  def carried(
-      previous: Generation,
-      changed: List[String],
-      independent: Set[String] = BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds
-  ): Map[String, (PluginStatus, Registries)] =
+  def carried(previous: Generation, changed: List[String]): Map[String, (PluginStatus, Registries)] =
     val relevant = changed.filter(k => Keys.exists(HotPlan.keyMatches(k, _)))
     // a former plugin's key (oa-index) concerns its successors
     val ids =
@@ -91,18 +142,19 @@ object Plugins:
     if ids.flatten.exists(vaults) || (whole && ids.contains(None)) then Map.empty
     else
       val touched = ids.flatten.toSet
-      val hostKey = ids.contains(None)
-      val kept = previous.report.plugins
+      val hostKeys = relevant.filter(k => pluginId(k).isEmpty)
+      // a plugin's block read by another first-party plugin: its key concerns that one too
+      val peerKeys = relevant.filter(pluginId(_).isDefined)
+      previous.report.plugins
         .filter { st =>
-          !touched(st.id) && (!hostKey || independent(st.id)) && (st.state == PluginState.Disabled.wire ||
+          !touched(st.id) && !hostKeys.exists(FirstPartySettings.rebuilds(st.id, _)) &&
+          !peerKeys.exists(k => FirstPartySettings.of(st.id).exists(_.readsHostKey(k))) &&
+          (st.state == PluginState.Disabled.wire ||
             st.state == PluginState.Registered.wire && !previous.withSecrets(st.id))
         }
         .flatMap(st => previous.carry(st.id))
         .map(c => c._1.id -> c)
         .toMap
-      // the landing step reads which of oa-unpaywall/oa-openalex registered: the three go together
-      val group = BuiltinFetchers.LandingGroup.filter(id => previous.report.plugins.exists(_.id == id))
-      if group.forall(kept.contains) then kept else kept -- group
 
   /** The plugin a changed key belongs to (`histmersion.plugins.<id>.…`); `None` for any other key — `order`, the whole
     * block, a host setting — which concerns every plugin.
@@ -125,37 +177,38 @@ object Plugins:
   /** The plugin that keys CORE: its `api-key` serves the new-source search too. */
   private val CorePlugin = "oa-core"
 
-  /** The plugins the host itself supplies, each its own plugin, enabled by default and switched off like any other:
-    * today's acquisition steps (`archive-org`, the open-access indexes `oa-unpaywall`, `oa-core`, `oa-openalex`,
-    * `oa-landing`, then `pmc`, `arxiv`), media collections (`media-wikidata`, `media-depicts`, `media-met`, … —
-    * [[BuiltinMedia]]) and event catalogues (`events-gvp`, `events-noaa`, `events-wikidata` — [[BuiltinCatalogues]])
-    * and AI providers (`ai-anthropic`, `ai-openai`, `ai-local`, `ai-claude-code`, `ai-codex`, `ai-opencode` —
-    * [[BuiltinAi]]).
+  /** The first-party plugins the host still supplies itself: the media collections (`media-wikidata`, `media-depicts`,
+    * `media-met`, … — [[BuiltinMedia]]), the event catalogues (`events-gvp`, `events-noaa`, `events-wikidata` —
+    * [[BuiltinCatalogues]]) and the AI providers (`ai-anthropic`, `ai-openai`, `ai-local`, `ai-claude-code`,
+    * `ai-codex`, `ai-opencode` — [[BuiltinAi]]). They read nothing at registration.
     */
-  def builtins(cfg: AppConfig, http: () => Http, core: CoreBudget = CoreBudget()): List[Plugin] =
-    lazy val openalex =
-      com.histmersion.upstreams
-        .OpenAlexCrossref(cfg.acquire.upstreamSettings, HttpPlugin(http()), HostLog.scribe.plugin)
-    lazy val archive = com.histmersion.upstreams.ArchiveOrg(cfg.acquire.upstreamSettings.archiveOrg, HttpPlugin(http()))
-    BuiltinFetchers.plugins(cfg.acquire, http, () => openalex, () => archive, core) ++ providers
-
-  /** The built-in media collections, event catalogues and AI providers: they read nothing at registration. */
   def providers: List[Plugin] = BuiltinMedia.plugins ++ BuiltinCatalogues.plugins ++ BuiltinAi.plugins
 
-  /** The generation of a server or a `Deps` built without a config to load plugins from (a test's): the built-in media
-    * collections, event catalogues and AI providers, registered through the plugin host with an empty user config — and
-    * no acquisition fetcher, so nothing is fetched (offline).
+  /** The generation of a server or a `Deps` built without a config to load plugins from (a test's): the plugins on the
+    * class path but the source fetchers, and the host's own media collections and AI providers, registered through the
+    * plugin host with an empty user config over `reference.conf` — so nothing is fetched (offline).
     */
   def offline: Generation =
+    val (found, errors) = PluginHost.discover(getClass.getClassLoader)
+    val all = found.filterNot(p => Fetchers(p.info.id)) ++ providers
+    val host =
+      FirstPartySettings.hostView(referenceSettings(ConfigFactory.empty), ConfigFactory.empty, ConfigFactory.empty, all)
     PluginHost.build(
-      providers,
+      all,
       ConfigFactory.empty,
       ConfigFactory.empty,
       services(
         () => new PluginHttp { def get(u: String, h: Map[String, String]) = Left("offline") },
         ConfigFactory.empty
-      )
+      ),
+      errors,
+      fallback = FirstPartySettings.fallback(_, host),
+      firstParty = firstParty(None)
     )
+
+  /** The first-party source fetchers' plugins, which an offline generation leaves out. */
+  private val Fetchers: Set[String] =
+    Set("archive-org", "oa-unpaywall", "oa-core", "oa-openalex", "oa-landing", "pmc", "arxiv")
 
   /** The host's services: the one outbound HTTP policy and scribe with the plugin's id on every line. */
   def services(http: () => PluginHttp, env: org.ekrich.config.Config): HostServices =

@@ -10,7 +10,8 @@ import com.histmersion.server.acquire.CoreBudget
 final class CoreQuotaLend(budget: CoreBudget, limits: CoreQuota.Limits) extends UpstreamQuota:
   def take(purpose: String): Either[String, Unit] =
     CoreQuota.Purpose.values.find(_.wire == purpose) match
-      case None    => Left(s"CORE's budget has no purpose '$purpose' (${CoreQuota.Purpose.values.map(_.wire).mkString(", ")})")
+      case None =>
+        Left(s"CORE's budget has no purpose '$purpose' (${CoreQuota.Purpose.values.map(_.wire).mkString(", ")})")
       case Some(p) => budget.take(limits, p).left.map(_.describe)
   def observe(status: Int, headers: Map[String, String]): Unit = budget.observe(limits, status, headers)
   override def waitingUntil: Option[String] = budget.state.block.map(_.until.toString)

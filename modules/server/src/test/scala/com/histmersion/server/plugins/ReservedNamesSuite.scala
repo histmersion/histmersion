@@ -1,6 +1,6 @@
 package com.histmersion.server.plugins
 
-import com.histmersion.pluginhost.ReservedNames
+import com.histmersion.pluginhost.{FirstPartySettings, PluginHost, ReservedNames}
 import com.histmersion.server.agents.BuiltinAi
 import com.histmersion.server.events.BuiltinCatalogues
 import com.histmersion.server.media.BuiltinMedia
@@ -14,3 +14,14 @@ class ReservedNamesSuite extends munit.FunSuite:
     assertEquals(ReservedNames.mediaCollections, BuiltinMedia.reserved)
     assertEquals(ReservedNames.eventCatalogues, BuiltinCatalogues.reserved)
     assertEquals(ReservedNames.aiProviders, BuiltinAi.reserved)
+
+  test("the first-party plugins are the ones every image holds: found on its class path or supplied by the host"):
+    val ids = PluginHost.discover(getClass.getClassLoader)._1.map(_.info.id) ++ Plugins.providers.map(_.info.id)
+    assertEquals(ids.toSet, ReservedNames.firstPartyPlugins)
+    assertEquals(ids.size, ids.distinct.size)
+
+  test("the settings table names every first-party plugin but the vaults, which are rebuilt as any plugin is"):
+    assertEquals(
+      FirstPartySettings.all.map(_.plugin).toSet,
+      ReservedNames.firstPartyPlugins -- Set("keepassxc", "1password", "bitwarden")
+    )

@@ -343,6 +343,19 @@ lazy val pluginVaults = project
   )
   .settings(commonDeps)
 
+// Histmersion's own acquisition plugins (archive-org, oa-unpaywall, oa-core, oa-openalex, oa-landing, pmc, arxiv):
+// plugin-api and the upstreams library alone, found by ServiceLoader like any plugin; in every image as the
+// server's runtime dependency, each switched off by its `enabled`
+lazy val pluginsFetchers = projectMatrix
+  .in(file("modules/plugins/fetchers"))
+  .dependsOn(upstreams, pluginTestkit % Test)
+  .settings(
+    name := "histmersion-plugins-fetchers",
+    description := "Histmersion's own acquisition plugins: archive.org, the open-access indexes, PMC and arXiv"
+  )
+  .settings(commonDeps)
+  .jvmPlatform(scalaVersions = Seq(scala3))
+
 lazy val pluginHello = project
   .in(file("modules/plugin-fixtures/hello"))
   .dependsOn(pluginApi)
@@ -530,6 +543,8 @@ def buildMetaSource(base: File): String = {
 lazy val server = project
   .in(file("modules/server"))
   .dependsOn(core.jvm(scala3), db % "compile->compile;test->test", pluginApi, upstreams, pluginHost, pluginVaults)
+  // the first-party plugins: in every image, found by ServiceLoader at run time; no server code can name their classes
+  .dependsOn(pluginsFetchers.jvm(scala3) % "runtime->compile")
   .settings(
     name := "histmersion-server",
     description := "The server: MCP, REST and the web UI over the store; built as a native image",
@@ -560,7 +575,8 @@ lazy val server = project
     relinkKit := Def.uncached {
       val log = streams.value.log
       val conv = fileConverter.value
-      val entries = (Compile / fullClasspath).value.map(a => conv.toPath(a.data).toFile)
+      // Runtime's: the first-party plugins are the server's runtime dependencies
+      val entries = (Runtime / fullClasspath).value.map(a => conv.toPath(a.data).toFile)
       val cp = Sloth.patch(
         log,
         (ThisBuild / slothJar).value,
@@ -868,7 +884,7 @@ lazy val web = project
 lazy val root = project
   .in(file("."))
   .aggregate(
-    (values.projectRefs ++ api.projectRefs ++ core.projectRefs)*
+    (values.projectRefs ++ api.projectRefs ++ core.projectRefs ++ pluginsFetchers.projectRefs)*
   )
   .aggregate(
     config,

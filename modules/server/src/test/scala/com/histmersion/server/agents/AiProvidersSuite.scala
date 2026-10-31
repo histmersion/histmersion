@@ -51,7 +51,7 @@ class AiProvidersSuite extends munit.FunSuite:
 
   /** A third-party plugin registering `provider` under `name`. */
   final private class AiPlugin(name: String, provider: AiProvider, id: String = "zq-ai") extends Plugin:
-    type Config = com.histmersion.server.acquire.fetchers.BuiltinConfig
+    type Config = com.histmersion.util.plugins.HostProvided.NoSettings
     val info = PluginInfo(id, "0.1.0", Spi.Version)
     override def defaultsResource = "zq-none.conf"
     def register(c: Config, ctx: PluginContext) = ctx.aiProviders.add(name, provider)

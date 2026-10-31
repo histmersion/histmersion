@@ -60,7 +60,10 @@ class PmcFetchSuite extends munit.FunSuite:
     fixture(record).replaceAll("(\\." + ext + "\\?md5=)[0-9a-f]{32}", "$1" + md5)
 
   private def fetch(c: AcquireConfig, http: Http, doi: String, arxiv: Option[String] = None) =
-    OaFetch(c, http).fetch(Some(doi), arxiv)
+    OaFetch(loaded(s"histmersion.acquire.contact-email = \"${c.contactEmail}\""), http).fetch(Some(doi), arxiv)
+
+  private def loaded(text: String): com.histmersion.config.LoadedConfig =
+    AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e), identity)
 
   test("Europe PMC's PDF link is a challenge page → the PMC dataset PDF, verified, provenance pmc"):
     val c = cfg

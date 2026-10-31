@@ -1,9 +1,9 @@
 package com.histmersion.upstreams
 
-/** The identifiers an upstream's record names, as Histmersion keeps them: a DOI lower-case and bare (no `doi.org/`,
-  * no trailing punctuation a citation dragged in), an arXiv id without its version. The host's own copy of these two
-  * rules (the wire's `Acquire.normalizeDoi`/`normalizeArxiv`, which the Scala.js page shares) is kept equal to these by
-  * a test over the same inputs.
+/** The identifiers an upstream's record names, as Histmersion keeps them: a DOI lower-case and bare (no `doi.org/`, no
+  * trailing punctuation a citation dragged in), an arXiv id without its version. The host's own copy of these two rules
+  * (the wire's `Acquire.normalizeDoi`/`normalizeArxiv`, which the Scala.js page shares) is kept equal to these by a
+  * test over the same inputs.
   */
 object Identifiers:
 

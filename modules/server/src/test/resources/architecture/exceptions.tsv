@@ -289,9 +289,6 @@ direction	server:server/acquire/AcquireHandlers.scala	library -> server: Deps	1
 direction	server:server/acquire/AcquireHandlers.scala	library -> server: UpdateNotice	1
 direction	server:server/acquire/CandidateSearch.scala	library -> research: ArticleRepo	1
 direction	server:server/acquire/DiscoveryClient.scala	library -> server: UpdateNotice	1
-direction	server:server/acquire/fetchers/Builtin.scala	library -> server: Version	1
-direction	server:server/acquire/fetchers/BuiltinFetchers.scala	library -> server: Version	1
-direction	server:server/acquire/fetchers/BuiltinWith.scala	library -> server: Version	1
 direction	server:server/agents/AcquireRecheckService.scala	library -> split: Handlers	1
 direction	server:server/agents/AcquisitionSweepPipeline.scala	library -> split: Handlers	1
 direction	server:server/agents/AgentDoctor.scala	automation -> server: Version	1
@@ -339,7 +336,6 @@ direction	server:server/agents/AutoApprovals.scala	automation -> research: Compi
 direction	server:server/agents/AutoApprovals.scala	automation -> split: Handlers	1
 direction	server:server/agents/AutopilotService.scala	automation -> library: Query	1
 direction	server:server/agents/AutopilotService.scala	automation -> split: Handlers	1
-direction	server:server/agents/BuiltinAi.scala	automation -> library: Builtin	1
 direction	server:server/agents/CliProcess.scala	automation -> catalogue: Tree	1
 direction	server:server/agents/CompileArticlePipeline.scala	research -> split: Handlers	1
 direction	server:server/agents/CurrencyCheckPipeline.scala	library -> split: Handlers	1
@@ -409,7 +405,6 @@ direction	server:server/basemap/BasemapService.scala	util.basemap -> library: Se
 direction	server:server/basemap/BasemapService.scala	util.basemap -> server: Deps	1
 direction	server:server/basemap/JavaRangeHttp.scala	util.basemap -> library: HttpPolicy	1
 direction	server:server/basemap/JavaRangeHttp.scala	util.basemap -> server: Version	1
-direction	server:server/events/BuiltinCatalogues.scala	catalogue -> library: Builtin	1
 direction	server:server/events/EventCatalogHandlers.scala	catalogue -> library: Chunk	1
 direction	server:server/events/EventCatalogHandlers.scala	catalogue -> library: PassageFinder	1
 direction	server:server/events/EventCatalogHandlers.scala	catalogue -> library: SourceRepo	1
@@ -420,8 +415,6 @@ direction	server:server/importers/GazetteerLoad.scala	catalogue -> library: Http
 direction	server:server/importers/ImportRunner.scala	catalogue -> library: CliopatriaImporter	1
 direction	server:server/importers/ImportRunner.scala	catalogue -> library: GazetteerImporter	1
 direction	server:server/importers/ImportRunner.scala	catalogue -> library: HttpPolicy	1
-direction	server:server/media/BuiltinMedia.scala	media -> library: Builtin	1
-direction	server:server/media/BuiltinMedia.scala	media -> library: BuiltinWith	1
 direction	server:server/media/BuiltinMedia.scala	media -> server: Deps	1
 direction	server:server/media/HostMediaCollection.scala	media -> server: Deps	1
 direction	server:server/media/KeyedEntry.scala	media -> server: Deps	1
@@ -430,14 +423,10 @@ direction	server:server/media/MediaHandlers.scala	media -> server: Deps	1
 direction	server:server/media/MediaImporter.scala	media -> server: Deps	1
 direction	server:server/media/MediaImporters.scala	media -> server: Deps	1
 direction	server:server/media/SourcePictures.scala	media -> library: SourceCoverParams	1
-direction	server:server/plugins/LegacyPlugins.scala	util.plugins -> library: BuiltinFetchers	1
-direction	server:server/plugins/LegacyPlugins.scala	util.plugins -> library: OaIndex	1
 direction	server:server/plugins/RelinkPlugins.scala	util.plugins -> server: Version	1
 direction	server:server/plugins/Plugins.scala	util.plugins -> automation: BuiltinAi	1
 direction	server:server/plugins/Plugins.scala	util.plugins -> catalogue: BuiltinCatalogues	1
-direction	server:server/plugins/Plugins.scala	util.plugins -> library: BuiltinFetchers	1
 direction	server:server/plugins/Plugins.scala	util.plugins -> library: CoreBudget	1
-direction	server:server/plugins/Plugins.scala	util.plugins -> library: Http	1
 direction	server:server/plugins/Plugins.scala	util.plugins -> library: HttpPlugin	1
 direction	server:server/plugins/Plugins.scala	util.plugins -> library: SttpHttp	1
 direction	server:server/plugins/Plugins.scala	util.plugins -> media: BuiltinMedia	1

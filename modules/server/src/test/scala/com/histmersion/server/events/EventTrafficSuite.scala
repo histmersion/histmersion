@@ -83,13 +83,13 @@ class EventTrafficSuite extends com.histmersion.db.DbSuite:
   override def beforeAll(): Unit = if testDb.isDefined then clean()
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
-  /** Rows as stored, without the columns a run's clock or a fresh id fills. */
+  /** Rows as stored, without the columns a run's clock, a fresh id or the database's own instance fills. */
   private def steady(json: List[String]): String =
     json.map { j =>
       io.circe.parser
         .parse(j)
         .fold(e => fail(e.toString), identity)
-        .mapObject(_.filterKeys(k => !k.endsWith("_at") && k != "uid"))
+        .mapObject(_.filterKeys(k => !k.endsWith("_at") && k != "uid" && k != "origin"))
         .noSpaces + "\n"
     }.mkString
 

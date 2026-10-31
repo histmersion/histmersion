@@ -30,8 +30,9 @@ object NativeImage extends AutoPlugin {
     nativeImage := Def.uncached {
       val log = streams.value.log
       val conv = fileConverter.value // sbt 2.0: classpath entries are virtual file refs
-      // Compile's class path holds % Provided jars: read Runtime's before a binary depends on chimney-iron
-      val entries = (Compile / fullClasspath).value.map(a => conv.toPath(a.data).toFile)
+      // Runtime's class path: the server's first-party plugins are its runtime dependencies, and % Provided jars
+      // (chimney-iron) stay off it
+      val entries = (Runtime / fullClasspath).value.map(a => conv.toPath(a.data).toFile)
       val cp = Sloth
         .patch(
           log,
@@ -59,11 +60,11 @@ object NativeImage extends AutoPlugin {
       if rc != 0 then sys.error(s"native-image failed (exit $rc)")
       log.info(s"native image built → $out")
     },
-    // the module's Compile classpath in target/classpath.txt, so the app can be run under the tracing agent
+    // the module's Runtime classpath in target/classpath.txt, so the app can be run under the tracing agent
     // directly (no sbt classes polluting the collected metadata)
     writeClasspath := {
       val conv = fileConverter.value
-      val cp = (Compile / fullClasspath).value
+      val cp = (Runtime / fullClasspath).value
         .map(a => conv.toPath(a.data).toFile)
         .mkString(java.io.File.pathSeparator)
       val f = target.value / "classpath.txt"

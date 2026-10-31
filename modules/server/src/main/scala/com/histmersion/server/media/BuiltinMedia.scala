@@ -6,7 +6,7 @@ import com.histmersion.domain.{MediaLicence, MediaMatch, MediaRecord, MediaRight
 import com.histmersion.api.MediaProvider
 import com.histmersion.plugin.*
 import com.histmersion.server.{ConverterClient, Deps}
-import com.histmersion.server.acquire.fetchers.{Builtin, BuiltinWith}
+import com.histmersion.util.plugins.HostProvided
 
 import com.histmersion.plugin.PluginConfig.given
 
@@ -152,9 +152,9 @@ object BuiltinMedia:
   val pluginIds: Set[String] = entries.map(_.plugin).toSet ++ keyed.map(_.plugin)
 
   /** Each a plugin of its own, registering its one collection; a keyed one resolves its key first. */
-  def plugins: List[Plugin] = entries.map(e => Builtin(e.plugin, _.mediaCollections.add(e.name, e))) ++
+  def plugins: List[Plugin] = entries.map(e => HostProvided(e.plugin, _.mediaCollections.add(e.name, e))) ++
     keyed.map(m =>
-      BuiltinWith[KeyedConfig](
+      new HostProvided[KeyedConfig](
         m.plugin,
         (c, ctx) =>
           c.apiKey

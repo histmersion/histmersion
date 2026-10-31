@@ -6,7 +6,8 @@ import com.histmersion.upstreams.{AcquireParse, Identifiers}
 import io.circe.parser.parse
 
 /** The upstreams' records as the wire shows them: a work keyed by the citekey the corpus gives it, a citing work and a
-  * reference with the wire's defaults; and the upstreams' identifier rules equal to the wire's own over the same inputs.
+  * reference with the wire's defaults; and the upstreams' identifier rules equal to the wire's own over the same
+  * inputs.
   */
 class UpstreamRecordsSuite extends munit.FunSuite:
 
@@ -30,7 +31,8 @@ class UpstreamRecordsSuite extends munit.FunSuite:
     assert(r.forall(_.citekey.isEmpty))
 
   test("a retraction notice reads as a retraction; the real citation contexts classify"):
-    val ups = com.histmersion.server.acquire.DiscoveryClient.notices(AcquireParse.crossrefUpdates(fixture("crossref_retracted.json")))
+    val ups = com.histmersion.server.acquire.DiscoveryClient
+      .notices(AcquireParse.crossrefUpdates(fixture("crossref_retracted.json")))
     assertEquals(
       api.Acquire.verdict(Nil, ups, false, Some(5), Some(2019), 50, 3, 2018),
       api.Acquire.Verdicts.Retracted

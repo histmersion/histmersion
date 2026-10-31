@@ -5,7 +5,7 @@ import com.histmersion.pluginhost.{PluginEvents, SpiValues}
 import com.histmersion.api.CatalogProviderInfo
 import com.histmersion.domain.CatalogProvider
 import com.histmersion.plugin.*
-import com.histmersion.server.acquire.fetchers.Builtin
+import com.histmersion.util.plugins.HostProvided
 
 import scala.collection.immutable.ListMap
 
@@ -22,7 +22,7 @@ object BuiltinCatalogues:
 
   val pluginIds: Set[String] = entries.map(_.plugin).toSet
 
-  def plugins: List[Plugin] = entries.map(e => Builtin(e.plugin, _.eventCatalogues.add(e.name, e)))
+  def plugins: List[Plugin] = entries.map(e => HostProvided(e.plugin, _.eventCatalogues.add(e.name, e)))
 
   /** The other names `events import` takes for a built-in catalogue. */
   val aliases: Map[String, String] = Map(

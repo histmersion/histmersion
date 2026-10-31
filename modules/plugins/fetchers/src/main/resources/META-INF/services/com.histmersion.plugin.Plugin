@@ -1,0 +1,7 @@
+com.histmersion.plugins.fetchers.ArchiveOrgPlugin
+com.histmersion.plugins.fetchers.UnpaywallPlugin
+com.histmersion.plugins.fetchers.CorePlugin
+com.histmersion.plugins.fetchers.OpenAlexPlugin
+com.histmersion.plugins.fetchers.LandingPlugin
+com.histmersion.plugins.fetchers.PmcPlugin
+com.histmersion.plugins.fetchers.ArxivPlugin

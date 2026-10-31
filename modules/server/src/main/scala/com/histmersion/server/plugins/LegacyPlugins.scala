@@ -29,7 +29,7 @@ object LegacyPlugins:
   /** A former plugin id and the plugins that took its place, in their chain order. */
   final case class Split(id: String, into: List[String])
 
-  val OaIndex: Split = Split("oa-index", com.histmersion.server.acquire.fetchers.BuiltinFetchers.OaIndexes)
+  val OaIndex: Split = Split("oa-index", List("oa-unpaywall", "oa-core", "oa-openalex", "oa-landing"))
 
   val All: List[Split] = List(OaIndex)
 

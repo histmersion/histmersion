@@ -15,7 +15,12 @@ class SpiBackingSuite extends munit.FunSuite:
   private val noLog: (String, Boolean, String) => Unit = (_, _, _) => ()
 
   private def services(quota: String => UpstreamQuota = _ => UpstreamQuota.Unlimited): HostServices =
-    HostServices(() => new PluginHttp { def get(u: String, h: Map[String, String]) = Left("offline") }, ConfigFactory.empty, noLog, quota)
+    HostServices(
+      () => new PluginHttp { def get(u: String, h: Map[String, String]) = Left("offline") },
+      ConfigFactory.empty,
+      noLog,
+      quota
+    )
 
   private def build(
       plugins: List[Plugin],
@@ -44,9 +49,13 @@ class SpiBackingSuite extends munit.FunSuite:
         sent += url -> headers
         Right(HttpAnswer(429, Map("x-ratelimit-remaining" -> "0"), "slow down".getBytes("UTF-8")))
     val policy = PolicyHttp("histmersion/0.1", wire, sleep = _ => fail("a fetch never waits"))
-    val r = policy.plugin.fetch("https://core.example/v3/search", Map("Authorization" -> "Bearer k")).fold(fail(_), identity)
+    val r =
+      policy.plugin.fetch("https://core.example/v3/search", Map("Authorization" -> "Bearer k")).fold(fail(_), identity)
     assertEquals((r.status, r.header("X-RateLimit-Remaining"), String(r.body, "UTF-8")), (429, Some("0"), "slow down"))
-    assertEquals(sent.toList, List("https://core.example/v3/search" -> Map("Authorization" -> "Bearer k", "User-Agent" -> "histmersion/0.1")))
+    assertEquals(
+      sent.toList,
+      List("https://core.example/v3/search" -> Map("Authorization" -> "Bearer k", "User-Agent" -> "histmersion/0.1"))
+    )
     // `get` keeps asking a slow-down again, as before
     sent.clear()
     val retried = PolicyHttp("histmersion/0.1", wire, tries = 2, sleep = _ => ()).plugin.get("https://core.example/x")
@@ -72,13 +81,21 @@ class SpiBackingSuite extends munit.FunSuite:
       def take(purpose: String) = { taken += purpose; if taken.size > 1 then Left("spent") else Right(()) }
       def observe(status: Int, headers: Map[String, String]) = ()
     val p = Metered("core")
-    val g = build(List(p), "histmersion.plugins.zq-metered.enabled = true", quota = n => if n == "core" then core else UpstreamQuota.Unlimited)
+    val g = build(
+      List(p),
+      "histmersion.plugins.zq-metered.enabled = true",
+      quota = n => if n == "core" then core else UpstreamQuota.Unlimited
+    )
     assert(g.report.ok, g.report.toString)
     assertEquals(p.quota.map(_.take("lookup")), Some(Right(())))
     assertEquals(p.quota.map(_.take("lookup")), Some(Left("spent")))
     assertEquals(taken.toList, List("lookup", "lookup"))
     val other = Metered("elsewhere")
-    build(List(other), "histmersion.plugins.zq-metered.enabled = true", quota = n => if n == "core" then core else UpstreamQuota.Unlimited)
+    build(
+      List(other),
+      "histmersion.plugins.zq-metered.enabled = true",
+      quota = n => if n == "core" then core else UpstreamQuota.Unlimited
+    )
     assertEquals(other.quota, Some(UpstreamQuota.Unlimited))
 
   // ── SPI-3: FetchContext.registered ──────────────────────────────────────────────────────────
@@ -90,7 +107,8 @@ class SpiBackingSuite extends munit.FunSuite:
       def fetch(work: WorkKey, ctx: FetchContext) =
         List("oa-unpaywall", "oa-openalex").foreach(id => asked += id -> ctx.registered(id))
         Fetch.Miss("nothing")
-    val (chain, _) = FetchChain.of(scala.collection.immutable.ListMap("peer" -> peerAware), Nil, false, plugins = Set("oa-unpaywall"))
+    val (chain, _) =
+      FetchChain.of(scala.collection.immutable.ListMap("peer" -> peerAware), Nil, false, plugins = Set("oa-unpaywall"))
     chain.fetchWorkExplained(WorkKey(archive = Some("x")), legalOnly = true)
     assertEquals(asked.toList, List("oa-unpaywall" -> true, "oa-openalex" -> false))
     asked.clear()
@@ -177,7 +195,10 @@ class SpiBackingSuite extends munit.FunSuite:
   test("a reserved catalogue name is kept for the first-party plugin; any other plugin is refused it"):
     val third = build(List(Volcanoes("zq-volcanoes")), "histmersion.plugins.zq-volcanoes.enabled = true")
     assertEquals(third.report.plugins.head.state, "failed")
-    assert(third.report.plugins.head.error.exists(_.contains("Histmersion's own event catalogues")), third.report.toString)
+    assert(
+      third.report.plugins.head.error.exists(_.contains("Histmersion's own event catalogues")),
+      third.report.toString
+    )
     val first = build(
       List(Volcanoes("events-gvp")),
       "histmersion.plugins.events-gvp.enabled = true",

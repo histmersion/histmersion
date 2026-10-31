@@ -2,7 +2,7 @@ package com.histmersion.server.agents
 
 import com.histmersion.api.Agents.ProviderKind
 import com.histmersion.plugin.*
-import com.histmersion.server.acquire.fetchers.Builtin
+import com.histmersion.util.plugins.HostProvided
 
 import scala.collection.immutable.ListMap
 
@@ -26,7 +26,7 @@ object BuiltinAi:
 
   val pluginIds: Set[String] = entries.map(_.plugin).toSet
 
-  def plugins: List[Plugin] = entries.map(e => Builtin(e.plugin, _.aiProviders.add(e.kind.wire, e)))
+  def plugins: List[Plugin] = entries.map(e => HostProvided(e.plugin, _.aiProviders.add(e.kind.wire, e)))
 
   /** Names a plugin's provider may not take. */
   val reserved: Set[String] = ProviderKind.values.map(_.wire).toSet

@@ -21,10 +21,14 @@ class OaFetchSuite extends munit.FunSuite:
 
   private def acquire(email: String) = AppConfig.load().acquire.copy(contactEmail = email)
 
+  private def loaded(text: String): com.histmersion.config.LoadedConfig =
+    AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e), identity)
+
   private def asked(email: String): List[String] =
     val cfg = acquire(email)
     val http = RecordingHttp()
-    val _ = OaFetch(cfg, http).fetch(Some("10.1038/nature14317"), None)
+    val _ =
+      OaFetch(loaded(s"histmersion.acquire.contact-email = \"$email\""), http).fetch(Some("10.1038/nature14317"), None)
     http.urls
 
   test("the repository default has no contact e-mail"):

@@ -21,6 +21,10 @@ final class CoreBudget(clock: () => Instant = () => Instant.now(), sleep: Long =
   /** The state now. */
   def state: CoreQuota.State = current.get
 
+  /** This budget as the plugin SPI lends it (`ctx.quota("core")`), under `limits`. */
+  def lend(limits: CoreQuota.Limits): com.histmersion.plugin.UpstreamQuota =
+    com.histmersion.domain.library.acquisition.CoreQuotaLend(this, limits)
+
   /** Keep the budget in `s` from now on, starting from what it holds: the same day's spending and a block that has not
     * ended are kept (the larger count, the later block, when both sides have one).
     */
@@ -84,8 +88,12 @@ final class CoreBudget(clock: () => Instant = () => Instant.now(), sleep: Long =
         None
 
 object CoreBudget:
-  /** Its row in `upstream_quota`. */
+  /** Its row in `upstream_quota`, and the upstream's name plugins ask the host's quota by. */
   val Upstream = "core"
+
+  /** The budgets the host lends plugins by upstream name: CORE's, `core` under `limits`; any other is unlimited. */
+  def quotas(core: CoreBudget, limits: CoreQuota.Limits): String => com.histmersion.plugin.UpstreamQuota =
+    name => if name == Upstream then core.lend(limits) else com.histmersion.plugin.UpstreamQuota.Unlimited
 
   /** The limits `acquire.core.*` set. */
   def limits(c: CoreServiceConfig): CoreQuota.Limits =

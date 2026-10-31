@@ -1,10 +1,9 @@
 package com.histmersion.server.acquire
 
-import com.histmersion.config.{AcquireConfig, ApiKey, AppConfig, ItemCount, Seconds, ServiceUrl, TokenCount}
+import com.histmersion.config.{AppConfig, LoadedConfig}
 import com.histmersion.domain.CoreQuota
 import com.histmersion.plugin.{Doi, Fetch, FetchContext, FetchedFile, PluginHttp, PluginLog, SourceFetcher, WorkKey}
 import com.histmersion.pluginhost.{FetchChain, Generation, PluginHost}
-import com.histmersion.server.acquire.fetchers.BuiltinFetchers
 import com.histmersion.server.plugins.{MakerPlugin, Plugins}
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
 import io.circe.Json
@@ -74,27 +73,25 @@ class CoreBudgetSuite extends munit.FunSuite:
     try body(core)
     finally core.stop()
 
-  private val base = AppConfig.load().acquire
-
+  /** The settings with CORE at the stub, as `histmersion.conf` writes them (the plugins read the host's keys). */
   private def acquire(
       core: StubCore,
       key: String = "",
       perMinute: Int = 20,
       daily: Int = 900,
       searches: Int = 600,
-      maxWait: Int = 30
-  ): AcquireConfig =
-    base.copy(core =
-      base.core.copy(
-        url = ServiceUrl.applyUnsafe(s"${core.base}/v3"),
-        apiKey = ApiKey.applyUnsafe(key),
-        perMinute = ItemCount.applyUnsafe(perMinute),
-        dailyTokens = TokenCount.applyUnsafe(daily),
-        searchDailyTokens = TokenCount.applyUnsafe(searches),
-        maxWaitSeconds = Seconds.applyUnsafe(maxWait),
-        exhaustedPauseSeconds = Seconds(60)
+      maxWait: Int = 30,
+      user: String = ""
+  ): LoadedConfig =
+    AppConfig
+      .loadWithUserText(
+        ConfigFactory.empty,
+        s"""histmersion.acquire.core { url = "${core.base}/v3", api-key = "$key", per-minute = $perMinute,
+           |  daily-tokens = $daily, search-daily-tokens = $searches, max-wait-seconds = $maxWait,
+           |  exhausted-pause-seconds = 60 }
+           |$user""".stripMargin
       )
-    )
+      .fold(e => fail(e), identity)
 
   /** A clock the test moves; `sleep` moves it too (and is recorded), so nothing waits. */
   final private class Clock:
@@ -109,35 +106,19 @@ class CoreBudgetSuite extends munit.FunSuite:
     val log: PluginLog = new PluginLog { def info(message: String) = (); def warn(message: String) = () }
 
   private def generation(
-      cfg: AcquireConfig,
+      cfg: LoadedConfig,
       budget: CoreBudget,
-      user: String = "",
-      env: Map[String, String] = Map.empty,
       extra: List[com.histmersion.plugin.Plugin] = Nil
   ): Generation =
-    val http = SttpHttp(cfg, tries = 1)
-    val plugins = extra ++ BuiltinFetchers.plugins(
-      cfg,
-      () => http,
-      () => fail("openalex asked"),
-      () => fail("archive asked"),
-      budget
-    )
-    PluginHost.build(
-      plugins,
-      ConfigFactory.parseString(user),
-      ConfigFactory.parseMap(env.asJava),
-      Plugins.services(
-        () => new PluginHttp { def get(u: String, h: Map[String, String]) = Left("offline") },
-        ConfigFactory.parseMap(env.asJava)
-      )
-    )
+    val http = SttpHttp(cfg.config.acquire, tries = 1)
+    Plugins.fetchers(cfg, () => HttpPlugin(http), budget, extra)
 
   private val work = WorkKey(doi = Some(Doi("10.1/x")))
 
   private def lookup(g: Generation): Fetch = g.registries.sourceFetchers("core").fetch(work, Ctx)
 
-  private def coreIndex(cfg: AcquireConfig, g: Generation, budget: CoreBudget): Option[ScholarlyIndex] =
+  private def coreIndex(loaded: LoadedConfig, g: Generation, budget: CoreBudget): Option[ScholarlyIndex] =
+    val cfg = loaded.config.acquire
     Indexes
       .of(cfg, SttpHttp(cfg, tries = 1), com.histmersion.server.plugins.Plugins.coreKey(g, cfg.core.key), budget)
       ._1
@@ -273,17 +254,15 @@ class CoreBudgetSuite extends munit.FunSuite:
   test("ONE setting enables both uses: oa-core's api-key as a vault reference keys the lookup AND the search"):
     withCore { core =>
       val budget = Clock().budget()
-      val cfg = acquire(core) // no acquire.core.api-key
-      val g = generation(
-        cfg,
-        budget,
-        extra = List(MakerPlugin()),
+      val cfg = acquire( // no acquire.core.api-key
+        core,
         user = """histmersion.plugins.maker { enabled = true, vault = "fakevault" }
                  |histmersion.plugins.oa-core.api-key = "fakevault:Work/Histmersion/CORE#password"""".stripMargin
       )
+      val g = generation(cfg, budget, extra = List(MakerPlugin()))
       assert(g.report.ok, g.report.toString)
       assertEquals(
-        com.histmersion.server.plugins.Plugins.coreKey(g, cfg.core.key),
+        com.histmersion.server.plugins.Plugins.coreKey(g, cfg.config.acquire.core.key),
         Some("v(Work/Histmersion/CORE#password)")
       )
       lookup(g)
@@ -302,7 +281,7 @@ class CoreBudgetSuite extends munit.FunSuite:
       coreIndex(keyed, g, budget).getOrElse(fail("no core index")).search("q", LocalDate.of(2026, 1, 1), 10)
       assertEquals(core.asked.asScala.toList.map(_._2), List("Bearer k-plain", "Bearer k-plain"))
       // the index alone (oa-core switched off): the plain key still serves the search
-      val off = generation(keyed, budget, user = "histmersion.plugins.oa-core.enabled = false")
+      val off = generation(acquire(core, key = "k-plain", user = "histmersion.plugins.oa-core.enabled = false"), budget)
       assert(coreIndex(keyed, off, budget).isDefined)
       val none = generation(acquire(core), budget)
       assert(missWhy(lookup(none)).contains("needs CORE's API key"))
