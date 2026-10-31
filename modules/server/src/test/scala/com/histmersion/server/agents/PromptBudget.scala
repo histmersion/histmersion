@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.workflows.ToolName
+
 import io.circe.Json
 import io.circe.syntax.*
 import sttp.ai.core.agent.ResponseSchema
@@ -49,11 +51,11 @@ object PromptBudget:
     "acquisition-ranker" -> AnswerSchemas.ranking
   )
 
-  private lazy val toolbox = Toolbox(null, () => AgentUpstream.Offline)
+  private lazy val toolbox = TestToolbox(null)
 
   /** One tool as the agent MCP endpoint lists it (`tools/list`). */
   def toolJson(t: ToolName): Json =
-    val at = toolbox.tool(t)
+    val at = toolbox.tool(t).get
     Json.obj("name" -> at.name.asJson, "description" -> at.description.asJson, "inputSchema" -> Toolbox.inputSchema(at))
 
   def toolChars(t: ToolName): Int = toolJson(t).noSpaces.length
@@ -63,7 +65,7 @@ object PromptBudget:
       Row(
         a.name,
         d.system(a, ToolStyle.Claude).length,
-        a.tools.map(t => t.wire -> toolChars(t)).toMap,
+        a.tools.map(t => t.value -> toolChars(t)).toMap,
         answers.get(a.name).fold(0)(s => ClaudeCode.schemaJson(s).length)
       )
     }
@@ -78,7 +80,7 @@ object PromptBudget:
 
   def toolTable: String =
     "| tool | chars | ~tok |\n|---|---:|---:|\n" +
-      ToolName.values.map(t => s"| ${t.wire} | ${toolChars(t)} | ${tokens(toolChars(t))} |").mkString("\n")
+      TransitionTools.names.map(t => s"| ${t.value} | ${toolChars(t)} | ${tokens(toolChars(t))} |").mkString("\n")
 
   /** The files `export` writes, relative to its directory. */
   def exportTree(d: AgentGenerator.Defs): Map[String, String] =

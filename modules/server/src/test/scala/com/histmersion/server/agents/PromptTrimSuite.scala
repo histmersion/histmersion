@@ -40,7 +40,7 @@ class PromptTrimSuite extends munit.FunSuite:
         .exists(_.contains("names no audience"))
     )
     assertEquals(
-      AgentGenerator.check(d, Generated.known(AgentDefinitions(Prompts("")))),
+      AgentGenerator.check(d, Generated.known(AgentDefinitions(Prompts(""), TransitionTools.names))),
       Nil,
       "the bundled definitions are clean"
     )

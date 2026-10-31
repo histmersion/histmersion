@@ -65,7 +65,7 @@ final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: Cli
           launch,
           mcp.map(_.toString),
           call.tools.map(_.name),
-          ToolName.values.toList.map(_.wire),
+          rt.definitions.tools.map(_.value),
           web
         )
         val pool = rt.pools

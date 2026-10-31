@@ -1,0 +1,9 @@
+package com.histmersion.domain.automation.workflows
+
+import io.github.iltotore.iron.*
+import io.github.iltotore.iron.constraint.string.Match
+
+/** A workflow's identifier (`enrich-source`, `review-article`, …): what a run records as its pipeline. */
+type WorkflowId = WorkflowId.T
+
+object WorkflowId extends RefinedType[String, Match["[a-z][a-z0-9-]*"]]

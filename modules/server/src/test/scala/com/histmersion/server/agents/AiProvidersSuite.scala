@@ -77,7 +77,8 @@ class AiProvidersSuite extends munit.FunSuite:
   private def on(id: String = "zq-ai") = s"histmersion.plugins.$id.enabled = true"
 
   private val app = AppConfig.load()
-  private def rt(host: String = "127.0.0.1") = CliRuntime(app.copy(server = app.server.copy(host = host)))
+  private def rt(host: String = "127.0.0.1") =
+    CliRuntime(app.copy(server = app.server.copy(host = host)), TransitionTools.names)
 
   // ── the built-ins ──────────────────────────────────────────────────────────────────────────────
 

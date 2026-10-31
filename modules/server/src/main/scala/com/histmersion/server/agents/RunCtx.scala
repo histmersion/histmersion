@@ -398,7 +398,7 @@ final class RunCtx private[agents] (val run: RunInfo, engine: Engine):
           val call = LlmCall[A](
             prompt.system,
             user,
-            engine.agents.toolbox.tools(agent.tools),
+            engine.agents.toolbox.tools(engine.offered(run, agent)),
             schema,
             turns,
             maxTokens,

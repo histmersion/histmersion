@@ -1,6 +1,7 @@
 package com.histmersion.server.agents
 
 import com.histmersion.config.AppConfig
+import com.histmersion.domain.automation.workflows.ToolName
 
 import scala.jdk.CollectionConverters.*
 
@@ -27,5 +28,6 @@ final class CliRuntime(val app: AppConfig, val definitions: AgentDefinitions):
     agent.map(a => tokens.issue(a, call.scope, (math.max(1, timeoutSeconds).toLong + 60L) * 1000L))
 
 object CliRuntime:
-  def apply(app: AppConfig): CliRuntime =
-    new CliRuntime(app, AgentDefinitions(Prompts(app.agents.promptsDir)))
+  /** `tools`: the agent tools the engine's toolbox holds (what a definition may list). */
+  def apply(app: AppConfig, tools: List[ToolName]): CliRuntime =
+    new CliRuntime(app, AgentDefinitions(Prompts(app.agents.promptsDir), tools))

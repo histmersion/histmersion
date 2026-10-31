@@ -11,7 +11,7 @@ import scala.jdk.CollectionConverters.*
   */
 class AgentGeneratorSuite extends munit.FunSuite:
 
-  private lazy val defs = AgentDefinitions(Prompts(""))
+  private lazy val defs = AgentDefinitions(Prompts(""), TransitionTools.names)
   private lazy val d = Generated.defs()
   private def agent(s: StepAgent) = d.agents.find(_.name == s.wire).getOrElse(fail(s"no ${s.wire}"))
 
@@ -27,16 +27,22 @@ class AgentGeneratorSuite extends munit.FunSuite:
   test("the manifest: role, tools, includes, interactive spec"):
     val sk = agent(StepAgent.Skeptic)
     assertEquals(sk.role, Role.Skeptic)
-    assertEquals(sk.tools.map(_.wire), List("get_source", "passages", "neighbors", "search", "query", "followups"))
+    assertEquals(
+      sk.tools.map(t => t.value: String),
+      List("get_source", "passages", "neighbors", "search", "query", "followups")
+    )
     assertEquals(sk.include, List("review-common", "review-skeptic", "writing-rules"))
     assertEquals(sk.interactive.map(_.tools), Some(List("Bash", "Read")))
     assertEquals(agent(StepAgent.ColdReader).tools, Nil, "the cold reader reads the article and nothing else")
-    assertEquals(agent(StepAgent.EnrichClassify).tools.map(_.wire), List("facets", "search"))
+    assertEquals(agent(StepAgent.EnrichClassify).tools.map(t => t.value: String), List("facets", "search"))
     assert(!agent(StepAgent.EnrichClassify).runsOn(AgentRuntime.Interactive))
 
   test("the fixer answers with edits and dry-runs them; the compile writer may lint its draft"):
     val fx = agent(StepAgent.Fixer)
-    assertEquals(fx.tools.map(_.wire), List("get_source", "passages", "neighbors", "search", "query", "check_edits"))
+    assertEquals(
+      fx.tools.map(t => t.value: String),
+      List("get_source", "passages", "neighbors", "search", "query", "check_edits")
+    )
     assertEquals(fx.maxTurns, 12, "the base; the pipeline adds turns per finding")
     val sys = d.system(fx, ToolStyle.Claude)
     assert(sys.contains("`mcp__histmersion__check_edits`") && sys.contains("Edits, not a rewrite"), sys.takeRight(3000))
@@ -46,7 +52,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
       "the fixer is told how evidence reads"
     )
     val wr = agent(StepAgent.CompileWriter)
-    assertEquals((wr.tools.map(_.wire), wr.maxTurns), (List("check_edits"), 4))
+    assertEquals((wr.tools.map(t => t.value: String), wr.maxTurns), (List("check_edits"), 4))
     assert(d.system(wr, ToolStyle.Bare).contains("check_edits"))
     // the reviewers are asked for their evidence
     for r <- List(StepAgent.Skeptic, StepAgent.RulesReviewer) do
@@ -76,7 +82,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
     val rules = agent(StepAgent.RulesReviewer)
     // facets: never called in 36 traced rules steps (2026-10-09), so no longer offered
     assertEquals(
-      rules.tools.map(_.wire),
+      rules.tools.map(t => t.value: String),
       List("get_source", "passages", "neighbors", "search", "query", "article_coverage")
     )
     val rs = d.system(rules, ToolStyle.Claude)
@@ -90,11 +96,14 @@ class AgentGeneratorSuite extends munit.FunSuite:
   test("a definition that names a tool an agent cannot have, or misses its name, is refused with why"):
     val bad =
       "---\nname: x\ndescription: d\nmodel-role: reviewer\ntools:\n  histmersion: [get_source, patch_source]\n---\nbody"
-    assert(AgentDefinitions.parse("x", bad).left.exists(_.contains("patch_source")), AgentDefinitions.parse("x", bad))
-    assert(AgentDefinitions.parse("y", bad).left.exists(_.contains("name 'x'")))
-    assert(AgentDefinitions.parse("x", "no header").isLeft)
+    assert(
+      AgentDefinitions.parse("x", bad, TransitionTools.names).left.exists(_.contains("patch_source")),
+      AgentDefinitions.parse("x", bad, TransitionTools.names)
+    )
+    assert(AgentDefinitions.parse("y", bad, TransitionTools.names).left.exists(_.contains("name 'x'")))
+    assert(AgentDefinitions.parse("x", "no header", TransitionTools.names).isLeft)
     val noRole = bad.replace("model-role: reviewer", "model-role: boss")
-    assert(AgentDefinitions.parse("x", noRole).left.exists(_.contains("model-role")))
+    assert(AgentDefinitions.parse("x", noRole, TransitionTools.names).left.exists(_.contains("model-role")))
 
   test("placeholders render per runtime"):
     val t = "call {{tool:get_source}} then {{tool:*}}"
@@ -299,7 +308,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
 
   test("the whole tree generates under a server's runtimes dir"):
     val dir = Files.createTempDirectory("hm-gen-all-")
-    val rt = CliRuntime(FakeCli.app(dir))
+    val rt = CliRuntime(FakeCli.app(dir), TransitionTools.names)
     val r = rt.trees.generate(Generated.known(rt.definitions)).fold(m => fail(m), identity)
     assertEquals(r.runtimes, List("claude-code", "codex", "opencode"))
     assert(Files.isRegularFile(dir.resolve("codex/home/article-skeptic.config.toml")))
@@ -321,7 +330,7 @@ class PluginTreeSuite extends munit.FunSuite:
       .get
 
   test("plugin/ is up to date with agents/ and skills/ (run `just plugin` when this fails)"):
-    val tree = PluginTree.tree().fold(m => fail(m), identity)
+    val tree = PluginTree.tree(TransitionTools.names).fold(m => fail(m), identity)
     val stale = tree.toList.sortBy(_._1).collect {
       case (rel, text) if !Files.isRegularFile(root.resolve(rel)) || Files.readString(root.resolve(rel)) != text => rel
     }

@@ -30,7 +30,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
     env = Map.empty
   )
   private val Sonnet = ModelRef(ProviderKind.ClaudeCode, "sonnet")
-  private val AllTools = ToolName.values.toList.map(_.wire)
+  private val AllTools = TransitionTools.names.map(_.value)
   private val Launch =
     ClaudeCode.Launch.Agent("/g/headless", "article-skeptic", "/g/roles/article-skeptic/settings.json")
 
@@ -189,10 +189,14 @@ class ClaudeCodeSuite extends munit.FunSuite:
     )
     assert(!ClaudeCodeEnv.isLoopback("0.0.0.0") && !ClaudeCodeEnv.isLoopback("192.168.1.5"))
     val dir = Files.createTempDirectory("hm-rt-")
-    val lan = CliRuntime(FakeCli.app(dir, "HISTMERSION_BIND" -> "0.0.0.0"))
+    val lan = CliRuntime(FakeCli.app(dir, "HISTMERSION_BIND" -> "0.0.0.0"), TransitionTools.names)
     assert(ClaudeCode.client(Cfg, lan, Sonnet).left.exists(_.contains("beyond loopback")))
     assert(ClaudeCode.client(Cfg.copy(allowNonLoopback = true), lan, Sonnet).isRight)
-    assert(ClaudeCode.client(Cfg, CliRuntime(FakeCli.app(dir)), ModelRef(ProviderKind.Local, "x")).isLeft)
+    assert(
+      ClaudeCode
+        .client(Cfg, CliRuntime(FakeCli.app(dir), TransitionTools.names), ModelRef(ProviderKind.Local, "x"))
+        .isLeft
+    )
 
   // ── the stream-json output ─────────────────────────────────────────────────────────────────────
 
@@ -372,7 +376,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
 
   private def runtime(sink: FakeCli.Sink): (CliRuntime, AgentDef) =
     val dir = Files.createTempDirectory("hm-agents-")
-    val rt = CliRuntime(FakeCli.app(dir))
+    val rt = CliRuntime(FakeCli.app(dir), TransitionTools.names)
     rt.pools = Some(sink)
     val gen = rt.trees.generate(Generated.known(rt.definitions), List(AgentRuntime.ClaudeCode))
     assert(gen.isRight, gen)

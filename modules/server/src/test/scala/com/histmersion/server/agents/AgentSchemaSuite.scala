@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.workflows.ToolName
+
 import com.histmersion.api.Agents.ProbeAnswer
 import com.histmersion.server.McpTools.GetSourceInput
 import com.histmersion.api.VocabularyCodecs.given
@@ -57,11 +59,11 @@ class AgentSchemaSuite extends munit.FunSuite:
     assert(List("site (", "region (", "polity (", "water (").forall(js.contains), js)
 
   test("followups as an agent tool has no apply flag"):
-    val t = Toolbox(null, () => AgentUpstream.Offline).tool(ToolName.Followups)
+    val t = TestToolbox(null).tool(TransitionTools.Followups).get
     assert(!t.rawJsonSchema.noSpaces.contains("apply"), t.rawJsonSchema.noSpaces)
 
   test("check_edits as an agent tool takes the MCP tool's input: slug, edits (op, anchor, text) or a body"):
-    val t = Toolbox(null, () => AgentUpstream.Offline).tool(ToolName.CheckEdits)
+    val t = TestToolbox(null).tool(TransitionTools.CheckEdits).get
     val js = t.rawJsonSchema.noSpaces
     assertEquals(t.name, "check_edits")
     assert(List("\"slug\"", "\"edits\"", "\"anchor\"", "\"body\"", "insertBefore").forall(js.contains), js)
@@ -75,21 +77,21 @@ class AgentSchemaSuite extends munit.FunSuite:
     )
     val draft = js(ResponseSchema.derived[com.histmersion.domain.CompileArticle.DraftAnswer]())
     assert(draft.contains("\"reasons\"") && draft.contains("you do NOT cite"), draft)
-    val t = Toolbox(null, () => AgentUpstream.Offline).tool(ToolName.ArticleCoverage)
+    val t = TestToolbox(null).tool(TransitionTools.ArticleCoverage).get
     assertEquals(t.name, "article_coverage")
     assert(t.rawJsonSchema.noSpaces.contains("\"slug\""), t.rawJsonSchema.noSpaces)
 
   // ── the agent tools ────────────────────────────────────────────────────────────────────────────
 
-  private val box = Toolbox(null, () => AgentUpstream.Offline)
-  private def schema(t: ToolName) = Toolbox.inputSchema(box.tool(t)).noSpaces
+  private val box = TestToolbox(null)
+  private def schema(t: ToolName) = Toolbox.inputSchema(box.tool(t).get).noSpaces
 
   test("an agent tool's schema carries no $schema marker and no type titles"):
-    ToolName.values.foreach { t =>
+    TransitionTools.names.foreach { t =>
       val js = schema(t)
-      assert(!js.contains("$schema") && !js.contains("\"title\":\""), s"${t.wire}: $js")
+      assert(!js.contains("$schema") && !js.contains("\"title\":\""), s"${t.value}: $js")
     }
-    assert(schema(ToolName.CheckEdits).contains("\"anchor\""), "the $defs survive, only their titles go")
+    assert(schema(TransitionTools.CheckEdits).contains("\"anchor\""), "the $defs survive, only their titles go")
 
   test("a property named title is kept"):
     val t = AgentTool.fromFunction[AgentSchemaSuite.Titled]("t", "d")(_ => "")
@@ -98,7 +100,7 @@ class AgentSchemaSuite extends munit.FunSuite:
     assert(js.hcursor.downField("title").failed, js.noSpaces)
 
   test("the agent search, facets and get_source take what steps use, mapped onto the same handlers"):
-    val search = schema(ToolName.Search)
+    val search = schema(TransitionTools.Search)
     List("\"query\"", "\"topics\"", "\"status\"", "\"limit\"", "\"offset\"").foreach(k => assert(search.contains(k), k))
     List("groupBy", "minLon", "samples", "verbose", "asOf").foreach(k => assert(!search.contains(k), k))
     val f = AgentSearchInput(
@@ -115,8 +117,8 @@ class AgentSchemaSuite extends munit.FunSuite:
       (Some("Hittite"), List("a", "b"), List("contested"), 30, 30)
     )
     assert(f.period.isDefined && f.bbox.isEmpty && f.places.isEmpty)
-    assert(!schema(ToolName.Facets).contains("minLon") && schema(ToolName.Facets).contains("\"prefix\""))
-    assert(!schema(ToolName.GetSource).contains("fullText"))
+    assert(!schema(TransitionTools.Facets).contains("minLon") && schema(TransitionTools.Facets).contains("\"prefix\""))
+    assert(!schema(TransitionTools.GetSource).contains("fullText"))
     assertEquals(AgentGetSourceInput("x").sectionOrBody, None, "no section: summary, findings and notes")
     assertEquals(AgentGetSourceInput("x", offset = Some(120)).sectionOrBody, Some("body"), "a slice reads the body")
     assertEquals(AgentGetSourceInput("x", section = Some("all"), offset = Some(120)).sectionOrBody, Some("all"))
@@ -131,7 +133,7 @@ class AgentSchemaSuite extends munit.FunSuite:
     assertEquals(decode[AgentGetSourceInput]("""{"citekey":"x","fullText":true}"""), Right(AgentGetSourceInput("x")))
     assertEquals(decode[AgentFacetsInput]("""{"field":"tags"}"""), Right(AgentFacetsInput("tags")))
     assertEquals(decode[FollowupsInput]("""{"id":"x"}"""), Right(FollowupsInput("x")))
-    val t = box.tool(ToolName.Search)
+    val t = box.tool(TransitionTools.Search).get
     assert(
       t.codec.decodeJson(io.circe.Json.obj("topics" -> io.circe.Json.arr(io.circe.Json.fromString("a")))).isRight,
       "the codec the agent endpoints decode with"

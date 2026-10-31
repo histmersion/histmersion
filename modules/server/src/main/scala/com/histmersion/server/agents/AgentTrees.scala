@@ -104,7 +104,7 @@ object AgentTrees:
   /** The definitions' fingerprint: what the trees were generated from. */
   def sha(d: AgentGenerator.Defs): String =
     Prompt.sha256(
-      (d.agents.sortBy(_.name).map(a => s"${a.name}\u0000${a.body}\u0000${a.toString}") ++
+      (d.agents.sortBy(_.name).map(a => s"${a.name}\u0000${a.body}\u0000${a.fingerprint}") ++
         d.fragments.toList.sorted.map((k, v) => s"$k\u0000$v") ++
         d.skills.toList.sortBy(_._1).map((k, s) => s"$k\u0000${s.header.mkString("\n")}\u0000${s.body}"))
         .mkString("\u0001")

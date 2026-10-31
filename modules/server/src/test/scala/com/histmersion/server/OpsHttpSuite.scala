@@ -244,7 +244,12 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
       assert(tools.size > 40, tools.toString)
       // every {{tool:x}} placeholder in the canonical agents and skills names a tool /mcp really has
       val named = com.histmersion.server.agents.Generated
-        .known(com.histmersion.server.agents.AgentDefinitions(com.histmersion.server.agents.Prompts("")))
+        .known(
+          com.histmersion.server.agents.AgentDefinitions(
+            com.histmersion.server.agents.Prompts(""),
+            com.histmersion.server.agents.TransitionTools.names
+          )
+        )
       assertEquals(named.filterNot(tools.toSet).toList.sorted, Nil, "placeholders naming no MCP tool")
       val root = Iterator
         .iterate(java.nio.file.Path.of(sys.props("user.dir")).toAbsolutePath)(_.getParent)

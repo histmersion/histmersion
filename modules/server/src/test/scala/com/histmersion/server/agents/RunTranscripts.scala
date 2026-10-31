@@ -13,8 +13,8 @@ import scala.collection.mutable
   * test's start), in every table but the bulky reference ones, plus the texts a test hands to [[note]] (the scheduler's
   * and the autopilot's answers).
   *
-  * A row is its JSON with what a run mints masked: timestamps as `TS`, UUIDs as `UUID` (a run's eight-character short form as `RUN`), serial ids as
-  * `ID` (in every column that names one; `#<n>` in a text as `#ID`), durations as `MS`. A
+  * A row is its JSON with what a run mints masked: timestamps as `TS`, UUIDs as `UUID` (a run's eight-character short
+  * form as `RUN`), serial ids as `ID` (in every column that names one; `#<n>` in a text as `#ID`), durations as `MS`. A
   * long text is its digest and length. Rows are sorted, so the order parallel steps write in does not show.
   * `HISTMERSION_UPDATE_ORACLE=1` rewrites `oracle/automation/runs/<suite>.txt`; otherwise each test's block is compared
   * with its recorded one, and the actual record is written under `target/oracle-actual/`.
@@ -37,7 +37,7 @@ trait RunTranscripts extends munit.FunSuite:
   private val blocks = mutable.LinkedHashMap.empty[String, String]
 
   /** A text the test wants in its record (a status, a decision), under `label`. */
-  protected def note(label: String, text: String): Unit = notes.synchronized { notes += s"## $label\n$text" }
+  protected def note(label: String, text: String): Unit = notes.synchronized(notes += s"## $label\n$text")
 
   private val Skipped = Set(
     "flyway_schema_history",
@@ -78,7 +78,7 @@ trait RunTranscripts extends munit.FunSuite:
             if Files.exists(recorded) then Files.readString(recorded, UTF_8) else ""
           )
           expected.get(name) match
-            case None                       => fail(s"$suiteName: no recorded transcript for '$name' in $recorded")
+            case None                            => fail(s"$suiteName: no recorded transcript for '$name' in $recorded")
             case Some(e) if e.trim != block.trim =>
               val el = e.trim.linesIterator.toVector
               val al = block.trim.linesIterator.toVector
@@ -174,8 +174,7 @@ object RunTranscripts:
       Json.fromBoolean,
       n =>
         if Durations(key) then Json.fromString("MS")
-        else if idKey(key) then
-          Json.fromString("ID")
+        else if idKey(key) then Json.fromString("ID")
         else Json.fromJsonNumber(n),
       s =>
         if key == "sha256" || (idKey(key) && s.forall(_.isDigit) && s.nonEmpty) then
@@ -190,6 +189,8 @@ object RunTranscripts:
       o =>
         val digest = o("scheme").contains(Json.fromString("sha256"))
         Json.fromJsonObject(
-          JsonObject.fromIterable(o.toList.sortBy(_._1).map((k, v) => k -> masked(v, if digest && k == "value" then "sha256" else k)))
+          JsonObject.fromIterable(
+            o.toList.sortBy(_._1).map((k, v) => k -> masked(v, if digest && k == "value" then "sha256" else k))
+          )
         )
     )
