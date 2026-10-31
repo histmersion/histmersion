@@ -1,6 +1,6 @@
 # Domain model, package by feature, first-party plugins out of the server (refactor step 3, design)
 
-Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15.** Written 2026-10-30 on master
+Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16.** Written 2026-10-30 on master
 58de5489 (branch `domain-design`); revised after the user's reviews of §3: domains above features, measured;
 `personal` with its own interface; `library`, `research`, `catalogue`, `media` named; acquisition and OCR
 dissolved (2026-10-30); automation as a generic workflow engine fed by the domains, data management and file
@@ -1905,3 +1905,109 @@ the media, AI and archive defaults resources, `KeyedConfig$`'s reader and sttp-a
 gained the collections' 27 wire records' lazy fields and `CollectionsTools$CollectionInput$` (the CLI's file the wire
 records too). No tracing agent was run: every path a plugin's new code takes is reached only by a request to an
 upstream or a model, and slice 3's tracing once reached a real service; the entries were written by hand from `javap`.
+
+## 16. Slice 5 as built (supporting areas, 2026-10-31)
+
+Branch `refactor-s5` from master 5550fa72: the oracles first, then `util.storage`, then three streams (the base map;
+settings and plugins; jobs, identity, processes and OCR), merged. `ContractSnapshotSuite` and `CliHelpSnapshotSuite`
+held byte for byte after every commit; no snapshot or oracle was rewritten after the first commit.
+
+**The oracles** (server tests, recorded on the unchanged code, `HISTMERSION_UPDATE_ORACLE=1` rewrites them):
+
+| suite | what it records | file | result |
+|---|---|---|---|
+| `RegistriesOracleSuite` | every job kind (identifier, name, pause/cancel, the subject a job of it shows for each kind of detail and for a source), the name of an unknown kind; every alias table (noun, identifier word, table and columns, the rule and the "followed" note), which bundle kind has which | `oracle/job-kinds.txt`, `oracle/alias-tables.txt` | identical; read from the registries since |
+| `DataTreeOracleSuite` (DB) | a server over one scratch root — settings changed twice, a reload, an upload converted, an acquisition spool, the base map fetched (every layer, a focus region, a regional relief), tiles read from the extracts and on demand, a focus region removed — then every path under the root, its kind and a file's size (text files with the root written `ROOT`; archives without size, their metadata carries a time) | `oracle/data-tree.txt` | identical |
+
+**`util.storage`** (server). `Location` — `IngestOriginals` (`converter.spool-dir`), `Spool` (`acquire.spool-dir`),
+`Basemap`, `Backups`, `Bundles`, `GazetteerExtracts`, `AgentHomes`, `Plugins`, `RelinkKit`, `Install`, `Logs`,
+`UserConfig`, `Scratch`; `StoreKey` (relative, no `.`/`..`, no empty segment, no backslash or NUL); `Store` (`put`
+through a reservation, `write`, `reserve` with `TempName.Fixed`/`Unique` and `throughLink`, `move`, `copy` with
+attributes, `list`, `walk`, `stat`, `delete`, `deleteTree`, `touch`, `size`, `usableSpace`, `prune` by
+`PruneRule.LeastRecentlyUsed`/`OlderThan`, `sub`); `Blob` (`open`, `bytes`, `text`, `sha256`, `readAt`, `reader()` — one
+channel reopened after an interrupt closed it, as `PmTilesFile` had it —, `mapped()`); `Reservation` (`output`,
+`writeAt`, `commit(keepPermissions)`, `discard`); `Storage` (`find`/`store`, `scratch`) on disk and `Storage.InMemory`;
+`Storage.at(location, path)` for the composition root. A store's file reaches another program only inside
+`com.histmersion.util` (`private[util] onDisk`, `onDiskFile`). `server/StorageLocations` places each location from
+today's keys at each call (Q36: no key added); `Deps.storage`. `StoreContractSuite` runs every case on disk and in
+memory.
+
+**`util.jobs`.** `values.JobKind` is a newtype; `util.jobs.JobKinds` (api, JVM and JS) holds `JobKindEntry`s — name,
+meaning (the jobs window's tooltip, moved from the web page), pause and cancel, the subject read from a job's detail.
+Wording, the jobs window, `JobActions.Stoppable`, `JobDetail.subject` and the job controls read it. Today's sixteen
+kinds are registered by the transition adapter `api.JobKindsAdapter`. The runner (`BackgroundJob`), the controls
+(`JobControlService`, `JobControlControllers`, `JobStops`, `JobControlRules`, …) and `JobRepo` (still in `db`) are in
+`util.jobs`; the runner keeps a job on its generation through `util.jobs.WorkCarrier`, which `hot.Pinning` implements.
+
+**`util.identity`.** `AliasKind` (what a record and its identifier are called) is util.identity's; `AliasTable` (a
+kind's table and columns, with the one resolution of an old identifier) and the `AliasTables` registry
+(`Deps.aliasTables`) replace `AliasRepo`'s switch. Transition adapters: `api.AliasKindsAdapter`,
+`util.identity.AliasTablesAdapter`.
+
+**`util.process`.** `Processes` (and an in-memory twin that records launches) starts a `ProcessLaunch` — command, the
+store it runs in, added variables, output piped, appended to or written to a store's file, or discarded. The bundle's
+supervisor (the converter, Postgres's tools, `sysctl`), the backup's `pg_dump`/`pg_restore` and the relocation's
+`codesign` launch through it.
+
+**`util.ocr`.** `ConverterClient`, `HttpConverterClient`, `JatsConverter`, `ConverterState`; a document is handed as a
+`Blob` (streamed with its length; an empty one as no body) and the client is told `ConverterSettings`, which
+`server/ConverterWiring` builds from `converter.*` with the one HTTP/1.1 client. The chunker and `Chunk` are in
+`util.ocr` (core).
+
+**`util.basemap`.** The 25 files of `server/basemap` with no file-system API: `BasemapService` works over
+`Store(Basemap)` (the extracts, `terrain-focus/`, the `.part` work stores, the on-demand caches as sub-stores),
+`PmTilesFile` over `Blob.reader()`, `PmTilesWriter` and the downloads over reservations (`RangeHttp.download(…, to:
+Reservation)`), `DiskLru` over a store (use is `touch`, the order `walk`'s times). `server/BasemapWiring` gives it its
+jobs (`BasemapJobs`), its retry policy (`RetryPolicy` over `HttpPolicy`), its sea-floor grid and the User-Agent;
+`UserPaths.basemapDir` places the directory.
+
+**`util.settings` and `util.plugins`.** `domain/settings/*`, `ConfigSource`, `ConfigViews`, `HotConfig` and
+`MergeSettingsViews` are in `util.settings`. The config editor stays pure in `config.edit` behind `SettingsFile`: the
+server's `StoredSettingsFile` writes through `Store(UserConfig)` (a unique temporary file beside the file — through a
+symlink —, checked with its includes as a load reads it, the `.bak` copied with its attributes, moved in keeping the
+permissions), the CLI's `LocalSettingsFile` on disk. `Plugins`, `LegacyPlugins` and `PluginSetResource` are in
+`util.plugins`; `server/ServerPlugins` supplies the built-in AI runtimes, the outbound client and the CORE quotas.
+
+**Architecture.** Deletions only: `exceptions.tsv` 714 → 633 rows — direction 420 → 393 (27, among them the job kinds'
+and alias kinds' enum cases, `JobDetail.subject`'s and `Wording`'s, `BackgroundJob → Pinning`, `Plugins →` `BuiltinAi`,
+`CoreBudget`, `HttpPlugin`, `SttpHttp`, `ConfigViews → UiConfig`/`UiSettings`, the converter's `ConverterConfig` and
+`Version`, `BasemapService → Deps`/`SeaFloorSource`, `JavaRangeHttp → Version`/`HttpPolicy`, the two `Chunk` rows),
+file system 132 → 85 (47 rows, 157 uses: the base map 116, settings and plugins, the converter, `MediaHandlers`,
+`BackupService`'s `.toFile`), process 7 → 4 (`Supervisor`, `BackupService`, `PgRelocation`), repository 155 → 151
+(`AliasRepo`'s four users). `places.tsv` lost 57 rows and gained 8 for new files outside a feature package
+(`StorageLocations`, `BasemapWiring`, `ServerPlugins`, `ConverterWiring` — the composition root; `UiConfigViews` —
+`server.instance`; `config/edit/SettingsFile` — `util.settings`; the two api adapters — `api`, as `Api.all` is).
+
+**Deviations.**
+
+- Locations: only what is on disk today. Pictures, thumbnails and figures are rows of the database, and the map tiles'
+  cache is the base map's sub-store, so `Assets`, `Thumbnails`, `Figures`, `TileCache` and `Exports` (a directory the
+  caller names) are not locations. `Install` and `Logs` were added for the supervisor; `Originals` is
+  `IngestOriginals` because `db.Originals` already names a type.
+- The file code of `util.data` (backups, bundles, relocation, the storage probe), of the domains (ingest, the acquire
+  spool, gazetteer extracts, agent trees) and `files` (`SafePath`, `DirSize`, notes) stays for their slices (6–10): the
+  storage handles exist for them. `server/acquire/Spool` stays where it is: it hands a path to the ingest queue, which
+  slice 10 moves to stores.
+- The agents' command-line runtimes (`CliProcess`, `CodexHome`, `PlanPools`, `AgentDoctor`) keep `ProcessBuilder` until
+  they move to `plugins/ai-cli` (slice 12, SPI-9).
+- `JobDetail` and `ResolvedId` keep their per-kind fields (four and two rows): they are the wire contract.
+- The registries' api parts (`JobKinds`, `AliasKind`) are in `util.jobs`/`util.identity` packages of the api module,
+  because the web page and the CLI read them; `JobRepo` stays in the `db` module, in package `util.jobs`.
+- A job's subject is the first registered reading of its detail; a job's detail holds one kind's fields, so the order
+  of the old chain cannot show.
+- `RelinkPlugins` and the `pluginTool` main stay in `server.plugins` (the kit's main class, the tool exemption);
+  `config/UserConfigFile` keeps its `Option[Path]` (config loading reads it as a path).
+- `BasemapService` stays a class (not yet a service trait with `InMemory`); a log line of the on-demand cache names
+  the store's path; the base map's in-flight files are `<name>.tmp`.
+- `WriteOutcome`, `SettingsSnapshot` name the settings file as a string, as messages do.
+
+**Native image.** Renamed: `JobRow$` (`util.jobs`), the base map's `OnDemandTiles` and `Vp8l$Group[]`; removed:
+`BasemapStyles` and `ConfigViews$`'s Chimney given; added: `Deps.storage$lzy1` (read with `javap`). No other new
+`$lzy` field or derived codec in the moved or new classes (`javap -p` over every class of the new packages). No
+tracing-agent run: every new path is a file or process operation, none reflective. To check at the bundle:
+`--self-check`; `smoke.sh` (first run, settings, reload, OCR); the base map's fetch and tiles; the settings page with a
+symlinked file; `histmersion config set` natively; a relink.
+
+**Tests.** After `sbt clean`, `just test-quick` with every module named, on a throwaway database: 4 902 tests, none
+failed (2 skipped, 1 ignored). The DB-gated oracle and the suites of the moved areas ran uncached.
+
