@@ -1,0 +1,1187 @@
+# the session
+{
+  "bundle" : "BUNDLE-WHOLE",
+  "resolutions" : {
+    "bundle" : null,
+    "policy" : {
+      "editions" : null
+    },
+    "resolve" : [
+      {
+        "decision" : "keep-right",
+        "issue" : "S-issue:zzalpha2001_storm",
+        "text" : null
+      },
+      {
+        "decision" : "keep-right",
+        "issue" : "A-issue:zz_storm",
+        "text" : null
+      }
+    ]
+  },
+  "updatedAt" : "TS"
+}
+# the plan
+{
+  "asOf" : "TS",
+  "bundleId" : "UUID",
+  "changes" : 15,
+  "formatVersion" : 1,
+  "from" : {
+    "id" : "instance:work",
+    "label" : "work"
+  },
+  "info" : [
+    "article zz_kingdom: changed on both sides, merged three-way without a conflict — queued for review"
+  ],
+  "into" : {
+    "id" : "instance:home",
+    "label" : null
+  },
+  "issues" : [
+    {
+      "condition" : null,
+      "decidedBy" : "resolution",
+      "decision" : "keep-right",
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "citekey",
+            "left" : "zzalpha2001_storm",
+            "right" : "zzalpha2001_storm"
+          },
+          {
+            "field" : "title",
+            "left" : "The Storm God",
+            "right" : "The Storm God"
+          },
+          {
+            "field" : "authors",
+            "left" : "Doe, Jane",
+            "right" : "Doe, Jane"
+          },
+          {
+            "field" : "year",
+            "left" : "2001",
+            "right" : "2001"
+          },
+          {
+            "field" : "DOI",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "venue",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "status",
+            "left" : "current",
+            "right" : "current"
+          },
+          {
+            "field" : "period",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "tags",
+            "left" : "zz-oracle",
+            "right" : "zz-oracle"
+          },
+          {
+            "field" : "summary",
+            "left" : "edited at home",
+            "right" : "edited at work"
+          },
+          {
+            "field" : "notes",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "OCR body",
+            "left" : "sha256 28ae1f725e71…",
+            "right" : "sha256 28ae1f725e71…"
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "source",
+      "id" : "S-issue:zzalpha2001_storm",
+      "kind" : "changed-both-sides",
+      "left" : {
+        "label" : "zzalpha2001_storm",
+        "lines" : [
+        ],
+        "uid" : "source:zzalpha2001_storm"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right"
+      ],
+      "right" : {
+        "label" : "zzalpha2001_storm",
+        "lines" : [
+        ],
+        "uid" : "source:zzalpha2001_storm"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "changed on both sides since the last import",
+      "why" : [
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : "resolution",
+      "decision" : "keep-right",
+      "detail" : {
+        "fields" : [
+        ],
+        "place" : null,
+        "text" : {
+          "base" : "Intro [[zzalpha2001_storm]].\n\nMiddle part.\n\nEnd.",
+          "hunks" : [
+            {
+              "base" : [
+              ],
+              "conflict" : false,
+              "left" : [
+                "Intro [[zzalpha2001_storm]].",
+                ""
+              ],
+              "right" : [
+              ]
+            },
+            {
+              "base" : [
+                "Middle part."
+              ],
+              "conflict" : true,
+              "left" : [
+                "Middle part, at home."
+              ],
+              "right" : [
+                "Middle part, at work."
+              ]
+            },
+            {
+              "base" : [
+              ],
+              "conflict" : false,
+              "left" : [
+                "",
+                "End."
+              ],
+              "right" : [
+              ]
+            }
+          ],
+          "left" : "Intro [[zzalpha2001_storm]].\n\nMiddle part, at home.\n\nEnd.",
+          "right" : "Intro [[zzalpha2001_storm]].\n\nMiddle part, at work.\n\nEnd."
+        }
+      },
+      "entity" : "article",
+      "id" : "A-issue:zz_storm",
+      "kind" : "changed-both-sides",
+      "left" : {
+        "label" : "zz_storm",
+        "lines" : [
+        ],
+        "uid" : "article:zz_storm"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right",
+        "both",
+        "file"
+      ],
+      "right" : {
+        "label" : "zz_storm",
+        "lines" : [
+        ],
+        "uid" : "article:zz_storm"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "changed on both sides since a common version: 1 conflicting region",
+      "why" : [
+      ]
+    }
+  ],
+  "matches" : {
+    "byLedger" : 0,
+    "byScore" : 0,
+    "byStrongKey" : 0,
+    "byUid" : 3,
+    "deletedHere" : 0,
+    "sources" : 4,
+    "undecided" : 0,
+    "unmatched" : 1
+  },
+  "planHash" : "DIGEST",
+  "problems" : [
+  ],
+  "resolutionErrors" : [
+  ],
+  "resolved" : 2,
+  "schemaVersion" : "109",
+  "sources" : [
+    {
+      "issue" : null,
+      "leftCitekey" : null,
+      "leftUid" : null,
+      "method" : "unmatched",
+      "outcome" : "new",
+      "rightCitekey" : "zzdelta2020_new",
+      "rightUid" : "source:zzdelta2020_new",
+      "score" : null,
+      "why" : [
+      ]
+    }
+  ]
+}
+# the resolution file and how it reads back
+# resolutions for bundle UUID from work — plan PLAN
+# left = this collection (here), right = the bundle. An id with no value is still open.
+# Use with: histmersion merge plan <bundle> --resolutions <this file>
+bundle: UUID
+policy:
+  # editions: merge        # every year-gap question at once: merge | separate
+resolve:
+  S-issue:zzalpha2001_storm: keep-right    # source — changed on both sides since the last import
+  A-issue:zz_storm: keep-right    # article — changed on both sides since a common version: 1 conflicting region
+
+{"resolve":[{"issue":"A-issue:zz_storm","decision":"keep-right","text":null},{"issue":"S-issue:zzalpha2001_storm","decision":"keep-right","text":null}],"policy":{"editions":null},"bundle":"UUID"}
+# applied
+{
+  "bundle" : "BUNDLE-WHOLE",
+  "elapsedMs" : "N",
+  "error" : null,
+  "job" : "UUID",
+  "planHash" : "DIGEST",
+  "result" : {
+    "applied" : true,
+    "backup" : "histmersion-STAMP.dump",
+    "bundleId" : "UUID",
+    "counts" : [
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 1,
+        "keptLocal" : 0,
+        "kind" : "source",
+        "skippedDeleted" : 0,
+        "unchanged" : 1,
+        "updated" : 2
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 2,
+        "keptLocal" : 0,
+        "kind" : "finding",
+        "skippedDeleted" : 0,
+        "unchanged" : 1,
+        "updated" : 2
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "article",
+        "skippedDeleted" : 0,
+        "unchanged" : 0,
+        "updated" : 2
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 3,
+        "keptLocal" : 0,
+        "kind" : "article-version",
+        "skippedDeleted" : 0,
+        "unchanged" : 1,
+        "updated" : 0
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "asset",
+        "skippedDeleted" : 0,
+        "unchanged" : 2,
+        "updated" : 0
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "attestation",
+        "skippedDeleted" : 0,
+        "unchanged" : 1,
+        "updated" : 0
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 1,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "event",
+        "skippedDeleted" : 0,
+        "unchanged" : 1,
+        "updated" : 0
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 1,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "goal",
+        "skippedDeleted" : 0,
+        "unchanged" : 1,
+        "updated" : 0
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 1,
+        "keptLocal" : 0,
+        "kind" : "queue-item",
+        "skippedDeleted" : 0,
+        "unchanged" : 3,
+        "updated" : 0
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "place",
+        "skippedDeleted" : 0,
+        "unchanged" : 1,
+        "updated" : 0
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "period",
+        "skippedDeleted" : 0,
+        "unchanged" : 1,
+        "updated" : 0
+      }
+    ],
+    "from" : {
+      "id" : "instance:work",
+      "label" : "work"
+    },
+    "issues" : [
+    ],
+    "logEntry" : 7,
+    "mergeId" : "UUID",
+    "notes" : [
+    ],
+    "planHash" : "DIGEST",
+    "problems" : [
+    ],
+    "replanChanges" : 0,
+    "reviews" : [
+      "zz_kingdom",
+      "zz_storm"
+    ],
+    "tally" : {
+      "aliases" : 0,
+      "articlesBoth" : 0,
+      "articlesFastForward" : 0,
+      "articlesFromFile" : 0,
+      "articlesThreeWay" : 1,
+      "assetsMerged" : 0,
+      "attestationsDropped" : 0,
+      "attestationsReanchored" : 0,
+      "eventsMerged" : 0,
+      "findingsMerged" : 0,
+      "goalsMerged" : 0,
+      "periodsMerged" : 0,
+      "placesMerged" : 0,
+      "queueMerged" : 0,
+      "redirects" : 0,
+      "selfLoopsDropped" : 0,
+      "sourcesByScore" : 0,
+      "sourcesMerged" : 0,
+      "sourcesRenamed" : 0
+    }
+  },
+  "state" : "done"
+}
+# merges
+[
+  {
+    "appliedAt" : "TS",
+    "backup" : "histmersion-STAMP.dump",
+    "bundleId" : "UUID",
+    "bundleSha256" : "BUNDLE-WHOLE",
+    "from" : {
+      "id" : "instance:work",
+      "label" : "work"
+    },
+    "id" : "UUID",
+    "ledgerRows" : 15,
+    "planHash" : "DIGEST",
+    "redirects" : 0
+  },
+  {
+    "appliedAt" : "TS",
+    "backup" : null,
+    "bundleId" : "UUID",
+    "bundleSha256" : "BUNDLE-FIRST",
+    "from" : {
+      "id" : "instance:work",
+      "label" : "work"
+    },
+    "id" : "UUID",
+    "ledgerRows" : 13,
+    "planHash" : null,
+    "redirects" : 0
+  }
+]
+# the merge
+{
+  "applied" : {
+    "applied" : true,
+    "backup" : "histmersion-STAMP.dump",
+    "bundleId" : "UUID",
+    "counts" : [
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 1,
+        "keptLocal" : 0,
+        "kind" : "source",
+        "skippedDeleted" : 0,
+        "unchanged" : 1,
+        "updated" : 2
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 2,
+        "keptLocal" : 0,
+        "kind" : "finding",
+        "skippedDeleted" : 0,
+        "unchanged" : 1,
+        "updated" : 2
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "article",
+        "skippedDeleted" : 0,
+        "unchanged" : 0,
+        "updated" : 2
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 3,
+        "keptLocal" : 0,
+        "kind" : "article-version",
+        "skippedDeleted" : 0,
+        "unchanged" : 1,
+        "updated" : 0
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "asset",
+        "skippedDeleted" : 0,
+        "unchanged" : 2,
+        "updated" : 0
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "attestation",
+        "skippedDeleted" : 0,
+        "unchanged" : 1,
+        "updated" : 0
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 1,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "event",
+        "skippedDeleted" : 0,
+        "unchanged" : 1,
+        "updated" : 0
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 1,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "goal",
+        "skippedDeleted" : 0,
+        "unchanged" : 1,
+        "updated" : 0
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 1,
+        "keptLocal" : 0,
+        "kind" : "queue-item",
+        "skippedDeleted" : 0,
+        "unchanged" : 3,
+        "updated" : 0
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "place",
+        "skippedDeleted" : 0,
+        "unchanged" : 1,
+        "updated" : 0
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "period",
+        "skippedDeleted" : 0,
+        "unchanged" : 1,
+        "updated" : 0
+      }
+    ],
+    "from" : {
+      "id" : "instance:work",
+      "label" : "work"
+    },
+    "issues" : [
+    ],
+    "logEntry" : null,
+    "mergeId" : null,
+    "notes" : [
+    ],
+    "planHash" : "DIGEST",
+    "problems" : [
+    ],
+    "replanChanges" : null,
+    "reviews" : [
+    ],
+    "tally" : {
+      "aliases" : 0,
+      "articlesBoth" : 0,
+      "articlesFastForward" : 0,
+      "articlesFromFile" : 0,
+      "articlesThreeWay" : 1,
+      "assetsMerged" : 0,
+      "attestationsDropped" : 0,
+      "attestationsReanchored" : 0,
+      "eventsMerged" : 0,
+      "findingsMerged" : 0,
+      "goalsMerged" : 0,
+      "periodsMerged" : 0,
+      "placesMerged" : 0,
+      "queueMerged" : 0,
+      "redirects" : 0,
+      "selfLoopsDropped" : 0,
+      "sourcesByScore" : 0,
+      "sourcesMerged" : 0,
+      "sourcesRenamed" : 0
+    }
+  },
+  "imported" : null,
+  "merge" : {
+    "appliedAt" : "TS",
+    "backup" : "histmersion-STAMP.dump",
+    "bundleId" : "UUID",
+    "bundleSha256" : "BUNDLE-WHOLE",
+    "from" : {
+      "id" : "instance:work",
+      "label" : "work"
+    },
+    "id" : "UUID",
+    "ledgerRows" : 15,
+    "planHash" : "DIGEST",
+    "redirects" : 0
+  },
+  "remembered" : [
+    {
+      "decision" : "keep-right",
+      "issue" : "A-issue:zz_storm",
+      "text" : null
+    },
+    {
+      "decision" : "keep-right",
+      "issue" : "S-issue:zzalpha2001_storm",
+      "text" : null
+    }
+  ],
+  "resolutions" : {
+    "bundle" : null,
+    "policy" : {
+      "editions" : null
+    },
+    "resolve" : [
+      {
+        "decision" : "keep-right",
+        "issue" : "S-issue:zzalpha2001_storm",
+        "text" : null
+      },
+      {
+        "decision" : "keep-right",
+        "issue" : "A-issue:zz_storm",
+        "text" : null
+      }
+    ]
+  }
+}
+# the ledger
+{
+  "entries" : [
+    {
+      "decision" : "FastForward",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "source:zzalpha2001_storm",
+      "kind" : "source",
+      "label" : "zzalpha2001_storm",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "source:zzalpha2001_storm",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "FastForward",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "finding:zzalpha2001_storm#1",
+      "kind" : "finding",
+      "label" : "zzalpha2001_storm#1",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "finding:zzalpha2001_storm#1",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "FastForward",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "source:zzbeta2005_hittites",
+      "kind" : "source",
+      "label" : "zzbeta2005_hittites",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "source:zzbeta2005_hittites",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "FastForward",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "finding:zzbeta2005_hittites#1",
+      "kind" : "finding",
+      "label" : "zzbeta2005_hittites#1",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "finding:zzbeta2005_hittites#1",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "FastForward",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "article:zz_storm",
+      "kind" : "article",
+      "label" : "zz_storm",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "article:zz_storm",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "FastForward",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "article:zz_kingdom",
+      "kind" : "article",
+      "label" : "zz_kingdom",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "article:zz_kingdom",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Delete",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "tombstone:goal",
+      "kind" : "goal",
+      "label" : null,
+      "localRevAfter" : null,
+      "localUid" : "tombstone:goal",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Delete",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "tombstone:event",
+      "kind" : "event",
+      "label" : null,
+      "localRevAfter" : null,
+      "localUid" : "tombstone:event",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "finding:zzalpha2001_storm#3",
+      "kind" : "finding",
+      "label" : "zzalpha2001_storm#3",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "finding:zzalpha2001_storm#3",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "UUID",
+      "kind" : "article-version",
+      "label" : null,
+      "localRevAfter" : "DIGEST",
+      "localUid" : "UUID",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "UUID",
+      "kind" : "article-version",
+      "label" : null,
+      "localRevAfter" : "DIGEST",
+      "localUid" : "UUID",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "UUID",
+      "kind" : "article-version",
+      "label" : null,
+      "localRevAfter" : "DIGEST",
+      "localUid" : "UUID",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "source:zzdelta2020_new",
+      "kind" : "source",
+      "label" : "zzdelta2020_new",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "source:zzdelta2020_new",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "finding:zzdelta2020_new#1",
+      "kind" : "finding",
+      "label" : "zzdelta2020_new#1",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "finding:zzdelta2020_new#1",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "queue:tasks:a task work added",
+      "kind" : "queue-item",
+      "label" : "a task work added",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "queue:tasks:a task work added",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "finding:zzalpha2001_storm#2",
+      "kind" : "finding",
+      "label" : "zzalpha2001_storm#2",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "finding:zzalpha2001_storm#2",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "source:zzgamma1903_prolegomena",
+      "kind" : "source",
+      "label" : "zzgamma1903_prolegomena",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "source:zzgamma1903_prolegomena",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "UUID",
+      "kind" : "article-version",
+      "label" : null,
+      "localRevAfter" : "DIGEST",
+      "localUid" : "UUID",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "goal:zz_goal",
+      "kind" : "goal",
+      "label" : "zz_goal",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "goal:zz_goal",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "place:zz_site",
+      "kind" : "place",
+      "label" : "zz_site",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "place:zz_site",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "period:zz_period",
+      "kind" : "period",
+      "label" : "zz_period",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "period:zz_period",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "event:zz_event",
+      "kind" : "event",
+      "label" : "zz_event",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "event:zz_event",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "asset:zzalpha2001_storm/fig1.png",
+      "kind" : "asset",
+      "label" : "fig1.png",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "asset:zzalpha2001_storm/fig1.png",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "asset:zzalpha2001_storm/fig2.png",
+      "kind" : "asset",
+      "label" : "fig2.png",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "asset:zzalpha2001_storm/fig2.png",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "attestation:zzalpha2001_storm:zz_site",
+      "kind" : "attestation",
+      "label" : null,
+      "localRevAfter" : "DIGEST",
+      "localUid" : "attestation:zzalpha2001_storm:zz_site",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "queue:tasks:check the storm god",
+      "kind" : "queue-item",
+      "label" : "check the storm god",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "queue:tasks:check the storm god",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "queue:log:crafted the oracle",
+      "kind" : "queue-item",
+      "label" : "crafted the oracle",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "queue:log:crafted the oracle",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "queue:acquire:Doe, The Lost Book (1900)",
+      "kind" : "queue-item",
+      "label" : "Doe, The Lost Book (1900)",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "queue:acquire:Doe, The Lost Book (1900)",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    }
+  ],
+  "query" : null,
+  "redirects" : [
+  ]
+}
+# home's rows
+## acquire_checks 0 rows
+## agent_allowances 0 rows
+## agent_autopilot 1 rows
+{ "changed_at" : "TS", "changed_by" : "", "drain_by" : null, "drain_since" : null, "drained_at" : null, "enabled" : false, "id" : true, "last_backup_at" : null, "last_digest_at" : null, "last_ensure_at" : null, "last_lint_at" : null, "max_active_goals" : null, "paused" : [ ], "scheduler_at" : null, "scheduler_by" : null, "scheduler_strategy" : null }
+## agent_leases 0 rows
+## agent_managers 0 rows
+## agent_messages 0 rows
+## agent_role_chains 0 rows
+## agent_role_fallthrough 0 rows
+## agent_state 0 rows
+## agent_steps 0 rows
+## alias_tombstones 0 rows
+## approvals 0 rows
+## article_aliases 0 rows
+## article_critique_reasons 0 rows
+## article_links 2 rows
+{ "src_slug" : "zz_kingdom", "target" : "zzbeta2005_hittites", "target_kind" : "source" }
+{ "src_slug" : "zz_storm", "target" : "zzalpha2001_storm", "target_kind" : "source" }
+## article_versions 9 rows
+{ "body" : "Intro [[zzalpha2001_storm]].\n\nMiddle part.\n\nEnd.", "created_at" : "TS", "id" : 2, "origin" : "instance:home", "slug" : "zz_storm", "summary" : null, "uid" : "UUID", "updated_at" : "TS" }
+{ "body" : "Intro [[zzalpha2001_storm]].\n\nMiddle part.\n\nEnd.", "created_at" : "TS", "id" : 7, "origin" : "instance:work", "slug" : "zz_storm", "summary" : null, "uid" : "UUID", "updated_at" : "TS" }
+{ "body" : "Intro [[zzalpha2001_storm]].\n\nMiddle.\n\nEnd.", "created_at" : "TS", "id" : 1, "origin" : "instance:work", "slug" : "zz_storm", "summary" : null, "uid" : "UUID", "updated_at" : "TS" }
+{ "body" : "One (work) [[zzbeta2005_kingdom]].\n\nTwo.", "created_at" : "TS", "id" : 6, "origin" : "instance:home", "slug" : "zz_kingdom", "summary" : null, "uid" : "UUID", "updated_at" : "TS" }
+{ "body" : "One [[zzbeta2005_hittites]].\n\nTwo (home).", "created_at" : "TS", "id" : 5, "origin" : "instance:home", "slug" : "zz_kingdom", "summary" : null, "uid" : "UUID", "updated_at" : "TS" }
+{ "body" : "One [[zzbeta2005_hittites]].\n\nTwo.", "created_at" : "TS", "id" : 9, "origin" : "instance:work", "slug" : "zz_kingdom", "summary" : null, "uid" : "UUID", "updated_at" : "TS" }
+{ "body" : "One [[zzbeta2005_kingdom]].\n\nTwo (home).", "created_at" : "TS", "id" : 4, "origin" : "instance:home", "slug" : "zz_kingdom", "summary" : null, "uid" : "UUID", "updated_at" : "TS" }
+{ "body" : "One [[zzbeta2005_kingdom]].\n\nTwo.", "created_at" : "TS", "id" : 3, "origin" : "instance:home", "slug" : "zz_kingdom", "summary" : null, "uid" : "UUID", "updated_at" : "TS" }
+{ "body" : "One [[zzbeta2005_kingdom]].\n\nTwo.", "created_at" : "TS", "id" : 8, "origin" : "instance:work", "slug" : "zz_kingdom", "summary" : null, "uid" : "UUID", "updated_at" : "TS" }
+## articles 2 rows
+{ "body" : "Intro [[zzalpha2001_storm]].\n\nMiddle part, at work.\n\nEnd.", "coverage_filter" : null, "coverage_reasons" : {  }, "kind" : "concept", "origin" : "instance:work", "period" : null, "regions" : [ ], "slug" : "zz_storm", "summary" : null, "tags" : [ ], "title" : "Storm gods", "tsv" : "'end':10C 'god':2A 'intro':3C 'middl':6C 'part':7C 'storm':1A,5C 'work':9C 'zzalpha2001':4C", "uid" : "article:zz_storm", "updated_at" : "TS" }
+{ "body" : "One (work) [[zzbeta2005_kingdom]].\n\nTwo (home).", "coverage_filter" : null, "coverage_reasons" : {  }, "kind" : "culture", "origin" : "instance:work", "period" : null, "regions" : [ ], "slug" : "zz_kingdom", "summary" : null, "tags" : [ ], "title" : "Kingdoms", "tsv" : "'home':7C 'kingdom':1A,5C 'one':2C 'two':6C 'work':3C 'zzbeta2005':4C", "uid" : "article:zz_kingdom", "updated_at" : "TS" }
+## assessments 0 rows
+## asset_links 0 rows
+## assets 2 rows
+{ "author" : null, "bytes" : "\\x89504e470d0a1a0a010101", "caption" : null, "citekey" : "zzalpha2001_storm", "credit" : null, "geom" : null, "height" : null, "kind" : null, "license" : null, "license_url" : null, "mime" : "image/png", "name" : "fig1.png", "origin" : "instance:work", "original_url" : null, "period" : null, "provider" : null, "provider_key" : null, "retrieved_at" : null, "sha256" : "672de25c8bf800614c8aa27bfcfaedfce790c51f1eb4d1f442961587717da9bf", "source_url" : null, "thumb" : null, "thumb_height" : null, "thumb_mime" : null, "thumb_width" : null, "uid" : "asset:zzalpha2001_storm/fig1.png", "updated_at" : "TS", "width" : null }
+{ "author" : null, "bytes" : "\\x89504e470d0a1a0a020202", "caption" : null, "citekey" : "zzalpha2001_storm", "credit" : null, "geom" : null, "height" : null, "kind" : null, "license" : null, "license_url" : null, "mime" : "image/png", "name" : "fig2.png", "origin" : "instance:work", "original_url" : null, "period" : null, "provider" : null, "provider_key" : null, "retrieved_at" : null, "sha256" : "a36d780e393de111736aaddea84425341d8b74110719e7d4f9f1de0d6670cb3f", "source_url" : null, "thumb" : null, "thumb_height" : null, "thumb_mime" : null, "thumb_width" : null, "uid" : "asset:zzalpha2001_storm/fig2.png", "updated_at" : "TS", "width" : null }
+## attestations 1 rows
+{ "canvas" : null, "char_end" : 10, "char_start" : 0, "chunk_ord" : null, "citekey" : "zzalpha2001_storm", "created_at" : "TS", "cts_urn" : null, "id" : 1, "note" : null, "origin" : "instance:work", "page" : null, "prefix" : null, "quote" : "Alpha body", "suffix" : null, "target_id" : "zz_site", "target_type" : "place", "uid" : "attestation:zzalpha2001_storm:zz_site", "updated_at" : "TS", "xywh" : null }
+## bookmarks 0 rows
+## candidate_watches 0 rows
+## corrections 0 rows
+## edges 1 rows
+{ "dst" : "zzbeta2005_hittites", "kind" : "references", "src" : "zzalpha2001_storm" }
+## event_aliases 0 rows
+## event_catalogue 0 rows
+## event_datings 0 rows
+## event_edges 0 rows
+## event_import_parts 0 rows
+## event_link_candidates 0 rows
+## event_link_checks 0 rows
+## event_participants 0 rows
+## events 1 rows
+{ "begin_by" : null, "catalogue" : null, "central" : null, "citekey" : null, "dating_method" : null, "description" : null, "end_from" : null, "geom" : null, "historicity" : "attested", "id" : "zz_event", "inner_span" : null, "kind" : "battle", "label" : "A storm at the hill", "names" : [ ], "not_after" : -1290, "not_before" : -1300, "origin" : "instance:work", "outer_span" : "[-1300,-1289)", "parent_id" : null, "place_id" : "zz_site", "plus_minus" : null, "scale" : null, "uid" : "event:zz_event", "uncertainty" : 5, "updated_at" : "TS", "wikidata" : null }
+## finding_places 3 rows
+{ "finding_id" : "zzalpha2001_storm#1", "place_id" : "zz_site" }
+{ "finding_id" : "zzbeta2005_hittites#1", "place_id" : "zz_site" }
+{ "finding_id" : "zzdelta2020_new#1", "place_id" : "zz_site" }
+## findings 5 rows
+{ "citekey" : "zzalpha2001_storm", "claim" : "Hattusa burned around 1180 BC", "confidence" : "high", "geom" : { "coordinates" : [ 35.6, 40 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "id" : "zzalpha2001_storm#2", "origin" : "instance:work", "period" : "[-1400,-1199)", "period_name" : "LBA", "region_name" : "Anatolia", "significance" : null, "tags" : [ "oracle" ], "uid" : "finding:zzalpha2001_storm#2", "updated_at" : "TS" }
+{ "citekey" : "zzalpha2001_storm", "claim" : "a third claim, work's", "confidence" : "high", "geom" : { "coordinates" : [ 36.6, 40 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "id" : "zzalpha2001_storm#3", "origin" : "instance:work", "period" : "[-1400,-1199)", "period_name" : "LBA", "region_name" : "Anatolia", "significance" : null, "tags" : [ "oracle" ], "uid" : "finding:zzalpha2001_storm#3", "updated_at" : "TS" }
+{ "citekey" : "zzalpha2001_storm", "claim" : "the storm god of Hatti is Tarhunna of Arinna", "confidence" : "high", "geom" : { "coordinates" : [ 34.6, 40 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "id" : "zzalpha2001_storm#1", "origin" : "instance:work", "period" : "[-1400,-1199)", "period_name" : "LBA", "region_name" : "Anatolia", "significance" : null, "tags" : [ "oracle" ], "uid" : "finding:zzalpha2001_storm#1", "updated_at" : "TS" }
+{ "citekey" : "zzbeta2005_hittites", "claim" : "a kingdom in central Anatolia", "confidence" : "high", "geom" : { "coordinates" : [ 34.6, 40 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "id" : "zzbeta2005_hittites#1", "origin" : "instance:work", "period" : "[-1400,-1199)", "period_name" : "LBA", "region_name" : "Anatolia", "significance" : null, "tags" : [ "oracle" ], "uid" : "finding:zzbeta2005_hittites#1", "updated_at" : "TS" }
+{ "citekey" : "zzdelta2020_new", "claim" : "new at work", "confidence" : "high", "geom" : { "coordinates" : [ 34.6, 40 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "id" : "zzdelta2020_new#1", "origin" : "instance:work", "period" : "[-1400,-1199)", "period_name" : "LBA", "region_name" : "Anatolia", "significance" : null, "tags" : [ "oracle" ], "uid" : "finding:zzdelta2020_new#1", "updated_at" : "TS" }
+## flyway_schema_history 95 rows
+## gazetteer_sources 0 rows
+## goal_aliases 0 rows
+## goal_focus 0 rows
+## goal_links 0 rows
+## goal_schedules 0 rows
+## goals 1 rows
+{ "budget_usd" : null, "created_at" : "TS", "notes" : null, "origin" : "instance:work", "parent_slug" : null, "period" : null, "plan" : null, "plan_approved_at" : null, "regions" : [ ], "slug" : "zz_goal", "status" : "planned", "tags" : [ ], "title" : "Know the storm gods", "uid" : "goal:zz_goal", "updated_at" : "TS" }
+## instance 1 rows
+{ "created_at" : "TS", "id" : "instance:home", "label" : null, "singleton" : true }
+## jobs 1 rows
+{ "acquire_item" : null, "budget_tokens" : null, "budget_usd" : null, "citekey" : null, "created_at" : "TS", "detail" : { "about" : null, "eventImport" : null, "eventRederive" : null, "events" : null, "init" : null, "media" : null, "planHash" : "DIGEST", "recheck" : null, "skippedPeriodCount" : 0, "skippedPeriods" : [ ], "vacuum" : null }, "dry_run" : false, "error" : null, "goal_slug" : null, "heartbeat_at" : null, "id" : "UUID", "kind" : "merge-apply", "manager_id" : null, "manager_item" : null, "model" : null, "origin" : null, "params" : {  }, "parent_job" : null, "pipeline" : null, "pipeline_version" : null, "progress" : null, "result" : { "applied" : true, "backup" : "histmersion-STAMP.dump", "bundleId" : "UUID", "counts" : [ { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 1, "keptLocal" : 0, "kind" : "source", "skippedDeleted" : 0, "unchanged" : 1, "updated" : 2 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 2, "keptLocal" : 0, "kind" : "finding", "skippedDeleted" : 0, "unchanged" : 1, "updated" : 2 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 0, "keptLocal" : 0, "kind" : "article", "skippedDeleted" : 0, "unchanged" : 0, "updated" : 2 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 3, "keptLocal" : 0, "kind" : "article-version", "skippedDeleted" : 0, "unchanged" : 1, "updated" : 0 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 0, "keptLocal" : 0, "kind" : "asset", "skippedDeleted" : 0, "unchanged" : 2, "updated" : 0 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 0, "keptLocal" : 0, "kind" : "attestation", "skippedDeleted" : 0, "unchanged" : 1, "updated" : 0 }, { "conflicts" : 0, "deleted" : 1, "held" : 0, "inserted" : 0, "keptLocal" : 0, "kind" : "event", "skippedDeleted" : 0, "unchanged" : 1, "updated" : 0 }, { "conflicts" : 0, "deleted" : 1, "held" : 0, "inserted" : 0, "keptLocal" : 0, "kind" : "goal", "skippedDeleted" : 0, "unchanged" : 1, "updated" : 0 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 1, "keptLocal" : 0, "kind" : "queue-item", "skippedDeleted" : 0, "unchanged" : 3, "updated" : 0 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 0, "keptLocal" : 0, "kind" : "place", "skippedDeleted" : 0, "unchanged" : 1, "updated" : 0 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 0, "keptLocal" : 0, "kind" : "period", "skippedDeleted" : 0, "unchanged" : 1, "updated" : 0 } ], "from" : { "id" : "instance:work", "label" : "work" }, "issues" : [ ], "logEntry" : 7, "mergeId" : "UUID", "notes" : [ ], "planHash" : "DIGEST", "problems" : [ ], "replanChanges" : 0, "reviews" : [ "zz_kingdom", "zz_storm" ], "tally" : { "aliases" : 0, "articlesBoth" : 0, "articlesFastForward" : 0, "articlesFromFile" : 0, "articlesThreeWay" : 1, "assetsMerged" : 0, "attestationsDropped" : 0, "attestationsReanchored" : 0, "eventsMerged" : 0, "findingsMerged" : 0, "goalsMerged" : 0, "periodsMerged" : 0, "placesMerged" : 0, "queueMerged" : 0, "redirects" : 0, "selfLoopsDropped" : 0, "sourcesByScore" : 0, "sourcesMerged" : 0, "sourcesRenamed" : 0 } }, "resume_at" : null, "sha256" : "BUNDLE-WHOLE", "status" : "done", "target_id" : null, "target_kind" : null, "updated_at" : "TS", "warnings" : [ ] }
+## land 0 rows
+## manager_events 0 rows
+## manager_hint_uses 0 rows
+## manager_hints 0 rows
+## manager_items 0 rows
+## map_changes 14 rows
+{ "grp" : "corpus", "id" : 10, "weight" : 1 }
+{ "grp" : "corpus", "id" : 12, "weight" : 1 }
+{ "grp" : "corpus", "id" : 2, "weight" : 1 }
+{ "grp" : "corpus", "id" : 6, "weight" : 1 }
+{ "grp" : "events", "id" : 11, "weight" : 1 }
+{ "grp" : "events", "id" : 5, "weight" : 1 }
+{ "grp" : "events", "id" : 8, "weight" : 1 }
+{ "grp" : "media", "id" : 13, "weight" : 1 }
+{ "grp" : "media", "id" : 4, "weight" : 1 }
+{ "grp" : "media", "id" : 9, "weight" : 1 }
+{ "grp" : "places", "id" : 1, "weight" : 1 }
+{ "grp" : "places", "id" : 14, "weight" : 1 }
+{ "grp" : "places", "id" : 3, "weight" : 1 }
+{ "grp" : "places", "id" : 7, "weight" : 1 }
+## media_checks 0 rows
+## media_links 0 rows
+## merge_decisions 2 rows
+{ "decided_at" : "TS", "decision" : "keep-right", "issue_id" : "A-issue:zz_storm", "merge_id" : "UUID" }
+{ "decided_at" : "TS", "decision" : "keep-right", "issue_id" : "S-issue:zzalpha2001_storm", "merge_id" : "UUID" }
+## merge_ledger 28 rows
+{ "decision" : "Delete", "foreign_rev" : "DIGEST", "foreign_uid" : "tombstone:event", "kind" : "event", "local_rev_after" : null, "local_uid" : "tombstone:event", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "Delete", "foreign_rev" : "DIGEST", "foreign_uid" : "tombstone:goal", "kind" : "goal", "local_rev_after" : null, "local_uid" : "tombstone:goal", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "FastForward", "foreign_rev" : "DIGEST", "foreign_uid" : "article:zz_kingdom", "kind" : "article", "local_rev_after" : "DIGEST", "local_uid" : "article:zz_kingdom", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "FastForward", "foreign_rev" : "DIGEST", "foreign_uid" : "article:zz_storm", "kind" : "article", "local_rev_after" : "DIGEST", "local_uid" : "article:zz_storm", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "FastForward", "foreign_rev" : "DIGEST", "foreign_uid" : "finding:zzalpha2001_storm#1", "kind" : "finding", "local_rev_after" : "DIGEST", "local_uid" : "finding:zzalpha2001_storm#1", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "FastForward", "foreign_rev" : "DIGEST", "foreign_uid" : "finding:zzbeta2005_hittites#1", "kind" : "finding", "local_rev_after" : "DIGEST", "local_uid" : "finding:zzbeta2005_hittites#1", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "FastForward", "foreign_rev" : "DIGEST", "foreign_uid" : "source:zzalpha2001_storm", "kind" : "source", "local_rev_after" : "DIGEST", "local_uid" : "source:zzalpha2001_storm", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "FastForward", "foreign_rev" : "DIGEST", "foreign_uid" : "source:zzbeta2005_hittites", "kind" : "source", "local_rev_after" : "DIGEST", "local_uid" : "source:zzbeta2005_hittites", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "Insert", "foreign_rev" : "DIGEST", "foreign_uid" : "UUID", "kind" : "article-version", "local_rev_after" : "DIGEST", "local_uid" : "UUID", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "Insert", "foreign_rev" : "DIGEST", "foreign_uid" : "UUID", "kind" : "article-version", "local_rev_after" : "DIGEST", "local_uid" : "UUID", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "Insert", "foreign_rev" : "DIGEST", "foreign_uid" : "UUID", "kind" : "article-version", "local_rev_after" : "DIGEST", "local_uid" : "UUID", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "Insert", "foreign_rev" : "DIGEST", "foreign_uid" : "UUID", "kind" : "article-version", "local_rev_after" : "DIGEST", "local_uid" : "UUID", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "Insert", "foreign_rev" : "DIGEST", "foreign_uid" : "asset:zzalpha2001_storm/fig1.png", "kind" : "asset", "local_rev_after" : "DIGEST", "local_uid" : "asset:zzalpha2001_storm/fig1.png", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "Insert", "foreign_rev" : "DIGEST", "foreign_uid" : "asset:zzalpha2001_storm/fig2.png", "kind" : "asset", "local_rev_after" : "DIGEST", "local_uid" : "asset:zzalpha2001_storm/fig2.png", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "Insert", "foreign_rev" : "DIGEST", "foreign_uid" : "attestation:zzalpha2001_storm:zz_site", "kind" : "attestation", "local_rev_after" : "DIGEST", "local_uid" : "attestation:zzalpha2001_storm:zz_site", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "Insert", "foreign_rev" : "DIGEST", "foreign_uid" : "event:zz_event", "kind" : "event", "local_rev_after" : "DIGEST", "local_uid" : "event:zz_event", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "Insert", "foreign_rev" : "DIGEST", "foreign_uid" : "finding:zzalpha2001_storm#2", "kind" : "finding", "local_rev_after" : "DIGEST", "local_uid" : "finding:zzalpha2001_storm#2", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "Insert", "foreign_rev" : "DIGEST", "foreign_uid" : "finding:zzalpha2001_storm#3", "kind" : "finding", "local_rev_after" : "DIGEST", "local_uid" : "finding:zzalpha2001_storm#3", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "Insert", "foreign_rev" : "DIGEST", "foreign_uid" : "finding:zzdelta2020_new#1", "kind" : "finding", "local_rev_after" : "DIGEST", "local_uid" : "finding:zzdelta2020_new#1", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "Insert", "foreign_rev" : "DIGEST", "foreign_uid" : "goal:zz_goal", "kind" : "goal", "local_rev_after" : "DIGEST", "local_uid" : "goal:zz_goal", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "Insert", "foreign_rev" : "DIGEST", "foreign_uid" : "period:zz_period", "kind" : "period", "local_rev_after" : "DIGEST", "local_uid" : "period:zz_period", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "Insert", "foreign_rev" : "DIGEST", "foreign_uid" : "place:zz_site", "kind" : "place", "local_rev_after" : "DIGEST", "local_uid" : "place:zz_site", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "Insert", "foreign_rev" : "DIGEST", "foreign_uid" : "queue:acquire:Doe, The Lost Book (1900)", "kind" : "queue-item", "local_rev_after" : "DIGEST", "local_uid" : "queue:acquire:Doe, The Lost Book (1900)", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "Insert", "foreign_rev" : "DIGEST", "foreign_uid" : "queue:log:crafted the oracle", "kind" : "queue-item", "local_rev_after" : "DIGEST", "local_uid" : "queue:log:crafted the oracle", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "Insert", "foreign_rev" : "DIGEST", "foreign_uid" : "queue:tasks:a task work added", "kind" : "queue-item", "local_rev_after" : "DIGEST", "local_uid" : "queue:tasks:a task work added", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "Insert", "foreign_rev" : "DIGEST", "foreign_uid" : "queue:tasks:check the storm god", "kind" : "queue-item", "local_rev_after" : "DIGEST", "local_uid" : "queue:tasks:check the storm god", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "Insert", "foreign_rev" : "DIGEST", "foreign_uid" : "source:zzdelta2020_new", "kind" : "source", "local_rev_after" : "DIGEST", "local_uid" : "source:zzdelta2020_new", "merge_id" : "UUID", "recorded_at" : "TS" }
+{ "decision" : "Insert", "foreign_rev" : "DIGEST", "foreign_uid" : "source:zzgamma1903_prolegomena", "kind" : "source", "local_rev_after" : "DIGEST", "local_uid" : "source:zzgamma1903_prolegomena", "merge_id" : "UUID", "recorded_at" : "TS" }
+## merge_sessions 0 rows
+## merges 2 rows
+{ "applied_at" : "TS", "backup" : "histmersion-STAMP.dump", "bundle_id" : "UUID", "bundle_sha256" : "BUNDLE-WHOLE", "from_instance" : "instance:work", "from_label" : "work", "id" : "UUID", "plan_hash" : "DIGEST", "report" : { "applied" : true, "backup" : "histmersion-STAMP.dump", "bundleId" : "UUID", "counts" : [ { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 1, "keptLocal" : 0, "kind" : "source", "skippedDeleted" : 0, "unchanged" : 1, "updated" : 2 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 2, "keptLocal" : 0, "kind" : "finding", "skippedDeleted" : 0, "unchanged" : 1, "updated" : 2 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 0, "keptLocal" : 0, "kind" : "article", "skippedDeleted" : 0, "unchanged" : 0, "updated" : 2 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 3, "keptLocal" : 0, "kind" : "article-version", "skippedDeleted" : 0, "unchanged" : 1, "updated" : 0 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 0, "keptLocal" : 0, "kind" : "asset", "skippedDeleted" : 0, "unchanged" : 2, "updated" : 0 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 0, "keptLocal" : 0, "kind" : "attestation", "skippedDeleted" : 0, "unchanged" : 1, "updated" : 0 }, { "conflicts" : 0, "deleted" : 1, "held" : 0, "inserted" : 0, "keptLocal" : 0, "kind" : "event", "skippedDeleted" : 0, "unchanged" : 1, "updated" : 0 }, { "conflicts" : 0, "deleted" : 1, "held" : 0, "inserted" : 0, "keptLocal" : 0, "kind" : "goal", "skippedDeleted" : 0, "unchanged" : 1, "updated" : 0 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 1, "keptLocal" : 0, "kind" : "queue-item", "skippedDeleted" : 0, "unchanged" : 3, "updated" : 0 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 0, "keptLocal" : 0, "kind" : "place", "skippedDeleted" : 0, "unchanged" : 1, "updated" : 0 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 0, "keptLocal" : 0, "kind" : "period", "skippedDeleted" : 0, "unchanged" : 1, "updated" : 0 } ], "from" : { "id" : "instance:work", "label" : "work" }, "issues" : [ ], "logEntry" : null, "mergeId" : null, "notes" : [ ], "planHash" : "DIGEST", "problems" : [ ], "replanChanges" : null, "reviews" : [ ], "tally" : { "aliases" : 0, "articlesBoth" : 0, "articlesFastForward" : 0, "articlesFromFile" : 0, "articlesThreeWay" : 1, "assetsMerged" : 0, "attestationsDropped" : 0, "attestationsReanchored" : 0, "eventsMerged" : 0, "findingsMerged" : 0, "goalsMerged" : 0, "periodsMerged" : 0, "placesMerged" : 0, "queueMerged" : 0, "redirects" : 0, "selfLoopsDropped" : 0, "sourcesByScore" : 0, "sourcesMerged" : 0, "sourcesRenamed" : 0 } }, "resolutions" : { "bundle" : null, "policy" : { "editions" : null }, "resolve" : [ { "decision" : "keep-right", "issue" : "S-issue:zzalpha2001_storm", "text" : null }, { "decision" : "keep-right", "issue" : "A-issue:zz_storm", "text" : null } ] } }
+{ "applied_at" : "TS", "backup" : null, "bundle_id" : "UUID", "bundle_sha256" : "BUNDLE-FIRST", "from_instance" : "instance:work", "from_label" : "work", "id" : "UUID", "plan_hash" : null, "report" : { "applied" : true, "blobs" : 4, "bundleId" : "UUID", "conflicts" : [ ], "counts" : [ { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 3, "keptLocal" : 0, "kind" : "source", "skippedDeleted" : 0, "unchanged" : 0, "updated" : 0 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 3, "keptLocal" : 0, "kind" : "finding", "skippedDeleted" : 0, "unchanged" : 0, "updated" : 0 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 2, "keptLocal" : 0, "kind" : "article", "skippedDeleted" : 0, "unchanged" : 0, "updated" : 0 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 1, "keptLocal" : 0, "kind" : "article-version", "skippedDeleted" : 0, "unchanged" : 0, "updated" : 0 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 2, "keptLocal" : 0, "kind" : "asset", "skippedDeleted" : 0, "unchanged" : 0, "updated" : 0 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 1, "keptLocal" : 0, "kind" : "attestation", "skippedDeleted" : 0, "unchanged" : 0, "updated" : 0 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 2, "keptLocal" : 0, "kind" : "event", "skippedDeleted" : 0, "unchanged" : 0, "updated" : 0 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 2, "keptLocal" : 0, "kind" : "goal", "skippedDeleted" : 0, "unchanged" : 0, "updated" : 0 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 3, "keptLocal" : 0, "kind" : "queue-item", "skippedDeleted" : 0, "unchanged" : 0, "updated" : 0 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 1, "keptLocal" : 0, "kind" : "place", "skippedDeleted" : 0, "unchanged" : 0, "updated" : 0 }, { "conflicts" : 0, "deleted" : 0, "held" : 0, "inserted" : 1, "keptLocal" : 0, "kind" : "period", "skippedDeleted" : 0, "unchanged" : 0, "updated" : 0 } ], "dryRun" : false, "from" : { "id" : "instance:work", "label" : "work" }, "issues" : [ ], "mergeId" : null, "notes" : [ ], "planHash" : "DIGEST", "problems" : [ ] }, "resolutions" : null }
+## notes 0 rows
+## periods 1 rows
+{ "authority" : "oracle", "dataset" : "local", "id" : "zz_period", "label" : "Storm period", "origin" : "instance:work", "parent_id" : null, "period" : "[-1400,-1199)", "preset" : null, "region" : null, "uid" : "period:zz_period", "updated_at" : "TS" }
+## place_aliases 0 rows
+## place_descriptions 0 rows
+## place_footprints 1 rows
+{ "accuracy_m" : null, "certainty" : "approximate", "citekey" : null, "geom" : { "coordinates" : [ 34.6, 40 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "id" : 1, "period" : "[-1650,-1179)", "place_id" : "zz_site", "role" : "extent" }
+## place_links 0 rows
+## place_names 1 rows
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "", "manual" : false, "name" : "Storm hill", "period" : "(,)", "place_id" : "zz_site" }
+## place_overrides 0 rows
+## place_relations 0 rows
+## place_removals 0 rows
+## place_types 0 rows
+## places 1 rows
+{ "dataset" : "local", "geom" : { "coordinates" : [ 34.6, 40 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "zz_site", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "site", "label" : "Storm hill", "label_norm" : "stormhill", "location_precision" : null, "origin" : "instance:work", "period" : "[-1650,-1179)", "properties" : null, "shape_area" : 0, "shape_box" : "BOX(34.6 40,34.6 40)", "shape_dim" : 0, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : null, "start_unknown" : false, "uid" : "place:zz_site", "updated_at" : "TS", "web_geojson" : null }
+## plan_pools 0 rows
+## plan_quota_readings 0 rows
+## plan_quota_refreshes 0 rows
+## queue_items 7 rows
+{ "closed_job" : null, "created_at" : "TS", "created_job" : null, "done_at" : null, "goal_slug" : null, "id" : 1, "list" : "tasks", "origin" : "instance:work", "reason" : null, "status" : "open", "text" : "check the storm god", "topic" : "oracle", "uid" : "queue:tasks:check the storm god", "updated_at" : "TS" }
+{ "closed_job" : null, "created_at" : "TS", "created_job" : null, "done_at" : null, "goal_slug" : null, "id" : 2, "list" : "log", "origin" : "instance:work", "reason" : null, "status" : "open", "text" : "crafted the oracle", "topic" : "oracle", "uid" : "queue:log:crafted the oracle", "updated_at" : "TS" }
+{ "closed_job" : null, "created_at" : "TS", "created_job" : null, "done_at" : null, "goal_slug" : null, "id" : 3, "list" : "acquire", "origin" : "instance:work", "reason" : null, "status" : "open", "text" : "Doe, The Lost Book (1900)", "topic" : "oracle", "uid" : "queue:acquire:Doe, The Lost Book (1900)", "updated_at" : "TS" }
+{ "closed_job" : null, "created_at" : "TS", "created_job" : null, "done_at" : null, "goal_slug" : null, "id" : 4, "list" : "tasks", "origin" : "instance:work", "reason" : null, "status" : "open", "text" : "a task work added", "topic" : "oracle", "uid" : "queue:tasks:a task work added", "updated_at" : "TS" }
+{ "closed_job" : null, "created_at" : "TS", "created_job" : null, "done_at" : null, "goal_slug" : null, "id" : 5, "list" : "tasks", "origin" : "instance:home", "reason" : "`merge apply` changed the article; a merged text is not reviewed", "status" : "open", "text" : "/review-article zz_kingdom --fix — merged with work's (merge SHORT)", "topic" : "merge", "uid" : "queue:tasks:/review-article zz_kingdom --fix — merged with work's (merge SHORT)", "updated_at" : "TS" }
+{ "closed_job" : null, "created_at" : "TS", "created_job" : null, "done_at" : null, "goal_slug" : null, "id" : 6, "list" : "tasks", "origin" : "instance:home", "reason" : "`merge apply` changed the article; a merged text is not reviewed", "status" : "open", "text" : "/review-article zz_storm --fix — merged with work's (merge SHORT)", "topic" : "merge", "uid" : "queue:tasks:/review-article zz_storm --fix — merged with work's (merge SHORT)", "updated_at" : "TS" }
+{ "closed_job" : null, "created_at" : "TS", "created_job" : null, "done_at" : null, "goal_slug" : null, "id" : 7, "list" : "log", "origin" : "instance:home", "reason" : null, "status" : "open", "text" : "Merged the bundle of work (SHORT…) as merge SHORT: 0 sources merged, 1 new, 2 articles to review; backup histmersion-STAMP.dump", "topic" : "merge", "uid" : "queue:log:Merged the bundle of work (SHORT…) as merge SHORT: 0 sources merged, 1 new, 2 articles to review; backup histmersion-STAMP.dump", "updated_at" : "TS" }
+## read_marks 0 rows
+## retraction_watch 0 rows
+## review_ledgers 0 rows
+## seed_versions 0 rows
+## site_undated_build 0 rows
+## site_undated_cells 0 rows
+## source_aliases 2 rows
+{ "alias" : "zzbeta2005_kingdom", "citekey" : "zzbeta2005_hittites", "created_at" : "TS" }
+{ "alias" : "zzgamma1903_old", "citekey" : "zzgamma1903_prolegomena", "created_at" : "TS" }
+## source_candidates 0 rows
+## source_chunks 1 rows
+{ "body" : "Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm.", "citekey" : "zzalpha2001_storm", "heading" : null, "ord" : 0, "tsv" : "'alpha':1,7,13,19,25,31,37,43,49,55,61,67,73,79,85,91,97,103,109,115 'bodi':2,8,14,20,26,32,38,44,50,56,62,68,74,80,86,92,98,104,110,116 'rule':4,10,16,22,28,34,40,46,52,58,64,70,76,82,88,94,100,106,112,118 'storm':6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120 'tarhunna':3,9,15,21,27,33,39,45,51,57,63,69,75,81,87,93,99,105,111,117" }
+## source_identifiers 0 rows
+## sources 4 rows
+{ "added_date" : "2026-10-31", "authors" : [ "Doe, Jane" ], "calibre_id" : null, "cited_by_count" : null, "citekey" : "zzalpha2001_storm", "doi" : null, "influential_citations" : null, "license" : null, "notes" : null, "ocr_markdown" : "Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. Alpha body. Tarhunna rules the storm. ", "origin" : "instance:work", "period" : null, "regions" : [ "Anatolia" ], "sha256" : null, "source" : null, "status" : "current", "summary" : "edited at work", "tags" : [ "zz-oracle" ], "title" : "The Storm God", "topics" : [ "bronze age" ], "tsv" : "'edit':4B 'god':3A 'storm':2A 'work':6B", "uid" : "source:zzalpha2001_storm", "updated_at" : "TS", "venue" : null, "year" : 2001 }
+{ "added_date" : "2026-10-31", "authors" : [ "Doe, Jane" ], "calibre_id" : null, "cited_by_count" : null, "citekey" : "zzbeta2005_hittites", "doi" : null, "influential_citations" : null, "license" : null, "notes" : null, "ocr_markdown" : null, "origin" : "instance:work", "period" : null, "regions" : [ "Anatolia" ], "sha256" : null, "source" : null, "status" : "contested", "summary" : null, "tags" : [ "zz-oracle" ], "title" : "The Kingdom", "topics" : [ "bronze age" ], "tsv" : "'kingdom':2A", "uid" : "source:zzbeta2005_hittites", "updated_at" : "TS", "venue" : null, "year" : 2005 }
+{ "added_date" : "2026-10-31", "authors" : [ "Doe, Jane" ], "calibre_id" : null, "cited_by_count" : null, "citekey" : "zzdelta2020_new", "doi" : null, "influential_citations" : null, "license" : null, "notes" : null, "ocr_markdown" : null, "origin" : "instance:work", "period" : null, "regions" : [ "Anatolia" ], "sha256" : null, "source" : null, "status" : "current", "summary" : null, "tags" : [ "zz-oracle" ], "title" : "A New Book", "topics" : [ "bronze age" ], "tsv" : "'book':3A 'new':2A", "uid" : "source:zzdelta2020_new", "updated_at" : "TS", "venue" : null, "year" : 2020 }
+{ "added_date" : "2026-10-31", "authors" : [ "Doe, Jane" ], "calibre_id" : null, "cited_by_count" : null, "citekey" : "zzgamma1903_prolegomena", "doi" : null, "influential_citations" : null, "license" : null, "notes" : null, "ocr_markdown" : null, "origin" : "instance:work", "period" : null, "regions" : [ "Anatolia" ], "sha256" : null, "source" : null, "status" : "current", "summary" : null, "tags" : [ "zz-oracle" ], "title" : "An Old Book", "topics" : [ "bronze age" ], "tsv" : "'book':3A 'old':2A", "uid" : "source:zzgamma1903_prolegomena", "updated_at" : "TS", "venue" : null, "year" : 1903 }
+## spatial_ref_sys 8500 rows, 1393192e4e6499f0
+## tombstones 2 rows
+{ "deleted_at" : "TS", "kind" : "event", "origin" : "instance:work", "uid" : "tombstone:event" }
+{ "deleted_at" : "TS", "kind" : "goal", "origin" : "instance:work", "uid" : "tombstone:goal" }
+## ui_seen 5 rows
+{ "board" : "acquire", "seen_at" : "TS" }
+{ "board" : "approvals", "seen_at" : "TS" }
+{ "board" : "goals", "seen_at" : "TS" }
+{ "board" : "log", "seen_at" : "TS" }
+{ "board" : "tasks", "seen_at" : "TS" }
+## uid_aliases 0 rows
+## unresolved_edges 1 rows
+{ "dst" : "zzunknown1900_lost", "kind" : "references", "src" : "zzalpha2001_storm" }
+## upstream_quota 0 rows

@@ -1,0 +1,292 @@
+{
+  "counts" : {
+    "articles" : 2,
+    "events" : 1,
+    "findings" : 5,
+    "periods" : 1,
+    "places" : 1,
+    "presets" : 0,
+    "sources" : 4
+  },
+  "jobs" : {
+    "cancelled" : 0,
+    "done" : 0,
+    "failed" : 0,
+    "paused" : 0,
+    "queued" : 0,
+    "running" : 0
+  },
+  "storage" : {
+    "ageSeconds" : "N",
+    "backups" : {
+      "bytes" : "N",
+      "count" : 0,
+      "keep" : 2,
+      "newest" : null
+    },
+    "entries" : [
+      {
+        "bytes" : "N",
+        "detail" : "histmersion_s6o_work_test",
+        "exists" : true,
+        "files" : null,
+        "group" : "database",
+        "host" : "server",
+        "key" : "database",
+        "label" : "database (Postgres)",
+        "partial" : false,
+        "path" : null,
+        "shrink" : "histmersion maintenance vacuum; agents.keep-messages-days trims the agents' message traces",
+        "volume" : null,
+        "within" : null
+      },
+      {
+        "bytes" : null,
+        "detail" : null,
+        "exists" : false,
+        "files" : null,
+        "group" : "backups",
+        "host" : "server",
+        "key" : "backups",
+        "label" : "backups",
+        "partial" : false,
+        "path" : "TMP/work-backups",
+        "shrink" : "lower backups.keep (now 2) — the next backup deletes the older archives",
+        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "within" : null
+      },
+      {
+        "bytes" : null,
+        "detail" : null,
+        "exists" : false,
+        "files" : null,
+        "group" : "corpus",
+        "host" : "server",
+        "key" : "originals",
+        "label" : "stored originals (uploads)",
+        "partial" : false,
+        "path" : "TMP/work-spool",
+        "shrink" : null,
+        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "within" : null
+      },
+      {
+        "bytes" : null,
+        "detail" : null,
+        "exists" : false,
+        "files" : null,
+        "group" : "corpus",
+        "host" : "server",
+        "key" : "acquire-spool",
+        "label" : "acquisition scratch",
+        "partial" : false,
+        "path" : "TMP/work-acquire",
+        "shrink" : "scratch: safe to empty while no acquisition is running",
+        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "within" : null
+      },
+      {
+        "bytes" : "N",
+        "detail" : null,
+        "exists" : true,
+        "files" : 3,
+        "group" : "corpus",
+        "host" : "server",
+        "key" : "bundles",
+        "label" : "bundle scratch",
+        "partial" : false,
+        "path" : "TMP/work-bundles",
+        "shrink" : "scratch: safe to empty while no bundle export or import is running",
+        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "within" : null
+      },
+      {
+        "bytes" : "N",
+        "detail" : null,
+        "exists" : true,
+        "files" : 4,
+        "group" : "caches",
+        "host" : "server",
+        "key" : "gazetteer",
+        "label" : "gazetteer extracts (cache)",
+        "partial" : false,
+        "path" : "/Users/dev/.cache/histmersion/gazetteer",
+        "shrink" : "delete the cached extracts — histmersion places load fetches them again",
+        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "within" : null
+      },
+      {
+        "bytes" : "N",
+        "detail" : null,
+        "exists" : true,
+        "files" : 3,
+        "group" : "caches",
+        "host" : "server",
+        "key" : "gazetteer-data",
+        "label" : "gazetteer folder (data)",
+        "partial" : false,
+        "path" : "/Users/dev/Library/Application Support/Histmersion/gazetteer",
+        "shrink" : null,
+        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "within" : null
+      },
+      {
+        "bytes" : null,
+        "detail" : null,
+        "exists" : false,
+        "files" : null,
+        "group" : "caches",
+        "host" : "server",
+        "key" : "gazetteer-lpf",
+        "label" : "gazetteer LPF drop folder",
+        "partial" : false,
+        "path" : "/Users/dev/Library/Application Support/Histmersion/gazetteer/lpf",
+        "shrink" : null,
+        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "within" : "gazetteer-data"
+      },
+      {
+        "bytes" : "N",
+        "detail" : "vector 3.8 GB · terrain 3.2 GB · labels 6.5 MB · bathymetry 999.3 MB · relief cache 24.0 MB · map cache 2.9 MB · sea-floor cache 13.4 MB",
+        "exists" : true,
+        "files" : 900,
+        "group" : "caches",
+        "host" : "server",
+        "key" : "basemap",
+        "label" : "terrain base map (cache)",
+        "partial" : false,
+        "path" : "/Users/dev/.cache/histmersion/basemap",
+        "shrink" : "histmersion basemap rm (one layer: histmersion basemap rm --layer <name>)",
+        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "within" : null
+      },
+      {
+        "bytes" : "N",
+        "detail" : null,
+        "exists" : true,
+        "files" : 656,
+        "group" : "install",
+        "host" : "server",
+        "key" : "toolchain",
+        "label" : "GraalVM toolchain",
+        "partial" : false,
+        "path" : "/Users/dev/Library/Application Support/Histmersion/toolchain",
+        "shrink" : "histmersion-toolchain remove (needed again only to relink plugins)",
+        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "within" : null
+      },
+      {
+        "bytes" : "N",
+        "detail" : null,
+        "exists" : true,
+        "files" : 10,
+        "group" : "install",
+        "host" : "server",
+        "key" : "plugins",
+        "label" : "plugins",
+        "partial" : false,
+        "path" : "/Users/dev/Library/Application Support/Histmersion/plugins",
+        "shrink" : null,
+        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "within" : null
+      },
+      {
+        "bytes" : "N",
+        "detail" : null,
+        "exists" : true,
+        "files" : 21348,
+        "group" : "install",
+        "host" : "server",
+        "key" : "agents",
+        "label" : "agent definitions",
+        "partial" : false,
+        "path" : "/Users/dev/Library/Application Support/Histmersion/agents",
+        "shrink" : null,
+        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "within" : null
+      },
+      {
+        "bytes" : "N",
+        "detail" : null,
+        "exists" : true,
+        "files" : 21186,
+        "group" : "other",
+        "host" : "server",
+        "key" : "codex-home",
+        "label" : "Codex home of the agent runs (transcripts, state)",
+        "partial" : false,
+        "path" : "/Users/dev/Library/Application Support/Histmersion/agents/codex/home",
+        "shrink" : "lower agents.providers.codex.keep-sessions-days — older run transcripts are deleted and its SQLite files vacuumed while no Codex run uses it (every retention-every-hours); never delete auth.json, its login",
+        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "within" : "agents"
+      },
+      {
+        "bytes" : "N",
+        "detail" : null,
+        "exists" : true,
+        "files" : 6,
+        "group" : "logs",
+        "host" : "server",
+        "key" : "logs",
+        "label" : "logs",
+        "partial" : false,
+        "path" : "/Users/dev/Library/Application Support/Histmersion/logs",
+        "shrink" : "delete old log files (the server reopens them)",
+        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "within" : null
+      },
+      {
+        "bytes" : "N",
+        "detail" : "/Users/dev/Library/Application Support/Histmersion: backups, bundles, pg, uploads",
+        "exists" : true,
+        "files" : 3129,
+        "group" : "other",
+        "host" : "server",
+        "key" : "data-other",
+        "label" : "other files in the data directory",
+        "partial" : false,
+        "path" : null,
+        "shrink" : null,
+        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
+        "within" : null
+      }
+    ],
+    "hints" : [
+    ],
+    "lowFreeBytes" : 10000000000,
+    "measuredAt" : "TS",
+    "measuring" : false,
+    "problems" : [
+    ],
+    "tables" : [
+      {
+        "bytes" : "N",
+        "name" : "spatial_ref_sys"
+      },
+      {
+        "bytes" : "N",
+        "name" : "places"
+      },
+      {
+        "bytes" : "N",
+        "name" : "sources"
+      },
+      {
+        "bytes" : "N",
+        "name" : "articles"
+      },
+      {
+        "bytes" : "N",
+        "name" : "events"
+      }
+    ],
+    "tookMillis" : "N",
+    "volumes" : [
+      {
+        "freeBytes" : "N",
+        "id" : "/System/Volumes/Data (/dev/disk3s5)",
+        "totalBytes" : "N"
+      }
+    ]
+  }
+}
