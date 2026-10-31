@@ -6,7 +6,7 @@ import com.histmersion.domain.*
 import com.histmersion.db.*
 import com.histmersion.values.{Confidence, PlaceKind, SourceStatus}
 import com.augustnagro.magnum.*
-import io.circe.{Json, parser}
+import io.circe.{parser, Json}
 import ox.supervised
 
 import java.io.ByteArrayInputStream
@@ -54,7 +54,8 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
   private def cfgFor(name: String): AppConfig =
     base.copy(
       db = base.db.copy(url = scratch.urlOf(s"histmersion_s6o_${name}_test")),
-      backups = base.backups.copy(dir = tmp.resolve(s"$name-backups").toString, pgBinDir = pgBinDir.getOrElse(""), keep = 2),
+      backups =
+        base.backups.copy(dir = tmp.resolve(s"$name-backups").toString, pgBinDir = pgBinDir.getOrElse(""), keep = 2),
       bundles = base.bundles.copy(dir = tmp.resolve(s"$name-bundles").toString),
       converter = base.converter.copy(spoolDir = tmp.resolve(s"$name-spool").toString),
       acquire = base.acquire.copy(spoolDir = tmp.resolve(s"$name-acquire").toString),
@@ -206,17 +207,36 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
     EventRepo.put(
       ds,
       "zz_event",
-      EventPut("A storm at the hill", "battle", TimeSpan(Some(-1300), None, None, Some(-1290)), placeId = Some("zz_site"))
+      EventPut(
+        "A storm at the hill",
+        "battle",
+        TimeSpan(Some(-1300), None, None, Some(-1290)),
+        placeId = Some("zz_site")
+      )
     )
-    EventRepo.put(ds, "zz_event_gone", EventPut("An event deleted later", "battle", TimeSpan(Some(-1250), None, None, None)))
+    EventRepo.put(
+      ds,
+      "zz_event_gone",
+      EventPut("An event deleted later", "battle", TimeSpan(Some(-1250), None, None, None))
+    )
     val _ = AssetRepo.add(
       ds,
       "zzalpha2001_storm",
-      List(AssetRepo.Stored("fig1.png", "image/png", png(1), None, None), AssetRepo.Stored("fig2.png", "image/png", png(2), None, None))
+      List(
+        AssetRepo.Stored("fig1.png", "image/png", png(1), None, None),
+        AssetRepo.Stored("fig2.png", "image/png", png(2), None, None)
+      )
     )
     val _ = AttestationRepo.create(
       ds,
-      AttestationPut("zzalpha2001_storm", "place", "zz_site", quote = Some("Alpha body"), charStart = Some(0), charEnd = Some(10))
+      AttestationPut(
+        "zzalpha2001_storm",
+        "place",
+        "zz_site",
+        quote = Some("Alpha body"),
+        charStart = Some(0),
+        charEnd = Some(10)
+      )
     )
     val _ = QueueRepo.add(ds, Queue.Kind.Tasks, Queue.QueueAdd("check the storm god", topic = Some("oracle")))
     val _ = QueueRepo.add(ds, Queue.Kind.Log, Queue.QueueAdd("crafted the oracle", topic = Some("oracle")))
@@ -269,7 +289,8 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
 
   // ── normalisation ──────────────────────────────────────────────────────────────────────────
 
-  private val UuidRe = "\\b[A-Z]-[0-9a-f]{8}\\b|[0-9a-f]{64}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}".r
+  private val UuidRe =
+    "\\b[A-Z]-[0-9a-f]{8}\\b|[0-9a-f]{64}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}".r
   private val TimeRe =
     "\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}(?::?\\d{2})?)?".r
   private val StampRe = "\\d{8}T\\d{6}Z".r
@@ -296,7 +317,8 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
     def run(ds: DataSource, q: String): List[(String, String)] =
       scala.util.Try(connect(ds)(Sql.raw(q).frag.query[(String, String)].run().toList)).getOrElse(Nil)
     val records = dss.flatMap((_, ds) => queries.flatMap(run(ds, _)))
-    val instances = dss.flatMap((n, ds) => run(ds, "SELECT id::text, 'x' FROM instance").map((id, _) => id -> s"instance:$n"))
+    val instances =
+      dss.flatMap((n, ds) => run(ds, "SELECT id::text, 'x' FROM instance").map((id, _) => id -> s"instance:$n"))
     val merges = dss.flatMap((n, ds) =>
       run(ds, "SELECT id::text, 'x' FROM merges ORDER BY created_at").zipWithIndex.map { case ((id, _), i) =>
         id -> s"merge:$n#${i + 1}"
@@ -307,13 +329,27 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
   private def normalise(text: String, names: Map[String, String]): String =
     val roots = List(tmp.toString -> "TMP")
     val t1 = roots.foldLeft(text)((t, r) => t.replace(r._1, r._2))
-    val t2 = UuidRe.replaceAllIn(t1, m => scala.util.matching.Regex.quoteReplacement(names.getOrElse(m.matched, if m.matched.length != 36 then m.matched else "UUID")))
+    val t2 = UuidRe.replaceAllIn(
+      t1,
+      m =>
+        scala.util.matching.Regex
+          .quoteReplacement(names.getOrElse(m.matched, if m.matched.length != 36 then m.matched else "UUID"))
+    )
     val t3 = TimeRe.replaceAllIn(t2, "TS")
     ShortRe.replaceAllIn(PlanRe.replaceAllIn(StampRe.replaceAllIn(t3, "STAMP"), "plan PLAN"), "SHORT")
 
   /** Sizes, durations and free space the disk and the clock decide. */
   private val Measured =
-    Set("bytes", "durationMs", "elapsedMs", "tookMillis", "ageSeconds", "totalBytes", "freeBytes", "lastBackupAgeSeconds")
+    Set(
+      "bytes",
+      "durationMs",
+      "elapsedMs",
+      "tookMillis",
+      "ageSeconds",
+      "totalBytes",
+      "freeBytes",
+      "lastBackupAgeSeconds"
+    )
 
   /** A line's revision and a bundle file's digest: hashes over its uids and clocks. */
   private def digest(key: String): Boolean = key.toLowerCase.matches(".*(rev|hash)(_?(after|before))?")
@@ -343,7 +379,8 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
   private def bundleText(bundle: Array[Byte], names: Map[String, String]): String =
     val in = java.util.zip.GZIPInputStream(ByteArrayInputStream(bundle))
     val out = StringBuilder()
-    @scala.annotation.tailrec def loop(): Unit =
+    @scala.annotation.tailrec
+    def loop(): Unit =
       val header = in.readNBytes(512)
       if header.length == 512 && header.exists(_ != 0) then
         val name = String(header.take(100), UTF_8).takeWhile(_ != 0)
@@ -354,7 +391,9 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
         val path = if prefix.isEmpty then name else s"$prefix/$name"
         if path == "manifest.json" then
           val m = parser.parse(String(data, UTF_8)).fold(e => fail(e.toString), identity)
-          val kept = m.mapObject(_.remove("createdAt").remove("bundleId")).hcursor
+          val kept = m
+            .mapObject(_.remove("createdAt").remove("bundleId"))
+            .hcursor
             .downField("files")
             .withFocus(_.mapArray(_.map(_.mapObject(_.remove("sha256")))))
             .top
@@ -415,7 +454,9 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
     // home imports work once: the shared history
     val first = withServer("work")(url => bytes(s"$url/api/bundle"))
     withServer("home")(url => ok(postBytes(s"$url/api/bundle/import", first)))
-    val since = connect(work)(sql"SELECT to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"')".query[String].run().head)
+    val since = connect(work)(
+      sql"SELECT to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"')".query[String].run().head
+    )
     Thread.sleep(20)
     editBoth(work, home)
 
@@ -442,8 +483,15 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
         .flatMap(_.hcursor.downField("issues").focus)
         .flatMap(_.asArray)
         .getOrElse(Vector.empty)
-        .flatMap(i => i.hcursor.downField("id").as[String].toOption.filter(_ => i.hcursor.downField("decision").focus.forall(_.isNull)))
-      val resolutions = s"""{"resolve":[${open.map(id => s"""{"issue":"$id","decision":"keep-right"}""").mkString(",")}]}"""
+        .flatMap(i =>
+          i.hcursor
+            .downField("id")
+            .as[String]
+            .toOption
+            .filter(_ => i.hcursor.downField("decision").focus.forall(_.isNull))
+        )
+      val resolutions =
+        s"""{"resolve":[${open.map(id => s"""{"issue":"$id","decision":"keep-right"}""").mkString(",")}]}"""
       val s = ok(
         send(
           HttpRequest
@@ -467,7 +515,8 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
         )
       )
       val hash = field(p1, "planHash")
-      val job = ok(postJson(s"$url/api/merge/apply", s"""{"bundle":"$sha","planHash":"$hash","resolutions":$resolutions}"""))
+      val job =
+        ok(postJson(s"$url/api/merge/apply", s"""{"bundle":"$sha","planHash":"$hash","resolutions":$resolutions}"""))
       val done = awaitApply(url, field(job, "job"))
       val ml = get(s"$url/api/merges")
       val id = field(ml, "id")
@@ -503,14 +552,25 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
         val c = i.hcursor
         for
           id <- c.downField("id").as[String].toOption
-          label <- c.downField("right").downField("label").as[String].toOption
+          label <- c
+            .downField("right")
+            .downField("label")
+            .as[String]
+            .toOption
             .orElse(c.downField("left").downField("label").as[String].toOption)
         yield id -> s"${id.take(1)}-issue:$label"
       }
       .toMap
-    val names2 = issueNames ++ names(all) ++ Map(shaOf(whole) -> "BUNDLE-WHOLE", shaOf(first) -> "BUNDLE-FIRST", shaOf(part) -> "BUNDLE-PART")
+    val names2 = issueNames ++ names(all) ++ Map(
+      shaOf(whole) -> "BUNDLE-WHOLE",
+      shaOf(first) -> "BUNDLE-FIRST",
+      shaOf(part) -> "BUNDLE-PART"
+    )
 
-    compare("bundle.txt", s"# work, whole\n${bundleText(whole, names2)}# work, since the shared history\n${bundleText(part, names2)}")
+    compare(
+      "bundle.txt",
+      s"# work, whole\n${bundleText(whole, names2)}# work, since the shared history\n${bundleText(part, names2)}"
+    )
     compare("import.txt", s"# the result\n${json(imported, names2)}\n# the rows\n${rows(copy, names2)}")
     compare(
       "merge.txt",
@@ -523,7 +583,10 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       s"# backups\n${backups.linesIterator.map(l => DumpDigest.replaceAllIn(json(l, names2), "\"sha256\" : \"DIGEST\"")).mkString("\n")}\n# restored\n${json(restoredResult, names2)}\n" +
         s"# every row of the restored database is work's: $sameAsWork\n"
     )
-    compare("lint.txt", s"# every rule\n${json(lint, names2)}\n# the safe fixes on a copy\n${json(fixedResult, names2)}\n")
+    compare(
+      "lint.txt",
+      s"# every rule\n${json(lint, names2)}\n# the safe fixes on a copy\n${json(fixedResult, names2)}\n"
+    )
     compare("notes.txt", normalise(notes, names2))
     val aboutJson = parser.parse(about).fold(e => fail(e.toString), identity)
     val kept = Json.obj(
