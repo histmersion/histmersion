@@ -16,8 +16,8 @@ trait BasemapJobs:
   /** The refusal of work asked for while a job runs: `what` is the kind of work, `busyCode` its error code. */
   def busy(what: String, busyCode: Option[String]): ApiError
 
-  /** `body` started as a job of `kind` described by `about`, given a progress reporter and answering its summary or
-    * why it failed; `Left` — [[busy]] — while another runs.
+  /** `body` started as a job of `kind` described by `about`, given a progress reporter and answering its summary or why
+    * it failed; `Left` — [[busy]] — while another runs.
     */
   def start(kind: String, about: String, what: String, busyCode: Option[String])(
       body: (String => Unit) => Either[String, String]
