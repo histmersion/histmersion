@@ -1,0 +1,27 @@
+source	citekey	sources.citekey	source_aliases.alias -> citekey
+  rule	The old citekey stays an alias: every read and every write that names it (put, patch, delete, rename, a reference) goes to the record under its new citekey, and the answer names the new citekey.
+  followed	_`old_one` is an old citekey of this source — it went to `new_one`._
+article	slug	articles.slug	article_aliases.alias -> slug
+  rule	The old slug stays an alias: every read and every write that names it (put, patch, delete, rename, a reference) goes to the record under its new slug, and the answer names the new slug.
+  followed	_`old_one` is an old slug of this article — it went to `new_one`._
+event	id	events.id	event_aliases.alias -> event_id
+  rule	The old id stays an alias: every read and every write that names it (put, patch, delete, rename, a reference) goes to the record under its new id, and the answer names the new id.
+  followed	_`old_one` is an old id of this event — it went to `new_one`._
+goal	slug	goals.slug	goal_aliases.alias -> goal_slug
+  rule	The old slug stays an alias: every read and every write that names it (put, patch, delete, rename, a reference) goes to the record under its new slug, and the answer names the new slug.
+  followed	_`old_one` is an old slug of this goal — it went to `new_one`._
+place	id	places.id	place_aliases.alias -> place_id
+  rule	The old id stays an alias: every read and every write that names it (put, patch, delete, rename, a reference) goes to the record under its new id, and the answer names the new id.
+  followed	_`old_one` is an old id of this place — it went to `new_one`._
+bundle Source	-
+bundle Finding	-
+bundle Article	article
+bundle ArticleVersion	-
+bundle Asset	-
+bundle AssetLink	-
+bundle Attestation	-
+bundle Event	event
+bundle Goal	goal
+bundle QueueItem	-
+bundle Place	place
+bundle Period	-

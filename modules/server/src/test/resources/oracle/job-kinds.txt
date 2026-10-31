@@ -1,0 +1,161 @@
+ingest	Bring in a source	stoppable=false
+  none	-
+  init	bundled gazetteer, bundled period presets, fetch land
+  plan	merge plan abc123
+  vacuum	VACUUM (ANALYZE) of sources, places
+  media	pictures of 3 places
+  events	gvp: 10 parts
+  about	the vector map of crete
+  recheck	the acquisition list's legal re-check of every open item with a DOI
+  citekey	hattusa_1990
+reocr	Read a source's text again	stoppable=false
+  none	-
+  init	bundled gazetteer, bundled period presets, fetch land
+  plan	merge plan abc123
+  vacuum	VACUUM (ANALYZE) of sources, places
+  media	pictures of 3 places
+  events	gvp: 10 parts
+  about	the vector map of crete
+  recheck	the acquisition list's legal re-check of every open item with a DOI
+  citekey	hattusa_1990
+init	Import reference data	stoppable=true
+  none	-
+  init	bundled gazetteer, bundled period presets, fetch land
+  plan	merge plan abc123
+  vacuum	VACUUM (ANALYZE) of sources, places
+  media	pictures of 3 places
+  events	gvp: 10 parts
+  about	the vector map of crete
+  recheck	the acquisition list's legal re-check of every open item with a DOI
+  citekey	hattusa_1990
+merge-apply	Merge another collection	stoppable=false
+  none	-
+  init	bundled gazetteer, bundled period presets, fetch land
+  plan	merge plan abc123
+  vacuum	VACUUM (ANALYZE) of sources, places
+  media	pictures of 3 places
+  events	gvp: 10 parts
+  about	the vector map of crete
+  recheck	the acquisition list's legal re-check of every open item with a DOI
+  citekey	hattusa_1990
+vacuum	Clean up the database	stoppable=false
+  none	-
+  init	bundled gazetteer, bundled period presets, fetch land
+  plan	merge plan abc123
+  vacuum	VACUUM (ANALYZE) of sources, places
+  media	pictures of 3 places
+  events	gvp: 10 parts
+  about	the vector map of crete
+  recheck	the acquisition list's legal re-check of every open item with a DOI
+  citekey	hattusa_1990
+agent	Agent run	stoppable=false
+  none	-
+  init	bundled gazetteer, bundled period presets, fetch land
+  plan	merge plan abc123
+  vacuum	VACUUM (ANALYZE) of sources, places
+  media	pictures of 3 places
+  events	gvp: 10 parts
+  about	the vector map of crete
+  recheck	the acquisition list's legal re-check of every open item with a DOI
+  citekey	hattusa_1990
+acquire_recheck	Check what to acquire again	stoppable=true
+  none	-
+  init	bundled gazetteer, bundled period presets, fetch land
+  plan	merge plan abc123
+  vacuum	VACUUM (ANALYZE) of sources, places
+  media	pictures of 3 places
+  events	gvp: 10 parts
+  about	the vector map of crete
+  recheck	the acquisition list's legal re-check of every open item with a DOI
+  citekey	hattusa_1990
+basemap-fetch	Download the background map	stoppable=true
+  none	-
+  init	bundled gazetteer, bundled period presets, fetch land
+  plan	merge plan abc123
+  vacuum	VACUUM (ANALYZE) of sources, places
+  media	pictures of 3 places
+  events	gvp: 10 parts
+  about	the vector map of crete
+  recheck	the acquisition list's legal re-check of every open item with a DOI
+  citekey	hattusa_1990
+places-fetch	Download a gazetteer	stoppable=false
+  none	-
+  init	bundled gazetteer, bundled period presets, fetch land
+  plan	merge plan abc123
+  vacuum	VACUUM (ANALYZE) of sources, places
+  media	pictures of 3 places
+  events	gvp: 10 parts
+  about	the vector map of crete
+  recheck	the acquisition list's legal re-check of every open item with a DOI
+  citekey	hattusa_1990
+places-hierarchy	Work out which places lie inside which	stoppable=false
+  none	-
+  init	bundled gazetteer, bundled period presets, fetch land
+  plan	merge plan abc123
+  vacuum	VACUUM (ANALYZE) of sources, places
+  media	pictures of 3 places
+  events	gvp: 10 parts
+  about	the vector map of crete
+  recheck	the acquisition list's legal re-check of every open item with a DOI
+  citekey	hattusa_1990
+events-import	Import events	stoppable=true
+  none	-
+  init	bundled gazetteer, bundled period presets, fetch land
+  plan	merge plan abc123
+  vacuum	VACUUM (ANALYZE) of sources, places
+  media	pictures of 3 places
+  events	gvp: 10 parts
+  about	the vector map of crete
+  recheck	the acquisition list's legal re-check of every open item with a DOI
+  citekey	hattusa_1990
+events-candidates	Find sources for events	stoppable=false
+  none	-
+  init	bundled gazetteer, bundled period presets, fetch land
+  plan	merge plan abc123
+  vacuum	VACUUM (ANALYZE) of sources, places
+  media	pictures of 3 places
+  events	gvp: 10 parts
+  about	the vector map of crete
+  recheck	the acquisition list's legal re-check of every open item with a DOI
+  citekey	hattusa_1990
+events-rederive	Re-date events	stoppable=false
+  none	-
+  init	bundled gazetteer, bundled period presets, fetch land
+  plan	merge plan abc123
+  vacuum	VACUUM (ANALYZE) of sources, places
+  media	pictures of 3 places
+  events	gvp: 10 parts
+  about	the vector map of crete
+  recheck	the acquisition list's legal re-check of every open item with a DOI
+  citekey	hattusa_1990
+site-types	Look up site types	stoppable=false
+  none	-
+  init	bundled gazetteer, bundled period presets, fetch land
+  plan	merge plan abc123
+  vacuum	VACUUM (ANALYZE) of sources, places
+  media	pictures of 3 places
+  events	gvp: 10 parts
+  about	the vector map of crete
+  recheck	the acquisition list's legal re-check of every open item with a DOI
+  citekey	hattusa_1990
+media-import	Fetch pictures	stoppable=true
+  none	-
+  init	bundled gazetteer, bundled period presets, fetch land
+  plan	merge plan abc123
+  vacuum	VACUUM (ANALYZE) of sources, places
+  media	pictures of 3 places
+  events	gvp: 10 parts
+  about	the vector map of crete
+  recheck	the acquisition list's legal re-check of every open item with a DOI
+  citekey	hattusa_1990
+media-covers	Fetch source covers	stoppable=true
+  none	-
+  init	bundled gazetteer, bundled period presets, fetch land
+  plan	merge plan abc123
+  vacuum	VACUUM (ANALYZE) of sources, places
+  media	pictures of 3 places
+  events	gvp: 10 parts
+  about	the vector map of crete
+  recheck	the acquisition list's legal re-check of every open item with a DOI
+  citekey	hattusa_1990
+unknown	Some new kind	stoppable=false
