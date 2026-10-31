@@ -221,7 +221,7 @@ final class McpTools(
         h.putSource(in.citekey, in.source, in.strict) match
           case Right(sw) =>
             ToolResult.text(
-              Aliases.note(AliasKind.Source, in.citekey, sw.source.citekey)(
+              Aliases.note(AliasKindsAdapter.SourceRecords, in.citekey, sw.source.citekey)(
                 Markdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)
               )
             )
@@ -249,7 +249,7 @@ final class McpTools(
         h.patchSource(in.citekey, in.patch, in.strict) match
           case Right(sw) =>
             ToolResult.text(
-              Aliases.note(AliasKind.Source, in.citekey, sw.source.citekey)(
+              Aliases.note(AliasKindsAdapter.SourceRecords, in.citekey, sw.source.citekey)(
                 Markdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)
               )
             )
@@ -264,7 +264,7 @@ final class McpTools(
           "the findings are renumbered '<new>#<n>', every table that stores the citekey follows, and " +
           "every [[old]] link (labels and anchors kept, short forms like [[beckman2025]] included) " +
           "is rewritten in article bodies — each rewrite recorded as an article version — and in " +
-          s"source notes/summaries. ${Aliases.rule(AliasKind.Source)} (get_source, neighbors, graph, " +
+          s"source notes/summaries. ${Aliases.rule(AliasKindsAdapter.SourceRecords)} (get_source, neighbors, graph, " +
           "export_source, /source/<old> and [[old]] included.) Refused when the " +
           "new citekey is taken (by a source, or as an old citekey of another source) or is not " +
           "link-shaped. Use it only to fix an identifier; to change metadata (year, title) use " +
@@ -632,7 +632,9 @@ final class McpTools(
         h.putArticle(in.slug, in.article, in.strict) match
           case Right(v) =>
             ToolResult.text(
-              Aliases.note(AliasKind.Article, in.slug.toLowerCase, v.article.slug)(ArticleMarkdown.article(v))
+              Aliases.note(AliasKindsAdapter.ArticleRecords, in.slug.toLowerCase, v.article.slug)(
+                ArticleMarkdown.article(v)
+              )
             )
           case Left(e) => McpOut.error(e)
       }
@@ -659,7 +661,9 @@ final class McpTools(
         h.patchArticle(in.slug, in.patch, in.strict) match
           case Right(v) =>
             ToolResult.text(
-              Aliases.note(AliasKind.Article, in.slug.toLowerCase, v.article.slug)(ArticleMarkdown.article(v))
+              Aliases.note(AliasKindsAdapter.ArticleRecords, in.slug.toLowerCase, v.article.slug)(
+                ArticleMarkdown.article(v)
+              )
             )
           case Left(e) => McpOut.error(e)
       }
@@ -946,8 +950,9 @@ final class McpTools(
               wikidata = in.wikidata
             )
             h.patchEvent(in.id, p) match
-              case Right(d) => ToolResult.text(Aliases.note(AliasKind.Event, in.id, d.event.id)(Markdown.event(d)))
-              case Left(e)  => McpOut.error(e)
+              case Right(d) =>
+                ToolResult.text(Aliases.note(AliasKindsAdapter.EventRecords, in.id, d.event.id)(Markdown.event(d)))
+              case Left(e) => McpOut.error(e)
       }
 
   private val attestations =
@@ -1041,8 +1046,9 @@ final class McpTools(
         val put =
           GoalPut(in.title, in.status, in.notes, in.tags, in.regions, in.periodStart, in.periodEnd, in.parentSlug)
         h.putGoal(in.slug, put) match
-          case Right(g) => ToolResult.text(Aliases.note(AliasKind.Goal, in.slug, g.slug)(Markdown.goal(g)))
-          case Left(e)  => McpOut.error(e)
+          case Right(g) =>
+            ToolResult.text(Aliases.note(AliasKindsAdapter.GoalRecords, in.slug, g.slug)(Markdown.goal(g)))
+          case Left(e) => McpOut.error(e)
       }
 
   private val patchGoalTool =
@@ -1062,8 +1068,9 @@ final class McpTools(
           in.budgetUsd
         )
         h.patchGoal(in.slug, p) match
-          case Right(g) => ToolResult.text(Aliases.note(AliasKind.Goal, in.slug, g.slug)(Markdown.goal(g)))
-          case Left(e)  => McpOut.error(e)
+          case Right(g) =>
+            ToolResult.text(Aliases.note(AliasKindsAdapter.GoalRecords, in.slug, g.slug)(Markdown.goal(g)))
+          case Left(e) => McpOut.error(e)
       }
 
   private val agentStateTool =

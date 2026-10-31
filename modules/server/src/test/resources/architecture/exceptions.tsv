@@ -7,8 +7,6 @@ direction	api:api/AgentsMarkdown.scala	automation -> library: Edge	1
 direction	api:api/AgentsMarkdown.scala	automation -> library: Query	1
 direction	api:api/AgentsMarkdown.scala	automation -> research: ArticleFilter	1
 direction	api:api/AgentsMarkdown.scala	automation -> research: ArticlePlans	1
-direction	api:api/AliasKind.scala	util.identity -> automation: Goal	1
-direction	api:api/AliasKind.scala	util.identity -> catalogue: Place	1
 direction	api:api/Assessment.scala	library -> server: UpdateNotice	1
 direction	api:api/AssetLinkTarget.scala	media -> library: Finding	1
 direction	api:api/AttestationTarget.scala	catalogue -> library: Edge	1
@@ -192,8 +190,6 @@ direction	core:domain/activity/ActivityRules.scala	automation -> server: Jobs	1
 direction	db:db/AgentRepo.scala	automation -> library: AgentProposals	1
 direction	db:db/AgentRepo.scala	automation -> research: ArticleFilter	1
 direction	db:db/AgentRepo.scala	automation -> research: ArticlePlans	1
-direction	db:db/AliasRepo.scala	util.identity -> automation: Goal	1
-direction	db:db/AliasRepo.scala	util.identity -> catalogue: Place	1
 direction	db:db/BundleExport.scala	util.data -> library: Originals	1
 direction	db:db/BundleImport.scala	util.data -> automation: Decided	1
 direction	db:db/BundleImport.scala	util.data -> automation: Goal	1
@@ -560,10 +556,8 @@ repository	db:db/BundleImport.scala	PlaceRepo of catalogue.places	1
 repository	db:db/BundleImport.scala	QueueRepo of automation.worklists	1
 repository	db:db/BundleImport.scala	SourceRepo of library.sources	1
 repository	db:db/CritiqueRepo.scala	SourceRepo of library.sources	1
-repository	db:db/EventRepo.scala	AliasRepo of util.identity	1
 repository	db:db/EventRepo.scala	MediaRepo of media	1
 repository	db:db/FocusRepo.scala	AutopilotRepo of automation.autopilot	1
-repository	db:db/GoalRepo.scala	AliasRepo of util.identity	1
 repository	db:db/Importer.scala	AssetRepo of media	1
 repository	db:db/Importer.scala	PlaceRepo of catalogue.places	1
 repository	db:db/Importer.scala	SourceRepo of library.sources	1
@@ -572,7 +566,6 @@ repository	db:db/LintRepo.scala	PlaceReviewRepo of catalogue.places	1
 repository	db:db/LintRepo.scala	PointAreaRepo of catalogue.places	1
 repository	db:db/LintRepo.scala	SourceRepo of library.sources	1
 repository	db:db/MergeState.scala	PlaceRepo of catalogue.places	1
-repository	db:db/PlaceRepo.scala	AliasRepo of util.identity	1
 repository	db:db/SourceDeleteRepo.scala	QueueRepo of automation.worklists	1
 repository	db:db/SourceRepo.scala	ArticleRepo of research.articles	1
 repository	db:db/SourceRepo.scala	PlaceRepo of catalogue.places	1
@@ -586,7 +579,6 @@ repository	server:server/Bootstrap.scala	PeriodRepo of catalogue.periods	1
 repository	server:server/Bootstrap.scala	PlaceRepo of catalogue.places	1
 repository	server:server/Handlers.scala	AgentStateRepo of automation.agents	1
 repository	server:server/Handlers.scala	AggregateRepo of library.search	1
-repository	server:server/Handlers.scala	AliasRepo of util.identity	1
 repository	server:server/Handlers.scala	ArticleRepo of research.articles	1
 repository	server:server/Handlers.scala	ArticleReviewRepo of research.articles.review	1
 repository	server:server/Handlers.scala	AssetLinkRepo of media	1

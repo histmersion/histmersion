@@ -95,6 +95,9 @@ object Deps:
     */
   def apply(cfg: AppConfig, ds: DataSource): Deps = apply(cfg, ds, ds)
 
+  /** Every alias table: how an old identifier of each renamed kind is followed. */
+  val aliasTables: com.histmersion.util.identity.AliasTables = com.histmersion.util.identity.AliasTablesAdapter.all
+
   /** The reload of a server that was started without a config file to read again. */
   val NoReload: () => ReloadReport = () =>
     ReloadReport(

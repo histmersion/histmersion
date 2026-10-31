@@ -19,7 +19,6 @@ api:api/Agents.scala	automation.agents
 api:api/AgentsApi.scala	automation.agents
 api:api/AgentsMarkdown.scala	automation.agents
 api:api/Aggregate.scala	library.search
-api:api/AliasKind.scala	util.identity
 api:api/Aliases.scala	util.identity
 api:api/Api.scala	api
 api:api/ApiError.scala	util.common
@@ -822,7 +821,6 @@ db:db/AcquireRepo.scala	library.acquisition
 db:db/AgentRepo.scala	automation.agents
 db:db/AgentStateRepo.scala	automation.agents
 db:db/AggregateRepo.scala	library.search
-db:db/AliasRepo.scala	util.identity
 db:db/ArticleRepo.scala	research.articles
 db:db/ArticleReviewRepo.scala	research.articles.review
 db:db/AssetLinkRepo.scala	media
@@ -1163,3 +1161,4 @@ server:server/SystemContext.scala	server
 server:server/Composition.scala	server
 server:server/StorageLocations.scala	server
 api:api/JobKindsAdapter.scala	api
+api:api/AliasKindsAdapter.scala	api

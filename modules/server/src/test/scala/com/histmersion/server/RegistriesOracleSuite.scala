@@ -1,7 +1,6 @@
 package com.histmersion.server
 
 import com.histmersion.api.*
-import com.histmersion.db.AliasRepo
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
@@ -10,7 +9,8 @@ import java.nio.file.{Files, Path}
   * compared byte for byte: for a job kind its identifier, the name a person reads, whether it can be paused and
   * cancelled, and what a job of it is about for each kind of detail; for an alias table the record's noun, its
   * identifier's word, the tables and columns a rename is resolved through, and the rule the surfaces state. Recorded on
-  * the code before the registries existed; `HISTMERSION_UPDATE_ORACLE=1` rewrites it.
+  * the code before the registries existed, read from the registries since (`JobKindsAdapter.all`, `Deps.aliasTables`);
+  * `HISTMERSION_UPDATE_ORACLE=1` rewrites it.
   */
 class RegistriesOracleSuite extends munit.FunSuite:
 
@@ -52,11 +52,13 @@ class RegistriesOracleSuite extends munit.FunSuite:
     check("job-kinds.txt", (lines :+ unknown).mkString("", "\n", "\n"))
 
   test("alias-tables.txt: every alias table, its words and its columns"):
-    val lines = AliasKind.values.toList.map { k =>
-      val t = AliasRepo.tables(k)
-      s"${k.noun}\t${k.idWord}\t${t.table}.${t.idCol}\t${t.aliasTable}.alias -> ${t.targetCol}\n" +
+    val lines = Deps.aliasTables.tables.map { t =>
+      val k = t.kind
+      s"${k.noun}\t${k.idWord}\t${t.table}.${t.idColumn}\t${t.aliasTable}.alias -> ${t.targetColumn}\n" +
         s"  rule\t${Aliases.rule(k)}\n  followed\t${Aliases.followed(k, "old_one", "new_one").getOrElse("-")}"
     }
     val bundles =
-      com.histmersion.values.BundleKind.values.toList.map(b => s"bundle $b\t${AliasKind.of(b).fold("-")(_.noun)}")
+      com.histmersion.values.BundleKind.values.toList.map(b =>
+        s"bundle $b\t${AliasKindsAdapter.of(b).fold("-")(_.noun)}"
+      )
     check("alias-tables.txt", (lines ++ bundles).mkString("", "\n", "\n"))

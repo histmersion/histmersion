@@ -1541,7 +1541,8 @@ object PlaceRepo:
     transact(ds)(renameIn(oldId.trim, newId.trim))
 
   /** The id an OLD place id was renamed to — `None` when it is a live id, or nothing. */
-  def renamedTo(ds: DataSource, id: String): Option[String] = AliasRepo.renamedTo(ds, AliasKind.Place, id)
+  def renamedTo(ds: DataSource, id: String): Option[String] =
+    com.histmersion.util.identity.AliasTablesAdapter.PlaceAliases.renamedTo(ds, id)
 
   // ── a person's edits (#987) ─────────────────────────────────────────────────────────────────────
 

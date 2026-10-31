@@ -34,7 +34,7 @@ object RenameCmd:
   val command: Opts[Client => Either[CliError, Unit]] =
     Opts.subcommand(
       "rename",
-      s"Give a source a new citekey — findings, links in articles/notes and every table follow. ${Aliases.rule(AliasKind.Source)}"
+      s"Give a source a new citekey — findings, links in articles/notes and every table follow. ${Aliases.rule(AliasKindsAdapter.SourceRecords)}"
     ) {
       args.map { a => (c: Client) =>
         c.renameSource(a.oldCitekey, a.newCitekey).map(r => Output.emit(a.json, r)(Markdown.sourceRenamed))
