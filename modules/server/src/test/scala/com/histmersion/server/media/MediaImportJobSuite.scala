@@ -126,6 +126,18 @@ class MediaImportJobSuite extends com.histmersion.db.DbSuite:
         commons = base.media.commons.copy(apiUrl = s"$providerUrl/commons", batch = 50)
       )
     )
+
+  /** The plugins, supplied the same media settings as [[cfg]]: the collections ask the stand-in, never a real API. */
+  private lazy val plugins = com.histmersion.server.plugins.Plugins.offlineWith(
+    Nil,
+    org.ekrich.config.ConfigFactory.parseString(
+      s"""histmersion.media {
+      |  request-interval-ms = 0, import-batch = 50
+      |  wikidata { api-url = "$providerUrl/wikidata", batch = 50 }
+      |  commons { api-url = "$providerUrl/commons", batch = 50 }
+      |}""".stripMargin
+    )
+  )
   private lazy val ds =
     val d = testPool(cfg.db)
     Migrate.run(d)
@@ -162,7 +174,7 @@ class MediaImportJobSuite extends com.histmersion.db.DbSuite:
 
   test("a 300-event import: the request answers at once with a job, progress is n/total, failures are collected"):
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0, MediaHandlers.NoThumbnails, plugins = plugins).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         // the synchronous endpoint keeps the dry run and ONE place/event; many is a job

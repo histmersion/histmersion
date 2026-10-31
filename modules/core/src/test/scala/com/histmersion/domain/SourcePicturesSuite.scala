@@ -115,7 +115,6 @@ class SourcePicturesSuite extends munit.FunSuite:
     assert(md.contains("- illustration: no figures: 1"), md)
     assertEquals(MediaCoversReport.combine(r, r.copy(dryRun = false)).covers, 2)
 
-  test("roles: a place's config may not name a source's role; a cover shows before an illustration"):
-    assertEquals(MediaRoles.parse("P18:image,P18:cover,P1:illustration"), List("P18" -> "image"))
+  test("roles: a cover shows before an illustration"):
     assert(MediaRole.order(MediaRole.Cover) < MediaRole.order(MediaRole.Illustration))
     assert(MediaProvider.covers(MediaProvider.Calibre) && !MediaProvider.covers(MediaProvider.Commons))

@@ -26,6 +26,8 @@ import com.histmersion.values.Period
   *   `("geonames", "310858")`, `("wikidata", "Q5788")` ([[ExternalIds]]); a place carrying one of them is matched by it
   * @param withheld
   *   why the record is not shown whatever its licence (Open Context's human-remains flag)
+  * @param role
+  *   the role its picture plays, when its collection plays more than one; none is the collection's
   */
 final case class MediaRecord(
     key: String,
@@ -38,5 +40,6 @@ final case class MediaRecord(
     geography: List[(String, String)],
     period: Option[Period],
     ids: List[(String, String)] = Nil,
-    withheld: Option[String] = None
+    withheld: Option[String] = None,
+    role: Option[String] = None
 )

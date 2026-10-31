@@ -57,3 +57,9 @@ trait PluginContext:
     * default, so a context written before budgets existed still compiles.
     */
   def quota(upstream: String): UpstreamQuota = UpstreamQuota.Unlimited
+
+  /** The host's reading of licence statements ([[LicenceReader]]), for a media collection that must decide on a licence
+    * before it states it. A host that lends none reads every statement as unknown — the default, so a context written
+    * before it existed still compiles.
+    */
+  def licences: LicenceReader = LicenceReader.Unread

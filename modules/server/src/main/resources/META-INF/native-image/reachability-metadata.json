@@ -16671,14 +16671,6 @@
       ]
     },
     {
-      "type": "com.histmersion.server.media.KeyedConfig$",
-      "fields": [
-        {
-          "name": "derived$ConfigReader$lzy1"
-        }
-      ]
-    },
-    {
       "type": "com.histmersion.server.media.SourcePictures",
       "fields": [
         {
@@ -19575,36 +19567,6 @@
     },
     {
       "glob": "META-INF/histmersion/plugins/keepassxc.conf"
-    },
-    {
-      "glob": "META-INF/histmersion/plugins/media-aic.conf"
-    },
-    {
-      "glob": "META-INF/histmersion/plugins/media-cleveland.conf"
-    },
-    {
-      "glob": "META-INF/histmersion/plugins/media-depicts.conf"
-    },
-    {
-      "glob": "META-INF/histmersion/plugins/media-europeana.conf"
-    },
-    {
-      "glob": "META-INF/histmersion/plugins/media-loc.conf"
-    },
-    {
-      "glob": "META-INF/histmersion/plugins/media-met.conf"
-    },
-    {
-      "glob": "META-INF/histmersion/plugins/media-opencontext.conf"
-    },
-    {
-      "glob": "META-INF/histmersion/plugins/media-pleiades.conf"
-    },
-    {
-      "glob": "META-INF/histmersion/plugins/media-smithsonian.conf"
-    },
-    {
-      "glob": "META-INF/histmersion/plugins/media-wikidata.conf"
     },
     {
       "glob": "META-INF/native/libnetty_transport_native_kqueue.dylib"

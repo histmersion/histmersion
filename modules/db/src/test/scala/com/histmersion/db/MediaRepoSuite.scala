@@ -98,7 +98,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     MediaRepo.ProviderAsset(
       P,
       key,
-      MediaText.safeName(key),
+      key.stripPrefix("File:").trim.replaceAll("[^A-Za-z0-9._-]+", "_"),
       "image/jpeg",
       Array[Byte](-1, -40, 1),
       Some(1280),

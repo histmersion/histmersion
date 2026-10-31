@@ -1,6 +1,6 @@
 package com.histmersion.server.media
 
-import com.histmersion.pluginhost.{allowed, PluginMedia, Polite}
+import com.histmersion.pluginhost.{PluginMedia, Polite}
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -14,7 +14,7 @@ trait Collection:
   /** The asset provider and the `media_checks` name. */
   def provider: String
 
-  /** The role its pictures play for a place: `object` (a museum's) or `map`. */
+  /** The role its pictures play for a place, unless a record names its own: `object` (a museum's) or `map`. */
   def role: String
   def conf: MediaCollectionConfig
 

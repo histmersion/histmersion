@@ -434,6 +434,7 @@ object PluginHost:
     def secret(s: Secret) = resolved(s)
     def secretVaults = vaults
     override def quota(upstream: String) = services.quota(upstream)
+    override def licences = HostLicences
     override def sourceFetchers = fetchers
     override def mediaCollections = media
     override def eventCatalogues = events
@@ -451,14 +452,13 @@ object PluginHost:
   private def validCollection(firstParty: Boolean)(id: String, c: MediaCollection): Option[String] =
     if !id.matches(IdPattern) then Some(s"'$id': a media collection id is $IdPattern")
     else if c == null then Some(s"media collection '$id' is null")
-    else if firstParty || c.isInstanceOf[HostOwned] then None
+    else if firstParty then None
     else if ReservedNames.mediaCollections(id) then
       Some(s"'$id' is the name of one of Histmersion's own media providers")
-    else if !MediaCollection.Roles(c.role) then
-      Some(
-        s"media collection '$id': role '${c.role}' is not one of ${MediaCollection.Roles.toList.sorted.mkString(", ")}"
-      )
-    else None
+    else
+      (c.role :: c.roles.toList.sorted).find(r => !MediaCollection.Roles(r)).map { r =>
+        s"media collection '$id': role '$r' is not one of ${MediaCollection.Roles.toList.sorted.mkString(", ")}"
+      }
 
   /** An event catalogue: a kebab-case id; a plugin's may not take a name of the host's own catalogues, unless it is the
     * first-party plugin the name is reserved for.

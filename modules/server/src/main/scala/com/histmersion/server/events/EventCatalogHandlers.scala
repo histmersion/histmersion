@@ -713,7 +713,7 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
           .grouped(ec.siteTypes.batch.max(1))
           .toList
           .flatMap { b =>
-            c.json(Wikidata.entitiesUrl(api, b, cfg.media.wikidata.maxlag))
+            c.json(com.histmersion.upstreams.WikidataEntities.url(api, b, cfg.media.wikidata.maxlag))
               .flatMap(EventProviders.WikidataEvents.claims(_, prop))
               .getOrElse(Map.empty)
               .toList
