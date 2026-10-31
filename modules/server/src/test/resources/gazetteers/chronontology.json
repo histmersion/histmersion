@@ -1,0 +1,50 @@
+{
+    "results": [
+      {
+        "resource": {
+          "id": "NvftiJLCwhhO",
+          "names": {"en": ["Middle Helladic"], "de": ["Mittelhelladisch"]},
+          "types": ["material_culture"],
+          "hasTimespan": [{
+            "begin": {"notBefore": "-2100", "notAfter": "-2050"},
+            "end": {"at": "-1700"}
+          }]
+        },
+        "regions": [{"en": "Southern Aegean"}, {"en": "Europe"}]
+      },
+      {
+        "resource": {
+          "id": "abc123def",
+          "names": {"en": ["Ptolemaic Period"], "ar": ["العصر البطلمي"]},
+          "types": ["political"],
+          "hasTimespan": [{
+            "begin": {"at": "-305"},
+            "end": {"at": "-30"}
+          }]
+        },
+        "regions": [{"en": "Arab Republic of Egypt"}]
+      },
+      {
+        "resource": {
+          "id": "xyz789",
+          "names": {"de": ["Quartär"]},
+          "types": ["geological"],
+          "hasTimespan": [{
+            "begin": {"at": "-2588000"},
+            "end": {"at": "not specified"}
+          }]
+        },
+        "regions": []
+      },
+      {
+        "resource": {
+          "id": "noname1",
+          "names": {},
+          "types": [],
+          "hasTimespan": []
+        },
+        "regions": []
+      }
+    ],
+    "total": 4
+  }

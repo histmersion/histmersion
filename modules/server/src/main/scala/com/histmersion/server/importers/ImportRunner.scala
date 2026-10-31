@@ -21,10 +21,11 @@ object ImportRunner:
       imp: GazetteerImporter,
       ds: DataSource,
       dryRun: Boolean,
-      toleranceKm: Double
+      toleranceKm: Double,
+      from: Option[String] = None
   ): Either[String, PlaceImportResult] =
     for
-      json <- download(imp.fetchUrl)
+      json <- download(from.getOrElse(imp.fetchUrl))
       items <- imp.transform(json)
       parents = imp match
         case c: CliopatriaImporter.type => c.parentConcepts(items)

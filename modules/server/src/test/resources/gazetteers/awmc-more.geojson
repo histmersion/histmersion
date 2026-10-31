@@ -1,0 +1,15 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {"type": "Feature", "properties": {"title": "Ubii", "type": "people, tribe", "CREATOR": "AWMC staff", "notes": "lower-case keys"},
+     "geometry": {"type": "MultiLineString", "coordinates": [[[6.5,50.5],[7.5,51.0]]]}},
+    {"type": "Feature", "properties": {"NAME": "Mons Haemus", "P_TYPE": "Mountain", "PID": "207496"},
+     "geometry": {"type": "MultiLineString", "coordinates": [[[24.0,42.7],[26.0,42.8]]]}},
+    {"type": "Feature", "properties": {"TITLE": "Insula Nova", "TYPE": "island"}, "geometry": null},
+    {"type": "Feature", "properties": {"TITLE": "Campus", "TYPE": "plain", "P_TYPE": "labeled feature"}, "geometry": null},
+    {"type": "Feature", "properties": {"TITLE": "Elsewhere", "TYPE": "settlement"}, "geometry": null},
+    {"type": "Feature", "properties": {"TITLE": "", "TYPE": "region"}, "geometry": null},
+    {"type": "Feature", "geometry": null},
+    42
+  ]
+}

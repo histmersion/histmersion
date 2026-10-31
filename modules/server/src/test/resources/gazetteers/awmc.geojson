@@ -1,0 +1,46 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": {
+          "TITLE": "Thynias",
+          "TYPE": "region",
+          "PID": "511444",
+          "CREATED": "1899/12/30",
+          "P_TYPE": "region"
+        },
+        "geometry": {
+          "type": "MultiLineString",
+          "coordinates": [[[28.5,41.5],[29.0,42.0]]]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "TITLE": "Salmydessos",
+          "TYPE": "region",
+          "PID": "511405",
+          "P_TYPE": "region"
+        },
+        "geometry": {
+          "type": "MultiLineString",
+          "coordinates": [[[28.0,42.0],[28.5,42.5]]]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "TITLE": "Asticus M.",
+          "TYPE": "mountain",
+          "PID": "511171",
+          "P_TYPE": "mountain",
+          "NOTES": "Should be 'field'"
+        },
+        "geometry": {
+          "type": "MultiLineString",
+          "coordinates": [[[28.2,41.8],[28.7,42.2]]]
+        }
+      }
+    ]
+  }

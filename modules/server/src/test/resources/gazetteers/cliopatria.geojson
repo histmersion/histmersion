@@ -1,0 +1,62 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": {
+          "Name": "Hittite Empire",
+          "FromYear": -1650,
+          "ToYear": -1401,
+          "Type": "POLITY",
+          "Wikidata": "Q170494",
+          "Wikipedia": "Hittites",
+          "SeshatID": "tr_hittite_eg",
+          "MemberOf": "",
+          "Components": "",
+          "Area": 50000.0
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [[[32.0,37.0],[36.0,37.0],[36.0,40.0],[32.0,40.0],[32.0,37.0]]]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "Name": "Hittite Empire",
+          "FromYear": -1400,
+          "ToYear": -1201,
+          "Type": "POLITY",
+          "Wikidata": "Q170494",
+          "Wikipedia": "Hittites",
+          "SeshatID": "tr_hittite_nk",
+          "MemberOf": "",
+          "Components": "",
+          "Area": 80000.0
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [[[30.0,35.0],[38.0,35.0],[38.0,41.0],[30.0,41.0],[30.0,35.0]]]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "Name": "Kingdom of Elam",
+          "FromYear": -3200,
+          "ToYear": -2701,
+          "Type": "POLITY",
+          "Wikidata": "Q192736",
+          "Wikipedia": "Elam",
+          "SeshatID": "",
+          "MemberOf": "Sumerian City-States",
+          "Components": "",
+          "Area": 30000.0
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [[[48.0,30.0],[52.0,30.0],[52.0,34.0],[48.0,34.0],[48.0,30.0]]]
+        }
+      }
+    ]
+  }

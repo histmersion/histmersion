@@ -1,0 +1,16 @@
+{
+  "results": [
+    {"resource": {"id": "begin0nly", "names": {"de": ["Spätbronzezeit"], "en": ["Late Bronze Age"]}, "types": ["Political", "material_culture"],
+      "hasTimespan": [{"begin": {"notBefore": "-1600"}, "end": {}}, {"begin": {"at": "1"}, "end": {"at": "2"}}]},
+     "regions": [{"de": "Ägäis"}, {"en": "Aegean"}]},
+    {"resource": {"id": "endOnly", "names": {"it": ["Età del ferro", "Ferro"], "fr": ["Âge du fer"]}, "types": ["climatological"],
+      "hasTimespan": [{"begin": {"at": " "}, "end": {"notAfter": " -500 "}}]},
+     "regions": [{"fr": "Gaule"}]},
+    {"resource": {"id": "noTime", "names": {"en": ["Undated period"]}, "types": []}},
+    {"resource": {"id": "", "names": {"en": ["No id"]}}},
+    {"resource": {"names": {"en": ["Missing id"]}}},
+    {"notResource": true},
+    "not an object"
+  ],
+  "total": 7
+}
