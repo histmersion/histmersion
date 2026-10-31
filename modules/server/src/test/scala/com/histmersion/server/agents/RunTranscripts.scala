@@ -15,19 +15,24 @@ import scala.collection.mutable
   *
   * A row is its JSON with what a run mints masked: timestamps as `TS`, UUIDs as `UUID` (a run's eight-character short
   * form as `RUN`), serial ids as `ID` (in every column that names one; `#<n>` in a text as `#ID`), durations as `MS`. A
-  * long text is its digest and length. Rows are sorted, so the order parallel steps write in does not show.
-  * `HISTMERSION_UPDATE_ORACLE=1` rewrites `oracle/automation/runs/<suite>.txt`; otherwise each test's block is compared
-  * with its recorded one, and the actual record is written under `target/oracle-actual/`.
+  * long text is its digest and length. Rows are sorted, so the order parallel steps write in does not show. A count of
+  * minutes in a text is `N min` (how long an item waited depends on the wall clock). `HISTMERSION_UPDATE_ORACLE=1`
+  * rewrites `oracle/automation/runs/<suite>.txt`; otherwise each test's block is compared with its recorded one, and
+  * the actual record is written under `target/oracle-actual/`.
   */
 trait RunTranscripts extends munit.FunSuite:
 
   /** The database the suite's runs write to. */
   protected def transcriptDs: DataSource
 
-  /** Whether the suite runs at all (no database: nothing is recorded). */
-  protected def transcriptOn: Boolean = com.histmersion.db.TestDb.url.isDefined
-
   private val update = sys.env.get("HISTMERSION_UPDATE_ORACLE").contains("1")
+
+  /** Recorded and compared only when asked (`HISTMERSION_ORACLE_RUNS=1`) and with a database: the rows a test leaves
+    * depend on what the other suites of its forked group left in the group's database, so the record holds for one
+    * invocation only, `server/testOnly com.histmersion.server.agents.*`, the one it was written under.
+    */
+  protected def transcriptOn: Boolean =
+    com.histmersion.db.TestDb.url.isDefined && sys.env.get("HISTMERSION_ORACLE_RUNS").contains("1")
   private def suiteName = getClass.getSimpleName
   private def recorded = Path.of(s"modules/server/src/test/resources/oracle/automation/runs/$suiteName.txt")
   private def actual = Path.of(s"target/oracle-actual/automation/runs/$suiteName.txt")
@@ -146,6 +151,7 @@ object RunTranscripts:
   private val Stamp =
     "\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?(Z|[+-]\\d{2}(:?\\d{2})?)?".r
   private val Day = "\\b\\d{4}-\\d{2}-\\d{2}\\b".r
+  private val Minutes = "\\b\\d+ min\\b".r
   private val ShortRun = "\\b[0-9a-f]{8}\\b".r
   private val Hash = "#(\\d+)".r
   private val Numbered = "\\b(approvals?|items?|hints?|tasks?|versions?) (\\d+)\\b".r
@@ -162,7 +168,8 @@ object RunTranscripts:
     val t2 = Stamp.replaceAllIn(t1, "TS")
     val t3 = ShortRun.replaceAllIn(Day.replaceAllIn(t2, "DAY"), "RUN")
     val t4 = Numbered.replaceAllIn(Hash.replaceAllIn(t3, "#ID"), m => s"${m.group(1)} ID")
-    if long && t4.length > 160 then s"<${digest(t4)}:${t4.length}>" else t4
+    val t5 = Minutes.replaceAllIn(t4, "N min")
+    if long && t5.length > 160 then s"<${digest(t5)}:${t5.length}>" else t5
 
   /** A column or field that names a serial row: its number is whatever the sequence gave. */
   private def idKey(key: String): Boolean =
