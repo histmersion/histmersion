@@ -165,10 +165,10 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** Settings: the settings file read and changed (never the database), reloaded into this server; the restart for what
     * only a restart applies.
     */
-  lazy val settings: com.histmersion.domain.settings.SettingsControllers =
-    import com.histmersion.domain.settings.{RestartService, SettingsControllers, SettingsService}
+  lazy val settings: com.histmersion.util.settings.SettingsControllers =
+    import com.histmersion.util.settings.{RestartService, SettingsControllers, SettingsService}
     SettingsControllers(
-      SettingsService(() => deps.loaded),
+      SettingsService(() => deps.loaded, () => StorageLocations.settingsFile(deps.loaded, deps.storage)),
       RestartService(deps.restart),
       () => configReload(),
       () =>
@@ -308,7 +308,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** The `ui` config block, plus whether writes need a key — never the key itself — and the plugins (their settings
     * with secrets as references, never values).
     */
-  def uiConfig: UiConfig = ConfigViews.page(
+  def uiConfig: UiConfig = UiConfigViews.page(
     cfg.ui,
     writeKeyRequired = cfg.auth.apiKey.nonEmpty,
     agentsEnabled = cfg.agents.enabled,

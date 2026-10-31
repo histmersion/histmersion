@@ -738,6 +738,7 @@ config:config/edit/SettingReading.scala	util.settings
 config:config/edit/SettingShown.scala	util.settings
 config:config/edit/SettingSource.scala	config
 config:config/edit/SettingValue.scala	util.settings
+config:config/edit/SettingsFile.scala	util.settings
 config:config/edit/SettingsReader.scala	util.settings
 config:config/edit/WriteOutcome.scala	util.settings
 config:config/edit/Written.scala	util.settings
@@ -918,11 +919,6 @@ server:domain/jobs/JobControlControllers.scala	util.jobs
 server:domain/jobs/JobControlService.scala	util.jobs
 server:domain/jobs/JobStopped.scala	util.jobs
 server:domain/jobs/JobStops.scala	util.jobs
-server:domain/settings/RestartService.scala	util.settings
-server:domain/settings/SettingsControllers.scala	util.settings
-server:domain/settings/SettingsService.scala	util.settings
-server:domain/settings/SettingsSnapshot.scala	util.settings
-server:domain/settings/SettingsViews.scala	util.settings
 server:server/ArticlePage.scala	research.articles
 server:server/ArticlesApi.scala	server
 server:server/AuthHandler.scala	server
@@ -934,14 +930,11 @@ server:server/BundleHandlers.scala	util.data.exchange
 server:server/ChipField.scala	kernel
 server:server/Citation.scala	research.articles
 server:server/CitedEntry.scala	research.articles
-server:server/ConfigSource.scala	util.settings
-server:server/ConfigViews.scala	util.settings
 server:server/ConverterClient.scala	util.ocr
 server:server/ConverterState.scala	util.ocr
 server:server/Deps.scala	server
 server:server/FullText.scala	library.sources
 server:server/Handlers.scala	split
-server:server/HotConfig.scala	util.settings
 server:server/HtmlRender.scala	research.articles
 server:server/HttpApi.scala	server
 server:server/HttpConverterClient.scala	util.ocr
@@ -959,7 +952,6 @@ server:server/MarkdownHtml.scala	util.common
 server:server/MarkdownLint.scala	research.articles.lint
 server:server/McpTools.scala	server
 server:server/MergeApplyJobs.scala	util.data.exchange
-server:server/MergeSettingsViews.scala	util.settings
 server:server/OpsHandlers.scala	split
 server:server/OpsRoutes.scala	server
 server:server/OpsTools.scala	split
@@ -980,6 +972,7 @@ server:server/StoredOriginals.scala	library.ingest
 server:server/Supervisor.scala	server
 server:server/TileCache.scala	catalogue.maptiles
 server:server/TimeZoneCheck.scala	server.instance
+server:server/UiConfigViews.scala	server.instance
 server:server/VacuumJobs.scala	util.data.maintenance
 server:server/acquire/AcquireClients.scala	library.acquisition
 server:server/acquire/AcquireHandlers.scala	library.acquisition

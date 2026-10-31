@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.settings.MergeSettingsViews
+
 import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*

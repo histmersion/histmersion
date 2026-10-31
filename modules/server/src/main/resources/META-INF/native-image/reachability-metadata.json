@@ -15516,14 +15516,6 @@
       "type": "com.histmersion.server.AuthHandler"
     },
     {
-      "type": "com.histmersion.server.ConfigViews$",
-      "fields": [
-        {
-          "name": "given_Transformer_Path_String$lzy1"
-        }
-      ]
-    },
-    {
       "type": "com.histmersion.server.Handlers",
       "fields": [
         {

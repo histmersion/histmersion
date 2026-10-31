@@ -1,17 +1,11 @@
 package com.histmersion.server
 
-import com.histmersion.api.{ConfigFileInfo, PluginsReport, UiConfig}
-import com.histmersion.config.{UiSettings, UserConfigFile}
-import io.scalaland.chimney.Transformer
+import com.histmersion.api.{PluginsReport, UiConfig}
+import com.histmersion.config.UiSettings
 import io.scalaland.chimney.dsl.*
 
-import java.nio.file.Path
-
-/** What the wire says of the configuration: the `ui` block as `/api/config` serves it, and the user config file's line
-  * in `/api/about`.
-  */
-object ConfigViews:
-  private given Transformer[Path, String] = _.toString
+/** What the wire says of the `ui` block: the page's settings as `/api/config` serves them. */
+object UiConfigViews:
 
   /** The page's settings: the `ui` block, plus what the server knows and the block does not hold. */
   def page(
@@ -31,7 +25,3 @@ object ConfigViews:
       .withFieldConst(_.baseMapSource, baseMapSource)
       .withFieldConst(_.mapLanguage, mapLanguage)
       .transform
-
-  def configFile(file: UserConfigFile): ConfigFileInfo = file.transformInto[ConfigFileInfo]
-
-extension (file: UserConfigFile) def info: ConfigFileInfo = ConfigViews.configFile(file)

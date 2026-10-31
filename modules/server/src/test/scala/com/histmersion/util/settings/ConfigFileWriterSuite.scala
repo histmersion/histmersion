@@ -1,12 +1,18 @@
-package com.histmersion.config.edit
+package com.histmersion.util.settings
 
+import com.histmersion.cli.LocalSettingsFile
+import com.histmersion.config.edit.*
+import com.histmersion.util.storage.{Location, Storage, StoreKey}
 import org.ekrich.config.{Config, ConfigFactory}
 
 import java.nio.file.{Files, Path}
 import java.nio.file.attribute.PosixFilePermissions
 import scala.jdk.CollectionConverters.*
 
-class ConfigFileWriterSuite extends munit.FunSuite:
+/** The settings editor over each place a settings file is kept: the command line's file on its own disk, the server's
+  * in the store of its directory. Both must change a file exactly alike.
+  */
+abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit.FunSuite:
 
   private def key(s: String) = SettingKey.parse(s).toOption.get
   private def set(k: String, v: SettingValue) = SettingEdit.Set(key(k), v)
@@ -22,7 +28,7 @@ class ConfigFileWriterSuite extends munit.FunSuite:
     Files.writeString(f, text)
     f
 
-  private def writer(f: Path, env: Config = noEnv) = ConfigFileWriter(f, env, ConfigSchema.reference)
+  private def writer(f: Path, env: Config = noEnv) = ConfigFileWriter(fileAt(f), env, ConfigSchema.reference)
 
   private def ok(f: Path, edits: SettingEdit*): WriteOutcome =
     writer(f).write(edits.toList, None, literalConsent = false).fold(e => fail(e.message), identity)
@@ -51,7 +57,7 @@ class ConfigFileWriterSuite extends munit.FunSuite:
     assertEquals(o.changed.map(_.relative), List("backups.keep"))
     assertEquals(read(f), Commented.replace("keep = 3", "keep = 7"))
     assertEquals(Files.readString(f.resolveSibling("histmersion.conf.bak")), Commented, "the old text is the .bak")
-    assertEquals(o.backup, Some(f.resolveSibling("histmersion.conf.bak")))
+    assertEquals(o.backup, Some(f.resolveSibling("histmersion.conf.bak").toString))
 
   test("setting a value the file already holds writes nothing; the same change twice gives the same file"):
     val f = fileWith(Commented)
@@ -264,3 +270,15 @@ class ConfigFileWriterSuite extends munit.FunSuite:
     val f = fileWith("")
     ok(f, set("backups.keep", num(3)))
     assert(read(f).endsWith("}\n"), read(f))
+
+class LocalConfigFileWriterSuite extends ConfigFileWriterSuite(LocalSettingsFile(_))
+
+class StoredConfigFileWriterSuite
+    extends ConfigFileWriterSuite(f =>
+      StoredSettingsFile(
+        Storage(l => Option.when(l == Location.UserConfig)(f.toAbsolutePath.getParent), () => f.getParent)
+          .store(Location.UserConfig),
+        StoreKey.applyUnsafe(f.getFileName.toString),
+        f.toString
+      )
+    )

@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.settings.{ConfigSource, HotConfig}
+
 import com.histmersion.domain.library.acquisition.OpenAlexDiscovery
 
 import com.histmersion.pluginhost.{upstreamSettings, FetchChain, Generation, HostLog, OutboundTls}

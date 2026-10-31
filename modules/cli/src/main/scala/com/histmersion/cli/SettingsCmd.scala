@@ -108,21 +108,24 @@ object SettingsCmd:
   private object Local:
     private def env = ConfigFactory.systemEnvironment()
 
-    private def writer: Either[CliError, ConfigFileWriter] =
+    private def file: Either[CliError, LocalSettingsFile] =
       UserPaths
         .configFile(AppConfig.lookup(env))
         .toRight(CliError(s"no settings file location: HOME is unset (set ${UserPaths.ConfigEnv})", ExitCode.Usage))
-        .map(ConfigFileWriter(_, env, ConfigSchema.reference))
+        .map(LocalSettingsFile(_))
+
+    private def writer: Either[CliError, ConfigFileWriter] =
+      file.map(ConfigFileWriter(_, env, ConfigSchema.reference))
 
     private def failed(e: SettingError) = CliError(e.message, ExitCode.Refused)
 
     def page(prefix: Option[String]): Either[CliError, ConfigEdit.Page] =
       for
-        w <- writer
+        f <- file
         p <- prefix.fold(Right(None))(k => SettingKey.parse(k).map(Some(_))).left.map(CliError(_, ExitCode.Usage))
-        state <- w.read().left.map(failed)
+        state <- f.read().left.map(failed)
       yield
-        val loaded = AppConfig.loadWithUserFile(env, Some(w.path))
+        val loaded = AppConfig.loadWithUserFile(env, Some(f.path))
         val merged = loaded.fold(_ => ConfigFactory.empty, _.merged)
         val shown = SettingsReader.read(ConfigSchema.reference, state, merged, env, p).map(SettingShown.of)
         val fields = shown.map(s =>
@@ -144,7 +147,7 @@ object SettingsCmd:
           )
         )
         ConfigEdit.Page(
-          Some(w.path.toString),
+          Some(f.shown),
           state.text.isDefined,
           state.version.value,
           fields.map(_.section).distinct.map(id => ConfigEdit.Section(id, fields = fields.filter(_.section == id))),
@@ -157,10 +160,10 @@ object SettingsCmd:
         edits <- SettingEdit.parseAll(w.changes.map(c => c.key -> c.value), ConfigSchema.reference).left.map(failed)
         out <- fw.write(edits, None, w.literalConsent).left.map(failed)
       yield ConfigEdit.Written(
-        out.file.toString,
+        out.file,
         out.changed.map(_.value),
         out.unchanged.map(_.value),
-        out.backup.map(_.toString),
+        out.backup,
         out.version.value,
         out.created,
         out.restart.map((k, why) => ConfigEdit.RestartNote(k.value, why)),

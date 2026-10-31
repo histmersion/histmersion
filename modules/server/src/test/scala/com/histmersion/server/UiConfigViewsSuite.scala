@@ -1,23 +1,13 @@
 package com.histmersion.server
 
-import com.histmersion.api.{
-  ConfigFileInfo,
-  DebounceConfig,
-  EventsUiConfig,
-  MapTilesUiConfig,
-  PluginsReport,
-  TimeConfig,
-  UiConfig
-}
-import com.histmersion.config.{AppConfig, UserConfigFile}
+import com.histmersion.api.{DebounceConfig, EventsUiConfig, MapTilesUiConfig, PluginsReport, TimeConfig, UiConfig}
+import com.histmersion.config.AppConfig
 
-import java.nio.file.Path
-
-class ConfigViewsSuite extends munit.FunSuite:
+class UiConfigViewsSuite extends munit.FunSuite:
 
   test("the page's settings: every `ui` setting as read, and what the server adds"):
     val ui = AppConfig.load().ui
-    val page = ConfigViews.page(
+    val page = UiConfigViews.page(
       ui,
       writeKeyRequired = true,
       agentsEnabled = true,
@@ -64,8 +54,3 @@ class ConfigViewsSuite extends munit.FunSuite:
         setupDue = true
       )
     )
-
-  test("the config file's line: its path as text, whether it was read, the keys it ignored"):
-    val f = UserConfigFile(Some(Path.of("/c/histmersion.conf")), loaded = true, List("histmersion.x"))
-    assertEquals(f.info, ConfigFileInfo(Some("/c/histmersion.conf"), loaded = true, List("histmersion.x")))
-    assertEquals(UserConfigFile(None, loaded = false).info, ConfigFileInfo(None, loaded = false, Nil))

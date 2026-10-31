@@ -2,7 +2,7 @@ package com.histmersion.server
 
 import com.histmersion.api.{Api, ConfigEdit, PluginsReport}
 import com.histmersion.config.{AppConfig, LoadedConfig}
-import com.histmersion.domain.settings.{SettingsService, SettingsViews}
+import com.histmersion.util.settings.{SettingsService, SettingsViews}
 import com.histmersion.server.acquire.{AcquireHandlers, SkeletonIngest}
 import com.histmersion.server.agents.{Generated, PromptBudget, ToolName}
 import io.circe.Json

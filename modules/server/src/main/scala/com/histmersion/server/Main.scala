@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.settings.{info, ConfigSource}
+
 import com.histmersion.api.PluginsMarkdown
 import com.histmersion.config.{AppConfig, Environment, UserPaths}
 import com.histmersion.server.acquire.CoreBudget

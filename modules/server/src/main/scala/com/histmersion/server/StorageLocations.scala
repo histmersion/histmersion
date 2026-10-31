@@ -4,7 +4,9 @@ import com.histmersion.config.{AppConfig, Environment, LoadedConfig, UserPaths}
 import com.histmersion.server.agents.AgentTrees
 import com.histmersion.server.basemap.BasemapService
 import com.histmersion.server.importers.GazetteerLoad
-import com.histmersion.util.storage.{Location, Storage}
+import com.histmersion.config.edit.SettingsFile
+import com.histmersion.util.settings.StoredSettingsFile
+import com.histmersion.util.storage.{Location, Storage, StoreKey}
 
 import java.nio.file.Path
 
@@ -37,6 +39,17 @@ object StorageLocations:
       case Location.UserConfig =>
         loaded.file.path.orElse(userPaths.configFile).flatMap(p => Option(p.toAbsolutePath.getParent))
       case Location.Scratch => Some(temp)
+
+  /** The settings file `loaded` was read from, in the store of its directory ([[Location.UserConfig]]) and named in
+    * messages as the load names it; `None` when it was read from none.
+    */
+  def settingsFile(loaded: LoadedConfig, storage: Storage): Option[SettingsFile] =
+    loaded.file.path.flatMap(p =>
+      StoreKey
+        .of(p.getFileName.toString)
+        .toOption
+        .map(StoredSettingsFile(storage.store(Location.UserConfig), _, p.toString))
+    )
 
   /** `acquire.spool-dir`, or `<java.io.tmpdir>/histmersion-acquire` when it is empty — absolute and normalised. */
   def spool(dir: String): Path =

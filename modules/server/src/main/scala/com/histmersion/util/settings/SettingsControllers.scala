@@ -1,4 +1,4 @@
-package com.histmersion.domain.settings
+package com.histmersion.util.settings
 
 import com.histmersion.api.{ApiError, ConfigEdit, ReloadReport}
 import com.histmersion.config.edit.*

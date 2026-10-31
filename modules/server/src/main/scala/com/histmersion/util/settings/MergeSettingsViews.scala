@@ -1,4 +1,4 @@
-package com.histmersion.server
+package com.histmersion.util.settings
 
 import com.histmersion.config.MergeConfig
 import com.histmersion.domain.MergeSettings

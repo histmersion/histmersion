@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.settings.{info, ConfigSource, HotConfig}
+
 import com.histmersion.pluginhost.Generation
 
 import com.histmersion.config.{AppConfig, ConfigReload}
