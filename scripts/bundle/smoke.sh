@@ -84,7 +84,7 @@ rc=0; TZ=Australia/Lord_Howe "$b/bin/histmersion-server" --self-check > "$data/t
   || fail "--self-check under TZ=Australia/Lord_Howe (exit $rc): $(grep 'time zones' "$data/tz.out")"
 echo "  $(grep '^- time zones' "$data/tz.out")"
 # the built-in acquisition plugins: in the binary, enabled by default, their fetchers registered
-for line in "archive-org 1.0.0 — registered (source-fetcher:archive-org)" \
+for line in "archive-org 1.0.0 — registered (source-fetcher:archive-org, source-collection:archive-org)" \
     "arxiv 1.0.0 — registered (source-fetcher:arxiv)" \
     "oa-unpaywall 1.0.0 — registered (source-fetcher:unpaywall)" \
     "oa-core 1.0.0 — registered (source-fetcher:core)" \
