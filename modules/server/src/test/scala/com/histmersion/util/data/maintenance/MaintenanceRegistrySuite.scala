@@ -1,0 +1,31 @@
+package com.histmersion.util.data.maintenance
+
+import com.histmersion.server.Deps
+import com.histmersion.util.data.TablesAdapter.*
+import com.histmersion.util.storage.Location
+
+/** What today's owners register for backup, maintenance and the storage figures. */
+class MaintenanceRegistrySuite extends munit.FunSuite:
+
+  test("the reindex is the library's, found by name; nothing else is"):
+    assertEquals(Deps.data.task(MaintenanceTaskName("reindex")).map(_.owner), Some(LibraryOwner))
+    assertEquals(Deps.data.task(MaintenanceTaskName("prune")), None)
+    assertEquals(Deps.data.maintenance.map(_.name.value: String), List("reindex"))
+
+  test("each store and each cache has one owner; a restore clears only the map's tiles"):
+    val stores = Deps.data.stores.map(_._2)
+    assertEquals(stores.distinct, stores)
+    assertEquals(Deps.data.stores.collect { case (o, Location.Backups) => o }, List(DataArea))
+    val names = Deps.data.caches.map(_.name)
+    assertEquals(names.distinct, names)
+    assertEquals(
+      Deps.data.caches.filter(_.staleAfter.contains(CacheEvent.Restored)).map(_.name.value: String),
+      List("map-tiles")
+    )
+
+  test("a backup takes no store's files, and a restore guards the library's sources alone"):
+    assertEquals(Deps.data.backups.flatMap(_._2.stores), Nil)
+    assertEquals(
+      Deps.data.backups.flatMap((o, b) => b.guarded.map(g => (o, g.table.value: String, g.noun))),
+      List((LibraryOwner, "sources", "source"))
+    )

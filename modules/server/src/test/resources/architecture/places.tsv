@@ -827,7 +827,6 @@ db:db/AssetMetaRepo.scala	media
 db:db/AssetRepo.scala	media
 db:db/AttestationRepo.scala	catalogue.evidence
 db:db/AutopilotRepo.scala	automation.autopilot
-db:db/BackupRepo.scala	util.data.backup
 db:db/BundleExport.scala	util.data.exchange
 db:db/BundleImport.scala	util.data.exchange
 db:db/BundleRepo.scala	util.data.exchange
@@ -880,13 +879,11 @@ db:db/SiteTypesSql.scala	catalogue.places
 db:db/SourceDeleteRepo.scala	library.sources
 db:db/SourceRepo.scala	library.sources
 db:db/Sql.scala	util.common
-db:db/StatsRepo.scala	util.data.storage
 db:db/TileRepo.scala	catalogue.maptiles
 db:db/TreeRepo.scala	catalogue.places
 db:db/UiRepo.scala	server.instance
 db:db/UndatedSiteRepo.scala	catalogue.maptiles
 db:db/UpstreamQuotaRepo.scala	library.acquisition
-db:db/VacuumRepo.scala	util.data.maintenance
 db:db/Vocab.scala	util.common
 files:files/ArticleNote.scala	research.articles
 files:files/BundleEntities.scala	util.data.exchange
@@ -894,7 +891,6 @@ files:files/BundleFormat.scala	util.data.exchange
 files:files/BundleReader.scala	util.data.exchange
 files:files/BundleTar.scala	util.data.exchange
 files:files/CoverChoice.scala	media
-files:files/DirSize.scala	util.data.maintenance
 files:files/Export.scala	library.sources
 files:files/Frontmatter.scala	library.sources
 files:files/MergeResolutionsFile.scala	util.data.exchange
@@ -908,8 +904,6 @@ server:domain/activity/ActivityService.scala	automation.activity
 server:server/ArticlePage.scala	research.articles
 server:server/ArticlesApi.scala	server
 server:server/AuthHandler.scala	server
-server:server/BackupJobs.scala	util.data.backup
-server:server/BackupService.scala	util.data.backup
 server:server/BasemapWiring.scala	server
 server:server/Bootstrap.scala	server
 server:server/BundleHandlers.scala	util.data.exchange
@@ -926,7 +920,6 @@ server:server/IngestHandlers.scala	library.ingest
 server:server/Jobs.scala	server
 server:server/ListQueries.scala	automation.approvals
 server:server/Main.scala	server
-server:server/Maintenance.scala	util.data.maintenance
 server:server/MapTileService.scala	catalogue.maptiles
 server:server/MapTiles.scala	catalogue.maptiles
 server:server/MarkdownFlavor.scala	util.common
@@ -940,22 +933,17 @@ server:server/OpsTools.scala	split
 server:server/PageBuilder.scala	research.articles
 server:server/PageKind.scala	research.articles
 server:server/Pages.scala	research.articles
-server:server/PgRelocation.scala	util.data.backup
-server:server/ReadOnlyPool.scala	util.data.maintenance
 server:server/ServerArgs.scala	server
 server:server/ServerGraph.scala	server
 server:server/ServerMode.scala	server
 server:server/ServerPlugins.scala	server
 server:server/SourcePage.scala	research.articles
 server:server/Static.scala	server
-server:server/StorageCache.scala	util.data.maintenance
-server:server/StorageProbe.scala	util.data.maintenance
 server:server/StoredOriginals.scala	library.ingest
 server:server/Supervisor.scala	server
 server:server/TileCache.scala	catalogue.maptiles
 server:server/TimeZoneCheck.scala	server.instance
 server:server/UiConfigViews.scala	server.instance
-server:server/VacuumJobs.scala	util.data.maintenance
 server:server/acquire/AcquireClients.scala	library.acquisition
 server:server/acquire/AcquireHandlers.scala	library.acquisition
 server:server/acquire/AcquireMcp.scala	library.acquisition
@@ -1124,3 +1112,4 @@ server:server/StorageLocations.scala	server
 api:api/JobKindsAdapter.scala	api
 api:api/AliasKindsAdapter.scala	api
 server:server/ConverterWiring.scala	server
+server:server/BackupWiring.scala	server

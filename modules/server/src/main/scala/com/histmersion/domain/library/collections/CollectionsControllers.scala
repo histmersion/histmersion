@@ -3,13 +3,13 @@ package com.histmersion.domain.library.collections
 import com.histmersion.api.*
 import com.histmersion.api.library.collections.*
 import com.histmersion.domain.Caller
-import com.histmersion.server.Maintenance
+import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.values.Citekey
 
 /** The collections' endpoints and tools over [[CollectionsService]]: the citekey checked where one is named, every
   * write behind the maintenance lock.
   */
-final class CollectionsControllers(service: CollectionsService, maintenance: Maintenance):
+final class CollectionsControllers(service: CollectionsService, maintenance: WriteGate):
 
   private def citekey(raw: String): Either[ApiError, String] = Citekey.of(raw).map(_.value)
 

@@ -1,10 +1,8 @@
-package com.histmersion.server
+package com.histmersion.util.data.maintenance
 
 import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.util.process.{Processes, ProcessLaunch, ProcessOutput}
-
-import java.nio.file.{Files, Path}
-import scala.jdk.CollectionConverters.*
+import com.histmersion.util.storage.{Store, StoreKey}
 
 /** Makes the bundled PostgreSQL work from wherever the bundle was put.
   *
@@ -48,41 +46,35 @@ object PgRelocation:
         i = indexOf(d, from, end)
       (d, tooLong)
 
-  /** Relocate `pg` if its marker names another place. `None` when there is nothing to do: no marker (a pixi environment
-    * used in place) or already at home.
+  /** Relocate the PostgreSQL in `pg` if its marker names another place. `None` when there is nothing to do: no marker
+    * (a pixi environment used in place) or already at home. The re-signing runs through `processes`.
     */
-  def relocate(pg: Path, macOS: Boolean): Option[Result] =
-    val marker = pg.resolve(Marker)
-    val here = pg.toRealPath().toString
-    val recorded = if Files.isRegularFile(marker) then Some(Files.readString(marker).trim).filter(_.nonEmpty) else None
+  def relocate(pg: Store, macOS: Boolean, processes: Processes): Option[Result] =
+    val marker = StoreKey.applyUnsafe(Marker)
+    val here = pg.onDisk(StoreKey.Root).fold(e => throw IllegalStateException(e.message), _.toRealPath().toString)
+    val recorded = if pg.isFile(marker) then pg.get(marker).map(_.text().trim).filter(_.nonEmpty) else None
     recorded.filter(_ != here).map { from =>
       val (fb, tb) = (from.getBytes(UTF_8), here.getBytes(UTF_8))
       var files, signed, tooLong = 0
-      val walk = Files.walk(pg)
-      try
-        walk.iterator.asScala
-          .filter(p => p != marker && Files.isRegularFile(p) && !Files.isSymbolicLink(p))
-          .foreach { p =>
-            val bytes = Files.readAllBytes(p)
-            if indexOf(bytes, fb, 0) >= 0 then
-              val (out, skipped) = patch(bytes, fb, tb)
-              Files.write(p, out) // in place: keeps the file's permissions
-              files += 1
-              tooLong += skipped
-              if macOS && isMachO(out) then
-                val rc = Processes()
-                  .start(
-                    ProcessLaunch(
-                      List("codesign", "--force", "--sign", "-", p.toString),
-                      output = ProcessOutput.Discarded
-                    )
-                  )
-                  .fold(e => throw java.io.IOException(e), _.waitFor())
-                if rc != 0 then throw IllegalStateException(s"codesign failed on $p (exit $rc)")
-                signed += 1
-          }
-      finally walk.close()
-      Files.writeString(marker, here)
+      pg.walk()
+        .map(_.key)
+        .filter(k => k != marker && !pg.isLink(k))
+        .foreach { k =>
+          val bytes = pg.get(k).fold(Array.emptyByteArray)(_.bytes())
+          if indexOf(bytes, fb, 0) >= 0 then
+            val (out, skipped) = patch(bytes, fb, tb)
+            pg.write(k, out).left.foreach(e => throw java.io.IOException(e.message)) // in place: keeps the permissions
+            files += 1
+            tooLong += skipped
+            if macOS && isMachO(out) then
+              val file = pg.onDisk(k).fold(e => throw java.io.IOException(e.message), _.toString)
+              val rc = processes
+                .start(ProcessLaunch(List("codesign", "--force", "--sign", "-", file), output = ProcessOutput.Discarded))
+                .fold(e => throw java.io.IOException(e), _.waitFor())
+              if rc != 0 then throw IllegalStateException(s"codesign failed on $file (exit $rc)")
+              signed += 1
+        }
+      pg.write(marker, here.getBytes(UTF_8)).left.foreach(e => throw java.io.IOException(e.message))
       Result(files, signed, tooLong)
     }
 

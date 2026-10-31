@@ -1,8 +1,10 @@
-package com.histmersion.db
+package com.histmersion.util.data.diagnostics
 
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+
+import com.histmersion.db.{Migrate, Sql}
 
 import com.augustnagro.magnum.*
 
@@ -23,7 +25,17 @@ class StatsRepoSuite extends com.histmersion.db.DbSuite:
     connect(ds)(Sql.raw(s"SELECT count(*)::int FROM $table").frag.query[Int].run().head)
 
   test("#718: corpus counts read every table they name"):
-    val c = StatsRepo.corpus(ds)
+    val c = connect(ds)(
+      CorpusCounts(
+        StatsRepo.rows("sources").toInt,
+        StatsRepo.rows("findings").toInt,
+        StatsRepo.rows("articles").toInt,
+        StatsRepo.rows("events").toInt,
+        StatsRepo.rows("places").toInt,
+        StatsRepo.rows("periods").toInt,
+        StatsRepo.rowsWith("periods", "preset").toInt
+      )
+    )
     // places and periods are reference data no other suite deletes: they can only have grown
     assert(c.places <= count("places"), c)
     assert(c.periods <= count("periods"), c)
@@ -34,18 +46,17 @@ class StatsRepoSuite extends com.histmersion.db.DbSuite:
 
   test("#718: the job queue by state adds up to the jobs table"):
     val before = count("jobs")
-    val j = StatsRepo.jobs(ds)
+    val j = JobCounts.of(connect(ds)(StatsRepo.jobStates))
     val after = count("jobs")
     val total = JobState.values.toList.map(j.of).sum
     assert(total >= before - 1 && total <= after + 1, s"$j vs $before..$after")
 
   test("storage: the database's size and its largest tables, largest first, at most n"):
-    val (name, bytes) = StatsRepo.databaseSize(ds)
+    val (name, bytes) = connect(ds)(StatsRepo.databaseSize)
     assert(name.endsWith("_test"), name)
     assert(bytes > 0, bytes)
-    val top = StatsRepo.largestTables(ds, 5)
+    val top = connect(ds)(StatsRepo.tableBytes).take(5).map(TableSize(_, _))
     assert(top.nonEmpty && top.size <= 5, top)
     assertEquals(top.map(_.bytes), top.map(_.bytes).sorted.reverse)
     assert(top.forall(t => t.bytes <= bytes), top)
     assert(!top.exists(_.name.startsWith("pg_")), top)
-    assertEquals(StatsRepo.largestTables(ds, 0), Nil)

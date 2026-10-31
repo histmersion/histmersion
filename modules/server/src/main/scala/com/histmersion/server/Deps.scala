@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.data.maintenance.WriteGate
+
 import com.histmersion.pluginhost.Generation
 
 import com.histmersion.config.{AppConfig, Environment, LoadedConfig, UserConfigFile, UserPaths}
@@ -27,7 +29,7 @@ final class Deps(
     cfgNow: () => AppConfig,
     val ds: DataSource,
     val queryDs: DataSource,
-    val maintenance: Maintenance,
+    val maintenance: WriteGate,
     configFileNow: () => ConfigFileInfo,
     pluginsNow: () => Generation,
     /** Pins work to a generation; [[Pinning.none]] without a hot graph (a test's fixed `Deps`). */
@@ -83,7 +85,7 @@ object Deps:
       cfg: AppConfig,
       ds: DataSource,
       queryDs: DataSource,
-      maintenance: Maintenance = Maintenance(),
+      maintenance: WriteGate = WriteGate(),
       configFile: ConfigFileInfo = ConfigFileInfo(),
       plugins: Generation = ServerPlugins.offline
   ): Deps =
@@ -97,7 +99,10 @@ object Deps:
   /** Every owner's data contribution: what data management runs its operations over. */
   lazy val data: com.histmersion.util.data.DataContributions =
     com.histmersion.util.data.DataContributions
-      .of(com.histmersion.util.data.TransitionContributions.all)
+      .of(
+        com.histmersion.util.data.TransitionContributions
+          .withTasks(com.histmersion.domain.library.sources.SourcesMaintenanceAdapter.tasks)
+      )
       .fold(problems => throw IllegalStateException(problems.mkString("; ")), identity)
 
   /** Every alias table: how an old identifier of each renamed kind is followed. */

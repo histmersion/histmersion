@@ -6,14 +6,17 @@ import java.io.{InputStream, IOException, OutputStream}
 import java.nio.ByteBuffer
 import java.nio.channels.{ClosedChannelException, FileChannel}
 import java.nio.charset.StandardCharsets.UTF_8
-import java.nio.file.attribute.{FileTime, PosixFileAttributeView}
+import java.nio.file.attribute.{BasicFileAttributes, FileTime, PosixFileAttributeView}
 import java.nio.file.{
   AtomicMoveNotSupportedException,
   Files,
+  FileVisitOption,
+  FileVisitResult,
   LinkOption,
   NoSuchFileException,
   Path,
   StandardCopyOption,
+  SimpleFileVisitor,
   StandardOpenOption
 }
 import java.security.MessageDigest
@@ -51,6 +54,8 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
   def exists(key: StoreKey): Boolean = Files.exists(path(key))
   def isFile(key: StoreKey): Boolean = Files.isRegularFile(path(key))
   def isDirectory(key: StoreKey): Boolean = Files.isDirectory(path(key))
+  def isLink(key: StoreKey): Boolean = Files.isSymbolicLink(path(key))
+  def isExecutable(key: StoreKey): Boolean = Files.isRegularFile(path(key)) && Files.isExecutable(path(key))
 
   def stat(key: StoreKey): Option[Stored] =
     val p = path(key)
@@ -96,8 +101,9 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
     Files.createDirectories(dir)
     val file = temp match
       case TempName.Fixed  => target.resolveSibling(target.getFileName.toString + ".tmp")
-      case TempName.Unique => Files.createTempFile(dir, s".${asked.getFileName}.", ".tmp")
-    if temp == TempName.Fixed then Files.deleteIfExists(file): Unit
+      case TempName.Unique         => Files.createTempFile(dir, s".${asked.getFileName}.", ".tmp")
+      case TempName.Suffixed(more) => target.resolveSibling(target.getFileName.toString + more)
+    if temp != TempName.Unique then Files.deleteIfExists(file): Unit
     DiskStore.FileReservation(key, file, target, asked)
   }
 
@@ -144,6 +150,56 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
         .flatMap(p => scala.util.Try(Files.getFileStore(p).getUsableSpace).toOption)
         .getOrElse(0L)
     )
+
+  def measure(budget: MeasureBudget): StoreMeasure =
+    if !Files.exists(root) then StoreMeasure.absent
+    else if Files.isRegularFile(root) then
+      val _ = budget.take()
+      StoreMeasure(ByteCount.applyUnsafe(scala.util.Try(Files.size(root)).getOrElse(0L)), 1L, exists = true)
+    else if budget.exhausted then StoreMeasure(ByteCount.zero, 0L, exists = true, partial = true)
+    else
+      // the walk's running sums: a visitor is callback-shaped, so it accumulates into locals
+      var bytes = 0L
+      var files = 0L
+      var partial = false
+      var unreadable = 0
+      val start = scala.util.Try(root.toRealPath()).getOrElse(root)
+      val visitor = new SimpleFileVisitor[Path]:
+        private def step(): FileVisitResult =
+          if budget.take() then FileVisitResult.CONTINUE
+          else { partial = true; FileVisitResult.TERMINATE }
+        override def preVisitDirectory(d: Path, a: BasicFileAttributes): FileVisitResult = step()
+        override def visitFile(f: Path, a: BasicFileAttributes): FileVisitResult =
+          if a.isRegularFile then { bytes += a.size; files += 1 }
+          step()
+        override def visitFileFailed(f: Path, e: IOException): FileVisitResult =
+          unreadable += 1
+          FileVisitResult.CONTINUE
+        override def postVisitDirectory(d: Path, e: IOException): FileVisitResult =
+          if e != null then unreadable += 1
+          FileVisitResult.CONTINUE
+      try
+        val _ = Files.walkFileTree(start, java.util.EnumSet.noneOf(classOf[FileVisitOption]), Int.MaxValue, visitor)
+      catch case _: IOException => unreadable += 1
+      StoreMeasure(ByteCount.applyUnsafe(bytes), files, exists = true, partial, unreadable)
+
+  def volume: Option[StoreVolume] =
+    @tailrec def existing(p: Path): Option[Path] =
+      if p == null then None else if Files.exists(p) then Some(p) else existing(p.getParent)
+    existing(root.toAbsolutePath).flatMap { e =>
+      scala.util.Try {
+        val s = Files.getFileStore(e)
+        StoreVolume(s.toString, ByteCount.applyUnsafe(s.getTotalSpace), ByteCount.applyUnsafe(s.getUsableSpace))
+      }.toOption
+    }
+
+  def names(prefix: StoreKey): List[String] =
+    val dir = path(prefix)
+    if !Files.isDirectory(dir) then Nil
+    else
+      scala.util
+        .Try(Using.resource(Files.list(dir))(_.iterator.asScala.toList.map(_.getFileName.toString).sorted))
+        .getOrElse(Nil)
 
   def prune(rule: PruneRule): PruneReport = PruneReport(DiskStore.pruned(walk(), rule).filter(s => delete(s.key)))
 

@@ -43,3 +43,39 @@ enum Location:
 
   /** A temporary directory one operation makes and removes ([[Storage.scratch]]). */
   case Scratch
+
+  /** The bundled PostgreSQL's cluster (`<data dir>/pg`). */
+  case DatabaseCluster
+
+  /** The folder the seed importer reads (`corpus.dir`). */
+  case CorpusFolder
+
+  /** The gazetteer folder older installs kept in the data directory. */
+  case GazetteerFolder
+
+  /** The folder Linked Places files are dropped into for a gazetteer load (`places.sources.lpf-dir`). */
+  case GazetteerDrop
+
+  /** The bundle's OCR converter: its Python and its models (`<install>/converter`). */
+  case Converter
+
+  /** The GraalVM toolchain a relink of the plugins uses (`<data dir>/toolchain`). */
+  case Toolchain
+
+  /** The Codex runtime's home of the agent runs: its transcripts and state. */
+  case CodexSessions
+
+  /** The data directory itself (`runtime.data-dir`), for what no other location covers. */
+  case DataDirectory
+
+  /** The per-user cache directory, for what no other location covers. */
+  case CacheDirectory
+
+  /** The bundle's PostgreSQL (`<install>/pg`), which a moved bundle rewrites to its new place. */
+  case Postgres
+
+  /** The directory of the PostgreSQL client tools a backup runs (`backups.pg-bin-dir`). */
+  case PostgresTools
+
+  /** One directory of the executables' search path (`PATH`). */
+  case Executables

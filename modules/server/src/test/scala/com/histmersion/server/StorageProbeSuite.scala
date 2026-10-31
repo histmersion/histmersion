@@ -1,9 +1,10 @@
 package com.histmersion.server
 
 import com.histmersion.api.*
-import com.histmersion.files.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.util.data.diagnostics.{StorageCache, StorageFigures}
+import com.histmersion.util.storage.{Location, MeasureBudget}
 
 import java.nio.file.{Files, Path}
 import java.util.Comparator
@@ -14,6 +15,8 @@ import java.util.concurrent.atomic.AtomicInteger
   * directory, cache or database is read.
   */
 class StorageProbeSuite extends munit.FunSuite:
+
+  private val figures = StorageFigures(Deps.data)
 
   private val tmp = FunFixture[Path](
     _ => Files.createTempDirectory("histmersion-storage"),
@@ -52,9 +55,12 @@ class StorageProbeSuite extends munit.FunSuite:
 
   tmp.test("every location comes from the config: data dir, cache dir, backups, originals, bundle"): d =>
     val cfg = config(d, bundled = true)
-    val p = StorageProbe.places(cfg, env(d), "Mac OS X", None)
-    assertEquals(p.home, Some(d.resolve("install").toAbsolutePath.normalize))
-    val locs = StorageProbe.locations(p, env(d)).map(l => l.key -> l.shown.map(x => d.relativize(x).toString)).toMap
+    val p = StorageLocations.measured(cfg, env(d), "Mac OS X", None)
+    assertEquals(p.find(Location.Install).map(s => Path.of(s.where())), Some(d.resolve("install").toAbsolutePath.normalize))
+    val locs = figures
+      .spots(p, StorageLocations.install)
+      .map(l => l.key -> l.path.map(x => d.relativize(Path.of(x)).toString))
+      .toMap
     assertEquals(locs("database-cluster"), Some("data/pg"))
     assertEquals(locs("backups"), Some("data/backups"))
     assertEquals(locs("originals"), Some("data/uploads"))
@@ -72,7 +78,8 @@ class StorageProbeSuite extends munit.FunSuite:
     assertEquals(locs("logs"), Some("data/logs"))
     assert(!locs.contains("acquire-spool") && !locs.contains("corpus"), locs) // not configured: nothing of ours
     // not bundled: no cluster, no install
-    val dev = StorageProbe.locations(StorageProbe.places(config(d), env(d), "Linux", None), env(d)).map(_.key)
+    val dev =
+      figures.spots(StorageLocations.measured(config(d), env(d), "Linux", None), StorageLocations.install).map(_.key)
     assert(!dev.contains("database-cluster") && !dev.contains("install") && !dev.contains("relink-kit"), dev)
 
   tmp.test("the leftovers: other cache folders are listed one by one, the rest of the data dir together"): d =>
@@ -81,10 +88,10 @@ class StorageProbeSuite extends munit.FunSuite:
     file(d.resolve("data/signing/gpg-key"), 5)
     file(d.resolve("data/relink.conf"), 5)
     file(d.resolve("data/logs/server.log"), 5)
-    val locs = StorageProbe.locations(StorageProbe.places(config(d), env(d), "Linux", None), env(d))
+    val locs = figures.spots(StorageLocations.measured(config(d), env(d), "Linux", None), StorageLocations.install)
     assertEquals(locs.filter(_.key.startsWith("cache:")).map(_.key), List("cache:thumbs"))
     val rest = locs.find(_.key == "data-other").getOrElse(fail(s"no data-other: $locs"))
-    assertEquals(rest.paths.map(_.getFileName.toString), List("relink.conf", "signing"))
+    assertEquals(rest.stores.map(s => Path.of(s.where()).getFileName.toString), List("relink.conf", "signing"))
     assertEquals(rest.shown, None)
 
   tmp.test("measure: sizes, nesting, base-map files, backups usage, advice, volumes — and no database without one"):
@@ -99,9 +106,10 @@ class StorageProbeSuite extends munit.FunSuite:
       // the tiles read on demand: the map outside the region (#3760)
       file(d.resolve("cache/histmersion/basemap/vector-cache/tiles/3/0/0.mvt"), 3000)
       val cfg = config(d, bundled = true)
-      val p = StorageProbe.places(cfg, env(d), "Linux", None)
-      val bs = BackupService(cfg)
-      val r = StorageProbe.measure(p, env(d), None, bs.list.left.map(_.message), DirSize.Budget.unlimited)
+      val p = StorageLocations.measured(cfg, env(d), "Linux", None)
+      val bs = BackupFixtures.service(cfg)
+      val r =
+        figures.measure(p, StorageLocations.install, cfg, None, bs.list.left.map(_.message), MeasureBudget.unlimited)
       def entry(k: String) = r.entries.find(_.key == k).getOrElse(fail(s"no $k: ${r.entries.map(_.key)}"))
       assertEquals(entry("backups").bytes, Some(7000L))
       assertEquals(entry("backups").shrink, StorageAdvice.shrink("backups", 3))
@@ -124,12 +132,13 @@ class StorageProbeSuite extends munit.FunSuite:
   tmp.test("measure: a budget that runs out says so, and marks what it stopped"): d =>
     (1 to 30).foreach(i => file(d.resolve(s"data/logs/l$i.log"), 10))
     val cfg = config(d)
-    val r = StorageProbe.measure(
-      StorageProbe.places(cfg, env(d), "Linux", None),
-      env(d),
+    val r = figures.measure(
+      StorageLocations.measured(cfg, env(d), "Linux", None),
+      StorageLocations.install,
+      cfg,
       None,
       Right(Nil),
-      DirSize.Budget(5, Long.MaxValue)
+      MeasureBudget(5, Long.MaxValue)
     )
     assert(r.entries.exists(_.partial), r.entries)
     assert(r.problems.exists(_.contains("storage.max-entries")), r.problems)
