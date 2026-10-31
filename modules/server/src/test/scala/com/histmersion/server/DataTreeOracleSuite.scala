@@ -14,12 +14,12 @@ import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 
 /** The files a run of the server leaves in its directories, as a smoke run makes them: one scratch root holding the
-  * settings file, the data directory, the converter's and the acquisition's spools, the backups and bundles
-  * directories and the base map; a server started over it, a setting changed twice, a config reload, a document
-  * uploaded and converted, a file spooled by an acquisition; the base map fetched, a focus region added, tiles read
-  * from the extract and on demand, a focus region removed. Then every path under the root, relative, with
-  * its kind and a file's size, is compared with `oracle/data-tree.txt`, recorded on the code before the file code moved
-  * behind the storage area. `HISTMERSION_UPDATE_ORACLE=1` rewrites it. Skipped without HISTMERSION_TEST_DB_URL.
+  * settings file, the data directory, the converter's and the acquisition's spools, the backups and bundles directories
+  * and the base map; a server started over it, a setting changed twice, a config reload, a document uploaded and
+  * converted, a file spooled by an acquisition; the base map fetched, a focus region added, tiles read from the extract
+  * and on demand, a focus region removed. Then every path under the root, relative, with its kind and a file's size, is
+  * compared with `oracle/data-tree.txt`, recorded on the code before the file code moved behind the storage area.
+  * `HISTMERSION_UPDATE_ORACLE=1` rewrites it. Skipped without HISTMERSION_TEST_DB_URL.
   */
 class DataTreeOracleSuite extends DbSuite:
   private val testDb = TestDb.url
@@ -175,7 +175,13 @@ class DataTreeOracleSuite extends DbSuite:
     fetched(BasemapFetchQuery())
     fetched(BasemapFetchQuery(focus = Some("crete")))
     fetched(BasemapFetchQuery(layer = "terrain", maxZoom = Some(4), bbox = Some("22.5,37.4,23.2,37.9")))
-    List(("vector", 4, 9L, 6L), ("vector", 4, 0L, 0L), ("terrain", 5, 0L, 0L), ("terrain", 5, 1L, 1L), ("bathymetry", 3, 4L, 3L))
+    List(
+      ("vector", 4, 9L, 6L),
+      ("vector", 4, 0L, 0L),
+      ("terrain", 5, 0L, 0L),
+      ("terrain", 5, 1L, 1L),
+      ("bathymetry", 3, 4L, 3L)
+    )
       .foreach((layer, z, x, y) => assert(svc.tile(layer, z, x, y).isRight, s"$layer $z/$x/$y"))
     assert(svc.status.available)
     assert(svc.remove(BasemapRemoveQuery("none", focus = Some("crete"))).isRight)
@@ -183,10 +189,13 @@ class DataTreeOracleSuite extends DbSuite:
   /** A file the acquisition spools for the converter. */
   private def spoolRun(): Unit =
     val base = AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e), identity).config
-    assert(acquire.Spool.write(base.acquire.spoolDir, "zz_data_tree", "pdf", "%PDF-1.4 spooled".getBytes(UTF_8)).isRight)
+    assert(
+      acquire.Spool.write(base.acquire.spoolDir, "zz_data_tree", "pdf", "%PDF-1.4 spooled".getBytes(UTF_8)).isRight
+    )
 
   /** Every path under the root: `<kind> <relative path>[ <size>]`, sorted. A text file's size is taken with the root's
-    * own path written as `ROOT` (the settings name it); an archive's is left out (its metadata carries the time it was made).
+    * own path written as `ROOT` (the settings name it); an archive's is left out (its metadata carries the time it was
+    * made).
     */
   private def tree(): String =
     Files

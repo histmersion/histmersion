@@ -57,7 +57,6 @@ class RegistriesOracleSuite extends munit.FunSuite:
       s"${k.noun}\t${k.idWord}\t${t.table}.${t.idCol}\t${t.aliasTable}.alias -> ${t.targetCol}\n" +
         s"  rule\t${Aliases.rule(k)}\n  followed\t${Aliases.followed(k, "old_one", "new_one").getOrElse("-")}"
     }
-    val bundles = com.histmersion.values.BundleKind.values.toList.map(b =>
-      s"bundle ${b}\t${AliasKind.of(b).fold("-")(_.noun)}"
-    )
+    val bundles =
+      com.histmersion.values.BundleKind.values.toList.map(b => s"bundle $b\t${AliasKind.of(b).fold("-")(_.noun)}")
     check("alias-tables.txt", (lines ++ bundles).mkString("", "\n", "\n"))

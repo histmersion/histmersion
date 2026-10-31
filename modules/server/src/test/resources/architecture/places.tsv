@@ -1115,7 +1115,6 @@ server:server/agents/Writes.scala	automation.agents
 server:server/basemap/BasemapFetch.scala	util.basemap
 server:server/basemap/BasemapLabels.scala	util.basemap
 server:server/basemap/BasemapService.scala	util.basemap
-server:server/basemap/ByteOffset.scala	util.basemap
 server:server/basemap/Degrees.scala	util.basemap
 server:server/basemap/DegreesPerPixel.scala	util.basemap
 server:server/basemap/DiskLru.scala	util.basemap
@@ -1173,3 +1172,4 @@ config:config/NewtypeReaders.scala	config
 config:config/Environment.scala	config
 server:server/SystemContext.scala	server
 server:server/Composition.scala	server
+server:server/StorageLocations.scala	server

@@ -1,6 +1,7 @@
 package com.histmersion.server.basemap
 
 import com.histmersion.api.BBox
+import com.histmersion.values.ByteOffset
 import io.github.iltotore.iron.*
 
 import java.nio.{ByteBuffer, ByteOrder}
