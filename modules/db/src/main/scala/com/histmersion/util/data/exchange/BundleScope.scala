@@ -1,11 +1,5 @@
-package com.histmersion.db
+package com.histmersion.util.data.exchange
 
-import com.histmersion.api.*
-import com.histmersion.files.*
-import com.histmersion.config.*
-import com.histmersion.domain.*
-
-import com.augustnagro.magnum.*
 import java.util.UUID
 
 /** Which rows a bundle read covers: every one, the ones changed after a moment (`--since`), or the ones with the given

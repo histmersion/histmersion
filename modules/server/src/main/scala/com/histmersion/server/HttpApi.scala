@@ -77,7 +77,7 @@ final class HttpApi(
     Api.restore.serverLogic[Identity](req => h.restore(req)),
     // ── portable bundles (M0–M2) ──────────────────────────────────────────────────────────────
     Api.instance.serverLogicSuccess[Identity](_ => h.bundles.instance),
-    Api.setInstance.serverLogic[Identity](in => h.bundles.setInstance(in)),
+    Api.setInstance.serverLogic[Identity](in => h.bundles.setInstance(in.label)),
     Api.exportBundle.serverLogic[Identity](since => h.bundles.exportBundle(since)),
     Api.verifyBundle.serverLogic[Identity](f => h.bundles.verify(f)),
     Api.importBundle.serverLogic[Identity]((dryRun, f) => h.bundles.importBundle(dryRun, f)),

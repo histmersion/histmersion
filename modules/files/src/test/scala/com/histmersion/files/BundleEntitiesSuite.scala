@@ -7,6 +7,7 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
 import com.histmersion.values.{BundleKind, SourceStatus}
+import com.histmersion.util.data.exchange.{BundleFormat, BundleReader, BundleTar}
 
 /** The `.hmx` bundle's content in memory: its entities (blob and dangling references, the event-catalogue sets, a
   * decode round trip) and the reader's problem reports.

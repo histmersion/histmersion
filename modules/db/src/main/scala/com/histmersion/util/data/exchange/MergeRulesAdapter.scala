@@ -1,0 +1,37 @@
+package com.histmersion.util.data.exchange
+
+import com.histmersion.util.data.DataOwner
+import com.histmersion.values.BundleKind
+
+/** Today's merge rules, registered by owner until each owner registers its own. */
+object MergeRulesAdapter:
+
+  final private case class Adapted(
+      owner: DataOwner,
+      kind: BundleKind,
+      override val ledgerLabel: Option[String],
+      override val referable: Boolean
+  ) extends MergeRules
+
+  private def kind(wire: String): BundleKind =
+    BundleKind.fromWire(wire).getOrElse(throw IllegalArgumentException(s"no kind of record '$wire'"))
+
+  private def label(column: String, table: String) = Some(s"SELECT $column FROM $table WHERE uid = l.local_uid")
+
+  /** Every kind, by owner. */
+  val all: List[MergeRules] = List(
+    Adapted(DataOwner("automation"), kind("goal"), label("slug", "goals"), referable = true),
+    Adapted(DataOwner("automation"), kind("queue-item"), label("left(text, 60)", "queue_items"), referable = false),
+    Adapted(DataOwner("catalogue"), kind("place"), label("id", "places"), referable = false),
+    Adapted(DataOwner("catalogue"), kind("period"), label("id", "periods"), referable = false),
+    Adapted(DataOwner("catalogue"), kind("event"), label("id", "events"), referable = true),
+    Adapted(DataOwner("catalogue"), kind("attestation"), None, referable = false),
+    Adapted(DataOwner("media"), kind("asset"), label("name", "assets"), referable = true),
+    Adapted(DataOwner("media"), kind("asset-link"), None, referable = false),
+    Adapted(DataOwner("library"), kind("source"), label("citekey", "sources"), referable = true),
+    Adapted(DataOwner("library"), kind("finding"), label("id", "findings"), referable = false),
+    Adapted(DataOwner("research"), kind("article"), label("slug", "articles"), referable = true),
+    Adapted(DataOwner("research"), kind("article-version"), None, referable = false)
+  )
+
+  def of(owner: DataOwner): List[MergeRules] = all.filter(_.owner == owner)

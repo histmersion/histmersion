@@ -749,7 +749,6 @@ core:domain/ArticleReviewStatus.scala	research.articles.review
 core:domain/AutoEnrich.scala	library.workflows
 core:domain/AutopilotPolicy.scala	automation.autopilot
 core:domain/BrowserDownload.scala	library.acquisition
-core:domain/BundlePlan.scala	util.data.exchange
 core:domain/CatalogMerge.scala	catalogue.events
 core:domain/CatalogProvider.scala	catalogue.events
 core:domain/Citekeys.scala	library.sources
@@ -758,7 +757,6 @@ core:domain/CompareRuns.scala	automation.agents
 core:domain/CompileArticle.scala	research.workflows
 core:domain/CoreQuota.scala	library.acquisition
 core:domain/Cron.scala	automation.scheduler
-core:domain/Diff3.scala	util.data.exchange
 core:domain/EnrichSource.scala	library.workflows
 core:domain/EventMatcher.scala	catalogue.evidence
 core:domain/EventProviders.scala	catalogue.events
@@ -827,10 +825,8 @@ db:db/AssetMetaRepo.scala	media
 db:db/AssetRepo.scala	media
 db:db/AttestationRepo.scala	catalogue.evidence
 db:db/AutopilotRepo.scala	automation.autopilot
-db:db/BundleExport.scala	util.data.exchange
 db:db/BundleImport.scala	util.data.exchange
 db:db/BundleRepo.scala	util.data.exchange
-db:db/BundleScope.scala	util.data.exchange
 db:db/CandidateRepo.scala	library.acquisition
 db:db/Codecs.scala	util.common
 db:db/CorrectionRepo.scala	catalogue.events
@@ -857,7 +853,6 @@ db:db/ListSql.scala	util.database
 db:db/ManagerRepo.scala	automation.managers
 db:db/MediaRepo.scala	media
 db:db/MediaTargetRow.scala	media
-db:db/MergeRepo.scala	util.data.exchange
 db:db/MergeState.scala	util.data.exchange
 db:db/Migrate.scala	util.common
 db:db/ModelSettingsRepo.scala	automation.agents
@@ -887,13 +882,9 @@ db:db/UpstreamQuotaRepo.scala	library.acquisition
 db:db/Vocab.scala	util.common
 files:files/ArticleNote.scala	research.articles
 files:files/BundleEntities.scala	util.data.exchange
-files:files/BundleFormat.scala	util.data.exchange
-files:files/BundleReader.scala	util.data.exchange
-files:files/BundleTar.scala	util.data.exchange
 files:files/CoverChoice.scala	media
 files:files/Export.scala	library.sources
 files:files/Frontmatter.scala	library.sources
-files:files/MergeResolutionsFile.scala	util.data.exchange
 files:files/OpenLibrary.scala	media
 files:files/PlaceSeed.scala	catalogue.places
 files:files/PluginKit.scala	util.plugins
@@ -906,7 +897,6 @@ server:server/ArticlesApi.scala	server
 server:server/AuthHandler.scala	server
 server:server/BasemapWiring.scala	server
 server:server/Bootstrap.scala	server
-server:server/BundleHandlers.scala	util.data.exchange
 server:server/ChipField.scala	kernel
 server:server/Citation.scala	research.articles
 server:server/CitedEntry.scala	research.articles
@@ -926,7 +916,6 @@ server:server/MarkdownFlavor.scala	util.common
 server:server/MarkdownHtml.scala	util.common
 server:server/MarkdownLint.scala	research.articles.lint
 server:server/McpTools.scala	server
-server:server/MergeApplyJobs.scala	util.data.exchange
 server:server/OpsHandlers.scala	split
 server:server/OpsRoutes.scala	server
 server:server/OpsTools.scala	split

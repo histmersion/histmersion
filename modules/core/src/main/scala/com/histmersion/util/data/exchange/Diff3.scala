@@ -1,4 +1,4 @@
-package com.histmersion.domain
+package com.histmersion.util.data.exchange
 
 /** A line-based three-way merge (diff3; Khanna, Kunal & Pierce 2007), for article bodies that changed on both sides
   * since a common base (docs/research-merge-import.md §5.4). Pure.

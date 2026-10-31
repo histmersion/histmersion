@@ -423,7 +423,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
         val normed = rs.map(r => json(r, names).linesIterator.map(_.trim).mkString(" ")).sorted
         if t == "flyway_schema_history" then s"## $t ${normed.size} rows"
         else if normed.size > 200 then
-          s"## $t ${normed.size} rows, ${com.histmersion.files.BundleFormat.sha256Hex(normed.mkString("\n").getBytes(UTF_8)).take(16)}"
+          s"## $t ${normed.size} rows, ${com.histmersion.util.data.exchange.BundleFormat.sha256Hex(normed.mkString("\n").getBytes(UTF_8)).take(16)}"
         else (s"## $t ${normed.size} rows" :: normed).mkString("\n")
       }
       .mkString("", "\n", "\n")
@@ -544,7 +544,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       ok(postBytes(s"$url/api/bundle/import", whole))
       ok(postJson(s"$url/api/lint/fix", ""))
     }
-    def shaOf(b: Array[Byte]) = com.histmersion.files.BundleFormat.sha256Hex(b)
+    def shaOf(b: Array[Byte]) = com.histmersion.util.data.exchange.BundleFormat.sha256Hex(b)
     val issueNames = parser
       .parse(plan)
       .toOption

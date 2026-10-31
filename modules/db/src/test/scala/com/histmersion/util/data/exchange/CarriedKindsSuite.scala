@@ -1,0 +1,76 @@
+package com.histmersion.util.data.exchange
+
+import com.histmersion.api.BundleFiles
+import com.histmersion.util.data.{DataOwner, TableName}
+import com.histmersion.values.BundleKind
+
+/** The carried kinds and merge rules an export, an import and a plan run over: every entry of the format once, in its
+  * order, whoever registered first; the import's steps in stage and rank order; each kind of record's table.
+  */
+class CarriedKindsSuite extends munit.FunSuite:
+
+  private val kinds = CarriedKinds.transition
+
+  test("today's kinds carry every entry of the bundle format once, in the format's order"):
+    assertEquals(kinds.inBundleOrder.map(_.entry.value), BundleFiles.all)
+
+  test("the order of the entries does not depend on the order the kinds were registered in"):
+    assertEquals(
+      CarriedKinds(CarriedKindsAdapter.all.reverse).inBundleOrder.map(_.entry.value),
+      kinds.inBundleOrder.map(_.entry.value)
+    )
+
+  test("a registry missing an entry, carrying one twice or one the format does not have is refused, each named"):
+    val sources = CarriedKindsAdapter.all.find(_.entry.value == BundleKind.Source.file).get
+    val odd = new CarriedKind:
+      def owner: DataOwner = DataOwner("x")
+      def entry: BundleEntry = BundleEntry("entities/odd.ndjson")
+      def out(scope: BundleScope, files: com.histmersion.util.storage.ContentStore)(using
+          com.augustnagro.magnum.DbCon
+      ): CarriedOut = CarriedOut(Array.emptyByteArray, None)
+    val withoutTombstones = CarriedKindsAdapter.all.filterNot(_.entry.value == BundleFiles.Tombstones)
+    assertEquals(
+      CarriedKinds.of(sources :: odd :: withoutTombstones).left.toOption,
+      Some(
+        List(
+          s"no carried kind writes ${BundleFiles.Tombstones}",
+          s"${BundleKind.Source.file} is carried twice",
+          "entities/odd.ndjson is not a file of the bundle format"
+        )
+      )
+    )
+
+  test("every kind of record has its table"):
+    assertEquals(kinds.tableOf(BundleKind.Source), TableName("sources"))
+    assertEquals(kinds.tableOf(BundleKind.ArticleVersion), TableName("article_versions"))
+    assertEquals(kinds.tableOf(BundleKind.QueueItem), TableName("queue_items"))
+    assertEquals(BundleKind.values.toList.map(kinds.tableOf).distinct.size, BundleKind.values.length)
+
+  test("the import's steps: tombstones first, the rows before the blobs, links after them, derived state last"):
+    val rows = kinds.steps(ImportStage.Rows).map(_.rank.value: Int)
+    assertEquals(rows, rows.sorted)
+    assertEquals(rows.head, 0)
+    assertEquals(rows.distinct.size, rows.size)
+    assertEquals(kinds.steps(ImportStage.AfterBlobs).map(_.rank.value: Int), List(100, 101, 102, 103))
+    assertEquals(kinds.steps(ImportStage.Derived).map(_.rank.value: Int), List(200, 201))
+
+  test("every carried kind and merge rule is registered by one of the owners"):
+    val owners = Set("automation", "catalogue", "media", "library", "research", "util.identity")
+    assertEquals(CarriedKindsAdapter.all.map(_.owner.value).filterNot(owners), Nil)
+    assertEquals(MergeRulesAdapter.all.map(_.owner.value).filterNot(owners), Nil)
+    assertEquals(
+      owners.toList.sorted.map(o => o -> CarriedKindsAdapter.of(DataOwner(o)).size),
+      List("automation" -> 3, "catalogue" -> 11, "library" -> 6, "media" -> 2, "research" -> 3, "util.identity" -> 1)
+    )
+
+  test("merge rules: the ledger names the records of every kind it has a label for; lines point at five kinds"):
+    val rules = MergeRuleSet.transition
+    List("source", "finding", "article", "asset", "event", "goal", "place", "period", "queue-item").foreach { k =>
+      assert(rules.ledgerLabelSql.contains(s"WHEN '$k' THEN ("), k)
+    }
+    assert(rules.ledgerLabelSql.startsWith("CASE l.kind WHEN") && rules.ledgerLabelSql.endsWith(" END"))
+    assertEquals(
+      rules.referableTables(kinds).map(_.value).sorted,
+      List("articles", "assets", "events", "goals", "sources")
+    )
+    assertEquals(MergeRulesAdapter.all.map(_.kind).sortBy(_.ordinal), BundleKind.values.toList)

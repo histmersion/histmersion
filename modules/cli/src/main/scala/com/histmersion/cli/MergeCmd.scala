@@ -8,6 +8,7 @@ import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
 import com.histmersion.values.{DecisionKind, EditionsPolicy}
+import com.histmersion.util.data.exchange.MergeResolutionsFile
 
 /** `histmersion merge plan` — what importing another collection's bundle would do, and every issue, in one run
   * (docs/research-merge-import.md §6, milestone M3). The bundle is uploaded to the server (it is planned there, against
