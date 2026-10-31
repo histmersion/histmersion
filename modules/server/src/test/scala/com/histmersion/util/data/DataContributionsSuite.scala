@@ -11,7 +11,7 @@ import com.augustnagro.magnum.*
 class DataContributionsSuite extends DbSuite:
   private val testDb = TestDb.url
 
-  private final class Fixed(val owner: DataOwner, val tables: List[OwnedTable]) extends DataContribution:
+  final private class Fixed(val owner: DataOwner, val tables: List[OwnedTable]) extends DataContribution:
     def figures(using DbCon): diagnostics.DataFigures = diagnostics.DataFigures.empty
 
   test("an owner registered twice and a table claimed twice are refused, each named"):
@@ -21,7 +21,8 @@ class DataContributionsSuite extends DbSuite:
       DataContributions.of(List(a, b, a)).left.toOption,
       Some(List("owner a is registered twice", "table t1 is claimed by a, a", "table t2 is claimed by a, b, a"))
     )
-    val ok = DataContributions.of(List(a, Fixed(DataOwner("b"), OwnedTable.all("t3")))).fold(e => fail(e.toString), identity)
+    val ok =
+      DataContributions.of(List(a, Fixed(DataOwner("b"), OwnedTable.all("t3")))).fold(e => fail(e.toString), identity)
     assertEquals(ok.ownerOf(TableName("t3")), Some(DataOwner("b")))
     assertEquals(ok.ownerOf(TableName("t9")), None)
 
@@ -29,8 +30,16 @@ class DataContributionsSuite extends DbSuite:
     assertEquals(
       Deps.data.owners.map(_.value),
       List(
-        "automation", "catalogue", "media", "library", "research", "personal", "util.data", "util.jobs",
-        "util.identity", "util.database"
+        "automation",
+        "catalogue",
+        "media",
+        "library",
+        "research",
+        "personal",
+        "util.data",
+        "util.jobs",
+        "util.identity",
+        "util.database"
       )
     )
 
