@@ -211,7 +211,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
           c,
           Some(diagnostics),
           backups.list.left.map(_.message),
-          MeasureBudget.of(c.storage.maxEntries.toLong, c.storage.maxMillis.toLong)
+          MeasureBudget.of(c.storage.maxEntries.toLong, c.storage.maxMillis.toLong),
+          () => deps.clock.instant()
         )
       )
       () => run.run()
