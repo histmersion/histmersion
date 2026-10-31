@@ -91,15 +91,7 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
   }
 
   private def generation: Generation =
-    PluginHost.build(
-      Plugins.providers :+ ZqPlugin(),
-      ConfigFactory.parseString("histmersion.plugins.zq-plugin.enabled = true"),
-      ConfigFactory.empty,
-      Plugins.services(
-        () => new spi.PluginHttp { def get(u: String, h: Map[String, String]) = Left("no") },
-        ConfigFactory.empty
-      )
-    )
+    Plugins.offlineWith(List(ZqPlugin()), ConfigFactory.parseString("histmersion.plugins.zq-plugin.enabled = true"))
 
   private lazy val base =
     val b = AppConfig.load()
@@ -228,15 +220,7 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
       "a collection is about places"
     )
     // the plugin switched off: its collection is gone from the import and the list
-    val off = PluginHost.build(
-      Plugins.providers :+ ZqPlugin(),
-      ConfigFactory.empty,
-      ConfigFactory.empty,
-      Plugins.services(
-        () => new spi.PluginHttp { def get(u: String, hs: Map[String, String]) = Left("no") },
-        ConfigFactory.empty
-      )
-    )
+    val off = Plugins.offlineWith(List(ZqPlugin()), ConfigFactory.empty)
     val h2 = MediaHandlers(Deps(base, ds, ds, plugins = off), fake)
     assert(!h2.providers.exists(_.name == Collection))
     assert(

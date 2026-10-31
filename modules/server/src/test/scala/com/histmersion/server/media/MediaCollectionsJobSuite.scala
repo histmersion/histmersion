@@ -84,6 +84,17 @@ class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
         aic = base.media.aic.copy(apiUrl = s"$providerUrl/api", imageUrl = s"$providerUrl/iiif", requestIntervalMs = 0)
       )
     )
+
+  /** The plugins, supplied the same media settings as [[cfg]]: the collections ask the stand-in, never a real API. */
+  private lazy val plugins = com.histmersion.server.plugins.Plugins.offlineWith(
+    Nil,
+    org.ekrich.config.ConfigFactory.parseString(
+      s"""histmersion.media {
+      |  request-interval-ms = 0
+      |  aic { api-url = "$providerUrl/api", image-url = "$providerUrl/iiif", request-interval-ms = 0 }
+      |}""".stripMargin
+    )
+  )
   private lazy val ds =
     val d = testPool(cfg.db)
     Migrate.run(d)
@@ -151,7 +162,7 @@ class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
 
   test("dry run, a job, the link's reason and the check — through the server"):
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0, MediaHandlers.NoThumbnails, plugins = plugins).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val (us, ub) = post(s"$url/api/media/import", """{"provider":"rijks","dryRun":true}""")

@@ -123,6 +123,19 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
         openContext = m.openContext.copy(apiUrl = providerUrl, requestIntervalMs = 0)
       )
     )
+
+  /** The plugins, supplied the same media settings as [[cfg]]: the collections ask the stand-in, never a real API. */
+  private lazy val plugins = com.histmersion.server.plugins.Plugins.offlineWith(
+    Nil,
+    org.ekrich.config.ConfigFactory.parseString(
+      s"""histmersion.media {
+      |  request-interval-ms = 0
+      |  commons.api-url = "$providerUrl/w/api.php"
+      |  pleiades { api-url = "$providerUrl", request-interval-ms = 0 }
+      |  open-context { api-url = "$providerUrl", request-interval-ms = 0 }
+      |}""".stripMargin
+    )
+  )
   private lazy val ds =
     val d = testPool(cfg.db)
     Migrate.run(d)
@@ -222,7 +235,7 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
     "Open Context and Pleiades through the server: a dry run's reason, both jobs storing with the basis on the link"
   ):
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0, MediaHandlers.NoThumbnails, plugins = plugins).start()
       val url = s"http://127.0.0.1:${b.port}"
       def job(body: String): JobInfo =
         val (js, jb) = post(s"$url/api/media/import/job", body)

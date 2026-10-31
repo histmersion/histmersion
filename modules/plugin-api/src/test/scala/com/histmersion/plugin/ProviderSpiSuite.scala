@@ -24,7 +24,10 @@ class ProviderSpiSuite extends munit.FunSuite:
     val item = Portal.search(MediaPlace("p", "Mycenae"), offline).toOption.get.head.toOption.get
     assertEquals(Portal.complete(item, offline), Right(item))
     assertEquals(item.rights, Left("not open access"))
-    assertEquals(MediaCollection.Roles, Set("object", "map", "image"))
+    assertEquals(
+      MediaCollection.Roles,
+      Set("object", "map", "image", "locator-map", "plan", "aerial-view", "route-map", "depiction")
+    )
 
   test("a catalogue's defaults and its parts for a query"):
     assertEquals(Quakes.requestIntervalMs, 1000)

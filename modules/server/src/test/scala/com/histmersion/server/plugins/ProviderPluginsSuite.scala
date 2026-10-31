@@ -22,13 +22,11 @@ class ProviderPluginsSuite extends munit.FunSuite:
 
   private val offline = new PluginHttp { def get(u: String, h: Map[String, String]) = Left("offline") }
 
-  private def build(plugins: List[Plugin], user: String = ""): Generation =
-    PluginHost.build(
-      plugins,
-      ConfigFactory.parseString(user),
-      ConfigFactory.empty,
-      Plugins.services(() => offline, ConfigFactory.empty)
-    )
+  /** The class path's plugins (the first-party media collections among them, supplied the host's settings) and `extra`,
+    * under `user`.
+    */
+  private def build(extra: List[Plugin], user: String = ""): Generation =
+    Plugins.offlineWith(extra, ConfigFactory.parseString(user))
 
   /** A third-party plugin: one media collection and one event catalogue under ids of its choosing. */
   final private class Portal(collection: String = "zq-portal", catalogue: String = "zq-quakes", role: String = "object")
@@ -66,7 +64,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
       g.report.plugins.map(_.id).toSet -- vaults,
       BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds
     )
-    val keyed = BuiltinMedia.keyed.map(_.plugin).toSet
+    val keyed = BuiltinMedia.keyed.keySet.flatMap(BuiltinMedia.entry).map(_.plugin)
     assertEquals(keyed, Set("media-smithsonian", "media-europeana"))
     assert(
       g.report.plugins.filterNot(p => keyed(p.id) || vaults(p.id)).forall(_.state == "registered"),
@@ -103,7 +101,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assert(!g.report.plugins.exists(_.state == "failed"), g.report.toString)
 
   test("a built-in switched off is out of its registry; the import names the switch"):
-    val g = build(Plugins.providers, "histmersion.plugins { media-met.enabled = false, events-noaa.enabled = false }")
+    val g = build(Nil, "histmersion.plugins { media-met.enabled = false, events-noaa.enabled = false }")
     assertEquals(g.report.plugins.find(_.id == "media-met").map(_.state), Some("disabled"))
     assert(!g.registries.mediaCollections.contains("met"))
     assertEquals(
@@ -115,11 +113,10 @@ class ProviderPluginsSuite extends munit.FunSuite:
       Some("NOAA NCEI Natural Hazards (noaa) is switched off (histmersion.plugins.events-noaa.enabled = false)")
     )
     // the environment switches one off too
-    val e = PluginHost.build(
-      Plugins.providers,
+    val e = Plugins.offlineWith(
+      Nil,
       ConfigFactory.empty,
-      ConfigFactory.parseString("HISTMERSION_PLUGIN_MEDIA_LOC_ENABLED = false"),
-      Plugins.services(() => offline, ConfigFactory.empty)
+      ConfigFactory.parseString("HISTMERSION_PLUGIN_MEDIA_LOC_ENABLED = false")
     )
     assertEquals(e.report.plugins.find(_.id == "media-loc").map(_.state), Some("disabled"))
 
@@ -149,8 +146,11 @@ class ProviderPluginsSuite extends munit.FunSuite:
 
   private val keyedOn = "histmersion.plugins { media-smithsonian.enabled = true, media-europeana.enabled = true }"
 
-  private def keyedEntry(g: Generation, name: String) =
-    g.registries.mediaCollections.get(name).collect { case k: com.histmersion.server.media.KeyedEntry => k }
+  private def keyedEntry(g: Generation, name: String) = g.registries.mediaCollections.get(name)
+
+  private val noKey =
+    "Smithsonian Open Access objects needs an api.data.gov key: set histmersion.plugins.media-smithsonian.api-key " +
+      "to a secret reference (\"env:<NAME>\" or a vault's, e.g. \"keepassxc:<entry>#password\"); it was not asked"
 
   test("keyed: off by default the import says it is off and what it needs; it is still a reserved name"):
     val c = Plugins.offline.registries.mediaCollections
@@ -170,22 +170,14 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assert(MediaImporters.lookup("europeana", c).left.exists(_.contains("needs a Europeana personal API key")))
 
   test("keyed: switched on without a key, the collection is listed and refused at the import with the setting to set"):
-    val g = build(Plugins.providers, keyedOn)
+    val g = build(Nil, keyedOn)
     assert(g.report.ok, g.report.toString)
     assertEquals(
       g.report.plugins.find(_.id == "media-europeana").map(_.provides),
       Some(List("media-collection:europeana"))
     )
     val si = keyedEntry(g, "smithsonian").getOrElse(fail("not registered"))
-    assertEquals(si.key, None)
-    val cfg = com.histmersion.config.AppConfig.load(ConfigFactory.empty).media
-    assertEquals(
-      com.histmersion.server.media.KeyedEntry.check(si.meta, si.key, cfg).left.toOption,
-      Some(
-        "Smithsonian Open Access objects needs an api.data.gov key: set histmersion.plugins.media-smithsonian.api-key " +
-          "to a secret reference (\"env:<NAME>\" or a vault's, e.g. \"keepassxc:<entry>#password\"); it was not asked"
-      )
-    )
+    assertEquals(si.check.left.toOption, Some(noKey))
     val infos = MediaImporters.infos(g.registries.mediaCollections, _ => "?", _ => "")
     assertEquals(infos.map(_.name).takeRight(2), List("smithsonian", "europeana"), "after the keyless built-ins")
     assert(
@@ -204,29 +196,31 @@ class ProviderPluginsSuite extends munit.FunSuite:
       histmersion.plugins.media-smithsonian.api-key = "env:HISTMERSION_TEST_SI_KEY"
       histmersion.plugins.media-europeana.api-key = "env:HISTMERSION_TEST_EU_KEY"
     """)
-    val g = PluginHost.build(Plugins.providers, user, env, Plugins.services(() => offline, env))
+    val g = Plugins.offlineWith(Nil, user, env)
     assert(g.report.ok, g.report.toString)
-    assertEquals(keyedEntry(g, "smithsonian").flatMap(_.key), Some("si-secret-123"))
-    assertEquals(keyedEntry(g, "europeana").map(_.key), Some(None), "a blank value is no key")
+    assertEquals(keyedEntry(g, "smithsonian").map(_.check), Some(Right(())))
+    assert(
+      keyedEntry(g, "europeana").exists(_.check.left.exists(_.contains("needs a Europeana personal API key"))),
+      "a blank value is no key"
+    )
     assert(!g.report.toString.contains("si-secret-123"), "the report shows the reference, never the value")
     assert(!keyedEntry(g, "smithsonian").get.toString.contains("si-secret-123"))
-    val cfg = com.histmersion.config.AppConfig.load(ConfigFactory.empty).media
-    val si = keyedEntry(g, "smithsonian").get
-    assertEquals(com.histmersion.server.media.KeyedEntry.check(si.meta, si.key, cfg), Right("si-secret-123"))
+    val off = Plugins.offlineWith(
+      Nil,
+      user.withFallback(ConfigFactory.parseString("histmersion.media.smithsonian.enabled = false")),
+      env
+    )
     assertEquals(
-      com.histmersion.server.media.KeyedEntry
-        .check(si.meta, si.key, cfg.copy(smithsonian = cfg.smithsonian.copy(enabled = false))),
-      Left("Smithsonian Open Access objects is switched off (media.smithsonian.enabled = false)")
+      keyedEntry(off, "smithsonian").map(_.check),
+      Some(Left("Smithsonian Open Access objects is switched off (media.smithsonian.enabled = false)"))
     )
     // an unresolvable reference fails that plugin alone, naming the reference
-    val missing = PluginHost.build(
-      Plugins.providers,
+    val missing = Plugins.offlineWith(
+      Nil,
       ConfigFactory.parseString(
         keyedOn +
           "\nhistmersion.plugins.media-smithsonian.api-key = \"env:HISTMERSION_TEST_NOT_SET\""
-      ),
-      ConfigFactory.empty,
-      Plugins.services(() => offline, ConfigFactory.empty)
+      )
     )
     val st = missing.report.plugins.find(_.id == "media-smithsonian").get
     assertEquals(st.state, "failed")
@@ -263,12 +257,14 @@ class ProviderPluginsSuite extends munit.FunSuite:
   test("a plugin may not take a name of the host's providers, nor a role the host does not store"):
     // a registered built-in's name is taken; an alias or a stored provider's name is reserved even when
     // its built-in is switched off
-    val dup = build(Plugins.providers :+ Portal(collection = "met"), portalOn)
+    val dup = build(List(Portal(collection = "met")), portalOn)
     assert(
       dup.report.plugins.find(_.id == "zq-plugin").exists(_.error.exists(_.contains("'met' is already registered")))
     )
     assert(
-      dup.registries.mediaCollections.get("met").exists(_.isInstanceOf[BuiltinMedia.Entry]),
+      dup.registries.mediaCollections
+        .get("met")
+        .exists(_.getClass.getName.startsWith("com.histmersion.plugins.media.")),
       "the built-in is untouched"
     )
     for name <- List(
@@ -286,17 +282,24 @@ class ProviderPluginsSuite extends munit.FunSuite:
       )
     do
       val g = build(
-        Plugins.providers :+ Portal(collection = name),
+        List(Portal(collection = name)),
         s"$portalOn\nhistmersion.plugins { media-met.enabled = false, media-pleiades.enabled = false }"
       )
       val st = g.report.plugins.find(_.id == "zq-plugin").get
       assertEquals(st.state, "failed", name)
       assert(st.error.exists(_.contains("one of Histmersion's own media providers")), st.toString)
     val cat =
-      build(Plugins.providers :+ Portal(catalogue = "volcano"), portalOn).report.plugins.find(_.id == "zq-plugin").get
+      build(List(Portal(catalogue = "volcano")), portalOn).report.plugins.find(_.id == "zq-plugin").get
     assert(cat.error.exists(_.contains("one of Histmersion's own event catalogues")), cat.toString)
-    val role = build(Plugins.providers :+ Portal(role = "cover"), portalOn).report.plugins.find(_.id == "zq-plugin").get
-    assert(role.error.exists(_.contains("role 'cover' is not one of image, map, object")), role.toString)
+    val role = build(List(Portal(role = "cover")), portalOn).report.plugins.find(_.id == "zq-plugin").get
+    assert(
+      role.error.exists(
+        _.contains(
+          "role 'cover' is not one of aerial-view, depiction, image, locator-map, map, object, plan, route-map"
+        )
+      ),
+      role.toString
+    )
 
   test("a host whose context predates media and events refuses those additions (SPI version stays 1)"):
     val ctx = new PluginContext:
@@ -312,7 +315,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
   // ── reloads ────────────────────────────────────────────────────────────────────────────────────
 
   test(
-    "reload: a host key (acquire.*) rebuilds the fetchers and third-party plugins, never the media/events built-ins"
+    "reload: a host key rebuilds the plugins that read it — acquire.* the fetchers and third parties, media.* the collections"
   ):
     val g1 = Plugins.offlineWith(List(Portal()), ConfigFactory.parseString(portalOn))
     // the secret vaults on the class path, off: a plugin's own block or a media key leaves them as they are
@@ -324,23 +327,17 @@ class ProviderPluginsSuite extends munit.FunSuite:
       Plugins.carried(g1, List("histmersion.plugins.media-met.enabled")).keySet,
       BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds ++ vaults + "zq-plugin" - "media-met"
     )
-    // a media setting is no plugin key: nothing is rebuilt (the import reads it at each run)
+    // a media setting rebuilds the media collections, which are supplied it, and nothing else
     assertEquals(
       Plugins.carried(g1, List("histmersion.media.met.licences")).keySet,
-      BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds ++ vaults + "zq-plugin"
+      BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds ++ vaults + "zq-plugin"
     )
     assertEquals(Plugins.carried(g1, List("histmersion.plugins.order")), Map.empty)
     assertEquals(Plugins.carried(g1, List("histmersion.plugins")), Map.empty)
     // the carried built-in is the same instance in the next generation
-    val g2 = PluginHost.build(
-      Plugins.providers :+ Portal(),
-      ConfigFactory.parseString(portalOn),
-      ConfigFactory.empty,
-      Plugins.services(() => offline, ConfigFactory.empty),
-      carried = carried
-    )
+    val g2 = Plugins.offlineWith(List(Portal()), ConfigFactory.parseString(portalOn), carried = carried)
     assert(g2.registries.mediaCollections("met") eq g1.registries.mediaCollections("met"))
-    assertEquals(g2.rebuilt, List("zq-plugin"))
+    assertEquals(g2.rebuilt.filterNot(vaults), List("zq-plugin"))
 
   // ── the host's reading of a plugin's records ──────────────────────────────────────────────────
 
@@ -508,9 +505,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
   test("the host's own catalogues and collections are never searched through the SPI"):
     val gvp = BuiltinCatalogues.entries.head
     assertEquals((gvp.plugin, gvp.name, gvp.title), ("events-gvp", "gvp", "Smithsonian Global Volcanism Program"))
-    val met = BuiltinMedia.entries.find(_.name == "met").get
-    assert(met.search(MediaPlace("p", "P"), offline).isLeft)
-    assertEquals(BuiltinMedia.reserved.intersect(BuiltinMedia.entries.map(_.name).toSet).size, 8)
+    assertEquals(BuiltinMedia.reserved.intersect(BuiltinMedia.entries.map(_.name).toSet).size, 10)
     assert(Set("smithsonian", "europeana").subsetOf(BuiltinMedia.reserved))
 
 /** The fixture plugin's (empty) settings. */

@@ -84,7 +84,6 @@ direction	api:api/Markdown.scala	util.common -> library: TimeHistogram	1
 direction	api:api/Markdown.scala	util.common -> media: AssetDetail	1
 direction	api:api/Markdown.scala	util.common -> media: AssetLink	1
 direction	api:api/Markdown.scala	util.common -> media: AssetLinkList	1
-direction	api:api/Markdown.scala	util.common -> media: Commons	1
 direction	api:api/Markdown.scala	util.common -> media: FigureLicenceFill	1
 direction	api:api/Markdown.scala	util.common -> media: MediaCount	1
 direction	api:api/Markdown.scala	util.common -> media: MediaCoversReport	1
@@ -160,7 +159,6 @@ direction	core:domain/CompareRuns.scala	automation -> library: AgentVerify	1
 direction	core:domain/CompareRuns.scala	automation -> library: EnrichSource	1
 direction	core:domain/CompareRuns.scala	automation -> library: Finding	1
 direction	core:domain/CompareRuns.scala	automation -> research: ReviewArticle	1
-direction	core:domain/Europeana.scala	media -> library: ExternalIds	1
 direction	core:domain/ManagerDefaults.scala	automation -> library: WatchManagerDefaults	1
 direction	core:domain/ManagerDefaults.scala	automation -> research: ReviewManagerDefaults	1
 direction	core:domain/ManagerPolicy.scala	automation -> library: SeedPlanDefaults	1
@@ -188,7 +186,6 @@ direction	core:domain/MergePlanner.scala	util.data -> research: ArticleLinks	1
 direction	core:domain/MergePlanner.scala	util.data -> research: ArticleVersion	1
 direction	core:domain/MergePlanner.scala	util.data -> research: TextAnchor	1
 direction	core:domain/MergeSettings.scala	util.data -> catalogue: MatchWeights	1
-direction	core:domain/OpenContext.scala	media -> library: ExternalIds	1
 direction	core:domain/PlanGoal.scala	automation -> library: Acquire	1
 direction	core:domain/PlanGoal.scala	automation -> library: WorkRef	1
 direction	core:domain/PlanGoal.scala	automation -> research: Articles	1
@@ -415,9 +412,6 @@ direction	server:server/importers/GazetteerLoad.scala	catalogue -> library: Http
 direction	server:server/importers/ImportRunner.scala	catalogue -> library: CliopatriaImporter	1
 direction	server:server/importers/ImportRunner.scala	catalogue -> library: GazetteerImporter	1
 direction	server:server/importers/ImportRunner.scala	catalogue -> library: HttpPolicy	1
-direction	server:server/media/BuiltinMedia.scala	media -> server: Deps	1
-direction	server:server/media/HostMediaCollection.scala	media -> server: Deps	1
-direction	server:server/media/KeyedEntry.scala	media -> server: Deps	1
 direction	server:server/media/MediaHandlers.scala	media -> library: SourceCoverParams	1
 direction	server:server/media/MediaHandlers.scala	media -> server: Deps	1
 direction	server:server/media/MediaImporter.scala	media -> server: Deps	1
@@ -428,7 +422,6 @@ direction	server:server/plugins/Plugins.scala	util.plugins -> automation: Builti
 direction	server:server/plugins/Plugins.scala	util.plugins -> library: CoreBudget	1
 direction	server:server/plugins/Plugins.scala	util.plugins -> library: HttpPlugin	1
 direction	server:server/plugins/Plugins.scala	util.plugins -> library: SttpHttp	1
-direction	server:server/plugins/Plugins.scala	util.plugins -> media: BuiltinMedia	1
 filesystem	config:config/UserConfigFile.scala	java.nio.file	1
 filesystem	config:config/edit/ConfigFileState.scala	Path.of	1
 filesystem	config:config/edit/ConfigFileState.scala	java.nio.file	1

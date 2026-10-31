@@ -47,10 +47,74 @@ trait MediaCollection:
     */
   def complete(item: MediaItem, http: PluginHttp): Either[String, MediaItem] = Right(item)
 
+  /** The roles its pictures may play — [[role]] alone, unless its items name others ([[MediaItem.role]]): a Wikidata
+    * item's image, locator map and plan are one collection's.
+    */
+  def roles: Set[String] = Set(role)
+
+  /** What it asks about: places (the default), events with a Wikidata item, or both. A collection that asks about both
+    * is asked about the places on the map one per Wikidata item, and the events with one.
+    */
+  def asks: Set[MediaTarget] = Set(MediaTarget.Places)
+
+  /** The records a search for `event` answers ([[asks]] must name events); none by default. */
+  def searchEvent(event: MediaEvent, http: PluginHttp): Either[String, List[Either[String, MediaItem]]] = Right(Nil)
+
+  /** Whether it can be asked now — a key configured, its own switch on — asked before an import: its refusal is the
+    * import's ("Europeana images needs a key …"), and nothing is sent.
+    */
+  def check: Either[String, Unit] = Right(())
+
+  /** How long to wait after a host refuses (HTTP 403) before asking it again, each step in turn, in milliseconds: a
+    * provider that rate-limits with refusals. Empty (the default): a refusal is final.
+    */
+  def refusalBackoffMs: List[Long] = Nil
+
+  /** The last year an object may be made in, for the museum and gazetteer-id rules ([[matchRule]]); `None`: any. */
+  def latestYear: Option[Year] = None
+
+  /** Only places that carry an id of this gazetteer (`"pleiades"`: their own `pleiades_…` id or an exact link) are
+    * asked about, each with its ids ([[MediaPlace.ids]]); `None` (the default): every place on the map.
+    */
+  def placesCarrying: Option[String] = None
+
+  /** A collection of its targets' own pictures ([[MediaMatchRule.Own]]) is asked about a batch at once: what it found
+    * for each. By default, [[search]] for each place and [[searchEvent]] for each event, in order.
+    */
+  def searchTargets(places: List[MediaPlace], events: List[MediaEvent], http: PluginHttp): MediaFound =
+    val asked = places.map(p => MediaTargetId(MediaTarget.Places, p.id) -> search(p, http)) ++
+      events.map(e => MediaTargetId(MediaTarget.Events, e.id) -> searchEvent(e, http))
+    MediaFound(
+      uses = asked.flatMap((t, r) =>
+        r.toOption.toList.flatMap(_.collect { case Right(it) => it }.zipWithIndex.map((it, i) => MediaUse(t, it, i)))
+      ),
+      asked = asked.map(_._1),
+      unanswered = asked.collect { case (t, Left(_)) => t }.toSet,
+      read = asked.map(_._2.fold(_ => 0, _.size)).sum,
+      failed = asked.flatMap((t, r) =>
+        r.fold(e => List(s"$title search for ${t.id}: $e"), _.collect { case Left(e) => s"${t.id}: $e" })
+      )
+    )
+
+  /** The items about to be stored of a collection of its targets' own pictures, completed in one batch: by default
+    * [[complete]] for each.
+    */
+  def completeAll(items: List[MediaItem], http: PluginHttp): MediaCompleted =
+    val done = items.map(it => it.key -> complete(it, http))
+    MediaCompleted(
+      done.collect { case (k, Right(it)) => k -> it }.toMap,
+      done.collect { case (k, Left(e)) => s"$k: $e" }
+    )
+
 object MediaCollection:
   val Object = "object"
   val Map = "map"
   val Image = "image"
+  val LocatorMap = "locator-map"
+  val Plan = "plan"
+  val AerialView = "aerial-view"
+  val RouteMap = "route-map"
+  val Depiction = "depiction"
 
-  /** The roles a plugin's collection may declare. */
-  val Roles: Set[String] = Set(Object, Map, Image)
+  /** The roles a collection's pictures may play: the ones the host stores. */
+  val Roles: Set[String] = Set(Object, Map, Image, LocatorMap, Plan, AerialView, RouteMap, Depiction)

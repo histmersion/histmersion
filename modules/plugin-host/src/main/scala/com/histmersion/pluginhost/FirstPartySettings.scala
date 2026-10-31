@@ -46,9 +46,13 @@ object FirstPartySettings:
   private val fetcher = ClientKeys
   private val unpaywallContact = s"${PluginHost.Root}.oa-unpaywall.contact-email"
 
-  /** The first-party plugins and what each reads of the host's settings. The media collections and AI providers read
-    * their settings at each use, from the host (until they move into plugins of their own): no path, and a host key
-    * never rebuilds them.
+  /** The media settings every media collection reads: its own block (`media.met.*`), the pace and widths, and the
+    * Wikidata and Commons APIs the Commons-backed ones share.
+    */
+  private val Media = "histmersion.media"
+
+  /** The first-party plugins and what each reads of the host's settings. The AI providers read their settings at each
+    * use, from the host (until they move into plugins of their own): no path, and a host key never rebuilds them.
     */
   val all: List[FirstPartySettings] =
     List("archive-org", "oa-unpaywall", "oa-core", "oa-openalex", "pmc", "arxiv").map(FirstPartySettings(_, fetcher)) ++
@@ -69,7 +73,9 @@ object FirstPartySettings:
         "media-pleiades",
         "media-opencontext",
         "media-smithsonian",
-        "media-europeana",
+        "media-europeana"
+      ).map(FirstPartySettings(_, List(Media))) ++
+      List(
         "ai-anthropic",
         "ai-openai",
         "ai-local",

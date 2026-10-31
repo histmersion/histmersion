@@ -1,6 +1,6 @@
 package com.histmersion.server.media
 
-import com.histmersion.pluginhost.{allowed, PluginMedia, Polite}
+import com.histmersion.pluginhost.{PluginMedia, Polite}
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -8,6 +8,8 @@ import com.histmersion.domain.*
 import com.histmersion.db.MediaRepo
 import com.histmersion.db.MediaRepo.{PlaceFacts, ProviderAsset, Rights, Target}
 import com.histmersion.server.ConverterClient
+import com.histmersion.upstreams.MediaText
+import com.histmersion.domain.media.MediaStep
 
 /** The import of one collection (#1446): for each place, a search by its name; each record judged — its own licence
   * statement first (never assumed), the collection's allowlist, then the match ([[Collection.matches]]) — and at most
@@ -21,9 +23,12 @@ final class CollectionImport(col: Collection, fetch: Polite, cfg: MediaConfig, c
 
   final private case class Judged(target: Target, rec: MediaRecord, decision: Either[String, String])
 
+  /** The role a record's picture plays: its own, else the collection's. */
+  private def roleOf(rec: MediaRecord): String = rec.role.getOrElse(col.role)
+
   def run(targets: List[Target], dryRun: Boolean, refresh: Boolean, store: MediaStore): MediaImportReport =
     val failed = List.newBuilder[String]
-    val allow = col.conf.allowed
+    val allow = MediaLicence.allowList(col.conf.licences)
     val places = targets.filter(_.targetType == MediaRepo.Place)
     val facts = store.placeFacts(places.map(_.id))
 
@@ -109,7 +114,7 @@ final class CollectionImport(col: Collection, fetch: Polite, cfg: MediaConfig, c
         .toList
         .map((k, rs) => MediaCount(k, rs.size, rs.head.rights.exists(r => MediaLicence.allowed(r.licence, allow))))
         .sortBy(c => (-c.n, c.key)),
-      byRole = MediaCount.of(kept.map(_ => col.role)),
+      byRole = MediaCount.of(kept.map(j => roleOf(j.rec))),
       rejected = MediaCount.of(judged.flatMap(_.decision.left.toOption)),
       samples = samples.take(cfg.samples.max(0))
     )
@@ -126,7 +131,7 @@ final class CollectionImport(col: Collection, fetch: Polite, cfg: MediaConfig, c
       db: MediaStore,
       failed: scala.collection.mutable.Builder[String, List[String]]
   ): MediaImportReport =
-    val allow = col.conf.allowed
+    val allow = MediaLicence.allowList(col.conf.licences)
     val known = db.known(col.provider, judged.map(_.rec.key).distinct)
     def each[A](what: => String)(write: => A): Option[A] = MediaStep.each(failed)(what)(write)
 
@@ -186,7 +191,7 @@ final class CollectionImport(col: Collection, fetch: Polite, cfg: MediaConfig, c
                 rights.credit,
                 rec.pageUrl,
                 rec.originalUrl,
-                Some(MediaRepo.kindOf(col.role))
+                Some(MediaRepo.kindOf(roleOf(rec)))
               )
               each(s"${rec.key} (store)")(db.save(a, (j.target.targetType, j.target.id))).foreach { (uid, inserted) =>
                 if inserted then stored += 1 else updated += 1
@@ -204,7 +209,7 @@ final class CollectionImport(col: Collection, fetch: Polite, cfg: MediaConfig, c
               uid,
               j.target.targetType,
               j.target.id,
-              col.role,
+              roleOf(j.rec),
               None,
               None,
               ranks.getOrElse(j.target.id, Nil).indexOf(j.rec.key).max(0),

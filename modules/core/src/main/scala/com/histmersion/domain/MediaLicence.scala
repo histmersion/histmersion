@@ -96,8 +96,13 @@ object MediaLicence:
   /** Pure: the first of the candidates that reads as a known licence (the machine id first, then the short name);
     * [[Unknown]] with the first non-empty one when none does.
     */
-  def parse(machine: Option[String], short: Option[String]): Licence =
-    val cands = (machine.toList ++ short.toList).map(_.trim).filter(_.nonEmpty)
+  def parse(machine: Option[String], short: Option[String]): Licence = firstKnown(machine.toList ++ short.toList)
+
+  /** Pure: the first of the statements that reads as a known licence ([[classify]]); [[Unknown]] with the first
+    * non-empty one when none does.
+    */
+  def firstKnown(statements: List[String]): Licence =
+    val cands = statements.map(_.trim).filter(_.nonEmpty)
     cands.iterator
       .map(classify)
       .find(_.family != Unknown)

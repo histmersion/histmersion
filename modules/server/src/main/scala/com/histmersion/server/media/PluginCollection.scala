@@ -3,20 +3,22 @@ package com.histmersion.server.media
 import com.histmersion.pluginhost.{PluginMedia, Polite, SpiValues}
 
 import com.histmersion.config.MediaCollectionConfig
-import com.histmersion.domain.{MediaLicence, MediaMatch, MediaRecord, MediaRights as CoreRights}
+import com.histmersion.domain.{MediaMatch, MediaRecord}
 import com.histmersion.db.MediaRepo.PlaceFacts
 import com.histmersion.plugin.*
 
-import com.histmersion.plugin.PluginConfig.given
-
-/** A PLUGIN's collection run by the host's own collection import ([[CollectionImport]]): the plugin searches and
-  * describes; the host reads each stated licence ([[PluginMedia.rights]]) and judges it against `allowed` —
-  * `media.collections` for this collection, never anything the plugin says —, ties records to places by [[MediaMatch]]
-  * under the rule the collection chose, downloads, thumbnails and stores. One per import (it keeps the run's items for
+/** A collection searched by a place's name, run by the host's own collection import ([[CollectionImport]]): the plugin
+  * searches and describes; the host reads each stated licence ([[PluginMedia.rights]]) and judges it against `allowed`
+  * — the collection's allowlist, never anything the plugin says —, ties records to places by [[MediaMatch]] under the
+  * rule the collection chose, downloads, thumbnails and stores. One per import (it keeps the run's items for
   * [[complete]]).
+  *
+  * @param provider
+  *   the name its checks are recorded and its pictures stored under
   */
 final class PluginCollection(val provider: String, col: MediaCollection, allowed: String) extends Collection:
   val role: String = col.role
+  private val latest = col.latestYear.map(_.value)
   val conf: MediaCollectionConfig =
     MediaCollectionConfig(
       enabled = true,
@@ -44,7 +46,7 @@ final class PluginCollection(val provider: String, col: MediaCollection, allowed
   override def matches(rec: MediaRecord, place: MediaMatch.PlaceInfo, resolve: MediaMatch.Resolve) =
     col.matchRule match
       case MediaMatchRule.Map(maxYear) => MediaMatch.map(rec, place, resolve, maxYear.value)
-      case _                           => MediaMatch.museum(rec, place, resolve)
+      case _                           => MediaMatch.museum(rec, place, resolve, latest)
 
   override def usesIds: Boolean = col.matchRule.isInstanceOf[MediaMatchRule.PlaceIds]
 
@@ -55,7 +57,7 @@ final class PluginCollection(val provider: String, col: MediaCollection, allowed
       resolveId: MediaMatch.ResolveId
   ) =
     col.matchRule match
-      case MediaMatchRule.PlaceIds(deeper) => MediaMatch.withIds(rec, place, resolveId, resolve, deeper)
+      case MediaMatchRule.PlaceIds(deeper) => MediaMatch.withIds(rec, place, resolveId, resolve, deeper, latest)
       case _                               => matches(rec, place, resolve)
 
   override def complete(fetch: Polite, rec: MediaRecord): Either[String, MediaRecord] =

@@ -72,7 +72,8 @@ object PluginMedia:
       it.geography,
       period.toOption.flatten,
       it.ids,
-      it.withheld
+      it.withheld,
+      Option(it.role).flatten.map(_.trim).filter(_.nonEmpty)
     )
 
   /** Pure: what a provider's licence statement means, read by the host as every built-in collection's is

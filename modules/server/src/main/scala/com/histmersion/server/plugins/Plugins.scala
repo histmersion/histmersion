@@ -17,7 +17,6 @@ import org.ekrich.config.{ConfigFactory, ConfigUtil}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.plugin.{Plugin, PluginHttp}
 import com.histmersion.server.acquire.{CoreBudget, HttpPlugin, SttpHttp}
-import com.histmersion.server.media.BuiltinMedia
 import com.histmersion.server.agents.BuiltinAi
 
 /** The composition root's handle on the plugins: discover the providers on the server's class path — the first-party
@@ -176,11 +175,10 @@ object Plugins:
   /** The plugin that keys CORE: its `api-key` serves the new-source search too. */
   private val CorePlugin = "oa-core"
 
-  /** The first-party plugins the host still supplies itself: the media collections (`media-wikidata`, `media-depicts`,
-    * `media-met`, … — [[BuiltinMedia]]) and the AI providers (`ai-anthropic`, `ai-openai`, `ai-local`,
+  /** The first-party plugins the host still supplies itself: the AI providers (`ai-anthropic`, `ai-openai`, `ai-local`,
     * `ai-claude-code`, `ai-codex`, `ai-opencode` — [[BuiltinAi]]). They read nothing at registration.
     */
-  def providers: List[Plugin] = BuiltinMedia.plugins ++ BuiltinAi.plugins
+  def providers: List[Plugin] = BuiltinAi.plugins
 
   /** The generation of a server or a `Deps` built without a config to load plugins from (a test's): the plugins on the
     * class path but the source fetchers, and the host's own media collections and AI providers, registered through the
@@ -188,20 +186,26 @@ object Plugins:
     */
   def offline: Generation = offlineWith(Nil, ConfigFactory.empty)
 
-  /** [[offline]] with `extra` plugins (a test's) beside the class path's, under the user block `user`. */
-  def offlineWith(extra: List[Plugin], user: org.ekrich.config.Config): Generation =
+  /** [[offline]] with `extra` plugins (a test's) beside the class path's, under the user block `user` (the host's own
+    * settings read from `user` too) and the environment `env`, carrying `carried` over from an earlier generation.
+    */
+  def offlineWith(
+      extra: List[Plugin],
+      user: org.ekrich.config.Config,
+      env: org.ekrich.config.Config = ConfigFactory.empty,
+      carried: Map[String, (PluginStatus, Registries)] = Map.empty
+  ): Generation =
     val (found, errors) = PluginHost.discover(getClass.getClassLoader)
     val all = found.filterNot(p => Fetchers(p.info.id)) ++ providers ++ extra
-    val host = FirstPartySettings.hostView(referenceSettings(ConfigFactory.empty), user, ConfigFactory.empty, all)
+    val settings = AppConfig.loadWithUserFile(env, None).fold(_ => ConfigFactory.empty, _.merged)
+    val host = FirstPartySettings.hostView(user.withFallback(settings).resolve(), user, env, all)
     PluginHost.build(
       all,
       user,
-      ConfigFactory.empty,
-      services(
-        () => new PluginHttp { def get(u: String, h: Map[String, String]) = Left("offline") },
-        ConfigFactory.empty
-      ),
+      env,
+      services(() => new PluginHttp { def get(u: String, h: Map[String, String]) = Left("offline") }, env),
       errors,
+      carried,
       fallback = FirstPartySettings.fallback(_, host),
       firstParty = firstParty(None)
     )

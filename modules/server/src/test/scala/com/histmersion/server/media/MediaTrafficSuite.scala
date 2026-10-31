@@ -213,7 +213,8 @@ class MediaTrafficSuite extends com.histmersion.db.DbSuite:
   /** Rows as stored, without the columns a run's clock or a fresh uid fills; pictures by their bytes' digest. */
   private def stored: String =
     connect(ds):
-      val assets = sql"""SELECT jsonb_build_object('provider', provider, 'key', provider_key, 'name', name, 'mime', mime,
+      val assets =
+        sql"""SELECT jsonb_build_object('provider', provider, 'key', provider_key, 'name', name, 'mime', mime,
               'bytes', length(bytes), 'sha256', sha256, 'width', width, 'height', height, 'kind', kind,
               'license', license, 'licenseUrl', license_url, 'author', author, 'credit', credit,
               'sourceUrl', source_url, 'originalUrl', original_url, 'thumbMime', thumb_mime,
@@ -264,8 +265,18 @@ class MediaTrafficSuite extends com.histmersion.db.DbSuite:
     sb ++= s"providers: ${handlers.providers.asJson.noSpaces}\n"
     sb ++= wire.take()
 
-    val all = List("wikidata", "depicts", "met", "cleveland", "aic", "loc", "pleiades", "opencontext", "smithsonian",
-      "europeana")
+    val all = List(
+      "wikidata",
+      "depicts",
+      "met",
+      "cleveland",
+      "aic",
+      "loc",
+      "pleiades",
+      "opencontext",
+      "smithsonian",
+      "europeana"
+    )
     all.foreach(p => run(s"$p (dry run)", MediaImportRequest(p, dryRun = true, limit = Some(20))))
 
     run("wikidata, one place", MediaImportRequest("wikidata", dryRun = false, place = Some("pleiades_570491")))
@@ -323,5 +334,7 @@ class MediaTrafficSuite extends com.histmersion.db.DbSuite:
     if got != want then
       val (g, w) = (got.linesIterator.toVector, want.linesIterator.toVector)
       val at = g.zipAll(w, "<end>", "<end>").indexWhere((a, b) => a != b)
-      fail(s"the media traffic differs at line ${at + 1}:\n  got:  ${g.lift(at).getOrElse("<end>")}\n" +
-        s"  want: ${w.lift(at).getOrElse("<end>")}")
+      fail(
+        s"the media traffic differs at line ${at + 1}:\n  got:  ${g.lift(at).getOrElse("<end>")}\n" +
+          s"  want: ${w.lift(at).getOrElse("<end>")}"
+      )

@@ -1,32 +1,26 @@
 package com.histmersion.pluginhost
 
 import com.histmersion.config.AppConfig
+import com.histmersion.domain.MediaLicence
 import com.histmersion.domain.MediaLicence.*
-import com.histmersion.values.MediaRole
+import com.histmersion.plugin.LicenceRead
 
 class MediaSettingsSuite extends munit.FunSuite:
 
-  test("media config: an honest User-Agent with no e-mail, the default allowlist without NC, P15/P3311 roles"):
+  test("media config: an honest User-Agent with no e-mail, the default allowlist without NC"):
     val m = AppConfig.load(org.ekrich.config.ConfigFactory.empty).media
     assertEquals(m.userAgent, "Histmersion (+https://github.com/histmersion/histmersion)")
     assert(!m.userAgent.contains("@") && !m.userAgent.toLowerCase.contains("mailto"))
-    assertEquals(m.commons.allowed, Set(Cc0, PublicDomain, CcBy, CcBySa))
-    assertEquals(m.wikidata.placeRoles.toMap.get("P3311"), Some(MediaRole.Plan))
-    assertEquals(m.wikidata.placeRoles.toMap.get("P15"), Some(MediaRole.RouteMap))
-    assertEquals(m.wikidata.eventRoles, List("P18" -> MediaRole.Image))
+    assertEquals(MediaLicence.allowList(m.commons.licences), Set(Cc0, PublicDomain, CcBy, CcBySa))
 
-  test("media config: max-year 0 sets no latest year; the exclusion lists are trimmed comma lists"):
-    val m = AppConfig.load(org.ekrich.config.ConfigFactory.empty).media
-    assertEquals((m.met.latestYear, m.europeana.latestYear, m.smithsonian.latestYear), (None, Some(1500), Some(1500)))
-    assertEquals(MediaSettings.items(" OpenUp! , ,Fixture Aggregator,"), List("OpenUp!", "Fixture Aggregator"))
-    assertEquals(MediaSettings.items(""), Nil)
-    val ex = m.europeana.europeanaExclusions
-    assertEquals(ex.providers, List("OpenUp!"))
-    assert(ex.dataProviders.contains("Natural History Museum") && ex.types.contains("PreservedSpecimen"), ex.toString)
-    assert(
-      m.smithsonian.excludedProviders.contains("NMNHINV") && !m.smithsonian.excludedProviders.contains("NMNHANTHRO")
-    )
+  test("the licence reading a plugin is lent is the host's own"):
+    assertEquals(HostLicences.readName("CC BY-SA 3.0 de"), LicenceRead("CC-BY-SA-3.0-DE", CcBySa, true))
+    assertEquals(HostLicences.readName("cc0"), LicenceRead("CC0-1.0", Cc0, false))
     assertEquals(
-      (m.met.excludedProviders, m.met.europeanaExclusions),
-      (Nil, com.histmersion.domain.Europeana.Exclusions.none)
+      HostLicences.readUrl("https://creativecommons.org/licenses/by/4.0/"),
+      LicenceRead("CC-BY-4.0", CcBy, true)
     )
+    assertEquals(HostLicences.readUrl("http://rightsstatements.org/vocab/NoC-NC/1.0/").family, Unknown)
+    assertEquals(HostLicences.readFirst(List("nonsense", "CC BY 4.0")), LicenceRead("CC-BY-4.0", CcBy, true))
+    assertEquals(HostLicences.readFirst(Nil), LicenceRead("", Unknown, false))
+    assertEquals(HostLicences.readFirst(List(" ", "odd")).id, "odd")

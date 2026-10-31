@@ -35,7 +35,7 @@ class FirstPartySettingsSuite extends munit.FunSuite:
 
   test("a plugin the table does not name — a third party's — is supplied nothing"):
     assert(FirstPartySettings.fallback("zq-portal", host).isEmpty)
-    assert(FirstPartySettings.fallback("media-met", host).isEmpty)
+    assert(FirstPartySettings.fallback("ai-claude-code", host).isEmpty)
 
   test("a changed host key rebuilds the plugins that read it; a third party's on the client's keys alone"):
     assert(FirstPartySettings.rebuilds("pmc", "histmersion.acquire.europepmc.url"))
@@ -45,6 +45,9 @@ class FirstPartySettingsSuite extends munit.FunSuite:
     assert(FirstPartySettings.rebuilds("events-gvp", "histmersion.events"))
     assert(!FirstPartySettings.rebuilds("events-gvp", "histmersion.acquire.user-agent"))
     assert(!FirstPartySettings.rebuilds("media-met", "histmersion.acquire.user-agent"))
+    assert(FirstPartySettings.rebuilds("media-met", "histmersion.media.met.licences"))
+    assert(FirstPartySettings.rebuilds("media-wikidata", "histmersion.media.commons.api-url"))
+    assert(!FirstPartySettings.rebuilds("media-met", "histmersion.events.gvp.url"))
     assert(FirstPartySettings.rebuilds("zq-portal", "histmersion.acquire.user-agent"))
     assert(!FirstPartySettings.rebuilds("zq-portal", "histmersion.events.gvp.url"))
     assert(FirstPartySettings.of("oa-landing").exists(_.readsHostKey("histmersion.plugins.oa-unpaywall.contact-email")))

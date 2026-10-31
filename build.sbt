@@ -372,6 +372,24 @@ lazy val pluginsEvents = projectMatrix
   )
   .jvmPlatform(scalaVersions = Seq(scala3))
 
+// Histmersion's own media collections (media-wikidata, media-depicts, media-met, media-cleveland, media-aic,
+// media-loc, media-pleiades, media-opencontext, media-smithsonian, media-europeana): plugin-api and the upstreams
+// library alone, run by the host's one collection import as any collection; in every image, each switched off by its
+// `enabled` (the two keyed ones off by default)
+lazy val pluginsMedia = projectMatrix
+  .in(file("modules/plugins/media"))
+  .dependsOn(upstreams, pluginTestkit % Test)
+  .settings(
+    name := "histmersion-plugins-media",
+    description := "Histmersion's own media collections: Wikidata and Commons, museums, maps, excavation archives"
+  )
+  .settings(commonDeps)
+  .settings(
+    // the collections' captured answers, shared with the host's suites
+    Test / unmanagedResourceDirectories += (ThisBuild / baseDirectory).value / "modules" / "server" / "src" / "test" / "resources"
+  )
+  .jvmPlatform(scalaVersions = Seq(scala3))
+
 lazy val pluginHello = project
   .in(file("modules/plugin-fixtures/hello"))
   .dependsOn(pluginApi)
@@ -561,6 +579,7 @@ lazy val server = project
   .dependsOn(core.jvm(scala3), db % "compile->compile;test->test", pluginApi, upstreams, pluginHost, pluginVaults)
   // the first-party plugins: in every image, found by ServiceLoader at run time; no server code can name their classes
   .dependsOn(pluginsFetchers.jvm(scala3) % "runtime->compile", pluginsEvents.jvm(scala3) % "runtime->compile")
+  .dependsOn(pluginsMedia.jvm(scala3) % "runtime->compile")
   .settings(
     name := "histmersion-server",
     description := "The server: MCP, REST and the web UI over the store; built as a native image",
@@ -901,7 +920,7 @@ lazy val root = project
   .in(file("."))
   .aggregate(
     (values.projectRefs ++ api.projectRefs ++ core.projectRefs ++ pluginsFetchers.projectRefs ++
-      pluginsEvents.projectRefs)*
+      pluginsEvents.projectRefs ++ pluginsMedia.projectRefs)*
   )
   .aggregate(
     config,
