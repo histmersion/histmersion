@@ -1,14 +1,16 @@
 package com.histmersion.server.agents
 
+import com.histmersion.util.jobs.BackgroundJob
+
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.AcquireChecks.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.{AcquireCheckRepo, JobRepo, ManagerRepo, QueueRepo}
+import com.histmersion.db.{AcquireCheckRepo, ManagerRepo, QueueRepo}
+import com.histmersion.util.jobs.JobRepo
 import com.histmersion.domain.AcquireRecheck.{Action, Candidate, Held, JobPlan, Outcome, Settings, Shared, Tally}
-import com.histmersion.server.BackgroundJob
 
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicLong

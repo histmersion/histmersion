@@ -1,5 +1,7 @@
 package com.histmersion.server.events
 
+import com.histmersion.util.jobs.BackgroundJob
+
 import scala.annotation.tailrec
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.pluginhost.{HttpTransport, JavaHttpTransport, PluginEvents, Polite}
@@ -7,16 +9,9 @@ import com.histmersion.pluginhost.{HttpTransport, JavaHttpTransport, PluginEvent
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{
-  AttestationRepo,
-  CorrectionRepo,
-  EventCatalogRepo,
-  EventRepo,
-  JobRepo,
-  PlaceScope,
-  SourceRepo
-}
-import com.histmersion.server.{BackgroundJob, Deps}
+import com.histmersion.db.{AttestationRepo, CorrectionRepo, EventCatalogRepo, EventRepo, PlaceScope, SourceRepo}
+import com.histmersion.util.jobs.JobRepo
+import com.histmersion.server.Deps
 import com.histmersion.values.EventLinkStatus
 
 /** Events from catalogues (#1449): the import (a job, dry run or not), the proposed links of an event to the corpus and
@@ -762,7 +757,7 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
       report.copy(pending = EventCatalogRepo.countSitesToType(ds, req.refresh, Some(started)), requests = c.requests)
 
 object EventCatalogHandlers:
-  val ImportJobKind = com.histmersion.api.JobKind.EventsImport.wire
-  val CandidatesJobKind = com.histmersion.api.JobKind.EventsCandidates.wire
-  val SiteTypesJobKind = com.histmersion.api.JobKind.SiteTypes.wire
-  val RederiveJobKind = com.histmersion.api.JobKind.EventsRederive.wire
+  val ImportJobKind = com.histmersion.api.JobKindsAdapter.EventsImport.value
+  val CandidatesJobKind = com.histmersion.api.JobKindsAdapter.EventsCandidates.value
+  val SiteTypesJobKind = com.histmersion.api.JobKindsAdapter.SiteTypes.value
+  val RederiveJobKind = com.histmersion.api.JobKindsAdapter.EventsRederive.value

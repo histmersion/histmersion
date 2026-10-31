@@ -1,4 +1,4 @@
-package com.histmersion.domain.jobs
+package com.histmersion.util.jobs
 
 /** What answering a [[JobAction]] on one job takes. */
 enum JobControlStep:

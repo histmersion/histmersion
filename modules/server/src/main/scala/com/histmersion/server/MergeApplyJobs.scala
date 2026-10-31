@@ -22,7 +22,7 @@ final class MergeApplyJobs(
     waitSeconds: => Int,
     pins: com.histmersion.server.hot.Pinning = com.histmersion.server.hot.Pinning.none
 ):
-  import com.histmersion.db.JobRepo
+  import com.histmersion.util.jobs.JobRepo
   import java.util.concurrent.{CompletableFuture, TimeoutException, TimeUnit}
 
   /** Start `run` on its own thread and wait up to `waitSeconds` for it. */

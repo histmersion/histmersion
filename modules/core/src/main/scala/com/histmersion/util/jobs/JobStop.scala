@@ -1,4 +1,4 @@
-package com.histmersion.domain.jobs
+package com.histmersion.util.jobs
 
 /** Why a running background job stops before its end: a person paused it (to be resumed) or cancelled it. */
 enum JobStop:

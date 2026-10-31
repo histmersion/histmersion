@@ -2,7 +2,7 @@ package com.histmersion.util.storage
 
 import com.histmersion.values.{ByteCount, ByteOffset, Sha256}
 
-import java.io.{IOException, InputStream, OutputStream}
+import java.io.{InputStream, IOException, OutputStream}
 import java.nio.ByteBuffer
 import java.nio.channels.{ClosedChannelException, FileChannel}
 import java.nio.charset.StandardCharsets.UTF_8
@@ -23,7 +23,7 @@ import scala.jdk.CollectionConverters.*
 import scala.util.Using
 
 /** A store over a directory on disk: a key is a path below `root`. */
-private[storage] final class DiskStore(val location: Location, root: Path) extends Store:
+final private[storage] class DiskStore(val location: Location, root: Path) extends Store:
 
   private def path(key: StoreKey): Path = if key.isRoot then root else root.resolve(key.value)
 
@@ -140,7 +140,8 @@ private[storage] final class DiskStore(val location: Location, root: Path) exten
     @tailrec def existing(p: Path): Option[Path] =
       if p == null then None else if Files.exists(p) then Some(p) else existing(p.getParent)
     ByteCount.applyUnsafe(
-      existing(root.toAbsolutePath).flatMap(p => scala.util.Try(Files.getFileStore(p).getUsableSpace).toOption)
+      existing(root.toAbsolutePath)
+        .flatMap(p => scala.util.Try(Files.getFileStore(p).getUsableSpace).toOption)
         .getOrElse(0L)
     )
 
@@ -185,7 +186,9 @@ private[storage] object DiskStore:
     def reader(): RandomReader = ChannelReader(file)
 
     def mapped(): ByteBuffer =
-      Using.resource(FileChannel.open(file, StandardOpenOption.READ))(c => c.map(FileChannel.MapMode.READ_ONLY, 0, c.size()))
+      Using.resource(FileChannel.open(file, StandardOpenOption.READ))(c =>
+        c.map(FileChannel.MapMode.READ_ONLY, 0, c.size())
+      )
 
   /** Positional reads on one channel, opened again when an interrupt closed it. */
   final class ChannelReader(file: Path) extends RandomReader:

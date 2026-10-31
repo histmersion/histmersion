@@ -1,9 +1,11 @@
 package com.histmersion.server.basemap
 
+import com.histmersion.util.jobs.BackgroundJob
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.server.{BackgroundJob, Deps}
+import com.histmersion.server.Deps
 
 import sttp.model.StatusCode
 
@@ -1039,7 +1041,7 @@ object BasemapService:
       )
     )
 
-  val JobKind = com.histmersion.api.JobKind.BasemapFetch.wire
+  val JobKind = com.histmersion.api.JobKindsAdapter.BasemapFetch.value
 
   /** Where the extracts live: `basemap.dir`, else `$XDG_CACHE_HOME/histmersion/basemap` (default
     * `~/.cache/histmersion/basemap`), else under the data directory.

@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.util.jobs.BackgroundJob
+
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.pluginhost.{HttpTransport, JavaHttpTransport}
 
@@ -7,7 +9,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.MediaRepo
-import com.histmersion.server.{BackgroundJob, ConverterClient, Deps}
+import com.histmersion.server.{ConverterClient, Deps}
 
 import java.util.concurrent.atomic.AtomicReference
 
@@ -283,8 +285,8 @@ final class MediaHandlers(deps: Deps, http: HttpTransport, converter: ConverterC
     else Right(MediaRepo.fillFigureLicences(ds, apply = false))
 
 object MediaHandlers:
-  val ImportJobKind = com.histmersion.api.JobKind.MediaImport.wire
-  val CoversJobKind = com.histmersion.api.JobKind.MediaCovers.wire
+  val ImportJobKind = com.histmersion.api.JobKindsAdapter.MediaImport.value
+  val CoversJobKind = com.histmersion.api.JobKindsAdapter.MediaCovers.value
 
   /** A converter that makes no thumbnails (tests; a server whose sidecar is down still serves cards). */
   object NoThumbnails extends ConverterClient:

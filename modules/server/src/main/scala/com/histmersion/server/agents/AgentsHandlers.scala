@@ -49,7 +49,7 @@ final class AgentsHandlers(
   val pins: com.histmersion.server.hot.Pinning = deps.pins
 
   /** A person's pause and cancel of the server's long background jobs. */
-  val jobStops: com.histmersion.domain.jobs.JobStops = deps.jobStops
+  val jobStops: com.histmersion.util.jobs.JobStops = deps.jobStops
 
   /** The acquisition toolset (OpenAlex/Crossref, refs, assess, followups). A `var` because it is built AFTER
     * [[Handlers]] (it needs the ingest queue), and attached by `Main` before the pool starts; until then — and in a

@@ -1,6 +1,7 @@
 package com.histmersion.web.settings
 
-import com.histmersion.api.{JobInfo, JobKind, ListFilters}
+import com.histmersion.api.{JobInfo, JobKindsAdapter, ListFilters}
+import com.histmersion.values.JobKind
 import com.histmersion.api.Activity.Entry
 import com.histmersion.web.{ActivityView, ApiClient}
 import com.raquo.laminar.api.L.*
@@ -14,7 +15,13 @@ object DownloadJobs:
 
   /** The job kinds Data and downloads follows. */
   val Kinds: List[JobKind] =
-    List(JobKind.BasemapFetch, JobKind.Init, JobKind.PlacesFetch, JobKind.EventsImport, JobKind.MediaImport)
+    List(
+      JobKindsAdapter.BasemapFetch,
+      JobKindsAdapter.Init,
+      JobKindsAdapter.PlacesFetch,
+      JobKindsAdapter.EventsImport,
+      JobKindsAdapter.MediaImport
+    )
 
   private val jobs = Var(List.empty[JobInfo])
   private var mounted = false
@@ -25,7 +32,7 @@ object DownloadJobs:
   /** Read again now (after a download was started here). */
   def refresh(): Unit =
     ApiClient
-      .jobs(ListFilters.JobFilter(status = List("running", "queued", "paused"), kind = Kinds.map(_.wire)), Some(20))
+      .jobs(ListFilters.JobFilter(status = List("running", "queued", "paused"), kind = Kinds.map(_.value)), Some(20))
       .foreach { (js, _) =>
         jobs.set(js)
         if mounted && js.exists(_.status != "paused") then
@@ -33,7 +40,7 @@ object DownloadJobs:
       }
 
   /** Is a job of `kind` going now? */
-  def busy(kind: JobKind): Signal[Boolean] = jobs.signal.map(_.exists(_.kind == kind.wire))
+  def busy(kind: JobKind): Signal[Boolean] = jobs.signal.map(_.exists(_.kind == kind.value))
 
   def panel: HtmlElement =
     div(

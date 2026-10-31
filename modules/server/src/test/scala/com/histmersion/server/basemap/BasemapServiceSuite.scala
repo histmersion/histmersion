@@ -3,7 +3,8 @@ package com.histmersion.server.basemap
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{JobRepo, Migrate}
+import com.histmersion.db.Migrate
+import com.histmersion.util.jobs.JobRepo
 import com.histmersion.server.Deps
 
 import java.nio.file.{Files, Path}

@@ -36,7 +36,7 @@ final class Deps(
     /** `histmersion config reload`: read the config file again and switch to it. */
     val reloader: () => ReloadReport = Deps.NoReload,
     /** A person's pause and cancel of the long background jobs this server runs. */
-    val jobStops: com.histmersion.domain.jobs.JobStops = com.histmersion.domain.jobs.JobStops(),
+    val jobStops: com.histmersion.util.jobs.JobStops = com.histmersion.util.jobs.JobStops(),
     /** The load `cfg` came from: the settings file and the environment it was read with (Settings writes that file).
       */
     loadedNow: Option[() => LoadedConfig] = None,

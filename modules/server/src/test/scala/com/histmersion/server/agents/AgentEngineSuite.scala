@@ -5,7 +5,8 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
-import com.histmersion.db.{AgentRepo, Db, JobRepo, Migrate, QueueRepo}
+import com.histmersion.db.{AgentRepo, Db, Migrate, QueueRepo}
+import com.histmersion.util.jobs.JobRepo
 import com.histmersion.server.{Deps, Handlers}
 import sttp.ai.core.agent.*
 import sttp.ai.core.agent.testing.{RecordedRequest, ScriptedAgent}

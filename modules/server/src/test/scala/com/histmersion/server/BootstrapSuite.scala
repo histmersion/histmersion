@@ -3,7 +3,8 @@ package com.histmersion.server
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{Db, JobRepo, Migrate, PeriodRepo}
+import com.histmersion.db.{Db, Migrate, PeriodRepo}
+import com.histmersion.util.jobs.JobRepo
 
 import com.augustnagro.magnum.*
 import java.nio.file.{Files, Path}

@@ -1,9 +1,12 @@
-package com.histmersion.server
+package com.histmersion.util.jobs
+
+import com.histmersion.util.jobs.BackgroundJob
 
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{Db, JobRepo, Migrate}
+import com.histmersion.db.{Db, Migrate}
+import com.histmersion.util.jobs.JobRepo
 
 import java.util.concurrent.CountDownLatch
 

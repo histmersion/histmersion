@@ -333,7 +333,6 @@ api:api/JobActions.scala	util.jobs
 api:api/JobCounts.scala	util.jobs
 api:api/JobDetail.scala	util.jobs
 api:api/JobInfo.scala	util.jobs
-api:api/JobKind.scala	util.jobs
 api:api/JobState.scala	util.jobs
 api:api/Label.scala	library.search
 api:api/LabelRename.scala	library.search
@@ -815,10 +814,6 @@ core:domain/Wikidata.scala	media
 core:domain/activity/ActivityCursor.scala	automation.activity
 core:domain/activity/ActivityQuery.scala	automation.activity
 core:domain/activity/ActivityRules.scala	automation.activity
-core:domain/jobs/JobAction.scala	util.jobs
-core:domain/jobs/JobControlRules.scala	util.jobs
-core:domain/jobs/JobControlStep.scala	util.jobs
-core:domain/jobs/JobStop.scala	util.jobs
 core:domain/maptiles/GridCell.scala	catalogue.maptiles
 core:domain/maptiles/UndatedBuild.scala	catalogue.maptiles
 core:domain/maptiles/UndatedCells.scala	catalogue.maptiles
@@ -857,7 +852,6 @@ db:db/Geocoder.scala	catalogue.places
 db:db/GoalLinkRepo.scala	automation.goals
 db:db/GoalRepo.scala	automation.goals
 db:db/Importer.scala	library.ingest
-db:db/JobRepo.scala	util.jobs
 db:db/Jsonb.scala	util.common
 db:db/Keyset.scala	util.database
 db:db/LandRepo.scala	catalogue.places
@@ -914,10 +908,6 @@ files:files/SafePath.scala	util.files
 server:domain/activity/ActivityControllers.scala	automation.activity
 server:domain/activity/ActivityRepo.scala	automation.activity
 server:domain/activity/ActivityService.scala	automation.activity
-server:domain/jobs/JobControlControllers.scala	util.jobs
-server:domain/jobs/JobControlService.scala	util.jobs
-server:domain/jobs/JobStopped.scala	util.jobs
-server:domain/jobs/JobStops.scala	util.jobs
 server:domain/settings/RestartService.scala	util.settings
 server:domain/settings/SettingsControllers.scala	util.settings
 server:domain/settings/SettingsService.scala	util.settings
@@ -926,7 +916,6 @@ server:domain/settings/SettingsViews.scala	util.settings
 server:server/ArticlePage.scala	research.articles
 server:server/ArticlesApi.scala	server
 server:server/AuthHandler.scala	server
-server:server/BackgroundJob.scala	util.jobs
 server:server/BackupJobs.scala	util.data.backup
 server:server/BackupService.scala	util.data.backup
 server:server/Bootstrap.scala	server
@@ -1173,3 +1162,4 @@ config:config/Environment.scala	config
 server:server/SystemContext.scala	server
 server:server/Composition.scala	server
 server:server/StorageLocations.scala	server
+api:api/JobKindsAdapter.scala	api

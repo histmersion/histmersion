@@ -1,7 +1,7 @@
-package com.histmersion.domain.jobs
+package com.histmersion.util.jobs
 
 import com.histmersion.api.{ApiError, JobInfo, JobState, Write}
-import com.histmersion.db.JobRepo
+import com.histmersion.util.jobs.JobRepo
 
 import java.util.concurrent.atomic.AtomicReference
 import javax.sql.DataSource

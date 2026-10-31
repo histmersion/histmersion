@@ -9,7 +9,7 @@ import javax.sql.DataSource
   * column's full precision and the order is total. Indexed by `(…, created_at, id)` (V086); Postgres walks those
   * backwards for the descending order.
   */
-private[db] object Keyset:
+private[histmersion] object Keyset:
 
   /** The order every paged list uses. `alias` = the table's alias in the query (with its dot). */
   def orderBy(alias: String): Sql = Sql.raw(s" ORDER BY ${alias}created_at DESC, ${alias}id DESC")

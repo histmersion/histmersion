@@ -23,7 +23,10 @@ abstract class StoreContractSuite extends munit.FunSuite:
     assertEquals(s.get(key("a/b/one.txt")).map(_.text()), Some("one"))
     assertEquals(s.stat(key("a/two.bin")).map(st => (st.kind, st.size.value: Long)), Some((StoredKind.File, 3L)))
     assert(s.isDirectory(key("a/b")) && s.isFile(key("a/two.bin")) && !s.exists(key("a/none")))
-    assertEquals(s.list(key("a")).map(st => (st.key.value: String, st.kind)), List("a/b" -> StoredKind.Directory, "a/two.bin" -> StoredKind.File))
+    assertEquals(
+      s.list(key("a")).map(st => (st.key.value: String, st.kind)),
+      List("a/b" -> StoredKind.Directory, "a/two.bin" -> StoredKind.File)
+    )
     assertEquals(s.walk().map(st => st.key.value: String), List("a/b/one.txt", "a/two.bin"))
     assertEquals(s.size.value: Long, 6L)
     assertEquals(s.get(key("a/none")), None)
@@ -87,13 +90,17 @@ abstract class StoreContractSuite extends munit.FunSuite:
         s.put(key(k), utf("1234")): Unit
         s.touch(key(k), Instant.parse(t))
     }
-    assertEquals(s.prune(PruneRule.LeastRecentlyUsed(ByteCount.applyUnsafe(5L))).removed.map(st => st.key.value: String), List("old", "mid"))
+    assertEquals(
+      s.prune(PruneRule.LeastRecentlyUsed(ByteCount.applyUnsafe(5L))).removed.map(st => st.key.value: String),
+      List("old", "mid")
+    )
     assertEquals(s.walk().map(st => st.key.value: String), List("new"))
     assertEquals(s.prune(PruneRule.OlderThan(Instant.parse("2023-01-01T00:00:00Z"))).freed.value: Long, 4L)
 
 class DiskStoreSuite extends StoreContractSuite:
-  def fresh(): Store = Storage(_ => Some(Files.createTempDirectory("histmersion-store")), () => Files.createTempDirectory("t"))
-    .store(Location.Basemap)
+  def fresh(): Store =
+    Storage(_ => Some(Files.createTempDirectory("histmersion-store")), () => Files.createTempDirectory("t"))
+      .store(Location.Basemap)
 
   test("on disk: a key is a path below the root; a symbolic link is written through when asked"):
     val dir = Files.createTempDirectory("histmersion-store")
