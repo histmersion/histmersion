@@ -4,7 +4,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
-import com.histmersion.db.{AgentRepo, QueueRepo}
+import com.histmersion.db.AgentRepo
 import com.histmersion.domain.automation.workflows.{ToolName, Workflows}
 import com.histmersion.api.VocabularyCodecs.given
 import io.circe.parser.decode
@@ -391,8 +391,7 @@ final class Engine(
           if scheduled then
             s"scheduled ${run.pipeline}${run.goal.fold("")(g => s" for goal $g")} (agent run ${run.id.take(8)}) $w"
           else s"${run.pipeline} of [[${run.target}]] queued by its import (agent run ${run.id.take(8)}) $w"
-        val _ = QueueRepo.add(
-          ds,
+        val _ = agents.queues.add(
           com.histmersion.api.Queue.Kind.Tasks,
           com.histmersion.api.Queue.QueueAdd(
             text,

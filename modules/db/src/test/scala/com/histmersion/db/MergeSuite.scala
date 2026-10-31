@@ -286,7 +286,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       EventPut("Fall of Hattusa (work)", "destruction", TimeSpan(Some(-1190), None, None, Some(-1180)))
     )
     GoalRepo.put(work, "zz_goal_both", GoalPut("Goal created at work", status = "seeding"))
-    val _ = QueueRepo.add(work, Queue.Kind.Tasks, Queue.QueueAdd("Find the  Kuhrt reprint"))
+    val _ = QueueRows.add(work, Queue.Kind.Tasks, Queue.QueueAdd("Find the  Kuhrt reprint"))
 
     // ── home ──
     put(
@@ -378,8 +378,8 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       EventPut("Fall of Hattusa (home)", "destruction", TimeSpan(Some(-1190), None, None, Some(-1180)))
     )
     GoalRepo.put(home, "zz_goal_both", GoalPut("Goal created at home", notes = Some("home's plan")))
-    val task = QueueRepo.add(home, Queue.Kind.Tasks, Queue.QueueAdd("Find the Kuhrt reprint"))
-    val _ = QueueRepo.patch(home, task.id, Queue.QueuePatch(status = Some(Queue.Done)))
+    val task = QueueRows.add(home, Queue.Kind.Tasks, Queue.QueueAdd("Find the Kuhrt reprint"))
+    val _ = QueueRows.patch(home, task.id, Queue.QueuePatch(status = Some(Queue.Done)))
     (work, home, sw, sh)
 
   /** kind, id letter, left label, right label, severity, conditional on. */

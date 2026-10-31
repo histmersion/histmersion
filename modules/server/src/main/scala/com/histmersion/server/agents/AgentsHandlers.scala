@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.worklists.QueueItemId
+
 import com.histmersion.domain.automation.agents.VerbatimFailure
 import com.histmersion.domain.automation.workflows.{ToolName, Workflows}
 import hearth.kindlings.optics.syntax.*
@@ -10,7 +12,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.GoalPlans.*
-import com.histmersion.db.{AgentRepo, GoalLinkRepo, GoalRepo, ModelSettingsRepo, QueueRepo}
+import com.histmersion.db.{AgentRepo, GoalLinkRepo, GoalRepo, ModelSettingsRepo}
 import com.histmersion.server.{Deps, Handlers}
 
 /** The ONE implementation of the embedded-agent operations (docs/research-embedded-agents.md): the model check, the
@@ -45,6 +47,9 @@ final class AgentsHandlers(
   /** Read at each use: a config reload switches it (Deps). */
   private def cfg = deps.cfg.agents
   private val ds = deps.ds
+
+  /** The work lists' kernel (the runs' log lines, the review's tasks). */
+  val queues: com.histmersion.domain.automation.worklists.QueueService = deps.queues
 
   /** How the engine, the managers and their threads keep work on the generation it started on. */
   val pins: com.histmersion.server.hot.Pinning = deps.pins
@@ -686,7 +691,7 @@ final class AgentsHandlers(
         yield ()
       case _ =>
         req.acquireItem.fold(Right(()))(id =>
-          Queue.fulfillable(id, QueueRepo.get(ds, id)).map(_ => ()).left.map(ApiError(_))
+          Queue.fulfillable(id, deps.queues.get(QueueItemId(id))).map(_ => ()).left.map(ApiError(_))
         )
 
   /** Budgets are stored to the micro-dollar (numeric(12,6)): anything smaller would round to 0. */
@@ -844,7 +849,7 @@ final class AgentsHandlers(
         case LinkKind.Article   => h.getArticle(ref).map(_.article.slug)
         case LinkKind.QueueItem =>
           ref.toIntOption
-            .flatMap(QueueRepo.get(ds, _))
+            .flatMap(i => deps.queues.get(QueueItemId(i)))
             .map(_.id.toString)
             .toRight(ApiError(s"No queue item '$ref'", Some(Write.CodeNotFound)))
         case LinkKind.Query =>

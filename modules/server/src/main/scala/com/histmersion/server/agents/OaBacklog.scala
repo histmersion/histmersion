@@ -8,7 +8,7 @@ import com.histmersion.domain.IngestBacklog.{Entry, Failure, Lane, Placement, Re
 import com.histmersion.api.Managers.*
 import com.histmersion.api.Queue.QueueAdd
 import com.histmersion.api.RepairAcquire.*
-import com.histmersion.db.{GoalLinkRepo, ManagerRepo, QueueRepo}
+import com.histmersion.db.{GoalLinkRepo, ManagerRepo}
 import com.histmersion.server.agents.OaBacklog.Snapshot
 
 import java.time.Instant
@@ -51,7 +51,7 @@ final class OaBacklog(
       .itemFor(ds, managerId, OaIngest, doi)
       .filter(i => ItemStatus.parse(i.status).exists(_.isFinal))
       .map(_.id)
-    val acquire = QueueRepo.acquireNaming(ds, doi).headOption.map(_.id)
+    val acquire = h.queues.naming(Queue.Kind.Acquire, doi).headOption.map(_.id)
     IngestBacklog.place(ManagerRepo.citekeyOfDoi(ds, doi), acquire, open.map(_.id), settled) match
       case p @ Placement.InCorpus(ck) =>
         val _ =
@@ -288,7 +288,7 @@ final class OaBacklog(
     * every goal. None when the list refused it.
     */
   private def acquireOnce(goals: List[String], doi: String, w: OaWork): Option[Int] =
-    val existing = QueueRepo.acquireNaming(ds, doi).headOption.map(_.id)
+    val existing = h.queues.naming(Queue.Kind.Acquire, doi).headOption.map(_.id)
     val id = existing.orElse {
       val goal = goals.headOption.getOrElse("")
       val text = w.acquireText.getOrElse(

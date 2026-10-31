@@ -258,11 +258,11 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
       GoalPut("Hittites", "seeding", Some("notes"), List("t"), Nil, Some(-1650), Some(-1180))
     )
     GoalRepo.put(ds, "zzb_goal_sub", GoalPut("Sub", parentSlug = Some("zzb_goal")))
-    val q1 = QueueRepo.add(ds, Kind.Tasks, QueueAdd("read alpha", Some("Hittites"), reason = Some("why")))
-    val _ = QueueRepo.add(ds, Kind.Log, QueueAdd("2026-10-03: did things", createdAt = Some("2026-10-03T09:00:00Z")))
-    val q3 = QueueRepo.add(ds, Kind.Acquire, QueueAdd("buy a book"))
-    val _ = QueueRepo.patch(ds, q1.id, QueuePatch(status = Some("done")))
-    val _ = QueueRepo.delete(ds, q3.id)
+    val q1 = QueueRows.add(ds, Kind.Tasks, QueueAdd("read alpha", Some("Hittites"), reason = Some("why")))
+    val _ = QueueRows.add(ds, Kind.Log, QueueAdd("2026-10-03: did things", createdAt = Some("2026-10-03T09:00:00Z")))
+    val q3 = QueueRows.add(ds, Kind.Acquire, QueueAdd("buy a book"))
+    val _ = QueueRows.patch(ds, q1.id, QueuePatch(status = Some("done")))
+    val _ = QueueRows.delete(ds, q3.id)
 
   /** The event-catalogue sets (#1647): the catalogue's columns of an event, its catalogue record, a candidate decided
     * and one proposed, a check, a correction of an event and of a place (a JSON null value, a JSON null and an absent
@@ -793,7 +793,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
         }
       }
       if rnd.nextBoolean() then
-        val _ = QueueRepo.add(a, Kind.Tasks, QueueAdd(rnd.alphanumeric.take(20).mkString))
+        val _ = QueueRows.add(a, Kind.Tasks, QueueAdd(rnd.alphanumeric.take(20).mkString))
       val first = exportOf(a, sa)
       val r = importInto(b, first, sb)
       assert(r.applied, s"iteration $i: ${r.problems.mkString("\n")}")
