@@ -1,9 +1,10 @@
 package com.histmersion.util.data
 
+import com.histmersion.util.data.backup.BackupShare
 import com.histmersion.util.data.checks.CheckRule
 import com.histmersion.util.data.exchange.{CarriedKind, MergeRules}
 import com.histmersion.util.data.mirror.MirrorExport
-import com.histmersion.util.data.maintenance.{CacheSpec, MaintenanceTask}
+import com.histmersion.util.data.maintenance.{CacheSpec, MaintenanceTask, MaintenanceTaskName}
 import com.histmersion.util.storage.Location
 
 /** The registry: every owner's contribution, in the order they were registered, which is the order every operation
@@ -19,6 +20,10 @@ final class DataContributions private (val all: List[DataContribution]):
   def caches: List[CacheSpec] = all.flatMap(_.caches)
   def maintenance: List[MaintenanceTask] = all.flatMap(_.maintenance)
   def checks: List[CheckRule] = all.flatMap(_.checks)
+  def backups: List[(DataOwner, BackupShare)] = all.map(c => c.owner -> c.backup)
+
+  /** The registered piece of upkeep called `name`. */
+  def task(name: MaintenanceTaskName): Option[MaintenanceTask] = maintenance.find(_.name == name)
 
   /** The owner of a table, when one registered it. */
   def ownerOf(table: TableName): Option[DataOwner] = tables.collectFirst { case (o, t) if t.name == table => o }

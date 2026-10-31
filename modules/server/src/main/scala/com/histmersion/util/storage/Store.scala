@@ -21,6 +21,12 @@ trait Store:
   def isFile(key: StoreKey): Boolean
   def isDirectory(key: StoreKey): Boolean
 
+  /** Is `key` a symbolic link (whatever it points to)? */
+  def isLink(key: StoreKey): Boolean
+
+  /** Is `key` a file this process may run? */
+  def isExecutable(key: StoreKey): Boolean
+
   /** `key` and what it is now, when it exists. */
   def stat(key: StoreKey): Option[Stored]
 
@@ -69,6 +75,19 @@ trait Store:
 
   /** The space left on the disk the store is on. */
   def usableSpace: ByteCount
+
+  /** What the store holds, counted by a walk `budget` bounds (shared by every walk of one measurement). The store's own
+    * directory may be a symbolic link (a directory moved to another disk) and is followed; links below it are neither
+    * followed nor counted, so a link to a big directory elsewhere is not this store's size and a loop cannot hang the
+    * walk. An entry that cannot be read is skipped and counted. A store whose root is a file counts that file.
+    */
+  def measure(budget: MeasureBudget): StoreMeasure
+
+  /** The disk the store is (or, when its directory is not made yet, would be) on. */
+  def volume: Option[StoreVolume]
+
+  /** The names `prefix` holds directly, by name, without reading what they are; none when it is no directory. */
+  def names(prefix: StoreKey = StoreKey.Root): List[String]
 
   /** The files `rule` names, removed. */
   def prune(rule: PruneRule): PruneReport

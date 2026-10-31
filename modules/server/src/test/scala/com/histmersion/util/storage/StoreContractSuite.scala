@@ -119,6 +119,41 @@ abstract class StoreContractSuite extends munit.FunSuite:
     assertEquals(s.walk().map(st => st.key.value: String), List("new"))
     assertEquals(s.prune(PruneRule.OlderThan(Instant.parse("2023-01-01T00:00:00Z"))).freed.value: Long, 4L)
 
+  test("measure: the files below the store, by bytes and count; a sub-store not made yet is absent"):
+    val s = fresh()
+    s.put(key("a.bin"), Array.fill[Byte](100)(1)): Unit
+    s.put(key("x/y/b.bin"), Array.fill[Byte](200)(1)): Unit
+    val r = s.measure(MeasureBudget.unlimited)
+    assertEquals((r.bytes.value: Long, r.files, r.exists, r.partial), (300L, 2L, true, false))
+    assertEquals(s.sub(key("x")).measure(MeasureBudget.unlimited).bytes.value: Long, 200L)
+    assertEquals(s.sub(key("nope")).measure(MeasureBudget.unlimited), StoreMeasure.absent)
+
+  test("measure: a budget that runs out stops the walk, partial, and is shared by the next walk"):
+    val s = fresh()
+    (1 to 30).foreach(i => s.put(key(f"f$i%02d.bin"), Array.fill[Byte](10)(1)): Unit)
+    val b = MeasureBudget(10, Long.MaxValue)
+    val r = s.measure(b)
+    assert(r.partial && r.files < 30L && r.bytes.value < 300L, r)
+    assert(b.exhausted)
+    assert(s.measure(b).partial)
+
+  test("names: what a directory holds directly, by name; none for a missing one"):
+    val s = fresh()
+    s.put(key("b/x"), Array[Byte](1)): Unit
+    s.put(key("a"), Array[Byte](1)): Unit
+    assertEquals(s.names(), List("a", "b"))
+    assertEquals(s.names(key("nowhere")), Nil)
+    assert(!s.isLink(key("a")) && !s.isExecutable(key("a")))
+
+  test("a reservation with a suffixed temporary name commits over its key"):
+    val s = fresh()
+    val r = s.reserve(key("d/x.dump"), TempName.Suffixed(".part")).toOption.get
+    Using.resource(r.output())(_.write(utf("dump")))
+    assert(!s.isFile(key("d/x.dump")))
+    assertEquals(r.commit().map(_.size.value: Long), Right(4L))
+    assertEquals(s.get(key("d/x.dump")).map(_.text()), Some("dump"))
+    assertEquals(s.names(key("d")), List("x.dump"))
+
 class DiskStoreSuite extends StoreContractSuite:
   def fresh(): Store =
     Storage(_ => Some(Files.createTempDirectory("histmersion-store")), () => Files.createTempDirectory("t"))
@@ -137,6 +172,12 @@ class DiskStoreSuite extends StoreContractSuite:
     assert(Files.isSymbolicLink(dir.resolve("link.conf")))
     assertEquals(Files.readString(real), "new")
     assert(s.usableSpace.value > 0)
+
+  test("on disk: a reservation's suffixed file is the key's name and the suffix, beside it"):
+    val dir = Files.createTempDirectory("histmersion-store")
+    val r = Storage.at(Location.Backups, dir).reserve(StoreKey.applyUnsafe("a.dump"), TempName.Suffixed(".part"))
+    assertEquals(r.flatMap(_.onDisk).map(_.toString), Right(dir.resolve("a.dump.part").toString))
+    r.foreach(_.close())
 
   test("a store at a directory is the store the storage gives for a location placed there"):
     val dir = Files.createTempDirectory("histmersion-store")
@@ -165,3 +206,4 @@ class MemoryStoreSuite extends StoreContractSuite:
     storage.store(Location.Spool).put(StoreKey.applyUnsafe("x"), Array[Byte](1)): Unit
     assert(storage.store(Location.Spool).isFile(StoreKey.applyUnsafe("x")))
     assert(storage.store(Location.Spool).onDisk(StoreKey.applyUnsafe("x")).isLeft)
+    assertEquals(storage.store(Location.Spool).volume, None)

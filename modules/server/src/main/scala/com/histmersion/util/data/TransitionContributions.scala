@@ -1,5 +1,6 @@
 package com.histmersion.util.data
 
+import com.histmersion.util.data.backup.{BackupAdapter, BackupShare}
 import com.histmersion.util.data.checks.{CheckRule, CheckRulesAdapter}
 import com.histmersion.util.data.diagnostics.{DataFigures, FiguresAdapter}
 import com.histmersion.util.data.exchange.{CarriedKind, CarriedKindsAdapter, MergeRules, MergeRulesAdapter}
@@ -14,15 +15,22 @@ import com.augustnagro.magnum.DbCon
   */
 object TransitionContributions:
 
-  private final class Adapted(val owner: DataOwner) extends DataContribution:
+  private final class Adapted(val owner: DataOwner, ownTasks: List[MaintenanceTask]) extends DataContribution:
     val tables: List[OwnedTable] = TablesAdapter.of(owner)
     override val stores: List[Location] = MaintenanceAdapter.stores(owner)
+    override val backup: BackupShare = BackupAdapter.of(owner)
     override val carried: List[CarriedKind] = CarriedKindsAdapter.of(owner)
     override val mergeRules: List[MergeRules] = MergeRulesAdapter.of(owner)
     override val mirror: List[MirrorExport] = MirrorAdapter.of(owner)
     override val caches: List[CacheSpec] = MaintenanceAdapter.caches(owner)
-    override val maintenance: List[MaintenanceTask] = MaintenanceAdapter.tasks(owner)
+    override val maintenance: List[MaintenanceTask] = MaintenanceAdapter.tasks(owner) ++ ownTasks
     override val checks: List[CheckRule] = CheckRulesAdapter.of(owner)
     def figures(using DbCon): DataFigures = FiguresAdapter.of(owner)
 
-  val all: List[DataContribution] = TablesAdapter.owners.map(Adapted(_))
+  val all: List[DataContribution] = withTasks(Nil)
+
+  /** The same, with the upkeep an owner's adapter registers from the owner's own place (it names that owner's
+    * repositories, which code here may not), handed in by the composition root.
+    */
+  def withTasks(tasks: List[MaintenanceTask]): List[DataContribution] =
+    TablesAdapter.owners.map(o => Adapted(o, tasks.filter(_.owner == o)))

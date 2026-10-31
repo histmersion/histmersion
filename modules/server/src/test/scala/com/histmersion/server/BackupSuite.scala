@@ -1,5 +1,6 @@
 package com.histmersion.server
 
+import com.histmersion.util.data.backup.BackupJobs
 import com.histmersion.util.data.maintenance.WriteGate
 
 import com.histmersion.api.*
@@ -63,8 +64,8 @@ class BackupSuite extends munit.FunSuite:
   // ── listing and name resolution ──────────────────────────────────────────────────────────────
 
   tmp.test("an empty (or absent) backups directory lists nothing rather than failing") { d =>
-    assertEquals(BackupService(cfgWith(d)).list, Right(Nil))
-    assertEquals(BackupService(cfgWith(d.resolve("not-created-yet"))).list, Right(Nil))
+    assertEquals(BackupFixtures.service(cfgWith(d)).list, Right(Nil))
+    assertEquals(BackupFixtures.service(cfgWith(d.resolve("not-created-yet"))).list, Right(Nil))
   }
 
   tmp.test("the listing is newest first, and ignores everything that is not a dump") { d =>
@@ -72,7 +73,7 @@ class BackupSuite extends munit.FunSuite:
     names.foreach(n => Files.writeString(d.resolve(n), "x"))
     Files.writeString(d.resolve("histmersion-20260826T101112Z.dump.part"), "half-written") // in flight
     Files.writeString(d.resolve("notes.txt"), "unrelated")
-    val listed = BackupService(cfgWith(d)).list.toOption.get
+    val listed = BackupFixtures.service(cfgWith(d)).list.toOption.get
     assertEquals(listed.map(_.file), List("histmersion-20260825T101112Z.dump", "histmersion-20260824T101112Z.dump"))
     assertEquals(listed.map(_.bytes), List(1L, 1L))
     assert(listed.forall(b => Instant.parse(b.createdAt).toEpochMilli > 0))
@@ -81,8 +82,8 @@ class BackupSuite extends munit.FunSuite:
   tmp.test("resolve only accepts a name that is BOTH syntactically safe and in the listing") { d =>
     val name = Backup.fileName(Instant.parse("2026-08-25T14:51:12Z"))
     Files.writeString(d.resolve(name), "x")
-    val svc = BackupService(cfgWith(d))
-    assertEquals(svc.resolve(name), Right(d.toAbsolutePath.normalize.resolve(name)))
+    val svc = BackupFixtures.service(cfgWith(d))
+    assertEquals(svc.archive(name).map(_.toPath), Right(d.toAbsolutePath.normalize.resolve(name)))
     // present on disk but never listed → refused
     assertEquals(svc.resolve("histmersion-20260101T000000Z.dump").left.map(_.code), Left(Some(Write.CodeNotFound)))
   }
@@ -90,7 +91,7 @@ class BackupSuite extends munit.FunSuite:
   tmp.test("resolve refuses to escape the backups directory") { d =>
     val outside = Files.createTempFile("histmersion-outside", ".dump")
     try
-      val svc = BackupService(cfgWith(d))
+      val svc = BackupFixtures.service(cfgWith(d))
       val escapes = List(
         s"../${outside.getFileName}",
         "../../etc/passwd.dump",
@@ -105,7 +106,7 @@ class BackupSuite extends munit.FunSuite:
 
   tmp.test("a missing pg_dump is a clear, actionable error rather than an exception") { d =>
     val base = cfgWith(d)
-    val svc = BackupService(base.copy(backups = base.backups.copy(pgBinDir = d.resolve("nowhere").toString)))
+    val svc = BackupFixtures.service(base.copy(backups = base.backups.copy(pgBinDir = d.resolve("nowhere").toString)))
     val err = svc.create(Instant.now())
     assert(err.isLeft, err.toString)
     assert(err.left.exists(_.message.contains("pg_dump")), err.toString)
@@ -125,7 +126,7 @@ class BackupSuite extends munit.FunSuite:
     val _ = fake.toFile.setExecutable(true)
 
     val base = cfgWith(d)
-    val svc = BackupService(base.copy(backups = base.backups.copy(pgBinDir = bin.toString, timeoutSeconds = 1)))
+    val svc = BackupFixtures.service(base.copy(backups = base.backups.copy(pgBinDir = bin.toString, timeoutSeconds = 1)))
 
     val started = System.nanoTime()
     val r = svc.create(Instant.now())
@@ -147,7 +148,7 @@ class BackupSuite extends munit.FunSuite:
     Files.writeString(fake, "#!/bin/sh\necho one\necho two >&2\nexit 3\n")
     val _ = fake.toFile.setExecutable(true)
     val base = cfgWith(d)
-    val svc = BackupService(base.copy(backups = base.backups.copy(pgBinDir = bin.toString)))
+    val svc = BackupFixtures.service(base.copy(backups = base.backups.copy(pgBinDir = bin.toString)))
     val r = svc.create(Instant.now())
     assert(r.isLeft, r.toString)
     val msg = r.swap.toOption.get.message
@@ -172,7 +173,7 @@ class BackupSuite extends munit.FunSuite:
 
   private def jobs(d: Path, bin: Path, waitS: Int): BackupJobs =
     val base = cfgWith(d)
-    BackupJobs(BackupService(base.copy(backups = base.backups.copy(pgBinDir = bin.toString))), waitS)
+    BackupJobs(BackupFixtures.service(base.copy(backups = base.backups.copy(pgBinDir = bin.toString))), waitS)
 
   private def cleanBin(bin: Path): Unit =
     Files.list(bin).forEach { p =>
@@ -191,7 +192,7 @@ class BackupSuite extends munit.FunSuite:
     old.foreach(n => Files.writeString(d.resolve(n), "old"))
     Files.writeString(d.resolve("my-own-copy.dump"), "the user's") // not ours: never pruned
     val base = cfgWith(d)
-    val svc = BackupService(base.copy(backups = base.backups.copy(pgBinDir = bin.toString, keep = 3)))
+    val svc = BackupFixtures.service(base.copy(backups = base.backups.copy(pgBinDir = bin.toString, keep = 3)))
     val r = svc.create(Instant.parse("2026-09-26T12:00:00Z")).fold(e => fail(e.message), identity)
     assertEquals(r.pruned, List("histmersion-20260101T000000Z.dump", "histmersion-20260102T000000Z.dump"))
     val left = Files.list(d).map(_.getFileName.toString).toList.asScala.toSet - "bin"
@@ -207,7 +208,7 @@ class BackupSuite extends munit.FunSuite:
     val bin = fakeDump(d, sleepS = 0)
     (1 to 7).foreach(i => Files.writeString(d.resolve(f"histmersion-202601$i%02dT000000Z.dump"), "old"))
     val base = cfgWith(d)
-    val r = BackupService(base.copy(backups = base.backups.copy(pgBinDir = bin.toString, keep = 0)))
+    val r = BackupFixtures.service(base.copy(backups = base.backups.copy(pgBinDir = bin.toString, keep = 0)))
       .create(Instant.now())
       .fold(e => fail(e.message), identity)
     assertEquals(r.pruned, Nil)
@@ -251,4 +252,4 @@ class BackupSuite extends munit.FunSuite:
 
   test("no status before the first backup"):
     val base = AppConfig.load()
-    assertEquals(BackupJobs(BackupService(base), 1).status, None)
+    assertEquals(BackupJobs(BackupFixtures.service(base), 1).status, None)

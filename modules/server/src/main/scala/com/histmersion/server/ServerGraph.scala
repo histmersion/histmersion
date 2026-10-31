@@ -1,6 +1,6 @@
 package com.histmersion.server
 
-import com.histmersion.util.data.maintenance.WriteGate
+import com.histmersion.util.data.maintenance.{ReadOnlyPool, WriteGate}
 
 import com.histmersion.util.settings.{info, ConfigSource, HotConfig}
 

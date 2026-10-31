@@ -46,6 +46,8 @@ final class MemoryStore private (
   def exists(key: StoreKey): Boolean = isFile(key) || isDirectory(key)
   def isFile(key: StoreKey): Boolean = state.get.files.contains(full(key))
   def isDirectory(key: StoreKey): Boolean = full(key).isRoot || directories(StoreKey.Root).contains(full(key))
+  def isLink(key: StoreKey): Boolean = false
+  def isExecutable(key: StoreKey): Boolean = false
 
   def stat(key: StoreKey): Option[Stored] =
     state.get.files
@@ -118,6 +120,22 @@ final class MemoryStore private (
   def size: ByteCount = ByteCount.applyUnsafe(files.valuesIterator.map(_.size.value).sum)
 
   def usableSpace: ByteCount = ByteCount.applyUnsafe(Long.MaxValue)
+
+  def measure(budget: MeasureBudget): StoreMeasure =
+    if base.isRoot || exists(StoreKey.Root) then
+      val held = files.values.toList
+      val counted = held.takeWhile(_ => budget.take())
+      StoreMeasure(
+        ByteCount.applyUnsafe(counted.iterator.map(_.size.value).sum),
+        counted.size.toLong,
+        exists = true,
+        partial = counted.size < held.size
+      )
+    else StoreMeasure.absent
+
+  def volume: Option[StoreVolume] = None
+
+  def names(prefix: StoreKey): List[String] = list(prefix).map(_.key.name)
 
   def prune(rule: PruneRule): PruneReport = PruneReport(DiskStore.pruned(walk(), rule).filter(s => delete(s.key)))
 

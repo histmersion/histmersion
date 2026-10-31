@@ -1,6 +1,18 @@
 package com.histmersion.server
 
-import com.histmersion.util.data.maintenance.WriteGate
+import com.histmersion.util.data.TablesAdapter.JobsOwner
+import com.histmersion.util.data.diagnostics.{DiagnosticsService, StorageCache, StorageFigures}
+import com.histmersion.util.data.backup.{BackupJobs, BackupService}
+import com.histmersion.util.data.maintenance.{
+  CacheEvent,
+  CacheName,
+  MaintenanceSite,
+  MaintenanceSlice,
+  MaintenanceTaskName,
+  VacuumJobs,
+  WriteGate
+}
+import com.histmersion.util.storage.MeasureBudget
 
 import com.histmersion.util.ocr.ConverterClient
 
@@ -21,7 +33,6 @@ import com.histmersion.db.{
   AssetLinkRepo,
   AssetMetaRepo,
   AttestationRepo,
-  BackupRepo,
   CoverageRepo,
   CritiqueRepo,
   EventRepo,
@@ -36,7 +47,6 @@ import com.histmersion.db.{
   ReviewLedgerRepo,
   SourceDeleteRepo,
   SourceRepo,
-  StatsRepo,
   TreeRepo
 }
 import com.histmersion.domain.catalogue.places.BuiltinGazetteers
@@ -63,9 +73,12 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * tolerance travels with the write rather than only with `places rebuild`.
     */
   private def tolKm = cfg.places.pointToleranceKm
-  private val backups = BackupService(deps.cfg)
+  private val backups: BackupService = BackupWiring.service(deps)
   private val backupJobs = BackupJobs(backups, deps.cfg.backups.requestWaitSeconds, deps.pins)
-  private val vacuumJobs = VacuumJobs(ds, deps.maintenance, () => cfg.maintenance.tables, deps.pins)
+  private val vacuumJobs = VacuumJobs(ds, deps.maintenance, Deps.data, () => cfg.maintenance.tables, deps.pins)
+
+  /** The registry's figures on this server's database. */
+  private val diagnostics: DiagnosticsService = DiagnosticsService(Deps.data, deps.transactor)
 
   /** One lock per server (plan §1.10): held by a restore, checked by EVERY write — here, in `OpsHandlers`, in
     * `IngestHandlers` and in the acquisition handlers, which is why it lives on `Deps` rather than in this class. A
@@ -189,14 +202,16 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     prepare = () => {
       val c = cfg
       val env = (k: String) => sys.env.get(k)
-      val places = StorageProbe.places(c, env, System.getProperty("os.name", ""), Supervisor.currentExecutable)
+      val measured =
+        StorageLocations.measured(c, env, System.getProperty("os.name", ""), Supervisor.currentExecutable)
       val run = deps.pins.carry(
-        StorageProbe.measure(
-          places,
-          env,
-          Some(ds),
+        StorageFigures(Deps.data).measure(
+          measured,
+          StorageLocations.install,
+          c,
+          Some(diagnostics),
           backups.list.left.map(_.message),
-          DirSize.Budget.of(c.storage.maxEntries.toLong, c.storage.maxMillis.toLong)
+          MeasureBudget.of(c.storage.maxEntries.toLong, c.storage.maxMillis.toLong)
         )
       )
       () => run.run()
@@ -222,8 +237,10 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def about(now: Instant = Instant.now()): About =
     def attempt[A](what: String)(a: => A): Either[String, A] =
       scala.util.Try(a).toEither.left.map(e => s"$what: ${e.getMessage}")
-    val jobs = attempt("job counts")(StatsRepo.jobs(ds))
-    val counts = attempt("store counts")(StatsRepo.corpus(ds))
+    val jobs = attempt("job counts")(
+      JobCounts.of(diagnostics.figures(JobsOwner).counts.map(c => c.noun -> c.count.toInt))
+    )
+    val counts = attempt("store counts")(corpusCounts)
     val listed = backups.list.left.map(e => s"backups: ${e.message}")
     val last = listed.toOption.flatMap(_.headOption)
     val age = last
@@ -251,6 +268,20 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       storage = storageNow(now),
       upstreams = upstreamQuotas(now),
       acquireRecheck = scala.util.Try(agents.acquireRecheck.status(now)).toOption
+    )
+
+  /** The corpus About counts: what the owners count of their records. */
+  private def corpusCounts: CorpusCounts =
+    val figures = Deps.data.owners.filterNot(_ == JobsOwner).map(diagnostics.figures)
+    def count(noun: String): Int = figures.flatMap(_.count(noun)).headOption.fold(0)(_.toInt)
+    CorpusCounts(
+      count("sources"),
+      count("findings"),
+      count("articles"),
+      count("events"),
+      count("places"),
+      count("periods"),
+      count("presets")
     )
 
   /** The metered upstreams' budgets as the database keeps them (CORE's: `upstream_quota`), under today's limits; none
@@ -1477,15 +1508,12 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** One resumable slice of the FTS chunk rebuild (plan §1.4); loop on `remaining` > 0. */
   def reindex(after: Option[String], limit: Option[Int]): Either[ApiError, ReindexResult] =
     maintenance.guard("reindex"):
-      Right(
-        SourceRepo.reindexChunks(
-          ds,
-          cfg.limits.chunkChars,
-          after.map(_.trim).filter(_.nonEmpty),
-          limit.filter(_ > 0),
-          cfg.limits.reindexChars
+      Deps.data
+        .task(MaintenanceTaskName("reindex"))
+        .toRight(ApiError("no reindex is registered"))
+        .map(
+          _.run(MaintenanceSlice(after.map(_.trim).filter(_.nonEmpty), limit.filter(_ > 0)), MaintenanceSite(ds, cfg))
         )
-      )
 
   // ── backup / restore (plan §1.10) ───────────────────────────────────────────────────────────
 
@@ -1516,7 +1544,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def backupList: Either[ApiError, List[BackupInfo]] = backups.list
 
   /** The archive itself, for `GET /api/backups/{file}` — validated against the listing first. */
-  def backupFile(file: String): Either[ApiError, java.io.File] = backups.resolve(file).map(_.toFile)
+  def backupFile(file: String): Either[ApiError, java.io.File] = backups.archive(file)
 
   /** Restore under the maintenance lock: every other write is answered 503 until it returns. Refuses a database that
     * still holds sources unless `force` (`pg_restore --clean` DROPS them), and re-validates the schema with Flyway
@@ -1543,19 +1571,11 @@ final class Handlers(deps: Deps, converter: ConverterClient):
         finally ingest.resume()
 
   private def restoreNow(req: RestoreRequest): Either[ApiError, RestoreResult] =
-    val before = BackupRepo.sourceCount(ds)
+    val before = backups.guardedRows
     for
-      path <- backups.resolve(req.file)
-      _ <-
-        if req.force || before == 0 then Right(())
-        else
-          Left(
-            ApiError(
-              s"the database still holds $before source(s); restoring would drop them — " +
-                "re-run with force"
-            )
-          )
-      r <- backups.restore(path)
+      archive <- backups.resolve(req.file)
+      _ <- if req.force || before == 0 then Right(()) else Left(backups.refusal(before))
+      r <- backups.restore(archive)
       // Every pooled connection now holds a session cache describing types the restore dropped;
       // PostGIS in particular fails outright on the next spatial query. Throw them away here,
       // while the maintenance lock still keeps everyone else out.
@@ -1576,9 +1596,14 @@ final class Handlers(deps: Deps, converter: ConverterClient):
         .toList
       _ = { com.histmersion.db.Db.evict(ds); com.histmersion.db.Db.evict(deps.queryDs) }
       // the restored versions of what the map's tiles read may be ones the kept tiles were cut under
-      _ = tiles.cache.clear()
+      _ = clearOnRestore()
       v <- Migrate.validate(ds).left.map(m => ApiError(s"restored ${req.file}, but the schema does not validate: $m"))
-    yield RestoreResult(req.file, v, before, BackupRepo.sourceCount(ds), r._1, r._2 ++ role)
+    yield RestoreResult(req.file, v, before, backups.guardedRows, r._1, r._2 ++ role)
+
+  /** The registered caches a restore makes stale, cleared: what this server holds of each. */
+  private def clearOnRestore(): Unit =
+    val held: Map[CacheName, () => Unit] = Map(CacheName("map-tiles") -> (() => tiles.cache.clear()))
+    Deps.data.caches.filter(_.staleAfter.contains(CacheEvent.Restored)).foreach(c => held.get(c.name).foreach(_()))
 
   // ── articles: the compiled wiki (plan §5.2 stream 2.7) ──────────────────────────────────────
 
