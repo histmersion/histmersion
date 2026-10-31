@@ -75,3 +75,6 @@ trait Store:
 
   /** The file `key` itself, for a program the supporting areas hand it to. */
   private[util] def onDisk(key: StoreKey): Either[StoreError, java.nio.file.Path]
+
+  /** The same, as the process launcher takes it. */
+  final private[util] def onDiskFile(key: StoreKey): Either[StoreError, HandedFile] = onDisk(key).map(_.toFile)

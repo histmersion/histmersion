@@ -4,6 +4,8 @@ import scala.util.chaining.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.util.process.{Processes, ProcessLaunch, ProcessOutput}
+import com.histmersion.util.storage.{Location, Storage, StoreKey}
 
 import java.io.File
 import java.nio.file.{Files, Path, StandardCopyOption}
@@ -24,6 +26,7 @@ final class BackupService(cfg: => AppConfig): // by name: read at each use (a co
 
   private def backups = cfg.backups
   private def timeoutS = math.max(1, backups.timeoutSeconds)
+  private val processes: Processes = Processes()
   private val createdAt = DateTimeFormatter.ISO_INSTANT.withZone(ZoneOffset.UTC)
 
   /** Absolute, so a relative config value does not depend on where a handler thread thinks it is. */
@@ -71,20 +74,23 @@ final class BackupService(cfg: => AppConfig): // by name: read at each use (a co
     */
   private def run(cmd: List[String]): Either[ApiError, (Int, List[String])] =
     val log = Files.createTempFile("histmersion-pg-", ".log")
-    val pb = ProcessBuilder(cmd.asJava)
-      .redirectErrorStream(true)
-      .redirectOutput(ProcessBuilder.Redirect.to(log.toFile))
-    pb.environment.put("PGPASSWORD", cfg.db.password)
-    pb.environment.put("PGUSER", cfg.db.user)
+    val launch = ProcessLaunch(
+      cmd,
+      environment = Map("PGPASSWORD" -> cfg.db.password, "PGUSER" -> cfg.db.user),
+      output = ProcessOutput.WriteTo(
+        Storage.at(Location.Scratch, log.getParent),
+        StoreKey.applyUnsafe(log.getFileName.toString)
+      )
+    )
     scala.util
       .Try {
-        val p = pb.start()
+        val p = processes.start(launch).fold(e => throw java.io.IOException(e), identity)
         val ended = p.waitFor(timeoutS.toLong, TimeUnit.SECONDS)
         if !ended then
           p.destroyForcibly()
           val _ = p.waitFor(5, TimeUnit.SECONDS) // let the kill land before reading the log
           (Int.MinValue, tail(log))
-        else (p.exitValue, tail(log))
+        else (p.waitFor(), tail(log))
       }
       .toEither
       .left
