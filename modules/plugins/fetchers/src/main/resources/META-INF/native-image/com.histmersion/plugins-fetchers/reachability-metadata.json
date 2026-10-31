@@ -1,0 +1,167 @@
+{
+  "reflection": [
+    {
+      "type": "com.histmersion.plugins.fetchers.ArchiveOrgPlugin",
+      "fields": [
+        {
+          "name": "configReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.fetchers.ArxivPlugin",
+      "fields": [
+        {
+          "name": "configReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.fetchers.CoreConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.fetchers.CorePlugin",
+      "fields": [
+        {
+          "name": "configReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.fetchers.HostAcquire$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.fetchers.LandingConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.fetchers.LandingPeers$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.fetchers.LandingPlugin",
+      "fields": [
+        {
+          "name": "configReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.fetchers.OaRecords",
+      "fields": [
+        {
+          "name": "datacite$lzy1"
+        },
+        {
+          "name": "handle$lzy1"
+        },
+        {
+          "name": "openalex$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.fetchers.OpenAccess",
+      "fields": [
+        {
+          "name": "openalexClient$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.fetchers.OpenAlexPlugin",
+      "fields": [
+        {
+          "name": "configReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.fetchers.Pmc$PmcLookup",
+      "fields": [
+        {
+          "name": "hit$lzy1"
+        },
+        {
+          "name": "record$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.fetchers.PmcPlugin",
+      "fields": [
+        {
+          "name": "configReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.fetchers.UnpaywallConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.fetchers.UnpaywallPeer$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.plugins.fetchers.UnpaywallPlugin",
+      "fields": [
+        {
+          "name": "configReader$lzy1"
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "glob": "META-INF/histmersion/plugins/archive-org.conf"
+    },
+    {
+      "glob": "META-INF/histmersion/plugins/arxiv.conf"
+    },
+    {
+      "glob": "META-INF/histmersion/plugins/oa-core.conf"
+    },
+    {
+      "glob": "META-INF/histmersion/plugins/oa-landing.conf"
+    },
+    {
+      "glob": "META-INF/histmersion/plugins/oa-openalex.conf"
+    },
+    {
+      "glob": "META-INF/histmersion/plugins/oa-unpaywall.conf"
+    },
+    {
+      "glob": "META-INF/histmersion/plugins/pmc.conf"
+    },
+    {
+      "glob": "META-INF/services/com.histmersion.plugin.Plugin"
+    }
+  ]
+}

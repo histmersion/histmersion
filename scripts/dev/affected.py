@@ -29,8 +29,11 @@ DEPS = {
     "core": ["values", "api", "config", "files"],
     "pluginApi": [],
     "pluginVaults": ["pluginApi"],
-    "pluginHost": ["core", "config", "pluginApi"],
+    "upstreams": ["pluginApi"],
+    "pluginHost": ["core", "config", "pluginApi", "upstreams"],
     "pluginTestkit": ["pluginHost"],
+    "pluginsFetchers": ["upstreams", "pluginTestkit"],
+    "pluginsEvents": ["upstreams", "pluginTestkit"],
     "pluginHello": ["pluginApi"],
     "pluginHelloAi": ["pluginApi"],
     "pluginHelloLib": [],
@@ -41,9 +44,11 @@ DEPS = {
     "db": ["config", "core"],
     "cli": ["api", "config", "files"],
     "web": ["apiJS"],
-    "server": ["core", "db", "pluginApi", "pluginHost", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloDeps"],
+    "server": ["core", "db", "pluginApi", "pluginHost", "pluginVaults", "pluginsFetchers", "pluginsEvents", "pluginHello",
+               "pluginHelloAi", "pluginHelloDeps"],
 }
-ORDER = ["values", "valuesJS", "api", "apiJS", "config", "files", "core", "pluginApi", "pluginHost", "pluginTestkit", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloLib",
+ORDER = ["values", "valuesJS", "api", "apiJS", "config", "files", "core", "pluginApi", "upstreams", "pluginHost", "pluginTestkit",
+         "pluginsFetchers", "pluginsEvents", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloLib",
          "pluginHelloDeps", "pluginResolver", "chimneyIron", "chimneyIronTests", "db", "cli", "web", "server"]
 # modules with no test sources of their own
 NO_TESTS = {"pluginHello", "pluginHelloAi", "pluginHelloLib", "pluginHelloDeps", "chimneyIron"}
@@ -76,6 +81,9 @@ RULES = [
     ("modules/web/", ["web"]),
     ("modules/plugin-api/", ["pluginApi"]),
     ("modules/plugin-host/", ["pluginHost"]),
+    ("modules/upstreams/", ["upstreams"]),
+    ("modules/plugins/fetchers/", ["pluginsFetchers"]),
+    ("modules/plugins/events/", ["pluginsEvents"]),
     ("modules/plugin-testkit/", ["pluginTestkit"]),
     ("modules/plugin-vaults/", ["pluginVaults"]),
     ("modules/plugin-fixtures/hello-ai/", ["pluginHelloAi"]),

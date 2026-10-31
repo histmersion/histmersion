@@ -1,6 +1,6 @@
 # Domain model, package by feature, first-party plugins out of the server (refactor step 3, design)
 
-Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13.** Written 2026-10-30 on master
+Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14.** Written 2026-10-30 on master
 58de5489 (branch `domain-design`); revised after the user's reviews of §3: domains above features, measured;
 `personal` with its own interface; `library`, `research`, `catalogue`, `media` named; acquisition and OCR
 dissolved (2026-10-30); automation as a generic workflow engine fed by the domains, data management and file
@@ -1586,3 +1586,136 @@ ignored). The browser suite (Chromium) against the traced JVM server on an empty
 `#7381` goal stage colours is the known one (no goals), the icon menus and the map-start settings test passed when
 run alone, and `marks.test.mjs` passed whole (13 of 13) when run again.
 
+
+## 14. Slice 3 as built (plugins I: fetchers and event catalogues, 2026-10-31)
+
+Branch `refactor-s3` from master 6c3293c8. Five commits: the oracle first, then the shared library with the SPI
+additions, the fetchers, the event catalogues, and the native metadata with this record. `ContractSnapshotSuite`
+(`plugins.json` included: the same ids, versions, provides, states, settings and order, and the same default order
+of the fetch chain) and `CliHelpSnapshotSuite` held byte for byte after every commit; no snapshot was rewritten.
+
+**The oracle.** Two suites written on the unchanged code before anything moved, their transcripts committed with
+them, and compared byte for byte after each later commit (`HISTMERSION_UPDATE_TRAFFIC=1` rewrites them; it was never
+set after the first commit):
+
+| suite | what it runs (no socket: every request answered by a recording transport) | transcript |
+|---|---|---|
+| `FetcherTrafficSuite` | the stock fetch chain built from a config text (`Plugins.load` over a recording `HttpTransport`) over a fixed list of works — by DOI, arXiv id, PMCID and archive.org identifier, keyed and unkeyed CORE, a lending-only item, a CORE slow-down — each request with every header, in order, then the chain's answers | `traffic/fetchers.txt` |
+| `EventTrafficSuite` | GVP (dry run, then stored), NOAA (two pages), Wikidata (with the label lookup), each again, `--refresh`, an alias with `--limit`; the stored `events`, `event_catalogue`, `event_import_parts` and `event_datings` rows; then `events rederive` (dry, whole, one catalogue) over rows made stale (a record as V085 stored it, spans that no longer match their records) with a transport that refuses every request; the stored rows again | `traffic/events.txt` |
+
+The one edit to a transcript after the first commit is a column taken out: the `origin` of a stored row is the
+database's instance id, which differs between two test databases (the suites compare rows without their clock and
+id columns already). The same requests in the same order with the same headers, and the same stored rows and
+rederive reports, came out after each of the three moving commits.
+
+**`upstreams`** (`modules/upstreams`, depends on `plugin-api`, circe and sttp's core; registers nothing). One copy of
+each upstream's client and parser, read by the host and the first-party plugins alike: `AcquireParse` (Unpaywall,
+OpenAlex, CORE, Crossref, DataCite, Europe PMC, PMC's OA service, the landing page's `citation_pdf_url`),
+`OpenAlexCrossref` (discovery, references, follow-ups, update notices), `ArchiveOrg`, `CoreApi` with
+`CoreFailure`, `RepositoryLanding`, `Jats`, `CatalogDating` (the four-point span, the BCE/CE shift, Wikidata
+precision, the clamp, the central year read back) and `WikidataClasses`, over `UpstreamHttp` (the SPI's
+`PluginHttp`). Their records (`WorkRef`, `RefRow`, `FollowupRow`, `UpdateNotice`, `ArchiveItem`, `ArchiveFile`,
+`OaAccess`, `PmcRecord`, `PmcObject`, `EuropePmcHit`) are the library's own; the server maps them to the wire with
+the extensions in `domain/library/acquisition/UpstreamRecords`. `Identifiers` repeats `api`'s DOI and arXiv
+normalisation (`upstreams` cannot see `api`); a suite asserts the two agree over the same inputs.
+
+**The SPI additions**, all additive and defaulted; `Spi.Version` stays 2, and a plugin compiled against master's
+`plugin-api` links and registers unchanged (below).
+
+| | member | default | the host's backing |
+|---|---|---|---|
+| SPI-1 | `PluginHttp.fetch(url, headers): Either[String, PluginHttpResponse]` (status, headers, body) | `get`'s body as status 200 | `PolicyHttp`: one request, never retried, the policy's User-Agent; `get` keeps its retries |
+| SPI-2 | `PluginContext.quota(upstream): UpstreamQuota` (`take`, `observe`, `waitingUntil`) | `UpstreamQuota.Unlimited` | `CoreBudget.quotas`: `core` is the server's one `CoreBudget` (`upstream_quota`), the same instance discovery spends; any other name is unlimited |
+| SPI-3 | `FetchContext.registered(pluginId): Boolean` | `false` | the generation's registered ids (`Generation.registered`), passed to `FetchChain.of` |
+| SPI-7 | `EventCatalogue.reread(stored: CatalogueEvent): Option[CatalogueEvent]` | `None` | `events rederive` re-reads each stored record through its catalogue (`PluginEvents.reread`), then dates it as the import does |
+
+`SpiAdditionsSuite` (plugin-api) checks each default; `SpiBackingSuite` (plugin-host) the host's backing;
+`CoreQuotaLendSuite` and `CoreBudgetSuite` (server) that a plugin's CORE call and the new-source search spend one
+budget — a plugin's `take` lowers what discovery has left, a 429 a plugin observed makes discovery wait, and the
+reverse.
+
+**`plugins/fetchers`** (`archive-org`, `oa-unpaywall`, `oa-core`, `oa-openalex`, `oa-landing`, `pmc`, `arxiv`) and
+**`plugins/events`** (`events-gvp`, `events-noaa`, `events-wikidata`): `projectMatrix` rows over `upstreams`, the
+testkit for their tests, each registered in its `META-INF/services/com.histmersion.plugin.Plugin` with its defaults
+in `META-INF/histmersion/plugins/<id>.conf` (moved from the server). The server depends on both at run time only
+(`runtime->compile`), so no server source names a plugin class; `server/run`, `writeClasspath`, `relinkKit` and
+`nativeImage` read `Runtime / fullClasspath`. Each is switched off by `histmersion.plugins.<id>.enabled = false` as
+before. `scripts/dev/affected.py` knows the three new modules, so `just test-quick` tests them with their
+dependencies. Their suites run them through the plugin testkit as an author runs a plugin (`FetcherPluginsKitSuite`,
+`CataloguePluginsKitSuite`), and the parsers' cases moved from core and server with them (`CataloguesSuite`).
+
+**First-party = a reserved name loaded from the image's own class path.** `ReservedNames.firstPartyPlugins` (29
+ids) keeps a third party off a built-in name; `Plugins.firstParty` adds that the plugin did not come from a set a
+relink linked in. Only a first-party plugin is supplied host settings, and only a first-party one may register a
+reserved catalogue or collection name.
+
+**`FirstPartySettings`** (plugin-host) is the one table of which host paths each first-party plugin reads: the
+fetchers `histmersion.acquire` and `histmersion.media.max-retry-after-seconds`, `oa-landing` also
+`histmersion.plugins.oa-unpaywall.contact-email`, each catalogue its `histmersion.events.<catalogue>` (GVP also
+`histmersion.events.min-year`), the media collections and AI providers none (they read theirs at each use). The
+paths are supplied under the plugin's own block, below the user's block and the environment, above the defaults;
+the report shows the plugin's own block alone, and a host key written into a plugin's block is an unknown setting.
+The same table is the reload rule (`Plugins.carried`): a first-party plugin is rebuilt when its block or one of its
+paths changes, any other plugin when its block or a key of the shared client does. It replaces `Plugins.carried`'s
+`independent` list and `LandingGroup`. Users keep writing `histmersion.acquire.*`, `HISTMERSION_ACQUIRE_…` and
+`histmersion.events.<catalogue>.*`.
+
+**Gone:** `Builtin`, `BuiltinWith`, `BuiltinConfig`, `BuiltinFetchers`, `Plugins.builtins`, `CoreFetcher`,
+`Fetching`, `OaIndex` (and its registration state), `HostEventCatalogue` and the marker design (E4), core's
+`CatalogDating` and the catalogue parsers of `EventProviders` (the host's merge, threshold and scope rules stay).
+The host's import loop (`EventCatalogHandlers.run`) runs a first-party catalogue exactly as a third party's; a
+catalogue that says `everyPartEachImport` (NOAA) has every part read at every import, as NOAA's pages were.
+`BuiltinCatalogues` is now the table of the three first-party ids, their aliases and their reserved names.
+
+**Architecture.** Deletions only. 16 rows left `exceptions.tsv`, all `direction`: `JatsConverter → Jats`,
+`OpenAlexCrossref → UpdateNotice`, `Version` in `Builtin`, `BuiltinFetchers` and `BuiltinWith`, `Builtin` in
+`BuiltinAi`, `BuiltinCatalogues` and `BuiltinMedia`, `BuiltinMedia → BuiltinWith`, `LegacyPlugins →
+BuiltinFetchers` and `→ OaIndex`, `Plugins →` `BuiltinCatalogues`, `ArchiveOrg`, `BuiltinFetchers`, `Http` and
+`OpenAlexCrossref`. 20 rows left `places.tsv`: core's `CatalogDating`, `Jats` and `RepositoryLanding`; the server's
+`ArchiveOrg`, `CoreApi`, `CoreFailure`, `OpenAlexCrossref`, `HostEventCatalogue` and the twelve files of
+`server/acquire/fetchers`. The new server files are in their feature's package (`domain/library/acquisition`).
+
+**Deviations from §8.**
+
+- `CoreQuota` (the budget's arithmetic) stays in core: the plugin reaches the budget through SPI-2, and moving it
+  would make `db` depend on `upstreams` and add a second parser of `Retry-After`.
+- `reread` takes the stored event, not its raw record alone: NOAA needs the stored id for its dataset, Wikidata the
+  stored kind, GVP's records stored before V088 have no raw record and are read back from their span and
+  description.
+- Two members beyond the four planned, both defaulted: `EventCatalogue.everyPartEachImport` (NOAA's pages were read
+  at every import; without it a second import would have skipped them) and `UpstreamQuota.waitingUntil` (CORE's
+  "not asked until …" answer names the time).
+- The Wikidata steps that are host rules, not reading (the label and alias lookup, the more-specific-kind merge) stay
+  host-side, keyed by the catalogue's name, so the requests stay identical.
+- A first-party catalogue switched off is not re-read by `events rederive` and its floor is not applied: the
+  re-derivation asks the catalogue, and a catalogue not registered states nothing (its rows are only held inside
+  the present, as a third party's are).
+- The media collections and AI providers stay host code wrapped by `util/plugins/HostProvided` until slice 4; only
+  catalogue and collection names are checked against `firstParty`.
+- A renamed parameter: the host's anonymous `PluginHttp` in `PluginEvents` and `PluginMedia` names its client
+  `polite`, because a parameter named `fetch` is ambiguous with SPI-1's member there. A third-party plugin that
+  writes an anonymous `PluginHttp` with a local named `fetch` meets the same compile error on recompilation; a
+  compiled jar is not affected.
+- `Plugins.offline` (a test's or a database-less tool's generation) now lists the secret vaults too, disabled — it
+  is built from what ServiceLoader finds, as the server's is.
+
+**A plugin built against master's SPI.** The jars of the `hello` (a source fetcher) and `hello-ai` (an AI
+provider) test plugins, built from master before this branch, were put on the class path of this branch's server
+(`server/writeClasspath`, then `java -cp … --self-check` with both enabled in a scratch config): both registered —
+`hello 0.1.0 — registered (source-fetcher:hello)`, its settings and greeting as configured, `hello-ai 0.1.0 —
+registered (ai-provider:hello-ai)` — beside the 29 first-party plugins, exit 0. The testkit's own suites (which
+load the fixtures as an author would) pass unchanged.
+
+**Native image.** The plugin modules carry their own metadata, as a third-party plugin jar does:
+`META-INF/native-image/com.histmersion/plugins-fetchers/`, `…/plugins-events/` and `…/upstreams/`
+`reachability-metadata.json`, each with its classes' lazy-val fields, the fetchers' and catalogues' defaults
+resources and the services file. The server's file lost the ten defaults resources (now in the plugin modules) and
+the six entries of the deleted `server/acquire/fetchers` classes. A tracing-agent run recorded the new entries
+(`sbt server/run --self-check`, then `sbt server/run` from this branch on an empty `*_test` database, scratch
+settings, data and cache, port 18080: health, about, config, the catalogue list, the events list, the jobs, an
+`events rederive`, and an `events import gvp --dry-run`, the gazetteer's first-run import alongside); the agent's
+additions under `com.histmersion.plugins.*` and `com.histmersion.upstreams.*` were then moved into those modules'
+files. Two holders whose lazy values only a fetch reads, `OaRecords` (`openalex`, `datacite`, `handle`) and
+`Pmc$PmcLookup` (`hit`, `record`), were carried over by hand from the deleted classes' entries, their field names
+read with `javap`. The server's other new entries are `HostProvided$NoSettings$`'s reader and two givens of the
+import's merge (`CatalogMerge$Fit$`, the `CatalogRecord` schema). The CLI's metadata is unchanged.

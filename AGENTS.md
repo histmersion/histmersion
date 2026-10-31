@@ -26,15 +26,23 @@ files ── the local files client and server exchange or keep (package `files`
 core  ── the DOMAIN (package `domain`): the logic server and db run on. JVM only.
          NO database code, NO side effects.   depends on values, api, files — never config (its tests only)
 db    ── the STORE: Magnum repos, Flyway migrations, the seed importer.      depends on config, core
-server─ MCP + REST + web UI; the ONLY database client.  depends on core, db, plugin-api, plugin-host (+ plugin-vaults)
+server─ MCP + REST + web UI; the ONLY database client.  depends on core, db, plugin-api, plugin-host (+ plugin-vaults;
+         plugins/fetchers and plugins/events at run time only)
          (and through them on values, api and config)
 cli   ── a PURE HTTP CLIENT of the server.         depends on api, config and files — never core, never db
 web   ── the Scala.js page (Laminar) over the sttp client derived from api's endpoints.   depends on api ONLY
 plugin-api ── the plugin SPI (Plugin, PluginContext, Secret, SecretVault) and its own newtypes (Year, Doi, …):
               sconfig + kindlings + iron ONLY
 plugin-host ── the host side of the SPI without server or DB: discovery, config, registration, the
-              acquisition client and its parsers of the upstreams' JSON, the chain, how plugin
-              media/catalogues/AI are read.                       core, config + plugin-api
+              acquisition client, the chain, the first-party settings table, how plugin
+              media/catalogues/AI are read.            core, config, upstreams + plugin-api
+upstreams ── the clients and parsers of the upstream services the host and first-party plugins share
+              (OpenAlex/Crossref, archive.org, CORE, PMC, Europe PMC, landing pages, JATS, catalogue
+              datings); registers nothing.            depends on plugin-api ONLY (+ circe, sttp core)
+plugins/fetchers ─ the first-party acquisition plugins (archive-org, oa-unpaywall, oa-core, oa-openalex,
+              oa-landing, pmc, arxiv).                           upstreams (+ plugin-testkit for tests)
+plugins/events ─ the first-party event catalogues (events-gvp, events-noaa, events-wikidata).
+                                                                 upstreams (+ plugin-testkit for tests)
 plugin-testkit ─ a plugin's TEST dependency: load and run it as the server does (plugin-host), with
               live/record/replay HTTP; shipped in the install's maven/, its API a contract.  plugin-host
 plugin-vaults ─ the built-in secret-vault plugins.                          depends on plugin-api ONLY
@@ -51,15 +59,17 @@ name (`values`, `api`, `core`), the Scala.js row adds `JS` (`valuesJS`, `apiJS`;
 sources are in `src/main/scala` (and `src/test/scala`); a platform's own in `src/main/scalajvm` or
 `src/main/scalajs`. A plain project names a row as `api.jvm(scala3)` or `api.js(scala3)`.
 
-A plugin — first-party or not — compiles against `plugin-api` alone and never sees `values`, `api`,
-`config`, `core`, `db` or `server`; the server discovers it through ServiceLoader (`PluginHost`, in `plugin-host`, which the testkit runs too). See
-`docs/research-plugins.md` (§15: as built). The one exception is the built-in acquisition plugins
-(`server/acquire/fetchers`: `archive-org`, `oa-unpaywall`, `oa-core`, `oa-openalex`, `oa-landing`, `pmc`,
-`arxiv`; the former `oa-index`'s settings are mapped by `server/plugins/LegacyPlugins`): they are host code
-over the `acquire.*` settings, supplied to `PluginHost` by `server/plugins/Plugins.builtins` instead of
-ServiceLoader, and registered, ordered and reported like any other plugin (§16). The media collections,
-event catalogues and AI providers (`server/agents/AiPlugins`: `ai-anthropic` … `ai-opencode`, over
-`agents.providers.*`, §23) are built in the same way.
+A plugin — first-party or not — compiles against `plugin-api` alone (a first-party one also against
+`upstreams`) and never sees `values`, `api`, `config`, `core`, `db` or `server`; the server discovers it
+through ServiceLoader (`PluginHost`, in `plugin-host`, which the testkit runs too). See
+`docs/research-plugins.md` (§15: as built). The acquisition plugins (`plugins/fetchers`) and the event
+catalogues (`plugins/events`) are first-party plugins discovered from the image's own class path; their
+names are reserved (`ReservedNames.firstPartyPlugins`), and the host supplies them the paths of its own
+settings that `pluginhost/FirstPartySettings` lists (`histmersion.acquire.*`, `histmersion.events.<catalogue>.*`
+— the user keeps writing those), the same table deciding which plugin a settings change rebuilds; the former
+`oa-index`'s settings are mapped by `server/plugins/LegacyPlugins`. The media collections and AI providers
+(`server/agents/AiPlugins`: `ai-anthropic` … `ai-opencode`, over `agents.providers.*`, §23) are still host code
+wrapped by `server/util/plugins/HostProvided`, until they move too (`docs/research-domain-model.md` §9.2).
 
 A user's own plugins are linked in by `bin/histmersion-relink` from the bundle's relink kit
 (`server/relinkKit`: the Sloth-patched class path and `server/nativeImageOptions`, the ONE list of native-image
