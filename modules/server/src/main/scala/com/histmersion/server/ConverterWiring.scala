@@ -30,8 +30,8 @@ object ConverterWiring:
     )
 
   /** HTTP/1.1 explicitly: java.net.http defaults to HTTP/2 and offers an h2c upgrade (`Connection: Upgrade,
-    * HTTP2-Settings` + `Upgrade: h2c`), on which uvicorn DISCARDS the request body — the sidecar then answers 422 "field
-    * required: file" for a perfectly well-formed upload.
+    * HTTP2-Settings` + `Upgrade: h2c`), on which uvicorn DISCARDS the request body — the sidecar then answers 422
+    * "field required: file" for a perfectly well-formed upload.
     */
   def http(): HttpClient =
     HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).connectTimeout(Duration.ofSeconds(10)).build()
