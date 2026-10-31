@@ -1,6 +1,6 @@
 # Domain model, package by feature, first-party plugins out of the server (refactor step 3, design)
 
-Status: **proposal, waiting for the user's approval**. Nothing here is built. Written 2026-10-30 on master
+Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12.** Written 2026-10-30 on master
 58de5489 (branch `domain-design`); revised after the user's reviews of §3: domains above features, measured;
 `personal` with its own interface; `library`, `research`, `catalogue`, `media` named; acquisition and OCR
 dissolved (2026-10-30); automation as a generic workflow engine fed by the domains, data management and file
@@ -1332,3 +1332,139 @@ Q16, Q18, Q22 and Q24. Decided or superseded: Q17, Q20, Q25, Q27.
 | Q40 | CLI plugins for a server on another machine: the native CLI hands plugin commands to a JVM-mode CLI, in a later slice 13? | Yes: a relink of the CLI costs minutes and gigabytes per plugin change; a JVM-only CLI slows every command; the hand-off costs about a second only for plugin commands |
 | Q41 | Calibre write-back (adding missing sources, enriching Calibre's records): off unless configured? | Yes (`write-back = false` by default); writes are refused while the Calibre GUI holds the library, with today's message |
 | Q42 | Which further integrations become plugins in this refactor (§8.5)? | Calibre and archive.org's collection now (slice 4); discovery indexes, Retraction Watch, citation export, the mirror format, base-map sources, backup targets and converter backends later, each when it gets a second implementation or a user asks |
+
+## 12. Slice 1 as built (groundwork, 2026-10-31)
+
+Branch `refactor-s1` from master aa819718. One commit per item, the snapshot baseline first. No endpoint, tool,
+command, setting or table changed: the snapshots taken on master before anything else held byte for byte after
+every commit.
+
+**Contract snapshots.** `ContractSnapshotSuite` (server, no database) and `CliHelpSnapshotSuite` (cli) write
+`src/test/resources/contract/` and compare byte for byte; `HISTMERSION_UPDATE_CONTRACT=1` rewrites them.
+
+| snapshot | how it is made | size |
+|---|---|---:|
+| `openapi.json` | `OpenAPIDocsInterpreter` over `Api.all` (tapir-openapi-docs and apispec's openapi-circe, test scope): 220 paths | 852 kB |
+| `mcp-tools.json` | `tools/list` of `McpTools` on a Netty listener on port 0: 79 tools | 187 kB |
+| `toolbox.json` | each of the 10 agent tools as `/mcp/agent/<role>` lists it, and each of the 15 roles' tools and answer schema | 53 kB |
+| `plugins.json` | the report of `Plugins.load` over `reference.conf` and an empty environment: 29 plugins | 10 kB |
+| `settings.json` | the settings page of `SettingsService.InMemory` with no file and an empty environment | 342 kB |
+| `cli-help.txt` | `--help` of every command, walked from the top: 240 commands | 175 kB |
+
+The handlers run over a data source that refuses every connection, so the `query` tool's description is its
+schema-less fallback (`OpsHandlers.queryToolDescription`) — the one MCP text the snapshot does not pin; step 2's
+comparison read it from a test database. The environment is empty in all of them, so no setting of the machine
+running the suite reaches a snapshot.
+
+**`ArchitectureSuite`** (server, no database, about a second) reads the 1 242 main sources of `api`, `config`,
+`files`, `core`, `db` and `server`. A file's place is its row in `architecture/places.tsv` while it is not in its
+feature package — 1 228 rows: 1 224 from `files.md` (the 15 files of the personal pilot and three kernel files are
+placed by their packages) and the 4 files slice 1 added in packages not by feature yet —
+then its package. Three more tests keep the tables honest: every file has a place, no row is stale, and the
+exception list is exact both ways (a new violation fails; so does a row nothing violates any more).
+
+| rule | rows in `exceptions.tsv` | what they are |
+|---|---:|---|
+| direction | 455 | 281 between domains and the six measured supporting areas (the design measured 264 with a slightly different name rule), 78 into the composition root (`Handlers` 29, `Deps` 12, `Version` 8, …), 98 from `util.common` (`api/Markdown` 61, `Wording` 13, `Write` 11, …), `util.ocr` and `util.database` |
+| file system | 132 rows, 421 uses | 168 uses in domains (automation 81, library 51, catalogue 30, media 6), 253 in supporting areas (basemap 116, data 86, settings 30, ocr 9, plugins 7, files 5) |
+| process | 7 | `ProcessBuilder` outside `util.process` (agents' CLI runtimes, backup, the supervisor) |
+| repository | 155 | a `…Repo` named outside its feature (`Handlers`, the engine, bundle and merge) |
+
+Differences from §3.3, and why:
+
+- `api` is scanned too: the measurement of §3.2 included it, and `api.<domain>` packages are where its features
+  go.
+- References into the composition root (`server`, `server.instance`, the `Handlers` split) count as violations:
+  no domain may name them, and the measurement left them out.
+- The file-system rule binds the supporting areas as well as the domains (Q37, accepted), so their 253 uses are
+  listed; the stand-alone tools exempted are `pluginTool`'s file, `generatePlugin`'s file and `ApiIndex`, and
+  the config root (it builds the locations) with the composition root.
+- A name defined in two places, and the shared vocabulary of §3.2 (`Period`, `Filter`, `Paging`, `Label`,
+  `Wikidata`, `ExternalId`, `Source`, `Target`), is not counted, as in the measurement.
+
+**Generic newtype instances.** One given per library, from Iron's `RefinedType.Mirror`:
+
+```scala
+given encoder: [T] => (m: RefinedType.Mirror[T]) => (base: Encoder[m.BaseType]) => Encoder[T] =
+  base.asInstanceOf[Encoder[T]]
+given decoder: [T] => (m: RefinedType.Mirror[T]) => (base: Decoder[m.BaseType]) => Decoder[T] =
+  base.emap(m.ops.either).asInstanceOf[Decoder[T]]
+```
+
+The form differs from §4.4 in one point: the constraint is checked with the companion's own runtime check
+(`m.ops.either`, the `RuntimeConstraint` Iron keeps on every `RefinedType`), not by summoning an inline
+`Constraint[m.BaseType, m.ConstraintType]`. That needs no inline given, compiles in this form, and checks exactly
+what `X.either` checks; the §4.4 fallback (one line per newtype) was not needed. The instances:
+`util.json.NewtypeCodecs` (circe and tapir, api, JVM and Scala.js), `util.database.NewtypeColumns` (Magnum; a
+refused stored value fails with `column <label>: '<value>' is not valid: …`, NULL passes to `Option`'s codec),
+`config.NewtypeReaders` (over config's lenient base readers) and `cli.NewtypeArguments` (decline). Nothing is
+converted to them yet: the existing hand instances (`ValueCodecs`, the config companions) stay until their
+features move; `NewtypeCodecsSuite` shows the generic ones give `Year`, `Doi`, `WikidataId`, `Latitude` and
+`Longitude` the same JSON and schema as the hand ones.
+
+**Identifier newtypes** in `values`: `Slug`, `GoalSlug`, `EventId` (`[a-z0-9][a-z0-9_.-]{0,120}`), `PlaceId`
+(`[a-z][a-z0-9]*_.+`), `JobId` and `RunId` (lower-case UUID text), `SourceUid`, `ArticleUid`, `EventUid`,
+`GoalUid`, `AssetUid` (UUID), `ArxivId`, `Pmid`, `Pmcid`, `Isbn`, `ArchiveId` (`Pure`), `PluginId` (the host's
+`[a-z0-9][a-z0-9-]*`; the CLI's stricter template id stays), and `UserId`, moved from `domain.personal`. Each
+has a round trip (`decode(encode(x)) == x`, its JSON equal to the base value's, its schema the base schema with
+no name). Deviation: **`RunId` is in `values`**, not `domain.automation` as §4.2 has it, because the shared
+kernel's `Caller.Automation(run: RunId)` names it and the kernel may not depend on a domain. The ids §4.2 places
+in domain packages (`ManagerId`, `StepId`, `ApprovalId`, `QueueItemId`, `AssetId`, `ModelRef`, …) come with
+their slices.
+
+**`Transactor`, the system context, `Caller`.** `util.database.Transactor` (`read`, `transact` over Magnum's
+`connect`/`transact`); `Deps.transactor` and `Deps.queryTransactor` over the application and read-only pools.
+The server's entry point builds `SystemContext(clock, environment, userPaths)`: `config.Environment.of` the
+environment the settings were loaded with (no second read), `UserPaths(environment, os.name)` (now also a value;
+its pure functions stay on the companion for the CLI and config loading), `Clock.systemUTC()`; `Deps` carries
+them. `Supervisor.start`/`reloadSource` take the paths instead of reading `System.getenv` and `os.name`; the
+entry point's own reads (`HISTMERSION_RUNTIME`, `XPC_SERVICE_NAME`, `INVOCATION_ID`) go through the
+`Environment`. Test servers get `SystemContext.isolated`. `domain.Caller` is `Person(user, role)` or
+`Automation(run)`, `Caller.Local` the local user as `Admin`. Deviation: the role enum is **`Caller.Role`**, not a
+top-level `Role`, because `api.Agents.Role` (the agent roles) is imported by wildcard beside `domain.*`.
+
+**Entry points.**
+
+| was | now |
+|---|---|
+| `com.histmersion.server.Main` | `com.histmersion.server.histmersionServer` (`Main.scala`); the wiring in `object Composition` (tests: `Composition.server`) |
+| `com.histmersion.cli.Main` | `com.histmersion.cli.histmersionCli` (`Main.scala`); the command tree in `object Cli` |
+| `com.histmersion.web.Main` | `com.histmersion.web.histmersionWeb`; `Compile / mainClass` set explicitly |
+| `com.histmersion.server.plugins.PluginTool` | `…plugins.pluginTool`; its functions in `object RelinkPlugins` |
+| `com.histmersion.server.agents.GeneratePlugin` | `…agents.generatePlugin(root)`; `object PluginTree` |
+| `com.histmersion.pluginresolver.PluginResolver` | `…pluginresolver.pluginResolver`; `object DependencyResolver` |
+| test tools `BasemapLabelsTool`, `BasemapExtractTool`, `PromptBudget` | `basemapLabels`, `basemapExtract`, `promptBudgetReport` |
+
+Three objects were renamed because their `@main def` would differ from them only in case, and on macOS's
+case-insensitive file system `pluginTool.class` and `PluginTool.class` overwrite each other (AGENTS.md rule 14
+now says so). The test tools' mains got names that differ from their objects for the same reason. References
+updated: `build.sbt` (three `mainClass` settings, the relink kit's `main-class`), `RelinkPlugins.kitManifest`'s
+default, `scripts/bundle/{relink,server,server-jvm,kit-common}.sh` and the fakes of
+`scripts/bundle/tests/{relink,kit-scripts}-test.sh`, `scripts/docs/screenshots.sh`,
+`scripts/agents/claude-overhead.sh`, `tools/gen-cli-docs.sh`, `justfile` (`just plugin`), the suites
+(`PluginToolSuite`, `PluginKitSuite`, `PluginResolverSuite`, `AgentGeneratorSuite`, `MainInitSuite`, 45 server
+suites that build a test server), `docs/research-plugins.md`, the contributing guide, the basemap fixtures' README. The tools' usage
+texts (`usage: PluginTool …`, `PluginResolver: …`) are unchanged. A relink uses the `main-class` file of its own
+kit, so a kit built before the rename keeps working with its own scripts.
+
+**AGENTS.md**: rule 14 (§5.4, with the case rule), rule 10's table of places and what each may depend on, with
+how `ArchitectureSuite` keeps it, the `Transactor`, `SystemContext` and `Caller` in rules 11–13, and the steps
+of adding an operation to a feature in its own package.
+
+**Native image.** A tracing-agent run of the JVM server and CLI on an empty test database (scratch config, data and
+cache, port 18080; the REST reads, the page and its assets through the browser suite, MCP `tools/list`, the CLI's
+`health`, `search`, `about`, `queue`, `article list`, `--help`, `plugin list`) left the server's metadata unchanged
+and added the lazy schema and codec fields `article list` decodes to the CLI's (a gap older than this slice). No main
+class or composition object was ever named in either file, and the generic instances are casts plus the companion's
+own check, so the rename needs no metadata. The bundle is not built in this slice.
+
+**Contract snapshots and the process environment.** sconfig resolves `reference.conf`'s `${?VAR}` against the
+process environment whatever environment a load is given, so the first baseline held the forked test group's
+`HISTMERSION_SHUTDOWN_GRACE=0` as that setting's effective value. The suite now shows the default for a field whose
+variable is set where it runs; that one line was the only change to any snapshot.
+
+**Tests.** `just test-quick` (every module: `project/Dependencies.scala` changed) on a throwaway database: 4 638 tests, none
+failed (2 skipped, 1 ignored). `relink-test.sh` 56 and `kit-scripts-test.sh` 65 passed. The
+browser suite (Chromium) against a JVM server from this branch on an empty `*_test` database: 127 of 129 passed;
+the two failures are the known ones (`#7381` goal stage colours needs goals, the map-start settings test passed when
+run again).
