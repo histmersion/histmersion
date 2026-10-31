@@ -34,9 +34,9 @@ import javax.sql.DataSource
   *   2. stream the blobs, each checked against its sha256 as it is consumed, into the kind that owns its use; then what
   *      hangs off them, and the derived state.
   *
-  * Rows written from the bundle keep its timestamps: the change-clock triggers stand aside while `histmersion.importing`
-  * is on. The derived steps run with it off, so a LOCAL row the import changes moves and is exported next time like any
-  * other change. Then the ledger and the `merges` row ([[MergeRepo.record]]).
+  * Rows written from the bundle keep its timestamps: the change-clock triggers stand aside while
+  * `histmersion.importing` is on. The derived steps run with it off, so a LOCAL row the import changes moves and is
+  * exported next time like any other change. Then the ledger and the `merges` row ([[MergeRepo.record]]).
   */
 object BundleImporter:
 
@@ -165,7 +165,8 @@ object BundleImporter:
     def writes(uid: UUID): Boolean = decisionOf.get(uid).exists(d => d == Decision.Insert || d == Decision.FastForward)
     val needed = neededBlobs(es, writes)
     MergeRepo.importing(true)
-    val w = BundleImport.Writer(es, decided, decisionOf, writes, input.local, planned.skipAliases, planned.apply, opts, kinds)
+    val w =
+      BundleImport.Writer(es, decided, decisionOf, writes, input.local, planned.skipAliases, planned.apply, opts, kinds)
     kinds.steps(ImportStage.Rows).foreach(_.write(w))
     // ── pass 2: the blobs ──
     if needed.nonEmpty then

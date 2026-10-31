@@ -3,8 +3,8 @@ package com.histmersion.util.storage
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Files
 
-/** The stored originals over a store, on disk and in memory alike: found by digest, stored only when the content is
-  * its name, under a safe extension, never half written.
+/** The stored originals over a store, on disk and in memory alike: found by digest, stored only when the content is its
+  * name, under a safe extension, never half written.
   */
 class StoreContentsSuite extends munit.FunSuite:
 

@@ -9,8 +9,8 @@ trait ContentStore:
   /** The file with this digest, and its extension. */
   def find(sha256: String): Option[(ByteSource, String)]
 
-  /** Keep `in` as `<sha256>.<ext>` unless a file with the digest is there already; `Left` with why when it could not
-    * be — including content that does not hash to `sha256`.
+  /** Keep `in` as `<sha256>.<ext>` unless a file with the digest is there already; `Left` with why when it could not be
+    * — including content that does not hash to `sha256`.
     */
   def store(sha256: String, ext: String, in: InputStream): Either[String, Unit]
 
