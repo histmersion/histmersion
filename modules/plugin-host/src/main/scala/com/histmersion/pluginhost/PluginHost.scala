@@ -734,13 +734,14 @@ object PluginHost:
         val ai = Staged[AiProvider](Registries.AiProvider, regs.aiProviders, validAiProvider(firstParty))
         val gazetteers =
           Staged[GazetteerSource](Registries.GazetteerSource, regs.gazetteerSources, validGazetteer(firstParty))
-                val collections =
+        val collections =
           Staged[SourceCollection](
             Registries.SourceCollection,
             regs.sourceCollections,
             validSourceCollection(firstParty)
           )
-        val ctx = RegistrationContext(id, services, resolved, staged, fetchers, media, events, ai, gazetteers, collections)
+        val ctx =
+          RegistrationContext(id, services, resolved, staged, fetchers, media, events, ai, gazetteers, collections)
         val outcome =
           try pr.call(ctx)
           catch

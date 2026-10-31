@@ -3,10 +3,10 @@ package com.histmersion.plugin
 import scala.compiletime.deferred
 
 /** What the host lends a plugin, and where it plugs in. Each registry is one extension point; a new extension point is
-  * a new registry here, not a new service type, so existing plugin jars keep loading. (Six: [[secretVaults]],
-  * [[sourceFetchers]], [[mediaCollections]], [[eventCatalogues]], [[aiProviders]] and [[gazetteerSources]]. Each one
-  * added after the first has a default that refuses every addition, so a context written for an earlier extension point
-  * — a test's — still compiles, and adding them changed no `Spi.Version`.)
+  * a new registry here, not a new service type, so existing plugin jars keep loading. (Seven: [[secretVaults]],
+  * [[sourceFetchers]], [[mediaCollections]], [[eventCatalogues]], [[aiProviders]], [[gazetteerSources]] and
+  * [[sourceCollections]]. Each one added after the first has a default that refuses every addition, so a context
+  * written for an earlier extension point — a test's — still compiles, and adding them changed no `Spi.Version`.)
   */
 trait PluginContext:
   /** The host's outbound HTTP — the one policy (User-Agent without personal data, Retry-After, bot challenges stop the
