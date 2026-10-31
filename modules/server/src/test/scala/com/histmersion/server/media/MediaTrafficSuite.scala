@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.server.ServerPlugins
+
 import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.{AppConfig, LoadedConfig}
@@ -7,7 +9,6 @@ import com.histmersion.db.{PlaceRepo, TestDb}
 import com.histmersion.util.jobs.JobRepo
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport}
 import com.histmersion.server.{ConverterClient, Deps}
-import com.histmersion.server.plugins.Plugins
 import com.histmersion.values.PlaceKind
 import io.circe.syntax.*
 import org.ekrich.config.ConfigFactory
@@ -240,7 +241,7 @@ class MediaTrafficSuite extends com.histmersion.db.DbSuite:
     val sb = StringBuilder()
     val loaded = load("")
     val wire = Wire()
-    val plugins = Plugins.load(loaded, transport = _ => wire)
+    val plugins = ServerPlugins.load(loaded, transport = _ => wire)
     val handlers = MediaHandlers(Deps(loaded.config, ds, ds, plugins = plugins), wire, Thumbs())
 
     def report(r: Either[ApiError, MediaImportReport]): String =
@@ -315,7 +316,7 @@ class MediaTrafficSuite extends com.histmersion.db.DbSuite:
         |""".stripMargin
     )
     val offHandlers =
-      MediaHandlers(Deps(off.config, ds, ds, plugins = Plugins.load(off, transport = _ => wire)), wire, Thumbs())
+      MediaHandlers(Deps(off.config, ds, ds, plugins = ServerPlugins.load(off, transport = _ => wire)), wire, Thumbs())
     List("cleveland", "met", "europeana", "smithsonian").foreach { p =>
       sb ++= s"## $p, switched off\n" + report(offHandlers.importMedia(MediaImportRequest(p))) + wire.take()
     }

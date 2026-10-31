@@ -1,10 +1,9 @@
-package com.histmersion.domain.settings
+package com.histmersion.util.settings
 
 import com.histmersion.config.{AppConfig, LoadedConfig}
 import com.histmersion.config.edit.*
 import org.ekrich.config.{Config, ConfigFactory, ConfigParseOptions, ConfigSyntax}
 
-import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 
 /** The settings file — read and changed. Settings live there and nowhere else (never in the database), so a person can
@@ -28,8 +27,11 @@ trait SettingsService:
 
 object SettingsService:
 
-  /** The settings file of `loaded` — the one the server read — with the environment it read it with. */
-  def apply(loaded: () => LoadedConfig): SettingsService = Implementation(loaded, ConfigSchema.reference)
+  /** The settings file of `loaded` — the one the server read, `file` (`None`: it read none) — with the environment it
+    * read it with.
+    */
+  def apply(loaded: () => LoadedConfig, file: () => Option[SettingsFile]): SettingsService =
+    Implementation(loaded, file, ConfigSchema.reference)
 
   private def noFile = SettingError.NoFile(
     "This server was started without a settings file, so Settings cannot change anything. " +
@@ -44,7 +46,7 @@ object SettingsService:
       env: Config,
       prefix: Option[SettingKey],
       completed: Boolean,
-      file: Option[Path],
+      file: Option[String],
       extra: List[SettingKey]
   ): SettingsSnapshot =
     val merged =
@@ -59,10 +61,14 @@ object SettingsService:
       setupDue = !completed && !ConfigSchema.setsAnything(state.parsed)
     )
 
-  final private class Implementation(loaded: () => LoadedConfig, val schema: ConfigSchema) extends SettingsService:
+  final private class Implementation(
+      loaded: () => LoadedConfig,
+      file: () => Option[SettingsFile],
+      val schema: ConfigSchema
+  ) extends SettingsService:
     private def writer: Option[ConfigFileWriter] =
       val l = loaded()
-      l.file.path.map(p => ConfigFileWriter(p, l.env, schema))
+      file().map(ConfigFileWriter(_, l.env, schema))
 
     def read(prefix: Option[SettingKey], extra: List[SettingKey]): Either[SettingError, SettingsSnapshot] =
       val l = loaded()
@@ -70,7 +76,7 @@ object SettingsService:
         .toRight(noFile)
         .flatMap(w =>
           w.read().map { state =>
-            val now = AppConfig.loadWithUserFile(l.env, Some(w.path))
+            val now = AppConfig.loadWithUserFile(l.env, l.file.path)
             snapshot(
               schema,
               state,
@@ -78,7 +84,7 @@ object SettingsService:
               l.env,
               prefix,
               now.fold(_ => l.config.setup.completed, _.config.setup.completed),
-              Some(w.path),
+              Some(w.file.shown),
               extra
             )
           }
@@ -105,24 +111,24 @@ object SettingsService:
       env: Config = ConfigFactory.empty,
       val schema: ConfigSchema = ConfigSchema.reference
   ) extends SettingsService:
-    val path: Path = Path.of("histmersion.conf")
+    val path: String = SettingsService.InMemory.FileName
 
     def current: Option[String] = text.get
 
     private def state: Either[SettingError, ConfigFileState] =
       text.get match
-        case None    => Right(ConfigFileState(path, None, FileVersion.Missing, ConfigFactory.empty, Some(here)))
+        case None    => Right(ConfigFileState(None, FileVersion.Missing, ConfigFactory.empty, here))
         case Some(t) =>
-          try Right(ConfigFileState(path, Some(t), FileVersion.of(Some(t)), parse(t), Some(here)))
+          try Right(ConfigFileState(Some(t), FileVersion.of(Some(t)), parse(t), here))
           catch case e: org.ekrich.config.ConfigException => Left(SettingError.Unreadable(e.getMessage))
 
     private def parse(t: String): Config =
       ConfigFactory.parseString(
         t,
-        ConfigParseOptions.defaults.setOriginDescription(path.toString).setSyntax(ConfigSyntax.CONF)
+        ConfigParseOptions.defaults.setOriginDescription(path).setSyntax(ConfigSyntax.CONF)
       )
 
-    private def here(o: org.ekrich.config.ConfigOrigin): Boolean = o.description.startsWith(path.toString)
+    private def here(o: org.ekrich.config.ConfigOrigin): Boolean = o.description.startsWith(path)
 
     def read(prefix: Option[SettingKey], extra: List[SettingKey]): Either[SettingError, SettingsSnapshot] =
       state.map { s =>
@@ -155,14 +161,22 @@ object SettingsService:
                 _ <- AppConfig.loadWithUserText(env, edited.text).left.map(SettingError.Invalid(_))
               yield text.set(Some(edited.text))
         yield
-          val out = WriteOutcome.of(path, schema, env, current.version, edited, None, notes)
-          if edited.changed.isEmpty then out
+          if edited.changed.isEmpty then WriteOutcome.of(path, schema, env, current.version, edited, None, notes)
           else
-            out.copy(
-              version = FileVersion.of(Some(edited.text)),
-              created = current.text.isEmpty,
-              backup = current.text.map(_ => path.resolveSibling(s"${path.getFileName}.bak"))
+            WriteOutcome.of(
+              path,
+              schema,
+              env,
+              FileVersion.of(Some(edited.text)),
+              edited,
+              current.text.map(_ => s"$path.bak"),
+              notes,
+              created = current.text.isEmpty
             )
       }
 
     def setupDue: Boolean = read(None).fold(_ => false, _.setupDue)
+
+  object InMemory:
+    /** The name the file held in memory goes by. */
+    val FileName = "histmersion.conf"

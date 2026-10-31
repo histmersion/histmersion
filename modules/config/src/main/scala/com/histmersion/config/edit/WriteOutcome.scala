@@ -2,10 +2,10 @@ package com.histmersion.config.edit
 
 import org.ekrich.config.Config
 
-import java.nio.file.Path
-
 /** What a write did to the config file.
   *
+  * @param file
+  *   where the file is, as messages name it
   * @param changed
   *   the settings it changed
   * @param unchanged
@@ -20,10 +20,10 @@ import java.nio.file.Path
   *   what works but should be known: a `value:` credential, an environment variable that overrides the new value
   */
 final case class WriteOutcome(
-    file: Path,
+    file: String,
     changed: List[SettingKey],
     unchanged: List[SettingKey],
-    backup: Option[Path],
+    backup: Option[String],
     version: FileVersion,
     created: Boolean,
     restart: List[(SettingKey, String)],
@@ -32,17 +32,18 @@ final case class WriteOutcome(
   def wrote: Boolean = changed.nonEmpty
 
 object WriteOutcome:
-  /** What `edited` did to the file at `path`: the restart-only settings among the changed ones, and the warnings —
-    * `notes`, and an environment variable of `env` that sets a changed setting too (and wins over the file).
+  /** What `edited` did to `file`, now at `version`: the restart-only settings among the changed ones, and the warnings
+    * — `notes`, and an environment variable of `env` that sets a changed setting too (and wins over the file).
     */
   def of(
-      path: Path,
+      file: String,
       schema: ConfigSchema,
       env: Config,
       version: FileVersion,
       edited: EditedText,
-      backup: Option[Path],
-      notes: List[String]
+      backup: Option[String],
+      notes: List[String],
+      created: Boolean = false
   ): WriteOutcome =
     val fields = edited.changed.flatMap(schema.field)
     val shadowed = fields.flatMap(f =>
@@ -53,12 +54,12 @@ object WriteOutcome:
         )
     )
     WriteOutcome(
-      path,
+      file,
       edited.changed,
       edited.unchanged,
       backup,
       version,
-      created = false,
+      created,
       restart = fields.flatMap(f => f.restart.map(f.key -> _)),
       warnings = notes ++ shadowed
     )

@@ -1,4 +1,4 @@
-package com.histmersion.server.plugins
+package com.histmersion.util.plugins
 
 import org.ekrich.config.ConfigFactory
 

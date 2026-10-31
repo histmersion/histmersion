@@ -1,10 +1,12 @@
 package com.histmersion.server.acquire
 
+import com.histmersion.server.ServerPlugins
+
 import com.histmersion.config.{AppConfig, LoadedConfig}
 import com.histmersion.domain.CoreQuota
 import com.histmersion.plugin.{Doi, Fetch, FetchContext, FetchedFile, PluginHttp, PluginLog, SourceFetcher, WorkKey}
 import com.histmersion.pluginhost.{FetchChain, Generation, PluginHost}
-import com.histmersion.server.plugins.{MakerPlugin, Plugins}
+import com.histmersion.server.plugins.MakerPlugin
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
 import io.circe.Json
 import org.ekrich.config.ConfigFactory
@@ -111,7 +113,7 @@ class CoreBudgetSuite extends munit.FunSuite:
       extra: List[com.histmersion.plugin.Plugin] = Nil
   ): Generation =
     val http = SttpHttp(cfg.config.acquire, tries = 1)
-    Plugins.fetchers(cfg, () => HttpPlugin(http), budget, extra)
+    ServerPlugins.fetchers(cfg, () => HttpPlugin(http), budget, extra)
 
   private val work = WorkKey(doi = Some(Doi("10.1/x")))
 
@@ -120,7 +122,7 @@ class CoreBudgetSuite extends munit.FunSuite:
   private def coreIndex(loaded: LoadedConfig, g: Generation, budget: CoreBudget): Option[ScholarlyIndex] =
     val cfg = loaded.config.acquire
     Indexes
-      .of(cfg, SttpHttp(cfg, tries = 1), com.histmersion.server.plugins.Plugins.coreKey(g, cfg.core.key), budget)
+      .of(cfg, SttpHttp(cfg, tries = 1), com.histmersion.util.plugins.Plugins.coreKey(g, cfg.core.key), budget)
       ._1
       .find(_.name == "core")
 
@@ -262,7 +264,7 @@ class CoreBudgetSuite extends munit.FunSuite:
       val g = generation(cfg, budget, extra = List(MakerPlugin()))
       assert(g.report.ok, g.report.toString)
       assertEquals(
-        com.histmersion.server.plugins.Plugins.coreKey(g, cfg.config.acquire.core.key),
+        com.histmersion.util.plugins.Plugins.coreKey(g, cfg.config.acquire.core.key),
         Some("v(Work/Histmersion/CORE#password)")
       )
       lookup(g)

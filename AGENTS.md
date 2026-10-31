@@ -77,7 +77,7 @@ catalogues (`plugins/events`) and the network gazetteers (`plugins/gazetteers`) 
 names are reserved (`ReservedNames.firstPartyPlugins`), and the host supplies them the paths of its own
 settings that `pluginhost/FirstPartySettings` lists (`histmersion.acquire.*`, `histmersion.events.<catalogue>.*`
 — the user keeps writing those), the same table deciding which plugin a settings change rebuilds; the former
-`oa-index`'s settings are mapped by `server/plugins/LegacyPlugins`. The HTTP AI providers
+`oa-index`'s settings are mapped by `util/plugins/LegacyPlugins`. The HTTP AI providers
 (`plugins/ai-http`) are first-party plugins too, supplied `histmersion.agents.providers.<name>.*`, and so are the
 media collections (`plugins/media`), supplied `histmersion.media.*` and run by the host's one collection import
 (`server/media/MediaImporter`). The command-line AI runtimes (`server/agents/BuiltinAi`: `ai-claude-code`, `ai-codex`,
@@ -103,7 +103,7 @@ database, it needs a new endpoint instead.
 
 If `api`, `config`, `files` or `core` grows an `import com.histmersion.db.…`, the layering is broken. Same for a
 `println` in any of them; the compiler keeps `api` free of `domain` and `config`, and `config` free of
-`domain` and `api` (the server converts a config record the wire shows, `server/ConfigViews`), and the domain
+`domain` and `api` (the server converts a config record the wire shows, `server/UiConfigViews`), and the domain
 free of `config`: it takes settings records of its own (`ManagerDefaults`, `SchedulerDefaults`, `MergeSettings`,
 …), which the server — or plugin-host, for the media settings — converts from config where it reads them. The
 domain still works on api's wire records where both sides have one shape, and on the pure helpers clients
@@ -115,7 +115,7 @@ Every operation is implemented **once**. REST routes (`HttpApi`) and MCP tools (
 implementation; the CLI reaches it over HTTP. This is what makes "the CLI and the MCP tools agree" a mechanical
 fact rather than a promise.
 
-A feature in its own package (`domain.<domain>.<feature>`; `domain.personal` and `domain.settings` are the
+A feature in its own package (`domain.<domain>.<feature>`; `domain.personal` and `util.settings` are the
 models) implements it in a service its controllers call. A feature not moved yet still implements it in
 `Handlers`; follow the shape the feature has, and move it only as its slice of the refactor does
 (`docs/research-domain-model.md` §9).

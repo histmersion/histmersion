@@ -1,9 +1,11 @@
 package com.histmersion.server.acquire
 
+import com.histmersion.server.ServerPlugins
+import com.histmersion.util.plugins.Plugins
+
 import com.histmersion.config.{AcquireConfig, AppConfig, LoadedConfig}
 import com.histmersion.plugin.{Doi, WorkKey}
 import com.histmersion.pluginhost.{FetchChain, Generation, HttpAnswer, HttpTransport, PolicyHttp}
-import com.histmersion.server.plugins.Plugins
 import org.ekrich.config.ConfigFactory
 
 import java.nio.charset.StandardCharsets.UTF_8
@@ -73,7 +75,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
     val cfg = l.config.acquire
     val wire = Wire(routes(cfg))
     val core = budget()
-    val g: Generation = Plugins.load(l, core = core, transport = _ => wire)
+    val g: Generation = ServerPlugins.load(l, core = core, transport = _ => wire)
     val (chain, _) =
       FetchChain.of(g.registries.sourceFetchers, cfg.chainIds, cfg.allowUnauthorised, plugins = g.registered)
     val sb = StringBuilder(s"## $name\n")

@@ -84,6 +84,16 @@ object AppConfig:
           case Some(user) => withUser(reference, user, env, Some(p), inFile(p))
         }
 
+  /** The user config file `file` as a load parses it: HOCON with its includes, unresolved; `None` when there is no such
+    * file.
+    */
+  def parseUserFile(file: java.nio.file.Path): Either[String, Option[org.ekrich.config.Config]] =
+    ConfigLayers.parse(file)
+
+  /** Is `origin` the user config file `file` itself, not a file it includes? */
+  def writtenIn(file: java.nio.file.Path)(origin: org.ekrich.config.ConfigOrigin): Boolean =
+    ConfigLayers.sameFile(origin, file)
+
   /** The same load over the TEXT of a config file (a change checked before it is written, without a file; an include in
     * it is not followed).
     */

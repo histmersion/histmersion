@@ -1,5 +1,8 @@
 package com.histmersion.server.events
 
+import com.histmersion.server.ServerPlugins
+import com.histmersion.util.plugins.Plugins
+
 import com.histmersion.pluginhost.{Generation, PluginHost}
 
 import com.augustnagro.magnum.*
@@ -10,7 +13,6 @@ import com.histmersion.db.{EventCatalogRepo, EventRepo, Migrate, TestDb}
 import com.histmersion.plugin as spi
 import com.histmersion.server.Deps
 import com.histmersion.server.media.FakeMediaHttp
-import com.histmersion.server.plugins.Plugins
 import com.histmersion.api.VocabularyCodecs.given
 import org.ekrich.config.ConfigFactory
 
@@ -77,7 +79,10 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
   )
 
   private def generation: Generation =
-    Plugins.offlineWith(List(ZqPlugin()), ConfigFactory.parseString("histmersion.plugins.zq-plugin.enabled = true"))
+    ServerPlugins.offlineWith(
+      List(ZqPlugin()),
+      ConfigFactory.parseString("histmersion.plugins.zq-plugin.enabled = true")
+    )
 
   private lazy val base = AppConfig.load()
   private lazy val ds =
@@ -138,7 +143,7 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
     assert(job.left.exists(_.message.contains(s"one of: gvp, noaa, wikidata, $Catalogue")), job.toString)
 
   test("the plugin switched off: its catalogue is out of the import; its events stay on the map"):
-    val off = Plugins.offlineWith(List(ZqPlugin()), ConfigFactory.empty)
+    val off = ServerPlugins.offlineWith(List(ZqPlugin()), ConfigFactory.empty)
     val h = EventCatalogHandlers(Deps(cfg, ds, ds, plugins = off), fake)
     assert(
       h.importJob(EventImportRequest(Catalogue, dryRun = true))
@@ -195,7 +200,7 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
 
   private def floodsGeneration: Generation =
     PluginHost.build(
-      Plugins.providers :+ FloodsPlugin(),
+      ServerPlugins.providers :+ FloodsPlugin(),
       ConfigFactory.parseString("histmersion.plugins.zq-floods-plugin.enabled = true"),
       ConfigFactory.empty,
       Plugins.services(
@@ -231,7 +236,7 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
     assertEquals((again.records, again.changed, again.fromRaw), (4, 0, 0), again.toString)
     assertEquals(storedFloods, at)
     // and with the plugin switched off since (no floor known): still nothing to change
-    val off = EventCatalogHandlers(Deps(cfg, ds, ds, plugins = Plugins.offline), fake2, () => 2026L)
+    val off = EventCatalogHandlers(Deps(cfg, ds, ds, plugins = ServerPlugins.offline), fake2, () => 2026L)
     assertEquals(off.runRederive(Some(Floods), dryRun = true, _ => ()).changed, 0)
 
   private def fake2 = FakeMediaHttp(url =>

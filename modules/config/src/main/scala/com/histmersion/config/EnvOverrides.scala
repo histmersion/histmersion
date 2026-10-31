@@ -6,6 +6,7 @@ import org.ekrich.config.{
   ConfigException,
   ConfigFactory,
   ConfigObject,
+  ConfigOrigin,
   ConfigParseOptions,
   ConfigRenderOptions,
   ConfigUtil,
@@ -156,6 +157,12 @@ private[config] object ConfigLayers:
     else
       try Right(Some(ConfigFactory.parseFile(file.toFile, ConfigParseOptions.defaults.setAllowMissing(false))))
       catch case e: ConfigException => Left(e.getMessage)
+
+  /** Is `o` the origin of `file` itself, not of a file it includes? */
+  def sameFile(o: ConfigOrigin, file: Path): Boolean =
+    Option(o.filename).exists(f =>
+      Try(Path.of(f).toAbsolutePath.normalize).toOption.contains(file.toAbsolutePath.normalize)
+    )
 
   /** A decoding error as `<key>: <what is wrong>`, the key spelled as it is in the file. */
   def describe(err: ConfigDecodingError): String =

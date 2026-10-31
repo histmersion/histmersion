@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.settings.ConfigSource
+
 import com.histmersion.config.*
 import com.histmersion.db.{DbSuite, TestDb}
 import org.ekrich.config.ConfigFactory

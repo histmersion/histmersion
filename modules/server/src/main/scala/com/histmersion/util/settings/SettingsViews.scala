@@ -1,4 +1,4 @@
-package com.histmersion.domain.settings
+package com.histmersion.util.settings
 
 import com.histmersion.api.{ApiError, ConfigEdit}
 import com.histmersion.config.edit.*
@@ -12,7 +12,7 @@ object SettingsViews:
       .map(_.section)
       .distinct
       .map(id => ConfigEdit.Section(id, doc = sectionDoc(id), fields.filter(_.section == id)))
-    ConfigEdit.Page(s.file.map(_.toString), s.exists, s.version.value, sections, s.problems, restartable, s.setupDue)
+    ConfigEdit.Page(s.file, s.exists, s.version.value, sections, s.problems, restartable, s.setupDue)
 
   private def sectionDoc(id: String): String =
     SettingKey.either(s"${SettingKey.Root}.$id").toOption.fold("")(ConfigSchema.reference.blockDoc)
@@ -42,10 +42,10 @@ object SettingsViews:
       restartable: Boolean
   ): ConfigEdit.Written =
     ConfigEdit.Written(
-      o.file.toString,
+      o.file,
       o.changed.map(_.value),
       o.unchanged.map(_.value),
-      o.backup.map(_.toString),
+      o.backup,
       o.version.value,
       o.created,
       o.restart.map((k, why) => ConfigEdit.RestartNote(k.value, why)),

@@ -5,7 +5,6 @@ import com.histmersion.pluginhost.Generation
 import com.histmersion.config.{AppConfig, Environment, LoadedConfig, UserConfigFile, UserPaths}
 import com.histmersion.api.{ConfigFileInfo, ReloadReport}
 import com.histmersion.server.hot.Pinning
-import com.histmersion.server.plugins.Plugins
 import com.histmersion.util.database.Transactor
 import java.time.Clock
 import javax.sql.DataSource
@@ -78,7 +77,7 @@ final class Deps(
 
 object Deps:
   /** A fixed `Deps` — one config, one pair of DataSources, nothing hot (tests, tools); its plugins are the built-in
-    * media collections and event catalogues and no fetcher ([[Plugins.offline]]).
+    * media collections and event catalogues and no fetcher ([[ServerPlugins.offline]]).
     */
   def apply(
       cfg: AppConfig,
@@ -86,7 +85,7 @@ object Deps:
       queryDs: DataSource,
       maintenance: Maintenance = Maintenance(),
       configFile: ConfigFileInfo = ConfigFileInfo(),
-      plugins: Generation = Plugins.offline
+      plugins: Generation = ServerPlugins.offline
   ): Deps =
     new Deps(() => cfg, ds, queryDs, maintenance, () => configFile, () => plugins)
 

@@ -2,7 +2,7 @@ package com.histmersion.server.acquire
 
 import com.histmersion.config.LoadedConfig
 import com.histmersion.pluginhost.FetchChain
-import com.histmersion.server.plugins.Plugins
+import com.histmersion.util.plugins.Plugins
 
 /** The acquisition chain over the first-party fetchers (archive.org, Unpaywall, CORE, OpenAlex, PMC, arXiv, landing
   * pages, PMC's JATS text) — discovered and registered through the plugin host exactly as the server registers them,
@@ -11,7 +11,11 @@ import com.histmersion.server.plugins.Plugins
   */
 object OaFetch:
   def apply(loaded: LoadedConfig, http: Http, core: CoreBudget = CoreBudget()): FetchChain =
-    val g = Plugins.fetchers(loaded, () => HttpPlugin(http), core)
+    val g = Plugins.fetchers(
+      loaded,
+      () => HttpPlugin(http),
+      CoreBudget.quotas(core, CoreBudget.limits(loaded.config.acquire.core))
+    )
     val cfg = loaded.config.acquire
     FetchChain.of(g.registries.sourceFetchers, cfg.chainIds, cfg.allowUnauthorised, plugins = g.registered)._1
 

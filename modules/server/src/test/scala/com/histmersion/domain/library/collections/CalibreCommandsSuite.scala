@@ -314,7 +314,7 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
     val onServer = runAll(CalibreCommandsSuite.plugins(lib), CalibreCommandsSuite.tools(lib, hostSide = false))
     assertEquals(lib.takeLog().size, 4, "the server read the library once per command but the gaps")
     val onHost =
-      runAll(com.histmersion.server.plugins.Plugins.offline, CalibreCommandsSuite.tools(lib, hostSide = true))
+      runAll(com.histmersion.server.ServerPlugins.offline, CalibreCommandsSuite.tools(lib, hostSide = true))
     assertEquals(lib.takeLog().size, 4, "the CLI read the library once per command but the gaps")
     assertEquals(onHost, onServer)
     assertEquals(onServer.map(_._1), List(0, 0, 0, 0, 1, 0))
@@ -326,7 +326,7 @@ object CalibreCommandsSuite:
     */
   def plugins(lib: CalibreFixture): com.histmersion.pluginhost.Generation =
     CalibreFixture.refuseRealLibrary(lib.dir)
-    val g = com.histmersion.server.plugins.Plugins.offlineWith(
+    val g = com.histmersion.server.ServerPlugins.offlineWith(
       List(com.histmersion.plugins.calibre.CalibrePlugin()),
       org.ekrich.config.ConfigFactory.parseString(
         s"""histmersion.plugins.calibre {

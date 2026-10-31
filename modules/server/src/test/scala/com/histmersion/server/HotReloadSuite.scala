@@ -1,10 +1,11 @@
 package com.histmersion.server
 
+import com.histmersion.util.settings.ConfigSource
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.{DbSuite, TestDb}
-import com.histmersion.server.plugins.Plugins
 import org.ekrich.config.ConfigFactory
 import ox.supervised
 
@@ -257,7 +258,7 @@ class HotReloadSuite extends DbSuite:
   test("a plugin block rebuilds that plugin only; a hot key applies; a restart-only key is reported, not applied"):
     write(DbB)
     val l = loaded
-    val gen = Plugins.load(l)
+    val gen = ServerPlugins.load(l)
     supervised {
       val b =
         Composition
@@ -287,7 +288,7 @@ class HotReloadSuite extends DbSuite:
   test("an AI provider switched off by a reload is out of every chain at once; switched on again, it is back"):
     write(DbB, "agents.roles.extractor = \"local:zzhot\"\n  agents.prices = \"zzhot=0/0\"")
     val l = loaded
-    val gen = Plugins.load(l)
+    val gen = ServerPlugins.load(l)
     supervised {
       val b =
         Composition

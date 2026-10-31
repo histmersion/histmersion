@@ -128,7 +128,7 @@ class MediaImportJobSuite extends com.histmersion.db.DbSuite:
     )
 
   /** The plugins, supplied the same media settings as [[cfg]]: the collections ask the stand-in, never a real API. */
-  private lazy val plugins = com.histmersion.server.plugins.Plugins.offlineWith(
+  private lazy val plugins = com.histmersion.server.ServerPlugins.offlineWith(
     Nil,
     org.ekrich.config.ConfigFactory.parseString(
       s"""histmersion.media {

@@ -1,10 +1,11 @@
 package com.histmersion.server.media
 
+import com.histmersion.server.ServerPlugins
+
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport, Polite}
 
 import com.histmersion.config.{AppConfig, MediaConfig}
 import com.histmersion.plugin.MediaCollection
-import com.histmersion.server.plugins.Plugins
 import org.ekrich.config.ConfigFactory
 
 import scala.jdk.CollectionConverters.*
@@ -47,7 +48,7 @@ object FakeMediaHttp:
     * `histmersion.plugins.<id>` block), its secret references read from `env`.
     */
   def collection(name: String, settings: String = "", env: Map[String, String] = Map.empty): MediaCollection =
-    val g = Plugins.offlineWith(Nil, ConfigFactory.parseString(settings), ConfigFactory.parseMap(env.asJava))
+    val g = ServerPlugins.offlineWith(Nil, ConfigFactory.parseString(settings), ConfigFactory.parseMap(env.asJava))
     g.registries.mediaCollections.getOrElse(
       name,
       throw IllegalStateException(s"no media collection '$name' registered: ${g.report}")

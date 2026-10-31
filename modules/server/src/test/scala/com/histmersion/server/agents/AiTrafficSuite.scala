@@ -1,8 +1,9 @@
 package com.histmersion.server.agents
 
+import com.histmersion.server.ServerPlugins
+
 import com.histmersion.api.Agents.{ModelRef, ProviderKind}
 import com.histmersion.config.{AppConfig, LoadedConfig}
-import com.histmersion.server.plugins.Plugins
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
 import org.ekrich.config.ConfigFactory
 import sttp.ai.core.agent.*
@@ -173,7 +174,7 @@ class AiTrafficSuite extends munit.FunSuite:
   ): String =
     up.script(answers)
     val l = loaded(text)
-    val g = Plugins.load(l)
+    val g = ServerPlugins.load(l)
     val f = LlmClient.factory(CliRuntime(l.config), () => g.registries.aiProviders)
     val sb = StringBuilder(s"## $name\n")
     f(l.config.agents, ref) match
