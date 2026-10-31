@@ -973,7 +973,6 @@ server:server/MapTiles.scala	catalogue.maptiles
 server:server/MarkdownFlavor.scala	util.common
 server:server/MarkdownHtml.scala	util.common
 server:server/MarkdownLint.scala	research.articles.lint
-server:server/McpOut.scala	server
 server:server/McpTools.scala	server
 server:server/MergeApplyJobs.scala	util.data.exchange
 server:server/MergeSettingsViews.scala	util.settings

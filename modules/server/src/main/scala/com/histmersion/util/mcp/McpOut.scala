@@ -1,4 +1,4 @@
-package com.histmersion.server
+package com.histmersion.util.mcp
 
 import chimp.server.{NoStructuredOutput, ToolResult}
 import com.histmersion.api.ApiError

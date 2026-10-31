@@ -2,7 +2,7 @@ package com.histmersion.domain.personal
 
 import chimp.server.*
 import com.histmersion.api.personal.PersonalMarkdown
-import com.histmersion.server.{McpOut, McpTools}
+import com.histmersion.util.mcp.McpOut
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -11,7 +11,7 @@ import sttp.tapir.Schema
   * the person's own, written in the web UI and with `histmersion bookmarks|notes`.
   */
 object PersonalTools:
-  import McpTools.given
+  import com.histmersion.util.mcp.ToolInputs.given
 
   final case class BookmarksInput(kind: Option[String] = None, query: Option[String] = None, limit: Option[Int] = None)
       derives KindlingsCodecAsObject,

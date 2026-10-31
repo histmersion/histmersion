@@ -268,8 +268,6 @@ direction	files:files/BundleEntities.scala	util.data -> media: AssetLink	1
 direction	files:files/BundleEntities.scala	util.data -> research: ArticleVersion	1
 direction	server:domain/activity/ActivityRepo.scala	automation -> server: Jobs	1
 direction	server:domain/personal/ItemTitles.scala	personal -> automation: Goal	1
-direction	server:domain/personal/PersonalTools.scala	personal -> server: McpOut	1
-direction	server:domain/personal/PersonalTools.scala	personal -> server: McpTools	1
 direction	server:server/BackgroundJob.scala	util.jobs -> server: Pinning	1
 direction	server:server/BackupJobs.scala	util.data -> server: Pinning	1
 direction	server:server/BundleHandlers.scala	util.data -> library: InstanceLabel	1
@@ -292,7 +290,6 @@ direction	server:server/StorageProbe.scala	util.data -> server: Supervisor	1
 direction	server:server/VacuumJobs.scala	util.data -> server: Pinning	1
 direction	server:server/acquire/AcquireHandlers.scala	library -> server: Deps	1
 direction	server:server/acquire/AcquireHandlers.scala	library -> server: UpdateNotice	1
-direction	server:server/acquire/AcquireMcp.scala	library -> server: McpOut	1
 direction	server:server/acquire/CandidateSearch.scala	library -> research: ArticleRepo	1
 direction	server:server/acquire/DiscoveryClient.scala	library -> server: UpdateNotice	1
 direction	server:server/acquire/OpenAlexCrossref.scala	library -> server: UpdateNotice	1
@@ -332,8 +329,6 @@ direction	server:server/agents/AgentsSettings.scala	automation -> library: Enric
 direction	server:server/agents/AgentsSettings.scala	automation -> research: AgentInferFilterConfig	1
 direction	server:server/agents/AgentsSettings.scala	automation -> research: FilterInference	1
 direction	server:server/agents/AgentsTools.scala	automation -> library: RepairAcquire	1
-direction	server:server/agents/AgentsTools.scala	automation -> server: McpOut	1
-direction	server:server/agents/AgentsTools.scala	automation -> server: McpTools	1
 direction	server:server/agents/AnswerSchemas.scala	automation -> library: EnrichSource	1
 direction	server:server/agents/AnswerSchemas.scala	automation -> research: CompileArticle	1
 direction	server:server/agents/AnswerSchemas.scala	automation -> research: FilterInference	1
@@ -424,8 +419,6 @@ direction	server:server/events/EventCatalogHandlers.scala	catalogue -> library: 
 direction	server:server/events/EventCatalogHandlers.scala	catalogue -> library: SourceRepo	1
 direction	server:server/events/EventCatalogHandlers.scala	catalogue -> server: Deps	1
 direction	server:server/events/EventCatalogRoutes.scala	catalogue -> split: Handlers	1
-direction	server:server/events/EventCatalogTools.scala	catalogue -> server: McpOut	1
-direction	server:server/events/EventCatalogTools.scala	catalogue -> server: McpTools	1
 direction	server:server/events/EventCatalogTools.scala	catalogue -> split: Handlers	1
 direction	server:server/importers/GazetteerLoad.scala	catalogue -> library: HttpPolicy	1
 direction	server:server/importers/ImportRunner.scala	catalogue -> library: CliopatriaImporter	1
