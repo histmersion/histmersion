@@ -24,8 +24,8 @@ object OpsTools:
     val lint =
       tool("lint")
         .description(
-          s"Health-check the corpus and get a Markdown report grouped by rule. ${Lint.all.size} rules: " +
-            Lint.names.mkString(", ") +
+          s"Health-check the corpus and get a Markdown report grouped by rule. ${ops.lintRules.size} rules: " +
+            ops.lintRules.mkString(", ") +
             ". Run it after a batch of ingestion to find dead reference targets, un-enriched sources " +
             "(no findings / period / regions / summary), sources still at status=unassessed, " +
             "duplicate DOIs, non-canonical tags, year/citekey mismatches, article filler phrases, " +

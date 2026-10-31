@@ -25,7 +25,9 @@ object PointAreaRepo:
   final case class Settings(kinds: List[String], batch: Int, budgetMs: Long, toleranceKm: Double)
 
   /** What one [[remove]] call did. */
-  final case class Removal(removed: Int, remaining: Int, findings: Int, sources: Int)
+  final case class Removal(removed: Int, remaining: Int, findings: Int, sources: Int):
+    /** The line `lint --fix` reports it with. */
+    def line: String = PointAreas.fixed(removed, remaining, findings, sources)
 
   private val sources: List[String] = Gazetteer.PointAreaSources
 
