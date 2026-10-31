@@ -6,6 +6,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
+import com.histmersion.util.data.maintenance.PgRelocation
 import com.histmersion.util.process.{Processes, ProcessLaunch, ProcessOutput, RunningProcess}
 import com.histmersion.util.storage.{Location, Storage, StoreKey}
 
@@ -223,7 +224,7 @@ object Supervisor:
     List(l.data, l.logs, l.backups, l.uploads, l.bundles).foreach(d => Files.createDirectories(d))
     scribe.info(s"runtime: bundle ${l.home}, data ${l.data}")
     PgRelocation
-      .relocate(l.pgBin.getParent, paths.isMac)
+      .relocate(Storage.at(Location.Postgres, l.pgBin.getParent), paths.isMac, processes)
       .foreach(r =>
         scribe.info(
           s"runtime: relocated PostgreSQL to ${l.pgBin.getParent} " +

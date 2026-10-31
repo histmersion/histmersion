@@ -1,4 +1,7 @@
-package com.histmersion.server
+package com.histmersion.util.data.maintenance
+
+import com.histmersion.util.process.Processes
+import com.histmersion.util.storage.{Location, Storage}
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
@@ -48,17 +51,17 @@ class PgRelocationSuite extends munit.FunSuite:
       Files.writeString(bin.resolve("tool-config"), "prefix=/build/env/default\n")
       Files.writeString(bin.resolve("unrelated"), "nothing to see")
       val here = pg.toRealPath().toString
-      val r = PgRelocation.relocate(pg, macOS = false)
+      val r = PgRelocation.relocate(Storage.at(Location.Postgres, pg), macOS = false, Processes())
       assertEquals(r, Some(PgRelocation.Result(files = 2, signed = 0, tooLong = 0)))
       assertEquals(Files.readString(pg.resolve(PgRelocation.Marker)), here)
       assertEquals(Files.readString(bin.resolve("tool-config")), s"prefix=$here\n")
       assert(String(Files.readAllBytes(bin.resolve("pg_config")), UTF_8).contains(s"$here/share\u0000"))
-      assertEquals(PgRelocation.relocate(pg, macOS = false), None)
+      assertEquals(PgRelocation.relocate(Storage.at(Location.Postgres, pg), macOS = false, Processes()), None)
     finally deleteTree(pg)
 
   test("relocate: no marker means a pixi environment used in place — untouched"):
     val pg = Files.createTempDirectory("pgreloc")
-    try assertEquals(PgRelocation.relocate(pg, macOS = false), None)
+    try assertEquals(PgRelocation.relocate(Storage.at(Location.Postgres, pg), macOS = false, Processes()), None)
     finally deleteTree(pg)
 
   private def deleteTree(p: Path): Unit =

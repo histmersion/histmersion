@@ -7,3 +7,6 @@ enum TempName:
 
   /** `.<name>.<random>.tmp`: unique, hidden. */
   case Unique
+
+  /** `<name><suffix>`: one writer at a time, named as the readers of the directory expect (`.part`). */
+  case Suffixed(suffix: String)

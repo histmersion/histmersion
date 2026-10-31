@@ -1,5 +1,6 @@
 package com.histmersion.util.data
 
+import com.histmersion.util.data.backup.BackupShare
 import com.histmersion.util.data.checks.CheckRule
 import com.histmersion.util.data.diagnostics.DataFigures
 import com.histmersion.util.data.exchange.{CarriedKind, MergeRules}
@@ -19,6 +20,9 @@ trait DataContribution:
 
   /** Its file stores: backed up, sized and pruned. */
   def stores: List[Location] = Nil
+
+  /** What a backup takes of it beside the dump, and what a restore must not drop unasked. */
+  def backup: BackupShare = BackupShare.none
 
   /** The kinds of record a bundle carries for it: their rows out and in, their tombstones. */
   def carried: List[CarriedKind] = Nil

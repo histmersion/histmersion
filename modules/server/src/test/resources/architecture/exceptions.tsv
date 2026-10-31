@@ -239,7 +239,6 @@ direction	db:db/SourceDeleteRepo.scala	library -> research: ArticleLinks	1
 direction	db:db/SourceRepo.scala	library -> research: ArticleLinks	1
 direction	db:db/SourceRepo.scala	library -> research: ArticleRepo	1
 direction	db:db/SourceRepo.scala	library -> research: TocEntry	1
-direction	db:db/StatsRepo.scala	util.data -> server: CorpusCounts	1
 direction	db:db/TileRepo.scala	catalogue -> media: MediaRepo	1
 direction	db:db/TreeRepo.scala	catalogue -> library: FilterSql	1
 direction	files:files/BundleEntities.scala	util.data -> automation: Goal	1
@@ -251,7 +250,6 @@ direction	files:files/BundleEntities.scala	util.data -> library: Finding	1
 direction	files:files/BundleEntities.scala	util.data -> media: AssetLink	1
 direction	files:files/BundleEntities.scala	util.data -> research: ArticleVersion	1
 direction	server:domain/activity/ActivityRepo.scala	automation -> server: Jobs	1
-direction	server:server/BackupJobs.scala	util.data -> server: Pinning	1
 direction	server:server/BundleHandlers.scala	util.data -> library: InstanceLabel	1
 direction	server:server/BundleHandlers.scala	util.data -> library: Originals	1
 direction	server:server/BundleHandlers.scala	util.data -> server: Deps	1
@@ -260,10 +258,6 @@ direction	server:server/IngestHandlers.scala	library -> server: Jobs	1
 direction	server:server/MapTileService.scala	catalogue -> media: MediaRepo	1
 direction	server:server/MergeApplyJobs.scala	util.data -> server: Pinning	1
 direction	server:server/PageBuilder.scala	research -> split: Handlers	1
-direction	server:server/StorageProbe.scala	util.data -> automation: AgentTrees	1
-direction	server:server/StorageProbe.scala	util.data -> catalogue: GazetteerLoad	1
-direction	server:server/StorageProbe.scala	util.data -> server: Supervisor	1
-direction	server:server/VacuumJobs.scala	util.data -> server: Pinning	1
 direction	server:server/acquire/AcquireHandlers.scala	library -> server: Deps	1
 direction	server:server/acquire/AcquireHandlers.scala	library -> server: UpdateNotice	1
 direction	server:server/acquire/CandidateSearch.scala	library -> research: ArticleRepo	1
@@ -406,8 +400,6 @@ filesystem	db:db/MergeState.scala	java.nio.file	1
 filesystem	db:db/Originals.scala	Files.*	6
 filesystem	db:db/Originals.scala	StandardCopyOption	2
 filesystem	db:db/Originals.scala	java.nio.file	1
-filesystem	files:files/DirSize.scala	Files.*	8
-filesystem	files:files/DirSize.scala	java.nio.file	2
 filesystem	files:files/Frontmatter.scala	Files.*	3
 filesystem	files:files/Frontmatter.scala	java.nio.file	1
 filesystem	files:files/PlaceSeed.scala	Files.*	3
@@ -415,11 +407,6 @@ filesystem	files:files/PlaceSeed.scala	java.nio.file	1
 filesystem	files:files/PluginKit.scala	File(	1
 filesystem	files:files/SafePath.scala	Paths.get	4
 filesystem	files:files/SafePath.scala	java.nio.file	1
-filesystem	server:server/BackupService.scala	Files.*	18
-filesystem	server:server/BackupService.scala	Path.of	3
-filesystem	server:server/BackupService.scala	StandardCopyOption	2
-filesystem	server:server/BackupService.scala	java.io.File	1
-filesystem	server:server/BackupService.scala	java.nio.file	1
 filesystem	server:server/BundleHandlers.scala	.toFile	2
 filesystem	server:server/BundleHandlers.scala	Files.*	14
 filesystem	server:server/BundleHandlers.scala	Path.of	2
@@ -431,11 +418,6 @@ filesystem	server:server/IngestHandlers.scala	Path.of	1
 filesystem	server:server/IngestHandlers.scala	StandardCopyOption	2
 filesystem	server:server/IngestHandlers.scala	java.io.File	3
 filesystem	server:server/IngestHandlers.scala	java.nio.file	1
-filesystem	server:server/PgRelocation.scala	Files.*	8
-filesystem	server:server/PgRelocation.scala	java.nio.file	1
-filesystem	server:server/StorageProbe.scala	Files.*	3
-filesystem	server:server/StorageProbe.scala	Path.of	2
-filesystem	server:server/StorageProbe.scala	java.nio.file	1
 filesystem	server:server/StoredOriginals.scala	Files.*	6
 filesystem	server:server/StoredOriginals.scala	java.nio.file	1
 filesystem	server:server/acquire/AcquireHandlers.scala	Path.of	1
@@ -519,7 +501,6 @@ repository	server:server/Handlers.scala	ArticleReviewRepo of research.articles.r
 repository	server:server/Handlers.scala	AssetLinkRepo of media	1
 repository	server:server/Handlers.scala	AssetMetaRepo of media	1
 repository	server:server/Handlers.scala	AttestationRepo of catalogue.evidence	1
-repository	server:server/Handlers.scala	BackupRepo of util.data.backup	1
 repository	server:server/Handlers.scala	CoverageRepo of research.articles	1
 repository	server:server/Handlers.scala	CritiqueRepo of research.articles	1
 repository	server:server/Handlers.scala	EventRepo of catalogue.events	1
@@ -530,7 +511,6 @@ repository	server:server/Handlers.scala	PlaceRepo of catalogue.places	1
 repository	server:server/Handlers.scala	ReviewLedgerRepo of research.workflows	1
 repository	server:server/Handlers.scala	SourceDeleteRepo of library.sources	1
 repository	server:server/Handlers.scala	SourceRepo of library.sources	1
-repository	server:server/Handlers.scala	StatsRepo of util.data.storage	1
 repository	server:server/Handlers.scala	TreeRepo of catalogue.places	1
 repository	server:server/Handlers.scala	UiRepo of server.instance	1
 repository	server:server/Handlers.scala	UpstreamQuotaRepo of library.acquisition	1
@@ -554,7 +534,6 @@ repository	server:server/OpsHandlers.scala	PointAreaRepo of catalogue.places	1
 repository	server:server/OpsHandlers.scala	QueryRepo of library.search	1
 repository	server:server/OpsHandlers.scala	QueueRepo of automation.worklists	1
 repository	server:server/OpsHandlers.scala	SourceRepo of library.sources	1
-repository	server:server/StorageProbe.scala	StatsRepo of util.data.storage	1
 repository	server:server/acquire/AcquireHandlers.scala	AssetRepo of media	1
 repository	server:server/acquire/AcquireHandlers.scala	QueueRepo of automation.worklists	1
 repository	server:server/acquire/AcquireHandlers.scala	SourceRepo of library.sources	1

@@ -1,14 +1,11 @@
-package com.histmersion.server
+package com.histmersion.util.data.diagnostics
 
-import com.histmersion.api.*
-import com.histmersion.files.*
-import com.histmersion.config.*
-import com.histmersion.domain.*
+import com.histmersion.api.StorageReport
 
 import java.util.concurrent.{CompletableFuture, ExecutionException, TimeoutException, TimeUnit}
 import java.util.concurrent.atomic.AtomicReference
 
-/** The last [[StorageProbe]] measurement, reused for `ttl` and measured again in the background after it — ONE
+/** The last [[StorageFigures]] measurement, reused for `ttl` and measured again in the background after it — ONE
   * measurement at a time, however many Abouts ask. A request that finds nothing measured yet waits up to `wait` for the
   * first one, then answers "measuring…"; one that finds an old measurement gets it at once (marked measuring) while the
   * next one runs.

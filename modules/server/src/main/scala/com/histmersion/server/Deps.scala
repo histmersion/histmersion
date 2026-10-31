@@ -99,7 +99,10 @@ object Deps:
   /** Every owner's data contribution: what data management runs its operations over. */
   lazy val data: com.histmersion.util.data.DataContributions =
     com.histmersion.util.data.DataContributions
-      .of(com.histmersion.util.data.TransitionContributions.all)
+      .of(
+        com.histmersion.util.data.TransitionContributions
+          .withTasks(com.histmersion.domain.library.sources.SourcesMaintenanceAdapter.tasks)
+      )
       .fold(problems => throw IllegalStateException(problems.mkString("; ")), identity)
 
   /** Every alias table: how an old identifier of each renamed kind is followed. */

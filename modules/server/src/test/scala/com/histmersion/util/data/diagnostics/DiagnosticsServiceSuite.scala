@@ -1,0 +1,34 @@
+package com.histmersion.util.data.diagnostics
+
+import com.histmersion.api.TableSize
+import com.histmersion.server.Deps
+import com.histmersion.util.data.{DataOwner, TableName}
+import com.histmersion.util.data.TablesAdapter.*
+import com.histmersion.values.ByteCount
+
+/** The figures read from the registry: only registered tables are sized, in the order the database gives them. */
+class DiagnosticsServiceSuite extends munit.FunSuite:
+
+  private def bytes(n: Long) = ByteCount.applyUnsafe(n)
+
+  private val service = DiagnosticsService.InMemory(
+    Deps.data,
+    Map(LibraryOwner -> DataFigures(List(DataCount("sources", 4), DataCount("findings", 5)))),
+    ("histmersion_test", bytes(1000)),
+    List(TableName("sources") -> bytes(300), TableName("not_registered") -> bytes(200), TableName("places") -> bytes(100))
+  )
+
+  test("the largest tables are the registered ones, largest first, at most n"):
+    assertEquals(service.largestTables(5), List(TableSize("sources", 300), TableSize("places", 100)))
+    assertEquals(service.largestTables(1), List(TableSize("sources", 300)))
+    assertEquals(service.largestTables(0), Nil)
+
+  test("each owner's tables summed, every owner in the registry's order"):
+    val sums = service.ownerTables.toMap
+    assertEquals(service.ownerTables.map(_._1), Deps.data.owners)
+    assertEquals((sums(LibraryOwner).value: Long, sums(CatalogueOwner).value: Long, sums(MediaOwner).value: Long), (300L, 100L, 0L))
+
+  test("an owner's counts, by noun; none for an owner that counts nothing"):
+    assertEquals(service.figures(LibraryOwner).count("findings"), Some(5L))
+    assertEquals(service.figures(LibraryOwner).count("articles"), None)
+    assertEquals(service.figures(DataOwner("nobody")), DataFigures.empty)

@@ -1,13 +1,11 @@
-package com.histmersion.server
+package com.histmersion.util.data.backup
 
-import scala.util.chaining.*
-import com.histmersion.api.*
-import com.histmersion.config.*
-import com.histmersion.domain.*
+import com.histmersion.api.{ApiError, BackupResult, BackupStatus}
+import com.histmersion.util.jobs.WorkCarrier
 
 import java.time.Instant
-import java.util.concurrent.TimeUnit
-import scala.jdk.CollectionConverters.*
+import java.util.concurrent.{CompletableFuture, TimeoutException, TimeUnit}
+import java.util.concurrent.atomic.AtomicReference
 
 /** Backups run as a JOB, not inside the HTTP request. A dump of the corpus takes minutes, and the request that started
   * it used to be cut at 60 s (by the server and by any proxy in between): the handler thread was interrupted and the
@@ -20,10 +18,8 @@ import scala.jdk.CollectionConverters.*
 final class BackupJobs(
     service: BackupService,
     waitSeconds: => Int,
-    pins: com.histmersion.server.hot.Pinning = com.histmersion.server.hot.Pinning.none
+    pins: WorkCarrier = WorkCarrier.none
 ):
-  import java.util.concurrent.{CompletableFuture, TimeoutException}
-  import java.util.concurrent.atomic.AtomicReference
 
   final private case class Job(file: String, started: Long, result: CompletableFuture[Either[ApiError, BackupResult]])
   private val current = AtomicReference[Option[Job]](None)
@@ -40,14 +36,12 @@ final class BackupJobs(
           val j = Job(p.file, System.nanoTime(), f)
           current.set(Some(j))
           // the dump runs on the generation (database) the request was pinned to
-          val work = pins.carry(
-            f.complete(
+          val work = pins.carryWork { () =>
+            val _ = f.complete(
               scala.util.Try(p.run()).toEither.left.map(e => ApiError(s"backup crashed: ${e.getMessage}")).flatten
             )
-          )
-          val _ = Thread.ofPlatform().daemon(true).name("histmersion-backup").start { () =>
-            val _ = work.run()
           }
+          val _ = Thread.ofPlatform().daemon(true).name("histmersion-backup").start(() => work())
           j
         }
     job.map { j =>
