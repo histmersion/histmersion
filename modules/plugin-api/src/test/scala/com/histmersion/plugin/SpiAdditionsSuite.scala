@@ -97,3 +97,90 @@ class SpiAdditionsSuite extends munit.FunSuite:
     )
     assert(classOf[AiTurnRequest].getConstructor(request*) != null)
     assert(AiTurnRequest.getClass.getMethod("apply", request*) != null)
+
+  // ── media: the members added for the first-party collections ─────────────────────────────────
+
+  /** A collection as a plugin of SPI 2's first release wrote it: a title, a role and a search. */
+  private object Portal extends MediaCollection:
+    val title = "Portal objects"
+    val role = MediaCollection.Object
+    def search(place: MediaPlace, http: PluginHttp) =
+      if place.label == "Nowhere" then Left("offline")
+      else
+        Right(
+          List(
+            Right(MediaItem(s"${place.id}-1", place.label, "https://portal.example/1", None, Left("closed"))),
+            Left("one record unreadable")
+          )
+        )
+
+  test("an item built as SPI 2's first release built it has no role of its own and no rendition"):
+    val rights = Left("not open access")
+    val applied = MediaItem("k", "t", "https://p", None, rights, None, None, Nil, None, Nil, None)
+    val constructed = new MediaItem("k", "t", "https://p", None, rights, None, None, Nil, None, Nil, Some("withheld"))
+    assertEquals((applied.role, applied.rendition), (None, None))
+    assertEquals((constructed.role, constructed.rendition, constructed.withheld), (None, None, Some("withheld")))
+    assertEquals(applied, MediaItem("k", "t", "https://p", None, rights))
+
+  test("a place described as SPI 2's first release described it carries no gazetteer ids"):
+    val applied = MediaPlace("p", "Mycenae", None, None, None, None)
+    val constructed = new MediaPlace("p", "Mycenae", None, None, None, None)
+    assertEquals((applied.ids, constructed.ids), (Nil, Nil))
+    assertEquals(applied, MediaPlace("p", "Mycenae"))
+
+  test("a collection's new members by default: its role alone, places, no events, always asked, refusals final"):
+    assertEquals(Portal.roles, Set(MediaCollection.Object))
+    assertEquals(Portal.asks, Set(MediaTarget.Places))
+    assertEquals(Portal.searchEvent(MediaEvent("e", "Fall of X"), Bodies), Right(Nil))
+    assertEquals(Portal.check, Right(()))
+    assertEquals(Portal.refusalBackoffMs, Nil)
+    assertEquals(Portal.latestYear, None)
+    assertEquals(Portal.placesCarrying, None)
+
+  test("searchTargets by default: search for each place and searchEvent for each event, in order, failures counted"):
+    val found = Portal.searchTargets(
+      List(MediaPlace("a", "Mycenae"), MediaPlace("b", "Nowhere")),
+      List(MediaEvent("e", "Fall of X")),
+      Bodies
+    )
+    val (a, b, e) =
+      (
+        MediaTargetId(MediaTarget.Places, "a"),
+        MediaTargetId(MediaTarget.Places, "b"),
+        MediaTargetId(MediaTarget.Events, "e")
+      )
+    assertEquals(found.uses.map(u => (u.target, u.item.key, u.rank)), List((a, "a-1", 0)))
+    assertEquals(found.asked, List(a, b, e))
+    assertEquals(found.unanswered, Set(b), "a failed search is not recorded as asked")
+    assertEquals(found.read, 2)
+    assertEquals(found.failed, List("a: one record unreadable", "Portal objects search for b: offline"))
+    assertEquals((found.notTaken, found.categories), (Nil, Nil))
+
+  test("completeAll by default: complete for each item, by its key"):
+    val items =
+      List(MediaItem("k1", "t", "https://p", None, Left("x")), MediaItem("k2", "t", "https://p", None, Left("y")))
+    assertEquals(Portal.completeAll(items, Bodies), MediaCompleted(items.map(i => i.key -> i).toMap))
+    val failing = new MediaCollection:
+      val title = "Failing"
+      val role = MediaCollection.Map
+      def search(place: MediaPlace, http: PluginHttp) = Right(Nil)
+      override def complete(item: MediaItem, http: PluginHttp) =
+        if item.key == "k1" then Left("gone") else Right(item)
+    assertEquals(failing.completeAll(items, Bodies), MediaCompleted(Map("k2" -> items(1)), List("k1: gone")))
+
+  test("the roles a collection's pictures may play are the ones the host stores"):
+    assertEquals(
+      MediaCollection.Roles,
+      Set("object", "map", "image", "locator-map", "plan", "aerial-view", "route-map", "depiction")
+    )
+
+  test("a context written before the host lent its licence reading reads every statement as unknown"):
+    val l = EarlyContext.licences
+    assertEquals(l.readName("CC BY 4.0"), LicenceRead("CC BY 4.0", LicenceRead.Unknown))
+    assertEquals(
+      l.readUrl("https://creativecommons.org/licenses/by/4.0"),
+      LicenceRead.unknown("https://creativecommons.org/licenses/by/4.0")
+    )
+    assertEquals(l.readFirst(List(" ", "cc0", "pd")), LicenceRead("cc0", LicenceRead.Unknown))
+    assertEquals(l.readFirst(Nil), LicenceRead.unknown(""))
+    assert(!l.readName("cc-by-4.0").needsAttribution)

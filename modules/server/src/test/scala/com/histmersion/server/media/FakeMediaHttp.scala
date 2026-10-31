@@ -3,6 +3,11 @@ package com.histmersion.server.media
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport, Polite}
 
 import com.histmersion.config.{AppConfig, MediaConfig}
+import com.histmersion.plugin.MediaCollection
+import com.histmersion.server.plugins.Plugins
+import org.ekrich.config.ConfigFactory
+
+import scala.jdk.CollectionConverters.*
 
 /** A provider that never opens a socket (#1446): answers come from `route`, every request is recorded with its headers,
   * and the waits a polite client would sleep are recorded instead.
@@ -36,3 +41,25 @@ object FakeMediaHttp:
     // `var`: the fake clock, advanced by every recorded sleep
     var now = 1_000_000L
     (Polite(http, c, ms => { slept += ms; now += ms }, () => now, refusalBackoffMs), slept)
+
+  /** The first-party collection registered as `name`, as the host builds it: its plugin discovered on the class path
+    * and supplied the host's settings `settings` (a `histmersion.conf` text: `histmersion.media.*`, and a keyed one's
+    * `histmersion.plugins.<id>` block), its secret references read from `env`.
+    */
+  def collection(name: String, settings: String = "", env: Map[String, String] = Map.empty): MediaCollection =
+    val g = Plugins.offlineWith(Nil, ConfigFactory.parseString(settings), ConfigFactory.parseMap(env.asJava))
+    g.registries.mediaCollections.getOrElse(
+      name,
+      throw IllegalStateException(s"no media collection '$name' registered: ${g.report}")
+    )
+
+  /** [[collection]] as the host's collection import runs one searched by a place's name: stored under its provider,
+    * judged by its own allowlist in `c`.
+    */
+  def builtin(
+      name: String,
+      settings: String = "",
+      env: Map[String, String] = Map.empty,
+      c: MediaConfig = cfg
+  ): PluginCollection =
+    PluginCollection(BuiltinMedia.providerOf(name), collection(name, settings, env), BuiltinMedia.licencesFor(name, c))

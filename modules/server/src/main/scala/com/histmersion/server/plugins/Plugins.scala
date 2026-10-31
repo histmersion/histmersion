@@ -21,9 +21,9 @@ import com.histmersion.server.agents.BuiltinAi
 
 /** The composition root's handle on the plugins: discover the providers on the server's class path — the first-party
   * fetchers, event catalogues, media collections, gazetteers, HTTP AI providers and vaults among them, as any plugin —
-  * add the command-line AI runtimes the host still supplies itself, and build the generation for a loaded config. Opens nothing — no database, no listener,
-  * no socket (the HTTP client is built only when a plugin or a fetch first asks for it) — so `--self-check` can call
-  * it.
+  * add the command-line AI runtimes the host still supplies itself, and build the generation for a loaded config. Opens
+  * nothing — no database, no listener, no socket (the HTTP client is built only when a plugin or a fetch first asks for
+  * it) — so `--self-check` can call it.
   */
 object Plugins:
 
@@ -181,8 +181,8 @@ object Plugins:
   def providers: List[Plugin] = BuiltinAi.plugins
 
   /** The generation of a server or a `Deps` built without a config to load plugins from (a test's): the plugins on the
-    * class path but the source fetchers, and the host's own command-line AI runtimes, registered through the
-    * plugin host with an empty user config over `reference.conf` — so nothing is fetched (offline).
+    * class path but the source fetchers, and the host's own command-line AI runtimes, registered through the plugin
+    * host with an empty user config over `reference.conf` — so nothing is fetched (offline).
     */
   def offline: Generation = offlineWith(Nil, ConfigFactory.empty)
 
