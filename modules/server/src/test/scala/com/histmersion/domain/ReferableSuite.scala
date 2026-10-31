@@ -14,8 +14,8 @@ import com.augustnagro.magnum.*
 import java.time.Instant
 import java.util.UUID
 
-/** A reference resolves and describes the same way in memory and in the database (a scratch database of its own,
-  * gated on HISTMERSION_TEST_DB_URL): the source a reference names now, after a rename, a merge and a deletion.
+/** A reference resolves and describes the same way in memory and in the database (a scratch database of its own, gated
+  * on HISTMERSION_TEST_DB_URL): the source a reference names now, after a rename, a merge and a deletion.
   */
 class ReferableSuite extends com.histmersion.db.DbSuite:
 
@@ -58,8 +58,7 @@ class ReferableSuite extends com.histmersion.db.DbSuite:
       (a, b) =>
         db.transact {
           sql"""INSERT INTO uid_aliases (alias_uid, uid, kind)
-                SELECT f.uid, i.uid, 'source' FROM sources f, sources i WHERE f.citekey = $a AND i.citekey = $b"""
-            .update
+                SELECT f.uid, i.uid, 'source' FROM sources f, sources i WHERE f.citekey = $a AND i.citekey = $b""".update
             .run(): Unit
           sql"DELETE FROM sources WHERE citekey = $a".update.run(): Unit
         },

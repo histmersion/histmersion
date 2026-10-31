@@ -1,0 +1,29 @@
+package com.histmersion.domain.personal.seen
+
+import com.histmersion.domain.personal.MarkTime
+import com.histmersion.util.database.NewtypeColumns.given
+
+import com.augustnagro.magnum.*
+
+import java.time.Instant
+
+/** The `ui_seen` table: one mark per board. Takes the connection it runs on. */
+private[seen] object SeenRepo:
+
+  private val Iso = SqlLiteral("""'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'""")
+
+  def all(using DbCon): Map[SeenBoard, MarkTime] =
+    sql"SELECT board, to_char(seen_at AT TIME ZONE 'UTC', $Iso) FROM ui_seen"
+      .query[(SeenBoard, String)]
+      .run()
+      .map((b, at) => b -> MarkTime.parse(at))
+      .toMap
+
+  /** The mark moved forward to `at` (the database's now when none); the mark kept. */
+  def mark(board: SeenBoard, at: Option[Instant])(using DbCon): MarkTime =
+    val asked = at.map(_.toString)
+    MarkTime.parse(
+      sql"""INSERT INTO ui_seen (board, seen_at) VALUES ($board, coalesce($asked::timestamptz, now()))
+            ON CONFLICT (board) DO UPDATE SET seen_at = greatest(ui_seen.seen_at, EXCLUDED.seen_at)
+            RETURNING to_char(seen_at AT TIME ZONE 'UTC', $Iso)""".query[String].run().head
+    )

@@ -1,31 +1,29 @@
 package com.histmersion.domain.personal
 
-import com.histmersion.values.UserId
+import com.histmersion.api.personal.{MapZoom, ViewState}
+import com.histmersion.domain.{ItemKey, ItemUid}
+import com.histmersion.values.{Latitude, Longitude, Year}
 
-import com.histmersion.api.personal.Target
-
-/** A target as the tables' columns hold it: plain values, which the database driver binds. */
+/** A target as the tables' columns hold it. */
 final private[personal] case class TargetColumns(
     kind: String,
-    key: Option[String],
-    lat: Option[Double],
-    lon: Option[Double],
-    zoom: Option[Double],
-    from: Option[Long],
-    to: Option[Long],
-    view: Option[String]
-):
-  def user(u: UserId): String = u.value
+    key: Option[ItemKey],
+    uid: Option[ItemUid],
+    lat: Option[Latitude],
+    lon: Option[Longitude],
+    zoom: Option[MapZoom],
+    from: Option[Year],
+    to: Option[Year],
+    view: Option[ViewState]
+)
 
 private[personal] object TargetColumns:
-  def of(t: Target): TargetColumns =
-    TargetColumns(
-      t.kind.wire,
-      t.itemKey,
-      t.lat.map(v => v.value: Double),
-      t.lon.map(v => v.value: Double),
-      t.zoom.map(v => v.value: Double),
-      t.from.map(v => (v.value: Int).toLong),
-      t.to.map(v => (v.value: Int).toLong),
-      t.view.map(v => v.value: String)
-    )
+  def of(t: MarkTarget): TargetColumns = t match
+    case MarkTarget.Item(r) =>
+      TargetColumns(t.kind.wire, Some(r.key), r.uid, None, None, None, None, None, None)
+    case MarkTarget.Point(lat, lon, zoom, from, to) =>
+      TargetColumns(t.kind.wire, None, None, Some(lat), Some(lon), zoom, from, to, None)
+    case MarkTarget.View(state, lat, lon, zoom, from, to) =>
+      TargetColumns(t.kind.wire, None, None, lat, lon, zoom, from, to, state)
+    case MarkTarget.Span(from, to) =>
+      TargetColumns(t.kind.wire, None, None, None, None, None, Some(from), Some(to), None)

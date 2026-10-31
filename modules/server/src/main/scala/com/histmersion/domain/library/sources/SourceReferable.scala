@@ -11,4 +11,11 @@ object SourceReferable:
   val Kind: ItemKind = ItemKind("source")
 
   val Table: RecordTable =
-    RecordTable(Kind, "sources", "t.citekey", "t.title", Some("t.uid"), Some(AliasColumns("source_aliases", "alias", "citekey")))
+    RecordTable(
+      Kind,
+      "sources",
+      "t.citekey",
+      "t.title",
+      Some("t.uid"),
+      Some(AliasColumns("source_aliases", "alias", "citekey"))
+    )

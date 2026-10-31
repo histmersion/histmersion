@@ -9,8 +9,8 @@ import com.augustnagro.magnum.*
 
 /** The toolbar's notices against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise: an approval's proposal
   * and its decision both count as a change, a goal's edit does, the open ones are counted, V083 left a baseline mark
-  * for every board, and a mark only moves forward. Assertions are about this suite's own rows (other suites write
-  * approvals and goals at the same time).
+  * for every board, and each counter carries the seen mark it is given. Assertions are about this suite's own rows
+  * (other suites write approvals and goals at the same time).
   */
 class UiRepoSuite extends com.histmersion.db.DbSuite:
   private val testDb = TestDb.url
@@ -32,7 +32,26 @@ class UiRepoSuite extends com.histmersion.db.DbSuite:
   override def beforeEach(context: BeforeEach): Unit = if testDb.isDefined then tidy()
   override def afterEach(context: AfterEach): Unit = if testDb.isDefined then tidy()
 
-  private def board(b: Board) = UiRepo.counters(ds).boards.find(_.key == b.wire).getOrElse(fail(s"no ${b.wire}"))
+  /** The seen marks as the person's service keeps them (`ui_seen`, written here directly: that service is the
+    * server's).
+    */
+  private def seen(): Map[String, String] =
+    connect(ds)(
+      sql"""SELECT board, to_char(seen_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') FROM ui_seen"""
+        .query[(String, String)]
+        .run()
+        .toMap
+    )
+
+  private def markSeen(b: Board, at: String): Unit =
+    connect(ds)(
+      sql"""INSERT INTO ui_seen (board, seen_at) VALUES (${b.wire}, $at::timestamptz)
+            ON CONFLICT (board) DO UPDATE SET seen_at = greatest(ui_seen.seen_at, EXCLUDED.seen_at)""".update
+        .run(): Unit
+    )
+
+  private def board(b: Board) =
+    UiRepo.counters(ds, seen()).boards.find(_.key == b.wire).getOrElse(fail(s"no ${b.wire}"))
 
   private def now(): String =
     connect(ds)(
@@ -40,7 +59,7 @@ class UiRepoSuite extends com.histmersion.db.DbSuite:
     )
 
   test("every board is listed in order; the counted ones carry a count"):
-    val cs = UiRepo.counters(ds).boards
+    val cs = UiRepo.counters(ds, seen()).boards
     assertEquals(cs.map(_.key), Board.wires)
     assertEquals(cs.filter(_.count.isDefined).map(_.key), List("tasks", "approvals", "acquire"))
     assert(cs.forall(_.count.forall(_ >= 0)))
@@ -73,7 +92,7 @@ class UiRepoSuite extends com.histmersion.db.DbSuite:
 
   test("an approval proposed is counted and new; read, it is not; its decision is news again"):
     val t0 = now()
-    val _ = UiRepo.markSeen(ds, Board.Approvals, Some(t0))
+    markSeen(Board.Approvals, t0)
     val before = board(Board.Approvals).count.get
     val id = connect(ds)(
       sql"""INSERT INTO approvals (kind, citekey, status, proposal) VALUES ('status-change', $ck, 'contested', '{}'::jsonb)
@@ -84,7 +103,7 @@ class UiRepoSuite extends com.histmersion.db.DbSuite:
     assert(proposed.fresh, proposed.toString)
     assert(proposed.latest.exists(_ > t0), proposed.toString)
     val latest = proposed.latest.get
-    assertEquals(UiRepo.markSeen(ds, Board.Approvals, Some(latest)), latest)
+    markSeen(Board.Approvals, latest)
     val read = board(Board.Approvals)
     assertEquals(read.seen, Some(latest))
     // another suite may propose one at the same moment; ours is read either way
@@ -96,17 +115,13 @@ class UiRepoSuite extends com.histmersion.db.DbSuite:
 
   test("a goal changed after the mark is news"):
     val t0 = now()
-    val _ = UiRepo.markSeen(ds, Board.Goals, Some(t0))
+    markSeen(Board.Goals, t0)
     connect(ds)(sql"INSERT INTO goals (slug, title) VALUES ($goal, 'zz notice')".update.run())
     val g = board(Board.Goals)
     assert(g.fresh && g.latest.exists(_ > t0), g.toString)
     assertEquals(g.count, None, "goals are not counted")
 
-  test("a mark only moves forward, and no instant means now"):
-    val t0 = now()
-    val m1 = UiRepo.markSeen(ds, Board.Log, Some(t0))
-    assert(m1 >= t0)
-    assertEquals(UiRepo.markSeen(ds, Board.Log, Some("2000-01-01T00:00:00.000000Z")), m1)
-    val m2 = UiRepo.markSeen(ds, Board.Log, None)
-    assert(m2 >= m1, s"$m2 < $m1")
-    assertEquals(board(Board.Log).seen, Some(m2))
+  test("a board's counter carries the seen mark it is given, and none for a board never opened"):
+    val cs = UiRepo.counters(ds, Map(Board.Log.wire -> "2026-10-31T12:00:00.000000Z")).boards
+    assertEquals(cs.find(_.key == Board.Log.wire).flatMap(_.seen), Some("2026-10-31T12:00:00.000000Z"))
+    assertEquals(cs.find(_.key == Board.Tasks.wire).flatMap(_.seen), None)

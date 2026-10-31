@@ -1,0 +1,168 @@
+package com.histmersion.domain.personal.notes
+
+import com.histmersion.api.personal.{ItemKind as MarkKind, NoteId, NoteText}
+import com.histmersion.domain.{ItemKey, Referables}
+import com.histmersion.domain.personal.PersonalState.StoredNote
+import com.histmersion.domain.personal.{MarkTarget, MarkTime, PersonalState, SearchWords, TargetColumns, TargetLabel}
+import com.histmersion.util.database.Transactor
+import com.histmersion.values.{PageSize, UserId}
+
+import hearth.kindlings.optics.syntax.*
+
+import java.util.UUID
+import java.util.concurrent.atomic.AtomicReference
+
+/** A person's notes, each left on an item or a point on the map, which it opens back to. A target and a text reach here
+  * checked; a removed note is kept as its tombstone. An item's key and title are its owner's as they are when the notes
+  * are read.
+  */
+trait NoteService:
+  /** Last changed first, `size` of them: of one kind, on one item (by its key now or the key it was left under), those
+    * whose text, title or key hold every word.
+    */
+  def list(
+      user: UserId,
+      kind: Option[MarkKind],
+      item: Option[ItemKey],
+      words: SearchWords,
+      size: PageSize
+  ): List[Note]
+  def get(user: UserId, id: NoteId): Option[Note]
+  def add(user: UserId, target: MarkTarget, text: NoteText, title: Option[TargetLabel], at: MarkTime): Note
+
+  /** The note's new text, unless it is gone or changed since `unchangedSince`. */
+  def edit(
+      user: UserId,
+      id: NoteId,
+      text: NoteText,
+      unchangedSince: Option[MarkTime],
+      at: MarkTime
+  ): Either[NoteEditRefused, Note]
+
+  /** The note as it was before it was removed. */
+  def remove(user: UserId, id: NoteId, at: MarkTime): Option[Note]
+
+object NoteService:
+
+  def apply(db: Transactor, items: Referables): NoteService = Implementation(db, items)
+
+  private def shown(stored: List[StoredNote], items: Referables): List[Note] =
+    val described = items.describe(stored.flatMap(_.target.itemRef).toSet)
+    stored.map(Note.of(_, described))
+
+  private def page(all: List[Note], words: SearchWords, size: PageSize): List[Note] =
+    (if words.isEmpty then all else all.filter(_.matches(words))).take(size.value)
+
+  /** The key, with the uids of the records of `kind` (of every kind when none) it names now. */
+  private def noteItem(key: ItemKey, kind: Option[MarkKind], items: Referables): NoteItem =
+    val kinds = kind.filter(_.isItem).fold(items.kinds)(k => Set(MarkTarget.itemKind(k)))
+    NoteItem(key, kinds.flatMap(k => items.resolve(k, key).toOption.flatMap(_.uid)))
+
+  private def resolved(target: MarkTarget, items: Referables): MarkTarget =
+    target.itemRef.fold(target)(r => target.resolved(items.resolve(r.kind, r.key).toOption.flatMap(_.uid))).withoutZoom
+
+  final private class Implementation(db: Transactor, items: Referables) extends NoteService:
+
+    def list(
+        user: UserId,
+        kind: Option[MarkKind],
+        item: Option[ItemKey],
+        words: SearchWords,
+        size: PageSize
+    ): List[Note] =
+      val about = item.map(noteItem(_, kind, items))
+      val rows = db.read(NoteRepo.list(user, kind, about, Option.when(words.isEmpty)(size)))
+      page(shown(rows.flatMap(_.stored(user)), items), words, size)
+
+    def get(user: UserId, id: NoteId): Option[Note] =
+      db.read(NoteRepo.live(user, id).flatMap(_.stored(user))).map(s => shown(List(s), items).head)
+
+    def add(user: UserId, target: MarkTarget, text: NoteText, title: Option[TargetLabel], at: MarkTime): Note =
+      val t = resolved(target, items)
+      val stored = db.transact:
+        val id = NoteRepo.insert(user, TargetColumns.of(t), text, title, at)
+        NoteRepo
+          .live(user, id)
+          .flatMap(_.stored(user))
+          .getOrElse(throw IllegalStateException(s"note ${id.value} not read back"))
+      shown(List(stored), items).head
+
+    def edit(
+        user: UserId,
+        id: NoteId,
+        text: NoteText,
+        unchangedSince: Option[MarkTime],
+        at: MarkTime
+    ): Either[NoteEditRefused, Note] =
+      db.transact {
+        NoteRepo.live(user, id).flatMap(_.stored(user)) match
+          case None                                               => Left(NoteEditRefused.Missing)
+          case Some(n) if unchangedSince.exists(_ != n.updatedAt) => Left(NoteEditRefused.Changed(n.updatedAt))
+          case Some(_)                                            =>
+            NoteRepo.rewrite(user, id, text, at): Unit
+            NoteRepo.live(user, id).flatMap(_.stored(user)).toRight(NoteEditRefused.Missing)
+      }.map(s => shown(List(s), items).head)
+
+    def remove(user: UserId, id: NoteId, at: MarkTime): Option[Note] =
+      db.transact {
+        val before = NoteRepo.live(user, id).flatMap(_.stored(user))
+        before.foreach(_ => NoteRepo.tombstone(user, id, at))
+        before
+      }.map(s => shown(List(s), items).head)
+
+  /** The notes held in `state`, beside the bookmarks and read marks of the same person, by the rules the table keeps.
+    */
+  final class InMemory(
+      state: AtomicReference[PersonalState],
+      items: Referables,
+      newId: () => UUID = () => UUID.randomUUID()
+  ) extends NoteService:
+
+    private def live(s: PersonalState, user: UserId): Vector[StoredNote] =
+      s.notes.filter(n => n.user == user && n.deletedAt.isEmpty)
+
+    private def stored(user: UserId, id: NoteId): Option[StoredNote] = live(state.get, user).find(_.id == id)
+
+    private def changed(user: UserId, id: NoteId)(change: StoredNote => StoredNote): Unit =
+      state.updateAndGet(
+        _.modify(_.notes)
+          .using(_.map(n => if n.id == id && n.user == user && n.deletedAt.isEmpty then change(n) else n))
+      ): Unit
+
+    def list(
+        user: UserId,
+        kind: Option[MarkKind],
+        item: Option[ItemKey],
+        words: SearchWords,
+        size: PageSize
+    ): List[Note] =
+      val about = item.map(noteItem(_, kind, items))
+      val mine = live(state.get, user).filter(n => kind.forall(_ == n.target.kind) && about.forall(_.holds(n)))
+      page(shown(PersonalState.newestFirst(mine)(_.updatedAt, _.id.value), items), words, size)
+
+    def get(user: UserId, id: NoteId): Option[Note] = stored(user, id).map(s => shown(List(s), items).head)
+
+    def add(user: UserId, target: MarkTarget, text: NoteText, title: Option[TargetLabel], at: MarkTime): Note =
+      val id = NoteId.parse(newId().toString).fold(e => throw IllegalStateException(e), identity)
+      val note = StoredNote(user, id, resolved(target, items), text, title, at, at)
+      state.updateAndGet(_.modify(_.notes).using(_ :+ note)): Unit
+      shown(List(note), items).head
+
+    def edit(
+        user: UserId,
+        id: NoteId,
+        text: NoteText,
+        unchangedSince: Option[MarkTime],
+        at: MarkTime
+    ): Either[NoteEditRefused, Note] =
+      stored(user, id) match
+        case None                                               => Left(NoteEditRefused.Missing)
+        case Some(n) if unchangedSince.exists(_ != n.updatedAt) => Left(NoteEditRefused.Changed(n.updatedAt))
+        case Some(_)                                            =>
+          changed(user, id)(_.copy(text = text, updatedAt = at))
+          get(user, id).toRight(NoteEditRefused.Missing)
+
+    def remove(user: UserId, id: NoteId, at: MarkTime): Option[Note] =
+      val found = get(user, id)
+      found.foreach(_ => changed(user, id)(_.copy(deletedAt = Some(at), updatedAt = at)))
+      found
