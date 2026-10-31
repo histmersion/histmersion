@@ -75,7 +75,8 @@ object CarriedKindsAdapter:
       Some(TableName(table)),
       (scope, files) =>
         val (as, blobs) = lines(scope, files)
-        CarriedOut(BundleFormat.ndjson(as.map(BundleFormat.stamp(_).line)), as.map(clock).maxOption, blobs),
+        CarriedOut(BundleFormat.ndjson(as.map(BundleFormat.stamp(_).line)), as.map(clock).maxOption, blobs)
+      ,
       takes,
       steps
     )
@@ -91,7 +92,8 @@ object CarriedKindsAdapter:
       None,
       (scope, _) =>
         val as = lines(scope).toList
-        CarriedOut(BundleFormat.ndjson(as.map(BundleFormat.line(_))), as.flatMap(clock).maxOption),
+        CarriedOut(BundleFormat.ndjson(as.map(BundleFormat.line(_))), as.flatMap(clock).maxOption)
+      ,
       _ => false,
       steps
     )
@@ -275,8 +277,8 @@ object CarriedKindsAdapter:
       _.checkedAt
     )
   private val tombstones =
-    owned[BundleTombstone](Identity, set("tombstones"), List(rows(0)(_.tombstones())))(BundleRepo.tombstones(_))(
-      t => Some(t.deletedAt)
+    owned[BundleTombstone](Identity, set("tombstones"), List(rows(0)(_.tombstones())))(BundleRepo.tombstones(_))(t =>
+      Some(t.deletedAt)
     )
 
   /** Every kind, by owner. */

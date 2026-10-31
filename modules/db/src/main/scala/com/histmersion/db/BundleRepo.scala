@@ -293,7 +293,8 @@ final private[histmersion] case class BQueueRow(
     doneAt: Option[String],
     updatedAt: String
 ) derives DbCodec
-final private[histmersion] case class BTombstoneRow(uid: UUID, kind: String, origin: UUID, deletedAt: String) derives DbCodec
+final private[histmersion] case class BTombstoneRow(uid: UUID, kind: String, origin: UUID, deletedAt: String)
+    derives DbCodec
 
 // a finding's confidence reads through `DbCodec[Option[Confidence]]` (Codecs): an unknown word is "not stated"
 given DbCodec[BundleCorrection] = DbCodec.derived

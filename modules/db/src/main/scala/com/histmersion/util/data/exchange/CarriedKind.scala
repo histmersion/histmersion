@@ -8,8 +8,8 @@ import com.histmersion.values.BundleKind
 
 import com.augustnagro.magnum.DbCon
 
-/** A kind of record a bundle carries for its owner: one entry of the archive, its lines out for a scope (with the
-  * blobs they use and where their bytes are read from), the blobs it takes in, and its rows in.
+/** A kind of record a bundle carries for its owner: one entry of the archive, its lines out for a scope (with the blobs
+  * they use and where their bytes are read from), the blobs it takes in, and its rows in.
   *
   * `files` is the content-addressed store the server keeps files in (the originals stored at ingest); a kind whose
   * lines name no file ignores it.

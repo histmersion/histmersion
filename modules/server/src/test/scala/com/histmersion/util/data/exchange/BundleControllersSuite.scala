@@ -16,7 +16,10 @@ class BundleControllersSuite extends munit.FunSuite:
   test("since: an ISO-8601 moment with its offset, or nothing; anything else is a readable 400"):
     assertEquals(BundleControllers.since(None), Right(None))
     assertEquals(BundleControllers.since(Some("  ")), Right(None))
-    assertEquals(BundleControllers.since(Some("2026-10-03T09:12:00.123456Z")), Right(Some("2026-10-03T09:12:00.123456Z")))
+    assertEquals(
+      BundleControllers.since(Some("2026-10-03T09:12:00.123456Z")),
+      Right(Some("2026-10-03T09:12:00.123456Z"))
+    )
     assert(BundleControllers.since(Some("yesterday")).left.exists(_.message.contains("ISO-8601")))
     assert(BundleControllers.since(Some("2026-10-03")).isLeft)
 

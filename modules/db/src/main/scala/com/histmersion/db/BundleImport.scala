@@ -29,8 +29,8 @@ import com.histmersion.util.storage.{ByteSource, ContentStore}
   * [[Writer]] whose steps the carried kinds register, and the entry points for a bundle on disk. The transaction, the
   * lock, the plan's checks, the blob pass and the ledger are [[BundleImporter]]'s.
   *
-  * A foreign row is the local row with the same uid, or no row; what happens to it is [[BundlePlan]]'s decision, or
-  * the merge plan's. Rows are written in dependency order, with the bundle's own uids, origins and timestamps.
+  * A foreign row is the local row with the same uid, or no row; what happens to it is [[BundlePlan]]'s decision, or the
+  * merge plan's. Rows are written in dependency order, with the bundle's own uids, origins and timestamps.
   */
 object BundleImport:
 
@@ -66,8 +66,8 @@ object BundleImport:
   ): Either[String, MergeApplyResult] =
     BundleImporter.apply(ds, ByteSource.file(file), bundleSha256, opts, originals, resolutions, merge, planHash, backup)
 
-  /** What a merge leaves to do: a `/review-article` task per merged article, and a `log` entry. The articles to
-    * review, and the log entry's id.
+  /** What a merge leaves to do: a `/review-article` task per merged article, and a `log` entry. The articles to review,
+    * and the log entry's id.
     */
   def mergeTasks(
       m: BundleManifest,
@@ -556,8 +556,8 @@ object BundleImport:
               ON CONFLICT DO NOTHING""".update.run()
       }
 
-    /** Goals: the rows, their parents, then — after every goal is in (a link can name another goal's record, a
-      * schedule its own goal) — their sets.
+    /** Goals: the rows, their parents, then — after every goal is in (a link can name another goal's record, a schedule
+      * its own goal) — their sets.
       */
     def goals(): Unit =
       val goals = es.goals.filter(g => writes(g.uid))
