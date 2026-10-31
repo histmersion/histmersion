@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.data.maintenance.WriteGate
+
 import com.histmersion.util.settings.{info, ConfigSource, HotConfig}
 
 import com.histmersion.pluginhost.Generation
@@ -42,7 +44,7 @@ final class ServerGraph private (
   val queryDs: DataSource = HotDataSource(queryPool)(_.ds)
 
   /** The handlers' view: config, file and plugins from the graph at each call. */
-  def deps(maintenance: Maintenance, restart: Option[() => Unit], system: SystemContext): Deps =
+  def deps(maintenance: WriteGate, restart: Option[() => Unit], system: SystemContext): Deps =
     new Deps(
       () => graph.config.app,
       ds,

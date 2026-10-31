@@ -8,7 +8,7 @@ import com.histmersion.domain.personal.bookmarks.BookmarkService
 import com.histmersion.domain.personal.marks.Readable
 import com.histmersion.domain.personal.notes.NoteService
 import com.histmersion.domain.personal.reading.ReadingService
-import com.histmersion.server.Maintenance
+import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.values.{Latitude, Longitude, RunId, Year}
 
 import java.time.{Clock, Instant, ZoneId, ZoneOffset}
@@ -29,7 +29,7 @@ class PersonalControllersSuite extends munit.FunSuite:
 
   private val me = Caller.Local
 
-  private def fixture(maintenance: Maintenance = Maintenance(), clock: Clock = Ticking()): PersonalControllers =
+  private def fixture(maintenance: WriteGate = WriteGate(), clock: Clock = Ticking()): PersonalControllers =
     val state = AtomicReference(PersonalState())
     val items = Referables(List(Referable.InMemory(SourceReferable.Kind)))
     PersonalControllers(
@@ -140,7 +140,7 @@ class PersonalControllersSuite extends munit.FunSuite:
     assertEquals(c.listBookmarks(someone, None, None, None).map(_.size), Right(1))
 
   test("writes wait while a restore holds the maintenance lock"):
-    val m = Maintenance()
+    val m = WriteGate()
     val c = fixture(m)
     val refused = m.exclusively("restore")(Right(c.addBookmark(me, BookmarkNew(Target.item(ItemKind.Source, "zz")))))
     assert(refused.toOption.get.isLeft)

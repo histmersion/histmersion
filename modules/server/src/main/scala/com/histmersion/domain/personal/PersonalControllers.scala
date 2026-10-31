@@ -26,7 +26,7 @@ import com.histmersion.domain.{Caller, ItemKey}
 import com.histmersion.domain.personal.bookmarks.BookmarkService
 import com.histmersion.domain.personal.notes.{NoteEditRefused, NoteService}
 import com.histmersion.domain.personal.reading.{ReadingService, ReadingShow}
-import com.histmersion.server.Maintenance
+import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.values.{Offset, PageSize, UserId}
 
 import java.time.{Clock, Instant}
@@ -40,7 +40,7 @@ final class PersonalControllers(
     bookmarks: BookmarkService,
     notes: NoteService,
     reading: ReadingService,
-    maintenance: Maintenance,
+    maintenance: WriteGate,
     clock: Clock
 ):
 
