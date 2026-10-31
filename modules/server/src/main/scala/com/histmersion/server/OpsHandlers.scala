@@ -7,19 +7,8 @@ import com.histmersion.api.Lint.*
 import com.histmersion.api.Query.*
 import com.histmersion.api.Queue.*
 import com.histmersion.api.GoalPlans.{GoalView, LinkKind, Plan}
-import com.histmersion.db.{
-  AcquireCheckRepo,
-  ArticleRepo,
-  Geocoder,
-  GoalLinkRepo,
-  GoalRepo,
-  LintRepo,
-  PlaceReviewRepo,
-  PointAreaRepo,
-  QueryRepo,
-  QueueRepo,
-  SourceRepo
-}
+import com.histmersion.db.{AcquireCheckRepo, ArticleRepo, GoalLinkRepo, GoalRepo, QueryRepo, QueueRepo}
+import com.histmersion.util.data.checks.{CheckContext, CheckRulesAdapter, CheckRunner, GuardedWrite}
 
 /** The ONE implementation of the stream-2.8 operations — lint, the bookkeeping queues and the read-only query (plan
   * §5.2). Reached by REST through [[OpsRoutes]] and by MCP through [[OpsTools]]; the CLI reaches them over HTTP, like
@@ -34,39 +23,33 @@ final class OpsHandlers(deps: Deps):
 
   // ── lint ─────────────────────────────────────────────────────────────────────────────────────
 
+  /** The registered checks, run by util.data's lint runner in today's order. */
+  private val checks = CheckRunner(Deps.data.checks, CheckRulesAdapter.order, deps.transactor)
+
+  /** The rule names, in report order. */
+  def lintRules: List[String] = checks.names
+
   /** `GET /api/lint` — read-only. An unknown rule name is a 400: a typo must never read as a clean corpus.
     */
   def lint(rules: List[String]): Either[ApiError, LintReport] =
-    Lint
+    checks
       .select(rules)
       .left
       .map(m => ApiError(m))
-      .map(rs =>
-        LintRepo
-          .run(ds, rs, cfg.lint.maxItems, cfg.lint.suggestions, formatChecker, geocodeSettings, pointAreaSettings.kinds)
-      )
+      .map(rs => checks.report(rs, checkContext, cfg.lint.maxItems))
 
-  /** `place-imported-point-area`'s knobs (`places.sources.point-area-*`). */
-  private def pointAreaSettings: PointAreaRepo.Settings =
-    val src = cfg.places.sources
-    PointAreaRepo.Settings(
-      src.pointAreaKindSet.toList.sorted,
-      src.pointAreaFixBatch,
-      src.pointAreaFixSeconds.toLong * 1000L,
-      cfg.places.pointToleranceKm
-    )
-
-  /** The geocoder's knobs (`places.geocode-*`), as `finding-geocode` and its repair use them. */
-  private def geocodeSettings: Geocoder.Settings =
-    Geocoder.Settings(cfg.places.geocodePlaceholderMin, cfg.places.geocodeRepairKm, cfg.places.pointToleranceKm)
+  private def checkContext: CheckContext = CheckContext(cfg, ds, formatChecker, articleWrite)
 
   /** The formatting rules' check: the corpus-wide pass reports bare citekeys against every stored one, and leaves
     * unresolved `[[links]]` to `dangling-article-links` (one rule per fact).
     */
-  private def formatChecker: FormatChecker =
-    lazy val citekeys = SourceRepo.citekeys(ds).toSet
+  private def formatChecker(isCitekey: String => Boolean): FormatChecker =
     (text, field, article) =>
-      MarkdownLint.issues(text, field, MarkdownLint.Context(article = article, isCitekey = Some(citekeys.contains)))
+      MarkdownLint.issues(text, field, MarkdownLint.Context(article = article, isCitekey = Some(isCitekey)))
+
+  /** `article-critique-pairing`'s repair writes each article through the article patch, guarded by its token. */
+  private val articleWrite: GuardedWrite = (slug, body, token) =>
+    ArticleRepo.patch(ds, slug, ArticlePatch(body = Some(body), ifUpdatedAt = token)).isRight
 
   /** `POST /api/lint/fix` — the two repairs that are safe to make without a human: unify unambiguous short edge
     * targets, and re-chunk sources whose full-text index is missing. Both are bounded per call; `remaining > 0` means
@@ -84,70 +67,7 @@ final class OpsHandlers(deps: Deps):
   def guardedLintFix(rules: List[String] = Nil): Either[ApiError, LintFixResult] =
     maintenance.guard("lint/fix")(Right(lintFixNow(rules)))
 
-  private def lintFixNow(rules: List[String]): LintFixResult =
-    val resolved = SourceRepo.resolveEdges(ds)
-    val r = LintRepo.reindexStale(ds, cfg.limits.chunkChars, cfg.limits.reindexChars)
-    val left = if r.remaining > 0 then s", ${r.remaining} still stale" else ""
-    def asked(rule: String) = rules.exists(_.trim.equalsIgnoreCase(rule))
-    val regeocoded =
-      if !asked(FindingGeocode) then None
-      else
-        val s = geocodeSettings
-        Some(Geocoder.apply(ds, Geocoder.moves(ds, s), s.toleranceKm))
-    val placed =
-      if !asked(FindingUnplaced) then None
-      else
-        val s = geocodeSettings
-        Some(Geocoder.place(ds, Geocoder.placements(ds, s), s.toleranceKm))
-    val reviewed =
-      if !asked(PlaceKindRule) then None
-      else Some(PlaceReviewRepo.apply(ds, PlaceReviewRepo.proposals(ds), cfg.places.pointToleranceKm))
-    val relocated =
-      if !asked(PlaceGridPoint) then None
-      else Some(PlaceReviewRepo.relocate(ds, PlaceReviewRepo.relocations(ds), cfg.places.pointToleranceKm))
-    val pointAreas =
-      if !asked(PlaceImportedPointArea) then None
-      else Some(PointAreaRepo.remove(ds, pointAreaSettings))
-    // each article's paragraphs that name a disagreement partner they do not cite: the citekey
-    // appended, one patch per article guarded by its token (a concurrent writer wins; the next lint
-    // lists it again)
-    val paired =
-      if !asked(ArticleCritiquePairing) then None
-      else
-        val rs = LintRepo.pairingRepairs(ds)
-        val written = rs.filter(r =>
-          ArticleRepo.patch(ds, r.slug, ArticlePatch(body = Some(r.body), ifUpdatedAt = r.updatedAt)).isRight
-        )
-        Some((written.size, written.map(_.applied.size).sum))
-    LintFixResult(
-      applied = List(
-        s"resolve-edges: $resolved edge target(s) rewritten",
-        s"reindex: ${r.sources} source(s) → ${r.chunks} chunk(s)$left"
-      ) ++
-        regeocoded.map(n => s"$FindingGeocode: $n finding(s) moved to the place the current geocoder chooses").toList ++
-        placed.map(n => s"$FindingUnplaced: $n finding(s) given the point of the place they name").toList ++
-        reviewed.map((r, m) => s"$PlaceKindRule: $r place(s) reclassified, $m merged into their replacement").toList ++
-        relocated
-          .map(n => s"$PlaceGridPoint: $n place(s) moved from a grid square's centre to their linked record's point")
-          .toList ++
-        pointAreas.map(r => PointAreas.fixed(r.removed, r.remaining, r.findings, r.sources)).toList ++
-        paired
-          .map((a, n) =>
-            s"$ArticleCritiquePairing: $n citation(s) added to the paragraphs that name them, in $a article(s)"
-          )
-          .toList,
-      edgesResolved = resolved,
-      sourcesReindexed = r.sources,
-      chunksWritten = r.chunks,
-      remaining = r.remaining,
-      findingsRegeocoded = regeocoded.getOrElse(0),
-      findingsPlaced = placed.getOrElse(0),
-      placesReclassified = reviewed.fold(0)(_._1),
-      placesMerged = reviewed.fold(0)(_._2),
-      placesRelocated = relocated.getOrElse(0),
-      pointAreasRemoved = pointAreas.fold(0)(_.removed),
-      pointAreasRemaining = pointAreas.fold(0)(_.remaining)
-    )
+  private def lintFixNow(rules: List[String]): LintFixResult = checks.fix(rules, checkContext)
 
   /** Lint, optionally after applying the safe fixes — what `histmersion lint --fix` and the MCP tool do, so the report
     * the caller sees is the state AFTER the repair.

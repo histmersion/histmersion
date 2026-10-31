@@ -548,12 +548,8 @@ repository	server:server/OpsHandlers.scala	AcquireCheckRepo of library.acquisiti
 repository	server:server/OpsHandlers.scala	ArticleRepo of research.articles	1
 repository	server:server/OpsHandlers.scala	GoalLinkRepo of automation.goals	1
 repository	server:server/OpsHandlers.scala	GoalRepo of automation.goals	1
-repository	server:server/OpsHandlers.scala	LintRepo of util.data.checks	1
-repository	server:server/OpsHandlers.scala	PlaceReviewRepo of catalogue.places	1
-repository	server:server/OpsHandlers.scala	PointAreaRepo of catalogue.places	1
 repository	server:server/OpsHandlers.scala	QueryRepo of library.search	1
 repository	server:server/OpsHandlers.scala	QueueRepo of automation.worklists	1
-repository	server:server/OpsHandlers.scala	SourceRepo of library.sources	1
 repository	server:server/StorageProbe.scala	StatsRepo of util.data.storage	1
 repository	server:server/acquire/AcquireHandlers.scala	AssetRepo of media	1
 repository	server:server/acquire/AcquireHandlers.scala	QueueRepo of automation.worklists	1
