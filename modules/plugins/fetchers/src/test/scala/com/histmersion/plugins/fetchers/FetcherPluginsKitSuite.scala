@@ -13,8 +13,15 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
 
   private val Pdf: Array[Byte] = ("%PDF-1.5\n" + ("x" * 4096)).getBytes("ISO-8859-1")
 
-  private def load(id: String, stubs: Map[String, StubAnswer] = Map.empty, config: String = "", secrets: Map[String, String] = Map.empty) =
-    PluginHarness.load(id, config, http = HttpMode.Stub(stubs), secrets = secrets, env = Map.empty).fold(e => fail(e), identity)
+  private def load(
+      id: String,
+      stubs: Map[String, StubAnswer] = Map.empty,
+      config: String = "",
+      secrets: Map[String, String] = Map.empty
+  ) =
+    PluginHarness
+      .load(id, config, http = HttpMode.Stub(stubs), secrets = secrets, env = Map.empty)
+      .fold(e => fail(e), identity)
 
   private def json(s: String) = StubAnswer.text(s, "application/json")
 
@@ -71,7 +78,8 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
     assertEquals(h.fetch(WorkKey(archive = Some("zqbook"), format = Some("pdf"))).file.map(_.extension), Some("pdf"))
 
   test("archive-org: a lending-only item is REFUSED and never downloaded"):
-    val lent = """{"metadata":{"identifier":"zqlent","access-restricted-item":"true"},"files":[{"name":"zqlent.pdf"}]}"""
+    val lent =
+      """{"metadata":{"identifier":"zqlent","access-restricted-item":"true"},"files":[{"name":"zqlent.pdf"}]}"""
     val h = load("archive-org", Map("https://archive.org/metadata/zqlent" -> json(lent)))
     val r = h.fetch(WorkKey(archive = Some("zqlent")))
     r.outcome match
@@ -127,7 +135,9 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
     val h = load(
       "oa-landing",
       Map(
-        "https://api.datacite.org/dois/10.9999/zq" -> json("""{"data":{"attributes":{"url":"https://repo.example.ac.uk/item/1"}}}"""),
+        "https://api.datacite.org/dois/10.9999/zq" -> json(
+          """{"data":{"attributes":{"url":"https://repo.example.ac.uk/item/1"}}}"""
+        ),
         "https://repo.example.ac.uk/item/1" -> StubAnswer.text(
           """<html><head><meta name="citation_pdf_url" content="https://repo.example.ac.uk/item/1.pdf"></head></html>""",
           "text/html"

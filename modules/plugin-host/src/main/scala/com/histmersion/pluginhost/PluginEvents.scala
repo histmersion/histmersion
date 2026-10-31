@@ -1,7 +1,7 @@
 package com.histmersion.pluginhost
 
 import com.histmersion.api.{BBox, CatalogRecord, EventTaxonomy, TimeSpan}
-import com.histmersion.domain.CatalogDating
+import com.histmersion.upstreams.CatalogDating
 import com.histmersion.config.MediaConfig
 import com.histmersion.plugin.*
 
@@ -36,8 +36,59 @@ object PluginEvents:
     val undated = List(ts.notBefore, ts.beginBy, ts.endFrom, ts.notAfter).forall(_.isEmpty)
     val stated = r.central
       .filter(_ => undated)
-      .fold(r)(c => r.copy(timeSpan = CatalogDating.span(Some(CatalogDating.year(c, r.plusMinus)), None)))
-    CatalogDating.clamp(stated, limits)
+      .fold(r)(c => r.copy(timeSpan = timeSpan(CatalogDating.span(Some(CatalogDating.year(c, r.plusMinus)), None))))
+    stated.copy(timeSpan = timeSpan(CatalogDating.clamp(span(stated.timeSpan), limits)))
+
+  /** Pure: a span as the dating rules read it. */
+  def span(ts: TimeSpan): CatalogDating.Span = CatalogDating.Span(ts.notBefore, ts.beginBy, ts.endFrom, ts.notAfter)
+
+  /** Pure: a span as the host stores it. */
+  def timeSpan(s: CatalogDating.Span): TimeSpan = TimeSpan(s.notBefore, s.beginBy, s.endFrom, s.notAfter)
+
+  /** Pure: a stored record as its catalogue's event, for the catalogue to read again ([[EventCatalogue.reread]]);
+    * `None` when a stored value is one the SPI's types do not hold (a year beyond an `Int`, a position off the globe).
+    */
+  def event(r: CatalogRecord): Option[CatalogueEvent] =
+    def opt[A, B](a: Option[A])(f: A => Option[B]): Option[Option[B]] = a.fold(Some(None))(v => f(v).map(Some(_)))
+    for
+      notBefore <- opt(r.timeSpan.notBefore)(SpiValues.year)
+      beginBy <- opt(r.timeSpan.beginBy)(SpiValues.year)
+      endFrom <- opt(r.timeSpan.endFrom)(SpiValues.year)
+      notAfter <- opt(r.timeSpan.notAfter)(SpiValues.year)
+      central <- opt(r.central)(SpiValues.year)
+      lat <- opt(r.lat)(SpiValues.latitude)
+      lon <- opt(r.lon)(SpiValues.longitude)
+      wikidata <- opt(r.wikidata)(SpiValues.wikidata)
+    yield CatalogueEvent(
+      r.providerId,
+      r.url,
+      r.label,
+      r.kind,
+      notBefore,
+      notAfter,
+      beginBy,
+      endFrom,
+      lat,
+      lon,
+      r.historicity,
+      r.vei,
+      r.magnitude,
+      r.deaths,
+      wikidata,
+      r.names,
+      r.description,
+      r.group,
+      central,
+      r.plusMinus,
+      r.datingMethod,
+      r.raw
+    )
+
+  /** A stored record read again by its catalogue, without the network: the catalogue's own reading of it as the host
+    * stores a record ([[record]]), or `None` when the catalogue does not re-read (or not this record).
+    */
+  def reread(catalogue: EventCatalogue, provider: String, r: CatalogRecord): Option[CatalogRecord] =
+    event(r).flatMap(e => guard(Right(catalogue.reread(e))).toOption.flatten).flatMap(record(provider, _).toOption)
 
   /** The query a plugin catalogue is asked: the import's years (held at what a `Year` holds) and its area (left out
     * when a corner is off the globe: the host applies the area itself anyway).

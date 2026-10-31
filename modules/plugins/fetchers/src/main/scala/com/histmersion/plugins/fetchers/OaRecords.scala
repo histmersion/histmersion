@@ -4,10 +4,16 @@ import com.histmersion.plugin.{PluginHttp, PluginLog}
 import com.histmersion.upstreams.{json, OpenAlexCrossref, RepositoryLanding, UpstreamSettings, Url}
 import io.circe.Json
 
-/** The open-access indexes' records of one DOI, asked lazily and at most once per fetch, shared through the fetch's memo
-  * by the index steps and the landing step of every open-access index plugin.
+/** The open-access indexes' records of one DOI, asked lazily and at most once per fetch, shared through the fetch's
+  * memo by the index steps and the landing step of every open-access index plugin.
   */
-final class OaRecords(val doi: String, cfg: UpstreamSettings, http: PluginHttp, openalexClient: OpenAlexCrossref, log: PluginLog):
+final class OaRecords(
+    val doi: String,
+    cfg: UpstreamSettings,
+    http: PluginHttp,
+    openalexClient: OpenAlexCrossref,
+    log: PluginLog
+):
   lazy val openalex: Option[Json] = openalexClient.raw(doi).toOption
 
   /** Where DataCite says the DOI resolves — `None` for a DOI it does not register (a Crossref one). */

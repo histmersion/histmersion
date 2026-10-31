@@ -356,6 +356,22 @@ lazy val pluginsFetchers = projectMatrix
   .settings(commonDeps)
   .jvmPlatform(scalaVersions = Seq(scala3))
 
+// Histmersion's own event catalogues (events-gvp, events-noaa, events-wikidata): plugin-api and the upstreams
+// library alone, read by the host's one import loop as any catalogue; in every image, each switched off by its `enabled`
+lazy val pluginsEvents = projectMatrix
+  .in(file("modules/plugins/events"))
+  .dependsOn(upstreams, pluginTestkit % Test)
+  .settings(
+    name := "histmersion-plugins-events",
+    description := "Histmersion's own event catalogues: the GVP's eruptions, NOAA NCEI's hazards, Wikidata's events"
+  )
+  .settings(commonDeps)
+  .settings(
+    // the catalogues' captured answers, shared with the host's suites
+    Test / unmanagedResourceDirectories += (ThisBuild / baseDirectory).value / "modules" / "core" / "src" / "test" / "resources"
+  )
+  .jvmPlatform(scalaVersions = Seq(scala3))
+
 lazy val pluginHello = project
   .in(file("modules/plugin-fixtures/hello"))
   .dependsOn(pluginApi)
@@ -544,7 +560,7 @@ lazy val server = project
   .in(file("modules/server"))
   .dependsOn(core.jvm(scala3), db % "compile->compile;test->test", pluginApi, upstreams, pluginHost, pluginVaults)
   // the first-party plugins: in every image, found by ServiceLoader at run time; no server code can name their classes
-  .dependsOn(pluginsFetchers.jvm(scala3) % "runtime->compile")
+  .dependsOn(pluginsFetchers.jvm(scala3) % "runtime->compile", pluginsEvents.jvm(scala3) % "runtime->compile")
   .settings(
     name := "histmersion-server",
     description := "The server: MCP, REST and the web UI over the store; built as a native image",
@@ -884,7 +900,8 @@ lazy val web = project
 lazy val root = project
   .in(file("."))
   .aggregate(
-    (values.projectRefs ++ api.projectRefs ++ core.projectRefs ++ pluginsFetchers.projectRefs)*
+    (values.projectRefs ++ api.projectRefs ++ core.projectRefs ++ pluginsFetchers.projectRefs ++
+      pluginsEvents.projectRefs)*
   )
   .aggregate(
     config,

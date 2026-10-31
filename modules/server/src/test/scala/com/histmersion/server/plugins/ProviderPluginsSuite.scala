@@ -4,7 +4,7 @@ import com.histmersion.pluginhost.{Generation, PluginEvents, PluginHost, PluginM
 
 import com.histmersion.domain.{MediaLicence, MediaRecord}
 import com.histmersion.plugin.*
-import com.histmersion.server.events.{BuiltinCatalogues, HostEventCatalogue}
+import com.histmersion.server.events.BuiltinCatalogues
 import com.histmersion.server.media.{BuiltinMedia, MediaImporters, PluginCollection}
 import com.histmersion.server.agents.BuiltinAi
 import com.histmersion.api.VocabularyCodecs.given
@@ -83,6 +83,11 @@ class ProviderPluginsSuite extends munit.FunSuite:
       List("wikidata", "depicts", "met", "cleveland", "aic", "loc", "pleiades", "opencontext")
     )
     assertEquals(BuiltinCatalogues.ordered(g.registries.eventCatalogues.keys.toList), List("gvp", "noaa", "wikidata"))
+    // the first-party plugins' catalogues state the terms the host showed for them before they moved
+    assertEquals(
+      BuiltinCatalogues.infos(g.registries.eventCatalogues),
+      com.histmersion.domain.CatalogProvider.all.flatMap(com.histmersion.domain.CatalogProvider.info)
+    )
     assert(g.registries.sourceFetchers.isEmpty, "offline: no fetcher")
 
   test("the full built-in set: the fetchers, the collections and the catalogues; no plugin needs a setting"):
@@ -231,7 +236,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
   // ── a third-party plugin ───────────────────────────────────────────────────────────────────────
 
   test("a third-party plugin's collection and catalogue register beside the built-ins and are listed after them"):
-    val g = build(Plugins.providers :+ Portal(), portalOn)
+    val g = Plugins.offlineWith(List(Portal()), ConfigFactory.parseString(portalOn))
     assertEquals(
       g.report.plugins.find(_.id == "zq-plugin").map(_.provides),
       Some(List("media-collection:zq-portal", "event-catalogue:zq-quakes"))
@@ -309,18 +314,20 @@ class ProviderPluginsSuite extends munit.FunSuite:
   test(
     "reload: a host key (acquire.*) rebuilds the fetchers and third-party plugins, never the media/events built-ins"
   ):
-    val g1 = build(Plugins.providers :+ Portal(), portalOn)
+    val g1 = Plugins.offlineWith(List(Portal()), ConfigFactory.parseString(portalOn))
+    // the secret vaults on the class path, off: a plugin's own block or a media key leaves them as they are
+    val vaults = Set("1password", "bitwarden", "keepassxc")
     val carried = Plugins.carried(g1, List("histmersion.acquire.chain"))
     assertEquals(carried.keySet, BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds)
     // their own block rebuilds them alone
     assertEquals(
       Plugins.carried(g1, List("histmersion.plugins.media-met.enabled")).keySet,
-      BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds + "zq-plugin" - "media-met"
+      BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds ++ vaults + "zq-plugin" - "media-met"
     )
     // a media setting is no plugin key: nothing is rebuilt (the import reads it at each run)
     assertEquals(
       Plugins.carried(g1, List("histmersion.media.met.licences")).keySet,
-      BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds + "zq-plugin"
+      BuiltinMedia.pluginIds ++ BuiltinCatalogues.pluginIds ++ BuiltinAi.pluginIds ++ vaults + "zq-plugin"
     )
     assertEquals(Plugins.carried(g1, List("histmersion.plugins.order")), Map.empty)
     assertEquals(Plugins.carried(g1, List("histmersion.plugins")), Map.empty)
@@ -438,7 +445,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
     "a plugin catalogue's record is dated as the host dates its own: a stated year ± when no span, held inside the limits"
   ):
     import com.histmersion.api.TimeSpan
-    import com.histmersion.domain.CatalogDating
+    import com.histmersion.upstreams.CatalogDating
     val base = PluginEvents
       .record(
         "zq",
@@ -493,7 +500,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
       override def floorYear = throw IllegalStateException("boom")
       def parts(q: CatalogueQuery) = Nil
       def read(p: String, q: CatalogueQuery, h: PluginHttp) = Left("no")
-    import com.histmersion.domain.CatalogDating.Limits
+    import com.histmersion.upstreams.CatalogDating.Limits
     assertEquals(PluginEvents.limits(Some(floored), 2026), Limits(2026, Some(-9700L)))
     assertEquals(PluginEvents.limits(Some(throws), 2026), Limits(2026, None))
     assertEquals(PluginEvents.limits(None, 2026), Limits(2026, None))
@@ -501,8 +508,6 @@ class ProviderPluginsSuite extends munit.FunSuite:
   test("the host's own catalogues and collections are never searched through the SPI"):
     val gvp = BuiltinCatalogues.entries.head
     assertEquals((gvp.plugin, gvp.name, gvp.title), ("events-gvp", "gvp", "Smithsonian Global Volcanism Program"))
-    assert(gvp.read("x", CatalogueQuery(None, Year(0)), offline).isLeft)
-    assert(HostEventCatalogue("p", "nope").licence.value.isEmpty)
     val met = BuiltinMedia.entries.find(_.name == "met").get
     assert(met.search(MediaPlace("p", "P"), offline).isLeft)
     assertEquals(BuiltinMedia.reserved.intersect(BuiltinMedia.entries.map(_.name).toSet).size, 8)

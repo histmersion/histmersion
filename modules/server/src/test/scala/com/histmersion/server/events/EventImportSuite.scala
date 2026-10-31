@@ -56,19 +56,27 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
     else Left(s"unexpected $url")
   }
 
-  private lazy val base = AppConfig.load()
+  /** The catalogues' paces at zero, one Wikidata class: the host's own `events.*` keys, which the first-party catalogue
+    * plugins are supplied from.
+    */
+  private val text =
+    """histmersion.media.request-interval-ms = 0
+      |histmersion.events.gvp.request-interval-ms = 0
+      |histmersion.events.noaa.request-interval-ms = 0
+      |histmersion.events.wikidata { request-interval-ms = 0, api-interval-ms = 0, classes = "Q188055:siege" }
+      |""".stripMargin
+
+  private lazy val loaded: LoadedConfig =
+    AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e), identity)
+  private lazy val cfg = loaded.config
+  private lazy val plugins = com.histmersion.server.plugins.Plugins.load(loaded)
   private lazy val ds =
-    val d = testPool(base.db.copy(url = testDb.get))
+    val d = testPool(cfg.db.copy(url = testDb.get))
     Migrate.run(d)
     d
-  private lazy val cfg = base.copy(
-    media = base.media.copy(requestIntervalMs = 0),
-    events = base.events.copy(
-      gvp = base.events.gvp.copy(requestIntervalMs = 0),
-      noaa = base.events.noaa.copy(requestIntervalMs = 0),
-      wikidata = base.events.wikidata.copy(requestIntervalMs = 0, apiIntervalMs = 0, classes = "Q188055:siege")
-    )
-  )
+
+  /** The handlers' dependencies: `c` (the host's thresholds), the catalogues of the suite's generation. */
+  private def deps(c: AppConfig): Deps = Deps(c, ds, ds, plugins = plugins)
 
   private def clean(): Unit = connect(ds):
     val _ = sql"DELETE FROM events WHERE catalogue IS NOT NULL OR id LIKE 'zqei%'".update.run()
@@ -84,31 +92,31 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
 
   test("a dry run reads and counts, and stores nothing"):
     val f = http
-    val r = run(EventCatalogHandlers(Deps(cfg, ds), f), "gvp", dry = true)
+    val r = run(EventCatalogHandlers(deps(cfg), f), "gvp", dry = true)
     assertEquals((r.records, r.kept, r.created), (3, 3, 3))
     assertEquals(r.byKind, List(EventCount("eruption", 3)))
     assertEquals(EventCatalogRepo.stored(ds).count(_.catalogue), 0)
     assert(f.requests.forall(_._2.get("User-Agent").exists(ua => !ua.contains("@"))), "no e-mail in the User-Agent")
 
   test("GVP then NOAA: the same eruption is one event with both catalogue records; a rerun reads nothing again"):
-    val h = EventCatalogHandlers(Deps(cfg, ds), http)
+    val h = EventCatalogHandlers(deps(cfg), http)
     val g = run(h, "gvp", dry = false)
     assertEquals(g.created, 3)
     val n = run(h, "noaa", dry = false)
     assert(n.matchedEvents.exists(_.contains("gvp_13879")), n.matchedEvents.toString)
     assertEquals(EventCatalogRepo.catalogueRefs(ds, "gvp_13879").map(_.provider).toSet, Set("gvp", "noaa"))
     val f = http
-    val r = run(EventCatalogHandlers(Deps(cfg, ds), f), "gvp", dry = false)
+    val r = run(EventCatalogHandlers(deps(cfg), f), "gvp", dry = false)
     assertEquals((r.records, f.requests.size), (0, 0), "every window was read: nothing is asked again")
     // #6561: a wider region (here: a lower VEI floor) judged differently — every window is read again
     val wider =
       cfg.copy(events = cfg.events.copy(gvp = cfg.events.gvp.copy(regionMinVei = cfg.events.gvp.regionMinVei + 1)))
     val f2 = http
-    val r2 = run(EventCatalogHandlers(Deps(wider, ds), f2), "gvp", dry = false)
+    val r2 = run(EventCatalogHandlers(deps(wider), f2), "gvp", dry = false)
     assert(f2.requests.nonEmpty && r2.records > 0, s"thresholds changed: the windows are due again ($r2)")
 
   test("Wikidata: labels and aliases in other languages become the event's names"):
-    val h = EventCatalogHandlers(Deps(cfg, ds), http)
+    val h = EventCatalogHandlers(deps(cfg), http)
     val r = run(h, "wikidata", dry = false)
     assert(r.created >= 2, r.toString)
     val (tier, names, provider) = EventCatalogRepo.tierAndNames(ds, "wikidata_q131386").get
@@ -145,7 +153,7 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
       chunk
     )
     SourceRepo.upsert(ds, src("zqei_near2020", "# Gaul\n\nA hillfort was excavated nearby.", 4.6), chunk)
-    val h = EventCatalogHandlers(Deps(cfg, ds), http)
+    val h = EventCatalogHandlers(deps(cfg), http)
     val links = h.links("wikidata_q131386").toOption.get
     assertEquals(links.candidates.map(_.citekey).take(2), List("zqei_named2020", "zqei_near2020"))
     assert(links.candidates.head.passages.exists(_.quote == "Siege of Alesia"))
@@ -197,7 +205,7 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
       val _ = sql"""INSERT INTO finding_places (finding_id, place_id) VALUES
                       ('zqei_sites2020#0', 'wikidata_q9100001'), ('zqei_sites2020#0', 'wikidata_q9100002')""".update
         .run()
-    val h = EventCatalogHandlers(Deps(cfg, ds), http)
+    val h = EventCatalogHandlers(deps(cfg), http)
     assertEquals(h.runSiteTypes(SiteTypesRequest(dryRun = true), _ => ()).pending, 2)
     val r = h.runSiteTypes(SiteTypesRequest(), _ => ())
     assertEquals((r.asked, r.pending), (2, 0))
@@ -229,7 +237,7 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
 
   test("GVP ± 2500: held inside the present, the year, ± and method kept; --refresh reads again and refreshes"):
     val f = heklaHttp
-    val h = EventCatalogHandlers(Deps(cfg, ds), f, () => 2026L)
+    val h = EventCatalogHandlers(deps(cfg), f, () => 2026L)
     val r = h.runImport("gvp", EventImportRequest("gvp", dryRun = false, refresh = true), None, _ => ())
     assert(f.requests.nonEmpty && r.created == 1, r.toString)
     val e = event("gvp_12724")
@@ -257,7 +265,7 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
                     WHERE id = 'gvp_12724'""".update.run()
     assert(EventRepo.patch(ds, "gvp_12724", EventPatch(label = Some("Hekla, a prehistoric tephra (zqei)"))).isRight)
     val offline = FakeMediaHttp(url => Left(s"no network in a re-derivation: $url"))
-    val h = EventCatalogHandlers(Deps(cfg, ds), offline, () => 2026L)
+    val h = EventCatalogHandlers(deps(cfg), offline, () => 2026L)
     val dry = h.runRederive(Some("gvp"), dryRun = true, _ => ())
     assert(dry.changed >= 1 && dry.updated == 0, dry.toString)
     assertEquals(event("gvp_12724").timeSpan.notAfter, Some(2750L), "a dry run stores nothing")

@@ -77,15 +77,7 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
   )
 
   private def generation: Generation =
-    PluginHost.build(
-      Plugins.providers :+ ZqPlugin(),
-      ConfigFactory.parseString("histmersion.plugins.zq-plugin.enabled = true"),
-      ConfigFactory.empty,
-      Plugins.services(
-        () => new spi.PluginHttp { def get(u: String, h: Map[String, String]) = Left("no") },
-        ConfigFactory.empty
-      )
-    )
+    Plugins.offlineWith(List(ZqPlugin()), ConfigFactory.parseString("histmersion.plugins.zq-plugin.enabled = true"))
 
   private lazy val base = AppConfig.load()
   private lazy val ds =
@@ -146,15 +138,7 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
     assert(job.left.exists(_.message.contains(s"one of: gvp, noaa, wikidata, $Catalogue")), job.toString)
 
   test("the plugin switched off: its catalogue is out of the import; its events stay on the map"):
-    val off = PluginHost.build(
-      Plugins.providers :+ ZqPlugin(),
-      ConfigFactory.empty,
-      ConfigFactory.empty,
-      Plugins.services(
-        () => new spi.PluginHttp { def get(u: String, hs: Map[String, String]) = Left("no") },
-        ConfigFactory.empty
-      )
-    )
+    val off = Plugins.offlineWith(List(ZqPlugin()), ConfigFactory.empty)
     val h = EventCatalogHandlers(Deps(cfg, ds, ds, plugins = off), fake)
     assert(
       h.importJob(EventImportRequest(Catalogue, dryRun = true))
