@@ -3,8 +3,8 @@ package com.histmersion.api
 import com.histmersion.util.identity.{AliasKind, KeyWord, RecordNoun}
 import com.histmersion.values.BundleKind
 
-/** Today's kinds of renamed records, named in one table until each owner names its own: what each is called and what its
-  * identifier is called, and which bundle kind carries each.
+/** Today's kinds of renamed records, named in one table until each owner names its own: what each is called and what
+  * its identifier is called, and which bundle kind carries each.
   */
 object AliasKindsAdapter:
   private def kind(noun: String, idWord: String): AliasKind = AliasKind(RecordNoun(noun), KeyWord(idWord))

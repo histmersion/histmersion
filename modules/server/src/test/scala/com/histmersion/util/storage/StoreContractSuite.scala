@@ -83,6 +83,28 @@ abstract class StoreContractSuite extends munit.FunSuite:
     assert(s.delete(key("a")) && !s.delete(key("a")))
     assertEquals(s.deleteTree(key("nowhere")), None)
 
+  test("a reservation streamed, then overwritten in place at its head, replaces the file at its key whole"):
+    val s = fresh()
+    s.put(key("t/x.pmtiles"), utf("an older archive, longer")): Unit
+    val r = s.reserve(key("t/x.pmtiles")).toOption.get
+    Using.resource(r.output()) { out => out.write(utf("....")); out.write(utf("body")) }
+    assertEquals(r.size.value: Long, 8L)
+    r.writeAt(ByteOffset.applyUnsafe(0L), utf("head"))
+    assertEquals(s.get(key("t/x.pmtiles")).map(_.text()), Some("an older archive, longer"))
+    assertEquals(r.commit().map(_.size.value: Long), Right(8L))
+    r.close()
+    assertEquals(s.get(key("t/x.pmtiles")).map(_.text()), Some("headbody"))
+    assertEquals(s.walk().map(st => st.key.value: String), List("t/x.pmtiles"))
+
+  test("a sub-store's touch is the modification time its walk reports"):
+    val s = fresh()
+    val cache = s.sub(key("cache/tiles"))
+    cache.put(key("1/0/0.webp"), utf("x")): Unit
+    val at = Instant.parse("2021-06-01T12:00:00Z")
+    cache.touch(key("1/0/0.webp"), at)
+    assertEquals(cache.walk().map(st => (st.key.value: String, st.modified)), List(("1/0/0.webp", at)))
+    assertEquals(s.walk(key("cache")).map(_.modified), List(at))
+
   test("prune: the least recently used first, down to what may be kept; or what is older than a time"):
     val s = fresh()
     List("old" -> "2020-01-01T00:00:00Z", "mid" -> "2021-01-01T00:00:00Z", "new" -> "2022-01-01T00:00:00Z").foreach {
@@ -115,6 +137,14 @@ class DiskStoreSuite extends StoreContractSuite:
     assert(Files.isSymbolicLink(dir.resolve("link.conf")))
     assertEquals(Files.readString(real), "new")
     assert(s.usableSpace.value > 0)
+
+  test("a store at a directory is the store the storage gives for a location placed there"):
+    val dir = Files.createTempDirectory("histmersion-store")
+    val at = Storage.at(Location.Basemap, dir)
+    at.put(StoreKey.applyUnsafe("vector.pmtiles"), "v".getBytes(UTF_8)): Unit
+    val placed = Storage(_ => Some(dir), () => dir).store(Location.Basemap)
+    assertEquals(placed.get(StoreKey.applyUnsafe("vector.pmtiles")).map(_.text()), Some("v"))
+    assertEquals((at.location, at.where()), (Location.Basemap, dir.toString))
 
   test("a scratch store is removed when it closes"):
     val base = Files.createTempDirectory("histmersion-scratch")

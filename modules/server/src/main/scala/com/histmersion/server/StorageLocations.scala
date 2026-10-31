@@ -2,7 +2,6 @@ package com.histmersion.server
 
 import com.histmersion.config.{AppConfig, Environment, LoadedConfig, UserPaths}
 import com.histmersion.server.agents.AgentTrees
-import com.histmersion.server.basemap.BasemapService
 import com.histmersion.server.importers.GazetteerLoad
 import com.histmersion.util.storage.{Location, Storage}
 
@@ -26,7 +25,7 @@ object StorageLocations:
     location match
       case Location.IngestOriginals   => Some(Path.of(cfg.converter.spoolDir))
       case Location.Spool             => Some(spool(cfg.acquire.spoolDir))
-      case Location.Basemap           => Some(BasemapService.dir(cfg, env))
+      case Location.Basemap           => Some(UserPaths.basemapDir(cfg.basemap.dir, cfg.init.dataDir, env))
       case Location.Backups           => Some(Path.of(cfg.backups.dir))
       case Location.Bundles           => Some(Path.of(cfg.bundles.dir))
       case Location.GazetteerExtracts => Some(GazetteerLoad.paths(cfg, env).extracts)

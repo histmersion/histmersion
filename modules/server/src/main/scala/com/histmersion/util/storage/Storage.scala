@@ -25,6 +25,11 @@ object Storage:
   /** Stores on disk: `roots` says where each location is now, `temp` where scratch stores are made. */
   def apply(roots: Location => Option[Path], temp: () => Path): Storage = Implementation(roots, temp)
 
+  /** The store of `location` over the directory `root`, for the composition root and the tools that are handed a path
+    * (a test's temporary directory, a tool's argument).
+    */
+  def at(location: Location, root: Path): Store = DiskStore(location, root)
+
   final private class Implementation(roots: Location => Option[Path], temp: () => Path) extends Storage:
     def find(location: Location): Option[Store] = roots(location).map(DiskStore(location, _))
 

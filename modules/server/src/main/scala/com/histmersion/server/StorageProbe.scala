@@ -6,7 +6,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.StatsRepo
 import com.histmersion.server.agents.AgentTrees
-import com.histmersion.server.basemap.BasemapService
 import com.histmersion.server.importers.GazetteerLoad
 
 import java.nio.file.{Files, Path}
@@ -82,7 +81,14 @@ object StorageProbe:
       Some(Location.at("gazetteer", "gazetteer extracts (cache)", "caches", gaz.extracts)),
       gaz.legacy.map(Location.at("gazetteer-data", "gazetteer folder (data)", "caches", _)),
       Some(Location.at("gazetteer-lpf", "gazetteer LPF drop folder", "caches", gaz.lpf)),
-      Some(Location.at("basemap", "terrain base map (cache)", "caches", BasemapService.dir(cfg, env))),
+      Some(
+        Location.at(
+          "basemap",
+          "terrain base map (cache)",
+          "caches",
+          UserPaths.basemapDir(cfg.basemap.dir, cfg.init.dataDir, env)
+        )
+      ),
       p.home.map(Location.at("install", "install (binaries, Postgres, converter)", "install", _)),
       p.home.map(h => Location.at("converter", "OCR converter (Python, models)", "install", h.resolve("converter"))),
       p.home.map(h => Location.at("relink-kit", "plugin relink kit", "install", h.resolve("kit"))),

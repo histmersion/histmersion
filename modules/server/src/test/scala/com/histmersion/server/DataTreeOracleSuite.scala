@@ -4,7 +4,8 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.db.{DbSuite, Migrate, TestDb}
 import com.histmersion.util.jobs.JobRepo
-import com.histmersion.server.basemap.{BasemapFixtures, BasemapService, BasemapServiceSuite, RangeHttp}
+import com.histmersion.util.basemap.{BasemapFixtures, BasemapServiceSuite, RangeHttp}
+import com.histmersion.util.storage.Reservation
 import org.ekrich.config.ConfigFactory
 import ox.supervised
 
@@ -157,7 +158,7 @@ class DataTreeOracleSuite extends DbSuite:
         else if url == "fake://ne/rivers.geojson" then Right(BasemapServiceSuite.Rivers)
         else v.text(url)
       def bytes(url: String, o: Long, l: Long) = pick(url).bytes(url, o, l)
-      def download(url: String, o: Long, l: Long, to: Path) = pick(url).download(url, o, l, to)
+      def download(url: String, o: Long, l: Long, to: Reservation) = pick(url).download(url, o, l, to)
       override def file(url: String) =
         val Sea = "fake://sea/(\\d+)/(\\d+)/(\\d+).png".r
         url match
@@ -169,7 +170,7 @@ class DataTreeOracleSuite extends DbSuite:
     def await(id: String, left: Int = 400): JobInfo =
       val j = JobRepo.get(ds, id).getOrElse(fail(s"no job $id"))
       if j.isTerminal || left == 0 then j else { Thread.sleep(25); await(id, left - 1) }
-    val svc = BasemapService(Deps(cfg, ds), () => router, _ => Long.MaxValue / 4)
+    val svc = BasemapWiring.service(Deps(cfg, ds), () => router, _ => Long.MaxValue / 4)
     def fetched(q: BasemapFetchQuery): Unit =
       val j = await(svc.fetch(q).fold(e => fail(e.message), _.id))
       assert(j.succeeded, j.toString)
