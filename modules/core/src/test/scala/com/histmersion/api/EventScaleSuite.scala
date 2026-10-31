@@ -8,6 +8,7 @@ import com.histmersion.domain.given
 
 import io.circe.parser.decode
 import io.circe.syntax.*
+import com.histmersion.util.data.exchange.BundleFormat
 
 /** An event's scale (#1440): parsing, the defaults from the kind, the sub-event rule, the place's kind and the
   * geometry; the point an event can be given; the years it covers on the map; the Markdown.

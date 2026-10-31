@@ -10,15 +10,24 @@ import com.histmersion.domain.MergeText.MinHash
 import com.augustnagro.magnum.*
 import java.io.InputStream
 import java.nio.charset.StandardCharsets.UTF_8
-import java.nio.file.{Files, Path}
+import java.nio.file.Path
 import java.util.UUID
 import javax.sql.DataSource
+import com.histmersion.util.data.TableName
+import com.histmersion.util.data.exchange.{
+  BundleFormat,
+  BundleReader,
+  BundleScope,
+  BundleTar,
+  CarriedKinds,
+  MergePlans,
+  MergeRuleSet
+}
+import com.histmersion.util.storage.{ByteSource, ContentStore}
 
 /** What this collection knows that a merge plan needs (docs/research-merge-import.md §5–§6, milestone M3): the plan's
-  * input stage. [[MergePlanner]] is the pure rest.
-  *
-  * Read inside the caller's transaction — `merge plan` in a read-only `REPEATABLE READ` snapshot ([[planFile]]),
-  * `bundle import` in its own write transaction, so the plan it checks is the plan of the state it writes over.
+  * input stage — its rows, labels, ledger, redirects, matched places and periods, article histories and OCR bodies.
+  * [[MergePlanner]] is the pure rest; [[MergePlans]] puts the two together.
   */
 object MergeState:
 
@@ -28,9 +37,10 @@ object MergeState:
       es: BundleEntities,
       m: BundleManifest,
       readProblems: List[String],
-      originals: Originals,
+      originals: ContentStore,
       chunkChars: Int = 0,
-      cfg: Option[MergeSettings] = None
+      cfg: Option[MergeSettings] = None,
+      referable: List[TableName] = MergeRuleSet.transition.referableTables(CarriedKinds.transition)
   )(using DbCon): Input =
     val inst = BundleRepo.instance
     val schema = BundleRepo.schemaVersion
@@ -126,7 +136,7 @@ object MergeState:
     val referenced = localized.references.map(_.uid)
     val asked = (localUids ++ referenced ++ labels.citekeys.values ++ labels.aliases.values).distinct
     val tombstoned = sql"SELECT uid FROM tombstones WHERE uid = ANY(${ids(asked)}::uuid[])".query[UUID].run().toSet
-    val live = liveUids(referenced.distinct)
+    val live = liveUids(referenced.distinct, referable)
     val placeIds = (es.events.flatMap(_.placeId) ++ placeMatches.values).distinct
     val places =
       if placeIds.isEmpty then Set.empty[String]
@@ -242,7 +252,7 @@ object MergeState:
   /** The plan's issues with their geometries (hex EWKB from the planner) turned into GeoJSON, which the review screen
     * draws — one query for every geometry of the plan.
     */
-  private[db] def withGeoJson(p: MergePlan)(using DbCon): MergePlan =
+  def withGeoJson(p: MergePlan)(using DbCon): MergePlan =
     val hexes =
       p.issues.flatMap(_.detail.flatMap(_.place)).flatMap(x => x.leftGeometry.toList ++ x.rightGeometry.toList).distinct
     if hexes.isEmpty then p
@@ -270,22 +280,26 @@ object MergeState:
         )
       )
 
-  /** The uids, among `uids`, of rows that exist here (of the kinds a line can refer to). */
-  private[db] def liveUids(uids: List[UUID])(using DbCon): Set[UUID] =
-    if uids.isEmpty then Set.empty
+  /** The uids, among `uids`, of rows that exist here, in the tables of the kinds a line can refer to. */
+  private[db] def liveUids(uids: List[UUID], tables: List[TableName])(using DbCon): Set[UUID] =
+    if uids.isEmpty || tables.isEmpty then Set.empty
     else
       val us = ids(uids)
-      sql"""SELECT uid FROM sources WHERE uid = ANY($us::uuid[]) UNION ALL
-            SELECT uid FROM articles WHERE uid = ANY($us::uuid[]) UNION ALL
-            SELECT uid FROM assets WHERE uid = ANY($us::uuid[]) UNION ALL
-            SELECT uid FROM events WHERE uid = ANY($us::uuid[]) UNION ALL
-            SELECT uid FROM goals WHERE uid = ANY($us::uuid[])""".query[UUID].run().toSet
+      Sql
+        .of(
+          tables.map(t => s"SELECT uid FROM ${t.value} WHERE uid = ANY(?::uuid[])").mkString(" UNION ALL "),
+          tables.map(_ => Param.A(us))*
+        )
+        .frag
+        .query[UUID]
+        .run()
+        .toSet
 
   /** MinHash signatures of the OCR bodies `wanted` names (by sha256): this collection's from the database, the bundle's
     * from one pass over its blobs. Only bodies of pairs whose score they can change are asked for
     * ([[MergePlanner.sketchesWanted]]).
     */
-  def sketches(file: Path, in: Input, wanted: Set[String], size: Int)(using DbCon): Map[String, MinHash] =
+  def sketches(bundle: ByteSource, in: Input, wanted: Set[String], size: Int)(using DbCon): Map[String, MinHash] =
     if wanted.isEmpty then Map.empty
     else
       val here = in.sources
@@ -301,12 +315,12 @@ object MergeState:
         }
         .toMap
       val there = wanted -- here.keySet
-      here ++ (if there.isEmpty then Map.empty else bundleSketches(file, there, size))
+      here ++ (if there.isEmpty then Map.empty else bundleSketches(bundle, there, size))
 
   /** The OCR bodies `wanted` names (by sha256), as text: this collection's from the database, the bundle's from one
     * pass over its blobs ([[MergePlanner.bodiesWanted]]).
     */
-  def bodies(file: Path, in: Input, wanted: Set[String])(using DbCon): Map[String, String] =
+  def bodies(bundle: ByteSource, in: Input, wanted: Set[String])(using DbCon): Map[String, String] =
     if wanted.isEmpty then Map.empty
     else
       val here = in.sources
@@ -322,11 +336,10 @@ object MergeState:
         }
         .toMap
       val there = wanted -- here.keySet
-      here ++ (if there.isEmpty then Map.empty else blobTexts(file, there))
+      here ++ (if there.isEmpty then Map.empty else blobTexts(bundle, there))
 
-  private def blobTexts(file: Path, wanted: Set[String]): Map[String, String] =
-    val in = java.io.BufferedInputStream(Files.newInputStream(file), 1 << 16)
-    try
+  private def blobTexts(bundle: ByteSource, wanted: Set[String]): Map[String, String] =
+    bundle.read { in =>
       val tar = BundleTar.Reader(in)
       // a bounded walk: one step per tar entry, and the reader ends (or fails) at the end of the file
       @annotation.tailrec
@@ -340,11 +353,10 @@ object MergeState:
                 case Some(sha) => loop(acc + (sha -> String(tar.readAll(), UTF_8)))
                 case None      => loop(acc)
       loop(Map.empty)
-    finally in.close()
+    }
 
-  private def bundleSketches(file: Path, wanted: Set[String], size: Int): Map[String, MinHash] =
-    val in = java.io.BufferedInputStream(Files.newInputStream(file), 1 << 16)
-    try
+  private def bundleSketches(bundle: ByteSource, wanted: Set[String], size: Int): Map[String, MinHash] =
+    bundle.read { in =>
       val tar = BundleTar.Reader(in)
       // a bounded walk: one step per tar entry, and the reader ends (or fails) at the end of the file
       @annotation.tailrec
@@ -358,44 +370,17 @@ object MergeState:
                 case Some(sha) => loop(acc + (sha -> MergeText.minHash(String(tar.readAll(), UTF_8), size)))
                 case None      => loop(acc)
       loop(Map.empty)
-    finally in.close()
+    }
 
-  /** `merge plan`: read the bundle, gather this collection's state in one read-only snapshot, plan. */
+  /** `merge plan` of a bundle on disk ([[MergePlans.planFile]]). */
   def planFile(
       ds: DataSource,
       file: Path,
       resolutions: MergeResolutions,
       cfg: MergeSettings,
-      originals: Originals,
+      originals: ContentStore,
       chunkChars: Int = 0
   ): Either[String, MergePlan] =
-    val loaded = withFile(file)(BundleReader.read(_, hashBlobs = false))
-    loaded.manifest match
-      case None    => Left(("not a readable bundle" :: loaded.problems).mkString("; "))
-      case Some(m) =>
-        Right(transact(ds) {
-          sql"SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY".update.run()
-          withGeoJson(plan(file, m, loaded, resolutions, cfg, originals, chunkChars)._2.plan)
-        })
+    MergePlans.planFile(ds, ByteSource.file(file), resolutions, cfg, originals, chunkChars)
 
-  /** The plan, inside the caller's transaction. `chunkChars` places a re-anchored attestation in its FTS chunk;
-    * `merge plan` and `merge apply` must pass the same value, or their plan hashes differ.
-    */
-  private[db] def plan(
-      file: Path,
-      m: BundleManifest,
-      loaded: BundleReader.Loaded,
-      resolutions: MergeResolutions,
-      cfg: MergeSettings,
-      originals: Originals,
-      chunkChars: Int = 0
-  )(using DbCon): (Input, MergePlanner.Result) =
-    val input0 = load(loaded.entities, m, loaded.problems, originals, chunkChars, Some(cfg))
-    val sk = sketches(file, input0, MergePlanner.sketchesWanted(input0, cfg), cfg.minhashSize)
-    val input = input0.copy(bodies = bodies(file, input0, MergePlanner.bodiesWanted(input0, sk, resolutions, cfg)))
-    (input, MergePlanner.plan(input, sk, resolutions, cfg))
-
-  private[db] def withFile[A](file: Path)(f: InputStream => A): A =
-    val in = java.io.BufferedInputStream(Files.newInputStream(file), 1 << 16)
-    try f(in)
-    finally in.close()
+  private[db] def withFile[A](file: Path)(f: InputStream => A): A = ByteSource.file(file).read(f)

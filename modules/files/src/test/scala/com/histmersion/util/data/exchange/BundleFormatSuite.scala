@@ -1,0 +1,199 @@
+package com.histmersion.util.data.exchange
+
+import com.histmersion.api.*
+import com.histmersion.api.given
+
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+import java.nio.charset.StandardCharsets.UTF_8
+import java.util.UUID
+import com.histmersion.values.{BundleKind, SourceStatus}
+
+/** The pure half of the `.hmx` bundle: the tar container, canonical lines and revs, the bundle id, manifest checks, the
+  * bundle's kinds and the import report.
+  */
+class BundleFormatSuite extends munit.FunSuite:
+
+  private val U1 = UUID.fromString("01920000-0000-7000-8000-000000000001")
+  private val U2 = UUID.fromString("01920000-0000-7000-8000-000000000002")
+  private val U3 = UUID.fromString("01920000-0000-7000-8000-000000000003")
+  private val I = UUID.fromString("01910000-0000-7000-8000-0000000000aa")
+
+  private def goal(slug: String, updated: String = "2026-10-03T09:00:00.000000Z", notes: Option[String] = None) =
+    BundleGoal(
+      U1,
+      I,
+      slug,
+      "Title",
+      "planned",
+      notes,
+      List("b", "a"),
+      Nil,
+      Some(BundleRange(Some(-1650), None)),
+      None,
+      "2026-10-01T00:00:00.000000Z",
+      updated
+    )
+
+  // ── tar ──────────────────────────────────────────────────────────────────────────────────────
+
+  private def tar(entries: (String, Array[Byte])*): Array[Byte] =
+    val out = ByteArrayOutputStream()
+    val w = BundleTar.Writer(out)
+    entries.foreach((n, b) => w.bytes(n, b).fold(e => fail(e), identity))
+    w.finish()
+    out.toByteArray
+
+  private def untar(b: Array[Byte]): List[(String, String)] =
+    val r = BundleTar.Reader(ByteArrayInputStream(b))
+    Iterator
+      .continually(r.next().fold(e => fail(e), identity))
+      .takeWhile(_.isDefined)
+      .flatten
+      .map(e => e.name -> String(r.readAll(), UTF_8))
+      .toList
+
+  test("tar: what is written is read back, in order, whatever the sizes (0, 1, 512, 513 bytes)"):
+    val es = List("a" -> "", "b/c" -> "x", "d" -> ("y" * 512), "e" -> ("z" * 513))
+    assertEquals(untar(tar(es.map((n, s) => n -> s.getBytes(UTF_8))*)), es)
+
+  test("tar: the same entries give the same bytes (no timestamps, owners or modes vary)"):
+    val es = List("manifest.json" -> "{}".getBytes(UTF_8), Bundle.blobPath("ab" * 32) -> Array[Byte](1, 2, 3))
+    assert(java.util.Arrays.equals(tar(es*), tar(es*)))
+
+  test("tar: a header is ustar, 512 bytes, checksummed; a bad checksum or name is refused"):
+    val h = BundleTar.header("manifest.json", 10).fold(e => fail(e), identity)
+    assertEquals(h.length, 512)
+    assertEquals(String(h.slice(257, 262), UTF_8), "ustar")
+    assertEquals(BundleTar.parseHeader(h), Right(Some(BundleTar.Entry("manifest.json", 10))))
+    assert(BundleTar.parseHeader(h.updated(0, 'M'.toByte)).isLeft)
+    assertEquals(BundleTar.parseHeader(new Array[Byte](512)), Right(None))
+    assert(BundleTar.header("x" * 101, 1).isLeft)
+    assert(BundleTar.header("x", -1).isLeft)
+
+  test("tar: an entry that writes more or less than it declared is an error"):
+    val w = BundleTar.Writer(ByteArrayOutputStream())
+    assert(w.entry("a", 3)(_.write(Array[Byte](1, 2))).isLeft)
+
+  test("tar: a truncated archive is an error, not a silent short read"):
+    val b = tar("a" -> ("q" * 4000).getBytes(UTF_8))
+    val r = BundleTar.Reader(ByteArrayInputStream(b.take(b.length / 2)))
+    val outcome = scala.util.Try(r.next().flatMap(_ => scala.util.Try(r.readAll()).toEither.left.map(_.getMessage)))
+    assert(outcome.isFailure || outcome.get.isLeft || r.next().isLeft)
+
+  test("blob paths: content-addressed and fanned out; anything else is not a blob"):
+    val sha = "0f" * 32
+    assertEquals(Bundle.blobPath(sha), s"blobs/sha256/0f/$sha")
+    assertEquals(Bundle.blobSha(Bundle.blobPath(sha)), Some(sha))
+    assertEquals(Bundle.blobSha(s"blobs/sha256/aa/$sha"), None)
+    assertEquals(Bundle.blobSha("entities/sources.ndjson"), None)
+
+  // ── lines and revs ───────────────────────────────────────────────────────────────────────────
+
+  test("a line is canonical: keys sorted, no whitespace, absent fields left out, the rev added"):
+    val s = BundleFormat.stamp(goal("g"))
+    assert(s.line.startsWith("""{"createdAt":"""), s.line)
+    assert(!s.line.contains("notes"), s.line) // None is absent, not null
+    assert(!s.line.contains(" "), s.line)
+    assert(s.line.contains(s""""rev":"${s.rev}""""))
+    assertEquals(s.rev.length, 64)
+
+  test("the rev covers the content, not the timestamp: same content → same rev"):
+    assertEquals(
+      BundleFormat.stamp(goal("g")).rev,
+      BundleFormat.stamp(goal("g", updated = "2030-01-01T00:00:00.000000Z")).rev
+    )
+    assertNotEquals(BundleFormat.stamp(goal("g")).rev, BundleFormat.stamp(goal("g", notes = Some("n"))).rev)
+    // a rev field already set is replaced, never trusted
+    assertEquals(BundleFormat.stamp(goal("g").copy(rev = "bogus")).rev, BundleFormat.stamp(goal("g")).rev)
+
+  test("decoding a line checks its rev; a tampered line is reported"):
+    val line = BundleFormat.stamp(goal("g")).line
+    assertEquals(BundleFormat.decodeLine[BundleGoal](line, stamped = true).map(_.slug), Right("g"))
+    val tampered = line.replace("\"Title\"", "\"Other\"")
+    assert(BundleFormat.decodeLine[BundleGoal](tampered, stamped = true).left.exists(_.contains("does not match")))
+    assert(BundleFormat.decodeLine[BundleGoal]("{not json", stamped = true).isLeft)
+
+  test("content uuids: deterministic, version 8, RFC variant"):
+    val u = BundleFormat.contentUuid(Seq("a", "b"))
+    assertEquals(u, BundleFormat.contentUuid(Seq("a", "b")))
+    assertNotEquals(u, BundleFormat.contentUuid(Seq("a", "c")))
+    assertEquals(u.version, 8)
+    assertEquals(u.variant, 2)
+
+  test("compatibility: a newer format or schema is refused, an older one accepted, each reason given"):
+    val m = BundleManifest(
+      Bundle.Format,
+      Bundle.FormatVersion,
+      "33",
+      U1,
+      BundleInstance(I),
+      None,
+      None,
+      Nil,
+      BundleBlobs(0, 0),
+      BundleReference(0, "", 0, "")
+    )
+    assertEquals(BundleFormat.compatible(m, Some("33")), Nil)
+    assertEquals(BundleFormat.compatible(m, Some("40")), Nil)
+    assert(BundleFormat.compatible(m, Some("32")).exists(_.contains("newer than this server")))
+    assertEquals(BundleFormat.compatible(m.copy(format = "x", formatVersion = 99), Some("33")).size, 2)
+
+  test("file checks list every missing, unexpected and differing file"):
+    val f = BundleFileInfo("entities/goals.ndjson", 1, 10, "a")
+    val m = BundleManifest(
+      Bundle.Format,
+      1,
+      "33",
+      U1,
+      BundleInstance(I),
+      None,
+      None,
+      List(f, BundleFileInfo("entities/queue.ndjson", 0, 0, "e")),
+      BundleBlobs(0, 0),
+      BundleReference(0, "", 0, "")
+    )
+    val ps = BundleFormat.checkFiles(m, Map(f.path -> f.copy(sha256 = "b"), "entities/x.ndjson" -> f))
+    assertEquals(ps.size, 3, ps.mkString("\n"))
+
+  // ── entities ─────────────────────────────────────────────────────────────────────────────────
+
+  test("kinds: wire names match the tombstone trigger's, files are distinct"):
+    assertEquals(
+      BundleKind.values.toList.map(_.wire),
+      List(
+        "source",
+        "finding",
+        "article",
+        "article-version",
+        "asset",
+        "asset-link",
+        "attestation",
+        "event",
+        "goal",
+        "queue-item",
+        "place",
+        "period"
+      )
+    )
+    assertEquals(BundleFiles.all.distinct.size, BundleFiles.all.size)
+    BundleKind.values.foreach(k => assertEquals(BundleKind.fromWire(k.wire), Some(k)))
+
+  test("markdown: an import report says what it did, and lists every problem"):
+    val r = BundleImportResult(
+      U1,
+      BundleInstance(I, Some("work")),
+      dryRun = false,
+      applied = false,
+      List(BundleKindCounts(BundleKind.Source, inserted = 2)),
+      0,
+      List("source x: clash"),
+      Nil,
+      Nil
+    )
+    val md = BundleMarkdown.importResult(r)
+    assert(md.startsWith("**Refused**"), md)
+    assert(md.contains("- source x: clash"), md)
+    assert(md.contains("work ("), md)
+    assert(
+      BundleMarkdown.importResult(r.copy(problems = Nil, applied = true, counts = Nil)).contains("Nothing to change")
+    )

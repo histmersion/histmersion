@@ -11,6 +11,7 @@ import MergePlanner.{Input, Labels, LedgerEntry}
 
 import java.util.UUID
 import com.histmersion.values.{BundleKind, DecisionKind, IssueKind, IssueSeverity, SourceStatus}
+import com.histmersion.util.data.exchange.BundleFormat
 
 /** A crafted pair of collections, in memory (docs/research-merge-import.md §8): "work" exported a bundle, "home" plans
   * it. One case per row of the scenario catalogue the pure planner can see. The database twin of this fixture is

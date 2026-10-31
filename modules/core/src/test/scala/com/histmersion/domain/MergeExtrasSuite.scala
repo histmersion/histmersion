@@ -1,5 +1,6 @@
 package com.histmersion.domain
 
+import com.histmersion.util.data.exchange.{BundlePlan, MergeResolutionsFile}
 import com.histmersion.config.*
 import com.histmersion.files.*
 import com.histmersion.api.*

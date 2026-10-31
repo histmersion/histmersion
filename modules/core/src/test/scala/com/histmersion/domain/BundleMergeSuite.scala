@@ -6,6 +6,7 @@ import com.histmersion.files.*
 
 import java.util.UUID
 import com.histmersion.values.BundleKind
+import com.histmersion.util.data.exchange.BundlePlan
 
 /** The merge's side of the `.hmx` bundle: localizing the event-catalogue sets, folding two events, and the import
   * decisions.

@@ -45,3 +45,11 @@ class DataContributionsSuite extends DbSuite:
     val owned = Deps.data.tables.map(_._2.name.value)
     assertEquals(schema.filterNot(owned.contains), Nil, "tables no owner registered")
     assertEquals(owned.filterNot(schema.contains), Nil, "registered tables the schema does not have")
+
+  test("today's registry carries every entry of the bundle format once, and a merge rule for every kind of record"):
+    val carried = exchange.CarriedKinds(Deps.data.carried)
+    assertEquals(carried.inBundleOrder.map(_.entry.value), com.histmersion.api.BundleFiles.all)
+    assertEquals(
+      Deps.data.mergeRules.map(_.kind).sortBy(_.ordinal),
+      com.histmersion.values.BundleKind.values.toList
+    )

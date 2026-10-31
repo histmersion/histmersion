@@ -13,6 +13,8 @@ import java.nio.file.{Files, Path}
 import javax.sql.DataSource
 import com.histmersion.values.{IssueKind, PlaceKind, SourceStatus}
 import io.scalaland.chimney.dsl.*
+import com.histmersion.util.data.exchange.{BundleFormat, BundleReader}
+import com.histmersion.util.data.exchange.{BundleExport, MergeRepo}
 
 /** What a bundle carries and a merge decides beyond M5, against real Postgres (docs/research-merge-import.md §7.8): a
   * collection's own places and named periods (V052) and not its seeds, a goal's plan, links and schedules (#881, V054),

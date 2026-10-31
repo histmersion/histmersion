@@ -11,6 +11,8 @@ import java.util.UUID
 import javax.sql.DataSource
 import com.histmersion.values.{BundleKind, Confidence, DecisionKind, IssueKind, IssueSeverity, SourceStatus}
 import io.scalaland.chimney.dsl.*
+import com.histmersion.util.data.exchange.BundleFormat
+import com.histmersion.util.data.exchange.{BundleExport, BundleScope}
 
 /** `merge plan` against real Postgres (docs/research-merge-import.md §8, milestone M3): the crafted pair of
   * collections, "work" and "home", built through the repositories in two databases of their own; work's bundle planned
