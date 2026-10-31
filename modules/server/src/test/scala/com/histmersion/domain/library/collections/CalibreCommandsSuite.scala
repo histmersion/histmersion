@@ -5,6 +5,7 @@ import com.histmersion.config.*
 import com.histmersion.db.SourceRepo
 import com.histmersion.server.{Composition, OfflineConverter}
 import com.histmersion.values.SourceStatus
+import com.histmersion.plugins.calibre.CalibreFixture
 import ox.supervised
 
 import java.nio.charset.StandardCharsets.UTF_8
@@ -12,11 +13,11 @@ import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 
 /** Every `histmersion calibre …` command, run end to end over a fixture library: a server on port 0 over a database of
-  * this suite's own, seeded with sources, and the CLI as a separate process (its stdout, stderr and exit code are what a
-  * person sees), with the fake `calibredb` and the logging `sqlite3` of [[CalibreFixture]] — whose argument logs are
-  * part of the transcript. Writes run against a COPY of the fixture library. The transcript is
-  * `calibre/commands.txt`, compared byte for byte (`HISTMERSION_UPDATE_TRAFFIC=1` rewrites it); only what differs
-  * between runs is normalised: the scratch directories, the server's port, job ids and timestamps.
+  * this suite's own, seeded with sources, and the CLI as a separate process (its stdout, stderr and exit code are what
+  * a person sees), with the fake `calibredb` and the logging `sqlite3` of [[CalibreFixture]] — whose argument logs are
+  * part of the transcript. Writes run against a COPY of the fixture library. The transcript is `calibre/commands.txt`,
+  * compared byte for byte (`HISTMERSION_UPDATE_TRAFFIC=1` rewrites it); only what differs between runs is normalised:
+  * the scratch directories, the server's port, job ids and timestamps.
   */
 class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
   private val testDb = com.histmersion.db.TestDb.url
@@ -33,7 +34,24 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
   override protected def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
 
   private def source(ck: String, title: String, authors: List[String], year: Option[Int]) =
-    Source(ck, title, authors, None, year, None, SourceStatus.Current, Nil, Nil, Nil, None, None, None, None, None, None)
+    Source(
+      ck,
+      title,
+      authors,
+      None,
+      year,
+      None,
+      SourceStatus.Current,
+      Nil,
+      Nil,
+      Nil,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None
+    )
 
   /** The sources the commands act on; `stored` ones get an original in the spool. */
   private def seed(ds: javax.sql.DataSource, spool: Path, chunk: Int): Unit =
@@ -47,12 +65,21 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
           sql"UPDATE sources SET sha256 = $sha WHERE citekey = ${s.citekey}".update.run(): Unit
     put(
       source("zzcal_linked", "Bronze Age tin and its trade", List("Stocker, Sharon R."), Some(2019))
-        .copy(doi = Some("10.1/zzcal.1"), topics = List("tin", "trade"), provenance = Some("unpaywall"),
-          calibreId = Some("1"), summary = Some("Tin routes.")),
+        .copy(
+          doi = Some("10.1/zzcal.1"),
+          topics = List("tin", "trade"),
+          provenance = Some("unpaywall"),
+          calibreId = Some("1"),
+          summary = Some("Tin routes.")
+        ),
       stored = true
     )
-    put(source("zzcal_shared_a", "The Linear B tablets", List("Michael Ventris"), Some(1956)).copy(calibreId = Some("2")))
-    put(source("zzcal_shared_b", "Linear B, the tablets", List("John Chadwick"), Some(1956)).copy(calibreId = Some("2")))
+    put(
+      source("zzcal_shared_a", "The Linear B tablets", List("Michael Ventris"), Some(1956)).copy(calibreId = Some("2"))
+    )
+    put(
+      source("zzcal_shared_b", "Linear B, the tablets", List("John Chadwick"), Some(1956)).copy(calibreId = Some("2"))
+    )
     put(source("zzcal_missing", "A lost book", List("Lost Author"), Some(1990)).copy(calibreId = Some("99")))
     put(source("zzcal_drift", "The original title", List("Original Author"), Some(2005)).copy(calibreId = Some("3")))
     put(source("zzcal_junk", "Real title", List("Real Author"), Some(2011)).copy(calibreId = Some("4")))
@@ -70,8 +97,10 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
       stored = true
     )
     put(source("zzcal_nolink", "Not linked", List("No Link"), Some(2016)).copy(provenance = Some("calibre")))
-    put(source("zzcal2001_collision", "Collision of keys", List("Jane Zzcal"), Some(2001)).copy(provenance =
-      Some("calibre")))
+    put(
+      source("zzcal2001_collision", "Collision of keys", List("Jane Zzcal"), Some(2001))
+        .copy(provenance = Some("calibre"))
+    )
 
   /** One step of the scenario: a CLI command (with the host-side originals directory or not), or a change made through
     * the server between two commands.
@@ -176,7 +205,8 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
     )
     seed(ds, spool, cfg.limits.chunkChars)
     val transcript = supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0, OfflineConverter(), plugins = CalibreCommandsSuite.plugins(lib))
+      val b = Composition
+        .server(cfg, "127.0.0.1", 0, OfflineConverter(), plugins = CalibreCommandsSuite.plugins(lib))
         .start()
       val url = s"http://127.0.0.1:${b.port}"
       try
@@ -253,18 +283,25 @@ object CalibreCommandsSuite:
   private lazy val classPath: String =
     @scala.annotation.tailrec
     def urls(l: ClassLoader, acc: List[String]): List[String] = l match
-      case null                     => acc
+      case null                       => acc
       case u: java.net.URLClassLoader =>
         urls(u.getParent, acc ++ u.getURLs.toList.map(x => Path.of(x.toURI).toAbsolutePath.toString))
       case other => urls(other.getParent, acc)
-    (urls(getClass.getClassLoader, Nil) ++ System.getProperty("java.class.path").split(java.io.File.pathSeparator))
-      .distinct
+    (urls(getClass.getClassLoader, Nil) ++ System
+      .getProperty("java.class.path")
+      .split(java.io.File.pathSeparator)).distinct
       .mkString(java.io.File.pathSeparator)
 
   def cli(args: List[String], env: Map[String, String], cwd: Path): (Int, String, String) =
     val launcher = Path.of(System.getProperty("java.home"), "bin", "java").toString
     val pb = new ProcessBuilder(
-      (List(launcher, "--sun-misc-unsafe-memory-access=allow", "-cp", classPath, "com.histmersion.cli.histmersionCli") ++ args).asJava
+      (List(
+        launcher,
+        "--sun-misc-unsafe-memory-access=allow",
+        "-cp",
+        classPath,
+        "com.histmersion.cli.histmersionCli"
+      ) ++ args).asJava
     )
     pb.environment().clear()
     pb.environment().putAll(env.asJava)

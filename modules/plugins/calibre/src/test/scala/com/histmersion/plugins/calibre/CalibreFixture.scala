@@ -1,4 +1,4 @@
-package com.histmersion.domain.library.collections
+package com.histmersion.plugins.calibre
 
 import io.circe.Json
 import io.circe.syntax.*
@@ -75,8 +75,13 @@ object CalibreFixture:
       List("pdf"),
       cover = true
     ),
-    Book(2, "The Linear B tablets", List("Michael Ventris", "John Chadwick"), "1956-01-01T00:00:00+00:00", formats =
-      List("pdf")),
+    Book(
+      2,
+      "The Linear B tablets",
+      List("Michael Ventris", "John Chadwick"),
+      "1956-01-01T00:00:00+00:00",
+      formats = List("pdf")
+    ),
     Book(
       3,
       "A drifted title",
@@ -139,8 +144,11 @@ object CalibreFixture:
       val bookDir = Files.createDirectories(dir.resolve(b.path))
       val files = b.formats.map { ext =>
         val f = bookDir.resolve(s"Book ${b.id}.$ext")
-        Files.write(f, (if ext == "pdf" then "%PDF-1.4\n" else "PK\u0003\u0004") .getBytes(UTF_8) ++
-          s"book ${b.id} ${"x" * 2048}".getBytes(UTF_8))
+        Files.write(
+          f,
+          (if ext == "pdf" then "%PDF-1.4\n" else "PK\u0003\u0004").getBytes(UTF_8) ++
+            s"book ${b.id} ${"x" * 2048}".getBytes(UTF_8)
+        )
         f.toString
       }
       val cover = Option.when(b.cover) {
@@ -196,7 +204,9 @@ object CalibreFixture:
             s"INSERT INTO books_publishers_link (book, publisher) VALUES (${b.id}, ${publishers(p)})"
           ) ++ b.tags.map(t => s"INSERT INTO books_tags_link (book, tag) VALUES (${b.id}, ${tags(t)})") ++
           b.comments.map(c => s"INSERT INTO comments (book, text) VALUES (${b.id}, ${q(c)})") ++
-          b.identifiers.map((k, v) => s"INSERT INTO identifiers (book, type, val) VALUES (${b.id}, ${q(k)}, ${q(v)})") ++
+          b.identifiers.map((k, v) =>
+            s"INSERT INTO identifiers (book, type, val) VALUES (${b.id}, ${q(k)}, ${q(v)})"
+          ) ++
           b.formats.map(f =>
             s"INSERT INTO data (book, format, name) VALUES (${b.id}, ${q(f.toUpperCase)}, ${q(s"Book ${b.id}")})"
           )

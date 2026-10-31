@@ -15,7 +15,8 @@ final case class Registries(
     mediaCollections: ListMap[String, MediaCollection] = ListMap.empty,
     eventCatalogues: ListMap[String, EventCatalogue] = ListMap.empty,
     aiProviders: ListMap[String, AiProvider] = ListMap.empty,
-    gazetteerSources: ListMap[String, GazetteerSource] = ListMap.empty
+    gazetteerSources: ListMap[String, GazetteerSource] = ListMap.empty,
+    sourceCollections: ListMap[String, SourceCollection] = ListMap.empty
 ):
   def provides: List[String] =
     secretVaults.keys.toList.map(k => s"${Registries.SecretVault}:$k") ++
@@ -23,7 +24,8 @@ final case class Registries(
       mediaCollections.keys.toList.map(k => s"${Registries.MediaCollection}:$k") ++
       eventCatalogues.keys.toList.map(k => s"${Registries.EventCatalogue}:$k") ++
       aiProviders.keys.toList.map(k => s"${Registries.AiProvider}:$k") ++
-      gazetteerSources.keys.toList.map(k => s"${Registries.GazetteerSource}:$k")
+      gazetteerSources.keys.toList.map(k => s"${Registries.GazetteerSource}:$k") ++
+      sourceCollections.keys.toList.map(k => s"${Registries.SourceCollection}:$k")
 
   /** Every registry, the other's entries after this one's. */
   def ++(other: Registries): Registries =
@@ -33,7 +35,8 @@ final case class Registries(
       mediaCollections ++ other.mediaCollections,
       eventCatalogues ++ other.eventCatalogues,
       aiProviders ++ other.aiProviders,
-      gazetteerSources ++ other.gazetteerSources
+      gazetteerSources ++ other.gazetteerSources,
+      sourceCollections ++ other.sourceCollections
     )
 
 object Registries:
@@ -43,4 +46,5 @@ object Registries:
   val EventCatalogue = "event-catalogue"
   val AiProvider = "ai-provider"
   val GazetteerSource = "gazetteer-source"
+  val SourceCollection = "source-collection"
   val empty: Registries = Registries()
