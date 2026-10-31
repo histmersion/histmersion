@@ -10144,6 +10144,9 @@
       ]
     },
     {
+      "type": "com.histmersion.api.personal.ItemKind[]"
+    },
+    {
       "type": "com.histmersion.api.personal.MapZoom$package$MapZoom$",
       "fields": [
         {
@@ -14889,30 +14892,6 @@
       ]
     },
     {
-      "type": "com.histmersion.domain.personal.BookmarkRow$",
-      "fields": [
-        {
-          "name": "derived$DbCodec$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.domain.personal.MarkRow$",
-      "fields": [
-        {
-          "name": "derived$DbCodec$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.domain.personal.NoteRow$",
-      "fields": [
-        {
-          "name": "derived$DbCodec$lzy1"
-        }
-      ]
-    },
-    {
       "type": "com.histmersion.domain.personal.PersonalTools$BookmarksInput$",
       "fields": [
         {
@@ -14941,10 +14920,26 @@
       ]
     },
     {
-      "type": "com.histmersion.domain.personal.UnreadDbRow$",
+      "type": "com.histmersion.domain.personal.bookmarks.BookmarkRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy2"
+          "name": "derived$DbCodec$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.personal.notes.NoteRow$",
+      "fields": [
+        {
+          "name": "derived$DbCodec$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.personal.reading.MarkRow$",
+      "fields": [
+        {
+          "name": "derived$DbCodec$lzy1"
         }
       ]
     },
@@ -15088,15 +15083,13 @@
           "name": "personal$lzy1"
         },
         {
-          "name": "settings$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.server.McpTools$",
-      "fields": [
+          "name": "referables$lzy1"
+        },
         {
-          "name": "given_Configuration$lzy1"
+          "name": "seenMarks$lzy1"
+        },
+        {
+          "name": "settings$lzy1"
         }
       ]
     },
@@ -16742,6 +16735,14 @@
       "fields": [
         {
           "name": "openLibraryClient$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.util.mcp.ToolInputs$",
+      "fields": [
+        {
+          "name": "configuration$lzy1"
         }
       ]
     },

@@ -1,6 +1,6 @@
 # Domain model, package by feature, first-party plugins out of the server (refactor step 3, design)
 
-Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12.** Written 2026-10-30 on master
+Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13.** Written 2026-10-30 on master
 58de5489 (branch `domain-design`); revised after the user's reviews of §3: domains above features, measured;
 `personal` with its own interface; `library`, `research`, `catalogue`, `media` named; acquisition and OCR
 dissolved (2026-10-30); automation as a generic workflow engine fed by the domains, data management and file
@@ -1468,3 +1468,121 @@ failed (2 skipped, 1 ignored). `relink-test.sh` 56 and `kit-scripts-test.sh` 65 
 browser suite (Chromium) against a JVM server from this branch on an empty `*_test` database: 127 of 129 passed;
 the two failures are the known ones (`#7381` goal stage colours needs goals, the map-start settings test passed when
 run again).
+
+## 13. Slice 2 as built (personal, the template, 2026-10-31)
+
+Branch `refactor-s2` from master 6fcea4f0. Four commits of code and this record. `ContractSnapshotSuite` and
+`CliHelpSnapshotSuite` held byte for byte after every commit: no endpoint, tool, command, setting or table changed.
+
+**The one intended text change (#8010).** `pluginTool` and `pluginResolver` print their own names in the usage and
+error lines (`usage: pluginTool describe …`, `pluginResolver: <error>`). No snapshot covers either text (the CLI help
+snapshot is the `histmersion` command tree), and no script or suite matches them.
+
+**`util.mcp`.** `McpOut` (a tool's Markdown answer and its refusal) and `ToolInputs` (the decoding settings of tool
+arguments: Scala defaults honoured, unknown arguments refused) moved from the composition root to a supporting area,
+so a feature's `…Tools` names no composition type. `McpTools` re-exports the given; the four other tool groups import it
+from `util.mcp`.
+
+**`Referable` in the shared kernel.**
+
+| piece | module, package | what it is |
+|---|---|---|
+| `ItemKind`, `ItemKey`, `ItemUid`, `ItemRef`, `Described`, `RecordState` | core, `domain` | a reference to a record of another domain, and how it shows now |
+| `Referable` (with `InMemory`), `Referables` | server, `domain` | the interface, its in-memory twin (rename, merge, delete), the registry by kind |
+| `RecordTable`, `AliasColumns`, `TableReferable` | server, `util.identity` | resolve and describe over an owner's table: key and alias, uid, `uid_aliases` (followed up to 16 merges), `tombstones` |
+| `SourceReferable` | `domain.library.sources` | `source`: citekey, `source_aliases`, uid |
+| `ArticleReferable` | `domain.research.articles` | `article`: slug, `article_aliases`, uid |
+| `CatalogueReferable` | `domain.catalogue` | `event` (id, `event_aliases`, uid) and `place` (id, `place_aliases`, no uid) |
+| `PictureReferable` | `domain.media.assets` | `picture`: the asset's uid, shown by its caption |
+| `GoalReferable` | `domain.automation.goals` | `goal`: slug, `goal_aliases`, uid |
+
+`Readable` (`domain.personal.marks`, the interface package any domain may name) lists what a person has not marked
+read; `SourceReadable` and `ArticleReadable` implement it with today's order (`lower(title)`, then the key), told only
+the keys and uids the person marked.
+
+**Personal.** `domain.personal` holds the shared types (`MarkTarget` — `Item(ItemRef)`, `Point`, `View`, `Span` —,
+`MarkTime`, `TargetLabel`, `SearchWords`, `PersonalState`), `PersonalControllers`, `PersonalRoutes` and
+`PersonalTools`; the features are `bookmarks`, `notes`, `reading` and `seen`, each a service trait with a private
+`Implementation` over a `Transactor` and a public `InMemory` over the shared `PersonalState`, a `private[<feature>]`
+repository taking the connection, and rows typed with the generic column codecs (`BookmarkId`, `NoteId`, `ItemKey`,
+`ItemUid`, `Latitude`, `MapZoom`, `Year`, `ViewState`, `BookmarkLabel`, `NoteText`, `TargetLabel`). Every service
+method takes the `UserId`; every controller method takes the `Caller` (`Caller.person`: an automated run has no marks
+and is refused); `PersonalRoutes` and the tools pass `Caller.Local`. The clock is the composition's `Clock`.
+`ItemTitles`, `PersonalRules` (its functions went to `MarkTime`, `TargetLabel`, `SearchWords`, `MarkTarget`,
+`BookmarkLabel.tidy`, `NoteText.tidy`) and the per-row joins are gone. `ui_seen` is personal's `seen` (Q30): the
+toolbar counters read the marks through `SeenService` and pass them to `UiRepo.counters`, which no longer joins the
+table; the forward-only rule moved from `UiRepoSuite` to the seen contract.
+
+**Pull (Q21).** A list reads the marks, then asks `Referables.describe` once per owner for the batch. A rename
+shows the new key and title (the uid stored with the mark), a merge shows the survivor (`uid_aliases`), a deletion
+shows the key and name stored with the mark (`tombstones`). A mark made before its item existed is described by its
+key. A word search over bookmarks and notes matches the label or text, the title and the key **as described**: the
+list is read whole, described, filtered, then cut to the page, which is today's result exactly (see deviations). A
+note list narrowed to an item matches the stored key or any uid that key names now. Nothing writes on read.
+
+**Contract suites.** `BookmarkServiceContractSuite` (4 scenarios), `NoteServiceContractSuite` (1),
+`ReadingServiceContractSuite` (1), `SeenServiceContractSuite` (1), each run on `InMemory` and on a scratch database
+(`PersonalServiceContract`), with a source renamed, merged and deleted under the marks; `ReferableSuite` runs the same
+on `Referable.InMemory` and `SourceReferable`, and every owner's SQL on the database. `PersonalControllersSuite` runs
+over the in-memory services; `PersonalTypesSuite` covers the pure rules.
+
+**Listing speed.** A scratch `*_test` database with 3 000 sources (100 renamed with aliases), 500 articles, 1 000
+events, 2 000 places, 200 goals; 3 000 bookmarks of every kind, 1 000 notes, 2 300 read marks. Service calls, median
+of 21 after 5 warm-ups (ms):
+
+| call | before (joins) | after (describe) |
+|---|---:|---:|
+| bookmarks, newest 200 | 1.1 | 3.2 |
+| bookmarks, 1 000 | 4.2 | 7.9 |
+| bookmarks of sources, 200 | 1.0 | 1.5 |
+| bookmarks, two words | 5.3 | 15.9 |
+| notes, newest 200 | 0.9 | 1.0 |
+| notes on one source | 1.4 | 0.4 |
+| read marks, read 200 | 3.1 | 3.2 |
+| read marks, recently opened 20 | 1.1 | 0.5 |
+| read marks, all 1 000 | 4.8 | 7.9 |
+| not read yet, sources page 200 | 267.4 | 4.5 |
+| not read yet, articles page 200 | 8.8 | 1.0 |
+
+Every call stays under 20 ms; "Not read yet" over sources is 60 times faster, because the owner's query is now a
+plain `NOT (key = ANY(…) OR uid = ANY(…))` instead of a correlated `NOT EXISTS … OR …` over `read_marks`.
+
+**Architecture.** 9 rows left `exceptions.tsv`, all `direction`: 7 `McpOut`/`McpTools` into the composition root
+(personal 2, library 1, automation 2, catalogue 2), `ItemTitles → Goal`, and `api/Queue.scala → personal: Note` (a
+name collision that ends because `Note` is now defined in two personal places). One row left `places.tsv`
+(`McpOut`). Two personal rows stay: `api/personal/ItemKind.scala` names `Goal` and `Place` — the wire enum's cases,
+which the name rule reads as automation's and the catalogue's types. The enum is the OpenAPI contract and stays.
+
+**Deviations from §3.9.**
+
+- `Referable` takes no `DbCon`: each owner reads on a connection of its own through its `Transactor`, so personal's
+  `InMemory` services can be given `Referable.InMemory` (§6.3) without a database. A list costs one connection
+  checkout per owner; the figures above include it.
+- `Described` is `(key, title, state)`: the key the record goes by now is what every reader needs; `at`, `years` and
+  `route` come with the first reader that needs them (goal links, asset links, attestations). `title` is optional
+  (none once deleted).
+- The state type is `RecordState`, not `ItemState`: core's `ManagerPolicy` imports `api.Managers.ItemState` by
+  wildcard in the same package, which a kernel `ItemState` would make ambiguous.
+- The word search reads the person's whole list and filters after `describe`, instead of matching a stored label
+  refreshed on read: it keeps today's results (the title and key as they are now), needs no write on a read, and
+  measured 16 ms for 3 000 bookmarks.
+- Catalogue implements one `CatalogueReferable` for events and places, in `domain.catalogue`, so five domains give five
+  implementers.
+- Visible only where today's join answered nothing: a merged item shows its survivor (Q21), a picture shows its
+  caption, a mark made before its item existed shows the item's title, a read source stays read under a key it was
+  renamed to. A stored row that cannot make a target (a point without its position) is left out instead of shown
+  half-empty; writes never make one.
+
+**Native image.** No wire codec or schema changed; the new rows and tuples are Magnum's compile-time `DbCodec`s, the
+uid columns use Magnum's `UUIDCodec` (already read natively by the bundle repository), and the newtype columns are
+casts. A tracing-agent run (`sbt server/run` from this branch on an empty `*_test` database, scratch settings, data
+and cache, port 18080; the personal endpoints and the `bookmarks` tool by hand, then the browser suite) added the
+lazy-val fields Scala 3 reads reflectively: the three rows' derived `DbCodec`s, `ToolInputs.configuration`,
+`Handlers.referables` and `seenMarks`, and the wire `ItemKind[]`. The entries of the five deleted holders (the old
+personal rows and `McpTools`' given) were taken out by hand. The CLI's metadata is unchanged: no wire record changed.
+
+**Tests.** `just test-quick` (every module) on a throwaway database: 4 590 tests, none failed (1 skipped, 1
+ignored). The browser suite (Chromium) against the traced JVM server on an empty `*_test` database: 126 of 129 passed;
+`#7381` goal stage colours is the known one (no goals), the icon menus and the map-start settings test passed when
+run alone, and `marks.test.mjs` passed whole (13 of 13) when run again.
+
