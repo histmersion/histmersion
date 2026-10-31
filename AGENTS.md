@@ -19,9 +19,9 @@ values ── the newtypes every layer speaks of: Citekey, Year, Period, Doi, Wi
 api   ── the CONTRACT on the wire (JVM + JS): wire records, Tapir endpoint defs, circe codecs + schemas,
          Markdown, and the helpers they need.   NO database code, NO side effects.   depends on values ONLY
 config ── AppConfig and its readers (sconfig, Kindlings), reference.conf.   JVM only.   depends on values ONLY
-files ── the local files client and server exchange or keep (package `files`): the `.hmx` bundle's tar and
-         canonical JSON, the merge resolution file, the source and article notes of the Markdown mirror
-         (frontmatter, export), the plugin set, a directory's size.
+files ── the local files client and server exchange or keep: the `.hmx` bundle's tar and canonical JSON and
+         the merge resolution file (`util.data.exchange`), the Markdown mirror's layout and frontmatter
+         (`util.data.mirror`) and the source and article notes (package `files`), the plugin set.
          JVM only (snakeyaml).                                     depends on api ONLY
 core  ── the DOMAIN (package `domain`): the logic server and db run on. JVM only.
          NO database code, NO side effects.   depends on values, api, files — never config (its tests only)

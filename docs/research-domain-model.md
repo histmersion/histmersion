@@ -1,6 +1,6 @@
 # Domain model, package by feature, first-party plugins out of the server (refactor step 3, design)
 
-Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16.** Written 2026-10-30 on master
+Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17.** Written 2026-10-30 on master
 58de5489 (branch `domain-design`); revised after the user's reviews of §3: domains above features, measured;
 `personal` with its own interface; `library`, `research`, `catalogue`, `media` named; acquisition and OCR
 dissolved (2026-10-30); automation as a generic workflow engine fed by the domains, data management and file
@@ -2011,3 +2011,128 @@ symlinked file; `histmersion config set` natively; a relink.
 **Tests.** After `sbt clean`, `just test-quick` with every module named, on a throwaway database: 4 901 tests, none
 failed (2 skipped, 1 ignored). The DB-gated oracle and the suites of the moved areas ran uncached.
 
+
+## 17. Slice 6 as built (data management, 2026-10-31)
+
+Branch `refactor-s6` from master 9ebc38cc: the oracle first, then the registry, then three streams (backup, maintenance
+and diagnostics; checks and the Markdown mirror; the bundle and merge mechanism), merged. `ContractSnapshotSuite` and
+`CliHelpSnapshotSuite` held byte for byte after every commit; no snapshot was rewritten.
+
+**The oracles.**
+
+| oracle | what it records | result |
+|---|---|---|
+| `DataOracleSuite` (server, DB; `oracle/data/*.txt`, `HISTMERSION_UPDATE_ORACLE=1` rewrites them) | a crafted pair of collections over HTTP: work's whole bundle and the part since the shared history (every entry and line), its import into an empty collection (the result, every row), home merging work's bundle after both went on — changed findings, a renamed citekey, a paragraph both edited, a deleted event and goal — (the session, plan, resolution file, apply job, merges, the merge, the ledger, every row of home), a backup of work restored into an empty database (every row equal), the backups kept (`keep = 2`), the lint report of every rule and the safe fixes on a copy, every source and article note, About's counts, jobs and storage. Uids are written as the record they name, instance ids as the collection, clocks, revisions, plan hashes, dump digests and disk sizes by a placeholder | identical after every commit |
+| the realistic copy (scratch, not committed) | a `*_test` database restored from the newest live dump (16 GB): About (JSON and Markdown), `lint --json`, the `export <dir>` tree with every file's digest, the whole bundle and the part changed since 2026-10-27 (every entry with its size and digest, the manifest without its moment and id), `bundle verify`, a backup restored into another `*_test` database (a digest per table of both), `lint --fix` on a copy, the whole bundle imported into an empty `*_test` database (the result and a digest per table), and a merge: a small database made from the part, a second one importing it and going on (a finding changed, a citekey renamed, an event deleted, a paragraph edited, the same paragraph edited on the first side), the second's bundle planned, decided and applied on a copy of the first (the plan, the resolution file, the apply, the merges, the merge, the ledger, every row afterwards), the backups pruned to `keep = 2` | see below |
+
+The realistic copy ran on the unchanged code (a classpath frozen at 9ebc38cc's build) and on this branch, with a
+sandbox that refuses every connection but loopback, scratch homes and settings, and the converter pointed at nothing.
+A whole-database export, import, verify, restore and `lint --fix` run past the HTTP listener's 60-second idle cut
+(tapir's `NettyConfig.idleTimeout`, unchanged here), so those five ran the endpoints' own controller code through a
+scratch driver instead of over HTTP; the CLI's `bundle export` also sets no read timeout of its own (sttp's one-minute
+default), unlike every other CLI call. Both are older than this slice and left as they are.
+
+Results, before against after, over 30 recorded outputs: 12 byte-identical (`lint --json`, the `lint --fix` report,
+the export tree's digests, the whole and changed-since bundle listings, the per-table checksums of the export and
+the bundle import among them); the other 18 equal once what a run mints is masked — run and merge ids, clocks,
+durations, dump file names, free disk space, the commit About names, a dump's size (±2 bytes of pg_dump's header) and
+the pretty-printer's spacing of the scratch driver's JSON. The per-table checksums after the import, the restore and
+the merge differ only in `agent_managers` (the manager's heartbeat) and `flyway_schema_history` (`installed_on`). The
+merge's 122 672 rows: 188 lines differ, every one a minted id, a dump name or a clock. A first, whole-file comparison
+script ran the shared machine out of memory (2026-10-31); the comparison was redone streaming, line by line.
+
+The oracle's first record depended on the machine and the second: two dumps taken in one second get a `-2` suffix,
+and About measured directories under the home directory the test runs with. The suite now gives every configurable
+directory a scratch path and writes the home directory as `HOME`, a suffix as part of `STAMP` and a file count as `N`;
+it was recorded again on the unchanged mechanism and agreed three times in a row before anything moved.
+
+**The registry** (`util.data`, server module; `DataOwner` and `TableName` in db). `DataContribution` as §3.6 has it,
+plus `backup` (what a dump covers and what guards a restore); `DataContributions.of` refuses an owner registered twice
+and a table claimed twice, and keeps the owners' order: automation, catalogue, media, library, research, personal,
+`util.data`, `util.jobs`, `util.identity`, `util.database`. `TablesAdapter` lists every table's owner (90 tables;
+`DataContributionsSuite` checks every table of the migrated schema has exactly one); `queue_items` is automation's
+(the work-list kernel), the acquire list being library's rows in it. `TransitionContributions` builds each owner's
+contribution from one adapter per member until the owner's slice registers its own; `Deps.data` is the registry.
+
+**Backup** (`util.data.backup`). `BackupService` (trait, `Implementation`, `InMemory`) dumps into a reservation of
+`Store(Backups)` (`<name>.part`, committed on success) and restores through `util.process`; the client tools are found
+in the store of `backups.pg-bin-dir`, then the `PATH` directories. Registered: no owner's store goes into a dump (as
+before); the library guards a restore with `sources` ("source"). `BackupJobs` carries its work with `WorkCarrier`.
+
+**Maintenance** (`util.data.maintenance`). `WriteGate` is the maintenance lock (`Deps.maintenance` keeps its name);
+vacuum runs through `BackgroundJob` and may vacuum the registered tables the database has; `PgRelocation` works over a
+store and `Processes`; `ReadOnlyPool` moved here. `CacheSpec` and `MaintenanceTask` registered: the catalogue's map
+tiles, undated cells and the base map's on-demand caches, media's thumbnails, the storage figures; the library's
+`reindex` task (from `domain.library.sources`), which the `reindex` endpoint runs.
+
+**Diagnostics** (`util.data.diagnostics`). `StorageFigures` builds About › Storage from the registered stores (in
+About's order, `ShownStore`) and the install's places, measured through `Store.measure`; `DiagnosticsService` gives
+each owner's figures, the database's size, its largest registered tables and per-owner table sizes; About's corpus
+counts and job counts are the owners' figures. `StorageProbe` and `DirSize` (in the server) are gone; `DirSize` lives
+on in the CLI, its last user. New locations for what About measured as paths: `DatabaseCluster`, `CorpusFolder`,
+`GazetteerFolder`, `GazetteerDrop`, `Converter`, `Toolchain`, `CodexSessions`, `DataDirectory`, `CacheDirectory`,
+`Postgres`, `PostgresTools`, `Executables`.
+
+**Checks** (`util.data.checks`). `CheckRunner` selects, runs and reports the registered `CheckRule`s on one read and
+applies their `SafeFix`es in a stated order (`CheckOrder`: the report in `Lint.names`' order, the fixes resolve-edges
+and reindex on every call, then the named ones); `CheckRun` (db) reads each input several rules share once.
+`CheckRulesAdapter` registers the 34 rules: library 23, research 6, catalogue 4, media 1. `LintRepo` keeps the per-kind
+SQL and the per-kind fix parts that left `OpsHandlers`; a fix that writes an article reaches it as `CheckContext.write`.
+
+**Mirror** (`util.data.mirror`; `export` is a Scala 3 keyword). The layout (`MirrorPlacement`) and the frontmatter
+writer (`Frontmatter`) are in the files module, where the CLI's `export` resolves its paths; `MirrorExport` notes are
+registered for the library's sources and research's articles; `Mirror` runs the export endpoints over the registry.
+
+**Exchange** (`util.data.exchange`). Moved: `BundleTar`, `BundleFormat`, `BundleReader`, `MergeResolutionsFile` (files),
+`Diff3`, `BundlePlan` (core), `BundleScope`, `MergeRepo` (with the import's generic writes: the lock, the importing
+flag, the ledger and `merges` row, tombstones, touches, redirects, remembered decisions) and `BundleExport` (db, over
+every carried kind's lines and blob readers in one REPEATABLE READ transaction). New: `BundleImporter` (the import's
+and merge apply's transaction and generic blob pass), `MergePlans` (the plan and `planFile`), `CarriedKind`/
+`CarriedKinds` (entries in the format's order, each carried exactly once), `MergeRules`/`MergeRuleSet`, `BundleService`
+over `Store(Bundles)` and the originals' content store, `BundleControllers` (in place of `BundleHandlers`),
+`MergeApplyJobs` through `util.jobs.MergeApplyRuns`. `CarriedKindsAdapter` registers 26 kinds (library 6, research 3,
+catalogue 11, media 2, automation 3, `util.identity` 1) with their lines, clocks, blobs, tables and import steps, whose
+stages and ranks reproduce the import's write order; `MergeRulesAdapter` the 12 record kinds' ledger labels. Per-kind
+code stays at its path for slices 8–11: `BundleImport.Writer` (one step per kind), `MergeState`'s matching,
+`BundleRepo`'s readers, `MergePlanner`, `MergeFold`, `MergeSettings`, `BundleEntities`.
+
+**Architecture.** Deletions only: `exceptions.tsv` 633 → 578 rows — direction 24 (among them `BundleImport → Goal`,
+`Attestation`, `Place`, `Finding`, `AssetLink`, `ArticleVersion`, `Decided`, `Originals`; `BundleHandlers → Deps`,
+`Originals`, `InstanceLabel`; `StorageProbe → AgentTrees`, `GazetteerLoad`, `Supervisor`; the three jobs' `Pinning`;
+`StatsRepo → CorpusCounts`; `MergeLedger`/`MergeRepo → LedgerRow`; `FormatSeverity → Frontmatter`), file system 23
+(`BackupService`, `BundleHandlers`, `BundleExport`, `BundleImport`, `MergeState`, `Originals`, `PgRelocation`,
+`StorageProbe`, `DirSize`), repository 8 (`OpsHandlers` → `LintRepo`, `PlaceReviewRepo`, `PointAreaRepo`,
+`SourceRepo`; `Handlers` → `BackupRepo`, `StatsRepo`; `StorageProbe → StatsRepo`; `MergeApplyJobs → JobRepo`).
+`places.tsv` lost 23 rows and gained one (`server/BackupWiring`, the composition root).
+
+**Deviations.**
+
+- The mirror's package is `util.data.mirror`; `DataContribution` has a `backup` member §3.6 does not list.
+- Wire records stay in `com.histmersion.api` and settings records in `config`, as slice 5 left its areas'.
+- The bundle's entry order is the format's (`BundleFiles.all`), not the registration order, which starts with
+  automation; `CarriedKinds` checks every entry is carried once.
+- `CarriedKind`, `MergeRules` and their adapters are in the db module, where the import and the plan run and the db
+  suites call them without a registry (they default to the transition list; the server passes `Deps.data`'s).
+- `MergeRules` is thin (the ledger label, whether lines refer to the kind): matching, folding and decisions are still
+  `MergePlanner.plan`; the rows-in steps share `BundleImport.Writer`'s cross-kind state. The merge's review tasks and
+  log entry stay in `BundleImport.mergeTasks` (they go through `QueueRepo`).
+- The checks' and the mirror's transition bridges: `LintRepo` and `Lint` carry the rules; the article note needs the
+  coverage only `Handlers` computes, so `MirrorExport.note` takes a `TransitionNotes` that `Handlers` implements. The
+  meta files (work lists, `GOALS.md`) keep automation's endpoints.
+- `CheckRunner`, `Mirror` and `BundleService` have no `InMemory` twin: they are mechanisms over registered members
+  that run on a connection (as `BasemapService` in slice 5).
+- The install's places (binaries, converter, relink kit, toolchain, plugins, logs) are the composition root's, not an
+  owner's store; the base map's directory is registered under the catalogue.
+- Environment reads stay at the composition root (About's home directory, the dump's `PATH`).
+- Visible only in files: a dump that times out now discards its `.part`; bundle exports and uploads are written as
+  `<name>.tmp` reservations; the backups listing skips entries that are not files; About's corpus counts are seven
+  queries on one connection.
+
+**Native image.** Added: `Deps$.data$lzy1`, `CarriedKinds$.transition$lzy1`, `MergeRuleSet$.transition$lzy1`; renamed:
+`db.LedgerDbRow$` → `util.data.exchange.LedgerRow$` (`derived$DbCodec$lzy2`), `db.MergeRow$` →
+`util.data.exchange.MergeRow$`; removed the stale `db.MergeRepo$package$`. `javap -p` over every class of the new
+packages shows no other reflective lazy value. No tracing-agent run. To check at the bundle: `--self-check`; `smoke.sh`
+(About's storage lines, the relocation); `histmersion backup`, `backups`, `restore`; `bundle export|verify|import`;
+`merge plan|apply|list|show|ledger`; `lint` and `lint --fix`; `export <dir>`; `maintenance vacuum`; `reindex`.
+
+TESTS-LINE
