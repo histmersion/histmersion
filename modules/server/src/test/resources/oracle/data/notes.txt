@@ -1,0 +1,196 @@
+== source zzalpha2001_storm
+---
+citekey: zzalpha2001_storm
+doi: null
+title: The Storm God
+authors:
+- Doe, Jane
+year: 2001
+venue: null
+source: null
+calibre_id: null
+status: current
+superseded_by: null
+topics:
+- bronze age
+regions:
+- Anatolia
+tags:
+- zz-oracle
+period_start: null
+period_end: null
+cited_by_count: null
+influential_citations: null
+summary: edited at work
+findings:
+- claim: the storm god of Hatti is Tarhunna of Arinna
+  region: Anatolia
+  lat: 40.0
+  lon: 34.6
+  period_start: -1400
+  period_end: -1200
+  period_name: LBA
+  tags:
+  - oracle
+  confidence: high
+  significance: null
+- claim: Hattusa burned around 1180 BC
+  region: Anatolia
+  lat: 40.0
+  lon: 35.6
+  period_start: -1400
+  period_end: -1200
+  period_name: LBA
+  tags:
+  - oracle
+  confidence: high
+  significance: null
+- claim: a third claim, work's
+  region: Anatolia
+  lat: 40.0
+  lon: 36.6
+  period_start: -1400
+  period_end: -1200
+  period_name: LBA
+  tags:
+  - oracle
+  confidence: high
+  significance: null
+---
+
+== source zzbeta2005_hittites
+---
+citekey: zzbeta2005_hittites
+doi: null
+title: The Kingdom
+authors:
+- Doe, Jane
+year: 2005
+venue: null
+source: null
+calibre_id: null
+status: contested
+superseded_by: null
+topics:
+- bronze age
+regions:
+- Anatolia
+tags:
+- zz-oracle
+period_start: null
+period_end: null
+cited_by_count: null
+influential_citations: null
+summary: null
+findings:
+- claim: a kingdom in central Anatolia
+  region: Anatolia
+  lat: 40.0
+  lon: 34.6
+  period_start: -1400
+  period_end: -1200
+  period_name: LBA
+  tags:
+  - oracle
+  confidence: high
+  significance: null
+---
+
+== source zzgamma1903_prolegomena
+---
+citekey: zzgamma1903_prolegomena
+doi: null
+title: An Old Book
+authors:
+- Doe, Jane
+year: 1903
+venue: null
+source: null
+calibre_id: null
+status: current
+superseded_by: null
+topics:
+- bronze age
+regions:
+- Anatolia
+tags:
+- zz-oracle
+period_start: null
+period_end: null
+cited_by_count: null
+influential_citations: null
+summary: null
+findings: []
+---
+
+== source zzdelta2020_new
+---
+citekey: zzdelta2020_new
+doi: null
+title: A New Book
+authors:
+- Doe, Jane
+year: 2020
+venue: null
+source: null
+calibre_id: null
+status: current
+superseded_by: null
+topics:
+- bronze age
+regions:
+- Anatolia
+tags:
+- zz-oracle
+period_start: null
+period_end: null
+cited_by_count: null
+influential_citations: null
+summary: null
+findings:
+- claim: new at work
+  region: Anatolia
+  lat: 40.0
+  lon: 34.6
+  period_start: -1400
+  period_end: -1200
+  period_name: LBA
+  tags:
+  - oracle
+  confidence: high
+  significance: null
+---
+
+== article zz_storm
+---
+type: concept
+slug: zz_storm
+title: Storm gods
+summary: null
+regions: []
+tags: []
+period_start: null
+period_end: null
+---
+
+Intro [[zzalpha2001_storm]].
+
+Middle part, at work.
+
+End.
+
+== article zz_kingdom
+---
+type: culture
+slug: zz_kingdom
+title: Kingdoms
+summary: null
+regions: []
+tags: []
+period_start: null
+period_end: null
+---
+
+One (work) [[zzbeta2005_kingdom]].
+
+Two.

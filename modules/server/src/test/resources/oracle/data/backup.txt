@@ -1,0 +1,55 @@
+# backups
+{
+  "bytes" : "N",
+  "durationMs" : "N",
+  "error" : null,
+  "file" : "histmersion-STAMP.dump",
+  "pruned" : [
+  ],
+  "sha256" : "DIGEST",
+  "state" : "done"
+}
+{
+  "bytes" : "N",
+  "durationMs" : "N",
+  "error" : null,
+  "file" : "histmersion-STAMP-2.dump",
+  "pruned" : [
+  ],
+  "sha256" : "DIGEST",
+  "state" : "done"
+}
+{
+  "bytes" : "N",
+  "durationMs" : "N",
+  "error" : null,
+  "file" : "histmersion-STAMP-3.dump",
+  "pruned" : [
+    "histmersion-STAMP.dump"
+  ],
+  "sha256" : "DIGEST",
+  "state" : "done"
+}
+[
+  {
+    "bytes" : "N",
+    "createdAt" : "TS",
+    "file" : "histmersion-STAMP-3.dump"
+  },
+  {
+    "bytes" : "N",
+    "createdAt" : "TS",
+    "file" : "histmersion-STAMP-2.dump"
+  }
+]
+# restored
+{
+  "durationMs" : "N",
+  "file" : "histmersion-STAMP-3.dump",
+  "schemaVersion" : "109",
+  "sourcesAfter" : 4,
+  "sourcesBefore" : 0,
+  "warnings" : [
+  ]
+}
+# every row of the restored database is work's: true
