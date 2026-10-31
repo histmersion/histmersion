@@ -2,6 +2,7 @@ package com.histmersion.server.agents
 
 import scala.annotation.tailrec
 import com.histmersion.api.Agents.Role
+import com.histmersion.domain.automation.workflows.ToolName
 import org.yaml.snakeyaml.{LoaderOptions, Yaml}
 import org.yaml.snakeyaml.constructor.SafeConstructor
 
@@ -101,7 +102,7 @@ object AgentDefinitions:
     case other                       => Left(s"expected a list, not '$other'")
 
   /** Parse one definition. `name` is its file name; the header's `name` must agree. */
-  def parse(name: String, md: String): Either[String, AgentDef] =
+  def parse(name: String, md: String, known: List[ToolName]): Either[String, AgentDef] =
     def fail(m: String) = Left(s"agents/$name.md: $m")
     split(md).flatMap((h, body) => yaml(h).map(_ -> body)).left.map(m => s"agents/$name.md: $m").flatMap { (m, body) =>
       def str(k: String) = m.get(k).map(String.valueOf).map(_.trim).filter(_.nonEmpty)
@@ -127,12 +128,12 @@ object AgentDefinitions:
         sk <- strings(m.getOrElse("skills", null)).left.flatMap(e => fail(s"skills: $e"))
         inc <- strings(m.getOrElse("include", null)).left.flatMap(e => fail(s"include: $e"))
         hm <- strings(tools.getOrElse("histmersion", null)).left.flatMap(e => fail(s"tools.histmersion: $e"))
-        ts <- hm.map(t => ToolName.values.find(_.wire == t).toRight(t)).partitionMap(identity) match
+        ts <- hm.map(t => known.find(_.value == t).toRight(t)).partitionMap(identity) match
           case (Nil, ok) => Right(ok)
           case (bad, _)  =>
             fail(
               s"tools.histmersion names tools an agent cannot be offered: ${bad.mkString(", ")} " +
-                s"(one of ${ToolName.values.map(_.wire).mkString(", ")})"
+                s"(one of ${known.map(_.value).mkString(", ")})"
             )
         web <- WebAccess.values
           .find(w => tools.get("web").map(String.valueOf).getOrElse("none") == w.wire)
@@ -210,7 +211,8 @@ object AgentDefinitions:
   * from `agents.prompts-dir` through [[Prompts]]. Read on every use — a definition can be iterated on without a
   * rebuild, and the hash recorded per attempt says which text ran.
   */
-final class AgentDefinitions(prompts: Prompts):
+/** `tools` are the agent tools the engine's toolbox holds: a definition may list only these. */
+final class AgentDefinitions(prompts: Prompts, val tools: List[ToolName]):
 
   /** Every bundled file, relative to `agents/`. */
   def index: List[String] =
@@ -228,7 +230,8 @@ final class AgentDefinitions(prompts: Prompts):
     case r if r.startsWith("_shared/") => r.stripPrefix("_shared/").stripSuffix(".md")
   }
 
-  def agent(name: String): Either[String, AgentDef] = prompts.load(s"$name.md").flatMap(AgentDefinitions.parse(name, _))
+  def agent(name: String): Either[String, AgentDef] =
+    prompts.load(s"$name.md").flatMap(AgentDefinitions.parse(name, _, tools))
   def agent(s: StepAgent): Either[String, AgentDef] = agent(s.wire)
   def skill(name: String): Either[String, SkillDef] =
     prompts.load(s"skills/$name/SKILL.md").flatMap(AgentDefinitions.parseSkill(name, _))

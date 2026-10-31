@@ -5,6 +5,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.db.{AgentRepo, QueueRepo}
+import com.histmersion.domain.automation.workflows.{ToolName, Workflows}
 import com.histmersion.api.VocabularyCodecs.given
 import io.circe.parser.decode
 import io.circe.syntax.*
@@ -46,7 +47,7 @@ final class Engine(
     val ds: DataSource,
     cfgNow: => AgentsConfig,
     val agents: AgentsHandlers,
-    pipelines: Map[Pipeline, PipelineDef]
+    val workflows: Workflows
 ):
 
   /** Read at each use (a config reload switches it); a run reads it once, into its [[RunCtx]]. */
@@ -58,6 +59,12 @@ final class Engine(
   final private case class Queued(id: String, work: com.histmersion.server.hot.Carried[Unit])
   private val queue = LinkedBlockingQueue[Queued]()
   val llmSlots: Semaphore = Semaphore(math.max(1, cfg.maxLlmCallsInFlight))
+
+  /** The tools a step of `run` offers its agent: the agent's own, as far as its workflow lets the agent's role use them
+    * (a run of no registered workflow offers none).
+    */
+  def offered(run: RunInfo, agent: AgentDef): List[ToolName] =
+    workflows.parse(run.pipeline).fold(Nil)(w => agent.tools.filter(w.allowedTools(agent.role)))
 
   /** When the trace was last pruned (epoch ms; 0 = not yet in this process). */
   private val lastPrune = java.util.concurrent.atomic.AtomicLong(0L)
@@ -296,9 +303,8 @@ final class Engine(
     AgentRepo.get(ds, id) match
       case None      => ()
       case Some(run) =>
-        val pipe = Pipeline.parse(run.pipeline).flatMap(pipelines.get)
-        val sameVersion =
-          Pipeline.parse(run.pipeline).forall(p => AgentRepo.pipelineVersion(ds, id).forall(_ == p.version))
+        val pipe = workflows.parse(run.pipeline)
+        val sameVersion = pipe.forall(w => AgentRepo.pipelineVersion(ds, id).forall(_ == w.version))
         if AgentRepo.transition(ds, id, RunState.Queued, RunState.Running).isDefined then
           val ctl = Control(Thread.currentThread())
           running.put(id, ctl)

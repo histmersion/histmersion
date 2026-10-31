@@ -155,6 +155,16 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     */
   val agents: com.histmersion.server.agents.AgentsHandlers = com.histmersion.server.agents.AgentsHandlers(deps, this)
 
+  /** The agent tools the engine is given today (what an agent definition may list). */
+  def agentToolNames: List[com.histmersion.domain.automation.workflows.ToolName] =
+    com.histmersion.server.agents.TransitionTools.names
+
+  /** What today's library and research code registers into the engine (`agents` asks for it as it is built). */
+  def automationContributions(
+      a: com.histmersion.server.agents.AgentsHandlers
+  ): com.histmersion.domain.automation.workflows.Contributions =
+    com.histmersion.server.agents.TransitionWorkflows.contributions(deps, this, a)
+
   /** Research › Activity: runs, jobs, worklog lines and a person's decisions, one list. */
   val activity: com.histmersion.domain.activity.ActivityControllers =
     com.histmersion.domain.activity

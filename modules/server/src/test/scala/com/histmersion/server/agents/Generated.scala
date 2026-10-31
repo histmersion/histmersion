@@ -9,10 +9,10 @@ object Generated:
     val texts = defs.agents.toOption.toList.flatten.map(_.body) ++
       defs.fragments.toOption.toList.flatMap(_.values) ++
       defs.skills.toOption.toList.flatMap(_.values.map(s => s.header.mkString("\n") + s.body))
-    texts.flatMap(AgentDefinitions.placeholders).toSet ++ ToolName.values.map(_.wire)
+    texts.flatMap(AgentDefinitions.placeholders).toSet ++ TransitionTools.names.map(_.value)
 
   def defs(): AgentGenerator.Defs =
-    val d = AgentDefinitions(Prompts(""))
+    val d = AgentDefinitions(Prompts(""), TransitionTools.names)
     AgentGenerator.Defs(
       d.agents.fold(m => throw AssertionError(m), identity),
       d.fragments.fold(m => throw AssertionError(m), identity),

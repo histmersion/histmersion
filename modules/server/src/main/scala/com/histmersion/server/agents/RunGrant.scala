@@ -1,5 +1,6 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.workflows.ToolName
 import io.netty.handler.codec.http.*
 
 /** What one run token allows: the agent definition a step runs as, and so exactly its tools; the run and step it

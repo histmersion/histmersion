@@ -114,7 +114,7 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite with RunTranscripts
         deps,
         h,
         (_, ref) => clients.get(ref).toRight(s"no scripted client for ${ref.wire}"),
-        CliRuntime(cfg),
+        CliRuntime(cfg, TransitionTools.names),
         reads.seams
       ),
       h

@@ -432,7 +432,9 @@ object AgentsTools:
     a.definitions.agentNames.flatMap { n =>
       a.definitions.agent(n) match
         case Right(d) =>
-          List(McpServer(tools = d.tools.map(t => mcpTool(a.toolbox.tool(t)))).endpoint(List("mcp", "agent", d.name)))
+          List(
+            McpServer(tools = d.tools.flatMap(a.toolbox.tool).map(mcpTool(_))).endpoint(List("mcp", "agent", d.name))
+          )
         case Left(m) =>
           scribe.warn(s"agent MCP: no endpoint for $n: $m")
           Nil

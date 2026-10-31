@@ -1,5 +1,6 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.workflows.ToolName
 import io.circe.syntax.*
 
 import java.nio.charset.StandardCharsets.UTF_8
@@ -12,13 +13,12 @@ import scala.jdk.CollectionConverters.*
   * com.histmersion.server.agents.generatePlugin <repo root>"` — the test classpath runs it in process, outside the
   * native-image tracing agent).
   */
-@main def generatePlugin(root: String): Unit = PluginTree.write(Path.of(root).toAbsolutePath.normalize)
-
 object PluginTree:
 
-  /** The tree from the bundled definitions (no server, no override directory). */
-  def tree(): Either[String, Map[String, String]] =
-    val defs = AgentDefinitions(Prompts(""))
+  /** The tree from the bundled definitions (no server, no override directory); `tools` the agent tools they may list.
+    */
+  def tree(tools: List[ToolName]): Either[String, Map[String, String]] =
+    val defs = AgentDefinitions(Prompts(""), tools)
     for
       as <- defs.agents
       fs <- defs.fragments
@@ -29,8 +29,8 @@ object PluginTree:
   val Owned: List[String] = List("plugin/agents", "plugin/skills")
 
   /** Writes the tree under `root`, removing what it no longer holds from the directories it owns. */
-  def write(root: Path): Unit =
-    tree() match
+  def write(root: Path, tools: List[ToolName]): Unit =
+    tree(tools) match
       case Left(m)  => System.err.println(s"cannot generate the plugin: $m"); sys.exit(1)
       case Right(t) =>
         Owned.map(root.resolve).filter(Files.exists(_)).foreach { d =>

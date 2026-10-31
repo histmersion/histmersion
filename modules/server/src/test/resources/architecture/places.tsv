@@ -1014,6 +1014,8 @@ server:server/agents/EnrichSourcePipeline.scala	library.workflows
 server:server/agents/FirstCallProbe.scala	automation.agents
 server:server/agents/FollowupsInput.scala	library.workflows
 server:server/agents/GenSettings.scala	automation.agents
+server:server/agents/GeneratePluginMain.scala	server
+server:server/agents/PipelineWorkflow.scala	server
 server:server/agents/PluginTree.scala	automation.agents
 server:server/agents/GoalFocusService.scala	automation.goals
 server:server/agents/GoalSweep.scala	automation.goals
@@ -1058,11 +1060,12 @@ server:server/agents/SeedService.scala	library.workflows
 server:server/agents/SkillDef.scala	automation.agents
 server:server/agents/StepAgent.scala	automation.agents
 server:server/agents/StrictJsonSchema.scala	automation.agents
-server:server/agents/ToolName.scala	automation.agents
 server:server/agents/ToolResultCap.scala	automation.agents
 server:server/agents/ToolStyle.scala	automation.agents
 server:server/agents/Toolbox.scala	automation.agents
 server:server/agents/Trace.scala	automation.agents
+server:server/agents/TransitionTools.scala	server
+server:server/agents/TransitionWorkflows.scala	server
 server:server/agents/WebAccess.scala	automation.agents
 server:server/agents/Writes.scala	automation.agents
 server:server/events/BuiltinCatalogues.scala	catalogue.events

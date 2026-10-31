@@ -1,6 +1,7 @@
 package com.histmersion.server.agents
 
 import com.histmersion.domain.automation.agents.VerbatimFailure
+import com.histmersion.domain.automation.workflows.{ToolName, Workflows}
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.pluginhost.HostAiHttp
 
@@ -31,7 +32,7 @@ final class AgentsHandlers(
     * pool (a scripted model's test must never spend a real plan on a probe).
     */
   def this(deps: Deps, h: Handlers, clientFor: LlmClient.Factory) =
-    this(deps, h, clientFor, CliRuntime(deps.cfg), PlanPools.Seams.Offline)
+    this(deps, h, clientFor, CliRuntime(deps.cfg, h.agentToolNames), PlanPools.Seams.Offline)
 
   private def this(deps: Deps, h: Handlers, w: (LlmClient.Factory, CliRuntime)) =
     this(deps, h, w._1, w._2, PlanPools.Seams.Real)
@@ -39,7 +40,7 @@ final class AgentsHandlers(
   /** The server's own providers ([[LlmClient.factory]]: the ones registered in the pinned plugin generation — the HTTP
     * ones, the CLI runtimes and any plugin's).
     */
-  def this(deps: Deps, h: Handlers) = this(deps, h, AgentsHandlers.serverWiring(deps))
+  def this(deps: Deps, h: Handlers) = this(deps, h, AgentsHandlers.serverWiring(deps, h.agentToolNames))
 
   /** Read at each use: a config reload switches it (Deps). */
   private def cfg = deps.cfg.agents
@@ -68,7 +69,6 @@ final class AgentsHandlers(
   /** The subscription pools (also what the CLI clients report their readings to). */
   val pools: PlanPools = PlanPools(ds, cfg, () => cli.trees.codexHome, planSeams)
   cli.pools = Some(pools)
-  val toolbox: Toolbox = Toolbox(h, () => upstream, cfg.tools)
 
   /** A `hint-effect` approval a person approves is applied by the managers (read when it happens, so the forward
     * reference to [[managing]] is safe).
@@ -84,28 +84,17 @@ final class AgentsHandlers(
   val acquireRecheck: AcquireRecheckService =
     AcquireRecheckService(ds, deps.cfg.acquire.recheck, h, () => upstream, this)
 
+  /** What the domains register into the engine: their workflows and agent tools. A registration the engine refuses (two
+    * workflows with one identifier, a tool nobody contributes) stops the server here.
+    */
+  val workflows: Workflows =
+    Workflows.of(h.automationContributions(this)).fold(m => throw IllegalStateException(s"workflows: $m"), identity)
+
+  /** The contributed agent tools, by name. */
+  val toolbox: Toolbox = Toolbox(workflows.tools)
+
   /** The run pool. Constructed here, started by [[start]] (from `Main`, after the OCR pool). */
-  val engine: Engine = Engine(
-    ds,
-    cfg,
-    this,
-    Map(
-      Pipeline.EnrichSource -> EnrichSourcePipeline(h, ds, cfg, () => upstream, approvals),
-      Pipeline.ReviewArticle -> ReviewArticlePipeline(h, ds, cfg, approvals, definitions),
-      Pipeline.PlanGoal -> PlanGoalPipeline(h, ds, cfg, () => upstream),
-      Pipeline.CompileArticle -> CompileArticlePipeline(
-        h,
-        ds,
-        cfg,
-        (req, parent) => startRunAs(req, Origin.Run, Some(parent))
-      ),
-      Pipeline.CurrencyCheck -> CurrencyCheckPipeline(h, ds, cfg, () => upstream, approvals),
-      Pipeline.AcquisitionSweep -> AcquisitionSweepPipeline(h, ds, cfg, () => upstream, oaBacklog),
-      Pipeline.InferFilter -> InferFilterPipeline(h, ds, cfg),
-      Pipeline.ProposeArticles -> ProposeArticlesPipeline(h, ds, cfg),
-      Pipeline.HintEffect -> HintEffectPipeline(h, ds, cfg)
-    )
-  )
+  val engine: Engine = Engine(ds, cfg, this, workflows)
 
   /** The process managers' supervisor (started with the pool), nudged whenever a run settles. */
   val managers: ManagerSupervisor = ManagerSupervisor(ds, cfg, this, h)
@@ -173,9 +162,9 @@ final class AgentsHandlers(
     * handlers ([[com.histmersion.server.McpTools]] needs them); `Main` attaches it before [[start]]. Until then, the
     * agent tools.
     */
-  @volatile private var knownTools: Set[String] = ToolName.values.map(_.wire).toSet
+  @volatile private var knownTools: Set[String] = toolbox.names.map(_.value).toSet
 
-  def attachTools(names: Set[String]): Unit = knownTools = names ++ ToolName.values.map(_.wire)
+  def attachTools(names: Set[String]): Unit = knownTools = names ++ toolbox.names.map(_.value)
 
   /** `POST /api/agents/generate` — works with agents off too: the interactive plugin the research workspace installs is
     * one of the trees.
@@ -999,8 +988,8 @@ final class AgentsHandlers(
 
 object AgentsHandlers:
   /** The server's providers over one [[CliRuntime]]. */
-  def serverWiring(deps: Deps): (LlmClient.Factory, CliRuntime) =
-    val rt = CliRuntime(deps.cfg)
+  def serverWiring(deps: Deps, tools: List[ToolName]): (LlmClient.Factory, CliRuntime) =
+    val rt = CliRuntime(deps.cfg, tools)
     (LlmClient.factory(rt, () => deps.plugins.registries.aiProviders), rt)
 
   /** [[attempt]], telling the plan's own usage limit (a model to pass over, [[ModelLimitReached]]) apart from a broken
