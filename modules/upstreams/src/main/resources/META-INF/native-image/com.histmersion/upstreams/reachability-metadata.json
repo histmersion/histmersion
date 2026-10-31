@@ -1,0 +1,44 @@
+{
+  "reflection": [
+    {
+      "type": "com.histmersion.upstreams.CoreEndpoint$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.upstreams.Endpoint$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.upstreams.LandingSettings$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.upstreams.SearchDefaults$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.upstreams.UpstreamSettings$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    }
+  ]
+}

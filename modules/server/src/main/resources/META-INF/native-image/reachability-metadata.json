@@ -3574,6 +3574,9 @@
         },
         {
           "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_CatalogRecord$lzy1"
         }
       ]
     },
@@ -14044,6 +14047,14 @@
       ]
     },
     {
+      "type": "com.histmersion.domain.CatalogMerge$Fit$",
+      "fields": [
+        {
+          "name": "given_Ordering_Fit$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.domain.CompileArticle$Claim$",
       "fields": [
         {
@@ -16206,69 +16217,6 @@
       ]
     },
     {
-      "type": "com.histmersion.server.acquire.fetchers.Builtin",
-      "fields": [
-        {
-          "name": "configReader$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.server.acquire.fetchers.BuiltinConfig$",
-      "fields": [
-        {
-          "name": "derived$ConfigReader$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.server.acquire.fetchers.CoreConfig$",
-      "fields": [
-        {
-          "name": "derived$ConfigReader$lzy1"
-        },
-        {
-          "name": "derived$ConfigReader$lzy3"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.server.acquire.fetchers.OaIndex$OaRecords",
-      "fields": [
-        {
-          "name": "datacite$lzy1"
-        },
-        {
-          "name": "handle$lzy1"
-        },
-        {
-          "name": "openalex$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.server.acquire.fetchers.Pmc$PmcLookup",
-      "fields": [
-        {
-          "name": "hit$lzy1"
-        },
-        {
-          "name": "record$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.server.acquire.fetchers.UnpaywallConfig$",
-      "fields": [
-        {
-          "name": "derived$ConfigReader$lzy1"
-        },
-        {
-          "name": "derived$ConfigReader$lzy2"
-        }
-      ]
-    },
-    {
       "type": "com.histmersion.server.agents.AcquisitionSweepPipeline$Failed$",
       "fields": [
         {
@@ -16743,6 +16691,14 @@
       "fields": [
         {
           "name": "configuration$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.util.plugins.HostProvided$NoSettings$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
         }
       ]
     },
@@ -19615,22 +19571,7 @@
       "glob": "META-INF/histmersion/plugins/ai-opencode.conf"
     },
     {
-      "glob": "META-INF/histmersion/plugins/archive-org.conf"
-    },
-    {
-      "glob": "META-INF/histmersion/plugins/arxiv.conf"
-    },
-    {
       "glob": "META-INF/histmersion/plugins/bitwarden.conf"
-    },
-    {
-      "glob": "META-INF/histmersion/plugins/events-gvp.conf"
-    },
-    {
-      "glob": "META-INF/histmersion/plugins/events-noaa.conf"
-    },
-    {
-      "glob": "META-INF/histmersion/plugins/events-wikidata.conf"
     },
     {
       "glob": "META-INF/histmersion/plugins/keepassxc.conf"
@@ -19664,21 +19605,6 @@
     },
     {
       "glob": "META-INF/histmersion/plugins/media-wikidata.conf"
-    },
-    {
-      "glob": "META-INF/histmersion/plugins/oa-core.conf"
-    },
-    {
-      "glob": "META-INF/histmersion/plugins/oa-landing.conf"
-    },
-    {
-      "glob": "META-INF/histmersion/plugins/oa-openalex.conf"
-    },
-    {
-      "glob": "META-INF/histmersion/plugins/oa-unpaywall.conf"
-    },
-    {
-      "glob": "META-INF/histmersion/plugins/pmc.conf"
     },
     {
       "glob": "META-INF/native/libnetty_transport_native_kqueue.dylib"
