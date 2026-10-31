@@ -13965,7 +13965,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.JobRow$",
+      "type": "com.histmersion.util.jobs.JobRow$",
       "fields": [
         {
           "name": "derived$DbCodec$lzy1"
@@ -15514,6 +15514,14 @@
     },
     {
       "type": "com.histmersion.server.AuthHandler"
+    },
+    {
+      "type": "com.histmersion.server.Deps",
+      "fields": [
+        {
+          "name": "storage$lzy1"
+        }
+      ]
     },
     {
       "type": "com.histmersion.server.Handlers",
