@@ -926,7 +926,6 @@ server:server/IngestHandlers.scala	library.ingest
 server:server/Jobs.scala	server
 server:server/ListQueries.scala	automation.approvals
 server:server/Main.scala	server
-server:server/Maintenance.scala	util.data.maintenance
 server:server/MapTileService.scala	catalogue.maptiles
 server:server/MapTiles.scala	catalogue.maptiles
 server:server/MarkdownFlavor.scala	util.common

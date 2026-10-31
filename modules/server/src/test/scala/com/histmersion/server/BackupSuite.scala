@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.data.maintenance.WriteGate
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -28,12 +30,12 @@ class BackupSuite extends munit.FunSuite:
   // ── the maintenance lock ─────────────────────────────────────────────────────────────────────
 
   test("guard runs the operation when no restore is in progress"):
-    val m = Maintenance()
+    val m = WriteGate()
     assertEquals(m.guard("seed")(Right(42)), Right(42))
     assertEquals(m.active, false)
 
   test("while a restore holds the lock, other writes are refused with the 503 code"):
-    val m = Maintenance()
+    val m = WriteGate()
     val seen = m.exclusively("restore") {
       assertEquals(m.active, true)
       Right(m.guard("seed")(Right(42)))
@@ -42,11 +44,11 @@ class BackupSuite extends munit.FunSuite:
     assertEquals(seen.toOption.flatMap(_.left.toOption).flatMap(_.code), Some(Backup.CodeMaintenance))
 
   test("one server's restore does not freeze another server's writes (locks are per instance)"):
-    val a, b = Maintenance()
+    val a, b = WriteGate()
     assertEquals(a.exclusively("restore")(Right(b.guard("seed")(Right(42)))), Right(Right(42)))
 
   test("a second concurrent restore is refused, and the lock is released afterwards"):
-    val m = Maintenance()
+    val m = WriteGate()
     // the inner attempt cannot take the flag the outer one holds, so its Left is what comes back
     val nested: Either[ApiError, String] = m.exclusively("restore")(m.exclusively("restore")(Right("inner")))
     assertEquals(nested, Left(Backup.maintenance("restore")))
@@ -54,7 +56,7 @@ class BackupSuite extends munit.FunSuite:
     assertEquals(m.exclusively("restore")(Right("again")), Right("again"))
 
   test("the lock is released even when the operation throws"):
-    val m = Maintenance()
+    val m = WriteGate()
     intercept[RuntimeException](m.exclusively("restore")(throw new RuntimeException("boom")))
     assertEquals(m.active, false)
 

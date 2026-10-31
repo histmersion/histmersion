@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.data.maintenance.WriteGate
+
 import com.histmersion.util.ocr.ConverterClient
 
 import com.histmersion.util.settings.{ConfigSource, HotConfig}
@@ -106,7 +108,7 @@ object Composition:
     // the CORE budget, built before the database (the first plugin generation spends from it), kept in it
     // from here on: a restart does not hand the day's tokens out again
     core.persistTo(CoreQuotaStore.db(sg.ds))
-    val deps = sg.deps(Maintenance(), restart, system)
+    val deps = sg.deps(WriteGate(), restart, system)
     val cfg = hc.app // the listener's settings: restart-only (ConfigReload.RestartOnly)
     val h = Handlers(deps, converter.getOrElse(ConverterWiring.client(deps.cfg.converter)))
     onHandlers(h) // a test's handle on this server's handlers (its run tokens); nothing in production

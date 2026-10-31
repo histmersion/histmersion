@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.data.maintenance.WriteGate
+
 import com.histmersion.util.jobs.BackgroundJob
 
 import scala.annotation.tailrec
@@ -17,7 +19,7 @@ import javax.sql.DataSource
   */
 final class VacuumJobs(
     ds: DataSource,
-    maintenance: Maintenance,
+    maintenance: WriteGate,
     defaults: () => List[String],
     pins: com.histmersion.server.hot.Pinning = com.histmersion.server.hot.Pinning.none
 ):

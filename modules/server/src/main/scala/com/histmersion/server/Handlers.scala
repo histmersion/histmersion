@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.data.maintenance.WriteGate
+
 import com.histmersion.util.ocr.ConverterClient
 
 import com.histmersion.util.jobs.BackgroundJob
@@ -70,7 +72,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * restore drops and recreates every table; a write that slipped past the lock wrote into a schema that was about to
     * be replaced.
     */
-  val maintenance: Maintenance = deps.maintenance
+  val maintenance: WriteGate = deps.maintenance
 
   /** Stream 2.8 — lint, the bookkeeping queues and the read-only query. Its own object (one file per stream), wired
     * into REST and MCP through this same `Handlers` value.
