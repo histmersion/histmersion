@@ -113,6 +113,9 @@
         },
         {
           "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_AcquireCheck$lzy1"
         }
       ]
     },
@@ -1646,6 +1649,9 @@
         },
         {
           "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_ArticleKindCount$lzy1"
         }
       ]
     },
@@ -7808,6 +7814,9 @@
         },
         {
           "name": "derived$KindlingsSchema$lzy4"
+        },
+        {
+          "name": "given_Schema_GoalRef$lzy1"
         }
       ]
     },
@@ -7819,6 +7828,9 @@
         },
         {
           "name": "derived$KindlingsSchema$lzy3"
+        },
+        {
+          "name": "given_Schema_ItemGoals$lzy1"
         }
       ]
     },
@@ -8240,6 +8252,9 @@
         },
         {
           "name": "derived$KindlingsSchema$lzy1"
+        },
+        {
+          "name": "given_Schema_ReviewBadge$lzy1"
         }
       ]
     },
@@ -8273,6 +8288,20 @@
         },
         {
           "name": "derived$KindlingsSchema$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.ReviewState$",
+      "fields": [
+        {
+          "name": "given_Decoder_ReviewState$lzy1"
+        },
+        {
+          "name": "given_Encoder_ReviewState$lzy1"
+        },
+        {
+          "name": "given_Schema_ReviewState$lzy1"
         }
       ]
     },
