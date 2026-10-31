@@ -296,6 +296,8 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
   private val TimeRe =
     "\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}(?::?\\d{2})?)?".r
   private val StampRe = "\\d{8}T\\d{6}Z(?:-\\d+)?".r
+  /** The day a record was added: the local calendar day the suite runs on. */
+  private val AddedRe = "(\"added(?:Date|_date)\" : )\"\\d{4}-\\d{2}-\\d{2}\"".r
   private val PlanRe = "plan [0-9a-f]{8}\\b".r
   private val ShortRe = "(?<![-\\w])[0-9a-f]{8}(?![-\\w])".r
 
@@ -337,7 +339,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
         scala.util.matching.Regex
           .quoteReplacement(names.getOrElse(m.matched, if m.matched.length != 36 then m.matched else "UUID"))
     )
-    val t3 = TimeRe.replaceAllIn(t2, "TS")
+    val t3 = AddedRe.replaceAllIn(TimeRe.replaceAllIn(t2, "TS"), "$1\"DAY\"")
     ShortRe.replaceAllIn(PlanRe.replaceAllIn(StampRe.replaceAllIn(t3, "STAMP"), "plan PLAN"), "SHORT")
 
   /** Sizes, durations and free space the disk and the clock decide. */
