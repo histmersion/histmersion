@@ -1,27 +1,18 @@
-package com.histmersion.server
+package com.histmersion.util.ocr
 
 import com.histmersion.api.*
-import com.histmersion.config.*
-import com.histmersion.domain.*
+import com.histmersion.util.storage.Blob
 
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
-import java.nio.file.{Files, Path}
 import java.time.Duration
 
 /** Multipart `POST /convert` against the sidecar. Stateless and thread-safe: one `HttpClient` is shared by the worker
   * pool, and every request carries its own body.
   */
-final class HttpConverterClient(cfg: => ConverterConfig) extends ConverterClient: // by name: a reload may move it
-  // HTTP/1.1 explicitly: java.net.http defaults to HTTP/2 and offers an h2c upgrade
-  // (`Connection: Upgrade, HTTP2-Settings` + `Upgrade: h2c`), on which uvicorn DISCARDS the request
-  // body — the sidecar then answers 422 "field required: file" for a perfectly well-formed upload.
-  private val http = HttpClient
-    .newBuilder()
-    .version(HttpClient.Version.HTTP_1_1)
-    .connectTimeout(Duration.ofSeconds(10))
-    .build()
-  private def base = cfg.url.trim.stripSuffix("/")
+final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
+    extends ConverterClient: // by name: a reload may move it
+  private def base = cfg.url.value.trim.stripSuffix("/")
 
   private val ConversionTimeoutHint =
     "raise converter.seconds-per-page or converter.timeout-seconds for documents like this one"
@@ -35,7 +26,7 @@ final class HttpConverterClient(cfg: => ConverterConfig) extends ConverterClient
   /** The document's page count from the sidecar's `/inspect` — cheap, no conversion. `None` when it cannot tell (an
     * older sidecar, an unreadable file): the conversion then gets the plain timeout and reports the real error itself.
     */
-  def pages(file: Path, filename: String): Option[ConverterClient.PageCount] =
+  def pages(file: Blob, filename: String): Option[ConverterClient.PageCount] =
     val boundary = "histmersion-" + java.util.UUID.randomUUID().toString.replace("-", "")
     (for
       body <- multipart(boundary, file, filename, quality = false)
@@ -51,7 +42,7 @@ final class HttpConverterClient(cfg: => ConverterConfig) extends ConverterClient
       n <- json.hcursor.get[Int]("pages").left.map(_ => "no page count")
     yield ConverterClient.PageCount(n, json.hcursor.get[Int]("scanned").getOrElse(0))).toOption
 
-  def convert(file: Path, filename: String, quality: Boolean): Either[String, ConvertedDoc] =
+  def convert(file: Blob, filename: String, quality: Boolean): Either[String, ConvertedDoc] =
     val boundary = "histmersion-" + java.util.UUID.randomUUID().toString.replace("-", "")
     val allowed = ConverterClient.timeoutFor(cfg, pages(file, filename), quality)
     for
@@ -125,14 +116,13 @@ final class HttpConverterClient(cfg: => ConverterConfig) extends ConverterClient
 
   /** RFC 7578 body: the file part plus the scalar form fields the sidecar expects.
     *
-    * STREAMED. It used to `Files.readAllBytes` the upload and then copy it into a `ByteArrayOutputStream`, i.e. hold a
-    * 250 MB scan in the heap TWICE to send it once (and the accepted upload limit is exactly 256 MB).
-    * `BodyPublishers.concat` splices the prologue, an `ofFile` publisher and the epilogue, so the file goes from disk
-    * to socket.
+    * STREAMED: the stored file goes from disk to socket between the prologue and the epilogue, with its length given
+    * (so the request is not chunked). Reading it whole first held a 250 MB scan in the heap twice to send it once (and
+    * the accepted upload limit is exactly 256 MB).
     */
   private def multipart(
       boundary: String,
-      file: Path,
+      file: Blob,
       filename: String,
       quality: Boolean
   ): Either[String, HttpRequest.BodyPublisher] =
@@ -146,14 +136,19 @@ final class HttpConverterClient(cfg: => ConverterConfig) extends ConverterClient
     val tail = java.io.ByteArrayOutputStream()
     tail.write(ascii("\r\n"))
     tail.write(field("force_quality", quality.toString))
-    tail.write(field("dpi", cfg.dpi.toString))
-    tail.write(field("max_image_px", cfg.maxImagePx.toString))
+    tail.write(field("dpi", cfg.dpi.value.toString))
+    tail.write(field("max_image_px", cfg.maxImage.value.toString))
     tail.write(ascii(s"--$boundary--\r\n"))
     scala.util
-      .Try(HttpRequest.BodyPublishers.ofFile(file))
+      .Try {
+        val length = file.size.value
+        if length == 0 then HttpRequest.BodyPublishers.noBody()
+        else
+          HttpRequest.BodyPublishers.fromPublisher(HttpRequest.BodyPublishers.ofInputStream(() => file.open()), length)
+      }
       .toEither
       .left
-      .map(e => s"cannot read the upload at $file: ${e.getMessage}")
+      .map(e => s"cannot read the upload at ${file.where}: ${e.getMessage}")
       .map(fileBody =>
         HttpRequest.BodyPublishers.concat(
           HttpRequest.BodyPublishers.ofByteArray(head),

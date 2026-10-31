@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.util.ocr.Chunker
+
 /** Finding a quoted passage again in another text — the W3C Web Annotation TextQuoteSelector (`exact` + `prefix` +
   * `suffix`), as an attestation stores it (`quote`/`prefix`/`suffix`). Used when a merge keeps one OCR body and the
   * other side's attestations must point into it (docs/research-merge-import.md §5.3–§5.4). Pure.

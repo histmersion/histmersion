@@ -27,7 +27,9 @@ class ProcessesSuite extends munit.FunSuite:
     val logs = Storage.at(Location.Logs, dir)
     logs.put(StoreKey("child.log"), "before\n".getBytes): Unit
     val p = Processes()
-      .start(ProcessLaunch(List("/bin/sh", "-c", "echo after"), output = ProcessOutput.AppendTo(logs, StoreKey("child.log"))))
+      .start(
+        ProcessLaunch(List("/bin/sh", "-c", "echo after"), output = ProcessOutput.AppendTo(logs, StoreKey("child.log")))
+      )
       .fold(fail(_), identity)
     assertEquals(p.waitFor(), 0)
     assertEquals(logs.get(StoreKey("child.log")).map(_.text()), Some("before\nafter\n"))

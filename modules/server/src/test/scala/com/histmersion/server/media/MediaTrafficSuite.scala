@@ -8,7 +8,8 @@ import com.histmersion.config.{AppConfig, LoadedConfig}
 import com.histmersion.db.{PlaceRepo, TestDb}
 import com.histmersion.util.jobs.JobRepo
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport}
-import com.histmersion.server.{ConverterClient, Deps}
+import com.histmersion.server.Deps
+import com.histmersion.util.ocr.ConverterClient
 import com.histmersion.values.PlaceKind
 import io.circe.syntax.*
 import org.ekrich.config.ConfigFactory
@@ -122,7 +123,11 @@ class MediaTrafficSuite extends com.histmersion.db.DbSuite:
 
   /** Thumbnails made here: one per call, named after the file. */
   final private class Thumbs extends ConverterClient:
-    def convert(file: java.nio.file.Path, filename: String, quality: Boolean): Either[String, ConvertedDoc] =
+    def convert(
+        file: com.histmersion.util.storage.Blob,
+        filename: String,
+        quality: Boolean
+    ): Either[String, ConvertedDoc] =
       Left("not used")
     def health: Either[String, String] = Right("ok")
     override def thumbnail(bytes: Array[Byte], filename: String, maxPx: Int): Either[String, ConverterClient.Thumb] =

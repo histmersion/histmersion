@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.ocr.ConverterClient
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -49,7 +51,11 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
 
   private object NoConverter extends ConverterClient:
     def health: Either[String, String] = Right("ok")
-    def convert(file: Path, filename: String, quality: Boolean): Either[String, ConvertedDoc] = Left("not used")
+    def convert(
+        file: com.histmersion.util.storage.Blob,
+        filename: String,
+        quality: Boolean
+    ): Either[String, ConvertedDoc] = Left("not used")
 
   private def source(ck: String, edges: List[Edge] = Nil, findings: Int = 0, calibre: Option[String] = None) = Source(
     citekey = ck,

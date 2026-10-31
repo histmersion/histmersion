@@ -1,5 +1,8 @@
 package com.histmersion.server
 
+import com.histmersion.util.ocr.{ConverterClient, ConverterState}
+import com.histmersion.util.storage.{Location, Storage, StoreKey}
+
 import com.histmersion.values.{Citekey, SourceStatus}
 import com.histmersion.files.*
 
@@ -364,11 +367,13 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient, afterStore: S
             val converted =
               inConverter.add(id)
               try
-                converter.convert(
-                  job.file,
-                  job.params.filename.getOrElse(job.file.getFileName.toString),
-                  job.params.quality
-                )
+                val name = job.file.getFileName.toString
+                StoreKey
+                  .either(name)
+                  .toOption
+                  .flatMap(Storage.at(Location.IngestOriginals, job.file.toAbsolutePath.getParent).get)
+                  .toRight(s"cannot read the upload at ${job.file}: ${job.file}")
+                  .flatMap(blob => converter.convert(blob, job.params.filename.getOrElse(name), job.params.quality))
               finally inConverter.remove(id): Unit
             val outcome =
               converted

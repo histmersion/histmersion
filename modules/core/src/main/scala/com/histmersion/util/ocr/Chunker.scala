@@ -1,4 +1,4 @@
-package com.histmersion.domain
+package com.histmersion.util.ocr
 
 /** Splits a Markdown body into FTS chunks — pure, no I/O, no config lookups.
   *

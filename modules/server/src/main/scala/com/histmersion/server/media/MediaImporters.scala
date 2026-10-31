@@ -4,7 +4,8 @@ import com.histmersion.pluginhost.{HttpTransport, PluginMedia}
 
 import com.histmersion.api.MediaProviderInfo
 import com.histmersion.plugin.*
-import com.histmersion.server.{ConverterClient, Deps}
+import com.histmersion.server.Deps
+import com.histmersion.util.ocr.ConverterClient
 
 import scala.collection.immutable.ListMap
 import scala.util.control.NonFatal

@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.ocr.{ConverterClient, JatsConverter}
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -183,7 +185,7 @@ class PmcFetchSuite extends munit.FunSuite:
 
   final private class Sidecar extends ConverterClient:
     var calls: List[String] = Nil // a test double: which files reached the sidecar
-    def convert(file: java.nio.file.Path, filename: String, quality: Boolean) =
+    def convert(file: com.histmersion.util.storage.Blob, filename: String, quality: Boolean) =
       calls = calls :+ filename
       Right(ConvertedDoc("from the sidecar", pages = 3))
     def health = Right("ok")
@@ -196,15 +198,21 @@ class PmcFetchSuite extends munit.FunSuite:
       val other = Files.write(dir.resolve("list.xml"), "<?xml version=\"1.0\"?><ListBucketResult/>".getBytes("UTF-8"))
       val side = Sidecar()
       val conv = JatsConverter(side)
-      val doc = conv.convert(xml, "paper.xml", quality = false).fold(fail(_), identity)
+      val doc = conv.convert(OfflineConverter.blob(xml), "paper.xml", quality = false).fold(fail(_), identity)
       assert(doc.markdown.startsWith("# The first horse herders"), doc.markdown.take(200))
       assertEquals(doc.images, Nil)
-      assertEquals(conv.convert(pdf, "paper.pdf", quality = false).map(_.markdown), Right("from the sidecar"))
-      assertEquals(conv.convert(other, "list.xml", quality = false).map(_.markdown), Right("from the sidecar"))
+      assertEquals(
+        conv.convert(OfflineConverter.blob(pdf), "paper.pdf", quality = false).map(_.markdown),
+        Right("from the sidecar")
+      )
+      assertEquals(
+        conv.convert(OfflineConverter.blob(other), "list.xml", quality = false).map(_.markdown),
+        Right("from the sidecar")
+      )
       assertEquals(side.calls, List("paper.pdf", "list.xml"))
     finally
       Files.list(dir).forEach(Files.delete)
       Files.delete(dir)
 
   test("the configured converter is the JATS-aware one"):
-    assert(ConverterClient.fromConfig(AppConfig.load().converter).isInstanceOf[JatsConverter])
+    assert(ConverterWiring.client(AppConfig.load().converter).isInstanceOf[JatsConverter])

@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.ocr.ConverterClient
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -22,7 +24,7 @@ class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
     Migrate.run(ds)
     val converter = new ConverterClient:
       def health = Right("ok")
-      def convert(file: Path, filename: String, quality: Boolean) =
+      def convert(file: com.histmersion.util.storage.Blob, filename: String, quality: Boolean) =
         Right(ConvertedDoc(markdown = "# Fixture\n\nOCR succeeded.", pages = 1, images = Nil))
     val handler = IngestHandlers(Deps(cfg, ds), converter)
     val key = "zz_ingest_queue_failure"

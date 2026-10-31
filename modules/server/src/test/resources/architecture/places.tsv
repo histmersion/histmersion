@@ -752,8 +752,6 @@ core:domain/BrowserDownload.scala	library.acquisition
 core:domain/BundlePlan.scala	util.data.exchange
 core:domain/CatalogMerge.scala	catalogue.events
 core:domain/CatalogProvider.scala	catalogue.events
-core:domain/Chunk.scala	library.sources
-core:domain/Chunker.scala	util.ocr
 core:domain/Citekeys.scala	library.sources
 core:domain/CodexRetention.scala	automation.agents
 core:domain/CompareRuns.scala	automation.agents
@@ -918,17 +916,13 @@ server:server/BundleHandlers.scala	util.data.exchange
 server:server/ChipField.scala	kernel
 server:server/Citation.scala	research.articles
 server:server/CitedEntry.scala	research.articles
-server:server/ConverterClient.scala	util.ocr
-server:server/ConverterState.scala	util.ocr
 server:server/Deps.scala	server
 server:server/FullText.scala	library.sources
 server:server/Handlers.scala	split
 server:server/HtmlRender.scala	research.articles
 server:server/HttpApi.scala	server
-server:server/HttpConverterClient.scala	util.ocr
 server:server/IiifHandler.scala	media
 server:server/IngestHandlers.scala	library.ingest
-server:server/JatsConverter.scala	util.ocr
 server:server/Jobs.scala	server
 server:server/ListQueries.scala	automation.approvals
 server:server/Main.scala	server
@@ -1129,3 +1123,4 @@ server:server/Composition.scala	server
 server:server/StorageLocations.scala	server
 api:api/JobKindsAdapter.scala	api
 api:api/AliasKindsAdapter.scala	api
+server:server/ConverterWiring.scala	server

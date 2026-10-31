@@ -6,7 +6,7 @@ import com.histmersion.api.*
 import com.histmersion.domain.*
 import com.histmersion.db.MediaRepo.{PlaceFacts, Target}
 import com.histmersion.plugin.Year
-import com.histmersion.server.ConverterClient
+import com.histmersion.util.ocr.ConverterClient
 
 /** The two key-gated collections end to end against FAKE providers and an in-memory store: what is matched, what is
   * refused and why, that the key travels only as a header to the API's own host — never in a URL, never to an image
@@ -20,7 +20,11 @@ class KeyedCollectionsSuite extends munit.FunSuite:
   private val key = "test-key-0123456789"
 
   final private class NoConverter extends ConverterClient:
-    def convert(file: java.nio.file.Path, filename: String, quality: Boolean): Either[String, ConvertedDoc] = Left(
+    def convert(
+        file: com.histmersion.util.storage.Blob,
+        filename: String,
+        quality: Boolean
+    ): Either[String, ConvertedDoc] = Left(
       "not used"
     )
     def health: Either[String, String] = Right("ok")

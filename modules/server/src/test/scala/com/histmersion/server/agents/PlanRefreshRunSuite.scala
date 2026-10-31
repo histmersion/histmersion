@@ -494,7 +494,7 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite:
     ox.supervised {
       val b =
         Composition
-          .server(keyed, "127.0.0.1", 0, com.histmersion.server.ConverterClient.fromConfig(keyed.converter))
+          .server(keyed, "127.0.0.1", 0, com.histmersion.server.ConverterWiring.client(keyed.converter))
           .start()
       try
         val url = s"http://127.0.0.1:${b.port}/api/agents/quota"

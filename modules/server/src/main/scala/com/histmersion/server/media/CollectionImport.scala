@@ -7,7 +7,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.MediaRepo
 import com.histmersion.db.MediaRepo.{PlaceFacts, ProviderAsset, Rights, Target}
-import com.histmersion.server.ConverterClient
+import com.histmersion.util.ocr.ConverterClient
 import com.histmersion.upstreams.MediaText
 import com.histmersion.domain.media.MediaStep
 

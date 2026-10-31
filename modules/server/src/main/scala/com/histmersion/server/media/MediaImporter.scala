@@ -8,7 +8,8 @@ import com.histmersion.domain.*
 import com.histmersion.db.MediaRepo
 import com.histmersion.db.MediaRepo.Target
 import com.histmersion.plugin.{MediaCollection, MediaMatchRule, MediaTarget}
-import com.histmersion.server.{ConverterClient, Deps}
+import com.histmersion.server.Deps
+import com.histmersion.util.ocr.ConverterClient
 import com.histmersion.domain.media.OwnImport
 
 /** One of the imports `media import <provider>` runs (#1446) — what it asks about, what it has still to ask, and a run

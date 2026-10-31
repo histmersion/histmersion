@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.ocr.ConverterClient
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -124,4 +126,4 @@ class ZeroLengthUploadSuite extends munit.FunSuite:
   /** No sidecar is needed: the jobs never get to run in this suite. */
   private object NoConverter extends ConverterClient:
     def health = Right("ok")
-    def convert(file: Path, filename: String, quality: Boolean) = Left("not used")
+    def convert(file: com.histmersion.util.storage.Blob, filename: String, quality: Boolean) = Left("not used")

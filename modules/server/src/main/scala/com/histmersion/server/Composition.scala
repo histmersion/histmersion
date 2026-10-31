@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.ocr.ConverterClient
+
 import com.histmersion.util.settings.{ConfigSource, HotConfig}
 
 import com.histmersion.domain.library.acquisition.OpenAlexDiscovery
@@ -106,7 +108,7 @@ object Composition:
     core.persistTo(CoreQuotaStore.db(sg.ds))
     val deps = sg.deps(Maintenance(), restart, system)
     val cfg = hc.app // the listener's settings: restart-only (ConfigReload.RestartOnly)
-    val h = Handlers(deps, converter.getOrElse(ConverterClient.fromConfig(deps.cfg.converter)))
+    val h = Handlers(deps, converter.getOrElse(ConverterWiring.client(deps.cfg.converter)))
     onHandlers(h) // a test's handle on this server's handlers (its run tokens); nothing in production
     val _ = h.ingest.start() // reconcile interrupted jobs, then start the bounded worker pool
     val acq = acquireHandlers(sg, deps, h)

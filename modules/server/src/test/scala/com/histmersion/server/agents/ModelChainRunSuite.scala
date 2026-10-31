@@ -411,7 +411,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite:
           off,
           "127.0.0.1",
           0,
-          com.histmersion.server.ConverterClient.fromConfig(off.converter),
+          com.histmersion.server.ConverterWiring.client(off.converter),
           onHandlers = h => hs = Some(h)
         )
         .start()

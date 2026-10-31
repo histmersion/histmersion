@@ -1,4 +1,4 @@
-package com.histmersion.domain
+package com.histmersion.util.ocr
 
 import com.histmersion.api.*
 import com.histmersion.config.*

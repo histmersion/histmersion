@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.util.ocr.ConverterClient
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -91,7 +93,7 @@ class IngestHttpSuite extends munit.FunSuite:
       extends ConverterClient:
     @volatile var calls: List[(String, Boolean)] = Nil
     def health = Right("ok")
-    def convert(file: Path, filename: String, quality: Boolean) =
+    def convert(file: com.histmersion.util.storage.Blob, filename: String, quality: Boolean) =
       beforeConvert()
       calls = calls :+ (filename, quality)
       fail.toLeft(
@@ -417,7 +419,7 @@ class IngestHttpSuite extends munit.FunSuite:
     val release = CountDownLatch(1)
     val conv = new ConverterClient:
       def health = Left("converter at http://sidecar did not finish within 5 s")
-      def convert(file: Path, filename: String, quality: Boolean) =
+      def convert(file: com.histmersion.util.storage.Blob, filename: String, quality: Boolean) =
         entered.countDown()
         release.await(30, TimeUnit.SECONDS)
         Right(ConvertedDoc(markdown = "# Busy\n", pages = 1, images = Nil, filename = Some(filename)))
