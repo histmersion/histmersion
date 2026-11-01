@@ -67,7 +67,7 @@ final class ManagersHandlers(
 
   def list: List[ManagerInfo] =
     lazy val snap = backlogs()
-    connect(ds)(ManagerRepo.list()).map(withEffective(_, snap))
+    agents.managerStore.list().map(withEffective(_, snap))
 
   def get(id: String): Either[ApiError, ManagerDetail] =
     manager(id).map { m =>
@@ -652,7 +652,8 @@ final class ManagersHandlers(
     * ([[WatchSchedules.view]]), and any `goal_schedules` row the managers have not moved yet.
     */
   def goalSchedules(goal: Option[String]): List[GoalPlans.GoalSchedule] =
-    connect(ds)(ManagerRepo.list())
+    agents.managerStore
+      .list()
       .filter(m => m.kind == Kind.Watch.wire && goal.forall(g => m.goal.contains(g)))
       .flatMap(m => WatchSchedules.view(m, ManagerRepo.items(ds, m.id, None, 0, 20)._1)) ++ agents.goals.schedules(goal)
 

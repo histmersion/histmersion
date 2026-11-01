@@ -1,6 +1,6 @@
 package com.histmersion.server.agents
 
-import com.augustnagro.magnum.{connect, transact}
+import com.augustnagro.magnum.connect
 
 import com.histmersion.domain.automation.agents.AgentsHandlers
 

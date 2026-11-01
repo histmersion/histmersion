@@ -150,7 +150,7 @@ final class ManagerSupervisor(
       // draining: no approval decided by code (a decision wakes a waiting run: new work)
       if !agents.drain.draining then out ++= guarded("auto-approvals", out)(agents.autoApprovals.sweep(now))
       out ++= guarded("digest", out)(agents.digest.tick(now))
-      val managers = connect(ds)(ManagerRepo.list()).filter(m => State.parse(m.state).exists(_ != State.Stopped))
+      val managers = agents.managerStore.list().filter(m => State.parse(m.state).exists(_ != State.Stopped))
       managers.foreach { m =>
         guarded(m.id, out)(evaluate(m, now, out))
         guarded(m.id, out)(releaseHolds(m, now, out))
@@ -159,7 +159,8 @@ final class ManagerSupervisor(
       // sweep is dispatched (a sweep gets what it leaves)
       kinds.flatMap(_.housework(now, agents.drain.draining)).foreach((name, work) => out ++= guarded(name, out)(work()))
       // the ones that may start runs, refilled, then dispatched round-robin over the global room
-      val live = connect(ds)(ManagerRepo.list())
+      val live = agents.managerStore
+        .list()
         .filter(m =>
           State.parse(m.state).contains(State.Active) &&
             Kind.parse(m.kind).exists(byKind.contains)
@@ -592,7 +593,7 @@ final class ManagerSupervisor(
       }
     }
     // paused/stopped managers show it too
-    connect(ds)(ManagerRepo.list()).filterNot(m => byId.contains(m.id)).foreach { m =>
+    agents.managerStore.list().filterNot(m => byId.contains(m.id)).foreach { m =>
       State
         .parse(m.state)
         .foreach(st =>
