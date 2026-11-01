@@ -110,6 +110,6 @@ object TestRuns:
     SourceProposals(
       a.approvals,
       a.config,
-      ck => h.getSource(ck, body = false).toOption.map(_.source.status),
-      p => h.patchSource(p.citekey, p.patch).left.map(_.message).map(_ => p.describe)
+      ck => h.library.sources.get(ck, body = false).toOption.map(_.source.status),
+      p => h.library.sources.patch(p.citekey, p.patch).left.map(_.message).map(_ => p.describe)
     )

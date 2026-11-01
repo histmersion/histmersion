@@ -136,7 +136,7 @@ class PluginAiRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     (h.agents, h)
 
   private def startAndRun(a: AgentsHandlers, h: Handlers): RunInfo =
-    assert(h.putSource(Ck, SourcePut(title = "Bronze Age tin", year = Some(2019), body = Some(Body))).isRight)
+    assert(h.library.sources.put(Ck, SourcePut(title = "Bronze Age tin", year = Some(2019), body = Some(Body))).isRight)
     val run = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
     a.engine.execute(run.id)
     connect(ds)(AgentRepo.get(run.id)).get
@@ -164,7 +164,7 @@ class PluginAiRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     // classify: the facets call ran in the host, then the answer — two turns, each counted
     assertEquals(llm.head.usage, Usage(200, 40))
     assert(connect(ds)(AgentRepo.messages(run.id)).exists(m => m.toolName.contains("facets") && m.role == "tool"))
-    val got = h.getSource(Ck, body = false).toOption.get
+    val got = h.library.sources.get(Ck, body = false).toOption.get
     assertEquals(got.source.summary, Some("Tin reached the Aegean by sea."))
     assert(got.findings.exists(_.claim.contains("Uluburun")), got.findings.toString)
     assert(got.source.notes.exists(_.contains("tin by sea")), got.source.notes.toString)

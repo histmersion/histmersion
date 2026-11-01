@@ -1,6 +1,6 @@
 package com.histmersion.server
 
-import com.histmersion.domain.library.sources.SourceMedia
+import com.histmersion.domain.library.sources.{SourceMedia, SourceService}
 import com.histmersion.domain.media.{MediaJobs, MediaSources}
 import com.histmersion.domain.media.assets.{AssetsControllers, AssetService, IiifControllers, MediaMapLayer}
 import com.histmersion.domain.media.covers.{CoversControllers, CoverService, SourcePictures}
@@ -26,7 +26,8 @@ final class MediaWiring(deps: Deps, http: HttpTransport, converter: ConverterCli
   val importStore: ImportService = ImportService(deps.transactor)
 
   /** The sources the figures and covers belong to. */
-  val sources: MediaSources = SourceMedia(deps.ds)
+  val sources: MediaSources =
+    SourceMedia(SourceService(deps.transactor, Deps.sourceReferrers, () => LibraryWiring.settings(deps.cfg)))
 
   /** One media run at a time. */
   val jobs: MediaJobs = MediaJobs(deps.ds, deps.maintenance, deps.pins, deps.jobStops)

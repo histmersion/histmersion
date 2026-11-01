@@ -1,5 +1,10 @@
 package com.histmersion.db
 
+import com.histmersion.domain.library.findings.FindingFixtures
+import com.histmersion.domain.library.search.FilterSql
+import com.histmersion.domain.library.search.SearchFixtures
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
 import com.histmersion.domain.catalogue.places.Geocoder
@@ -206,7 +211,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
       val feed = Sql.raw("SELECT f.id FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ") ++
         FilterSql.sourceWhere(f) ++ Sql.raw(" AND ") ++ FilterSql.findingWhere(f, scope = sc)
       assertEquals(citekeys(feed), citekeys(correlated(feed)), f.toString)
-      assertEquals(SourceRepo.findingsFor(ds, f, sc).size, citekeys(feed).size, f.toString)
+      assertEquals(FindingFixtures.findingsFor(ds, f, sc).size, citekeys(feed).size, f.toString)
     }
     // the fixtures are actually exercised: the region reaches the town's finding through the hierarchy
     assert(
@@ -248,10 +253,10 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
       val f = Filter(places = List(id))
       val sc = scope(f)
       assertEquals(
-        SourceRepo.selectionCounts(ds, f, sc),
+        SearchFixtures.selectionCounts(ds, f, sc),
         PlaceCounts(
-          sources = SourceRepo.count(ds, f, sc),
-          findings = SourceRepo.findingsCount(ds, f, sc),
+          sources = SearchFixtures.count(ds, f, sc),
+          findings = FindingFixtures.findingsCount(ds, f, sc),
           articles = ArticleRepo.list(ds, f, sc, None, None, 1, 0).total,
           events = EventFixtures.list(ds, f, sc, None, None, None, None, 1, 0).total
         ),
@@ -259,7 +264,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
       )
     }
     assertEquals(
-      SourceRepo
+      SearchFixtures
         .selectionCounts(ds, Filter(places = List("zzi_land")), scope(Filter(places = List("zzi_land"))))
         .sources,
       2

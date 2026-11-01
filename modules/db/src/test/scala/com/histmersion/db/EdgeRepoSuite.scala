@@ -1,5 +1,8 @@
 package com.histmersion.db
 
+import com.histmersion.domain.library.citations.CitationFixtures
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -94,13 +97,16 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
     put(source(a, edges = List(Edge(a, b, "challenges"))))
     // the domain read still carries it — a patch or an export must not lose it
     assertEquals(SourceRepo.load(ds, a).get.edges, List(Edge(a, b, "challenges")))
-    assertEquals(SourceRepo.neighbors(ds, a).map(n => (n.citekey, n.target)), Vector(b -> NeighborTarget.Unresolved))
+    assertEquals(
+      CitationFixtures.neighbors(ds, a).map(n => (n.citekey, n.target)),
+      Vector(b -> NeighborTarget.Unresolved)
+    )
     put(source(b))
     assertEquals(
-      SourceRepo.neighbors(ds, a).map(n => (n.direction, n.citekey, n.target, n.title)),
+      CitationFixtures.neighbors(ds, a).map(n => (n.direction, n.citekey, n.target, n.title)),
       Vector(("out", b, NeighborTarget.Source, Some(s"Title $b")))
     )
-    assertEquals(SourceRepo.neighbors(ds, b).map(n => (n.direction, n.citekey)), Vector("in" -> a))
+    assertEquals(CitationFixtures.neighbors(ds, b).map(n => (n.direction, n.citekey)), Vector("in" -> a))
     val parked = connect(ds)(sql"SELECT count(*)::int FROM unresolved_edges WHERE src = $a".query[Int].run().head)
     assertEquals(parked, 0)
 
@@ -110,11 +116,11 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
     val _ = ArticleRepo.put(ds, Article(slug, "A topic", "concept", "# A topic", None, Nil, Nil, None))
     put(source(a, edges = List(Edge(a, slug, "updates"))))
     assertEquals(
-      SourceRepo.neighbors(ds, a).map(n => (n.citekey, n.target, n.title)),
+      CitationFixtures.neighbors(ds, a).map(n => (n.citekey, n.target, n.title)),
       Vector((slug, NeighborTarget.Article, Some("A topic")))
     )
     // `kinds` narrows every branch
-    assertEquals(SourceRepo.neighbors(ds, a, List("refutes")), Vector.empty)
+    assertEquals(CitationFixtures.neighbors(ds, a, List("refutes")), Vector.empty)
 
   test("edges/resolve promotes a unique short form and leaves an ambiguous one parked"):
     val a = s"${Prefix}a2020_x"
@@ -123,7 +129,7 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
     put(source(a, edges = List(Edge(a, s"${Prefix}c2019", "references"), Edge(a, s"${Prefix}d2018", "references"))))
     assert(SourceRepo.resolveEdges(ds) >= 1)
     assertEquals(
-      SourceRepo.neighbors(ds, a).map(n => (n.citekey, n.target)),
+      CitationFixtures.neighbors(ds, a).map(n => (n.citekey, n.target)),
       Vector(s"${Prefix}c2019_full" -> NeighborTarget.Source, s"${Prefix}d2018" -> NeighborTarget.Unresolved)
     )
 
@@ -132,12 +138,12 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
     List(b, c, d).foreach(k => put(source(k)))
     put(source(a, edges = List(Edge(a, b, "references"), Edge(a, "not_a_source_topic", "references"))))
     put(source(c, edges = List(Edge(c, a, "challenges"), Edge(c, d, "references"))))
-    val g1 = SourceRepo.graph(ds, a, 1)
+    val g1 = CitationFixtures.graph(ds, a, 1)
     assertEquals(g1.nodes.map(_.id).toSet, Set(a, b, c))
     assertEquals(g1.links.map(l => (l.source, l.target)).toSet, Set(a -> b, c -> a))
     val ids = g1.nodes.map(_.id).toSet
     assert(g1.links.forall(l => ids(l.source) && ids(l.target)), g1)
-    val g2 = SourceRepo.graph(ds, a, 2)
+    val g2 = CitationFixtures.graph(ds, a, 2)
     assertEquals(g2.nodes.map(_.id).toSet, Set(a, b, c, d))
     assertEquals(g2.nodes.find(_.id == d).map(_.depth), Some(2))
-    assertEquals(SourceRepo.graph(ds, a, 0).links, Nil)
+    assertEquals(CitationFixtures.graph(ds, a, 0).links, Nil)

@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.domain.automation.agents.*
 
 import com.augustnagro.magnum.*
@@ -9,7 +11,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.AcquireChecks.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.{AcquireCheckRepo, AutopilotRepo, Migrate, SourceRepo}
+import com.histmersion.db.{AcquireCheckRepo, AutopilotRepo, Migrate}
 import com.histmersion.util.jobs.JobRepo
 import com.histmersion.plugin.{Access, Fetch, FetchContext, FetchedFile, SourceFetcher, WorkKey}
 import com.histmersion.pluginhost.FetchChain
@@ -115,11 +117,13 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
   ):
     val (a, h, up) = setup()
     assert(
-      h.putSource("zzrecheck_full", SourcePut(title = "Full", doi = Some(doi("full")), body = Some("The text.")))
+      h.library.sources
+        .put("zzrecheck_full", SourcePut(title = "Full", doi = Some(doi("full")), body = Some("The text.")))
         .isRight
     )
     assert(
-      h.putSource("zzrecheck_meta", SourcePut(title = "Meta", doi = Some(doi("meta")), notes = Some("Compiled.")))
+      h.library.sources
+        .put("zzrecheck_meta", SourcePut(title = "Meta", doi = Some(doi("meta")), notes = Some("Compiled.")))
         .isRight
     )
     val full = item(h, "full"); val meta = item(h, "meta"); val none = item(h, "none")
@@ -311,7 +315,9 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     )
     a.attach(AgentUpstream.of(acq))
     assert(
-      h.putSource("zzrecheck_kept", SourcePut(title = "Kept", doi = Some(doi("oa")), notes = Some("Compiled."))).isRight
+      h.library.sources
+        .put("zzrecheck_kept", SourcePut(title = "Kept", doi = Some(doi("oa")), notes = Some("Compiled.")))
+        .isRight
     )
     val oa = item(h, "oa"); val closed = item(h, "closed")
     val r = passNow(a, RecheckRequest(limit = Some(10))).fold(e => fail(e.message), identity)
@@ -386,7 +392,8 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     )
     assertEquals(asked(up), Nil)
     assert(
-      h.putSource("zzrecheck_full", SourcePut(title = "Full", doi = Some(doi("full")), body = Some("The text.")))
+      h.library.sources
+        .put("zzrecheck_full", SourcePut(title = "Full", doi = Some(doi("full")), body = Some("The text.")))
         .isRight
     )
     val full = item(h, "full")

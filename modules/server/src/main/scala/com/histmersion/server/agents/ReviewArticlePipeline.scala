@@ -443,12 +443,12 @@ final class ReviewArticlePipeline(
     val resolve = h.pageLinks(AgentVerify.wikilinks(body))
     t => resolve(t).isDefined
 
-  private def isCitekey(ck: String): Boolean = h.getSource(ck, body = false).isRight
+  private def isCitekey(ck: String): Boolean = h.library.sources.get(ck, body = false).isRight
 
   /** What a quote may be checked against: a source's summary, findings, notes and body — what `get_source` shows.
     */
   private def recordText(ck: String): Option[String] =
-    h.getSource(ck, body = true).toOption.map { s =>
+    h.library.sources.get(ck, body = true).toOption.map { s =>
       (s.source.summary.toList ++ s.findings.map(_.claim) ++ s.source.notes.toList ++ s.source.ocrMarkdown.toList)
         .mkString("\n\n")
     }

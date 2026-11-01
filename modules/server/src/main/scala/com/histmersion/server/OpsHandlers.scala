@@ -9,7 +9,7 @@ import com.histmersion.api.Lint.*
 import com.histmersion.api.Query.*
 import com.histmersion.api.Queue.*
 import com.histmersion.api.GoalPlans.{GoalView, LinkKind, Plan}
-import com.histmersion.db.{AcquireCheckRepo, ArticleRepo, GoalLinkRepo, GoalRepo, QueryRepo}
+import com.histmersion.db.{AcquireCheckRepo, ArticleRepo, GoalLinkRepo, GoalRepo}
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope}
 import com.histmersion.util.data.checks.{CheckContext, CheckRulesAdapter, CheckRunner, GuardedWrite}
 
@@ -148,25 +148,7 @@ final class OpsHandlers(deps: Deps):
     val status = deps.queues.byIds(itemIds.map(QueueItemId(_))).map(i => i.id -> i.status).toMap
     GoalsExport.render(views, status)
 
-  // ── read-only query + read-only backup listing ────────────────────────────────────────────────
+  // ── read-only backup listing ────────────────────────────────────────────────
 
   /** Read-only backup listing — the `backups` MCP tool. */
   def backups: Either[ApiError, List[BackupInfo]] = BackupWiring.service(deps).list
-
-  /** The ONLY caller that runs on `deps.queryDs` — the dedicated read-only role. Everything else in this file uses the
-    * application `ds`, and must: the escape hatch is the one place arbitrary SQL arrives.
-    */
-  def query(req: QueryRequest): Either[ApiError, QueryResult] =
-    QueryRepo
-      .run(deps.queryDs, req.sql, cfg.query.timeoutMs, cfg.query.maxRows, cfg.query.maxCellChars)
-      .left
-      .map(m => ApiError(m))
-
-  def schemaTables: SchemaTables = SchemaTables(QueryRepo.tables(ds))
-
-  /** The `query` tool's description, generated from the live schema. Falls back to a schema-less description if the
-    * database cannot be read while the tool list is being built — a server that cannot answer `information_schema` has
-    * bigger problems than a thin tool description.
-    */
-  def queryToolDescription: String =
-    Query.toolDescription(scala.util.Try(schemaTables).getOrElse(SchemaTables(Nil)))

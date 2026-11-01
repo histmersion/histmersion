@@ -19,7 +19,7 @@ final class TransitionHost(h: Handlers, upstream: () => AgentUpstream) extends A
   def patchGoal(slug: String, patch: GoalPatch): Either[ApiError, Goal] = h.patchGoal(slug, patch)
   def runTarget(p: Pipeline, raw: String): Option[Either[ApiError, String]] =
     p.targetKind match
-      case TargetKind.Source => Some(h.getSource(raw, body = false).map(_.source.citekey))
+      case TargetKind.Source => Some(h.library.sources.get(raw, body = false).map(_.source.citekey))
       case TargetKind.Article if p == Pipeline.CompileArticle => Some(Articles.slugOf(raw).left.map(ApiError(_)))
       case TargetKind.Article                                 => Some(h.getArticle(raw).map(_.article.slug))
       case TargetKind.Goal                                    => Some(h.getGoal(raw.trim).map(_.slug))
@@ -68,16 +68,16 @@ final class TransitionHost(h: Handlers, upstream: () => AgentUpstream) extends A
 
   def linkRef(kind: LinkKind, raw: String): Either[ApiError, String] =
     if kind == LinkKind.Article then h.getArticle(raw).map(_.article.slug)
-    else h.getSource(raw, body = false).map(_.source.citekey)
+    else h.library.sources.get(raw, body = false).map(_.source.citekey)
 
   def probeSubject(citekey: String): Either[ApiError, ProbeAnswer] =
-    h.getSource(citekey, body = false).map(s => ProbeAnswer(s.source.citekey, s.source.title, s.source.year))
+    h.library.sources.get(citekey, body = false).map(s => ProbeAnswer(s.source.citekey, s.source.title, s.source.year))
 
   def sameTitle(answered: String, record: String): Boolean = AgentVerify.sameTitle(answered, record)
 
   def workLookup: PlanGoal.Lookup = doi => upstream().meta(doi)
   def vocabulary(field: String): List[String] =
-    h.facets(field, None, Filter()).toOption.toList.flatten.sortBy(-_.count).map(_.value)
+    h.library.labels.facets(field, None, Filter()).toOption.toList.flatten.sortBy(-_.count).map(_.value)
   def housekeepingBlock: Option[String] = h.housekeepingBlock
   def backup(): Either[ApiError, BackupStatus] = h.backup()
   def backupStatus: Either[ApiError, BackupStatus] = h.backupStatus

@@ -26,8 +26,8 @@ import javax.sql.DataSource
   *     its clearing, summary, body, notes, topics, regions, period, tags, findings — one removed, one added, the stable
   *     ids — and edges), the refusals (a stale token, a strict patch, an unknown key), through REST and the MCP tools;
   *     a note imported; the chunks rebuilt;
-  *   - citations: neighbors, the graph and the contradictions over every kind of edge, an edge parked and promoted,
-  *     the short forms resolved;
+  *   - citations: neighbors, the graph and the contradictions over every kind of edge, an edge parked and promoted, the
+  *     short forms resolved;
   *   - search: the filtered search under every criterion (text, tags, authors, places by name and by gazetteer id,
   *     topics, statuses, publication years, deep time, a box and one over the antimeridian, every order, pages), the
   *     legacy search, every facet field with prefixes, the map feed and its pages, the histogram and its trees in every
@@ -366,7 +366,8 @@ class LibraryOracleSuite extends DbSuite:
       )
     )
     val _ = step("put refused: a bad citekey", send("PUT", s"$url/api/sources/Bad%20Key", """{"title":"x"}"""))
-    val _ = step("put refused: an unknown key", send("PUT", s"$url/api/sources/zqx2000_x", """{"title":"x","nope":1}"""))
+    val _ =
+      step("put refused: an unknown key", send("PUT", s"$url/api/sources/zqx2000_x", """{"title":"x","nope":1}"""))
     val _ = step(
       "put refused: an edge from another source",
       send(
@@ -481,7 +482,8 @@ class LibraryOracleSuite extends DbSuite:
         |('zq-goal', 'source', 'zqalpha1990_tell', 'the walls'),
         |('zq-goal', 'source', 'zqdelta2010_gone', 'the lost report')""".stripMargin
     )
-    val _ = step("a task mentioning delta", post(s"$url/api/queue/tasks", """{"text":"re-read [[zqdelta2010_gone]]"}"""))
+    val _ =
+      step("a task mentioning delta", post(s"$url/api/queue/tasks", """{"text":"re-read [[zqdelta2010_gone]]"}"""))
     val _ = step("a task mentioning alpha", post(s"$url/api/queue/tasks", """{"text":"check zqalpha1990_tell"}"""))
     log.result()
 
@@ -603,7 +605,9 @@ class LibraryOracleSuite extends DbSuite:
           "source" -> Json.obj(
             "title" -> "Put over MCP".asJson,
             "tags" -> List("zq-oracle").asJson,
-            "findings" -> Json.arr(Json.obj("claim" -> "an MCP claim".asJson, "lon" -> 34.0.asJson, "lat" -> 39.0.asJson))
+            "findings" -> Json.arr(
+              Json.obj("claim" -> "an MCP claim".asJson, "lon" -> 34.0.asJson, "lat" -> 39.0.asJson)
+            )
           )
         )
       )
@@ -802,9 +806,7 @@ class LibraryOracleSuite extends DbSuite:
       "SELECT nonsense FROM nowhere",
       ""
     )
-    statements.foreach(s =>
-      step(s"POST /api/query $s", post(s"$url/api/query", Json.obj("sql" -> s.asJson).noSpaces))
-    )
+    statements.foreach(s => step(s"POST /api/query $s", post(s"$url/api/query", Json.obj("sql" -> s.asJson).noSpaces)))
     val _ = step(
       "tool query",
       tool(url, "query", Json.obj("sql" -> "SELECT citekey FROM sources ORDER BY citekey LIMIT 2".asJson))

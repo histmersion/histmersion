@@ -1,5 +1,9 @@
 package com.histmersion.db
 
+import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.search.FilterSql
+import com.histmersion.domain.library.search.Search
+
 import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.util.database.RangeSql
@@ -177,7 +181,9 @@ object ArticleRepo:
     * [[write]], so the previous text is kept in `article_versions` and `article_links` is recomputed. Returns (slug,
     * links moved) for each article that changed.
     */
-  private[db] def retargetLinks(needle: String, to: String => Option[String])(using DbCon): List[(String, Int)] =
+  private[histmersion] def retargetLinks(needle: String, to: String => Option[String])(using
+      DbCon
+  ): List[(String, Int)] =
     sql"""SELECT slug FROM articles
           WHERE strpos(lower(body || ' ' || coalesce(summary, '') || ' ' || coverage_reasons::text), ${needle.toLowerCase}) > 0
           ORDER BY slug""".query[String].run().toList.flatMap { slug =>

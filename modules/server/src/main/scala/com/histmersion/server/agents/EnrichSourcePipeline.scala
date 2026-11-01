@@ -73,7 +73,7 @@ final class EnrichSourcePipeline(
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
   private def load(ck: String): Either[String, Loaded] =
-    h.getSource(ck, body = true).left.map(_.message).flatMap { sw =>
+    h.library.sources.get(ck, body = true).left.map(_.message).flatMap { sw =>
       val s = sw.source
       val body = s.ocrMarkdown.map(_.trim).getOrElse("")
       if body.isEmpty then Left(s"$ck has no text — ingest or OCR it first")
@@ -187,7 +187,7 @@ final class EnrichSourcePipeline(
     s"Write the notes for [[${l.citekey}]].\n\n${meta(l)}\n\nsummary: ${c.summary}\n\nverified findings:\n" +
       fs.map(f => s"- ${f.claim} (quote: \"${f.quote}\")").mkString("\n")
 
-  private def isCitekey(s: String): Boolean = h.getSource(s, body = false).isRight
+  private def isCitekey(s: String): Boolean = h.library.sources.get(s, body = false).isRight
 
   /** The single write. On a 412 (someone wrote the source since `load`) the source is re-read and the patch rebuilt
     * from the CHECKPOINTED answers — no LLM call — and sent once more.
@@ -203,7 +203,7 @@ final class EnrichSourcePipeline(
     val (p, fields, proposal) = patch(l, c, fs, Option(notes).filter(_.nonEmpty))
     // a dry run's simulated patch "succeeds": its step says what it would have set
     ctx.write(s"patch [[$ck]]: ${if fields.isEmpty then "nothing new" else fields.mkString(", ")}", p.asJson)(
-      h.patchSource(ck, p).map(_ => ())
+      h.library.sources.patch(ck, p).map(_ => ())
     )(Right(())) match
       case Right(_)                                           => Right(Patched(fs.size, fields, proposal))
       case Left(e) if e.code.contains(Write.CodePrecondition) =>
@@ -216,7 +216,8 @@ final class EnrichSourcePipeline(
             fs.filterNot(f => existing.contains(AgentVerify.normalise(f.claim))),
             Option(notes).filter(_.nonEmpty)
           )
-          h.patchSource(ck, p2)
+          h.library.sources
+            .patch(ck, p2)
             .left
             .map(_.message)
             .map(_ => Patched(p2.findings.fold(0)(_.add.size), fields2, proposal2))
@@ -321,7 +322,7 @@ final class EnrichSourcePipeline(
     // a dry run patched nothing: the lint would only describe the source as it was before
     val lint = if ctx.dryRun then Nil
     else
-      h.getSource(ck, body = false).toOption.toList.flatMap { s =>
+      h.library.sources.get(ck, body = false).toOption.toList.flatMap { s =>
         closeLint(s.findings.size, s.source.periodStart.isDefined, s.source.status)
       }
     lint.foreach(l => ctx.warn(s"lint: $l"))

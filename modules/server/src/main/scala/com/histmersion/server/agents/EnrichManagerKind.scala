@@ -35,14 +35,14 @@ final class EnrichManagerKind(h: Handlers, a: AgentsHandlers) extends ManagerKin
 
   def target(m: ManagerInfo, itemKind: String, raw: String): Either[ApiError, String] =
     itemKind match
-      case SourceEnrich => h.getSource(raw.trim, body = false).map(_.source.citekey)
+      case SourceEnrich => h.library.sources.get(raw.trim, body = false).map(_.source.citekey)
       case other        => Left(ApiError(s"unknown item kind '$other'"))
 
   /** What an Enrich button names: a source itself (enriched again even if it was), or the sources an article cites / a
     * goal links that are NOT enriched yet ([[AutoEnrich.enrichedBy]]; the others are reported as skipped, with why).
     */
   override def expand(c: ManagerContext, raw: String): Either[ApiError, (List[String], List[String])] =
-    h.getSource(raw, body = false).map(s => (List(s.source.citekey), Nil)).orElse {
+    h.library.sources.get(raw, body = false).map(s => (List(s.source.citekey), Nil)).orElse {
       val cited = h
         .getArticle(raw)
         .map(v => h.citedSources(v.article.body))
@@ -55,7 +55,7 @@ final class EnrichManagerKind(h: Handlers, a: AgentsHandlers) extends ManagerKin
 
   /** Why a source counts as enriched already (findings, notes, a live enrich run), if it does. */
   private def enrichedWhy(c: ManagerContext, ck: String): Option[String] =
-    h.getSource(ck, body = false).toOption match
+    h.library.sources.get(ck, body = false).toOption match
       case None      => Some("no such source")
       case Some(src) =>
         val runs = c
@@ -75,7 +75,7 @@ final class EnrichManagerKind(h: Handlers, a: AgentsHandlers) extends ManagerKin
     def cfg = a.config
     try
       autoEnrichLock.synchronized {
-        h.getSource(citekey, body = false) match
+        h.library.sources.get(citekey, body = false) match
           case Left(e)    => Some(AutoEnrich.notQueued(e.message))
           case Right(src) =>
             val ck = src.source.citekey
@@ -129,7 +129,7 @@ final class EnrichManagerKind(h: Handlers, a: AgentsHandlers) extends ManagerKin
   ): Option[String] =
     item.kind match
       case SourceEnrich =>
-        h.getSource(item.target, body = false) match
+        h.library.sources.get(item.target, body = false) match
           case Left(_)    => c.settleNow(m, item, ItemStatus.Cancelled, "the source no longer exists")
           case Right(src) =>
             val runs = c

@@ -1,5 +1,8 @@
 package com.histmersion.db
 
+import com.histmersion.domain.library.sources.SourceFixtures
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.domain.media.assets.AssetFixtures
 import com.histmersion.domain.media.links.AssetLinkFixtures
 import com.histmersion.domain.media.assets.NewFigure
@@ -175,7 +178,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
       )
     )
     put(ds, source(G1, Some("# Gamma\n\nshort"), 0, List(Edge(G1, A1, "superseded_by"))))
-    val _ = SourceRepo.rename(ds, B0, B1)
+    val _ = SourceFixtures.rename(ds, B0, B1)
     // a finding dropped by a later write leaves a tombstone
     SourceRepo.load(ds, A1).foreach(s => put(ds, s.copy(findings = s.findings.filterNot(_.id == s"$A1#3"))))
     val _ =
@@ -337,7 +340,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
         ds,
         f,
         BundleFormat.sha256Hex(bundle),
-        BundleImport.Options(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm),
+        BundleImport.Options(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm, SourceFixtures.referrers),
         Originals.inDir(originals),
         resolutions,
         merge,
@@ -364,7 +367,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     val after = connect(ds)(sql"SELECT uid FROM sources WHERE citekey = $B1".query[UUID].run().head)
     assertEquals(after, before, "the rename changed the uid")
     // …and the wire shapes carry it (get_source, its findings, an article)
-    val (detail, fs) = SourceRepo.get(ds, B1).getOrElse(fail("no source"))
+    val (detail, fs) = SourceFixtures.get(ds, B1).getOrElse(fail("no source"))
     assertEquals(detail.uid, Some(after))
     assertEquals(detail.origin, Some(instanceId(ds)))
     assert(fs.nonEmpty && fs.forall(_.uid.isDefined), fs.toString)
@@ -675,7 +678,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(r4.counts.find(_.kind == BundleKind.Goal).map(_.deleted), Some(1), r4.toString)
     assertEquals(count(b, "SELECT count(*)::int FROM goals WHERE slug = 'zzb_goal_sub'"), 0)
     // a rename over there is followed here: the citekey, its findings and an alias
-    val _ = SourceRepo.rename(a, G1, "zzb2004_gamma")
+    val _ = SourceFixtures.rename(a, G1, "zzb2004_gamma")
     val r5 = importInto(b, exportOf(a, sa), sb)
     assert(r5.applied, r5.problems.mkString("\n"))
     assertEquals(count(b, "SELECT count(*)::int FROM sources WHERE citekey = 'zzb2004_gamma'"), 1)
@@ -689,7 +692,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = importInto(b, bundle, sb)
     assertEquals(count(b, s"SELECT count(*)::int FROM source_aliases WHERE alias = '$B0'"), 1)
     // here, the source goes back to its old key: the alias B0 is dropped
-    assert(SourceRepo.rename(b, B1, B0).isRight)
+    assert(SourceFixtures.rename(b, B1, B0).isRight)
     assertEquals(count(b, s"SELECT count(*)::int FROM alias_tombstones WHERE alias = '$B0'"), 1)
     val r = importInto(b, bundle, sb)
     assert(r.applied, r.problems.mkString("\n"))

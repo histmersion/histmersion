@@ -18,15 +18,6 @@ object SourceDelete:
             s"Calibre: the record links entry $id (not checked against the library); it is NOT touched — " +
               "remove it in Calibre if it is there and should go too."
 
-  def attestationGone(targetType: String, targetId: String, ck: String): Boolean =
-    targetType match
-      case AttestationTarget.Finding     => targetId.startsWith(ck + "#")
-      case AttestationTarget.Edge        => targetId.split('|').headOption.contains(ck)
-      case AttestationTarget.EventDating => Rename.replaceToken(targetId, ck, "\u0000") != targetId
-      case _                             => false
-
-  def links(text: String, ck: String): Boolean = ArticleLinks.targets(text).exists(_.equalsIgnoreCase(ck))
-
   def refusal(ck: String, blockers: List[DeleteBlocker]): String =
     val groups = blockers.groupBy(_.kind).toList.sortBy(_._1.ordinal).map { (k, bs) =>
       s"${k.label} ${bs.map(b => b.id + b.title.fold("")(t => s" ($t)")).mkString(", ")}"

@@ -51,13 +51,13 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
     AssetInput("f.png", "image/png", java.util.Base64.getEncoder.encodeToString(Array[Byte](1, 2, 3)), None, None, None)
 
   test("every source write is refused while a restore holds the lock"):
-    refused("put_source")(h.putSource("zzlock_src", SourcePut(title = "T")))
-    refused("patch_source")(h.patchSource("zzlock_src", SourcePatch(summary = Some("x"))))
-    refused("import")(h.importNote(NoteImport(text = "---\ncitekey: zzlock_src\n---\n")))
+    refused("put_source")(h.library.sources.put("zzlock_src", SourcePut(title = "T")))
+    refused("patch_source")(h.library.sources.patch("zzlock_src", SourcePatch(summary = Some("x"))))
+    refused("import")(h.library.sources.importNote(NoteImport(text = "---\ncitekey: zzlock_src\n---\n")))
     refused("seed")(h.seed(SeedRequest(dir = "/tmp")))
     refused("reindex")(h.reindex(None, None))
-    refused("edges/resolve")(h.resolveEdges)
-    refused("delete_source")(h.deleteSource("zzlock_src", SourceDeleteRequest(apply = true)))
+    refused("edges/resolve")(h.library.citations.resolveEdges)
+    refused("delete_source")(h.library.sources.delete("zzlock_src", SourceDeleteRequest(apply = true)))
 
   test("every ARTICLE write is refused too — these had no guard at all"):
     refused("put_article")(h.putArticle("zzlock-art", ArticlePut(title = "T", kind = "concept", body = "b")))
@@ -106,5 +106,5 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
     assert(!h.ingest.paused, "…and it must come back, whatever the restore did")
 
   test("once the lock is released, the same writes go through"):
-    assert(h.putSource("zzlock_src", SourcePut(title = "T")).isRight)
+    assert(h.library.sources.put("zzlock_src", SourcePut(title = "T")).isRight)
     assert(h.places.rebuild(Caller.Local).isRight)

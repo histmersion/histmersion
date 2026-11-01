@@ -1,10 +1,13 @@
 package com.histmersion.server
 
+import com.histmersion.domain.library.sources.SourceFixtures
+import com.histmersion.domain.library.sources.SourceRepo
+
 import ox.supervised
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.PassageFinder
 import com.histmersion.api.PassageResult
-import com.histmersion.db.{Db, Migrate, SourceRepo}
+import com.histmersion.db.{Db, Migrate}
 import com.augustnagro.magnum.*
 import java.net.{URI, URLEncoder}
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
@@ -95,7 +98,7 @@ class PassagesHttpSuite extends com.histmersion.db.DbSuite:
     withServer { url =>
       seed(url)
       val ds = testPool(cfg.db)
-      assertEquals(PassageFinder.body(SourceRepo.bodyChunks(ds, Ck)), SourceRepo.bodyText(ds, Ck))
+      assertEquals(PassageFinder.body(SourceFixtures.bodyChunks(ds, Ck)), SourceFixtures.bodyText(ds, Ck))
     }
 
   test("hits with headings, and each offset reads on through get_source's body slice"):

@@ -3,7 +3,7 @@ package com.histmersion.api
 import com.histmersion.api.Query.*
 
 /** The pure half of the read-only query surface: the Markdown table and the generated tool description (plan §5.2
-  * stream 2.8). Execution is `db.QueryRepo`, tested against Postgres.
+  * stream 2.8). Execution is the search's `QueryRepo`, tested against Postgres.
   */
 class QuerySuite extends munit.FunSuite:
 

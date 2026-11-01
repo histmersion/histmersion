@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.library.sources.SourceFixtures
+
 import com.histmersion.domain.media.assets.AssetFixtures
 import com.histmersion.domain.media.links.AssetLinkFixtures
 import com.histmersion.domain.media.imports.ImportFixtures
@@ -521,7 +523,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       AssetFixtures.figures(ds, "zqmd2022_paper").map(f => (f.name, f.width)),
       List(("fig-0002-01.png", Some(900)), ("logo.png", Some(40)))
     )
-    assert(SourceRepo.markdown(ds, "zqmd2022_paper").contains("assets/logo.png"))
+    assert(SourceFixtures.markdown(ds, "zqmd2022_paper").contains("assets/logo.png"))
     assert(CoverFixtures.illustrationCandidates(ds, None, refresh = false, 100000).contains("zqmd2022_paper"))
     val fig = AssetFixtures.figures(ds, "zqmd2022_paper").head
     AssetFixtures.setSourcePicture(ds, "zqmd2022_paper", fig.uid, MediaRole.Illustration, None)

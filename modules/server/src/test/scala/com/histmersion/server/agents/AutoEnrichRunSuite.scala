@@ -151,14 +151,16 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   test("an already-enriched source (it has findings) is converted again but not re-enriched"):
     withHandlers() { h =>
       assert(
-        h.putSource(
-          Ck,
-          SourcePut(
-            title = "Bronze Age tin",
-            year = Some(2020),
-            findings = List(FindingInput("The Uluburun ship carried copper."))
+        h.library.sources
+          .put(
+            Ck,
+            SourcePut(
+              title = "Bronze Age tin",
+              year = Some(2020),
+              findings = List(FindingInput("The Uluburun ship carried copper."))
+            )
           )
-        ).isRight
+          .isRight
       )
       val job = ingest(h)
       assertEquals(runs, Nil)

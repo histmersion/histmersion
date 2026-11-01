@@ -1,5 +1,8 @@
 package com.histmersion.server.events
 
+import com.histmersion.domain.library.sources.SourceFixtures
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.server.CatalogueWiring
 
 import com.histmersion.domain.catalogue.events.*
@@ -8,7 +11,7 @@ import com.histmersion.domain.catalogue.evidence.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{Db, Migrate, SourceRepo, TestDb}
+import com.histmersion.db.{Db, Migrate, TestDb}
 import com.histmersion.server.Deps
 import com.histmersion.server.media.FakeMediaHttp
 
@@ -172,7 +175,7 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
       .get
     assertEquals(r.attested.map(a => (a.citekey, a.quote)), List(("zqei_named2020", Some("Siege of Alesia"))))
     val a = r.attested.head
-    val body = SourceRepo.bodyText(ds, "zqei_named2020")
+    val body = SourceFixtures.bodyText(ds, "zqei_named2020")
     assertEquals(body.substring(a.charStart.get, a.charEnd.get), "Siege of Alesia", "the offsets point at the quote")
     assert(r.refused.exists(_.startsWith("zqei_near2020: no passage")), r.refused.toString)
     assertEquals(EventFixtures.get(ds, "wikidata_q131386").map(_.event.tier), Some(EventTier.Attested))

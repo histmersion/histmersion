@@ -57,7 +57,7 @@ final class CurrencyCheckPipeline(
 
   private def load(goal: String): List[Target] =
     goalSources(goal, cfg.scheduler.currencySources)
-      .flatMap(ck => h.getSource(ck, body = false).toOption)
+      .flatMap(ck => h.library.sources.get(ck, body = false).toOption)
       .map(s => Target(s.source.citekey, s.source.doi.filter(_.trim.nonEmpty)))
 
   private def assess(ctx: RunCtx, ts: List[Target]): Assessed =
@@ -80,7 +80,8 @@ final class CurrencyCheckPipeline(
           val acts = r.followups.map(Scheduling.currencyAction(t.citekey, _))
           val proposed = acts.collect { case CurrencyAction.Propose(p) => p }.count { p =>
             val known = ctx.approvalStore.proposedBefore(p.kind, p.citekey, p.status, p.edgeKind, p.target) ||
-              h.neighbors(p.citekey, p.edgeKind.map(EdgeKind.wireOf).toList)
+              h.library.citations
+                .neighbors(p.citekey, p.edgeKind.map(EdgeKind.wireOf).toList)
                 .exists(n => n.direction == "out" && p.target.contains(n.citekey))
             !known && (approvals.propose(ctx, p) match
               case SourceProposals.Outcome.Recorded(id, w) => ctx.warn(s"approval $id waits for a person: $w"); true

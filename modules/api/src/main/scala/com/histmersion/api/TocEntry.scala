@@ -7,3 +7,10 @@ import sttp.tapir.Schema
 final case class TocEntry(heading: String, ord: Int, chars: Int) derives KindlingsCodecAsObject, KindlingsSchema
 object TocEntry:
   given Schema[TocEntry] = summon[KindlingsSchema[TocEntry]].schema
+
+  /** A source's table of contents as `get_source` shows it. */
+  def markdown(entries: List[TocEntry]): String =
+    if entries.isEmpty then "_(no headings in body)_"
+    else
+      val items = entries.map(e => s"- **${e.heading}** — ord ${e.ord}, ${e.chars} chars")
+      s"### Table of Contents (${entries.size} heading(s))\n\n${items.mkString("\n")}"

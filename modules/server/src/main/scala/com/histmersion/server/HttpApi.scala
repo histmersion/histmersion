@@ -34,39 +34,21 @@ final class HttpApi(
     BasemapApi.fetch.serverLogic[Identity](q => h.basemap.fetch(q)),
     BasemapApi.remove.serverLogic[Identity](q => h.basemap.remove(q)),
     BasemapApi.tile.serverLogic[Identity]((l, z, x, y, sub, keys) => h.basemap.tile(l, z, x, y, sub, keys)),
-    TilesApi.tile.serverLogic[Identity](q => h.tile(q)),
-    Api.search.serverLogicSuccess[Identity]((q, limit) => h.search(q, limit)),
-    Api.sources.serverLogicSuccess[Identity](f => h.sources(f)),
-    Api.facets.serverLogic[Identity]((field, prefix, f) => h.facets(field, prefix, f)),
+    TilesApi.tile.serverLogic[Identity](q => h.tile(q))
+  ) ++ com.histmersion.domain.library.LibraryRoutes(
+    h.library.search,
+    h.library.labels,
+    h.library.sources,
+    h.library.findings,
+    h.library.citations,
     Api.sourceArticles.serverLogic[Identity](ck => h.sourceArticles(ck)),
-    // `sources/{ck}/lint(/fix)` are longer paths than `sources/{ck}`
-    Api.lintSource.serverLogic[Identity](ck => h.lintSource(ck)),
-    Api.fixSourceFormat.serverLogic[Identity](ck => h.fixSource(ck)),
     OpsApi.lintMarkdown.serverLogicSuccess[Identity](in => h.lintText(in)),
-    Api.sourceView.serverLogic[Identity](q =>
-      h.sourceMarkdown(q.citekey, q.fullText, q.section, q.heading, q.offset, q.chars)
-    ),
-    Api.passages.serverLogic[Identity](q => h.passages(q)),
     Api.resolveId.serverLogic[Identity](h.resolveId),
-    Api.getSource.serverLogic[Identity]((ck, body) => h.getSource(ck, body)),
-    Api.findingsPage.serverLogicSuccess[Identity](q => h.findingsPage(q)),
-    Api.findings.serverLogicSuccess[Identity](q => h.findings(q)),
-    Api.aggregate.serverLogic[Identity](q => h.aggregate(q)),
-    Api.neighbors.serverLogicSuccess[Identity]((ck, kinds) => h.neighbors(ck, kinds)),
-    Api.graph.serverLogicSuccess[Identity]((ck, depth) => h.graph(ck, depth)),
-    Api.contradictions.serverLogicSuccess[Identity]((ck, since) => h.contradictions(ck, since)),
     Api.seed.serverLogic[Identity](req => h.seed(req)),
     // ── writes (plan §1.9a): the `export` route must precede `getSource`, which is a prefix of it ──
     Api.exportSource.serverLogic[Identity](ck => h.exportSource(ck)),
-    Api.putSource.serverLogic[Identity]((ck, in, strict) => h.putSource(ck, in, strict)),
-    Api.patchSource.serverLogic[Identity]((ck, p, strict) => h.patchSource(ck, p, strict)),
-    Api.renameSource.serverLogic[Identity]((ck, req) => h.renameSource(ck, req)),
-    Api.deleteSource.serverLogic[Identity]((ck, req) => h.deleteSource(ck, req)),
-    Api.sourceAliases.serverLogicSuccess[Identity](_ => h.sourceAliases),
-    Api.importNote.serverLogic[Identity](req => h.importNote(req)),
-    Api.citekeys.serverLogicSuccess[Identity](_ => h.citekeys),
-    Api.resolveEdges.serverLogic[Identity](_ => h.resolveEdges),
-    Api.reindex.serverLogic[Identity]((after, limit) => h.reindex(after, limit)),
+    Api.reindex.serverLogic[Identity]((after, limit) => h.reindex(after, limit))
+  ) ++ List[ServerEndpoint[Any, Identity]](
     // ── backup / restore (plan §1.10); the listing route precedes the per-file download ──
     Api.configReload.serverLogic[Identity](_ => Right(h.configReload())),
     Api.backup.serverLogic[Identity](_ => h.backup()),
@@ -164,7 +146,7 @@ final class HttpApi(
       .out(stringBody)
       .out(header(Header.contentType(MediaType.TextHtml)))
       .serverLogicSuccess[Identity] { case (ck, full, fragment, q) =>
-        val now = h.canonical(ck)
+        val now = h.library.sources.canonical(ck)
         if now != ck then
           val to = Article.sourceUrl(now, full, fragment, q)
           (
@@ -229,6 +211,8 @@ final class HttpApi(
         h
       ).endpoints ++ OpsRoutes(
         h.ops
+      ) ++ com.histmersion.domain.library.search.QueryRoutes(
+        h.library.query
       ) ++ com.histmersion.domain.automation.agents.AgentsRoutes(h.agents) ++ com.histmersion.domain.automation.managers
         .ManagersRoutes(
           h.agents.managing,

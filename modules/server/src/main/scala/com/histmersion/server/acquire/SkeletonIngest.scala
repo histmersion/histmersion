@@ -1,11 +1,13 @@
 package com.histmersion.server.acquire
 
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.values.SourceStatus
 
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{AcquireRepo, SourceRepo}
+import com.histmersion.db.AcquireRepo
 
 import java.nio.file.Path
 import javax.sql.DataSource

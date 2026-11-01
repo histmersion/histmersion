@@ -62,7 +62,7 @@ final class Deps(
 
   /** The sources' texts as the catalogue's evidence searches them (the library's). */
   lazy val passages: com.histmersion.domain.catalogue.evidence.passages.PassageSource =
-    com.histmersion.domain.library.sources.SourcePassages(ds)
+    com.histmersion.domain.library.sources.SourcePassages(transactor)
 
   /** The events related to what a filter selects, as the library reads the filter's sources. */
   lazy val eventSources: com.histmersion.domain.catalogue.events.EventSourceFilter =
@@ -123,6 +123,23 @@ object Deps:
         )
       )
       .fold(problems => throw IllegalStateException(problems.mkString("; ")), identity)
+
+  /** Every domain that names sources, in the order a rename reports their columns: what each keeps right when the
+    * library renames or deletes a source.
+    */
+  val sourceReferrers: com.histmersion.domain.library.sources.referrers.SourceReferrers =
+    com.histmersion.domain.library.sources.referrers.SourceReferrers(
+      List(
+        com.histmersion.domain.catalogue.evidence.AttestationSourceReferrer(),
+        com.histmersion.domain.media.links.AssetLinkSourceReferrer(),
+        com.histmersion.domain.research.articles.ArticleSourceReferrer(),
+        com.histmersion.domain.catalogue.events.EventSourceReferrer(),
+        com.histmersion.util.jobs.JobSourceReferrer(),
+        com.histmersion.domain.catalogue.places.PlaceSourceReferrer(),
+        com.histmersion.domain.automation.goals.GoalSourceReferrer(),
+        com.histmersion.domain.automation.worklists.WorkListSourceReferrer()
+      )
+    )
 
   /** Every alias table: how an old identifier of each renamed kind is followed. */
   val aliasTables: com.histmersion.util.identity.AliasTables = com.histmersion.util.identity.AliasTablesAdapter.all

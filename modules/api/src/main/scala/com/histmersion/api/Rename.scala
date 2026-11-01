@@ -1,5 +1,6 @@
 package com.histmersion.api
 
+import com.histmersion.util.text.WikiLinks
 import com.histmersion.values.Citekey
 
 object Rename:
@@ -8,7 +9,7 @@ object Rename:
     Citekey.of(newRaw).flatMap { ck =>
       if ck.value == oldCk.trim then
         Left(ApiError(s"'$ck' is already the citekey of that source", Some(Write.CodeInvalid)))
-      else if !ArticleLinks.isCitekeyShaped(ck.value) then
+      else if !WikiLinks.isCitekeyShaped(ck.value) then
         Left(
           ApiError(
             s"'$ck' is a valid citekey but not a LINK-shaped one — `[[$ck]]` would resolve to an " +

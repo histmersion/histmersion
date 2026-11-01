@@ -1,5 +1,10 @@
 package com.histmersion.db
 
+import com.histmersion.domain.library.labels.LabelFixtures
+import com.histmersion.domain.library.search.FilterSql
+import com.histmersion.domain.library.search.SearchFixtures
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
 import com.histmersion.domain.catalogue.places.FindingPlacement
@@ -258,7 +263,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
     seed()
     def found(place: String, from: Long, to: Long) =
       val f = Filter(places = List(place), period = Some(Period(from, to)), limit = 50)
-      val r = SourceRepo.sources(ds, f, cfg.limits.snippetWords, PlaceFixtures.scopeFor(ds, f.places, f.period))
+      val r = SearchFixtures.sources(ds, f, cfg.limits.snippetWords, PlaceFixtures.scopeFor(ds, f.places, f.period))
       r.hits.map(_.source.citekey).toSet
     assert(found("zzp_asia", -1400, -1200).contains("zzp_src"), "Hattusa → Hatti → Turkey → Asia")
     assert(found("zzp_hatti", -1400, -1200).contains("zzp_src"))
@@ -266,7 +271,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
     // the matched finding explains WHICH place chip it satisfied — by the place's NAME, not by the
     // gazetteer id the filter carries (item 15: `place: pleiades_589831` explains nothing)
     val f = Filter(places = List("zzp_hattusa"), period = Some(Period(-1400, -1200)), limit = 50)
-    val hit = SourceRepo
+    val hit = SearchFixtures
       .sources(ds, f, cfg.limits.snippetWords, PlaceFixtures.scopeFor(ds, f.places, f.period))
       .hits
       .find(_.source.citekey == "zzp_src")
@@ -281,11 +286,11 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
 
   test("unlocated counts the findings the gazetteer could not place"):
     seed()
-    assert(SourceRepo.unlocated(ds, Filter(period = Some(Period(-1302, -1202)))) >= 1)
+    assert(SearchFixtures.unlocated(ds, Filter(period = Some(Period(-1302, -1202)))) >= 1)
 
   test("the places facet reports the gazetteer label AND the id behind it"):
     seed()
-    val rows = SourceRepo.facets(ds, FacetField.Places, Some("Tur"), Filter(), 20)
+    val rows = LabelFixtures.facets(ds, FacetField.Places, Some("Tur"), Filter(), 20)
     val turkey = rows.find(_.value == "Turkey")
     assert(turkey.isDefined, rows.toString)
     assertEquals(turkey.get.id, Some("zzp_turkey"))

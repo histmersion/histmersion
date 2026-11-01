@@ -14,7 +14,7 @@ import com.augustnagro.magnum.*
 import javax.sql.DataSource
 
 /** The gazetteer behind the §1.6 aggregation tree: the places a tree's rows were placed in, their ancestors and the
-  * edges between them. The library counts the rows ([[com.histmersion.db.AggregateRepo.treeRows]]);
+  * edges between them. The library counts the rows (the search's `AggregateRepo.treeRows`);
   * [[com.histmersion.api.Tree]] (pure) buckets and nests.
   */
 private[places] object TreeRepo:

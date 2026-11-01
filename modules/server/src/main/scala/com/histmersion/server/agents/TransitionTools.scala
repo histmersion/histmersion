@@ -7,15 +7,9 @@ import com.histmersion.config.AgentToolsConfig
 import com.histmersion.domain.automation.workflows.{ToolContribution, ToolName}
 import com.histmersion.server.Handlers
 import com.histmersion.server.McpTools
-import com.histmersion.server.McpTools.{
-  ArticleCoverageInput,
-  CheckEditsInput,
-  FacetsInput,
-  GetArticleInput,
-  NeighborsInput,
-  PassagesInput
-}
-import com.histmersion.server.OpsTools.QueryInput
+import com.histmersion.server.McpTools.{ArticleCoverageInput, CheckEditsInput, GetArticleInput}
+import com.histmersion.domain.library.LibraryTools.{FacetsInput, NeighborsInput, PassagesInput}
+import com.histmersion.domain.library.search.QueryTools.QueryInput
 import com.histmersion.api.VocabularyCodecs.given
 import sttp.ai.core.agent.AgentTool
 import sttp.shared.Identity
@@ -61,7 +55,8 @@ final class TransitionTools(h: Handlers, upstream: () => AgentUpstream, caps: =>
         "Read one source by citekey: its summary, findings and notes, or the part `section` names."
       ) { in =>
         val section = in.sectionOrBody
-        h.sourceMarkdown(in.citekey, fullText = false, section, in.heading, in.offset, bodyChars(in.chars))
+        h.library.sources
+          .markdown(in.citekey, fullText = false, section, in.heading, in.offset, bodyChars(in.chars))
           .fold(
             e => s"No source '${in.citekey}': ${e.message}",
             md =>
@@ -82,7 +77,7 @@ final class TransitionTools(h: Handlers, upstream: () => AgentUpstream, caps: =>
           "accent-insensitive."
       )(in =>
         cap(
-          McpTools.passagesMarkdown(h, in),
+          com.histmersion.domain.library.LibraryTools.passagesMarkdown(h.library.sources, in),
           max,
           "ask for fewer passages (`limit`), less `context`, or a more specific query"
         )
@@ -95,7 +90,7 @@ final class TransitionTools(h: Handlers, upstream: () => AgentUpstream, caps: =>
       ) { in =>
         val f = in.toFilter
         cap(
-          ToolResultCap.plainLinks(Markdown.briefResults(h.sources(f))),
+          ToolResultCap.plainLinks(Markdown.briefResults(h.library.search.sources(f))),
           max,
           "ask for fewer results (`limit`) or narrow the filters"
         )
@@ -106,7 +101,8 @@ final class TransitionTools(h: Handlers, upstream: () => AgentUpstream, caps: =>
         TransitionTools.Facets.value,
         "The existing values of one field, with source counts — pick from them instead of inventing new ones."
       ) { in =>
-        h.facets(in.field, in.prefix, FacetsInput(in.field, in.prefix).toFilter)
+        h.library.labels
+          .facets(in.field, in.prefix, FacetsInput(in.field, in.prefix).toFilter)
           .fold(e => e.message, fs => cap(Markdown.facets(in.field, fs.toVector), max, "narrow it with `prefix`"))
       }
     },
@@ -115,7 +111,7 @@ final class TransitionTools(h: Handlers, upstream: () => AgentUpstream, caps: =>
         TransitionTools.Neighbors.value,
         "A source's typed edges in and out, with each neighbour's status. No edge is NOT evidence of agreement."
       ) { in =>
-        val rows = h.neighbors(in.citekey, in.kinds)
+        val rows = h.library.citations.neighbors(in.citekey, in.kinds)
         if rows.isEmpty then s"No edges recorded for ${in.citekey}. An empty result is not evidence of agreement."
         else cap(Markdown.neighbors(in.citekey, rows.toVector), max, "ask for one edge kind (`kinds`)")
       }
@@ -125,8 +121,8 @@ final class TransitionTools(h: Handlers, upstream: () => AgentUpstream, caps: =>
         TransitionTools.Query.value,
         "One read-only SQL SELECT on the corpus database (Postgres) — e.g. every cited source's status at once."
       ) { in =>
-        h.ops
-          .query(Query.QueryRequest(in.sql))
+        h.library.query
+          .run(Query.QueryRequest(in.sql))
           .fold(e => e.message, r => TransitionTools.queryResult(r, caps.queryMaxRows, max))
       }
     },

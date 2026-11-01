@@ -1,5 +1,8 @@
 package com.histmersion.db
 
+import com.histmersion.domain.library.search.FilterSql
+import com.histmersion.domain.library.search.Search
+
 import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.api.*

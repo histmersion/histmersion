@@ -142,12 +142,12 @@ final class CompileArticlePipeline(
         )
       case Left(e) => Left(e.message)
 
-  private def isCitekey(ck: String): Boolean = h.getSource(ck, body = false).isRight
+  private def isCitekey(ck: String): Boolean = h.library.sources.get(ck, body = false).isRight
 
   private def filter(ctx: RunCtx, s: Snap): Either[String, Found] =
     val af = s.filter.getOrElse(ArticleFilter(query = s.query, topics = s.topics, tags = s.tags))
     val f = af.toFilter.copy(limit = cfg.compile.maxSources)
-    val res = h.sources(f)
+    val res = h.library.search.sources(f)
     val line = af.line
     val facts = res.hits.map(x => SourceFact(x.source.citekey, x.source.title, x.source.year, x.source.status))
     // cited, or listed (a hand-written Not used list, or a stored reason): handled already
@@ -160,7 +160,7 @@ final class CompileArticlePipeline(
     * `agents.compile.record-chars`.
     */
   private def record(ck: String): Option[String] =
-    h.getSource(ck, body = true).toOption.map { s =>
+    h.library.sources.get(ck, body = true).toOption.map { s =>
       val parts = List(
         s.source.summary.map(x => s"Summary:\n$x"),
         Option.when(s.findings.nonEmpty)("Findings:\n" + s.findings.map(f => s"- ${f.claim}").mkString("\n")),
@@ -200,7 +200,8 @@ final class CompileArticlePipeline(
     */
   private def evidenceOf(found: Found, extracted: List[Extracted]): Evidence =
     val edges = found.sources.flatMap { s =>
-      h.neighbors(s.citekey, CompileArticle.DisagreementKinds.toList)
+      h.library.citations
+        .neighbors(s.citekey, CompileArticle.DisagreementKinds.toList)
         .filter(n => n.direction == "out" && n.target == NeighborTarget.Source)
         .map(n => EdgeFact(s.citekey, n.kind, n.citekey))
     }
@@ -236,7 +237,7 @@ final class CompileArticlePipeline(
         val corpus = Corpus(
           isCitekey,
           t => resolve(t).isDefined,
-          ck => h.getSource(ck, body = false).toOption.map(_.source.status)
+          ck => h.library.sources.get(ck, body = false).toOption.map(_.source.status)
         )
         val title = Option.when(s.mode == DraftMode.Extend)(s.title).orElse(ctx.run.params.title)
         CompileArticle

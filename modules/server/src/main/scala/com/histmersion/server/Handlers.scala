@@ -32,7 +32,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.{
   AgentStateRepo,
-  AggregateRepo,
   ArticleRepo,
   ArticleReviewRepo,
   CoverageRepo,
@@ -40,9 +39,7 @@ import com.histmersion.db.{
   GoalRepo,
   Importer,
   Migrate,
-  ReviewLedgerRepo,
-  SourceDeleteRepo,
-  SourceRepo
+  ReviewLedgerRepo
 }
 import java.nio.file.{Files, Path}
 import java.time.Instant
@@ -62,7 +59,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** Read at each use: a config reload switches it (Deps). */
   private def cfg = deps.cfg
 
-  /** Every source write re-materialises that citekey's `finding_places` (see `SourceRepo.write`), so the gazetteer
+  /** Every source write re-materialises that citekey's `finding_places` (the library's sources), so the gazetteer
     * tolerance travels with the write rather than only with `places rebuild`.
     */
   private def tolKm = cfg.places.pointToleranceKm
@@ -151,7 +148,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
           CarriedKinds(Deps.data.carried),
           MergeRuleSet(Deps.data.mergeRules),
           applyJobs,
-          () => backups.create(Instant.now()).map(_.file)
+          () => backups.create(Instant.now()).map(_.file),
+          Deps.sourceReferrers
         )
       ),
       deps.maintenance
@@ -404,238 +402,35 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       case s @ (BaseMapSource.Local | BaseMapSource.Online) => s
       case _ => BaseMapSource.resolve(cfg.ui.baseMapSource, basemap.status)
 
-  /** Legacy `GET /api/search` — kept working (the web page uses it) by delegating to the filtered search and dropping
-    * the evidence, so there is ONE query path (FTS ranking and snippets included). New callers should use [[sources]].
-    */
-  def search(q: Option[String], limit: Option[Int]): List[SearchHit] =
-    sources(Filter(q = q.map(_.trim).filter(_.nonEmpty), limit = limit.getOrElse(0))).hits.map(_.source)
+  /** A filter's page, as the library reads it. */
+  private def resolve(f: Filter): Filter = library.filters.page(f)
 
-  /** `limit <= 0` means "use the configured page size" — no literal page size exists in the code — and any limit is
-    * CAPPED at `limits.max-page`. An uncapped `limit` is a denial of service by query parameter: `?limit=100000000`
-    * used to build every row of it.
-    */
-  private def resolve(f: Filter): Filter =
-    f.copy(limit = cfg.limits.page(Some(f.limit), cfg.limits.search), offset = f.offset.max(0))
-
-  /** How the gazetteer reads this filter's `places` values (plan §1.6a): the ids among them expand to themselves plus
-    * their descendants as of `f.period`; the rest fall back to the name ILIKE. Resolved ONCE per request and threaded
-    * into every query, so the sidebar, the map, the facets and the histogram all agree. No `places` filter ⇒ no query
-    * at all.
-    */
-  private def scopeOf(f: Filter): PlaceScope =
-    if f.places.isEmpty then PlaceScope.empty else catalogue.placeStore.scopeFor(f.places, f.period)
-
-  /** `GET /api/sources` — THE discovery operation: sources with their matched findings and reasons. */
-  def sources(f: Filter): SearchResult =
-    SourceRepo.sources(ds, resolve(f), cfg.limits.snippetWords, scopeOf(f))
-
-  /** `GET /api/facets` — the vocabulary of one dimension inside the current filter. */
-  def facets(field: String, prefix: Option[String], f: Filter): Either[ApiError, List[Facet]] =
-    FacetField
-      .parse(field)
-      .toRight(ApiError(s"unknown facet field '$field' (one of: ${FacetField.all.mkString(", ")})"))
-      .map(ff => SourceRepo.facets(ds, ff, prefix, resolve(f), resolve(f).limit, scopeOf(f)).toList)
+  /** The places a filter's `places` values name, as the library reads them. */
+  private def scopeOf(f: Filter): PlaceScope = library.filters.scope(f)
 
   /** `GET /api/sources/{ck}/articles` — the compiled articles that cite this source (plan §5.2). 404 when the citekey
     * itself is unknown, so "no articles yet" and "no such source" are different answers.
     */
   def sourceArticles(citekey: String): Either[ApiError, List[Backlink]] =
-    getSource(citekey).map(s => ArticleRepo.backlinksForSource(ds, s.source.citekey))
+    library.sources.get(citekey).map(s => ArticleRepo.backlinksForSource(ds, s.source.citekey))
 
   /** `GET /api/resolve/{id}`: a stored source, else an article, else nothing — never an error. */
   def resolveId(id: String): Either[ApiError, ResolvedId] =
-    val src = getSource(id, body = false).toOption.map(s =>
-      ResolvedSource(s.source.citekey, s.source.doi, s.source.authors, s.source.year, s.source.title, s.source.status)
-    )
+    val src = library.sources
+      .get(id, body = false)
+      .toOption
+      .map(s =>
+        ResolvedSource(s.source.citekey, s.source.doi, s.source.authors, s.source.year, s.source.title, s.source.status)
+      )
     val art = if src.isDefined then None
     else getArticle(id, brief = true).toOption.map(a => ResolvedArticle(a.article.slug, a.article.title))
     Right(ResolvedId(id, src, art))
-
-  /** THE citekey resolution (V027): the citekey a source has NOW, when `id` is an old one it was renamed from;
-    * otherwise `id` unchanged (and a later lookup reports it unknown). Every operation that takes a citekey resolves it
-    * here first, so an old id keeps working in every read — the REST routes, the MCP tools, the CLI and the
-    * `/source/{id}` page (which redirects).
-    */
-  def canonical(id: String): String = SourceRepo.canonical(ds, id).getOrElse(id)
 
   /** THE identifier resolution of every renamed kind (#1799, [[Aliases]]): the identifier the record answers to now —
     * an old one resolves to where it went. Every read AND every write resolves here first, so a put, patch, delete or
     * rename naming an old id goes to the current record.
     */
   def current(k: AliasKind, id: String): String = Deps.aliasTables.current(ds, k, id)
-
-  def getSource(citekey: String, body: Boolean = true): Either[ApiError, SourceWithFindings] =
-    SourceRepo
-      .get(ds, canonical(citekey))
-      .map((s, fs) =>
-        SourceWithFindings(
-          if body then s else s.copy(ocrMarkdown = None),
-          fs.toList,
-          illustration = media.assets.sourceThumb(s.citekey)
-        )
-      )
-      .toRight(ApiError(s"No source '$citekey'"))
-
-  /** `GET /api/findings` — the MAP FEED (plan §1.0): the findings that themselves satisfy the filter's finding-level
-    * criteria, of the sources that satisfy its source-level ones. Same query parameters as [[sources]]; `limit <= 0`
-    * means the configured `limits.findings`.
-    */
-  def findings(q: Api.FindingsQuery): List[GeoHit] =
-    val f = q.toFilter
-    // the map feed's own cap is `limits.findings`, which is BOTH the default and the ceiling
-    SourceRepo
-      .findingsFor(
-        ds,
-        f.copy(limit = cfg.limits.page(Some(f.limit), cfg.limits.findings).min(cfg.limits.findings)),
-        scopeOf(f)
-      )
-      .toList
-
-  /** `GET /api/findings/page` — [[findings]] with its total, where the page starts and the next offset (`geo_when` used
-    * to print `### 200 finding(s)` with no way to ask for the rest).
-    */
-  def findingsPage(q: Api.FindingsQuery): GeoHitPage =
-    val f = q.toFilter
-    val scope = scopeOf(f)
-    GeoHitPage.of(SourceRepo.findingsCount(ds, f, scope), findings(q), f.offset.max(0))
-
-  /** `/api/aggregate` — the timeline strip (§1.7) AND the nested tree (§1.6). Narrowed by the SAME filter as
-    * `/api/sources` and `/api/findings`; the window defaults to the configured UI span.
-    *
-    * `by=time` alone keeps the wave-1 behaviour byte for byte: the flat bars, gaps included, which is what the strip
-    * draws. Adding `depth`/`samples` nests the same numbers, and `by=region|time,region|region,time` fills `tree`
-    * instead. SQL only ever SELECTS rows; [[Aggregate]] and [[Tree]] (both pure) do all the bucketing, so the strip,
-    * the tabs, the CLI and MCP cannot drift apart.
-    *
-    * Deeper levels are LAZY by construction: there is no cursor — a client narrows `from`/`to` (or `place`) to one
-    * bucket and asks again, which is the same query with a smaller window.
-    */
-  def aggregate(q: Api.AggregateQuery): Either[ApiError, TimeHistogram] =
-    def norm(o: Option[String], dflt: String) = o.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(dflt)
-    val unit = norm(q.unit, "sources")
-    Tree
-      .parseBy(norm(q.by, Tree.KindTime))
-      .toRight(
-        ApiError(
-          s"unsupported by='${norm(q.by, Tree.KindTime)}' — use " +
-            "time | region | time,region | region,time"
-        )
-      )
-      .flatMap { axes =>
-        if unit != "sources" && unit != "findings" && unit != Aggregate.UnitStarts then
-          Left(ApiError(s"unsupported unit='$unit' — use sources, findings or starts"))
-        else aggregateOn(axes, unit, q)
-      }
-
-  /** The aggregation itself, once `by`/`unit` have been validated.
-    *
-    * The window is CLAMPED to the configured deep-time span (`ui.time.min/max`) and the resulting bucket count is
-    * capped (`ui.max-buckets`). Without either, `from=-1e15&to=1e15` asked for 400 000 000 000 buckets: the request
-    * built them one `TimeBucket` at a time until the heap gave out, and `to = Long.MaxValue` overflowed the bucket
-    * arithmetic on top of that.
-    */
-  private def aggregateOn(axes: List[String], unit: String, q: Api.AggregateQuery): Either[ApiError, TimeHistogram] =
-    val t = cfg.ui.time
-    // the window to bucket = the filter's deep-time range, defaulted (half-open bounds included)
-    val a = Filter.lowerGiven(q.filter.period).getOrElse(t.defaultFrom)
-    val b = Filter.upperGiven(q.filter.period).getOrElse(t.defaultTo)
-    val (lo, hi) = if a <= b then (a, b) else (b, a)
-    val (from, to) = (clampToSpan(lo, t), clampToSpan(hi, t))
-    val size = q.size.filter(_ > 0).getOrElse(Aggregate.bucketSize(to - from))
-    val wanted = Aggregate.bucketCount(from, to, size)
-    if wanted > BigInt(math.max(1, cfg.ui.maxBuckets)) then
-      Left(
-        ApiError(
-          s"that window needs $wanted buckets of $size year(s), over the " +
-            s"${cfg.ui.maxBuckets} allowed (ui.max-buckets) — narrow `from`/`to`"
-        )
-      )
-    else Right(aggregateWindow(axes, unit, q, from, to, size))
-
-  /** A caller's year, forced inside the configured span. `ui.time.min/max` is what the web UI can draw and what the
-    * corpus covers; nothing outside it can have a non-empty answer anyway.
-    */
-  private def clampToSpan(v: Long, t: UiTimeSettings): Long = math.max(t.min, math.min(t.max, v))
-
-  private def aggregateWindow(
-      axes: List[String],
-      unit: String,
-      q: Api.AggregateQuery,
-      from: Long,
-      to: Long,
-      size: Long
-  ): TimeHistogram =
-    val window = q.filter.copy(period = Some(Period(from, to)))
-    val scope = scopeOf(window)
-    val depth = q.depth.filter(_ > 0).getOrElse(cfg.ui.treeDepth).max(1).min(Tree.MaxDepth)
-    val samples = q.samples.getOrElse(cfg.ui.treeSamples).max(0).min(Tree.MaxSamples)
-    // `unit=starts` is the SOURCE unit counted a different way (plan §1.7): same rows, one bar each,
-    // by where the period begins. The rows query therefore still asks for sources.
-    val starts = unit == Aggregate.UnitStarts
-    val rowUnit = if starts then "sources" else unit
-    val counting = if starts then Aggregate.Counting.Starts else Aggregate.Counting.Overlap
-    val flat =
-      if axes.headOption.contains(Tree.KindTime) then
-        Aggregate.histogram(AggregateRepo.periods(ds, rowUnit, window, scope).toList, from, to, size, counting)
-      else Nil
-    val base = TimeHistogram(from, to, size, flat, by = axes.mkString(","), unit = unit, depth = depth)
-    // The TIMELINE STRIP asks for `by=time` on every span change and only wants `buckets`; building
-    // the tree as well would double its cost for nothing. A caller that wants the nested answer for
-    // the same axis says so by asking for a `depth`/`samples` — which is exactly what the "by time"
-    // tab does, and what the CLI's `--group time` sends.
-    if axes == List(Tree.KindTime) && q.depth.isEmpty && q.samples.isEmpty then base
-    else treeOn(axes, rowUnit, window, scope, from, to, depth, samples, q.asOf, base)
-
-  /** The nested part of [[aggregateOn]] — split out so the flat strip never pays for it. */
-  private def treeOn(
-      axes: List[String],
-      unit: String,
-      window: Filter,
-      scope: PlaceScope,
-      from: Long,
-      to: Long,
-      depth: Int,
-      samples: Int,
-      askedAsOf: Option[Long],
-      base: TimeHistogram
-  ): TimeHistogram =
-    val rows = AggregateRepo.treeRows(ds, unit, window, scope).toList
-    // the gazetteer slice these rows hang off — one upward closure, not the whole 16 k-place table
-    def gaz = catalogue.placeStore.gazetteer(rows.flatMap(_.placeIds))
-    // `by=region` reads the hierarchy at ONE year: the caller's, else the middle of the window
-    val asOf = askedAsOf.orElse(Some(Tree.midpoint(from, to)))
-    // LAZY DEEPER LEVELS: `place=<one gazetteer id>` roots the region tree AT that place, so
-    // expanding a node returns its subtree rather than the whole forest with the node buried in it.
-    // (Two place chips, or a name that is not a gazetteer id, is an ordinary filter — no re-rooting.)
-    val root = window.places.filter(p => scope.idsFor(p).isDefined) match
-      case one :: Nil => Some(one)
-      case _          => None
-    val tree = axes match
-      case Tree.KindTime :: Nil   => Tree.timeTree(rows, from, to, depth, samples)
-      case Tree.KindRegion :: Nil =>
-        val (ns, rs) = gaz; Tree.regionTree(rows, ns, rs, asOf, depth, samples, root)
-      case Tree.KindTime :: Tree.KindRegion :: Nil =>
-        val (ns, rs) = gaz; Tree.timeRegionTree(rows, from, to, ns, rs, depth, samples)
-      case _ =>
-        val (ns, rs) = gaz; Tree.regionTimeTree(rows, from, to, ns, rs, asOf, depth, samples, root)
-    base.copy(
-      total = rows.iterator.map(_.key).toSet.size,
-      // `time,region` reads the gazetteer at each bucket's OWN midpoint, so no single asOf applies
-      asOf = if axes == List(Tree.KindTime, Tree.KindRegion) || axes == List(Tree.KindTime) then None else asOf,
-      tree = tree
-    )
-
-  /** Each row's far end arrives classified ([[NeighborTarget]]), so every renderer (MCP, CLI over HTTP, the HTML page)
-    * links sources, articles and unresolved targets without a second lookup.
-    */
-  def neighbors(citekey: String, kinds: List[String] = Nil): List[NeighborRow] =
-    SourceRepo.neighbors(ds, canonical(citekey), kinds).toList
-
-  def graph(citekey: String, depth: Option[Int]): SourceGraph =
-    SourceRepo.graph(ds, canonical(citekey), depth.getOrElse(2).max(0).min(4))
-
-  def contradictions(citekey: Option[String], since: Option[Long]): ContradictionsResult =
-    SourceRepo.contradictions(ds, citekey.map(canonical), since)
 
   def seed(req: SeedRequest): Either[ApiError, SeedResult] = maintenance.guard("seed"):
     val asked = Option(req.dir).map(_.trim).filter(_.nonEmpty).getOrElse(cfg.corpus.dir)
@@ -669,97 +464,10 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** `corpus.dir` as an `Option`: empty string = not configured. */
   private def corpusRoot: Option[String] = Option(cfg.corpus.dir).map(_.trim).filter(_.nonEmpty)
 
-  // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
-
-  /** Create or REPLACE everything under one citekey. */
-  /** An OLD citekey follows the alias (#1799): the put replaces the source it was renamed to — it never creates a
-    * second source under the old name, which the alias would then shadow.
-    */
-  def putSource(citekey: String, in: SourcePut, strict: Boolean = false): Either[ApiError, SourceWithFindings] =
-    maintenance.guard("put_source"):
-      Citekey.of(citekey).map(_ => current(AliasKindsAdapter.SourceRecords, citekey)).flatMap { ck =>
-        Write
-          .applyPut(ck, in, SourceRepo.aliasesOf(ds, ck))
-          .left
-          .map(m => ApiError(m, Some(Write.CodeInvalid)))
-          .flatMap(s => strictGate(strict, sourceFormatting(s.summary, s.notes)).map(_ => s))
-          .flatMap { s =>
-            val _ = SourceRepo.put(ds, s, cfg.limits.chunkChars, tolKm); getSource(ck).map(withFormatting)
-          }
-      }
-
-  /** An IMPORT of a note must not land under an OLD citekey — the one exception to following the alias: a note named by
-    * an old citekey is a stale mirror file the export leaves behind (and prunes), and its findings are numbered under
-    * the old name. A put, patch or delete follows.
-    */
-  private def notAnAlias(ck: String): Either[ApiError, String] =
-    SourceRepo.aliasOf(ds, ck) match
-      case Some(now) =>
-        Left(ApiError(s"'$ck' was renamed to '$now' — write to '$now' instead", Some(Write.CodeInvalid)))
-      case None => Right(ck)
-
-  /** `POST /api/sources/{ck}/rename` — see `SourceRepo.rename` for everything it touches. */
-  def renameSource(citekey: String, req: RenameRequest): Either[ApiError, SourceRenamed] =
-    maintenance.guard("rename_source"):
-      val from = current(AliasKindsAdapter.SourceRecords, citekey)
-      SourceRepo.rename(ds, from, req.newCitekey).flatMap { counts =>
-        val now = req.newCitekey.trim
-        getSource(now, body = false)
-          .map(sw => SourceRenamed(from, now, sw.source, counts, SourceRepo.calibreId(ds, now)))
-      }
-
-  /** Every old citekey and the source it names now. */
-  def sourceAliases: List[SourceAlias] = SourceRepo.aliases(ds)
-
-  /** `POST /api/sources/{ck}/delete` (#969) — a dry run unless `apply`. What it decides is `core.SourceDelete`; what it
-    * touches, `SourceDeleteRepo`. Applied, the database half is one transaction (refused while anything cites the
-    * source), and the stored originals ([[StoredOriginals]]) are removed after the commit, best effort. Not an MCP
-    * tool, like deleting an article: a person's decision.
-    */
-  def deleteSource(citekey: String, req: SourceDeleteRequest): Either[ApiError, SourceDeletion] =
-    val ck = current(AliasKindsAdapter.SourceRecords, citekey)
-    def originals(p: SourceDeleteRepo.Plan): List[Path] =
-      StoredOriginals.find(
-        Path.of(cfg.converter.spoolDir),
-        acquire.Spool.base(cfg.acquire.spoolDir),
-        p.sha256,
-        p.shaShared,
-        p.keys
-      )
-    if !req.apply then SourceDeleteRepo.plan(ds, ck).map(p => p.deletion.copy(files = originals(p).map(_.toString)))
-    else
-      maintenance.guard("delete_source"):
-        val today = java.time.LocalDate.now(java.time.ZoneOffset.UTC).toString
-        // the files are named inside the transaction (they are in its log line) and go only after it committed
-        SourceDeleteRepo
-          .apply(ds, ck, today, p => originals(p).map(_.toString))
-          .map { p =>
-            scribe.info(SourceDelete.logText(p.deletion))
-            p.deletion.copy(filesFailed = StoredOriginals.remove(p.deletion.files.map(Path.of(_))))
-          }
-
-  /** Merge only the parts present in the patch (read + merge + write in one transaction). */
-  def patchSource(citekey: String, p: SourcePatch, strict: Boolean = false): Either[ApiError, SourceWithFindings] =
-    maintenance.guard("patch_source"):
-      Citekey
-        .of(citekey)
-        // only what this patch writes is gated: a strict patch of the tags is not refused for old notes
-        .flatMap(_ => strictGate(strict, sourceFormatting(p.summary, p.notes)))
-        .flatMap(_ => SourceRepo.patch(ds, citekey, p, cfg.limits.chunkChars, tolKm))
-        .flatMap(_ => getSource(citekey))
-        .map(withFormatting)
-
   // ── formatting: what in the agent-written Markdown will not display as meant ─────────────────
-
-  /** A source's formatting problems, its links resolved against the corpus. */
-  def sourceFormatting(summary: Option[String], notes: Option[String]): List[FormatIssue] =
-    MarkdownLint.ofSource(summary, notes, pageLinks(MarkdownLint.lookups(summary.toList ++ notes.toList)))
 
   private def articleFormatting(body: String, summary: Option[String]): List[FormatIssue] =
     MarkdownLint.ofArticle(body, summary, pageLinks(MarkdownLint.lookups(body :: summary.toList)))
-
-  private def withFormatting(sw: SourceWithFindings): SourceWithFindings =
-    sw.copy(formatting = sourceFormatting(sw.source.summary, sw.source.notes))
 
   /** `strict`: refuse a write whose text has a formatting ERROR; otherwise the problems ride along in the response, and
     * the write goes through.
@@ -767,42 +475,6 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   private def strictGate(strict: Boolean, issues: => List[FormatIssue]): Either[ApiError, Unit] =
     if !strict then Right(())
     else MarkdownLint.refusal(issues).fold(Right(()))(m => Left(ApiError(m, Some(Write.CodeInvalid))))
-
-  /** `GET /api/sources/{citekey}/lint`. */
-  def lintSource(citekey: String): Either[ApiError, FormatReport] =
-    getSource(citekey, body = false).map(sw =>
-      FormatReport(sw.source.citekey, sourceFormatting(sw.source.summary, sw.source.notes))
-    )
-
-  /** `POST /api/sources/{citekey}/lint/fix` — the wording-safe repairs to summary and notes, written as one patch
-    * guarded by the `updatedAt` just read, then the report of what is left.
-    */
-  def fixSource(citekey: String): Either[ApiError, FormatReport] =
-    maintenance.guard("fix_source_format"):
-      SourceRepo.load(ds, canonical(citekey)).toRight(Write.notFound(citekey)).flatMap { s =>
-        val (summary, fs) =
-          s.summary.map(t => MarkdownLint.fix(t, FormatField.Summary)).fold((None, Nil))((t, f) => (Some(t), f))
-        val (notes, fn) =
-          s.notes.map(t => MarkdownLint.fix(t, FormatField.Notes)).fold((None, Nil))((t, f) => (Some(t), f))
-        val done = fs.map("summary: " + _) ++ fn.map("notes: " + _)
-        val write =
-          if done.isEmpty then Right(())
-          else
-            SourceRepo
-              .patch(
-                ds,
-                s.citekey,
-                SourcePatch(
-                  summary = summary.filter(_ => fs.nonEmpty),
-                  notes = notes.filter(_ => fn.nonEmpty),
-                  ifUpdatedAt = s.updatedAt
-                ),
-                cfg.limits.chunkChars,
-                tolKm
-              )
-              .map(_ => ())
-        write.flatMap(_ => lintSource(s.citekey)).map(_.copy(fixed = done))
-      }
 
   /** `GET /api/articles/{slug}/lint`. */
   def lintArticle(slug: String): Either[ApiError, FormatReport] =
@@ -843,7 +515,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     val issues = in.field match
       case FormatField.Body    => articleFormatting(text, None)
       case FormatField.Summary => MarkdownLint.ofSource(Some(text), None, pageLinks(MarkdownLint.lookups(List(text))))
-      case FormatField.Notes   => sourceFormatting(None, Some(text))
+      case FormatField.Notes   => library.sources.formatIssues(None, Some(text))
     FormatReport("text", issues, done, Option.when(in.fix)(text))
 
   // ── a draft of an article, checked as review-article's fixer validation checks it ──────────────
@@ -901,7 +573,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   private val transitionNotes: TransitionNotes = new TransitionNotes:
     def sourceNote(citekey: String): Either[ApiError, String] =
-      SourceRepo.load(ds, canonical(citekey)).map(Export.note).toRight(Write.notFound(citekey))
+      library.sources.note(citekey)
 
     def articleNote(slug: String): Either[ApiError, String] =
       ArticleRepo
@@ -909,153 +581,12 @@ final class Handlers(deps: Deps, converter: ConverterClient):
         .map(a => ArticleNote.render(a, coverageOf(a).map(ArticleCoverage.exported)))
         .toRight(Articles.notFound(slug))
 
-  def citekeys: List[String] = SourceRepo.citekeys(ds).toList
-
-  def resolveEdges: Either[ApiError, EdgesResolved] =
-    maintenance.guard("edges/resolve"):
-      Right(EdgesResolved(SourceRepo.resolveEdges(ds)))
-
-  /** Seed ONE note from raw text (the host-side path of `histmersion seed`, for a corpus dir the SERVER cannot see).
-    * Applies the same "stored row is newer than the file" guard as [[seed]] whenever the client sends the file's mtime.
-    */
-  def importNote(req: NoteImport): Either[ApiError, SeedResult] = maintenance.guard("import"):
-    Frontmatter.parseNote(req.text, req.citekey.getOrElse("")) match
-      case None         => Left(ApiError("no YAML frontmatter in the note"))
-      case Some(parsed) =>
-        val ck = parsed.citekey
-        if ck.isEmpty then Left(ApiError("note has no citekey (none in the frontmatter, none supplied)"))
-        else if Citekey.parse(ck).isLeft then Citekey.of(ck).map(_ => SeedResult(0, Nil, 0, Nil))
-        else if SourceRepo.aliasOf(ds, ck).isDefined then notAnAlias(ck).map(_ => SeedResult(0, Nil, 0, Nil))
-        else if !req.force && req.mtime.exists(m => Importer.isStale(SourceRepo.updatedAtMillis(ds), ck, m))
-        then Right(SeedResult(0, Nil, 0, List(ck)))
-        else
-          // `body` is the converted paper text the client read from `md_path`; NUL bytes occur in some
-          // OCR output and Postgres `text` rejects them.
-          val withBody = req.body.map(_.filterNot(_.toInt == 0)).filter(_.nonEmpty) match
-            case Some(b) => parsed.copy(ocrMarkdown = Some(b))
-            case None    => parsed
-          // figures of the old file pipeline (plan §1.8): every `…/figures/<name>` spelling is
-          // normalised to the canonical `assets/<name>` and the OCR's picture-text dumps folded
-          // away, and any base64 payloads that travelled with the note stored
-          val normalised =
-            withBody.copy(ocrMarkdown = withBody.ocrMarkdown.map(AssetLinks.normalizeBody(_, withBody.title)))
-          val _ = SourceRepo.put(ds, normalised, cfg.limits.chunkChars, tolKm)
-          if req.assets.isEmpty then Right(SeedResult(1, Nil, 0, Nil))
-          else media.assets.putFigures(ck, req.assets).map(_ => SeedResult(1, Nil, 0, Nil))
-
-  /** `get_source` as Markdown, with image links made ABSOLUTE (plan §1.8) so an image-capable MCP client can fetch the
-    * figures. The ONE renderer both MCP and the article page go through.
-    *
-    * Sectioning (A1/A7/A18): `section` selects what to return; `heading` filters to chunks under one heading;
-    * `offset`/`chars` slice the body.
-    */
-  def sourceMarkdown(
-      requested: String,
-      fullText: Boolean,
-      section: Option[String] = None,
-      heading: Option[String] = None,
-      offset: Option[Int] = None,
-      chars: Option[Int] = None
-  ): Either[ApiError, String] =
-    val sec = section.flatMap(SourceSection.parse)
-    val badSection = section.filter(_.nonEmpty).exists(_ => sec.isEmpty)
-    if badSection then
-      Left(ApiError(s"unknown section '${section.getOrElse("")}' — one of: ${SourceSection.all.mkString(", ")}"))
-    else
-      getSource(requested).map { sw =>
-        val citekey = sw.source.citekey
-        sec match
-          case Some(SourceSection.Toc) =>
-            val entries = SourceRepo.toc(ds, citekey)
-            Markdown.toc(entries)
-
-          case Some(SourceSection.Body) =>
-            val bodyText = bodySlice(citekey, heading, offset, chars)
-            AssetLinks.toAbsolute(bodyText, citekey, cfg.server.publicUrl)
-
-          case Some(SourceSection.Summary) =>
-            val s = sw.source
-            val authStr = Markdown.chipLinks(s.authors, "author")
-            val meta = List(authStr, Markdown.periodLabel(s.periodStart, s.periodEnd))
-              .filter(_.nonEmpty)
-              .mkString(" · ")
-            s"# ${s.title}\n\n_${meta}_" +
-              s.summary.map(x => s"\n\n${x.trim}").getOrElse("")
-
-          case Some(SourceSection.Findings) =>
-            Markdown.sourceFindingsOnly(sw.findings.toVector)
-
-          case Some(SourceSection.Notes) =>
-            sw.source.notes
-              .map(_.trim)
-              .filter(_.nonEmpty)
-              .map(n => s"## Notes\n\n$n")
-              .getOrElse("_(no notes)_")
-
-          case Some(SourceSection.All) =>
-            val ft = fullText || offset.isDefined || heading.isDefined
-            val md = if ft && (offset.isDefined || chars.isDefined) then
-              val bodyText = bodySlice(citekey, heading, offset, chars)
-              Markdown.source(sw.source, sw.findings.toVector, false) + s"\n\n---\n\n$bodyText"
-            else Markdown.source(sw.source, sw.findings.toVector, ft)
-            AssetLinks.toAbsolute(md + mentionedIn(citekey), citekey, cfg.server.publicUrl)
-
-          case Some(_) =>
-            Markdown.source(sw.source, sw.findings.toVector, false)
-
-          case None =>
-            val ft = fullText
-            val md =
-              if ft && (offset.isDefined || chars.isDefined) then
-                val bodyText = bodySlice(citekey, heading, offset, chars)
-                Markdown.source(sw.source, sw.findings.toVector, false) + s"\n\n---\n\n$bodyText"
-              else Markdown.source(sw.source, sw.findings.toVector, ft)
-            AssetLinks.toAbsolute(md + mentionedIn(citekey), citekey, cfg.server.publicUrl)
-      }
-
-  /** `passages` (#954): find text inside ONE source's body — what `get --full | grep` is in a shell. The body is read
-    * once (chunks, or the raw text of an unchunked source) and searched in memory by [[PassageFinder]], so the offsets
-    * are those [[bodySlice]] uses. An old citekey resolves like every read; an unknown one is a 404, an empty query or
-    * a bad regex a 400.
-    */
-  def passages(q: Api.PassagesQuery): Either[ApiError, PassageResult] =
-    val lim = cfg.limits.passages
-    SourceRepo
-      .canonical(ds, q.citekey)
-      .toRight(ApiError(s"No source '${q.citekey}'", Some(Write.CodeNotFound)))
-      .flatMap { ck =>
-        PassageFinder
-          .find(
-            ck,
-            SourceRepo.bodyChunks(ds, ck),
-            q.q,
-            q.regex,
-            lim.limitOf(q.limit),
-            lim.contextOf(q.context),
-            lim.maxMatches,
-            lim.regexTimeoutMs.toLong
-          )
-          .left
-          .map(m => ApiError(m, Some(Write.CodeInvalid)))
-      }
-
   /** "Mentioned in articles" rides along with the default/all views rather than becoming a tool of its own: an LLM
     * asking about a source wants what the corpus has WRITTEN about it in the same answer, not after a second round
     * trip.
     */
   private def mentionedIn(citekey: String): String =
     Markdown.sourceArticles(ArticleRepo.backlinksForSource(ds, citekey).toVector)
-
-  /** Read the body (from chunks or raw `ocr_markdown`), optionally filtered by heading and sliced. */
-  private def bodySlice(citekey: String, heading: Option[String], offset: Option[Int], chars: Option[Int]): String =
-    val raw = heading match
-      case Some(h) => SourceRepo.bodyUnderHeading(ds, citekey, h)
-      case None    => SourceRepo.bodyText(ds, citekey)
-    val total = raw.length
-    val off = offset.filter(_ > 0).getOrElse(0).min(total)
-    val cap = chars.filter(_ > 0).getOrElse(cfg.limits.fullTextChars)
-    val slice = raw.substring(off, math.min(total, off + cap))
-    Markdown.bodySlice(slice, off, total)
 
   // ── events (plan §1.2) ──────────────────────────────────────────────────────────────────────
 
@@ -1067,6 +598,30 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       () => java.time.Year.now(deps.clock.withZone(java.time.ZoneOffset.UTC)).getValue.toLong,
       resolve,
       scopeOf
+    )
+
+  /** The library's sources, findings, citations, labels and search; research's prose lint checks a source's text and
+    * writes the "Mentioned in articles" part, the ingest's stores hold its originals.
+    */
+  lazy val library: LibraryWiring =
+    LibraryWiring(
+      deps,
+      media.assets,
+      catalogue.placeStore,
+      com.histmersion.domain.research.articles.lint.SourceTextFormatting(pageLinks),
+      mentionedIn,
+      new com.histmersion.domain.library.sources.SourceOriginals:
+        def find(plan: com.histmersion.domain.library.sources.SourceDeletePlan): List[String] =
+          StoredOriginals
+            .find(
+              Path.of(cfg.converter.spoolDir),
+              acquire.Spool.base(cfg.acquire.spoolDir),
+              plan.sha256,
+              plan.shaShared,
+              plan.keys
+            )
+            .map(_.toString)
+        def remove(files: List[String]): List[String] = StoredOriginals.remove(files.map(Path.of(_)))
     )
 
   /** The events' store. */
@@ -1247,7 +802,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     */
   private def placeCounts(id: String): PlaceCounts =
     val f = Filter(places = List(id))
-    SourceRepo.selectionCounts(ds, f, scopeOf(f))
+    library.search.selectionCounts(f)
 
   /** One resumable slice of the FTS chunk rebuild (plan §1.4); loop on `remaining` > 0. */
   def reindex(after: Option[String], limit: Option[Int]): Either[ApiError, ReindexResult] =
@@ -1488,8 +1043,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     val links = bodyLinks(body)
     val cited = citedOf(body, links)
     val edges = CoverageRepo.edgesTouching(ds, cited, ArticleCoverage.DisagreementKinds)
-    val works = SourceRepo
-      .refs(ds, edges.flatMap(e => List(e.from, e.to)).distinct)
+    val works = library.sourceStore
+      .refs(edges.flatMap(e => List(e.from, e.to)).distinct)
       .map(r => r.citekey -> CritiquePairing.Work(r.citekey, CritiquePairing.names(r.citekey, r.authors), r.year))
       .toMap
     val resolve: String => Option[String] = t => links(t).collect { case r: SourceRef => r.citekey }
@@ -1565,8 +1120,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   ): List[CritiquePair] =
     if edges.isEmpty then Nil
     else
-      val refs = SourceRepo
-        .refs(ds, edges.flatMap(e => List(e.from, e.to)).distinct)
+      val refs = library.sourceStore
+        .refs(edges.flatMap(e => List(e.from, e.to)).distinct)
         .map(r => r.citekey -> (r.title, r.year))
         .toMap
       Critiques.build(body, t => links(t).collect { case r: SourceRef => r.citekey }, edges, reasons, refs.get)
@@ -1575,7 +1130,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   private def canonicalReasons(rs: List[CoverageReason]): List[CoverageReason] =
     rs.map(r =>
       r.copy(citekey =
-        canonical(Option(r.citekey).map(_.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse(""))
+        library.sources
+          .canonical(Option(r.citekey).map(_.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse(""))
       )
     )
 
@@ -1586,13 +1142,13 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * renders as text rather than a link to a 404.
     */
   def pageLinks(targets: List[String]): String => Option[LinkTarget] =
-    val aliases = SourceRepo.resolveAliases(ds, targets)
-    val sources = SourceRepo.refs(ds, aliases.values.toList).map(r => r.citekey -> r).toMap
+    val aliases = library.sourceStore.resolveLinks(targets)
+    val sources = library.sourceStore.refs(aliases.values.toList).map(r => r.citekey -> r).toMap
     val articles = ArticleRepo.refs(ds, targets).map(a => a.slug -> a).toMap
     t => aliases.get(t).flatMap(sources.get).orElse(articles.get(t))
 
   /** The citation-link view of stored sources (DOI, byline, status), for the HTML pages. */
-  def sourceRefs(citekeys: List[String]): List[SourceRef] = SourceRepo.refs(ds, citekeys)
+  def sourceRefs(citekeys: List[String]): List[SourceRef] = library.sourceStore.refs(citekeys)
 
   /** The link view of compiled articles, for the HTML pages. */
   def articleRefs(slugs: List[String]): List[ArticleRef] = ArticleRepo.refs(ds, slugs)

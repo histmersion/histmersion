@@ -1,5 +1,7 @@
 package com.histmersion.util.data.exchange
 
+import com.histmersion.domain.library.sources.referrers.SourceReferrers
+
 import com.histmersion.api.{
   ApiError,
   Bundle,
@@ -54,7 +56,8 @@ trait BundleService:
 object BundleService:
 
   /** What the service runs over: the database, the settings of the moment, the stores, the clock, the registry's
-    * carried kinds and merge rules, the apply's jobs and the backup an apply takes first.
+    * carried kinds and merge rules, the apply's jobs and the backup an apply takes first; `sourceReferrers` keep what
+    * every domain stores of a source right when an import renames one.
     */
   final case class Wiring(
       ds: DataSource,
@@ -64,7 +67,8 @@ object BundleService:
       carried: CarriedKinds,
       rules: MergeRuleSet,
       applyJobs: MergeApplyJobs,
-      backup: () => Either[ApiError, String]
+      backup: () => Either[ApiError, String],
+      sourceReferrers: SourceReferrers
   )
 
   def apply(wiring: Wiring): BundleService = Implementation(wiring)
@@ -77,7 +81,7 @@ object BundleService:
     private def originals: StoreContents = StoreContents(w.storage.store(Location.IngestOriginals))
 
     private def options(dryRun: Boolean): ImportOptions =
-      ImportOptions(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm)
+      ImportOptions(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm, w.sourceReferrers)
 
     def instance: InstanceInfo = BundleRepo.instance(w.ds)
 

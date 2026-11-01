@@ -1,11 +1,15 @@
 package com.histmersion.server
 
+import com.histmersion.domain.library.citations.CitationFixtures
+import com.histmersion.domain.library.sources.SourceFixtures
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.util.ocr.ConverterClient
 
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{ArticleRepo, Db, Migrate, SourceRepo}
+import com.histmersion.db.{ArticleRepo, Db, Migrate}
 
 import com.augustnagro.magnum.*
 import java.nio.file.{Files, Path}
@@ -125,7 +129,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
       )
     )
     put(source(Other, edges = Nil))
-    SourceRepo.rename(ds, Old, Del).fold(e => fail(e.message), _ => ())
+    SourceFixtures.rename(ds, Old, Del).fold(e => fail(e.message), _ => ())
     put(source(Other, edges = List(Edge(Other, Del, "references"))))
     connect(ds):
       sql"UPDATE sources SET sha256 = $Sha WHERE citekey = $Del".update.run()
@@ -176,7 +180,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     "the dry run lists every part, the parked edges, the aliases, the files and the Calibre id — and changes nothing"
   ):
     seed()
-    val d = h.deleteSource(Del, SourceDeleteRequest()).fold(e => fail(e.message), identity)
+    val d = h.library.sources.delete(Del, SourceDeleteRequest()).fold(e => fail(e.message), identity)
     assert(!d.applied && !d.refused, d.toString)
     assertEquals(d.title, s"Title $Old")
     import DeletePart.*
@@ -230,9 +234,12 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     List(s"See [[$Del]].", s"See [[$Old|the book]].", s"See [[zzdel2020]] (short).").zipWithIndex.foreach { (body, i) =>
       val slug = s"${Slug}_cites$i"
       val _ = ArticleRepo.put(ds, Article(slug, s"Cites $i", "concept", s"# C\n\n$body", None, Nil, Nil, None))
-      val dry = h.deleteSource(Del, SourceDeleteRequest()).fold(e => fail(e.message), identity)
+      val dry = h.library.sources.delete(Del, SourceDeleteRequest()).fold(e => fail(e.message), identity)
       assertEquals(dry.blockers.map(b => (b.kind, b.id)), List((DeleteBlockerKind.Article, slug)), body)
-      val e = h.deleteSource(Del, SourceDeleteRequest(apply = true)).swap.getOrElse(fail("the delete was not refused"))
+      val e = h.library.sources
+        .delete(Del, SourceDeleteRequest(apply = true))
+        .swap
+        .getOrElse(fail("the delete was not refused"))
       assert(e.message.contains(s"cited by article $slug") && e.message.contains("no override"), e.message)
       assert(SourceRepo.load(ds, Del).isDefined, "a refused delete deleted")
       ArticleRepo.delete(ds, slug): Unit
@@ -243,17 +250,22 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     connect(ds):
       sql"UPDATE events SET citekey = $Del WHERE id = $Event".update.run()
       sql"INSERT INTO jobs (id, kind, citekey, status) VALUES ('zzdel_job', 'ingest', $Old, 'running')".update.run()
-    val d = h.deleteSource(Del, SourceDeleteRequest()).fold(e => fail(e.message), identity)
+    val d = h.library.sources.delete(Del, SourceDeleteRequest()).fold(e => fail(e.message), identity)
     assertEquals(d.blockers.map(_.kind), List(DeleteBlockerKind.Event, DeleteBlockerKind.Job))
-    assert(h.deleteSource(Del, SourceDeleteRequest(apply = true)).isLeft)
+    assert(h.library.sources.delete(Del, SourceDeleteRequest(apply = true)).isLeft)
     assert(SourceRepo.load(ds, Del).isDefined)
 
   test(
     "an old citekey follows the alias (#1799): the dry run names the source under its current key; an unknown one is not deleted"
   ):
     seed()
-    assertEquals(h.deleteSource(Old, SourceDeleteRequest()).map(_.citekey), Right(Del))
-    assert(h.deleteSource("zzdel1999_nothing", SourceDeleteRequest()).left.exists(_.code.contains(Write.CodeNotFound)))
+    assertEquals(h.library.sources.delete(Old, SourceDeleteRequest()).map(_.citekey), Right(Del))
+    assert(
+      h.library.sources
+        .delete("zzdel1999_nothing", SourceDeleteRequest())
+        .left
+        .exists(_.code.contains(Write.CodeNotFound))
+    )
     assert(SourceRepo.load(ds, Del).isDefined)
 
   test(
@@ -261,7 +273,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
   ):
     seed()
     val theUid = uid(Del)
-    val d = h.deleteSource(Del, SourceDeleteRequest(apply = true)).fold(e => fail(e.message), identity)
+    val d = h.library.sources.delete(Del, SourceDeleteRequest(apply = true)).fold(e => fail(e.message), identity)
     assert(d.applied && d.filesFailed.isEmpty, d.toString)
     assertEquals(d.calibreId, Some("1693"), "Calibre's id is reported, never touched")
 
@@ -281,7 +293,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     none(sql"SELECT count(*)::int FROM source_identifiers WHERE source_uid = $theUid::uuid")
     none(sql"SELECT count(*)::int FROM event_datings WHERE citekey = $Del")
     none(sql"SELECT count(*)::int FROM goal_links WHERE ref = $Del")
-    assertEquals(SourceRepo.aliasOf(ds, Old), None, "the old citekey no longer resolves")
+    assertEquals(SourceFixtures.aliasOf(ds, Old), None, "the old citekey no longer resolves")
 
     // other sources' data: the edge is parked, not lost; the attestation of that edge stays, the
     // attestations of its finding and of its own edge go; Other's own figure stays
@@ -317,13 +329,13 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
 
     // ingested again under the same citekey, the parked edge comes back
     put(source(Del))
-    assertEquals(SourceRepo.neighbors(ds, Del).map(n => (n.direction, n.citekey)).toList, List(("in", Other)))
+    assertEquals(CitationFixtures.neighbors(ds, Del).map(n => (n.direction, n.citekey)).toList, List(("in", Other)))
 
   test("a stored original another source still holds stays"):
     seed()
     put(source(Twin))
     connect(ds)(sql"UPDATE sources SET sha256 = $Sha WHERE citekey = $Twin".update.run(): Unit)
-    val d = h.deleteSource(Del, SourceDeleteRequest(apply = true)).fold(e => fail(e.message), identity)
+    val d = h.library.sources.delete(Del, SourceDeleteRequest(apply = true)).fold(e => fail(e.message), identity)
     assert(!d.files.contains(spool.resolve(s"$Sha.pdf").toString), d.files.toString)
     assert(Files.exists(spool.resolve(s"$Sha.pdf")))
 
@@ -332,8 +344,8 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     var out: Either[ApiError, SourceDeletion] = Left(ApiError("never ran")) // set inside the lock, read after it
     var dry: Either[ApiError, SourceDeletion] = Left(ApiError("never ran"))
     val _ = h.maintenance.exclusively("test-restore") {
-      out = h.deleteSource(Del, SourceDeleteRequest(apply = true))
-      dry = h.deleteSource(Del, SourceDeleteRequest())
+      out = h.library.sources.delete(Del, SourceDeleteRequest(apply = true))
+      dry = h.library.sources.delete(Del, SourceDeleteRequest())
       Right(())
     }
     assertEquals(out.swap.toOption.flatMap(_.code), Some(Backup.CodeMaintenance))

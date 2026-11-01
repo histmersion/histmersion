@@ -1,5 +1,9 @@
 package com.histmersion.db
 
+import com.histmersion.domain.library.search.SearchFixtures
+
+import com.histmersion.domain.library.search.FilterSql
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -13,7 +17,7 @@ class AggregateSqlSuite extends munit.FunSuite:
   private val window = Filter(period = Some(Period(-2000, -1000)))
 
   test("unit=findings: one row per finding, source-level filter joined in"):
-    val s = AggregateRepo.periodsQuery("findings", window.copy(q = Some("collapse"), places = List("Anatolia")))
+    val s = SearchFixtures.periodsQuery("findings", window.copy(q = Some("collapse"), places = List("Anatolia")))
     assert(s.text.startsWith("SELECT lower(f.period), upper(f.period) - 1"), s.text)
     assert(s.text.contains("FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE"), s.text)
     assert(s.text.contains("s.tsv @@ websearch_to_tsquery"), s.text) // source-level (FTS)
@@ -22,7 +26,7 @@ class AggregateSqlSuite extends munit.FunSuite:
     assertEquals(s.params, List(S("collapse"), S("collapse"), L(-2000), L(-1000), S("%Anatolia%")))
 
   test("unit=sources: one row per source, bucketed by its own period or its findings' envelope"):
-    val s = AggregateRepo.periodsQuery("sources", window)
+    val s = SearchFixtures.periodsQuery("sources", window)
     assert(
       s.text.startsWith("SELECT COALESCE(lower(s.period), fp.min_start), COALESCE(upper(s.period) - 1, fp.max_end)"),
       s.text
@@ -40,10 +44,10 @@ class AggregateSqlSuite extends munit.FunSuite:
       window.copy(tags = List("steppe")),
       window.copy(bbox = Some(BBox(1, 2, 3, 4)))
     )
-      .foreach(f => assert(AggregateRepo.periodsQuery("sources", f).text.contains("fp.matched > 0"), f.toString))
+      .foreach(f => assert(SearchFixtures.periodsQuery("sources", f).text.contains("fp.matched > 0"), f.toString))
 
   test("unit=sources: the tag criterion is evaluated per finding, over findings.tags ∪ sources.tags"):
-    val s = AggregateRepo.periodsQuery("sources", window.copy(tags = List("steppe")))
+    val s = SearchFixtures.periodsQuery("sources", window.copy(tags = List("steppe")))
     assert(
       s.text.contains("FROM findings f WHERE f.citekey = s.citekey AND (EXISTS (SELECT 1 FROM unnest(f.tags)"),
       s.text
@@ -53,14 +57,14 @@ class AggregateSqlSuite extends munit.FunSuite:
 
   test("an empty filter still yields a valid predicate"):
     assertEquals(
-      AggregateRepo.periodsQuery("findings", Filter()),
+      SearchFixtures.periodsQuery("findings", Filter()),
       Sql(
         "SELECT lower(f.period), upper(f.period) - 1" +
           " FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE TRUE AND TRUE",
         Nil
       )
     )
-    val s = AggregateRepo.periodsQuery("sources", Filter())
+    val s = SearchFixtures.periodsQuery("sources", Filter())
     assert(s.text.contains("count(*) FILTER (WHERE TRUE)"), s.text)
     assert(s.text.endsWith("WHERE TRUE AND (TRUE OR fp.in_window > 0)"), s.text)
     assertEquals(s.params, Nil)

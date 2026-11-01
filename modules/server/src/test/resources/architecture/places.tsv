@@ -208,10 +208,10 @@ api:api/DataCredits.scala	media
 api:api/Dataset.scala	kernel
 api:api/DatingMethod.scala	catalogue.events
 api:api/DebounceConfig.scala	server.instance
-api:api/DeleteBlocker.scala	library.sources
-api:api/DeleteBlockerKind.scala	library.sources
-api:api/DeleteCount.scala	library.sources
-api:api/DeletePart.scala	library.sources
+api:api/DeleteBlocker.scala	library.sources.referrers
+api:api/DeleteBlockerKind.scala	library.sources.referrers
+api:api/DeleteCount.scala	library.sources.referrers
+api:api/DeletePart.scala	library.sources.referrers
 api:api/DiscoverResult.scala	library.acquisition
 api:api/DriftKind.scala	research.articles
 api:api/Edge.scala	library.citations
@@ -482,7 +482,7 @@ api:api/ReindexResult.scala	util.data.maintenance
 api:api/ReloadMarkdown.scala	util.settings
 api:api/ReloadReport.scala	util.settings
 api:api/Rename.scala	library.sources
-api:api/RenameCount.scala	library.sources
+api:api/RenameCount.scala	library.sources.referrers
 api:api/RenameCounts.scala	library.sources
 api:api/RenameRequest.scala	library.sources
 api:api/RepairAcquire.scala	library.acquisition
@@ -548,7 +548,7 @@ api:api/TimeBucket.scala	library.search
 api:api/TimeConfig.scala	server.instance
 api:api/TimeHistogram.scala	library.search
 api:api/TimeSpan.scala	kernel
-api:api/TocEntry.scala	research.articles
+api:api/TocEntry.scala	library.sources
 api:api/Tree.scala	catalogue.places
 api:api/UiApi.scala	server.instance
 api:api/UiConfig.scala	server.instance
@@ -796,7 +796,6 @@ db:db/AcquireCheckRepo.scala	library.acquisition
 db:db/AcquireRepo.scala	library.acquisition
 db:db/AgentRepo.scala	automation.agents
 db:db/AgentStateRepo.scala	automation.agents
-db:db/AggregateRepo.scala	library.search
 db:db/ArticleRepo.scala	research.articles
 db:db/ArticleReviewRepo.scala	research.articles.review
 db:db/AutopilotRepo.scala	automation.autopilot
@@ -807,7 +806,6 @@ db:db/Codecs.scala	util.common
 db:db/CoverageRepo.scala	research.articles
 db:db/CritiqueRepo.scala	research.articles
 db:db/Db.scala	util.common
-db:db/FilterSql.scala	library.search
 db:db/FocusRepo.scala	automation.goals
 db:db/GoalLinkRepo.scala	automation.goals
 db:db/GoalRepo.scala	automation.goals
@@ -823,11 +821,7 @@ db:db/ModelSettingsRepo.scala	automation.agents
 db:db/Originals.scala	library.ingest
 db:db/Param.scala	util.common
 db:db/PlanQuotaRepo.scala	automation.agents
-db:db/QueryRepo.scala	library.search
 db:db/ReviewLedgerRepo.scala	research.workflows
-db:db/Search.scala	library.search
-db:db/SourceDeleteRepo.scala	library.sources
-db:db/SourceRepo.scala	library.sources
 db:db/Sql.scala	util.common
 db:db/UiRepo.scala	server.instance
 db:db/UpstreamQuotaRepo.scala	library.acquisition
@@ -863,6 +857,7 @@ server:server/HttpApi.scala	server
 server:server/HttpDownload.scala	server
 server:server/IngestHandlers.scala	library.ingest
 server:server/Jobs.scala	server
+server:server/LibraryWiring.scala	server
 server:server/ListQueries.scala	automation.approvals
 server:server/Main.scala	server
 server:server/MarkdownFlavor.scala	util.common

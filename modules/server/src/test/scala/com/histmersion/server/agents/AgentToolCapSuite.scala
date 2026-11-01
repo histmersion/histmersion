@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.domain.automation.agents.Toolbox
 
 import com.histmersion.domain.automation.workflows.ToolName
@@ -10,7 +12,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{Db, Migrate, SourceRepo}
+import com.histmersion.db.{Db, Migrate}
 import com.histmersion.server.{Deps, Handlers}
 import com.histmersion.util.ocr.ConverterClient
 import io.circe.Json
@@ -73,7 +75,7 @@ class AgentToolCapSuite extends com.histmersion.db.DbSuite:
         FindingInput("The formula is Proto-Indo-European.")
       )
     )
-    assert(h.putSource(Ck, put).isRight)
+    assert(h.library.sources.put(Ck, put).isRight)
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private def call(box: Toolbox, t: ToolName, args: Json): String =

@@ -1,5 +1,8 @@
 package com.histmersion.db
 
+import com.histmersion.domain.library.sources.SourceFixtures
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -55,7 +58,7 @@ class VocabCodecSuite extends com.histmersion.db.DbSuite:
     connect(ds):
       sql"UPDATE findings SET confidence = 'Certain' WHERE id = ${s"$ck#1"}".update.run()
       sql"UPDATE sources SET status = 'bogus' WHERE citekey = $ck".update.run()
-    val (s, fs) = SourceRepo.get(ds, ck).get
+    val (s, fs) = SourceFixtures.get(ds, ck).get
     assertEquals(
       fs.map(f => f.claim -> f.confidence).toMap,
       Map("stated low" -> Some(Confidence.Low), "garbled" -> None, "not stated" -> None)
