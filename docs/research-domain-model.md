@@ -2360,7 +2360,18 @@ library replace them in their slices. Run reads and the manager kinds' article q
 reached by the review kind through `ManagerContext`, until research owns them. `AgentTrees`, `Prompts` and the
 command-line runtimes keep their file code (above).
 
-**Oracles and equivalence.** EQUIVALENCE
+**Oracles and equivalence.** Part 1's oracles are the baseline, and they reach what part 2 touches: the transcripts
+record every row a test writes in every table — the `jobs` rows the runs write through `JobRuns`, the manager items and
+events the kinds' decisions leave, the goals' stages the autopilot moves from the objectives — and the texts of the
+autopilot's status (each goal's progress), the scheduler's status and `why`, and the stalls report; so no new oracle
+was recorded. The gated invocation (`HISTMERSION_ORACLE_RUNS=1 HISTMERSION_TEST_GROUPS_SERVER=1`, a fresh test
+database, `server/testOnly com.histmersion.server.agents.*`) passed with all 351 tests identical twice on master
+dea709d6 and twice on the branch, between 07:00 and 07:10 UTC. Outside 07:00–24:00 UTC it does not hold on the unchanged
+code either: the approval digest is written once a UTC day after `agents.autopilot.digest-hour` (7) by the wall clock,
+so before that hour the first suites' `agent_autopilot` rows and digest log lines differ (`SchedulerDbSuite`,
+`IngestBacklogDbSuite`, `ManagerAutopilotSuite`, `ManagerPhase2Suite`); the intermediate runs at night were compared
+section by section without the digest's rows and were otherwise identical. The new `JobRuns` contract runs on both
+implementations; `AgentRosterSuite` pins the roles' check.
 
 **Native image.** Renamed in `reachability-metadata.json` (the moved classes): `AgentsTools$*Input$` (10),
 `RunCtx`, `RunTokenGate` → `domain.automation.agents`; `Decided$` → `domain.automation.approvals`;
@@ -2373,5 +2384,10 @@ eager value, not a nested object, so it needs no entry. No tracing-agent run. To
 `histmersion agent manager list|get|enqueue`, `agent autopilot`, `agent scheduler`, `agent approvals`/`decide` (a
 status change and an article filter), `queue acquire recheck`, `agent autopilot repair-acquire`, `agent generate`.
 
-**Tests.** TESTS
+**Tests.** After `sbt clean`, every module's suites with the DB suites on a throwaway database (`just test-quick` with
+every module named): 0 failed — values 20, valuesJS 20, api 823, apiJS 84, config 67, files 73, core 749, pluginApi 45,
+upstreams 57, pluginHost 39, pluginTestkit 19, pluginVaults 29 (1 skipped), pluginsFetchers 15, pluginsEvents 18,
+pluginsMedia 52, pluginsGazetteers 58, pluginsAiHttp 26, pluginsCalibre 45, pluginResolver 23, chimneyIronTests 10,
+db 535, cli 232, web 639, server 1 325 (1 skipped, 1 ignored). `ContractSnapshotSuite`, `CliHelpSnapshotSuite`,
+`AutomationOracleSuite`, `DataOracleSuite` and `ArchitectureSuite` passed.
 
