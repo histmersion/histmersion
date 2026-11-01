@@ -1,7 +1,6 @@
 package com.histmersion.domain.automation.approvals
 
 import com.histmersion.domain.automation.agents.*
-import com.histmersion.server.agents.CompileArticlePipeline
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -29,9 +28,8 @@ import javax.sql.DataSource
 final class AutoApprovals(
     ds: DataSource,
     cfg: => AgentsConfig,
-    h: com.histmersion.server.Handlers,
     agents: AgentsHandlers
-):
+) extends ApprovalChecks:
 
   /** The kinds decided here. */
   val Kinds: List[ApprovalKind] = List(ApprovalKind.ArticlePlan, ApprovalKind.GoalPlan, ApprovalKind.ArticlePublish)
@@ -155,48 +153,16 @@ final class AutoApprovals(
 
   /** The checks of one approval as the corpus is now. */
   def judge(a: ApprovalInfo, run: Option[RunInfo], mgr: Option[Managers.ManagerInfo], now: Instant): Verdict =
+    agents.workflows.managerKinds.view
+      .flatMap(_.judge(this, a, run, mgr, now))
+      .headOption
+      .getOrElse(judgeOwn(a, now))
+
+  /** The approvals the engine's own workflows open (a goal's plan). */
+  private def judgeOwn(a: ApprovalInfo, now: Instant): Verdict =
     val day = ManagerPolicy.dayStart(now)
     val caps = cfg.approvals.auto
     a.approvalKind match
-      case Some(ApprovalKind.ArticlePlan) =>
-        a.articles match
-          case None       => Verdict.Leave("the approval carries no readable plan")
-          case Some(plan) =>
-            val goal = a.subject.getOrElse(plan.goal)
-            val min =
-              mgr.flatMap(_.config.minSources).orElse(run.flatMap(_.params.minSources)).getOrElse(cfg.seed.minSources)
-            val facts = plan.articles.map { p =>
-              val free = !AgentRepo.slugExists(ds, p.slug) && h.getArticle(p.slug).isLeft
-              PlannedFacts(p.slug, free, h.filterReach(p.filter, Nil, 0)._1)
-            }
-            val today = AgentRepo
-              .autoApprovedSince(ds, ApprovalKind.ArticlePlan, day)
-              .filter(_.subject.contains(goal))
-              .map(_.articles.fold(0)(_.articles.size))
-              .sum
-            AutopilotPolicy.articlePlan(facts, math.max(1, min), today, caps.articlesPerGoalPerDay)
-      case Some(ApprovalKind.ArticlePublish) =>
-        (a.article, run) match
-          case (Some(d), Some(r)) =>
-            val snap = checkpoint[CompileArticlePipeline.Snap](r.id, "snapshot")
-            val found = checkpoint[CompileArticlePipeline.Found](r.id, "filter")
-            val facts = DraftFacts(
-              d.slug,
-              d.mode == DraftMode.Create,
-              snap.exists(_.filter.isDefined),
-              found.map(_.total),
-              d.problems,
-              d.cited.distinct.size,
-              !AgentRepo.slugExists(ds, d.slug)
-            )
-            AutopilotPolicy.articlePublish(
-              facts,
-              caps.publishMinSources,
-              AgentRepo.autoApprovedSince(ds, ApprovalKind.ArticlePublish, day).size,
-              publishCap
-            )
-          case (None, _) => Verdict.Leave("the approval carries no readable draft")
-          case (_, None) => Verdict.Leave("the run that drafted it is gone")
       case Some(ApprovalKind.GoalPlan) =>
         (a.plan, agents.focus.goalPlansWait()) match
           case (_, Some(wait)) => Verdict.Leave(wait)
@@ -215,10 +181,14 @@ final class AutoApprovals(
               case v                      => v
       case _ => Verdict.Leave("not a kind the autopilot decides")
 
-  private def checkpoint[A: io.circe.Decoder](run: String, step: String): Option[A] =
+  def checkpoint(run: String, step: String): Option[String] =
     AgentRepo
       .steps(ds, run, 100000)
       .filter(s => s.name == step && s.status == StepStatus.Done.wire)
       .lastOption
       .flatMap(_.output)
-      .flatMap(o => io.circe.parser.decode[A](o).toOption)
+
+  def config: AgentsConfig = cfg
+  def slugExists(slug: String): Boolean = AgentRepo.slugExists(ds, slug)
+  def autoApprovedSince(kind: ApprovalKind, since: Instant): List[ApprovalInfo] =
+    AgentRepo.autoApprovedSince(ds, kind, since)

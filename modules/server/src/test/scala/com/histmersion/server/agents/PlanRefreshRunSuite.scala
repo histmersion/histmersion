@@ -114,8 +114,7 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite with RunTranscripts
     val h = Handlers(deps)
     (
       AgentsHandlers(
-        deps,
-        h,
+        TransitionSite(deps, h),
         (_, ref) => clients.get(ref).toRight(s"no scripted client for ${ref.wire}"),
         CliRuntime(cfg, TransitionWorkflows.roster),
         reads.seams

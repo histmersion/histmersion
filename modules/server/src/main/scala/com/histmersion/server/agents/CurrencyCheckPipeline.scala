@@ -1,7 +1,6 @@
 package com.histmersion.server.agents
 
 import com.histmersion.domain.automation.agents.*
-import com.histmersion.domain.automation.approvals.Approvals
 import com.histmersion.domain.automation.workflows.PipelineDef
 
 import com.histmersion.api.*
@@ -33,7 +32,7 @@ final class CurrencyCheckPipeline(
     protected val ds: DataSource,
     cfg: => AgentsConfig,
     upstream: () => AgentUpstream,
-    approvals: Approvals
+    approvals: SourceProposals
 ) extends PipelineDef
     with GoalSweep:
   val pipeline: Pipeline = Pipeline.CurrencyCheck
@@ -85,11 +84,11 @@ final class CurrencyCheckPipeline(
               h.neighbors(p.citekey, p.edgeKind.map(EdgeKind.wireOf).toList)
                 .exists(n => n.direction == "out" && p.target.contains(n.citekey))
             !known && (approvals.propose(ctx, p) match
-              case Approvals.Outcome.Recorded(id, w) => ctx.warn(s"approval $id waits for a person: $w"); true
-              case Approvals.Outcome.Applied(_)      => true
-              case Approvals.Outcome.NotProposed(_)  => true
-              case Approvals.Outcome.Failed(w)       => ctx.warn(s"proposal not applied: $w"); false
-              case _                                 => false)
+              case SourceProposals.Outcome.Recorded(id, w) => ctx.warn(s"approval $id waits for a person: $w"); true
+              case SourceProposals.Outcome.Applied(_)      => true
+              case SourceProposals.Outcome.NotProposed(_)  => true
+              case SourceProposals.Outcome.Failed(w)       => ctx.warn(s"proposal not applied: $w"); false
+              case _                                       => false)
           }
           val fetched = acts.collect { case CurrencyAction.Fetch(row) => row }.count { row =>
             row.doi.flatMap(Acquire.normalizeDoi).exists { doi =>

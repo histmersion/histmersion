@@ -19,12 +19,18 @@ object TransitionWorkflows:
     val ds = deps.ds
     val work = AcquisitionWork(deps, h, a)
     val upstream = () => work.acquisition
+    val proposals = SourceProposals(
+      a.approvals,
+      cfg,
+      ck => h.getSource(ck, body = false).toOption.map(_.source.status),
+      p => h.patchSource(p.citekey, p.patch).left.map(_.message).map(_ => p.describe)
+    )
     val pipelines: List[PipelineDef] = List(
-      EnrichSourcePipeline(h, ds, cfg, upstream, a.approvals),
-      ReviewArticlePipeline(h, ds, cfg, a.approvals, a.definitions),
+      EnrichSourcePipeline(h, ds, cfg, upstream, proposals),
+      ReviewArticlePipeline(h, ds, cfg, proposals, a.definitions),
       PlanGoalPipeline(a.host, deps.queues, deps.workLists, ds, cfg),
       CompileArticlePipeline(h, ds, cfg, (req, parent) => a.startRunAs(req, Origin.Run, Some(parent))),
-      CurrencyCheckPipeline(h, ds, cfg, upstream, a.approvals),
+      CurrencyCheckPipeline(h, ds, cfg, upstream, proposals),
       AcquisitionSweepPipeline(h, ds, cfg, upstream, work.oaBacklog),
       InferFilterPipeline(h, ds, cfg),
       ProposeArticlesPipeline(h, ds, cfg),

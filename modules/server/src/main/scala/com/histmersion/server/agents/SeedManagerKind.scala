@@ -1,11 +1,14 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.approvals.ApprovalChecks
 import com.histmersion.domain.automation.managers.{ManagerContext, ManagerKindDefinition}
 
 import com.histmersion.api.Agents.*
 import com.histmersion.api.{ApiError, GoalPlans}
 import com.histmersion.api.Managers.*
 import com.histmersion.domain.{AutopilotPolicy, ManagerPolicy}
+import com.histmersion.domain.AutopilotPolicy.{DraftFacts, PlannedFacts, Verdict}
+import com.histmersion.api.GoalPlans.DraftMode
 import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts}
 import com.histmersion.config.AgentsConfig
 import com.histmersion.domain.ManagerDefaults
@@ -113,6 +116,70 @@ final class SeedManagerKind(h: Handlers) extends ManagerKindDefinition:
       case ArticleCompile =>
         Left(ApiError(s"'$ArticleCompile' items come from an approved article plan (propose-articles)"))
       case other => Left(ApiError(s"unknown item kind '$other'"))
+
+  /** The autopilot's checks of the approvals its items wait for: an article plan (each article's slug free and its
+    * filter reaching enough sources, within the area's daily cap) and an article to publish (its draft's filter, the
+    * sources it cites, the daily cap).
+    */
+  override def judge(
+      c: ApprovalChecks,
+      a: ApprovalInfo,
+      run: Option[RunInfo],
+      mgr: Option[ManagerInfo],
+      now: Instant
+  ): Option[Verdict] =
+    val day = ManagerPolicy.dayStart(now)
+    val caps = c.config.approvals.auto
+    Option.when(a.approvalKind.exists(k => k == ApprovalKind.ArticlePlan || k == ApprovalKind.ArticlePublish)) {
+      a.approvalKind match
+        case Some(ApprovalKind.ArticlePlan) =>
+          a.articles match
+            case None       => Verdict.Leave("the approval carries no readable plan")
+            case Some(plan) =>
+              val goal = a.subject.getOrElse(plan.goal)
+              val min =
+                mgr
+                  .flatMap(_.config.minSources)
+                  .orElse(run.flatMap(_.params.minSources))
+                  .getOrElse(c.config.seed.minSources)
+              val facts = plan.articles.map { p =>
+                val free = !c.slugExists(p.slug) && h.getArticle(p.slug).isLeft
+                PlannedFacts(p.slug, free, h.filterReach(p.filter, Nil, 0)._1)
+              }
+              val today = c
+                .autoApprovedSince(ApprovalKind.ArticlePlan, day)
+                .filter(_.subject.contains(goal))
+                .map(_.articles.fold(0)(_.articles.size))
+                .sum
+              AutopilotPolicy.articlePlan(facts, math.max(1, min), today, caps.articlesPerGoalPerDay)
+        case Some(ApprovalKind.ArticlePublish) =>
+          (a.article, run) match
+            case (Some(d), Some(r)) =>
+              val snap = c
+                .checkpoint(r.id, "snapshot")
+                .flatMap(o => io.circe.parser.decode[CompileArticlePipeline.Snap](o).toOption)
+              val found = c
+                .checkpoint(r.id, "filter")
+                .flatMap(o => io.circe.parser.decode[CompileArticlePipeline.Found](o).toOption)
+              val facts = DraftFacts(
+                d.slug,
+                d.mode == DraftMode.Create,
+                snap.exists(_.filter.isDefined),
+                found.map(_.total),
+                d.problems,
+                d.cited.distinct.size,
+                !c.slugExists(d.slug)
+              )
+              AutopilotPolicy.articlePublish(
+                facts,
+                caps.publishMinSources,
+                c.autoApprovedSince(ApprovalKind.ArticlePublish, day).size,
+                c.publishCap
+              )
+            case (None, _) => Verdict.Leave("the approval carries no readable draft")
+            case (_, None) => Verdict.Leave("the run that drafted it is gone")
+        case _ => Verdict.Leave("not a kind the autopilot decides")
+    }
 
   def dispatch(
       c: ManagerContext,

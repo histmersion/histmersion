@@ -75,7 +75,13 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def handlers(clients: Map[ModelRef, LlmClient], cfg: AppConfig = baseCfg): (AgentsHandlers, Handlers) =
     val deps = Deps(cfg, ds)
     val h = Handlers(deps)
-    (AgentsHandlers(deps, h, (_, ref) => clients.get(ref).toRight(s"no scripted client for ${ref.wire}")), h)
+    (
+      AgentsHandlers(
+        TransitionSite(deps, h),
+        (_, ref) => clients.get(ref).toRight(s"no scripted client for ${ref.wire}")
+      ),
+      h
+    )
 
   private def withAllowances(s: String) = baseCfg.copy(agents = baseCfg.agents.copy(allowances = s))
 
@@ -335,7 +341,8 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         )
       )
       val deps = Deps(cfg, ds)
-      val a = AgentsHandlers(deps, Handlers(deps)) // the server's own factory: real clients, nothing called
+      val a =
+        AgentsHandlers(TransitionSite(deps, Handlers(deps))) // the server's own factory: real clients, nothing called
       val d = a.doctor(offline = false)
       val local = d.providers.find(_.provider == "local").get
       assert(local.used && local.upstreamModels.contains("zzA"), local)
@@ -370,7 +377,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       assert(requests.isEmpty)
       // the same server bound beyond loopback refuses claude-code (and says why)
       val lan = cfg.copy(server = cfg.server.copy(host = "0.0.0.0"))
-      val ld = AgentsHandlers(Deps(lan, ds), Handlers(Deps(lan, ds))).doctor(offline = true)
+      val ld = AgentsHandlers(TransitionSite(Deps(lan, ds), Handlers(Deps(lan, ds)))).doctor(offline = true)
       val bind = ld.providers.find(_.provider == "claude-code").get.checks.find(_.name == "bind").get
       assertEquals(bind.level, CheckLevel.Fail)
       assert(

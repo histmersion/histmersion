@@ -236,25 +236,6 @@ direction	files:files/BundleEntities.scala	util.data -> library: Finding	1
 direction	files:files/BundleEntities.scala	util.data -> media: AssetLink	1
 direction	files:files/BundleEntities.scala	util.data -> research: ArticleVersion	1
 direction	server:domain/activity/ActivityRepo.scala	automation -> server: Jobs	1
-direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> library: AcquireRecheckService	1
-direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> library: AgentUpstream	1
-direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> library: AgentVerify	1
-direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> library: EnrichSource	1
-direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> library: OaBacklog	1
-direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> library: Query	1
-direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> library: SeedService	1
-direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> library: SourceDetail	1
-direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> research: Articles	1
-direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> research: CompileArticle	1
-direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> research: ReviewArticle	1
-direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> server: Deps	1
-direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> split: Handlers	1
-direction	server:domain/automation/approvals/Approvals.scala	automation -> library: AgentProposals	1
-direction	server:domain/automation/approvals/Approvals.scala	automation -> research: ArticleFilter	1
-direction	server:domain/automation/approvals/Approvals.scala	automation -> research: InferFilterPipeline	1
-direction	server:domain/automation/approvals/Approvals.scala	automation -> split: Handlers	1
-direction	server:domain/automation/approvals/AutoApprovals.scala	automation -> research: CompileArticlePipeline	1
-direction	server:domain/automation/approvals/AutoApprovals.scala	automation -> split: Handlers	1
 direction	server:server/IngestHandlers.scala	library -> server: Deps	1
 direction	server:server/IngestHandlers.scala	library -> server: Jobs	1
 direction	server:server/MapTileService.scala	catalogue -> media: MediaRepo	1
@@ -305,11 +286,9 @@ filesystem	files:files/PluginKit.scala	File(	1
 filesystem	files:files/SafePath.scala	Paths.get	4
 filesystem	files:files/SafePath.scala	java.nio.file	1
 filesystem	server:domain/automation/agents/AgentTrees.scala	Files.*	14
-filesystem	server:domain/automation/agents/AgentTrees.scala	Path.of	2
+filesystem	server:domain/automation/agents/AgentTrees.scala	Path.of	3
 filesystem	server:domain/automation/agents/AgentTrees.scala	StandardCopyOption	3
 filesystem	server:domain/automation/agents/AgentTrees.scala	java.nio.file	1
-filesystem	server:domain/automation/agents/AgentsHandlers.scala	Path.of	1
-filesystem	server:domain/automation/agents/AgentsHandlers.scala	java.nio.file	1
 filesystem	server:domain/automation/agents/Prompts.scala	Files.*	2
 filesystem	server:domain/automation/agents/Prompts.scala	Path.of	1
 filesystem	server:domain/automation/agents/Prompts.scala	java.nio.file	1

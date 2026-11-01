@@ -54,7 +54,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, Handlers, StubUpstream) =
     val deps = Deps(cfg, ds)
     val h = Handlers(deps)
-    val a = AgentsHandlers(deps, h, (_, _) => Right(c))
+    val a = AgentsHandlers(TransitionSite(deps, h), (_, _) => Right(c))
     val up = StubUpstream()
     a.attach(up)
     (a, h, up)

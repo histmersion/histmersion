@@ -1,6 +1,8 @@
 package com.histmersion.domain.automation.workflows
 
 import com.histmersion.api.{ApiError, BackupStatus, Goal, GoalPatch, GoalPut}
+import com.histmersion.api.Agents.{Pipeline, ProbeAnswer, Role, RunRequest}
+import com.histmersion.api.GoalPlans.LinkKind
 import com.histmersion.api.Lint.LintFixResult
 import com.histmersion.domain.PlanGoal
 
@@ -17,6 +19,28 @@ trait AutomationHost:
 
   /** A goal changed as a person would (`PATCH`). */
   def patchGoal(slug: String, patch: GoalPatch): Either[ApiError, Goal]
+
+  // ── a run's request, checked by the workflow it names ─────────────────────────────────────────
+
+  /** The target as pipeline `p` names it: an existing source or article, a goal — or, for compile-article, any valid
+    * slug (a new article is created, an existing one extended). None: a target kind the engine resolves itself.
+    */
+  def runTarget(p: Pipeline, raw: String): Option[Either[ApiError, String]]
+
+  /** The options pipeline `p` understands, checked before a run is queued (`roundsCap`: the review's round cap). */
+  def runOptions(p: Pipeline, req: RunRequest, target: String, roundsCap: Int): Either[ApiError, Unit]
+
+  /** The roles a run of `p` may give a model of its own: its own, and those of the run it chains. */
+  def runRoles(p: Pipeline): List[Role]
+
+  /** A source or an article a goal links, as its canonical key (a citekey, a slug). */
+  def linkRef(kind: LinkKind, raw: String): Either[ApiError, String]
+
+  /** What the probe asks a model about one source, and the answer it must give: (citekey, title, year). */
+  def probeSubject(citekey: String): Either[ApiError, ProbeAnswer]
+
+  /** Whether a model's title names the record's (after normalisation). */
+  def sameTitle(answered: String, record: String): Boolean
 
   /** A goal plan's works looked up by DOI (the library's metadata: title, year, authors, whether the corpus holds it,
     * whether it is open access or retracted).

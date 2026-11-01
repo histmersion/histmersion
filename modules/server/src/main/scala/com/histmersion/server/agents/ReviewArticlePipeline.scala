@@ -10,7 +10,6 @@ import com.histmersion.domain.automation.agents.{
   StepAgent,
   Writes
 }
-import com.histmersion.domain.automation.approvals.Approvals
 import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
 
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope}
@@ -73,7 +72,7 @@ final class ReviewArticlePipeline(
     h: Handlers,
     ds: DataSource,
     cfg: => AgentsConfig,
-    approvals: Approvals,
+    approvals: SourceProposals,
     definitions: AgentDefinitions
 ) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.ReviewArticle
@@ -641,9 +640,9 @@ final class ReviewArticlePipeline(
     m.proposals.map { p =>
       val o = approvals.propose(ctx, p)
       o match
-        case Approvals.Outcome.Recorded(id, w) => ctx.warn(s"approval $id waits for a person: $w")
-        case Approvals.Outcome.Failed(w)       => ctx.warn(s"proposal not applied: $w")
-        case _                                 => ()
+        case SourceProposals.Outcome.Recorded(id, w) => ctx.warn(s"approval $id waits for a person: $w")
+        case SourceProposals.Outcome.Failed(w)       => ctx.warn(s"proposal not applied: $w")
+        case _                                       => ()
       o.line
     }
 

@@ -168,29 +168,10 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** The work lists' operations (the pipelines' worklog lines). */
   def workLists: com.histmersion.domain.automation.worklists.WorkListControllers = deps.workLists
 
-  /** What engine `a` asks of the handlers until each owner offers its service (its works looked up through the
-    * acquisition toolset attached to it).
-    */
-  def automationHost(
-      a: com.histmersion.domain.automation.agents.AgentsHandlers
-  ): com.histmersion.domain.automation.workflows.AutomationHost =
-    com.histmersion.server.agents.TransitionHost(
-      this,
-      () => com.histmersion.server.agents.TransitionWorkflows.work(a).acquisition
-    )
-
   val agents: com.histmersion.domain.automation.agents.AgentsHandlers =
-    com.histmersion.domain.automation.agents.AgentsHandlers(deps, this)
-
-  /** The agent tools the engine is given today (what an agent definition may list). */
-  def agentRoster: com.histmersion.domain.automation.agents.AgentRoster =
-    com.histmersion.server.agents.TransitionWorkflows.roster
-
-  /** What today's library and research code registers into the engine (`agents` asks for it as it is built). */
-  def automationContributions(
-      a: com.histmersion.domain.automation.agents.AgentsHandlers
-  ): com.histmersion.domain.automation.workflows.Contributions =
-    com.histmersion.server.agents.TransitionWorkflows.contributions(deps, this, a)
+    com.histmersion.domain.automation.agents.AgentsHandlers(
+      com.histmersion.server.agents.TransitionSite(deps, this)
+    )
 
   /** Research › Activity: runs, jobs, worklog lines and a person's decisions, one list. */
   val activity: com.histmersion.domain.activity.ActivityControllers =
@@ -1851,6 +1832,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** How many sources the filter article `slug` records returns now (None: no article, or no filter) — the review
     * manager's stale check.
     */
+  /** Whether an article with this slug exists (as stored, no alias followed). */
+  def articleExists(slug: String): Boolean = ArticleRepo.load(ds, slug).isDefined
+
   /** Every goal's linked articles that exist: goal → slugs (research's measure of a goal's progress). */
   def articlesByGoal(): Map[String, List[String]] = ArticleRepo.articlesByGoal(ds)
 
