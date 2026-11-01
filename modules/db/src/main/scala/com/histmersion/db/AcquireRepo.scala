@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.places.FindingPlacement
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -141,7 +143,7 @@ object AcquireRepo:
       citekey: String,
       status: SourceStatus,
       chunkChars: Int,
-      toleranceKm: Double = PlaceRepo.DefaultToleranceKm
+      toleranceKm: Double = FindingPlacement.DefaultToleranceKm
   ): Either[ApiError, String] =
     SourceRepo.patch(
       ds,

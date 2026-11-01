@@ -1,5 +1,9 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.places.PlaceFixtures
+
+import com.histmersion.domain.catalogue.places.Geocoder
+
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
@@ -46,7 +50,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
   override def beforeAll(): Unit =
     if testDb.isDefined then
       clean()
-      val _ = PlaceRepo.upsertPlaces(
+      val _ = PlaceFixtures.upsertPlaces(
         ds,
         List(
           PlaceInput(
@@ -296,7 +300,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(MediaRepo.commonsCategory(ds, "zqmd_site", "Zqmd category", "Q90000001"))
     assert(!MediaRepo.commonsCategory(ds, "zqmd_site", "Zqmd category", "Q90000001"))
     assert(
-      PlaceRepo
+      PlaceFixtures
         .get(ds, "zqmd_site", None, cfg.places.modernFrom)
         .get
         .links
@@ -392,7 +396,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
   // ── #1446 second slice: equivalents, items, sources' pictures ──────────────────────────────────
 
   private def eqFixtures(): Unit =
-    val _ = PlaceRepo.upsertPlaces(
+    val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(
         PlaceInput(

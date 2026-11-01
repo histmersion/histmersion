@@ -1,8 +1,10 @@
 package com.histmersion.domain.catalogue.maptiles
 
+import com.histmersion.domain.catalogue.places.PlaceScope
+
 import com.histmersion.api.{ApiError, Filter, TileLayer, TilesApi}
 import com.histmersion.config.UiMapTilesSettings
-import com.histmersion.db.PlaceScope
+import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.catalogue.events.{EventSelection, EventService, EventSourceFilter, EventSql}
 import com.histmersion.domain.catalogue.maptiles.layers.MapLayer
 import com.histmersion.util.database.Transactor

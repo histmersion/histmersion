@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.places.{Geocoder, PlaceRepo, PlaceReviewRepo, PointAreaRepo}
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -399,7 +401,7 @@ object LintRepo:
   /** `finding-geocode`: move the findings the rule lists to the place the current geocoder chooses. */
   def regeocodeFix(ds: DataSource, cfg: AppConfig): LintFixResult =
     val s = geocodeOf(cfg)
-    val moved = Geocoder.apply(ds, Geocoder.moves(ds, s), s.toleranceKm)
+    val moved = transact(ds)(Geocoder.apply(connect(ds)(Geocoder.moves(s)), s.toleranceKm))
     LintFixResult(
       List(s"$FindingGeocode: $moved finding(s) moved to the place the current geocoder chooses"),
       0,
@@ -412,7 +414,7 @@ object LintRepo:
   /** `finding-unplaced`: give the findings the rule lists the point of the place they name. */
   def placeFix(ds: DataSource, cfg: AppConfig): LintFixResult =
     val s = geocodeOf(cfg)
-    val placed = Geocoder.place(ds, Geocoder.placements(ds, s), s.toleranceKm)
+    val placed = transact(ds)(Geocoder.place(connect(ds)(Geocoder.placements(s)), s.toleranceKm))
     LintFixResult(
       List(s"$FindingUnplaced: $placed finding(s) given the point of the place they name"),
       0,
@@ -424,7 +426,8 @@ object LintRepo:
 
   /** `place-kind`: reclassify the places the rule lists and merge the withdrawn ones into their replacement. */
   def reclassifyFix(ds: DataSource, cfg: AppConfig): LintFixResult =
-    val (reclassified, merged) = PlaceReviewRepo.apply(ds, PlaceReviewRepo.proposals(ds), cfg.places.pointToleranceKm)
+    val (reclassified, merged) =
+      transact(ds)(PlaceReviewRepo.apply(connect(ds)(PlaceReviewRepo.proposals()), cfg.places.pointToleranceKm))
     LintFixResult(
       List(s"$PlaceKindRule: $reclassified place(s) reclassified, $merged merged into their replacement"),
       0,
@@ -437,7 +440,8 @@ object LintRepo:
 
   /** `place-grid-point`: move the places the rule lists to their linked record's point. */
   def relocateFix(ds: DataSource, cfg: AppConfig): LintFixResult =
-    val relocated = PlaceReviewRepo.relocate(ds, PlaceReviewRepo.relocations(ds), cfg.places.pointToleranceKm)
+    val relocated =
+      transact(ds)(PlaceReviewRepo.relocate(connect(ds)(PlaceReviewRepo.relocations()), cfg.places.pointToleranceKm))
     LintFixResult(
       List(s"$PlaceGridPoint: $relocated place(s) moved from a grid square's centre to their linked record's point"),
       0,

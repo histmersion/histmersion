@@ -1,7 +1,9 @@
 package com.histmersion.server
 
+import com.histmersion.domain.catalogue.places.PlaceScope
+
 import com.histmersion.api.Filter
-import com.histmersion.db.PlaceScope
+import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.catalogue.CatalogueJobs
 import com.histmersion.domain.catalogue.events.{
   CorrectionService,
@@ -16,12 +18,24 @@ import com.histmersion.domain.catalogue.evidence.{
   EventLinkService,
   LeadService
 }
-import com.histmersion.domain.catalogue.places.{SiteTypesControllers, SiteTypeService}
-import com.histmersion.pluginhost.{HttpTransport, JavaHttpTransport}
+import com.histmersion.domain.catalogue.places.{
+  GazetteerControllers,
+  GazetteerImports,
+  GazetteerLoad,
+  Geocoding,
+  PlaceGeometry,
+  PlaceMap,
+  PlacesControllers,
+  PlaceService,
+  SiteTypesControllers,
+  SiteTypeService
+}
+import com.histmersion.pluginhost.{HttpTransport, JavaHttpTransport, PluginGazetteers}
+import com.histmersion.util.storage.Location
 
-/** The catalogue's events, their catalogues and their links to the corpus, and the refinement of site types, built over
-  * one server's `deps`: `http` fetches the event catalogues and Wikidata, `presentYear` is the year datings are held
-  * inside, `resolve` gives a list's filter its page size, `scope` the gazetteer's reading of its places.
+/** The catalogue's places, events, their catalogues and their links to the corpus, and the refinement of site types,
+  * built over one server's `deps`: `http` fetches the event catalogues and Wikidata, `presentYear` is the year datings
+  * are held inside, `resolve` gives a list's filter its page size, `scope` the gazetteer's reading of its places.
   */
 final class CatalogueWiring(
     deps: Deps,
@@ -84,3 +98,62 @@ final class CatalogueWiring(
 
   lazy val siteTypes: SiteTypesControllers =
     SiteTypesControllers(SiteTypeService(deps.transactor), jobs, () => deps.cfg, http, deps.clock)
+
+  /** The gazetteer's records. */
+  lazy val placeStore: PlaceService = PlaceService(deps.transactor)
+
+  /** The gazetteer's geometry: findings matched to places, the hierarchy, the land. */
+  lazy val placeGeometry: PlaceGeometry = PlaceGeometry(deps.transactor)
+
+  lazy val places: PlacesControllers =
+    PlacesControllers(
+      placeStore,
+      PlaceMap(deps.transactor),
+      placeGeometry,
+      Geocoding(deps.transactor),
+      (k, id) => Deps.aliasTables.current(deps.ds, k, id),
+      () => deps.cfg,
+      (limit, default) => deps.cfg.limits.page(limit, default),
+      deps.maintenance
+    )
+
+  lazy val gazetteer: GazetteerControllers =
+    GazetteerControllers(
+      CatalogueWiring.gazetteer(deps, placeStore, HttpDownload().file, HttpDownload().text),
+      placeGeometry,
+      deps.ds,
+      deps.pins,
+      deps.maintenance
+    )
+
+object CatalogueWiring:
+
+  /** How the gazetteer comes in, over `deps`' stores and plugins: `download` fetches a pinned extract into its file,
+    * `text` a url's text (the land).
+    */
+  def gazetteer(
+      deps: Deps,
+      places: PlaceService,
+      download: GazetteerLoad.Download,
+      text: String => Either[String, String]
+  ): GazetteerImports =
+    GazetteerImports(
+      deps.transactor,
+      places,
+      PlaceGeometry(deps.transactor),
+      () =>
+        val paths = GazetteerPaths.of(deps.cfg, deps.environment.lookup)
+        GazetteerLoad.Stores(
+          deps.storage.store(Location.GazetteerExtracts),
+          deps.storage.find(Location.GazetteerFolder),
+          deps.storage.store(Location.GazetteerDrop),
+          paths.manifest.toString,
+          () => paths.manifestText()
+        )
+      ,
+      () => deps.cfg,
+      download,
+      text,
+      () => deps.plugins.registries.gazetteerSources,
+      () => PluginGazetteers.http(PluginGazetteers.transport(deps.cfg.places))
+    )

@@ -31,7 +31,7 @@ final class QueuedIngest(
     ingest: IngestHandlers,
     ds: DataSource,
     chunkChars: Int,
-    toleranceKm: Double = com.histmersion.db.PlaceRepo.DefaultToleranceKm
+    toleranceKm: Double = com.histmersion.domain.catalogue.places.FindingPlacement.DefaultToleranceKm
 ) extends IngestJobs:
 
   private val skeleton = SkeletonIngest(ds, chunkChars, toleranceKm)

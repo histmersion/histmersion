@@ -3,7 +3,7 @@ package com.histmersion.domain.catalogue
 import com.histmersion.domain.catalogue.events.{CorrectionService, EventImportService, EventService}
 import com.histmersion.domain.catalogue.evidence.{AttestationService, EventLinkService, LeadService}
 import com.histmersion.domain.catalogue.periods.PeriodService
-import com.histmersion.domain.catalogue.places.SiteTypeService
+import com.histmersion.domain.catalogue.places.{PlaceService, SiteTypeService}
 
 /** The catalogue's services one test runs against, in memory or over a scratch database, and how a test seeds what
   * another domain owns.
@@ -17,6 +17,7 @@ trait CatalogueStores:
   def eventLinks: EventLinkService
   def leads: LeadService
   def siteTypes: SiteTypeService
+  def places: PlaceService
 
   /** A source of the library's (titled by its citekey), for what points at one. */
   def source(citekey: String): Unit

@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.places.PlaceScope
+
 import com.histmersion.util.database.RangeSql
 
 import com.histmersion.api.*
@@ -59,3 +61,75 @@ object AggregateRepo:
   /** Run [[periodsQuery]]. `unit` is `sources` (default) or `findings`. */
   def periods(ds: DataSource, unit: String, filter: Filter, scope: PlaceScope = PlaceScope.empty): Vector[PeriodRow] =
     connect(ds)(periodsQuery(unit, filter, scope).frag.query[PeriodRow].run())
+
+  /** One row as SQL returns it — the place ids arrive as a `text[]`. */
+  final private[db] case class TreeRowRaw(
+      key: String,
+      citekey: String,
+      title: String,
+      periodStart: Option[Long],
+      periodEnd: Option[Long],
+      placeIds: List[String]
+  ) derives DbCodec:
+    def toRow: Tree.TreeRow = Tree.TreeRow(key, citekey, title, periodStart, periodEnd, placeIds.distinct)
+
+  // ── the rows of the §1.6 aggregation tree ──────────────────────────────────────────────────────
+
+  /** The gazetteer places one FINDING was materialised into, as an array (correlated on `fa`). */
+  private def placesOf(fa: String): String =
+    s"ARRAY(SELECT fp.place_id FROM finding_places fp WHERE fp.finding_id = $fa.id ORDER BY fp.place_id)"
+
+  /** The SQL behind [[treeRows]] — a **pure** value, so the predicate can be asserted on without a database (plan
+    * §1.0/§2.2).
+    *
+    *   - `unit = "findings"` → one row per matching finding: its own period and its own places.
+    *   - `unit = "sources"` → one row per matching SOURCE (the unit of every result, §1.0): its own period, falling
+    *     back to the envelope of its matching findings when it is undated, and the UNION of those findings' places. The
+    *     window/gate logic mirrors [[AggregateRepo.periodsQuery]] exactly, so the tree and the timeline strip always
+    *     agree about which sources are in scope.
+    *
+    * Ordering is the caller's `sort=`, which is what makes `samples` under a leaf the *top* sources for that bucket
+    * rather than an arbitrary few.
+    */
+  def treeRowsQuery(unit: String, filter: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
+    if unit == "findings" then
+      Sql.raw(
+        s"SELECT f.id, f.citekey, s.title, ${RangeSql.cols("f.period")}, ${placesOf("f")}" +
+          " FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE "
+      ) ++
+        FilterSql.sourceWhere(filter) ++ Sql.raw(" AND ") ++ FilterSql.findingWhere(filter, scope = scope) ++
+        Sql.raw(" ") ++ FilterSql.orderBySql(filter)
+    else
+      val gate =
+        if FilterSql.hasFindingPlaceCriteria(filter) then Sql.raw(" AND fp.matched > 0") else Sql.empty
+      val ownPeriod = filter.period.fold(Sql.raw("TRUE"))(RangeSql.overlaps("s.period", _))
+      Sql.raw(
+        "SELECT s.citekey, s.citekey, s.title," +
+          s" COALESCE(${RangeSql.start("s.period")}, fp.min_start), COALESCE(${RangeSql.end("s.period")}, fp.max_end)," +
+          " coalesce(fp.place_ids, '{}'::text[])" +
+          " FROM sources s LEFT JOIN LATERAL (" +
+          s"SELECT min(${RangeSql.start("f.period")}) AS min_start, max(${RangeSql.end("f.period")}) AS max_end," +
+          " count(DISTINCT f.id) AS matched," +
+          " count(DISTINCT f.id) FILTER (WHERE "
+      ) ++
+        FilterSql.findingPeriodWhere(filter) ++
+        Sql.raw(
+          ") AS in_window, array_agg(DISTINCT l.place_id) FILTER (WHERE l.place_id IS NOT NULL) AS place_ids" +
+            " FROM findings f LEFT JOIN finding_places l ON l.finding_id = f.id" +
+            " WHERE f.citekey = s.citekey AND "
+        ) ++
+        FilterSql.findingPlaceWhere(filter, scope = scope) ++
+        Sql.raw(") fp ON true WHERE ") ++ FilterSql.sourceWhere(filter) ++ gate ++
+        Sql.raw(" AND (") ++ ownPeriod ++ Sql.raw(" OR fp.in_window > 0) ") ++
+        FilterSql.orderBySql(filter)
+
+  /** Run [[treeRowsQuery]]: the rows the tree buckets and nests ([[com.histmersion.api.Tree]], pure), hung off the
+    * gazetteer the catalogue gives (`TreeRepo.gazetteer`). `unit` is `sources` (default) or `findings`.
+    */
+  def treeRows(
+      ds: DataSource,
+      unit: String,
+      filter: Filter,
+      scope: PlaceScope = PlaceScope.empty
+  ): Vector[Tree.TreeRow] =
+    connect(ds)(treeRowsQuery(unit, filter, scope).frag.query[TreeRowRaw].run()).map(_.toRow)

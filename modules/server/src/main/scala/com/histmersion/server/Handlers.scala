@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.domain.catalogue.places.PlaceScope
+
 import com.augustnagro.magnum.{connect, transact}
 
 import com.histmersion.util.data.TablesAdapter.JobsOwner
@@ -37,21 +39,14 @@ import com.histmersion.db.{
   AssetMetaRepo,
   CoverageRepo,
   CritiqueRepo,
-  Geocoder,
   GoalRepo,
   Importer,
   MediaRepo,
   Migrate,
-  PlaceOverrideRepo,
-  PlaceRepo,
-  PlaceScope,
   ReviewLedgerRepo,
   SourceDeleteRepo,
-  SourceRepo,
-  TreeRepo
+  SourceRepo
 }
-import com.histmersion.domain.catalogue.places.BuiltinGazetteers
-import com.histmersion.pluginhost.PluginGazetteers
 import java.nio.file.{Files, Path}
 import java.time.Instant
 
@@ -428,7 +423,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * at all.
     */
   private def scopeOf(f: Filter): PlaceScope =
-    if f.places.isEmpty then PlaceScope.empty else PlaceRepo.scopeFor(ds, f.places, f.period)
+    if f.places.isEmpty then PlaceScope.empty else catalogue.placeStore.scopeFor(f.places, f.period)
 
   /** `GET /api/sources` — THE discovery operation: sources with their matched findings and reasons. */
   def sources(f: Filter): SearchResult =
@@ -604,9 +599,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       askedAsOf: Option[Long],
       base: TimeHistogram
   ): TimeHistogram =
-    val rows = TreeRepo.rows(ds, unit, window, scope).toList
+    val rows = AggregateRepo.treeRows(ds, unit, window, scope).toList
     // the gazetteer slice these rows hang off — one upward closure, not the whole 16 k-place table
-    def gaz = TreeRepo.gazetteer(ds, rows)
+    def gaz = catalogue.placeStore.gazetteer(rows.flatMap(_.placeIds))
     // `by=region` reads the hierarchy at ONE year: the caller's, else the middle of the window
     val asOf = askedAsOf.orElse(Some(Tree.midpoint(from, to)))
     // LAZY DEEPER LEVELS: `place=<one gazetteer id>` roots the region tree AT that place, so
@@ -1097,12 +1092,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * `GET /api/places/{old}` and in a `place=<old>` filter alike.
     */
   def renamePlace(id: String, req: LabelRename): Either[ApiError, LabelRenamed] =
-    maintenance.guard("rename_place"):
-      val from = current(AliasKindsAdapter.PlaceRecords, id)
-      for
-        to <- LabelRenames.validate(BundleKind.Place, from, req.to)
-        _ <- PlaceRepo.rename(ds, from, to)
-      yield LabelRenamed(BundleKind.Place, from, to)
+    places
+      .rename(Caller.Local, id, from => LabelRenames.validate(BundleKind.Place, from, req.to))
+      .map((from, to) => LabelRenamed(BundleKind.Place, from, to))
 
   /** `POST /api/events/{id}/rename` — a new id; the old one keeps resolving (V053). */
   def renameEvent(id: String, req: LabelRename): Either[ApiError, LabelRenamed] =
@@ -1242,15 +1234,17 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   // ── the gazetteer (plan §1.6a) ──────────────────────────────────────────────────────────────
 
-  /** A place NAME → its gazetteer point (#981): the one geocoder (`db.Geocoder`, ranking in `core.Geocode`), for a
-    * finding about a place of kind `hint` dated `at`. `None` = unknown.
+  /** The gazetteer's operations. */
+  def places: com.histmersion.domain.catalogue.places.PlacesControllers = catalogue.places
+
+  /** The gazetteer's background work: a plugin's source or the land fetched, the hierarchy built. */
+  def gazetteer: com.histmersion.domain.catalogue.places.GazetteerControllers = catalogue.gazetteer
+
+  /** A place NAME → its gazetteer point (#981), for a finding about a place of kind `hint` dated `at`. `None` =
+    * unknown.
     */
   def geocode(name: String, hint: Geocode.KindHint, at: Option[Period]): Option[Geocode.Resolution] =
-    Geocoder.resolve(ds, name, hint, at, cfg.places.geocodePlaceholderMin)
-
-  /** `GET /api/places` — name search; `limit <= 0` means the configured `places.search-limit`. */
-  def places(q: Option[String], asOf: Option[Long], limit: Option[Int]): List[PlaceHit] =
-    PlaceRepo.search(ds, q, asOf, cfg.limits.page(limit, cfg.places.searchLimit), cfg.places.modernFrom).toList
+    places.geocode(name, hint, at)
 
   /** The map's sites, events and pictures as vector tiles (`GET /api/tiles/…`). */
   val tiles: com.histmersion.domain.catalogue.maptiles.MapTileService =
@@ -1271,32 +1265,13 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   def tile(q: TilesApi.TileQuery): Either[ApiError, TilesApi.TileAnswer] = tiles.tile(q)
 
-  /** `GET /api/places/geo` — the map layers' shapes for the time [[GeoPick.resolve]] makes of the query. */
-  def placesGeo(q: Api.PlacesGeoQuery): Either[ApiError, String] =
-    q.pick.map(_.trim).filter(_.nonEmpty) match
-      case Some(p) if GeoPick.parse(p).isEmpty =>
-        Left(ApiError(s"unknown pick '$p': one of ${GeoPick.values.map(_.wire).mkString(", ")}"))
-      case p =>
-        val time = GeoPick.resolve(q.asOf, q.from, q.to, p.flatMap(GeoPick.parse).getOrElse(GeoPick.Mid))
-        Right(PlaceRepo.geoJsonAt(ds, q.kind, time, cfg.places.geoLimit(q.limit, 100), cfg.places.modernFrom))
-
   /** `GET /api/places/{id}` — the row, its GeoJSON geometry and the hierarchy around it at `asOf`; with `counts`, also
-    * what the corpus holds for it (the web UI's map hover card).
+    * what the corpus holds for it and its pictures (the web UI's map hover card).
     */
   def place(id: String, asOf: Option[Long], counts: Boolean = false): Either[ApiError, PlaceDetail] =
-    val now = placeId(id)
-    PlaceRepo
-      .get(ds, now, asOf, cfg.places.modernFrom)
-      .toRight(ApiError(s"No place '$id'"))
-      .map(d =>
-        if counts then d.copy(counts = Some(placeCounts(now)), media = media.placeThumbs(d.place.id))
-        else d
-      )
-
-  /** A place's id now: an old id (renamed, V055 — e.g. by a merge that followed a rename made in the other collection)
-    * resolves to the place it names, as an old citekey does.
-    */
-  private def placeId(id: String): String = current(AliasKindsAdapter.PlaceRecords, id)
+    com.histmersion.server.views
+      .PlaceCardView(places.get, places.placeId, placeCounts, media.placeThumbs)
+      .apply(id, asOf, counts)
 
   /** What `place=<id>` alone selects in each list — the same scope (the place and its descendants) and the same queries
     * as `/api/sources`, `/api/findings`, `/api/articles` and `/api/events`.
@@ -1304,189 +1279,6 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   private def placeCounts(id: String): PlaceCounts =
     val f = Filter(places = List(id))
     SourceRepo.selectionCounts(ds, f, scopeOf(f))
-
-  def placeChildren(id: String, asOf: Option[Long]): Either[ApiError, List[PlaceSummary]] =
-    place(id, asOf).map(d =>
-      PlaceRepo.children(ds, d.place.id, asOf, cfg.places.childrenLimit, cfg.places.modernFrom).toList
-    )
-
-  /** The subtree under one place, depth-tagged; `depth <= 0` means the configured `places.tree-depth`. */
-  def placeTree(id: String, asOf: Option[Long], depth: Option[Int]): Either[ApiError, List[PlaceTreeRow]] =
-    place(id, asOf).map(d =>
-      PlaceRepo
-        .hierarchy(
-          ds,
-          asOf,
-          Some(d.place.id),
-          depth.filter(_ > 0).getOrElse(cfg.places.treeDepth),
-          cfg.places.treeLimit,
-          depthCap = cfg.places.treeDepth,
-          modernFrom = cfg.places.modernFrom
-        )
-        .toList
-    )
-
-  /** `POST /api/places/import` — an LPF document or a plain GeoJSON FeatureCollection. Parsing is pure ([[Lpf]]) and
-    * all-or-nothing: a malformed document is a 400, never a half import.
-    */
-  def importPlaces(kind: Option[String], dataset: Option[String], body: String): Either[ApiError, PlaceImportResult] =
-    maintenance.guard("places/import"):
-      val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(PlaceKind.Region)
-      if !PlaceKind.all.contains(k) then Left(ApiError(s"unknown kind '$k' (one of: ${PlaceKind.all.mkString(", ")})"))
-      else
-        for
-          set <- Dataset.ofParam(dataset)
-          in <- Lpf.parse(body, k).left.map(ApiError(_))
-        yield PlaceRepo.upsertPlaces(ds, in, set)
-
-  /** `POST /api/places/{id}/names` (#987) — a name a person gives a place, stored as MANUAL: no re-seed deletes it. An
-    * old (renamed) id resolves to the place it names.
-    */
-  def addPlaceName(id: String, in: PlaceNameAdd): Either[ApiError, PlaceNameChanged] =
-    maintenance.guard("places/names/add"):
-      for
-        n <- PlaceEdits.name(in.name)
-        l <- PlaceEdits.lang(in.lang)
-        r <- PlaceRepo.addName(ds, placeId(id.trim), n, l)
-      yield r
-
-  /** `POST /api/places/{id}/names/remove` — only a name a person added; an imported one is refused. */
-  def removePlaceName(id: String, in: PlaceNameRemove): Either[ApiError, PlaceNameChanged] =
-    maintenance.guard("places/names/remove"):
-      for
-        n <- PlaceEdits.name(in.name)
-        l <- PlaceEdits.lang(in.lang)
-        r <- PlaceRepo.removeName(ds, placeId(id.trim), n, l)
-      yield r
-
-  /** `GET /api/places/names?place=` — the names people added, every place or one. */
-  def manualPlaceNames(id: Option[String]): List[ManualPlaceName] =
-    PlaceRepo.manualNames(ds, id.map(_.trim).filter(_.nonEmpty).map(placeId))
-
-  /** `POST /api/places/{id}/override` (V080) — a person's kind and/or period for a place, kept by every re-import, or
-    * `reset` back to the source's; the place's findings are matched again at once. An old (renamed) id resolves to the
-    * place it names.
-    */
-  def setPlaceOverride(id: String, in: PlaceOverrideSet): Either[ApiError, PlaceOverrideChanged] =
-    maintenance.guard("places/override"):
-      PlaceOverrides.edit(in).flatMap(e => PlaceOverrideRepo.set(ds, placeId(id.trim), e, tolKm))
-
-  /** `POST /api/places/{id}/merge` (V080) — the place is `into`; its id resolves there from then on. */
-  def mergePlace(id: String, in: PlaceMergeIn): Either[ApiError, PlaceGone] =
-    maintenance.guard("places/merge"):
-      PlaceOverrides
-        .reason(in.reason)
-        .flatMap(_ => PlaceOverrideRepo.merge(ds, placeId(id.trim), placeId(in.into.trim), tolKm))
-
-  /** `POST /api/places/{id}/remove` (V080) — only a place nothing refers to; no re-seed brings it back. */
-  def removePlace(id: String, in: PlaceRemoveIn): Either[ApiError, PlaceGone] =
-    maintenance.guard("places/remove"):
-      PlaceOverrides.reason(in.reason).flatMap(r => PlaceOverrideRepo.remove(ds, placeId(id.trim), r))
-
-  /** `GET /api/places/overrides?place=` — the kinds and periods people set, every place's or one's. */
-  def placeOverrides(id: Option[String]): List[PlaceOverride] =
-    PlaceOverrideRepo.list(ds, id.map(_.trim).filter(_.nonEmpty).map(placeId))
-
-  /** `POST /api/places` (#987) — a point place of a person's own (`local`, carried in a bundle, never touched by a
-    * re-seed). Its findings are matched by the next `places rebuild`.
-    */
-  def addPlace(in: PlaceAdd): Either[ApiError, PlaceSummary] =
-    maintenance.guard("places/add"):
-      PlaceEdits.toInput(in).flatMap(PlaceRepo.addPlace(ds, _))
-
-  /** One gazetteer job at a time — a fetch, the land import or the hierarchy build ([[BackgroundJob]]): each rewrites
-    * places the others read.
-    */
-  private val placesSlot = BackgroundJob.Slot()
-
-  /** A places job: `about` says what it does (the jobs list shows it), `run` answers its summary or why it failed.
-    */
-  private def placesJob(kind: String, about: String)(run: => Either[String, String]): Either[ApiError, JobInfo] =
-    BackgroundJob.start(ds, kind, Some(JobDetail(about = Some(about))), placesSlot, "a places job", pins = deps.pins)(
-      (_, progress) =>
-        progress(about)
-        scribe.info(s"[import] $about…")
-        val r = run
-        r.fold(e => scribe.error(s"[import] $about failed: $e"), ok => scribe.info(s"[import] $about: $ok"))
-        BackgroundJob.Outcome.of(r)
-    )
-
-  /** `POST /api/places/fetch?source=cliopatria` — download, transform and upsert an external gazetteer. Idempotent:
-    * re-running upserts over existing entries.
-    *
-    * A real run is a background job (the download + 15K-row upsert exceeds any reasonable HTTP timeout): the answer
-    * carries its id, which `histmersion jobs <id>` follows. A dry run answers its counts at once.
-    */
-  def fetchExternalPlaces(source: String, dryRun: Boolean = false): Either[ApiError, PlaceImportResult] =
-    maintenance.guard("places/fetch"):
-      if source.trim.toLowerCase == importers.NaturalEarthLand.name then fetchLand(dryRun)
-      else
-        val name = source.trim.toLowerCase
-        val registered = deps.plugins.registries.gazetteerSources
-        BuiltinGazetteers
-          .resolve(
-            name,
-            registered,
-            s"unknown source '$source' (available: " +
-              s"${(BuiltinGazetteers.available(registered) :+ importers.NaturalEarthLand.name).mkString(", ")})"
-          )
-          .left
-          .map(ApiError(_))
-          .flatMap { src =>
-            val http = PluginGazetteers.http(PluginGazetteers.transport(cfg.places))
-            if dryRun then
-              importers.ImportRunner
-                .fetchAndImport(src, http, ds, dryRun = true, cfg.places.pointToleranceKm)
-                .left
-                .map(ApiError(_))
-            else
-              placesJob(Handlers.PlacesFetchJobKind, s"fetch $name")(
-                importers.ImportRunner
-                  .fetchAndImport(src, http, ds, dryRun = false, cfg.places.pointToleranceKm)
-                  .map(r =>
-                    s"${r.places} places, ${r.names} names, ${r.relations} relations" +
-                      (if r.failed.nonEmpty then s", ${r.failed.size} failed" else "")
-                  )
-              )
-                .map(j => PlaceImportResult(0, 0, 0, job = Some(j.id)))
-          }
-
-  /** `places fetch land`: Natural Earth land for clipping polities to the coast (V025). Like the gazetteers, a real run
-    * is a background job — two downloads and a re-clip of every polity.
-    */
-  private def fetchLand(dryRun: Boolean): Either[ApiError, PlaceImportResult] =
-    val land = importers.NaturalEarthLand
-    if dryRun then land.run(ds, dryRun = true).left.map(ApiError(_))
-    else
-      placesJob(Handlers.PlacesFetchJobKind, "fetch land")(
-        land.run(ds, dryRun = false).map(r => s"${r.places} polities clipped${r.failed.mkString(" ", "; ", "")}".trim)
-      )
-        .map(j => PlaceImportResult(0, 0, 0, job = Some(j.id)))
-
-  def placeFootprints(id: String, asOf: Option[Long]): Either[ApiError, List[PlaceFootprint]] =
-    place(id, asOf).map(d => PlaceRepo.footprints(ds, d.place.id, asOf).toList)
-
-  def placeLinks(id: String): Either[ApiError, List[PlaceLink]] =
-    val now = placeId(id)
-    PlaceRepo.get(ds, now).map(_ => PlaceRepo.links(ds, now).toList).toRight(ApiError(s"No place '$id'"))
-
-  /** `POST /api/places/rebuild` — re-materialise `finding_places`. Returns `Either` (and its route uses the write error
-    * mapping) so a rebuild arriving during a restore is a 503 like every other write, rather than a rebuild against a
-    * half-restored schema.
-    */
-  def rebuildPlaces(): Either[ApiError, PlaceRebuildResult] =
-    maintenance.guard("places/rebuild"):
-      Right(PlaceRepo.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm))
-
-  /** `POST /api/places/build-hierarchy` — compute parent-child edges from spatial containment, as a background job
-    * (ST_Contains across 15K+ polygons is slow): the answer carries its id, the finished job's summary the counts.
-    */
-  def buildHierarchy(): Either[ApiError, SpatialHierarchyResult] =
-    maintenance.guard("places/build-hierarchy"):
-      placesJob(Handlers.PlacesHierarchyJobKind, "build the spatial hierarchy") {
-        val r = PlaceRepo.buildSpatialHierarchy(ds)
-        Right(s"${r.edgesCreated} edges from ${r.polygonPlaces} polygons × ${r.pointPlaces} points")
-      }.map(j => SpatialHierarchyResult(edgesCreated = 0, polygonPlaces = 0, pointPlaces = 0, job = Some(j.id)))
 
   /** One resumable slice of the FTS chunk rebuild (plan §1.4); loop on `remaining` > 0. */
   def reindex(after: Option[String], limit: Option[Int]): Either[ApiError, ReindexResult] =

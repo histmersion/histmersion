@@ -2,7 +2,7 @@ package com.histmersion.domain.catalogue.places
 
 import com.histmersion.api.GazetteerKind
 import com.histmersion.plugin.GazetteerSource
-import com.histmersion.server.importers.{NaturalEarthLand, PeriodOFetch}
+import com.histmersion.domain.catalogue.periods.PeriodOFetch
 
 import scala.collection.immutable.ListMap
 

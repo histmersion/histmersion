@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.places.PlaceFixtures
+
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
@@ -125,8 +127,8 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
   test("places and periods: the collection's own travel and import; the seeds do not; the dataset marks which"):
     val (work, home) = (fresh("pw"), fresh("ph"))
     val (sw, sh) = (spool("pw"), spool("ph"))
-    val _ = PlaceRepo.upsertPlaces(work, List(site("zz_seed_site", "A seed site", 30.0, 39.0)), Dataset.Seed)
-    val _ = PlaceRepo.upsertPlaces(work, List(site("zz_my_site", "My site", 34.6, 40.0)), Dataset.Local)
+    val _ = PlaceFixtures.upsertPlaces(work, List(site("zz_seed_site", "A seed site", 30.0, 39.0)), Dataset.Seed)
+    val _ = PlaceFixtures.upsertPlaces(work, List(site("zz_my_site", "My site", 34.6, 40.0)), Dataset.Local)
     val _ = connect(work)(
       sql"""INSERT INTO periods (id, label, authority, period, dataset)
             VALUES ('zz_my_period', 'My period', 'me', '[-1400,-1199)'::int8range, 'local')""".update.run()
@@ -142,7 +144,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(es.periods.map(_.id), List("zz_my_period"))
     assertEquals(es.places.head.names.map(_.name), List("My site"))
     // home has only the seeds it imports itself — the event's place comes with the bundle
-    val _ = PlaceRepo.upsertPlaces(home, List(site("zz_seed_site", "A seed site", 30.0, 39.0)), Dataset.Seed)
+    val _ = PlaceFixtures.upsertPlaces(home, List(site("zz_seed_site", "A seed site", 30.0, 39.0)), Dataset.Seed)
     val r = importInto(home, bundle, sh)
     assert(r.applied, r.problems.mkString("\n"))
     assertEquals(text(home, "SELECT dataset FROM places WHERE id = 'zz_my_site'"), Some("local"))
@@ -161,7 +163,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
   test("places: one id with two geometries asks, and keep-right takes the bundle's; one place under another id folds"):
     val (work, home) = (fresh("qw"), fresh("qh"))
     val (sw, sh) = (spool("qw"), spool("qh"))
-    val _ = PlaceRepo.upsertPlaces(
+    val _ = PlaceFixtures.upsertPlaces(
       work,
       List(site("zz_ugarit", "Ugarit", 35.78, 35.60), site("work_troy", "Troy", 26.2389, 39.9575)),
       Dataset.Local
@@ -171,8 +173,8 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
       "zz_troy_burns",
       EventPut("Troy burns", "destruction", TimeSpan(Some(-1190), None, None, Some(-1180)), placeId = Some("work_troy"))
     )
-    val _ = PlaceRepo.upsertPlaces(home, List(site("zz_ugarit", "Ugarit", 35.70, 35.50)), Dataset.Local)
-    val _ = PlaceRepo.upsertPlaces(home, List(site("pleiades_550595", "Troy", 26.2390, 39.9576)), Dataset.Seed)
+    val _ = PlaceFixtures.upsertPlaces(home, List(site("zz_ugarit", "Ugarit", 35.70, 35.50)), Dataset.Local)
+    val _ = PlaceFixtures.upsertPlaces(home, List(site("pleiades_550595", "Troy", 26.2390, 39.9576)), Dataset.Seed)
     val bundle = exportOf(work, sw)
     val p = planIn(home, bundle, sh)
     val q = p.issues.find(_.kind == IssueKind.PlaceDiffers).getOrElse(fail(p.issues.mkString("\n")))
@@ -279,8 +281,8 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     val (sw, sh) = (spool("aw"), spool("ah"))
     val _ = ArticleRepo.put(work, Article("zz_first_slug", "An article", "concept", "Text."))
     val _ = ArticleRepo.rename(work, "zz_first_slug", "zz_second_slug").fold(e => fail(e.message), identity)
-    val _ = PlaceRepo.upsertPlaces(work, List(site("zz_kadesh", "Kadesh", 36.51, 34.56)), Dataset.Seed)
-    val _ = PlaceRepo.upsertPlaces(home, List(site("zz_kadesh", "Kadesh", 36.51, 34.56)), Dataset.Seed)
+    val _ = PlaceFixtures.upsertPlaces(work, List(site("zz_kadesh", "Kadesh", 36.51, 34.56)), Dataset.Seed)
+    val _ = PlaceFixtures.upsertPlaces(home, List(site("zz_kadesh", "Kadesh", 36.51, 34.56)), Dataset.Seed)
     EventFixtures.put(
       work,
       "work_kadesh",
@@ -346,7 +348,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
   test("a place renamed over there is followed: the new id here, the old one an alias, events and names follow"):
     val (work, home) = (fresh("prw"), fresh("prh"))
     val (sw, sh) = (spool("prw"), spool("prh"))
-    val _ = PlaceRepo.upsertPlaces(work, List(site("zz_old_site", "My site", 34.6, 40.0)), Dataset.Local)
+    val _ = PlaceFixtures.upsertPlaces(work, List(site("zz_old_site", "My site", 34.6, 40.0)), Dataset.Local)
     EventFixtures.put(
       work,
       "zz_at_site",
@@ -355,7 +357,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     val first = importInto(home, exportOf(work, sw), sh)
     assert(first.applied, first.problems.mkString("\n"))
     // work renames the place: its event follows by key (V055)
-    assert(PlaceRepo.rename(work, "zz_old_site", "zz_new_site").isRight)
+    assert(PlaceFixtures.rename(work, "zz_old_site", "zz_new_site").isRight)
     assertEquals(text(work, "SELECT place_id FROM events WHERE id = 'zz_at_site'"), Some("zz_new_site"))
     val bundle = exportOf(work, sw)
     val p = planIn(home, bundle, sh)
@@ -366,18 +368,18 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(count(home, "SELECT count(*)::int FROM places WHERE id = 'zz_old_site'"), 0)
     assertEquals(text(home, "SELECT place_id FROM place_names WHERE name = 'My site'"), Some("zz_new_site"))
     assertEquals(text(home, "SELECT place_id FROM events WHERE id = 'zz_at_site'"), Some("zz_new_site"))
-    assertEquals(PlaceRepo.renamedTo(home, "zz_old_site"), Some("zz_new_site"))
+    assertEquals(PlaceFixtures.renamedTo(home, "zz_old_site"), Some("zz_new_site"))
     // the same bundle again changes nothing
     assertEquals(importInto(home, bundle, sh).changed, 0)
 
   test("a place renamed over there onto an id another place has here keeps ours; the bundle's events point at it"):
     val (work, home) = (fresh("pkw"), fresh("pkh"))
     val (sw, sh) = (spool("pkw"), spool("pkh"))
-    val _ = PlaceRepo.upsertPlaces(work, List(site("zz_old_site", "My site", 34.6, 40.0)), Dataset.Local)
+    val _ = PlaceFixtures.upsertPlaces(work, List(site("zz_old_site", "My site", 34.6, 40.0)), Dataset.Local)
     val first = importInto(home, exportOf(work, sw), sh)
     assert(first.applied, first.problems.mkString("\n"))
-    val _ = PlaceRepo.upsertPlaces(home, List(site("zz_taken", "A seed site", 30.0, 39.0)), Dataset.Seed)
-    assert(PlaceRepo.rename(work, "zz_old_site", "zz_taken").isRight)
+    val _ = PlaceFixtures.upsertPlaces(home, List(site("zz_taken", "A seed site", 30.0, 39.0)), Dataset.Seed)
+    assert(PlaceFixtures.rename(work, "zz_old_site", "zz_taken").isRight)
     EventFixtures.put(
       work,
       "zz_at_taken",
@@ -402,10 +404,10 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
   test("old event ids, goal slugs and place ids travel in a bundle, are written here, and keep resolving"):
     val (work, home) = (fresh("alw"), fresh("alh"))
     val (sw, sh) = (spool("alw"), spool("alh"))
-    val _ = PlaceRepo.upsertPlaces(work, List(site("zz_pl_before", "My site", 34.6, 40.0)), Dataset.Local)
+    val _ = PlaceFixtures.upsertPlaces(work, List(site("zz_pl_before", "My site", 34.6, 40.0)), Dataset.Local)
     EventFixtures.put(work, "zz_ev_before", EventPut("E", "battle"))
     transact(work)(GoalRepo.put("zz_goal_before", GoalPut("G")))
-    assert(PlaceRepo.rename(work, "zz_pl_before", "zz_pl_after").isRight)
+    assert(PlaceFixtures.rename(work, "zz_pl_before", "zz_pl_after").isRight)
     assert(EventFixtures.rename(work, "zz_ev_before", "zz_ev_after").isRight)
     assert(GoalRepo.rename(work, "zz_goal_before", "zz_goal_after").isRight)
     val bundle = exportOf(work, sw)
@@ -417,9 +419,9 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(r.applied, r.problems.mkString("\n"))
     assertEquals(EventFixtures.renamedTo(home, "zz_ev_before"), Some("zz_ev_after"))
     assertEquals(GoalRepo.renamedTo(home, "zz_goal_before"), Some("zz_goal_after"))
-    assertEquals(PlaceRepo.renamedTo(home, "zz_pl_before"), Some("zz_pl_after"))
+    assertEquals(PlaceFixtures.renamedTo(home, "zz_pl_before"), Some("zz_pl_after"))
     // a filter on the OLD id is the filter on the place it names now, labelled with that place
-    val scope = PlaceRepo.scopeFor(home, List("zz_pl_before"), None)
+    val scope = PlaceFixtures.scopeFor(home, List("zz_pl_before"), None)
     assertEquals(scope.idsFor("zz_pl_before"), Some(List("zz_pl_after")))
     assertEquals(scope.labelFor("zz_pl_before"), "My site")
     // the same bundle again changes nothing, and an alias naming another record here is not written
@@ -433,19 +435,19 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
 
   test("place renames keep the old id as an alias: refused when taken, dropped when renamed back"):
     val ds = fresh("prn")
-    val _ = PlaceRepo.upsertPlaces(
+    val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(site("zz_pl_a", "A", 30.0, 39.0), site("zz_pl_other", "Other", 31.0, 39.0)),
       Dataset.Local
     )
-    assert(PlaceRepo.rename(ds, "zz_pl_a", "zz_pl_b").isRight)
-    assertEquals(PlaceRepo.renamedTo(ds, "zz_pl_a"), Some("zz_pl_b"))
-    assertEquals(PlaceRepo.get(ds, "zz_pl_b").map(_.place.label), Some("A"))
-    assert(PlaceRepo.rename(ds, "zz_pl_other", "zz_pl_a").left.exists(_.message.contains("old id of 'zz_pl_b'")))
-    assert(PlaceRepo.rename(ds, "zz_pl_b", "zz_pl_other").left.exists(_.message.contains("already the id")))
-    assert(PlaceRepo.rename(ds, "zz_pl_b", "zz_pl_a").isRight)
-    assertEquals(PlaceRepo.renamedTo(ds, "zz_pl_a"), None)
-    assertEquals(PlaceRepo.renamedTo(ds, "zz_pl_b"), Some("zz_pl_a"))
+    assert(PlaceFixtures.rename(ds, "zz_pl_a", "zz_pl_b").isRight)
+    assertEquals(PlaceFixtures.renamedTo(ds, "zz_pl_a"), Some("zz_pl_b"))
+    assertEquals(PlaceFixtures.get(ds, "zz_pl_b").map(_.place.label), Some("A"))
+    assert(PlaceFixtures.rename(ds, "zz_pl_other", "zz_pl_a").left.exists(_.message.contains("old id of 'zz_pl_b'")))
+    assert(PlaceFixtures.rename(ds, "zz_pl_b", "zz_pl_other").left.exists(_.message.contains("already the id")))
+    assert(PlaceFixtures.rename(ds, "zz_pl_b", "zz_pl_a").isRight)
+    assertEquals(PlaceFixtures.renamedTo(ds, "zz_pl_a"), None)
+    assertEquals(PlaceFixtures.renamedTo(ds, "zz_pl_b"), Some("zz_pl_a"))
 
   // #888: the apply jobs were kept in memory and lost on a restart
   test("merge apply jobs are rows: running, then done with the report; a restart turns a running one interrupted"):

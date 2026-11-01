@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.places.{Geocoder, PlaceScope}
+
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 

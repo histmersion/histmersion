@@ -1,5 +1,9 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.places.PlaceFixtures
+
+import com.histmersion.domain.catalogue.places.Geocoder
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -20,7 +24,7 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
   test("Rome's Regiones and the tribe Aiantis take findings only by an explicit match — on write and on rebuild"):
     seed()
     assignmentsHold()
-    val _ = PlaceRepo.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm)
+    val _ = PlaceFixtures.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm)
     assignmentsHold()
 
   test("location_precision: the generated column and its Scala twin agree, Pleiades rows only"):
@@ -52,13 +56,15 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
     seed()
     val precise =
       Place("pleiades_999100010", "Zzrc Thessalia", PlaceKind.Region, pt(141.9, -47.1), properties = types("region"))
-    val _ = PlaceRepo.upsertPlaces(ds, List(PlaceInput(precise, List(PlaceName(precise.label)))))
-    val r = Geocoder.resolve(ds, "Zzrc Thessalia", Geocode.KindHint.Unknown, None, cfg.places.geocodePlaceholderMin)
+    val _ = PlaceFixtures.upsertPlaces(ds, List(PlaceInput(precise, List(PlaceName(precise.label)))))
+    val r =
+      connect(ds)(Geocoder.resolve("Zzrc Thessalia", Geocode.KindHint.Unknown, None, cfg.places.geocodePlaceholderMin))
     assertEquals(r.map(_.placeId), Some("pleiades_999100010"))
-    val alone = Geocoder.resolve(ds, "Zzrc Achaia", Geocode.KindHint.Unknown, None, cfg.places.geocodePlaceholderMin)
+    val alone =
+      connect(ds)(Geocoder.resolve("Zzrc Achaia", Geocode.KindHint.Unknown, None, cfg.places.geocodePlaceholderMin))
     assertEquals(alone.map(r => (r.placeId, r.approximate)), Some((Achaia, List(Geocode.Approximation.GridSquare))))
-    assertEquals(PlaceRepo.get(ds, Thess).map(_.locationPrecision), Some(LocationPrecision.GridCell))
-    assertEquals(PlaceRepo.get(ds, Regio1).map(_.locationPrecision), Some(LocationPrecision.Stated))
+    assertEquals(PlaceFixtures.get(ds, Thess).map(_.locationPrecision), Some(LocationPrecision.GridCell))
+    assertEquals(PlaceFixtures.get(ds, Regio1).map(_.locationPrecision), Some(LocationPrecision.Stated))
 
   test("the assignment's placeholder minimum is the configured one"):
-    assertEquals(PlaceRepo.DefaultPlaceholderMin, cfg.places.geocodePlaceholderMin)
+    assertEquals(PlaceFixtures.DefaultPlaceholderMin, cfg.places.geocodePlaceholderMin)

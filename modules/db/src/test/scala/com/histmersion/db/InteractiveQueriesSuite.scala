@@ -1,5 +1,9 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.places.PlaceFixtures
+
+import com.histmersion.domain.catalogue.places.Geocoder
+
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
@@ -86,7 +90,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
 
   override def beforeAll(): Unit =
     if testDb.isDefined then
-      val _ = PlaceRepo.upsertPlaces(ds, places)
+      val _ = PlaceFixtures.upsertPlaces(ds, places)
       val _ = connect(ds)(sql"""UPDATE places SET import_source = 'wikidata',
                           properties = coalesce(properties, '{}'::jsonb) || '{"modern":true}'::jsonb
                         WHERE id = 'zzi_wd_now'""".update.run())
@@ -173,7 +177,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
       period <- periods
     yield Filter(places = places, tags = tags, period = period, limit = 500)
 
-  private def scope(f: Filter) = PlaceRepo.scopeFor(ds, f.places, f.period)
+  private def scope(f: Filter) = PlaceFixtures.scopeFor(ds, f.places, f.period)
 
   /** The source predicate as it was: the place ids through a CORRELATED `EXISTS`. */
   private def correlated(sql: Sql): Sql =
@@ -263,7 +267,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
 
   // ── place search: the single statement, verbatim, as the reference ────────────────────────────
   // With the time rule (2026-10-09): the statement as the time-views branch wrote it — the window
-  // CTE `tw` in front and `PlaceRepo.inTimeSql` where `p.period @> asOf` was — so the rank-first
+  // CTE `tw` in front and `PlaceFixtures.inTimeSql` where `p.period @> asOf` was — so the rank-first
   // rewrite is held to the rule, not to the plain period containment it replaced.
 
   private def referenceSearch(q: Option[String], asOf: Option[Long], limit: Int): Vector[PlaceHit] =
@@ -274,7 +278,10 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
     val long = text.filter(_.length >= 3)
     val short = text.filter(_.length < 3).map(Geocode.key)
     connect(ds):
-      (Sql.raw("WITH ") ++ PlaceRepo.timeWindowCte(asOf, PlaceRepo.DefaultModernFrom) ++ sql""", cand AS MATERIALIZED (
+      (Sql.raw("WITH ") ++ PlaceFixtures.timeWindowCte(
+        asOf,
+        PlaceFixtures.DefaultModernFrom
+      ) ++ sql""", cand AS MATERIALIZED (
               SELECT id FROM places WHERE $long::text IS NOT NULL AND label ILIKE $cont ESCAPE '\\'
               UNION
               SELECT place_id FROM place_names WHERE $long::text IS NOT NULL AND name ILIKE $cont ESCAPE '\\'
@@ -282,10 +289,10 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
               SELECT id FROM places WHERE $short::text IS NOT NULL AND histmersion_place_key(label) = $short::text
               UNION
               SELECT place_id FROM place_names WHERE $short::text IS NOT NULL AND histmersion_place_key(name) = $short::text)
-            SELECT p.id, p.label, p.kind, ${SqlLiteral(PlaceRepo.startCol)}, upper(p.period) - 1, p.source,
+            SELECT p.id, p.label, p.kind, ${SqlLiteral(PlaceFixtures.startCol)}, upper(p.period) - 1, p.source,
                    coalesce(nm.names, ''), nm.matched, coalesce(fc.n, 0),
                    coalesce((p.properties->>'contested')::boolean, false), ${SqlLiteral(
-          PlaceRepo.datingCol
+          PlaceFixtures.datingCol
         )}, p.import_source
             FROM places p
             LEFT JOIN LATERAL (
@@ -305,7 +312,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
             WHERE ($text::text IS NULL OR p.id IN (SELECT id FROM cand))
               AND ($text::text IS NULL OR nm.matched IS NOT NULL OR p.label ILIKE $cont ESCAPE '\\'
                    OR $short::text IS NOT NULL)
-              AND ${SqlLiteral(PlaceRepo.inTimeSql("p", asOf))}
+              AND ${SqlLiteral(PlaceFixtures.inTimeSql("p", asOf))}
             ORDER BY (lower(p.label) = lower($exact)) DESC,
                      (p.label ILIKE $pre ESCAPE '\\') DESC,
                      ${SqlLiteral(Geocoder.tierSql)},
@@ -334,28 +341,28 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
       limit <- List(1, 2, 3, 5, 20)
     do
       assertEquals(
-        PlaceRepo.search(ds, Some(q), asOf, limit),
+        PlaceFixtures.search(ds, Some(q), asOf, limit),
         referenceSearch(Some(q), asOf, limit),
         s"q=$q asOf=$asOf limit=$limit"
       )
 
   test("place search: the label-prefix fast path and the full path both reach the fixtures"):
     // "Zzia" has five label prefixes (Zzia, Zzia Land/Realm/Town/East): 3 come from the prefix pass alone
-    assertEquals(PlaceRepo.search(ds, Some("Zzia"), None, 3).head.id, "zzi_exact")
+    assertEquals(PlaceFixtures.search(ds, Some("Zzia"), None, 3).head.id, "zzi_exact")
     // the period-scoped name is the only way to "Hidden Place": present in its window, absent outside
-    val inWindow = PlaceRepo.search(ds, Some("Zzia Hidden"), Some(-1300), 20)
+    val inWindow = PlaceFixtures.search(ds, Some("Zzia Hidden"), Some(-1300), 20)
     assertEquals(inWindow.map(_.id), Vector("zzi_hidden"))
     assertEquals(inWindow.head.matchedName, Some("Zzia Hidden"))
-    assert(!PlaceRepo.search(ds, Some("Zzia Hidden"), Some(0), 20).exists(_.id == "zzi_hidden"))
+    assert(!PlaceFixtures.search(ds, Some("Zzia Hidden"), Some(0), 20).exists(_.id == "zzi_hidden"))
     // a present-day import: by label and by name only from modern-from (the pre-modern passes skip it)
     List("Zzia Wiki", "Wikizz").foreach { q =>
-      assert(!PlaceRepo.search(ds, Some(q), Some(-1400L), 20).exists(_.id == "zzi_wd_now"), q)
-      assert(PlaceRepo.search(ds, Some(q), Some(1600L), 20).exists(_.id == "zzi_wd_now"), q)
+      assert(!PlaceFixtures.search(ds, Some(q), Some(-1400L), 20).exists(_.id == "zzi_wd_now"), q)
+      assert(PlaceFixtures.search(ds, Some(q), Some(1600L), 20).exists(_.id == "zzi_wd_now"), q)
     }
 
   // ── the map's base layers: the single statement, verbatim, as the reference ──────────────────
   // With the time rule (2026-10-09): the statement as the time-views branch wrote it — the window
-  // CTE, `PlaceRepo.inTimeSql` in place of `p.period @> asOf`, the `basis` column and the ranking of
+  // CTE, `PlaceFixtures.inTimeSql` in place of `p.period @> asOf`, the `basis` column and the ranking of
   // dated before findings, timeless and modern — so the split base layer and the tier-aware pairs are
   // held to the rule, not to the plain period containment it replaced. Since V090 the layer reads the
   // stored shape columns and draws an area's stored web outline; the fixtures are boxes and points,
@@ -363,7 +370,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private def referenceGeoQuery(kind: Option[String], asOf: Option[Long], limit: Int): Sql =
     import Param.*
-    import PlaceRepo.*
+    import PlaceFixtures.*
     val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty)
     val where = List(
       Some(Sql.raw("p.geom IS NOT NULL")),
@@ -413,7 +420,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
   test("the base layers draw exactly what the single statement drew"):
     // two overlapping polities in different tiers (one shadows the other), an imported site with a
     // finding (drawn) and one without (not drawn)
-    val _ = PlaceRepo.upsertPlaces(
+    val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(
         PlaceInput(
@@ -528,22 +535,22 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
       limit <- List(3, 400)
     do
       assertEquals(
-        rows(PlaceRepo.geoJsonQuery(kind, asOf, limit)),
+        rows(PlaceFixtures.geoJsonQuery(kind, asOf, limit)),
         rows(referenceGeoQuery(kind, asOf, limit)),
         s"kind=$kind asOf=$asOf limit=$limit"
       )
-    val sites = rows(PlaceRepo.geoJsonQuery(Some("site"), Some(-1200L), 100000)).mkString
+    val sites = rows(PlaceFixtures.geoJsonQuery(Some("site"), Some(-1200L), 100000)).mkString
     assert(
       sites.contains("zzi_imp_hit") && !sites.contains("zzi_imp_miss"),
       "an imported site is drawn only with a finding"
     )
-    val polities = rows(PlaceRepo.geoJsonQuery(Some("polity"), Some(-1200L), 100000)).mkString
+    val polities = rows(PlaceFixtures.geoJsonQuery(Some("polity"), Some(-1200L), 100000)).mkString
     assert(
       polities.contains("zzi_pol_ohm") && !polities.contains("zzi_pol_cl"),
       "the lower tier shadows the same state"
     )
     def siteIds(y: Long) = "\\(([a-z_]+),".r
-      .findAllMatchIn(rows(PlaceRepo.geoJsonQuery(None, Some(y), 100000)).mkString("\n"))
+      .findAllMatchIn(rows(PlaceFixtures.geoJsonQuery(None, Some(y), 100000)).mkString("\n"))
       .map(_.group(1))
       .filter(_.startsWith("zzi_"))
       .toSet
@@ -557,7 +564,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
     )
     def layer(kind: String, y: Option[Long]) = "\\(([a-z_]+),".r
       .findAllMatchIn(
-        rows(PlaceRepo.geoJsonQuery(Some(kind), y, 100000))
+        rows(PlaceFixtures.geoJsonQuery(Some(kind), y, 100000))
           .mkString("\n")
       )
       .map(_.group(1))
@@ -573,7 +580,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
       "an undated people by its findings, as any undated place"
     )
     assert(
-      rows(PlaceRepo.geoJsonQuery(Some("people"), Some(-850L), 100000)).exists(r =>
+      rows(PlaceFixtures.geoJsonQuery(Some("people"), Some(-850L), 100000)).exists(r =>
         r.contains("zzi_people") && r.contains(",findings,")
       ),
       "drawn as dated by its findings"

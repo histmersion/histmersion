@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.domain.catalogue.places.PlaceFixtures
+
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
@@ -8,7 +10,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{Db, MediaRepo, Migrate, PlaceRepo}
+import com.histmersion.db.{Db, MediaRepo, Migrate}
 import com.histmersion.server.{Composition, Deps}
 import io.circe.parser.decode
 import java.net.URI
@@ -64,7 +66,7 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
   override def beforeAll(): Unit =
     if testDb.isDefined then
       clean()
-      val _ = PlaceRepo.upsertPlaces(
+      val _ = PlaceFixtures.upsertPlaces(
         ds,
         List(
           PlaceInput(

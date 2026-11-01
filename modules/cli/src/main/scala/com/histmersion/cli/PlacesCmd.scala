@@ -125,7 +125,17 @@ object PlacesCmd:
   }
 
   /** The seed set in import order — [[PlaceSeed.files]], shared with the server's first-run import. */
-  private[cli] def seedFiles(dir: Path): List[(Path, Option[String])] = PlaceSeed.files(dir)
+  private[cli] def seedFiles(dir: Path): List[(Path, Option[String])] = PlaceSeed.files(entries(dir), entries)
+
+  /** What a directory on the host holds, as [[PlaceSeed]] orders it. */
+  private def entries(dir: Path): List[PlaceSeed.Entry[Path]] =
+    val st = java.nio.file.Files.list(dir)
+    try
+      import scala.jdk.CollectionConverters.*
+      st.iterator.asScala.toList
+        .map(p => PlaceSeed.Entry(p.getFileName.toString, java.nio.file.Files.isDirectory(p), p))
+        .filter(e => e.directory || java.nio.file.Files.isRegularFile(e.at))
+    finally st.close()
 
   /** Where `places seed` reads: an absolute path as given; a relative one (the default `db/places`) under the working
     * directory when it is there (a checkout), else under the install this executable sits in (`<home>/bin/histmersion`,

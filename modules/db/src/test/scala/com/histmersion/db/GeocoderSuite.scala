@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.places.Geocoder
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -89,7 +91,7 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private def resolve(name: String, hint: KindHint = KindHint.Unknown, at: Option[Period] = None) =
-    Geocoder.resolve(ds, name, hint, at, min)
+    connect(ds)(Geocoder.resolve(name, hint, at, min))
 
   private def chosen(name: String, hint: KindHint = KindHint.Unknown, at: Option[Period] = None) =
     resolve(name, hint, at).map(_.placeId)
@@ -252,7 +254,7 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
       val _ = sql"""INSERT INTO agent_steps (job_id, seq, attempt, name, kind, status, output)
                     VALUES ('zzgeo_job', 4, 1, 'findings-1', 'llm', 'done', $out::jsonb)""".update.run()
 
-    val moves = Geocoder.moves(ds, settings).filter(_.citekey == Ck)
+    val moves = connect(ds)(Geocoder.moves(settings)).filter(_.citekey == Ck)
     assertEquals(
       moves.map(m => (m.findingId, m.asked, m.to.placeId)).sortBy(_._1),
       List(
@@ -270,7 +272,7 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(items.exists(_.detail.contains(s"stored as '$siteLabel'")), items)
 
     val before1 = point(s"$Ck#1")
-    assertEquals(Geocoder.apply(ds, moves, settings.toleranceKm), 3)
+    assertEquals(transact(ds)(Geocoder.apply(moves, settings.toleranceKm)), 3)
     val (lon0, lat0, region0) = point(s"$Ck#0")
     assert(lon0 > 19.3 && lon0 < 21.0 && lat0 > 39.7 && lat0 < 42.6, (lon0, lat0))
     assertEquals(region0, Some("Zzalbania"), "the asked name replaces the alias site's label")
@@ -288,5 +290,5 @@ class GeocoderSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(inAlbania, 1L)
 
     // idempotent: nothing is left to move, and a stale move is not applied over a newer point
-    assertEquals(Geocoder.moves(ds, settings).filter(_.citekey == Ck), Nil)
-    assertEquals(Geocoder.apply(ds, moves, settings.toleranceKm), 0)
+    assertEquals(connect(ds)(Geocoder.moves(settings)).filter(_.citekey == Ck), Nil)
+    assertEquals(transact(ds)(Geocoder.apply(moves, settings.toleranceKm)), 0)

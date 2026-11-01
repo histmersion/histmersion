@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.places.PlaceFixtures
+
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
@@ -61,7 +63,7 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
   override def beforeAll(): Unit =
     if testDb.isDefined then
       clean()
-      val _ = PlaceRepo.upsertPlaces(ds, fixtures)
+      val _ = PlaceFixtures.upsertPlaces(ds, fixtures)
       // an unknown start (V074): the stored period is the window the time filters use
       connect(ds)(sql"UPDATE places SET start_unknown = true WHERE id = 'zqtv_su'".update.run())
       def f(i: Int, at: Int, p: Option[Period]) =
@@ -104,17 +106,17 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
   private val Ours = "\"id\":\"(zqtv_[a-z]+)\"".r
 
   private def onMap(kind: String, asOf: Option[Long]): Set[String] =
-    Ours.findAllMatchIn(PlaceRepo.geoJson(ds, Some(kind), asOf, 100000)).map(_.group(1)).toSet
-  private def found(asOf: Option[Long]): Set[String] = PlaceRepo.search(ds, Some("Zqtv"), asOf, 100).map(_.id).toSet
-  private def kids(asOf: Option[Long]): Set[String] = PlaceRepo.children(ds, "zqtv_root", asOf, 100).map(_.id).toSet
+    Ours.findAllMatchIn(PlaceFixtures.geoJson(ds, Some(kind), asOf, 100000)).map(_.group(1)).toSet
+  private def found(asOf: Option[Long]): Set[String] = PlaceFixtures.search(ds, Some("Zqtv"), asOf, 100).map(_.id).toSet
+  private def kids(asOf: Option[Long]): Set[String] = PlaceFixtures.children(ds, "zqtv_root", asOf, 100).map(_.id).toSet
   private def tree(asOf: Option[Long]): Set[String] =
-    PlaceRepo.hierarchy(ds, asOf, Some("zqtv_root"), 3, 100).map(_.id).toSet
+    PlaceFixtures.hierarchy(ds, asOf, Some("zqtv_root"), 3, 100).map(_.id).toSet
 
   private val All = fixtures.map(_.place.id).toSet
 
   test("the fixtures' findings and event are where the cases need them"):
-    assertEquals(PlaceRepo.placesOf(ds, "zqtv_src#0").map(_.id).toSet, Set("zqtv_evid"))
-    assertEquals(PlaceRepo.placesOf(ds, "zqtv_src#1").map(_.id).toSet, Set("zqtv_undfind"))
+    assertEquals(PlaceFixtures.placesOf(ds, "zqtv_src#0").map(_.id).toSet, Set("zqtv_evid"))
+    assertEquals(PlaceFixtures.placesOf(ds, "zqtv_src#1").map(_.id).toSet, Set("zqtv_undfind"))
 
   test(
     "at 2500 BCE every surface shows the dated overlap, the river, the root, and the undated site with a finding then"
@@ -149,7 +151,7 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(found(Some(1500L)).contains("zqtv_su"))
     assert(!found(Some(1400L)).contains("zqtv_su"), "before the window of its unknown start")
     assertEquals(
-      PlaceRepo.search(ds, Some("Zqtv city"), Some(1499L), 10, modernFrom = 1400L).map(_.id).toList,
+      PlaceFixtures.search(ds, Some("Zqtv city"), Some(1499L), 10, modernFrom = 1400L).map(_.id).toList,
       List("zqtv_city"),
       "the cutoff is the caller's (configured) value"
     )
@@ -161,13 +163,13 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(onMap("site", None), All -- Set("zqtv_root", "zqtv_river", "zqtv_city"))
 
   test("the map feed says on what ground: findings for the undated site, dated for the rest"):
-    val json = PlaceRepo.geoJson(ds, Some("site"), Some(-2500L), 100000)
+    val json = PlaceFixtures.geoJson(ds, Some("site"), Some(-2500L), 100000)
     def basisOf(id: String) = s"\"id\":\"$id\"[^}]*\"basis\":\"([a-z]+)\"".r.findFirstMatchIn(json).map(_.group(1))
     assertEquals(basisOf("zqtv_evid"), Some("findings"))
     assertEquals(basisOf("zqtv_dated"), Some("dated"))
 
   test("among points, dated places outrank the rest under the limit"):
-    val json = PlaceRepo.geoJson(ds, Some("site"), Some(1600L), 100000)
+    val json = PlaceFixtures.geoJson(ds, Some("site"), Some(1600L), 100000)
     val order = Ours.findAllMatchIn(json).map(_.group(1)).toList
     assertEquals(order, List("zqtv_su", "zqtv_city"))
 
@@ -178,12 +180,12 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
     )
     for id <- All do
       val (kind, modern, undated, geom) = attrs(id)
-      val d = PlaceRepo.get(ds, id, Some(-2500L)).get
+      val d = PlaceFixtures.get(ds, id, Some(-2500L)).get
       assertEquals(d.timeBasis, PlaceTimeBasis.of(kind, modern, imported = false, undated, geom), id)
-    assert(PlaceRepo.get(ds, "zqtv_evid", Some(-2500L)).get.datedByFindings)
-    assert(!PlaceRepo.get(ds, "zqtv_evid", None).get.datedByFindings)
+    assert(PlaceFixtures.get(ds, "zqtv_evid", Some(-2500L)).get.datedByFindings)
+    assert(!PlaceFixtures.get(ds, "zqtv_evid", None).get.datedByFindings)
     assertEquals(
-      PlaceRepo.get(ds, "zqtv_root", Some(-2500L)).get.children.map(_.id).toSet,
+      PlaceFixtures.get(ds, "zqtv_root", Some(-2500L)).get.children.map(_.id).toSet,
       Set("zqtv_dated", "zqtv_evid", "zqtv_river"),
       "the place's own children follow the rule too"
     )
@@ -210,11 +212,11 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
         java.nio.charset.StandardCharsets.UTF_8
       )
       connect(ds)(scala.util.Using.resource(summon[DbCon].connection.createStatement())(_.execute(migration)))
-      def span(id: String) = PlaceRepo.get(ds, id).map(d => (d.place.periodStart, d.place.periodEnd))
+      def span(id: String) = PlaceFixtures.get(ds, id).map(d => (d.place.periodStart, d.place.periodEnd))
       assertEquals(span("cliopatria_zqtv_kingdom"), Some((Some(-900L), Some(-601L))))
       assertEquals(span("cliopatria_zqtv_nodates"), Some((None, None)))
       assert(
-        !PlaceRepo.search(ds, Some("zqtv kingdom"), Some(-2500L), 10).exists(_.id == "cliopatria_zqtv_kingdom"),
+        !PlaceFixtures.search(ds, Some("zqtv kingdom"), Some(-2500L), 10).exists(_.id == "cliopatria_zqtv_kingdom"),
         "a dated concept is no longer in every time view"
       )
     finally connect(ds)(sql"DELETE FROM places WHERE id LIKE 'cliopatria_zqtv%'".update.run())

@@ -98,30 +98,13 @@ final class HttpApi(
     Api.renameArticle.serverLogic[Identity]((slug, req) => h.renameArticle(slug, req)),
     Api.renameEvent.serverLogic[Identity]((id, req) => h.renameEvent(id, req)),
     Api.renameGoal.serverLogic[Identity]((slug, req) => h.renameGoal(slug, req)),
-    Api.renamePlace.serverLogic[Identity]((id, req) => h.renamePlace(id, req)),
-    // ── the gazetteer (plan §1.6a): the /{id} route is a prefix of /{id}/children and /{id}/tree,
-    //    so the longer paths are registered first ──────────────────────────────────────────────
-    Api.places.serverLogicSuccess[Identity]((q, asOf, limit) => h.places(q, asOf, limit)),
-    Api.placesGeo.serverLogic[Identity](q => h.placesGeo(q)),
-    Api.placeNames.serverLogicSuccess[Identity](place => h.manualPlaceNames(place)),
-    Api.placeOverrides.serverLogicSuccess[Identity](id => h.placeOverrides(id)),
-    Api.placeSources.serverLogic[Identity](_ => Right(h.bootstrap.gazetteerSources)),
-    Api.placeChildren.serverLogic[Identity]((id, asOf) => h.placeChildren(id, asOf)),
-    Api.placeTree.serverLogic[Identity]((id, asOf, depth) => h.placeTree(id, asOf, depth)),
-    Api.placeFootprints.serverLogic[Identity]((id, asOf) => h.placeFootprints(id, asOf)),
-    Api.placeLinks.serverLogic[Identity](id => h.placeLinks(id)),
-    Api.place.serverLogic[Identity]((id, asOf, counts) => h.place(id, asOf, counts.getOrElse(false))),
-    Api.addPlaceName.serverLogic[Identity]((id, in) => h.addPlaceName(id, in)),
-    Api.removePlaceName.serverLogic[Identity]((id, in) => h.removePlaceName(id, in)),
-    Api.setPlaceOverride.serverLogic[Identity]((id, in) => h.setPlaceOverride(id, in)),
-    Api.mergePlace.serverLogic[Identity]((id, in) => h.mergePlace(id, in)),
-    Api.removePlace.serverLogic[Identity]((id, in) => h.removePlace(id, in)),
-    Api.addPlace.serverLogic[Identity](in => h.addPlace(in)),
-    Api.importPlaces.serverLogic[Identity]((kind, dataset, body) => h.importPlaces(kind, dataset, body)),
-    Api.rebuildPlaces.serverLogic[Identity](_ => h.rebuildPlaces()),
-    Api.fetchExternalPlaces.serverLogic[Identity]((source, dryRun) => h.fetchExternalPlaces(source, dryRun)),
-    Api.loadPlaces.serverLogic[Identity]((source, apply) => h.bootstrap.loadGazetteer(source, apply)),
-    Api.buildHierarchy.serverLogic[Identity](_ => h.buildHierarchy())
+    Api.renamePlace.serverLogic[Identity]((id, req) => h.renamePlace(id, req))
+  ) ++ com.histmersion.domain.catalogue.places.PlacesRoutes(
+    h.places,
+    h.gazetteer,
+    (id, asOf, counts) => h.place(id, asOf, counts),
+    () => h.bootstrap.gazetteerSources,
+    (source, apply) => h.bootstrap.loadGazetteer(source, apply)
   ) ++ com.histmersion.domain.catalogue.periods.PeriodsRoutes(h.periods) ++ List[ServerEndpoint[Any, Identity]](
     Api.init.serverLogic[Identity](fetch => h.bootstrap.init(fetch))
     // ── events (plan §1.2) and attestations (plan §1.3) ──────────────────────────────────────

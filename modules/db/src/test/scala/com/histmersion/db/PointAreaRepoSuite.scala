@@ -1,9 +1,13 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.places.PlaceFixtures
+
+import com.histmersion.domain.catalogue.places.{Geocoder, PointAreaRepo}
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.domain.PointAreas.Dating
+import com.histmersion.domain.catalogue.places.PointAreas.Dating
 
 import com.augustnagro.magnum.*
 import com.histmersion.values.{PlaceKind, SourceStatus}
@@ -47,7 +51,7 @@ class PointAreaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
   private val Mine = List(Region, Polity, Pinned, Shaped, GnArea, GnSite, Thrace, Thracia, Eastern, Curated)
 
   private def seed(): Unit =
-    val _ = PlaceRepo.upsertPlaces(
+    val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(
         PlaceInput(
@@ -123,7 +127,7 @@ class PointAreaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
                     VALUES ('zzpa_src', 'place', $Pinned, 'here')""".update.run()
 
   private def at(n: Int): Set[String] =
-    PlaceRepo.placesOf(ds, s"zzpa_src#$n").map(_.id).filter(id => Mine.contains(id) || id == Site).toSet
+    PlaceFixtures.placesOf(ds, s"zzpa_src#$n").map(_.id).filter(id => Mine.contains(id) || id == Site).toSet
   private def exists(id: String): Boolean =
     connect(ds)(sql"SELECT 1 FROM places WHERE id = $id".query[Int].run().nonEmpty)
   private val kinds = Gazetteer.DefaultPointAreaKinds
@@ -237,7 +241,7 @@ class PointAreaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(left, 0L)
     // the fix re-matched the affected source; a whole rebuild agrees with it
     val fixed = (1 to 4).map(at).toList
-    val _ = PlaceRepo.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm)
+    val _ = PlaceFixtures.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm)
     assertEquals((1 to 4).map(at).toList, fixed)
     assertEquals(
       PointAreaRepo.remove(ds, settings(batch = 10, budgetMs = 1000)),

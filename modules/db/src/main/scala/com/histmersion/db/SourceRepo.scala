@@ -1,5 +1,9 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.places.FindingPlacement
+
+import com.histmersion.domain.catalogue.places.PlaceScope
+
 import com.histmersion.util.database.RangeSql
 
 import com.histmersion.util.ocr.{Chunk, Chunker}
@@ -76,13 +80,23 @@ object SourceRepo:
   /** Full replace of a source and everything under it, in ONE transaction. Kept as the original `Unit` signature;
     * [[put]] is the same write returning the new `updated_at` token.
     */
-  def upsert(ds: DataSource, s: Source, chunkChars: Int, toleranceKm: Double = PlaceRepo.DefaultToleranceKm): Unit =
+  def upsert(
+      ds: DataSource,
+      s: Source,
+      chunkChars: Int,
+      toleranceKm: Double = FindingPlacement.DefaultToleranceKm
+  ): Unit =
     val _ = put(ds, s, chunkChars, toleranceKm)
 
   /** Full replace (`put_source`). Returns the fresh `updatedAt` concurrency token. `chunkChars` (config
     * `histmersion.limits.chunk-chars`) sizes the FTS body chunks rewritten with it.
     */
-  def put(ds: DataSource, s: Source, chunkChars: Int, toleranceKm: Double = PlaceRepo.DefaultToleranceKm): String =
+  def put(
+      ds: DataSource,
+      s: Source,
+      chunkChars: Int,
+      toleranceKm: Double = FindingPlacement.DefaultToleranceKm
+  ): String =
     transact(ds):
       write(s, chunkChars, toleranceKm)
       token(s.citekey).getOrElse("")
@@ -96,7 +110,7 @@ object SourceRepo:
       requested: String,
       p: SourcePatch,
       chunkChars: Int,
-      toleranceKm: Double = PlaceRepo.DefaultToleranceKm
+      toleranceKm: Double = FindingPlacement.DefaultToleranceKm
   ): Either[ApiError, String] =
     transact(ds):
       // an OLD citekey (V027) patches the source it was renamed to — see [[canonical]]
@@ -179,7 +193,7 @@ object SourceRepo:
     }
     // …and re-materialise this citekey's gazetteer assignment in the SAME transaction, so a moved
     // or newly-added finding is located the moment the write commits.
-    val _ = PlaceRepo.materialiseFor(s.citekey, toleranceKm)
+    val _ = FindingPlacement(toleranceKm).placeSource(s.citekey)
 
     sql"DELETE FROM edges WHERE src = ${s.citekey}".update.run()
     sql"DELETE FROM unresolved_edges WHERE src = ${s.citekey}".update.run()
@@ -855,6 +869,16 @@ object SourceRepo:
     connect(ds)(FilterSql.countQuery(filter, scope).frag.query[Int].run().headOption.getOrElse(0))
 
   /** How many findings the filter selects (uncapped — the map feed above stops at its limit). */
+  /** How many findings matching `filter` landed in NO place at all — the "unlocated" bucket of the region tree (plan
+    * §1.6a). Built from the SHARED [[FilterSql]] fragments, so it is narrowed by exactly the same criteria as the map
+    * feed.
+    */
+  def unlocated(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): Int =
+    val q = Sql.raw("SELECT count(*)::int FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ") ++
+      FilterSql.sourceWhere(filter) ++ Sql.raw(" AND ") ++ FilterSql.findingWhere(filter, scope = scope) ++
+      Sql.raw(" AND NOT EXISTS (SELECT 1 FROM finding_places fp WHERE fp.finding_id = f.id)")
+    connect(ds)(q.frag.query[Int].run().headOption.getOrElse(0))
+
   def findingsCount(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): Int =
     connect(ds)(FilterSql.findingsCountQuery(filter, scope).frag.query[Int].run().headOption.getOrElse(0))
 

@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.places.PlaceFixtures
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -91,7 +93,7 @@ trait RegionCleanupFixtures extends com.histmersion.db.DbSuite with Bounded:
   ) // round numbers ON a grid centre
 
   protected def seed(): Unit =
-    val _ = PlaceRepo.upsertPlaces(ds, places.map(p => PlaceInput(p, List(PlaceName(p.label)))))
+    val _ = PlaceFixtures.upsertPlaces(ds, places.map(p => PlaceInput(p, List(PlaceName(p.label)))))
     SourceRepo.upsert(
       ds,
       Source(
@@ -119,7 +121,7 @@ trait RegionCleanupFixtures extends com.histmersion.db.DbSuite with Bounded:
 
   /** The fixture places finding `n` belongs to. */
   protected def at(n: Int): Set[String] =
-    PlaceRepo
+    PlaceFixtures
       .placesOf(ds, s"zzrc_src#$n")
       .map(_.id)
       .filter(id => id.startsWith("pleiades_99910") || id.startsWith("zzrc"))

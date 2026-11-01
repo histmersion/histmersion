@@ -294,7 +294,7 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
     val geo = EventFixtures.geo(
       ds,
       Filter(period = Some(Period(-500, 500))),
-      com.histmersion.db.PlaceScope.empty,
+      com.histmersion.domain.catalogue.places.PlaceScope.empty,
       Some("Hekla"),
       None,
       None,

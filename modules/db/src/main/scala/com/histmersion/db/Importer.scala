@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.places.FindingPlacement
+
 import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*
@@ -28,7 +30,7 @@ object Importer:
       chunkChars: Int,
       force: Boolean,
       assetBytes: Long = Long.MaxValue,
-      toleranceKm: Double = PlaceRepo.DefaultToleranceKm,
+      toleranceKm: Double = FindingPlacement.DefaultToleranceKm,
       confineTo: Option[String] = None
   ): SeedResult =
     // `Files.list` holds an OS directory handle; on a corpus-sized seed, leaking one per call

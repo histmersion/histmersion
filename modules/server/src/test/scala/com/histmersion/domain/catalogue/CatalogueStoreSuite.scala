@@ -5,7 +5,7 @@ import com.histmersion.config.AppConfig
 import com.histmersion.domain.catalogue.events.{CorrectionService, EventImportService, EventService}
 import com.histmersion.domain.catalogue.evidence.{AttestationService, EventLinkService, LeadService}
 import com.histmersion.domain.catalogue.periods.PeriodService
-import com.histmersion.domain.catalogue.places.{HeldSite, SiteTypeService}
+import com.histmersion.domain.catalogue.places.{HeldSite, PlaceService, SiteTypeService}
 import com.histmersion.domain.library.search.FilterEventSources
 import com.histmersion.util.database.Transactor
 import com.augustnagro.magnum.*
@@ -42,6 +42,8 @@ object CatalogueStoreSuite:
         val eventLinks = EventLinkService.InMemory(state, ck => sources.get(ck).map(_ => Some(ck)))
         val leads = LeadService.InMemory(state, evs, ck => sources.get(ck).map(_ => (Some(ck), None)))
         val siteTypes = SiteTypeService.InMemory(state, () => clock.incrementAndGet())
+        val places =
+          PlaceService.InMemory(state, java.time.Clock.fixed(java.time.Instant.EPOCH, java.time.ZoneOffset.UTC))
         def source(citekey: String): Unit = sources.update(citekey, ())
         def site(id: String, onMap: Boolean, cls: Option[String]): Unit =
           val _ = state.updateAndGet(_.modify(_.sites).using(_ :+ HeldSite(id, onMap, cls)))
@@ -73,6 +75,7 @@ object CatalogueStoreSuite:
           val eventLinks = EventLinkService(db)
           val leads = LeadService(db, FilterEventSources())
           val siteTypes = SiteTypeService(db)
+          val places = PlaceService(db)
           def source(citekey: String): Unit =
             connect(ds)(sql"INSERT INTO sources (citekey, title) VALUES ($citekey, $citekey)".update.run()): Unit
           def site(id: String, onMap: Boolean, cls: Option[String]): Unit =

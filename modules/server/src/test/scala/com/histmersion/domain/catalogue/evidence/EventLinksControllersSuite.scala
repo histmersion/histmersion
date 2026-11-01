@@ -1,8 +1,10 @@
 package com.histmersion.domain.catalogue.evidence
 
+import com.histmersion.domain.catalogue.places.PlaceScope
+
 import com.histmersion.api.{EventLinksRequest, EventPut, MatchSpan, TimeSpan, Write}
 import com.histmersion.config.AppConfig
-import com.histmersion.db.PlaceScope
+import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.{CatalogueJobs, CatalogueState}
 import com.histmersion.domain.catalogue.events.EventService

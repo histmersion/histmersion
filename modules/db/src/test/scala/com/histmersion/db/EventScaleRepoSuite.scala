@@ -1,5 +1,9 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.places.PlaceFixtures
+
+import com.histmersion.domain.catalogue.places.PlaceScope
+
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
@@ -72,7 +76,7 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
   override def beforeAll(): Unit =
     if testDb.isDefined then
       clean()
-      val _ = PlaceRepo.upsertPlaces(ds, places)
+      val _ = PlaceFixtures.upsertPlaces(ds, places)
       ev("zqes_battle_area", "battle", place = Some("zqes_area")) // kind: local, at an area
       ev("zqes_migration", "migration", place = Some("zqes_area")) // kind: regional, with an outline
       ev("zqes_event_site", "event", place = Some("zqes_site")) // place kind: local

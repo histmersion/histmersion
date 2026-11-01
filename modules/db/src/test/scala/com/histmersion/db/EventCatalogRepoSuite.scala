@@ -1,5 +1,9 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.places.PlaceFixtures
+
+import com.histmersion.domain.catalogue.places.PlaceScope
+
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 import com.histmersion.domain.catalogue.places.SiteTypeFixtures
@@ -259,7 +263,7 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
 
   test("the places feed carries a site's type: stored, else from its gazetteer's fields"):
     val pt = Some(s"""{"type":"Point","coordinates":[152.0,$Lat]}""")
-    val _ = PlaceRepo.upsertPlaces(
+    val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(PlaceInput(Place("zqec_site", "Zqec site", PlaceKind.Site, pt), List(PlaceName("Zqec site"))))
     )
@@ -268,7 +272,7 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
         sql"""UPDATE places SET properties = '{"feature_types":"settlement,temple-2"}'::jsonb WHERE id = 'zqec_site'""".update
           .run()
     def siteType: Option[String] =
-      val json = io.circe.parser.parse(PlaceRepo.geoJson(ds, Some("site"), None, 5000)).toOption.get
+      val json = io.circe.parser.parse(PlaceFixtures.geoJson(ds, Some("site"), None, 5000)).toOption.get
       json.hcursor
         .downField("features")
         .focus
@@ -280,7 +284,7 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
         .flatMap(_.get[String]("siteType").toOption)
     assertEquals(siteType, Some("sanctuary"))
     // the place's card reads the same type, so it shows the icon the marker has
-    assertEquals(PlaceRepo.get(ds, "zqec_site").flatMap(_.siteType), Some("sanctuary"))
+    assertEquals(PlaceFixtures.get(ds, "zqec_site").flatMap(_.siteType), Some("sanctuary"))
     SiteTypeFixtures.setSiteTypes(ds, List("zqec_site" -> Some("palace")))
     assertEquals(siteType, Some("palace"))
-    assertEquals(PlaceRepo.get(ds, "zqec_site").flatMap(_.siteType), Some("palace"))
+    assertEquals(PlaceFixtures.get(ds, "zqec_site").flatMap(_.siteType), Some("palace"))

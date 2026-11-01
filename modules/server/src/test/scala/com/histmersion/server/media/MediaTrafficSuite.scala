@@ -1,11 +1,13 @@
 package com.histmersion.server.media
 
+import com.histmersion.domain.catalogue.places.PlaceFixtures
+
 import com.histmersion.server.ServerPlugins
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.{AppConfig, LoadedConfig}
-import com.histmersion.db.{PlaceRepo, TestDb}
+import com.histmersion.db.TestDb
 import com.histmersion.util.jobs.JobRepo
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport}
 import com.histmersion.server.Deps
@@ -168,7 +170,7 @@ class MediaTrafficSuite extends com.histmersion.db.DbSuite:
 
   /** The places on the map (each holds a finding), their Wikidata and Pleiades links, and two events. */
   private def seed(): Unit =
-    val _ = PlaceRepo.upsertPlaces(
+    val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(
         place("pleiades_570491", "Mycenae", PlaceKind.Site, 22.756, 37.73, Some((-1600L, -1100L))),

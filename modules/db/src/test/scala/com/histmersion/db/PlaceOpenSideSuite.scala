@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.places.PlaceFixtures
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -40,7 +42,7 @@ class PlaceOpenSideSuite extends com.histmersion.db.DbSuite:
 
   test("a place, a name and a relation with one side open keep it open in the store"):
     val in = Lpf.parse(doc).fold(e => fail(e), identity)
-    val _ = PlaceRepo.upsertPlaces(ds, in)
+    val _ = PlaceFixtures.upsertPlaces(ds, in)
     def read(q: Frag): Bounds = connect(ds)(q.query[Bounds].run().head)
     assertEquals(
       read(sql"""SELECT lower(period), upper(period) - 1, lower_inf(period), upper_inf(period)

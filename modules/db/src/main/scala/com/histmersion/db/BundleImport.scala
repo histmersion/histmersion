@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.places.PlaceRepo
+
 import com.histmersion.util.database.RangeSql
 
 import com.histmersion.api.*

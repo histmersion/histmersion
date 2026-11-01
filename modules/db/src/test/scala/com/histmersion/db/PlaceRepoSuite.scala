@@ -1,5 +1,9 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.places.PlaceFixtures
+
+import com.histmersion.domain.catalogue.places.FindingPlacement
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -126,13 +130,13 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
   )
 
   private def seed(): Unit =
-    val _ = PlaceRepo.upsertPlaces(ds, batch)
+    val _ = PlaceFixtures.upsertPlaces(ds, batch)
     SourceRepo.upsert(ds, src, cfg.limits.chunkChars)
-    val _ = PlaceRepo.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm)
+    val _ = PlaceFixtures.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm)
 
   test("upsert is idempotent and reports a dangling parent instead of failing"):
-    val r1 = PlaceRepo.upsertPlaces(ds, batch)
-    val r2 = PlaceRepo.upsertPlaces(ds, batch)
+    val r1 = PlaceFixtures.upsertPlaces(ds, batch)
+    val r2 = PlaceFixtures.upsertPlaces(ds, batch)
     assertEquals(r1.places, 5)
     assertEquals(r1.relations, 3, "the edge to zzp_nowhere is dropped")
     assert(r1.failed.exists(_.contains("zzp_nowhere")), r1.failed.toString)
@@ -140,7 +144,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
 
   test("rebuild: containment + point tolerance + period overlap, and the region_name fallback"):
     seed()
-    def ids(f: String) = PlaceRepo.placesOf(ds, f).map(_.id).toSet
+    def ids(f: String) = PlaceFixtures.placesOf(ds, f).map(_.id).toSet
     assert(ids("zzp_src#0").contains("zzp_turkey"), "inside the polygon")
     assert(ids("zzp_src#0").contains("zzp_hatti"), "inside the polity, and the periods overlap")
     assert(ids("zzp_src#0").contains("zzp_hattusa"), "within the point tolerance of the site")
@@ -154,7 +158,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
 
   test("rebuild counts add up"):
     seed()
-    val r = PlaceRepo.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm)
+    val r = PlaceFixtures.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm)
     assertEquals(r.links, r.byGeometry + r.byName)
     assert(r.located >= 3 && r.unlocated >= 1, r.toString)
     assert(r.places >= 5)
@@ -164,7 +168,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
     // the shared edge of two adjoining boxes: a point ON it is within both
     val west = Place("zzp_west", "West", PlaceKind.Polity, Some(box(0, 0, 10, 10)))
     val east = Place("zzp_east", "East", PlaceKind.Polity, Some(box(10, 0, 20, 10)))
-    val _ = PlaceRepo.upsertPlaces(
+    val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(PlaceInput(west, List(PlaceName("West"))), PlaceInput(east, List(PlaceName("East"))))
     )
@@ -185,76 +189,76 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
       )
     )
     SourceRepo.upsert(ds, border, cfg.limits.chunkChars)
-    val _ = PlaceRepo.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm)
-    assertEquals(PlaceRepo.placesOf(ds, "zzp_border#0").map(_.id).toSet, Set("zzp_west", "zzp_east"))
+    val _ = PlaceFixtures.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm)
+    assertEquals(PlaceFixtures.placesOf(ds, "zzp_border#0").map(_.id).toSet, Set("zzp_west", "zzp_east"))
 
   test("search: names in any language, exact hits first, asOf filters period-scoped rows"):
     seed()
-    val hits = PlaceRepo.search(ds, Some("Zzpland"), None, 10)
+    val hits = PlaceFixtures.search(ds, Some("Zzpland"), None, 10)
     assertEquals(hits.head.id, "zzp_turkey")
     assertEquals(hits.head.matchedName, Some("Zzpland"))
     assert(hits.head.names.contains("Türkiye"), hits.head.names)
-    assert(PlaceRepo.search(ds, Some("Hatti"), None, 10).map(_.id).contains("zzp_hatti"))
+    assert(PlaceFixtures.search(ds, Some("Hatti"), None, 10).map(_.id).contains("zzp_hatti"))
     // the Hittite Empire row is only valid inside its own period
-    assert(PlaceRepo.search(ds, Some("Hatti"), Some(-1300), 10).map(_.id).contains("zzp_hatti"))
-    assert(!PlaceRepo.search(ds, Some("Hatti"), Some(-700), 10).map(_.id).contains("zzp_hatti"))
+    assert(PlaceFixtures.search(ds, Some("Hatti"), Some(-1300), 10).map(_.id).contains("zzp_hatti"))
+    assert(!PlaceFixtures.search(ds, Some("Hatti"), Some(-700), 10).map(_.id).contains("zzp_hatti"))
 
   // #769: `ESCAPE '\'` inside a Magnum sql"…" reached Postgres as `ESCAPE ''`, so `_` never matched
   test("search: `_` and `%` in the query are literal characters"):
     seed()
-    val _ = PlaceRepo.upsertPlaces(
+    val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(PlaceInput(Place("zzp_under", "Zzp_Under 50%", PlaceKind.Site), List(PlaceName("Zzp_Under 50%"))))
     )
-    assertEquals(PlaceRepo.search(ds, Some("Zzp_U"), None, 10).map(_.id), Vector("zzp_under"))
-    assertEquals(PlaceRepo.search(ds, Some("50%"), None, 10).map(_.id), Vector("zzp_under"))
+    assertEquals(PlaceFixtures.search(ds, Some("Zzp_U"), None, 10).map(_.id), Vector("zzp_under"))
+    assertEquals(PlaceFixtures.search(ds, Some("50%"), None, 10).map(_.id), Vector("zzp_under"))
     assertEquals(
-      PlaceRepo.search(ds, Some("Zzp_Under 5"), None, 10).headOption.flatMap(_.matchedName),
+      PlaceFixtures.search(ds, Some("Zzp_Under 5"), None, 10).headOption.flatMap(_.matchedName),
       Some("Zzp_Under 50%")
     )
-    assert(PlaceRepo.search(ds, Some("Zz_l"), None, 10).isEmpty, "`_` is not a wildcard (Zzpland)")
+    assert(PlaceFixtures.search(ds, Some("Zz_l"), None, 10).isEmpty, "`_` is not a wildcard (Zzpland)")
 
   test("get: geometry as GeoJSON, parents/children as of a year, union for a shapeless place"):
     seed()
-    val t = PlaceRepo.get(ds, "zzp_turkey", Some(-1300)).get
+    val t = PlaceFixtures.get(ds, "zzp_turkey", Some(-1300)).get
     assert(t.geometry.exists(_.contains("Polygon")), t.geometry.toString)
     assertEquals(t.parents.map(_.id), List("zzp_asia"))
     assertEquals(t.children.map(_.id), List("zzp_hatti"))
     assert(t.findings >= 3, t.findings.toString)
     // …but Hatti is not a child of Turkey in the Iron Age: the EDGE carries its own validity
-    assertEquals(PlaceRepo.get(ds, "zzp_turkey", Some(-700)).get.children, Nil)
+    assertEquals(PlaceFixtures.get(ds, "zzp_turkey", Some(-700)).get.children, Nil)
     // Asia has no shape of its own → the union of its children's
-    assert(PlaceRepo.get(ds, "zzp_asia", None).get.geometry.exists(_.contains("olygon")))
+    assert(PlaceFixtures.get(ds, "zzp_asia", None).get.geometry.exists(_.contains("olygon")))
 
   test("hierarchy: a recursive walk of the edges valid at asOf"):
     seed()
-    val lba = PlaceRepo.hierarchy(ds, Some(-1300), Some("zzp_asia"), 6, 100)
+    val lba = PlaceFixtures.hierarchy(ds, Some(-1300), Some("zzp_asia"), 6, 100)
     // undated Hattusa's only finding (1401–1351 BCE) is not of 1300 BCE: the time rule leaves it out;
     // undated Turkey is in by its 1301–1201 BCE finding, shapeless Asia as a grouping node
     assertEquals(lba.map(r => (r.id, r.depth)), Vector(("zzp_asia", 0), ("zzp_turkey", 1), ("zzp_hatti", 2)))
-    assertEquals(PlaceRepo.hierarchy(ds, Some(-1380), Some("zzp_asia"), 6, 100).map(_.id).last, "zzp_hattusa")
+    assertEquals(PlaceFixtures.hierarchy(ds, Some(-1380), Some("zzp_asia"), 6, 100).map(_.id).last, "zzp_hattusa")
     // (750 BCE: undated Turkey is in by its 801–701 BCE finding)
-    val iron = PlaceRepo.hierarchy(ds, Some(-750), Some("zzp_asia"), 6, 100)
+    val iron = PlaceFixtures.hierarchy(ds, Some(-750), Some("zzp_asia"), 6, 100)
     assertEquals(iron.map(_.id), Vector("zzp_asia", "zzp_turkey"), "the Hatti edge is out of validity")
     assert(
-      PlaceRepo.hierarchy(ds, Some(-1300), None, 6, 100).map(_.id).contains("zzp_asia"),
+      PlaceFixtures.hierarchy(ds, Some(-1300), None, 6, 100).map(_.id).contains("zzp_asia"),
       "no root → every place with children but no parent"
     )
 
   test("scopeFor: a place id expands to its descendants as of the filter period; a name does not"):
     seed()
-    val lba = PlaceRepo.scopeFor(ds, List("zzp_asia"), Some(Period(-1400, -1200)))
+    val lba = PlaceFixtures.scopeFor(ds, List("zzp_asia"), Some(Period(-1400, -1200)))
     assertEquals(lba.idsFor("zzp_asia").map(_.toSet), Some(Set("zzp_asia", "zzp_turkey", "zzp_hatti", "zzp_hattusa")))
-    val iron = PlaceRepo.scopeFor(ds, List("zzp_asia"), Some(Period(-800, -700)))
+    val iron = PlaceFixtures.scopeFor(ds, List("zzp_asia"), Some(Period(-800, -700)))
     assertEquals(iron.idsFor("zzp_asia").map(_.toSet), Some(Set("zzp_asia", "zzp_turkey")))
-    assert(PlaceRepo.scopeFor(ds, List("Zzpland"), None).isEmpty, "a plain name is not a place id")
-    assert(PlaceRepo.scopeFor(ds, Nil, None).isEmpty)
+    assert(PlaceFixtures.scopeFor(ds, List("Zzpland"), None).isEmpty, "a plain name is not a place id")
+    assert(PlaceFixtures.scopeFor(ds, Nil, None).isEmpty)
 
   test("Filter.places by id reaches the source through finding_places and the hierarchy"):
     seed()
     def found(place: String, from: Long, to: Long) =
       val f = Filter(places = List(place), period = Some(Period(from, to)), limit = 50)
-      val r = SourceRepo.sources(ds, f, cfg.limits.snippetWords, PlaceRepo.scopeFor(ds, f.places, f.period))
+      val r = SourceRepo.sources(ds, f, cfg.limits.snippetWords, PlaceFixtures.scopeFor(ds, f.places, f.period))
       r.hits.map(_.source.citekey).toSet
     assert(found("zzp_asia", -1400, -1200).contains("zzp_src"), "Hattusa → Hatti → Turkey → Asia")
     assert(found("zzp_hatti", -1400, -1200).contains("zzp_src"))
@@ -263,7 +267,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
     // gazetteer id the filter carries (item 15: `place: pleiades_589831` explains nothing)
     val f = Filter(places = List("zzp_hattusa"), period = Some(Period(-1400, -1200)), limit = 50)
     val hit = SourceRepo
-      .sources(ds, f, cfg.limits.snippetWords, PlaceRepo.scopeFor(ds, f.places, f.period))
+      .sources(ds, f, cfg.limits.snippetWords, PlaceFixtures.scopeFor(ds, f.places, f.period))
       .hits
       .find(_.source.citekey == "zzp_src")
       .get
@@ -277,7 +281,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
 
   test("unlocated counts the findings the gazetteer could not place"):
     seed()
-    assert(PlaceRepo.unlocated(ds, Filter(period = Some(Period(-1302, -1202)))) >= 1)
+    assert(SourceRepo.unlocated(ds, Filter(period = Some(Period(-1302, -1202)))) >= 1)
 
   test("the places facet reports the gazetteer label AND the id behind it"):
     seed()
@@ -291,7 +295,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
 
   test("patching a source keeps finding_places: the write re-materialises instead of cascading"):
     seed()
-    val before = PlaceRepo.placesOf(ds, "zzp_src#0").map(_.id).toSet
+    val before = PlaceFixtures.placesOf(ds, "zzp_src#0").map(_.id).toSet
     assert(before.nonEmpty, "fixture: the finding starts out located")
     // a patch that touches NOTHING spatial. This used to DELETE FROM findings, and
     // finding_places cascades off findings(id), so every assignment vanished.
@@ -306,8 +310,8 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
         )
         .isRight
     )
-    assertEquals(PlaceRepo.placesOf(ds, "zzp_src#0").map(_.id).toSet, before)
-    assertEquals(PlaceRepo.placesOf(ds, "zzp_src#2").map(_.id).toSet, Set("zzp_turkey"))
+    assertEquals(PlaceFixtures.placesOf(ds, "zzp_src#0").map(_.id).toSet, before)
+    assertEquals(PlaceFixtures.placesOf(ds, "zzp_src#2").map(_.id).toSet, Set("zzp_turkey"))
 
   test("a put re-materialises: a finding that MOVED lands in its new places"):
     seed()
@@ -317,45 +321,45 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
     })
     val _ = SourceRepo.put(ds, moved, cfg.limits.chunkChars, cfg.places.pointToleranceKm)
     assertEquals(
-      PlaceRepo.placesOf(ds, "zzp_src#0").map(_.id).toSet,
+      PlaceFixtures.placesOf(ds, "zzp_src#0").map(_.id).toSet,
       Set.empty[String],
       "it is no longer inside anything"
     )
     // …and moving it back puts it back
     val _ = SourceRepo.put(ds, src, cfg.limits.chunkChars, cfg.places.pointToleranceKm)
-    assert(PlaceRepo.placesOf(ds, "zzp_src#0").map(_.id).toSet.contains("zzp_hattusa"))
+    assert(PlaceFixtures.placesOf(ds, "zzp_src#0").map(_.id).toSet.contains("zzp_hattusa"))
 
   test("a finding dropped from the source is deleted; the others keep their places"):
     seed()
     val fewer = src.copy(findings = src.findings.filter(_.id != "zzp_src#1"))
     val _ = SourceRepo.put(ds, fewer, cfg.limits.chunkChars, cfg.places.pointToleranceKm)
     assertEquals(SourceRepo.load(ds, "zzp_src").get.findings.map(_.id), List("zzp_src#0", "zzp_src#2", "zzp_src#3"))
-    assert(PlaceRepo.placesOf(ds, "zzp_src#0").nonEmpty)
+    assert(PlaceFixtures.placesOf(ds, "zzp_src#0").nonEmpty)
 
   test("the fallback tolerance matches the configured one, so they cannot drift"):
-    assertEquals(PlaceRepo.DefaultToleranceKm, cfg.places.pointToleranceKm)
+    assertEquals(FindingPlacement.DefaultToleranceKm, cfg.places.pointToleranceKm)
 
   // ── the hierarchy walk's bounds ──────────────────────────────────────────────────────────────
 
   test("a part_of CYCLE does not repeat a place down the walk"):
     seed()
     // close the loop: Asia is part of Hattusa, which is (transitively) part of Asia
-    val _ = PlaceRepo.upsertPlaces(
+    val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(PlaceInput(asia, List(PlaceName("Asia")), List(PlaceRelation("zzp_asia", "zzp_hattusa"))))
     )
-    val rows = PlaceRepo.hierarchy(ds, None, Some("zzp_turkey"), 20, 500)
+    val rows = PlaceFixtures.hierarchy(ds, None, Some("zzp_turkey"), 20, 500)
     val ids = rows.map(_.id)
     assertEquals(ids.size, ids.distinct.size, s"a place appears twice on one walk: $ids")
     assert(ids.contains("zzp_hatti"), ids.toString)
     // put the gazetteer back the way the other tests expect it
-    val _ = PlaceRepo.upsertPlaces(ds, List(PlaceInput(asia, List(PlaceName("Asia")))))
+    val _ = PlaceFixtures.upsertPlaces(ds, List(PlaceInput(asia, List(PlaceName("Asia")))))
 
   test("depthCap bounds a caller asking for an absurd depth"):
     seed()
-    val deep = PlaceRepo.hierarchy(ds, None, Some("zzp_asia"), 10000, 500, depthCap = 1)
+    val deep = PlaceFixtures.hierarchy(ds, None, Some("zzp_asia"), 10000, 500, depthCap = 1)
     assert(deep.forall(_.depth <= 1), deep.map(r => r.id -> r.depth).toString)
-    val deeper = PlaceRepo.hierarchy(ds, None, Some("zzp_asia"), 10000, 500, depthCap = 6)
+    val deeper = PlaceFixtures.hierarchy(ds, None, Some("zzp_asia"), 10000, 500, depthCap = 6)
     assert(deeper.size >= deep.size)
     // …and the caller's own smaller number still wins
-    assert(PlaceRepo.hierarchy(ds, None, Some("zzp_asia"), 0, 500, depthCap = 6).forall(_.depth == 0))
+    assert(PlaceFixtures.hierarchy(ds, None, Some("zzp_asia"), 0, 500, depthCap = 6).forall(_.depth == 0))
