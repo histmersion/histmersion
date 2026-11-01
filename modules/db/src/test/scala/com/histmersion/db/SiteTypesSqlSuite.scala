@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.places.SiteTypesSql
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 

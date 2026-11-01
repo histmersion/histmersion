@@ -1,7 +1,7 @@
 package com.histmersion.domain.catalogue.events
 
 import chimp.server.*
-import com.histmersion.api.{AliasKindsAdapter, Aliases, Api, EventGeometry, EventPatch, Filter, Markdown, StrictJson}
+import com.histmersion.api.{Aliases, AliasKindsAdapter, Api, EventGeometry, EventPatch, Filter, Markdown, StrictJson}
 import com.histmersion.domain.Caller
 import com.histmersion.util.mcp.McpOut
 import hearth.kindlings.circederivation.KindlingsCodecAsObject

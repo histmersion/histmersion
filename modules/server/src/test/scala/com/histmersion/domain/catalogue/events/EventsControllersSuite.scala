@@ -36,15 +36,24 @@ class EventsControllersSuite extends munit.FunSuite:
     val put = c.put(Caller.Local, "zz_old", EventPut("Zz event", "battle", span))
     assertEquals(put.map(d => (d.event.id, d.names)), Right(("zz_ev", List("from the card"))))
     assertEquals(c.get("zz_old").map(_.event.id), Right("zz_ev"))
-    assertEquals(c.patch(Caller.Local, "zz_old", EventPatch(label = Some("Zz again"))).map(_.event.label), Right("Zz again"))
+    assertEquals(
+      c.patch(Caller.Local, "zz_old", EventPatch(label = Some("Zz again"))).map(_.event.label),
+      Right("Zz again")
+    )
     assertEquals(code(c.get("zz_missing")), Some(Write.CodeNotFound))
     assertEquals(c.delete(Caller.Local, "zz_old").map(_.id), Right("zz_ev"))
     assertEquals(code(c.delete(Caller.Local, "zz_old")), Some(Write.CodeNotFound))
 
   test("a scale, a geometry or a Wikidata item the store cannot take is refused before the write"):
     val c = controllers()
-    assertEquals(code(c.put(Caller.Local, "zz_s", EventPut("Zz", "battle", span, scale = Some("huge")))), Some(Write.CodeInvalid))
-    assertEquals(code(c.put(Caller.Local, "zz_g", EventPut("Zz", "battle", span, geometry = Some("POINT(1 2)")))), Some(Write.CodeInvalid))
+    assertEquals(
+      code(c.put(Caller.Local, "zz_s", EventPut("Zz", "battle", span, scale = Some("huge")))),
+      Some(Write.CodeInvalid)
+    )
+    assertEquals(
+      code(c.put(Caller.Local, "zz_g", EventPut("Zz", "battle", span, geometry = Some("POINT(1 2)")))),
+      Some(Write.CodeInvalid)
+    )
     assertEquals(code(c.get("zz_s")), Some(Write.CodeNotFound), "nothing written")
     val _ = c.put(Caller.Local, "zz_w", EventPut("Zz", "battle", span))
     assertEquals(code(c.patch(Caller.Local, "zz_w", EventPatch(wikidata = Some("x1")))), Some(Write.CodeInvalid))
@@ -52,7 +61,13 @@ class EventsControllersSuite extends munit.FunSuite:
 
   test("the list's page from its filter; the map's limit"):
     val c = controllers()
-    List("zz_1", "zz_2", "zz_3").foreach(id => c.put(Caller.Local, id, EventPut(s"Zz $id", "battle", span, geometry = Some("""{"type":"Point","coordinates":[1,2]}"""))))
+    List("zz_1", "zz_2", "zz_3").foreach(id =>
+      c.put(
+        Caller.Local,
+        id,
+        EventPut(s"Zz $id", "battle", span, geometry = Some("""{"type":"Point","coordinates":[1,2]}"""))
+      )
+    )
     val l = c.list(Api.EventQuery(Filter(limit = 50)))
     assertEquals((l.total, l.events.size), (3, 2))
     assertEquals(c.geo(Api.EventQuery(Filter())).events.size, 3)

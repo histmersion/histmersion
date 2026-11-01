@@ -1,14 +1,14 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.{CorrectionList, CorrectionStatus, Corrections}
+import com.histmersion.api.{CorrectionList, Corrections, CorrectionStatus}
 import com.histmersion.db.{Param, Sql}
 
 import com.augustnagro.magnum.*
 import io.circe.Json
 import com.histmersion.db.given_DbCodec_List
 
-/** CORRECTIONS BY HAND ([[Corrections]]): a person's value for one field of a target an importer writes, with
-  * what upstream said then and at the last refresh. Generic over the target kind; the events are the first target
+/** CORRECTIONS BY HAND ([[Corrections]]): a person's value for one field of a target an importer writes, with what
+  * upstream said then and at the last refresh. Generic over the target kind; the events are the first target
   * (`EventRepo.patch` records them, `EventImportRepo.save` reconciles and applies them). Everything here runs inside
   * the caller's transaction.
   */

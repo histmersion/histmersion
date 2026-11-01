@@ -56,10 +56,17 @@ class EventLinksControllersSuite extends munit.FunSuite:
     val first = c.links("zz_siege").toOption.get
     assertEquals(first.candidates.map(_.citekey), List("zzln2020_names"))
     val r = c
-      .applyLinks(Caller.Local, "zz_siege", EventLinksRequest(confirm = List("zzln2020_names", "zzln2021_silent", "zzgone")))
+      .applyLinks(
+        Caller.Local,
+        "zz_siege",
+        EventLinksRequest(confirm = List("zzln2020_names", "zzln2021_silent", "zzgone"))
+      )
       .toOption
       .get
-    assertEquals(r.attested.map(a => (a.citekey, a.quote, a.charStart)), List(("zzln2020_names", Some("Siege of Zzaria"), Some(4))))
+    assertEquals(
+      r.attested.map(a => (a.citekey, a.quote, a.charStart)),
+      List(("zzln2020_names", Some("Siege of Zzaria"), Some(4)))
+    )
     assertEquals(r.refused.size, 2)
     assert(r.refused.exists(_.startsWith("zzgone: no such source")))
     assertEquals(attestations.list(None, Some("event"), Some("zz_siege"), 10, 0).total, 1)

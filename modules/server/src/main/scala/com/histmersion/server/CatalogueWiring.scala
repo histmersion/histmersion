@@ -5,18 +5,18 @@ import com.histmersion.db.PlaceScope
 import com.histmersion.domain.catalogue.CatalogueJobs
 import com.histmersion.domain.catalogue.events.{
   CorrectionService,
-  EventImportService,
   EventImports,
   EventImportsControllers,
+  EventImportService,
   EventService
 }
 import com.histmersion.domain.catalogue.evidence.{
   AttestationService,
-  EventLinkService,
   EventLinksControllers,
+  EventLinkService,
   LeadService
 }
-import com.histmersion.domain.catalogue.places.{SiteTypeService, SiteTypesControllers}
+import com.histmersion.domain.catalogue.places.{SiteTypesControllers, SiteTypeService}
 import com.histmersion.pluginhost.{HttpTransport, JavaHttpTransport}
 
 /** The catalogue's events, their catalogues and their links to the corpus, and the refinement of site types, built over

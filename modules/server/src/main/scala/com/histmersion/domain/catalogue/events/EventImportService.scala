@@ -3,9 +3,9 @@ package com.histmersion.domain.catalogue.events
 import com.histmersion.api.{
   CatalogRecord,
   CorrectionCounts,
+  Corrections,
   CorrectionStatus,
   CorrectionTarget,
-  Corrections,
   EventFields,
   EventTaxonomy,
   TimeSpan
@@ -44,7 +44,8 @@ object EventImportService:
 
   final private class Implementation(db: Transactor) extends EventImportService:
     def stored(): List[StoredEvent] = db.read(EventImportRepo.stored)
-    def save(placed: List[(CatalogRecord, CatalogMerge.Placement)]): EventSaved = db.transact(EventImportRepo.save(placed))
+    def save(placed: List[(CatalogRecord, CatalogMerge.Placement)]): EventSaved =
+      db.transact(EventImportRepo.save(placed))
     def records(provider: Option[String]): (List[(String, String, CatalogRecord)], Int) =
       db.read(EventImportRepo.records(provider))
     def storedKinds(provider: String): Map[(String, String), String] = db.read(EventImportRepo.storedKinds(provider))
@@ -80,10 +81,12 @@ object EventImportService:
 
     private def fill(s: CatalogueState, id: String, names: List[String], wd: Option[String]): CatalogueState =
       s.modify(_.events)
-        .using(_.map(e =>
-          if e.id != id then e
-          else e.modify(_.wikidata).using(_.orElse(wd)).modify(_.names).using(merged(_, names))
-        ))
+        .using(
+          _.map(e =>
+            if e.id != id then e
+            else e.modify(_.wikidata).using(_.orElse(wd)).modify(_.names).using(merged(_, names))
+          )
+        )
 
     private def refresh(
         s: CatalogueState,
@@ -100,7 +103,9 @@ object EventImportService:
       val outcomes = applied.flatMap(c =>
         now.get(c.field).map(up => (c, Corrections.reconcile(json(c.value), json(c.upstreamValue), up), up))
       )
-      val keep = outcomes.collect { case (c, o, _) if o != Corrections.Outcome.Retire => c.field -> json(c.value) }.toMap
+      val keep = outcomes.collect {
+        case (c, o, _) if o != Corrections.Outcome.Retire => c.field -> json(c.value)
+      }.toMap
       def text(f: String): Option[Option[String]] = keep.get(f).map(_.asString)
       val spanKept = keep.contains(EventFields.Span)
       val geom: Option[String] = keep.get(EventFields.Geometry) match
@@ -109,9 +114,11 @@ object EventImportService:
       val refreshed = s
         .modify(_.corrections)
         .using(_.map { c =>
-          outcomes.find(_._1.id == c.id).fold(c)((_, o, up) =>
-            c.modify(_.status).setTo(Corrections.status(o)).modify(_.upstreamNow).setTo(Some(up.noSpaces))
-          )
+          outcomes
+            .find(_._1.id == c.id)
+            .fold(c)((_, o, up) =>
+              c.modify(_.status).setTo(Corrections.status(o)).modify(_.upstreamNow).setTo(Some(up.noSpaces))
+            )
         })
         .modify(_.events)
         .using(_.map { e =>
@@ -214,9 +221,9 @@ object EventImportService:
       (rows, 0)
 
     def storedKinds(provider: String): Map[(String, String), String] =
-      state.get.catalogueRecords
-        .collect { case (_, r) if r.provider == provider => r.key -> EventTaxonomy.canonical(r.kind) }
-        .toMap
+      state.get.catalogueRecords.collect {
+        case (_, r) if r.provider == provider => r.key -> EventTaxonomy.canonical(r.kind)
+      }.toMap
 
     def partsDone(provider: String): Set[String] = state.get.importParts.getOrElse(provider, Map.empty).keySet
 

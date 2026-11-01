@@ -3,8 +3,8 @@ package com.histmersion.domain.catalogue.events
 import com.histmersion.api.{
   CatalogRecord,
   CorrectionCounts,
-  CorrectionTarget,
   Corrections,
+  CorrectionTarget,
   EventCatalogueRef,
   EventFields,
   EventTaxonomy,

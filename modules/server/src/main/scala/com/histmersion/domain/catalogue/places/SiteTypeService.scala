@@ -57,7 +57,7 @@ object SiteTypeService:
       val typed = types.toMap
       val _ = state.updateAndGet(
         _.modify(_.sites)
-          .using(_.map(s =>
-            typed.get(s.id).fold(s)(t => s.modify(_.siteType).setTo(t).modify(_.checkedAt).setTo(Some(at)))
-          ))
+          .using(
+            _.map(s => typed.get(s.id).fold(s)(t => s.modify(_.siteType).setTo(t).modify(_.checkedAt).setTo(Some(at))))
+          )
       )

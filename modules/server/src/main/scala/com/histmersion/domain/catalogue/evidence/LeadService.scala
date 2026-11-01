@@ -19,8 +19,8 @@ trait LeadService:
   /** The dated, placed findings within `km` and `years` of an event, nearest in time then space first. */
   def nearFindings(id: String, km: Double, years: Long, limit: Int): List[EventFindingRef]
 
-  /** The facts of the leads of the events `selection` selects, the catalogue's and the largest first, one page; and
-    * how many it selects.
+  /** The facts of the leads of the events `selection` selects, the catalogue's and the largest first, one page; and how
+    * many it selects.
     */
   def leads(selection: EventSelection, km: Double, years: Long, limit: Int, offset: Int): (Int, List[LeadRow])
 
@@ -72,9 +72,10 @@ object LeadService:
 
     def attestingSources(id: String): List[EventSourceRef] =
       val s = state.get
-      val own = s.events.find(_.id == id).flatMap(_.citekey).flatMap(ck =>
-        source(ck).map((t, y) => EventSourceRef(ck, t, y, "citekey"))
-      )
+      val own = s.events
+        .find(_.id == id)
+        .flatMap(_.citekey)
+        .flatMap(ck => source(ck).map((t, y) => EventSourceRef(ck, t, y, "citekey")))
       val att = s.attestations
         .filter(a => a.targetType == "event" && a.targetId == id)
         .sortBy(a => (a.citekey, a.id))

@@ -31,14 +31,14 @@ private[places] object SiteTypeRepo:
       refresh: Boolean,
       before: Option[Long]
   )(using DbCon): List[(String, String, Option[String])] =
-      (Sql.raw("SELECT p.id, upper(substr(p.id, 10)), p.properties->>'class' FROM places p WHERE ") ++
-        toTypeWhere(refresh, before) ++ Sql.of(" ORDER BY p.id LIMIT ?", Param.I(limit.max(0)))).frag
-        .query[(String, String, Option[String])]
-        .run()
-        .toList
+    (Sql.raw("SELECT p.id, upper(substr(p.id, 10)), p.properties->>'class' FROM places p WHERE ") ++
+      toTypeWhere(refresh, before) ++ Sql.of(" ORDER BY p.id LIMIT ?", Param.I(limit.max(0)))).frag
+      .query[(String, String, Option[String])]
+      .run()
+      .toList
 
   def countSitesToType(refresh: Boolean, before: Option[Long])(using DbCon): Int =
-      (Sql.raw("SELECT count(*)::int FROM places p WHERE ") ++ toTypeWhere(refresh, before)).frag.query[Int].run().head
+    (Sql.raw("SELECT count(*)::int FROM places p WHERE ") ++ toTypeWhere(refresh, before)).frag.query[Int].run().head
 
   /** Record the refined types (`None` = asked, none of the curated classes). */
   def setSiteTypes(types: List[(String, Option[String])])(using DbCon): Unit =

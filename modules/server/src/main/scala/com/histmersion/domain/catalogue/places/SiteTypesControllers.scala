@@ -1,6 +1,14 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.{ApiError, EventCount, JobInfo, JobKindsAdapter, SiteTypes, SiteTypesReport, SiteTypesRequest}
+import com.histmersion.api.{
+  ApiError,
+  EventCount,
+  JobInfo,
+  JobKindsAdapter,
+  SiteTypes,
+  SiteTypesReport,
+  SiteTypesRequest
+}
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.CatalogueJobs
@@ -10,8 +18,8 @@ import com.histmersion.pluginhost.{HttpTransport, PluginEvents, Polite}
 import java.time.Clock
 import scala.annotation.tailrec
 
-/** The refinement of the Wikidata sites' types (a job, dry run or not): each site on the map asked for its classes (P31)
-  * and their superclasses (P279), and given the curated type they fall under.
+/** The refinement of the Wikidata sites' types (a job, dry run or not): each site on the map asked for its classes
+  * (P31) and their superclasses (P279), and given the curated type they fall under.
   */
 final class SiteTypesControllers(
     sites: SiteTypeService,
@@ -36,8 +44,7 @@ final class SiteTypesControllers(
 
   def runSiteTypes(req: SiteTypesRequest, progress: String => Unit): SiteTypesReport =
     val started = clock.millis()
-    if req.dryRun then
-      SiteTypesReport(dryRun = true, pending = sites.countSitesToType(req.refresh, None))
+    if req.dryRun then SiteTypesReport(dryRun = true, pending = sites.countSitesToType(req.refresh, None))
     else
       val c = polite(ec.wikidata.apiIntervalMs)
       val cap = req.limit.filter(_ > 0).getOrElse(Int.MaxValue)

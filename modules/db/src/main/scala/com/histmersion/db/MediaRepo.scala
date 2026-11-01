@@ -808,7 +808,7 @@ object MediaRepo:
   /** The pictures of the media layer as [[TileRepo]] selects them — [[geo]]'s selection, every one whose dates overlap
     * `window` (none: whatever their dates), in the tile's box `envelope`: uid, point and dates.
     */
-  private[db] def tileCandidates(
+  def tileCandidates(
       kind: Option[String],
       provider: Option[String],
       license: Option[String],
