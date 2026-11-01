@@ -2977,4 +2977,10 @@ names|set|merge|remove|rename|add|import|rebuild|build-hierarchy|sources`, `plac
 (network off: their refusal), `init`; the MCP tools `places`, `place_names`, `place_override`, `add_place`; `lint`
 and `lint --fix --rule place-kind|place-grid-point|place-imported-point-area`; About › Storage and its counts.
 
-**Tests.** TESTS
+**Tests.** After `sbt clean`, every module's suites with the DB suites on a throwaway database (`just test-quick` with
+every module named): 5 108 tests, 0 failed — values 20, valuesJS 20, api 823, apiJS 84, config 67, files 73, core 748,
+pluginApi 45, upstreams 57, pluginHost 39, pluginTestkit 19, pluginVaults 29 (1 skipped), pluginsFetchers 15,
+pluginsEvents 18, pluginsMedia 52, pluginsGazetteers 58, pluginsAiHttp 26, pluginsCalibre 45, pluginResolver 23,
+chimneyIronTests 10, db 524 (`PointAreaRepoSuite`'s 3 moved to the server), cli 232, web 639, server 1 442 (1 skipped,
+1 ignored; 21 new). A cached build once passed `fmt-check` over files a clean one reformats: the commits were formatted
+again from a clean check before the run.
