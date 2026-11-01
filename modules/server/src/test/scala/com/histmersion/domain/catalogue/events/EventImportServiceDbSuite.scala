@@ -1,0 +1,5 @@
+package com.histmersion.domain.catalogue.events
+
+import com.histmersion.domain.catalogue.CatalogueStoreSuite
+
+class EventImportServiceDbSuite extends EventImportServiceContract with CatalogueStoreSuite.OnDatabase

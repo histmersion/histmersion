@@ -432,13 +432,16 @@ class CatalogueOracleSuite extends DbSuite:
     val _ = step("event rename", post(s"$url/api/events/zz_ash/rename", """{"to":"zz_ashfall"}"""))
     val _ = step("event delete", send("DELETE", s"$url/api/events/zz_gone", ""))
     // the catalogue import, then a person's edit of an imported event: a correction
-    val catalog = com.histmersion.server.events.EventCatalogHandlers(
+    val catalog = com.histmersion.server.CatalogueWiring(
       Deps(cfgFor("cat"), ds, ds, plugins = ServerPlugins.load(oracleLoaded)),
       FakeMediaHttp(gvp),
       () => 2026L
     )
-    val job = catalog
-      .importJob(EventImportRequest("gvp", dryRun = false, from = Some(-2000), to = Some(-1000)))
+    val job = catalog.eventImports
+      .importJob(
+        com.histmersion.domain.Caller.Local,
+        EventImportRequest("gvp", dryRun = false, from = Some(-2000), to = Some(-1000))
+      )
       .fold(e => fail(e.message), identity)
     val _ = step("events import gvp", awaitJob(url, job.id))
     val imported = connect(ds)(

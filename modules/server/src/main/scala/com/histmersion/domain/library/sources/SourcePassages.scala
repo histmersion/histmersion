@@ -9,6 +9,7 @@ import javax.sql.DataSource
 /** The sources' bodies as the catalogue's evidence reads them: by their current citekey, searched chunk by chunk. */
 final class SourcePassages(ds: DataSource) extends PassageSource:
   def canonical(citekey: String): Option[String] = SourceRepo.canonical(ds, citekey)
+  def naming(name: String, limit: Int): List[String] = SourceRepo.naming(ds, name, limit)
   def reader(citekey: String): PassageReader = SourcePassages.Text(ds, citekey)
 
 object SourcePassages:

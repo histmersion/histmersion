@@ -1,11 +1,14 @@
 package com.histmersion.server.media
 
+import com.histmersion.domain.catalogue.events.*
+import com.histmersion.domain.catalogue.evidence.*
+
 import ox.supervised
 import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{Db, EventRepo, Migrate}
+import com.histmersion.db.{Db, Migrate}
 import com.histmersion.server.Composition
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
 import io.circe.parser.decode
@@ -153,7 +156,11 @@ class MediaImportJobSuite extends com.histmersion.db.DbSuite:
     if testDb.isDefined then
       clean()
       (0 until N).foreach(i =>
-        EventRepo.put(ds, id(i), EventPut(s"Zqmj event $i", "battle", TimeSpan(Some(-1200), None, None, Some(-1190))))
+        EventFixtures.put(
+          ds,
+          id(i),
+          EventPut(s"Zqmj event $i", "battle", TimeSpan(Some(-1200), None, None, Some(-1190)))
+        )
       )
       connect(ds)(sql"""UPDATE events SET wikidata = 'Q' || (9100000 + substring(id FROM 7)::int)::text
             WHERE id LIKE '0zqmj%'""".update.run())

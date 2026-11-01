@@ -1,5 +1,10 @@
 package com.histmersion.server.events
 
+import com.histmersion.server.CatalogueWiring
+
+import com.histmersion.domain.catalogue.events.*
+import com.histmersion.domain.catalogue.evidence.*
+
 import com.histmersion.server.ServerPlugins
 import com.histmersion.util.plugins.Plugins
 
@@ -9,7 +14,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{EventCatalogRepo, EventRepo, Migrate, TestDb}
+import com.histmersion.db.{Migrate, TestDb}
 import com.histmersion.plugin as spi
 import com.histmersion.server.Deps
 import com.histmersion.server.media.FakeMediaHttp
@@ -102,12 +107,12 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
   override def beforeAll(): Unit = if testDb.isDefined then clean()
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
-  private def run(h: EventCatalogHandlers, dry: Boolean): EventImportReport =
-    h.runImport(Catalogue, EventImportRequest(Catalogue, dryRun = dry), None, _ => ())
+  private def run(h: CatalogueWiring, dry: Boolean): EventImportReport =
+    h.eventImporter.runImport(Catalogue, EventImportRequest(Catalogue, dryRun = dry), None, _ => ())
 
   test("the plugin's catalogue: parts in order, a page followed, a refused record and a failed part reported"):
     val http = fake
-    val h = EventCatalogHandlers(Deps(cfg, ds, ds, plugins = generation), http)
+    val h = CatalogueWiring(Deps(cfg, ds, ds, plugins = generation), http)
     val r = run(h, dry = false)
     assertEquals((r.records, r.kept, r.created), (2, 2, 2), r.toString)
     assert(r.failed.contains("p1: bad: its dating runs backwards"), r.failed.toString)
@@ -119,11 +124,11 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
       List("https://zq.example/api/p1", "https://zq.example/api/p1b", "https://zq.example/api/p2")
     )
     assert(http.requests.forall(_._2.get("User-Agent").contains(HttpPolicy.userAgent(cfg.media.userAgent))))
-    assertEquals(EventCatalogRepo.partsDone(ds, Catalogue).map(_.split(" @ ").head), Set("p1", "p1b"))
-    val e = EventRepo.get(ds, "zq_quakes_b1").getOrElse(fail("not stored"))
+    assertEquals(EventFixtures.partsDone(ds, Catalogue).map(_.split(" @ ").head), Set("p1", "p1b"))
+    val e = EventFixtures.get(ds, "zq_quakes_b1").getOrElse(fail("not stored"))
     assertEquals((e.event.label, e.event.kind), ("Zq Battle One", "battle"))
     // the card names the plugin's catalogue with its terms
-    val card = h.context(e)
+    val card = h.eventLinks.context(e)
     assertEquals(
       card.catalogue.map(c => (c.provider, c.providerId, c.title, c.licence)),
       List((Catalogue, "b1", "Zq battle catalogue", "CC0-1.0"))
@@ -133,26 +138,27 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
   test("a second import reads only the part left; the catalogue is listed beside the built-ins"):
     p2Up = true
     val http = fake
-    val h = EventCatalogHandlers(Deps(cfg, ds, ds, plugins = generation), http)
+    val h = CatalogueWiring(Deps(cfg, ds, ds, plugins = generation), http)
     val r = run(h, dry = false)
     assertEquals((r.records, r.created, r.pending), (1, 1, 0), r.toString)
     assertEquals(http.requests.map(_._1).toList, List("https://zq.example/api/p2"))
-    assertEquals(h.catalogues.map(_.id), List("gvp", "noaa", "wikidata", Catalogue))
+    assertEquals(h.eventImporter.catalogues.map(_.id), List("gvp", "noaa", "wikidata", Catalogue))
     // the built-ins still answer by their aliases; an unknown one lists the plugin's
-    val job = h.importJob(EventImportRequest("usgs", dryRun = true))
+    val job = h.eventImports.importJob(Caller.Local, EventImportRequest("usgs", dryRun = true))
     assert(job.left.exists(_.message.contains(s"one of: gvp, noaa, wikidata, $Catalogue")), job.toString)
 
   test("the plugin switched off: its catalogue is out of the import; its events stay on the map"):
     val off = ServerPlugins.offlineWith(List(ZqPlugin()), ConfigFactory.empty)
-    val h = EventCatalogHandlers(Deps(cfg, ds, ds, plugins = off), fake)
+    val h = CatalogueWiring(Deps(cfg, ds, ds, plugins = off), fake)
     assert(
-      h.importJob(EventImportRequest(Catalogue, dryRun = true))
+      h.eventImports
+        .importJob(Caller.Local, EventImportRequest(Catalogue, dryRun = true))
         .left
         .exists(_.message.contains("unknown event catalogue"))
     )
-    assert(!h.catalogues.exists(_.id == Catalogue))
-    val e = EventRepo.get(ds, "zq_quakes_b1").getOrElse(fail("gone"))
-    assertEquals(h.context(e).catalogue.map(_.provider), List(Catalogue))
+    assert(!h.eventImporter.catalogues.exists(_.id == Catalogue))
+    val e = EventFixtures.get(ds, "zq_quakes_b1").getOrElse(fail("gone"))
+    assertEquals(h.eventLinks.context(e).catalogue.map(_.provider), List(Catalogue))
 
   // ── a catalogue whose records need holding inside the limits (§19: the host dates them at the import) ──
 
@@ -210,8 +216,8 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
     )
 
   private def storedFloods: Map[String, (TimeSpan, TimeSpan, Option[Long], Option[Long])] =
-    val events = EventCatalogRepo.stored(ds).map(e => e.id -> e.timeSpan).toMap
-    EventCatalogRepo
+    val events = EventFixtures.stored(ds).map(e => e.id -> e.timeSpan).toMap
+    EventFixtures
       .records(ds, Some(Floods))
       ._1
       .map((id, _, r) =>
@@ -220,8 +226,9 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
       .toMap
 
   test("a plugin's records are held inside the present and its floor AT THE IMPORT; rederive then changes nothing"):
-    val h = EventCatalogHandlers(Deps(cfg, ds, ds, plugins = floodsGeneration), fake2, () => 2026L)
-    val r = h.runImport(Floods, EventImportRequest(Floods, dryRun = false, to = Some(3000L)), None, _ => ())
+    val h = CatalogueWiring(Deps(cfg, ds, ds, plugins = floodsGeneration), fake2, () => 2026L)
+    val r =
+      h.eventImporter.runImport(Floods, EventImportRequest(Floods, dryRun = false, to = Some(3000L)), None, _ => ())
     assertEquals((r.records, r.kept, r.created, r.failed), (4, 4, 4, Nil), r.toString)
     val at = storedFloods
     // the record and its event both carry the held dating
@@ -232,12 +239,12 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
     assertEquals(at("plain")._1, TimeSpan(Some(-1200L), None, None, Some(-1200L)))
     at.foreach((k, v) => assertEquals(v._2, v._1, s"$k: the event's dating is its record's"))
     // re-derived from the stored records (no network): the same datings, nothing changed
-    val again = h.runRederive(Some(Floods), dryRun = false, _ => ())
+    val again = h.eventImporter.runRederive(Some(Floods), dryRun = false, _ => ())
     assertEquals((again.records, again.changed, again.fromRaw), (4, 0, 0), again.toString)
     assertEquals(storedFloods, at)
     // and with the plugin switched off since (no floor known): still nothing to change
-    val off = EventCatalogHandlers(Deps(cfg, ds, ds, plugins = ServerPlugins.offline), fake2, () => 2026L)
-    assertEquals(off.runRederive(Some(Floods), dryRun = true, _ => ()).changed, 0)
+    val off = CatalogueWiring(Deps(cfg, ds, ds, plugins = ServerPlugins.offline), fake2, () => 2026L)
+    assertEquals(off.eventImporter.runRederive(Some(Floods), dryRun = true, _ => ()).changed, 0)
 
   private def fake2 = FakeMediaHttp(url =>
     if url == "https://zq.example/api/floods" then FakeMediaHttp.json("{}") else Left(s"unexpected $url")

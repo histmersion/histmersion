@@ -1,0 +1,5 @@
+package com.histmersion.domain.catalogue.evidence
+
+import com.histmersion.domain.catalogue.CatalogueStoreSuite
+
+class EventLinkServiceInMemorySuite extends EventLinkServiceContract with CatalogueStoreSuite.InMemory

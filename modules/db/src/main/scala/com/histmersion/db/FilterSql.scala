@@ -236,12 +236,7 @@ object FilterSql:
   /** The PostGIS predicate for a viewport. A box with `minLon > maxLon` crosses the **antimeridian** and becomes two
     * envelopes OR'ed together (`minLon…180` and `-180…maxLon`).
     */
-  def envelopes(geom: String, b: BBox): Sql =
-    def env(minLon: Double, minLat: Double, maxLon: Double, maxLat: Double) =
-      Sql.of(s"$geom && ST_MakeEnvelope(?, ?, ?, ?, 4326)", D(minLon), D(minLat), D(maxLon), D(maxLat))
-    if b.crossesAntimeridian then
-      anyOf(List(env(b.minLon, b.minLat, 180.0, b.maxLat), env(-180.0, b.minLat, b.maxLon, b.maxLat)))
-    else env(b.minLon, b.minLat, b.maxLon, b.maxLat)
+  def envelopes(geom: String, b: BBox): Sql = com.histmersion.util.database.EnvelopeSql.envelopes(geom, b)
 
   // ── the FINDING-level predicate (map feed §1.1, histogram §1.7) ─────────────────────────────
   // `/api/sources` asks "does this SOURCE match?" — an EXISTS quantified over its findings (above).

@@ -1,5 +1,8 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.events.*
+import com.histmersion.domain.catalogue.evidence.*
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -87,7 +90,7 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
         cfg.limits.chunkChars,
         cfg.places.pointToleranceKm
       )
-      EventRepo.put(
+      EventFixtures.put(
         ds,
         "zqtv_event",
         EventPut(

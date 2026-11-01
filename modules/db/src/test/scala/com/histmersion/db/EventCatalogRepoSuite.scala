@@ -1,5 +1,9 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.events.*
+import com.histmersion.domain.catalogue.evidence.*
+import com.histmersion.domain.catalogue.places.SiteTypeFixtures
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -96,7 +100,7 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
       clean()
       SourceRepo.upsert(ds, src, cfg.limits.chunkChars)
       // a compiled event: a source names it
-      EventRepo.put(
+      EventFixtures.put(
         ds,
         "zqec_compiled",
         EventPut(
@@ -128,7 +132,7 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(cols, Set("site_type", "site_type_checked_at"))
 
   test("saving placed records: new events created, a compiled one matched and never overwritten"):
-    val stored = EventCatalogRepo.stored(ds).filter(_.id.startsWith("zqec"))
+    val stored = EventFixtures.stored(ds).filter(_.id.startsWith("zqec"))
     val records = List(
       rec("zztest", "a", "natural_disaster", -1610, 150.01, Some(6)), // the compiled event's kind is not eruption: new
       rec("zztest", "b", "eruption", -1200, 151.0, Some(4))
@@ -136,43 +140,43 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
     val placed = CatalogMerge.place(records, stored, CatalogMerge.Tolerance(60, 30))
     // the first is natural_disaster like the compiled one, at its place and time: matched
     assertEquals(placed.map(_._2.eventId), List("zqec_compiled", "zztest_b"))
-    val saved = EventCatalogRepo.save(ds, placed)
+    val saved = EventFixtures.save(ds, placed)
     assertEquals((saved.created, saved.rows), (1, 2))
-    val compiled = EventRepo.get(ds, "zqec_compiled").get.event
+    val compiled = EventFixtures.get(ds, "zqec_compiled").get.event
     assertEquals(
       (compiled.label, compiled.kind, compiled.citekey),
       ("Zqec compiled eruption", "natural_disaster", Some("zqec_src2020"))
     )
-    assertEquals(EventCatalogRepo.catalogueRefs(ds, "zqec_compiled").map(_.providerId), List("a"))
-    assert(EventCatalogRepo.tierAndNames(ds, "zqec_compiled").get._2.contains("Zqecian eruption"), "names added")
-    val created = EventRepo.get(ds, "zztest_b").get.event
+    assertEquals(EventFixtures.catalogueRefs(ds, "zqec_compiled").map(_.providerId), List("a"))
+    assert(EventFixtures.tierAndNames(ds, "zqec_compiled").get._2.contains("Zqecian eruption"), "names added")
+    val created = EventFixtures.get(ds, "zztest_b").get.event
     assertEquals((created.kind, created.tier), ("eruption", EventTier.Catalogue))
     // a second save of the same records changes nothing
     assertEquals(
-      EventCatalogRepo
-        .save(ds, CatalogMerge.place(records, EventCatalogRepo.stored(ds), CatalogMerge.Tolerance(60, 30)))
+      EventFixtures
+        .save(ds, CatalogMerge.place(records, EventFixtures.stored(ds), CatalogMerge.Tolerance(60, 30)))
         .created,
       0
     )
 
   test("the events feed: tier, kind groups, the catalogue context and the area"):
-    def ids(f: Filter = Filter(), kind: Option[String] = None, more: EventRepo.Narrow = EventRepo.Narrow()) =
-      EventRepo
+    def ids(f: Filter = Filter(), kind: Option[String] = None, more: EventSql.Narrow = EventSql.Narrow()) =
+      EventFixtures
         .list(ds, f, PlaceScope.empty, None, kind, None, None, 500, 0, more)
         .events
         .map(_.id)
         .filter(i => i.startsWith("zqec") || i.startsWith("zztest"))
         .toSet
-    assertEquals(ids(more = EventRepo.Narrow(tier = Some("catalogue"))), Set("zztest_b"))
-    assertEquals(ids(more = EventRepo.Narrow(tier = Some("attested"))), Set("zqec_compiled"))
+    assertEquals(ids(more = EventSql.Narrow(tier = Some("catalogue"))), Set("zztest_b"))
+    assertEquals(ids(more = EventSql.Narrow(tier = Some("attested"))), Set("zqec_compiled"))
     assertEquals(ids(kind = Some("natural")), Set("zqec_compiled", "zztest_b"))
     assertEquals(ids(kind = Some("human")), Set.empty[String])
     // a source filter selects the compiled event; with the catalogue context, the catalogue's too
     val bySource = Filter(tags = List("zqec"), period = Some(Period(-2000, -1000)))
     assertEquals(ids(bySource), Set("zqec_compiled"))
-    assertEquals(ids(bySource, more = EventRepo.Narrow(context = true)), Set("zqec_compiled", "zztest_b"))
-    assertEquals(ids(more = EventRepo.Narrow(area = BBox.parse("150.5,-41,151.5,-39"))), Set("zztest_b"))
-    val geo = EventRepo.geo(
+    assertEquals(ids(bySource, more = EventSql.Narrow(context = true)), Set("zqec_compiled", "zztest_b"))
+    assertEquals(ids(more = EventSql.Narrow(area = BBox.parse("150.5,-41,151.5,-39"))), Set("zztest_b"))
+    val geo = EventFixtures.geo(
       ds,
       Filter(),
       PlaceScope.empty,
@@ -182,19 +186,19 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
       None,
       100,
       0.01,
-      EventRepo.Narrow(tier = Some("catalogue"))
+      EventSql.Narrow(tier = Some("catalogue"))
     )
     assertEquals(geo.events.find(_.id == "zztest_b").map(g => (g.tier, g.size)), Some(("catalogue", Some("VEI 4"))))
 
   test("findings near an event: within the distance and years, nearest first, the far one left out"):
-    val near = EventCatalogRepo.nearFindings(ds, "zqec_compiled", 150, 100, 10)
+    val near = EvidenceFixtures.nearFindings(ds, "zqec_compiled", 150, 100, 10)
     assertEquals(near.map(_.id), List("zqec_src2020#0"))
     assertEquals(near.head.yearGap, 0L)
     assert(near.head.km > 10 && near.head.km < 25, near.head.km.toString)
-    assertEquals(EventCatalogRepo.nearFindings(ds, "zztest_b", 150, 100, 10), Nil, "1200 BCE is 380 years away")
+    assertEquals(EvidenceFixtures.nearFindings(ds, "zztest_b", 150, 100, 10), Nil, "1200 BCE is 380 years away")
 
   test("the full-text index finds the sources naming an event; candidates keep their status"):
-    assertEquals(EventCatalogRepo.sourcesNaming(ds, "Zqecian eruption", 10), List("zqec_src2020"))
+    assertEquals(SourceRepo.naming(ds, "Zqecian eruption", 10), List("zqec_src2020"))
     val c = EventLinkCandidate(
       "zztest_b",
       "zqec_src2020",
@@ -203,16 +207,16 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
       passages = List(EventPassage(10, 26, "Zqecian eruption", "Zqecian eruption")),
       reasons = List("names it")
     )
-    EventCatalogRepo.saveCandidates(ds, "zztest_b", List(c))
-    assert(EventCatalogRepo.isChecked(ds, "zztest_b"))
+    EvidenceFixtures.saveCandidates(ds, "zztest_b", List(c))
+    assert(EvidenceFixtures.isChecked(ds, "zztest_b"))
     assertEquals(
-      EventCatalogRepo.candidates(ds, "zztest_b").map(x => (x.citekey, x.status, x.passages.head.start)),
+      EvidenceFixtures.candidates(ds, "zztest_b").map(x => (x.citekey, x.status, x.passages.head.start)),
       List(("zqec_src2020", "proposed", 10))
     )
-    assert(EventCatalogRepo.setStatus(ds, "zztest_b", "zqec_src2020", EventLinkStatus.Rejected))
-    EventCatalogRepo.saveCandidates(ds, "zztest_b", List(c)) // a recompute keeps the rejection
-    assertEquals(EventCatalogRepo.candidates(ds, "zztest_b"), Nil)
-    assertEquals(EventCatalogRepo.candidates(ds, "zztest_b", withRejected = true).map(_.status), List("rejected"))
+    assert(EvidenceFixtures.setStatus(ds, "zztest_b", "zqec_src2020", EventLinkStatus.Rejected))
+    EvidenceFixtures.saveCandidates(ds, "zztest_b", List(c)) // a recompute keeps the rejection
+    assertEquals(EvidenceFixtures.candidates(ds, "zztest_b"), Nil)
+    assertEquals(EvidenceFixtures.candidates(ds, "zztest_b", withRejected = true).map(_.status), List("rejected"))
 
   test("an attestation makes a catalogue event attested"):
     val _ = AttestationRows.create(
@@ -226,32 +230,32 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
         charEnd = Some(26)
       )
     )
-    assertEquals(EventCatalogRepo.tierAndNames(ds, "zztest_b").map(_._1), Some(EventTier.Attested))
+    assertEquals(EventFixtures.tierAndNames(ds, "zztest_b").map(_._1), Some(EventTier.Attested))
     assertEquals(
-      EventCatalogRepo.attestingSources(ds, "zztest_b").map(s => (s.citekey, s.via)),
+      EvidenceFixtures.attestingSources(ds, "zztest_b").map(s => (s.citekey, s.via)),
       List(("zqec_src2020", "attestation"))
     )
     val _ = connect(ds)(sql"DELETE FROM attestations WHERE target_id = 'zztest_b'".update.run())
-    assertEquals(EventCatalogRepo.tierAndNames(ds, "zztest_b").map(_._1), Some(EventTier.Catalogue))
+    assertEquals(EventFixtures.tierAndNames(ds, "zztest_b").map(_._1), Some(EventTier.Catalogue))
 
   test("lead facts count the findings around a catalogue event"):
-    val (_, rows) = EventCatalogRepo.leadRows(ds, Sql.of("e.id = ?", Param.S("zztest_b")), 300, 500, 5, 0)
+    val (_, rows) = EvidenceFixtures.leadRows(ds, Sql.of("e.id = ?", Param.S("zztest_b")), 300, 500, 5, 0)
     assertEquals(rows.map(r => (r.id, r.tier, r.vei, r.findingsNear)), List(("zztest_b", "catalogue", Some(4), 1)))
 
   test("an article's catalogue events: in its period, near its sources' findings, large enough"):
-    val got = EventCatalogRepo.articleCandidates(ds, List("zqec_src2020"), Some((-1700, -1100)), 300, 4, 7.0, 10)
+    val got = EvidenceFixtures.articleCandidates(ds, List("zqec_src2020"), Some((-1700, -1100)), 300, 4, 7.0, 10)
     assertEquals(got.map(_._1), List("zztest_b"))
     assertEquals(
-      EventCatalogRepo.articleCandidates(ds, List("zqec_src2020"), Some((-1700, -1100)), 300, 5, 7.0, 10),
+      EvidenceFixtures.articleCandidates(ds, List("zqec_src2020"), Some((-1700, -1100)), 300, 5, 7.0, 10),
       Nil,
       "VEI 4 is below 5"
     )
 
   test("parts read are recorded and cleared"):
-    EventCatalogRepo.markPart(ds, "zztest", "class:Q1", 3)
-    assertEquals(EventCatalogRepo.partsDone(ds, "zztest"), Set("class:Q1"))
-    EventCatalogRepo.clearParts(ds, "zztest")
-    assertEquals(EventCatalogRepo.partsDone(ds, "zztest"), Set.empty[String])
+    EventFixtures.markPart(ds, "zztest", "class:Q1", 3)
+    assertEquals(EventFixtures.partsDone(ds, "zztest"), Set("class:Q1"))
+    EventFixtures.clearParts(ds, "zztest")
+    assertEquals(EventFixtures.partsDone(ds, "zztest"), Set.empty[String])
 
   test("the places feed carries a site's type: stored, else from its gazetteer's fields"):
     val pt = Some(s"""{"type":"Point","coordinates":[152.0,$Lat]}""")
@@ -277,6 +281,6 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(siteType, Some("sanctuary"))
     // the place's card reads the same type, so it shows the icon the marker has
     assertEquals(PlaceRepo.get(ds, "zqec_site").flatMap(_.siteType), Some("sanctuary"))
-    EventCatalogRepo.setSiteTypes(ds, List("zqec_site" -> Some("palace")))
+    SiteTypeFixtures.setSiteTypes(ds, List("zqec_site" -> Some("palace")))
     assertEquals(siteType, Some("palace"))
     assertEquals(PlaceRepo.get(ds, "zqec_site").flatMap(_.siteType), Some("palace"))

@@ -1,5 +1,8 @@
 package com.histmersion.server
 
+import com.histmersion.domain.catalogue.events.*
+import com.histmersion.domain.catalogue.evidence.*
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -204,7 +207,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
     val _ = com.histmersion.domain.catalogue.periods
       .PeriodService(com.histmersion.util.database.Transactor(ds))
       .write(List(HistoricalPeriod("zz_period", "Storm period", Some("oracle"), Period(-1400, -1200))), Dataset.Local)
-    EventRepo.put(
+    EventFixtures.put(
       ds,
       "zz_event",
       EventPut(
@@ -214,7 +217,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
         placeId = Some("zz_site")
       )
     )
-    EventRepo.put(
+    EventFixtures.put(
       ds,
       "zz_event_gone",
       EventPut("An event deleted later", "battle", TimeSpan(Some(-1250), None, None, None))
@@ -282,7 +285,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
     val _ =
       ArticleRepo.put(home, Article("zz_kingdom", "Kingdoms", "culture", "One [[zzbeta2005_kingdom]].\n\nTwo (home)."))
     // a deleted event and a deleted goal at work
-    val _ = EventRepo.delete(work, "zz_event_gone")
+    val _ = EventFixtures.delete(work, "zz_event_gone")
     val _ = GoalRepo.delete(work, "zz_goal_gone")
     // something new at work
     SourceRepo.upsert(work, src("zzdelta2020_new", "A New Book", 2020, findings = List("new at work")), chunk)

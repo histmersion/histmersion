@@ -22,6 +22,7 @@ class AttestationsControllersSuite extends munit.FunSuite:
 
   private val sources = new PassageSource:
     def canonical(citekey: String): Option[String] = Option.when(citekey == "zznew1990_x")(citekey)
+    def naming(name: String, limit: Int): List[String] = Nil
     def reader(citekey: String): PassageReader = (_, _, _, _, _, _) => Left("no text")
 
   private def controllers(gate: WriteGate = WriteGate()) =

@@ -753,8 +753,6 @@ core:domain/ArticleReviewStatus.scala	research.articles.review
 core:domain/AutoEnrich.scala	library.workflows
 core:domain/AutopilotPolicy.scala	automation.autopilot
 core:domain/BrowserDownload.scala	library.acquisition
-core:domain/CatalogMerge.scala	catalogue.events
-core:domain/CatalogProvider.scala	catalogue.events
 core:domain/Citekeys.scala	library.sources
 core:domain/CodexRetention.scala	automation.agents
 core:domain/CompareRuns.scala	automation.agents
@@ -762,8 +760,6 @@ core:domain/CompileArticle.scala	research.workflows
 core:domain/CoreQuota.scala	library.acquisition
 core:domain/Cron.scala	automation.scheduler
 core:domain/EnrichSource.scala	library.workflows
-core:domain/EventMatcher.scala	catalogue.evidence
-core:domain/EventProviders.scala	catalogue.events
 core:domain/ExternalIds.scala	library.sources
 core:domain/FigurePick.scala	media
 core:domain/FilterInference.scala	research.workflows
@@ -775,7 +771,6 @@ core:domain/IngestBacklog.scala	library.acquisition
 core:domain/ManagerDefaults.scala	automation.managers
 core:domain/ManagerPolicy.scala	automation.managers
 core:domain/ManagerRunDefaults.scala	automation.managers
-core:domain/MatchWeights.scala	catalogue.evidence
 core:domain/MediaLicence.scala	media
 core:domain/MediaMatch.scala	media
 core:domain/MediaRecord.scala	media
@@ -799,7 +794,6 @@ core:domain/SchedulerPolicy.scala	automation.scheduler
 core:domain/Scheduling.scala	automation.scheduler
 core:domain/SeedPlanDefaults.scala	library.workflows
 core:domain/SourceMatcher.scala	library.merge-rules
-core:domain/StoredEvent.scala	catalogue.events
 core:domain/TextAnchor.scala	research.articles
 core:domain/TileCell.scala	catalogue.maptiles
 core:domain/TileCoord.scala	catalogue.maptiles
@@ -832,12 +826,9 @@ db:db/BundleImport.scala	util.data.exchange
 db:db/BundleRepo.scala	util.data.exchange
 db:db/CandidateRepo.scala	library.acquisition
 db:db/Codecs.scala	util.common
-db:db/CorrectionRepo.scala	catalogue.events
 db:db/CoverageRepo.scala	research.articles
 db:db/CritiqueRepo.scala	research.articles
 db:db/Db.scala	util.common
-db:db/EventCatalogRepo.scala	catalogue.events
-db:db/EventRepo.scala	catalogue.events
 db:db/Figures.scala	media
 db:db/FilterSql.scala	library.search
 db:db/FocusRepo.scala	automation.goals
@@ -850,7 +841,6 @@ db:db/Importer.scala	library.ingest
 db:db/Jsonb.scala	util.common
 db:db/Keyset.scala	util.database
 db:db/LandRepo.scala	catalogue.places
-db:db/LeadRow.scala	catalogue.evidence
 db:db/LintRepo.scala	util.data.checks
 db:db/ListSql.scala	util.database
 db:db/ManagerRepo.scala	automation.managers
@@ -898,6 +888,7 @@ server:server/AuthHandler.scala	server
 server:server/BackupWiring.scala	server
 server:server/BasemapWiring.scala	server
 server:server/Bootstrap.scala	server
+server:server/CatalogueWiring.scala	server
 server:server/ChipField.scala	kernel
 server:server/Citation.scala	research.articles
 server:server/CitedEntry.scala	research.articles
@@ -1027,11 +1018,6 @@ server:server/agents/TransitionSite.scala	server
 server:server/agents/TransitionTools.scala	server
 server:server/agents/TransitionWorkflows.scala	server
 server:server/agents/WatchManagerKind.scala	server
-server:server/events/BuiltinCatalogues.scala	catalogue.events
-server:server/events/EventCatalogHandlers.scala	catalogue.events
-server:server/events/EventCatalogRoutes.scala	catalogue.events
-server:server/events/EventCatalogTools.scala	catalogue.events
-server:server/events/EventsSettings.scala	catalogue.events
 server:server/hot/Hot.scala	server
 server:server/hot/HotDataSource.scala	server
 server:server/hot/HotGraph.scala	server
@@ -1053,3 +1039,4 @@ server:server/media/MediaStore.scala	media
 server:server/media/PluginCollection.scala	media
 server:server/media/SourcePictures.scala	media
 server:server/plugins/RelinkPlugins.scala	util.plugins
+server:server/views/EventCardView.scala	server

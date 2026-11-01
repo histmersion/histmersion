@@ -13619,22 +13619,6 @@
       ]
     },
     {
-      "type": "com.histmersion.db.CandidateRow$",
-      "fields": [
-        {
-          "name": "derived$DbCodec$lzy4"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.db.CatalogueRefRow$",
-      "fields": [
-        {
-          "name": "derived$DbCodec$lzy2"
-        }
-      ]
-    },
-    {
       "type": "com.histmersion.db.CitekeyMillis$",
       "fields": [
         {
@@ -13675,101 +13659,10 @@
       ]
     },
     {
-      "type": "com.histmersion.db.CorrectionRepo$package$",
-      "fields": [
-        {
-          "name": "given_DbCodec_CorrectionRow$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.db.CorrectionRow$",
-      "fields": [
-        {
-          "name": "derived$DbCodec$lzy1"
-        }
-      ]
-    },
-    {
       "type": "com.histmersion.db.EdgeRow$",
       "fields": [
         {
           "name": "derived$DbCodec$lzy3"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.db.EventCatalogRepo$package$",
-      "fields": [
-        {
-          "name": "given_DbCodec_CandidateRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_CatalogueRefRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_LeadRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_NearFindingRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_StoredEventRow$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.db.EventDatingRow$",
-      "fields": [
-        {
-          "name": "derived$DbCodec$lzy4"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.db.EventDetailRow$",
-      "fields": [
-        {
-          "name": "derived$DbCodec$lzy2"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.db.EventGeoRow$",
-      "fields": [
-        {
-          "name": "derived$DbCodec$lzy3"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.db.EventRepo$package$",
-      "fields": [
-        {
-          "name": "given_DbCodec_EventDatingRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_EventDetailRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_EventEdge$lzy1"
-        },
-        {
-          "name": "given_DbCodec_EventGeoRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_EventParticipant$lzy1"
-        },
-        {
-          "name": "given_DbCodec_EventRow$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.db.EventRow$",
-      "fields": [
-        {
-          "name": "derived$DbCodec$lzy1"
         }
       ]
     },
@@ -13949,6 +13842,114 @@
       ]
     },
     {
+      "type": "com.histmersion.domain.catalogue.events.CatalogMerge$Fit$",
+      "fields": [
+        {
+          "name": "given_Ordering_Fit$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.catalogue.events.CatalogueRefRow$",
+      "fields": [
+        {
+          "name": "derived$DbCodec$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.catalogue.events.CorrectionRow$",
+      "fields": [
+        {
+          "name": "derived$DbCodec$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.catalogue.events.CorrectionsTools$EventCorrectionsInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_EventCorrectionsInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.catalogue.events.EventDatingRow$",
+      "fields": [
+        {
+          "name": "derived$DbCodec$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.catalogue.events.EventDetailRow$",
+      "fields": [
+        {
+          "name": "derived$DbCodec$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.catalogue.events.EventGeoRow$",
+      "fields": [
+        {
+          "name": "derived$DbCodec$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.catalogue.events.EventRepo$",
+      "fields": [
+        {
+          "name": "given_DbCodec_EventEdge$lzy1"
+        },
+        {
+          "name": "given_DbCodec_EventParticipant$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.catalogue.events.EventRow$",
+      "fields": [
+        {
+          "name": "derived$DbCodec$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.catalogue.events.EventsTools$EventsInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_EventsInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.catalogue.events.EventsTools$PatchEventInput$",
+      "fields": [
+        {
+          "name": "given_AsObject_PatchEventInput$lzy1"
+        },
+        {
+          "name": "given_Schema_PatchEventInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.catalogue.events.StoredEventRow$",
+      "fields": [
+        {
+          "name": "derived$DbCodec$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.domain.catalogue.evidence.AttestationRepo$",
       "fields": [
         {
@@ -13990,6 +13991,41 @@
       ]
     },
     {
+      "type": "com.histmersion.domain.catalogue.evidence.CandidateRow$",
+      "fields": [
+        {
+          "name": "derived$DbCodec$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.catalogue.evidence.EventLinksTools$EventLinksInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_EventLinksInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.catalogue.evidence.LeadRow$",
+      "fields": [
+        {
+          "name": "derived$DbCodec$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.catalogue.evidence.NearFindingRow$",
+      "fields": [
+        {
+          "name": "derived$DbCodec$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.domain.catalogue.periods.PeriodRow$",
       "fields": [
         {
@@ -14013,6 +14049,26 @@
       "fields": [
         {
           "name": "chunks$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.server.CatalogueWiring",
+      "fields": [
+        {
+          "name": "eventImporter$lzy1"
+        },
+        {
+          "name": "eventImports$lzy1"
+        },
+        {
+          "name": "eventLinks$lzy1"
+        },
+        {
+          "name": "eventStore$lzy1"
+        },
+        {
+          "name": "siteTypes$lzy1"
         }
       ]
     },
@@ -14050,14 +14106,6 @@
     },
     {
       "type": "com.histmersion.util.jobs.JobRow$",
-      "fields": [
-        {
-          "name": "derived$DbCodec$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.db.LeadRow$",
       "fields": [
         {
           "name": "derived$DbCodec$lzy1"
@@ -14174,14 +14222,6 @@
       "fields": [
         {
           "name": "derived$DbCodec$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.db.NearFindingRow$",
-      "fields": [
-        {
-          "name": "derived$DbCodec$lzy3"
         }
       ]
     },
@@ -14433,14 +14473,6 @@
       ]
     },
     {
-      "type": "com.histmersion.db.StoredEventRow$",
-      "fields": [
-        {
-          "name": "derived$DbCodec$lzy1"
-        }
-      ]
-    },
-    {
       "type": "com.histmersion.db.TileRepo$",
       "fields": [
         {
@@ -14511,14 +14543,6 @@
         },
         {
           "name": "given_Schema_ProposalAnswer$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.domain.CatalogMerge$Fit$",
-      "fields": [
-        {
-          "name": "given_Ordering_Fit$lzy1"
         }
       ]
     },
@@ -15570,6 +15594,9 @@
       "type": "com.histmersion.server.Deps",
       "fields": [
         {
+          "name": "eventSources$lzy1"
+        },
+        {
           "name": "passages$lzy1"
         },
         {
@@ -15582,6 +15609,9 @@
       "fields": [
         {
           "name": "attestations$lzy1"
+        },
+        {
+          "name": "events$lzy1"
         },
         {
           "name": "jobControl$lzy1"
@@ -15628,9 +15658,6 @@
         },
         {
           "name": "derived$KindlingsCodecAsObject$lzy30"
-        },
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy31"
         },
         {
           "name": "derived$KindlingsCodecAsObject$lzy32"
@@ -15725,9 +15752,6 @@
         },
         {
           "name": "derived$KindlingsCodecAsObject$lzy32"
-        },
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy33"
         },
         {
           "name": "derived$KindlingsCodecAsObject$lzy36"
@@ -15847,9 +15871,6 @@
           "name": "derived$KindlingsCodecAsObject$lzy31"
         },
         {
-          "name": "derived$KindlingsCodecAsObject$lzy32"
-        },
-        {
           "name": "derived$KindlingsCodecAsObject$lzy33"
         },
         {
@@ -15870,33 +15891,10 @@
           "name": "derived$KindlingsCodecAsObject$lzy33"
         },
         {
-          "name": "derived$KindlingsCodecAsObject$lzy34"
-        },
-        {
           "name": "derived$KindlingsCodecAsObject$lzy37"
         },
         {
           "name": "given_Schema_DeleteAssetLinkInput$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.server.McpTools$EventsInput$",
-      "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy22"
-        },
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy25"
-        },
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy26"
-        },
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy29"
-        },
-        {
-          "name": "given_Schema_EventsInput$lzy1"
         }
       ]
     },
@@ -16053,9 +16051,6 @@
         },
         {
           "name": "derived$KindlingsCodecAsObject$lzy29"
-        },
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy30"
         },
         {
           "name": "given_Schema_GoalsInput$lzy1"
@@ -16269,17 +16264,6 @@
         },
         {
           "name": "given_Schema_PatchAssetInput$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.server.McpTools$PatchEventInput$",
-      "fields": [
-        {
-          "name": "given_AsObject_PatchEventInput$lzy1"
-        },
-        {
-          "name": "given_Schema_PatchEventInput$lzy1"
         }
       ]
     },
@@ -17060,28 +17044,6 @@
     },
     {
       "type": "com.histmersion.util.basemap.Vp8l$Group[]"
-    },
-    {
-      "type": "com.histmersion.server.events.EventCatalogTools$EventCorrectionsInput$",
-      "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy2"
-        },
-        {
-          "name": "given_Schema_EventCorrectionsInput$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.server.events.EventCatalogTools$EventLinksInput$",
-      "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy1"
-        },
-        {
-          "name": "given_Schema_EventLinksInput$lzy1"
-        }
-      ]
     },
     {
       "type": "com.histmersion.server.media.SourcePictures",

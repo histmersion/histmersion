@@ -66,6 +66,12 @@ given DbCodec[FindingRow] = DbCodec.derived
 given DbCodec[SourceRef] = DbCodec.derived
 
 object SourceRepo:
+
+  /** The sources whose chunks contain `name` as a phrase (the FTS index), most chunks first, at most `limit`. */
+  def naming(ds: DataSource, name: String, limit: Int): List[String] =
+    connect(ds):
+      sql"""SELECT citekey FROM source_chunks WHERE tsv @@ phraseto_tsquery('english', $name)
+            GROUP BY citekey ORDER BY count(*) DESC, citekey LIMIT $limit""".query[String].run().toList
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
   /** Full replace of a source and everything under it, in ONE transaction. Kept as the original `Unit` signature;
     * [[put]] is the same write returning the new `updated_at` token.

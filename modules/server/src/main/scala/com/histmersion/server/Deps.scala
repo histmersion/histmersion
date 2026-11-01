@@ -64,6 +64,10 @@ final class Deps(
   lazy val passages: com.histmersion.domain.catalogue.evidence.passages.PassageSource =
     com.histmersion.domain.library.sources.SourcePassages(ds)
 
+  /** The events related to what a filter selects, as the library reads the filter's sources. */
+  lazy val eventSources: com.histmersion.domain.catalogue.events.EventSourceFilter =
+    com.histmersion.domain.library.search.FilterEventSources()
+
   /** The server's files, each named place where today's settings put it. */
   lazy val storage: com.histmersion.util.storage.Storage =
     StorageLocations.storage(() => cfg, () => loaded, environment, userPaths)

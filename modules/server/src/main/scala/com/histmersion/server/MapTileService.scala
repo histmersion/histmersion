@@ -5,6 +5,7 @@ import com.histmersion.config.UiMapTilesSettings
 import com.histmersion.db.*
 import com.histmersion.domain.*
 import com.histmersion.domain.maptiles.UndatedCells
+import com.histmersion.domain.catalogue.events.{EventSelection, EventService, EventSourceFilter, EventSql}
 import com.histmersion.server.maptiles.UndatedSites
 
 import sttp.model.StatusCode
@@ -19,7 +20,9 @@ final class MapTileService(
     settings: () => UiMapTilesSettings,
     modernFrom: () => Long,
     scopeOf: Filter => PlaceScope,
-    undatedSites: UndatedSites
+    undatedSites: UndatedSites,
+    events: EventService,
+    related: EventSourceFilter
 ):
   import MapTiles.*
 
@@ -84,19 +87,19 @@ final class MapTileService(
         TileFeatures.of(c.z, cells, records.get, TileFeatures.site)
       case TileLayer.Events =>
         val f = q.filter
-        def where(f: Filter) = EventRepo.listWhere(
+        def where(f: Filter) = EventSelection(
           f,
           scopeOf(f),
           q.text,
           q.kind,
           q.historicity,
           q.placeId,
-          EventRepo.Narrow(q.tier.map(_.trim).filter(_.nonEmpty), q.context.getOrElse(false), None)
-        )
+          EventSql.Narrow(q.tier.map(_.trim).filter(_.nonEmpty), q.context.getOrElse(false), None)
+        ).sql(related)
         val cells =
           if q.withUndated then TileRepo.eventCellsWithUndated(ds, c, grid, where(f), where(f.copy(period = None)))
           else TileRepo.eventCells(ds, c, grid, where(f))
-        val records = EventRepo.geoOf(ds, cells.filter(_.isItem).map(_.key))
+        val records = events.geoOf(cells.filter(_.isItem).map(_.key))
         TileFeatures.of(c.z, cells, records.get, TileFeatures.event)
       case TileLayer.Media =>
         val cells = TileRepo.mediaCells(ds, c, grid, q.kind, q.provider, q.license, window(q.filter))

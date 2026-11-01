@@ -1,5 +1,8 @@
 package com.histmersion.server.plugins
 
+import com.histmersion.domain.catalogue.events.*
+import com.histmersion.domain.catalogue.evidence.*
+
 import com.histmersion.server.ServerPlugins
 import com.histmersion.util.plugins.Plugins
 
@@ -8,7 +11,7 @@ import com.histmersion.pluginhost.{Generation, PluginEvents, PluginHost, PluginM
 import com.histmersion.domain.{MediaLicence, MediaRecord}
 import com.histmersion.plugin.*
 import com.histmersion.domain.catalogue.places.BuiltinGazetteers
-import com.histmersion.server.events.BuiltinCatalogues
+import com.histmersion.domain.catalogue.events.BuiltinCatalogues
 import com.histmersion.server.media.{BuiltinMedia, MediaImporters, PluginCollection}
 import com.histmersion.server.agents.BuiltinAi
 import com.histmersion.api.VocabularyCodecs.given
@@ -89,7 +92,8 @@ class ProviderPluginsSuite extends munit.FunSuite:
     // the first-party plugins' catalogues state the terms the host showed for them before they moved
     assertEquals(
       BuiltinCatalogues.infos(g.registries.eventCatalogues),
-      com.histmersion.domain.CatalogProvider.all.flatMap(com.histmersion.domain.CatalogProvider.info)
+      com.histmersion.domain.catalogue.events.CatalogProvider.all
+        .flatMap(com.histmersion.domain.catalogue.events.CatalogProvider.info)
     )
     assert(g.registries.sourceFetchers.isEmpty, "offline: no fetcher")
 

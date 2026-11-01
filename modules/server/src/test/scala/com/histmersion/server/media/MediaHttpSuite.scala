@@ -1,11 +1,14 @@
 package com.histmersion.server.media
 
+import com.histmersion.domain.catalogue.events.*
+import com.histmersion.domain.catalogue.evidence.*
+
 import ox.supervised
 import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{Db, EventRepo, MediaRepo, Migrate, PlaceRepo}
+import com.histmersion.db.{Db, MediaRepo, Migrate, PlaceRepo}
 import com.histmersion.server.{Composition, Deps}
 import io.circe.parser.decode
 import java.net.URI
@@ -87,7 +90,7 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
       )
       connect(ds)(sql"""INSERT INTO place_links (place_id, scheme, external_id, relation, import_source, import_ref)
             VALUES ($PlaceId, 'wikidata', 'Q132564', 'exact_match', 'test', 'zqmh')""".update.run())
-      EventRepo.put(
+      EventFixtures.put(
         ds,
         EventId,
         EventPut("Zqmh battle", "battle", TimeSpan(Some(-1200), None, None, Some(-1190)), placeId = Some(PlaceId))

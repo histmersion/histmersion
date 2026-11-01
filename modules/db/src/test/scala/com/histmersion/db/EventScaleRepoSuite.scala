@@ -1,5 +1,8 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.events.*
+import com.histmersion.domain.catalogue.evidence.*
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -10,9 +13,9 @@ import com.histmersion.util.data.exchange.BundleScope
 
 /** An event's scale (V078, #1440) and the map's events feed against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped
   * otherwise): the column and its check, the scale derived from the kind, the sub-event rule, the place's kind and the
-  * event's own geometry, a stated scale and its `auto` reset, and `EventRepo.geo` — each event's anchor (a point, or
-  * the point-on-surface of an area), the outline of a REGIONAL event's area only, the unplaced count — and the bundle
-  * carrying a stated scale. Fixtures sit at 120–125°E, 50°S, ids start with `zqes`.
+  * event's own geometry, a stated scale and its `auto` reset, and `EventFixtures.geo` — each event's anchor (a point,
+  * or the point-on-surface of an area), the outline of a REGIONAL event's area only, the unplaced count — and the
+  * bundle carrying a stated scale. Fixtures sit at 120–125°E, 50°S, ids start with `zqes`.
   */
 class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
   private val testDb = TestDb.url
@@ -48,7 +51,7 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       geometry: Option[String] = None,
       scale: Option[String] = None
   ) =
-    EventRepo.put(
+    EventFixtures.put(
       ds,
       id,
       EventPut(
@@ -83,10 +86,10 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       ev("zqes_stated", "battle", place = Some("zqes_area"), scale = Some("regional"))
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
-  private def summary(id: String): EventSummary = EventRepo.get(ds, id).getOrElse(fail(s"no $id")).event
+  private def summary(id: String): EventSummary = EventFixtures.get(ds, id).getOrElse(fail(s"no $id")).event
 
   private def geo(): EventGeoList =
-    val all = EventRepo.geo(ds, Filter(), PlaceScope.empty, Some("Zqes"), None, None, None, 1000, 0.01)
+    val all = EventFixtures.geo(ds, Filter(), PlaceScope.empty, Some("Zqes"), None, None, None, 1000, 0.01)
     all.copy(events = all.events.filter(_.id.startsWith("zqes")))
 
   test("V078: the scale column takes local, regional or nothing — and nothing else"):
@@ -131,7 +134,7 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     )
     assert(!summary("zqes_migration").scaleStated)
     // the list carries the same
-    val listed = EventRepo
+    val listed = EventFixtures
       .list(ds, Filter(), PlaceScope.empty, Some("Zqes"), None, None, None, 100, 0)
       .events
       .map(e => e.id -> e.scale)
@@ -141,12 +144,12 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
 
   test("a stated scale wins; a patch states one, and `auto` forgets it"):
     assertEquals((summary("zqes_stated").scale, summary("zqes_stated").scaleStated), ("regional", true))
-    assertEquals(EventRepo.patch(ds, "zqes_stated", EventPatch(scale = Some("auto"))), Right(()))
+    assertEquals(EventFixtures.patch(ds, "zqes_stated", EventPatch(scale = Some("auto"))), Right(()))
     assertEquals((summary("zqes_stated").scale, summary("zqes_stated").scaleStated), ("local", false))
-    assertEquals(EventRepo.patch(ds, "zqes_stated", EventPatch(scale = Some("Regional"))), Right(()))
+    assertEquals(EventFixtures.patch(ds, "zqes_stated", EventPatch(scale = Some("Regional"))), Right(()))
     assertEquals((summary("zqes_stated").scale, summary("zqes_stated").scaleStated), ("regional", true))
     // a patch of something else keeps it
-    assertEquals(EventRepo.patch(ds, "zqes_stated", EventPatch(description = Some("d"))), Right(()))
+    assertEquals(EventFixtures.patch(ds, "zqes_stated", EventPatch(description = Some("d"))), Right(()))
     assertEquals(summary("zqes_stated").scale, "regional")
 
   test("the map feed: the anchor, the outline of a regional area only, the unplaced count"):

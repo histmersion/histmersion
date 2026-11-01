@@ -6,7 +6,7 @@ package com.histmersion.pluginhost
   */
 object ReservedNames:
   import com.histmersion.api.{Agents, MediaProvider}
-  import com.histmersion.domain.CatalogProvider
+  import com.histmersion.domain.catalogue.events.CatalogProvider
 
   /** The built-in media imports (`media import <name>`) and their aliases, and every provider pictures are stored
     * under.

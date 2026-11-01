@@ -10,6 +10,7 @@ import com.histmersion.files.BundleEntities.BlobUse
 
 import com.augustnagro.magnum.*
 import com.histmersion.domain.automation.worklists.QueueRepo
+import com.histmersion.domain.catalogue.events.EventRepo
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Path
 import java.util.UUID
@@ -418,7 +419,7 @@ object BundleImport:
       )
 
     def eventRenames(): Unit =
-      followRenames(es.events, _.uid, _.id, local.events.map(e => e.uid -> e.id).toMap, "event")(EventRepo.renameIn)
+      followRenames(es.events, _.uid, _.id, local.events.map(e => e.uid -> e.id).toMap, "event")(EventRepo.rename)
 
     def goalRenames(): Unit =
       followRenames(es.goals, _.uid, _.slug, local.goals.map(g => g.uid -> g.slug).toMap, "goal")(GoalRepo.renameIn)

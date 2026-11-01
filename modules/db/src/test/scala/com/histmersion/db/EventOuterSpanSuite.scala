@@ -1,5 +1,8 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.events.*
+import com.histmersion.domain.catalogue.evidence.*
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -27,7 +30,7 @@ class EventOuterSpanSuite extends com.histmersion.db.DbSuite:
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private def put(id: String, ts: TimeSpan, kind: String = "war") =
-    EventRepo.put(
+    EventFixtures.put(
       ds,
       id,
       EventPut(s"Zqos $id", kind, ts, geometry = Some("""{"type":"Point","coordinates":[163.0,-46.0]}"""))
@@ -61,13 +64,13 @@ class EventOuterSpanSuite extends com.histmersion.db.DbSuite:
     put("zqos_case_open", TimeSpan(notBefore = Some(-1200)))
     put("zqos_case_closed", TimeSpan(Some(-1210), None, None, Some(-1190)))
     def geoIds(p: Period) =
-      EventRepo
+      EventFixtures
         .geo(ds, Filter(period = Some(p)), PlaceScope.empty, Some("Zqos zqos_case_"), None, None, None, 100, 0.01)
         .events
         .map(_.id)
         .toSet
     def listIds(p: Period) =
-      EventRepo
+      EventFixtures
         .list(ds, Filter(period = Some(p)), PlaceScope.empty, Some("Zqos zqos_case_"), None, None, None, 100, 0)
         .events
         .map(_.id)
