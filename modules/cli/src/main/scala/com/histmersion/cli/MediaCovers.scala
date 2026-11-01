@@ -2,6 +2,7 @@ package com.histmersion.cli
 
 import com.histmersion.api.*
 import com.histmersion.files.*
+import com.histmersion.domain.media.covers.CoverChoice
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}

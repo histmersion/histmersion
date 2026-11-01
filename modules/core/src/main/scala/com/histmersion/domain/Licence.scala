@@ -80,8 +80,8 @@ object Licence:
     */
   def parse(machine: Option[String], short: Option[String]): Licence = firstKnown(machine.toList ++ short.toList)
 
-  /** Pure: the first of the statements that reads as a known licence ([[classify]]); [[LicenceFamily.Unknown]] with
-    * the first non-empty one when none does.
+  /** Pure: the first of the statements that reads as a known licence ([[classify]]); [[LicenceFamily.Unknown]] with the
+    * first non-empty one when none does.
     */
   def firstKnown(statements: List[String]): Licence =
     val cands = statements.map(_.trim).filter(_.nonEmpty)

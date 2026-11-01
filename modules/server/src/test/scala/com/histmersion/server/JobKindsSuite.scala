@@ -19,8 +19,8 @@ class JobKindsSuite extends munit.FunSuite:
       com.histmersion.domain.catalogue.evidence.EventLinksControllers.CandidatesJobKind,
       com.histmersion.domain.catalogue.places.SiteTypesControllers.SiteTypesJobKind,
       com.histmersion.domain.catalogue.events.EventImportsControllers.RederiveJobKind,
-      media.MediaHandlers.ImportJobKind,
-      media.MediaHandlers.CoversJobKind,
+      com.histmersion.domain.media.imports.ImportsControllers.ImportJobKind,
+      com.histmersion.domain.media.covers.CoversControllers.CoversJobKind,
       Bootstrap.JobKind
     )
     assertEquals(kinds.filterNot(k => JobKindsAdapter.all.parse(k).isDefined), Nil)

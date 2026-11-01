@@ -35,13 +35,10 @@ import com.histmersion.db.{
   AggregateRepo,
   ArticleRepo,
   ArticleReviewRepo,
-  AssetLinkRepo,
-  AssetMetaRepo,
   CoverageRepo,
   CritiqueRepo,
   GoalRepo,
   Importer,
-  MediaRepo,
   Migrate,
   ReviewLedgerRepo,
   SourceDeleteRepo,
@@ -98,21 +95,24 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** The ingest/jobs/assets surface (plan §1.8), in its own file but reached only through here — so "one implementation
     * per operation" still holds for REST, MCP and the CLI alike.
     */
+  /** Media's pictures, their links, the imports from outside providers (#1446), the sources' covers and illustrations.
+    * Thumbnails come from the converter.
+    */
+  val media: MediaWiring = MediaWiring(deps, converter)
+
   val ingest: IngestHandlers = IngestHandlers(
     deps,
     converter,
+    media.assetStore,
     ck =>
       // a stored conversion: the source's illustration (and Open Library cover) first, then enrichment
       Option(
         List(
-          media.afterIngest(ck),
+          media.covers.afterIngest(ck),
           com.histmersion.server.agents.TransitionWorkflows.enrich(agents).autoEnrich(ck)
         ).flatten
       ).filter(_.nonEmpty).map(_.mkString(" · "))
   )
-
-  /** Media from outside providers (#1446) — same arrangement. Thumbnails come from the converter. */
-  val media: com.histmersion.server.media.MediaHandlers = com.histmersion.server.media.MediaHandlers(deps, converter)
 
   /** Named periods' write path and the first-run `init` job (#719, #720) — same arrangement. */
   val bootstrap: Bootstrap = Bootstrap(deps)
@@ -471,7 +471,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
         SourceWithFindings(
           if body then s else s.copy(ocrMarkdown = None),
           fs.toList,
-          illustration = media.sourceThumb(s.citekey)
+          illustration = media.assets.sourceThumb(s.citekey)
         )
       )
       .toRight(ApiError(s"No source '$citekey'"))
@@ -652,7 +652,18 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       SafePath.confine(corpusRoot, asked).left.map(ApiError(_)).flatMap { dir =>
         if !Files.isDirectory(dir) then Left(ApiError(s"not a directory on the server: $dir"))
         else
-          Right(Importer.importDir(ds, dir, cfg.limits.chunkChars, req.force, cfg.limits.assetBytes, tolKm, corpusRoot))
+          Right(
+            Importer.importDir(
+              ds,
+              dir,
+              cfg.limits.chunkChars,
+              req.force,
+              SeedFigureFiles(media.assetStore),
+              cfg.limits.assetBytes,
+              tolKm,
+              corpusRoot
+            )
+          )
       }
 
   /** `corpus.dir` as an `Option`: empty string = not configured. */
@@ -930,7 +941,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
             withBody.copy(ocrMarkdown = withBody.ocrMarkdown.map(AssetLinks.normalizeBody(_, withBody.title)))
           val _ = SourceRepo.put(ds, normalised, cfg.limits.chunkChars, tolKm)
           if req.assets.isEmpty then Right(SeedResult(1, Nil, 0, Nil))
-          else ingest.putAssets(ck, req.assets).map(_ => SeedResult(1, Nil, 0, Nil))
+          else media.assets.putFigures(ck, req.assets).map(_ => SeedResult(1, Nil, 0, Nil))
 
   /** `get_source` as Markdown, with image links made ABSOLUTE (plan §1.8) so an image-capable MCP client can fetch the
     * figures. The ONE renderer both MCP and the article page go through.
@@ -1077,7 +1088,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       com.histmersion.server.views
         .EventCardView(
           eventLinks.context,
-          media.eventThumbs,
+          media.assets.eventThumbs,
           (citekeys, limit) => ArticleRepo.citing(ds, citekeys, limit)
         )
         .apply,
@@ -1190,48 +1201,6 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       if AgentStateRepo.delete(ds, key) then Right(AgentStateDeleted(key, true))
       else Left(ApiError(s"No agent state key '$key'", Some(Write.CodeNotFound)))
 
-  // ── media associations (plan §1.6) ──────────────────────────────────────────────────────────
-
-  def assetDetail(citekey: String, name: String): Either[ApiError, AssetDetail] =
-    AssetMetaRepo.detail(ds, citekey, name).toRight(ApiError(s"No asset '$citekey/$name'", Some(Write.CodeNotFound)))
-
-  def patchAsset(citekey: String, name: String, p: AssetPatch): Either[ApiError, AssetDetail] =
-    maintenance.guard("patch_asset")(AssetMetaRepo.patch(ds, citekey, name, p))
-
-  def mediaGeo(q: Api.MediaGeoQuery): List[MediaGeoHit] =
-    MediaRepo.geo(ds, q, cfg.limits.page(q.limit, 200))
-
-  def listAssetLinks(
-      citekey: Option[String],
-      asset: Option[String],
-      targetType: Option[String],
-      targetId: Option[String]
-  ): AssetLinkList =
-    val target = for t <- targetType; i <- targetId yield refId(t, i)
-    AssetLinkRepo.list(
-      ds,
-      citekey.map(current(AliasKindsAdapter.SourceRecords, _)),
-      asset,
-      targetType,
-      target.orElse(targetId)
-    )
-
-  def createAssetLink(in: AssetLinkPut): Either[ApiError, AssetLink] =
-    maintenance.guard("create_asset_link")(
-      AssetLinkRepo.create(
-        ds,
-        in.copy(
-          citekey = current(AliasKindsAdapter.SourceRecords, in.citekey),
-          targetId = refId(in.targetType, in.targetId)
-        )
-      )
-    )
-
-  def deleteAssetLink(id: Long): Either[ApiError, AssetLinkDeleted] =
-    maintenance.guard("delete_asset_link"):
-      if AssetLinkRepo.delete(ds, id) then Right(AssetLinkDeleted(id, true))
-      else Left(ApiError(s"No asset link #$id", Some(Write.CodeNotFound)))
-
   // ── the gazetteer (plan §1.6a) ──────────────────────────────────────────────────────────────
 
   /** The gazetteer's operations. */
@@ -1260,7 +1229,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       ),
       eventStore,
       deps.eventSources,
-      com.histmersion.domain.media.MediaMapLayer(ds)
+      media.mapLayer
     )
 
   def tile(q: TilesApi.TileQuery): Either[ApiError, TilesApi.TileAnswer] = tiles.tile(q)
@@ -1270,7 +1239,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     */
   def place(id: String, asOf: Option[Long], counts: Boolean = false): Either[ApiError, PlaceDetail] =
     com.histmersion.server.views
-      .PlaceCardView(places.get, places.placeId, placeCounts, media.placeThumbs)
+      .PlaceCardView(places.get, places.placeId, placeCounts, media.assets.placeThumbs)
       .apply(id, asOf, counts)
 
   /** What `place=<id>` alone selects in each list — the same scope (the place and its descendants) and the same queries

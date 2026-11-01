@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.server.MediaWiring
+
 import com.histmersion.server.ServerPlugins
 
 import com.histmersion.api.*
@@ -41,13 +43,13 @@ class MediaTrafficSuite extends com.histmersion.db.DbSuite:
     val loaded = load("")
     val wire = MediaWire.Wire()
     val plugins = ServerPlugins.load(loaded, transport = _ => wire)
-    val handlers = MediaHandlers(Deps(loaded.config, ds, ds, plugins = plugins), wire, MediaWire.Thumbs())
+    val handlers = MediaWiring(Deps(loaded.config, ds, ds, plugins = plugins), wire, MediaWire.Thumbs())
 
     def report(r: Either[ApiError, MediaImportReport]): String =
       r.fold(e => s"refused: ${e.message}\n", r => s"report: ${r.asJson.noSpaces}\n")
 
     def run(name: String, req: MediaImportRequest): Unit =
-      val r = handlers.importMedia(req)
+      val r = handlers.imports.importMedia(req)
       sb ++= s"## $name\n" + wire.take() + report(r)
 
     @annotation.tailrec
@@ -56,14 +58,14 @@ class MediaTrafficSuite extends com.histmersion.db.DbSuite:
       if j.isTerminal || n <= 0 then j else { Thread.sleep(50); until(id, n - 1) }
 
     def job(name: String, req: MediaImportRequest): Unit =
-      handlers.importJob(req) match
+      handlers.imports.importJob(req) match
         case Left(e)  => sb ++= s"## job $name\n" + wire.take() + s"refused: ${e.message}\n"
         case Right(j) =>
           val end = until(j.id, 600)
           sb ++= s"## job $name\n" + wire.take() +
             s"job: ${end.status} ${end.detail.flatMap(_.media).getOrElse("")} — ${end.progress.getOrElse("")}\n"
 
-    sb ++= s"providers: ${handlers.providers.asJson.noSpaces}\n"
+    sb ++= s"providers: ${handlers.imports.providers.asJson.noSpaces}\n"
     sb ++= wire.take()
 
     val all = List(
@@ -115,15 +117,15 @@ class MediaTrafficSuite extends com.histmersion.db.DbSuite:
         |""".stripMargin
     )
     val offHandlers =
-      MediaHandlers(
+      MediaWiring(
         Deps(off.config, ds, ds, plugins = ServerPlugins.load(off, transport = _ => wire)),
         wire,
         MediaWire.Thumbs()
       )
     List("cleveland", "met", "europeana", "smithsonian").foreach { p =>
-      sb ++= s"## $p, switched off\n" + report(offHandlers.importMedia(MediaImportRequest(p))) + wire.take()
+      sb ++= s"## $p, switched off\n" + report(offHandlers.imports.importMedia(MediaImportRequest(p))) + wire.take()
     }
-    sb ++= s"providers, some switched off: ${offHandlers.providers.asJson.noSpaces}\n"
+    sb ++= s"providers, some switched off: ${offHandlers.imports.providers.asJson.noSpaces}\n"
 
     sb ++= "## stored\n" + stored
     sb.result()

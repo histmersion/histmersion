@@ -13,7 +13,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Acquire.Ident
-import com.histmersion.db.{AcquireRepo, AssetRepo, CandidateRepo, SourceRepo}
+import com.histmersion.db.{AcquireRepo, CandidateRepo, SourceRepo}
 import com.histmersion.server.Deps
 
 import io.circe.Json
@@ -439,7 +439,7 @@ final class AcquireHandlers(
     // an existing source WITH its original keeps it (and its body) unless asked to refetch; one
     // without (metadata only, e.g. created when no OA copy was found) is fetched and converted
     val original =
-      AcquireHandlers.originalOf(SourceRepo.load(ds, citekey).map(_.ocrMarkdown), AssetRepo.sha256Of(ds, citekey))
+      AcquireHandlers.originalOf(SourceRepo.load(ds, citekey).map(_.ocrMarkdown), SourceRepo.sha256Of(ds, citekey))
     val skip = original.filter(_ => !refetch)
 
     // ── the copy: the acquisition chain (the plugins' source fetchers, legal ones first; the legal

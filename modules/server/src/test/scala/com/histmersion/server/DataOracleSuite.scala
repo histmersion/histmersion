@@ -1,5 +1,8 @@
 package com.histmersion.server
 
+import com.histmersion.domain.media.assets.AssetFixtures
+import com.histmersion.domain.media.assets.NewFigure
+
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
 import com.histmersion.domain.catalogue.events.*
@@ -224,12 +227,12 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       "zz_event_gone",
       EventPut("An event deleted later", "battle", TimeSpan(Some(-1250), None, None, None))
     )
-    val _ = AssetRepo.add(
+    val _ = AssetFixtures.add(
       ds,
       "zzalpha2001_storm",
       List(
-        AssetRepo.Stored("fig1.png", "image/png", png(1), None, None),
-        AssetRepo.Stored("fig2.png", "image/png", png(2), None, None)
+        NewFigure("fig1.png", "image/png", png(1), None, None),
+        NewFigure("fig2.png", "image/png", png(2), None, None)
       )
     )
     val _ = com.histmersion.domain.catalogue.evidence

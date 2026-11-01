@@ -3,7 +3,7 @@ package com.histmersion.domain.library.collections
 import com.histmersion.api.*
 import com.histmersion.api.library.collections.*
 import com.histmersion.domain.Caller
-import com.histmersion.files.CoverChoice
+import com.histmersion.domain.media.covers.CoverChoice
 import com.histmersion.plugin.{
   CollectionCapability,
   CollectionFile,

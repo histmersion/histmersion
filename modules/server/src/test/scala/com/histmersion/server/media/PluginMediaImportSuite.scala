@@ -1,5 +1,8 @@
 package com.histmersion.server.media
 
+import com.histmersion.domain.media.assets.AssetFixtures
+import com.histmersion.server.MediaWiring
+
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
 import com.histmersion.server.ServerPlugins
@@ -11,7 +14,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{MediaRepo, Migrate}
+import com.histmersion.db.Migrate
 import com.histmersion.plugin as spi
 import com.histmersion.server.{Composition, Deps}
 import io.circe.parser.decode
@@ -143,7 +146,7 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private def handlers(cfg: AppConfig, http: HttpTransport) =
-    MediaHandlers(Deps(cfg, ds, ds, plugins = generation), http)
+    MediaWiring(Deps(cfg, ds, ds, plugins = generation), http).imports
 
   test("dry run: the plugin's records judged by the host — a stated NC licence refused under the default allowlist"):
     val http = fake
@@ -169,7 +172,7 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
     assert(url.startsWith("https://zq.example/search?q=Zqplenae"), url)
     assertEquals(headers.get("User-Agent"), Some(HttpPolicy.userAgent(base.media.userAgent)))
     assertEquals(headers.get("Accept"), Some("application/json"))
-    assertEquals(MediaRepo.thumbs(ds, "place", PlaceId), Nil, "a dry run stores nothing")
+    assertEquals(AssetFixtures.thumbs(ds, "place", PlaceId), Nil, "a dry run stores nothing")
 
   test("allowed for this collection by the user, the NC record is stored; all-rights-reserved never is"):
     val cfg = allowing("cc0,public-domain,cc-by,cc-by-nc,all-rights-reserved")
@@ -202,8 +205,8 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
     assertEquals(checked, List(2))
 
   test("the provider list and an unknown name come from the registries; the default allowlist is the host's"):
-    val h = handlers(base, fake)
-    val ps = h.providers
+    val h = MediaWiring(Deps(base, ds, ds, plugins = generation), fake)
+    val ps = h.imports.providers
     assertEquals(
       ps.map(_.name),
       List("wikidata", "depicts", "met", "cleveland", "aic", "loc", "pleiades", "opencontext", Collection)
@@ -220,17 +223,20 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
         base.media.collections.licences
       )
     )
-    assert(h.importMedia(MediaImportRequest("rijks")).left.exists(_.message.contains(s"opencontext, $Collection;")))
+    assert(
+      h.imports.importMedia(MediaImportRequest("rijks")).left.exists(_.message.contains(s"opencontext, $Collection;"))
+    )
     assert(
       handlers(base, fake).importMedia(MediaImportRequest(Collection, event = Some("e1"))).isLeft,
       "a collection is about places"
     )
     // the plugin switched off: its collection is gone from the import and the list
     val off = ServerPlugins.offlineWith(List(ZqPlugin()), ConfigFactory.empty)
-    val h2 = MediaHandlers(Deps(base, ds, ds, plugins = off), fake)
-    assert(!h2.providers.exists(_.name == Collection))
+    val h2 = MediaWiring(Deps(base, ds, ds, plugins = off), fake)
+    assert(!h2.imports.providers.exists(_.name == Collection))
     assert(
-      h2.importMedia(MediaImportRequest(Collection))
+      h2.imports
+        .importMedia(MediaImportRequest(Collection))
         .left
         .exists(_.message.contains("unknown media provider 'zq-portal'"))
     )
@@ -238,7 +244,7 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
   test("through the server: GET /api/media/providers lists the plugin's collection; about lists what it registered"):
     val client = HttpClient.newHttpClient()
     supervised {
-      val b = Composition.server(base, "127.0.0.1", 0, MediaHandlers.NoThumbnails, plugins = generation).start()
+      val b = Composition.server(base, "127.0.0.1", 0, MediaWiring.NoThumbnails, plugins = generation).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val r = client.send(

@@ -43,10 +43,16 @@ class LicenceFamilySuite extends munit.FunSuite:
         LicenceFamily.Gfdl
       )
     )
-    assertEquals(LicenceFamily.values.toList.filter(_.isPublicDomain), List(LicenceFamily.Cc0, LicenceFamily.PublicDomain))
+    assertEquals(
+      LicenceFamily.values.toList.filter(_.isPublicDomain),
+      List(LicenceFamily.Cc0, LicenceFamily.PublicDomain)
+    )
 
   test("a statement is a URL or a name, read by the one classification"):
-    assertEquals(Licence.ofStatement("https://creativecommons.org/licenses/by/4.0/"), Licence.ofUrl("https://creativecommons.org/licenses/by/4.0/"))
+    assertEquals(
+      Licence.ofStatement("https://creativecommons.org/licenses/by/4.0/"),
+      Licence.ofUrl("https://creativecommons.org/licenses/by/4.0/")
+    )
     assertEquals(Licence.ofStatement("CC BY 4.0"), Licence(LicenceId("CC-BY-4.0"), LicenceFamily.CcBy))
     assertEquals(Licence.unknown("odd"), Licence(LicenceId("odd"), LicenceFamily.Unknown))
 

@@ -1,5 +1,8 @@
 package com.histmersion.db
 
+import com.histmersion.domain.media.assets.AssetFixtures
+import com.histmersion.domain.media.assets.NewFigure
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -85,35 +88,35 @@ class RepoDetailsSuite extends com.histmersion.db.DbSuite:
 
   // ── 21 + 22: the assets contract ─────────────────────────────────────────────────────────────
 
-  private def png(byte: Byte) = AssetRepo.Stored("fig1.png", "image/png", Array[Byte](1, 2, 3, byte), None, None)
+  private def png(byte: Byte) = NewFigure("fig1.png", "image/png", Array[Byte](1, 2, 3, byte), None, None)
 
   private def updatedAt: String = SourceRepo.load(ds, ck).get.updatedAt.get
 
   test("add() leaves an asset already stored under that name alone, as its doc says"):
     val _ = seed()
-    assertEquals(AssetRepo.replace(ds, ck, List(png(10))), 1)
-    val _ = AssetRepo.add(ds, ck, List(png(99)))
+    assertEquals(AssetFixtures.replace(ds, ck, List(png(10))), 1)
+    val _ = AssetFixtures.add(ds, ck, List(png(99)))
     assertEquals(
-      AssetRepo.read(ds, ck, "fig1.png").get._2.toList,
+      AssetFixtures.read(ds, ck, "fig1.png").get._2.toList,
       List[Byte](1, 2, 3, 10),
       "add() must not overwrite — replace() is the operation that does"
     )
 
   test("replace() DOES overwrite, which is what a re-conversion needs"):
     val _ = seed()
-    val _ = AssetRepo.replace(ds, ck, List(png(10)))
-    val _ = AssetRepo.replace(ds, ck, List(png(99)))
-    assertEquals(AssetRepo.read(ds, ck, "fig1.png").get._2.toList, List[Byte](1, 2, 3, 99))
+    val _ = AssetFixtures.replace(ds, ck, List(png(10)))
+    val _ = AssetFixtures.replace(ds, ck, List(png(99)))
+    assertEquals(AssetFixtures.read(ds, ck, "fig1.png").get._2.toList, List[Byte](1, 2, 3, 99))
 
   test("changing a source's assets moves its updated_at token"):
     val _ = seed()
     val before = updatedAt
     Thread.sleep(5) // the token has microsecond resolution
-    val _ = AssetRepo.replace(ds, ck, List(png(10)))
+    val _ = AssetFixtures.replace(ds, ck, List(png(10)))
     val afterReplace = updatedAt
     assertNotEquals(afterReplace, before, "replace() must invalidate the concurrency token")
     Thread.sleep(5)
-    val _ = AssetRepo.add(ds, ck, List(AssetRepo.Stored("fig2.png", "image/png", Array[Byte](9, 9), None, None)))
+    val _ = AssetFixtures.add(ds, ck, List(NewFigure("fig2.png", "image/png", Array[Byte](9, 9), None, None)))
     assertNotEquals(updatedAt, afterReplace, "add() must too")
 
   // ── 23: findings_flat's inclusive upper bound ────────────────────────────────────────────────

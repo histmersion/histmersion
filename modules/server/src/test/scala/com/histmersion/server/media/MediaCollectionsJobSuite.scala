@@ -1,5 +1,8 @@
 package com.histmersion.server.media
 
+import com.histmersion.domain.media.imports.ImportFixtures
+import com.histmersion.server.MediaWiring
+
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
 import ox.supervised
@@ -7,7 +10,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{Db, MediaRepo, Migrate}
+import com.histmersion.db.{Db, Migrate}
 import com.histmersion.server.Composition
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
 import io.circe.parser.decode
@@ -145,26 +148,26 @@ class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
       providerServer.stop(0)
 
   test("the places as a match reads them: every name's key, the findings' span, and what a name names on the map"):
-    val f = MediaRepo.placeFacts(ds, List("zqmc_site"))("zqmc_site")
+    val f = ImportFixtures.placeFacts(ds, List("zqmc_site"))("zqmc_site")
     assertEquals(f.keys, Set("zqmcenae", "zqmcenai"))
     assertEquals(f.period, Some((-1600L, -1100L)))
-    val named = MediaRepo.mapPlacesNamed(ds, List("zqmcenai", "zqmc thebai", "zqmc nowhere"))
+    val named = ImportFixtures.mapPlacesNamed(ds, List("zqmcenai", "zqmc thebai", "zqmc nowhere"))
     assertEquals(
       named.view.mapValues(_.map(_.id).sorted).toMap,
       Map("zqmcenai" -> List("zqmc_site"), "zqmc thebai" -> List("zqmc_thebai_a", "zqmc_thebai_b"))
     )
-    val ts = MediaRepo
+    val ts = ImportFixtures
       .collectionTargets(ds, MediaProvider.ArtInstitute, places = true, None, None, 10_000, refresh = false)
       .fold(fail(_), identity)
     assert(Set("zqmc_site", "zqmc_thebai_a").subsetOf(ts.map(_.id).toSet), ts.toString)
     assert(
-      MediaRepo.collectionTargets(ds, MediaProvider.ArtInstitute, places = true, None, Some("e"), 1, false).isLeft,
+      ImportFixtures.collectionTargets(ds, MediaProvider.ArtInstitute, places = true, None, Some("e"), 1, false).isLeft,
       "a collection is about places"
     )
 
   test("dry run, a job, the link's reason and the check — through the server"):
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0, MediaHandlers.NoThumbnails, plugins = plugins).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0, MediaWiring.NoThumbnails, plugins = plugins).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val (us, ub) = post(s"$url/api/media/import", """{"provider":"rijks","dryRun":true}""")

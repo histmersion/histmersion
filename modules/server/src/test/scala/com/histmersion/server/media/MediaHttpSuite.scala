@@ -1,5 +1,8 @@
 package com.histmersion.server.media
 
+import com.histmersion.domain.media.assets.AssetFixtures
+import com.histmersion.server.MediaWiring
+
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
 import com.histmersion.domain.catalogue.events.*
@@ -10,7 +13,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{Db, MediaRepo, Migrate}
+import com.histmersion.db.{Db, Migrate}
 import com.histmersion.server.{Composition, Deps}
 import io.circe.parser.decode
 import java.net.URI
@@ -111,28 +114,38 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
 
   test("an import through the handler: dry run stores nothing; the real one stores, links, checks"):
     val fake = fakeProvider
-    val h = MediaHandlers(Deps(cfg, ds), fake)
-    val dry = h.importMedia(MediaImportRequest(place = Some(PlaceId))).fold(e => fail(e.message), identity)
+    val h = MediaWiring(Deps(cfg, ds), fake)
+    val dry = h.imports.importMedia(MediaImportRequest(place = Some(PlaceId))).fold(e => fail(e.message), identity)
     assert(dry.dryRun)
     assertEquals(dry.byLicence.map(c => (c.key, c.allowed)), List(("CC-BY-NC-SA-4.0", false), ("CC-BY-SA-2.5", true)))
-    assertEquals(MediaRepo.thumbs(ds, "place", PlaceId), Nil)
+    assertEquals(AssetFixtures.thumbs(ds, "place", PlaceId), Nil)
     val done =
-      h.importMedia(MediaImportRequest(dryRun = false, place = Some(PlaceId))).fold(e => fail(e.message), identity)
+      h.imports
+        .importMedia(MediaImportRequest(dryRun = false, place = Some(PlaceId)))
+        .fold(e => fail(e.message), identity)
     assertEquals((done.stored, done.linked, done.categories), (1, 1, 1))
-    assertEquals(MediaRepo.thumbs(ds, "place", PlaceId).map(_.license), List(Some("CC-BY-SA-2.5")))
+    assertEquals(AssetFixtures.thumbs(ds, "place", PlaceId).map(_.license), List(Some("CC-BY-SA-2.5")))
     assert(fake.requests.forall(_._2 == Map("User-Agent" -> cfg.media.userAgent)))
     val checked = connect(ds)(sql"SELECT found FROM media_checks WHERE target_id = $PlaceId".query[Int].run())
     assertEquals(checked, Vector(1))
 
   test("refusals: an unknown provider, a place with no Wikidata link, an event with no item"):
-    val h = MediaHandlers(Deps(cfg, ds), fakeProvider)
+    val h = MediaWiring(Deps(cfg, ds), fakeProvider)
     assert(
-      h.importMedia(MediaImportRequest(provider = "flickr")).left.exists(_.message.contains("unknown media provider"))
+      h.imports
+        .importMedia(MediaImportRequest(provider = "flickr"))
+        .left
+        .exists(_.message.contains("unknown media provider"))
     )
     assert(
-      h.importMedia(MediaImportRequest(place = Some("zqmh_nolink"))).left.exists(_.message.contains("no Wikidata link"))
+      h.imports
+        .importMedia(MediaImportRequest(place = Some("zqmh_nolink")))
+        .left
+        .exists(_.message.contains("no Wikidata link"))
     )
-    assert(h.importMedia(MediaImportRequest(event = Some(EventId))).left.exists(_.message.contains("events patch")))
+    assert(
+      h.imports.importMedia(MediaImportRequest(event = Some(EventId))).left.exists(_.message.contains("events patch"))
+    )
 
   test("the server: the place card carries the thumbnail, served locally with its type; list, show, facets"):
     supervised {

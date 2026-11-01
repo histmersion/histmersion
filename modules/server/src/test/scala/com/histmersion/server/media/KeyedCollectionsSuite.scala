@@ -1,10 +1,14 @@
 package com.histmersion.server.media
 
+import com.histmersion.domain.media.imports.SearchedCollection
+import com.histmersion.domain.media.imports.CollectionImport
+import com.histmersion.domain.media.imports.PlaceFacts
+import com.histmersion.domain.media.imports.Target
+
 import com.histmersion.pluginhost.HttpAnswer
 
 import com.histmersion.api.*
 import com.histmersion.domain.*
-import com.histmersion.db.MediaRepo.{PlaceFacts, Target}
 import com.histmersion.plugin.Year
 import com.histmersion.util.ocr.ConverterClient
 
@@ -53,7 +57,7 @@ class KeyedCollectionsSuite extends munit.FunSuite:
   private def target(f: PlaceFacts) = Target("place", f.id, "", f.label)
 
   private def run(
-      col: Collection,
+      col: SearchedCollection,
       http: FakeMediaHttp,
       targets: List[Target],
       dryRun: Boolean,
@@ -68,7 +72,7 @@ class KeyedCollectionsSuite extends munit.FunSuite:
       |histmersion.plugins.media-europeana { enabled = true, api-key = "env:ZQMT_EU_KEY" }
       |""".stripMargin
   private val env = Map("ZQMT_SI_KEY" -> key, "ZQMT_EU_KEY" -> key)
-  private def collection(name: String): Collection =
+  private def collection(name: String): SearchedCollection =
     FakeMediaHttp.builtin(name, keyed, env)
 
   private def noKeyInUrls(http: FakeMediaHttp) =

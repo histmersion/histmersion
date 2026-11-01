@@ -1,6 +1,7 @@
 package com.histmersion.db
 
 import com.histmersion.domain.catalogue.places.FindingPlacement
+import com.histmersion.domain.media.assets.NewFigure
 
 import com.histmersion.api.*
 import com.histmersion.files.*
@@ -19,7 +20,16 @@ import scala.jdk.CollectionConverters.*
   */
 object Importer:
 
-  def importDir(ds: DataSource, dir: Path, chunkChars: Int): SeedResult = importDir(ds, dir, chunkChars, force = false)
+  /** The figures a note brings (media's: read where the note is, stored with the source). */
+  trait SeedFigures:
+    /** The figures of the old file pipeline beside a note, at most `maxBytes` each. */
+    def of(note: Path, citekey: String, maxBytes: Long): List[NewFigure]
+
+    /** A source's figures added, leaving any stored under the same name alone; how many were written. */
+    def add(citekey: String, figures: List[NewFigure]): Int
+
+  def importDir(ds: DataSource, dir: Path, chunkChars: Int, figures: SeedFigures): SeedResult =
+    importDir(ds, dir, chunkChars, force = false, figures)
 
   /** `chunkChars` (config `histmersion.limits.chunk-chars`) sizes the FTS body chunks written per source; `assetBytes`
     * (`histmersion.limits.asset-bytes`) caps one figure picked up from `md/<ck>/figures/…`.
@@ -29,6 +39,7 @@ object Importer:
       dir: Path,
       chunkChars: Int,
       force: Boolean,
+      figures: SeedFigures,
       assetBytes: Long = Long.MaxValue,
       toleranceKm: Double = FindingPlacement.DefaultToleranceKm,
       confineTo: Option[String] = None
@@ -54,11 +65,11 @@ object Importer:
               // figures of the old file pipeline (plan §1.8): stored as assets, and the body's
               // `…/figures/<name>` links (absolute paths included) normalised to the canonical
               // `assets/<name>` in the same write, along with the OCR's picture-text dumps
-              val figures = Figures.forNote(f, parsed.citekey, assetBytes)
+              val found = figures.of(f, parsed.citekey, assetBytes)
               val s = parsed.copy(ocrMarkdown = parsed.ocrMarkdown.map(AssetLinks.normalizeBody(_, parsed.title)))
               SourceRepo.upsert(ds, s, chunkChars, toleranceKm)
-              if figures.nonEmpty then
-                val _ = AssetRepo.add(ds, s.citekey, figures)
+              if found.nonEmpty then
+                val _ = figures.add(s.citekey, found)
               ok += 1
           case None => failures += s"${f.getFileName}: no frontmatter"
       catch case e: Throwable => failures += s"${f.getFileName}: ${e.getMessage}"

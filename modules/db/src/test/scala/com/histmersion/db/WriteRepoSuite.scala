@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.media.figures.FigureFixtures
+
 import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*
@@ -162,7 +164,7 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
     val _ = Files.writeString(file, s"---\ncitekey: $ckS\ntitle: From file\ntags: [fromfile]\n---\nbody\n")
 
     // 1st seed: nothing stored yet → imported
-    val first = Importer.importDir(ds, dir, 4000)
+    val first = Importer.importDir(ds, dir, 4000, FigureFixtures.onDisk(ds))
     assertEquals(first.imported, 1)
     assertEquals(first.skipped, Nil)
 
@@ -170,13 +172,13 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
     assert(SourceRepo.patch(ds, ckS, SourcePatch(tags = Some(ListPatch(add = List("enriched")))), 4000).isRight)
 
     // 2nd seed: the file is older than the row → skipped, enrichment preserved
-    val second = Importer.importDir(ds, dir, 4000)
+    val second = Importer.importDir(ds, dir, 4000, FigureFixtures.onDisk(ds))
     assertEquals(second.imported, 0)
     assertEquals(second.skipped, List(ckS))
     assert(SourceRepo.load(ds, ckS).get.tags.contains("enriched"))
 
     // --force: the file wins and the enrichment is gone (the deliberate re-import)
-    val forced = Importer.importDir(ds, dir, 4000, force = true)
+    val forced = Importer.importDir(ds, dir, 4000, force = true, FigureFixtures.onDisk(ds))
     assertEquals(forced.imported, 1)
     assertEquals(forced.skipped, Nil)
     assertEquals(SourceRepo.load(ds, ckS).get.tags, List("fromfile"))
@@ -209,7 +211,7 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
     val one = Export.note(SourceRepo.load(ds, ck).get)
     val dir = Files.createTempDirectory("histmersion-export")
     val _ = Files.writeString(dir.resolve(s"$ck.md"), one)
-    assertEquals(Importer.importDir(ds, dir, 4000, force = true).imported, 1)
+    assertEquals(Importer.importDir(ds, dir, 4000, force = true, FigureFixtures.onDisk(ds)).imported, 1)
     val two = Export.note(SourceRepo.load(ds, ck).get)
     assertEquals(two, one)
 

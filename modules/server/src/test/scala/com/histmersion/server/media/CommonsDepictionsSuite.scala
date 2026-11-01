@@ -1,12 +1,13 @@
 package com.histmersion.server.media
 
-import com.histmersion.domain.media.OwnImport
+import com.histmersion.domain.media.imports.OwnImport
+import com.histmersion.domain.media.imports.Target
+
 import com.histmersion.pluginhost.HttpAnswer
 
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.MediaRepo.Target
 import com.histmersion.values.MediaRole
 
 /** Pictures that depict events (#1446) against a FAKE Wikidata and Commons — the `media-depicts` plugin's collection,

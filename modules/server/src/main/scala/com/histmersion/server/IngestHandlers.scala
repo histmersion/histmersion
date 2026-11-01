@@ -11,7 +11,8 @@ import com.histmersion.files.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{AssetRepo, SourceRepo}
+import com.histmersion.db.SourceRepo
+import com.histmersion.domain.media.assets.{AssetService, NewFigure}
 import com.histmersion.util.jobs.JobRepo
 
 import java.nio.file.{Files, Path, StandardCopyOption}
@@ -39,7 +40,12 @@ import scala.jdk.OptionConverters.*
   *      already enriched); what it answers joins the job's progress line. It never fails the job and never holds it:
   *      queueing a run is a row and a submit.
   */
-final class IngestHandlers(deps: Deps, converter: ConverterClient, afterStore: String => Option[String] = _ => None):
+final class IngestHandlers(
+    deps: Deps,
+    converter: ConverterClient,
+    figures: AssetService,
+    afterStore: String => Option[String] = _ => None
+):
   private val ds = deps.ds
   private def cfg = deps.cfg
   private val maintenance = deps.maintenance
@@ -227,7 +233,7 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient, afterStore: S
     SourceRepo.load(ds, citekey) match
       case None    => Left(Write.notFound(citekey))
       case Some(_) =>
-        AssetRepo.sha256Of(ds, citekey).flatMap(sha => spooledFor(sha).map(sha -> _)) match
+        SourceRepo.sha256Of(ds, citekey).flatMap(sha => spooledFor(sha).map(sha -> _)) match
           case None =>
             Left(
               ApiError(
@@ -255,7 +261,7 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient, afterStore: S
       SourceRepo.load(ds, citekey) match
         case None    => Left(Write.notFound(citekey))
         case Some(s) =>
-          AssetRepo.sha256Of(ds, s.citekey).flatMap(spooledFor) match
+          SourceRepo.sha256Of(ds, s.citekey).flatMap(spooledFor) match
             case None =>
               Left(
                 ApiError(
@@ -319,36 +325,10 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient, afterStore: S
 
   private def clean(cursor: Option[String]): Option[String] = cursor.map(_.trim).filter(_.nonEmpty)
 
-  // ── assets ─────────────────────────────────────────────────────────────────────────────────
-  /** Asset URLs embed the citekey, so an OLD one (V027) is resolved first, as every read does. */
-  private def canonical(ck: String): String = SourceRepo.canonical(ds, ck).getOrElse(ck)
-
-  def assets(citekey: String): List[AssetInfo] = AssetRepo.list(ds, canonical(citekey)).toList
-
-  def asset(citekey: String, name: String): Either[ApiError, (Array[Byte], String)] =
-    AssetRepo
-      .read(ds, canonical(citekey), AssetLinks.safeName(name))
-      .map((mime, bytes) => (bytes, mime))
-      .toRight(ApiError(s"No asset '$name' for '$citekey'", Some(Write.CodeNotFound)))
-
-  /** Add figures to an existing source (the host-side seed path). */
-  def putAssets(citekey: String, in: List[AssetInput]): Either[ApiError, AssetsStored] =
-    maintenance.guard("put_assets")(putAssetsNow(citekey, in))
-
-  private def putAssetsNow(citekey: String, in: List[AssetInput]): Either[ApiError, AssetsStored] =
-    Citekey.of(citekey).flatMap { _ =>
-      if SourceRepo.load(ds, citekey).isEmpty then Left(Write.notFound(citekey))
-      else
-        decode(in).map { stored =>
-          val n = AssetRepo.add(ds, citekey, stored)
-          AssetsStored(citekey, n)
-        }
-    }
-
-  /** Wire assets → storable ones, failing the whole batch on the first unusable payload. */
-  def decode(in: List[AssetInput]): Either[ApiError, List[AssetRepo.Stored]] =
-    in.foldLeft[Either[ApiError, List[AssetRepo.Stored]]](Right(Nil)) { (acc, a) =>
-      acc.flatMap(xs => AssetRepo.Stored.of(a, cfg.limits.assetBytes).left.map(ApiError(_)).map(xs :+ _))
+  /** A conversion's figures → storable ones, failing the whole batch on the first unusable payload. */
+  private def decode(in: List[AssetInput]): Either[ApiError, List[NewFigure]] =
+    in.foldLeft[Either[ApiError, List[NewFigure]]](Right(Nil)) { (acc, a) =>
+      acc.flatMap(xs => NewFigure.of(a, cfg.limits.assetBytes).left.map(ApiError(_)).map(xs :+ _))
     }
 
   // ── the job body ───────────────────────────────────────────────────────────────────────────
@@ -437,8 +417,8 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient, afterStore: S
               val _ = SourceRepo.put(ds, s, cfg.limits.chunkChars, cfg.places.pointToleranceKm)
             )
       written.map { _ =>
-        val kept = AssetRepo.replace(ds, citekey, stored)
-        AssetRepo.setSha256(ds, citekey, job.sha256)
+        val kept = figures.replaceFigures(citekey, stored)
+        SourceRepo.setSha256(ds, citekey, job.sha256)
         kept
       }
     }
@@ -556,7 +536,7 @@ final class IngestHandlers(deps: Deps, converter: ConverterClient, afterStore: S
 
   /** 409 unless `force`: the same bytes are already stored under another citekey. */
   private def duplicate(sha: String, citekey: String, force: Boolean): Either[ApiError, Unit] =
-    AssetRepo.citekeyOfSha256(ds, sha) match
+    SourceRepo.citekeyOfSha256(ds, sha) match
       case Some(other) if other != citekey && !force =>
         Left(
           ApiError(

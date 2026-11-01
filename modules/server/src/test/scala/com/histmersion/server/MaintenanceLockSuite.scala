@@ -80,7 +80,7 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
     try
       refused("ingest")(h.ingest.ingest(IngestParams("zzlock_src", Some("a.pdf")), f))
       refused("reocr")(h.ingest.reocr("zzlock_src", false))
-      refused("put_assets")(h.ingest.putAssets("zzlock_src", List(png)))
+      refused("put_assets")(h.media.assets.putFigures("zzlock_src", List(png)))
     finally { val _ = f.delete() }
 
   test("the ops writes are refused, while the READS still answer"):

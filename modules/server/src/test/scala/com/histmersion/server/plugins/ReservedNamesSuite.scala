@@ -7,7 +7,7 @@ import com.histmersion.pluginhost.{FirstPartySettings, PluginHost, ReservedNames
 import com.histmersion.domain.catalogue.places.BuiltinGazetteers
 import com.histmersion.server.agents.BuiltinAi
 import com.histmersion.domain.catalogue.events.BuiltinCatalogues
-import com.histmersion.server.media.BuiltinMedia
+import com.histmersion.domain.media.imports.BuiltinMedia
 
 /** The plugin host refuses a plugin's contribution under a name of one of the server's own providers; it keeps those
   * names itself (the plugin testkit runs it without the server), so they must be the names the server's built-in

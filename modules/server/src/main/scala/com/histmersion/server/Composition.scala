@@ -276,8 +276,8 @@ object Composition:
           try s.forEach(p => java.nio.file.Files.deleteIfExists(p): Unit)
           finally s.close()
           java.nio.file.Files.deleteIfExists(dir): Unit
-      def putCover(params: SourceCoverParams, bytes: Array[Byte]) = h.media.putCover(params, bytes)
-      def openLibraryCover(req: MediaCoversRequest) = h.media.covers(req)
+      def putCover(params: SourceCoverParams, bytes: Array[Byte]) = h.media.covers.putCover(params, bytes)
+      def openLibraryCover(req: MediaCoversRequest) = h.media.covers.covers(req)
       def archiveImport(item: ArchiveItem, file: ArchiveFile, req: ArchiveImportRequest) =
         acq.archiveImport(item, file, req)
     CollectionsControllers(

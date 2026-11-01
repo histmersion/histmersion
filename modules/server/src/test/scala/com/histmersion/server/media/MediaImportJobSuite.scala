@@ -1,5 +1,8 @@
 package com.histmersion.server.media
 
+import com.histmersion.domain.media.imports.ImportsControllers
+import com.histmersion.server.MediaWiring
+
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
@@ -181,7 +184,7 @@ class MediaImportJobSuite extends com.histmersion.db.DbSuite:
 
   test("a 300-event import: the request answers at once with a job, progress is n/total, failures are collected"):
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0, MediaHandlers.NoThumbnails, plugins = plugins).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0, MediaWiring.NoThumbnails, plugins = plugins).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         // the synchronous endpoint keeps the dry run and ONE place/event; many is a job
@@ -192,7 +195,7 @@ class MediaImportJobSuite extends com.histmersion.db.DbSuite:
         val (s, body) = post(s"$url/api/media/import/job", s"""{"dryRun":false,"limit":$N}""")
         assertEquals(s, 202, body)
         val started = decode[JobInfo](body).fold(e => fail(s"$e: $body"), identity)
-        assertEquals(started.kind, MediaHandlers.ImportJobKind)
+        assertEquals(started.kind, ImportsControllers.ImportJobKind)
         assert(!started.isTerminal, started.toString)
 
         // mid-way: two batches of 50 asked, the third held at Wikidata
