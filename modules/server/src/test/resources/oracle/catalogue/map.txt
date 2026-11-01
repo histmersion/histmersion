@@ -1,0 +1,4738 @@
+== GET /api/findings
+200 [
+  {
+    "citekey" : "zzvolc2004_ash",
+    "claim" : "ash from Mount Zzvolc fell east of Zzport",
+    "confidence" : "high",
+    "doi" : null,
+    "lat" : 39.0,
+    "lon" : 36.0,
+    "periodEnd" : -1600,
+    "periodStart" : -1620,
+    "regionName" : "Zzland",
+    "significance" : null,
+    "sourceKind" : "unknown",
+    "title" : "Ash over Zzport"
+  },
+  {
+    "citekey" : "zzhill1990_battle",
+    "claim" : "the Zzwell is of the Zzmarch period",
+    "confidence" : "high",
+    "doi" : null,
+    "lat" : 39.7,
+    "lon" : 34.9,
+    "periodEnd" : -1300,
+    "periodStart" : -1500,
+    "regionName" : "Zzwell",
+    "significance" : null,
+    "sourceKind" : "unknown",
+    "title" : "The Battle of Zzhill"
+  },
+  {
+    "citekey" : "zzhill1990_battle",
+    "claim" : "the battle of Zzhill was fought around 1300 BC",
+    "confidence" : "high",
+    "doi" : null,
+    "lat" : 40.0,
+    "lon" : 34.6,
+    "periodEnd" : -1290,
+    "periodStart" : -1310,
+    "regionName" : "Zzhill",
+    "significance" : null,
+    "sourceKind" : "unknown",
+    "title" : "The Battle of Zzhill"
+  },
+  {
+    "citekey" : "zzhill1990_battle",
+    "claim" : "Zzport sent ships to Zzhill",
+    "confidence" : "high",
+    "doi" : null,
+    "lat" : 39.2,
+    "lon" : 35.5,
+    "periodEnd" : -1290,
+    "periodStart" : -1310,
+    "regionName" : "Zzport",
+    "significance" : null,
+    "sourceKind" : "unknown",
+    "title" : "The Battle of Zzhill"
+  }
+]
+== GET /api/findings?place=zz_land
+200 [
+  {
+    "citekey" : "zzvolc2004_ash",
+    "claim" : "ash from Mount Zzvolc fell east of Zzport",
+    "confidence" : "high",
+    "doi" : null,
+    "lat" : 39.0,
+    "lon" : 36.0,
+    "periodEnd" : -1600,
+    "periodStart" : -1620,
+    "regionName" : "Zzland",
+    "significance" : null,
+    "sourceKind" : "unknown",
+    "title" : "Ash over Zzport"
+  },
+  {
+    "citekey" : "zzhill1990_battle",
+    "claim" : "the Zzwell is of the Zzmarch period",
+    "confidence" : "high",
+    "doi" : null,
+    "lat" : 39.7,
+    "lon" : 34.9,
+    "periodEnd" : -1300,
+    "periodStart" : -1500,
+    "regionName" : "Zzwell",
+    "significance" : null,
+    "sourceKind" : "unknown",
+    "title" : "The Battle of Zzhill"
+  },
+  {
+    "citekey" : "zzhill1990_battle",
+    "claim" : "the battle of Zzhill was fought around 1300 BC",
+    "confidence" : "high",
+    "doi" : null,
+    "lat" : 40.0,
+    "lon" : 34.6,
+    "periodEnd" : -1290,
+    "periodStart" : -1310,
+    "regionName" : "Zzhill",
+    "significance" : null,
+    "sourceKind" : "unknown",
+    "title" : "The Battle of Zzhill"
+  },
+  {
+    "citekey" : "zzhill1990_battle",
+    "claim" : "Zzport sent ships to Zzhill",
+    "confidence" : "high",
+    "doi" : null,
+    "lat" : 39.2,
+    "lon" : 35.5,
+    "periodEnd" : -1290,
+    "periodStart" : -1310,
+    "regionName" : "Zzport",
+    "significance" : null,
+    "sourceKind" : "unknown",
+    "title" : "The Battle of Zzhill"
+  }
+]
+== GET /api/findings?place=zz_march
+200 [
+  {
+    "citekey" : "zzvolc2004_ash",
+    "claim" : "ash from Mount Zzvolc fell east of Zzport",
+    "confidence" : "high",
+    "doi" : null,
+    "lat" : 39.0,
+    "lon" : 36.0,
+    "periodEnd" : -1600,
+    "periodStart" : -1620,
+    "regionName" : "Zzland",
+    "significance" : null,
+    "sourceKind" : "unknown",
+    "title" : "Ash over Zzport"
+  },
+  {
+    "citekey" : "zzhill1990_battle",
+    "claim" : "the Zzwell is of the Zzmarch period",
+    "confidence" : "high",
+    "doi" : null,
+    "lat" : 39.7,
+    "lon" : 34.9,
+    "periodEnd" : -1300,
+    "periodStart" : -1500,
+    "regionName" : "Zzwell",
+    "significance" : null,
+    "sourceKind" : "unknown",
+    "title" : "The Battle of Zzhill"
+  },
+  {
+    "citekey" : "zzhill1990_battle",
+    "claim" : "the battle of Zzhill was fought around 1300 BC",
+    "confidence" : "high",
+    "doi" : null,
+    "lat" : 40.0,
+    "lon" : 34.6,
+    "periodEnd" : -1290,
+    "periodStart" : -1310,
+    "regionName" : "Zzhill",
+    "significance" : null,
+    "sourceKind" : "unknown",
+    "title" : "The Battle of Zzhill"
+  },
+  {
+    "citekey" : "zzhill1990_battle",
+    "claim" : "Zzport sent ships to Zzhill",
+    "confidence" : "high",
+    "doi" : null,
+    "lat" : 39.2,
+    "lon" : 35.5,
+    "periodEnd" : -1290,
+    "periodStart" : -1310,
+    "regionName" : "Zzport",
+    "significance" : null,
+    "sourceKind" : "unknown",
+    "title" : "The Battle of Zzhill"
+  }
+]
+== GET /api/findings?place=zz_hill
+200 [
+  {
+    "citekey" : "zzhill1990_battle",
+    "claim" : "the battle of Zzhill was fought around 1300 BC",
+    "confidence" : "high",
+    "doi" : null,
+    "lat" : 40.0,
+    "lon" : 34.6,
+    "periodEnd" : -1290,
+    "periodStart" : -1310,
+    "regionName" : "Zzhill",
+    "significance" : null,
+    "sourceKind" : "unknown",
+    "title" : "The Battle of Zzhill"
+  }
+]
+== GET /api/findings?place=Zzhill
+200 [
+  {
+    "citekey" : "zzhill1990_battle",
+    "claim" : "the battle of Zzhill was fought around 1300 BC",
+    "confidence" : "high",
+    "doi" : null,
+    "lat" : 40.0,
+    "lon" : 34.6,
+    "periodEnd" : -1290,
+    "periodStart" : -1310,
+    "regionName" : "Zzhill",
+    "significance" : null,
+    "sourceKind" : "unknown",
+    "title" : "The Battle of Zzhill"
+  }
+]
+== GET /api/findings?from=-1320&to=-1280
+200 [
+  {
+    "citekey" : "zzhill1990_battle",
+    "claim" : "the Zzwell is of the Zzmarch period",
+    "confidence" : "high",
+    "doi" : null,
+    "lat" : 39.7,
+    "lon" : 34.9,
+    "periodEnd" : -1300,
+    "periodStart" : -1500,
+    "regionName" : "Zzwell",
+    "significance" : null,
+    "sourceKind" : "unknown",
+    "title" : "The Battle of Zzhill"
+  },
+  {
+    "citekey" : "zzhill1990_battle",
+    "claim" : "the battle of Zzhill was fought around 1300 BC",
+    "confidence" : "high",
+    "doi" : null,
+    "lat" : 40.0,
+    "lon" : 34.6,
+    "periodEnd" : -1290,
+    "periodStart" : -1310,
+    "regionName" : "Zzhill",
+    "significance" : null,
+    "sourceKind" : "unknown",
+    "title" : "The Battle of Zzhill"
+  },
+  {
+    "citekey" : "zzhill1990_battle",
+    "claim" : "Zzport sent ships to Zzhill",
+    "confidence" : "high",
+    "doi" : null,
+    "lat" : 39.2,
+    "lon" : 35.5,
+    "periodEnd" : -1290,
+    "periodStart" : -1310,
+    "regionName" : "Zzport",
+    "significance" : null,
+    "sourceKind" : "unknown",
+    "title" : "The Battle of Zzhill"
+  }
+]
+== GET /api/findings?minLon=34&minLat=39&maxLon=35&maxLat=40.5
+200 [
+  {
+    "citekey" : "zzhill1990_battle",
+    "claim" : "the Zzwell is of the Zzmarch period",
+    "confidence" : "high",
+    "doi" : null,
+    "lat" : 39.7,
+    "lon" : 34.9,
+    "periodEnd" : -1300,
+    "periodStart" : -1500,
+    "regionName" : "Zzwell",
+    "significance" : null,
+    "sourceKind" : "unknown",
+    "title" : "The Battle of Zzhill"
+  },
+  {
+    "citekey" : "zzhill1990_battle",
+    "claim" : "the battle of Zzhill was fought around 1300 BC",
+    "confidence" : "high",
+    "doi" : null,
+    "lat" : 40.0,
+    "lon" : 34.6,
+    "periodEnd" : -1290,
+    "periodStart" : -1310,
+    "regionName" : "Zzhill",
+    "significance" : null,
+    "sourceKind" : "unknown",
+    "title" : "The Battle of Zzhill"
+  }
+]
+== GET /api/findings?place=zz_camp
+200 [
+]
+== GET /api/findings/page?place=zz_land&limit=2
+200 {
+  "hits" : [
+    {
+      "citekey" : "zzvolc2004_ash",
+      "claim" : "ash from Mount Zzvolc fell east of Zzport",
+      "confidence" : "high",
+      "doi" : null,
+      "lat" : 39.0,
+      "lon" : 36.0,
+      "periodEnd" : -1600,
+      "periodStart" : -1620,
+      "regionName" : "Zzland",
+      "significance" : null,
+      "sourceKind" : "unknown",
+      "title" : "Ash over Zzport"
+    },
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "the Zzwell is of the Zzmarch period",
+      "confidence" : "high",
+      "doi" : null,
+      "lat" : 39.7,
+      "lon" : 34.9,
+      "periodEnd" : -1300,
+      "periodStart" : -1500,
+      "regionName" : "Zzwell",
+      "significance" : null,
+      "sourceKind" : "unknown",
+      "title" : "The Battle of Zzhill"
+    }
+  ],
+  "next" : 2,
+  "offset" : 0,
+  "total" : 4
+}
+== GET /api/findings?region=Zzland
+200 [
+  {
+    "citekey" : "zzvolc2004_ash",
+    "claim" : "ash from Mount Zzvolc fell east of Zzport",
+    "confidence" : "high",
+    "doi" : null,
+    "lat" : 39.0,
+    "lon" : 36.0,
+    "periodEnd" : -1600,
+    "periodStart" : -1620,
+    "regionName" : "Zzland",
+    "significance" : null,
+    "sourceKind" : "unknown",
+    "title" : "Ash over Zzport"
+  }
+]
+== GET /api/aggregate
+200 {
+  "asOf" : null,
+  "bucket" : 100,
+  "buckets" : [
+    {
+      "count" : 0,
+      "end" : -3401,
+      "start" : -3500
+    },
+    {
+      "count" : 0,
+      "end" : -3301,
+      "start" : -3400
+    },
+    {
+      "count" : 0,
+      "end" : -3201,
+      "start" : -3300
+    },
+    {
+      "count" : 0,
+      "end" : -3101,
+      "start" : -3200
+    },
+    {
+      "count" : 0,
+      "end" : -3001,
+      "start" : -3100
+    },
+    {
+      "count" : 0,
+      "end" : -2901,
+      "start" : -3000
+    },
+    {
+      "count" : 0,
+      "end" : -2801,
+      "start" : -2900
+    },
+    {
+      "count" : 0,
+      "end" : -2701,
+      "start" : -2800
+    },
+    {
+      "count" : 0,
+      "end" : -2601,
+      "start" : -2700
+    },
+    {
+      "count" : 0,
+      "end" : -2501,
+      "start" : -2600
+    },
+    {
+      "count" : 0,
+      "end" : -2401,
+      "start" : -2500
+    },
+    {
+      "count" : 0,
+      "end" : -2301,
+      "start" : -2400
+    },
+    {
+      "count" : 0,
+      "end" : -2201,
+      "start" : -2300
+    },
+    {
+      "count" : 0,
+      "end" : -2101,
+      "start" : -2200
+    },
+    {
+      "count" : 0,
+      "end" : -2001,
+      "start" : -2100
+    },
+    {
+      "count" : 0,
+      "end" : -1901,
+      "start" : -2000
+    },
+    {
+      "count" : 0,
+      "end" : -1801,
+      "start" : -1900
+    },
+    {
+      "count" : 0,
+      "end" : -1701,
+      "start" : -1800
+    },
+    {
+      "count" : 1,
+      "end" : -1601,
+      "start" : -1700
+    },
+    {
+      "count" : 1,
+      "end" : -1501,
+      "start" : -1600
+    },
+    {
+      "count" : 1,
+      "end" : -1401,
+      "start" : -1500
+    },
+    {
+      "count" : 1,
+      "end" : -1301,
+      "start" : -1400
+    },
+    {
+      "count" : 1,
+      "end" : -1201,
+      "start" : -1300
+    },
+    {
+      "count" : 0,
+      "end" : -1101,
+      "start" : -1200
+    },
+    {
+      "count" : 0,
+      "end" : -1001,
+      "start" : -1100
+    },
+    {
+      "count" : 0,
+      "end" : -901,
+      "start" : -1000
+    },
+    {
+      "count" : 0,
+      "end" : -801,
+      "start" : -900
+    },
+    {
+      "count" : 0,
+      "end" : -701,
+      "start" : -800
+    },
+    {
+      "count" : 0,
+      "end" : -601,
+      "start" : -700
+    },
+    {
+      "count" : 0,
+      "end" : -501,
+      "start" : -600
+    },
+    {
+      "count" : 0,
+      "end" : -401,
+      "start" : -500
+    }
+  ],
+  "by" : "time",
+  "depth" : 2,
+  "from" : -3500,
+  "to" : -500,
+  "total" : 0,
+  "tree" : [
+  ],
+  "unit" : "sources"
+}
+== GET /api/aggregate?from=-1700&to=-1200
+200 {
+  "asOf" : null,
+  "bucket" : 10,
+  "buckets" : [
+    {
+      "count" : 0,
+      "end" : -1691,
+      "start" : -1700
+    },
+    {
+      "count" : 0,
+      "end" : -1681,
+      "start" : -1690
+    },
+    {
+      "count" : 0,
+      "end" : -1671,
+      "start" : -1680
+    },
+    {
+      "count" : 0,
+      "end" : -1661,
+      "start" : -1670
+    },
+    {
+      "count" : 0,
+      "end" : -1651,
+      "start" : -1660
+    },
+    {
+      "count" : 0,
+      "end" : -1641,
+      "start" : -1650
+    },
+    {
+      "count" : 0,
+      "end" : -1631,
+      "start" : -1640
+    },
+    {
+      "count" : 0,
+      "end" : -1621,
+      "start" : -1630
+    },
+    {
+      "count" : 1,
+      "end" : -1611,
+      "start" : -1620
+    },
+    {
+      "count" : 1,
+      "end" : -1601,
+      "start" : -1610
+    },
+    {
+      "count" : 1,
+      "end" : -1591,
+      "start" : -1600
+    },
+    {
+      "count" : 0,
+      "end" : -1581,
+      "start" : -1590
+    },
+    {
+      "count" : 0,
+      "end" : -1571,
+      "start" : -1580
+    },
+    {
+      "count" : 0,
+      "end" : -1561,
+      "start" : -1570
+    },
+    {
+      "count" : 0,
+      "end" : -1551,
+      "start" : -1560
+    },
+    {
+      "count" : 0,
+      "end" : -1541,
+      "start" : -1550
+    },
+    {
+      "count" : 0,
+      "end" : -1531,
+      "start" : -1540
+    },
+    {
+      "count" : 0,
+      "end" : -1521,
+      "start" : -1530
+    },
+    {
+      "count" : 0,
+      "end" : -1511,
+      "start" : -1520
+    },
+    {
+      "count" : 0,
+      "end" : -1501,
+      "start" : -1510
+    },
+    {
+      "count" : 1,
+      "end" : -1491,
+      "start" : -1500
+    },
+    {
+      "count" : 1,
+      "end" : -1481,
+      "start" : -1490
+    },
+    {
+      "count" : 1,
+      "end" : -1471,
+      "start" : -1480
+    },
+    {
+      "count" : 1,
+      "end" : -1461,
+      "start" : -1470
+    },
+    {
+      "count" : 1,
+      "end" : -1451,
+      "start" : -1460
+    },
+    {
+      "count" : 1,
+      "end" : -1441,
+      "start" : -1450
+    },
+    {
+      "count" : 1,
+      "end" : -1431,
+      "start" : -1440
+    },
+    {
+      "count" : 1,
+      "end" : -1421,
+      "start" : -1430
+    },
+    {
+      "count" : 1,
+      "end" : -1411,
+      "start" : -1420
+    },
+    {
+      "count" : 1,
+      "end" : -1401,
+      "start" : -1410
+    },
+    {
+      "count" : 1,
+      "end" : -1391,
+      "start" : -1400
+    },
+    {
+      "count" : 1,
+      "end" : -1381,
+      "start" : -1390
+    },
+    {
+      "count" : 1,
+      "end" : -1371,
+      "start" : -1380
+    },
+    {
+      "count" : 1,
+      "end" : -1361,
+      "start" : -1370
+    },
+    {
+      "count" : 1,
+      "end" : -1351,
+      "start" : -1360
+    },
+    {
+      "count" : 1,
+      "end" : -1341,
+      "start" : -1350
+    },
+    {
+      "count" : 1,
+      "end" : -1331,
+      "start" : -1340
+    },
+    {
+      "count" : 1,
+      "end" : -1321,
+      "start" : -1330
+    },
+    {
+      "count" : 1,
+      "end" : -1311,
+      "start" : -1320
+    },
+    {
+      "count" : 1,
+      "end" : -1301,
+      "start" : -1310
+    },
+    {
+      "count" : 1,
+      "end" : -1291,
+      "start" : -1300
+    },
+    {
+      "count" : 1,
+      "end" : -1281,
+      "start" : -1290
+    },
+    {
+      "count" : 0,
+      "end" : -1271,
+      "start" : -1280
+    },
+    {
+      "count" : 0,
+      "end" : -1261,
+      "start" : -1270
+    },
+    {
+      "count" : 0,
+      "end" : -1251,
+      "start" : -1260
+    },
+    {
+      "count" : 0,
+      "end" : -1241,
+      "start" : -1250
+    },
+    {
+      "count" : 0,
+      "end" : -1231,
+      "start" : -1240
+    },
+    {
+      "count" : 0,
+      "end" : -1221,
+      "start" : -1230
+    },
+    {
+      "count" : 0,
+      "end" : -1211,
+      "start" : -1220
+    },
+    {
+      "count" : 0,
+      "end" : -1201,
+      "start" : -1210
+    },
+    {
+      "count" : 0,
+      "end" : -1191,
+      "start" : -1200
+    }
+  ],
+  "by" : "time",
+  "depth" : 2,
+  "from" : -1700,
+  "to" : -1200,
+  "total" : 0,
+  "tree" : [
+  ],
+  "unit" : "sources"
+}
+== GET /api/aggregate?from=-1700&to=-1200&unit=findings
+200 {
+  "asOf" : null,
+  "bucket" : 10,
+  "buckets" : [
+    {
+      "count" : 0,
+      "end" : -1691,
+      "start" : -1700
+    },
+    {
+      "count" : 0,
+      "end" : -1681,
+      "start" : -1690
+    },
+    {
+      "count" : 0,
+      "end" : -1671,
+      "start" : -1680
+    },
+    {
+      "count" : 0,
+      "end" : -1661,
+      "start" : -1670
+    },
+    {
+      "count" : 0,
+      "end" : -1651,
+      "start" : -1660
+    },
+    {
+      "count" : 0,
+      "end" : -1641,
+      "start" : -1650
+    },
+    {
+      "count" : 0,
+      "end" : -1631,
+      "start" : -1640
+    },
+    {
+      "count" : 0,
+      "end" : -1621,
+      "start" : -1630
+    },
+    {
+      "count" : 1,
+      "end" : -1611,
+      "start" : -1620
+    },
+    {
+      "count" : 1,
+      "end" : -1601,
+      "start" : -1610
+    },
+    {
+      "count" : 1,
+      "end" : -1591,
+      "start" : -1600
+    },
+    {
+      "count" : 0,
+      "end" : -1581,
+      "start" : -1590
+    },
+    {
+      "count" : 0,
+      "end" : -1571,
+      "start" : -1580
+    },
+    {
+      "count" : 0,
+      "end" : -1561,
+      "start" : -1570
+    },
+    {
+      "count" : 0,
+      "end" : -1551,
+      "start" : -1560
+    },
+    {
+      "count" : 0,
+      "end" : -1541,
+      "start" : -1550
+    },
+    {
+      "count" : 0,
+      "end" : -1531,
+      "start" : -1540
+    },
+    {
+      "count" : 0,
+      "end" : -1521,
+      "start" : -1530
+    },
+    {
+      "count" : 0,
+      "end" : -1511,
+      "start" : -1520
+    },
+    {
+      "count" : 0,
+      "end" : -1501,
+      "start" : -1510
+    },
+    {
+      "count" : 1,
+      "end" : -1491,
+      "start" : -1500
+    },
+    {
+      "count" : 1,
+      "end" : -1481,
+      "start" : -1490
+    },
+    {
+      "count" : 1,
+      "end" : -1471,
+      "start" : -1480
+    },
+    {
+      "count" : 1,
+      "end" : -1461,
+      "start" : -1470
+    },
+    {
+      "count" : 1,
+      "end" : -1451,
+      "start" : -1460
+    },
+    {
+      "count" : 1,
+      "end" : -1441,
+      "start" : -1450
+    },
+    {
+      "count" : 1,
+      "end" : -1431,
+      "start" : -1440
+    },
+    {
+      "count" : 1,
+      "end" : -1421,
+      "start" : -1430
+    },
+    {
+      "count" : 1,
+      "end" : -1411,
+      "start" : -1420
+    },
+    {
+      "count" : 1,
+      "end" : -1401,
+      "start" : -1410
+    },
+    {
+      "count" : 1,
+      "end" : -1391,
+      "start" : -1400
+    },
+    {
+      "count" : 1,
+      "end" : -1381,
+      "start" : -1390
+    },
+    {
+      "count" : 1,
+      "end" : -1371,
+      "start" : -1380
+    },
+    {
+      "count" : 1,
+      "end" : -1361,
+      "start" : -1370
+    },
+    {
+      "count" : 1,
+      "end" : -1351,
+      "start" : -1360
+    },
+    {
+      "count" : 1,
+      "end" : -1341,
+      "start" : -1350
+    },
+    {
+      "count" : 1,
+      "end" : -1331,
+      "start" : -1340
+    },
+    {
+      "count" : 1,
+      "end" : -1321,
+      "start" : -1330
+    },
+    {
+      "count" : 1,
+      "end" : -1311,
+      "start" : -1320
+    },
+    {
+      "count" : 3,
+      "end" : -1301,
+      "start" : -1310
+    },
+    {
+      "count" : 3,
+      "end" : -1291,
+      "start" : -1300
+    },
+    {
+      "count" : 2,
+      "end" : -1281,
+      "start" : -1290
+    },
+    {
+      "count" : 0,
+      "end" : -1271,
+      "start" : -1280
+    },
+    {
+      "count" : 0,
+      "end" : -1261,
+      "start" : -1270
+    },
+    {
+      "count" : 0,
+      "end" : -1251,
+      "start" : -1260
+    },
+    {
+      "count" : 0,
+      "end" : -1241,
+      "start" : -1250
+    },
+    {
+      "count" : 0,
+      "end" : -1231,
+      "start" : -1240
+    },
+    {
+      "count" : 0,
+      "end" : -1221,
+      "start" : -1230
+    },
+    {
+      "count" : 0,
+      "end" : -1211,
+      "start" : -1220
+    },
+    {
+      "count" : 0,
+      "end" : -1201,
+      "start" : -1210
+    },
+    {
+      "count" : 0,
+      "end" : -1191,
+      "start" : -1200
+    }
+  ],
+  "by" : "time",
+  "depth" : 2,
+  "from" : -1700,
+  "to" : -1200,
+  "total" : 0,
+  "tree" : [
+  ],
+  "unit" : "findings"
+}
+== GET /api/aggregate?from=-1700&to=-1200&unit=starts
+200 {
+  "asOf" : null,
+  "bucket" : 10,
+  "buckets" : [
+    {
+      "count" : 0,
+      "end" : -1691,
+      "start" : -1700
+    },
+    {
+      "count" : 0,
+      "end" : -1681,
+      "start" : -1690
+    },
+    {
+      "count" : 0,
+      "end" : -1671,
+      "start" : -1680
+    },
+    {
+      "count" : 0,
+      "end" : -1661,
+      "start" : -1670
+    },
+    {
+      "count" : 0,
+      "end" : -1651,
+      "start" : -1660
+    },
+    {
+      "count" : 0,
+      "end" : -1641,
+      "start" : -1650
+    },
+    {
+      "count" : 0,
+      "end" : -1631,
+      "start" : -1640
+    },
+    {
+      "count" : 0,
+      "end" : -1621,
+      "start" : -1630
+    },
+    {
+      "count" : 1,
+      "end" : -1611,
+      "start" : -1620
+    },
+    {
+      "count" : 0,
+      "end" : -1601,
+      "start" : -1610
+    },
+    {
+      "count" : 0,
+      "end" : -1591,
+      "start" : -1600
+    },
+    {
+      "count" : 0,
+      "end" : -1581,
+      "start" : -1590
+    },
+    {
+      "count" : 0,
+      "end" : -1571,
+      "start" : -1580
+    },
+    {
+      "count" : 0,
+      "end" : -1561,
+      "start" : -1570
+    },
+    {
+      "count" : 0,
+      "end" : -1551,
+      "start" : -1560
+    },
+    {
+      "count" : 0,
+      "end" : -1541,
+      "start" : -1550
+    },
+    {
+      "count" : 0,
+      "end" : -1531,
+      "start" : -1540
+    },
+    {
+      "count" : 0,
+      "end" : -1521,
+      "start" : -1530
+    },
+    {
+      "count" : 0,
+      "end" : -1511,
+      "start" : -1520
+    },
+    {
+      "count" : 0,
+      "end" : -1501,
+      "start" : -1510
+    },
+    {
+      "count" : 1,
+      "end" : -1491,
+      "start" : -1500
+    },
+    {
+      "count" : 0,
+      "end" : -1481,
+      "start" : -1490
+    },
+    {
+      "count" : 0,
+      "end" : -1471,
+      "start" : -1480
+    },
+    {
+      "count" : 0,
+      "end" : -1461,
+      "start" : -1470
+    },
+    {
+      "count" : 0,
+      "end" : -1451,
+      "start" : -1460
+    },
+    {
+      "count" : 0,
+      "end" : -1441,
+      "start" : -1450
+    },
+    {
+      "count" : 0,
+      "end" : -1431,
+      "start" : -1440
+    },
+    {
+      "count" : 0,
+      "end" : -1421,
+      "start" : -1430
+    },
+    {
+      "count" : 0,
+      "end" : -1411,
+      "start" : -1420
+    },
+    {
+      "count" : 0,
+      "end" : -1401,
+      "start" : -1410
+    },
+    {
+      "count" : 0,
+      "end" : -1391,
+      "start" : -1400
+    },
+    {
+      "count" : 0,
+      "end" : -1381,
+      "start" : -1390
+    },
+    {
+      "count" : 0,
+      "end" : -1371,
+      "start" : -1380
+    },
+    {
+      "count" : 0,
+      "end" : -1361,
+      "start" : -1370
+    },
+    {
+      "count" : 0,
+      "end" : -1351,
+      "start" : -1360
+    },
+    {
+      "count" : 0,
+      "end" : -1341,
+      "start" : -1350
+    },
+    {
+      "count" : 0,
+      "end" : -1331,
+      "start" : -1340
+    },
+    {
+      "count" : 0,
+      "end" : -1321,
+      "start" : -1330
+    },
+    {
+      "count" : 0,
+      "end" : -1311,
+      "start" : -1320
+    },
+    {
+      "count" : 0,
+      "end" : -1301,
+      "start" : -1310
+    },
+    {
+      "count" : 0,
+      "end" : -1291,
+      "start" : -1300
+    },
+    {
+      "count" : 0,
+      "end" : -1281,
+      "start" : -1290
+    },
+    {
+      "count" : 0,
+      "end" : -1271,
+      "start" : -1280
+    },
+    {
+      "count" : 0,
+      "end" : -1261,
+      "start" : -1270
+    },
+    {
+      "count" : 0,
+      "end" : -1251,
+      "start" : -1260
+    },
+    {
+      "count" : 0,
+      "end" : -1241,
+      "start" : -1250
+    },
+    {
+      "count" : 0,
+      "end" : -1231,
+      "start" : -1240
+    },
+    {
+      "count" : 0,
+      "end" : -1221,
+      "start" : -1230
+    },
+    {
+      "count" : 0,
+      "end" : -1211,
+      "start" : -1220
+    },
+    {
+      "count" : 0,
+      "end" : -1201,
+      "start" : -1210
+    },
+    {
+      "count" : 0,
+      "end" : -1191,
+      "start" : -1200
+    }
+  ],
+  "by" : "time",
+  "depth" : 2,
+  "from" : -1700,
+  "to" : -1200,
+  "total" : 0,
+  "tree" : [
+  ],
+  "unit" : "starts"
+}
+== GET /api/aggregate?by=region&from=-1700&to=-1200
+200 {
+  "asOf" : -1450,
+  "bucket" : 10,
+  "buckets" : [
+  ],
+  "by" : "region",
+  "depth" : 2,
+  "from" : -1700,
+  "to" : -1200,
+  "total" : 2,
+  "tree" : [
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+          ],
+          "contested" : false,
+          "count" : 2,
+          "end" : -1200,
+          "key" : "zz_march",
+          "kind" : "region",
+          "label" : "Zzmarch",
+          "overlap" : 0,
+          "placeId" : "zz_march",
+          "samples" : [
+            {
+              "citekey" : "zzhill1990_battle",
+              "title" : "The Battle of Zzhill"
+            },
+            {
+              "citekey" : "zzvolc2004_ash",
+              "title" : "Ash over Zzport"
+            }
+          ],
+          "start" : -1600
+        }
+      ],
+      "contested" : false,
+      "count" : 2,
+      "end" : -1000,
+      "key" : "zz_land",
+      "kind" : "region",
+      "label" : "Zzland",
+      "overlap" : 0,
+      "placeId" : "zz_land",
+      "samples" : [
+      ],
+      "start" : -2000
+    }
+  ],
+  "unit" : "sources"
+}
+== GET /api/aggregate?by=region&from=-1700&to=-1200&place=zz_land
+200 {
+  "asOf" : -1450,
+  "bucket" : 10,
+  "buckets" : [
+  ],
+  "by" : "region",
+  "depth" : 2,
+  "from" : -1700,
+  "to" : -1200,
+  "total" : 2,
+  "tree" : [
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+          ],
+          "contested" : false,
+          "count" : 2,
+          "end" : -1200,
+          "key" : "zz_march",
+          "kind" : "region",
+          "label" : "Zzmarch",
+          "overlap" : 0,
+          "placeId" : "zz_march",
+          "samples" : [
+            {
+              "citekey" : "zzhill1990_battle",
+              "title" : "The Battle of Zzhill"
+            },
+            {
+              "citekey" : "zzvolc2004_ash",
+              "title" : "Ash over Zzport"
+            }
+          ],
+          "start" : -1600
+        }
+      ],
+      "contested" : false,
+      "count" : 2,
+      "end" : -1000,
+      "key" : "zz_land",
+      "kind" : "region",
+      "label" : "Zzland",
+      "overlap" : 0,
+      "placeId" : "zz_land",
+      "samples" : [
+      ],
+      "start" : -2000
+    }
+  ],
+  "unit" : "sources"
+}
+== GET /api/aggregate?by=time,region&from=-1700&to=-1200
+200 {
+  "asOf" : null,
+  "bucket" : 10,
+  "buckets" : [
+    {
+      "count" : 0,
+      "end" : -1691,
+      "start" : -1700
+    },
+    {
+      "count" : 0,
+      "end" : -1681,
+      "start" : -1690
+    },
+    {
+      "count" : 0,
+      "end" : -1671,
+      "start" : -1680
+    },
+    {
+      "count" : 0,
+      "end" : -1661,
+      "start" : -1670
+    },
+    {
+      "count" : 0,
+      "end" : -1651,
+      "start" : -1660
+    },
+    {
+      "count" : 0,
+      "end" : -1641,
+      "start" : -1650
+    },
+    {
+      "count" : 0,
+      "end" : -1631,
+      "start" : -1640
+    },
+    {
+      "count" : 0,
+      "end" : -1621,
+      "start" : -1630
+    },
+    {
+      "count" : 1,
+      "end" : -1611,
+      "start" : -1620
+    },
+    {
+      "count" : 1,
+      "end" : -1601,
+      "start" : -1610
+    },
+    {
+      "count" : 1,
+      "end" : -1591,
+      "start" : -1600
+    },
+    {
+      "count" : 0,
+      "end" : -1581,
+      "start" : -1590
+    },
+    {
+      "count" : 0,
+      "end" : -1571,
+      "start" : -1580
+    },
+    {
+      "count" : 0,
+      "end" : -1561,
+      "start" : -1570
+    },
+    {
+      "count" : 0,
+      "end" : -1551,
+      "start" : -1560
+    },
+    {
+      "count" : 0,
+      "end" : -1541,
+      "start" : -1550
+    },
+    {
+      "count" : 0,
+      "end" : -1531,
+      "start" : -1540
+    },
+    {
+      "count" : 0,
+      "end" : -1521,
+      "start" : -1530
+    },
+    {
+      "count" : 0,
+      "end" : -1511,
+      "start" : -1520
+    },
+    {
+      "count" : 0,
+      "end" : -1501,
+      "start" : -1510
+    },
+    {
+      "count" : 1,
+      "end" : -1491,
+      "start" : -1500
+    },
+    {
+      "count" : 1,
+      "end" : -1481,
+      "start" : -1490
+    },
+    {
+      "count" : 1,
+      "end" : -1471,
+      "start" : -1480
+    },
+    {
+      "count" : 1,
+      "end" : -1461,
+      "start" : -1470
+    },
+    {
+      "count" : 1,
+      "end" : -1451,
+      "start" : -1460
+    },
+    {
+      "count" : 1,
+      "end" : -1441,
+      "start" : -1450
+    },
+    {
+      "count" : 1,
+      "end" : -1431,
+      "start" : -1440
+    },
+    {
+      "count" : 1,
+      "end" : -1421,
+      "start" : -1430
+    },
+    {
+      "count" : 1,
+      "end" : -1411,
+      "start" : -1420
+    },
+    {
+      "count" : 1,
+      "end" : -1401,
+      "start" : -1410
+    },
+    {
+      "count" : 1,
+      "end" : -1391,
+      "start" : -1400
+    },
+    {
+      "count" : 1,
+      "end" : -1381,
+      "start" : -1390
+    },
+    {
+      "count" : 1,
+      "end" : -1371,
+      "start" : -1380
+    },
+    {
+      "count" : 1,
+      "end" : -1361,
+      "start" : -1370
+    },
+    {
+      "count" : 1,
+      "end" : -1351,
+      "start" : -1360
+    },
+    {
+      "count" : 1,
+      "end" : -1341,
+      "start" : -1350
+    },
+    {
+      "count" : 1,
+      "end" : -1331,
+      "start" : -1340
+    },
+    {
+      "count" : 1,
+      "end" : -1321,
+      "start" : -1330
+    },
+    {
+      "count" : 1,
+      "end" : -1311,
+      "start" : -1320
+    },
+    {
+      "count" : 1,
+      "end" : -1301,
+      "start" : -1310
+    },
+    {
+      "count" : 1,
+      "end" : -1291,
+      "start" : -1300
+    },
+    {
+      "count" : 1,
+      "end" : -1281,
+      "start" : -1290
+    },
+    {
+      "count" : 0,
+      "end" : -1271,
+      "start" : -1280
+    },
+    {
+      "count" : 0,
+      "end" : -1261,
+      "start" : -1270
+    },
+    {
+      "count" : 0,
+      "end" : -1251,
+      "start" : -1260
+    },
+    {
+      "count" : 0,
+      "end" : -1241,
+      "start" : -1250
+    },
+    {
+      "count" : 0,
+      "end" : -1231,
+      "start" : -1240
+    },
+    {
+      "count" : 0,
+      "end" : -1221,
+      "start" : -1230
+    },
+    {
+      "count" : 0,
+      "end" : -1211,
+      "start" : -1220
+    },
+    {
+      "count" : 0,
+      "end" : -1201,
+      "start" : -1210
+    },
+    {
+      "count" : 0,
+      "end" : -1191,
+      "start" : -1200
+    }
+  ],
+  "by" : "time,region",
+  "depth" : 2,
+  "from" : -1700,
+  "to" : -1200,
+  "total" : 2,
+  "tree" : [
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+          ],
+          "contested" : false,
+          "count" : 1,
+          "end" : -1000,
+          "key" : "zz_land",
+          "kind" : "region",
+          "label" : "Zzland",
+          "overlap" : 0,
+          "placeId" : "zz_land",
+          "samples" : [
+            {
+              "citekey" : "zzvolc2004_ash",
+              "title" : "Ash over Zzport"
+            }
+          ],
+          "start" : -2000
+        }
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1611,
+      "key" : "time:-1620:-1611",
+      "kind" : "time",
+      "label" : "1620 BCE–1611 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+      ],
+      "start" : -1620
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+          ],
+          "contested" : false,
+          "count" : 1,
+          "end" : -1000,
+          "key" : "zz_land",
+          "kind" : "region",
+          "label" : "Zzland",
+          "overlap" : 0,
+          "placeId" : "zz_land",
+          "samples" : [
+            {
+              "citekey" : "zzvolc2004_ash",
+              "title" : "Ash over Zzport"
+            }
+          ],
+          "start" : -2000
+        }
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1601,
+      "key" : "time:-1610:-1601",
+      "kind" : "time",
+      "label" : "1610 BCE–1601 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+      ],
+      "start" : -1610
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1200,
+              "key" : "zz_march",
+              "kind" : "region",
+              "label" : "Zzmarch",
+              "overlap" : 0,
+              "placeId" : "zz_march",
+              "samples" : [
+                {
+                  "citekey" : "zzvolc2004_ash",
+                  "title" : "Ash over Zzport"
+                }
+              ],
+              "start" : -1600
+            }
+          ],
+          "contested" : false,
+          "count" : 1,
+          "end" : -1000,
+          "key" : "zz_land",
+          "kind" : "region",
+          "label" : "Zzland",
+          "overlap" : 0,
+          "placeId" : "zz_land",
+          "samples" : [
+          ],
+          "start" : -2000
+        }
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1591,
+      "key" : "time:-1600:-1591",
+      "kind" : "time",
+      "label" : "1600 BCE–1591 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+      ],
+      "start" : -1600
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1200,
+              "key" : "zz_march",
+              "kind" : "region",
+              "label" : "Zzmarch",
+              "overlap" : 0,
+              "placeId" : "zz_march",
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1600
+            }
+          ],
+          "contested" : false,
+          "count" : 1,
+          "end" : -1000,
+          "key" : "zz_land",
+          "kind" : "region",
+          "label" : "Zzland",
+          "overlap" : 0,
+          "placeId" : "zz_land",
+          "samples" : [
+          ],
+          "start" : -2000
+        }
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1491,
+      "key" : "time:-1500:-1491",
+      "kind" : "time",
+      "label" : "1500 BCE–1491 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+      ],
+      "start" : -1500
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1200,
+              "key" : "zz_march",
+              "kind" : "region",
+              "label" : "Zzmarch",
+              "overlap" : 0,
+              "placeId" : "zz_march",
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1600
+            }
+          ],
+          "contested" : false,
+          "count" : 1,
+          "end" : -1000,
+          "key" : "zz_land",
+          "kind" : "region",
+          "label" : "Zzland",
+          "overlap" : 0,
+          "placeId" : "zz_land",
+          "samples" : [
+          ],
+          "start" : -2000
+        }
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1481,
+      "key" : "time:-1490:-1481",
+      "kind" : "time",
+      "label" : "1490 BCE–1481 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+      ],
+      "start" : -1490
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1200,
+              "key" : "zz_march",
+              "kind" : "region",
+              "label" : "Zzmarch",
+              "overlap" : 0,
+              "placeId" : "zz_march",
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1600
+            }
+          ],
+          "contested" : false,
+          "count" : 1,
+          "end" : -1000,
+          "key" : "zz_land",
+          "kind" : "region",
+          "label" : "Zzland",
+          "overlap" : 0,
+          "placeId" : "zz_land",
+          "samples" : [
+          ],
+          "start" : -2000
+        }
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1471,
+      "key" : "time:-1480:-1471",
+      "kind" : "time",
+      "label" : "1480 BCE–1471 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+      ],
+      "start" : -1480
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1200,
+              "key" : "zz_march",
+              "kind" : "region",
+              "label" : "Zzmarch",
+              "overlap" : 0,
+              "placeId" : "zz_march",
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1600
+            }
+          ],
+          "contested" : false,
+          "count" : 1,
+          "end" : -1000,
+          "key" : "zz_land",
+          "kind" : "region",
+          "label" : "Zzland",
+          "overlap" : 0,
+          "placeId" : "zz_land",
+          "samples" : [
+          ],
+          "start" : -2000
+        }
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1461,
+      "key" : "time:-1470:-1461",
+      "kind" : "time",
+      "label" : "1470 BCE–1461 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+      ],
+      "start" : -1470
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1200,
+              "key" : "zz_march",
+              "kind" : "region",
+              "label" : "Zzmarch",
+              "overlap" : 0,
+              "placeId" : "zz_march",
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1600
+            }
+          ],
+          "contested" : false,
+          "count" : 1,
+          "end" : -1000,
+          "key" : "zz_land",
+          "kind" : "region",
+          "label" : "Zzland",
+          "overlap" : 0,
+          "placeId" : "zz_land",
+          "samples" : [
+          ],
+          "start" : -2000
+        }
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1451,
+      "key" : "time:-1460:-1451",
+      "kind" : "time",
+      "label" : "1460 BCE–1451 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+      ],
+      "start" : -1460
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1200,
+              "key" : "zz_march",
+              "kind" : "region",
+              "label" : "Zzmarch",
+              "overlap" : 0,
+              "placeId" : "zz_march",
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1600
+            }
+          ],
+          "contested" : false,
+          "count" : 1,
+          "end" : -1000,
+          "key" : "zz_land",
+          "kind" : "region",
+          "label" : "Zzland",
+          "overlap" : 0,
+          "placeId" : "zz_land",
+          "samples" : [
+          ],
+          "start" : -2000
+        }
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1441,
+      "key" : "time:-1450:-1441",
+      "kind" : "time",
+      "label" : "1450 BCE–1441 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+      ],
+      "start" : -1450
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1200,
+              "key" : "zz_march",
+              "kind" : "region",
+              "label" : "Zzmarch",
+              "overlap" : 0,
+              "placeId" : "zz_march",
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1600
+            }
+          ],
+          "contested" : false,
+          "count" : 1,
+          "end" : -1000,
+          "key" : "zz_land",
+          "kind" : "region",
+          "label" : "Zzland",
+          "overlap" : 0,
+          "placeId" : "zz_land",
+          "samples" : [
+          ],
+          "start" : -2000
+        }
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1431,
+      "key" : "time:-1440:-1431",
+      "kind" : "time",
+      "label" : "1440 BCE–1431 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+      ],
+      "start" : -1440
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1200,
+              "key" : "zz_march",
+              "kind" : "region",
+              "label" : "Zzmarch",
+              "overlap" : 0,
+              "placeId" : "zz_march",
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1600
+            }
+          ],
+          "contested" : false,
+          "count" : 1,
+          "end" : -1000,
+          "key" : "zz_land",
+          "kind" : "region",
+          "label" : "Zzland",
+          "overlap" : 0,
+          "placeId" : "zz_land",
+          "samples" : [
+          ],
+          "start" : -2000
+        }
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1421,
+      "key" : "time:-1430:-1421",
+      "kind" : "time",
+      "label" : "1430 BCE–1421 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+      ],
+      "start" : -1430
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1200,
+              "key" : "zz_march",
+              "kind" : "region",
+              "label" : "Zzmarch",
+              "overlap" : 0,
+              "placeId" : "zz_march",
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1600
+            }
+          ],
+          "contested" : false,
+          "count" : 1,
+          "end" : -1000,
+          "key" : "zz_land",
+          "kind" : "region",
+          "label" : "Zzland",
+          "overlap" : 0,
+          "placeId" : "zz_land",
+          "samples" : [
+          ],
+          "start" : -2000
+        }
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1411,
+      "key" : "time:-1420:-1411",
+      "kind" : "time",
+      "label" : "1420 BCE–1411 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+      ],
+      "start" : -1420
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1200,
+              "key" : "zz_march",
+              "kind" : "region",
+              "label" : "Zzmarch",
+              "overlap" : 0,
+              "placeId" : "zz_march",
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1600
+            }
+          ],
+          "contested" : false,
+          "count" : 1,
+          "end" : -1000,
+          "key" : "zz_land",
+          "kind" : "region",
+          "label" : "Zzland",
+          "overlap" : 0,
+          "placeId" : "zz_land",
+          "samples" : [
+          ],
+          "start" : -2000
+        }
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1401,
+      "key" : "time:-1410:-1401",
+      "kind" : "time",
+      "label" : "1410 BCE–1401 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+      ],
+      "start" : -1410
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1200,
+              "key" : "zz_march",
+              "kind" : "region",
+              "label" : "Zzmarch",
+              "overlap" : 0,
+              "placeId" : "zz_march",
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1600
+            }
+          ],
+          "contested" : false,
+          "count" : 1,
+          "end" : -1000,
+          "key" : "zz_land",
+          "kind" : "region",
+          "label" : "Zzland",
+          "overlap" : 0,
+          "placeId" : "zz_land",
+          "samples" : [
+          ],
+          "start" : -2000
+        }
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1391,
+      "key" : "time:-1400:-1391",
+      "kind" : "time",
+      "label" : "1400 BCE–1391 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+      ],
+      "start" : -1400
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1200,
+              "key" : "zz_march",
+              "kind" : "region",
+              "label" : "Zzmarch",
+              "overlap" : 0,
+              "placeId" : "zz_march",
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1600
+            }
+          ],
+          "contested" : false,
+          "count" : 1,
+          "end" : -1000,
+          "key" : "zz_land",
+          "kind" : "region",
+          "label" : "Zzland",
+          "overlap" : 0,
+          "placeId" : "zz_land",
+          "samples" : [
+          ],
+          "start" : -2000
+        }
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1381,
+      "key" : "time:-1390:-1381",
+      "kind" : "time",
+      "label" : "1390 BCE–1381 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+      ],
+      "start" : -1390
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1200,
+              "key" : "zz_march",
+              "kind" : "region",
+              "label" : "Zzmarch",
+              "overlap" : 0,
+              "placeId" : "zz_march",
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1600
+            }
+          ],
+          "contested" : false,
+          "count" : 1,
+          "end" : -1000,
+          "key" : "zz_land",
+          "kind" : "region",
+          "label" : "Zzland",
+          "overlap" : 0,
+          "placeId" : "zz_land",
+          "samples" : [
+          ],
+          "start" : -2000
+        }
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1371,
+      "key" : "time:-1380:-1371",
+      "kind" : "time",
+      "label" : "1380 BCE–1371 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+      ],
+      "start" : -1380
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1200,
+              "key" : "zz_march",
+              "kind" : "region",
+              "label" : "Zzmarch",
+              "overlap" : 0,
+              "placeId" : "zz_march",
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1600
+            }
+          ],
+          "contested" : false,
+          "count" : 1,
+          "end" : -1000,
+          "key" : "zz_land",
+          "kind" : "region",
+          "label" : "Zzland",
+          "overlap" : 0,
+          "placeId" : "zz_land",
+          "samples" : [
+          ],
+          "start" : -2000
+        }
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1361,
+      "key" : "time:-1370:-1361",
+      "kind" : "time",
+      "label" : "1370 BCE–1361 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+      ],
+      "start" : -1370
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1200,
+              "key" : "zz_march",
+              "kind" : "region",
+              "label" : "Zzmarch",
+              "overlap" : 0,
+              "placeId" : "zz_march",
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1600
+            }
+          ],
+          "contested" : false,
+          "count" : 1,
+          "end" : -1000,
+          "key" : "zz_land",
+          "kind" : "region",
+          "label" : "Zzland",
+          "overlap" : 0,
+          "placeId" : "zz_land",
+          "samples" : [
+          ],
+          "start" : -2000
+        }
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1351,
+      "key" : "time:-1360:-1351",
+      "kind" : "time",
+      "label" : "1360 BCE–1351 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+      ],
+      "start" : -1360
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1200,
+              "key" : "zz_march",
+              "kind" : "region",
+              "label" : "Zzmarch",
+              "overlap" : 0,
+              "placeId" : "zz_march",
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1600
+            }
+          ],
+          "contested" : false,
+          "count" : 1,
+          "end" : -1000,
+          "key" : "zz_land",
+          "kind" : "region",
+          "label" : "Zzland",
+          "overlap" : 0,
+          "placeId" : "zz_land",
+          "samples" : [
+          ],
+          "start" : -2000
+        }
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1341,
+      "key" : "time:-1350:-1341",
+      "kind" : "time",
+      "label" : "1350 BCE–1341 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+      ],
+      "start" : -1350
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1200,
+              "key" : "zz_march",
+              "kind" : "region",
+              "label" : "Zzmarch",
+              "overlap" : 0,
+              "placeId" : "zz_march",
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1600
+            }
+          ],
+          "contested" : false,
+          "count" : 1,
+          "end" : -1000,
+          "key" : "zz_land",
+          "kind" : "region",
+          "label" : "Zzland",
+          "overlap" : 0,
+          "placeId" : "zz_land",
+          "samples" : [
+          ],
+          "start" : -2000
+        }
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1331,
+      "key" : "time:-1340:-1331",
+      "kind" : "time",
+      "label" : "1340 BCE–1331 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+      ],
+      "start" : -1340
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1200,
+              "key" : "zz_march",
+              "kind" : "region",
+              "label" : "Zzmarch",
+              "overlap" : 0,
+              "placeId" : "zz_march",
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1600
+            }
+          ],
+          "contested" : false,
+          "count" : 1,
+          "end" : -1000,
+          "key" : "zz_land",
+          "kind" : "region",
+          "label" : "Zzland",
+          "overlap" : 0,
+          "placeId" : "zz_land",
+          "samples" : [
+          ],
+          "start" : -2000
+        }
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1321,
+      "key" : "time:-1330:-1321",
+      "kind" : "time",
+      "label" : "1330 BCE–1321 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+      ],
+      "start" : -1330
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1200,
+              "key" : "zz_march",
+              "kind" : "region",
+              "label" : "Zzmarch",
+              "overlap" : 0,
+              "placeId" : "zz_march",
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1600
+            }
+          ],
+          "contested" : false,
+          "count" : 1,
+          "end" : -1000,
+          "key" : "zz_land",
+          "kind" : "region",
+          "label" : "Zzland",
+          "overlap" : 0,
+          "placeId" : "zz_land",
+          "samples" : [
+          ],
+          "start" : -2000
+        }
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1311,
+      "key" : "time:-1320:-1311",
+      "kind" : "time",
+      "label" : "1320 BCE–1311 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+      ],
+      "start" : -1320
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1200,
+              "key" : "zz_march",
+              "kind" : "region",
+              "label" : "Zzmarch",
+              "overlap" : 0,
+              "placeId" : "zz_march",
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1600
+            }
+          ],
+          "contested" : false,
+          "count" : 1,
+          "end" : -1000,
+          "key" : "zz_land",
+          "kind" : "region",
+          "label" : "Zzland",
+          "overlap" : 0,
+          "placeId" : "zz_land",
+          "samples" : [
+          ],
+          "start" : -2000
+        }
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1301,
+      "key" : "time:-1310:-1301",
+      "kind" : "time",
+      "label" : "1310 BCE–1301 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+      ],
+      "start" : -1310
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1200,
+              "key" : "zz_march",
+              "kind" : "region",
+              "label" : "Zzmarch",
+              "overlap" : 0,
+              "placeId" : "zz_march",
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1600
+            }
+          ],
+          "contested" : false,
+          "count" : 1,
+          "end" : -1000,
+          "key" : "zz_land",
+          "kind" : "region",
+          "label" : "Zzland",
+          "overlap" : 0,
+          "placeId" : "zz_land",
+          "samples" : [
+          ],
+          "start" : -2000
+        }
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1291,
+      "key" : "time:-1300:-1291",
+      "kind" : "time",
+      "label" : "1300 BCE–1291 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+      ],
+      "start" : -1300
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1200,
+              "key" : "zz_march",
+              "kind" : "region",
+              "label" : "Zzmarch",
+              "overlap" : 0,
+              "placeId" : "zz_march",
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1600
+            }
+          ],
+          "contested" : false,
+          "count" : 1,
+          "end" : -1000,
+          "key" : "zz_land",
+          "kind" : "region",
+          "label" : "Zzland",
+          "overlap" : 0,
+          "placeId" : "zz_land",
+          "samples" : [
+          ],
+          "start" : -2000
+        }
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1281,
+      "key" : "time:-1290:-1281",
+      "kind" : "time",
+      "label" : "1290 BCE–1281 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+      ],
+      "start" : -1290
+    }
+  ],
+  "unit" : "sources"
+}
+== GET /api/aggregate?by=region,time&from=-1700&to=-1200&depth=2&samples=1
+200 {
+  "asOf" : -1450,
+  "bucket" : 10,
+  "buckets" : [
+  ],
+  "by" : "region,time",
+  "depth" : 2,
+  "from" : -1700,
+  "to" : -1200,
+  "total" : 2,
+  "tree" : [
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+        {
+          "alsoUnder" : [
+          ],
+          "children" : [
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1611,
+              "key" : "time:-1620:-1611",
+              "kind" : "time",
+              "label" : "1620 BCE–1611 BCE",
+              "overlap" : 0,
+              "placeId" : null,
+              "samples" : [
+                {
+                  "citekey" : "zzvolc2004_ash",
+                  "title" : "Ash over Zzport"
+                }
+              ],
+              "start" : -1620
+            },
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1601,
+              "key" : "time:-1610:-1601",
+              "kind" : "time",
+              "label" : "1610 BCE–1601 BCE",
+              "overlap" : 0,
+              "placeId" : null,
+              "samples" : [
+                {
+                  "citekey" : "zzvolc2004_ash",
+                  "title" : "Ash over Zzport"
+                }
+              ],
+              "start" : -1610
+            },
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1591,
+              "key" : "time:-1600:-1591",
+              "kind" : "time",
+              "label" : "1600 BCE–1591 BCE",
+              "overlap" : 0,
+              "placeId" : null,
+              "samples" : [
+                {
+                  "citekey" : "zzvolc2004_ash",
+                  "title" : "Ash over Zzport"
+                }
+              ],
+              "start" : -1600
+            },
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1491,
+              "key" : "time:-1500:-1491",
+              "kind" : "time",
+              "label" : "1500 BCE–1491 BCE",
+              "overlap" : 0,
+              "placeId" : null,
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1500
+            },
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1481,
+              "key" : "time:-1490:-1481",
+              "kind" : "time",
+              "label" : "1490 BCE–1481 BCE",
+              "overlap" : 0,
+              "placeId" : null,
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1490
+            },
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1471,
+              "key" : "time:-1480:-1471",
+              "kind" : "time",
+              "label" : "1480 BCE–1471 BCE",
+              "overlap" : 0,
+              "placeId" : null,
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1480
+            },
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1461,
+              "key" : "time:-1470:-1461",
+              "kind" : "time",
+              "label" : "1470 BCE–1461 BCE",
+              "overlap" : 0,
+              "placeId" : null,
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1470
+            },
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1451,
+              "key" : "time:-1460:-1451",
+              "kind" : "time",
+              "label" : "1460 BCE–1451 BCE",
+              "overlap" : 0,
+              "placeId" : null,
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1460
+            },
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1441,
+              "key" : "time:-1450:-1441",
+              "kind" : "time",
+              "label" : "1450 BCE–1441 BCE",
+              "overlap" : 0,
+              "placeId" : null,
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1450
+            },
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1431,
+              "key" : "time:-1440:-1431",
+              "kind" : "time",
+              "label" : "1440 BCE–1431 BCE",
+              "overlap" : 0,
+              "placeId" : null,
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1440
+            },
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1421,
+              "key" : "time:-1430:-1421",
+              "kind" : "time",
+              "label" : "1430 BCE–1421 BCE",
+              "overlap" : 0,
+              "placeId" : null,
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1430
+            },
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1411,
+              "key" : "time:-1420:-1411",
+              "kind" : "time",
+              "label" : "1420 BCE–1411 BCE",
+              "overlap" : 0,
+              "placeId" : null,
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1420
+            },
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1401,
+              "key" : "time:-1410:-1401",
+              "kind" : "time",
+              "label" : "1410 BCE–1401 BCE",
+              "overlap" : 0,
+              "placeId" : null,
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1410
+            },
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1391,
+              "key" : "time:-1400:-1391",
+              "kind" : "time",
+              "label" : "1400 BCE–1391 BCE",
+              "overlap" : 0,
+              "placeId" : null,
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1400
+            },
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1381,
+              "key" : "time:-1390:-1381",
+              "kind" : "time",
+              "label" : "1390 BCE–1381 BCE",
+              "overlap" : 0,
+              "placeId" : null,
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1390
+            },
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1371,
+              "key" : "time:-1380:-1371",
+              "kind" : "time",
+              "label" : "1380 BCE–1371 BCE",
+              "overlap" : 0,
+              "placeId" : null,
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1380
+            },
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1361,
+              "key" : "time:-1370:-1361",
+              "kind" : "time",
+              "label" : "1370 BCE–1361 BCE",
+              "overlap" : 0,
+              "placeId" : null,
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1370
+            },
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1351,
+              "key" : "time:-1360:-1351",
+              "kind" : "time",
+              "label" : "1360 BCE–1351 BCE",
+              "overlap" : 0,
+              "placeId" : null,
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1360
+            },
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1341,
+              "key" : "time:-1350:-1341",
+              "kind" : "time",
+              "label" : "1350 BCE–1341 BCE",
+              "overlap" : 0,
+              "placeId" : null,
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1350
+            },
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1331,
+              "key" : "time:-1340:-1331",
+              "kind" : "time",
+              "label" : "1340 BCE–1331 BCE",
+              "overlap" : 0,
+              "placeId" : null,
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1340
+            },
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1321,
+              "key" : "time:-1330:-1321",
+              "kind" : "time",
+              "label" : "1330 BCE–1321 BCE",
+              "overlap" : 0,
+              "placeId" : null,
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1330
+            },
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1311,
+              "key" : "time:-1320:-1311",
+              "kind" : "time",
+              "label" : "1320 BCE–1311 BCE",
+              "overlap" : 0,
+              "placeId" : null,
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1320
+            },
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1301,
+              "key" : "time:-1310:-1301",
+              "kind" : "time",
+              "label" : "1310 BCE–1301 BCE",
+              "overlap" : 0,
+              "placeId" : null,
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1310
+            },
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1291,
+              "key" : "time:-1300:-1291",
+              "kind" : "time",
+              "label" : "1300 BCE–1291 BCE",
+              "overlap" : 0,
+              "placeId" : null,
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1300
+            },
+            {
+              "alsoUnder" : [
+              ],
+              "children" : [
+              ],
+              "contested" : false,
+              "count" : 1,
+              "end" : -1281,
+              "key" : "time:-1290:-1281",
+              "kind" : "time",
+              "label" : "1290 BCE–1281 BCE",
+              "overlap" : 0,
+              "placeId" : null,
+              "samples" : [
+                {
+                  "citekey" : "zzhill1990_battle",
+                  "title" : "The Battle of Zzhill"
+                }
+              ],
+              "start" : -1290
+            }
+          ],
+          "contested" : false,
+          "count" : 2,
+          "end" : -1200,
+          "key" : "zz_march",
+          "kind" : "region",
+          "label" : "Zzmarch",
+          "overlap" : 0,
+          "placeId" : "zz_march",
+          "samples" : [
+          ],
+          "start" : -1600
+        }
+      ],
+      "contested" : false,
+      "count" : 2,
+      "end" : -1000,
+      "key" : "zz_land",
+      "kind" : "region",
+      "label" : "Zzland",
+      "overlap" : 0,
+      "placeId" : "zz_land",
+      "samples" : [
+      ],
+      "start" : -2000
+    }
+  ],
+  "unit" : "sources"
+}
+== GET /api/aggregate?by=time&from=-1700&to=-1200&depth=2
+200 {
+  "asOf" : null,
+  "bucket" : 10,
+  "buckets" : [
+    {
+      "count" : 0,
+      "end" : -1691,
+      "start" : -1700
+    },
+    {
+      "count" : 0,
+      "end" : -1681,
+      "start" : -1690
+    },
+    {
+      "count" : 0,
+      "end" : -1671,
+      "start" : -1680
+    },
+    {
+      "count" : 0,
+      "end" : -1661,
+      "start" : -1670
+    },
+    {
+      "count" : 0,
+      "end" : -1651,
+      "start" : -1660
+    },
+    {
+      "count" : 0,
+      "end" : -1641,
+      "start" : -1650
+    },
+    {
+      "count" : 0,
+      "end" : -1631,
+      "start" : -1640
+    },
+    {
+      "count" : 0,
+      "end" : -1621,
+      "start" : -1630
+    },
+    {
+      "count" : 1,
+      "end" : -1611,
+      "start" : -1620
+    },
+    {
+      "count" : 1,
+      "end" : -1601,
+      "start" : -1610
+    },
+    {
+      "count" : 1,
+      "end" : -1591,
+      "start" : -1600
+    },
+    {
+      "count" : 0,
+      "end" : -1581,
+      "start" : -1590
+    },
+    {
+      "count" : 0,
+      "end" : -1571,
+      "start" : -1580
+    },
+    {
+      "count" : 0,
+      "end" : -1561,
+      "start" : -1570
+    },
+    {
+      "count" : 0,
+      "end" : -1551,
+      "start" : -1560
+    },
+    {
+      "count" : 0,
+      "end" : -1541,
+      "start" : -1550
+    },
+    {
+      "count" : 0,
+      "end" : -1531,
+      "start" : -1540
+    },
+    {
+      "count" : 0,
+      "end" : -1521,
+      "start" : -1530
+    },
+    {
+      "count" : 0,
+      "end" : -1511,
+      "start" : -1520
+    },
+    {
+      "count" : 0,
+      "end" : -1501,
+      "start" : -1510
+    },
+    {
+      "count" : 1,
+      "end" : -1491,
+      "start" : -1500
+    },
+    {
+      "count" : 1,
+      "end" : -1481,
+      "start" : -1490
+    },
+    {
+      "count" : 1,
+      "end" : -1471,
+      "start" : -1480
+    },
+    {
+      "count" : 1,
+      "end" : -1461,
+      "start" : -1470
+    },
+    {
+      "count" : 1,
+      "end" : -1451,
+      "start" : -1460
+    },
+    {
+      "count" : 1,
+      "end" : -1441,
+      "start" : -1450
+    },
+    {
+      "count" : 1,
+      "end" : -1431,
+      "start" : -1440
+    },
+    {
+      "count" : 1,
+      "end" : -1421,
+      "start" : -1430
+    },
+    {
+      "count" : 1,
+      "end" : -1411,
+      "start" : -1420
+    },
+    {
+      "count" : 1,
+      "end" : -1401,
+      "start" : -1410
+    },
+    {
+      "count" : 1,
+      "end" : -1391,
+      "start" : -1400
+    },
+    {
+      "count" : 1,
+      "end" : -1381,
+      "start" : -1390
+    },
+    {
+      "count" : 1,
+      "end" : -1371,
+      "start" : -1380
+    },
+    {
+      "count" : 1,
+      "end" : -1361,
+      "start" : -1370
+    },
+    {
+      "count" : 1,
+      "end" : -1351,
+      "start" : -1360
+    },
+    {
+      "count" : 1,
+      "end" : -1341,
+      "start" : -1350
+    },
+    {
+      "count" : 1,
+      "end" : -1331,
+      "start" : -1340
+    },
+    {
+      "count" : 1,
+      "end" : -1321,
+      "start" : -1330
+    },
+    {
+      "count" : 1,
+      "end" : -1311,
+      "start" : -1320
+    },
+    {
+      "count" : 1,
+      "end" : -1301,
+      "start" : -1310
+    },
+    {
+      "count" : 1,
+      "end" : -1291,
+      "start" : -1300
+    },
+    {
+      "count" : 1,
+      "end" : -1281,
+      "start" : -1290
+    },
+    {
+      "count" : 0,
+      "end" : -1271,
+      "start" : -1280
+    },
+    {
+      "count" : 0,
+      "end" : -1261,
+      "start" : -1270
+    },
+    {
+      "count" : 0,
+      "end" : -1251,
+      "start" : -1260
+    },
+    {
+      "count" : 0,
+      "end" : -1241,
+      "start" : -1250
+    },
+    {
+      "count" : 0,
+      "end" : -1231,
+      "start" : -1240
+    },
+    {
+      "count" : 0,
+      "end" : -1221,
+      "start" : -1230
+    },
+    {
+      "count" : 0,
+      "end" : -1211,
+      "start" : -1220
+    },
+    {
+      "count" : 0,
+      "end" : -1201,
+      "start" : -1210
+    },
+    {
+      "count" : 0,
+      "end" : -1191,
+      "start" : -1200
+    }
+  ],
+  "by" : "time",
+  "depth" : 2,
+  "from" : -1700,
+  "to" : -1200,
+  "total" : 2,
+  "tree" : [
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1611,
+      "key" : "time:-1620:-1611",
+      "kind" : "time",
+      "label" : "1620 BCE–1611 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+        {
+          "citekey" : "zzvolc2004_ash",
+          "title" : "Ash over Zzport"
+        }
+      ],
+      "start" : -1620
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1601,
+      "key" : "time:-1610:-1601",
+      "kind" : "time",
+      "label" : "1610 BCE–1601 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+        {
+          "citekey" : "zzvolc2004_ash",
+          "title" : "Ash over Zzport"
+        }
+      ],
+      "start" : -1610
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1591,
+      "key" : "time:-1600:-1591",
+      "kind" : "time",
+      "label" : "1600 BCE–1591 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+        {
+          "citekey" : "zzvolc2004_ash",
+          "title" : "Ash over Zzport"
+        }
+      ],
+      "start" : -1600
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1491,
+      "key" : "time:-1500:-1491",
+      "kind" : "time",
+      "label" : "1500 BCE–1491 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "title" : "The Battle of Zzhill"
+        }
+      ],
+      "start" : -1500
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1481,
+      "key" : "time:-1490:-1481",
+      "kind" : "time",
+      "label" : "1490 BCE–1481 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "title" : "The Battle of Zzhill"
+        }
+      ],
+      "start" : -1490
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1471,
+      "key" : "time:-1480:-1471",
+      "kind" : "time",
+      "label" : "1480 BCE–1471 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "title" : "The Battle of Zzhill"
+        }
+      ],
+      "start" : -1480
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1461,
+      "key" : "time:-1470:-1461",
+      "kind" : "time",
+      "label" : "1470 BCE–1461 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "title" : "The Battle of Zzhill"
+        }
+      ],
+      "start" : -1470
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1451,
+      "key" : "time:-1460:-1451",
+      "kind" : "time",
+      "label" : "1460 BCE–1451 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "title" : "The Battle of Zzhill"
+        }
+      ],
+      "start" : -1460
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1441,
+      "key" : "time:-1450:-1441",
+      "kind" : "time",
+      "label" : "1450 BCE–1441 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "title" : "The Battle of Zzhill"
+        }
+      ],
+      "start" : -1450
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1431,
+      "key" : "time:-1440:-1431",
+      "kind" : "time",
+      "label" : "1440 BCE–1431 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "title" : "The Battle of Zzhill"
+        }
+      ],
+      "start" : -1440
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1421,
+      "key" : "time:-1430:-1421",
+      "kind" : "time",
+      "label" : "1430 BCE–1421 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "title" : "The Battle of Zzhill"
+        }
+      ],
+      "start" : -1430
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1411,
+      "key" : "time:-1420:-1411",
+      "kind" : "time",
+      "label" : "1420 BCE–1411 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "title" : "The Battle of Zzhill"
+        }
+      ],
+      "start" : -1420
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1401,
+      "key" : "time:-1410:-1401",
+      "kind" : "time",
+      "label" : "1410 BCE–1401 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "title" : "The Battle of Zzhill"
+        }
+      ],
+      "start" : -1410
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1391,
+      "key" : "time:-1400:-1391",
+      "kind" : "time",
+      "label" : "1400 BCE–1391 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "title" : "The Battle of Zzhill"
+        }
+      ],
+      "start" : -1400
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1381,
+      "key" : "time:-1390:-1381",
+      "kind" : "time",
+      "label" : "1390 BCE–1381 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "title" : "The Battle of Zzhill"
+        }
+      ],
+      "start" : -1390
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1371,
+      "key" : "time:-1380:-1371",
+      "kind" : "time",
+      "label" : "1380 BCE–1371 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "title" : "The Battle of Zzhill"
+        }
+      ],
+      "start" : -1380
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1361,
+      "key" : "time:-1370:-1361",
+      "kind" : "time",
+      "label" : "1370 BCE–1361 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "title" : "The Battle of Zzhill"
+        }
+      ],
+      "start" : -1370
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1351,
+      "key" : "time:-1360:-1351",
+      "kind" : "time",
+      "label" : "1360 BCE–1351 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "title" : "The Battle of Zzhill"
+        }
+      ],
+      "start" : -1360
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1341,
+      "key" : "time:-1350:-1341",
+      "kind" : "time",
+      "label" : "1350 BCE–1341 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "title" : "The Battle of Zzhill"
+        }
+      ],
+      "start" : -1350
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1331,
+      "key" : "time:-1340:-1331",
+      "kind" : "time",
+      "label" : "1340 BCE–1331 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "title" : "The Battle of Zzhill"
+        }
+      ],
+      "start" : -1340
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1321,
+      "key" : "time:-1330:-1321",
+      "kind" : "time",
+      "label" : "1330 BCE–1321 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "title" : "The Battle of Zzhill"
+        }
+      ],
+      "start" : -1330
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1311,
+      "key" : "time:-1320:-1311",
+      "kind" : "time",
+      "label" : "1320 BCE–1311 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "title" : "The Battle of Zzhill"
+        }
+      ],
+      "start" : -1320
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1301,
+      "key" : "time:-1310:-1301",
+      "kind" : "time",
+      "label" : "1310 BCE–1301 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "title" : "The Battle of Zzhill"
+        }
+      ],
+      "start" : -1310
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1291,
+      "key" : "time:-1300:-1291",
+      "kind" : "time",
+      "label" : "1300 BCE–1291 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "title" : "The Battle of Zzhill"
+        }
+      ],
+      "start" : -1300
+    },
+    {
+      "alsoUnder" : [
+      ],
+      "children" : [
+      ],
+      "contested" : false,
+      "count" : 1,
+      "end" : -1281,
+      "key" : "time:-1290:-1281",
+      "kind" : "time",
+      "label" : "1290 BCE–1281 BCE",
+      "overlap" : 0,
+      "placeId" : null,
+      "samples" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "title" : "The Battle of Zzhill"
+        }
+      ],
+      "start" : -1290
+    }
+  ],
+  "unit" : "sources"
+}
+== GET /api/aggregate?by=nonsense
+400 {
+  "code" : null,
+  "message" : "unsupported by='nonsense' — use time | region | time,region | region,time"
+}
+== tool geo_when {"places":["zz_land"]}
+### 4 finding(s)
+
+- **zzhill1990_battle** — The Battle of Zzhill
+  - the Zzwell is of the Zzmarch period — _Zzwell (39.7, 34.9), 1500 BCE–1300 BCE_
+  - the battle of Zzhill was fought around 1300 BC — _Zzhill (40.0, 34.6), 1310 BCE–1290 BCE_
+  - Zzport sent ships to Zzhill — _Zzport (39.2, 35.5), 1310 BCE–1290 BCE_
+- **zzvolc2004_ash** — Ash over Zzport
+  - ash from Mount Zzvolc fell east of Zzport — _Zzland (39.0, 36.0), 1620 BCE–1600 BCE_
+== tool geo_when {"from":-1320,"to":-1280}
+### 3 finding(s)
+
+- **zzhill1990_battle** — The Battle of Zzhill
+  - the Zzwell is of the Zzmarch period — _Zzwell (39.7, 34.9), 1500 BCE–1300 BCE_
+  - the battle of Zzhill was fought around 1300 BC — _Zzhill (40.0, 34.6), 1310 BCE–1290 BCE_
+  - Zzport sent ships to Zzhill — _Zzport (39.2, 35.5), 1310 BCE–1290 BCE_
+== tool histogram {"from":-1700,"to":-1200}
+### sources per 10 yrs · 1700 BCE → 1200 BCE
+
+| period | sources | |
+|---|---:|---|
+| 1700 BCE–1621 BCE | 0 |  | _(8 buckets)_
+| 1620 BCE–1591 BCE | 1 | ████████████████████████ | _(3 buckets)_
+| 1590 BCE–1501 BCE | 0 |  | _(9 buckets)_
+| 1500 BCE–1281 BCE | 1 | ████████████████████████ | _(22 buckets)_
+| 1280 BCE–1191 BCE | 0 |  | _(9 buckets)_
+
+_25 non-empty bucket(s); each source is counted in every bucket its period overlaps, so the bars do not sum to a total._
+== tool histogram {"places":["zz_march"],"unit":"findings"}
+### findings per 100 yrs · 3500 BCE → 500 BCE
+
+| period | findings | |
+|---|---:|---|
+| 3500 BCE–1701 BCE | 0 |  | _(18 buckets)_
+| 1700 BCE–1401 BCE | 1 | ████████ | _(3 buckets)_
+| 1400 BCE–1201 BCE | 3 | ████████████████████████ | _(2 buckets)_
+| 1200 BCE–401 BCE | 0 |  | _(8 buckets)_
+
+_5 non-empty bucket(s); each finding is counted in every bucket its period overlaps, so the bars do not sum to a total._
+== tiles: path status length sha256 etag
+sites/0/0/0 200 386 ecf87984aa2b5178b1ac96867df9ea7f4030788a2bedab340262f9afe9ff0f40 "155db20af3ee8b08be08f960"
+sites/0/0/0?from=-1320&to=-1280 200 386 ecf87984aa2b5178b1ac96867df9ea7f4030788a2bedab340262f9afe9ff0f40 "1582e511210516df03c1c1ef"
+sites/0/0/0?from=-1700&to=-1600 200 150 a3ce605ded5a0887b513012c1e5e6d08f16a54dd40bf9e415d126ddfefa229eb "6f8880f92b522b0a78da97b1"
+sites/0/0/0?undated=true 200 386 ecf87984aa2b5178b1ac96867df9ea7f4030788a2bedab340262f9afe9ff0f40 "0e00acc5a3689541f8ac22e3"
+sites/0/0/0?undated=true&from=-1320&to=-1280 200 386 ecf87984aa2b5178b1ac96867df9ea7f4030788a2bedab340262f9afe9ff0f40 "435325dbb13205914eb92397"
+sites/0/0/0?siteType=settlement 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "c11e2b082cf90cdf51f3b16d"
+sites/0/0/0?place=zz_land 200 386 ecf87984aa2b5178b1ac96867df9ea7f4030788a2bedab340262f9afe9ff0f40 "155db20af3ee8b08be08f960"
+sites/0/0/0?kind=battle 200 386 ecf87984aa2b5178b1ac96867df9ea7f4030788a2bedab340262f9afe9ff0f40 "155db20af3ee8b08be08f960"
+sites/0/0/0?tier=catalogue 200 386 ecf87984aa2b5178b1ac96867df9ea7f4030788a2bedab340262f9afe9ff0f40 "155db20af3ee8b08be08f960"
+sites/0/0/0?text=Zz 200 386 ecf87984aa2b5178b1ac96867df9ea7f4030788a2bedab340262f9afe9ff0f40 "155db20af3ee8b08be08f960"
+sites/0/0/0?kind=figure 200 386 ecf87984aa2b5178b1ac96867df9ea7f4030788a2bedab340262f9afe9ff0f40 "155db20af3ee8b08be08f960"
+sites/0/0/0?provider=source 200 386 ecf87984aa2b5178b1ac96867df9ea7f4030788a2bedab340262f9afe9ff0f40 "155db20af3ee8b08be08f960"
+sites/0/0/0?license=none 200 386 ecf87984aa2b5178b1ac96867df9ea7f4030788a2bedab340262f9afe9ff0f40 "155db20af3ee8b08be08f960"
+sites/3/4/3 200 386 50a7b4a611b627e79d25964e180135b7e57703a630b2688f699b74399250e746 "63c150eae527265781131c6b"
+sites/3/4/3?from=-1320&to=-1280 200 386 50a7b4a611b627e79d25964e180135b7e57703a630b2688f699b74399250e746 "ab6585a98feecd4ab756528c"
+sites/3/4/3?from=-1700&to=-1600 200 150 9ad33dde38b805a752d954bb0eeca5100dc80872c6eaaff63ee5a5a4d57301bd "76d5031d3abad09cbe299414"
+sites/3/4/3?undated=true 200 386 50a7b4a611b627e79d25964e180135b7e57703a630b2688f699b74399250e746 "1ae504067e5a39673aad39f3"
+sites/3/4/3?undated=true&from=-1320&to=-1280 200 386 50a7b4a611b627e79d25964e180135b7e57703a630b2688f699b74399250e746 "a0cce6478188a3dacc74118b"
+sites/3/4/3?siteType=settlement 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "2a6899f530df8629f7fb8ed7"
+sites/3/4/3?place=zz_land 200 386 50a7b4a611b627e79d25964e180135b7e57703a630b2688f699b74399250e746 "63c150eae527265781131c6b"
+sites/3/4/3?kind=battle 200 386 50a7b4a611b627e79d25964e180135b7e57703a630b2688f699b74399250e746 "63c150eae527265781131c6b"
+sites/3/4/3?tier=catalogue 200 386 50a7b4a611b627e79d25964e180135b7e57703a630b2688f699b74399250e746 "63c150eae527265781131c6b"
+sites/3/4/3?text=Zz 200 386 50a7b4a611b627e79d25964e180135b7e57703a630b2688f699b74399250e746 "63c150eae527265781131c6b"
+sites/3/4/3?kind=figure 200 386 50a7b4a611b627e79d25964e180135b7e57703a630b2688f699b74399250e746 "63c150eae527265781131c6b"
+sites/3/4/3?provider=source 200 386 50a7b4a611b627e79d25964e180135b7e57703a630b2688f699b74399250e746 "63c150eae527265781131c6b"
+sites/3/4/3?license=none 200 386 50a7b4a611b627e79d25964e180135b7e57703a630b2688f699b74399250e746 "63c150eae527265781131c6b"
+sites/6/38/24 200 386 be2e62f8060a36b347897215d3cb87b106acbec60f5d1364da91e1211fb490f6 "131768e15d4db4bb920bc8d2"
+sites/6/38/24?from=-1320&to=-1280 200 386 be2e62f8060a36b347897215d3cb87b106acbec60f5d1364da91e1211fb490f6 "29aae76711ca29b7470a377c"
+sites/6/38/24?from=-1700&to=-1600 200 150 703cea1a2f586a21ab12e6acfbf51cae7a5398188155a8b360e7334e884f5afb "64814f816677db67120ce0f0"
+sites/6/38/24?undated=true 200 386 be2e62f8060a36b347897215d3cb87b106acbec60f5d1364da91e1211fb490f6 "6c03b7514b1cf2fd55121692"
+sites/6/38/24?undated=true&from=-1320&to=-1280 200 386 be2e62f8060a36b347897215d3cb87b106acbec60f5d1364da91e1211fb490f6 "7651a438a002a451f96f9e49"
+sites/6/38/24?siteType=settlement 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "e511bc1c2ee8e4f7f7c95e68"
+sites/6/38/24?place=zz_land 200 386 be2e62f8060a36b347897215d3cb87b106acbec60f5d1364da91e1211fb490f6 "131768e15d4db4bb920bc8d2"
+sites/6/38/24?kind=battle 200 386 be2e62f8060a36b347897215d3cb87b106acbec60f5d1364da91e1211fb490f6 "131768e15d4db4bb920bc8d2"
+sites/6/38/24?tier=catalogue 200 386 be2e62f8060a36b347897215d3cb87b106acbec60f5d1364da91e1211fb490f6 "131768e15d4db4bb920bc8d2"
+sites/6/38/24?text=Zz 200 386 be2e62f8060a36b347897215d3cb87b106acbec60f5d1364da91e1211fb490f6 "131768e15d4db4bb920bc8d2"
+sites/6/38/24?kind=figure 200 386 be2e62f8060a36b347897215d3cb87b106acbec60f5d1364da91e1211fb490f6 "131768e15d4db4bb920bc8d2"
+sites/6/38/24?provider=source 200 386 be2e62f8060a36b347897215d3cb87b106acbec60f5d1364da91e1211fb490f6 "131768e15d4db4bb920bc8d2"
+sites/6/38/24?license=none 200 386 be2e62f8060a36b347897215d3cb87b106acbec60f5d1364da91e1211fb490f6 "131768e15d4db4bb920bc8d2"
+sites/9/305/193 200 150 60e9eab3151565adbc8b7cf3ce47e874318015dc1f6eb6c19eaef5ce2f383955 "6f1ae16b6d294338faab89a1"
+sites/9/305/193?from=-1320&to=-1280 200 150 60e9eab3151565adbc8b7cf3ce47e874318015dc1f6eb6c19eaef5ce2f383955 "4c12adf716c2472199891317"
+sites/9/305/193?from=-1700&to=-1600 200 150 60e9eab3151565adbc8b7cf3ce47e874318015dc1f6eb6c19eaef5ce2f383955 "594701f1e721a7b1fe77f02b"
+sites/9/305/193?undated=true 200 150 60e9eab3151565adbc8b7cf3ce47e874318015dc1f6eb6c19eaef5ce2f383955 "c4ddf2021c0de36e375acffd"
+sites/9/305/193?undated=true&from=-1320&to=-1280 200 150 60e9eab3151565adbc8b7cf3ce47e874318015dc1f6eb6c19eaef5ce2f383955 "d69b61be175f59433b3741cd"
+sites/9/305/193?siteType=settlement 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "9f28ef76324a25303799951a"
+sites/9/305/193?place=zz_land 200 150 60e9eab3151565adbc8b7cf3ce47e874318015dc1f6eb6c19eaef5ce2f383955 "6f1ae16b6d294338faab89a1"
+sites/9/305/193?kind=battle 200 150 60e9eab3151565adbc8b7cf3ce47e874318015dc1f6eb6c19eaef5ce2f383955 "6f1ae16b6d294338faab89a1"
+sites/9/305/193?tier=catalogue 200 150 60e9eab3151565adbc8b7cf3ce47e874318015dc1f6eb6c19eaef5ce2f383955 "6f1ae16b6d294338faab89a1"
+sites/9/305/193?text=Zz 200 150 60e9eab3151565adbc8b7cf3ce47e874318015dc1f6eb6c19eaef5ce2f383955 "6f1ae16b6d294338faab89a1"
+sites/9/305/193?kind=figure 200 150 60e9eab3151565adbc8b7cf3ce47e874318015dc1f6eb6c19eaef5ce2f383955 "6f1ae16b6d294338faab89a1"
+sites/9/305/193?provider=source 200 150 60e9eab3151565adbc8b7cf3ce47e874318015dc1f6eb6c19eaef5ce2f383955 "6f1ae16b6d294338faab89a1"
+sites/9/305/193?license=none 200 150 60e9eab3151565adbc8b7cf3ce47e874318015dc1f6eb6c19eaef5ce2f383955 "6f1ae16b6d294338faab89a1"
+sites/9/306/195 200 132 8911678cadcbac2165e2b79ae0c8bd4a77a5f61e506138108977d2a6b0329fa0 "4046e18b38a476f8e00dd0c5"
+sites/9/306/195?from=-1320&to=-1280 200 132 8911678cadcbac2165e2b79ae0c8bd4a77a5f61e506138108977d2a6b0329fa0 "ef10560d9f30b2b868f2cc00"
+sites/9/306/195?from=-1700&to=-1600 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "65009a44c44c7e9e0c0ada46"
+sites/9/306/195?undated=true 200 132 8911678cadcbac2165e2b79ae0c8bd4a77a5f61e506138108977d2a6b0329fa0 "a1f11c3e737476e2f0e473db"
+sites/9/306/195?undated=true&from=-1320&to=-1280 200 132 8911678cadcbac2165e2b79ae0c8bd4a77a5f61e506138108977d2a6b0329fa0 "d8ca975b1df9ee946cd8b998"
+sites/9/306/195?siteType=settlement 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "9105b2389dd57eeed25b6dfb"
+sites/9/306/195?place=zz_land 200 132 8911678cadcbac2165e2b79ae0c8bd4a77a5f61e506138108977d2a6b0329fa0 "4046e18b38a476f8e00dd0c5"
+sites/9/306/195?kind=battle 200 132 8911678cadcbac2165e2b79ae0c8bd4a77a5f61e506138108977d2a6b0329fa0 "4046e18b38a476f8e00dd0c5"
+sites/9/306/195?tier=catalogue 200 132 8911678cadcbac2165e2b79ae0c8bd4a77a5f61e506138108977d2a6b0329fa0 "4046e18b38a476f8e00dd0c5"
+sites/9/306/195?text=Zz 200 132 8911678cadcbac2165e2b79ae0c8bd4a77a5f61e506138108977d2a6b0329fa0 "4046e18b38a476f8e00dd0c5"
+sites/9/306/195?kind=figure 200 132 8911678cadcbac2165e2b79ae0c8bd4a77a5f61e506138108977d2a6b0329fa0 "4046e18b38a476f8e00dd0c5"
+sites/9/306/195?provider=source 200 132 8911678cadcbac2165e2b79ae0c8bd4a77a5f61e506138108977d2a6b0329fa0 "4046e18b38a476f8e00dd0c5"
+sites/9/306/195?license=none 200 132 8911678cadcbac2165e2b79ae0c8bd4a77a5f61e506138108977d2a6b0329fa0 "4046e18b38a476f8e00dd0c5"
+sites/11/1220/775 200 150 8349dabc7e2ef6321f6814648bd84c3c0d9cab12a8bd8ee02ea3a219194434a0 "fe8b31f81475e29eaea994b0"
+sites/11/1220/775?from=-1320&to=-1280 200 150 8349dabc7e2ef6321f6814648bd84c3c0d9cab12a8bd8ee02ea3a219194434a0 "d5d7708dd398a2e0d66a960e"
+sites/11/1220/775?from=-1700&to=-1600 200 150 8349dabc7e2ef6321f6814648bd84c3c0d9cab12a8bd8ee02ea3a219194434a0 "1b737b536b10daf32bd25c2c"
+sites/11/1220/775?undated=true 200 150 8349dabc7e2ef6321f6814648bd84c3c0d9cab12a8bd8ee02ea3a219194434a0 "a17c71641ba7b945d07a62f9"
+sites/11/1220/775?undated=true&from=-1320&to=-1280 200 150 8349dabc7e2ef6321f6814648bd84c3c0d9cab12a8bd8ee02ea3a219194434a0 "460aca2b88bb2395ce61689d"
+sites/11/1220/775?siteType=settlement 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "cfc0b02cc73ac1d2823ebf36"
+sites/11/1220/775?place=zz_land 200 150 8349dabc7e2ef6321f6814648bd84c3c0d9cab12a8bd8ee02ea3a219194434a0 "fe8b31f81475e29eaea994b0"
+sites/11/1220/775?kind=battle 200 150 8349dabc7e2ef6321f6814648bd84c3c0d9cab12a8bd8ee02ea3a219194434a0 "fe8b31f81475e29eaea994b0"
+sites/11/1220/775?tier=catalogue 200 150 8349dabc7e2ef6321f6814648bd84c3c0d9cab12a8bd8ee02ea3a219194434a0 "fe8b31f81475e29eaea994b0"
+sites/11/1220/775?text=Zz 200 150 8349dabc7e2ef6321f6814648bd84c3c0d9cab12a8bd8ee02ea3a219194434a0 "fe8b31f81475e29eaea994b0"
+sites/11/1220/775?kind=figure 200 150 8349dabc7e2ef6321f6814648bd84c3c0d9cab12a8bd8ee02ea3a219194434a0 "fe8b31f81475e29eaea994b0"
+sites/11/1220/775?provider=source 200 150 8349dabc7e2ef6321f6814648bd84c3c0d9cab12a8bd8ee02ea3a219194434a0 "fe8b31f81475e29eaea994b0"
+sites/11/1220/775?license=none 200 150 8349dabc7e2ef6321f6814648bd84c3c0d9cab12a8bd8ee02ea3a219194434a0 "fe8b31f81475e29eaea994b0"
+sites/11/1225/781 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "dfb3834f18334e1b09d689c8"
+sites/11/1225/781?from=-1320&to=-1280 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "9ec386ceacf2cef3584160e0"
+sites/11/1225/781?from=-1700&to=-1600 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "160971bbec0908ff6af064ce"
+sites/11/1225/781?undated=true 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "19b3cbc86e02c1f164413953"
+sites/11/1225/781?undated=true&from=-1320&to=-1280 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "ea6cc3b2864ab1acd339ea58"
+sites/11/1225/781?siteType=settlement 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "aabd69e5b9eb1b3964e27d94"
+sites/11/1225/781?place=zz_land 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "dfb3834f18334e1b09d689c8"
+sites/11/1225/781?kind=battle 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "dfb3834f18334e1b09d689c8"
+sites/11/1225/781?tier=catalogue 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "dfb3834f18334e1b09d689c8"
+sites/11/1225/781?text=Zz 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "dfb3834f18334e1b09d689c8"
+sites/11/1225/781?kind=figure 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "dfb3834f18334e1b09d689c8"
+sites/11/1225/781?provider=source 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "dfb3834f18334e1b09d689c8"
+sites/11/1225/781?license=none 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "dfb3834f18334e1b09d689c8"
+events/0/0/0 200 788 06d4feb22aa25d4533b45b410d62054dc7a552fd25b6062b3bae311b059f1ad0 "3a738997f6fd01acd470b681"
+events/0/0/0?from=-1320&to=-1280 200 503 8c2b0761d7c102b5de523b9781fe09d3a85154c78a4cc3f2eb740db0ae009093 "b4ced45fc951a67353cadeaf"
+events/0/0/0?from=-1700&to=-1600 200 478 e1e707a234fe680bcd05202b9fd5e822f735b3680c37be6087aa6bf33d6bb0fc "aa64f74dbb041016a911c17e"
+events/0/0/0?undated=true 200 788 12eabb887e58ac5f0addc7e380feb87c51448e1ba8d1f23435e1ed04ce7b51e3 "16c879f88941967414b8103d"
+events/0/0/0?undated=true&from=-1320&to=-1280 200 503 8c2b0761d7c102b5de523b9781fe09d3a85154c78a4cc3f2eb740db0ae009093 "ffe32cd37738ce2b2dfd3182"
+events/0/0/0?siteType=settlement 200 788 06d4feb22aa25d4533b45b410d62054dc7a552fd25b6062b3bae311b059f1ad0 "3a738997f6fd01acd470b681"
+events/0/0/0?place=zz_land 200 286 4f5253f7da33d96f85cb2169add26d4859faf2d1511ba28fa9ff4f93f3e0e06c "1cb6495b756722981ba19fda"
+events/0/0/0?kind=battle 200 286 4f5253f7da33d96f85cb2169add26d4859faf2d1511ba28fa9ff4f93f3e0e06c "dd6a9b3c8e0c53cea1965897"
+events/0/0/0?tier=catalogue 200 712 e7857306175954f23e02ba542ad7684600e0a0cac20447cae1887791abeffdf9 "125ed48d3e49ba7671c57d85"
+events/0/0/0?text=Zz 200 620 bb1c42568ee249ce62456e89627e1edaa8e0401faf573a2c223c83218cfd8802 "eaa4675e76b2a779dc2395c4"
+events/0/0/0?kind=figure 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "b20a136fa9795f98e334de0c"
+events/0/0/0?provider=source 200 788 06d4feb22aa25d4533b45b410d62054dc7a552fd25b6062b3bae311b059f1ad0 "3a738997f6fd01acd470b681"
+events/0/0/0?license=none 200 788 06d4feb22aa25d4533b45b410d62054dc7a552fd25b6062b3bae311b059f1ad0 "3a738997f6fd01acd470b681"
+events/3/4/3 200 788 0c2586431bde77100f15979d95b3e437c1ced42acf96af0725faa135261c140a "d1c85b0a30e9b336d6196741"
+events/3/4/3?from=-1320&to=-1280 200 503 6fa45190e9ef836da06de362b5adc208c8ce5d6b71ef77f43bf52f1d90bb1054 "f1a1cf86c4791a62e18d19f4"
+events/3/4/3?from=-1700&to=-1600 200 478 23e88e08c1174684a2fa414ef1b360682c5167d208aa88fde69b6b31919b613b "d44d8dc390d4948e85727772"
+events/3/4/3?undated=true 200 788 cf85834c2b691342fa898855152f3627da8a50f15dc539fd8728ca251f00ec20 "8e4ecc589dd014a764ef9fe9"
+events/3/4/3?undated=true&from=-1320&to=-1280 200 503 6fa45190e9ef836da06de362b5adc208c8ce5d6b71ef77f43bf52f1d90bb1054 "f182daf464bc4a71fe72ba47"
+events/3/4/3?siteType=settlement 200 788 0c2586431bde77100f15979d95b3e437c1ced42acf96af0725faa135261c140a "d1c85b0a30e9b336d6196741"
+events/3/4/3?place=zz_land 200 286 1a9aba45228cf8ffc0bb4f773567b3c8297e634ae54d6609238e81c5fedea9c7 "0d390480920b01e42ab5626e"
+events/3/4/3?kind=battle 200 286 1a9aba45228cf8ffc0bb4f773567b3c8297e634ae54d6609238e81c5fedea9c7 "9a19acb8e56f5c35e3a2742d"
+events/3/4/3?tier=catalogue 200 712 8293ca604151c394466566e4633e2eca033b42a9a7fb1914033ad6f8609db8d0 "fbd8cb16482e017a5548d2e0"
+events/3/4/3?text=Zz 200 620 8696880cd5da799214ac2c6691814dfed58af162f0146562457ddfd273a5625a "564d5087001a8b792bd7818d"
+events/3/4/3?kind=figure 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "df0c969097f1a9f090e161e2"
+events/3/4/3?provider=source 200 788 0c2586431bde77100f15979d95b3e437c1ced42acf96af0725faa135261c140a "d1c85b0a30e9b336d6196741"
+events/3/4/3?license=none 200 788 0c2586431bde77100f15979d95b3e437c1ced42acf96af0725faa135261c140a "d1c85b0a30e9b336d6196741"
+events/6/38/24 200 620 5cb0d324f5fc44e9c9b1012873e5d0b440b1f848cec2eaa6807ff32af52efe9b "8956fb32e393dc33cac01a34"
+events/6/38/24?from=-1320&to=-1280 200 503 947a9fa21154d789ac01de26a86e69c8fbf195649cd40b05dcb8304785bd0e8f "238b41878b89ed9d2c3e6a8e"
+events/6/38/24?from=-1700&to=-1600 200 301 06326273ba1a5a287085e6bcabba20eabd7d78c0d99fdaabf884b1606bbaa72f "f60f07712d04224aac8e93e9"
+events/6/38/24?undated=true 200 620 2f579f982b7ed5f314ff421c1276c4da0d0e5f28579b2b85cefea98e36cf4adb "8e9f644048f4beedf09e6f02"
+events/6/38/24?undated=true&from=-1320&to=-1280 200 503 947a9fa21154d789ac01de26a86e69c8fbf195649cd40b05dcb8304785bd0e8f "8871982a839d2f50df3e4fd8"
+events/6/38/24?siteType=settlement 200 620 5cb0d324f5fc44e9c9b1012873e5d0b440b1f848cec2eaa6807ff32af52efe9b "8956fb32e393dc33cac01a34"
+events/6/38/24?place=zz_land 200 286 856f5214563cb4a187138a1ce9f38c2809b01720c071948253fe5f82f8720dce "324a05bc2c5fcf950f2db652"
+events/6/38/24?kind=battle 200 286 856f5214563cb4a187138a1ce9f38c2809b01720c071948253fe5f82f8720dce "4ceaacd1216f043c708f4cce"
+events/6/38/24?tier=catalogue 200 544 cc830627b6370652f240a866a9277e2c34981a62025446ad807cee1450e0411b "1cb95052ea2958589a0c6ed6"
+events/6/38/24?text=Zz 200 620 5cb0d324f5fc44e9c9b1012873e5d0b440b1f848cec2eaa6807ff32af52efe9b "906c6a0b6f4039a794fe8214"
+events/6/38/24?kind=figure 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "b2bc081f094852f79a3740f5"
+events/6/38/24?provider=source 200 620 5cb0d324f5fc44e9c9b1012873e5d0b440b1f848cec2eaa6807ff32af52efe9b "8956fb32e393dc33cac01a34"
+events/6/38/24?license=none 200 620 5cb0d324f5fc44e9c9b1012873e5d0b440b1f848cec2eaa6807ff32af52efe9b "8956fb32e393dc33cac01a34"
+events/9/305/193 200 399 5fdbd39884f673881c183ec9d7bbd0fbe0cc24df67053a93e43cc860e048c925 "4cd8152ec7a79e3ebb254708"
+events/9/305/193?from=-1320&to=-1280 200 399 5fdbd39884f673881c183ec9d7bbd0fbe0cc24df67053a93e43cc860e048c925 "8700bcd9c68d956af62f1902"
+events/9/305/193?from=-1700&to=-1600 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "b6b36eeee126114ddf59deef"
+events/9/305/193?undated=true 200 399 cfb80ad5561658cf68079be4be3192a1016aa76847ce3b295987dec7938c186f "a52afded90f936cfb6064806"
+events/9/305/193?undated=true&from=-1320&to=-1280 200 399 5fdbd39884f673881c183ec9d7bbd0fbe0cc24df67053a93e43cc860e048c925 "630e1b75ef44bcccdbd9a60c"
+events/9/305/193?siteType=settlement 200 399 5fdbd39884f673881c183ec9d7bbd0fbe0cc24df67053a93e43cc860e048c925 "4cd8152ec7a79e3ebb254708"
+events/9/305/193?place=zz_land 200 286 217124a22caafbf44088efaad163d47d99595d3ee0e6f49dbf23bd47a8617610 "a7a51fdcfdf1e3a7f7d2cfe8"
+events/9/305/193?kind=battle 200 286 217124a22caafbf44088efaad163d47d99595d3ee0e6f49dbf23bd47a8617610 "2ae7234471e96c6eeb05a33f"
+events/9/305/193?tier=catalogue 200 323 fef2c34db72c14e5d9ec4de5125f2da06913ddb8960d2f611350150c209d2903 "8bec8502a60bba4879d97ce4"
+events/9/305/193?text=Zz 200 399 5fdbd39884f673881c183ec9d7bbd0fbe0cc24df67053a93e43cc860e048c925 "8d54e465fceed8e405677fb4"
+events/9/305/193?kind=figure 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "f67d187fe38dfe72a5b24ae9"
+events/9/305/193?provider=source 200 399 5fdbd39884f673881c183ec9d7bbd0fbe0cc24df67053a93e43cc860e048c925 "4cd8152ec7a79e3ebb254708"
+events/9/305/193?license=none 200 399 5fdbd39884f673881c183ec9d7bbd0fbe0cc24df67053a93e43cc860e048c925 "4cd8152ec7a79e3ebb254708"
+events/9/306/195 200 301 86a085a373dbf30db09be4b82493b7eab0bf62bbf274d4b58e25abc678a34607 "fb76913f2dc16575ea4ddf55"
+events/9/306/195?from=-1320&to=-1280 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "ae20c6b80d9c4b6eb60a4e4d"
+events/9/306/195?from=-1700&to=-1600 200 301 86a085a373dbf30db09be4b82493b7eab0bf62bbf274d4b58e25abc678a34607 "aa0f7642900d251e77a6708c"
+events/9/306/195?undated=true 200 301 86a085a373dbf30db09be4b82493b7eab0bf62bbf274d4b58e25abc678a34607 "e0839d72e3adb5f67eff18a9"
+events/9/306/195?undated=true&from=-1320&to=-1280 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "c2d54d4c3c1203b66e3b98a1"
+events/9/306/195?siteType=settlement 200 301 86a085a373dbf30db09be4b82493b7eab0bf62bbf274d4b58e25abc678a34607 "fb76913f2dc16575ea4ddf55"
+events/9/306/195?place=zz_land 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "062ac68b4e5cb58e7fc119ea"
+events/9/306/195?kind=battle 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "92e5650cda770d7671dd8716"
+events/9/306/195?tier=catalogue 200 301 86a085a373dbf30db09be4b82493b7eab0bf62bbf274d4b58e25abc678a34607 "fbd01b6c23b89d13ed44c6da"
+events/9/306/195?text=Zz 200 301 86a085a373dbf30db09be4b82493b7eab0bf62bbf274d4b58e25abc678a34607 "b49dc2661517ffc9bf75bc4a"
+events/9/306/195?kind=figure 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "60451b000123781b9f83a802"
+events/9/306/195?provider=source 200 301 86a085a373dbf30db09be4b82493b7eab0bf62bbf274d4b58e25abc678a34607 "fb76913f2dc16575ea4ddf55"
+events/9/306/195?license=none 200 301 86a085a373dbf30db09be4b82493b7eab0bf62bbf274d4b58e25abc678a34607 "fb76913f2dc16575ea4ddf55"
+events/11/1220/775 200 399 0cf671ca582902dc619c899d0536f684fa7234b28378861c11c654650e0ea669 "45c64084f506f55afbd38e2b"
+events/11/1220/775?from=-1320&to=-1280 200 399 0cf671ca582902dc619c899d0536f684fa7234b28378861c11c654650e0ea669 "cf2e286bb7a4a64c4b2b1333"
+events/11/1220/775?from=-1700&to=-1600 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "2815860983b30ee96c1b6ef5"
+events/11/1220/775?undated=true 200 399 9c007295b6e1346310df7f1084c1ecb9b74d83a467cf7cb1c2963555119f2151 "0404c571eb7fb998e1d8dcac"
+events/11/1220/775?undated=true&from=-1320&to=-1280 200 399 0cf671ca582902dc619c899d0536f684fa7234b28378861c11c654650e0ea669 "9b1c39c039495da43e3e12fe"
+events/11/1220/775?siteType=settlement 200 399 0cf671ca582902dc619c899d0536f684fa7234b28378861c11c654650e0ea669 "45c64084f506f55afbd38e2b"
+events/11/1220/775?place=zz_land 200 286 0dd08e322c1601773ca17503507df42bba2db450a0aad2bd6fd7c87f834c20d8 "ebb495581da22eabf452477c"
+events/11/1220/775?kind=battle 200 286 0dd08e322c1601773ca17503507df42bba2db450a0aad2bd6fd7c87f834c20d8 "12b2a8b00a6acb9cdfc99c3c"
+events/11/1220/775?tier=catalogue 200 323 b0f45e0c94cc06477f3d7c7d53e0616dc0025e52fe339d2e72292bcbdf391376 "fd8fa99fc0a95bb71942c9a9"
+events/11/1220/775?text=Zz 200 399 0cf671ca582902dc619c899d0536f684fa7234b28378861c11c654650e0ea669 "1fb82d7ff884aabd9c53affb"
+events/11/1220/775?kind=figure 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "34013b276c051824289a181f"
+events/11/1220/775?provider=source 200 399 0cf671ca582902dc619c899d0536f684fa7234b28378861c11c654650e0ea669 "45c64084f506f55afbd38e2b"
+events/11/1220/775?license=none 200 399 0cf671ca582902dc619c899d0536f684fa7234b28378861c11c654650e0ea669 "45c64084f506f55afbd38e2b"
+events/11/1225/781 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "28016a18d0ce046538ce3ce0"
+events/11/1225/781?from=-1320&to=-1280 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "00b611f32fcef9e5d8607c18"
+events/11/1225/781?from=-1700&to=-1600 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "0ea6628bd6745613fb8d7b83"
+events/11/1225/781?undated=true 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "3153537dd2ec46af80ce697a"
+events/11/1225/781?undated=true&from=-1320&to=-1280 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "d2452bb19a6997a7dd5ab3b8"
+events/11/1225/781?siteType=settlement 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "28016a18d0ce046538ce3ce0"
+events/11/1225/781?place=zz_land 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "b668d3fd965e9a75f995904a"
+events/11/1225/781?kind=battle 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "fe588cd139c7948ba3b306e3"
+events/11/1225/781?tier=catalogue 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "5ab58f70079c18ca44188b6c"
+events/11/1225/781?text=Zz 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "c4d6d3297a770bd836b6012a"
+events/11/1225/781?kind=figure 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "8a8bbacb8fb81c5b87f9e08f"
+events/11/1225/781?provider=source 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "28016a18d0ce046538ce3ce0"
+events/11/1225/781?license=none 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "28016a18d0ce046538ce3ce0"
+media/0/0/0 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "e785d6d4be16a124965b3136"
+media/0/0/0?from=-1320&to=-1280 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "8dfc2af03fc62812f9ac2400"
+media/0/0/0?from=-1700&to=-1600 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "230d871d23a17c9f52497fc7"
+media/0/0/0?undated=true 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "e785d6d4be16a124965b3136"
+media/0/0/0?undated=true&from=-1320&to=-1280 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "8dfc2af03fc62812f9ac2400"
+media/0/0/0?siteType=settlement 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "e785d6d4be16a124965b3136"
+media/0/0/0?place=zz_land 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "e785d6d4be16a124965b3136"
+media/0/0/0?kind=battle 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "27aca71e07c26e9949c4931b"
+media/0/0/0?tier=catalogue 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "e785d6d4be16a124965b3136"
+media/0/0/0?text=Zz 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "e785d6d4be16a124965b3136"
+media/0/0/0?kind=figure 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "ea93f1f99f6c7dbb09340570"
+media/0/0/0?provider=source 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "d9841ffb13f077f410119cdd"
+media/0/0/0?license=none 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "0a9607d22be7a699b836ef99"
+media/3/4/3 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "62db6ec658e93a72ef6ab66c"
+media/3/4/3?from=-1320&to=-1280 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "3d1c5f950646a67e79f4b826"
+media/3/4/3?from=-1700&to=-1600 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "4a6e358c1679f7c0ab5b9e51"
+media/3/4/3?undated=true 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "62db6ec658e93a72ef6ab66c"
+media/3/4/3?undated=true&from=-1320&to=-1280 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "3d1c5f950646a67e79f4b826"
+media/3/4/3?siteType=settlement 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "62db6ec658e93a72ef6ab66c"
+media/3/4/3?place=zz_land 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "62db6ec658e93a72ef6ab66c"
+media/3/4/3?kind=battle 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "484521bec94e0ab73a4f902c"
+media/3/4/3?tier=catalogue 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "62db6ec658e93a72ef6ab66c"
+media/3/4/3?text=Zz 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "62db6ec658e93a72ef6ab66c"
+media/3/4/3?kind=figure 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "1c9e51572984c23036886b78"
+media/3/4/3?provider=source 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "2d36f81c75663a727fb82036"
+media/3/4/3?license=none 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "8ca62daec596fe63b2fadfd8"
+media/6/38/24 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "dc3195242bccafbd21ad8044"
+media/6/38/24?from=-1320&to=-1280 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "969fe2da05e47705365632f6"
+media/6/38/24?from=-1700&to=-1600 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "26e9957551c393a4842fd8ae"
+media/6/38/24?undated=true 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "dc3195242bccafbd21ad8044"
+media/6/38/24?undated=true&from=-1320&to=-1280 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "969fe2da05e47705365632f6"
+media/6/38/24?siteType=settlement 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "dc3195242bccafbd21ad8044"
+media/6/38/24?place=zz_land 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "dc3195242bccafbd21ad8044"
+media/6/38/24?kind=battle 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "457374a7ad70def731a7f65a"
+media/6/38/24?tier=catalogue 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "dc3195242bccafbd21ad8044"
+media/6/38/24?text=Zz 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "dc3195242bccafbd21ad8044"
+media/6/38/24?kind=figure 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "e02ca958b580a52e0b2a658f"
+media/6/38/24?provider=source 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "ea3d742401fbc9afd0ee9f23"
+media/6/38/24?license=none 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "356f9d7683b05a8a14fc73c7"
+media/9/305/193 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "5b245b7c9b96234af66d0fac"
+media/9/305/193?from=-1320&to=-1280 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "18a21b1c23b53afad194f28a"
+media/9/305/193?from=-1700&to=-1600 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "08abf1855f2afa20a21ee833"
+media/9/305/193?undated=true 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "5b245b7c9b96234af66d0fac"
+media/9/305/193?undated=true&from=-1320&to=-1280 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "18a21b1c23b53afad194f28a"
+media/9/305/193?siteType=settlement 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "5b245b7c9b96234af66d0fac"
+media/9/305/193?place=zz_land 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "5b245b7c9b96234af66d0fac"
+media/9/305/193?kind=battle 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "2083232d15aff19b56a24a43"
+media/9/305/193?tier=catalogue 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "5b245b7c9b96234af66d0fac"
+media/9/305/193?text=Zz 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "5b245b7c9b96234af66d0fac"
+media/9/305/193?kind=figure 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "1806de05224f16befb1c5c63"
+media/9/305/193?provider=source 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "e5831a67f72cbb6cf21ce944"
+media/9/305/193?license=none 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "70dcc42c545a75468f487a97"
+media/9/306/195 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "a1f28027d5a1bba5d6850f75"
+media/9/306/195?from=-1320&to=-1280 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "a35a3318132f7a8ab721ac9f"
+media/9/306/195?from=-1700&to=-1600 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "03e1063d37da5ce035a16642"
+media/9/306/195?undated=true 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "a1f28027d5a1bba5d6850f75"
+media/9/306/195?undated=true&from=-1320&to=-1280 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "a35a3318132f7a8ab721ac9f"
+media/9/306/195?siteType=settlement 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "a1f28027d5a1bba5d6850f75"
+media/9/306/195?place=zz_land 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "a1f28027d5a1bba5d6850f75"
+media/9/306/195?kind=battle 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "e390e6332ef6f28d50329fff"
+media/9/306/195?tier=catalogue 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "a1f28027d5a1bba5d6850f75"
+media/9/306/195?text=Zz 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "a1f28027d5a1bba5d6850f75"
+media/9/306/195?kind=figure 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "6bd746c4a957b5b88d984ff0"
+media/9/306/195?provider=source 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "38ddcbac3f49fddc6badadd3"
+media/9/306/195?license=none 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "3870129cbee66db29c796903"
+media/11/1220/775 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "6537d1052415e7b68f52e9ed"
+media/11/1220/775?from=-1320&to=-1280 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "3969ce1888f785e90ad9d879"
+media/11/1220/775?from=-1700&to=-1600 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "6cefcf3ad07ec8313cccc43b"
+media/11/1220/775?undated=true 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "6537d1052415e7b68f52e9ed"
+media/11/1220/775?undated=true&from=-1320&to=-1280 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "3969ce1888f785e90ad9d879"
+media/11/1220/775?siteType=settlement 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "6537d1052415e7b68f52e9ed"
+media/11/1220/775?place=zz_land 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "6537d1052415e7b68f52e9ed"
+media/11/1220/775?kind=battle 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "8e88dcd7ace882f3e03e26f7"
+media/11/1220/775?tier=catalogue 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "6537d1052415e7b68f52e9ed"
+media/11/1220/775?text=Zz 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "6537d1052415e7b68f52e9ed"
+media/11/1220/775?kind=figure 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "b0c17d6f13494d093a919f25"
+media/11/1220/775?provider=source 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "3eb6cfcc483de413440efe1b"
+media/11/1220/775?license=none 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "26811c6929899d8ad0b43c63"
+media/11/1225/781 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "b4cdb488c2b65ae4627cb009"
+media/11/1225/781?from=-1320&to=-1280 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "c293f6791bb5cc12c4de0100"
+media/11/1225/781?from=-1700&to=-1600 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "ca058fc58df2013efad2e6bf"
+media/11/1225/781?undated=true 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "b4cdb488c2b65ae4627cb009"
+media/11/1225/781?undated=true&from=-1320&to=-1280 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "c293f6791bb5cc12c4de0100"
+media/11/1225/781?siteType=settlement 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "b4cdb488c2b65ae4627cb009"
+media/11/1225/781?place=zz_land 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "b4cdb488c2b65ae4627cb009"
+media/11/1225/781?kind=battle 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "9548c7c2f0b13469ef558842"
+media/11/1225/781?tier=catalogue 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "b4cdb488c2b65ae4627cb009"
+media/11/1225/781?text=Zz 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "b4cdb488c2b65ae4627cb009"
+media/11/1225/781?kind=figure 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "0054f2844cab6400f53f07d4"
+media/11/1225/781?provider=source 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "c4ca65743e71f888e97f4016"
+media/11/1225/781?license=none 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "a7632843388b9c7db8209ea2"
+nonsense/0/0/0 400 79 b46720bddb2fee7a9698572b5d985a8ad26a9eb317459a21ee91578d878e032e -
+sites/40/0/0 400 50 a904f954130f5231ad72c0e4915887c32e104b61ad44140adebf9bf206616771 -
+sites/2/9/0 400 64 febbd1dbd3a5fa3aeb5a5b688cff380b1d79a645b214c49cb7827f4e8786fc64 -

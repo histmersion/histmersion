@@ -1,0 +1,320 @@
+== GET /api/attestations
+200 {
+  "attestations" : [
+    {
+      "canvas" : null,
+      "charEnd" : 50,
+      "charStart" : 30,
+      "chunkOrd" : null,
+      "citekey" : "zzhill1990_battle",
+      "ctsUrn" : null,
+      "id" : 1,
+      "note" : null,
+      "page" : null,
+      "prefix" : null,
+      "quote" : "The battle of Zzhill",
+      "suffix" : null,
+      "targetId" : "zz_hill",
+      "targetType" : "place",
+      "xywh" : null
+    },
+    {
+      "canvas" : null,
+      "charEnd" : null,
+      "charStart" : null,
+      "chunkOrd" : null,
+      "citekey" : "zzhill1990_battle",
+      "ctsUrn" : null,
+      "id" : 2,
+      "note" : null,
+      "page" : "12",
+      "prefix" : null,
+      "quote" : "fought below the walls",
+      "suffix" : null,
+      "targetId" : "zz_battle",
+      "targetType" : "event",
+      "xywh" : null
+    },
+    {
+      "canvas" : null,
+      "charEnd" : null,
+      "charStart" : null,
+      "chunkOrd" : null,
+      "citekey" : "zzvolc2004_ash",
+      "ctsUrn" : null,
+      "id" : 3,
+      "note" : "patched",
+      "page" : null,
+      "prefix" : null,
+      "quote" : "Zzport",
+      "suffix" : null,
+      "targetId" : "zz_camp_north",
+      "targetType" : "place",
+      "xywh" : null
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 3
+}
+== GET /api/attestations?citekey=zzhill1990_battle
+200 {
+  "attestations" : [
+    {
+      "canvas" : null,
+      "charEnd" : 50,
+      "charStart" : 30,
+      "chunkOrd" : null,
+      "citekey" : "zzhill1990_battle",
+      "ctsUrn" : null,
+      "id" : 1,
+      "note" : null,
+      "page" : null,
+      "prefix" : null,
+      "quote" : "The battle of Zzhill",
+      "suffix" : null,
+      "targetId" : "zz_hill",
+      "targetType" : "place",
+      "xywh" : null
+    },
+    {
+      "canvas" : null,
+      "charEnd" : null,
+      "charStart" : null,
+      "chunkOrd" : null,
+      "citekey" : "zzhill1990_battle",
+      "ctsUrn" : null,
+      "id" : 2,
+      "note" : null,
+      "page" : "12",
+      "prefix" : null,
+      "quote" : "fought below the walls",
+      "suffix" : null,
+      "targetId" : "zz_battle",
+      "targetType" : "event",
+      "xywh" : null
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 2
+}
+== GET /api/attestations?targetType=place&targetId=zz_hill
+200 {
+  "attestations" : [
+    {
+      "canvas" : null,
+      "charEnd" : 50,
+      "charStart" : 30,
+      "chunkOrd" : null,
+      "citekey" : "zzhill1990_battle",
+      "ctsUrn" : null,
+      "id" : 1,
+      "note" : null,
+      "page" : null,
+      "prefix" : null,
+      "quote" : "The battle of Zzhill",
+      "suffix" : null,
+      "targetId" : "zz_hill",
+      "targetType" : "place",
+      "xywh" : null
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 1
+}
+== GET /api/attestations?targetType=place&targetId=zz_camp
+200 {
+  "attestations" : [
+    {
+      "canvas" : null,
+      "charEnd" : null,
+      "charStart" : null,
+      "chunkOrd" : null,
+      "citekey" : "zzvolc2004_ash",
+      "ctsUrn" : null,
+      "id" : 3,
+      "note" : "patched",
+      "page" : null,
+      "prefix" : null,
+      "quote" : "Zzport",
+      "suffix" : null,
+      "targetId" : "zz_camp_north",
+      "targetType" : "place",
+      "xywh" : null
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 1
+}
+== GET /api/attestations?targetType=event&targetId=zz_battle&limit=1
+200 {
+  "attestations" : [
+    {
+      "canvas" : null,
+      "charEnd" : null,
+      "charStart" : null,
+      "chunkOrd" : null,
+      "citekey" : "zzhill1990_battle",
+      "ctsUrn" : null,
+      "id" : 2,
+      "note" : null,
+      "page" : "12",
+      "prefix" : null,
+      "quote" : "fought below the walls",
+      "suffix" : null,
+      "targetId" : "zz_battle",
+      "targetType" : "event",
+      "xywh" : null
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 1
+}
+== GET /api/attestations/1
+200 {
+  "canvas" : null,
+  "charEnd" : 50,
+  "charStart" : 30,
+  "chunkOrd" : null,
+  "citekey" : "zzhill1990_battle",
+  "ctsUrn" : null,
+  "id" : 1,
+  "note" : null,
+  "page" : null,
+  "prefix" : null,
+  "quote" : "The battle of Zzhill",
+  "suffix" : null,
+  "targetId" : "zz_hill",
+  "targetType" : "place",
+  "xywh" : null
+}
+== GET /api/attestations/999
+404 {
+  "code" : "not_found",
+  "message" : "No attestation 999"
+}
+== GET /api/events/zz_battle/links
+200 {
+  "candidates" : [
+    {
+      "citekey" : "zzhill1990_battle",
+      "eventId" : "zz_battle",
+      "findings" : [
+        "zzhill1990_battle#0",
+        "zzhill1990_battle#2",
+        "zzhill1990_battle#1"
+      ],
+      "passages" : [
+        {
+          "context" : "The battle of Zzhill was fought below the walls of Zzhill around 1300 BC; Zzport sent ships.",
+          "end" : 20,
+          "name" : "Battle of Zzhill",
+          "quote" : "battle of Zzhill",
+          "start" : 4
+        },
+        {
+          "context" : "Zzhill burned soon after, and the battle of Zzhill was remembered in the songs of Zzland.",
+          "end" : 143,
+          "name" : "Battle of Zzhill",
+          "quote" : "battle of Zzhill",
+          "start" : 127
+        }
+      ],
+      "reasons" : [
+        "names it 2 times: \"battle of Zzhill\"",
+        "3 findings within 118 km (nearest 0 km), 3 overlapping in time"
+      ],
+      "score" : 1.7,
+      "status" : "confirmed",
+      "title" : "The Battle of Zzhill"
+    }
+  ],
+  "eventId" : "zz_battle",
+  "label" : "Battle of Zzhill"
+}
+== GET /api/events/zz_ashfall/links
+200 {
+  "candidates" : [
+    {
+      "citekey" : "zzvolc2004_ash",
+      "eventId" : "zz_ashfall",
+      "findings" : [
+        "zzvolc2004_ash#0"
+      ],
+      "passages" : [
+      ],
+      "reasons" : [
+        "1 finding within 48 km (nearest 48 km), 1 overlapping in time"
+      ],
+      "score" : 0.409,
+      "status" : "proposed",
+      "title" : "Ash over Zzport"
+    }
+  ],
+  "eventId" : "zz_ashfall",
+  "label" : "Ash over Zzport"
+}
+== GET /api/events/zz_war/links
+200 {
+  "candidates" : [
+    {
+      "citekey" : "zzhill1990_battle",
+      "eventId" : "zz_war",
+      "findings" : [
+        "zzhill1990_battle#2",
+        "zzhill1990_battle#0",
+        "zzhill1990_battle#1"
+      ],
+      "passages" : [
+      ],
+      "reasons" : [
+        "3 findings within 80 km (nearest 31 km), 3 overlapping in time"
+      ],
+      "score" : 0.6,
+      "status" : "proposed",
+      "title" : "The Battle of Zzhill"
+    }
+  ],
+  "eventId" : "zz_war",
+  "label" : "The Zzmarch war"
+}
+== tool attestations {"citekey":"zzhill1990_battle"}
+### 2 attestation(s)
+
+- `#1` [[zzhill1990_battle]] → place:`zz_hill` (chars 30–50) "The battle of Zzhill"
+- `#2` [[zzhill1990_battle]] → event:`zz_battle` (p.12) "fought below the walls"
+== tool attestations {"targetType":"place","targetId":"zz_camp_north"}
+### 1 attestation(s)
+
+- `#3` [[zzvolc2004_ash]] → place:`zz_camp_north` "Zzport" — patched
+== tool event_links {"id":"zz_battle"}
+## Sources that may discuss Battle of Zzhill (`zz_battle`)
+
+_Proposed from findings near it and passages naming it — unconfirmed until confirmed (an attestation)._
+
+- [[zzhill1990_battle]] — The Battle of Zzhill · score 1.7 · confirmed — names it 2 times: "battle of Zzhill"; 3 findings within 118 km (nearest 0 km), 3 overlapping in time
+== tool event_links {"from":-1700,"to":-1200}
+## Event leads (4 of 4)
+
+- **An eruption, named by a person** (`gvp_13879`, eruption) — No source in the corpus discusses this VEI 7 eruption (1624 BCE–1596 BCE) — 0 findings in the corpus within 300 km and ±100 years
+  - search the literature: `histmersion discover search "An eruption, named by a person" --not-in-db`
+  - add to the acquire queue: `histmersion queue acquire add "literature on An eruption, named by a person (1624 BCE–1596 BCE)" --topic events`
+  - link to a goal: `histmersion goals link <goal> --query "An eruption, named by a person"`
+- **Ash over Zzport** (`zz_ashfall`, eruption) — No source in the corpus is confirmed to discuss this eruption (1620 BCE–1600 BCE) — 1 source possibly discuss it (unconfirmed); 2 findings in the corpus within 300 km and ±100 years
+  - search the literature: `histmersion discover search "Ash over Zzport" --not-in-db`
+  - add to the acquire queue: `histmersion queue acquire add "literature on Ash over Zzport (1620 BCE–1600 BCE)" --topic events`
+  - link to a goal: `histmersion goals link <goal> --query "Ash over Zzport"`
+  - review the proposed sources: `histmersion events links zz_ashfall`
+- **The Zzmarch war** (`zz_war`, war) — No source in the corpus is confirmed to discuss this war (1320 BCE–1280 BCE) — 1 source possibly discuss it (unconfirmed); 3 findings in the corpus within 300 km and ±100 years
+  - search the literature: `histmersion discover search "The Zzmarch war" --not-in-db`
+  - add to the acquire queue: `histmersion queue acquire add "literature on The Zzmarch war (1320 BCE–1280 BCE)" --topic events`
+  - link to a goal: `histmersion goals link <goal> --query "The Zzmarch war"`
+  - review the proposed sources: `histmersion events links zz_war`
+- **Zzhill burns** (`zz_fire`, destruction) — No source in the corpus discusses this destruction (1290 BCE–1270 BCE) — 3 findings in the corpus within 300 km and ±100 years
+  - search the literature: `histmersion discover search "Zzhill burns" --not-in-db`
+  - add to the acquire queue: `histmersion queue acquire add "literature on Zzhill burns (1290 BCE–1270 BCE)" --topic events`
+  - link to a goal: `histmersion goals link <goal> --query "Zzhill burns"`

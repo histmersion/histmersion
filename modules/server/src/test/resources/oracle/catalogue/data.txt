@@ -1,0 +1,567 @@
+# lint
+200 {
+  "fixed" : [
+  ],
+  "rules" : [
+    {
+      "count" : 0,
+      "description" : "edge targets that are not citekeys — dead references and unresolved [[wikilinks]]; the ones SHAPED like a citekey (a four-digit year) are listed first, because the rest are links to concept articles",
+      "items" : [
+      ],
+      "rule" : "dangling-edges"
+    },
+    {
+      "count" : 0,
+      "description" : "dangling edge targets that ARE a prefix of one or more real citekeys — `lint --fix` rewrites the unambiguous ones",
+      "items" : [
+      ],
+      "rule" : "unresolved-short-citekeys"
+    },
+    {
+      "count" : 0,
+      "description" : "sources with no findings mined out of them yet (un-enriched)",
+      "items" : [
+      ],
+      "rule" : "no-findings"
+    },
+    {
+      "count" : 2,
+      "description" : "sources with no deep-time period, so they appear on no timeline",
+      "items" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "detail" : "The Battle of Zzhill"
+        },
+        {
+          "citekey" : "zzvolc2004_ash",
+          "detail" : "Ash over Zzport"
+        }
+      ],
+      "rule" : "no-period"
+    },
+    {
+      "count" : 0,
+      "description" : "sources with no regions, so they appear in no region tree",
+      "items" : [
+      ],
+      "rule" : "no-regions"
+    },
+    {
+      "count" : 2,
+      "description" : "sources whose summary is missing or blank",
+      "items" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "detail" : "The Battle of Zzhill"
+        },
+        {
+          "citekey" : "zzvolc2004_ash",
+          "detail" : "Ash over Zzport"
+        }
+      ],
+      "rule" : "empty-summary"
+    },
+    {
+      "count" : 2,
+      "description" : "sources still at status=unassessed",
+      "items" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "detail" : "The Battle of Zzhill"
+        },
+        {
+          "citekey" : "zzvolc2004_ash",
+          "detail" : "Ash over Zzport"
+        }
+      ],
+      "rule" : "unassessed-status"
+    },
+    {
+      "count" : 0,
+      "description" : "the same DOI stored under more than one citekey",
+      "items" : [
+      ],
+      "rule" : "duplicate-doi"
+    },
+    {
+      "count" : 0,
+      "description" : "the same file hash stored under more than one citekey (skipped while the column is unpopulated)",
+      "items" : [
+      ],
+      "rule" : "duplicate-sha256"
+    },
+    {
+      "count" : 2,
+      "description" : "sources with no incoming and no outgoing edges — cited by nothing, citing nothing",
+      "items" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "detail" : "The Battle of Zzhill"
+        },
+        {
+          "citekey" : "zzvolc2004_ash",
+          "detail" : "Ash over Zzport"
+        }
+      ],
+      "rule" : "orphan-sources"
+    },
+    {
+      "count" : 0,
+      "description" : "sources that have a body but no full-text chunks — `lint --fix` reindexes them",
+      "items" : [
+      ],
+      "rule" : "stale-chunks"
+    },
+    {
+      "count" : 0,
+      "description" : "findings with no period, so they are invisible to every time filter",
+      "items" : [
+      ],
+      "rule" : "undated-findings"
+    },
+    {
+      "count" : 0,
+      "description" : "findings with neither coordinates nor a region — invisible on the map",
+      "items" : [
+      ],
+      "rule" : "unlocated-findings"
+    },
+    {
+      "count" : 0,
+      "description" : "bodies whose figures still point at a `figures/…` path (usually the converter's own absolute path) instead of the canonical `assets/…` — they render as 0×0 images; re-import the note (`histmersion seed --force`) to rewrite them",
+      "items" : [
+      ],
+      "rule" : "legacy-figure-links"
+    },
+    {
+      "count" : 0,
+      "description" : "`[[wikilinks]]` in an ARTICLE that resolve to nothing — neither a compiled article slug nor a source citekey (nor a unique short form of one); they render as plain text, so the reader sees a name with no page behind it",
+      "items" : [
+      ],
+      "rule" : "dangling-article-links"
+    },
+    {
+      "count" : 2,
+      "description" : "tags not in lowercase_snake_case (the canonical form)",
+      "items" : [
+        {
+          "citekey" : "zzhill1990_battle",
+          "detail" : "tag 'zz-oracle' → 'zz_oracle'"
+        },
+        {
+          "citekey" : "zzvolc2004_ash",
+          "detail" : "tag 'zz-oracle' → 'zz_oracle'"
+        }
+      ],
+      "rule" : "non-canonical-tag"
+    },
+    {
+      "count" : 0,
+      "description" : "sources with no publication year — rendered as n.d.",
+      "items" : [
+      ],
+      "rule" : "missing-year"
+    },
+    {
+      "count" : 0,
+      "description" : "the four-digit year in the citekey does not match the stored publication year",
+      "items" : [
+      ],
+      "rule" : "year-citekey-mismatch"
+    },
+    {
+      "count" : 0,
+      "description" : "author names containing a pipe '|' — likely a parse artifact (\"Cline| Eric H.\")",
+      "items" : [
+      ],
+      "rule" : "author-pipe"
+    },
+    {
+      "count" : 0,
+      "description" : "articles whose body contains banned filler phrases from the writing guide",
+      "items" : [
+      ],
+      "rule" : "article-filler"
+    },
+    {
+      "count" : 0,
+      "description" : "article body paragraphs with no [[citekey]] citation",
+      "items" : [
+      ],
+      "rule" : "article-uncited-paragraph"
+    },
+    {
+      "count" : 0,
+      "description" : "article summaries that are missing, a stand-in (\"placeholder\", TODO…) or shorter than 0 characters — the card and the search hit show nothing useful",
+      "items" : [
+      ],
+      "rule" : "article-thin-summary"
+    },
+    {
+      "count" : 0,
+      "description" : "article paragraphs that cite one side of a disagreement edge (challenges, refutes, updates, superseded_by) and name the other side's author without citing it — the critique is written but the pair stays open; `lint --rule article-critique-pairing --fix` appends the missing citekey where the name points at exactly one work",
+      "items" : [
+      ],
+      "rule" : "article-critique-pairing"
+    },
+    {
+      "count" : 0,
+      "description" : "sources with status=superseded but no superseded_by edge — set the edge or change the status",
+      "items" : [
+      ],
+      "rule" : "superseded-without-edge"
+    },
+    {
+      "count" : 0,
+      "description" : "article bodies and summaries whose Markdown will not display as written — tables shown as pipes, unpaired ** or `, links that are not links, malformed [[wikilinks]], pasted frontmatter, headings without a space, chatter and placeholders; one line per problem (`histmersion article lint <slug> --fix` repairs the safe ones)",
+      "items" : [
+      ],
+      "rule" : "article-markdown"
+    },
+    {
+      "count" : 0,
+      "description" : "the same formatting check over each source's summary and notes (`histmersion lint --source <citekey> --fix`)",
+      "items" : [
+      ],
+      "rule" : "note-markdown"
+    },
+    {
+      "count" : 0,
+      "description" : "findings whose point the OLD geocoder chose for their place name (before #981 it let an alias, a placeholder point or the wrong dated snapshot win) and that the current ranking puts elsewhere; hand-placed points are never listed — `lint --rule finding-geocode --fix` moves them",
+      "items" : [
+      ],
+      "rule" : "finding-geocode"
+    },
+    {
+      "count" : 0,
+      "description" : "findings that name a place but have no point, where the gazetteer now knows that name (a re-seed added the English names: Dead Sea, Balkans, Kraków…) — `lint --rule finding-unplaced --fix` gives them the geocoder's point; a finding that has a point is never touched",
+      "items" : [
+      ],
+      "rule" : "finding-unplaced"
+    },
+    {
+      "count" : 0,
+      "description" : "point-only seed regions that are something else, by their Pleiades types and linked Wikidata item: a people or civic tribe (→ people), a province or diocese (→ polity, with a period), a settlement (→ site), a place Pleiades withdrew as a duplicate (→ merged into its replacement); one line each: id, label, current → proposed kind, why, evidence — `lint --rule place-kind --fix` applies them and re-matches findings to places",
+      "items" : [
+      ],
+      "rule" : "place-kind"
+    },
+    {
+      "count" : 0,
+      "description" : "Pleiades places whose point is only the centre of an atlas grid square, where a linked record (Wikidata's coordinate) gives a real point — `lint --rule place-grid-point --fix` moves them there and re-matches findings to places",
+      "items" : [
+      ],
+      "rule" : "place-grid-point"
+    },
+    {
+      "count" : 0,
+      "description" : "GeoNames and Wikidata places of an area kind (region, polity, people: `places.sources.point-area-kinds`) stored with only a point — no shape, so no region; the importer no longer keeps them. Listed: the counts by source, kind and dating, every one that holds a finding (and how many of those findings it is the only place of), then a sample — `lint --rule place-imported-point-area --fix` removes them with their names, links and finding matches, in batches, and matches the affected sources' findings again",
+      "items" : [
+      ],
+      "rule" : "place-imported-point-area"
+    },
+    {
+      "count" : 0,
+      "description" : "findings whose point is a placeholder (an atlas grid square's centre, or the point the geocoder gives a region) and whose place name the gazetteer cannot resolve, or that have none — no site takes them, and the areas that do are only those covering the point; give the finding a place name the gazetteer knows (or the place a name with `places name add`), or a real point",
+      "items" : [
+      ],
+      "rule" : "finding-placeholder"
+    },
+    {
+      "count" : 0,
+      "description" : "stored pictures with no licence, or a provider's picture with no credit line — they cannot be shown as their licence requires; a source's figure is listed as `<citekey>/<name>` (it takes its source's licence with `histmersion media fill-licences` once the source records one), a provider's as `media:<uid>` (re-import it with `histmersion media import wikidata --refresh`); a book cover (Calibre, Open Library) needs a credit line only — it is the publisher's picture of the user's own copy, shown locally and never exported",
+      "items" : [
+      ],
+      "rule" : "media-licence"
+    },
+    {
+      "count" : 0,
+      "description" : "catalogue events a person corrected by hand whose catalogue has since changed the same field to something else — the person's value is still applied; review each (`histmersion events corrections --status conflict`) and either keep it (patch it again) or take the catalogue's (patch the field to the catalogue's value, which retires the correction)",
+      "items" : [
+      ],
+      "rule" : "event-correction-conflict"
+    }
+  ]
+}
+# the bundle's catalogue entries
+== manifest.json
+== entities/sources.ndjson
+== entities/findings.ndjson
+== entities/articles.ndjson
+== entities/article-versions.ndjson
+== entities/assets.ndjson
+== entities/asset-links.ndjson
+== entities/attestations.ndjson (3 lines)
+{ "charEnd" : 50, "charStart" : 30, "createdAt" : "TS", "origin" : "instance:cat", "quote" : "The battle of Zzhill", "rev" : "DIGEST", "sourceUid" : "source:zzhill1990_battle", "targetId" : "zz_hill", "targetType" : "place", "uid" : "attestation:zzhill1990_battle:zz_hill", "updatedAt" : "TS" }
+{ "createdAt" : "TS", "origin" : "instance:cat", "page" : "12", "quote" : "fought below the walls", "rev" : "DIGEST", "sourceUid" : "source:zzhill1990_battle", "targetId" : "zz_battle", "targetType" : "event", "targetUid" : "event:zz_battle", "uid" : "attestation:zzhill1990_battle:zz_battle", "updatedAt" : "TS" }
+{ "createdAt" : "TS", "note" : "patched", "origin" : "instance:cat", "quote" : "Zzport", "rev" : "DIGEST", "sourceUid" : "source:zzvolc2004_ash", "targetId" : "zz_camp_north", "targetType" : "place", "uid" : "attestation:zzvolc2004_ash:zz_camp_north", "updatedAt" : "TS" }
+== entities/events.ndjson (5 lines)
+{ "citekey" : "zzhill1990_battle", "datings" : [ { "citekey" : "zzhill1990_battle", "method" : "historical", "notAfter" : -1290, "notBefore" : -1310, "sourceUid" : "source:zzhill1990_battle" } ], "description" : "fought below the walls", "edges" : [ ], "historicity" : "attested", "id" : "zz_battle", "kind" : "battle", "label" : "Battle of Zzhill", "notAfter" : -1290, "notBefore" : -1310, "origin" : "instance:cat", "participants" : [ { "actor" : "the Zzport fleet", "role" : "ally" } ], "placeId" : "zz_hill", "rev" : "DIGEST", "sourceUid" : "source:zzhill1990_battle", "uid" : "event:zz_battle", "updatedAt" : "TS" }
+{ "datings" : [ ], "edges" : [ { "citekey" : "zzhill1990_battle", "dstUid" : "event:zz_battle", "kind" : "after", "sourceUid" : "source:zzhill1990_battle" } ], "historicity" : "attested", "id" : "zz_fire", "kind" : "destruction", "label" : "Zzhill burns", "notAfter" : -1270, "notBefore" : -1290, "origin" : "instance:cat", "parentUid" : "event:zz_battle", "participants" : [ ], "placeId" : "zz_hill", "rev" : "DIGEST", "uid" : "tombstone:event", "updatedAt" : "TS" }
+{ "datings" : [ ], "description" : "a war of the march lords", "edges" : [ ], "geom" : "0103000020e610000001000000050000000000000000c0404000000000004043406666666666e6414000000000004043406666666666e6414000000000004044400000000000c0404000000000004044400000000000c040400000000000404340", "historicity" : "attested", "id" : "zz_war", "kind" : "war", "label" : "The Zzmarch war", "notAfter" : -1280, "notBefore" : -1320, "origin" : "instance:cat", "participants" : [ ], "rev" : "DIGEST", "scale" : "regional", "uid" : "event:zz_war", "updatedAt" : "TS" }
+{ "datings" : [ ], "edges" : [ ], "historicity" : "attested", "id" : "zz_ashfall", "kind" : "eruption", "label" : "Ash over Zzport", "notAfter" : -1600, "notBefore" : -1620, "origin" : "instance:cat", "participants" : [ ], "placeId" : "zz_port", "rev" : "DIGEST", "uid" : "event:zz_ashfall", "updatedAt" : "TS" }
+{ "catalogue" : "gvp", "central" : -1610, "datingMethod" : "Isotopic: 14C (calibrated)", "datings" : [ ], "description" : "edited", "edges" : [ ], "geom" : "0101000020e61000004c37894160653940c1caa145b6334240", "historicity" : "attested", "id" : "gvp_13879", "kind" : "eruption", "label" : "An eruption, named by a person", "names" : [ "Eruption of Santorini", "Santorini eruption" ], "notAfter" : -1596, "notBefore" : -1624, "origin" : "instance:cat", "participants" : [ ], "plusMinus" : 14, "rev" : "DIGEST", "uid" : "event:gvp_13879", "updatedAt" : "TS" }
+== entities/goals.ndjson
+== entities/queue.ndjson
+== entities/places.ndjson (8 lines)
+{ "geom" : "0103000020e610000001000000050000000000000000003e40000000000000424000000000000044400000000000004240000000000000444000000000000045400000000000003e4000000000000045400000000000003e400000000000004240", "id" : "zz_land", "kind" : "region", "label" : "Zzland", "links" : [ ], "names" : [ { "lang" : "en", "name" : "Zzland", "period" : {  } }, { "lang" : "la", "name" : "Zzlandia", "period" : {  } } ], "origin" : "instance:cat", "period" : { "end" : -1000, "start" : -2000 }, "relations" : [ ], "rev" : "DIGEST", "types" : [ ], "uid" : "place:zz_land", "updatedAt" : "TS" }
+{ "geom" : "0103000020e610000001000000050000000000000000804040000000000000434000000000000042400000000000004340000000000000424000000000008044400000000000804040000000000080444000000000008040400000000000004340", "id" : "zz_march", "kind" : "region", "label" : "Zzmarch", "links" : [ ], "names" : [ { "lang" : "en", "name" : "Zzmarch", "period" : {  } } ], "origin" : "instance:cat", "period" : { "end" : -1200, "start" : -1600 }, "relations" : [ { "kind" : "part_of", "parentId" : "zz_land", "period" : {  } } ], "rev" : "DIGEST", "types" : [ ], "uid" : "place:zz_march", "updatedAt" : "TS" }
+{ "geom" : "0103000020e6100000010000000500000000000000000034400000000000003e400000000000003d400000000000003e400000000000003d4000000000008041400000000000003440000000000080414000000000000034400000000000003e40", "id" : "zz_sea", "kind" : "region", "label" : "Zzsea", "links" : [ ], "names" : [ { "name" : "Zzsea", "period" : {  } } ], "origin" : "instance:cat", "period" : {  }, "relations" : [ ], "rev" : "DIGEST", "types" : [ ], "uid" : "place:zz_sea", "updatedAt" : "TS" }
+{ "geom" : "0101000020e6100000cdcccccccc4c41400000000000004440", "id" : "zz_hill", "kind" : "site", "label" : "Zzhill", "links" : [ ], "names" : [ { "lang" : "en", "name" : "Zzhill", "period" : {  } }, { "lang" : "tr", "name" : "Zzhill Höyük", "period" : {  } }, { "lang" : "de", "name" : "Zzhügel", "period" : {  } } ], "origin" : "instance:cat", "period" : { "end" : -1180, "start" : -1650 }, "relations" : [ { "kind" : "spatial_containment", "parentId" : "zz_land", "period" : { "end" : -1000, "start" : -2000 } }, { "kind" : "spatial_containment", "parentId" : "zz_march", "period" : { "end" : -1200, "start" : -1600 } } ], "rev" : "DIGEST", "types" : [ ], "uid" : "place:zz_hill", "updatedAt" : "TS" }
+{ "geom" : "0101000020e61000006666666666c641400000000000a04340", "id" : "zz_port", "kind" : "site", "label" : "Zzport", "links" : [ ], "names" : [ { "name" : "Zzport", "period" : {  } } ], "origin" : "instance:cat", "period" : { "start" : -1400 }, "relations" : [ { "kind" : "spatial_containment", "parentId" : "zz_land", "period" : { "end" : -1000, "start" : -2000 } }, { "kind" : "spatial_containment", "parentId" : "zz_march", "period" : { "end" : -1200, "start" : -1600 } } ], "rev" : "DIGEST", "types" : [ ], "uid" : "place:zz_harbour", "updatedAt" : "TS" }
+{ "geom" : "0101000020e610000033333333337341409a99999999d94340", "id" : "zz_well", "kind" : "site", "label" : "Zzwell", "links" : [ ], "names" : [ { "name" : "Zzwell", "period" : {  } } ], "origin" : "instance:cat", "period" : { "end" : -1100, "start" : -1500 }, "relations" : [ { "kind" : "spatial_containment", "parentId" : "zz_land", "period" : { "end" : -1000, "start" : -2000 } }, { "kind" : "spatial_containment", "parentId" : "zz_march", "period" : { "end" : -1200, "start" : -1600 } } ], "rev" : "DIGEST", "types" : [ ], "uid" : "place:zz_well", "updatedAt" : "TS" }
+{ "geom" : "0101000020e61000009a99999999994240cdcccccccc0c4340", "id" : "zz_mound", "kind" : "site", "label" : "Zzmound", "links" : [ ], "names" : [ { "name" : "Zzmound", "period" : {  } } ], "origin" : "instance:cat", "period" : { "end" : -1300, "start" : -1500 }, "relations" : [ { "kind" : "spatial_containment", "parentId" : "zz_land", "period" : { "end" : -1000, "start" : -2000 } } ], "rev" : "DIGEST", "types" : [ ], "uid" : "place:zz_mound", "updatedAt" : "TS" }
+{ "geom" : "0101000020e610000033333333333342403333333333f34340", "id" : "zz_camp_north", "kind" : "site", "label" : "Zzcamp", "links" : [ ], "names" : [ { "name" : "Zzcamp", "period" : {  } }, { "lang" : "de", "name" : "Zzlager", "period" : {  } } ], "origin" : "instance:cat", "period" : { "end" : -1250, "start" : -1350 }, "properties" : { "added" : true }, "relations" : [ { "kind" : "spatial_containment", "parentId" : "zz_land", "period" : { "end" : -1000, "start" : -2000 } } ], "rev" : "DIGEST", "source" : "a survey map", "types" : [ ], "uid" : "place:zz_camp_north", "updatedAt" : "TS" }
+== entities/periods.ndjson (6 lines)
+{ "authority" : "PeriodO zzqauth", "id" : "zzqauth", "label" : "Zzq test chronology", "origin" : "instance:cat", "period" : { "end" : -500, "start" : -3000 }, "rev" : "DIGEST", "uid" : "period:zzqauth", "updatedAt" : "TS" }
+{ "authority" : "PeriodO zzqother", "id" : "zzqother", "label" : "Zzq other chronology", "origin" : "instance:cat", "period" : { "end" : 100, "start" : 1 }, "rev" : "DIGEST", "uid" : "period:zzqother", "updatedAt" : "TS" }
+{ "authority" : "PeriodO zzqauthbronze · Zzq test chronology (2020)", "id" : "zzqauthbronze", "label" : "Zzq Bronze Age", "origin" : "instance:cat", "parentId" : "zzqauth", "period" : { "end" : -1200, "start" : -3000 }, "region" : "Zzqland", "rev" : "DIGEST", "uid" : "period:zzqauthbronze", "updatedAt" : "TS" }
+{ "authority" : "PeriodO zzqauthlba · Zzq test chronology (2020)", "id" : "zzqauthlba", "label" : "Zzq Late Bronze Age", "origin" : "instance:cat", "parentId" : "zzqauthbronze", "period" : { "end" : -1200, "start" : -1600 }, "region" : "Zzqland", "rev" : "DIGEST", "uid" : "period:zzqauthlba", "updatedAt" : "TS" }
+{ "authority" : "PeriodO zzqauthiron · Zzq test chronology (2020)", "id" : "zzqauthiron", "label" : "Zzq Iron Age", "origin" : "instance:cat", "parentId" : "zzqauth", "period" : { "end" : -500, "start" : -1200 }, "rev" : "DIGEST", "uid" : "period:zzqauthiron", "updatedAt" : "TS" }
+{ "authority" : "PeriodO zzqother01 · Zzq other chronology", "id" : "zzqother01", "label" : "Zzq Something", "origin" : "instance:cat", "parentId" : "zzqother", "period" : { "end" : 100, "start" : 1 }, "rev" : "DIGEST", "uid" : "period:zzqother01", "updatedAt" : "TS" }
+== entities/edges.ndjson
+== entities/unresolved-edges.ndjson
+== entities/assessments.ndjson
+== entities/aliases.ndjson
+== entities/article-aliases.ndjson
+== entities/event-aliases.ndjson (1 lines)
+{ "alias" : "zz_ash", "createdAt" : "TS", "eventUid" : "event:zz_ashfall" }
+== entities/goal-aliases.ndjson
+== entities/place-aliases.ndjson (2 lines)
+{ "alias" : "zz_camp", "createdAt" : "TS", "placeUid" : "place:zz_camp_north" }
+{ "alias" : "zz_mound_dup", "createdAt" : "TS", "placeUid" : "place:zz_mound" }
+== entities/event-catalogue.ndjson (1 lines)
+{ "eventUid" : "event:gvp_13879", "historicity" : "attested", "kind" : "eruption", "label" : "Eruption of Santorini", "lat" : 36.404, "lon" : 25.396, "notAfter" : -1596, "notBefore" : -1624, "provider" : "gvp", "providerId" : "13879", "record" : { "central" : -1610, "datingMethod" : "Isotopic: 14C (calibrated)", "description" : "Confirmed Eruption at Santorini; VEI 7", "group" : "volcano:212040", "historicity" : "attested", "kind" : "eruption", "label" : "Eruption of Santorini", "lat" : 36.404, "lon" : 25.396, "names" : [ "Santorini eruption" ], "plusMinus" : 14, "provider" : "gvp", "providerId" : "13879", "raw" : "{\"type\":\"Feature\",\"id\":\"Smithsonian_VOTW_Holocene_Eruptions.fid-5949073e_1a13b776a51_-7f7c\",\"geometry\":{\"type\":\"Point\",\"coordinates\":[25.396,36.404]},\"geometry_name\":\"GeoLocation\",\"properties\":{\"Volcano_Number\":212040,\"Volcano_Name\":\"Santorini\",\"Eruption_Number\":13879,\"Activity_Type\":\"Confirmed Eruption\",\"ExplosivityIndexMax\":7,\"ExplosivityIndexModifier\":\"?\",\"ActivityArea\":null,\"ActivityUnit\":null,\"StartEvidenceMethod\":\"Isotopic: 14C (calibrated)\",\"StartDateYearModifier\":null,\"StartDateYear\":-1610,\"StartDateYearUncertainty\":14,\"StartDateDayModifier\":null,\"StartDateMonth\":0,\"StartDateDay\":0,\"StartDateDayUncertainty\":null,\"EndDateYearModifier\":null,\"EndDateYear\":null,\"EndDateYearUncertainty\":null,\"EndDateDayModifier\":null,\"EndDateMonth\":null,\"EndDateDay\":null,\"EndDateDayUncertainty\":null}}", "timeSpan" : { "notAfter" : -1596, "notBefore" : -1624 }, "url" : "https://volcano.si.edu/volcano.cfm?vn=212040", "vei" : 7 }, "retrievedAt" : "TS", "url" : "https://volcano.si.edu/volcano.cfm?vn=212040", "vei" : 7 }
+== entities/event-candidates.ndjson (3 lines)
+{ "citekey" : "zzhill1990_battle", "computedAt" : "TS", "eventUid" : "event:zz_battle", "findings" : [ "zzhill1990_battle#0", "zzhill1990_battle#2", "zzhill1990_battle#1" ], "passages" : [ { "context" : "The battle of Zzhill was fought below the walls of Zzhill around 1300 BC; Zzport sent ships.", "end" : 20, "name" : "Battle of Zzhill", "quote" : "battle of Zzhill", "start" : 4 }, { "context" : "Zzhill burned soon after, and the battle of Zzhill was remembered in the songs of Zzland.", "end" : 143, "name" : "Battle of Zzhill", "quote" : "battle of Zzhill", "start" : 127 } ], "reasons" : [ "names it 2 times: \"battle of Zzhill\"", "3 findings within 118 km (nearest 0 km), 3 overlapping in time" ], "score" : 1.7, "sourceUid" : "source:zzhill1990_battle", "status" : "confirmed" }
+{ "citekey" : "zzhill1990_battle", "computedAt" : "TS", "eventUid" : "event:zz_war", "findings" : [ "zzhill1990_battle#2", "zzhill1990_battle#0", "zzhill1990_battle#1" ], "passages" : [ ], "reasons" : [ "3 findings within 80 km (nearest 31 km), 3 overlapping in time" ], "score" : 0.6, "sourceUid" : "source:zzhill1990_battle", "status" : "proposed" }
+{ "citekey" : "zzvolc2004_ash", "computedAt" : "TS", "eventUid" : "event:zz_ashfall", "findings" : [ "zzvolc2004_ash#0" ], "passages" : [ ], "reasons" : [ "1 finding within 48 km (nearest 48 km), 1 overlapping in time" ], "score" : 0.409, "sourceUid" : "source:zzvolc2004_ash", "status" : "proposed" }
+== entities/event-checks.ndjson (3 lines)
+{ "checkedAt" : "TS", "eventUid" : "event:zz_battle" }
+{ "checkedAt" : "TS", "eventUid" : "event:zz_war" }
+{ "checkedAt" : "TS", "eventUid" : "event:zz_ashfall" }
+== entities/corrections.ndjson (2 lines)
+{ "createdAt" : "TS", "field" : "description", "status" : "active", "targetId" : "gvp_13879", "targetKind" : "event", "targetUid" : "event:gvp_13879", "updatedAt" : "TS", "upstream" : "gvp", "upstreamValue" : "\"Confirmed Eruption at Santorini; VEI 7\"", "value" : "\"edited\"" }
+{ "createdAt" : "TS", "field" : "label", "status" : "active", "targetId" : "gvp_13879", "targetKind" : "event", "targetUid" : "event:gvp_13879", "updatedAt" : "TS", "upstream" : "gvp", "upstreamValue" : "\"Eruption of Santorini\"", "value" : "\"An eruption, named by a person\"" }
+== entities/site-types.ndjson (0 lines)
+== entities/tombstones.ndjson (3 lines)
+{ "deletedAt" : "TS", "kind" : "place", "origin" : "instance:cat", "uid" : "tombstone:place" }
+{ "deletedAt" : "TS", "kind" : "place", "origin" : "instance:cat", "uid" : "tombstone:place" }
+{ "deletedAt" : "TS", "kind" : "event", "origin" : "instance:cat", "uid" : "tombstone:event" }
+== blobs/sha256/61/611b891424fb89a55f8ceecd0f6fd1fd0ce552dded1feb8c9bc21e21cf57c2a9
+== blobs/sha256/a9/a919236928dee0bd037377f5417dced2d4f6d355e572b6ced80b87a1b04b1a6d
+# imported into an empty collection
+200 {
+  "applied" : true,
+  "blobs" : 2,
+  "bundleId" : "UUID",
+  "conflicts" : [
+  ],
+  "counts" : [
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 2,
+      "keptLocal" : 0,
+      "kind" : "source",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 4,
+      "keptLocal" : 0,
+      "kind" : "finding",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 3,
+      "keptLocal" : 0,
+      "kind" : "attestation",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 5,
+      "keptLocal" : 0,
+      "kind" : "event",
+      "skippedDeleted" : 0,
+      "unchanged" : 1,
+      "updated" : 0
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 8,
+      "keptLocal" : 0,
+      "kind" : "place",
+      "skippedDeleted" : 0,
+      "unchanged" : 2,
+      "updated" : 0
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 6,
+      "keptLocal" : 0,
+      "kind" : "period",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    }
+  ],
+  "dryRun" : false,
+  "from" : {
+    "id" : "instance:cat",
+    "label" : null
+  },
+  "issues" : [
+  ],
+  "mergeId" : "UUID",
+  "notes" : [
+    "the gazetteer/periods differ from the bundle's (bundle: 0 places, 280 periods) — events point into them by id"
+  ],
+  "planHash" : "DIGEST",
+  "problems" : [
+  ]
+}
+## places 8 rows
+{ "dataset" : "local", "geom" : { "coordinates" : [ 34.6, 40 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "zz_hill", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "site", "label" : "Zzhill", "label_norm" : "zzhill", "location_precision" : null, "origin" : "instance:cat", "period" : "[-1650,-1179)", "properties" : null, "shape_area" : 0, "shape_box" : "BOX(34.6 40,34.6 40)", "shape_dim" : 0, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : null, "start_unknown" : false, "uid" : "place:zz_hill", "updated_at" : "TS", "web_geojson" : null }
+{ "dataset" : "local", "geom" : { "coordinates" : [ 34.9, 39.7 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "zz_well", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "site", "label" : "Zzwell", "label_norm" : "zzwell", "location_precision" : null, "origin" : "instance:cat", "period" : "[-1500,-1099)", "properties" : null, "shape_area" : 0, "shape_box" : "BOX(34.9 39.7,34.9 39.7)", "shape_dim" : 0, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : null, "start_unknown" : false, "uid" : "place:zz_well", "updated_at" : "TS", "web_geojson" : null }
+{ "dataset" : "local", "geom" : { "coordinates" : [ 35.55, 39.25 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "zz_port", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "site", "label" : "Zzport", "label_norm" : "zzport", "location_precision" : null, "origin" : "instance:cat", "period" : "[-1400,)", "properties" : null, "shape_area" : 0, "shape_box" : "BOX(35.55 39.25,35.55 39.25)", "shape_dim" : 0, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : null, "start_unknown" : false, "uid" : "place:zz_harbour", "updated_at" : "TS", "web_geojson" : null }
+{ "dataset" : "local", "geom" : { "coordinates" : [ 36.4, 39.9 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "zz_camp_north", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "site", "label" : "Zzcamp", "label_norm" : "zzcamp", "location_precision" : null, "origin" : "instance:cat", "period" : "[-1350,-1249)", "properties" : { "added" : true }, "shape_area" : 0, "shape_box" : "BOX(36.4 39.9,36.4 39.9)", "shape_dim" : 0, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : "a survey map", "start_unknown" : false, "uid" : "place:zz_camp_north", "updated_at" : "TS", "web_geojson" : null }
+{ "dataset" : "local", "geom" : { "coordinates" : [ 37.2, 38.1 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "zz_mound", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "site", "label" : "Zzmound", "label_norm" : "zzmound", "location_precision" : null, "origin" : "instance:cat", "period" : "[-1500,-1299)", "properties" : null, "shape_area" : 0, "shape_box" : "BOX(37.2 38.1,37.2 38.1)", "shape_dim" : 0, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : null, "start_unknown" : false, "uid" : "place:zz_mound", "updated_at" : "TS", "web_geojson" : null }
+{ "dataset" : "local", "geom" : { "coordinates" : [ [ [ 20, 30 ], [ 29, 30 ], [ 29, 35 ], [ 20, 35 ], [ 20, 30 ] ] ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Polygon" }, "geom_clipped" : null, "id" : "zz_sea", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "region", "label" : "Zzsea", "label_norm" : "zzsea", "location_precision" : null, "origin" : "instance:cat", "period" : "(,)", "properties" : null, "shape_area" : 45, "shape_box" : "BOX(20 30,29 35)", "shape_dim" : 2, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : null, "start_unknown" : false, "uid" : "place:zz_sea", "updated_at" : "TS", "web_geojson" : "{\"type\":\"Polygon\",\"coordinates\":[[[20,30],[29,30],[29,35],[20,35],[20,30]]]}" }
+{ "dataset" : "local", "geom" : { "coordinates" : [ [ [ 30, 36 ], [ 40, 36 ], [ 40, 42 ], [ 30, 42 ], [ 30, 36 ] ] ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Polygon" }, "geom_clipped" : null, "id" : "zz_land", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "region", "label" : "Zzland", "label_norm" : "zzland", "location_precision" : null, "origin" : "instance:cat", "period" : "[-2000,-999)", "properties" : null, "shape_area" : 60, "shape_box" : "BOX(30 36,40 42)", "shape_dim" : 2, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : null, "start_unknown" : false, "uid" : "place:zz_land", "updated_at" : "TS", "web_geojson" : "{\"type\":\"Polygon\",\"coordinates\":[[[30,36],[40,36],[40,42],[30,42],[30,36]]]}" }
+{ "dataset" : "local", "geom" : { "coordinates" : [ [ [ 33, 38 ], [ 36, 38 ], [ 36, 41 ], [ 33, 41 ], [ 33, 38 ] ] ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Polygon" }, "geom_clipped" : null, "id" : "zz_march", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "region", "label" : "Zzmarch", "label_norm" : "zzmarch", "location_precision" : null, "origin" : "instance:cat", "period" : "[-1600,-1199)", "properties" : null, "shape_area" : 9, "shape_box" : "BOX(33 38,36 41)", "shape_dim" : 2, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : null, "start_unknown" : false, "uid" : "place:zz_march", "updated_at" : "TS", "web_geojson" : "{\"type\":\"Polygon\",\"coordinates\":[[[33,38],[36,38],[36,41],[33,41],[33,38]]]}" }
+## place_names 12 rows
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "", "manual" : false, "name" : "Zzcamp", "period" : "(,)", "place_id" : "zz_camp_north" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "", "manual" : false, "name" : "Zzmound", "period" : "(,)", "place_id" : "zz_mound" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "", "manual" : false, "name" : "Zzport", "period" : "(,)", "place_id" : "zz_port" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "", "manual" : false, "name" : "Zzsea", "period" : "(,)", "place_id" : "zz_sea" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "", "manual" : false, "name" : "Zzwell", "period" : "(,)", "place_id" : "zz_well" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "de", "manual" : false, "name" : "Zzhügel", "period" : "(,)", "place_id" : "zz_hill" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "de", "manual" : false, "name" : "Zzlager", "period" : "(,)", "place_id" : "zz_camp_north" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "en", "manual" : false, "name" : "Zzhill", "period" : "(,)", "place_id" : "zz_hill" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "en", "manual" : false, "name" : "Zzland", "period" : "(,)", "place_id" : "zz_land" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "en", "manual" : false, "name" : "Zzmarch", "period" : "(,)", "place_id" : "zz_march" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "la", "manual" : false, "name" : "Zzlandia", "period" : "(,)", "place_id" : "zz_land" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "tr", "manual" : false, "name" : "Zzhill Höyük", "period" : "(,)", "place_id" : "zz_hill" }
+## place_relations 9 rows
+{ "child_id" : "zz_camp_north", "kind" : "spatial_containment", "parent_id" : "zz_land", "period" : "[-2000,-999)" }
+{ "child_id" : "zz_hill", "kind" : "spatial_containment", "parent_id" : "zz_land", "period" : "[-2000,-999)" }
+{ "child_id" : "zz_hill", "kind" : "spatial_containment", "parent_id" : "zz_march", "period" : "[-1600,-1199)" }
+{ "child_id" : "zz_march", "kind" : "part_of", "parent_id" : "zz_land", "period" : "(,)" }
+{ "child_id" : "zz_mound", "kind" : "spatial_containment", "parent_id" : "zz_land", "period" : "[-2000,-999)" }
+{ "child_id" : "zz_port", "kind" : "spatial_containment", "parent_id" : "zz_land", "period" : "[-2000,-999)" }
+{ "child_id" : "zz_port", "kind" : "spatial_containment", "parent_id" : "zz_march", "period" : "[-1600,-1199)" }
+{ "child_id" : "zz_well", "kind" : "spatial_containment", "parent_id" : "zz_land", "period" : "[-2000,-999)" }
+{ "child_id" : "zz_well", "kind" : "spatial_containment", "parent_id" : "zz_march", "period" : "[-1600,-1199)" }
+## place_aliases 2 rows
+{ "alias" : "zz_camp", "created_at" : "TS", "place_id" : "zz_camp_north" }
+{ "alias" : "zz_mound_dup", "created_at" : "TS", "place_id" : "zz_mound" }
+## place_overrides 0 rows
+## periods 6 rows
+{ "authority" : "PeriodO zzqauth", "dataset" : "local", "id" : "zzqauth", "label" : "Zzq test chronology", "origin" : "instance:cat", "parent_id" : null, "period" : "[-3000,-499)", "preset" : null, "region" : null, "uid" : "period:zzqauth", "updated_at" : "TS" }
+{ "authority" : "PeriodO zzqauthbronze · Zzq test chronology (2020)", "dataset" : "local", "id" : "zzqauthbronze", "label" : "Zzq Bronze Age", "origin" : "instance:cat", "parent_id" : "zzqauth", "period" : "[-3000,-1199)", "preset" : null, "region" : "Zzqland", "uid" : "period:zzqauthbronze", "updated_at" : "TS" }
+{ "authority" : "PeriodO zzqauthiron · Zzq test chronology (2020)", "dataset" : "local", "id" : "zzqauthiron", "label" : "Zzq Iron Age", "origin" : "instance:cat", "parent_id" : "zzqauth", "period" : "[-1200,-499)", "preset" : null, "region" : null, "uid" : "period:zzqauthiron", "updated_at" : "TS" }
+{ "authority" : "PeriodO zzqauthlba · Zzq test chronology (2020)", "dataset" : "local", "id" : "zzqauthlba", "label" : "Zzq Late Bronze Age", "origin" : "instance:cat", "parent_id" : "zzqauthbronze", "period" : "[-1600,-1199)", "preset" : null, "region" : "Zzqland", "uid" : "period:zzqauthlba", "updated_at" : "TS" }
+{ "authority" : "PeriodO zzqother", "dataset" : "local", "id" : "zzqother", "label" : "Zzq other chronology", "origin" : "instance:cat", "parent_id" : null, "period" : "[1,101)", "preset" : null, "region" : null, "uid" : "period:zzqother", "updated_at" : "TS" }
+{ "authority" : "PeriodO zzqother01 · Zzq other chronology", "dataset" : "local", "id" : "zzqother01", "label" : "Zzq Something", "origin" : "instance:cat", "parent_id" : "zzqother", "period" : "[1,101)", "preset" : null, "region" : null, "uid" : "period:zzqother01", "updated_at" : "TS" }
+## events 5 rows
+{ "begin_by" : null, "catalogue" : "gvp", "central" : -1610, "citekey" : null, "dating_method" : "Isotopic: 14C (calibrated)", "description" : "edited", "end_from" : null, "geom" : { "coordinates" : [ 25.396, 36.404 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "historicity" : "attested", "id" : "gvp_13879", "inner_span" : null, "kind" : "eruption", "label" : "An eruption, named by a person", "names" : [ "Eruption of Santorini", "Santorini eruption" ], "not_after" : -1596, "not_before" : -1624, "origin" : "instance:cat", "outer_span" : "[-1624,-1595)", "parent_id" : null, "place_id" : null, "plus_minus" : 14, "scale" : null, "uid" : "event:gvp_13879", "uncertainty" : 14, "updated_at" : "TS", "wikidata" : null }
+{ "begin_by" : null, "catalogue" : null, "central" : null, "citekey" : "zzhill1990_battle", "dating_method" : null, "description" : "fought below the walls, at dusk", "end_from" : null, "geom" : null, "historicity" : "attested", "id" : "zz_battle", "inner_span" : null, "kind" : "battle", "label" : "Battle of Zzhill", "names" : [ ], "not_after" : -1290, "not_before" : -1310, "origin" : "instance:cat", "outer_span" : "[-1310,-1289)", "parent_id" : null, "place_id" : "zz_hill", "plus_minus" : null, "scale" : null, "uid" : "event:zz_battle", "uncertainty" : 10, "updated_at" : "TS", "wikidata" : null }
+{ "begin_by" : null, "catalogue" : null, "central" : null, "citekey" : null, "dating_method" : null, "description" : "a war of the march lords", "end_from" : null, "geom" : { "coordinates" : [ [ [ 33.5, 38.5 ], [ 35.8, 38.5 ], [ 35.8, 40.5 ], [ 33.5, 40.5 ], [ 33.5, 38.5 ] ] ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Polygon" }, "historicity" : "attested", "id" : "zz_war", "inner_span" : null, "kind" : "war", "label" : "The Zzmarch war", "names" : [ ], "not_after" : -1280, "not_before" : -1320, "origin" : "instance:cat", "outer_span" : "[-1320,-1279)", "parent_id" : null, "place_id" : null, "plus_minus" : null, "scale" : "regional", "uid" : "event:zz_war", "uncertainty" : 20, "updated_at" : "TS", "wikidata" : null }
+{ "begin_by" : null, "catalogue" : null, "central" : null, "citekey" : null, "dating_method" : null, "description" : null, "end_from" : null, "geom" : null, "historicity" : "attested", "id" : "zz_ashfall", "inner_span" : null, "kind" : "eruption", "label" : "Ash over Zzport", "names" : [ ], "not_after" : -1600, "not_before" : -1620, "origin" : "instance:cat", "outer_span" : "[-1620,-1599)", "parent_id" : null, "place_id" : "zz_port", "plus_minus" : null, "scale" : null, "uid" : "event:zz_ashfall", "uncertainty" : 10, "updated_at" : "TS", "wikidata" : null }
+{ "begin_by" : null, "catalogue" : null, "central" : null, "citekey" : null, "dating_method" : null, "description" : null, "end_from" : null, "geom" : null, "historicity" : "attested", "id" : "zz_fire", "inner_span" : null, "kind" : "destruction", "label" : "Zzhill burns", "names" : [ ], "not_after" : -1270, "not_before" : -1290, "origin" : "instance:cat", "outer_span" : "[-1290,-1269)", "parent_id" : "zz_battle", "place_id" : "zz_hill", "plus_minus" : null, "scale" : null, "uid" : "tombstone:event", "uncertainty" : 10, "updated_at" : "TS", "wikidata" : null }
+## event_aliases 1 rows
+{ "alias" : "zz_ash", "created_at" : "TS", "event_id" : "zz_ashfall" }
+## event_datings 1 rows
+{ "begin_by" : null, "citekey" : "zzhill1990_battle", "end_from" : null, "event_id" : "zz_battle", "method" : "historical", "not_after" : -1290, "not_before" : -1310, "note" : null }
+## event_edges 1 rows
+{ "citekey" : "zzhill1990_battle", "dst_id" : "zz_battle", "kind" : "after", "note" : null, "src_id" : "zz_fire" }
+## event_participants 1 rows
+{ "actor" : "the Zzport fleet", "citekey" : null, "event_id" : "zz_battle", "role" : "ally" }
+## event_catalogue 1 rows
+{ "begin_by" : null, "deaths" : null, "end_from" : null, "event_id" : "gvp_13879", "historicity" : "attested", "kind" : "eruption", "label" : "Eruption of Santorini", "lat" : 36.404, "lon" : 25.396, "magnitude" : null, "not_after" : -1596, "not_before" : -1624, "provider" : "gvp", "provider_id" : "13879", "record" : { "central" : -1610, "datingMethod" : "Isotopic: 14C (calibrated)", "description" : "Confirmed Eruption at Santorini; VEI 7", "group" : "volcano:212040", "historicity" : "attested", "kind" : "eruption", "label" : "Eruption of Santorini", "lat" : 36.404, "lon" : 25.396, "names" : [ "Santorini eruption" ], "plusMinus" : 14, "provider" : "gvp", "providerId" : "13879", "raw" : "{\"type\":\"Feature\",\"id\":\"Smithsonian_VOTW_Holocene_Eruptions.fid-5949073e_1a13b776a51_-7f7c\",\"geometry\":{\"type\":\"Point\",\"coordinates\":[25.396,36.404]},\"geometry_name\":\"GeoLocation\",\"properties\":{\"Volcano_Number\":212040,\"Volcano_Name\":\"Santorini\",\"Eruption_Number\":13879,\"Activity_Type\":\"Confirmed Eruption\",\"ExplosivityIndexMax\":7,\"ExplosivityIndexModifier\":\"?\",\"ActivityArea\":null,\"ActivityUnit\":null,\"StartEvidenceMethod\":\"Isotopic: 14C (calibrated)\",\"StartDateYearModifier\":null,\"StartDateYear\":-1610,\"StartDateYearUncertainty\":14,\"StartDateDayModifier\":null,\"StartDateMonth\":0,\"StartDateDay\":0,\"StartDateDayUncertainty\":null,\"EndDateYearModifier\":null,\"EndDateYear\":null,\"EndDateYearUncertainty\":null,\"EndDateDayModifier\":null,\"EndDateMonth\":null,\"EndDateDay\":null,\"EndDateDayUncertainty\":null}}", "timeSpan" : { "notAfter" : -1596, "notBefore" : -1624 }, "url" : "https://volcano.si.edu/volcano.cfm?vn=212040", "vei" : 7 }, "retrieved_at" : "TS", "url" : "https://volcano.si.edu/volcano.cfm?vn=212040", "vei" : 7 }
+## event_candidates (no such table)
+## event_checks (no such table)
+## corrections 2 rows
+{ "checked_at" : null, "created_at" : "TS", "field" : "description", "id" : 1, "status" : "active", "target_id" : "gvp_13879", "target_kind" : "event", "updated_at" : "TS", "upstream" : "gvp", "upstream_now" : null, "upstream_value" : "Confirmed Eruption at Santorini; VEI 7", "value" : "edited" }
+{ "checked_at" : null, "created_at" : "TS", "field" : "label", "id" : 2, "status" : "active", "target_id" : "gvp_13879", "target_kind" : "event", "updated_at" : "TS", "upstream" : "gvp", "upstream_now" : null, "upstream_value" : "Eruption of Santorini", "value" : "An eruption, named by a person" }
+## attestations 3 rows
+{ "canvas" : null, "char_end" : 50, "char_start" : 30, "chunk_ord" : null, "citekey" : "zzhill1990_battle", "created_at" : "TS", "cts_urn" : null, "id" : 1, "note" : null, "origin" : "instance:cat", "page" : null, "prefix" : null, "quote" : "The battle of Zzhill", "suffix" : null, "target_id" : "zz_hill", "target_type" : "place", "uid" : "attestation:zzhill1990_battle:zz_hill", "updated_at" : "TS", "xywh" : null }
+{ "canvas" : null, "char_end" : null, "char_start" : null, "chunk_ord" : null, "citekey" : "zzhill1990_battle", "created_at" : "TS", "cts_urn" : null, "id" : 2, "note" : null, "origin" : "instance:cat", "page" : "12", "prefix" : null, "quote" : "fought below the walls", "suffix" : null, "target_id" : "zz_battle", "target_type" : "event", "uid" : "attestation:zzhill1990_battle:zz_battle", "updated_at" : "TS", "xywh" : null }
+{ "canvas" : null, "char_end" : null, "char_start" : null, "chunk_ord" : null, "citekey" : "zzvolc2004_ash", "created_at" : "TS", "cts_urn" : null, "id" : 3, "note" : "patched", "origin" : "instance:cat", "page" : null, "prefix" : null, "quote" : "Zzport", "suffix" : null, "target_id" : "zz_camp_north", "target_type" : "place", "uid" : "attestation:zzvolc2004_ash:zz_camp_north", "updated_at" : "TS", "xywh" : null }
+## finding_places 11 rows
+{ "finding_id" : "zzhill1990_battle#0", "place_id" : "zz_hill" }
+{ "finding_id" : "zzhill1990_battle#0", "place_id" : "zz_land" }
+{ "finding_id" : "zzhill1990_battle#0", "place_id" : "zz_march" }
+{ "finding_id" : "zzhill1990_battle#1", "place_id" : "zz_land" }
+{ "finding_id" : "zzhill1990_battle#1", "place_id" : "zz_march" }
+{ "finding_id" : "zzhill1990_battle#1", "place_id" : "zz_port" }
+{ "finding_id" : "zzhill1990_battle#2", "place_id" : "zz_land" }
+{ "finding_id" : "zzhill1990_battle#2", "place_id" : "zz_march" }
+{ "finding_id" : "zzhill1990_battle#2", "place_id" : "zz_well" }
+{ "finding_id" : "zzvolc2004_ash#0", "place_id" : "zz_land" }
+{ "finding_id" : "zzvolc2004_ash#0", "place_id" : "zz_march" }
+## tombstones 3 rows
+{ "deleted_at" : "TS", "kind" : "event", "origin" : "instance:cat", "uid" : "tombstone:event" }
+{ "deleted_at" : "TS", "kind" : "place", "origin" : "instance:cat", "uid" : "tombstone:place" }
+{ "deleted_at" : "TS", "kind" : "place", "origin" : "instance:cat", "uid" : "tombstone:place" }
+# the merge plan of the next bundle
+{
+  "asOf" : "TS",
+  "bundleId" : "UUID",
+  "changes" : 5,
+  "formatVersion" : 1,
+  "from" : {
+    "id" : "instance:cat",
+    "label" : null
+  },
+  "info" : [
+    "place zz_port: renamed zz_harbour in the bundle — renamed here too (the old id stays an alias)",
+    "event zz_battle: the same dating and place on both sides — one event, datings and participants unioned",
+    "the gazetteer/periods differ from the bundle's (bundle: 0 places, 280 periods) — events point into them by id"
+  ],
+  "into" : {
+    "id" : "instance:home",
+    "label" : null
+  },
+  "issues" : [
+  ],
+  "matches" : {
+    "byLedger" : 0,
+    "byScore" : 0,
+    "byStrongKey" : 0,
+    "byUid" : 2,
+    "deletedHere" : 0,
+    "sources" : 2,
+    "undecided" : 0,
+    "unmatched" : 0
+  },
+  "planHash" : "DIGEST",
+  "problems" : [
+  ],
+  "resolutionErrors" : [
+  ],
+  "resolved" : 0,
+  "schemaVersion" : "109",
+  "sources" : [
+  ]
+}
