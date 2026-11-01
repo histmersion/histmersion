@@ -1,0 +1,197 @@
+## dry run
+report: {
+  "covers" : 2,
+  "dryRun" : true,
+  "failed" : [
+  ],
+  "illustrations" : 0,
+  "lines" : [
+    {
+      "citekey" : "zqcal1998_hittite",
+      "detail" : "Calibre id 5",
+      "provider" : "calibre",
+      "role" : "cover"
+    },
+    {
+      "citekey" : "zqcal2019_tin",
+      "detail" : "Calibre id 1",
+      "provider" : "calibre",
+      "role" : "cover"
+    }
+  ],
+  "skipped" : [
+    {
+      "allowed" : true,
+      "key" : "cover: Calibre id not in the library",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "cover: no cover file in Calibre, no ISBN",
+      "n" : 1
+    }
+  ],
+  "sources" : 4
+}
+asks: []
+## every linked source
+report: {
+  "covers" : 2,
+  "dryRun" : false,
+  "failed" : [
+  ],
+  "illustrations" : 0,
+  "lines" : [
+    {
+      "citekey" : "zqcal1998_hittite",
+      "detail" : "Calibre id 5",
+      "provider" : "calibre",
+      "role" : "cover"
+    },
+    {
+      "citekey" : "zqcal2019_tin",
+      "detail" : "Calibre id 1",
+      "provider" : "calibre",
+      "role" : "cover"
+    }
+  ],
+  "skipped" : [
+    {
+      "allowed" : true,
+      "key" : "cover: Calibre id not in the library",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "cover: no cover file in Calibre, no ISBN",
+      "n" : 1
+    }
+  ],
+  "sources" : 4
+}
+asks: []
+## again: nothing left
+report: {
+  "covers" : 0,
+  "dryRun" : false,
+  "failed" : [
+  ],
+  "illustrations" : 0,
+  "lines" : [
+  ],
+  "skipped" : [
+    {
+      "allowed" : true,
+      "key" : "cover: Calibre id not in the library",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "cover: no cover file in Calibre, no ISBN",
+      "n" : 1
+    }
+  ],
+  "sources" : 2
+}
+asks: []
+## one, refreshed
+report: {
+  "covers" : 1,
+  "dryRun" : false,
+  "failed" : [
+  ],
+  "illustrations" : 0,
+  "lines" : [
+    {
+      "citekey" : "zqcal2019_tin",
+      "detail" : "Calibre id 1",
+      "provider" : "calibre",
+      "role" : "cover"
+    }
+  ],
+  "skipped" : [
+  ],
+  "sources" : 1
+}
+asks: []
+## the covers stored
+200 {
+  "items" : [
+    {
+      "author" : null,
+      "bytes" : 11,
+      "caption" : null,
+      "citekey" : null,
+      "credit" : "Cover: the local Calibre library",
+      "fileUrl" : "/media/asset:calibre:1/file",
+      "height" : null,
+      "kind" : "photo",
+      "license" : null,
+      "licenseUrl" : null,
+      "mime" : "image/jpeg",
+      "name" : "cover-calibre-1.jpeg",
+      "originalUrl" : null,
+      "provider" : "calibre",
+      "providerKey" : "1",
+      "retrievedAt" : "TS",
+      "sourceUrl" : "calibre:book/1",
+      "targets" : [
+        {
+          "basis" : null,
+          "item" : null,
+          "property" : "calibre",
+          "role" : "cover",
+          "targetId" : "zqcal2019_tin",
+          "targetType" : "source"
+        }
+      ],
+      "thumbUrl" : "/media/asset:calibre:1/thumb",
+      "uid" : "asset:calibre:1",
+      "width" : null
+    },
+    {
+      "author" : null,
+      "bytes" : 11,
+      "caption" : null,
+      "citekey" : null,
+      "credit" : "Cover: the local Calibre library",
+      "fileUrl" : "/media/asset:calibre:5/file",
+      "height" : null,
+      "kind" : "photo",
+      "license" : null,
+      "licenseUrl" : null,
+      "mime" : "image/jpeg",
+      "name" : "cover-calibre-5.jpeg",
+      "originalUrl" : null,
+      "provider" : "calibre",
+      "providerKey" : "5",
+      "retrievedAt" : "TS",
+      "sourceUrl" : "calibre:book/5",
+      "targets" : [
+        {
+          "basis" : null,
+          "item" : null,
+          "property" : "calibre",
+          "role" : "cover",
+          "targetId" : "zqcal1998_hittite",
+          "targetType" : "source"
+        }
+      ],
+      "thumbUrl" : "/media/asset:calibre:5/thumb",
+      "uid" : "asset:calibre:5",
+      "width" : null
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 2
+}
+# rows
+## assets 2 rows
+{ "author" : null, "bytes" : 11, "caption" : null, "citekey" : null, "credit" : "Cover: the local Calibre library", "geom" : null, "height" : null, "kind" : "photo", "license" : null, "license_url" : null, "mime" : "image/jpeg", "name" : "cover-calibre-1.jpeg", "origin" : "instance:cal", "original_url" : null, "period" : null, "provider" : "calibre", "provider_key" : "1", "retrieved_at" : "TS", "sha256" : "59b226443f3ddf145a96234b50bbfb484007c6b913526a8683981708746bb51a", "source_url" : "calibre:book/1", "thumb" : 20, "thumbSha" : "0f905899b9f0c2c88ad2fe279791a60fd9a00e148c6ac877229fabda50be8930", "thumb_height" : 247, "thumb_mime" : "image/jpeg", "thumb_width" : 330, "uid" : "asset:calibre:1", "updated_at" : "TS", "width" : null }
+{ "author" : null, "bytes" : 11, "caption" : null, "citekey" : null, "credit" : "Cover: the local Calibre library", "geom" : null, "height" : null, "kind" : "photo", "license" : null, "license_url" : null, "mime" : "image/jpeg", "name" : "cover-calibre-5.jpeg", "origin" : "instance:cal", "original_url" : null, "period" : null, "provider" : "calibre", "provider_key" : "5", "retrieved_at" : "TS", "sha256" : "fbe96c8589348244368ee1e3bd72cf89012f3e3b46e33bc616fc31e950277566", "source_url" : "calibre:book/5", "thumb" : 20, "thumbSha" : "3cc5f044f7a2776b3e40a5ee385f66c8fc4e9eff9288f35ddf8eb303eecb1727", "thumb_height" : 247, "thumb_mime" : "image/jpeg", "thumb_width" : 330, "uid" : "asset:calibre:5", "updated_at" : "TS", "width" : null }
+## asset_links 0 rows
+## media_links 2 rows
+{ "asset_uid" : "asset:calibre:1", "basis" : null, "created_at" : "TS", "item" : null, "property" : "calibre", "rank" : 0, "role" : "cover", "target_id" : "zqcal2019_tin", "target_type" : "source" }
+{ "asset_uid" : "asset:calibre:5", "basis" : null, "created_at" : "TS", "item" : null, "property" : "calibre", "rank" : 0, "role" : "cover", "target_id" : "zqcal1998_hittite", "target_type" : "source" }
+## media_checks 0 rows

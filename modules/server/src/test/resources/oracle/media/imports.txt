@@ -1,0 +1,2356 @@
+providers: [
+  {
+    "builtin" : true,
+    "description" : "Pictures of places and events from their Wikidata items (image, locator map, plan, aerial view, route map), licensed on Wikimedia Commons; a job asks about every place on the map not asked yet (one per Wikidata item, most-cited sites first), batch by batch, and resumes where it stopped",
+    "licences" : "",
+    "name" : "wikidata",
+    "over" : "places and events",
+    "plugin" : "media-wikidata",
+    "title" : "Wikidata pictures"
+  },
+  {
+    "builtin" : true,
+    "description" : "Pictures that depict events: Wikimedia Commons files whose structured data says P180 'depicts' the event's Wikidata item, and the images of the works its item lists as P1299 'depicted by'; licence read from Commons",
+    "licences" : "",
+    "name" : "depicts",
+    "over" : "events",
+    "plugin" : "media-depicts",
+    "title" : "Commons depictions"
+  },
+  {
+    "builtin" : true,
+    "description" : "The Metropolitan Museum of Art (CC0, isPublicDomain) — Open Access objects only (as the record itself says), tied to a place on the map when the object's most specific place field names it (and no other) and its dates overlap the place's; --dry-run lists the matches with their reasons",
+    "licences" : "",
+    "name" : "met",
+    "over" : "places",
+    "plugin" : "media-met",
+    "title" : "Met objects"
+  },
+  {
+    "builtin" : true,
+    "description" : "The Cleveland Museum of Art (CC0, share_license_status) — Open Access objects only (as the record itself says), tied to a place on the map when the object's most specific place field names it (and no other) and its dates overlap the place's; --dry-run lists the matches with their reasons",
+    "licences" : "",
+    "name" : "cleveland",
+    "over" : "places",
+    "plugin" : "media-cleveland",
+    "title" : "Cleveland Museum of Art objects"
+  },
+  {
+    "builtin" : true,
+    "description" : "The Art Institute of Chicago (CC0, is_public_domain; IIIF images) — Open Access objects only (as the record itself says), tied to a place on the map when the object's most specific place field names it (and no other) and its dates overlap the place's; --dry-run lists the matches with their reasons",
+    "licences" : "",
+    "name" : "aic",
+    "over" : "places",
+    "plugin" : "media-aic",
+    "title" : "Art Institute of Chicago objects"
+  },
+  {
+    "builtin" : true,
+    "description" : "Historical maps from the Library of Congress, Geography and Map Division: public domain only (rights 'No known restrictions' and dated by media.loc.max-year), linked as role map to the places their locations name",
+    "licences" : "",
+    "name" : "loc",
+    "over" : "places",
+    "plugin" : "media-loc",
+    "title" : "Library of Congress maps"
+  },
+  {
+    "builtin" : true,
+    "description" : "Wikimedia Commons files that Pleiades place records link, for the places on the map that carry a Pleiades id (matched by that id, no name matching); licence read from Commons; links to Flickr (needs a key), Commons categories and other sites are counted, not taken",
+    "licences" : "",
+    "name" : "pleiades",
+    "over" : "places",
+    "plugin" : "media-pleiades",
+    "title" : "Pleiades-linked pictures"
+  },
+  {
+    "builtin" : true,
+    "description" : "Open Context's excavation media (photographs, drawings), each record under its own Creative Commons licence (read from the search record and again from the media item); tied to a place on the map by a shared Pleiades/GeoNames/Wikidata id, else by its site's name in its context path, and its dates; records flagged as related to human remains are not shown",
+    "licences" : "",
+    "name" : "opencontext",
+    "over" : "places",
+    "plugin" : "media-opencontext",
+    "title" : "Open Context media"
+  },
+  {
+    "builtin" : true,
+    "description" : "Smithsonian Open Access objects whose image is itself CC0 (usage.access), tied to a place on the map when the object's most specific place field names it (and no other) and its dates overlap the place's; natural-history units' specimens and objects made after media.smithsonian.max-year are refused; needs an api.data.gov key (histmersion.plugins.media-smithsonian.api-key, a secret reference)",
+    "licences" : "",
+    "name" : "smithsonian",
+    "over" : "places",
+    "plugin" : "media-smithsonian",
+    "title" : "Smithsonian Open Access objects"
+  },
+  {
+    "builtin" : true,
+    "description" : "Europeana's openly licensed images (reusability=open: CC0, PDM, CC BY, CC BY-SA), each record's own edm:rights read from the search and again from the Record API; tied to a place on the map by its dcterms:spatial name or a gazetteer id, and its dates; natural-history specimens and objects made after media.europeana.max-year are refused; needs a personal API key (histmersion.plugins.media-europeana.api-key, a secret reference)",
+    "licences" : "",
+    "name" : "europeana",
+    "over" : "places",
+    "plugin" : "media-europeana",
+    "title" : "Europeana images"
+  },
+  {
+    "builtin" : false,
+    "description" : "A fixture's collection of its targets' own pictures",
+    "licences" : "cc0,public-domain,cc-by,cc-by-sa",
+    "name" : "zq-own",
+    "over" : "places and events",
+    "plugin" : "zq-own",
+    "title" : "Zq own pictures"
+  },
+  {
+    "builtin" : false,
+    "description" : "",
+    "licences" : "cc0,public-domain,cc-by,cc-by-sa",
+    "name" : "zq-search",
+    "over" : "places",
+    "plugin" : "zq-own",
+    "title" : "Zq searched objects"
+  }
+]
+## wikidata dry run
+GET https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&formatversion=2&props=claims&ids=Q132564
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 1419 bytes
+GET https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&prop=imageinfo&iiprop=url%7Csize%7Cmime%7Cextmetadata&iiurlwidth=1280&iiextmetadatafilter=LicenseShortName%7CLicense%7CLicenseUrl%7CArtist%7CCredit%7CAttribution%7CAttributionRequired%7CCopyrighted%7CNonFree%7CUsageTerms%7CRestrictions%7CObjectName&iiextmetadatalanguage=en&titles=File%3ALions-Gate-Mycenae.jpg%7CFile%3AMycenae+plan+NC.png&maxlag=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 3360 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : false,
+      "key" : "CC-BY-NC-SA-4.0",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "CC-BY-SA-2.5",
+      "n" : 1
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "image",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "plan",
+      "n" : 1
+    }
+  ],
+  "categories" : 0,
+  "dryRun" : true,
+  "failed" : [
+  ],
+  "files" : 2,
+  "items" : 2,
+  "linked" : 0,
+  "pending" : 7,
+  "provider" : "wikimedia-commons",
+  "rejected" : [
+    {
+      "allowed" : true,
+      "key" : "licence cc-by-nc-sa not allowed for wikimedia-commons",
+      "n" : 1
+    }
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+  ],
+  "statements" : 2,
+  "stored" : 0,
+  "targets" : 1,
+  "updated" : 0
+}
+## wikidata dry run
+GET https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&formatversion=2&props=claims&ids=Q404
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 1419 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+  ],
+  "byRole" : [
+  ],
+  "categories" : 0,
+  "dryRun" : true,
+  "failed" : [
+  ],
+  "files" : 0,
+  "items" : 2,
+  "linked" : 0,
+  "pending" : 7,
+  "provider" : "wikimedia-commons",
+  "rejected" : [
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+  ],
+  "statements" : 0,
+  "stored" : 0,
+  "targets" : 1,
+  "updated" : 0
+}
+## depicts dry run
+GET https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&formatversion=2&props=claims&ids=Q203729
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 649 bytes
+GET https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&formatversion=2&props=claims&ids=Q5002%7CQ5001
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 230 bytes
+GET https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&list=search&srnamespace=6&srlimit=10&srsearch=haswbstatement%3AP180%3DQ203729&maxlag=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 1270 bytes
+GET https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&prop=imageinfo&iiprop=url%7Csize%7Cmime%7Cextmetadata&iiurlwidth=1280&iiextmetadatafilter=LicenseShortName%7CLicense%7CLicenseUrl%7CArtist%7CCredit%7CAttribution%7CAttributionRequired%7CCopyrighted%7CNonFree%7CUsageTerms%7CRestrictions%7CObjectName&iiextmetadatalanguage=en&titles=File%3AKadesh+relief.jpg%7CFile%3AMuseum+Hattusa+-+Bo%C4%9Fazk%C3%B6y+Museum%2C+Bo%C4%9Fazk%C3%B6y%2C+%C3%87orum%2C+Turkey+05.jpg%7CFile%3AMuseum+Hattusa+-+Bo%C4%9Fazk%C3%B6y+Museum%2C+Bo%C4%9Fazk%C3%B6y%2C+%C3%87orum%2C+Turkey+20.jpg&maxlag=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 1487 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : true,
+      "key" : "CC-BY-SA-4.0",
+      "n" : 3
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "depiction",
+      "n" : 3
+    }
+  ],
+  "categories" : 0,
+  "dryRun" : true,
+  "failed" : [
+  ],
+  "files" : 3,
+  "items" : 3,
+  "linked" : 0,
+  "pending" : 2,
+  "provider" : "wikimedia-commons-depicts",
+  "rejected" : [
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+    {
+      "basis" : "P1299 depicted by Q203729",
+      "key" : "File:Kadesh relief.jpg",
+      "license" : "CC-BY-SA-4.0",
+      "targetId" : "battle_of_kadesh",
+      "targetLabel" : "Battle of Kadesh",
+      "targetType" : "event",
+      "title" : "Kadesh relief.jpg",
+      "url" : "https://commons.wikimedia.org/wiki/G0"
+    },
+    {
+      "basis" : "P180 depicts Q203729",
+      "key" : "File:Museum Hattusa - Boğazköy Museum, Boğazköy, Çorum, Turkey 05.jpg",
+      "license" : "CC-BY-SA-4.0",
+      "targetId" : "battle_of_kadesh",
+      "targetLabel" : "Battle of Kadesh",
+      "targetType" : "event",
+      "title" : "Museum Hattusa - Boğazköy Museum, Boğazköy, Çorum, Turkey 05.jpg",
+      "url" : "https://commons.wikimedia.org/wiki/G1"
+    },
+    {
+      "basis" : "P180 depicts Q203729",
+      "key" : "File:Museum Hattusa - Boğazköy Museum, Boğazköy, Çorum, Turkey 20.jpg",
+      "license" : "CC-BY-SA-4.0",
+      "targetId" : "battle_of_kadesh",
+      "targetLabel" : "Battle of Kadesh",
+      "targetType" : "event",
+      "title" : "Museum Hattusa - Boğazköy Museum, Boğazköy, Çorum, Turkey 20.jpg",
+      "url" : "https://commons.wikimedia.org/wiki/G2"
+    }
+  ],
+  "statements" : 3,
+  "stored" : 0,
+  "targets" : 1,
+  "updated" : 0
+}
+## met dry run
+GET https://collectionapi.metmuseum.org/public/collection/v1.1/search?hasImages=true&geoLocation=Mycenae&q=Mycenae&limit=20
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 69 bytes
+GET https://collectionapi.metmuseum.org/public/collection/v1/objects/252448
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 793 bytes
+GET https://collectionapi.metmuseum.org/public/collection/v1/objects/248284
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 794 bytes
+GET https://collectionapi.metmuseum.org/public/collection/v1/objects/252447
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 791 bytes
+GET https://collectionapi.metmuseum.org/public/collection/v1/objects/252446
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 404 0 bytes
+GET https://collectionapi.metmuseum.org/public/collection/v1/objects/253574
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 404 0 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : true,
+      "key" : "CC0-1.0",
+      "n" : 2
+    },
+    {
+      "allowed" : false,
+      "key" : "not open access",
+      "n" : 1
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "object",
+      "n" : 1
+    }
+  ],
+  "categories" : 0,
+  "dryRun" : true,
+  "failed" : [
+    "pleiades_570491: object 252446: collectionapi.metmuseum.org: HTTP 404",
+    "pleiades_570491: object 253574: collectionapi.metmuseum.org: HTTP 404"
+  ],
+  "files" : 1,
+  "items" : 3,
+  "linked" : 0,
+  "pending" : 9,
+  "provider" : "met-museum",
+  "rejected" : [
+    {
+      "allowed" : true,
+      "key" : "names another place on the map",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "not Open Access (isPublicDomain is false)",
+      "n" : 1
+    }
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+    {
+      "basis" : "excavation = Mycenae; 1400–1201 BCE within 1600–1100 BCE",
+      "key" : "252448",
+      "license" : "CC0-1.0",
+      "targetId" : "pleiades_570491",
+      "targetLabel" : "Mycenae",
+      "targetType" : "place",
+      "title" : "Terracotta animal figurine",
+      "url" : "https://www.metmuseum.org/art/collection/search/252448"
+    }
+  ],
+  "statements" : 1,
+  "stored" : 0,
+  "targets" : 1,
+  "updated" : 0
+}
+## cleveland dry run
+GET https://openaccess-api.clevelandart.org/api/artworks/?q=Cyprus&cc0=1&has_image=1&limit=20&fields=id,accession_number,title,share_license_status,find_spot,culture,creation_date_earliest,creation_date_latest,url,images,creditline,creators,tombstone
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 3290 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : true,
+      "key" : "CC0-1.0",
+      "n" : 4
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "object",
+      "n" : 2
+    }
+  ],
+  "categories" : 0,
+  "dryRun" : true,
+  "failed" : [
+  ],
+  "files" : 2,
+  "items" : 4,
+  "linked" : 0,
+  "pending" : 9,
+  "provider" : "cleveland-museum",
+  "rejected" : [
+    {
+      "allowed" : true,
+      "key" : "its place is not on the map",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "no place on the record",
+      "n" : 1
+    }
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+    {
+      "basis" : "culture = Cyprus; 499–400 BCE within 1200–300 BCE",
+      "key" : "1916.131",
+      "license" : "CC0-1.0",
+      "targetId" : "geonames_146669",
+      "targetLabel" : "Cyprus",
+      "targetType" : "place",
+      "title" : "Earring",
+      "url" : "https://clevelandart.org/art/1916.131"
+    },
+    {
+      "basis" : "culture = Cyprus; 1999–1000 BCE within 1200–300 BCE",
+      "key" : "1974.38",
+      "license" : "CC0-1.0",
+      "targetId" : "geonames_146669",
+      "targetLabel" : "Cyprus",
+      "targetType" : "place",
+      "title" : "Bull Protome",
+      "url" : "https://clevelandart.org/art/1974.38"
+    }
+  ],
+  "statements" : 2,
+  "stored" : 0,
+  "targets" : 1,
+  "updated" : 0
+}
+## aic dry run
+GET https://api.artic.edu/api/v1/artworks/search?q=Cyprus&limit=20&fields=id,title,is_public_domain,image_id,place_of_origin,date_start,date_end,artist_title,credit_line
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 1862 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : true,
+      "key" : "CC0-1.0",
+      "n" : 3
+    },
+    {
+      "allowed" : false,
+      "key" : "not open access",
+      "n" : 1
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "object",
+      "n" : 1
+    }
+  ],
+  "categories" : 0,
+  "dryRun" : true,
+  "failed" : [
+  ],
+  "files" : 1,
+  "items" : 4,
+  "linked" : 0,
+  "pending" : 9,
+  "provider" : "art-institute-chicago",
+  "rejected" : [
+    {
+      "allowed" : true,
+      "key" : "its dates do not overlap the place's",
+      "n" : 2
+    },
+    {
+      "allowed" : true,
+      "key" : "not public domain (is_public_domain is false)",
+      "n" : 1
+    }
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+    {
+      "basis" : "place_of_origin = Cyprus; 500–401 BCE within 1200–300 BCE",
+      "key" : "108896",
+      "license" : "CC0-1.0",
+      "targetId" : "geonames_146669",
+      "targetLabel" : "Cyprus",
+      "targetType" : "place",
+      "title" : "Head of a Bearded Man",
+      "url" : "https://www.artic.edu/artworks/108896"
+    }
+  ],
+  "statements" : 1,
+  "stored" : 0,
+  "targets" : 1,
+  "updated" : 0
+}
+## loc dry run
+GET https://www.loc.gov/maps/?q=Mycenae&fo=json&c=10&fa=partof%3Ageography+and+map+division
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 495 bytes
+GET https://www.loc.gov/item/2007627513/?fo=json
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 816 bytes
+GET https://www.loc.gov/item/2010593001/?fo=json
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 816 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : true,
+      "key" : "public-domain",
+      "n" : 1
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "map",
+      "n" : 1
+    }
+  ],
+  "categories" : 0,
+  "dryRun" : true,
+  "failed" : [
+  ],
+  "files" : 1,
+  "items" : 1,
+  "linked" : 0,
+  "pending" : 9,
+  "provider" : "library-of-congress",
+  "rejected" : [
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+    {
+      "basis" : "location = mycenae; map of 1880–1880 CE",
+      "key" : "2007627513",
+      "license" : "public-domain",
+      "targetId" : "pleiades_570491",
+      "targetLabel" : "Mycenae",
+      "targetType" : "place",
+      "title" : "Plan of Mycenae",
+      "url" : "https://www.loc.gov/item/2007627513/"
+    }
+  ],
+  "statements" : 1,
+  "stored" : 0,
+  "targets" : 1,
+  "updated" : 0
+}
+## pleiades dry run
+GET https://pleiades.stoa.org/places/757208100/json
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 8791 bytes
+GET https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&prop=imageinfo&iiprop=url%7Csize%7Cmime%7Cextmetadata&iiurlwidth=1280&iiextmetadatafilter=LicenseShortName%7CLicense%7CLicenseUrl%7CArtist%7CCredit%7CAttribution%7CAttributionRequired%7CCopyrighted%7CNonFree%7CUsageTerms%7CRestrictions%7CObjectName&iiextmetadatalanguage=en&titles=File%3AZygouries-General+plan+of+the+excavations.jpg&maxlag=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 503 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : true,
+      "key" : "CC-BY-SA-4.0",
+      "n" : 1
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "image",
+      "n" : 1
+    }
+  ],
+  "categories" : 0,
+  "dryRun" : true,
+  "failed" : [
+  ],
+  "files" : 1,
+  "items" : 1,
+  "linked" : 0,
+  "pending" : 3,
+  "provider" : "pleiades",
+  "rejected" : [
+    {
+      "allowed" : true,
+      "key" : "a Commons category, not a file",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "a picture on elexikon.ch (no documented keyless licence API)",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "on Flickr (its API needs a key)",
+      "n" : 1
+    }
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+    {
+      "basis" : "Pleiades place 757208100 links it (citesAsRelated)",
+      "key" : "File:Zygouries-General plan of the excavations.jpg",
+      "license" : "CC-BY-SA-4.0",
+      "targetId" : "pleiades_757208100",
+      "targetLabel" : "Zygouries",
+      "targetType" : "place",
+      "title" : "Zygouries-General plan of the excavations.jpg",
+      "url" : "https://commons.wikimedia.org/wiki/G0"
+    }
+  ],
+  "statements" : 1,
+  "stored" : 0,
+  "targets" : 1,
+  "updated" : 0
+}
+## opencontext dry run
+GET https://opencontext.org/query/.json?type=media&cat=oc-gen-image&q=Petra&rows=20&attributes=dc-terms-license%2Cdc-terms-spatial%2Cdc-terms-creator%2Cdc-terms-subject&add-attribute-uris=1&response=metadata%2Curi-meta
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 4480 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : true,
+      "key" : "CC-BY-4.0",
+      "n" : 4
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "object",
+      "n" : 2
+    }
+  ],
+  "categories" : 0,
+  "dryRun" : true,
+  "failed" : [
+  ],
+  "files" : 2,
+  "items" : 4,
+  "linked" : 0,
+  "pending" : 9,
+  "provider" : "open-context",
+  "rejected" : [
+    {
+      "allowed" : true,
+      "key" : "human remains (Open Context flags them; not shown)",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "its dates do not overlap the place's",
+      "n" : 1
+    }
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+    {
+      "basis" : "pleiades:697725 (the record's place id); 200 BCE–360 CE within 300 BCE–100 CE",
+      "key" : "UUID",
+      "license" : "CC-BY-4.0",
+      "targetId" : "pleiades_697725",
+      "targetLabel" : "Petra",
+      "targetType" : "place",
+      "title" : "Bowls 7 (30-38).jpg",
+      "url" : "https://opencontext.org/media/UUID"
+    },
+    {
+      "basis" : "pleiades:697725 (the record's place id); 200 BCE–360 CE within 300 BCE–100 CE",
+      "key" : "UUID",
+      "license" : "CC-BY-4.0",
+      "targetId" : "pleiades_697725",
+      "targetLabel" : "Petra",
+      "targetType" : "place",
+      "title" : "Bowls 6 (24-29).jpg",
+      "url" : "https://opencontext.org/media/UUID"
+    }
+  ],
+  "statements" : 2,
+  "stored" : 0,
+  "targets" : 1,
+  "updated" : 0
+}
+## smithsonian dry run
+GET https://api.si.edu/openaccess/api/v1.0/search?q=%22Egypt%22+AND+online_media_type%3AImages+AND+NOT+unit_code%3A%28NMNHBIRDS+OR+NMNHBOTANY+OR+NMNHENTO+OR+NMNHFISHES+OR+NMNHHERPS+OR+NMNHINV+OR+NMNHMAMMALS+OR+NMNHMINSCI+OR+NMNHPALEO%29&rows=20&type=edanmdm&row_group=objects
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  X-Api-Key: si-fixture-key
+  -> 200 16894 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : true,
+      "key" : "CC0-1.0",
+      "n" : 3
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "object",
+      "n" : 1
+    }
+  ],
+  "categories" : 0,
+  "dryRun" : true,
+  "failed" : [
+  ],
+  "files" : 1,
+  "items" : 3,
+  "linked" : 0,
+  "pending" : 9,
+  "provider" : "smithsonian",
+  "rejected" : [
+    {
+      "allowed" : true,
+      "key" : "its place is not on the map",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "names another place on the map",
+      "n" : 1
+    }
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+    {
+      "basis" : "origin = Egypt; 1550–1196 BCE within 3100–30 BCE",
+      "key" : "fsg_F1909.1185",
+      "license" : "CC0-1.0",
+      "targetId" : "geonames_357994",
+      "targetLabel" : "Egypt",
+      "targetType" : "place",
+      "title" : "Bead",
+      "url" : "https://asia.si.edu/object/F1909.1185/"
+    }
+  ],
+  "statements" : 1,
+  "stored" : 0,
+  "targets" : 1,
+  "updated" : 0
+}
+## europeana dry run
+GET https://api.europeana.eu/record/v2/search.json?query=where%3A%28%22Mycenae%22%29+NOT+PROVIDER%3A%28%22OpenUp%21%22%29+NOT+proxy_dc_type%3A%28%22PreservedSpecimen%22+OR+%22Preserved+Specimen%22+OR+%22FossilSpecimen%22+OR+%22Fossil+Specimen%22+OR+%22LivingSpecimen%22+OR+%22Living+Specimen%22+OR+%22Specimen%22%29&reusability=open&media=true&thumbnail=true&qf=TYPE%3AIMAGE&profile=rich&rows=20
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  X-Api-Key: eu-fixture-key
+  -> 200 2471 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : true,
+      "key" : "CC-BY-SA-4.0",
+      "n" : 1
+    },
+    {
+      "allowed" : false,
+      "key" : "not open access",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "public-domain",
+      "n" : 1
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "object",
+      "n" : 1
+    }
+  ],
+  "categories" : 0,
+  "dryRun" : true,
+  "failed" : [
+  ],
+  "files" : 1,
+  "items" : 3,
+  "linked" : 0,
+  "pending" : 9,
+  "provider" : "europeana",
+  "rejected" : [
+    {
+      "allowed" : true,
+      "key" : "its dcterms:spatial names another place on the map",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "not an open licence (http://rightsstatements.org/vocab/NoC-NC/1.0/)",
+      "n" : 1
+    }
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+    {
+      "basis" : "dcterms:spatial = Mycenae; 1250–1250 BCE within 1600–1100 BCE",
+      "key" : "9200999/fixture_mycenae_lion_gate",
+      "license" : "CC-BY-SA-4.0",
+      "targetId" : "pleiades_570491",
+      "targetLabel" : "Mycenae",
+      "targetType" : "place",
+      "title" : "The Lion Gate, Mycenae",
+      "url" : "https://www.europeana.eu/item/9200999/fixture_mycenae_lion_gate"
+    }
+  ],
+  "statements" : 1,
+  "stored" : 0,
+  "targets" : 1,
+  "updated" : 0
+}
+## wikidata pleiades_570491
+GET https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&formatversion=2&props=claims&ids=Q132564
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 1419 bytes
+GET https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&prop=imageinfo&iiprop=url%7Csize%7Cmime%7Cextmetadata&iiurlwidth=1280&iiextmetadatafilter=LicenseShortName%7CLicense%7CLicenseUrl%7CArtist%7CCredit%7CAttribution%7CAttributionRequired%7CCopyrighted%7CNonFree%7CUsageTerms%7CRestrictions%7CObjectName&iiextmetadatalanguage=en&titles=File%3ALions-Gate-Mycenae.jpg%7CFile%3AMycenae+plan+NC.png&maxlag=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 3360 bytes
+GET https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&prop=imageinfo&iiprop=url%7Csize%7Cmime&iiurlwidth=330&titles=File%3ALions-Gate-Mycenae.jpg&maxlag=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 3359 bytes
+GET https://upload.example/thumb/Lions-Gate-Mycenae.jpg/1280px-Lions-Gate-Mycenae.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 84 bytes
+GET https://upload.example/thumb/Lions-Gate-Mycenae.jpg/330px-Lions-Gate-Mycenae.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 83 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : false,
+      "key" : "CC-BY-NC-SA-4.0",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "CC-BY-SA-2.5",
+      "n" : 1
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "image",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "plan",
+      "n" : 1
+    }
+  ],
+  "categories" : 1,
+  "dryRun" : false,
+  "failed" : [
+  ],
+  "files" : 2,
+  "items" : 2,
+  "linked" : 1,
+  "pending" : 6,
+  "provider" : "wikimedia-commons",
+  "rejected" : [
+    {
+      "allowed" : true,
+      "key" : "licence cc-by-nc-sa not allowed for wikimedia-commons",
+      "n" : 1
+    }
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+  ],
+  "statements" : 2,
+  "stored" : 1,
+  "targets" : 1,
+  "updated" : 0
+}
+## wikidata fall_of_x
+GET https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&formatversion=2&props=claims&ids=Q404
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 1419 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+  ],
+  "byRole" : [
+  ],
+  "categories" : 0,
+  "dryRun" : false,
+  "failed" : [
+  ],
+  "files" : 0,
+  "items" : 2,
+  "linked" : 0,
+  "pending" : 5,
+  "provider" : "wikimedia-commons",
+  "rejected" : [
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+  ],
+  "statements" : 0,
+  "stored" : 0,
+  "targets" : 1,
+  "updated" : 0
+}
+## depicts battle_of_kadesh
+GET https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&formatversion=2&props=claims&ids=Q203729
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 649 bytes
+GET https://www.wikidata.org/w/api.php?action=wbgetentities&format=json&formatversion=2&props=claims&ids=Q5002%7CQ5001
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 230 bytes
+GET https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&list=search&srnamespace=6&srlimit=10&srsearch=haswbstatement%3AP180%3DQ203729&maxlag=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 1270 bytes
+GET https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&prop=imageinfo&iiprop=url%7Csize%7Cmime%7Cextmetadata&iiurlwidth=1280&iiextmetadatafilter=LicenseShortName%7CLicense%7CLicenseUrl%7CArtist%7CCredit%7CAttribution%7CAttributionRequired%7CCopyrighted%7CNonFree%7CUsageTerms%7CRestrictions%7CObjectName&iiextmetadatalanguage=en&titles=File%3AKadesh+relief.jpg%7CFile%3AMuseum+Hattusa+-+Bo%C4%9Fazk%C3%B6y+Museum%2C+Bo%C4%9Fazk%C3%B6y%2C+%C3%87orum%2C+Turkey+05.jpg%7CFile%3AMuseum+Hattusa+-+Bo%C4%9Fazk%C3%B6y+Museum%2C+Bo%C4%9Fazk%C3%B6y%2C+%C3%87orum%2C+Turkey+20.jpg&maxlag=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 1487 bytes
+GET https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&prop=imageinfo&iiprop=url%7Csize%7Cmime&iiurlwidth=330&titles=File%3AKadesh+relief.jpg%7CFile%3AMuseum+Hattusa+-+Bo%C4%9Fazk%C3%B6y+Museum%2C+Bo%C4%9Fazk%C3%B6y%2C+%C3%87orum%2C+Turkey+05.jpg%7CFile%3AMuseum+Hattusa+-+Bo%C4%9Fazk%C3%B6y+Museum%2C+Bo%C4%9Fazk%C3%B6y%2C+%C3%87orum%2C+Turkey+20.jpg&maxlag=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 1478 bytes
+GET https://upload.example/g0-1280.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 37 bytes
+GET https://upload.example/g0-330.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 36 bytes
+GET https://upload.example/g1-1280.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 37 bytes
+GET https://upload.example/g1-330.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 36 bytes
+GET https://upload.example/g2-1280.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 37 bytes
+GET https://upload.example/g2-330.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 36 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : true,
+      "key" : "CC-BY-SA-4.0",
+      "n" : 3
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "depiction",
+      "n" : 3
+    }
+  ],
+  "categories" : 0,
+  "dryRun" : false,
+  "failed" : [
+  ],
+  "files" : 3,
+  "items" : 3,
+  "linked" : 3,
+  "pending" : 1,
+  "provider" : "wikimedia-commons-depicts",
+  "rejected" : [
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+    {
+      "basis" : "P1299 depicted by Q203729",
+      "key" : "File:Kadesh relief.jpg",
+      "license" : "CC-BY-SA-4.0",
+      "targetId" : "battle_of_kadesh",
+      "targetLabel" : "Battle of Kadesh",
+      "targetType" : "event",
+      "title" : "Kadesh relief.jpg",
+      "url" : "https://commons.wikimedia.org/wiki/G0"
+    },
+    {
+      "basis" : "P180 depicts Q203729",
+      "key" : "File:Museum Hattusa - Boğazköy Museum, Boğazköy, Çorum, Turkey 05.jpg",
+      "license" : "CC-BY-SA-4.0",
+      "targetId" : "battle_of_kadesh",
+      "targetLabel" : "Battle of Kadesh",
+      "targetType" : "event",
+      "title" : "Museum Hattusa - Boğazköy Museum, Boğazköy, Çorum, Turkey 05.jpg",
+      "url" : "https://commons.wikimedia.org/wiki/G1"
+    },
+    {
+      "basis" : "P180 depicts Q203729",
+      "key" : "File:Museum Hattusa - Boğazköy Museum, Boğazköy, Çorum, Turkey 20.jpg",
+      "license" : "CC-BY-SA-4.0",
+      "targetId" : "battle_of_kadesh",
+      "targetLabel" : "Battle of Kadesh",
+      "targetType" : "event",
+      "title" : "Museum Hattusa - Boğazköy Museum, Boğazköy, Çorum, Turkey 20.jpg",
+      "url" : "https://commons.wikimedia.org/wiki/G2"
+    }
+  ],
+  "statements" : 3,
+  "stored" : 3,
+  "targets" : 1,
+  "updated" : 0
+}
+## met pleiades_570491
+GET https://collectionapi.metmuseum.org/public/collection/v1.1/search?hasImages=true&geoLocation=Mycenae&q=Mycenae&limit=20
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 69 bytes
+GET https://collectionapi.metmuseum.org/public/collection/v1/objects/252448
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 793 bytes
+GET https://collectionapi.metmuseum.org/public/collection/v1/objects/248284
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 794 bytes
+GET https://collectionapi.metmuseum.org/public/collection/v1/objects/252447
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 791 bytes
+GET https://collectionapi.metmuseum.org/public/collection/v1/objects/252446
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 404 0 bytes
+GET https://collectionapi.metmuseum.org/public/collection/v1/objects/253574
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 404 0 bytes
+GET https://images.metmuseum.org/CRDImages/gr/web-large/DP121403.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 67 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : true,
+      "key" : "CC0-1.0",
+      "n" : 2
+    },
+    {
+      "allowed" : false,
+      "key" : "not open access",
+      "n" : 1
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "object",
+      "n" : 1
+    }
+  ],
+  "categories" : 0,
+  "dryRun" : false,
+  "failed" : [
+    "pleiades_570491: object 252446: collectionapi.metmuseum.org: HTTP 404",
+    "pleiades_570491: object 253574: collectionapi.metmuseum.org: HTTP 404"
+  ],
+  "files" : 1,
+  "items" : 3,
+  "linked" : 1,
+  "pending" : 8,
+  "provider" : "met-museum",
+  "rejected" : [
+    {
+      "allowed" : true,
+      "key" : "names another place on the map",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "not Open Access (isPublicDomain is false)",
+      "n" : 1
+    }
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+    {
+      "basis" : "excavation = Mycenae; 1400–1201 BCE within 1600–1100 BCE",
+      "key" : "252448",
+      "license" : "CC0-1.0",
+      "targetId" : "pleiades_570491",
+      "targetLabel" : "Mycenae",
+      "targetType" : "place",
+      "title" : "Terracotta animal figurine",
+      "url" : "https://www.metmuseum.org/art/collection/search/252448"
+    }
+  ],
+  "statements" : 1,
+  "stored" : 1,
+  "targets" : 1,
+  "updated" : 0
+}
+## cleveland geonames_146669
+GET https://openaccess-api.clevelandart.org/api/artworks/?q=Cyprus&cc0=1&has_image=1&limit=20&fields=id,accession_number,title,share_license_status,find_spot,culture,creation_date_earliest,creation_date_latest,url,images,creditline,creators,tombstone
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 3290 bytes
+GET https://openaccess-cdn.clevelandart.org/1916.131/1916.131_web.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 68 bytes
+GET https://openaccess-cdn.clevelandart.org/1974.38/1974.38_web.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 66 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : true,
+      "key" : "CC0-1.0",
+      "n" : 4
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "object",
+      "n" : 2
+    }
+  ],
+  "categories" : 0,
+  "dryRun" : false,
+  "failed" : [
+  ],
+  "files" : 2,
+  "items" : 4,
+  "linked" : 2,
+  "pending" : 8,
+  "provider" : "cleveland-museum",
+  "rejected" : [
+    {
+      "allowed" : true,
+      "key" : "its place is not on the map",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "no place on the record",
+      "n" : 1
+    }
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+    {
+      "basis" : "culture = Cyprus; 499–400 BCE within 1200–300 BCE",
+      "key" : "1916.131",
+      "license" : "CC0-1.0",
+      "targetId" : "geonames_146669",
+      "targetLabel" : "Cyprus",
+      "targetType" : "place",
+      "title" : "Earring",
+      "url" : "https://clevelandart.org/art/1916.131"
+    },
+    {
+      "basis" : "culture = Cyprus; 1999–1000 BCE within 1200–300 BCE",
+      "key" : "1974.38",
+      "license" : "CC0-1.0",
+      "targetId" : "geonames_146669",
+      "targetLabel" : "Cyprus",
+      "targetType" : "place",
+      "title" : "Bull Protome",
+      "url" : "https://clevelandart.org/art/1974.38"
+    }
+  ],
+  "statements" : 2,
+  "stored" : 2,
+  "targets" : 1,
+  "updated" : 0
+}
+## aic geonames_146669
+GET https://api.artic.edu/api/v1/artworks/search?q=Cyprus&limit=20&fields=id,title,is_public_domain,image_id,place_of_origin,date_start,date_end,artist_title,credit_line
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 1862 bytes
+GET https://www.artic.edu/iiif/2/UUID/full/843,/0/default.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 92 bytes
+GET https://www.artic.edu/iiif/2/UUID/full/330,/0/default.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 92 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : true,
+      "key" : "CC0-1.0",
+      "n" : 3
+    },
+    {
+      "allowed" : false,
+      "key" : "not open access",
+      "n" : 1
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "object",
+      "n" : 1
+    }
+  ],
+  "categories" : 0,
+  "dryRun" : false,
+  "failed" : [
+  ],
+  "files" : 1,
+  "items" : 4,
+  "linked" : 1,
+  "pending" : 8,
+  "provider" : "art-institute-chicago",
+  "rejected" : [
+    {
+      "allowed" : true,
+      "key" : "its dates do not overlap the place's",
+      "n" : 2
+    },
+    {
+      "allowed" : true,
+      "key" : "not public domain (is_public_domain is false)",
+      "n" : 1
+    }
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+    {
+      "basis" : "place_of_origin = Cyprus; 500–401 BCE within 1200–300 BCE",
+      "key" : "108896",
+      "license" : "CC0-1.0",
+      "targetId" : "geonames_146669",
+      "targetLabel" : "Cyprus",
+      "targetType" : "place",
+      "title" : "Head of a Bearded Man",
+      "url" : "https://www.artic.edu/artworks/108896"
+    }
+  ],
+  "statements" : 1,
+  "stored" : 1,
+  "targets" : 1,
+  "updated" : 0
+}
+## loc pleiades_570491
+GET https://www.loc.gov/maps/?q=Mycenae&fo=json&c=10&fa=partof%3Ageography+and+map+division
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 495 bytes
+GET https://www.loc.gov/item/2007627513/?fo=json
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 816 bytes
+GET https://www.loc.gov/item/2010593001/?fo=json
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 816 bytes
+GET https://tile.loc.gov/storage-services/service/gmd/g6814m/ct000001/1024.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 77 bytes
+GET https://tile.loc.gov/storage-services/service/gmd/g6814m/ct000001/1024.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 77 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : true,
+      "key" : "public-domain",
+      "n" : 1
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "map",
+      "n" : 1
+    }
+  ],
+  "categories" : 0,
+  "dryRun" : false,
+  "failed" : [
+  ],
+  "files" : 1,
+  "items" : 1,
+  "linked" : 1,
+  "pending" : 8,
+  "provider" : "library-of-congress",
+  "rejected" : [
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+    {
+      "basis" : "location = mycenae; map of 1880–1880 CE",
+      "key" : "2007627513",
+      "license" : "public-domain",
+      "targetId" : "pleiades_570491",
+      "targetLabel" : "Mycenae",
+      "targetType" : "place",
+      "title" : "Plan of Mycenae",
+      "url" : "https://www.loc.gov/item/2007627513/"
+    }
+  ],
+  "statements" : 1,
+  "stored" : 1,
+  "targets" : 1,
+  "updated" : 0
+}
+## pleiades pleiades_757208100
+GET https://pleiades.stoa.org/places/757208100/json
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 8791 bytes
+GET https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&prop=imageinfo&iiprop=url%7Csize%7Cmime%7Cextmetadata&iiurlwidth=1280&iiextmetadatafilter=LicenseShortName%7CLicense%7CLicenseUrl%7CArtist%7CCredit%7CAttribution%7CAttributionRequired%7CCopyrighted%7CNonFree%7CUsageTerms%7CRestrictions%7CObjectName&iiextmetadatalanguage=en&titles=File%3AZygouries-General+plan+of+the+excavations.jpg&maxlag=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 503 bytes
+GET https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&prop=imageinfo&iiprop=url%7Csize%7Cmime&iiurlwidth=330&titles=File%3AZygouries-General+plan+of+the+excavations.jpg&maxlag=5
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 500 bytes
+GET https://upload.example/g0-1280.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 37 bytes
+GET https://upload.example/g0-330.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 36 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : true,
+      "key" : "CC-BY-SA-4.0",
+      "n" : 1
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "image",
+      "n" : 1
+    }
+  ],
+  "categories" : 0,
+  "dryRun" : false,
+  "failed" : [
+  ],
+  "files" : 1,
+  "items" : 1,
+  "linked" : 1,
+  "pending" : 2,
+  "provider" : "pleiades",
+  "rejected" : [
+    {
+      "allowed" : true,
+      "key" : "a Commons category, not a file",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "a picture on elexikon.ch (no documented keyless licence API)",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "on Flickr (its API needs a key)",
+      "n" : 1
+    }
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+    {
+      "basis" : "Pleiades place 757208100 links it (citesAsRelated)",
+      "key" : "File:Zygouries-General plan of the excavations.jpg",
+      "license" : "CC-BY-SA-4.0",
+      "targetId" : "pleiades_757208100",
+      "targetLabel" : "Zygouries",
+      "targetType" : "place",
+      "title" : "Zygouries-General plan of the excavations.jpg",
+      "url" : "https://commons.wikimedia.org/wiki/G0"
+    }
+  ],
+  "statements" : 1,
+  "stored" : 1,
+  "targets" : 1,
+  "updated" : 0
+}
+## opencontext pleiades_697725
+GET https://opencontext.org/query/.json?type=media&cat=oc-gen-image&q=Petra&rows=20&attributes=dc-terms-license%2Cdc-terms-spatial%2Cdc-terms-creator%2Cdc-terms-subject&add-attribute-uris=1&response=metadata%2Curi-meta
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 4480 bytes
+GET https://opencontext.org/media/UUID.json
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 2318 bytes
+GET https://storage.googleapis.com/opencontext-media/internet-archive/ia-previews/10-bowls-7-30-38jpg.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 104 bytes
+GET https://storage.googleapis.com/opencontext-media/internet-archive/ia-thumbnails/10-bowls-7-30-38jpg.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 106 bytes
+GET https://opencontext.org/media/UUID.json
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 2318 bytes
+GET https://storage.googleapis.com/opencontext-media/internet-archive/ia-previews/10-bowls-7-30-38jpg.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 104 bytes
+GET https://storage.googleapis.com/opencontext-media/internet-archive/ia-thumbnails/10-bowls-7-30-38jpg.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 106 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : true,
+      "key" : "CC-BY-4.0",
+      "n" : 4
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "object",
+      "n" : 2
+    }
+  ],
+  "categories" : 0,
+  "dryRun" : false,
+  "failed" : [
+  ],
+  "files" : 2,
+  "items" : 4,
+  "linked" : 2,
+  "pending" : 8,
+  "provider" : "open-context",
+  "rejected" : [
+    {
+      "allowed" : true,
+      "key" : "human remains (Open Context flags them; not shown)",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "its dates do not overlap the place's",
+      "n" : 1
+    }
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+    {
+      "basis" : "pleiades:697725 (the record's place id); 200 BCE–360 CE within 300 BCE–100 CE",
+      "key" : "UUID",
+      "license" : "CC-BY-4.0",
+      "targetId" : "pleiades_697725",
+      "targetLabel" : "Petra",
+      "targetType" : "place",
+      "title" : "Bowls 7 (30-38).jpg",
+      "url" : "https://opencontext.org/media/UUID"
+    },
+    {
+      "basis" : "pleiades:697725 (the record's place id); 200 BCE–360 CE within 300 BCE–100 CE",
+      "key" : "UUID",
+      "license" : "CC-BY-4.0",
+      "targetId" : "pleiades_697725",
+      "targetLabel" : "Petra",
+      "targetType" : "place",
+      "title" : "Bowls 6 (24-29).jpg",
+      "url" : "https://opencontext.org/media/UUID"
+    }
+  ],
+  "statements" : 2,
+  "stored" : 2,
+  "targets" : 1,
+  "updated" : 0
+}
+## smithsonian geonames_357994
+GET https://api.si.edu/openaccess/api/v1.0/search?q=%22Egypt%22+AND+online_media_type%3AImages+AND+NOT+unit_code%3A%28NMNHBIRDS+OR+NMNHBOTANY+OR+NMNHENTO+OR+NMNHFISHES+OR+NMNHHERPS+OR+NMNHINV+OR+NMNHMAMMALS+OR+NMNHMINSCI+OR+NMNHPALEO%29&rows=20&type=edanmdm&row_group=objects
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  X-Api-Key: si-fixture-key
+  -> 200 16894 bytes
+GET https://ids.si.edu/ids/download?id=FS-8431_10_screen
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 55 bytes
+GET https://ids.si.edu/ids/download?id=FS-8431_10_thumb
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 54 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : true,
+      "key" : "CC0-1.0",
+      "n" : 3
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "object",
+      "n" : 1
+    }
+  ],
+  "categories" : 0,
+  "dryRun" : false,
+  "failed" : [
+  ],
+  "files" : 1,
+  "items" : 3,
+  "linked" : 1,
+  "pending" : 8,
+  "provider" : "smithsonian",
+  "rejected" : [
+    {
+      "allowed" : true,
+      "key" : "its place is not on the map",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "names another place on the map",
+      "n" : 1
+    }
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+    {
+      "basis" : "origin = Egypt; 1550–1196 BCE within 3100–30 BCE",
+      "key" : "fsg_F1909.1185",
+      "license" : "CC0-1.0",
+      "targetId" : "geonames_357994",
+      "targetLabel" : "Egypt",
+      "targetType" : "place",
+      "title" : "Bead",
+      "url" : "https://asia.si.edu/object/F1909.1185/"
+    }
+  ],
+  "statements" : 1,
+  "stored" : 1,
+  "targets" : 1,
+  "updated" : 0
+}
+## europeana pleiades_570491
+GET https://api.europeana.eu/record/v2/search.json?query=where%3A%28%22Mycenae%22%29+NOT+PROVIDER%3A%28%22OpenUp%21%22%29+NOT+proxy_dc_type%3A%28%22PreservedSpecimen%22+OR+%22Preserved+Specimen%22+OR+%22FossilSpecimen%22+OR+%22Fossil+Specimen%22+OR+%22LivingSpecimen%22+OR+%22Living+Specimen%22+OR+%22Specimen%22%29&reusability=open&media=true&thumbnail=true&qf=TYPE%3AIMAGE&profile=rich&rows=20
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  X-Api-Key: eu-fixture-key
+  -> 200 2471 bytes
+GET https://api.europeana.eu/record/v2/9200999/fixture_mycenae_lion_gate.json
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  X-Api-Key: eu-fixture-key
+  -> 200 1348 bytes
+GET https://api.europeana.eu/thumbnail/v3/400/7c3fc02270074a00731030290f64e1fe.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 81 bytes
+GET https://api.europeana.eu/thumbnail/v3/200/7c3fc02270074a00731030290f64e1fe.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 81 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : true,
+      "key" : "CC-BY-SA-4.0",
+      "n" : 1
+    },
+    {
+      "allowed" : false,
+      "key" : "not open access",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "public-domain",
+      "n" : 1
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "object",
+      "n" : 1
+    }
+  ],
+  "categories" : 0,
+  "dryRun" : false,
+  "failed" : [
+  ],
+  "files" : 1,
+  "items" : 3,
+  "linked" : 1,
+  "pending" : 8,
+  "provider" : "europeana",
+  "rejected" : [
+    {
+      "allowed" : true,
+      "key" : "its dcterms:spatial names another place on the map",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "not an open licence (http://rightsstatements.org/vocab/NoC-NC/1.0/)",
+      "n" : 1
+    }
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+    {
+      "basis" : "dcterms:spatial = Mycenae; 1250–1250 BCE within 1600–1100 BCE",
+      "key" : "9200999/fixture_mycenae_lion_gate",
+      "license" : "CC-BY-SA-4.0",
+      "targetId" : "pleiades_570491",
+      "targetLabel" : "Mycenae",
+      "targetType" : "place",
+      "title" : "The Lion Gate, Mycenae",
+      "url" : "https://www.europeana.eu/item/9200999/fixture_mycenae_lion_gate"
+    }
+  ],
+  "statements" : 1,
+  "stored" : 1,
+  "targets" : 1,
+  "updated" : 0
+}
+## zq-own dry run
+GET https://zq-own.example/batch
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 11 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : true,
+      "key" : "CC-BY-4.0",
+      "n" : 5
+    },
+    {
+      "allowed" : false,
+      "key" : "CC-BY-NC-4.0",
+      "n" : 5
+    },
+    {
+      "allowed" : true,
+      "key" : "CC-BY-SA-4.0",
+      "n" : 5
+    },
+    {
+      "allowed" : true,
+      "key" : "public-domain",
+      "n" : 2
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "image",
+      "n" : 7
+    },
+    {
+      "allowed" : true,
+      "key" : "locator-map",
+      "n" : 5
+    },
+    {
+      "allowed" : true,
+      "key" : "plan",
+      "n" : 5
+    }
+  ],
+  "categories" : 0,
+  "dryRun" : true,
+  "failed" : [
+  ],
+  "files" : 17,
+  "items" : 17,
+  "linked" : 0,
+  "pending" : 7,
+  "provider" : "zq-own",
+  "rejected" : [
+    {
+      "allowed" : true,
+      "key" : "licence cc-by-nc not allowed for zq-own",
+      "n" : 5
+    },
+    {
+      "allowed" : true,
+      "key" : "a statement the plugin did not take",
+      "n" : 1
+    }
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+    {
+      "basis" : "its own picture",
+      "key" : "pleiades_570491-by",
+      "license" : "CC-BY-4.0",
+      "targetId" : "pleiades_570491",
+      "targetLabel" : "Mycenae",
+      "targetType" : "place",
+      "title" : "Zq picture pleiades_570491-by",
+      "url" : "https://zq-own.example/page/pleiades_570491-by"
+    },
+    {
+      "basis" : "its own picture",
+      "key" : "pleiades_697725-by",
+      "license" : "CC-BY-4.0",
+      "targetId" : "pleiades_697725",
+      "targetLabel" : "Petra",
+      "targetType" : "place",
+      "title" : "Zq picture pleiades_697725-by",
+      "url" : "https://zq-own.example/page/pleiades_697725-by"
+    },
+    {
+      "basis" : "its own picture",
+      "key" : "x_site-by",
+      "license" : "CC-BY-4.0",
+      "targetId" : "x_site",
+      "targetLabel" : "X",
+      "targetType" : "place",
+      "title" : "Zq picture x_site-by",
+      "url" : "https://zq-own.example/page/x_site-by"
+    },
+    {
+      "basis" : "its own picture",
+      "key" : "geonames_146669-by",
+      "license" : "CC-BY-4.0",
+      "targetId" : "geonames_146669",
+      "targetLabel" : "Cyprus",
+      "targetType" : "place",
+      "title" : "Zq picture geonames_146669-by",
+      "url" : "https://zq-own.example/page/geonames_146669-by"
+    },
+    {
+      "basis" : "its own picture",
+      "key" : "geonames_390903-by",
+      "license" : "CC-BY-4.0",
+      "targetId" : "geonames_390903",
+      "targetLabel" : "Greece",
+      "targetType" : "place",
+      "title" : "Zq picture geonames_390903-by",
+      "url" : "https://zq-own.example/page/geonames_390903-by"
+    }
+  ],
+  "statements" : 17,
+  "stored" : 0,
+  "targets" : 7,
+  "updated" : 0
+}
+## zq-own a place
+GET https://zq-own.example/batch
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 11 bytes
+GET https://zq-own.example/img/pleiades_697725-anon.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 54 bytes
+GET https://zq-own.example/img/pleiades_697725-by.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 52 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : true,
+      "key" : "CC-BY-4.0",
+      "n" : 1
+    },
+    {
+      "allowed" : false,
+      "key" : "CC-BY-NC-4.0",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "CC-BY-SA-4.0",
+      "n" : 1
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "image",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "locator-map",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "plan",
+      "n" : 1
+    }
+  ],
+  "categories" : 0,
+  "dryRun" : false,
+  "failed" : [
+  ],
+  "files" : 3,
+  "items" : 3,
+  "linked" : 2,
+  "pending" : 6,
+  "provider" : "zq-own",
+  "rejected" : [
+    {
+      "allowed" : true,
+      "key" : "a statement the plugin did not take",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "licence cc-by-nc not allowed for zq-own",
+      "n" : 1
+    }
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+    {
+      "basis" : "its own picture",
+      "key" : "pleiades_697725-by",
+      "license" : "CC-BY-4.0",
+      "targetId" : "pleiades_697725",
+      "targetLabel" : "Petra",
+      "targetType" : "place",
+      "title" : "Zq picture pleiades_697725-by",
+      "url" : "https://zq-own.example/page/pleiades_697725-by"
+    }
+  ],
+  "statements" : 3,
+  "stored" : 2,
+  "targets" : 1,
+  "updated" : 0
+}
+## zq-own an event
+GET https://zq-own.example/batch
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 11 bytes
+GET https://zq-own.example/img/fall_of_x-pd.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 46 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : true,
+      "key" : "public-domain",
+      "n" : 1
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "image",
+      "n" : 1
+    }
+  ],
+  "categories" : 0,
+  "dryRun" : false,
+  "failed" : [
+  ],
+  "files" : 1,
+  "items" : 1,
+  "linked" : 1,
+  "pending" : 5,
+  "provider" : "zq-own",
+  "rejected" : [
+    {
+      "allowed" : true,
+      "key" : "a statement the plugin did not take",
+      "n" : 1
+    }
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+  ],
+  "statements" : 1,
+  "stored" : 1,
+  "targets" : 1,
+  "updated" : 0
+}
+## zq-own again, refresh
+GET https://zq-own.example/batch
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 11 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : true,
+      "key" : "CC-BY-4.0",
+      "n" : 1
+    },
+    {
+      "allowed" : false,
+      "key" : "CC-BY-NC-4.0",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "CC-BY-SA-4.0",
+      "n" : 1
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "image",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "locator-map",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "plan",
+      "n" : 1
+    }
+  ],
+  "categories" : 0,
+  "dryRun" : false,
+  "failed" : [
+  ],
+  "files" : 3,
+  "items" : 3,
+  "linked" : 0,
+  "pending" : 5,
+  "provider" : "zq-own",
+  "rejected" : [
+    {
+      "allowed" : true,
+      "key" : "a statement the plugin did not take",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "licence cc-by-nc not allowed for zq-own",
+      "n" : 1
+    }
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+    {
+      "basis" : "its own picture",
+      "key" : "pleiades_697725-by",
+      "license" : "CC-BY-4.0",
+      "targetId" : "pleiades_697725",
+      "targetLabel" : "Petra",
+      "targetType" : "place",
+      "title" : "Zq picture pleiades_697725-by",
+      "url" : "https://zq-own.example/page/pleiades_697725-by"
+    }
+  ],
+  "statements" : 3,
+  "stored" : 0,
+  "targets" : 1,
+  "updated" : 2
+}
+## zq-search dry run
+GET https://zq-search.example/q?label=Mycenae
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 11 bytes
+GET https://zq-search.example/q?label=Petra
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 11 bytes
+GET https://zq-search.example/q?label=Zygouries
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 11 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : true,
+      "key" : "CC-BY-4.0",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "CC0-1.0",
+      "n" : 1
+    },
+    {
+      "allowed" : false,
+      "key" : "all-rights-reserved",
+      "n" : 1
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "object",
+      "n" : 2
+    }
+  ],
+  "categories" : 0,
+  "dryRun" : true,
+  "failed" : [
+    "pleiades_570491: an unreadable record",
+    "pleiades_697725: an unreadable record",
+    "pleiades_757208100: an unreadable record"
+  ],
+  "files" : 1,
+  "items" : 3,
+  "linked" : 0,
+  "pending" : 9,
+  "provider" : "zq-search",
+  "rejected" : [
+    {
+      "allowed" : true,
+      "key" : "its place is not on the map",
+      "n" : 3
+    },
+    {
+      "allowed" : true,
+      "key" : "licence all-rights-reserved not allowed for zq-search",
+      "n" : 3
+    },
+    {
+      "allowed" : true,
+      "key" : "its dates do not overlap the place's",
+      "n" : 1
+    }
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+    {
+      "basis" : "find_spot = Mycenae; 1500–1300 BCE within 1600–1100 BCE",
+      "key" : "s1",
+      "license" : "CC0-1.0",
+      "targetId" : "pleiades_570491",
+      "targetLabel" : "Mycenae",
+      "targetType" : "place",
+      "title" : "Zq object s1",
+      "url" : "https://zq-search.example/objects/s1"
+    },
+    {
+      "basis" : "find_spot = Zygouries; 1500–1300 BCE within 3000–1100 BCE",
+      "key" : "s1",
+      "license" : "CC0-1.0",
+      "targetId" : "pleiades_757208100",
+      "targetLabel" : "Zygouries",
+      "targetType" : "place",
+      "title" : "Zq object s1",
+      "url" : "https://zq-search.example/objects/s1"
+    }
+  ],
+  "statements" : 2,
+  "stored" : 0,
+  "targets" : 3,
+  "updated" : 0
+}
+## zq-search a place
+GET https://zq-search.example/q?label=Mycenae
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 11 bytes
+GET https://zq-search.example/img/s1.jpg
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 39 bytes
+report: {
+  "batches" : 0,
+  "byLicence" : [
+    {
+      "allowed" : true,
+      "key" : "CC-BY-4.0",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "CC0-1.0",
+      "n" : 1
+    },
+    {
+      "allowed" : false,
+      "key" : "all-rights-reserved",
+      "n" : 1
+    }
+  ],
+  "byRole" : [
+    {
+      "allowed" : true,
+      "key" : "object",
+      "n" : 1
+    }
+  ],
+  "categories" : 0,
+  "dryRun" : false,
+  "failed" : [
+    "pleiades_570491: an unreadable record"
+  ],
+  "files" : 1,
+  "items" : 3,
+  "linked" : 1,
+  "pending" : 8,
+  "provider" : "zq-search",
+  "rejected" : [
+    {
+      "allowed" : true,
+      "key" : "its place is not on the map",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "licence all-rights-reserved not allowed for zq-search",
+      "n" : 1
+    }
+  ],
+  "revoked" : [
+  ],
+  "samples" : [
+    {
+      "basis" : "find_spot = Mycenae; 1500–1300 BCE within 1600–1100 BCE",
+      "key" : "s1",
+      "license" : "CC0-1.0",
+      "targetId" : "pleiades_570491",
+      "targetLabel" : "Mycenae",
+      "targetType" : "place",
+      "title" : "Zq object s1",
+      "url" : "https://zq-search.example/objects/s1"
+    }
+  ],
+  "statements" : 1,
+  "stored" : 1,
+  "targets" : 1,
+  "updated" : 0
+}
+## an unknown collection
+refused: unknown media provider 'zq-nothing' (one of: wikidata, depicts, met, cleveland, aic, loc, pleiades, opencontext, smithsonian, europeana, zq-own, zq-search; `histmersion media providers` lists them)
+## many, not as a job
+refused: an import over many places/events is a job: POST /api/media/import/job (`histmersion media import wikidata` starts and follows it)
+## covers: dry run
+report: {
+  "covers" : 2,
+  "dryRun" : true,
+  "failed" : [
+  ],
+  "illustrations" : 0,
+  "lines" : [
+    {
+      "citekey" : "zqol2000_a",
+      "detail" : "isbn:9780000000001",
+      "provider" : "open-library",
+      "role" : "cover"
+    },
+    {
+      "citekey" : "zqol2000_b",
+      "detail" : "isbn:9780000000009",
+      "provider" : "open-library",
+      "role" : "cover"
+    }
+  ],
+  "skipped" : [
+  ],
+  "sources" : 2
+}
+## covers: one with a cover
+GET https://covers.openlibrary.org/b/isbn/9780000000001-L.jpg?default=false
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 80 bytes
+GET https://covers.openlibrary.org/b/isbn/9780000000001-M.jpg?default=false
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 80 bytes
+report: {
+  "covers" : 1,
+  "dryRun" : false,
+  "failed" : [
+  ],
+  "illustrations" : 0,
+  "lines" : [
+    {
+      "citekey" : "zqol2000_a",
+      "detail" : "isbn:9780000000001",
+      "provider" : "open-library",
+      "role" : "cover"
+    }
+  ],
+  "skipped" : [
+  ],
+  "sources" : 1
+}
+## covers: one without
+GET https://covers.openlibrary.org/b/isbn/9780000000009-L.jpg?default=false
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 404 0 bytes
+report: {
+  "covers" : 0,
+  "dryRun" : false,
+  "failed" : [
+  ],
+  "illustrations" : 0,
+  "lines" : [
+  ],
+  "skipped" : [
+    {
+      "allowed" : true,
+      "key" : "cover: Open Library has no cover",
+      "n" : 1
+    }
+  ],
+  "sources" : 1
+}
+## covers: an ISBN the request names
+GET https://covers.openlibrary.org/b/isbn/9780000000003-L.jpg?default=false
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 80 bytes
+GET https://covers.openlibrary.org/b/isbn/9780000000003-M.jpg?default=false
+  User-Agent: Histmersion (+https://github.com/histmersion/histmersion)
+  -> 200 80 bytes
+report: {
+  "covers" : 1,
+  "dryRun" : false,
+  "failed" : [
+  ],
+  "illustrations" : 0,
+  "lines" : [
+    {
+      "citekey" : "zqmt2020_x",
+      "detail" : "isbn:9780000000003",
+      "provider" : "open-library",
+      "role" : "cover"
+    }
+  ],
+  "skipped" : [
+  ],
+  "sources" : 1
+}
+## stored
+assets:
+{"key": "108896", "kind": "photo", "mime": "image/jpeg", "name": "art-institute-chicago-108896-Head_of_a_Bearded_Man", "bytes": 92, "point": "POINT(33 35)", "width": null, "author": null, "credit": "Head of a Bearded Man, The Art Institute of Chicago, CC0", "height": null, "period": "[-1200,-299)", "sha256": "93d6e42ae2c920c7e2f3b7ac40c828091cfaa6b26fdbd992f8337b376c9043c1", "license": "CC0-1.0", "provider": "art-institute-chicago", "sourceUrl": "https://www.artic.edu/artworks/108896", "thumbMime": "image/jpeg", "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/", "thumbBytes": 92, "thumbWidth": null, "originalUrl": "https://www.artic.edu/iiif/2/UUID/full/full/0/default.jpg", "thumbHeight": null}
+{"key": "1916.131", "kind": "photo", "mime": "image/jpeg", "name": "cleveland-museum-1916.131-Earring", "bytes": 68, "point": "POINT(33 35)", "width": null, "author": null, "credit": "Earring, The Cleveland Museum of Art, Gift of Mr. and Mrs. J. H. Wade, CC0", "height": null, "period": "[-1200,-299)", "sha256": "c03df0e073f627b25a6a67ca504b79d937368d9a1e7e8e6d971c1e3791a9ba71", "license": "CC0-1.0", "provider": "cleveland-museum", "sourceUrl": "https://clevelandart.org/art/1916.131", "thumbMime": "image/jpeg", "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/", "thumbBytes": 25, "thumbWidth": 330, "originalUrl": "https://openaccess-cdn.clevelandart.org/1916.131/1916.131_print.jpg", "thumbHeight": 247}
+{"key": "1974.38", "kind": "photo", "mime": "image/jpeg", "name": "cleveland-museum-1974.38-Bull_Protome", "bytes": 66, "point": "POINT(33 35)", "width": null, "author": null, "credit": "Bull Protome, The Cleveland Museum of Art, James Parmelee Fund, CC0", "height": null, "period": "[-1200,-299)", "sha256": "1c3fd2c9dafee570eb7b511cca878a540985ea5f9fe5be374bb068d6a8f5e8a0", "license": "CC0-1.0", "provider": "cleveland-museum", "sourceUrl": "https://clevelandart.org/art/1974.38", "thumbMime": "image/jpeg", "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/", "thumbBytes": 24, "thumbWidth": 330, "originalUrl": "https://openaccess-cdn.clevelandart.org/1974.38/1974.38_print.jpg", "thumbHeight": 247}
+{"key": "9200999/fixture_mycenae_lion_gate", "kind": "photo", "mime": "image/jpeg", "name": "europeana-9200999_fixture_mycenae_lion_gate-The_Lion_Gate_Mycenae", "bytes": 81, "point": "POINT(22.756 37.73)", "width": null, "author": "Fixture Photographer", "credit": "The Lion Gate, Mycenae, Fixture Photographer, Fixture Archive, via Europeana, CC BY-SA 4.0", "height": null, "period": "[-1600,-1099)", "sha256": "5cb1352f980323c58e0559bd22f7f5c8f1852e6a0fd90b7af01703b28e22da0f", "license": "CC-BY-SA-4.0", "provider": "europeana", "sourceUrl": "https://www.europeana.eu/item/9200999/fixture_mycenae_lion_gate", "thumbMime": "image/jpeg", "licenseUrl": "http://creativecommons.org/licenses/by-sa/4.0/", "thumbBytes": 81, "thumbWidth": null, "originalUrl": "https://images.fixture.example/lion-gate.jpg", "thumbHeight": null}
+{"key": "2007627513", "kind": "map", "mime": "image/jpeg", "name": "library-of-congress-2007627513-Plan_of_Mycenae", "bytes": 77, "point": "POINT(22.756 37.73)", "width": null, "author": "Steffen, Bernhard", "credit": "Plan of Mycenae, Steffen, Bernhard, Library of Congress, Geography and Map Division", "height": null, "period": "[-1600,-1099)", "sha256": "d9a30aba6067f44deaa63625cbd4fc73f255be95ce6ae16609511d82cdc40221", "license": "public-domain", "provider": "library-of-congress", "sourceUrl": "https://www.loc.gov/item/2007627513/", "thumbMime": "image/jpeg", "licenseUrl": "https://www.loc.gov/legal/understanding-copyright/", "thumbBytes": 77, "thumbWidth": null, "originalUrl": "https://tile.loc.gov/storage-services/service/gmd/g6814m/ct000001/4000.jpg", "thumbHeight": null}
+{"key": "252448", "kind": "photo", "mime": "image/jpeg", "name": "met-museum-252448-Terracotta_animal_figurine", "bytes": 67, "point": "POINT(22.756 37.73)", "width": null, "author": null, "credit": "Terracotta animal figurine, The Metropolitan Museum of Art, CC0", "height": null, "period": "[-1600,-1099)", "sha256": "074d521f3cdf15c2893dff3a722c425d1eb5b51f6d5ffa26e80286a078cd7574", "license": "CC0-1.0", "provider": "met-museum", "sourceUrl": "https://www.metmuseum.org/art/collection/search/252448", "thumbMime": "image/jpeg", "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/", "thumbBytes": 23, "thumbWidth": 330, "originalUrl": "https://images.metmuseum.org/CRDImages/gr/original/DP121403.jpg", "thumbHeight": 247}
+{"key": "UUID", "kind": "photo", "mime": "image/jpeg", "name": "open-context-UUID-Bowls_6_24-29_.jpg", "bytes": 104, "point": "POINT(35.44 30.33)", "width": null, "author": "Martha Sharp Joukowsky", "credit": "Martha Sharp Joukowsky (2010). \"Bowls 6 (24-29).jpg from Asia/Jordan/Petra Great Temple/Upper Temenos/Trench 94/Locus 75/Seq. 94211/Pottery 242\". In Petra Great Temple Excavations. Open Context. https://n2t.net/ark:/28722/k2639tg61. CC BY 4.0", "height": null, "period": "[-300,101)", "sha256": "0e12ba0753e74b8c66fc385cbe89275caf1ed18e7c0f479d58175a8f00bc7431", "license": "CC-BY-4.0", "provider": "open-context", "sourceUrl": "https://opencontext.org/media/UUID", "thumbMime": "image/jpeg", "licenseUrl": "https://creativecommons.org/licenses/by/4.0", "thumbBytes": 106, "thumbWidth": null, "originalUrl": "https://archive.org/download/opencontext-10-bowls-7-30-38jpg/10-bowls-7-30-38jpg.jpg", "thumbHeight": null}
+{"key": "UUID", "kind": "photo", "mime": "image/jpeg", "name": "open-context-UUID-Bowls_7_30-38_.jpg", "bytes": 104, "point": "POINT(35.44 30.33)", "width": null, "author": "Martha Sharp Joukowsky", "credit": "Martha Sharp Joukowsky (2010). \"Bowls 7 (30-38).jpg from Asia/Jordan/Petra Great Temple/Upper Temenos/Trench 94/Locus none provided/Pottery 248\". In Petra Great Temple Excavations. Open Context. https://n2t.net/ark:/28722/k2xk8d17p. CC BY 4.0", "height": null, "period": "[-300,101)", "sha256": "0e12ba0753e74b8c66fc385cbe89275caf1ed18e7c0f479d58175a8f00bc7431", "license": "CC-BY-4.0", "provider": "open-context", "sourceUrl": "https://opencontext.org/media/UUID", "thumbMime": "image/jpeg", "licenseUrl": "https://creativecommons.org/licenses/by/4.0", "thumbBytes": 106, "thumbWidth": null, "originalUrl": "https://archive.org/download/opencontext-10-bowls-7-30-38jpg/10-bowls-7-30-38jpg.jpg", "thumbHeight": null}
+{"key": "isbn:9780000000001", "kind": "photo", "mime": "image/jpeg", "name": "cover-isbn-9780000000001.jpg", "bytes": 80, "point": null, "width": null, "author": null, "credit": "Cover: Open Library", "height": null, "period": null, "sha256": "521441ed648d8d684e771d37439824ca79de72a4bb6b50f1988a6a24335cbd16", "license": null, "provider": "open-library", "sourceUrl": "https://openlibrary.org/isbn/9780000000001", "thumbMime": "image/jpeg", "licenseUrl": null, "thumbBytes": 80, "thumbWidth": null, "originalUrl": "https://covers.openlibrary.org/b/isbn/9780000000001-L.jpg", "thumbHeight": null}
+{"key": "isbn:9780000000003", "kind": "photo", "mime": "image/jpeg", "name": "cover-isbn-9780000000003.jpg", "bytes": 80, "point": null, "width": null, "author": null, "credit": "Cover: Open Library", "height": null, "period": null, "sha256": "1e13f899f019ede23ba4338a7cae045c01e6dd361cf283161c175a6a90bd8d32", "license": null, "provider": "open-library", "sourceUrl": "https://openlibrary.org/isbn/9780000000003", "thumbMime": "image/jpeg", "licenseUrl": null, "thumbBytes": 80, "thumbWidth": null, "originalUrl": "https://covers.openlibrary.org/b/isbn/9780000000003-L.jpg", "thumbHeight": null}
+{"key": "fsg_F1909.1185", "kind": "photo", "mime": "image/jpeg", "name": "smithsonian-fsg_F1909.1185-Bead", "bytes": 55, "point": "POINT(30 26)", "width": null, "author": null, "credit": "Bead, National Museum of Asian Art, Smithsonian Institution, Gift of Charles Lang Freer, CC0", "height": null, "period": "[-3100,-29)", "sha256": "6542e8fb230d9fbc2806e594f293620d429cd1418503572556d6118867edb8c4", "license": "CC0-1.0", "provider": "smithsonian", "sourceUrl": "https://asia.si.edu/object/F1909.1185/", "thumbMime": "image/jpeg", "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/", "thumbBytes": 54, "thumbWidth": null, "originalUrl": "https://ids.si.edu/ids/download?id=FS-8431_10.jpg", "thumbHeight": null}
+{"key": "File:Kadesh relief.jpg", "kind": "photo", "mime": "image/jpeg", "name": "Kadesh_relief.jpg", "bytes": 37, "point": null, "width": 1280, "author": "Zqmt", "credit": "Zqmt, CC BY-SA 4.0, via Wikimedia Commons", "height": 1280, "period": null, "sha256": "9dfc377832b1afb6d275872a76bbfbb8b3bd31a0b18261a6e6f4d9ef497c1db4", "license": "CC-BY-SA-4.0", "provider": "wikimedia-commons", "sourceUrl": "https://commons.wikimedia.org/wiki/G0", "thumbMime": "image/jpeg", "licenseUrl": null, "thumbBytes": 36, "thumbWidth": 330, "originalUrl": "https://upload.example/g0.jpg", "thumbHeight": 330}
+{"key": "File:Lions-Gate-Mycenae.jpg", "kind": "photo", "mime": "image/jpeg", "name": "Lions-Gate-Mycenae.jpg", "bytes": 84, "point": "POINT(22.756 37.73)", "width": 1280, "author": "Andreas Trepte", "credit": "Andreas Trepte, CC BY-SA 2.5, via Wikimedia Commons", "height": 1037, "period": "[-1600,-1099)", "sha256": "023a1eec6638f393542d83a150237681de32e09b1fe33fc737047f191e1984ec", "license": "CC-BY-SA-2.5", "provider": "wikimedia-commons", "sourceUrl": "https://commons.wikimedia.org/wiki/File:Lions-Gate-Mycenae.jpg", "thumbMime": "image/jpeg", "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5", "thumbBytes": 83, "thumbWidth": 1280, "originalUrl": "https://upload.example/Lions-Gate-Mycenae.jpg", "thumbHeight": 1037}
+{"key": "File:Museum Hattusa - Boğazköy Museum, Boğazköy, Çorum, Turkey 05.jpg", "kind": "photo", "mime": "image/jpeg", "name": "Museum_Hattusa_-_Bo_azk_y_Museum_Bo_azk_y_orum_Turkey_05.jpg", "bytes": 37, "point": null, "width": 1280, "author": "Zqmt", "credit": "Zqmt, CC BY-SA 4.0, via Wikimedia Commons", "height": 1280, "period": null, "sha256": "c347770988b711e68005510d12227b5e5beb8e545711583cd3fa1c89cc9ea302", "license": "CC-BY-SA-4.0", "provider": "wikimedia-commons", "sourceUrl": "https://commons.wikimedia.org/wiki/G1", "thumbMime": "image/jpeg", "licenseUrl": null, "thumbBytes": 36, "thumbWidth": 330, "originalUrl": "https://upload.example/g1.jpg", "thumbHeight": 330}
+{"key": "File:Museum Hattusa - Boğazköy Museum, Boğazköy, Çorum, Turkey 20.jpg", "kind": "photo", "mime": "image/jpeg", "name": "Museum_Hattusa_-_Bo_azk_y_Museum_Bo_azk_y_orum_Turkey_20.jpg", "bytes": 37, "point": null, "width": 1280, "author": "Zqmt", "credit": "Zqmt, CC BY-SA 4.0, via Wikimedia Commons", "height": 1280, "period": null, "sha256": "709fb7281190e81edf41069677d39020d5f8a111e7cbd88410786013cc5a91d2", "license": "CC-BY-SA-4.0", "provider": "wikimedia-commons", "sourceUrl": "https://commons.wikimedia.org/wiki/G2", "thumbMime": "image/jpeg", "licenseUrl": null, "thumbBytes": 36, "thumbWidth": 330, "originalUrl": "https://upload.example/g2.jpg", "thumbHeight": 330}
+{"key": "File:Zygouries-General plan of the excavations.jpg", "kind": "photo", "mime": "image/jpeg", "name": "Zygouries-General_plan_of_the_excavations.jpg", "bytes": 37, "point": "POINT(22.85 37.8)", "width": 1280, "author": "Zqmt", "credit": "Zqmt, CC BY-SA 4.0, via Wikimedia Commons", "height": 1280, "period": "[-3000,-1099)", "sha256": "9dfc377832b1afb6d275872a76bbfbb8b3bd31a0b18261a6e6f4d9ef497c1db4", "license": "CC-BY-SA-4.0", "provider": "wikimedia-commons", "sourceUrl": "https://commons.wikimedia.org/wiki/G0", "thumbMime": "image/jpeg", "licenseUrl": null, "thumbBytes": 36, "thumbWidth": 330, "originalUrl": "https://upload.example/g0.jpg", "thumbHeight": 330}
+{"key": "fall_of_x-pd", "kind": "photo", "mime": "image/jpeg", "name": "fall_of_x-pd", "bytes": 46, "point": null, "width": null, "author": null, "credit": "Zq picture fall_of_x-pd, https://creativecommons.org/publicdomain/mark/1.0/", "height": null, "period": null, "sha256": "6b30d072eba5b01ff14975a2a8823fd4b94e4bfd42962f60c3623f8857138137", "license": "public-domain", "provider": "zq-own", "sourceUrl": "https://zq-own.example/page/fall_of_x-pd", "thumbMime": null, "licenseUrl": null, "thumbBytes": null, "thumbWidth": null, "originalUrl": null, "thumbHeight": null}
+{"key": "pleiades_697725-anon", "kind": "map", "mime": "image/jpeg", "name": "pleiades_697725-anon", "bytes": 54, "point": "POINT(35.44 30.33)", "width": null, "author": null, "credit": "Zq picture pleiades_697725-anon, cc-by-sa-4.0", "height": null, "period": "[-300,101)", "sha256": "ced54720a3bd3278307c7446da2cd9eb76ab95f43982851fe32e0178ecc26379", "license": "CC-BY-SA-4.0", "provider": "zq-own", "sourceUrl": "https://zq-own.example/page/pleiades_697725-anon", "thumbMime": null, "licenseUrl": null, "thumbBytes": null, "thumbWidth": null, "originalUrl": null, "thumbHeight": null}
+{"key": "pleiades_697725-by", "kind": "photo", "mime": "image/jpeg", "name": "pleiades_697725-by", "bytes": 52, "point": "POINT(35.44 30.33)", "width": null, "author": "Zq", "credit": "Zq picture pleiades_697725-by, CC BY 4.0", "height": null, "period": "[-300,101)", "sha256": "d876e80c173cc091594a78fa65d85b56c183bca58a80bf79f2d34cf8f14b49fa", "license": "CC-BY-4.0", "provider": "zq-own", "sourceUrl": "https://zq-own.example/page/pleiades_697725-by", "thumbMime": null, "licenseUrl": null, "thumbBytes": null, "thumbWidth": null, "originalUrl": null, "thumbHeight": null}
+{"key": "s1", "kind": "photo", "mime": "image/jpeg", "name": "zq-search-s1-Zq_object_s1", "bytes": 39, "point": "POINT(22.756 37.73)", "width": null, "author": "Zq Museum", "credit": "Zq object s1", "height": null, "period": "[-1600,-1099)", "sha256": "09e4298a7183abd01eb3a063c566f75970cac598d9ace8b492cbce0b48ce2731", "license": "CC0-1.0", "provider": "zq-search", "sourceUrl": "https://zq-search.example/objects/s1", "thumbMime": "image/jpeg", "licenseUrl": null, "thumbBytes": 19, "thumbWidth": 330, "originalUrl": null, "thumbHeight": 247}
+media_links:
+{"key": "108896", "item": null, "rank": 0, "role": "object", "basis": "place_of_origin = Cyprus; 500–401 BCE within 1200–300 BCE", "target": "place:geonames_146669", "property": null, "provider": "art-institute-chicago"}
+{"key": "1916.131", "item": null, "rank": 0, "role": "object", "basis": "culture = Cyprus; 499–400 BCE within 1200–300 BCE", "target": "place:geonames_146669", "property": null, "provider": "cleveland-museum"}
+{"key": "1974.38", "item": null, "rank": 1, "role": "object", "basis": "culture = Cyprus; 1999–1000 BCE within 1200–300 BCE", "target": "place:geonames_146669", "property": null, "provider": "cleveland-museum"}
+{"key": "9200999/fixture_mycenae_lion_gate", "item": null, "rank": 0, "role": "object", "basis": "dcterms:spatial = Mycenae; 1250–1250 BCE within 1600–1100 BCE", "target": "place:pleiades_570491", "property": null, "provider": "europeana"}
+{"key": "2007627513", "item": null, "rank": 0, "role": "map", "basis": "location = mycenae; map of 1880–1880 CE", "target": "place:pleiades_570491", "property": null, "provider": "library-of-congress"}
+{"key": "252448", "item": null, "rank": 0, "role": "object", "basis": "excavation = Mycenae; 1400–1201 BCE within 1600–1100 BCE", "target": "place:pleiades_570491", "property": null, "provider": "met-museum"}
+{"key": "UUID", "item": null, "rank": 1, "role": "object", "basis": "pleiades:697725 (the record's place id); 200 BCE–360 CE within 300 BCE–100 CE", "target": "place:pleiades_697725", "property": null, "provider": "open-context"}
+{"key": "UUID", "item": null, "rank": 0, "role": "object", "basis": "pleiades:697725 (the record's place id); 200 BCE–360 CE within 300 BCE–100 CE", "target": "place:pleiades_697725", "property": null, "provider": "open-context"}
+{"key": "isbn:9780000000001", "item": null, "rank": 0, "role": "cover", "basis": null, "target": "source:zqol2000_a", "property": "isbn", "provider": "open-library"}
+{"key": "isbn:9780000000003", "item": null, "rank": 0, "role": "cover", "basis": null, "target": "source:zqmt2020_x", "property": "isbn", "provider": "open-library"}
+{"key": "fsg_F1909.1185", "item": null, "rank": 0, "role": "object", "basis": "origin = Egypt; 1550–1196 BCE within 3100–30 BCE", "target": "place:geonames_357994", "property": null, "provider": "smithsonian"}
+{"key": "File:Kadesh relief.jpg", "item": "Q203729", "rank": 0, "role": "depiction", "basis": null, "target": "event:battle_of_kadesh", "property": "P1299", "provider": "wikimedia-commons"}
+{"key": "File:Lions-Gate-Mycenae.jpg", "item": "Q132564", "rank": 0, "role": "image", "basis": null, "target": "place:pleiades_570491", "property": "P18", "provider": "wikimedia-commons"}
+{"key": "File:Museum Hattusa - Boğazköy Museum, Boğazköy, Çorum, Turkey 05.jpg", "item": "Q203729", "rank": 1, "role": "depiction", "basis": null, "target": "event:battle_of_kadesh", "property": "P180", "provider": "wikimedia-commons"}
+{"key": "File:Museum Hattusa - Boğazköy Museum, Boğazköy, Çorum, Turkey 20.jpg", "item": "Q203729", "rank": 2, "role": "depiction", "basis": null, "target": "event:battle_of_kadesh", "property": "P180", "provider": "wikimedia-commons"}
+{"key": "File:Zygouries-General plan of the excavations.jpg", "item": null, "rank": 0, "role": "image", "basis": "Pleiades place 757208100 links it (citesAsRelated)", "target": "place:pleiades_757208100", "property": null, "provider": "wikimedia-commons"}
+{"key": "fall_of_x-pd", "item": null, "rank": 0, "role": "image", "basis": "the event's own item", "target": "event:fall_of_x", "property": null, "provider": "zq-own"}
+{"key": "pleiades_697725-anon", "item": null, "rank": 2, "role": "locator-map", "basis": null, "target": "place:pleiades_697725", "property": null, "provider": "zq-own"}
+{"key": "pleiades_697725-by", "item": null, "rank": 0, "role": "image", "basis": null, "target": "place:pleiades_697725", "property": "P18", "provider": "zq-own"}
+{"key": "s1", "item": null, "rank": 0, "role": "object", "basis": "find_spot = Mycenae; 1500–1300 BCE within 1600–1100 BCE", "target": "place:pleiades_570491", "property": null, "provider": "zq-search"}
+media_checks:
+{"qid": null, "found": 1, "target": "place:geonames_146669", "provider": "art-institute-chicago"}
+{"qid": null, "found": 2, "target": "place:geonames_146669", "provider": "cleveland-museum"}
+{"qid": null, "found": 1, "target": "place:pleiades_570491", "provider": "europeana"}
+{"qid": null, "found": 1, "target": "place:pleiades_570491", "provider": "library-of-congress"}
+{"qid": null, "found": 1, "target": "place:pleiades_570491", "provider": "met-museum"}
+{"qid": null, "found": 2, "target": "place:pleiades_697725", "provider": "open-context"}
+{"qid": null, "found": 1, "target": "source:zqmt2020_x", "provider": "open-library"}
+{"qid": null, "found": 1, "target": "source:zqol2000_a", "provider": "open-library"}
+{"qid": null, "found": 0, "target": "source:zqol2000_b", "provider": "open-library"}
+{"qid": null, "found": 1, "target": "place:pleiades_757208100", "provider": "pleiades"}
+{"qid": null, "found": 1, "target": "place:geonames_357994", "provider": "smithsonian"}
+{"qid": "Q404", "found": 0, "target": "event:fall_of_x", "provider": "wikimedia-commons"}
+{"qid": "Q132564", "found": 1, "target": "place:pleiades_570491", "provider": "wikimedia-commons"}
+{"qid": "Q203729", "found": 3, "target": "event:battle_of_kadesh", "provider": "wikimedia-commons-depicts"}
+{"qid": "Q404", "found": 1, "target": "event:fall_of_x", "provider": "zq-own"}
+{"qid": "Q5788", "found": 2, "target": "place:pleiades_697725", "provider": "zq-own"}
+{"qid": null, "found": 1, "target": "place:pleiades_570491", "provider": "zq-search"}
+commons categories:
+{"ref": "Q132564", "place": "pleiades_570491", "category": "Mycenae"}
+# rows
+## assets 20 rows
+{ "author" : "Andreas Trepte", "bytes" : 84, "caption" : null, "citekey" : null, "credit" : "Andreas Trepte, CC BY-SA 2.5, via Wikimedia Commons", "geom" : "POINT(22.756 37.73)", "height" : 1037, "kind" : "photo", "license" : "CC-BY-SA-2.5", "license_url" : "https://creativecommons.org/licenses/by-sa/2.5", "mime" : "image/jpeg", "name" : "Lions-Gate-Mycenae.jpg", "origin" : "instance:imp", "original_url" : "https://upload.example/Lions-Gate-Mycenae.jpg", "period" : "[-1600,-1099)", "provider" : "wikimedia-commons", "provider_key" : "File:Lions-Gate-Mycenae.jpg", "retrieved_at" : "TS", "sha256" : "023a1eec6638f393542d83a150237681de32e09b1fe33fc737047f191e1984ec", "source_url" : "https://commons.wikimedia.org/wiki/File:Lions-Gate-Mycenae.jpg", "thumb" : 83, "thumbSha" : "7ddb05df134f87410665561c8e923d578abb2b095bece3d8b335a162657578dc", "thumb_height" : 1037, "thumb_mime" : "image/jpeg", "thumb_width" : 1280, "uid" : "asset:wikimedia-commons:File:Lions-Gate-Mycenae.jpg", "updated_at" : "TS", "width" : 1280 }
+{ "author" : "Fixture Photographer", "bytes" : 81, "caption" : null, "citekey" : null, "credit" : "The Lion Gate, Mycenae, Fixture Photographer, Fixture Archive, via Europeana, CC BY-SA 4.0", "geom" : "POINT(22.756 37.73)", "height" : null, "kind" : "photo", "license" : "CC-BY-SA-4.0", "license_url" : "http://creativecommons.org/licenses/by-sa/4.0/", "mime" : "image/jpeg", "name" : "europeana-9200999_fixture_mycenae_lion_gate-The_Lion_Gate_Mycenae", "origin" : "instance:imp", "original_url" : "https://images.fixture.example/lion-gate.jpg", "period" : "[-1600,-1099)", "provider" : "europeana", "provider_key" : "9200999/fixture_mycenae_lion_gate", "retrieved_at" : "TS", "sha256" : "5cb1352f980323c58e0559bd22f7f5c8f1852e6a0fd90b7af01703b28e22da0f", "source_url" : "https://www.europeana.eu/item/9200999/fixture_mycenae_lion_gate", "thumb" : 81, "thumbSha" : "e46627d129305aa67d05b74384415c688d1845c669c755b772632f76d9632034", "thumb_height" : null, "thumb_mime" : "image/jpeg", "thumb_width" : null, "uid" : "asset:europeana:9200999/fixture_mycenae_lion_gate", "updated_at" : "TS", "width" : null }
+{ "author" : "Martha Sharp Joukowsky", "bytes" : 104, "caption" : null, "citekey" : null, "credit" : "Martha Sharp Joukowsky (2010). \"Bowls 6 (24-29).jpg from Asia/Jordan/Petra Great Temple/Upper Temenos/Trench 94/Locus 75/Seq. 94211/Pottery 242\". In Petra Great Temple Excavations. Open Context. https://n2t.net/ark:/28722/k2639tg61. CC BY 4.0", "geom" : "POINT(35.44 30.33)", "height" : null, "kind" : "photo", "license" : "CC-BY-4.0", "license_url" : "https://creativecommons.org/licenses/by/4.0", "mime" : "image/jpeg", "name" : "open-context-UUID-Bowls_6_24-29_.jpg", "origin" : "instance:imp", "original_url" : "https://archive.org/download/opencontext-10-bowls-7-30-38jpg/10-bowls-7-30-38jpg.jpg", "period" : "[-300,101)", "provider" : "open-context", "provider_key" : "UUID", "retrieved_at" : "TS", "sha256" : "0e12ba0753e74b8c66fc385cbe89275caf1ed18e7c0f479d58175a8f00bc7431", "source_url" : "https://opencontext.org/media/UUID", "thumb" : 106, "thumbSha" : "df513c41382a48beb508d827907efcf8f89e603445b3667542813e588dfc26e9", "thumb_height" : null, "thumb_mime" : "image/jpeg", "thumb_width" : null, "uid" : "asset:open-context:d9feb4e7-3ec6-444f-6a85-2b6873c8822a", "updated_at" : "TS", "width" : null }
+{ "author" : "Martha Sharp Joukowsky", "bytes" : 104, "caption" : null, "citekey" : null, "credit" : "Martha Sharp Joukowsky (2010). \"Bowls 7 (30-38).jpg from Asia/Jordan/Petra Great Temple/Upper Temenos/Trench 94/Locus none provided/Pottery 248\". In Petra Great Temple Excavations. Open Context. https://n2t.net/ark:/28722/k2xk8d17p. CC BY 4.0", "geom" : "POINT(35.44 30.33)", "height" : null, "kind" : "photo", "license" : "CC-BY-4.0", "license_url" : "https://creativecommons.org/licenses/by/4.0", "mime" : "image/jpeg", "name" : "open-context-UUID-Bowls_7_30-38_.jpg", "origin" : "instance:imp", "original_url" : "https://archive.org/download/opencontext-10-bowls-7-30-38jpg/10-bowls-7-30-38jpg.jpg", "period" : "[-300,101)", "provider" : "open-context", "provider_key" : "UUID", "retrieved_at" : "TS", "sha256" : "0e12ba0753e74b8c66fc385cbe89275caf1ed18e7c0f479d58175a8f00bc7431", "source_url" : "https://opencontext.org/media/UUID", "thumb" : 106, "thumbSha" : "df513c41382a48beb508d827907efcf8f89e603445b3667542813e588dfc26e9", "thumb_height" : null, "thumb_mime" : "image/jpeg", "thumb_width" : null, "uid" : "asset:open-context:f589a368-62ed-43df-5738-4c84d2f5f765", "updated_at" : "TS", "width" : null }
+{ "author" : "Steffen, Bernhard", "bytes" : 77, "caption" : null, "citekey" : null, "credit" : "Plan of Mycenae, Steffen, Bernhard, Library of Congress, Geography and Map Division", "geom" : "POINT(22.756 37.73)", "height" : null, "kind" : "map", "license" : "public-domain", "license_url" : "https://www.loc.gov/legal/understanding-copyright/", "mime" : "image/jpeg", "name" : "library-of-congress-2007627513-Plan_of_Mycenae", "origin" : "instance:imp", "original_url" : "https://tile.loc.gov/storage-services/service/gmd/g6814m/ct000001/4000.jpg", "period" : "[-1600,-1099)", "provider" : "library-of-congress", "provider_key" : "2007627513", "retrieved_at" : "TS", "sha256" : "d9a30aba6067f44deaa63625cbd4fc73f255be95ce6ae16609511d82cdc40221", "source_url" : "https://www.loc.gov/item/2007627513/", "thumb" : 77, "thumbSha" : "d9a30aba6067f44deaa63625cbd4fc73f255be95ce6ae16609511d82cdc40221", "thumb_height" : null, "thumb_mime" : "image/jpeg", "thumb_width" : null, "uid" : "asset:library-of-congress:2007627513", "updated_at" : "TS", "width" : null }
+{ "author" : "Zq Museum", "bytes" : 39, "caption" : null, "citekey" : null, "credit" : "Zq object s1", "geom" : "POINT(22.756 37.73)", "height" : null, "kind" : "photo", "license" : "CC0-1.0", "license_url" : null, "mime" : "image/jpeg", "name" : "zq-search-s1-Zq_object_s1", "origin" : "instance:imp", "original_url" : null, "period" : "[-1600,-1099)", "provider" : "zq-search", "provider_key" : "s1", "retrieved_at" : "TS", "sha256" : "09e4298a7183abd01eb3a063c566f75970cac598d9ace8b492cbce0b48ce2731", "source_url" : "https://zq-search.example/objects/s1", "thumb" : 19, "thumbSha" : "597d07757a931915dc623fee21c4d3437624475b36aedeb9d200a404fc6a989f", "thumb_height" : 247, "thumb_mime" : "image/jpeg", "thumb_width" : 330, "uid" : "asset:zq-search:s1", "updated_at" : "TS", "width" : null }
+{ "author" : "Zq", "bytes" : 52, "caption" : null, "citekey" : null, "credit" : "Zq picture pleiades_697725-by, CC BY 4.0", "geom" : "POINT(35.44 30.33)", "height" : null, "kind" : "photo", "license" : "CC-BY-4.0", "license_url" : null, "mime" : "image/jpeg", "name" : "pleiades_697725-by", "origin" : "instance:imp", "original_url" : null, "period" : "[-300,101)", "provider" : "zq-own", "provider_key" : "pleiades_697725-by", "retrieved_at" : "TS", "sha256" : "d876e80c173cc091594a78fa65d85b56c183bca58a80bf79f2d34cf8f14b49fa", "source_url" : "https://zq-own.example/page/pleiades_697725-by", "thumb" : null, "thumbSha" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "thumb_height" : null, "thumb_mime" : null, "thumb_width" : null, "uid" : "asset:zq-own:pleiades_697725-by", "updated_at" : "TS", "width" : null }
+{ "author" : "Zqmt", "bytes" : 37, "caption" : null, "citekey" : null, "credit" : "Zqmt, CC BY-SA 4.0, via Wikimedia Commons", "geom" : "POINT(22.85 37.8)", "height" : 1280, "kind" : "photo", "license" : "CC-BY-SA-4.0", "license_url" : null, "mime" : "image/jpeg", "name" : "Zygouries-General_plan_of_the_excavations.jpg", "origin" : "instance:imp", "original_url" : "https://upload.example/g0.jpg", "period" : "[-3000,-1099)", "provider" : "wikimedia-commons", "provider_key" : "File:Zygouries-General plan of the excavations.jpg", "retrieved_at" : "TS", "sha256" : "9dfc377832b1afb6d275872a76bbfbb8b3bd31a0b18261a6e6f4d9ef497c1db4", "source_url" : "https://commons.wikimedia.org/wiki/G0", "thumb" : 36, "thumbSha" : "fcbb346ce9604d9ebc1b0d96a58e9c975f49b02a1a2538f8f3d72917166b37d2", "thumb_height" : 330, "thumb_mime" : "image/jpeg", "thumb_width" : 330, "uid" : "asset:wikimedia-commons:File:Zygouries-General plan of the excavations.jpg", "updated_at" : "TS", "width" : 1280 }
+{ "author" : "Zqmt", "bytes" : 37, "caption" : null, "citekey" : null, "credit" : "Zqmt, CC BY-SA 4.0, via Wikimedia Commons", "geom" : null, "height" : 1280, "kind" : "photo", "license" : "CC-BY-SA-4.0", "license_url" : null, "mime" : "image/jpeg", "name" : "Kadesh_relief.jpg", "origin" : "instance:imp", "original_url" : "https://upload.example/g0.jpg", "period" : null, "provider" : "wikimedia-commons", "provider_key" : "File:Kadesh relief.jpg", "retrieved_at" : "TS", "sha256" : "9dfc377832b1afb6d275872a76bbfbb8b3bd31a0b18261a6e6f4d9ef497c1db4", "source_url" : "https://commons.wikimedia.org/wiki/G0", "thumb" : 36, "thumbSha" : "fcbb346ce9604d9ebc1b0d96a58e9c975f49b02a1a2538f8f3d72917166b37d2", "thumb_height" : 330, "thumb_mime" : "image/jpeg", "thumb_width" : 330, "uid" : "asset:wikimedia-commons:File:Kadesh relief.jpg", "updated_at" : "TS", "width" : 1280 }
+{ "author" : "Zqmt", "bytes" : 37, "caption" : null, "citekey" : null, "credit" : "Zqmt, CC BY-SA 4.0, via Wikimedia Commons", "geom" : null, "height" : 1280, "kind" : "photo", "license" : "CC-BY-SA-4.0", "license_url" : null, "mime" : "image/jpeg", "name" : "Museum_Hattusa_-_Bo_azk_y_Museum_Bo_azk_y_orum_Turkey_05.jpg", "origin" : "instance:imp", "original_url" : "https://upload.example/g1.jpg", "period" : null, "provider" : "wikimedia-commons", "provider_key" : "File:Museum Hattusa - Boğazköy Museum, Boğazköy, Çorum, Turkey 05.jpg", "retrieved_at" : "TS", "sha256" : "c347770988b711e68005510d12227b5e5beb8e545711583cd3fa1c89cc9ea302", "source_url" : "https://commons.wikimedia.org/wiki/G1", "thumb" : 36, "thumbSha" : "f872bb158ce9ab5a23ec0dcc8816d807e8c73af7c9b9727792e8e7a80453f0a0", "thumb_height" : 330, "thumb_mime" : "image/jpeg", "thumb_width" : 330, "uid" : "asset:wikimedia-commons:File:Museum Hattusa - Boğazköy Museum, Boğazköy, Çorum, Turkey 05.jpg", "updated_at" : "TS", "width" : 1280 }
+{ "author" : "Zqmt", "bytes" : 37, "caption" : null, "citekey" : null, "credit" : "Zqmt, CC BY-SA 4.0, via Wikimedia Commons", "geom" : null, "height" : 1280, "kind" : "photo", "license" : "CC-BY-SA-4.0", "license_url" : null, "mime" : "image/jpeg", "name" : "Museum_Hattusa_-_Bo_azk_y_Museum_Bo_azk_y_orum_Turkey_20.jpg", "origin" : "instance:imp", "original_url" : "https://upload.example/g2.jpg", "period" : null, "provider" : "wikimedia-commons", "provider_key" : "File:Museum Hattusa - Boğazköy Museum, Boğazköy, Çorum, Turkey 20.jpg", "retrieved_at" : "TS", "sha256" : "709fb7281190e81edf41069677d39020d5f8a111e7cbd88410786013cc5a91d2", "source_url" : "https://commons.wikimedia.org/wiki/G2", "thumb" : 36, "thumbSha" : "5a5e386bfd532f3d5ebacccb112d741c6b755b9161e5bf57f777ec720638b716", "thumb_height" : 330, "thumb_mime" : "image/jpeg", "thumb_width" : 330, "uid" : "asset:wikimedia-commons:File:Museum Hattusa - Boğazköy Museum, Boğazköy, Çorum, Turkey 20.jpg", "updated_at" : "TS", "width" : 1280 }
+{ "author" : null, "bytes" : 46, "caption" : null, "citekey" : null, "credit" : "Zq picture fall_of_x-pd, https://creativecommons.org/publicdomain/mark/1.0/", "geom" : null, "height" : null, "kind" : "photo", "license" : "public-domain", "license_url" : null, "mime" : "image/jpeg", "name" : "fall_of_x-pd", "origin" : "instance:imp", "original_url" : null, "period" : null, "provider" : "zq-own", "provider_key" : "fall_of_x-pd", "retrieved_at" : "TS", "sha256" : "6b30d072eba5b01ff14975a2a8823fd4b94e4bfd42962f60c3623f8857138137", "source_url" : "https://zq-own.example/page/fall_of_x-pd", "thumb" : null, "thumbSha" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "thumb_height" : null, "thumb_mime" : null, "thumb_width" : null, "uid" : "asset:zq-own:fall_of_x-pd", "updated_at" : "TS", "width" : null }
+{ "author" : null, "bytes" : 54, "caption" : null, "citekey" : null, "credit" : "Zq picture pleiades_697725-anon, cc-by-sa-4.0", "geom" : "POINT(35.44 30.33)", "height" : null, "kind" : "map", "license" : "CC-BY-SA-4.0", "license_url" : null, "mime" : "image/jpeg", "name" : "pleiades_697725-anon", "origin" : "instance:imp", "original_url" : null, "period" : "[-300,101)", "provider" : "zq-own", "provider_key" : "pleiades_697725-anon", "retrieved_at" : "TS", "sha256" : "ced54720a3bd3278307c7446da2cd9eb76ab95f43982851fe32e0178ecc26379", "source_url" : "https://zq-own.example/page/pleiades_697725-anon", "thumb" : null, "thumbSha" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "thumb_height" : null, "thumb_mime" : null, "thumb_width" : null, "uid" : "asset:zq-own:pleiades_697725-anon", "updated_at" : "TS", "width" : null }
+{ "author" : null, "bytes" : 55, "caption" : null, "citekey" : null, "credit" : "Bead, National Museum of Asian Art, Smithsonian Institution, Gift of Charles Lang Freer, CC0", "geom" : "POINT(30 26)", "height" : null, "kind" : "photo", "license" : "CC0-1.0", "license_url" : "https://creativecommons.org/publicdomain/zero/1.0/", "mime" : "image/jpeg", "name" : "smithsonian-fsg_F1909.1185-Bead", "origin" : "instance:imp", "original_url" : "https://ids.si.edu/ids/download?id=FS-8431_10.jpg", "period" : "[-3100,-29)", "provider" : "smithsonian", "provider_key" : "fsg_F1909.1185", "retrieved_at" : "TS", "sha256" : "6542e8fb230d9fbc2806e594f293620d429cd1418503572556d6118867edb8c4", "source_url" : "https://asia.si.edu/object/F1909.1185/", "thumb" : 54, "thumbSha" : "1f9bb38c5e17ab2ec2d6026de038bb19b75d789fde3905bebb522ac87dc4525e", "thumb_height" : null, "thumb_mime" : "image/jpeg", "thumb_width" : null, "uid" : "asset:smithsonian:fsg_F1909.1185", "updated_at" : "TS", "width" : null }
+{ "author" : null, "bytes" : 66, "caption" : null, "citekey" : null, "credit" : "Bull Protome, The Cleveland Museum of Art, James Parmelee Fund, CC0", "geom" : "POINT(33 35)", "height" : null, "kind" : "photo", "license" : "CC0-1.0", "license_url" : "https://creativecommons.org/publicdomain/zero/1.0/", "mime" : "image/jpeg", "name" : "cleveland-museum-1974.38-Bull_Protome", "origin" : "instance:imp", "original_url" : "https://openaccess-cdn.clevelandart.org/1974.38/1974.38_print.jpg", "period" : "[-1200,-299)", "provider" : "cleveland-museum", "provider_key" : "1974.38", "retrieved_at" : "TS", "sha256" : "1c3fd2c9dafee570eb7b511cca878a540985ea5f9fe5be374bb068d6a8f5e8a0", "source_url" : "https://clevelandart.org/art/1974.38", "thumb" : 24, "thumbSha" : "e4f334b87729888aa87713c1eb5afecbb6ecdaefc871c67e1ddcfc4d113dfa5f", "thumb_height" : 247, "thumb_mime" : "image/jpeg", "thumb_width" : 330, "uid" : "asset:cleveland-museum:1974.38", "updated_at" : "TS", "width" : null }
+{ "author" : null, "bytes" : 67, "caption" : null, "citekey" : null, "credit" : "Terracotta animal figurine, The Metropolitan Museum of Art, CC0", "geom" : "POINT(22.756 37.73)", "height" : null, "kind" : "photo", "license" : "CC0-1.0", "license_url" : "https://creativecommons.org/publicdomain/zero/1.0/", "mime" : "image/jpeg", "name" : "met-museum-252448-Terracotta_animal_figurine", "origin" : "instance:imp", "original_url" : "https://images.metmuseum.org/CRDImages/gr/original/DP121403.jpg", "period" : "[-1600,-1099)", "provider" : "met-museum", "provider_key" : "252448", "retrieved_at" : "TS", "sha256" : "074d521f3cdf15c2893dff3a722c425d1eb5b51f6d5ffa26e80286a078cd7574", "source_url" : "https://www.metmuseum.org/art/collection/search/252448", "thumb" : 23, "thumbSha" : "6b26468d94354454e2f75a05afdc6aabb7e186d36763b307f086cc7752197c63", "thumb_height" : 247, "thumb_mime" : "image/jpeg", "thumb_width" : 330, "uid" : "asset:met-museum:252448", "updated_at" : "TS", "width" : null }
+{ "author" : null, "bytes" : 68, "caption" : null, "citekey" : null, "credit" : "Earring, The Cleveland Museum of Art, Gift of Mr. and Mrs. J. H. Wade, CC0", "geom" : "POINT(33 35)", "height" : null, "kind" : "photo", "license" : "CC0-1.0", "license_url" : "https://creativecommons.org/publicdomain/zero/1.0/", "mime" : "image/jpeg", "name" : "cleveland-museum-1916.131-Earring", "origin" : "instance:imp", "original_url" : "https://openaccess-cdn.clevelandart.org/1916.131/1916.131_print.jpg", "period" : "[-1200,-299)", "provider" : "cleveland-museum", "provider_key" : "1916.131", "retrieved_at" : "TS", "sha256" : "c03df0e073f627b25a6a67ca504b79d937368d9a1e7e8e6d971c1e3791a9ba71", "source_url" : "https://clevelandart.org/art/1916.131", "thumb" : 25, "thumbSha" : "3549eab9d46609b06705424ca489759a3eb5503f3146a1a0d0c614a76798c7b7", "thumb_height" : 247, "thumb_mime" : "image/jpeg", "thumb_width" : 330, "uid" : "asset:cleveland-museum:1916.131", "updated_at" : "TS", "width" : null }
+{ "author" : null, "bytes" : 80, "caption" : null, "citekey" : null, "credit" : "Cover: Open Library", "geom" : null, "height" : null, "kind" : "photo", "license" : null, "license_url" : null, "mime" : "image/jpeg", "name" : "cover-isbn-9780000000001.jpg", "origin" : "instance:imp", "original_url" : "https://covers.openlibrary.org/b/isbn/9780000000001-L.jpg", "period" : null, "provider" : "open-library", "provider_key" : "isbn:9780000000001", "retrieved_at" : "TS", "sha256" : "521441ed648d8d684e771d37439824ca79de72a4bb6b50f1988a6a24335cbd16", "source_url" : "https://openlibrary.org/isbn/9780000000001", "thumb" : 80, "thumbSha" : "373cce3584efcf0ea4b0c8d277947a58bec5219e6cff631277549f34f0d0f0ea", "thumb_height" : null, "thumb_mime" : "image/jpeg", "thumb_width" : null, "uid" : "asset:open-library:isbn:9780000000001", "updated_at" : "TS", "width" : null }
+{ "author" : null, "bytes" : 80, "caption" : null, "citekey" : null, "credit" : "Cover: Open Library", "geom" : null, "height" : null, "kind" : "photo", "license" : null, "license_url" : null, "mime" : "image/jpeg", "name" : "cover-isbn-9780000000003.jpg", "origin" : "instance:imp", "original_url" : "https://covers.openlibrary.org/b/isbn/9780000000003-L.jpg", "period" : null, "provider" : "open-library", "provider_key" : "isbn:9780000000003", "retrieved_at" : "TS", "sha256" : "1e13f899f019ede23ba4338a7cae045c01e6dd361cf283161c175a6a90bd8d32", "source_url" : "https://openlibrary.org/isbn/9780000000003", "thumb" : 80, "thumbSha" : "28dc6e2912c35e3e1570b2cc4317c40963d1fe234f52c19004d599b4f7d23cda", "thumb_height" : null, "thumb_mime" : "image/jpeg", "thumb_width" : null, "uid" : "asset:open-library:isbn:9780000000003", "updated_at" : "TS", "width" : null }
+{ "author" : null, "bytes" : 92, "caption" : null, "citekey" : null, "credit" : "Head of a Bearded Man, The Art Institute of Chicago, CC0", "geom" : "POINT(33 35)", "height" : null, "kind" : "photo", "license" : "CC0-1.0", "license_url" : "https://creativecommons.org/publicdomain/zero/1.0/", "mime" : "image/jpeg", "name" : "art-institute-chicago-108896-Head_of_a_Bearded_Man", "origin" : "instance:imp", "original_url" : "https://www.artic.edu/iiif/2/UUID/full/full/0/default.jpg", "period" : "[-1200,-299)", "provider" : "art-institute-chicago", "provider_key" : "108896", "retrieved_at" : "TS", "sha256" : "93d6e42ae2c920c7e2f3b7ac40c828091cfaa6b26fdbd992f8337b376c9043c1", "source_url" : "https://www.artic.edu/artworks/108896", "thumb" : 92, "thumbSha" : "2148ae723a9ced8eceb899dc14ba3d9690d34492ec0d4672da3fa6be65e2ce18", "thumb_height" : null, "thumb_mime" : "image/jpeg", "thumb_width" : null, "uid" : "asset:art-institute-chicago:108896", "updated_at" : "TS", "width" : null }
+## asset_links 0 rows
+## media_links 20 rows
+{ "asset_uid" : "asset:art-institute-chicago:108896", "basis" : "place_of_origin = Cyprus; 500–401 BCE within 1200–300 BCE", "created_at" : "TS", "item" : null, "property" : null, "rank" : 0, "role" : "object", "target_id" : "geonames_146669", "target_type" : "place" }
+{ "asset_uid" : "asset:cleveland-museum:1916.131", "basis" : "culture = Cyprus; 499–400 BCE within 1200–300 BCE", "created_at" : "TS", "item" : null, "property" : null, "rank" : 0, "role" : "object", "target_id" : "geonames_146669", "target_type" : "place" }
+{ "asset_uid" : "asset:cleveland-museum:1974.38", "basis" : "culture = Cyprus; 1999–1000 BCE within 1200–300 BCE", "created_at" : "TS", "item" : null, "property" : null, "rank" : 1, "role" : "object", "target_id" : "geonames_146669", "target_type" : "place" }
+{ "asset_uid" : "asset:europeana:9200999/fixture_mycenae_lion_gate", "basis" : "dcterms:spatial = Mycenae; 1250–1250 BCE within 1600–1100 BCE", "created_at" : "TS", "item" : null, "property" : null, "rank" : 0, "role" : "object", "target_id" : "pleiades_570491", "target_type" : "place" }
+{ "asset_uid" : "asset:library-of-congress:2007627513", "basis" : "location = mycenae; map of 1880–1880 CE", "created_at" : "TS", "item" : null, "property" : null, "rank" : 0, "role" : "map", "target_id" : "pleiades_570491", "target_type" : "place" }
+{ "asset_uid" : "asset:met-museum:252448", "basis" : "excavation = Mycenae; 1400–1201 BCE within 1600–1100 BCE", "created_at" : "TS", "item" : null, "property" : null, "rank" : 0, "role" : "object", "target_id" : "pleiades_570491", "target_type" : "place" }
+{ "asset_uid" : "asset:open-context:d9feb4e7-3ec6-444f-6a85-2b6873c8822a", "basis" : "pleiades:697725 (the record's place id); 200 BCE–360 CE within 300 BCE–100 CE", "created_at" : "TS", "item" : null, "property" : null, "rank" : 1, "role" : "object", "target_id" : "pleiades_697725", "target_type" : "place" }
+{ "asset_uid" : "asset:open-context:f589a368-62ed-43df-5738-4c84d2f5f765", "basis" : "pleiades:697725 (the record's place id); 200 BCE–360 CE within 300 BCE–100 CE", "created_at" : "TS", "item" : null, "property" : null, "rank" : 0, "role" : "object", "target_id" : "pleiades_697725", "target_type" : "place" }
+{ "asset_uid" : "asset:open-library:isbn:9780000000001", "basis" : null, "created_at" : "TS", "item" : null, "property" : "isbn", "rank" : 0, "role" : "cover", "target_id" : "zqol2000_a", "target_type" : "source" }
+{ "asset_uid" : "asset:open-library:isbn:9780000000003", "basis" : null, "created_at" : "TS", "item" : null, "property" : "isbn", "rank" : 0, "role" : "cover", "target_id" : "zqmt2020_x", "target_type" : "source" }
+{ "asset_uid" : "asset:smithsonian:fsg_F1909.1185", "basis" : "origin = Egypt; 1550–1196 BCE within 3100–30 BCE", "created_at" : "TS", "item" : null, "property" : null, "rank" : 0, "role" : "object", "target_id" : "geonames_357994", "target_type" : "place" }
+{ "asset_uid" : "asset:wikimedia-commons:File:Kadesh relief.jpg", "basis" : null, "created_at" : "TS", "item" : "Q203729", "property" : "P1299", "rank" : 0, "role" : "depiction", "target_id" : "battle_of_kadesh", "target_type" : "event" }
+{ "asset_uid" : "asset:wikimedia-commons:File:Lions-Gate-Mycenae.jpg", "basis" : null, "created_at" : "TS", "item" : "Q132564", "property" : "P18", "rank" : 0, "role" : "image", "target_id" : "pleiades_570491", "target_type" : "place" }
+{ "asset_uid" : "asset:wikimedia-commons:File:Museum Hattusa - Boğazköy Museum, Boğazköy, Çorum, Turkey 05.jpg", "basis" : null, "created_at" : "TS", "item" : "Q203729", "property" : "P180", "rank" : 1, "role" : "depiction", "target_id" : "battle_of_kadesh", "target_type" : "event" }
+{ "asset_uid" : "asset:wikimedia-commons:File:Museum Hattusa - Boğazköy Museum, Boğazköy, Çorum, Turkey 20.jpg", "basis" : null, "created_at" : "TS", "item" : "Q203729", "property" : "P180", "rank" : 2, "role" : "depiction", "target_id" : "battle_of_kadesh", "target_type" : "event" }
+{ "asset_uid" : "asset:wikimedia-commons:File:Zygouries-General plan of the excavations.jpg", "basis" : "Pleiades place 757208100 links it (citesAsRelated)", "created_at" : "TS", "item" : null, "property" : null, "rank" : 0, "role" : "image", "target_id" : "pleiades_757208100", "target_type" : "place" }
+{ "asset_uid" : "asset:zq-own:fall_of_x-pd", "basis" : "the event's own item", "created_at" : "TS", "item" : null, "property" : null, "rank" : 0, "role" : "image", "target_id" : "fall_of_x", "target_type" : "event" }
+{ "asset_uid" : "asset:zq-own:pleiades_697725-anon", "basis" : null, "created_at" : "TS", "item" : null, "property" : null, "rank" : 2, "role" : "locator-map", "target_id" : "pleiades_697725", "target_type" : "place" }
+{ "asset_uid" : "asset:zq-own:pleiades_697725-by", "basis" : null, "created_at" : "TS", "item" : null, "property" : "P18", "rank" : 0, "role" : "image", "target_id" : "pleiades_697725", "target_type" : "place" }
+{ "asset_uid" : "asset:zq-search:s1", "basis" : "find_spot = Mycenae; 1500–1300 BCE within 1600–1100 BCE", "created_at" : "TS", "item" : null, "property" : null, "rank" : 0, "role" : "object", "target_id" : "pleiades_570491", "target_type" : "place" }
+## media_checks 17 rows
+{ "checked_at" : "TS", "found" : 0, "provider" : "open-library", "qid" : null, "target_id" : "zqol2000_b", "target_type" : "source" }
+{ "checked_at" : "TS", "found" : 0, "provider" : "wikimedia-commons", "qid" : "Q404", "target_id" : "fall_of_x", "target_type" : "event" }
+{ "checked_at" : "TS", "found" : 1, "provider" : "art-institute-chicago", "qid" : null, "target_id" : "geonames_146669", "target_type" : "place" }
+{ "checked_at" : "TS", "found" : 1, "provider" : "europeana", "qid" : null, "target_id" : "pleiades_570491", "target_type" : "place" }
+{ "checked_at" : "TS", "found" : 1, "provider" : "library-of-congress", "qid" : null, "target_id" : "pleiades_570491", "target_type" : "place" }
+{ "checked_at" : "TS", "found" : 1, "provider" : "met-museum", "qid" : null, "target_id" : "pleiades_570491", "target_type" : "place" }
+{ "checked_at" : "TS", "found" : 1, "provider" : "open-library", "qid" : null, "target_id" : "zqmt2020_x", "target_type" : "source" }
+{ "checked_at" : "TS", "found" : 1, "provider" : "open-library", "qid" : null, "target_id" : "zqol2000_a", "target_type" : "source" }
+{ "checked_at" : "TS", "found" : 1, "provider" : "pleiades", "qid" : null, "target_id" : "pleiades_757208100", "target_type" : "place" }
+{ "checked_at" : "TS", "found" : 1, "provider" : "smithsonian", "qid" : null, "target_id" : "geonames_357994", "target_type" : "place" }
+{ "checked_at" : "TS", "found" : 1, "provider" : "wikimedia-commons", "qid" : "Q132564", "target_id" : "pleiades_570491", "target_type" : "place" }
+{ "checked_at" : "TS", "found" : 1, "provider" : "zq-own", "qid" : "Q404", "target_id" : "fall_of_x", "target_type" : "event" }
+{ "checked_at" : "TS", "found" : 1, "provider" : "zq-search", "qid" : null, "target_id" : "pleiades_570491", "target_type" : "place" }
+{ "checked_at" : "TS", "found" : 2, "provider" : "cleveland-museum", "qid" : null, "target_id" : "geonames_146669", "target_type" : "place" }
+{ "checked_at" : "TS", "found" : 2, "provider" : "open-context", "qid" : null, "target_id" : "pleiades_697725", "target_type" : "place" }
+{ "checked_at" : "TS", "found" : 2, "provider" : "zq-own", "qid" : "Q5788", "target_id" : "pleiades_697725", "target_type" : "place" }
+{ "checked_at" : "TS", "found" : 3, "provider" : "wikimedia-commons-depicts", "qid" : "Q203729", "target_id" : "battle_of_kadesh", "target_type" : "event" }

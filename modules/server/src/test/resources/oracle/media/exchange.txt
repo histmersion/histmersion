@@ -1,0 +1,832 @@
+# the shared bundle's media entries
+== manifest.json
+== entities/sources.ndjson
+== entities/findings.ndjson
+== entities/articles.ndjson
+== entities/article-versions.ndjson
+== entities/assets.ndjson (3 lines)
+{ "caption" : "The plan of Zqtell", "geom" : "0101000020e6100000cdcccccccc4c41400000000000004440", "height" : 48, "kind" : "plan", "license" : "CC-BY-4.0", "mime" : "image/png", "name" : "fig-a.png", "origin" : "instance:xsrc", "period" : { "end" : -1200, "start" : -1600 }, "rev" : "DIGEST", "sha256" : "d467c9c7ff34b32f2a46ff358b491aac107a6924a028e3ec2570bac8494edca2", "sourceUid" : "source:zqfig2001_tell", "uid" : "asset:zqfig2001_tell/fig-a.png", "updatedAt" : "TS", "width" : 64 }
+{ "height" : 8, "license" : "CC-BY-4.0", "mime" : "image/png", "name" : "fig-b.png", "origin" : "instance:xsrc", "rev" : "DIGEST", "sha256" : "82ef7ad0b6273b1d057589ba0e499259965fa32331f09cdf89a0ff7d98d4d373", "sourceUid" : "source:zqfig2001_tell", "uid" : "asset:zqfig2001_tell/fig-b.png", "updatedAt" : "TS", "width" : 8 }
+{ "caption" : "The cove", "geom" : "0101000020e61000000000000000c041409a99999999994340", "height" : 90, "kind" : "photo", "license" : "CC0-1.0", "mime" : "image/jpeg", "name" : "fig-c.jpg", "origin" : "instance:xsrc", "period" : { "end" : -1300, "start" : -1400 }, "rev" : "DIGEST", "sha256" : "19a8cd6b43d945db1e2168e3e738fad64f53f1d239e03d23fef98805a9053445", "sourceUid" : "source:zqfig2001_tell", "uid" : "asset:zqfig2001_tell/fig-c.jpg", "updatedAt" : "TS", "width" : 120 }
+== entities/asset-links.ndjson (5 lines)
+{ "assetUid" : "asset:zqfig2001_tell/fig-a.png", "origin" : "instance:xsrc", "relation" : "depicts", "rev" : "DIGEST", "targetId" : "zq_tell", "targetType" : "place", "uid" : "tombstone:asset-link", "updatedAt" : "TS", "xywh" : "0,0,32,24" }
+{ "assetUid" : "asset:zqfig2001_tell/fig-a.png", "notes" : "the siege", "origin" : "instance:xsrc", "relation" : "illustrates", "rev" : "DIGEST", "targetId" : "zq_siege", "targetType" : "event", "targetUid" : "event:zq_siege", "uid" : "asset-link:zqfig2001_tell/fig-a.png:illustrates:event:zq_siege", "updatedAt" : "TS" }
+{ "assetUid" : "asset:zqfig2001_tell/fig-c.jpg", "origin" : "instance:xsrc", "relation" : "taken_at", "rev" : "DIGEST", "targetId" : "zqfig2001_tell#2", "targetType" : "finding", "uid" : "asset-link:zqfig2001_tell/fig-c.jpg:taken_at:finding:zqfig2001_tell#2", "updatedAt" : "TS" }
+{ "assetUid" : "asset:zqfig2001_tell/fig-c.jpg", "origin" : "instance:xsrc", "relation" : "page_of", "rev" : "DIGEST", "targetId" : "zqbook1999_ships", "targetType" : "source", "targetUid" : "source:zqbook1999_ships", "uid" : "asset-link:zqfig2001_tell/fig-c.jpg:page_of:source:zqbook1999_ships", "updatedAt" : "TS" }
+{ "assetUid" : "asset:zqfig2001_tell/fig-b.png", "origin" : "instance:xsrc", "relation" : "illustrates", "rev" : "DIGEST", "targetId" : "zq-article", "targetType" : "article", "uid" : "asset-link:zqfig2001_tell/fig-b.png:illustrates:article:zq-article", "updatedAt" : "TS" }
+== entities/attestations.ndjson
+== entities/events.ndjson
+== entities/goals.ndjson
+== entities/queue.ndjson
+== entities/places.ndjson
+== entities/periods.ndjson
+== entities/edges.ndjson
+== entities/unresolved-edges.ndjson
+== entities/assessments.ndjson
+== entities/aliases.ndjson
+== entities/article-aliases.ndjson
+== entities/event-aliases.ndjson
+== entities/goal-aliases.ndjson
+== entities/place-aliases.ndjson
+== entities/event-catalogue.ndjson
+== entities/event-candidates.ndjson
+== entities/event-checks.ndjson
+== entities/corrections.ndjson
+== entities/site-types.ndjson
+== entities/tombstones.ndjson (1 lines)
+{ "deletedAt" : "TS", "kind" : "asset-link", "origin" : "instance:xsrc", "uid" : "tombstone:asset-link" }
+== blobs/sha256/19/19a8cd6b43d945db1e2168e3e738fad64f53f1d239e03d23fef98805a9053445 6918 19a8cd6b43d945db1e2168e3e738fad64f53f1d239e03d23fef98805a9053445
+== blobs/sha256/66/66ca49a00f3574b46806e88435dcacc67a9499ec6d5d41dd7c4a8e94d0569148 154 66ca49a00f3574b46806e88435dcacc67a9499ec6d5d41dd7c4a8e94d0569148
+== blobs/sha256/82/82ef7ad0b6273b1d057589ba0e499259965fa32331f09cdf89a0ff7d98d4d373 268 82ef7ad0b6273b1d057589ba0e499259965fa32331f09cdf89a0ff7d98d4d373
+== blobs/sha256/96/96c49b953e62eb1fc2b9f0a903b6cea9320ad0ed5b73b710c8a1e56a764bfa6b 21 96c49b953e62eb1fc2b9f0a903b6cea9320ad0ed5b73b710c8a1e56a764bfa6b
+== blobs/sha256/d4/d467c9c7ff34b32f2a46ff358b491aac107a6924a028e3ec2570bac8494edca2 7024 d467c9c7ff34b32f2a46ff358b491aac107a6924a028e3ec2570bac8494edca2
+# imported into an empty collection
+200 {
+  "applied" : true,
+  "blobs" : 5,
+  "bundleId" : "UUID",
+  "conflicts" : [
+  ],
+  "counts" : [
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 2,
+      "keptLocal" : 0,
+      "kind" : "source",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 2,
+      "keptLocal" : 0,
+      "kind" : "finding",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 3,
+      "keptLocal" : 0,
+      "kind" : "asset",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 5,
+      "keptLocal" : 0,
+      "kind" : "asset-link",
+      "skippedDeleted" : 0,
+      "unchanged" : 1,
+      "updated" : 0
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 1,
+      "keptLocal" : 0,
+      "kind" : "event",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 2,
+      "keptLocal" : 0,
+      "kind" : "place",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    }
+  ],
+  "dryRun" : false,
+  "from" : {
+    "id" : "instance:xsrc",
+    "label" : null
+  },
+  "issues" : [
+  ],
+  "mergeId" : "UUID",
+  "notes" : [
+  ],
+  "planHash" : "DIGEST",
+  "problems" : [
+  ]
+}
+# its rows
+## assets 6 rows
+{ "author" : null, "bytes" : 268, "caption" : null, "citekey" : "zqfig2001_tell", "credit" : null, "geom" : null, "height" : 8, "kind" : null, "license" : "CC-BY-4.0", "license_url" : null, "mime" : "image/png", "name" : "fig-b.png", "origin" : "instance:xsrc", "original_url" : null, "period" : null, "provider" : null, "provider_key" : null, "retrieved_at" : null, "sha256" : "82ef7ad0b6273b1d057589ba0e499259965fa32331f09cdf89a0ff7d98d4d373", "source_url" : null, "thumb" : null, "thumbSha" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "thumb_height" : null, "thumb_mime" : null, "thumb_width" : null, "uid" : "asset:zqfig2001_tell/fig-b.png", "updated_at" : "TS", "width" : 8 }
+{ "author" : null, "bytes" : 2798, "caption" : null, "citekey" : "zqfig2001_tell", "credit" : null, "geom" : null, "height" : 30, "kind" : null, "license" : null, "license_url" : null, "mime" : "image/png", "name" : "fig-d-LABEL.png", "origin" : "instance:xsrc", "original_url" : null, "period" : null, "provider" : null, "provider_key" : null, "retrieved_at" : null, "sha256" : "e15a9b4f125c84fc9ee7e95be1febc8cafd4d4b8584ffde14d7f0d207ba1a9f9", "source_url" : null, "thumb" : null, "thumbSha" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "thumb_height" : null, "thumb_mime" : null, "thumb_width" : null, "uid" : "asset:zqfig2001_tell/fig-d.png", "updated_at" : "TS", "width" : 30 }
+{ "author" : null, "bytes" : 2798, "caption" : null, "citekey" : "zqfig2001_tell", "credit" : null, "geom" : null, "height" : 30, "kind" : null, "license" : null, "license_url" : null, "mime" : "image/png", "name" : "fig-d.png", "origin" : "instance:xhome", "original_url" : null, "period" : null, "provider" : null, "provider_key" : null, "retrieved_at" : null, "sha256" : "1879588c017378f0b4dde037964e244a5bfb584e7f5cded55b490174a774e554", "source_url" : null, "thumb" : null, "thumbSha" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "thumb_height" : null, "thumb_mime" : null, "thumb_width" : null, "uid" : "asset:zqfig2001_tell/fig-d.png", "updated_at" : "TS", "width" : 30 }
+{ "author" : null, "bytes" : 2798, "caption" : null, "citekey" : "zqfig2001_tell", "credit" : null, "geom" : null, "height" : 30, "kind" : null, "license" : null, "license_url" : null, "mime" : "image/png", "name" : "fig-e.png", "origin" : "instance:xsrc", "original_url" : null, "period" : null, "provider" : null, "provider_key" : null, "retrieved_at" : null, "sha256" : "1879588c017378f0b4dde037964e244a5bfb584e7f5cded55b490174a774e554", "source_url" : null, "thumb" : null, "thumbSha" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "thumb_height" : null, "thumb_mime" : null, "thumb_width" : null, "uid" : "asset:zqfig2001_tell/fig-e.png", "updated_at" : "TS", "width" : 30 }
+{ "author" : null, "bytes" : 6918, "caption" : "The cove", "citekey" : "zqfig2001_tell", "credit" : null, "geom" : "POINT(35.5 39.2)", "height" : 90, "kind" : "photo", "license" : "CC0-1.0", "license_url" : null, "mime" : "image/jpeg", "name" : "fig-c.jpg", "origin" : "instance:xsrc", "original_url" : null, "period" : "[-1400,-1299)", "provider" : null, "provider_key" : null, "retrieved_at" : null, "sha256" : "19a8cd6b43d945db1e2168e3e738fad64f53f1d239e03d23fef98805a9053445", "source_url" : null, "thumb" : null, "thumbSha" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "thumb_height" : null, "thumb_mime" : null, "thumb_width" : null, "uid" : "asset:zqfig2001_tell/fig-c.jpg", "updated_at" : "TS", "width" : 120 }
+{ "author" : null, "bytes" : 7024, "caption" : "The plan, revised", "citekey" : "zqfig2001_tell", "credit" : null, "geom" : "POINT(34.6 40)", "height" : 48, "kind" : "plan", "license" : "CC-BY-4.0", "license_url" : null, "mime" : "image/png", "name" : "fig-a.png", "origin" : "instance:xsrc", "original_url" : null, "period" : "[-1600,-1199)", "provider" : null, "provider_key" : null, "retrieved_at" : null, "sha256" : "d467c9c7ff34b32f2a46ff358b491aac107a6924a028e3ec2570bac8494edca2", "source_url" : null, "thumb" : null, "thumbSha" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "thumb_height" : null, "thumb_mime" : null, "thumb_width" : null, "uid" : "asset:zqfig2001_tell/fig-a.png", "updated_at" : "TS", "width" : 64 }
+## asset_links 6 rows
+{ "asset_name" : "fig-a.png", "citekey" : "zqfig2001_tell", "id" : 2, "notes" : "the siege", "origin" : "instance:xsrc", "relation" : "illustrates", "target_id" : "zq_siege", "target_type" : "event", "uid" : "asset-link:zqfig2001_tell/fig-a.png:illustrates:event:zq_siege", "updated_at" : "TS", "xywh" : null }
+{ "asset_name" : "fig-b.png", "citekey" : "zqfig2001_tell", "id" : 5, "notes" : null, "origin" : "instance:xsrc", "relation" : "illustrates", "target_id" : "zq-article", "target_type" : "article", "uid" : "asset-link:zqfig2001_tell/fig-b.png:illustrates:article:zq-article", "updated_at" : "TS", "xywh" : null }
+{ "asset_name" : "fig-c.jpg", "citekey" : "zqfig2001_tell", "id" : 3, "notes" : null, "origin" : "instance:xsrc", "relation" : "taken_at", "target_id" : "zqfig2001_tell#2", "target_type" : "finding", "uid" : "asset-link:zqfig2001_tell/fig-c.jpg:taken_at:finding:zqfig2001_tell#2", "updated_at" : "TS", "xywh" : null }
+{ "asset_name" : "fig-c.jpg", "citekey" : "zqfig2001_tell", "id" : 4, "notes" : null, "origin" : "instance:xsrc", "relation" : "page_of", "target_id" : "zqbook1999_ships", "target_type" : "source", "uid" : "asset-link:zqfig2001_tell/fig-c.jpg:page_of:source:zqbook1999_ships", "updated_at" : "TS", "xywh" : null }
+{ "asset_name" : "fig-c.jpg", "citekey" : "zqfig2001_tell", "id" : 6, "notes" : null, "origin" : "instance:xhome", "relation" : "depicts", "target_id" : "zq_tell", "target_type" : "place", "uid" : "asset-link:zqfig2001_tell/fig-c.jpg:depicts:place:zq_tell", "updated_at" : "TS", "xywh" : null }
+{ "asset_name" : "fig-d-LABEL.png", "citekey" : "zqfig2001_tell", "id" : 7, "notes" : null, "origin" : "instance:xsrc", "relation" : "depicts", "target_id" : "zq_cove", "target_type" : "place", "uid" : "asset-link:zqfig2001_tell/fig-d.png:depicts:place:zq_cove", "updated_at" : "TS", "xywh" : null }
+## media_links 0 rows
+## media_checks 0 rows
+# both sides' changes
+== src: caption
+200 {
+  "bytes" : 7024,
+  "caption" : "The plan, revised",
+  "height" : 48,
+  "kind" : "plan",
+  "lat" : 40.0,
+  "license" : "CC-BY-4.0",
+  "lon" : 34.6,
+  "mime" : "image/png",
+  "name" : "fig-a.png",
+  "periodEnd" : -1200,
+  "periodStart" : -1600,
+  "sha256" : "d467c9c7ff34b32f2a46ff358b491aac107a6924a028e3ec2570bac8494edca2",
+  "width" : 64
+}
+== home: caption
+200 {
+  "bytes" : 7024,
+  "caption" : "The plan (home)",
+  "height" : 48,
+  "kind" : "plan",
+  "lat" : 40.0,
+  "license" : "CC-BY-4.0",
+  "lon" : 34.6,
+  "mime" : "image/png",
+  "name" : "fig-a.png",
+  "periodEnd" : -1200,
+  "periodStart" : -1600,
+  "sha256" : "d467c9c7ff34b32f2a46ff358b491aac107a6924a028e3ec2570bac8494edca2",
+  "width" : 64
+}
+== src: a figure
+200 {
+  "citekey" : "zqfig2001_tell",
+  "stored" : 1
+}
+== home: the same name, other bytes
+200 {
+  "citekey" : "zqfig2001_tell",
+  "stored" : 1
+}
+== src: a figure under a name
+200 {
+  "citekey" : "zqfig2001_tell",
+  "stored" : 1
+}
+== src: a link
+200 {
+  "assetName" : "fig-d.png",
+  "citekey" : "zqfig2001_tell",
+  "id" : 8,
+  "notes" : null,
+  "relation" : "depicts",
+  "targetId" : "zq_cove",
+  "targetType" : "place",
+  "xywh" : null
+}
+== home: a link
+200 {
+  "assetName" : "fig-c.jpg",
+  "citekey" : "zqfig2001_tell",
+  "id" : 6,
+  "notes" : null,
+  "relation" : "depicts",
+  "targetId" : "zq_tell",
+  "targetType" : "place",
+  "xywh" : null
+}
+== src: a link deleted
+200 {
+  "deleted" : true,
+  "id" : 1
+}
+# the bundle's media entries
+== manifest.json
+== entities/sources.ndjson
+== entities/findings.ndjson
+== entities/articles.ndjson
+== entities/article-versions.ndjson
+== entities/assets.ndjson (5 lines)
+{ "caption" : "The plan, revised", "geom" : "0101000020e6100000cdcccccccc4c41400000000000004440", "height" : 48, "kind" : "plan", "license" : "CC-BY-4.0", "mime" : "image/png", "name" : "fig-a.png", "origin" : "instance:xsrc", "period" : { "end" : -1200, "start" : -1600 }, "rev" : "DIGEST", "sha256" : "d467c9c7ff34b32f2a46ff358b491aac107a6924a028e3ec2570bac8494edca2", "sourceUid" : "source:zqfig2001_tell", "uid" : "asset:zqfig2001_tell/fig-a.png", "updatedAt" : "TS", "width" : 64 }
+{ "height" : 8, "license" : "CC-BY-4.0", "mime" : "image/png", "name" : "fig-b.png", "origin" : "instance:xsrc", "rev" : "DIGEST", "sha256" : "82ef7ad0b6273b1d057589ba0e499259965fa32331f09cdf89a0ff7d98d4d373", "sourceUid" : "source:zqfig2001_tell", "uid" : "asset:zqfig2001_tell/fig-b.png", "updatedAt" : "TS", "width" : 8 }
+{ "caption" : "The cove", "geom" : "0101000020e61000000000000000c041409a99999999994340", "height" : 90, "kind" : "photo", "license" : "CC0-1.0", "mime" : "image/jpeg", "name" : "fig-c.jpg", "origin" : "instance:xsrc", "period" : { "end" : -1300, "start" : -1400 }, "rev" : "DIGEST", "sha256" : "19a8cd6b43d945db1e2168e3e738fad64f53f1d239e03d23fef98805a9053445", "sourceUid" : "source:zqfig2001_tell", "uid" : "asset:zqfig2001_tell/fig-c.jpg", "updatedAt" : "TS", "width" : 120 }
+{ "height" : 30, "mime" : "image/png", "name" : "fig-d.png", "origin" : "instance:xsrc", "rev" : "DIGEST", "sha256" : "e15a9b4f125c84fc9ee7e95be1febc8cafd4d4b8584ffde14d7f0d207ba1a9f9", "sourceUid" : "source:zqfig2001_tell", "uid" : "asset:zqfig2001_tell/fig-d.png", "updatedAt" : "TS", "width" : 30 }
+{ "height" : 30, "mime" : "image/png", "name" : "fig-e.png", "origin" : "instance:xsrc", "rev" : "DIGEST", "sha256" : "1879588c017378f0b4dde037964e244a5bfb584e7f5cded55b490174a774e554", "sourceUid" : "source:zqfig2001_tell", "uid" : "asset:zqfig2001_tell/fig-e.png", "updatedAt" : "TS", "width" : 30 }
+== entities/asset-links.ndjson (5 lines)
+{ "assetUid" : "asset:zqfig2001_tell/fig-a.png", "notes" : "the siege", "origin" : "instance:xsrc", "relation" : "illustrates", "rev" : "DIGEST", "targetId" : "zq_siege", "targetType" : "event", "targetUid" : "event:zq_siege", "uid" : "asset-link:zqfig2001_tell/fig-a.png:illustrates:event:zq_siege", "updatedAt" : "TS" }
+{ "assetUid" : "asset:zqfig2001_tell/fig-c.jpg", "origin" : "instance:xsrc", "relation" : "taken_at", "rev" : "DIGEST", "targetId" : "zqfig2001_tell#2", "targetType" : "finding", "uid" : "asset-link:zqfig2001_tell/fig-c.jpg:taken_at:finding:zqfig2001_tell#2", "updatedAt" : "TS" }
+{ "assetUid" : "asset:zqfig2001_tell/fig-c.jpg", "origin" : "instance:xsrc", "relation" : "page_of", "rev" : "DIGEST", "targetId" : "zqbook1999_ships", "targetType" : "source", "targetUid" : "source:zqbook1999_ships", "uid" : "asset-link:zqfig2001_tell/fig-c.jpg:page_of:source:zqbook1999_ships", "updatedAt" : "TS" }
+{ "assetUid" : "asset:zqfig2001_tell/fig-b.png", "origin" : "instance:xsrc", "relation" : "illustrates", "rev" : "DIGEST", "targetId" : "zq-article", "targetType" : "article", "uid" : "asset-link:zqfig2001_tell/fig-b.png:illustrates:article:zq-article", "updatedAt" : "TS" }
+{ "assetUid" : "asset:zqfig2001_tell/fig-d.png", "origin" : "instance:xsrc", "relation" : "depicts", "rev" : "DIGEST", "targetId" : "zq_cove", "targetType" : "place", "uid" : "asset-link:zqfig2001_tell/fig-d.png:depicts:place:zq_cove", "updatedAt" : "TS" }
+== entities/attestations.ndjson
+== entities/events.ndjson
+== entities/goals.ndjson
+== entities/queue.ndjson
+== entities/places.ndjson
+== entities/periods.ndjson
+== entities/edges.ndjson
+== entities/unresolved-edges.ndjson
+== entities/assessments.ndjson
+== entities/aliases.ndjson
+== entities/article-aliases.ndjson
+== entities/event-aliases.ndjson
+== entities/goal-aliases.ndjson
+== entities/place-aliases.ndjson
+== entities/event-catalogue.ndjson
+== entities/event-candidates.ndjson
+== entities/event-checks.ndjson
+== entities/corrections.ndjson
+== entities/site-types.ndjson
+== entities/tombstones.ndjson (2 lines)
+{ "deletedAt" : "TS", "kind" : "asset-link", "origin" : "instance:xsrc", "uid" : "tombstone:asset-link" }
+{ "deletedAt" : "TS", "kind" : "asset-link", "origin" : "instance:xsrc", "uid" : "tombstone:asset-link" }
+== blobs/sha256/18/1879588c017378f0b4dde037964e244a5bfb584e7f5cded55b490174a774e554 2798 1879588c017378f0b4dde037964e244a5bfb584e7f5cded55b490174a774e554
+== blobs/sha256/19/19a8cd6b43d945db1e2168e3e738fad64f53f1d239e03d23fef98805a9053445 6918 19a8cd6b43d945db1e2168e3e738fad64f53f1d239e03d23fef98805a9053445
+== blobs/sha256/66/66ca49a00f3574b46806e88435dcacc67a9499ec6d5d41dd7c4a8e94d0569148 154 66ca49a00f3574b46806e88435dcacc67a9499ec6d5d41dd7c4a8e94d0569148
+== blobs/sha256/82/82ef7ad0b6273b1d057589ba0e499259965fa32331f09cdf89a0ff7d98d4d373 268 82ef7ad0b6273b1d057589ba0e499259965fa32331f09cdf89a0ff7d98d4d373
+== blobs/sha256/96/96c49b953e62eb1fc2b9f0a903b6cea9320ad0ed5b73b710c8a1e56a764bfa6b 21 96c49b953e62eb1fc2b9f0a903b6cea9320ad0ed5b73b710c8a1e56a764bfa6b
+== blobs/sha256/d4/d467c9c7ff34b32f2a46ff358b491aac107a6924a028e3ec2570bac8494edca2 7024 d467c9c7ff34b32f2a46ff358b491aac107a6924a028e3ec2570bac8494edca2
+== blobs/sha256/e1/e15a9b4f125c84fc9ee7e95be1febc8cafd4d4b8584ffde14d7f0d207ba1a9f9 2798 e15a9b4f125c84fc9ee7e95be1febc8cafd4d4b8584ffde14d7f0d207ba1a9f9
+# the plan, round 1
+{
+  "asOf" : "TS",
+  "bundleId" : "UUID",
+  "changes" : 4,
+  "formatVersion" : 1,
+  "from" : {
+    "id" : "instance:xsrc",
+    "label" : null
+  },
+  "info" : [
+    "asset fig-d.png: that name is another figure's in its source here — the bundle's arrives as fig-d-LABEL.png"
+  ],
+  "into" : {
+    "id" : "instance:xhome",
+    "label" : null
+  },
+  "issues" : [
+    {
+      "condition" : null,
+      "decidedBy" : null,
+      "decision" : null,
+      "detail" : null,
+      "entity" : "asset",
+      "id" : "X-issue:changed-both-sides:fig-a.png:changed on both sides since the last imp",
+      "kind" : "changed-both-sides",
+      "left" : {
+        "label" : "fig-a.png",
+        "lines" : [
+        ],
+        "uid" : "asset:zqfig2001_tell/fig-a.png"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right"
+      ],
+      "right" : {
+        "label" : "fig-a.png",
+        "lines" : [
+        ],
+        "uid" : "asset:zqfig2001_tell/fig-a.png"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "changed on both sides since the last import",
+      "why" : [
+      ]
+    }
+  ],
+  "matches" : {
+    "byLedger" : 0,
+    "byScore" : 0,
+    "byStrongKey" : 0,
+    "byUid" : 2,
+    "deletedHere" : 0,
+    "sources" : 2,
+    "undecided" : 0,
+    "unmatched" : 0
+  },
+  "planHash" : "DIGEST",
+  "problems" : [
+  ],
+  "resolutionErrors" : [
+  ],
+  "resolved" : 0,
+  "schemaVersion" : "109",
+  "sources" : [
+  ]
+}
+# the plan, round 2
+{
+  "asOf" : "TS",
+  "bundleId" : "UUID",
+  "changes" : 5,
+  "formatVersion" : 1,
+  "from" : {
+    "id" : "instance:xsrc",
+    "label" : null
+  },
+  "info" : [
+    "asset fig-d.png: that name is another figure's in its source here — the bundle's arrives as fig-d-LABEL.png"
+  ],
+  "into" : {
+    "id" : "instance:xhome",
+    "label" : null
+  },
+  "issues" : [
+    {
+      "condition" : null,
+      "decidedBy" : "resolution",
+      "decision" : "keep-right",
+      "detail" : null,
+      "entity" : "asset",
+      "id" : "X-issue:changed-both-sides:fig-a.png:changed on both sides since the last imp",
+      "kind" : "changed-both-sides",
+      "left" : {
+        "label" : "fig-a.png",
+        "lines" : [
+        ],
+        "uid" : "asset:zqfig2001_tell/fig-a.png"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right"
+      ],
+      "right" : {
+        "label" : "fig-a.png",
+        "lines" : [
+        ],
+        "uid" : "asset:zqfig2001_tell/fig-a.png"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "changed on both sides since the last import",
+      "why" : [
+      ]
+    }
+  ],
+  "matches" : {
+    "byLedger" : 0,
+    "byScore" : 0,
+    "byStrongKey" : 0,
+    "byUid" : 2,
+    "deletedHere" : 0,
+    "sources" : 2,
+    "undecided" : 0,
+    "unmatched" : 0
+  },
+  "planHash" : "DIGEST",
+  "problems" : [
+  ],
+  "resolutionErrors" : [
+  ],
+  "resolved" : 1,
+  "schemaVersion" : "109",
+  "sources" : [
+  ]
+}
+# applied
+200 {
+  "bundle" : "DIGEST",
+  "elapsedMs" : N,
+  "error" : null,
+  "job" : "UUID",
+  "planHash" : "DIGEST",
+  "result" : {
+    "applied" : true,
+    "backup" : "histmersion-STAMP.dump",
+    "bundleId" : "UUID",
+    "counts" : [
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "source",
+        "skippedDeleted" : 0,
+        "unchanged" : 2,
+        "updated" : 0
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "finding",
+        "skippedDeleted" : 0,
+        "unchanged" : 2,
+        "updated" : 0
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 2,
+        "keptLocal" : 0,
+        "kind" : "asset",
+        "skippedDeleted" : 0,
+        "unchanged" : 2,
+        "updated" : 1
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 1,
+        "held" : 0,
+        "inserted" : 1,
+        "keptLocal" : 0,
+        "kind" : "asset-link",
+        "skippedDeleted" : 0,
+        "unchanged" : 5,
+        "updated" : 0
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "event",
+        "skippedDeleted" : 0,
+        "unchanged" : 1,
+        "updated" : 0
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "place",
+        "skippedDeleted" : 0,
+        "unchanged" : 2,
+        "updated" : 0
+      }
+    ],
+    "from" : {
+      "id" : "instance:xsrc",
+      "label" : null
+    },
+    "issues" : [
+    ],
+    "logEntry" : 1,
+    "mergeId" : "UUID",
+    "notes" : [
+    ],
+    "planHash" : "DIGEST",
+    "problems" : [
+    ],
+    "replanChanges" : 0,
+    "reviews" : [
+    ],
+    "tally" : {
+      "aliases" : 0,
+      "articlesBoth" : 0,
+      "articlesFastForward" : 0,
+      "articlesFromFile" : 0,
+      "articlesThreeWay" : 0,
+      "assetsMerged" : 0,
+      "attestationsDropped" : 0,
+      "attestationsReanchored" : 0,
+      "eventsMerged" : 0,
+      "findingsMerged" : 0,
+      "goalsMerged" : 0,
+      "periodsMerged" : 0,
+      "placesMerged" : 0,
+      "queueMerged" : 0,
+      "redirects" : 0,
+      "selfLoopsDropped" : 0,
+      "sourcesByScore" : 0,
+      "sourcesMerged" : 0,
+      "sourcesRenamed" : 0
+    }
+  },
+  "state" : "done"
+}
+# the ledger
+200 {
+  "entries" : [
+    {
+      "decision" : "FastForward",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "asset:zqfig2001_tell/fig-a.png",
+      "kind" : "asset",
+      "label" : "fig-a.png",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "asset:zqfig2001_tell/fig-a.png",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Delete",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "tombstone:asset-link",
+      "kind" : "asset-link",
+      "label" : null,
+      "localRevAfter" : null,
+      "localUid" : "tombstone:asset-link",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "asset:zqfig2001_tell/fig-d.png",
+      "kind" : "asset",
+      "label" : "fig-d-LABEL.png",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "asset:zqfig2001_tell/fig-d.png",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "asset:zqfig2001_tell/fig-e.png",
+      "kind" : "asset",
+      "label" : "fig-e.png",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "asset:zqfig2001_tell/fig-e.png",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "asset-link:zqfig2001_tell/fig-d.png:depicts:place:zq_cove",
+      "kind" : "asset-link",
+      "label" : null,
+      "localRevAfter" : "DIGEST",
+      "localUid" : "asset-link:zqfig2001_tell/fig-d.png:depicts:place:zq_cove",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "place:zq_tell",
+      "kind" : "place",
+      "label" : "zq_tell",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "place:zq_tell",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "place:zq_cove",
+      "kind" : "place",
+      "label" : "zq_cove",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "place:zq_cove",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "source:zqfig2001_tell",
+      "kind" : "source",
+      "label" : "zqfig2001_tell",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "source:zqfig2001_tell",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "finding:zqfig2001_tell#0",
+      "kind" : "finding",
+      "label" : "zqfig2001_tell#0",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "finding:zqfig2001_tell#0",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "finding:zqfig2001_tell#1",
+      "kind" : "finding",
+      "label" : "zqfig2001_tell#1",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "finding:zqfig2001_tell#1",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "source:zqbook1999_ships",
+      "kind" : "source",
+      "label" : "zqbook1999_ships",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "source:zqbook1999_ships",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "event:zq_siege",
+      "kind" : "event",
+      "label" : "zq_siege",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "event:zq_siege",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "asset:zqfig2001_tell/fig-b.png",
+      "kind" : "asset",
+      "label" : "fig-b.png",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "asset:zqfig2001_tell/fig-b.png",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "asset:zqfig2001_tell/fig-c.jpg",
+      "kind" : "asset",
+      "label" : "fig-c.jpg",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "asset:zqfig2001_tell/fig-c.jpg",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "asset-link:zqfig2001_tell/fig-a.png:illustrates:event:zq_siege",
+      "kind" : "asset-link",
+      "label" : null,
+      "localRevAfter" : "DIGEST",
+      "localUid" : "asset-link:zqfig2001_tell/fig-a.png:illustrates:event:zq_siege",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "asset-link:zqfig2001_tell/fig-c.jpg:taken_at:finding:zqfig2001_tell#2",
+      "kind" : "asset-link",
+      "label" : null,
+      "localRevAfter" : "DIGEST",
+      "localUid" : "asset-link:zqfig2001_tell/fig-c.jpg:taken_at:finding:zqfig2001_tell#2",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "asset-link:zqfig2001_tell/fig-c.jpg:page_of:source:zqbook1999_ships",
+      "kind" : "asset-link",
+      "label" : null,
+      "localRevAfter" : "DIGEST",
+      "localUid" : "asset-link:zqfig2001_tell/fig-c.jpg:page_of:source:zqbook1999_ships",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "asset-link:zqfig2001_tell/fig-b.png:illustrates:article:zq-article",
+      "kind" : "asset-link",
+      "label" : null,
+      "localRevAfter" : "DIGEST",
+      "localUid" : "asset-link:zqfig2001_tell/fig-b.png:illustrates:article:zq-article",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "RecordTombstone",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "tombstone:asset-link",
+      "kind" : "asset-link",
+      "label" : null,
+      "localRevAfter" : null,
+      "localUid" : "tombstone:asset-link",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    }
+  ],
+  "query" : null,
+  "redirects" : [
+  ]
+}
+# home's rows
+## assets 6 rows
+{ "author" : null, "bytes" : 268, "caption" : null, "citekey" : "zqfig2001_tell", "credit" : null, "geom" : null, "height" : 8, "kind" : null, "license" : "CC-BY-4.0", "license_url" : null, "mime" : "image/png", "name" : "fig-b.png", "origin" : "instance:xsrc", "original_url" : null, "period" : null, "provider" : null, "provider_key" : null, "retrieved_at" : null, "sha256" : "82ef7ad0b6273b1d057589ba0e499259965fa32331f09cdf89a0ff7d98d4d373", "source_url" : null, "thumb" : null, "thumbSha" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "thumb_height" : null, "thumb_mime" : null, "thumb_width" : null, "uid" : "asset:zqfig2001_tell/fig-b.png", "updated_at" : "TS", "width" : 8 }
+{ "author" : null, "bytes" : 2798, "caption" : null, "citekey" : "zqfig2001_tell", "credit" : null, "geom" : null, "height" : 30, "kind" : null, "license" : null, "license_url" : null, "mime" : "image/png", "name" : "fig-d-LABEL.png", "origin" : "instance:xsrc", "original_url" : null, "period" : null, "provider" : null, "provider_key" : null, "retrieved_at" : null, "sha256" : "e15a9b4f125c84fc9ee7e95be1febc8cafd4d4b8584ffde14d7f0d207ba1a9f9", "source_url" : null, "thumb" : null, "thumbSha" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "thumb_height" : null, "thumb_mime" : null, "thumb_width" : null, "uid" : "asset:zqfig2001_tell/fig-d.png", "updated_at" : "TS", "width" : 30 }
+{ "author" : null, "bytes" : 2798, "caption" : null, "citekey" : "zqfig2001_tell", "credit" : null, "geom" : null, "height" : 30, "kind" : null, "license" : null, "license_url" : null, "mime" : "image/png", "name" : "fig-d.png", "origin" : "instance:xhome", "original_url" : null, "period" : null, "provider" : null, "provider_key" : null, "retrieved_at" : null, "sha256" : "1879588c017378f0b4dde037964e244a5bfb584e7f5cded55b490174a774e554", "source_url" : null, "thumb" : null, "thumbSha" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "thumb_height" : null, "thumb_mime" : null, "thumb_width" : null, "uid" : "asset:zqfig2001_tell/fig-d.png", "updated_at" : "TS", "width" : 30 }
+{ "author" : null, "bytes" : 2798, "caption" : null, "citekey" : "zqfig2001_tell", "credit" : null, "geom" : null, "height" : 30, "kind" : null, "license" : null, "license_url" : null, "mime" : "image/png", "name" : "fig-e.png", "origin" : "instance:xsrc", "original_url" : null, "period" : null, "provider" : null, "provider_key" : null, "retrieved_at" : null, "sha256" : "1879588c017378f0b4dde037964e244a5bfb584e7f5cded55b490174a774e554", "source_url" : null, "thumb" : null, "thumbSha" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "thumb_height" : null, "thumb_mime" : null, "thumb_width" : null, "uid" : "asset:zqfig2001_tell/fig-e.png", "updated_at" : "TS", "width" : 30 }
+{ "author" : null, "bytes" : 6918, "caption" : "The cove", "citekey" : "zqfig2001_tell", "credit" : null, "geom" : "POINT(35.5 39.2)", "height" : 90, "kind" : "photo", "license" : "CC0-1.0", "license_url" : null, "mime" : "image/jpeg", "name" : "fig-c.jpg", "origin" : "instance:xsrc", "original_url" : null, "period" : "[-1400,-1299)", "provider" : null, "provider_key" : null, "retrieved_at" : null, "sha256" : "19a8cd6b43d945db1e2168e3e738fad64f53f1d239e03d23fef98805a9053445", "source_url" : null, "thumb" : null, "thumbSha" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "thumb_height" : null, "thumb_mime" : null, "thumb_width" : null, "uid" : "asset:zqfig2001_tell/fig-c.jpg", "updated_at" : "TS", "width" : 120 }
+{ "author" : null, "bytes" : 7024, "caption" : "The plan, revised", "citekey" : "zqfig2001_tell", "credit" : null, "geom" : "POINT(34.6 40)", "height" : 48, "kind" : "plan", "license" : "CC-BY-4.0", "license_url" : null, "mime" : "image/png", "name" : "fig-a.png", "origin" : "instance:xsrc", "original_url" : null, "period" : "[-1600,-1199)", "provider" : null, "provider_key" : null, "retrieved_at" : null, "sha256" : "d467c9c7ff34b32f2a46ff358b491aac107a6924a028e3ec2570bac8494edca2", "source_url" : null, "thumb" : null, "thumbSha" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "thumb_height" : null, "thumb_mime" : null, "thumb_width" : null, "uid" : "asset:zqfig2001_tell/fig-a.png", "updated_at" : "TS", "width" : 64 }
+## asset_links 6 rows
+{ "asset_name" : "fig-a.png", "citekey" : "zqfig2001_tell", "id" : 2, "notes" : "the siege", "origin" : "instance:xsrc", "relation" : "illustrates", "target_id" : "zq_siege", "target_type" : "event", "uid" : "asset-link:zqfig2001_tell/fig-a.png:illustrates:event:zq_siege", "updated_at" : "TS", "xywh" : null }
+{ "asset_name" : "fig-b.png", "citekey" : "zqfig2001_tell", "id" : 5, "notes" : null, "origin" : "instance:xsrc", "relation" : "illustrates", "target_id" : "zq-article", "target_type" : "article", "uid" : "asset-link:zqfig2001_tell/fig-b.png:illustrates:article:zq-article", "updated_at" : "TS", "xywh" : null }
+{ "asset_name" : "fig-c.jpg", "citekey" : "zqfig2001_tell", "id" : 3, "notes" : null, "origin" : "instance:xsrc", "relation" : "taken_at", "target_id" : "zqfig2001_tell#2", "target_type" : "finding", "uid" : "asset-link:zqfig2001_tell/fig-c.jpg:taken_at:finding:zqfig2001_tell#2", "updated_at" : "TS", "xywh" : null }
+{ "asset_name" : "fig-c.jpg", "citekey" : "zqfig2001_tell", "id" : 4, "notes" : null, "origin" : "instance:xsrc", "relation" : "page_of", "target_id" : "zqbook1999_ships", "target_type" : "source", "uid" : "asset-link:zqfig2001_tell/fig-c.jpg:page_of:source:zqbook1999_ships", "updated_at" : "TS", "xywh" : null }
+{ "asset_name" : "fig-c.jpg", "citekey" : "zqfig2001_tell", "id" : 6, "notes" : null, "origin" : "instance:xhome", "relation" : "depicts", "target_id" : "zq_tell", "target_type" : "place", "uid" : "asset-link:zqfig2001_tell/fig-c.jpg:depicts:place:zq_tell", "updated_at" : "TS", "xywh" : null }
+{ "asset_name" : "fig-d-LABEL.png", "citekey" : "zqfig2001_tell", "id" : 7, "notes" : null, "origin" : "instance:xsrc", "relation" : "depicts", "target_id" : "zq_cove", "target_type" : "place", "uid" : "asset-link:zqfig2001_tell/fig-d.png:depicts:place:zq_cove", "updated_at" : "TS", "xywh" : null }
+## media_links 0 rows
+## media_checks 0 rows
+# the changes since the shared history imported into a copy
+200 {
+  "applied" : true,
+  "blobs" : 3,
+  "bundleId" : "UUID",
+  "conflicts" : [
+  ],
+  "counts" : [
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 0,
+      "keptLocal" : 0,
+      "kind" : "source",
+      "skippedDeleted" : 0,
+      "unchanged" : 1,
+      "updated" : 0
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 2,
+      "keptLocal" : 0,
+      "kind" : "asset",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 1
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 1,
+      "held" : 0,
+      "inserted" : 1,
+      "keptLocal" : 0,
+      "kind" : "asset-link",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    }
+  ],
+  "dryRun" : false,
+  "from" : {
+    "id" : "instance:xsrc",
+    "label" : null
+  },
+  "issues" : [
+  ],
+  "mergeId" : "UUID",
+  "notes" : [
+  ],
+  "planHash" : "DIGEST",
+  "problems" : [
+  ]
+}
+# the copy's rows
+## assets 5 rows
+{ "author" : null, "bytes" : 268, "caption" : null, "citekey" : "zqfig2001_tell", "credit" : null, "geom" : null, "height" : 8, "kind" : null, "license" : "CC-BY-4.0", "license_url" : null, "mime" : "image/png", "name" : "fig-b.png", "origin" : "instance:xsrc", "original_url" : null, "period" : null, "provider" : null, "provider_key" : null, "retrieved_at" : null, "sha256" : "82ef7ad0b6273b1d057589ba0e499259965fa32331f09cdf89a0ff7d98d4d373", "source_url" : null, "thumb" : null, "thumbSha" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "thumb_height" : null, "thumb_mime" : null, "thumb_width" : null, "uid" : "asset:zqfig2001_tell/fig-b.png", "updated_at" : "TS", "width" : 8 }
+{ "author" : null, "bytes" : 2798, "caption" : null, "citekey" : "zqfig2001_tell", "credit" : null, "geom" : null, "height" : 30, "kind" : null, "license" : null, "license_url" : null, "mime" : "image/png", "name" : "fig-d.png", "origin" : "instance:xsrc", "original_url" : null, "period" : null, "provider" : null, "provider_key" : null, "retrieved_at" : null, "sha256" : "e15a9b4f125c84fc9ee7e95be1febc8cafd4d4b8584ffde14d7f0d207ba1a9f9", "source_url" : null, "thumb" : null, "thumbSha" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "thumb_height" : null, "thumb_mime" : null, "thumb_width" : null, "uid" : "asset:zqfig2001_tell/fig-d.png", "updated_at" : "TS", "width" : 30 }
+{ "author" : null, "bytes" : 2798, "caption" : null, "citekey" : "zqfig2001_tell", "credit" : null, "geom" : null, "height" : 30, "kind" : null, "license" : null, "license_url" : null, "mime" : "image/png", "name" : "fig-e.png", "origin" : "instance:xsrc", "original_url" : null, "period" : null, "provider" : null, "provider_key" : null, "retrieved_at" : null, "sha256" : "1879588c017378f0b4dde037964e244a5bfb584e7f5cded55b490174a774e554", "source_url" : null, "thumb" : null, "thumbSha" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "thumb_height" : null, "thumb_mime" : null, "thumb_width" : null, "uid" : "asset:zqfig2001_tell/fig-e.png", "updated_at" : "TS", "width" : 30 }
+{ "author" : null, "bytes" : 6918, "caption" : "The cove", "citekey" : "zqfig2001_tell", "credit" : null, "geom" : "POINT(35.5 39.2)", "height" : 90, "kind" : "photo", "license" : "CC0-1.0", "license_url" : null, "mime" : "image/jpeg", "name" : "fig-c.jpg", "origin" : "instance:xsrc", "original_url" : null, "period" : "[-1400,-1299)", "provider" : null, "provider_key" : null, "retrieved_at" : null, "sha256" : "19a8cd6b43d945db1e2168e3e738fad64f53f1d239e03d23fef98805a9053445", "source_url" : null, "thumb" : null, "thumbSha" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "thumb_height" : null, "thumb_mime" : null, "thumb_width" : null, "uid" : "asset:zqfig2001_tell/fig-c.jpg", "updated_at" : "TS", "width" : 120 }
+{ "author" : null, "bytes" : 7024, "caption" : "The plan, revised", "citekey" : "zqfig2001_tell", "credit" : null, "geom" : "POINT(34.6 40)", "height" : 48, "kind" : "plan", "license" : "CC-BY-4.0", "license_url" : null, "mime" : "image/png", "name" : "fig-a.png", "origin" : "instance:xsrc", "original_url" : null, "period" : "[-1600,-1199)", "provider" : null, "provider_key" : null, "retrieved_at" : null, "sha256" : "d467c9c7ff34b32f2a46ff358b491aac107a6924a028e3ec2570bac8494edca2", "source_url" : null, "thumb" : null, "thumbSha" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "thumb_height" : null, "thumb_mime" : null, "thumb_width" : null, "uid" : "asset:zqfig2001_tell/fig-a.png", "updated_at" : "TS", "width" : 64 }
+## asset_links 5 rows
+{ "asset_name" : "fig-a.png", "citekey" : "zqfig2001_tell", "id" : 2, "notes" : "the siege", "origin" : "instance:xsrc", "relation" : "illustrates", "target_id" : "zq_siege", "target_type" : "event", "uid" : "asset-link:zqfig2001_tell/fig-a.png:illustrates:event:zq_siege", "updated_at" : "TS", "xywh" : null }
+{ "asset_name" : "fig-b.png", "citekey" : "zqfig2001_tell", "id" : 5, "notes" : null, "origin" : "instance:xsrc", "relation" : "illustrates", "target_id" : "zq-article", "target_type" : "article", "uid" : "asset-link:zqfig2001_tell/fig-b.png:illustrates:article:zq-article", "updated_at" : "TS", "xywh" : null }
+{ "asset_name" : "fig-c.jpg", "citekey" : "zqfig2001_tell", "id" : 3, "notes" : null, "origin" : "instance:xsrc", "relation" : "taken_at", "target_id" : "zqfig2001_tell#2", "target_type" : "finding", "uid" : "asset-link:zqfig2001_tell/fig-c.jpg:taken_at:finding:zqfig2001_tell#2", "updated_at" : "TS", "xywh" : null }
+{ "asset_name" : "fig-c.jpg", "citekey" : "zqfig2001_tell", "id" : 4, "notes" : null, "origin" : "instance:xsrc", "relation" : "page_of", "target_id" : "zqbook1999_ships", "target_type" : "source", "uid" : "asset-link:zqfig2001_tell/fig-c.jpg:page_of:source:zqbook1999_ships", "updated_at" : "TS", "xywh" : null }
+{ "asset_name" : "fig-d.png", "citekey" : "zqfig2001_tell", "id" : 6, "notes" : null, "origin" : "instance:xsrc", "relation" : "depicts", "target_id" : "zq_cove", "target_type" : "place", "uid" : "asset-link:zqfig2001_tell/fig-d.png:depicts:place:zq_cove", "updated_at" : "TS", "xywh" : null }
+## media_links 0 rows
+## media_checks 0 rows
