@@ -29,7 +29,7 @@ final class ApprovalDigestService(
     ApprovalKind.parse(k).exists(kk => agents.autoApprovals.Kinds.contains(kk) && cfg.approvals.checked(kk))
 
   /** The digest as of `now`. */
-  def digest(now: Instant = Instant.now()): Digest =
+  def digest(now: Instant = Instant.now(agents.clock)): Digest =
     val open = AgentRepo.openLight(ds)
     val wait = agents.focus.goalPlansWait()
     Digest(
@@ -41,11 +41,14 @@ final class ApprovalDigestService(
       wait
     )
 
-  /** From the managers' tick: once a UTC day, after `digest-hour`, the digest's line goes to the worklog. */
+  /** From the managers' tick: once a UTC day (the tick's), after `digest-hour` (on the tick's time or on the digest's
+    * clock, when it has one: [[AgentsHandlers.digestClock]]), the digest's line goes to the worklog.
+    */
   def tick(now: Instant): List[String] =
     val hour = cfg.autopilot.digestHour
     val day = ManagerPolicy.dayStart(now)
-    val due = hour >= 0 && !now.isBefore(day.plusSeconds(math.min(23, hour).toLong * 3600L)) &&
+    def pastHour(t: Instant) = !t.isBefore(ManagerPolicy.dayStart(t).plusSeconds(math.min(23, hour).toLong * 3600L))
+    val due = hour >= 0 && (pastHour(now) || agents.digestClock.exists(c => pastHour(Instant.now(c)))) &&
       AutopilotRepo.lastDigest(ds).flatMap(ManagerPolicy.parseInstant).forall(_.isBefore(day))
     if !due then Nil
     else

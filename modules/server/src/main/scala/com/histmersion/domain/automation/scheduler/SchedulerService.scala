@@ -290,7 +290,11 @@ final class SchedulerService(
   // ── what it shows ──────────────────────────────────────────────────────────────────────────────
 
   /** The status: the last pass (or a dry one), the first `limit` waiting items (default 50). */
-  def status(limit: Option[Int] = None, now: Instant = Instant.now(), changes: List[String] = Nil): SchedulerStatus =
+  def status(
+      limit: Option[Int] = None,
+      now: Instant = Instant.now(agents.clock),
+      changes: List[String] = Nil
+  ): SchedulerStatus =
     val snap = last.getOrElse(dry(now))
     val s = snap.s
     val shown = math.max(0, limit.getOrElse(50))
@@ -355,7 +359,7 @@ final class SchedulerService(
     )
 
   /** Why one item (its id, or a target among the open items) is where it is. */
-  def why(ref: String, now: Instant = Instant.now()): Either[ApiError, WhyInfo] =
+  def why(ref: String, now: Instant = Instant.now(agents.clock)): Either[ApiError, WhyInfo] =
     val r = ref.trim
     val item = r
       .stripPrefix("#")
@@ -444,7 +448,7 @@ final class SchedulerService(
     * counts as progress), the one reason it stands still and what unblocks it ([[Stalls.classify]]): waiting for a
     * person, draining, paused, a budget, quota, the scheduler's queue, a block, a failed item, no candidates, idle.
     */
-  def stalls(days: Option[Int] = None, now: Instant = Instant.now()): Stalls.StallReport =
+  def stalls(days: Option[Int] = None, now: Instant = Instant.now(agents.clock)): Stalls.StallReport =
     val n = math.max(0, days.getOrElse(cfg.autopilot.stallDays))
     val goals = FocusRepo.goals(ds).filterNot(g => GoalFocus.finished(g.status))
     val progress = ManagerRepo.lastProgress(ds)
@@ -496,7 +500,7 @@ final class SchedulerService(
   /** Switch the strategy live (`default` = back to agents.scheduler.strategy); the next tick uses it (nudged now).
     * Answers what a pass would do with it.
     */
-  def set(in: SchedulerSet, now: Instant = Instant.now()): Either[ApiError, SchedulerStatus] =
+  def set(in: SchedulerSet, now: Instant = Instant.now(agents.clock)): Either[ApiError, SchedulerStatus] =
     val by = in.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")
     val name = in.strategy.trim.toLowerCase(java.util.Locale.ROOT)
     val done: Either[ApiError, String] =

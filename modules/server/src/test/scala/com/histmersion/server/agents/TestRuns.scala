@@ -12,6 +12,14 @@ import javax.sql.DataSource
 object TestRuns:
   private def runs(ds: DataSource): JobRuns = JobRuns(Transactor(ds))
 
+  /** The clock the time-of-day suites run on: noon UTC of the day it is made, moving with the wall clock — after the
+    * approval digest's hour, and hours away from a watcher's weekly cron at 22:30 and from midnight, whenever they run.
+    */
+  def noonClock(wall: java.time.Clock = java.time.Clock.systemUTC()): java.time.Clock =
+    val now = java.time.Instant.now(wall)
+    val noon = now.truncatedTo(java.time.temporal.ChronoUnit.DAYS).plusSeconds(12L * 3600L)
+    java.time.Clock.offset(wall, java.time.Duration.between(now, noon))
+
   def create(
       ds: DataSource,
       p: Pipeline,

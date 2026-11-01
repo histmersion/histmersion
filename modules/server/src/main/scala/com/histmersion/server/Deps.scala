@@ -95,9 +95,10 @@ object Deps:
       queryDs: DataSource,
       maintenance: WriteGate = WriteGate(),
       configFile: ConfigFileInfo = ConfigFileInfo(),
-      plugins: Generation = ServerPlugins.offline
+      plugins: Generation = ServerPlugins.offline,
+      clock: Clock = Clock.systemUTC()
   ): Deps =
-    new Deps(() => cfg, ds, queryDs, maintenance, () => configFile, () => plugins)
+    new Deps(() => cfg, ds, queryDs, maintenance, () => configFile, () => plugins, clock = clock)
 
   /** A fixed `Deps` whose read-only DataSource is the application one: for a test that does not exercise `query` (a
     * second role would need a second pool someone has to own and close).

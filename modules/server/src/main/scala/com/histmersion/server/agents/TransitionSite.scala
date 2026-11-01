@@ -12,13 +12,15 @@ import javax.sql.DataSource
 import scala.collection.immutable.ListMap
 
 /** The engine's [[EngineSite]] over the composition's `Deps` and today's handlers. */
-final class TransitionSite(deps: Deps, h: Handlers) extends EngineSite:
+final class TransitionSite(deps: Deps, h: Handlers, digestOn: Option[java.time.Clock] = None) extends EngineSite:
   def config: AppConfig = deps.cfg
   def ds: DataSource = deps.ds
   def queues: QueueService = deps.queues
   def workLists: WorkListControllers = deps.workLists
   def pins: Pinning = deps.pins
   def jobStops: JobStops = deps.jobStops
+  def clock: java.time.Clock = deps.clock
+  def digestClock: Option[java.time.Clock] = digestOn
   def aiProviders: () => ListMap[String, AiProvider] = () => deps.plugins.registries.aiProviders
   def roster: AgentRoster = TransitionWorkflows.roster
   def contributions(a: AgentsHandlers): Contributions = TransitionWorkflows.contributions(deps, h, a)
