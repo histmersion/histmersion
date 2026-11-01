@@ -298,7 +298,7 @@ final class AgentDoctor(
   private def codex(models: List[ModelRef]): List[DoctorCheck] =
     val cc = cfg.providers.codex
     val level = if models.nonEmpty then fail else warn
-    val home = AgentTrees(app, AgentDefinitions(Prompts(cfg.promptsDir), Nil)).codexHome
+    val home = AgentTrees(app, AgentDefinitions(Prompts(cfg.promptsDir), AgentRoster.none)).codexHome
     val login = home.map { h =>
       if java.nio.file.Files.isRegularFile(h.resolve("auth.json")) then ok("login", s"$h has a login (never read here)")
       else level("login", s"no login in $h — run `CODEX_HOME=\"$h\" ${cc.command} login` once")

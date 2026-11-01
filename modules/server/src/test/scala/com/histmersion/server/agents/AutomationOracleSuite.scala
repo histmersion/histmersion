@@ -37,7 +37,7 @@ class AutomationOracleSuite extends munit.FunSuite:
     MessageDigest.getInstance("SHA-256").digest(bytes).map(b => f"${b & 0xff}%02x").mkString
 
   test("agent-trees.txt: every generated file of every runtime, the definitions' fingerprint, the answer"):
-    val defs = AgentDefinitions(Prompts(""), TransitionTools.names)
+    val defs = AgentDefinitions(Prompts(""), TransitionWorkflows.roster)
     val out = Files.createTempDirectory("histmersion-agent-trees")
     val trees = AgentTrees(loaded.config, defs)
     val known = Generated.known(defs)

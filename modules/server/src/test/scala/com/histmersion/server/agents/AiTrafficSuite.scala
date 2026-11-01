@@ -177,7 +177,7 @@ class AiTrafficSuite extends munit.FunSuite:
     up.script(answers)
     val l = loaded(text)
     val g = ServerPlugins.load(l)
-    val f = LlmClient.factory(CliRuntime(l.config, TransitionTools.names), () => g.registries.aiProviders)
+    val f = LlmClient.factory(CliRuntime(l.config, TransitionWorkflows.roster), () => g.registries.aiProviders)
     val sb = StringBuilder(s"## $name\n")
     f(l.config.agents, ref) match
       case Left(why)     => sb ++= s"client: refused: $why\n"

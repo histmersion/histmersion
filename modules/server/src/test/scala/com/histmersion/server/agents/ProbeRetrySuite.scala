@@ -90,7 +90,7 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
     * no plan pool is read).
     */
   private def claudeHandlers(fake: FakeCli.Fake): AgentsHandlers =
-    val rt = CliRuntime(FakeCli.app(Files.createTempDirectory("hm-agents-")), TransitionTools.names)
+    val rt = CliRuntime(FakeCli.app(Files.createTempDirectory("hm-agents-")), TransitionWorkflows.roster)
     assert(rt.trees.generate(Generated.known(rt.definitions), List(AgentRuntime.ClaudeCode)).isRight)
     val client = ClaudeCodeClient(
       Haiku,

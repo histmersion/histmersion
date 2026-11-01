@@ -680,7 +680,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         """"usage":{"input_tokens":100,"output_tokens":20},"modelUsage":{"claude-haiku-4-5-20251001":{"inputTokens":10,"outputTokens":2},""" +
         """"claude-haiku-5-5":{"inputTokens":90,"outputTokens":18}}}"""
     val fake = FakeCli("claude", List(ClaudeStreams.Init, result))
-    val rt = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")), TransitionTools.names)
+    val rt = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")), TransitionWorkflows.roster)
     val Plan = ModelRef(ProviderKind.ClaudeCode, "haiku")
     val client = ClaudeCodeClient(Plan, baseCfg.agents.providers.claudeCode.copy(command = fake.script.toString), rt)
     val cfg = evalCfg.copy(agents = evalCfg.agents.copy(roles = evalCfg.agents.roles.copy(extractor = Plan.wire)))
@@ -727,7 +727,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         )
       )
     )
-    val rt = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")), TransitionTools.names)
+    val rt = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")), TransitionWorkflows.roster)
     val Plan = ModelRef(ProviderKind.ClaudeCode, "sonnet")
     val client = ClaudeCodeClient(Plan, baseCfg.agents.providers.claudeCode.copy(command = fake.script.toString), rt)
     val cfg = evalCfg.copy(agents = evalCfg.agents.copy(roles = evalCfg.agents.roles.copy(extractor = Plan.wire)))
@@ -848,7 +848,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   /** A run of `pipeline` on the fake `claude`, configured with `agents.step.max-tokens = stepCap`. */
   private def claudeRun(fake: FakeCli.Fake, stepCap: Int, pipeline: PipelineDef): (AgentsHandlers, String) =
-    val rt = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")), TransitionTools.names)
+    val rt = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")), TransitionWorkflows.roster)
     val Plan = ModelRef(ProviderKind.ClaudeCode, "haiku")
     val client = ClaudeCodeClient(Plan, baseCfg.agents.providers.claudeCode.copy(command = fake.script.toString), rt)
     val cfg = evalCfg.copy(agents =
