@@ -1,0 +1,1294 @@
+== sources before
+200 [
+  {
+    "citation" : "GeoNames (geonames.org)",
+    "file" : "TMP/gaz-extracts/geonames-fixture.ndjson.gz",
+    "importedAt" : null,
+    "importedVersion" : null,
+    "key" : "geonames",
+    "kind" : "geonames",
+    "licence" : "CC BY 4.0",
+    "links" : null,
+    "names" : null,
+    "periodEnd" : null,
+    "periodStart" : null,
+    "pinnedVersion" : "fixture-1",
+    "places" : null,
+    "present" : true,
+    "title" : "GeoNames fixture"
+  },
+  {
+    "citation" : null,
+    "file" : "TMP/gaz-extracts/tgn-absent.ndjson.gz",
+    "importedAt" : null,
+    "importedVersion" : null,
+    "key" : "tgn",
+    "kind" : "tgn",
+    "licence" : "ODC-By 1.0",
+    "links" : null,
+    "names" : null,
+    "periodEnd" : null,
+    "periodStart" : null,
+    "pinnedVersion" : "fixture-2",
+    "places" : null,
+    "present" : false,
+    "title" : "TGN fixture"
+  },
+  {
+    "citation" : null,
+    "file" : "TMP/gaz-lpf/zzgaz_hittite.jsonld",
+    "importedAt" : null,
+    "importedVersion" : null,
+    "key" : "lpf:zzgaz_hittite",
+    "kind" : "lpf",
+    "licence" : null,
+    "links" : null,
+    "names" : null,
+    "periodEnd" : null,
+    "periodStart" : null,
+    "pinnedVersion" : null,
+    "places" : null,
+    "present" : true,
+    "title" : "zzgaz_hittite.jsonld"
+  },
+  {
+    "citation" : null,
+    "file" : "TMP/gaz-lpf/zzgaz_kultepe.tsv",
+    "importedAt" : null,
+    "importedVersion" : null,
+    "key" : "lpf:zzgaz_kultepe",
+    "kind" : "lpf",
+    "licence" : null,
+    "links" : null,
+    "names" : null,
+    "periodEnd" : null,
+    "periodStart" : null,
+    "pinnedVersion" : null,
+    "places" : null,
+    "present" : true,
+    "title" : "zzgaz_kultepe.tsv"
+  }
+]
+== init
+200 {
+  "acquireItem" : null,
+  "citekey" : null,
+  "createdAt" : "TS",
+  "detail" : {
+    "about" : null,
+    "eventImport" : null,
+    "eventRederive" : null,
+    "events" : null,
+    "init" : {
+      "check" : false,
+      "fetch" : [
+      ],
+      "gazetteer" : true,
+      "periodPresets" : true
+    },
+    "media" : null,
+    "planHash" : null,
+    "recheck" : null,
+    "skippedPeriodCount" : 0,
+    "skippedPeriods" : [
+    ],
+    "vacuum" : null
+  },
+  "error" : null,
+  "id" : "UUID",
+  "kind" : "init",
+  "progress" : null,
+  "sha256" : null,
+  "status" : "queued",
+  "updatedAt" : "TS"
+}
+== init, the job
+200 {
+  "acquireItem" : null,
+  "citekey" : null,
+  "createdAt" : "TS",
+  "detail" : {
+    "about" : null,
+    "eventImport" : null,
+    "eventRederive" : null,
+    "events" : null,
+    "init" : {
+      "check" : false,
+      "fetch" : [
+      ],
+      "gazetteer" : true,
+      "periodPresets" : true
+    },
+    "media" : null,
+    "planHash" : null,
+    "recheck" : null,
+    "skippedPeriodCount" : 2,
+    "skippedPeriods" : [
+      {
+        "detail" : "-14000001 → -250001 lies outside -3000000..2100",
+        "id" : "p0m64tdgpvd",
+        "label" : "Palaeolithic, Lower",
+        "reason" : "out_of_range"
+      },
+      {
+        "detail" : "-14000001 → -18001 lies outside -3000000..2100",
+        "id" : "p0m64tdp282",
+        "label" : "Palaeolithic",
+        "reason" : "out_of_range"
+      }
+    ],
+    "vacuum" : null
+  },
+  "error" : null,
+  "id" : "UUID",
+  "kind" : "init",
+  "progress" : "gazetteer: 5 place(s) from 2 file(s); 0 finding→place link(s); period presets: 280 periods, 149 presets, 2 skipped",
+  "sha256" : null,
+  "status" : "done",
+  "updatedAt" : "TS"
+}
+== places after the seed
+200 [
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "findings" : 0,
+    "id" : "zzs_tell",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zztell",
+    "matchedName" : "Zztell",
+    "names" : "Zzhöyük, Zztell",
+    "periodEnd" : -1200,
+    "periodStart" : -1700,
+    "source" : null
+  }
+]
+== the seed's tree
+200 [
+  {
+    "contested" : false,
+    "depth" : 0,
+    "findings" : 0,
+    "id" : "zzs_shore",
+    "kind" : "region",
+    "label" : "Zzshore"
+  },
+  {
+    "contested" : false,
+    "depth" : 1,
+    "findings" : 0,
+    "id" : "zzs_vale",
+    "kind" : "region",
+    "label" : "Zzvale"
+  }
+]
+== load geonames, a dry run
+200 {
+  "acquireItem" : null,
+  "citekey" : null,
+  "createdAt" : "TS",
+  "detail" : {
+    "about" : null,
+    "eventImport" : null,
+    "eventRederive" : null,
+    "events" : null,
+    "init" : {
+      "check" : true,
+      "fetch" : [
+        "geonames"
+      ],
+      "gazetteer" : false,
+      "periodPresets" : false
+    },
+    "media" : null,
+    "planHash" : null,
+    "recheck" : null,
+    "skippedPeriodCount" : 0,
+    "skippedPeriods" : [
+    ],
+    "vacuum" : null
+  },
+  "error" : null,
+  "id" : "UUID",
+  "kind" : "init",
+  "progress" : null,
+  "sha256" : null,
+  "status" : "queued",
+  "updatedAt" : "TS"
+}
+== load geonames, a dry run, the job
+200 {
+  "acquireItem" : null,
+  "citekey" : null,
+  "createdAt" : "TS",
+  "detail" : {
+    "about" : null,
+    "eventImport" : null,
+    "eventRederive" : null,
+    "events" : null,
+    "init" : {
+      "check" : true,
+      "fetch" : [
+        "geonames"
+      ],
+      "gazetteer" : false,
+      "periodPresets" : false
+    },
+    "media" : null,
+    "planHash" : null,
+    "recheck" : null,
+    "skippedPeriodCount" : 0,
+    "skippedPeriods" : [
+    ],
+    "vacuum" : null
+  },
+  "error" : null,
+  "id" : "UUID",
+  "kind" : "init",
+  "progress" : "dry run of geonames: geonames fixture-1: 2 records, 2 new place(s), 0 joined an existing place, 0 place(s) changed, names +5 −0 ~0, links +3 −0",
+  "sha256" : null,
+  "status" : "done",
+  "updatedAt" : "TS"
+}
+== load geonames
+200 {
+  "acquireItem" : null,
+  "citekey" : null,
+  "createdAt" : "TS",
+  "detail" : {
+    "about" : null,
+    "eventImport" : null,
+    "eventRederive" : null,
+    "events" : null,
+    "init" : {
+      "check" : false,
+      "fetch" : [
+        "geonames"
+      ],
+      "gazetteer" : false,
+      "periodPresets" : false
+    },
+    "media" : null,
+    "planHash" : null,
+    "recheck" : null,
+    "skippedPeriodCount" : 0,
+    "skippedPeriods" : [
+    ],
+    "vacuum" : null
+  },
+  "error" : null,
+  "id" : "UUID",
+  "kind" : "init",
+  "progress" : null,
+  "sha256" : null,
+  "status" : "queued",
+  "updatedAt" : "TS"
+}
+== load geonames, the job
+200 {
+  "acquireItem" : null,
+  "citekey" : null,
+  "createdAt" : "TS",
+  "detail" : {
+    "about" : null,
+    "eventImport" : null,
+    "eventRederive" : null,
+    "events" : null,
+    "init" : {
+      "check" : false,
+      "fetch" : [
+        "geonames"
+      ],
+      "gazetteer" : false,
+      "periodPresets" : false
+    },
+    "media" : null,
+    "planHash" : null,
+    "recheck" : null,
+    "skippedPeriodCount" : 0,
+    "skippedPeriods" : [
+    ],
+    "vacuum" : null
+  },
+  "error" : null,
+  "id" : "UUID",
+  "kind" : "init",
+  "progress" : "fetch geonames: geonames fixture-1: 2 records, 2 new place(s), 0 joined an existing place, 0 place(s) changed, names +5 −0 ~0, links +3 −0",
+  "sha256" : null,
+  "status" : "done",
+  "updatedAt" : "TS"
+}
+== load tgn, its file missing
+200 {
+  "acquireItem" : null,
+  "citekey" : null,
+  "createdAt" : "TS",
+  "detail" : {
+    "about" : null,
+    "eventImport" : null,
+    "eventRederive" : null,
+    "events" : null,
+    "init" : {
+      "check" : false,
+      "fetch" : [
+        "tgn"
+      ],
+      "gazetteer" : false,
+      "periodPresets" : false
+    },
+    "media" : null,
+    "planHash" : null,
+    "recheck" : null,
+    "skippedPeriodCount" : 0,
+    "skippedPeriods" : [
+    ],
+    "vacuum" : null
+  },
+  "error" : null,
+  "id" : "UUID",
+  "kind" : "init",
+  "progress" : null,
+  "sha256" : null,
+  "status" : "queued",
+  "updatedAt" : "TS"
+}
+== load tgn, its file missing, the job
+200 {
+  "acquireItem" : null,
+  "citekey" : null,
+  "createdAt" : "TS",
+  "detail" : {
+    "about" : null,
+    "eventImport" : null,
+    "eventRederive" : null,
+    "events" : null,
+    "init" : {
+      "check" : false,
+      "fetch" : [
+        "tgn"
+      ],
+      "gazetteer" : false,
+      "periodPresets" : false
+    },
+    "media" : null,
+    "planHash" : null,
+    "recheck" : null,
+    "skippedPeriodCount" : 0,
+    "skippedPeriods" : [
+    ],
+    "vacuum" : null
+  },
+  "error" : "fetch tgn: tgn fixture-2: tgn-absent.ndjson.gz is not at TMP/gaz-extracts/tgn-absent.ndjson.gz, and its pin has no download url (the extracts are not hosted). Put the file there — sha256 0000000000000000000000000000000000000000000000000000000000000000, 1 B — copied from another install or rebuilt with db/gazetteer/build.py (db/gazetteer/README.md); the folder is places.sources.dir (HISTMERSION_GAZETTEER_DIR; by default the XDG cache directory, $XDG_CACHE_HOME/histmersion/gazetteer or ~/.cache/histmersion/gazetteer). Then run the load again.",
+  "id" : "UUID",
+  "kind" : "init",
+  "progress" : "nothing to do",
+  "sha256" : null,
+  "status" : "failed",
+  "updatedAt" : "TS"
+}
+== load lpf
+200 {
+  "acquireItem" : null,
+  "citekey" : null,
+  "createdAt" : "TS",
+  "detail" : {
+    "about" : null,
+    "eventImport" : null,
+    "eventRederive" : null,
+    "events" : null,
+    "init" : {
+      "check" : false,
+      "fetch" : [
+        "lpf"
+      ],
+      "gazetteer" : false,
+      "periodPresets" : false
+    },
+    "media" : null,
+    "planHash" : null,
+    "recheck" : null,
+    "skippedPeriodCount" : 0,
+    "skippedPeriods" : [
+    ],
+    "vacuum" : null
+  },
+  "error" : null,
+  "id" : "UUID",
+  "kind" : "init",
+  "progress" : null,
+  "sha256" : null,
+  "status" : "queued",
+  "updatedAt" : "TS"
+}
+== load lpf, the job
+200 {
+  "acquireItem" : null,
+  "citekey" : null,
+  "createdAt" : "TS",
+  "detail" : {
+    "about" : null,
+    "eventImport" : null,
+    "eventRederive" : null,
+    "events" : null,
+    "init" : {
+      "check" : false,
+      "fetch" : [
+        "lpf"
+      ],
+      "gazetteer" : false,
+      "periodPresets" : false
+    },
+    "media" : null,
+    "planHash" : null,
+    "recheck" : null,
+    "skippedPeriodCount" : 0,
+    "skippedPeriods" : [
+    ],
+    "vacuum" : null
+  },
+  "error" : null,
+  "id" : "UUID",
+  "kind" : "init",
+  "progress" : "fetch lpf: lpf:zzgaz_hittite 56149470d829: 2 records, 1 new place(s), 1 joined an existing place, 0 place(s) changed, names +5 −0 ~0, links +1 −0; lpf:zzgaz_kultepe 0cd21d53760e: 1 record, 1 new place(s), 0 joined an existing place, 0 place(s) changed, names +3 −0 ~0, links +1 −0",
+  "sha256" : null,
+  "status" : "done",
+  "updatedAt" : "TS"
+}
+== load, unknown source
+400 {
+  "code" : "invalid",
+  "message" : "unknown gazetteer source 'nowhere' (available: geonames, wikidata, lpf, tgn)"
+}
+== sources after
+200 [
+  {
+    "citation" : "GeoNames (geonames.org)",
+    "file" : "TMP/gaz-extracts/geonames-fixture.ndjson.gz",
+    "importedAt" : "TS",
+    "importedVersion" : "fixture-1",
+    "key" : "geonames",
+    "kind" : "geonames",
+    "licence" : "CC BY 4.0",
+    "links" : 3,
+    "names" : 5,
+    "periodEnd" : null,
+    "periodStart" : null,
+    "pinnedVersion" : "fixture-1",
+    "places" : 2,
+    "present" : true,
+    "title" : "GeoNames fixture"
+  },
+  {
+    "citation" : null,
+    "file" : "TMP/gaz-extracts/tgn-absent.ndjson.gz",
+    "importedAt" : null,
+    "importedVersion" : null,
+    "key" : "tgn",
+    "kind" : "tgn",
+    "licence" : "ODC-By 1.0",
+    "links" : null,
+    "names" : null,
+    "periodEnd" : null,
+    "periodStart" : null,
+    "pinnedVersion" : "fixture-2",
+    "places" : null,
+    "present" : false,
+    "title" : "TGN fixture"
+  },
+  {
+    "citation" : "Fixture, A. (2026). Zzgaz Hittite capitals. A hand-written Linked Places Format test file.",
+    "file" : "TMP/gaz-lpf/zzgaz_hittite.jsonld",
+    "importedAt" : "TS",
+    "importedVersion" : "56149470d829",
+    "key" : "lpf:zzgaz_hittite",
+    "kind" : "lpf",
+    "licence" : "CC BY 4.0",
+    "links" : 1,
+    "names" : 5,
+    "periodEnd" : -1180,
+    "periodStart" : -1650,
+    "pinnedVersion" : null,
+    "places" : 2,
+    "present" : true,
+    "title" : "zzgaz_hittite.jsonld"
+  },
+  {
+    "citation" : "Fixture, B. (2026). Kültepe LP-TSV.",
+    "file" : "TMP/gaz-lpf/zzgaz_kultepe.tsv",
+    "importedAt" : "TS",
+    "importedVersion" : "0cd21d53760e",
+    "key" : "lpf:zzgaz_kultepe",
+    "kind" : "lpf",
+    "licence" : "CC0",
+    "links" : 1,
+    "names" : 3,
+    "periodEnd" : -1700,
+    "periodStart" : -2000,
+    "pinnedVersion" : null,
+    "places" : 1,
+    "present" : true,
+    "title" : "zzgaz_kultepe.tsv"
+  }
+]
+== places after the loads
+200 [
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "findings" : 0,
+    "id" : "lpf_zzgaz_kultepe_k1",
+    "importSource" : "lpf:zzgaz_kultepe",
+    "kind" : "site",
+    "label" : "Zzgaz Kaneš",
+    "matchedName" : "Zzgaz Neša",
+    "names" : "Zzgaz Kanesh, Zzgaz Kaneš, Zzgaz Neša",
+    "periodEnd" : -1700,
+    "periodStart" : -2000,
+    "source" : "Kültepe texts"
+  },
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "findings" : 0,
+    "id" : "lpf_zzgaz_hittite_sapinuwa",
+    "importSource" : "lpf:zzgaz_hittite",
+    "kind" : "site",
+    "label" : "Zzgaz Šapinuwa",
+    "matchedName" : "Zzgaz Ortaköy",
+    "names" : "Zzgaz Ortaköy, Zzgaz Šapinuwa",
+    "periodEnd" : -1350,
+    "periodStart" : -1400,
+    "source" : "Fixture, A. (2026). Zzgaz Hittite capitals. A hand-written Linked Places Format test file."
+  },
+  {
+    "contested" : false,
+    "dating" : "unknown",
+    "findings" : 0,
+    "id" : "geonames_999000201",
+    "importSource" : "geonames",
+    "kind" : "site",
+    "label" : "Zzgaz Boğazkale",
+    "matchedName" : "Zzgaz Hattusas",
+    "names" : "Zzgaz Bogazkale, Zzgaz Boğazkale, Zzgaz Hattusas",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "source" : "GeoNames (geonames.org), CC BY 4.0"
+  },
+  {
+    "contested" : false,
+    "dating" : "unknown",
+    "findings" : 0,
+    "id" : "geonames_999000202",
+    "importSource" : "geonames",
+    "kind" : "site",
+    "label" : "Zzgaz Yeghegnadzor",
+    "matchedName" : "Zzgaz Hattusa",
+    "names" : "Zzgaz Boğazköy, Zzgaz Hattusa, Zzgaz Mikoyan, Zzgaz Yeghegnadzor, Zzgaz Ḫattuša",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "source" : "GeoNames (geonames.org), CC BY 4.0"
+  }
+]
+== a loaded place
+200 [
+  {
+    "contested" : false,
+    "dating" : "unknown",
+    "findings" : 0,
+    "id" : "geonames_999000201",
+    "importSource" : "geonames",
+    "kind" : "site",
+    "label" : "Zzgaz Boğazkale",
+    "matchedName" : "Zzgaz Hattusas",
+    "names" : "Zzgaz Bogazkale, Zzgaz Boğazkale, Zzgaz Hattusas",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "source" : "GeoNames (geonames.org), CC BY 4.0"
+  }
+]
+== a name by hand
+200 {
+  "added" : true,
+  "changed" : true,
+  "label" : "Zzford",
+  "lang" : "en",
+  "name" : "Zzcrossing",
+  "placeId" : "zzs_ford",
+  "wasImported" : false
+}
+== an override
+200 {
+  "findingsAfter" : 0,
+  "findingsBefore" : 0,
+  "kindAfter" : "polity",
+  "kindBefore" : "site",
+  "label" : "Zzford",
+  "latAfter" : 39.4,
+  "latBefore" : 39.4,
+  "lonAfter" : 35.1,
+  "lonBefore" : 35.1,
+  "periodAfter" : "1500 BCE–1000 BCE",
+  "periodBefore" : "undated",
+  "placeId" : "zzs_ford",
+  "reset" : false,
+  "unlocated" : 0
+}
+== a place by hand
+200 {
+  "contested" : false,
+  "dating" : "stated",
+  "id" : "local_zzcairn",
+  "importSource" : null,
+  "kind" : "site",
+  "label" : "Zzcairn",
+  "names" : "Zzcairn",
+  "periodEnd" : null,
+  "periodStart" : null,
+  "source" : "survey"
+}
+== rebuild
+200 {
+  "byGeometry" : 0,
+  "byName" : 0,
+  "links" : 0,
+  "located" : 0,
+  "places" : 10,
+  "unlocated" : 0
+}
+== tool place_names {}
+1 name(s) added by hand:
+
+- **Zzcrossing** (en) → Zzford `zzs_ford`
+== tool place_names {"placeId":"zzs_ford"}
+1 name(s) added by hand:
+
+- **Zzcrossing** (en) → Zzford `zzs_ford`
+== tool place_names {"placeId":"zzs_tell","name":"Zzmound of ash"}
+added the name **Zzmound of ash** to **Zztell** `zzs_tell` — names added by hand survive every re-seed
+== tool place_names {"placeId":"zzs_tell","name":"Zzmound of ash","remove":true}
+removed the name **Zzmound of ash** from **Zztell** `zzs_tell` — names added by hand survive every re-seed
+== tool place_names {"placeId":"zzs_tell","name":"Zztell","remove":true}
+_'Zztell' [zzs_tell] has no name 'Zztell'_
+== tool place_override {}
+1 place(s) with a kind, period or point set by hand:
+
+- **Zzford** `zzs_ford`: polity, 1500 BCE–1000 BCE _(the source says: site, undated)_ — dug
+== tool place_override {"placeId":"zzs_ford"}
+1 place(s) with a kind, period or point set by hand:
+
+- **Zzford** `zzs_ford`: polity, 1500 BCE–1000 BCE _(the source says: site, undated)_ — dug
+== tool places {"query":"zzs"}
+### 1 place(s)
+
+- **Zzshore** — `zzs_shore`  
+  _region · 0 finding(s)_
+== tool places {"id":"zzs_vale","asOf":-1500}
+# Zzvale
+
+_`zzs_vale` · region · 1800 BCE–1100 BCE · 0 finding(s) · as of 1500 BCE_  
+**Also known as:** Zzvale  
+**Geometry:** {"type":"Polygon"… (GeoJSON)
+
+**Footprints (1)**
+- extent · 1800 BCE–1100 BCE · _approximate_
+
+**Part of**
+- Zzshore `zzs_shore` _(region)_
+
+## Hierarchy
+
+- **Zzvale** `zzs_vale` _(region)_
+== geocode Zztell site -1500..-1400
+'Zztell' → Zztell [zzs_tell] at 34.6 40.0 approximate=
+== geocode Zzhöyük unknown -
+'Zzhöyük' → Zztell [zzs_tell] at 34.6 40.0 approximate=
+== geocode Zzcrossing site -
+'Zzcrossing' → Zzford [zzs_ford] at 35.1 39.4 approximate=
+== geocode Zzvale region -1300..-1200
+'Zzvale' → Zzvale [zzs_vale] at 34.5 39.5 approximate=
+== geocode Eastern Zzshore region -
+'Eastern Zzshore' → Zzshore [zzs_shore] (approximate: 'Eastern' dropped) at 37.5 39.0 approximate='Eastern' dropped
+== geocode Zztell, Zzshore site -
+'Zztell, Zzshore' → Zztell [zzs_tell] at 34.6 40.0 approximate=
+== geocode Zzgaz Hattusas unknown -
+'Zzgaz Hattusas' → Zzgaz Boğazkale [geonames_999000201] at 34.60947 40.02191 approximate=
+== geocode Zznowhere unknown -
+none
+== lint
+200 {
+  "fixed" : [
+  ],
+  "rules" : [
+    {
+      "count" : 0,
+      "description" : "edge targets that are not citekeys — dead references and unresolved [[wikilinks]]; the ones SHAPED like a citekey (a four-digit year) are listed first, because the rest are links to concept articles",
+      "items" : [
+      ],
+      "rule" : "dangling-edges"
+    },
+    {
+      "count" : 0,
+      "description" : "dangling edge targets that ARE a prefix of one or more real citekeys — `lint --fix` rewrites the unambiguous ones",
+      "items" : [
+      ],
+      "rule" : "unresolved-short-citekeys"
+    },
+    {
+      "count" : 0,
+      "description" : "sources with no findings mined out of them yet (un-enriched)",
+      "items" : [
+      ],
+      "rule" : "no-findings"
+    },
+    {
+      "count" : 0,
+      "description" : "sources with no deep-time period, so they appear on no timeline",
+      "items" : [
+      ],
+      "rule" : "no-period"
+    },
+    {
+      "count" : 0,
+      "description" : "sources with no regions, so they appear in no region tree",
+      "items" : [
+      ],
+      "rule" : "no-regions"
+    },
+    {
+      "count" : 0,
+      "description" : "sources whose summary is missing or blank",
+      "items" : [
+      ],
+      "rule" : "empty-summary"
+    },
+    {
+      "count" : 0,
+      "description" : "sources still at status=unassessed",
+      "items" : [
+      ],
+      "rule" : "unassessed-status"
+    },
+    {
+      "count" : 0,
+      "description" : "the same DOI stored under more than one citekey",
+      "items" : [
+      ],
+      "rule" : "duplicate-doi"
+    },
+    {
+      "count" : 0,
+      "description" : "the same file hash stored under more than one citekey (skipped while the column is unpopulated)",
+      "items" : [
+      ],
+      "rule" : "duplicate-sha256"
+    },
+    {
+      "count" : 0,
+      "description" : "sources with no incoming and no outgoing edges — cited by nothing, citing nothing",
+      "items" : [
+      ],
+      "rule" : "orphan-sources"
+    },
+    {
+      "count" : 0,
+      "description" : "sources that have a body but no full-text chunks — `lint --fix` reindexes them",
+      "items" : [
+      ],
+      "rule" : "stale-chunks"
+    },
+    {
+      "count" : 0,
+      "description" : "findings with no period, so they are invisible to every time filter",
+      "items" : [
+      ],
+      "rule" : "undated-findings"
+    },
+    {
+      "count" : 0,
+      "description" : "findings with neither coordinates nor a region — invisible on the map",
+      "items" : [
+      ],
+      "rule" : "unlocated-findings"
+    },
+    {
+      "count" : 0,
+      "description" : "bodies whose figures still point at a `figures/…` path (usually the converter's own absolute path) instead of the canonical `assets/…` — they render as 0×0 images; re-import the note (`histmersion seed --force`) to rewrite them",
+      "items" : [
+      ],
+      "rule" : "legacy-figure-links"
+    },
+    {
+      "count" : 0,
+      "description" : "`[[wikilinks]]` in an ARTICLE that resolve to nothing — neither a compiled article slug nor a source citekey (nor a unique short form of one); they render as plain text, so the reader sees a name with no page behind it",
+      "items" : [
+      ],
+      "rule" : "dangling-article-links"
+    },
+    {
+      "count" : 0,
+      "description" : "tags not in lowercase_snake_case (the canonical form)",
+      "items" : [
+      ],
+      "rule" : "non-canonical-tag"
+    },
+    {
+      "count" : 0,
+      "description" : "sources with no publication year — rendered as n.d.",
+      "items" : [
+      ],
+      "rule" : "missing-year"
+    },
+    {
+      "count" : 0,
+      "description" : "the four-digit year in the citekey does not match the stored publication year",
+      "items" : [
+      ],
+      "rule" : "year-citekey-mismatch"
+    },
+    {
+      "count" : 0,
+      "description" : "author names containing a pipe '|' — likely a parse artifact (\"Cline| Eric H.\")",
+      "items" : [
+      ],
+      "rule" : "author-pipe"
+    },
+    {
+      "count" : 0,
+      "description" : "articles whose body contains banned filler phrases from the writing guide",
+      "items" : [
+      ],
+      "rule" : "article-filler"
+    },
+    {
+      "count" : 0,
+      "description" : "article body paragraphs with no [[citekey]] citation",
+      "items" : [
+      ],
+      "rule" : "article-uncited-paragraph"
+    },
+    {
+      "count" : 0,
+      "description" : "article summaries that are missing, a stand-in (\"placeholder\", TODO…) or shorter than 0 characters — the card and the search hit show nothing useful",
+      "items" : [
+      ],
+      "rule" : "article-thin-summary"
+    },
+    {
+      "count" : 0,
+      "description" : "article paragraphs that cite one side of a disagreement edge (challenges, refutes, updates, superseded_by) and name the other side's author without citing it — the critique is written but the pair stays open; `lint --rule article-critique-pairing --fix` appends the missing citekey where the name points at exactly one work",
+      "items" : [
+      ],
+      "rule" : "article-critique-pairing"
+    },
+    {
+      "count" : 0,
+      "description" : "sources with status=superseded but no superseded_by edge — set the edge or change the status",
+      "items" : [
+      ],
+      "rule" : "superseded-without-edge"
+    },
+    {
+      "count" : 0,
+      "description" : "article bodies and summaries whose Markdown will not display as written — tables shown as pipes, unpaired ** or `, links that are not links, malformed [[wikilinks]], pasted frontmatter, headings without a space, chatter and placeholders; one line per problem (`histmersion article lint <slug> --fix` repairs the safe ones)",
+      "items" : [
+      ],
+      "rule" : "article-markdown"
+    },
+    {
+      "count" : 0,
+      "description" : "the same formatting check over each source's summary and notes (`histmersion lint --source <citekey> --fix`)",
+      "items" : [
+      ],
+      "rule" : "note-markdown"
+    },
+    {
+      "count" : 0,
+      "description" : "findings whose point the OLD geocoder chose for their place name (before #981 it let an alias, a placeholder point or the wrong dated snapshot win) and that the current ranking puts elsewhere; hand-placed points are never listed — `lint --rule finding-geocode --fix` moves them",
+      "items" : [
+      ],
+      "rule" : "finding-geocode"
+    },
+    {
+      "count" : 0,
+      "description" : "findings that name a place but have no point, where the gazetteer now knows that name (a re-seed added the English names: Dead Sea, Balkans, Kraków…) — `lint --rule finding-unplaced --fix` gives them the geocoder's point; a finding that has a point is never touched",
+      "items" : [
+      ],
+      "rule" : "finding-unplaced"
+    },
+    {
+      "count" : 0,
+      "description" : "point-only seed regions that are something else, by their Pleiades types and linked Wikidata item: a people or civic tribe (→ people), a province or diocese (→ polity, with a period), a settlement (→ site), a place Pleiades withdrew as a duplicate (→ merged into its replacement); one line each: id, label, current → proposed kind, why, evidence — `lint --rule place-kind --fix` applies them and re-matches findings to places",
+      "items" : [
+      ],
+      "rule" : "place-kind"
+    },
+    {
+      "count" : 0,
+      "description" : "Pleiades places whose point is only the centre of an atlas grid square, where a linked record (Wikidata's coordinate) gives a real point — `lint --rule place-grid-point --fix` moves them there and re-matches findings to places",
+      "items" : [
+      ],
+      "rule" : "place-grid-point"
+    },
+    {
+      "count" : 0,
+      "description" : "GeoNames and Wikidata places of an area kind (region, polity, people: `places.sources.point-area-kinds`) stored with only a point — no shape, so no region; the importer no longer keeps them. Listed: the counts by source, kind and dating, every one that holds a finding (and how many of those findings it is the only place of), then a sample — `lint --rule place-imported-point-area --fix` removes them with their names, links and finding matches, in batches, and matches the affected sources' findings again",
+      "items" : [
+      ],
+      "rule" : "place-imported-point-area"
+    },
+    {
+      "count" : 0,
+      "description" : "findings whose point is a placeholder (an atlas grid square's centre, or the point the geocoder gives a region) and whose place name the gazetteer cannot resolve, or that have none — no site takes them, and the areas that do are only those covering the point; give the finding a place name the gazetteer knows (or the place a name with `places name add`), or a real point",
+      "items" : [
+      ],
+      "rule" : "finding-placeholder"
+    },
+    {
+      "count" : 0,
+      "description" : "stored pictures with no licence, or a provider's picture with no credit line — they cannot be shown as their licence requires; a source's figure is listed as `<citekey>/<name>` (it takes its source's licence with `histmersion media fill-licences` once the source records one), a provider's as `media:<uid>` (re-import it with `histmersion media import wikidata --refresh`); a book cover (Calibre, Open Library) needs a credit line only — it is the publisher's picture of the user's own copy, shown locally and never exported",
+      "items" : [
+      ],
+      "rule" : "media-licence"
+    },
+    {
+      "count" : 0,
+      "description" : "catalogue events a person corrected by hand whose catalogue has since changed the same field to something else — the person's value is still applied; review each (`histmersion events corrections --status conflict`) and either keep it (patch it again) or take the catalogue's (patch the field to the catalogue's value, which retires the correction)",
+      "items" : [
+      ],
+      "rule" : "event-correction-conflict"
+    }
+  ]
+}
+## places 10 rows
+{ "dataset" : "local", "geom" : { "coordinates" : [ 34.7, 40.1 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "local_zzcairn", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "site", "label" : "Zzcairn", "label_norm" : "zzcairn", "location_precision" : null, "origin" : "instance:gaz", "period" : "(,)", "properties" : { "added" : true }, "shape_area" : 0, "shape_box" : "BOX(34.7 40.1,34.7 40.1)", "shape_dim" : 0, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : "survey", "start_unknown" : false, "uid" : "place:local_zzcairn", "updated_at" : "TS", "web_geojson" : null }
+{ "dataset" : "seed", "geom" : { "coordinates" : [ 34, 39 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "zzs_orphan", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "site", "label" : "Zzorphan", "label_norm" : "zzorphan", "location_precision" : null, "origin" : "instance:gaz", "period" : "(,)", "properties" : null, "shape_area" : 0, "shape_box" : "BOX(34 39,34 39)", "shape_dim" : 0, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : null, "start_unknown" : false, "uid" : "place:zzs_orphan", "updated_at" : "TS", "web_geojson" : null }
+{ "dataset" : "seed", "geom" : { "coordinates" : [ 34.6, 40 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "zzs_tell", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "site", "label" : "Zztell", "label_norm" : "zztell", "location_precision" : null, "origin" : "instance:gaz", "period" : "[-1700,-1199)", "properties" : null, "shape_area" : 0, "shape_box" : "BOX(34.6 40,34.6 40)", "shape_dim" : 0, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : null, "start_unknown" : false, "uid" : "place:zzs_tell", "updated_at" : "TS", "web_geojson" : null }
+{ "dataset" : "seed", "geom" : { "coordinates" : [ 34.60947, 40.02191 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "geonames_999000201", "import_ref" : "geonames:999000201", "import_source" : "geonames", "import_version" : "fixture-1", "kind" : "site", "label" : "Zzgaz Boğazkale", "label_norm" : "zzgazboazkale", "location_precision" : null, "origin" : "instance:gaz", "period" : "(,)", "properties" : { "ccodes" : [ "TR" ], "fcode" : "P.PPLA2", "modern" : true }, "shape_area" : 0, "shape_box" : "BOX(34.60947 40.02191,34.60947 40.02191)", "shape_dim" : 0, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : "GeoNames (geonames.org), CC BY 4.0", "start_unknown" : false, "uid" : "place:geonames_999000201", "updated_at" : "TS", "web_geojson" : null }
+{ "dataset" : "seed", "geom" : { "coordinates" : [ 35.06, 40.27 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "lpf_zzgaz_hittite_sapinuwa", "import_ref" : "https://example.org/zzgaz/places/sapinuwa", "import_source" : "lpf:zzgaz_hittite", "import_version" : "56149470d829", "kind" : "site", "label" : "Zzgaz Šapinuwa", "label_norm" : "zzgazapinuwa", "location_precision" : null, "origin" : "instance:gaz", "period" : "[-1400,-1349)", "properties" : null, "shape_area" : 0, "shape_box" : "BOX(35.06 40.27,35.06 40.27)", "shape_dim" : 0, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : "Fixture, A. (2026). Zzgaz Hittite capitals. A hand-written Linked Places Format test file.", "start_unknown" : false, "uid" : "place:lpf_zzgaz_hittite_sapinuwa", "updated_at" : "TS", "web_geojson" : null }
+{ "dataset" : "seed", "geom" : { "coordinates" : [ 35.1, 39.4 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "zzs_ford", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "polity", "label" : "Zzford", "label_norm" : "zzford", "location_precision" : null, "origin" : "instance:gaz", "period" : "[-1500,-999)", "properties" : null, "shape_area" : 0, "shape_box" : "BOX(35.1 39.4,35.1 39.4)", "shape_dim" : 0, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : null, "start_unknown" : false, "uid" : "place:zzs_ford", "updated_at" : "TS", "web_geojson" : null }
+{ "dataset" : "seed", "geom" : { "coordinates" : [ 35.635, 38.85 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "lpf_zzgaz_kultepe_k1", "import_ref" : "k1", "import_source" : "lpf:zzgaz_kultepe", "import_version" : "0cd21d53760e", "kind" : "site", "label" : "Zzgaz Kaneš", "label_norm" : "zzgazkane", "location_precision" : null, "origin" : "instance:gaz", "period" : "[-2000,-1699)", "properties" : { "ccodes" : [ "TR" ], "types" : "settlement" }, "shape_area" : 0, "shape_box" : "BOX(35.635 38.85,35.635 38.85)", "shape_dim" : 0, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : "Kültepe texts", "start_unknown" : false, "uid" : "place:lpf_zzgaz_kultepe_k1", "updated_at" : "TS", "web_geojson" : null }
+{ "dataset" : "seed", "geom" : { "coordinates" : [ 44.9, 39.7 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "geonames_999000202", "import_ref" : "geonames:999000202", "import_source" : "geonames", "import_version" : "fixture-1", "kind" : "site", "label" : "Zzgaz Yeghegnadzor", "label_norm" : "zzgazyeghegnadzor", "location_precision" : null, "origin" : "instance:gaz", "period" : "(,)", "properties" : { "ccodes" : [ "AM" ], "fcode" : "P.PPL", "modern" : true }, "shape_area" : 0, "shape_box" : "BOX(44.9 39.7,44.9 39.7)", "shape_dim" : 0, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : "GeoNames (geonames.org), CC BY 4.0", "start_unknown" : false, "uid" : "place:geonames_999000202", "updated_at" : "TS", "web_geojson" : null }
+{ "dataset" : "seed", "geom" : { "coordinates" : [ [ [ 30, 36 ], [ 40, 36 ], [ 40, 42 ], [ 30, 42 ], [ 30, 36 ] ] ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Polygon" }, "geom_clipped" : null, "id" : "zzs_shore", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "region", "label" : "Zzshore", "label_norm" : "zzshore", "location_precision" : null, "origin" : "instance:gaz", "period" : "(,)", "properties" : null, "shape_area" : 60, "shape_box" : "BOX(30 36,40 42)", "shape_dim" : 2, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : null, "start_unknown" : false, "uid" : "place:zzs_shore", "updated_at" : "TS", "web_geojson" : "{\"type\":\"Polygon\",\"coordinates\":[[[30,36],[40,36],[40,42],[30,42],[30,36]]]}" }
+{ "dataset" : "seed", "geom" : { "coordinates" : [ [ [ 33, 38 ], [ 36, 38 ], [ 36, 41 ], [ 33, 41 ], [ 33, 38 ] ] ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Polygon" }, "geom_clipped" : null, "id" : "zzs_vale", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "region", "label" : "Zzvale", "label_norm" : "zzvale", "location_precision" : null, "origin" : "instance:gaz", "period" : "[-1800,-1099)", "properties" : null, "shape_area" : 9, "shape_box" : "BOX(33 38,36 41)", "shape_dim" : 2, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : null, "start_unknown" : false, "uid" : "place:zzs_vale", "updated_at" : "TS", "web_geojson" : "{\"type\":\"Polygon\",\"coordinates\":[[[33,38],[36,38],[36,41],[33,41],[33,38]]]}" }
+## place_names 22 rows
+{ "citation" : "Bryce, The Kingdom of the Hittites (2005)", "import_ref" : "https://example.org/zzgaz/places/hattusa", "import_source" : "lpf:zzgaz_hittite", "import_version" : "56149470d829", "lang" : "hit", "manual" : false, "name" : "Zzgaz Ḫattuša", "period" : "[-1650,-1179)", "place_id" : "geonames_999000202" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "", "manual" : false, "name" : "Zzcairn", "period" : "(,)", "place_id" : "local_zzcairn" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "", "manual" : false, "name" : "Zzford", "period" : "(,)", "place_id" : "zzs_ford" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "", "manual" : false, "name" : "Zzorphan", "period" : "(,)", "place_id" : "zzs_orphan" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "", "manual" : false, "name" : "Zzvale", "period" : "(,)", "place_id" : "zzs_vale" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "de", "manual" : false, "name" : "Zzküste", "period" : "(,)", "place_id" : "zzs_shore" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "en", "manual" : false, "name" : "Zzshore", "period" : "(,)", "place_id" : "zzs_shore" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "en", "manual" : false, "name" : "Zztell", "period" : "(,)", "place_id" : "zzs_tell" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "en", "manual" : true, "name" : "Zzcrossing", "period" : "(,)", "place_id" : "zzs_ford" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "tr", "manual" : false, "name" : "Zzhöyük", "period" : "(,)", "place_id" : "zzs_tell" }
+{ "citation" : null, "import_ref" : "geonames:999000201", "import_source" : "geonames", "import_version" : "fixture-1", "lang" : "", "manual" : false, "name" : "Zzgaz Bogazkale", "period" : "(,)", "place_id" : "geonames_999000201" }
+{ "citation" : null, "import_ref" : "geonames:999000201", "import_source" : "geonames", "import_version" : "fixture-1", "lang" : "en", "manual" : false, "name" : "Zzgaz Hattusas", "period" : "(,)", "place_id" : "geonames_999000201" }
+{ "citation" : null, "import_ref" : "geonames:999000201", "import_source" : "geonames", "import_version" : "fixture-1", "lang" : "tr", "manual" : false, "name" : "Zzgaz Boğazkale", "period" : "(,)", "place_id" : "geonames_999000201" }
+{ "citation" : null, "import_ref" : "geonames:999000202", "import_source" : "geonames", "import_version" : "fixture-1", "lang" : "", "manual" : false, "name" : "Zzgaz Yeghegnadzor", "period" : "(,)", "place_id" : "geonames_999000202" }
+{ "citation" : null, "import_ref" : "geonames:999000202", "import_source" : "geonames", "import_version" : "fixture-1", "lang" : "en", "manual" : false, "name" : "Zzgaz Mikoyan", "period" : "[1935,1957)", "place_id" : "geonames_999000202" }
+{ "citation" : null, "import_ref" : "https://example.org/zzgaz/places/hattusa", "import_source" : "lpf:zzgaz_hittite", "import_version" : "56149470d829", "lang" : "", "manual" : false, "name" : "Zzgaz Hattusa", "period" : "(,)", "place_id" : "geonames_999000202" }
+{ "citation" : null, "import_ref" : "https://example.org/zzgaz/places/hattusa", "import_source" : "lpf:zzgaz_hittite", "import_version" : "56149470d829", "lang" : "tr", "manual" : false, "name" : "Zzgaz Boğazköy", "period" : "(,1938)", "place_id" : "geonames_999000202" }
+{ "citation" : null, "import_ref" : "https://example.org/zzgaz/places/sapinuwa", "import_source" : "lpf:zzgaz_hittite", "import_version" : "56149470d829", "lang" : "", "manual" : false, "name" : "Zzgaz Šapinuwa", "period" : "(,)", "place_id" : "lpf_zzgaz_hittite_sapinuwa" }
+{ "citation" : null, "import_ref" : "https://example.org/zzgaz/places/sapinuwa", "import_source" : "lpf:zzgaz_hittite", "import_version" : "56149470d829", "lang" : "tr", "manual" : false, "name" : "Zzgaz Ortaköy", "period" : "(,)", "place_id" : "lpf_zzgaz_hittite_sapinuwa" }
+{ "citation" : null, "import_ref" : "k1", "import_source" : "lpf:zzgaz_kultepe", "import_version" : "0cd21d53760e", "lang" : "", "manual" : false, "name" : "Zzgaz Kaneš", "period" : "(,)", "place_id" : "lpf_zzgaz_kultepe_k1" }
+{ "citation" : null, "import_ref" : "k1", "import_source" : "lpf:zzgaz_kultepe", "import_version" : "0cd21d53760e", "lang" : "en", "manual" : false, "name" : "Zzgaz Kanesh", "period" : "(,)", "place_id" : "lpf_zzgaz_kultepe_k1" }
+{ "citation" : null, "import_ref" : "k1", "import_source" : "lpf:zzgaz_kultepe", "import_version" : "0cd21d53760e", "lang" : "hit", "manual" : false, "name" : "Zzgaz Neša", "period" : "(,)", "place_id" : "lpf_zzgaz_kultepe_k1" }
+## place_relations 1 rows
+{ "child_id" : "zzs_vale", "kind" : "part_of", "parent_id" : "zzs_shore", "period" : "(,)" }
+## place_aliases 0 rows
+## place_overrides 1 rows
+{ "created_at" : "TS", "kind" : "polity", "period" : "[-1500,-999)", "place_id" : "zzs_ford", "point" : null, "reason" : "dug", "source_geom" : null, "source_kind" : "site", "source_period" : "(,)", "source_start_unknown" : false, "updated_at" : "TS" }
+## periods 280 rows
+{ "authority" : "PeriodO p03wskd29mn · Pleiades: A community-built gazetteer and graph of ancient places (2025)", "dataset" : "seed", "id" : "p03wskd29mn", "label" : "Urartian Eastern Anatolia (900-600 BC)", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-901,-600)", "preset" : "anatolia", "region" : "Eastern Anatolia", "uid" : "period:p03wskd29mn", "updated_at" : "TS" }
+{ "authority" : "PeriodO p03wskd2qsd · Pleiades: A community-built gazetteer and graph of ancient places (2025)", "dataset" : "seed", "id" : "p03wskd2qsd", "label" : "Late Bronze Age Anatolia (1600-1200 BC)", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1600,-1199)", "preset" : null, "region" : "Anatolia", "uid" : "period:p03wskd2qsd", "updated_at" : "TS" }
+{ "authority" : "PeriodO p03wskd82ps · Pleiades: A community-built gazetteer and graph of ancient places (2025)", "dataset" : "seed", "id" : "p03wskd82ps", "label" : "Middle Bronze Age Anatolia (1750-1450 BC)", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1751,-1450)", "preset" : null, "region" : "Anatolia", "uid" : "period:p03wskd82ps", "updated_at" : "TS" }
+{ "authority" : "PeriodO p03wskdjrcs · Pleiades: A community-built gazetteer and graph of ancient places (2025)", "dataset" : "seed", "id" : "p03wskdjrcs", "label" : "Middle-Late Iron Age Anatolia (700-500 BC)", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-701,-500)", "preset" : null, "region" : "Anatolia", "uid" : "period:p03wskdjrcs", "updated_at" : "TS" }
+{ "authority" : "PeriodO p03wskdm4tb · Pleiades: A community-built gazetteer and graph of ancient places (2025)", "dataset" : "seed", "id" : "p03wskdm4tb", "label" : "Early Iron Age Anatolia (1200-700 BC)", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1201,-700)", "preset" : null, "region" : "Anatolia", "uid" : "period:p03wskdm4tb", "updated_at" : "TS" }
+{ "authority" : "PeriodO p03wskdnzgc · Pleiades: A community-built gazetteer and graph of ancient places (2025)", "dataset" : "seed", "id" : "p03wskdnzgc", "label" : "Early Bronze Age Anatolia (2000-1750 BC)", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2001,-1750)", "preset" : null, "region" : "Anatolia", "uid" : "period:p03wskdnzgc", "updated_at" : "TS" }
+{ "authority" : "PeriodO p03wskdv8qb · Pleiades: A community-built gazetteer and graph of ancient places (2025)", "dataset" : "seed", "id" : "p03wskdv8qb", "label" : "Neo-Hittite Northern Levant (1200-700 BC)", "origin" : "instance:gaz", "parent_id" : "p03wskdm4tb", "period" : "[-1201,-700)", "preset" : null, "region" : "Northern Levant", "uid" : "period:p03wskdv8qb", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06c6g32z39 · Library of Congress Subject Headings (2015)", "dataset" : "seed", "id" : "p06c6g32z39", "label" : "Middle Ages, 500-1500", "origin" : "instance:gaz", "parent_id" : null, "period" : "[500,1501)", "preset" : "broad", "region" : "Europe", "uid" : "period:p06c6g32z39", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06hps84bgf · Archaeological periods for the island of Ireland (2022)", "dataset" : "seed", "id" : "p06hps84bgf", "label" : "Neolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-4000,-2500)", "preset" : "britain-ireland", "region" : "Island of Ireland", "uid" : "period:p06hps84bgf", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06hps8fk76 · Archaeological periods for the island of Ireland (2022)", "dataset" : "seed", "id" : "p06hps8fk76", "label" : "Chalcolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2500,-2200)", "preset" : "britain-ireland", "region" : "Island of Ireland", "uid" : "period:p06hps8fk76", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06hps8h2jd · Archaeological periods for the island of Ireland (2022)", "dataset" : "seed", "id" : "p06hps8h2jd", "label" : "Iron Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-800,400)", "preset" : "britain-ireland", "region" : "Island of Ireland", "uid" : "period:p06hps8h2jd", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06hps8vvgz · Archaeological periods for the island of Ireland (2022)", "dataset" : "seed", "id" : "p06hps8vvgz", "label" : "Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2200,-800)", "preset" : "britain-ireland", "region" : "Island of Ireland", "uid" : "period:p06hps8vvgz", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06v8w44jbs · FASTI - Home (2004)", "dataset" : "seed", "id" : "p06v8w44jbs", "label" : "Neolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-7000,-5499)", "preset" : "eastern-europe", "region" : "Ukraine", "uid" : "period:p06v8w44jbs", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06v8w4bk7n · FASTI - Home (2004)", "dataset" : "seed", "id" : "p06v8w4bk7n", "label" : "Middle Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2300,-1799)", "preset" : "eastern-europe", "region" : "Ukraine", "uid" : "period:p06v8w4bk7n", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06v8w4bm9m · FASTI - Home (2004)", "dataset" : "seed", "id" : "p06v8w4bm9m", "label" : "Neolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-5000,-3301)", "preset" : "italy", "region" : "Italy", "uid" : "period:p06v8w4bm9m", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06v8w4fpkn · FASTI - Home (2004)", "dataset" : "seed", "id" : "p06v8w4fpkn", "label" : "Mesolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-10000,-6999)", "preset" : "eastern-europe", "region" : "Ukraine", "uid" : "period:p06v8w4fpkn", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06v8w4hzqv · FASTI - Home (2004)", "dataset" : "seed", "id" : "p06v8w4hzqv", "label" : "Early Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-3200,-2299)", "preset" : "eastern-europe", "region" : "Ukraine", "uid" : "period:p06v8w4hzqv", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06v8w4jrfp · FASTI - Home (2004)", "dataset" : "seed", "id" : "p06v8w4jrfp", "label" : "Final Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1300,-999)", "preset" : "eastern-europe", "region" : "Ukraine", "uid" : "period:p06v8w4jrfp", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06v8w4kqqb · FASTI - Home (2004)", "dataset" : "seed", "id" : "p06v8w4kqqb", "label" : "Bronze age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2300,-1001)", "preset" : "italy", "region" : "Italy", "uid" : "period:p06v8w4kqqb", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06v8w4ncv7 · FASTI - Home (2004)", "dataset" : "seed", "id" : "p06v8w4ncv7", "label" : "Eneolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-5500,-3199)", "preset" : "eastern-europe", "region" : "Ukraine", "uid" : "period:p06v8w4ncv7", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06v8w4pndh · FASTI - Home (2004)", "dataset" : "seed", "id" : "p06v8w4pndh", "label" : "Sarmatian", "origin" : "instance:gaz", "parent_id" : "p06v8w4t56d", "period" : "[-300,301)", "preset" : "eastern-europe", "region" : "Ukraine", "uid" : "period:p06v8w4pndh", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06v8w4s5zg · FASTI - Home (2004)", "dataset" : "seed", "id" : "p06v8w4s5zg", "label" : "Cimmerian", "origin" : "instance:gaz", "parent_id" : "p06v8w4t56d", "period" : "[-900,-699)", "preset" : "eastern-europe", "region" : "Ukraine", "uid" : "period:p06v8w4s5zg", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06v8w4spfw · FASTI - Home (2004)", "dataset" : "seed", "id" : "p06v8w4spfw", "label" : "Scythian", "origin" : "instance:gaz", "parent_id" : "p06v8w4t56d", "period" : "[-750,-249)", "preset" : "eastern-europe", "region" : "Ukraine", "uid" : "period:p06v8w4spfw", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06v8w4t56d · FASTI - Home (2004)", "dataset" : "seed", "id" : "p06v8w4t56d", "label" : "Iron Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1000,451)", "preset" : "eastern-europe", "region" : "Ukraine", "uid" : "period:p06v8w4t56d", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06v8w4v2r4 · FASTI - Home (2004)", "dataset" : "seed", "id" : "p06v8w4v2r4", "label" : "Late Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1800,-1299)", "preset" : "eastern-europe", "region" : "Ukraine", "uid" : "period:p06v8w4v2r4", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06v8w4z9mm · FASTI - Home (2004)", "dataset" : "seed", "id" : "p06v8w4z9mm", "label" : "Iron Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1000,-751)", "preset" : "italy", "region" : "Italy", "uid" : "period:p06v8w4z9mm", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06vx8j3drv · Institutul Național al Patrimoniului periodizare (2023)", "dataset" : "seed", "id" : "p06vx8j3drv", "label" : "Late Bronze Age", "origin" : "instance:gaz", "parent_id" : "p06vx8j82tz", "period" : "[-1600,-1149)", "preset" : null, "region" : "Romania", "uid" : "period:p06vx8j3drv", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06vx8j3zzs · Institutul Național al Patrimoniului periodizare (2023)", "dataset" : "seed", "id" : "p06vx8j3zzs", "label" : "Halstatt", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1150,-449)", "preset" : "southeast-europe", "region" : "Romania", "uid" : "period:p06vx8j3zzs", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06vx8j6r99 · Institutul Național al Patrimoniului periodizare (2023)", "dataset" : "seed", "id" : "p06vx8j6r99", "label" : "Middle Bronze Age", "origin" : "instance:gaz", "parent_id" : "p06vx8j82tz", "period" : "[-3000,-1599)", "preset" : null, "region" : "Romania", "uid" : "period:p06vx8j6r99", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06vx8j82tz · Institutul Național al Patrimoniului periodizare (2023)", "dataset" : "seed", "id" : "p06vx8j82tz", "label" : "Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-3800,-1099)", "preset" : "southeast-europe", "region" : "Romania", "uid" : "period:p06vx8j82tz", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06vx8jcb7p · Institutul Național al Patrimoniului periodizare (2023)", "dataset" : "seed", "id" : "p06vx8jcb7p", "label" : "La Tène", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-450,107)", "preset" : "southeast-europe", "region" : "Romania", "uid" : "period:p06vx8jcb7p", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06vx8jcxfv · Institutul Național al Patrimoniului periodizare (2023)", "dataset" : "seed", "id" : "p06vx8jcxfv", "label" : "Yamna", "origin" : "instance:gaz", "parent_id" : "p06vx8j6r99", "period" : "[-3400,-2499)", "preset" : "southeast-europe", "region" : "Moldova, Muntenia, Dobrogea, Banat, Crișana, Câmpia de Vest, Depresiunea Transilvaniei", "uid" : "period:p06vx8jcxfv", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06vx8jczcj · Institutul Național al Patrimoniului periodizare (2023)", "dataset" : "seed", "id" : "p06vx8jczcj", "label" : "Cucuteni-Ariusd-Tripolie", "origin" : "instance:gaz", "parent_id" : "p06vx8jsmqk", "period" : "[-4600,-3699)", "preset" : "southeast-europe", "region" : "Moldova, Sud-estul Transilkvaniei", "uid" : "period:p06vx8jczcj", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06vx8jdsqf · Institutul Național al Patrimoniului periodizare (2023)", "dataset" : "seed", "id" : "p06vx8jdsqf", "label" : "Neo-Eneolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-6600,-3499)", "preset" : "southeast-europe", "region" : "Romania", "uid" : "period:p06vx8jdsqf", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06vx8jsmqk · Institutul Național al Patrimoniului periodizare (2023)", "dataset" : "seed", "id" : "p06vx8jsmqk", "label" : "Mature Eneolithic", "origin" : "instance:gaz", "parent_id" : "p06vx8jdsqf", "period" : "[-4500,-3699)", "preset" : null, "region" : "Romania", "uid" : "period:p06vx8jsmqk", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06vx8jw8kg · Institutul Național al Patrimoniului periodizare (2023)", "dataset" : "seed", "id" : "p06vx8jw8kg", "label" : "Cucuteni-Ariusd-Tripolia", "origin" : "instance:gaz", "parent_id" : "p06vx8jwkfm", "period" : "[-3700,-2999)", "preset" : null, "region" : "Moldova", "uid" : "period:p06vx8jw8kg", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06vx8jwkfm · Institutul Național al Patrimoniului periodizare (2023)", "dataset" : "seed", "id" : "p06vx8jwkfm", "label" : "Early Bronze Age", "origin" : "instance:gaz", "parent_id" : "p06vx8j82tz", "period" : "[-3700,-2199)", "preset" : null, "region" : "Romania", "uid" : "period:p06vx8jwkfm", "updated_at" : "TS" }
+{ "authority" : "PeriodO p06vx8jxh5x · Institutul Național al Patrimoniului periodizare (2023)", "dataset" : "seed", "id" : "p06vx8jxh5x", "label" : "Early Eneolithic", "origin" : "instance:gaz", "parent_id" : "p06vx8jdsqf", "period" : "[-5000,-4499)", "preset" : null, "region" : "Romania", "uid" : "period:p06vx8jxh5x", "updated_at" : "TS" }
+{ "authority" : "PeriodO p083p5r5nk9 · Ancient cities : the archaeology of urban life in the Ancient Near East and Egypt, Greece and Rome (2003)", "dataset" : "seed", "id" : "p083p5r5nk9", "label" : "Middle Hittite Kingdom", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1400,-1349)", "preset" : "anatolia", "region" : "Anatolia", "uid" : "period:p083p5r5nk9", "updated_at" : "TS" }
+{ "authority" : "PeriodO p083p5r9zvn · Ancient cities : the archaeology of urban life in the Ancient Near East and Egypt, Greece and Rome (2003)", "dataset" : "seed", "id" : "p083p5r9zvn", "label" : "Old Hittite Kingdom", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1575,-1399)", "preset" : "anatolia", "region" : "Anatolia", "uid" : "period:p083p5r9zvn", "updated_at" : "TS" }
+{ "authority" : "PeriodO p083p5rmv3r · Ancient cities : the archaeology of urban life in the Ancient Near East and Egypt, Greece and Rome (2003)", "dataset" : "seed", "id" : "p083p5rmv3r", "label" : "Hittite Empire", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1350,-1199)", "preset" : "anatolia", "region" : "Anatolia", "uid" : "period:p083p5rmv3r", "updated_at" : "TS" }
+{ "authority" : "PeriodO p083p5rwkfs · Ancient cities : the archaeology of urban life in the Ancient Near East and Egypt, Greece and Rome (2003)", "dataset" : "seed", "id" : "p083p5rwkfs", "label" : "Harappan, or Mature", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2600,-1899)", "preset" : "south-asia", "region" : "Indus Valley", "uid" : "period:p083p5rwkfs", "updated_at" : "TS" }
+{ "authority" : "PeriodO p08m57h54j8 · British Museum", "dataset" : "seed", "id" : "p08m57h54j8", "label" : "Indus Civilisation", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2500,-1999)", "preset" : null, "region" : "Pakistan and western India", "uid" : "period:p08m57h54j8", "updated_at" : "TS" }
+{ "authority" : "PeriodO p08m57h9sf6 · British Museum", "dataset" : "seed", "id" : "p08m57h9sf6", "label" : "Shang dynasty", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1500,-1049)", "preset" : "china", "region" : "China", "uid" : "period:p08m57h9sf6", "updated_at" : "TS" }
+{ "authority" : "PeriodO p08m57hbmrr · British Museum", "dataset" : "seed", "id" : "p08m57hbmrr", "label" : "Late Medieval", "origin" : "instance:gaz", "parent_id" : null, "period" : "[1050,1501)", "preset" : "broad", "region" : "Europe", "uid" : "period:p08m57hbmrr", "updated_at" : "TS" }
+{ "authority" : "PeriodO p08m57hdt2t · British Museum", "dataset" : "seed", "id" : "p08m57hdt2t", "label" : "Longshan culture", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-3000,-1699)", "preset" : "china", "region" : "China", "uid" : "period:p08m57hdt2t", "updated_at" : "TS" }
+{ "authority" : "PeriodO p08m57hfj2z · British Museum", "dataset" : "seed", "id" : "p08m57hfj2z", "label" : "Yangshao culture", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-5000,-2999)", "preset" : "china", "region" : "China", "uid" : "period:p08m57hfj2z", "updated_at" : "TS" }
+{ "authority" : "PeriodO p08m57hq9gh · British Museum", "dataset" : "seed", "id" : "p08m57hq9gh", "label" : "BMAC", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2200,-1699)", "preset" : "central-asia", "region" : "Central Asia", "uid" : "period:p08m57hq9gh", "updated_at" : "TS" }
+{ "authority" : "PeriodO p08m57hrc6v · British Museum", "dataset" : "seed", "id" : "p08m57hrc6v", "label" : "Eastern Zhou dynasty", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-770,-220)", "preset" : "china", "region" : "China", "uid" : "period:p08m57hrc6v", "updated_at" : "TS" }
+{ "authority" : "PeriodO p08m57hskv9 · British Museum", "dataset" : "seed", "id" : "p08m57hskv9", "label" : "Copper Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-3800,-2199)", "preset" : "italy", "region" : "Italy", "uid" : "period:p08m57hskv9", "updated_at" : "TS" }
+{ "authority" : "PeriodO p08m57hts6f · British Museum", "dataset" : "seed", "id" : "p08m57hts6f", "label" : "Western Zhou dynasty", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1050,-770)", "preset" : "china", "region" : "China", "uid" : "period:p08m57hts6f", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0cwscs3csg · DB-HERITAGE historical periods (2021)", "dataset" : "seed", "id" : "p0cwscs3csg", "label" : "Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2200,-700)", "preset" : "iberia", "region" : "Portugal", "uid" : "period:p0cwscs3csg", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0cwscs4mwd · DB-HERITAGE historical periods (2021)", "dataset" : "seed", "id" : "p0cwscs4mwd", "label" : "Chalcolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-3000,-2199)", "preset" : "iberia", "region" : "Portugal", "uid" : "period:p0cwscs4mwd", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0cwscsjj9h · DB-HERITAGE historical periods (2021)", "dataset" : "seed", "id" : "p0cwscsjj9h", "label" : "Neolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-5000,-2999)", "preset" : "iberia", "region" : "Portugal", "uid" : "period:p0cwscsjj9h", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0cwscswhdc · DB-HERITAGE historical periods (2021)", "dataset" : "seed", "id" : "p0cwscswhdc", "label" : "Iron Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-800,-25)", "preset" : "iberia", "region" : "Portugal", "uid" : "period:p0cwscswhdc", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qj24b2 · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qj24b2", "label" : "Old Palace period", "origin" : "instance:gaz", "parent_id" : "p0ds9qj9kdj", "period" : "[-1900,-1599)", "preset" : null, "region" : "Crete", "uid" : "period:p0ds9qj24b2", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qj2hxw · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qj2hxw", "label" : "Classical", "origin" : "instance:gaz", "parent_id" : "p0ds9qjpdcd", "period" : "[-480,-322)", "preset" : "aegean", "region" : "Greece", "uid" : "period:p0ds9qj2hxw", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qj2wwg · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qj2wwg", "label" : "Mesolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-11000,-6799)", "preset" : "aegean", "region" : "Greece", "uid" : "period:p0ds9qj2wwg", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qj3fwb · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qj3fwb", "label" : "Final Neolithic or Chalcolithic", "origin" : "instance:gaz", "parent_id" : "p0ds9qj3x2t", "period" : "[-4500,-2999)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qj3fwb", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qj3t4n · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qj3t4n", "label" : "Early Helladic I", "origin" : "instance:gaz", "parent_id" : "p0ds9qj4tbn", "period" : "[-3100,-2699)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qj3t4n", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qj3txg · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qj3txg", "label" : "Middle Minoan II", "origin" : "instance:gaz", "parent_id" : "p0ds9qjm95d", "period" : "[-1875,-1699)", "preset" : null, "region" : "Crete", "uid" : "period:p0ds9qj3txg", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qj3x2t · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qj3x2t", "label" : "Neolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-6500,-2999)", "preset" : "aegean", "region" : "Greece", "uid" : "period:p0ds9qj3x2t", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qj49wh · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qj49wh", "label" : "Post-palatial period", "origin" : "instance:gaz", "parent_id" : "p0ds9qj9kdj", "period" : "[-1390,-1069)", "preset" : null, "region" : "Crete", "uid" : "period:p0ds9qj49wh", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qj4tbn · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qj4tbn", "label" : "Early Helladic", "origin" : "instance:gaz", "parent_id" : "p0ds9qj9pc2", "period" : "[-3100,-1999)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qj4tbn", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qj4wcg · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qj4wcg", "label" : "Middle Byzantine", "origin" : "instance:gaz", "parent_id" : "p0ds9qjcznw", "period" : "[610,1205)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qj4wcg", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qj56qg · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qj56qg", "label" : "Late Minoan III", "origin" : "instance:gaz", "parent_id" : "p0ds9qjh4dh", "period" : "[-1420,-1049)", "preset" : null, "region" : "Crete", "uid" : "period:p0ds9qj56qg", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qj5m2x · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qj5m2x", "label" : "Late Helladic IIIC", "origin" : "instance:gaz", "parent_id" : "p0ds9qjwd4n", "period" : "[-1200,-1049)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qj5m2x", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qj6kgg · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qj6kgg", "label" : "Middle Helladic III", "origin" : "instance:gaz", "parent_id" : "p0ds9qjztzb", "period" : "[-1700,-1599)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qj6kgg", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qj6vmq · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qj6vmq", "label" : "Final Palatial period", "origin" : "instance:gaz", "parent_id" : "p0ds9qj9kdj", "period" : "[-1450,-1299)", "preset" : null, "region" : "Crete", "uid" : "period:p0ds9qj6vmq", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qj79hw · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qj79hw", "label" : "Middle Paleolithic", "origin" : "instance:gaz", "parent_id" : "p0ds9qjsdpq", "period" : "[-100000,-34999)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qj79hw", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qj7xjv · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qj7xjv", "label" : "Late Helladic IIIB", "origin" : "instance:gaz", "parent_id" : "p0ds9qjwd4n", "period" : "[-1330,-1189)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qj7xjv", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qj8jfc · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qj8jfc", "label" : "Late Minoan I", "origin" : "instance:gaz", "parent_id" : "p0ds9qjh4dh", "period" : "[-1700,-1459)", "preset" : null, "region" : "Crete", "uid" : "period:p0ds9qj8jfc", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qj8snx · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qj8snx", "label" : "Late Bronze Age", "origin" : "instance:gaz", "parent_id" : "p0ds9qjq7b2", "period" : "[-1625,-1049)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qj8snx", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qj9kdj · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qj9kdj", "label" : "Bronze Age Minoan", "origin" : "instance:gaz", "parent_id" : "p0ds9qjq7b2", "period" : "[-3100,-1049)", "preset" : "aegean", "region" : "Crete", "uid" : "period:p0ds9qj9kdj", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qj9pc2 · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qj9pc2", "label" : "Bronze Age Helladic", "origin" : "instance:gaz", "parent_id" : "p0ds9qjq7b2", "period" : "[-3100,-1049)", "preset" : "aegean", "region" : "Greece", "uid" : "period:p0ds9qj9pc2", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjb6nz · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjb6nz", "label" : "Late Minoan IIIA", "origin" : "instance:gaz", "parent_id" : "p0ds9qj56qg", "period" : "[-1420,-1314)", "preset" : null, "region" : "Crete", "uid" : "period:p0ds9qjb6nz", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjc3v7 · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjc3v7", "label" : "Late Helladic IIIA", "origin" : "instance:gaz", "parent_id" : "p0ds9qjwd4n", "period" : "[-1420,-1314)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qjc3v7", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjcznw · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjcznw", "label" : "Byzantine", "origin" : "instance:gaz", "parent_id" : null, "period" : "[324,1454)", "preset" : "aegean", "region" : "Greece", "uid" : "period:p0ds9qjcznw", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjcztd · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjcztd", "label" : "Early Helladic III", "origin" : "instance:gaz", "parent_id" : "p0ds9qj4tbn", "period" : "[-2200,-1999)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qjcztd", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjd2xr · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjd2xr", "label" : "Early Cycladic", "origin" : "instance:gaz", "parent_id" : "p0ds9qjhmqs", "period" : "[-3100,-1999)", "preset" : null, "region" : "Cyclades", "uid" : "period:p0ds9qjd2xr", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjd8b9 · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjd8b9", "label" : "Early Byzantine", "origin" : "instance:gaz", "parent_id" : "p0ds9qjcznw", "period" : "[324,611)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qjd8b9", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjdc5k · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjdc5k", "label" : "Middle Minoan III", "origin" : "instance:gaz", "parent_id" : "p0ds9qjm95d", "period" : "[-1750,-1674)", "preset" : null, "region" : "Crete", "uid" : "period:p0ds9qjdc5k", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjdx5q · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjdx5q", "label" : "Protogeometric", "origin" : "instance:gaz", "parent_id" : "p0ds9qjrvwn", "period" : "[-1100,-899)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qjdx5q", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjfhcm · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjfhcm", "label" : "Middle Minoan I", "origin" : "instance:gaz", "parent_id" : "p0ds9qjm95d", "period" : "[-2100,-1849)", "preset" : null, "region" : "Crete", "uid" : "period:p0ds9qjfhcm", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjh3bn · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjh3bn", "label" : "Early Minoan II", "origin" : "instance:gaz", "parent_id" : "p0ds9qjpvn5", "period" : "[-2650,-2199)", "preset" : null, "region" : "Crete", "uid" : "period:p0ds9qjh3bn", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjh4dh · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjh4dh", "label" : "Late Minoan", "origin" : "instance:gaz", "parent_id" : "p0ds9qj9kdj", "period" : "[-1700,-1049)", "preset" : null, "region" : "Crete", "uid" : "period:p0ds9qjh4dh", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjh6s9 · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjh6s9", "label" : "Late Byzantine", "origin" : "instance:gaz", "parent_id" : "p0ds9qjcznw", "period" : "[1204,1454)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qjh6s9", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjhmqs · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjhmqs", "label" : "Bronze Age Cycladic", "origin" : "instance:gaz", "parent_id" : "p0ds9qjq7b2", "period" : "[-3100,-1079)", "preset" : "aegean", "region" : "Greece", "uid" : "period:p0ds9qjhmqs", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjj6zz · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjj6zz", "label" : "Upper Paleolithic", "origin" : "instance:gaz", "parent_id" : "p0ds9qjsdpq", "period" : "[-35000,-10999)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qjj6zz", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjkb6q · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjkb6q", "label" : "Middle Bronze Age", "origin" : "instance:gaz", "parent_id" : "p0ds9qjq7b2", "period" : "[-2100,-1549)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qjkb6q", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjkkqz · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjkkqz", "label" : "Late Minoan IIIC", "origin" : "instance:gaz", "parent_id" : "p0ds9qj56qg", "period" : "[-1200,-1049)", "preset" : null, "region" : "Crete", "uid" : "period:p0ds9qjkkqz", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjkvdd · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjkvdd", "label" : "Late Minoan II", "origin" : "instance:gaz", "parent_id" : "p0ds9qjh4dh", "period" : "[-1470,-1409)", "preset" : null, "region" : "Crete", "uid" : "period:p0ds9qjkvdd", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjkz7p · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjkz7p", "label" : "Early Bronze Age", "origin" : "instance:gaz", "parent_id" : "p0ds9qjq7b2", "period" : "[-3200,-2099)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qjkz7p", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjkzn8 · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjkzn8", "label" : "Geometric", "origin" : "instance:gaz", "parent_id" : "p0ds9qjrvwn", "period" : "[-900,-699)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qjkzn8", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjm95d · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjm95d", "label" : "Middle Minoan", "origin" : "instance:gaz", "parent_id" : "p0ds9qj9kdj", "period" : "[-2100,-1674)", "preset" : null, "region" : "Crete", "uid" : "period:p0ds9qjm95d", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjmkt4 · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjmkt4", "label" : "Early Helladic II", "origin" : "instance:gaz", "parent_id" : "p0ds9qj4tbn", "period" : "[-2700,-2199)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qjmkt4", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjmv48 · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjmv48", "label" : "Hellenistic", "origin" : "instance:gaz", "parent_id" : "p0ds9qjpdcd", "period" : "[-323,-30)", "preset" : "aegean", "region" : "Greece", "uid" : "period:p0ds9qjmv48", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjn6xc · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjn6xc", "label" : "Late Helladic", "origin" : "instance:gaz", "parent_id" : "p0ds9qj9pc2", "period" : "[-1700,-1049)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qjn6xc", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjp52w · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjp52w", "label" : "Late Cycladic", "origin" : "instance:gaz", "parent_id" : "p0ds9qjhmqs", "period" : "[-1600,-1079)", "preset" : null, "region" : "Cyclades", "uid" : "period:p0ds9qjp52w", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjpdcd · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjpdcd", "label" : "Antiquity", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-800,601)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qjpdcd", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjpt9w · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjpt9w", "label" : "Sub-Mycenean", "origin" : "instance:gaz", "parent_id" : "p0ds9qjrvwn", "period" : "[-1100,-1049)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qjpt9w", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjpvn5 · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjpvn5", "label" : "Early Minoan", "origin" : "instance:gaz", "parent_id" : "p0ds9qj9kdj", "period" : "[-3100,-2049)", "preset" : null, "region" : "Crete", "uid" : "period:p0ds9qjpvn5", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjq6gx · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjq6gx", "label" : "Late Helladic II", "origin" : "instance:gaz", "parent_id" : "p0ds9qjn6xc", "period" : "[-1635,-1409)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qjq6gx", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjq7b2 · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjq7b2", "label" : "Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-3200,-1049)", "preset" : "aegean", "region" : "Greece", "uid" : "period:p0ds9qjq7b2", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjqc49 · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjqc49", "label" : "Late Neolithic", "origin" : "instance:gaz", "parent_id" : "p0ds9qj3x2t", "period" : "[-5500,-3249)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qjqc49", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjqhhk · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjqhhk", "label" : "Middle Helladic I", "origin" : "instance:gaz", "parent_id" : "p0ds9qjztzb", "period" : "[-2000,-1899)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qjqhhk", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjqppc · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjqppc", "label" : "Late Antique", "origin" : "instance:gaz", "parent_id" : "p0ds9qjpdcd", "period" : "[306,611)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qjqppc", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjr2pw · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjr2pw", "label" : "Middle Helladic II", "origin" : "instance:gaz", "parent_id" : "p0ds9qjztzb", "period" : "[-1900,-1699)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qjr2pw", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjr3jz · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjr3jz", "label" : "Early Minoan I", "origin" : "instance:gaz", "parent_id" : "p0ds9qjpvn5", "period" : "[-3100,-2999)", "preset" : null, "region" : "Crete", "uid" : "period:p0ds9qjr3jz", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjrgzd · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjrgzd", "label" : "New Palace period", "origin" : "instance:gaz", "parent_id" : "p0ds9qj9kdj", "period" : "[-1600,-1389)", "preset" : null, "region" : "Crete", "uid" : "period:p0ds9qjrgzd", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjrk5c · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjrk5c", "label" : "Middle Neolithic", "origin" : "instance:gaz", "parent_id" : "p0ds9qj3x2t", "period" : "[-5900,-4749)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qjrk5c", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjrvwn · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjrvwn", "label" : "Early Iron Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1100,-699)", "preset" : "aegean", "region" : "Greece", "uid" : "period:p0ds9qjrvwn", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjs62t · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjs62t", "label" : "Late Minoan IIIB", "origin" : "instance:gaz", "parent_id" : "p0ds9qj56qg", "period" : "[-1330,-1189)", "preset" : null, "region" : "Crete", "uid" : "period:p0ds9qjs62t", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjsdpq · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjsdpq", "label" : "Paleolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-350000,-10999)", "preset" : "aegean", "region" : "Greece", "uid" : "period:p0ds9qjsdpq", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjv6nb · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjv6nb", "label" : "Middle Cycladic", "origin" : "instance:gaz", "parent_id" : "p0ds9qjhmqs", "period" : "[-2000,-1599)", "preset" : null, "region" : "Cyclades", "uid" : "period:p0ds9qjv6nb", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjv9j7 · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjv9j7", "label" : "Late Helladic I", "origin" : "instance:gaz", "parent_id" : "p0ds9qjn6xc", "period" : "[-1700,-1599)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qjv9j7", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjvfn5 · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjvfn5", "label" : "Early Minoan III", "origin" : "instance:gaz", "parent_id" : "p0ds9qjpvn5", "period" : "[-2200,-2049)", "preset" : null, "region" : "Crete", "uid" : "period:p0ds9qjvfn5", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjwd4n · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjwd4n", "label" : "Late Helladic III", "origin" : "instance:gaz", "parent_id" : "p0ds9qjn6xc", "period" : "[-1420,-1049)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qjwd4n", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjwmfv · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjwmfv", "label" : "Early Neolithic", "origin" : "instance:gaz", "parent_id" : "p0ds9qj3x2t", "period" : "[-6500,-5799)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qjwmfv", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjwq59 · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjwq59", "label" : "Sub-Minoan", "origin" : "instance:gaz", "parent_id" : "p0ds9qjrvwn", "period" : "[-1070,-1014)", "preset" : null, "region" : "Crete", "uid" : "period:p0ds9qjwq59", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjwwfx · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjwwfx", "label" : "Roman", "origin" : "instance:gaz", "parent_id" : "p0ds9qjpdcd", "period" : "[-31,325)", "preset" : "aegean", "region" : "Greece", "uid" : "period:p0ds9qjwwfx", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjwzmx · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjwzmx", "label" : "Archaic", "origin" : "instance:gaz", "parent_id" : "p0ds9qjpdcd", "period" : "[-700,-479)", "preset" : "aegean", "region" : "Greece", "uid" : "period:p0ds9qjwzmx", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjxdv4 · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjxdv4", "label" : "Lower Paleolithic", "origin" : "instance:gaz", "parent_id" : "p0ds9qjsdpq", "period" : "[-350000,-99999)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qjxdv4", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ds9qjztzb · The British School at Athens: archaeological periods of Greece (2022)", "dataset" : "seed", "id" : "p0ds9qjztzb", "label" : "Middle Helladic", "origin" : "instance:gaz", "parent_id" : "p0ds9qj9pc2", "period" : "[-2000,-1599)", "preset" : null, "region" : "Greece", "uid" : "period:p0ds9qjztzb", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ghrgf2rdm ·  Cultural Monuments in Serbia Timeline (2022)", "dataset" : "seed", "id" : "p0ghrgf2rdm", "label" : "Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2200,-1099)", "preset" : "southeast-europe", "region" : "Serbia, Balkans, Urnfield Culture, Vatin Culture, Somogyvár-Vinkovci Culture, Mureș Culture, Cruceni-Belegiš Culture", "uid" : "period:p0ghrgf2rdm", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ghrgf3ffs ·  Cultural Monuments in Serbia Timeline (2022)", "dataset" : "seed", "id" : "p0ghrgf3ffs", "label" : "Eneolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-3500,-2199)", "preset" : "southeast-europe", "region" : "Serbia, Balkans, Baden Culture, Kostolac Culture, Vučedol Culture", "uid" : "period:p0ghrgf3ffs", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ghrgf3h4n ·  Cultural Monuments in Serbia Timeline (2022)", "dataset" : "seed", "id" : "p0ghrgf3h4n", "label" : "Iron Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1100,151)", "preset" : "southeast-europe", "region" : "Serbia, Balkans, Bosut Culture, Brnjica Culture", "uid" : "period:p0ghrgf3h4n", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0ghrgfq4wb ·  Cultural Monuments in Serbia Timeline (2022)", "dataset" : "seed", "id" : "p0ghrgfq4wb", "label" : "Neolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-8000,-3499)", "preset" : "southeast-europe", "region" : "Serbia, Balkans, Turdaș-Vinča Culture, Starčevo Culture", "uid" : "period:p0ghrgfq4wb", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0jrrjbbvc7 · Epigraphische Datenbank Heidelberg (2017)", "dataset" : "seed", "id" : "p0jrrjbbvc7", "label" : "Early Middle Ages", "origin" : "instance:gaz", "parent_id" : null, "period" : "[477,831)", "preset" : "broad", "region" : "Western Europe", "uid" : "period:p0jrrjbbvc7", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0jtbzw9jwb · Cypriot antiquities text panels (2007)", "dataset" : "seed", "id" : "p0jtbzw9jwb", "label" : "Iron Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1050,251)", "preset" : "cyprus", "region" : "Cyprus", "uid" : "period:p0jtbzw9jwb", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0jtbzwjsrv · Cypriot antiquities text panels (2007)", "dataset" : "seed", "id" : "p0jtbzwjsrv", "label" : "Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2500,-1049)", "preset" : "cyprus", "region" : "Cyprus", "uid" : "period:p0jtbzwjsrv", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0jtbzwsrd3 · Cypriot antiquities text panels (2007)", "dataset" : "seed", "id" : "p0jtbzwsrd3", "label" : "Chalcolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-4000,-2499)", "preset" : "cyprus", "region" : "Cyprus", "uid" : "period:p0jtbzwsrd3", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0jtbzwxgdq · Cypriot antiquities text panels (2007)", "dataset" : "seed", "id" : "p0jtbzwxgdq", "label" : "Neolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-7000,-5499)", "preset" : "cyprus", "region" : "Cyprus", "uid" : "period:p0jtbzwxgdq", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0kh9ds7q8m · Historic England Periods (2014)", "dataset" : "seed", "id" : "p0kh9ds7q8m", "label" : "Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2600,-699)", "preset" : "britain-ireland", "region" : "England", "uid" : "period:p0kh9ds7q8m", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0kh9dsbz2g · Historic England Periods (2014)", "dataset" : "seed", "id" : "p0kh9dsbz2g", "label" : "Neolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-4000,-2199)", "preset" : "britain-ireland", "region" : "England", "uid" : "period:p0kh9dsbz2g", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0kh9dsj33x · Historic England Periods (2014)", "dataset" : "seed", "id" : "p0kh9dsj33x", "label" : "Iron Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-800,44)", "preset" : "britain-ireland", "region" : "England", "uid" : "period:p0kh9dsj33x", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0kh9dskb4p · Historic England Periods (2014)", "dataset" : "seed", "id" : "p0kh9dskb4p", "label" : "Chalcolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2500,-2199)", "preset" : "britain-ireland", "region" : "England", "uid" : "period:p0kh9dskb4p", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m63nj24nd · The Levantine Ceramics Project (2012)", "dataset" : "seed", "id" : "p0m63nj24nd", "label" : "Iron Age I", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1201,-850)", "preset" : "anatolia", "region" : "Turkey", "uid" : "period:p0m63nj24nd", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m63nj3kjh · The Levantine Ceramics Project (2012)", "dataset" : "seed", "id" : "p0m63nj3kjh", "label" : "Iron Age III", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-701,-547)", "preset" : "anatolia", "region" : "Turkey", "uid" : "period:p0m63nj3kjh", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m63nj6xtw · The Levantine Ceramics Project (2012)", "dataset" : "seed", "id" : "p0m63nj6xtw", "label" : "Pottery Neolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-6901,-6400)", "preset" : "anatolia", "region" : "Turkey", "uid" : "period:p0m63nj6xtw", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m63njncbv · The Levantine Ceramics Project (2012)", "dataset" : "seed", "id" : "p0m63njncbv", "label" : "Early Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-3001,-2000)", "preset" : "anatolia", "region" : "Turkey", "uid" : "period:p0m63njncbv", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m63njngrr · The Levantine Ceramics Project (2012)", "dataset" : "seed", "id" : "p0m63njngrr", "label" : "Middle Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2001,-1600)", "preset" : "anatolia", "region" : "Turkey", "uid" : "period:p0m63njngrr", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m63njqxz5 · The Levantine Ceramics Project (2012)", "dataset" : "seed", "id" : "p0m63njqxz5", "label" : "Chalcolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-6401,-3000)", "preset" : "anatolia", "region" : "Turkey", "uid" : "period:p0m63njqxz5", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m63njwrjx · The Levantine Ceramics Project (2012)", "dataset" : "seed", "id" : "p0m63njwrjx", "label" : "Late Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1601,-1200)", "preset" : "anatolia", "region" : "Turkey", "uid" : "period:p0m63njwrjx", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m63njx89q · The Levantine Ceramics Project (2012)", "dataset" : "seed", "id" : "p0m63njx89q", "label" : "Iron Age II", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-851,-700)", "preset" : "anatolia", "region" : "Turkey", "uid" : "period:p0m63njx89q", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64td23dg · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64td23dg", "label" : "Chalcolithic, Late 4", "origin" : "instance:gaz", "parent_id" : "p0m64tdz9hp", "period" : "[-3601,-3300)", "preset" : null, "region" : "Northern Mesopotamia", "uid" : "period:p0m64td23dg", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64td282s · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64td282s", "label" : "Bronze Age, Kassite", "origin" : "instance:gaz", "parent_id" : "p0m64td2tp9", "period" : "[-1551,-1100)", "preset" : null, "region" : "Southern Mesopotamia", "uid" : "period:p0m64td282s", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64td29pd · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64td29pd", "label" : "Early Bronze Age 3", "origin" : "instance:gaz", "parent_id" : "p0m64tdfpbq", "period" : "[-2801,-2500)", "preset" : null, "region" : "Southern Levant", "uid" : "period:p0m64td29pd", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64td2tp9 · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64td2tp9", "label" : "Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-3101,-900)", "preset" : "levant-mesopotamia", "region" : "Southern Mesopotamia", "uid" : "period:p0m64td2tp9", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64td3bdh · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64td3bdh", "label" : "Chalcolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-5201,-3000)", "preset" : "levant-mesopotamia", "region" : "Levant", "uid" : "period:p0m64td3bdh", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64td3mq8 · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64td3mq8", "label" : "Islamic, Late [Post-Abbasid]", "origin" : "instance:gaz", "parent_id" : "p0m64tdm947", "period" : "[1250,1501)", "preset" : null, "region" : "Iraq", "uid" : "period:p0m64td3mq8", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64td4dcx · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64td4dcx", "label" : "Early Bronze Age, Early", "origin" : "instance:gaz", "parent_id" : "p0m64tdcj4g", "period" : "[-3101,-2600)", "preset" : null, "region" : "Northern Mesopotamia", "uid" : "period:p0m64td4dcx", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64td54gz · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64td54gz", "label" : "Iron Age 3", "origin" : "instance:gaz", "parent_id" : "p0m64td6gpk", "period" : "[-701,-550)", "preset" : null, "region" : "Southern Levant", "uid" : "period:p0m64td54gz", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64td573h · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64td573h", "label" : "Iron Age, Post-Assyrian/Achaemenid/Persian", "origin" : "instance:gaz", "parent_id" : "p0m64td6gpk", "period" : "[-551,-330)", "preset" : null, "region" : "Levant/Mesopotamia", "uid" : "period:p0m64td573h", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64td5t47 · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64td5t47", "label" : "Early Bronze Age, Late", "origin" : "instance:gaz", "parent_id" : "p0m64tdcj4g", "period" : "[-2601,-2000)", "preset" : null, "region" : "Northern Mesopotamia", "uid" : "period:p0m64td5t47", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64td6537 · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64td6537", "label" : "Sasanian", "origin" : "instance:gaz", "parent_id" : "p0m64tdf9bv", "period" : "[225,641)", "preset" : null, "region" : "Levant/Mesopotamia/Iran/Northern Arabia", "uid" : "period:p0m64td6537", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64td6gpk · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64td6gpk", "label" : "Iron Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1201,-330)", "preset" : "levant-mesopotamia", "region" : "Levant/Mesopotamia", "uid" : "period:p0m64td6gpk", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64td6qd2 · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64td6qd2", "label" : "Iron Age, Late/Neo-Assyrian", "origin" : "instance:gaz", "parent_id" : "p0m64td6gpk", "period" : "[-951,-600)", "preset" : null, "region" : "Mesopotamia", "uid" : "period:p0m64td6qd2", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64td78gg · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64td78gg", "label" : "Neolithic, Late/Ceramic/Pottery, Late", "origin" : "instance:gaz", "parent_id" : "p0m64tdbthk", "period" : "[-6001,-5000)", "preset" : null, "region" : "Levant/Mesopotamia", "uid" : "period:p0m64td78gg", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64td7whf · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64td7whf", "label" : "Bronze Age, Akkadian", "origin" : "instance:gaz", "parent_id" : "p0m64td2tp9", "period" : "[-2401,-2150)", "preset" : null, "region" : "Southern Mesopotamia", "uid" : "period:p0m64td7whf", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64td7xqg · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64td7xqg", "label" : "Bronze Age, Early Dynastic II", "origin" : "instance:gaz", "parent_id" : "p0m64td2tp9", "period" : "[-2751,-2600)", "preset" : null, "region" : "Southern Mesopotamia", "uid" : "period:p0m64td7xqg", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64td859f · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64td859f", "label" : "Bronze Age, Old Babylonian", "origin" : "instance:gaz", "parent_id" : "p0m64td2tp9", "period" : "[-1901,-1550)", "preset" : null, "region" : "Southern Mesopotamia", "uid" : "period:p0m64td859f", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64td9nsf · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64td9nsf", "label" : "Neolithic, Early/Aceramic/Pre-Pottery B", "origin" : "instance:gaz", "parent_id" : "p0m64tdbthk", "period" : "[-8551,-6800)", "preset" : null, "region" : "Levant/Mesopotamia", "uid" : "period:p0m64td9nsf", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64td9rbc · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64td9rbc", "label" : "Iron Age, Middle Assyrian", "origin" : "instance:gaz", "parent_id" : "p0m64td6gpk", "period" : "[-1201,-950)", "preset" : null, "region" : "Mesopotamia", "uid" : "period:p0m64td9rbc", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdb3v4 · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdb3v4", "label" : "Middle Bronze Age 2", "origin" : "instance:gaz", "parent_id" : "p0m64tdfpbq", "period" : "[-1801,-1600)", "preset" : null, "region" : "Levant", "uid" : "period:p0m64tdb3v4", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdbgsc · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdbgsc", "label" : "Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2901,-1200)", "preset" : "iran", "region" : "Central Zagros, Iran", "uid" : "period:p0m64tdbgsc", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdbnfp · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdbnfp", "label" : "Late Bronze Age 2", "origin" : "instance:gaz", "parent_id" : "p0m64tdfpbq", "period" : "[-1401,-1200)", "preset" : null, "region" : "Levant", "uid" : "period:p0m64tdbnfp", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdbthk · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdbthk", "label" : "Neolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-10001,-5000)", "preset" : "levant-mesopotamia", "region" : "Levant/Mesopotamia", "uid" : "period:p0m64tdbthk", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdcj4g · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdcj4g", "label" : "Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-3101,-1200)", "preset" : "levant-mesopotamia", "region" : "Northern Mesopotamia", "uid" : "period:p0m64tdcj4g", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdcjqh · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdcjqh", "label" : "Late Bronze Age 2/Middle Assyrian", "origin" : "instance:gaz", "parent_id" : "p0m64tdcj4g", "period" : "[-1401,-1200)", "preset" : null, "region" : "Northern Mesopotamia", "uid" : "period:p0m64tdcjqh", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdczcn · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdczcn", "label" : "Chalcolithic, Late 5", "origin" : "instance:gaz", "parent_id" : "p0m64tdz9hp", "period" : "[-3301,-3000)", "preset" : null, "region" : "Northern Mesopotamia", "uid" : "period:p0m64tdczcn", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tddbc7 · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tddbc7", "label" : "Bronze Age, Jemdat Nasr", "origin" : "instance:gaz", "parent_id" : "p0m64td2tp9", "period" : "[-3101,-2900)", "preset" : null, "region" : "Southern Mesopotamia", "uid" : "period:p0m64tddbc7", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tddh9w · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tddh9w", "label" : "Iron Age 2", "origin" : "instance:gaz", "parent_id" : "p0m64td6gpk", "period" : "[-1001,-700)", "preset" : null, "region" : "Southern Levant", "uid" : "period:p0m64tddh9w", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tddkc2 · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tddkc2", "label" : "Middle Bronze Age 1", "origin" : "instance:gaz", "parent_id" : "p0m64tdfpbq", "period" : "[-2001,-1800)", "preset" : null, "region" : "Levant", "uid" : "period:p0m64tddkc2", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tddwrm · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tddwrm", "label" : "Palaeolithic, Middle", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-250001,-45000)", "preset" : null, "region" : "Levant/Arabia/Mesopotamia", "uid" : "period:p0m64tddwrm", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tddxxc · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tddxxc", "label" : "Palaeolithic, Upper", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-45001,-18000)", "preset" : null, "region" : "Levant/Arabia/Mesopotamia", "uid" : "period:p0m64tddxxc", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdf9bv · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdf9bv", "label" : "Classical/Pre-Islamic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-331,641)", "preset" : "levant-mesopotamia", "region" : "Levant/Mesopotamia/Iran/Northern Arabia", "uid" : "period:p0m64tdf9bv", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdfpbq · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdfpbq", "label" : "Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-3601,-1200)", "preset" : "levant-mesopotamia", "region" : "Levant", "uid" : "period:p0m64tdfpbq", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdfq8d · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdfq8d", "label" : "Bronze Age, Early Dynastic III", "origin" : "instance:gaz", "parent_id" : "p0m64td2tp9", "period" : "[-2601,-2350)", "preset" : null, "region" : "Southern Mesopotamia", "uid" : "period:p0m64tdfq8d", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdftbr · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdftbr", "label" : "Late Bronze Age 1", "origin" : "instance:gaz", "parent_id" : "p0m64tdfpbq", "period" : "[-1601,-1400)", "preset" : null, "region" : "Levant", "uid" : "period:p0m64tdftbr", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdg8fq · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdg8fq", "label" : "Early Bronze Age 4", "origin" : "instance:gaz", "parent_id" : "p0m64tdfpbq", "period" : "[-2501,-2000)", "preset" : null, "region" : "Southern Levant", "uid" : "period:p0m64tdg8fq", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdh27m · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdh27m", "label" : "Chalcolithic, Late 1", "origin" : "instance:gaz", "parent_id" : "p0m64tdz9hp", "period" : "[-4501,-4200)", "preset" : null, "region" : "Northern Mesopotamia", "uid" : "period:p0m64tdh27m", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdhc9j · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdhc9j", "label" : "Chalcolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-5201,-3300)", "preset" : "iran", "region" : "Northern Iran", "uid" : "period:p0m64tdhc9j", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdht8m · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdht8m", "label" : "Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-3101,-1250)", "preset" : "iran", "region" : "Northwest Iran", "uid" : "period:p0m64tdht8m", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdj7x3 · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdj7x3", "label" : "Roman/Byzantine", "origin" : "instance:gaz", "parent_id" : "p0m64tdf9bv", "period" : "[-32,641)", "preset" : null, "region" : "Levant/Mesopotamia", "uid" : "period:p0m64tdj7x3", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdk66s · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdk66s", "label" : "Islamic, Middle [Abbasid]", "origin" : "instance:gaz", "parent_id" : "p0m64tdm947", "period" : "[750,1251)", "preset" : null, "region" : "Iraq", "uid" : "period:p0m64tdk66s", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdkfpr · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdkfpr", "label" : "Bronze Age, Ur III Period", "origin" : "instance:gaz", "parent_id" : "p0m64td2tp9", "period" : "[-2151,-2000)", "preset" : null, "region" : "Southern Mesopotamia", "uid" : "period:p0m64tdkfpr", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdm3d2 · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdm3d2", "label" : "Islamic, Early [Early Caliphate/Umayyad]", "origin" : "instance:gaz", "parent_id" : "p0m64tdm947", "period" : "[640,751)", "preset" : null, "region" : "Iraq", "uid" : "period:p0m64tdm3d2", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdm68m · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdm68m", "label" : "Early Bronze Age 1", "origin" : "instance:gaz", "parent_id" : "p0m64tdfpbq", "period" : "[-3601,-3000)", "preset" : null, "region" : "Southern Levant", "uid" : "period:p0m64tdm68m", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdm947 · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdm947", "label" : "Islamic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[640,1901)", "preset" : "levant-mesopotamia", "region" : "Iraq", "uid" : "period:p0m64tdm947", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdmdq2 · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdmdq2", "label" : "Late Bronze Age 1/Mittani", "origin" : "instance:gaz", "parent_id" : "p0m64tdcj4g", "period" : "[-1601,-1400)", "preset" : null, "region" : "Northern Mesopotamia", "uid" : "period:p0m64tdmdq2", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdn3h5 · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdn3h5", "label" : "Middle Bronze Age 2", "origin" : "instance:gaz", "parent_id" : "p0m64tdcj4g", "period" : "[-1801,-1600)", "preset" : null, "region" : "Northern Mesopotamia", "uid" : "period:p0m64tdn3h5", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdnvht · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdnvht", "label" : "Neolithic, Early/Aceramic/Pre-Pottery A", "origin" : "instance:gaz", "parent_id" : "p0m64tdbthk", "period" : "[-10001,-8550)", "preset" : null, "region" : "Levant/Mesopotamia", "uid" : "period:p0m64tdnvht", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdp3pt · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdp3pt", "label" : "Neolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-8501,-5000)", "preset" : "iran", "region" : "Iran", "uid" : "period:p0m64tdp3pt", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdp4rp · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdp4rp", "label" : "Parthian", "origin" : "instance:gaz", "parent_id" : "p0m64tdf9bv", "period" : "[-251,226)", "preset" : null, "region" : "Levant/Mesopotamia/Iran/Northern Arabia", "uid" : "period:p0m64tdp4rp", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdpvjc · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdpvjc", "label" : "Bronze Age, Middle Babylonian", "origin" : "instance:gaz", "parent_id" : "p0m64td2tp9", "period" : "[-1401,-1100)", "preset" : null, "region" : "Southern Mesopotamia", "uid" : "period:p0m64tdpvjc", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdq2q4 · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdq2q4", "label" : "Iron Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1401,-330)", "preset" : "iran", "region" : "Iran", "uid" : "period:p0m64tdq2q4", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdq3k6 · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdq3k6", "label" : "Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-3101,-1100)", "preset" : "iran", "region" : "Khuzestan, Iran", "uid" : "period:p0m64tdq3k6", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdqdhw · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdqdhw", "label" : "Chalcolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-5001,-2900)", "preset" : "iran", "region" : "Southern Iran", "uid" : "period:p0m64tdqdhw", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdrvzc · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdrvzc", "label" : "Iron Age 1", "origin" : "instance:gaz", "parent_id" : "p0m64td6gpk", "period" : "[-1201,-1000)", "preset" : null, "region" : "Southern Levant", "uid" : "period:p0m64tdrvzc", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdrx6c · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdrx6c", "label" : "Chalcolithic, Early", "origin" : "instance:gaz", "parent_id" : "p0m64td3bdh", "period" : "[-5201,-4500)", "preset" : null, "region" : "Levant", "uid" : "period:p0m64tdrx6c", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tds5vh · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tds5vh", "label" : "Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-3101,-1500)", "preset" : "iran", "region" : "Northeast Iran", "uid" : "period:p0m64tds5vh", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tds5x4 · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tds5x4", "label" : "Post-Achaemenid/Hellenistic/Seleucid, Early", "origin" : "instance:gaz", "parent_id" : "p0m64tdf9bv", "period" : "[-331,-160)", "preset" : null, "region" : "Levant/Mesopotamia/Iran", "uid" : "period:p0m64tds5x4", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdsp73 · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdsp73", "label" : "Neolithic, Late/Ceramic/Pottery, Early", "origin" : "instance:gaz", "parent_id" : "p0m64tdbthk", "period" : "[-6801,-6000)", "preset" : null, "region" : "Levant/Mesopotamia", "uid" : "period:p0m64tdsp73", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdsqhp · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdsqhp", "label" : "Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2901,-1000)", "preset" : "iran", "region" : "Southern Iran", "uid" : "period:p0m64tdsqhp", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdswpg · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdswpg", "label" : "Chalcolithic, Late 2", "origin" : "instance:gaz", "parent_id" : "p0m64tdz9hp", "period" : "[-4201,-3800)", "preset" : null, "region" : "Northern Mesopotamia", "uid" : "period:p0m64tdswpg", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdt67n · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdt67n", "label" : "Iron Age, Neo-Babylonian", "origin" : "instance:gaz", "parent_id" : "p0m64td6gpk", "period" : "[-651,-550)", "preset" : null, "region" : "Mesopotamia", "uid" : "period:p0m64tdt67n", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdttb7 · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdttb7", "label" : "Chalcolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-6001,-3100)", "preset" : "iran", "region" : "Khuzestan, Iran", "uid" : "period:p0m64tdttb7", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdv2r9 · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdv2r9", "label" : "Chalcolithic, Late", "origin" : "instance:gaz", "parent_id" : "p0m64td3bdh", "period" : "[-4501,-3600)", "preset" : null, "region" : "Levant", "uid" : "period:p0m64tdv2r9", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdvjrw · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdvjrw", "label" : "Chalcolithic, Late 3", "origin" : "instance:gaz", "parent_id" : "p0m64tdz9hp", "period" : "[-3801,-3600)", "preset" : null, "region" : "Northern Mesopotamia", "uid" : "period:p0m64tdvjrw", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdw4hx · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdw4hx", "label" : "Chalcolithic, Early/Ubaid", "origin" : "instance:gaz", "parent_id" : "p0m64tdz9hp", "period" : "[-5901,-4200)", "preset" : null, "region" : "Mesopotamia", "uid" : "period:p0m64tdw4hx", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdw8bh · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdw8bh", "label" : "Middle Bronze Age 1", "origin" : "instance:gaz", "parent_id" : "p0m64tdcj4g", "period" : "[-2001,-1800)", "preset" : null, "region" : "Northern Mesopotamia", "uid" : "period:p0m64tdw8bh", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdwspc · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdwspc", "label" : "Dynastic Egypt", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-3001,-350)", "preset" : null, "region" : "Egypt", "uid" : "period:p0m64tdwspc", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdww6z · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdww6z", "label" : "Chalcolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-5501,-3000)", "preset" : "iran", "region" : "Central Zagros, Iran", "uid" : "period:p0m64tdww6z", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdz9hp · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdz9hp", "label" : "Chalcolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-5901,-3000)", "preset" : "levant-mesopotamia", "region" : "Mesopotamia", "uid" : "period:p0m64tdz9hp", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdzs88 · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdzs88", "label" : "Bronze Age, Early Dynastic I", "origin" : "instance:gaz", "parent_id" : "p0m64td2tp9", "period" : "[-2901,-2750)", "preset" : null, "region" : "Southern Mesopotamia", "uid" : "period:p0m64tdzs88", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0m64tdzzwv · EAMENA Database (2021)", "dataset" : "seed", "id" : "p0m64tdzzwv", "label" : "Early Bronze Age 2", "origin" : "instance:gaz", "parent_id" : "p0m64tdfpbq", "period" : "[-3001,-2800)", "preset" : null, "region" : "Southern Levant", "uid" : "period:p0m64tdzzwv", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qhb66358p · ARIADNE Data Collection (2015)", "dataset" : "seed", "id" : "p0qhb66358p", "label" : "Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1801,-501)", "preset" : "scandinavia", "region" : "Norway", "uid" : "period:p0qhb66358p", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qhb6644wz · ARIADNE Data Collection (2015)", "dataset" : "seed", "id" : "p0qhb6644wz", "label" : "Iron Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1101,15)", "preset" : "southeast-europe", "region" : "Bulgaria", "uid" : "period:p0qhb6644wz", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qhb664686 · ARIADNE Data Collection (2015)", "dataset" : "seed", "id" : "p0qhb664686", "label" : "Neolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-3901,-1701)", "preset" : "scandinavia", "region" : "Denmark", "uid" : "period:p0qhb664686", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qhb6659nf · ARIADNE Data Collection (2015)", "dataset" : "seed", "id" : "p0qhb6659nf", "label" : "Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-3401,-1101)", "preset" : "southeast-europe", "region" : "Bulgaria", "uid" : "period:p0qhb6659nf", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qhb665rjw · ARIADNE Data Collection (2015)", "dataset" : "seed", "id" : "p0qhb665rjw", "label" : "Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1801,-401)", "preset" : "central-europe", "region" : "Poland", "uid" : "period:p0qhb665rjw", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qhb667btm · ARIADNE Data Collection (2015)", "dataset" : "seed", "id" : "p0qhb667btm", "label" : "Neolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-6001,-4501)", "preset" : "central-europe", "region" : "Hungary", "uid" : "period:p0qhb667btm", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qhb667g25 · ARIADNE Data Collection (2015)", "dataset" : "seed", "id" : "p0qhb667g25", "label" : "Iron Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-501,1050)", "preset" : "scandinavia", "region" : "Norway", "uid" : "period:p0qhb667g25", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qhb66b3zn · ARIADNE Data Collection (2015)", "dataset" : "seed", "id" : "p0qhb66b3zn", "label" : "Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2201,-801)", "preset" : "central-europe", "region" : "Germany, Switzerland, Czech Republic, Liechtenstein", "uid" : "period:p0qhb66b3zn", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qhb66c6xc · ARIADNE Data Collection (2015)", "dataset" : "seed", "id" : "p0qhb66c6xc", "label" : "Iron Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1201,-51)", "preset" : "central-europe", "region" : "Germany, Switzerland, Czech Republic, Liechtenstein", "uid" : "period:p0qhb66c6xc", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qhb66cb4k · ARIADNE Data Collection (2015)", "dataset" : "seed", "id" : "p0qhb66cb4k", "label" : "Copper Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-4251,-2201)", "preset" : "central-europe", "region" : "Austria", "uid" : "period:p0qhb66cb4k", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qhb66d5b9 · ARIADNE Data Collection (2015)", "dataset" : "seed", "id" : "p0qhb66d5b9", "label" : "Neolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-5601,-4001)", "preset" : "central-europe", "region" : "Germany, Switzerland, Czech Republic, Liechtenstein", "uid" : "period:p0qhb66d5b9", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qhb66dv8v · ARIADNE Data Collection (2015)", "dataset" : "seed", "id" : "p0qhb66dv8v", "label" : "Copper Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-4501,-2701)", "preset" : "central-europe", "region" : "Hungary", "uid" : "period:p0qhb66dv8v", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qhb66f8kc · ARIADNE Data Collection (2015)", "dataset" : "seed", "id" : "p0qhb66f8kc", "label" : "Copper Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-4251,-2201)", "preset" : "central-europe", "region" : "Germany, Switzerland, Czech Republic, Liechtenstein", "uid" : "period:p0qhb66f8kc", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qhb66fwwp · ARIADNE Data Collection (2015)", "dataset" : "seed", "id" : "p0qhb66fwwp", "label" : "Iron Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-401,100)", "preset" : "central-europe", "region" : "Poland", "uid" : "period:p0qhb66fwwp", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qhb66gpgs · ARIADNE Data Collection (2015)", "dataset" : "seed", "id" : "p0qhb66gpgs", "label" : "Bronze age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2701,-901)", "preset" : "central-europe", "region" : "Hungary", "uid" : "period:p0qhb66gpgs", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qhb66hvns · ARIADNE Data Collection (2015)", "dataset" : "seed", "id" : "p0qhb66hvns", "label" : "Iron Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-901,-101)", "preset" : "central-europe", "region" : "Hungary", "uid" : "period:p0qhb66hvns", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qhb66jmxk · ARIADNE Data Collection (2015)", "dataset" : "seed", "id" : "p0qhb66jmxk", "label" : "Neolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-4001,-1801)", "preset" : "scandinavia", "region" : "Norway", "uid" : "period:p0qhb66jmxk", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qhb66qvmt · ARIADNE Data Collection (2015)", "dataset" : "seed", "id" : "p0qhb66qvmt", "label" : "Neolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-5601,-4001)", "preset" : "central-europe", "region" : "Austria", "uid" : "period:p0qhb66qvmt", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qhb66r7js · ARIADNE Data Collection (2015)", "dataset" : "seed", "id" : "p0qhb66r7js", "label" : "Neolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-6301,-4901)", "preset" : "southeast-europe", "region" : "Bulgaria", "uid" : "period:p0qhb66r7js", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qhb66sx95 · ARIADNE Data Collection (2015)", "dataset" : "seed", "id" : "p0qhb66sx95", "label" : "Neolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-4501,-1801)", "preset" : "central-europe", "region" : "Poland", "uid" : "period:p0qhb66sx95", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qhb66vp76 · ARIADNE Data Collection (2015)", "dataset" : "seed", "id" : "p0qhb66vp76", "label" : "Eneolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-4901,-3801)", "preset" : "southeast-europe", "region" : "Bulgaria", "uid" : "period:p0qhb66vp76", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qhb66w478 · ARIADNE Data Collection (2015)", "dataset" : "seed", "id" : "p0qhb66w478", "label" : "Iron Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-801,-1)", "preset" : "central-europe", "region" : "Austria", "uid" : "period:p0qhb66w478", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qhb66wrbs · ARIADNE Data Collection (2015)", "dataset" : "seed", "id" : "p0qhb66wrbs", "label" : "Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1701,-501)", "preset" : "scandinavia", "region" : "Denmark", "uid" : "period:p0qhb66wrbs", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qhb66wrsn · ARIADNE Data Collection (2015)", "dataset" : "seed", "id" : "p0qhb66wrsn", "label" : "Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2201,-801)", "preset" : "central-europe", "region" : "Austria", "uid" : "period:p0qhb66wrsn", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qhb66x7jw · ARIADNE Data Collection (2015)", "dataset" : "seed", "id" : "p0qhb66x7jw", "label" : "Iron Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-501,1050)", "preset" : "scandinavia", "region" : "Denmark", "uid" : "period:p0qhb66x7jw", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qk76z92f9 · UCLA Encyclopedia of Egyptology", "dataset" : "seed", "id" : "p0qk76z92f9", "label" : "Old Kingdom", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2670,-2167)", "preset" : "egypt", "region" : "Egypt", "uid" : "period:p0qk76z92f9", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qk76zbv62 · UCLA Encyclopedia of Egyptology", "dataset" : "seed", "id" : "p0qk76zbv62", "label" : "Roman", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-30,395)", "preset" : "egypt", "region" : "Egypt", "uid" : "period:p0qk76zbv62", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qk76zh6n2 · UCLA Encyclopedia of Egyptology", "dataset" : "seed", "id" : "p0qk76zh6n2", "label" : "Late Period", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-664,-331)", "preset" : "egypt", "region" : "Egypt", "uid" : "period:p0qk76zh6n2", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qk76zkb23 · UCLA Encyclopedia of Egyptology", "dataset" : "seed", "id" : "p0qk76zkb23", "label" : "Middle Kingdom", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2040,-1639)", "preset" : "egypt", "region" : "Egypt", "uid" : "period:p0qk76zkb23", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qk76zkc72 · UCLA Encyclopedia of Egyptology", "dataset" : "seed", "id" : "p0qk76zkc72", "label" : "Early Dynastic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2950,-2669)", "preset" : "egypt", "region" : "Egypt", "uid" : "period:p0qk76zkc72", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qk76zn9c9 · UCLA Encyclopedia of Egyptology", "dataset" : "seed", "id" : "p0qk76zn9c9", "label" : "Ptolemaic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-304,-29)", "preset" : "egypt", "region" : "Egypt", "uid" : "period:p0qk76zn9c9", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qk76zpmnv · UCLA Encyclopedia of Egyptology", "dataset" : "seed", "id" : "p0qk76zpmnv", "label" : "Third Intermediate Period", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1086,-663)", "preset" : "egypt", "region" : "Egypt", "uid" : "period:p0qk76zpmnv", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qk76zqqr2 · UCLA Encyclopedia of Egyptology", "dataset" : "seed", "id" : "p0qk76zqqr2", "label" : "First Intermediate Period", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2168,-2039)", "preset" : "egypt", "region" : "Egypt", "uid" : "period:p0qk76zqqr2", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qk76zvjkw · UCLA Encyclopedia of Egyptology", "dataset" : "seed", "id" : "p0qk76zvjkw", "label" : "New Kingdom", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1548,-1085)", "preset" : "egypt", "region" : "Egypt", "uid" : "period:p0qk76zvjkw", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qk76zvrnc · UCLA Encyclopedia of Egyptology", "dataset" : "seed", "id" : "p0qk76zvrnc", "label" : "Predynastic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-4500,-2949)", "preset" : "egypt", "region" : "Egypt", "uid" : "period:p0qk76zvrnc", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qk76zw52w · UCLA Encyclopedia of Egyptology", "dataset" : "seed", "id" : "p0qk76zw52w", "label" : "Neolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-6000,-4499)", "preset" : "egypt", "region" : "Egypt", "uid" : "period:p0qk76zw52w", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0qk76zxgwt · UCLA Encyclopedia of Egyptology", "dataset" : "seed", "id" : "p0qk76zxgwt", "label" : "Second Intermediate Period", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1640,-1547)", "preset" : "egypt", "region" : "Egypt", "uid" : "period:p0qk76zxgwt", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0s2rwk499p · ROCEEH Out of Africa Database (ROAD) (2020)", "dataset" : "seed", "id" : "p0s2rwk499p", "label" : "Upper Paleolithic", "origin" : "instance:gaz", "parent_id" : "p0s2rwkrjbs", "period" : "[-41001,-20000)", "preset" : "broad", "region" : "Eurasia", "uid" : "period:p0s2rwk499p", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0s2rwk5ndd · ROCEEH Out of Africa Database (ROAD) (2020)", "dataset" : "seed", "id" : "p0s2rwk5ndd", "label" : "Gravettian", "origin" : "instance:gaz", "parent_id" : "p0s2rwk499p", "period" : "[-33001,-23000)", "preset" : null, "region" : "Eurasia", "uid" : "period:p0s2rwk5ndd", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0s2rwk5zjw · ROCEEH Out of Africa Database (ROAD) (2020)", "dataset" : "seed", "id" : "p0s2rwk5zjw", "label" : "Mesolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-9601,-4500)", "preset" : "broad", "region" : "Europe", "uid" : "period:p0s2rwk5zjw", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0s2rwkchqc · ROCEEH Out of Africa Database (ROAD) (2020)", "dataset" : "seed", "id" : "p0s2rwkchqc", "label" : "Middle Paleolithic", "origin" : "instance:gaz", "parent_id" : "p0s2rwkrjbs", "period" : "[-448001,-32000)", "preset" : "south-asia", "region" : "South Asia", "uid" : "period:p0s2rwkchqc", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0s2rwkgzwv · ROCEEH Out of Africa Database (ROAD) (2020)", "dataset" : "seed", "id" : "p0s2rwkgzwv", "label" : "Lower Paleolithic", "origin" : "instance:gaz", "parent_id" : "p0s2rwkrjbs", "period" : "[-1498001,-118000)", "preset" : "south-asia", "region" : "South Asia", "uid" : "period:p0s2rwkgzwv", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0s2rwkj4cn · ROCEEH Out of Africa Database (ROAD) (2020)", "dataset" : "seed", "id" : "p0s2rwkj4cn", "label" : "Upper Paleolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-46001,-10000)", "preset" : "south-asia", "region" : "South Asia", "uid" : "period:p0s2rwkj4cn", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0s2rwkjh5q · ROCEEH Out of Africa Database (ROAD) (2020)", "dataset" : "seed", "id" : "p0s2rwkjh5q", "label" : "Middle Paleolithic", "origin" : "instance:gaz", "parent_id" : "p0s2rwkrjbs", "period" : "[-348001,-38000)", "preset" : "broad", "region" : "Eurasia", "uid" : "period:p0s2rwkjh5q", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0s2rwkkkxz · ROCEEH Out of Africa Database (ROAD) (2020)", "dataset" : "seed", "id" : "p0s2rwkkkxz", "label" : "Neolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-9501,-3000)", "preset" : null, "region" : "Eurasia", "uid" : "period:p0s2rwkkkxz", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0s2rwkn8cc · ROCEEH Out of Africa Database (ROAD) (2020)", "dataset" : "seed", "id" : "p0s2rwkn8cc", "label" : "Aurignacian", "origin" : "instance:gaz", "parent_id" : "p0s2rwk499p", "period" : "[-41001,-30000)", "preset" : null, "region" : "Europe", "uid" : "period:p0s2rwkn8cc", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0s2rwkp552 · ROCEEH Out of Africa Database (ROAD) (2020)", "dataset" : "seed", "id" : "p0s2rwkp552", "label" : "Lower Paleolithic", "origin" : "instance:gaz", "parent_id" : "p0s2rwkrjbs", "period" : "[-1498001,-298000)", "preset" : "broad", "region" : "Europe", "uid" : "period:p0s2rwkp552", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0s2rwkp72n · ROCEEH Out of Africa Database (ROAD) (2020)", "dataset" : "seed", "id" : "p0s2rwkp72n", "label" : "Solutrean", "origin" : "instance:gaz", "parent_id" : "p0s2rwk499p", "period" : "[-22001,-16000)", "preset" : null, "region" : "Europe", "uid" : "period:p0s2rwkp72n", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0s2rwkrbhq · ROCEEH Out of Africa Database (ROAD) (2020)", "dataset" : "seed", "id" : "p0s2rwkrbhq", "label" : "Iron Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1601,0)", "preset" : null, "region" : "Eurasia", "uid" : "period:p0s2rwkrbhq", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0s2rwkrjbs · ROCEEH Out of Africa Database (ROAD) (2020)", "dataset" : "seed", "id" : "p0s2rwkrjbs", "label" : "Paleolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2998001,-18000)", "preset" : null, "region" : "Africa, Europe, and Asia", "uid" : "period:p0s2rwkrjbs", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0s2rwkrm8q · ROCEEH Out of Africa Database (ROAD) (2020)", "dataset" : "seed", "id" : "p0s2rwkrm8q", "label" : "Kebaran", "origin" : "instance:gaz", "parent_id" : "p0s2rwks8k2", "period" : "[-20001,-16000)", "preset" : "levant-mesopotamia", "region" : "Levant", "uid" : "period:p0s2rwkrm8q", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0s2rwks8k2 · ROCEEH Out of Africa Database (ROAD) (2020)", "dataset" : "seed", "id" : "p0s2rwks8k2", "label" : "Epipaleolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-22001,-8000)", "preset" : "broad", "region" : "Eurasia", "uid" : "period:p0s2rwks8k2", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0s2rwksjfw · ROCEEH Out of Africa Database (ROAD) (2020)", "dataset" : "seed", "id" : "p0s2rwksjfw", "label" : "Natufian", "origin" : "instance:gaz", "parent_id" : "p0s2rwks8k2", "period" : "[-13001,-9000)", "preset" : "levant-mesopotamia", "region" : "Levant", "uid" : "period:p0s2rwksjfw", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0s2rwktsx4 · ROCEEH Out of Africa Database (ROAD) (2020)", "dataset" : "seed", "id" : "p0s2rwktsx4", "label" : "Chalcolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-5001,-3000)", "preset" : null, "region" : "Eurasia", "uid" : "period:p0s2rwktsx4", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0s2rwkv3zf · ROCEEH Out of Africa Database (ROAD) (2020)", "dataset" : "seed", "id" : "p0s2rwkv3zf", "label" : "Magdalenian", "origin" : "instance:gaz", "parent_id" : "p0s2rwk499p", "period" : "[-18001,-12000)", "preset" : null, "region" : "Europe", "uid" : "period:p0s2rwkv3zf", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0s2rwkwbsz · ROCEEH Out of Africa Database (ROAD) (2020)", "dataset" : "seed", "id" : "p0s2rwkwbsz", "label" : "Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-3301,-1500)", "preset" : null, "region" : "Eurasia", "uid" : "period:p0s2rwkwbsz", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0s2rwkwgnt · ROCEEH Out of Africa Database (ROAD) (2020)", "dataset" : "seed", "id" : "p0s2rwkwgnt", "label" : "Mousterian", "origin" : "instance:gaz", "parent_id" : "p0s2rwkjh5q", "period" : "[-348001,-38000)", "preset" : null, "region" : "Eurasia", "uid" : "period:p0s2rwkwgnt", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0xxt6tcq9w · Scottish Archaeological Periods & Ages (ScAPA) (2018)", "dataset" : "seed", "id" : "p0xxt6tcq9w", "label" : "Chalcolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2501,-2200)", "preset" : "britain-ireland", "region" : "Scotland", "uid" : "period:p0xxt6tcq9w", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0xxt6tfv6h · Scottish Archaeological Periods & Ages (ScAPA) (2018)", "dataset" : "seed", "id" : "p0xxt6tfv6h", "label" : "Bronze Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-2201,-800)", "preset" : "britain-ireland", "region" : "Scotland", "uid" : "period:p0xxt6tfv6h", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0xxt6tprqq · Scottish Archaeological Periods & Ages (ScAPA) (2018)", "dataset" : "seed", "id" : "p0xxt6tprqq", "label" : "Neolithic", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-4301,-2500)", "preset" : "britain-ireland", "region" : "Scotland", "uid" : "period:p0xxt6tprqq", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0xxt6tvdbz · Scottish Archaeological Periods & Ages (ScAPA) (2018)", "dataset" : "seed", "id" : "p0xxt6tvdbz", "label" : "Iron Age", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-801,501)", "preset" : "britain-ireland", "region" : "Scotland", "uid" : "period:p0xxt6tvdbz", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0z5nvhpsq5 · Art history (2005)", "dataset" : "seed", "id" : "p0z5nvhpsq5", "label" : "Maurya Period", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-322,-184)", "preset" : "south-asia", "region" : "South Asia", "uid" : "period:p0z5nvhpsq5", "updated_at" : "TS" }
+{ "authority" : "PeriodO p0z5nvhtdz8 · Art history (2005)", "dataset" : "seed", "id" : "p0z5nvhtdz8", "label" : "Vedic Period", "origin" : "instance:gaz", "parent_id" : null, "period" : "[-1750,-321)", "preset" : "south-asia", "region" : "South Asia", "uid" : "period:p0z5nvhtdz8", "updated_at" : "TS" }
+## events 0 rows
+## event_aliases 0 rows
+## event_datings 0 rows
+## event_edges 0 rows
+## event_participants 0 rows
+## event_catalogue 0 rows
+## event_candidates (no such table)
+## event_checks (no such table)
+## corrections 0 rows
+## attestations 0 rows
+## finding_places 0 rows
+## tombstones 0 rows
