@@ -10,9 +10,9 @@ import com.histmersion.db.given
 import com.augustnagro.magnum.*
 import java.util.UUID
 
-/** The places as a bundle carries them (docs/research-merge-import.md §4, §7.3): this collection's own places with their
-  * names, parents, links and types, their old ids and the site types refined from outside — read out in a deterministic
-  * order, and written in by an import.
+/** The places as a bundle carries them (docs/research-merge-import.md §4, §7.3): this collection's own places with
+  * their names, parents, links and types, their old ids and the site types refined from outside — read out in a
+  * deterministic order, and written in by an import.
   */
 private[places] object PlaceBundleRepo:
 

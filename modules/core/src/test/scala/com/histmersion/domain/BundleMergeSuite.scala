@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.domain.catalogue.events.EventPlan
+
 import com.histmersion.api.*
 import com.histmersion.api.given
 import com.histmersion.files.*
@@ -117,12 +119,12 @@ class BundleMergeSuite extends munit.FunSuite:
         datingMethod = Some("radiocarbon")
       )
     )
-    val f = MergeFold.foldEvent(w, o)
+    val f = EventPlan.foldEvent(w, o)
     assertEquals(f.names, Some(List("Thera", "Santorini")))
     assertEquals(f.catalogue, Some("gvp"))
     assertEquals((f.central, f.plusMinus, f.datingMethod), (Some(-1560L), Some(10L), Some("radiocarbon")))
     val w2 = w.copy(plusMinus = Some(50))
-    assertEquals(MergeFold.foldEvent(w2, o).central, None, "the winner's own statement is not mixed with the other's")
+    assertEquals(EventPlan.foldEvent(w2, o).central, None, "the winner's own statement is not mixed with the other's")
 
   import BundlePlan.{Decision, Ledger, Local}
 

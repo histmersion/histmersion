@@ -84,3 +84,8 @@ class VocabularySuite extends munit.FunSuite:
       List("foundational", "current", "contested", "superseded", "debunked", "retracted", "unassessed")
     )
     assertEquals(Confidence.values.toList.map(_.wire), List("high", "medium", "low", "contested"))
+
+  test("every kind of record a bundle carries has its own letter of an issue id"):
+    val letters = BundleKind.values.toList.map(_.issueLetter)
+    assertEquals(letters, List("S", "F", "A", "V", "X", "K", "T", "E", "G", "Q", "P", "N"))
+    assertEquals(letters.distinct, letters)

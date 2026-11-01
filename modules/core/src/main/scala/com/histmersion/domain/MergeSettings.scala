@@ -1,6 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.domain.catalogue.evidence.MatchWeights
+import com.histmersion.util.data.exchange.MatchWeights
 
 final case class MergeSettings(
     autoMerge: Double,

@@ -1,5 +1,9 @@
 package com.histmersion.domain
 
+import com.histmersion.domain.catalogue.events.EventPlan
+import com.histmersion.domain.catalogue.places.PlacePlan
+import com.histmersion.domain.catalogue.CataloguePlan
+
 import com.histmersion.util.data.exchange.{BundlePlan, MergeResolutionsFile}
 import com.histmersion.config.*
 import com.histmersion.files.*
@@ -25,7 +29,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
       in0: MergePlanner.Input => MergePlanner.Input = identity,
       res: MergeResolutions = MergeResolutions()
   ): MergePlanner.Result =
-    MergePlanner.plan(in0(input(es)), sketches, res, cfg)
+    MergePlanner.plan(in0(input(es)), sketches, res, cfg, List(CataloguePlan))
 
   private def resolve(pairs: (String, String)*): MergeResolutions =
     MergeResolutions(pairs.toList.map((i, d) => MergeResolution(i, d)))
@@ -131,13 +135,13 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     val ours = place("h-p6", "zz_old_site", "Site", origin = home)
     val theirs = ours.copy(id = "zz_new_site")
     val other = place("h-p7", "zz_new_site", "Another site", origin = home)
-    assertEquals(MergePlanner.renamedPlaces(List(theirs), List(ours), Set.empty), List((theirs, "zz_old_site", false)))
+    assertEquals(PlacePlan.renamedPlaces(List(theirs), List(ours), Set.empty), List((theirs, "zz_old_site", false)))
     assertEquals(
-      MergePlanner.renamedPlaces(List(theirs), List(ours, other), Set.empty),
+      PlacePlan.renamedPlaces(List(theirs), List(ours, other), Set.empty),
       List((theirs, "zz_old_site", true))
     )
-    assertEquals(MergePlanner.renamedPlaces(List(ours), List(ours), Set.empty), Nil)
-    assertEquals(MergePlanner.renamedPlaces(List(theirs), List(ours), Set(theirs.uid)), Nil)
+    assertEquals(PlacePlan.renamedPlaces(List(ours), List(ours), Set.empty), Nil)
+    assertEquals(PlacePlan.renamedPlaces(List(theirs), List(ours), Set(theirs.uid)), Nil)
 
   test("places: a rename over there is followed — the new id is written, events keep pointing at it"):
     val ours = place("h-p8", "zz_old_site", "Site", origin = home)
@@ -212,10 +216,10 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
 
   test("MergeFold.sameEventAcrossIds: label fingerprint, a shared year, one place (or none on both)"):
     val a = event("a", "a", "Fall of Hattusa", from = -1190, to = -1180)
-    assert(MergeFold.sameEventAcrossIds(a, a.copy(id = "b", label = "fall of HATTUSA")))
-    assert(!MergeFold.sameEventAcrossIds(a, a.copy(id = "b", notBefore = Some(-1100), notAfter = Some(-1050))))
-    assert(!MergeFold.sameEventAcrossIds(a, a.copy(id = "b", placeId = Some("x"))))
-    assert(!MergeFold.sameEventAcrossIds(a, a.copy(id = "b", label = "Sack of Hattusa")))
+    assert(EventPlan.sameEventAcrossIds(a, a.copy(id = "b", label = "fall of HATTUSA")))
+    assert(!EventPlan.sameEventAcrossIds(a, a.copy(id = "b", notBefore = Some(-1100), notAfter = Some(-1050))))
+    assert(!EventPlan.sameEventAcrossIds(a, a.copy(id = "b", placeId = Some("x"))))
+    assert(!EventPlan.sameEventAcrossIds(a, a.copy(id = "b", label = "Sack of Hattusa")))
 
   // ── goals (#881) ──────────────────────────────────────────────────────────────────────────────
 

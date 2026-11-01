@@ -1,35 +1,25 @@
 package com.histmersion.domain
 
 import scala.annotation.tailrec
-import com.histmersion.api.LatinFold
+import com.histmersion.util.text.Fingerprint
 import com.histmersion.api.given
-
-import java.text.Normalizer
 
 /** The normalisers the source matcher compares with (docs/research-merge-import.md §5.2): folding, OpenRefine
   * fingerprints, title keys, personal names, Jaro-Winkler, token Jaccard and MinHash. All pure; JVM-only because of
-  * `java.text.Normalizer`.
+  * `java.text.Normalizer` (in [[Fingerprint]]).
   */
 object MergeText:
 
   // ── folding ──────────────────────────────────────────────────────────────────────────────────
 
-  /** Typographic quotes, folded to the ASCII apostrophe. */
-  private val quotes: Map[Char, String] = Map('’' -> "'", '‘' -> "'")
-
-  /** Lower case, diacritics removed (`Güterbock` → `guterbock`, `López` → `lopez`): the shared [[LatinFold]] table
-    * first (it also maps the letters NFD does not decompose — `ß`, `ł`, `ø`, `þ`), then NFD for every other script.
-    */
-  def fold(s: String): String =
-    val pre = LatinFold.fold(s).flatMap(c => quotes.getOrElse(c, c.toString))
-    Normalizer.normalize(pre, Normalizer.Form.NFD).replaceAll("\\p{M}+", "").toLowerCase(java.util.Locale.ROOT)
+  /** Lower case, diacritics removed (`Güterbock` → `guterbock`, `López` → `lopez`): [[Fingerprint.fold]]. */
+  def fold(s: String): String = Fingerprint.fold(s)
 
   /** Folded alphanumeric tokens, in order. */
-  def tokens(s: String): List[String] =
-    fold(s).split("[^\\p{L}\\p{N}]+").toList.filter(_.nonEmpty)
+  def tokens(s: String): List[String] = Fingerprint.tokens(s)
 
   /** OpenRefine's key-collision fingerprint: folded tokens, de-duplicated, sorted, joined. */
-  def fingerprint(s: String): String = tokens(s).distinct.sorted.mkString(" ")
+  def fingerprint(s: String): String = Fingerprint.of(s).value
 
   private val stopwords: Set[String] = Set(
     "a",

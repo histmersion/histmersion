@@ -1,6 +1,7 @@
-package com.histmersion.domain
+package com.histmersion.domain.catalogue.evidence
 
 import com.histmersion.util.ocr.Chunker
+import com.histmersion.util.text.Anchor
 
 /** Finding a quoted passage again in another text — the W3C Web Annotation TextQuoteSelector (`exact` + `prefix` +
   * `suffix`), as an attestation stores it (`quote`/`prefix`/`suffix`). Used when a merge keeps one OCR body and the
@@ -12,9 +13,6 @@ import com.histmersion.util.ocr.Chunker
   * guess.
   */
 object TextAnchor:
-
-  /** Where the passage is: `[start, end)` character offsets into the text. */
-  final case class Anchor(start: Int, end: Int)
 
   def reanchor(
       text: String,

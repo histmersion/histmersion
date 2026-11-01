@@ -1,6 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.domain.catalogue.evidence.MatchWeights
+import com.histmersion.util.data.exchange.MatchWeights
 
 import scala.annotation.tailrec
 import com.histmersion.api.BundleSource

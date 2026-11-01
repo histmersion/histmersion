@@ -55,5 +55,7 @@ object MergePlans:
     val input0 = MergeState.load(loaded.entities, m, loaded.problems, files, chunkChars, cfg, kinds, rules)
     val sk = MergeState.sketches(bundle, input0, MergePlanner.sketchesWanted(input0, cfg), cfg.minhashSize)
     val input =
-      input0.copy(bodies = MergeState.bodies(bundle, input0, MergePlanner.bodiesWanted(input0, sk, resolutions, cfg)))
-    (input, MergePlanner.plan(input, sk, resolutions, cfg))
+      input0.copy(bodies =
+        MergeState.bodies(bundle, input0, MergePlanner.bodiesWanted(input0, sk, resolutions, cfg, rules.planning))
+      )
+    (input, MergePlanner.plan(input, sk, resolutions, cfg, rules.planning))

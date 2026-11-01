@@ -359,7 +359,7 @@ api:api/MapStartConfig.scala	server.instance
 api:api/MapStartMode.scala	server.instance
 api:api/MapTilesUiConfig.scala	catalogue.maptiles
 api:api/Markdown.scala	util.common
-api:api/MatchCounts.scala	catalogue.evidence
+api:api/MatchCounts.scala	util.data.exchange
 api:api/MatchSpan.scala	catalogue.evidence
 api:api/MediaCount.scala	media
 api:api/MediaCoversReport.scala	media
@@ -792,7 +792,6 @@ core:domain/SchedulerPolicy.scala	automation.scheduler
 core:domain/Scheduling.scala	automation.scheduler
 core:domain/SeedPlanDefaults.scala	library.workflows
 core:domain/SourceMatcher.scala	library.merge-rules
-core:domain/TextAnchor.scala	research.articles
 core:domain/WatchManagerDefaults.scala	library.workflows
 core:domain/WatchSchedules.scala	automation.scheduler
 core:domain/Wikidata.scala	media
