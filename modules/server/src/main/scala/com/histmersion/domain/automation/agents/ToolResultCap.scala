@@ -2,8 +2,6 @@ package com.histmersion.domain.automation.agents
 
 import com.histmersion.server.agents.Codex
 
-import com.histmersion.api.Query
-
 /** What one tool call of an agent step may return (`agents.tools`). Every later turn of a step re-sends every earlier
   * result, so a step that reads ten records pays for them on each of its turns: a Codex review step averaged ~8 turns
   * and ~140k characters of tool output (2026-10-16). Pure: the [[Toolbox]] applies it to what the handlers return.
@@ -80,18 +78,3 @@ object ToolResultCap:
       val nl = notes.lastIndexOf('\n', room)
       val cut = if nl >= room / 2 then nl else room
       notes.substring(0, cut).stripTrailing + trailer(cut, notes.length, hint)
-
-  /** A `query` result as an agent sees it: at most `maxRows` rows, marked as cut (the row cap's own flag), then
-    * [[cap]]ped like any result.
-    */
-  def queryResult(r: Query.QueryResult, maxRows: Int, max: Int): String =
-    val shown = if maxRows > 0 && r.rows.size > maxRows then
-      r.copy(rows = r.rows.take(maxRows), rowCount = maxRows, truncated = true)
-    else r
-    val more = if shown.rows.size < r.rows.size then
-      s"\n\n_…${r.rows.size - shown.rows.size}${
-          if r.truncated then "+" else ""
-        } more rows not shown — select only the rows you need " +
-        "(`WHERE citekey IN (…)`, `LIMIT`), never a whole table_"
-    else ""
-    cap(Query.markdown(shown) + more, max, "select fewer columns or rows (`WHERE … IN (…)`, `LIMIT`)")

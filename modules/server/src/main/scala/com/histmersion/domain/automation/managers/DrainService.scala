@@ -22,7 +22,6 @@ import javax.sql.DataSource
 final class DrainService(
     ds: DataSource,
     cfg: => AgentsConfig,
-    h: com.histmersion.server.Handlers,
     agents: AgentsHandlers
 ):
 
@@ -84,5 +83,5 @@ final class DrainService(
     agents.autopilot.status(now).copy(changes = List(line))
 
   private def log(line: String): Unit =
-    val _ = h.ops.queueAdd("log", QueueAdd(line.take(1000)))
+    val _ = agents.workLists.add("log", QueueAdd(line.take(1000)))
     scribe.info(line)

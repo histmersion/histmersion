@@ -148,8 +148,8 @@ final class ReviewManagerKind(h: Handlers) extends ManagerKindDefinition:
 
   // ── the selection ──────────────────────────────────────────────────────────────────────────────
 
-  /** Below the low water: the selection — articles with open MAJORs (most first), never-reviewed ones, then stale ones —
-    * with an infer-filter item before the review of an article that records no filter, and the standing prioritise
+  /** Below the low water: the selection — articles with open MAJORs (most first), never-reviewed ones, then stale ones
+    * — with an infer-filter item before the review of an article that records no filter, and the standing prioritise
     * hints applied. Then the articles new sources reach.
     */
   override def refill(
@@ -283,7 +283,7 @@ final class ReviewManagerKind(h: Handlers) extends ManagerKindDefinition:
   def target(m: ManagerInfo, itemKind: String, raw: String): Either[ApiError, String] =
     itemKind match
       case ArticleReview | InferFilter | ArticleExtend => h.getArticle(raw.trim).map(_.article.slug)
-      case other => Left(ApiError(s"unknown item kind '$other'"))
+      case other                                       => Left(ApiError(s"unknown item kind '$other'"))
 
   /** An article that records no filter and never had an infer-filter item gets one, at its review's priority, so its
     * review waits for it (when the manager's `inferFilter` is on).
@@ -368,4 +368,3 @@ final class ReviewManagerKind(h: Handlers) extends ManagerKindDefinition:
             )
       case other =>
         c.settleNow(m, item, ItemStatus.Cancelled, s"'$other' items are not driven by a ${m.kind} manager")
-

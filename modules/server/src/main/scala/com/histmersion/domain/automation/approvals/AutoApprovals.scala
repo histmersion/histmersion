@@ -127,7 +127,7 @@ final class AutoApprovals(
             mgr.foreach(m =>
               ManagerRepo.event(ds, m.id, run.flatMap(_.managerItem), a.runId, Feed.Approval, text.take(2000))
             )
-            val _ = h.ops.queueAdd("log", QueueAdd(s"autopilot: $text".take(1000)))
+            val _ = agents.workLists.add("log", QueueAdd(s"autopilot: $text".take(1000)))
             scribe.info(s"autopilot: $text")
             List(s"$what: ${decision.wire}")
 

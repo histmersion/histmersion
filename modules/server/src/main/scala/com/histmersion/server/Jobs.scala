@@ -23,13 +23,13 @@ final class Jobs(
     ds: DataSource,
     parallelism: Int,
     run: String => Unit,
-    pins: com.histmersion.server.hot.Pinning = com.histmersion.server.hot.Pinning.none
+    pins: com.histmersion.util.jobs.Pinning = com.histmersion.util.jobs.Pinning.none
 ):
 
   /** A job id and the generation it was submitted on: it runs there — on the database its row is in, even after a
     * config reload swapped the database (docs/research-plugins.md §3.6).
     */
-  final private case class Queued(id: String, work: com.histmersion.server.hot.Carried[Unit])
+  final private case class Queued(id: String, work: com.histmersion.util.jobs.Carried[Unit])
   private val queue = LinkedBlockingQueue[Queued]()
 
   /** The jobs this pool holds — queued in memory or running: a reconciliation never fails them (a config reload that

@@ -1,9 +1,9 @@
-package com.histmersion.server.hot
+package com.histmersion.util.jobs
 
 /** Keeping work on the generation it started on (docs/research-plugins.md §3.6). The server's [[HotGraph]] is one;
   * [[Pinning.none]] is for code running without a graph (a test's fixed `Deps`).
   */
-trait Pinning extends com.histmersion.util.jobs.WorkCarrier:
+trait Pinning extends WorkCarrier:
   /** Run `f` pinned: on the calling thread's generation when it has one, else on the current one. */
   def pinned[A](f: => A): A
 

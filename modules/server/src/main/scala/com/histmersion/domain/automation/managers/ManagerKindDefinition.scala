@@ -28,7 +28,13 @@ trait ManagerKindDefinition:
   def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[String]
 
   /** A manager's queue filled by its own selection, below the low water or when its cron fired (`force`). */
-  def refill(c: ManagerContext, m: ManagerInfo, now: Instant, force: Boolean, out: Builder[String, List[String]]): Unit =
+  def refill(
+      c: ManagerContext,
+      m: ManagerInfo,
+      now: Instant,
+      force: Boolean,
+      out: Builder[String, List[String]]
+  ): Unit =
     ()
 
   /** One of its items whose run settled (`st`): by default the one-run rule of [[ManagerContext.evaluateStep]] over
@@ -85,7 +91,8 @@ trait ManagerKindDefinition:
   /** What a person's enqueue of this kind names: the targets to add and, for the others named, why they are skipped. */
   def expand(c: ManagerContext, raw: String): Either[ApiError, (List[String], List[String])] = Right((List(raw), Nil))
 
-  /** Per manager of this kind: what waits in its backlog and the days it takes to drain (a watcher's ingest backlog). */
+  /** Per manager of this kind: what waits in its backlog and the days it takes to drain (a watcher's ingest backlog).
+    */
   def backlog(): Map[String, (Int, Option[Int])] = Map.empty
 
   /** The autopilot's status with this kind's domain's part filled in. */

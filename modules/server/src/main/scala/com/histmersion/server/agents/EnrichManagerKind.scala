@@ -1,5 +1,6 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.AgentsHandlers
 import com.histmersion.domain.automation.managers.{ManagerContext, ManagerKindDefinition}
 
 import com.histmersion.api.{ApiError, GoalPlans, Write}
@@ -16,7 +17,7 @@ import scala.collection.mutable.Builder
   * transition adapter until the library contributes it: a source already enriched is settled without a run, unless a
   * person asked.
   */
-final class EnrichManagerKind(h: Handlers) extends ManagerKindDefinition:
+final class EnrichManagerKind(h: Handlers, a: AgentsHandlers) extends ManagerKindDefinition:
   val kind: Kind = Kind.Enrich
 
   def pipelineOf(itemKind: String): Pipeline = itemKind match
@@ -30,7 +31,7 @@ final class EnrichManagerKind(h: Handlers) extends ManagerKindDefinition:
   def target(m: ManagerInfo, itemKind: String, raw: String): Either[ApiError, String] =
     itemKind match
       case SourceEnrich => h.getSource(raw.trim, body = false).map(_.source.citekey)
-      case other => Left(ApiError(s"unknown item kind '$other'"))
+      case other        => Left(ApiError(s"unknown item kind '$other'"))
 
   /** What an Enrich button names: a source itself (enriched again even if it was), or the sources an article cites / a
     * goal links that are NOT enriched yet ([[AutoEnrich.enrichedBy]]; the others are reported as skipped, with why).
@@ -58,6 +59,60 @@ final class EnrichManagerKind(h: Handlers) extends ManagerKindDefinition:
           .filterNot(_.dryRun)
           .flatMap(r => RunState.parse(r.status).map(AutoEnrich.PriorRun(r.id, _)))
         AutoEnrich.enrichedBy(src.findings.size, src.source.notes, runs)
+
+  // ── auto-enrich ────────────────────────────────────────────────────────────────────────────────
+
+  /** `agents.auto-enrich`: after an ingest job stored `citekey`, it is enriched ([[AutoEnrich]] decides whether it
+    * already is or one is on its way) — an item of the enrich manager while the managers are on, else a run of its own.
+    * Answers the ingest job's progress note (None: not asked for).
+    */
+  def autoEnrich(citekey: String): Option[String] =
+    def cfg = a.config
+    try
+      autoEnrichLock.synchronized {
+        h.getSource(citekey, body = false) match
+          case Left(e)    => Some(AutoEnrich.notQueued(e.message))
+          case Right(src) =>
+            val ck = src.source.citekey
+            // a dry run wrote nothing: it neither enriched the source nor stands for a run that will
+            val runs = a.managers
+              .runsFor(Pipeline.EnrichSource, ck)
+              .toList
+              .filterNot(_.dryRun)
+              .flatMap(r => RunState.parse(r.status).map(AutoEnrich.PriorRun(r.id, _)))
+            AutoEnrich.decide(cfg.enabled, cfg.autoEnrich, src.findings.size, src.source.notes, runs) match
+              case Left(skip)                        => AutoEnrich.note(skip)
+              case Right(()) if cfg.managers.enabled => Some(ingested(a.managers, ck))
+              case Right(())                         =>
+                Some(
+                  a.startRunAs(RunRequest(Pipeline.EnrichSource.wire, ck), Origin.Ingest, None)
+                    .fold(e => AutoEnrich.notQueued(e.message), r => AutoEnrich.queued(r.id))
+                )
+      }
+    catch
+      case e: InterruptedException => throw e
+      case e: Exception            =>
+        scribe.warn(s"auto-enrich of $citekey failed: ${e.getClass.getSimpleName}: ${e.getMessage}")
+        Some(AutoEnrich.notQueued(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300)))
+
+  private val autoEnrichLock = new Object
+
+  /** With the managers on: the ingested source becomes an item of the enrich manager (created paused if missing).
+    * Answers the ingest job's progress note.
+    */
+  private def ingested(c: ManagerContext, citekey: String): String =
+    val _ = c.ensure(Kind.Review, ReviewId, None)
+    val _ = c.ensure(Kind.Enrich, EnrichId, None)
+    val (itemId, isNew) = c.upsert(EnrichId, SourceEnrich, citekey, ItemOrigin.Ingest, 0, reopen = true)
+    c.event(
+      EnrichId,
+      Some(itemId),
+      None,
+      Feed.Evaluated,
+      s"$citekey ${if isNew then "enqueued" else "enqueued again"} by an ingest"
+    )
+    c.nudge()
+    AutoEnrich.managed(itemId, c.state(EnrichId).getOrElse(State.Paused.wire))
 
   def dispatch(
       c: ManagerContext,

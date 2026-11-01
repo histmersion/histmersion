@@ -307,7 +307,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       schema: ResponseSchema[A],
       maxTokens: Option[Int] = None,
       turns: Option[Int] = None
-  )(validate: (A, Boolean, List[AgentVerify.ToolUse]) => Either[List[String], Checked[O]]): Either[Halt, O] =
+  )(validate: (A, Boolean, List[ToolUse]) => Either[List[String], Checked[O]]): Either[Halt, O] =
     replay[O](seq, name).getOrElse {
       engine.checkControl(run.id).flatMap { _ =>
         engine.beat(run.id, Some(seq))
@@ -360,7 +360,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       schema: ResponseSchema[A],
       maxTokens: Int,
       turns: Int,
-      validate: (A, Boolean, List[AgentVerify.ToolUse]) => Either[List[String], Checked[O]],
+      validate: (A, Boolean, List[ToolUse]) => Either[List[String], Checked[O]],
       capKey: String
   ): Either[Halt, O] =
     val role = agent.role
@@ -377,7 +377,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
         tries: Int,
         problems: List[String],
         previous: Option[String],
-        seen: List[AgentVerify.ToolUse]
+        seen: List[ToolUse]
     ): Either[Halt, O] =
       engine.checkControl(run.id).flatMap(_ => engine.checkBudget(run.id)).flatMap(_ => pickModel(name, role)) match
         case Left(h)                                                       => Left(h)
@@ -440,7 +440,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
               val use = LlmClient.usage(res.usage)
               val msgs = Trace.messages(res.history, latency.millis, cfg.trace.maxToolResultChars)
               val served = Served(LlmClient.servedBy(res.llmCalls), first.tokens, Some(res.iterations))
-              val calls = seen ++ res.toolCalls.toList.map(c => AgentVerify.ToolUse(c.toolName, c.input))
+              val calls = seen ++ res.toolCalls.toList.map(c => ToolUse(c.toolName, c.input))
               res.finishReason match
                 case FinishReason.BudgetExceeded =>
                   record(

@@ -68,4 +68,4 @@ private[agents] trait GoalSweep:
           }
         )(Right(true))
 
-  protected def log(ctx: RunCtx, line: String): Either[String, String] = Pipelines.log(h, ctx, line)
+  protected def log(ctx: RunCtx, line: String): Either[String, String] = Pipelines.log(h.workLists, ctx, line)

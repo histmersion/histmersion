@@ -26,3 +26,14 @@ object ReviewLedgerRepo:
     transact(ds):
       sql"""INSERT INTO review_ledgers (slug, ledger, updated_at) VALUES (${l.slug}, $json::jsonb, now())
             ON CONFLICT (slug) DO UPDATE SET ledger = EXCLUDED.ledger, updated_at = now()""".update.run()
+
+  /** The articles that passed their review: a review ledger with no open MAJOR, and no open item of review manager
+    * `reviewId` (a review queued or running is not passed yet).
+    */
+  def passedReview(ds: DataSource, reviewId: String): Set[String] =
+    connect(ds):
+      sql"""SELECT l.slug FROM review_ledgers l
+            WHERE NOT EXISTS (SELECT 1 FROM jsonb_array_elements(coalesce(l.ledger->'entries', '[]'::jsonb)) e
+                              WHERE coalesce(e->>'status', 'open') = 'open' AND e->'finding'->>'severity' = 'major')
+              AND NOT EXISTS (SELECT 1 FROM manager_items i WHERE i.manager_id = $reviewId AND i.target = l.slug
+                              AND i.status IN ('pending', 'held', 'active'))""".query[String].run().toSet

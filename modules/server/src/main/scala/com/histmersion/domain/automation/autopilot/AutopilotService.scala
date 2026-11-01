@@ -38,7 +38,6 @@ import javax.sql.DataSource
 final class AutopilotService(
     ds: DataSource,
     cfg: => AgentsConfig,
-    h: com.histmersion.server.Handlers,
     agents: AgentsHandlers
 ):
 
@@ -147,7 +146,11 @@ final class AutopilotService(
     val planned = GoalLinkRepo.planned(ds)
     val links = GoalLinkRepo.linkCounts(ds)
     val gs = goals.map(g =>
-      GoalRow(g.slug, g.status, needsPlan = !planned(g.slug) && links.getOrElse((g.slug, LinkKind.Query.wire), 0) == 0)
+      GoalRow(
+        g.slug,
+        g.status,
+        needsPlan = !planned(g.slug) && links.getOrElse((g.slug, LinkKind.SearchQuery.wire), 0) == 0
+      )
     )
     val steps = AutopilotPolicy.ensure(gs, rows(), AutopilotRepo.get(ds).paused.toSet, settings)
     val out = steps.flatMap(s => applyStep(s, now))
@@ -257,8 +260,8 @@ final class AutopilotService(
     val goals = GoalRepo.all(ds)
     val parentOf = goals.map(g => g.slug -> g.parentSlug).toMap
     val managers = ManagerRepo.light(ds)
-    val articles = GoalLinkRepo.articlesByGoal(ds)
-    val passed = ManagerRepo.passedReview(ds, ReviewId)
+    val articles = agents.workflows.linked()
+    val passed = agents.workflows.finished()
     val status = collection.mutable.Map.from(goals.map(g => g.slug -> g.status))
     val order = goals.sortBy(g => -AutopilotPolicy.depth(g.slug, s => parentOf.get(s).flatten))
     order.flatMap { g =>
@@ -272,7 +275,7 @@ final class AutopilotService(
       val kids = goals.filter(_.parentSlug.contains(g.slug)).map(c => status.getOrElse(c.slug, c.status))
       val facts = GoalFacts(g.slug, status(g.slug), managed, arts.size, compileOpen, arts.forall(passed), kids)
       AutopilotPolicy.advance(facts).flatMap { (to, why) =>
-        h.patchGoal(g.slug, GoalPatch(status = Some(to))) match
+        agents.host.patchGoal(g.slug, GoalPatch(status = Some(to))) match
           case Left(e) =>
             scribe.warn(s"autopilot: goal ${g.slug} not moved to $to: ${e.message}")
             None
@@ -328,7 +331,7 @@ final class AutopilotService(
     val lintDue = AutopilotPolicy.due(row.lastLintAt.flatMap(ManagerPolicy.parseInstant), acfg.lintHours, now)
     if !(backupDue || lintDue) then Nil
     else
-      h.housekeepingBlock match
+      agents.host.housekeepingBlock match
         case Some(why)                                            => List(s"housekeeping waits: $why")
         case None if !housekeepingBusy.compareAndSet(false, true) => Nil
         case None                                                 =>
@@ -347,7 +350,7 @@ final class AutopilotService(
           )
 
   private def backup(): Unit =
-    val line = h.backup() match
+    val line = agents.host.backup() match
       case Left(e)    => s"autopilot: the scheduled backup failed: ${e.message}"
       case Right(st0) =>
         // the request answers `running` after a while: follow the job to its end
@@ -355,7 +358,7 @@ final class AutopilotService(
         val deadline = System.currentTimeMillis() + 3L * 3600L * 1000L
         while st.stateOf.contains(BackupState.Running) && System.currentTimeMillis() < deadline do
           Thread.sleep(10000)
-          st = h.backupStatus.getOrElse(st)
+          st = agents.host.backupStatus.getOrElse(st)
         st.result match
           case Some(r) =>
             s"autopilot: backup ${r.file} (${r.bytes} bytes)" +
@@ -364,7 +367,7 @@ final class AutopilotService(
     log(line)
 
   private def lint(): Unit =
-    val line = h.ops.guardedLintFix(Nil) match
+    val line = agents.host.lintFix() match
       case Left(e)  => s"autopilot: the scheduled lint --fix failed: ${e.message}"
       case Right(r) =>
         s"autopilot: lint --fix — ${r.edgesResolved} edge(s) resolved, ${r.sourcesReindexed} source(s) re-indexed" +
@@ -372,7 +375,7 @@ final class AutopilotService(
     log(line)
 
   private def log(line: String): Unit =
-    val _ = h.ops.queueAdd("log", QueueAdd(line.take(1000)))
+    val _ = agents.workLists.add("log", QueueAdd(line.take(1000)))
     scribe.info(line)
 
   // ── status ─────────────────────────────────────────────────────────────────────────────────────
@@ -386,7 +389,7 @@ final class AutopilotService(
     val managers = ManagerRepo.light(ds)
     val pace = ManagerRepo.pace(ds, now.minusSeconds(7L * 86400L))
     val links = GoalLinkRepo.linkCounts(ds)
-    val arts = GoalLinkRepo.articlesByGoal(ds)
+    val arts = agents.workflows.linked()
     val open = AgentRepo.openBySubject(ds)
     def brief(m: ManagerRepo.Light) = ManagerBrief(m.id, m.kind, m.state, m.statusNote)
     val progress = goals.sortBy(_.slug).map { g =>

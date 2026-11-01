@@ -140,7 +140,7 @@ final class CompileArticlePipeline(
         )
       case Left(e) => Left(e.message)
 
-  private def isCitekey(ck: String): Boolean = Pipelines.isCitekey(h)(ck)
+  private def isCitekey(ck: String): Boolean = h.getSource(ck, body = false).isRight
 
   private def filter(ctx: RunCtx, s: Snap): Either[String, Found] =
     val af = s.filter.getOrElse(ArticleFilter(query = s.query, topics = s.topics, tags = s.tags))
@@ -319,7 +319,7 @@ final class CompileArticlePipeline(
       ctx.run.goal.foreach(g => GoalLinkRepo.link(ds, g, LinkKind.Article, d.slug, Some("compiled by an agent run")))
     log(ctx, CompileArticle.logLine(d, w.written, w.why, review, ctx.run.id))
 
-  private def log(ctx: RunCtx, line: String): Either[String, String] = Pipelines.log(h, ctx, line)
+  private def log(ctx: RunCtx, line: String): Either[String, String] = Pipelines.log(h.workLists, ctx, line)
 
 object CompileArticlePipeline:
 

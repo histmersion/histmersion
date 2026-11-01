@@ -10,7 +10,7 @@ import com.histmersion.api.Agents.{ApprovalKind, Pipeline}
 import com.histmersion.domain.HintProposals.{HintAnswer, Proposed}
 import com.histmersion.api.Managers.*
 import com.histmersion.db.{AgentRepo, ManagerRepo}
-import com.histmersion.server.Handlers
+import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
@@ -26,7 +26,8 @@ import javax.sql.DataSource
   *
   * Steps: load · propose · record · close. A DRY run records the approval it would open.
   */
-final class HintEffectPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfig) extends PipelineDef:
+final class HintEffectPipeline(workLists: WorkListControllers, ds: DataSource, cfg: => AgentsConfig)
+    extends PipelineDef:
   val pipeline: Pipeline = Pipeline.HintEffect
   import HintEffectPipeline.*
 
@@ -47,7 +48,7 @@ final class HintEffectPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfig
       line <- ctx.code[String]("record")(record(ctx, loaded, proposed))
       closed <- ctx.code[String]("close")(
         Pipelines.log(
-          h,
+          workLists,
           ctx,
           s"hint-effect ${loaded.managerId} hint #${loaded.hint}: $line " +
             s"(agent run ${ctx.run.id.take(8)})"

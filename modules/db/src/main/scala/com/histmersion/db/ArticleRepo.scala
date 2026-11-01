@@ -464,3 +464,13 @@ object ArticleRepo:
         .query[ArticleVersionFull]
         .run()
         .headOption
+
+  /** Every goal's linked articles that exist: goal → slugs. */
+  def articlesByGoal(ds: DataSource): Map[String, List[String]] =
+    connect(ds):
+      sql"""SELECT l.goal_slug, l.ref FROM goal_links l JOIN articles a ON a.slug = l.ref
+            WHERE l.kind = 'article' ORDER BY l.goal_slug, l.ref"""
+        .query[(String, String)]
+        .run()
+        .toList
+        .groupMap(_._1)(_._2)

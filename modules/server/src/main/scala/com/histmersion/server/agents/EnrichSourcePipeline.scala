@@ -334,7 +334,7 @@ final class EnrichSourcePipeline(
     val approval = r.approval.fold("")(id => s"; its status proposal waits for approval $id")
     val line = s"enrich-source [[$ck]] (agent run ${ctx.run.id.take(8)}): $what$approval" +
       acquire.fold("")(a => s"; $a")
-    Pipelines.log(h, ctx, line).map(_ => Closed(line, lint, acquire))
+    Pipelines.log(h.workLists, ctx, line).map(_ => Closed(line, lint, acquire))
 
   /** Tick acquisition item `id` off as fulfilled by `ck` — the same rule an OCR upload follows. It never fails the run:
     * an item done or deleted meanwhile is left as it is, and said so.

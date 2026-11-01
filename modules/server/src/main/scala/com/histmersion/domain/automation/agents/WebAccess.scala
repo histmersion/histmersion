@@ -11,5 +11,5 @@ import scala.jdk.CollectionConverters.*
 enum WebAccess(val wire: String):
   case None extends WebAccess("none")
   case Discover extends WebAccess("discover")
-  case Search extends WebAccess("search")
+  case WebSearch extends WebAccess("search")
   case Fetch extends WebAccess("fetch")

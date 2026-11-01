@@ -10,9 +10,9 @@ import com.histmersion.values.ApprovalKind
 import java.time.Instant
 import scala.collection.mutable.Builder
 
-/** What the supervisor gives a [[ManagerKindDefinition]]: its managers' items, events and hints, the runs and approvals they
-  * left, and the engine's mechanics of starting, retrying and settling an item. Every write is the one the supervisor
-  * itself makes, with the same events.
+/** What the supervisor gives a [[ManagerKindDefinition]]: its managers' items, events and hints, the runs and approvals
+  * they left, and the engine's mechanics of starting, retrying and settling an item. Every write is the one the
+  * supervisor itself makes, with the same events.
   */
 trait ManagerContext:
   def cfg: AgentsConfig
@@ -48,6 +48,12 @@ trait ManagerContext:
       outcome: Option[String]
   ): Boolean
   def hints(id: String): List[ManagerHint]
+
+  /** A manager's state (`active`, `paused`, …), if it exists. */
+  def state(id: String): Option[String]
+
+  /** Tick soon (an item was added). */
+  def nudge(): Unit
 
   /** The review selection's article queries (the review kind's, until research owns them). */
   def openMajorArticles(id: String, tags: List[String], goal: Option[String], limit: Int): List[(String, Int)]

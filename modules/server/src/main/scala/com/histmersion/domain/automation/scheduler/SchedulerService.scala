@@ -29,7 +29,6 @@ import javax.sql.DataSource
 final class SchedulerService(
     ds: DataSource,
     cfg: => AgentsConfig,
-    h: com.histmersion.server.Handlers,
     agents: AgentsHandlers
 ):
 
@@ -449,7 +448,7 @@ final class SchedulerService(
     val n = math.max(0, days.getOrElse(cfg.autopilot.stallDays))
     val goals = FocusRepo.goals(ds).filterNot(g => GoalFocus.finished(g.status))
     val progress = ManagerRepo.lastProgress(ds)
-    val articles = GoalLinkRepo.articlesByGoal(ds)
+    val articles = agents.workflows.linked()
     val bySubj = AgentRepo.openLight(ds).groupBy(_.subject)
     val held = ManagerRepo.personHeldByGoal(ds)
     val paused = ManagerRepo
@@ -515,7 +514,7 @@ final class SchedulerService(
             Right(s"strategy ${st.name} (by $by)")
     done.map { line =>
       last = None
-      val _ = h.ops.queueAdd("log", QueueAdd(s"agent scheduler: $line".take(1000)))
+      val _ = agents.workLists.add("log", QueueAdd(s"agent scheduler: $line".take(1000)))
       scribe.info(s"agent scheduler: $line")
       agents.managers.nudge()
       status(None, now, List(line))

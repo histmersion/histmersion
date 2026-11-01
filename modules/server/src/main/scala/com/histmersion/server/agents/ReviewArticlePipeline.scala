@@ -442,7 +442,7 @@ final class ReviewArticlePipeline(
     val resolve = h.pageLinks(AgentVerify.wikilinks(body))
     t => resolve(t).isDefined
 
-  private def isCitekey(ck: String): Boolean = Pipelines.isCitekey(h)(ck)
+  private def isCitekey(ck: String): Boolean = h.getSource(ck, body = false).isRight
 
   /** What a quote may be checked against: a source's summary, findings, notes and body — what `get_source` shows.
     */
@@ -817,7 +817,7 @@ final class ReviewArticlePipeline(
        else s"; ${Plural.count(end.deferred.size, "new MAJOR")} of the final pass deferred to the next run") +
       s"; ledger ${ledger.entries.count(_.status == ReviewLedger.Status.Fixed)} fixed, ${ledger.open.size} open" +
       (if pairs.isEmpty then "" else s"; critiques ${Critiques.summary(pairs)}")
-    Pipelines.log(h, ctx, line)
+    Pipelines.log(h.workLists, ctx, line)
 
   private def backlog(ctx: RunCtx, slug: String, l: Ledger): Ledger =
     val tasks = Queue.Kind.Tasks.label

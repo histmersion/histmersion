@@ -3,7 +3,6 @@ package com.histmersion.domain.automation.goals
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.approvals.Decided
 import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
-import com.histmersion.server.agents.AgentUpstream
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -13,7 +12,8 @@ import com.histmersion.api.GoalPlans.{LinkKind, Plan}
 import com.histmersion.domain.PlanGoal.*
 import com.histmersion.api.Queue.QueueAdd
 import com.histmersion.db.{GoalLinkRepo, GoalRepo}
-import com.histmersion.server.Handlers
+import com.histmersion.domain.automation.workflows.AutomationHost
+import com.histmersion.domain.automation.worklists.{QueueScope, QueueService, WorkListControllers}
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
 
@@ -31,8 +31,13 @@ import com.histmersion.api.VocabularyCodecs.given
   * DRY run opens no approval (the plan is treated as approved) and `apply` records the plan it would apply instead of
   * applying it; the log line likewise.
   */
-final class PlanGoalPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfig, upstream: () => AgentUpstream)
-    extends PipelineDef:
+final class PlanGoalPipeline(
+    host: AutomationHost,
+    queues: QueueService,
+    workLists: WorkListControllers,
+    ds: DataSource,
+    cfg: => AgentsConfig
+) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.PlanGoal
   import PlanGoalPipeline.*
 
@@ -82,10 +87,9 @@ final class PlanGoalPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfig, 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
   private def load(slug: String): Either[String, Loaded] =
-    h.getGoal(slug).left.map(_.message).map { g =>
+    host.goal(slug).left.map(_.message).map { g =>
       val links = GoalLinkRepo.links(ds, slug)
-      val vocab = (field: String) =>
-        h.facets(field, None, Filter()).toOption.toList.flatten.sortBy(-_.count).take(VocabularySize).map(_.value)
+      val vocab = (field: String) => host.vocabulary(field).take(VocabularySize)
       Loaded(
         g.slug,
         g.title,
@@ -95,7 +99,7 @@ final class PlanGoalPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfig, 
         g.periodStart,
         g.periodEnd,
         GoalRepo.children(ds, slug).map(c => s"${c.slug} — ${c.title}"),
-        links.filter(_.kind == LinkKind.Query).map(_.ref),
+        links.filter(_.kind == LinkKind.SearchQuery).map(_.ref),
         links
           .filter(l => l.kind == LinkKind.Source || l.kind == LinkKind.Article)
           .map(l => s"${l.kind.wire} [[${l.ref}]]${l.title.fold("")(t => s" — $t")}"),
@@ -123,11 +127,11 @@ final class PlanGoalPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfig, 
     * DOI code could not check.
     */
   private def verify(ctx: RunCtx, p: Proposed, slug: String): Plan =
-    val plan = PlanGoal.verify(p, slug, doi => upstream().meta(doi))
+    val plan = PlanGoal.verify(p, slug, host.workLookup)
     plan.dropped.foreach(d => ctx.warn(s"verify: $d"))
     plan
 
-  private def log(ctx: RunCtx, line: String): Either[String, String] = Pipelines.log(h, ctx, line)
+  private def log(ctx: RunCtx, line: String): Either[String, String] = Pipelines.log(workLists, ctx, line)
 
   /** The approved plan, applied: sub-goals (children of the goal), query links, works in the corpus linked, the others
     * queued for acquisition and linked by item. A rejected plan changes nothing. Idempotent (a re-run after a crash
@@ -153,12 +157,12 @@ final class PlanGoalPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfig, 
       )
 
   private def applyApproved(ctx: RunCtx, slug: String, plan: Plan): Either[String, Applied] =
-    val parent = h.getGoal(slug).toOption
+    val parent = host.goal(slug).toOption
     val created = plan.subGoals.filter { g =>
       if GoalRepo.exists(ds, g.slug) then {
         ctx.warn(s"apply: '${g.slug}' became a goal meanwhile; left as it is"); false
       } else
-        h.putGoal(
+        host.putGoal(
           g.slug,
           GoalPut(
             g.title,
@@ -174,12 +178,12 @@ final class PlanGoalPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfig, 
           case Right(_) => true
           case Left(e)  => ctx.warn(s"apply: sub-goal '${g.slug}' not created — ${e.message}"); false
     }
-    plan.queries.foreach(q => GoalLinkRepo.link(ds, slug, LinkKind.Query, q, Some("from the approved plan")))
-    val queued = h.ops
-      .queueList("acquire", all = true)
+    plan.queries.foreach(q => GoalLinkRepo.link(ds, slug, LinkKind.SearchQuery, q, Some("from the approved plan")))
+    val queued = workLists
+      .kindOf("acquire")
       .toOption
       .toList
-      .flatMap(_.items)
+      .flatMap(queues.list(_, QueueScope.All))
       .flatMap(i => Scheduling.dois(i.text).map(_ -> i.id))
       .toMap
     val (inCorpus, outside) = plan.works.partition(w => w.inCorpus && w.citekey.isDefined)
@@ -189,8 +193,8 @@ final class PlanGoalPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfig, 
         .get(w.doi)
         .map(Right(_))
         .getOrElse(
-          h.ops
-            .queueAdd(
+          workLists
+            .add(
               "acquire",
               QueueAdd(
                 PlanGoal.acquireText(w, slug),

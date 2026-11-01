@@ -160,6 +160,9 @@ object Agents:
   object Origin:
     def parse(s: String): Option[Origin] = values.find(_.wire == s.trim.toLowerCase)
 
+    /** A run an ingest started ([[Ingest]]), by a name no other type takes. */
+    val FromIngest: Origin = Ingest
+
   final case class ProbeRequest(citekey: String, model: Option[String] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema
