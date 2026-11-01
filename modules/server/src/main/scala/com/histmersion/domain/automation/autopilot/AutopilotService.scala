@@ -76,7 +76,7 @@ final class AutopilotService(
   /** Turn it on (ensure and advance at once) or off (pause the seeding managers and watchers it runs). Idempotent; the
     * answer is the status with what it did.
     */
-  def set(in: AutopilotSet, now: Instant = Instant.now()): AutopilotStatus =
+  def set(in: AutopilotSet, now: Instant = Instant.now(agents.clock)): AutopilotStatus =
     val by = in.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")
     val row = AutopilotRepo.get(ds)
     val changes =
@@ -383,7 +383,7 @@ final class AutopilotService(
   /** Per goal: its stage, managers, counts, open approvals, last activity and pace — a few queries for every goal at
     * once (readable with agents off).
     */
-  def status(now: Instant = Instant.now()): AutopilotStatus =
+  def status(now: Instant = Instant.now(agents.clock)): AutopilotStatus =
     val row = AutopilotRepo.get(ds)
     val goals = GoalRepo.all(ds)
     val managers = ManagerRepo.light(ds)

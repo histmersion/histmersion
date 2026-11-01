@@ -23,6 +23,15 @@ trait EngineSite:
   def pins: Pinning
   def jobStops: JobStops
 
+  /** The time the engine's decisions read: the composition's clock (a suite gives one of its own). */
+  def clock: java.time.Clock
+
+  /** A clock the daily approval digest also reads its hour on, beside the tick's time: none in a server (the tick's
+    * time is the composition's clock); a suite's own, so that its ticks at the wall clock's hour, whatever it is, are
+    * past the digest's hour.
+    */
+  def digestClock: Option[java.time.Clock]
+
   /** The AI providers of the pinned plugin generation, by name. */
   def aiProviders: () => ListMap[String, AiProvider]
 

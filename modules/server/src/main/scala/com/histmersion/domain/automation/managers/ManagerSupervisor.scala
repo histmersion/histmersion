@@ -119,7 +119,7 @@ final class ManagerSupervisor(
     try
       while !stopping do
         // one tick, one generation: its database and config throughout (a reload moves the next one)
-        try { val _ = agents.pins.pinned(tick(Instant.now())) }
+        try { val _ = agents.pins.pinned(tick(Instant.now(agents.clock))) }
         catch
           case e: InterruptedException => throw e
           case e: Exception            => scribe.warn(s"agent managers tick failed: ${e.getMessage}", e)

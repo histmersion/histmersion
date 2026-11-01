@@ -57,10 +57,13 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private lazy val ds = testPool(cfg.db)
   protected def transcriptDs: javax.sql.DataSource = ds
 
-  private def handlers(c: AppConfig = cfg): (AgentsHandlers, Handlers, StubUpstream) =
+  private def handlers(
+      c: AppConfig = cfg,
+      digestClock: java.time.Clock = TestRuns.noonClock()
+  ): (AgentsHandlers, Handlers, StubUpstream) =
     val deps = Deps(c, ds)
     val h = Handlers(deps)
-    val a = AgentsHandlers(TransitionSite(deps, h), (_, _) => Right(ScriptedClient(Model)))
+    val a = AgentsHandlers(TransitionSite(deps, h, Some(digestClock)), (_, _) => Right(ScriptedClient(Model)))
     val up = StubUpstream()
     a.attach(up)
     (a, h, up)
@@ -341,7 +344,8 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(a.digest.digest().goalPlansWait, None)
 
   test("the digest: open approvals by kind; one worklog line a UTC day after digest-hour; a kind decided at once"):
-    val (a, h, up) = handlers(); seed(a, h, up)
+    val morning = Instant.parse("2031-03-03T06:59:00Z")
+    val (a, h, up) = handlers(digestClock = java.time.Clock.fixed(morning, java.time.ZoneOffset.UTC)); seed(a, h, up)
     def plan(goal: String) =
       AgentRepo.openSubject(ds, None, ApprovalKind.GoalPlan, goal, Plan(goal, "r", Nil, List("q")).asJson.noSpaces)
     val ps = List(g(1), g(2), g(3)).map(plan)
@@ -350,7 +354,6 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals((plans.count, plans.decidedBy), (3, "person"))
     assertEquals(plans.ids, ps.map(_.id).sorted)
     // once a day, after the hour (7 UTC by default)
-    val morning = Instant.parse("2031-03-03T06:59:00Z")
     assertEquals(a.digest.tick(morning), Nil, "before the hour")
     assertEquals(a.digest.tick(morning.plusSeconds(120)), List("approval digest written"))
     assertEquals(a.digest.tick(morning.plusSeconds(3600)), Nil, "once a day")

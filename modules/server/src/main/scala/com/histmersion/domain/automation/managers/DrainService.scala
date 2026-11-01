@@ -71,7 +71,7 @@ final class DrainService(
         else Nil
 
   /** Start or lift the drain; answers the autopilot's status with what it did. */
-  def set(in: DrainSet, now: Instant = Instant.now()): AutopilotStatus =
+  def set(in: DrainSet, now: Instant = Instant.now(agents.clock)): AutopilotStatus =
     val by = in.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")
     val changed = AutopilotRepo.setDrain(ds, in.on, by)
     val line =

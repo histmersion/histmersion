@@ -86,7 +86,10 @@ final class ManagersHandlers(
     * and starts with one item per sweep (they run when it is resumed, then on its cron). Created paused unless `paused`
     * is false — or, `paused` not given, while the autopilot is on (it runs every goal's managers).
     */
-  def create(in: ManagerCreate, now: java.time.Instant = java.time.Instant.now()): Either[ApiError, ManagerInfo] =
+  def create(
+      in: ManagerCreate,
+      now: java.time.Instant = java.time.Instant.now(agents.clock)
+  ): Either[ApiError, ManagerInfo] =
     // created paused unless asked otherwise — or, when nothing is asked, while the autopilot runs the goals
     val state =
       if in.paused.contains(false) || (in.paused.isEmpty && agents.autopilot.on) then State.Active else State.Paused
@@ -151,7 +154,7 @@ final class ManagersHandlers(
   def update(
       id: String,
       in: ManagerUpdate,
-      now: java.time.Instant = java.time.Instant.now()
+      now: java.time.Instant = java.time.Instant.now(agents.clock)
   ): Either[ApiError, ManagerInfo] =
     for
       m <- manager(id)

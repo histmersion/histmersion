@@ -86,11 +86,14 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
   private lazy val ds = testPool(autoCfg.db)
   protected def transcriptDs: javax.sql.DataSource = ds
 
+  /** Noon UTC of the day it runs: the digest and the crons see the same hour whenever the suite runs. */
+  private val suiteClock: java.time.Clock = TestRuns.noonClock()
+
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
   private def str(s: String) = Json.fromString(s).noSpaces
 
   private def handlers(c: LlmClient, cfg: AppConfig = autoCfg): (AgentsHandlers, Handlers) =
-    val deps = Deps(cfg, ds)
+    val deps = Deps(cfg, ds, ds, clock = suiteClock)
     val h = Handlers(deps)
     (AgentsHandlers(TransitionSite(deps, h), (_, _) => Right(c)), h)
 
@@ -203,7 +206,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
   /** A clock from the wall clock (the switch records real times) that moves six minutes a tick — past the autopilot's
     * ensure interval every tick.
     */
-  final private class Clock(var now: Instant = Instant.now()): // a var: the test's own moving time
+  final private class Clock(var now: Instant = Instant.now(suiteClock)): // a var: the test's own moving time
     def tick(a: AgentsHandlers, minutes: Int = 6): List[String] =
       now = now.plusSeconds(minutes.toLong * 60L)
       a.managers.tick(now)
@@ -420,7 +423,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(AutopilotRepo.get(ds).paused, Nil)
     // a goal added while it is on gets its managers at the next ensure
     assert(h.putGoal("zzagent-aplate", GoalPut("Zz later")).isRight)
-    Clock(Instant.now().plusSeconds(3600)).tick(a)
+    Clock(Instant.now(suiteClock).plusSeconds(3600)).tick(a)
     assertEquals(ManagerRepo.get(ds, seedId("zzagent-aplate")).map(_.state), Some("active"))
     // the New research area form's watcher, asked for while it is on, is created active (paused only when asked)
     assert(h.putGoal("zzagent-apform", GoalPut("Zz form")).isRight)
@@ -462,7 +465,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val p1 =
       AgentRepo.openSubject(ds, None, ApprovalKind.ArticlePlan, Goal, plan("zzagent_p1", "zzagent_p2").asJson.noSpaces)
     val p2 = AgentRepo.openSubject(ds, None, ApprovalKind.ArticlePlan, Goal, plan("zzagent_p3").asJson.noSpaces)
-    val now = Instant.now()
+    val now = Instant.now(suiteClock)
     a.autoApprovals.sweep(now)
     assertEquals(AgentRepo.approval(ds, p1.id).map(_.state), Some("approved"))
     assertEquals(
@@ -522,7 +525,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
         .asJson
         .noSpaces
     )
-    a.autoApprovals.sweep(Instant.now())
+    a.autoApprovals.sweep(Instant.now(suiteClock))
     assertEquals(AgentRepo.approval(ds, plan.id).map(_.state), Some("approved"))
     assert(waiting.forall(w => AgentRepo.approval(ds, w.id).exists(_.state == "open")))
 
@@ -530,7 +533,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val (a, h) = handlers(ScriptedClient(Model)); seed(h)
     a.managing.setAutopilot(AutopilotSet(on = true)).fold(e => fail(e.message), identity)
     ManagerRepo.event(ds, watchId(Goal), None, None, Feed.Ingested, "[[zzagent_a]] ingested")
-    val now = Instant.now()
+    val now = Instant.now(suiteClock)
     // the goal's plan-goal run starts beside it: a sweep does not wait for it
     Clock(now).tick(a, 0)
     assert(item(seedId(Goal), PlanGoalItem, Goal).runId.isDefined)

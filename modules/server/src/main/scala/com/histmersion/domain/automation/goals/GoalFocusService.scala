@@ -274,7 +274,7 @@ final class GoalFocusService(
   // ── what it shows ──────────────────────────────────────────────────────────────────────────────
 
   /** The focus as the next pass would decide it (read-only: with the autopilot off, what it WOULD focus on). */
-  def info(now: Instant = Instant.now(), changes: List[String] = Nil): FocusInfo =
+  def info(now: Instant = Instant.now(agents.clock), changes: List[String] = Nil): FocusInfo =
     val (max, from) = cap
     val r = read()
     val plan = GoalFocus.select(r.facts, settings(r, if max > 0 then max else acfg.maxActiveGoals))
@@ -330,7 +330,7 @@ final class GoalFocusService(
   /** `pin` / `unpin` / `priority` a goal, or the cap (`max`; no value: back to the config's). Applied at the next
     * managers' tick (nudged now); answers the focus as the next pass will decide it.
     */
-  def set(in: FocusSet, now: Instant = Instant.now()): Either[ApiError, FocusInfo] =
+  def set(in: FocusSet, now: Instant = Instant.now(agents.clock)): Either[ApiError, FocusInfo] =
     val by = in.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")
     def goal = in.goal.map(_.trim).filter(_.nonEmpty).toRight(ApiError(s"`${in.action}` needs `goal`"))
     def missing(g: String) = ApiError(s"no goal '$g'", Some(Write.CodeNotFound))

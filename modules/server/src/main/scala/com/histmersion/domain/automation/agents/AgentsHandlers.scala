@@ -75,6 +75,12 @@ final class AgentsHandlers(
   /** A person's pause and cancel of the server's long background jobs. */
   val jobStops: com.histmersion.util.jobs.JobStops = site.jobStops
 
+  /** The time the managers' tick, the autopilot, the scheduler and the digest decide by. */
+  val clock: java.time.Clock = site.clock
+
+  /** What the daily approval digest also reads the hour on ([[EngineSite.digestClock]]). */
+  val digestClock: Option[java.time.Clock] = site.digestClock
+
   val definitions: AgentDefinitions = cli.definitions
   val tokens: RunTokens = cli.tokens
 
@@ -146,7 +152,7 @@ final class AgentsHandlers(
     * elsewhere).
     */
   def start(): Int =
-    val _ = managers.migrateSchedules(java.time.Instant.now())
+    val _ = managers.migrateSchedules(java.time.Instant.now(clock))
     if !cfg.enabled then 0
     else
       if cfg.runtimes.generate then
@@ -285,7 +291,7 @@ final class AgentsHandlers(
     */
   def adoptDatabase(): Unit =
     if cfg.enabled then
-      val _ = managers.migrateSchedules(java.time.Instant.now())
+      val _ = managers.migrateSchedules(java.time.Instant.now(clock))
       managers.ensureDefaults()
       val paused = engine.start()
       managers.start()
@@ -637,7 +643,7 @@ final class AgentsHandlers(
       upTo: Option[String]
   ): Either[ApiError, (List[RunInfo], Paging.Page)] =
     for
-      q <- com.histmersion.server.ListQueries.runs(f, java.time.Instant.now())
+      q <- com.histmersion.server.ListQueries.runs(f, java.time.Instant.now(clock))
       page <- AgentRepo
         .page(ds, q, site.config.limits.page(limit, site.config.limits.search), cursor(before), cursor(upTo))
         .left
@@ -798,7 +804,7 @@ final class AgentsHandlers(
       slug: String,
       kind: String,
       in: ScheduleSet,
-      now: java.time.Instant = java.time.Instant.now()
+      now: java.time.Instant = java.time.Instant.now(clock)
   ): Either[ApiError, GoalSchedule] =
     for
       g <- host.goal(slug)
