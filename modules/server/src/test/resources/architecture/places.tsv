@@ -1006,6 +1006,7 @@ server:server/agents/GeneratePluginMain.scala	server
 server:server/agents/GoalSweep.scala	automation.goals
 server:server/agents/HostAiProvider.scala	automation.agents
 server:server/agents/InferFilterPipeline.scala	research.workflows
+server:server/agents/LibraryAnswers.scala	library.workflows
 server:server/agents/OaBacklog.scala	library.workflows
 server:server/agents/Opencode.scala	automation.agents
 server:server/agents/OpencodeRunClient.scala	automation.agents
@@ -1015,12 +1016,14 @@ server:server/agents/ProposeArticlesPipeline.scala	research.workflows
 server:server/agents/QuotaGuard.scala	automation.agents
 server:server/agents/RefreshGate.scala	automation.agents
 server:server/agents/Refreshed.scala	automation.agents
+server:server/agents/ResearchAnswers.scala	research.workflows
 server:server/agents/ReviewArticlePipeline.scala	research.workflows
 server:server/agents/ReviewManagerKind.scala	server
 server:server/agents/SeedManagerKind.scala	server
 server:server/agents/SeedService.scala	library.workflows
 server:server/agents/TransitionHost.scala	server
 server:server/agents/TransitionRoutes.scala	server
+server:server/agents/TransitionSettings.scala	server
 server:server/agents/TransitionTools.scala	server
 server:server/agents/TransitionWorkflows.scala	server
 server:server/agents/WatchManagerKind.scala	server

@@ -8,6 +8,8 @@ import com.histmersion.api.Agents.*
 import com.histmersion.api.Managers.*
 import com.histmersion.domain.AutoEnrich
 import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts}
+import com.histmersion.config.AgentsConfig
+import com.histmersion.domain.ManagerDefaults
 import com.histmersion.server.Handlers
 
 import java.time.Instant
@@ -19,6 +21,9 @@ import scala.collection.mutable.Builder
   */
 final class EnrichManagerKind(h: Handlers, a: AgentsHandlers) extends ManagerKindDefinition:
   val kind: Kind = Kind.Enrich
+
+  def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig =
+    ReviewSettings.defaultsFor(kind, m, cfg.seed.seedPlan)
 
   def pipelineOf(itemKind: String): Pipeline = itemKind match
     case SourceEnrich => Pipeline.EnrichSource

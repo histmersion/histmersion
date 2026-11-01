@@ -52,7 +52,7 @@ final class EnrichSourcePipeline(
         "classify",
         StepAgent.EnrichClassify,
         classifyInput(loaded),
-        AnswerSchemas.classification
+        LibraryAnswers.classification
       )((c, last) => checkClassification(c, cfg.verify.maxAbsYear, last).map(Checked(_, _)))
       verified <- findings(ctx, loaded, classified)
       geocoded <- ctx.code[Geocoded]("geocode")(Right(geocode(ctx, verified)))
@@ -60,7 +60,7 @@ final class EnrichSourcePipeline(
         "notes",
         StepAgent.EnrichNotes,
         notesInput(loaded, classified, verified),
-        AnswerSchemas.notes
+        LibraryAnswers.notes
       )((n, _) => checkNotes(n, isCitekey, slug => AgentRepo.slugExists(ds, slug)).map(Checked(_)))
       patched <- ctx.code[Patched]("patch")(write(ctx, ck, loaded, classified, geocoded.findings, notes))
       _ <- ctx.code[Upstreamed]("refs")(Right(refs(ctx, loaded)))
@@ -126,7 +126,7 @@ final class EnrichSourcePipeline(
             s"findings-${w.index}",
             StepAgent.EnrichFindings,
             user,
-            AnswerSchemas.findings
+            LibraryAnswers.findings
           ) { (f, last) =>
             checkFindings(
               f,

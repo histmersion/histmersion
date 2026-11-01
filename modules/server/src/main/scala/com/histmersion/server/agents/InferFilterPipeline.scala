@@ -48,7 +48,7 @@ final class InferFilterPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfi
               "propose",
               StepAgent.FilterInferrer,
               input(loaded),
-              AnswerSchemas.filter
+              ResearchAnswers.filter
             )((a, last) => check(slug, loaded, a, last).map(Checked(_)))
             recorded <- ctx.code[Recorded]("record")(record(ctx, slug, inferred))
             closed <- ctx.code[String]("close")(log(ctx, FilterInference.logLine(slug, recorded.line, ctx.run.id)))

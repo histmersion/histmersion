@@ -9,6 +9,8 @@ import com.histmersion.api.Managers.*
 import com.histmersion.api.Queue.{QueueAdd, QueuePatch}
 import com.histmersion.domain.*
 import com.histmersion.domain.ManagerPolicy.{Next, ReviewFacts, ReviewSettings, StepFacts}
+import com.histmersion.config.AgentsConfig
+import com.histmersion.domain.ManagerDefaults
 import com.histmersion.server.Handlers
 
 import java.time.Instant
@@ -22,6 +24,9 @@ import scala.collection.mutable.Builder
   */
 final class ReviewManagerKind(h: Handlers) extends ManagerKindDefinition:
   val kind: Kind = Kind.Review
+
+  def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig =
+    ReviewSettings.defaultsFor(kind, m, cfg.seed.seedPlan)
 
   def pipelineOf(itemKind: String): Pipeline = itemKind match
     case InferFilter   => Pipeline.InferFilter

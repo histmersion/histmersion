@@ -7,6 +7,8 @@ import com.histmersion.api.Agents.*
 import com.histmersion.api.Managers.*
 import com.histmersion.domain.{IngestBacklog, ManagerPolicy}
 import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts}
+import com.histmersion.config.AgentsConfig
+import com.histmersion.domain.ManagerDefaults
 import com.histmersion.server.Handlers
 
 import hearth.kindlings.optics.syntax.*
@@ -21,6 +23,9 @@ import scala.collection.mutable.Builder
   */
 final class WatchManagerKind(h: Handlers, val work: AcquisitionWork) extends ManagerKindDefinition:
   val kind: Kind = Kind.Watch
+
+  def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig =
+    ReviewSettings.defaultsFor(kind, m, cfg.seed.seedPlan)
 
   def pipelineOf(itemKind: String): Pipeline = itemKind match
     case AcquisitionSweep => Pipeline.AcquisitionSweep

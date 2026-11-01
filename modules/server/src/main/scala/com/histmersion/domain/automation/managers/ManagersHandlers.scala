@@ -49,8 +49,9 @@ final class ManagersHandlers(
 
   private def withEffective(m: ManagerInfo, backlog: => Map[String, (Int, Option[Int])]): ManagerInfo =
     val e = m.copy(effective =
-      ReviewSettings
-        .defaultsFor(kindOf(m), ManagerDefaultsViews.defaults(mcfg), ManagerDefaultsViews.seedPlan(cfg.seed))
+      kinds
+        .find(_.kind == kindOf(m))
+        .fold(ManagerConfig())(_.defaults(cfg, ManagerDefaultsViews.defaults(mcfg)))
         .merge(m.config)
     )
     if kindOf(m) != Kind.Watch then e

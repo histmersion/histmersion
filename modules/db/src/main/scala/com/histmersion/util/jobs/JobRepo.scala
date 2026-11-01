@@ -204,8 +204,8 @@ object JobRepo:
   /** Startup reconciliation: nothing survives the process, so anything still `running` failed with it — and a
     * background job a person paused, whose way to go on was the process's. Returns how many rows were corrected. Agent
     * runs are NOT touched: their finished steps are checkpointed, so an interrupted run is paused and resumable
-    * (`AgentRepo.reconcile`). * `except`: the jobs this process is still running or holding queued — a config reload
-    * that swapped back to a database (docs/research-plugins.md §3.6) must not fail its own work there.
+    * (`JobRuns.reconcile`). * `except`: the jobs this process is still running or holding queued — a config reload that
+    * swapped back to a database (docs/research-plugins.md §3.6) must not fail its own work there.
     */
   def failInterrupted(ds: DataSource, except: List[String] = Nil): Int =
     transact(ds):
@@ -214,6 +214,103 @@ object JobRepo:
             WHERE status IN (${JobState.Running.wire}, ${JobState.Queued.wire}, ${JobState.Paused.wire})
               AND kind <> ${Agents.JobKind}
               AND NOT (id = ANY($except::text[]))""".update.run()
+
+  // ── runs: jobs that run as checkpointed steps (agent runs) ───────────────────────────────────
+
+  /** A new run's row; its id. */
+  def insertRun(r: RunRow)(using DbCon): String =
+    val id = java.util.UUID.randomUUID().toString
+    sql"""INSERT INTO jobs (id, kind, citekey, status, pipeline, pipeline_version, target_kind, target_id,
+                            model, budget_usd, budget_tokens, params, acquire_item, goal_slug, parent_job, origin,
+                            dry_run, manager_id, manager_item)
+          VALUES ($id, ${r.kind}, ${r.citekey}, ${r.status},
+                  ${r.pipeline}, ${r.pipelineVersion}, ${r.targetKind}, ${r.target}, ${r.model}, ${r.budgetUsd},
+                  ${r.budgetTokens}, ${r.params}::jsonb, ${r.acquireItem}, ${r.goal}, ${r.parent}, ${r.origin},
+                  ${r.dryRun}, ${r.managerId}, ${r.managerItem})""".update
+      .run()
+    id
+
+  /** The pipeline version a run was started with. */
+  def runPipelineVersion(id: String)(using DbCon): Option[Int] =
+    sql"SELECT pipeline_version FROM jobs WHERE id = $id".query[Option[Int]].run().headOption.flatten
+
+  def runHeartbeat(kind: String, id: String)(using DbCon): Unit =
+    val _ = sql"UPDATE jobs SET heartbeat_at = now() WHERE id = $id AND kind = $kind".update.run()
+
+  /** How many runs of `kind` are in one of `statuses`. */
+  def runsIn(kind: String, statuses: (String, String))(using DbCon): Int =
+    sql"""SELECT count(*)::int FROM jobs WHERE kind = $kind
+          AND status IN (${statuses._1}, ${statuses._2})""".query[Int].run().head
+
+  /** Compare-and-set: `from` → `to`, setting the error, progress and resume time (None clears them). */
+  def moveRun(
+      kind: String,
+      id: String,
+      from: String,
+      to: String,
+      error: Option[String],
+      progress: Option[String],
+      resumeAt: Option[String]
+  )(using DbCon): Boolean =
+    sql"""UPDATE jobs SET status = $to, error = $error, progress = $progress,
+                          resume_at = $resumeAt::timestamptz, updated_at = now()
+          WHERE id = $id AND kind = $kind AND status = $from""".update.run() > 0
+
+  /** The `paused` runs whose resume time has come, oldest resume first. */
+  def runsDue(kind: String, paused: String, at: String)(using DbCon): Vector[String] =
+    sql"""SELECT id FROM jobs WHERE kind = $kind AND status = $paused
+                                AND resume_at IS NOT NULL AND resume_at <= $at::timestamptz
+          ORDER BY resume_at, created_at""".query[String].run()
+
+  /** The `paused` runs whose error starts like `like` and that do not resume by themselves before `at`: (id, pipeline,
+    * model, error).
+    */
+  def runsPausedLike(
+      kind: String,
+      paused: String,
+      like: String,
+      at: String
+  )(using DbCon): Vector[(String, String, Option[String], String)] =
+    sql"""SELECT id, coalesce(pipeline, ''), model, coalesce(error, '') FROM jobs
+          WHERE kind = $kind AND status = $paused AND error LIKE $like
+            AND (resume_at IS NULL OR resume_at > $at::timestamptz)
+          ORDER BY updated_at, created_at""".query[(String, String, Option[String], String)].run()
+
+  def runProgress(kind: String, id: String, text: String)(using DbCon): Unit =
+    val _ = sql"UPDATE jobs SET progress = $text, updated_at = now() WHERE id = $id AND kind = $kind".update.run()
+
+  def runWarning(kind: String, id: String, w: String)(using DbCon): Unit =
+    val _ = sql"""UPDATE jobs SET warnings = array_append(warnings, $w), updated_at = now()
+                  WHERE id = $id AND kind = $kind""".update.run()
+
+  def runBudget(kind: String, id: String, usd: Option[BigDecimal], tokens: Option[Long])(using DbCon): Unit =
+    val _ =
+      sql"""UPDATE jobs SET budget_usd = coalesce($usd, budget_usd), budget_tokens = coalesce($tokens, budget_tokens),
+                          updated_at = now() WHERE id = $id AND kind = $kind""".update.run()
+
+  /** The `running` runs (but `except`) moved to `paused` with `error`, returned with their origin; then the `queued`
+    * ones (but `except`), oldest first.
+    */
+  def runsReconciled(
+      kind: String,
+      running: String,
+      paused: String,
+      error: String,
+      queued: String,
+      except: List[String]
+  )(using DbCon): (Vector[(String, Option[String])], Vector[String]) =
+    val moved = sql"""UPDATE jobs SET status = $paused, error = $error, updated_at = now()
+                      WHERE kind = $kind AND status = $running AND NOT (id = ANY($except::text[]))
+                      RETURNING id, origin""".query[(String, Option[String])].run()
+    val waiting = sql"""SELECT id FROM jobs WHERE kind = $kind AND status = $queued
+                          AND NOT (id = ANY($except::text[]))
+                        ORDER BY created_at""".query[String].run()
+    (moved, waiting)
+
+  /** A `paused` run's resume time (unless it moved on meanwhile). */
+  def runResumesAt(kind: String, id: String, paused: String, at: String)(using DbCon): Boolean =
+    sql"""UPDATE jobs SET resume_at = $at::timestamptz, updated_at = now()
+          WHERE id = $id AND kind = $kind AND status = $paused""".update.run() > 0
 
   // ── merge apply (#888) ─────────────────────────────────────────────────────────────────────────
 

@@ -182,7 +182,7 @@ final class CompileArticlePipeline(
               s"extract-${i + 1}",
               StepAgent.CompileExtractor,
               user,
-              AnswerSchemas.extract
+              ResearchAnswers.extract
             ) { (a, last) =>
               CompileArticle
                 .checkExtract(a, ck, text, cfg.verify.quoteMinRatio, cfg.compile.maxClaims, last)
@@ -227,7 +227,7 @@ final class CompileArticlePipeline(
         "draft",
         StepAgent.CompileWriter,
         user,
-        AnswerSchemas.draft,
+        ResearchAnswers.draft,
         Some(cfg.compile.draftMaxTokens)
       ) { (a, last) =>
         val resolve = h.pageLinks(AgentVerify.wikilinks(s.body + "\n" + Option(a.body).getOrElse("")))

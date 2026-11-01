@@ -17,7 +17,7 @@ class StepFailureSuite extends munit.FunSuite:
       """"usage":{"input_tokens":70000,"output_tokens":16384}}"""
 
   private def claudeResult(lines: String*) =
-    ClaudeCode.result(ClaudeCode.parse(lines.toList), "u", AnswerSchemas.notes).toOption.get
+    ClaudeCode.result(ClaudeCode.parse(lines.toList), "u", LibraryAnswers.notes).toOption.get
 
   test("#1450 Claude Code's output-cap error is recognised, with the cap it names"):
     val r = claudeResult(ClaudeStreams.Init, OverCap)
@@ -38,7 +38,10 @@ class StepFailureSuite extends munit.FunSuite:
   test("#941 a decoding failure names the path and the decoder's message, then the start of the answer"):
     val raw = """{"notes": 5}"""
     val f =
-      AnswerSchemas.notes.codec.decodeJson(io.circe.parser.parse(raw).toOption.get).left.map(AgentParseError(raw, _))
+      LibraryAnswers.notes.codec
+        .decodeJson(io.circe.parser.parse(raw).toOption.get)
+        .left
+        .map(AgentParseError(raw, _))
     val p = Engine.answerProblem(f.swap.toOption.get, FinishReason.NaturalStop)
     assert(p.startsWith("the answer does not match the schema at .notes: "), p)
     assert(p.contains("expecting string"), p)
@@ -48,7 +51,10 @@ class StepFailureSuite extends munit.FunSuite:
   test("#941 a missing field deep in a list is located by index"):
     val raw = """{"findings":[{"claim":"x"}]}"""
     val f =
-      AnswerSchemas.findings.codec.decodeJson(io.circe.parser.parse(raw).toOption.get).left.map(AgentParseError(raw, _))
+      LibraryAnswers.findings.codec
+        .decodeJson(io.circe.parser.parse(raw).toOption.get)
+        .left
+        .map(AgentParseError(raw, _))
     val p = Engine.answerProblem(f.swap.toOption.get, FinishReason.NaturalStop)
     assert(p.contains(".findings[0]."), p)
 
@@ -111,7 +117,7 @@ class StepFailureSuite extends munit.FunSuite:
     val cli = CliOutcomes.result(
       CliOutcome(Vector.empty, Vector.empty, Some("no json"), TokenUsage.Zero, None, 1),
       "u",
-      AnswerSchemas.notes,
+      LibraryAnswers.notes,
       None
     )
     assert(
@@ -123,7 +129,7 @@ class StepFailureSuite extends munit.FunSuite:
     val failed = CliOutcomes.result(
       CliOutcome(Vector.empty, Vector.empty, Some("boom"), TokenUsage.Zero, Some("crash"), 1),
       "u",
-      AnswerSchemas.notes,
+      LibraryAnswers.notes,
       None
     )
     assertEquals(Engine.undecoded(failed.finalAnswer), None)

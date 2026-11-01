@@ -14,9 +14,12 @@ import com.histmersion.api.VocabularyCodecs.given
 /** Every step's answer schema as Codex is sent it — OpenAI's strict structured-output form, which the Responses API
   * demands with `strict: true` and answers anything else with a 400 before the model runs — and every answer Codex
   * sends back under it: `null` for each formerly optional field decodes exactly like the field left out. Iterated over
-  * [[AnswerSchemas.all]], not a hand-picked schema.
+  * [[AnswerSchemas.all]] and [[LibraryAnswers.all ++ ResearchAnswers.all]], not a hand-picked schema.
   */
 class AnswerSchemasSuite extends munit.FunSuite:
+
+  /** Every step schema the server sends: the engine's, the library's and research's. */
+  private val allSchemas = AnswerSchemas.all ++ LibraryAnswers.all ++ ResearchAnswers.all
 
   // ── strict-mode invariants, checked independently of the converter's own constants ─────────────
 
@@ -97,8 +100,8 @@ class AnswerSchemasSuite extends munit.FunSuite:
   private def derived(s: ResponseSchema[?]): Json = parser.parse(Codex.schemaJson(s)).toOption.get
 
   test("every step schema has a name, and they are all listed"):
-    assertEquals(AnswerSchemas.all.map(_._1).distinct.size, AnswerSchemas.all.size)
-    assert(AnswerSchemas.all.size >= 12, AnswerSchemas.all.map(_._1))
+    assertEquals(allSchemas.map(_._1).distinct.size, allSchemas.size)
+    assert(allSchemas.size >= 12, allSchemas.map(_._1))
 
   test("no step derives its schema at the call: every ResponseSchema the server sends is in AnswerSchemas"):
     val main = Iterator
@@ -112,21 +115,23 @@ class AnswerSchemasSuite extends munit.FunSuite:
       .iterator
       .asScala
       .filter(_.toString.endsWith(".scala"))
-      .filterNot(_.getFileName.toString == "AnswerSchemas.scala")
+      .filterNot(f =>
+        Set("AnswerSchemas.scala", "LibraryAnswers.scala", "ResearchAnswers.scala")(f.getFileName.toString)
+      )
       .filter(f => Files.readString(f).contains("ResponseSchema.derived"))
       .map(main.relativize)
       .toList
     assertEquals(stray, Nil, "a step schema derived outside AnswerSchemas escapes the strict-form tests")
 
   test("Codex is sent every step schema in OpenAI's strict form"):
-    for (name, s) <- AnswerSchemas.all do assertEquals(violations(strict(s)), Nil, s"$name: ${strict(s).noSpaces}")
+    for (name, s) <- allSchemas do assertEquals(violations(strict(s)), Nil, s"$name: ${strict(s).noSpaces}")
 
   test("the derived schemas are NOT strict (what Codex refused): the conversion is what makes them pass"):
-    val refused = AnswerSchemas.all.filter((_, s) => violations(derived(s)).exists(_.contains("additionalProperties")))
-    assertEquals(refused.map(_._1), AnswerSchemas.all.map(_._1))
+    val refused = allSchemas.filter((_, s) => violations(derived(s)).exists(_.contains("additionalProperties")))
+    assertEquals(refused.map(_._1), allSchemas.map(_._1))
 
   test("the conversion keeps every property, description and the fields that were required"):
-    for (name, s) <- AnswerSchemas.all do
+    for (name, s) <- allSchemas do
       val (d, c) = (nodes(derived(s), "#").toMap, nodes(strict(s), "#").toMap)
       for (p, o) <- d if c.contains(p) do
         assertEquals(o("description"), c(p)("description"), s"$name $p")
@@ -185,7 +190,7 @@ class AnswerSchemasSuite extends munit.FunSuite:
     assertEquals(violations(out), Nil)
 
   test("#1461 the cold reader's emptySlots is an array of the four slot names, in both forms Claude and Codex get"):
-    for js <- List(derived(AnswerSchemas.coldReader), strict(AnswerSchemas.coldReader)) do
+    for js <- List(derived(ResearchAnswers.coldReader), strict(ResearchAnswers.coldReader)) do
       val p = js.hcursor.downField("properties").downField("emptySlots")
       val items = p.downField("items").success.orElse(p.downField("anyOf").downN(0).downField("items").success)
       assertEquals(
@@ -195,7 +200,7 @@ class AnswerSchemasSuite extends munit.FunSuite:
       )
 
   test("the strict form is idempotent"):
-    for (name, s) <- AnswerSchemas.all do assertEquals(StrictJsonSchema(strict(s)), strict(s), name)
+    for (name, s) <- allSchemas do assertEquals(StrictJsonSchema(strict(s)), strict(s), name)
 
   // ── the answers: null decodes as absent ────────────────────────────────────────────────────────
 
@@ -270,13 +275,13 @@ class AnswerSchemasSuite extends munit.FunSuite:
       .finalAnswer
 
   test("a Codex answer (every optional field null) is valid under the strict schema; one leaving them out is not"):
-    for (name, s) <- AnswerSchemas.all do
+    for (name, s) <- allSchemas do
       val (codex, claude) = (instance(derived(s), nulls = true), instance(derived(s), nulls = false))
       assert(conforms(strict(s), codex), s"$name: ${codex.noSpaces}")
       if codex != claude then assert(!conforms(strict(s), claude), s"$name: strict mode requires every field")
 
   test("every step's answer decodes the same with its optional fields null as with them left out"):
-    for (name, s) <- AnswerSchemas.all do
+    for (name, s) <- allSchemas do
       val (codex, claude) = (instance(derived(s), nulls = true), instance(derived(s), nulls = false))
       val (a, b) = (decode(s, codex), decode(s, claude))
       assert(b.isRight, s"$name: ${claude.noSpaces} → $b")

@@ -504,7 +504,8 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       .fold(e => fail(e.message), identity)
     // a run of this manager that already cost 0.02 USD today (and one plan-billed step: 0 USD, tokens only)
     val spent = com.augustnagro.magnum.transact(ds)(
-      AgentRepo.createIn(
+      TestRuns.createIn(
+        ds,
         Pipeline.CurrencyCheck,
         Goal,
         None,

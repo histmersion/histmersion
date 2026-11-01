@@ -517,7 +517,7 @@ final class ReviewArticlePipeline(
             s"rules-$r",
             StepAgent.RulesReviewer,
             user + ledger(true) + citedText(s) + reasonsText(s),
-            AnswerSchemas.rules
+            ResearchAnswers.rules
           )((a, last, calls) =>
             checkRules(
               a,
@@ -535,7 +535,7 @@ final class ReviewArticlePipeline(
             s"cold-reader-$r",
             StepAgent.ColdReader,
             user + ledger(false, Some(Reviewer.ColdReader)),
-            AnswerSchemas.coldReader
+            ResearchAnswers.coldReader
           )((a, last) => checkColdReader(a, last, prior(Reviewer.ColdReader)).map(Checked(_, _))),
         () =>
           ctx.llmAt[SkepticAnswer, Report](
@@ -543,7 +543,7 @@ final class ReviewArticlePipeline(
             s"skeptic-$r",
             StepAgent.Skeptic,
             user + ledger(true) + citedText(s) + checklist + ctx.notes,
-            AnswerSchemas.skeptic
+            ResearchAnswers.skeptic
           )((a, last) =>
             checkSkeptic(
               a,
@@ -604,7 +604,7 @@ final class ReviewArticlePipeline(
           s"${rv.wire}-check-$r",
           agent,
           recheckInput(s, rv, l, asked, edited) + notes,
-          AnswerSchemas.recheck,
+          ResearchAnswers.recheck,
           None,
           turns
         )((a, last) => checkRecheck(rv, a, prior, edited.text, ev, last, s.critiques).map(Checked(_, _)))
@@ -694,7 +694,7 @@ final class ReviewArticlePipeline(
       s"fixer-$r",
       StepAgent.Fixer,
       user,
-      AnswerSchemas.fixer,
+      ResearchAnswers.fixer,
       Some(cfg.review.fixerMaxTokens),
       turns
     ) { (a, last) =>

@@ -225,7 +225,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "anthropic: two tools, three iterations (the last without tools), a typed answer",
           sonnet,
-          call(AnswerSchemas.classification, 3),
+          call(LibraryAnswers.classification, 3),
           List(
             claude(
               List(
@@ -454,7 +454,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "openai (strict tools): two tools, three iterations, a call without an id, a typed answer",
           gpt,
-          call(AnswerSchemas.classification, 3),
+          call(LibraryAnswers.classification, 3),
           List(
             openai(
               openaiTools(
@@ -662,7 +662,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "local with a key and strict tools",
           qwen,
-          call(AnswerSchemas.findings, 1),
+          call(LibraryAnswers.findings, 1),
           List(openai(openaiText("""{"findings":[]}"""), "stop", model = "qwen3-coder", usage = openaiUsagePlain)),
           base + "histmersion.agents.providers.local { api-key = \"k-local\", strict-tools = true }\n"
         ),

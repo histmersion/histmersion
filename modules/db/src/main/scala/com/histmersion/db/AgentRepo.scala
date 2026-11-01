@@ -126,32 +126,11 @@ object AgentRepo:
       r.heartbeatAt
     )
 
-  /** A `queued` run. `goal` is the goal it works for, `parent` the run that started it, `origin` who; `dryRun` is fixed
-    * here, once — a resumed dry run is still one.
+  /** A new run's row: `queued`, of pipeline `p` on `target`; `goal` is the goal it works for, `parent` the run that
+    * started it, `origin` who; `dryRun` is fixed here, once — a resumed dry run is still one.
+    * `managerId`/`managerItem`: the manager and work item it is for. The jobs area records it (`util.jobs.JobRuns`).
     */
-  def create(
-      ds: DataSource,
-      p: Pipeline,
-      target: String,
-      model: Option[String],
-      budgetUsd: BigDecimal,
-      budgetTokens: Long,
-      params: RunParams = RunParams(),
-      acquireItem: Option[Int] = None,
-      goal: Option[String] = None,
-      parent: Option[String] = None,
-      origin: Origin = Origin.Person,
-      dryRun: Boolean = false
-  ): RunInfo =
-    val id = transact(ds)(
-      createIn(p, target, model, budgetUsd, budgetTokens, params, acquireItem, goal, parent, origin, dryRun)
-    )
-    get(ds, id).get
-
-  /** [[create]] inside the caller's transaction (a manager's dispatch: the run, its item's CAS and the event commit
-    * together). `managerId`/`managerItem`: the manager and work item it is for. Returns the new run's id.
-    */
-  def createIn(
+  def runRow(
       p: Pipeline,
       target: String,
       model: Option[String],
@@ -165,23 +144,30 @@ object AgentRepo:
       dryRun: Boolean,
       managerId: Option[String] = None,
       managerItem: Option[Long] = None
-  )(using DbCon): String =
-    val id = java.util.UUID.randomUUID().toString
-    sql"""INSERT INTO jobs (id, kind, citekey, status, pipeline, pipeline_version, target_kind, target_id,
-                            model, budget_usd, budget_tokens, params, acquire_item, goal_slug, parent_job, origin,
-                            dry_run, manager_id, manager_item)
-          VALUES ($id, $JobKind, ${Option.when(p.targetKind == TargetKind.Source)(target)}, ${RunState.Queued.wire},
-                  ${p.wire}, ${p.version}, ${p.targetKind.wire}, $target, $model, $budgetUsd, $budgetTokens,
-                  $params::jsonb, $acquireItem, $goal, $parent, ${origin.wire}, $dryRun, $managerId, $managerItem)""".update
-      .run()
-    id
+  ): com.histmersion.util.jobs.RunRow =
+    com.histmersion.util.jobs.RunRow(
+      JobKind,
+      RunState.Queued.wire,
+      p.wire,
+      p.version,
+      p.targetKind.wire,
+      target,
+      Option.when(p.targetKind == TargetKind.Source)(target),
+      model,
+      budgetUsd,
+      budgetTokens,
+      Jsonb.write(params, dropNulls = true),
+      acquireItem,
+      goal,
+      parent,
+      origin.wire,
+      dryRun,
+      managerId,
+      managerItem
+    )
 
   def get(ds: DataSource, id: String): Option[RunInfo] =
     connect(ds)((runSelect ++ Sql.of(" AND j.id = ?", Param.S(id))).frag.query[RunRow].run().headOption.map(toInfo))
-
-  /** The pipeline version a run was started with (a resume under a changed pipeline is refused). */
-  def pipelineVersion(ds: DataSource, id: String): Option[Int] =
-    connect(ds)(sql"SELECT pipeline_version FROM jobs WHERE id = $id".query[Option[Int]].run().headOption.flatten)
 
   def list(ds: DataSource, status: Option[String], limit: Int, goal: Option[String] = None): Vector[RunInfo] =
     connect(ds):
@@ -348,101 +334,6 @@ object AgentRepo:
         " AND j.target_id = ? AND j.status IN ('queued', 'running', 'paused', 'waiting')",
         Param.S(target)
       )).frag.query[RunRow].run().map(toInfo)
-
-  /** The stall watchdog's sign of life, persisted (the in-memory one is checked; this one is shown). */
-  def heartbeat(ds: DataSource, id: String): Unit =
-    val _ = transact(ds):
-      sql"UPDATE jobs SET heartbeat_at = now() WHERE id = $id AND kind = $JobKind".update.run()
-
-  /** Agent runs queued or running now — what a scheduled start counts against `max-concurrent-runs`. */
-  def active(ds: DataSource): Int =
-    connect(ds)(sql"""SELECT count(*)::int FROM jobs WHERE kind = $JobKind
-                      AND status IN (${RunState.Queued.wire}, ${RunState.Running.wire})""".query[Int].run().head)
-
-  /** Compare-and-set state change through [[RunState.next]]: `None` when refused or when the row had already moved on
-    * (another worker, a concurrent cancel). `resumeAt` is when a run paused for an allowance may go on; every
-    * transition sets it (None clears it).
-    */
-  def transition(
-      ds: DataSource,
-      id: String,
-      from: RunState,
-      to: RunState,
-      error: Option[String] = None,
-      progress: Option[String] = None,
-      resumeAt: Option[java.time.Instant] = None
-  ): Option[RunState] =
-    RunState.next(from, to).flatMap { target =>
-      val at = resumeAt.map(_.toString)
-      val n = transact(ds):
-        sql"""UPDATE jobs SET status = ${target.wire}, error = $error, progress = $progress,
-                              resume_at = $at::timestamptz, updated_at = now()
-              WHERE id = $id AND kind = $JobKind AND status = ${from.wire}""".update.run()
-      Option.when(n > 0)(target)
-    }
-
-  /** Paused runs whose `resume_at` has come (an allowance window freed): the engine re-queues them. */
-  def dueToResume(ds: DataSource, now: java.time.Instant): Vector[String] =
-    val at = now.toString
-    connect(ds):
-      sql"""SELECT id FROM jobs WHERE kind = $JobKind AND status = ${RunState.Paused.wire}
-                                  AND resume_at IS NOT NULL AND resume_at <= $at::timestamptz
-            ORDER BY resume_at, created_at""".query[String].run()
-
-  /** Paused runs whose pause names `reason` (`<reason>: …`) and that do not resume by themselves before `now` (no
-    * `resume_at`, or a later one): (id, pipeline, the run's own model, the pause). The allowance check asks whether a
-    * fresh reading lets them go on early.
-    */
-  def pausedFor(
-      ds: DataSource,
-      reason: PauseReason,
-      now: java.time.Instant
-  ): Vector[(String, String, Option[String], String)] =
-    val (at, like) = (now.toString, s"${reason.wire}:%")
-    connect(ds):
-      sql"""SELECT id, coalesce(pipeline, ''), model, coalesce(error, '') FROM jobs
-            WHERE kind = $JobKind AND status = ${RunState.Paused.wire} AND error LIKE $like
-              AND (resume_at IS NULL OR resume_at > $at::timestamptz)
-            ORDER BY updated_at, created_at""".query[(String, String, Option[String], String)].run()
-
-  def progress(ds: DataSource, id: String, text: String): Unit =
-    val _ = transact(ds):
-      sql"UPDATE jobs SET progress = $text, updated_at = now() WHERE id = $id AND kind = $JobKind".update.run()
-
-  def addWarning(ds: DataSource, id: String, w: String): Unit =
-    val _ = transact(ds):
-      sql"""UPDATE jobs SET warnings = array_append(warnings, $w), updated_at = now()
-            WHERE id = $id AND kind = $JobKind""".update.run()
-
-  /** Raise a paused run's budget before it resumes. */
-  def setBudget(ds: DataSource, id: String, usd: Option[BigDecimal], tokens: Option[Long]): Unit =
-    val _ = transact(ds):
-      sql"""UPDATE jobs SET budget_usd = coalesce($usd, budget_usd), budget_tokens = coalesce($tokens, budget_tokens),
-                            updated_at = now() WHERE id = $id AND kind = $JobKind""".update.run()
-
-  /** Startup: a run that was `running` when the process died is RESUMABLE — `paused: interrupted`, not failed (its
-    * finished steps are checkpointed). Queued runs stay queued; the caller re-enqueues them. Returns (the ids of the
-    * runs paused now, with their origin; the ids to re-enqueue). `except`: the runs this process is running or holding
-    * queued (a config reload swapping back to a database).
-    */
-  def reconcile(ds: DataSource, except: List[String] = Nil): (Vector[(String, Option[String])], Vector[String]) =
-    transact(ds):
-      val paused = sql"""UPDATE jobs SET status = ${RunState.Paused.wire}, error = ${PauseReason.Interrupted.wire},
-                                         updated_at = now()
-                         WHERE kind = $JobKind AND status = ${RunState.Running.wire}
-                           AND NOT (id = ANY($except::text[]))
-                         RETURNING id, origin""".query[(String, Option[String])].run()
-      val queued = sql"""SELECT id FROM jobs WHERE kind = $JobKind AND status = ${RunState.Queued.wire}
-                           AND NOT (id = ANY($except::text[]))
-                         ORDER BY created_at""".query[String].run()
-      (paused, queued)
-
-  /** A paused run goes on by itself at `at` (unless it moved on meanwhile). */
-  def resumeAt(ds: DataSource, id: String, at: java.time.Instant): Boolean =
-    val t = at.toString
-    transact(ds):
-      sql"""UPDATE jobs SET resume_at = $t::timestamptz, updated_at = now()
-            WHERE id = $id AND kind = $JobKind AND status = ${RunState.Paused.wire}""".update.run() > 0
 
   // ── steps: checkpoints and attempts ────────────────────────────────────────────────────────────
 

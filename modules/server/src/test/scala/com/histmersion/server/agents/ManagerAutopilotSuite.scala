@@ -304,9 +304,9 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
 
     // 4. the review (settled by hand: it converged) → the goal is reviewed
     val rev = runOf(ReviewId, ArticleReview, "zzagent_new")
-    assert(AgentRepo.transition(ds, rev.id, RunState.Queued, RunState.Running).isDefined)
+    assert(TestRuns.transition(ds, rev.id, RunState.Queued, RunState.Running).isDefined)
     ReviewLedgerRepo.put(ds, absorb(Ledger("zzagent_new"), Nil, rev.id, 1)._1)
-    assert(AgentRepo.transition(ds, rev.id, RunState.Running, RunState.Done).isDefined)
+    assert(TestRuns.transition(ds, rev.id, RunState.Running, RunState.Done).isDefined)
     clock.tick(a)
     assertEquals(item(ReviewId, ArticleReview, "zzagent_new").status, "done")
     clock.tick(a)

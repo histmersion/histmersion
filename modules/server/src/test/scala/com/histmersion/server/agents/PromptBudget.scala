@@ -47,15 +47,15 @@ object PromptBudget:
   /** The answer schema each agent definition's steps use (a reviewer's verification pass: `recheck`). */
   val answers: Map[String, ResponseSchema[?]] = Map(
     "probe" -> AnswerSchemas.probe,
-    "enrich-classify" -> AnswerSchemas.classification,
-    "enrich-findings" -> AnswerSchemas.findings,
-    "enrich-notes" -> AnswerSchemas.notes,
-    "compile-extractor" -> AnswerSchemas.extract,
-    "compile-writer" -> AnswerSchemas.draft,
-    "article-rules-reviewer" -> AnswerSchemas.rules,
-    "article-cold-reader" -> AnswerSchemas.coldReader,
-    "article-skeptic" -> AnswerSchemas.skeptic,
-    "article-fixer" -> AnswerSchemas.fixer,
+    "enrich-classify" -> LibraryAnswers.classification,
+    "enrich-findings" -> LibraryAnswers.findings,
+    "enrich-notes" -> LibraryAnswers.notes,
+    "compile-extractor" -> ResearchAnswers.extract,
+    "compile-writer" -> ResearchAnswers.draft,
+    "article-rules-reviewer" -> ResearchAnswers.rules,
+    "article-cold-reader" -> ResearchAnswers.coldReader,
+    "article-skeptic" -> ResearchAnswers.skeptic,
+    "article-fixer" -> ResearchAnswers.fixer,
     "goal-planner" -> AnswerSchemas.plan,
     "acquisition-ranker" -> AnswerSchemas.ranking
   )
@@ -140,4 +140,4 @@ object PromptBudget:
         println()
         println(toolTable)
         println()
-        println(s"recheck answer schema: ${ClaudeCode.schemaJson(AnswerSchemas.recheck).length} chars")
+        println(s"recheck answer schema: ${ClaudeCode.schemaJson(ResearchAnswers.recheck).length} chars")
