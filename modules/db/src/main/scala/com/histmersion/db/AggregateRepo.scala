@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.util.database.RangeSql
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -34,18 +36,18 @@ object AggregateRepo:
   def periodsQuery(unit: String, filter: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
     if unit == "findings" then
       Sql.raw(
-        s"SELECT ${PeriodSql.cols("f.period")}" +
+        s"SELECT ${RangeSql.cols("f.period")}" +
           " FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE "
       ) ++
         FilterSql.sourceWhere(filter) ++ Sql.raw(" AND ") ++ FilterSql.findingWhere(filter, scope = scope)
     else
       val gate =
         if FilterSql.hasFindingPlaceCriteria(filter) then Sql.raw(" AND fp.matched > 0") else Sql.empty
-      val ownPeriod = filter.period.fold(Sql.raw("TRUE"))(PeriodSql.overlaps("s.period", _))
+      val ownPeriod = filter.period.fold(Sql.raw("TRUE"))(RangeSql.overlaps("s.period", _))
       Sql.raw(
-        s"SELECT COALESCE(${PeriodSql.start("s.period")}, fp.min_start), COALESCE(${PeriodSql.end("s.period")}, fp.max_end)" +
+        s"SELECT COALESCE(${RangeSql.start("s.period")}, fp.min_start), COALESCE(${RangeSql.end("s.period")}, fp.max_end)" +
           " FROM sources s LEFT JOIN LATERAL (" +
-          s"SELECT min(${PeriodSql.start("f.period")}) AS min_start, max(${PeriodSql.end("f.period")}) AS max_end," +
+          s"SELECT min(${RangeSql.start("f.period")}) AS min_start, max(${RangeSql.end("f.period")}) AS max_end," +
           " count(*) AS matched, count(*) FILTER (WHERE "
       ) ++
         FilterSql.findingPeriodWhere(filter) ++

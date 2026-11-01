@@ -121,12 +121,8 @@ final class HttpApi(
     Api.rebuildPlaces.serverLogic[Identity](_ => h.rebuildPlaces()),
     Api.fetchExternalPlaces.serverLogic[Identity]((source, dryRun) => h.fetchExternalPlaces(source, dryRun)),
     Api.loadPlaces.serverLogic[Identity]((source, apply) => h.bootstrap.loadGazetteer(source, apply)),
-    Api.buildHierarchy.serverLogic[Identity](_ => h.buildHierarchy()),
-    Api.periods.serverLogicSuccess[Identity]((q, region, from, to) => h.periods(q, region, from, to)),
-    Api.period.serverLogic[Identity](id => h.bootstrap.period(id)),
-    Api.seedPeriods.serverLogic[Identity](replace => h.bootstrap.seedPeriods(replace)),
-    Api.importPeriods.serverLogic[Identity]((cols, dataset, body) => h.bootstrap.importPeriods(cols, dataset, body)),
-    Api.fetchPeriods.serverLogic[Identity]((source, cols) => h.bootstrap.fetchPeriods(source, cols)),
+    Api.buildHierarchy.serverLogic[Identity](_ => h.buildHierarchy())
+  ) ++ com.histmersion.domain.catalogue.periods.PeriodsRoutes(h.periods) ++ List[ServerEndpoint[Any, Identity]](
     Api.init.serverLogic[Identity](fetch => h.bootstrap.init(fetch)),
     // ── events (plan §1.2) ────────────────────────────────────────────────────────────────────
     Api.events.serverLogicSuccess[Identity](q => h.listEvents(q)),

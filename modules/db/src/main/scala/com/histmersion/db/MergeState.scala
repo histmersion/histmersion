@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.util.database.RangeSql
+
 import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*
@@ -236,7 +238,7 @@ object MergeState:
         .of(
           s"""SELECT p.id FROM periods p
             WHERE $norm = ${PlaceRepo.normLabelSql("?")}
-              AND p.period && ${PeriodSql.range("nullif(?, '')::bigint", "nullif(?, '')::bigint")}
+              AND p.period && ${RangeSql.range("nullif(?, '')::bigint", "nullif(?, '')::bigint")}
             ORDER BY CASE WHEN p.dataset = 'local' THEN 0 ELSE 1 END, p.id LIMIT 1""",
           Param.S(b.label),
           Param.S(lo.fold("")(_.toString)),

@@ -191,7 +191,6 @@ direction	db:db/BundleImport.scala	util.data -> automation: GoalRepo	1
 direction	db:db/BundleImport.scala	util.data -> automation: Queue	1
 direction	db:db/BundleImport.scala	util.data -> automation: QueueRepo	1
 direction	db:db/BundleImport.scala	util.data -> catalogue: EventRepo	1
-direction	db:db/BundleImport.scala	util.data -> catalogue: PeriodSql	1
 direction	db:db/BundleImport.scala	util.data -> catalogue: PlaceRepo	1
 direction	db:db/BundleImport.scala	util.data -> library: Edge	1
 direction	db:db/BundleImport.scala	util.data -> library: SourceRepo	1
@@ -203,7 +202,6 @@ direction	db:db/Codecs.scala	util.common -> library: NeighborTarget	1
 direction	db:db/Db.scala	util.common -> library: QueryConfig	1
 direction	db:db/EventRepo.scala	catalogue -> library: FilterSql	1
 direction	db:db/EventRepo.scala	catalogue -> media: MediaRepo	1
-direction	db:db/GoalRepo.scala	automation -> catalogue: PeriodSql	1
 direction	db:db/LintRepo.scala	util.data -> catalogue: Gazetteer	1
 direction	db:db/LintRepo.scala	util.data -> catalogue: Geocoder	1
 direction	db:db/LintRepo.scala	util.data -> catalogue: PlaceRepo	1
@@ -361,7 +359,6 @@ repository	db:db/TileRepo.scala	MediaRepo of media	1
 repository	db:db/TileRepo.scala	PlaceRepo of catalogue.places	1
 repository	db:db/UndatedSiteRepo.scala	PlaceRepo of catalogue.places	1
 repository	server:server/Bootstrap.scala	JobRepo of util.jobs	1
-repository	server:server/Bootstrap.scala	PeriodRepo of catalogue.periods	1
 repository	server:server/Bootstrap.scala	PlaceRepo of catalogue.places	1
 repository	server:server/Handlers.scala	AgentStateRepo of automation.agents	1
 repository	server:server/Handlers.scala	AggregateRepo of library.search	1

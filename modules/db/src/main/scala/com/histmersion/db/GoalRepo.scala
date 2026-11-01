@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.util.database.RangeSql
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -25,7 +27,7 @@ object GoalRepo:
 
   private val cols =
     "g.slug, g.title, g.status, g.notes, g.tags, g.regions, " +
-      s"${PeriodSql.cols("g.period")}, g.parent_slug, g.updated_at::text"
+      s"${RangeSql.cols("g.period")}, g.parent_slug, g.updated_at::text"
 
   def list(ds: DataSource, status: Option[String], limit: Int, offset: Int): GoalList =
     val st = status.map(_.trim.toLowerCase).filter(_.nonEmpty)
@@ -65,10 +67,10 @@ object GoalRepo:
     * ends is refused.
     */
   def put(slug: String, in: GoalPut)(using DbCon): Either[ApiError, Unit] =
-    PeriodSql
+    RangeSql
       .merge((None, None), in.periodStart, in.periodEnd, s"goal '$slug'")
       .getOrElse(Right((None, None)))
-      .map((s, e) => putIn(slug, in, PeriodSql.literal(s, e)))
+      .map((s, e) => putIn(slug, in, RangeSql.literal(s, e)))
 
   private def putIn(slug: String, in: GoalPut, period: Option[String])(using DbCon): Unit =
     sql"""INSERT INTO goals (slug, title, status, notes, tags, regions, period, parent_slug, updated_at)
@@ -104,14 +106,14 @@ object GoalRepo:
           val usd = Option.when(v > 0)(BigDecimal(v))
           sql"UPDATE goals SET budget_usd = $usd, updated_at = now() WHERE slug = $slug".update.run()
         }
-        // a bound given alone replaces that bound; the other stays as stored ([[PeriodSql.merge]])
-        val stored = sql"SELECT ${SqlLiteral(PeriodSql.cols("period"))} FROM goals WHERE slug = $slug"
+        // a bound given alone replaces that bound; the other stays as stored ([[RangeSql.merge]])
+        val stored = sql"SELECT ${SqlLiteral(RangeSql.cols("period"))} FROM goals WHERE slug = $slug"
           .query[(Option[Long], Option[Long])]
           .run()
           .head
-        PeriodSql.merge(stored, p.periodStart, p.periodEnd, s"goal '$slug'").getOrElse(Right(stored)).map { (s, e) =>
+        RangeSql.merge(stored, p.periodStart, p.periodEnd, s"goal '$slug'").getOrElse(Right(stored)).map { (s, e) =>
           if (s, e) != stored then
-            val range = PeriodSql.literal(s, e)
+            val range = RangeSql.literal(s, e)
             sql"UPDATE goals SET period = $range::int8range, updated_at = now() WHERE slug = $slug".update.run()
         }
 

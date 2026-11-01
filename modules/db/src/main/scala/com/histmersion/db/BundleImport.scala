@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.util.database.RangeSql
+
 import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*
@@ -106,11 +108,11 @@ object BundleImport:
 
   // ── the writes ──────────────────────────────────────────────────────────────────────────────
 
-  /** A bundle range as the `int8range` literal ([[PeriodSql.bounds]]), NULL when the bundle has none. */
-  private def rLit(p: Option[BundleRange]): Option[String] = p.map(r => PeriodSql.bounds(r.start, r.end))
+  /** A bundle range as the `int8range` literal ([[RangeSql.bounds]]), NULL when the bundle has none. */
+  private def rLit(p: Option[BundleRange]): Option[String] = p.map(r => RangeSql.bounds(r.start, r.end))
 
   /** A bundle range where no range means every year (`(,)`) — places, relations, types, periods. */
-  private def rAll(p: Option[BundleRange]): String = PeriodSql.bounds(p.flatMap(_.start), p.flatMap(_.end))
+  private def rAll(p: Option[BundleRange]): String = RangeSql.bounds(p.flatMap(_.start), p.flatMap(_.end))
 
   /** Applies the decided lines, one step per kind's part. One instance per import; it remembers what the later steps
     * need.

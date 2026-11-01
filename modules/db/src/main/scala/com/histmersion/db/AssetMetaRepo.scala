@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.util.database.RangeSql
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -14,7 +16,7 @@ object AssetMetaRepo:
       sql"""SELECT name, mime, length(bytes), sha256, width, height,
                    kind, caption, license,
                    ST_Y(geom::geometry), ST_X(geom::geometry),
-                   ${SqlLiteral(PeriodSql.cols("period"))}
+                   ${SqlLiteral(RangeSql.cols("period"))}
             FROM assets WHERE citekey = $citekey AND name = $name"""
         .query[AssetDetailRow]
         .run()
@@ -54,16 +56,16 @@ object AssetMetaRepo:
             sql"UPDATE assets SET geom = ST_SetSRID(ST_Point($lon, $lat), 4326) WHERE citekey = $citekey AND name = $name".update
               .run()
           case _ => ()
-        // a bound given alone replaces that bound; the other stays as stored ([[PeriodSql.merge]])
+        // a bound given alone replaces that bound; the other stays as stored ([[RangeSql.merge]])
         val stored =
-          sql"SELECT ${SqlLiteral(PeriodSql.cols("period"))} FROM assets WHERE citekey = $citekey AND name = $name"
+          sql"SELECT ${SqlLiteral(RangeSql.cols("period"))} FROM assets WHERE citekey = $citekey AND name = $name"
             .query[(Option[Long], Option[Long])]
             .run()
             .head
-        PeriodSql.merge(stored, p.periodStart, p.periodEnd, s"asset '$citekey/$name'").getOrElse(Right(stored)).map {
+        RangeSql.merge(stored, p.periodStart, p.periodEnd, s"asset '$citekey/$name'").getOrElse(Right(stored)).map {
           (s, e) =>
             if (s, e) != stored then
-              val range = PeriodSql.literal(s, e)
+              val range = RangeSql.literal(s, e)
               sql"UPDATE assets SET period = $range::int8range WHERE citekey = $citekey AND name = $name".update.run()
         }
     .flatMap(_ => detail(ds, citekey, name).toRight(ApiError(s"No asset '$citekey/$name'", Some(Write.CodeNotFound))))

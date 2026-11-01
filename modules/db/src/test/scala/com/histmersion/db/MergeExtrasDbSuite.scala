@@ -124,10 +124,9 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     val (sw, sh) = (spool("pw"), spool("ph"))
     val _ = PlaceRepo.upsertPlaces(work, List(site("zz_seed_site", "A seed site", 30.0, 39.0)), Dataset.Seed)
     val _ = PlaceRepo.upsertPlaces(work, List(site("zz_my_site", "My site", 34.6, 40.0)), Dataset.Local)
-    val _ = PeriodRepo.upsert(
-      work,
-      List(HistoricalPeriod("zz_my_period", "My period", Some("me"), Period(-1400, -1200))),
-      Dataset.Local
+    val _ = connect(work)(
+      sql"""INSERT INTO periods (id, label, authority, period, dataset)
+            VALUES ('zz_my_period', 'My period', 'me', '[-1400,-1199)'::int8range, 'local')""".update.run()
     )
     EventRepo.put(
       work,

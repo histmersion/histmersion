@@ -1,0 +1,63 @@
+package com.histmersion.domain.catalogue.periods
+
+import com.histmersion.domain.Caller
+import com.histmersion.domain.catalogue.CatalogueState
+import com.histmersion.util.data.maintenance.WriteGate
+
+import java.util.concurrent.atomic.AtomicReference
+
+/** The periods' controllers over the in-memory service, no server and no database: a PeriodO dump sent and fetched (one
+  * collection, under one node per authority), the bundled seed missing, an unknown source and dataset refused, one
+  * period shown with its parent and parts, and every write refused while the maintenance lock is held.
+  */
+class PeriodsControllersSuite extends munit.FunSuite:
+  private val dump = scala.io.Source.fromResource("periods/periodo_dump.json")(using scala.io.Codec.UTF8).mkString
+
+  private def controllers(
+      download: String => Either[String, String] = _ => Right(dump),
+      seed: () => Either[String, String] = () => Left("no period seed here"),
+      gate: WriteGate = WriteGate()
+  ): PeriodsControllers =
+    val periods = PeriodService.InMemory(AtomicReference(CatalogueState.empty))
+    val imports =
+      PeriodImports(periods, () => PeriodSources("https://periodo.test/dump", List("zzqauth")), seed, download)
+    PeriodsControllers(periods, imports, gate)
+
+  test("a sent dump is grouped under its authorities; a period shows its parent and its parts"):
+    val c = controllers()
+    val r = c.importDataset(Caller.Local, Nil, Some("local"), dump).fold(e => fail(e.message), identity)
+    assertEquals(r.roots, 2)
+    val lba = c.period("zzqauthlba").fold(e => fail(e.message), identity)
+    assertEquals(lba.parent.map(_.id), Some("zzqauthbronze"))
+    val node = c.period("zzqauth").fold(e => fail(e.message), identity)
+    assertEquals(node.children.map(_.id).toSet, Set("zzqauthbronze", "zzqauthiron"))
+    assertEquals(c.search(Some("Zzq Late"), None, None, None).map(_.id), List("zzqauthlba"))
+    assertEquals(c.period("zz_none").left.map(_.message), Left("No period 'zz_none'"))
+
+  test("a fetch takes the configured collections; an unknown source, dataset or collection is refused"):
+    val c = controllers()
+    val r = c.fetch(Caller.Local, "PeriodO", Nil).fold(e => fail(e.message), identity)
+    assertEquals(r.roots, 1)
+    assertEquals(r.periods, 4)
+    assert(c.period("zzqother01").isLeft)
+    assert(c.fetch(Caller.Local, "chronontology", Nil).left.exists(_.message.contains("unknown period source")))
+    assert(c.fetch(Caller.Local, "periodo", List("zzqnope")).left.exists(_.message.contains("zzqnope")))
+    assert(c.importDataset(Caller.Local, Nil, Some("other"), dump).left.exists(_.message.contains("seed or local")))
+    val dead = controllers(download = _ => Left("HTTP 503 from https://periodo.test/dump"))
+    assert(dead.fetch(Caller.Local, "periodo", Nil).left.exists(_.message.contains("503")))
+
+  test("the seed's absence is the answer of a seed; a held lock refuses every write"):
+    assertEquals(controllers().seed(Caller.Local, replace = false).left.map(_.message), Left("no period seed here"))
+    val gate = WriteGate()
+    val c = controllers(gate = gate)
+    val held = gate.exclusively("restore") {
+      Right(
+        (
+          c.seed(Caller.Local, replace = false),
+          c.importDataset(Caller.Local, Nil, None, dump),
+          c.fetch(Caller.Local, "periodo", Nil)
+        )
+      )
+    }
+    val (a, b, d) = held.fold(e => fail(e.message), identity)
+    assert(List(a, b, d).forall(_.isLeft), List(a, b, d))

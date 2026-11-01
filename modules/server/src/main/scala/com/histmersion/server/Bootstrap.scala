@@ -6,7 +6,8 @@ import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{PeriodRepo, PlaceRepo}
+import com.histmersion.db.PlaceRepo
+import com.histmersion.domain.catalogue.periods.{PeriodImports, PeriodService, PeriodSources}
 import com.histmersion.util.jobs.JobRepo
 import com.histmersion.server.importers.{GazetteerLoad, ImportRunner, NaturalEarthLand, PeriodOFetch}
 import com.histmersion.domain.catalogue.places.BuiltinGazetteers
@@ -47,91 +48,20 @@ final class Bootstrap(
 
   // ── periods ──────────────────────────────────────────────────────────────────────────────────
 
-  def period(id: String): Either[ApiError, PeriodDetail] =
-    PeriodRepo.get(ds, id).toRight(ApiError(s"No period '$id'", Some(Write.CodeNotFound))).map { p =>
-      PeriodDetail(p, p.parentId.flatMap(PeriodRepo.get(ds, _)), PeriodRepo.children(ds, id).toList)
-    }
-
-  /** `POST /api/periods/seed?replace=` — the presets bundled with this server; with `replace`, the seed rows it no
-    * longer has are deleted as well.
-    */
-  def seedPeriods(replace: Boolean = false): Either[ApiError, PeriodImportResult] =
-    maintenance.guard("periods/seed")(seedPeriodsNow(replace).left.map(ApiError(_)))
-
-  /** `POST /api/periods/import` — a PeriodO dataset sent by the client (a dump, or a subset of one). */
-  def importPeriods(
-      collections: List[String],
-      dataset: Option[String],
-      body: String
-  ): Either[ApiError, PeriodImportResult] =
-    maintenance.guard("periods/import"):
-      for
-        set <- Dataset.ofParam(dataset)
-        d <- PeriodO.parse(body).left.map(ApiError(_))
-      yield write(d.only(collections.map(_.trim).toSet), set)
-
-  /** `POST /api/periods/fetch?source=periodo` — the live PeriodO dump, the named collections only. */
-  def fetchPeriods(source: String, collections: List[String]): Either[ApiError, PeriodImportResult] =
-    maintenance.guard("periods/fetch"):
-      if source.trim.toLowerCase != PeriodOFetch.name then
-        Left(ApiError(s"unknown period source '$source' (available: ${PeriodOFetch.name})"))
-      else fetchPeriodsNow(collections).left.map(ApiError(_))
-
-  /** The bundled seed, parsed. */
-  private def bundledSeed: Either[String, PeriodODataset] =
-    if !Files.isRegularFile(periodsSeed) then Left(s"no period seed at $periodsSeed (set init.data-dir)")
-    else PeriodO.parse(Files.readString(periodsSeed))
-
-  /** Apply the bundled seed: upsert its rows, make its presets the ONLY presets (a preset an earlier seed named and
-    * this one does not leaves the menu; the row stays), record its version — and, with `replace`, delete the seed rows
-    * it no longer has (a collection's own periods are kept).
-    */
-  private def seedPeriodsNow(replace: Boolean = false): Either[String, PeriodImportResult] =
-    bundledSeed.map { d =>
-      val r = write(d)
-      val ids = d.authorities.flatMap(_.periods.map(_.id))
-      val _ = PeriodRepo.retainPresets(ds, d.presets.keys.toList)
-      val removed = if replace then PeriodRepo.deleteSeedExcept(ds, ids) else 0
-      d.version.foreach(PeriodRepo.setSeedVersion(ds, Bootstrap.PeriodSeed, _))
-      r.copy(presets = PeriodRepo.presetCount(ds), removed = removed)
-    }
-
-  /** Is the bundled seed newer than the one last applied here? Then a start re-applies it: the presets of an existing
-    * install follow a new seed without anyone running `periods seed`.
-    */
-  private def seedOutdated: Boolean =
-    bundledSeed.toOption
-      .flatMap(_.version)
-      .exists(v => PeriodRepo.seedVersion(ds, Bootstrap.PeriodSeed).forall(_ < v))
-
-  private def fetchPeriodsNow(collections: List[String]): Either[String, PeriodImportResult] =
-    val wanted = collections.map(_.trim).filter(_.nonEmpty) match
-      case Nil => cfg.periods.collections
-      case cs  => cs
-    for
-      raw <- download(cfg.periods.periodoUrl)
-      all <- PeriodO.parse(raw)
-      d = all.only(wanted.toSet)
-      _ <-
-        if d.authorities.isEmpty then Left(s"no PeriodO collection ${wanted.mkString(", ")} in the dump")
-        else Right(())
-    yield write(d, Dataset.Seed)
-
-  /** Upsert a dataset. A raw PeriodO dump (no curated overlay) is grouped under one node per authority, and every
-    * period already in the store keeps its place; a curated seed places its own rows ([[PeriodO.toPeriods]]).
-    */
-  private def write(d: PeriodODataset, dataset: Dataset = Dataset.Seed): PeriodImportResult =
-    val roots = !d.curated
-    val ids = d.authorities.flatMap(a => a.id :: a.periods.map(_.id))
-    val rows = PeriodO.toPeriods(d, PeriodRepo.placement(ds, ids), roots)
-    val n = PeriodRepo.upsert(ds, rows, dataset)
-    PeriodImportResult(
-      n,
-      if roots then d.authorities.count(_.periods.nonEmpty) else 0,
-      PeriodRepo.presetCount(ds),
-      d.skipped.take(Bootstrap.SkippedListed),
-      d.skipped.size
+  /** The named periods, and how the seed, a sent dataset and the live dump come in. */
+  val periods: PeriodService = PeriodService(deps.transactor)
+  val periodImports: PeriodImports =
+    PeriodImports(
+      periods,
+      () => PeriodSources(cfg.periods.periodoUrl, cfg.periods.collections),
+      () => bundledSeed,
+      download
     )
+
+  /** The bundled seed's text. */
+  private def bundledSeed: Either[String, String] =
+    if !Files.isRegularFile(periodsSeed) then Left(s"no period seed at $periodsSeed (set init.data-dir)")
+    else Right(Files.readString(periodsSeed))
 
   // ── init ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -180,7 +110,7 @@ final class Bootstrap(
   private[server] def plan(fetch: Boolean, onlyEmpty: Boolean): InitPlan =
     InitPlan(
       gazetteer = !onlyEmpty || PlaceRepo.count(ds) == 0,
-      periodPresets = !onlyEmpty || PeriodRepo.count(ds) == 0 || seedOutdated,
+      periodPresets = !onlyEmpty || periods.count() == 0 || periodImports.seedOutdated,
       fetch = if fetch then cfg.init.sources else Nil
     )
 
@@ -197,7 +127,7 @@ final class Bootstrap(
 
   private def run(id: String, p: InitPlan, note: String => Unit): BackgroundJob.Outcome =
     // the definitions a period import left out go on the job (#771), not just into the log
-    def periods(r: PeriodImportResult): PeriodImportResult =
+    def withSkipped(r: PeriodImportResult): PeriodImportResult =
       if r.skippedCount > 0 then
         JobRepo.get(ds, id).foreach { j =>
           val d = j.detail.getOrElse(JobDetail(init = Some(p)))
@@ -216,13 +146,14 @@ final class Bootstrap(
         Option.when(p.gazetteer)("gazetteer" -> (() => seedPlaces(note))),
         Option.when(p.periodPresets)(
           "period presets" -> (() =>
-            seedPeriodsNow()
-              .map(periods)
+            periodImports
+              .applySeed(replace = false)
+              .map(withSkipped)
               .map(r => s"${Plural.count(r.periods, "period")}, ${Plural.count(r.presets, "preset")}" + skippedNote(r))
           )
         )
       ).flatten ++ p.fetch.map(s =>
-        s"${if p.check then "dry run of" else "fetch"} $s" -> (() => fetchSource(s, periods, p.check, note))
+        s"${if p.check then "dry run of" else "fetch"} $s" -> (() => fetchSource(s, withSkipped, p.check, note))
       )
     val results = steps.map { (name, step) =>
       if maintenance.active then name -> Left("a restore started; skipped")
@@ -300,7 +231,7 @@ final class Bootstrap(
   private def fetchNetwork(name: String, periods: PeriodImportResult => PeriodImportResult): Either[String, String] =
     name.trim.toLowerCase match
       case PeriodOFetch.name =>
-        fetchPeriodsNow(Nil).map(periods).map(r => Plural.count(r.periods, "period") + skippedNote(r))
+        periodImports.fetch(Nil).map(periods).map(r => Plural.count(r.periods, "period") + skippedNote(r))
       case NaturalEarthLand.name =>
         NaturalEarthLand.run(ds, dryRun = false).map(r => s"${r.places} polit(y/ies) clipped")
       case other =>
@@ -319,10 +250,10 @@ object Bootstrap:
   val JobKind = InitPlan.JobKind
 
   /** The `seed_versions` name of the bundled period seed. */
-  val PeriodSeed = "periods"
+  val PeriodSeed: String = PeriodImports.SeedName
 
   /** How many skipped period definitions an import result or a job names one by one (all are counted). */
-  val SkippedListed = 50
+  val SkippedListed: Int = PeriodImports.SkippedListed
 
   /** Every name `init.fetch-sources` may hold (and the sources a plugin registers). */
   def sources: List[String] =

@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.util.database.RangeSql
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -348,20 +350,20 @@ object EventCatalogRepo:
             SELECT f.id, f.citekey, f.claim,
                    ST_Distance(f.geom::geography, ev.pt::geography) / 1000.0,
                    CASE WHEN f.period && ev.span THEN 0
-                        ELSE greatest(${SqlLiteral(PeriodSql.start("f.period"))} - (${SqlLiteral(
-          PeriodSql.end("ev.span")
+                        ELSE greatest(${SqlLiteral(RangeSql.start("f.period"))} - (${SqlLiteral(
+          RangeSql.end("ev.span")
         )}),
-                                      ${SqlLiteral(PeriodSql.start("ev.span"))} - (${SqlLiteral(
-          PeriodSql.end("f.period")
+                                      ${SqlLiteral(RangeSql.start("ev.span"))} - (${SqlLiteral(
+          RangeSql.end("f.period")
         )})) END,
-                   ${SqlLiteral(PeriodSql.cols("f.period"))}
+                   ${SqlLiteral(RangeSql.cols("f.period"))}
             FROM ev JOIN findings f
               ON f.geom IS NOT NULL AND ev.pt IS NOT NULL AND ev.span IS NOT NULL
              AND NOT lower_inf(f.period) AND NOT upper_inf(f.period)
              AND f.geom && ${SqlLiteral(boxAround("ev.pt", km))}
              AND ST_DWithin(f.geom::geography, ev.pt::geography, ${km * 1000.0})
-             AND f.period && int8range(${SqlLiteral(PeriodSql.start("ev.span"))} - $years, ${SqlLiteral(
-          PeriodSql.end("ev.span")
+             AND f.period && int8range(${SqlLiteral(RangeSql.start("ev.span"))} - $years, ${SqlLiteral(
+          RangeSql.end("ev.span")
         )} + $years, '[]')
             ORDER BY 5, 4, f.id LIMIT $limit"""
         .query[NearFindingRow]
@@ -442,7 +444,7 @@ object EventCatalogRepo:
                      AND NOT lower_inf(f.period) AND NOT upper_inf(f.period)
                      AND f.geom && ${boxAround("a.pt", km)}
                      AND ST_DWithin(f.geom::geography, a.pt::geography, ?)
-                     AND f.period && int8range(${PeriodSql.start("e.outer_span")} - ?, ${PeriodSql.end(
+                     AND f.period && int8range(${RangeSql.start("e.outer_span")} - ?, ${RangeSql.end(
           "e.outer_span"
         )} + ?, '[]')),
                  (SELECT count(*)::int FROM event_link_candidates k WHERE k.event_id = e.id AND k.status = 'proposed'),

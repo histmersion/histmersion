@@ -201,11 +201,9 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
     val _ = transact(ds)(GoalRepo.put("zz_goal", GoalPut("Know the storm gods")))
     val _ = transact(ds)(GoalRepo.put("zz_goal_gone", GoalPut("A goal deleted later")))
     val _ = PlaceRepo.upsertPlaces(ds, List(site("zz_site", "Storm hill", 34.6, 40.0)), Dataset.Local)
-    val _ = PeriodRepo.upsert(
-      ds,
-      List(HistoricalPeriod("zz_period", "Storm period", Some("oracle"), Period(-1400, -1200))),
-      Dataset.Local
-    )
+    val _ = com.histmersion.domain.catalogue.periods
+      .PeriodService(com.histmersion.util.database.Transactor(ds))
+      .write(List(HistoricalPeriod("zz_period", "Storm period", Some("oracle"), Period(-1400, -1200))), Dataset.Local)
     EventRepo.put(
       ds,
       "zz_event",
