@@ -12,7 +12,7 @@ import com.histmersion.db.given_DbCodec_List
   * (`EventRepo.patch` records them, `EventImportRepo.save` reconciles and applies them). Everything here runs inside
   * the caller's transaction.
   */
-private[histmersion] object CorrectionRepo:
+private[events] object CorrectionRepo:
 
   private val Cols =
     "c.id, c.target_kind, c.target_id, c.field, c.value::text, c.upstream_value::text, c.status, c.upstream, " +
@@ -82,3 +82,17 @@ private[histmersion] object CorrectionRepo:
       .run()
       .toList
     CorrectionList(count, rows.map((r, label) => r.toDto(label)))
+
+  /** `lint --rule event-correction-conflict`: the events whose catalogue changed a field a person kept by hand, each
+    * with what the person kept, what the catalogue said and what it says now.
+    */
+  def conflictsIn()(using DbCon): List[(String, String)] =
+    Sql.raw(ConflictsSql).frag.query[(String, String)].run().toList
+
+  private val ConflictsSql =
+    """SELECT c.target_id,
+                c.field || ': kept “' || left(coalesce(c.value #>> '{}', c.value::text), 60) || '” by hand; the catalogue (' ||
+                coalesce(c.upstream, '?') || ') said “' || left(coalesce(c.upstream_value #>> '{}', c.upstream_value::text), 60) ||
+                '” and now says “' || left(coalesce(c.upstream_now #>> '{}', c.upstream_now::text, '?'), 60) || '”'
+         FROM corrections c WHERE c.target_kind = 'event' AND c.status = 'conflict'
+         ORDER BY c.target_id, c.field"""

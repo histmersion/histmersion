@@ -117,8 +117,10 @@ object Deps:
   lazy val data: com.histmersion.util.data.DataContributions =
     com.histmersion.util.data.DataContributions
       .of(
-        com.histmersion.util.data.TransitionContributions
-          .withTasks(com.histmersion.domain.library.sources.SourcesMaintenanceAdapter.tasks)
+        com.histmersion.util.data.TransitionContributions.withOwn(
+          List(com.histmersion.domain.catalogue.CatalogueData),
+          com.histmersion.domain.library.sources.SourcesMaintenanceAdapter.tasks
+        )
       )
       .fold(problems => throw IllegalStateException(problems.mkString("; ")), identity)
 

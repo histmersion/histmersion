@@ -1,6 +1,8 @@
 package com.histmersion.util.data
 
-/** Today's owners and their tables, in one table until each owner registers its own. */
+/** Today's owners and their tables, in one table until each owner registers its own (the catalogue registers its own:
+  * `domain.catalogue.CatalogueData`).
+  */
 object TablesAdapter:
   val AutomationOwner: DataOwner = DataOwner("automation")
   val CatalogueOwner: DataOwner = DataOwner("catalogue")
@@ -53,37 +55,6 @@ object TablesAdapter:
         "goal_links",
         "goal_schedules",
         "queue_items"
-      )
-    case CatalogueOwner =>
-      OwnedTable.all(
-        "places",
-        "place_aliases",
-        "place_descriptions",
-        "place_footprints",
-        "place_links",
-        "place_names",
-        "place_overrides",
-        "place_relations",
-        "place_removals",
-        "place_types",
-        "gazetteer_sources",
-        "land",
-        "periods",
-        "seed_versions",
-        "events",
-        "event_aliases",
-        "event_catalogue",
-        "event_datings",
-        "event_edges",
-        "event_import_parts",
-        "event_link_candidates",
-        "event_link_checks",
-        "event_participants",
-        "corrections",
-        "attestations",
-        "site_undated_build",
-        "site_undated_cells",
-        "map_changes"
       )
     case MediaOwner   => OwnedTable.all("assets", "asset_links", "media_links", "media_checks")
     case LibraryOwner =>

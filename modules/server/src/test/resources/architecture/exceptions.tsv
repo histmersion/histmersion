@@ -141,7 +141,6 @@ direction	config:config/AgentsConfig.scala	automation -> research: AgentCompileC
 direction	config:config/AgentsConfig.scala	automation -> research: AgentInferFilterConfig	1
 direction	config:config/AgentsConfig.scala	automation -> research: AgentReviewConfig	1
 direction	config:config/BasemapBathymetryConfig.scala	util.basemap -> library: SeaFloorSource	1
-direction	config:config/MaintenanceConfig.scala	util.data -> catalogue: PeriodsConfig	1
 direction	core:domain/BrowserDownload.scala	library -> research: Citation	1
 direction	core:domain/CompareRuns.scala	automation -> library: AgentVerify	1
 direction	core:domain/CompareRuns.scala	automation -> library: EnrichSource	1
@@ -199,11 +198,8 @@ direction	db:db/Codecs.scala	util.common -> catalogue: PlaceDating	1
 direction	db:db/Codecs.scala	util.common -> catalogue: PlaceTimeBasis	1
 direction	db:db/Codecs.scala	util.common -> library: NeighborTarget	1
 direction	db:db/Db.scala	util.common -> library: QueryConfig	1
-direction	db:db/LintRepo.scala	util.data -> catalogue: Gazetteer	1
 direction	db:db/LintRepo.scala	util.data -> catalogue: Geocoder	1
 direction	db:db/LintRepo.scala	util.data -> catalogue: PlaceRepo	1
-direction	db:db/LintRepo.scala	util.data -> catalogue: PlaceReviewRepo	1
-direction	db:db/LintRepo.scala	util.data -> catalogue: PointAreaRepo	1
 direction	db:db/LintRepo.scala	util.data -> library: Edge	1
 direction	db:db/LintRepo.scala	util.data -> library: Hit	1
 direction	db:db/LintRepo.scala	util.data -> library: SourceRepo	1
@@ -323,8 +319,6 @@ repository	db:db/CritiqueRepo.scala	SourceRepo of library.sources	1
 repository	db:db/Importer.scala	AssetRepo of media	1
 repository	db:db/Importer.scala	SourceRepo of library.sources	1
 repository	db:db/LintRepo.scala	PlaceRepo of catalogue.places	1
-repository	db:db/LintRepo.scala	PlaceReviewRepo of catalogue.places	1
-repository	db:db/LintRepo.scala	PointAreaRepo of catalogue.places	1
 repository	db:db/LintRepo.scala	SourceRepo of library.sources	1
 repository	db:db/MergeState.scala	PlaceRepo of catalogue.places	1
 repository	db:db/SourceDeleteRepo.scala	QueueRepo of automation.worklists	1

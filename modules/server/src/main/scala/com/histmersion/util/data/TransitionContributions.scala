@@ -32,5 +32,10 @@ object TransitionContributions:
   /** The same, with the upkeep an owner's adapter registers from the owner's own place (it names that owner's
     * repositories, which code here may not), handed in by the composition root.
     */
-  def withTasks(tasks: List[MaintenanceTask]): List[DataContribution] =
-    TablesAdapter.owners.map(o => Adapted(o, tasks.filter(_.owner == o)))
+  def withTasks(tasks: List[MaintenanceTask]): List[DataContribution] = withOwn(Nil, tasks)
+
+  /** The same, with the contributions the owners that register their own hand in (the catalogue's), each in its owner's
+    * place in the order every operation runs the owners in.
+    */
+  def withOwn(own: List[DataContribution], tasks: List[MaintenanceTask]): List[DataContribution] =
+    TablesAdapter.owners.map(o => own.find(_.owner == o).getOrElse(Adapted(o, tasks.filter(_.owner == o))))

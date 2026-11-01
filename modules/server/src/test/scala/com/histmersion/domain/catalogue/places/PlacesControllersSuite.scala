@@ -26,6 +26,9 @@ class PlacesControllersSuite extends munit.FunSuite:
     def buildHierarchy() = SpatialHierarchyResult(0, 0, 0)
     def replaceLand(geometries: List[String]) = geometries.size
     def reclip() = 0
+    def reclassify(toleranceKm: Double) = (0, 0)
+    def relocate(toleranceKm: Double) = 0
+    def removePointAreas(settings: PointAreaRepo.Settings) = PointAreaRepo.Removal(0, 0, 0, 0)
   private val geocoder: Geocoding = (name, _, _, _) =>
     Option.when(name == "Zzcl")(Geocode.Resolution(name, "zzcl_hill", "Zzclhill", 34.6, 40.0))
 

@@ -1,6 +1,6 @@
 # Domain model, package by feature, first-party plugins out of the server (refactor step 3, design)
 
-Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18; slice 7 part 2 built — §19; slice 7 part 3 built — §20; slice 8 part 1 built — §21; slice 8 part 2 built (events, evidence, map tiles; places and data contributions are part 3) — §21.** Written 2026-10-30 on master
+Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18; slice 7 part 2 built — §19; slice 7 part 3 built — §20; slice 8 part 1 built — §21; slice 8 part 2 built (events, evidence, map tiles) — §21; slice 8 part 3 built (places, the catalogue's own data contribution but its carried kinds and merge rules, which are part 4) — §21.** Written 2026-10-30 on master
 58de5489 (branch `domain-design`); revised after the user's reviews of §3: domains above features, measured;
 `personal` with its own interface; `library`, `research`, `catalogue`, `media` named; acquisition and OCR
 dissolved (2026-10-30); automation as a generic workflow engine fed by the domains, data management and file
@@ -15,7 +15,7 @@ Inventories too long for this page are in `research-domain-model/`:
 | [`files.md`](research-domain-model/files.md) | every source file of `server`, `core`, `db`, `api`, `config`, `files` mapped to its target domain or supporting area and feature |
 | [`objects.md`](research-domain-model/objects.md) | all 645 top-level objects without a same-named type, each with its destination and a one-line reason |
 | [`primitives.md`](research-domain-model/primitives.md) | primitive parameters and fields by name, measured per module, and the counts behind §4 |
-| `catalogue-live-*.tsv` | slice 8's live-volume measurements (§21): per request its status, length, SHA-256, ETag and the median and p95 of 20 runs — digests and timings only |
+| `catalogue-live-*.tsv` | slice 8's live-volume measurements (§21, parts 1–3): per request its status, length, SHA-256, ETag and the median and p95 of 20 runs — digests and timings only |
 
 `catalogue` is the domain of places, periods and events (Q17, decided 2026-10-30): the catalogue of data points the
 map and the timeline show. The name is one package segment (`domain.catalogue`, `api.catalogue`,
@@ -2500,7 +2500,7 @@ server's suites run again on the last commit passed, 1 369 with none failed. `Co
 `CliHelpSnapshotSuite`, `AutomationOracleSuite`, `DataOracleSuite`, `NativeMetadataSuite` and `ArchitectureSuite`
 passed; the six contracts 44 tests in all.
 
-## 21. Slice 8 as built, parts 1 and 2 (the catalogue: oracles, periods, attestations and their passage source; events, evidence, map tiles, 2026-11-01)
+## 21. Slice 8 as built, parts 1 to 3 (the catalogue: oracles, periods, attestations and their passage source; events, evidence, map tiles; places and the data contribution, 2026-11-01)
 
 Branch `refactor-s8` from master 485daa59 (slices 1–7 deployed). The slice is built in two parts (part 2 below); part 1
 is green on its own and leaves no code half-moved. Endpoints, MCP tools, CLI commands, tile bytes and agent
@@ -2820,3 +2820,161 @@ pluginVaults 29 (1 skipped), pluginsFetchers 15, pluginsEvents 18, pluginsMedia 
 pluginsCalibre 45, pluginResolver 23, chimneyIronTests 10, db 527, cli 232, web 639, server 1 421 (1 skipped, 1 ignored;
 29 new). The in-memory twins' folds were then written as `@tailrec` loops and the catalogue's suites, its oracle,
 `DataOracleSuite`, `ContractSnapshotSuite` and `ArchitectureSuite` run again: 81 tests, 0 failed.
+
+### Part 3 as built (the places, and the catalogue's own data contribution, 2026-11-01)
+
+Branch `refactor-s8c` from master a6458845 (parts 1 and 2 deployed). Three commits, each green on its own: the oracle's
+new part on the unchanged code, the places, then the catalogue's data contribution. The carried kinds and the merge
+rules did not fit beside the places and stay the data management's adapters: they are part 4 (below). Endpoints, MCP
+tools, CLI commands, tile bytes and agent definitions are unchanged: `ContractSnapshotSuite`, `CliHelpSnapshotSuite`,
+`AutomationOracleSuite`, `DataOracleSuite` and `CatalogueOracleSuite` held byte for byte after each step; no oracle or
+snapshot was re-recorded, and no migration was added.
+
+**The oracle, extended first.** `CatalogueOracleSuite` gains a second collection (`oracle/catalogue/gazetteer.txt`,
+recorded on the unchanged code and stable twice in a row before anything moved): the bundled seed imported by the init
+job (a top-level file, a directory that gives the kind, a dangling parent), `GET /api/places/sources` before and after,
+the GeoNames fixture loaded from a pinned extract (a dry run, then for real), a pinned TGN extract whose file is missing
+(the message naming where to put it), the LPF drop folder loaded, an unknown source refused, a name, an override and a
+place by hand, a rebuild, the MCP tools `place_names` (list, add, remove, an imported name refused), `place_override`
+and `places`, the geocoder asked eight names (a period, a qualifier, a compass part, a loaded record, none), the lint
+report, and every row of the catalogue's tables. Its call sites changed twice (the geocoder through `Geocoding`, an
+import); no recorded line did. `scripts/perf/catalogue_live.py` also reads three places found by a search — detail,
+counts, a year, children, the tree, footprints, links, and what `place=<id>` selects in the findings, the events and
+the histogram — written under a symbolic name (`/api/places/{hatt}…`), never the id (242 requests).
+
+**The live volumes**, after the places moved: a `*_test` database restored from the newest live dump (1.8 million
+places, 4 247 events, 14 394 findings) on a scratch cluster (`shared_buffers` 512 MB), its statistics taken once, kept as
+the pristine template each run copies (one database state for both builds); a scratch server (`-Xmx4g`, `sandbox-exec`
+refusing every connection but loopback — the JVM needs `-Djava.net.preferIPv4Stack=true` there —, scratch home and
+settings, the converter pointed at nothing, the tile cache at its 1 MB floor) on a class path frozen from each build.
+The unchanged code (`catalogue-live-part3-before.tsv`) and this branch's places (`catalogue-live-part3.tsv`): all 242
+answers — every tile's bytes and ETag, every `findings`, `events`, `events/geo`, `events/leads`, `places`, place detail
+and histogram response — identical, both passes stable; medians summed per kind of request:
+
+| requests | n | unchanged (ms) | branch (ms) | ratio |
+|---|---:|---:|---:|---:|
+| tiles (sites, events, media) | 160 | 1 183.6 | 1 170.4 | 0.99 |
+| `findings` (geo-when) | 9 | 47.9 | 48.6 | 1.01 |
+| `events` | 6 | 33.0 | 33.3 | 1.01 |
+| `events/geo` | 6 | 48.5 | 49.3 | 1.02 |
+| `events/leads` | 6 | 44.9 | 45.0 | 1.00 |
+| `places/geo` | 5 | 182.3 | 182.7 | 1.00 |
+| `places` (search) | 10 | 197.0 | 120.0 | 0.61 |
+| a place: detail, children, tree, footprints, links | 27 | 101.7 | 101.5 | 1.00 |
+| what `place=<id>` selects | 9 | 509.1 | 511.9 | 1.01 |
+| `aggregate` (histogram) | 4 | 2 330.7 | 2 342.8 | 1.01 |
+
+No request whose median is 5 ms or more is slower by more than 10 % (the search's lower sum is the first run's colder
+cache on its first searches; the SQL is the same). The databases were dropped and the cluster removed afterwards.
+
+**`domain.catalogue.places`.** The repositories moved into the feature (db module): `PlaceRepo` (import, search, a place
+and the hierarchy around it, footprints, links, renames, names, a person's place, the scope of a filter's places;
+every method on the connection it is given), `PlaceOverrideRepo`, `PlaceReviewRepo`, `PointAreaRepo`, `GazetteerRepo`,
+`TreeRepo` (the gazetteer a tree's rows hang off), `LandRepo`, `Geocoder`, `PlaceScope`, `GazetteerSourceRow`, the rows
+one a file (`PlaceDetailRow`, `FootprintRow`, `PlaceTypeRow`), `PlaceReview` and `PointAreas` (core). The
+materialisation of `finding_places` — the only code that decides which findings belong to which places — is
+`FindingPlaceRepo`; the library reaches it through **`FindingPlacement`** (the library's side of the places: a source's
+findings placed again inside the library's own transaction, and the default tolerance), so `SourceRepo`, `AcquireRepo`,
+`Importer`, `QueuedIngest` and `SkeletonIngest` name no catalogue repository. The services (server):
+
+- **`PlaceService`** — the records, names, old ids, a person's kinds and periods, merges and removals, the hierarchy:
+  `Implementation` over a `Transactor`, `InMemory` over `CatalogueState` (which now holds the places, their old ids, the
+  overrides and the removals). The in-memory twin holds the catalogue's rows alone and answers as a database holding
+  only those would: no finding is stored, so every count of findings is 0; a geometry is kept as it was given; a place
+  is valid at a year its period covers. The contract tests what both answer alike.
+- **`PlaceMap`** (the map's shapes for a time), **`PlaceGeometry`** (finding places rebuilt, the hierarchy from spatial
+  containment, the land replaced and every polity clipped again in batches, and the places' checks' repairs) and
+  **`Geocoding`** — mechanisms over PostGIS with no in-memory twin, as `MapTileService` and `CheckRunner`.
+- **`GazetteerImports`** — how the gazetteer comes in: the bundled seed (`PlaceSeed`'s order over a store of the new
+  location `GazetteerSeed`), **`GazetteerLoad`** over the stores of `GazetteerExtracts`, `GazetteerFolder` and
+  `GazetteerDrop` (a download goes into a reservation; the legacy extract is moved over by a copy), `ImportRunner` (a
+  plugin's source) and `NaturalEarthLand`, given the downloads and the plugins' sources by the composition root.
+  `PeriodOFetch` (its name and description) moved to `periods`.
+- **`PlacesControllers`**, **`GazetteerControllers`** (the places' jobs, one at a time), `PlacesRoutes` (the endpoints
+  in their old order) and `PlacesTools` (`places`, `place_names`, `place_override`, `add_place`). `server.views.
+  PlaceCardView` joins a place's page with what `place=<id>` selects and its pictures. `Handlers` keeps `place`
+  (the view), `geocode` (the enrichment's) and `renamePlace` (the label renames' shape rule); `Bootstrap` keeps the init
+  job over `GazetteerImports`; `CatalogueWiring` builds the rest.
+
+At the composition root: `GazetteerPaths` (where the extracts, the drop folder, the manifest and the legacy folder are;
+it was `GazetteerLoad.paths`) and `HttpDownload` (the plain downloads with the generic User-Agent, `HttpPolicy`'s,
+which the catalogue may not name). The library's: `SourceRepo.unlocated` (from `PlaceRepo`, a filter's count) and
+`AggregateRepo.treeRows` (from `TreeRepo`, the rows the histogram's tree counts).
+
+**The catalogue's data contribution.** `domain.catalogue.CatalogueData` registers the catalogue's 28 tables, its stores
+(the gazetteer's three and the base map), the map's caches, its counts (`EventsData`, `PlacesData`, `PeriodsData` on the
+caller's connection) and its four checks with their repairs: `place-kind`, `place-grid-point` and
+`place-imported-point-area` in `PlacesData` (the repairs through `PlaceGeometry`), `event-correction-conflict` in
+`EventsData` (its SQL now `CorrectionRepo.conflictsIn`). `TransitionContributions.withOwn` puts it in the catalogue's
+place among the owners (`Deps.data`); the catalogue's branches of `TablesAdapter`, `MaintenanceAdapter`,
+`FiguresAdapter` and `CheckRulesAdapter` are gone. Its carried kinds and merge rules are still
+`CarriedKindsAdapter.of`/`MergeRulesAdapter.of` (part 4). `EventImportRepo` and `CorrectionRepo` are `private[events]`.
+
+**Contract suites.** `PlaceServiceContract` 7 tests on both stores (an import read back with a dangling parent, the
+search's order, a person's names, a rename and its old id, a person's own place, an override set, kept and reset, a
+merge and a removal neither undone by the next import); `PlacesControllersSuite` 3 over the in-memory records (an LPF
+document, an old id, the boundary's parsing, a held lock refusing every write). The db suites reach the moved
+repositories through `PlaceFixtures` (the places' test package); `GazetteerRepoSuite`, `ImportedPlaceTimeSuite` and
+`EventCorrectionsRepoSuite` moved into their features' test packages, `PointAreaRepoSuite` and the gazetteer suites
+(`GazetteerLoadSuite` over stores, `GazetteerStoreSuite`, `GazetteerTrafficSuite`, `NaturalEarthLandSuite`) into the
+server's `catalogue.places`.
+
+**Architecture.** `exceptions.tsv` 403 → 377 rows, deletions only: direction 259 → 247 (`PlaceRepo` naming `FilterSql`
+and `GeoTime`; `TreeRepo` naming `FilterSql`; `GazetteerLoad` and `ImportRunner` naming `HttpPolicy`; `LintRepo` naming
+`Gazetteer`, `PlaceReviewRepo`, `PointAreaRepo`; `MaintenanceConfig` naming `PeriodsConfig`), filesystem 60 → 54
+(`GazetteerLoad` 4 rows, `PlaceSeed` 2), repository 80 → 69 (`SourceRepo`, `AcquireRepo`, `Importer`, `QueuedIngest`,
+`SkeletonIngest`, `Bootstrap` naming `PlaceRepo`; `Handlers` naming `PlaceRepo`, `PlaceOverrideRepo`, `TreeRepo`;
+`LintRepo` naming `PlaceReviewRepo`, `PointAreaRepo`). `places.tsv` lost 16 rows (moved files), gained three
+(`GazetteerPaths`, `HttpDownload`, `PlaceCardView`, the composition root), and `GeoTime` is placed in `catalogue.places`
+(it was `library.search`; only the map's shapes and the web map read it, and `GeoPick` resolves to it).
+
+The catalogue rows that remain, by owner:
+
+| rows | owner | why |
+|---|---|---|
+| `BundleImport` naming `EventRepo`, `PlaceRepo` (both rules), `MergeState` naming `PlaceRepo` (both), `MergePlanner` naming `Attestation`, `Place`, `MatchCounts`, `MergeSettings` naming `MatchWeights`, `BundleEntities` naming `Attestation`, `Corrections`, `Place`, `SiteTypes` | catalogue, part 4 | the carried kinds and merge rules still in `util.data` |
+| `LintRepo` naming `Geocoder`, `PlaceRepo` (both rules) | library (slice 10) | the library's rules `finding-geocode`, `finding-unplaced`, `finding-placeholder`, which ask the geocoder and the placeholders |
+| `api/Markdown` (25), `api/YearFmt`, `db/Codecs` (3), `api/BundleFiles` (2), `api/MergeMarkdown`, `api/MergePlan`, `api/JobDetail` (3) | slice 12 | `api.catalogue.*` and the job details' edges |
+| `api/EventDetail`, `api/PlaceDetail` naming `MediaThumb`; `api/AttestationTarget` naming `Edge`, `Finding`; `api/Tree` naming `Aggregate`, `Bucket`, `BucketSample` | slice 12 (wire records), media and library | records whose other end is media's or the library's |
+| `api/personal/ItemKind` naming `Place`; `CliProcess` naming `Tree` | personal; automation (slice 12) | name collisions with another's word |
+
+**Deviations.**
+
+- The carried kinds and the merge rules are not moved (part 4): `CatalogueData` registers the adapters' for them.
+  `BundleImport` (renames, a touched source's findings placed again), `MergeState` (the label rule) and `LintRepo` (the
+  library's rules) still name `PlaceRepo`, `EventRepo` and `Geocoder`, so these and `PlaceReviewRepo`/`PointAreaRepo`
+  (db suites outside the feature) stay `private[histmersion]`, with three transitional forwarders on `PlaceRepo`; the
+  others are `private[places]`/`private[events]`.
+- `finding_places`' materialisation stays the catalogue's (`FindingPlaceRepo`), reached through `FindingPlacement`: the
+  places decide which findings belong to them, and the catalogue's own writes (overrides, merges, the checks'
+  repairs) place findings again in the same transaction.
+- The services speak the wire records, as parts 1 and 2's do.
+- `GeoTime` re-placed in `catalogue.places` (above); `Location.GazetteerSeed` is new (About does not show it).
+- `places.sources`' default paths are now resolved with the environment the composition root read once, not
+  `sys.env` (the same values in a server).
+- A legacy extract is moved to the extracts' store by a copy and a delete (stores move within themselves).
+- `PlaceGeometry.removePointAreas` keeps the moved repair's monotonic deadline (`System.nanoTime`).
+
+**Part 4 (to build).** The catalogue's carried kinds (the 11, their readers out of `BundleRepo`, their steps out of
+`BundleImport.Writer` with the cross-kind state a step needs exposed — the places' and events' renames, a touched
+source's findings placed again through `FindingPlacement`), the event and place merge rules out of `MergePlanner` and
+`MergeState`; then `PlaceRepo`, `EventRepo`, `PlaceReviewRepo`, `PointAreaRepo` and `Geocoder` `private[<feature>]`
+(the db suites through fixtures) and `PlaceRepo`'s forwarders gone.
+
+**Native image.** `reachability-metadata.json`, the lazy values `javap -p` reads compared with the build of a6458845:
+renamed `db.FootprintRow$`, `GazetteerSourceRow$`, `Geocoder$` (with `$Placed$`, `$Unplaced$`), `PlaceDetailRow$`,
+`PlaceOverrideRepo$` (with `$Row$`), `PlaceReviewRepo$` (with `$ItemRow$`, `$Relocation$`, `$Row$`), `PlaceTypeRow$`,
+`PointAreaRepo$Row$`, `TreeRepo$RegionNodeRow$`, `$RelationRow$` → `domain.catalogue.places.*$`, `db.PlaceRepo$Named$`,
+`$Placeholder$` → `places.FindingPlaceRepo$…`, `db.PlaceRepo$package$`'s givens → `places.PlaceRepo$`,
+`db.TreeRepo$TreeRowRaw$` → `db.AggregateRepo$TreeRowRaw$`, `McpTools$PlacesInput$`, `$PlaceNamesInput$`,
+`$PlaceOverrideInput$` → `places.PlacesTools$…` (fields renumbered as `javap -p` reads them); removed the stale
+`db.GazetteerRepo$package$`, `db.PlaceRepo$`, `db.PointAreaRepo$`, `db.TreeRepo$`; added `CatalogueWiring`'s
+`gazetteer`, `placeGeometry`, `placeStore`, `places`; the `McpTools` inputs declared after the removed ones
+(`ActivityInput`, `AssetsInput`, `JobControlInput`, `JobStatusInput`) renumbered. No tracing-agent run, no native
+build. To check at the bundle: `--self-check`; `smoke.sh`; `histmersion places search|show|children|tree|footprints|links|
+names|set|merge|remove|rename|add|import|rebuild|build-hierarchy|sources`, `places load lpf` (a drop folder),
+`places load geonames` (a pinned extract present, and missing), `places fetch land --dry-run` and a plugin's source
+(network off: their refusal), `init`; the MCP tools `places`, `place_names`, `place_override`, `add_place`; `lint`
+and `lint --fix --rule place-kind|place-grid-point|place-imported-point-area`; About › Storage and its counts.
+
+**Tests.** TESTS
