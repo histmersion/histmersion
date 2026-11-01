@@ -1,0 +1,1381 @@
+== rows before
+## sources 7 rows
+{ "calibre_id" : null, "citekey" : "zqalpha1990_tell", "notes" : "Notes on The Walls of Zqtell.", "status" : "current", "summary" : "A study of The Walls of Zqtell.", "tags" : [ "zq-walls", "zq-oracle" ], "title" : "The Walls of Zqtell", "year" : 1990 }
+{ "calibre_id" : null, "citekey" : "zqbeta2001_cove", "notes" : "Notes on The Harbour at Zqcove.", "status" : "contested", "summary" : "A study of The Harbour at Zqcove.", "tags" : [ "zq-trade", "zq-oracle" ], "title" : "The Harbour at Zqcove", "year" : 2001 }
+{ "calibre_id" : null, "citekey" : "zqdelta2010_gone", "notes" : "Notes on A Lost Report.", "status" : "current", "summary" : "A study of A Lost Report.", "tags" : [ "zq-oracle" ], "title" : "A Lost Report", "year" : 2010 }
+{ "calibre_id" : null, "citekey" : "zqeps1999_cited", "notes" : "Notes on A Cited Survey.", "status" : "current", "summary" : "A study of A Cited Survey.", "tags" : [ "zq-oracle" ], "title" : "A Cited Survey", "year" : 1999 }
+{ "calibre_id" : null, "citekey" : "zqeta2020_note", "notes" : "A note about [[zqalpha1990_tell]].", "status" : "unassessed", "summary" : null, "tags" : [ "zq-oracle", "zq-note" ], "title" : "An Imported Note", "year" : 2020 }
+{ "calibre_id" : null, "citekey" : "zqgamma1975_kings", "notes" : "[[zqalpha1990_tell]] and a bare zqbeta2001_cove", "status" : "contested", "summary" : "Kings, again; see [[zqalpha1990_tell]].", "tags" : [ "zq-oracle", "zq-court", "zq-dynasty", "zq-mcp" ], "title" : "Kings of Zqland, revised", "year" : 1976 }
+{ "calibre_id" : null, "citekey" : "zqzeta2015_mcp", "notes" : null, "status" : "unassessed", "summary" : null, "tags" : [ "zq-oracle" ], "title" : "Put over MCP", "year" : null }
+## source_aliases 0 rows
+## alias_tombstones 0 rows
+## findings 10 rows
+{ "citekey" : "zqalpha1990_tell", "claim" : "Zqcove sent tin to Zqtell", "id" : "zqalpha1990_tell#1", "tags" : [ "zq-trade" ] }
+{ "citekey" : "zqalpha1990_tell", "claim" : "the sea peoples reached Zqtell", "id" : "zqalpha1990_tell#2", "tags" : [ "zq-claim" ] }
+{ "citekey" : "zqalpha1990_tell", "claim" : "the walls of Zqtell were raised around 1500 BC", "id" : "zqalpha1990_tell#0", "tags" : [ "zq-claim" ] }
+{ "citekey" : "zqbeta2001_cove", "claim" : "Zqcove traded tin with the islands", "id" : "zqbeta2001_cove#0", "tags" : [ "zq-trade" ] }
+{ "citekey" : "zqbeta2001_cove", "claim" : "ships of Zqcove reached the Zqisles", "id" : "zqbeta2001_cove#1", "tags" : [ "zq-claim" ] }
+{ "citekey" : "zqdelta2010_gone", "claim" : "nothing survives", "id" : "zqdelta2010_gone#0", "tags" : [ "zq-claim" ] }
+{ "citekey" : "zqeta2020_note", "claim" : "a claim from a note", "id" : "zqeta2020_note#0", "tags" : [ ] }
+{ "citekey" : "zqgamma1975_kings", "claim" : "and another", "id" : "zqgamma1975_kings#1", "tags" : [ ] }
+{ "citekey" : "zqgamma1975_kings", "claim" : "one claim only", "id" : "zqgamma1975_kings#0", "tags" : [ ] }
+{ "citekey" : "zqzeta2015_mcp", "claim" : "an MCP claim", "id" : "zqzeta2015_mcp#0", "tags" : [ ] }
+## finding_places 14 rows
+{ "finding_id" : "zqalpha1990_tell#0", "place_id" : "zq_land" }
+{ "finding_id" : "zqalpha1990_tell#0", "place_id" : "zq_tell" }
+{ "finding_id" : "zqalpha1990_tell#1", "place_id" : "zq_cove" }
+{ "finding_id" : "zqalpha1990_tell#1", "place_id" : "zq_land" }
+{ "finding_id" : "zqalpha1990_tell#2", "place_id" : "zq_land" }
+{ "finding_id" : "zqalpha1990_tell#2", "place_id" : "zq_tell" }
+{ "finding_id" : "zqbeta2001_cove#0", "place_id" : "zq_cove" }
+{ "finding_id" : "zqbeta2001_cove#0", "place_id" : "zq_land" }
+{ "finding_id" : "zqbeta2001_cove#1", "place_id" : "zq_isles" }
+{ "finding_id" : "zqdelta2010_gone#0", "place_id" : "zq_land" }
+{ "finding_id" : "zqeta2020_note#0", "place_id" : "zq_land" }
+{ "finding_id" : "zqgamma1975_kings#0", "place_id" : "zq_land" }
+{ "finding_id" : "zqgamma1975_kings#1", "place_id" : "zq_land" }
+{ "finding_id" : "zqzeta2015_mcp#0", "place_id" : "zq_land" }
+## edges 6 rows
+{ "dst" : "zqalpha1990_tell", "kind" : "cites", "src" : "zqdelta2010_gone" }
+{ "dst" : "zqalpha1990_tell", "kind" : "references", "src" : "zqeta2020_note" }
+{ "dst" : "zqalpha1990_tell", "kind" : "refutes", "src" : "zqbeta2001_cove" }
+{ "dst" : "zqbeta2001_cove", "kind" : "references", "src" : "zqalpha1990_tell" }
+{ "dst" : "zqbeta2001_cove", "kind" : "updates", "src" : "zqgamma1975_kings" }
+{ "dst" : "zqgamma1975_kings", "kind" : "challenges", "src" : "zqalpha1990_tell" }
+## unresolved_edges 2 rows
+{ "dst" : "zq_article", "kind" : "references", "src" : "zqalpha1990_tell" }
+{ "dst" : "zqnot2020_yet", "kind" : "references", "src" : "zqgamma1975_kings" }
+## source_chunks 8 rows
+{ "citekey" : "zqalpha1990_tell", "heading" : "Zqtell > References", "ord" : 2 }
+{ "citekey" : "zqalpha1990_tell", "heading" : "Zqtell > The harbour", "ord" : 1 }
+{ "citekey" : "zqalpha1990_tell", "heading" : "Zqtell > The walls", "ord" : 0 }
+{ "citekey" : "zqbeta2001_cove", "heading" : "Zqcove", "ord" : 0 }
+{ "citekey" : "zqdelta2010_gone", "heading" : "A lost report", "ord" : 0 }
+{ "citekey" : "zqeps1999_cited", "heading" : "Survey", "ord" : 0 }
+{ "citekey" : "zqeta2020_note", "heading" : "Body", "ord" : 0 }
+{ "citekey" : "zqgamma1975_kings", "heading" : "Kings of Zqland > Court", "ord" : 0 }
+## articles 1 rows
+{ "body" : "The walls fell [[zqalpha1990_tell]]; see also [[zqalpha1990|the walls]] and [[zqeps1999_cited#Survey]].\n\nThe harbour [[zqbeta2001_cove]].", "coverage_reasons" : { "zqdelta2010_gone" : "lost" }, "slug" : "zq_article", "summary" : "On [[zqalpha1990_tell]]." }
+## article_links 4 rows
+{ "src_slug" : "zq_article", "target" : "zqalpha1990", "target_kind" : "article" }
+{ "src_slug" : "zq_article", "target" : "zqalpha1990_tell", "target_kind" : "source" }
+{ "src_slug" : "zq_article", "target" : "zqbeta2001_cove", "target_kind" : "source" }
+{ "src_slug" : "zq_article", "target" : "zqeps1999_cited", "target_kind" : "source" }
+## article_versions 0 rows
+## asset_links 4 rows
+{ "asset_name" : "fig-1.png", "citekey" : "zqbeta2001_cove", "relation" : "depicts", "target_id" : "zqalpha1990_tell", "target_type" : "source" }
+{ "asset_name" : "fig-1.png", "citekey" : "zqbeta2001_cove", "relation" : "depicts", "target_id" : "zqalpha1990_tell#1", "target_type" : "finding" }
+{ "asset_name" : "fig-1.png", "citekey" : "zqbeta2001_cove", "relation" : "depicts", "target_id" : "zqdelta2010_gone", "target_type" : "source" }
+{ "asset_name" : "fig-1.png", "citekey" : "zqbeta2001_cove", "relation" : "depicts", "target_id" : "zqdelta2010_gone#0", "target_type" : "finding" }
+## assets 1 rows
+{ "citekey" : "zqbeta2001_cove", "name" : "fig-1.png" }
+## attestations 3 rows
+{ "citekey" : "zqbeta2001_cove", "quote" : "Zqcove", "target_id" : "zqalpha1990_tell#0", "target_type" : "finding" }
+{ "citekey" : "zqbeta2001_cove", "quote" : "Zqcove", "target_id" : "zqalpha1990_tell|zqbeta2001_cove|references", "target_type" : "edge" }
+{ "citekey" : "zqbeta2001_cove", "quote" : "Zqcove", "target_id" : "zqdelta2010_gone#0", "target_type" : "finding" }
+## events 1 rows
+{ "citekey" : "zqeps1999_cited", "id" : "zq_siege" }
+## event_datings 2 rows
+{ "citekey" : "zqalpha1990_tell", "event_id" : "zq_siege" }
+{ "citekey" : "zqdelta2010_gone", "event_id" : "zq_siege" }
+## places 5 rows
+{ "id" : "zq_cove", "source" : null }
+{ "id" : "zq_gate", "source" : "zqalpha1990_tell" }
+{ "id" : "zq_isles", "source" : null }
+{ "id" : "zq_land", "source" : null }
+{ "id" : "zq_tell", "source" : null }
+## goal_links 2 rows
+{ "goal_slug" : "zq-goal", "kind" : "source", "note" : "the lost report", "ref" : "zqdelta2010_gone" }
+{ "goal_slug" : "zq-goal", "kind" : "source", "note" : "the walls", "ref" : "zqalpha1990_tell" }
+## queue_items 2 rows
+{ "list" : "tasks", "status" : "open", "text" : "check zqalpha1990_tell", "topic" : null }
+{ "list" : "tasks", "status" : "open", "text" : "re-read [[zqdelta2010_gone]]", "topic" : null }
+## jobs 1 rows
+{ "citekey" : null, "kind" : "places-hierarchy", "status" : "done" }
+## tombstones 1 rows
+{ "kind" : "finding" }
+== rename alpha (zqalpha1990_tell → zqalpha1991_walls)
+200 {
+  "calibreId" : null,
+  "counts" : {
+    "articles" : [
+      "zq_article"
+    ],
+    "columns" : [
+      {
+        "rows" : 1,
+        "table" : "attestations.target_id (finding)"
+      },
+      {
+        "rows" : 1,
+        "table" : "attestations.target_id (edge, event_dating)"
+      },
+      {
+        "rows" : 1,
+        "table" : "asset_links.target_id (finding)"
+      },
+      {
+        "rows" : 1,
+        "table" : "asset_links.target_id (source)"
+      },
+      {
+        "rows" : 1,
+        "table" : "article_links.target"
+      },
+      {
+        "rows" : 1,
+        "table" : "event_datings.citekey"
+      },
+      {
+        "rows" : 1,
+        "table" : "place_footprints.citekey"
+      },
+      {
+        "rows" : 1,
+        "table" : "places.source"
+      }
+    ],
+    "edgesPromoted" : 0,
+    "findings" : 3,
+    "links" : 6,
+    "sources" : [
+      "zqeta2020_note",
+      "zqgamma1975_kings"
+    ]
+  },
+  "newCitekey" : "zqalpha1991_walls",
+  "oldCitekey" : "zqalpha1990_tell",
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqwriter, Bo"
+    ],
+    "citekey" : "zqalpha1991_walls",
+    "doi" : null,
+    "notes" : "Notes on The Walls of Zqtell.",
+    "ocrMarkdown" : null,
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : null,
+    "regions" : [
+      "Zqland"
+    ],
+    "status" : "current",
+    "summary" : "A study of The Walls of Zqtell.",
+    "tags" : [
+      "zq-walls",
+      "zq-oracle"
+    ],
+    "title" : "The Walls of Zqtell",
+    "topics" : [
+      "bronze age",
+      "fortification"
+    ],
+    "uid" : "source:zqalpha1990_tell",
+    "updatedAt" : "TS",
+    "venue" : "Journal of Zq Studies",
+    "year" : 1990
+  }
+}
+== refused: an old citekey (zqalpha1990_tell → zqx2000_x)
+200 {
+  "calibreId" : null,
+  "counts" : {
+    "articles" : [
+      "zq_article"
+    ],
+    "columns" : [
+      {
+        "rows" : 1,
+        "table" : "attestations.target_id (finding)"
+      },
+      {
+        "rows" : 1,
+        "table" : "attestations.target_id (edge, event_dating)"
+      },
+      {
+        "rows" : 1,
+        "table" : "asset_links.target_id (finding)"
+      },
+      {
+        "rows" : 1,
+        "table" : "asset_links.target_id (source)"
+      },
+      {
+        "rows" : 1,
+        "table" : "article_links.target"
+      },
+      {
+        "rows" : 1,
+        "table" : "event_datings.citekey"
+      },
+      {
+        "rows" : 1,
+        "table" : "place_footprints.citekey"
+      },
+      {
+        "rows" : 1,
+        "table" : "places.source"
+      }
+    ],
+    "edgesPromoted" : 0,
+    "findings" : 3,
+    "links" : 6,
+    "sources" : [
+      "zqeta2020_note",
+      "zqgamma1975_kings"
+    ]
+  },
+  "newCitekey" : "zqx2000_x",
+  "oldCitekey" : "zqalpha1991_walls",
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqwriter, Bo"
+    ],
+    "citekey" : "zqx2000_x",
+    "doi" : null,
+    "notes" : "Notes on The Walls of Zqtell.",
+    "ocrMarkdown" : null,
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : null,
+    "regions" : [
+      "Zqland"
+    ],
+    "status" : "current",
+    "summary" : "A study of The Walls of Zqtell.",
+    "tags" : [
+      "zq-walls",
+      "zq-oracle"
+    ],
+    "title" : "The Walls of Zqtell",
+    "topics" : [
+      "bronze age",
+      "fortification"
+    ],
+    "uid" : "source:zqalpha1990_tell",
+    "updatedAt" : "TS",
+    "venue" : "Journal of Zq Studies",
+    "year" : 1990
+  }
+}
+== refused: taken (zqalpha1991_walls → zqbeta2001_cove)
+400 {
+  "code" : "invalid",
+  "message" : "'zqbeta2001_cove' is already the citekey of another source"
+}
+== refused: invalid (zqalpha1991_walls → ZQ bad)
+400 {
+  "code" : "invalid",
+  "message" : "invalid citekey 'ZQ bad' — lower-case, start with a letter, then letters, digits, '_', '.' or '-' (2-121 characters), e.g. anthony2007_horse"
+}
+== refused: not link-shaped (zqalpha1991_walls → zqwalls)
+400 {
+  "code" : "invalid",
+  "message" : "'zqwalls' is a valid citekey but not a LINK-shaped one — `[[zqwalls]]` would resolve to an article, not the source. Use lower-case letters, digits and '_' with a four-digit year or an underscore (e.g. page1959_history)"
+}
+== refused: the same (zqalpha1991_walls → zqalpha1991_walls)
+200 {
+  "calibreId" : null,
+  "counts" : {
+    "articles" : [
+      "zq_article"
+    ],
+    "columns" : [
+      {
+        "rows" : 1,
+        "table" : "attestations.target_id (finding)"
+      },
+      {
+        "rows" : 1,
+        "table" : "attestations.target_id (edge, event_dating)"
+      },
+      {
+        "rows" : 1,
+        "table" : "asset_links.target_id (finding)"
+      },
+      {
+        "rows" : 1,
+        "table" : "asset_links.target_id (source)"
+      },
+      {
+        "rows" : 1,
+        "table" : "article_links.target"
+      },
+      {
+        "rows" : 1,
+        "table" : "event_datings.citekey"
+      },
+      {
+        "rows" : 1,
+        "table" : "place_footprints.citekey"
+      },
+      {
+        "rows" : 1,
+        "table" : "places.source"
+      }
+    ],
+    "edgesPromoted" : 0,
+    "findings" : 3,
+    "links" : 6,
+    "sources" : [
+      "zqeta2020_note",
+      "zqgamma1975_kings"
+    ]
+  },
+  "newCitekey" : "zqalpha1991_walls",
+  "oldCitekey" : "zqx2000_x",
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqwriter, Bo"
+    ],
+    "citekey" : "zqalpha1991_walls",
+    "doi" : null,
+    "notes" : "Notes on The Walls of Zqtell.",
+    "ocrMarkdown" : null,
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : null,
+    "regions" : [
+      "Zqland"
+    ],
+    "status" : "current",
+    "summary" : "A study of The Walls of Zqtell.",
+    "tags" : [
+      "zq-walls",
+      "zq-oracle"
+    ],
+    "title" : "The Walls of Zqtell",
+    "topics" : [
+      "bronze age",
+      "fortification"
+    ],
+    "uid" : "source:zqalpha1990_tell",
+    "updatedAt" : "TS",
+    "venue" : "Journal of Zq Studies",
+    "year" : 1990
+  }
+}
+== refused: unknown (zqnone2000_x → zqnone2001_x)
+404 {
+  "code" : "not_found",
+  "message" : "No source 'zqnone2000_x'"
+}
+== rows after the rename
+## sources 7 rows
+{ "calibre_id" : null, "citekey" : "zqalpha1991_walls", "notes" : "Notes on The Walls of Zqtell.", "status" : "current", "summary" : "A study of The Walls of Zqtell.", "tags" : [ "zq-walls", "zq-oracle" ], "title" : "The Walls of Zqtell", "year" : 1990 }
+{ "calibre_id" : null, "citekey" : "zqbeta2001_cove", "notes" : "Notes on The Harbour at Zqcove.", "status" : "contested", "summary" : "A study of The Harbour at Zqcove.", "tags" : [ "zq-trade", "zq-oracle" ], "title" : "The Harbour at Zqcove", "year" : 2001 }
+{ "calibre_id" : null, "citekey" : "zqdelta2010_gone", "notes" : "Notes on A Lost Report.", "status" : "current", "summary" : "A study of A Lost Report.", "tags" : [ "zq-oracle" ], "title" : "A Lost Report", "year" : 2010 }
+{ "calibre_id" : null, "citekey" : "zqeps1999_cited", "notes" : "Notes on A Cited Survey.", "status" : "current", "summary" : "A study of A Cited Survey.", "tags" : [ "zq-oracle" ], "title" : "A Cited Survey", "year" : 1999 }
+{ "calibre_id" : null, "citekey" : "zqeta2020_note", "notes" : "A note about [[zqalpha1991_walls]].", "status" : "unassessed", "summary" : null, "tags" : [ "zq-oracle", "zq-note" ], "title" : "An Imported Note", "year" : 2020 }
+{ "calibre_id" : null, "citekey" : "zqgamma1975_kings", "notes" : "[[zqalpha1991_walls]] and a bare zqbeta2001_cove", "status" : "contested", "summary" : "Kings, again; see [[zqalpha1991_walls]].", "tags" : [ "zq-oracle", "zq-court", "zq-dynasty", "zq-mcp" ], "title" : "Kings of Zqland, revised", "year" : 1976 }
+{ "calibre_id" : null, "citekey" : "zqzeta2015_mcp", "notes" : null, "status" : "unassessed", "summary" : null, "tags" : [ "zq-oracle" ], "title" : "Put over MCP", "year" : null }
+## source_aliases 2 rows
+{ "alias" : "zqalpha1990_tell", "citekey" : "zqalpha1991_walls", "created_at" : "TS" }
+{ "alias" : "zqx2000_x", "citekey" : "zqalpha1991_walls", "created_at" : "TS" }
+## alias_tombstones 1 rows
+{ "alias" : "zqalpha1991_walls" }
+## findings 10 rows
+{ "citekey" : "zqalpha1991_walls", "claim" : "Zqcove sent tin to Zqtell", "id" : "zqalpha1991_walls#1", "tags" : [ "zq-trade" ] }
+{ "citekey" : "zqalpha1991_walls", "claim" : "the sea peoples reached Zqtell", "id" : "zqalpha1991_walls#2", "tags" : [ "zq-claim" ] }
+{ "citekey" : "zqalpha1991_walls", "claim" : "the walls of Zqtell were raised around 1500 BC", "id" : "zqalpha1991_walls#0", "tags" : [ "zq-claim" ] }
+{ "citekey" : "zqbeta2001_cove", "claim" : "Zqcove traded tin with the islands", "id" : "zqbeta2001_cove#0", "tags" : [ "zq-trade" ] }
+{ "citekey" : "zqbeta2001_cove", "claim" : "ships of Zqcove reached the Zqisles", "id" : "zqbeta2001_cove#1", "tags" : [ "zq-claim" ] }
+{ "citekey" : "zqdelta2010_gone", "claim" : "nothing survives", "id" : "zqdelta2010_gone#0", "tags" : [ "zq-claim" ] }
+{ "citekey" : "zqeta2020_note", "claim" : "a claim from a note", "id" : "zqeta2020_note#0", "tags" : [ ] }
+{ "citekey" : "zqgamma1975_kings", "claim" : "and another", "id" : "zqgamma1975_kings#1", "tags" : [ ] }
+{ "citekey" : "zqgamma1975_kings", "claim" : "one claim only", "id" : "zqgamma1975_kings#0", "tags" : [ ] }
+{ "citekey" : "zqzeta2015_mcp", "claim" : "an MCP claim", "id" : "zqzeta2015_mcp#0", "tags" : [ ] }
+## finding_places 14 rows
+{ "finding_id" : "zqalpha1991_walls#0", "place_id" : "zq_land" }
+{ "finding_id" : "zqalpha1991_walls#0", "place_id" : "zq_tell" }
+{ "finding_id" : "zqalpha1991_walls#1", "place_id" : "zq_cove" }
+{ "finding_id" : "zqalpha1991_walls#1", "place_id" : "zq_land" }
+{ "finding_id" : "zqalpha1991_walls#2", "place_id" : "zq_land" }
+{ "finding_id" : "zqalpha1991_walls#2", "place_id" : "zq_tell" }
+{ "finding_id" : "zqbeta2001_cove#0", "place_id" : "zq_cove" }
+{ "finding_id" : "zqbeta2001_cove#0", "place_id" : "zq_land" }
+{ "finding_id" : "zqbeta2001_cove#1", "place_id" : "zq_isles" }
+{ "finding_id" : "zqdelta2010_gone#0", "place_id" : "zq_land" }
+{ "finding_id" : "zqeta2020_note#0", "place_id" : "zq_land" }
+{ "finding_id" : "zqgamma1975_kings#0", "place_id" : "zq_land" }
+{ "finding_id" : "zqgamma1975_kings#1", "place_id" : "zq_land" }
+{ "finding_id" : "zqzeta2015_mcp#0", "place_id" : "zq_land" }
+## edges 6 rows
+{ "dst" : "zqalpha1991_walls", "kind" : "cites", "src" : "zqdelta2010_gone" }
+{ "dst" : "zqalpha1991_walls", "kind" : "references", "src" : "zqeta2020_note" }
+{ "dst" : "zqalpha1991_walls", "kind" : "refutes", "src" : "zqbeta2001_cove" }
+{ "dst" : "zqbeta2001_cove", "kind" : "references", "src" : "zqalpha1991_walls" }
+{ "dst" : "zqbeta2001_cove", "kind" : "updates", "src" : "zqgamma1975_kings" }
+{ "dst" : "zqgamma1975_kings", "kind" : "challenges", "src" : "zqalpha1991_walls" }
+## unresolved_edges 2 rows
+{ "dst" : "zq_article", "kind" : "references", "src" : "zqalpha1991_walls" }
+{ "dst" : "zqnot2020_yet", "kind" : "references", "src" : "zqgamma1975_kings" }
+## source_chunks 8 rows
+{ "citekey" : "zqalpha1991_walls", "heading" : "Zqtell > References", "ord" : 2 }
+{ "citekey" : "zqalpha1991_walls", "heading" : "Zqtell > The harbour", "ord" : 1 }
+{ "citekey" : "zqalpha1991_walls", "heading" : "Zqtell > The walls", "ord" : 0 }
+{ "citekey" : "zqbeta2001_cove", "heading" : "Zqcove", "ord" : 0 }
+{ "citekey" : "zqdelta2010_gone", "heading" : "A lost report", "ord" : 0 }
+{ "citekey" : "zqeps1999_cited", "heading" : "Survey", "ord" : 0 }
+{ "citekey" : "zqeta2020_note", "heading" : "Body", "ord" : 0 }
+{ "citekey" : "zqgamma1975_kings", "heading" : "Kings of Zqland > Court", "ord" : 0 }
+## articles 1 rows
+{ "body" : "The walls fell [[zqalpha1991_walls]]; see also [[zqalpha1991_walls|the walls]] and [[zqeps1999_cited#Survey]].\n\nThe harbour [[zqbeta2001_cove]].", "coverage_reasons" : { "zqdelta2010_gone" : "lost" }, "slug" : "zq_article", "summary" : "On [[zqalpha1991_walls]]." }
+## article_links 3 rows
+{ "src_slug" : "zq_article", "target" : "zqalpha1991_walls", "target_kind" : "source" }
+{ "src_slug" : "zq_article", "target" : "zqbeta2001_cove", "target_kind" : "source" }
+{ "src_slug" : "zq_article", "target" : "zqeps1999_cited", "target_kind" : "source" }
+## article_versions 3 rows
+{ "body" : "The walls fell [[zqalpha1990_tell]]; see also [[zqalpha1990|the walls]] and [[zqeps1999_cited#Survey]].\n\nThe harbour [[zqbeta2001_cove]].", "slug" : "zq_article" }
+{ "body" : "The walls fell [[zqalpha1991_walls]]; see also [[zqalpha1991_walls|the walls]] and [[zqeps1999_cited#Survey]].\n\nThe harbour [[zqbeta2001_cove]].", "slug" : "zq_article" }
+{ "body" : "The walls fell [[zqx2000_x]]; see also [[zqx2000_x|the walls]] and [[zqeps1999_cited#Survey]].\n\nThe harbour [[zqbeta2001_cove]].", "slug" : "zq_article" }
+## asset_links 4 rows
+{ "asset_name" : "fig-1.png", "citekey" : "zqbeta2001_cove", "relation" : "depicts", "target_id" : "zqalpha1991_walls", "target_type" : "source" }
+{ "asset_name" : "fig-1.png", "citekey" : "zqbeta2001_cove", "relation" : "depicts", "target_id" : "zqalpha1991_walls#1", "target_type" : "finding" }
+{ "asset_name" : "fig-1.png", "citekey" : "zqbeta2001_cove", "relation" : "depicts", "target_id" : "zqdelta2010_gone", "target_type" : "source" }
+{ "asset_name" : "fig-1.png", "citekey" : "zqbeta2001_cove", "relation" : "depicts", "target_id" : "zqdelta2010_gone#0", "target_type" : "finding" }
+## assets 1 rows
+{ "citekey" : "zqbeta2001_cove", "name" : "fig-1.png" }
+## attestations 3 rows
+{ "citekey" : "zqbeta2001_cove", "quote" : "Zqcove", "target_id" : "zqalpha1991_walls#0", "target_type" : "finding" }
+{ "citekey" : "zqbeta2001_cove", "quote" : "Zqcove", "target_id" : "zqalpha1991_walls|zqbeta2001_cove|references", "target_type" : "edge" }
+{ "citekey" : "zqbeta2001_cove", "quote" : "Zqcove", "target_id" : "zqdelta2010_gone#0", "target_type" : "finding" }
+## events 1 rows
+{ "citekey" : "zqeps1999_cited", "id" : "zq_siege" }
+## event_datings 2 rows
+{ "citekey" : "zqalpha1991_walls", "event_id" : "zq_siege" }
+{ "citekey" : "zqdelta2010_gone", "event_id" : "zq_siege" }
+## places 5 rows
+{ "id" : "zq_cove", "source" : null }
+{ "id" : "zq_gate", "source" : "zqalpha1991_walls" }
+{ "id" : "zq_isles", "source" : null }
+{ "id" : "zq_land", "source" : null }
+{ "id" : "zq_tell", "source" : null }
+## goal_links 2 rows
+{ "goal_slug" : "zq-goal", "kind" : "source", "note" : "the lost report", "ref" : "zqdelta2010_gone" }
+{ "goal_slug" : "zq-goal", "kind" : "source", "note" : "the walls", "ref" : "zqalpha1990_tell" }
+## queue_items 2 rows
+{ "list" : "tasks", "status" : "open", "text" : "check zqalpha1990_tell", "topic" : null }
+{ "list" : "tasks", "status" : "open", "text" : "re-read [[zqdelta2010_gone]]", "topic" : null }
+## jobs 1 rows
+{ "citekey" : null, "kind" : "places-hierarchy", "status" : "done" }
+## tombstones 1 rows
+{ "kind" : "finding" }
+== GET /api/sources/zqalpha1990_tell?body=false (an old citekey)
+200 {
+  "findings" : [
+    {
+      "claim" : "the walls of Zqtell were raised around 1500 BC",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1480,
+      "periodName" : "Zq period",
+      "periodStart" : -1520,
+      "regionName" : "Zqtell",
+      "significance" : null,
+      "tags" : [
+        "zq-claim"
+      ],
+      "uid" : "finding:zqalpha1990_tell#0"
+    },
+    {
+      "claim" : "Zqcove sent tin to Zqtell",
+      "confidence" : "high",
+      "lat" : 39.2,
+      "lon" : 35.5,
+      "periodEnd" : -1300,
+      "periodName" : "Zq period",
+      "periodStart" : -1400,
+      "regionName" : "Zqcove",
+      "significance" : null,
+      "tags" : [
+        "zq-trade"
+      ],
+      "uid" : "finding:zqalpha1990_tell#1"
+    },
+    {
+      "claim" : "the sea peoples reached Zqtell",
+      "confidence" : "contested",
+      "lat" : 40.01,
+      "lon" : 34.61,
+      "periodEnd" : -1180,
+      "periodName" : "Zq period",
+      "periodStart" : -1200,
+      "regionName" : "Zqtell",
+      "significance" : null,
+      "tags" : [
+        "zq-claim"
+      ],
+      "uid" : "finding:zqalpha1990_tell#2"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqwriter, Bo"
+    ],
+    "citekey" : "zqalpha1991_walls",
+    "doi" : null,
+    "notes" : "Notes on The Walls of Zqtell.",
+    "ocrMarkdown" : null,
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : null,
+    "regions" : [
+      "Zqland"
+    ],
+    "status" : "current",
+    "summary" : "A study of The Walls of Zqtell.",
+    "tags" : [
+      "zq-walls",
+      "zq-oracle"
+    ],
+    "title" : "The Walls of Zqtell",
+    "topics" : [
+      "bronze age",
+      "fortification"
+    ],
+    "uid" : "source:zqalpha1990_tell",
+    "updatedAt" : "TS",
+    "venue" : "Journal of Zq Studies",
+    "year" : 1990
+  }
+}
+== GET /api/neighbors/zqalpha1990_tell (an old citekey)
+200 [
+  {
+    "citekey" : "zqdelta2010_gone",
+    "direction" : "in",
+    "kind" : "cites",
+    "status" : "current",
+    "target" : "source",
+    "title" : "A Lost Report"
+  },
+  {
+    "citekey" : "zqeta2020_note",
+    "direction" : "in",
+    "kind" : "references",
+    "status" : "unassessed",
+    "target" : "source",
+    "title" : "An Imported Note"
+  },
+  {
+    "citekey" : "zqbeta2001_cove",
+    "direction" : "in",
+    "kind" : "refutes",
+    "status" : "contested",
+    "target" : "source",
+    "title" : "The Harbour at Zqcove"
+  },
+  {
+    "citekey" : "zqgamma1975_kings",
+    "direction" : "out",
+    "kind" : "challenges",
+    "status" : "contested",
+    "target" : "source",
+    "title" : "Kings of Zqland, revised"
+  },
+  {
+    "citekey" : "zq_article",
+    "direction" : "out",
+    "kind" : "references",
+    "status" : null,
+    "target" : "article",
+    "title" : "Zq walls"
+  },
+  {
+    "citekey" : "zqbeta2001_cove",
+    "direction" : "out",
+    "kind" : "references",
+    "status" : "contested",
+    "target" : "source",
+    "title" : "The Harbour at Zqcove"
+  }
+]
+== GET /api/graph/zqalpha1990_tell?depth=1 (an old citekey)
+200 {
+  "depth" : 1,
+  "links" : [
+    {
+      "kind" : "references",
+      "source" : "zqalpha1991_walls",
+      "target" : "zqbeta2001_cove"
+    },
+    {
+      "kind" : "challenges",
+      "source" : "zqalpha1991_walls",
+      "target" : "zqgamma1975_kings"
+    },
+    {
+      "kind" : "refutes",
+      "source" : "zqbeta2001_cove",
+      "target" : "zqalpha1991_walls"
+    },
+    {
+      "kind" : "cites",
+      "source" : "zqdelta2010_gone",
+      "target" : "zqalpha1991_walls"
+    },
+    {
+      "kind" : "references",
+      "source" : "zqeta2020_note",
+      "target" : "zqalpha1991_walls"
+    }
+  ],
+  "nodes" : [
+    {
+      "depth" : 0,
+      "id" : "zqalpha1991_walls",
+      "status" : "current",
+      "title" : "The Walls of Zqtell",
+      "year" : 1990
+    },
+    {
+      "depth" : 1,
+      "id" : "zqbeta2001_cove",
+      "status" : "contested",
+      "title" : "The Harbour at Zqcove",
+      "year" : 2001
+    },
+    {
+      "depth" : 1,
+      "id" : "zqdelta2010_gone",
+      "status" : "current",
+      "title" : "A Lost Report",
+      "year" : 2010
+    },
+    {
+      "depth" : 1,
+      "id" : "zqeta2020_note",
+      "status" : "unassessed",
+      "title" : "An Imported Note",
+      "year" : 2020
+    },
+    {
+      "depth" : 1,
+      "id" : "zqgamma1975_kings",
+      "status" : "contested",
+      "title" : "Kings of Zqland, revised",
+      "year" : 1976
+    }
+  ],
+  "root" : "zqalpha1991_walls"
+}
+== GET /api/source-aliases (an old citekey)
+200 [
+  {
+    "alias" : "zqalpha1990_tell",
+    "citekey" : "zqalpha1991_walls"
+  },
+  {
+    "alias" : "zqx2000_x",
+    "citekey" : "zqalpha1991_walls"
+  }
+]
+== GET /api/resolve/zqalpha1990_tell (an old citekey)
+200 {
+  "article" : null,
+  "id" : "zqalpha1990_tell",
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqwriter, Bo"
+    ],
+    "citekey" : "zqalpha1991_walls",
+    "doi" : null,
+    "status" : "current",
+    "title" : "The Walls of Zqtell",
+    "year" : 1990
+  }
+}
+== patch by the old citekey
+200 {
+  "findings" : [
+    {
+      "claim" : "the walls of Zqtell were raised around 1500 BC",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1480,
+      "periodName" : "Zq period",
+      "periodStart" : -1520,
+      "regionName" : "Zqtell",
+      "significance" : null,
+      "tags" : [
+        "zq-claim"
+      ],
+      "uid" : "finding:zqalpha1990_tell#0"
+    },
+    {
+      "claim" : "Zqcove sent tin to Zqtell",
+      "confidence" : "high",
+      "lat" : 39.2,
+      "lon" : 35.5,
+      "periodEnd" : -1300,
+      "periodName" : "Zq period",
+      "periodStart" : -1400,
+      "regionName" : "Zqcove",
+      "significance" : null,
+      "tags" : [
+        "zq-trade"
+      ],
+      "uid" : "finding:zqalpha1990_tell#1"
+    },
+    {
+      "claim" : "the sea peoples reached Zqtell",
+      "confidence" : "contested",
+      "lat" : 40.01,
+      "lon" : 34.61,
+      "periodEnd" : -1180,
+      "periodName" : "Zq period",
+      "periodStart" : -1200,
+      "regionName" : "Zqtell",
+      "significance" : null,
+      "tags" : [
+        "zq-claim"
+      ],
+      "uid" : "finding:zqalpha1990_tell#2"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqwriter, Bo"
+    ],
+    "citekey" : "zqalpha1991_walls",
+    "doi" : null,
+    "notes" : "Notes on The Walls of Zqtell.",
+    "ocrMarkdown" : "# Zqtell\n\n## The walls\n\nThe walls of Zqtell were raised in the Zq period; the Ḫattuša-style gate faced the “sea road”.\nThe sea peoples came to Zqtell — twice — and the walls of Zqtell fell.\n\n## The harbour\n\nThe harbour of Zqcove sent tin and copper to Zqtell.\n\n## References\n\nZqauthor 1950; Zqtell excavations.\n",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : null,
+    "regions" : [
+      "Zqland"
+    ],
+    "status" : "current",
+    "summary" : "A study of The Walls of Zqtell.",
+    "tags" : [
+      "zq-walls",
+      "zq-oracle",
+      "zq-renamed"
+    ],
+    "title" : "The Walls of Zqtell",
+    "topics" : [
+      "bronze age",
+      "fortification"
+    ],
+    "uid" : "source:zqalpha1990_tell",
+    "updatedAt" : "TS",
+    "venue" : "Journal of Zq Studies",
+    "year" : 1990
+  }
+}
+== tool rename_source
+# Renamed `zqbeta2001_cove` → `zqbeta2001_harbour`
+
+**The Harbour at Zqcove** (2001)
+
+- findings renumbered: 2
+- articles rewritten (a version recorded for each): `zq_article`
+- source notes/summaries rewritten: none
+- `[[links]]` rewritten: 1
+- parked edges promoted: 0
+- other columns:
+  - attestations.target_id (edge, event_dating): 1
+  - article_links.target: 1
+
+`zqbeta2001_cove` is now an alias: every read, URL and `[[zqbeta2001_cove]]` still resolves to `zqbeta2001_harbour`.
+
+Calibre: not pushed yet. `histmersion calibre push zqbeta2001_harbour` looks for `<cli.calibre.originals-dir>/zqbeta2001_harbour/paper.*` — rename the `zqbeta2001_cove` directory there first, or pass `--file`.
+
+Mirror: the next full `histmersion export` removes `sources/zqbeta2001_cove.md`.
+== rename back
+200 {
+  "calibreId" : null,
+  "counts" : {
+    "articles" : [
+      "zq_article"
+    ],
+    "columns" : [
+      {
+        "rows" : 1,
+        "table" : "attestations.target_id (finding)"
+      },
+      {
+        "rows" : 1,
+        "table" : "attestations.target_id (edge, event_dating)"
+      },
+      {
+        "rows" : 1,
+        "table" : "asset_links.target_id (finding)"
+      },
+      {
+        "rows" : 1,
+        "table" : "asset_links.target_id (source)"
+      },
+      {
+        "rows" : 1,
+        "table" : "article_links.target"
+      },
+      {
+        "rows" : 1,
+        "table" : "event_datings.citekey"
+      },
+      {
+        "rows" : 1,
+        "table" : "place_footprints.citekey"
+      },
+      {
+        "rows" : 1,
+        "table" : "places.source"
+      }
+    ],
+    "edgesPromoted" : 0,
+    "findings" : 3,
+    "links" : 6,
+    "sources" : [
+      "zqeta2020_note",
+      "zqgamma1975_kings"
+    ]
+  },
+  "newCitekey" : "zqalpha1990_tell",
+  "oldCitekey" : "zqalpha1991_walls",
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqwriter, Bo"
+    ],
+    "citekey" : "zqalpha1990_tell",
+    "doi" : null,
+    "notes" : "Notes on The Walls of Zqtell.",
+    "ocrMarkdown" : null,
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : null,
+    "regions" : [
+      "Zqland"
+    ],
+    "status" : "current",
+    "summary" : "A study of The Walls of Zqtell.",
+    "tags" : [
+      "zq-walls",
+      "zq-oracle",
+      "zq-renamed"
+    ],
+    "title" : "The Walls of Zqtell",
+    "topics" : [
+      "bronze age",
+      "fortification"
+    ],
+    "uid" : "source:zqalpha1990_tell",
+    "updatedAt" : "TS",
+    "venue" : "Journal of Zq Studies",
+    "year" : 1990
+  }
+}
+== source aliases after
+200 [
+  {
+    "alias" : "zqalpha1991_walls",
+    "citekey" : "zqalpha1990_tell"
+  },
+  {
+    "alias" : "zqbeta2001_cove",
+    "citekey" : "zqbeta2001_harbour"
+  },
+  {
+    "alias" : "zqx2000_x",
+    "citekey" : "zqalpha1990_tell"
+  }
+]
+== rows after the rename back
+## sources 7 rows
+{ "calibre_id" : null, "citekey" : "zqalpha1990_tell", "notes" : "Notes on The Walls of Zqtell.", "status" : "current", "summary" : "A study of The Walls of Zqtell.", "tags" : [ "zq-walls", "zq-oracle", "zq-renamed" ], "title" : "The Walls of Zqtell", "year" : 1990 }
+{ "calibre_id" : null, "citekey" : "zqbeta2001_harbour", "notes" : "Notes on The Harbour at Zqcove.", "status" : "contested", "summary" : "A study of The Harbour at Zqcove.", "tags" : [ "zq-trade", "zq-oracle" ], "title" : "The Harbour at Zqcove", "year" : 2001 }
+{ "calibre_id" : null, "citekey" : "zqdelta2010_gone", "notes" : "Notes on A Lost Report.", "status" : "current", "summary" : "A study of A Lost Report.", "tags" : [ "zq-oracle" ], "title" : "A Lost Report", "year" : 2010 }
+{ "calibre_id" : null, "citekey" : "zqeps1999_cited", "notes" : "Notes on A Cited Survey.", "status" : "current", "summary" : "A study of A Cited Survey.", "tags" : [ "zq-oracle" ], "title" : "A Cited Survey", "year" : 1999 }
+{ "calibre_id" : null, "citekey" : "zqeta2020_note", "notes" : "A note about [[zqalpha1990_tell]].", "status" : "unassessed", "summary" : null, "tags" : [ "zq-oracle", "zq-note" ], "title" : "An Imported Note", "year" : 2020 }
+{ "calibre_id" : null, "citekey" : "zqgamma1975_kings", "notes" : "[[zqalpha1990_tell]] and a bare zqbeta2001_cove", "status" : "contested", "summary" : "Kings, again; see [[zqalpha1990_tell]].", "tags" : [ "zq-oracle", "zq-court", "zq-dynasty", "zq-mcp" ], "title" : "Kings of Zqland, revised", "year" : 1976 }
+{ "calibre_id" : null, "citekey" : "zqzeta2015_mcp", "notes" : null, "status" : "unassessed", "summary" : null, "tags" : [ "zq-oracle" ], "title" : "Put over MCP", "year" : null }
+## source_aliases 3 rows
+{ "alias" : "zqalpha1991_walls", "citekey" : "zqalpha1990_tell", "created_at" : "TS" }
+{ "alias" : "zqbeta2001_cove", "citekey" : "zqbeta2001_harbour", "created_at" : "TS" }
+{ "alias" : "zqx2000_x", "citekey" : "zqalpha1990_tell", "created_at" : "TS" }
+## alias_tombstones 1 rows
+{ "alias" : "zqalpha1990_tell" }
+## findings 10 rows
+{ "citekey" : "zqalpha1990_tell", "claim" : "Zqcove sent tin to Zqtell", "id" : "zqalpha1990_tell#1", "tags" : [ "zq-trade" ] }
+{ "citekey" : "zqalpha1990_tell", "claim" : "the sea peoples reached Zqtell", "id" : "zqalpha1990_tell#2", "tags" : [ "zq-claim" ] }
+{ "citekey" : "zqalpha1990_tell", "claim" : "the walls of Zqtell were raised around 1500 BC", "id" : "zqalpha1990_tell#0", "tags" : [ "zq-claim" ] }
+{ "citekey" : "zqbeta2001_harbour", "claim" : "Zqcove traded tin with the islands", "id" : "zqbeta2001_harbour#0", "tags" : [ "zq-trade" ] }
+{ "citekey" : "zqbeta2001_harbour", "claim" : "ships of Zqcove reached the Zqisles", "id" : "zqbeta2001_harbour#1", "tags" : [ "zq-claim" ] }
+{ "citekey" : "zqdelta2010_gone", "claim" : "nothing survives", "id" : "zqdelta2010_gone#0", "tags" : [ "zq-claim" ] }
+{ "citekey" : "zqeta2020_note", "claim" : "a claim from a note", "id" : "zqeta2020_note#0", "tags" : [ ] }
+{ "citekey" : "zqgamma1975_kings", "claim" : "and another", "id" : "zqgamma1975_kings#1", "tags" : [ ] }
+{ "citekey" : "zqgamma1975_kings", "claim" : "one claim only", "id" : "zqgamma1975_kings#0", "tags" : [ ] }
+{ "citekey" : "zqzeta2015_mcp", "claim" : "an MCP claim", "id" : "zqzeta2015_mcp#0", "tags" : [ ] }
+## finding_places 16 rows
+{ "finding_id" : "zqalpha1990_tell#0", "place_id" : "zq_gate" }
+{ "finding_id" : "zqalpha1990_tell#0", "place_id" : "zq_land" }
+{ "finding_id" : "zqalpha1990_tell#0", "place_id" : "zq_tell" }
+{ "finding_id" : "zqalpha1990_tell#1", "place_id" : "zq_cove" }
+{ "finding_id" : "zqalpha1990_tell#1", "place_id" : "zq_land" }
+{ "finding_id" : "zqalpha1990_tell#2", "place_id" : "zq_gate" }
+{ "finding_id" : "zqalpha1990_tell#2", "place_id" : "zq_land" }
+{ "finding_id" : "zqalpha1990_tell#2", "place_id" : "zq_tell" }
+{ "finding_id" : "zqbeta2001_harbour#0", "place_id" : "zq_cove" }
+{ "finding_id" : "zqbeta2001_harbour#0", "place_id" : "zq_land" }
+{ "finding_id" : "zqbeta2001_harbour#1", "place_id" : "zq_isles" }
+{ "finding_id" : "zqdelta2010_gone#0", "place_id" : "zq_land" }
+{ "finding_id" : "zqeta2020_note#0", "place_id" : "zq_land" }
+{ "finding_id" : "zqgamma1975_kings#0", "place_id" : "zq_land" }
+{ "finding_id" : "zqgamma1975_kings#1", "place_id" : "zq_land" }
+{ "finding_id" : "zqzeta2015_mcp#0", "place_id" : "zq_land" }
+## edges 6 rows
+{ "dst" : "zqalpha1990_tell", "kind" : "cites", "src" : "zqdelta2010_gone" }
+{ "dst" : "zqalpha1990_tell", "kind" : "references", "src" : "zqeta2020_note" }
+{ "dst" : "zqalpha1990_tell", "kind" : "refutes", "src" : "zqbeta2001_harbour" }
+{ "dst" : "zqbeta2001_harbour", "kind" : "references", "src" : "zqalpha1990_tell" }
+{ "dst" : "zqbeta2001_harbour", "kind" : "updates", "src" : "zqgamma1975_kings" }
+{ "dst" : "zqgamma1975_kings", "kind" : "challenges", "src" : "zqalpha1990_tell" }
+## unresolved_edges 2 rows
+{ "dst" : "zq_article", "kind" : "references", "src" : "zqalpha1990_tell" }
+{ "dst" : "zqnot2020_yet", "kind" : "references", "src" : "zqgamma1975_kings" }
+## source_chunks 8 rows
+{ "citekey" : "zqalpha1990_tell", "heading" : "Zqtell > References", "ord" : 2 }
+{ "citekey" : "zqalpha1990_tell", "heading" : "Zqtell > The harbour", "ord" : 1 }
+{ "citekey" : "zqalpha1990_tell", "heading" : "Zqtell > The walls", "ord" : 0 }
+{ "citekey" : "zqbeta2001_harbour", "heading" : "Zqcove", "ord" : 0 }
+{ "citekey" : "zqdelta2010_gone", "heading" : "A lost report", "ord" : 0 }
+{ "citekey" : "zqeps1999_cited", "heading" : "Survey", "ord" : 0 }
+{ "citekey" : "zqeta2020_note", "heading" : "Body", "ord" : 0 }
+{ "citekey" : "zqgamma1975_kings", "heading" : "Kings of Zqland > Court", "ord" : 0 }
+## articles 1 rows
+{ "body" : "The walls fell [[zqalpha1990_tell]]; see also [[zqalpha1990_tell|the walls]] and [[zqeps1999_cited#Survey]].\n\nThe harbour [[zqbeta2001_harbour]].", "coverage_reasons" : { "zqdelta2010_gone" : "lost" }, "slug" : "zq_article", "summary" : "On [[zqalpha1990_tell]]." }
+## article_links 3 rows
+{ "src_slug" : "zq_article", "target" : "zqalpha1990_tell", "target_kind" : "source" }
+{ "src_slug" : "zq_article", "target" : "zqbeta2001_harbour", "target_kind" : "source" }
+{ "src_slug" : "zq_article", "target" : "zqeps1999_cited", "target_kind" : "source" }
+## article_versions 5 rows
+{ "body" : "The walls fell [[zqalpha1990_tell]]; see also [[zqalpha1990|the walls]] and [[zqeps1999_cited#Survey]].\n\nThe harbour [[zqbeta2001_cove]].", "slug" : "zq_article" }
+{ "body" : "The walls fell [[zqalpha1991_walls]]; see also [[zqalpha1991_walls|the walls]] and [[zqeps1999_cited#Survey]].\n\nThe harbour [[zqbeta2001_cove]].", "slug" : "zq_article" }
+{ "body" : "The walls fell [[zqalpha1991_walls]]; see also [[zqalpha1991_walls|the walls]] and [[zqeps1999_cited#Survey]].\n\nThe harbour [[zqbeta2001_cove]].", "slug" : "zq_article" }
+{ "body" : "The walls fell [[zqalpha1991_walls]]; see also [[zqalpha1991_walls|the walls]] and [[zqeps1999_cited#Survey]].\n\nThe harbour [[zqbeta2001_harbour]].", "slug" : "zq_article" }
+{ "body" : "The walls fell [[zqx2000_x]]; see also [[zqx2000_x|the walls]] and [[zqeps1999_cited#Survey]].\n\nThe harbour [[zqbeta2001_cove]].", "slug" : "zq_article" }
+## asset_links 4 rows
+{ "asset_name" : "fig-1.png", "citekey" : "zqbeta2001_harbour", "relation" : "depicts", "target_id" : "zqalpha1990_tell", "target_type" : "source" }
+{ "asset_name" : "fig-1.png", "citekey" : "zqbeta2001_harbour", "relation" : "depicts", "target_id" : "zqalpha1990_tell#1", "target_type" : "finding" }
+{ "asset_name" : "fig-1.png", "citekey" : "zqbeta2001_harbour", "relation" : "depicts", "target_id" : "zqdelta2010_gone", "target_type" : "source" }
+{ "asset_name" : "fig-1.png", "citekey" : "zqbeta2001_harbour", "relation" : "depicts", "target_id" : "zqdelta2010_gone#0", "target_type" : "finding" }
+## assets 1 rows
+{ "citekey" : "zqbeta2001_harbour", "name" : "fig-1.png" }
+## attestations 3 rows
+{ "citekey" : "zqbeta2001_harbour", "quote" : "Zqcove", "target_id" : "zqalpha1990_tell#0", "target_type" : "finding" }
+{ "citekey" : "zqbeta2001_harbour", "quote" : "Zqcove", "target_id" : "zqalpha1990_tell|zqbeta2001_harbour|references", "target_type" : "edge" }
+{ "citekey" : "zqbeta2001_harbour", "quote" : "Zqcove", "target_id" : "zqdelta2010_gone#0", "target_type" : "finding" }
+## events 1 rows
+{ "citekey" : "zqeps1999_cited", "id" : "zq_siege" }
+## event_datings 2 rows
+{ "citekey" : "zqalpha1990_tell", "event_id" : "zq_siege" }
+{ "citekey" : "zqdelta2010_gone", "event_id" : "zq_siege" }
+## places 5 rows
+{ "id" : "zq_cove", "source" : null }
+{ "id" : "zq_gate", "source" : "zqalpha1990_tell" }
+{ "id" : "zq_isles", "source" : null }
+{ "id" : "zq_land", "source" : null }
+{ "id" : "zq_tell", "source" : null }
+## goal_links 2 rows
+{ "goal_slug" : "zq-goal", "kind" : "source", "note" : "the lost report", "ref" : "zqdelta2010_gone" }
+{ "goal_slug" : "zq-goal", "kind" : "source", "note" : "the walls", "ref" : "zqalpha1990_tell" }
+## queue_items 2 rows
+{ "list" : "tasks", "status" : "open", "text" : "check zqalpha1990_tell", "topic" : null }
+{ "list" : "tasks", "status" : "open", "text" : "re-read [[zqdelta2010_gone]]", "topic" : null }
+## jobs 1 rows
+{ "citekey" : null, "kind" : "places-hierarchy", "status" : "done" }
+## tombstones 1 rows
+{ "kind" : "finding" }
+== delete zqdelta2010_gone: dry run
+200 {
+  "aliases" : [
+  ],
+  "applied" : false,
+  "blockers" : [
+  ],
+  "calibreId" : null,
+  "citekey" : "zqdelta2010_gone",
+  "counts" : [
+    {
+      "part" : "findings",
+      "rows" : 1
+    },
+    {
+      "part" : "finding-places",
+      "rows" : 1
+    },
+    {
+      "part" : "edges-out",
+      "rows" : 1
+    },
+    {
+      "part" : "chunks",
+      "rows" : 1
+    },
+    {
+      "part" : "asset-links-to",
+      "rows" : 2
+    },
+    {
+      "part" : "attestations-of",
+      "rows" : 1
+    },
+    {
+      "part" : "event-datings",
+      "rows" : 1
+    },
+    {
+      "part" : "goal-links",
+      "rows" : 1
+    },
+    {
+      "part" : "coverage-reasons",
+      "rows" : 1
+    }
+  ],
+  "coverage" : [
+    "zq_article"
+  ],
+  "edgesIn" : [
+  ],
+  "files" : [
+  ],
+  "filesFailed" : [
+  ],
+  "logEntry" : null,
+  "mentions" : [
+    1
+  ],
+  "title" : "A Lost Report"
+}
+== delete zqeps1999_cited: dry run, refused
+200 {
+  "aliases" : [
+  ],
+  "applied" : false,
+  "blockers" : [
+    {
+      "id" : "zq_article",
+      "kind" : "article",
+      "title" : "Zq walls"
+    },
+    {
+      "id" : "zq_siege",
+      "kind" : "event",
+      "title" : "The siege of Zqtell"
+    }
+  ],
+  "calibreId" : null,
+  "citekey" : "zqeps1999_cited",
+  "counts" : [
+    {
+      "part" : "chunks",
+      "rows" : 1
+    }
+  ],
+  "coverage" : [
+  ],
+  "edgesIn" : [
+  ],
+  "files" : [
+  ],
+  "filesFailed" : [
+  ],
+  "logEntry" : null,
+  "mentions" : [
+  ],
+  "title" : "A Cited Survey"
+}
+== delete zqeps1999_cited: refused
+400 {
+  "code" : "invalid",
+  "message" : "'zqeps1999_cited' cannot be deleted — cited by article zq_article (Zq walls); primary source of event zq_siege (The siege of Zqtell). Fix those first (remove the citation from each article, re-source the events, let the job finish); there is no override"
+}
+== delete zqnone2000_x: unknown
+404 {
+  "code" : "not_found",
+  "message" : "No source 'zqnone2000_x'"
+}
+== delete zqalpha1991_walls: an old citekey
+200 {
+  "aliases" : [
+    "zqalpha1991_walls",
+    "zqx2000_x"
+  ],
+  "applied" : false,
+  "blockers" : [
+    {
+      "id" : "zq_article",
+      "kind" : "article",
+      "title" : "Zq walls"
+    }
+  ],
+  "calibreId" : null,
+  "citekey" : "zqalpha1990_tell",
+  "counts" : [
+    {
+      "part" : "findings",
+      "rows" : 3
+    },
+    {
+      "part" : "finding-places",
+      "rows" : 8
+    },
+    {
+      "part" : "edges-out",
+      "rows" : 2
+    },
+    {
+      "part" : "parked-edges-out",
+      "rows" : 1
+    },
+    {
+      "part" : "edges-in",
+      "rows" : 3
+    },
+    {
+      "part" : "chunks",
+      "rows" : 3
+    },
+    {
+      "part" : "asset-links-to",
+      "rows" : 2
+    },
+    {
+      "part" : "attestations-of",
+      "rows" : 2
+    },
+    {
+      "part" : "aliases",
+      "rows" : 2
+    },
+    {
+      "part" : "event-datings",
+      "rows" : 1
+    },
+    {
+      "part" : "goal-links",
+      "rows" : 1
+    }
+  ],
+  "coverage" : [
+  ],
+  "edgesIn" : [
+    {
+      "dst" : "zqalpha1990_tell",
+      "kind" : "refutes",
+      "src" : "zqbeta2001_harbour"
+    },
+    {
+      "dst" : "zqalpha1990_tell",
+      "kind" : "cites",
+      "src" : "zqdelta2010_gone"
+    },
+    {
+      "dst" : "zqalpha1990_tell",
+      "kind" : "references",
+      "src" : "zqeta2020_note"
+    }
+  ],
+  "files" : [
+  ],
+  "filesFailed" : [
+  ],
+  "logEntry" : null,
+  "mentions" : [
+  ],
+  "title" : "The Walls of Zqtell"
+}
+== delete zqdelta2010_gone: delete
+200 {
+  "aliases" : [
+  ],
+  "applied" : true,
+  "blockers" : [
+  ],
+  "calibreId" : null,
+  "citekey" : "zqdelta2010_gone",
+  "counts" : [
+    {
+      "part" : "findings",
+      "rows" : 1
+    },
+    {
+      "part" : "finding-places",
+      "rows" : 1
+    },
+    {
+      "part" : "edges-out",
+      "rows" : 1
+    },
+    {
+      "part" : "chunks",
+      "rows" : 1
+    },
+    {
+      "part" : "asset-links-to",
+      "rows" : 2
+    },
+    {
+      "part" : "attestations-of",
+      "rows" : 1
+    },
+    {
+      "part" : "event-datings",
+      "rows" : 1
+    },
+    {
+      "part" : "goal-links",
+      "rows" : 1
+    },
+    {
+      "part" : "coverage-reasons",
+      "rows" : 1
+    }
+  ],
+  "coverage" : [
+    "zq_article"
+  ],
+  "edgesIn" : [
+  ],
+  "files" : [
+  ],
+  "filesFailed" : [
+  ],
+  "logEntry" : 3,
+  "mentions" : [
+    1
+  ],
+  "title" : "A Lost Report"
+}
+== GET the deleted
+404 {
+  "code" : null,
+  "message" : "No source 'zqdelta2010_gone'"
+}
+== rows after the delete
+## sources 6 rows
+{ "calibre_id" : null, "citekey" : "zqalpha1990_tell", "notes" : "Notes on The Walls of Zqtell.", "status" : "current", "summary" : "A study of The Walls of Zqtell.", "tags" : [ "zq-walls", "zq-oracle", "zq-renamed" ], "title" : "The Walls of Zqtell", "year" : 1990 }
+{ "calibre_id" : null, "citekey" : "zqbeta2001_harbour", "notes" : "Notes on The Harbour at Zqcove.", "status" : "contested", "summary" : "A study of The Harbour at Zqcove.", "tags" : [ "zq-trade", "zq-oracle" ], "title" : "The Harbour at Zqcove", "year" : 2001 }
+{ "calibre_id" : null, "citekey" : "zqeps1999_cited", "notes" : "Notes on A Cited Survey.", "status" : "current", "summary" : "A study of A Cited Survey.", "tags" : [ "zq-oracle" ], "title" : "A Cited Survey", "year" : 1999 }
+{ "calibre_id" : null, "citekey" : "zqeta2020_note", "notes" : "A note about [[zqalpha1990_tell]].", "status" : "unassessed", "summary" : null, "tags" : [ "zq-oracle", "zq-note" ], "title" : "An Imported Note", "year" : 2020 }
+{ "calibre_id" : null, "citekey" : "zqgamma1975_kings", "notes" : "[[zqalpha1990_tell]] and a bare zqbeta2001_cove", "status" : "contested", "summary" : "Kings, again; see [[zqalpha1990_tell]].", "tags" : [ "zq-oracle", "zq-court", "zq-dynasty", "zq-mcp" ], "title" : "Kings of Zqland, revised", "year" : 1976 }
+{ "calibre_id" : null, "citekey" : "zqzeta2015_mcp", "notes" : null, "status" : "unassessed", "summary" : null, "tags" : [ "zq-oracle" ], "title" : "Put over MCP", "year" : null }
+## source_aliases 3 rows
+{ "alias" : "zqalpha1991_walls", "citekey" : "zqalpha1990_tell", "created_at" : "TS" }
+{ "alias" : "zqbeta2001_cove", "citekey" : "zqbeta2001_harbour", "created_at" : "TS" }
+{ "alias" : "zqx2000_x", "citekey" : "zqalpha1990_tell", "created_at" : "TS" }
+## alias_tombstones 1 rows
+{ "alias" : "zqalpha1990_tell" }
+## findings 9 rows
+{ "citekey" : "zqalpha1990_tell", "claim" : "Zqcove sent tin to Zqtell", "id" : "zqalpha1990_tell#1", "tags" : [ "zq-trade" ] }
+{ "citekey" : "zqalpha1990_tell", "claim" : "the sea peoples reached Zqtell", "id" : "zqalpha1990_tell#2", "tags" : [ "zq-claim" ] }
+{ "citekey" : "zqalpha1990_tell", "claim" : "the walls of Zqtell were raised around 1500 BC", "id" : "zqalpha1990_tell#0", "tags" : [ "zq-claim" ] }
+{ "citekey" : "zqbeta2001_harbour", "claim" : "Zqcove traded tin with the islands", "id" : "zqbeta2001_harbour#0", "tags" : [ "zq-trade" ] }
+{ "citekey" : "zqbeta2001_harbour", "claim" : "ships of Zqcove reached the Zqisles", "id" : "zqbeta2001_harbour#1", "tags" : [ "zq-claim" ] }
+{ "citekey" : "zqeta2020_note", "claim" : "a claim from a note", "id" : "zqeta2020_note#0", "tags" : [ ] }
+{ "citekey" : "zqgamma1975_kings", "claim" : "and another", "id" : "zqgamma1975_kings#1", "tags" : [ ] }
+{ "citekey" : "zqgamma1975_kings", "claim" : "one claim only", "id" : "zqgamma1975_kings#0", "tags" : [ ] }
+{ "citekey" : "zqzeta2015_mcp", "claim" : "an MCP claim", "id" : "zqzeta2015_mcp#0", "tags" : [ ] }
+## finding_places 15 rows
+{ "finding_id" : "zqalpha1990_tell#0", "place_id" : "zq_gate" }
+{ "finding_id" : "zqalpha1990_tell#0", "place_id" : "zq_land" }
+{ "finding_id" : "zqalpha1990_tell#0", "place_id" : "zq_tell" }
+{ "finding_id" : "zqalpha1990_tell#1", "place_id" : "zq_cove" }
+{ "finding_id" : "zqalpha1990_tell#1", "place_id" : "zq_land" }
+{ "finding_id" : "zqalpha1990_tell#2", "place_id" : "zq_gate" }
+{ "finding_id" : "zqalpha1990_tell#2", "place_id" : "zq_land" }
+{ "finding_id" : "zqalpha1990_tell#2", "place_id" : "zq_tell" }
+{ "finding_id" : "zqbeta2001_harbour#0", "place_id" : "zq_cove" }
+{ "finding_id" : "zqbeta2001_harbour#0", "place_id" : "zq_land" }
+{ "finding_id" : "zqbeta2001_harbour#1", "place_id" : "zq_isles" }
+{ "finding_id" : "zqeta2020_note#0", "place_id" : "zq_land" }
+{ "finding_id" : "zqgamma1975_kings#0", "place_id" : "zq_land" }
+{ "finding_id" : "zqgamma1975_kings#1", "place_id" : "zq_land" }
+{ "finding_id" : "zqzeta2015_mcp#0", "place_id" : "zq_land" }
+## edges 5 rows
+{ "dst" : "zqalpha1990_tell", "kind" : "references", "src" : "zqeta2020_note" }
+{ "dst" : "zqalpha1990_tell", "kind" : "refutes", "src" : "zqbeta2001_harbour" }
+{ "dst" : "zqbeta2001_harbour", "kind" : "references", "src" : "zqalpha1990_tell" }
+{ "dst" : "zqbeta2001_harbour", "kind" : "updates", "src" : "zqgamma1975_kings" }
+{ "dst" : "zqgamma1975_kings", "kind" : "challenges", "src" : "zqalpha1990_tell" }
+## unresolved_edges 2 rows
+{ "dst" : "zq_article", "kind" : "references", "src" : "zqalpha1990_tell" }
+{ "dst" : "zqnot2020_yet", "kind" : "references", "src" : "zqgamma1975_kings" }
+## source_chunks 7 rows
+{ "citekey" : "zqalpha1990_tell", "heading" : "Zqtell > References", "ord" : 2 }
+{ "citekey" : "zqalpha1990_tell", "heading" : "Zqtell > The harbour", "ord" : 1 }
+{ "citekey" : "zqalpha1990_tell", "heading" : "Zqtell > The walls", "ord" : 0 }
+{ "citekey" : "zqbeta2001_harbour", "heading" : "Zqcove", "ord" : 0 }
+{ "citekey" : "zqeps1999_cited", "heading" : "Survey", "ord" : 0 }
+{ "citekey" : "zqeta2020_note", "heading" : "Body", "ord" : 0 }
+{ "citekey" : "zqgamma1975_kings", "heading" : "Kings of Zqland > Court", "ord" : 0 }
+## articles 1 rows
+{ "body" : "The walls fell [[zqalpha1990_tell]]; see also [[zqalpha1990_tell|the walls]] and [[zqeps1999_cited#Survey]].\n\nThe harbour [[zqbeta2001_harbour]].", "coverage_reasons" : {  }, "slug" : "zq_article", "summary" : "On [[zqalpha1990_tell]]." }
+## article_links 3 rows
+{ "src_slug" : "zq_article", "target" : "zqalpha1990_tell", "target_kind" : "source" }
+{ "src_slug" : "zq_article", "target" : "zqbeta2001_harbour", "target_kind" : "source" }
+{ "src_slug" : "zq_article", "target" : "zqeps1999_cited", "target_kind" : "source" }
+## article_versions 5 rows
+{ "body" : "The walls fell [[zqalpha1990_tell]]; see also [[zqalpha1990|the walls]] and [[zqeps1999_cited#Survey]].\n\nThe harbour [[zqbeta2001_cove]].", "slug" : "zq_article" }
+{ "body" : "The walls fell [[zqalpha1991_walls]]; see also [[zqalpha1991_walls|the walls]] and [[zqeps1999_cited#Survey]].\n\nThe harbour [[zqbeta2001_cove]].", "slug" : "zq_article" }
+{ "body" : "The walls fell [[zqalpha1991_walls]]; see also [[zqalpha1991_walls|the walls]] and [[zqeps1999_cited#Survey]].\n\nThe harbour [[zqbeta2001_cove]].", "slug" : "zq_article" }
+{ "body" : "The walls fell [[zqalpha1991_walls]]; see also [[zqalpha1991_walls|the walls]] and [[zqeps1999_cited#Survey]].\n\nThe harbour [[zqbeta2001_harbour]].", "slug" : "zq_article" }
+{ "body" : "The walls fell [[zqx2000_x]]; see also [[zqx2000_x|the walls]] and [[zqeps1999_cited#Survey]].\n\nThe harbour [[zqbeta2001_cove]].", "slug" : "zq_article" }
+## asset_links 2 rows
+{ "asset_name" : "fig-1.png", "citekey" : "zqbeta2001_harbour", "relation" : "depicts", "target_id" : "zqalpha1990_tell", "target_type" : "source" }
+{ "asset_name" : "fig-1.png", "citekey" : "zqbeta2001_harbour", "relation" : "depicts", "target_id" : "zqalpha1990_tell#1", "target_type" : "finding" }
+## assets 1 rows
+{ "citekey" : "zqbeta2001_harbour", "name" : "fig-1.png" }
+## attestations 2 rows
+{ "citekey" : "zqbeta2001_harbour", "quote" : "Zqcove", "target_id" : "zqalpha1990_tell#0", "target_type" : "finding" }
+{ "citekey" : "zqbeta2001_harbour", "quote" : "Zqcove", "target_id" : "zqalpha1990_tell|zqbeta2001_harbour|references", "target_type" : "edge" }
+## events 1 rows
+{ "citekey" : "zqeps1999_cited", "id" : "zq_siege" }
+## event_datings 1 rows
+{ "citekey" : "zqalpha1990_tell", "event_id" : "zq_siege" }
+## places 5 rows
+{ "id" : "zq_cove", "source" : null }
+{ "id" : "zq_gate", "source" : "zqalpha1990_tell" }
+{ "id" : "zq_isles", "source" : null }
+{ "id" : "zq_land", "source" : null }
+{ "id" : "zq_tell", "source" : null }
+## goal_links 1 rows
+{ "goal_slug" : "zq-goal", "kind" : "source", "note" : "the walls", "ref" : "zqalpha1990_tell" }
+## queue_items 3 rows
+{ "list" : "log", "status" : "open", "text" : "deleted zqdelta2010_gone (A Lost Report): 1 findings, 1 finding places, 1 edges out, 1 chunks, 2 asset links to, 1 attestations of, 1 event datings, 1 goal links, 1 coverage reasons", "topic" : "DAY" }
+{ "list" : "tasks", "status" : "open", "text" : "check zqalpha1990_tell", "topic" : null }
+{ "list" : "tasks", "status" : "open", "text" : "re-read [[zqdelta2010_gone]]", "topic" : null }
+## jobs 1 rows
+{ "citekey" : null, "kind" : "places-hierarchy", "status" : "done" }
+## tombstones 6 rows
+{ "kind" : "asset-link" }
+{ "kind" : "asset-link" }
+{ "kind" : "attestation" }
+{ "kind" : "finding" }
+{ "kind" : "finding" }
+{ "kind" : "source" }

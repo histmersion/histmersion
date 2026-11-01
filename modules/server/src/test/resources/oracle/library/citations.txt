@@ -1,0 +1,512 @@
+== GET /api/neighbors/zqalpha1990_tell
+200 [
+  {
+    "citekey" : "zqdelta2010_gone",
+    "direction" : "in",
+    "kind" : "cites",
+    "status" : "current",
+    "target" : "source",
+    "title" : "A Lost Report"
+  },
+  {
+    "citekey" : "zqbeta2001_cove",
+    "direction" : "in",
+    "kind" : "refutes",
+    "status" : "contested",
+    "target" : "source",
+    "title" : "The Harbour at Zqcove"
+  },
+  {
+    "citekey" : "zqgamma1975_kings",
+    "direction" : "in",
+    "kind" : "superseded_by",
+    "status" : "superseded",
+    "target" : "source",
+    "title" : "Kings of Zqland"
+  },
+  {
+    "citekey" : "zqgamma1975",
+    "direction" : "out",
+    "kind" : "challenges",
+    "status" : null,
+    "target" : "unresolved",
+    "title" : null
+  },
+  {
+    "citekey" : "zq_article",
+    "direction" : "out",
+    "kind" : "references",
+    "status" : null,
+    "target" : "article",
+    "title" : "Zq walls"
+  },
+  {
+    "citekey" : "zqbeta2001_cove",
+    "direction" : "out",
+    "kind" : "references",
+    "status" : "contested",
+    "target" : "source",
+    "title" : "The Harbour at Zqcove"
+  }
+]
+== GET /api/neighbors/zqalpha1990_tell?kind=refutes
+200 [
+  {
+    "citekey" : "zqbeta2001_cove",
+    "direction" : "in",
+    "kind" : "refutes",
+    "status" : "contested",
+    "target" : "source",
+    "title" : "The Harbour at Zqcove"
+  }
+]
+== GET /api/neighbors/zqalpha1990_tell?kind=references&kind=challenges
+200 [
+  {
+    "citekey" : "zqgamma1975",
+    "direction" : "out",
+    "kind" : "challenges",
+    "status" : null,
+    "target" : "unresolved",
+    "title" : null
+  },
+  {
+    "citekey" : "zq_article",
+    "direction" : "out",
+    "kind" : "references",
+    "status" : null,
+    "target" : "article",
+    "title" : "Zq walls"
+  },
+  {
+    "citekey" : "zqbeta2001_cove",
+    "direction" : "out",
+    "kind" : "references",
+    "status" : "contested",
+    "target" : "source",
+    "title" : "The Harbour at Zqcove"
+  }
+]
+== GET /api/neighbors/zqgamma1975_kings
+200 [
+  {
+    "citekey" : "zqalpha1990_tell",
+    "direction" : "out",
+    "kind" : "superseded_by",
+    "status" : "current",
+    "target" : "source",
+    "title" : "The Walls of Zqtell"
+  }
+]
+== GET /api/neighbors/zqnone2000_x
+200 [
+]
+== GET /api/graph/zqalpha1990_tell
+200 {
+  "depth" : 2,
+  "links" : [
+    {
+      "kind" : "references",
+      "source" : "zqalpha1990_tell",
+      "target" : "zqbeta2001_cove"
+    },
+    {
+      "kind" : "refutes",
+      "source" : "zqbeta2001_cove",
+      "target" : "zqalpha1990_tell"
+    },
+    {
+      "kind" : "cites",
+      "source" : "zqdelta2010_gone",
+      "target" : "zqalpha1990_tell"
+    },
+    {
+      "kind" : "superseded_by",
+      "source" : "zqgamma1975_kings",
+      "target" : "zqalpha1990_tell"
+    }
+  ],
+  "nodes" : [
+    {
+      "depth" : 0,
+      "id" : "zqalpha1990_tell",
+      "status" : "current",
+      "title" : "The Walls of Zqtell",
+      "year" : 1990
+    },
+    {
+      "depth" : 1,
+      "id" : "zqbeta2001_cove",
+      "status" : "contested",
+      "title" : "The Harbour at Zqcove",
+      "year" : 2001
+    },
+    {
+      "depth" : 1,
+      "id" : "zqdelta2010_gone",
+      "status" : "current",
+      "title" : "A Lost Report",
+      "year" : 2010
+    },
+    {
+      "depth" : 1,
+      "id" : "zqgamma1975_kings",
+      "status" : "superseded",
+      "title" : "Kings of Zqland",
+      "year" : 1975
+    }
+  ],
+  "root" : "zqalpha1990_tell"
+}
+== GET /api/graph/zqalpha1990_tell?depth=0
+200 {
+  "depth" : 0,
+  "links" : [
+  ],
+  "nodes" : [
+    {
+      "depth" : 0,
+      "id" : "zqalpha1990_tell",
+      "status" : "current",
+      "title" : "The Walls of Zqtell",
+      "year" : 1990
+    }
+  ],
+  "root" : "zqalpha1990_tell"
+}
+== GET /api/graph/zqalpha1990_tell?depth=1
+200 {
+  "depth" : 1,
+  "links" : [
+    {
+      "kind" : "references",
+      "source" : "zqalpha1990_tell",
+      "target" : "zqbeta2001_cove"
+    },
+    {
+      "kind" : "refutes",
+      "source" : "zqbeta2001_cove",
+      "target" : "zqalpha1990_tell"
+    },
+    {
+      "kind" : "cites",
+      "source" : "zqdelta2010_gone",
+      "target" : "zqalpha1990_tell"
+    },
+    {
+      "kind" : "superseded_by",
+      "source" : "zqgamma1975_kings",
+      "target" : "zqalpha1990_tell"
+    }
+  ],
+  "nodes" : [
+    {
+      "depth" : 0,
+      "id" : "zqalpha1990_tell",
+      "status" : "current",
+      "title" : "The Walls of Zqtell",
+      "year" : 1990
+    },
+    {
+      "depth" : 1,
+      "id" : "zqbeta2001_cove",
+      "status" : "contested",
+      "title" : "The Harbour at Zqcove",
+      "year" : 2001
+    },
+    {
+      "depth" : 1,
+      "id" : "zqdelta2010_gone",
+      "status" : "current",
+      "title" : "A Lost Report",
+      "year" : 2010
+    },
+    {
+      "depth" : 1,
+      "id" : "zqgamma1975_kings",
+      "status" : "superseded",
+      "title" : "Kings of Zqland",
+      "year" : 1975
+    }
+  ],
+  "root" : "zqalpha1990_tell"
+}
+== GET /api/graph/zqgamma1975_kings?depth=9
+200 {
+  "depth" : 4,
+  "links" : [
+    {
+      "kind" : "references",
+      "source" : "zqalpha1990_tell",
+      "target" : "zqbeta2001_cove"
+    },
+    {
+      "kind" : "refutes",
+      "source" : "zqbeta2001_cove",
+      "target" : "zqalpha1990_tell"
+    },
+    {
+      "kind" : "cites",
+      "source" : "zqdelta2010_gone",
+      "target" : "zqalpha1990_tell"
+    },
+    {
+      "kind" : "superseded_by",
+      "source" : "zqgamma1975_kings",
+      "target" : "zqalpha1990_tell"
+    }
+  ],
+  "nodes" : [
+    {
+      "depth" : 0,
+      "id" : "zqgamma1975_kings",
+      "status" : "superseded",
+      "title" : "Kings of Zqland",
+      "year" : 1975
+    },
+    {
+      "depth" : 1,
+      "id" : "zqalpha1990_tell",
+      "status" : "current",
+      "title" : "The Walls of Zqtell",
+      "year" : 1990
+    },
+    {
+      "depth" : 2,
+      "id" : "zqbeta2001_cove",
+      "status" : "contested",
+      "title" : "The Harbour at Zqcove",
+      "year" : 2001
+    },
+    {
+      "depth" : 2,
+      "id" : "zqdelta2010_gone",
+      "status" : "current",
+      "title" : "A Lost Report",
+      "year" : 2010
+    }
+  ],
+  "root" : "zqgamma1975_kings"
+}
+== GET /api/contradictions
+200 {
+  "rows" : [
+    {
+      "citekey" : "zqalpha1990_tell",
+      "direction" : "in",
+      "kind" : "refutes",
+      "otherCitekey" : "zqbeta2001_cove",
+      "otherStatus" : "contested",
+      "otherTitle" : "The Harbour at Zqcove",
+      "otherYear" : 2001,
+      "status" : "current",
+      "title" : "The Walls of Zqtell",
+      "year" : 1990
+    },
+    {
+      "citekey" : "zqalpha1990_tell",
+      "direction" : "in",
+      "kind" : "superseded_by",
+      "otherCitekey" : "zqgamma1975_kings",
+      "otherStatus" : "superseded",
+      "otherTitle" : "Kings of Zqland",
+      "otherYear" : 1975,
+      "status" : "current",
+      "title" : "The Walls of Zqtell",
+      "year" : 1990
+    },
+    {
+      "citekey" : "zqbeta2001_cove",
+      "direction" : "out",
+      "kind" : "refutes",
+      "otherCitekey" : "zqalpha1990_tell",
+      "otherStatus" : "current",
+      "otherTitle" : "The Walls of Zqtell",
+      "otherYear" : 1990,
+      "status" : "contested",
+      "title" : "The Harbour at Zqcove",
+      "year" : 2001
+    },
+    {
+      "citekey" : "zqgamma1975_kings",
+      "direction" : "out",
+      "kind" : "superseded_by",
+      "otherCitekey" : "zqalpha1990_tell",
+      "otherStatus" : "current",
+      "otherTitle" : "The Walls of Zqtell",
+      "otherYear" : 1990,
+      "status" : "superseded",
+      "title" : "Kings of Zqland",
+      "year" : 1975
+    }
+  ],
+  "total" : 4
+}
+== GET /api/contradictions?citekey=zqalpha1990_tell
+200 {
+  "rows" : [
+    {
+      "citekey" : "zqalpha1990_tell",
+      "direction" : "in",
+      "kind" : "refutes",
+      "otherCitekey" : "zqbeta2001_cove",
+      "otherStatus" : "contested",
+      "otherTitle" : "The Harbour at Zqcove",
+      "otherYear" : 2001,
+      "status" : "current",
+      "title" : "The Walls of Zqtell",
+      "year" : 1990
+    },
+    {
+      "citekey" : "zqalpha1990_tell",
+      "direction" : "in",
+      "kind" : "superseded_by",
+      "otherCitekey" : "zqgamma1975_kings",
+      "otherStatus" : "superseded",
+      "otherTitle" : "Kings of Zqland",
+      "otherYear" : 1975,
+      "status" : "current",
+      "title" : "The Walls of Zqtell",
+      "year" : 1990
+    }
+  ],
+  "total" : 2
+}
+== GET /api/contradictions?since=1995
+200 {
+  "rows" : [
+    {
+      "citekey" : "zqalpha1990_tell",
+      "direction" : "in",
+      "kind" : "refutes",
+      "otherCitekey" : "zqbeta2001_cove",
+      "otherStatus" : "contested",
+      "otherTitle" : "The Harbour at Zqcove",
+      "otherYear" : 2001,
+      "status" : "current",
+      "title" : "The Walls of Zqtell",
+      "year" : 1990
+    }
+  ],
+  "total" : 1
+}
+== GET /api/contradictions?citekey=zqnone2000_x
+200 {
+  "rows" : [
+  ],
+  "total" : 0
+}
+== edges resolve
+200 {
+  "resolved" : 1
+}
+== neighbors after resolve
+200 [
+  {
+    "citekey" : "zqdelta2010_gone",
+    "direction" : "in",
+    "kind" : "cites",
+    "status" : "current",
+    "target" : "source",
+    "title" : "A Lost Report"
+  },
+  {
+    "citekey" : "zqbeta2001_cove",
+    "direction" : "in",
+    "kind" : "refutes",
+    "status" : "contested",
+    "target" : "source",
+    "title" : "The Harbour at Zqcove"
+  },
+  {
+    "citekey" : "zqgamma1975_kings",
+    "direction" : "in",
+    "kind" : "superseded_by",
+    "status" : "superseded",
+    "target" : "source",
+    "title" : "Kings of Zqland"
+  },
+  {
+    "citekey" : "zqgamma1975_kings",
+    "direction" : "out",
+    "kind" : "challenges",
+    "status" : "superseded",
+    "target" : "source",
+    "title" : "Kings of Zqland"
+  },
+  {
+    "citekey" : "zq_article",
+    "direction" : "out",
+    "kind" : "references",
+    "status" : null,
+    "target" : "article",
+    "title" : "Zq walls"
+  },
+  {
+    "citekey" : "zqbeta2001_cove",
+    "direction" : "out",
+    "kind" : "references",
+    "status" : "contested",
+    "target" : "source",
+    "title" : "The Harbour at Zqcove"
+  }
+]
+== tool neighbors {"citekey":"zqalpha1990_tell"}
+### Sources · zqalpha1990_tell
+
+**Outgoing (this → other)**
+- _challenges_ → [[zqgamma1975_kings]] — Kings of Zqland _(superseded)_
+- _references_ → [[zqbeta2001_cove]] — The Harbour at Zqcove _(contested)_
+
+**Incoming (other → this)**
+- _cites_ → [[zqdelta2010_gone]] — A Lost Report _(current)_
+- _refutes_ → [[zqbeta2001_cove]] — The Harbour at Zqcove _(contested)_
+- _superseded_by_ → [[zqgamma1975_kings]] — Kings of Zqland _(superseded)_
+
+**Articles**
+- _references_ → [Zq walls](/article/zq_article)
+== tool neighbors {"citekey":"zqalpha1990_tell","kinds":["refutes"]}
+### Sources · zqalpha1990_tell
+
+**Incoming (other → this)**
+- _refutes_ → [[zqbeta2001_cove]] — The Harbour at Zqcove _(contested)_
+== tool neighbors {"citekey":"zqnone2000_x"}
+_No references recorded for **zqnone2000_x**._ An empty result is not evidence of agreement — disagreement edges are sparse.
+== tool graph {"citekey":"zqbeta2001_cove","depth":2}
+### Source graph · zqbeta2001_cove (depth 2, 4 nodes, 5 links)
+
+**Nodes**
+- [[zqbeta2001_cove]] (2001) _[contested]_ **root** — The Harbour at Zqcove
+- [[zqalpha1990_tell]] (1990) _[current]_ d=1 — The Walls of Zqtell
+- [[zqdelta2010_gone]] (2010) _[current]_ d=2 — A Lost Report
+- [[zqgamma1975_kings]] (1975) _[superseded]_ d=2 — Kings of Zqland
+
+**Links**
+- `zqalpha1990_tell` →_references_ `zqbeta2001_cove`
+- `zqalpha1990_tell` →_challenges_ `zqgamma1975_kings`
+- `zqbeta2001_cove` →_refutes_ `zqalpha1990_tell`
+- `zqdelta2010_gone` →_cites_ `zqalpha1990_tell`
+- `zqgamma1975_kings` →_superseded_by_ `zqalpha1990_tell`
+== tool contradictions {}
+### 6 contradiction(s)
+
+- **zqalpha1990_tell** (1990 · current) — refutes ← **zqbeta2001_cove** (The Harbour at Zqcove · 2001 · contested)
+- **zqalpha1990_tell** (1990 · current) — superseded_by ← **zqgamma1975_kings** (Kings of Zqland · 1975 · superseded)
+- **zqalpha1990_tell** (1990 · current) — challenges → **zqgamma1975_kings** (Kings of Zqland · 1975 · superseded)
+- **zqbeta2001_cove** (2001 · contested) — refutes → **zqalpha1990_tell** (The Walls of Zqtell · 1990 · current)
+- **zqgamma1975_kings** (1975 · superseded) — challenges ← **zqalpha1990_tell** (The Walls of Zqtell · 1990 · current)
+- **zqgamma1975_kings** (1975 · superseded) — superseded_by → **zqalpha1990_tell** (The Walls of Zqtell · 1990 · current)
+
+_Edge kinds: references, challenges, refutes, updates, superseded_by. An empty result is not evidence of agreement._
+== tool contradictions {"citekey":"zqbeta2001_cove"}
+### 1 contradiction(s) · zqbeta2001_cove
+
+- **zqbeta2001_cove** (2001 · contested) — refutes → **zqalpha1990_tell** (The Walls of Zqtell · 1990 · current)
+
+_Edge kinds: references, challenges, refutes, updates, superseded_by. An empty result is not evidence of agreement._
+== tool contradictions {"since":2000}
+### 1 contradiction(s)
+
+- **zqalpha1990_tell** (1990 · current) — refutes ← **zqbeta2001_cove** (The Harbour at Zqcove · 2001 · contested)
+
+_Edge kinds: references, challenges, refutes, updates, superseded_by. An empty result is not evidence of agreement._
