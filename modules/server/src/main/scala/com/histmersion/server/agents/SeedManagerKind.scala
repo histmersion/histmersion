@@ -133,7 +133,7 @@ final class SeedManagerKind(h: Handlers) extends ManagerKindDefinition:
             )
       case ArticleCompile =>
         item.state.spec match
-          case None                                      => c.settleNow(m, item, ItemStatus.Cancelled, "no approved article to compile")
+          case None => c.settleNow(m, item, ItemStatus.Cancelled, "no approved article to compile")
           case Some(_) if c.slugExists(item.target) =>
             c.settleNow(m, item, ItemStatus.Cancelled, "an article with this slug was created meanwhile")
           case Some(sp) =>

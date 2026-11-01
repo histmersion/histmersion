@@ -985,6 +985,7 @@ server:server/agents/AgentFacetsInput.scala	library.workflows
 server:server/agents/AgentGetSourceInput.scala	library.workflows
 server:server/agents/AgentSearchInput.scala	library.workflows
 server:server/agents/AgentUpstream.scala	library.workflows
+server:server/agents/ArticleObjectives.scala	server
 server:server/agents/BuiltinAi.scala	automation.agents
 server:server/agents/ClaudeCode.scala	automation.agents
 server:server/agents/ClaudeCodeClient.scala	automation.agents
@@ -1028,12 +1029,10 @@ server:server/events/EventCatalogHandlers.scala	catalogue.events
 server:server/events/EventCatalogRoutes.scala	catalogue.events
 server:server/events/EventCatalogTools.scala	catalogue.events
 server:server/events/EventsSettings.scala	catalogue.events
-server:server/hot/Carried.scala	server
 server:server/hot/Hot.scala	server
 server:server/hot/HotDataSource.scala	server
 server:server/hot/HotGraph.scala	server
 server:server/hot/PinRequests.scala	server
-server:server/hot/Pinning.scala	server
 server:server/importers/GazetteerLoad.scala	catalogue.places
 server:server/importers/ImportRunner.scala	catalogue.places
 server:server/importers/NaturalEarthLand.scala	catalogue.places

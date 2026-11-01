@@ -1,5 +1,7 @@
 package com.histmersion.server.hot
 
+import com.histmersion.util.jobs.{Carried, Pinning}
+
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.config.{HotNode, HotPlan}
 import ox.{supervised, Ox}

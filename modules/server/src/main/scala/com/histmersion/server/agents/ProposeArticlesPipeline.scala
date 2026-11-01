@@ -48,7 +48,7 @@ final class ProposeArticlesPipeline(h: Handlers, ds: DataSource, cfg: => AgentsC
       )((a, last) => check(ctx, loaded, a, last).map(Checked(_, Nil)))
       recorded <- ctx.code[Recorded]("record")(record(ctx, goal, plan))
       closed <- ctx.code[String]("close")(
-        Pipelines.log(h, ctx, PlanArticles.logLine(goal, plan, recorded.line, ctx.run.id))
+        Pipelines.log(h.workLists, ctx, PlanArticles.logLine(goal, plan, recorded.line, ctx.run.id))
       )
     yield closed
 

@@ -127,7 +127,7 @@ final class TransitionTools(h: Handlers, upstream: () => AgentUpstream, caps: =>
       ) { in =>
         h.ops
           .query(Query.QueryRequest(in.sql))
-          .fold(e => e.message, r => ToolResultCap.queryResult(r, caps.queryMaxRows, max))
+          .fold(e => e.message, r => TransitionTools.queryResult(r, caps.queryMaxRows, max))
       }
     },
     contribution(TransitionTools.GetArticle) {
@@ -179,6 +179,26 @@ final class TransitionTools(h: Handlers, upstream: () => AgentUpstream, caps: =>
   )
 
 object TransitionTools:
+
+  /** A `query` result as an agent sees it: at most `maxRows` rows, marked as cut (the row cap's own flag), then
+    * [[cap]]ped like any result.
+    */
+  def queryResult(r: com.histmersion.api.Query.QueryResult, maxRows: Int, max: Int): String =
+    val shown = if maxRows > 0 && r.rows.size > maxRows then
+      r.copy(rows = r.rows.take(maxRows), rowCount = maxRows, truncated = true)
+    else r
+    val more = if shown.rows.size < r.rows.size then
+      s"\n\n_…${r.rows.size - shown.rows.size}${
+          if r.truncated then "+" else ""
+        } more rows not shown — select only the rows you need " +
+        "(`WHERE citekey IN (…)`, `LIMIT`), never a whole table_"
+    else ""
+    ToolResultCap.cap(
+      com.histmersion.api.Query.markdown(shown) + more,
+      max,
+      "select fewer columns or rows (`WHERE … IN (…)`, `LIMIT`)"
+    )
+
   val GetSource: ToolName = ToolName("get_source")
   val Passages: ToolName = ToolName("passages")
   val Search: ToolName = ToolName("search")

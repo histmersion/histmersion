@@ -77,9 +77,9 @@ object AgentGenerator:
 
   /** The built-in tools a role gets besides Histmersion's MCP tools. */
   def claudeWebTools(w: WebAccess): List[String] = w match
-    case WebAccess.Search => List("WebSearch", "WebFetch")
-    case WebAccess.Fetch  => List("WebFetch")
-    case _                => Nil
+    case WebAccess.WebSearch => List("WebSearch", "WebFetch")
+    case WebAccess.Fetch     => List("WebFetch")
+    case _                   => Nil
 
   /** The tool `claude -p --json-schema` answers through. An agent whose `tools:` leaves it out cannot give a typed
     * answer: the model writes the JSON as text and `structured_output` stays empty.
@@ -283,8 +283,8 @@ object AgentGenerator:
     */
   def codexProfile(d: Defs, a: AgentDef): String =
     val web = a.web match
-      case WebAccess.Search | WebAccess.Fetch => "web_search = \"live\"\n"
-      case _                                  => ""
+      case WebAccess.WebSearch | WebAccess.Fetch => "web_search = \"live\"\n"
+      case _                                     => ""
     val mcp =
       if a.tools.isEmpty then s"[mcp_servers.${AgentDefinitions.McpServer}]\nenabled = false\nrequired = false\n"
       else
@@ -355,9 +355,9 @@ object AgentGenerator:
   /** The permission map of a role: deny everything, allow its tools (last match wins). */
   def opencodePermissions(a: AgentDef): List[(String, String)] =
     ("*" -> "deny") :: a.tools.map(t => ToolStyle.Opencode.tool(t.value) -> "allow") ++ (a.web match
-      case WebAccess.Search => List("webfetch" -> "allow", "websearch" -> "allow")
-      case WebAccess.Fetch  => List("webfetch" -> "allow")
-      case _                => Nil)
+      case WebAccess.WebSearch => List("webfetch" -> "allow", "websearch" -> "allow")
+      case WebAccess.Fetch     => List("webfetch" -> "allow")
+      case _                   => Nil)
 
   def opencodeAgent(d: Defs, a: AgentDef): String =
     val perms = opencodePermissions(a).map((k, v) => s"  ${yamlString(k)}: $v").mkString("\n")

@@ -795,17 +795,6 @@ object ManagerRepo:
         .head
     )
 
-  /** The articles that passed their review: a review ledger with no open MAJOR, and no open item of review manager
-    * `reviewId` (a review queued or running is not passed yet).
-    */
-  def passedReview(ds: DataSource, reviewId: String): Set[String] =
-    connect(ds):
-      sql"""SELECT l.slug FROM review_ledgers l
-            WHERE NOT EXISTS (SELECT 1 FROM jsonb_array_elements(coalesce(l.ledger->'entries', '[]'::jsonb)) e
-                              WHERE coalesce(e->>'status', 'open') = 'open' AND e->'finding'->>'severity' = 'major')
-              AND NOT EXISTS (SELECT 1 FROM manager_items i WHERE i.manager_id = $reviewId AND i.target = l.slug
-                              AND i.status IN ('pending', 'held', 'active'))""".query[String].run().toSet
-
   /** Open items on `target` in manager `id`, any kind. */
   def openOn(ds: DataSource, managerId: String, target: String): Boolean =
     connect(ds)(sql"""SELECT 1 FROM manager_items WHERE manager_id = $managerId AND target = $target

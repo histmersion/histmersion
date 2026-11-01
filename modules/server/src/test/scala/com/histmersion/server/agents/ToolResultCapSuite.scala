@@ -80,12 +80,12 @@ class ToolResultCapSuite extends munit.FunSuite:
       false,
       3
     )
-    val md = ToolResultCap.queryResult(r, 50, 100000)
+    val md = TransitionTools.queryResult(r, 50, 100000)
     assert(md.startsWith("### 50 row(s) (truncated by the row cap)"), md.take(80))
     assert(md.contains("| ck50 |") && !md.contains("| ck51 |"), "50 rows")
     assert(md.contains("70 more rows not shown") && md.contains("never a whole table"), md.takeRight(200))
     val capped = QueryResult(List("c"), (1 to 500).toList.map(i => List(Some(s"r$i"))), 500, true, 3)
-    assert(ToolResultCap.queryResult(capped, 50, 100000).contains("450+ more rows"), "the server's row cap hid more")
+    assert(TransitionTools.queryResult(capped, 50, 100000).contains("450+ more rows"), "the server's row cap hid more")
     val few = r.copy(rows = r.rows.take(3), rowCount = 3)
-    assertEquals(ToolResultCap.queryResult(few, 50, 100000), com.histmersion.api.Query.markdown(few))
-    assert(ToolResultCap.queryResult(r, 0, 600).length <= 600, "no row cap: the character cap still holds")
+    assertEquals(TransitionTools.queryResult(few, 50, 100000), com.histmersion.api.Query.markdown(few))
+    assert(TransitionTools.queryResult(r, 0, 600).length <= 600, "no row cap: the character cap still holds")

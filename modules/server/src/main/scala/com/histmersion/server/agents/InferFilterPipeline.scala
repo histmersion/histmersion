@@ -136,7 +136,7 @@ final class InferFilterPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfi
                 .map(a => Recorded(Some(a.id), applied = false, s"approval ${a.id} waits for a person: $what"))
             )(Right(Recorded(None, applied = false, s"no approval opened (${AgentsMarkdown.DryRunNote}): $what")))
 
-  private def log(ctx: RunCtx, line: String): Either[String, String] = Pipelines.log(h, ctx, line)
+  private def log(ctx: RunCtx, line: String): Either[String, String] = Pipelines.log(h.workLists, ctx, line)
 
 object InferFilterPipeline:
   /** How many of the most used topics and tags the model is shown, how many cited sources by title, and how much of the

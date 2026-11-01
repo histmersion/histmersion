@@ -21,7 +21,6 @@ import javax.sql.DataSource
 final class ApprovalDigestService(
     ds: DataSource,
     cfg: => AgentsConfig,
-    h: com.histmersion.server.Handlers,
     agents: AgentsHandlers
 ):
 
@@ -52,7 +51,7 @@ final class ApprovalDigestService(
     else
       val line = ApprovalDigest.line(digest(now))
       AutopilotRepo.digested(ds, now)
-      val _ = h.ops.queueAdd("log", QueueAdd(line.take(1000)))
+      val _ = agents.workLists.add("log", QueueAdd(line.take(1000)))
       scribe.info(line)
       List("approval digest written")
 
@@ -95,7 +94,7 @@ final class ApprovalDigestService(
           ).flatten.mkString(", ")
           val line = s"approvals ${if d == Decision.Approve then "approved" else "rejected"} in bulk by $by ($what): " +
             s"${ok.size} of ${ms.size}" + (if bad.nonEmpty then s", ${bad.size} refused" else "") + s"; $left open left"
-          val _ = h.ops.queueAdd("log", QueueAdd(line.take(1000)))
+          val _ = agents.workLists.add("log", QueueAdd(line.take(1000)))
           scribe.info(line)
         agents.managers.nudge()
         BulkResult(d.wire, dryRun = false, ms.size, ok, bad, left)

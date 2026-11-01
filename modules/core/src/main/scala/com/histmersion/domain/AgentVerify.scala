@@ -13,11 +13,8 @@ import com.histmersion.values.{Confidence, SourceStatus}
   */
 object AgentVerify:
 
-  /** A tool call an LLM step made, as its runtime reported it (sttp-ai's loop, Claude Code's stream-json, Codex's
-    * `mcp_tool_call` items, opencode's `tool_use` parts) — never as the model describes it: what an answer's claimed
-    * lookups are held to.
-    */
-  final case class ToolUse(tool: String, input: String)
+  /** A tool call an LLM step made, as the engine records it ([[com.histmersion.domain.automation.agents.ToolUse]]). */
+  export com.histmersion.domain.automation.agents.ToolUse
 
   // ── quotes ──────────────────────────────────────────────────────────────────────────────────
 

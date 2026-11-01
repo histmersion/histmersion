@@ -379,24 +379,6 @@ final class ManagersHandlers(
             EnqueueResult(EnrichId, items, skipped)
           }
 
-  /** `agents.auto-enrich` with the managers on: the ingested source becomes an item of the enrich manager (created
-    * paused if missing). Answers the item and the manager's state, for the ingest job's progress note.
-    */
-  def ingested(citekey: String): (Long, String) =
-    supervisor.ensureDefaults()
-    val (itemId, isNew) = ManagerRepo.upsert(ds, EnrichId, SourceEnrich, citekey, ItemOrigin.Ingest, 0, reopen = true)
-    ManagerRepo.event(
-      ds,
-      EnrichId,
-      Some(itemId),
-      None,
-      Feed.Evaluated,
-      s"$citekey ${if isNew then "enqueued" else "enqueued again"} by an ingest"
-    )
-    supervisor.nudge()
-    val state = ManagerRepo.get(ds, EnrichId).map(_.state).getOrElse(State.Paused.wire)
-    (itemId, state)
-
   def patchItem(id: String, ref: String, in: ItemPatch): Either[ApiError, ManagerItem] =
     for
       m <- manager(id)

@@ -8,6 +8,10 @@ enum GoalLinkKind(val wire: String):
   case QueueItem extends GoalLinkKind("queue-item")
 
 object GoalLinkKind:
+
+  /** The search queries a goal's plan recorded ([[Query]]): the name the engine uses, which no other type shares. */
+  val SearchQuery: GoalLinkKind = Query
+
   def parse(s: String): Option[GoalLinkKind] = values.find(_.wire == s.trim.toLowerCase)
   given WireEnumValues[GoalLinkKind]:
     def all: Array[GoalLinkKind] = GoalLinkKind.values

@@ -108,7 +108,12 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     converter,
     ck =>
       // a stored conversion: the source's illustration (and Open Library cover) first, then enrichment
-      Option(List(media.afterIngest(ck), agents.autoEnrich(ck)).flatten).filter(_.nonEmpty).map(_.mkString(" · "))
+      Option(
+        List(
+          media.afterIngest(ck),
+          com.histmersion.server.agents.TransitionWorkflows.enrich(agents).autoEnrich(ck)
+        ).flatten
+      ).filter(_.nonEmpty).map(_.mkString(" · "))
   )
 
   /** Media from outside providers (#1446) — same arrangement. Thumbnails come from the converter. */
@@ -160,9 +165,19 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** Embedded research agents (docs/research-embedded-agents.md) — off unless `agents.enabled`. Constructing it starts
     * nothing; `Main` starts its run pool after the OCR pool.
     */
-  /** What the engine asks of the handlers until each owner offers its service. */
-  lazy val automationHost: com.histmersion.domain.automation.workflows.AutomationHost =
-    com.histmersion.server.agents.TransitionHost(this)
+  /** The work lists' operations (the pipelines' worklog lines). */
+  def workLists: com.histmersion.domain.automation.worklists.WorkListControllers = deps.workLists
+
+  /** What engine `a` asks of the handlers until each owner offers its service (its works looked up through the
+    * acquisition toolset attached to it).
+    */
+  def automationHost(
+      a: com.histmersion.domain.automation.agents.AgentsHandlers
+  ): com.histmersion.domain.automation.workflows.AutomationHost =
+    com.histmersion.server.agents.TransitionHost(
+      this,
+      () => com.histmersion.server.agents.TransitionWorkflows.work(a).acquisition
+    )
 
   val agents: com.histmersion.domain.automation.agents.AgentsHandlers =
     com.histmersion.domain.automation.agents.AgentsHandlers(deps, this)
@@ -1836,6 +1851,12 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** How many sources the filter article `slug` records returns now (None: no article, or no filter) — the review
     * manager's stale check.
     */
+  /** Every goal's linked articles that exist: goal → slugs (research's measure of a goal's progress). */
+  def articlesByGoal(): Map[String, List[String]] = ArticleRepo.articlesByGoal(ds)
+
+  /** The articles that passed their review (no open MAJOR, no open item of review manager `reviewId`). */
+  def passedReview(reviewId: String): Set[String] = ReviewLedgerRepo.passedReview(ds, reviewId)
+
   /** An article's review ledger (none: never reviewed, or one that no longer decodes) — the review manager kind's. */
   def reviewLedger(slug: String): Option[ReviewLedger.Ledger] = ReviewLedgerRepo.get(ds, slug).toOption.flatten
 

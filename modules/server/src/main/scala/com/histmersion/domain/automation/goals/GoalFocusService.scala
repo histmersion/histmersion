@@ -36,7 +36,6 @@ import javax.sql.DataSource
 final class GoalFocusService(
     ds: DataSource,
     cfg: => AgentsConfig,
-    h: com.histmersion.server.Handlers,
     agents: AgentsHandlers
 ):
 
@@ -121,8 +120,8 @@ final class GoalFocusService(
       base,
       work,
       FocusRepo.sourceCounts(ds),
-      GoalLinkRepo.articlesByGoal(ds),
-      ManagerRepo.passedReview(ds, ReviewId),
+      agents.workflows.linked(),
+      agents.workflows.finished(),
       FocusRepo.compileOpen(ds),
       FocusRepo.lastStops(ds)
     )
@@ -368,5 +367,5 @@ final class GoalFocusService(
     }
 
   private def log(line: String): Unit =
-    val _ = h.ops.queueAdd("log", QueueAdd(line.take(1000)))
+    val _ = agents.workLists.add("log", QueueAdd(line.take(1000)))
     scribe.info(line)

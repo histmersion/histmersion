@@ -21,19 +21,26 @@ object TransitionWorkflows:
     val pipelines: List[PipelineDef] = List(
       EnrichSourcePipeline(h, ds, cfg, upstream, a.approvals),
       ReviewArticlePipeline(h, ds, cfg, a.approvals, a.definitions),
-      PlanGoalPipeline(h, ds, cfg, upstream),
+      PlanGoalPipeline(a.host, deps.queues, deps.workLists, ds, cfg),
       CompileArticlePipeline(h, ds, cfg, (req, parent) => a.startRunAs(req, Origin.Run, Some(parent))),
       CurrencyCheckPipeline(h, ds, cfg, upstream, a.approvals),
       AcquisitionSweepPipeline(h, ds, cfg, upstream, work.oaBacklog),
       InferFilterPipeline(h, ds, cfg),
       ProposeArticlesPipeline(h, ds, cfg),
-      HintEffectPipeline(h, ds, cfg)
+      HintEffectPipeline(deps.workLists, ds, cfg)
     )
     Contributions(
       pipelines.map(PipelineWorkflow.of(_, a.definitions)),
       TransitionTools(h, upstream, cfg.tools).contributions,
-      List(ReviewManagerKind(h), EnrichManagerKind(h), SeedManagerKind(h), WatchManagerKind(h, work))
+      List(ReviewManagerKind(h), EnrichManagerKind(h, a), SeedManagerKind(h), WatchManagerKind(h, work)),
+      List(ArticleObjectives(h))
     )
+
+  /** The enrich kind of `a`'s registry (its auto-enrich after an ingest). */
+  def enrich(a: AgentsHandlers): EnrichManagerKind =
+    a.workflows.managerKinds
+      .collectFirst { case e: EnrichManagerKind => e }
+      .getOrElse(throw IllegalStateException("no enrich manager kind is registered"))
 
   /** The acquisition work the watch kind of `a`'s registry holds. */
   def work(a: AgentsHandlers): AcquisitionWork =

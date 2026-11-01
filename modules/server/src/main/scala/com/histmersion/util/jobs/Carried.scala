@@ -1,4 +1,4 @@
-package com.histmersion.server.hot
+package com.histmersion.util.jobs
 
 import java.util.concurrent.atomic.AtomicBoolean
 

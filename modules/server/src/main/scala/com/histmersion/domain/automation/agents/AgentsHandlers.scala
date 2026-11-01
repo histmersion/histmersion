@@ -65,13 +65,22 @@ final class AgentsHandlers(
 
   /** Read at each use: a config reload switches it (Deps). */
   private def cfg = deps.cfg.agents
+
+  /** The agents' settings now (read at each use). */
+  def config: AgentsConfig = cfg
   private val ds = deps.ds
+
+  /** What the engine asks of the rest of the server (goals, the housekeeping) until the owners offer services. */
+  val host: com.histmersion.domain.automation.workflows.AutomationHost = h.automationHost(this)
+
+  /** The work lists' operations as a person's go: the worklog lines of the engine's services. */
+  val workLists: com.histmersion.domain.automation.worklists.WorkListControllers = deps.workLists
 
   /** The work lists' kernel (the runs' log lines, the review's tasks). */
   val queues: com.histmersion.domain.automation.worklists.QueueService = deps.queues
 
   /** How the engine, the managers and their threads keep work on the generation it started on. */
-  val pins: com.histmersion.server.hot.Pinning = deps.pins
+  val pins: com.histmersion.util.jobs.Pinning = deps.pins
 
   /** A person's pause and cancel of the server's long background jobs. */
   val jobStops: com.histmersion.util.jobs.JobStops = deps.jobStops
@@ -105,27 +114,27 @@ final class AgentsHandlers(
   engine.onSettled(managers.settled)
 
   /** The operations on the managers (REST, MCP, CLI). */
-  val managing: ManagersHandlers = ManagersHandlers(ds, cfg, deps.cfg.limits, this, managers, h.automationHost)
+  val managing: ManagersHandlers = ManagersHandlers(ds, cfg, deps.cfg.limits, this, managers, host)
 
   /** The checked auto approvals the managers' tick runs (article-plan, goal-plan, article-publish). */
   val autoApprovals: AutoApprovals = AutoApprovals(ds, cfg, h, this)
 
   /** The autopilot: one switch that lets the managers carry every goal from planned to reviewed. */
-  val autopilot: AutopilotService = AutopilotService(ds, cfg, h, this)
+  val autopilot: AutopilotService = AutopilotService(ds, cfg, this)
 
   /** The autopilot's focus: how the goals rank (its pins and priorities are the goals' priorities in the scheduler); it
     * holds nothing since the central scheduler admits the work.
     */
-  val focus: GoalFocusService = GoalFocusService(ds, cfg, h, this)
+  val focus: GoalFocusService = GoalFocusService(ds, cfg, this)
 
   /** The central scheduler: which of the managers' pending items start a run, across every job type. */
-  val scheduler: SchedulerService = SchedulerService(ds, cfg, h, this)
+  val scheduler: SchedulerService = SchedulerService(ds, cfg, this)
 
   /** The approval digest: everything waiting for a person, a daily worklog line, a group decided at once. */
-  val digest: ApprovalDigestService = ApprovalDigestService(ds, cfg, h, this)
+  val digest: ApprovalDigestService = ApprovalDigestService(ds, cfg, this)
 
   /** Drain mode: nothing new starts while the runs in flight finish (a deploy). */
-  val drain: DrainService = DrainService(ds, cfg, h, this)
+  val drain: DrainService = DrainService(ds, cfg, this)
 
   /** One agent server per database: the engine and the managers start only in the server that holds it (ttl 3 × the
     * managers' tick).
@@ -546,44 +555,6 @@ final class AgentsHandlers(
       // a run started by a dry run is one too (nothing it starts may write)
       val dry = req.dryRun.contains(true) || parent.exists(_.dryRun)
       Prepared(p, target, req.model.map(_.trim).filter(_.nonEmpty), usd, tok.toLong, params, goal, dry)
-
-  /** `agents.auto-enrich`: after an ingest job stored `citekey`, it is enriched ([[AutoEnrich]] decides whether it
-    * needs to be). Since the managers' phase 2 the source becomes an item of the library-wide `enrich` manager (created
-    * PAUSED if it does not exist: a person resumes it once), which runs `enrich-source` within its `max-runs` — and, as
-    * before, budgets, plan floors and `max-calls-in-flight`. With the managers off (`agents.managers.enabled = false`)
-    * the run is queued at once, as before. Returns the note for the job's progress line — what was queued, or why not —
-    * or None when nothing was asked for (agents or the switch off). One at a time, so two imports of the same file
-    * finishing together cannot both queue one. Never throws: the ingest is done whatever happens here.
-    */
-  def autoEnrich(citekey: String): Option[String] =
-    try
-      autoEnrichLock.synchronized {
-        h.getSource(citekey, body = false) match
-          case Left(e)    => Some(AutoEnrich.notQueued(e.message))
-          case Right(src) =>
-            val ck = src.source.citekey
-            // a dry run wrote nothing: it neither enriched the source nor stands for a run that will
-            val runs = AgentRepo
-              .forTarget(ds, Pipeline.EnrichSource, ck)
-              .toList
-              .filterNot(_.dryRun)
-              .flatMap(r => RunState.parse(r.status).map(AutoEnrich.PriorRun(r.id, _)))
-            AutoEnrich.decide(cfg.enabled, cfg.autoEnrich, src.findings.size, src.source.notes, runs) match
-              case Left(skip)                        => AutoEnrich.note(skip)
-              case Right(()) if cfg.managers.enabled => Some(AutoEnrich.managed.tupled(managing.ingested(ck)))
-              case Right(())                         =>
-                Some(
-                  startRunAs(RunRequest(Pipeline.EnrichSource.wire, ck), Origin.Ingest, None)
-                    .fold(e => AutoEnrich.notQueued(e.message), r => AutoEnrich.queued(r.id))
-                )
-      }
-    catch
-      case e: InterruptedException => throw e
-      case e: Exception            =>
-        scribe.warn(s"auto-enrich of $citekey failed: ${e.getClass.getSimpleName}: ${e.getMessage}")
-        Some(AutoEnrich.notQueued(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300)))
-
-  private val autoEnrichLock = new Object
 
   /** The roles a run of `p` may give a model of its own: its own, and those of the run it chains (compile-article
     * starts a review-article run with fix).

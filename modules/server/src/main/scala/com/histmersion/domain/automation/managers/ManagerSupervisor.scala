@@ -770,6 +770,7 @@ final class ManagerSupervisor(
       outcome: Option[String]
   ): Boolean = ManagerRepo.evaluated(ds, itemId, run, status, notBefore, failures, state, outcome)
   def hints(id: String): List[ManagerHint] = ManagerRepo.hints(ds, id, live = true)
+  def state(id: String): Option[String] = ManagerRepo.get(ds, id).map(_.state)
   def openMajorArticles(id: String, tags: List[String], goal: Option[String], limit: Int): List[(String, Int)] =
     ManagerRepo.openMajorArticles(ds, id, ArticleReview, tags, goal, limit)
   def unreviewedArticles(id: String, tags: List[String], goal: Option[String], limit: Int): List[String] =

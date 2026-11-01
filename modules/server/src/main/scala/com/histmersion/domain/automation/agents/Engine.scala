@@ -59,7 +59,7 @@ final class Engine(
   /** A queued run and the generation it was queued on: it runs there — on the database it was queued in, even after a
     * config reload swapped the database (docs/research-plugins.md §3.6).
     */
-  final private case class Queued(id: String, work: com.histmersion.server.hot.Carried[Unit])
+  final private case class Queued(id: String, work: com.histmersion.util.jobs.Carried[Unit])
   private val queue = LinkedBlockingQueue[Queued]()
   val llmSlots: Semaphore = Semaphore(math.max(1, cfg.maxLlmCallsInFlight))
 
@@ -381,7 +381,7 @@ final class Engine(
     */
   private def notify(run: RunInfo, settled: Either[Halt, String]): Unit =
     val scheduled = run.origin.contains(Origin.Scheduler.wire)
-    val ingested = run.origin.contains(Origin.Ingest.wire)
+    val ingested = run.origin.contains(Origin.FromIngest.wire)
     // a dry run writes nothing, its backlog item included
     if (scheduled || ingested) && !run.dryRun then
       val why = settled match

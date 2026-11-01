@@ -1,5 +1,6 @@
 package com.histmersion.domain.automation.workflows
 
+import com.histmersion.domain.automation.goals.ObjectiveProgress
 import com.histmersion.domain.automation.managers.ManagerKindDefinition
 import com.histmersion.values.AgentRole
 
@@ -10,7 +11,8 @@ import com.histmersion.values.AgentRole
 final class Workflows private (
     val definitions: List[WorkflowDefinition],
     val tools: List[ToolContribution],
-    val managerKinds: List[ManagerKindDefinition]
+    val managerKinds: List[ManagerKindDefinition],
+    val objectives: List[ObjectiveProgress]
 ):
   private val byId: Map[String, WorkflowDefinition] = definitions.map(d => (d.id.value: String) -> d).toMap
 
@@ -18,6 +20,13 @@ final class Workflows private (
   def parse(raw: String): Option[WorkflowDefinition] = byId.get(raw.trim.toLowerCase)
 
   def definition(id: WorkflowId): Option[WorkflowDefinition] = byId.get(id.value: String)
+
+  /** Every goal's linked items that exist, by goal, as the domains count them. */
+  def linked(): Map[String, List[String]] =
+    objectives.flatMap(_.linked().toList).groupMap(_._1)(_._2).view.mapValues(_.flatten).toMap
+
+  /** The linked items that count as finished. */
+  def finished(): Set[String] = objectives.flatMap(_.finished()).toSet
 
   /** Every contributed tool's name, in the order of registration. */
   def toolNames: List[ToolName] = tools.map(_.name)
@@ -29,12 +38,13 @@ final class Workflows private (
       if rest.size == definitions.size then definitions :+ definition
       else definitions.map(d => if d.id == definition.id then definition else d),
       tools,
-      managerKinds
+      managerKinds,
+      objectives
     )
 
 object Workflows:
   def of(contributions: Contributions): Either[String, Workflows] =
-    val Contributions(definitions, tools, kinds) = contributions
+    val Contributions(definitions, tools, kinds, objectives) = contributions
     val twice = definitions.groupBy(_.id.value).collect { case (id, ds) if ds.size > 1 => id }.toList.sorted
     val twiceTools = tools.groupBy(_.name.value).collect { case (n, ts) if ts.size > 1 => n }.toList.sorted
     val known = tools.map(_.name).toSet
@@ -50,4 +60,4 @@ object Workflows:
     else if unknown.nonEmpty then Left(unknown.mkString("; "))
     else if twiceKinds.nonEmpty then Left(s"manager kinds registered twice: ${twiceKinds.mkString(", ")}")
     else if twiceItems.nonEmpty then Left(s"item kinds two manager kinds drive: ${twiceItems.mkString(", ")}")
-    else Right(new Workflows(definitions, tools, kinds))
+    else Right(new Workflows(definitions, tools, kinds, objectives))

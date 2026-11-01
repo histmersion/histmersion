@@ -1,5 +1,7 @@
 package com.histmersion.server.hot
 
+import com.histmersion.util.jobs.Pinning
+
 import sttp.monad.MonadError
 import sttp.shared.Identity
 import sttp.tapir.model.ServerRequest

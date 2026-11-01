@@ -6,7 +6,7 @@ import com.histmersion.pluginhost.Generation
 
 import com.histmersion.config.{AppConfig, Environment, LoadedConfig, UserConfigFile, UserPaths}
 import com.histmersion.api.{ConfigFileInfo, ReloadReport}
-import com.histmersion.server.hot.Pinning
+import com.histmersion.util.jobs.Pinning
 import com.histmersion.util.database.Transactor
 import java.time.Clock
 import javax.sql.DataSource

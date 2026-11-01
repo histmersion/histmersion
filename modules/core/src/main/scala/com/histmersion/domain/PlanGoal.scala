@@ -149,7 +149,10 @@ object PlanGoal:
   /** Look each proposed DOI up (OpenAlex/Crossref through the discover path). A DOI that does not resolve, or a
     * retracted work, is dropped with why — a person never sees an unverified work.
     */
-  def verify(p: Proposed, goal: String, lookup: String => Either[String, WorkRef]): Plan =
+  /** A work looked up by its DOI. */
+  type Lookup = String => Either[String, WorkRef]
+
+  def verify(p: Proposed, goal: String, lookup: Lookup): Plan =
     val looked = p.works.map(w => (w, lookup(w.doi)))
     val works = looked.collect {
       case (w, Right(r)) if !r.isRetracted =>
