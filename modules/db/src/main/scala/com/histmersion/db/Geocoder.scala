@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.util.database.RangeSql
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -38,11 +40,11 @@ object Geocoder:
               SELECT id, true AS by_label, NULL::bigint AS nlo, NULL::bigint AS nhi
               FROM places WHERE histmersion_place_key(label) = $key
               UNION ALL
-              SELECT place_id, false, ${SqlLiteral(PeriodSql.cols("period"))}
+              SELECT place_id, false, ${SqlLiteral(RangeSql.cols("period"))}
               FROM place_names WHERE histmersion_place_key(name) = $key)
             SELECT p.id, p.label, p.kind, bool_or(h.by_label),
-                   greatest(${SqlLiteral(PeriodSql.start("p.period"))}, h.nlo), least(${SqlLiteral(
-          PeriodSql.end("p.period")
+                   greatest(${SqlLiteral(RangeSql.start("p.period"))}, h.nlo), least(${SqlLiteral(
+          RangeSql.end("p.period")
         )}, h.nhi),
                    ST_Dimension(p.geom), ST_Area(p.geom),
                    CASE WHEN ST_Dimension(p.geom) = 0
@@ -153,7 +155,7 @@ object Geocoder:
          ORDER BY f.id, j.created_at DESC
        ), named AS (
          SELECT f.id, f.citekey, coalesce(a.place, btrim(f.region_name)) AS name, f.region_name,
-                ST_X(f.geom) AS lon, ST_Y(f.geom) AS lat, ${PeriodSql.cols("f.period", "p0", "p1")}
+                ST_X(f.geom) AS lon, ST_Y(f.geom) AS lat, ${RangeSql.cols("f.period", "p0", "p1")}
          FROM findings f LEFT JOIN asked a ON a.id = f.id
          WHERE f.geom IS NOT NULL AND coalesce(a.place, btrim(f.region_name), '') <> ''
        ), names AS (
@@ -221,7 +223,7 @@ object Geocoder:
 
   /** The findings with a place name and no point — what `finding-unplaced` reads. */
   val unplacedSql: String =
-    s"""SELECT f.id, f.citekey, btrim(f.region_name), ${PeriodSql.cols("f.period")}
+    s"""SELECT f.id, f.citekey, btrim(f.region_name), ${RangeSql.cols("f.period")}
        FROM findings f
        WHERE f.geom IS NULL AND btrim(coalesce(f.region_name, '')) <> ''
        ORDER BY f.citekey, f.id"""

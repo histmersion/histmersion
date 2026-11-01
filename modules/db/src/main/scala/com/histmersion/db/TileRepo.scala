@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.util.database.RangeSql
+
 import com.histmersion.api.*
 import com.histmersion.domain.*
 import com.histmersion.domain.maptiles.GridCell
@@ -154,7 +156,7 @@ object TileRepo:
     val ub = if markUndated then "(lower_inf(p.period) AND upper_inf(p.period))" else "false"
     Sql.raw(
       "SELECT p.id AS key, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat," +
-        s" ${PeriodSql.start("p.period")} AS ps, ${PeriodSql.end("p.period")} AS pe, $ub AS ub" +
+        s" ${RangeSql.start("p.period")} AS ps, ${RangeSql.end("p.period")} AS pe, $ub AS ub" +
         " FROM places p CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(p.geom) = 'POINT' THEN p.geom" +
         " ELSE ST_PointOnSurface(p.geom) END AS pt) q" +
         s" WHERE p.kind = '${PlaceKind.Site}' AND p.geom IS NOT NULL" +
@@ -176,7 +178,7 @@ object TileRepo:
         Sql
           .of(
             s"SELECT p.id, p.label, p.kind, ${SiteTypesSql.expr("p")}, ${PlaceRepo.timeBasisSql("p")}," +
-              s" ${PeriodSql.start("p.period")}, ${PeriodSql.end("p.period")} FROM places p WHERE p.id = ANY(?)",
+              s" ${RangeSql.start("p.period")}, ${RangeSql.end("p.period")} FROM places p WHERE p.id = ANY(?)",
             Param.A(ids)
           )
           .frag

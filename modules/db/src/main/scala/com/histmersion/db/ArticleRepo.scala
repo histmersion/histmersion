@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.util.database.RangeSql
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -75,9 +77,9 @@ object ArticleRepo:
     * `text[]` arrives as a list in both.
     */
   private val SummaryCols =
-    s"a.slug, a.title, a.kind, a.summary, a.tags, a.regions, ${PeriodSql.cols("a.period")}, $Token"
+    s"a.slug, a.title, a.kind, a.summary, a.tags, a.regions, ${RangeSql.cols("a.period")}, $Token"
   private val RowCols =
-    s"a.slug, a.title, a.kind, a.body, a.summary, a.tags, a.regions, ${PeriodSql.cols("a.period")}, $Token"
+    s"a.slug, a.title, a.kind, a.body, a.summary, a.tags, a.regions, ${RangeSql.cols("a.period")}, $Token"
 
   /** [[ArticleRow]], the wire shape: the row plus its uid (V030). */
   private val ViewCols = s"$RowCols, a.uid"
@@ -140,7 +142,7 @@ object ArticleRepo:
     // Snapshot the PREVIOUS version before the update overwrites it.
     sql"""INSERT INTO article_versions (slug, body, summary, updated_at)
           SELECT slug, body, summary, updated_at FROM articles WHERE slug = ${a.slug}""".update.run()
-    val periodLit = PeriodSql.literal(a.period)
+    val periodLit = RangeSql.literal(a.period)
     val filter = filterJson(a)
     val reasons = reasonsJson(a)
     sql"""INSERT INTO articles (slug, title, kind, body, summary, tags, period, regions, coverage_filter, coverage_reasons)

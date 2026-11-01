@@ -862,8 +862,6 @@ db:db/Migrate.scala	util.common
 db:db/ModelSettingsRepo.scala	automation.agents
 db:db/Originals.scala	library.ingest
 db:db/Param.scala	util.common
-db:db/PeriodRepo.scala	catalogue.periods
-db:db/PeriodSql.scala	catalogue.periods
 db:db/PlaceOverrideRepo.scala	catalogue.places
 db:db/PlaceRepo.scala	catalogue.places
 db:db/PlaceReviewRepo.scala	catalogue.places

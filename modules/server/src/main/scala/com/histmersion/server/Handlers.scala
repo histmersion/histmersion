@@ -129,6 +129,11 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** Named periods' write path and the first-run `init` job (#719, #720) — same arrangement. */
   val bootstrap: Bootstrap = Bootstrap(deps)
 
+  /** The named periods' operations. */
+  val periods: com.histmersion.domain.catalogue.periods.PeriodsControllers =
+    com.histmersion.domain.catalogue.periods
+      .PeriodsControllers(bootstrap.periods, bootstrap.periodImports, deps.maintenance)
+
   /** The terrain base map (docs/research-terrain-basemap.md): its extracts, their fetch job and the tiles the web page
     * draws — same arrangement.
     */
@@ -1546,9 +1551,6 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def placeLinks(id: String): Either[ApiError, List[PlaceLink]] =
     val now = placeId(id)
     PlaceRepo.get(ds, now).map(_ => PlaceRepo.links(ds, now).toList).toRight(ApiError(s"No place '$id'"))
-
-  def periods(q: Option[String], region: Option[String], from: Option[Long], to: Option[Long]): List[HistoricalPeriod] =
-    PlaceRepo.listPeriods(ds, q, region, from, to).toList
 
   /** `POST /api/places/rebuild` — re-materialise `finding_places`. Returns `Either` (and its route uses the write error
     * mapping) so a rebuild arriving during a restore is a 503 like every other write, rather than a rebuild against a

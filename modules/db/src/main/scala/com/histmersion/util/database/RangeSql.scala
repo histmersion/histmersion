@@ -1,7 +1,7 @@
-package com.histmersion.db
+package com.histmersion.util.database
 
 import com.histmersion.api.*
-import com.histmersion.config.*
+import com.histmersion.db.{Param, Sql}
 import com.histmersion.domain.*
 
 /** The ONE spelling of a deep-time `int8range` column in SQL (#1798 item 9): how its inclusive bounds are read, how
@@ -11,7 +11,7 @@ import com.histmersion.domain.*
   * one-year-too-long trap). A bound may be open: `[a,)` is "from a", `(,b+1)` is "until b"; the open side reads back as
   * NULL. Pure, apart from the SQL text it returns.
   */
-object PeriodSql:
+object RangeSql:
 
   /** `lower(col)` — the inclusive start of an `int8range` column; NULL when that side is open (Postgres reads an
     * infinite bound as NULL), or the column is NULL or empty.

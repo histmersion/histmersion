@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.util.database.RangeSql
+
 import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*
@@ -823,7 +825,7 @@ object MediaRepo:
       ps += (if l == "none" then Sql.raw("coalesce(btrim(a.license), '') = ''")
              else Sql.of("a.license = ?", Param.S(l)))
     )
-    window.foreach((lo, hi) => ps += Sql.raw(PeriodSql.overlaps("a.period", s"$lo::bigint", s"$hi::bigint")))
+    window.foreach((lo, hi) => ps += Sql.raw(RangeSql.overlaps("a.period", s"$lo::bigint", s"$hi::bigint")))
     val rest = ps.result().foldLeft(Sql.empty)((acc, p) => acc ++ Sql.raw(" AND ") ++ p)
     Sql.raw(
       "SELECT a.uid::text AS key, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat, lower(a.period) AS ps, upper(a.period) - 1 AS pe," +

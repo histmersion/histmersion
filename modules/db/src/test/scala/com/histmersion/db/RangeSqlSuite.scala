@@ -1,57 +1,59 @@
 package com.histmersion.db
 
+import com.histmersion.util.database.RangeSql
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 
-/** [[PeriodSql]] (#1798 item 9): the pure literal/merge rules, and — on a test database — a goal or an asset patched
-  * with ONE bound (it used to be silently ignored), read back through [[PeriodSql.cols]].
+/** [[RangeSql]] (#1798 item 9): the pure literal/merge rules, and — on a test database — a goal or an asset patched
+  * with ONE bound (it used to be silently ignored), read back through [[RangeSql.cols]].
   */
-class PeriodSqlSuite extends com.histmersion.db.DbSuite:
+class RangeSqlSuite extends com.histmersion.db.DbSuite:
 
   // ── pure ───────────────────────────────────────────────────────────────────────────────────────
   test("literal: closed, open on either side, none"):
-    assertEquals(PeriodSql.literal(Some(-1200), Some(-1000)), Some("[-1200,-999)"))
-    assertEquals(PeriodSql.literal(Some(-1200), None), Some("[-1200,)"))
-    assertEquals(PeriodSql.literal(None, Some(-1000)), Some("(,-999)"))
-    assertEquals(PeriodSql.literal(None, None), None)
+    assertEquals(RangeSql.literal(Some(-1200), Some(-1000)), Some("[-1200,-999)"))
+    assertEquals(RangeSql.literal(Some(-1200), None), Some("[-1200,)"))
+    assertEquals(RangeSql.literal(None, Some(-1000)), Some("(,-999)"))
+    assertEquals(RangeSql.literal(None, None), None)
 
   test("bounds and always: every year when no bound is given; literal of a closed period"):
-    assertEquals(PeriodSql.bounds(None, None), "(,)")
-    assertEquals(PeriodSql.always(None), "(,)")
-    assertEquals(PeriodSql.always(Some(Period(-1200, -1000))), "[-1200,-999)")
-    assertEquals(PeriodSql.literal(Some(Period(5, 5))), Some("[5,6)"))
-    assertEquals(PeriodSql.literal(Option.empty[Period]), None)
-    assertEquals(PeriodSql.literalOf(DeepTime.span(-1200L, -1000L)), Some("[-1200,-999)"))
-    assertEquals(PeriodSql.literalOf(None), None)
+    assertEquals(RangeSql.bounds(None, None), "(,)")
+    assertEquals(RangeSql.always(None), "(,)")
+    assertEquals(RangeSql.always(Some(Period(-1200, -1000))), "[-1200,-999)")
+    assertEquals(RangeSql.literal(Some(Period(5, 5))), Some("[5,6)"))
+    assertEquals(RangeSql.literal(Option.empty[Period]), None)
+    assertEquals(RangeSql.literalOf(DeepTime.span(-1200L, -1000L)), Some("[-1200,-999)"))
+    assertEquals(RangeSql.literalOf(None), None)
 
   test("the SQL spellings: inclusive reads, a range of inclusive bounds, an inclusive overlap"):
-    assertEquals(PeriodSql.cols("f.period"), "lower(f.period), upper(f.period) - 1")
-    assertEquals(PeriodSql.cols("f.period", "p0", "p1"), "lower(f.period) AS p0, upper(f.period) - 1 AS p1")
-    assertEquals(PeriodSql.range("d.lo", "d.hi"), "int8range(d.lo, d.hi + 1, '[)')")
-    val o = PeriodSql.overlaps("s.period", Period(-10, 10))
+    assertEquals(RangeSql.cols("f.period"), "lower(f.period), upper(f.period) - 1")
+    assertEquals(RangeSql.cols("f.period", "p0", "p1"), "lower(f.period) AS p0, upper(f.period) - 1 AS p1")
+    assertEquals(RangeSql.range("d.lo", "d.hi"), "int8range(d.lo, d.hi + 1, '[)')")
+    val o = RangeSql.overlaps("s.period", Period(-10, 10))
     assertEquals(o.text, "s.period && int8range(?::bigint, ?::bigint, '[]')")
     assertEquals(o.params, List(Param.L(-10), Param.L(10)))
 
   test("merge: a bound given alone replaces that bound and keeps the other"):
     val stored = (Some(-1200L), Some(-1000L))
-    assertEquals(PeriodSql.merge(stored, Some(-1300), None, "x"), Some(Right((Some(-1300L), Some(-1000L)))))
-    assertEquals(PeriodSql.merge(stored, None, Some(-900), "x"), Some(Right((Some(-1200L), Some(-900L)))))
-    assertEquals(PeriodSql.merge(stored, None, None, "x"), None, "nothing named, nothing to write")
-    assertEquals(PeriodSql.merge((None, None), Some(-50), None, "x"), Some(Right((Some(-50L), None))))
+    assertEquals(RangeSql.merge(stored, Some(-1300), None, "x"), Some(Right((Some(-1300L), Some(-1000L)))))
+    assertEquals(RangeSql.merge(stored, None, Some(-900), "x"), Some(Right((Some(-1200L), Some(-900L)))))
+    assertEquals(RangeSql.merge(stored, None, None, "x"), None, "nothing named, nothing to write")
+    assertEquals(RangeSql.merge((None, None), Some(-50), None, "x"), Some(Right((Some(-50L), None))))
 
   test("merge: a result that starts after it ends is refused, naming both years"):
-    val r = PeriodSql.merge((Some(-1200L), Some(-1000L)), Some(-900), None, "goal 'g'")
+    val r = RangeSql.merge((Some(-1200L), Some(-1000L)), Some(-900), None, "goal 'g'")
     assert(
       r.exists(_.left.exists(e => e.message.contains("900 BCE") && e.code.contains(Write.CodeInvalid))),
       r.toString
     )
 
   test("period: closed only when both bounds are known"):
-    assertEquals(PeriodSql.period(Some(-5), Some(5)), Some(Period(-5, 5)))
-    assertEquals(PeriodSql.period(Some(-5), None), None)
+    assertEquals(RangeSql.period(Some(-5), Some(5)), Some(Period(-5, 5)))
+    assertEquals(RangeSql.period(Some(-5), None), None)
 
   // ── on a test database ────────────────────────────────────────────────────────────────────────
   private val testDb = TestDb.url

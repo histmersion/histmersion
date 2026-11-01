@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.util.database.RangeSql
+
 import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*
@@ -315,7 +317,7 @@ object BundleRepo:
     s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')"""
 
   /** A range as the three columns [[range]] reads back. */
-  private def rangeCols(col: String): String = s"$col IS NULL, ${PeriodSql.cols(col)}"
+  private def rangeCols(col: String): String = s"$col IS NULL, ${RangeSql.cols(col)}"
 
   private[histmersion] def range(isNull: Boolean, lo: Option[Long], hi: Option[Long]): Option[BundleRange] =
     Option.when(!isNull)(BundleRange(lo, hi))

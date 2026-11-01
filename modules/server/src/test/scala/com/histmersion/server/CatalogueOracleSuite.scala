@@ -266,7 +266,10 @@ class CatalogueOracleSuite extends DbSuite:
         """{"label":"Zzcamp","kind":"site","lon":36.4,"lat":39.9,"source":"a survey map","id":"zz_camp","names":["Zzlager"],"lang":"de","periodStart":-1350,"periodEnd":-1250}"""
       )
     )
-    val _ = step("places add, refused", post(s"$url/api/places", """{"label":"","kind":"site","lon":1,"lat":2,"source":"x"}"""))
+    val _ = step(
+      "places add, refused",
+      post(s"$url/api/places", """{"label":"","kind":"site","lon":1,"lat":2,"source":"x"}""")
+    )
     val h = ok(step("places build-hierarchy", post(s"$url/api/places/build-hierarchy")))
     val _ = step("places build-hierarchy job", awaitJob(url, field(h, "job")))
     val _ = step("places name add", post(s"$url/api/places/zz_hill/names", """{"name":"Zzhill Höyük","lang":"tr"}"""))
@@ -419,7 +422,8 @@ class CatalogueOracleSuite extends DbSuite:
       "event ash",
       send("PUT", s"$url/api/events/zz_ash", eventPut("Ash over Zzport", "eruption", -1620, -1600, Some("zz_port")))
     )
-    val _ = step("event gone", send("PUT", s"$url/api/events/zz_gone", eventPut("A deleted event", "event", -900, -800)))
+    val _ =
+      step("event gone", send("PUT", s"$url/api/events/zz_gone", eventPut("A deleted event", "event", -900, -800)))
     val _ = step("event refused", send("PUT", s"$url/api/events/zz_bad", """{"label":"bad","scale":"huge"}"""))
     val _ = step(
       "event patch",
@@ -467,7 +471,10 @@ class CatalogueOracleSuite extends DbSuite:
         """{"citekey":"zzvolc2004_ash","targetType":"place","targetId":"zz_camp","quote":"Zzport","note":"by its old id"}"""
       )
     )
-    val _ = step("attestation refused", post(s"$url/api/attestations", """{"citekey":"zzhill1990_battle","targetType":"planet","targetId":"x"}"""))
+    val _ = step(
+      "attestation refused",
+      post(s"$url/api/attestations", """{"citekey":"zzhill1990_battle","targetType":"planet","targetId":"x"}""")
+    )
     val _ = step(
       "attestation missing source",
       post(s"$url/api/attestations", """{"citekey":"zznone1900_x","targetType":"place","targetId":"zz_hill"}""")
@@ -886,7 +893,8 @@ class CatalogueOracleSuite extends DbSuite:
       val _ = ok(post(s"$url/api/places/zz_hill/names", """{"name":"Zzhill on the river"}"""))
       val _ = ok(send("PATCH", s"$url/api/events/zz_battle", """{"description":"fought below the walls, at dawn"}"""))
       val _ = ok(send("DELETE", s"$url/api/events/zz_fire", ""))
-      val _ = ok(send("PUT", s"$url/api/events/zz_flood", eventPut("A flood", "flood", -1250, -1240, Some("zz_harbour"))))
+      val _ =
+        ok(send("PUT", s"$url/api/events/zz_flood", eventPut("A flood", "flood", -1250, -1240, Some("zz_harbour"))))
       bytes(s"$url/api/bundle")
     }
     val plan = withServer("home") { url =>

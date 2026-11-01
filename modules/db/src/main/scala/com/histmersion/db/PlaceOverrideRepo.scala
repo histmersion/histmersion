@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.util.database.RangeSql
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -33,7 +35,7 @@ object PlaceOverrideRepo:
     */
   private def rowOf(id: String)(using DbCon): Option[Row] =
     sql"""SELECT p.label, p.kind, ${SqlLiteral(PlaceRepo.startCol)},
-                 ${SqlLiteral(PeriodSql.end("p.period"))},
+                 ${SqlLiteral(RangeSql.end("p.period"))},
                  CASE WHEN GeometryType(p.geom) = 'POINT' THEN ST_Y(p.geom) END,
                  CASE WHEN GeometryType(p.geom) = 'POINT' THEN ST_X(p.geom) END,
                  coalesce(GeometryType(p.geom) <> 'POINT', false)
@@ -88,7 +90,7 @@ object PlaceOverrideRepo:
           case PlaceOverrideEdit.Put(kind, period, reason, point) =>
             // a side not given keeps what the override had (open, the first time)
             val hasPeriod = period.isDefined
-            val range = period.map((lo, hi) => PeriodSql.bounds(lo, hi))
+            val range = period.map((lo, hi) => RangeSql.bounds(lo, hi))
             val hasLo = period.flatMap(_._1).isDefined
             val hasHi = period.flatMap(_._2).isDefined
             val lon = point.map(_.lon)
@@ -217,12 +219,12 @@ object PlaceOverrideRepo:
   def list(ds: DataSource, id: Option[String]): List[PlaceOverride] =
     connect(ds):
       sql"""SELECT o.place_id, p.label, o.kind,
-                   ${SqlLiteral(PeriodSql.cols("o.period"))},
+                   ${SqlLiteral(RangeSql.cols("o.period"))},
                    o.period IS NOT NULL, o.reason, o.source_kind,
                    CASE WHEN o.source_start_unknown THEN NULL ELSE ${SqlLiteral(
-          PeriodSql.start("o.source_period")
+          RangeSql.start("o.source_period")
         )} END,
-                   ${SqlLiteral(PeriodSql.end("o.source_period"))},
+                   ${SqlLiteral(RangeSql.end("o.source_period"))},
                    to_char(o.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
                    ST_Y(o.point), ST_X(o.point),
                    CASE WHEN GeometryType(o.source_geom) = 'POINT' THEN ST_Y(o.source_geom) END,

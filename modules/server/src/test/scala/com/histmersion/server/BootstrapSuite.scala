@@ -3,7 +3,10 @@ package com.histmersion.server
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{Db, Migrate, PeriodRepo}
+import com.histmersion.db.{Db, Migrate}
+import com.histmersion.domain.catalogue.periods.{PeriodsControllers, PeriodService}
+import com.histmersion.util.data.maintenance.WriteGate
+import com.histmersion.util.database.Transactor
 import com.histmersion.util.jobs.JobRepo
 
 import com.augustnagro.magnum.*
@@ -40,6 +43,15 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
     val cfg = base.copy(db = base.db.copy(url = testDb.get), init = base.init.copy(dataDir = dir.toString))
     Bootstrap(Deps(cfg, ds), net)
 
+  /** The periods as the server's controllers reach them, over `b`'s service and imports. */
+  extension (b: Bootstrap)
+    private def ctl: PeriodsControllers = PeriodsControllers(b.periods, b.periodImports, WriteGate())
+    def seedPeriods(replace: Boolean = false) = ctl.seed(Caller.Local, replace)
+    def period(id: String) = ctl.period(id)
+    def fetchPeriods(source: String, collections: List[String]) = ctl.fetch(Caller.Local, source, collections)
+
+  private lazy val periods = PeriodService(Transactor(ds))
+
   private def clean(): Unit =
     (fixtureIds ++ seedIds.reverse).foreach(id => transact(ds)(sql"DELETE FROM periods WHERE id = $id".update.run()))
     transact(ds)(sql"DELETE FROM seed_versions WHERE name = ${Bootstrap.PeriodSeed}".update.run())
@@ -54,7 +66,7 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
     // #771: the seed's two EAMENA Palaeolithic periods start in 14,000,000 BC — reported, not stored
     assertEquals(r.skipped.map(_.id), List("p0m64tdgpvd", "p0m64tdp282"))
     assertEquals(r.skippedCount, 2)
-    assertEquals(PeriodRepo.get(ds, "p0m64tdp282"), None)
+    assertEquals(periods.get("p0m64tdp282"), None)
     val b = bootstrap(dataDir())
     val lm = b.period("p0ds9qjh4dh").fold(e => fail(e.message), identity) // Late Minoan (BSA)
     assertEquals(lm.period.period, Period(-1700, -1050))
@@ -64,18 +76,18 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
     // the web timeline's presets are the seed's, each under its region heading
     val seed = PeriodO.parse(seedText).toOption.get
     assertEquals(r.presets, seed.presets.size)
-    val aegean = PeriodRepo.get(ds, "p0ds9qjq7b2").fold(fail("no Bronze Age (Greece)"))(identity)
+    val aegean = periods.get("p0ds9qjq7b2").fold(fail("no Bronze Age (Greece)"))(identity)
     assertEquals(
       (aegean.label, aegean.region, aegean.preset),
       ("Bronze Age", Some("Greece"), Some(PresetRegion.Aegean))
     )
     // ROAD's Eurasia-wide Bronze Age is still a period, but not a preset
-    assertEquals(PeriodRepo.get(ds, "p0s2rwkwbsz").map(p => (p.label, p.preset)), Some(("Bronze Age", None)))
+    assertEquals(periods.get("p0s2rwkwbsz").map(p => (p.label, p.preset)), Some(("Bronze Age", None)))
 
   test("a second seed is idempotent"):
-    val before = PeriodRepo.count(ds)
+    val before = periods.count()
     bootstrap(dataDir()).seedPeriods().fold(e => fail(e.message), identity)
-    assertEquals(PeriodRepo.count(ds), before)
+    assertEquals(periods.count(), before)
 
   // the presets of an install seeded before V062 were the parentless rows, under ROAD's umbrella
   test("a newer bundled seed re-applies itself on start: old nesting undone, the presets become the seed's"):
@@ -83,23 +95,23 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
     b.seedPeriods().fold(e => fail(e.message), identity)
     assertEquals(b.plan(fetch = false, onlyEmpty = true).periodPresets, false) // current: nothing to do
     // an older install: version 1, the BSA's Bronze Age under ROAD's, a preset the seed does not name
-    PeriodRepo.setSeedVersion(ds, Bootstrap.PeriodSeed, 1)
+    periods.setSeedVersion(Bootstrap.PeriodSeed, 1)
     transact(ds):
       val _ = sql"UPDATE periods SET parent_id = 'p0s2rwkwbsz', preset = NULL WHERE id = 'p0ds9qjq7b2'".update.run()
       val _ = sql"UPDATE periods SET preset = 'broad' WHERE id = 'p0s2rwkwbsz'".update.run()
     assertEquals(b.plan(fetch = false, onlyEmpty = true).periodPresets, true)
     b.seedPeriods().fold(e => fail(e.message), identity)
-    val bsa = PeriodRepo.get(ds, "p0ds9qjq7b2").get
+    val bsa = periods.get("p0ds9qjq7b2").get
     assertEquals((bsa.parentId, bsa.preset), (None, Some(PresetRegion.Aegean)))
-    assertEquals(PeriodRepo.get(ds, "p0s2rwkwbsz").flatMap(_.preset), None)
-    assertEquals(PeriodRepo.seedVersion(ds, Bootstrap.PeriodSeed), PeriodO.parse(seedText).toOption.get.version)
+    assertEquals(periods.get("p0s2rwkwbsz").flatMap(_.preset), None)
+    assertEquals(periods.seedVersion(Bootstrap.PeriodSeed), PeriodO.parse(seedText).toOption.get.version)
     assertEquals(b.plan(fetch = false, onlyEmpty = true).periodPresets, false)
 
   test("a period fetch never takes a seed preset off the menu"):
     val b = bootstrap(dataDir())
     b.seedPeriods().fold(e => fail(e.message), identity)
-    PeriodRepo.upsert(ds, List(PeriodRepo.get(ds, "p0ds9qjq7b2").get.copy(preset = None)))
-    assertEquals(PeriodRepo.get(ds, "p0ds9qjq7b2").flatMap(_.preset), Some(PresetRegion.Aegean))
+    periods.write(List(periods.get("p0ds9qjq7b2").get.copy(preset = None)), Dataset.Seed)
+    assertEquals(periods.get("p0ds9qjq7b2").flatMap(_.preset), Some(PresetRegion.Aegean))
 
   test("a missing seed is an error naming where it looked"):
     val r = bootstrap(Files.createTempDirectory("histmersion-empty")).seedPeriods()
@@ -112,16 +124,16 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
     assertEquals(asked, List(base.periods.periodoUrl))
     assertEquals(r.periods, 4) // 3 periods + the authority node
     assertEquals(r.roots, 1)
-    assertEquals(PeriodRepo.get(ds, "zzqother01"), None)
+    assertEquals(periods.get("zzqother01"), None)
     val node = b.period("zzqauth").fold(e => fail(e.message), identity)
     assertEquals(node.period.label, "Zzq test chronology")
     assertEquals(node.period.period, Period(-3000, -500))
     assertEquals(node.children.map(_.id).toSet, Set("zzqauthbronze", "zzqauthiron"))
-    assertEquals(PeriodRepo.get(ds, "zzqauthlba").flatMap(_.parentId), Some("zzqauthbronze"))
+    assertEquals(periods.get("zzqauthlba").flatMap(_.parentId), Some("zzqauthbronze"))
     // somebody moves a period; a re-fetch leaves it where it is
     transact(ds)(sql"UPDATE periods SET parent_id = NULL WHERE id = 'zzqauthiron'".update.run())
     b.fetchPeriods("periodo", List("zzqauth")).fold(e => fail(e.message), identity)
-    assertEquals(PeriodRepo.get(ds, "zzqauthiron").flatMap(_.parentId), None)
+    assertEquals(periods.get("zzqauthiron").flatMap(_.parentId), None)
 
   test("periods fetch: an unknown source, a missing collection and a dead network are errors"):
     val b = bootstrap(dataDir())

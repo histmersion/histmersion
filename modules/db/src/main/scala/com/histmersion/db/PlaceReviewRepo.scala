@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.util.database.RangeSql
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -57,7 +59,7 @@ object PlaceReviewRepo:
     val rows = Sql
       .raw(
         "SELECT p.id, p.label, p.kind, p.properties->>'feature_types', p.properties->>'time_periods'," +
-          s" CASE WHEN p.start_unknown THEN NULL ELSE ${PeriodSql.start("p.period")} END, ${PeriodSql.end("p.period")}" +
+          s" CASE WHEN p.start_unknown THEN NULL ELSE ${RangeSql.start("p.period")} END, ${RangeSql.end("p.period")}" +
           s" FROM places p WHERE $reviewedSql ORDER BY p.id"
       )
       .frag
@@ -66,7 +68,7 @@ object PlaceReviewRepo:
       .toList
     val ids = rows.map(_.id)
     val items = sql"""SELECT place_id, scheme || ':' || external_id, item_class,
-                             ${SqlLiteral(PeriodSql.cols("item_period"))}
+                             ${SqlLiteral(RangeSql.cols("item_period"))}
                       FROM place_links WHERE place_id = ANY($ids::text[]) AND item_class IS NOT NULL
                       ORDER BY place_id, scheme, external_id""".query[ItemRow].run().toList.groupBy(_.placeId)
     val descs = sql"""SELECT place_id, text FROM place_descriptions
@@ -120,7 +122,7 @@ object PlaceReviewRepo:
     else
       transact(ds):
         val re = todo.collect { case p: Proposal.Reclassify => p }.filter { p =>
-          val range = PeriodSql.literalOf(p.period)
+          val range = RangeSql.literalOf(p.period)
           sql"""UPDATE places SET kind = ${p.to},
                   period = coalesce($range::int8range, period),
                   start_unknown = CASE WHEN $range::text IS NULL THEN start_unknown ELSE false END

@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.util.database.RangeSql
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -272,7 +274,7 @@ object EventRepo:
     */
   private[db] def tileCandidates(where: Sql, envelope: Sql): Sql =
     Sql.raw(s"""SELECT e.id AS key, ST_X(a.pt) AS lon, ST_Y(a.pt) AS lat,
-                  ${PeriodSql.start("e.outer_span")} AS ps, ${PeriodSql.end("e.outer_span")} AS pe, false AS ub
+                  ${RangeSql.start("e.outer_span")} AS ps, ${RangeSql.end("e.outer_span")} AS pe, false AS ub
                 FROM $fromEvents $anchorJoins
                 WHERE s.g IS NOT NULL AND e.uncertainty <= ${EventPrecision.ApproximateUpTo} AND s.g && """) ++
       envelope ++ Sql.raw(" AND ") ++ where
@@ -285,7 +287,7 @@ object EventRepo:
     */
   private[db] def tileCandidatesWithUndated(where: Sql, undatedWhere: Sql, envelope: Sql): Sql =
     Sql.raw(s"""SELECT e.id AS key, ST_X(a.pt) AS lon, ST_Y(a.pt) AS lat,
-                  ${PeriodSql.start("e.outer_span")} AS ps, ${PeriodSql.end("e.outer_span")} AS pe, $UndatedSql AS ub
+                  ${RangeSql.start("e.outer_span")} AS ps, ${RangeSql.end("e.outer_span")} AS pe, $UndatedSql AS ub
                 FROM $fromEvents $anchorJoins
                 WHERE s.g IS NOT NULL AND s.g && """) ++ envelope ++
       Sql.raw(s" AND ((e.uncertainty <= ${EventPrecision.ApproximateUpTo} AND ") ++ where ++
