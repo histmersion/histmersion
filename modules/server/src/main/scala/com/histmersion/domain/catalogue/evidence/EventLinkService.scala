@@ -7,6 +7,7 @@ import com.histmersion.values.EventLinkStatus
 import hearth.kindlings.optics.syntax.*
 
 import java.util.concurrent.atomic.AtomicReference
+import scala.annotation.tailrec
 
 /** The sources proposed as discussing an event — scored, then confirmed or rejected — and which events' proposals were
   * computed.
@@ -58,24 +59,28 @@ object EventLinkService:
     def saveCandidates(id: String, cs: List[EventLinkCandidate]): Unit =
       val _ = state.updateAndGet { s =>
         val kept = s.candidates.filterNot(c => c.eventId == id && c.status == EventLinkStatus.Proposed)
-        val written = cs.foldLeft(kept) { (acc, c) =>
-          acc.find(o => o.eventId == id && o.citekey == c.citekey) match
-            case Some(o) =>
-              acc.map(x =>
-                if x eq o then
-                  x.modify(_.score)
-                    .setTo(c.score)
-                    .modify(_.findings)
-                    .setTo(c.findings)
-                    .modify(_.passages)
-                    .setTo(c.passages)
-                    .modify(_.reasons)
-                    .setTo(c.reasons)
-                else x
-              )
-            case None =>
-              acc :+ c.modify(_.eventId).setTo(id).modify(_.status).setTo(EventLinkStatus.Proposed)
-        }
+        @tailrec def loop(rest: List[EventLinkCandidate], acc: Vector[EventLinkCandidate]): Vector[EventLinkCandidate] =
+          rest match
+            case c :: tail =>
+              val decided = acc.indexWhere(o => o.eventId == id && o.citekey == c.citekey)
+              val next =
+                if decided >= 0 then
+                  acc.updated(
+                    decided,
+                    acc(decided)
+                      .modify(_.score)
+                      .setTo(c.score)
+                      .modify(_.findings)
+                      .setTo(c.findings)
+                      .modify(_.passages)
+                      .setTo(c.passages)
+                      .modify(_.reasons)
+                      .setTo(c.reasons)
+                  )
+                else acc :+ c.modify(_.eventId).setTo(id).modify(_.status).setTo(EventLinkStatus.Proposed)
+              loop(tail, next)
+            case Nil => acc
+        val written = loop(cs, kept)
         s.modify(_.candidates).setTo(written).modify(_.checked).using(_ + id)
       }
 

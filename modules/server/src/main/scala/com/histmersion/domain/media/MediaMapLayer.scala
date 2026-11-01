@@ -21,7 +21,8 @@ final class MediaMapLayer(ds: DataSource) extends MapLayer:
     TilePoint(
       c.x,
       c.y,
-      F.text(P.Key, c.key) ++ F.text(P.Uid, h.uid) ++ F.text(P.Citekey, h.citekey) ++ F.text(P.AssetName, h.assetName) ++
+      F.text(P.Key, c.key) ++ F.text(P.Uid, h.uid) ++ F.text(P.Citekey, h.citekey) ++ F
+        .text(P.AssetName, h.assetName) ++
         F.text(P.Kind, h.kind) ++ F.whole(P.PeriodStart, h.periodStart) ++ F.whole(P.PeriodEnd, h.periodEnd) ++ F.text(
           P.Caption,
           h.caption
@@ -33,4 +34,3 @@ final class MediaMapLayer(ds: DataSource) extends MapLayer:
         // its full size is this server's own `/media/{uid}/file`, which the map makes from the uid (not sent per picture)
         F.text(P.SourceUrl, h.sourceUrl) ++ F.text(P.LicenseUrl, h.licenseUrl) ++ F.text(P.Author, h.author)
     )
-

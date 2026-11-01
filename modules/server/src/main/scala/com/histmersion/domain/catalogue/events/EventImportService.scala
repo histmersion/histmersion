@@ -15,6 +15,7 @@ import com.histmersion.util.database.Transactor
 import hearth.kindlings.optics.syntax.*
 
 import java.util.concurrent.atomic.AtomicReference
+import scala.annotation.tailrec
 
 /** What an import of an event catalogue reads and writes: the stored events as its merge sees them, the placed records
   * written (events created and refreshed, corrections by hand applied), the records kept for a re-derivation, and the
@@ -174,42 +175,67 @@ object EventImportService:
     private def upsertRecord(s: CatalogueState, eventId: String, r: CatalogRecord): CatalogueState =
       s.modify(_.catalogueRecords).using(rs => rs.filterNot(_._2.key == r.key) :+ (eventId -> r))
 
-    def save(placed: List[(CatalogRecord, CatalogMerge.Placement)]): EventSaved =
-      // `var`s: the counts of this write
-      var created, updated = 0
-      var counts = CorrectionCounts()
-      val _ = state.updateAndGet { s0 =>
-        created = 0; updated = 0; counts = CorrectionCounts()
-        placed.groupBy(_._2.eventId).toList.sortBy(_._1).foldLeft(s0) { case (s, (eventId, group)) =>
-          val recs = group.map(_._1).sortBy(_.key)
-          val names = recs.flatMap(r => r.label :: r.names).map(_.trim).filter(_.nonEmpty).distinct
-          val wd = recs.flatMap(_.wikidata).headOption
-          val catalogue = s.events.find(_.id == eventId).map(_.catalogue)
-          def ownerIn(p: String): Option[CatalogRecord] =
-            val storedKeys = s.catalogueRecords.filter(_._1 == eventId).map(_._2.key).toList
-            CatalogRecord.owner(eventId, p, storedKeys ++ recs.map(_.key)).flatMap(k => recs.find(_.key == k))
-          def refreshOrFill(p: String): CatalogueState =
-            ownerIn(p).fold(fill(s, eventId, names, wd)) { r =>
-              val (after, c) = refresh(s, eventId, r, names, wd)
-              counts = counts + c
-              updated += 1
-              after
-            }
-          val written = group.head._2 match
-            case CatalogMerge.Placement.New(_, _) =>
-              val creator = recs.find(r => CatalogRecord.eventId(r) == eventId).getOrElse(recs.head)
-              catalogue match
-                case None =>
-                  created += 1
-                  inserted(s, eventId, creator, names, wd)
-                case Some(Some(p)) => refreshOrFill(p)
-                case Some(None)    => fill(s, eventId, names, wd)
-            case CatalogMerge.Placement.Existing(_, _) =>
-              catalogue.flatten.fold(fill(s, eventId, names, wd))(refreshOrFill)
-          recs.foldLeft(written)(upsertRecord(_, eventId, _))
+    /** One event's placed records written: the state after, whether the event was created, and what became of its
+      * corrections when it was refreshed.
+      */
+    private def saveOne(
+        s: CatalogueState,
+        eventId: String,
+        group: List[(CatalogRecord, CatalogMerge.Placement)]
+    ): (CatalogueState, Boolean, Option[CorrectionCounts]) =
+      val recs = group.map(_._1).sortBy(_.key)
+      val names = recs.flatMap(r => r.label :: r.names).map(_.trim).filter(_.nonEmpty).distinct
+      val wd = recs.flatMap(_.wikidata).headOption
+      val catalogue = s.events.find(_.id == eventId).map(_.catalogue)
+      def ownerIn(p: String): Option[CatalogRecord] =
+        val storedKeys = s.catalogueRecords.filter(_._1 == eventId).map(_._2.key).toList
+        CatalogRecord.owner(eventId, p, storedKeys ++ recs.map(_.key)).flatMap(k => recs.find(_.key == k))
+      def refreshOrFill(p: String): (CatalogueState, Boolean, Option[CorrectionCounts]) =
+        ownerIn(p).fold((fill(s, eventId, names, wd), false, None)) { r =>
+          val (after, c) = refresh(s, eventId, r, names, wd)
+          (after, false, Some(c))
         }
+      val (written, created, refreshed) = group.head._2 match
+        case CatalogMerge.Placement.New(_, _) =>
+          val creator = recs.find(r => CatalogRecord.eventId(r) == eventId).getOrElse(recs.head)
+          catalogue match
+            case None          => (inserted(s, eventId, creator, names, wd), true, None)
+            case Some(Some(p)) => refreshOrFill(p)
+            case Some(None)    => (fill(s, eventId, names, wd), false, None)
+        case CatalogMerge.Placement.Existing(_, _) =>
+          catalogue.flatten.fold((fill(s, eventId, names, wd), false, None))(refreshOrFill)
+      @tailrec def kept(rest: List[CatalogRecord], acc: CatalogueState): CatalogueState = rest match
+        case r :: tail => kept(tail, upsertRecord(acc, eventId, r))
+        case Nil       => acc
+      (kept(recs, written), created, refreshed)
+
+    def save(placed: List[(CatalogRecord, CatalogMerge.Placement)]): EventSaved =
+      val groups = placed.groupBy(_._2.eventId).toList.sortBy(_._1)
+      @tailrec def loop(
+          rest: List[(String, List[(CatalogRecord, CatalogMerge.Placement)])],
+          s: CatalogueState,
+          created: Int,
+          updated: Int,
+          counts: CorrectionCounts
+      ): (CatalogueState, EventSaved) = rest match
+        case (eventId, group) :: tail =>
+          val (after, made, refreshed) = saveOne(s, eventId, group)
+          loop(
+            tail,
+            after,
+            created + (if made then 1 else 0),
+            updated + refreshed.size,
+            refreshed.fold(counts)(counts + _)
+          )
+        case Nil => (s, EventSaved(created, updated, placed.size, counts))
+      // the answer of the attempt that took: a contended update runs the loop again on the newer state
+      val answer = AtomicReference[EventSaved]()
+      val _ = state.updateAndGet { s0 =>
+        val (after, saved) = loop(groups, s0, 0, 0, CorrectionCounts())
+        answer.set(saved)
+        after
       }
-      EventSaved(created, updated, placed.size, counts)
+      answer.get
 
     def records(provider: Option[String]): (List[(String, String, CatalogRecord)], Int) =
       val s = state.get
