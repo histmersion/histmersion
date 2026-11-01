@@ -9,11 +9,11 @@ import com.histmersion.db.given
 import com.augustnagro.magnum.*
 import java.util.UUID
 
-/** The figures as a bundle carries them (docs/research-merge-import.md §4): this collection's assets with their source's
-  * uid, read out in uid order, the bytes of each one a blob — and written in by an import, the metadata of the ones
-  * whose bytes are here already first, the rest as their bytes arrive.
+/** The figures as a bundle carries them (docs/research-merge-import.md §4): this collection's assets with their
+  * source's uid, read out in uid order, the bytes of each one a blob — and written in by an import, the metadata of the
+  * ones whose bytes are here already first, the rest as their bytes arrive.
   */
-private[media] object AssetBundleRepo:
+private[assets] object AssetBundleRepo:
 
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 
@@ -44,7 +44,10 @@ private[media] object AssetBundleRepo:
 
   /** The bytes of one asset, written as a blob. */
   def bytes(uid: UUID)(using DbCon): java.io.OutputStream => Unit =
-    out => out.write(Sql.of("SELECT bytes FROM assets WHERE uid = ?::uuid", Param.S(uid.toString)).frag.query[Array[Byte]].run().head)
+    out =>
+      out.write(
+        Sql.of("SELECT bytes FROM assets WHERE uid = ?::uuid", Param.S(uid.toString)).frag.query[Array[Byte]].run().head
+      )
 
   // ── in ───────────────────────────────────────────────────────────────────────────────────────
 

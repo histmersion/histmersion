@@ -4,7 +4,7 @@ import com.augustnagro.magnum.DbCodec
 import java.util.UUID
 
 /** An asset as a bundle reads it: its line's fields, the size of its bytes, its period's inclusive bounds. */
-final private[media] case class AssetBundleRow(
+final private[assets] case class AssetBundleRow(
     uid: UUID,
     origin: UUID,
     sourceUid: UUID,

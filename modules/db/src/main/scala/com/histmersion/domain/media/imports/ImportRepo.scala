@@ -10,7 +10,7 @@ import com.augustnagro.magnum.*
   * not asked yet by a provider, the facts a collection's match reads of a place, and `media_checks`. Every method runs
   * on the connection it is given.
   */
-private[histmersion] object ImportRepo:
+private[imports] object ImportRepo:
 
   val Place = "place"
   val Event = "event"

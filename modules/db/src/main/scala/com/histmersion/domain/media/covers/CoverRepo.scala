@@ -9,7 +9,7 @@ import com.augustnagro.magnum.*
 /** The sources a run of covers and illustrations looks at (#1446): those with figures and no illustration yet, those
   * with an ISBN or OCLC number and no cover yet. Every method runs on the connection it is given.
   */
-private[histmersion] object CoverRepo:
+private[covers] object CoverRepo:
 
   /** Sources with figures, for illustrations: those without one yet (all with `refresh`), or `only`. */
   def illustrationCandidates(only: Option[String], refresh: Boolean, limit: Int)(using DbCon): List[String] =

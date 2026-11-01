@@ -2,7 +2,7 @@ package com.histmersion.domain.media.assets
 
 import com.augustnagro.magnum.DbCodec
 
-final private[media] case class MediaGeoRow(
+final private[assets] case class MediaGeoRow(
     citekey: Option[String],
     name: String,
     kind: Option[String],

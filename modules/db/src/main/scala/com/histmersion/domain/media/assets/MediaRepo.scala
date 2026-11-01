@@ -14,7 +14,7 @@ import com.histmersion.values.MediaRole
   * stored picture shares — the media list and facets, the media layer, the cards' thumbnails. Every method runs on the
   * connection it is given.
   */
-private[histmersion] object MediaRepo:
+private[assets] object MediaRepo:
 
   // ── writes ───────────────────────────────────────────────────────────────────────────────────
 
