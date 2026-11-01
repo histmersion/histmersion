@@ -27,6 +27,7 @@ for b in bboxes:
         reqs.append(("geo-when", f"/api/findings?{b}&{p}"))
         reqs.append(("events", f"/api/events?{b}&{p}"))
         reqs.append(("events-geo", f"/api/events/geo?{b}&{p}"))
+        reqs.append(("events-leads", f"/api/events/leads?{b}&{p}"))
     reqs.append(("geo-when", f"/api/findings?{b}"))
 for p in ("asOf=-1300", "asOf=-2000", "from=-1600&to=-1100", "from=-1600&to=-1100&pick=latest"):
     reqs.append(("places-geo", f"/api/places/geo?kind=region&{p}"))

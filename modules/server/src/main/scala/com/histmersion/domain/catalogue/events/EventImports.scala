@@ -115,8 +115,7 @@ final class EventImports(
           val lim = limitsOf(provider, presentYear())
           val date: CatalogRecord => CatalogRecord = PluginEvents.derive(_, lim)
           // an item read again in a later (less specific) class keeps the kind it was stored with
-          val kinds = if provider == CatalogProvider.Wikidata && !req.dryRun then
-            store.storedKinds(provider)
+          val kinds = if provider == CatalogProvider.Wikidata && !req.dryRun then store.storedKinds(provider)
           else Map.empty
           val recs = read
             .map(date)
@@ -326,5 +325,7 @@ final class EventImports(
         }
         .toMap
       recs.map(r =>
-        r.wikidata.flatMap(names.get).fold(r)(ns => r.modify(_.names).setTo((r.names ++ ns).filterNot(_ == r.label).distinct))
+        r.wikidata
+          .flatMap(names.get)
+          .fold(r)(ns => r.modify(_.names).setTo((r.names ++ ns).filterNot(_ == r.label).distinct))
       )

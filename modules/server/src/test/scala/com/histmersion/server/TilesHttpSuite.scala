@@ -2,7 +2,7 @@ package com.histmersion.server
 
 import com.histmersion.api.TilesApi
 import com.histmersion.config.AppConfig
-import com.histmersion.domain.{TileCoord, VectorTileReader}
+import com.histmersion.domain.catalogue.maptiles.{TileCoord, VectorTileReader}
 import com.histmersion.db.Migrate
 
 import com.augustnagro.magnum.*

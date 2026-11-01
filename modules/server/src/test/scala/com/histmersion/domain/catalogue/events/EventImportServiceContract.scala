@@ -53,7 +53,10 @@ abstract class EventImportServiceContract extends CatalogueStoreSuite:
     assertEquals(records.map((id, _, r) => (id, r.providerId)), List(("gvp_1", "1"), ("zz_hand", "2")))
     assertEquals(undecodable, 0)
     assertEquals(im.storedKinds("gvp"), Map(("gvp", "1") -> "eruption", ("gvp", "2") -> "eruption"))
-    assertEquals(s.events.catalogueRefs("gvp_1").map(r => (r.provider, r.providerId, r.vei)), List(("gvp", "1", Some(6))))
+    assertEquals(
+      s.events.catalogueRefs("gvp_1").map(r => (r.provider, r.providerId, r.vei)),
+      List(("gvp", "1", Some(6)))
+    )
   }
 
   stest("the parts read: marked, listed, cleared") { s =>
@@ -88,4 +91,3 @@ abstract class EventImportServiceContract extends CatalogueStoreSuite:
       assertEquals(listed(None), Nil, "a retired correction is not listed by default")
       assertEquals(listed(Some("agreed")).map(_.field), List("label"))
   }
-

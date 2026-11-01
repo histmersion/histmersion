@@ -81,7 +81,8 @@ object EventFixtures:
   def markPart(ds: DataSource, provider: String, part: String, records: Int): Unit =
     transact(ds)(EventImportRepo.markPart(provider, part, records))
   def clearParts(ds: DataSource, provider: String): Unit = transact(ds)(EventImportRepo.clearParts(provider))
-  def catalogueRefs(ds: DataSource, id: String): List[EventCatalogueRef] = connect(ds)(EventImportRepo.catalogueRefs(id))
+  def catalogueRefs(ds: DataSource, id: String): List[EventCatalogueRef] =
+    connect(ds)(EventImportRepo.catalogueRefs(id))
 
   def corrections(
       ds: DataSource,

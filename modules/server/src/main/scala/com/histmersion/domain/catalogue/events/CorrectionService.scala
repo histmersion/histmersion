@@ -28,7 +28,8 @@ object CorrectionService:
       val one = id.map(_.trim).filter(_.nonEmpty)
       val all = s.corrections
         .filter(c =>
-          c.targetKind == kind && one.forall(_ == c.targetId) && st.fold(c.status != CorrectionStatus.Agreed)(_ == c.status)
+          c.targetKind == kind && one.forall(_ == c.targetId) && st
+            .fold(c.status != CorrectionStatus.Agreed)(_ == c.status)
         )
         .sortBy(c => (c.status != CorrectionStatus.Conflict, c.targetId, c.field))
       val from = offset.max(0)

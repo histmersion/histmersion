@@ -200,11 +200,16 @@ object EventService:
           e.parentId.flatMap(p => s.events.find(_.id == p)).map(summaryOf(s, _)),
           ordered(s.events.filter(_.parentId.contains(id))).toList.map(summaryOf(s, _)),
           e.datings.sortBy(_.citekey),
-          s.events.flatMap(_.edges).filter(g => g.srcId == id || g.dstId == id).distinct.toList
+          s.events
+            .flatMap(_.edges)
+            .filter(g => g.srcId == id || g.dstId == id)
+            .distinct
+            .toList
             .sortBy(g => (g.kind, g.srcId, g.dstId)),
           e.participants.sortBy(p => (p.role, p.actor)),
           e.wikidata,
-          corrections = s.corrections.filter(c => c.targetKind == CorrectionTarget.Event && c.targetId == id)
+          corrections = s.corrections
+            .filter(c => c.targetKind == CorrectionTarget.Event && c.targetId == id)
             .sortBy(_.field)
             .toList
         )
@@ -242,9 +247,9 @@ object EventService:
         case Right(j) =>
           val c = j.hcursor
           c.get[String]("type").toOption match
-            case None                                 => Some("unknown GeoJSON type")
+            case None => Some("unknown GeoJSON type")
             case Some(t) if c.downField("coordinates").succeeded || t == "GeometryCollection" => None
-            case Some(_)                              => Some("Unable to find 'coordinates' in GeoJSON string")
+            case Some(_) => Some("Unable to find 'coordinates' in GeoJSON string")
 
     /** The corrections a person's `fields` make on an event an import created, recorded as the database does. */
     private def withCorrections(s: CatalogueState, id: String, fields: Map[String, io.circe.Json]): CatalogueState =
@@ -259,9 +264,8 @@ object EventService:
         val up = EventFields.upstream(rec)
         fields.foldLeft(s) { case (acc, (f, v)) =>
           up.get(f).fold(acc) { u =>
-            val others = acc.corrections.filterNot(c =>
-              c.targetKind == CorrectionTarget.Event && c.targetId == id && c.field == f
-            )
+            val others =
+              acc.corrections.filterNot(c => c.targetKind == CorrectionTarget.Event && c.targetId == id && c.field == f)
             if v == u then acc.modify(_.corrections).setTo(others)
             else
               val n = acc.lastCorrectionId + 1
@@ -391,7 +395,11 @@ object EventService:
                 .using(_.map(p => p.modify(_.eventId).using(ren)))
             })
             .modify(_.attestations)
-            .using(_.map(a => if a.targetType == "event" && a.targetId == oldId then a.modify(_.targetId).setTo(newId) else a))
+            .using(
+              _.map(a =>
+                if a.targetType == "event" && a.targetId == oldId then a.modify(_.targetId).setTo(newId) else a
+              )
+            )
             .modify(_.corrections)
             .using(_.map(c => if c.targetKind == CorrectionTarget.Event then c.modify(_.targetId).using(ren) else c))
             .modify(_.catalogueRecords)
@@ -409,7 +417,9 @@ object EventService:
       val had = state.get.events.exists(_.id == id)
       val _ = state.updateAndGet(
         _.modify(_.events)
-          .using(_.filterNot(_.id == id).map(e => e.modify(_.edges).using(_.filterNot(g => g.srcId == id || g.dstId == id))))
+          .using(
+            _.filterNot(_.id == id).map(e => e.modify(_.edges).using(_.filterNot(g => g.srcId == id || g.dstId == id)))
+          )
           .modify(_.corrections)
           .using(_.filterNot(c => c.targetKind == CorrectionTarget.Event && c.targetId == id))
       )

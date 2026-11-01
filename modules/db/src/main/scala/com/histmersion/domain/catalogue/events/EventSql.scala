@@ -36,8 +36,8 @@ object EventSql:
     */
   final case class Narrow(tier: Option[String] = None, context: Boolean = false, area: Option[BBox] = None)
 
-  /** The WHERE of the event list over `events e` with its place `ep` (the area reads the anchor): the events related
-    * to the filter's sources ([[EventSourceFilter]]), narrowed by the event's own `text` (label/description substring),
+  /** The WHERE of the event list over `events e` with its place `ep` (the area reads the anchor): the events related to
+    * the filter's sources ([[EventSourceFilter]]), narrowed by the event's own `text` (label/description substring),
     * kind, historicity, place and [[Narrow]].
     */
   def listWhere(

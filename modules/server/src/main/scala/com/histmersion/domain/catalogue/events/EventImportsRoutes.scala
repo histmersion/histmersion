@@ -14,6 +14,8 @@ object EventImportsRoutes:
     List(
       EventsApi.importEvents.serverLogic[Identity](req => imports.importJob(me, req)),
       EventsApi.rederive.serverLogic[Identity](req => imports.rederiveJob(me, req)),
-      EventsApi.corrections.serverLogic[Identity]((st, ev, limit, offset) => imports.corrections(st, ev, limit, offset)),
+      EventsApi.corrections.serverLogic[Identity]((st, ev, limit, offset) =>
+        imports.corrections(st, ev, limit, offset)
+      ),
       EventsApi.catalogues.serverLogicSuccess[Identity](_ => imports.catalogues)
     )

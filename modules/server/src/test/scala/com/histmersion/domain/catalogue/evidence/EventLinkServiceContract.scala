@@ -10,7 +10,14 @@ import com.histmersion.values.EventLinkStatus
   */
 abstract class EventLinkServiceContract extends CatalogueStoreSuite:
   private def cand(ck: String, score: Double) =
-    EventLinkCandidate("zz_ev", ck, score, findings = List("f1"), passages = List(EventPassage(1, 5, "Zzev", "Zzev", "a Zzev b")), reasons = List("named"))
+    EventLinkCandidate(
+      "zz_ev",
+      ck,
+      score,
+      findings = List("f1"),
+      passages = List(EventPassage(1, 5, "Zzev", "Zzev", "a Zzev b")),
+      reasons = List("named")
+    )
 
   stest("proposed, decided, saved again; the check recorded; the events still to check") { s =>
     val l = s.eventLinks
@@ -26,7 +33,10 @@ abstract class EventLinkServiceContract extends CatalogueStoreSuite:
     assert(l.setStatus("zz_ev", "zzl2020_a", EventLinkStatus.Confirmed))
     assert(l.setStatus("zz_ev", "zzl2020_c", EventLinkStatus.Rejected))
     assert(!l.setStatus("zz_ev", "zzl2020_none", EventLinkStatus.Confirmed))
-    assertEquals(l.candidates("zz_ev").map(c => (c.citekey, c.status)), List("zzl2020_a" -> "confirmed", "zzl2020_b" -> "proposed"))
+    assertEquals(
+      l.candidates("zz_ev").map(c => (c.citekey, c.status)),
+      List("zzl2020_a" -> "confirmed", "zzl2020_b" -> "proposed")
+    )
     assertEquals(l.candidates("zz_ev", withRejected = true).size, 3)
     l.saveCandidates("zz_ev", List(cand("zzl2020_a", 0.1), cand("zzl2020_c", 0.8)))
     assertEquals(

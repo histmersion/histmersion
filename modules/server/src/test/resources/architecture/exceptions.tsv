@@ -182,7 +182,6 @@ direction	core:domain/Scheduling.scala	automation -> library: AgentProposals	1
 direction	core:domain/Scheduling.scala	automation -> library: Edge	1
 direction	core:domain/Scheduling.scala	automation -> library: FollowupRow	1
 direction	core:domain/Scheduling.scala	automation -> library: WorkRef	1
-direction	core:domain/TileFeatures.scala	catalogue -> media: MediaGeoHit	1
 direction	core:domain/activity/ActivityRules.scala	automation -> server: Jobs	1
 direction	db:db/AgentRepo.scala	automation -> library: AgentProposals	1
 direction	db:db/AgentRepo.scala	automation -> research: ArticleFilter	1
@@ -221,7 +220,6 @@ direction	db:db/SourceDeleteRepo.scala	library -> research: ArticleLinks	1
 direction	db:db/SourceRepo.scala	library -> research: ArticleLinks	1
 direction	db:db/SourceRepo.scala	library -> research: ArticleRepo	1
 direction	db:db/SourceRepo.scala	library -> research: TocEntry	1
-direction	db:db/TileRepo.scala	catalogue -> media: MediaRepo	1
 direction	db:db/TreeRepo.scala	catalogue -> library: FilterSql	1
 direction	files:files/BundleEntities.scala	util.data -> automation: Goal	1
 direction	files:files/BundleEntities.scala	util.data -> catalogue: Attestation	1
@@ -234,7 +232,6 @@ direction	files:files/BundleEntities.scala	util.data -> research: ArticleVersion
 direction	server:domain/activity/ActivityRepo.scala	automation -> server: Jobs	1
 direction	server:server/IngestHandlers.scala	library -> server: Deps	1
 direction	server:server/IngestHandlers.scala	library -> server: Jobs	1
-direction	server:server/MapTileService.scala	catalogue -> media: MediaRepo	1
 direction	server:server/PageBuilder.scala	research -> split: Handlers	1
 direction	server:server/acquire/AcquireHandlers.scala	library -> server: Deps	1
 direction	server:server/acquire/AcquireHandlers.scala	library -> server: UpdateNotice	1
@@ -346,9 +343,6 @@ repository	db:db/MergeState.scala	PlaceRepo of catalogue.places	1
 repository	db:db/SourceDeleteRepo.scala	QueueRepo of automation.worklists	1
 repository	db:db/SourceRepo.scala	ArticleRepo of research.articles	1
 repository	db:db/SourceRepo.scala	PlaceRepo of catalogue.places	1
-repository	db:db/TileRepo.scala	MediaRepo of media	1
-repository	db:db/TileRepo.scala	PlaceRepo of catalogue.places	1
-repository	db:db/UndatedSiteRepo.scala	PlaceRepo of catalogue.places	1
 repository	server:server/Bootstrap.scala	JobRepo of util.jobs	1
 repository	server:server/Bootstrap.scala	PlaceRepo of catalogue.places	1
 repository	server:server/Handlers.scala	AgentStateRepo of automation.agents	1
@@ -374,7 +368,6 @@ repository	server:server/IngestHandlers.scala	JobRepo of util.jobs	1
 repository	server:server/IngestHandlers.scala	SourceRepo of library.sources	1
 repository	server:server/Jobs.scala	JobRepo of util.jobs	1
 repository	server:server/ListQueries.scala	JobRepo of util.jobs	1
-repository	server:server/MapTileService.scala	MediaRepo of media	1
 repository	server:server/OpsHandlers.scala	AcquireCheckRepo of library.acquisition	1
 repository	server:server/OpsHandlers.scala	ArticleRepo of research.articles	1
 repository	server:server/OpsHandlers.scala	GoalLinkRepo of automation.goals	1

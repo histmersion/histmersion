@@ -12,7 +12,10 @@ abstract class SiteTypeServiceContract extends CatalogueStoreSuite:
     s.site("wikidata_q1", onMap = true, None)
     s.site("wikidata_q3", onMap = false, None)
     s.site("pleiades_1", onMap = true, None)
-    assertEquals(t.sitesToType(10, refresh = false, None), List(("wikidata_q1", "Q1", None), ("wikidata_q2", "Q2", Some("Q123"))))
+    assertEquals(
+      t.sitesToType(10, refresh = false, None),
+      List(("wikidata_q1", "Q1", None), ("wikidata_q2", "Q2", Some("Q123")))
+    )
     assertEquals(t.sitesToType(1, refresh = false, None).map(_._1), List("wikidata_q1"))
     assertEquals(t.countSitesToType(refresh = false, None), 2)
     t.setSiteTypes(List("wikidata_q1" -> Some("palace")))

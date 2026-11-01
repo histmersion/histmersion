@@ -32,7 +32,7 @@ import com.histmersion.config.AppConfig
 import com.histmersion.db.PlaceScope
 import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.CatalogueJobs
-import com.histmersion.domain.catalogue.events.{EventSelection, EventService, EventSql, weights}
+import com.histmersion.domain.catalogue.events.{weights, EventSelection, EventService, EventSql}
 import com.histmersion.domain.catalogue.evidence.passages.PassageSource
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.values.EventLinkStatus
@@ -81,7 +81,14 @@ final class EventLinksControllers(
         val words = n.split("\\s+").filter(_.nonEmpty).map(w => java.util.regex.Pattern.quote(w))
         val rx = words.mkString("\\b", "\\s+", "\\b")
         text
-          .find(rx, regex = true, limit = 5, context = 160, maxMatches = 50, settings().limits.passages.regexTimeoutMs.toLong)
+          .find(
+            rx,
+            regex = true,
+            limit = 5,
+            context = 160,
+            maxMatches = 50,
+            settings().limits.passages.regexTimeoutMs.toLong
+          )
           .toOption
           .toList
           .flatten
@@ -113,8 +120,7 @@ final class EventLinksControllers(
   /** An event's candidates — computed on the first ask, stored after. */
   def links(id: String): Either[ApiError, EventLinkList] =
     eventOrFail(id).map { d =>
-      if links.isChecked(d.event.id) then
-        EventLinkList(d.event.id, d.event.label, links.candidates(d.event.id))
+      if links.isChecked(d.event.id) then EventLinkList(d.event.id, d.event.label, links.candidates(d.event.id))
       else compute(d)
     }
 
@@ -175,9 +181,7 @@ final class EventLinksControllers(
           .map(_.trim)
           .filter(_.nonEmpty)
           .distinct
-          .filter(ck =>
-            links.setStatus(eid, sources.canonical(ck).getOrElse(ck), EventLinkStatus.Rejected)
-          )
+          .filter(ck => links.setStatus(eid, sources.canonical(ck).getOrElse(ck), EventLinkStatus.Rejected))
         EventLinksResult(
           EventLinkList(eid, d.event.label, links.candidates(eid)),
           attested,

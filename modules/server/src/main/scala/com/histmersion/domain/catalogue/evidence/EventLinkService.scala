@@ -36,7 +36,8 @@ object EventLinkService:
   final private class Implementation(db: Transactor) extends EventLinkService:
     def candidates(id: String, withRejected: Boolean): List[EventLinkCandidate] =
       db.read(EventLinkRepo.candidates(id, withRejected))
-    def saveCandidates(id: String, cs: List[EventLinkCandidate]): Unit = db.transact(EventLinkRepo.saveCandidates(id, cs))
+    def saveCandidates(id: String, cs: List[EventLinkCandidate]): Unit =
+      db.transact(EventLinkRepo.saveCandidates(id, cs))
     def setStatus(id: String, citekey: String, status: String): Boolean =
       db.transact(EventLinkRepo.setStatus(id, citekey, status))
     def isChecked(id: String): Boolean = db.read(EventLinkRepo.isChecked(id))
