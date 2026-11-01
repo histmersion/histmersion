@@ -355,7 +355,11 @@ agent tool is a `ToolContribution` and a workflow a `WorkflowDefinition` registe
 a workflow names the tools each of its roles may use, and the engine offers an agent nothing else. A kind of manager
 is a `ManagerKindDefinition` (the supervisor's loop, holds, retries, cron and approvals stay the engine's), a domain's
 measure of a goal an `ObjectiveProgress`, what approving its proposals does an `ApprovalEffects`; runs are recorded
-through `util.jobs.JobRuns`. The engine is built from an `EngineSite` the composition gives it. Today's pipelines,
+through `util.jobs.JobRuns`. The engine is built from an `EngineSite` the composition gives it (its clock among
+them). Inside the engine, a feature reaches another's data only through that feature's service — `agents.RunService`
+(runs and their steps) and `agents.ApprovalService`, `managers.ManagerService`, `goals.GoalService` and
+`goals.FocusService`, `autopilot.AutopilotRowService` — each with an `InMemory` over the shared
+`domain.automation.AutomationState` and one contract suite (`EngineStoreSuite`) run on both. Today's pipelines,
 tools, manager kinds and effects are registered by transition adapters in the composition root (`server/agents`:
 `PipelineWorkflow`, `TransitionTools`, `TransitionWorkflows`, `TransitionSite`, `TransitionHost`, the four
 `…ManagerKind`s, `ArticleObjectives`, `TransitionApprovalEffects`) until their domains define their own;

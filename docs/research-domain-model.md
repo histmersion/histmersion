@@ -1,6 +1,6 @@
 # Domain model, package by feature, first-party plugins out of the server (refactor step 3, design)
 
-Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18; slice 7 part 2 built — §19.** Written 2026-10-30 on master
+Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18; slice 7 part 2 built — §19; slice 7 part 3 built — §20.** Written 2026-10-30 on master
 58de5489 (branch `domain-design`); revised after the user's reviews of §3: domains above features, measured;
 `personal` with its own interface; `library`, `research`, `catalogue`, `media` named; acquisition and OCR
 dissolved (2026-10-30); automation as a generic workflow engine fed by the domains, data management and file
@@ -2391,3 +2391,110 @@ pluginsMedia 52, pluginsGazetteers 58, pluginsAiHttp 26, pluginsCalibre 45, plug
 db 535, cli 232, web 639, server 1 325 (1 skipped, 1 ignored). `ContractSnapshotSuite`, `CliHelpSnapshotSuite`,
 `AutomationOracleSuite`, `DataOracleSuite` and `ArchitectureSuite` passed.
 
+
+## 20. Slice 7 as built, part 3 (the automation engine's own services, 2026-11-01)
+
+Branch `refactor-s7c` from master 163d688f (part 2 deployed). Endpoints, MCP tools, CLI commands and agent definitions
+are unchanged: `ContractSnapshotSuite` (`toolbox.json` and `mcp-tools.json` included), `CliHelpSnapshotSuite` and
+`AutomationOracleSuite` held byte for byte; no oracle or snapshot was re-recorded, and no migration was added.
+
+**A service per engine feature.** Each is a trait whose companion holds a `private final class Implementation` over a
+`Transactor` (it opens the transaction; the repository methods it runs take the `DbCon` they run on) and a `final class
+InMemory` over one shared `AutomationState` (`domain.automation`, §6.3's state record: the autopilot's row, the goals,
+their links, schedules and focus records, the approvals, the steps and their traces, the managers, their items and
+events), updated through lenses. The runs' rows themselves are the jobs area's: an `InMemory` engine service is given
+`JobRuns.InMemory` (which gained `all`, `stamped` and a run's `createdAt`) and reads it, as §6.3 has a higher place's
+in-memory service call the lower one's.
+
+| feature | service | operations | repository it runs |
+|---|---|---:|---|
+| `agents` | `RunService`: a run with its steps' usage summed, the lists, pages and facets, a target's, a manager's and the unsettled runs, the states' counts; the steps' checkpoints, attempts, records, trace, spend and pruning; `RunService.row` (a new run's row, was `AgentRepo.runRow`) | 17 | `AgentRepo` |
+| `agents` | `ApprovalService`: record, open for a step or a subject, decide once, settle, close a cancelled run's; the lists' pages and facets; the digest's, the autopilot's and the scheduler's reads | 22 | `AgentRepo` |
+| `managers` | `ManagerService`: a manager, the list, the light view (`ManagerLight`), made once, its state and settings; items added once and brought back, held, released, settled, dispatched, held and released for the focus; events; the reads over every manager (pace, backlog, the runs that hold a place, the newest runs' kinds, what waits for a person, each goal's last progress, held and running items, sweep outcomes) | 34 | `ManagerRepo` |
+| `goals` | `GoalService`: a goal, all, sub-goals, put; links with what they point at (`GoalLinkTargets` in memory), counts, plans and caps; the schedules not moved yet, taken out in the caller's transaction | 17 | `GoalRepo`, `GoalLinkRepo` |
+| `goals` | `FocusService`: every goal with what the focus recorded, the goals of linked sources and articles, last stops, sources; joined, left, pin, priority | 8 | `FocusRepo` |
+| `autopilot` | `AutopilotRowService`: the switch, the managers it paused, ensure and housekeeping times, a person's scheduler strategy, the digest's day, the drain | 14 | `AutopilotRepo` |
+
+`AgentsHandlers` builds them first (`runs`, `approvalStore`, `managerStore`, `goals`, `focusStore`, `autopilotRow`), and
+every engine feature reaches another's data through them; `PlanGoalPipeline`, `HintEffectPipeline` and `Approvals` are
+given theirs, `RunCtx.approvalStore` is the pipelines' way to theirs. One contract suite per service runs on both
+implementations: `EngineStoreSuite` gives each test new stores, in memory (a clock that moves a millisecond each read,
+as the database's `now()` does) or on a scratch database of its own (gated on `HISTMERSION_TEST_DB_URL`), and seeds
+what another domain owns (an article, a source) by a row there or an entry of the in-memory link targets; a run by the
+jobs area's `JobRuns`. `AutopilotRowServiceContract` 4 tests, `GoalServiceContract` 4, `ApprovalServiceContract` 4,
+`RunServiceContract` 3, `ManagerServiceContract` 5, `FocusServiceContract` 2, each on both.
+
+**The 22 run reads** are `RunService`'s, not `util.jobs`': every one joins `agent_steps` (a run's usage, the models its
+steps used), a table of the engine the jobs area does not know; `JobRuns` keeps the statements on the `jobs` rows
+alone. They read beside the job rows through the same service when `server.views` comes (slice 12) only if a view
+needs them across domains.
+
+**What moved.** The agent lease's statements left `ManagerRepo` for the agents feature (`LeaseRepo`, db module, package
+`domain.automation.agents`; `AgentLease` opens their transactions). `RunQuery` and `ApprovalQuery` (with the
+decided-by expression) are types of `domain.automation.agents` and `domain.automation.approvals` (db module), so
+`ListQueries` and the activity read name no repository. The managers' and the auto approvals' article check is
+`AutomationHost.articleExists` (`Handlers.articleExists`, now `ArticleRepo.slugExists`). `Keyset` and `ListSql` have
+their `DbCon` forms (`existsOn`, `countsOn`, `pageOn`, `facetOn`).
+
+**Callers outside the engine** (the composition, the library's and research's pipelines, the db module's own tests,
+the server's suites) call the converted repository methods in `connect(ds)(…)` or `transact(ds)(…)`, as they ran
+before; the methods no service runs keep their `DataSource` form until their slices.
+
+**A fixed clock for the digest suites.** `EngineSite.clock` (the composition's `Deps.clock`) replaces `Instant.now()`
+in the managers' loop and in the engine services' default times. The approval digest is written once a UTC day after
+`digest-hour`, read on the tick's time, or, when the site gives one, also on `EngineSite.digestClock` (none in a
+server). `SchedulerDbSuite`, `IngestBacklogDbSuite` and `ManagerPhase2Suite` give a digest clock at noon UTC of the day
+(`TestRuns.noonClock`), their own times staying the wall clock's: the scheduler's texts count waits against the rows
+the database stamped, so a moved test clock would change them (a four-hour move printed `waited 4 h N min`).
+`ManagerAutopilotSuite`'s moving clock and its `Deps.clock` start at noon UTC instead (identical as recorded), hours
+away from a watcher's Saturday 22:30 cron and from midnight, which removes that flake. The digest test itself runs on a
+clock fixed at its 06:59. Equivalence: the gated transcripts identical on master 163d688f at 07:38 UTC (before any
+change), identical on the branch after every commit and twice on the last (09:15, 09:17 UTC). The night itself was not
+reached: a run with `digest-hour = 9` in a scratch `reference.conf` at 07:58 UTC (as if before the hour) was identical
+on the branch and on master alike but for the digest test's own 07:01 tick — so the hour is not what part 2's night
+runs differed by on their own, and the change is shown at the hours it ran at, not yet before 07:00 UTC or on a
+Saturday evening.
+
+**Architecture.** `exceptions.tsv` 463 → 428 rows, deletions only: repository 128 → 93 — the 30 rows between the
+engine's features, and five more the services made pointless (`ActivityRepo`, `ListQueries`, `CurrencyCheckPipeline`
+and `InferFilterPipeline` naming `AgentRepo`; `FocusRepo` naming `AutopilotRepo`). Direction (271), filesystem (60) and
+process (4) unchanged. Of part 2's 37 rows, the 7 file-system rows of `AgentTrees` and `Prompts` remain: the trees are
+written and the prompts read through store handles once SPI-9's `PluginStore` exists (slice 12).
+
+**Deviations.**
+
+- The approvals' service is the agents feature's (`agents.ApprovalService`), not the approvals feature's: the
+  approvals are `AgentRepo`'s table, and moving their statements to a repository of their own would carry the names
+  their payloads are read as (`AgentProposals`, `ArticlePlans`, `ArticleFilter`) into a new file — direction rows
+  re-homed, not deleted. The approvals feature reaches them through the service like every other feature. Its source
+  proposal is recorded from its parts (`record`, `proposedBefore`), so the service names no library type.
+- The services speak the repositories' types (text ids, the wire records), as `JobRuns` does; newtyping them is the
+  domains' slices' work, where the callers get their types.
+- A feature's own orchestration (the supervisor, `ManagersHandlers`, `GoalFocusService`, `PlanGoalPipeline`,
+  `HintEffectPipeline`) still calls its own repository for what no other feature asks (hints, item evaluation, the
+  review kind's article queries) — in `connect`/`transact` where the method now takes its connection; the repository
+  rule, and §3's direction, are about the other features.
+- `InMemory` does not enforce the foreign keys the database does (a goal's parent, an item's manager), and keeps a
+  payload's JSON text as written where the database normalises `jsonb`; the contracts compare what both define.
+- `ManagerRepo.Light` is `ManagerLight` (db module, `domain.automation.managers`): the autopilot named the repository
+  through it.
+
+**Native image.** `reachability-metadata.json`: `ManagerRepo$Light$` and `ManagerRepo$`'s `given_DbCodec_Light$lzy1`
+gone; `ManagerRepo$HintRow$` `derived$DbCodec$lzy5` → `lzy4` and `ManagerRepo$SweepAcquireItem$` `lzy4` → `lzy3` (the
+rows renumbered once `Light` left the file); `domain.automation.managers.ManagerLight$` added
+(`given_DbCodec_ManagerConfig$lzy1`, `given_DbCodec_ManagerLight$lzy1`). `javap -p` over every new and changed class of
+db and server: no other module-level lazy value (the services' and states' only local ones, `LazyRef`); `AgentRepo`'s
+rows keep their numbers. No tracing-agent run. To check at the bundle: `--self-check`; `smoke.sh`; `histmersion agent
+runs`/`run`/`steps`, `agent approvals` (a page, a filter, `decide`), `agent manager list|get|items|enqueue|hold`,
+`agent autopilot` (on, off, drain, undrain), `agent scheduler` (`why`, a strategy), `agent focus` (pin, priority),
+`goals links`/`link`/`schedules`, `agent stalls`, the approval digest line in the log after the hour.
+
+**Tests.** After `sbt clean`, every module's suites with the DB suites on a throwaway database (`just test-quick` with
+every module named): values 20, valuesJS 20, api 823, apiJS 84, config 67, files 73, core 749, pluginApi 45,
+upstreams 57, pluginHost 39, pluginTestkit 19, pluginVaults 29 (1 skipped), pluginsFetchers 15, pluginsEvents 18,
+pluginsMedia 52, pluginsGazetteers 58, pluginsAiHttp 26, pluginsCalibre 45, pluginResolver 23, chimneyIronTests 10,
+db 535, cli 232, web 639, server 1 369 (1 skipped, 1 ignored). In that run one server test failed, `AgentEngineSuite`'s
+watchdog test (its child process had not written its pid file within the wait while every module's forks ran); the
+server's suites run again on the last commit passed, 1 369 with none failed. `ContractSnapshotSuite`,
+`CliHelpSnapshotSuite`, `AutomationOracleSuite`, `DataOracleSuite`, `NativeMetadataSuite` and `ArchitectureSuite`
+passed; the six contracts 44 tests in all.
