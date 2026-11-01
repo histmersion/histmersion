@@ -5,7 +5,7 @@ import com.histmersion.api.{ListFilters, Paging}
 import com.histmersion.db.{AgentRepo, Jsonb}
 import com.histmersion.domain.automation.AutomationState
 import com.histmersion.util.database.Transactor
-import com.histmersion.util.jobs.{JobRunState, JobRuns, RunRow}
+import com.histmersion.util.jobs.{JobRuns, JobRunState, RunRow}
 import hearth.kindlings.optics.syntax.*
 
 import java.time.{Clock, Instant, ZoneOffset}
@@ -227,7 +227,8 @@ object RunService:
 
     /** Whether `r` passes every filter of `q` but `except`'s. */
     private def matches(q: RunQuery, except: String)(r: JobRunState): Boolean =
-      def any(name: String, vs: List[String], v: => Option[String]) = except == name || vs.isEmpty || v.exists(vs.contains)
+      def any(name: String, vs: List[String], v: => Option[String]) =
+        except == name || vs.isEmpty || v.exists(vs.contains)
       any("status", q.status, Some(r.row.status)) &&
       any("pipeline", q.pipelines, Some(r.row.pipeline)) &&
       any("manager", q.managers, r.row.managerId) &&
@@ -235,7 +236,9 @@ object RunService:
       (except == "model" || q.models.isEmpty || models(r).exists(q.models.contains)) &&
       (except == "provider" || q.providers.isEmpty || models(r).map(provider).exists(q.providers.contains)) &&
       any("origin", q.origins, Some(r.row.origin)) &&
-      (except == "time" || q.since.forall(s => !r.createdAt.isBefore(s)) && q.until.forall(u => r.createdAt.isBefore(u))) &&
+      (except == "time" || q.since.forall(s => !r.createdAt.isBefore(s)) && q.until.forall(u =>
+        r.createdAt.isBefore(u)
+      )) &&
       (except == "q" || q.q.forall(t => r.row.target.toLowerCase.contains(t.toLowerCase)))
 
     def page(
@@ -372,4 +375,7 @@ object RunService:
       if days <= 0 then 0
       else
         val cut = now.minusSeconds(days.toLong * 86400L)
-        state.getAndUpdate(_.modify(_.messages).using(_.filterNot(_.createdAt.isBefore(cut)))).messages.count(_.createdAt.isBefore(cut))
+        state
+          .getAndUpdate(_.modify(_.messages).using(_.filterNot(_.createdAt.isBefore(cut))))
+          .messages
+          .count(_.createdAt.isBefore(cut))

@@ -10,7 +10,6 @@ import com.histmersion.domain.AutopilotPolicy.{DraftFacts, GoalPlanFacts, Planne
 import com.histmersion.api.GoalPlans.DraftMode
 import com.histmersion.api.Managers.Feed
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.ManagerRepo
 
 import java.time.Instant
 import javax.sql.DataSource
@@ -56,12 +55,12 @@ final class AutoApprovals(
     val kinds = if agents.focus.goalPlansWait().isDefined then Kinds.filterNot(_ == ApprovalKind.GoalPlan) else Kinds
     val open = agents.approvalStore.openOfKinds(kinds, Int.MaxValue).flatMap { a =>
       val run = runOf(a)
-      val mgr = run.flatMap(_.managerId).flatMap(ManagerRepo.get(ds, _))
+      val mgr = run.flatMap(_.managerId).flatMap(agents.managerStore.get(_))
       Option.when(checked(a, mgr))(Candidate(a, run, mgr))
     }
-    val goals = com.histmersion.db.FocusRepo.goals(ds).map(g => g.slug -> g).toMap
-    val linked = com.histmersion.db.FocusRepo
-      .goalsOf(ds, GoalPlans.LinkKind.Article.wire, open.flatMap(_.approval.subject).distinct)
+    val goals = agents.focusStore.goals().map(g => g.slug -> g).toMap
+    val linked = agents.focusStore
+      .goalsOf(GoalPlans.LinkKind.Article.wire, open.flatMap(_.approval.subject).distinct)
     def goalOf(a: ApprovalInfo) =
       a.subject.flatMap(s => goals.get(s).orElse(linked.getOrElse(s, Nil).flatMap(goals.get).headOption))
     val ordered = open.sortBy { c =>
@@ -102,8 +101,8 @@ final class AutoApprovals(
           case _                => ""
         mgr.foreach { m =>
           val text = s"approval #${a.id} (${a.kind}) left for a person: $why"
-          if !ManagerRepo.lastEventOf(ds, m.id, Feed.Approval).exists(_.text == text) then
-            ManagerRepo.event(ds, m.id, run.flatMap(_.managerItem), a.runId, Feed.Approval, text)
+          if !agents.managerStore.lastEventOf(m.id, Feed.Approval).exists(_.text == text) then
+            agents.managerStore.event(m.id, run.flatMap(_.managerItem), a.runId, Feed.Approval, text)
         }
         Nil
       case Some(note) =>
@@ -123,7 +122,7 @@ final class AutoApprovals(
                              s" — applying it failed: ${d.result.getOrElse("")}"
                            else "")
             mgr.foreach(m =>
-              ManagerRepo.event(ds, m.id, run.flatMap(_.managerItem), a.runId, Feed.Approval, text.take(2000))
+              agents.managerStore.event(m.id, run.flatMap(_.managerItem), a.runId, Feed.Approval, text.take(2000))
             )
             val _ = agents.workLists.add("log", QueueAdd(s"autopilot: $text".take(1000)))
             scribe.info(s"autopilot: $text")

@@ -127,7 +127,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
        |Where the tin was mined is open [[$Ck]].""".stripMargin
 
   private def item(mid: String, kind: String, target: String): ManagerItem =
-    ManagerRepo.itemFor(ds, mid, kind, target).get
+    connect(ds)(ManagerRepo.itemFor(mid, kind, target)).get
 
   private def why(r: RunInfo): String =
     (r.error.toList ++ connect(ds)(AgentRepo.steps(r.id, 200))
@@ -262,7 +262,10 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     a.managers.tick(t0)
     assertEquals(item(m.id, ProposeArticles, Goal).status, "held")
-    assert(ManagerRepo.itemFor(ds, m.id, ArticleCompile, "zzagent_new").isEmpty, "nothing compiled before approval")
+    assert(
+      connect(ds)(ManagerRepo.itemFor(m.id, ArticleCompile, "zzagent_new")).isEmpty,
+      "nothing compiled before approval"
+    )
     // approve: one compile item, dispatched with chainReview off
     assert(a.decide(appr.id, "approve", DecisionRequest()).isRight)
     val compile = item(m.id, ArticleCompile, "zzagent_new")
@@ -289,7 +292,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(item(m.id, ArticleCompile, "zzagent_new").status, "done")
     val chained = item(ReviewId, ArticleReview, "zzagent_new")
     assertEquals((chained.origin, chained.priority, chained.status), ("chain", 2, "pending"))
-    assertEquals(ManagerRepo.get(ds, ReviewId).map(_.state), Some("paused"))
+    assertEquals(connect(ds)(ManagerRepo.get(ReviewId)).map(_.state), Some("paused"))
     assert(connect(ds)(GoalLinkRepo.links(Goal)).exists(l => l.kind == LinkKind.Article && l.ref == "zzagent_new"))
 
   test("seed: a rejected plan compiles nothing; Extend on a goal queues the next proposal"):
@@ -302,7 +305,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     val (a, h) = handlers(c); seed(h)
     val r = a.managing.enqueue(EnqueueRequest("seed", Goal)).fold(e => fail(e.message), identity)
     assertEquals((r.managerId, r.items.map(_.kind)), (seedId(Goal), List(ProposeArticles)))
-    assertEquals(ManagerRepo.get(ds, seedId(Goal)).map(_.state), Some("paused"))
+    assertEquals(connect(ds)(ManagerRepo.get(seedId(Goal))).map(_.state), Some("paused"))
     a.managing.action(seedId(Goal), "resume", None)
     a.managers.tick(t0)
     a.engine.execute(item(seedId(Goal), ProposeArticles, Goal).runId.get)
@@ -311,7 +314,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(a.decide(appr.id, "reject", DecisionRequest()).isRight)
     a.managers.tick(t0)
     assertEquals(item(seedId(Goal), ProposeArticles, Goal).status, "stopped")
-    assert(ManagerRepo.itemFor(ds, seedId(Goal), ArticleCompile, "zzagent_r").isEmpty)
+    assert(connect(ds)(ManagerRepo.itemFor(seedId(Goal), ArticleCompile, "zzagent_r")).isEmpty)
     // Extend again: the settled item is re-opened
     assertEquals(a.managing.enqueue(EnqueueRequest("seed", Goal)).map(_.items.map(_.status)), Right(List("pending")))
 
@@ -326,7 +329,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals((i.origin, i.status), ("ingest", "pending"))
     // a second ingest of the same source does not double it
     a.autoEnrich(Ck)
-    assertEquals(ManagerRepo.counts(ds, EnrichId).pending, 1)
+    assertEquals(connect(ds)(ManagerRepo.counts(EnrichId)).pending, 1)
     // the source got findings meanwhile: the manager settles the item without a run
     assert(h.patchSource(Ck, SourcePatch(notes = Some("enriched by hand"))).isRight)
     a.managing.action(EnrichId, "resume", None)
@@ -372,21 +375,22 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     a.managing.action(ReviewId, "resume", None)
     // it converged when its filter returned one source
-    val (id, _) = ManagerRepo.upsert(
-      ds,
-      ReviewId,
-      ArticleReview,
-      "zzagent_s1",
-      ItemOrigin.Person,
-      10,
-      reopen = false,
-      ItemState(filterHits = Some(1))
+    val (id, _) = transact(ds)(
+      ManagerRepo.upsert(
+        ReviewId,
+        ArticleReview,
+        "zzagent_s1",
+        ItemOrigin.Person,
+        10,
+        reopen = false,
+        ItemState(filterHits = Some(1))
+      )
     )
     connect(ds)(
       sql"UPDATE manager_items SET status = 'done', outcome = 'converged after 1 run' WHERE id = $id".update.run()
     )
     a.managers.tick(t0)
-    val again = ManagerRepo.item(ds, id).get
+    val again = connect(ds)(ManagerRepo.item(id)).get
     assertEquals((again.priority, again.origin), (ManagerPolicy.StalePriority, "selection"))
     assert(again.outcome.exists(_.contains("its filter gained 1 source")), again.outcome)
     assert(Set("pending", "active").contains(again.status), again.status)

@@ -142,7 +142,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     a.managing.setAutopilot(AutopilotSet(on = true, Some("test"))).fold(e => fail(e.message), identity)
 
   private def item(mid: String, kind: String, target: String): ManagerItem =
-    ManagerRepo.itemFor(ds, mid, kind, target).getOrElse(fail(s"no $kind item for $target in $mid"))
+    connect(ds)(ManagerRepo.itemFor(mid, kind, target)).getOrElse(fail(s"no $kind item for $target in $mid"))
 
   /** The runs the managers dispatched on these goals (and the article), by pipeline. */
   private def runs(): Vector[RunInfo] =
@@ -170,7 +170,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       Set(("propose-articles", g(20)), ("acquisition-sweep", g(20)), ("currency-check", g(20)))
     )
     // the focus holds nothing: the others are pending, in the scheduler's queue
-    assertEquals(ManagerRepo.focusHeldCount(ds), 0)
+    assertEquals(connect(ds)(ManagerRepo.focusHeldCount()), 0)
     assertEquals(item(seedId(g(2)), ProposeArticles, g(2)).status, "pending")
     val st = a.scheduler.status(Some(500))
     note("scheduler status", AgentSchedulerMarkdown.status(st))
@@ -203,8 +203,8 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(goals.count(s => item(watchId(s), OaIngest, doi(s)).status == "done"), 20)
     // the manager whose items wait says why in its status line
     assert(
-      ManagerRepo.get(ds, seedId(g(2))).flatMap(_.statusNote).exists(_.contains("the scheduler: capacity")),
-      ManagerRepo.get(ds, seedId(g(2))).flatMap(_.statusNote)
+      connect(ds)(ManagerRepo.get(seedId(g(2)))).flatMap(_.statusNote).exists(_.contains("the scheduler: capacity")),
+      connect(ds)(ManagerRepo.get(seedId(g(2)))).flatMap(_.statusNote)
     )
 
     // switched live to type-balanced, with three more places: the starts spread over the job types
@@ -479,7 +479,9 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     import scala.jdk.CollectionConverters.*
     // the two first sourceless goals (g01, g02: oldest, then slug) were seeded; g10 has sources and is not
     def seeded =
-      goals.filter(x => ManagerRepo.events(ds, watchId(x), None, 100).exists(_.text.startsWith("seed before the plan")))
+      goals.filter(x =>
+        connect(ds)(ManagerRepo.events(watchId(x), None, 100)).exists(_.text.startsWith("seed before the plan"))
+      )
     assertEquals(seeded, List(g(1), g(2)))
     // their legal open-access finds went through the ingest backlog and were ingested in the same tick
     assertEquals(
@@ -494,7 +496,10 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     // the next tick seeds the next two; a goal seeded today is not seeded again
     clock.tick(a)
     assertEquals(seeded, List(g(1), g(2), g(3), g(4)))
-    assertEquals(ManagerRepo.events(ds, watchId(g(1)), None, 100).count(_.text.startsWith("seed before the plan")), 1)
+    assertEquals(
+      connect(ds)(ManagerRepo.events(watchId(g(1)), None, 100)).count(_.text.startsWith("seed before the plan")),
+      1
+    )
     // draining: no seeding
     a.drain.set(Autopilot.DrainSet(on = true))
     clock.tick(a)
@@ -512,22 +517,29 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(a.autopilot.nextArticles(clock.now), Nil)
     // the article passes its review (a clean ledger, no review item open), and the proposal had settled days ago
     ReviewLedgerRepo.put(ds, ReviewLedger.Ledger(Art))
-    ManagerRepo
-      .itemFor(ds, ReviewId, ArticleReview, Art)
+    connect(ds)(ManagerRepo.itemFor(ReviewId, ArticleReview, Art))
       .foreach(i =>
-        ManagerRepo
-          .settle(ds, i.id, ItemStatus.Done, "converged", List(ItemStatus.Pending, ItemStatus.Active, ItemStatus.Held))
+        transact(ds)(
+          ManagerRepo.settle(
+            i.id,
+            ItemStatus.Done,
+            "converged",
+            List(ItemStatus.Pending, ItemStatus.Active, ItemStatus.Held)
+          )
+        )
       )
-    ManagerRepo.settle(ds, prop.id, ItemStatus.Done, "approval #1 approved", List(ItemStatus.Pending))
+    transact(ds)(ManagerRepo.settle(prop.id, ItemStatus.Done, "approval #1 approved", List(ItemStatus.Pending)))
     connect(ds)(sql"UPDATE manager_items SET updated_at = now() - interval '2 days' WHERE id = ${prop.id}".update.run())
     assertEquals(a.autopilot.nextArticles(clock.now), List(s"goal ${g(5)}: next article proposed"))
     assertEquals(item(seedId(g(5)), ProposeArticles, g(5)).status, "pending")
-    assert(ManagerRepo.events(ds, seedId(g(5)), None, 50).exists(_.text.contains("its next article is proposed")))
+    assert(
+      connect(ds)(ManagerRepo.events(seedId(g(5)), None, 50)).exists(_.text.contains("its next article is proposed"))
+    )
     clock.tick(a)
     assertNotEquals(a.scheduler.why(prop.id.toString).map(_.code), Right("blocked"), "no longer kept back")
     // open again: not proposed twice; an approved article to compile keeps the next one back
     assertEquals(a.autopilot.nextArticles(clock.now), Nil)
-    ManagerRepo.upsert(ds, seedId(g(5)), ArticleCompile, "zzfocus_next", ItemOrigin.Chain, 0, reopen = false)
+    transact(ds)(ManagerRepo.upsert(seedId(g(5)), ArticleCompile, "zzfocus_next", ItemOrigin.Chain, 0, reopen = false))
     clock.tick(a)
     val back = a.scheduler.why(prop.id.toString).fold(e => fail(e.message), identity)
     assert(back.code == "blocked" && back.why.contains("1 to compile"), back)

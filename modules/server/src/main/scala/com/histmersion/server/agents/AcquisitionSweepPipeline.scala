@@ -268,13 +268,14 @@ final class AcquisitionSweepPipeline(
         GoalLinkRepo.link(goal, LinkKind.Source, r.citekey, Some(s"ingested by a watcher sweep: ${p.why}".take(500)))
       )
       ctx.run.managerId.foreach(mid =>
-        ManagerRepo.event(
-          ds,
-          mid,
-          ctx.run.managerItem,
-          Some(ctx.run.id),
-          Managers.Feed.Ingested,
-          s"[[${r.citekey}]] ingested (legal open access, ${r.pdf.fold("no file")(_.source)}): ${p.candidate.title} — https://doi.org/$doi"
+        transact(ds)(
+          ManagerRepo.event(
+            mid,
+            ctx.run.managerItem,
+            Some(ctx.run.id),
+            Managers.Feed.Ingested,
+            s"[[${r.citekey}]] ingested (legal open access, ${r.pdf.fold("no file")(_.source)}): ${p.candidate.title} — https://doi.org/$doi"
+          )
         )
       )
       Ingested(doi, r.citekey)

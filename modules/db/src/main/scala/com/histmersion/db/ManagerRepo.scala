@@ -4,6 +4,7 @@ import com.histmersion.api.Agents.{JobKind, PauseReason, RunState}
 import com.histmersion.api.Managers.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.domain.automation.managers.ManagerLight
 import javax.sql.DataSource
 
 /** The store of the process managers (V087, docs/research-process-managers.md §2): managers, their work items, hints
@@ -43,8 +44,8 @@ object ManagerRepo:
     Sql.raw(s"""SELECT id, kind, goal_slug, state, pause_runs, config::text, status_note, cron, ${at("next_tick_at")},
               ${at("created_at")}, ${at("updated_at")} FROM agent_managers""")
 
-  private def toInfo(ds: DataSource, r: ManagerRow): ManagerInfo =
-    val (usd, tokens) = spendToday(ds, r.id)
+  private def toInfo(r: ManagerRow)(using DbCon): ManagerInfo =
+    val (usd, tokens) = spendToday(r.id)
     ManagerInfo(
       r.id,
       r.kind,
@@ -58,9 +59,9 @@ object ManagerRepo:
       r.nextTickAt,
       r.createdAt,
       r.updatedAt,
-      counts(ds, r.id),
-      inFlight(ds, r.id),
-      lastEvent(ds, r.id),
+      counts(r.id),
+      inFlight(r.id),
+      lastEvent(r.id),
       usd.toDouble,
       tokens
     )
@@ -68,27 +69,31 @@ object ManagerRepo:
   /** What a manager's runs spent this UTC day (the steps that finished since midnight UTC): metered USD — a plan-billed
     * call is recorded at 0 — and tokens in + out, every call's.
     */
-  def spendToday(ds: DataSource, id: String): (BigDecimal, Long) =
-    connect(ds):
-      sql"""SELECT coalesce(sum(s.cost_usd), 0), coalesce(sum(s.tokens_in + s.tokens_out), 0)::bigint
-            FROM agent_steps s JOIN jobs j ON j.id = s.job_id
-            WHERE j.manager_id = $id
-              AND s.finished_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'"""
-        .query[(BigDecimal, Long)]
-        .run()
-        .head
+  def spendToday(id: String)(using DbCon): (BigDecimal, Long) =
+    sql"""SELECT coalesce(sum(s.cost_usd), 0), coalesce(sum(s.tokens_in + s.tokens_out), 0)::bigint
+          FROM agent_steps s JOIN jobs j ON j.id = s.job_id
+          WHERE j.manager_id = $id
+            AND s.finished_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'"""
+      .query[(BigDecimal, Long)]
+      .run()
+      .head
 
-  def list(ds: DataSource): List[ManagerInfo] =
-    connect(ds)((managerSelect ++ Sql.of(" ORDER BY created_at, id")).frag.query[ManagerRow].run().toList)
-      .map(toInfo(ds, _))
+  def list()(using DbCon): List[ManagerInfo] =
+    (managerSelect ++ Sql.of(" ORDER BY created_at, id")).frag
+      .query[ManagerRow]
+      .run()
+      .toList
+      .map(toInfo(_))
 
-  def get(ds: DataSource, id: String): Option[ManagerInfo] =
-    connect(ds)((managerSelect ++ Sql.of(" WHERE id = ?", Param.S(id))).frag.query[ManagerRow].run().headOption)
-      .map(toInfo(ds, _))
+  def get(id: String)(using DbCon): Option[ManagerInfo] =
+    (managerSelect ++ Sql.of(" WHERE id = ?", Param.S(id))).frag
+      .query[ManagerRow]
+      .run()
+      .headOption
+      .map(toInfo(_))
 
   /** A new manager (with its cron and first firing, if it has one); `false` when the id is taken. */
   def create(
-      ds: DataSource,
       id: String,
       kind: Kind,
       goal: Option[String],
@@ -96,8 +101,8 @@ object ManagerRepo:
       config: ManagerConfig,
       cron: Option[String] = None,
       nextTick: Option[java.time.Instant] = None
-  ): Boolean =
-    transact(ds)(createIn(id, kind, goal, state, config, cron, nextTick))
+  )(using DbCon): Boolean =
+    createIn(id, kind, goal, state, config, cron, nextTick)
 
   def createIn(
       id: String,
@@ -118,20 +123,18 @@ object ManagerRepo:
     val n = next.map(_.toString)
     transact(ds)(sql"""UPDATE agent_managers SET next_tick_at = $n::timestamptz WHERE id = $id""".update.run() > 0)
 
-  def setState(ds: DataSource, id: String, state: State, pauseRuns: Boolean): Boolean =
-    transact(ds):
-      sql"""UPDATE agent_managers SET state = ${state.wire}, pause_runs = $pauseRuns, updated_at = now()
-            WHERE id = $id""".update.run() > 0
+  def setState(id: String, state: State, pauseRuns: Boolean)(using DbCon): Boolean =
+    sql"""UPDATE agent_managers SET state = ${state.wire}, pause_runs = $pauseRuns, updated_at = now()
+          WHERE id = $id""".update.run() > 0
 
   /** Its settings and cron; `next` = when the cron fires next (None with no cron). */
   def setConfig(
-      ds: DataSource,
       id: String,
       config: ManagerConfig,
       cron: Option[String],
       next: Option[java.time.Instant]
-  ): Boolean =
-    transact(ds)(setConfigIn(id, config, cron, next))
+  )(using DbCon): Boolean =
+    setConfigIn(id, config, cron, next)
 
   def setConfigIn(id: String, config: ManagerConfig, cron: Option[String], next: Option[java.time.Instant])(using
       DbCon
@@ -149,20 +152,18 @@ object ManagerRepo:
   def delete(ds: DataSource, id: String): Boolean =
     transact(ds)(sql"DELETE FROM agent_managers WHERE id = $id".update.run() > 0)
 
-  def counts(ds: DataSource, id: String): ItemCounts =
+  def counts(id: String)(using DbCon): ItemCounts =
     ItemCounts.of(
-      connect(ds)(
-        sql"""SELECT status, count(*)::int FROM manager_items WHERE manager_id = $id GROUP BY status"""
-          .query[(String, Int)]
-          .run()
-          .toList
-      )
+      sql"""SELECT status, count(*)::int FROM manager_items WHERE manager_id = $id GROUP BY status"""
+        .query[(String, Int)]
+        .run()
+        .toList
     )
 
   /** Its runs not settled yet (queued, running, paused, waiting). */
-  def inFlight(ds: DataSource, id: String): Int =
-    connect(ds)(sql"""SELECT count(*)::int FROM jobs WHERE kind = $JobKind AND manager_id = $id
-                      AND status IN ('queued', 'running', 'paused', 'waiting')""".query[Int].run().head)
+  def inFlight(id: String)(using DbCon): Int =
+    sql"""SELECT count(*)::int FROM jobs WHERE kind = $JobKind AND manager_id = $id
+                      AND status IN ('queued', 'running', 'paused', 'waiting')""".query[Int].run().head
 
   /** Its runs that run, or will run again without a person (what a manager's own `maxRuns` counts): queued, running,
     * and paused for a reason that resumes by itself — a restart's `interrupted` and a `stalled` pause (both carry
@@ -172,23 +173,21 @@ object ManagerRepo:
     * `budget`, `provider`) frees its place — resuming it is that person's call — and so does a run WAITING for a
     * person's approval (#3762 proposal 1: one unanswered approval used to stop a whole manager).
     */
-  def running(ds: DataSource, id: String): Int =
-    connect(ds)(
-      (Sql.of("SELECT count(*)::int FROM jobs WHERE kind = ? AND manager_id = ? AND ", Param.S(JobKind), Param.S(id)) ++
-        occupyingOn("jobs")).frag.query[Int].run().head
-    )
+  def running(id: String)(using DbCon): Int =
+
+    (Sql.of("SELECT count(*)::int FROM jobs WHERE kind = ? AND manager_id = ? AND ", Param.S(JobKind), Param.S(id)) ++
+      occupyingOn("jobs")).frag.query[Int].run().head
 
   /** Every agent run that occupies a place ([[running]]'s rule, a person's runs too): its pipeline, and the goal of the
     * manager that started it (None: a person's, or a library-wide manager's).
     */
-  def occupyingRuns(ds: DataSource): List[(String, Option[String])] =
-    connect(ds)(
-      (Sql.of(
-        "SELECT j.pipeline, m.goal_slug FROM jobs j LEFT JOIN agent_managers m ON m.id = j.manager_id " +
-          "WHERE j.kind = ? AND ",
-        Param.S(JobKind)
-      ) ++ occupyingOn("j")).frag.query[(String, Option[String])].run().toList
-    )
+  def occupyingRuns()(using DbCon): List[(String, Option[String])] =
+
+    (Sql.of(
+      "SELECT j.pipeline, m.goal_slug FROM jobs j LEFT JOIN agent_managers m ON m.id = j.manager_id " +
+        "WHERE j.kind = ? AND ",
+      Param.S(JobKind)
+    ) ++ occupyingOn("j")).frag.query[(String, Option[String])].run().toList
 
   /** The runs that occupy a place ([[running]]'s rule), as a predicate on table (alias) `t` of `jobs`. */
   private def occupyingOn(t: String): Sql =
@@ -201,72 +200,66 @@ object ManagerRepo:
 
   /** The item kinds of the last `n` runs the managers started, newest first (what the scheduler's shares count).
     */
-  def recentKinds(ds: DataSource, n: Int): List[String] =
-    connect(ds):
-      sql"""SELECT i.kind FROM jobs j JOIN manager_items i ON i.id = j.manager_item
-            WHERE j.kind = $JobKind ORDER BY j.created_at DESC, j.id DESC LIMIT ${math.max(0, n)}"""
-        .query[String]
-        .run()
-        .toList
+  def recentKinds(n: Int)(using DbCon): List[String] =
+    sql"""SELECT i.kind FROM jobs j JOIN manager_items i ON i.id = j.manager_item
+          WHERE j.kind = $JobKind ORDER BY j.created_at DESC, j.id DESC LIMIT ${math.max(0, n)}"""
+      .query[String]
+      .run()
+      .toList
 
   /** Per goal: when it last progressed — a run of one of its managers started, settled or was evaluated, a work was
     * ingested or swept for it, or a source was linked to it — as an ISO instant (UTC).
     */
-  def lastProgress(ds: DataSource): Map[String, String] =
+  def lastProgress()(using DbCon): Map[String, String] =
     val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
-    connect(ds):
-      Sql
-        .of(
-          s"""SELECT goal, to_char(max(at) AT TIME ZONE 'UTC', $ts) FROM (
-                   SELECT m.goal_slug AS goal, max(e.at) AS at FROM manager_events e JOIN agent_managers m ON m.id = e.manager_id
-                   WHERE m.goal_slug IS NOT NULL AND e.kind IN (?, ?, ?, ?, ?) GROUP BY m.goal_slug
-                   UNION ALL
-                   SELECT goal_slug, max(created_at) FROM goal_links WHERE kind = 'source' GROUP BY goal_slug) t
-                 GROUP BY goal""",
-          Param.S(Feed.Started),
-          Param.S(Feed.Settled),
-          Param.S(Feed.Evaluated),
-          Param.S(Feed.Ingested),
-          Param.S(Feed.Swept)
-        )
-        .frag
-        .query[(String, String)]
-        .run()
-        .toMap
+    Sql
+      .of(
+        s"""SELECT goal, to_char(max(at) AT TIME ZONE 'UTC', $ts) FROM (
+                 SELECT m.goal_slug AS goal, max(e.at) AS at FROM manager_events e JOIN agent_managers m ON m.id = e.manager_id
+                 WHERE m.goal_slug IS NOT NULL AND e.kind IN (?, ?, ?, ?, ?) GROUP BY m.goal_slug
+                 UNION ALL
+                 SELECT goal_slug, max(created_at) FROM goal_links WHERE kind = 'source' GROUP BY goal_slug) t
+               GROUP BY goal""",
+        Param.S(Feed.Started),
+        Param.S(Feed.Settled),
+        Param.S(Feed.Evaluated),
+        Param.S(Feed.Ingested),
+        Param.S(Feed.Swept)
+      )
+      .frag
+      .query[(String, String)]
+      .run()
+      .toMap
 
   /** Per goal: its items a person holds (held, not for an approval and not by the focus). */
-  def personHeldByGoal(ds: DataSource): Map[String, Int] =
-    connect(ds):
-      sql"""SELECT m.goal_slug, count(*)::int FROM manager_items i JOIN agent_managers m ON m.id = i.manager_id
-            WHERE m.goal_slug IS NOT NULL AND i.status = 'held' AND i.hold->>'focus' IS NULL AND i.hold->>'untilApproval' IS NULL
-            GROUP BY m.goal_slug""".query[(String, Int)].run().toMap
+  def personHeldByGoal()(using DbCon): Map[String, Int] =
+    sql"""SELECT m.goal_slug, count(*)::int FROM manager_items i JOIN agent_managers m ON m.id = i.manager_id
+          WHERE m.goal_slug IS NOT NULL AND i.status = 'held' AND i.hold->>'focus' IS NULL AND i.hold->>'untilApproval' IS NULL
+          GROUP BY m.goal_slug""".query[(String, Int)].run().toMap
 
   /** Per goal: its items whose run is queued or running. */
-  def runningByGoal(ds: DataSource): Map[String, Int] =
-    connect(ds):
-      sql"""SELECT m.goal_slug, count(*)::int FROM manager_items i JOIN agent_managers m ON m.id = i.manager_id
-            JOIN jobs j ON j.id = i.run_id
-            WHERE m.goal_slug IS NOT NULL AND i.status = 'active' AND j.status IN ('queued', 'running')
-            GROUP BY m.goal_slug""".query[(String, Int)].run().toMap
+  def runningByGoal()(using DbCon): Map[String, Int] =
+    sql"""SELECT m.goal_slug, count(*)::int FROM manager_items i JOIN agent_managers m ON m.id = i.manager_id
+          JOIN jobs j ON j.id = i.run_id
+          WHERE m.goal_slug IS NOT NULL AND i.status = 'active' AND j.status IN ('queued', 'running')
+          GROUP BY m.goal_slug""".query[(String, Int)].run().toMap
 
   /** Per goal: the outcome of its watcher's acquisition sweep when it is settled. */
-  def sweepOutcomes(ds: DataSource): Map[String, String] =
-    connect(ds):
-      sql"""SELECT m.goal_slug, coalesce(i.outcome, '') FROM manager_items i JOIN agent_managers m ON m.id = i.manager_id
-            WHERE m.goal_slug IS NOT NULL AND i.kind = $AcquisitionSweep AND i.status IN ('done', 'stopped', 'failed')"""
-        .query[(String, String)]
-        .run()
-        .toMap
+  def sweepOutcomes()(using DbCon): Map[String, String] =
+    sql"""SELECT m.goal_slug, coalesce(i.outcome, '') FROM manager_items i JOIN agent_managers m ON m.id = i.manager_id
+          WHERE m.goal_slug IS NOT NULL AND i.kind = $AcquisitionSweep AND i.status IN ('done', 'stopped', 'failed')"""
+      .query[(String, String)]
+      .run()
+      .toMap
 
   /** Items that wait for a person and hold no place: held (not by the focus: for an approval, or by a person), or
     * active with their run waiting for an approval — of managers that are not stopped.
     */
-  def forPerson(ds: DataSource): Int =
-    connect(ds):
-      sql"""SELECT count(*)::int FROM manager_items i JOIN agent_managers m ON m.id = i.manager_id
-            LEFT JOIN jobs j ON j.id = i.run_id
-            WHERE m.state <> 'stopped' AND ((i.status = 'held' AND i.hold->>'focus' IS NULL)
-              OR (i.status = 'active' AND j.status = 'waiting'))""".query[Int].run().head
+  def forPerson()(using DbCon): Int =
+    sql"""SELECT count(*)::int FROM manager_items i JOIN agent_managers m ON m.id = i.manager_id
+          LEFT JOIN jobs j ON j.id = i.run_id
+          WHERE m.state <> 'stopped' AND ((i.status = 'held' AND i.hold->>'focus' IS NULL)
+            OR (i.status = 'active' AND j.status = 'waiting'))""".query[Int].run().head
 
   // ── items ──────────────────────────────────────────────────────────────────────────────────────
 
@@ -316,27 +309,25 @@ object ManagerRepo:
       r.updatedAt
     )
 
-  def item(ds: DataSource, id: Long): Option[ManagerItem] =
-    connect(ds)((itemSelect ++ Sql.of(" WHERE id = ?", Param.L(id))).frag.query[ItemRow].run().headOption.map(toItem))
+  def item(id: Long)(using DbCon): Option[ManagerItem] =
+    (itemSelect ++ Sql.of(" WHERE id = ?", Param.L(id))).frag.query[ItemRow].run().headOption.map(toItem)
 
-  def itemFor(ds: DataSource, managerId: String, kind: String, target: String): Option[ManagerItem] =
-    connect(ds)(
-      (itemSelect ++ Sql.of(
-        " WHERE manager_id = ? AND kind = ? AND target = ?",
-        Param.S(managerId),
-        Param.S(kind),
-        Param.S(target)
-      )).frag.query[ItemRow].run().headOption.map(toItem)
-    )
+  def itemFor(managerId: String, kind: String, target: String)(using DbCon): Option[ManagerItem] =
+
+    (itemSelect ++ Sql.of(
+      " WHERE manager_id = ? AND kind = ? AND target = ?",
+      Param.S(managerId),
+      Param.S(kind),
+      Param.S(target)
+    )).frag.query[ItemRow].run().headOption.map(toItem)
 
   /** The open items (pending, held, active) of any manager whose target is `target`, the newest first. */
-  def openFor(ds: DataSource, target: String): List[ManagerItem] =
-    connect(ds)(
-      (itemSelect ++ Sql.of(
-        " WHERE target = ? AND status IN ('pending', 'held', 'active') ORDER BY id DESC",
-        Param.S(target)
-      )).frag.query[ItemRow].run().toList.map(toItem)
-    )
+  def openFor(target: String)(using DbCon): List[ManagerItem] =
+
+    (itemSelect ++ Sql.of(
+      " WHERE target = ? AND status IN ('pending', 'held', 'active') ORDER BY id DESC",
+      Param.S(target)
+    )).frag.query[ItemRow].run().toList.map(toItem)
 
   /** A page of a manager's items: by `status` (none = all), the most urgent first. */
   def items(
@@ -359,20 +350,18 @@ object ManagerRepo:
       )).frag.query[ItemRow].run().toList.map(toItem)
       (rows, total)
 
-  def withStatus(ds: DataSource, managerId: String, status: ItemStatus): List[ManagerItem] =
-    connect(ds)(
-      (itemSelect ++ Sql.of(
-        " WHERE manager_id = ? AND status = ? ORDER BY priority DESC, id",
-        Param.S(managerId),
-        Param.S(status.wire)
-      )).frag.query[ItemRow].run().toList.map(toItem)
-    )
+  def withStatus(managerId: String, status: ItemStatus)(using DbCon): List[ManagerItem] =
+
+    (itemSelect ++ Sql.of(
+      " WHERE manager_id = ? AND status = ? ORDER BY priority DESC, id",
+      Param.S(managerId),
+      Param.S(status.wire)
+    )).frag.query[ItemRow].run().toList.map(toItem)
 
   /** Add an item, or — when it exists — bring it back: `reopen` sets a settled one pending again, and the priority is
     * raised to `priority` (an active one keeps running). Returns the item's id and whether it was new.
     */
   def upsert(
-      ds: DataSource,
       managerId: String,
       kind: String,
       target: String,
@@ -380,32 +369,31 @@ object ManagerRepo:
       priority: Int,
       reopen: Boolean,
       initial: ItemState = ItemState()
-  ): (Long, Boolean) =
-    transact(ds):
-      sql"""INSERT INTO manager_items (manager_id, kind, target, origin, priority, state)
-            VALUES ($managerId, $kind, $target, ${origin.wire}, $priority, $initial::jsonb)
-            ON CONFLICT (manager_id, kind, target) DO NOTHING RETURNING id""".query[Long].run().headOption match
-        case Some(id) => (id, true)
-        case None     =>
-          val id =
-            sql"""SELECT id FROM manager_items WHERE manager_id = $managerId AND kind = $kind AND target = $target"""
-              .query[Long]
-              .run()
-              .head
-          if reopen then
-            sql"""UPDATE manager_items SET
-                    status = CASE WHEN status IN ('done', 'stopped', 'failed', 'cancelled') THEN 'pending' ELSE status END,
-                    attempts = CASE WHEN status IN ('done', 'stopped', 'failed', 'cancelled') THEN 0 ELSE attempts END,
-                    failures = CASE WHEN status IN ('done', 'stopped', 'failed', 'cancelled') THEN 0 ELSE failures END,
-                    not_before = CASE WHEN status IN ('done', 'stopped', 'failed', 'cancelled') THEN NULL ELSE not_before END,
-                    outcome = CASE WHEN status IN ('done', 'stopped', 'failed', 'cancelled') THEN NULL ELSE outcome END,
-                    priority = greatest(priority, $priority), origin = ${origin.wire}, updated_at = now()
-                  WHERE id = $id""".update.run()
-          (id, false)
+  )(using DbCon): (Long, Boolean) =
+    sql"""INSERT INTO manager_items (manager_id, kind, target, origin, priority, state)
+          VALUES ($managerId, $kind, $target, ${origin.wire}, $priority, $initial::jsonb)
+          ON CONFLICT (manager_id, kind, target) DO NOTHING RETURNING id""".query[Long].run().headOption match
+      case Some(id) => (id, true)
+      case None     =>
+        val id =
+          sql"""SELECT id FROM manager_items WHERE manager_id = $managerId AND kind = $kind AND target = $target"""
+            .query[Long]
+            .run()
+            .head
+        if reopen then
+          sql"""UPDATE manager_items SET
+                  status = CASE WHEN status IN ('done', 'stopped', 'failed', 'cancelled') THEN 'pending' ELSE status END,
+                  attempts = CASE WHEN status IN ('done', 'stopped', 'failed', 'cancelled') THEN 0 ELSE attempts END,
+                  failures = CASE WHEN status IN ('done', 'stopped', 'failed', 'cancelled') THEN 0 ELSE failures END,
+                  not_before = CASE WHEN status IN ('done', 'stopped', 'failed', 'cancelled') THEN NULL ELSE not_before END,
+                  outcome = CASE WHEN status IN ('done', 'stopped', 'failed', 'cancelled') THEN NULL ELSE outcome END,
+                  priority = greatest(priority, $priority), origin = ${origin.wire}, updated_at = now()
+                WHERE id = $id""".update.run()
+        (id, false)
 
   /** The pending items whose time has come, the most urgent first: (id, target, priority, not-before). */
-  def pending(ds: DataSource, managerId: String): List[ManagerItem] =
-    withStatus(ds, managerId, ItemStatus.Pending)
+  def pending(managerId: String)(using DbCon): List[ManagerItem] =
+    withStatus(managerId, ItemStatus.Pending)
 
   /** Dispatch, in the caller's transaction: pending → active with `run`, one more attempt, the open MAJORs before it in
     * its state. `false` = it was no longer pending (another tick took it).
@@ -465,49 +453,43 @@ object ManagerRepo:
               AND coalesce(run_id, '') = $key AND evaluated_run IS DISTINCT FROM $run""".update.run() > 0
 
   /** A person's (or a hint's) change of one item. Each is a CAS on the statuses it may change. */
-  def hold(ds: DataSource, itemId: Long, h: Hold): Boolean =
+  def hold(itemId: Long, h: Hold)(using DbCon): Boolean =
     val hold = Option(h)
-    transact(ds):
-      sql"""UPDATE manager_items SET status = 'held', hold = $hold::jsonb, updated_at = now()
-            WHERE id = $itemId AND status IN ('pending', 'held')""".update.run() > 0
+    sql"""UPDATE manager_items SET status = 'held', hold = $hold::jsonb, updated_at = now()
+          WHERE id = $itemId AND status IN ('pending', 'held')""".update.run() > 0
 
-  def release(ds: DataSource, itemId: Long): Boolean =
-    transact(ds):
-      sql"""UPDATE manager_items SET status = 'pending', hold = NULL, updated_at = now()
-            WHERE id = $itemId AND status = 'held'""".update.run() > 0
+  def release(itemId: Long)(using DbCon): Boolean =
+    sql"""UPDATE manager_items SET status = 'pending', hold = NULL, updated_at = now()
+          WHERE id = $itemId AND status = 'held'""".update.run() > 0
 
   // ── the focus's holds (docs/research-process-managers.md "As built: the focus") ─────────────────
 
   /** Hold a PENDING item for the focus (`h.focus` = its goal); false = it was not pending any more. */
-  def focusHold(ds: DataSource, itemId: Long, h: Hold): Boolean =
+  def focusHold(itemId: Long, h: Hold)(using DbCon): Boolean =
     val hold = Option(h)
-    transact(ds):
-      sql"""UPDATE manager_items SET status = 'held', hold = $hold::jsonb, updated_at = now()
-            WHERE id = $itemId AND status = 'pending'""".update.run() > 0
+    sql"""UPDATE manager_items SET status = 'held', hold = $hold::jsonb, updated_at = now()
+          WHERE id = $itemId AND status = 'pending'""".update.run() > 0
 
   /** Release the focus holds among `ids` (a person's or an approval's hold is never touched); how many. */
-  def focusRelease(ds: DataSource, ids: List[Long]): Int =
+  def focusRelease(ids: List[Long])(using DbCon): Int =
     if ids.isEmpty then 0
     else
       val arr = ids.map(_.toString)
-      transact(ds):
-        sql"""UPDATE manager_items SET status = 'pending', hold = NULL, updated_at = now()
-              WHERE id = ANY($arr::bigint[]) AND status = 'held' AND hold->>'focus' IS NOT NULL""".update.run()
+      sql"""UPDATE manager_items SET status = 'pending', hold = NULL, updated_at = now()
+            WHERE id = ANY($arr::bigint[]) AND status = 'held' AND hold->>'focus' IS NOT NULL""".update.run()
 
   /** Release every focus hold (the focus is not in force any more); how many. */
-  def focusReleaseAll(ds: DataSource): Int =
-    transact(ds):
-      sql"""UPDATE manager_items SET status = 'pending', hold = NULL, updated_at = now()
-            WHERE status = 'held' AND hold->>'focus' IS NOT NULL""".update.run()
+  def focusReleaseAll()(using DbCon): Int =
+    sql"""UPDATE manager_items SET status = 'pending', hold = NULL, updated_at = now()
+          WHERE status = 'held' AND hold->>'focus' IS NOT NULL""".update.run()
 
   /** The items the focus holds now. */
-  def focusHeldCount(ds: DataSource): Int =
-    connect(ds)(
-      sql"""SELECT count(*)::int FROM manager_items WHERE status = 'held' AND hold->>'focus' IS NOT NULL"""
-        .query[Int]
-        .run()
-        .head
-    )
+  def focusHeldCount()(using DbCon): Int =
+
+    sql"""SELECT count(*)::int FROM manager_items WHERE status = 'held' AND hold->>'focus' IS NOT NULL"""
+      .query[Int]
+      .run()
+      .head
 
   def setPriority(ds: DataSource, itemId: Long, priority: Int): Boolean =
     transact(ds)(
@@ -515,11 +497,10 @@ object ManagerRepo:
     )
 
   /** Settle an item that is not active (skip: stopped by a person; a manager's stop: cancelled). */
-  def settle(ds: DataSource, itemId: Long, status: ItemStatus, outcome: String, from: List[ItemStatus]): Boolean =
+  def settle(itemId: Long, status: ItemStatus, outcome: String, from: List[ItemStatus])(using DbCon): Boolean =
     val fs = from.map(_.wire)
-    transact(ds):
-      sql"""UPDATE manager_items SET status = ${status.wire}, outcome = $outcome, hold = NULL, updated_at = now()
-            WHERE id = $itemId AND status = ANY($fs::text[])""".update.run() > 0
+    sql"""UPDATE manager_items SET status = ${status.wire}, outcome = $outcome, hold = NULL, updated_at = now()
+          WHERE id = $itemId AND status = ANY($fs::text[])""".update.run() > 0
 
   /** Re-open a settled item: pending again, its run count and failures reset, how often recorded. */
   def reopen(ds: DataSource, itemId: Long): Boolean =
@@ -544,10 +525,9 @@ object ManagerRepo:
   /** A manager's open items (pending, held, active) as (kind, target) — what
     * [[com.histmersion.domain.ManagerPolicy.waitsFor]] reads.
     */
-  def openKeys(ds: DataSource, managerId: String): List[(String, String)] =
-    connect(ds):
-      sql"""SELECT kind, target FROM manager_items WHERE manager_id = $managerId
-            AND status IN ('pending', 'held', 'active')""".query[(String, String)].run().toList
+  def openKeys(managerId: String)(using DbCon): List[(String, String)] =
+    sql"""SELECT kind, target FROM manager_items WHERE manager_id = $managerId
+          AND status IN ('pending', 'held', 'active')""".query[(String, String)].run().toList
 
   /** Does manager `managerId` have (or ever had) an item of `kind` on `target`? */
   def hasItem(ds: DataSource, managerId: String, kind: String, target: String): Boolean =
@@ -715,85 +695,67 @@ object ManagerRepo:
 
   // ── the autopilot's views (few queries for every manager at once) ──────────────────────────────
 
-  /** A manager without its counts: what the autopilot's ensure and status read for every manager. `planItem` = it has a
-    * plan-goal item (any status).
-    */
-  final case class Light(
-      id: String,
-      kind: String,
-      goal: Option[String],
-      state: String,
-      cron: Option[String],
-      config: ManagerConfig,
-      statusNote: Option[String],
-      planItem: Boolean
-  ) derives DbCodec
-
-  def light(ds: DataSource): List[Light] =
-    connect(ds):
-      Sql
-        .of(
-          s"""SELECT m.id, m.kind, m.goal_slug, m.state, m.cron, m.config::text, m.status_note,
-                        EXISTS (SELECT 1 FROM manager_items i WHERE i.manager_id = m.id AND i.kind = ?)
-                 FROM agent_managers m ORDER BY m.id""",
-          Param.S(PlanGoalItem)
-        )
-        .frag
-        .query[Light]
-        .run()
-        .toList
+  def light()(using DbCon): List[ManagerLight] =
+    Sql
+      .of(
+        s"""SELECT m.id, m.kind, m.goal_slug, m.state, m.cron, m.config::text, m.status_note,
+                      EXISTS (SELECT 1 FROM manager_items i WHERE i.manager_id = m.id AND i.kind = ?)
+               FROM agent_managers m ORDER BY m.id""",
+        Param.S(PlanGoalItem)
+      )
+      .frag
+      .query[ManagerLight]
+      .run()
+      .toList
 
   /** Per manager: its open items (pending, held, active), the items it settled since `since`, and when it last recorded
     * an event. A watcher's ingest backlog is not counted: it drains by the day's ingest caps, not at the pace of its
     * runs (it has its own estimate, [[com.histmersion.domain.IngestBacklog.daysToDrain]]).
     */
-  def pace(ds: DataSource, since: java.time.Instant): Map[String, (Int, Int, Option[String])] =
+  def pace(since: java.time.Instant)(using DbCon): Map[String, (Int, Int, Option[String])] =
     val t = since.toString
-    connect(ds):
-      Sql
-        .of(
-          s"""SELECT m.id,
-                        (SELECT count(*)::int FROM manager_items i WHERE i.manager_id = m.id AND i.kind <> ?
-                           AND i.status IN ('pending', 'held', 'active')),
-                        (SELECT count(*)::int FROM manager_items i WHERE i.manager_id = m.id AND i.kind <> ?
-                           AND i.status IN ('done', 'stopped', 'failed') AND i.updated_at >= ?::timestamptz),
-                        (SELECT ${at("max(e.at)")} FROM manager_events e WHERE e.manager_id = m.id)
-                 FROM agent_managers m""",
-          Param.S(OaIngest),
-          Param.S(OaIngest),
-          Param.S(t)
-        )
-        .frag
-        .query[(String, Int, Int, Option[String])]
-        .run()
-        .toList
-        .map((id, o, d, l) => id -> (o, d, l))
-        .toMap
+    Sql
+      .of(
+        s"""SELECT m.id,
+                      (SELECT count(*)::int FROM manager_items i WHERE i.manager_id = m.id AND i.kind <> ?
+                         AND i.status IN ('pending', 'held', 'active')),
+                      (SELECT count(*)::int FROM manager_items i WHERE i.manager_id = m.id AND i.kind <> ?
+                         AND i.status IN ('done', 'stopped', 'failed') AND i.updated_at >= ?::timestamptz),
+                      (SELECT ${at("max(e.at)")} FROM manager_events e WHERE e.manager_id = m.id)
+               FROM agent_managers m""",
+        Param.S(OaIngest),
+        Param.S(OaIngest),
+        Param.S(t)
+      )
+      .frag
+      .query[(String, Int, Int, Option[String])]
+      .run()
+      .toList
+      .map((id, o, d, l) => id -> (o, d, l))
+      .toMap
 
   /** Open items of `kind` in manager `id` (pending, held or active) — e.g. a goal's compiles. `focusHeld` = an item the
     * focus holds counts as held (false: as the pending item it really is).
     */
   def openOf(
-      ds: DataSource,
       managerId: String,
       kinds: List[String],
       statuses: List[String],
       focusHeld: Boolean = true
-  ): Int =
-    connect(ds)(
-      Sql
-        .of(
-          "SELECT count(*)::int FROM manager_items WHERE manager_id = ? AND kind = ANY(?::text[]) AND status = ANY(?::text[])" +
-            (if focusHeld then "" else " AND NOT (status = 'held' AND hold->>'focus' IS NOT NULL)"),
-          Param.S(managerId),
-          Param.A(kinds),
-          Param.A(statuses)
-        )
-        .frag
-        .query[Int]
-        .run()
-        .head
-    )
+  )(using DbCon): Int =
+
+    Sql
+      .of(
+        "SELECT count(*)::int FROM manager_items WHERE manager_id = ? AND kind = ANY(?::text[]) AND status = ANY(?::text[])" +
+          (if focusHeld then "" else " AND NOT (status = 'held' AND hold->>'focus' IS NOT NULL)"),
+        Param.S(managerId),
+        Param.A(kinds),
+        Param.A(statuses)
+      )
+      .frag
+      .query[Int]
+      .run()
+      .head
 
   /** Open items on `target` in manager `id`, any kind. */
   def openOn(ds: DataSource, managerId: String, target: String): Boolean =
@@ -849,15 +811,14 @@ object ManagerRepo:
     )
 
   /** Per watcher: its backlog items by status (pending, held) — what the status lines count. */
-  def backlogCounts(ds: DataSource): Map[String, (Int, Int)] =
-    connect(ds):
-      sql"""SELECT manager_id, count(*) FILTER (WHERE status = 'pending')::int, count(*) FILTER (WHERE status = 'held')::int
-            FROM manager_items WHERE kind = $OaIngest AND status IN ('pending', 'held') GROUP BY manager_id"""
-        .query[(String, Int, Int)]
-        .run()
-        .toList
-        .map((m, p, h) => m -> (p, h))
-        .toMap
+  def backlogCounts()(using DbCon): Map[String, (Int, Int)] =
+    sql"""SELECT manager_id, count(*) FILTER (WHERE status = 'pending')::int, count(*) FILTER (WHERE status = 'held')::int
+          FROM manager_items WHERE kind = $OaIngest AND status IN ('pending', 'held') GROUP BY manager_id"""
+      .query[(String, Int, Int)]
+      .run()
+      .toList
+      .map((m, p, h) => m -> (p, h))
+      .toMap
 
   /** Per manager: its events of `kind` since `since` (every watcher's ingests today, in one query). */
   def countEventsBy(ds: DataSource, kind: String, since: java.time.Instant): Map[String, Int] =
@@ -959,23 +920,21 @@ object ManagerRepo:
                   VALUES ($managerId, $itemId, $runId, $kind, ${text.take(2000)})""".update.run()
 
   def event(
-      ds: DataSource,
       managerId: String,
       itemId: Option[Long],
       runId: Option[String],
       kind: String,
       text: String
-  ): Unit =
-    transact(ds)(eventIn(managerId, itemId, runId, kind, text))
+  )(using DbCon): Unit =
+    eventIn(managerId, itemId, runId, kind, text)
 
   /** Newest first; `before` = only events older than that id. */
-  def events(ds: DataSource, managerId: String, before: Option[Long], limit: Int): List[ManagerEvent] =
-    connect(ds):
-      (eventSelect ++ Sql.of(" WHERE manager_id = ?", Param.S(managerId)) ++
-        before.fold(Sql.empty)(b => Sql.of(" AND id < ?", Param.L(b))) ++
-        Sql.of(" ORDER BY id DESC LIMIT ?", Param.I(math.max(1, limit)))).frag.query[ManagerEvent].run().toList
+  def events(managerId: String, before: Option[Long], limit: Int)(using DbCon): List[ManagerEvent] =
+    (eventSelect ++ Sql.of(" WHERE manager_id = ?", Param.S(managerId)) ++
+      before.fold(Sql.empty)(b => Sql.of(" AND id < ?", Param.L(b))) ++
+      Sql.of(" ORDER BY id DESC LIMIT ?", Param.I(math.max(1, limit)))).frag.query[ManagerEvent].run().toList
 
-  def lastEvent(ds: DataSource, managerId: String): Option[ManagerEvent] = events(ds, managerId, None, 1).headOption
+  def lastEvent(managerId: String)(using DbCon): Option[ManagerEvent] = events(managerId, None, 1).headOption
 
   /** How many events of `kind` a manager has recorded since `since` (a watcher's ingests today). */
   def countEvents(ds: DataSource, managerId: String, kind: String, since: java.time.Instant): Int =
@@ -986,24 +945,22 @@ object ManagerRepo:
   /** How many events of `kind` ALL managers recorded since `since` (every watcher's ingests today: the autopilot's
     * shared cap).
     */
-  def countEventsAll(ds: DataSource, kind: String, since: java.time.Instant): Int =
+  def countEventsAll(kind: String, since: java.time.Instant)(using DbCon): Int =
     val at = since.toString
-    connect(ds)(
-      sql"""SELECT count(*)::int FROM manager_events WHERE kind = $kind AND at >= $at::timestamptz"""
-        .query[Int]
-        .run()
-        .head
-    )
+
+    sql"""SELECT count(*)::int FROM manager_events WHERE kind = $kind AND at >= $at::timestamptz"""
+      .query[Int]
+      .run()
+      .head
 
   /** The newest event of `kind` (a starved note is logged once per change). */
-  def lastEventOf(ds: DataSource, managerId: String, kind: String): Option[ManagerEvent] =
-    connect(ds)(
-      (eventSelect ++ Sql.of(
-        " WHERE manager_id = ? AND kind = ? ORDER BY id DESC LIMIT 1",
-        Param.S(managerId),
-        Param.S(kind)
-      )).frag.query[ManagerEvent].run().headOption
-    )
+  def lastEventOf(managerId: String, kind: String)(using DbCon): Option[ManagerEvent] =
+
+    (eventSelect ++ Sql.of(
+      " WHERE manager_id = ? AND kind = ? ORDER BY id DESC LIMIT 1",
+      Param.S(managerId),
+      Param.S(kind)
+    )).frag.query[ManagerEvent].run().headOption
 
   def pruneEvents(ds: DataSource, days: Int): Int =
     if days <= 0 then 0
@@ -1099,29 +1056,3 @@ object ManagerRepo:
       if !h.standing then
         sql"UPDATE manager_hints SET retired_at = now() WHERE id = ${h.id} AND retired_at IS NULL".update.run()
     }
-
-  // ── the agent lease ────────────────────────────────────────────────────────────────────────────
-
-  /** Claim (or renew) lease `name` for `owner` for `ttlSeconds`: it is taken when free, expired, or already ours.
-    * `true` = we hold it now.
-    */
-  def claim(ds: DataSource, name: String, owner: String, ttlSeconds: Int): Boolean =
-    transact(ds):
-      sql"""INSERT INTO agent_leases (name, owner, until) VALUES ($name, $owner, now() + make_interval(secs => $ttlSeconds))
-            ON CONFLICT (name) DO UPDATE SET owner = EXCLUDED.owner, until = EXCLUDED.until
-            WHERE agent_leases.until < now() OR agent_leases.owner = EXCLUDED.owner
-            RETURNING owner""".query[String].run().nonEmpty
-
-  /** Give it up (a clean stop), so the next server need not wait for it to expire. */
-  def release(ds: DataSource, name: String, owner: String): Unit =
-    val _ = transact(ds)(sql"DELETE FROM agent_leases WHERE name = $name AND owner = $owner".update.run())
-
-  /** Who holds it, until when, and whether that is in the past. */
-  def holder(ds: DataSource, name: String): Option[(String, String, Boolean)] =
-    connect(ds):
-      Sql
-        .of(s"SELECT owner, ${at("until")}, until < now() FROM agent_leases WHERE name = ?", Param.S(name))
-        .frag
-        .query[(String, String, Boolean)]
-        .run()
-        .headOption

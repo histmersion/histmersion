@@ -52,8 +52,7 @@ final class OaBacklog(
   def add(managerId: String, goal: String, w: OaWork): Placement =
     val doi = w.doi
     val open = ManagerRepo.backlogOpenFor(ds, doi)
-    val settled = ManagerRepo
-      .itemFor(ds, managerId, OaIngest, doi)
+    val settled = connect(ds)(ManagerRepo.itemFor(managerId, OaIngest, doi))
       .filter(i => ItemStatus.parse(i.status).exists(_.isFinal))
       .map(_.id)
     val acquire = h.queues.naming(Queue.Kind.Acquire, doi).headOption.map(_.id)
@@ -77,28 +76,31 @@ final class OaBacklog(
               i.state.copy(oa = Some(st.copy(goals = st.goals :+ goal))),
               List(ItemStatus.Pending, ItemStatus.Held, ItemStatus.Active)
             )
-            ManagerRepo.event(
-              ds,
-              i.managerId,
-              Some(i.id),
-              None,
-              Feed.Evaluated,
-              s"$doi (ingest backlog): found by goal $goal too ($managerId)"
+            transact(ds)(
+              ManagerRepo.event(
+                i.managerId,
+                Some(i.id),
+                None,
+                Feed.Evaluated,
+                s"$doi (ingest backlog): found by goal $goal too ($managerId)"
+              )
             )
         }
         p
       case p @ Placement.SettledBefore(_) => p
       case Placement.New                  =>
         val st = ItemState(oa = Some(w.copy(goals = (w.goals :+ goal).distinct)))
-        val (id, isNew) = ManagerRepo.upsert(ds, managerId, OaIngest, doi, ItemOrigin.Selection, 0, reopen = false, st)
+        val (id, isNew) =
+          transact(ds)(ManagerRepo.upsert(managerId, OaIngest, doi, ItemOrigin.Selection, 0, reopen = false, st))
         if isNew then
-          ManagerRepo.event(
-            ds,
-            managerId,
-            Some(id),
-            w.foundBy,
-            Feed.Evaluated,
-            s"$doi (ingest backlog): ${w.title.take(200)} — legal open access, waits for a day's ingest allowance"
+          transact(ds)(
+            ManagerRepo.event(
+              managerId,
+              Some(id),
+              w.foundBy,
+              Feed.Evaluated,
+              s"$doi (ingest backlog): ${w.title.take(200)} — legal open access, waits for a day's ingest allowance"
+            )
           )
           Placement.New
         else Placement.SettledBefore(id)
@@ -108,8 +110,7 @@ final class OaBacklog(
   /** The watchers whose backlog drains (active, auto-ingest on) → what is left of their own allowance today. */
   private def ownLeft(now: Instant): Map[String, Int] =
     val today = ManagerRepo.countEventsBy(ds, Feed.Ingested, ManagerPolicy.dayStart(now))
-    ManagerRepo
-      .light(ds)
+    connect(ds)(ManagerRepo.light())
       .filter(m => m.kind == Kind.Watch.wire && m.state == State.Active.wire && m.config.autoIngest.contains(true))
       .map(m => m.id -> ManagerPolicy.ingestAllowance(m.config, managerDefaults, today.getOrElse(m.id, 0)))
       .toMap
@@ -118,9 +119,8 @@ final class OaBacklog(
     * backlog item of a watcher that drains (the shared cap's).
     */
   def reserved(managerId: String): (Int, Int) =
-    val counts = ManagerRepo.backlogCounts(ds)
-    val draining = ManagerRepo
-      .light(ds)
+    val counts = connect(ds)(ManagerRepo.backlogCounts())
+    val draining = connect(ds)(ManagerRepo.light())
       .filter(m =>
         m.kind == Kind.Watch.wire && m.state == State.Active.wire &&
           m.config.autoIngest.contains(true)
@@ -131,7 +131,7 @@ final class OaBacklog(
 
   /** The backlog per watcher and in all, with the days to drain it ([[OaBacklog.Snapshot]]). */
   def snapshot(now: Instant = Instant.now(), extra: Map[String, Int] = Map.empty): Snapshot =
-    val stored = ManagerRepo.backlogCounts(ds)
+    val stored = connect(ds)(ManagerRepo.backlogCounts())
     // `extra` = pending items a dry run would add, per watcher
     val counts = (stored.keySet ++ extra.keySet)
       .map(id => id -> stored.get(id).fold((extra.getOrElse(id, 0), 0))((p, hd) => (p + extra.getOrElse(id, 0), hd)))
@@ -139,7 +139,7 @@ final class OaBacklog(
     if counts.isEmpty then Snapshot(Map.empty, 0, None)
     else
       val left = ownLeft(now)
-      val light = ManagerRepo.light(ds).map(m => m.id -> m).toMap
+      val light = connect(ds)(ManagerRepo.light()).map(m => m.id -> m).toMap
       val shared = agents.autopilot.sharedIngestLeft(now)
       val sharedCap = Option.when(shared.isDefined)(agents.autopilot.ingestCap).filter(_ > 0)
       // a held item drains once released: counted in the backlog, not in the days (it waits for a person)
@@ -188,13 +188,13 @@ final class OaBacklog(
       if picks.isEmpty then Nil
       else
         val byId = pending.map(i => i.id -> i).toMap
-        val goalOf = ManagerRepo.light(ds).map(m => m.id -> m.goal).toMap
+        val goalOf = connect(ds)(ManagerRepo.light()).map(m => m.id -> m.goal).toMap
         val results = picks.flatMap(e => byId.get(e.id)).map(i => one(i, goalOf.get(i.managerId).flatten, now))
         val ingested = results.collect { case Drained.Ingested(ck) => ck }
         val queued = results.collect { case Drained.Queued(id) => id }
         val known = results.count(_ == Drained.Known)
         val retried = results.count(_ == Drained.Retried)
-        val waiting = ManagerRepo.backlogCounts(ds).values.map((p, hd) => p + hd).sum
+        val waiting = connect(ds)(ManagerRepo.backlogCounts()).values.map((p, hd) => p + hd).sum
         val line =
           s"ingest backlog: ${ingested.size} ingested (legal open access${ingested.map(c => s" [[$c]]").mkString})" +
             (if queued.nonEmpty then
@@ -217,8 +217,8 @@ final class OaBacklog(
     val w = i.state.oa.getOrElse(OaWork(doi))
     val goals = (w.goals ++ holderGoal.toList).distinct
     def settle(status: ItemStatus, outcome: String, kind: String, text: String, d: Drained): Drained =
-      if ManagerRepo.settle(ds, i.id, status, outcome, List(ItemStatus.Pending)) then
-        ManagerRepo.event(ds, i.managerId, Some(i.id), None, kind, text)
+      if transact(ds)(ManagerRepo.settle(i.id, status, outcome, List(ItemStatus.Pending))) then
+        transact(ds)(ManagerRepo.event(i.managerId, Some(i.id), None, kind, text))
         d
       else Drained.Lost
     ManagerRepo.citekeyOfDoi(ds, doi) match
@@ -266,13 +266,14 @@ final class OaBacklog(
                     s"not ingested ($n of ${s.maxFailures}): $why; again after $nb"
                   )
                 then
-                  ManagerRepo.event(
-                    ds,
-                    i.managerId,
-                    Some(i.id),
-                    None,
-                    Feed.Evaluated,
-                    s"$doi (ingest backlog): not ingested ($n of ${s.maxFailures}): $why; again after $nb"
+                  transact(ds)(
+                    ManagerRepo.event(
+                      i.managerId,
+                      Some(i.id),
+                      None,
+                      Feed.Evaluated,
+                      s"$doi (ingest backlog): not ingested ($n of ${s.maxFailures}): $why; again after $nb"
+                    )
                   )
                   Drained.Retried
                 else Drained.Lost
@@ -289,7 +290,7 @@ final class OaBacklog(
                   case None => Drained.Lost
 
   private def settingsOf(managerId: String): ManagerPolicy.ReviewSettings =
-    val c = ManagerRepo.get(ds, managerId).map(_.config).getOrElse(ManagerConfig())
+    val c = connect(ds)(ManagerRepo.get(managerId)).map(_.config).getOrElse(ManagerConfig())
     ManagerPolicy.ReviewSettings.forKind(Kind.Watch, c, managerDefaults)
 
   /** The acquisition item for `doi` (an existing one that names it, else a new one in the sweep's wording), linked to
@@ -337,7 +338,7 @@ final class OaBacklog(
   def repair(in: RepairRequest): RepairResult =
     val by = in.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")
     val rows = ManagerRepo.sweepAcquireItems(ds)
-    val light = ManagerRepo.light(ds).map(m => m.id -> m).toMap
+    val light = connect(ds)(ManagerRepo.light()).map(m => m.id -> m).toMap
     val items = rows.groupBy(_.item).toList.sortBy(_._1)
     val out = items.map { (item, rs) =>
       val first = rs.find(_.isOa).getOrElse(rs.head)
@@ -388,13 +389,14 @@ final class OaBacklog(
               case Some(id) =>
                 goals.foreach(g => joinGoal(id, g))
                 removeAcquire(item, goals)
-                ManagerRepo.event(
-                  ds,
-                  first.managerId,
-                  Some(id),
-                  Some(first.job),
-                  Feed.Evaluated,
-                  s"${first.doi} (ingest backlog): moved from acquisition item #$item by repair-acquire ($by)"
+                transact(ds)(
+                  ManagerRepo.event(
+                    first.managerId,
+                    Some(id),
+                    Some(first.job),
+                    Feed.Evaluated,
+                    s"${first.doi} (ingest backlog): moved from acquisition item #$item by repair-acquire ($by)"
+                  )
                 )
                 RepairRow(item, first.doi, goals, first.managerId, Move, "legal open access", Some(id))
     }
@@ -428,21 +430,14 @@ final class OaBacklog(
     */
   private def addMoved(managerId: String, w: OaWork): Option[Long] =
     ManagerRepo.backlogOpenFor(ds, w.doi).map(_.id).orElse {
-      val (id, isNew) = ManagerRepo.upsert(
-        ds,
-        managerId,
-        OaIngest,
-        w.doi,
-        ItemOrigin.Selection,
-        0,
-        reopen = false,
-        ItemState(oa = Some(w))
+      val (id, isNew) = transact(ds)(
+        ManagerRepo.upsert(managerId, OaIngest, w.doi, ItemOrigin.Selection, 0, reopen = false, ItemState(oa = Some(w)))
       )
       Option.when(isNew)(id)
     }
 
   private def joinGoal(itemId: Long, goal: String): Unit =
-    ManagerRepo.item(ds, itemId).foreach { i =>
+    connect(ds)(ManagerRepo.item(itemId)).foreach { i =>
       val st = i.state.oa.getOrElse(OaWork(i.target))
       if !st.goals.contains(goal) then
         val _ = ManagerRepo.setItemState(

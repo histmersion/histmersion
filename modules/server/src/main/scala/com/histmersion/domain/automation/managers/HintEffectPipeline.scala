@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.managers
 
+import com.augustnagro.magnum.{connect, transact}
+
 import com.histmersion.domain.automation.agents.{AnswerSchemas, Checked, Halt, Prompt, RunCtx, StepAgent}
 import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
 
@@ -62,13 +64,13 @@ final class HintEffectPipeline(
 
   private def load(mid: String, hint: Option[Long]): Either[String, Loaded] =
     for
-      m <- ManagerRepo.get(ds, mid).toRight(s"no manager '$mid'")
+      m <- connect(ds)(ManagerRepo.get(mid)).toRight(s"no manager '$mid'")
       id <- hint.toRight("the run names no hint (RunParams.hint)")
       ht <- ManagerRepo.hint(ds, id).filter(_.managerId == m.id).toRight(s"manager $mid has no hint #$id")
     yield
       val (items, _) = ManagerRepo.items(ds, m.id, None, 0, ItemsShown)
       val lines = items.map(i => s"${i.target} (${i.kind}, ${i.status}, priority ${i.priority})")
-      val itemTarget = ht.itemId.flatMap(ManagerRepo.item(ds, _)).map(_.target)
+      val itemTarget = ht.itemId.flatMap(connect(ds)(ManagerRepo.item(_))).map(_.target)
       Loaded(
         m.id,
         m.kind,
@@ -103,13 +105,14 @@ final class HintEffectPipeline(
         val what = ManagersMarkdown.effect(e)
         ctx.write(s"${ApprovalKind.HintEffect.wire} approval for ${l.managerId} hint #${l.hint}", hp.asJson) {
           val a = store.openSubject(Some(ctx.run.id), ApprovalKind.HintEffect, l.managerId, hp.asJson.noSpaces)
-          ManagerRepo.event(
-            ds,
-            l.managerId,
-            None,
-            Some(ctx.run.id),
-            Feed.Hint,
-            s"hint #${l.hint}: a model proposed $what — approval #${a.id} waits for a person"
+          transact(ds)(
+            ManagerRepo.event(
+              l.managerId,
+              None,
+              Some(ctx.run.id),
+              Feed.Hint,
+              s"hint #${l.hint}: a model proposed $what — approval #${a.id} waits for a person"
+            )
           )
           Right(s"approval ${a.id} waits for a person: $what")
         }(Right(s"no approval opened (${AgentsMarkdown.DryRunNote}): $what"))

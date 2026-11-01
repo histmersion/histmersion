@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.LeaseRepo
+
 import com.histmersion.domain.automation.agents.{AgentLease, AgentsHandlers, LlmClient}
 import com.histmersion.domain.automation.managers.Zero
 
@@ -132,8 +134,8 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         .isDefined
     )
 
-  private def item(slug: String): ManagerItem = ManagerRepo.itemFor(ds, ReviewId, ArticleReview, slug).get
-  private def events: List[ManagerEvent] = ManagerRepo.events(ds, ReviewId, None, 200).reverse
+  private def item(slug: String): ManagerItem = connect(ds)(ManagerRepo.itemFor(ReviewId, ArticleReview, slug)).get
+  private def events: List[ManagerEvent] = connect(ds)(ManagerRepo.events(ReviewId, None, 200)).reverse
 
   test("selection, dispatch and the stop rules over runs: 3 runs to converge; max runs, no progress, churn"):
     val (a, h) = handlers(PanelClient(Model)); seed(h, "zzagent_m1", "zzagent_m2")
@@ -301,8 +303,8 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       List("pending", "active", "pending")
     )
     assert(
-      ManagerRepo.get(ds, ReviewId).get.statusNote.exists(_.startsWith("at capacity")),
-      ManagerRepo.get(ds, ReviewId).get.statusNote
+      connect(ds)(ManagerRepo.get(ReviewId)).get.statusNote.exists(_.startsWith("at capacity")),
+      connect(ds)(ManagerRepo.get(ReviewId)).get.statusNote
     )
     assertEquals(a.engine.cancel(mine.id).map(_.status), Right("cancelled"))
     a.managers.tick(t0)
@@ -344,7 +346,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, "zzagent_s1"))
     a.managers.tick(t0); a.managers.tick(t0)
     assertEquals(item("zzagent_s1").status, "pending")
-    val m = ManagerRepo.get(ds, ReviewId).get
+    val m = connect(ds)(ManagerRepo.get(ReviewId)).get
     assert(m.statusNote.exists(_.startsWith("starved: skeptic")), m.statusNote)
     assertEquals(events.count(_.kind == Feed.Starved), 1, "one event per change, not per tick")
     a.managing.update(ReviewId, ManagerUpdate(Some(ManagerConfig(includeTags = Some(List(Tag))))))
@@ -440,7 +442,11 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val (b, _) = handlers(PanelClient(Model))
     b.engine.reconcile()
     assertEquals(connect(ds)(AgentRepo.get(run1)).map(r => (r.status, r.resumeAt.isDefined)), Some(("paused", true)))
-    assertEquals(ManagerRepo.running(ds, ReviewId), 2, "an interrupted and a stalled run both resume by themselves")
+    assertEquals(
+      connect(ds)(ManagerRepo.running(ReviewId)),
+      2,
+      "an interrupted and a stalled run both resume by themselves"
+    )
     b.managers.tick(t0)
     assertEquals(List("zzagent_r3", "zzagent_r4").map(item(_).status), List("pending", "pending"))
     // the engine resumes both: still two, and the next tick starts nothing
@@ -453,7 +459,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     connect(ds)(sql"UPDATE jobs SET status = 'waiting' WHERE id = $run1".update.run())
     b.managers.tick(t0)
     assertEquals(List("zzagent_r3", "zzagent_r4").map(item(_).status), List("active", "pending"))
-    assertEquals(ManagerRepo.running(ds, ReviewId), 2, "run2 and run3: the waiting run1 holds no place")
+    assertEquals(connect(ds)(ManagerRepo.running(ReviewId)), 2, "run2 and run3: the waiting run1 holds no place")
     // decided, run1 goes on beside them (the cap overshoots until runs settle); nothing new starts meanwhile
     connect(ds)(sql"UPDATE jobs SET status = 'queued' WHERE id = $run1".update.run())
     b.managers.tick(t0)
@@ -468,18 +474,18 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         .transition(ds, run3, RunState.Queued, RunState.Paused, error = Some("requested: paused on request"))
         .isDefined
     )
-    assertEquals(ManagerRepo.running(ds, ReviewId), 1)
+    assertEquals(connect(ds)(ManagerRepo.running(ReviewId)), 1)
 
   test("lease: one holder; another takes over only after it expires; renewing keeps it"):
-    assert(ManagerRepo.claim(ds, "zzlease", "one", 2))
-    assert(!ManagerRepo.claim(ds, "zzlease", "two", 2))
-    assert(ManagerRepo.claim(ds, "zzlease", "one", 2), "the holder renews")
+    assert(transact(ds)(LeaseRepo.claim("zzlease", "one", 2)))
+    assert(!transact(ds)(LeaseRepo.claim("zzlease", "two", 2)))
+    assert(transact(ds)(LeaseRepo.claim("zzlease", "one", 2)), "the holder renews")
     Thread.sleep(2300)
-    assert(ManagerRepo.claim(ds, "zzlease", "two", 2), "taken over after the ttl")
-    assert(!ManagerRepo.claim(ds, "zzlease", "one", 2), "the old holder lost it")
-    assertEquals(ManagerRepo.holder(ds, "zzlease").map(_._1), Some("two"))
-    ManagerRepo.release(ds, "zzlease", "two")
-    assert(ManagerRepo.claim(ds, "zzlease", "one", 2), "free once released")
+    assert(transact(ds)(LeaseRepo.claim("zzlease", "two", 2)), "taken over after the ttl")
+    assert(!transact(ds)(LeaseRepo.claim("zzlease", "one", 2)), "the old holder lost it")
+    assertEquals(connect(ds)(LeaseRepo.holder("zzlease")).map(_._1), Some("two"))
+    transact(ds)(LeaseRepo.release("zzlease", "two"))
+    assert(transact(ds)(LeaseRepo.claim("zzlease", "one", 2)), "free once released")
 
   test("lease: a second server's agents wait for the lease; its holder's start runs them"):
     val (a, _) = handlers(PanelClient(Model))
@@ -578,7 +584,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val (a, h) = handlers(PanelClient(Model)); seed(h, "zzagent_q1")
     val i = a.managing.enqueue(EnqueueRequest("review", "zzagent_q1")).fold(e => fail(e.message), _.items.head)
     assertEquals((i.managerId, i.priority, i.status, i.origin), (ReviewId, 10, "pending", "person"))
-    assertEquals(ManagerRepo.get(ds, ReviewId).map(_.state), Some("paused"))
+    assertEquals(connect(ds)(ManagerRepo.get(ReviewId)).map(_.state), Some("paused"))
     assert(a.managing.enqueue(EnqueueRequest("review", "zzagent_nope")).isLeft)
 
   // ── scripted answers (the shapes ReviewArticleRunSuite uses) ────────────────────────────────────

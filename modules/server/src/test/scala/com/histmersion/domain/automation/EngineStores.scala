@@ -3,7 +3,8 @@ package com.histmersion.domain.automation
 import com.histmersion.domain.automation.agents.{ApprovalService, RunService}
 import com.histmersion.domain.automation.autopilot.AutopilotRowService
 import com.histmersion.util.jobs.{JobRuns, RunRow}
-import com.histmersion.domain.automation.goals.GoalService
+import com.histmersion.domain.automation.goals.{FocusService, GoalService}
+import com.histmersion.domain.automation.managers.ManagerService
 import com.augustnagro.magnum.DbCon
 
 /** The engine features' services over one store — the database's scratch copy or the shared in-memory state — and how a
@@ -16,6 +17,8 @@ trait EngineStores:
   def approvals: ApprovalService
   def runs: JobRuns
   def agentRuns: RunService
+  def managers: ManagerService
+  def focus: FocusService
   def article(slug: String, title: String): Unit
   def source(citekey: String, title: String): Unit
   def within[A](work: DbCon ?=> A): A

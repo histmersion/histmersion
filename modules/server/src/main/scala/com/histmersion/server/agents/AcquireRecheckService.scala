@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.augustnagro.magnum.{connect, transact}
+
 import com.histmersion.domain.automation.agents.AgentsHandlers
 
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope}
@@ -104,7 +106,12 @@ final class AcquireRecheckService(
     agents.autopilot
       .sharedIngestLeft(now)
       .map(left =>
-        Shared(left, agents.autopilot.ingestCap, ManagerRepo.backlogCounts(ds).values.map(_._1).sum, fetchedToday)
+        Shared(
+          left,
+          agents.autopilot.ingestCap,
+          connect(ds)(ManagerRepo.backlogCounts()).values.map(_._1).sum,
+          fetchedToday
+        )
       )
 
   private def candidate(f: Facts): Candidate = Candidate(f.item.id, f.last.map(_.last))

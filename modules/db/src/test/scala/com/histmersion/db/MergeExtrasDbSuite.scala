@@ -254,15 +254,16 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     val (work, sw) = (fresh("ww"), spool("ww"))
     transact(work)(GoalRepo.put("zz_goal", GoalPut("A watched goal")))
     assert(
-      ManagerRepo.create(
-        work,
-        "watch:zz_goal",
-        com.histmersion.api.Managers.Kind.Watch,
-        Some("zz_goal"),
-        com.histmersion.api.Managers.State.Paused,
-        com.histmersion.api.Managers.ManagerConfig(sweeps = Some(List("acquisition")), budgetUsd = Some(0.3)),
-        Some("@weekly"),
-        None
+      transact(work)(
+        ManagerRepo.create(
+          "watch:zz_goal",
+          com.histmersion.api.Managers.Kind.Watch,
+          Some("zz_goal"),
+          com.histmersion.api.Managers.State.Paused,
+          com.histmersion.api.Managers.ManagerConfig(sweeps = Some(List("acquisition")), budgetUsd = Some(0.3)),
+          Some("@weekly"),
+          None
+        )
       )
     )
     val g = entitiesOf(exportOf(work, sw)).goals.find(_.slug == "zz_goal").getOrElse(fail("no goal"))

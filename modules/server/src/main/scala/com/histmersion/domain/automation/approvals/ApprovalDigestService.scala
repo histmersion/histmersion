@@ -8,7 +8,6 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.{ApprovalKind, Decision, DecisionRequest}
 import com.histmersion.api.ApprovalDigest.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.ManagerRepo
 
 import java.time.Instant
 import javax.sql.DataSource
@@ -36,7 +35,7 @@ final class ApprovalDigestService(
       now.toString,
       open.size,
       ApprovalDigest.group(open, checked, wait.fold(Set.empty)(_ => Set(ApprovalKind.GoalPlan.wire))),
-      ManagerRepo.forPerson(ds),
+      agents.managerStore.forPerson(),
       agents.autopilotRow.lastDigest(),
       wait
     )

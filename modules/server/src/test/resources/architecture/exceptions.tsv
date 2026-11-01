@@ -360,15 +360,6 @@ repository	db:db/TileRepo.scala	EventRepo of catalogue.events	1
 repository	db:db/TileRepo.scala	MediaRepo of media	1
 repository	db:db/TileRepo.scala	PlaceRepo of catalogue.places	1
 repository	db:db/UndatedSiteRepo.scala	PlaceRepo of catalogue.places	1
-repository	server:domain/automation/agents/AgentLease.scala	ManagerRepo of automation.managers	1
-repository	server:domain/automation/agents/AgentsHandlers.scala	ManagerRepo of automation.managers	1
-repository	server:domain/automation/approvals/ApprovalDigestService.scala	ManagerRepo of automation.managers	1
-repository	server:domain/automation/approvals/AutoApprovals.scala	FocusRepo of automation.goals	1
-repository	server:domain/automation/approvals/AutoApprovals.scala	ManagerRepo of automation.managers	1
-repository	server:domain/automation/autopilot/AutopilotService.scala	ManagerRepo of automation.managers	1
-repository	server:domain/automation/goals/GoalFocusService.scala	ManagerRepo of automation.managers	1
-repository	server:domain/automation/scheduler/SchedulerService.scala	FocusRepo of automation.goals	1
-repository	server:domain/automation/scheduler/SchedulerService.scala	ManagerRepo of automation.managers	1
 repository	server:server/Bootstrap.scala	JobRepo of util.jobs	1
 repository	server:server/Bootstrap.scala	PeriodRepo of catalogue.periods	1
 repository	server:server/Bootstrap.scala	PlaceRepo of catalogue.places	1

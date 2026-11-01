@@ -119,8 +119,11 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     withHandlers(on) { h =>
       val job = ingest(h)
       assertEquals(runs, Nil, "the manager starts it, not the ingest")
-      val item = com.histmersion.db.ManagerRepo
-        .itemFor(ds, com.histmersion.api.Managers.EnrichId, com.histmersion.api.Managers.SourceEnrich, Ck)
+      val item = com.augustnagro.magnum
+        .connect(ds)(
+          com.histmersion.db.ManagerRepo
+            .itemFor(com.histmersion.api.Managers.EnrichId, com.histmersion.api.Managers.SourceEnrich, Ck)
+        )
         .getOrElse(fail("no item"))
       assertEquals((item.origin, item.status), ("ingest", "pending"))
       assert(

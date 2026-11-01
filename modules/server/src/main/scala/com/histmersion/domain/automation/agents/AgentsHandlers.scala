@@ -64,6 +64,14 @@ final class AgentsHandlers(
   /** The agent runs and their steps, as the engine's features read them. */
   val runs: RunService = RunService(Transactor(ds))
 
+  /** The process managers, their items and events, as the engine's other features reach them. */
+  val managerStore: com.histmersion.domain.automation.managers.ManagerService =
+    com.histmersion.domain.automation.managers.ManagerService(Transactor(ds))
+
+  /** What the focus records of every goal, and its reads over them. */
+  val focusStore: com.histmersion.domain.automation.goals.FocusService =
+    com.histmersion.domain.automation.goals.FocusService(Transactor(ds))
+
   /** The approvals: what runs proposed for a person to decide. */
   val approvalStore: com.histmersion.domain.automation.agents.ApprovalService =
     com.histmersion.domain.automation.agents.ApprovalService(Transactor(ds), site.clock)
@@ -608,8 +616,8 @@ final class AgentsHandlers(
     host
       .runTarget(p, raw)
       .getOrElse(
-        com.histmersion.db.ManagerRepo
-          .get(ds, raw.trim)
+        managerStore
+          .get(raw.trim)
           .map(_.id)
           .toRight(ApiError(s"No manager '$raw'", Some(Write.CodeNotFound)))
       )

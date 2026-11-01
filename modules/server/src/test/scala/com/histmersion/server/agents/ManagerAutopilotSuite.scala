@@ -174,7 +174,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     s"""{"title":"Zz new","summary":"Where Aegean tin came from.","body":${str(body)},"section":null,"reasons":[]}"""
 
   private def item(mid: String, kind: String, target: String): ManagerItem =
-    ManagerRepo.itemFor(ds, mid, kind, target).get
+    connect(ds)(ManagerRepo.itemFor(mid, kind, target)).get
   private def runOf(mid: String, kind: String, target: String): RunInfo =
     connect(ds)(
       AgentRepo.get(
@@ -226,10 +226,10 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
       on.changes
     )
     assertEquals(status(Goal), GoalStatus.Seeding, "managed: seeding")
-    val seedM = ManagerRepo.get(ds, seedId(Goal)).get
+    val seedM = connect(ds)(ManagerRepo.get(seedId(Goal))).get
     assertEquals((seedM.state, seedM.cron), ("active", Some(AutopilotPolicy.stagger("@weekly", seedId(Goal)))))
     assertEquals(
-      ManagerRepo.get(ds, watchId(Goal)).map(m => (m.state, m.config.autoIngest)),
+      connect(ds)(ManagerRepo.get(watchId(Goal))).map(m => (m.state, m.config.autoIngest)),
       Some(("active", Some(true)))
     )
     assertEquals(item(seedId(Goal), PlanGoalItem, Goal).priority, 1)
@@ -254,8 +254,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(exec(a, plan.id).status, "done", why(connect(ds)(AgentRepo.get(plan.id)).get))
     assertEquals(GoalLinkRepo.refs(ds, Goal, LinkKind.Query), List("Bronze Age tin isotopes"))
     assert(
-      ManagerRepo
-        .events(ds, seedId(Goal), None, 100)
+      connect(ds)(ManagerRepo.events(seedId(Goal), None, 100))
         .exists(e => e.kind == Feed.Approval && e.text.contains("approved by the autopilot"))
     )
     assert(QueueRows.list(ds, Queue.Kind.Log, all = true).exists(_.text.startsWith("autopilot: goal-plan")))
@@ -312,8 +311,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     clock.tick(a)
     assertEquals(status(Goal), GoalStatus.Reviewed)
     assert(
-      ManagerRepo
-        .events(ds, seedId(Goal), None, 200)
+      connect(ds)(ManagerRepo.events(seedId(Goal), None, 200))
         .exists(e => e.kind == Feed.Autopilot && e.text.contains("compiled → reviewed"))
     )
     assert(QueueRows.list(ds, Queue.Kind.Log, all = true).exists(_.text.contains(s"goal $Goal: compiled → reviewed")))
@@ -360,13 +358,14 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(a.managing.autopilot.goals.find(_.slug == Goal).map(_.openApprovals), Some(1))
     assert(a.managing.autopilot.approvals.forall(_.mode == "person"), a.managing.autopilot.approvals)
     // a manager's own autoApprove wins over the defaults
-    val sm = ManagerRepo.get(ds, seedId(Goal)).get
-    ManagerRepo.setConfig(
-      ds,
-      sm.id,
-      sm.config.copy(autoApprove = Some(true)),
-      sm.cron,
-      sm.nextTickAt.flatMap(ManagerPolicy.parseInstant)
+    val sm = connect(ds)(ManagerRepo.get(seedId(Goal))).get
+    transact(ds)(
+      ManagerRepo.setConfig(
+        sm.id,
+        sm.config.copy(autoApprove = Some(true)),
+        sm.cron,
+        sm.nextTickAt.flatMap(ManagerPolicy.parseInstant)
+      )
     )
     // the plan is code's to decide now
     clock.tick(a)
@@ -387,8 +386,8 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     a.managers.ensureDefaults()
     a.managing.setAutopilot(AutopilotSet(on = true)).fold(e => fail(e.message), identity)
     List(Goal, "zzagent-apchild", "zzagent-apgrand").foreach { g =>
-      assertEquals(ManagerRepo.get(ds, seedId(g)).map(_.state), Some("active"), g)
-      assertEquals(ManagerRepo.get(ds, watchId(g)).map(_.state), Some("active"), g)
+      assertEquals(connect(ds)(ManagerRepo.get(seedId(g))).map(_.state), Some("active"), g)
+      assertEquals(connect(ds)(ManagerRepo.get(watchId(g))).map(_.state), Some("active"), g)
       assertEquals(status(g), GoalStatus.Seeding, g)
     }
     Clock().tick(a)
@@ -407,21 +406,26 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val off = a.managing.setAutopilot(AutopilotSet(on = false)).fold(e => fail(e.message), identity)
     assert(!off.on)
     assert(off.changes.exists(_.contains("paused 5 managers")), off.changes)
-    assert(ManagerRepo.list(ds).filter(m => m.kind == "seed" || m.kind == "watch").forall(_.state == "paused"))
-    assertEquals(ManagerRepo.get(ds, ReviewId).map(_.state), Some("active"), "the library-wide ones stay")
+    assert(
+      connect(ds)(ManagerRepo.list()).filter(m => m.kind == "seed" || m.kind == "watch").forall(_.state == "paused")
+    )
+    assertEquals(connect(ds)(ManagerRepo.get(ReviewId)).map(_.state), Some("active"), "the library-wide ones stay")
     assertEquals(Clock().tick(a).filter(_.startsWith("goal")), Nil, "off: nothing ensured")
     a.managing.setAutopilot(AutopilotSet(on = true)).fold(e => fail(e.message), identity)
     assertEquals(
-      ManagerRepo.get(ds, watchId("zzagent-apchild")).map(_.state),
+      connect(ds)(ManagerRepo.get(watchId("zzagent-apchild"))).map(_.state),
       Some("paused"),
       "the person's pause holds"
     )
-    assertEquals(ManagerRepo.list(ds).count(m => (m.kind == "seed" || m.kind == "watch") && m.state == "active"), 5)
+    assertEquals(
+      connect(ds)(ManagerRepo.list()).count(m => (m.kind == "seed" || m.kind == "watch") && m.state == "active"),
+      5
+    )
     assertEquals(transact(ds)(AutopilotRepo.get()).paused, Nil)
     // a goal added while it is on gets its managers at the next ensure
     assert(h.putGoal("zzagent-aplate", GoalPut("Zz later")).isRight)
     Clock(Instant.now(suiteClock).plusSeconds(3600)).tick(a)
-    assertEquals(ManagerRepo.get(ds, seedId("zzagent-aplate")).map(_.state), Some("active"))
+    assertEquals(connect(ds)(ManagerRepo.get(seedId("zzagent-aplate"))).map(_.state), Some("active"))
     // the New research area form's watcher, asked for while it is on, is created active (paused only when asked)
     assert(h.putGoal("zzagent-apform", GoalPut("Zz form")).isRight)
     assertEquals(a.managing.create(ManagerCreate("watch", Some("zzagent-apform"))).map(_.state), Right("active"))
@@ -434,9 +438,9 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val (a, h) = handlers(ScriptedClient(Model)); seed(h)
     assert(h.patchGoal(Goal, GoalPatch(status = Some(GoalStatus.Reviewed))).isRight)
     a.managing.setAutopilot(AutopilotSet(on = true)).fold(e => fail(e.message), identity)
-    assertEquals(ManagerRepo.get(ds, seedId(Goal)), None)
+    assertEquals(connect(ds)(ManagerRepo.get(seedId(Goal))), None)
     assertEquals(
-      ManagerRepo.get(ds, watchId(Goal)).flatMap(_.cron),
+      connect(ds)(ManagerRepo.get(watchId(Goal))).flatMap(_.cron),
       Some(AutopilotPolicy.stagger("@monthly", watchId(Goal)))
     )
 
@@ -540,7 +544,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
   test("shared ingest cap: every watcher's ingests today count; at the cap a sweep ingests nothing"):
     val (a, h) = handlers(ScriptedClient(Model)); seed(h)
     a.managing.setAutopilot(AutopilotSet(on = true)).fold(e => fail(e.message), identity)
-    ManagerRepo.event(ds, watchId(Goal), None, None, Feed.Ingested, "[[zzagent_a]] ingested")
+    transact(ds)(ManagerRepo.event(watchId(Goal), None, None, Feed.Ingested, "[[zzagent_a]] ingested"))
     val now = Instant.now(suiteClock)
     // the goal's plan-goal run starts beside it: a sweep does not wait for it
     Clock(now).tick(a, 0)
@@ -551,7 +555,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
       "min(own 5 − 1, shared 2 − 1)"
     )
     assertEquals(a.managing.autopilot.ingestedToday, 1)
-    ManagerRepo.event(ds, watchId(Goal), None, None, Feed.Ingested, "[[zzagent_b]] ingested")
+    transact(ds)(ManagerRepo.event(watchId(Goal), None, None, Feed.Ingested, "[[zzagent_b]] ingested"))
     assertEquals(a.autopilot.sharedIngestLeft(now), Some(0))
 
   // ── new sources reach the article ──────────────────────────────────────────────────────────────
@@ -583,8 +587,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val x = item(ReviewId, ArticleExtend, "zzagent_x")
     assertEquals(x.origin, "selection")
     assert(
-      ManagerRepo
-        .events(ds, ReviewId, None, 20)
+      connect(ds)(ManagerRepo.events(ReviewId, None, 20))
         .exists(_.text.contains("1 source it neither cites nor gives a reason for"))
     )
     // settled: within the cooldown it is not extended again
