@@ -466,6 +466,10 @@ object ArticleRepo:
         .headOption
 
   /** Every goal's linked articles that exist: goal → slugs. */
+  /** Is there an article with this slug? */
+  def slugExists(ds: DataSource, slug: String): Boolean =
+    connect(ds)(sql"SELECT count(*) FROM articles WHERE slug = $slug".query[Long].run().head > 0)
+
   def articlesByGoal(ds: DataSource): Map[String, List[String]] =
     connect(ds):
       sql"""SELECT l.goal_slug, l.ref FROM goal_links l JOIN articles a ON a.slug = l.ref

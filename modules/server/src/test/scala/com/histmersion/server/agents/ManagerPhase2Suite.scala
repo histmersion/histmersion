@@ -130,8 +130,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     ManagerRepo.itemFor(ds, mid, kind, target).get
 
   private def why(r: RunInfo): String =
-    (r.error.toList ++ AgentRepo
-      .steps(ds, r.id, 200)
+    (r.error.toList ++ connect(ds)(AgentRepo.steps(r.id, 200))
       .filter(_.error.isDefined)
       .map(s => s"${s.name}#${s.attempt}: ${s.error.get}"))
       .mkString("\n")
@@ -164,13 +163,12 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     val inf = item(ReviewId, InferFilter, "zzagent_f1")
     val rev = item(ReviewId, ArticleReview, "zzagent_f1")
     assertEquals((inf.status, rev.status, inf.priority, rev.priority), ("active", "pending", 0, 0))
-    val run = AgentRepo.get(ds, inf.runId.get).get
+    val run = connect(ds)(AgentRepo.get(inf.runId.get)).get
     assertEquals((run.pipeline, run.origin), ("infer-filter", Some("manager")))
     a.engine.execute(run.id)
-    val done = AgentRepo.get(ds, run.id).get
+    val done = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(done.status, "done", why(done))
-    val failed = AgentRepo
-      .steps(ds, run.id, 4000)
+    val failed = connect(ds)(AgentRepo.steps(run.id, 4000))
       .find(s => s.name == "propose" && s.status == "failed")
       .flatMap(_.error)
       .getOrElse("")
@@ -195,7 +193,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(item(ReviewId, InferFilter, "zzagent_f1").outcome.exists(_.contains("approved")))
     val r2 = item(ReviewId, ArticleReview, "zzagent_f1")
     assertEquals(r2.status, "active")
-    assertEquals(AgentRepo.get(ds, r2.runId.get).map(_.pipeline), Some("review-article"))
+    assertEquals(connect(ds)(AgentRepo.get(r2.runId.get)).map(_.pipeline), Some("review-article"))
 
   test("infer-filter with article-filter = auto records at once; a person's enqueue brings an infer-filter item too"):
     val c = ScriptedClient(Model)
@@ -250,10 +248,10 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(a.managing.create(ManagerCreate("seed", Some(Goal))).isLeft, "one per area")
     a.managers.tick(t0)
     val prop = item(m.id, ProposeArticles, Goal)
-    val run = AgentRepo.get(ds, prop.runId.get).get
+    val run = connect(ds)(AgentRepo.get(prop.runId.get)).get
     assertEquals((run.pipeline, run.goal), ("propose-articles", Some(Goal)))
     a.engine.execute(run.id)
-    assertEquals(AgentRepo.get(ds, run.id).get.status, "done", why(AgentRepo.get(ds, run.id).get))
+    assertEquals(connect(ds)(AgentRepo.get(run.id)).get.status, "done", why(connect(ds)(AgentRepo.get(run.id)).get))
     val appr = a.approvalsList(None, None).toOption.get.find(_.subject.contains(Goal)).get
     assertEquals(appr.kind, "article-plan")
     val plan = appr.articles.get
@@ -276,14 +274,17 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     a.managers.tick(t0)
     assertEquals(item(m.id, ProposeArticles, Goal).status, "done")
-    val crun = AgentRepo.get(ds, item(m.id, ArticleCompile, "zzagent_new").runId.get).get
+    val crun = connect(ds)(AgentRepo.get(item(m.id, ArticleCompile, "zzagent_new").runId.get)).get
     assertEquals(
       (crun.pipeline, crun.params.chainReview, crun.goal, crun.params.title),
       ("compile-article", Some(false), Some(Goal), Some("Zz new"))
     )
     a.engine.execute(crun.id)
-    assertEquals(AgentRepo.get(ds, crun.id).get.status, "done", why(AgentRepo.get(ds, crun.id).get))
-    assert(AgentRepo.list(ds, None, 50).forall(r => !r.parent.contains(crun.id)), "the compile chained no review run")
+    assertEquals(connect(ds)(AgentRepo.get(crun.id)).get.status, "done", why(connect(ds)(AgentRepo.get(crun.id)).get))
+    assert(
+      connect(ds)(AgentRepo.list(None, 50)).forall(r => !r.parent.contains(crun.id)),
+      "the compile chained no review run"
+    )
     a.managers.tick(t0)
     assertEquals(item(m.id, ArticleCompile, "zzagent_new").status, "done")
     val chained = item(ReviewId, ArticleReview, "zzagent_new")
@@ -338,7 +339,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(r.items.map(_.target), List(Ck2))
     assert(r.skipped.exists(_.contains(Ck)), r.skipped)
     a.managers.tick(t0)
-    val run = AgentRepo.get(ds, item(EnrichId, SourceEnrich, Ck2).runId.get).get
+    val run = connect(ds)(AgentRepo.get(item(EnrichId, SourceEnrich, Ck2).runId.get)).get
     assertEquals((run.pipeline, run.origin, run.managerId), ("enrich-source", Some("manager"), Some(EnrichId)))
     // with the managers off, auto-enrich queues a run at once, as before
     val off = baseCfg.copy(agents =
@@ -403,7 +404,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     a.managing.update(ReviewId, ManagerUpdate(Some(ManagerConfig(includeTags = Some(List(Tag))))))
     a.managing.action(ReviewId, "resume", None)
     a.managers.tick(t0)
-    val run = AgentRepo.get(ds, item(ReviewId, ArticleExtend, "zzagent_x1").runId.get).get
+    val run = connect(ds)(AgentRepo.get(item(ReviewId, ArticleExtend, "zzagent_x1").runId.get)).get
     assertEquals((run.pipeline, run.params.chainReview), ("compile-article", Some(false)))
     assert(a.managing.enqueue(EnqueueRequest("frobnicate", "x")).isLeft)
     assert(a.managing.addItem(seedId(Goal), EnqueueRequest("compile", "zzagent_y")).isLeft, "no such manager")

@@ -128,6 +128,10 @@ object JobRuns:
     /** Every run, in the order they were made. */
     def all: List[JobRunState] = state.get.values.toList.sortBy(_.created)
 
+    /** A run's row changed by its owner's own tables (a step recorded): stamped as the database's `updated_at = now()`.
+      */
+    def stamped(id: String): Unit = state.get.get(id).foreach(r => change(r.row.kind, id)(touched): Unit)
+
     def create(run: RunRow): String =
       val id = java.util.UUID.randomUUID().toString
       val n = stamp.incrementAndGet()

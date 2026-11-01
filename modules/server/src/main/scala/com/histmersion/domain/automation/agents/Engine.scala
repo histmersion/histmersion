@@ -7,7 +7,6 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
-import com.histmersion.db.AgentRepo
 import com.histmersion.domain.automation.workflows.{ToolName, Workflows}
 import com.histmersion.api.VocabularyCodecs.given
 import io.circe.parser.decode
@@ -81,7 +80,7 @@ final class Engine(
     if cfg.trace.keepMessagesDays <= 0 || (!force && now - last < every) || !lastPrune.compareAndSet(last, now) then 0
     else
       try
-        val n = AgentRepo.pruneMessages(ds, cfg.trace.keepMessagesDays)
+        val n = agents.runs.pruneMessages(cfg.trace.keepMessagesDays)
         if n > 0 then scribe.info(s"agent trace: pruned $n message(s) older than ${cfg.trace.keepMessagesDays} day(s)")
         n
       catch
@@ -138,7 +137,7 @@ final class Engine(
     running.asScala.toList.filter((_, c) => c.stalled.isEmpty && !c.cancel && now - c.lastBeat > limit).map { (id, c) =>
       val mins = (now - c.lastBeat) / 60000L
       val mark = s"${Engine.StallMark} ${c.seq}"
-      val prior = AgentRepo.get(ds, id).toList.flatMap(_.warnings).count(_.startsWith(mark + " "))
+      val prior = agents.runs.get(id).toList.flatMap(_.warnings).count(_.startsWith(mark + " "))
       val n = prior + 1
       agents.jobRuns.warn(
         JobKind,
@@ -253,7 +252,7 @@ final class Engine(
           .getOrElse(Pipeline.parse(pipeline).map(_.roles).getOrElse(Nil))
         val notes = List.newBuilder[String]
         // the run's own model for the role: its --model-for, else its --model
-        val run = AgentRepo.get(ds, id)
+        val run = agents.runs.get(id)
         def modelOf(r: Role) = run.fold(model)(_.modelFor(r))
         val free = roles.find(r =>
           agents.picker
@@ -339,7 +338,7 @@ final class Engine(
 
   /** Run one queued run to its next resting state. */
   private[histmersion] def execute(id: String): Unit =
-    AgentRepo.get(ds, id) match
+    agents.runs.get(id) match
       case None      => ()
       case Some(run) =>
         val pipe = workflows.parse(run.pipeline)
@@ -401,8 +400,8 @@ final class Engine(
                 val _ = wake(id)
               waiting
           notify(run, settled)
-          AgentRepo
-            .get(ds, id)
+          agents.runs
+            .get(id)
             .foreach(r =>
               settledHooks.foreach(f =>
                 try f(r)
@@ -454,10 +453,10 @@ final class Engine(
 
   /** Before an LLM call: the run's own budget, and the global daily and monthly caps. */
   private[histmersion] def checkBudget(id: String): Either[Halt, Unit] =
-    AgentRepo.get(ds, id) match
+    agents.runs.get(id) match
       case None    => Left(Halt.Fail("the run disappeared"))
       case Some(r) =>
-        val (day, month) = AgentRepo.spendDayMonth(ds)
+        val (day, month) = agents.runs.spendDayMonth()
         if r.costUsd >= r.budgetUsd then
           Left(
             Halt.Pause(
@@ -490,8 +489,8 @@ final class Engine(
         else Right(())
 
   private[histmersion] def budgetInterceptor(id: String, billing: Billing): RunBudget =
-    val r = AgentRepo.get(ds, id)
-    val (use, cost) = AgentRepo.runSpend(ds, id)
+    val r = agents.runs.get(id)
+    val (use, cost) = agents.runs.runSpend(id)
     RunBudget(
       cost,
       use.budgeted(cfg.budgets.cacheReadWeight),
@@ -551,7 +550,7 @@ final class Engine(
     }
 
   private def get(id: String): Either[ApiError, RunInfo] =
-    AgentRepo.get(ds, id).toRight(ApiError(s"No agent run '$id'", Some(Write.CodeNotFound)))
+    agents.runs.get(id).toRight(ApiError(s"No agent run '$id'", Some(Write.CodeNotFound)))
 
   private def withRun[A](id: String)(f: RunInfo => Either[ApiError, A]): Either[ApiError, A] = get(id).flatMap(f)
 

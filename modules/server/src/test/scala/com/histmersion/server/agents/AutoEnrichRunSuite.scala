@@ -92,7 +92,7 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(j.state, JobState.Done, j.toString)
     j
 
-  private def runs: List[RunInfo] = AgentRepo.forTarget(ds, Pipeline.EnrichSource, Ck).toList
+  private def runs: List[RunInfo] = connect(ds)(AgentRepo.forTarget(Pipeline.EnrichSource, Ck)).toList
 
   test("an ingest queues exactly one enrich-source run and says so; a second import of the same file queues none"):
     withHandlers() { h =>

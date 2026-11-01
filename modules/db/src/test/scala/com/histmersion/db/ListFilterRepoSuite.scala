@@ -152,8 +152,9 @@ class ListFilterRepoSuite extends com.histmersion.db.DbSuite:
     // an OCR job is not a run, whatever it is about
     job(s"$tag-o1", "ingest", "done", "2026-10-01T10:00:00Z", citekey = Some(s"$t-four"))
     step(a, 1, "codex:gpt-a"); step(a, 2, "codex:gpt-b"); step(b, 1, "claude-code:opus")
-    def ids(q: AgentRepo.RunQuery) = AgentRepo.page(ds, q, 50, None, None).toOption.get._1.map(_.id).toSet
-    val mine = AgentRepo.RunQuery(q = Some(t))
+    def ids(q: com.histmersion.domain.automation.agents.RunQuery) =
+      connect(ds)(AgentRepo.page(q, 50, None, None)).toOption.get._1.map(_.id).toSet
+    val mine = com.histmersion.domain.automation.agents.RunQuery(q = Some(t))
     assertEquals(ids(mine), Set(a, b, c))
     assertEquals(ids(mine.copy(pipelines = List("review-article"))), Set(a, c))
     assertEquals(ids(mine.copy(status = List("failed", "cancelled"))), Set(b))
@@ -165,7 +166,7 @@ class ListFilterRepoSuite extends com.histmersion.db.DbSuite:
     val at = (s: String) => Some(Instant.parse(s))
     assertEquals(ids(mine.copy(since = at("2026-09-10T00:00:00Z"))), Set(b, c))
     assertEquals(ids(mine.copy(since = at("2026-09-10T00:00:00Z"), until = at("2026-10-01T00:00:00Z"))), Set(b))
-    val (states, facets) = AgentRepo.runFacets(ds, mine.copy(pipelines = List("review-article")))
+    val (states, facets) = connect(ds)(AgentRepo.runFacets(mine.copy(pipelines = List("review-article"))))
     assertEquals(states.toMap, Map("done" -> 2))
     val f = facets.toMap
     assertEquals(f("pipeline"), List("review-article" -> 2, "enrich-source" -> 1))
@@ -173,7 +174,10 @@ class ListFilterRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(f("model").toMap, Map("codex:gpt-a" -> 1, "codex:gpt-b" -> 1))
     // two codex models on one run count it once for the provider
     assertEquals(f("provider"), List("codex" -> 1))
-    assertEquals(AgentRepo.runFacets(ds, mine)._2.toMap.apply("origin").toMap, Map("manager" -> 2, "person" -> 1))
+    assertEquals(
+      connect(ds)(AgentRepo.runFacets(mine))._2.toMap.apply("origin").toMap,
+      Map("manager" -> 2, "person" -> 1)
+    )
 
   test("jobs: kind, status, dates and subject text; the kind facet counts over the state filter"):
     val t = s"$tag-j"

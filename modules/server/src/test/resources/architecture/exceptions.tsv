@@ -363,14 +363,10 @@ repository	db:db/UndatedSiteRepo.scala	PlaceRepo of catalogue.places	1
 repository	server:domain/automation/agents/AgentLease.scala	ManagerRepo of automation.managers	1
 repository	server:domain/automation/agents/AgentsHandlers.scala	ManagerRepo of automation.managers	1
 repository	server:domain/automation/approvals/ApprovalDigestService.scala	ManagerRepo of automation.managers	1
-repository	server:domain/automation/approvals/AutoApprovals.scala	AgentRepo of automation.agents	1
 repository	server:domain/automation/approvals/AutoApprovals.scala	FocusRepo of automation.goals	1
 repository	server:domain/automation/approvals/AutoApprovals.scala	ManagerRepo of automation.managers	1
 repository	server:domain/automation/autopilot/AutopilotService.scala	ManagerRepo of automation.managers	1
 repository	server:domain/automation/goals/GoalFocusService.scala	ManagerRepo of automation.managers	1
-repository	server:domain/automation/managers/ManagerSupervisor.scala	AgentRepo of automation.agents	1
-repository	server:domain/automation/managers/ManagersHandlers.scala	AgentRepo of automation.agents	1
-repository	server:domain/automation/scheduler/SchedulerService.scala	AgentRepo of automation.agents	1
 repository	server:domain/automation/scheduler/SchedulerService.scala	FocusRepo of automation.goals	1
 repository	server:domain/automation/scheduler/SchedulerService.scala	ManagerRepo of automation.managers	1
 repository	server:server/Bootstrap.scala	JobRepo of util.jobs	1
@@ -400,7 +396,6 @@ repository	server:server/IngestHandlers.scala	AssetRepo of media	1
 repository	server:server/IngestHandlers.scala	JobRepo of util.jobs	1
 repository	server:server/IngestHandlers.scala	SourceRepo of library.sources	1
 repository	server:server/Jobs.scala	JobRepo of util.jobs	1
-repository	server:server/ListQueries.scala	AgentRepo of automation.agents	1
 repository	server:server/ListQueries.scala	JobRepo of util.jobs	1
 repository	server:server/MapTileService.scala	EventRepo of catalogue.events	1
 repository	server:server/MapTileService.scala	MediaRepo of media	1

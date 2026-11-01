@@ -13,6 +13,7 @@ import com.histmersion.server.Handlers
 
 /** The engine's [[AutomationHost]] over today's handlers, until each operation's owner offers its own service. */
 final class TransitionHost(h: Handlers, upstream: () => AgentUpstream) extends AutomationHost:
+  def articleExists(slug: String): Boolean = h.articleExists(slug)
   def goal(slug: String): Either[ApiError, Goal] = h.getGoal(slug)
   def putGoal(slug: String, in: GoalPut): Either[ApiError, Goal] = h.putGoal(slug, in)
   def patchGoal(slug: String, patch: GoalPatch): Either[ApiError, Goal] = h.patchGoal(slug, patch)

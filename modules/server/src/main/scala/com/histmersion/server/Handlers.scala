@@ -1834,7 +1834,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     * manager's stale check.
     */
   /** Whether an article with this slug exists (as stored, no alias followed). */
-  def articleExists(slug: String): Boolean = ArticleRepo.load(ds, slug).isDefined
+  def articleExists(slug: String): Boolean = ArticleRepo.slugExists(ds, slug)
 
   /** Every goal's linked articles that exist: goal → slugs (research's measure of a goal's progress). */
   def articlesByGoal(): Map[String, List[String]] = ArticleRepo.articlesByGoal(ds)

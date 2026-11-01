@@ -150,9 +150,9 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(
       (i1.status, i2.status),
       ("active", "active"),
-      s"$out1 ${events.map(_.text)} ${AgentRepo.list(ds, None, 50).filter(r => r.status == "queued" || r.status == "running").map(r => (r.target, r.pipeline, r.status))}"
+      s"$out1 ${events.map(_.text)} ${connect(ds)(AgentRepo.list(None, 50)).filter(r => r.status == "queued" || r.status == "running").map(r => (r.target, r.pipeline, r.status))}"
     )
-    val r1 = AgentRepo.get(ds, i1.runId.get).get
+    val r1 = connect(ds)(AgentRepo.get(i1.runId.get)).get
     assertEquals(
       (r1.origin, r1.managerId, r1.managerItem, r1.status),
       (Some("manager"), Some(ReviewId), Some(i1.id), "queued")
@@ -322,19 +322,19 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     a.managing.action(ReviewId, "resume", None)
     a.managers.tick(t0)
     val run = item("zzagent_p1").runId.get
-    assertEquals(AgentRepo.get(ds, run).get.status, "queued")
+    assertEquals(connect(ds)(AgentRepo.get(run)).get.status, "queued")
     val p = a.managing.action(ReviewId, "pause", Some(true)).fold(e => fail(e.message), identity)
     assert(p.pauseRuns)
-    assertEquals(AgentRepo.get(ds, run).get.status, "paused")
+    assertEquals(connect(ds)(AgentRepo.get(run)).get.status, "paused")
     // pausing it is not a settle: the item stays active
     a.managers.tick(t0)
     assertEquals(item("zzagent_p1").status, "active")
     a.managing.action(ReviewId, "resume", None)
-    assertEquals(AgentRepo.get(ds, run).get.status, "queued")
+    assertEquals(connect(ds)(AgentRepo.get(run)).get.status, "queued")
     a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, "zzagent_p2"))
     val s = a.managing.action(ReviewId, "stop", None).fold(e => fail(e.message), identity)
     assertEquals(s.state, "stopped")
-    assertEquals(AgentRepo.get(ds, run).get.status, "cancelled")
+    assertEquals(connect(ds)(AgentRepo.get(run)).get.status, "cancelled")
     assertEquals(List("zzagent_p1", "zzagent_p2").map(item(_).status), List("cancelled", "cancelled"))
     assert(a.managers.tick(t0).isEmpty || item("zzagent_p2").status == "cancelled")
 
@@ -386,7 +386,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(queued.count(_ == run), 1)
     b.engine.execute(run)
     b.engine.execute(run) // a second delivery does nothing: it is no longer queued
-    assertEquals(AgentRepo.get(ds, run).get.status, "done")
+    assertEquals(connect(ds)(AgentRepo.get(run)).get.status, "done")
     assertEquals(c.served("rules"), 1)
     // the settle was never evaluated (the process died again): the next process evaluates it once
     val (d, _) = handlers(c)
@@ -403,12 +403,12 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(TestRuns.transition(ds, run, RunState.Queued, RunState.Running).isDefined)
     val (b, _) = handlers(PanelClient(Model))
     b.engine.reconcile()
-    val r = AgentRepo.get(ds, run).get
+    val r = connect(ds)(AgentRepo.get(run)).get
     assertEquals((r.status, r.error, r.resumeAt.isDefined), ("paused", Some("interrupted"), true))
     b.managers.tick(t0)
     assertEquals(item("zzagent_b1").status, "active", "a paused run keeps its item active")
     assert(b.engine.resumeDue(Instant.now().plusSeconds(120)).contains(run))
-    assertEquals(AgentRepo.get(ds, run).get.status, "queued")
+    assertEquals(connect(ds)(AgentRepo.get(run)).get.status, "queued")
 
   test(
     "restart: runs interrupted or paused at boot hold their places; maxRuns 2 never has more than 2 running (#1803)"
@@ -439,7 +439,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     // the restart: boot pauses r1 as interrupted; the first tick must not take its place
     val (b, _) = handlers(PanelClient(Model))
     b.engine.reconcile()
-    assertEquals(AgentRepo.get(ds, run1).map(r => (r.status, r.resumeAt.isDefined)), Some(("paused", true)))
+    assertEquals(connect(ds)(AgentRepo.get(run1)).map(r => (r.status, r.resumeAt.isDefined)), Some(("paused", true)))
     assertEquals(ManagerRepo.running(ds, ReviewId), 2, "an interrupted and a stalled run both resume by themselves")
     b.managers.tick(t0)
     assertEquals(List("zzagent_r3", "zzagent_r4").map(item(_).status), List("pending", "pending"))
@@ -510,7 +510,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     a.managers.tick(t0)
     val run = item("zzagent_n1").runId.get
     assertEquals(
-      AgentRepo.get(ds, run).get.params.notes,
+      connect(ds)(AgentRepo.get(run)).get.params.notes,
       Some(List("Prefer the 2019 dating.", "Check the tin isotopes this time."))
     )
     assert(ManagerRepo.hint(ds, once.id).get.retiredAt.isDefined, "a once-hint is used up")
@@ -523,7 +523,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     c.add("skeptic", Seq(text(skepticPass)), Seq(text(skepticPass)))
     c.add("fixer", Seq(text(fixerGloss)))
     a.engine.execute(run)
-    assertEquals(AgentRepo.get(ds, run).get.status, "done", AgentRepo.get(ds, run).get.error)
+    assertEquals(connect(ds)(AgentRepo.get(run)).get.status, "done", connect(ds)(AgentRepo.get(run)).get.error)
     def user(w: String) = c.requests
       .get(w)
       .asScala

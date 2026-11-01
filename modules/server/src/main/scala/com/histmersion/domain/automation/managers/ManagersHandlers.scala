@@ -10,7 +10,7 @@ import com.histmersion.api.Agents.*
 import com.histmersion.api.GoalPlans.{LinkKind, Removed}
 import com.histmersion.domain.ManagerPolicy.ReviewSettings
 import com.histmersion.api.Managers.*
-import com.histmersion.db.{AgentRepo, ManagerRepo}
+import com.histmersion.db.ManagerRepo
 
 import javax.sql.DataSource
 
@@ -32,7 +32,7 @@ final class ManagersHandlers(
   /** The runs manager `id` dispatched, newest first (`status` narrows) — `run_status`'s manager filter. */
   def runs(id: String, status: Option[String], limit: Option[Int]): List[RunInfo] =
     val st = status.map(_.trim).filter(_.nonEmpty)
-    AgentRepo.forManager(ds, id.trim, limit = limits.page(limit, 50)).toList.filter(r => st.forall(_ == r.status))
+    agents.runs.forManager(id.trim, limit = limits.page(limit, 50)).toList.filter(r => st.forall(_ == r.status))
 
   private def notFound(what: String) = ApiError(what, Some(Write.CodeNotFound))
   private def conflict(m: String) = ApiError(m, Some(AgentsApi.CodeConflict))
@@ -78,7 +78,7 @@ final class ManagersHandlers(
     }
 
   private def withRuns(is: List[ManagerItem]): List[ManagerItem] =
-    is.map(i => i.copy(run = i.runId.flatMap(AgentRepo.get(ds, _))))
+    is.map(i => i.copy(run = i.runId.flatMap(agents.runs.get(_))))
 
   /** `POST /api/agents/managers` — `review` (id `review`) and `enrich` (id `enrich`) are library-wide; `seed` needs its
     * research area (`goal`; id `seed:<goal>`) and starts with the item that proposes its first articles; `watch` needs
@@ -228,7 +228,7 @@ final class ManagersHandlers(
       Removed(ManagerRepo.delete(ds, m.id))
     }
 
-  private def inFlight(id: String): List[RunInfo] = AgentRepo.forManager(ds, id, active = true).toList
+  private def inFlight(id: String): List[RunInfo] = agents.runs.forManager(id, active = true).toList
 
   /** `POST /api/agents/managers/{id}/{pause|resume|stop}[?runs=true]`. Pause = no new runs (with `runs`, its in-flight
     * runs are paused too, cooperatively); resume reverses both (only the runs paused on request); stop cancels its

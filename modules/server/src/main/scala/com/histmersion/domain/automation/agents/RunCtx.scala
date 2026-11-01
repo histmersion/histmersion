@@ -91,7 +91,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     * run, which is refused rather than misread.
     */
   private def replay[O: Decoder](seq: Int, name: String): Option[Either[Halt, O]] =
-    AgentRepo.checkpoint(ds, run.id, seq).map { (recorded, json) =>
+    engine.agents.runs.checkpoint(run.id, seq).map { (recorded, json) =>
       if recorded != name then
         Left(
           Halt
@@ -118,12 +118,11 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
             case e: InterruptedException => throw e
             case e: Exception            => Left(s"${e.getClass.getSimpleName}: ${e.getMessage}")
         engine.beat(run.id)
-        val attempt = AgentRepo.attempts(ds, run.id, seq) + 1
+        val attempt = engine.agents.runs.attempts(run.id, seq) + 1
         val would = drainSkipped()
         out match
           case Right(o) =>
-            AgentRepo.record(
-              ds,
+            engine.agents.runs.record(
               run.id,
               AgentRepo.StepRecord(
                 seq,
@@ -144,8 +143,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
             )
             Right(o)
           case Left(m) =>
-            AgentRepo.record(
-              ds,
+            engine.agents.runs.record(
               run.id,
               AgentRepo.StepRecord(
                 seq,
@@ -184,12 +182,11 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       engine.checkControl(run.id).flatMap { _ =>
         val started = java.time.Instant.now()
         def done(d: Decided): Either[Halt, Decided] =
-          AgentRepo.record(
-            ds,
+          engine.agents.runs.record(
             run.id,
             AgentRepo.StepRecord(
               seq,
-              AgentRepo.attempts(ds, run.id, seq) + 1,
+              engine.agents.runs.attempts(run.id, seq) + 1,
               name,
               StepKind.Code,
               StepStatus.Done,
@@ -219,12 +216,11 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                 case e: Exception            => Left(s"${e.getClass.getSimpleName}: ${e.getMessage}")
             body match
               case Left(m) =>
-                AgentRepo.record(
-                  ds,
+                engine.agents.runs.record(
                   run.id,
                   AgentRepo.StepRecord(
                     seq,
-                    AgentRepo.attempts(ds, run.id, seq) + 1,
+                    engine.agents.runs.attempts(run.id, seq) + 1,
                     name,
                     StepKind.Code,
                     StepStatus.Failed,
@@ -368,7 +364,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     val role = agent.role
     val maxAttempts = 1 + math.max(0, cfg.step.maxRetries)
     // a resumed step's earlier attempts count as answers judged: its retries are not handed out twice
-    val before = AgentRepo.attempts(ds, run.id, seq)
+    val before = engine.agents.runs.attempts(run.id, seq)
     // tail-recursive retry loop over attempts; `problems` are the previous attempt's rejections and
     // `tries` counts the answers judged so far (an attempt cut short by a model's allowance or plan
     // limit is not an answer: it moves on to the chain's next model without using up a retry)
@@ -578,8 +574,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       served: Served = Served.Unknown
   ): Unit =
     val cost = billing.cost(use)
-    AgentRepo.record(
-      ds,
+    engine.agents.runs.record(
       run.id,
       AgentRepo.StepRecord(
         seq,

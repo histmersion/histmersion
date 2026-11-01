@@ -91,17 +91,21 @@ class PagingRepoSuite extends com.histmersion.db.DbSuite:
     val goal = s"${tag}g"
     val done = jobs(s"$tag-r", RunState.Done.wire, 5, Agents.JobKind, Some(goal))
     val paused = jobs(s"$tag-s", RunState.Paused.wire, 1, Agents.JobKind, Some(goal))
-    val (p1, more) = AgentRepo.page(ds, Some(RunState.Done.wire), 2, Some(goal)).toOption.get
+    val (p1, more) = connect(ds)(AgentRepo.page(Some(RunState.Done.wire), 2, Some(goal))).toOption.get
     assertEquals((p1.map(_.id).toList, more), (done.take(2), true))
-    val (p2, _) = AgentRepo.page(ds, Some(RunState.Done.wire), 10, Some(goal), before = Some(p1.last.id)).toOption.get
+    val (p2, _) =
+      connect(ds)(AgentRepo.page(Some(RunState.Done.wire), 10, Some(goal), before = Some(p1.last.id))).toOption.get
     assertEquals(p2.map(_.id).toList, done.drop(2))
-    val (every, _) = AgentRepo.page(ds, None, 10, Some(goal)).toOption.get
+    val (every, _) = connect(ds)(AgentRepo.page(None, 10, Some(goal))).toOption.get
     assertEquals(every.size, 6)
-    assertEquals(AgentRepo.stateCounts(ds, Some(goal)).toMap, Map(RunState.Done.wire -> 5, RunState.Paused.wire -> 1))
+    assertEquals(
+      connect(ds)(AgentRepo.stateCounts(Some(goal))).toMap,
+      Map(RunState.Done.wire -> 5, RunState.Paused.wire -> 1)
+    )
     // an OCR job is not a run, wherever it sits
     jobs(s"$tag-x", RunState.Done.wire, 1, "ingest", Some(goal))
-    assertEquals(AgentRepo.stateCounts(ds, Some(goal)).toMap.get(RunState.Done.wire), Some(5))
-    assert(AgentRepo.page(ds, None, 10, Some(goal), upTo = Some(s"$tag-nope")).isLeft)
+    assertEquals(connect(ds)(AgentRepo.stateCounts(Some(goal))).toMap.get(RunState.Done.wire), Some(5))
+    assert(connect(ds)(AgentRepo.page(None, 10, Some(goal), upTo = Some(s"$tag-nope"))).isLeft)
     assertEquals(paused.size, 1)
 
   test("approvals: newest first by created_at then id, the cursor and upTo, a state filter, the counts"):

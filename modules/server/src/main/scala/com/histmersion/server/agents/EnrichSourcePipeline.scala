@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.augustnagro.magnum.{connect, transact}
+
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
 
@@ -60,7 +62,7 @@ final class EnrichSourcePipeline(
         StepAgent.EnrichNotes,
         notesInput(loaded, classified, verified),
         LibraryAnswers.notes
-      )((n, _) => checkNotes(n, isCitekey, slug => AgentRepo.slugExists(ds, slug)).map(Checked(_)))
+      )((n, _) => checkNotes(n, isCitekey, slug => connect(ds)(AgentRepo.slugExists(slug))).map(Checked(_)))
       patched <- ctx.code[Patched]("patch")(write(ctx, ck, loaded, classified, geocoded.findings, notes))
       _ <- ctx.code[Upstreamed]("refs")(Right(refs(ctx, loaded)))
       assessed <- ctx.code[Upstreamed]("assess")(Right(assess(ctx, loaded)))

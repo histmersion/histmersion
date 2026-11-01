@@ -126,7 +126,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(a.managing.create(ManagerCreate("watch", Some(Goal))).left.exists(_.message.contains("exists already")))
     assert(a.managing.create(ManagerCreate("watch")).left.exists(_.message.contains("give its goal")))
     assertEquals(a.managers.tick(now).filter(_.contains("started")), Nil, "paused: nothing starts")
-    assertEquals(AgentRepo.forManager(ds, m.id), Vector.empty)
+    assertEquals(connect(ds)(AgentRepo.forManager(m.id)), Vector.empty)
 
   test(
     "watch sweep with auto-ingest ON: legal OA picks ingested up to the daily cap (one with no legal copy queued instead), the open ones past it in the backlog, the closed queued; events record it"
@@ -165,14 +165,14 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       "active",
       "the currency check starts beside it: another pipeline on the goal, and no per-manager cap since the central scheduler"
     )
-    val run = AgentRepo.get(ds, sweep.runId.get).get
+    val run = connect(ds)(AgentRepo.get(sweep.runId.get)).get
     assertEquals(
       (run.pipeline, run.origin, run.params.autoIngest, run.params.oaBacklog),
       ("acquisition-sweep", Some("manager"), Some(2), Some(true))
     )
     assert(events(m.id, Feed.Started).exists(_.text.contains("2 works left today")), events(m.id, Feed.Started))
     a.engine.execute(run.id)
-    val done = AgentRepo.get(ds, run.id).get
+    val done = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(done.status, "done", done.error)
     import scala.jdk.CollectionConverters.*
     val asked = up.calls.asScala.toList.filter(_.startsWith("ingest"))
@@ -230,7 +230,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     up.found = Map(Query -> List(work("10.5555/zzagent.f", "F", oa = true)))
     a.managing.patchItem(m.id, sweep.id.toString, ItemPatch("reopen")).fold(e => fail(e.message), identity)
     a.managers.tick(now)
-    val again = AgentRepo.get(ds, item(m.id, AcquisitionSweep).runId.get).get
+    val again = connect(ds)(AgentRepo.get(item(m.id, AcquisitionSweep).runId.get)).get
     assertEquals(again.params.autoIngest, None, "the daily cap is spent")
     assert(events(m.id, Feed.Started).exists(_.text.contains("0 works left today")))
     a.engine.execute(again.id)
@@ -257,14 +257,14 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     a.managing.action(m.id, "resume", None).fold(e => fail(e.message), identity)
     a.managers.tick(Instant.now())
-    val run = AgentRepo.get(ds, item(m.id, AcquisitionSweep).runId.get).get
+    val run = connect(ds)(AgentRepo.get(item(m.id, AcquisitionSweep).runId.get)).get
     assertEquals(run.params.autoIngest, None)
     a.engine.execute(run.id)
-    assertEquals(AgentRepo.get(ds, run.id).get.status, "done")
+    assertEquals(connect(ds)(AgentRepo.get(run.id)).get.status, "done")
     import scala.jdk.CollectionConverters.*
     assertEquals(up.calls.asScala.count(_.startsWith("ingest")), 0)
     assertEquals(acquire(h).count(_.text.contains("zzagent.a")), 1)
-    assert(AgentRepo.steps(ds, run.id, 1000).forall(_.name != "ingest"), "no ingest step without auto-ingest")
+    assert(connect(ds)(AgentRepo.steps(run.id, 1000)).forall(_.name != "ingest"), "no ingest step without auto-ingest")
     assertEquals(events(m.id, Feed.Ingested), Nil)
 
   test(
@@ -459,10 +459,10 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     val hint = a.managing
       .addHint(EnrichId, HintAdd("please leave A alone until December", suggest = Some(true)))
       .fold(e => fail(e.message), identity)
-    val run = AgentRepo.list(ds, None, 20).find(_.pipeline == "hint-effect").get
+    val run = connect(ds)(AgentRepo.list(None, 20)).find(_.pipeline == "hint-effect").get
     assertEquals((run.target, run.origin, run.params.hint), (EnrichId, Some("person"), Some(hint.id)))
     a.engine.execute(run.id)
-    val done = AgentRepo.get(ds, run.id).get
+    val done = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(done.status, "done", done.error)
     assertEquals(c.steps.size, 2, "the unknown target was sent back")
     val sent = c.steps.head.head.history.entries.collectFirst { case ConversationEntry.UserPrompt(p) => p }.get

@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.augustnagro.magnum.{connect, transact}
+
 import com.histmersion.api.Agents.*
 import com.histmersion.db.AgentRepo
 import com.histmersion.util.database.Transactor
@@ -39,9 +41,10 @@ object TestRuns:
       dryRun: Boolean = false
   ): RunInfo =
     val id = runs(ds).create(
-      AgentRepo.runRow(p, target, model, budgetUsd, budgetTokens, params, acquireItem, goal, parent, origin, dryRun)
+      com.histmersion.domain.automation.agents.RunService
+        .row(p, target, model, budgetUsd, budgetTokens, params, acquireItem, goal, parent, origin, dryRun)
     )
-    AgentRepo.get(ds, id).get
+    connect(ds)(AgentRepo.get(id)).get
 
   def createIn(
       ds: DataSource,
@@ -60,7 +63,7 @@ object TestRuns:
       managerItem: Option[Long] = None
   )(using DbCon): String =
     runs(ds).createIn(
-      AgentRepo.runRow(
+      com.histmersion.domain.automation.agents.RunService.row(
         p,
         target,
         model,

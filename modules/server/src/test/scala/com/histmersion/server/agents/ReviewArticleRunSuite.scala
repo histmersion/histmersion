@@ -262,7 +262,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
   private def start(a: AgentsHandlers, req: RunRequest): RunInfo =
     val run = a.startRun(req).fold(e => fail(e.message), identity)
     a.engine.execute(run.id)
-    AgentRepo.get(ds, run.id).get
+    connect(ds)(AgentRepo.get(run.id)).get
 
   test("review only: the panel runs in parallel with its own tools, merged by code; a proposal becomes an approval"):
     val c = PanelClient(Model)
@@ -277,7 +277,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(run.status, "done", run.error)
     assertEquals(run.targetKind, "article")
 
-    val steps = AgentRepo.steps(ds, run.id, 4000)
+    val steps = connect(ds)(AgentRepo.steps(run.id, 4000))
     assertEquals(
       steps.map(_.name),
       List(
@@ -355,7 +355,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(h.getArticle(Slug).toOption.get.article.body.trim, Revised.trim)
     val versions = h.articleVersions(Slug).toOption.get
     assert(versions.nonEmpty, "the previous text is kept, so the run can be undone")
-    val names = AgentRepo.steps(ds, run.id, 10).map(_.name)
+    val names = connect(ds)(AgentRepo.steps(run.id, 10)).map(_.name)
     assertEquals(
       names,
       List(
@@ -421,8 +421,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     )
     assertEquals((c.served("rules"), c.served("cold"), c.served("skeptic")), (3, 2, 2))
     // the step output records exactly what changed, edit by edit
-    val fixStep = AgentRepo
-      .steps(ds, run.id, 40000)
+    val fixStep = connect(ds)(AgentRepo.steps(run.id, 40000))
       .find(_.name == "fixer-1")
       .flatMap(_.output)
       .flatMap(io.circe.parser.decode[ReviewArticle.Fix](_).toOption)
@@ -540,7 +539,9 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assert(!prompt.contains("Cornish"), "a quote that is not in the record never reaches the fixer")
     assert(run.warnings.exists(w => w.contains("S1 evidence dropped") && w.contains("not in the record")), run.warnings)
     val merged = io.circe.parser
-      .decode[ReviewArticle.Merged](AgentRepo.steps(ds, run.id, 40000).find(_.name == "merge-1").get.output.get)
+      .decode[ReviewArticle.Merged](
+        connect(ds)(AgentRepo.steps(run.id, 40000)).find(_.name == "merge-1").get.output.get
+      )
       .toOption
       .get
     assertEquals(merged.findings.flatMap(_.evidence).map(e => (e.citekey, e.offset)), List((Ck, Some(75))))
@@ -646,7 +647,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val run = start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(2)))
     assertEquals(run.status, "done", run.error)
 
-    val steps = AgentRepo.steps(ds, run.id, 40000)
+    val steps = connect(ds)(AgentRepo.steps(run.id, 40000))
     val mech1 = io.circe.parser
       .decode[List[ReviewArticle.Finding]](steps.find(_.name == "mechanical-1").get.output.get)
       .toOption
@@ -714,8 +715,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(run.status, "done", run.error)
     assertEquals(h.getArticle(Slug).toOption.get.article.body.trim, theirs.trim, "a stale fix never overwrites")
     assert(run.warnings.exists(_.contains("changed while the fixer worked")), run.warnings)
-    val patched = AgentRepo
-      .steps(ds, run.id, 4000)
+    val patched = connect(ds)(AgentRepo.steps(run.id, 4000))
       .find(_.name == "patch-1")
       .flatMap(_.output)
       .flatMap(io.circe.parser.decode[ReviewArticle.Patched](_).toOption)
@@ -746,7 +746,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val (a2, _) = handlers(second)
     assert(a2.control(paused.id, "resume", None, None).isRight)
     a2.engine.execute(paused.id)
-    val done = AgentRepo.get(ds, paused.id).get
+    val done = connect(ds)(AgentRepo.get(paused.id)).get
     assertEquals(done.status, "done", done.error)
     assertEquals((second.served("rules"), second.served("cold"), second.served("skeptic")), (0, 0, 1))
 
@@ -808,7 +808,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val run = start(a, RunRequest("review-article", Slug, fix = Some(true), rounds = Some(3)))
     assertEquals(run.status, "done", run.error)
 
-    val steps = AgentRepo.steps(ds, run.id, 100000)
+    val steps = connect(ds)(AgentRepo.steps(run.id, 100000))
     assertEquals(
       steps.map(_.name).distinct,
       List(
@@ -944,11 +944,11 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val (clear, c1) = go("clear")
     assertEquals(clear.status, "done", clear.error)
     assertEquals((c1.served("rules"), c1.served("cold"), c1.served("skeptic")), (2, 1, 1))
-    assert(!AgentRepo.steps(ds, clear.id, 100).exists(_.name == "rules-3"))
+    assert(!connect(ds)(AgentRepo.steps(clear.id, 100)).exists(_.name == "rules-3"))
     val (always, c2) = go("always")
     assertEquals(always.status, "done", always.error)
     assertEquals((c2.served("rules"), c2.served("cold"), c2.served("skeptic")), (3, 2, 2))
-    assert(AgentRepo.steps(ds, always.id, 100).exists(_.name == "merge-3"))
+    assert(connect(ds)(AgentRepo.steps(always.id, 100)).exists(_.name == "merge-3"))
 
   test(
     "#934: one backlog item per article listing its open MAJORs — rewritten by the next run, closed when none is open"
@@ -1011,7 +1011,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       s"review-article [[$Slug]]: 1 open MAJOR — R2 (Open questions): the mines are not named " +
         s"(agent run ${r2.id.take(8)})"
     )
-    val steps2 = AgentRepo.steps(ds, r2.id, 100000).filter(_.name == "rules-1")
+    val steps2 = connect(ds)(AgentRepo.steps(r2.id, 100000)).filter(_.name == "rules-1")
     assertEquals(steps2.size, 2, "the answer without checks was sent back")
     assert(
       steps2.head.error.exists(e =>
@@ -1125,7 +1125,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(run.status, "done", run.error)
     assertEquals(c.served("cold"), 1, "the count's MAJOR verdict is corrected, not sent back")
     val merged = io.circe.parser
-      .decode[ReviewArticle.Merged](AgentRepo.steps(ds, run.id, 4000).find(_.name == "merge-1").get.output.get)
+      .decode[ReviewArticle.Merged](connect(ds)(AgentRepo.steps(run.id, 4000)).find(_.name == "merge-1").get.output.get)
       .toOption
       .get
     assertEquals(merged.verdict, ReviewArticle.Verdict.Minor)
@@ -1206,7 +1206,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(CorpusSnapshot.of(ds), before, "no patch, no approval, no log or tasks line")
     assertEquals(h.getArticle(Slug).toOption.get.article.body.trim, Body.trim)
 
-    val steps = AgentRepo.steps(ds, run.id, 100000)
+    val steps = connect(ds)(AgentRepo.steps(run.id, 100000))
     assertEquals(
       steps.map(_.name),
       List(
@@ -1292,7 +1292,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     def used = c.modelsUsed.asScala.view.mapValues(_.asScala.toList).toMap
     assertEquals(used, Map("rules" -> List(Model.wire), "cold" -> List(Model.wire), "skeptic" -> List(Haiku.wire)))
     assertEquals(
-      AgentRepo.steps(ds, run.id, 100).filter(_.kind == "llm").map(s => s.name -> s.model),
+      connect(ds)(AgentRepo.steps(run.id, 100)).filter(_.kind == "llm").map(s => s.name -> s.model),
       List("rules-1" -> Some(Model.wire), "cold-reader-1" -> Some(Model.wire), "skeptic-1" -> Some(Haiku.wire))
     )
     assert(AgentsMarkdown.runLine(run).contains(s"skeptic=${Haiku.wire}"), AgentsMarkdown.runLine(run))
@@ -1388,7 +1388,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val (a, h) = handlers(c); seed(h)
     val run = start(a, RunRequest("review-article", Slug))
     assertEquals(run.status, "done", run.error)
-    val steps = AgentRepo.steps(ds, run.id, 100000).filter(_.name == "rules-1")
+    val steps = connect(ds)(AgentRepo.steps(run.id, 100000)).filter(_.name == "rules-1")
     assertEquals(steps.map(_.status), List("failed", "done"))
     assert(steps.head.error.exists(_.contains("spot-checks: 0 of the 1 required are verified")), steps.head.error)
     assert(steps.head.error.exists(_.contains("no get_source or passages call for it in this step")), steps.head.error)
@@ -1681,7 +1681,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       led.entries.map(e => (e.id, e.status, e.deferred)),
       List(("S1", ReviewLedger.Status.Fixed, None), ("S2", ReviewLedger.Status.Open, Some(run.id)))
     )
-    val merge3 = AgentRepo.steps(ds, run.id, 100000).find(_.name == "merge-3").get
+    val merge3 = connect(ds)(AgentRepo.steps(run.id, 100000)).find(_.name == "merge-3").get
     assert(merge3.output.exists(_.replace(" ", "").contains("\"deferred\":[\"S2\"]")), merge3.output)
     assert(
       logOf(h).exists(l =>
@@ -1770,7 +1770,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       ledgerOf(h).get.entries.map(e => (e.id, e.status, e.closed.map(_.by))),
       List(("S1", ReviewLedger.Status.Fixed, Some("skeptic")))
     )
-    val patch = AgentRepo.steps(ds, run.id, 100000).find(_.name == "fixer-1").get
+    val patch = connect(ds)(AgentRepo.steps(run.id, 100000)).find(_.name == "fixer-1").get
     assert(patch.output.exists(_.replace(" ", "").contains("\"repaired\":[\"S1\"]")), patch.output)
     assertEquals(states(h), List(s"$Ck2>$Ck" -> "addressed"))
     assert(logOf(h).exists(_.contains("round 3 → PASS")), logOf(h))
@@ -1815,7 +1815,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       second
     )
     // pass 2 had nothing claimed to re-check; pass 3 verified the second fix; the confirmation passed
-    assert(!AgentRepo.steps(ds, run.id, 200).exists(_.name == "skeptic-check-2"))
+    assert(!connect(ds)(AgentRepo.steps(run.id, 200)).exists(_.name == "skeptic-check-2"))
     val e = ledgerOf(h).get.entry("S1").get
     assertEquals((e.status, e.notFixedCount), (ReviewLedger.Status.Fixed, 1))
     assert(logOf(h).exists(_.contains("round 4 → PASS")), logOf(h))

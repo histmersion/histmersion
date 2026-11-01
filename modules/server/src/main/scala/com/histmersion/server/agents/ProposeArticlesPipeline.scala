@@ -151,7 +151,7 @@ final class ProposeArticlesPipeline(h: Handlers, ds: DataSource, cfg: => AgentsC
         a.rationale,
         cs,
         dropped,
-        s => !taken(s) && !AgentRepo.slugExists(ds, s) && h.getArticle(s).isLeft,
+        s => !taken(s) && !connect(ds)(AgentRepo.slugExists(s)) && h.getArticle(s).isLeft,
         f => { val (n, _, rows) = h.filterReach(f, Nil, OverlapCap); (n, rows.toSet) },
         existing,
         lim

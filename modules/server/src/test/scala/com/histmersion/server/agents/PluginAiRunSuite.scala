@@ -139,7 +139,7 @@ class PluginAiRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(h.putSource(Ck, SourcePut(title = "Bronze Age tin", year = Some(2019), body = Some(Body))).isRight)
     val run = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
     a.engine.execute(run.id)
-    AgentRepo.get(ds, run.id).get
+    connect(ds)(AgentRepo.get(run.id)).get
 
   test("the plugin from its own jar is registered with its secret resolved, and reported by reference only"):
     val g = generation()
@@ -157,13 +157,13 @@ class PluginAiRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val (a, h) = handlers(generation())
     val run = startAndRun(a, h)
     assertEquals(run.status, "done", run.error.toString)
-    val llm = AgentRepo.steps(ds, run.id, 200).filter(_.kind == "llm")
+    val llm = connect(ds)(AgentRepo.steps(run.id, 200)).filter(_.kind == "llm")
     assertEquals(llm.map(_.name), List("classify", "findings-1", "notes"))
     assert(llm.forall(s => s.status == "done" && s.model.contains("hello-ai:echo")), llm.toString)
     assertEquals(llm.flatMap(_.actualModel).distinct, List("echo-scripted"), "the model the provider said served")
     // classify: the facets call ran in the host, then the answer — two turns, each counted
     assertEquals(llm.head.usage, Usage(200, 40))
-    assert(AgentRepo.messages(ds, run.id).exists(m => m.toolName.contains("facets") && m.role == "tool"))
+    assert(connect(ds)(AgentRepo.messages(run.id)).exists(m => m.toolName.contains("facets") && m.role == "tool"))
     val got = h.getSource(Ck, body = false).toOption.get
     assertEquals(got.source.summary, Some("Tin reached the Aegean by sea."))
     assert(got.findings.exists(_.claim.contains("Uluburun")), got.findings.toString)
@@ -176,7 +176,7 @@ class PluginAiRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val (a, h) = handlers(generation(), cfg)
     val run = startAndRun(a, h)
     assertEquals(run.status, "done", run.error.toString)
-    val done = AgentRepo.steps(ds, run.id, 200).filter(s => s.kind == "llm" && s.status == "done")
+    val done = connect(ds)(AgentRepo.steps(run.id, 200)).filter(s => s.kind == "llm" && s.status == "done")
     assert(done.nonEmpty && done.forall(_.model.contains("hello-ai:echo")), done.toString)
     assert(a.picker.cooldowns().exists(_._1 == "hello-ai:limited"), a.picker.cooldowns().toString)
 

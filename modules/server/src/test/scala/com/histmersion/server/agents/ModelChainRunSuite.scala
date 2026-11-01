@@ -115,24 +115,25 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       None,
       Origin.Person
     )
-    AgentRepo.record(
-      ds,
-      run.id,
-      AgentRepo.StepRecord(
-        1,
-        1,
-        "classify",
-        StepKind.Llm,
-        StepStatus.Done,
-        Some("{}"),
-        None,
-        Some(model.wire),
-        Usage(tokens, 0),
-        BigDecimal(0),
-        None,
-        Instant.now()
-      ),
-      Nil
+    transact(ds)(
+      AgentRepo.record(
+        run.id,
+        AgentRepo.StepRecord(
+          1,
+          1,
+          "classify",
+          StepKind.Llm,
+          StepStatus.Done,
+          Some("{}"),
+          None,
+          Some(model.wire),
+          Usage(tokens, 0),
+          BigDecimal(0),
+          None,
+          Instant.now()
+        ),
+        Nil
+      )
     )
     connect(ds)(
       sql"UPDATE agent_steps SET finished_at = now() - make_interval(mins => $minutesAgo) WHERE job_id = ${run.id}".update
@@ -143,10 +144,10 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def startAndRun(a: AgentsHandlers): RunInfo =
     val run = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
     a.engine.execute(run.id)
-    AgentRepo.get(ds, run.id).get
+    connect(ds)(AgentRepo.get(run.id)).get
 
   private def llmModels(id: String) =
-    AgentRepo.steps(ds, id, 200).filter(_.kind == "llm").map(s => (s.name, s.attempt, s.status, s.model))
+    connect(ds)(AgentRepo.steps(id, 200)).filter(_.kind == "llm").map(s => (s.name, s.attempt, s.status, s.model))
 
   test(
     "the first model below its allowance is passed over: the chain's next one runs every step, the run says so once"
@@ -195,10 +196,10 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     // the window frees (the spend ages out) and the waker re-queues the run, which then finishes
     connect(ds)(sql"UPDATE agent_steps SET finished_at = now() - interval '2 hours' WHERE job_id = $spent".update.run())
     assertEquals(a.engine.resumeDue(at.plusSeconds(1)), List(run.id))
-    assertEquals(AgentRepo.get(ds, run.id).get.resumeAt, None, "re-queued: the reset time is cleared")
+    assertEquals(connect(ds)(AgentRepo.get(run.id)).get.resumeAt, None, "re-queued: the reset time is cleared")
     enrichScripts(ca) // the chain's first model has room again
     a.engine.execute(run.id)
-    val done = AgentRepo.get(ds, run.id).get
+    val done = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(done.status, "done", done.error)
 
   test("a model that runs out DURING a step hands it to the chain's next model; the cut attempt is not a retry"):
@@ -210,7 +211,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val (a, h) = handlers(Map(A -> ca, B -> cb), withAllowances("local:zzA = 1000 tokens/1h")); seed(h)
     val run = startAndRun(a)
     assertEquals(run.status, "done", run.error)
-    val classify = AgentRepo.steps(ds, run.id, 200).filter(_.name == "classify")
+    val classify = connect(ds)(AgentRepo.steps(run.id, 200)).filter(_.name == "classify")
     assertEquals(
       classify.map(s => (s.attempt, s.status, s.model)),
       List((1, "failed", Some(A.wire)), (2, "done", Some(B.wire)))
@@ -227,7 +228,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val (a, h) = handlers(Map(A -> limited, B -> cb)); seed(h)
     val run = startAndRun(a)
     assertEquals(run.status, "done", run.error)
-    val first = AgentRepo.steps(ds, run.id, 200).filter(_.kind == "llm").head
+    val first = connect(ds)(AgentRepo.steps(run.id, 200)).filter(_.kind == "llm").head
     assert(first.error.exists(e => e.contains("usage limit") && e.contains("skipped until")), first)
     assertEquals(llmModels(run.id).count(_._4.contains(A.wire)), 1, "zzA was tried once, then skipped")
     val ex = a.models.chains.find(_.role == "extractor").get

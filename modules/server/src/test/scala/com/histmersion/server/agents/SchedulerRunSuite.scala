@@ -74,7 +74,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
   private def start(a: AgentsHandlers, req: RunRequest): RunInfo =
     val run = a.startRun(req).fold(e => fail(e.message), identity)
     a.engine.execute(run.id)
-    AgentRepo.get(ds, run.id).get
+    connect(ds)(AgentRepo.get(run.id)).get
 
   private val citing = List(
     FollowupRow(
@@ -364,7 +364,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
     val id =
       a.startRunAs(RunRequest("acquisition-sweep", Goal), Origin.Scheduler, None).fold(e => fail(e.message), _.id)
     a.engine.execute(id)
-    assertEquals(AgentRepo.get(ds, id).get.status, "paused")
+    assertEquals(connect(ds)(AgentRepo.get(id)).get.status, "paused")
     def tasks = h.ops.queueList("tasks", all = false).toOption.get.items.map(_.text).filter(_.contains(Goal))
     assert(tasks.exists(t => t.contains("scheduled acquisition-sweep") && t.contains("paused (provider)")), tasks)
     val mine = start(a, RunRequest("acquisition-sweep", Goal))
@@ -382,7 +382,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
     val run = start(a, RunRequest("currency-check", Goal, dryRun = Some(true)))
     assertEquals(run.status, "done", run.error)
     assertEquals(CorpusSnapshot.of(ds), before)
-    val steps = AgentRepo.steps(ds, run.id, 100000)
+    val steps = connect(ds)(AgentRepo.steps(run.id, 100000))
     def would(n: String) = steps.find(_.name == n).toList.flatMap(_.wouldWrite.map(_.what))
     assertEquals(would("assess"), List(s"assess [[$Ck]] applied: verdict current"))
     val followed = would("followups")
@@ -402,6 +402,6 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
     val run = start(a, RunRequest("acquisition-sweep", Goal, dryRun = Some(true)))
     assertEquals(run.status, "done", run.error)
     assertEquals(CorpusSnapshot.of(ds), before)
-    val queue = AgentRepo.steps(ds, run.id, 100000).find(_.name == "queue").get.wouldWrite
+    val queue = connect(ds)(AgentRepo.steps(run.id, 100000)).find(_.name == "queue").get.wouldWrite
     assertEquals(queue.map(_.what), List(s"acquire item for 10.5555/zzagent.a, linked to goal $Goal"))
     assert(queue.head.payload.contains("core study"), queue.head.payload)
