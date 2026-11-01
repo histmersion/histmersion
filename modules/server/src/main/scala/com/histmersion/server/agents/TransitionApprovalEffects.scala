@@ -8,8 +8,8 @@ import com.histmersion.values.ApprovalKind
 
 import javax.sql.DataSource
 
-/** What approving a source's proposal (the library's) and an article's inferred filter (research's) does, registered
-  * by this transition adapter until those domains contribute their own.
+/** What approving a source's proposal (the library's) and an article's inferred filter (research's) does, registered by
+  * this transition adapter until those domains contribute their own.
   */
 final class TransitionApprovalEffects(h: Handlers, ds: DataSource) extends ApprovalEffects:
   def proposal(payload: String): Option[() => Either[String, String]] =

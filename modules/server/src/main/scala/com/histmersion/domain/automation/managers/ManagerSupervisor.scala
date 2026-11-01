@@ -726,7 +726,7 @@ final class ManagerSupervisor(
   // ── what a kind is given (ManagerContext) ─────────────────────────────────────────────────────
 
   /** An item of a kind no registered kind drives: settled as a finished one-run item. */
-  private object Unknown extends ManagerKindDefinition:
+  private val Unknown: ManagerKindDefinition = new ManagerKindDefinition:
     val kind: Kind = Kind.Review
     override def items: List[String] = Nil
     def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[String] = Nil
