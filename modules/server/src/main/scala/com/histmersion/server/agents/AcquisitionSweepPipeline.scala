@@ -1,6 +1,6 @@
 package com.histmersion.server.agents
 
-import com.augustnagro.magnum.{connect, transact}
+import com.augustnagro.magnum.transact
 
 import com.histmersion.domain.automation.agents.{AnswerSchemas, Checked, Halt, Prompt, RunCtx, StepAgent}
 import com.histmersion.domain.automation.workflows.PipelineDef

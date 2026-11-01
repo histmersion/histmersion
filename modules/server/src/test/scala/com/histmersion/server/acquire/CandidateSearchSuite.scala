@@ -1,6 +1,6 @@
 package com.histmersion.server.acquire
 
-import com.augustnagro.magnum.{connect, transact}
+import com.augustnagro.magnum.transact
 
 import com.histmersion.api.*
 import com.histmersion.config.*

@@ -1,7 +1,5 @@
 package com.histmersion.domain.automation.scheduler
 
-import com.augustnagro.magnum.{connect, transact}
-
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.{ManagerDefaultsViews, ManagerSupervisor}
 
