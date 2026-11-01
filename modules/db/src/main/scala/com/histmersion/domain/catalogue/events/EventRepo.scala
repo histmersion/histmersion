@@ -27,6 +27,9 @@ import com.histmersion.db.given_DbCodec_List
   */
 private[histmersion] object EventRepo:
 
+  /** How many events the catalogue holds. */
+  def count()(using DbCon): Long = sql"SELECT count(*)::int FROM events".query[Int].run().head.toLong
+
   private given DbCodec[EventEdge] = DbCodec.derived
   private given DbCodec[EventParticipant] = DbCodec.derived
 

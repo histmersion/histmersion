@@ -1,8 +1,7 @@
-package com.histmersion.db
+package com.histmersion.domain.catalogue.places
 
-import com.histmersion.domain.catalogue.places.PlaceFixtures
-
-import com.histmersion.domain.catalogue.places.{Geocoder, PointAreaRepo}
+import com.histmersion.db.*
+import com.histmersion.db.given
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -17,7 +16,7 @@ import com.histmersion.values.{PlaceKind, SourceStatus}
   * every dependent row gone, the affected findings matched again, a shape, a site and a seed place untouched. Fixtures
   * around 150°E 60°S, where no other suite has any; ids `wikidata_q9992…`, `geonames_9992…`, `zzpa…`.
   */
-class PointAreaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
+class PointAreaRepoSuite extends com.histmersion.db.DbSuite with com.histmersion.db.Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -132,6 +131,7 @@ class PointAreaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     connect(ds)(sql"SELECT 1 FROM places WHERE id = $id".query[Int].run().nonEmpty)
   private val kinds = Gazetteer.DefaultPointAreaKinds
   private val rule = Lint.rule(Lint.PlaceImportedPointArea).get
+  private lazy val geometry = PlaceGeometry(com.histmersion.util.database.Transactor(ds))
   private def settings(batch: Int, budgetMs: Long) =
     PointAreaRepo.Settings(kinds, batch, budgetMs, cfg.places.pointToleranceKm)
 
@@ -160,16 +160,7 @@ class PointAreaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       groups.exists(g => g.source == "wikidata" && g.kind == "polity" && g.dating == Dating.Dated && g.places >= 1),
       groups.toString
     )
-    val rep = LintRepo.run(
-      ds,
-      List(rule),
-      50,
-      3,
-      (_, _, _) => Nil,
-      Geocoder.Settings(cfg.places.geocodePlaceholderMin, cfg.places.geocodeRepairKm, cfg.places.pointToleranceKm),
-      kinds
-    )
-    val r = rep.rules.head
+    val r = connect(ds)(PointAreaRepo.reportIn(rule, kinds, 50))
     assert(r.count >= 4, r.toString)
     assert(
       r.items.exists(i => i.citekey == Polity && i.detail.contains("1 finding, at no other place")),
@@ -179,23 +170,7 @@ class PointAreaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       !r.items.exists(i => i.citekey == Shaped || i.citekey == GnSite || i.citekey == Site),
       "a shape, a site and the seed are no point areas"
     )
-    assertEquals(
-      LintRepo
-        .run(
-          ds,
-          List(rule),
-          50,
-          3,
-          (_, _, _) => Nil,
-          Geocoder.Settings(cfg.places.geocodePlaceholderMin, cfg.places.geocodeRepairKm, cfg.places.pointToleranceKm),
-          Nil
-        )
-        .rules
-        .head
-        .count,
-      0,
-      "no kinds, no rule"
-    )
+    assertEquals(connect(ds)(PointAreaRepo.reportIn(rule, Nil, 50)).count, 0, "no kinds, no rule")
     assert(Mine.forall(exists), "a listing writes nothing")
 
   test(
@@ -203,10 +178,10 @@ class PointAreaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
   ):
     seed()
     // a zero budget still makes progress: one batch per call
-    val one = PointAreaRepo.remove(ds, settings(batch = 1, budgetMs = 0))
+    val one = geometry.removePointAreas(settings(batch = 1, budgetMs = 0))
     assertEquals(one.removed, 1)
     assert(one.remaining >= 3, one.toString)
-    val rest = PointAreaRepo.remove(ds, settings(batch = 2, budgetMs = 60000))
+    val rest = geometry.removePointAreas(settings(batch = 2, budgetMs = 60000))
     assertEquals(rest.remaining, 0)
     assert(!exists(Region) && !exists(Polity) && !exists(GnArea))
     assert(exists(Pinned) && exists(Shaped) && exists(GnSite) && exists(Site) && exists(Thracia) && !exists(Thrace))
@@ -244,7 +219,7 @@ class PointAreaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = PlaceFixtures.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm)
     assertEquals((1 to 4).map(at).toList, fixed)
     assertEquals(
-      PointAreaRepo.remove(ds, settings(batch = 10, budgetMs = 1000)),
+      geometry.removePointAreas(settings(batch = 10, budgetMs = 1000)),
       PointAreaRepo.Removal(0, 0, 0, 0),
       "nothing left to do"
     )

@@ -98,8 +98,12 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
 
   private def keys(rule: String): List[String] = run(rule).map(_.citekey).distinct
 
-  test("every rule has SQL behind it"):
-    Lint.names.foreach(n => assert(LintRepo.sqlOf(n).nonEmpty, s"$n has no statement"))
+  /** The rules the catalogue registers itself (`domain.catalogue.CatalogueData`): its own suites run them. */
+  private val CatalogueRules =
+    Set(Lint.PlaceKindRule, Lint.PlaceGridPoint, Lint.PlaceImportedPointArea, Lint.EventCorrectionConflict)
+
+  test("every rule of the data management's has SQL behind it"):
+    Lint.names.filterNot(CatalogueRules).foreach(n => assert(LintRepo.sqlOf(n).nonEmpty, s"$n has no statement"))
 
   test("every rule executes against the real schema"):
     val rep = LintRepo.run(ds, Lint.all, cfg.lint.maxItems, cfg.lint.suggestions, checker, geo)

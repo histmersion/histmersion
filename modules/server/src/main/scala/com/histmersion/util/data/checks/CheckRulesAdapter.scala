@@ -92,13 +92,5 @@ object CheckRulesAdapter:
       listed(owner, DanglingArticleLinks, ArticleFiller, ArticleUncitedParagraph, ArticleThinSummary) ++
         List(fixed(owner, ArticleCritiquePairing, FixWhen.WhenNamed)(pairCritiques)) ++
         listed(owner, ArticleFormat)
-    case TablesAdapter.CatalogueOwner =>
-      List(
-        fixed(owner, PlaceKindRule, FixWhen.WhenNamed)(c => LintRepo.reclassifyFix(c.dataSource, c.config)),
-        fixed(owner, PlaceGridPoint, FixWhen.WhenNamed)(c => LintRepo.relocateFix(c.dataSource, c.config)),
-        fixed(owner, PlaceImportedPointArea, FixWhen.WhenNamed)(c =>
-          LintRepo.removePointAreasFix(c.dataSource, c.config)
-        )
-      ) ++ listed(owner, EventCorrectionConflict)
     case TablesAdapter.MediaOwner => listed(owner, MediaLicenceRule)
     case _                        => Nil

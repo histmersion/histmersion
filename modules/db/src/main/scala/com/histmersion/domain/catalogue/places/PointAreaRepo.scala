@@ -109,7 +109,7 @@ private[histmersion] object PointAreaRepo:
     else PointAreas.report(rule, groupsIn(kinds), holdersIn(kinds), sampleIn(kinds, maxItems), maxItems)
 
   /** The ids `--fix` may remove: every listed place no evidence names. */
-  private def removableIn(kinds: List[String])(using DbCon): List[String] =
+  private[places] def removableIn(kinds: List[String])(using DbCon): List[String] =
     sql"""SELECT p.id FROM places p
           WHERE p.import_source = ANY($sources::text[]) AND p.kind = ANY($kinds::text[])
             AND (p.geom IS NULL OR ST_Dimension(p.geom) = 0)
@@ -117,36 +117,6 @@ private[histmersion] object PointAreaRepo:
             AND NOT EXISTS (SELECT 1 FROM asset_links t WHERE t.target_type = 'place' AND t.target_id = p.id)
             AND NOT EXISTS (SELECT 1 FROM place_overrides o WHERE o.place_id = p.id)
           ORDER BY p.id""".query[String].run().toList
-
-  /** Remove the listed places, `batch` per transaction, until none is left or `budgetMs` is spent; returns what was
-    * done and what is left (call again while `remaining > 0`).
-    *
-    * Each transaction re-checks the rule on the rows it deletes (compare-and-set: a place that got a shape, another
-    * kind or evidence since the listing stays), deletes what hangs off them — their finding matches, names, links,
-    * descriptions, types, footprints, relations (either side) and aliases; an event naming one loses its place (the
-    * foreign key's `SET NULL`) — then the places, and matches the findings of the sources that held one again
-    * ([[FindingPlaceRepo.materialiseFor]]): only those, never the whole corpus.
-    */
-  def remove(ds: DataSource, s: Settings): Removal =
-    if s.kinds.isEmpty then Removal(0, 0, 0, 0)
-    else
-      val kinds = s.kinds
-      val deadline = System.nanoTime() + math.max(0L, s.budgetMs) * 1000000L
-      val todo = connect(ds)(removableIn(kinds))
-      val chunks = todo.grouped(math.max(1, s.batch)).toList
-      val named = if todo.isEmpty then Map.empty[String, Set[String]] else connect(ds)(nameKeysIn())
-      // one pass over the chunks while time is left; at least one chunk per call, so a call progresses
-      @annotation.tailrec
-      def go(rest: List[List[String]], removed: Int, findings: Int, cks: Set[String]): (Int, Int, Set[String]) =
-        rest match
-          case Nil         => (removed, findings, cks)
-          case ids :: more =>
-            val (n, f, c) = transact(ds)(removeIn(ids, kinds, s.toleranceKm, named))
-            val acc = (removed + n, findings + f, cks ++ c)
-            if System.nanoTime() >= deadline then acc else go(more, acc._1, acc._2, acc._3)
-      val (removed, findings, cks) = go(chunks, 0, 0, Set.empty)
-      val remaining = connect(ds)(removableIn(kinds)).size
-      Removal(removed, remaining, findings, cks.size)
 
   /** Delete these places and everything that hangs off them, set-wise (one statement per table, so the foreign keys'
     * per-row cascades find nothing left to do): finding matches, names, links, descriptions, types, footprints,
@@ -189,7 +159,7 @@ private[histmersion] object PointAreaRepo:
     * point region, before "Bohemia"), and chooses the seed place once that is gone. Every other match an imported point
     * has is a finding ON it, which the place's own rows say.
     */
-  private def nameKeysIn()(using DbCon): Map[String, Set[String]] =
+  private[places] def nameKeysIn()(using DbCon): Map[String, Set[String]] =
     val findings =
       sql"""SELECT DISTINCT citekey, btrim(region_name) FROM findings WHERE btrim(coalesce(region_name, '')) <> ''"""
         .query[(String, String)]
@@ -221,8 +191,13 @@ private[histmersion] object PointAreaRepo:
     * the places' names AND as an explicit-only seed place's ([[nameKeysIn]]): the geocoder may have chosen the removed
     * place for it, and now chooses the seed region, which takes the finding by its name ("Thrace").
     */
-  private def removeIn(ids0: List[String], kinds: List[String], toleranceKm: Double, named: Map[String, Set[String]])(
-      using DbCon
+  private[places] def removeIn(
+      ids0: List[String],
+      kinds: List[String],
+      toleranceKm: Double,
+      named: Map[String, Set[String]]
+  )(using
+      DbCon
   ): (Int, Int, Set[String]) =
     val ids = sql"""SELECT p.id FROM places p
                     WHERE p.id = ANY($ids0::text[])

@@ -1,8 +1,10 @@
-package com.histmersion.db
+package com.histmersion.domain.catalogue.events
 
-import com.histmersion.domain.catalogue.places.{Geocoder, PlaceScope}
+import com.histmersion.db.*
+import com.histmersion.db.given
 
-import com.histmersion.domain.catalogue.events.*
+import com.histmersion.domain.catalogue.places.PlaceScope
+
 import com.histmersion.domain.catalogue.evidence.*
 
 import com.histmersion.api.*
@@ -206,10 +208,8 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
       List(EventFields.Description -> Some("Confirmed Eruption at Zqcr; area: SW flank"))
     )
     assertEquals(conflict.head.label, Some("Hekla 3 (Zqcr)"))
-    val geo =
-      Geocoder.Settings(cfg.places.geocodePlaceholderMin, cfg.places.geocodeRepairKm, cfg.places.pointToleranceKm)
-    val lint = LintRepo.run(ds, List(Lint.rule(Lint.EventCorrectionConflict).get), 1000, 3, (_, _, _) => Nil, geo)
-    assert(lint.rules.head.items.exists(i => i.citekey == Id && i.detail.startsWith("description:")), lint.toString)
+    val lint = connect(ds)(CorrectionRepo.conflictsIn())
+    assert(lint.exists((id, detail) => id == Id && detail.startsWith("description:")), lint.toString)
     // still a conflict on the next import (the catalogue unchanged since), and back to active if it reverts
     assertEquals(reimport(changed).corrections, CorrectionCounts(conflicts = 1))
     assertEquals(reimport(upstream0.copy(label = "Hekla 3 (Zqcr)")).corrections, CorrectionCounts(kept = 1))

@@ -18,7 +18,7 @@ import com.histmersion.db.given_DbCodec_List
 /** The event catalogues' records (`event_catalogue`) and the parts of each catalogue an import has read
   * (`event_import_parts`): what an import merges with and writes. Every method runs on the connection it is given.
   */
-private[histmersion] object EventImportRepo:
+private[events] object EventImportRepo:
 
   /** Every stored event, as the merge sees it ([[CatalogMerge.place]]), in id order (the merge's choice never depends
     * on the order rows come in — it ranks candidates itself — but a stable order keeps every run reproducible).

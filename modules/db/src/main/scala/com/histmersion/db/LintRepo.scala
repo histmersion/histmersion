@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.domain.catalogue.places.{Geocoder, PlaceRepo, PlaceReviewRepo, PointAreaRepo}
+import com.histmersion.domain.catalogue.places.{Geocoder, PlaceRepo}
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -51,13 +51,6 @@ object LintRepo:
            AND NOT EXISTS (SELECT 1 FROM unresolved_edges u WHERE u.src = s.citekey)
            AND NOT EXISTS (SELECT 1 FROM edges e WHERE e.dst = s.citekey)
          ORDER BY s.citekey""",
-    EventCorrectionConflict ->
-      """SELECT c.target_id,
-                c.field || ': kept “' || left(coalesce(c.value #>> '{}', c.value::text), 60) || '” by hand; the catalogue (' ||
-                coalesce(c.upstream, '?') || ') said “' || left(coalesce(c.upstream_value #>> '{}', c.upstream_value::text), 60) ||
-                '” and now says “' || left(coalesce(c.upstream_now #>> '{}', c.upstream_now::text, '?'), 60) || '”'
-         FROM corrections c WHERE c.target_kind = 'event' AND c.status = 'conflict'
-         ORDER BY c.target_id, c.field""",
     MediaLicenceRule ->
       """SELECT coalesce(a.citekey || '/' || a.name, 'media:' || a.uid::text),
                 concat_ws(' · ',
@@ -163,12 +156,8 @@ object LintRepo:
     case NoteFormat             => List(noteTextsSql)
     case FindingGeocode         => List(Geocoder.legacySql)
     case FindingUnplaced        => List(Geocoder.unplacedSql)
-    case PlaceKindRule          => List("SELECT id FROM places WHERE import_source IS NULL")
-    case PlaceGridPoint         => List("SELECT id FROM places WHERE location_precision = 'grid-cell'")
-    case PlaceImportedPointArea =>
-      List(s"SELECT id FROM places WHERE import_source IN ${PlaceRepo.ImportedList} AND ST_Dimension(geom) = 0")
-    case FindingPlaceholder => List(PlaceRepo.placeholderFindingsSql)
-    case r                  => projections.get(r).toList
+    case FindingPlaceholder     => List(PlaceRepo.placeholderFindingsSql)
+    case r                      => projections.get(r).toList
 
   private def pairs(sql: String)(using DbCon): List[(String, String)] =
     Sql.raw(sql).frag.query[(String, String)].run().toList
@@ -180,33 +169,21 @@ object LintRepo:
     Sql.raw(sql).frag.query[(String, List[String])].run().toList
 
   /** What the rules read besides the database: how many prefix candidates a dangling target is offered
-    * (`lint.suggestions`), the formatting check, the geocoder's knobs (`finding-geocode`, `finding-unplaced`) and
-    * `places.sources.point-area-kinds` (`place-imported-point-area`).
+    * (`lint.suggestions`), the formatting check and the geocoder's knobs (`finding-geocode`, `finding-unplaced`).
     */
   final case class Context(
       suggestions: Int,
       format: FormatChecker,
-      geocode: Geocoder.Settings,
-      pointAreaKinds: List[String]
+      geocode: Geocoder.Settings
   )
 
   object Context:
     def of(cfg: AppConfig, format: FormatChecker): Context =
-      Context(cfg.lint.suggestions, format, geocodeOf(cfg), pointAreaOf(cfg).kinds)
+      Context(cfg.lint.suggestions, format, geocodeOf(cfg))
 
   /** The geocoder's knobs (`places.geocode-*`), as `finding-geocode` and its repair use them. */
   def geocodeOf(cfg: AppConfig): Geocoder.Settings =
     Geocoder.Settings(cfg.places.geocodePlaceholderMin, cfg.places.geocodeRepairKm, cfg.places.pointToleranceKm)
-
-  /** `place-imported-point-area`'s knobs (`places.sources.point-area-*`). */
-  def pointAreaOf(cfg: AppConfig): PointAreaRepo.Settings =
-    val src = cfg.places.sources
-    PointAreaRepo.Settings(
-      src.pointAreaKindSet.toList.sorted,
-      src.pointAreaFixBatch,
-      src.pointAreaFixSeconds.toLong * 1000L,
-      cfg.places.pointToleranceKm
-    )
 
   // the graph inputs and the wave 3 fetches several rules classify, read at most once per run
   private val StoredCitekeys = CheckInput(Sql.raw(citekeysSql).frag.query[String].run().toSet)
@@ -230,8 +207,7 @@ object LintRepo:
   def storedCitekey(using run: CheckRun)(using DbCon): String => Boolean = ck => run(StoredCitekeys).contains(ck)
 
   /** Run the selected rules. One connection for the lot; the graph inputs (citekeys, edges) are fetched at most once
-    * even though two rules classify them. `pointAreaKinds` is `places.sources.point-area-kinds`
-    * (`place-imported-point-area`).
+    * even though two rules classify them.
     */
   def run(
       ds: DataSource,
@@ -239,54 +215,49 @@ object LintRepo:
       maxItems: Int,
       suggestions: Int,
       format: FormatChecker,
-      geocode: Geocoder.Settings,
-      pointAreaKinds: List[String] = Gazetteer.DefaultPointAreaKinds
+      geocode: Geocoder.Settings
   ): LintReport =
     connect(ds):
       val run = CheckRun()
-      val context = Context(suggestions, format, geocode, pointAreaKinds)
+      val context = Context(suggestions, format, geocode)
       LintReport(rules.map(report(_, context, maxItems)(using run)))
 
   /** One rule's report, on the run's connection. */
   def report(r: Rule, c: Context, maxItems: Int)(using run: CheckRun)(using DbCon): LintRuleReport =
-    if r.name == PlaceImportedPointArea then PointAreaRepo.reportIn(r, c.pointAreaKinds, maxItems)
-    else
-      val items = r.name match
-        case DanglingEdges           => Lint.danglingEdges(run(EdgeRows), run(StoredCitekeys), c.suggestions)
-        case UnresolvedShortCitekeys => Lint.unresolvedShortCitekeys(run(EdgeRows), run(StoredCitekeys), c.suggestions)
-        case DuplicateDoi            => Lint.duplicates(pairs(doiSql), "doi")
-        case DuplicateSha256         => Lint.duplicates(pairs(sha256Sql), "sha256")
-        case NonCanonicalTag         => Lint.nonCanonicalTags(run(TagRows))
-        case YearCitekeyMismatch     => Lint.yearCitekeyMismatch(run(YearRows))
-        case AuthorPipe              => Lint.authorPipe(run(AuthorRows))
-        case ArticleFiller           => Lint.articleFiller(run(ArticleRows))
-        case ArticleUncitedParagraph => Lint.articleUncitedParagraphs(run(ArticleRows))
-        case ArticleCritiquePairing  =>
-          val p = pairingCorpusIn()
-          Lint.articleCritiquePairing(run(ArticleRows), p.resolve, p.edges, p.work)
-        case ArticleThinSummary => Lint.articleThinSummary(pairs(articleSummariesSql))
-        case ArticleFormat      =>
-          Lint.formatItems(
-            triples(articleTextsSql).flatMap((slug, body, summary) =>
-              List((slug, FormatField.Body, body), (slug, FormatField.Summary, summary))
-            ),
-            c.format
-          )
-        case NoteFormat =>
-          Lint.formatItems(
-            triples(noteTextsSql).flatMap((ck, summary, notes) =>
-              List((ck, FormatField.Summary, summary), (ck, FormatField.Notes, notes))
-            ),
-            c.format
-          )
-        case FindingGeocode     => Geocoder.movesIn(c.geocode).map(m => LintItem(m.citekey, m.describe))
-        case FindingUnplaced    => Geocoder.placementsIn(c.geocode).map(p => LintItem(p.citekey, p.describe))
-        case PlaceKindRule      => PlaceReviewRepo.proposalsIn().map(p => LintItem(p.id, p.detail))
-        case PlaceGridPoint     => PlaceReviewRepo.relocationsIn().map(r => LintItem(r.id, r.detail))
-        case FindingPlaceholder => PlaceRepo.unresolvedPlaceholdersIn().map((ck, detail) => LintItem(ck, detail))
-        case name               =>
-          projections.get(name).toList.flatMap(pairs).map((ck, detail) => LintItem(ck, detail))
-      Lint.report(r, items, maxItems)
+    val items = r.name match
+      case DanglingEdges           => Lint.danglingEdges(run(EdgeRows), run(StoredCitekeys), c.suggestions)
+      case UnresolvedShortCitekeys => Lint.unresolvedShortCitekeys(run(EdgeRows), run(StoredCitekeys), c.suggestions)
+      case DuplicateDoi            => Lint.duplicates(pairs(doiSql), "doi")
+      case DuplicateSha256         => Lint.duplicates(pairs(sha256Sql), "sha256")
+      case NonCanonicalTag         => Lint.nonCanonicalTags(run(TagRows))
+      case YearCitekeyMismatch     => Lint.yearCitekeyMismatch(run(YearRows))
+      case AuthorPipe              => Lint.authorPipe(run(AuthorRows))
+      case ArticleFiller           => Lint.articleFiller(run(ArticleRows))
+      case ArticleUncitedParagraph => Lint.articleUncitedParagraphs(run(ArticleRows))
+      case ArticleCritiquePairing  =>
+        val p = pairingCorpusIn()
+        Lint.articleCritiquePairing(run(ArticleRows), p.resolve, p.edges, p.work)
+      case ArticleThinSummary => Lint.articleThinSummary(pairs(articleSummariesSql))
+      case ArticleFormat      =>
+        Lint.formatItems(
+          triples(articleTextsSql).flatMap((slug, body, summary) =>
+            List((slug, FormatField.Body, body), (slug, FormatField.Summary, summary))
+          ),
+          c.format
+        )
+      case NoteFormat =>
+        Lint.formatItems(
+          triples(noteTextsSql).flatMap((ck, summary, notes) =>
+            List((ck, FormatField.Summary, summary), (ck, FormatField.Notes, notes))
+          ),
+          c.format
+        )
+      case FindingGeocode     => Geocoder.movesIn(c.geocode).map(m => LintItem(m.citekey, m.describe))
+      case FindingUnplaced    => Geocoder.placementsIn(c.geocode).map(p => LintItem(p.citekey, p.describe))
+      case FindingPlaceholder => PlaceRepo.unresolvedPlaceholdersIn().map((ck, detail) => LintItem(ck, detail))
+      case name               =>
+        projections.get(name).toList.flatMap(pairs).map((ck, detail) => LintItem(ck, detail))
+    Lint.report(r, items, maxItems)
 
   // ── article-critique-pairing ─────────────────────────────────────────────────────────────────
 
@@ -423,35 +394,3 @@ object LintRepo:
       0,
       findingsPlaced = placed
     )
-
-  /** `place-kind`: reclassify the places the rule lists and merge the withdrawn ones into their replacement. */
-  def reclassifyFix(ds: DataSource, cfg: AppConfig): LintFixResult =
-    val (reclassified, merged) =
-      transact(ds)(PlaceReviewRepo.apply(connect(ds)(PlaceReviewRepo.proposals()), cfg.places.pointToleranceKm))
-    LintFixResult(
-      List(s"$PlaceKindRule: $reclassified place(s) reclassified, $merged merged into their replacement"),
-      0,
-      0,
-      0,
-      0,
-      placesReclassified = reclassified,
-      placesMerged = merged
-    )
-
-  /** `place-grid-point`: move the places the rule lists to their linked record's point. */
-  def relocateFix(ds: DataSource, cfg: AppConfig): LintFixResult =
-    val relocated =
-      transact(ds)(PlaceReviewRepo.relocate(connect(ds)(PlaceReviewRepo.relocations()), cfg.places.pointToleranceKm))
-    LintFixResult(
-      List(s"$PlaceGridPoint: $relocated place(s) moved from a grid square's centre to their linked record's point"),
-      0,
-      0,
-      0,
-      0,
-      placesRelocated = relocated
-    )
-
-  /** `place-imported-point-area`: remove a bounded batch of the places the rule lists. */
-  def removePointAreasFix(ds: DataSource, cfg: AppConfig): LintFixResult =
-    val r = PointAreaRepo.remove(ds, pointAreaOf(cfg))
-    LintFixResult(List(r.line), 0, 0, 0, 0, pointAreasRemoved = r.removed, pointAreasRemaining = r.remaining)
