@@ -10,7 +10,7 @@ import com.histmersion.domain.AutopilotPolicy.{GoalFacts, GoalRow, ManagerRow, S
 import com.histmersion.api.GoalPlans.LinkKind
 import com.histmersion.api.Managers.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.{AgentRepo, AutopilotRepo, ManagerRepo}
+import com.histmersion.db.{AutopilotRepo, ManagerRepo}
 
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicBoolean
@@ -390,7 +390,7 @@ final class AutopilotService(
     val pace = ManagerRepo.pace(ds, now.minusSeconds(7L * 86400L))
     val links = agents.goals.linkCounts()
     val arts = agents.workflows.linked()
-    val open = AgentRepo.openBySubject(ds)
+    val open = agents.approvalStore.openBySubject()
     def brief(m: ManagerRepo.Light) = ManagerBrief(m.id, m.kind, m.state, m.statusNote)
     val progress = goals.sortBy(_.slug).map { g =>
       val mine = managers.filter(_.goal.contains(g.slug))
@@ -429,7 +429,7 @@ final class AutopilotService(
           Agents.ApprovalKind.GoalPlan,
           AutopilotPolicy.capText(
             caps.goalPlansPerDay,
-            AgentRepo.openCount(ds, Agents.ApprovalKind.GoalPlan),
+            agents.approvalStore.openCount(Agents.ApprovalKind.GoalPlan),
             caps.goalPlansBacklogShare,
             caps.goalPlansCeiling
           ) +
@@ -440,7 +440,7 @@ final class AutopilotService(
           Agents.ApprovalKind.ArticlePublish,
           AutopilotPolicy.capText(
             caps.publishPerDay,
-            AgentRepo.openCount(ds, Agents.ApprovalKind.ArticlePublish),
+            agents.approvalStore.openCount(Agents.ApprovalKind.ArticlePublish),
             caps.publishBacklogShare,
             caps.publishCeiling
           ) + s", filter at least ${caps.publishMinSources} sources"

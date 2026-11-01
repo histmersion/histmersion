@@ -278,15 +278,16 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val (a, h, up) = handlers(auto); seed(a, h, up)
     on(a)
     Clock().tick(a)
-    def plan(goal: String, kids: Int) = AgentRepo.openSubject(
-      ds,
-      None,
-      ApprovalKind.GoalPlan,
-      goal,
-      Plan(goal, "r", (1 to kids).toList.map(i => PlannedGoal(s"$goal-k$i", s"Zz k$i")), List("q")).asJson.noSpaces
-    )
+    def plan(goal: String, kids: Int) = TestRuns
+      .approvals(ds)
+      .openSubject(
+        None,
+        ApprovalKind.GoalPlan,
+        goal,
+        Plan(goal, "r", (1 to kids).toList.map(i => PlannedGoal(s"$goal-k$i", s"Zz k$i")), List("q")).asJson.noSpaces
+      )
     val now = Instant.now()
-    def judged(p: ApprovalInfo) = a.autoApprovals.judge(AgentRepo.approval(ds, p.id).get, None, None, now)
+    def judged(p: ApprovalInfo) = a.autoApprovals.judge(TestRuns.approvals(ds).approval(p.id).get, None, None, now)
     assert(
       judged(plan(g(7), 0)).isInstanceOf[AutopilotPolicy.Verdict.Approve],
       "not active in any focus: decided all the same"
@@ -325,10 +326,12 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     // an open goal plan is neither decided by code nor reported to its manager; the digest and the status say why
     val p =
-      AgentRepo.openSubject(ds, None, ApprovalKind.GoalPlan, g(4), Plan(g(4), "r", Nil, List("q")).asJson.noSpaces)
+      TestRuns
+        .approvals(ds)
+        .openSubject(None, ApprovalKind.GoalPlan, g(4), Plan(g(4), "r", Nil, List("q")).asJson.noSpaces)
     val _ = a.autoApprovals.sweep(Instant.now())
-    assertEquals(AgentRepo.approval(ds, p.id).map(_.state), Some("open"))
-    a.autoApprovals.judge(AgentRepo.approval(ds, p.id).get, None, None, Instant.now()) match
+    assertEquals(TestRuns.approvals(ds).approval(p.id).map(_.state), Some("open"))
+    a.autoApprovals.judge(TestRuns.approvals(ds).approval(p.id).get, None, None, Instant.now()) match
       case AutopilotPolicy.Verdict.Leave(w) => assert(w.contains("limit on unfinished goals"), w)
       case v                                => fail(v.toString)
     val d = a.digest.digest()
@@ -347,7 +350,9 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val morning = Instant.parse("2031-03-03T06:59:00Z")
     val (a, h, up) = handlers(digestClock = java.time.Clock.fixed(morning, java.time.ZoneOffset.UTC)); seed(a, h, up)
     def plan(goal: String) =
-      AgentRepo.openSubject(ds, None, ApprovalKind.GoalPlan, goal, Plan(goal, "r", Nil, List("q")).asJson.noSpaces)
+      TestRuns
+        .approvals(ds)
+        .openSubject(None, ApprovalKind.GoalPlan, goal, Plan(goal, "r", Nil, List("q")).asJson.noSpaces)
     val ps = List(g(1), g(2), g(3)).map(plan)
     val d = a.digest.digest()
     val plans = d.kinds.find(_.kind == "goal-plan").getOrElse(fail(d.toString))
@@ -370,13 +375,13 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       .decideAll(ApprovalDigest.BulkDecide("reject", kind = Some("goal-plan"), dryRun = true))
       .fold(e => fail(e.message), identity)
     assertEquals((dry.matched, dry.decided.size, dry.dryRun), (3, 3, true))
-    assert(ps.forall(p => AgentRepo.approval(ds, p.id).exists(_.state == "open")), "a dry run decides nothing")
+    assert(ps.forall(p => TestRuns.approvals(ds).approval(p.id).exists(_.state == "open")), "a dry run decides nothing")
     val done = a.digest
       .decideAll(ApprovalDigest.BulkDecide("reject", kind = Some("goal-plan"), subject = Some(g(2)), by = Some("test")))
       .fold(e => fail(e.message), identity)
     assertEquals((done.matched, done.decided, done.failed), (1, List(ps(1).id), Nil))
     assertEquals(
-      AgentRepo.approval(ds, ps(1).id).map(x => (x.state, x.note.exists(_.contains("in bulk by test")))),
+      TestRuns.approvals(ds).approval(ps(1).id).map(x => (x.state, x.note.exists(_.contains("in bulk by test")))),
       Some(("rejected", true))
     )
     assert(QueueRepoLog.has(ds, "approvals rejected in bulk by test"), "a worklog line")
@@ -392,7 +397,9 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     val (a, h, up) = handlers(scaled); seed(a, h, up)
     (1 to 6).foreach(i =>
-      AgentRepo.openSubject(ds, None, ApprovalKind.GoalPlan, g(i), Plan(g(i), "r", Nil, List("q")).asJson.noSpaces)
+      TestRuns
+        .approvals(ds)
+        .openSubject(None, ApprovalKind.GoalPlan, g(i), Plan(g(i), "r", Nil, List("q")).asJson.noSpaces)
     )
     assertEquals(a.autoApprovals.goalPlanCap, 3, "max(1, ceil(6 x 0.5)) = 3, at most 3")
     assert(
@@ -439,7 +446,9 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   test("stalls: every unfinished goal with no progress, the reason and the action"):
     val (a, h, up) = handlers(); seed(a, h, up)
     on(a)
-    AgentRepo.openSubject(ds, None, ApprovalKind.GoalPlan, g(4), Plan(g(4), "r", Nil, List("q")).asJson.noSpaces)
+    TestRuns
+      .approvals(ds)
+      .openSubject(None, ApprovalKind.GoalPlan, g(4), Plan(g(4), "r", Nil, List("q")).asJson.noSpaces)
     Clock().tick(a)
     val r = a.scheduler.stalls(Some(0))
     note("stalls", StallsMarkdown.report(r))

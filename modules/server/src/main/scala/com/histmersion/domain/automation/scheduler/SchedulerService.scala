@@ -423,7 +423,7 @@ final class SchedulerService(
             run.map(_.status).flatMap(RunState.parse) match
               case Some(RunState.WaitingApproval) =>
                 val open = run.toList
-                  .flatMap(r => AgentRepo.approvalsOf(ds, r.id, None))
+                  .flatMap(r => agents.approvalStore.approvalsOf(r.id, None))
                   .filter(_.state == ApprovalState.Open.wire)
                 base.copy(
                   code = AgentScheduler.Code.Person,
@@ -453,7 +453,7 @@ final class SchedulerService(
     val goals = FocusRepo.goals(ds).filterNot(g => GoalFocus.finished(g.status))
     val progress = ManagerRepo.lastProgress(ds)
     val articles = agents.workflows.linked()
-    val bySubj = AgentRepo.openLight(ds).groupBy(_.subject)
+    val bySubj = agents.approvalStore.openLight().groupBy(_.subject)
     val held = ManagerRepo.personHeldByGoal(ds)
     val paused = ManagerRepo
       .light(ds)

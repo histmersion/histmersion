@@ -315,7 +315,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assert(!first.systemPrompt.exists(_.contains("Tin reached the Aegean")))
 
     // the edge was verified against the target's record and waits for a person
-    val open = AgentRepo.approvals(ds, Some(ApprovalState.Open), 50).filter(_.citekey == Ck)
+    val open = TestRuns.approvals(ds).approvals(Some(ApprovalState.Open), 50).filter(_.citekey == Ck)
     assertEquals(open.map(x => (x.kind, x.edgeKind, x.target)), List(("edge", Some("refutes"), Some(Ck2))))
     assertEquals(h.neighbors(Ck, List("refutes")), Nil, "nothing is applied before approval")
     val log = h.ops.queueList("log", all = true).toOption.get.items.filter(_.text.contains(Slug))
@@ -1629,7 +1629,11 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assert(run.warnings.exists(_.contains("recorded minor")), run.warnings)
     // the edge waits for a person (edges = manual): the checklist has no pair yet; the next run's will
     assertEquals(
-      AgentRepo.approvals(ds, Some(ApprovalState.Open), 50).filter(_.citekey.startsWith("zzagent")).map(_.citekey),
+      TestRuns
+        .approvals(ds)
+        .approvals(Some(ApprovalState.Open), 50)
+        .filter(_.citekey.startsWith("zzagent"))
+        .map(_.citekey),
       List(Ck2)
     )
 

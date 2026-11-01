@@ -74,7 +74,10 @@ object AutopilotRowService:
     /** Change the row by `f` when `when` holds of it; whether it did. */
     private def change(when: AutopilotRowState => Boolean)(f: AutopilotRowState => AutopilotRowState): Boolean =
       val _ = current()
-      state.getAndUpdate(s => s.modify(_.autopilot).using(_.map(r => if when(r) then f(r) else r))).autopilot.exists(when)
+      state
+        .getAndUpdate(s => s.modify(_.autopilot).using(_.map(r => if when(r) then f(r) else r)))
+        .autopilot
+        .exists(when)
     private def always(f: AutopilotRowState => AutopilotRowState): Unit = change(_ => true)(f): Unit
     private def t(at: Option[Instant]): Option[String] = at.map(AutomationState.text)
 
@@ -111,7 +114,9 @@ object AutopilotRowService:
       val r = current()
       r.strategy.map(n => (n, r.strategyBy.getOrElse(""), t(r.strategyAt).getOrElse("")))
     def setStrategy(name: Option[String], by: String): Unit =
-      always(_.modify(_.strategy).setTo(name).modify(_.strategyBy).setTo(Some(by)).modify(_.strategyAt).setTo(Some(now)))
+      always(
+        _.modify(_.strategy).setTo(name).modify(_.strategyBy).setTo(Some(by)).modify(_.strategyAt).setTo(Some(now))
+      )
     def lastDigest(): Option[String] = t(current().lastDigestAt)
     def digested(now: Instant): Unit = always(_.modify(_.lastDigestAt).setTo(Some(now)))
     def drain(): Option[(String, String, Option[String])] =

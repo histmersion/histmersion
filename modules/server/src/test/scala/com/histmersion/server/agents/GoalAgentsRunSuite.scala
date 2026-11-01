@@ -264,7 +264,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     val second = start(a, RunRequest("plan-goal", Goal))
     assertEquals(second.status, "waiting")
     assertEquals(a.control(second.id, "cancel", None, None).map(_.status), Right("cancelled"))
-    val closed = AgentRepo.forStep(ds, second.id, 4).get
+    val closed = TestRuns.approvals(ds).forStep(second.id, 4).get
     assertEquals(closed.state, "rejected")
     assert(a.control(second.id, "resume", None, None).isLeft)
 

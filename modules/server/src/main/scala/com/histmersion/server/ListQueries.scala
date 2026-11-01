@@ -18,7 +18,7 @@ object ListQueries:
   private def bad(m: String): ApiError = ApiError(m)
 
   /** No `state` = the open ones (what the list always showed); `all` = every state. */
-  def approvals(f: ApprovalFilter): Either[ApiError, AgentRepo.ApprovalQuery] =
+  def approvals(f: ApprovalFilter): Either[ApiError, com.histmersion.domain.automation.approvals.ApprovalQuery] =
     val n = f.normalized
     for
       state <- n.state match
@@ -31,7 +31,7 @@ object ListQueries:
             .toRight(bad(s"unknown state '$s' (one of: ${(ApprovalState.values.map(_.wire) :+ "all").mkString(", ")})"))
       kinds <- ListFilters.known("kind", n.kind, ApprovalKind.values.map(_.wire).toSeq).left.map(bad)
       by <- ListFilters.known("decidedBy", n.decidedBy, DecidedBy.values.map(_.wire).toSeq).left.map(bad)
-    yield AgentRepo.ApprovalQuery(
+    yield com.histmersion.domain.automation.approvals.ApprovalQuery(
       state,
       kinds.flatMap(ApprovalKind.parse),
       n.subject,

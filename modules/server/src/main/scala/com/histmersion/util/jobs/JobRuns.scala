@@ -125,10 +125,15 @@ object JobRuns:
     /** A run as it stands. */
     def get(id: String): Option[JobRunState] = state.get.get(id)
 
+    /** Every run, in the order they were made. */
+    def all: List[JobRunState] = state.get.values.toList.sortBy(_.created)
+
     def create(run: RunRow): String =
       val id = java.util.UUID.randomUUID().toString
       val n = stamp.incrementAndGet()
-      val _ = state.updateAndGet(_.updated(id, JobRunState(id, run, None, None, None, Nil, None, n, n, now())))
+      val _ = state.updateAndGet(
+        _.updated(id, { val at = now(); JobRunState(id, run, None, None, None, Nil, None, n, n, at, at) })
+      )
       id
     def createIn(run: RunRow)(using DbCon): String = create(run)
     def pipelineVersion(id: String): Option[Int] = get(id).map(_.row.pipelineVersion)

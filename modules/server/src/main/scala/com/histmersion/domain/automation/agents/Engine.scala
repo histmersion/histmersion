@@ -396,7 +396,8 @@ final class Engine(
               val waiting =
                 transition(id, RunState.Running, RunState.WaitingApproval, progress = Some(why.take(500)))
               // decided in the instant between opening it and this transition: go straight back to the queue
-              if waiting.isDefined && AgentRepo.approval(ds, approval).exists(_.state != ApprovalState.Open.wire) then
+              if waiting.isDefined && agents.approvalStore.approval(approval).exists(_.state != ApprovalState.Open.wire)
+              then
                 val _ = wake(id)
               waiting
           notify(run, settled)
@@ -543,7 +544,7 @@ final class Engine(
           transition(id, s, RunState.Cancelled, error = Some("cancelled"))
             .toRight(conflict(s"run $id moved on; look again"))
             .flatMap { _ =>
-              val _ = AgentRepo.closeForRun(ds, id, "rejected: the run was cancelled")
+              val _ = agents.approvalStore.closeForRun(id, "rejected: the run was cancelled")
               get(id)
             }
         case _ => Left(conflict(s"run $id is ${r.status}; it has already finished"))

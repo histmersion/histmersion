@@ -1,7 +1,7 @@
 package com.histmersion.domain.automation.goals
 
 import com.histmersion.api.GoalPut
-import com.histmersion.domain.automation.{EngineStoreSuite, EngineStores}
+import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
 import com.histmersion.values.{GoalLinkKind, ScheduleKind}
 
 import java.time.Instant
@@ -13,54 +13,61 @@ abstract class GoalServiceContract extends EngineStoreSuite:
   private def g(s: EngineStores) = s.goals
   private def bare(s: EngineStores, slug: String) = g(s).get(slug).map(_.copy(updatedAt = None))
 
-  stest("a goal is put, replaced and read back; its sub-goals by slug; a period ending before it starts is refused") { s =>
-    assert(g(s).put("zz-b", GoalPut("B", periodStart = Some(-1200))).isRight)
-    assert(g(s).put("zz-a", GoalPut("A", "active", Some("n"), List("t"), List("r"), Some(-3000), Some(-2000))).isRight)
-    assert(g(s).put("zz-a2", GoalPut("A2", parentSlug = Some("zz-a"))).isRight)
-    assert(g(s).put("zz-a1", GoalPut("A1", parentSlug = Some("zz-a"))).isRight)
-    assertEquals(
-      bare(s, "zz-a").map(x => (x.title, x.status, x.notes, x.tags, x.regions, x.periodStart, x.periodEnd)),
-      Some(("A", "active", Some("n"), List("t"), List("r"), Some(-3000L), Some(-2000L)))
-    )
-    assertEquals(bare(s, "zz-b").map(x => (x.status, x.periodStart, x.periodEnd)), Some(("planned", Some(-1200L), None)))
-    assert(g(s).get("zz-a").flatMap(_.updatedAt).isDefined)
-    assertEquals(g(s).all().map(_.slug), List("zz-a", "zz-a1", "zz-a2", "zz-b"))
-    assertEquals(g(s).children("zz-a").map(_.slug), List("zz-a1", "zz-a2"))
-    assert(g(s).put("zz-b", GoalPut("B again")).isRight)
-    assertEquals(bare(s, "zz-b").map(x => (x.title, x.periodStart)), Some(("B again", None)))
-    val bad = g(s).put("zz-c", GoalPut("C", periodStart = Some(100), periodEnd = Some(-100)))
-    assert(bad.left.exists(_.message.contains("goal 'zz-c'")), bad)
-    assertEquals(g(s).get("zz-c"), None)
+  stest("a goal is put, replaced and read back; its sub-goals by slug; a period ending before it starts is refused") {
+    s =>
+      assert(g(s).put("zz-b", GoalPut("B", periodStart = Some(-1200))).isRight)
+      assert(
+        g(s).put("zz-a", GoalPut("A", "active", Some("n"), List("t"), List("r"), Some(-3000), Some(-2000))).isRight
+      )
+      assert(g(s).put("zz-a2", GoalPut("A2", parentSlug = Some("zz-a"))).isRight)
+      assert(g(s).put("zz-a1", GoalPut("A1", parentSlug = Some("zz-a"))).isRight)
+      assertEquals(
+        bare(s, "zz-a").map(x => (x.title, x.status, x.notes, x.tags, x.regions, x.periodStart, x.periodEnd)),
+        Some(("A", "active", Some("n"), List("t"), List("r"), Some(-3000L), Some(-2000L)))
+      )
+      assertEquals(
+        bare(s, "zz-b").map(x => (x.status, x.periodStart, x.periodEnd)),
+        Some(("planned", Some(-1200L), None))
+      )
+      assert(g(s).get("zz-a").flatMap(_.updatedAt).isDefined)
+      assertEquals(g(s).all().map(_.slug), List("zz-a", "zz-a1", "zz-a2", "zz-b"))
+      assertEquals(g(s).children("zz-a").map(_.slug), List("zz-a1", "zz-a2"))
+      assert(g(s).put("zz-b", GoalPut("B again")).isRight)
+      assertEquals(bare(s, "zz-b").map(x => (x.title, x.periodStart)), Some(("B again", None)))
+      val bad = g(s).put("zz-c", GoalPut("C", periodStart = Some(100), periodEnd = Some(-100)))
+      assert(bad.left.exists(_.message.contains("goal 'zz-c'")), bad)
+      assertEquals(g(s).get("zz-c"), None)
   }
 
-  stest("links: only to a goal that exists, sources then articles then queries, a note kept unless a new one is given") {
-    s =>
-      assert(g(s).put("zz-g", GoalPut("G")).isRight)
-      s.source("zz2020_src", "A source")
-      assert(!g(s).link("zz-none", GoalLinkKind.Source, "zz2020_src", None), "no such goal")
-      assert(g(s).link("zz-g", GoalLinkKind.Query, "tin trade", None))
-      assert(g(s).link("zz-g", GoalLinkKind.Article, "zz-art", Some("why")))
-      assert(g(s).link("zz-g", GoalLinkKind.Source, "zz2020_src", Some("first")))
-      assert(g(s).link("zz-g", GoalLinkKind.Source, "zz2020_src", None))
-      val ls = g(s).links("zz-g")
-      assertEquals(
-        ls.map(l => (l.kind, l.ref, l.note, l.title)),
-        List(
-          (GoalLinkKind.Source, "zz2020_src", Some("first"), Some("A source")),
-          (GoalLinkKind.Article, "zz-art", Some("why"), None),
-          (GoalLinkKind.Query, "tin trade", None, None)
-        )
+  stest(
+    "links: only to a goal that exists, sources then articles then queries, a note kept unless a new one is given"
+  ) { s =>
+    assert(g(s).put("zz-g", GoalPut("G")).isRight)
+    s.source("zz2020_src", "A source")
+    assert(!g(s).link("zz-none", GoalLinkKind.Source, "zz2020_src", None), "no such goal")
+    assert(g(s).link("zz-g", GoalLinkKind.Query, "tin trade", None))
+    assert(g(s).link("zz-g", GoalLinkKind.Article, "zz-art", Some("why")))
+    assert(g(s).link("zz-g", GoalLinkKind.Source, "zz2020_src", Some("first")))
+    assert(g(s).link("zz-g", GoalLinkKind.Source, "zz2020_src", None))
+    val ls = g(s).links("zz-g")
+    assertEquals(
+      ls.map(l => (l.kind, l.ref, l.note, l.title)),
+      List(
+        (GoalLinkKind.Source, "zz2020_src", Some("first"), Some("A source")),
+        (GoalLinkKind.Article, "zz-art", Some("why"), None),
+        (GoalLinkKind.Query, "tin trade", None, None)
       )
-      assert(ls.forall(_.createdAt.matches("\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\dZ")), ls)
-      assert(g(s).link("zz-g", GoalLinkKind.Source, "zz2020_src", Some("second")))
-      assertEquals(g(s).links("zz-g").head.note, Some("second"))
-      assertEquals(g(s).linkCounts(), Map(("zz-g", "source") -> 1, ("zz-g", "query") -> 1))
-      s.article("zz-art", "An article")
-      assertEquals(g(s).linkCounts().get(("zz-g", "article")), Some(1))
-      assertEquals(g(s).links("zz-g")(1).title, Some("An article"))
-      assert(g(s).unlink("zz-g", GoalLinkKind.Query, "tin trade"))
-      assert(!g(s).unlink("zz-g", GoalLinkKind.Query, "tin trade"))
-      assertEquals(g(s).links("zz-g").map(_.kind), List(GoalLinkKind.Source, GoalLinkKind.Article))
+    )
+    assert(ls.forall(_.createdAt.matches("\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\dZ")), ls)
+    assert(g(s).link("zz-g", GoalLinkKind.Source, "zz2020_src", Some("second")))
+    assertEquals(g(s).links("zz-g").head.note, Some("second"))
+    assertEquals(g(s).linkCounts(), Map(("zz-g", "source") -> 1, ("zz-g", "query") -> 1))
+    s.article("zz-art", "An article")
+    assertEquals(g(s).linkCounts().get(("zz-g", "article")), Some(1))
+    assertEquals(g(s).links("zz-g")(1).title, Some("An article"))
+    assert(g(s).unlink("zz-g", GoalLinkKind.Query, "tin trade"))
+    assert(!g(s).unlink("zz-g", GoalLinkKind.Query, "tin trade"))
+    assertEquals(g(s).links("zz-g").map(_.kind), List(GoalLinkKind.Source, GoalLinkKind.Article))
   }
 
   stest("an approved plan and a run cap; the planned goals") { s =>
@@ -71,7 +78,10 @@ abstract class GoalServiceContract extends EngineStoreSuite:
     g(s).setPlan("zz-p", """{"goal":"zz-p"}""")
     g(s).setBudget("zz-p", Some(BigDecimal("2.50")))
     val Some((plan, usd)) = g(s).planAndBudget("zz-p"): @unchecked
-    assertEquals(plan.map(io.circe.parser.parse(_).toOption), Some(io.circe.parser.parse("""{"goal":"zz-p"}""").toOption))
+    assertEquals(
+      plan.map(io.circe.parser.parse(_).toOption),
+      Some(io.circe.parser.parse("""{"goal":"zz-p"}""").toOption)
+    )
     assertEquals(usd.map(_.toDouble), Some(2.5))
     assertEquals(g(s).planned(), Set("zz-p"))
     g(s).setBudget("zz-p", None)

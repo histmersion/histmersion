@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.automation.approvals.ApprovalQuery
+
 import com.histmersion.util.jobs.JobRepo
 
 import com.histmersion.api.*
@@ -91,25 +93,28 @@ class ListFilterRepoSuite extends com.histmersion.db.DbSuite:
       result = Some(s"${DecidedBy.AutoResult}: added")
     )
     val rej = approval("edge", "rejected", None, citekey = Some(s"${tag}_src2"), note = Some("not the critic"))
-    def ids(q: AgentRepo.ApprovalQuery) = AgentRepo.approvalPage(ds, q, 50, None, None).toOption.get._1.map(_.id).toSet
-    val mine = AgentRepo.ApprovalQuery(subject = Some(tag))
+    def ids(q: ApprovalQuery) =
+      connect(ds)(AgentRepo.approvalPage(q, 50, None, None)).toOption.get._1.map(_.id).toSet
+    val mine = ApprovalQuery(subject = Some(tag))
     assertEquals(ids(mine), Set(gp1, gp2, pub, edg, rej))
     assertEquals(ids(mine.copy(state = Some(ApprovalState.Open))), Set(gp1, pub))
     assertEquals(ids(mine.copy(kinds = List(ApprovalKind.Edge, ApprovalKind.GoalPlan))), Set(gp1, gp2, edg, rej))
     // goal: its own plan, and what a run for it proposed
-    assertEquals(ids(AgentRepo.ApprovalQuery(goal = Some(g))), Set(gp1, pub))
+    assertEquals(ids(ApprovalQuery(goal = Some(g))), Set(gp1, pub))
     // the decider
     assertEquals(ids(mine.copy(decidedBy = List(DecidedBy.Autopilot))), Set(gp2))
     assertEquals(ids(mine.copy(decidedBy = List(DecidedBy.Auto))), Set(edg))
     assertEquals(ids(mine.copy(decidedBy = List(DecidedBy.Person))), Set(rej))
     // a text filter takes `%` and `_` literally
-    assertEquals(ids(AgentRepo.ApprovalQuery(subject = Some(s"$tag%"))), Set.empty[Long])
+    assertEquals(ids(ApprovalQuery(subject = Some(s"$tag%"))), Set.empty[Long])
     // the counts: per state over the kind filter; per kind over the state filter, not the kind filter
     val (states, facets) =
-      AgentRepo.approvalFacets(ds, mine.copy(state = Some(ApprovalState.Open), kinds = List(ApprovalKind.GoalPlan)))
+      connect(ds)(
+        AgentRepo.approvalFacets(mine.copy(state = Some(ApprovalState.Open), kinds = List(ApprovalKind.GoalPlan)))
+      )
     assertEquals(states.toMap, Map("open" -> 1, "approved" -> 1))
     assertEquals(facets.toMap.apply("kind").toMap, Map("goal-plan" -> 1, "article-publish" -> 1))
-    val (_, every) = AgentRepo.approvalFacets(ds, mine)
+    val (_, every) = connect(ds)(AgentRepo.approvalFacets(mine))
     assertEquals(every.toMap.apply("kind"), List("edge" -> 2, "goal-plan" -> 2, "article-publish" -> 1))
     assertEquals(every.toMap.apply("decidedBy").toMap, Map("autopilot" -> 1, "auto" -> 1, "person" -> 1))
 

@@ -171,7 +171,7 @@ final class ProposeArticlesPipeline(h: Handlers, ds: DataSource, cfg: => AgentsC
         s"${ApprovalKind.ArticlePlan.wire} approval for goal $goal: ${Plural.count(plan.articles.size, "article")}",
         plan.asJson
       )(
-        Right(AgentRepo.openSubject(ds, Some(ctx.run.id), ApprovalKind.ArticlePlan, goal, plan.asJson.noSpaces))
+        Right(ctx.approvalStore.openSubject(Some(ctx.run.id), ApprovalKind.ArticlePlan, goal, plan.asJson.noSpaces))
           .map(a => Recorded(Some(a.id), s"approval ${a.id} waits for a person"))
       )(Right(Recorded(None, s"no approval opened (${AgentsMarkdown.DryRunNote})")))
 

@@ -12,6 +12,10 @@ import javax.sql.DataSource
 object TestRuns:
   private def runs(ds: DataSource): JobRuns = JobRuns(Transactor(ds))
 
+  /** The approvals over `ds`, as the engine records them. */
+  def approvals(ds: DataSource): com.histmersion.domain.automation.agents.ApprovalService =
+    com.histmersion.domain.automation.agents.ApprovalService(Transactor(ds), java.time.Clock.systemUTC())
+
   /** The clock the time-of-day suites run on: noon UTC of the day it is made, moving with the wall clock — after the
     * approval digest's hour, and hours away from a watcher's weekly cron at 22:30 and from midnight, whenever they run.
     */

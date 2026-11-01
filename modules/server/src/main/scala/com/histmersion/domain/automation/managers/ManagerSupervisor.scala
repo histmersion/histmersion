@@ -334,7 +334,7 @@ final class ManagerSupervisor(
     * already (approved automatically, say).
     */
   def approvalFacts(run: String, kind: ApprovalKind, none: String): StepFacts =
-    AgentRepo.approvalsOf(ds, run, Some(kind)).lastOption match
+    agents.approvalStore.approvalsOf(run, Some(kind)).lastOption match
       case None                                          => StepFacts.Finished(none)
       case Some(a) if a.state == ApprovalState.Open.wire =>
         StepFacts.Waiting(a.id, s"approval #${a.id} waits for a person")
@@ -424,7 +424,7 @@ final class ManagerSupervisor(
       aid: Long,
       out: collection.mutable.Builder[String, List[String]]
   ): Unit =
-    AgentRepo.approval(ds, aid) match
+    agents.approvalStore.approval(aid) match
       case None =>
         if ManagerRepo.settle(ds, i.id, ItemStatus.Stopped, s"approval #$aid is gone", List(ItemStatus.Held)) then
           ManagerRepo.event(ds, m.id, Some(i.id), None, Feed.Stopped, s"${i.target}: approval #$aid is gone")
@@ -801,7 +801,8 @@ final class ManagerSupervisor(
       .filter(s => s.name == step && s.status == StepStatus.Done.wire)
       .lastOption
       .flatMap(_.output)
-  def approvalsOf(run: String, kind: ApprovalKind): List[ApprovalInfo] = AgentRepo.approvalsOf(ds, run, Some(kind))
+  def approvalsOf(run: String, kind: ApprovalKind): List[ApprovalInfo] =
+    agents.approvalStore.approvalsOf(run, Some(kind))
   def unsettledOn(target: String): Seq[RunInfo] = AgentRepo.unsettledOn(ds, target)
   def runsFor(p: Pipeline, target: String): Seq[RunInfo] = AgentRepo.forTarget(ds, p, target)
   def slugExists(slug: String): Boolean = AgentRepo.slugExists(ds, slug)

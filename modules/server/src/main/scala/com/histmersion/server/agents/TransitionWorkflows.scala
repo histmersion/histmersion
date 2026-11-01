@@ -34,7 +34,7 @@ object TransitionWorkflows:
       AcquisitionSweepPipeline(h, ds, cfg, upstream, work.oaBacklog),
       InferFilterPipeline(h, ds, cfg),
       ProposeArticlesPipeline(h, ds, cfg),
-      HintEffectPipeline(deps.workLists, ds, cfg)
+      HintEffectPipeline(deps.workLists, a.approvalStore, ds, cfg)
     )
     Contributions(
       pipelines.map(PipelineWorkflow.of(_, a.definitions)),

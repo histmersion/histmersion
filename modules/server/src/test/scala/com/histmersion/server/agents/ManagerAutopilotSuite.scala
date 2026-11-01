@@ -463,71 +463,82 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
       )
     )
     val p1 =
-      AgentRepo.openSubject(ds, None, ApprovalKind.ArticlePlan, Goal, plan("zzagent_p1", "zzagent_p2").asJson.noSpaces)
-    val p2 = AgentRepo.openSubject(ds, None, ApprovalKind.ArticlePlan, Goal, plan("zzagent_p3").asJson.noSpaces)
+      TestRuns
+        .approvals(ds)
+        .openSubject(None, ApprovalKind.ArticlePlan, Goal, plan("zzagent_p1", "zzagent_p2").asJson.noSpaces)
+    val p2 =
+      TestRuns.approvals(ds).openSubject(None, ApprovalKind.ArticlePlan, Goal, plan("zzagent_p3").asJson.noSpaces)
     val now = Instant.now(suiteClock)
     a.autoApprovals.sweep(now)
-    assertEquals(AgentRepo.approval(ds, p1.id).map(_.state), Some("approved"))
+    assertEquals(TestRuns.approvals(ds).approval(p1.id).map(_.state), Some("approved"))
     assertEquals(
-      AgentRepo.approval(ds, p2.id).map(_.state),
+      TestRuns.approvals(ds).approval(p2.id).map(_.state),
       Some("open"),
       "2 of 2 articles approved today: the third waits"
     )
-    a.autoApprovals.judge(AgentRepo.approval(ds, p2.id).get, None, None, now) match
+    a.autoApprovals.judge(TestRuns.approvals(ds).approval(p2.id).get, None, None, now) match
       case AutopilotPolicy.Verdict.Leave(w) => assert(w.contains("daily cap"), w)
       case v                                => fail(v.toString)
     // a thin filter is rejected with why
-    val p3 = AgentRepo.openSubject(
-      ds,
-      None,
-      ApprovalKind.ArticlePlan,
-      "zzagent-other",
-      ArticlePlans
-        .ArticlePlan(
-          "zzagent-other",
-          "r",
-          List(
-            ArticlePlans
-              .ProposedArticle("zzagent_p4", "Zz", "concept", ArticleFilter(query = Some("zzagent nothing at all")))
+    val p3 = TestRuns
+      .approvals(ds)
+      .openSubject(
+        None,
+        ApprovalKind.ArticlePlan,
+        "zzagent-other",
+        ArticlePlans
+          .ArticlePlan(
+            "zzagent-other",
+            "r",
+            List(
+              ArticlePlans
+                .ProposedArticle("zzagent_p4", "Zz", "concept", ArticleFilter(query = Some("zzagent nothing at all")))
+            )
           )
-        )
-        .asJson
-        .noSpaces
-    )
+          .asJson
+          .noSpaces
+      )
     a.autoApprovals.sweep(now)
-    val d3 = AgentRepo.approval(ds, p3.id).get
+    val d3 = TestRuns.approvals(ds).approval(p3.id).get
     assertEquals(d3.state, "rejected")
     assert(d3.note.exists(_.contains("returns 0 source(s), fewer than 2")), d3.note)
     // the manager whose run opened it says autoApprove = false: never decided by code
     val m = ManagerInfo("seed:x", "seed", config = ManagerConfig(autoApprove = Some(false)))
-    assert(!a.autoApprovals.checked(AgentRepo.approval(ds, p2.id).get, Some(m)))
+    assert(!a.autoApprovals.checked(TestRuns.approvals(ds).approval(p2.id).get, Some(m)))
 
   test("older approvals a person decides never crowd the code-decided ones out of a tick"):
     val personPlans =
       autoCfg.copy(agents = autoCfg.agents.copy(approvals = autoCfg.agents.approvals.copy(goalPlan = "manual")))
     val (a, h) = handlers(ScriptedClient(Model), personPlans); seed(h)
     import io.circe.syntax.*
-    val waiting = (1 to 60).map(i => AgentRepo.openSubject(ds, None, ApprovalKind.GoalPlan, s"zzagent-crowd-$i", "{}"))
-    val plan = AgentRepo.openSubject(
-      ds,
-      None,
-      ApprovalKind.ArticlePlan,
-      Goal,
-      ArticlePlans
-        .ArticlePlan(
-          Goal,
-          "r",
-          List(
-            ArticlePlans
-              .ProposedArticle("zzagent_crowded", "Zz crowded", "concept", ArticleFilter(topics = List("zzagent_tin")))
+    val waiting =
+      (1 to 60).map(i => TestRuns.approvals(ds).openSubject(None, ApprovalKind.GoalPlan, s"zzagent-crowd-$i", "{}"))
+    val plan = TestRuns
+      .approvals(ds)
+      .openSubject(
+        None,
+        ApprovalKind.ArticlePlan,
+        Goal,
+        ArticlePlans
+          .ArticlePlan(
+            Goal,
+            "r",
+            List(
+              ArticlePlans
+                .ProposedArticle(
+                  "zzagent_crowded",
+                  "Zz crowded",
+                  "concept",
+                  ArticleFilter(topics = List("zzagent_tin"))
+                )
+            )
           )
-        )
-        .asJson
-        .noSpaces
-    )
+          .asJson
+          .noSpaces
+      )
     a.autoApprovals.sweep(Instant.now(suiteClock))
-    assertEquals(AgentRepo.approval(ds, plan.id).map(_.state), Some("approved"))
-    assert(waiting.forall(w => AgentRepo.approval(ds, w.id).exists(_.state == "open")))
+    assertEquals(TestRuns.approvals(ds).approval(plan.id).map(_.state), Some("approved"))
+    assert(waiting.forall(w => TestRuns.approvals(ds).approval(w.id).exists(_.state == "open")))
 
   test("shared ingest cap: every watcher's ingests today count; at the cap a sweep ingests nothing"):
     val (a, h) = handlers(ScriptedClient(Model)); seed(h)

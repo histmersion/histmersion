@@ -41,9 +41,12 @@ private[histmersion] object ListSql:
     * (`count(DISTINCT id)` where a row can appear twice).
     */
   def facet(ds: DataSource, from: Sql, expr: String, count: String = "count(*)"): List[(String, Int)] =
-    connect(ds):
-      (Sql.raw(s"SELECT $expr, $count::int ") ++ from ++
-        Sql.of(s" AND $expr IS NOT NULL GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT ?", Param.I(ListFilters.FacetMax))).frag
-        .query[(String, Int)]
-        .run()
-        .toList
+    connect(ds)(facetOn(from, expr, count))
+
+  /** [[facet]] on the caller's connection. */
+  def facetOn(from: Sql, expr: String, count: String = "count(*)")(using DbCon): List[(String, Int)] =
+    (Sql.raw(s"SELECT $expr, $count::int ") ++ from ++
+      Sql.of(s" AND $expr IS NOT NULL GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT ?", Param.I(ListFilters.FacetMax))).frag
+      .query[(String, Int)]
+      .run()
+      .toList

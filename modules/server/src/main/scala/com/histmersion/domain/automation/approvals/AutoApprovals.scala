@@ -54,7 +54,7 @@ final class AutoApprovals(
     // the window is taken among the approvals code decides: those a person decides never crowd it out
     // while goal plans wait (too many unfinished goals), an open one is left alone: not decided, no event
     val kinds = if agents.focus.goalPlansWait().isDefined then Kinds.filterNot(_ == ApprovalKind.GoalPlan) else Kinds
-    val open = AgentRepo.openOfKinds(ds, kinds, Int.MaxValue).flatMap { a =>
+    val open = agents.approvalStore.openOfKinds(kinds, Int.MaxValue).flatMap { a =>
       val run = runOf(a)
       val mgr = run.flatMap(_.managerId).flatMap(ManagerRepo.get(ds, _))
       Option.when(checked(a, mgr))(Candidate(a, run, mgr))
@@ -136,7 +136,7 @@ final class AutoApprovals(
     val c = cfg.approvals.auto
     AutopilotPolicy.scaledCap(
       c.goalPlansPerDay,
-      AgentRepo.openCount(ds, ApprovalKind.GoalPlan),
+      agents.approvalStore.openCount(ApprovalKind.GoalPlan),
       c.goalPlansBacklogShare,
       c.goalPlansCeiling
     )
@@ -146,7 +146,7 @@ final class AutoApprovals(
     val c = cfg.approvals.auto
     AutopilotPolicy.scaledCap(
       c.publishPerDay,
-      AgentRepo.openCount(ds, ApprovalKind.ArticlePublish),
+      agents.approvalStore.openCount(ApprovalKind.ArticlePublish),
       c.publishBacklogShare,
       c.publishCeiling
     )
@@ -173,7 +173,7 @@ final class AutoApprovals(
             AutopilotPolicy.goalPlan(
               GoalPlanFacts(goal, p.subGoals.size, p.queries.size, p.works.size, depth),
               caps.maxGoalDepth,
-              AgentRepo.autoApprovedSince(ds, ApprovalKind.GoalPlan, day).size,
+              agents.approvalStore.autoApprovedSince(ApprovalKind.GoalPlan, day).size,
               goalPlanCap
             ) match
               // decided by code whatever the focus: only the sub-goals it would open are bounded
@@ -191,4 +191,4 @@ final class AutoApprovals(
   def config: AgentsConfig = cfg
   def slugExists(slug: String): Boolean = AgentRepo.slugExists(ds, slug)
   def autoApprovedSince(kind: ApprovalKind, since: Instant): List[ApprovalInfo] =
-    AgentRepo.autoApprovedSince(ds, kind, since)
+    agents.approvalStore.autoApprovedSince(kind, since)

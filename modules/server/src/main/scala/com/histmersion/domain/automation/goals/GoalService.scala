@@ -113,10 +113,10 @@ object GoalService:
       s"${Updated.format(at)}$fraction+00"
     private def shown(r: GoalRecord): Goal = r.goal.modify(_.updatedAt).setTo(Some(updatedText(r.updatedAt)))
     private def kindOrder(k: GoalLinkKind): Int = k match
-      case GoalLinkKind.Source  => 0
-      case GoalLinkKind.Article => 1
+      case GoalLinkKind.Source      => 0
+      case GoalLinkKind.Article     => 1
       case GoalLinkKind.SearchQuery => 2
-      case _                    => 3
+      case _                        => 3
 
     def get(slug: String): Option[Goal] = goals.get(slug).map(shown)
     def all(): List[Goal] = goals.values.toList.sortBy(_.goal.slug).map(shown)
@@ -173,7 +173,8 @@ object GoalService:
         true
       }
     def unlink(goal: String, kind: GoalLinkKind, ref: String): Boolean =
-      val before = state.getAndUpdate(_.modify(_.links).using(_.filterNot(l => l.goal == goal && l.kind == kind && l.ref == ref)))
+      val before =
+        state.getAndUpdate(_.modify(_.links).using(_.filterNot(l => l.goal == goal && l.kind == kind && l.ref == ref)))
       before.links.exists(l => l.goal == goal && l.kind == kind && l.ref == ref)
     def linkCounts(): Map[(String, String), Int] =
       state.get.links
@@ -234,4 +235,9 @@ object GoalService:
         .exists(r => r.goal == goal && r.kind == kind)
     def scheduleGoals(): List[String] = state.get.schedules.map(_.goal).distinct.sorted.toList
     def takeSchedulesIn(goal: String)(using DbCon): List[GoalSchedule] =
-      state.getAndUpdate(_.modify(_.schedules).using(_.filterNot(_.goal == goal))).schedules.filter(_.goal == goal).toList.map(view)
+      state
+        .getAndUpdate(_.modify(_.schedules).using(_.filterNot(_.goal == goal)))
+        .schedules
+        .filter(_.goal == goal)
+        .toList
+        .map(view)

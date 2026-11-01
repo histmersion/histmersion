@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.automation.approvals.ApprovalQuery
+
 import com.histmersion.util.jobs.JobRepo
 
 import com.histmersion.api.*
@@ -117,16 +119,19 @@ class PagingRepoSuite extends com.histmersion.db.DbSuite:
       sql"""INSERT INTO approvals (kind, citekey, proposal, state, created_at)
             VALUES ('status-change', ${s"$tag-top"}, '{}'::jsonb, 'zz', '1971-01-02T00:00:00Z'::timestamptz)
             RETURNING id""".query[Long].run().head
-    val (all, more) = AgentRepo.approvalPage(ds, None, 3, before = Some(probe.toString)).toOption.get
+    val (all, more) = connect(ds)(AgentRepo.approvalPage(None, 3, before = Some(probe.toString))).toOption.get
     assertEquals(all.map(_.id), newest.take(3))
     assert(more)
-    val (rest, none) = AgentRepo.approvalPage(ds, None, 3, before = Some(all.last.id.toString)).toOption.get
+    val (rest, none) = connect(ds)(AgentRepo.approvalPage(None, 3, before = Some(all.last.id.toString))).toOption.get
     assertEquals((rest.map(_.id), none), (newest.drop(3), false))
-    val (open, _) = AgentRepo.approvalPage(ds, Some(ApprovalState.Open), 10, before = Some(probe.toString)).toOption.get
+    val (open, _) =
+      connect(ds)(AgentRepo.approvalPage(Some(ApprovalState.Open), 10, before = Some(probe.toString))).toOption.get
     assertEquals(open.map(_.id), newest.filterNot(_ == ids(1)))
     val (down, older) =
-      AgentRepo.approvalPage(ds, None, 10, before = Some(probe.toString), upTo = Some(newest(2).toString)).toOption.get
+      connect(ds)(
+        AgentRepo.approvalPage(None, 10, before = Some(probe.toString), upTo = Some(newest(2).toString))
+      ).toOption.get
     assertEquals((down.map(_.id), older), (newest.take(3), true))
-    assert(AgentRepo.approvalCounts(ds).exists((s, n) => s == "zz" && n >= 1))
-    assert(AgentRepo.approvalPage(ds, None, 3, before = Some("not-a-number")).isLeft)
-    assert(AgentRepo.approvalPage(ds, None, 3, before = Some("-1")).isLeft)
+    assert(connect(ds)(AgentRepo.approvalCounts()).exists((s, n) => s == "zz" && n >= 1))
+    assert(connect(ds)(AgentRepo.approvalPage(None, 3, before = Some("not-a-number"))).isLeft)
+    assert(connect(ds)(AgentRepo.approvalPage(None, 3, before = Some("-1"))).isLeft)

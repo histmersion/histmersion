@@ -6,6 +6,7 @@ import com.histmersion.api.{ArticlePlans, GoalPlans, ListFilters}
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.ApprovalDigest
+import com.histmersion.domain.automation.approvals.ApprovalQuery
 import javax.sql.DataSource
 import com.histmersion.values.{EdgeKind, SourceStatus}
 
@@ -480,9 +481,9 @@ object AgentRepo:
       transact(ds):
         sql"""DELETE FROM agent_messages WHERE created_at < now() - make_interval(days => $days)""".update.run()
 
-  // ── approvals ──────────────────────────────────────────────────────────────────────────────────
+  // ── approvals: what runs proposed for a person to decide (`ApprovalService` opens the connection) ────
 
-  final private case class ApprovalRow(
+  final case class ApprovalRow(
       id: Long,
       jobId: Option[String],
       kind: String,
@@ -509,7 +510,7 @@ object AgentRepo:
   )
 
   /** The payload decides how a row reads: a source proposal, a goal's plan, or an article draft. */
-  private def toApproval(r: ApprovalRow): ApprovalInfo =
+  def info(r: ApprovalRow): ApprovalInfo =
     val base = ApprovalInfo(
       r.id,
       r.jobId,
@@ -551,22 +552,8 @@ object AgentRepo:
         val p = Jsonb.read[AgentProposals.Proposal](r.proposal)
         base.copy(evidence = p.map(_.evidence).getOrElse(""), quote = p.flatMap(_.quote))
 
-  /** Record a proposal. `state` is `open` for a person to decide, or `approved` with its `result` when it was applied
-    * at once (an `auto` mode). An identical OPEN proposal already there is not doubled: `None` then.
-    */
-  def propose(
-      ds: DataSource,
-      jobId: Option[String],
-      p: AgentProposals.Proposal,
-      current: Option[SourceStatus],
-      state: ApprovalState = ApprovalState.Open,
-      result: Option[String] = None
-  ): Option[ApprovalInfo] =
-    record(ds, jobId, p.kind, p.citekey, p.status, current, p.edgeKind, p.target, Jsonb.write(p), state, result)
-
   /** Record a proposal about a source from its parts and its payload (the JSON a decision reads back). */
   def record(
-      ds: DataSource,
       jobId: Option[String],
       kind: ApprovalKind,
       citekey: String,
@@ -576,87 +563,66 @@ object AgentRepo:
       target: Option[String],
       payload: String,
       state: ApprovalState,
-      result: Option[String]
-  ): Option[ApprovalInfo] =
-    val decided = Option.when(state != ApprovalState.Open)(java.time.Instant.now().toString)
-    connect(ds):
-      sql"""INSERT INTO approvals (job_id, kind, citekey, status, current_status, edge_kind, target, proposal, state,
-                                   result, decided_at)
-            VALUES ($jobId, ${kind.wire}, $citekey, ${status.map(_.wire)}, ${current.map(_.wire)},
-                    ${edgeKind.map(EdgeKind.wireOf)}, $target, $payload::jsonb, ${state.wire}, $result,
-                    $decided::timestamptz)
-            ON CONFLICT DO NOTHING RETURNING id""".query[Long].run().headOption
-    .flatMap(approval(ds, _))
+      result: Option[String],
+      now: java.time.Instant
+  )(using DbCon): Option[ApprovalInfo] =
+    val decided = Option.when(state != ApprovalState.Open)(now.toString)
+    sql"""INSERT INTO approvals (job_id, kind, citekey, status, current_status, edge_kind, target, proposal, state,
+                                 result, decided_at)
+          VALUES ($jobId, ${kind.wire}, $citekey, ${status.map(_.wire)}, ${current.map(_.wire)},
+                  ${edgeKind.map(EdgeKind.wireOf)}, $target, $payload::jsonb, ${state.wire}, $result,
+                  $decided::timestamptz)
+          ON CONFLICT DO NOTHING RETURNING id"""
+      .query[Long]
+      .run()
+      .headOption
+      .flatMap(approval(_))
 
   /** The payload an approval was recorded with, as stored. */
-  def payload(ds: DataSource, id: Long): Option[String] =
-    connect(ds)(sql"SELECT proposal::text FROM approvals WHERE id = $id".query[String].run().headOption)
+  def payload(id: Long)(using DbCon): Option[String] =
+    sql"SELECT proposal::text FROM approvals WHERE id = $id".query[String].run().headOption
 
   /** Was this change ever proposed (in any state)? A scheduled check does not ask a person twice about an edge they
     * already rejected.
     */
-  def proposedBefore(ds: DataSource, p: AgentProposals.Proposal): Boolean =
-    connect(ds):
-      sql"""SELECT 1 FROM approvals WHERE kind = ${p.kind.wire} AND citekey = ${p.citekey}
-            AND coalesce(status, '') = ${p.status.fold("")(_.wire)}
-            AND coalesce(edge_kind, '') = ${p.edgeKind.fold("")(EdgeKind.wireOf)}
-            AND coalesce(target, '') = ${p.target.getOrElse("")} LIMIT 1""".query[Int].run().nonEmpty
+  def proposedBefore(
+      kind: ApprovalKind,
+      citekey: String,
+      status: Option[SourceStatus],
+      edgeKind: Option[EdgeKind],
+      target: Option[String]
+  )(using DbCon): Boolean =
+    sql"""SELECT 1 FROM approvals WHERE kind = ${kind.wire} AND citekey = $citekey
+          AND coalesce(status, '') = ${status.fold("")(_.wire)}
+          AND coalesce(edge_kind, '') = ${edgeKind.fold("")(EdgeKind.wireOf)}
+          AND coalesce(target, '') = ${target.getOrElse("")} LIMIT 1""".query[Int].run().nonEmpty
 
-  def approval(ds: DataSource, id: Long): Option[ApprovalInfo] =
-    connect(ds)(
-      (approvalSelect ++ Sql.of(" WHERE id = ?", Param.L(id))).frag
-        .query[ApprovalRow]
-        .run()
-        .headOption
-        .map(toApproval)
-    )
+  def approval(id: Long)(using DbCon): Option[ApprovalInfo] =
 
-  /** The verified proposal behind an approval. */
-  def proposal(ds: DataSource, id: Long): Option[AgentProposals.Proposal] =
-    payload(ds, id).flatMap(Jsonb.read[AgentProposals.Proposal])
+    (approvalSelect ++ Sql.of(" WHERE id = ?", Param.L(id))).frag
+      .query[ApprovalRow]
+      .run()
+      .headOption
+      .map(info)
 
   /** Newest first; `state` narrows (none = every state). */
-  def approvals(ds: DataSource, state: Option[ApprovalState], limit: Int): List[ApprovalInfo] =
+  def approvals(state: Option[ApprovalState], limit: Int)(using DbCon): List[ApprovalInfo] =
     val where = state.fold(Sql.empty)(s => Sql.of(" WHERE state = ?", Param.S(s.wire)))
-    connect(ds):
-      (approvalSelect ++ where ++ Sql.of(
-        " ORDER BY created_at DESC, id DESC LIMIT ?",
-        Param.I(math.max(1, limit))
-      )).frag.query[ApprovalRow].run().toList.map(toApproval)
+    (approvalSelect ++ where ++ Sql.of(
+      " ORDER BY created_at DESC, id DESC LIMIT ?",
+      Param.I(math.max(1, limit))
+    )).frag.query[ApprovalRow].run().toList.map(info)
 
   /** One page of the newest-first approvals ([[com.histmersion.api.Paging]]), `state` as in [[approvals]]; `before` /
     * `upTo` are approval ids. Left: a cursor that is not one.
     */
   def approvalPage(
-      ds: DataSource,
       state: Option[ApprovalState],
       limit: Int,
       before: Option[String] = None,
       upTo: Option[String] = None
-  ): Either[String, (List[ApprovalInfo], Boolean)] =
-    approvalPage(ds, ApprovalQuery(state), limit, before, upTo)
-
-  /** What the approvals list is filtered by (core `ListFilters.ApprovalFilter`, validated): `state` None = every state;
-    * the lists match any of their values.
-    */
-  final case class ApprovalQuery(
-      state: Option[ApprovalState] = None,
-      kinds: List[ApprovalKind] = Nil,
-      subject: Option[String] = None,
-      goal: Option[String] = None,
-      decidedBy: List[ListFilters.DecidedBy] = Nil
-  )
-
-  /** Who decided an approval, in SQL — `ListFilters.DecidedBy.of`, the same rules. The two prefixes are the code's own
-    * constants (no quote, `%` or `_` in them — `ListFiltersSuite` holds that), so they are written in, not bound: the
-    * expression is used both to filter and to count.
-    */
-  val decidedByExpr: String =
-    import ListFilters.DecidedBy
-    s"""(CASE WHEN state = '${ApprovalState.Open.wire}' THEN NULL
-              WHEN note LIKE '${DecidedBy.AutopilotNote}%' THEN '${DecidedBy.Autopilot.wire}'
-              WHEN note IS NULL AND result LIKE '${DecidedBy.AutoResult}%' THEN '${DecidedBy.Auto.wire}'
-              ELSE '${DecidedBy.Person.wire}' END)"""
+  )(using DbCon): Either[String, (List[ApprovalInfo], Boolean)] =
+    approvalPage(ApprovalQuery(state), limit, before, upTo)
 
   private def approvalConds(q: ApprovalQuery): ListSql.Conds =
     val subject = q.subject.fold(Sql.empty) { t =>
@@ -685,22 +651,21 @@ object AgentRepo:
         "kind" -> ListSql.anyOf("kind", q.kinds.map(_.wire)),
         "subject" -> subject,
         "goal" -> goal,
-        "decidedBy" -> ListSql.anyOf(decidedByExpr, q.decidedBy.map(_.wire))
+        "decidedBy" -> ListSql.anyOf(ApprovalQuery.decidedByExpr, q.decidedBy.map(_.wire))
       )
     )
 
   /** One page of the approvals that match `q`, newest first ([[com.histmersion.api.Paging]]). */
   def approvalPage(
-      ds: DataSource,
       q: ApprovalQuery,
       limit: Int,
       before: Option[String],
       upTo: Option[String]
-  ): Either[String, (List[ApprovalInfo], Boolean)] =
+  )(using DbCon): Either[String, (List[ApprovalInfo], Boolean)] =
     def cursor(c: String): Either[String, Param] =
       c.trim.toLongOption
         .map(Param.L(_))
-        .filter(Keyset.exists(ds, "approvals", _))
+        .filter(Keyset.existsOn("approvals", _))
         .toRight(s"No approval '$c' to page from")
     for
       b <- before.fold(Right(None))(cursor(_).map(Some(_)))
@@ -708,143 +673,133 @@ object AgentRepo:
     yield
       val where = Sql.raw(" WHERE true") ++ approvalConds(q).all
       val (rows, more) = Keyset
-        .page[ApprovalRow](ds, approvalSelect, where, "", "approvals", math.max(1, limit), b, u, r => Param.L(r.id))
-      (rows.toList.map(toApproval), more)
+        .pageOn[ApprovalRow](approvalSelect, where, "", "approvals", math.max(1, limit), b, u, r => Param.L(r.id))
+      (rows.toList.map(info), more)
 
   /** The counts that go with a filtered page: per state (under every filter but the state) and the `kind` and
     * `decidedBy` facets (each under every filter but its own).
     */
-  def approvalFacets(ds: DataSource, q: ApprovalQuery): (List[(String, Int)], List[(String, List[(String, Int)])]) =
+  def approvalFacets(q: ApprovalQuery)(using DbCon): (List[(String, Int)], List[(String, List[(String, Int)])]) =
     val c = approvalConds(q)
     def from(except: String) = Sql.raw(" FROM approvals WHERE true") ++ c.except(except)
     (
-      Keyset.counts(ds, from("state"), "state"),
+      Keyset.countsOn(from("state"), "state"),
       List(
-        "kind" -> ListSql.facet(ds, from("kind"), "kind"),
-        "decidedBy" -> ListSql.facet(ds, from("decidedBy"), decidedByExpr)
+        "kind" -> ListSql.facetOn(from("kind"), "kind"),
+        "decidedBy" -> ListSql.facetOn(from("decidedBy"), ApprovalQuery.decidedByExpr)
       )
     )
 
   /** How many approvals are in each state. */
-  def approvalCounts(ds: DataSource): List[(String, Int)] = Keyset.counts(ds, Sql.raw(" FROM approvals"), "state")
+  def approvalCounts()(using DbCon): List[(String, Int)] = Keyset.countsOn(Sql.raw(" FROM approvals"), "state")
 
   /** The approval step `seq` of run `jobId` waits on, opened if it is not there yet (a resumed run finds the one it
     * opened before, never a second). `state` = approved with a `result` records one applied at once (an `auto` mode).
     */
   def openForStep(
-      ds: DataSource,
       jobId: String,
       seq: Int,
       kind: ApprovalKind,
       subject: String,
       payload: String,
-      state: ApprovalState = ApprovalState.Open,
-      result: Option[String] = None
-  ): ApprovalInfo =
-    val decided = Option.when(state != ApprovalState.Open)(java.time.Instant.now().toString)
-    connect(ds):
-      sql"""INSERT INTO approvals (job_id, seq, kind, subject, proposal, state, result, decided_at)
-            VALUES ($jobId, $seq, ${kind.wire}, $subject, $payload::jsonb, ${state.wire}, $result, $decided::timestamptz)
-            ON CONFLICT (job_id, seq) WHERE seq IS NOT NULL DO NOTHING""".update.run()
-    forStep(ds, jobId, seq).get
+      state: ApprovalState,
+      result: Option[String],
+      now: java.time.Instant
+  )(using DbCon): ApprovalInfo =
+    val decided = Option.when(state != ApprovalState.Open)(now.toString)
+    sql"""INSERT INTO approvals (job_id, seq, kind, subject, proposal, state, result, decided_at)
+          VALUES ($jobId, $seq, ${kind.wire}, $subject, $payload::jsonb, ${state.wire}, $result, $decided::timestamptz)
+          ON CONFLICT (job_id, seq) WHERE seq IS NOT NULL DO NOTHING""".update.run()
+    forStep(jobId, seq).get
 
   /** A proposal about a goal or an article (`subject`) that the run does NOT wait for (an inferred filter, a plan of
     * articles): recorded `open` for a person, or `approved` with its `result` when it was applied at once (an `auto`
     * mode).
     */
   def openSubject(
-      ds: DataSource,
       jobId: Option[String],
       kind: ApprovalKind,
       subject: String,
       payload: String,
-      state: ApprovalState = ApprovalState.Open,
-      result: Option[String] = None
-  ): ApprovalInfo =
-    val decided = Option.when(state != ApprovalState.Open)(java.time.Instant.now().toString)
-    val id = connect(ds):
+      state: ApprovalState,
+      result: Option[String],
+      now: java.time.Instant
+  )(using DbCon): ApprovalInfo =
+    val decided = Option.when(state != ApprovalState.Open)(now.toString)
+    val id =
       sql"""INSERT INTO approvals (job_id, kind, subject, proposal, state, result, decided_at)
             VALUES ($jobId, ${kind.wire}, $subject, $payload::jsonb, ${state.wire}, $result, $decided::timestamptz)
             RETURNING id""".query[Long].run().head
-    approval(ds, id).get
+    approval(id).get
 
   /** The approvals run `jobId` opened (of `kind`, when given), oldest first. */
-  def approvalsOf(ds: DataSource, jobId: String, kind: Option[ApprovalKind] = None): List[ApprovalInfo] =
-    connect(ds):
-      (approvalSelect ++ Sql.of(" WHERE job_id = ?", Param.S(jobId)) ++
-        kind.fold(Sql.empty)(k => Sql.of(" AND kind = ?", Param.S(k.wire))) ++ Sql
-          .of(" ORDER BY id")).frag.query[ApprovalRow].run().toList.map(toApproval)
+  def approvalsOf(jobId: String, kind: Option[ApprovalKind] = None)(using DbCon): List[ApprovalInfo] =
+    (approvalSelect ++ Sql.of(" WHERE job_id = ?", Param.S(jobId)) ++
+      kind.fold(Sql.empty)(k => Sql.of(" AND kind = ?", Param.S(k.wire))) ++ Sql
+        .of(" ORDER BY id")).frag.query[ApprovalRow].run().toList.map(info)
 
   /** The approvals of `kind` the autopilot APPROVED since `since` (their note starts with `autopilot: approved`) — what
     * its daily caps count.
     */
-  def autoApprovedSince(ds: DataSource, kind: ApprovalKind, since: java.time.Instant): List[ApprovalInfo] =
+  def autoApprovedSince(kind: ApprovalKind, since: java.time.Instant)(using DbCon): List[ApprovalInfo] =
     val t = since.toString
-    connect(ds):
-      (approvalSelect ++ Sql.of(
-        " WHERE kind = ? AND note LIKE 'autopilot: approved%' AND decided_at >= ?::timestamptz ORDER BY id",
-        Param.S(kind.wire),
-        Param.S(t)
-      )).frag.query[ApprovalRow].run().toList.map(toApproval)
+    (approvalSelect ++ Sql.of(
+      " WHERE kind = ? AND note LIKE 'autopilot: approved%' AND decided_at >= ?::timestamptz ORDER BY id",
+      Param.S(kind.wire),
+      Param.S(t)
+    )).frag.query[ApprovalRow].run().toList.map(info)
 
   /** The OPEN approvals of the given kinds, oldest first (what the supervisor's checks look at). */
-  def openOfKinds(ds: DataSource, kinds: List[ApprovalKind], limit: Int): List[ApprovalInfo] =
-    connect(ds):
-      (approvalSelect ++ Sql.of(
-        " WHERE state = 'open' AND kind = ANY(?::text[]) ORDER BY id LIMIT ?",
-        Param.A(kinds.map(_.wire)),
-        Param.I(math.max(1, limit))
-      )).frag.query[ApprovalRow].run().toList.map(toApproval)
+  def openOfKinds(kinds: List[ApprovalKind], limit: Int)(using DbCon): List[ApprovalInfo] =
+    (approvalSelect ++ Sql.of(
+      " WHERE state = 'open' AND kind = ANY(?::text[]) ORDER BY id LIMIT ?",
+      Param.A(kinds.map(_.wire)),
+      Param.I(math.max(1, limit))
+    )).frag.query[ApprovalRow].run().toList.map(info)
 
   /** Every OPEN approval, light (id, kind, subject, created), oldest first — what the digest groups. */
-  def openLight(ds: DataSource): List[ApprovalDigest.Open] =
-    connect(ds):
-      sql"""SELECT id, kind, subject, to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
-            FROM approvals WHERE state = 'open' ORDER BY id"""
-        .query[(Long, String, Option[String], String)]
-        .run()
-        .toList
-        .map((i, k, s, c) => ApprovalDigest.Open(i, k, s, c))
+  def openLight()(using DbCon): List[ApprovalDigest.Open] =
+    sql"""SELECT id, kind, subject, to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+          FROM approvals WHERE state = 'open' ORDER BY id"""
+      .query[(Long, String, Option[String], String)]
+      .run()
+      .toList
+      .map((i, k, s, c) => ApprovalDigest.Open(i, k, s, c))
 
   /** How many approvals of `kind` are open (the backlog a scaled daily cap reads). */
-  def openCount(ds: DataSource, kind: ApprovalKind): Int =
-    connect(ds)(
-      sql"SELECT count(*)::int FROM approvals WHERE state = 'open' AND kind = ${kind.wire}".query[Int].run().head
-    )
+  def openCount(kind: ApprovalKind)(using DbCon): Int =
+
+    sql"SELECT count(*)::int FROM approvals WHERE state = 'open' AND kind = ${kind.wire}".query[Int].run().head
 
   /** Open approvals per subject (a goal or an article slug). */
-  def openBySubject(ds: DataSource): Map[String, Int] =
-    connect(ds):
-      sql"""SELECT subject, count(*)::int FROM approvals WHERE state = 'open' AND subject IS NOT NULL GROUP BY subject"""
-        .query[(String, Int)]
-        .run()
-        .toMap
+  def openBySubject()(using DbCon): Map[String, Int] =
+    sql"""SELECT subject, count(*)::int FROM approvals WHERE state = 'open' AND subject IS NOT NULL GROUP BY subject"""
+      .query[(String, Int)]
+      .run()
+      .toMap
 
   /** The approval step `seq` of run `jobId` opened, if it did. */
-  def forStep(ds: DataSource, jobId: String, seq: Int): Option[ApprovalInfo] =
-    connect(ds)(
-      (approvalSelect ++ Sql.of(" WHERE job_id = ? AND seq = ?", Param.S(jobId), Param.I(seq))).frag
-        .query[ApprovalRow]
-        .run()
-        .headOption
-        .map(toApproval)
-    )
+  def forStep(jobId: String, seq: Int)(using DbCon): Option[ApprovalInfo] =
+
+    (approvalSelect ++ Sql.of(" WHERE job_id = ? AND seq = ?", Param.S(jobId), Param.I(seq))).frag
+      .query[ApprovalRow]
+      .run()
+      .headOption
+      .map(info)
 
   /** A cancelled run's open approvals: rejected, so nobody decides for a run that is gone. */
-  def closeForRun(ds: DataSource, jobId: String, why: String): Int =
-    transact(ds):
-      sql"""UPDATE approvals SET state = ${ApprovalState.Rejected.wire}, result = $why, decided_at = now()
-            WHERE job_id = $jobId AND seq IS NOT NULL AND state = ${ApprovalState.Open.wire}""".update.run()
+  def closeForRun(jobId: String, why: String)(using DbCon): Int =
+    sql"""UPDATE approvals SET state = ${ApprovalState.Rejected.wire}, result = $why, decided_at = now()
+          WHERE job_id = $jobId AND seq IS NOT NULL AND state = ${ApprovalState.Open.wire}""".update.run()
 
   /** Compare-and-set an OPEN approval to its decision. `false` when it had already been decided. */
-  def decide(ds: DataSource, id: Long, to: ApprovalState, note: Option[String], result: Option[String]): Boolean =
-    transact(ds):
-      sql"""UPDATE approvals SET state = ${to.wire}, note = $note, result = $result, decided_at = now()
-            WHERE id = $id AND state = ${ApprovalState.Open.wire}""".update.run() > 0
+  def decide(id: Long, to: ApprovalState, note: Option[String], result: Option[String])(using DbCon): Boolean =
+    sql"""UPDATE approvals SET state = ${to.wire}, note = $note, result = $result, decided_at = now()
+          WHERE id = $id AND state = ${ApprovalState.Open.wire}""".update.run() > 0
 
   /** After [[decide]]: the final state and what applying the decision did. */
-  def settle(ds: DataSource, id: Long, to: ApprovalState, result: String): Unit =
-    val _ = transact(ds):
+  def settle(id: Long, to: ApprovalState, result: String)(using DbCon): Unit =
+    val _ =
       sql"UPDATE approvals SET state = ${to.wire}, result = $result WHERE id = $id".update.run()
 
   // ── corpus facts the verifiers need ────────────────────────────────────────────────────────────
