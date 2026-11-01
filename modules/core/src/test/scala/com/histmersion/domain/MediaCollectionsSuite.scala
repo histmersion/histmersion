@@ -1,5 +1,8 @@
 package com.histmersion.domain
 
+import com.histmersion.domain.media.imports.MediaMatch
+import com.histmersion.domain.media.imports.MediaRecord
+
 /** The host's match rules for collection records (#1446) — a record tied to a place by its most specific place field,
   * by any location of a map, and by the dates — and the deep-time spans they read. The records are built here as the
   * host reads a plugin's item ([[MediaRecord]]); the parsers that produce them are the media plugins' own suites.
@@ -19,7 +22,7 @@ class MediaCollectionsSuite extends munit.FunSuite:
       Some("https://x/i.jpg"),
       None,
       None,
-      Right(MediaRights.cc0(None, "t")),
+      Right(Attribution.cc0(None, "t")),
       geo,
       period
     )

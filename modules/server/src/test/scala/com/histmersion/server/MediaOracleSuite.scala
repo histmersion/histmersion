@@ -3,7 +3,8 @@ package com.histmersion.server
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.db.*
-import com.histmersion.domain.MediaLicence
+import com.histmersion.domain.{Attribution, Licence, LicenceFamily}
+import com.histmersion.values.LicenceId
 import com.histmersion.pluginhost.{HostLicences, HttpAnswer, PluginMedia}
 import com.histmersion.plugin as spi
 import com.histmersion.server.media.{BuiltinMedia, FakeMediaHttp, MediaHandlers, MediaWire}
@@ -133,23 +134,23 @@ class MediaOracleSuite extends DbSuite:
     "public-domain"
   )
 
-  private def lic(l: MediaLicence.Licence): String = s"${l.id}|${l.family}"
+  private def lic(l: Licence): String = s"${l.id.value}|${l.family.wire}"
 
   private def licences: String =
     val out = StringBuilder()
-    val default = MediaLicence.allowList("cc0,public-domain,cc-by,cc-by-sa")
+    val default = Licence.allowList("cc0,public-domain,cc-by,cc-by-sa")
     out ++= "# classify: statement → id|family · needs attribution · public domain · allowed by default · host's read\n"
     Statements.foreach { s =>
-      val l = MediaLicence.classify(s)
+      val l = Licence.classify(s)
       val r = HostLicences.readName(s)
-      out ++= s"${s.asJson.noSpaces} → ${lic(l)} · ${MediaLicence.needsAttribution(l.family)} · " +
-        s"${MediaLicence.isPublicDomain(l.family)} · ${MediaLicence.allowed(l, default)} · " +
+      out ++= s"${s.asJson.noSpaces} → ${lic(l)} · ${l.family.needsAttribution} · " +
+        s"${l.family.isPublicDomain} · ${Licence.allowed(l, default)} · " +
         s"${r.id}|${r.family}|${r.needsAttribution}\n"
     }
     out ++= "# ofUrl: url → id|family · host's read\n"
     Urls.foreach { u =>
       val r = HostLicences.readUrl(u)
-      out ++= s"${u.asJson.noSpaces} → ${lic(MediaLicence.ofUrl(u))} · ${r.id}|${r.family}|${r.needsAttribution}\n"
+      out ++= s"${u.asJson.noSpaces} → ${lic(Licence.ofUrl(u))} · ${r.id}|${r.family}|${r.needsAttribution}\n"
     }
     out ++= "# parse(machine, short) and firstKnown\n"
     val pairs = List(
@@ -160,17 +161,17 @@ class MediaOracleSuite extends DbSuite:
       (Some("odd"), Some("odder")),
       (None, None)
     )
-    pairs.foreach((m, s) => out ++= s"${m.asJson.noSpaces}, ${s.asJson.noSpaces} → ${lic(MediaLicence.parse(m, s))}\n")
+    pairs.foreach((m, s) => out ++= s"${m.asJson.noSpaces}, ${s.asJson.noSpaces} → ${lic(Licence.parse(m, s))}\n")
     List(List("x", "cc0"), List("", " ", "y"), Nil, List("CC BY-NC 4.0", "cc-by-4.0")).foreach { ss =>
       val r = HostLicences.readFirst(ss)
-      out ++= s"${ss.asJson.noSpaces} → ${lic(MediaLicence.firstKnown(ss))} · ${r.id}|${r.family}\n"
+      out ++= s"${ss.asJson.noSpaces} → ${lic(Licence.firstKnown(ss))} · ${r.id}|${r.family}\n"
     }
     out ++= "# allowList: csv → the families · each family allowed\n"
-    val families = MediaLicence.Families ++ List(MediaLicence.AllRights, MediaLicence.Unknown)
+    val families = LicenceFamily.allowable ++ List(LicenceFamily.AllRightsReserved, LicenceFamily.Unknown)
     AllowLists.foreach { csv =>
-      val allow = MediaLicence.allowList(csv)
-      out ++= s"${csv.asJson.noSpaces} → ${allow.toList.sorted.mkString(",")} · " +
-        families.map(f => s"$f=${MediaLicence.allowed(MediaLicence.Licence("x", f), allow)}").mkString(" ") + "\n"
+      val allow = Licence.allowList(csv)
+      out ++= s"${csv.asJson.noSpaces} → ${allow.toList.map(_.wire).sorted.mkString(",")} · " +
+        families.map(f => s"${f.wire}=${Licence.allowed(Licence(LicenceId("x"), f), allow)}").mkString(" ") + "\n"
     }
     out ++= "# the allowlist each collection is judged by: defaults, then a config with both key families\n"
     val names = BuiltinMedia.entries.map(_.name) ++ List("zq-portal", "zq-other")
@@ -191,9 +192,9 @@ class MediaOracleSuite extends DbSuite:
     List("defaults" -> defaults, "configured" -> configured).foreach { (what, cfg) =>
       names.foreach { n =>
         val csv = BuiltinMedia.licencesFor(n, cfg)
-        val allow = MediaLicence.allowList(csv)
+        val allow = Licence.allowList(csv)
         out ++= s"$what $n: ${csv.asJson.noSpaces} → " +
-          families.filter(f => MediaLicence.allowed(MediaLicence.Licence("x", f), allow)).mkString(",") + "\n"
+          families.filter(f => Licence.allowed(Licence(LicenceId("x"), f), allow)).map(_.wire).mkString(",") + "\n"
       }
     }
     out ++= "# a stated attribution as the host takes it\n"
@@ -216,15 +217,16 @@ class MediaOracleSuite extends DbSuite:
           .rights(r)
           .fold(
             why => s"refused: $why",
-            a => s"${lic(a.licence)} url=${a.licenceUrl.asJson.noSpaces} author=${a.author.asJson.noSpaces} " +
-              s"credit=${a.credit.asJson.noSpaces}"
+            a =>
+              s"${lic(a.licence)} url=${a.licenceUrl.asJson.noSpaces} author=${a.author.asJson.noSpaces} " +
+                s"credit=${a.credit.asJson.noSpaces}"
           ) + "\n"
     }
     out ++= "# the host's own statements\n"
     List(
-      com.histmersion.domain.MediaRights.cc0(Some("Zq"), "Zq, CC0"),
-      com.histmersion.domain.MediaRights.publicDomain(None, "Zq Museum"),
-      com.histmersion.domain.MediaRights.publicDomain(Some("Zq"), "Zq", None)
+      Attribution.cc0(Some("Zq"), "Zq, CC0"),
+      Attribution.publicDomain(None, "Zq Museum"),
+      Attribution.publicDomain(Some("Zq"), "Zq", None)
     ).foreach(a =>
       out ++= s"${lic(a.licence)} url=${a.licenceUrl.asJson.noSpaces} author=${a.author.asJson.noSpaces} " +
         s"credit=${a.credit.asJson.noSpaces}\n"
@@ -356,7 +358,8 @@ class MediaOracleSuite extends DbSuite:
   /** An image of `w`×`h` whose pixels follow `seed`, encoded as `format` (`png`, `jpg`). */
   private def image(w: Int, h: Int, seed: Int, format: String): Array[Byte] =
     val img = BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
-    for x <- 0 until w; y <- 0 until h do img.setRGB(x, y, ((x * 31 + y * 17 + seed * 101) * 2654435761L).toInt & 0xffffff)
+    for x <- 0 until w; y <- 0 until h do
+      img.setRGB(x, y, ((x * 31 + y * 17 + seed * 101) * 2654435761L).toInt & 0xffffff)
     val out = ByteArrayOutputStream()
     val _ = ImageIO.write(img, format, out)
     out.toByteArray
@@ -516,10 +519,17 @@ class MediaOracleSuite extends DbSuite:
     val _ = step("link, no such asset", link("nope.png", "depicts", "place", "zq_tell"))
     val _ = step("link, a bad relation", link("fig-a.png", "eats", "place", "zq_tell"))
     val gone = step("link to delete", link("fig-b.png", "depicts", "place", "zq_cove"))
-    val _ = step("delete a link", send("DELETE", s"$url/api/asset-links/${"\"id\"\\s*:\\s*(\\d+)".r
-        .findFirstMatchIn(gone)
-        .map(_.group(1))
-        .getOrElse("0")}", ""))
+    val _ = step(
+      "delete a link",
+      send(
+        "DELETE",
+        s"$url/api/asset-links/${"\"id\"\\s*:\\s*(\\d+)".r
+            .findFirstMatchIn(gone)
+            .map(_.group(1))
+            .getOrElse("0")}",
+        ""
+      )
+    )
     val _ = step("delete a link, again", send("DELETE", s"$url/api/asset-links/999", ""))
     val _ = step(
       "cover from the Calibre library",
@@ -559,10 +569,16 @@ class MediaOracleSuite extends DbSuite:
     val _ = step("covers over every source, refused", post(s"$url/api/media/covers", """{"dryRun":false}"""))
     val _ = step("fill licences, a dry run", post(s"$url/api/media/fill-licences"))
     val _ = step("fill licences", post(s"$url/api/media/fill-licences?apply=true"))
-    val _ = step("bookmark a picture", post(s"$url/api/bookmarks", s"""{"target":{"kind":"picture","id":"${uidOf(
-        ds,
-        "fig-c.jpg"
-      )}"}}"""))
+    val _ = step(
+      "bookmark a picture",
+      post(
+        s"$url/api/bookmarks",
+        s"""{"target":{"kind":"picture","id":"${uidOf(
+            ds,
+            "fig-c.jpg"
+          )}"}}"""
+      )
+    )
     log.result()
 
   private def uidOf(ds: DataSource, name: String): String =
@@ -788,7 +804,10 @@ class MediaOracleSuite extends DbSuite:
   private val LabelledRe = "-[0-9a-f]{8}(-\\d+)?\\.(png|jpg)\\b".r
 
   private def exchanged(text: String, names: Map[String, String]): String =
-    val stamped = LabelledRe.replaceAllIn(StampRe.replaceAllIn(text, "STAMP"), m => s"-LABEL${Option(m.group(1)).getOrElse("")}.${m.group(2)}")
+    val stamped = LabelledRe.replaceAllIn(
+      StampRe.replaceAllIn(text, "STAMP"),
+      m => s"-LABEL${Option(m.group(1)).getOrElse("")}.${m.group(2)}"
+    )
     resorted(ShortRe.replaceAllIn(stamped, m => names.getOrElse(m.matched, "SHORT")))
 
   private val HashOrdered = Set("issues", "resolve", "remembered")
@@ -959,7 +978,10 @@ class MediaOracleSuite extends DbSuite:
       run(s"$p dry run", MediaImportRequest(p, dryRun = true, place = place, event = event))
     )
     builtins.foreach((p, place, event) =>
-      run(s"$p ${place.orElse(event).getOrElse("")}", MediaImportRequest(p, dryRun = false, place = place, event = event))
+      run(
+        s"$p ${place.orElse(event).getOrElse("")}",
+        MediaImportRequest(p, dryRun = false, place = place, event = event)
+      )
     )
     run("zq-own dry run", MediaImportRequest("zq-own", dryRun = true, limit = Some(20)))
     run("zq-own a place", MediaImportRequest("zq-own", dryRun = false, place = Some("pleiades_697725")))
@@ -1055,7 +1077,7 @@ class MediaOracleSuite extends DbSuite:
           out ++= s"== $path (${lines.size} lines)\n"
           lines.foreach(l => out ++= json(l, names).linesIterator.map(_.trim).mkString(" ") + "\n")
         else if path.contains("/blobs/") || path.startsWith("blobs/") then
-          out ++= s"== $path ${size} ${com.histmersion.util.data.exchange.BundleFormat.sha256Hex(data)}\n"
+          out ++= s"== $path $size ${com.histmersion.util.data.exchange.BundleFormat.sha256Hex(data)}\n"
         else out ++= s"== $path\n"
         loop()
     loop()
@@ -1116,7 +1138,11 @@ class MediaOracleSuite extends DbSuite:
     val up = ok(postBytes(s"$url/api/bundle/upload", bundle))
     val sha = field(up, "sha256")
     @scala.annotation.tailrec
-    def rounds(decided: List[(String, String)], plans: List[String], left: Int): (List[(String, String)], List[String]) =
+    def rounds(
+        decided: List[(String, String)],
+        plans: List[String],
+        left: Int
+    ): (List[(String, String)], List[String]) =
       val body =
         s"""{"resolve":[${decided.map((i, d) => s"""{"issue":"$i","decision":"$d"}""").mkString(",")}]}"""
       val p = ok(post(s"$url/api/merge/plan", s"""{"bundle":"$sha","resolutions":$body}"""))

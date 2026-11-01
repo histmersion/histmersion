@@ -1,5 +1,8 @@
 package com.histmersion.domain
 
+import com.histmersion.domain.media.imports.MediaMatch
+import com.histmersion.domain.media.imports.MediaRecord
+
 import com.histmersion.values.Period
 
 /** The host's dates rule for the key-gated collections: a collection's latest year refuses a modern record, and an

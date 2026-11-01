@@ -196,7 +196,6 @@ direction	db:db/LintRepo.scala	util.data -> library: SourceRepo	1
 direction	db:db/LintRepo.scala	util.data -> research: CoverageEdge	1
 direction	db:db/LintRepo.scala	util.data -> research: CritiquePairing	1
 direction	db:db/ListSql.scala	util.database -> automation: ListFilters	1
-direction	db:db/MediaRepo.scala	media -> library: ExternalIds	1
 direction	db:db/MergeState.scala	util.data -> library: MergeText	1
 direction	db:db/Migrate.scala	util.common -> media: Collection	1
 direction	db:db/SourceDeleteRepo.scala	library -> research: ArticleLinks	1

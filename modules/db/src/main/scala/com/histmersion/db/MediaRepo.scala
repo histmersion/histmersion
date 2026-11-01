@@ -6,6 +6,7 @@ import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.domain.catalogue.places.{ExternalIds, Wikidata}
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource

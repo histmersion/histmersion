@@ -1,6 +1,8 @@
-package com.histmersion.domain
+package com.histmersion.domain.media.imports
 
 import com.histmersion.api.Geocode
+import com.histmersion.domain.DeepTime
+import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.values.Period
 
 import java.util.Locale

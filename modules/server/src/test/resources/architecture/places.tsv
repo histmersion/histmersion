@@ -760,8 +760,6 @@ core:domain/CompileArticle.scala	research.workflows
 core:domain/CoreQuota.scala	library.acquisition
 core:domain/Cron.scala	automation.scheduler
 core:domain/EnrichSource.scala	library.workflows
-core:domain/ExternalIds.scala	library.sources
-core:domain/FigurePick.scala	media
 core:domain/FilterInference.scala	research.workflows
 core:domain/GoalFocus.scala	automation.goals
 core:domain/Highlight.scala	library.search
@@ -771,10 +769,6 @@ core:domain/IngestBacklog.scala	library.acquisition
 core:domain/ManagerDefaults.scala	automation.managers
 core:domain/ManagerPolicy.scala	automation.managers
 core:domain/ManagerRunDefaults.scala	automation.managers
-core:domain/MediaLicence.scala	media
-core:domain/MediaMatch.scala	media
-core:domain/MediaRecord.scala	media
-core:domain/MediaRights.scala	media
 core:domain/MergeFold.scala	util.data.exchange
 core:domain/MergePlanner.scala	util.data.exchange
 core:domain/MergeSettings.scala	util.data.exchange
@@ -794,7 +788,6 @@ core:domain/SeedPlanDefaults.scala	library.workflows
 core:domain/SourceMatcher.scala	library.merge-rules
 core:domain/WatchManagerDefaults.scala	library.workflows
 core:domain/WatchSchedules.scala	automation.scheduler
-core:domain/Wikidata.scala	media
 core:domain/activity/ActivityCursor.scala	automation.activity
 core:domain/activity/ActivityQuery.scala	automation.activity
 core:domain/activity/ActivityRules.scala	automation.activity

@@ -3,7 +3,7 @@ package com.histmersion.server.media
 import com.histmersion.pluginhost.{PluginMedia, Polite, SpiValues}
 
 import com.histmersion.config.MediaCollectionConfig
-import com.histmersion.domain.{MediaMatch, MediaRecord}
+import com.histmersion.domain.media.imports.{MediaMatch, MediaRecord}
 import com.histmersion.db.MediaRepo.PlaceFacts
 import com.histmersion.plugin.*
 

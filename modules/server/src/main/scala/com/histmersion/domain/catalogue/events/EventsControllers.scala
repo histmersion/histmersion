@@ -19,7 +19,8 @@ import com.histmersion.api.{
   Write
 }
 import com.histmersion.domain.catalogue.places.PlaceScope
-import com.histmersion.domain.{Caller, Wikidata}
+import com.histmersion.domain.Caller
+import com.histmersion.domain.catalogue.places.Wikidata
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.identity.AliasKind
 

@@ -3,7 +3,7 @@ package com.histmersion.config
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** Media from outside providers (#1446): the polite-client settings, the stored sizes and, per provider, its API and
-  * the licence families it may be stored under ([[MediaLicence]]).
+  * the licence families it may be stored under ([[com.histmersion.domain.Licence]]).
   */
 final case class MediaConfig(
     userAgent: String,

@@ -1,8 +1,10 @@
 package com.histmersion.domain
 
+import com.histmersion.domain.catalogue.places.Wikidata
+
 import com.histmersion.api.*
 import com.histmersion.config.*
-import com.histmersion.values.MediaRole
+import com.histmersion.values.{LicenceId, MediaRole}
 
 /** The host's half of the media providers (#1446): how a stated licence is read and judged, the card's role order, the
   * counts, a gazetteer id that is a Wikidata item, the media config and the import report — no network, no database.
@@ -10,53 +12,61 @@ import com.histmersion.values.MediaRole
   */
 class MediaProvidersSuite extends munit.FunSuite:
 
-  import MediaLicence.*
+  import Licence.*
+  import LicenceFamily.*
 
   // ── licences ─────────────────────────────────────────────────────────────────────────────────
 
   test("Commons' machine ids and short names read as SPDX ids and families"):
-    assertEquals(classify("cc-by-sa-3.0"), Licence("CC-BY-SA-3.0", CcBySa))
-    assertEquals(classify("CC BY-SA 3.0"), Licence("CC-BY-SA-3.0", CcBySa))
-    assertEquals(classify("cc-by-2.0"), Licence("CC-BY-2.0", CcBy))
-    assertEquals(classify("CC BY 4.0"), Licence("CC-BY-4.0", CcBy))
-    assertEquals(classify("cc-by-sa-3.0-de"), Licence("CC-BY-SA-3.0-DE", CcBySa))
-    assertEquals(classify("cc-by-nc-sa-4.0"), Licence("CC-BY-NC-SA-4.0", CcByNcSa))
-    assertEquals(classify("cc-by-nc-4.0"), Licence("CC-BY-NC-4.0", CcByNc))
-    assertEquals(classify("cc-by-nd-4.0"), Licence("CC-BY-ND-4.0", CcByNd))
-    assertEquals(classify("cc-by-sa-4"), Licence("CC-BY-SA-4.0", CcBySa))
-    assertEquals(classify("cc0"), Licence("CC0-1.0", Cc0))
-    assertEquals(classify("CC0 1.0"), Licence("CC0-1.0", Cc0))
-    assertEquals(classify("pd"), Licence("public-domain", PublicDomain))
-    assertEquals(classify("Public domain"), Licence("public-domain", PublicDomain))
-    assertEquals(classify("PD-old-70"), Licence("public-domain", PublicDomain))
+    assertEquals(classify("cc-by-sa-3.0"), Licence(LicenceId("CC-BY-SA-3.0"), CcBySa))
+    assertEquals(classify("CC BY-SA 3.0"), Licence(LicenceId("CC-BY-SA-3.0"), CcBySa))
+    assertEquals(classify("cc-by-2.0"), Licence(LicenceId("CC-BY-2.0"), CcBy))
+    assertEquals(classify("CC BY 4.0"), Licence(LicenceId("CC-BY-4.0"), CcBy))
+    assertEquals(classify("cc-by-sa-3.0-de"), Licence(LicenceId("CC-BY-SA-3.0-DE"), CcBySa))
+    assertEquals(classify("cc-by-nc-sa-4.0"), Licence(LicenceId("CC-BY-NC-SA-4.0"), CcByNcSa))
+    assertEquals(classify("cc-by-nc-4.0"), Licence(LicenceId("CC-BY-NC-4.0"), CcByNc))
+    assertEquals(classify("cc-by-nd-4.0"), Licence(LicenceId("CC-BY-ND-4.0"), CcByNd))
+    assertEquals(classify("cc-by-sa-4"), Licence(LicenceId("CC-BY-SA-4.0"), CcBySa))
+    assertEquals(classify("cc0"), Licence(LicenceId("CC0-1.0"), Cc0))
+    assertEquals(classify("CC0 1.0"), Licence(LicenceId("CC0-1.0"), Cc0))
+    assertEquals(classify("pd"), Licence(LicenceId("public-domain"), PublicDomain))
+    assertEquals(classify("Public domain"), Licence(LicenceId("public-domain"), PublicDomain))
+    assertEquals(classify("PD-old-70"), Licence(LicenceId("public-domain"), PublicDomain))
     assertEquals(classify("GFDL").family, Gfdl)
-    assertEquals(classify("Copyrighted").family, AllRights)
+    assertEquals(classify("Copyrighted").family, AllRightsReserved)
     assertEquals(classify("Attribution only license").family, Unknown)
     assertEquals(classify("").family, Unknown)
 
   test("parse takes the machine id first, then the short name; neither read is unknown"):
-    assertEquals(MediaLicence.parse(Some("cc-by-sa-4.0"), Some("CC BY 2.0")).id, "CC-BY-SA-4.0")
-    assertEquals(MediaLicence.parse(Some("something-odd"), Some("CC BY 2.0")).id, "CC-BY-2.0")
-    assertEquals(MediaLicence.parse(None, None), Licence("", Unknown))
-    assertEquals(MediaLicence.parse(Some("weird"), None), Licence("weird", Unknown))
-    assertEquals(firstKnown(List(" ", "odd", "CC BY 2.0")), Licence("CC-BY-2.0", CcBy), "any number of statements")
-    assertEquals(firstKnown(List(" ", "odd")), Licence("odd", Unknown))
-    assertEquals(firstKnown(Nil), Licence("", Unknown))
+    assertEquals(Licence.parse(Some("cc-by-sa-4.0"), Some("CC BY 2.0")).id.value, "CC-BY-SA-4.0")
+    assertEquals(Licence.parse(Some("something-odd"), Some("CC BY 2.0")).id.value, "CC-BY-2.0")
+    assertEquals(Licence.parse(None, None), Licence(LicenceId(""), Unknown))
+    assertEquals(Licence.parse(Some("weird"), None), Licence(LicenceId("weird"), Unknown))
+    assertEquals(
+      firstKnown(List(" ", "odd", "CC BY 2.0")),
+      Licence(LicenceId("CC-BY-2.0"), CcBy),
+      "any number of statements"
+    )
+    assertEquals(firstKnown(List(" ", "odd")), Licence(LicenceId("odd"), Unknown))
+    assertEquals(firstKnown(Nil), Licence(LicenceId(""), Unknown))
 
   test("the allowlist keeps known families only, and never all-rights-reserved or unknown"):
     assertEquals(allowList("cc0, public-domain,CC-BY ,cc-by-sa"), Set(Cc0, PublicDomain, CcBy, CcBySa))
     assertEquals(allowList("cc-by,all-rights-reserved,unknown,bogus"), Set(CcBy))
-    assertEquals(allowList(""), Set.empty[String])
+    assertEquals(allowList(""), Set.empty[LicenceFamily])
     val default = allowList("cc0,public-domain,cc-by,cc-by-sa")
     assert(allowed(classify("cc-by-sa-4.0"), default))
     assert(!allowed(classify("cc-by-nc-4.0"), default), "non-commercial is off by default")
     assert(allowed(classify("cc-by-nc-4.0"), default + CcByNc), "…and on when the provider lists it")
-    assert(!allowed(Licence(AllRights, AllRights), Set(AllRights)), "all rights reserved: never")
-    assert(!allowed(Licence("x", Unknown), Set(Unknown)), "unknown: never")
+    assert(
+      !allowed(Licence(LicenceId("all-rights-reserved"), AllRightsReserved), Set(AllRightsReserved)),
+      "all rights reserved: never"
+    )
+    assert(!allowed(Licence(LicenceId("x"), Unknown), Set(Unknown)), "unknown: never")
 
   test("which families need the author named"):
-    assert(needsAttribution(CcBy) && needsAttribution(CcBySa) && needsAttribution(CcByNcSa) && needsAttribution(Gfdl))
-    assert(!needsAttribution(Cc0) && !needsAttribution(PublicDomain))
+    assert(CcBy.needsAttribution && CcBySa.needsAttribution && CcByNcSa.needsAttribution && Gfdl.needsAttribution)
+    assert(!Cc0.needsAttribution && !PublicDomain.needsAttribution)
 
   // ── roles and counts (shared) ────────────────────────────────────────────────────────────────
 

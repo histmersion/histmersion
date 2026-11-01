@@ -1,7 +1,7 @@
 package com.histmersion.server.media
 
 import com.histmersion.db.MediaRepo
-import com.histmersion.domain.FigurePick
+import com.histmersion.domain.media.figures.FigurePick
 
 class SourcePicturesSuite extends munit.FunSuite:
 
