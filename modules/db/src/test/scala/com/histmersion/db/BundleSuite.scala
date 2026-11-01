@@ -192,7 +192,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     )
     val _ =
       AssetLinkRepo.create(ds, AssetLinkPut(A1, "fig1.png", "depicts", "finding", s"$A1#0", xywh = Some("0,0,1,1")))
-    val _ = AttestationRepo.create(
+    val _ = AttestationRows.create(
       ds,
       AttestationPut(
         A1,

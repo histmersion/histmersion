@@ -138,7 +138,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
   private def png(n: Byte): Array[Byte] = Array[Byte](0x89.toByte, 'P', 'N', 'G', 13, 10, 26, 10, n, n, n)
   private def asset(name: String, n: Byte) = AssetRepo.Stored(name, "image/png", png(n), None, None)
   private def attest(ds: DataSource, ck: String, quote: String, target: String): Unit =
-    val _ = AttestationRepo.create(
+    val _ = AttestationRows.create(
       ds,
       AttestationPut(ck, "place", target, quote = Some(quote), charStart = Some(0), charEnd = Some(quote.length))
     )

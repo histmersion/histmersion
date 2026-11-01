@@ -35,7 +35,6 @@ import com.histmersion.db.{
   ArticleReviewRepo,
   AssetLinkRepo,
   AssetMetaRepo,
-  AttestationRepo,
   CoverageRepo,
   CritiqueRepo,
   EventRepo,
@@ -1171,11 +1170,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
         _ <- EventRepo.rename(ds, from, to)
       yield LabelRenamed(BundleKind.Event, from, to)
 
-  // ── attestations (plan §1.3) ──────────────────────────────────────────────────────────────
-
-  /** A REFERENCE to a record of a renamed kind (an attestation's or an asset link's target) names it by its current
-    * identifier (#1799): `event`, `place`, `source` and `article` targets resolve an old one; other targets (a finding
-    * id, an edge) are kept as given.
+  /** A REFERENCE to a record of a renamed kind (an asset link's target) names it by its current identifier (#1799):
+    * `event`, `place`, `source` and `article` targets resolve an old one; other targets are kept as given.
     */
   private def refId(targetType: String, id: String): String =
     val kind = targetType.trim.toLowerCase(java.util.Locale.ROOT) match
@@ -1186,39 +1182,17 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       case _         => None
     kind.fold(id)(current(_, id))
 
-  def listAttestations(q: Api.AttestationQuery): AttestationList =
-    val target = for t <- q.targetType; i <- q.targetId yield refId(t, i)
-    AttestationRepo.list(
-      ds,
-      q.citekey.map(current(AliasKindsAdapter.SourceRecords, _)),
-      q.targetType,
-      target.orElse(q.targetId),
-      cfg.limits.page(q.limit, cfg.limits.search),
-      q.offset.getOrElse(0)
+  // ── attestations (plan §1.3) ──────────────────────────────────────────────────────────────
+
+  /** What attests a data point: the attestations' operations. */
+  lazy val attestations: com.histmersion.domain.catalogue.evidence.AttestationsControllers =
+    com.histmersion.domain.catalogue.evidence.AttestationsControllers(
+      com.histmersion.domain.catalogue.evidence.AttestationService(deps.transactor),
+      deps.passages,
+      current,
+      limit => cfg.limits.page(limit, cfg.limits.search),
+      maintenance
     )
-
-  def getAttestation(id: Long): Either[ApiError, Attestation] =
-    AttestationRepo.get(ds, id).toRight(ApiError(s"No attestation $id", Some(Write.CodeNotFound)))
-
-  /** An unknown target type is a 400 and a missing source a 404 — checked first: the table's constraints answered both
-    * with a 500 (#3770).
-    */
-  def createAttestation(in: AttestationPut): Either[ApiError, Attestation] =
-    maintenance.guard("create_attestation"):
-      val ck = current(AliasKindsAdapter.SourceRecords, in.citekey)
-      for
-        t <- AttestationTarget.check(in.targetType).left.map(ApiError(_, Some(Write.CodeInvalid)))
-        _ <- Either.cond(AttestationRepo.sourceExists(ds, ck), (), Write.notFound(ck))
-      yield AttestationRepo.create(ds, in.copy(citekey = ck, targetType = t, targetId = refId(t, in.targetId)))
-
-  def patchAttestation(id: Long, p: AttestationPatch): Either[ApiError, Attestation] =
-    maintenance.guard("patch_attestation"):
-      AttestationRepo.patch(ds, id, p)
-
-  def deleteAttestation(id: Long): Either[ApiError, AttestationDeleted] =
-    maintenance.guard("delete_attestation"):
-      if AttestationRepo.delete(ds, id) then Right(AttestationDeleted(id, true))
-      else Left(ApiError(s"No attestation $id", Some(Write.CodeNotFound)))
 
   // ── goals (plan §1.5) ───────────────────────────────────────────────────────────────────────
 

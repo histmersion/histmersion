@@ -255,8 +255,6 @@ direction	server:server/agents/OaBacklog.scala	library -> split: Handlers	1
 direction	server:server/agents/ProposeArticlesPipeline.scala	research -> split: Handlers	1
 direction	server:server/agents/ReviewArticlePipeline.scala	research -> split: Handlers	1
 direction	server:server/agents/SeedService.scala	library -> split: Handlers	1
-direction	server:server/events/EventCatalogHandlers.scala	catalogue -> library: PassageFinder	1
-direction	server:server/events/EventCatalogHandlers.scala	catalogue -> library: SourceRepo	1
 direction	server:server/events/EventCatalogHandlers.scala	catalogue -> server: Deps	1
 direction	server:server/events/EventCatalogRoutes.scala	catalogue -> split: Handlers	1
 direction	server:server/events/EventCatalogTools.scala	catalogue -> split: Handlers	1
@@ -366,7 +364,6 @@ repository	server:server/Handlers.scala	ArticleRepo of research.articles	1
 repository	server:server/Handlers.scala	ArticleReviewRepo of research.articles.review	1
 repository	server:server/Handlers.scala	AssetLinkRepo of media	1
 repository	server:server/Handlers.scala	AssetMetaRepo of media	1
-repository	server:server/Handlers.scala	AttestationRepo of catalogue.evidence	1
 repository	server:server/Handlers.scala	CoverageRepo of research.articles	1
 repository	server:server/Handlers.scala	CritiqueRepo of research.articles	1
 repository	server:server/Handlers.scala	EventRepo of catalogue.events	1
@@ -421,6 +418,4 @@ repository	server:server/agents/ReviewArticlePipeline.scala	AgentRepo of automat
 repository	server:server/agents/SeedService.scala	CandidateRepo of library.acquisition	1
 repository	server:server/agents/SeedService.scala	FocusRepo of automation.goals	1
 repository	server:server/agents/SeedService.scala	ManagerRepo of automation.managers	1
-repository	server:server/events/EventCatalogHandlers.scala	AttestationRepo of catalogue.evidence	1
 repository	server:server/events/EventCatalogHandlers.scala	JobRepo of util.jobs	1
-repository	server:server/events/EventCatalogHandlers.scala	SourceRepo of library.sources	1

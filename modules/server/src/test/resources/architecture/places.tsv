@@ -827,7 +827,6 @@ db:db/ArticleReviewRepo.scala	research.articles.review
 db:db/AssetLinkRepo.scala	media
 db:db/AssetMetaRepo.scala	media
 db:db/AssetRepo.scala	media
-db:db/AttestationRepo.scala	catalogue.evidence
 db:db/AutopilotRepo.scala	automation.autopilot
 db:db/BundleImport.scala	util.data.exchange
 db:db/BundleRepo.scala	util.data.exchange
