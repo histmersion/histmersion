@@ -30,7 +30,13 @@ final class SourceProposals(
       Outcome.NotProposed(p.describe)
     )
 
-  private def record(runId: Option[String], p: Proposal, now: Option[SourceStatus], state: ApprovalState, result: Option[String]) =
+  private def record(
+      runId: Option[String],
+      p: Proposal,
+      now: Option[SourceStatus],
+      state: ApprovalState,
+      result: Option[String]
+  ) =
     approvals.record(
       runId,
       p.kind,

@@ -1,6 +1,6 @@
 # Domain model, package by feature, first-party plugins out of the server (refactor step 3, design)
 
-Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18.** Written 2026-10-30 on master
+Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18; slice 7 part 2 built — §19.** Written 2026-10-30 on master
 58de5489 (branch `domain-design`); revised after the user's reviews of §3: domains above features, measured;
 `personal` with its own interface; `library`, `research`, `catalogue`, `media` named; acquisition and OCR
 dissolved (2026-10-30); automation as a generic workflow engine fed by the domains, data management and file
@@ -2220,7 +2220,7 @@ adapter files added (`server`), `ToolName` and `db/QueueRepo` gone.
 - `ManagerAutopilotSuite`'s "approvals a person's" test failed on the unchanged code in the minutes around the weekly
   cron window above and passed outside it; it is a wall-clock dependence of the test, older than this slice.
 
-**Part 2 (to do).** The remaining scope of §9.2's row 7: `ManagerKind` (the supervisor's review and watch kinds as
+**Part 2 (built, §19).** The remaining scope of §9.2's row 7: `ManagerKind` (the supervisor's review and watch kinds as
 contributions, its loop, holds, retries, cron, approvals settlement and hints left in the engine), `ObjectiveProgress`
 (the goal stages' facts), runs recorded through `util.jobs` (the 36 statements of `AgentRepo` on `jobs`), the
 generator fed by contributed roles as well as tools, checkpoints, approvals, the scheduler and the autopilot moved into
@@ -2238,3 +2238,140 @@ run. To check at the bundle: `--self-check`; `smoke.sh`; an agent run with tools
 day — it was recorded on 2026-10-31 and fails from 2026-11-01 on the unchanged code (07f563ce) too, with nothing but
 that date different. The transcript oracle ran as above, identical twice; `ContractSnapshotSuite`,
 `CliHelpSnapshotSuite`, `AutomationOracleSuite` and `ArchitectureSuite` passed.
+
+## 19. Slice 7 as built, part 2 (the automation engine: kinds, objectives, runs through util.jobs, the moves, 2026-11-01)
+
+Branch `refactor-s7b` from master dea709d6 (part 1 deployed). Endpoints, MCP tools, CLI commands and agent definitions
+are unchanged: `ContractSnapshotSuite` (`toolbox.json` and `mcp-tools.json` included), `CliHelpSnapshotSuite` and
+`AutomationOracleSuite` held byte for byte after every commit; no oracle or snapshot was re-recorded.
+
+**The moves.** The engine's 60 files left `server/agents` for `domain.automation.{agents, approvals, autopilot, goals,
+managers, scheduler, workflows}` as `places.tsv` placed them (their 60 rows gone). `server/agents` keeps, each for its
+own slice: the command-line AI runtimes and their plan reading (`ClaudeCode*`, `Codex*`, `Opencode*`, `CliProcess`,
+`CliOutcome(s)`, `CliRuntime`, `HostAiProvider`, `BuiltinAi`, `QuotaGuard`, `PlanPools`, `RefreshGate`, `Refreshed`,
+`AgentDoctor` — slice 12, SPI-9 below: moved once, into `plugins/ai-cli`); the library's and research's pipelines and
+their parts (`EnrichSource`, `CurrencyCheck`, `AcquisitionSweep`, `OaBacklog`, `SeedService`, `AcquireRecheckService`,
+`AgentUpstream`, the tool inputs, `GoalSweep` — slices 10 and 11); and the composition's transition adapters. `Pinning`
+and `Carried` moved from `server.hot` to `util.jobs` (how work keeps its generation is a jobs mechanism; the hot graph
+implements it). Tests stay in `com.histmersion.server.agents` (so the gated transcript invocation is unchanged); the
+engine's few test hooks are `private[histmersion]`.
+
+**Manager kinds** (`domain.automation.managers`). `ManagerKindDefinition` (the design's `ManagerKind`: `values`
+already names the kind's identifier `ManagerKind`): `kind`, `items`, `pipelineOf(itemKind)`, `defaults`, `fire` (what a
+cron firing re-opens), `refill` (the selection), `evaluate`/`facts`/`afterDone` (a settled run of one of its items),
+`dispatch` (the run an item starts, or how it settles without one), `target`/`added`/`expand` (what a person adds),
+`judge` (the autopilot's checks of the approvals its items wait for), `housework` (its domain's work at every tick),
+`backlog`, `status`, `ingestedToday`, `busy` (the domain's part of the engine's figures). `ManagerSupervisor` keeps the
+loop, the tick's order, the guards, the holds and their release, the retries, the cron's timing, the approvals'
+settling, the one-run rule (`evaluateStep`), the dispatch transaction and the status lines, and gives a kind a
+`ManagerContext` (the items, events and hints; the runs' progress, step outputs and approvals; `start`, `retry`,
+`settleNow`, `chainReview`, `applyPlan`). An item is evaluated, followed up and started by the kind that lists its item
+kind, as the old `match` on the item kind did; an item kind no kind drives is settled as before. Transition adapters
+(`server/agents`, place `server`): `ReviewManagerKind` (the review ledger's evaluation, the selection, the stale and
+extend scans with their in-memory clocks, the infer-filter item a person's review brings), `EnrichManagerKind` (and
+auto-enrich after an ingest), `SeedManagerKind` (propose, compile, plan-goal; the article-plan and article-publish
+checks), `WatchManagerKind` (the sweeps, the candidate sweep first, the ingest allowance; it holds the library's
+`AcquisitionWork`: the toolset, the ingest backlog, the re-check and the seeding, which left `AgentsHandlers`). The two
+acquisition-list routes bind in their old place among the managers' routes (`TransitionRoutes`), the MCP repair through
+a function `AgentsTools` is given.
+
+**Objectives** (`domain.automation.goals.ObjectiveProgress`): `linked()` (each goal's linked items that exist) and
+`finished()`; the autopilot's advance and status, the scheduler and the focus read them through the registry
+(`Workflows.linked`, `finished`). Research's (`ArticleObjectives`): the articles linked to a goal, finished once they
+passed review. The two queries moved, unchanged, from `GoalLinkRepo`/`ManagerRepo` to `ArticleRepo.articlesByGoal` and
+`ReviewLedgerRepo.passedReview` (research's), reached through the handlers.
+
+**Runs through util.jobs.** `JobRepo` (db, `util.jobs`) holds the statements on the run rows: insert (from
+`RunRow`), the compare-and-set move, heartbeat, progress, warnings, budgets, the start's reconcile, the resume time, the
+due and paused reads, the count, the pipeline version; `JobRuns` (server, `util.jobs`; `Implementation` over a
+`Transactor`, `InMemory` over `JobRunState`, one contract suite on both, `JobRunsInMemorySuite`/`JobRunsDbSuite`) runs
+them for a kind with the owner's states passed in. The engine passes `RunState` wires and keeps `RunState.next`
+(`Engine.transition`); `AgentRepo.runRow` builds the row (its params as the dropped-nulls JSON they were written as).
+`AgentRepo` keeps the reads that join the steps' usage (`get`, `list`, `page`, `runFacets`, `stateCounts`,
+`forTarget`, `forManager`, `unsettledOn`): 14 of the 36 statements moved, the 22 reads wait for the usage to be read
+beside the job rows instead of joined to them (slice 12, with `server.views`).
+
+**The generator fed contributed roles.** `AgentRoster(tools, roles)`: what `AgentDefinitions` holds a definition to
+(a definition may take only a role a registered workflow runs, or the engine's probe, as it lists only contributed
+tools), what `CliRuntime`, `PluginTree` and `generatePlugin` are given; the engine refuses a registry whose workflows
+run a role the definitions were not told of. `TransitionWorkflows.roster`: the transition tools and the registered
+pipelines' roles. `WebAccess.Search` is `WebSearch` (its wire `search`); the definitions' fingerprint prints it as
+before, so installed trees are not regenerated.
+
+**Ports the engine owns, implemented by the composition.** `EngineSite` (settings, database, work lists, pins, job
+stops, the AI providers, the roster, the contributions and the host, asked once the engine exists; `TransitionSite`)
+replaces `Deps` and `Handlers` in `AgentsHandlers`. `AutomationHost` (`TransitionHost`): goals by slug (renamed slugs
+followed), put and patch; a run request's target, options and overridable roles (the workflow's domain checks them);
+a goal link's reference; the probe's subject and title check; the plan's works lookup (`PlanGoal.Lookup`) and
+vocabulary; the autopilot's housekeeping (backup, its status, the safe lint repairs, the maintenance block).
+`ApprovalEffects` (`TransitionApprovalEffects`): what approving a source's proposal or an article's filter does; the
+library's routing of a source's proposals is `SourceProposals` over the engine's `Approvals.record`. `ApprovalChecks`
+(`AutoApprovals`): what a kind's `judge` is given. The engine's services write their worklog lines through
+`WorkListControllers` (`deps.workLists`), as `queueAdd` did. The step schemas of the library and research are
+`LibraryAnswers` and `ResearchAnswers` (`AnswerSchemasSuite` checks all three lists), their settings' views
+`TransitionSettings`. Name collisions the direction rule reads as references: `GoalLinkKind.SearchQuery` and
+`Agents.Origin.FromIngest` name the cases `Query` and `Ingest`; `ToolUse` is the engine's (core,
+`domain.automation.agents`; `AgentVerify.ToolUse` exports it).
+
+**SPI-9 (Q5), designed; built in slice 12.** The command-line runtimes become `plugins/ai-cli` (`ai-claude-code`,
+`ai-codex`, `ai-opencode`) over one new registry, `PluginContext.aiRuntimes: Registry[AiRuntime]` (refusing by default):
+
+| member | what it is | today |
+|---|---|---|
+| `AiRuntime.name`, `models` | the runtime's provider name and the models it offers | `BuiltinAi`, `HostAiProvider` |
+| `generate(defs: AgentDefinitionsView): Map[RelPath, String]` | the runtime's tree from the canonical definitions the host renders and passes (agents with their system prompts, tools by the runtime's placeholder style, skills, settings) | `AgentGenerator.claudeCode`/`codex`/`opencode` |
+| `step(req: AiStepRequest, mcp: McpAccess(url, token), launcher: ProcessLauncher, home: PluginStore): Either[AiFailure, AiStepResult]` | one LLM step: launch the CLI through the host's launcher (util.process), read its stream, answer the conversation, usage, the final text or the plan's limit | `ClaudeCodeClient`, `CodexExecClient`, `OpencodeRunClient`, `CliProcess`, `CliOutcome(s)`, `ClaudeCodeEnv`, `CodexHome` |
+| `planReading(http, launcher): Option[PlanReading]` | the plan pool's reading (Claude's quota endpoint, Codex's app-server) | `PlanPools`' readers, `RefreshGate` |
+| `doctor(launcher): List[DoctorCheck]` | the runtime's own checks (binary, login, version) | `AgentDoctor`'s CLI part |
+
+The host keeps the generator's canonical input and the tree writing (through `util.storage`, `Location.AgentHomes`),
+the run tokens and the `/mcp/agent` gate, the plan pools' storage and their allowance logic, the quota-guard endpoint,
+and the loop's accounting; a runtime gets a `PluginStore` for its home (`CODEX_HOME`, `claude-code/login`) instead of a
+path. The measured coupling (25 host types, about 100 call sites) is what these members carry; the types they need
+(`AiStepRequest`, `AiStepResult`, `AiFailure`, `PlanReading`, `McpAccess`, `AgentDefinitionsView`) are plugin-api's,
+additive and defaulted (`Spi.Version` stays 2).
+
+**Architecture.** `exceptions.tsv` 542 → 463 rows: direction 345 → 271 (74: every direction row of the moved engine
+files — the supervisor's 13, `ManagersHandlers`' 9, `AgentsHandlers`' 17, `AnswerSchemas`' 5, `AgentsSettings`' 5,
+`Approvals`' 4, `AutoApprovals`' 2, `ManagerDefaultsViews`' 2 and the rest), filesystem 62 → 60 (`AgentsHandlers`'),
+repository 131 → 128 (`ArticleRepo` and `ReviewLedgerRepo` in the supervisor, `ArticleRepo` in `ManagersHandlers`).
+Not deletions: 37 rows of moved files whose path changed with the move — the file code of `AgentTrees` (4, its
+`Path.of` count 2 → 3: the requested output directory is parsed there now) and `Prompts` (3), and 30 repository rows
+between the engine's own features (`AgentRepo`, `ManagerRepo`, `GoalRepo`, `GoalLinkRepo`, `FocusRepo`,
+`AutopilotRepo` named by the scheduler, the autopilot, the approvals, the managers and the agents). `places.tsv`: the 60
+moved files' rows gone, `server/hot/{Pinning, Carried}` gone; added for the adapters (place `server`):
+`AcquisitionWork`, `ArticleObjectives`, the four kinds, `TransitionApprovalEffects`, `TransitionHost`,
+`TransitionRoutes`, `TransitionSettings`, `TransitionSite`; `LibraryAnswers` and `SourceProposals`
+(`library.workflows`), `ResearchAnswers` (`research.workflows`). `ArchitectureSuite`'s edge tools name
+`domain/automation/agents/PluginTree.scala`.
+
+**Not done (the remaining rows above).** The 30 repository rows need a service per engine feature that the others call
+(runs and steps, approvals, managers, goals and links, focus, the autopilot's row), each with an `InMemory` that
+behaves as its database version and a contract suite: about 80 operations, most of them the scheduler's and the
+autopilot's reads. The 7 file rows need the trees written through `Location.AgentHomes` and the prompts read through a
+location of `agents.prompts-dir`, with the runtimes taking store handles instead of paths — which is SPI-9's
+`PluginStore` (slice 12). The 22 reads of the run rows (above) also stay in `AgentRepo`.
+
+**Deviations.** The trait is `ManagerKindDefinition` (the name `ManagerKind` is the kind's identifier in `values`);
+its kinds are routed by item kind, as the supervisor matched on the item kind. The kinds, objectives, effects and
+the host are transition adapters in the composition root, as part 1's workflows and tools are; research and the
+library replace them in their slices. Run reads and the manager kinds' article queries (`openMajorArticles`,
+`unreviewedArticles`, `staleCandidates`, `extendCandidates`, `articleFacets`) stay in the engine's repositories,
+reached by the review kind through `ManagerContext`, until research owns them. `AgentTrees`, `Prompts` and the
+command-line runtimes keep their file code (above).
+
+**Oracles and equivalence.** EQUIVALENCE
+
+**Native image.** Renamed in `reachability-metadata.json` (the moved classes): `AgentsTools$*Input$` (10),
+`RunCtx`, `RunTokenGate` → `domain.automation.agents`; `Decided$` → `domain.automation.approvals`;
+`PlanGoalPipeline$Applied$`/`$Loaded$` → `domain.automation.goals`; `HintEffectPipeline$Loaded$`, `Zero$` →
+`domain.automation.managers`. No entry names `server.hot.Pinning`, `Carried`, `AgentVerify$ToolUse`, `WebAccess` or
+`ToolResultCap`. New classes: no reflective lazy value or derived codec — `javap -p` over every new and changed class shows
+only local lazy values (`LazyRef`) and the module fields that were there before; the supervisor's fallback kind is an
+eager value, not a nested object, so it needs no entry. No tracing-agent run. To check at the bundle:
+`--self-check`; `smoke.sh`; an agent run on a CLI runtime and on an HTTP provider (`/mcp/agent/<agent>` `tools/list`);
+`histmersion agent manager list|get|enqueue`, `agent autopilot`, `agent scheduler`, `agent approvals`/`decide` (a
+status change and an article filter), `queue acquire recheck`, `agent autopilot repair-acquire`, `agent generate`.
+
+**Tests.** TESTS
+

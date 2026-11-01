@@ -82,7 +82,7 @@ settings that `pluginhost/FirstPartySettings` lists (`histmersion.acquire.*`, `h
 media collections (`plugins/media`), supplied `histmersion.media.*` and run by the host's one collection import
 (`server/media/MediaImporter`). The command-line AI runtimes (`server/agents/BuiltinAi`: `ai-claude-code`, `ai-codex`,
 `ai-opencode`, §23) are still host code wrapped by `server/util/plugins/HostProvided`, until they move too
-(`docs/research-domain-model.md` §9.2).
+(`docs/research-domain-model.md` §9.2; their SPI, SPI-9, is designed in §19).
 
 A user's own plugins are linked in by `bin/histmersion-relink` from the bundle's relink kit
 (`server/relinkKit`: the Sloth-patched class path and `server/nativeImageOptions`, the ONE list of native-image
@@ -341,7 +341,7 @@ The places and what each may depend on (`docs/research-domain-model.md` §3):
 | place | about | may depend on |
 |---|---|---|
 | `util.<area>` (`database`, `json`, `mcp`, `storage`, `data`, `jobs`, `identity`, `plugins`, `settings`, `basemap`, `ocr`, `process`, …) | a mechanism: no research words | other supporting areas, the shared kernel, `values` — never a domain |
-| `domain.automation` | the workflow engine: runs, steps, schedules, managers, approvals, agents, goals, work lists (`worklists`: the ACQUIRE/TASKS/LOG kernel); `workflows` holds what the domains contribute to it (`WorkflowDefinition`, `ToolContribution`, the `Workflows` registry) | supporting areas |
+| `domain.automation` | the workflow engine, by feature: `agents` (runs, steps, the toolbox, model chains, the definitions and their generator), `approvals`, `autopilot`, `goals`, `managers`, `scheduler`, `worklists` (the ACQUIRE/TASKS/LOG kernel); `workflows` holds what the domains contribute to it (`WorkflowDefinition`, `ToolContribution`, `ManagerKindDefinition`, `ObjectiveProgress`, the `Workflows` registry) and what the engine asks of the rest of the server (`AutomationHost`) | supporting areas |
 | `domain.catalogue` | places, periods, events and what attests them | supporting areas, automation |
 | `domain.media` | pictures and their rights | supporting areas, automation, catalogue |
 | `domain.library` | sources, findings, citations, acquisition, ingest | supporting areas, automation, catalogue, media |
@@ -352,9 +352,14 @@ The places and what each may depend on (`docs/research-domain-model.md` §3):
 A lower domain reaches a higher one only through an interface the lower one owns and the higher one implements
 (a workflow the library registers into the engine, a data contribution a domain registers into `util.data`). An
 agent tool is a `ToolContribution` and a workflow a `WorkflowDefinition` registered into the engine's `Workflows`;
-a workflow names the tools each of its roles may use, and the engine offers an agent nothing else. Today's pipelines
-and tools are registered by transition adapters in the composition root (`server/agents/PipelineWorkflow`,
-`TransitionTools`, `TransitionWorkflows`) until their domains define their own.
+a workflow names the tools each of its roles may use, and the engine offers an agent nothing else. A kind of manager
+is a `ManagerKindDefinition` (the supervisor's loop, holds, retries, cron and approvals stay the engine's), a domain's
+measure of a goal an `ObjectiveProgress`, what approving its proposals does an `ApprovalEffects`; runs are recorded
+through `util.jobs.JobRuns`. The engine is built from an `EngineSite` the composition gives it. Today's pipelines,
+tools, manager kinds and effects are registered by transition adapters in the composition root (`server/agents`:
+`PipelineWorkflow`, `TransitionTools`, `TransitionWorkflows`, `TransitionSite`, `TransitionHost`, the four
+`…ManagerKind`s, `ArticleObjectives`, `TransitionApprovalEffects`) until their domains define their own;
+`server/agents` also keeps the library's and research's pipelines and the command-line AI runtimes until their slices.
 Files and directories are reached through `util.storage`, processes launched through `util.process`, and a
 repository is used only inside its feature. `ArchitectureSuite` (server tests) enforces the table, the file and
 process rule and the repository rule. A file not in its feature package yet has its destination in
