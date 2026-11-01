@@ -68,6 +68,7 @@ api:api/AssetLinkTarget.scala	media
 api:api/AssetLinks.scala	media
 api:api/AssetPatch.scala	media
 api:api/AssetRelation.scala	media
+api:api/AssetsMarkdown.scala	media.assets
 api:api/AssetsStored.scala	media
 api:api/Attestation.scala	catalogue.evidence
 api:api/AttestationDeleted.scala	catalogue.evidence
@@ -513,7 +514,7 @@ api:api/Sort.scala	library.search
 api:api/Source.scala	library.sources
 api:api/SourceAlias.scala	library.sources
 api:api/SourceCandidate.scala	library.acquisition
-api:api/SourceCoverParams.scala	library.sources
+api:api/SourceCoverParams.scala	media.covers
 api:api/SourceDelete.scala	library.sources
 api:api/SourceDeleteRequest.scala	library.sources
 api:api/SourceDeletion.scala	library.sources
@@ -798,9 +799,6 @@ db:db/AgentStateRepo.scala	automation.agents
 db:db/AggregateRepo.scala	library.search
 db:db/ArticleRepo.scala	research.articles
 db:db/ArticleReviewRepo.scala	research.articles.review
-db:db/AssetLinkRepo.scala	media
-db:db/AssetMetaRepo.scala	media
-db:db/AssetRepo.scala	media
 db:db/AutopilotRepo.scala	automation.autopilot
 db:db/BundleImport.scala	util.data.exchange
 db:db/BundleRepo.scala	util.data.exchange
@@ -809,7 +807,6 @@ db:db/Codecs.scala	util.common
 db:db/CoverageRepo.scala	research.articles
 db:db/CritiqueRepo.scala	research.articles
 db:db/Db.scala	util.common
-db:db/Figures.scala	media
 db:db/FilterSql.scala	library.search
 db:db/FocusRepo.scala	automation.goals
 db:db/GoalLinkRepo.scala	automation.goals
@@ -820,8 +817,6 @@ db:db/Keyset.scala	util.database
 db:db/LintRepo.scala	util.data.checks
 db:db/ListSql.scala	util.database
 db:db/ManagerRepo.scala	automation.managers
-db:db/MediaRepo.scala	media
-db:db/MediaTargetRow.scala	media
 db:db/MergeState.scala	util.data.exchange
 db:db/Migrate.scala	util.common
 db:db/ModelSettingsRepo.scala	automation.agents
@@ -839,10 +834,8 @@ db:db/UpstreamQuotaRepo.scala	library.acquisition
 db:db/Vocab.scala	util.common
 files:files/ArticleNote.scala	research.articles
 files:files/BundleEntities.scala	util.data.exchange
-files:files/CoverChoice.scala	media
 files:files/Export.scala	library.sources
 files:files/Frontmatter.scala	library.sources
-files:files/OpenLibrary.scala	media
 files:files/PlaceSeed.scala	catalogue.places
 files:files/PluginKit.scala	util.plugins
 files:files/SafePath.scala	util.files
@@ -868,7 +861,6 @@ server:server/Handlers.scala	split
 server:server/HtmlRender.scala	research.articles
 server:server/HttpApi.scala	server
 server:server/HttpDownload.scala	server
-server:server/IiifHandler.scala	media
 server:server/IngestHandlers.scala	library.ingest
 server:server/Jobs.scala	server
 server:server/ListQueries.scala	automation.approvals
@@ -877,12 +869,14 @@ server:server/MarkdownFlavor.scala	util.common
 server:server/MarkdownHtml.scala	util.common
 server:server/MarkdownLint.scala	research.articles.lint
 server:server/McpTools.scala	server
+server:server/MediaWiring.scala	server
 server:server/OpsHandlers.scala	split
 server:server/OpsRoutes.scala	server
 server:server/OpsTools.scala	split
 server:server/PageBuilder.scala	research.articles
 server:server/PageKind.scala	research.articles
 server:server/Pages.scala	research.articles
+server:server/SeedFigureFiles.scala	server
 server:server/ServerArgs.scala	server
 server:server/ServerGraph.scala	server
 server:server/ServerMode.scala	server
@@ -988,16 +982,6 @@ server:server/hot/Hot.scala	server
 server:server/hot/HotDataSource.scala	server
 server:server/hot/HotGraph.scala	server
 server:server/hot/PinRequests.scala	server
-server:server/media/BuiltinMedia.scala	media
-server:server/media/Collection.scala	media
-server:server/media/CollectionImport.scala	media
-server:server/media/DbMediaStore.scala	media
-server:server/media/MediaHandlers.scala	media
-server:server/media/MediaImporter.scala	media
-server:server/media/MediaImporters.scala	media
-server:server/media/MediaStore.scala	media
-server:server/media/PluginCollection.scala	media
-server:server/media/SourcePictures.scala	media
 server:server/plugins/RelinkPlugins.scala	util.plugins
 server:server/views/EventCardView.scala	server
 server:server/views/PlaceCardView.scala	server

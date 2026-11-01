@@ -134,30 +134,13 @@ final class HttpApi(
     Api.activity.serverLogic[Identity]((show, since, goal, limit, before) =>
       h.activity.page(show, since, goal, limit, before)
     ),
-    Api.jobs.serverLogic[Identity]((f, limit, before, upTo) => h.ingest.jobsPage(f, limit, before, upTo)),
-    Api.assets.serverLogicSuccess[Identity](ck => h.ingest.assets(ck)),
-    Api.putAssets.serverLogic[Identity]((ck, in) => h.ingest.putAssets(ck, in)),
-    Api.assetDetail.serverLogic[Identity]((ck, name) => h.assetDetail(ck, name)),
-    Api.patchAsset.serverLogic[Identity]((ck, name, p) => h.patchAsset(ck, name, p)),
-    Api.asset.serverLogic[Identity]((ck, name) => h.ingest.asset(ck, name)),
-    // media geo + asset links (1.6)
-    Api.mediaGeo.serverLogicSuccess[Identity](q => h.mediaGeo(q)),
-    Api.assetLinks.serverLogicSuccess[Identity]((ck, a, tt, ti) => h.listAssetLinks(ck, a, tt, ti)),
-    Api.createAssetLink.serverLogic[Identity](in => h.createAssetLink(in)),
-    Api.deleteAssetLink.serverLogic[Identity](id => h.deleteAssetLink(id)),
-    // media from outside providers (#1446): the fixed paths before `media/{uid}`
-    Api.mediaFacets.serverLogicSuccess[Identity](_ => h.media.facets),
-    Api.mediaProviders.serverLogicSuccess[Identity](_ => h.media.providers),
-    Api.mediaImport.serverLogic[Identity](req => h.media.importMedia(req)),
-    Api.mediaImportJob.serverLogic[Identity](req => h.media.importJob(req)),
-    Api.mediaCovers.serverLogic[Identity](req => h.media.covers(req)),
-    Api.mediaCoversJob.serverLogic[Identity](req => h.media.coversJob(req)),
-    Api.putSourceCover.serverLogic[Identity]((p, bytes) => h.media.putCover(p, bytes)),
-    Api.fillFigureLicences.serverLogic[Identity](apply => h.media.fillLicences(apply)),
-    Api.mediaList.serverLogicSuccess[Identity](q => h.media.list(q)),
-    Api.mediaShow.serverLogic[Identity](uid => h.media.show(uid)),
-    Api.mediaThumb.serverLogic[Identity](uid => h.media.thumb(uid)),
-    Api.mediaFile.serverLogic[Identity](uid => h.media.file(uid))
+    Api.jobs.serverLogic[Identity]((f, limit, before, upTo) => h.ingest.jobsPage(f, limit, before, upTo))
+  ) ++ com.histmersion.domain.media.MediaRoutes(
+    h.media.assets,
+    h.media.links,
+    h.media.imports,
+    h.media.covers,
+    h.media.figures
   )
 
   // ── the HTML source page (typed page model → HtmlRender; the Markdown in core is for MCP/CLI) ──
@@ -235,20 +218,6 @@ final class HttpApi(
   private val static: ServerEndpoint[Any, Identity] =
     staticResourcesGetServerEndpoint[Identity]("web")(classOf[HttpApi].getClassLoader, "web")
 
-  // ── IIIF Image API Level 1 (plan §4.3) ───────────────────────────────────────────────────────
-
-  private def baseUrl = deps.cfg.server.publicUrl.stripSuffix("/")
-
-  private val iiifInfoRoute: ServerEndpoint[Any, Identity] =
-    Api.iiifInfo.serverLogic[Identity] { (ck, name) =>
-      IiifHandler.info(deps.ds, ck, name, baseUrl)
-    }
-
-  private val iiifImageRoute: ServerEndpoint[Any, Identity] =
-    Api.iiifImage.serverLogic[Identity] { (ck, name, region, size, rotation, filename) =>
-      IiifHandler.image(deps.ds, ck, name, region, size, rotation, filename)
-    }
-
   // Articles (2.7), ops (2.8) and acquisition (2.6) live in their own files; their routes are appended here.
   private val acquireRoutes = com.histmersion.server.acquire.AcquireRoutes(acquire, collections).endpoints ++
     com.histmersion.domain.library.collections.CollectionsRoutes(collections)
@@ -265,7 +234,8 @@ final class HttpApi(
           h.agents.managing,
           com.histmersion.server.agents.TransitionRoutes.acquisition(h)
         ) ++ acquireRoutes ++
-      List(iiifInfoRoute, iiifImageRoute, sourcePage, static, apiNotFound, index)
+      com.histmersion.domain.media.assets.IiifRoutes(h.media.iiif) ++
+      List(sourcePage, static, apiNotFound, index)
 
 /** Pure helpers for the article pages. */
 object Article:

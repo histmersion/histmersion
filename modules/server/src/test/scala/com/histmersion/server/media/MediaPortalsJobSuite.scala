@@ -1,5 +1,8 @@
 package com.histmersion.server.media
 
+import com.histmersion.domain.media.imports.ImportFixtures
+import com.histmersion.server.MediaWiring
+
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
 import ox.supervised
@@ -8,7 +11,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.{MediaRole, PlaceKind}
-import com.histmersion.db.{Db, MediaRepo, Migrate}
+import com.histmersion.db.{Db, Migrate}
 import com.histmersion.db.given
 import com.histmersion.server.Composition
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
@@ -191,20 +194,23 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
     "the Pleiades ids and gazetteer ids places carry; the places on the map an id names; the Pleiades import's targets"
   ):
     assertEquals(
-      MediaRepo.pleiadesIds(ds, Ids),
+      ImportFixtures.pleiadesIds(ds, Ids),
       Map("zqmp_site" -> List("99900001"), "pleiades_99900002" -> List("99900002")),
       "a close match is not an id"
     )
-    val own = MediaRepo.placeExternalIds(ds, Ids)
+    val own = ImportFixtures.placeExternalIds(ds, Ids)
     assertEquals(own.get("zqmp_site"), Some(Set("pleiades" -> "99900001", "geonames" -> "99900009")))
     assert(own.get("pleiades_99900002").exists(_.contains("pleiades" -> "99900002")), own.toString)
     val byId =
-      MediaRepo.mapPlacesWithIds(ds, List("pleiades" -> "99900001", "pleiades" -> "99900002", "pleiades" -> "99900003"))
+      ImportFixtures.mapPlacesWithIds(
+        ds,
+        List("pleiades" -> "99900001", "pleiades" -> "99900002", "pleiades" -> "99900003")
+      )
     assertEquals(
       byId.view.mapValues(_.map(_.id)).toMap,
       Map(("pleiades", "99900001") -> List("zqmp_site"), ("pleiades", "99900002") -> List("pleiades_99900002"))
     )
-    val ts = MediaRepo
+    val ts = ImportFixtures
       .collectionTargets(
         ds,
         MediaProvider.Pleiades,
@@ -220,7 +226,7 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
       .toSet
     assert(Set("zqmp_site", "pleiades_99900002").subsetOf(ts), ts.toString)
     assert(!ts.contains("zqmp_region"))
-    val none = MediaRepo.collectionTargets(
+    val none = ImportFixtures.collectionTargets(
       ds,
       MediaProvider.Pleiades,
       places = true,
@@ -231,13 +237,13 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
       pleiadesOnly = true
     )
     assert(none.left.exists(_.contains("no Pleiades id")), none.toString)
-    assert(MediaRepo.collectionPending(ds, MediaProvider.Pleiades, places = true, pleiadesOnly = true) >= 2)
+    assert(ImportFixtures.collectionPending(ds, MediaProvider.Pleiades, places = true, pleiadesOnly = true) >= 2)
 
   test(
     "Open Context and Pleiades through the server: a dry run's reason, both jobs storing with the basis on the link"
   ):
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0, MediaHandlers.NoThumbnails, plugins = plugins).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0, MediaWiring.NoThumbnails, plugins = plugins).start()
       val url = s"http://127.0.0.1:${b.port}"
       def job(body: String): JobInfo =
         val (js, jb) = post(s"$url/api/media/import/job", body)

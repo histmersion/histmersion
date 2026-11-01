@@ -1,11 +1,19 @@
 package com.histmersion.server.media
 
+import com.histmersion.domain.media.imports.SearchedCollection
+import com.histmersion.domain.media.imports.MediaStore
+import com.histmersion.domain.media.imports.CollectionImport
+import com.histmersion.domain.media.imports.PlaceFacts
+import com.histmersion.domain.media.imports.Target
+import com.histmersion.domain.media.assets.ProviderAsset
+import com.histmersion.domain.media.assets.Known
+import com.histmersion.domain.media.assets.Rights
+
 import com.histmersion.pluginhost.HttpAnswer
 
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.MediaRepo.{Known, PlaceFacts, ProviderAsset, Rights, Target}
 import com.histmersion.util.ocr.ConverterClient
 import com.histmersion.plugin.MediaCollection
 import com.histmersion.values.MediaRole
@@ -91,7 +99,7 @@ class CollectionsSuite extends munit.FunSuite:
   private val cfg = FakeMediaHttp.cfg
 
   private def run(
-      col: Collection,
+      col: SearchedCollection,
       http: FakeMediaHttp,
       targets: List[Target],
       dryRun: Boolean,
@@ -276,11 +284,12 @@ class CollectionsSuite extends munit.FunSuite:
 
   test("a name naming the place's equivalents (same item, or within same-site-km) is not ambiguous; another place is"):
     val far = PlaceFacts("other_mycenae", "Mycenae", Set("mycenae"), None, None, Some(10.0), Some(10.0))
-    val r1 = Collection.resolveFor(mycenae, named, 3.0)("mycenae")
+    val r1 = SearchedCollection.resolveFor(mycenae, named, 3.0)("mycenae")
     assertEquals(r1, Set("pleiades_570491"))
-    val r2 = Collection.resolveFor(mycenae, named.updated("mycenae", List(mycenae, mycenaeGn, far)), 3.0)("mycenae")
+    val r2 =
+      SearchedCollection.resolveFor(mycenae, named.updated("mycenae", List(mycenae, mycenaeGn, far)), 3.0)("mycenae")
     assertEquals(r2, Set("pleiades_570491", "other_mycenae"))
-    assert(Collection.distanceKm(37.73, 22.756, 37.731, 22.757) < 0.2)
+    assert(SearchedCollection.distanceKm(37.73, 22.756, 37.731, 22.757) < 0.2)
 
   // ── roles ────────────────────────────────────────────────────────────────────────────────────
 

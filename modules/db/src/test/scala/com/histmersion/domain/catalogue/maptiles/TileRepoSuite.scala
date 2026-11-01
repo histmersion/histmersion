@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.maptiles
 
+import com.histmersion.domain.media.assets.AssetFixtures
+
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
 import com.histmersion.domain.catalogue.places.PlaceScope
@@ -310,13 +312,13 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
     def media(window: Option[(Long, Long)], license: Option[String] = None) =
       connect(ds)(
         TileRepo.cells(
-          MediaRepo.tileCandidates(None, Some("zztile"), license, window, TileRepo.envelope(c)),
+          AssetFixtures.tileCandidates(None, Some("zztile"), license, window, TileRepo.envelope(c)),
           c,
           grid
         )
       )
         .filter(_.isItem)
-        .flatMap(x => MediaRepo.geoOf(ds, List(x.key)).values.map(_.assetName))
+        .flatMap(x => AssetFixtures.geoOf(ds, List(x.key)).values.map(_.assetName))
         .toSet
     assertEquals(media(Some((-1250L, -1250L))), Set("Zz one"))
     assertEquals(media(None), Set("Zz one", "Zz two"))

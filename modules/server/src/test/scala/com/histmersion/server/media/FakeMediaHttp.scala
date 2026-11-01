@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.domain.media.imports.{BuiltinMedia, PluginCollection}
+
 import com.histmersion.server.ServerPlugins
 
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport, Polite}

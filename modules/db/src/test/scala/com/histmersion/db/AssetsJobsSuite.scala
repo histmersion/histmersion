@@ -1,5 +1,9 @@
 package com.histmersion.db
 
+import com.histmersion.domain.media.assets.AssetFixtures
+import com.histmersion.domain.media.links.AssetLinkFixtures
+import com.histmersion.domain.media.assets.NewFigure
+
 import com.histmersion.util.jobs.JobRepo
 
 import com.histmersion.api.*
@@ -47,107 +51,107 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
 
   test("assets round-trip: write, list, read back the exact bytes"):
     seed()
-    val n = AssetRepo.replace(
+    val n = AssetFixtures.replace(
       ds,
       ck,
       List(
-        AssetRepo.Stored("a.png", "image/png", png(1), Some(10), Some(20)),
-        AssetRepo.Stored("b.png", "image/png", png(2), None, None)
+        NewFigure("a.png", "image/png", png(1), Some(10), Some(20)),
+        NewFigure("b.png", "image/png", png(2), None, None)
       )
     )
     assertEquals(n, 2)
-    val listed = AssetRepo.list(ds, ck)
+    val listed = AssetFixtures.list(ds, ck)
     assertEquals(listed.map(_.name).toList, List("a.png", "b.png"))
     assertEquals(listed.head.width, Some(10))
     assertEquals(listed.head.bytes, png(1).length)
-    val (mime, bytes) = AssetRepo.read(ds, ck, "a.png").get
+    val (mime, bytes) = AssetFixtures.read(ds, ck, "a.png").get
     assertEquals(mime, "image/png")
     assertEquals(bytes.toList, png(1).toList)
-    assertEquals(AssetRepo.read(ds, ck, "nope.png"), None)
+    assertEquals(AssetFixtures.read(ds, ck, "nope.png"), None)
 
   test("identical pictures are stored once (sha256 dedupe), different ones are not"):
     seed()
-    val n = AssetRepo.replace(
+    val n = AssetFixtures.replace(
       ds,
       ck,
       List(
-        AssetRepo.Stored("page1-logo.png", "image/png", png(7), None, None),
-        AssetRepo.Stored("page2-logo.png", "image/png", png(7), None, None), // same bytes
-        AssetRepo.Stored("plot.png", "image/png", png(8), None, None)
+        NewFigure("page1-logo.png", "image/png", png(7), None, None),
+        NewFigure("page2-logo.png", "image/png", png(7), None, None), // same bytes
+        NewFigure("plot.png", "image/png", png(8), None, None)
       )
     )
     assertEquals(n, 2)
-    assertEquals(AssetRepo.list(ds, ck).map(_.name).toList, List("page1-logo.png", "plot.png"))
+    assertEquals(AssetFixtures.list(ds, ck).map(_.name).toList, List("page1-logo.png", "plot.png"))
 
   test("replace clears the previous set; add keeps it"):
     seed()
-    AssetRepo.replace(ds, ck, List(AssetRepo.Stored("old.png", "image/png", png(1), None, None)))
-    AssetRepo.add(ds, ck, List(AssetRepo.Stored("new.png", "image/png", png(2), None, None)))
-    assertEquals(AssetRepo.list(ds, ck).map(_.name).toList, List("new.png", "old.png"))
-    AssetRepo.replace(ds, ck, List(AssetRepo.Stored("only.png", "image/png", png(3), None, None)))
-    assertEquals(AssetRepo.list(ds, ck).map(_.name).toList, List("only.png"))
+    AssetFixtures.replace(ds, ck, List(NewFigure("old.png", "image/png", png(1), None, None)))
+    AssetFixtures.add(ds, ck, List(NewFigure("new.png", "image/png", png(2), None, None)))
+    assertEquals(AssetFixtures.list(ds, ck).map(_.name).toList, List("new.png", "old.png"))
+    AssetFixtures.replace(ds, ck, List(NewFigure("only.png", "image/png", png(3), None, None)))
+    assertEquals(AssetFixtures.list(ds, ck).map(_.name).toList, List("only.png"))
 
   test("a re-conversion keeps each asset's uid and links: same name in place, a moved picture renamed (#826)"):
     seed()
     connectForTest(s"DELETE FROM assets WHERE citekey = '$ck'")
-    AssetRepo.replace(
+    AssetFixtures.replace(
       ds,
       ck,
       List(
-        AssetRepo.Stored("fig-1.png", "image/png", png(1), None, None),
-        AssetRepo.Stored("fig-2.png", "image/png", png(2), None, None),
-        AssetRepo.Stored("fig-3.png", "image/png", png(3), None, None)
+        NewFigure("fig-1.png", "image/png", png(1), None, None),
+        NewFigure("fig-2.png", "image/png", png(2), None, None),
+        NewFigure("fig-3.png", "image/png", png(3), None, None)
       )
     )
     import com.augustnagro.magnum.*
     def uid(name: String) =
       connect(ds)(sql"SELECT uid::text FROM assets WHERE citekey = $ck AND name = $name".query[String].run().headOption)
-    def links = AssetLinkRepo.list(ds, Some(ck), None, None, None).links.map(l => l.assetName -> l.targetId).sorted
+    def links = AssetLinkFixtures.list(ds, Some(ck), None, None, None).links.map(l => l.assetName -> l.targetId).sorted
     val (u1, u2) = (uid("fig-1.png"), uid("fig-2.png"))
-    AssetLinkRepo
+    AssetLinkFixtures
       .create(ds, AssetLinkPut(ck, "fig-1.png", "depicts", "place", "hattusa"))
       .fold(e => fail(e.message), _ => ())
-    AssetLinkRepo
+    AssetLinkFixtures
       .create(ds, AssetLinkPut(ck, "fig-2.png", "depicts", "place", "troy"))
       .fold(e => fail(e.message), _ => ())
-    AssetLinkRepo
+    AssetLinkFixtures
       .create(ds, AssetLinkPut(ck, "fig-3.png", "depicts", "place", "mycenae"))
       .fold(e => fail(e.message), _ => ())
     // re-OCR: fig-1 re-rendered under its name, fig-2's picture now numbered fig-4, fig-3 gone
-    AssetRepo.replace(
+    AssetFixtures.replace(
       ds,
       ck,
       List(
-        AssetRepo.Stored("fig-1.png", "image/png", png(11), None, None),
-        AssetRepo.Stored("fig-4.png", "image/png", png(2), None, None)
+        NewFigure("fig-1.png", "image/png", png(11), None, None),
+        NewFigure("fig-4.png", "image/png", png(2), None, None)
       )
     )
-    assertEquals(AssetRepo.list(ds, ck).map(_.name).toList, List("fig-1.png", "fig-4.png"))
+    assertEquals(AssetFixtures.list(ds, ck).map(_.name).toList, List("fig-1.png", "fig-4.png"))
     assertEquals(uid("fig-1.png"), u1, "re-rendered at the same name: the same asset")
-    assertEquals(AssetRepo.read(ds, ck, "fig-1.png").map(_._2.toList), Some(png(11).toList))
+    assertEquals(AssetFixtures.read(ds, ck, "fig-1.png").map(_._2.toList), Some(png(11).toList))
     assertEquals(uid("fig-4.png"), u2, "the same picture under a new name: renamed, not replaced")
     assertEquals(links, List("fig-1.png" -> "hattusa", "fig-4.png" -> "troy"))
 
   test("assets die with their source (ON DELETE CASCADE)"):
     seed()
-    AssetRepo.replace(ds, ck, List(AssetRepo.Stored("x.png", "image/png", png(1), None, None)))
+    AssetFixtures.replace(ds, ck, List(NewFigure("x.png", "image/png", png(1), None, None)))
     connectForTest(s"DELETE FROM sources WHERE citekey = '$ck'")
-    assertEquals(AssetRepo.count(ds, ck), 0)
+    assertEquals(AssetFixtures.count(ds, ck), 0)
 
   test("the upload digest is stored on the source and finds it again"):
     seed()
-    val sha = AssetRepo.sha256(png(9))
-    AssetRepo.setSha256(ds, ck, sha)
-    assertEquals(AssetRepo.sha256Of(ds, ck), Some(sha))
-    assertEquals(AssetRepo.citekeyOfSha256(ds, sha), Some(ck))
-    assertEquals(AssetRepo.citekeyOfSha256(ds, "0" * 64), None)
+    val sha = NewFigure.sha256(png(9))
+    SourceRepo.setSha256(ds, ck, sha)
+    assertEquals(SourceRepo.sha256Of(ds, ck), Some(sha))
+    assertEquals(SourceRepo.citekeyOfSha256(ds, sha), Some(ck))
+    assertEquals(SourceRepo.citekeyOfSha256(ds, "0" * 64), None)
 
   test("a body write does NOT clear the stored digest (put preserves sources.sha256)"):
     seed()
-    val sha = AssetRepo.sha256(png(4))
-    AssetRepo.setSha256(ds, ck, sha)
+    val sha = NewFigure.sha256(png(4))
+    SourceRepo.setSha256(ds, ck, sha)
     SourceRepo.upsert(ds, source(Some("new body")), AppConfig.load().limits.chunkChars)
-    assertEquals(AssetRepo.sha256Of(ds, ck), Some(sha), "reocr depends on this pointer surviving")
+    assertEquals(SourceRepo.sha256Of(ds, ck), Some(sha), "reocr depends on this pointer surviving")
 
   // ── jobs ───────────────────────────────────────────────────────────────────────────────────
   test("job lifecycle: queued → running → done, with progress"):

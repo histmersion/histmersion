@@ -1,14 +1,21 @@
 package com.histmersion.server.media
 
+import com.histmersion.domain.media.imports.MediaStore
+import com.histmersion.domain.media.imports.CollectionImport
+import com.histmersion.domain.media.imports.OwnImport
+import com.histmersion.domain.media.imports.PlaceFacts
+import com.histmersion.domain.media.imports.Target
+import com.histmersion.domain.media.assets.ProviderAsset
+import com.histmersion.domain.media.assets.Known
+import com.histmersion.domain.media.assets.Rights
+
 import com.histmersion.domain.catalogue.places.ExternalIds
 
-import com.histmersion.domain.media.OwnImport
 import com.histmersion.pluginhost.HttpAnswer
 
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.MediaRepo.{Known, PlaceFacts, ProviderAsset, Rights, Target}
 import com.histmersion.util.ocr.ConverterClient
 import com.histmersion.values.MediaRole
 

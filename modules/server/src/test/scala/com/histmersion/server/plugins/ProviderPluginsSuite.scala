@@ -13,7 +13,7 @@ import com.histmersion.domain.media.imports.MediaRecord
 import com.histmersion.plugin.*
 import com.histmersion.domain.catalogue.places.BuiltinGazetteers
 import com.histmersion.domain.catalogue.events.BuiltinCatalogues
-import com.histmersion.server.media.{BuiltinMedia, MediaImporters, PluginCollection}
+import com.histmersion.domain.media.imports.{BuiltinMedia, MediaImporters, PluginCollection}
 import com.histmersion.server.agents.BuiltinAi
 import com.histmersion.api.VocabularyCodecs.given
 import org.ekrich.config.ConfigFactory

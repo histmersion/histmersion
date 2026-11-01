@@ -1,5 +1,9 @@
 package com.histmersion.db
 
+import com.histmersion.domain.media.assets.AssetFixtures
+import com.histmersion.domain.media.links.AssetLinkFixtures
+import com.histmersion.domain.media.assets.NewFigure
+
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
 import com.histmersion.domain.catalogue.events.*
@@ -176,15 +180,15 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     SourceRepo.load(ds, A1).foreach(s => put(ds, s.copy(findings = s.findings.filterNot(_.id == s"$A1#3"))))
     val _ =
       AcquireRepo.putAssessment(ds, A1, "current", false, """{"notices":[{"kind":"x","n":1}]}""", Some(12), Some(3))
-    val _ = AssetRepo.add(
+    val _ = AssetFixtures.add(
       ds,
       A1,
       List(
-        AssetRepo.Stored("fig1.png", "image/png", Png, None, None),
-        AssetRepo.Stored("fig2.png", "image/png", Png :+ 7.toByte, Some(2), Some(3))
+        NewFigure("fig1.png", "image/png", Png, None, None),
+        NewFigure("fig2.png", "image/png", Png :+ 7.toByte, Some(2), Some(3))
       )
     )
-    val _ = AssetMetaRepo.patch(
+    val _ = AssetFixtures.patch(
       ds,
       A1,
       "fig1.png",
@@ -197,7 +201,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
       )
     )
     val _ =
-      AssetLinkRepo.create(ds, AssetLinkPut(A1, "fig1.png", "depicts", "finding", s"$A1#0", xywh = Some("0,0,1,1")))
+      AssetLinkFixtures.create(ds, AssetLinkPut(A1, "fig1.png", "depicts", "finding", s"$A1#0", xywh = Some("0,0,1,1")))
     val _ = AttestationRows.create(
       ds,
       AttestationPut(
@@ -213,7 +217,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
       )
     )
     val sha = BundleFormat.sha256Hex(OriginalBytes)
-    AssetRepo.setSha256(ds, A1, sha)
+    SourceRepo.setSha256(ds, A1, sha)
     Files.write(Files.createDirectories(originals).resolve(s"$sha.pdf"), OriginalBytes)
     val _ = ArticleRepo.put(ds, Article("zzb_topic", "Topic", "concept", s"First draft citing [[$A1]].", Some("v1")))
     val _ = ArticleRepo.put(

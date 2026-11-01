@@ -26,7 +26,12 @@ class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
       def health = Right("ok")
       def convert(file: com.histmersion.util.storage.Blob, filename: String, quality: Boolean) =
         Right(ConvertedDoc(markdown = "# Fixture\n\nOCR succeeded.", pages = 1, images = Nil))
-    val handler = IngestHandlers(Deps(cfg, ds), converter)
+    val handler =
+      IngestHandlers(
+        Deps(cfg, ds),
+        converter,
+        com.histmersion.domain.media.assets.AssetService(Deps(cfg, ds).transactor)
+      )
     val key = "zz_ingest_queue_failure"
     val item = QueueRows.add(ds, Queue.Kind.Acquire, Queue.QueueAdd(text = key))
     val pdf = Files.createTempFile("ingest-queue-upload", ".pdf")

@@ -998,6 +998,31 @@ object SourceRepo:
             ORDER BY min(ord)""".query[TocEntry].run().toList
 
   /** Full body text: chunks concatenated in ord order, or raw ocr_markdown when unchunked. */
+  /** A source's converted text as stored — where its figures are linked from. */
+  def markdown(ds: DataSource, citekey: String): String =
+    connect(ds):
+      sql"SELECT coalesce(ocr_markdown, '') FROM sources WHERE citekey = $citekey"
+        .query[String]
+        .run()
+        .headOption
+        .getOrElse("")
+
+  // ── the uploaded ORIGINAL's digest, on `sources.sha256` (V001 already has the column) ─────────
+
+  /** The citekey that already holds this upload, if any — `POST /api/ingest` refuses a duplicate with it unless `force`
+    * (plan §1.8).
+    */
+  def citekeyOfSha256(ds: DataSource, sha: String): Option[String] =
+    connect(ds):
+      sql"SELECT citekey FROM sources WHERE sha256 = $sha ORDER BY citekey LIMIT 1".query[String].run().headOption
+
+  def setSha256(ds: DataSource, citekey: String, sha: String): Unit =
+    val _ = transact(ds)(sql"UPDATE sources SET sha256 = $sha WHERE citekey = $citekey".update.run())
+
+  def sha256Of(ds: DataSource, citekey: String): Option[String] =
+    connect(ds):
+      sql"SELECT sha256 FROM sources WHERE citekey = $citekey".query[Option[String]].run().headOption.flatten
+
   def bodyText(ds: DataSource, citekey: String): String =
     connect(ds):
       val chunks = sql"""SELECT body FROM source_chunks

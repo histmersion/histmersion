@@ -1,5 +1,7 @@
 package com.histmersion.files
 
+import com.histmersion.domain.media.covers.{CoverChoice, OpenLibrary}
+
 /** Where a book's cover comes from ([[CoverChoice]], [[OpenLibrary]]). */
 class CoverChoiceSuite extends munit.FunSuite:
 

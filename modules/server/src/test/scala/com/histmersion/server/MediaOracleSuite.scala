@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.domain.media.imports.BuiltinMedia
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.db.*
@@ -7,7 +9,7 @@ import com.histmersion.domain.{Attribution, Licence, LicenceFamily}
 import com.histmersion.values.LicenceId
 import com.histmersion.pluginhost.{HostLicences, HttpAnswer, PluginMedia}
 import com.histmersion.plugin as spi
-import com.histmersion.server.media.{BuiltinMedia, FakeMediaHttp, MediaHandlers, MediaWire}
+import com.histmersion.server.media.{FakeMediaHttp, MediaWire}
 import com.augustnagro.magnum.*
 import io.circe.{parser, Json}
 import io.circe.syntax.*
@@ -954,13 +956,13 @@ class MediaOracleSuite extends DbSuite:
       ConfigFactory.parseString(MediaWire.text + "histmersion.plugins.zq-own.enabled = true\n"),
       ConfigFactory.parseMap(scala.jdk.CollectionConverters.MapHasAsJava(MediaWire.env).asJava)
     )
-    val handlers = MediaHandlers(Deps(loaded.config, ds, ds, plugins = plugins), wire, MediaWire.Thumbs())
+    val handlers = MediaWiring(Deps(loaded.config, ds, ds, plugins = plugins), wire, MediaWire.Thumbs())
     def report(r: Either[ApiError, MediaImportReport]): String =
       r.fold(e => s"refused: ${e.message}\n", r => s"report: ${r.asJson.spaces2SortKeys}\n")
     def run(name: String, req: MediaImportRequest): Unit =
-      val r = handlers.importMedia(req)
+      val r = handlers.imports.importMedia(req)
       sb ++= s"## $name\n" + wire.take() + report(r)
-    sb ++= s"providers: ${handlers.providers.asJson.spaces2SortKeys}\n"
+    sb ++= s"providers: ${handlers.imports.providers.asJson.spaces2SortKeys}\n"
     val builtins = List(
       ("wikidata", Some("pleiades_570491"), None),
       ("wikidata", None, Some("fall_of_x")),
@@ -1002,7 +1004,7 @@ class MediaOracleSuite extends DbSuite:
          FROM sources WHERE citekey IN ('zqol2000_a', 'zqol2000_b')"""
     )
     def covers(name: String, req: MediaCoversRequest): Unit =
-      val r = handlers.covers(req)
+      val r = handlers.covers.covers(req)
       sb ++= s"## covers: $name\n" + wire.take() +
         r.fold(e => s"refused: ${e.message}\n", r => s"report: ${r.asJson.spaces2SortKeys}\n")
     covers("dry run", MediaCoversRequest(dryRun = true, illustrations = false))

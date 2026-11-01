@@ -1,5 +1,8 @@
 package com.histmersion.db
 
+import com.histmersion.domain.media.assets.AssetFixtures
+import com.histmersion.domain.media.assets.NewFigure
+
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
@@ -151,7 +154,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     )
 
   private def png(n: Byte): Array[Byte] = Array[Byte](0x89.toByte, 'P', 'N', 'G', 13, 10, 26, 10, n, n, n)
-  private def asset(name: String, n: Byte) = AssetRepo.Stored(name, "image/png", png(n), None, None)
+  private def asset(name: String, n: Byte) = NewFigure(name, "image/png", png(n), None, None)
   private def attest(ds: DataSource, ck: String, quote: String, target: String): Unit =
     val _ = AttestationRows.create(
       ds,
@@ -215,7 +218,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       )
     )
     // one figure as home's (the same bytes), one new, one whose name home uses for another figure
-    val _ = AssetRepo.add(
+    val _ = AssetFixtures.add(
       work,
       "guterbock1997_perspectives",
       List(asset("fig1.png", 1), asset("fig2.png", 2), asset("fig3.png", 4))
@@ -231,7 +234,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         body = Some("Kuhrt body, work's OCR")
       )
     )
-    AssetRepo.setSha256(work, "kuhrt1995_near", kuhrtSha)
+    SourceRepo.setSha256(work, "kuhrt1995_near", kuhrtSha)
     // one passage home's body has too (it moves), one only work's has (it cannot)
     attest(work, "kuhrt1995_near", "Kuhrt body", "zz_found")
     attest(work, "kuhrt1995_near", "work's OCR", "zz_lost")
@@ -318,7 +321,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         edges = List("page1959_history" -> "references")
       )
     )
-    val _ = AssetRepo.add(home, "guterbock1997_hittite", List(asset("fig1.png", 1), asset("fig3.png", 3)))
+    val _ = AssetFixtures.add(home, "guterbock1997_hittite", List(asset("fig1.png", 1), asset("fig3.png", 3)))
     put(
       home,
       src(
@@ -330,7 +333,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         body = Some("Preface. Kuhrt body, home's OCR")
       )
     )
-    AssetRepo.setSha256(home, "kuhrt1995_ancient", kuhrtSha)
+    SourceRepo.setSha256(home, "kuhrt1995_ancient", kuhrtSha)
     // home's own attestation: should the merge take work's body, it could not move
     attest(home, "kuhrt1995_ancient", "home's OCR", "zz_home")
     put(
@@ -686,7 +689,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(gf.exists(_.claim == "Hattusa burned around 1180 BC"))
     // figures: the same bytes are one, a taken name gets work's label
     assertEquals(
-      AssetRepo.list(home, "guterbock1997_hittite").map(_.name).toList.sorted,
+      AssetFixtures.list(home, "guterbock1997_hittite").map(_.name).toList.sorted,
       List("fig1.png", "fig2.png", "fig3-work.png", "fig3.png")
     )
     // edges: re-pointed through the merge, ours kept, the parked one carried
