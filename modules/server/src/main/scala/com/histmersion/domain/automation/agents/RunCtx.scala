@@ -25,6 +25,9 @@ import scala.jdk.CollectionConverters.*
   */
 final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
   private val ds = engine.ds
+
+  /** The approvals a run's steps open and wait on (and a pipeline records). */
+  def approvalStore: com.histmersion.domain.automation.agents.ApprovalService = engine.agents.approvalStore
   private val cfg = engine.cfg
 
   /** The next step's number. A `var` because the pipeline is straight-line code calling steps in order; the counter IS
@@ -205,7 +208,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
         def waitFor(a: ApprovalInfo): Either[Halt, Decided] =
           progress(s"$name: waiting for approval ${a.id}")
           Left(Halt.Wait(a.id, s"$name: approval ${a.id} waits for a person"))
-        AgentRepo.forStep(ds, run.id, seq) match
+        approvalStore.forStep(run.id, seq) match
           case Some(a) if a.state == ApprovalState.Open.wire => waitFor(a)
           case Some(a) => done(Decided(a.state == ApprovalState.Approved.wire, a.id, a.note))
           case None    =>
@@ -240,8 +243,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                 skipped.add(WouldWrite(s"${kind.wire} approval for $subject (treated as approved)", json))
                 done(Decided(approved = true, 0L, Some(Engine.DryRunApproval)))
               case Right(json) if mode == ApprovalMode.Auto =>
-                val a = AgentRepo.openForStep(
-                  ds,
+                val a = approvalStore.openForStep(
                   run.id,
                   seq,
                   kind,
@@ -251,7 +253,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                   Some("approved automatically (agents.approvals)")
                 )
                 done(Decided(approved = true, a.id))
-              case Right(json) => waitFor(AgentRepo.openForStep(ds, run.id, seq, kind, subject, json))
+              case Right(json) => waitFor(approvalStore.openForStep(run.id, seq, kind, subject, json))
       }
     }
 

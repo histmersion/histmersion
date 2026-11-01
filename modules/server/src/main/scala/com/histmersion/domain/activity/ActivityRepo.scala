@@ -2,7 +2,7 @@ package com.histmersion.domain.activity
 
 import com.histmersion.api.Activity
 import com.histmersion.api.Activity.{Entry, Show}
-import com.histmersion.db.{AgentRepo, Param, Sql}
+import com.histmersion.db.{Param, Sql}
 
 import com.augustnagro.magnum.*
 
@@ -84,7 +84,7 @@ private[activity] object ActivityRepo:
                 NULL::timestamptz, coalesce(rj.goal_slug, CASE WHEN a.kind = 'goal-plan' THEN a.subject END), a.job_id,
                 NULL, a.citekey, CASE WHEN a.kind IN ('article-publish', 'article-filter') THEN a.subject END,
                 NULL, NULL, a.id, a.target, NULL
-           FROM (SELECT * FROM approvals WHERE decided_at IS NOT NULL AND ${AgentRepo.decidedByExpr} = 'person') a
+           FROM (SELECT * FROM approvals WHERE decided_at IS NOT NULL AND ${com.histmersion.domain.automation.approvals.ApprovalQuery.decidedByExpr} = 'person') a
            LEFT JOIN jobs rj ON rj.id = a.job_id) m"""
 
   private val Projection: String =

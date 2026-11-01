@@ -565,8 +565,7 @@ final class ManagersHandlers(
   /** A model's effect, recorded for a person: an open `hint-effect` approval about the manager. */
   private def proposeEffect(m: ManagerInfo, hintId: Long, text: String, e: HintEffect, by: String): String =
     import io.circe.syntax.*
-    val a = AgentRepo.openSubject(
-      ds,
+    val a = agents.approvalStore.openSubject(
       None,
       ApprovalKind.HintEffect,
       m.id,

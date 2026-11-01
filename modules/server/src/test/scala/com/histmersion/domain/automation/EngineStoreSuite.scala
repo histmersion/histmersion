@@ -1,7 +1,9 @@
 package com.histmersion.domain.automation
 
 import com.histmersion.config.AppConfig
+import com.histmersion.domain.automation.agents.ApprovalService
 import com.histmersion.domain.automation.autopilot.AutopilotRowService
+import com.histmersion.util.jobs.{JobRuns, JobRunState}
 import com.histmersion.domain.automation.goals.{GoalLinkTargets, GoalService}
 import com.histmersion.util.database.Transactor
 import com.histmersion.values.GoalLinkKind
@@ -62,13 +64,15 @@ object EngineStoreSuite:
       val targets = new GoalLinkTargets:
         def title(kind: GoalLinkKind, ref: String): Option[String] = titles.get((kind, ref))
         def queueList(ref: String): Option[String] = None
+      val jobs = JobRuns.InMemory(AtomicReference(Map.empty[String, JobRunState]), () => Instant.now(clock))
       Some(new EngineStores:
         val autopilot = AutopilotRowService.InMemory(state, clock)
         val goals = GoalService.InMemory(state, clock, targets)
+        val approvals = ApprovalService.InMemory(state, jobs, clock)
+        val runs = jobs
         def article(slug: String, title: String): Unit = titles.update((GoalLinkKind.Article, slug), title)
         def source(citekey: String, title: String): Unit = titles.update((GoalLinkKind.Source, citekey), title)
-        def within[A](work: DbCon ?=> A): A = connect(NoDatabase)(work)
-      )
+        def within[A](work: DbCon ?=> A): A = connect(NoDatabase)(work))
 
   /** The stores on a scratch database of their own per test. */
   trait OnDatabase extends EngineStoreSuite:
@@ -88,8 +92,12 @@ object EngineStoreSuite:
         new EngineStores:
           val autopilot = AutopilotRowService(db)
           val goals = GoalService(db)
+          val approvals = ApprovalService(db, Clock.systemUTC())
+          val runs = JobRuns(db)
           def article(slug: String, title: String): Unit =
-            connect(ds)(sql"INSERT INTO articles (slug, title, kind, body) VALUES ($slug, $title, 'concept', '')".update.run()): Unit
+            connect(ds)(
+              sql"INSERT INTO articles (slug, title, kind, body) VALUES ($slug, $title, 'concept', '')".update.run()
+            ): Unit
           def source(citekey: String, title: String): Unit =
             connect(ds)(sql"INSERT INTO sources (citekey, title) VALUES ($citekey, $title)".update.run()): Unit
           def within[A](work: DbCon ?=> A): A = transact(ds)(work)

@@ -9,7 +9,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.{ApprovalKind, Pipeline}
 import com.histmersion.domain.HintProposals.{HintAnswer, Proposed}
 import com.histmersion.api.Managers.*
-import com.histmersion.db.{AgentRepo, ManagerRepo}
+import com.histmersion.db.ManagerRepo
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -26,8 +26,12 @@ import javax.sql.DataSource
   *
   * Steps: load · propose · record · close. A DRY run records the approval it would open.
   */
-final class HintEffectPipeline(workLists: WorkListControllers, ds: DataSource, cfg: => AgentsConfig)
-    extends PipelineDef:
+final class HintEffectPipeline(
+    workLists: WorkListControllers,
+    store: com.histmersion.domain.automation.agents.ApprovalService,
+    ds: DataSource,
+    cfg: => AgentsConfig
+) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.HintEffect
   import HintEffectPipeline.*
 
@@ -98,7 +102,7 @@ final class HintEffectPipeline(workLists: WorkListControllers, ds: DataSource, c
         val hp = HintProposal(l.managerId, l.hint, l.text, e, by, p.why)
         val what = ManagersMarkdown.effect(e)
         ctx.write(s"${ApprovalKind.HintEffect.wire} approval for ${l.managerId} hint #${l.hint}", hp.asJson) {
-          val a = AgentRepo.openSubject(ds, Some(ctx.run.id), ApprovalKind.HintEffect, l.managerId, hp.asJson.noSpaces)
+          val a = store.openSubject(Some(ctx.run.id), ApprovalKind.HintEffect, l.managerId, hp.asJson.noSpaces)
           ManagerRepo.event(
             ds,
             l.managerId,

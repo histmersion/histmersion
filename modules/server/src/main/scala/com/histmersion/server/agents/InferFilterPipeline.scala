@@ -9,7 +9,6 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.{ApprovalKind, ApprovalMode, ApprovalState, Pipeline}
 import com.histmersion.api.ArticlePlans.FilterProposal
 import com.histmersion.domain.FilterInference.{FilterAnswer, Inferred}
-import com.histmersion.db.AgentRepo
 import com.histmersion.server.Handlers
 import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -118,8 +117,7 @@ final class InferFilterPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfi
           case ApprovalMode.Auto =>
             ctx.write(s"record the coverage filter of [[$slug]]", p.asJson)(
               h.patchArticle(slug, ArticlePatch(filter = Some(p.filter))).left.map(_.message).map { _ =>
-                val a = AgentRepo.openSubject(
-                  ds,
+                val a = ctx.approvalStore.openSubject(
                   Some(ctx.run.id),
                   ApprovalKind.ArticleFilter,
                   slug,
@@ -132,7 +130,7 @@ final class InferFilterPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfi
             )(Right(Recorded(None, applied = false, s"filter not recorded (${AgentsMarkdown.DryRunNote}): $what")))
           case ApprovalMode.Manual =>
             ctx.write(s"${ApprovalKind.ArticleFilter.wire} approval for [[$slug]]", p.asJson)(
-              Right(AgentRepo.openSubject(ds, Some(ctx.run.id), ApprovalKind.ArticleFilter, slug, json))
+              Right(ctx.approvalStore.openSubject(Some(ctx.run.id), ApprovalKind.ArticleFilter, slug, json))
                 .map(a => Recorded(Some(a.id), applied = false, s"approval ${a.id} waits for a person: $what"))
             )(Right(Recorded(None, applied = false, s"no approval opened (${AgentsMarkdown.DryRunNote}): $what")))
 

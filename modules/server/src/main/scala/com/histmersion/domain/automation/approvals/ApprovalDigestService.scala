@@ -8,7 +8,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.{ApprovalKind, Decision, DecisionRequest}
 import com.histmersion.api.ApprovalDigest.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.{AgentRepo, ManagerRepo}
+import com.histmersion.db.ManagerRepo
 
 import java.time.Instant
 import javax.sql.DataSource
@@ -30,7 +30,7 @@ final class ApprovalDigestService(
 
   /** The digest as of `now`. */
   def digest(now: Instant = Instant.now(agents.clock)): Digest =
-    val open = AgentRepo.openLight(ds)
+    val open = agents.approvalStore.openLight()
     val wait = agents.focus.goalPlansWait()
     Digest(
       now.toString,
@@ -79,7 +79,7 @@ final class ApprovalDigestService(
             .map(_ => ())
         )
     yield
-      val open = AgentRepo.openLight(ds)
+      val open = agents.approvalStore.openLight()
       val ms = ApprovalDigest.matching(open, b)
       if b.dryRun then BulkResult(d.wire, dryRun = true, ms.size, ms.map(_.id), Nil, open.size)
       else
@@ -88,7 +88,7 @@ final class ApprovalDigestService(
         val done = ms.map(o => o.id -> agents.decide(o.id, d.wire, DecisionRequest(note)))
         val ok = done.collect { case (id, Right(_)) => id }
         val bad = done.collect { case (id, Left(e)) => BulkFailed(id, e.message.take(300)) }
-        val left = AgentRepo.openLight(ds).size
+        val left = agents.approvalStore.openLight().size
         if ok.nonEmpty then
           val what = List(
             b.kind.map(k => s"kind $k"),

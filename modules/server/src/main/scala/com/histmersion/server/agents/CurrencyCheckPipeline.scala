@@ -8,7 +8,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.Pipeline
 import com.histmersion.domain.Scheduling.CurrencyAction
-import com.histmersion.db.AgentRepo
 import com.histmersion.server.Handlers
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
@@ -80,7 +79,7 @@ final class CurrencyCheckPipeline(
         case Right(r) =>
           val acts = r.followups.map(Scheduling.currencyAction(t.citekey, _))
           val proposed = acts.collect { case CurrencyAction.Propose(p) => p }.count { p =>
-            val known = AgentRepo.proposedBefore(ds, p) ||
+            val known = ctx.approvalStore.proposedBefore(p.kind, p.citekey, p.status, p.edgeKind, p.target) ||
               h.neighbors(p.citekey, p.edgeKind.map(EdgeKind.wireOf).toList)
                 .exists(n => n.direction == "out" && p.target.contains(n.citekey))
             !known && (approvals.propose(ctx, p) match

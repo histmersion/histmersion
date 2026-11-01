@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.autopilot
 
-import com.histmersion.domain.automation.{EngineStoreSuite, EngineStores}
+import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
 
 import java.time.Instant
 
@@ -20,7 +20,10 @@ abstract class AutopilotRowServiceContract extends EngineStoreSuite:
     a(s).ensured(t)
     assertEquals(a(s).row().lastEnsureAt, Some("2026-10-20T08:30:00Z"))
     assert(a(s).set(enabled = false, "q", List("seed:x", "watch:x")))
-    assertEquals((a(s).row().enabled, a(s).row().paused, a(s).row().lastEnsureAt), (false, List("seed:x", "watch:x"), None))
+    assertEquals(
+      (a(s).row().enabled, a(s).row().paused, a(s).row().lastEnsureAt),
+      (false, List("seed:x", "watch:x"), None)
+    )
     a(s).unpaused("seed:x")
     assertEquals(a(s).row().paused, List("watch:x"))
     a(s).ensured(t)
@@ -28,7 +31,10 @@ abstract class AutopilotRowServiceContract extends EngineStoreSuite:
     assertEquals(a(s).row().lastEnsureAt, None)
     a(s).backedUp(t)
     a(s).linted(t.plusSeconds(60))
-    assertEquals((a(s).row().lastBackupAt, a(s).row().lastLintAt), (Some("2026-10-20T08:30:00Z"), Some("2026-10-20T08:31:00Z")))
+    assertEquals(
+      (a(s).row().lastBackupAt, a(s).row().lastLintAt),
+      (Some("2026-10-20T08:30:00Z"), Some("2026-10-20T08:31:00Z"))
+    )
   }
 
   stest("a person's strategy is kept with who chose it; cleared, the config's is back") { s =>

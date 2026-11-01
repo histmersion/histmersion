@@ -271,7 +271,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(h.getSource(Ck).toOption.get.source.status, SourceStatus.Unassessed)
     assert(run.warnings.exists(_.contains("status retracted not applied")), run.warnings)
     // the proposal waits in the approvals, not in the backlog (P2); nothing is applied until approved
-    val open = AgentRepo.approvals(ds, Some(ApprovalState.Open), 50).filter(_.citekey == Ck)
+    val open = TestRuns.approvals(ds).approvals(Some(ApprovalState.Open), 50).filter(_.citekey == Ck)
     assertEquals(
       open.map(a => (a.kind, a.status, a.current, a.runId)),
       List(("status-change", Some("retracted"), Some("unassessed"), Some(run.id)))
@@ -418,7 +418,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val run = startAndRun(a)
     assertEquals(run.status, "done", run.error)
     assert(run.warnings.exists(_.contains("RETRACTED")), run.warnings)
-    assertEquals(AgentRepo.approvals(ds, None, 50).filter(_.citekey == Ck), Nil)
+    assertEquals(TestRuns.approvals(ds).approvals(None, 50).filter(_.citekey == Ck), Nil)
 
   test("an acquisition item, fix or rounds on the wrong pipeline is refused before the run is queued"):
     val c = ScriptedClient(Model)
@@ -486,7 +486,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(o.isInstanceOf[SourceProposals.Outcome.Applied], o)
     assertEquals(h.getSource(Ck).toOption.get.source.status, SourceStatus.Debunked)
     assertEquals(
-      AgentRepo.approvals(ds, Some(ApprovalState.Approved), 50).filter(_.citekey == Ck).map(_.status),
+      TestRuns.approvals(ds).approvals(Some(ApprovalState.Approved), 50).filter(_.citekey == Ck).map(_.status),
       List(Some("debunked"))
     )
 
