@@ -1,5 +1,8 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.events.*
+import com.histmersion.domain.catalogue.evidence.*
+
 import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*
@@ -67,12 +70,12 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
               ('zqmd2020_figs#2', 'zqmd_busy'), ('zqmd2020_figs#3', 'zqmd_site'),
               ('zqmd2020_figs#3', 'zqmd_nolink')""".update.run()
         ()
-      EventRepo.put(
+      EventFixtures.put(
         ds,
         "zqmd_battle",
         EventPut("Zqmd battle", "battle", TimeSpan(Some(-1200), None, None, Some(-1190)), placeId = Some("zqmd_site"))
       )
-      val _ = EventRepo.patch(ds, "zqmd_battle", EventPatch(wikidata = Some("Q90000003")))
+      val _ = EventFixtures.patch(ds, "zqmd_battle", EventPatch(wikidata = Some("Q90000003")))
       val png = Array[Byte](-119, 80, 78, 71, 13, 10, 26, 10)
       val _ = AssetRepo.add(
         ds,
@@ -227,15 +230,15 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
   test("an event's card: its Wikidata item and its picture"):
     val (uid, _) = MediaRepo.save(ds, asset("File:Zqmd battle.jpg"), ("event", "zqmd_battle"))
     MediaRepo.link(ds, uid, "event", "zqmd_battle", MediaRole.Image, Some("P18"), Some("Q90000003"), 0)
-    val d = EventRepo.get(ds, "zqmd_battle").get
+    val d = EventFixtures.get(ds, "zqmd_battle").get
     assertEquals(d.wikidata, Some("Q90000003"))
-    assertEquals(d.media.map(_.uid), List(uid))
+    assertEquals(MediaRepo.thumbs(ds, MediaRepo.Event, "zqmd_battle").map(_.uid), List(uid), "its card's picture")
     val refused =
       intercept[Exception](connect(ds)(sql"UPDATE events SET wikidata = 'x1' WHERE id = 'zqmd_battle'".update.run()))
     assert(refused.getMessage.contains("events_wikidata_check"), refused.getMessage)
-    val _ = EventRepo.patch(ds, "zqmd_battle", EventPatch(wikidata = Some("")))
-    assertEquals(EventRepo.get(ds, "zqmd_battle").get.wikidata, None, "\"\" clears it")
-    val _ = EventRepo.patch(ds, "zqmd_battle", EventPatch(wikidata = Some("Q90000003")))
+    val _ = EventFixtures.patch(ds, "zqmd_battle", EventPatch(wikidata = Some("")))
+    assertEquals(EventFixtures.get(ds, "zqmd_battle").get.wikidata, None, "\"\" clears it")
+    val _ = EventFixtures.patch(ds, "zqmd_battle", EventPatch(wikidata = Some("Q90000003")))
 
   test("targets: one place by its exact Wikidata link; one with none or unknown is an error"):
     assertEquals(

@@ -1,5 +1,8 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.events.*
+import com.histmersion.domain.catalogue.evidence.*
+
 import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*
@@ -226,7 +229,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = ArticleRepo.put(ds, Article("zzb_gone", "Gone", "report", "to be deleted"))
     val _ = ArticleRepo.put(ds, Article("zzb_gone", "Gone", "report", "to be deleted, v2"))
     val _ = ArticleRepo.delete(ds, "zzb_gone")
-    EventRepo.put(
+    EventFixtures.put(
       ds,
       "zzb_e1",
       EventPut(
@@ -241,7 +244,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
         participants = List(EventParticipant("zzb_e1", "Hattusili", "ruler", Some(A1)))
       )
     )
-    EventRepo.put(
+    EventFixtures.put(
       ds,
       "zzb_e2",
       EventPut(

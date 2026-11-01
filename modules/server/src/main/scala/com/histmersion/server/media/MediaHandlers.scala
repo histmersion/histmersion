@@ -278,6 +278,9 @@ final class MediaHandlers(deps: Deps, http: HttpTransport, converter: ConverterC
   /** A place's pictures for its card, through its equivalents ([[MediaRepo.placeThumbsIn]]). */
   def placeThumbs(placeId: String): List[MediaThumb] = MediaRepo.placeThumbs(ds, placeId, cfg.media.sameSiteKm)
 
+  /** An event's pictures for its card. */
+  def eventThumbs(eventId: String): List[MediaThumb] = MediaRepo.thumbs(ds, MediaRepo.Event, eventId)
+
   /** A source's picture for its hover card. */
   def sourceThumb(citekey: String): Option[MediaThumb] = MediaRepo.sourceThumb(ds, citekey)
 

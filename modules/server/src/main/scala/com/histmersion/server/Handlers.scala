@@ -37,7 +37,6 @@ import com.histmersion.db.{
   AssetMetaRepo,
   CoverageRepo,
   CritiqueRepo,
-  EventRepo,
   Geocoder,
   GoalRepo,
   Importer,
@@ -119,11 +118,6 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** Media from outside providers (#1446) — same arrangement. Thumbnails come from the converter. */
   val media: com.histmersion.server.media.MediaHandlers = com.histmersion.server.media.MediaHandlers(deps, converter)
-
-  /** Events from catalogues, their links to the corpus and their leads; site types (#1449) — same arrangement.
-    */
-  val catalog: com.histmersion.server.events.EventCatalogHandlers =
-    com.histmersion.server.events.EventCatalogHandlers(deps)
 
   /** Named periods' write path and the first-run `init` job (#719, #720) — same arrangement. */
   val bootstrap: Bootstrap = Bootstrap(deps)
@@ -1059,96 +1053,45 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   // ── events (plan §1.2) ──────────────────────────────────────────────────────────────────────
 
-  /** `GET /api/events` — the events related to the filter's sources (see [[Api.EventQuery]]). */
-  def listEvents(q: Api.EventQuery): EventList =
-    val f = resolve(q.filter)
-    EventRepo.list(ds, f, scopeOf(f), q.text, q.kind, q.historicity, q.placeId, f.limit, f.offset, narrow(q))
-
-  /** What only an event is narrowed by (#1449): tier, the catalogue context, the area of the map. */
-  private def narrow(q: Api.EventQuery): EventRepo.Narrow =
-    EventRepo.Narrow(q.tier.map(_.trim).filter(_.nonEmpty), q.context.getOrElse(false), q.area.flatMap(BBox.parse))
-
-  /** `GET /api/events/leads` — the questions the selected events raise (#1449). */
-  def eventLeads(q: Api.EventQuery): EventLeadList = catalog.leads(q.copy(filter = resolve(q.filter)), scopeOf)
-
-  /** `GET /api/events/geo` — the map's events with their scale, anchor and outline (#1440). */
-  def eventsGeo(q: Api.EventQuery): EventGeoList =
-    val f = q.filter
-    EventRepo.geo(
-      ds,
-      f,
-      scopeOf(f),
-      q.text,
-      q.kind,
-      q.historicity,
-      q.placeId,
-      cfg.ui.events.mapLimit,
-      cfg.ui.events.outlineToleranceDeg,
-      narrow(q)
+  /** The catalogue's events, their catalogues and links, and the refinement of site types. */
+  val catalogue: CatalogueWiring =
+    CatalogueWiring(
+      deps,
+      com.histmersion.pluginhost.JavaHttpTransport(cfg.events.timeoutSeconds),
+      () => java.time.Year.now(deps.clock.withZone(java.time.ZoneOffset.UTC)).getValue.toLong,
+      resolve,
+      scopeOf
     )
 
-  /** A stated scale must be `local`, `regional` or (to clear it) `auto`. */
-  private def validScale(scale: Option[String]): Either[ApiError, Unit] =
-    scale match
-      case Some(v) if EventScale.parse(v).isEmpty =>
-        Left(
-          ApiError(s"scale '$v' is not ${(EventScale.all :+ EventScale.Auto).mkString(" | ")}", Some(Write.CodeInvalid))
+  /** The events' store. */
+  def eventStore: com.histmersion.domain.catalogue.events.EventService = catalogue.eventStore
+
+  /** The event catalogues: the import, the re-derivation, the corrections by hand. */
+  def eventImports: com.histmersion.domain.catalogue.events.EventImportsControllers = catalogue.eventImports
+
+  /** The links of events to the corpus, the leads, an event's card and an article's catalogue leads. */
+  def eventLinks: com.histmersion.domain.catalogue.evidence.EventLinksControllers = catalogue.eventLinks
+
+  /** The refinement of the Wikidata sites' types. */
+  def siteTypes: com.histmersion.domain.catalogue.places.SiteTypesControllers = catalogue.siteTypes
+
+  /** The events' operations; an event's page joins its pictures and the articles citing its sources. */
+  lazy val events: com.histmersion.domain.catalogue.events.EventsControllers =
+    com.histmersion.domain.catalogue.events.EventsControllers(
+      eventStore,
+      com.histmersion.server.views
+        .EventCardView(
+          eventLinks.context,
+          media.eventThumbs,
+          (citekeys, limit) => ArticleRepo.citing(ds, citekeys, limit)
         )
-      case _ => Right(())
-
-  /** An event's geometry is a GeoJSON geometry PostGIS reads (#2554): WKT, a Feature or bad coordinates are a 400
-    * naming the problem, not a failed statement. Blank passes (none / clear).
-    */
-  private def validGeometry(g: Option[String]): Either[ApiError, Unit] =
-    g.map(_.trim).filter(_.nonEmpty) match
-      case None    => Right(())
-      case Some(v) =>
-        EventGeometry
-          .check(v)
-          .flatMap(gj =>
-            EventRepo.geometryError(ds, gj).map(m => s"geometry is not a valid GeoJSON geometry: $m").toLeft(())
-          )
-          .left
-          .map(m => ApiError(m, Some(Write.CodeInvalid)))
-
-  /** An old event id (V053) answers as the event it was renamed to. */
-  def getEvent(id: String): Either[ApiError, EventDetail] =
-    EventRepo
-      .get(ds, current(AliasKindsAdapter.EventRecords, id))
-      .map(catalog.context)
-      .toRight(ApiError(s"No event '$id'", Some(Write.CodeNotFound)))
-
-  /** A write to an OLD id goes to the event it was renamed to (#1799) — a put replaces it, never creates a second event
-    * under the old id.
-    */
-  def putEvent(id: String, in: EventPut): Either[ApiError, EventDetail] =
-    maintenance.guard("put_event"):
-      val now = current(AliasKindsAdapter.EventRecords, id)
-      validScale(in.scale).flatMap(_ => validGeometry(in.geometry)).flatMap { _ =>
-        EventRepo.put(ds, now, in)
-        getEvent(now)
-      }
-
-  /** An event's Wikidata item is a `Q…` id; `""` clears it. */
-  private def validWikidata(q: Option[String]): Either[ApiError, Unit] =
-    q.map(_.trim) match
-      case Some(v) if v.nonEmpty && !Wikidata.isQid(v) =>
-        Left(ApiError(s"wikidata '$v' is not a Wikidata item id (Q followed by digits)", Some(Write.CodeInvalid)))
-      case _ => Right(())
-
-  def patchEvent(id: String, p: EventPatch): Either[ApiError, EventDetail] =
-    maintenance.guard("patch_event"):
-      val now = current(AliasKindsAdapter.EventRecords, id)
-      validScale(p.scale)
-        .flatMap(_ => validWikidata(p.wikidata))
-        .flatMap(_ => validGeometry(p.geometry))
-        .flatMap(_ => EventRepo.patch(ds, now, p).flatMap(_ => getEvent(now)))
-
-  def deleteEvent(id: String): Either[ApiError, EventDeleted] =
-    maintenance.guard("delete_event"):
-      val now = current(AliasKindsAdapter.EventRecords, id)
-      if EventRepo.delete(ds, now) then Right(EventDeleted(now, true))
-      else Left(ApiError(s"No event '$id'", Some(Write.CodeNotFound)))
+        .apply,
+      current,
+      resolve,
+      scopeOf,
+      () => (cfg.ui.events.mapLimit, cfg.ui.events.outlineToleranceDeg),
+      maintenance
+    )
 
   /** `POST /api/places/{id}/rename` — a new gazetteer id; the old one keeps resolving (V055), in
     * `GET /api/places/{old}` and in a `place=<old>` filter alike.
@@ -1163,12 +1106,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** `POST /api/events/{id}/rename` — a new id; the old one keeps resolving (V053). */
   def renameEvent(id: String, req: LabelRename): Either[ApiError, LabelRenamed] =
-    maintenance.guard("rename_event"):
-      val from = current(AliasKindsAdapter.EventRecords, id)
-      for
-        to <- LabelRenames.validate(BundleKind.Event, from, req.to)
-        _ <- EventRepo.rename(ds, from, to)
-      yield LabelRenamed(BundleKind.Event, from, to)
+    events
+      .rename(Caller.Local, id, from => LabelRenames.validate(BundleKind.Event, from, req.to))
+      .map((from, to) => LabelRenamed(BundleKind.Event, from, to))
 
   /** A REFERENCE to a record of a renamed kind (an asset link's target) names it by its current identifier (#1799):
     * `event`, `place`, `source` and `article` targets resolve an old one; other targets are kept as given.
@@ -1322,7 +1262,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       ds,
       () => cfg.ui.mapTiles.undatedKeptZoom,
       run => { val _ = Thread.ofVirtual().name("histmersion-undated-sites").start(() => run()) }
-    )
+    ),
+    eventStore,
+    deps.eventSources
   )
 
   def tile(q: TilesApi.TileQuery): Either[ApiError, TilesApi.TileAnswer] = tiles.tile(q)
@@ -1742,7 +1684,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       ArticleCoverage
         .compute(a.slug, af, total, hits, inFilter, cited, a.reasons, edges, searches)
         .copy(
-          eventLeads = catalog.articleLeads(a.body, (cited ++ hits.map(_.citekey)).distinct, f.period),
+          eventLeads = eventLinks.articleLeads(a.body, (cited ++ hits.map(_.citekey)).distinct, f.period),
           critiques = critiquesOf(a.body, links, edges, CritiqueRepo.list(ds, a.slug))
         )
     }

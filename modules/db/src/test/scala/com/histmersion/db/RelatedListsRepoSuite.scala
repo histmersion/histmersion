@@ -1,5 +1,8 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.events.*
+import com.histmersion.domain.catalogue.evidence.*
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -60,7 +63,7 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
     )
 
   private def event(id: String, label: String, year: Long, citekey: Option[String]) =
-    EventRepo.put(
+    EventFixtures.put(
       ds,
       id,
       EventPut(label = label, timeSpan = TimeSpan(Some(year), None, None, Some(year)), citekey = citekey)
@@ -82,7 +85,7 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
     if testDb.isDefined then
       List("zz_rel_cites_match", "zz_rel_cites_other", "zz_rel_cites_none").foreach(s => ArticleRepo.delete(ds, s))
       List("zz_rel_ev_match", "zz_rel_ev_late", "zz_rel_ev_other", "zz_rel_ev_nosrc").foreach(e =>
-        EventRepo.delete(ds, e)
+        EventFixtures.delete(ds, e)
       )
 
   private def articles(f: Filter): Set[String] =
@@ -94,7 +97,7 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
       .toSet
 
   private def events(f: Filter, text: Option[String] = None): Set[String] =
-    EventRepo
+    EventFixtures
       .list(ds, f, PlaceScope.empty, text, None, None, None, 500, 0)
       .events
       .map(_.id)

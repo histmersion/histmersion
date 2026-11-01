@@ -1,17 +1,30 @@
 package com.histmersion.domain.catalogue
 
-import com.histmersion.api.Attestation
+import com.histmersion.api.{Attestation, CatalogRecord, Correction, EventLinkCandidate}
+import com.histmersion.domain.catalogue.events.HeldEvent
 import com.histmersion.domain.catalogue.periods.StoredPeriod
+import com.histmersion.domain.catalogue.places.HeldSite
 
 /** The catalogue's rows held in memory, one record the `InMemory` services of its features share (each reads and
   * changes its own part, through lenses): the named periods and the bundled seeds' versions; the attestations and the
-  * last id given one.
+  * last id given one; the events, the old ids of renamed ones, the corrections by hand and the last id given one, the
+  * catalogues' records by event and the parts of each catalogue read; the events' proposed links and the events whose
+  * links were computed; the Wikidata sites whose type is refined.
   */
 final case class CatalogueState(
     periods: Vector[StoredPeriod],
     seedVersions: Map[String, Int],
     attestations: Vector[Attestation],
-    lastAttestationId: Long
+    lastAttestationId: Long,
+    events: Vector[HeldEvent] = Vector.empty,
+    eventAliases: Map[String, String] = Map.empty,
+    corrections: Vector[Correction] = Vector.empty,
+    lastCorrectionId: Long = 0L,
+    catalogueRecords: Vector[(String, CatalogRecord)] = Vector.empty,
+    importParts: Map[String, Map[String, Int]] = Map.empty,
+    candidates: Vector[EventLinkCandidate] = Vector.empty,
+    checked: Set[String] = Set.empty,
+    sites: Vector[HeldSite] = Vector.empty
 )
 
 object CatalogueState:

@@ -1,5 +1,7 @@
 package com.histmersion.server.events
 
+import com.histmersion.server.CatalogueWiring
+
 import com.histmersion.server.ServerPlugins
 
 import com.histmersion.api.*
@@ -108,12 +110,12 @@ class EventTrafficSuite extends com.histmersion.db.DbSuite:
   private def transcript: String =
     val sb = StringBuilder()
     val plugins = ServerPlugins.load(loaded)
-    def handlers(f: FakeMediaHttp) = EventCatalogHandlers(Deps(cfg, ds, ds, plugins = plugins), f, () => 2026L)
+    def handlers(f: FakeMediaHttp) = CatalogueWiring(Deps(cfg, ds, ds, plugins = plugins), f, () => 2026L)
     def run(name: String, req: EventImportRequest): Unit =
       val f = FakeMediaHttp(route)
-      val r = handlers(f).runImport(req.provider, req, None, _ => ())
+      val r = handlers(f).eventImporter.runImport(req.provider, req, None, _ => ())
       sb ++= s"## import $name\n" + requests(f) + s"report: ${r.asJson.noSpaces}\n"
-    sb ++= s"catalogues: ${handlers(FakeMediaHttp(route)).catalogues.asJson.noSpaces}\n"
+    sb ++= s"catalogues: ${handlers(FakeMediaHttp(route)).eventImporter.catalogues.asJson.noSpaces}\n"
     run("gvp (dry run)", EventImportRequest("gvp", dryRun = true))
     run("gvp", EventImportRequest("gvp", dryRun = false))
     run("noaa", EventImportRequest("noaa", dryRun = false))
@@ -133,12 +135,12 @@ class EventTrafficSuite extends com.histmersion.db.DbSuite:
       val _ = sql"""UPDATE event_catalogue SET record = record
                       || '{"timeSpan":{"notBefore":-5000,"beginBy":null,"endFrom":null,"notAfter":5000}}'::jsonb
                     WHERE provider IN ('noaa', 'wikidata')""".update.run()
-    val dry = handlers(FakeMediaHttp(route)).runRederive(None, dryRun = true, _ => ())
+    val dry = handlers(FakeMediaHttp(route)).eventImporter.runRederive(None, dryRun = true, _ => ())
     sb ++= s"## rederive (dry run)\nreport: ${dry.asJson.noSpaces}\n"
     val offline = FakeMediaHttp(url => Left(s"no network in a re-derivation: $url"))
-    val r = handlers(offline).runRederive(None, dryRun = false, _ => ())
+    val r = handlers(offline).eventImporter.runRederive(None, dryRun = false, _ => ())
     sb ++= s"## rederive\n" + requests(offline) + s"report: ${r.asJson.noSpaces}\n"
-    val one = handlers(FakeMediaHttp(route)).runRederive(Some("noaa"), dryRun = false, _ => ())
+    val one = handlers(FakeMediaHttp(route)).eventImporter.runRederive(Some("noaa"), dryRun = false, _ => ())
     sb ++= s"## rederive noaa\nreport: ${one.asJson.noSpaces}\n"
     sb ++= "## stored after rederive\n" + stored
     sb.result()

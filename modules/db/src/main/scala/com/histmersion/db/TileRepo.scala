@@ -5,13 +5,14 @@ import com.histmersion.util.database.RangeSql
 import com.histmersion.api.*
 import com.histmersion.domain.*
 import com.histmersion.domain.maptiles.GridCell
+import com.histmersion.domain.catalogue.events.EventSql
 import com.histmersion.values.PlaceKind
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
 
 /** The map's point layers cut into vector tiles (`GET /api/tiles/…`, [[TileGrid]]): each layer's selection in a tile's
-  * box ([[siteCandidates]], [[EventRepo.tileCandidates]], [[MediaRepo.tileCandidates]] — every item, never a limit),
+  * box ([[siteCandidates]], [[EventSql.tileCandidates]], [[MediaRepo.tileCandidates]] — every item, never a limit),
   * placed on the tile ([[cellsSql]]) and counted by cell where there are more than the grid keeps alone; then the
   * records of the items drawn alone. And the versions of what the layers read ([[versions]], V105).
   */
@@ -205,7 +206,7 @@ object TileRepo:
     siteCandidates(window, siteType, modernFrom, envelope(c), markUndated = true)
 
   /** An events tile's cells, with the events of no known date `undatedWhere` selects
-    * ([[EventRepo.tileCandidatesWithUndated]]).
+    * ([[EventSql.tileCandidatesWithUndated]]).
     */
   def eventCellsWithUndated(
       ds: DataSource,
@@ -214,12 +215,12 @@ object TileRepo:
       where: Sql,
       undatedWhere: Sql
   ): List[TileCell] =
-    cells(ds, EventRepo.tileCandidatesWithUndated(where, undatedWhere, envelope(c)), c, grid)
+    cells(ds, EventSql.tileCandidatesWithUndated(where, undatedWhere, envelope(c)), c, grid)
 
-  /** An events tile's cells: the events `where` selects (over `events e` with its place `ep`, [[EventRepo.listWhere]]).
+  /** An events tile's cells: the events `where` selects (over `events e` with its place `ep`, [[EventSql.listWhere]]).
     */
   def eventCells(ds: DataSource, c: TileCoord, grid: TileGrid, where: Sql): List[TileCell] =
-    cells(ds, EventRepo.tileCandidates(where, envelope(c)), c, grid)
+    cells(ds, EventSql.tileCandidates(where, envelope(c)), c, grid)
 
   /** A media tile's cells. */
   def mediaCells(

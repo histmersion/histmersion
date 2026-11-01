@@ -123,16 +123,9 @@ final class HttpApi(
     Api.loadPlaces.serverLogic[Identity]((source, apply) => h.bootstrap.loadGazetteer(source, apply)),
     Api.buildHierarchy.serverLogic[Identity](_ => h.buildHierarchy())
   ) ++ com.histmersion.domain.catalogue.periods.PeriodsRoutes(h.periods) ++ List[ServerEndpoint[Any, Identity]](
-    Api.init.serverLogic[Identity](fetch => h.bootstrap.init(fetch)),
-    // ── events (plan §1.2) ────────────────────────────────────────────────────────────────────
-    Api.events.serverLogicSuccess[Identity](q => h.listEvents(q)),
-    Api.eventsGeo.serverLogicSuccess[Identity](q => h.eventsGeo(q)),
-    Api.getEvent.serverLogic[Identity](id => h.getEvent(id)),
-    Api.putEvent.serverLogic[Identity]((id, in) => h.putEvent(id, in)),
-    Api.patchEvent.serverLogic[Identity]((id, p) => h.patchEvent(id, p)),
-    Api.deleteEvent.serverLogic[Identity](id => h.deleteEvent(id))
-    // ── attestations (plan §1.3) ──────────────────────────────────────────────────────────────
-  ) ++ com.histmersion.domain.catalogue.evidence
+    Api.init.serverLogic[Identity](fetch => h.bootstrap.init(fetch))
+    // ── events (plan §1.2) and attestations (plan §1.3) ──────────────────────────────────────
+  ) ++ com.histmersion.domain.catalogue.events.EventsRoutes(h.events) ++ com.histmersion.domain.catalogue.evidence
     .AttestationsRoutes(h.attestations) ++ List[ServerEndpoint[Any, Identity]](
     // ── goals (plan §1.5) ─────────────────────────────────────────────────────────────────────
     Api.goals.serverLogicSuccess[Identity](q => h.listGoals(q)),
@@ -278,13 +271,17 @@ final class HttpApi(
     com.histmersion.domain.library.collections.CollectionsRoutes(collections)
 
   val endpoints: List[ServerEndpoint[Any, Identity]] =
-    com.histmersion.server.events.EventCatalogRoutes(h) ++ rest ++ ArticlesApi(h).endpoints ++ OpsRoutes(
-      h.ops
-    ) ++ com.histmersion.domain.automation.agents.AgentsRoutes(h.agents) ++ com.histmersion.domain.automation.managers
-      .ManagersRoutes(
-        h.agents.managing,
-        com.histmersion.server.agents.TransitionRoutes.acquisition(h)
-      ) ++ acquireRoutes ++
+    com.histmersion.domain.catalogue.events.EventImportsRoutes(h.eventImports) ++
+      com.histmersion.domain.catalogue.evidence.EventLinksRoutes(h.eventLinks) ++
+      com.histmersion.domain.catalogue.places.SiteTypesRoutes(h.siteTypes) ++ rest ++ ArticlesApi(
+        h
+      ).endpoints ++ OpsRoutes(
+        h.ops
+      ) ++ com.histmersion.domain.automation.agents.AgentsRoutes(h.agents) ++ com.histmersion.domain.automation.managers
+        .ManagersRoutes(
+          h.agents.managing,
+          com.histmersion.server.agents.TransitionRoutes.acquisition(h)
+        ) ++ acquireRoutes ++
       List(iiifInfoRoute, iiifImageRoute, sourcePage, static, apiNotFound, index)
 
 /** Pure helpers for the article pages. */

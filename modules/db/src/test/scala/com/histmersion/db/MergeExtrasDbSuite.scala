@@ -1,5 +1,8 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.events.*
+import com.histmersion.domain.catalogue.evidence.*
+
 import com.histmersion.util.jobs.JobRepo
 
 import com.histmersion.api.*
@@ -128,7 +131,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
       sql"""INSERT INTO periods (id, label, authority, period, dataset)
             VALUES ('zz_my_period', 'My period', 'me', '[-1400,-1199)'::int8range, 'local')""".update.run()
     )
-    EventRepo.put(
+    EventFixtures.put(
       work,
       "zz_at_my_site",
       EventPut("At my site", "battle", TimeSpan(Some(-1300), None, None, Some(-1290)), placeId = Some("zz_my_site"))
@@ -163,7 +166,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
       List(site("zz_ugarit", "Ugarit", 35.78, 35.60), site("work_troy", "Troy", 26.2389, 39.9575)),
       Dataset.Local
     )
-    EventRepo.put(
+    EventFixtures.put(
       work,
       "zz_troy_burns",
       EventPut("Troy burns", "destruction", TimeSpan(Some(-1190), None, None, Some(-1180)), placeId = Some("work_troy"))
@@ -278,7 +281,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = ArticleRepo.rename(work, "zz_first_slug", "zz_second_slug").fold(e => fail(e.message), identity)
     val _ = PlaceRepo.upsertPlaces(work, List(site("zz_kadesh", "Kadesh", 36.51, 34.56)), Dataset.Seed)
     val _ = PlaceRepo.upsertPlaces(home, List(site("zz_kadesh", "Kadesh", 36.51, 34.56)), Dataset.Seed)
-    EventRepo.put(
+    EventFixtures.put(
       work,
       "work_kadesh",
       EventPut(
@@ -289,7 +292,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
         description = Some("work's account")
       )
     )
-    EventRepo.put(
+    EventFixtures.put(
       home,
       "kadesh_1274",
       EventPut(
@@ -324,16 +327,16 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
 
   test("label renames keep the old label as an alias: refused when taken, dropped when renamed back"):
     val ds = fresh("rn")
-    EventRepo.put(ds, "zz_ev_a", EventPut("E", "battle"))
-    EventRepo.put(ds, "zz_ev_other", EventPut("Other", "battle"))
+    EventFixtures.put(ds, "zz_ev_a", EventPut("E", "battle"))
+    EventFixtures.put(ds, "zz_ev_other", EventPut("Other", "battle"))
     transact(ds)(GoalRepo.put("zz_goal_a", GoalPut("G")))
-    assert(EventRepo.rename(ds, "zz_ev_a", "zz_ev_b").isRight)
-    assertEquals(EventRepo.renamedTo(ds, "zz_ev_a"), Some("zz_ev_b"))
+    assert(EventFixtures.rename(ds, "zz_ev_a", "zz_ev_b").isRight)
+    assertEquals(EventFixtures.renamedTo(ds, "zz_ev_a"), Some("zz_ev_b"))
     // an old id of one event is not free for another
-    assert(EventRepo.rename(ds, "zz_ev_other", "zz_ev_a").left.exists(_.message.contains("old id of 'zz_ev_b'")))
-    assert(EventRepo.rename(ds, "zz_ev_b", "zz_ev_a").isRight)
-    assertEquals(EventRepo.renamedTo(ds, "zz_ev_a"), None)
-    assertEquals(EventRepo.renamedTo(ds, "zz_ev_b"), Some("zz_ev_a"))
+    assert(EventFixtures.rename(ds, "zz_ev_other", "zz_ev_a").left.exists(_.message.contains("old id of 'zz_ev_b'")))
+    assert(EventFixtures.rename(ds, "zz_ev_b", "zz_ev_a").isRight)
+    assertEquals(EventFixtures.renamedTo(ds, "zz_ev_a"), None)
+    assertEquals(EventFixtures.renamedTo(ds, "zz_ev_b"), Some("zz_ev_a"))
     assert(GoalRepo.rename(ds, "zz_goal_a", "zz_goal_b").isRight)
     assertEquals(GoalRepo.renamedTo(ds, "zz_goal_a"), Some("zz_goal_b"))
     assert(GoalRepo.rename(ds, "zz_goal_b", "zz_goal_b").isLeft)
@@ -344,7 +347,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     val (work, home) = (fresh("prw"), fresh("prh"))
     val (sw, sh) = (spool("prw"), spool("prh"))
     val _ = PlaceRepo.upsertPlaces(work, List(site("zz_old_site", "My site", 34.6, 40.0)), Dataset.Local)
-    EventRepo.put(
+    EventFixtures.put(
       work,
       "zz_at_site",
       EventPut("At my site", "battle", TimeSpan(Some(-1300), None, None, Some(-1290)), placeId = Some("zz_old_site"))
@@ -375,7 +378,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(first.applied, first.problems.mkString("\n"))
     val _ = PlaceRepo.upsertPlaces(home, List(site("zz_taken", "A seed site", 30.0, 39.0)), Dataset.Seed)
     assert(PlaceRepo.rename(work, "zz_old_site", "zz_taken").isRight)
-    EventRepo.put(
+    EventFixtures.put(
       work,
       "zz_at_taken",
       EventPut(
@@ -400,10 +403,10 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     val (work, home) = (fresh("alw"), fresh("alh"))
     val (sw, sh) = (spool("alw"), spool("alh"))
     val _ = PlaceRepo.upsertPlaces(work, List(site("zz_pl_before", "My site", 34.6, 40.0)), Dataset.Local)
-    EventRepo.put(work, "zz_ev_before", EventPut("E", "battle"))
+    EventFixtures.put(work, "zz_ev_before", EventPut("E", "battle"))
     transact(work)(GoalRepo.put("zz_goal_before", GoalPut("G")))
     assert(PlaceRepo.rename(work, "zz_pl_before", "zz_pl_after").isRight)
-    assert(EventRepo.rename(work, "zz_ev_before", "zz_ev_after").isRight)
+    assert(EventFixtures.rename(work, "zz_ev_before", "zz_ev_after").isRight)
     assert(GoalRepo.rename(work, "zz_goal_before", "zz_goal_after").isRight)
     val bundle = exportOf(work, sw)
     val es = entitiesOf(bundle)
@@ -412,7 +415,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(es.placeAliases.map(_.alias), List("zz_pl_before"))
     val r = importInto(home, bundle, sh)
     assert(r.applied, r.problems.mkString("\n"))
-    assertEquals(EventRepo.renamedTo(home, "zz_ev_before"), Some("zz_ev_after"))
+    assertEquals(EventFixtures.renamedTo(home, "zz_ev_before"), Some("zz_ev_after"))
     assertEquals(GoalRepo.renamedTo(home, "zz_goal_before"), Some("zz_goal_after"))
     assertEquals(PlaceRepo.renamedTo(home, "zz_pl_before"), Some("zz_pl_after"))
     // a filter on the OLD id is the filter on the place it names now, labelled with that place
@@ -421,12 +424,12 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(scope.labelFor("zz_pl_before"), "My site")
     // the same bundle again changes nothing, and an alias naming another record here is not written
     assertEquals(importInto(home, bundle, sh).changed, 0)
-    EventRepo.put(work, "zz_ev_x", EventPut("X", "battle"))
-    assert(EventRepo.rename(work, "zz_ev_x", "zz_ev_y").isRight)
-    EventRepo.put(home, "zz_ev_x", EventPut("Home's own X", "battle"))
+    EventFixtures.put(work, "zz_ev_x", EventPut("X", "battle"))
+    assert(EventFixtures.rename(work, "zz_ev_x", "zz_ev_y").isRight)
+    EventFixtures.put(home, "zz_ev_x", EventPut("Home's own X", "battle"))
     val second = importInto(home, exportOf(work, sw), sh)
     assert(second.applied, second.problems.mkString("\n"))
-    assertEquals(EventRepo.renamedTo(home, "zz_ev_x"), None) // a live id here, never an alias
+    assertEquals(EventFixtures.renamedTo(home, "zz_ev_x"), None) // a live id here, never an alias
 
   test("place renames keep the old id as an alias: refused when taken, dropped when renamed back"):
     val ds = fresh("prn")

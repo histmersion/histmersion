@@ -200,8 +200,6 @@ direction	db:db/Codecs.scala	util.common -> catalogue: PlaceDating	1
 direction	db:db/Codecs.scala	util.common -> catalogue: PlaceTimeBasis	1
 direction	db:db/Codecs.scala	util.common -> library: NeighborTarget	1
 direction	db:db/Db.scala	util.common -> library: QueryConfig	1
-direction	db:db/EventRepo.scala	catalogue -> library: FilterSql	1
-direction	db:db/EventRepo.scala	catalogue -> media: MediaRepo	1
 direction	db:db/LintRepo.scala	util.data -> catalogue: Gazetteer	1
 direction	db:db/LintRepo.scala	util.data -> catalogue: Geocoder	1
 direction	db:db/LintRepo.scala	util.data -> catalogue: PlaceRepo	1
@@ -255,9 +253,6 @@ direction	server:server/agents/OaBacklog.scala	library -> split: Handlers	1
 direction	server:server/agents/ProposeArticlesPipeline.scala	research -> split: Handlers	1
 direction	server:server/agents/ReviewArticlePipeline.scala	research -> split: Handlers	1
 direction	server:server/agents/SeedService.scala	library -> split: Handlers	1
-direction	server:server/events/EventCatalogHandlers.scala	catalogue -> server: Deps	1
-direction	server:server/events/EventCatalogRoutes.scala	catalogue -> split: Handlers	1
-direction	server:server/events/EventCatalogTools.scala	catalogue -> split: Handlers	1
 direction	server:server/importers/GazetteerLoad.scala	catalogue -> library: HttpPolicy	1
 direction	server:server/importers/ImportRunner.scala	catalogue -> library: HttpPolicy	1
 direction	server:server/media/MediaHandlers.scala	media -> library: SourceCoverParams	1
@@ -340,7 +335,6 @@ repository	db:db/BundleImport.scala	PlaceRepo of catalogue.places	1
 repository	db:db/BundleImport.scala	QueueRepo of automation.worklists	1
 repository	db:db/BundleImport.scala	SourceRepo of library.sources	1
 repository	db:db/CritiqueRepo.scala	SourceRepo of library.sources	1
-repository	db:db/EventRepo.scala	MediaRepo of media	1
 repository	db:db/Importer.scala	AssetRepo of media	1
 repository	db:db/Importer.scala	PlaceRepo of catalogue.places	1
 repository	db:db/Importer.scala	SourceRepo of library.sources	1
@@ -352,7 +346,6 @@ repository	db:db/MergeState.scala	PlaceRepo of catalogue.places	1
 repository	db:db/SourceDeleteRepo.scala	QueueRepo of automation.worklists	1
 repository	db:db/SourceRepo.scala	ArticleRepo of research.articles	1
 repository	db:db/SourceRepo.scala	PlaceRepo of catalogue.places	1
-repository	db:db/TileRepo.scala	EventRepo of catalogue.events	1
 repository	db:db/TileRepo.scala	MediaRepo of media	1
 repository	db:db/TileRepo.scala	PlaceRepo of catalogue.places	1
 repository	db:db/UndatedSiteRepo.scala	PlaceRepo of catalogue.places	1
@@ -366,7 +359,6 @@ repository	server:server/Handlers.scala	AssetLinkRepo of media	1
 repository	server:server/Handlers.scala	AssetMetaRepo of media	1
 repository	server:server/Handlers.scala	CoverageRepo of research.articles	1
 repository	server:server/Handlers.scala	CritiqueRepo of research.articles	1
-repository	server:server/Handlers.scala	EventRepo of catalogue.events	1
 repository	server:server/Handlers.scala	GoalRepo of automation.goals	1
 repository	server:server/Handlers.scala	MediaRepo of media	1
 repository	server:server/Handlers.scala	PlaceOverrideRepo of catalogue.places	1
@@ -382,7 +374,6 @@ repository	server:server/IngestHandlers.scala	JobRepo of util.jobs	1
 repository	server:server/IngestHandlers.scala	SourceRepo of library.sources	1
 repository	server:server/Jobs.scala	JobRepo of util.jobs	1
 repository	server:server/ListQueries.scala	JobRepo of util.jobs	1
-repository	server:server/MapTileService.scala	EventRepo of catalogue.events	1
 repository	server:server/MapTileService.scala	MediaRepo of media	1
 repository	server:server/OpsHandlers.scala	AcquireCheckRepo of library.acquisition	1
 repository	server:server/OpsHandlers.scala	ArticleRepo of research.articles	1
@@ -418,4 +409,3 @@ repository	server:server/agents/ReviewArticlePipeline.scala	AgentRepo of automat
 repository	server:server/agents/SeedService.scala	CandidateRepo of library.acquisition	1
 repository	server:server/agents/SeedService.scala	FocusRepo of automation.goals	1
 repository	server:server/agents/SeedService.scala	ManagerRepo of automation.managers	1
-repository	server:server/events/EventCatalogHandlers.scala	JobRepo of util.jobs	1

@@ -1,5 +1,8 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.events.*
+import com.histmersion.domain.catalogue.evidence.*
+
 import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*
@@ -274,13 +277,13 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       )
     )
     val _ = ArticleRepo.put(work, Article("zz_same_text", "Same", "concept", "Identical on both sides."))
-    EventRepo.put(
+    EventFixtures.put(
       work,
       "zz_siege",
       EventPut("Siege of Troy (work)", "battle", TimeSpan(Some(-1200), None, None, Some(-1190)))
     )
     // the same event (dated alike) created on both sides
-    EventRepo.put(
+    EventFixtures.put(
       work,
       "zz_ev_same",
       EventPut("Fall of Hattusa (work)", "destruction", TimeSpan(Some(-1190), None, None, Some(-1180)))
@@ -367,12 +370,12 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       Article("bronze_age_collapse", "Bronze Age collapse", "concept", "Home's account of the collapse.")
     )
     val _ = ArticleRepo.put(home, Article("zz_same_text", "Same", "concept", "Identical on both sides."))
-    EventRepo.put(
+    EventFixtures.put(
       home,
       "zz_siege",
       EventPut("Siege of Troy (home)", "battle", TimeSpan(Some(-1210), None, None, Some(-1180)))
     )
-    EventRepo.put(
+    EventFixtures.put(
       home,
       "zz_ev_same",
       EventPut("Fall of Hattusa (home)", "destruction", TimeSpan(Some(-1190), None, None, Some(-1180)))
@@ -524,8 +527,8 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     val (a, b) = (fresh("da"), fresh("db"))
     val (sa, sb) = (spool("da"), spool("db"))
     put(a, src("zzy2001_new", "A new one", List("Roe, Richard"), 2001))
-    EventRepo.put(a, "zz_both", EventPut("Event at a", "battle", TimeSpan(Some(-1200), None, None, Some(-1190))))
-    EventRepo.put(b, "zz_both", EventPut("Event at b", "battle", TimeSpan(Some(-1300), None, None, Some(-1290))))
+    EventFixtures.put(a, "zz_both", EventPut("Event at a", "battle", TimeSpan(Some(-1200), None, None, Some(-1190))))
+    EventFixtures.put(b, "zz_both", EventPut("Event at b", "battle", TimeSpan(Some(-1300), None, None, Some(-1290))))
     val bundle = exportOf(a, sa)
     val p = planIn(b, bundle, sb)
     val taken = p.open.find(_.kind == IssueKind.LabelTaken).getOrElse(fail(p.issues.toString))
@@ -863,13 +866,13 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     val (sa, sb) = (spool("rna"), spool("rnb"))
     val _ = ArticleRepo.put(a, Article("zz_old_slug", "Old", "concept", "Text."))
     val _ = ArticleRepo.put(a, Article("zz_linker", "Linker", "concept", "See [[zz_old_slug]]."))
-    EventRepo.put(a, "zz_old_event", EventPut("An event", "battle", TimeSpan(Some(-1200), None, None, Some(-1190))))
+    EventFixtures.put(a, "zz_old_event", EventPut("An event", "battle", TimeSpan(Some(-1200), None, None, Some(-1190))))
     transact(a)(GoalRepo.put("zz_old_goal", GoalPut("A goal")))
     val first = importInto(b, exportOf(a, sa), sb)
     assert(first.applied, first.problems.mkString("\n"))
     transact(a) {
       ArticleRepo.renameIn("zz_old_slug", "zz_new_slug").fold(e => fail(e.message), identity)
-      EventRepo.renameIn("zz_old_event", "zz_new_event").fold(e => fail(e.message), identity)
+      EventFixtures.renameIn("zz_old_event", "zz_new_event").fold(e => fail(e.message), identity)
       GoalRepo.renameIn("zz_old_goal", "zz_new_goal").fold(e => fail(e.message), identity)
     }
     // the rename rewrote the link in the other article over there

@@ -1,0 +1,5 @@
+package com.histmersion.domain.catalogue.evidence
+
+import com.histmersion.domain.catalogue.CatalogueStoreSuite
+
+class EventLinkServiceDbSuite extends EventLinkServiceContract with CatalogueStoreSuite.OnDatabase

@@ -2,12 +2,17 @@ package com.histmersion.domain.catalogue
 
 import com.histmersion.api.Dataset
 import com.histmersion.config.AppConfig
-import com.histmersion.domain.catalogue.evidence.AttestationService
+import com.histmersion.domain.catalogue.events.{CorrectionService, EventImportService, EventService}
+import com.histmersion.domain.catalogue.evidence.{AttestationService, EventLinkService, LeadService}
 import com.histmersion.domain.catalogue.periods.PeriodService
+import com.histmersion.domain.catalogue.places.{HeldSite, SiteTypeService}
+import com.histmersion.domain.library.search.FilterEventSources
 import com.histmersion.util.database.Transactor
 import com.augustnagro.magnum.*
+import hearth.kindlings.optics.syntax.*
 
 import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
+import scala.collection.concurrent.TrieMap
 
 /** A contract of the catalogue's services, run once on the in-memory stores and once on the database (a scratch
   * database per test, gated on HISTMERSION_TEST_DB_URL): [[fresh]] gives each test empty stores, or none on a run with
@@ -21,14 +26,25 @@ abstract class CatalogueStoreSuite extends com.histmersion.db.DbSuite:
 
 object CatalogueStoreSuite:
 
-  /** The stores in memory, sharing one state. */
+  /** The stores in memory, sharing one state; the library's sources are the citekeys seeded, titled by themselves. */
   trait InMemory extends CatalogueStoreSuite:
     protected def fresh(test: String): Option[CatalogueStores] =
       val state = AtomicReference(CatalogueState.empty)
+      val sources = TrieMap.empty[String, Unit]
+      val clock = AtomicLong(1_000L)
+      val evs = EventService.InMemory(state)
       Some(new CatalogueStores:
         val periods = PeriodService.InMemory(state)
         val attestations = AttestationService.InMemory(state)
-        def source(citekey: String): Unit = ()
+        val events = evs
+        val corrections = CorrectionService.InMemory(state)
+        val eventImports = EventImportService.InMemory(state)
+        val eventLinks = EventLinkService.InMemory(state, ck => sources.get(ck).map(_ => Some(ck)))
+        val leads = LeadService.InMemory(state, evs, ck => sources.get(ck).map(_ => (Some(ck), None)))
+        val siteTypes = SiteTypeService.InMemory(state, () => clock.incrementAndGet())
+        def source(citekey: String): Unit = sources.update(citekey, ())
+        def site(id: String, onMap: Boolean, cls: Option[String]): Unit =
+          val _ = state.updateAndGet(_.modify(_.sites).using(_ :+ HeldSite(id, onMap, cls)))
         def seedRows(): List[String] =
           state.get.periods.filter(_.dataset == Dataset.Seed).map(_.period.id).toList)
 
@@ -47,11 +63,29 @@ object CatalogueStoreSuite:
       testDb.map { _ =>
         val ds = scratch(made.incrementAndGet().toString)
         val db = Transactor(ds)
+        val evs = EventService(db, FilterEventSources())
         new CatalogueStores:
           val periods = PeriodService(db)
           val attestations = AttestationService(db)
+          val events = evs
+          val corrections = CorrectionService(db)
+          val eventImports = EventImportService(db)
+          val eventLinks = EventLinkService(db)
+          val leads = LeadService(db, FilterEventSources())
+          val siteTypes = SiteTypeService(db)
           def source(citekey: String): Unit =
             connect(ds)(sql"INSERT INTO sources (citekey, title) VALUES ($citekey, $citekey)".update.run()): Unit
+          def site(id: String, onMap: Boolean, cls: Option[String]): Unit =
+            val props = cls.fold("{}")(c => s"""{"class":"$c"}""")
+            connect(ds):
+              sql"""INSERT INTO places (id, label, kind, import_source, properties)
+                    VALUES ($id, $id, 'site', 'wikidata', $props::jsonb)""".update.run()
+              if onMap then
+                val ck = s"zz_on_$id".replace("_q", "q")
+                sql"INSERT INTO sources (citekey, title) VALUES ($ck, $ck) ON CONFLICT DO NOTHING".update.run()
+                sql"INSERT INTO findings (id, citekey, claim) VALUES (${ck + "#1"}, $ck, 'here')".update.run()
+                sql"INSERT INTO finding_places (finding_id, place_id) VALUES (${ck + "#1"}, $id)".update.run()
+            : Unit
           def seedRows(): List[String] =
             connect(ds)(sql"SELECT id FROM periods WHERE dataset = 'seed'".query[String].run()).toList
       }

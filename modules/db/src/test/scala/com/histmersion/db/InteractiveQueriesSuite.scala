@@ -1,5 +1,8 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.events.*
+import com.histmersion.domain.catalogue.evidence.*
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -141,7 +144,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
       )
       List(("zzi_ev_a", -1380L, Some("zzi_a")), ("zzi_ev_b", -1280L, Some("zzi_b")), ("zzi_ev_none", -1300L, None))
         .foreach((id, y, ck) =>
-          EventRepo.put(
+          EventFixtures.put(
             ds,
             id,
             EventPut(label = s"Zzi event $id", timeSpan = TimeSpan(Some(y), None, None, Some(y)), citekey = ck)
@@ -151,7 +154,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
   override def afterSuite(): Unit =
     if testDb.isDefined then
       List("zzi_art_a", "zzi_art_b").foreach(s => ArticleRepo.delete(ds, s))
-      List("zzi_ev_a", "zzi_ev_b", "zzi_ev_none").foreach(e => EventRepo.delete(ds, e))
+      List("zzi_ev_a", "zzi_ev_b", "zzi_ev_none").foreach(e => EventFixtures.delete(ds, e))
 
   // ── the filters a reader builds: place ids (one, two), id + name, name, + tag, ± a period ──────
 
@@ -231,7 +234,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
           .run()
           .toSet
       )
-      val evs = EventRepo.list(ds, f, sc, None, None, None, None, 500, 0)
+      val evs = EventFixtures.list(ds, f, sc, None, None, None, None, 500, 0)
       assertEquals(evs.events.map(_.id).toSet, wantEvents, f.toString)
       assertEquals(evs.total, wantEvents.size, f.toString)
     }
@@ -246,7 +249,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
           sources = SourceRepo.count(ds, f, sc),
           findings = SourceRepo.findingsCount(ds, f, sc),
           articles = ArticleRepo.list(ds, f, sc, None, None, 1, 0).total,
-          events = EventRepo.list(ds, f, sc, None, None, None, None, 1, 0).total
+          events = EventFixtures.list(ds, f, sc, None, None, None, None, 1, 0).total
         ),
         id
       )

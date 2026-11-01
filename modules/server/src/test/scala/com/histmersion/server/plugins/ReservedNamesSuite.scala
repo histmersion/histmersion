@@ -6,7 +6,7 @@ import com.histmersion.util.plugins.HostProvided
 import com.histmersion.pluginhost.{FirstPartySettings, PluginHost, ReservedNames}
 import com.histmersion.domain.catalogue.places.BuiltinGazetteers
 import com.histmersion.server.agents.BuiltinAi
-import com.histmersion.server.events.BuiltinCatalogues
+import com.histmersion.domain.catalogue.events.BuiltinCatalogues
 import com.histmersion.server.media.BuiltinMedia
 
 /** The plugin host refuses a plugin's contribution under a name of one of the server's own providers; it keeps those

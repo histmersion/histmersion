@@ -314,6 +314,18 @@ object ArticleRepo:
              OR strpos(coalesce(s.notes, ''), '[[' || $slug || '|') > 0
           ORDER BY 1, 2""".query[Backlink].run().toList
 
+  /** The articles citing any of `citekeys` (one row per article, its first cited key), at most `limit` — an event's
+    * card lists those citing the sources that attest it.
+    */
+  def citing(ds: DataSource, citekeys: List[String], limit: Int): List[EventArticleRef] =
+    if citekeys.isEmpty then Nil
+    else
+      connect(ds):
+        sql"""SELECT DISTINCT ON (a.slug) a.slug, a.title, l.target
+            FROM article_links l JOIN articles a ON a.slug = l.src_slug
+            WHERE l.target_kind = 'source' AND l.target = ANY($citekeys::text[])
+            ORDER BY a.slug, l.target LIMIT $limit""".query[EventArticleRef].run().toList
+
   /** The other direction, for a SOURCE: which compiled articles cite it (`article_links` rows with
     * `target_kind = 'source'`). An index lookup, like [[backlinks]], because the classification was done at write time
     * — no LIKE scan of every article body.

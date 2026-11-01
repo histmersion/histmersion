@@ -1,5 +1,8 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.events.*
+import com.histmersion.domain.catalogue.evidence.*
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -268,12 +271,12 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
           ds,
           c,
           grid,
-          EventRepo.listWhere(Filter(period = Some(Period(lo, hi))), PlaceScope.empty, None, None, None, None)
+          EventFixtures.listWhere(Filter(period = Some(Period(lo, hi))), PlaceScope.empty, None, None, None, None)
         )
       ).filter(_.startsWith("zztile"))
     assertEquals(events(-1295, -1295), Set("zztile_e1"))
     assertEquals(events(-1500, 0), Set("zztile_e1", "zztile_e2"))
-    assertEquals(EventRepo.geoOf(ds, List("zztile_e1")).get("zztile_e1").map(_.label), Some("Zztile battle"))
+    assertEquals(EventFixtures.geoOf(ds, List("zztile_e1")).get("zztile_e1").map(_.label), Some("Zztile battle"))
     // an event with no known date: only when asked for, marked, whatever the span
     connect(ds):
       val _ = sql"""INSERT INTO events (id, label, kind, geom)
@@ -287,8 +290,8 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
           ds,
           c,
           grid,
-          EventRepo.listWhere(f, PlaceScope.empty, None, None, None, None),
-          EventRepo.listWhere(f.copy(period = None), PlaceScope.empty, None, None, None, None)
+          EventFixtures.listWhere(f, PlaceScope.empty, None, None, None, None),
+          EventFixtures.listWhere(f.copy(period = None), PlaceScope.empty, None, None, None, None)
         )
         .filter(_.key.startsWith("zztile"))
         .map(x => x.key -> x.undated)

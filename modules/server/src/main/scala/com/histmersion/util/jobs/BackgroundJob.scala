@@ -63,6 +63,10 @@ object BackgroundJob:
       case None if out.failed => asked.toLeft(out)
       case None               => Right(out)
 
+  /** Change the detail the job `id` records. */
+  def amendDetail(ds: DataSource, id: String)(change: JobDetail => JobDetail): Unit =
+    JobRepo.get(ds, id).foreach(j => JobRepo.setDetail(ds, id, change(j.detail.getOrElse(JobDetail()))))
+
   /** Start `body` as a job of `kind` (with `detail` stored on its row) in `slot`; `Left` — naming the running one —
     * when the slot is held. `what` names this kind of work in that refusal ("a vacuum job"), `busyCode` is its error
     * code. Answers the job as it stands once its thread is started.
