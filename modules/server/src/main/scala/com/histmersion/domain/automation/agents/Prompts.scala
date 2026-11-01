@@ -40,4 +40,4 @@ object Prompts:
   /** Every file under `agents/` the server reads — the definitions, the shared fragments and the skills, as the build's
     * `agents/index.txt` lists them — which the native image must bundle (a test holds the metadata to it).
     */
-  def bundled: List[String] = AgentDefinitions(Prompts(""), Nil).index
+  def bundled: List[String] = AgentDefinitions(Prompts(""), AgentRoster.none).index

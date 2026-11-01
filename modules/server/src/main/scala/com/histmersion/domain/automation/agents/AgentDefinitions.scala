@@ -213,8 +213,11 @@ object AgentDefinitions:
   * from `agents.prompts-dir` through [[Prompts]]. Read on every use — a definition can be iterated on without a
   * rebuild, and the hash recorded per attempt says which text ran.
   */
-/** `tools` are the agent tools the engine's toolbox holds: a definition may list only these. */
-final class AgentDefinitions(prompts: Prompts, val tools: List[ToolName]):
+/** `roster`: the agent tools the engine's toolbox holds and the roles the contributed workflows take — a definition may
+  * list only these tools and take only these roles.
+  */
+final class AgentDefinitions(prompts: Prompts, val roster: AgentRoster):
+  val tools: List[ToolName] = roster.tools
 
   /** Every bundled file, relative to `agents/`. */
   def index: List[String] =
@@ -233,7 +236,17 @@ final class AgentDefinitions(prompts: Prompts, val tools: List[ToolName]):
   }
 
   def agent(name: String): Either[String, AgentDef] =
-    prompts.load(s"$name.md").flatMap(AgentDefinitions.parse(name, _, tools))
+    prompts
+      .load(s"$name.md")
+      .flatMap(AgentDefinitions.parse(name, _, tools))
+      .flatMap(d =>
+        Either.cond(
+          roster.roles.contains(d.role),
+          d,
+          s"agents/$name.md: role ${d.role.wire} is no contributed workflow's " +
+            s"(one of: ${roster.roles.map(_.wire).mkString(", ")})"
+        )
+      )
   def agent(s: StepAgent): Either[String, AgentDef] = agent(s.wire)
   def skill(name: String): Either[String, SkillDef] =
     prompts.load(s"skills/$name/SKILL.md").flatMap(AgentDefinitions.parseSkill(name, _))

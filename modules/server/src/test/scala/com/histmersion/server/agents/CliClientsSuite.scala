@@ -22,7 +22,7 @@ class CliClientsSuite extends munit.FunSuite:
 
   private def runtime(sink: FakeCli.Sink = FakeCli.Sink()): (CliRuntime, Path) =
     val dir = Files.createTempDirectory("hm-cli-")
-    val rt = CliRuntime(FakeCli.app(dir), TransitionTools.names)
+    val rt = CliRuntime(FakeCli.app(dir), TransitionWorkflows.roster)
     rt.pools = Some(sink)
     assert(rt.trees.generate(Generated.known(rt.definitions)).isRight)
     (rt, dir)
@@ -88,7 +88,7 @@ class CliClientsSuite extends munit.FunSuite:
         .run(call(rt, StepAgent.Skeptic))
     )
     assert(e.getMessage.contains("usage limit"), e.getMessage)
-    val bare = CliRuntime(FakeCli.app(Files.createTempDirectory("hm-empty-")), TransitionTools.names)
+    val bare = CliRuntime(FakeCli.app(Files.createTempDirectory("hm-empty-")), TransitionWorkflows.roster)
     val io = intercept[java.io.IOException](
       CodexExecClient(ModelRef(ProviderKind.Codex, "x"), CodexCfg, bare).run(call(bare, StepAgent.Skeptic))
     )
@@ -107,7 +107,7 @@ class CliClientsSuite extends munit.FunSuite:
   test("codex: refused beyond loopback (it spends a plan)"):
     val lan = CliRuntime(
       FakeCli.app(Files.createTempDirectory("hm-lan-"), "HISTMERSION_BIND" -> "0.0.0.0"),
-      TransitionTools.names
+      TransitionWorkflows.roster
     )
     assert(Codex.client(CodexCfg, lan, ModelRef(ProviderKind.Codex, "m")).isLeft)
 

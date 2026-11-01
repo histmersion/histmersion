@@ -1,6 +1,5 @@
 package com.histmersion.domain.automation.agents
 
-import com.histmersion.domain.automation.workflows.ToolName
 import io.circe.syntax.*
 
 import java.nio.charset.StandardCharsets.UTF_8
@@ -15,10 +14,11 @@ import scala.jdk.CollectionConverters.*
   */
 object PluginTree:
 
-  /** The tree from the bundled definitions (no server, no override directory); `tools` the agent tools they may list.
+  /** The tree from the bundled definitions (no server, no override directory); `roster` the agent tools they may list
+    * and the roles they may take.
     */
-  def tree(tools: List[ToolName]): Either[String, Map[String, String]] =
-    val defs = AgentDefinitions(Prompts(""), tools)
+  def tree(roster: AgentRoster): Either[String, Map[String, String]] =
+    val defs = AgentDefinitions(Prompts(""), roster)
     for
       as <- defs.agents
       fs <- defs.fragments
@@ -29,8 +29,8 @@ object PluginTree:
   val Owned: List[String] = List("plugin/agents", "plugin/skills")
 
   /** Writes the tree under `root`, removing what it no longer holds from the directories it owns. */
-  def write(root: Path, tools: List[ToolName]): Unit =
-    tree(tools) match
+  def write(root: Path, roster: AgentRoster): Unit =
+    tree(roster) match
       case Left(m)  => System.err.println(s"cannot generate the plugin: $m"); sys.exit(1)
       case Right(t) =>
         Owned.map(root.resolve).filter(Files.exists(_)).foreach { d =>

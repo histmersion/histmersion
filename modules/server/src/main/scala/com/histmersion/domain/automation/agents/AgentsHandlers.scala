@@ -54,7 +54,7 @@ final class AgentsHandlers(
     * pool (a scripted model's test must never spend a real plan on a probe).
     */
   def this(deps: Deps, h: Handlers, clientFor: LlmClient.Factory) =
-    this(deps, h, clientFor, CliRuntime(deps.cfg, h.agentToolNames), PlanPools.Seams.Offline)
+    this(deps, h, clientFor, CliRuntime(deps.cfg, h.agentRoster), PlanPools.Seams.Offline)
 
   private def this(deps: Deps, h: Handlers, w: (LlmClient.Factory, CliRuntime)) =
     this(deps, h, w._1, w._2, PlanPools.Seams.Real)
@@ -62,7 +62,7 @@ final class AgentsHandlers(
   /** The server's own providers ([[LlmClient.factory]]: the ones registered in the pinned plugin generation — the HTTP
     * ones, the CLI runtimes and any plugin's).
     */
-  def this(deps: Deps, h: Handlers) = this(deps, h, AgentsHandlers.serverWiring(deps, h.agentToolNames))
+  def this(deps: Deps, h: Handlers) = this(deps, h, AgentsHandlers.serverWiring(deps, h.agentRoster))
 
   /** Read at each use: a config reload switches it (Deps). */
   private def cfg = deps.cfg.agents
@@ -106,6 +106,14 @@ final class AgentsHandlers(
     */
   val workflows: Workflows =
     Workflows.of(h.automationContributions(this)).fold(m => throw IllegalStateException(s"workflows: $m"), identity)
+
+  /** A workflow whose roles the definitions were not told of would run agents nobody may define: refused here. */
+  private val unrostered =
+    workflows.definitions.flatMap(_.roles).distinct.filterNot(definitions.roster.roles.contains)
+  if unrostered.nonEmpty then
+    throw IllegalStateException(
+      s"workflows: roles the agent definitions do not know: ${unrostered.map(_.wire).mkString(", ")}"
+    )
 
   /** The contributed agent tools, by name. */
   val toolbox: Toolbox = Toolbox(workflows.tools)
@@ -966,8 +974,8 @@ final class AgentsHandlers(
 
 object AgentsHandlers:
   /** The server's providers over one [[CliRuntime]]. */
-  def serverWiring(deps: Deps, tools: List[ToolName]): (LlmClient.Factory, CliRuntime) =
-    val rt = CliRuntime(deps.cfg, tools)
+  def serverWiring(deps: Deps, roster: AgentRoster): (LlmClient.Factory, CliRuntime) =
+    val rt = CliRuntime(deps.cfg, roster)
     (LlmClient.factory(rt, () => deps.plugins.registries.aiProviders), rt)
 
   /** [[attempt]], telling the plan's own usage limit (a model to pass over, [[ModelLimitReached]]) apart from a broken

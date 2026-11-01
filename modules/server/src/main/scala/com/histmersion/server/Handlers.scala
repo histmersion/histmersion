@@ -183,8 +183,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     com.histmersion.domain.automation.agents.AgentsHandlers(deps, this)
 
   /** The agent tools the engine is given today (what an agent definition may list). */
-  def agentToolNames: List[com.histmersion.domain.automation.workflows.ToolName] =
-    com.histmersion.server.agents.TransitionTools.names
+  def agentRoster: com.histmersion.domain.automation.agents.AgentRoster =
+    com.histmersion.server.agents.TransitionWorkflows.roster
 
   /** What today's library and research code registers into the engine (`agents` asks for it as it is built). */
   def automationContributions(

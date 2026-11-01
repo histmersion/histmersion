@@ -14,7 +14,7 @@ object Generated:
     texts.flatMap(AgentDefinitions.placeholders).toSet ++ TransitionTools.names.map(_.value)
 
   def defs(): AgentGenerator.Defs =
-    val d = AgentDefinitions(Prompts(""), TransitionTools.names)
+    val d = AgentDefinitions(Prompts(""), TransitionWorkflows.roster)
     AgentGenerator.Defs(
       d.agents.fold(m => throw AssertionError(m), identity),
       d.fragments.fold(m => throw AssertionError(m), identity),
