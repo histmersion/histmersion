@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.AgentsHandlers
+
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope}
 
 import com.histmersion.util.jobs.BackgroundJob

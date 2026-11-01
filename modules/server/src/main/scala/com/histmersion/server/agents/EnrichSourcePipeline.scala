@@ -1,5 +1,9 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.*
+import com.histmersion.domain.automation.approvals.Approvals
+import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
+
 import com.histmersion.domain.automation.worklists.QueueItemId
 
 import com.histmersion.api.*

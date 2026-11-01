@@ -1,5 +1,8 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.CompareRunsViews
+import com.histmersion.domain.automation.managers.Zero
+
 import com.histmersion.api.*
 import com.histmersion.api.Agents.*
 import com.histmersion.domain.CompareRuns

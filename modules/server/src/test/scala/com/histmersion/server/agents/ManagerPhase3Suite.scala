@@ -1,5 +1,8 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.{AgentsHandlers, LlmClient}
+import com.histmersion.domain.automation.managers.{ManagerDefaultsViews, Zero}
+
 import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.*

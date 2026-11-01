@@ -153,7 +153,7 @@ object Composition:
       )
       .addEndpoint(mcp.endpoint)
       .addEndpoints(
-        com.histmersion.server.agents.AgentsTools.agentEndpoints(h.agents)
+        com.histmersion.domain.automation.agents.AgentsTools.agentEndpoints(h.agents)
       ) // one per agent definition, behind run tokens
       .addEndpoints(HttpApi(deps, h, acq, collections).endpoints)
     if cfg.auth.apiKey.nonEmpty then
@@ -175,7 +175,11 @@ object Composition:
         val _ = pipeline.addAfter(codec, "histmersion-auth", AuthHandler(() => deps.cfg.auth.apiKey, h.agents.tokens))
         // first of all: the agent MCP endpoint answers only to a live run token, and only with its agent's tools
         val _ =
-          pipeline.addAfter(codec, "histmersion-run-token", com.histmersion.server.agents.RunTokenGate(h.agents.tokens))
+          pipeline.addAfter(
+            codec,
+            "histmersion-run-token",
+            com.histmersion.domain.automation.agents.RunTokenGate(h.agents.tokens)
+          )
       }
     }
 

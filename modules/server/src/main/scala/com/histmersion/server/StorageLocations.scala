@@ -1,7 +1,7 @@
 package com.histmersion.server
 
 import com.histmersion.config.{AppConfig, Environment, LoadedConfig, UserPaths}
-import com.histmersion.server.agents.AgentTrees
+import com.histmersion.domain.automation.agents.AgentTrees
 import com.histmersion.server.importers.GazetteerLoad
 import com.histmersion.config.edit.SettingsFile
 import com.histmersion.util.settings.StoredSettingsFile

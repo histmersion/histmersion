@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.{AgentDefinitions, AgentGenerator, Prompts}
+
 /** Test helpers for the generated trees. */
 object Generated:
   /** Every tool the bundled definitions name by placeholder, plus the agent tools: what a pure test hands the generator

@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.{AgentDefinitions, AgentRuntime, AgentTrees, Prompts}
+
 import com.histmersion.config.{AppConfig, LoadedConfig}
 import org.ekrich.config.ConfigFactory
 

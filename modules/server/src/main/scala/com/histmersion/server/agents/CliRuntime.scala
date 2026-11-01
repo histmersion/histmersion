@@ -1,5 +1,17 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.{
+  AgentDef,
+  AgentDefinitions,
+  AgentsHandlers,
+  AgentTrees,
+  LlmCall,
+  PoolSink,
+  Prompts,
+  RunGrant,
+  RunTokens
+}
+
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.automation.workflows.ToolName
 

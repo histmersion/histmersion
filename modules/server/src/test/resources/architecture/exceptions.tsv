@@ -236,6 +236,80 @@ direction	files:files/BundleEntities.scala	util.data -> library: Finding	1
 direction	files:files/BundleEntities.scala	util.data -> media: AssetLink	1
 direction	files:files/BundleEntities.scala	util.data -> research: ArticleVersion	1
 direction	server:domain/activity/ActivityRepo.scala	automation -> server: Jobs	1
+direction	server:domain/automation/agents/AgentGenerator.scala	automation -> library: Search	1
+direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> library: AcquireRecheckService	1
+direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> library: AgentUpstream	1
+direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> library: AgentVerify	1
+direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> library: AutoEnrich	1
+direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> library: EnrichSource	1
+direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> library: Ingest	1
+direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> library: OaBacklog	1
+direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> library: Query	1
+direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> library: SeedService	1
+direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> library: SourceDetail	1
+direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> research: Articles	1
+direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> research: CompileArticle	1
+direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> research: ReviewArticle	1
+direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> server: Deps	1
+direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> server: Pinning	1
+direction	server:domain/automation/agents/AgentsHandlers.scala	automation -> split: Handlers	1
+direction	server:domain/automation/agents/AgentsSettings.scala	automation -> catalogue: Geocode	1
+direction	server:domain/automation/agents/AgentsSettings.scala	automation -> library: AgentEnrichGuardsConfig	1
+direction	server:domain/automation/agents/AgentsSettings.scala	automation -> library: EnrichSource	1
+direction	server:domain/automation/agents/AgentsSettings.scala	automation -> research: AgentInferFilterConfig	1
+direction	server:domain/automation/agents/AgentsSettings.scala	automation -> research: FilterInference	1
+direction	server:domain/automation/agents/AgentsTools.scala	automation -> library: RepairAcquire	1
+direction	server:domain/automation/agents/AnswerSchemas.scala	automation -> library: EnrichSource	1
+direction	server:domain/automation/agents/AnswerSchemas.scala	automation -> research: CompileArticle	1
+direction	server:domain/automation/agents/AnswerSchemas.scala	automation -> research: FilterInference	1
+direction	server:domain/automation/agents/AnswerSchemas.scala	automation -> research: PlanArticles	1
+direction	server:domain/automation/agents/AnswerSchemas.scala	automation -> research: ReviewArticle	1
+direction	server:domain/automation/agents/Engine.scala	automation -> library: Ingest	1
+direction	server:domain/automation/agents/Engine.scala	automation -> server: Carried	1
+direction	server:domain/automation/agents/RunCtx.scala	automation -> library: AgentVerify	1
+direction	server:domain/automation/agents/ToolResultCap.scala	automation -> library: Query	1
+direction	server:domain/automation/agents/WebAccess.scala	automation -> library: Search	1
+direction	server:domain/automation/approvals/ApprovalDigestService.scala	automation -> split: Handlers	1
+direction	server:domain/automation/approvals/Approvals.scala	automation -> library: AgentProposals	1
+direction	server:domain/automation/approvals/Approvals.scala	automation -> research: ArticleFilter	1
+direction	server:domain/automation/approvals/Approvals.scala	automation -> research: InferFilterPipeline	1
+direction	server:domain/automation/approvals/Approvals.scala	automation -> split: Handlers	1
+direction	server:domain/automation/approvals/AutoApprovals.scala	automation -> research: CompileArticlePipeline	1
+direction	server:domain/automation/approvals/AutoApprovals.scala	automation -> split: Handlers	1
+direction	server:domain/automation/autopilot/AutopilotService.scala	automation -> library: Query	1
+direction	server:domain/automation/autopilot/AutopilotService.scala	automation -> split: Handlers	1
+direction	server:domain/automation/goals/GoalFocusService.scala	automation -> split: Handlers	1
+direction	server:domain/automation/goals/PlanGoalPipeline.scala	automation -> library: AgentUpstream	1
+direction	server:domain/automation/goals/PlanGoalPipeline.scala	automation -> library: Query	1
+direction	server:domain/automation/goals/PlanGoalPipeline.scala	automation -> split: Handlers	1
+direction	server:domain/automation/managers/DrainService.scala	automation -> split: Handlers	1
+direction	server:domain/automation/managers/HintEffectPipeline.scala	automation -> split: Handlers	1
+direction	server:domain/automation/managers/ManagerDefaultsViews.scala	automation -> library: AgentSeedConfig	1
+direction	server:domain/automation/managers/ManagerDefaultsViews.scala	automation -> library: SeedPlanDefaults	1
+direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> library: AcquisitionSweepPipeline	1
+direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> library: AutoEnrich	1
+direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> library: CandidateSweep	1
+direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> library: EnrichSource	1
+direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> library: IngestBacklog	1
+direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> research: ArticleFilter	1
+direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> research: ArticleRepo	1
+direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> research: CompileArticle	1
+direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> research: CompileArticlePipeline	1
+direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> research: ReviewArticle	1
+direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> research: ReviewLedger	1
+direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> research: ReviewLedgerRepo	1
+direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> split: Handlers	1
+direction	server:domain/automation/managers/ManagersHandlers.scala	automation -> library: Acquire	1
+direction	server:domain/automation/managers/ManagersHandlers.scala	automation -> library: AcquireChecks	1
+direction	server:domain/automation/managers/ManagersHandlers.scala	automation -> library: AutoEnrich	1
+direction	server:domain/automation/managers/ManagersHandlers.scala	automation -> library: EnrichSource	1
+direction	server:domain/automation/managers/ManagersHandlers.scala	automation -> library: Ingest	1
+direction	server:domain/automation/managers/ManagersHandlers.scala	automation -> library: OaBacklog	1
+direction	server:domain/automation/managers/ManagersHandlers.scala	automation -> library: RepairAcquire	1
+direction	server:domain/automation/managers/ManagersHandlers.scala	automation -> research: ArticleRepo	1
+direction	server:domain/automation/managers/ManagersHandlers.scala	automation -> split: Handlers	1
+direction	server:domain/automation/scheduler/SchedulerService.scala	automation -> split: Handlers	1
+direction	server:domain/automation/workflows/Pipelines.scala	automation -> split: Handlers	1
 direction	server:server/IngestHandlers.scala	library -> server: Deps	1
 direction	server:server/IngestHandlers.scala	library -> server: Jobs	1
 direction	server:server/MapTileService.scala	catalogue -> media: MediaRepo	1
@@ -247,90 +321,16 @@ direction	server:server/acquire/DiscoveryClient.scala	library -> server: UpdateN
 direction	server:server/agents/AcquireRecheckService.scala	library -> split: Handlers	1
 direction	server:server/agents/AcquisitionSweepPipeline.scala	library -> split: Handlers	1
 direction	server:server/agents/AgentDoctor.scala	automation -> server: Version	1
-direction	server:server/agents/AgentGenerator.scala	automation -> library: Search	1
-direction	server:server/agents/AgentsHandlers.scala	automation -> library: AcquireRecheckService	1
-direction	server:server/agents/AgentsHandlers.scala	automation -> library: AgentUpstream	1
-direction	server:server/agents/AgentsHandlers.scala	automation -> library: AgentVerify	1
-direction	server:server/agents/AgentsHandlers.scala	automation -> library: AutoEnrich	1
-direction	server:server/agents/AgentsHandlers.scala	automation -> library: EnrichSource	1
-direction	server:server/agents/AgentsHandlers.scala	automation -> library: Ingest	1
-direction	server:server/agents/AgentsHandlers.scala	automation -> library: OaBacklog	1
-direction	server:server/agents/AgentsHandlers.scala	automation -> library: Query	1
-direction	server:server/agents/AgentsHandlers.scala	automation -> library: SeedService	1
-direction	server:server/agents/AgentsHandlers.scala	automation -> library: SourceDetail	1
-direction	server:server/agents/AgentsHandlers.scala	automation -> research: Articles	1
-direction	server:server/agents/AgentsHandlers.scala	automation -> research: CompileArticle	1
-direction	server:server/agents/AgentsHandlers.scala	automation -> research: ReviewArticle	1
-direction	server:server/agents/AgentsHandlers.scala	automation -> server: Deps	1
-direction	server:server/agents/AgentsHandlers.scala	automation -> server: Pinning	1
-direction	server:server/agents/AgentsHandlers.scala	automation -> split: Handlers	1
-direction	server:server/agents/AgentsSettings.scala	automation -> catalogue: Geocode	1
-direction	server:server/agents/AgentsSettings.scala	automation -> library: AgentEnrichGuardsConfig	1
-direction	server:server/agents/AgentsSettings.scala	automation -> library: EnrichSource	1
-direction	server:server/agents/AgentsSettings.scala	automation -> research: AgentInferFilterConfig	1
-direction	server:server/agents/AgentsSettings.scala	automation -> research: FilterInference	1
-direction	server:server/agents/AgentsTools.scala	automation -> library: RepairAcquire	1
-direction	server:server/agents/AnswerSchemas.scala	automation -> library: EnrichSource	1
-direction	server:server/agents/AnswerSchemas.scala	automation -> research: CompileArticle	1
-direction	server:server/agents/AnswerSchemas.scala	automation -> research: FilterInference	1
-direction	server:server/agents/AnswerSchemas.scala	automation -> research: PlanArticles	1
-direction	server:server/agents/AnswerSchemas.scala	automation -> research: ReviewArticle	1
-direction	server:server/agents/ApprovalDigestService.scala	automation -> split: Handlers	1
-direction	server:server/agents/Approvals.scala	automation -> library: AgentProposals	1
-direction	server:server/agents/Approvals.scala	automation -> research: ArticleFilter	1
-direction	server:server/agents/Approvals.scala	automation -> research: InferFilterPipeline	1
-direction	server:server/agents/Approvals.scala	automation -> split: Handlers	1
-direction	server:server/agents/AutoApprovals.scala	automation -> research: CompileArticlePipeline	1
-direction	server:server/agents/AutoApprovals.scala	automation -> split: Handlers	1
-direction	server:server/agents/AutopilotService.scala	automation -> library: Query	1
-direction	server:server/agents/AutopilotService.scala	automation -> split: Handlers	1
 direction	server:server/agents/CliProcess.scala	automation -> catalogue: Tree	1
 direction	server:server/agents/CompileArticlePipeline.scala	research -> split: Handlers	1
 direction	server:server/agents/CurrencyCheckPipeline.scala	library -> split: Handlers	1
-direction	server:server/agents/DrainService.scala	automation -> split: Handlers	1
-direction	server:server/agents/Engine.scala	automation -> library: Ingest	1
-direction	server:server/agents/Engine.scala	automation -> server: Carried	1
 direction	server:server/agents/EnrichSourcePipeline.scala	library -> split: Handlers	1
-direction	server:server/agents/GoalFocusService.scala	automation -> split: Handlers	1
 direction	server:server/agents/GoalSweep.scala	automation -> split: Handlers	1
-direction	server:server/agents/HintEffectPipeline.scala	automation -> split: Handlers	1
 direction	server:server/agents/InferFilterPipeline.scala	research -> split: Handlers	1
-direction	server:server/agents/ManagerDefaultsViews.scala	automation -> library: AgentSeedConfig	1
-direction	server:server/agents/ManagerDefaultsViews.scala	automation -> library: SeedPlanDefaults	1
-direction	server:server/agents/ManagerSupervisor.scala	automation -> library: AcquisitionSweepPipeline	1
-direction	server:server/agents/ManagerSupervisor.scala	automation -> library: AutoEnrich	1
-direction	server:server/agents/ManagerSupervisor.scala	automation -> library: CandidateSweep	1
-direction	server:server/agents/ManagerSupervisor.scala	automation -> library: EnrichSource	1
-direction	server:server/agents/ManagerSupervisor.scala	automation -> library: IngestBacklog	1
-direction	server:server/agents/ManagerSupervisor.scala	automation -> research: ArticleFilter	1
-direction	server:server/agents/ManagerSupervisor.scala	automation -> research: ArticleRepo	1
-direction	server:server/agents/ManagerSupervisor.scala	automation -> research: CompileArticle	1
-direction	server:server/agents/ManagerSupervisor.scala	automation -> research: CompileArticlePipeline	1
-direction	server:server/agents/ManagerSupervisor.scala	automation -> research: ReviewArticle	1
-direction	server:server/agents/ManagerSupervisor.scala	automation -> research: ReviewLedger	1
-direction	server:server/agents/ManagerSupervisor.scala	automation -> research: ReviewLedgerRepo	1
-direction	server:server/agents/ManagerSupervisor.scala	automation -> split: Handlers	1
-direction	server:server/agents/ManagersHandlers.scala	automation -> library: Acquire	1
-direction	server:server/agents/ManagersHandlers.scala	automation -> library: AcquireChecks	1
-direction	server:server/agents/ManagersHandlers.scala	automation -> library: AutoEnrich	1
-direction	server:server/agents/ManagersHandlers.scala	automation -> library: EnrichSource	1
-direction	server:server/agents/ManagersHandlers.scala	automation -> library: Ingest	1
-direction	server:server/agents/ManagersHandlers.scala	automation -> library: OaBacklog	1
-direction	server:server/agents/ManagersHandlers.scala	automation -> library: RepairAcquire	1
-direction	server:server/agents/ManagersHandlers.scala	automation -> research: ArticleRepo	1
-direction	server:server/agents/ManagersHandlers.scala	automation -> split: Handlers	1
 direction	server:server/agents/OaBacklog.scala	library -> split: Handlers	1
-direction	server:server/agents/Pipelines.scala	automation -> split: Handlers	1
-direction	server:server/agents/PlanGoalPipeline.scala	automation -> library: AgentUpstream	1
-direction	server:server/agents/PlanGoalPipeline.scala	automation -> library: Query	1
-direction	server:server/agents/PlanGoalPipeline.scala	automation -> split: Handlers	1
 direction	server:server/agents/ProposeArticlesPipeline.scala	research -> split: Handlers	1
 direction	server:server/agents/ReviewArticlePipeline.scala	research -> split: Handlers	1
-direction	server:server/agents/RunCtx.scala	automation -> library: AgentVerify	1
-direction	server:server/agents/SchedulerService.scala	automation -> split: Handlers	1
 direction	server:server/agents/SeedService.scala	library -> split: Handlers	1
-direction	server:server/agents/ToolResultCap.scala	automation -> library: Query	1
-direction	server:server/agents/WebAccess.scala	automation -> library: Search	1
 direction	server:server/events/EventCatalogHandlers.scala	catalogue -> library: PassageFinder	1
 direction	server:server/events/EventCatalogHandlers.scala	catalogue -> library: SourceRepo	1
 direction	server:server/events/EventCatalogHandlers.scala	catalogue -> server: Deps	1
@@ -359,6 +359,15 @@ filesystem	files:files/PlaceSeed.scala	java.nio.file	1
 filesystem	files:files/PluginKit.scala	File(	1
 filesystem	files:files/SafePath.scala	Paths.get	4
 filesystem	files:files/SafePath.scala	java.nio.file	1
+filesystem	server:domain/automation/agents/AgentTrees.scala	Files.*	14
+filesystem	server:domain/automation/agents/AgentTrees.scala	Path.of	2
+filesystem	server:domain/automation/agents/AgentTrees.scala	StandardCopyOption	3
+filesystem	server:domain/automation/agents/AgentTrees.scala	java.nio.file	1
+filesystem	server:domain/automation/agents/AgentsHandlers.scala	Path.of	1
+filesystem	server:domain/automation/agents/AgentsHandlers.scala	java.nio.file	1
+filesystem	server:domain/automation/agents/Prompts.scala	Files.*	2
+filesystem	server:domain/automation/agents/Prompts.scala	Path.of	1
+filesystem	server:domain/automation/agents/Prompts.scala	java.nio.file	1
 filesystem	server:server/IngestHandlers.scala	.toFile	3
 filesystem	server:server/IngestHandlers.scala	Files.*	11
 filesystem	server:server/IngestHandlers.scala	Path.of	1
@@ -378,12 +387,6 @@ filesystem	server:server/acquire/Spool.scala	Path.of	2
 filesystem	server:server/acquire/Spool.scala	java.nio.file	1
 filesystem	server:server/agents/AgentDoctor.scala	Files.*	2
 filesystem	server:server/agents/AgentDoctor.scala	java.nio.file	2
-filesystem	server:server/agents/AgentTrees.scala	Files.*	14
-filesystem	server:server/agents/AgentTrees.scala	Path.of	2
-filesystem	server:server/agents/AgentTrees.scala	StandardCopyOption	3
-filesystem	server:server/agents/AgentTrees.scala	java.nio.file	1
-filesystem	server:server/agents/AgentsHandlers.scala	Path.of	1
-filesystem	server:server/agents/AgentsHandlers.scala	java.nio.file	1
 filesystem	server:server/agents/ClaudeCodeClient.scala	Files.*	4
 filesystem	server:server/agents/ClaudeCodeClient.scala	java.nio.file	1
 filesystem	server:server/agents/CliProcess.scala	.toFile	1
@@ -399,9 +402,6 @@ filesystem	server:server/agents/CodexHome.scala	java.nio.file	1
 filesystem	server:server/agents/OpencodeRunClient.scala	.toFile	1
 filesystem	server:server/agents/PlanPools.scala	Files.*	1
 filesystem	server:server/agents/PlanPools.scala	java.nio.file	5
-filesystem	server:server/agents/Prompts.scala	Files.*	2
-filesystem	server:server/agents/Prompts.scala	Path.of	1
-filesystem	server:server/agents/Prompts.scala	java.nio.file	1
 filesystem	server:server/importers/GazetteerLoad.scala	Files.*	19
 filesystem	server:server/importers/GazetteerLoad.scala	Path.of	3
 filesystem	server:server/importers/GazetteerLoad.scala	StandardCopyOption	3
@@ -438,6 +438,39 @@ repository	db:db/TileRepo.scala	MediaRepo of media	1
 repository	db:db/TileRepo.scala	PlaceRepo of catalogue.places	1
 repository	db:db/UndatedSiteRepo.scala	PlaceRepo of catalogue.places	1
 repository	server:domain/activity/ActivityRepo.scala	AgentRepo of automation.agents	1
+repository	server:domain/automation/agents/AgentLease.scala	ManagerRepo of automation.managers	1
+repository	server:domain/automation/agents/AgentsHandlers.scala	GoalLinkRepo of automation.goals	1
+repository	server:domain/automation/agents/AgentsHandlers.scala	GoalRepo of automation.goals	1
+repository	server:domain/automation/agents/AgentsHandlers.scala	ManagerRepo of automation.managers	1
+repository	server:domain/automation/approvals/ApprovalDigestService.scala	AgentRepo of automation.agents	1
+repository	server:domain/automation/approvals/ApprovalDigestService.scala	AutopilotRepo of automation.autopilot	1
+repository	server:domain/automation/approvals/ApprovalDigestService.scala	ManagerRepo of automation.managers	1
+repository	server:domain/automation/approvals/Approvals.scala	AgentRepo of automation.agents	1
+repository	server:domain/automation/approvals/AutoApprovals.scala	AgentRepo of automation.agents	1
+repository	server:domain/automation/approvals/AutoApprovals.scala	FocusRepo of automation.goals	1
+repository	server:domain/automation/approvals/AutoApprovals.scala	GoalRepo of automation.goals	1
+repository	server:domain/automation/approvals/AutoApprovals.scala	ManagerRepo of automation.managers	1
+repository	server:domain/automation/autopilot/AutopilotService.scala	AgentRepo of automation.agents	1
+repository	server:domain/automation/autopilot/AutopilotService.scala	GoalLinkRepo of automation.goals	1
+repository	server:domain/automation/autopilot/AutopilotService.scala	GoalRepo of automation.goals	1
+repository	server:domain/automation/autopilot/AutopilotService.scala	ManagerRepo of automation.managers	1
+repository	server:domain/automation/goals/GoalFocusService.scala	ManagerRepo of automation.managers	1
+repository	server:domain/automation/managers/DrainService.scala	AgentRepo of automation.agents	1
+repository	server:domain/automation/managers/DrainService.scala	AutopilotRepo of automation.autopilot	1
+repository	server:domain/automation/managers/HintEffectPipeline.scala	AgentRepo of automation.agents	1
+repository	server:domain/automation/managers/ManagerSupervisor.scala	AgentRepo of automation.agents	1
+repository	server:domain/automation/managers/ManagerSupervisor.scala	ArticleRepo of research.articles	1
+repository	server:domain/automation/managers/ManagerSupervisor.scala	GoalLinkRepo of automation.goals	1
+repository	server:domain/automation/managers/ManagerSupervisor.scala	GoalRepo of automation.goals	1
+repository	server:domain/automation/managers/ManagerSupervisor.scala	ReviewLedgerRepo of research.workflows	1
+repository	server:domain/automation/managers/ManagersHandlers.scala	AgentRepo of automation.agents	1
+repository	server:domain/automation/managers/ManagersHandlers.scala	ArticleRepo of research.articles	1
+repository	server:domain/automation/managers/ManagersHandlers.scala	GoalLinkRepo of automation.goals	1
+repository	server:domain/automation/scheduler/SchedulerService.scala	AgentRepo of automation.agents	1
+repository	server:domain/automation/scheduler/SchedulerService.scala	AutopilotRepo of automation.autopilot	1
+repository	server:domain/automation/scheduler/SchedulerService.scala	FocusRepo of automation.goals	1
+repository	server:domain/automation/scheduler/SchedulerService.scala	GoalLinkRepo of automation.goals	1
+repository	server:domain/automation/scheduler/SchedulerService.scala	ManagerRepo of automation.managers	1
 repository	server:server/Bootstrap.scala	JobRepo of util.jobs	1
 repository	server:server/Bootstrap.scala	PeriodRepo of catalogue.periods	1
 repository	server:server/Bootstrap.scala	PlaceRepo of catalogue.places	1
@@ -487,41 +520,13 @@ repository	server:server/agents/AcquireRecheckService.scala	JobRepo of util.jobs
 repository	server:server/agents/AcquireRecheckService.scala	ManagerRepo of automation.managers	1
 repository	server:server/agents/AcquisitionSweepPipeline.scala	GoalLinkRepo of automation.goals	1
 repository	server:server/agents/AcquisitionSweepPipeline.scala	ManagerRepo of automation.managers	1
-repository	server:server/agents/AgentLease.scala	ManagerRepo of automation.managers	1
-repository	server:server/agents/AgentsHandlers.scala	GoalLinkRepo of automation.goals	1
-repository	server:server/agents/AgentsHandlers.scala	GoalRepo of automation.goals	1
-repository	server:server/agents/AgentsHandlers.scala	ManagerRepo of automation.managers	1
-repository	server:server/agents/ApprovalDigestService.scala	AgentRepo of automation.agents	1
-repository	server:server/agents/ApprovalDigestService.scala	AutopilotRepo of automation.autopilot	1
-repository	server:server/agents/ApprovalDigestService.scala	ManagerRepo of automation.managers	1
-repository	server:server/agents/Approvals.scala	AgentRepo of automation.agents	1
-repository	server:server/agents/AutoApprovals.scala	AgentRepo of automation.agents	1
-repository	server:server/agents/AutoApprovals.scala	FocusRepo of automation.goals	1
-repository	server:server/agents/AutoApprovals.scala	GoalRepo of automation.goals	1
-repository	server:server/agents/AutoApprovals.scala	ManagerRepo of automation.managers	1
-repository	server:server/agents/AutopilotService.scala	AgentRepo of automation.agents	1
-repository	server:server/agents/AutopilotService.scala	GoalLinkRepo of automation.goals	1
-repository	server:server/agents/AutopilotService.scala	GoalRepo of automation.goals	1
-repository	server:server/agents/AutopilotService.scala	ManagerRepo of automation.managers	1
 repository	server:server/agents/CompileArticlePipeline.scala	AgentRepo of automation.agents	1
 repository	server:server/agents/CompileArticlePipeline.scala	ArticleRepo of research.articles	1
 repository	server:server/agents/CompileArticlePipeline.scala	GoalLinkRepo of automation.goals	1
 repository	server:server/agents/CurrencyCheckPipeline.scala	AgentRepo of automation.agents	1
-repository	server:server/agents/DrainService.scala	AgentRepo of automation.agents	1
-repository	server:server/agents/DrainService.scala	AutopilotRepo of automation.autopilot	1
 repository	server:server/agents/EnrichSourcePipeline.scala	AgentRepo of automation.agents	1
-repository	server:server/agents/GoalFocusService.scala	ManagerRepo of automation.managers	1
-repository	server:server/agents/HintEffectPipeline.scala	AgentRepo of automation.agents	1
 repository	server:server/agents/InferFilterPipeline.scala	AgentRepo of automation.agents	1
 repository	server:server/agents/InferFilterPipeline.scala	ArticleRepo of research.articles	1
-repository	server:server/agents/ManagerSupervisor.scala	AgentRepo of automation.agents	1
-repository	server:server/agents/ManagerSupervisor.scala	ArticleRepo of research.articles	1
-repository	server:server/agents/ManagerSupervisor.scala	GoalLinkRepo of automation.goals	1
-repository	server:server/agents/ManagerSupervisor.scala	GoalRepo of automation.goals	1
-repository	server:server/agents/ManagerSupervisor.scala	ReviewLedgerRepo of research.workflows	1
-repository	server:server/agents/ManagersHandlers.scala	AgentRepo of automation.agents	1
-repository	server:server/agents/ManagersHandlers.scala	ArticleRepo of research.articles	1
-repository	server:server/agents/ManagersHandlers.scala	GoalLinkRepo of automation.goals	1
 repository	server:server/agents/OaBacklog.scala	GoalLinkRepo of automation.goals	1
 repository	server:server/agents/OaBacklog.scala	ManagerRepo of automation.managers	1
 repository	server:server/agents/ProposeArticlesPipeline.scala	AgentRepo of automation.agents	1
@@ -530,11 +535,6 @@ repository	server:server/agents/ProposeArticlesPipeline.scala	GoalLinkRepo of au
 repository	server:server/agents/ProposeArticlesPipeline.scala	GoalRepo of automation.goals	1
 repository	server:server/agents/ProposeArticlesPipeline.scala	ManagerRepo of automation.managers	1
 repository	server:server/agents/ReviewArticlePipeline.scala	AgentRepo of automation.agents	1
-repository	server:server/agents/SchedulerService.scala	AgentRepo of automation.agents	1
-repository	server:server/agents/SchedulerService.scala	AutopilotRepo of automation.autopilot	1
-repository	server:server/agents/SchedulerService.scala	FocusRepo of automation.goals	1
-repository	server:server/agents/SchedulerService.scala	GoalLinkRepo of automation.goals	1
-repository	server:server/agents/SchedulerService.scala	ManagerRepo of automation.managers	1
 repository	server:server/agents/SeedService.scala	CandidateRepo of library.acquisition	1
 repository	server:server/agents/SeedService.scala	FocusRepo of automation.goals	1
 repository	server:server/agents/SeedService.scala	ManagerRepo of automation.managers	1

@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.PluginTree
+
 import java.nio.file.Path
 
 /** `just plugin`: writes the checked-in Claude Code plugin under the repository root, its definitions holding the agent

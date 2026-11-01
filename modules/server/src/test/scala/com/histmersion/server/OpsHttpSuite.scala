@@ -245,8 +245,8 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
       // every {{tool:x}} placeholder in the canonical agents and skills names a tool /mcp really has
       val named = com.histmersion.server.agents.Generated
         .known(
-          com.histmersion.server.agents.AgentDefinitions(
-            com.histmersion.server.agents.Prompts(""),
+          com.histmersion.domain.automation.agents.AgentDefinitions(
+            com.histmersion.domain.automation.agents.Prompts(""),
             com.histmersion.server.agents.TransitionTools.names
           )
         )

@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.Toolbox
+
 import com.histmersion.domain.automation.workflows.ToolName
 
 import com.histmersion.api.Agents.ProbeAnswer

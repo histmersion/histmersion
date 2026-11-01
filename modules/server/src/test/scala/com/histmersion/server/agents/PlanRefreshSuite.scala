@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.ModelPicker
+
 import com.histmersion.config.ClaudeCodeConfig
 import com.histmersion.api.Agents.Role
 import com.histmersion.api.PlanQuota.*

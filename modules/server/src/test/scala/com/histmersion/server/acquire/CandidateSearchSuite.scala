@@ -5,7 +5,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.GoalPlans.LinkKind
 import com.histmersion.db.{CandidateRepo, GoalLinkRepo, GoalRepo, Migrate, QueueRows, SourceRepo}
-import com.histmersion.server.agents.ManagerSupervisor
+import com.histmersion.domain.automation.managers.ManagerSupervisor
 
 import java.time.LocalDate
 import java.util.concurrent.ConcurrentLinkedQueue

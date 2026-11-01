@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.{AgentGenerator, FirstCallProbe, LlmCall, LlmClient, ModelLimitReached}
+
 import com.histmersion.config.ClaudeCodeConfig
 import com.histmersion.api.Agents.ModelRef
 import io.circe.{parser, Json}

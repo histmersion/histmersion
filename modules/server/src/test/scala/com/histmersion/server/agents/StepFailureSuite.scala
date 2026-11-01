@@ -1,5 +1,8 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.{AnswerSchemas, Engine, Prompt}
+import com.histmersion.domain.automation.managers.Zero
+
 import sttp.ai.core.agent.*
 
 /** How a step reads an attempt that did not produce its typed answer: an answer over the output cap (#1450, a

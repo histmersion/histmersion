@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.ToolResultCap
+
 import com.histmersion.api.Query.QueryResult
 
 /** What one agent tool call may return (`agents.tools`): a cut is at a line and says how to read on, a source record

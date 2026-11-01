@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.PoolSink
+
 import com.histmersion.config.AppConfig
 import com.histmersion.api.PlanQuota.{PoolId, Reading}
 

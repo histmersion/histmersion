@@ -16770,7 +16770,7 @@
       ]
     },
     {
-      "type": "com.histmersion.server.agents.AgentsTools$ApprovalsInput$",
+      "type": "com.histmersion.domain.automation.agents.AgentsTools$ApprovalsInput$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy3"
@@ -16787,7 +16787,7 @@
       ]
     },
     {
-      "type": "com.histmersion.server.agents.AgentsTools$DecideInput$",
+      "type": "com.histmersion.domain.automation.agents.AgentsTools$DecideInput$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy4"
@@ -16804,7 +16804,7 @@
       ]
     },
     {
-      "type": "com.histmersion.server.agents.AgentsTools$GoalLinkInput$",
+      "type": "com.histmersion.domain.automation.agents.AgentsTools$GoalLinkInput$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy3"
@@ -16818,7 +16818,7 @@
       ]
     },
     {
-      "type": "com.histmersion.server.agents.AgentsTools$ManagerInput$",
+      "type": "com.histmersion.domain.automation.agents.AgentsTools$ManagerInput$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy10"
@@ -16832,7 +16832,7 @@
       ]
     },
     {
-      "type": "com.histmersion.server.agents.AgentsTools$ModelsInput$",
+      "type": "com.histmersion.domain.automation.agents.AgentsTools$ModelsInput$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy1"
@@ -16843,7 +16843,7 @@
       ]
     },
     {
-      "type": "com.histmersion.server.agents.AgentsTools$RunInput$",
+      "type": "com.histmersion.domain.automation.agents.AgentsTools$RunInput$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy1"
@@ -16857,7 +16857,7 @@
       ]
     },
     {
-      "type": "com.histmersion.server.agents.AgentsTools$RunsInput$",
+      "type": "com.histmersion.domain.automation.agents.AgentsTools$RunsInput$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy2"
@@ -16871,7 +16871,7 @@
       ]
     },
     {
-      "type": "com.histmersion.server.agents.AgentsTools$ScheduleInput$",
+      "type": "com.histmersion.domain.automation.agents.AgentsTools$ScheduleInput$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy4"
@@ -16885,7 +16885,7 @@
       ]
     },
     {
-      "type": "com.histmersion.server.agents.AgentsTools$SchedulerInput$",
+      "type": "com.histmersion.domain.automation.agents.AgentsTools$SchedulerInput$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy9"
@@ -16896,7 +16896,7 @@
       ]
     },
     {
-      "type": "com.histmersion.server.agents.AgentsTools$SetModelsInput$",
+      "type": "com.histmersion.domain.automation.agents.AgentsTools$SetModelsInput$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy2"
@@ -16963,7 +16963,7 @@
       ]
     },
     {
-      "type": "com.histmersion.server.agents.Decided$",
+      "type": "com.histmersion.domain.automation.approvals.Decided$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy1"
@@ -16985,7 +16985,7 @@
       ]
     },
     {
-      "type": "com.histmersion.server.agents.HintEffectPipeline$Loaded$",
+      "type": "com.histmersion.domain.automation.managers.HintEffectPipeline$Loaded$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy1"
@@ -17009,7 +17009,7 @@
       ]
     },
     {
-      "type": "com.histmersion.server.agents.PlanGoalPipeline$Applied$",
+      "type": "com.histmersion.domain.automation.goals.PlanGoalPipeline$Applied$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy2"
@@ -17017,7 +17017,7 @@
       ]
     },
     {
-      "type": "com.histmersion.server.agents.PlanGoalPipeline$Loaded$",
+      "type": "com.histmersion.domain.automation.goals.PlanGoalPipeline$Loaded$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy1"
@@ -17049,7 +17049,7 @@
       ]
     },
     {
-      "type": "com.histmersion.server.agents.RunCtx",
+      "type": "com.histmersion.domain.automation.agents.RunCtx",
       "fields": [
         {
           "name": "Served$lzy1"
@@ -17057,7 +17057,7 @@
       ]
     },
     {
-      "type": "com.histmersion.server.agents.RunTokenGate"
+      "type": "com.histmersion.domain.automation.agents.RunTokenGate"
     },
     {
       "type": "com.histmersion.server.agents.TransitionTools$package$",
@@ -17068,7 +17068,7 @@
       ]
     },
     {
-      "type": "com.histmersion.server.agents.Zero$",
+      "type": "com.histmersion.domain.automation.managers.Zero$",
       "fields": [
         {
           "name": "given_Zero_Boolean$lzy1"

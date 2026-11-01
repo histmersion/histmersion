@@ -1,5 +1,17 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.{
+  AgentDef,
+  AgentRuntime,
+  FirstCallProbe,
+  LlmCall,
+  LlmClient,
+  ModelLimitReached,
+  RunScope,
+  StepAgent
+}
+import com.histmersion.domain.automation.managers.Zero
+
 import com.histmersion.config.ClaudeCodeConfig
 import com.histmersion.api.Agents.{ModelRef, ProbeAnswer, ProviderKind}
 import com.histmersion.api.PlanQuota.PoolId
