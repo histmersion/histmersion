@@ -2,6 +2,7 @@ package com.histmersion.domain.catalogue
 
 import com.histmersion.api.Dataset
 import com.histmersion.config.AppConfig
+import com.histmersion.domain.catalogue.evidence.AttestationService
 import com.histmersion.domain.catalogue.periods.PeriodService
 import com.histmersion.util.database.Transactor
 import com.augustnagro.magnum.*
@@ -26,6 +27,8 @@ object CatalogueStoreSuite:
       val state = AtomicReference(CatalogueState.empty)
       Some(new CatalogueStores:
         val periods = PeriodService.InMemory(state)
+        val attestations = AttestationService.InMemory(state)
+        def source(citekey: String): Unit = ()
         def seedRows(): List[String] =
           state.get.periods.filter(_.dataset == Dataset.Seed).map(_.period.id).toList)
 
@@ -46,6 +49,9 @@ object CatalogueStoreSuite:
         val db = Transactor(ds)
         new CatalogueStores:
           val periods = PeriodService(db)
+          val attestations = AttestationService(db)
+          def source(citekey: String): Unit =
+            connect(ds)(sql"INSERT INTO sources (citekey, title) VALUES ($citekey, $citekey)".update.run()): Unit
           def seedRows(): List[String] =
             connect(ds)(sql"SELECT id FROM periods WHERE dataset = 'seed'".query[String].run()).toList
       }

@@ -60,6 +60,10 @@ final class Deps(
   val workLists: com.histmersion.domain.automation.worklists.WorkListControllers =
     com.histmersion.domain.automation.worklists.WorkListControllers(queues, maintenance, clock)
 
+  /** The sources' texts as the catalogue's evidence searches them (the library's). */
+  lazy val passages: com.histmersion.domain.catalogue.evidence.passages.PassageSource =
+    com.histmersion.domain.library.sources.SourcePassages(ds)
+
   /** The server's files, each named place where today's settings put it. */
   lazy val storage: com.histmersion.util.storage.Storage =
     StorageLocations.storage(() => cfg, () => loaded, environment, userPaths)

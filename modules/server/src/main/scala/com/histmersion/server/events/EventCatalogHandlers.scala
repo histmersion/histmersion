@@ -11,7 +11,7 @@ import com.histmersion.pluginhost.{HttpTransport, JavaHttpTransport, PluginEvent
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{AttestationRepo, CorrectionRepo, EventCatalogRepo, EventRepo, PlaceScope, SourceRepo}
+import com.histmersion.db.{CorrectionRepo, EventCatalogRepo, EventRepo, PlaceScope}
 import com.histmersion.util.jobs.JobRepo
 import com.histmersion.server.Deps
 import com.histmersion.values.EventLinkStatus
@@ -27,6 +27,8 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
   def this(deps: Deps) = this(deps, JavaHttpTransport(deps.cfg.events.timeoutSeconds))
 
   private val ds = deps.ds
+  private val attestations = com.histmersion.domain.catalogue.evidence.AttestationService(deps.transactor)
+  private val sources = deps.passages
   private def cfg = deps.cfg
   private def ec = cfg.events
 
@@ -423,30 +425,17 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
   /** The passages of `citekey`'s body that name the event — a whole-word, case- and accent-insensitive match of each
     * name.
     */
-  private def passagesIn(
-      citekey: String,
-      names: List[String],
-      body: => List[com.histmersion.util.ocr.Chunk]
-  ): List[EventPassage] =
-    lazy val chunks = body
+  private def passagesIn(citekey: String, names: List[String]): List[EventPassage] =
+    val text = sources.reader(citekey)
     names
       .flatMap { n =>
         val words = n.split("\\s+").filter(_.nonEmpty).map(w => java.util.regex.Pattern.quote(w))
         val rx = words.mkString("\\b", "\\s+", "\\b")
-        PassageFinder
-          .find(
-            citekey,
-            chunks,
-            rx,
-            regex = true,
-            limit = 5,
-            context = 160,
-            maxMatches = 50,
-            timeoutMs = cfg.limits.passages.regexTimeoutMs.toLong
-          )
+        text
+          .find(rx, regex = true, limit = 5, context = 160, maxMatches = 50, cfg.limits.passages.regexTimeoutMs.toLong)
           .toOption
           .toList
-          .flatMap(_.passages)
+          .flatten
           .flatMap { h =>
             h.matches
               .map(m => EventPassage(h.offset + m.start, h.offset + m.end, h.text.substring(m.start, m.end), n, h.text))
@@ -465,7 +454,7 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
     val named = names
       .flatMap(n => EventCatalogRepo.sourcesNaming(ds, n, ec.links.sourcesPerName))
       .distinct
-      .map(ck => ck -> passagesIn(ck, names, SourceRepo.bodyChunks(ds, ck)))
+      .map(ck => ck -> passagesIn(ck, names))
       .filter(_._2.nonEmpty)
       .toMap
     val cands = EventMatcher.candidates(d.event.id, near, named, w)
@@ -490,7 +479,7 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
         val eid = d.event.id
         if req.recompute then compute(d)
         val names = namesOf(d)
-        val existing = AttestationRepo.list(ds, None, Some(AttestationTarget.Event), Some(eid), 1000, 0).attestations
+        val existing = attestations.list(None, Some(AttestationTarget.Event), Some(eid), 1000, 0).attestations
         @tailrec def confirm(
             rest: List[String],
             ok: List[Attestation],
@@ -499,14 +488,14 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
           rest match
             case Nil         => (ok, no)
             case raw :: tail =>
-              SourceRepo.canonical(ds, raw) match
+              sources.canonical(raw) match
                 case None     => confirm(tail, ok, no :+ s"$raw: no such source")
                 case Some(ck) =>
                   if existing.exists(_.citekey == ck) then
                     val _ = EventCatalogRepo.setStatus(ds, eid, ck, EventLinkStatus.Confirmed)
                     confirm(tail, ok, no :+ s"$ck: already attests it")
                   else
-                    EventMatcher.attestationPassage(passagesIn(ck, names, SourceRepo.bodyChunks(ds, ck))) match
+                    EventMatcher.attestationPassage(passagesIn(ck, names)) match
                       case None =>
                         confirm(
                           tail,
@@ -514,7 +503,7 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
                           no :+ s"$ck: no passage of its text names the event (${names.mkString(", ")}) — not attested"
                         )
                       case Some(p) =>
-                        val a = AttestationRepo.create(ds, EventMatcher.attestation(eid, ck, p))
+                        val a = attestations.create(EventMatcher.attestation(eid, ck, p))
                         if !EventCatalogRepo.setStatus(ds, eid, ck, EventLinkStatus.Confirmed) then
                           EventCatalogRepo.saveCandidates(
                             ds,
@@ -539,7 +528,7 @@ final class EventCatalogHandlers(deps: Deps, http: HttpTransport, presentYear: (
           .filter(_.nonEmpty)
           .distinct
           .filter(ck =>
-            EventCatalogRepo.setStatus(ds, eid, SourceRepo.canonical(ds, ck).getOrElse(ck), EventLinkStatus.Rejected)
+            EventCatalogRepo.setStatus(ds, eid, sources.canonical(ck).getOrElse(ck), EventLinkStatus.Rejected)
           )
         EventLinksResult(
           EventLinkList(eid, d.event.label, EventCatalogRepo.candidates(ds, eid)),

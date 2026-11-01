@@ -227,17 +227,18 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
         AssetRepo.Stored("fig2.png", "image/png", png(2), None, None)
       )
     )
-    val _ = AttestationRepo.create(
-      ds,
-      AttestationPut(
-        "zzalpha2001_storm",
-        "place",
-        "zz_site",
-        quote = Some("Alpha body"),
-        charStart = Some(0),
-        charEnd = Some(10)
+    val _ = com.histmersion.domain.catalogue.evidence
+      .AttestationService(com.histmersion.util.database.Transactor(ds))
+      .create(
+        AttestationPut(
+          "zzalpha2001_storm",
+          "place",
+          "zz_site",
+          quote = Some("Alpha body"),
+          charStart = Some(0),
+          charEnd = Some(10)
+        )
       )
-    )
     val _ = QueueRows.add(ds, Queue.Kind.Tasks, Queue.QueueAdd("check the storm god", topic = Some("oracle")))
     val _ = QueueRows.add(ds, Queue.Kind.Log, Queue.QueueAdd("crafted the oracle", topic = Some("oracle")))
     val _ = QueueRows.add(ds, Queue.Kind.Acquire, Queue.QueueAdd("Doe, The Lost Book (1900)", topic = Some("oracle")))

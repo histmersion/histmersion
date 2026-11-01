@@ -130,13 +130,10 @@ final class HttpApi(
     Api.getEvent.serverLogic[Identity](id => h.getEvent(id)),
     Api.putEvent.serverLogic[Identity]((id, in) => h.putEvent(id, in)),
     Api.patchEvent.serverLogic[Identity]((id, p) => h.patchEvent(id, p)),
-    Api.deleteEvent.serverLogic[Identity](id => h.deleteEvent(id)),
+    Api.deleteEvent.serverLogic[Identity](id => h.deleteEvent(id))
     // ── attestations (plan §1.3) ──────────────────────────────────────────────────────────────
-    Api.attestations.serverLogicSuccess[Identity](q => h.listAttestations(q)),
-    Api.getAttestation.serverLogic[Identity](id => h.getAttestation(id)),
-    Api.createAttestation.serverLogic[Identity](in => h.createAttestation(in)),
-    Api.patchAttestation.serverLogic[Identity]((id, p) => h.patchAttestation(id, p)),
-    Api.deleteAttestation.serverLogic[Identity](id => h.deleteAttestation(id)),
+  ) ++ com.histmersion.domain.catalogue.evidence
+    .AttestationsRoutes(h.attestations) ++ List[ServerEndpoint[Any, Identity]](
     // ── goals (plan §1.5) ─────────────────────────────────────────────────────────────────────
     Api.goals.serverLogicSuccess[Identity](q => h.listGoals(q)),
     Api.getGoal.serverLogic[Identity](slug => h.getGoal(slug)),

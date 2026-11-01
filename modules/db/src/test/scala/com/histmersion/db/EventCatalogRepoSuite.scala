@@ -215,7 +215,7 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(EventCatalogRepo.candidates(ds, "zztest_b", withRejected = true).map(_.status), List("rejected"))
 
   test("an attestation makes a catalogue event attested"):
-    val _ = AttestationRepo.create(
+    val _ = AttestationRows.create(
       ds,
       AttestationPut(
         "zqec_src2020",
