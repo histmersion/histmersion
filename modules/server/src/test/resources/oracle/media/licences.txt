@@ -1,0 +1,110 @@
+# classify: statement → id|family · needs attribution · public domain · allowed by default · host's read
+"" → |unknown · false · false · false · |unknown|false
+"   " → |unknown · false · false · false · |unknown|false
+"cc0" → CC0-1.0|cc0 · false · true · true · CC0-1.0|cc0|false
+"CC0 1.0" → CC0-1.0|cc0 · false · true · true · CC0-1.0|cc0|false
+"CC0-1.0" → CC0-1.0|cc0 · false · true · true · CC0-1.0|cc0|false
+"cc-zero" → CC0-1.0|cc0 · false · true · true · CC0-1.0|cc0|false
+"cc-0" → CC0-1.0|cc0 · false · true · true · CC0-1.0|cc0|false
+"pd" → public-domain|public-domain · false · true · true · public-domain|public-domain|false
+"PD-old" → public-domain|public-domain · false · true · true · public-domain|public-domain|false
+"PD-US" → public-domain|public-domain · false · true · true · public-domain|public-domain|false
+"Public domain" → public-domain|public-domain · false · true · true · public-domain|public-domain|false
+"public-domain-mark" → public-domain|public-domain · false · true · true · public-domain|public-domain|false
+"publicdomain" → public-domain|public-domain · false · true · true · public-domain|public-domain|false
+"PDM" → public-domain|public-domain · false · true · true · public-domain|public-domain|false
+"cc-by-4.0" → CC-BY-4.0|cc-by · true · false · true · CC-BY-4.0|cc-by|true
+"CC BY 4.0" → CC-BY-4.0|cc-by · true · false · true · CC-BY-4.0|cc-by|true
+"CC-BY-4.0" → CC-BY-4.0|cc-by · true · false · true · CC-BY-4.0|cc-by|true
+"cc-by-sa-3.0" → CC-BY-SA-3.0|cc-by-sa · true · false · true · CC-BY-SA-3.0|cc-by-sa|true
+"CC BY-SA 3.0 de" → CC-BY-SA-3.0-DE|cc-by-sa · true · false · true · CC-BY-SA-3.0-DE|cc-by-sa|true
+"cc-by-sa-3" → CC-BY-SA-3.0|cc-by-sa · true · false · true · CC-BY-SA-3.0|cc-by-sa|true
+"CC_BY_SA_2.5" → CC-BY-SA-2.5|cc-by-sa · true · false · true · CC-BY-SA-2.5|cc-by-sa|true
+"cc-by-nc-4.0" → CC-BY-NC-4.0|cc-by-nc · true · false · false · CC-BY-NC-4.0|cc-by-nc|true
+"CC BY-NC 4.0" → CC-BY-NC-4.0|cc-by-nc · true · false · false · CC-BY-NC-4.0|cc-by-nc|true
+"cc-by-nc-sa-2.5" → CC-BY-NC-SA-2.5|cc-by-nc-sa · true · false · false · CC-BY-NC-SA-2.5|cc-by-nc-sa|true
+"CC BY-ND 4.0" → CC-BY-ND-4.0|cc-by-nd · true · false · false · CC-BY-ND-4.0|cc-by-nd|true
+"cc-by-nd-2.0-fr" → CC-BY-ND-2.0-FR|cc-by-nd · true · false · false · CC-BY-ND-2.0-FR|cc-by-nd|true
+"cc-by-nc-nd-3.0-us" → CC-BY-NC-ND-3.0-US|cc-by-nc-nd · true · false · false · CC-BY-NC-ND-3.0-US|cc-by-nc-nd|true
+"cc-by" → CC-BY|cc-by · true · false · true · CC-BY|cc-by|true
+"cc-by-sa" → CC-BY-SA|cc-by-sa · true · false · true · CC-BY-SA|cc-by-sa|true
+"GFDL" → GFDL|gfdl · true · false · false · GFDL|gfdl|true
+"GFDL-1.2" → GFDL|gfdl · true · false · false · GFDL|gfdl|true
+"gfdl-self" → GFDL|gfdl · true · false · false · GFDL|gfdl|true
+"arr" → all-rights-reserved|all-rights-reserved · false · false · false · all-rights-reserved|all-rights-reserved|false
+"All rights reserved" → all-rights-reserved|all-rights-reserved · false · false · false · all-rights-reserved|all-rights-reserved|false
+"copyrighted" → all-rights-reserved|all-rights-reserved · false · false · false · all-rights-reserved|all-rights-reserved|false
+"© Zq Museum" → all-rights-reserved|all-rights-reserved · false · false · false · all-rights-reserved|all-rights-reserved|false
+"Attribution" → attribution|unknown · false · false · false · attribution|unknown|false
+"unknown-licence" → unknown-licence|unknown · false · false · false · unknown-licence|unknown|false
+"  CC BY-SA 4.0  " → CC-BY-SA-4.0|cc-by-sa · true · false · true · CC-BY-SA-4.0|cc-by-sa|true
+"https://creativecommons.org/licenses/by/4.0/" → https://creativecommons.org/licenses/by/4.0/|unknown · false · false · false · https://creativecommons.org/licenses/by/4.0/|unknown|false
+# ofUrl: url → id|family · host's read
+"" → |unknown · |unknown|false
+"https://creativecommons.org/licenses/by-sa/4.0" → CC-BY-SA-4.0|cc-by-sa · CC-BY-SA-4.0|cc-by-sa|true
+"https://creativecommons.org/licenses/by/4.0/" → CC-BY-4.0|cc-by · CC-BY-4.0|cc-by|true
+"http://www.creativecommons.org/licenses/by/3.0/de/" → CC-BY-3.0-DE|cc-by · CC-BY-3.0-DE|cc-by|true
+"https://creativecommons.org/licenses/by-nc/4.0/deed.en" → CC-BY-NC-4.0|cc-by-nc · CC-BY-NC-4.0|cc-by-nc|true
+"https://creativecommons.org/licenses/by-nc-sa/2.0/fr/deed.fr" → CC-BY-NC-SA-2.0-FR|cc-by-nc-sa · CC-BY-NC-SA-2.0-FR|cc-by-nc-sa|true
+"https://creativecommons.org/licenses/by-nd/2.5" → CC-BY-ND-2.5|cc-by-nd · CC-BY-ND-2.5|cc-by-nd|true
+"https://creativecommons.org/publicdomain/zero/1.0/" → CC0-1.0|cc0 · CC0-1.0|cc0|false
+"https://creativecommons.org/publicdomain/mark/1.0/" → public-domain|public-domain · public-domain|public-domain|false
+"HTTPS://CreativeCommons.org/publicdomain/zero/1.0/deed.de" → CC0-1.0|cc0 · CC0-1.0|cc0|false
+"https://rightsstatements.org/vocab/InC/1.0/" → https://rightsstatements.org/vocab/inc/1.0/|unknown · https://rightsstatements.org/vocab/inc/1.0/|unknown|false
+"https://creativecommons.org/licenses/by/x/" → https://creativecommons.org/licenses/by/x/|unknown · https://creativecommons.org/licenses/by/x/|unknown|false
+"not a url" → not a url|unknown · not a url|unknown|false
+# parse(machine, short) and firstKnown
+"cc-by-sa-4.0", "CC BY-SA 4.0" → CC-BY-SA-4.0|cc-by-sa
+"nonsense", "CC BY 2.0" → CC-BY-2.0|cc-by
+null, "Public domain" → public-domain|public-domain
+"", "" → |unknown
+"odd", "odder" → odd|unknown
+null, null → |unknown
+["x","cc0"] → CC0-1.0|cc0 · CC0-1.0|cc0
+[""," ","y"] → y|unknown · y|unknown
+[] → |unknown · |unknown
+["CC BY-NC 4.0","cc-by-4.0"] → CC-BY-NC-4.0|cc-by-nc · CC-BY-NC-4.0|cc-by-nc
+# allowList: csv → the families · each family allowed
+"cc0,public-domain,cc-by,cc-by-sa" → cc-by,cc-by-sa,cc0,public-domain · cc0=true public-domain=true cc-by=true cc-by-sa=true cc-by-nc=false cc-by-nc-sa=false cc-by-nd=false cc-by-nc-nd=false gfdl=false all-rights-reserved=false unknown=false
+" CC-BY , gfdl ,all-rights-reserved,unknown,bogus" → cc-by,gfdl · cc0=false public-domain=false cc-by=true cc-by-sa=false cc-by-nc=false cc-by-nc-sa=false cc-by-nd=false cc-by-nc-nd=false gfdl=true all-rights-reserved=false unknown=false
+"cc-by-nc,cc-by-nc-sa,cc-by-nd,cc-by-nc-nd" → cc-by-nc,cc-by-nc-nd,cc-by-nc-sa,cc-by-nd · cc0=false public-domain=false cc-by=false cc-by-sa=false cc-by-nc=true cc-by-nc-sa=true cc-by-nd=true cc-by-nc-nd=true gfdl=false all-rights-reserved=false unknown=false
+"" →  · cc0=false public-domain=false cc-by=false cc-by-sa=false cc-by-nc=false cc-by-nc-sa=false cc-by-nd=false cc-by-nc-nd=false gfdl=false all-rights-reserved=false unknown=false
+",,," →  · cc0=false public-domain=false cc-by=false cc-by-sa=false cc-by-nc=false cc-by-nc-sa=false cc-by-nd=false cc-by-nc-nd=false gfdl=false all-rights-reserved=false unknown=false
+"public-domain" → public-domain · cc0=false public-domain=true cc-by=false cc-by-sa=false cc-by-nc=false cc-by-nc-sa=false cc-by-nd=false cc-by-nc-nd=false gfdl=false all-rights-reserved=false unknown=false
+# the allowlist each collection is judged by: defaults, then a config with both key families
+defaults wikidata: "cc0,public-domain,cc-by,cc-by-sa" → cc0,public-domain,cc-by,cc-by-sa
+defaults depicts: "cc0,public-domain,cc-by,cc-by-sa" → cc0,public-domain,cc-by,cc-by-sa
+defaults met: "cc0,public-domain" → cc0,public-domain
+defaults cleveland: "cc0,public-domain" → cc0,public-domain
+defaults aic: "cc0,public-domain" → cc0,public-domain
+defaults loc: "public-domain" → public-domain
+defaults pleiades: "cc0,public-domain,cc-by,cc-by-sa" → cc0,public-domain,cc-by,cc-by-sa
+defaults opencontext: "cc0,public-domain,cc-by,cc-by-sa" → cc0,public-domain,cc-by,cc-by-sa
+defaults smithsonian: "cc0" → cc0
+defaults europeana: "cc0,public-domain,cc-by,cc-by-sa" → cc0,public-domain,cc-by,cc-by-sa
+defaults zq-portal: "cc0,public-domain,cc-by,cc-by-sa" → cc0,public-domain,cc-by,cc-by-sa
+defaults zq-other: "cc0,public-domain,cc-by,cc-by-sa" → cc0,public-domain,cc-by,cc-by-sa
+configured wikidata: "cc0,cc-by" → cc0,cc-by
+configured depicts: "cc0,public-domain,cc-by,cc-by-sa" → cc0,public-domain,cc-by,cc-by-sa
+configured met: "public-domain" → public-domain
+configured cleveland: "cc0,public-domain" → cc0,public-domain
+configured aic: "cc0,public-domain" → cc0,public-domain
+configured loc: "public-domain" → public-domain
+configured pleiades: "cc0,public-domain,cc-by,cc-by-sa" → cc0,public-domain,cc-by,cc-by-sa
+configured opencontext: "cc0,public-domain,cc-by,cc-by-sa,cc-by-nc" → cc0,public-domain,cc-by,cc-by-sa,cc-by-nc
+configured smithsonian: "cc0" → cc0
+configured europeana: "gfdl,all-rights-reserved" → gfdl
+configured zq-portal: "cc0,cc-by-nc" → cc0,cc-by-nc
+configured zq-other: "cc0" → cc0
+# a stated attribution as the host takes it
+"CC BY-SA 4.0" null → CC-BY-SA-4.0|cc-by-sa url=null author="Zq Photographer" credit="Zq, CC BY-SA"
+"https://creativecommons.org/publicdomain/zero/1.0/" null → CC0-1.0|cc0 url=null author=null credit="Zq Museum"
+"see the licence" "https://creativecommons.org/licenses/by/3.0/" → CC-BY-3.0|cc-by url="https://creativecommons.org/licenses/by/3.0/" author=null credit="Zq"
+"see the licence" "https://zq.example/terms" → see-the-licence|unknown url="https://zq.example/terms" author=null credit="Zq"
+"cc0" " " → CC0-1.0|cc0 url=null author=null credit="Zq"
+"cc-by-4.0" null → refused: no credit line
+"All rights reserved" null → all-rights-reserved|all-rights-reserved url=null author=null credit="Zq Museum"
+# the host's own statements
+CC0-1.0|cc0 url="https://creativecommons.org/publicdomain/zero/1.0/" author="Zq" credit="Zq, CC0"
+public-domain|public-domain url="https://creativecommons.org/publicdomain/mark/1.0/" author=null credit="Zq Museum"
+public-domain|public-domain url=null author="Zq" credit="Zq"

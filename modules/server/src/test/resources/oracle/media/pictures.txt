@@ -1,0 +1,1987 @@
+== places import sites
+200 {
+  "failed" : [
+  ],
+  "job" : null,
+  "names" : 2,
+  "places" : 2,
+  "relations" : 0
+}
+== source with figures
+200 {
+  "findings" : [
+    {
+      "claim" : "the tell was settled",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1200,
+      "periodName" : null,
+      "periodStart" : -1600,
+      "regionName" : "Zqland",
+      "significance" : null,
+      "tags" : [
+        "oracle"
+      ],
+      "uid" : "finding:zqfig2001_tell#0"
+    },
+    {
+      "claim" : "the cove",
+      "confidence" : "high",
+      "lat" : 39.2,
+      "lon" : 35.5,
+      "periodEnd" : -1300,
+      "periodName" : null,
+      "periodStart" : -1400,
+      "regionName" : "Zqland",
+      "significance" : null,
+      "tags" : [
+        "oracle"
+      ],
+      "uid" : "finding:zqfig2001_tell#1"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Doe, Jane"
+    ],
+    "citekey" : "zqfig2001_tell",
+    "doi" : null,
+    "notes" : null,
+    "ocrMarkdown" : "# Zqtell\n\nThe tell of Zqtell is shown in ![the plan](assets/fig-a.png) and again in ![](assets/fig-a.png).\nThe cove is ![a photograph](assets/fig-c.jpg).\n",
+    "origin" : "instance:med",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "provenance" : null,
+    "regions" : [
+      "Zqland"
+    ],
+    "status" : "unassessed",
+    "summary" : null,
+    "tags" : [
+    ],
+    "title" : "Zqtell excavated",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zqfig2001_tell",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 2001
+  }
+}
+== source, a book
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Doe, Jane"
+    ],
+    "citekey" : "zqbook1999_ships",
+    "doi" : null,
+    "notes" : null,
+    "ocrMarkdown" : "# Ships\n\nNo figures.\n",
+    "origin" : "instance:med",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "provenance" : null,
+    "regions" : [
+      "Zqland"
+    ],
+    "status" : "unassessed",
+    "summary" : null,
+    "tags" : [
+    ],
+    "title" : "Zq ships",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zqbook1999_ships",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 1999
+  }
+}
+== event
+200 {
+  "articles" : [
+  ],
+  "candidates" : [
+  ],
+  "catalogue" : [
+  ],
+  "children" : [
+  ],
+  "corrections" : [
+  ],
+  "datings" : [
+  ],
+  "edges" : [
+  ],
+  "event" : {
+    "central" : null,
+    "citekey" : null,
+    "datingMethod" : null,
+    "description" : null,
+    "historicity" : "attested",
+    "id" : "zq_siege",
+    "kind" : "battle",
+    "label" : "The siege of Zqtell",
+    "parentId" : null,
+    "placeId" : "zq_tell",
+    "plusMinus" : null,
+    "precision" : "precise",
+    "scale" : "local",
+    "scaleStated" : false,
+    "tier" : "catalogue",
+    "timeSpan" : {
+      "beginBy" : null,
+      "endFrom" : null,
+      "notAfter" : -1290,
+      "notBefore" : -1300
+    }
+  },
+  "findings" : [
+    {
+      "citekey" : "zqfig2001_tell",
+      "claim" : "the tell was settled",
+      "id" : "zqfig2001_tell#0",
+      "km" : 0.0,
+      "periodEnd" : -1200,
+      "periodStart" : -1600,
+      "yearGap" : 0
+    },
+    {
+      "citekey" : "zqfig2001_tell",
+      "claim" : "the cove",
+      "id" : "zqfig2001_tell#1",
+      "km" : 117.74707255148,
+      "periodEnd" : -1300,
+      "periodStart" : -1400,
+      "yearGap" : 0
+    }
+  ],
+  "geometry" : null,
+  "leads" : [
+    {
+      "actions" : [
+        {
+          "command" : "histmersion discover search \"The siege of Zqtell\" --not-in-db",
+          "kind" : "discover",
+          "label" : "search the literature",
+          "query" : "The siege of Zqtell"
+        },
+        {
+          "command" : "histmersion queue acquire add \"literature on The siege of Zqtell (1300 BCE–1290 BCE)\" --topic events",
+          "kind" : "acquire",
+          "label" : "add to the acquire queue",
+          "query" : null
+        },
+        {
+          "command" : "histmersion goals link <goal> --query \"The siege of Zqtell\"",
+          "kind" : "goal",
+          "label" : "link to a goal",
+          "query" : "The siege of Zqtell"
+        }
+      ],
+      "candidates" : 0,
+      "eventId" : "zq_siege",
+      "findingsNear" : 2,
+      "kind" : "battle",
+      "label" : "The siege of Zqtell",
+      "text" : "No source in the corpus discusses this battle (1300 BCE–1290 BCE) — 2 findings in the corpus within 300 km and ±100 years",
+      "tier" : "catalogue",
+      "years" : "1300 BCE–1290 BCE"
+    }
+  ],
+  "media" : [
+  ],
+  "names" : [
+  ],
+  "parent" : null,
+  "participants" : [
+  ],
+  "sources" : [
+  ],
+  "tier" : "catalogue",
+  "wikidata" : null
+}
+== figures
+200 {
+  "citekey" : "zqfig2001_tell",
+  "stored" : 3
+}
+== figures, again (left alone)
+200 {
+  "citekey" : "zqfig2001_tell",
+  "stored" : 1
+}
+== figures, refused
+400 {
+  "code" : null,
+  "message" : "asset 'bad.png': not valid base64 (Illegal base64 character 25)"
+}
+== figures, empty
+400 {
+  "code" : null,
+  "message" : "asset 'none.png': empty"
+}
+== patch fig-a
+200 {
+  "bytes" : 7024,
+  "caption" : "The plan of Zqtell",
+  "height" : 48,
+  "kind" : "plan",
+  "lat" : 40.0,
+  "license" : null,
+  "lon" : 34.6,
+  "mime" : "image/png",
+  "name" : "fig-a.png",
+  "periodEnd" : null,
+  "periodStart" : -1600,
+  "sha256" : "d467c9c7ff34b32f2a46ff358b491aac107a6924a028e3ec2570bac8494edca2",
+  "width" : 64
+}
+== patch fig-a, its end
+200 {
+  "bytes" : 7024,
+  "caption" : "The plan of Zqtell",
+  "height" : 48,
+  "kind" : "plan",
+  "lat" : 40.0,
+  "license" : null,
+  "lon" : 34.6,
+  "mime" : "image/png",
+  "name" : "fig-a.png",
+  "periodEnd" : -1200,
+  "periodStart" : -1600,
+  "sha256" : "d467c9c7ff34b32f2a46ff358b491aac107a6924a028e3ec2570bac8494edca2",
+  "width" : 64
+}
+== patch fig-c
+200 {
+  "bytes" : 6918,
+  "caption" : "The cove",
+  "height" : 90,
+  "kind" : "photo",
+  "lat" : 39.2,
+  "license" : "CC0-1.0",
+  "lon" : 35.5,
+  "mime" : "image/jpeg",
+  "name" : "fig-c.jpg",
+  "periodEnd" : -1300,
+  "periodStart" : -1400,
+  "sha256" : "19a8cd6b43d945db1e2168e3e738fad64f53f1d239e03d23fef98805a9053445",
+  "width" : 120
+}
+== patch, an end before the start
+400 {
+  "code" : "invalid",
+  "message" : "asset 'zqfig2001_tell/fig-c.jpg': the period would start (1400 BCE) after it ends (1500 BCE)"
+}
+== patch, no such asset
+400 {
+  "code" : "not_found",
+  "message" : "No asset 'zqfig2001_tell/nope.png'"
+}
+== link to a place
+200 {
+  "assetName" : "fig-a.png",
+  "citekey" : "zqfig2001_tell",
+  "id" : 1,
+  "notes" : null,
+  "relation" : "depicts",
+  "targetId" : "zq_tell",
+  "targetType" : "place",
+  "xywh" : "0,0,32,24"
+}
+== link to an event
+200 {
+  "assetName" : "fig-a.png",
+  "citekey" : "zqfig2001_tell",
+  "id" : 2,
+  "notes" : "the siege",
+  "relation" : "illustrates",
+  "targetId" : "zq_siege",
+  "targetType" : "event",
+  "xywh" : null
+}
+== link to a finding
+200 {
+  "assetName" : "fig-c.jpg",
+  "citekey" : "zqfig2001_tell",
+  "id" : 3,
+  "notes" : null,
+  "relation" : "taken_at",
+  "targetId" : "zqfig2001_tell#2",
+  "targetType" : "finding",
+  "xywh" : null
+}
+== link to a source
+200 {
+  "assetName" : "fig-c.jpg",
+  "citekey" : "zqfig2001_tell",
+  "id" : 4,
+  "notes" : null,
+  "relation" : "page_of",
+  "targetId" : "zqbook1999_ships",
+  "targetType" : "source",
+  "xywh" : null
+}
+== link to an article
+200 {
+  "assetName" : "fig-b.png",
+  "citekey" : "zqfig2001_tell",
+  "id" : 5,
+  "notes" : null,
+  "relation" : "illustrates",
+  "targetId" : "zq-article",
+  "targetType" : "article",
+  "xywh" : null
+}
+== link, no such asset
+400 {
+  "code" : "not_found",
+  "message" : "No asset 'zqfig2001_tell/nope.png'"
+}
+== link, a bad relation
+500 Internal server error
+== link to delete
+200 {
+  "assetName" : "fig-b.png",
+  "citekey" : "zqfig2001_tell",
+  "id" : 7,
+  "notes" : null,
+  "relation" : "depicts",
+  "targetId" : "zq_cove",
+  "targetType" : "place",
+  "xywh" : null
+}
+== delete a link
+200 {
+  "deleted" : true,
+  "id" : 7
+}
+== delete a link, again
+400 {
+  "code" : "not_found",
+  "message" : "No asset link #999"
+}
+== cover from the Calibre library
+200 {
+  "author" : null,
+  "bytes" : 2104,
+  "caption" : null,
+  "citekey" : null,
+  "credit" : "Cover: the local Calibre library",
+  "fileUrl" : "/media/asset:calibre:5/file",
+  "height" : 60,
+  "kind" : "photo",
+  "license" : null,
+  "licenseUrl" : null,
+  "mime" : "image/jpeg",
+  "name" : "cover-calibre-5.jpeg",
+  "originalUrl" : null,
+  "provider" : "calibre",
+  "providerKey" : "5",
+  "retrievedAt" : "TS",
+  "sourceUrl" : "calibre:book/5",
+  "targets" : [
+    {
+      "basis" : null,
+      "item" : null,
+      "property" : "calibre",
+      "role" : "cover",
+      "targetId" : "zqbook1999_ships",
+      "targetType" : "source"
+    }
+  ],
+  "thumbUrl" : "/media/asset:calibre:5/thumb",
+  "uid" : "asset:calibre:5",
+  "width" : 40
+}
+== cover, another provider
+400 {
+  "code" : "invalid",
+  "message" : "a cover is uploaded from calibre only (Open Library's come through `media covers`)"
+}
+== cover, not an image
+400 {
+  "code" : "invalid",
+  "message" : "the cover is not a JPEG, PNG, GIF or WebP image"
+}
+== cover, no such source
+404 {
+  "code" : "not_found",
+  "message" : "No source 'zqnone1900_x'"
+}
+== cover, empty
+400 {
+  "code" : "invalid",
+  "message" : "the cover is empty"
+}
+== covers and illustrations, a dry run
+200 {
+  "covers" : 0,
+  "dryRun" : true,
+  "failed" : [
+  ],
+  "illustrations" : 0,
+  "lines" : [
+  ],
+  "skipped" : [
+    {
+      "allowed" : true,
+      "key" : "illustration: no figure fit to illustrate it",
+      "n" : 1
+    }
+  ],
+  "sources" : 1
+}
+== illustrations of one source
+200 {
+  "covers" : 0,
+  "dryRun" : false,
+  "failed" : [
+  ],
+  "illustrations" : 0,
+  "lines" : [
+  ],
+  "skipped" : [
+    {
+      "allowed" : true,
+      "key" : "illustration: no figure fit to illustrate it",
+      "n" : 1
+    }
+  ],
+  "sources" : 1
+}
+== covers over every source, refused
+400 {
+  "code" : "invalid",
+  "message" : "a run over every source is a job: POST /api/media/covers/job"
+}
+== fill licences, a dry run
+200 {
+  "applied" : false,
+  "bySource" : [
+    {
+      "allowed" : true,
+      "key" : "zqfig2001_tell",
+      "n" : 2
+    }
+  ],
+  "candidates" : 2,
+  "updated" : 0
+}
+== fill licences
+200 {
+  "applied" : true,
+  "bySource" : [
+    {
+      "allowed" : true,
+      "key" : "zqfig2001_tell",
+      "n" : 2
+    }
+  ],
+  "candidates" : 2,
+  "updated" : 2
+}
+== bookmark a picture
+200 {
+  "createdAt" : "TS",
+  "id" : "bookmark",
+  "label" : null,
+  "target" : {
+    "from" : null,
+    "id" : "asset:zqfig2001_tell/fig-c.jpg",
+    "kind" : "picture",
+    "lat" : null,
+    "lon" : null,
+    "to" : null,
+    "view" : null,
+    "zoom" : null
+  },
+  "title" : "The cove",
+  "updatedAt" : "TS"
+}
+# reads
+== GET /api/sources/zqfig2001_tell/assets
+200 [
+  {
+    "bytes" : 7024,
+    "height" : 48,
+    "mime" : "image/png",
+    "name" : "fig-a.png",
+    "sha256" : "d467c9c7ff34b32f2a46ff358b491aac107a6924a028e3ec2570bac8494edca2",
+    "width" : 64
+  },
+  {
+    "bytes" : 268,
+    "height" : 8,
+    "mime" : "image/png",
+    "name" : "fig-b.png",
+    "sha256" : "82ef7ad0b6273b1d057589ba0e499259965fa32331f09cdf89a0ff7d98d4d373",
+    "width" : 8
+  },
+  {
+    "bytes" : 6918,
+    "height" : 90,
+    "mime" : "image/jpeg",
+    "name" : "fig-c.jpg",
+    "sha256" : "19a8cd6b43d945db1e2168e3e738fad64f53f1d239e03d23fef98805a9053445",
+    "width" : 120
+  }
+]
+== GET /api/sources/zqnone1900_x/assets
+200 [
+]
+== GET /api/sources/zqfig2001_tell/assets/fig-a.png/detail
+200 {
+  "bytes" : 7024,
+  "caption" : "The plan of Zqtell",
+  "height" : 48,
+  "kind" : "plan",
+  "lat" : 40.0,
+  "license" : "CC-BY-4.0",
+  "lon" : 34.6,
+  "mime" : "image/png",
+  "name" : "fig-a.png",
+  "periodEnd" : -1200,
+  "periodStart" : -1600,
+  "sha256" : "d467c9c7ff34b32f2a46ff358b491aac107a6924a028e3ec2570bac8494edca2",
+  "width" : 64
+}
+== GET /api/sources/zqfig2001_tell/assets/fig-c.jpg/detail
+200 {
+  "bytes" : 6918,
+  "caption" : "The cove",
+  "height" : 90,
+  "kind" : "photo",
+  "lat" : 39.2,
+  "license" : "CC0-1.0",
+  "lon" : 35.5,
+  "mime" : "image/jpeg",
+  "name" : "fig-c.jpg",
+  "periodEnd" : -1300,
+  "periodStart" : -1400,
+  "sha256" : "19a8cd6b43d945db1e2168e3e738fad64f53f1d239e03d23fef98805a9053445",
+  "width" : 120
+}
+== GET /api/sources/zqfig2001_tell/assets/nope.png/detail
+400 {
+  "code" : "not_found",
+  "message" : "No asset 'zqfig2001_tell/nope.png'"
+}
+== GET /api/asset-links
+200 {
+  "links" : [
+    {
+      "assetName" : "fig-a.png",
+      "citekey" : "zqfig2001_tell",
+      "id" : 1,
+      "notes" : null,
+      "relation" : "depicts",
+      "targetId" : "zq_tell",
+      "targetType" : "place",
+      "xywh" : "0,0,32,24"
+    },
+    {
+      "assetName" : "fig-a.png",
+      "citekey" : "zqfig2001_tell",
+      "id" : 2,
+      "notes" : "the siege",
+      "relation" : "illustrates",
+      "targetId" : "zq_siege",
+      "targetType" : "event",
+      "xywh" : null
+    },
+    {
+      "assetName" : "fig-c.jpg",
+      "citekey" : "zqfig2001_tell",
+      "id" : 3,
+      "notes" : null,
+      "relation" : "taken_at",
+      "targetId" : "zqfig2001_tell#2",
+      "targetType" : "finding",
+      "xywh" : null
+    },
+    {
+      "assetName" : "fig-c.jpg",
+      "citekey" : "zqfig2001_tell",
+      "id" : 4,
+      "notes" : null,
+      "relation" : "page_of",
+      "targetId" : "zqbook1999_ships",
+      "targetType" : "source",
+      "xywh" : null
+    },
+    {
+      "assetName" : "fig-b.png",
+      "citekey" : "zqfig2001_tell",
+      "id" : 5,
+      "notes" : null,
+      "relation" : "illustrates",
+      "targetId" : "zq-article",
+      "targetType" : "article",
+      "xywh" : null
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 5
+}
+== GET /api/asset-links?citekey=zqfig2001_tell&asset=fig-a.png
+200 {
+  "links" : [
+    {
+      "assetName" : "fig-a.png",
+      "citekey" : "zqfig2001_tell",
+      "id" : 1,
+      "notes" : null,
+      "relation" : "depicts",
+      "targetId" : "zq_tell",
+      "targetType" : "place",
+      "xywh" : "0,0,32,24"
+    },
+    {
+      "assetName" : "fig-a.png",
+      "citekey" : "zqfig2001_tell",
+      "id" : 2,
+      "notes" : "the siege",
+      "relation" : "illustrates",
+      "targetId" : "zq_siege",
+      "targetType" : "event",
+      "xywh" : null
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 2
+}
+== GET /api/asset-links?target_type=event
+200 {
+  "links" : [
+    {
+      "assetName" : "fig-a.png",
+      "citekey" : "zqfig2001_tell",
+      "id" : 2,
+      "notes" : "the siege",
+      "relation" : "illustrates",
+      "targetId" : "zq_siege",
+      "targetType" : "event",
+      "xywh" : null
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 1
+}
+== GET /api/asset-links?target_type=place&target_id=zq_tell
+200 {
+  "links" : [
+    {
+      "assetName" : "fig-a.png",
+      "citekey" : "zqfig2001_tell",
+      "id" : 1,
+      "notes" : null,
+      "relation" : "depicts",
+      "targetId" : "zq_tell",
+      "targetType" : "place",
+      "xywh" : "0,0,32,24"
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 1
+}
+== GET /iiif/zqfig2001_tell/fig-a.png/info.json
+200 {
+  "@context" : "http://iiif.io/api/image/3/context.json",
+  "extraFeatures" : [
+    "regionByPx",
+    "sizeByW",
+    "sizeByH",
+    "sizeByWh",
+    "sizeByForcedWh"
+  ],
+  "extraFormats" : [
+    "png"
+  ],
+  "extraQualities" : [
+  ],
+  "height" : 48,
+  "id" : "http://localhost:8000/iiif/zqfig2001_tell/fig-a.png",
+  "profile" : "level1",
+  "protocol" : "http://iiif.io/api/image",
+  "type" : "ImageService3",
+  "width" : 64
+}
+== GET /iiif/zqfig2001_tell/fig-c.jpg/info.json
+200 {
+  "@context" : "http://iiif.io/api/image/3/context.json",
+  "extraFeatures" : [
+    "regionByPx",
+    "sizeByW",
+    "sizeByH",
+    "sizeByWh",
+    "sizeByForcedWh"
+  ],
+  "extraFormats" : [
+    "png"
+  ],
+  "extraQualities" : [
+  ],
+  "height" : 90,
+  "id" : "http://localhost:8000/iiif/zqfig2001_tell/fig-c.jpg",
+  "profile" : "level1",
+  "protocol" : "http://iiif.io/api/image",
+  "type" : "ImageService3",
+  "width" : 120
+}
+== GET /iiif/zqfig2001_tell/nope.png/info.json
+404 {
+  "code" : "not_found",
+  "message" : "No asset 'nope.png' for 'zqfig2001_tell'"
+}
+== GET /iiif/zqfig2001_tell/fig-a.png/0,0,10,10/full/0/default.png
+404 {
+  "code" : null,
+  "message" : "invalid size: 'full'"
+}
+== GET /iiif/zqfig2001_tell/fig-a.png/full/90,/0/default.tiff
+404 {
+  "code" : null,
+  "message" : "unsupported format: 'tiff' (use jpg or png)"
+}
+== GET /iiif/zqfig2001_tell/fig-a.png/nonsense/full/0/default.jpg
+404 {
+  "code" : null,
+  "message" : "invalid region: 'nonsense' (expected 'full' or 'x,y,w,h')"
+}
+== GET /iiif/zqfig2001_tell/fig-a.png/full/full/90/default.jpg
+404 {
+  "code" : null,
+  "message" : "invalid size: 'full'"
+}
+== GET /api/media
+200 {
+  "items" : [
+    {
+      "author" : null,
+      "bytes" : 2104,
+      "caption" : null,
+      "citekey" : null,
+      "credit" : "Cover: the local Calibre library",
+      "fileUrl" : "/media/asset:calibre:5/file",
+      "height" : 60,
+      "kind" : "photo",
+      "license" : null,
+      "licenseUrl" : null,
+      "mime" : "image/jpeg",
+      "name" : "cover-calibre-5.jpeg",
+      "originalUrl" : null,
+      "provider" : "calibre",
+      "providerKey" : "5",
+      "retrievedAt" : "TS",
+      "sourceUrl" : "calibre:book/5",
+      "targets" : [
+        {
+          "basis" : null,
+          "item" : null,
+          "property" : "calibre",
+          "role" : "cover",
+          "targetId" : "zqbook1999_ships",
+          "targetType" : "source"
+        }
+      ],
+      "thumbUrl" : "/media/asset:calibre:5/thumb",
+      "uid" : "asset:calibre:5",
+      "width" : 40
+    },
+    {
+      "author" : null,
+      "bytes" : 7024,
+      "caption" : "The plan of Zqtell",
+      "citekey" : "zqfig2001_tell",
+      "credit" : null,
+      "fileUrl" : "/media/asset:zqfig2001_tell/fig-a.png/file",
+      "height" : 48,
+      "kind" : "plan",
+      "license" : "CC-BY-4.0",
+      "licenseUrl" : null,
+      "mime" : "image/png",
+      "name" : "fig-a.png",
+      "originalUrl" : null,
+      "provider" : null,
+      "providerKey" : null,
+      "retrievedAt" : null,
+      "sourceUrl" : null,
+      "targets" : [
+      ],
+      "thumbUrl" : null,
+      "uid" : "asset:zqfig2001_tell/fig-a.png",
+      "width" : 64
+    },
+    {
+      "author" : null,
+      "bytes" : 268,
+      "caption" : null,
+      "citekey" : "zqfig2001_tell",
+      "credit" : null,
+      "fileUrl" : "/media/asset:zqfig2001_tell/fig-b.png/file",
+      "height" : 8,
+      "kind" : null,
+      "license" : "CC-BY-4.0",
+      "licenseUrl" : null,
+      "mime" : "image/png",
+      "name" : "fig-b.png",
+      "originalUrl" : null,
+      "provider" : null,
+      "providerKey" : null,
+      "retrievedAt" : null,
+      "sourceUrl" : null,
+      "targets" : [
+      ],
+      "thumbUrl" : null,
+      "uid" : "asset:zqfig2001_tell/fig-b.png",
+      "width" : 8
+    },
+    {
+      "author" : null,
+      "bytes" : 6918,
+      "caption" : "The cove",
+      "citekey" : "zqfig2001_tell",
+      "credit" : null,
+      "fileUrl" : "/media/asset:zqfig2001_tell/fig-c.jpg/file",
+      "height" : 90,
+      "kind" : "photo",
+      "license" : "CC0-1.0",
+      "licenseUrl" : null,
+      "mime" : "image/jpeg",
+      "name" : "fig-c.jpg",
+      "originalUrl" : null,
+      "provider" : null,
+      "providerKey" : null,
+      "retrievedAt" : null,
+      "sourceUrl" : null,
+      "targets" : [
+      ],
+      "thumbUrl" : null,
+      "uid" : "asset:zqfig2001_tell/fig-c.jpg",
+      "width" : 120
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 4
+}
+== GET /api/media?provider=source
+200 {
+  "items" : [
+    {
+      "author" : null,
+      "bytes" : 7024,
+      "caption" : "The plan of Zqtell",
+      "citekey" : "zqfig2001_tell",
+      "credit" : null,
+      "fileUrl" : "/media/asset:zqfig2001_tell/fig-a.png/file",
+      "height" : 48,
+      "kind" : "plan",
+      "license" : "CC-BY-4.0",
+      "licenseUrl" : null,
+      "mime" : "image/png",
+      "name" : "fig-a.png",
+      "originalUrl" : null,
+      "provider" : null,
+      "providerKey" : null,
+      "retrievedAt" : null,
+      "sourceUrl" : null,
+      "targets" : [
+      ],
+      "thumbUrl" : null,
+      "uid" : "asset:zqfig2001_tell/fig-a.png",
+      "width" : 64
+    },
+    {
+      "author" : null,
+      "bytes" : 268,
+      "caption" : null,
+      "citekey" : "zqfig2001_tell",
+      "credit" : null,
+      "fileUrl" : "/media/asset:zqfig2001_tell/fig-b.png/file",
+      "height" : 8,
+      "kind" : null,
+      "license" : "CC-BY-4.0",
+      "licenseUrl" : null,
+      "mime" : "image/png",
+      "name" : "fig-b.png",
+      "originalUrl" : null,
+      "provider" : null,
+      "providerKey" : null,
+      "retrievedAt" : null,
+      "sourceUrl" : null,
+      "targets" : [
+      ],
+      "thumbUrl" : null,
+      "uid" : "asset:zqfig2001_tell/fig-b.png",
+      "width" : 8
+    },
+    {
+      "author" : null,
+      "bytes" : 6918,
+      "caption" : "The cove",
+      "citekey" : "zqfig2001_tell",
+      "credit" : null,
+      "fileUrl" : "/media/asset:zqfig2001_tell/fig-c.jpg/file",
+      "height" : 90,
+      "kind" : "photo",
+      "license" : "CC0-1.0",
+      "licenseUrl" : null,
+      "mime" : "image/jpeg",
+      "name" : "fig-c.jpg",
+      "originalUrl" : null,
+      "provider" : null,
+      "providerKey" : null,
+      "retrievedAt" : null,
+      "sourceUrl" : null,
+      "targets" : [
+      ],
+      "thumbUrl" : null,
+      "uid" : "asset:zqfig2001_tell/fig-c.jpg",
+      "width" : 120
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 3
+}
+== GET /api/media?provider=calibre
+200 {
+  "items" : [
+    {
+      "author" : null,
+      "bytes" : 2104,
+      "caption" : null,
+      "citekey" : null,
+      "credit" : "Cover: the local Calibre library",
+      "fileUrl" : "/media/asset:calibre:5/file",
+      "height" : 60,
+      "kind" : "photo",
+      "license" : null,
+      "licenseUrl" : null,
+      "mime" : "image/jpeg",
+      "name" : "cover-calibre-5.jpeg",
+      "originalUrl" : null,
+      "provider" : "calibre",
+      "providerKey" : "5",
+      "retrievedAt" : "TS",
+      "sourceUrl" : "calibre:book/5",
+      "targets" : [
+        {
+          "basis" : null,
+          "item" : null,
+          "property" : "calibre",
+          "role" : "cover",
+          "targetId" : "zqbook1999_ships",
+          "targetType" : "source"
+        }
+      ],
+      "thumbUrl" : "/media/asset:calibre:5/thumb",
+      "uid" : "asset:calibre:5",
+      "width" : 40
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 1
+}
+== GET /api/media?license=none
+200 {
+  "items" : [
+    {
+      "author" : null,
+      "bytes" : 2104,
+      "caption" : null,
+      "citekey" : null,
+      "credit" : "Cover: the local Calibre library",
+      "fileUrl" : "/media/asset:calibre:5/file",
+      "height" : 60,
+      "kind" : "photo",
+      "license" : null,
+      "licenseUrl" : null,
+      "mime" : "image/jpeg",
+      "name" : "cover-calibre-5.jpeg",
+      "originalUrl" : null,
+      "provider" : "calibre",
+      "providerKey" : "5",
+      "retrievedAt" : "TS",
+      "sourceUrl" : "calibre:book/5",
+      "targets" : [
+        {
+          "basis" : null,
+          "item" : null,
+          "property" : "calibre",
+          "role" : "cover",
+          "targetId" : "zqbook1999_ships",
+          "targetType" : "source"
+        }
+      ],
+      "thumbUrl" : "/media/asset:calibre:5/thumb",
+      "uid" : "asset:calibre:5",
+      "width" : 40
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 1
+}
+== GET /api/media?license=CC0-1.0
+200 {
+  "items" : [
+    {
+      "author" : null,
+      "bytes" : 6918,
+      "caption" : "The cove",
+      "citekey" : "zqfig2001_tell",
+      "credit" : null,
+      "fileUrl" : "/media/asset:zqfig2001_tell/fig-c.jpg/file",
+      "height" : 90,
+      "kind" : "photo",
+      "license" : "CC0-1.0",
+      "licenseUrl" : null,
+      "mime" : "image/jpeg",
+      "name" : "fig-c.jpg",
+      "originalUrl" : null,
+      "provider" : null,
+      "providerKey" : null,
+      "retrievedAt" : null,
+      "sourceUrl" : null,
+      "targets" : [
+      ],
+      "thumbUrl" : null,
+      "uid" : "asset:zqfig2001_tell/fig-c.jpg",
+      "width" : 120
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 1
+}
+== GET /api/media?place=zq_tell
+200 {
+  "items" : [
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 0
+}
+== GET /api/media?q=cover&limit=1
+200 {
+  "items" : [
+    {
+      "author" : null,
+      "bytes" : 2104,
+      "caption" : null,
+      "citekey" : null,
+      "credit" : "Cover: the local Calibre library",
+      "fileUrl" : "/media/asset:calibre:5/file",
+      "height" : 60,
+      "kind" : "photo",
+      "license" : null,
+      "licenseUrl" : null,
+      "mime" : "image/jpeg",
+      "name" : "cover-calibre-5.jpeg",
+      "originalUrl" : null,
+      "provider" : "calibre",
+      "providerKey" : "5",
+      "retrievedAt" : "TS",
+      "sourceUrl" : "calibre:book/5",
+      "targets" : [
+        {
+          "basis" : null,
+          "item" : null,
+          "property" : "calibre",
+          "role" : "cover",
+          "targetId" : "zqbook1999_ships",
+          "targetType" : "source"
+        }
+      ],
+      "thumbUrl" : "/media/asset:calibre:5/thumb",
+      "uid" : "asset:calibre:5",
+      "width" : 40
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 1
+}
+== GET /api/media?offset=1&limit=2
+200 {
+  "items" : [
+    {
+      "author" : null,
+      "bytes" : 7024,
+      "caption" : "The plan of Zqtell",
+      "citekey" : "zqfig2001_tell",
+      "credit" : null,
+      "fileUrl" : "/media/asset:zqfig2001_tell/fig-a.png/file",
+      "height" : 48,
+      "kind" : "plan",
+      "license" : "CC-BY-4.0",
+      "licenseUrl" : null,
+      "mime" : "image/png",
+      "name" : "fig-a.png",
+      "originalUrl" : null,
+      "provider" : null,
+      "providerKey" : null,
+      "retrievedAt" : null,
+      "sourceUrl" : null,
+      "targets" : [
+      ],
+      "thumbUrl" : null,
+      "uid" : "asset:zqfig2001_tell/fig-a.png",
+      "width" : 64
+    },
+    {
+      "author" : null,
+      "bytes" : 268,
+      "caption" : null,
+      "citekey" : "zqfig2001_tell",
+      "credit" : null,
+      "fileUrl" : "/media/asset:zqfig2001_tell/fig-b.png/file",
+      "height" : 8,
+      "kind" : null,
+      "license" : "CC-BY-4.0",
+      "licenseUrl" : null,
+      "mime" : "image/png",
+      "name" : "fig-b.png",
+      "originalUrl" : null,
+      "provider" : null,
+      "providerKey" : null,
+      "retrievedAt" : null,
+      "sourceUrl" : null,
+      "targets" : [
+      ],
+      "thumbUrl" : null,
+      "uid" : "asset:zqfig2001_tell/fig-b.png",
+      "width" : 8
+    }
+  ],
+  "next" : 3,
+  "offset" : 1,
+  "total" : 4
+}
+== GET /api/media/facets
+200 {
+  "licences" : [
+    {
+      "allowed" : true,
+      "key" : "CC-BY-4.0",
+      "n" : 2
+    },
+    {
+      "allowed" : true,
+      "key" : "CC0-1.0",
+      "n" : 1
+    },
+    {
+      "allowed" : true,
+      "key" : "none",
+      "n" : 1
+    }
+  ],
+  "providers" : [
+    {
+      "allowed" : true,
+      "key" : "source",
+      "n" : 3
+    },
+    {
+      "allowed" : true,
+      "key" : "calibre",
+      "n" : 1
+    }
+  ]
+}
+== GET /api/media/providers
+200 [
+  {
+    "builtin" : true,
+    "description" : "Pictures of places and events from their Wikidata items (image, locator map, plan, aerial view, route map), licensed on Wikimedia Commons; a job asks about every place on the map not asked yet (one per Wikidata item, most-cited sites first), batch by batch, and resumes where it stopped",
+    "licences" : "",
+    "name" : "wikidata",
+    "over" : "places and events",
+    "plugin" : "media-wikidata",
+    "title" : "Wikidata pictures"
+  },
+  {
+    "builtin" : true,
+    "description" : "Pictures that depict events: Wikimedia Commons files whose structured data says P180 'depicts' the event's Wikidata item, and the images of the works its item lists as P1299 'depicted by'; licence read from Commons",
+    "licences" : "",
+    "name" : "depicts",
+    "over" : "events",
+    "plugin" : "media-depicts",
+    "title" : "Commons depictions"
+  },
+  {
+    "builtin" : true,
+    "description" : "The Metropolitan Museum of Art (CC0, isPublicDomain) — Open Access objects only (as the record itself says), tied to a place on the map when the object's most specific place field names it (and no other) and its dates overlap the place's; --dry-run lists the matches with their reasons",
+    "licences" : "",
+    "name" : "met",
+    "over" : "places",
+    "plugin" : "media-met",
+    "title" : "Met objects"
+  },
+  {
+    "builtin" : true,
+    "description" : "The Cleveland Museum of Art (CC0, share_license_status) — Open Access objects only (as the record itself says), tied to a place on the map when the object's most specific place field names it (and no other) and its dates overlap the place's; --dry-run lists the matches with their reasons",
+    "licences" : "",
+    "name" : "cleveland",
+    "over" : "places",
+    "plugin" : "media-cleveland",
+    "title" : "Cleveland Museum of Art objects"
+  },
+  {
+    "builtin" : true,
+    "description" : "The Art Institute of Chicago (CC0, is_public_domain; IIIF images) — Open Access objects only (as the record itself says), tied to a place on the map when the object's most specific place field names it (and no other) and its dates overlap the place's; --dry-run lists the matches with their reasons",
+    "licences" : "",
+    "name" : "aic",
+    "over" : "places",
+    "plugin" : "media-aic",
+    "title" : "Art Institute of Chicago objects"
+  },
+  {
+    "builtin" : true,
+    "description" : "Historical maps from the Library of Congress, Geography and Map Division: public domain only (rights 'No known restrictions' and dated by media.loc.max-year), linked as role map to the places their locations name",
+    "licences" : "",
+    "name" : "loc",
+    "over" : "places",
+    "plugin" : "media-loc",
+    "title" : "Library of Congress maps"
+  },
+  {
+    "builtin" : true,
+    "description" : "Wikimedia Commons files that Pleiades place records link, for the places on the map that carry a Pleiades id (matched by that id, no name matching); licence read from Commons; links to Flickr (needs a key), Commons categories and other sites are counted, not taken",
+    "licences" : "",
+    "name" : "pleiades",
+    "over" : "places",
+    "plugin" : "media-pleiades",
+    "title" : "Pleiades-linked pictures"
+  },
+  {
+    "builtin" : true,
+    "description" : "Open Context's excavation media (photographs, drawings), each record under its own Creative Commons licence (read from the search record and again from the media item); tied to a place on the map by a shared Pleiades/GeoNames/Wikidata id, else by its site's name in its context path, and its dates; records flagged as related to human remains are not shown",
+    "licences" : "",
+    "name" : "opencontext",
+    "over" : "places",
+    "plugin" : "media-opencontext",
+    "title" : "Open Context media"
+  }
+]
+== GET /api/media/asset:zqfig2001_tell/fig-c.jpg
+200 {
+  "author" : null,
+  "bytes" : 6918,
+  "caption" : "The cove",
+  "citekey" : "zqfig2001_tell",
+  "credit" : null,
+  "fileUrl" : "/media/asset:zqfig2001_tell/fig-c.jpg/file",
+  "height" : 90,
+  "kind" : "photo",
+  "license" : "CC0-1.0",
+  "licenseUrl" : null,
+  "mime" : "image/jpeg",
+  "name" : "fig-c.jpg",
+  "originalUrl" : null,
+  "provider" : null,
+  "providerKey" : null,
+  "retrievedAt" : null,
+  "sourceUrl" : null,
+  "targets" : [
+  ],
+  "thumbUrl" : null,
+  "uid" : "asset:zqfig2001_tell/fig-c.jpg",
+  "width" : 120
+}
+== GET /api/media/asset:calibre:5
+200 {
+  "author" : null,
+  "bytes" : 2104,
+  "caption" : null,
+  "citekey" : null,
+  "credit" : "Cover: the local Calibre library",
+  "fileUrl" : "/media/asset:calibre:5/file",
+  "height" : 60,
+  "kind" : "photo",
+  "license" : null,
+  "licenseUrl" : null,
+  "mime" : "image/jpeg",
+  "name" : "cover-calibre-5.jpeg",
+  "originalUrl" : null,
+  "provider" : "calibre",
+  "providerKey" : "5",
+  "retrievedAt" : "TS",
+  "sourceUrl" : "calibre:book/5",
+  "targets" : [
+    {
+      "basis" : null,
+      "item" : null,
+      "property" : "calibre",
+      "role" : "cover",
+      "targetId" : "zqbook1999_ships",
+      "targetType" : "source"
+    }
+  ],
+  "thumbUrl" : "/media/asset:calibre:5/thumb",
+  "uid" : "asset:calibre:5",
+  "width" : 40
+}
+== GET /api/media/not-a-uid
+404 {
+  "code" : "not_found",
+  "message" : "No picture 'not-a-uid'"
+}
+== GET /api/media/UUID
+404 {
+  "code" : "not_found",
+  "message" : "No picture 'UUID'"
+}
+== GET /api/media-geo
+200 [
+  {
+    "assetName" : "fig-a.png",
+    "author" : null,
+    "caption" : "The plan of Zqtell",
+    "citekey" : "zqfig2001_tell",
+    "credit" : null,
+    "fileUrl" : "/media/asset:zqfig2001_tell/fig-a.png/file",
+    "kind" : "plan",
+    "lat" : 40.0,
+    "license" : "CC-BY-4.0",
+    "licenseUrl" : null,
+    "lon" : 34.6,
+    "periodEnd" : -1200,
+    "periodStart" : -1600,
+    "provider" : null,
+    "sourceUrl" : null,
+    "thumbUrl" : null,
+    "uid" : "asset:zqfig2001_tell/fig-a.png"
+  },
+  {
+    "assetName" : "fig-c.jpg",
+    "author" : null,
+    "caption" : "The cove",
+    "citekey" : "zqfig2001_tell",
+    "credit" : null,
+    "fileUrl" : "/media/asset:zqfig2001_tell/fig-c.jpg/file",
+    "kind" : "photo",
+    "lat" : 39.2,
+    "license" : "CC0-1.0",
+    "licenseUrl" : null,
+    "lon" : 35.5,
+    "periodEnd" : -1300,
+    "periodStart" : -1400,
+    "provider" : null,
+    "sourceUrl" : null,
+    "thumbUrl" : null,
+    "uid" : "asset:zqfig2001_tell/fig-c.jpg"
+  }
+]
+== GET /api/media-geo?kind=plan
+200 [
+  {
+    "assetName" : "fig-a.png",
+    "author" : null,
+    "caption" : "The plan of Zqtell",
+    "citekey" : "zqfig2001_tell",
+    "credit" : null,
+    "fileUrl" : "/media/asset:zqfig2001_tell/fig-a.png/file",
+    "kind" : "plan",
+    "lat" : 40.0,
+    "license" : "CC-BY-4.0",
+    "licenseUrl" : null,
+    "lon" : 34.6,
+    "periodEnd" : -1200,
+    "periodStart" : -1600,
+    "provider" : null,
+    "sourceUrl" : null,
+    "thumbUrl" : null,
+    "uid" : "asset:zqfig2001_tell/fig-a.png"
+  }
+]
+== GET /api/media-geo?from=-1350&to=-1320
+200 [
+  {
+    "assetName" : "fig-a.png",
+    "author" : null,
+    "caption" : "The plan of Zqtell",
+    "citekey" : "zqfig2001_tell",
+    "credit" : null,
+    "fileUrl" : "/media/asset:zqfig2001_tell/fig-a.png/file",
+    "kind" : "plan",
+    "lat" : 40.0,
+    "license" : "CC-BY-4.0",
+    "licenseUrl" : null,
+    "lon" : 34.6,
+    "periodEnd" : -1200,
+    "periodStart" : -1600,
+    "provider" : null,
+    "sourceUrl" : null,
+    "thumbUrl" : null,
+    "uid" : "asset:zqfig2001_tell/fig-a.png"
+  },
+  {
+    "assetName" : "fig-c.jpg",
+    "author" : null,
+    "caption" : "The cove",
+    "citekey" : "zqfig2001_tell",
+    "credit" : null,
+    "fileUrl" : "/media/asset:zqfig2001_tell/fig-c.jpg/file",
+    "kind" : "photo",
+    "lat" : 39.2,
+    "license" : "CC0-1.0",
+    "licenseUrl" : null,
+    "lon" : 35.5,
+    "periodEnd" : -1300,
+    "periodStart" : -1400,
+    "provider" : null,
+    "sourceUrl" : null,
+    "thumbUrl" : null,
+    "uid" : "asset:zqfig2001_tell/fig-c.jpg"
+  }
+]
+== GET /api/media-geo?provider=source&license=CC0-1.0
+200 [
+  {
+    "assetName" : "fig-c.jpg",
+    "author" : null,
+    "caption" : "The cove",
+    "citekey" : "zqfig2001_tell",
+    "credit" : null,
+    "fileUrl" : "/media/asset:zqfig2001_tell/fig-c.jpg/file",
+    "kind" : "photo",
+    "lat" : 39.2,
+    "license" : "CC0-1.0",
+    "licenseUrl" : null,
+    "lon" : 35.5,
+    "periodEnd" : -1300,
+    "periodStart" : -1400,
+    "provider" : null,
+    "sourceUrl" : null,
+    "thumbUrl" : null,
+    "uid" : "asset:zqfig2001_tell/fig-c.jpg"
+  }
+]
+== GET /api/places/zq_tell
+200 {
+  "asOf" : null,
+  "children" : [
+  ],
+  "contested" : false,
+  "counts" : null,
+  "descriptions" : [
+  ],
+  "findings" : 1,
+  "footprints" : [
+    {
+      "accuracyM" : null,
+      "certainty" : "approximate",
+      "citekey" : null,
+      "id" : 1,
+      "period" : {
+        "end" : -1180,
+        "start" : -1650
+      },
+      "placeId" : "zq_tell",
+      "role" : "extent"
+    }
+  ],
+  "geometry" : "{\"type\":\"Point\",\"coordinates\":[34.6,40]}",
+  "hasBoundary" : false,
+  "links" : [
+  ],
+  "locationPrecision" : "stated",
+  "media" : [
+  ],
+  "parents" : [
+  ],
+  "place" : {
+    "contested" : false,
+    "dating" : "stated",
+    "id" : "zq_tell",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zqtell",
+    "names" : "Zqtell",
+    "periodEnd" : -1180,
+    "periodStart" : -1650,
+    "source" : null
+  },
+  "record" : {
+    "dateSource" : null,
+    "designations" : [
+    ],
+    "periods" : [
+    ],
+    "registers" : [
+    ]
+  },
+  "siteType" : null,
+  "timeBasis" : "dated",
+  "types" : [
+  ]
+}
+== GET /api/places/zq_cove
+200 {
+  "asOf" : null,
+  "children" : [
+  ],
+  "contested" : false,
+  "counts" : null,
+  "descriptions" : [
+  ],
+  "findings" : 1,
+  "footprints" : [
+    {
+      "accuracyM" : null,
+      "certainty" : "approximate",
+      "citekey" : null,
+      "id" : 2,
+      "period" : null,
+      "placeId" : "zq_cove",
+      "role" : "extent"
+    }
+  ],
+  "geometry" : "{\"type\":\"Point\",\"coordinates\":[35.5,39.2]}",
+  "hasBoundary" : false,
+  "links" : [
+  ],
+  "locationPrecision" : "stated",
+  "media" : [
+  ],
+  "parents" : [
+  ],
+  "place" : {
+    "contested" : false,
+    "dating" : "stated",
+    "id" : "zq_cove",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zqcove",
+    "names" : "Zqcove",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "source" : null
+  },
+  "record" : {
+    "dateSource" : null,
+    "designations" : [
+    ],
+    "periods" : [
+    ],
+    "registers" : [
+    ]
+  },
+  "siteType" : null,
+  "timeBasis" : "findings",
+  "types" : [
+  ]
+}
+== GET /api/events/zq_siege
+200 {
+  "articles" : [
+  ],
+  "candidates" : [
+  ],
+  "catalogue" : [
+  ],
+  "children" : [
+  ],
+  "corrections" : [
+  ],
+  "datings" : [
+  ],
+  "edges" : [
+  ],
+  "event" : {
+    "central" : null,
+    "citekey" : null,
+    "datingMethod" : null,
+    "description" : null,
+    "historicity" : "attested",
+    "id" : "zq_siege",
+    "kind" : "battle",
+    "label" : "The siege of Zqtell",
+    "parentId" : null,
+    "placeId" : "zq_tell",
+    "plusMinus" : null,
+    "precision" : "precise",
+    "scale" : "local",
+    "scaleStated" : false,
+    "tier" : "catalogue",
+    "timeSpan" : {
+      "beginBy" : null,
+      "endFrom" : null,
+      "notAfter" : -1290,
+      "notBefore" : -1300
+    }
+  },
+  "findings" : [
+    {
+      "citekey" : "zqfig2001_tell",
+      "claim" : "the tell was settled",
+      "id" : "zqfig2001_tell#0",
+      "km" : 0.0,
+      "periodEnd" : -1200,
+      "periodStart" : -1600,
+      "yearGap" : 0
+    },
+    {
+      "citekey" : "zqfig2001_tell",
+      "claim" : "the cove",
+      "id" : "zqfig2001_tell#1",
+      "km" : 117.74707255148,
+      "periodEnd" : -1300,
+      "periodStart" : -1400,
+      "yearGap" : 0
+    }
+  ],
+  "geometry" : null,
+  "leads" : [
+    {
+      "actions" : [
+        {
+          "command" : "histmersion discover search \"The siege of Zqtell\" --not-in-db",
+          "kind" : "discover",
+          "label" : "search the literature",
+          "query" : "The siege of Zqtell"
+        },
+        {
+          "command" : "histmersion queue acquire add \"literature on The siege of Zqtell (1300 BCE–1290 BCE)\" --topic events",
+          "kind" : "acquire",
+          "label" : "add to the acquire queue",
+          "query" : null
+        },
+        {
+          "command" : "histmersion goals link <goal> --query \"The siege of Zqtell\"",
+          "kind" : "goal",
+          "label" : "link to a goal",
+          "query" : "The siege of Zqtell"
+        }
+      ],
+      "candidates" : 0,
+      "eventId" : "zq_siege",
+      "findingsNear" : 2,
+      "kind" : "battle",
+      "label" : "The siege of Zqtell",
+      "text" : "No source in the corpus discusses this battle (1300 BCE–1290 BCE) — 2 findings in the corpus within 300 km and ±100 years",
+      "tier" : "catalogue",
+      "years" : "1300 BCE–1290 BCE"
+    }
+  ],
+  "media" : [
+  ],
+  "names" : [
+  ],
+  "parent" : null,
+  "participants" : [
+  ],
+  "sources" : [
+  ],
+  "tier" : "catalogue",
+  "wikidata" : null
+}
+== GET /api/sources/zqfig2001_tell
+200 {
+  "findings" : [
+    {
+      "claim" : "the tell was settled",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1200,
+      "periodName" : null,
+      "periodStart" : -1600,
+      "regionName" : "Zqland",
+      "significance" : null,
+      "tags" : [
+        "oracle"
+      ],
+      "uid" : "finding:zqfig2001_tell#0"
+    },
+    {
+      "claim" : "the cove",
+      "confidence" : "high",
+      "lat" : 39.2,
+      "lon" : 35.5,
+      "periodEnd" : -1300,
+      "periodName" : null,
+      "periodStart" : -1400,
+      "regionName" : "Zqland",
+      "significance" : null,
+      "tags" : [
+        "oracle"
+      ],
+      "uid" : "finding:zqfig2001_tell#1"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Doe, Jane"
+    ],
+    "citekey" : "zqfig2001_tell",
+    "doi" : null,
+    "notes" : null,
+    "ocrMarkdown" : "# Zqtell\n\nThe tell of Zqtell is shown in ![the plan](assets/fig-a.png) and again in ![](assets/fig-a.png).\nThe cove is ![a photograph](assets/fig-c.jpg).\n",
+    "origin" : "instance:med",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "provenance" : null,
+    "regions" : [
+      "Zqland"
+    ],
+    "status" : "unassessed",
+    "summary" : null,
+    "tags" : [
+    ],
+    "title" : "Zqtell excavated",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zqfig2001_tell",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 2001
+  }
+}
+== GET /api/sources/zqbook1999_ships
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : {
+    "credit" : "Cover: the local Calibre library",
+    "height" : 247,
+    "license" : null,
+    "licenseUrl" : null,
+    "role" : "cover",
+    "sourceUrl" : "calibre:book/5",
+    "uid" : "asset:calibre:5",
+    "url" : "/media/asset:calibre:5/thumb",
+    "width" : 330
+  },
+  "source" : {
+    "authors" : [
+      "Doe, Jane"
+    ],
+    "citekey" : "zqbook1999_ships",
+    "doi" : null,
+    "notes" : null,
+    "ocrMarkdown" : "# Ships\n\nNo figures.\n",
+    "origin" : "instance:med",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "provenance" : null,
+    "regions" : [
+      "Zqland"
+    ],
+    "status" : "unassessed",
+    "summary" : null,
+    "tags" : [
+    ],
+    "title" : "Zq ships",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zqbook1999_ships",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 1999
+  }
+}
+== GET /api/bookmarks
+200 [
+  {
+    "createdAt" : "TS",
+    "id" : "bookmark",
+    "label" : null,
+    "target" : {
+      "from" : null,
+      "id" : "asset:zqfig2001_tell/fig-c.jpg",
+      "kind" : "picture",
+      "lat" : null,
+      "lon" : null,
+      "to" : null,
+      "view" : null,
+      "zoom" : null
+    },
+    "title" : "The cove",
+    "updatedAt" : "TS"
+  }
+]
+== GET /api/lint?rule=media-licence
+200 {
+  "fixed" : [
+  ],
+  "rules" : [
+    {
+      "count" : 0,
+      "description" : "stored pictures with no licence, or a provider's picture with no credit line — they cannot be shown as their licence requires; a source's figure is listed as `<citekey>/<name>` (it takes its source's licence with `histmersion media fill-licences` once the source records one), a provider's as `media:<uid>` (re-import it with `histmersion media import wikidata --refresh`); a book cover (Calibre, Open Library) needs a credit line only — it is the publisher's picture of the user's own copy, shown locally and never exported",
+      "items" : [
+      ],
+      "rule" : "media-licence"
+    }
+  ]
+}
+== GET /source/zqfig2001_tell/assets/fig-a.png (bytes)
+200 image/png 7024 d467c9c7ff34b32f2a46ff358b491aac107a6924a028e3ec2570bac8494edca2
+== GET /source/zqfig2001_tell/assets/fig-c.jpg (bytes)
+200 image/jpeg 6918 19a8cd6b43d945db1e2168e3e738fad64f53f1d239e03d23fef98805a9053445
+== GET /source/zqfig2001_tell/assets/fig-a-again.png (bytes)
+404 application/json {"message":"No asset 'fig-a-again.png' for 'zqfig2001_tell'","code":"not_found"}
+== GET /source/zqfig2001_tell/assets/nope.png (bytes)
+404 application/json {"message":"No asset 'nope.png' for 'zqfig2001_tell'","code":"not_found"}
+== GET /iiif/zqfig2001_tell/fig-a.png/full/full/0/default.png (bytes)
+404 application/json {"message":"invalid size: 'full'","code":null}
+== GET /iiif/zqfig2001_tell/fig-a.png/0,0,32,24/full/0/default.jpg (bytes)
+404 application/json {"message":"invalid size: 'full'","code":null}
+== GET /iiif/zqfig2001_tell/fig-c.jpg/full/60,/0/default.jpg (bytes)
+200 image/jpeg 1634 cf74894459a3477606b531c935ce48690113d68d7dd34264586e106539ffc804
+== GET /iiif/zqfig2001_tell/fig-c.jpg/pct:10,10,50,50/30,20/0/default.png (bytes)
+404 application/json {"message":"invalid region coordinates: 'pct:10,10,50,50' (expected x,y,w,h with w,h > 0)","code":null}
+== GET /api/media/asset:zqfig2001_tell/fig-c.jpg/thumb (bytes)
+404 application/json {"message":"no such endpoint: /api/media/asset:zqfig2001_tell/fig-c.jpg/thumb","code":null}
+== GET /api/media/asset:zqfig2001_tell/fig-c.jpg/file (bytes)
+404 application/json {"message":"no such endpoint: /api/media/asset:zqfig2001_tell/fig-c.jpg/file","code":null}
+== GET /api/media/asset:zqfig2001_tell/fig-a.png/thumb (bytes)
+404 application/json {"message":"no such endpoint: /api/media/asset:zqfig2001_tell/fig-a.png/thumb","code":null}
+== GET /api/media/asset:calibre:5/thumb (bytes)
+404 application/json {"message":"no such endpoint: /api/media/asset:calibre:5/thumb","code":null}
+== GET /api/media/asset:calibre:5/file (bytes)
+404 application/json {"message":"no such endpoint: /api/media/asset:calibre:5/file","code":null}
+== GET /api/media/not-a-uid/file (bytes)
+404 application/json {"message":"no such endpoint: /api/media/not-a-uid/file","code":null}
+== tool assets {"citekey":"zqfig2001_tell"}
+### 3 asset(s) · zqfig2001_tell
+
+| name | mime | size | bytes | url |
+|---|---|---|---:|---|
+| fig-a.png | image/png | 64×48 | 7024 | `/source/zqfig2001_tell/assets/fig-a.png` |
+| fig-b.png | image/png | 8×8 | 268 | `/source/zqfig2001_tell/assets/fig-b.png` |
+| fig-c.jpg | image/jpeg | 120×90 | 6918 | `/source/zqfig2001_tell/assets/fig-c.jpg` |
+== tool assets {"citekey":"zqnone1900_x"}
+_No source 'zqnone1900_x' — find a citekey with search._
+== tool patch_asset {"citekey":"zqfig2001_tell","name":"fig-b.png","caption":"A tiny sherd","kind":"figure"}
+# `zqfig2001_tell` / `fig-b.png`
+
+**Kind:** figure  
+**License:** CC-BY-4.0  
+**Size:** 268 bytes  
+**Dimensions:** 8×8
+
+> A tiny sherd
+== tool patch_asset {"citekey":"zqfig2001_tell","name":"nope.png"}
+_No asset 'zqfig2001_tell/nope.png'_
+== tool asset_links {"citekey":"zqfig2001_tell"}
+### 5 link(s)
+
+- **depicts** place:zq_tell ← zqfig2001_tell/fig-a.png xywh=0,0,32,24
+- **illustrates** event:zq_siege ← zqfig2001_tell/fig-a.png
+- **taken_at** finding:zqfig2001_tell#2 ← zqfig2001_tell/fig-c.jpg
+- **page_of** source:zqbook1999_ships ← zqfig2001_tell/fig-c.jpg
+- **illustrates** article:zq-article ← zqfig2001_tell/fig-b.png
+== tool asset_links {"citekey":"zqfig2001_tell","asset":"fig-b.png","relation":"depicts","targetType":"place","targetId":"zq_cove"}
+# Link #8
+
+**Relation:** depicts  
+**Target:** place:zq_cove  
+**Asset:** zqfig2001_tell/fig-b.png
+== tool asset_links {"targetType":"place"}
+### 2 link(s)
+
+- **depicts** place:zq_tell ← zqfig2001_tell/fig-a.png xywh=0,0,32,24
+- **depicts** place:zq_cove ← zqfig2001_tell/fig-b.png
+== tool delete_asset_link {"id":1}
+Deleted asset link #1.
+== tool delete_asset_link {"id":999}
+_No asset link #999_
+== tool lint {"rules":["media-licence"]}
+### Lint: clean (1 rule(s) checked)
+
+_clean: media-licence_
+== tiles: path status length sha256 etag
+media/0/0/0 200 383 8b43df5b4cbc920f1f75385f76666cea2bac5b1c86eb190a37ba8da32911cd91 "688b3451cdcf381b52cddf88"
+media/0/0/0?from=-1350&to=-1320 200 383 8b43df5b4cbc920f1f75385f76666cea2bac5b1c86eb190a37ba8da32911cd91 "6584c33211fc8f06f41c21b5"
+media/0/0/0?from=-1700&to=-1650 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "5d63695185ca3fefc5b48520"
+media/0/0/0?kind=plan 200 255 001c11baee3383e739a2dc4bec94bad28d4001dffc4357a7b2e3c1533ac9cb39 "37abddf1c8be7416aed3fecf"
+media/0/0/0?kind=photo 200 244 6bd653838cc6dcee7182738f2f06ca09e80e5a8d6e1595f179a78fe7d82051d3 "71ae399efabd48b6d5f0e231"
+media/0/0/0?provider=source 200 383 8b43df5b4cbc920f1f75385f76666cea2bac5b1c86eb190a37ba8da32911cd91 "1e0b45c9b7f7b954cf5010d3"
+media/0/0/0?license=none 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "a08f29eb52abcec9a619a271"
+media/0/0/0?license=CC0-1.0 200 244 6bd653838cc6dcee7182738f2f06ca09e80e5a8d6e1595f179a78fe7d82051d3 "fd082dbb72386abbebb881df"
+media/4/9/6 200 383 2f924f0cdcc26402ff4004b6a1b6075dc44d79dc83df244ccb80d3572396437d "db9a5a92d7d0d35dfdc530d6"
+media/4/9/6?from=-1350&to=-1320 200 383 2f924f0cdcc26402ff4004b6a1b6075dc44d79dc83df244ccb80d3572396437d "ee50c17f29575c2868902dd0"
+media/4/9/6?from=-1700&to=-1650 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "28ee02c764711d9f55415e94"
+media/4/9/6?kind=plan 200 255 1859d13b04ce849998f887bb517c92505a02be09cf33ed9552df0286682456f0 "90fef942a47830fa4e9db3ef"
+media/4/9/6?kind=photo 200 244 e4634d0844d3218470eed6a12acd81607bad8283d2c249d4207db8721709ac9d "4d10f017a96e2102f2795915"
+media/4/9/6?provider=source 200 383 2f924f0cdcc26402ff4004b6a1b6075dc44d79dc83df244ccb80d3572396437d "7b581886c88c68eeaad6c7e2"
+media/4/9/6?license=none 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "210ff001c09d7e92c6d04d58"
+media/4/9/6?license=CC0-1.0 200 244 e4634d0844d3218470eed6a12acd81607bad8283d2c249d4207db8721709ac9d "5ab0768a47286e34c0add98a"
+media/8/152/96 200 255 97d9744a46408c0d4067b97eaaca18ee69f3b0847cd84e445c319c059144e8e6 "230e90325a7612580d83efb1"
+media/8/152/96?from=-1350&to=-1320 200 255 97d9744a46408c0d4067b97eaaca18ee69f3b0847cd84e445c319c059144e8e6 "e2f4a48ceb6f9aaebbd6daf9"
+media/8/152/96?from=-1700&to=-1650 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "8e12d75419e3c1c1b1df5881"
+media/8/152/96?kind=plan 200 255 97d9744a46408c0d4067b97eaaca18ee69f3b0847cd84e445c319c059144e8e6 "285de5c7f49efb22b2ba804b"
+media/8/152/96?kind=photo 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "7427a0b4abde11946daa4f3c"
+media/8/152/96?provider=source 200 255 97d9744a46408c0d4067b97eaaca18ee69f3b0847cd84e445c319c059144e8e6 "1ff849e5be14089f5425c4a3"
+media/8/152/96?license=none 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "1d804405befa44bc693ade3e"
+media/8/152/96?license=CC0-1.0 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "0c492e5fe843d4a112327e2e"
+media/8/153/97 200 244 fd507466b18a6c266c366c9dcb63692284c1ba088f0d6979612e5d204cfbcbb2 "bdf4dc31d814ae5bf1f9cd9f"
+media/8/153/97?from=-1350&to=-1320 200 244 fd507466b18a6c266c366c9dcb63692284c1ba088f0d6979612e5d204cfbcbb2 "f35dfe8b1308e6b7567c3d4b"
+media/8/153/97?from=-1700&to=-1650 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "b16a0db6f942c3ff61e28ca3"
+media/8/153/97?kind=plan 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "1ae3aee337fa3d7fa212651c"
+media/8/153/97?kind=photo 200 244 fd507466b18a6c266c366c9dcb63692284c1ba088f0d6979612e5d204cfbcbb2 "28f00268b2df2785fee442f5"
+media/8/153/97?provider=source 200 244 fd507466b18a6c266c366c9dcb63692284c1ba088f0d6979612e5d204cfbcbb2 "2f647f9c6a9be7ce0511ac91"
+media/8/153/97?license=none 200 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 "3b486803d134354505c5e32b"
+media/8/153/97?license=CC0-1.0 200 244 fd507466b18a6c266c366c9dcb63692284c1ba088f0d6979612e5d204cfbcbb2 "47509550fb3a62ccac57f906"
+media/12/2441/1550 400 50 3e0c46ac6681fe00f6337a0f090c8be3522fbc7ccf36bda04d1ab2e2a9dad299 -
+media/12/2441/1550?from=-1350&to=-1320 400 50 3e0c46ac6681fe00f6337a0f090c8be3522fbc7ccf36bda04d1ab2e2a9dad299 -
+media/12/2441/1550?from=-1700&to=-1650 400 50 3e0c46ac6681fe00f6337a0f090c8be3522fbc7ccf36bda04d1ab2e2a9dad299 -
+media/12/2441/1550?kind=plan 400 50 3e0c46ac6681fe00f6337a0f090c8be3522fbc7ccf36bda04d1ab2e2a9dad299 -
+media/12/2441/1550?kind=photo 400 50 3e0c46ac6681fe00f6337a0f090c8be3522fbc7ccf36bda04d1ab2e2a9dad299 -
+media/12/2441/1550?provider=source 400 50 3e0c46ac6681fe00f6337a0f090c8be3522fbc7ccf36bda04d1ab2e2a9dad299 -
+media/12/2441/1550?license=none 400 50 3e0c46ac6681fe00f6337a0f090c8be3522fbc7ccf36bda04d1ab2e2a9dad299 -
+media/12/2441/1550?license=CC0-1.0 400 50 3e0c46ac6681fe00f6337a0f090c8be3522fbc7ccf36bda04d1ab2e2a9dad299 -
+media/12/2451/1562 400 50 3e0c46ac6681fe00f6337a0f090c8be3522fbc7ccf36bda04d1ab2e2a9dad299 -
+media/12/2451/1562?from=-1350&to=-1320 400 50 3e0c46ac6681fe00f6337a0f090c8be3522fbc7ccf36bda04d1ab2e2a9dad299 -
+media/12/2451/1562?from=-1700&to=-1650 400 50 3e0c46ac6681fe00f6337a0f090c8be3522fbc7ccf36bda04d1ab2e2a9dad299 -
+media/12/2451/1562?kind=plan 400 50 3e0c46ac6681fe00f6337a0f090c8be3522fbc7ccf36bda04d1ab2e2a9dad299 -
+media/12/2451/1562?kind=photo 400 50 3e0c46ac6681fe00f6337a0f090c8be3522fbc7ccf36bda04d1ab2e2a9dad299 -
+media/12/2451/1562?provider=source 400 50 3e0c46ac6681fe00f6337a0f090c8be3522fbc7ccf36bda04d1ab2e2a9dad299 -
+media/12/2451/1562?license=none 400 50 3e0c46ac6681fe00f6337a0f090c8be3522fbc7ccf36bda04d1ab2e2a9dad299 -
+media/12/2451/1562?license=CC0-1.0 400 50 3e0c46ac6681fe00f6337a0f090c8be3522fbc7ccf36bda04d1ab2e2a9dad299 -
+# rows
+## assets 4 rows
+{ "author" : null, "bytes" : 2104, "caption" : null, "citekey" : null, "credit" : "Cover: the local Calibre library", "geom" : null, "height" : 60, "kind" : "photo", "license" : null, "license_url" : null, "mime" : "image/jpeg", "name" : "cover-calibre-5.jpeg", "origin" : "instance:med", "original_url" : null, "period" : null, "provider" : "calibre", "provider_key" : "5", "retrieved_at" : "TS", "sha256" : "0d2c8f27b9f511117f476a6557ac6907c13cea84727db478126a3d12e145eb18", "source_url" : "calibre:book/5", "thumb" : 20, "thumbSha" : "3cc5f044f7a2776b3e40a5ee385f66c8fc4e9eff9288f35ddf8eb303eecb1727", "thumb_height" : 247, "thumb_mime" : "image/jpeg", "thumb_width" : 330, "uid" : "asset:calibre:5", "updated_at" : "TS", "width" : 40 }
+{ "author" : null, "bytes" : 268, "caption" : "A tiny sherd", "citekey" : "zqfig2001_tell", "credit" : null, "geom" : null, "height" : 8, "kind" : "figure", "license" : "CC-BY-4.0", "license_url" : null, "mime" : "image/png", "name" : "fig-b.png", "origin" : "instance:med", "original_url" : null, "period" : null, "provider" : null, "provider_key" : null, "retrieved_at" : null, "sha256" : "82ef7ad0b6273b1d057589ba0e499259965fa32331f09cdf89a0ff7d98d4d373", "source_url" : null, "thumb" : null, "thumbSha" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "thumb_height" : null, "thumb_mime" : null, "thumb_width" : null, "uid" : "asset:zqfig2001_tell/fig-b.png", "updated_at" : "TS", "width" : 8 }
+{ "author" : null, "bytes" : 6918, "caption" : "The cove", "citekey" : "zqfig2001_tell", "credit" : null, "geom" : "POINT(35.5 39.2)", "height" : 90, "kind" : "photo", "license" : "CC0-1.0", "license_url" : null, "mime" : "image/jpeg", "name" : "fig-c.jpg", "origin" : "instance:med", "original_url" : null, "period" : "[-1400,-1299)", "provider" : null, "provider_key" : null, "retrieved_at" : null, "sha256" : "19a8cd6b43d945db1e2168e3e738fad64f53f1d239e03d23fef98805a9053445", "source_url" : null, "thumb" : null, "thumbSha" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "thumb_height" : null, "thumb_mime" : null, "thumb_width" : null, "uid" : "asset:zqfig2001_tell/fig-c.jpg", "updated_at" : "TS", "width" : 120 }
+{ "author" : null, "bytes" : 7024, "caption" : "The plan of Zqtell", "citekey" : "zqfig2001_tell", "credit" : null, "geom" : "POINT(34.6 40)", "height" : 48, "kind" : "plan", "license" : "CC-BY-4.0", "license_url" : null, "mime" : "image/png", "name" : "fig-a.png", "origin" : "instance:med", "original_url" : null, "period" : "[-1600,-1199)", "provider" : null, "provider_key" : null, "retrieved_at" : null, "sha256" : "d467c9c7ff34b32f2a46ff358b491aac107a6924a028e3ec2570bac8494edca2", "source_url" : null, "thumb" : null, "thumbSha" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "thumb_height" : null, "thumb_mime" : null, "thumb_width" : null, "uid" : "asset:zqfig2001_tell/fig-a.png", "updated_at" : "TS", "width" : 64 }
+## asset_links 5 rows
+{ "asset_name" : "fig-a.png", "citekey" : "zqfig2001_tell", "id" : 2, "notes" : "the siege", "origin" : "instance:med", "relation" : "illustrates", "target_id" : "zq_siege", "target_type" : "event", "uid" : "asset-link:zqfig2001_tell/fig-a.png:illustrates:event:zq_siege", "updated_at" : "TS", "xywh" : null }
+{ "asset_name" : "fig-b.png", "citekey" : "zqfig2001_tell", "id" : 5, "notes" : null, "origin" : "instance:med", "relation" : "illustrates", "target_id" : "zq-article", "target_type" : "article", "uid" : "asset-link:zqfig2001_tell/fig-b.png:illustrates:article:zq-article", "updated_at" : "TS", "xywh" : null }
+{ "asset_name" : "fig-b.png", "citekey" : "zqfig2001_tell", "id" : 8, "notes" : null, "origin" : "instance:med", "relation" : "depicts", "target_id" : "zq_cove", "target_type" : "place", "uid" : "asset-link:zqfig2001_tell/fig-b.png:depicts:place:zq_cove", "updated_at" : "TS", "xywh" : null }
+{ "asset_name" : "fig-c.jpg", "citekey" : "zqfig2001_tell", "id" : 3, "notes" : null, "origin" : "instance:med", "relation" : "taken_at", "target_id" : "zqfig2001_tell#2", "target_type" : "finding", "uid" : "asset-link:zqfig2001_tell/fig-c.jpg:taken_at:finding:zqfig2001_tell#2", "updated_at" : "TS", "xywh" : null }
+{ "asset_name" : "fig-c.jpg", "citekey" : "zqfig2001_tell", "id" : 4, "notes" : null, "origin" : "instance:med", "relation" : "page_of", "target_id" : "zqbook1999_ships", "target_type" : "source", "uid" : "asset-link:zqfig2001_tell/fig-c.jpg:page_of:source:zqbook1999_ships", "updated_at" : "TS", "xywh" : null }
+## media_links 1 rows
+{ "asset_uid" : "asset:calibre:5", "basis" : null, "created_at" : "TS", "item" : null, "property" : "calibre", "rank" : 0, "role" : "cover", "target_id" : "zqbook1999_ships", "target_type" : "source" }
+## media_checks 0 rows
