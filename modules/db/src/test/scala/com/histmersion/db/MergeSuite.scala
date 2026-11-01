@@ -9,6 +9,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.data.exchange.TestExchange
 import java.nio.file.{Files, Path}
 import java.util.UUID
 import javax.sql.DataSource
@@ -52,7 +53,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private def exportOf(ds: DataSource, originals: Path): Path =
     val out = java.io.ByteArrayOutputStream()
-    BundleExport.write(ds, out, None, Originals.inDir(originals)).fold(e => fail(e), identity)
+    BundleExport.write(ds, out, None, Originals.inDir(originals), TestExchange.kinds).fold(e => fail(e), identity)
     val f = Files.createTempFile(tmp, "bundle-", ".hmx")
     Files.write(f, out.toByteArray)
 
@@ -63,7 +64,16 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       res: MergeResolutions = MergeResolutions()
   ): MergePlan =
     MergeState
-      .planFile(ds, bundle, res, merge, Originals.inDir(originals), cfg.limits.chunkChars)
+      .planFile(
+        ds,
+        bundle,
+        res,
+        merge,
+        Originals.inDir(originals),
+        cfg.limits.chunkChars,
+        TestExchange.kinds,
+        TestExchange.rules
+      )
       .fold(e => fail(e), identity)
 
   private def importInto(
@@ -81,7 +91,9 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         BundleImport.Options(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm),
         Originals.inDir(originals),
         res,
-        merge
+        merge,
+        TestExchange.kinds,
+        TestExchange.rules
       )
       .fold(e => fail(e), identity)
 
@@ -488,7 +500,8 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     val uidThere = connect(a)(sql"SELECT uid FROM sources WHERE citekey = 'zzx2001_there'".query[UUID].run().head)
     val uidHere = connect(b)(sql"SELECT uid FROM sources WHERE citekey = 'zzx2001_here'".query[UUID].run().head)
     // what merge apply (M5) will leave behind: a redirect, and a ledger row whose local rev is ours now
-    val localRev = connect(b)(BundleRepo.entities(BundleScope.Uids(List(uidHere)), Originals.none).revs(uidHere).rev)
+    val localRev =
+      connect(b)(TestExchange.kinds.entities(BundleScope.Uids(List(uidHere)), Originals.none).revs(uidHere).rev)
     exec(
       b,
       s"INSERT INTO merges (id, bundle_id, bundle_sha256, from_instance) VALUES ('$uidHere', '$uidHere', 'x', '$uidThere')"
@@ -560,7 +573,9 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         res,
         merge,
         hash,
-        () => { val _ = backupsTaken.incrementAndGet(); Right("stub.dump") }
+        () => { val _ = backupsTaken.incrementAndGet(); Right("stub.dump") },
+        TestExchange.kinds,
+        TestExchange.rules
       )
       .fold(e => fail(e), identity)
 

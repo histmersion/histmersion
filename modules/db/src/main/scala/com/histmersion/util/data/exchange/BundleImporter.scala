@@ -48,8 +48,8 @@ object BundleImporter:
       files: ContentStore,
       resolutions: MergeResolutions,
       merge: MergeSettings,
-      kinds: CarriedKinds = CarriedKinds.transition,
-      rules: MergeRuleSet = MergeRuleSet.transition
+      kinds: CarriedKinds,
+      rules: MergeRuleSet
   ): Either[String, BundleImportResult] =
     val loaded = bundle.read(BundleReader.read(_, hashBlobs = false))
     loaded.manifest match
@@ -245,8 +245,8 @@ object BundleImporter:
       merge: MergeSettings,
       planHash: String,
       backup: () => Either[String, String],
-      kinds: CarriedKinds = CarriedKinds.transition,
-      rules: MergeRuleSet = MergeRuleSet.transition
+      kinds: CarriedKinds,
+      rules: MergeRuleSet
   ): Either[String, MergeApplyResult] =
     val loaded = bundle.read(BundleReader.read(_, hashBlobs = false))
     loaded.manifest match

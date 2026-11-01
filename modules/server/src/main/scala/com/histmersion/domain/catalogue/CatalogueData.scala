@@ -6,14 +6,13 @@ import com.histmersion.domain.catalogue.places.PlacesData
 import com.histmersion.util.data.{DataContribution, DataOwner, OwnedTable, TableName}
 import com.histmersion.util.data.checks.CheckRule
 import com.histmersion.util.data.diagnostics.DataFigures
-import com.histmersion.util.data.exchange.{CarriedKind, CarriedKindsAdapter, MergeRules, MergeRulesAdapter}
+import com.histmersion.util.data.exchange.{CarriedKind, MergeRules}
 import com.histmersion.util.data.maintenance.{CacheEvent, CacheHolding, CacheName, CacheSpec}
 import com.histmersion.util.storage.{Location, StoreKey}
 import com.augustnagro.magnum.DbCon
 
 /** What the catalogue says about the data it owns: its tables, the gazetteer's stores and the base map's, the caches of
-  * the map, its counts and its checks. Its carried kinds and merge rules are still the data management's per-kind code
-  * (the adapters slice 6 registered), until the catalogue carries and merges its own.
+  * the map, what a bundle carries of it and how a merge treats it, its counts and its checks.
   */
 object CatalogueData extends DataContribution:
   val owner: DataOwner = DataOwner("catalogue")
@@ -53,8 +52,11 @@ object CatalogueData extends DataContribution:
   override val stores: List[Location] =
     List(Location.GazetteerExtracts, Location.GazetteerFolder, Location.GazetteerDrop, Location.Basemap)
 
-  override val carried: List[CarriedKind] = CarriedKindsAdapter.of(owner)
-  override val mergeRules: List[MergeRules] = MergeRulesAdapter.of(owner)
+  /** The places, periods, events and evidence a bundle carries. */
+  override val carried: List[CarriedKind] = CatalogueExchange.carried
+
+  /** How a merge treats places, periods, events and attestations. */
+  override val mergeRules: List[MergeRules] = CatalogueExchange.mergeRules
 
   /** The base map's tiles read on demand: the relief deeper, the map and the sea floor outside the focus region. */
   private def onDemand(directory: String): CacheHolding =

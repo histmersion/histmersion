@@ -17,7 +17,7 @@ import com.histmersion.api.{
   Write
 }
 import com.histmersion.api.given
-import com.histmersion.db.{BundleRepo, Jsonb, Param, Sql}
+import com.histmersion.db.{Jsonb, Param, Sql}
 import com.histmersion.db.given
 import com.histmersion.domain.MergePlanner
 import com.histmersion.domain.MergePlanner.Fold
@@ -59,7 +59,7 @@ final private[exchange] case class LedgerRow(
   */
 object MergeRepo:
 
-  private val ts = BundleRepo.ts
+  private val ts = BundleSql.ts
 
   private val mergeCols =
     s"""m.id, m.bundle_id, m.bundle_sha256, m.from_instance, m.from_label, ${ts("m.applied_at")}, m.plan_hash, m.backup,
@@ -149,7 +149,7 @@ object MergeRepo:
       uid: Option[String],
       merge: Option[String],
       limit: Int,
-      rules: MergeRuleSet = MergeRuleSet.transition
+      rules: MergeRuleSet
   ): Either[ApiError, MergeLedger] =
     connect(ds):
       val label = rules.ledgerLabelSql

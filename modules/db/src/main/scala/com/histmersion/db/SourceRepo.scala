@@ -77,6 +77,12 @@ object SourceRepo:
       sql"""SELECT citekey FROM source_chunks WHERE tsv @@ phraseto_tsquery('english', $name)
             GROUP BY citekey ORDER BY count(*) DESC, citekey LIMIT $limit""".query[String].run().toList
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
+  /** The findings of `citekey` placed again (`finding_places`), inside the caller's transaction: what a write that
+    * touched the source's findings leaves to do.
+    */
+  private[histmersion] def placeFindingsIn(citekey: String, toleranceKm: Double)(using DbCon): Int =
+    FindingPlacement(toleranceKm).placeSource(citekey)
+
   /** Full replace of a source and everything under it, in ONE transaction. Kept as the original `Unit` signature;
     * [[put]] is the same write returning the new `updated_at` token.
     */

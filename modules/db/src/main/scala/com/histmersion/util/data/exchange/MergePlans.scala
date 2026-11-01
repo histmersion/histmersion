@@ -26,8 +26,8 @@ object MergePlans:
       cfg: MergeSettings,
       files: ContentStore,
       chunkChars: Int,
-      kinds: CarriedKinds = CarriedKinds.transition,
-      rules: MergeRuleSet = MergeRuleSet.transition
+      kinds: CarriedKinds,
+      rules: MergeRuleSet
   ): Either[String, MergePlan] =
     val loaded = bundle.read(BundleReader.read(_, hashBlobs = false))
     loaded.manifest match
@@ -52,8 +52,7 @@ object MergePlans:
       kinds: CarriedKinds,
       rules: MergeRuleSet
   )(using DbCon): (MergePlanner.Input, MergePlanner.Result) =
-    val referable = rules.referableTables(kinds)
-    val input0 = MergeState.load(loaded.entities, m, loaded.problems, files, chunkChars, Some(cfg), referable)
+    val input0 = MergeState.load(loaded.entities, m, loaded.problems, files, chunkChars, cfg, kinds, rules)
     val sk = MergeState.sketches(bundle, input0, MergePlanner.sketchesWanted(input0, cfg), cfg.minhashSize)
     val input =
       input0.copy(bodies = MergeState.bodies(bundle, input0, MergePlanner.bodiesWanted(input0, sk, resolutions, cfg)))

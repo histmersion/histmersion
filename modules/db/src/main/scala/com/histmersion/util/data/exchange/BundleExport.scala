@@ -26,7 +26,7 @@ object BundleExport:
       out: OutputStream,
       since: Option[String],
       files: ContentStore,
-      kinds: CarriedKinds = CarriedKinds.transition
+      kinds: CarriedKinds
   ): Either[String, BundleManifest] =
     transact(ds):
       sql"SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY".update.run()

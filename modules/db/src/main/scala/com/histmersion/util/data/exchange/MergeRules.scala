@@ -1,11 +1,15 @@
 package com.histmersion.util.data.exchange
 
+import com.histmersion.domain.{MergePlanner, MergeSettings}
+import com.histmersion.files.BundleEntities
 import com.histmersion.util.data.DataOwner
 import com.histmersion.values.BundleKind
 
+import com.augustnagro.magnum.DbCon
+
 /** How a merge between two collections treats one kind of record: whether lines of other kinds can point at its records
-  * (a plan looks them up as live here), and how the ledger names one. The matching, folding and decisions of every kind
-  * are still one planner (`MergePlanner`), which each owner's slice splits into its own rules.
+  * (a plan looks them up as live here), how the ledger names one, and what a plan must know of this collection for the
+  * kind besides its rows.
   */
 trait MergeRules:
   def owner: DataOwner
@@ -16,3 +20,15 @@ trait MergeRules:
 
   /** Lines of other kinds refer to its records by uid. */
   def referable: Boolean = false
+
+  /** What the plan knows of this collection, with this kind's share added: the labels its records have here, the rows
+    * here a bundle's record may be one with. `bundle` is the bundle's lines, `localized` the same in this collection's
+    * uids; `in` holds this collection's rows (`local`) and what the other kinds gathered; `settings` are the plan's.
+    */
+  def gather(
+      bundle: BundleEntities,
+      localized: BundleEntities,
+      in: MergePlanner.Input,
+      settings: MergeSettings
+  )(using DbCon): MergePlanner.Input =
+    in

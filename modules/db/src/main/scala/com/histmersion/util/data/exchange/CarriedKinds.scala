@@ -2,10 +2,13 @@ package com.histmersion.util.data.exchange
 
 import com.histmersion.api.BundleFiles
 import com.histmersion.db.BundleImport
+import com.histmersion.files.BundleEntities
 import com.histmersion.files.BundleEntities.BlobUse
 import com.histmersion.util.data.TableName
 import com.histmersion.util.storage.ContentStore
 import com.histmersion.values.BundleKind
+
+import com.augustnagro.magnum.DbCon
 
 /** The carried kinds an export and an import run over, from the registry. The entries come in the bundle format's order
   * (the manifest lists them so, and a bundle is byte for byte the same whoever registered first); the steps of an
@@ -22,6 +25,14 @@ final class CarriedKinds private (val inBundleOrder: List[CarriedKind]):
   /** The steps of `stage`, in rank order (registration order among equal ranks). */
   def steps(stage: ImportStage): List[RowsIn] =
     inBundleOrder.flatMap(_.rowsIn).filter(_.stage == stage).sortBy(s => (s.rank.value: Int))
+
+  /** Every kind's lines in `scope`, in the bundle's in-memory form: what a merge compares a bundle's lines with. */
+  def entities(scope: BundleScope, files: ContentStore)(using DbCon): BundleEntities =
+    @annotation.tailrec
+    def loop(rest: List[CarriedKind], acc: BundleEntities): BundleEntities = rest match
+      case k :: tail => loop(tail, k.into(scope, files)(acc))
+      case Nil       => acc
+    loop(inBundleOrder, BundleEntities())
 
   /** Where the first kind that owns `use` puts it. */
   def sink(use: BlobUse, sha256: String, writer: BundleImport.Writer, files: ContentStore): Option[BlobSink] =
@@ -46,6 +57,3 @@ object CarriedKinds:
   /** The registry's kinds; an inconsistent registry is a programming error, found at start. */
   def apply(kinds: List[CarriedKind]): CarriedKinds =
     of(kinds).fold(ps => throw IllegalStateException(ps.mkString("; ")), identity)
-
-  /** Today's kinds as the transition adapters register them, for the callers that are not given the registry. */
-  lazy val transition: CarriedKinds = apply(CarriedKindsAdapter.all)

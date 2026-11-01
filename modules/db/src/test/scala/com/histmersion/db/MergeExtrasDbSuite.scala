@@ -14,6 +14,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.GoalPlans.{LinkKind, ScheduleKind}
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.data.exchange.TestExchange
 import java.nio.file.{Files, Path}
 import javax.sql.DataSource
 import com.histmersion.values.{IssueKind, PlaceKind, SourceStatus}
@@ -57,7 +58,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private def exportOf(ds: DataSource, originals: Path): Path =
     val out = java.io.ByteArrayOutputStream()
-    BundleExport.write(ds, out, None, Originals.inDir(originals)).fold(e => fail(e), identity)
+    BundleExport.write(ds, out, None, Originals.inDir(originals), TestExchange.kinds).fold(e => fail(e), identity)
     val f = Files.createTempFile(tmp, "bundle-", ".hmx")
     Files.write(f, out.toByteArray)
 
@@ -71,7 +72,16 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
       res: MergeResolutions = MergeResolutions()
   ): MergePlan =
     MergeState
-      .planFile(ds, bundle, res, merge, Originals.inDir(originals), cfg.limits.chunkChars)
+      .planFile(
+        ds,
+        bundle,
+        res,
+        merge,
+        Originals.inDir(originals),
+        cfg.limits.chunkChars,
+        TestExchange.kinds,
+        TestExchange.rules
+      )
       .fold(e => fail(e), identity)
 
   private def importInto(ds: DataSource, bundle: Path, originals: Path): BundleImportResult =
@@ -83,7 +93,9 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
         BundleImport.Options(false, cfg.limits.chunkChars, cfg.places.pointToleranceKm),
         Originals.inDir(originals),
         MergeResolutions(),
-        merge
+        merge,
+        TestExchange.kinds,
+        TestExchange.rules
       )
       .fold(e => fail(e), identity)
 
@@ -104,7 +116,9 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
         res,
         merge,
         hash,
-        () => Right("stub.dump")
+        () => Right("stub.dump"),
+        TestExchange.kinds,
+        TestExchange.rules
       )
       .fold(e => fail(e), identity)
 
@@ -322,7 +336,8 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(d.applied.map(_.tally.eventsMerged), Some(1))
     assertEquals(d.merge.backup, Some("stub.dump"))
     val evUid = connect(home)(sql"SELECT uid FROM events WHERE id = 'kadesh_1274'".query[java.util.UUID].run().head)
-    val led = MergeRepo.ledger(home, Some(evUid.toString), None, 50).fold(e => fail(e.message), identity)
+    val led =
+      MergeRepo.ledger(home, Some(evUid.toString), None, 50, TestExchange.rules).fold(e => fail(e.message), identity)
     assertEquals(led.entries.map(_.label), List(Some("kadesh_1274")))
     assertEquals(led.redirects.map(_.uid), List(evUid))
     assert(MergeRepo.detail(home, "zzzz").isLeft)
