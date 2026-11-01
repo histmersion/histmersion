@@ -1,5 +1,9 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.places.PlaceFixtures
+
+import com.histmersion.domain.catalogue.places.Geocoder
+
 import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*
@@ -7,6 +11,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.Geocode.{Approximation, KindHint}
 
 import com.augustnagro.magnum.*
+import scala.jdk.CollectionConverters.*
 import java.nio.file.{Files, Path}
 import com.histmersion.values.{Confidence, PlaceKind, SourceStatus}
 
@@ -74,7 +79,14 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
 
   /** The wanted features of the real seed files, as the first-run import parses them. */
   private lazy val seed: List[PlaceInput] =
-    PlaceSeed.files(root.resolve("db/places")).flatMap { (f, kind) =>
+    def entries(dir: Path): List[PlaceSeed.Entry[Path]] =
+      val st = Files.list(dir)
+      try
+        st.iterator.asScala.toList
+          .map(p => PlaceSeed.Entry(p.getFileName.toString, Files.isDirectory(p), p))
+          .filter(e => e.directory || Files.isRegularFile(e.at))
+      finally st.close()
+    PlaceSeed.files(entries(root.resolve("db/places")), entries).flatMap { (f, kind) =>
       val text = Files.readString(f)
       // the 17 MB Pleiades file is parsed only when it holds a wanted id
       if !Wanted.exists(id => text.contains(s"\"$id\"")) then Nil
@@ -94,12 +106,12 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
     if testDb.isDefined then
       clean()
       assertEquals(seed.map(_.place.id).toSet, Wanted, "every wanted place is in the bundled seed")
-      val _ = PlaceRepo.upsertPlaces(ds, seed)
+      val _ = PlaceFixtures.upsertPlaces(ds, seed)
 
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private def resolve(name: String, at: Option[Period] = None) =
-    Geocoder.resolve(ds, name, KindHint.Unknown, at, cfg.places.geocodePlaceholderMin)
+    connect(ds)(Geocoder.resolve(name, KindHint.Unknown, at, cfg.places.geocodePlaceholderMin))
 
   private def resolvesTo(name: String, ids: Set[String]): Geocode.Resolution =
     val r = resolve(name).getOrElse(fail(s"'$name' resolves to nothing"))
@@ -156,41 +168,47 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
 
   test("a name added by hand survives a re-seed; an import never deletes it, and the seed's own are replaced"):
     val before = names(Galilee)
-    val r = PlaceRepo.addName(ds, Galilee, "Kinnereth", "en").fold(e => fail(e.message), identity)
+    val r = PlaceFixtures.addName(ds, Galilee, "Kinnereth", "en").fold(e => fail(e.message), identity)
     assertEquals((r.changed, r.wasImported, r.label), (true, false, "Sea of Galilee"))
     // a name the seed already gives becomes manual: kept even when a later seed drops it
-    val again = PlaceRepo.addName(ds, Galilee, "Sea of Tiberias", "en").fold(e => fail(e.message), identity)
+    val again = PlaceFixtures.addName(ds, Galilee, "Sea of Tiberias", "en").fold(e => fail(e.message), identity)
     assertEquals((again.changed, again.wasImported), (true, true))
     assertEquals(
-      PlaceRepo.addName(ds, Galilee, "Kinnereth", "en").map(_.changed),
+      PlaceFixtures.addName(ds, Galilee, "Kinnereth", "en").map(_.changed),
       Right(false),
       "adding twice changes nothing"
     )
 
     // re-seed: the same files again, then a NEWER seed that no longer has "Sea of Tiberias"
-    val _ = PlaceRepo.upsertPlaces(ds, seed)
+    val _ = PlaceFixtures.upsertPlaces(ds, seed)
     assert(names(Galilee).contains(("Kinnereth", "en", true)), names(Galilee))
     val newer = seed.map(in =>
       if in.place.id == Galilee then in.copy(names = in.names.filterNot(_.name == "Sea of Tiberias")) else in
     )
-    val _ = PlaceRepo.upsertPlaces(ds, newer)
+    val _ = PlaceFixtures.upsertPlaces(ds, newer)
     val after = names(Galilee)
     assert(after.contains(("Kinnereth", "en", true)) && after.contains(("Sea of Tiberias", "en", true)), after)
     assertEquals(after.filterNot(_._3).size, before.size - 1, "the seed's own names are still replaced by the seed")
-    assertEquals(PlaceRepo.manualNames(ds, Some(Galilee)).map(_.name), List("Kinnereth", "Sea of Tiberias"))
+    assertEquals(PlaceFixtures.manualNames(ds, Some(Galilee)).map(_.name), List("Kinnereth", "Sea of Tiberias"))
     resolvesTo("Kinnereth", Set(Galilee))
 
     // removal: only a name added by hand; an imported one is refused
     assertEquals(
-      PlaceRepo.removeName(ds, Galilee, "Lake Tiberias", "en").left.map(_.code),
+      PlaceFixtures.removeName(ds, Galilee, "Lake Tiberias", "en").left.map(_.code),
       Left(Some(Write.CodeInvalid))
     )
-    assertEquals(PlaceRepo.removeName(ds, Galilee, "Kinnereth", "").left.map(_.code), Left(Some(Write.CodeNotFound)))
-    assert(PlaceRepo.removeName(ds, Galilee, "Kinnereth", "en").isRight)
-    assert(PlaceRepo.removeName(ds, Galilee, "Sea of Tiberias", "en").isRight)
-    val _ = PlaceRepo.upsertPlaces(ds, seed)
+    assertEquals(
+      PlaceFixtures.removeName(ds, Galilee, "Kinnereth", "").left.map(_.code),
+      Left(Some(Write.CodeNotFound))
+    )
+    assert(PlaceFixtures.removeName(ds, Galilee, "Kinnereth", "en").isRight)
+    assert(PlaceFixtures.removeName(ds, Galilee, "Sea of Tiberias", "en").isRight)
+    val _ = PlaceFixtures.upsertPlaces(ds, seed)
     assertEquals(names(Galilee), before, "after removing them, a re-seed restores exactly the seed's names")
-    assertEquals(PlaceRepo.addName(ds, "zzgn_no_such_place", "X", "").left.map(_.code), Left(Some(Write.CodeNotFound)))
+    assertEquals(
+      PlaceFixtures.addName(ds, "zzgn_no_such_place", "X", "").left.map(_.code),
+      Left(Some(Write.CodeNotFound))
+    )
 
   test("a place added by hand is local, refused when the id is taken, and untouched by a re-seed"):
     val in = PlaceEdits
@@ -206,18 +224,18 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
         )
       )
       .fold(e => fail(e.message), identity)
-    val p = PlaceRepo.addPlace(ds, in).fold(e => fail(e.message), identity)
+    val p = PlaceFixtures.addPlace(ds, in).fold(e => fail(e.message), identity)
     assertEquals((p.id, p.kind, p.source), ("local_zzgn_gornji", PlaceKind.Site, Some("fixture: a hand-checked map")))
     val dataset = connect(ds)(sql"SELECT dataset FROM places WHERE id = 'local_zzgn_gornji'".query[String].run().head)
     assertEquals(dataset, "local")
-    assertEquals(PlaceRepo.addPlace(ds, in).left.map(_.code), Left(Some(Write.CodeInvalid)), "the id is taken")
+    assertEquals(PlaceFixtures.addPlace(ds, in).left.map(_.code), Left(Some(Write.CodeInvalid)), "the id is taken")
     val seedId = in.copy(place = in.place.copy(id = Krakow))
     assertEquals(
-      PlaceRepo.addPlace(ds, seedId).left.map(_.code),
+      PlaceFixtures.addPlace(ds, seedId).left.map(_.code),
       Left(Some(Write.CodeInvalid)),
       "a seed id is never overwritten"
     )
-    val _ = PlaceRepo.upsertPlaces(ds, seed)
+    val _ = PlaceFixtures.upsertPlaces(ds, seed)
     assertEquals(resolve("Zzgn Gornij").map(_.placeId), Some("local_zzgn_gornji"))
 
   // ── the fill ───────────────────────────────────────────────────────────────────────────────
@@ -259,7 +277,7 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
     )
     SourceRepo.upsert(ds, src, cfg.limits.chunkChars)
 
-    val ps = Geocoder.placements(ds, settings).filter(_.citekey == Ck)
+    val ps = connect(ds)(Geocoder.placements(settings)).filter(_.citekey == Ck)
     assertEquals(
       ps.map(p => (p.findingId, p.region)).sorted,
       List((s"$Ck#0", "Dead Sea"), (s"$Ck#3", "northern Levant"), (s"$Ck#4", "Kraków"))
@@ -271,7 +289,7 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(items.size, 3, items)
     assert(items.exists(_.detail.startsWith(s"$Ck#4: 'Kraków' → Kraków [$Krakow]")), items)
 
-    assertEquals(Geocoder.place(ds, ps, settings.toleranceKm), 3)
+    assertEquals(transact(ds)(Geocoder.place(ps, settings.toleranceKm)), 3)
     val (lon0, lat0) = pointOf(0).getOrElse(fail("#0 has no point"))
     assert(lon0 > 35.2 && lon0 < 35.7 && lat0 > 30.9 && lat0 < 31.9, (lon0, lat0))
     assertEquals(pointOf(1), Some((-40.0, 10.0)), "a finding that had a point is never touched")
@@ -290,5 +308,5 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(inKrakow, 1L)
 
     // idempotent: nothing left to place, and a stale placement is not applied over a newer point
-    assertEquals(Geocoder.placements(ds, settings).filter(_.citekey == Ck), Nil)
-    assertEquals(Geocoder.place(ds, ps, settings.toleranceKm), 0)
+    assertEquals(connect(ds)(Geocoder.placements(settings)).filter(_.citekey == Ck), Nil)
+    assertEquals(transact(ds)(Geocoder.place(ps, settings.toleranceKm)), 0)

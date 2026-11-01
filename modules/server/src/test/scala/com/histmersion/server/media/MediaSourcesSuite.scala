@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.domain.catalogue.places.PlaceFixtures
+
 import com.histmersion.util.ocr.ConverterClient
 
 import com.histmersion.pluginhost.HttpAnswer
@@ -9,7 +11,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{AssetRepo, Db, MediaRepo, Migrate, PlaceRepo}
+import com.histmersion.db.{AssetRepo, Db, MediaRepo, Migrate}
 import com.histmersion.util.jobs.JobRepo
 import com.histmersion.server.{Composition, Deps}
 import com.histmersion.util.ocr.ConverterClient
@@ -108,7 +110,7 @@ class MediaSourcesSuite extends com.histmersion.db.DbSuite:
           AssetRepo.Stored("fig-0002-01.png", "image/png", Png ++ Array[Byte](2), Some(900), Some(650))
         )
       ) // the map
-      val _ = PlaceRepo.upsertPlaces(
+      val _ = PlaceFixtures.upsertPlaces(
         ds,
         List(
           PlaceInput(

@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.places.PlaceFixtures
+
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
@@ -49,7 +51,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
   private def fresh(n: String): DataSource =
     val ds = scratch(n)
     // the reference data both sides share (an event points into it)
-    val _ = PlaceRepo.upsertPlaces(
+    val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(PlaceInput(Place("zzb_place", "Hattusa", "site", Some("""{"type":"Point","coordinates":[34.61,40.02]}"""))))
     )

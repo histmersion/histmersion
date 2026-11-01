@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.domain.catalogue.places.PlaceFixtures
+
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
@@ -203,7 +205,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
     val _ = ArticleRepo.put(ds, Article("zz_kingdom", "Kingdoms", "culture", "One [[zzbeta2005_kingdom]].\n\nTwo."))
     val _ = transact(ds)(GoalRepo.put("zz_goal", GoalPut("Know the storm gods")))
     val _ = transact(ds)(GoalRepo.put("zz_goal_gone", GoalPut("A goal deleted later")))
-    val _ = PlaceRepo.upsertPlaces(ds, List(site("zz_site", "Storm hill", 34.6, 40.0)), Dataset.Local)
+    val _ = PlaceFixtures.upsertPlaces(ds, List(site("zz_site", "Storm hill", 34.6, 40.0)), Dataset.Local)
     val _ = com.histmersion.domain.catalogue.periods
       .PeriodService(com.histmersion.util.database.Transactor(ds))
       .write(List(HistoricalPeriod("zz_period", "Storm period", Some("oracle"), Period(-1400, -1200))), Dataset.Local)

@@ -1,5 +1,9 @@
 package com.histmersion.domain.catalogue.maptiles
 
+import com.histmersion.domain.catalogue.places.PlaceFixtures
+
+import com.histmersion.domain.catalogue.places.PlaceScope
+
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
@@ -207,7 +211,7 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
       "int8range(1200, 1400, '[]')",
       props = """{"heritage": {"id": "Q3"}, "registers": []}"""
     )
-    val r = PlaceRepo.get(ds, "zztile_r1").get.record
+    val r = PlaceFixtures.get(ds, "zztile_r1").get.record
     assertEquals(r.dateSource, Some("wikidata-p571"))
     assertEquals(r.periods, List("Byzantine"))
     assertEquals(r.designations, List(PlaceDesignation("Q2", Some("listed monument"), Some("1922"), None)))
@@ -215,7 +219,7 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
       r.registers,
       List(PlaceRegister("P1936", "99"), PlaceRegister("P2186", "GR-1"), PlaceRegister("P2186", "GR-2"))
     )
-    assert(PlaceRepo.get(ds, "zztile_r2").get.record.isEmpty)
+    assert(PlaceFixtures.get(ds, "zztile_r2").get.record.isEmpty)
 
   test("grouping: a tile of more items than it keeps alone counts them by cell, and the counts add up to every item"):
     // 900 sites on a 30 × 30 grid 0.01° apart: more than a tile keeps alone

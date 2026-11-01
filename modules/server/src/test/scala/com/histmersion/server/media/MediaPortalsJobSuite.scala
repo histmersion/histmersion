@@ -1,12 +1,14 @@
 package com.histmersion.server.media
 
+import com.histmersion.domain.catalogue.places.PlaceFixtures
+
 import ox.supervised
 import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.{MediaRole, PlaceKind}
-import com.histmersion.db.{Db, MediaRepo, Migrate, PlaceRepo}
+import com.histmersion.db.{Db, MediaRepo, Migrate}
 import com.histmersion.db.given
 import com.histmersion.server.Composition
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
@@ -159,7 +161,7 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
   override def beforeAll(): Unit =
     if testDb.isDefined then
       clean()
-      val _ = PlaceRepo.upsertPlaces(
+      val _ = PlaceFixtures.upsertPlaces(
         ds,
         List(
           PlaceInput(Place("zqmp_site", "Zqmpetra", PlaceKind.Site, pt(140.0)), List(PlaceName("Zqmpetra"))),

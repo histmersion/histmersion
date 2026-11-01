@@ -1,5 +1,9 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.places.PlaceFixtures
+
+import com.histmersion.domain.catalogue.places.PlaceScope
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -125,9 +129,9 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
   )
 
   private def seed(): Unit =
-    val _ = PlaceRepo.upsertPlaces(ds, batch)
+    val _ = PlaceFixtures.upsertPlaces(ds, batch)
     SourceRepo.upsert(ds, src, cfg.limits.chunkChars)
-    val _ = PlaceRepo.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm)
+    val _ = PlaceFixtures.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm)
 
   /** Only the fixture: the tag rides on the SOURCE, and the finding-level tag predicate unions
     * `findings.tags ∪ sources.tags`, so every one of its findings matches and nothing else does.
@@ -143,7 +147,7 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
 
   test("rows(findings): one row per finding, with the places it was materialised into"):
     seed()
-    val rows = TreeRepo.rows(ds, "findings", filter).toList
+    val rows = AggregateRepo.treeRows(ds, "findings", filter).toList
     assertEquals(rows.map(_.key).sorted, List("zzt_src#0", "zzt_src#1", "zzt_src#2"))
     def places(id: String) = rows.find(_.key == id).get.placeIds.filter(_.startsWith("zzt_")).toSet
     assertEquals(
@@ -160,27 +164,27 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
 
   test("rows(sources): one row per SOURCE, with the UNION of its matching findings' places"):
     seed()
-    val rows = TreeRepo.rows(ds, "sources", filter).toList
+    val rows = AggregateRepo.treeRows(ds, "sources", filter).toList
     assertEquals(rows.map(_.key), List("zzt_src"))
     assertEquals(rows.head.placeIds.filter(_.startsWith("zzt_")).toSet, Set("zzt_land", "zzt_north", "zzt_south"))
     assertEquals((rows.head.start, rows.head.end), (Some(-1400L), Some(-1350L)))
 
   test("rows agree with the histogram about which sources are in the window"):
     seed()
-    val keys = TreeRepo.rows(ds, "sources", filter).map(_.key).toSet
+    val keys = AggregateRepo.treeRows(ds, "sources", filter).map(_.key).toSet
     val periods = AggregateRepo.periods(ds, "sources", filter)
     assertEquals(keys.size, periods.size, "the tree and the timeline strip select the same sources")
 
   test("a window that excludes the fixture returns no rows"):
     seed()
-    assertEquals(TreeRepo.rows(ds, "sources", filter.copy(period = Some(Period(-500, -200)))).toList, Nil)
+    assertEquals(AggregateRepo.treeRows(ds, "sources", filter.copy(period = Some(Period(-500, -200)))).toList, Nil)
 
   // ── the gazetteer slice ──────────────────────────────────────────────────────────────────────
 
   test("gazetteer() closes UPWARD over the hierarchy, whatever an edge's validity"):
     seed()
-    val rows = TreeRepo.rows(ds, "findings", filter).toList
-    val (ns, rels) = TreeRepo.gazetteer(ds, rows)
+    val rows = AggregateRepo.treeRows(ds, "findings", filter).toList
+    val (ns, rels) = PlaceFixtures.gazetteer(ds, rows)
     assert(ns.exists(_.id == "zzt_world"), "the ancestor nobody is materialised into is still needed")
     assertEquals(ns.find(_.id == "zzt_north").flatMap(_.period), Some(Period(-1650, -1180)))
     assertEquals(ns.find(_.id == "zzt_world").flatMap(_.period), None)
@@ -190,14 +194,14 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
     assert(rels.forall(_.kind == PlaceRelation.PartOf))
 
   test("gazetteer() runs no query at all when nothing is located"):
-    assertEquals(TreeRepo.gazetteer(ds, Vector(TreeRow("x", "x", "X"))), (Nil, Nil))
+    assertEquals(PlaceFixtures.gazetteer(ds, Vector(TreeRow("x", "x", "X"))), (Nil, Nil))
 
   // ── repo + pure tree, end to end ─────────────────────────────────────────────────────────────
 
   test("the region tree over real rows: non-additive counts, overlap, and an unlocated leaf"):
     seed()
-    val rows = TreeRepo.rows(ds, "findings", filter).toList
-    val (ns, rels) = TreeRepo.gazetteer(ds, rows)
+    val rows = AggregateRepo.treeRows(ds, "findings", filter).toList
+    val (ns, rels) = PlaceFixtures.gazetteer(ds, rows)
     val tree = Tree.regionTree(rows, ns, rels, Some(-1400), 3, 2)
 
     assertEquals(find(tree, "zzt_world").map(_.count), Some(2), "2 of the 3 findings are located")
@@ -215,8 +219,8 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
 
   test("as of -1250 the southern polity is gone, so the frontier hoard sits under the northern one alone"):
     seed()
-    val rows = TreeRepo.rows(ds, "findings", filter).toList
-    val (ns, rels) = TreeRepo.gazetteer(ds, rows)
+    val rows = AggregateRepo.treeRows(ds, "findings", filter).toList
+    val (ns, rels) = PlaceFixtures.gazetteer(ds, rows)
     val tree = Tree.regionTree(rows, ns, rels, Some(-1250), 3)
     assertEquals(find(tree, "zzt_south"), None)
     assertEquals(find(tree, "zzt_north").map(_.count), Some(2))
@@ -224,8 +228,8 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
 
   test("by=time,region over real rows: the gazetteer inside each time bucket"):
     seed()
-    val rows = TreeRepo.rows(ds, "sources", filter).toList
-    val (ns, rels) = TreeRepo.gazetteer(ds, rows)
+    val rows = AggregateRepo.treeRows(ds, "sources", filter).toList
+    val (ns, rels) = PlaceFixtures.gazetteer(ds, rows)
     val tree = Tree.timeRegionTree(rows, -1600, -1200, ns, rels, 2, 1)
     val bucket = tree.find(_.start.contains(-1400L)).get
     assertEquals(bucket.kind, Tree.KindTime)
@@ -237,16 +241,16 @@ class TreeRepoSuite extends com.histmersion.db.DbSuite:
 
   test("rowsQuery threads the PlaceScope through, so a place chip narrows the tree"):
     val scope = PlaceScope(Map("zzt_north" -> List("zzt_north", "zzt_land")))
-    val sql = TreeRepo.rowsQuery("findings", Filter(places = List("zzt_north")), scope)
+    val sql = AggregateRepo.treeRowsQuery("findings", Filter(places = List("zzt_north")), scope)
     assert(sql.text.contains("finding_places"), sql.text)
     assert(sql.params.exists(_ == Param.A(List("zzt_north", "zzt_land"))), sql.params.toString)
 
   test("rowsQuery(sources) gates on a matching finding exactly as the histogram does"):
     val f = Filter(places = List("anywhere"), period = Some(Period(-1600, -1200)))
-    assert(TreeRepo.rowsQuery("sources", f).text.contains("fp.matched > 0"))
+    assert(AggregateRepo.treeRowsQuery("sources", f).text.contains("fp.matched > 0"))
     assert(
-      !TreeRepo
-        .rowsQuery("sources", Filter(period = Some(Period(-1600, -1200))))
+      !AggregateRepo
+        .treeRowsQuery("sources", Filter(period = Some(Period(-1600, -1200))))
         .text
         .contains("fp.matched > 0")
     )

@@ -56,6 +56,9 @@ enum Location:
   /** The folder Linked Places files are dropped into for a gazetteer load (`places.sources.lpf-dir`). */
   case GazetteerDrop
 
+  /** The bundled gazetteer seed the init job imports (`<init.data-dir>/places`, the repo's `db/places`). */
+  case GazetteerSeed
+
   /** The bundle's OCR converter: its Python and its models (`<install>/converter`). */
   case Converter
 

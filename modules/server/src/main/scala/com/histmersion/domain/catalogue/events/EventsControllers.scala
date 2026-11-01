@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.events
 
+import com.histmersion.domain.catalogue.places.PlaceScope
+
 import com.histmersion.api.{
   AliasKindsAdapter,
   Api,
@@ -16,7 +18,7 @@ import com.histmersion.api.{
   Filter,
   Write
 }
-import com.histmersion.db.PlaceScope
+import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.{Caller, Wikidata}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.identity.AliasKind

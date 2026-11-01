@@ -1,7 +1,9 @@
 package com.histmersion.domain.catalogue.events
 
+import com.histmersion.domain.catalogue.places.PlaceScope
+
 import com.histmersion.api.{AliasKindsAdapter, Api, ApiError, EventPatch, EventPut, Filter, TimeSpan, Write}
-import com.histmersion.db.PlaceScope
+import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.CatalogueState
 import com.histmersion.util.data.maintenance.WriteGate

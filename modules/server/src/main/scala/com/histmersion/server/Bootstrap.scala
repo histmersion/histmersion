@@ -6,15 +6,18 @@ import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.PlaceRepo
-import com.histmersion.domain.catalogue.periods.{PeriodImports, PeriodService, PeriodSources}
+import com.histmersion.domain.catalogue.periods.{PeriodImports, PeriodOFetch, PeriodService, PeriodSources}
+import com.histmersion.domain.catalogue.places.{
+  BuiltinGazetteers,
+  GazetteerImports,
+  GazetteerLoad,
+  NaturalEarthLand,
+  PlaceService
+}
 import com.histmersion.util.jobs.JobRepo
-import com.histmersion.server.importers.{GazetteerLoad, ImportRunner, NaturalEarthLand, PeriodOFetch}
-import com.histmersion.domain.catalogue.places.BuiltinGazetteers
-import com.histmersion.pluginhost.PluginGazetteers
+import com.histmersion.util.storage.Location
 
 import java.nio.file.{Files, Path}
-import com.histmersion.values.PlaceKind
 
 /** Named periods (#719) and first-run data (#720): the period-preset write path and the `init` job.
   *
@@ -29,8 +32,8 @@ import com.histmersion.values.PlaceKind
   */
 final class Bootstrap(
     deps: Deps,
-    download: String => Either[String, String] = PeriodOFetch.download,
-    gazetteerDownload: GazetteerLoad.Download = GazetteerLoad.httpDownload
+    download: String => Either[String, String] = HttpDownload().text,
+    gazetteerDownload: GazetteerLoad.Download = HttpDownload().file
 ):
 
   private val ds = deps.ds
@@ -43,7 +46,6 @@ final class Bootstrap(
   private val slot = BackgroundJob.Slot()
 
   private def dataDir: Path = Path.of(cfg.init.dataDir)
-  private def placesDir: Path = dataDir.resolve("places")
   private def periodsSeed: Path = dataDir.resolve(cfg.periods.seedFile)
 
   // ── periods ──────────────────────────────────────────────────────────────────────────────────
@@ -62,6 +64,14 @@ final class Bootstrap(
   private def bundledSeed: Either[String, String] =
     if !Files.isRegularFile(periodsSeed) then Left(s"no period seed at $periodsSeed (set init.data-dir)")
     else Right(Files.readString(periodsSeed))
+
+  // ── the gazetteer ───────────────────────────────────────────────────────────────────────────────
+
+  /** The gazetteer's records, and how its seed, its pinned extracts, its drop folder, the plugins' sources and the land
+    * come in.
+    */
+  private val places: PlaceService = PlaceService(deps.transactor)
+  private val gazetteerImports: GazetteerImports = CatalogueWiring.gazetteer(deps, places, gazetteerDownload, download)
 
   // ── init ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -87,7 +97,7 @@ final class Bootstrap(
 
   /** `GET /api/places/sources` — the pinned extracts, the LPF drop folder, and what was imported. */
   def gazetteerSources: List[GazetteerSourceInfo] =
-    GazetteerLoad.list(ds, GazetteerLoad.settings(cfg))
+    gazetteerImports.sources()
 
   /** `POST /api/places/load?source=&apply=` — one external source as an init job: a dry run that reports what it would
     * do (the default), or the import itself.
@@ -109,7 +119,7 @@ final class Bootstrap(
     */
   private[server] def plan(fetch: Boolean, onlyEmpty: Boolean): InitPlan =
     InitPlan(
-      gazetteer = !onlyEmpty || PlaceRepo.count(ds) == 0,
+      gazetteer = !onlyEmpty || places.count() == 0,
       periodPresets = !onlyEmpty || periods.count() == 0 || periodImports.seedOutdated,
       fetch = if fetch then cfg.init.sources else Nil
     )
@@ -170,44 +180,9 @@ final class Bootstrap(
     val summary = if done.isEmpty then Some("nothing to do") else Some(done.mkString("; "))
     BackgroundJob.Outcome(summary, Option.when(failed.nonEmpty)(failed.mkString("; ")))
 
-  /** The bundled gazetteer, the way `histmersion places seed` imports it: [[PlaceSeed.files]] order, then a second pass
-    * over every file that reported a dangling parent, then `finding_places`.
-    */
+  /** The bundled gazetteer, the way `histmersion places seed` imports it. */
   private def seedPlaces(note: String => Unit): Either[String, String] =
-    if !Files.isDirectory(placesDir) then Left(s"no gazetteer seed at $placesDir (set init.data-dir)")
-    else
-      val files = PlaceSeed.files(placesDir)
-      def importFile(f: Path, kind: Option[String]): Either[String, PlaceImportResult] =
-        Lpf
-          .parse(Files.readString(f), kind.getOrElse(PlaceKind.Region))
-          .left
-          .map(e => s"${placesDir.relativize(f)}: $e")
-          .map(_.grouped(math.max(1, cfg.places.importBatch)).foldLeft(PlaceImportResult(0, 0, 0, Nil)) { (sum, b) =>
-            val r = PlaceRepo.upsertPlaces(ds, b)
-            PlaceImportResult(
-              sum.places + r.places,
-              sum.names + r.names,
-              sum.relations + r.relations,
-              (sum.failed ++ r.failed).take(20)
-            )
-          })
-      def pass(fs: List[(Path, Option[String])]): Either[String, (Int, List[(Path, Option[String])])] =
-        fs.zipWithIndex.foldLeft[Either[String, (Int, List[(Path, Option[String])])]](Right((0, Nil))) {
-          case (acc, ((f, kind), i)) =>
-            acc.flatMap { (n, retry) =>
-              note(s"gazetteer: ${placesDir.relativize(f)} (${i + 1}/${fs.size})")
-              importFile(f, kind).map(r => (n + r.places, if r.failed.isEmpty then retry else retry :+ (f -> kind)))
-            }
-        }
-      if files.isEmpty then Left(s"no JSON files under $placesDir")
-      else
-        for
-          first <- pass(files)
-          _ <- if first._2.isEmpty then Right((0, Nil)) else pass(first._2)
-        yield
-          note("gazetteer: matching findings to places")
-          val r = PlaceRepo.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm)
-          s"${first._1} place(s) from ${files.size} file(s); ${r.links} finding→place link(s)"
+    gazetteerImports.seed(deps.storage.store(Location.GazetteerSeed), note)
 
   private def skippedNote(r: PeriodImportResult): String =
     if r.skippedCount == 0 then "" else s", ${r.skippedCount} skipped"
@@ -223,9 +198,7 @@ final class Bootstrap(
     else
       gazetteer match
         case Some(k) =>
-          GazetteerLoad
-            .load(ds, GazetteerLoad.settings(cfg), k, apply = !check, note, gazetteerDownload)
-            .map(_.map(_.describe).mkString("; "))
+          gazetteerImports.load(k, apply = !check, note).map(_.map(_.describe).mkString("; "))
         case None => fetchNetwork(name, periods)
 
   private def fetchNetwork(name: String, periods: PeriodImportResult => PeriodImportResult): Either[String, String] =
@@ -233,16 +206,12 @@ final class Bootstrap(
       case PeriodOFetch.name =>
         periodImports.fetch(Nil).map(periods).map(r => Plural.count(r.periods, "period") + skippedNote(r))
       case NaturalEarthLand.name =>
-        NaturalEarthLand.run(ds, dryRun = false).map(r => s"${r.places} polit(y/ies) clipped")
+        gazetteerImports.land(dryRun = false).map(r => s"${r.places} polit(y/ies) clipped")
       case other =>
-        val registered = deps.plugins.registries.gazetteerSources
-        val available = Bootstrap.sources ++ BuiltinGazetteers.thirdParty(registered)
-        BuiltinGazetteers
-          .resolve(other, registered, s"unknown source '$other' (available: ${available.mkString(", ")})")
-          .flatMap(src =>
-            val http = PluginGazetteers.http(PluginGazetteers.transport(cfg.places))
-            ImportRunner.fetchAndImport(src, http, ds, dryRun = false, cfg.places.pointToleranceKm)
-          )
+        val available = Bootstrap.sources ++ gazetteerImports.thirdParty
+        gazetteerImports
+          .source(other, s"unknown source '$other' (available: ${available.mkString(", ")})")
+          .flatMap(src => gazetteerImports.fetch(src, dryRun = false))
           .map(r => s"${r.places} place(s)")
 
 object Bootstrap:

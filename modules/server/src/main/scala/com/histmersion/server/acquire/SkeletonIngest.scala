@@ -22,7 +22,7 @@ import javax.sql.DataSource
 final class SkeletonIngest(
     ds: DataSource,
     chunkChars: Int,
-    toleranceKm: Double = com.histmersion.db.PlaceRepo.DefaultToleranceKm
+    toleranceKm: Double = com.histmersion.domain.catalogue.places.FindingPlacement.DefaultToleranceKm
 ) extends IngestJobs:
 
   def enqueue(pdfPath: Option[Path], citekey: String, meta: IngestMeta): Either[String, IngestOutcome] =

@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.catalogue.places.PlaceScope
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*

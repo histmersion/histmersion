@@ -1,7 +1,9 @@
 package com.histmersion.domain.catalogue.events
 
+import com.histmersion.domain.catalogue.places.PlaceScope
+
 import com.histmersion.api.Filter
-import com.histmersion.db.{PlaceScope, Sql}
+import com.histmersion.db.Sql
 
 /** Which events a list, the map's events or the leads select: those related to the filter's sources (read with the
   * gazetteer's `scope` of its places), narrowed by the event's own text (label or description), kind, historicity,

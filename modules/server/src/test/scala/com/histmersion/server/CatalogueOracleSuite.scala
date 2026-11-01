@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.domain.catalogue.places.Geocoding
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.db.*
@@ -1055,7 +1057,7 @@ class CatalogueOracleSuite extends DbSuite:
       ("Zznowhere", Geocode.KindHint.Unknown, None)
     )
     asks.foreach { (name, hint, at) =>
-      val r = Geocoder.resolve(ds, name, hint, at, 4)
+      val r = Geocoding(com.histmersion.util.database.Transactor(ds)).resolve(name, hint, at, 4)
       val _ = step(
         s"geocode $name ${hint.wire} ${at.map(p => s"${p.start}..${p.end}").getOrElse("-")}",
         r.fold("none")(r =>

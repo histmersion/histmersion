@@ -66,11 +66,13 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
     refused("import_article")(h.importArticle(ArticleImport(text = "---\nslug: zzlock-art\n---\n")))
 
   test("the gazetteer writes are refused"):
-    refused("places/import")(h.importPlaces(None, None, """{"type":"FeatureCollection","features":[]}"""))
-    refused("places/rebuild")(h.rebuildPlaces())
-    refused("places/names/add")(h.addPlaceName("zzlock_place", PlaceNameAdd("X")))
-    refused("places/names/remove")(h.removePlaceName("zzlock_place", PlaceNameRemove("X")))
-    refused("places/add")(h.addPlace(PlaceAdd("Zzlock", PlaceKind.Site, 0, 0, "fixture")))
+    refused("places/import")(
+      h.places.importPlaces(Caller.Local, None, None, """{"type":"FeatureCollection","features":[]}""")
+    )
+    refused("places/rebuild")(h.places.rebuild(Caller.Local))
+    refused("places/names/add")(h.places.addName(Caller.Local, "zzlock_place", PlaceNameAdd("X")))
+    refused("places/names/remove")(h.places.removeName(Caller.Local, "zzlock_place", PlaceNameRemove("X")))
+    refused("places/add")(h.places.add(Caller.Local, PlaceAdd("Zzlock", PlaceKind.Site, 0, 0, "fixture")))
 
   test("the ingest surface is refused"):
     val f = java.io.File.createTempFile("zzlock", ".pdf")
@@ -105,4 +107,4 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
 
   test("once the lock is released, the same writes go through"):
     assert(h.putSource("zzlock_src", SourcePut(title = "T")).isRight)
-    assert(h.rebuildPlaces().isRight)
+    assert(h.places.rebuild(Caller.Local).isRight)

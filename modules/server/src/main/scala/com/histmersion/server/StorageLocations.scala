@@ -2,7 +2,6 @@ package com.histmersion.server
 
 import com.histmersion.config.{AppConfig, Environment, LoadedConfig, UserPaths}
 import com.histmersion.domain.automation.agents.AgentTrees
-import com.histmersion.server.importers.GazetteerLoad
 import com.histmersion.config.edit.SettingsFile
 import com.histmersion.util.settings.StoredSettingsFile
 import com.histmersion.util.storage.{Location, Storage, Store, StoreKey}
@@ -30,7 +29,7 @@ object StorageLocations:
       case Location.Basemap           => Some(UserPaths.basemapDir(cfg.basemap.dir, cfg.init.dataDir, env))
       case Location.Backups           => Some(Path.of(cfg.backups.dir).toAbsolutePath.normalize)
       case Location.Bundles           => Some(Path.of(cfg.bundles.dir))
-      case Location.GazetteerExtracts => Some(GazetteerLoad.paths(cfg, env).extracts)
+      case Location.GazetteerExtracts => Some(GazetteerPaths.of(cfg, env).extracts)
       case Location.AgentHomes        => AgentTrees.root(cfg, env)
       case Location.Plugins           => dataDir.map(_.resolve("plugins"))
       case Location.RelinkKit         =>
@@ -42,8 +41,9 @@ object StorageLocations:
       case Location.Scratch         => Some(temp)
       case Location.DatabaseCluster => dataDir.map(_.resolve("pg"))
       case Location.CorpusFolder    => configured(cfg.corpus.dir)
-      case Location.GazetteerFolder => GazetteerLoad.paths(cfg, env).legacy
-      case Location.GazetteerDrop   => Some(GazetteerLoad.paths(cfg, env).lpf)
+      case Location.GazetteerFolder => GazetteerPaths.of(cfg, env).legacy
+      case Location.GazetteerDrop   => Some(GazetteerPaths.of(cfg, env).lpf)
+      case Location.GazetteerSeed   => Some(Path.of(cfg.init.dataDir).resolve("places"))
       case Location.Converter       =>
         Option(cfg.runtime.home).map(_.trim).filter(_.nonEmpty).map(h => Path.of(h).resolve("converter"))
       case Location.Toolchain      => dataDir.map(_.resolve("toolchain"))
@@ -79,7 +79,7 @@ object StorageLocations:
     val bundled = cfg.runtime.enabled || (env("HISTMERSION_RUNTIME").forall(_.trim.isEmpty) && Supervisor.bundled(exe))
     val home = Option.when(bundled)(Supervisor.layout(cfg.runtime, exe, env, osName).toOption.map(_.home)).flatten
     val data = UserPaths.dataDir(cfg.runtime.dataDir, env, osName).map(_.toAbsolutePath.normalize)
-    val gazetteer = GazetteerLoad.paths(cfg, env)
+    val gazetteer = GazetteerPaths.of(cfg, env)
     def place(location: Location): Option[Path] = location match
       case Location.DatabaseCluster   => data.filter(_ => bundled).map(_.resolve("pg"))
       case Location.Backups           => Some(Path.of(cfg.backups.dir))
@@ -101,8 +101,10 @@ object StorageLocations:
       case Location.Logs              => data.map(_.resolve("logs"))
       case Location.DataDirectory     => data
       case Location.CacheDirectory    => UserPaths.cacheDir(env)
-      case Location.UserConfig | Location.Postgres | Location.PostgresTools | Location.Executables => None
-      case Location.Scratch                                                                        => Some(temp)
+      case Location.UserConfig | Location.Postgres | Location.PostgresTools | Location.Executables |
+          Location.GazetteerSeed =>
+        None
+      case Location.Scratch => Some(temp)
     Storage(l => place(l).map(_.toAbsolutePath.normalize), () => temp)
 
   /** The settings file `loaded` was read from, in the store of its directory ([[Location.UserConfig]]) and named in

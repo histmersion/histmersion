@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.events
 
+import com.histmersion.domain.catalogue.places.PlaceScope
+
 import com.histmersion.api.{
   ApiError,
   CatalogRecord,
@@ -13,7 +15,7 @@ import com.histmersion.api.{
   EventPut,
   Filter
 }
-import com.histmersion.db.{PlaceScope, Sql}
+import com.histmersion.db.Sql
 import com.histmersion.domain.library.search.FilterEventSources
 
 import com.augustnagro.magnum.{connect, transact}
