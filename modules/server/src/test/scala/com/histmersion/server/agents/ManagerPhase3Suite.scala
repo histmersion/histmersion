@@ -185,7 +185,9 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       h.getSource("zzagent105555zzagenta", body = false).map(_.source.title),
       Right("Ingested 10.5555/zzagent.a")
     )
-    assert(GoalLinkRepo.links(ds, Goal).exists(l => l.kind == LinkKind.Source && l.ref == "zzagent105555zzagentd"))
+    assert(
+      connect(ds)(GoalLinkRepo.links(Goal)).exists(l => l.kind == LinkKind.Source && l.ref == "zzagent105555zzagentd")
+    )
     val queued = acquire(h).map(_.text)
     assertEquals(queued.size, 2, queued.mkString("\n"))
     assert(List("zzagent.b", "zzagent.c").forall(d => queued.exists(_.contains(d))), queued)

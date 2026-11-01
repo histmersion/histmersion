@@ -104,7 +104,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         h.putSource(c, SourcePut(title = s"Zz $c", year = Some(2020), topics = List("zzfocus_t"), body = Some("Tin.")))
           .isRight
       )
-      assert(GoalLinkRepo.link(ds, g(10), LinkKind.Source, c, None))
+      assert(transact(ds)(GoalLinkRepo.link(g(10), LinkKind.Source, c, None)))
     }
     assert(
       h.putArticle(
@@ -117,7 +117,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         )
       ).isRight
     )
-    assert(GoalLinkRepo.link(ds, g(5), LinkKind.Article, Art, None))
+    assert(transact(ds)(GoalLinkRepo.link(g(5), LinkKind.Article, Art, None)))
     up.onIngest = d =>
       assert(h.putSource(ck(d), SourcePut(title = s"Ingested $d", year = Some(2023), doi = Some(d))).isRight)
       Right(
@@ -478,8 +478,8 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       List("ingest 10.5555/zzseed.1", "ingest 10.5555/zzseed.3")
     )
     assert(
-      GoalLinkRepo.links(ds, g(1)).exists(l => l.kind == LinkKind.Source && l.ref == ck("10.5555/zzseed.1")),
-      GoalLinkRepo.links(ds, g(1))
+      connect(ds)(GoalLinkRepo.links(g(1))).exists(l => l.kind == LinkKind.Source && l.ref == ck("10.5555/zzseed.1")),
+      connect(ds)(GoalLinkRepo.links(g(1)))
     )
     assert(QueueRepoLog.has(ds, "seed before the plan: "), "a worklog line")
     // the next tick seeds the next two; a goal seeded today is not seeded again

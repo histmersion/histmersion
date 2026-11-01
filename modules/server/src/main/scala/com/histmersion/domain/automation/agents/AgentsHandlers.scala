@@ -20,7 +20,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.GoalPlans.*
-import com.histmersion.db.{AgentRepo, GoalLinkRepo, GoalRepo, ModelSettingsRepo}
+import com.histmersion.db.{AgentRepo, ModelSettingsRepo}
 
 /** The ONE implementation of the embedded-agent operations (docs/research-embedded-agents.md): the model check, the
   * probe and (through [[Engine]]) pipeline runs. REST ([[AgentsRoutes]]) and the CLI reach it; it is held as
@@ -56,6 +56,14 @@ final class AgentsHandlers(
   /** The agents' settings now (read at each use). */
   def config: AgentsConfig = cfg
   private val ds = site.ds
+
+  /** The goals: their sub-goals, links, plans and the schedules not moved into a watcher yet. */
+  val goals: com.histmersion.domain.automation.goals.GoalService =
+    com.histmersion.domain.automation.goals.GoalService(Transactor(ds))
+
+  /** The autopilot's row: its switch, housekeeping times, the scheduler's strategy, the digest's day, the drain. */
+  val autopilotRow: com.histmersion.domain.automation.autopilot.AutopilotRowService =
+    com.histmersion.domain.automation.autopilot.AutopilotRowService(Transactor(ds))
 
   /** What the engine asks of the rest of the server (goals, the housekeeping) until the owners offer services. */
   val host: com.histmersion.domain.automation.workflows.AutomationHost = site.host(this)
@@ -609,7 +617,7 @@ final class AgentsHandlers(
         case Some(g) => host.goal(g).map(x => Some(x.slug))
 
   private def goalBudget(goal: String): Option[Double] =
-    GoalLinkRepo.planAndBudget(ds, goal).flatMap(_._2).map(_.toDouble)
+    goals.planAndBudget(goal).flatMap(_._2).map(_.toDouble)
 
   /** Budgets are stored to the micro-dollar (numeric(12,6)): anything smaller would round to 0. */
   private def positive(v: Double, what: String): Either[ApiError, Double] =
@@ -746,11 +754,11 @@ final class AgentsHandlers(
   /** `GET /api/goals/{slug}/view` — readable whether or not agents are on. */
   def goalView(slug: String): Either[ApiError, GoalView] =
     host.goal(slug).map { g =>
-      val (plan, budget) = GoalLinkRepo.planAndBudget(ds, g.slug).getOrElse((None, None))
+      val (plan, budget) = goals.planAndBudget(g.slug).getOrElse((None, None))
       GoalView(
         g,
-        GoalRepo.children(ds, g.slug),
-        GoalLinkRepo.links(ds, g.slug),
+        goals.children(g.slug),
+        goals.links(g.slug),
         managing.goalSchedules(Some(g.slug)),
         plan.flatMap(j => io.circe.parser.decode[Plan](j).toOption),
         budget.map(_.toDouble)
@@ -775,9 +783,9 @@ final class AgentsHandlers(
             ref,
             ApiError(s"a query is 1 to ${cfg.plan.queryChars} characters")
           )
-      _ = GoalLinkRepo.link(ds, g.slug, in.kind, r, in.note.map(_.trim).filter(_.nonEmpty))
-      l <- GoalLinkRepo
-        .links(ds, g.slug)
+      _ = goals.link(g.slug, in.kind, r, in.note.map(_.trim).filter(_.nonEmpty))
+      l <- goals
+        .links(g.slug)
         .find(l => l.kind == in.kind && l.ref == r)
         .toRight(ApiError(s"the link to $r was not recorded"))
     yield l
@@ -788,7 +796,7 @@ final class AgentsHandlers(
       k <- LinkKind
         .parse(kind)
         .toRight(ApiError(s"unknown link kind '$kind' (one of: ${LinkKind.values.map(_.wire).mkString(", ")})"))
-    yield Removed(GoalLinkRepo.unlink(ds, g.slug, k, ref.trim))
+    yield Removed(goals.unlink(g.slug, k, ref.trim))
 
   private def scheduleKind(kind: String): Either[ApiError, ScheduleKind] =
     ScheduleKind

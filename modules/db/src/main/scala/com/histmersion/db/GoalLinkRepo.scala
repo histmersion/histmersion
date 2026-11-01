@@ -27,20 +27,19 @@ object GoalLinkRepo:
   /** A goal's links, each with the title of what it points at (`None` = it no longer exists; a query has no title).
     * Sources, then articles, queries, queue items; oldest first within a kind.
     */
-  def links(ds: DataSource, goal: String): List[GoalLink] =
-    connect(ds):
-      sql"""SELECT l.kind, l.ref, l.note,
-                   CASE l.kind WHEN 'source'  THEN (SELECT s.title FROM sources s WHERE s.citekey = l.ref)
-                               WHEN 'article' THEN (SELECT a.title FROM articles a WHERE a.slug = l.ref)
-                               WHEN 'queue-item' THEN (SELECT q.text FROM queue_items q WHERE q.id::text = l.ref)
-                               ELSE NULL END,
-                   to_char(l.created_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}),
-                   CASE l.kind WHEN 'queue-item' THEN (SELECT q.list FROM queue_items q WHERE q.id::text = l.ref) END
-            FROM goal_links l WHERE l.goal_slug = $goal
-            ORDER BY CASE l.kind WHEN 'source' THEN 0 WHEN 'article' THEN 1 WHEN 'query' THEN 2 ELSE 3 END,
-                     l.created_at, l.ref""".query[LinkRow].run().toList.flatMap { r =>
-        LinkKind.parse(r.kind).map(k => GoalLink(k, r.ref, r.note, r.title, r.createdAt, r.queue))
-      }
+  def links(goal: String)(using DbCon): List[GoalLink] =
+    sql"""SELECT l.kind, l.ref, l.note,
+                 CASE l.kind WHEN 'source'  THEN (SELECT s.title FROM sources s WHERE s.citekey = l.ref)
+                             WHEN 'article' THEN (SELECT a.title FROM articles a WHERE a.slug = l.ref)
+                             WHEN 'queue-item' THEN (SELECT q.text FROM queue_items q WHERE q.id::text = l.ref)
+                             ELSE NULL END,
+                 to_char(l.created_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}),
+                 CASE l.kind WHEN 'queue-item' THEN (SELECT q.list FROM queue_items q WHERE q.id::text = l.ref) END
+          FROM goal_links l WHERE l.goal_slug = $goal
+          ORDER BY CASE l.kind WHEN 'source' THEN 0 WHEN 'article' THEN 1 WHEN 'query' THEN 2 ELSE 3 END,
+                   l.created_at, l.ref""".query[LinkRow].run().toList.flatMap { r =>
+      LinkKind.parse(r.kind).map(k => GoalLink(k, r.ref, r.note, r.title, r.createdAt, r.queue))
+    }
 
   /** The goals that link each of these queue items, by item: (item id, goal slug, goal title), the goals of an item by
     * title.
@@ -68,55 +67,47 @@ object GoalLinkRepo:
 
   /** Link (idempotent: an existing link keeps its note unless a new one is given). `false` = the goal does not exist.
     */
-  def link(ds: DataSource, goal: String, kind: LinkKind, ref: String, note: Option[String]): Boolean =
-    transact(ds):
-      val exists = sql"SELECT 1 FROM goals WHERE slug = $goal".query[Int].run().nonEmpty
-      if exists then
-        sql"""INSERT INTO goal_links (goal_slug, kind, ref, note) VALUES ($goal, ${kind.wire}, $ref, $note)
-              ON CONFLICT (goal_slug, kind, ref) DO UPDATE SET note = coalesce(EXCLUDED.note, goal_links.note)""".update
-          .run()
-      exists
+  def link(goal: String, kind: LinkKind, ref: String, note: Option[String])(using DbCon): Boolean =
+    val exists = sql"SELECT 1 FROM goals WHERE slug = $goal".query[Int].run().nonEmpty
+    if exists then
+      sql"""INSERT INTO goal_links (goal_slug, kind, ref, note) VALUES ($goal, ${kind.wire}, $ref, $note)
+            ON CONFLICT (goal_slug, kind, ref) DO UPDATE SET note = coalesce(EXCLUDED.note, goal_links.note)""".update
+        .run()
+    exists
 
-  def unlink(ds: DataSource, goal: String, kind: LinkKind, ref: String): Boolean =
-    transact(ds)(
-      sql"DELETE FROM goal_links WHERE goal_slug = $goal AND kind = ${kind.wire} AND ref = $ref".update.run() > 0
-    )
+  def unlink(goal: String, kind: LinkKind, ref: String)(using DbCon): Boolean =
 
-  /** A goal's direct sub-goals. */
-  def children(ds: DataSource, goal: String): List[Goal] =
-    GoalRepo.children(ds, goal)
+    sql"DELETE FROM goal_links WHERE goal_slug = $goal AND kind = ${kind.wire} AND ref = $ref".update.run() > 0
 
   /** Every goal's links counted by kind: (goal, kind) → n. Article links count only articles that exist.
     */
-  def linkCounts(ds: DataSource): Map[(String, String), Int] =
-    connect(ds):
-      sql"""SELECT l.goal_slug, l.kind, count(*)::int FROM goal_links l
-            WHERE l.kind <> 'article' OR EXISTS (SELECT 1 FROM articles a WHERE a.slug = l.ref)
-            GROUP BY l.goal_slug, l.kind""".query[(String, String, Int)].run().map((g, k, n) => (g, k) -> n).toMap
+  def linkCounts()(using DbCon): Map[(String, String), Int] =
+    sql"""SELECT l.goal_slug, l.kind, count(*)::int FROM goal_links l
+          WHERE l.kind <> 'article' OR EXISTS (SELECT 1 FROM articles a WHERE a.slug = l.ref)
+          GROUP BY l.goal_slug, l.kind""".query[(String, String, Int)].run().map((g, k, n) => (g, k) -> n).toMap
 
   /** The goals that record an approved plan. */
-  def planned(ds: DataSource): Set[String] =
-    connect(ds)(sql"SELECT slug FROM goals WHERE plan IS NOT NULL".query[String].run().toSet)
+  def planned()(using DbCon): Set[String] =
+    sql"SELECT slug FROM goals WHERE plan IS NOT NULL".query[String].run().toSet
 
   // ── plan and run cap ───────────────────────────────────────────────────────────────────────────
 
   /** The approved plan (its JSON) and the goal's run cap. `None` = no such goal. */
-  def planAndBudget(ds: DataSource, goal: String): Option[(Option[String], Option[BigDecimal])] =
-    connect(ds):
-      sql"SELECT plan::text, budget_usd FROM goals WHERE slug = $goal"
-        .query[(Option[String], Option[BigDecimal])]
-        .run()
-        .headOption
+  def planAndBudget(goal: String)(using DbCon): Option[(Option[String], Option[BigDecimal])] =
+    sql"SELECT plan::text, budget_usd FROM goals WHERE slug = $goal"
+      .query[(Option[String], Option[BigDecimal])]
+      .run()
+      .headOption
 
   /** Record an approved plan, and when it was approved (V054: two collections' plans for one goal are merged by "the
     * one approved later wins").
     */
-  def setPlan(ds: DataSource, goal: String, planJson: String): Unit =
-    val _ = transact(ds)(sql"""UPDATE goals SET plan = $planJson::jsonb, plan_approved_at = now(), updated_at = now()
-                               WHERE slug = $goal""".update.run())
+  def setPlan(goal: String, planJson: String)(using DbCon): Unit =
+    val _ = sql"""UPDATE goals SET plan = $planJson::jsonb, plan_approved_at = now(), updated_at = now()
+                               WHERE slug = $goal""".update.run()
 
-  def setBudget(ds: DataSource, goal: String, usd: Option[BigDecimal]): Unit =
-    val _ = transact(ds)(sql"UPDATE goals SET budget_usd = $usd, updated_at = now() WHERE slug = $goal".update.run())
+  def setBudget(goal: String, usd: Option[BigDecimal])(using DbCon): Unit =
+    val _ = sql"UPDATE goals SET budget_usd = $usd, updated_at = now() WHERE slug = $goal".update.run()
 
   // ── schedules ──────────────────────────────────────────────────────────────────────────────────
 
@@ -155,14 +146,13 @@ object GoalLinkRepo:
       )
 
   /** Every schedule (or one goal's), the next due first. */
-  def schedules(ds: DataSource, goal: Option[String] = None): List[GoalSchedule] =
+  def schedules(goal: Option[String] = None)(using DbCon): List[GoalSchedule] =
     val where = goal.fold(Sql.empty)(g => Sql.of(" WHERE goal_slug = ?", Param.S(g)))
-    connect(ds):
-      (scheduleSelect ++ where ++ " ORDER BY next_run_at NULLS LAST, goal_slug, kind").frag
-        .query[ScheduleRow]
-        .run()
-        .toList
-        .flatMap(toSchedule)
+    (scheduleSelect ++ where ++ " ORDER BY next_run_at NULLS LAST, goal_slug, kind").frag
+      .query[ScheduleRow]
+      .run()
+      .toList
+      .flatMap(toSchedule)
 
   /** One row here (a bundle's import, before the managers move it into its goal's watcher). */
   def schedule(ds: DataSource, goal: String, kind: ScheduleKind): Option[GoalSchedule] =
@@ -175,30 +165,29 @@ object GoalLinkRepo:
 
   /** A row here (tests, a bundle's import) before the managers move it into its goal's watcher. */
   def setSchedule(
-      ds: DataSource,
       goal: String,
       kind: ScheduleKind,
       cron: String,
       enabled: Boolean,
       budgetUsd: Option[BigDecimal],
       next: Option[java.time.Instant]
-  ): Unit =
+  )(using DbCon): Unit =
     val at = next.map(_.toString)
-    val _ = transact(ds):
+    val _ =
       sql"""INSERT INTO goal_schedules (goal_slug, kind, cron, enabled, budget_usd, next_run_at)
             VALUES ($goal, ${kind.wire}, $cron, $enabled, $budgetUsd, $at::timestamptz)
             ON CONFLICT (goal_slug, kind) DO UPDATE SET cron = EXCLUDED.cron, enabled = EXCLUDED.enabled,
               budget_usd = EXCLUDED.budget_usd, next_run_at = EXCLUDED.next_run_at, updated_at = now()""".update.run()
 
-  def removeSchedule(ds: DataSource, goal: String, kind: ScheduleKind): Boolean =
-    transact(ds)(sql"DELETE FROM goal_schedules WHERE goal_slug = $goal AND kind = ${kind.wire}".update.run() > 0)
+  def removeSchedule(goal: String, kind: ScheduleKind)(using DbCon): Boolean =
+    sql"DELETE FROM goal_schedules WHERE goal_slug = $goal AND kind = ${kind.wire}".update.run() > 0
 
   /** The goals that still have rows here: schedules the managers have not moved into a watcher yet (since phase 3 a
     * goal's schedules ARE its `watch:<goal>` manager; a bundle's import still writes rows here, and the next managers'
     * tick moves them).
     */
-  def scheduleGoals(ds: DataSource): List[String] =
-    connect(ds)(sql"SELECT DISTINCT goal_slug FROM goal_schedules ORDER BY goal_slug".query[String].run().toList)
+  def scheduleGoals()(using DbCon): List[String] =
+    sql"SELECT DISTINCT goal_slug FROM goal_schedules ORDER BY goal_slug".query[String].run().toList
 
   /** Take a goal's schedules OUT of the table, in the caller's transaction (the migration into its watcher): two
     * servers migrating at once cannot both get them.

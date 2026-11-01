@@ -161,7 +161,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     BundleRepo.setLabel(home, Some("home"))
     // ── the shared history ──
     put(work, src("zzshared2001_alpha", "Alpha", List("Doe, John"), 2001, summary = Some("as imported")))
-    GoalRepo.put(work, "zz_shared_goal", GoalPut("Shared goal"))
+    transact(work)(GoalRepo.put("zz_shared_goal", GoalPut("Shared goal")))
     // two articles both sides will edit: in different places (a clean three-way merge), in one place
     val _ = ArticleRepo.put(work, Article("zz_shared_art", "Shared", "concept", "Intro.\n\nMiddle.\n\nEnd."))
     val _ = ArticleRepo.put(work, Article("zz_shared_conf", "Conflict", "concept", "One.\n\nTwo.\n\nThree."))
@@ -285,7 +285,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       "zz_ev_same",
       EventPut("Fall of Hattusa (work)", "destruction", TimeSpan(Some(-1190), None, None, Some(-1180)))
     )
-    GoalRepo.put(work, "zz_goal_both", GoalPut("Goal created at work", status = "seeding"))
+    transact(work)(GoalRepo.put("zz_goal_both", GoalPut("Goal created at work", status = "seeding")))
     val _ = QueueRows.add(work, Queue.Kind.Tasks, Queue.QueueAdd("Find the  Kuhrt reprint"))
 
     // ── home ──
@@ -377,7 +377,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       "zz_ev_same",
       EventPut("Fall of Hattusa (home)", "destruction", TimeSpan(Some(-1190), None, None, Some(-1180)))
     )
-    GoalRepo.put(home, "zz_goal_both", GoalPut("Goal created at home", notes = Some("home's plan")))
+    transact(home)(GoalRepo.put("zz_goal_both", GoalPut("Goal created at home", notes = Some("home's plan"))))
     val task = QueueRows.add(home, Queue.Kind.Tasks, Queue.QueueAdd("Find the Kuhrt reprint"))
     val _ = QueueRows.patch(home, task.id, Queue.QueuePatch(status = Some(Queue.Done)))
     (work, home, sw, sh)
@@ -864,7 +864,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = ArticleRepo.put(a, Article("zz_old_slug", "Old", "concept", "Text."))
     val _ = ArticleRepo.put(a, Article("zz_linker", "Linker", "concept", "See [[zz_old_slug]]."))
     EventRepo.put(a, "zz_old_event", EventPut("An event", "battle", TimeSpan(Some(-1200), None, None, Some(-1190))))
-    GoalRepo.put(a, "zz_old_goal", GoalPut("A goal"))
+    transact(a)(GoalRepo.put("zz_old_goal", GoalPut("A goal")))
     val first = importInto(b, exportOf(a, sa), sb)
     assert(first.applied, first.problems.mkString("\n"))
     transact(a) {

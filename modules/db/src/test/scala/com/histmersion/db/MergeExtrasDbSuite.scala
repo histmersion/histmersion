@@ -209,19 +209,13 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
       ),
       cfg.limits.chunkChars
     )
-    GoalRepo.put(work, "zz_goal", GoalPut("A goal"))
-    GoalLinkRepo.setPlan(work, "zz_goal", """{"goal":"zz_goal","rationale":"work's plan"}""")
-    GoalLinkRepo.setBudget(work, "zz_goal", Some(BigDecimal("2.5")))
-    assert(GoalLinkRepo.link(work, "zz_goal", LinkKind.Source, "zzgoal2020_src", Some("why")))
-    assert(GoalLinkRepo.link(work, "zz_goal", LinkKind.Query, "hittite storm god", None))
-    GoalLinkRepo.setSchedule(
-      work,
-      "zz_goal",
-      ScheduleKind.Currency,
-      "@weekly",
-      true,
-      None,
-      Some(java.time.Instant.now())
+    transact(work)(GoalRepo.put("zz_goal", GoalPut("A goal")))
+    transact(work)(GoalLinkRepo.setPlan("zz_goal", """{"goal":"zz_goal","rationale":"work's plan"}"""))
+    transact(work)(GoalLinkRepo.setBudget("zz_goal", Some(BigDecimal("2.5"))))
+    assert(transact(work)(GoalLinkRepo.link("zz_goal", LinkKind.Source, "zzgoal2020_src", Some("why"))))
+    assert(transact(work)(GoalLinkRepo.link("zz_goal", LinkKind.Query, "hittite storm god", None)))
+    transact(work)(
+      GoalLinkRepo.setSchedule("zz_goal", ScheduleKind.Currency, "@weekly", true, None, Some(java.time.Instant.now()))
     )
     val bundle = exportOf(work, sw)
     val g = entitiesOf(bundle).goals.find(_.slug == "zz_goal").getOrElse(fail("no goal"))
@@ -230,7 +224,10 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(g.schedules.map(_.map(_.cron)), Some(List("@weekly")))
     val r = importInto(home, bundle, sh)
     assert(r.applied, r.problems.mkString("\n"))
-    assertEquals(GoalLinkRepo.planAndBudget(home, "zz_goal").flatMap(_._1).exists(_.contains("work's plan")), true)
+    assertEquals(
+      connect(home)(GoalLinkRepo.planAndBudget("zz_goal")).flatMap(_._1).exists(_.contains("work's plan")),
+      true
+    )
     assertEquals(GoalLinkRepo.refs(home, "zz_goal", LinkKind.Source), List("zzgoal2020_src"))
     val s = GoalLinkRepo.schedule(home, "zz_goal", ScheduleKind.Currency).getOrElse(fail("no schedule"))
     // brought in, it never fires here before a person saves it
@@ -238,9 +235,9 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(s.lastNote.exists(_.contains("save it once")), s.toString)
     assertEquals(importInto(home, bundle, sh).changed, 0)
     // changed on both sides afterwards: one goal; home's schedule stays, the links of both
-    GoalLinkRepo.setSchedule(home, "zz_goal", ScheduleKind.Currency, "@daily", true, None, None)
-    assert(GoalLinkRepo.link(home, "zz_goal", LinkKind.Query, "ahhiyawa", None))
-    assert(GoalLinkRepo.link(work, "zz_goal", LinkKind.Query, "mycenae", None))
+    transact(home)(GoalLinkRepo.setSchedule("zz_goal", ScheduleKind.Currency, "@daily", true, None, None))
+    assert(transact(home)(GoalLinkRepo.link("zz_goal", LinkKind.Query, "ahhiyawa", None)))
+    assert(transact(work)(GoalLinkRepo.link("zz_goal", LinkKind.Query, "mycenae", None)))
     val again = exportOf(work, sw)
     val p = planIn(home, again, sh)
     assert(p.info.exists(_.contains("its currency schedule differs")), p.info.mkString("\n"))
@@ -255,7 +252,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
 
   test("goals (phase 3): a watcher's sweeps travel as the goal's schedules (cron, budget); its state stays home"):
     val (work, sw) = (fresh("ww"), spool("ww"))
-    GoalRepo.put(work, "zz_goal", GoalPut("A watched goal"))
+    transact(work)(GoalRepo.put("zz_goal", GoalPut("A watched goal")))
     assert(
       ManagerRepo.create(
         work,
@@ -329,7 +326,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     val ds = fresh("rn")
     EventRepo.put(ds, "zz_ev_a", EventPut("E", "battle"))
     EventRepo.put(ds, "zz_ev_other", EventPut("Other", "battle"))
-    GoalRepo.put(ds, "zz_goal_a", GoalPut("G"))
+    transact(ds)(GoalRepo.put("zz_goal_a", GoalPut("G")))
     assert(EventRepo.rename(ds, "zz_ev_a", "zz_ev_b").isRight)
     assertEquals(EventRepo.renamedTo(ds, "zz_ev_a"), Some("zz_ev_b"))
     // an old id of one event is not free for another
@@ -404,7 +401,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     val (sw, sh) = (spool("alw"), spool("alh"))
     val _ = PlaceRepo.upsertPlaces(work, List(site("zz_pl_before", "My site", 34.6, 40.0)), Dataset.Local)
     EventRepo.put(work, "zz_ev_before", EventPut("E", "battle"))
-    GoalRepo.put(work, "zz_goal_before", GoalPut("G"))
+    transact(work)(GoalRepo.put("zz_goal_before", GoalPut("G")))
     assert(PlaceRepo.rename(work, "zz_pl_before", "zz_pl_after").isRight)
     assert(EventRepo.rename(work, "zz_ev_before", "zz_ev_after").isRight)
     assert(GoalRepo.rename(work, "zz_goal_before", "zz_goal_after").isRight)

@@ -1,0 +1,5 @@
+package com.histmersion.domain.automation.autopilot
+
+import com.histmersion.domain.automation.EngineStoreSuite
+
+class AutopilotRowServiceInMemorySuite extends AutopilotRowServiceContract with EngineStoreSuite.InMemory

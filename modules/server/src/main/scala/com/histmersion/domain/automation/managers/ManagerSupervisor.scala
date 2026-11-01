@@ -14,7 +14,7 @@ import com.histmersion.api.Agents.*
 import com.histmersion.domain.ManagerPolicy.{Next, ReviewSettings, StepFacts}
 import com.histmersion.api.Managers.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.{AgentRepo, GoalLinkRepo, GoalRepo, ManagerRepo}
+import com.histmersion.db.{AgentRepo, ManagerRepo}
 
 import java.time.Instant
 import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
@@ -462,11 +462,11 @@ final class ManagerSupervisor(
     * line per goal migrated.
     */
   def migrateSchedules(now: Instant): List[String] =
-    GoalLinkRepo.scheduleGoals(ds).flatMap { g =>
+    agents.goals.scheduleGoals().flatMap { g =>
       val id = watchId(g)
       try
         val moved = transact(ds) {
-          val rows = GoalLinkRepo.takeSchedulesIn(g)
+          val rows = agents.goals.takeSchedulesIn(g)
           Option.when(rows.nonEmpty) {
             val existing = ManagerRepo.get(ds, id)
             val plan = WatchSchedules.migrate(
@@ -805,11 +805,11 @@ final class ManagerSupervisor(
   def unsettledOn(target: String): Seq[RunInfo] = AgentRepo.unsettledOn(ds, target)
   def runsFor(p: Pipeline, target: String): Seq[RunInfo] = AgentRepo.forTarget(ds, p, target)
   def slugExists(slug: String): Boolean = AgentRepo.slugExists(ds, slug)
-  def parentOf(slug: String): Option[String] = GoalRepo.get(ds, slug).flatMap(_.parentSlug)
+  def parentOf(slug: String): Option[String] = agents.goals.get(slug).flatMap(_.parentSlug)
   def linkGoal(goal: String, kind: GoalPlans.LinkKind, ref: String, note: Option[String]): Unit =
-    val _ = GoalLinkRepo.link(ds, goal, kind, ref, note)
+    val _ = agents.goals.link(goal, kind, ref, note)
   def goalLinks(goal: String, kind: GoalPlans.LinkKind): List[String] =
-    GoalLinkRepo.links(ds, goal).filter(_.kind == kind).map(_.ref)
+    agents.goals.links(goal).filter(_.kind == kind).map(_.ref)
   def sharedIngestLeft(now: Instant): Option[Int] = agents.autopilot.sharedIngestLeft(now)
   def autopilotSoon(): Unit = agents.autopilot.soon()
 

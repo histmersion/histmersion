@@ -252,12 +252,10 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
       )
     )
     eventSets(ds)
-    GoalRepo.put(
-      ds,
-      "zzb_goal",
-      GoalPut("Hittites", "seeding", Some("notes"), List("t"), Nil, Some(-1650), Some(-1180))
+    transact(ds)(
+      GoalRepo.put("zzb_goal", GoalPut("Hittites", "seeding", Some("notes"), List("t"), Nil, Some(-1650), Some(-1180)))
     )
-    GoalRepo.put(ds, "zzb_goal_sub", GoalPut("Sub", parentSlug = Some("zzb_goal")))
+    transact(ds)(GoalRepo.put("zzb_goal_sub", GoalPut("Sub", parentSlug = Some("zzb_goal"))))
     val q1 = QueueRows.add(ds, Kind.Tasks, QueueAdd("read alpha", Some("Hittites"), reason = Some("why")))
     val _ = QueueRows.add(ds, Kind.Log, QueueAdd("2026-10-03: did things", createdAt = Some("2026-10-03T09:00:00Z")))
     val q3 = QueueRows.add(ds, Kind.Acquire, QueueAdd("buy a book"))

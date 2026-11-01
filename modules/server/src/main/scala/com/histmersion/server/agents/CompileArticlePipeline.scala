@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.augustnagro.magnum.{connect, transact}
+
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.approvals.Decided
 import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
@@ -316,7 +318,9 @@ final class CompileArticlePipeline(
 
   private def close(ctx: RunCtx, d: ArticleDraft, w: Written, review: Option[String]): Either[String, String] =
     if w.written then
-      ctx.run.goal.foreach(g => GoalLinkRepo.link(ds, g, LinkKind.Article, d.slug, Some("compiled by an agent run")))
+      ctx.run.goal.foreach(g =>
+        transact(ds)(GoalLinkRepo.link(g, LinkKind.Article, d.slug, Some("compiled by an agent run")))
+      )
     log(ctx, CompileArticle.logLine(d, w.written, w.why, review, ctx.run.id))
 
   private def log(ctx: RunCtx, line: String): Either[String, String] = Pipelines.log(h.workLists, ctx, line)

@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.augustnagro.magnum.{connect, transact}
+
 import com.histmersion.util.data.TablesAdapter.JobsOwner
 import com.histmersion.util.data.diagnostics.{DiagnosticsService, StorageCache, StorageFigures}
 import com.histmersion.util.data.backup.{BackupJobs, BackupService}
@@ -1220,15 +1222,14 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** An old goal slug (V053) answers as the goal it was renamed to. */
   def getGoal(slug: String): Either[ApiError, Goal] =
-    GoalRepo
-      .get(ds, current(AliasKindsAdapter.GoalRecords, slug))
+    connect(ds)(GoalRepo.get(current(AliasKindsAdapter.GoalRecords, slug)))
       .toRight(ApiError(s"No goal '$slug'", Some(Write.CodeNotFound)))
 
   /** A write to an OLD slug goes to the goal it was renamed to (#1799); a put replaces it. */
   def putGoal(slug: String, in: GoalPut): Either[ApiError, Goal] =
     maintenance.guard("put_goal"):
       val now = current(AliasKindsAdapter.GoalRecords, slug)
-      GoalRepo.put(ds, now, in).flatMap(_ => getGoal(now))
+      transact(ds)(GoalRepo.put(now, in)).flatMap(_ => getGoal(now))
 
   def patchGoal(slug: String, p: GoalPatch): Either[ApiError, Goal] =
     maintenance.guard("patch_goal"):

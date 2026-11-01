@@ -8,7 +8,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.{ApprovalKind, Decision, DecisionRequest}
 import com.histmersion.api.ApprovalDigest.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.{AgentRepo, AutopilotRepo, ManagerRepo}
+import com.histmersion.db.{AgentRepo, ManagerRepo}
 
 import java.time.Instant
 import javax.sql.DataSource
@@ -37,7 +37,7 @@ final class ApprovalDigestService(
       open.size,
       ApprovalDigest.group(open, checked, wait.fold(Set.empty)(_ => Set(ApprovalKind.GoalPlan.wire))),
       ManagerRepo.forPerson(ds),
-      AutopilotRepo.lastDigest(ds),
+      agents.autopilotRow.lastDigest(),
       wait
     )
 
@@ -49,11 +49,11 @@ final class ApprovalDigestService(
     val day = ManagerPolicy.dayStart(now)
     def pastHour(t: Instant) = !t.isBefore(ManagerPolicy.dayStart(t).plusSeconds(math.min(23, hour).toLong * 3600L))
     val due = hour >= 0 && (pastHour(now) || agents.digestClock.exists(c => pastHour(Instant.now(c)))) &&
-      AutopilotRepo.lastDigest(ds).flatMap(ManagerPolicy.parseInstant).forall(_.isBefore(day))
+      agents.autopilotRow.lastDigest().flatMap(ManagerPolicy.parseInstant).forall(_.isBefore(day))
     if !due then Nil
     else
       val line = ApprovalDigest.line(digest(now))
-      AutopilotRepo.digested(ds, now)
+      agents.autopilotRow.digested(now)
       val _ = agents.workLists.add("log", QueueAdd(line.take(1000)))
       scribe.info(line)
       List("approval digest written")

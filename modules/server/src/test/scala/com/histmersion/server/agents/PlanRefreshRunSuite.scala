@@ -347,10 +347,12 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite with RunTranscripts
     val reads3 = Reads(); reads3.probeOut = List(event(20, 30), Result)
     val (c, _) = handlers(Map(Plan -> ScriptedClient(Plan), Paid -> ScriptedClient(Paid)), reads3)
     try
-      assert(AutopilotRepo.set(ds, enabled = true, "zzrefresh", Nil) || AutopilotRepo.get(ds).enabled)
+      assert(
+        transact(ds)(AutopilotRepo.set(enabled = true, "zzrefresh", Nil)) || transact(ds)(AutopilotRepo.get()).enabled
+      )
       assertEquals(c.scheduler.refreshPlans(java.time.Instant.now()), Nil, "no pass yet: no work waits on a pool")
       assertEquals(reads.probes.get() + reads3.probes.get(), 0)
-    finally { val _ = AutopilotRepo.set(ds, enabled = false, "zzrefresh", Nil) }
+    finally { val _ = transact(ds)(AutopilotRepo.set(enabled = false, "zzrefresh", Nil)) }
 
   test("#1827: a model parked after its plan's limit comes back once a reading taken SINCE says the pool is usable"):
     val reads = Reads(); reads.probeOut = List(event(0, 0), Result)

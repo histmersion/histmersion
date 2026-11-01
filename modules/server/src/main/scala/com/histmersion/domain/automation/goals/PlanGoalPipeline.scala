@@ -11,7 +11,7 @@ import com.histmersion.api.Agents.{ApprovalKind, ApprovalMode, Pipeline, Role}
 import com.histmersion.api.GoalPlans.{LinkKind, Plan}
 import com.histmersion.domain.PlanGoal.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.{GoalLinkRepo, GoalRepo}
+import com.histmersion.db.GoalRepo
 import com.histmersion.domain.automation.workflows.AutomationHost
 import com.histmersion.domain.automation.worklists.{QueueScope, QueueService, WorkListControllers}
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -35,6 +35,7 @@ final class PlanGoalPipeline(
     host: AutomationHost,
     queues: QueueService,
     workLists: WorkListControllers,
+    goals: GoalService,
     ds: DataSource,
     cfg: => AgentsConfig
 ) extends PipelineDef:
@@ -88,7 +89,7 @@ final class PlanGoalPipeline(
 
   private def load(slug: String): Either[String, Loaded] =
     host.goal(slug).left.map(_.message).map { g =>
-      val links = GoalLinkRepo.links(ds, slug)
+      val links = goals.links(slug)
       val vocab = (field: String) => host.vocabulary(field).take(VocabularySize)
       Loaded(
         g.slug,
@@ -98,7 +99,7 @@ final class PlanGoalPipeline(
         g.regions,
         g.periodStart,
         g.periodEnd,
-        GoalRepo.children(ds, slug).map(c => s"${c.slug} — ${c.title}"),
+        goals.children(slug).map(c => s"${c.slug} — ${c.title}"),
         links.filter(_.kind == LinkKind.SearchQuery).map(_.ref),
         links
           .filter(l => l.kind == LinkKind.Source || l.kind == LinkKind.Article)
@@ -178,7 +179,7 @@ final class PlanGoalPipeline(
           case Right(_) => true
           case Left(e)  => ctx.warn(s"apply: sub-goal '${g.slug}' not created — ${e.message}"); false
     }
-    plan.queries.foreach(q => GoalLinkRepo.link(ds, slug, LinkKind.SearchQuery, q, Some("from the approved plan")))
+    plan.queries.foreach(q => goals.link(slug, LinkKind.SearchQuery, q, Some("from the approved plan")))
     val queued = workLists
       .kindOf("acquire")
       .toOption
@@ -187,7 +188,7 @@ final class PlanGoalPipeline(
       .flatMap(i => Scheduling.dois(i.text).map(_ -> i.id))
       .toMap
     val (inCorpus, outside) = plan.works.partition(w => w.inCorpus && w.citekey.isDefined)
-    inCorpus.foreach(w => GoalLinkRepo.link(ds, slug, LinkKind.Source, w.citekey.get, Option(w.why).filter(_.nonEmpty)))
+    inCorpus.foreach(w => goals.link(slug, LinkKind.Source, w.citekey.get, Option(w.why).filter(_.nonEmpty)))
     val items = outside.flatMap { w =>
       queued
         .get(w.doi)
@@ -206,10 +207,10 @@ final class PlanGoalPipeline(
             .map(_.id)
         ) match
         case Right(id) =>
-          GoalLinkRepo.link(ds, slug, LinkKind.QueueItem, id.toString, Some(w.doi)); Some(id)
+          goals.link(slug, LinkKind.QueueItem, id.toString, Some(w.doi)); Some(id)
         case Left(e) => ctx.warn(s"apply: ${w.doi} not queued — ${e.message}"); None
     }
-    GoalLinkRepo.setPlan(ds, slug, plan.asJson.noSpaces)
+    goals.setPlan(slug, plan.asJson.noSpaces)
     log(ctx, PlanGoal.logLine(slug, plan, approved = true, created.size, inCorpus.size, items.size, ctx.run.id))
       .map(Applied(_, created.size, inCorpus.size, items.size))
 

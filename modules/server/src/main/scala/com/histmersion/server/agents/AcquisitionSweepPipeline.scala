@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.augustnagro.magnum.{connect, transact}
+
 import com.histmersion.domain.automation.agents.{AnswerSchemas, Checked, Halt, Prompt, RunCtx, StepAgent}
 import com.histmersion.domain.automation.workflows.PipelineDef
 
@@ -262,8 +264,9 @@ final class AcquisitionSweepPipeline(
       s"ingest $doi (legal open access only) for goal $goal",
       io.circe.Json.obj("doi" -> doi.asJson, "title" -> p.candidate.title.asJson, "why" -> p.why.asJson)
     )(upstream().ingestLegal(doi).map { r =>
-      val _ = GoalLinkRepo
-        .link(ds, goal, LinkKind.Source, r.citekey, Some(s"ingested by a watcher sweep: ${p.why}".take(500)))
+      val _ = transact(ds)(
+        GoalLinkRepo.link(goal, LinkKind.Source, r.citekey, Some(s"ingested by a watcher sweep: ${p.why}".take(500)))
+      )
       ctx.run.managerId.foreach(mid =>
         ManagerRepo.event(
           ds,

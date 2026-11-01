@@ -220,7 +220,7 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
       List(s"ingest ${doi("w21")}", s"ingest ${doi("w22")}", s"ingest ${doi("w23")}")
     )
     assertEquals(ingestCalls(upb).last, s"ingest ${doi("x1")}", "the later find last")
-    assert(GoalLinkRepo.links(ds, Goal).exists(l => l.kind == LinkKind.Source && l.ref == ck0(doi("w30"))))
+    assert(connect(ds)(GoalLinkRepo.links(Goal)).exists(l => l.kind == LinkKind.Source && l.ref == ck0(doi("w30"))))
     assertEquals(
       ManagerRepo
         .events(ds, m.id, None, 200)
@@ -264,7 +264,7 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     assertEquals(ManagerRepo.itemFor(ds, w1.id, OaIngest, doi("x")).get.status, "done")
     assert(
       List(Goal, Goal2).forall(g =>
-        GoalLinkRepo.links(ds, g).exists(l => l.kind == LinkKind.Source && l.ref == ck0(doi("x")))
+        connect(ds)(GoalLinkRepo.links(g)).exists(l => l.kind == LinkKind.Source && l.ref == ck0(doi("x")))
       )
     )
     val y = ManagerRepo.itemFor(ds, w1.id, OaIngest, doi("y")).get
@@ -273,7 +273,9 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     val ys = acquire(h).filter(i => Scheduling.dois(i.text).contains(doi("y")))
     assertEquals(ys.size, 1)
     assert(ys.head.text.contains("(open access)") && ys.head.text.contains(s"for goal $Goal"), ys.head.text)
-    assert(GoalLinkRepo.links(ds, Goal).exists(l => l.kind == LinkKind.QueueItem && l.ref == ys.head.id.toString))
+    assert(
+      connect(ds)(GoalLinkRepo.links(Goal)).exists(l => l.kind == LinkKind.QueueItem && l.ref == ys.head.id.toString)
+    )
     assertEquals(acquire(h).size, 2, "no duplicate acquisition item")
 
   test("the shared cap (autopilot on) bounds the drain across watchers; a paused watcher's backlog waits"):
@@ -335,7 +337,7 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
       )
       .toOption
       .get
-    assert(GoalLinkRepo.link(ds, Goal, LinkKind.QueueItem, mine.id.toString, Some(doi("p"))))
+    assert(transact(ds)(GoalLinkRepo.link(Goal, LinkKind.QueueItem, mine.id.toString, Some(doi("p")))))
     a.managers.tick(Instant.now())
     a.engine.execute(sweepRun(m.id, Goal).id)
     assertEquals(acquire(h).size, 4)
@@ -370,10 +372,12 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     assert(entry.head.state.oa.flatMap(_.acquireText).exists(_.contains(doi("a"))), "its old wording kept")
     assertEquals(done.rows.find(_.doi == doi("a")).flatMap(_.backlogItem), Some(entry.head.id))
     assert(
-      !GoalLinkRepo.links(ds, Goal).exists(l => l.kind == LinkKind.QueueItem && !left.exists(_.id.toString == l.ref)),
+      !connect(ds)(GoalLinkRepo.links(Goal)).exists(l =>
+        l.kind == LinkKind.QueueItem && !left.exists(_.id.toString == l.ref)
+      ),
       "no goal link to a removed item"
     )
-    assert(GoalLinkRepo.links(ds, Goal).exists(l => l.kind == LinkKind.Source && l.ref == "zzagent2023_c"))
+    assert(connect(ds)(GoalLinkRepo.links(Goal)).exists(l => l.kind == LinkKind.Source && l.ref == "zzagent2023_c"))
     assert(
       h.ops.queueList("log", all = true).toOption.get.items.exists(_.text.startsWith("repair-acquire (test): 1 legal"))
     )

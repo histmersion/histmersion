@@ -10,7 +10,7 @@ import com.histmersion.domain.AutopilotPolicy.{DraftFacts, GoalPlanFacts, Planne
 import com.histmersion.api.GoalPlans.DraftMode
 import com.histmersion.api.Managers.Feed
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.{AgentRepo, GoalRepo, ManagerRepo}
+import com.histmersion.db.{AgentRepo, ManagerRepo}
 
 import java.time.Instant
 import javax.sql.DataSource
@@ -169,7 +169,7 @@ final class AutoApprovals(
           case (None, _)       => Verdict.Leave("the approval carries no readable plan")
           case (Some(p), _)    =>
             val goal = a.subject.getOrElse(p.goal)
-            val depth = AutopilotPolicy.depth(goal, s => GoalRepo.get(ds, s).flatMap(_.parentSlug))
+            val depth = AutopilotPolicy.depth(goal, s => agents.goals.get(s).flatMap(_.parentSlug))
             AutopilotPolicy.goalPlan(
               GoalPlanFacts(goal, p.subGoals.size, p.queries.size, p.works.size, depth),
               caps.maxGoalDepth,

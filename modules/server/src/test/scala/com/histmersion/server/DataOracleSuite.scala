@@ -198,8 +198,8 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       Article("zz_storm", "Storm gods", "concept", "Intro [[zzalpha2001_storm]].\n\nMiddle part.\n\nEnd.")
     )
     val _ = ArticleRepo.put(ds, Article("zz_kingdom", "Kingdoms", "culture", "One [[zzbeta2005_kingdom]].\n\nTwo."))
-    val _ = GoalRepo.put(ds, "zz_goal", GoalPut("Know the storm gods"))
-    val _ = GoalRepo.put(ds, "zz_goal_gone", GoalPut("A goal deleted later"))
+    val _ = transact(ds)(GoalRepo.put("zz_goal", GoalPut("Know the storm gods")))
+    val _ = transact(ds)(GoalRepo.put("zz_goal_gone", GoalPut("A goal deleted later")))
     val _ = PlaceRepo.upsertPlaces(ds, List(site("zz_site", "Storm hill", 34.6, 40.0)), Dataset.Local)
     val _ = PeriodRepo.upsert(
       ds,

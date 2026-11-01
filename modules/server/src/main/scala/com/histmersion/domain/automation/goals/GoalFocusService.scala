@@ -12,7 +12,7 @@ import com.histmersion.api.Autopilot.*
 import com.histmersion.domain.GoalFocus.{Facts, Plan, Work}
 import com.histmersion.api.Managers.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.{FocusRepo, GoalLinkRepo, ManagerRepo}
+import com.histmersion.db.{FocusRepo, ManagerRepo}
 
 import java.time.Instant
 import javax.sql.DataSource
@@ -264,7 +264,7 @@ final class GoalFocusService(
 
   /** How many goals with an approved plan are unfinished now. */
   def unfinishedPlanned(): Int =
-    AutopilotPolicy.unfinishedPlanned(FocusRepo.goals(ds).map(g => g.slug -> g.status), GoalLinkRepo.planned(ds))
+    AutopilotPolicy.unfinishedPlanned(FocusRepo.goals(ds).map(g => g.slug -> g.status), agents.goals.planned())
 
   /** Why goal plans are not offered now, if they are not ([[AutopilotPolicy.goalPlansWait]]). */
   def goalPlansWait(): Option[String] =

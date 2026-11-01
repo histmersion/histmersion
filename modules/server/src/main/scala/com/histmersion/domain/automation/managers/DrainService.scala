@@ -7,7 +7,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Autopilot.{AutopilotStatus, DrainInfo, DrainSet}
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.{AgentRepo, AutopilotRepo}
 
 import java.time.Instant
 import javax.sql.DataSource
@@ -26,19 +25,19 @@ final class DrainService(
 ):
 
   /** Draining now? */
-  def draining: Boolean = AutopilotRepo.drain(ds).isDefined
+  def draining: Boolean = agents.autopilotRow.drain().isDefined
 
   /** The drain as shown (None: not draining). */
   def info(): Option[DrainInfo] =
-    AutopilotRepo.drain(ds).map { (since, by, at) =>
+    agents.autopilotRow.drain().map { (since, by, at) =>
       val active = agents.jobRuns.count(Agents.JobKind, (Agents.RunState.Queued.wire, Agents.RunState.Running.wire))
       DrainInfo(since, by, at.isDefined && active == 0, at, active)
     }
 
   /** Why nothing new starts (the scheduler's stop), while draining. */
   def block: Option[SchedulerPolicy.Block] =
-    AutopilotRepo
-      .drain(ds)
+    agents.autopilotRow
+      .drain()
       .map((since, by, _) =>
         SchedulerPolicy.Block(
           "drain",
@@ -52,7 +51,7 @@ final class DrainService(
     * a restart — makes it draining again).
     */
   def tick(now: Instant): List[String] =
-    AutopilotRepo.drain(ds) match
+    agents.autopilotRow.drain() match
       case None                 => Nil
       case Some((since, _, at)) =>
         val active = agents.jobRuns.count(
@@ -60,20 +59,20 @@ final class DrainService(
           (Agents.RunState.Queued.wire, Agents.RunState.Running.wire)
         ) + (if agents.workflows.managerKinds.exists(_.busy) then 1 else 0)
         if active == 0 && at.isEmpty then
-          AutopilotRepo.drained(ds, Some(now))
+          agents.autopilotRow.drained(Some(now))
           log(
             s"autopilot: drained (draining since $since): no agent run is queued or running — safe to stop the server"
           )
           List("drained")
         else if active > 0 && at.isDefined then
-          AutopilotRepo.drained(ds, None)
+          agents.autopilotRow.drained(None)
           List(s"draining again: ${Plural.count(active, "run")} in flight")
         else Nil
 
   /** Start or lift the drain; answers the autopilot's status with what it did. */
   def set(in: DrainSet, now: Instant = Instant.now(agents.clock)): AutopilotStatus =
     val by = in.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")
-    val changed = AutopilotRepo.setDrain(ds, in.on, by)
+    val changed = agents.autopilotRow.setDrain(in.on, by)
     val line =
       if in.on then
         (if changed then s"draining (by $by): nothing new starts; the runs in flight finish" else "draining already"

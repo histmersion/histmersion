@@ -219,7 +219,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     )
     assert(plan.dropped.exists(_.contains("10.5555/zzagent.ghost")), plan.dropped)
     assert(!GoalRepo.exists(ds, "zzagent-tin-mines"), "nothing is created before approval")
-    assertEquals(GoalLinkRepo.links(ds, Goal), Nil)
+    assertEquals(connect(ds)(GoalLinkRepo.links(Goal)), Nil)
 
     // approve: the run goes back to the queue and applies exactly the approved plan
     val decided = a.decide(open.head.id, "approve", DecisionRequest(Some("good plan"))).toOption.get
@@ -228,8 +228,8 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     val done = runAgain(a, run.id)
     assertEquals(done.status, "done", done.error)
     assertEquals(c.steps.size, 1, "the planner is not asked again on resume")
-    assertEquals(GoalRepo.get(ds, "zzagent-tin-mines").flatMap(_.parentSlug), Some(Goal))
-    val links = GoalLinkRepo.links(ds, Goal)
+    assertEquals(connect(ds)(GoalRepo.get("zzagent-tin-mines")).flatMap(_.parentSlug), Some(Goal))
+    val links = connect(ds)(GoalLinkRepo.links(Goal))
     assertEquals(
       links.map(l => (l.kind, l.ref)).filter(_._1 != LinkKind.QueueItem),
       List((LinkKind.Source, Ck), (LinkKind.Query, "Bronze Age tin isotopes"))
@@ -258,7 +258,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     assertEquals(done.status, "done", done.error)
     assert(done.progress.exists(_.contains("rejected")), done.progress)
     assert(!GoalRepo.exists(ds, "zzagent-tin-mines"))
-    assertEquals(GoalLinkRepo.links(ds, Goal), Nil)
+    assertEquals(connect(ds)(GoalLinkRepo.links(Goal)), Nil)
     assert(h.ops.queueList("acquire", all = true).toOption.get.items.forall(!_.text.contains("zzagent.out")))
 
     val second = start(a, RunRequest("plan-goal", Goal))
@@ -347,7 +347,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
       (child.pipeline, child.target, child.params.fixes, child.origin, child.goal),
       ("review-article", Slug, true, Some("run"), Some(Goal))
     )
-    assert(GoalLinkRepo.links(ds, Goal).exists(l => l.kind == LinkKind.Article && l.ref == Slug))
+    assert(connect(ds)(GoalLinkRepo.links(Goal)).exists(l => l.kind == LinkKind.Article && l.ref == Slug))
     val log = h.ops.queueList("log", all = true).toOption.get.items.map(_.text).filter(_.contains(Slug))
     assert(log.exists(_.contains("compiled a new article from 2 source(s)")), log)
     // #958: the article records the run's filter, so its Not used list and Method note are generated
