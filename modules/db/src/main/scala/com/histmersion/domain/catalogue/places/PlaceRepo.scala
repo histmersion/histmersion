@@ -24,7 +24,7 @@ import com.histmersion.values.{LocationPrecision, PlaceKind}
   * WKT used for findings: Postgres does all the spatial work and the native image never needs a binary PostGIS JDBC
   * type.
   */
-private[histmersion] object PlaceRepo:
+private[places] object PlaceRepo:
 
   given DbCodec[PlaceSummary] = DbCodec.derived
   given DbCodec[PlaceHit] = DbCodec.derived
@@ -475,7 +475,7 @@ private[histmersion] object PlaceRepo:
     * always a superset of the true circle.
     */
   /** The SQL of [[geoJson]], as a value — pure, so the de-duplication rules are unit-tested. */
-  private[histmersion] def geoJsonQuery(
+  private[places] def geoJsonQuery(
       kind: Option[String],
       asOf: Option[Long],
       limit: Int,
@@ -487,7 +487,7 @@ private[histmersion] object PlaceRepo:
     * makes a range of areas pair its shapes the plain way ([[rangeShadowedSql]]) — the reference `PlaceGeoSuite` holds
     * the indexed pairing to.
     */
-  private[histmersion] def geoJsonTimeQuery(
+  private[places] def geoJsonTimeQuery(
       kind: Option[String],
       time: GeoTime,
       limit: Int,
@@ -617,7 +617,7 @@ private[histmersion] object PlaceRepo:
     * pair, and repaired only when it is invalid (`shape_valid`, V090): ST_MakeValid returns a valid shape as it is, and
     * checking that again was half the cost of the test (13 of 25 ms over -3000..2000).
     */
-  private[histmersion] val rangeShadowTestSql: String =
+  private[places] val rangeShadowTestSql: String =
     def overlap(lo: String, hi: String) =
       s"greatest(0, least($hi(pr.lbb), $hi(pr.hbb)) - greatest($lo(pr.lbb), $lo(pr.hbb)))"
     def valid(g: String) = s"CASE WHEN $g.valid THEN $g.geom ELSE ST_MakeValid($g.geom) END"
@@ -636,7 +636,7 @@ private[histmersion] object PlaceRepo:
     * time met each other: 170 M comparisons, past the statement timeout; split, 970 pairs in 0.3 s for the whole of
     * -3000..2000 (2026-10-16). Each shape is fetched by id for its pair, as at a year.
     */
-  private[histmersion] val rangeShadowedSql: String =
+  private[places] val rangeShadowedSql: String =
     def pairs(lo: String, hi: String) =
       "SELECT lo.id AS lid, hi.id AS hid, lo.norm = hi.norm AS same_name, least(hi.area, lo.area) AS small," +
         " lo.bb AS lbb, hi.bb AS hbb" +
@@ -655,7 +655,7 @@ private[histmersion] object PlaceRepo:
     * 650 000 times (80 ms). `smallIsLo`: the small tier's shape is the one shadowed (a sketch under a real dataset) or
     * the one shadowing (OHM over Cliopatria).
     */
-  private[histmersion] def rangePairsSql(rest: Sql, small: Int, partner: String, smallIsLo: Boolean): Sql =
+  private[places] def rangePairsSql(rest: Sql, small: Int, partner: String, smallIsLo: Boolean): Sql =
     val (lo, hi) = if smallIsLo then ("s", "c") else ("c", "s")
     Sql.raw(
       s"SELECT $lo.id AS lid, $hi.id AS hid, s.norm = c.norm AS same_name, least(c.area, s.area) AS small," +
@@ -680,7 +680,7 @@ private[histmersion] object PlaceRepo:
     * together then both stay, as at a year. Cross-tier duplicates are gone already (`shadowed`, among shapes that
     * coexist), and different states may overlap: all are drawn.
     */
-  private[histmersion] def pickVersionSql(w: GeoTime.Within): String =
+  private[places] def pickVersionSql(w: GeoTime.Within): String =
     val (lo, hi) = (w.from, w.to)
     val (edge, anchor) = if w.latest then ("ee", "max") else ("es", "min")
     ", kept AS (SELECT live.*," +
@@ -814,14 +814,6 @@ private[histmersion] object PlaceRepo:
           ON CONFLICT (child_id, parent_id, kind) DO NOTHING""".update.run()
     SpatialHierarchyResult(edgesCreated = inserted, polygonPlaces = polygons, pointPlaces = points)
 
-  // ── for the data management's per-kind code, until the catalogue's own contribution carries it ──────
-
-  private[histmersion] def materialiseFor(citekey: String, toleranceKm: Double)(using DbCon): Int =
-    FindingPlaceRepo.materialiseFor(citekey, toleranceKm)
-  private[histmersion] def placeholderFindingsSql: String = FindingPlaceRepo.placeholderFindingsSql
-  private[histmersion] def unresolvedPlaceholdersIn()(using DbCon): List[(String, String)] =
-    FindingPlaceRepo.unresolvedPlaceholdersIn()
-
   // ── resolving a Filter's `places` values ─────────────────────────────────────────────────────
 
   /** Which of a filter's `places` values are gazetteer ids, and what each one stands for: itself plus every descendant
@@ -913,7 +905,7 @@ private[histmersion] object PlaceRepo:
     * old id of another place; renaming back to an old id drops that alias. The caller's transaction (a bundle import
     * follows a rename made in the other collection, #888).
     */
-  private[histmersion] def renameIn(oldId: String, newId: String)(using DbCon): Either[ApiError, Unit] =
+  private[places] def renameIn(oldId: String, newId: String)(using DbCon): Either[ApiError, Unit] =
     def exists(i: String) = sql"SELECT 1 FROM places WHERE id = $i".query[Int].run().nonEmpty
     val aliasOf = sql"SELECT place_id FROM place_aliases WHERE alias = $newId".query[String].run().headOption
     if !exists(oldId) then Left(ApiError(s"No place '$oldId'", Some(Write.CodeNotFound)))

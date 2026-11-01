@@ -135,3 +135,13 @@ object PlaceFixtures:
     connect(ds)(LandRepo.clipped())
 
   def gazetteerSources(ds: DataSource): List[GazetteerSourceRow] = connect(ds)(GazetteerRepo.sources())
+
+  def proposals(ds: DataSource): List[PlaceReview.Proposal] = connect(ds)(PlaceReviewRepo.proposals())
+
+  def applyProposals(ds: DataSource, ps: List[PlaceReview.Proposal], toleranceKm: Double): (Int, Int) =
+    transact(ds)(PlaceReviewRepo.apply(ps, toleranceKm))
+
+  def relocations(ds: DataSource): List[PlaceReviewRepo.Relocation] = connect(ds)(PlaceReviewRepo.relocations())
+
+  def relocate(ds: DataSource, rs: List[PlaceReviewRepo.Relocation], toleranceKm: Double): Int =
+    transact(ds)(PlaceReviewRepo.relocate(rs, toleranceKm))

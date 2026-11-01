@@ -40,8 +40,8 @@ trait PlanRun:
   /** The two records of a row question side by side, for a kind whose screen shows more than labels. */
   def rowDetail(kind: BundleKind, u: UUID, localized: BundleEntities): Option[IssueDetail] = None
 
-  /** A row changed on both sides that the kind merges by itself; `localized` is the bundle's lines in this
-    * collection's terms.
+  /** A row changed on both sides that the kind merges by itself; `localized` is the bundle's lines in this collection's
+    * terms.
     */
   def conflict(row: MergePlanner.Row, localized: BundleEntities): Option[PlanMerge] = None
 

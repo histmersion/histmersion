@@ -18,7 +18,7 @@ import javax.sql.DataSource
   * ([[LocationPrecision]]). Both read the store and list; `--fix` applies exactly what they list, compare-and-set, and
   * re-matches the changed places' findings ([[FindingPlaceRepo.materialisePlaces]]).
   */
-private[histmersion] object PlaceReviewRepo:
+private[places] object PlaceReviewRepo:
 
   final private case class Row(
       id: String,
@@ -135,7 +135,7 @@ private[histmersion] object PlaceReviewRepo:
       (re.size, mg.size)
 
   /** Merge place `from` into `into` in the caller's transaction. `false` when either is gone. */
-  private[histmersion] def mergeIn(from: String, into: String)(using DbCon): Boolean =
+  private[places] def mergeIn(from: String, into: String)(using DbCon): Boolean =
     val both = sql"SELECT count(*)::int FROM places WHERE id = $from OR id = $into".query[Int].run().head
     if from == into || both < 2 then false
     else

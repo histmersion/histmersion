@@ -44,7 +44,10 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
         renames.collect { case (p, ours, true) => p.id -> ours }
     val repointed = repoint(es, placeIdMap)
     if renameKept.isEmpty then repointed
-    else repointed.modify(_.places).setTo(repointed.places.map(p => renameKept.get(p.uid).fold(p)(ours => p.copy(id = ours))))
+    else
+      repointed
+        .modify(_.places)
+        .setTo(repointed.places.map(p => renameKept.get(p.uid).fold(p)(ours => p.copy(id = ours))))
 
   override def notices: List[String] =
     renames.toList.map { (p, ours, kept) =>

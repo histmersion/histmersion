@@ -83,6 +83,13 @@ object SourceRepo:
   private[histmersion] def placeFindingsIn(citekey: String, toleranceKm: Double)(using DbCon): Int =
     FindingPlacement(toleranceKm).placeSource(citekey)
 
+  /** The findings on a placeholder point (the places' [[FindingPlacement]]): `finding-placeholder`'s input. */
+  private[histmersion] def placeholderFindingsSql: String = FindingPlacement.placeholderFindingsSql
+
+  /** The findings on a placeholder point no named place resolves (the places' [[FindingPlacement]]). */
+  private[histmersion] def unresolvedPlaceholdersIn()(using DbCon): List[(String, String)] =
+    FindingPlacement.unresolvedPlaceholdersIn()
+
   /** Full replace of a source and everything under it, in ONE transaction. Kept as the original `Unit` signature;
     * [[put]] is the same write returning the new `updated_at` token.
     */

@@ -11,9 +11,9 @@ import hearth.kindlings.optics.syntax.*
 import java.util.UUID
 
 /** How a merge plan treats events: one changed on both sides, or added under an id an event here has, is one when its
-  * dating and place agree (its datings and participants unioned), else a question; one added on both sides under two ids
-  * is one when its label, dates and place agree. A rename decided gives the bundle's event another id, which must be
-  * one; an event whose place this gazetteer lacks cannot be written.
+  * dating and place agree (its datings and participants unioned), else a question; one added on both sides under two
+  * ids is one when its label, dates and place agree. A rename decided gives the bundle's event another id, which must
+  * be one; an event whose place this gazetteer lacks cannot be written.
   */
 final class EventPlan(in: MergePlanner.Input) extends PlanRun:
   import EventPlan.*
@@ -118,7 +118,9 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
       .filter(e => writes(e.uid))
       .flatMap(e => e.placeId.map(e.id -> _))
       .filterNot((_, p) => in.places(p) || placesComing(p))
-      .map((e, p) => s"event $e: place '$p' is not in this gazetteer — run `histmersion init` (or import that place) first")
+      .map((e, p) =>
+        s"event $e: place '$p' is not in this gazetteer — run `histmersion init` (or import that place) first"
+      )
 
 object EventPlan:
 

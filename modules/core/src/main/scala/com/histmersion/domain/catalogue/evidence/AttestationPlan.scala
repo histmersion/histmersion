@@ -157,7 +157,8 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
           tries.find(a => a.foreign && a.att.uid == t.uid) match
             case None                                  => ()
             case Some(AnchorTry(_, _, Some(a), co, _)) =>
-              attLine(t.uid) = es => attIn(es, t.uid).copy(charStart = Some(a.start), charEnd = Some(a.end), chunkOrd = co)
+              attLine(t.uid) =
+                es => attIn(es, t.uid).copy(charStart = Some(a.start), charEnd = Some(a.end), chunkOrd = co)
               f.count(_.modify(_.attestationsReanchored).using(_ + 1))
             case Some(AnchorTry(_, _, None, _, issue)) =>
               issue.flatMap(f.decisionIn).map(_.kind) match

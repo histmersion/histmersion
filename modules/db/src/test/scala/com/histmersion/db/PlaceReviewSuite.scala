@@ -2,8 +2,6 @@ package com.histmersion.db
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
-import com.histmersion.domain.catalogue.places.PlaceReviewRepo
-
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -23,7 +21,7 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
 
   test("place-kind: a dry run lists people, polities, a settlement and a merge, and changes nothing"):
     seed()
-    val ps = mine(connect(ds)(PlaceReviewRepo.proposals()))
+    val ps = mine(PlaceFixtures.proposals(ds))
     val byId = ps.map(p => p.id -> p).toMap
     assertEquals(byId.keySet, Set(Aiantis, Thess, Dup, Into, Peir))
     assertEquals(byId(Aiantis).asInstanceOf[Proposal.Reclassify].to, PlaceKind.People)
@@ -40,7 +38,7 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
       val _ = sql"""INSERT INTO place_links (place_id, scheme, external_id, relation)
                     VALUES ($Dup, 'pleiades', '999100007', 'exact_match') ON CONFLICT DO NOTHING""".update.run()
     val (re, mg) =
-      transact(ds)(PlaceReviewRepo.apply(mine(connect(ds)(PlaceReviewRepo.proposals())), cfg.places.pointToleranceKm))
+      PlaceFixtures.applyProposals(ds, mine(PlaceFixtures.proposals(ds)), cfg.places.pointToleranceKm)
     assertEquals((re, mg), (4, 1))
     assertEquals(PlaceFixtures.get(ds, Aiantis).map(_.place.kind), Some(PlaceKind.People))
     assertEquals(PlaceFixtures.get(ds, Peir).map(_.place.kind), Some(PlaceKind.Site))
@@ -60,7 +58,7 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
       Set(Aiantis),
       "a people takes the finding on its point; the point is a placeholder, so no site does"
     )
-    assertEquals(mine(connect(ds)(PlaceReviewRepo.proposals())), Nil, "a second run has nothing to do")
+    assertEquals(mine(PlaceFixtures.proposals(ds)), Nil, "a second run has nothing to do")
     // the fix re-matched only the changed places; a whole rebuild agrees with it
     val fixed = (0 to 5).map(at).toList
     val _ = PlaceFixtures.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm)
@@ -74,7 +72,7 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
                             ST_SetSRID(ST_MakePoint(141.71, -47.62), 4326)),
                            ($Achaia, 'wikidata', 'Q999100005', 'close_match', 'Q1620908',
                             ST_SetSRID(ST_MakePoint(141.75, -47.25), 4326))""".update.run()
-    val rs = connect(ds)(PlaceReviewRepo.relocations()).filter(_.id.startsWith("pleiades_99910"))
+    val rs = PlaceFixtures.relocations(ds).filter(_.id.startsWith("pleiades_99910"))
     assertEquals(rs.map(_.id), List(Thess), "a linked point on a grid centre itself is no better")
     assert(
       rs.head.describe.contains("wikidata:Q999100004's point 47.6200 S") || rs.head.describe.contains("-47.6200"),
@@ -118,16 +116,16 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
       cfg.places.pointToleranceKm
     )
     assertEquals(PlaceFixtures.placesOf(ds, "zzrc_src2#0").map(_.id).filter(_.startsWith("pleiades_99910")).toList, Nil)
-    assertEquals(transact(ds)(PlaceReviewRepo.relocate(rs, cfg.places.pointToleranceKm)), 1)
+    assertEquals(PlaceFixtures.relocate(ds, rs, cfg.places.pointToleranceKm), 1)
     assertEquals(
       PlaceFixtures.placesOf(ds, "zzrc_src2#0").map(_.id).filter(_.startsWith("pleiades_99910")).toList,
       List(Thess),
       "the moved place's findings are matched again at once"
     )
     assertEquals(PlaceFixtures.get(ds, Thess).map(_.locationPrecision), Some(LocationPrecision.Stated))
-    assertEquals(connect(ds)(PlaceReviewRepo.relocations()).filter(_.id.startsWith("pleiades_99910")), Nil)
+    assertEquals(PlaceFixtures.relocations(ds).filter(_.id.startsWith("pleiades_99910")), Nil)
     assertEquals(
-      transact(ds)(PlaceReviewRepo.relocate(rs, cfg.places.pointToleranceKm)),
+      PlaceFixtures.relocate(ds, rs, cfg.places.pointToleranceKm),
       0,
       "compare-and-set: moved once"
     )
