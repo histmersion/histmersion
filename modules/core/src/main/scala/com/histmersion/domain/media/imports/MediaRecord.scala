@@ -1,5 +1,6 @@
-package com.histmersion.domain
+package com.histmersion.domain.media.imports
 
+import com.histmersion.domain.Attribution
 import com.histmersion.values.Period
 
 /** One object or map of an open-access collection (#1446), as its API describes it — the pure, provider-neutral shape
@@ -23,7 +24,8 @@ import com.histmersion.values.Period
   *   the object's date range, signed years (BCE negative), when the record gives one
   * @param ids
   *   gazetteer ids the record itself gives for where it is from, as (scheme, id) — `("pleiades", "697725")`,
-  *   `("geonames", "310858")`, `("wikidata", "Q5788")` ([[ExternalIds]]); a place carrying one of them is matched by it
+  *   `("geonames", "310858")`, `("wikidata", "Q5788")` ([[com.histmersion.domain.catalogue.places.ExternalIds]]); a
+  *   place carrying one of them is matched by it
   * @param withheld
   *   why the record is not shown whatever its licence (Open Context's human-remains flag)
   * @param role
@@ -36,7 +38,7 @@ final case class MediaRecord(
     imageUrl: Option[String],
     thumbUrl: Option[String],
     originalUrl: Option[String],
-    rights: Either[String, MediaRights],
+    rights: Either[String, Attribution],
     geography: List[(String, String)],
     period: Option[Period],
     ids: List[(String, String)] = Nil,

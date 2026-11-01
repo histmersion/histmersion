@@ -1,4 +1,4 @@
-package com.histmersion.domain
+package com.histmersion.domain.catalogue.places
 
 import java.util.Locale
 

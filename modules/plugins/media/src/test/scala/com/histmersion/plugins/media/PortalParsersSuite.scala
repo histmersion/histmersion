@@ -1,7 +1,8 @@
 package com.histmersion.plugins.media
 
 import com.histmersion.plugin.*
-import com.histmersion.domain.{DeepTime, MediaMatch}
+import com.histmersion.domain.DeepTime
+import com.histmersion.domain.media.imports.MediaMatch
 import com.histmersion.pluginhost.{HostLicences, PluginMedia}
 import io.circe.Json
 import io.circe.parser.parse

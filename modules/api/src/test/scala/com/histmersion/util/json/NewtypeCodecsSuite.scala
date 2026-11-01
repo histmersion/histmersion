@@ -56,6 +56,7 @@ class NewtypeCodecsSuite extends munit.FunSuite:
   test("titles, authors and paging are their base values on the wire"):
     roundTrip(Title("The Sea Peoples"), "The Sea Peoples")
     roundTrip(AuthorName("Kristiansen, K."), "Kristiansen, K.")
+    roundTrip(LicenceId("CC-BY-SA-4.0"), "CC-BY-SA-4.0")
     roundTrip(PageSize(200), 200)
     roundTrip(Offset.Start, 0)
     assert(decode[PageSize]("0").isLeft)

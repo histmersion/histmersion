@@ -3,6 +3,7 @@ package com.histmersion.plugin.testkit
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.config.{AppConfig, LoadedConfig}
 import com.histmersion.api.PluginState
+import com.histmersion.domain.media.imports.LicencePolicy
 import com.histmersion.pluginhost.allowed
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.{
@@ -184,7 +185,7 @@ final class PluginHarness private (
         }
         MediaReport(verdicts, failure, logged, asked)
 
-  private def judge(name: String, col: MediaCollection, http: PluginHttp, allow: Set[String])(
+  private def judge(name: String, col: MediaCollection, http: PluginHttp, allow: LicencePolicy)(
       answered: Either[String, MediaItem]
   ): MediaVerdict =
     answered match
@@ -192,16 +193,17 @@ final class PluginHarness private (
       case Right(item) =>
         val rec = PluginMedia.record(item)
         PluginMedia.refusal(rec, allow, name) match
-          case Some(why) => MediaVerdict(rec.key, Some(item), rec.rights.toOption.map(_.licence.id), Some(why))
+          case Some(why) => MediaVerdict(rec.key, Some(item), rec.rights.toOption.map(_.licence.id.value), Some(why))
           case None      =>
             PluginMedia.guard(col.complete(item, http)) match
-              case Left(why)   => MediaVerdict(rec.key, Some(item), rec.rights.toOption.map(_.licence.id), Some(why))
+              case Left(why) =>
+                MediaVerdict(rec.key, Some(item), rec.rights.toOption.map(_.licence.id.value), Some(why))
               case Right(full) =>
                 val completed = PluginMedia.record(full)
                 val again = PluginMedia
                   .refusal(completed, allow, name)
                   .map(why => if why.startsWith("licence") then "licence not allowed on the full record" else why)
-                MediaVerdict(completed.key, Some(full), completed.rights.toOption.map(_.licence.id), again)
+                MediaVerdict(completed.key, Some(full), completed.rights.toOption.map(_.licence.id.value), again)
 
   /** One import of the plugin's event catalogue `catalogue`: its parts for `query`, each read page by page through the
     * catalogue's polite client, each record checked and dated as the server stores it (a part is read once per run; the

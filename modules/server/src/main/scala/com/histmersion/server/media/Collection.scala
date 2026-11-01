@@ -6,6 +6,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.MediaRepo.PlaceFacts
+import com.histmersion.domain.media.imports.{MediaMatch, MediaRecord}
 
 /** An open-access collection (#1446): how to search it for a place, read its records, and tie one to a place
   * ([[MediaMatch]]). The import around it is [[CollectionImport]].
@@ -78,4 +79,4 @@ object Collection:
     2 * r * math.asin(math.sqrt(a.min(1.0)))
 
   /** Pure: a record's licence key for the counts — its SPDX id, or why it has none. */
-  def licenceKey(rec: MediaRecord): String = rec.rights.fold(_ => "not open access", _.licence.id)
+  def licenceKey(rec: MediaRecord): String = rec.rights.fold(_ => "not open access", _.licence.id.value)

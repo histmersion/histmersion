@@ -1,6 +1,6 @@
 package com.histmersion.pluginhost
 
-import com.histmersion.domain.MediaLicence
+import com.histmersion.domain.media.imports.LicencePolicy
 import com.histmersion.plugin.*
 
 /** The parts of the host the server and the plugin testkit share: the media judgement, the catalogue paging, the AI
@@ -18,7 +18,7 @@ class PluginHostPartsSuite extends munit.FunSuite:
     )
 
   test("a media record is kept only with a readable, allowed licence and an image"):
-    val allow = MediaLicence.allowList("cc0,cc-by")
+    val allow = LicencePolicy.of("cc0,cc-by")
     assertEquals(PluginMedia.refusal(PluginMedia.record(item("CC-BY-4.0")), allow, "mine"), None)
     assert(
       PluginMedia.refusal(PluginMedia.record(item("CC BY-NC 4.0")), allow, "mine").exists(_.contains("not allowed"))

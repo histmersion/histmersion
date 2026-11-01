@@ -1,5 +1,11 @@
 package com.histmersion.domain
 
+import com.histmersion.domain.catalogue.places.ExternalIds
+import com.histmersion.domain.media.imports.MediaMatch
+import com.histmersion.domain.media.imports.MediaRecord
+
+import com.histmersion.values.LicenceId
+
 /** The host's half of the keyless portals (#1446): licences given as Creative Commons URLs, gazetteer ids in their URI
   * forms and the id a place id carries, and the rule that ties a record to a place by its own place id. The real Open
   * Context records' matches (#2571) run over the plugin's parser in the media plugins' suites.
@@ -9,12 +15,22 @@ class MediaPortalsSuite extends munit.FunSuite:
   // ── licences and ids ─────────────────────────────────────────────────────────────────────────
 
   test("a Creative Commons URL is read as its licence; anything else is unknown, never guessed"):
-    import MediaLicence.*
-    assertEquals(ofUrl("https://creativecommons.org/licenses/by/4.0"), Licence("CC-BY-4.0", CcBy))
-    assertEquals(ofUrl("http://creativecommons.org/licenses/by-sa/3.0/de/"), Licence("CC-BY-SA-3.0-DE", CcBySa))
-    assertEquals(ofUrl("https://creativecommons.org/licenses/by-nc/4.0/deed.en"), Licence("CC-BY-NC-4.0", CcByNc))
-    assertEquals(ofUrl("https://creativecommons.org/publicdomain/zero/1.0/"), Licence("CC0-1.0", Cc0))
-    assertEquals(ofUrl("https://creativecommons.org/publicdomain/mark/1.0/"), Licence("public-domain", PublicDomain))
+    import Licence.*
+    import LicenceFamily.*
+    assertEquals(ofUrl("https://creativecommons.org/licenses/by/4.0"), Licence(LicenceId("CC-BY-4.0"), CcBy))
+    assertEquals(
+      ofUrl("http://creativecommons.org/licenses/by-sa/3.0/de/"),
+      Licence(LicenceId("CC-BY-SA-3.0-DE"), CcBySa)
+    )
+    assertEquals(
+      ofUrl("https://creativecommons.org/licenses/by-nc/4.0/deed.en"),
+      Licence(LicenceId("CC-BY-NC-4.0"), CcByNc)
+    )
+    assertEquals(ofUrl("https://creativecommons.org/publicdomain/zero/1.0/"), Licence(LicenceId("CC0-1.0"), Cc0))
+    assertEquals(
+      ofUrl("https://creativecommons.org/publicdomain/mark/1.0/"),
+      Licence(LicenceId("public-domain"), PublicDomain)
+    )
     assertEquals(ofUrl("https://example.org/terms").family, Unknown)
     assertEquals(ofUrl("").family, Unknown)
 

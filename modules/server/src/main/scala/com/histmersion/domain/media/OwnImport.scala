@@ -4,7 +4,8 @@ import com.histmersion.pluginhost.{PluginMedia, Polite, SpiValues}
 
 import com.histmersion.api.{ImageSize, MediaCount, MediaImportReport, MediaSample}
 import com.histmersion.config.MediaConfig
-import com.histmersion.domain.MediaLicence
+import com.histmersion.domain.{Licence, LicenceFamily}
+import com.histmersion.domain.media.imports.LicencePolicy
 import com.histmersion.db.MediaRepo
 import com.histmersion.db.MediaRepo.{ProviderAsset, Rights, Target}
 import com.histmersion.plugin.*
@@ -30,7 +31,7 @@ final class OwnImport(name: String, col: MediaCollection, fetch: Polite, cfg: Me
 
   private val check = BuiltinMedia.checkOf(name)
   private val provider = BuiltinMedia.providerOf(name)
-  private val allow = MediaLicence.allowList(BuiltinMedia.licencesFor(name, cfg))
+  private val allow = LicencePolicy.of(BuiltinMedia.licencesFor(name, cfg))
 
   /** What the host decided about one picture: its licence key for the counts, and the item and rights when it may be
     * stored, else why not.
@@ -52,18 +53,16 @@ final class OwnImport(name: String, col: MediaCollection, fetch: Polite, cfg: Me
       case Left(why)     => Verdict(None, Left(why))
       case Right(rights) =>
         val stated = scala.util.Try(SpiValues.licenceOf(rights.licence)).toOption.getOrElse("").trim
-        val read =
-          if stated.toLowerCase(java.util.Locale.ROOT).matches("^https?://.*") then MediaLicence.ofUrl(stated)
-          else MediaLicence.classify(stated)
-        val key = Some(if read.id.isEmpty then MediaLicence.Unknown else read.id)
+        val read = Licence.ofStatement(stated)
+        val key = Some(if read.id.value.isEmpty then LicenceFamily.Unknown.wire else read.id.value)
         item.withheld match
           case Some(why) => Verdict(key, Left(why))
           case None      =>
             PluginMedia.rights(rights) match
-              case Left(why)                                           => Verdict(key, Left(why))
-              case Right(r) if !MediaLicence.allowed(r.licence, allow) =>
-                Verdict(key, Left(s"licence ${r.licence.family} not allowed for $provider"))
-              case Right(r) => Verdict(key, Right(item -> Rights(r.licence.id, r.licenceUrl, r.author, r.credit)))
+              case Left(why)                            => Verdict(key, Left(why))
+              case Right(r) if !allow.allows(r.licence) =>
+                Verdict(key, Left(s"licence ${r.licence.family.wire} not allowed for $provider"))
+              case Right(r) => Verdict(key, Right(item -> Rights(r.licence.id.value, r.licenceUrl, r.author, r.credit)))
 
   def run(targets: List[Target], dryRun: Boolean, refresh: Boolean, store: MediaStore): MediaImportReport =
     val places = targets.filter(_.targetType == MediaRepo.Place)
@@ -98,7 +97,7 @@ final class OwnImport(name: String, col: MediaCollection, fetch: Polite, cfg: Me
       statements = uses.size,
       files = verdicts.size,
       byLicence = MediaCount
-        .of(verdicts.values.flatMap(_.licence).toList, k => MediaLicence.allowed(MediaLicence.classify(k), allow)),
+        .of(verdicts.values.flatMap(_.licence).toList, k => allow.allows(Licence.classify(k))),
       byRole = MediaCount.of(uses.map(roleOf)),
       rejected = MediaCount.of(verdicts.values.flatMap(_.decision.left.toOption).toList)
     )

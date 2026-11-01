@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.domain.catalogue.places.ExternalIds
+
 import com.histmersion.domain.media.OwnImport
 import com.histmersion.pluginhost.HttpAnswer
 

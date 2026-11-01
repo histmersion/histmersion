@@ -1,7 +1,8 @@
 package com.histmersion.pluginhost
 
 import com.histmersion.config.MediaConfig
-import com.histmersion.domain.{MediaLicence, MediaRecord, MediaRights as CoreRights}
+import com.histmersion.domain.{Attribution, Licence, LicenceFamily}
+import com.histmersion.domain.media.imports.{LicencePolicy, MediaRecord}
 import com.histmersion.plugin.*
 
 import scala.util.control.NonFatal
@@ -25,12 +26,12 @@ object PluginMedia:
   /** Pure: why a record may not be kept whatever place it names — a withheld record, rights the host cannot read, a
     * licence family not in `allow` (the collection's allowlist), no image — or `None`.
     */
-  def refusal(rec: MediaRecord, allow: Set[String], provider: String): Option[String] =
+  def refusal(rec: MediaRecord, allow: LicencePolicy, provider: String): Option[String] =
     rec.rights match
-      case _ if rec.withheld.isDefined                         => rec.withheld
-      case Left(why)                                           => Some(why)
-      case Right(r) if !MediaLicence.allowed(r.licence, allow) =>
-        Some(s"licence ${r.licence.family} not allowed for $provider")
+      case _ if rec.withheld.isDefined          => rec.withheld
+      case Left(why)                            => Some(why)
+      case Right(r) if !allow.allows(r.licence) =>
+        Some(s"licence ${r.licence.family.wire} not allowed for $provider")
       case Right(_) if rec.imageUrl.isEmpty => Some("no image")
       case Right(_)                         => None
 
@@ -76,27 +77,25 @@ object PluginMedia:
       Option(it.role).flatten.map(_.trim).filter(_.nonEmpty)
     )
 
-  /** Pure: what a provider's licence statement means, read by the host as every built-in collection's is
-    * ([[MediaLicence]]): the statement as an id or short name, or as a Creative Commons URL; the licence URL when the
-    * statement says nothing known. A statement it cannot read is `unknown` — never stored, whatever an allowlist says.
-    * A record must carry a credit line. The family decided here is what the allowlist is checked against: the plugin
-    * states, the host judges.
+  /** Pure: what a provider's licence statement means, read by the host as every built-in collection's is ([[Licence]]):
+    * the statement as an id or short name, or as a Creative Commons URL; the licence URL when the statement says
+    * nothing known. A statement it cannot read is `unknown` — never stored, whatever an allowlist says. A record must
+    * carry a credit line. The family decided here is what the allowlist is checked against: the plugin states, the host
+    * judges.
     */
-  def rights(r: com.histmersion.plugin.MediaRights): Either[String, CoreRights] =
+  def rights(r: com.histmersion.plugin.MediaRights): Either[String, Attribution] =
     val stated =
       try Option(r.licence).map(SpiValues.licenceOf).getOrElse("").trim
       catch case NonFatal(_) => ""
-    val byStatement =
-      if stated.toLowerCase(java.util.Locale.ROOT).matches("^https?://.*") then MediaLicence.ofUrl(stated)
-      else MediaLicence.classify(stated)
+    val byStatement = Licence.ofStatement(stated)
     val licence =
-      if byStatement.family != MediaLicence.Unknown then byStatement
-      else r.licenceUrl.map(MediaLicence.ofUrl).filter(_.family != MediaLicence.Unknown).getOrElse(byStatement)
+      if byStatement.family != LicenceFamily.Unknown then byStatement
+      else r.licenceUrl.map(Licence.ofUrl).filter(_.family != LicenceFamily.Unknown).getOrElse(byStatement)
     val credit = Option(r.credit).getOrElse("").trim
     if credit.isEmpty then Left("no credit line")
     else
       Right(
-        CoreRights(
+        Attribution(
           licence,
           r.licenceUrl.map(_.trim).filter(_.nonEmpty),
           r.author.map(_.trim).filter(_.nonEmpty),

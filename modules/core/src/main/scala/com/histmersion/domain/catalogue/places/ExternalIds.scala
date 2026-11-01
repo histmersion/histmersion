@@ -1,4 +1,4 @@
-package com.histmersion.domain
+package com.histmersion.domain.catalogue.places
 
 /** Gazetteer ids in the URI forms providers write them. Pure. */
 object ExternalIds:
@@ -25,6 +25,6 @@ object ExternalIds:
     num("pleiades_")
       .map(Pleiades -> _)
       .orElse(num("geonames_").map(GeoNames -> _))
-      .orElse(com.histmersion.domain.Wikidata.qidOfPlaceId(s).map(Wikidata -> _))
+      .orElse(com.histmersion.domain.catalogue.places.Wikidata.qidOfPlaceId(s).map(Wikidata -> _))
 
   def show(id: (String, String)): String = s"${id._1}:${id._2}"

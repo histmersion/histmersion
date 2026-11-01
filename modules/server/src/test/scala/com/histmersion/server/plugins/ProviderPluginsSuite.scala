@@ -8,7 +8,8 @@ import com.histmersion.util.plugins.Plugins
 
 import com.histmersion.pluginhost.{Generation, PluginEvents, PluginHost, PluginMedia}
 
-import com.histmersion.domain.{MediaLicence, MediaRecord}
+import com.histmersion.domain.LicenceFamily
+import com.histmersion.domain.media.imports.MediaRecord
 import com.histmersion.plugin.*
 import com.histmersion.domain.catalogue.places.BuiltinGazetteers
 import com.histmersion.domain.catalogue.events.BuiltinCatalogues
@@ -361,29 +362,35 @@ class ProviderPluginsSuite extends munit.FunSuite:
   test("a stated licence is read by the host: ids, short names and Creative Commons URLs; unknown is never guessed"):
     assertEquals(
       rights("CC BY-NC 4.0").map(_.licence),
-      Right(MediaLicence.Licence("CC-BY-NC-4.0", MediaLicence.CcByNc))
+      Right(com.histmersion.domain.Licence(com.histmersion.values.LicenceId("CC-BY-NC-4.0"), LicenceFamily.CcByNc))
     )
-    assertEquals(rights("CC-BY-4.0").map(_.licence.family), Right(MediaLicence.CcBy))
+    assertEquals(rights("CC-BY-4.0").map(_.licence.family), Right(LicenceFamily.CcBy))
     assertEquals(
       rights("https://creativecommons.org/licenses/by-sa/4.0/").map(_.licence.family),
-      Right(MediaLicence.CcBySa)
+      Right(LicenceFamily.CcBySa)
     )
     assertEquals(
       rights("https://creativecommons.org/publicdomain/zero/1.0/").map(_.licence.family),
-      Right(MediaLicence.Cc0)
+      Right(LicenceFamily.Cc0)
     )
-    assertEquals(rights("Public domain").map(_.licence.family), Right(MediaLicence.PublicDomain))
-    assertEquals(rights("All rights reserved").map(_.licence.family), Right(MediaLicence.AllRights))
-    assertEquals(rights("free to use!").map(_.licence.family), Right(MediaLicence.Unknown))
+    assertEquals(rights("Public domain").map(_.licence.family), Right(LicenceFamily.PublicDomain))
+    assertEquals(rights("All rights reserved").map(_.licence.family), Right(LicenceFamily.AllRightsReserved))
+    assertEquals(rights("free to use!").map(_.licence.family), Right(LicenceFamily.Unknown))
     // an unclear statement: the licence URL decides when it is a known one
     assertEquals(
       rights("see link", Some("https://creativecommons.org/licenses/by/4.0/")).map(_.licence.family),
-      Right(MediaLicence.CcBy)
+      Right(LicenceFamily.CcBy)
     )
     assertEquals(rights("CC BY 4.0", credit = "  "), Left("no credit line"))
     // whatever the family, the allowlist decides; unknown and all-rights-reserved never pass
-    assert(!MediaLicence.allowed(rights("free to use!").toOption.get.licence, MediaLicence.Families.toSet))
-    assert(!MediaLicence.allowed(rights("CC BY-NC 4.0").toOption.get.licence, MediaLicence.allowList("cc0,cc-by")))
+    assert(
+      !com.histmersion.domain.Licence
+        .allowed(rights("free to use!").toOption.get.licence, LicenceFamily.allowable.toSet)
+    )
+    assert(
+      !com.histmersion.domain.Licence
+        .allowed(rights("CC BY-NC 4.0").toOption.get.licence, com.histmersion.domain.Licence.allowList("cc0,cc-by"))
+    )
 
   test("a plugin's item becomes the host's record: trimmed, its period converted, a refusal kept"):
     val it = MediaItem(
@@ -401,7 +408,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
       (r.key, r.title, r.imageUrl, r.period),
       ("k1", "Bowl", Some("https://zq.example/k1.jpg"), com.histmersion.domain.DeepTime.span(-1400L, -1300L))
     )
-    assertEquals(r.rights.map(_.licence.family), Right(MediaLicence.Cc0))
+    assertEquals(r.rights.map(_.licence.family), Right(LicenceFamily.Cc0))
     assertEquals(r.ids, List("pleiades" -> "1"))
     assertEquals(PluginMedia.record(it.copy(rights = Left("not open access"))).rights, Left("not open access"))
 

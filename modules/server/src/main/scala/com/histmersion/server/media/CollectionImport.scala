@@ -10,6 +10,7 @@ import com.histmersion.db.MediaRepo.{PlaceFacts, ProviderAsset, Rights, Target}
 import com.histmersion.util.ocr.ConverterClient
 import com.histmersion.upstreams.MediaText
 import com.histmersion.domain.media.MediaStep
+import com.histmersion.domain.media.imports.{LicencePolicy, MediaMatch, MediaRecord}
 
 /** The import of one collection (#1446): for each place, a search by its name; each record judged — its own licence
   * statement first (never assumed), the collection's allowlist, then the match ([[Collection.matches]]) — and at most
@@ -28,7 +29,7 @@ final class CollectionImport(col: Collection, fetch: Polite, cfg: MediaConfig, c
 
   def run(targets: List[Target], dryRun: Boolean, refresh: Boolean, store: MediaStore): MediaImportReport =
     val failed = List.newBuilder[String]
-    val allow = MediaLicence.allowList(col.conf.licences)
+    val allow = LicencePolicy.of(col.conf.licences)
     val places = targets.filter(_.targetType == MediaRepo.Place)
     val facts = store.placeFacts(places.map(_.id))
 
@@ -112,7 +113,7 @@ final class CollectionImport(col: Collection, fetch: Polite, cfg: MediaConfig, c
       byLicence = records
         .groupBy(Collection.licenceKey)
         .toList
-        .map((k, rs) => MediaCount(k, rs.size, rs.head.rights.exists(r => MediaLicence.allowed(r.licence, allow))))
+        .map((k, rs) => MediaCount(k, rs.size, rs.head.rights.exists(r => allow.allows(r.licence))))
         .sortBy(c => (-c.n, c.key)),
       byRole = MediaCount.of(kept.map(j => roleOf(j.rec))),
       rejected = MediaCount.of(judged.flatMap(_.decision.left.toOption)),
@@ -131,7 +132,7 @@ final class CollectionImport(col: Collection, fetch: Polite, cfg: MediaConfig, c
       db: MediaStore,
       failed: scala.collection.mutable.Builder[String, List[String]]
   ): MediaImportReport =
-    val allow = MediaLicence.allowList(col.conf.licences)
+    val allow = LicencePolicy.of(col.conf.licences)
     val known = db.known(col.provider, judged.map(_.rec.key).distinct)
     def each[A](what: => String)(write: => A): Option[A] = MediaStep.each(failed)(what)(write)
 
@@ -141,8 +142,8 @@ final class CollectionImport(col: Collection, fetch: Polite, cfg: MediaConfig, c
         rec.rights match
           case _ if rec.withheld.isDefined => Some(s"${col.provider} ${rec.key} (media:${k.uid}): ${rec.withheld.get}")
           case Left(why)                   => Some(s"${col.provider} ${rec.key} (media:${k.uid}): $why")
-          case Right(r) if !MediaLicence.allowed(r.licence, allow) =>
-            Some(s"${col.provider} ${rec.key} (media:${k.uid}): licence ${r.licence.family} not allowed")
+          case Right(r) if !allow.allows(r.licence) =>
+            Some(s"${col.provider} ${rec.key} (media:${k.uid}): licence ${r.licence.family.wire} not allowed")
           case _ => None
       }
     }
@@ -152,7 +153,7 @@ final class CollectionImport(col: Collection, fetch: Polite, cfg: MediaConfig, c
     val uids = scala.collection.mutable.Map.empty[String, String]
     def rightsOf(rec: MediaRecord) =
       val r = rec.rights.toOption.get // kept ⇒ readable rights
-      Rights(r.licence.id, r.licenceUrl, r.author, r.credit)
+      Rights(r.licence.id.value, r.licenceUrl, r.author, r.credit)
     kept.distinctBy(_.rec.key).foreach { j =>
       known.get(j.rec.key) match
         case Some(k) =>
@@ -165,7 +166,7 @@ final class CollectionImport(col: Collection, fetch: Polite, cfg: MediaConfig, c
           val completed = col
             .complete(fetch, j.rec)
             .filterOrElse(
-              _.rights.exists(r => MediaLicence.allowed(r.licence, allow)),
+              _.rights.exists(r => allow.allows(r.licence)),
               "licence not allowed on the full record"
             )
           completed.flatMap(rec => download(rec).map(d => (rec, d))) match

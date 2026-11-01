@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.domain.media.figures.FigurePick
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
