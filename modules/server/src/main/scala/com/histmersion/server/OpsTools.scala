@@ -47,7 +47,7 @@ object OpsTools:
               (if in.fix then h.fixArticle(slug) else h.lintArticle(slug))
                 .fold(McpOut.error, r => ToolResult.text(FormatMarkdown.report(r)))
             case (_, Some(ck), _) =>
-              (if in.fix then h.fixSource(ck) else h.lintSource(ck))
+              (if in.fix then h.library.sources.fix(ck) else h.library.sources.lint(ck))
                 .fold(McpOut.error, r => ToolResult.text(FormatMarkdown.report(r)))
             case (_, _, Some(text)) =>
               val r = h.lintText(FormatCheck(text, in.field.getOrElse(FormatField.Body), in.fix))
@@ -78,28 +78,6 @@ object OpsTools:
         .input[QueueInput]
         .handle(in => ToolResult.text(runQueue(ops, h, in)))
 
-    val query =
-      tool("query")
-        .description(ops.queryToolDescription)
-        .input[QueryInput]
-        .handle { in =>
-          ops.query(Query.QueryRequest(in.sql)) match
-            case Right(r) => ToolResult.text(Query.markdown(r))
-            // hand the live schema back with the error so the next attempt can be right
-            case Left(e) =>
-              ToolResult.text(s"${McpOut.refusal(e)}\n\n${Query.schemaMarkdown(ops.schemaTables)}")
-        }
-
-    val schema =
-      tool("schema")
-        .description(
-          "List the tables, columns and types that `query` can read (from the live " +
-            "information_schema). Use to check column names before writing SQL — not for " +
-            "searching the corpus."
-        )
-        .input[SchemaInput]
-        .handle(_ => ToolResult.text(Query.schemaMarkdown(ops.schemaTables)))
-
     val backups =
       tool("backups")
         .description(
@@ -114,7 +92,7 @@ object OpsTools:
             case Left(e)     => McpOut.error(e)
         }
 
-    List(lint, queue, query, schema, backups)
+    List(lint, queue) ++ com.histmersion.domain.library.search.QueryTools(h.library.query) ++ List(backups)
 
   /** `action` dispatch, kept out of the tool body so the failure modes read as one list. */
   private def runQueue(ops: OpsHandlers, h: Handlers, in: QueueInput): String =
@@ -211,17 +189,6 @@ object OpsTools:
       .modify(_.limit)(
         _.description("action=recheck: try at most this many due items (default acquire.recheck.per-pass)")
       )
-
-  final case class QueryInput(sql: String) derives KindlingsCodecAsObject
-  object QueryInput:
-    given Schema[QueryInput] = KindlingsSchema
-      .derived[QueryInput]
-      .schema
-      .modify(_.sql)(_.description("One read-only SQL statement (Postgres refuses writes)"))
-
-  final case class SchemaInput() derives KindlingsCodecAsObject, KindlingsSchema
-  object SchemaInput:
-    given Schema[SchemaInput] = summon[KindlingsSchema[SchemaInput]].schema
 
   final case class BackupsInput() derives KindlingsCodecAsObject, KindlingsSchema
   object BackupsInput:

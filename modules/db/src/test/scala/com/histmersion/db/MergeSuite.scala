@@ -1,5 +1,9 @@
 package com.histmersion.db
 
+import com.histmersion.domain.library.sources.SourceFixtures
+
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.domain.media.assets.AssetFixtures
 import com.histmersion.domain.media.assets.NewFigure
 
@@ -91,7 +95,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         ds,
         bundle,
         BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
-        BundleImport.Options(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm),
+        BundleImport.Options(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm, SourceFixtures.referrers),
         Originals.inDir(originals),
         res,
         merge,
@@ -274,7 +278,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         1903
       )
     )
-    val _ = SourceRepo.rename(work, "harrison1903_old", "harrison1903_prolegomena")
+    val _ = SourceFixtures.rename(work, "harrison1903_old", "harrison1903_prolegomena")
     put(work, src("olsen2015_penelope", "Penelope's Weaving", List("Barbara Olsen"), 2015, body = Some(olsen)))
     put(work, src("zznew2020_only", "A Book Only Work Has", List("Roe, Richard"), 2020))
     put(work, src("west1997_east", "The East Face of Helicon", List("M. L. West"), 1997))
@@ -361,7 +365,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       home,
       src("latacz2023_troy", "Troy and Homer: Towards a Solution of an Old Mystery", List("Joachim Latacz"), 2004)
     )
-    val _ = SourceRepo.rename(home, "latacz2023_troy", "latacz2004_troy")
+    val _ = SourceFixtures.rename(home, "latacz2023_troy", "latacz2004_troy")
     put(
       home,
       src("harrison1903_prolegomena_greek", "Prolegomena to the study of Greek religion", List("Jane Harrison"), 1903)
@@ -370,7 +374,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       home,
       src("harrison1903_old", "Themis: A Study of the Social Origins of Greek Religion", List("Jane Harrison"), 1912)
     )
-    val _ = SourceRepo.rename(home, "harrison1903_old", "harrison1912_themis")
+    val _ = SourceFixtures.rename(home, "harrison1903_old", "harrison1912_themis")
     put(
       home,
       src("olsen2015_penelope_weaving", "Penelope’s weaving", List("Olsen, Barbara"), 2015, body = Some(olsenAgain))
@@ -571,7 +575,8 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         ds,
         bundle,
         BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
-        BundleImport.Options(dryRun = false, cfg.limits.chunkChars, cfg.places.pointToleranceKm),
+        BundleImport
+          .Options(dryRun = false, cfg.limits.chunkChars, cfg.places.pointToleranceKm, SourceFixtures.referrers),
         Originals.inDir(originals),
         res,
         merge,

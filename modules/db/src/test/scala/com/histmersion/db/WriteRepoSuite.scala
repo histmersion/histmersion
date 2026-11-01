@@ -1,5 +1,8 @@
 package com.histmersion.db
 
+import com.histmersion.domain.library.sources.SourceFixtures
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.domain.media.figures.FigureFixtures
 
 import com.histmersion.api.*
@@ -65,7 +68,7 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
   // ── put ──────────────────────────────────────────────────────────────────────────────────────
   test("put → get round-trip, including notes and the updatedAt token"):
     val token = fresh()
-    val (d, fs) = SourceRepo.get(ds, ck).get
+    val (d, fs) = SourceFixtures.get(ds, ck).get
     assertEquals(d.title, "Writes")
     assertEquals(d.notes, Some("# article\n\nagent-written prose"))
     assertEquals(d.updatedAt, Some(token))
@@ -76,7 +79,7 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
     val _ = fresh()
     val s2 = seedSource().copy(tags = List("only"), findings = Nil, summary = None)
     val _ = SourceRepo.put(ds, s2, 4000)
-    val (d, fs) = SourceRepo.get(ds, ck).get
+    val (d, fs) = SourceFixtures.get(ds, ck).get
     assertEquals(d.tags, List("only"))
     assertEquals(fs.size, 0)
     assertEquals(d.summary, None)

@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope}
 
 import com.histmersion.util.ocr.{ConverterClient, ConverterState}
@@ -11,7 +13,6 @@ import com.histmersion.files.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.SourceRepo
 import com.histmersion.domain.media.assets.{AssetService, NewFigure}
 import com.histmersion.util.jobs.JobRepo
 

@@ -103,7 +103,7 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     if noCopy.contains(d) then Left(s"${IngestBacklog.NoLegalCopy} $d: no fetcher had it")
     else
       val ck = ck0(d)
-      assert(h.putSource(ck, SourcePut(title = s"Ingested $d", year = Some(2023), doi = Some(d))).isRight)
+      assert(h.library.sources.put(ck, SourcePut(title = s"Ingested $d", year = Some(2023), doi = Some(d))).isRight)
       Right(
         IngestReport(
           ck,
@@ -346,7 +346,9 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     a.engine.execute(sweepRun(m.id, Goal).id)
     assertEquals(acquire(h).size, 4)
     // c reached the corpus meanwhile; the watcher now auto-ingests
-    assert(h.putSource("zzagent2023_c", SourcePut(title = "C", year = Some(2023), doi = Some(doi("c")))).isRight)
+    assert(
+      h.library.sources.put("zzagent2023_c", SourcePut(title = "C", year = Some(2023), doi = Some(doi("c")))).isRight
+    )
     a.managing
       .update(m.id, ManagerUpdate(Some(m.config.copy(autoIngest = Some(true)))))
       .fold(e => fail(e.message), identity)

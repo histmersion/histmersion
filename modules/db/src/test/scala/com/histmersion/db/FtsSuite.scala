@@ -1,5 +1,8 @@
 package com.histmersion.db
 
+import com.histmersion.domain.library.search.SearchFixtures
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -90,7 +93,7 @@ class FtsSuite extends com.histmersion.db.DbSuite:
     */
   private def search(q: String): Vector[SearchHit] = listing(Filter(q = Some(q), limit = 20))
   private def listing(f: Filter): Vector[SearchHit] =
-    SourceRepo.sources(ds, f, words).hits.map(_.source).toVector
+    SearchFixtures.sources(ds, f, words).hits.map(_.source).toVector
 
   test("a >1 MB body is indexed and a body-only phrase is found, with snippet and heading"):
     fixture

@@ -87,7 +87,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     if noCopy.contains(doi) then Left(s"no legal open-access copy of $doi")
     else
       val ck = "zzagent" + doi.replaceAll("[^a-z0-9]", "")
-      assert(h.putSource(ck, SourcePut(title = s"Ingested $doi", year = Some(2023), doi = Some(doi))).isRight)
+      assert(h.library.sources.put(ck, SourcePut(title = s"Ingested $doi", year = Some(2023), doi = Some(doi))).isRight)
       Right(
         IngestReport(
           ck,
@@ -182,7 +182,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       "only open-access picks, until two were ingested"
     )
     assertEquals(
-      h.getSource("zzagent105555zzagenta", body = false).map(_.source.title),
+      h.library.sources.get("zzagent105555zzagenta", body = false).map(_.source.title),
       Right("Ingested 10.5555/zzagent.a")
     )
     assert(
@@ -344,8 +344,8 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   /** The (paused) enrich manager with two source items. */
   private def enrichItems(a: AgentsHandlers, h: Handlers): Unit =
-    assert(h.putSource(CkA, SourcePut(title = "Hint A", year = Some(2020))).isRight)
-    assert(h.putSource(CkB, SourcePut(title = "Hint B", year = Some(2021))).isRight)
+    assert(h.library.sources.put(CkA, SourcePut(title = "Hint A", year = Some(2020))).isRight)
+    assert(h.library.sources.put(CkB, SourcePut(title = "Hint B", year = Some(2021))).isRight)
     a.managers.ensureDefaults()
     List(CkA, CkB).foreach(ck =>
       a.managing.addItem(EnrichId, EnqueueRequest("enrich", ck, Some(0))).fold(e => fail(e.message), identity)

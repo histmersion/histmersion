@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.api.{NeighborTarget, PlaceDating, PlaceTimeBasis}
+import com.histmersion.api.{PlaceDating, PlaceTimeBasis}
 import com.augustnagro.magnum.*
 import io.circe.syntax.*
 import com.histmersion.values.{Confidence, EdgeKind, LocationPrecision, SourceStatus}
@@ -19,12 +19,6 @@ given DbCodec[SourceStatus] =
 
 /** An unknown edge kind is a plain `references` — the kind that claims no agreement or disagreement. */
 given DbCodec[EdgeKind] = Vocab.codec(EdgeKind.fromWire, EdgeKind.wireOf, EdgeKind.References)
-
-given DbCodec[NeighborTarget] = Vocab.codec(
-  s => NeighborTarget.values.find(_.toString.equalsIgnoreCase(s)),
-  _.toString.toLowerCase,
-  NeighborTarget.Unresolved
-)
 
 /** An unknown dating is `unknown` (it used to read as `stated`, a date the place does not have). */
 given DbCodec[PlaceDating] = Vocab.codec(PlaceDating.parse, _.wire, PlaceDating.Unknown)

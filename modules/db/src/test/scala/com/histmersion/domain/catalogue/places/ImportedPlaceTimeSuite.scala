@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.db.*
 import com.histmersion.db.given
 

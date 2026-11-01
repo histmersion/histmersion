@@ -96,12 +96,6 @@ object Markdown:
 
   private[api] def enc(s: String): String = java.net.URLEncoder.encode(s, "UTF-8").replace("+", "%20")
 
-  def toc(entries: List[TocEntry]): String =
-    if entries.isEmpty then "_(no headings in body)_"
-    else
-      val items = entries.map(e => s"- **${e.heading}** — ord ${e.ord}, ${e.chars} chars")
-      s"### Table of Contents (${entries.size} heading(s))\n\n${items.mkString("\n")}"
-
   def bodySlice(text: String, offset: Int, total: Int): String =
     val remaining = total - offset - text.length
     if remaining > 0 then s"$text\n\n_…$remaining more chars — pass offset=${offset + text.length}_"

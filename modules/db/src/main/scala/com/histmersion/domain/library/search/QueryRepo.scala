@@ -1,4 +1,7 @@
-package com.histmersion.db
+package com.histmersion.domain.library.search
+
+import com.histmersion.db.*
+import com.histmersion.db.given
 
 import com.histmersion.api.Query.*
 
@@ -23,7 +26,7 @@ import javax.sql.DataSource
   * Written against plain JDBC rather than Magnum: the projection of an arbitrary statement is not known at compile
   * time, so there is no `DbCodec` to derive — the `ResultSetMetaData` is the schema.
   */
-object QueryRepo:
+private[search] object QueryRepo:
 
   /** Run one statement. A rejected or failing statement is a VALUE (`Left(message)`), not an exception: a bad query is
     * an expected outcome of handing SQL to a model.

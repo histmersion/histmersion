@@ -1,5 +1,10 @@
 package com.histmersion.db
 
+import com.histmersion.domain.library.search.SearchFixtures
+
+import com.histmersion.domain.library.search.FilterSql
+import com.histmersion.domain.library.search.Search
+
 import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.api.*
@@ -8,13 +13,12 @@ import com.histmersion.domain.*
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 
-/** The SQL the filter's builders generate, recorded for every combination the search exercises: each criterion
-  * alone (text, tags, authors, places by name and by gazetteer id, topics, statuses, publication years, deep time, a
-  * box and one across the antimeridian, a title, a goal), pairs and the whole filter, every order, pages, each facet
-  * field with and without a prefix, the map feed, the counts, the snippets and the histogram's rows in both units —
-  * with an empty place scope and one that names gazetteer ids. The text and the bound parameters of each statement, so
-  * a move of the builders shows any change to the query the database is sent. `HISTMERSION_UPDATE_ORACLE=1` rewrites
-  * the file.
+/** The SQL the filter's builders generate, recorded for every combination the search exercises: each criterion alone
+  * (text, tags, authors, places by name and by gazetteer id, topics, statuses, publication years, deep time, a box and
+  * one across the antimeridian, a title, a goal), pairs and the whole filter, every order, pages, each facet field with
+  * and without a prefix, the map feed, the counts, the snippets and the histogram's rows in both units — with an empty
+  * place scope and one that names gazetteer ids. The text and the bound parameters of each statement, so a move of the
+  * builders shows any change to the query the database is sent. `HISTMERSION_UPDATE_ORACLE=1` rewrites the file.
   */
 class SearchSqlSnapshotSuite extends munit.FunSuite:
 
@@ -114,10 +118,10 @@ class SearchSqlSnapshotSuite extends munit.FunSuite:
       "findingsFeedQuery" -> FilterSql.findingsFeedQuery(f, scope),
       "findingsCountQuery" -> FilterSql.findingsCountQuery(f, scope),
       "selectionCountsQuery" -> FilterSql.selectionCountsQuery(f, scope),
-      "periodsQuery sources" -> AggregateRepo.periodsQuery("sources", f, scope),
-      "periodsQuery findings" -> AggregateRepo.periodsQuery("findings", f, scope),
-      "treeRowsQuery sources" -> AggregateRepo.treeRowsQuery("sources", f, scope),
-      "treeRowsQuery findings" -> AggregateRepo.treeRowsQuery("findings", f, scope)
+      "periodsQuery sources" -> SearchFixtures.periodsQuery("sources", f, scope),
+      "periodsQuery findings" -> SearchFixtures.periodsQuery("findings", f, scope),
+      "treeRowsQuery sources" -> SearchFixtures.treeRowsQuery("sources", f, scope),
+      "treeRowsQuery findings" -> SearchFixtures.treeRowsQuery("findings", f, scope)
     ) ++ text.toList.map(q => "snippetsQuery" -> FilterSql.snippetsQuery(q, 30, List("zqa1990_a", "zqb2001_b")))
 
   private def facets(f: Filter, scope: PlaceScope): List[(String, Sql)] =

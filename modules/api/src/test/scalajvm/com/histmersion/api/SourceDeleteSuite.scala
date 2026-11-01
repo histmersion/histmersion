@@ -3,31 +3,10 @@ package com.histmersion.api
 import io.circe.parser.decode
 import io.circe.syntax.*
 
-/** #969: the pure half of deleting a source — which attestations lose their target, the refusal message, the log line,
-  * the rendering and the wire shape.
-  */
+/** #969: the pure half of deleting a source — the refusal message, the log line, the rendering and the wire shape. */
 class SourceDeleteSuite extends munit.FunSuite:
 
   private val Ck = "beckman2011_ahhiyawa"
-
-  test("attestations of its findings, of edges FROM it and of its datings go; of edges TO it they stay"):
-    assert(SourceDelete.attestationGone("finding", s"$Ck#3", Ck))
-    assert(!SourceDelete.attestationGone("finding", s"${Ck}x#3", Ck))
-    assert(SourceDelete.attestationGone("edge", s"$Ck|cline2014_1177|challenges", Ck))
-    assert(
-      !SourceDelete.attestationGone("edge", s"cline2014_1177|$Ck|challenges", Ck),
-      "an incoming edge is parked, not deleted"
-    )
-    assert(SourceDelete.attestationGone("event_dating", s"fall_of_troy|$Ck", Ck))
-    assert(!SourceDelete.attestationGone("event_dating", s"fall_of_troy|${Ck}_v2", Ck))
-    assert(!SourceDelete.attestationGone("place", Ck, Ck))
-
-  test("links: any [[ck]], with a label or an anchor, case-insensitively"):
-    assert(SourceDelete.links(s"see [[$Ck|Beckman]]", Ck))
-    assert(SourceDelete.links(s"ingested as [[$Ck]]", Ck))
-    assert(SourceDelete.links(s"[[$Ck#ch-2]]", Ck))
-    assert(!SourceDelete.links(s"plain $Ck", Ck))
-    assert(!SourceDelete.links(s"[[${Ck}_v2]]", Ck))
 
   private val blocked = List(
     DeleteBlocker(DeleteBlockerKind.Article, "ahhiyawa", Some("Ahhiyawa")),

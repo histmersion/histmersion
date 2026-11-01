@@ -1,5 +1,10 @@
 package com.histmersion.db
 
+import com.histmersion.domain.library.findings.FindingFixtures
+import com.histmersion.domain.library.labels.LabelFixtures
+import com.histmersion.domain.library.search.SearchFixtures
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -175,11 +180,11 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
   private def find(r: SearchResult, ck: String): Hit = mine(r).find(_.source.citekey == ck).get
   private val words = AppConfig.load().limits.snippetWords
   private def run(f: Filter) =
-    SourceRepo.sources(ds, f.copy(limit = if f.limit <= 0 then 50 else f.limit), words)
+    SearchFixtures.sources(ds, f.copy(limit = if f.limit <= 0 then 50 else f.limit), words)
   // scoped to this suite's fixtures (the test DB is shared with other suites' rows)
   private val own = Filter(places = List("Levant", "Pontic", "Oceania"))
   private def facetMap(field: FacetField, prefix: Option[String] = None, f: Filter = own) =
-    SourceRepo.facets(ds, field, prefix, f.copy(limit = 200), 200).map(x => x.value -> x.count).toMap
+    LabelFixtures.facets(ds, field, prefix, f.copy(limit = 200), 200).map(x => x.value -> x.count).toMap
 
   test("acceptance: --tag sea-peoples --from -1300 --to -1100 returns sources WITH matched findings"):
     val r = run(Filter(tags = List("sea-peoples"), period = Some(Period(-1300, -1100))))
@@ -238,37 +243,37 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
   test("total is count(DISTINCT source) and ignores limit/offset"):
     val f = Filter(places = List("Levant", "Pontic", "Oceania"))
     assertEquals(run(f).total, 3)
-    val page = SourceRepo.sources(ds, f.copy(limit = 1, sort = Sort.Title), words)
+    val page = SearchFixtures.sources(ds, f.copy(limit = 1, sort = Sort.Title), words)
     assertEquals(page.total, 3)
     assertEquals(page.hits.size, 1)
-    val next = SourceRepo.sources(ds, f.copy(limit = 1, offset = 1, sort = Sort.Title), words)
+    val next = SearchFixtures.sources(ds, f.copy(limit = 1, offset = 1, sort = Sort.Title), words)
     assertEquals(next.total, 3)
     assertNotEquals(page.hits.head.source.citekey, next.hits.head.source.citekey)
 
   test("sorting: by publication year, newest or oldest first"):
     val f = Filter(places = List("Levant", "Pontic", "Oceania"))
     assertEquals(
-      keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.Year), words)),
+      keys(SearchFixtures.sources(ds, f.copy(limit = 50, sort = Sort.Year), words)),
       List("zzf_gamma", "zzf_alpha", "zzf_beta")
     )
     assertEquals(
-      keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.Oldest), words)),
+      keys(SearchFixtures.sources(ds, f.copy(limit = 50, sort = Sort.Oldest), words)),
       List("zzf_beta", "zzf_alpha", "zzf_gamma")
     )
 
   test("sorting: by title, by citations, by period start"):
     val f = Filter(places = List("Levant", "Pontic", "Oceania"))
     assertEquals(
-      keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.Title), words)),
+      keys(SearchFixtures.sources(ds, f.copy(limit = 50, sort = Sort.Title), words)),
       List("zzf_alpha", "zzf_gamma", "zzf_beta")
     )
     assertEquals(
-      keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.Cited), words)),
+      keys(SearchFixtures.sources(ds, f.copy(limit = 50, sort = Sort.Cited), words)),
       List("zzf_beta", "zzf_alpha", "zzf_gamma")
     )
     // undated sources sort last on period
     assertEquals(
-      keys(SourceRepo.sources(ds, f.copy(limit = 50, sort = Sort.PeriodStart), words)),
+      keys(SearchFixtures.sources(ds, f.copy(limit = 50, sort = Sort.PeriodStart), words)),
       List("zzf_beta", "zzf_alpha", "zzf_gamma")
     )
 
@@ -300,7 +305,7 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(facetMap(FacetField.Status).get("foundational"), Some(1))
 
   test("facets are ordered by count desc, then value"):
-    val rows = SourceRepo
+    val rows = LabelFixtures
       .facets(ds, FacetField.Tags, None, Filter(limit = 200), 200)
       .filter(f => Set("sea-peoples", "destruction", "island")(f.value))
     assertEquals(rows.map(_.value).toList, List("sea-peoples", "destruction", "island"))
@@ -317,7 +322,7 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
   // ── the map feed: `/api/findings` through the SAME filter (plan §1.0) ────────────────────────
   /** Findings of THIS suite's fixtures only (the test DB is shared with other suites' rows). */
   private def feed(f: Filter) =
-    SourceRepo
+    FindingFixtures
       .findingsFor(ds, f.copy(limit = if f.limit <= 0 then 200 else f.limit))
       .filter(_.citekey.startsWith("zzf_"))
 
@@ -349,7 +354,7 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(feed(Filter(places = List("cyprus"))).map(_.claim).toList, List("Cypriot trade revives"))
 
   test("map feed: the limit is honoured"):
-    assertEquals(SourceRepo.findingsFor(ds, Filter(tags = List("sea-peoples"), limit = 1)).size, 1)
+    assertEquals(FindingFixtures.findingsFor(ds, Filter(tags = List("sea-peoples"), limit = 1)).size, 1)
 
   // ── facets fold case (plan §1.3) ────────────────────────────────────────────────────────────
   private val caseScope = Filter(places = List("zzftolia"))

@@ -1,11 +1,14 @@
 package com.histmersion.server
 
+import com.histmersion.domain.library.citations.CitationFixtures
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.pluginhost.{FetchChain, OaFetcher}
 
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{AcquireRepo, Db, Migrate, QueueRows, SourceRepo}
+import com.histmersion.db.{AcquireRepo, Db, Migrate, QueueRows}
 import com.histmersion.server.acquire.*
 
 import java.nio.file.Path
@@ -179,7 +182,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assertEquals(r.resolved, 2)
     assertEquals(r.edgesAdded, 2)
     assertEquals(r.references.flatMap(_.citekey).toSet, Set("zzacq_bydoi", "zzacqreich2018_who"))
-    val out = SourceRepo.neighbors(ds, "zzacq_target").filter(_.direction == "out")
+    val out = CitationFixtures.neighbors(ds, "zzacq_target").filter(_.direction == "out")
     assertEquals(out.map(_.citekey).toSet, Set("zzacq_bydoi", "zzacqreich2018_who"))
     assert(out.forall(_.kind == "references"))
 
@@ -191,7 +194,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     val r = h.refs(RefsRequest("zzacq_target")).fold(e => fail(e.message), identity)
     assertEquals(r.resolved, 1)
     assertEquals(r.edgesAdded, 0)
-    assertEquals(SourceRepo.neighbors(ds, "zzacq_target").count(_.direction == "out"), 0)
+    assertEquals(CitationFixtures.neighbors(ds, "zzacq_target").count(_.direction == "out"), 0)
 
   // ── assess ──────────────────────────────────────────────────────────────────────────────────
 
@@ -296,7 +299,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assertEquals(r.followups.head.proposedKind, Acquire.EdgeKinds.Refutes) // influential first
     assertEquals(r.followups.map(_.citekey), List(Some("zzacq_critic"), None))
     assertEquals(r.edgesAdded, 1)
-    val incoming = SourceRepo.neighbors(ds, "zzacq_target").filter(_.direction == "in")
+    val incoming = CitationFixtures.neighbors(ds, "zzacq_target").filter(_.direction == "in")
     assertEquals(incoming.map(n => (n.citekey, n.kind)), Vector(("zzacq_critic", "refutes")))
 
   // ── discover ────────────────────────────────────────────────────────────────────────────────

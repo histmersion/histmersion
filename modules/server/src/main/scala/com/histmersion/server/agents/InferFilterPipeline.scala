@@ -64,7 +64,14 @@ final class InferFilterPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfi
       val refs =
         h.sourceRefs(cited.take(CitedShown)).map(r => s"[[${r.citekey}]] — ${r.title}${r.year.fold("")(y => s" ($y)")}")
       val vocab = (field: String) =>
-        h.facets(field, None, Filter()).toOption.toList.flatten.sortBy(-_.count).take(VocabularySize).map(_.value)
+        h.library.labels
+          .facets(field, None, Filter())
+          .toOption
+          .toList
+          .flatten
+          .sortBy(-_.count)
+          .take(VocabularySize)
+          .map(_.value)
       Loaded(
         a.slug,
         a.title,

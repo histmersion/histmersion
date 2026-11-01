@@ -1,5 +1,9 @@
 package com.histmersion.db
 
+import com.histmersion.domain.library.citations.CitationFixtures
+import com.histmersion.domain.library.sources.SourceFixtures
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -201,11 +205,11 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
       sql"""INSERT INTO place_footprints (place_id, role, geom, citekey)
             VALUES ($Place, 'core', ST_GeomFromText('POINT(32 39)', 4326), $Old)""".update.run()
 
-    val counts = SourceRepo.rename(ds, Old, New).fold(e => fail(e.message), identity)
+    val counts = SourceFixtures.rename(ds, Old, New).fold(e => fail(e.message), identity)
 
     // the source and everything with a foreign key
-    assert(SourceRepo.get(ds, Old).isEmpty)
-    val (detail, findings) = SourceRepo.get(ds, New).get
+    assert(SourceFixtures.get(ds, Old).isEmpty)
+    val (detail, findings) = SourceFixtures.get(ds, New).get
     assertEquals(detail.citekey, New)
     assertEquals(findings.size, 2)
     assertEquals(counts.findings, 2)
@@ -273,7 +277,7 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
 
     // edges in both directions followed the key; the parked ones waiting for the new name arrived
     assertEquals(
-      SourceRepo.neighbors(ds, New).map(n => (n.direction, n.kind, n.citekey)).toSet,
+      CitationFixtures.neighbors(ds, New).map(n => (n.direction, n.kind, n.citekey)).toSet,
       Set(
         ("out", "challenges", Other),
         ("in", "references", Other),
@@ -312,22 +316,22 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(counts.links, 10)
 
     // the alias
-    assertEquals(SourceRepo.aliases(ds).filter(_.alias.startsWith(Prefix)), List(SourceAlias(Old, New)))
-    assertEquals(SourceRepo.canonical(ds, Old), Some(New))
-    assertEquals(SourceRepo.canonical(ds, New), Some(New))
-    assertEquals(SourceRepo.canonical(ds, "zzrn_nothing"), None)
-    assertEquals(SourceRepo.resolveAliases(ds, List(Old, New)), Map(Old -> New, New -> New))
+    assertEquals(SourceFixtures.aliases(ds).filter(_.alias.startsWith(Prefix)), List(SourceAlias(Old, New)))
+    assertEquals(SourceFixtures.canonical(ds, Old), Some(New))
+    assertEquals(SourceFixtures.canonical(ds, New), Some(New))
+    assertEquals(SourceFixtures.canonical(ds, "zzrn_nothing"), None)
+    assertEquals(SourceFixtures.resolveAliases(ds, List(Old, New)), Map(Old -> New, New -> New))
 
   test("after a rename the old citekey keeps working as a link target, an edge target and a patch target"):
     put(source(Old)); put(source(Other))
-    val _ = SourceRepo.rename(ds, Old, New).fold(e => fail(e.message), identity)
+    val _ = SourceFixtures.rename(ds, Old, New).fold(e => fail(e.message), identity)
     // an article written LATER with the old key links the source, recorded under the new key
     val _ = ArticleRepo.put(ds, Article(Slug, "Zz", "concept", s"Late [[$Old]].", None, Nil, Nil, None))
     assertEquals(ArticleRepo.backlinksForSource(ds, New).map(_.id), List(Slug))
     // an edge written later to the old key is a real edge to the new one, not a parked one
     put(source(Other, edges = List(Edge(Other, Old, "challenges"))))
     assertEquals(
-      SourceRepo.neighbors(ds, New).map(n => (n.direction, n.citekey, n.target)),
+      CitationFixtures.neighbors(ds, New).map(n => (n.direction, n.citekey, n.target)),
       Vector(("in", Other, NeighborTarget.Source))
     )
     // a patch by the old key patches the renamed source
@@ -338,12 +342,12 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
     assert(e.getMessage.contains(s"renamed to '$New'"), e.getMessage)
     // the alias follows a second rename, and renaming back to a key the source had is allowed
     val third = "zzrn1999_book"
-    assert(SourceRepo.rename(ds, New, third).isRight)
-    assertEquals(SourceRepo.canonical(ds, Old), Some(third))
-    assert(SourceRepo.rename(ds, third, Old).isRight, "renaming back must be allowed")
-    assertEquals(SourceRepo.canonical(ds, Old), Some(Old))
+    assert(SourceFixtures.rename(ds, New, third).isRight)
+    assertEquals(SourceFixtures.canonical(ds, Old), Some(third))
+    assert(SourceFixtures.rename(ds, third, Old).isRight, "renaming back must be allowed")
+    assertEquals(SourceFixtures.canonical(ds, Old), Some(Old))
     assertEquals(
-      SourceRepo.aliases(ds).filter(_.alias.startsWith(Prefix)).toSet,
+      SourceFixtures.aliases(ds).filter(_.alias.startsWith(Prefix)).toSet,
       Set(SourceAlias(New, Old), SourceAlias(third, Old))
     )
 
@@ -356,18 +360,18 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
         .run()
         .toSet
     )
-    assert(SourceRepo.rename(ds, Old, New).isRight)
+    assert(SourceFixtures.rename(ds, Old, New).isRight)
     assertEquals(tombstones, Set.empty[(String, String)])
-    assert(SourceRepo.rename(ds, New, Old).isRight)
+    assert(SourceFixtures.rename(ds, New, Old).isRight)
     assertEquals(tombstones, Set(Old -> Old), "the alias Old was deleted: its tombstone names the source")
-    assertEquals(SourceRepo.aliases(ds).filter(_.alias.startsWith(Prefix)).map(_.alias), List(New))
-    assert(SourceRepo.rename(ds, Old, New).isRight)
+    assertEquals(SourceFixtures.aliases(ds).filter(_.alias.startsWith(Prefix)).map(_.alias), List(New))
+    assert(SourceFixtures.rename(ds, Old, New).isRight)
     assertEquals(tombstones, Set(New -> New), "Old is an alias again; New was dropped by this rename back")
 
   test("refusals leave everything as it was"):
     put(source(Old, findings = 1)); put(source(Other))
     def refused(from: String, to: String, code: Option[String], says: String): Unit =
-      SourceRepo.rename(ds, from, to) match
+      SourceFixtures.rename(ds, from, to) match
         case Right(_) => fail(s"$from → $to should be refused")
         case Left(e)  =>
           assertEquals(e.code, code, e.message)
@@ -378,7 +382,7 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
     refused("zzrn2000_missing", New, Some(Write.CodeNotFound), "zzrn2000_missing")
     refused(Old, Other, Some(Write.CodeInvalid), "already the citekey of another source")
     // a new key that is an OLD key of another source
-    assert(SourceRepo.rename(ds, Other, "zzrnb2019_other").isRight)
+    assert(SourceFixtures.rename(ds, Other, "zzrnb2019_other").isRight)
     refused(Old, Other, Some(Write.CodeInvalid), "old citekey of 'zzrnb2019_other'")
     // renaming an old key names what it points to
     refused(Other, New, Some(Write.CodeInvalid), "rename 'zzrnb2019_other' instead")
@@ -388,5 +392,5 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
     )
     refused(Old, New, Some(Write.CodeInvalid), s"finding id '$New#9'")
     // nothing moved
-    assertEquals(SourceRepo.get(ds, Old).map(_._1.citekey), Some(Old))
-    assertEquals(SourceRepo.aliasOf(ds, Old), None)
+    assertEquals(SourceFixtures.get(ds, Old).map(_._1.citekey), Some(Old))
+    assertEquals(SourceFixtures.aliasOf(ds, Old), None)

@@ -101,7 +101,8 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     }
     List("zzfocus_s1", "zzfocus_s2").foreach { c =>
       assert(
-        h.putSource(c, SourcePut(title = s"Zz $c", year = Some(2020), topics = List("zzfocus_t"), body = Some("Tin.")))
+        h.library.sources
+          .put(c, SourcePut(title = s"Zz $c", year = Some(2020), topics = List("zzfocus_t"), body = Some("Tin.")))
           .isRight
       )
       assert(transact(ds)(GoalLinkRepo.link(g(10), LinkKind.Source, c, None)))
@@ -119,7 +120,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     assert(transact(ds)(GoalLinkRepo.link(g(5), LinkKind.Article, Art, None)))
     up.onIngest = d =>
-      assert(h.putSource(ck(d), SourcePut(title = s"Ingested $d", year = Some(2023), doi = Some(d))).isRight)
+      assert(h.library.sources.put(ck(d), SourcePut(title = s"Ingested $d", year = Some(2023), doi = Some(d))).isRight)
       Right(
         IngestReport(
           ck(d),

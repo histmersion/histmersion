@@ -1,5 +1,7 @@
 package com.histmersion.server.acquire
 
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.augustnagro.magnum.connect
 
 import com.histmersion.domain.automation.worklists.QueueScope
@@ -8,7 +10,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.GoalPlans.LinkKind
-import com.histmersion.db.{AcquireRepo, ArticleRepo, CandidateRepo, GoalLinkRepo, GoalRepo, SourceRepo}
+import com.histmersion.db.{AcquireRepo, ArticleRepo, CandidateRepo, GoalLinkRepo, GoalRepo}
 
 import java.time.{LocalDate, ZoneOffset}
 import javax.sql.DataSource

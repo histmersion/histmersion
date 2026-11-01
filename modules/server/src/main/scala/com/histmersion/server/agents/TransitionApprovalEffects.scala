@@ -15,7 +15,7 @@ final class TransitionApprovalEffects(h: Handlers, ds: DataSource) extends Appro
   def proposal(payload: String): Option[() => Either[String, String]] =
     com.histmersion.db.Jsonb
       .read[Proposal](payload)
-      .map(p => () => h.patchSource(p.citekey, p.patch).left.map(_.message).map(_ => p.describe))
+      .map(p => () => h.library.sources.patch(p.citekey, p.patch).left.map(_.message).map(_ => p.describe))
 
   val subjectKinds: Set[ApprovalKind] = Set(ApprovalKind.ArticleFilter)
 

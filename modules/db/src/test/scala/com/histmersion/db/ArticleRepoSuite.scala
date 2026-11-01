@@ -1,5 +1,8 @@
 package com.histmersion.db
 
+import com.histmersion.domain.library.sources.SourceFixtures
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.api.*
@@ -97,7 +100,7 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
     val _ = ArticleRepo.put(ds, article("# T\n\n[[zz_comma2020_authors]]"))
     assertEquals(ArticleRepo.sourcesCited(ds, slug).map(_.authors), List(List("Stocker, Sharon R.", "Davis, Jack L.")))
     assertEquals(
-      SourceRepo.get(ds, "zz_comma2020_authors").map(_._1.authors),
+      SourceFixtures.get(ds, "zz_comma2020_authors").map(_._1.authors),
       Some(List("Stocker, Sharon R.", "Davis, Jack L."))
     )
 
@@ -334,6 +337,6 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
       article("# T\n\nbody")
         .copy(filter = Some(ArticleFilter(tags = List("x"))), reasons = Map("zz_covren2001_old" -> "about Egypt"))
     )
-    assert(SourceRepo.rename(ds, "zz_covren2001_old", "zz_covren2001_new").isRight)
+    assert(SourceFixtures.rename(ds, "zz_covren2001_old", "zz_covren2001_new").isRight)
     assertEquals(ArticleRepo.load(ds, slug).get.reasons, Map("zz_covren2001_new" -> "about Egypt"))
     wipe()

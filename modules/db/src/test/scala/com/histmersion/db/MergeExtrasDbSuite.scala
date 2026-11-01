@@ -1,5 +1,9 @@
 package com.histmersion.db
 
+import com.histmersion.domain.library.sources.SourceFixtures
+
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
 import com.histmersion.domain.catalogue.events.*
@@ -90,7 +94,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
         ds,
         bundle,
         BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
-        BundleImport.Options(false, cfg.limits.chunkChars, cfg.places.pointToleranceKm),
+        BundleImport.Options(false, cfg.limits.chunkChars, cfg.places.pointToleranceKm, SourceFixtures.referrers),
         Originals.inDir(originals),
         MergeResolutions(),
         merge,
@@ -111,7 +115,8 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
         ds,
         bundle,
         BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
-        BundleImport.Options(dryRun = false, cfg.limits.chunkChars, cfg.places.pointToleranceKm),
+        BundleImport
+          .Options(dryRun = false, cfg.limits.chunkChars, cfg.places.pointToleranceKm, SourceFixtures.referrers),
         Originals.inDir(originals),
         res,
         merge,

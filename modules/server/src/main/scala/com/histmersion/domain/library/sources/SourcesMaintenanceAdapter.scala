@@ -1,7 +1,6 @@
 package com.histmersion.domain.library.sources
 
 import com.histmersion.api.ReindexResult
-import com.histmersion.db.SourceRepo
 import com.histmersion.util.data.DataOwner
 import com.histmersion.util.data.TablesAdapter.LibraryOwner
 import com.histmersion.util.data.maintenance.{MaintenanceSite, MaintenanceSlice, MaintenanceTask, MaintenanceTaskName}

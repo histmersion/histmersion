@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.domain.catalogue.places.FindingPlacement
 import com.histmersion.domain.media.assets.NewFigure
 

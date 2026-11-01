@@ -1,5 +1,10 @@
 package com.histmersion.db
 
+import com.histmersion.domain.library.search.Search
+
+import com.histmersion.domain.library.search.SearchFixtures
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.domain.media.assets.AssetFixtures
 import com.histmersion.domain.media.assets.NewFigure
 
@@ -69,7 +74,7 @@ class RepoDetailsSuite extends com.histmersion.db.DbSuite:
     val _ = seed()
     // limits.snippetWords is snippetChars/6, so a small `snippet-chars` puts MaxWords under 8.
     List(1, 2, 5, 7, 8, 40).foreach { maxWords =>
-      val r = SourceRepo.sources(ds, Filter(q = Some("sea peoples"), limit = 5), maxWords)
+      val r = SearchFixtures.sources(ds, Filter(q = Some("sea peoples"), limit = 5), maxWords)
       assert(r.hits.nonEmpty, s"maxWords=$maxWords returned nothing")
     }
 

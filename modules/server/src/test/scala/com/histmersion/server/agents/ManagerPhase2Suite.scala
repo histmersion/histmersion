@@ -86,32 +86,39 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   private def seed(h: Handlers): Unit =
     assert(
-      h.putSource(
-        Ck,
-        SourcePut(
-          title = "Bronze Age tin",
-          year = Some(2019),
-          topics = List("zzagent_tin"),
-          status = Some(SourceStatus.Current),
-          summary = Some("The Uluburun ship carried ten tons of copper and one ton of tin."),
-          body =
-            Some("The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE.")
+      h.library.sources
+        .put(
+          Ck,
+          SourcePut(
+            title = "Bronze Age tin",
+            year = Some(2019),
+            topics = List("zzagent_tin"),
+            status = Some(SourceStatus.Current),
+            summary = Some("The Uluburun ship carried ten tons of copper and one ton of tin."),
+            body = Some(
+              "The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE."
+            )
+          )
         )
-      ).isRight
+        .isRight
     )
     assert(
-      h.putSource(
-        Ck2,
-        SourcePut(
-          title = "Tin isotopes",
-          year = Some(2024),
-          topics = List("zzagent_tin"),
-          body = Some("We show that the tin of the Uluburun cargo came from Central Asia, not Anatolia.")
+      h.library.sources
+        .put(
+          Ck2,
+          SourcePut(
+            title = "Tin isotopes",
+            year = Some(2024),
+            topics = List("zzagent_tin"),
+            body = Some("We show that the tin of the Uluburun cargo came from Central Asia, not Anatolia.")
+          )
         )
-      ).isRight
+        .isRight
     )
     assert(
-      h.patchSource(Ck2, SourcePatch(metadata = Some(MetadataPatch(status = Some(SourceStatus.Contested))))).isRight
+      h.library.sources
+        .patch(Ck2, SourcePatch(metadata = Some(MetadataPatch(status = Some(SourceStatus.Contested)))))
+        .isRight
     )
     assert(h.putGoal(Goal, GoalPut("Zz tin in the Bronze Age", notes = Some("where the tin came from"))).isRight)
 
@@ -331,7 +338,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     a.autoEnrich(Ck)
     assertEquals(connect(ds)(ManagerRepo.counts(EnrichId)).pending, 1)
     // the source got findings meanwhile: the manager settles the item without a run
-    assert(h.patchSource(Ck, SourcePatch(notes = Some("enriched by hand"))).isRight)
+    assert(h.library.sources.patch(Ck, SourcePatch(notes = Some("enriched by hand"))).isRight)
     a.managing.action(EnrichId, "resume", None)
     a.managers.tick(t0)
     assertEquals(item(EnrichId, SourceEnrich, Ck).status, "done")

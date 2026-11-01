@@ -1,5 +1,8 @@
 package com.histmersion.db
 
+import com.histmersion.domain.library.sources.SourceFixtures
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
 import com.histmersion.domain.catalogue.places.PlaceScope
@@ -202,7 +205,7 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(EvidenceFixtures.nearFindings(ds, "zztest_b", 150, 100, 10), Nil, "1200 BCE is 380 years away")
 
   test("the full-text index finds the sources naming an event; candidates keep their status"):
-    assertEquals(SourceRepo.naming(ds, "Zqecian eruption", 10), List("zqec_src2020"))
+    assertEquals(SourceFixtures.naming(ds, "Zqecian eruption", 10), List("zqec_src2020"))
     val c = EventLinkCandidate(
       "zztest_b",
       "zqec_src2020",

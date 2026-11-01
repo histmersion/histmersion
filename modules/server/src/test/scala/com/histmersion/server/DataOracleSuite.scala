@@ -1,5 +1,8 @@
 package com.histmersion.server
 
+import com.histmersion.domain.library.sources.SourceFixtures
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.domain.media.assets.AssetFixtures
 import com.histmersion.domain.media.assets.NewFigure
 
@@ -196,7 +199,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       chunk
     )
     SourceRepo.upsert(ds, src("zzgamma1903_old", "An Old Book", 1903), chunk)
-    val _ = SourceRepo.rename(ds, "zzgamma1903_old", "zzgamma1903_prolegomena")
+    val _ = SourceFixtures.rename(ds, "zzgamma1903_old", "zzgamma1903_prolegomena")
     val _ = ArticleRepo.put(
       ds,
       Article("zz_storm", "Storm gods", "concept", "Intro [[zzalpha2001_storm]].\n\nMiddle.\n\nEnd.")
@@ -274,7 +277,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
     // the same summary edited at home: a conflict
     val _ = SourceRepo.patch(home, "zzalpha2001_storm", SourcePatch(summary = Some("edited at home")), chunk)
     // a renamed citekey at work
-    val _ = SourceRepo.rename(work, "zzbeta2005_kingdom", "zzbeta2005_hittites")
+    val _ = SourceFixtures.rename(work, "zzbeta2005_kingdom", "zzbeta2005_hittites")
     // one paragraph both edited
     val _ = ArticleRepo.put(
       work,

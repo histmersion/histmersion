@@ -1,5 +1,8 @@
 package com.histmersion.db
 
+import com.histmersion.domain.library.search.SearchFixtures
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -41,7 +44,7 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
     q
 
   private def run(sql: String, maxRows: Int = 100, timeoutMs: Int = 5000, maxCell: Int = 2000) =
-    QueryRepo.run(queryDs, sql, timeoutMs, maxRows, maxCell)
+    SearchFixtures.run(queryDs, sql, timeoutMs, maxRows, maxCell)
 
   private val ck = "zzquery_probe"
 
@@ -166,7 +169,7 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
   // ── the live schema ──────────────────────────────────────────────────────────────────────────
 
   test("information_schema lists the real tables with their columns"):
-    val ts = QueryRepo.tables(ds)
+    val ts = SearchFixtures.tables(ds)
     val names = ts.map(_.name)
     List("sources", "findings", "edges", "source_chunks", "queue_items")
       .foreach(t => assert(names.contains(t), s"$t missing from $names"))
@@ -181,7 +184,7 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
 
   test("the generated tool description names the tables that exist"):
     // `Query` alone is ambiguous here — magnum exports one too
-    val d = com.histmersion.api.Query.toolDescription(com.histmersion.api.Query.SchemaTables(QueryRepo.tables(ds)))
+    val d = com.histmersion.api.Query.toolDescription(com.histmersion.api.Query.SchemaTables(SearchFixtures.tables(ds)))
     assert(d.contains("sources("), d)
     assert(d.contains("queue_items("), d)
 
@@ -243,8 +246,8 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
       assertEquals(Db.provisionQueryRole(ds, qc), Right(()), "idempotent")
       val q = testQueryPool(dbCfg, qc)
       assertEquals(Db.canConnect(q), Right(()))
-      assert(QueryRepo.run(q, s"SELECT title FROM sources WHERE citekey = '$ck'", 5000, 10, 100).isRight)
-      assert(QueryRepo.run(q, s"DELETE FROM sources WHERE citekey = '$ck'", 5000, 10, 100).isLeft)
+      assert(SearchFixtures.run(q, s"SELECT title FROM sources WHERE citekey = '$ck'", 5000, 10, 100).isRight)
+      assert(SearchFixtures.run(q, s"DELETE FROM sources WHERE citekey = '$ck'", 5000, 10, 100).isLeft)
       assert(probeExists)
     finally
       scala.util.Try(admin(s"DROP OWNED BY $role")); scala.util.Try(admin(s"DROP ROLE IF EXISTS $role"))

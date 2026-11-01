@@ -236,26 +236,31 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
 
   private def seed(h: Handlers): Unit =
     assert(
-      h.putSource(
-        Ck,
-        SourcePut(
-          title = "Bronze Age tin",
-          authors = List("Ann Tinley"),
-          year = Some(2019),
-          body =
-            Some("The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE.")
+      h.library.sources
+        .put(
+          Ck,
+          SourcePut(
+            title = "Bronze Age tin",
+            authors = List("Ann Tinley"),
+            year = Some(2019),
+            body = Some(
+              "The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE."
+            )
+          )
         )
-      ).isRight
+        .isRight
     )
     assert(
-      h.putSource(
-        Ck2,
-        SourcePut(
-          title = "Tin isotopes",
-          year = Some(2024),
-          body = Some("We show that the tin of the Uluburun cargo came from Central Asia, not Anatolia.")
+      h.library.sources
+        .put(
+          Ck2,
+          SourcePut(
+            title = "Tin isotopes",
+            year = Some(2024),
+            body = Some("We show that the tin of the Uluburun cargo came from Central Asia, not Anatolia.")
+          )
         )
-      ).isRight
+        .isRight
     )
     assert(h.putArticle(Slug, ArticlePut("Tin in the Bronze Age", "concept", Body)).isRight)
 
@@ -317,7 +322,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     // the edge was verified against the target's record and waits for a person
     val open = TestRuns.approvals(ds).approvals(Some(ApprovalState.Open), 50).filter(_.citekey == Ck)
     assertEquals(open.map(x => (x.kind, x.edgeKind, x.target)), List(("edge", Some("refutes"), Some(Ck2))))
-    assertEquals(h.neighbors(Ck, List("refutes")), Nil, "nothing is applied before approval")
+    assertEquals(h.library.citations.neighbors(Ck, List("refutes")), Nil, "nothing is applied before approval")
     val log = h.ops.queueList("log", all = true).toOption.get.items.filter(_.text.contains(Slug))
     assertEquals(
       log.map(_.text),
@@ -639,7 +644,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val (a, h) = handlers(c); seed(h)
     // the two sources under a topic of their own, the article's filter
     List(Ck, Ck2).foreach(ck =>
-      assert(h.patchSource(ck, SourcePatch(topics = Some(List("zzagent_review_tin")))).isRight)
+      assert(h.library.sources.patch(ck, SourcePatch(topics = Some(List("zzagent_review_tin")))).isRight)
     )
     assert(
       h.patchArticle(Slug, ArticlePatch(filter = Some(ArticleFilter(topics = List("zzagent_review_tin"))))).isRight
@@ -1438,20 +1443,26 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
   /** Two critics of the cited source: Ck2 refutes it, Ck3 challenges it — two open pairs. */
   private def critics(h: Handlers): Unit =
     assert(
-      h.putSource(
-        Ck3,
-        SourcePut(
-          title = "Tin routes",
-          year = Some(2021),
-          body = Some("The tin went overland before it reached the coast.")
+      h.library.sources
+        .put(
+          Ck3,
+          SourcePut(
+            title = "Tin routes",
+            year = Some(2021),
+            body = Some("The tin went overland before it reached the coast.")
+          )
         )
-      ).isRight
+        .isRight
     )
     assert(
-      h.patchSource(Ck2, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Ck, EdgeKind.Refutes)))))).isRight
+      h.library.sources
+        .patch(Ck2, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Ck, EdgeKind.Refutes))))))
+        .isRight
     )
     assert(
-      h.patchSource(Ck3, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Ck, EdgeKind.Challenges)))))).isRight
+      h.library.sources
+        .patch(Ck3, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Ck, EdgeKind.Challenges))))))
+        .isRight
     )
 
   /** After a fix that cites a second source the confirming rules reviewer would owe two spot-checks; its scripted
@@ -1642,7 +1653,9 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
   /** Ck2 refutes Ck: one open pair, on a work the article cites. */
   private def refuted(h: Handlers): Unit =
     assert(
-      h.patchSource(Ck2, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Ck, EdgeKind.Refutes)))))).isRight
+      h.library.sources
+        .patch(Ck2, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Ck, EdgeKind.Refutes))))))
+        .isRight
     )
 
   private def logOf(h: Handlers) =

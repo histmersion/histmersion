@@ -66,8 +66,16 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
   override def afterEach(context: AfterEach): Unit = clean()
 
   private def seed(h: Handlers): Unit =
-    assert(h.putSource(Ck, SourcePut(title = "Old tin", year = Some(2000), doi = Some("10.5555/zzagent.old"))).isRight)
-    assert(h.putSource(Ck2, SourcePut(title = "New tin", year = Some(2024), doi = Some("10.5555/zzagent.new"))).isRight)
+    assert(
+      h.library.sources
+        .put(Ck, SourcePut(title = "Old tin", year = Some(2000), doi = Some("10.5555/zzagent.old")))
+        .isRight
+    )
+    assert(
+      h.library.sources
+        .put(Ck2, SourcePut(title = "New tin", year = Some(2024), doi = Some("10.5555/zzagent.new")))
+        .isRight
+    )
     assert(h.putGoal(Goal, GoalPut("Zz scheduled tin")).isRight)
     assert(transact(ds)(GoalLinkRepo.link(Goal, LinkKind.Source, Ck, None)))
 
@@ -111,7 +119,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
     val open = a.approvalsList(None, None).toOption.get.filter(_.citekey == Ck2)
     assertEquals(open.map(x => (x.kind, x.edgeKind, x.target)), List(("edge", Some("refutes"), Some(Ck))))
     assert(open.head.evidence.contains("we refute the old dating"), open.head.evidence)
-    assertEquals(h.neighbors(Ck2, List("refutes")), Nil, "nothing applied before approval")
+    assertEquals(h.library.citations.neighbors(Ck2, List("refutes")), Nil, "nothing applied before approval")
     def queued = h.ops.queueList("acquire", all = true).toOption.get.items.filter(_.text.contains("zzagent.out"))
     assertEquals(queued.size, 1)
     assert(

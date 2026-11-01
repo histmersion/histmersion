@@ -166,9 +166,9 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
 
   test("backup → download → drop a source → restore --force → search finds it again"):
     val h = Handlers(Deps(cfg, ds))
-    assert(h.putSource("zz_backup_a", fixture("zz_backup_a", "The Kept One")).isRight)
-    assert(h.putSource("zz_backup_b", fixture("zz_backup_b", "The Other One")).isRight)
-    val before = h.sources(Filter(tags = List("zz-backup-test"), limit = 10)).total
+    assert(h.library.sources.put("zz_backup_a", fixture("zz_backup_a", "The Kept One")).isRight)
+    assert(h.library.sources.put("zz_backup_b", fixture("zz_backup_b", "The Other One")).isRight)
+    val before = h.library.search.sources(Filter(tags = List("zz-backup-test"), limit = 10)).total
     assertEquals(before, 2)
 
     supervised {
@@ -221,8 +221,8 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
 
         // 6. lose a source
         sql("DELETE FROM sources WHERE citekey = 'zz_backup_a'")
-        assert(h.getSource("zz_backup_a").isLeft)
-        assertEquals(h.sources(Filter(tags = List("zz-backup-test"), limit = 10)).total, 1)
+        assert(h.library.sources.get("zz_backup_a").isLeft)
+        assertEquals(h.library.search.sources(Filter(tags = List("zz-backup-test"), limit = 10)).total, 1)
 
         // 7. restore it
         val (fs, fb) = post(s"$url/api/restore", s"""{"file":"$file","force":true}""")
@@ -235,16 +235,16 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
         com.histmersion.db.Db.evict(ds)
 
         // 8. …and search finds it again, findings and all
-        val after = h.sources(Filter(tags = List("zz-backup-test"), limit = 10))
+        val after = h.library.search.sources(Filter(tags = List("zz-backup-test"), limit = 10))
         assertEquals(after.total, 2)
         assertEquals(after.hits.map(_.source.citekey).sorted, List("zz_backup_a", "zz_backup_b"))
-        val got = h.getSource("zz_backup_a").toOption.get
+        val got = h.library.sources.get("zz_backup_a").toOption.get
         assertEquals(got.source.title, "The Kept One")
         assertEquals(got.findings.map(_.claim), List("zz_backup_a says something"))
         assertEquals(got.source.periodStart, Some(-1300L))
 
         // 9. the maintenance lock was released — writes work again
-        assert(h.putSource("zz_backup_c", fixture("zz_backup_c", "After The Restore")).isRight)
+        assert(h.library.sources.put("zz_backup_c", fixture("zz_backup_c", "After The Restore")).isRight)
       finally b.stop()
     }
 
@@ -268,7 +268,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
   // A dump from another installation, whose roles are named differently, must still come back.
   test("a dump owned by and granted to roles this cluster no longer has restores cleanly"):
     val h = Handlers(Deps(cfg, ds))
-    assert(h.putSource("zz_backup_roles", fixture("zz_backup_roles", "Under Old Names")).isRight)
+    assert(h.library.sources.put("zz_backup_roles", fixture("zz_backup_roles", "Under Old Names")).isRight)
     admin("DROP ROLE IF EXISTS zz_gone_owner"); admin("DROP ROLE IF EXISTS zz_gone_reader")
     admin("CREATE ROLE zz_gone_owner"); admin("CREATE ROLE zz_gone_reader")
     sql("ALTER TABLE articles OWNER TO zz_gone_owner")
@@ -294,7 +294,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
     val h = Handlers(Deps(cfg, ds))
     val dump = takeBackup(h)
     sql("TRUNCATE sources CASCADE")
-    assertEquals(h.sources(Filter(limit = 10)).total, 0)
+    assertEquals(h.library.search.sources(Filter(limit = 10)).total, 0)
     val r = h.restore(RestoreRequest(dump.file, force = false))
     assert(r.isRight, r.toString)
     assert(r.toOption.get.sourcesAfter > 0, r.toString)

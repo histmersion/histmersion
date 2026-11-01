@@ -1,4 +1,7 @@
-package com.histmersion.db
+package com.histmersion.domain.library.search
+
+import com.histmersion.db.*
+import com.histmersion.db.given
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 

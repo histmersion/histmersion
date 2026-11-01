@@ -89,7 +89,6 @@ direction	api:api/Markdown.scala	util.common -> media: MediaProviderInfo	1
 direction	api:api/Markdown.scala	util.common -> media: MediaSample	1
 direction	api:api/Markdown.scala	util.common -> media: MediaThumb	1
 direction	api:api/Markdown.scala	util.common -> research: Backlink	1
-direction	api:api/Markdown.scala	util.common -> research: TocEntry	1
 direction	api:api/MergeIssueDetail.scala	util.data -> automation: GoalPlans	1
 direction	api:api/MergeMarkdown.scala	util.data -> catalogue: Place	1
 direction	api:api/MergeMarkdown.scala	util.data -> library: LabelRenamed	1
@@ -98,10 +97,8 @@ direction	api:api/MergePlan.scala	util.data -> library: SourceMatch	1
 direction	api:api/PlaceDetail.scala	catalogue -> media: MediaThumb	1
 direction	api:api/Queue.scala	automation -> library: Acquire	1
 direction	api:api/Queue.scala	automation -> library: AcquireChecks	1
-direction	api:api/Rename.scala	library -> research: ArticleLinks	1
 direction	api:api/ResolvedId.scala	util.identity -> library: ResolvedSource	1
 direction	api:api/ResolvedId.scala	util.identity -> research: ResolvedArticle	1
-direction	api:api/SourceDelete.scala	library -> research: ArticleLinks	1
 direction	api:api/Tree.scala	catalogue -> library: Aggregate	1
 direction	api:api/Tree.scala	catalogue -> library: Bucket	1
 direction	api:api/Tree.scala	catalogue -> library: BucketSample	1
@@ -184,7 +181,6 @@ direction	db:db/BundleImport.scala	util.data -> research: ArticleRepo	1
 direction	db:db/Codecs.scala	util.common -> catalogue: GridCell	1
 direction	db:db/Codecs.scala	util.common -> catalogue: PlaceDating	1
 direction	db:db/Codecs.scala	util.common -> catalogue: PlaceTimeBasis	1
-direction	db:db/Codecs.scala	util.common -> library: NeighborTarget	1
 direction	db:db/Db.scala	util.common -> library: QueryConfig	1
 direction	db:db/LintRepo.scala	util.data -> catalogue: Geocoder	1
 direction	db:db/LintRepo.scala	util.data -> library: Edge	1
@@ -194,10 +190,6 @@ direction	db:db/LintRepo.scala	util.data -> research: CoverageEdge	1
 direction	db:db/LintRepo.scala	util.data -> research: CritiquePairing	1
 direction	db:db/ListSql.scala	util.database -> automation: ListFilters	1
 direction	db:db/MergeState.scala	util.data -> library: MergeText	1
-direction	db:db/SourceDeleteRepo.scala	library -> research: ArticleLinks	1
-direction	db:db/SourceRepo.scala	library -> research: ArticleLinks	1
-direction	db:db/SourceRepo.scala	library -> research: ArticleRepo	1
-direction	db:db/SourceRepo.scala	library -> research: TocEntry	1
 direction	files:files/BundleEntities.scala	util.data -> automation: Goal	1
 direction	files:files/BundleEntities.scala	util.data -> catalogue: Attestation	1
 direction	files:files/BundleEntities.scala	util.data -> catalogue: Corrections	1
@@ -293,19 +285,14 @@ repository	db:db/BundleImport.scala	SourceRepo of library.sources	1
 repository	db:db/CritiqueRepo.scala	SourceRepo of library.sources	1
 repository	db:db/Importer.scala	SourceRepo of library.sources	1
 repository	db:db/LintRepo.scala	SourceRepo of library.sources	1
-repository	db:db/SourceDeleteRepo.scala	QueueRepo of automation.worklists	1
-repository	db:db/SourceRepo.scala	ArticleRepo of research.articles	1
 repository	server:server/Bootstrap.scala	JobRepo of util.jobs	1
 repository	server:server/Handlers.scala	AgentStateRepo of automation.agents	1
-repository	server:server/Handlers.scala	AggregateRepo of library.search	1
 repository	server:server/Handlers.scala	ArticleRepo of research.articles	1
 repository	server:server/Handlers.scala	ArticleReviewRepo of research.articles.review	1
 repository	server:server/Handlers.scala	CoverageRepo of research.articles	1
 repository	server:server/Handlers.scala	CritiqueRepo of research.articles	1
 repository	server:server/Handlers.scala	GoalRepo of automation.goals	1
 repository	server:server/Handlers.scala	ReviewLedgerRepo of research.workflows	1
-repository	server:server/Handlers.scala	SourceDeleteRepo of library.sources	1
-repository	server:server/Handlers.scala	SourceRepo of library.sources	1
 repository	server:server/Handlers.scala	UiRepo of server.instance	1
 repository	server:server/Handlers.scala	UpstreamQuotaRepo of library.acquisition	1
 repository	server:server/IngestHandlers.scala	JobRepo of util.jobs	1
@@ -316,7 +303,6 @@ repository	server:server/OpsHandlers.scala	AcquireCheckRepo of library.acquisiti
 repository	server:server/OpsHandlers.scala	ArticleRepo of research.articles	1
 repository	server:server/OpsHandlers.scala	GoalLinkRepo of automation.goals	1
 repository	server:server/OpsHandlers.scala	GoalRepo of automation.goals	1
-repository	server:server/OpsHandlers.scala	QueryRepo of library.search	1
 repository	server:server/acquire/AcquireHandlers.scala	SourceRepo of library.sources	1
 repository	server:server/acquire/CandidateSearch.scala	ArticleRepo of research.articles	1
 repository	server:server/acquire/CandidateSearch.scala	GoalLinkRepo of automation.goals	1

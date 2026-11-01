@@ -12,10 +12,10 @@ final class PageBuilder(h: Handlers):
 
   /** `(title, inner HTML)` of `/source/{citekey}`, `?q=` terms highlighted. */
   def source(ck: String, full: Boolean, q: Option[String]): Option[(String, String)] =
-    h.getSource(ck).toOption.map { sw =>
+    h.library.sources.get(ck).toOption.map { sw =>
       val s = sw.source
       val ref = SourceRef(s.citekey, s.doi, s.authors, s.year, s.title, s.status)
-      val rows = h.neighbors(ck)
+      val rows = h.library.citations.neighbors(ck)
       val refs = h
         .sourceRefs(rows.filter(_.target == NeighborTarget.Source).map(_.citekey))
         .map(r => r.citekey -> r)
@@ -50,7 +50,7 @@ final class PageBuilder(h: Handlers):
           if !full then FullText.Hidden
           else s.ocrMarkdown.filter(_.trim.nonEmpty).fold(FullText.Missing)(FullText.Shown(_)),
         query = term,
-        formatting = h.sourceFormatting(s.summary, s.notes)
+        formatting = h.library.sources.formatIssues(s.summary, s.notes)
       )
       val md = List(s.summary, s.notes, if full then s.ocrMarkdown else None).flatten.mkString("\n\n")
       val links = h.pageLinks(ArticleLinks.targets(md))

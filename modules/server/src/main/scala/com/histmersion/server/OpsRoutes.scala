@@ -19,7 +19,5 @@ object OpsRoutes:
     OpsApi.queueImport.serverLogic[Identity]((list, req) => ops.queueImport(list, req)),
     OpsApi.queueList.serverLogic[Identity]((list, all, goal, job) => ops.queueList(list, all, goal, job)),
     OpsApi.queueAdd.serverLogic[Identity]((list, in) => ops.queueAdd(list, in)),
-    OpsApi.goalsExport.serverLogicSuccess[Identity](_ => ops.goalsExport()),
-    OpsApi.query.serverLogic[Identity](req => ops.query(req)),
-    OpsApi.schemaTables.serverLogicSuccess[Identity](_ => ops.schemaTables)
+    OpsApi.goalsExport.serverLogicSuccess[Identity](_ => ops.goalsExport())
   )

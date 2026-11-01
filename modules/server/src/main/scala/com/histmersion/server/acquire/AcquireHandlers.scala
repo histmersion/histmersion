@@ -1,5 +1,7 @@
 package com.histmersion.server.acquire
 
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.domain.automation.worklists.QueueScope
 
 import com.histmersion.domain.library.acquisition.{upstream, wire}
@@ -13,7 +15,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Acquire.Ident
-import com.histmersion.db.{AcquireRepo, CandidateRepo, SourceRepo}
+import com.histmersion.db.{AcquireRepo, CandidateRepo}
 import com.histmersion.server.Deps
 
 import io.circe.Json

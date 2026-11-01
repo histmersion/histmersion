@@ -93,7 +93,7 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   override def afterEach(context: AfterEach): Unit = clean()
 
   private def seed(h: Handlers): Unit =
-    assert(h.putSource(Ck, SourcePut(title = "Bronze Age tin", year = Some(2019), body = Some(Body))).isRight)
+    assert(h.library.sources.put(Ck, SourcePut(title = "Bronze Age tin", year = Some(2019), body = Some(Body))).isRight)
 
   private val now = () => System.currentTimeMillis()
   private def low(resetIn: Long = 3600000L) =

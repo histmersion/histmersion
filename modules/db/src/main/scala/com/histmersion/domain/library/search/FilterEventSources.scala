@@ -3,7 +3,7 @@ package com.histmersion.domain.library.search
 import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.api.Filter
-import com.histmersion.db.{FilterSql, Sql}
+import com.histmersion.db.Sql
 import com.histmersion.domain.catalogue.events.EventSourceFilter
 
 /** The events related to what a filter selects, by the search's own reading of the filter's sources. */

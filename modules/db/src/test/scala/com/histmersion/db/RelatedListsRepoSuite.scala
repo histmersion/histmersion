@@ -1,5 +1,8 @@
 package com.histmersion.db
 
+import com.histmersion.domain.library.search.SearchFixtures
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.domain.catalogue.events.*
@@ -139,5 +142,5 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(events(Filter(), text = Some("unsourced")), Set("zz_rel_ev_nosrc"))
 
   test("sources: title narrows the source list by its own title"):
-    val r = SourceRepo.sources(ds, Filter(title = Some("title zz_rel_m"), limit = 50), 20, PlaceScope.empty)
+    val r = SearchFixtures.sources(ds, Filter(title = Some("title zz_rel_m"), limit = 50), 20, PlaceScope.empty)
     assertEquals(r.hits.map(_.source.citekey), List("zz_rel_match"))

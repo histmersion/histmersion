@@ -1,4 +1,7 @@
-package com.histmersion.db
+package com.histmersion.domain.library.search
+
+import com.histmersion.db.*
+import com.histmersion.db.given
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
@@ -9,16 +12,15 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
-import javax.sql.DataSource
-
-given DbCodec[PeriodRow] = DbCodec.derived
 
 /** Period bounds of everything matching a filter — the raw input of [[com.histmersion.api.Aggregate]].
   *
   * The DB only SELECTS periods; **bucketing happens in Scala** (pure, unit-tested) so the strip (§1.7) and the wave-2
   * "by time" tree (§1.6) cannot drift apart, and so no SQL has to know about adaptive bucket sizes.
   */
-object AggregateRepo:
+private[search] object AggregateRepo:
+
+  private given DbCodec[PeriodRow] = DbCodec.derived
 
   /** The SQL behind [[periods]] — a **pure** value (plan §1.0/§2.2), so the predicate can be asserted on without a
     * database.
@@ -59,11 +61,11 @@ object AggregateRepo:
         Sql.raw(" AND (") ++ ownPeriod ++ Sql.raw(" OR fp.in_window > 0)")
 
   /** Run [[periodsQuery]]. `unit` is `sources` (default) or `findings`. */
-  def periods(ds: DataSource, unit: String, filter: Filter, scope: PlaceScope = PlaceScope.empty): Vector[PeriodRow] =
-    connect(ds)(periodsQuery(unit, filter, scope).frag.query[PeriodRow].run())
+  def periods(unit: String, filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Vector[PeriodRow] =
+    periodsQuery(unit, filter, scope).frag.query[PeriodRow].run()
 
   /** One row as SQL returns it — the place ids arrive as a `text[]`. */
-  final private[db] case class TreeRowRaw(
+  final private[search] case class TreeRowRaw(
       key: String,
       citekey: String,
       title: String,
@@ -126,10 +128,5 @@ object AggregateRepo:
   /** Run [[treeRowsQuery]]: the rows the tree buckets and nests ([[com.histmersion.api.Tree]], pure), hung off the
     * gazetteer the catalogue gives (`TreeRepo.gazetteer`). `unit` is `sources` (default) or `findings`.
     */
-  def treeRows(
-      ds: DataSource,
-      unit: String,
-      filter: Filter,
-      scope: PlaceScope = PlaceScope.empty
-  ): Vector[Tree.TreeRow] =
-    connect(ds)(treeRowsQuery(unit, filter, scope).frag.query[TreeRowRaw].run()).map(_.toRow)
+  def treeRows(unit: String, filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Vector[Tree.TreeRow] =
+    treeRowsQuery(unit, filter, scope).frag.query[TreeRowRaw].run().map(_.toRow)

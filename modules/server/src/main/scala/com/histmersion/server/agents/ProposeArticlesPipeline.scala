@@ -101,7 +101,14 @@ final class ProposeArticlesPipeline(h: Handlers, ds: DataSource, cfg: => AgentsC
         .flatMap(i => i.state.spec.map(sp => Existing(i.target, sp.title, Some(sp.filter), Nil)))
         .foldLeft(List.empty[Existing])((acc, e) => if acc.exists(_.slug == e.slug) then acc else acc :+ e)
       val vocab = (field: String) =>
-        h.facets(field, None, Filter()).toOption.toList.flatten.sortBy(-_.count).take(VocabularySize).map(_.value)
+        h.library.labels
+          .facets(field, None, Filter())
+          .toOption
+          .toList
+          .flatten
+          .sortBy(-_.count)
+          .take(VocabularySize)
+          .map(_.value)
       Loaded(
         g.slug,
         g.title,

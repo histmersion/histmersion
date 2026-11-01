@@ -1,8 +1,9 @@
 package com.histmersion.domain.library.collections
 
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.api.*
 import com.histmersion.config.*
-import com.histmersion.db.SourceRepo
 import com.histmersion.server.{Composition, OfflineConverter}
 import com.histmersion.values.SourceStatus
 import com.histmersion.plugins.calibre.CalibreFixture

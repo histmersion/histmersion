@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.library.sources.SourceRepo
+
 import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*
@@ -223,7 +225,10 @@ object BundleImport:
       // old citekey does not stay an alias (it is the other work's now)
       merged.renames.foreach { (_, from, to) =>
         importing(false)
-        SourceRepo.renameIn(from, to).left.foreach(e => throw ImportAbort(List(s"source $from → $to: ${e.message}")))
+        SourceRepo
+          .renameIn(from, to, opts.sourceReferrers)
+          .left
+          .foreach(e => throw ImportAbort(List(s"source $from → $to: ${e.message}")))
         sql"DELETE FROM source_aliases WHERE alias = $from".update.run()
         importing(true)
       }
@@ -234,7 +239,7 @@ object BundleImport:
         localCk.get(s.uid).filter(_ != s.citekey).foreach { old =>
           importing(false)
           SourceRepo
-            .renameIn(old, s.citekey)
+            .renameIn(old, s.citekey, opts.sourceReferrers)
             .left
             .foreach(e => throw ImportAbort(List(s"source $old → ${s.citekey}: ${e.message}")))
           importing(true)

@@ -99,15 +99,18 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   private def seed(h: Handlers, slugs: String*): Unit =
     assert(
-      h.putSource(
-        Ck,
-        SourcePut(
-          title = "Bronze Age tin",
-          year = Some(2019),
-          body =
-            Some("The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE.")
+      h.library.sources
+        .put(
+          Ck,
+          SourcePut(
+            title = "Bronze Age tin",
+            year = Some(2019),
+            body = Some(
+              "The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE."
+            )
+          )
         )
-      ).isRight
+        .isRight
     )
     slugs.foreach(s => assert(h.putArticle(s, ArticlePut(s"Tin $s", "concept", Body, tags = List(Tag))).isRight))
 
@@ -215,13 +218,17 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     // two critics of the cited source: the checklist has two open pairs
     List("zzagent2020_critic", "zzagent2021_critic").foreach { ck =>
       assert(
-        h.putSource(
-          ck,
-          SourcePut(title = s"Against $ck", year = Some(2020), body = Some("The tin was not from Anatolia."))
-        ).isRight
+        h.library.sources
+          .put(
+            ck,
+            SourcePut(title = s"Against $ck", year = Some(2020), body = Some("The tin was not from Anatolia."))
+          )
+          .isRight
       )
       assert(
-        h.patchSource(ck, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Ck, EdgeKind.Refutes)))))).isRight
+        h.library.sources
+          .patch(ck, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Ck, EdgeKind.Refutes))))))
+          .isRight
       )
     }
     activeReview(a, ManagerConfig(maxRunsPerArticle = Some(4), noProgressRuns = Some(2), cooldownMinutes = Some(0)))
@@ -366,7 +373,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       .fold(e => fail(e.message), identity)
     a.managers.tick(t0)
     assertEquals(List("zzagent_h1", "zzagent_h2").map(item(_).status), List("held", "held"))
-    assert(h.putSource("zzagent2030_new", SourcePut(title = "New", year = Some(2030))).isRight)
+    assert(h.library.sources.put("zzagent2030_new", SourcePut(title = "New", year = Some(2030))).isRight)
     a.managers.tick(t0)
     assertEquals(item("zzagent_h2").status, "active")
     a.managers.tick(Instant.parse("2026-10-16T00:00:01Z"))
