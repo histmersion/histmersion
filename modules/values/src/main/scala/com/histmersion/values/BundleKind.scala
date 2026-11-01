@@ -16,6 +16,9 @@ enum BundleKind:
   /** The NDJSON file holding this kind's lines. */
   def file: String = s"entities/${BundleKind.fileStem(this)}.ndjson"
 
+  /** The letter a merge issue about this kind of record starts its id with (`P-1a2b3c4d`). */
+  def issueLetter: String = BundleKind.letterOf(this)
+
 object BundleKind:
   def wireOf(k: BundleKind): String = k match
     case Source         => "source"
@@ -44,6 +47,20 @@ object BundleKind:
     case QueueItem      => "queue"
     case Place          => "places"
     case Period         => "periods"
+
+  private def letterOf(k: BundleKind): String = k match
+    case Source         => "S"
+    case Finding        => "F"
+    case Article        => "A"
+    case ArticleVersion => "V"
+    case Asset          => "X"
+    case AssetLink      => "K"
+    case Attestation    => "T"
+    case Event          => "E"
+    case Goal           => "G"
+    case QueueItem      => "Q"
+    case Place          => "P"
+    case Period         => "N"
 
   def fromWire(s: String): Option[BundleKind] = values.find(_.wire == s.trim.toLowerCase)
 

@@ -3,6 +3,8 @@ package com.histmersion.domain.catalogue.events
 import com.histmersion.domain.{MergePlanner, MergeSettings}
 import com.histmersion.files.BundleEntities
 import com.histmersion.util.data.DataOwner
+import com.histmersion.domain.catalogue.CataloguePlan
+import com.histmersion.util.data.exchange.PlanRules
 import com.histmersion.util.data.exchange.MergeRules
 import com.histmersion.values.BundleKind
 
@@ -13,6 +15,7 @@ import hearth.kindlings.optics.syntax.*
   * which of the bundle's event ids and old ids name an event here.
   */
 object EventMergeRules extends MergeRules:
+  override val planning: Option[PlanRules] = Some(CataloguePlan)
   val owner: DataOwner = DataOwner("catalogue")
   val kind: BundleKind = BundleKind.Event
   override val ledgerLabel: Option[String] = Some("SELECT id FROM events WHERE uid = l.local_uid")

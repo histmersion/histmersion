@@ -1,6 +1,16 @@
 package com.histmersion.domain
 
-import com.histmersion.util.data.exchange.{BundleFormat, BundlePlan, Diff3}
+import com.histmersion.util.data.exchange.{
+  BundleFormat,
+  BundlePlan,
+  Diff3,
+  PairQuestions,
+  PlanFolds,
+  PlanMerge,
+  PlanQuestions,
+  PlanRules,
+  PlanRuns
+}
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.{
   ArticleLinks,
@@ -9,16 +19,12 @@ import com.histmersion.api.{
   BundleArticle,
   BundleAsset,
   BundleAssetLink,
-  BundleAttestation,
   BundleEdge,
-  BundleEvent,
   BundleFinding,
   BundleGoal,
   BundleGoalLink,
   BundleInstance,
   BundleManifest,
-  BundlePeriod,
-  BundlePlace,
   BundleQueueItem,
   BundleReference,
   BundleSource,
@@ -26,7 +32,6 @@ import com.histmersion.api.{
   IssueDetail,
   IssueField,
   IssueHunk,
-  IssuePlace,
   IssueSide,
   IssueText,
   MatchCounts,
@@ -47,7 +52,7 @@ import BundlePlan.{Decision, Ledger, Local}
 import MergeFold.{ArticleOutcome, FindingMatch}
 import MergeText.MinHash
 import SourceMatcher.{Outcome, Pair, Side}
-import TextAnchor.Anchor
+import com.histmersion.util.text.Anchor
 
 import io.circe.{Decoder, Encoder, Json}
 import java.util.UUID
@@ -324,20 +329,7 @@ object MergePlanner:
   def letter(kind: IssueKind, entity: BundleKind): String = kind match
     case IssueKind.BodyDiffers   => "O"
     case IssueKind.AliasConflict => "L"
-    case _                       =>
-      entity match
-        case BundleKind.Source         => "S"
-        case BundleKind.Finding        => "F"
-        case BundleKind.Article        => "A"
-        case BundleKind.ArticleVersion => "V"
-        case BundleKind.Asset          => "X"
-        case BundleKind.AssetLink      => "K"
-        case BundleKind.Attestation    => "T"
-        case BundleKind.Event          => "E"
-        case BundleKind.Goal           => "G"
-        case BundleKind.QueueItem      => "Q"
-        case BundleKind.Place          => "P"
-        case BundleKind.Period         => "N"
+    case _                       => entity.issueLetter
 
   /** `<letter>-<8 hex>`: sha256 of the kind, the sorted bundle uids, the sorted local uids, the two revs and anything
     * else that tells the issue apart (an alias). The same records unchanged → the same id; either side changed → a new
@@ -375,39 +367,6 @@ object MergePlanner:
       case None => List(IssueHunk(conflict = true, Nil, left.split("\n", -1).toList, right.split("\n", -1).toList))
     IssueText(base, left, right, hunks)
 
-  /** Events and places point at places by id, places and periods at their parents by id: a bundle place (period)
-    * matched to one here under another id is pointed at under that id. Pure.
-    */
-  def repoint(es: BundleEntities, places: Map[String, String], periods: Map[String, String]): BundleEntities =
-    if places.isEmpty && periods.isEmpty then es
-    else
-      es.copy(
-        events = es.events.map(e => e.placeId.flatMap(places.get).fold(e)(p => e.copy(placeId = Some(p)))),
-        places = es.places.map(p =>
-          p.copy(relations = p.relations.map(r => places.get(r.parentId).fold(r)(x => r.copy(parentId = x))))
-        ),
-        periods = es.periods.map(p => p.parentId.flatMap(periods.get).fold(p)(x => p.copy(parentId = Some(x))))
-      )
-
-  /** The bundle's places that are one here under another id — the other collection renamed them (the same uid, a new
-    * id): each with our id, and whether the new id is a DIFFERENT place's here (then the rename cannot be followed). A
-    * place a redirect maps (`mapped`) is localized already. Pure.
-    */
-  def renamedPlaces(
-      bundle: List[BundlePlace],
-      here: List[BundlePlace],
-      mapped: Set[UUID]
-  ): List[(BundlePlace, String, Boolean)] =
-    val ourId = here.map(p => p.uid -> p.id).toMap
-    val owner = here.map(p => p.id -> p.uid).toMap
-    bundle
-      .filterNot(p => mapped(p.uid))
-      .flatMap(p =>
-        ourId.get(p.uid).filter(_ != p.id).map { ours =>
-          (p, ours, owner.get(p.id).exists(_ != p.uid))
-        }
-      )
-
   /** A goal's links name what they link by label; the label of a linked source or article is the one it has here once
     * the merge is done (a merged source's survivor citekey, a renamed article).
     */
@@ -439,25 +398,20 @@ object MergePlanner:
       }
     }.toSet
 
-  /** An attestation that points into the text (a quote, or offsets): it must move with a body. */
-  private def anchored(t: BundleAttestation): Boolean = t.quote.exists(_.nonEmpty) || t.charStart.isDefined
-
-  /** The OCR bodies (by sha256) the plan must read to re-anchor attestations: those of every matched pair whose bodies
-    * differ and whose sources carry attestations.
+  /** The OCR bodies (by sha256) the plan must read for the kinds' rules (re-anchoring attestations): of the matched
+    * pairs, as each kind's rules say.
     */
   def bodiesWanted(
       in: Input,
       sketches: Map[String, MinHash],
       resolutions: MergeResolutions,
-      cfg: MergeSettings
+      cfg: MergeSettings,
+      rules: List[PlanRules]
   ): Set[String] =
     val (rights, lefts) = matchSides(in)
     val pairs = SourceMatcher.assign(rights, lefts, sketches, cfg, resolutions.policy.editions).pairs
-    val withAtts = (in.foreign.attestations ++ in.local.attestations).filter(anchored).map(_.sourceUid).toSet
-    pairs.flatMap { p =>
-      val (a, b) = (p.right.source.bodySha256, p.left.source.bodySha256)
-      if a != b && (withAtts(p.right.uid) || withAtts(p.left.uid)) then a.toList ++ b.toList else Nil
-    }.toSet
+    val run = PlanRuns(rules.map(_.start(in)))
+    run.bodiesWanted(pairs.map(p => (p.right.source, p.left.source)))
 
   /** The bundle's sources that need matching (no identity here), and the sources here they may match (not already some
     * bundle source's own, not deleted).
@@ -495,15 +449,6 @@ object MergePlanner:
   private enum Standing:
     case Live, Conditional, Dropped
 
-  /** An attestation of a pair tried against the body one alternative keeps. */
-  final private case class AnchorTry(
-      att: BundleAttestation,
-      foreign: Boolean,
-      anchor: Option[Anchor],
-      chunkOrd: Option[Int],
-      issue: Option[String]
-  )
-
   /** What M4 merges by itself, decided before the resolutions. */
   private enum Merges:
     /** This collection's article already contains the bundle's text: ours stays. */
@@ -514,20 +459,19 @@ object MergePlanner:
 
     /** Both changed since a common version, merged three-way without a conflict. */
     case ArticleMerged(body: String)
-    case GoalFold, QueueFold, EventFold
+    case GoalFold, QueueFold
 
-    /** Two events under different ids that are one ([[MergeFold.sameEventAcrossIds]]). */
-    case EventAcross
+    /** A record a kind's rules found to be one with a record here. */
+    case Contributed(how: PlanMerge)
 
-    /** A place (a named period) of the bundle that is one here: the same id and where/when, or the same label and
-      * geometry (span) under another id.
-      */
-    case PlaceFold, PeriodFold
-
-  /** A label for an event id. */
-  private val SlugShape = "^[a-z0-9][a-z0-9_.-]*$".r
-
-  def plan(in: Input, sketches: Map[String, MinHash], resolutions: MergeResolutions, cfg: MergeSettings): Result =
+  def plan(
+      in: Input,
+      sketches: Map[String, MinHash],
+      resolutions: MergeResolutions,
+      cfg: MergeSettings,
+      rules: List[PlanRules]
+  ): Result =
+    val run = PlanRuns(rules.map(_.start(in)))
     val idOf = mapUid(in.uidAliases, in.ledger)
     val fes = in.foreign
     val rawRevs = fes.revs
@@ -538,22 +482,8 @@ object MergePlanner:
       .filter((f, l) => f != l)
       .toMap
     val localRevs = in.local.revs
-    // a place the bundle renamed (its uid is here under another id, #888): the import follows the
-    // rename — unless the new id is a different place's here; then ours keeps its id, and what the
-    // bundle points at the new id points at ours
-    val renamed = renamedPlaces(fes.places, in.local.places, mapped.keySet)
-    val renameKept: Map[UUID, String] = renamed.collect { case (p, ours, true) => p.uid -> ours }.toMap
-    // a bundle place (named period) matched to one here under another id: what points at it by id follows
-    val placeIdMap: Map[String, String] =
-      fes.places.flatMap(p => in.placeMatches.get(p.uid).filter(_ != p.id).map(p.id -> _)).toMap ++
-        renamed.collect { case (p, ours, true) => p.id -> ours }
-    val periodIdMap: Map[String, String] =
-      fes.periods.flatMap(p => in.periodMatches.get(p.uid).filter(_ != p.id).map(p.id -> _)).toMap
-    val localized0 = repoint(localize(fes, mapped, localRevs.view.mapValues(_.label).toMap), placeIdMap, periodIdMap)
-    val localized =
-      if renameKept.isEmpty then localized0
-      else
-        localized0.copy(places = localized0.places.map(p => renameKept.get(p.uid).fold(p)(ours => p.copy(id = ours))))
+    // what the kinds' rules point at the records here (a place the bundle renamed, one matched under another id)
+    val localized = run.localized(localize(fes, mapped, localRevs.view.mapValues(_.label).toMap), mapped)
     val locRevs = localized.revs
     val toLocal: UUID => UUID = u => mapped.getOrElse(u, u)
     val own = in.ownBundle
@@ -605,11 +535,7 @@ object MergePlanner:
     val km = DecisionKind
     val lr = List(km.KeepLeft, km.KeepRight)
     val info = List.newBuilder[String]
-    renamed.foreach { (p, ours, kept) =>
-      info += (if kept then
-                 s"place $ours: renamed ${p.id} in the bundle, but here ${p.id} is another place — it keeps its id"
-               else s"place $ours: renamed ${p.id} in the bundle — renamed here too (the old id stays an alias)")
-    }
+    run.notices.foreach(info += _)
 
     // the gates
     matching.pairs.filter(_.outcome == Outcome.NeedsDecision).foreach { p =>
@@ -842,13 +768,15 @@ object MergePlanner:
     // rows of the bundle that already have their own uid here are not matched again inside a pair
     val foreignFindingsOf = fes.findings.filterNot(f => localRevs.contains(toLocal(f.uid))).groupBy(_.sourceUid)
     val localFindingsOf = in.local.findings.groupBy(_.sourceUid)
-    val foreignAttsOf = fes.attestations.filterNot(t => localRevs.contains(toLocal(t.uid))).groupBy(_.sourceUid)
-    val localAttsOf = in.local.attestations.groupBy(_.sourceUid)
     val nearIssue = scala.collection.mutable.Map.empty[UUID, String] // bundle finding → issue
     val findingMatches = scala.collection.mutable.Map.empty[UUID, List[FindingMatch]] // bundle source → matches
-    // per pair and per alternative of the body question (the body issue's decision, or None when
-    // there is no question): the body sha the merge keeps and the attestations tried against it
-    val anchors = scala.collection.mutable.Map.empty[UUID, Map[Option[DecisionKind], List[AnchorTry]]]
+    val pairQuestions = new PairQuestions:
+      def input: Input = in
+      def rightRev(u: UUID): String = rawRevs.get(u).map(_.rev).getOrElse("")
+      def localRev(u: UUID): String = localRevs.get(u).map(_.rev).getOrElse("")
+      def here(u: UUID): Boolean = localRevs.contains(u)
+      def toLocal(u: UUID): UUID = mapped.getOrElse(u, u)
+      def ask(issue: MergeIssue, importable: Set[DecisionKind]): Unit = add(Draft(issue, importable))
 
     pairs.foreach { (p, cond) =>
       val (r, l) = (p.right.source, p.left.source)
@@ -913,89 +841,8 @@ object MergePlanner:
           info += s"finding ${lf.id}: the same claim as the bundle's ${rf.id} at another confidence — the more cautious is kept"
         case _ => ()
       }
-      // attestations, under each alternative of the body question
-      val bodyIssue = pairFieldIds.get(r.uid).flatMap(_.get(IssueKind.BodyDiffers))
-      val alternatives: List[(Option[DecisionKind], Option[String], Option[IssueCondition])] = bodyIssue match
-        case Some(b) =>
-          List(
-            (Some(km.KeepLeft), l.bodySha256, Some(IssueCondition(b, km.KeepLeft))),
-            (Some(km.KeepRight), r.bodySha256, Some(IssueCondition(b, km.KeepRight)))
-          )
-        case None => List((None, l.bodySha256.orElse(r.bodySha256), cond))
-      val atts = foreignAttsOf.getOrElse(r.uid, Nil).map(_ -> true) ++ localAttsOf.getOrElse(l.uid, Nil).map(_ -> false)
-      anchors(r.uid) = alternatives.map { (alt, kept, c) =>
-        val tries = atts.sortBy((t, _) => t.uid.toString).flatMap { (t, foreign) =>
-          val ownBody = if foreign then r.bodySha256 else l.bodySha256
-          if kept.isEmpty || ownBody == kept || !anchored(t) then None
-          else
-            val body = kept.flatMap(in.bodies.get)
-            val found = for
-              txt <- body
-              q <- t.quote.filter(_.nonEmpty)
-              a <- TextAnchor.reanchor(txt, q, t.prefix, t.suffix, t.charStart)
-            yield a
-            found match
-              case Some(a) =>
-                Some(AnchorTry(t, foreign, Some(a), body.flatMap(TextAnchor.chunkOf(_, a, in.chunkChars)), None))
-              case None =>
-                val tag = alt.fold("")(DecisionKind.wireOf)
-                val id = issueId(
-                  IssueKind.AttestationUnanchored,
-                  BundleKind.Attestation,
-                  List(t.uid),
-                  List(l.uid),
-                  if foreign then rightRev(t.uid) else localRev(t.uid),
-                  kept.getOrElse(""),
-                  tag
-                )
-                val att = IssueSide(
-                  s"${t.targetType} ${t.targetId}",
-                  t.uid,
-                  t.quote.map(q => s"«${MergeIssueDetail.preview(q)}»").toList
-                )
-                val whose = if foreign then "the bundle's" else "this collection's"
-                add(
-                  Draft(
-                    MergeIssue(
-                      id,
-                      IssueKind.AttestationUnanchored,
-                      IssueSeverity.Blocking,
-                      BundleKind.Attestation,
-                      s"$whose attestation on ${l.citekey}: its quote is not in the body the merge keeps" +
-                        alt.fold("")(k => s" (if the body is ${DecisionKind.wireOf(k)})"),
-                      if foreign then Some(MergeIssueDetail.side(l)) else Some(att),
-                      if foreign then Some(att) else Some(MergeIssueDetail.side(r)),
-                      List(if t.quote.exists(_.nonEmpty) then
-                        "the quote (with its prefix and suffix) was looked for, exactly and with spacing ignored"
-                      else "it has a position but no quote, so it cannot be found again"),
-                      List(km.Drop, km.KeepUnanchored),
-                      None,
-                      c,
-                      detail = Some(
-                        IssueDetail(
-                          List(
-                            IssueField("quote", if foreign then None else t.quote, if foreign then t.quote else None),
-                            IssueField(
-                              "before it",
-                              if foreign then None else t.prefix,
-                              if foreign then t.prefix else None
-                            ),
-                            IssueField(
-                              "after it",
-                              if foreign then None else t.suffix,
-                              if foreign then t.suffix else None
-                            )
-                          )
-                        )
-                      )
-                    ),
-                    Set.empty
-                  )
-                )
-                Some(AnchorTry(t, foreign, None, None, Some(id)))
-        }
-        alt -> tries
-      }.toMap
+      // what the kinds own of the pair, under each alternative of the body question
+      run.pair(r, l, cond, pairFieldIds.get(r.uid).flatMap(_.get(IssueKind.BodyDiffers)), pairQuestions)
     }
 
     // ── 5. rows ──
@@ -1008,14 +855,12 @@ object MergePlanner:
     val assetSource = fes.assets.map(a => a.uid -> a.sourceUid).toMap
     val findingSource = fes.findings.map(f => f.uid -> f.sourceUid).toMap
     val linkAsset = fes.assetLinks.map(l => l.uid -> l.assetUid).toMap
-    val attSource = fes.attestations.map(t => t.uid -> t.sourceUid).toMap
     def ownerSource(f: UUID, kind: BundleKind): Option[UUID] = kind match
-      case BundleKind.Source      => Some(f)
-      case BundleKind.Finding     => findingSource.get(f)
-      case BundleKind.Asset       => assetSource.get(f)
-      case BundleKind.AssetLink   => linkAsset.get(f).flatMap(assetSource.get)
-      case BundleKind.Attestation => attSource.get(f)
-      case _                      => None
+      case BundleKind.Source    => Some(f)
+      case BundleKind.Finding   => findingSource.get(f)
+      case BundleKind.Asset     => assetSource.get(f)
+      case BundleKind.AssetLink => linkAsset.get(f).flatMap(assetSource.get)
+      case _                    => run.ownerSource(f, kind)
     def heldBy(f: UUID, kind: BundleKind): Boolean =
       ownerSource(f, kind).flatMap(fates.get).exists {
         case Fate.Auto(_) | Fate.Gate(_, _) => true
@@ -1050,11 +895,7 @@ object MergePlanner:
     // records here, by uid; the bundle's (localized) events by uid; the bundle's raw articles
     val localArticle = in.local.articles.map(a => a.uid -> a).toMap
     val localGoal = in.local.goals.map(g => g.uid -> g).toMap
-    val localEvent = in.local.events.map(e => e.uid -> e).toMap
     val localQueue = in.local.queue.map(q => q.uid -> q).toMap
-    val localPlace = in.local.places.map(p => p.uid -> p).toMap
-    val localPeriod = in.local.periods.map(p => p.uid -> p).toMap
-    val bundleEvent = localized.events.map(e => e.uid -> e).toMap
     val rawArticle = fes.articles.map(a => a.uid -> a).toMap
     def foreignHistory(f: UUID): Set[String] = fes.versions.filter(_.articleUid == f).map(_.bodySha256).toSet
     def outcome(local: BundleArticle, foreignUid: UUID): ArticleOutcome =
@@ -1074,10 +915,7 @@ object MergePlanner:
           .get(u)
           .zip(localized.sources.find(_.uid == u))
           .map((l, r) => IssueDetail(MergeIssueDetail.sourceFields(l, r)))
-      case BundleKind.Event => localEvent.get(u).zip(bundleEvent.get(u)).map(MergeIssueDetail.eventDetail)
-      case BundleKind.Place =>
-        in.local.places.find(_.uid == u).zip(localized.places.find(_.uid == u)).map(MergeIssueDetail.placeDetail)
-      case _ => None
+      case _ => run.rowDetail(kind, u, localized)
     // a bundle uid → (the uid here, what M4 does)
     val merges = scala.collection.mutable.LinkedHashMap.empty[UUID, (UUID, Merges)]
     def articleMerge(f: UUID, o: UUID, oc: ArticleOutcome): Boolean = oc match
@@ -1148,10 +986,11 @@ object MergePlanner:
                   )
           case BundleKind.Goal      => merges(r.foreignUid) = r.uid -> Merges.GoalFold
           case BundleKind.QueueItem => merges(r.foreignUid) = r.uid -> Merges.QueueFold
-          case BundleKind.Event
-              if localEvent.get(r.uid).zip(bundleEvent.get(r.uid)).exists((a, b) => MergeFold.sameCore(a, b)) =>
-            merges(r.foreignUid) = r.uid -> Merges.EventFold
-          case _ => conflictIssue("changed on both sides since the last import", lr, Set(km.KeepLeft, km.KeepRight))
+          case _                    =>
+            run.conflict(r, localized) match
+              case Some(how) => merges(r.foreignUid) = r.uid -> Merges.Contributed(how)
+              case None      =>
+                conflictIssue("changed on both sides since the last import", lr, Set(km.KeepLeft, km.KeepRight))
     }
 
     // labels a different record has here — for the lines that would be written
@@ -1212,6 +1051,56 @@ object MergePlanner:
               )
         }
       }
+    // the names the kinds' rules see, under the planner's own
+    val linesHere = localized
+    val writtenBefore: UUID => Boolean = writesInitially
+    def labelTakenOf[A](
+        kind: BundleKind,
+        rows: List[A],
+        uid: A => UUID,
+        label: A => String,
+        owner: A => Option[UUID],
+        what: String,
+        options: List[DecisionKind],
+        merge: (A, UUID) => Option[Merges],
+        detailOf: (A, UUID) => Option[IssueDetail]
+    ): Unit = labelTaken(kind, rows, uid, label, owner, what, options, merge, detailOf)
+    val questions = new PlanQuestions:
+      def input: Input = in
+      def bundle: BundleEntities = fes
+      def localized: BundleEntities = linesHere
+      def rightRev(u: UUID): String = pairQuestions.rightRev(u)
+      def localRev(u: UUID): String = pairQuestions.localRev(u)
+      def here(u: UUID): Boolean = localRevs.contains(u)
+      def inLocalized(u: UUID): Boolean = locRevs.contains(u)
+      def toLocal(u: UUID): UUID = mapped.getOrElse(u, u)
+      def bundleUidOf(u: UUID): UUID = mapped.collectFirst { case (k, v) if v == u => k }.getOrElse(u)
+      def writesInitially(u: UUID): Boolean = writtenBefore(u)
+      def merged(foreign: UUID): Boolean = merges.contains(foreign)
+      def merge(foreign: UUID, here: UUID, how: PlanMerge): Unit = merges(foreign) = here -> Merges.Contributed(how)
+      def ask(issue: MergeIssue, importable: Set[DecisionKind]): Unit = add(Draft(issue, importable))
+      def labelTaken[A](
+          kind: BundleKind,
+          rows: List[A],
+          uid: A => UUID,
+          label: A => String,
+          owner: A => Option[UUID],
+          what: String,
+          options: List[DecisionKind],
+          merge: (A, UUID) => Option[PlanMerge],
+          detailOf: (A, UUID) => Option[IssueDetail]
+      ): Unit =
+        labelTakenOf(
+          kind,
+          rows,
+          uid,
+          label,
+          owner,
+          what,
+          options,
+          (a, o) => merge(a, o).map(Merges.Contributed(_)),
+          detailOf
+        )
     labelTaken(
       BundleKind.Source,
       localized.sources.filter(s => localRevs.contains(s.uid)),
@@ -1221,17 +1110,7 @@ object MergePlanner:
       "citekey",
       detailOf = (s, o) => sourcesByUid.get(o).map(l => IssueDetail(MergeIssueDetail.sourceFields(l, s)))
     )
-    labelTaken(
-      BundleKind.Event,
-      localized.events,
-      _.uid,
-      _.id,
-      e => in.labels.events.get(e.id),
-      "event id",
-      options = List(km.KeepLeft, km.KeepRight, km.RenameRight),
-      merge = (e, o) => localEvent.get(o).filter(MergeFold.sameCore(_, e)).map(_ => Merges.EventFold),
-      detailOf = (e, o) => localEvent.get(o).map(MergeIssueDetail.eventDetail(_, e))
-    )
+    run.labelsTaken(questions)
     labelTaken(
       BundleKind.Goal,
       localized.goals,
@@ -1329,115 +1208,8 @@ object MergePlanner:
       }
     }
 
-    // an event under another id here that is the same event: the same label, dates and place
-    val eventsClaimed = scala.collection.mutable.Set.empty[UUID]
-    localized.events
-      .filter(e =>
-        writesInitially(e.uid) && !merges.contains(bundleUidOf(e.uid)) &&
-          in.labels.events.get(e.id).forall(_ == e.uid)
-      )
-      .sortBy(_.id)
-      .foreach { e =>
-        in.local.events
-          .filter(l => !eventsClaimed(l.uid) && !locRevs.contains(l.uid) && MergeFold.sameEventAcrossIds(l, e))
-          .sortBy(_.id)
-          .headOption
-          .foreach { l =>
-            eventsClaimed += l.uid
-            merges(bundleUidOf(e.uid)) = l.uid -> Merges.EventAcross
-          }
-      }
-
-    // places and named periods added on both sides: one id is one place when where and when agree,
-    // a question when they do not; a place under another id is one when its label and geometry are
-    // (the database compared them: `placeMatches`)
-    val localPlaceById = in.local.places.map(p => p.id -> p).toMap
-    val localPeriodById = in.local.periods.map(p => p.id -> p).toMap
-    val placeIssues = scala.collection.mutable.Map.empty[UUID, String] // bundle uid → issue
-    localized.places.filter(p => writesInitially(p.uid)).sortBy(_.id).foreach { p =>
-      val f = bundleUidOf(p.uid)
-      localPlaceById.get(p.id).filter(_.uid != p.uid) match
-        case Some(o) if MergeFold.samePlace(o, p) => merges(f) = o.uid -> Merges.PlaceFold
-        case Some(o)                              =>
-          val id = issueId(IssueKind.PlaceDiffers, BundleKind.Place, List(f), List(o.uid), rightRev(f), localRev(o.uid))
-          placeIssues(f) = id
-          add(
-            Draft(
-              MergeIssue(
-                id,
-                IssueKind.PlaceDiffers,
-                IssueSeverity.Blocking,
-                BundleKind.Place,
-                s"place ${p.id} was added on both sides, " +
-                  (if o.geom != p.geom then "with different geometries" else "with different time spans"),
-                Some(IssueSide(o.id, o.uid, List(o.label))),
-                Some(IssueSide(p.id, f, List(p.label))),
-                List(
-                  "keep-left keeps this collection's place (the bundle's events point at it); keep-right takes the bundle's " +
-                    "geometry and span"
-                ),
-                lr,
-                detail = Some(MergeIssueDetail.placeDetail(o, p))
-              ),
-              Set.empty
-            )
-          )
-        case None =>
-          localPlaceById.values
-            .find(x => in.placeMatches.get(f).contains(x.id))
-            .foreach(o => merges(f) = o.uid -> Merges.PlaceFold)
-    }
-    val periodIssues = scala.collection.mutable.Map.empty[UUID, String]
-    localized.periods.filter(p => writesInitially(p.uid)).sortBy(_.id).foreach { p =>
-      val f = bundleUidOf(p.uid)
-      localPeriodById.get(p.id).filter(_.uid != p.uid) match
-        case Some(o) if MergeFold.samePeriod(o, p) => merges(f) = o.uid -> Merges.PeriodFold
-        case Some(o)                               =>
-          val id =
-            issueId(IssueKind.NamedPeriodDiffers, BundleKind.Period, List(f), List(o.uid), rightRev(f), localRev(o.uid))
-          periodIssues(f) = id
-          add(
-            Draft(
-              MergeIssue(
-                id,
-                IssueKind.NamedPeriodDiffers,
-                IssueSeverity.Blocking,
-                BundleKind.Period,
-                s"named period ${p.id} was added on both sides and says something else: " +
-                  s"${o.label} ${MergeIssueDetail.rangeText(o.period)} here, ${p.label} ${MergeIssueDetail.rangeText(p.period)} in the bundle",
-                Some(IssueSide(o.id, o.uid, List(o.label))),
-                Some(IssueSide(p.id, f, List(p.label))),
-                List("keep-left keeps this collection's period; keep-right takes the bundle's label and span"),
-                lr,
-                detail = Some(
-                  IssueDetail(
-                    fields = List(
-                      IssueField("label", Some(o.label), Some(p.label)),
-                      IssueField(
-                        "span",
-                        Some(MergeIssueDetail.rangeText(o.period)),
-                        Some(MergeIssueDetail.rangeText(p.period))
-                      ),
-                      IssueField("authority", o.authority, p.authority),
-                      IssueField("region", o.region, p.region)
-                    ),
-                    place = Some(
-                      IssuePlace(
-                        leftSpan = o.period.map(MergeIssueDetail.span),
-                        rightSpan = p.period.map(MergeIssueDetail.span)
-                      )
-                    )
-                  )
-                )
-              ),
-              Set.empty
-            )
-          )
-        case None =>
-          localPeriodById.values
-            .find(x => in.periodMatches.get(f).contains(x.id))
-            .foreach(o => merges(f) = o.uid -> Merges.PeriodFold)
-    }
+    // records added on both sides that are one (or a question), as the kinds' rules find them
+    run.addedOnBoth(questions)
 
     // a goal that is one on both sides with two approved plans and neither newer: a question (#881)
     val goalPlanIssue = scala.collection.mutable.Map.empty[UUID, String] // bundle uid → issue
@@ -1493,7 +1265,6 @@ object MergePlanner:
     val byId: Map[String, Draft] = all.map(d => d.issue.id -> d).toMap
     val errors = List.newBuilder[String]
     val labelsHere = in.labels.citekeys.keySet ++ in.labels.aliases.keySet ++ fes.sources.map(_.citekey)
-    val eventIdsHere = in.local.events.map(_.id).toSet ++ fes.events.map(_.id)
     val texts: Map[String, String] = resolutions.resolve.flatMap(r => r.text.map(r.issue.trim -> _)).toMap
     // a resolution an earlier apply carried out answers an issue that is gone because of it: done, not stale
     val carriedOut = resolutions.resolve.filter(r =>
@@ -1523,12 +1294,8 @@ object MergePlanner:
                 else if in.labels.citekeys.get(ck).orElse(in.labels.aliases.get(ck)).exists(o => !leftUid.contains(o))
                 then Left(s"'$ck' is a citekey (or an old one) of another source here — merge under the other citekey")
                 else Right(())
-              case km.RenameRight | km.RenameLeft if i.entity == BundleKind.Event =>
-                val eid = dec.argument.getOrElse("")
-                if !SlugShape.matches(eid) then Left(s"'$eid' is not an event id (lower-case letters, digits, _ . -)")
-                else if eventIdsHere(eid) then Left(s"'$eid' is already an event id here or in the bundle")
-                else Right(())
-              case km.RenameRight | km.RenameLeft =>
+              case km.RenameRight | km.RenameLeft if run.argument(i, dec).isDefined => run.argument(i, dec).get
+              case km.RenameRight | km.RenameLeft                                   =>
                 val ck = dec.argument.getOrElse("")
                 if !Citekeys.valid(ck) then Left(s"'$ck' is not a citekey (lower-case letters, digits and _)")
                 else if labelsHere(ck) then Left(s"'$ck' is already a citekey (or an old one) here or in the bundle")
@@ -1617,34 +1384,34 @@ object MergePlanner:
     val findingLine = scala.collection.mutable.Map.empty[UUID, Line[BundleFinding]]
     val assetLine = scala.collection.mutable.Map.empty[UUID, Line[BundleAsset]]
     val linkLine = scala.collection.mutable.Map.empty[UUID, Line[BundleAssetLink]]
-    val attLine = scala.collection.mutable.Map.empty[UUID, Line[BundleAttestation]]
     val articleLine = scala.collection.mutable.Map.empty[UUID, Line[BundleArticle]]
-    val eventLine = scala.collection.mutable.Map.empty[UUID, Line[BundleEvent]]
     val goalLine = scala.collection.mutable.Map.empty[UUID, Line[BundleGoal]]
     val queueLine = scala.collection.mutable.Map.empty[UUID, Line[BundleQueueItem]]
-    val placeLine = scala.collection.mutable.Map.empty[UUID, Line[BundlePlace]]
-    val periodLine = scala.collection.mutable.Map.empty[UUID, Line[BundlePeriod]]
     def sourceIn(es: BundleEntities, u: UUID) = es.sources.find(_.uid == u).get
     def findingIn(es: BundleEntities, u: UUID) = es.findings.find(_.uid == u).get
     def assetIn(es: BundleEntities, u: UUID) = es.assets.find(_.uid == u).get
-    def attIn(es: BundleEntities, u: UUID) = es.attestations.find(_.uid == u).get
     def articleIn(es: BundleEntities, u: UUID) = es.articles.find(_.uid == u).get
-    def eventIn(es: BundleEntities, u: UUID) = es.events.find(_.uid == u).get
     def goalIn(es: BundleEntities, u: UUID) = es.goals.find(_.uid == u).get
     def queueIn(es: BundleEntities, u: UUID) = es.queue.find(_.uid == u).get
-    def placeIn(es: BundleEntities, u: UUID) = es.places.find(_.uid == u).get
-    def periodIn(es: BundleEntities, u: UUID) = es.periods.find(_.uid == u).get
-    val dropped = scala.collection.mutable.LinkedHashSet.empty[UUID] // bundle uids left out for good
     val foldedSources = scala.collection.mutable.LinkedHashMap.empty[UUID, UUID]
     val renames = List.newBuilder[(UUID, String, String)]
     val snapshots = scala.collection.mutable.LinkedHashSet.empty[UUID]
     val versions = List.newBuilder[ExtraVersion]
     val copies = List.newBuilder[Line[BundleArticle]]
-    val attFixes = List.newBuilder[AttestationFix]
     val bodyRenames = scala.collection.mutable.Map.empty[UUID, List[(String, String)]]
     val reviews = scala.collection.mutable.LinkedHashSet.empty[String]
     var tally = MergeTally() // the apply's report, added to as each fold is decided
     def fold(f: UUID, l: UUID, kind: BundleKind): Unit = foldMap(f) = l -> kind
+    val folds = new PlanFolds:
+      def input: Input = in
+      def localized: BundleEntities = linesHere
+      def fold(foreign: UUID, here: UUID, kind: BundleKind): Unit = foldMap(foreign) = here -> kind
+      def foldedTo(foreign: UUID): Option[UUID] = foldMap.get(foreign).map(_._1)
+      def here(u: UUID): Boolean = localRevs.contains(u)
+      def toLocal(u: UUID): UUID = mapped.getOrElse(u, u)
+      def decisionIn(issue: String): Option[MergeDecision] = unconditional.get(issue).flatMap(_.decision)
+      def count(f: MergeTally => MergeTally): Unit = tally = f(tally)
+      def keepLocal(foreign: UUID): Unit = overrides(foreign) = Decision.Kept
 
     // the citekey each source of the bundle will have here (`[[citekey]]` links follow it)
     val finalCitekey = scala.collection.mutable.Map.empty[UUID, String]
@@ -1735,43 +1502,11 @@ object MergePlanner:
             }
         }
 
-        // attestations: re-anchored into the body kept, or as decided; one already here is one
+        // what the kinds own of the pair: as the body question is decided
         val alt = pairFieldIds.get(r.uid).flatMap(_.get(IssueKind.BodyDiffers)) match
           case Some(id) => Some(decisionIn(id).map(_.kind).getOrElse(km.KeepLeft))
           case None     => None
-        val tries = anchors.get(r.uid).flatMap(_.get(alt)).getOrElse(Nil)
-        val localAtts = localAttsOf.getOrElse(l.uid, Nil)
-        def targetKey(t: BundleAttestation): String =
-          t.targetUid.map(u => foldMap.get(u).map(_._1).getOrElse(toLocal(u)).toString).getOrElse(t.targetId)
-        foreignAttsOf.getOrElse(r.uid, Nil).foreach { t =>
-          localAtts.find(x => x.targetType == t.targetType && targetKey(x) == targetKey(t) && x.quote == t.quote) match
-            case Some(x) => fold(t.uid, x.uid, BundleKind.Attestation); attLine(x.uid) = _ => x
-            case None    =>
-              tries.find(a => a.foreign && a.att.uid == t.uid) match
-                case None                                  => ()
-                case Some(AnchorTry(_, _, Some(a), co, _)) =>
-                  attLine(t.uid) =
-                    es => attIn(es, t.uid).copy(charStart = Some(a.start), charEnd = Some(a.end), chunkOrd = co)
-                  tally = tally.modify(_.attestationsReanchored).using(_ + 1)
-                case Some(AnchorTry(_, _, None, _, issue)) =>
-                  issue.flatMap(decisionIn).map(_.kind) match
-                    case Some(km.KeepUnanchored) =>
-                      attLine(t.uid) = es => attIn(es, t.uid).copy(charStart = None, charEnd = None, chunkOrd = None)
-                    case _ =>
-                      dropped += t.uid
-                      tally = tally.modify(_.attestationsDropped).using(_ + 1)
-        }
-        tries.filterNot(_.foreign).foreach {
-          case AnchorTry(t, _, Some(a), co, _) =>
-            attFixes += AttestationFix(t.uid, Some(a), co, drop = false)
-            tally = tally.modify(_.attestationsReanchored).using(_ + 1)
-          case AnchorTry(t, _, None, _, issue) =>
-            issue.flatMap(decisionIn).map(_.kind) match
-              case Some(km.KeepUnanchored) => attFixes += AttestationFix(t.uid, None, None, drop = false)
-              case _                       =>
-                attFixes += AttestationFix(t.uid, None, None, drop = true)
-                tally = tally.modify(_.attestationsDropped).using(_ + 1)
-        }
+        run.foldPair(r, l, alt, folds)
       }
     }
     // the citekey every other source of the bundle will have here
@@ -1876,18 +1611,7 @@ object MergePlanner:
           if f != o then fold(f, o, BundleKind.QueueItem)
           queueLine(o) = es => MergeFold.foldQueue(localQueue(o), queueIn(es, o))
           tally = tally.modify(_.queueMerged).using(_ + 1)
-        case Merges.EventFold | Merges.EventAcross =>
-          if f != o then fold(f, o, BundleKind.Event)
-          eventLine(o) = es => MergeFold.foldEvent(localEvent(o), eventIn(es, o))
-          tally = tally.modify(_.eventsMerged).using(_ + 1)
-        case Merges.PlaceFold =>
-          fold(f, o, BundleKind.Place)
-          placeLine(o) = es => MergeFold.foldPlace(localPlace(o), placeIn(es, o))
-          tally = tally.modify(_.placesMerged).using(_ + 1)
-        case Merges.PeriodFold =>
-          fold(f, o, BundleKind.Period)
-          periodLine(o) = _ => localPeriod(o)
-          tally = tally.modify(_.periodsMerged).using(_ + 1)
+        case Merges.Contributed(m) => m.fold(f, o, folds)
     }
     // the decisions about articles and events that M4 carries out (keep-left and keep-right of a
     // plain conflict are M2's row decisions, below)
@@ -1919,31 +1643,7 @@ object MergePlanner:
               reviews += slug
               tally = tally.modify(_.articlesBoth).using(_ + 1)
             case _ => ()
-        case (IssueKind.LabelTaken, BundleKind.Event, Some(d), Some(f), Some(o))
-            if d.kind == km.KeepRight && localEvent.contains(o) =>
-          fold(f, o, BundleKind.Event)
-          eventLine(o) = es =>
-            MergeFold.foldEvent(
-              eventIn(es, o).copy(id = localEvent(o).id, origin = localEvent(o).origin),
-              localEvent(o)
-            )
-          tally = tally.modify(_.eventsMerged).using(_ + 1)
-        case (IssueKind.LabelTaken, BundleKind.Event, Some(d), Some(f), _) if d.kind == km.RenameRight =>
-          d.argument.foreach(eid => eventLine(f) = es => eventIn(es, f).copy(id = eid))
-        // a place (named period) added on both sides under one id: ours stays, or theirs wins
-        case (IssueKind.PlaceDiffers, BundleKind.Place, Some(d), Some(f), Some(o)) =>
-          fold(f, o, BundleKind.Place)
-          tally = tally.modify(_.placesMerged).using(_ + 1)
-          if d.kind == km.KeepRight then
-            placeLine(o) = es => MergeFold.foldPlace(placeIn(es, o).copy(origin = localPlace(o).origin), localPlace(o))
-          else overrides(f) = Decision.Kept
-        case (IssueKind.NamedPeriodDiffers, BundleKind.Period, Some(d), Some(f), Some(o)) =>
-          fold(f, o, BundleKind.Period)
-          tally = tally.modify(_.periodsMerged).using(_ + 1)
-          if d.kind == km.KeepRight then
-            periodLine(o) = es => periodIn(es, o).copy(origin = localPeriod(o).origin, rev = "")
-          else overrides(f) = Decision.Kept
-        case _ => ()
+        case _ => run.decided(i, folds)
     }
     // every other article the bundle writes carries its links in this collection's citekeys
     if ckMap.nonEmpty then
@@ -1964,15 +1664,8 @@ object MergePlanner:
     // ── the final lines ──
     val foldUids: Map[UUID, UUID] = foldMap.view.mapValues(_._1).toMap
     val es0 = localize(localized, foldUids, Map.empty)
-    def replaced[A](
-        as: List[A],
-        uid: A => UUID,
-        repl: scala.collection.Map[UUID, Line[A]],
-        keep: A => Boolean = (_: A) => true
-    ): List[A] =
-      val base = as.filter(keep).map(a => repl.get(uid(a)).fold(a)(_(es0)))
-      val extra = repl.keySet.diff(as.map(uid).toSet).toList.sortBy(_.toString).map(u => repl(u)(es0))
-      (base ++ extra).distinctBy(uid)
+    def replaced[A](as: List[A], uid: A => UUID, repl: scala.collection.Map[UUID, Line[A]]): List[A] =
+      MergePlanner.replaced(as, uid, repl, es0, (_: A) => true)
     val foldedHere = foldedSources.values.toSet
     // a merged source's whole edge set: ours and the bundle's, re-pointed, without self-loops
     val edges0 = es0.edges ++ in.local.edges.filter(e => foldedHere(e.srcUid))
@@ -2033,8 +1726,6 @@ object MergePlanner:
       articles = replaced(es0.articles, _.uid, articleLine),
       assets = replaced(es0.assets, _.uid, assetLine),
       assetLinks = replaced(es0.assetLinks, _.uid, linkLine),
-      attestations = replaced(es0.attestations, _.uid, attLine, t => !dropped(t.uid)),
-      events = replaced(es0.events, _.uid, eventLine),
       goals = replaced(es0.goals, _.uid, goalLine).map { g =>
         // a goal here and there: this collection's schedules stay, the links of both
         localGoal.get(g.uid).filter(_ => !goalLine.contains(g.uid)).fold(g) { l =>
@@ -2044,8 +1735,6 @@ object MergePlanner:
         }
       },
       queue = replaced(es0.queue, _.uid, queueLine),
-      places = replaced(es0.places, _.uid, placeLine),
-      periods = replaced(es0.periods, _.uid, periodLine),
       articleAliases = es0.articleAliases.filter { a =>
         val owner = in.labels.slugs.get(a.alias).orElse(in.labels.articleAliases.get(a.alias)).filterNot(in.tombstoned)
         val other = owner.exists(_ != a.articleUid)
@@ -2081,7 +1770,8 @@ object MergePlanner:
         "place"
       )
     )
-    val finalEs = relinkGoals(finalEs0, in)
+    val finalEs = relinkGoals(run.lines(finalEs0, es0), in)
+    val dropped = run.dropped // bundle uids left out for good
     val finalRevs = finalEs.revs
     // a merged source whose own line is unchanged is still written when its edge set grows
     def edgeSet(es: List[BundleEdge], u: UUID) = es.filter(_.srcUid == u).toSet
@@ -2170,15 +1860,8 @@ object MergePlanner:
       .map(r => s"${r.from}: ${r.kind.wire} ${r.uid} is not here — that link is left out")
       .distinct
       .foreach(notes += _)
-    // gazetteer places
-    val placesComing = finalEs.places.filter(p => inBundleLive(p.uid)).map(_.id).toSet ++ in.local.places.map(_.id)
-    finalEs.events
-      .filter(e => writes(e.uid))
-      .flatMap(e => e.placeId.map(e.id -> _))
-      .filterNot((_, p) => in.places(p) || placesComing(p))
-      .foreach((e, p) =>
-        fatal += s"event $e: place '$p' is not in this gazetteer — run `histmersion init` (or import that place) first"
-      )
+    // what the kinds' written lines need that is not coming (an event's gazetteer place)
+    run.problems(finalEs, inBundleLive, writes).foreach(fatal += _)
     // two bundle lines onto one row here
     val ownUids = rawRevs.keySet ++ fes.tombstones.map(_.uid)
     mapped.toList
@@ -2235,10 +1918,9 @@ object MergePlanner:
         val pairIssue = i.kind match
           case IssueKind.DoiDiffers | IssueKind.YearDiffers | IssueKind.StatusDiffers | IssueKind.TitleDiffers |
               IssueKind.AuthorsDiffers | IssueKind.SummaryDiffers | IssueKind.NotesDiffers | IssueKind.PeriodDiffers |
-              IssueKind.BodyDiffers | IssueKind.SameWork | IssueKind.FindingNearDuplicate |
-              IssueKind.AttestationUnanchored =>
+              IssueKind.BodyDiffers | IssueKind.SameWork | IssueKind.FindingNearDuplicate =>
             true
-          case _ => false
+          case k => run.pairIssue(k)
         if !pairIssue && !byId(i.id).importable(dec.kind) then
           needsApply += s"${i.id} = ${dec.wire}: carrying that out is `merge apply`'s"
       }
@@ -2328,14 +2010,7 @@ object MergePlanner:
           info += s"goal $label: the same goal on both sides — the status further along, notes joined"
         case Merges.QueueFold =>
           info += s"queue item «${MergeIssueDetail.preview(label, 50)}»: the same item on both sides — one item, done if done anywhere"
-        case Merges.EventFold =>
-          info += s"event $label: the same dating and place on both sides — one event, datings and participants unioned"
-        case Merges.EventAcross =>
-          info += s"event $label: the bundle's ${rawRevs.get(f).fold("")(_.label)} has the same label, dates and place — one event"
-        case Merges.PlaceFold =>
-          info += s"place $label: the bundle's ${rawRevs.get(f).fold("")(_.label)} is the same place — one place, names unioned"
-        case Merges.PeriodFold =>
-          info += s"named period $label: the bundle's ${rawRevs.get(f).fold("")(_.label)} is the same period — this collection's kept"
+        case Merges.Contributed(m) => info += m.info(label, rawRevs.get(f).fold("")(_.label))
     }
     val problems = (in.compat ++ in.readProblems ++ fatal.result()).distinct
 
@@ -2345,9 +2020,8 @@ object MergePlanner:
       snapshots = snapshots.toSet,
       versions = versions.result(),
       copies = copies.result().map(_(es0)),
-      attestations = attFixes.result(),
-      tombstones =
-        dropped.toList.flatMap(u => fes.attestations.find(_.uid == u).map(t => (u, BundleKind.Attestation, t.origin))),
+      attestations = run.fixes,
+      tombstones = run.tombstones,
       bodyRenames = bodyRenames.toMap,
       reviews = reviews.toList,
       remember = issues
@@ -2405,6 +2079,20 @@ object MergePlanner:
       notes.result(),
       apply
     )
+
+  /** A kind's final lines: each line `repl` replaces read from `es0` (the bundle's lines in this collection's uids,
+    * folds made), the lines it adds after them in uid order, the ones `keep` refuses left out. Pure.
+    */
+  def replaced[A](
+      as: List[A],
+      uid: A => UUID,
+      repl: scala.collection.Map[UUID, BundleEntities => A],
+      es0: BundleEntities,
+      keep: A => Boolean
+  ): List[A] =
+    val base = as.filter(keep).map(a => repl.get(uid(a)).fold(a)(_(es0)))
+    val extra = repl.keySet.diff(as.map(uid).toSet).toList.sortBy(_.toString).map(u => repl(u)(es0))
+    (base ++ extra).distinctBy(uid)
 
   /** Both texts present and different (after trimming). */
   private def text(a: Option[String], b: Option[String]): Option[Unit] =

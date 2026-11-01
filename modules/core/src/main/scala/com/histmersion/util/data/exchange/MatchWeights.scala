@@ -1,5 +1,6 @@
-package com.histmersion.domain.catalogue.evidence
+package com.histmersion.util.data.exchange
 
+/** How much each comparison of two sources counts when a merge asks whether they are one work (`merge.weights`). */
 final case class MatchWeights(
     titleFingerprint: Double,
     titleMain: Double,

@@ -21,6 +21,11 @@ trait MergeRules:
   /** Lines of other kinds refer to its records by uid. */
   def referable: Boolean = false
 
+  /** The planner's rules of the kind, when its owner registers them (the matching, folding and questions of its
+    * records); several kinds of one owner may share one.
+    */
+  def planning: Option[PlanRules] = None
+
   /** What the plan knows of this collection, with this kind's share added: the labels its records have here, the rows
     * here a bundle's record may be one with. `bundle` is the bundle's lines, `localized` the same in this collection's
     * uids; `in` holds this collection's rows (`local`) and what the other kinds gathered; `settings` are the plan's.

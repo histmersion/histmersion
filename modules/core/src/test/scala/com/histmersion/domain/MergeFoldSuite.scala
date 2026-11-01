@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.domain.catalogue.events.EventPlan
+
 import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*
@@ -164,9 +166,9 @@ class MergeFoldSuite extends munit.FunSuite:
     val e2 = MergeFixture
       .event("e2", "zz_e", "There", work)
       .copy(datings = List(BundleEventDating("a2000_x", None, Some(-1200), None, None, Some(-1190), None, None)))
-    assert(MergeFold.sameCore(e1, e2))
-    assert(!MergeFold.sameCore(e1, e2.copy(notAfter = Some(-1100))))
-    val e = MergeFold.foldEvent(e1, e2)
+    assert(EventPlan.sameCore(e1, e2))
+    assert(!EventPlan.sameCore(e1, e2.copy(notAfter = Some(-1100))))
+    val e = EventPlan.foldEvent(e1, e2)
     assertEquals(e.label, "Here")
     assertEquals(e.datings.map(_.citekey), List("a2000_x"))
 

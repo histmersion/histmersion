@@ -94,7 +94,6 @@ direction	api:api/MergeIssueDetail.scala	util.data -> automation: GoalPlans	1
 direction	api:api/MergeMarkdown.scala	util.data -> catalogue: Place	1
 direction	api:api/MergeMarkdown.scala	util.data -> library: LabelRenamed	1
 direction	api:api/MergeMarkdown.scala	util.data -> library: SourceMatch	1
-direction	api:api/MergePlan.scala	util.data -> catalogue: MatchCounts	1
 direction	api:api/MergePlan.scala	util.data -> library: SourceMatch	1
 direction	api:api/PlaceDetail.scala	catalogue -> media: MediaThumb	1
 direction	api:api/Queue.scala	automation -> library: Acquire	1
@@ -158,9 +157,6 @@ direction	core:domain/MergeFold.scala	util.data -> library: MergeText	1
 direction	core:domain/MergeFold.scala	util.data -> media: AssetLinks	1
 direction	core:domain/MergePlanner.scala	util.data -> automation: Goal	1
 direction	core:domain/MergePlanner.scala	util.data -> automation: Queue	1
-direction	core:domain/MergePlanner.scala	util.data -> catalogue: Attestation	1
-direction	core:domain/MergePlanner.scala	util.data -> catalogue: MatchCounts	1
-direction	core:domain/MergePlanner.scala	util.data -> catalogue: Place	1
 direction	core:domain/MergePlanner.scala	util.data -> library: Citekeys	1
 direction	core:domain/MergePlanner.scala	util.data -> library: Finding	1
 direction	core:domain/MergePlanner.scala	util.data -> library: FindingMatch	1
@@ -170,9 +166,6 @@ direction	core:domain/MergePlanner.scala	util.data -> library: SourceMatcher	1
 direction	core:domain/MergePlanner.scala	util.data -> media: AssetLink	1
 direction	core:domain/MergePlanner.scala	util.data -> media: AssetLinks	1
 direction	core:domain/MergePlanner.scala	util.data -> research: ArticleLinks	1
-direction	core:domain/MergePlanner.scala	util.data -> research: ArticleVersion	1
-direction	core:domain/MergePlanner.scala	util.data -> research: TextAnchor	1
-direction	core:domain/MergeSettings.scala	util.data -> catalogue: MatchWeights	1
 direction	core:domain/PlanGoal.scala	automation -> library: Acquire	1
 direction	core:domain/PlanGoal.scala	automation -> library: WorkRef	1
 direction	core:domain/PlanGoal.scala	automation -> research: Articles	1

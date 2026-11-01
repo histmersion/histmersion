@@ -5,13 +5,10 @@ import scala.annotation.tailrec
 import com.histmersion.api.{
   AssetLinks,
   BundleArticle,
-  BundleEvent,
   BundleFinding,
   BundleGoal,
   BundleGoalLink,
   BundleGoalSchedule,
-  BundlePeriod,
-  BundlePlace,
   BundleQueueItem,
   BundleRange,
   BundleSource,
@@ -379,84 +376,6 @@ object MergeFold:
       reason = l.reason.orElse(r.reason),
       rev = ""
     )
-
-  // ── events ──────────────────────────────────────────────────────────────────────────────────
-
-  /** Two events with one id that say the same about when and where (§5.4): they are one. */
-  def sameCore(l: BundleEvent, r: BundleEvent): Boolean =
-    l.notBefore == r.notBefore && l.beginBy == r.beginBy && l.endFrom == r.endFrom && l.notAfter == r.notAfter &&
-      l.geom == r.geom && l.placeId == r.placeId
-
-  /** Two events under DIFFERENT ids that are one (§5.4): the same label (fingerprint), outer spans that share a year,
-    * and the same place — the same gazetteer id, or the same geometry, or neither side placing it.
-    */
-  def sameEventAcrossIds(l: BundleEvent, r: BundleEvent): Boolean =
-    def outer(e: BundleEvent) = Some(BundleRange(e.notBefore.orElse(e.beginBy), e.notAfter.orElse(e.endFrom)))
-    val place = (l.placeId, r.placeId, l.geom, r.geom) match
-      case (Some(a), Some(b), _, _)       => a == b
-      case (None, None, Some(a), Some(b)) => a == b
-      case (None, None, None, None)       => true
-      case _                              => false
-    MergeText.fingerprint(l.label).nonEmpty && MergeText.fingerprint(l.label) == MergeText.fingerprint(r.label) &&
-    overlap(outer(l), outer(r)) && place
-
-  /** One event out of two: `winner`'s fields, the datings (per citekey), participants and outgoing edges of both — the
-    * winner's where both have one.
-    */
-  def foldEvent(winner: BundleEvent, other: BundleEvent): BundleEvent =
-    val stated =
-      if winner.central.isDefined || winner.plusMinus.isDefined || winner.datingMethod.isDefined then winner else other
-    winner.copy(
-      datings = (winner.datings ++ other.datings.filterNot(d => winner.datings.exists(_.citekey == d.citekey)))
-        .sortBy(_.citekey),
-      participants = (winner.participants ++ other.participants.filterNot(p =>
-        winner.participants.exists(w => w.actor == p.actor && w.role == p.role)
-      )).sortBy(p => (p.actor, p.role)),
-      edges =
-        (winner.edges ++ other.edges.filterNot(e => winner.edges.exists(w => w.dstUid == e.dstUid && w.kind == e.kind)))
-          .sortBy(e => (e.dstUid.toString, e.kind)),
-      description = winner.description.orElse(other.description),
-      citekey = winner.citekey.orElse(other.citekey),
-      sourceUid = if winner.citekey.isDefined then winner.sourceUid else other.sourceUid,
-      parentUid = winner.parentUid.orElse(other.parentUid),
-      catalogue = winner.catalogue.orElse(other.catalogue),
-      wikidata = winner.wikidata.orElse(other.wikidata),
-      names = Option((winner.names.getOrElse(Nil) ++ other.names.getOrElse(Nil)).distinct).filter(_.nonEmpty),
-      // the stated dating is one statement: the winner's, or the other's whole when the winner states none
-      central = stated.central,
-      plusMinus = stated.plusMinus,
-      datingMethod = stated.datingMethod,
-      rev = ""
-    )
-
-  // ── places and named periods ────────────────────────────────────────────────────────────────
-
-  /** What decides whether two records of one place id are the same place: where and when. */
-  def samePlace(l: BundlePlace, r: BundlePlace): Boolean = l.geom == r.geom && l.period == r.period
-
-  /** One place out of two that are the same place: ours, with the bundle's names, parents, external ids and types that
-    * ours lacks.
-    */
-  def foldPlace(l: BundlePlace, r: BundlePlace): BundlePlace =
-    l.copy(
-      names = (l.names ++ r.names.filterNot(n => l.names.exists(m => m.name == n.name && m.lang == n.lang)))
-        .sortBy(n => (n.name, n.lang.getOrElse(""))),
-      relations = (l.relations ++ r.relations.filterNot(x =>
-        l.relations.exists(y => y.parentId == x.parentId && y.kind == x.kind)
-      ))
-        .sortBy(x => (x.parentId, x.kind)),
-      links =
-        (l.links ++ r.links.filterNot(x => l.links.exists(y => y.scheme == x.scheme && y.externalId == x.externalId)))
-          .sortBy(x => (x.scheme, x.externalId)),
-      types = (l.types ++ r.types.filterNot(x => l.types.exists(_.typeLabel == x.typeLabel))).sortBy(_.typeLabel),
-      source = l.source.orElse(r.source),
-      properties = l.properties.orElse(r.properties),
-      rev = ""
-    )
-
-  /** Two records of one period id that say the same: the same span and label. */
-  def samePeriod(l: BundlePeriod, r: BundlePeriod): Boolean =
-    l.period == r.period && MergeText.fingerprint(l.label) == MergeText.fingerprint(r.label)
 
   // ── articles (§5.4) ─────────────────────────────────────────────────────────────────────────
 

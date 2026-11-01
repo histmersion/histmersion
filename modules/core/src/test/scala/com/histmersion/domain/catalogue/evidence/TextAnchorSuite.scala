@@ -1,11 +1,11 @@
-package com.histmersion.domain
+package com.histmersion.domain.catalogue.evidence
 
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
-import TextAnchor.Anchor
+import com.histmersion.util.text.Anchor
 
 /** Re-anchoring a quoted passage in another OCR run of the same text (TextQuoteSelector). */
 class TextAnchorSuite extends munit.FunSuite:

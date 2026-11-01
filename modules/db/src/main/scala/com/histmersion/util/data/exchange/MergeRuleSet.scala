@@ -19,6 +19,9 @@ final class MergeRuleSet(val all: List[MergeRules]):
   def referableTables(carried: CarriedKinds): List[TableName] =
     all.filter(_.referable).map(r => carried.tableOf(r.kind)).distinct
 
+  /** The planners' rules the kinds register, each once, in registration order. */
+  def planning: List[PlanRules] = all.flatMap(_.planning).distinct
+
   /** What the plan knows of this collection, every kind's share added in turn. */
   def gather(
       bundle: BundleEntities,
