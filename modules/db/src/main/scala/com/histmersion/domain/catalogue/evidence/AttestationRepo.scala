@@ -16,8 +16,8 @@ private[evidence] object AttestationRepo:
       "a.quote, a.prefix, a.suffix, a.char_start, a.char_end, a.chunk_ord, " +
       "a.page, a.canvas, a.xywh, a.cts_urn, a.note"
 
-  def list(citekey: Option[String], targetType: Option[String], targetId: Option[String], limit: Int, offset: Int)(
-      using DbCon
+  def list(citekey: Option[String], targetType: Option[String], targetId: Option[String], limit: Int, offset: Int)(using
+      DbCon
   ): AttestationList =
     val ck = citekey.map(_.trim).filter(_.nonEmpty)
     val tt = targetType.map(_.trim).filter(_.nonEmpty)

@@ -35,7 +35,7 @@ object AttestationService:
 
   private def missing(id: Long) = ApiError(s"No attestation $id", Some(Write.CodeNotFound))
 
-  private final class Implementation(db: Transactor) extends AttestationService:
+  final private class Implementation(db: Transactor) extends AttestationService:
     def list(
         citekey: Option[String],
         targetType: Option[String],

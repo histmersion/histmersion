@@ -9,9 +9,9 @@ import com.histmersion.util.identity.AliasKind
 
 import java.util.concurrent.atomic.AtomicReference
 
-/** The attestations' controllers over the in-memory service, no server and no database: an old citekey and an old
-  * place id resolved before they are stored, an unknown target kind and a missing source refused, a finding id kept
-  * as given, the list narrowed by an old id, the page size the limit makes, every write refused under the lock.
+/** The attestations' controllers over the in-memory service, no server and no database: an old citekey and an old place
+  * id resolved before they are stored, an unknown target kind and a missing source refused, a finding id kept as given,
+  * the list narrowed by an old id, the page size the limit makes, every write refused under the lock.
   */
 class AttestationsControllersSuite extends munit.FunSuite:
   private val renamed: Map[(AliasKind, String), String] = Map(

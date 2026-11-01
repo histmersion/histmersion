@@ -75,7 +75,7 @@ object AttestationsTools:
 
   def apply(attestations: AttestationsControllers) =
     val listTool =
-        tool("attestations")
+      tool("attestations")
         .description(
           "ATTESTATIONS: granular source references linking entities (findings, events, places, edges) " +
             "to specific passages in a source. W3C Web Annotation selectors: TextQuoteSelector (quote/" +
@@ -97,7 +97,7 @@ object AttestationsTools:
         }
 
     val putTool =
-        tool("put_attestation")
+      tool("put_attestation")
         .description(
           "Create a new attestation linking an entity to a specific passage in a source. Returns the " +
             "created attestation with its generated id. Target types: finding|event|event_dating|place|edge."
@@ -126,7 +126,7 @@ object AttestationsTools:
         }
 
     val deleteTool =
-        tool("delete_attestation")
+      tool("delete_attestation")
         .description("Delete an attestation by its id.")
         .input[DeleteAttestationInput]
         .handle { in =>
