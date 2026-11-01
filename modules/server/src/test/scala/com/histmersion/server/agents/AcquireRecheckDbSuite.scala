@@ -75,7 +75,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
   private def setup(cfg: AppConfig = baseCfg): (AgentsHandlers, Handlers, RecheckUpstream) =
     val deps = Deps(cfg, ds)
     val h = Handlers(deps)
-    val a = AgentsHandlers(deps, h, (_, _) => Right(ScriptedClient(Model)))
+    val a = AgentsHandlers(TransitionSite(deps, h), (_, _) => Right(ScriptedClient(Model)))
     val up = RecheckUpstream()
     a.attach(up)
     (a, h, up)
@@ -298,7 +298,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val cfg = baseCfg.copy(acquire = baseCfg.acquire.copy(allowUnauthorised = true))
     val deps = Deps(cfg, ds)
     val h = Handlers(deps)
-    val a = AgentsHandlers(deps, h, (_, _) => Right(ScriptedClient(Model)))
+    val a = AgentsHandlers(TransitionSite(deps, h), (_, _) => Right(ScriptedClient(Model)))
     val acq = AcquireHandlers(
       deps,
       Discovery,
@@ -601,7 +601,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val cfg = baseCfg.copy(acquire = baseCfg.acquire.copy(allowUnauthorised = true))
     val deps = Deps(cfg, ds)
     val h = Handlers(deps)
-    val a = AgentsHandlers(deps, h, (_, _) => Right(ScriptedClient(Model)))
+    val a = AgentsHandlers(TransitionSite(deps, h), (_, _) => Right(ScriptedClient(Model)))
     a.attach(
       AgentUpstream.of(
         AcquireHandlers(

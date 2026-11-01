@@ -129,7 +129,7 @@ class PluginAiRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   override def afterEach(context: AfterEach): Unit = clean()
   override def afterSuite(): Unit = loader.close()
 
-  /** The server's own wiring (`AgentsHandlers(deps, Handlers(deps))`: no scripted factory) over `g`. */
+  /** The server's own wiring (`AgentsHandlers(TransitionSite(deps, Handlers(deps)))`: no scripted factory) over `g`. */
   private def handlers(g: Generation, cfg: AppConfig = baseCfg): (AgentsHandlers, Handlers) =
     val deps = Deps(cfg, ds, ds, plugins = g)
     val h = Handlers(deps)

@@ -562,16 +562,35 @@ object AgentRepo:
       state: ApprovalState = ApprovalState.Open,
       result: Option[String] = None
   ): Option[ApprovalInfo] =
-    val json = Jsonb.write(p)
+    record(ds, jobId, p.kind, p.citekey, p.status, current, p.edgeKind, p.target, Jsonb.write(p), state, result)
+
+  /** Record a proposal about a source from its parts and its payload (the JSON a decision reads back). */
+  def record(
+      ds: DataSource,
+      jobId: Option[String],
+      kind: ApprovalKind,
+      citekey: String,
+      status: Option[SourceStatus],
+      current: Option[SourceStatus],
+      edgeKind: Option[EdgeKind],
+      target: Option[String],
+      payload: String,
+      state: ApprovalState,
+      result: Option[String]
+  ): Option[ApprovalInfo] =
     val decided = Option.when(state != ApprovalState.Open)(java.time.Instant.now().toString)
     connect(ds):
       sql"""INSERT INTO approvals (job_id, kind, citekey, status, current_status, edge_kind, target, proposal, state,
                                    result, decided_at)
-            VALUES ($jobId, ${p.kind.wire}, ${p.citekey}, ${p.status.map(_.wire)}, ${current.map(_.wire)},
-                    ${p.edgeKind.map(EdgeKind.wireOf)}, ${p.target}, $json::jsonb, ${state.wire}, $result,
+            VALUES ($jobId, ${kind.wire}, $citekey, ${status.map(_.wire)}, ${current.map(_.wire)},
+                    ${edgeKind.map(EdgeKind.wireOf)}, $target, $payload::jsonb, ${state.wire}, $result,
                     $decided::timestamptz)
             ON CONFLICT DO NOTHING RETURNING id""".query[Long].run().headOption
     .flatMap(approval(ds, _))
+
+  /** The payload an approval was recorded with, as stored. */
+  def payload(ds: DataSource, id: Long): Option[String] =
+    connect(ds)(sql"SELECT proposal::text FROM approvals WHERE id = $id".query[String].run().headOption)
 
   /** Was this change ever proposed (in any state)? A scheduled check does not ask a person twice about an edge they
     * already rejected.
@@ -594,8 +613,7 @@ object AgentRepo:
 
   /** The verified proposal behind an approval. */
   def proposal(ds: DataSource, id: Long): Option[AgentProposals.Proposal] =
-    connect(ds)(sql"SELECT proposal::text FROM approvals WHERE id = $id".query[String].run().headOption)
-      .flatMap(Jsonb.read[AgentProposals.Proposal])
+    payload(ds, id).flatMap(Jsonb.read[AgentProposals.Proposal])
 
   /** Newest first; `state` narrows (none = every state). */
   def approvals(ds: DataSource, state: Option[ApprovalState], limit: Int): List[ApprovalInfo] =

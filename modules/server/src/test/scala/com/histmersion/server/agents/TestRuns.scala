@@ -86,3 +86,15 @@ object TestRuns:
       RunState.Queued.wire,
       Nil
     )
+
+  /** The library's routing of a source's proposals, as the composition builds it for engine `a`. */
+  def proposals(
+      a: com.histmersion.domain.automation.agents.AgentsHandlers,
+      h: com.histmersion.server.Handlers
+  ): SourceProposals =
+    SourceProposals(
+      a.approvals,
+      a.config,
+      ck => h.getSource(ck, body = false).toOption.map(_.source.status),
+      p => h.patchSource(p.citekey, p.patch).left.map(_.message).map(_ => p.describe)
+    )

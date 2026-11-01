@@ -70,7 +70,13 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def handlers(clients: Map[ModelRef, LlmClient], cfg: AppConfig = baseCfg): (AgentsHandlers, Handlers) =
     val deps = Deps(cfg, ds)
     val h = Handlers(deps)
-    (AgentsHandlers(deps, h, (_, ref) => clients.get(ref).toRight(s"no scripted client for ${ref.wire}")), h)
+    (
+      AgentsHandlers(
+        TransitionSite(deps, h),
+        (_, ref) => clients.get(ref).toRight(s"no scripted client for ${ref.wire}")
+      ),
+      h
+    )
 
   private def clean(): Unit =
     Migrate.run(ds)

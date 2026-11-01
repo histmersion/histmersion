@@ -1021,9 +1021,12 @@ server:server/agents/ReviewArticlePipeline.scala	research.workflows
 server:server/agents/ReviewManagerKind.scala	server
 server:server/agents/SeedManagerKind.scala	server
 server:server/agents/SeedService.scala	library.workflows
+server:server/agents/SourceProposals.scala	library.workflows
+server:server/agents/TransitionApprovalEffects.scala	server
 server:server/agents/TransitionHost.scala	server
 server:server/agents/TransitionRoutes.scala	server
 server:server/agents/TransitionSettings.scala	server
+server:server/agents/TransitionSite.scala	server
 server:server/agents/TransitionTools.scala	server
 server:server/agents/TransitionWorkflows.scala	server
 server:server/agents/WatchManagerKind.scala	server

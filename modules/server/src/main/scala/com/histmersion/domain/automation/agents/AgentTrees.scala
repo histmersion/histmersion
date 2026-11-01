@@ -80,6 +80,10 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions):
 
 object AgentTrees:
 
+  /** The directory a request names for the trees (`~` expanded), absolute; none for a blank one. */
+  def out(raw: Option[String]): Option[Path] =
+    raw.map(_.trim).filter(_.nonEmpty).map(o => Path.of(expand(o)).toAbsolutePath.normalize)
+
   def expand(p: String): String = p.replaceFirst("^~", System.getProperty("user.home"))
 
   /** `agents.runtimes.dir`, else the data directory the bundle uses (`runtime.data-dir`, else

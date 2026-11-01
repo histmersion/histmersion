@@ -75,7 +75,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, Handlers) =
     val deps = Deps(cfg, ds)
     val h = Handlers(deps)
-    (AgentsHandlers(deps, h, (_, _) => Right(c)), h)
+    (AgentsHandlers(TransitionSite(deps, h), (_, _) => Right(c)), h)
 
   private def clean(): Unit =
     Migrate.run(ds)

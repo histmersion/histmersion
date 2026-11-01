@@ -60,7 +60,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def handlers(c: AppConfig = cfg): (AgentsHandlers, Handlers, StubUpstream) =
     val deps = Deps(c, ds)
     val h = Handlers(deps)
-    val a = AgentsHandlers(deps, h, (_, _) => Right(ScriptedClient(Model)))
+    val a = AgentsHandlers(TransitionSite(deps, h), (_, _) => Right(ScriptedClient(Model)))
     val up = StubUpstream()
     a.attach(up)
     (a, h, up)

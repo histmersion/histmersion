@@ -1,7 +1,9 @@
 package com.histmersion.domain.automation.managers
 
 import com.histmersion.api.ApiError
-import com.histmersion.api.Agents.{Pipeline, RunState}
+import com.histmersion.api.Agents.{ApprovalInfo, Pipeline, RunInfo, RunState}
+import com.histmersion.domain.AutopilotPolicy
+import com.histmersion.domain.automation.approvals.ApprovalChecks
 import com.histmersion.api.Autopilot.AutopilotStatus
 import com.histmersion.api.Managers
 import com.histmersion.api.Managers.{Kind, ManagerConfig, ManagerInfo, ManagerItem}
@@ -105,6 +107,15 @@ trait ManagerKindDefinition:
 
   /** What this kind's domain ingested today outside the managers' own events (the shared ingest cap counts it). */
   def ingestedToday(now: Instant): Int = 0
+
+  /** The autopilot's checks of an approval this kind's items wait for (None: not one of its kinds). */
+  def judge(
+      c: ApprovalChecks,
+      a: ApprovalInfo,
+      run: Option[RunInfo],
+      mgr: Option[ManagerInfo],
+      now: Instant
+  ): Option[AutopilotPolicy.Verdict] = None
 
   /** Whether a job of this kind's domain is in flight that a drain waits for. */
   def busy: Boolean = false

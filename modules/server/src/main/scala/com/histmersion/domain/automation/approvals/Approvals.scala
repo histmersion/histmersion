@@ -1,71 +1,44 @@
 package com.histmersion.domain.automation.approvals
 
 import com.histmersion.domain.automation.agents.*
-import com.histmersion.server.agents.InferFilterPipeline
 
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
-import com.histmersion.domain.AgentProposals.{Proposal, Route}
 import com.histmersion.db.AgentRepo
-import com.histmersion.server.Handlers
 
 import javax.sql.DataSource
-import com.histmersion.values.SourceStatus
+import com.histmersion.values.{EdgeKind, SourceStatus}
 
 /** The approval gate (docs/research-embedded-agents.md §5.2): what an agent run PROPOSES — a status, a disagreement
-  * edge — is applied by code only under the rules of [[AgentProposals.route]]; otherwise it becomes an `approvals` row
-  * a person decides from the web UI or the CLI. Approving applies it through [[Handlers.patchSource]], exactly the
-  * patch a person would send.
+  * edge, a filter, a plan — becomes an `approvals` row a person decides from the web UI or the CLI (the library routes
+  * a source's proposals first: `server/agents/SourceProposals`). Approving applies it through the domain's
+  * [[ApprovalEffects]], exactly the patch a person would send.
   *
   * A run does not wait for its approvals: it finishes, and the proposal stays open until decided.
   */
 final class Approvals(
-    h: Handlers,
     ds: DataSource,
     cfg: => AgentsConfig,
+    effects: => ApprovalEffects,
     applyHint: Managers.HintProposal => Either[String, String] = _ => Left("no managers to apply it")
 ):
-  import Approvals.Outcome
 
-  private def current(ck: String): Option[SourceStatus] = h.getSource(ck, body = false).toOption.map(_.source.status)
-
-  private def apply(p: Proposal): Either[String, String] =
-    h.patchSource(p.citekey, p.patch).left.map(_.message).map(_ => p.describe)
-
-  /** [[propose]] inside a run, through its write gate: a dry run records the proposal on the step and neither applies
-    * nor records it.
-    */
-  def propose(ctx: RunCtx, p: Proposal): Outcome =
-    import io.circe.syntax.*
-    ctx.write(s"${p.kind.wire} proposal: ${p.describe}", p.asJson)(propose(Some(ctx.run.id), p))(
-      Outcome.NotProposed(p.describe)
-    )
-
-  /** Route one verified proposal: apply it now (and record it, already approved), or record it open. */
-  def propose(runId: Option[String], p: Proposal): Outcome =
-    // the status it had matters to a status change only (an edge leaves the status alone)
-    val now = if p.kind == ApprovalKind.StatusChange then current(p.citekey) else None
-    AgentProposals.route(p, now, cfg.approvals.statusMode, cfg.approvals.edgeMode) match
-      case Route.Skip(why) => Outcome.Skipped(s"${p.describe} ($why)")
-      case Route.Apply     =>
-        apply(p) match
-          case Left(m)  => Outcome.Failed(s"${p.describe}: $m")
-          case Right(w) =>
-            val _ = AgentRepo.propose(
-              ds,
-              runId,
-              p,
-              now,
-              ApprovalState.Approved,
-              Some(s"${ListFilters.DecidedBy.AutoResult}: $w")
-            )
-            Outcome.Applied(w)
-      case Route.Ask =>
-        AgentRepo.propose(ds, runId, p, now) match
-          case Some(a) => Outcome.Recorded(a.id, p.describe)
-          case None    => Outcome.AlreadyOpen(p.describe)
+  /** Record a proposal about a source from its parts (open for a person, or already decided with `result`). */
+  def record(
+      runId: Option[String],
+      kind: ApprovalKind,
+      citekey: String,
+      status: Option[SourceStatus],
+      current: Option[SourceStatus],
+      edgeKind: Option[EdgeKind],
+      target: Option[String],
+      payload: String,
+      state: ApprovalState = ApprovalState.Open,
+      result: Option[String] = None
+  ): Option[ApprovalInfo] =
+    AgentRepo.record(ds, runId, kind, citekey, status, current, edgeKind, target, payload, state, result)
 
   def list(state: Option[String], limit: Option[Int], page: Int): Either[ApiError, List[ApprovalInfo]] =
     filter(state).map(st => AgentRepo.approvals(ds, st, page))
@@ -143,10 +116,8 @@ final class Approvals(
           a.hintEffect.toRight("the approval carries no readable action").flatMap(applyHint) match
             case Right(w) => AgentRepo.settle(ds, a.id, ApprovalState.Approved, s"applied: $w".take(1000))
             case Left(m)  => AgentRepo.settle(ds, a.id, ApprovalState.Failed, m.take(1000))
-        case (Decision.Approve, ApprovalKind.ArticleFilter) =>
-          a.filter
-            .toRight("the approval carries no readable filter")
-            .flatMap(InferFilterPipeline.applyProposal(h, ds, _)) match
+        case (Decision.Approve, k) if effects.subjectKinds(k) =>
+          effects.applySubject(a) match
             case Right(w) => AgentRepo.settle(ds, a.id, ApprovalState.Approved, s"applied: $w")
             case Left(m)  => AgentRepo.settle(ds, a.id, ApprovalState.Failed, m.take(1000))
         case (Decision.Approve, _) =>
@@ -175,7 +146,10 @@ final class Approvals(
 
   private def decideSource(id: Long, d: Decision, clean: Option[String]): Either[ApiError, ApprovalInfo] =
     for
-      p <- AgentRepo.proposal(ds, id).toRight(ApiError(s"approval $id carries no readable proposal"))
+      apply <- AgentRepo
+        .payload(ds, id)
+        .flatMap(effects.proposal)
+        .toRight(ApiError(s"approval $id carries no readable proposal"))
       // claim the decision FIRST (compare-and-set on `open`), so two people approving at once apply
       // the change once; then apply it and record what happened
       to = if d == Decision.Approve then ApprovalState.Approved else ApprovalState.Rejected
@@ -187,28 +161,8 @@ final class Approvals(
       _ = d match
         case Decision.Reject  => AgentRepo.settle(ds, id, ApprovalState.Rejected, "rejected")
         case Decision.Approve =>
-          apply(p) match
+          apply() match
             case Right(w) => AgentRepo.settle(ds, id, ApprovalState.Approved, s"applied: $w")
             case Left(m)  => AgentRepo.settle(ds, id, ApprovalState.Failed, m.take(1000))
       out <- AgentRepo.approval(ds, id).toRight(ApiError(s"No approval $id", Some(Write.CodeNotFound)))
     yield out
-
-object Approvals:
-  /** What became of one proposal, for the run's log and warnings. */
-  enum Outcome:
-    case Applied(what: String)
-    case Recorded(id: Long, what: String)
-    case AlreadyOpen(what: String)
-    case Skipped(why: String)
-    case Failed(why: String)
-
-    /** A dry run's proposal: neither recorded nor applied (#992). */
-    case NotProposed(what: String)
-
-    def line: String = this match
-      case Applied(w)     => s"applied: $w"
-      case Recorded(i, w) => s"approval $i waits for a person: $w"
-      case AlreadyOpen(w) => s"already waiting for a person: $w"
-      case Skipped(w)     => s"nothing to do: $w"
-      case Failed(w)      => s"not applied: $w"
-      case NotProposed(w) => s"${com.histmersion.api.AgentsMarkdown.DryRunNote}: $w"

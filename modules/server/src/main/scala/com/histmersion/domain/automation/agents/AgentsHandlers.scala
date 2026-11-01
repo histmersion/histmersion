@@ -5,19 +5,7 @@ import com.histmersion.domain.automation.autopilot.AutopilotService
 import com.histmersion.domain.automation.goals.GoalFocusService
 import com.histmersion.domain.automation.managers.{DrainService, ManagersHandlers, ManagerSupervisor, Zero}
 import com.histmersion.domain.automation.scheduler.SchedulerService
-import com.histmersion.server.agents.{
-  AcquireRecheckService,
-  AgentDoctor,
-  AgentUpstream,
-  BuiltinAi,
-  ClaudeCode,
-  CliRuntime,
-  Codex,
-  OaBacklog,
-  Opencode,
-  PlanPools,
-  SeedService
-}
+import com.histmersion.server.agents.{AgentDoctor, BuiltinAi, ClaudeCode, CliRuntime, Codex, Opencode, PlanPools}
 
 import com.histmersion.domain.automation.worklists.QueueItemId
 
@@ -33,7 +21,6 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.GoalPlans.*
 import com.histmersion.db.{AgentRepo, GoalLinkRepo, GoalRepo, ModelSettingsRepo}
-import com.histmersion.server.{Deps, Handlers}
 
 /** The ONE implementation of the embedded-agent operations (docs/research-embedded-agents.md): the model check, the
   * probe and (through [[Engine]]) pipeline runs. REST ([[AgentsRoutes]]) and the CLI reach it; it is held as
@@ -43,8 +30,7 @@ import com.histmersion.server.{Deps, Handlers}
   * pools are read on purpose ([[PlanPools.Seams]]).
   */
 final class AgentsHandlers(
-    deps: Deps,
-    h: Handlers,
+    site: EngineSite,
     clientFor: LlmClient.Factory,
     val cli: CliRuntime,
     planSeams: PlanPools.Seams
@@ -53,41 +39,41 @@ final class AgentsHandlers(
   /** A test's factory (sttp-ai's scripted model) over the server's own CLI context. No CLI is started to read a plan
     * pool (a scripted model's test must never spend a real plan on a probe).
     */
-  def this(deps: Deps, h: Handlers, clientFor: LlmClient.Factory) =
-    this(deps, h, clientFor, CliRuntime(deps.cfg, h.agentRoster), PlanPools.Seams.Offline)
+  def this(site: EngineSite, clientFor: LlmClient.Factory) =
+    this(site, clientFor, CliRuntime(site.config, site.roster), PlanPools.Seams.Offline)
 
-  private def this(deps: Deps, h: Handlers, w: (LlmClient.Factory, CliRuntime)) =
-    this(deps, h, w._1, w._2, PlanPools.Seams.Real)
+  private def this(site: EngineSite, w: (LlmClient.Factory, CliRuntime)) =
+    this(site, w._1, w._2, PlanPools.Seams.Real)
 
   /** The server's own providers ([[LlmClient.factory]]: the ones registered in the pinned plugin generation — the HTTP
     * ones, the CLI runtimes and any plugin's).
     */
-  def this(deps: Deps, h: Handlers) = this(deps, h, AgentsHandlers.serverWiring(deps, h.agentRoster))
+  def this(site: EngineSite) = this(site, AgentsHandlers.serverWiring(site))
 
   /** Read at each use: a config reload switches it (Deps). */
-  private def cfg = deps.cfg.agents
+  private def cfg = site.config.agents
 
   /** The agents' settings now (read at each use). */
   def config: AgentsConfig = cfg
-  private val ds = deps.ds
+  private val ds = site.ds
 
   /** What the engine asks of the rest of the server (goals, the housekeeping) until the owners offer services. */
-  val host: com.histmersion.domain.automation.workflows.AutomationHost = h.automationHost(this)
+  val host: com.histmersion.domain.automation.workflows.AutomationHost = site.host(this)
 
   /** The work lists' operations as a person's go: the worklog lines of the engine's services. */
-  val workLists: com.histmersion.domain.automation.worklists.WorkListControllers = deps.workLists
+  val workLists: com.histmersion.domain.automation.worklists.WorkListControllers = site.workLists
 
   /** The runs' rows, recorded through the jobs area that owns the `jobs` table. */
   val jobRuns: com.histmersion.util.jobs.JobRuns = com.histmersion.util.jobs.JobRuns(Transactor(ds))
 
   /** The work lists' kernel (the runs' log lines, the review's tasks). */
-  val queues: com.histmersion.domain.automation.worklists.QueueService = deps.queues
+  val queues: com.histmersion.domain.automation.worklists.QueueService = site.queues
 
   /** How the engine, the managers and their threads keep work on the generation it started on. */
-  val pins: com.histmersion.util.jobs.Pinning = deps.pins
+  val pins: com.histmersion.util.jobs.Pinning = site.pins
 
   /** A person's pause and cancel of the server's long background jobs. */
-  val jobStops: com.histmersion.util.jobs.JobStops = deps.jobStops
+  val jobStops: com.histmersion.util.jobs.JobStops = site.jobStops
 
   val definitions: AgentDefinitions = cli.definitions
   val tokens: RunTokens = cli.tokens
@@ -99,13 +85,13 @@ final class AgentsHandlers(
   /** A `hint-effect` approval a person approves is applied by the managers (read when it happens, so the forward
     * reference to [[managing]] is safe).
     */
-  val approvals: Approvals = Approvals(h, ds, cfg, p => managing.applyProposal(p))
+  val approvals: Approvals = Approvals(ds, cfg, site.approvalEffects, p => managing.applyProposal(p))
 
   /** What the domains register into the engine: their workflows and agent tools. A registration the engine refuses (two
     * workflows with one identifier, a tool nobody contributes) stops the server here.
     */
   val workflows: Workflows =
-    Workflows.of(h.automationContributions(this)).fold(m => throw IllegalStateException(s"workflows: $m"), identity)
+    Workflows.of(site.contributions(this)).fold(m => throw IllegalStateException(s"workflows: $m"), identity)
 
   /** A workflow whose roles the definitions were not told of would run agents nobody may define: refused here. */
   private val unrostered =
@@ -122,14 +108,14 @@ final class AgentsHandlers(
   val engine: Engine = Engine(ds, cfg, this, workflows)
 
   /** The process managers' supervisor (started with the pool), nudged whenever a run settles. */
-  val managers: ManagerSupervisor = ManagerSupervisor(ds, cfg, this, deps.workLists, workflows.managerKinds)
+  val managers: ManagerSupervisor = ManagerSupervisor(ds, cfg, this, site.workLists, workflows.managerKinds)
   engine.onSettled(managers.settled)
 
   /** The operations on the managers (REST, MCP, CLI). */
-  val managing: ManagersHandlers = ManagersHandlers(ds, cfg, deps.cfg.limits, this, managers, host)
+  val managing: ManagersHandlers = ManagersHandlers(ds, cfg, site.config.limits, this, managers, host)
 
   /** The checked auto approvals the managers' tick runs (article-plan, goal-plan, article-publish). */
-  val autoApprovals: AutoApprovals = AutoApprovals(ds, cfg, h, this)
+  val autoApprovals: AutoApprovals = AutoApprovals(ds, cfg, this)
 
   /** The autopilot: one switch that lets the managers carry every goal from planned to reviewed. */
   val autopilot: AutopilotService = AutopilotService(ds, cfg, this)
@@ -203,11 +189,7 @@ final class AgentsHandlers(
               s"unknown runtime(s) ${bad.mkString(", ")} (one of: ${AgentRuntime.Generated.map(_.wire).mkString(", ")})"
             )
           )
-      out = req.out
-        .map(_.trim)
-        .filter(_.nonEmpty)
-        .map(o => java.nio.file.Path.of(AgentTrees.expand(o)).toAbsolutePath.normalize)
-      r <- cli.trees.generate(knownTools, rts, out).left.map(ApiError(_))
+      r <- cli.trees.generate(knownTools, rts, AgentTrees.out(req.out)).left.map(ApiError(_))
     yield r
 
   // ── plan pools ─────────────────────────────────────────────────────────────────────────────────
@@ -334,7 +316,7 @@ final class AgentsHandlers(
   /** The client plugin AI providers' doctor checks and model listings go through. */
   private val aiHttp: com.histmersion.plugin.AiHttp = HostAiHttp()
 
-  def knownProviders: Set[String] = BuiltinAi.known(deps.plugins.registries.aiProviders)
+  def knownProviders: Set[String] = BuiltinAi.known(site.aiProviders())
 
   /** The model chains and allowances in effect, and the choice before every LLM call. */
   val picker: ModelPicker = ModelPicker(ds, cfg, resolve, pools, () => knownProviders)
@@ -456,7 +438,7 @@ final class AgentsHandlers(
   /** `GET /api/agents/doctor` — every provider checked without spending anything. */
   def doctor(offline: Boolean): Agents.DoctorReport =
     val r =
-      AgentDoctor(deps.cfg, picker, resolve, registry = Some(deps.plugins.registries.aiProviders), aiHttp = aiHttp)
+      AgentDoctor(site.config, picker, resolve, registry = Some(site.aiProviders()), aiHttp = aiHttp)
         .report(online = !offline)
     val held = lease.status match
       case Some((o, u, false, true))  => DoctorCheck("agent lease", CheckLevel.Ok, s"held by this server ($o) until $u")
@@ -550,7 +532,7 @@ final class AgentsHandlers(
       _ <- over.toList.filterNot((r, _) => p.roles.contains(r)).foldLeft[Either[ApiError, Unit]](Right(())) {
         case (acc, (role, ref)) => acc.flatMap(_ => runnable(role, Some(ref)).left.map(ApiError(_)))
       }
-      _ <- options(p, req, target)
+      _ <- host.runOptions(p, req, target, cfg.review.roundsCap)
       goal <- goalOf(p, target, req.goal.orElse(parent.flatMap(_.goal)))
       usd <- positive(req.budgetUsd.orElse(goal.flatMap(goalBudget)).getOrElse(cfg.budgets.runUsd), "budget-usd")
       tok <- positive(req.budgetTokens.getOrElse(cfg.budgets.runTokensFor(p.wire)).toDouble, "budget-tokens")
@@ -570,18 +552,12 @@ final class AgentsHandlers(
       val dry = req.dryRun.contains(true) || parent.exists(_.dryRun)
       Prepared(p, target, req.model.map(_.trim).filter(_.nonEmpty), usd, tok.toLong, params, goal, dry)
 
-  /** The roles a run of `p` may give a model of its own: its own, and those of the run it chains (compile-article
-    * starts a review-article run with fix).
-    */
-  private def overridable(p: Pipeline): List[Role] =
-    (p.roles ++ (if p == Pipeline.CompileArticle then Pipeline.ReviewArticle.roles else Nil)).distinct
-
   /** `--model-for role=provider:model`, checked before the run is queued: a role the pipeline uses, once, with a model
     * ref (or `a > b` chain) that parses. Whether that model can run is checked with the rest of the roles (the
     * readiness `models set` shows).
     */
   private def overrides(p: Pipeline, asked: List[ModelOverride]): Either[ApiError, Map[Role, String]] =
-    val roles = overridable(p)
+    val roles = host.runRoles(p)
     asked.foldLeft[Either[ApiError, Map[Role, String]]](Right(Map.empty)) { (acc, o) =>
       acc.flatMap { m =>
         for
@@ -606,20 +582,16 @@ final class AgentsHandlers(
       }
     }
 
-  /** The target as the pipeline names it: an existing source or article, a goal — or, for compile-article, any valid
-    * slug (a new article is created, an existing one extended).
-    */
+  /** The target as the pipeline names it (its workflow's domain resolves it), or a manager. */
   private def targetOf(p: Pipeline, raw: String): Either[ApiError, String] =
-    p.targetKind match
-      case TargetKind.Source                                  => h.getSource(raw, body = false).map(_.source.citekey)
-      case TargetKind.Article if p == Pipeline.CompileArticle => Articles.slugOf(raw).left.map(ApiError(_))
-      case TargetKind.Article                                 => h.getArticle(raw).map(_.article.slug)
-      case TargetKind.Goal                                    => h.getGoal(raw.trim).map(_.slug)
-      case TargetKind.Manager                                 =>
+    host
+      .runTarget(p, raw)
+      .getOrElse(
         com.histmersion.db.ManagerRepo
           .get(ds, raw.trim)
           .map(_.id)
           .toRight(ApiError(s"No manager '$raw'", Some(Write.CodeNotFound)))
+      )
 
   /** The goal a run works for: the target of a goal pipeline, else the one the request names (which must exist).
     */
@@ -628,52 +600,10 @@ final class AgentsHandlers(
     else
       named.map(_.trim).filter(_.nonEmpty) match
         case None    => Right(None)
-        case Some(g) => h.getGoal(g).map(x => Some(x.slug))
+        case Some(g) => host.goal(g).map(x => Some(x.slug))
 
   private def goalBudget(goal: String): Option[Double] =
     GoalLinkRepo.planAndBudget(ds, goal).flatMap(_._2).map(_.toDouble)
-
-  /** The options a pipeline understands, checked before the run is queued: `fix`/`rounds` belong to review-article, an
-    * acquisition item to enrich-source (and must be an open acquisition item), a title, kind and filter to
-    * compile-article (a NEW article needs a filter and a valid kind).
-    */
-  private def options(p: Pipeline, req: RunRequest, target: String): Either[ApiError, Unit] =
-    val wrong = (what: String, owner: Pipeline) =>
-      Left(ApiError(s"$what is an option of ${owner.wire}, not of ${p.wire}"))
-    val compileOpts =
-      req.title.isDefined || req.kind.isDefined || req.query.isDefined || req.topics.nonEmpty || req.tags.nonEmpty
-    p match
-      case _ if p != Pipeline.ReviewArticle && req.fix.contains(true)   => wrong("fix", Pipeline.ReviewArticle)
-      case _ if p != Pipeline.ReviewArticle && req.rounds.isDefined     => wrong("rounds", Pipeline.ReviewArticle)
-      case _ if p != Pipeline.EnrichSource && req.acquireItem.isDefined =>
-        wrong("an acquisition item", Pipeline.EnrichSource)
-      case _ if p != Pipeline.CompileArticle && compileOpts => wrong("a title, kind or filter", Pipeline.CompileArticle)
-      case _ if req.rounds.exists(n => n < 1 || n > cfg.review.roundsCap) =>
-        Left(ApiError(s"rounds must be between 1 and ${cfg.review.roundsCap} (agents.review.rounds-cap)"))
-      case Pipeline.CompileArticle =>
-        val exists = AgentRepo.slugExists(ds, target)
-        val filter =
-          req.query.exists(_.trim.nonEmpty) || req.topics.exists(_.trim.nonEmpty) || req.tags.exists(_.trim.nonEmpty)
-        for
-          _ <- req.kind.fold[Either[ApiError, String]](Right(""))(k => Articles.kindOf(k).left.map(ApiError(_)))
-          _ <- Either.cond(
-            exists || filter,
-            (),
-            ApiError(
-              s"'$target' is a new article: give a filter (query, topics or tags) " +
-                "for the sources to compile it from"
-            )
-          )
-          _ <- Either.cond(
-            exists || req.title.exists(_.trim.nonEmpty),
-            (),
-            ApiError(s"'$target' is a new article: give its title")
-          )
-        yield ()
-      case _ =>
-        req.acquireItem.fold(Right(()))(id =>
-          Queue.fulfillable(id, deps.queues.get(QueueItemId(id))).map(_ => ()).left.map(ApiError(_))
-        )
 
   /** Budgets are stored to the micro-dollar (numeric(12,6)): anything smaller would round to 0. */
   private def positive(v: Double, what: String): Either[ApiError, Double] =
@@ -683,7 +613,7 @@ final class AgentsHandlers(
     status.map(_.trim).filter(_.nonEmpty) match
       case Some(st) if RunState.parse(st).isEmpty =>
         Left(ApiError(s"unknown status '$st' (one of: ${RunState.values.map(_.wire).mkString(", ")})"))
-      case st => Right(AgentRepo.list(ds, st, deps.cfg.limits.page(limit, deps.cfg.limits.search), goal).toList)
+      case st => Right(AgentRepo.list(ds, st, site.config.limits.page(limit, site.config.limits.search), goal).toList)
 
   /** `GET /api/agents/runs` — one page, newest first ([[Paging]]), with the per-state counts of the runs (of `goal`,
     * when given).
@@ -709,7 +639,7 @@ final class AgentsHandlers(
     for
       q <- com.histmersion.server.ListQueries.runs(f, java.time.Instant.now())
       page <- AgentRepo
-        .page(ds, q, deps.cfg.limits.page(limit, deps.cfg.limits.search), cursor(before), cursor(upTo))
+        .page(ds, q, site.config.limits.page(limit, site.config.limits.search), cursor(before), cursor(upTo))
         .left
         .map(ApiError(_, Some(Write.CodeNotFound)))
     yield
@@ -769,7 +699,7 @@ final class AgentsHandlers(
     * proposed).
     */
   def approvalsList(state: Option[String], limit: Option[Int]): Either[ApiError, List[ApprovalInfo]] =
-    approvals.list(state, limit, deps.cfg.limits.page(limit, deps.cfg.limits.search))
+    approvals.list(state, limit, site.config.limits.page(limit, site.config.limits.search))
 
   /** One page of [[approvalsList]] ([[Paging]]), with the per-state counts of every approval. */
   def approvalsPage(
@@ -789,7 +719,7 @@ final class AgentsHandlers(
       before: Option[String],
       upTo: Option[String]
   ): Either[ApiError, (List[ApprovalInfo], Paging.Page)] =
-    approvals.page(f, deps.cfg.limits.page(limit, deps.cfg.limits.search), cursor(before), cursor(upTo))
+    approvals.page(f, site.config.limits.page(limit, site.config.limits.search), cursor(before), cursor(upTo))
 
   /** `POST /api/agents/approvals/{id}/{approve|reject}`. Deciding works with agents off too: it only applies a change a
     * person accepts, through the ordinary patch.
@@ -809,7 +739,7 @@ final class AgentsHandlers(
 
   /** `GET /api/goals/{slug}/view` — readable whether or not agents are on. */
   def goalView(slug: String): Either[ApiError, GoalView] =
-    h.getGoal(slug).map { g =>
+    host.goal(slug).map { g =>
       val (plan, budget) = GoalLinkRepo.planAndBudget(ds, g.slug).getOrElse((None, None))
       GoalView(
         g,
@@ -824,16 +754,16 @@ final class AgentsHandlers(
   def addGoalLink(slug: String, in: LinkAdd): Either[ApiError, GoalLink] =
     val ref = in.ref.trim
     for
-      g <- h.getGoal(slug)
+      g <- host.goal(slug)
       r <- in.kind match
-        case LinkKind.Source    => h.getSource(ref, body = false).map(_.source.citekey)
-        case LinkKind.Article   => h.getArticle(ref).map(_.article.slug)
+        case LinkKind.Source    => host.linkRef(LinkKind.Source, ref)
+        case LinkKind.Article   => host.linkRef(LinkKind.Article, ref)
         case LinkKind.QueueItem =>
           ref.toIntOption
-            .flatMap(i => deps.queues.get(QueueItemId(i)))
+            .flatMap(i => site.queues.get(QueueItemId(i)))
             .map(_.id.toString)
             .toRight(ApiError(s"No queue item '$ref'", Some(Write.CodeNotFound)))
-        case LinkKind.Query =>
+        case LinkKind.SearchQuery =>
           Either.cond(
             ref.nonEmpty && ref.length <= cfg.plan.queryChars,
             ref,
@@ -848,7 +778,7 @@ final class AgentsHandlers(
 
   def removeGoalLink(slug: String, kind: String, ref: String): Either[ApiError, Removed] =
     for
-      g <- h.getGoal(slug)
+      g <- host.goal(slug)
       k <- LinkKind
         .parse(kind)
         .toRight(ApiError(s"unknown link kind '$kind' (one of: ${LinkKind.values.map(_.wire).mkString(", ")})"))
@@ -871,7 +801,7 @@ final class AgentsHandlers(
       now: java.time.Instant = java.time.Instant.now()
   ): Either[ApiError, GoalSchedule] =
     for
-      g <- h.getGoal(slug)
+      g <- host.goal(slug)
       k <- scheduleKind(kind)
       _ <- in.budgetUsd.fold[Either[ApiError, Double]](Right(0))(positive(_, "budget-usd"))
       out <- managing.setSchedule(g.slug, k, in, now)
@@ -879,7 +809,7 @@ final class AgentsHandlers(
 
   def removeSchedule(slug: String, kind: String): Either[ApiError, Removed] =
     for
-      g <- h.getGoal(slug)
+      g <- host.goal(slug)
       k <- scheduleKind(kind)
     yield managing.removeSchedule(g.slug, k)
 
@@ -893,15 +823,15 @@ final class AgentsHandlers(
   def probe(req: ProbeRequest): Either[ApiError, ProbeResult] =
     for
       _ <- enabled
-      src <- h.getSource(req.citekey, body = false)
+      src <- host.probeSubject(req.citekey)
       picked <- picker.pick(Role.Probe, req.model).left.map {
         case PickFailure.Unavailable(m)     => ApiError(m)
         case PickFailure.Exhausted(m, _, _) => ApiError(m)
       }
-      result <- probeWith(picked.client, picked.billing, src.source)
+      result <- probeWith(picked.client, picked.billing, src)
     yield result
 
-  private def probeWith(client: LlmClient, billing: Billing, src: SourceDetail): Either[ApiError, ProbeResult] =
+  private def probeWith(client: LlmClient, billing: Billing, src: ProbeAnswer): Either[ApiError, ProbeResult] =
     for
       d <- definitions.agent(StepAgent.Probe).left.map(ApiError(_))
       sys <- definitions.system(d, ToolStyle.Bare).left.map(ApiError(_))
@@ -917,7 +847,7 @@ final class AgentsHandlers(
   private def probeCall(
       client: LlmClient,
       billing: Billing,
-      src: SourceDetail,
+      src: ProbeAnswer,
       d: AgentDef,
       system: String
   ): Either[ApiError, ProbeResult] =
@@ -957,9 +887,8 @@ final class AgentsHandlers(
                 model = client.model.wire,
                 answer = answer,
                 rawAnswer = LlmClient.rawAnswer(res.finalAnswer).take(2000),
-                matchesRecord = problems.isEmpty && answer.exists(a =>
-                  AgentVerify.sameTitle(a.title, src.title) && a.year == src.year
-                ),
+                matchesRecord =
+                  problems.isEmpty && answer.exists(a => host.sameTitle(a.title, src.title) && a.year == src.year),
                 toolCalls = toolCalls,
                 iterations = res.iterations,
                 finish = LlmClient.finish(res.finishReason),
@@ -974,9 +903,9 @@ final class AgentsHandlers(
 
 object AgentsHandlers:
   /** The server's providers over one [[CliRuntime]]. */
-  def serverWiring(deps: Deps, roster: AgentRoster): (LlmClient.Factory, CliRuntime) =
-    val rt = CliRuntime(deps.cfg, roster)
-    (LlmClient.factory(rt, () => deps.plugins.registries.aiProviders), rt)
+  def serverWiring(site: EngineSite): (LlmClient.Factory, CliRuntime) =
+    val rt = CliRuntime(site.config, site.roster)
+    (LlmClient.factory(rt, site.aiProviders), rt)
 
   /** [[attempt]], telling the plan's own usage limit (a model to pass over, [[ModelLimitReached]]) apart from a broken
     * provider.

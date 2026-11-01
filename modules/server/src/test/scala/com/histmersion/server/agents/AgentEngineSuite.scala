@@ -101,7 +101,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, Handlers) =
     val deps = Deps(cfg, ds)
     val h = Handlers(deps)
-    (AgentsHandlers(deps, h, (_, _) => Right(c)), h)
+    (AgentsHandlers(TransitionSite(deps, h), (_, _) => Right(c)), h)
 
   private def clean(): Unit =
     Migrate.run(ds)
@@ -440,12 +440,12 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val (a, h) = handlers(c); seed(h)
     val p =
       AgentProposals.Proposal(ApprovalKind.StatusChange, Ck, status = Some(SourceStatus.Contested), evidence = "e")
-    val first = a.approvals.propose(None, p)
+    val first = TestRuns.proposals(a, h).propose(None, p)
     val id = first match
-      case Approvals.Outcome.Recorded(i, _) => i
-      case other                            => fail(s"expected an open approval, got $other")
+      case SourceProposals.Outcome.Recorded(i, _) => i
+      case other                                  => fail(s"expected an open approval, got $other")
     // the same proposal while it is open is not doubled
-    assert(a.approvals.propose(None, p).isInstanceOf[Approvals.Outcome.AlreadyOpen])
+    assert(TestRuns.proposals(a, h).propose(None, p).isInstanceOf[SourceProposals.Outcome.AlreadyOpen])
     assertEquals(h.getSource(Ck).toOption.get.source.status, SourceStatus.Unassessed)
     val decided = a.decide(id, "approve", DecisionRequest(Some("checked the rebuttal"))).toOption.get
     assertEquals((decided.state, decided.note), ("approved", Some("checked the rebuttal")))
@@ -454,9 +454,9 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(a.decide(999999999L, "approve", DecisionRequest()).left.exists(_.code.contains(Write.CodeNotFound)))
     assert(a.decide(id, "maybe", DecisionRequest()).isLeft)
     val p2 = p.copy(status = Some(SourceStatus.Debunked))
-    val id2 = a.approvals.propose(None, p2) match
-      case Approvals.Outcome.Recorded(i, _) => i
-      case other                            => fail(s"expected an open approval, got $other")
+    val id2 = TestRuns.proposals(a, h).propose(None, p2) match
+      case SourceProposals.Outcome.Recorded(i, _) => i
+      case other                                  => fail(s"expected an open approval, got $other")
     assertEquals(a.decide(id2, "reject", DecisionRequest()).map(_.state), Right("rejected"))
     assertEquals(h.getSource(Ck).toOption.get.source.status, SourceStatus.Contested)
     assertEquals(a.approvalsList(Some("all"), None).map(_.count(_.citekey == Ck)), Right(2))
@@ -477,11 +477,13 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val c = ScriptedClient(Model)
     val auto = baseCfg.copy(agents = baseCfg.agents.copy(approvals = AgentApprovalsConfig("auto", "manual", "manual")))
     val (a, h) = handlers(c, auto); seed(h)
-    val o = a.approvals.propose(
-      None,
-      AgentProposals.Proposal(ApprovalKind.StatusChange, Ck, status = Some(SourceStatus.Debunked), evidence = "e")
-    )
-    assert(o.isInstanceOf[Approvals.Outcome.Applied], o)
+    val o = TestRuns
+      .proposals(a, h)
+      .propose(
+        None,
+        AgentProposals.Proposal(ApprovalKind.StatusChange, Ck, status = Some(SourceStatus.Debunked), evidence = "e")
+      )
+    assert(o.isInstanceOf[SourceProposals.Outcome.Applied], o)
     assertEquals(h.getSource(Ck).toOption.get.source.status, SourceStatus.Debunked)
     assertEquals(
       AgentRepo.approvals(ds, Some(ApprovalState.Approved), 50).filter(_.citekey == Ck).map(_.status),
@@ -577,7 +579,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def handlersFor(f: LlmClient.Factory, cfg: AppConfig = evalCfg): (AgentsHandlers, Handlers) =
     val deps = Deps(cfg, ds)
     val h = Handlers(deps)
-    (AgentsHandlers(deps, h, f), h)
+    (AgentsHandlers(TransitionSite(deps, h), f), h)
 
   test("enrich-source dry run: every read and model step runs, nothing is written, each write is recorded on its step"):
     val c = ScriptedClient(Model)

@@ -1,7 +1,6 @@
 package com.histmersion.server.agents
 
 import com.histmersion.domain.automation.agents.*
-import com.histmersion.domain.automation.approvals.Approvals
 import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
 
 import com.histmersion.domain.automation.worklists.QueueItemId
@@ -38,7 +37,7 @@ final class EnrichSourcePipeline(
     ds: DataSource,
     cfg: => AgentsConfig,
     upstream: () => AgentUpstream,
-    approvals: Approvals
+    approvals: SourceProposals
 ) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.EnrichSource
   private val name = pipeline.wire
@@ -301,11 +300,11 @@ final class EnrichSourcePipeline(
         evidence = Option(c.statusEvidence).filter(_.trim.nonEmpty).getOrElse("(the model gave no evidence)")
       )
       approvals.propose(ctx, proposal) match
-        case o @ Approvals.Outcome.Applied(w)      => StatusRouted(Some(c.status.wire), None, o.line)
-        case o @ Approvals.Outcome.Recorded(id, _) =>
+        case o @ SourceProposals.Outcome.Applied(w)      => StatusRouted(Some(c.status.wire), None, o.line)
+        case o @ SourceProposals.Outcome.Recorded(id, _) =>
           ctx.warn(s"status ${c.status.wire} not applied: approval $id waits for a person")
           StatusRouted(None, Some(id), o.line)
-        case o @ Approvals.Outcome.Failed(_) =>
+        case o @ SourceProposals.Outcome.Failed(_) =>
           ctx.warn(s"status: ${o.line}")
           StatusRouted(None, None, o.line)
         case o => StatusRouted(None, None, o.line)

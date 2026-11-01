@@ -92,7 +92,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
   private def handlers(c: LlmClient, cfg: AppConfig = autoCfg): (AgentsHandlers, Handlers) =
     val deps = Deps(cfg, ds)
     val h = Handlers(deps)
-    (AgentsHandlers(deps, h, (_, _) => Right(c)), h)
+    (AgentsHandlers(TransitionSite(deps, h), (_, _) => Right(c)), h)
 
   private def clean(): Unit =
     Migrate.run(ds)

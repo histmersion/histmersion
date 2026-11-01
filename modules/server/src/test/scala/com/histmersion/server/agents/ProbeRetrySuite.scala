@@ -55,7 +55,10 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val deps = Deps(cfg, ds)
     val h = Handlers(deps)
     assert(h.putSource(Ck, SourcePut(title = "A Catalogue of Fishes", year = Some(1956))).isRight)
-    AgentsHandlers(deps, h, (_, ref) => Option.when(ref == Model)(c).toRight(s"no scripted client for ${ref.wire}"))
+    AgentsHandlers(
+      TransitionSite(deps, h),
+      (_, ref) => Option.when(ref == Model)(c).toRight(s"no scripted client for ${ref.wire}")
+    )
 
   test("an empty title and a null year are sent back with the problems; the second answer matches"):
     val c = ScriptedClient(Model)
@@ -100,7 +103,10 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val deps = Deps(cfg, ds)
     val h = Handlers(deps)
     assert(h.putSource(Ck, SourcePut(title = "A Catalogue of Fishes", year = Some(1956))).isRight)
-    AgentsHandlers(deps, h, (_, ref) => Option.when(ref == Model)(client).toRight(s"no client for ${ref.wire}"))
+    AgentsHandlers(
+      TransitionSite(deps, h),
+      (_, ref) => Option.when(ref == Model)(client).toRight(s"no client for ${ref.wire}")
+    )
 
   test("claude-code: a prose answer is asked again with why; the typed second answer matches (#915)"):
     val fake = FakeCli.sequence("claude", List(List(ClaudeStreams.Init, Prose), List(ClaudeStreams.Init, Typed)))

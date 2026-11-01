@@ -218,7 +218,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
   private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, Handlers) =
     val deps = Deps(cfg, ds)
     val h = Handlers(deps)
-    (AgentsHandlers(deps, h, (_, _) => Right(c)), h)
+    (AgentsHandlers(TransitionSite(deps, h), (_, _) => Right(c)), h)
 
   private def clean(): Unit =
     Migrate.run(ds)
@@ -1181,7 +1181,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
   private def handlersWith(f: LlmClient.Factory, cfg: AppConfig = evalCfg): (AgentsHandlers, Handlers) =
     val deps = Deps(cfg, ds)
     val h = Handlers(deps)
-    (AgentsHandlers(deps, h, f), h)
+    (AgentsHandlers(TransitionSite(deps, h), f), h)
 
   test("fix dry run: nothing is written, yet round 2 reviews the fixer's unwritten revision"):
     val c = PanelClient(Model)
