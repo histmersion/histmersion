@@ -1,6 +1,6 @@
 # Domain model, package by feature, first-party plugins out of the server (refactor step 3, design)
 
-Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18; slice 7 part 2 built — §19; slice 7 part 3 built — §20; slice 8 part 1 built — §21; slice 8 part 2 built (events, evidence, map tiles) — §21; slice 8 part 3 built (places, the catalogue's own data contribution but its carried kinds and merge rules, which are part 4) — §21; slice 8 part 4 built (the catalogue's carried kinds and merge rules) — §21: slice 8 is complete; slice 9 built (media) — §22.** Written 2026-10-30 on master
+Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18; slice 7 part 2 built — §19; slice 7 part 3 built — §20; slice 8 part 1 built — §21; slice 8 part 2 built (events, evidence, map tiles) — §21; slice 8 part 3 built (places, the catalogue's own data contribution but its carried kinds and merge rules, which are part 4) — §21; slice 8 part 4 built (the catalogue's carried kinds and merge rules) — §21: slice 8 is complete; slice 9 built (media) — §22; slice 10 part 1 built (sources, findings, citations, labels, search and query, `SourceReferrer`; acquisition, ingest and the collections are part 2, the workflows and data contributions part 3) — §23.** Written 2026-10-30 on master
 58de5489 (branch `domain-design`); revised after the user's reviews of §3: domains above features, measured;
 `personal` with its own interface; `library`, `research`, `catalogue`, `media` named; acquisition and OCR
 dissolved (2026-10-30); automation as a generic workflow engine fed by the domains, data management and file
@@ -17,6 +17,7 @@ Inventories too long for this page are in `research-domain-model/`:
 | [`primitives.md`](research-domain-model/primitives.md) | primitive parameters and fields by name, measured per module, and the counts behind §4 |
 | `catalogue-live-*.tsv` | slice 8's live-volume measurements (§21, parts 1–3): per request its status, length, SHA-256, ETag and the median and p95 of 20 runs — digests and timings only |
 | `media-live-*.tsv` | slice 9's live-volume measurements (§22), the same driver and columns |
+| `library-live-*.tsv` | slice 10 part 1's live-volume measurements (§23): `scripts/perf/library_live.py`, the same columns |
 
 `catalogue` is the domain of places, periods and events (Q17, decided 2026-10-30): the catalogue of data points the
 map and the timeline show. The name is one package segment (`domain.catalogue`, `api.catalogue`,
@@ -3318,3 +3319,192 @@ the server as `SeedFigureFilesSuite`), cli 232, web 639, server
 1 480 (1 skipped, 1 ignored; the media oracle, the five contract suites on both twins, the three controller suites).
 Two intermediate commits (the domain move and the data contribution) left a few lines unformatted that the next commit
 formatted (the formatter's cache had replayed); every commit from the narrowing on passes `fmt-check` as it is.
+
+## 23. Slice 10 as built, part 1 (the library: sources, findings, citations, labels, search and query, `SourceReferrer`, 2026-11-01)
+
+Branch `refactor-s10a` from master d42f6178 (slices 1–9 deployed). Slice 10 is XL (§9.2), so it runs in three parts,
+each deployed before the next; this is part 1. Four commits: the oracles on the unchanged code, the library's move with
+`SourceReferrer`, the native metadata, this section. Endpoints, MCP tools, CLI commands, search results and their
+order, facets, `query` and `schema`, bundle entries, merge plans and lint output are unchanged: `ContractSnapshotSuite`,
+`CliHelpSnapshotSuite`, `AutomationOracleSuite`, `DataOracleSuite`, `CatalogueOracleSuite`, `MediaOracleSuite`, the new
+`LibraryOracleSuite` and `SearchSqlSnapshotSuite` held byte for byte; no oracle or snapshot was re-recorded after the
+first commit, and no migration was added.
+
+**The oracles, first** (recorded on the unchanged code and stable twice in a row before anything moved;
+`HISTMERSION_UPDATE_ORACLE=1` rewrites them):
+
+| oracle | what it records |
+|---|---|
+| `SearchSqlSnapshotSuite` (db, pure; `snapshot/search-sql.txt`) | the SQL text and bound parameters the filter's builders generate: each criterion alone (text with phrases, exclusions, `or`, blanks and `%`; tags, authors, places by name and gazetteer id, topics, statuses, publication years, deep time, a box and one across the antimeridian, a title, a goal), pairs and the whole filter, every order, pages, each facet field with and without a prefix, the map feed, the counts, the snippets and the histogram's rows in both units — with an empty place scope and one naming gazetteer ids |
+| `LibraryOracleSuite` (server, DB; `oracle/library/*.txt`) | a crafted collection over REST and MCP: `written.txt` (put, patch field by field, strict refusals), `sources.txt` (get, full, view sections, citekeys, aliases, notes, passages, export, lint and fix), `citations.txt` (edges of every kind added and removed, `neighbors`, `graph`, `contradictions`), `search.txt` (search, every facet kind with prefixes, statuses, `query` and `schema`, the histogram and geo-when over the fixture, the findings' pages), `referrers.txt` (a rename with its alias and a delete, refused and applied, with every row the catalogue, media, research, automation and the jobs hold of the sources before and after) |
+
+UUIDs, timestamps, days and durations are masked. `scripts/perf/library_live.py` (180 requests: 51 searches, the
+citekeys and the aliases, 12 facet lists, 8 map feeds and pages, 12 histograms, 6 queries and the schema, 2 quick
+searches, the detail, views, passages, export and lint of six sources and their citations) drives the live comparison below; it writes digests, lengths and timings only, and
+names the corpus's values (a source, a tag, a place) by symbolic labels it resolves at run time.
+
+**`domain.library`, by feature** (db module for the repositories and the SQL, server for the services, controllers,
+routes and tools):
+
+- **`sources`** — `SourceService` (the current citekey of an id, its aliases, the citekeys and their update times, a
+  source with its findings, its body by part — whole, table of contents, under a heading, chunks —, its Markdown, put,
+  patch, rename, the delete's plan and the delete, the edges' resolution) over `SourceRepo` and `SourceDeleteRepo`;
+  `SourcesControllers` (canonical, get, citekeys, aliases, note, put, patch, rename, delete, a note's import, the
+  formatting issues, lint, fix, markdown, passages); `SourceFormatting` (what it asks of research's prose lint,
+  `domain.research.articles.lint.SourceTextFormatting`), `SourceOriginals` (the ingest's stores, for a delete's files),
+  `SourceSettings`; `SourceMedia` and `SourcePassages` (the media's and the catalogue's interfaces) now over the
+  service. The rows the repositories read (`FullSourceRow`, `FindingIdRow`, `EdgeRow`, `CitekeyMillis`) are files of
+  their own; `SourceDeletePlan` is the delete's plan.
+- **`sources.referrers`** — `SourceReferrer` (below), `SourceRename`, `SourceKeys`, `RenamedReferences`, `DeleteReport`
+  and `SourceReferrers`, the registry.
+- **`citations`** — `CitationService` (neighbors, the graph, the disagreements) over `CitationRepo` (with the codecs of
+  `NeighborRow`, `NeighborTarget` and `ContradictionRow`, out of `db/Codecs` and `SourceRepo`'s package); the edges'
+  resolution is `CitationsControllers.resolveEdges`.
+- **`findings`** — `FindingService` (the map feed and its count) over `FindingRepo`; `GeoFeedRow`; `FindingsControllers`.
+- **`labels`** — `LabelService` (the facets: every field, a prefix, a filter, a place scope) over `LabelRepo`;
+  `LabelsControllers`.
+- **`search`** — `SearchService` (the search with its snippets, the counts, the unlocated count, a selection's place
+  counts, the histogram's rows) over `SearchRepo` and `AggregateRepo`; `QueryService` (the read-only query and the
+  schema) over `QueryRepo`; `FilterSql` and `Search` (the filter's SQL, moved unchanged but for the package);
+  `SearchFilters` (a filter's page and places, out of `Handlers.resolve`/`scopeOf`); `SearchControllers` (the quick
+  search, the sources' search, a selection's place counts, the histogram) and `QueryControllers`; `QueryTools` and `QueryRoutes` (`query` and `schema`, out of `OpsTools` and
+  `OpsRoutes`, in their places among the operations' tools and routes).
+
+`LibraryState` is the record the `InMemory` services share (the sources with their findings' uids, chunks and update
+times, aliases and their tombstones, edges and the parked ones); `LibraryRoutes` holds the library's routes and
+`LibraryTools` its 13 MCP tools (`search`, `facets`, `get_source`, `passages`, `geo_when`, `neighbors`, `graph`,
+`contradictions`, `put_source`, `patch_source`, `rename_source`, `export_source`, `histogram`), their inputs out of
+`McpTools`, both in today's order; the routes the other owners still serve among them (a source's articles, the lint of
+Markdown, an id's resolution, the seed, a source's export, the reindex) are handed in, so the order does not change.
+The composition root builds it all in `server/LibraryWiring`; `Handlers.library` is that wiring, and the library's
+methods of `Handlers` and `OpsHandlers.query` are gone (`resolve` and `scopeOf` forward to `library.filters`; the pages,
+`sourceRefs` and the critiques read through `library.sourceStore`). `Search`'s hits are unchanged records of `api`.
+
+**Services and their twins.** `SourceService` and `CitationService` keep records, so each is a trait with
+`Implementation` (over a `Transactor`, owning its transactions) and `InMemory` (over `LibraryState`), and one contract
+suite run on both (`SourceServiceContract`, `CitationServiceContract`, gathered in `LibraryStoreSuite`);
+`SourcesControllersSuite` covers the controllers. `SearchService`, `FindingService`, `LabelService` and `QueryService`
+are mechanisms over SQL (the filter's builders, full-text ranking, PostGIS, the database's catalogue) and have no
+in-memory twin, as `MapTileService` and the carried kinds have none; their answers are in `SearchSqlSnapshotSuite`,
+the oracle and the db suites. The in-memory twins hold only the library's rows and answer as a database holding only
+those would (a rename or delete in memory touches no other domain's rows).
+
+**`SourceReferrer`** (§3.4: the library owns the interface, every table owner implements it). A domain whose records
+name a source implements four members, each defaulting to "nothing of mine": `renamed` (rewrite its columns and
+`[[citekey]]` texts, return what it rewrote), `report` (what of it refuses a delete, goes with it or stays and is
+reported), `deleting` (remove what goes) and `recorded` (the log's entry of the delete). They run in the library's
+transaction, in the order `Deps.sourceReferrers` registers them — the catalogue's attestations, the media's asset links,
+research's articles, the catalogue's events, `util.jobs`, the catalogue's places, the automation's goals and work lists
+— which is the order the statements ran in before; a delete's counts and blockers are sorted by their enum's ordinal,
+which reproduces today's lists. Each implementation sits beside its owner's repository in the db module
+(`AttestationSourceReferrer`, `AssetLinkSourceReferrer`, `ArticleSourceReferrer`, `EventSourceReferrer`,
+`JobSourceReferrer`, `PlaceSourceReferrer`, `GoalSourceReferrer`, `WorkListSourceReferrer`); `SourceRepo` and
+`SourceDeleteRepo` name none of them, nor `ArticleRepo`, `QueueRepo` or `ArticleLinks`. The bundle import's renames
+reach the same registry (`ImportOptions.sourceReferrers`).
+
+**Moved to their owners.** The `[[link]]` grammar both the library and research read is `util.text.WikiLinks` (api;
+`ArticleLinks` forwards to it); a table of contents' Markdown is `TocEntry.markdown` (was `Markdown.toc`), and
+`TocEntry` is placed in `library.sources`; `SourceDelete`'s attestation rule is `AttestationSourceReferrer`'s; the
+delete's and rename's records (`DeletePart`, `DeleteCount`, `DeleteBlocker`, `DeleteBlockerKind`, `RenameCount`) are
+placed in `library.sources.referrers`.
+
+**Equivalence.**
+
+- The eight oracles and snapshots above identical after the move.
+- **Live volumes.** A `*_test` database restored from the newest live dump (16 GB) on a scratch cluster
+  (`shared_buffers` 512 MB), its statistics taken once and checked present for all 126 tables; a scratch server
+  (`-Xmx4g`, `sandbox-exec` refusing every connection but loopback, scratch home, settings and data directory, the
+  converter pointed at nothing) on a class path frozen from each build (the unchanged code at e706810e, whose main sources are d42f6178's; this
+  branch), driven by `scripts/perf/library_live.py`, 20 rounds per request. Both builds ran on the same database itself,
+  not a copy, alternating (unchanged, branch, unchanged, branch), so that no server start's sampling of statistics
+  differed between them (§21's lesson): all 180 answers (status, length, SHA-256 and
+  ETag of every response) identical in all four runs, and identical to the unchanged code's first run on a copy of the
+  same restore; every run stable over its 20 rounds (`library-live-before-s1.tsv`, `library-live-after-s1.tsv`,
+  `library-live-before-s2.tsv`, `library-live-after-s2.tsv`). Medians summed per kind of request:
+
+  | requests | n | unchanged 1 (ms) | branch 1 (ms) | unchanged 2 (ms) | branch 2 (ms) | ratio 2 |
+  |---|---:|---:|---:|---:|---:|---:|
+  | `sources` (51 searches: text, tags, places, topics, statuses, years, deep time, boxes, orders, pages, groups), `citekeys`, `source-aliases` | 53 | 3 479.8 | 3 479.3 | 3 487.1 | 3 497.5 | 1.00 |
+  | `search` (the quick search) | 2 | 132.5 | 132.8 | 133.9 | 134.6 | 1.01 |
+  | `facets` (every field, prefixes, a filter, a place) | 12 | 2 933.9 | 2 945.9 | 2 943.9 | 2 948.7 | 1.00 |
+  | `findings` and their pages (geo-when) | 8 | 205.5 | 206.6 | 208.2 | 207.8 | 1.00 |
+  | `aggregate` (the histogram, both units, trees) | 12 | 5 012.7 | 5 026.9 | 5 060.4 | 5 064.0 | 1.00 |
+  | six sources: detail, views, passages, export, lint | 60 | 379.0 | 387.9 | 382.2 | 384.7 | 1.01 |
+  | `neighbors`, `graph`, `contradictions` | 26 | 33.1 | 33.3 | 32.6 | 32.9 | 1.01 |
+  | `query`, `schema` | 7 | 12.9 | 13.5 | 13.4 | 13.4 | 1.00 |
+  | total | 180 | 12 189.4 | 12 226.2 | 12 261.7 | 12 283.6 | 1.00 |
+
+  No request is slower by more than 10 % at a median of 5 ms or more in both pairs: the ones that are in one pair are
+  a source's detail or view at 5–9 ms, slower by 0.6–0.9 ms, and different requests in each pair (three in the first,
+  two in the second); the unchanged code against itself shows the same (two requests, 4.8 → 5.3 and 14.3 → 15.9 ms).
+  The database was dropped and the cluster removed afterwards
+- `ArchitectureSuite`, the library's suites and every module's tests (below) pass.
+
+**Architecture.** `exceptions.tsv` 344 → 330 rows, deletions only: direction 229 → 221 (`api/Markdown` naming
+research's `TocEntry`; `api/Rename` and `api/SourceDelete` naming `ArticleLinks`; `db/Codecs` naming the library's
+`NeighborTarget`; `db/SourceDeleteRepo` naming `ArticleLinks`; `db/SourceRepo` naming `ArticleLinks`, `ArticleRepo` and
+`TocEntry`), repository 59 → 53 (`SourceDeleteRepo` naming `QueueRepo`; `SourceRepo` naming `ArticleRepo`; `Handlers`
+naming `AggregateRepo`, `SourceDeleteRepo` and `SourceRepo`; `OpsHandlers` naming `QueryRepo`); filesystem (52) and
+process (4) unchanged. `places.tsv` 987 → 982 lines: the six moved db files' rows gone, the five delete and rename
+records re-placed in `library.sources.referrers`, `TocEntry` in `library.sources`, `server/LibraryWiring.scala` placed in
+`server`.
+
+**Deviations.**
+
+- One commit moves the library's five features with `SourceReferrer`, not one per feature: `SourceRepo` held the
+  sources, the search's hits, the findings' feed, the facets and the citations' rows in one package object and its
+  rename and delete reached into four other domains' tables, so no feature compiled alone with the rest unmoved.
+- `SourceRepo` is `private[histmersion]`, not `private[sources]`: the bundle import, the lint's projections, the
+  importer, acquisition, ingest and the critiques still call it (rows below; part 3 narrows it). The other repositories
+  are narrowed to their feature (`CitationRepo`, `FindingRepo`, `LabelRepo`, `AggregateRepo`, `SearchRepo`,
+  `QueryRepo`, `SourceDeleteRepo`); the db suites reach them through `SourceFixtures`, `SearchFixtures`,
+  `FindingFixtures`, `LabelFixtures` and `CitationFixtures`.
+- The referrers are in the db module, beside the repositories they write with, and are handed the library's `DbCon`:
+  a referrer that opened its own transaction would split a rename that is one statement batch today.
+- `AttestationSourceReferrer` names its targets by their wire strings (`finding`, `edge`, `event_dating`), as the SQL
+  did, rather than `AttestationTarget`'s cases, whose names are the library's types (`Finding`, `Edge`) and would add
+  direction rows; `api/AttestationTarget` itself stays a row (below).
+- `SearchControllers.clampToSpan` takes the timeline's bounds as two numbers rather than `UiTimeSettings`, which is the
+  composition root's.
+- `IngestHandlers`, acquisition, the agents' pipelines and the bundle import still call `SourceRepo` or `Handlers`'
+  forwarders; they are part 2's and part 3's.
+
+**Left for parts 2 and 3** (the library rows that remain in `exceptions.tsv`, by the part or slice that removes them):
+
+| rows | removed by | what moves |
+|---|---|---|
+| direction: `api/Acquire`, `api/Assessment` naming `UpdateNotice`; `server/IngestHandlers` naming `Deps`, `Jobs`; `server/acquire/AcquireHandlers` naming `Deps`, `UpdateNotice`; `server/acquire/DiscoveryClient` naming `UpdateNotice`; `server/acquire/CandidateSearch` naming `ArticleRepo`; `config/AcquireDefaults` naming `CitationCount`; `core/BrowserDownload` naming `Citation` — repository: `SourceRepo` named by `AcquireRepo`, `Importer`, `IngestHandlers`, `AcquireHandlers`, `CandidateSearch`, `SkeletonIngest`; `Handlers` naming `UpstreamQuotaRepo`; `OpsHandlers` naming `AcquireCheckRepo` | part 2 | acquisition (`server/acquire`, `AcquireRepo`, `CandidateRepo`, `UpstreamQuotaRepo`, `AcquireCheckRepo`), ingest over `util.ocr` and its stores (`IngestHandlers`, `Importer`, `SkeletonIngest`), the collections' running (Calibre, archive.org), `sources.license` as `Option[Licence]` with `Attribution` and `DataCredit` on datasets (Q26) |
+| direction: `server/agents/AcquireRecheckService`, `AcquisitionSweepPipeline`, `CurrencyCheckPipeline`, `EnrichSourcePipeline`, `OaBacklog`, `SeedService` naming `Handlers`; `config/AgentManagersConfig` naming `WatchManagerConfig`, `config/AgentsConfig` naming `AgentEnrichConfig`, `AgentSeedConfig`, `AgentVerifyConfig`; `core/ManagerDefaults` naming `WatchManagerDefaults`; `core/ManagerPolicy` naming `SeedPlanDefaults` — repository: `SeedService` naming `CandidateRepo` | part 3 | the library's workflows, tools and the watch manager kind out of the slice-7 adapters |
+| direction: `db/BundleImport` naming `Edge`, `SourceRepo`; `db/LintRepo` naming `Edge`, `Hit`, `SourceRepo`; `db/MergeState` naming `MergeText`; `core/MergeFold` naming `FindingMatch`, `MergeText`; `core/MergePlanner` naming `Citekeys`, `Finding`, `FindingMatch`, `MergeText`, `SourceMatch`, `SourceMatcher`; `api/MergeMarkdown` naming `LabelRenamed`, `SourceMatch`; `api/MergePlan` naming `SourceMatch`; `api/Lint` naming `Edge` — repository: `SourceRepo` named by `BundleImport`, `LintRepo`, `ArticleRepo`, `CritiqueRepo` | part 3 | the library's data contribution (its carried kinds, `SourceMatcher` and the sources' merge rules, `MatchWeights`, its lint rules with the three place rules out of `LintRepo`, `Geocoder` narrowed), `SourceRepo` narrowed to `private[sources]` |
+| direction: `api/Agents`, `api/Managers` naming `Ingest`; `api/AgentsMarkdown` naming `Edge`, `Query`; `api/GoalsExport` naming `Query`; `api/Autopilot` naming `AcquireChecks`, `UpstreamQuota`; `api/ManagersApi` naming `AcquireChecks`, `RepairAcquire`; `api/Queue` naming `Acquire`, `AcquireChecks`; `api/JobDetail` naming `AcquireChecks`; `core/CompareRuns` naming `AgentVerify`, `EnrichSource`, `Finding`; `core/PlanGoal` naming `Acquire`, `WorkRef`; `core/Scheduling` naming `Acquire`, `AgentProposals`, `Edge`, `FollowupRow`, `WorkRef`; `db/AgentRepo` naming `AgentProposals` | part 3, where the automation's view of the library moves; the wire records' rows slice 12 | — |
+| direction: `api/Markdown` (16: `Aggregate`, `Bucket`, `ContradictionsResult`, `Facet`, `FindingRow`, `GeoHit`, `GeoHitPage`, `NeighborRow`, `NeighborTarget`, `SearchHit`, `SearchResult`, `SourceDetail`, `SourceGraph`, `SourceRenamed`, `TimeBucket`, `TimeHistogram`); `api/Write` (11: `Edge`, `EdgeInput`, `EdgesPatch`, `Finding`, `FindingInput`, `FindingsPatch`, `MetadataField`, `MetadataPatch`, `Provenance`, `SourcePatch`, `SourcePut`); `api/Wording` naming `Edge`, `EnrichSource`; `api/Tree` naming `Aggregate`, `Bucket`, `BucketSample`; `api/ResolvedId` naming `ResolvedSource`; `api/AssetLinkTarget` naming `Finding`; `api/AttestationTarget` naming `Edge`, `Finding`; `files/BundleEntities` naming `Finding`; `db/Db` naming `QueryConfig`; `config/BasemapBathymetryConfig` naming `SeaFloorSource` | slice 12 (wire records, `api.library.*`, the format's vocabulary) | — |
+
+**Native image.** `reachability-metadata.json` (server), compared field by field with `javap -p` of the compiled
+classes: renamed `db.FullSourceRow$`, `FindingIdRow$`, `EdgeRow$`, `CitekeyMillis$` → `domain.library.sources.*$`,
+`db.SourceRepo$FindingHitRow$` → `domain.library.search.FindingHitRow$`, `db.SourceRepo$GeoFeedRow$` →
+`domain.library.findings.GeoFeedRow$`, `db.FilterSql$SnippetRow$`/`SourceRow$`, `db.AggregateRepo$TreeRowRaw$` →
+`domain.library.search.*`, `db.SourceDeleteRepo$Row$` → `domain.library.sources.SourceDeleteRepo$Row$` (each its
+`derived$DbCodec$lzyN` as now numbered); `db.SourceRepo$package$`'s givens spread over `domain.library.sources.SourceRepo$`
+(`TocEntry`, `SourceDetail`, `FindingRow`, `SourceRef`), `citations.CitationRepo$` (`NeighborRow`, `ContradictionRow`,
+and `NeighborTarget` out of `db.Codecs$package$`) and `labels.LabelRepo$` (`Facet`); `db.AggregateRepo$package$`'s
+`PeriodRow` → `search.AggregateRepo$`; `server.McpTools$…Input$` (the 13 library tools) → `domain.library.LibraryTools$…$`
+and `server.OpsTools$QueryInput$`/`SchemaInput$` → `domain.library.search.QueryTools$…$`; `server.Handlers` gained
+`library$lzy1`; the inputs left in `McpTools` and `OpsTools` gained the renumbered fields `javap -p` reads; removed
+`db.SourceRepo$package$` and `db.AggregateRepo$package$` and ten givens listed there that no code had. The new services,
+controllers and referrers hold eager values only. No tracing-agent run, no native build. To check at the bundle:
+`--self-check`; `smoke.sh`; `histmersion search` (text, tags, places, a box, `--group time,region`), `facets` (every
+kind, a prefix), `get` and `get --full`, `passages`, `neighbors`, `patch` with findings and edges, `put`, `rename`
+(the alias, an article's and a goal's links following), a source's delete (refused, then applied), `query`, `schema`,
+`histogram`, `geo-when`, `export`; the MCP `search`, `facets`, `get_source`, `passages`, `geo_when`, `neighbors`,
+`graph`, `contradictions`, `put_source`, `patch_source`, `rename_source`, `export_source`, `histogram`, `query`,
+`schema`; the web UI's search, the map's findings, the timeline and a source's page; `bundle import` with a rename.
+
+**Tests.** After `sbt clean`, with the sbt disk cache moved aside so nothing was replayed, every module's suites with
+the DB suites on a throwaway database (`just test-quick` with every module named; its `fmt-check` passed first): 5 193
+tests, 0 failed — values 21, valuesJS 21, api 825 (`WikiLinksSuite`), apiJS 88, config 67, files 73, core 765,
+pluginApi 45, upstreams 57, pluginHost 39, pluginTestkit 19, pluginVaults 29 (1 skipped), pluginsFetchers 15,
+pluginsEvents 18, pluginsMedia 52, pluginsGazetteers 58, pluginsAiHttp 26, pluginsCalibre 45, pluginResolver 23,
+chimneyIronTests 10, db 523 (`SearchSqlSnapshotSuite`, `SourceKeysSuite`, `AttestationSourceReferrerSuite`), cli 232,
+web 639, server 1 503 (1 skipped, 1 ignored; the library oracle, the two contract suites on both twins, the controllers'
+suite). The move's commit was formatted before it was made, after a fresh `scalafmtAll` without the cache (the cached
+one had replayed); every commit passes `fmt-check` as it is.
