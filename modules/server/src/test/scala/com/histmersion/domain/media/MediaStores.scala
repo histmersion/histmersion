@@ -6,8 +6,8 @@ import com.histmersion.domain.media.figures.FigureService
 import com.histmersion.domain.media.imports.ImportService
 import com.histmersion.domain.media.links.AssetLinkService
 
-/** Media's services over one store, and how a test seeds what another domain owns there: a source its figures belong
-  * to (a row of the library's on the database; nothing in memory, which holds no source).
+/** Media's services over one store, and how a test seeds what another domain owns there: a source its figures belong to
+  * (a row of the library's on the database; nothing in memory, which holds no source).
   */
 trait MediaStores:
   def assets: AssetService

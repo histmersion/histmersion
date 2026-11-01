@@ -80,17 +80,6 @@ object MergeState:
         "SELECT slug, uid FROM goals WHERE slug = ANY(?::text[])",
         es.goals.map(_.slug) ++ es.goalAliases.map(_.alias)
       ),
-      assets = {
-        val srcs = localized.assets.map(_.sourceUid)
-        if srcs.isEmpty then Map.empty
-        else
-          sql"""SELECT s.uid, x.name, x.uid FROM assets x JOIN sources s ON s.citekey = x.citekey
-                   WHERE s.uid = ANY(${ids(srcs)}::uuid[])"""
-            .query[(UUID, String, UUID)]
-            .run()
-            .map((s, n, u) => (s, n) -> u)
-            .toMap
-      },
       articleAliases = owners(
         "SELECT x.alias, a.uid FROM article_aliases x JOIN articles a ON a.slug = x.slug WHERE x.alias = ANY(?::text[])",
         es.articles.map(_.slug) ++ es.articleAliases.map(_.alias)

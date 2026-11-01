@@ -12,8 +12,12 @@ import java.util.concurrent.atomic.AtomicReference
   * illustrates, whose page it is — the links listed by source, figure and target, made and removed.
   */
 trait AssetLinkService:
-  def list(citekey: Option[String], asset: Option[String], targetType: Option[String], targetId: Option[String])
-      : AssetLinkList
+  def list(
+      citekey: Option[String],
+      asset: Option[String],
+      targetType: Option[String],
+      targetId: Option[String]
+  ): AssetLinkList
 
   /** A link made; refused when the figure it names is not stored. */
   def create(in: AssetLinkPut): Either[ApiError, AssetLink]
@@ -29,9 +33,13 @@ object AssetLinkService:
   private def noFigure(in: AssetLinkPut): ApiError =
     ApiError(s"No asset '${in.citekey}/${in.assetName}'", Some(Write.CodeNotFound))
 
-  private final class Implementation(db: Transactor) extends AssetLinkService:
-    def list(citekey: Option[String], asset: Option[String], targetType: Option[String], targetId: Option[String])
-        : AssetLinkList =
+  final private class Implementation(db: Transactor) extends AssetLinkService:
+    def list(
+        citekey: Option[String],
+        asset: Option[String],
+        targetType: Option[String],
+        targetId: Option[String]
+    ): AssetLinkList =
       val rows = db.read(AssetLinkRepo.list(named(citekey), named(asset), named(targetType), named(targetId)))
       AssetLinkList.of(rows.size, rows, 0)
 
@@ -44,8 +52,12 @@ object AssetLinkService:
 
   /** The links media holds in memory, beside its pictures (the figure a link names is looked up there). */
   final class InMemory(state: AtomicReference[MediaState]) extends AssetLinkService:
-    def list(citekey: Option[String], asset: Option[String], targetType: Option[String], targetId: Option[String])
-        : AssetLinkList =
+    def list(
+        citekey: Option[String],
+        asset: Option[String],
+        targetType: Option[String],
+        targetId: Option[String]
+    ): AssetLinkList =
       val (ck, an, tt, ti) = (named(citekey), named(asset), named(targetType), named(targetId))
       val rows = state.get.assetLinks
         .filter(l =>

@@ -11,8 +11,6 @@ import com.histmersion.domain.media.imports.Target
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
-import com.histmersion.domain.catalogue.places.Geocoder
-
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
@@ -406,10 +404,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
 
   test("lint media-licence: a figure with no licence, a provider's picture with no credit line"):
     val (uid, _) = AssetFixtures.save(ds, asset("File:Zqmd uncredited.jpg", credit = " "), ("place", "zqmd_site"))
-    val geo =
-      Geocoder.Settings(cfg.places.geocodePlaceholderMin, cfg.places.geocodeRepairKm, cfg.places.pointToleranceKm)
-    val rep = LintRepo.run(ds, List(Lint.rule(Lint.MediaLicenceRule).get), 100000, 3, (_, _, _) => Nil, geo)
-    val items = rep.rules.head.items.map(i => i.citekey -> i.detail).toMap
+    val items = AssetFixtures.licenceGaps(ds).toMap
     assertEquals(items.get("zqmd2021_nolic/fig.png").map(_.startsWith("no licence")), Some(true))
     assertEquals(items.get(s"media:$uid").map(_.startsWith("no credit line")), Some(true))
     assert(!items.contains("zqmd2020_figs/fig1.png"), "a figure with its source's licence is fine")
@@ -581,10 +576,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     AssetFixtures.setSourcePicture(ds, "zqmd2022_paper", c2, MediaRole.Cover, Some("calibre"))
     assertEquals(AssetFixtures.sourcePicture(ds, "zqmd2022_paper", MediaRole.Cover).map(_._1), Some(c2))
     // the licence lint leaves covers alone
-    val geo =
-      Geocoder.Settings(cfg.places.geocodePlaceholderMin, cfg.places.geocodeRepairKm, cfg.places.pointToleranceKm)
-    val rep = LintRepo.run(ds, List(Lint.rule(Lint.MediaLicenceRule).get), 100000, 3, (_, _, _) => Nil, geo)
-    assert(!rep.rules.head.items.exists(_.citekey == s"media:$c2"), "a cover needs no reuse licence")
+    assert(!AssetFixtures.licenceGaps(ds).exists(_._1 == s"media:$c2"), "a cover needs no reuse licence")
     connect(ds)(sql"DELETE FROM assets WHERE provider = 'calibre' AND provider_key LIKE 'zqmd-%'".update.run())
 
   test("cover candidates: a source with an ISBN and no cover, not asked of Open Library yet"):

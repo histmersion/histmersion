@@ -1,6 +1,6 @@
 package com.histmersion.util.data.maintenance
 
-import com.histmersion.util.data.{DataOwner, TableName}
+import com.histmersion.util.data.DataOwner
 import com.histmersion.util.data.TablesAdapter.*
 import com.histmersion.util.storage.{Location, StoreKey}
 
@@ -21,15 +21,6 @@ object MaintenanceAdapter:
     case _               => Nil
 
   def caches(owner: DataOwner): List[CacheSpec] = owner match
-    case MediaOwner =>
-      List(
-        CacheSpec(
-          owner,
-          CacheName("thumbnails"),
-          "picture thumbnails",
-          CacheHolding.InTables(List(TableName("assets")))
-        )
-      )
     case DataArea =>
       List(CacheSpec(owner, CacheName("storage"), "storage figures", CacheHolding.InMemory, List(CacheEvent.Expired)))
     case _ => Nil

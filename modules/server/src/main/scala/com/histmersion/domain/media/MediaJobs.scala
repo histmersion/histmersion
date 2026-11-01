@@ -41,7 +41,9 @@ final class MediaJobs(ds: DataSource, maintenance: WriteGate, pins: WorkCarrier,
     * as `interrupted` like every other unfinished job, and a person may pause, resume or cancel it between its batches.
     * `body` returns the summary the finished job shows, or why it failed.
     */
-  def start(kind: String, describe: String)(body: (String => Unit) => Either[String, String]): Either[ApiError, JobInfo] =
+  def start(kind: String, describe: String)(
+      body: (String => Unit) => Either[String, String]
+  ): Either[ApiError, JobInfo] =
     maintenance.guard(kind) {
       BackgroundJob.start(
         ds,

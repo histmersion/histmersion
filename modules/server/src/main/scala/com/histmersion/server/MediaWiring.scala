@@ -2,14 +2,9 @@ package com.histmersion.server
 
 import com.histmersion.domain.library.sources.SourceMedia
 import com.histmersion.domain.media.{MediaJobs, MediaSources}
-import com.histmersion.domain.media.assets.{
-  AssetsControllers,
-  AssetService,
-  IiifControllers,
-  MediaMapLayer
-}
-import com.histmersion.domain.media.covers.{CoverService, CoversControllers, SourcePictures}
-import com.histmersion.domain.media.figures.{FigureService, FiguresControllers}
+import com.histmersion.domain.media.assets.{AssetsControllers, AssetService, IiifControllers, MediaMapLayer}
+import com.histmersion.domain.media.covers.{CoversControllers, CoverService, SourcePictures}
+import com.histmersion.domain.media.figures.{FiguresControllers, FigureService}
 import com.histmersion.domain.media.imports.{ImportsControllers, ImportService, MediaStore}
 import com.histmersion.domain.media.links.{AssetLinksControllers, AssetLinkService}
 import com.histmersion.pluginhost.{HttpTransport, JavaHttpTransport}
@@ -41,7 +36,11 @@ final class MediaWiring(deps: Deps, http: HttpTransport, converter: ConverterCli
   val iiif: IiifControllers = IiifControllers(assetStore, () => deps.cfg.server.publicUrl.stripSuffix("/"))
 
   val links: AssetLinksControllers =
-    AssetLinksControllers(AssetLinkService(deps.transactor), (k, id) => Deps.aliasTables.current(deps.ds, k, id), deps.maintenance)
+    AssetLinksControllers(
+      AssetLinkService(deps.transactor),
+      (k, id) => Deps.aliasTables.current(deps.ds, k, id),
+      deps.maintenance
+    )
 
   val imports: ImportsControllers =
     ImportsControllers(

@@ -8,9 +8,9 @@ import com.histmersion.util.data.maintenance.WriteGate
 import java.util.Base64
 import java.util.concurrent.atomic.AtomicReference
 
-/** The pictures' controllers over the in-memory service: a figure's URL under an old citekey, an upload to a source that
-  * is not there or that does not decode, a picture's uid that is not one, and every write refused while the maintenance
-  * lock is held.
+/** The pictures' controllers over the in-memory service: a figure's URL under an old citekey, an upload to a source
+  * that is not there or that does not decode, a picture's uid that is not one, and every write refused while the
+  * maintenance lock is held.
   */
 class AssetsControllersSuite extends munit.FunSuite:
 
@@ -29,7 +29,9 @@ class AssetsControllersSuite extends munit.FunSuite:
     val (c, _) = controllers()
     assertEquals(c.putFigures("zqnew2001_x", List(png)).map(_.stored), Right(1))
     assertEquals(c.putFigures("zqgone2001_x", List(png)).left.map(_.code), Left(Some(Write.CodeNotFound)))
-    assert(c.putFigures("zqnew2001_x", List(png.copy(base64 = "%%%"))).left.exists(_.message.contains("not valid base64")))
+    assert(
+      c.putFigures("zqnew2001_x", List(png.copy(base64 = "%%%"))).left.exists(_.message.contains("not valid base64"))
+    )
     assertEquals(c.figures("zqold").map(_.name), List("a.png"))
     assertEquals(c.figure("zqold", "a.png").map(_._2), Right("image/png"))
     assertEquals(c.figure("zqold", "b.png").left.map(_.code), Left(Some(Write.CodeNotFound)))

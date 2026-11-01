@@ -387,6 +387,21 @@ private[histmersion] object MediaRepo:
       author = r.author
     )
 
+  /** `media-licence`: the pictures with no licence (a cover from Calibre or Open Library needs none) or a provider's
+    * with no credit line — `citekey/name` (else `media:<uid>`) and what is missing, the provider's first.
+    */
+  def licenceGaps()(using DbCon): List[(String, String)] =
+    sql"""SELECT coalesce(a.citekey || '/' || a.name, 'media:' || a.uid::text),
+                concat_ws(' · ',
+                  CASE WHEN coalesce(btrim(a.license), '') = ''
+                        AND coalesce(a.provider, '') NOT IN ('calibre', 'open-library') THEN 'no licence' END,
+                  CASE WHEN a.provider IS NOT NULL AND coalesce(btrim(a.credit), '') = '' THEN 'no credit line' END,
+                  coalesce(a.provider || ' ' || a.provider_key, a.mime))
+         FROM assets a
+         WHERE (coalesce(btrim(a.license), '') = '' AND coalesce(a.provider, '') NOT IN ('calibre', 'open-library'))
+            OR (a.provider IS NOT NULL AND coalesce(btrim(a.credit), '') = '')
+         ORDER BY a.provider NULLS LAST, 1""".query[(String, String)].run().toList
+
   /** A source's stored figures (images only), as the illustration's choice weighs them. */
   def sourceFigures(citekey: String)(using DbCon): List[SourceFigure] =
     sql"""SELECT uid::text, name, width, height, thumb IS NOT NULL FROM assets

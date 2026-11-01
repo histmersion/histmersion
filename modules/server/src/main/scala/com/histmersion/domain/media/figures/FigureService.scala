@@ -12,9 +12,10 @@ trait FigureService:
 object FigureService:
   def apply(db: Transactor): FigureService = Implementation(db)
 
-  private final class Implementation(db: Transactor) extends FigureService:
+  final private class Implementation(db: Transactor) extends FigureService:
     def fillLicences(apply: Boolean): FigureLicenceFill =
-      if apply then db.transact(FigureRepo.fillLicences(apply = true)) else db.read(FigureRepo.fillLicences(apply = false))
+      if apply then db.transact(FigureRepo.fillLicences(apply = true))
+      else db.read(FigureRepo.fillLicences(apply = false))
 
   /** Media's rows alone, in memory: no source is held, so no figure has a source licence to take. */
   final class InMemory extends FigureService:

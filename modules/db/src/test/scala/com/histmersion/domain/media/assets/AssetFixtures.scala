@@ -10,7 +10,8 @@ import javax.sql.DataSource
   * transaction of its own, as the service runs it.
   */
 object AssetFixtures:
-  def add(ds: DataSource, citekey: String, figures: List[NewFigure]): Int = transact(ds)(AssetRepo.add(citekey, figures))
+  def add(ds: DataSource, citekey: String, figures: List[NewFigure]): Int =
+    transact(ds)(AssetRepo.add(citekey, figures))
   def replace(ds: DataSource, citekey: String, figures: List[NewFigure]): Int =
     transact(ds)(AssetRepo.replace(citekey, figures))
   def list(ds: DataSource, citekey: String): Vector[AssetInfo] = connect(ds)(AssetRepo.list(citekey))
@@ -23,6 +24,8 @@ object AssetFixtures:
     transact(ds)(AssetRepo.patch(citekey, name, p))
       .flatMap(_ => detail(ds, citekey, name).toRight(ApiError(s"No asset '$citekey/$name'", Some(Write.CodeNotFound))))
 
+  /** What the media's `media-licence` check lists: (`citekey/name` or `media:<uid>`, what is missing). */
+  def licenceGaps(ds: DataSource): List[(String, String)] = connect(ds)(MediaRepo.licenceGaps())
   def known(ds: DataSource, provider: String, keys: List[String]): Map[String, Known] =
     connect(ds)(MediaRepo.known(provider, keys))
   def save(ds: DataSource, a: ProviderAsset, firstTarget: (String, String)): (String, Boolean) =

@@ -57,8 +57,16 @@ trait PlanRun:
   /** An issue of a pair: its decision is carried out with the pair's fold. */
   def pairIssue(kind: IssueKind): Boolean = false
 
+  /** What a pair that folds does with the kind's lines before every kind's [[foldPair]]: `keepsBundleBody` is whether
+    * the folded source takes the bundle's body.
+    */
+  def foldPairFirst(right: BundleSource, left: BundleSource, keepsBundleBody: Boolean, folds: PlanFolds): Unit = ()
+
   /** What a pair that folds does with the kind's lines; `alt` is the body question's decision, when there is one. */
   def foldPair(right: BundleSource, left: BundleSource, alt: Option[DecisionKind], folds: PlanFolds): Unit = ()
+
+  /** The kind's labels of inserted records that a different record has here, given new ones. */
+  def relabel(relabels: PlanRelabels): Unit = ()
 
   /** A decided issue of this kind carried out. */
   def decided(issue: MergeIssue, folds: PlanFolds): Unit = ()
@@ -77,3 +85,6 @@ trait PlanRun:
 
   /** The tombstones of the records left out: uid, kind, origin. */
   def tombstones: List[(UUID, BundleKind, UUID)] = Nil
+
+  /** What the merge renames in a body it takes from the bundle: source uid → (old name, new name) of its files. */
+  def bodyRenames: Map[UUID, List[(String, String)]] = Map.empty

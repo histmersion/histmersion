@@ -12,7 +12,7 @@ trait CoverService:
 object CoverService:
   def apply(db: Transactor): CoverService = Implementation(db)
 
-  private final class Implementation(db: Transactor) extends CoverService:
+  final private class Implementation(db: Transactor) extends CoverService:
     def illustrationCandidates(only: Option[String], refresh: Boolean, limit: Int): List[String] =
       db.read(CoverRepo.illustrationCandidates(only, refresh, limit))
     def coverCandidates(only: Option[String], refresh: Boolean, limit: Int): List[CoverKeys] =

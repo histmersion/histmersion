@@ -1,6 +1,6 @@
 package com.histmersion.domain.media.covers
 
-import com.histmersion.domain.media.{MediaStoreSuite, MediaStores}
+import com.histmersion.domain.media.{MediaStores, MediaStoreSuite}
 
 /** The sources a run of covers looks at, on a collection that holds no source: none, on the database and in memory. */
 abstract class CoverServiceContract extends MediaStoreSuite:

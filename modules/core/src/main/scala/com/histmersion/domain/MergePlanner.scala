@@ -8,17 +8,15 @@ import com.histmersion.util.data.exchange.{
   PlanFolds,
   PlanMerge,
   PlanQuestions,
+  PlanRelabels,
   PlanRules,
   PlanRuns
 }
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.{
   ArticleLinks,
-  AssetLinks,
   BundleAlias,
   BundleArticle,
-  BundleAsset,
-  BundleAssetLink,
   BundleEdge,
   BundleFinding,
   BundleGoal,
@@ -52,7 +50,7 @@ import BundlePlan.{Decision, Ledger, Local}
 import MergeFold.{ArticleOutcome, FindingMatch}
 import MergeText.MinHash
 import SourceMatcher.{Outcome, Pair, Side}
-import com.histmersion.util.text.Anchor
+import com.histmersion.util.text.{Anchor, SafeName}
 
 import io.circe.{Decoder, Encoder, Json}
 import java.util.UUID
@@ -852,15 +850,11 @@ object MergePlanner:
       val l = toLocal(f)
       Local(localRevs.get(l).map(_.rev), in.tombstoned(l), ledgerOf(f))
     // the source a line belongs to (its fate decides whether the line is held, or folded with it)
-    val assetSource = fes.assets.map(a => a.uid -> a.sourceUid).toMap
     val findingSource = fes.findings.map(f => f.uid -> f.sourceUid).toMap
-    val linkAsset = fes.assetLinks.map(l => l.uid -> l.assetUid).toMap
     def ownerSource(f: UUID, kind: BundleKind): Option[UUID] = kind match
-      case BundleKind.Source    => Some(f)
-      case BundleKind.Finding   => findingSource.get(f)
-      case BundleKind.Asset     => assetSource.get(f)
-      case BundleKind.AssetLink => linkAsset.get(f).flatMap(assetSource.get)
-      case _                    => run.ownerSource(f, kind)
+      case BundleKind.Source  => Some(f)
+      case BundleKind.Finding => findingSource.get(f)
+      case _                  => run.ownerSource(f, kind)
     def heldBy(f: UUID, kind: BundleKind): Boolean =
       ownerSource(f, kind).flatMap(fates.get).exists {
         case Fate.Auto(_) | Fate.Gate(_, _) => true
@@ -1145,7 +1139,7 @@ object MergePlanner:
     def bothSlug(f: UUID, slug: String): String =
       bothSlugs.getOrElseUpdate(
         f, {
-          val tag = AssetLinks.safeName(from).toLowerCase(java.util.Locale.ROOT)
+          val tag = SafeName.of(from).toLowerCase(java.util.Locale.ROOT)
           val s = Iterator.from(1).map(i => s"$slug-$tag${if i == 1 then "" else s"-$i"}").find(s => !slugsUsed(s)).get
           slugsUsed += s
           s
@@ -1382,14 +1376,11 @@ object MergePlanner:
     type Line[A] = BundleEntities => A
     val sourceLine = scala.collection.mutable.Map.empty[UUID, Line[BundleSource]]
     val findingLine = scala.collection.mutable.Map.empty[UUID, Line[BundleFinding]]
-    val assetLine = scala.collection.mutable.Map.empty[UUID, Line[BundleAsset]]
-    val linkLine = scala.collection.mutable.Map.empty[UUID, Line[BundleAssetLink]]
     val articleLine = scala.collection.mutable.Map.empty[UUID, Line[BundleArticle]]
     val goalLine = scala.collection.mutable.Map.empty[UUID, Line[BundleGoal]]
     val queueLine = scala.collection.mutable.Map.empty[UUID, Line[BundleQueueItem]]
     def sourceIn(es: BundleEntities, u: UUID) = es.sources.find(_.uid == u).get
     def findingIn(es: BundleEntities, u: UUID) = es.findings.find(_.uid == u).get
-    def assetIn(es: BundleEntities, u: UUID) = es.assets.find(_.uid == u).get
     def articleIn(es: BundleEntities, u: UUID) = es.articles.find(_.uid == u).get
     def goalIn(es: BundleEntities, u: UUID) = es.goals.find(_.uid == u).get
     def queueIn(es: BundleEntities, u: UUID) = es.queue.find(_.uid == u).get
@@ -1398,7 +1389,6 @@ object MergePlanner:
     val snapshots = scala.collection.mutable.LinkedHashSet.empty[UUID]
     val versions = List.newBuilder[ExtraVersion]
     val copies = List.newBuilder[Line[BundleArticle]]
-    val bodyRenames = scala.collection.mutable.Map.empty[UUID, List[(String, String)]]
     val reviews = scala.collection.mutable.LinkedHashSet.empty[String]
     var tally = MergeTally() // the apply's report, added to as each fold is decided
     def fold(f: UUID, l: UUID, kind: BundleKind): Unit = foldMap(f) = l -> kind
@@ -1472,35 +1462,8 @@ object MergePlanner:
           case _ => ()
         }
 
-        // assets: the same bytes are one figure; a name taken here gets the other collection's label
-        val localAssets = in.local.assets.filter(_.sourceUid == l.uid)
-        val names = scala.collection.mutable.Set.from(localAssets.map(_.name))
-        val usedLocal = scala.collection.mutable.Set.empty[UUID]
-        fes.assets.filter(a => a.sourceUid == r.uid && !localRevs.contains(toLocal(a.uid))).sortBy(_.name).foreach { a =>
-          localAssets.find(x => x.sha256 == a.sha256 && !usedLocal(x.uid)) match
-            case Some(x) =>
-              usedLocal += x.uid; fold(a.uid, x.uid, BundleKind.Asset); assetLine(x.uid) = _ => x
-              tally = tally.modify(_.assetsMerged).using(_ + 1)
-            case None if names(a.name) =>
-              val n = MergeFold.freeAssetName(a.name, from, names.toSet)
-              names += n
-              assetLine(a.uid) = es => assetIn(es, a.uid).copy(name = n)
-              if keepRightBody then bodyRenames(l.uid) = bodyRenames.getOrElse(l.uid, Nil) :+ (a.name -> n)
-            case None => names += a.name
-        }
-        // asset links of a folded figure that this collection's figure already has are one
-        fes.assetLinks.filter(k => foldMap.get(k.assetUid).exists(_._2 == BundleKind.Asset)).foreach { k =>
-          val target =
-            k.targetUid.map(u => foldMap.get(u).map(_._1).getOrElse(toLocal(u)).toString).getOrElse(k.targetId)
-          in.local.assetLinks
-            .find(x =>
-              x.assetUid == foldMap(k.assetUid)._1 && x.relation == k.relation &&
-                x.targetType == k.targetType && x.targetUid.map(_.toString).getOrElse(x.targetId) == target
-            )
-            .foreach { x =>
-              fold(k.uid, x.uid, BundleKind.AssetLink); linkLine(x.uid) = _ => x
-            }
-        }
+        // what the kinds own of the pair before the rest: the figures
+        run.foldPairFirst(r, l, keepRightBody, folds)
 
         // what the kinds own of the pair: as the body question is decided
         val alt = pairFieldIds.get(r.uid).flatMap(_.get(IssueKind.BodyDiffers)) match
@@ -1555,24 +1518,13 @@ object MergePlanner:
           relabelled += s"finding ${f.id} → $id"
         }
       }
-    val assetNamesTaken = scala.collection.mutable.Set.from(in.local.assets.map(a => (a.sourceUid, a.name)))
-    initialRows
-      .filter(r => r.decision == Decision.Insert && r.kind == BundleKind.Asset && !assetLine.contains(r.foreignUid))
-      .foreach { r =>
-        val a = localized.assets.find(_.uid == r.uid).get
-        if in.labels.assets.get((a.sourceUid, a.name)).exists(_ != a.uid) then
-          val n = MergeFold.freeAssetName(
-            a.name,
-            from,
-            assetNamesTaken.collect { case (s, x) if s == a.sourceUid => x }.toSet
-          )
-          assetNamesTaken += ((a.sourceUid, n))
-          assetLine(r.foreignUid) = es => assetIn(es, r.foreignUid).copy(name = n)
-          if initialOf.get(fes.assets.find(_.uid == r.foreignUid).get.sourceUid).exists(_.decision.writes) then
-            bodyRenames(a.sourceUid) = bodyRenames.getOrElse(a.sourceUid, Nil) :+ (a.name -> n)
-          info += s"asset ${a.name}: that name is another figure's in its source here — the bundle's arrives as $n"
-          relabelled += s"asset ${a.name} → $n"
-      }
+    val (notes0, relabelled0) = (info, relabelled)
+    run.relabel(new PlanRelabels:
+      def rows: List[Row] = initialRows
+      def localized: BundleEntities = linesHere
+      def writesInitially(foreign: UUID): Boolean = initialOf.get(foreign).exists(_.decision.writes)
+      def info(line: String): Unit = notes0 += line
+      def relabelled(line: String): Unit = relabelled0 += line)
     val ckMap: Map[String, String] =
       fes.sources.flatMap(s => finalCitekey.get(s.uid).filter(_ != s.citekey).map(s.citekey -> _)).toMap
     def rewrite(body: String): String = if ckMap.isEmpty then body else ArticleLinks.retarget(body, ckMap.get)._1
@@ -1724,8 +1676,6 @@ object MergePlanner:
       unresolvedEdges = (es0.unresolvedEdges ++ in.local.unresolvedEdges.filter(e => foldedHere(e.srcUid))).distinct,
       aliases = es0.aliases ++ newAliases,
       articles = replaced(es0.articles, _.uid, articleLine),
-      assets = replaced(es0.assets, _.uid, assetLine),
-      assetLinks = replaced(es0.assetLinks, _.uid, linkLine),
       goals = replaced(es0.goals, _.uid, goalLine).map { g =>
         // a goal here and there: this collection's schedules stay, the links of both
         localGoal.get(g.uid).filter(_ => !goalLine.contains(g.uid)).fold(g) { l =>
@@ -2022,7 +1972,7 @@ object MergePlanner:
       copies = copies.result().map(_(es0)),
       attestations = run.fixes,
       tombstones = run.tombstones,
-      bodyRenames = bodyRenames.toMap,
+      bodyRenames = run.bodyRenames,
       reviews = reviews.toList,
       remember = issues
         .filter(i => i.condition.isEmpty && i.decidedBy.exists(b => b == DecidedBy.Resolution || b == DecidedBy.Policy))
