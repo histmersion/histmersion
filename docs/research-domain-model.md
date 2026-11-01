@@ -1,6 +1,6 @@
 # Domain model, package by feature, first-party plugins out of the server (refactor step 3, design)
 
-Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18; slice 7 part 2 built — §19; slice 7 part 3 built — §20; slice 8 part 1 built — §21; slice 8 part 2 built (events, evidence, map tiles) — §21; slice 8 part 3 built (places, the catalogue's own data contribution but its carried kinds and merge rules, which are part 4) — §21.** Written 2026-10-30 on master
+Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18; slice 7 part 2 built — §19; slice 7 part 3 built — §20; slice 8 part 1 built — §21; slice 8 part 2 built (events, evidence, map tiles) — §21; slice 8 part 3 built (places, the catalogue's own data contribution but its carried kinds and merge rules, which are part 4) — §21; slice 8 part 4 built (the catalogue's carried kinds and merge rules) — §21: slice 8 is complete.** Written 2026-10-30 on master
 58de5489 (branch `domain-design`); revised after the user's reviews of §3: domains above features, measured;
 `personal` with its own interface; `library`, `research`, `catalogue`, `media` named; acquisition and OCR
 dissolved (2026-10-30); automation as a generic workflow engine fed by the domains, data management and file
@@ -2500,7 +2500,7 @@ server's suites run again on the last commit passed, 1 369 with none failed. `Co
 `CliHelpSnapshotSuite`, `AutomationOracleSuite`, `DataOracleSuite`, `NativeMetadataSuite` and `ArchitectureSuite`
 passed; the six contracts 44 tests in all.
 
-## 21. Slice 8 as built, parts 1 to 3 (the catalogue: oracles, periods, attestations and their passage source; events, evidence, map tiles; places and the data contribution, 2026-11-01)
+## 21. Slice 8 as built, parts 1 to 4 (the catalogue: oracles, periods, attestations and their passage source; events, evidence, map tiles; places and the data contribution; its carried kinds and merge rules, 2026-11-01)
 
 Branch `refactor-s8` from master 485daa59 (slices 1–7 deployed). The slice is built in two parts (part 2 below); part 1
 is green on its own and leaves no code half-moved. Endpoints, MCP tools, CLI commands, tile bytes and agent
@@ -2984,3 +2984,136 @@ pluginsEvents 18, pluginsMedia 52, pluginsGazetteers 58, pluginsAiHttp 26, plugi
 chimneyIronTests 10, db 524 (`PointAreaRepoSuite`'s 3 moved to the server), cli 232, web 639, server 1 442 (1 skipped,
 1 ignored; 21 new). A cached build once passed `fmt-check` over files a clean one reformats: the commits were formatted
 again from a clean check before the run.
+
+### Part 4 as built (the catalogue's carried kinds and merge rules, 2026-11-01)
+
+Branch `refactor-s8d` from master 1b010a8e (parts 1 to 3 deployed). Four commits, each green on its own: the oracle's new
+part on the unchanged code, the carried kinds, the merge rules, the repositories narrowed. With this part slice 8 is
+complete. Endpoints, MCP tools, CLI commands, bundle entries, merge plans, decisions, the ledger and applied results are
+unchanged: `ContractSnapshotSuite`, `CliHelpSnapshotSuite`, `AutomationOracleSuite`, `DataOracleSuite` and
+`CatalogueOracleSuite` held byte for byte after each step; no oracle or snapshot was re-recorded, and no migration was
+added.
+
+**The oracle, extended first.** `CatalogueOracleSuite` gains a third collection (`oracle/catalogue/exchange.txt`,
+recorded on the unchanged code and stable three times in a row before anything moved): cat (the crafted collection) is
+imported into home and a copy; then both go on — a place renamed and one merged into another (old ids), an event
+renamed, a place, a named period and an event added on both sides under one id (a place with two geometries, a period
+saying something else, another event) and under two (a place by label and point, a period by label and span, an event by
+label, dates and place), an event changed on both sides, an imported event corrected on both, a candidate confirmed here
+and recomputed there, site types refined on both, and two works under two citekeys with one DOI whose bodies differ, with
+attestations in them (re-anchored, dropped, kept without a place, this collection's moved). Recorded: both sides' answers,
+cat's bundle entries, every round of home's plan as the suite answers the questions it asks, the apply, the merges, the
+merge and the ledger, every row of home's catalogue tables, redirects and tombstones; then the part of cat since the
+shared history imported into the copy, and its rows. Issue ids hash random uids, so the arrays they order (the issues,
+the resolutions, the remembered decisions) are sorted by their normalised text, and bundle digests, dump names and
+short ids are masked. The other three tests' recorded lines did not change; one call site (`craft` given its
+collection's name) did.
+
+**Equivalence.** `DataOracleSuite` (bundle, import, merge, backup, lint, notes, storage) and `CatalogueOracleSuite`
+(the bundle entries, an import into an empty collection, a merge plan, and the exchange above) identical after every
+commit. No read path the live-volume driver covers changed (the tiles, `findings`, `events`, `places` and the histogram
+are untouched; the bundle readers moved, which the driver does not read), so no live-volume run was made.
+
+**The carried kinds** (`domain.catalogue.<feature>`, db module). The eleven kinds are the features' own:
+`PlacesCarried` (places, old place ids, site types), `PeriodsCarried` (named periods), `EventsCarried` (events, old event
+ids, the event catalogue, corrections), `EvidenceCarried` (attestations, event candidates, event checks), gathered by
+`CatalogueExchange.carried`, which `CatalogueData` registers. Their lines are read by `PlaceBundleRepo`,
+`PeriodBundleRepo`, `EventBundleRepo` and `EvidenceBundleRepo` (`private[<feature>]`, the readers and rows that left
+`BundleRepo`, one row a file), whose `…In` steps are the ones that left `BundleImport.Writer`, at the same stages and
+ranks. `CarriedKind` gained `into` (its lines put into the bundle's in-memory form) and the factories `records` and
+`owned` for a kind whose lines use no blob; `CarriedKinds.entities` builds what a merge compares a bundle with from every
+kind (it was `BundleRepo.entities`). The Writer gives every step what they share: the lines (`es`), this collection's
+rows (`local`), `writes`, the merge's decisions besides the lines (`merged`, was `apply`), `citekeyOf`, `citekeyHere`,
+`targetLabel`, `followRenames`, `asLocal` (a write as this collection's own) and the import's `transaction`. A place the
+other side renamed keeps its id here through `PlacesCarried.placeHere`, which the events' and corrections' steps use; a
+touched source's findings are placed again through the library (`SourceRepo.placeFindingsIn`, over `FindingPlacement`).
+The SQL every kind's lines are read with is `util.data.exchange.BundleSql` (the clock, ranges, scopes, targets' uids).
+`CarriedKinds.transition` and `MergeRuleSet.transition` are gone: every caller is given the registry (the server's
+`Deps.data`; the db suites `TestExchange`, the adapters' and the catalogue's).
+
+**The merge rules.** In the db module, `PlaceMergeRules`, `PeriodMergeRules`, `EventMergeRules` and
+`AttestationMergeRules` (the ledger labels and what lines point at, as the adapter had them) add to what a plan knows of
+this collection — `MergeRules.gather`: the labels and old ids of places and events here, the places and periods matched
+by label and geometry or span (`matchPlaces`, `matchPeriods`, out of `MergeState`), the gazetteer ids the bundle's
+events name. In the core module, `MergePlanner.plan` runs each owner's `PlanRules` (`util.data.exchange`; a `PlanRun`
+per plan, several as one through `PlanRuns`) at its stages, in today's order: the bundle localized (places repointed and
+renamed, periods repointed), the first notices, what a pair of sources owns (`PairQuestions`), the source a line belongs
+to, row details, conflicts, labels taken and records added on both sides (`PlanQuestions`), decision arguments, the
+pair's fold, the M4 merges (`PlanMerge`: the fold and the plan's line), the decided issues (`PlanFolds`), the final lines,
+the problems, the dropped records, fixes and tombstones. The catalogue's are `EventPlan`, `PlacePlan`, `PeriodPlan` and
+`AttestationPlan` (with the event, place and period folds that left `MergeFold`, and `TextAnchor`, now
+`catalogue.evidence` over `util.text.Anchor`), in the order `CataloguePlan` gives them; `MergeRules.planning` names them,
+`MergeRuleSet.planning` hands them to the planner and to `bodiesWanted`. The planner keeps the generic mechanisms: the
+plan's stages, the sources' matching and folds, the issue ids (`BundleKind.issueLetter`), the old labels' rule for every
+kind, the resolutions. `util.text.Fingerprint` is the label fingerprint both the library's matcher (`MergeText`) and the
+catalogue's rules use. `MatchWeights` — the source matcher's weights, placed with the evidence in part 2 — is
+`util.data.exchange`'s beside `MergeSettings`, and `api/MatchCounts` (the plan's source-match counts) is placed there too.
+
+**The repositories narrowed.** `PlaceRepo`, `PlaceReviewRepo` and `PointAreaRepo` are `private[places]`, `EventRepo`
+`private[events]`; `PlaceRepo`'s three forwarders are gone (the library's `finding-placeholder` reaches the places
+through `SourceRepo` and `FindingPlacement`, which now names the placeholder findings). The db suites reach the places'
+review through `PlaceFixtures`.
+
+**Contract and unit suites.** New: `PlanRunsSuite` (the stages in order, the first answer), `PeriodPlanSuite` (the
+periods' repoint and sameness), `FingerprintSuite`, the issue letters in `VocabularySuite`; the planner's, folds' and
+bundle suites run with `CataloguePlan` and `TestExchange`. A mechanism over SQL (the carried kinds, the merge rules'
+gathering) has no in-memory twin, as `CheckRunner` and `BundleService` in slice 6; the plans are pure and are tested as
+such.
+
+**Architecture.** `exceptions.tsv` 377 → 362 rows, deletions only: direction 250 → 239 (`BundleImport` naming
+`EventRepo` and `PlaceRepo`; `MergeState` naming `PlaceRepo`; `MergePlanner` naming `Attestation`, `Place`,
+`MatchCounts`, `ArticleVersion` and `TextAnchor`; `MergePlan` naming `MatchCounts`; `MergeSettings` naming
+`MatchWeights`; `LintRepo` naming `PlaceRepo`), repository 69 → 65 (`BundleImport` naming `EventRepo`, `PlaceRepo`;
+`MergeState` and `LintRepo` naming `PlaceRepo`); filesystem (54) and process (4) unchanged. `places.tsv`: `TextAnchor`'s
+row gone (it is in its package), `api/MatchCounts.scala` placed in `util.data.exchange`.
+
+The catalogue rows that remain, by owner:
+
+| rows | owner | why |
+|---|---|---|
+| `LintRepo` naming `Geocoder` | library (slice 10) | the library's rules `finding-geocode` and `finding-unplaced` run the geocoder; `Geocoder` stays `private[histmersion]` for them |
+| `files/BundleEntities` naming `Attestation`, `Corrections`, `Place`, `SiteTypes` | slice 12 (the format's edges) | not references: the format's own vocabulary (`BundleKind.Attestation`, `BundleKind.Place`, `BundleFiles.Corrections`, `BundleFiles.SiteTypes`) spells catalogue words; the in-memory form keeps one field per entry for the planner, and the kinds fill it (`CarriedKinds.entities`) |
+| `api/BundleFiles` naming `Corrections`, `SiteTypes`; `api/MergeMarkdown` naming `Place` | slice 12 | the same words, in the format's entry names and the plan's Markdown |
+| `api/Markdown` (25), `api/YearFmt`, `db/Codecs` (3), `api/JobDetail` (3) | slice 12 | `api.catalogue.*` and the job details' edges |
+| `api/EventDetail`, `api/PlaceDetail` naming `MediaThumb`; `api/AttestationTarget` naming `Edge`, `Finding`; `api/Tree` naming `Aggregate`, `Bucket`, `BucketSample` | slice 12 (wire records), media and library | records whose other end is media's or the library's |
+| `api/personal/ItemKind` naming `Place`; `CliProcess` naming `Tree` | personal; automation (slice 12) | name collisions with another's word |
+
+**Deviations.**
+
+- `BundleEntities` keeps its fields and the format's spelling of every entry (above); the in-memory form is built from
+  the kinds, not from `BundleRepo`. Making it a map of registered kinds' lines would change every reader of the plan.
+- The places' matching knobs stay `MergeSettings.placeWithinKm` and `placeOverlapAtLeast` (the `merge.*` settings a plan
+  is given): `MergeRules.gather` receives the plan's settings, so `Deps.data` stays one registry with no config.
+- `Geocoder` stays `private[histmersion]` (`LintRepo`, above); every other repository the brief names is private to its
+  feature.
+- The old labels' rule (an old id or slug travels unless it names another record here) stays the planner's, applied to
+  events', goals' and places' old labels alike, so its notes keep their order.
+- The planner's stages are hooks of one `PlanRun` per owner rather than §3.5's `MergeRules` with match, fold and
+  conflicts: the plan is one pass whose stages interleave every kind (the issues, merges and notes keep today's order),
+  and a decomposition per kind would reorder them.
+- The bundle readers and the gathering still join the library's `sources` for a source's uid and the event's and
+  attestation's targets (as the leads did in part 2).
+- `MatchWeights` is the merge mechanism's until the library's slice gives the sources' matching its own rules.
+
+**Native image.** `reachability-metadata.json`, compared field by field with the compiled classes: renamed
+`db.BEventRow$`, `BDatingRow$`, `BEventEdgeRow$`, `BParticipantRow$`, `BCatalogueRow$` → `domain.catalogue.events.*$`,
+`db.BAttestationFullRow$`, `BCandidateRow$` → `domain.catalogue.evidence.*$`, `db.BPeriodRow$` →
+`domain.catalogue.periods.BPeriodRow$`, `db.BPlaceRow$`, `BPlaceNameRow$`, `BPlaceRelRow$`, `BPlaceTypeRow$` →
+`domain.catalogue.places.*$` (each `derived$DbCodec$lzy1`); `BundleRepo$package$`'s `given_DbCodec_BundleCorrection`
+→ `EventBundleRepo$` (`given_DbCodec_BundleCorrection$lzy1`); the rows left in `BundleRepo.scala` renumbered as
+`javap -p` reads them (`BGoalRow$` lzy7, `BGoalLinkRow$` lzy8, `BGoalScheduleRow$` lzy9, `BQueueRow$` lzy10,
+`BTombstoneRow$` lzy11); removed `CarriedKinds$.transition$lzy1`, `MergeRuleSet$` and `BundleRepo$package$`'s givens of
+the moved rows. The new objects and plans hold eager values and anonymous classes only (no module lazy value, no
+nested object). No tracing-agent run, no native build. To check at the bundle: `--self-check`; `smoke.sh`; `histmersion
+bundle export|verify|import` (a whole and a `--since` bundle, an import into an empty collection and into one that has
+the shared history); `merge plan` (a place renamed and merged, an event label taken, a place and a period added on
+both sides, two works with attestations), `merge apply`, `merge list|show|ledger`; `lint --rule finding-placeholder`;
+`places` reviews (`lint --fix --rule place-grid-point`).
+
+**Tests.** After `sbt clean`, with the sbt disk cache moved aside so nothing was replayed, every module's suites with the
+DB suites on a throwaway database (`just test-quick` with every module named): 5 118 tests, 0 failed — values 21 (1 new), valuesJS 21, api 823,
+apiJS 84, config 67, files 73, core 755 (7 new), pluginApi 45, upstreams 57, pluginHost 39, pluginTestkit 19,
+pluginVaults 29 (1 skipped), pluginsFetchers 15, pluginsEvents 18, pluginsMedia 52, pluginsGazetteers 58, pluginsAiHttp
+26, pluginsCalibre 45, pluginResolver 23, chimneyIronTests 10, db 524, cli 232, web 639, server 1 443 (1 skipped, 1
+ignored; 1 new, the exchange oracle). The clean build reformatted no file: every commit passes `fmt-check` as it is.
+
