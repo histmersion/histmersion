@@ -9,7 +9,7 @@ import com.augustnagro.magnum.*
 /** A source's figures take the source's licence (#1446): the figures with no licence whose source records one. Runs on
   * the connection it is given.
   */
-private[histmersion] object FigureRepo:
+private[figures] object FigureRepo:
 
   private val figureCandidates =
     """FROM assets a JOIN sources s ON s.citekey = a.citekey

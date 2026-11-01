@@ -14,7 +14,7 @@ import com.augustnagro.magnum.*
   * has, see [[replace]]). Within a source the same picture (a logo on every page) is stored ONCE: writes are
   * deduplicated by sha256, and the later names are dropped. Every method runs on the connection it is given.
   */
-private[histmersion] object AssetRepo:
+private[assets] object AssetRepo:
 
   /** REPLACE the whole set for one source (what a re-conversion does). Returns how many were kept after sha256
     * deduplication.

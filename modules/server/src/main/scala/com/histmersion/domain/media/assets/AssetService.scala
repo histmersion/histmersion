@@ -134,7 +134,9 @@ object AssetService:
     def file(uid: String): Option[(String, Array[Byte])] = db.read(MediaRepo.file(uid))
     def facets: MediaFacets = db.read(MediaRepo.facets)
     def geo(q: Api.MediaGeoQuery, limit: Int): List[MediaGeoHit] = db.read(MediaRepo.geo(q, limit))
-    def geoOf(uids: List[String]): Map[String, MediaGeoHit] = db.read(MediaRepo.geoOf(uids))
+    // no connection for a tile with no pictures
+    def geoOf(uids: List[String]): Map[String, MediaGeoHit] =
+      if uids.isEmpty then Map.empty else db.read(MediaRepo.geoOf(uids))
     def thumbs(targetType: String, targetId: String, limit: Int): List[MediaThumb] =
       db.read(MediaRepo.thumbsIn(targetType, targetId, limit))
     def placeThumbs(placeId: String, sameSiteKm: Double, limit: Int): List[MediaThumb] =

@@ -8,7 +8,7 @@ import com.augustnagro.magnum.*
 /** A source's figure tied to a place, an event, a finding, a source or an article (plan §1.6): what it depicts, where
   * it was taken, what it illustrates, whose page it is. Every method runs on the connection it is given.
   */
-private[histmersion] object AssetLinkRepo:
+private[links] object AssetLinkRepo:
 
   given DbCodec[AssetLink] = DbCodec.derived
 

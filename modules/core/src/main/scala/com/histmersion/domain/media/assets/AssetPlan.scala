@@ -12,8 +12,8 @@ import java.util.UUID
 
 /** How a merge plan treats the figures of the sources and their links: a figure belongs to its source, a link to its
   * figure's; in a pair of sources that fold, the same bytes are one figure, a name the survivor has gets the other
-  * collection's label (and a body taken from the bundle follows the new name), a link the survivor's figure already
-  * has is one; a figure added under a name another figure of its source has here arrives renamed.
+  * collection's label (and a body taken from the bundle follows the new name), a link the survivor's figure already has
+  * is one; a figure added under a name another figure of its source has here arrives renamed.
   */
 final class AssetPlan(in: MergePlanner.Input) extends PlanRun:
 
@@ -87,7 +87,9 @@ final class AssetPlan(in: MergePlanner.Input) extends PlanRun:
           taken += ((a.sourceUid, n))
           assetLine(r.foreignUid) = es => assetIn(es, r.foreignUid).modify(_.name).setTo(n)
           if assetSource.get(r.foreignUid).exists(relabels.writesInitially) then renamed(a.sourceUid, a.name, n)
-          relabels.info(s"asset ${a.name}: that name is another figure's in its source here — the bundle's arrives as $n")
+          relabels.info(
+            s"asset ${a.name}: that name is another figure's in its source here — the bundle's arrives as $n"
+          )
           relabels.relabelled(s"asset ${a.name} → $n")
       }
 

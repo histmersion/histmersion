@@ -12,7 +12,7 @@ import java.util.UUID
   * record — read out in uid order, and written in by an import once every figure is here, the target named by its label
   * here.
   */
-private[media] object AssetLinkBundleRepo:
+private[links] object AssetLinkBundleRepo:
 
   def assetLinks(scope: BundleScope)(using DbCon): Vector[BundleAssetLink] =
     (Sql.raw(s"""SELECT l.uid, l.origin, x.uid, l.relation, l.target_type, l.target_id,

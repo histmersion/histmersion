@@ -30,4 +30,3 @@ object MediaData extends DataContribution:
   override val checks: List[CheckRule] = AssetsData.checks(owner)
 
   def figures(using DbCon): DataFigures = DataFigures.empty
-

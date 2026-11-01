@@ -2,7 +2,7 @@ package com.histmersion.domain.media.assets
 
 import com.augustnagro.magnum.DbCodec
 
-final private[media] case class AssetDetailRow(
+final private[assets] case class AssetDetailRow(
     name: String,
     mime: String,
     bytes: Int,
