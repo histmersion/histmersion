@@ -253,7 +253,7 @@ class CatalogueOracleSuite extends DbSuite:
     else Left(s"unexpected $url")
 
   /** Writes, each recorded with its answer. */
-  private def craft(url: String, ds: DataSource): String =
+  private def craft(url: String, ds: DataSource, name: String = "cat"): String =
     val log = StringBuilder()
     def step(name: String, answer: String): String =
       log ++= s"== $name\n$answer\n"
@@ -437,7 +437,7 @@ class CatalogueOracleSuite extends DbSuite:
     val _ = step("event delete", send("DELETE", s"$url/api/events/zz_gone", ""))
     // the catalogue import, then a person's edit of an imported event: a correction
     val catalog = com.histmersion.server.CatalogueWiring(
-      Deps(cfgFor("cat"), ds, ds, plugins = ServerPlugins.load(oracleLoaded)),
+      Deps(cfgFor(name), ds, ds, plugins = ServerPlugins.load(oracleLoaded)),
       FakeMediaHttp(gvp),
       () => 2026L
     )
@@ -1075,6 +1075,399 @@ class CatalogueOracleSuite extends DbSuite:
     val text = withServerOn(gazetteerCfg)(url => gazetteer(url, gaz))
     val n = names(List("gaz" -> gaz))
     compare("gazetteer.txt", answers(text, n) + rows(gaz, n))
+
+  // ── the catalogue's kinds through a merge apply and an incremental import ───────────────────
+
+  private val StampRe = "\\d{8}T\\d{6}Z(?:-\\d+)?".r
+  private val ShortRe = "(?<![-\\w])[0-9a-f]{8}(?![-\\w])".r
+  private val Sha256Re = "\\b[0-9a-f]{64}\\b".r
+
+  private def applyJob(url: String, job: String, left: Int = 600): String =
+    val j = get(s"$url/api/merge/apply/$job")
+    if j.contains("\"done\"") || j.contains("\"failed\"") || left == 0 then j
+    else { Thread.sleep(100); applyJob(url, job, left - 1) }
+
+  private def exec(ds: DataSource, statement: String): Unit =
+    connect(ds)(Sql.raw(statement).frag.update.run(): Unit)
+
+  /** A source by its DOI: one work under two citekeys, so a merge pairs the two by the strong key. */
+  private def pairSource(title: String, doi: String, body: String): String =
+    Json
+      .obj(
+        "title" -> title.asJson,
+        "authors" -> List("Roe, Rick").asJson,
+        "year" -> 2001.asJson,
+        "doi" -> doi.asJson,
+        "body" -> body.asJson,
+        "findings" -> Json.arr()
+      )
+      .noSpaces
+
+  private def attestation(citekey: String, target: String, quote: String): String =
+    s"""{"citekey":"$citekey","targetType":"place","targetId":"$target","quote":"$quote"}"""
+
+  /** The issues of a plan nobody answered (open, or decided by default), each with its kind, entity, the left side's
+    * label, its title and its options.
+    */
+  private def openIssues(plan: String): List[(String, String, String, String, String, List[String])] =
+    parser
+      .parse(plan)
+      .toOption
+      .flatMap(_.hcursor.downField("issues").focus)
+      .flatMap(_.asArray)
+      .getOrElse(Vector.empty)
+      .toList
+      .flatMap { i =>
+        val c = i.hcursor
+        for
+          id <- c.downField("id").as[String].toOption
+          if c.downField("condition").focus.forall(_.isNull)
+          if c.downField("decision").focus.forall(_.isNull) || c.downField("decidedBy").as[String].contains("default")
+          kind <- c.downField("kind").as[String].toOption
+        yield (
+          id,
+          kind,
+          c.downField("entity").as[String].getOrElse(""),
+          c.downField("left").downField("label").as[String].getOrElse(""),
+          c.downField("title").as[String].getOrElse(""),
+          c.downField("options").as[List[String]].getOrElse(Nil)
+        )
+      }
+
+  /** How the suite answers each question the plan asks: its own answer where the issue offers it, else the first that
+    * needs no argument.
+    */
+  private def decide(kind: String, entity: String, left: String, title: String, options: List[String]): String =
+    val mine = (kind, entity) match
+      case ("label-taken", "event")                                          => "rename-right:zz_omen_cat"
+      case ("place-differs", _)                                              => "keep-right"
+      case ("named-period-differs", _)                                       => "keep-right"
+      case ("body-differs", _) if left == "zzpairb2001_home"                 => "keep-right"
+      case ("body-differs", _)                                               => "keep-left"
+      case ("attestation-unanchored", _) if title.startsWith("the bundle's") => "drop"
+      case ("attestation-unanchored", _)                                     => "keep-unanchored"
+      case _                                                                 => "keep-right"
+    val bare = options.filterNot(Set("map", "rename-right", "rename-left", "file"))
+    if options.contains(mine.takeWhile(_ != ':')) then mine else bare.headOption.getOrElse(mine)
+
+  private def issueNamesOf(plan: String): Map[String, String] =
+    parser
+      .parse(plan)
+      .toOption
+      .flatMap(_.hcursor.downField("issues").focus)
+      .flatMap(_.asArray)
+      .getOrElse(Vector.empty)
+      .toList
+      .flatMap { i =>
+        val c = i.hcursor
+        for
+          id <- c.downField("id").as[String].toOption
+          kind <- c.downField("kind").as[String].toOption
+          label = c
+            .downField("right")
+            .downField("label")
+            .as[String]
+            .toOption
+            .orElse(c.downField("left").downField("label").as[String].toOption)
+            .getOrElse("")
+          title = c.downField("title").as[String].getOrElse("")
+        yield id -> s"${id.take(1)}-issue:$kind:$label:${title.take(40)}"
+      }
+      .toMap
+
+  /** Both sides' changes after the shared history: renames and merges of places and events, places, periods and events
+    * added on both sides (one place, one period and one event under one id; one place and one event under two), an
+    * event changed on both sides, an imported event corrected on both, a candidate confirmed here and recomputed there,
+    * site types, and two works under two citekeys whose bodies differ, with attestations in them.
+    */
+  private def diverge(catUrl: String, cat: DataSource, homeUrl: String, home: DataSource): String =
+    val log = StringBuilder()
+    def step(name: String, answer: String): String =
+      log ++= s"== $name\n$answer\n"
+      answer
+    val imported =
+      connect(cat)(sql"SELECT id FROM events WHERE catalogue IS NOT NULL ORDER BY id".query[String].run().toList)
+    // home first, so that cat's later edits are the newer ones
+    val _ = step(
+      "home: event battle patched",
+      send("PATCH", s"$homeUrl/api/events/zz_battle", """{"description":"fought below the walls, at dusk"}""")
+    )
+    imported.headOption.foreach { id =>
+      val _ = step(
+        "home: imported event corrected",
+        send("PATCH", s"$homeUrl/api/events/$id", """{"label":"An eruption, as home names it","description":"home"}""")
+      )
+    }
+    val _ = step(
+      "home: event links ash confirmed",
+      post(s"$homeUrl/api/events/zz_ashfall/links", """{"confirm":["zzvolc2004_ash"]}""")
+    )
+    exec(home, "UPDATE places SET site_type = 'Q15661340', site_type_checked_at = now() WHERE id = 'zz_hill'")
+    exec(home, "UPDATE places SET site_type = 'Q839954', site_type_checked_at = now() WHERE id = 'zz_mound'")
+    val _ = step(
+      "home: place both",
+      post(
+        s"$homeUrl/api/places",
+        """{"label":"Zzboth","kind":"site","lon":31.0,"lat":37.0,"source":"home's map","id":"zz_both"}"""
+      )
+    )
+    val _ = step(
+      "home: place tower",
+      post(
+        s"$homeUrl/api/places",
+        """{"label":"Zztower","kind":"site","lon":36.2,"lat":38.6,"source":"home's map","id":"zz_tower_h"}"""
+      )
+    )
+    exec(
+      home,
+      "INSERT INTO periods (id, label, period, region, dataset) VALUES ('zz_age', 'The Zz age', '[-1500,-1001)', 'Zzland', 'local'), ('zz_dusk_h', 'The Zz dusk', '[-1200,-1001)', 'Zzland', 'local')"
+    )
+    val _ = step(
+      "home: event tremor",
+      send(
+        "PUT",
+        s"$homeUrl/api/events/zz_tremor",
+        eventPut("The great quake", "earthquake", -1205, -1195, Some("zz_hill"))
+      )
+    )
+    val _ = step(
+      "home: event omen",
+      send("PUT", s"$homeUrl/api/events/zz_omen", eventPut("An omen seen at home", "omen", -1100, -1090))
+    )
+    val _ = step(
+      "home: pair a",
+      send(
+        "PUT",
+        s"$homeUrl/api/sources/zzpaira2001_home",
+        pairSource(
+          "The Zzwall",
+          "10.9999/zz.pair.a",
+          "# The Zzwall\n\nThe walls of the citadel stood until the fire.\n"
+        )
+      )
+    )
+    val _ = step(
+      "home: pair b",
+      send(
+        "PUT",
+        s"$homeUrl/api/sources/zzpairb2001_home",
+        pairSource(
+          "The Zzgate",
+          "10.9999/zz.pair.b",
+          "# The Zzgate\n\nThe gate faced the sea. A tower guarded the road.\n"
+        )
+      )
+    )
+    val _ = step(
+      "home: attestation in pair b",
+      post(s"$homeUrl/api/attestations", attestation("zzpairb2001_home", "zz_hill", "gate faced the sea"))
+    )
+    val _ = step(
+      "home: attestation in pair b, lost",
+      post(s"$homeUrl/api/attestations", attestation("zzpairb2001_home", "zz_port", "A tower guarded the road"))
+    )
+    Thread.sleep(20)
+    // then cat
+    val _ = step(
+      "cat: event battle patched",
+      send("PATCH", s"$catUrl/api/events/zz_battle", """{"description":"fought below the walls, at dawn"}""")
+    )
+    imported.headOption.foreach { id =>
+      val _ = step(
+        "cat: imported event corrected",
+        send("PATCH", s"$catUrl/api/events/$id", """{"label":"An eruption, as cat names it"}""")
+      )
+    }
+    val _ =
+      step("cat: event links ash recomputed", post(s"$catUrl/api/events/zz_ashfall/links", """{"recompute":true}"""))
+    exec(cat, "UPDATE places SET site_type = 'Q839954', site_type_checked_at = now() WHERE id = 'zz_hill'")
+    val _ = step("cat: place renamed", post(s"$catUrl/api/places/zz_port/rename", """{"to":"zz_harbour"}"""))
+    val _ = step(
+      "cat: place merged",
+      post(s"$catUrl/api/places/zz_well/merge", """{"into":"zz_hill","reason":"the well is on the hill"}""")
+    )
+    val _ = step("cat: event renamed", post(s"$catUrl/api/events/zz_war/rename", """{"to":"zz_march_war"}"""))
+    val _ = step(
+      "cat: event flood",
+      send("PUT", s"$catUrl/api/events/zz_flood", eventPut("A flood", "flood", -1250, -1240, Some("zz_harbour")))
+    )
+    val _ = step(
+      "cat: place both",
+      post(
+        s"$catUrl/api/places",
+        """{"label":"Zzboth","kind":"site","lon":31.5,"lat":37.5,"source":"cat's map","id":"zz_both"}"""
+      )
+    )
+    val _ = step(
+      "cat: place tower",
+      post(
+        s"$catUrl/api/places",
+        """{"label":"Zztower","kind":"site","lon":36.2,"lat":38.6,"source":"cat's map","id":"zz_tower_c"}"""
+      )
+    )
+    exec(
+      cat,
+      "INSERT INTO periods (id, label, period, region, dataset) VALUES ('zz_age', 'The Zz era', '[-1600,-1001)', 'Zzland', 'local'), ('zz_dusk_c', 'The Zz dusk', '[-1200,-1001)', 'Zzland', 'local')"
+    )
+    val _ = step(
+      "cat: event quake",
+      send(
+        "PUT",
+        s"$catUrl/api/events/zz_quake",
+        eventPut("The great quake", "earthquake", -1205, -1195, Some("zz_hill"))
+      )
+    )
+    val _ = step(
+      "cat: event omen",
+      send("PUT", s"$catUrl/api/events/zz_omen", eventPut("An omen seen at cat", "omen", -1300, -1290))
+    )
+    val _ = step(
+      "cat: pair a",
+      send(
+        "PUT",
+        s"$catUrl/api/sources/zzpaira2001_cat",
+        pairSource(
+          "The Zzwall",
+          "10.9999/zz.pair.a",
+          "# The Zzwall\n\nOf old, the walls of the citadel stood until the fire. Smoke rose.\n"
+        )
+      )
+    )
+    val _ = step(
+      "cat: pair b",
+      send(
+        "PUT",
+        s"$catUrl/api/sources/zzpairb2001_cat",
+        pairSource("The Zzgate", "10.9999/zz.pair.b", "# The Zzgate\n\nWe read that the gate faced the sea.\n")
+      )
+    )
+    val _ = step(
+      "cat: attestation in pair a",
+      post(s"$catUrl/api/attestations", attestation("zzpaira2001_cat", "zz_hill", "walls of the citadel stood"))
+    )
+    val _ = step(
+      "cat: attestation in pair a, lost",
+      post(s"$catUrl/api/attestations", attestation("zzpaira2001_cat", "zz_mound", "Smoke rose"))
+    )
+    log.result()
+
+  /** Plan, answer every open question, plan again, as often as new questions appear; then apply. */
+  private def mergeOf(url: String, bundle: Array[Byte]): (List[String], String, String, String, String) =
+    val up = ok(postBytes(s"$url/api/bundle/upload", bundle))
+    val sha = field(up, "sha256")
+    @scala.annotation.tailrec
+    def rounds(
+        decided: List[(String, String)],
+        plans: List[String],
+        left: Int
+    ): (List[(String, String)], List[String]) =
+      val body =
+        s"""{"resolve":[${decided.map((i, d) => s"""{"issue":"$i","decision":"$d"}""").mkString(",")}]}"""
+      val p = ok(post(s"$url/api/merge/plan", s"""{"bundle":"$sha","resolutions":$body}"""))
+      val open = openIssues(p).filterNot((id, _, _, _, _, _) => decided.exists(_._1 == id))
+      if open.isEmpty || left == 0 then (decided, plans :+ p)
+      else rounds(decided ++ open.map((id, k, e, l, t, o) => id -> decide(k, e, l, t, o)), plans :+ p, left - 1)
+    val (decided, plans) = rounds(Nil, Nil, 4)
+    val resolutions =
+      s"""{"resolve":[${decided.map((i, d) => s"""{"issue":"$i","decision":"$d"}""").mkString(",")}]}"""
+    val hash = field(plans.last, "planHash")
+    val job = ok(post(s"$url/api/merge/apply", s"""{"bundle":"$sha","planHash":"$hash","resolutions":$resolutions}"""))
+    val done = applyJob(url, field(job, "job"))
+    val ml = get(s"$url/api/merges")
+    val id = field(ml, "id")
+    (plans, done, ml, get(s"$url/api/merges/$id"), get(s"$url/api/merges/ledger?limit=1000"))
+
+  /** The catalogue's tables, the redirects and the tombstones, every row, normalised. */
+  private val ExchangeTables = List(
+    "places",
+    "place_names",
+    "place_relations",
+    "place_links",
+    "place_types",
+    "place_aliases",
+    "periods",
+    "events",
+    "event_aliases",
+    "event_datings",
+    "event_edges",
+    "event_participants",
+    "event_catalogue",
+    "event_link_candidates",
+    "event_link_checks",
+    "corrections",
+    "attestations",
+    "finding_places",
+    "uid_aliases",
+    "tombstones"
+  )
+
+  private def exchangeRows(ds: DataSource, names: Map[String, String]): String =
+    ExchangeTables
+      .map { t =>
+        val rs = connect(ds)(Sql.raw(s"""SELECT to_jsonb(x)::text FROM "$t" x""").frag.query[String].run().toList)
+        val normed = rs.map(r => exchanged(json(r, names), names).linesIterator.map(_.trim).mkString(" ")).sorted
+        (s"## $t ${normed.size} rows" :: normed).mkString("\n")
+      }
+      .mkString("", "\n", "\n")
+
+  private def exchanged(text: String, names: Map[String, String]): String =
+    val stamped = Sha256Re.replaceAllIn(StampRe.replaceAllIn(text, "STAMP"), "SHA256")
+    resorted(ShortRe.replaceAllIn(stamped, m => names.getOrElse(m.matched, "SHORT")))
+
+  /** The arrays whose order follows the issue ids, which hash random uids: sorted by their normalised text. */
+  private val HashOrdered = Set("issues", "resolve", "remembered")
+
+  private def resorted(text: String): String =
+    def walk(j: Json): Json =
+      j.arrayOrObject(
+        j,
+        a => Json.fromValues(a.map(walk)),
+        o =>
+          Json.fromFields(o.toList.map { (k, v) =>
+            val w = walk(v)
+            if HashOrdered(k) then k -> w.asArray.fold(w)(a => Json.fromValues(a.sortBy(_.spaces2SortKeys)))
+            else k -> w
+          })
+      )
+    val (status, body) =
+      "^(\\d{3} )([\\s\\S]*)$".r.findFirstMatchIn(text).fold(("", text))(m => (m.group(1), m.group(2)))
+    parser
+      .parse(body)
+      .fold(_ => text, j => status + walk(j).spaces2SortKeys + (if text.endsWith("\n") then "\n" else ""))
+
+  test("the catalogue's kinds through a merge apply and an incremental import, as recorded"):
+    val cat = scratch("xcat")
+    val home = scratch("xhome")
+    val copy = scratch("xcopy")
+    val all = List("xcat" -> cat, "xhome" -> home, "xcopy" -> copy)
+    val shared = withServer("xcat") { url =>
+      val _ = craft(url, cat, "xcat")
+      bytes(s"$url/api/bundle")
+    }
+    withServer("xhome")(url => ok(postBytes(s"$url/api/bundle/import", shared)))
+    withServer("xcopy")(url => ok(postBytes(s"$url/api/bundle/import", shared)))
+    val since = connect(cat)(
+      sql"SELECT to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"')".query[String].run().head
+    )
+    Thread.sleep(20)
+    val written = withServer("xhome")(homeUrl => withServer("xcat")(catUrl => diverge(catUrl, cat, homeUrl, home)))
+    val (whole, part) = withServer("xcat")(url => (bytes(s"$url/api/bundle"), bytes(s"$url/api/bundle?since=$since")))
+    val (plans, applied, merges, merge, ledger) = withServer("xhome")(url => mergeOf(url, whole))
+    val incremental = withServer("xcopy")(url => postBytes(s"$url/api/bundle/import", part))
+    val n0 = names(all)
+    val n = plans.flatMap(issueNamesOf).toMap ++ n0
+    def j(text: String) = exchanged(json(text, n), n)
+    def a(text: String) = exchanged(answers(text, n), n)
+    compare(
+      "exchange.txt",
+      s"# both sides' changes\n${exchanged(answers(written, n), n)}" +
+        s"# the bundle's catalogue entries\n${exchanged(bundleText(whole, n), n)}" +
+        plans.zipWithIndex.map((p, i) => s"# the plan, round ${i + 1}\n${j(p)}\n").mkString +
+        s"# applied\n${a(applied)}# merges\n${a(merges)}# the merge\n${a(merge)}# the ledger\n${a(ledger)}" +
+        s"# home's rows\n${exchangeRows(home, n)}" +
+        s"# the changes since the shared history imported into a copy\n${exchanged(answers(incremental, n), n)}" +
+        s"# the copy's rows\n${exchangeRows(copy, n)}"
+    )
 
   private def postBytes(url: String, body: Array[Byte]): String =
     val r = raw(
