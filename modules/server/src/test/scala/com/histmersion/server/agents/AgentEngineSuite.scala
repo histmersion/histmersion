@@ -1,5 +1,10 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.*
+import com.histmersion.domain.automation.approvals.{Approvals, Decided}
+import com.histmersion.domain.automation.managers.Zero
+import com.histmersion.domain.automation.workflows.PipelineDef
+
 import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.*

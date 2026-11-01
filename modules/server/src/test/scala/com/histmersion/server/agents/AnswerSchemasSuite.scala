@@ -1,5 +1,8 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.{AnswerSchemas, StrictJsonSchema}
+import com.histmersion.domain.automation.managers.Zero
+
 import io.circe.{parser, Json, JsonObject}
 import io.circe.syntax.*
 import sttp.ai.core.agent.*

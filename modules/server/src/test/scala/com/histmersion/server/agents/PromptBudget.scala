@@ -1,5 +1,14 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.{
+  AgentGenerator,
+  AgentRuntime,
+  AnswerSchemas,
+  GenSettings,
+  Toolbox,
+  ToolStyle
+}
+
 import com.histmersion.domain.automation.workflows.ToolName
 
 import io.circe.Json

@@ -1,5 +1,15 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.{
+  AgentDefinitions,
+  AgentGenerator,
+  AgentRuntime,
+  Audience,
+  Prompts,
+  StepAgent,
+  ToolStyle
+}
+
 /** What a headless step is sent every turn, and that trimming it lost no rule (2026-10-09): the audience markers, the
   * reviewers' edition of the writing guide, and a ceiling per review role so the prompt does not grow back unnoticed.
   * Pure.

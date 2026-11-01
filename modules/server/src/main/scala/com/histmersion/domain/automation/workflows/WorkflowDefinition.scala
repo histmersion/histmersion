@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.workflows
 
-import com.histmersion.server.agents.{Halt, RunCtx}
+import com.histmersion.domain.automation.agents.{Halt, RunCtx}
 import com.histmersion.values.{AgentRole, TargetKind}
 
 /** A kind of workflow a domain defines and the engine runs: what it is called and works on, the roles its agents take,

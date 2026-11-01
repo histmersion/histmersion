@@ -160,7 +160,8 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** Embedded research agents (docs/research-embedded-agents.md) — off unless `agents.enabled`. Constructing it starts
     * nothing; `Main` starts its run pool after the OCR pool.
     */
-  val agents: com.histmersion.server.agents.AgentsHandlers = com.histmersion.server.agents.AgentsHandlers(deps, this)
+  val agents: com.histmersion.domain.automation.agents.AgentsHandlers =
+    com.histmersion.domain.automation.agents.AgentsHandlers(deps, this)
 
   /** The agent tools the engine is given today (what an agent definition may list). */
   def agentToolNames: List[com.histmersion.domain.automation.workflows.ToolName] =
@@ -168,7 +169,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
 
   /** What today's library and research code registers into the engine (`agents` asks for it as it is built). */
   def automationContributions(
-      a: com.histmersion.server.agents.AgentsHandlers
+      a: com.histmersion.domain.automation.agents.AgentsHandlers
   ): com.histmersion.domain.automation.workflows.Contributions =
     com.histmersion.server.agents.TransitionWorkflows.contributions(deps, this, a)
 

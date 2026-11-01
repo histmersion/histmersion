@@ -1,5 +1,9 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.*
+import com.histmersion.domain.automation.approvals.Decided
+import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*

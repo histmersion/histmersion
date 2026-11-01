@@ -1,5 +1,10 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.AgentsHandlers
+import com.histmersion.domain.automation.goals.PlanGoalPipeline
+import com.histmersion.domain.automation.managers.HintEffectPipeline
+import com.histmersion.domain.automation.workflows.PipelineDef
+
 import com.histmersion.api.Agents.Origin
 import com.histmersion.domain.automation.workflows.Contributions
 import com.histmersion.server.{Deps, Handlers}

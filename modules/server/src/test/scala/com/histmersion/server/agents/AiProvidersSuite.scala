@@ -1,5 +1,8 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.*
+import com.histmersion.domain.automation.managers.Zero
+
 import com.histmersion.server.ServerPlugins
 import com.histmersion.util.plugins.Plugins
 

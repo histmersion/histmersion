@@ -1,5 +1,8 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.*
+import com.histmersion.domain.automation.managers.Zero
+
 import com.histmersion.config.CodexConfig
 import com.histmersion.api.Agents.{ModelRef, ProviderKind}
 import io.circe.{parser, Json}

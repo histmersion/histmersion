@@ -244,7 +244,7 @@ object ArchitectureSuite:
     /** The files that keep paths at their edge: they build or receive the locations. */
     private val Tools = Set(
       "server:server/plugins/RelinkPlugins.scala",
-      "server:server/agents/PluginTree.scala",
+      "server:domain/automation/agents/PluginTree.scala",
       "api:api/ApiIndex.scala"
     )
 

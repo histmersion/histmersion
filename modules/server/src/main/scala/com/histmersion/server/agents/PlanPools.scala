@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.*
+
 import com.histmersion.config.{AgentsConfig, ScheduledRefresh}
 import com.histmersion.domain.{PlanReadSchedule, ScheduledRead}
 import com.histmersion.api.PlanQuota

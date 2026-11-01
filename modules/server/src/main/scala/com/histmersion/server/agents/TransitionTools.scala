@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.ToolResultCap
+
 import com.histmersion.api.{AcquireMarkdown, ArticleMarkdown, Markdown, Query}
 import com.histmersion.config.AgentToolsConfig
 import com.histmersion.domain.automation.workflows.{ToolContribution, ToolName}

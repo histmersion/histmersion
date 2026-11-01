@@ -1,5 +1,8 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.agents.RunCtx
+import com.histmersion.domain.automation.workflows.Pipelines
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*

@@ -287,7 +287,7 @@ final class HttpApi(
   val endpoints: List[ServerEndpoint[Any, Identity]] =
     com.histmersion.server.events.EventCatalogRoutes(h) ++ rest ++ ArticlesApi(h).endpoints ++ OpsRoutes(
       h.ops
-    ) ++ com.histmersion.server.agents.AgentsRoutes(h.agents) ++ com.histmersion.server.agents
+    ) ++ com.histmersion.domain.automation.agents.AgentsRoutes(h.agents) ++ com.histmersion.domain.automation.managers
       .ManagersRoutes(h.agents.managing) ++ acquireRoutes ++
       List(iiifInfoRoute, iiifImageRoute, sourcePage, static, apiNotFound, index)
 

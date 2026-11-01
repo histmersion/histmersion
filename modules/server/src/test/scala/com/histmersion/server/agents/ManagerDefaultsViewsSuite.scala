@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.automation.managers.ManagerDefaultsViews
+
 import com.histmersion.config.{
   AgentManagersConfig,
   AgentSchedulerConfig,

@@ -20,7 +20,7 @@ import java.nio.charset.StandardCharsets
   */
 final class AuthHandler(
     apiKey: () => String,
-    tokens: com.histmersion.server.agents.RunTokens = com.histmersion.server.agents.RunTokens()
+    tokens: com.histmersion.domain.automation.agents.RunTokens = com.histmersion.domain.automation.agents.RunTokens()
 ) extends ChannelInboundHandlerAdapter:
   /** The key is read per request (a config reload may set, change or clear it); none = no gate. */
   private def expected: Option[String] = Option(apiKey()).filter(_.nonEmpty).map(k => s"Bearer $k")
@@ -52,12 +52,12 @@ final class AuthHandler(
         val _ = ReferenceCountUtil.release(c)
       case _ => super.channelRead(ctx, msg)
 
-  /** The agent MCP endpoint is gated by run tokens instead ([[com.histmersion.server.agents.RunTokenGate]], in front of
-    * this handler); the quota-guard mod of a headless run reports with its run token.
+  /** The agent MCP endpoint is gated by run tokens instead ([[com.histmersion.domain.automation.agents.RunTokenGate]],
+    * in front of this handler); the quota-guard mod of a headless run reports with its run token.
     */
   private def byRunToken(req: HttpRequest): Boolean =
     val path = req.uri().takeWhile(_ != '?')
-    import com.histmersion.server.agents.RunTokens
+    import com.histmersion.domain.automation.agents.RunTokens
     RunTokens.isAgentPath(path) ||
     (path == RunTokens.QuotaPath && tokens.bearer(req.headers().get(HttpHeaderNames.AUTHORIZATION)).isDefined)
 
