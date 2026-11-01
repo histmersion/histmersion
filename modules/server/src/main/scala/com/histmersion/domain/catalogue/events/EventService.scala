@@ -25,6 +25,7 @@ import hearth.kindlings.optics.syntax.*
 
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicReference
+import scala.annotation.tailrec
 
 /** The events: dated happenings with their datings by source, their relations to each other and their participants,
   * listed by a selection, drawn on the map, written by hand, renamed and deleted.
@@ -262,27 +263,37 @@ object EventService:
       yield cat -> rec
       upstream.fold(s) { (provider, rec) =>
         val up = EventFields.upstream(rec)
-        fields.foldLeft(s) { case (acc, (f, v)) =>
-          up.get(f).fold(acc) { u =>
-            val others =
-              acc.corrections.filterNot(c => c.targetKind == CorrectionTarget.Event && c.targetId == id && c.field == f)
-            if v == u then acc.modify(_.corrections).setTo(others)
-            else
-              val n = acc.lastCorrectionId + 1
-              val c = com.histmersion.api.Correction(
-                n,
-                CorrectionTarget.Event,
-                id,
-                f,
-                v.noSpaces,
-                u.noSpaces,
-                com.histmersion.api.CorrectionStatus.Active,
-                Some(provider)
-              )
-              acc.modify(_.corrections).setTo(others :+ c).modify(_.lastCorrectionId).setTo(n)
-          }
-        }
+        @tailrec def loop(rest: List[(String, io.circe.Json)], acc: CatalogueState): CatalogueState = rest match
+          case (f, v) :: tail => loop(tail, up.get(f).fold(acc)(u => corrected(acc, provider, id, f, v, u)))
+          case Nil            => acc
+        loop(fields.toList, s)
       }
+
+    /** One field's correction recorded: none when the person's value is the catalogue's. */
+    private def corrected(
+        s: CatalogueState,
+        provider: String,
+        id: String,
+        field: String,
+        value: io.circe.Json,
+        upstream: io.circe.Json
+    ): CatalogueState =
+      val others =
+        s.corrections.filterNot(c => c.targetKind == CorrectionTarget.Event && c.targetId == id && c.field == field)
+      if value == upstream then s.modify(_.corrections).setTo(others)
+      else
+        val n = s.lastCorrectionId + 1
+        val c = com.histmersion.api.Correction(
+          n,
+          CorrectionTarget.Event,
+          id,
+          field,
+          value.noSpaces,
+          upstream.noSpaces,
+          com.histmersion.api.CorrectionStatus.Active,
+          Some(provider)
+        )
+        s.modify(_.corrections).setTo(others :+ c).modify(_.lastCorrectionId).setTo(n)
 
     def put(id: String, in: EventPut): Unit =
       val _ = state.updateAndGet { s =>
