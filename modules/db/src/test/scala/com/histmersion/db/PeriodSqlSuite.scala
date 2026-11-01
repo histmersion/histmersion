@@ -66,26 +66,33 @@ class PeriodSqlSuite extends com.histmersion.db.DbSuite:
   dbTest("a goal patched with one bound changes that bound (#1798)"):
     connect(ds)(sql"DELETE FROM goals WHERE slug = 'zz_period_goal'".update.run())
     assertEquals(
-      GoalRepo.put(ds, "zz_period_goal", GoalPut("Period goal", periodStart = Some(-1200), periodEnd = Some(-1000))),
+      transact(ds)(
+        GoalRepo.put("zz_period_goal", GoalPut("Period goal", periodStart = Some(-1200), periodEnd = Some(-1000)))
+      ),
       Right(())
     )
     assertEquals(GoalRepo.patch(ds, "zz_period_goal", GoalPatch(periodStart = Some(-1300))), Right(()))
-    val g = GoalRepo.get(ds, "zz_period_goal").get
+    val g = connect(ds)(GoalRepo.get("zz_period_goal")).get
     assertEquals((g.periodStart, g.periodEnd), (Some(-1300L), Some(-1000L)))
     assertEquals(GoalRepo.patch(ds, "zz_period_goal", GoalPatch(periodEnd = Some(-1100))), Right(()))
-    val g2 = GoalRepo.get(ds, "zz_period_goal").get
+    val g2 = connect(ds)(GoalRepo.get("zz_period_goal")).get
     assertEquals((g2.periodStart, g2.periodEnd), (Some(-1300L), Some(-1100L)))
     // inverted: refused, stored period unchanged
     assert(GoalRepo.patch(ds, "zz_period_goal", GoalPatch(periodStart = Some(-1000))).isLeft)
     assertEquals(
-      GoalRepo.get(ds, "zz_period_goal").map(x => (x.periodStart, x.periodEnd)),
+      connect(ds)(GoalRepo.get("zz_period_goal")).map(x => (x.periodStart, x.periodEnd)),
       Some((Some(-1300L), Some(-1100L)))
     )
     connect(ds)(sql"DELETE FROM goals WHERE slug = 'zz_period_goal'".update.run())
 
   dbTest("a goal put with one bound stores an open period; an inverted one is refused"):
     connect(ds)(sql"DELETE FROM goals WHERE slug = 'zz_period_open'".update.run())
-    assertEquals(GoalRepo.put(ds, "zz_period_open", GoalPut("Open", periodStart = Some(-3300))), Right(()))
-    assertEquals(GoalRepo.get(ds, "zz_period_open").map(x => (x.periodStart, x.periodEnd)), Some((Some(-3300L), None)))
-    assert(GoalRepo.put(ds, "zz_period_open", GoalPut("Open", periodStart = Some(5), periodEnd = Some(-5))).isLeft)
+    assertEquals(transact(ds)(GoalRepo.put("zz_period_open", GoalPut("Open", periodStart = Some(-3300)))), Right(()))
+    assertEquals(
+      connect(ds)(GoalRepo.get("zz_period_open")).map(x => (x.periodStart, x.periodEnd)),
+      Some((Some(-3300L), None))
+    )
+    assert(
+      transact(ds)(GoalRepo.put("zz_period_open", GoalPut("Open", periodStart = Some(5), periodEnd = Some(-5)))).isLeft
+    )
     connect(ds)(sql"DELETE FROM goals WHERE slug = 'zz_period_open'".update.run())

@@ -11,7 +11,7 @@ import com.histmersion.api.Managers.*
 import com.histmersion.api.Queue.QueueAdd
 import com.histmersion.domain.SchedulerPolicy.*
 import com.histmersion.api.AgentScheduler.*
-import com.histmersion.db.{AgentRepo, AutopilotRepo, FocusRepo, GoalLinkRepo, ManagerRepo}
+import com.histmersion.db.{AgentRepo, FocusRepo, ManagerRepo}
 
 import java.time.Instant
 import javax.sql.DataSource
@@ -33,7 +33,7 @@ final class SchedulerService(
 ):
 
   /** A person's choice of strategy (name, by, at), if any. */
-  def chosen: Option[(String, String, String)] = AutopilotRepo.strategy(ds)
+  def chosen: Option[(String, String, String)] = agents.autopilotRow.strategy()
 
   /** The settings in effect now. */
   def settings: Settings = SchedulerPolicy.settings(ManagerDefaultsViews.scheduler(cfg.scheduler), chosen.map(_._1))
@@ -505,7 +505,7 @@ final class SchedulerService(
     val name = in.strategy.trim.toLowerCase(java.util.Locale.ROOT)
     val done: Either[ApiError, String] =
       if name == "default" then
-        AutopilotRepo.setStrategy(ds, None, by)
+        agents.autopilotRow.setStrategy(None, by)
         Right(
           s"strategy back to agents.scheduler.strategy (${SchedulerPolicy.settings(ManagerDefaultsViews.scheduler(cfg.scheduler)).strategy.name}) (by $by)"
         )
@@ -514,7 +514,7 @@ final class SchedulerService(
           case None =>
             Left(ApiError(s"unknown strategy '${in.strategy}' (one of: ${Strategies.names.mkString(", ")}, default)"))
           case Some(st) =>
-            AutopilotRepo.setStrategy(ds, Some(st.name), by)
+            agents.autopilotRow.setStrategy(Some(st.name), by)
             Right(s"strategy ${st.name} (by $by)")
     done.map { line =>
       last = None

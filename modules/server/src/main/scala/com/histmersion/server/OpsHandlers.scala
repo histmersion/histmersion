@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.augustnagro.magnum.{connect, transact}
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -106,7 +108,8 @@ final class OpsHandlers(deps: Deps):
       val linked = com.histmersion.db.GoalLinkRepo
         .goalsOfItems(ds, items.map(_.id))
         .map((id, slug, title) => (id, GoalRef(slug, title)))
-      val titles = items.flatMap(_.goal).distinct.flatMap(s => GoalRepo.get(ds, s).map(g => s -> g.title)).toMap
+      val titles =
+        items.flatMap(_.goal).distinct.flatMap(s => connect(ds)(GoalRepo.get(s)).map(g => s -> g.title)).toMap
       val own = items.flatMap(i => i.goal.map(s => (i.id, GoalRef(s, titles.getOrElse(s, s)))))
       QueueListing(k.label, items, checks, Queue.itemGoals(own, linked))
     }
@@ -129,13 +132,13 @@ final class OpsHandlers(deps: Deps):
     * open. Read-only; the rendering is [[GoalsExport.render]].
     */
   def goalsExport(): String =
-    val schedules = GoalLinkRepo.schedules(ds).groupBy(_.goal)
-    val views = GoalRepo.all(ds).map { g =>
-      val (plan, budget) = GoalLinkRepo.planAndBudget(ds, g.slug).getOrElse((None, None))
+    val schedules = connect(ds)(GoalLinkRepo.schedules()).groupBy(_.goal)
+    val views = connect(ds)(GoalRepo.all()).map { g =>
+      val (plan, budget) = connect(ds)(GoalLinkRepo.planAndBudget(g.slug)).getOrElse((None, None))
       GoalView(
         g,
         Nil,
-        GoalLinkRepo.links(ds, g.slug),
+        connect(ds)(GoalLinkRepo.links(g.slug)),
         schedules.getOrElse(g.slug, Nil),
         plan.flatMap(j => io.circe.parser.decode[Plan](j).toOption),
         budget.map(_.toDouble)

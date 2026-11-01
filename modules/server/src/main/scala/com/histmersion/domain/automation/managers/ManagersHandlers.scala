@@ -10,7 +10,7 @@ import com.histmersion.api.Agents.*
 import com.histmersion.api.GoalPlans.{LinkKind, Removed}
 import com.histmersion.domain.ManagerPolicy.ReviewSettings
 import com.histmersion.api.Managers.*
-import com.histmersion.db.{AgentRepo, GoalLinkRepo, ManagerRepo}
+import com.histmersion.db.{AgentRepo, ManagerRepo}
 
 import javax.sql.DataSource
 
@@ -660,10 +660,7 @@ final class ManagersHandlers(
     ManagerRepo
       .list(ds)
       .filter(m => m.kind == Kind.Watch.wire && goal.forall(g => m.goal.contains(g)))
-      .flatMap(m => WatchSchedules.view(m, ManagerRepo.items(ds, m.id, None, 0, 20)._1)) ++ GoalLinkRepo.schedules(
-      ds,
-      goal
-    )
+      .flatMap(m => WatchSchedules.view(m, ManagerRepo.items(ds, m.id, None, 0, 20)._1)) ++ agents.goals.schedules(goal)
 
   /** `PUT /api/goals/{slug}/schedules/{kind}` — since phase 3 a goal's schedule is a sweep of its watcher
     * `watch:<goal>` (created PAUSED when it does not exist: resume it for the schedule to fire). `enabled` puts the
@@ -714,7 +711,7 @@ final class ManagersHandlers(
                   if sweeps.isEmpty then "none" else sweeps.map(_.wire).mkString(", ")
                 }"
           )
-      _ = GoalLinkRepo.removeSchedule(ds, goal, kind) // a row the managers had not moved yet is replaced
+      _ = agents.goals.removeSchedule(goal, kind) // a row the managers had not moved yet is replaced
       m <- manager(id)
     yield
       supervisor.nudge()
@@ -727,7 +724,7 @@ final class ManagersHandlers(
     * watcher itself stays.
     */
   def removeSchedule(goal: String, kind: GoalPlans.ScheduleKind): GoalPlans.Removed =
-    val legacy = GoalLinkRepo.removeSchedule(ds, goal, kind)
+    val legacy = agents.goals.removeSchedule(goal, kind)
     val sw = WatchSchedules.sweepOf(kind)
     val fromWatcher = ManagerRepo.get(ds, watchId(goal)).filter(m => Sweep.of(m.config).contains(sw)).exists { m =>
       val rest = Sweep.of(m.config).filterNot(_ == sw)

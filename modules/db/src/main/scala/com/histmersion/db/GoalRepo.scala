@@ -39,27 +39,24 @@ object GoalRepo:
             """.query[GoalRow].run().toList.map(_.toDto)
       GoalList.of(total, rows, offset.max(0))
 
-  def get(ds: DataSource, slug: String): Option[Goal] =
-    connect(ds):
-      sql"""SELECT ${SqlLiteral(cols)} FROM goals g WHERE g.slug = $slug"""
-        .query[GoalRow]
-        .run()
-        .headOption
-        .map(_.toDto)
+  def get(slug: String)(using DbCon): Option[Goal] =
+    sql"""SELECT ${SqlLiteral(cols)} FROM goals g WHERE g.slug = $slug"""
+      .query[GoalRow]
+      .run()
+      .headOption
+      .map(_.toDto)
 
   /** Every goal, by slug — unpaged, for the `meta/GOALS.md` export. */
-  def all(ds: DataSource): List[Goal] =
-    connect(ds):
-      sql"""SELECT ${SqlLiteral(cols)} FROM goals g ORDER BY g.slug""".query[GoalRow].run().toList.map(_.toDto)
+  def all()(using DbCon): List[Goal] =
+    sql"""SELECT ${SqlLiteral(cols)} FROM goals g ORDER BY g.slug""".query[GoalRow].run().toList.map(_.toDto)
 
   /** A goal's direct sub-goals, by slug. */
-  def children(ds: DataSource, slug: String): List[Goal] =
-    connect(ds):
-      sql"""SELECT ${SqlLiteral(cols)} FROM goals g WHERE g.parent_slug = $slug ORDER BY g.slug"""
-        .query[GoalRow]
-        .run()
-        .toList
-        .map(_.toDto)
+  def children(slug: String)(using DbCon): List[Goal] =
+    sql"""SELECT ${SqlLiteral(cols)} FROM goals g WHERE g.parent_slug = $slug ORDER BY g.slug"""
+      .query[GoalRow]
+      .run()
+      .toList
+      .map(_.toDto)
 
   def exists(ds: DataSource, slug: String): Boolean =
     connect(ds)(sql"SELECT 1 FROM goals WHERE slug = $slug".query[Int].run().nonEmpty)
@@ -67,22 +64,21 @@ object GoalRepo:
   /** Create or replace a goal. Either bound of its period may be given alone (an open period); one that starts after it
     * ends is refused.
     */
-  def put(ds: DataSource, slug: String, in: GoalPut): Either[ApiError, Unit] =
+  def put(slug: String, in: GoalPut)(using DbCon): Either[ApiError, Unit] =
     PeriodSql
       .merge((None, None), in.periodStart, in.periodEnd, s"goal '$slug'")
       .getOrElse(Right((None, None)))
-      .map((s, e) => putIn(ds, slug, in, PeriodSql.literal(s, e)))
+      .map((s, e) => putIn(slug, in, PeriodSql.literal(s, e)))
 
-  private def putIn(ds: DataSource, slug: String, in: GoalPut, period: Option[String]): Unit =
-    transact(ds):
-      sql"""INSERT INTO goals (slug, title, status, notes, tags, regions, period, parent_slug, updated_at)
-            VALUES ($slug, ${in.title}, ${in.status}, ${in.notes},
-                    ${in.tags}::text[], ${in.regions}::text[],
-                    $period::int8range, ${in.parentSlug}, now())
-            ON CONFLICT (slug) DO UPDATE SET
-              title = EXCLUDED.title, status = EXCLUDED.status, notes = EXCLUDED.notes,
-              tags = EXCLUDED.tags, regions = EXCLUDED.regions, period = EXCLUDED.period,
-              parent_slug = EXCLUDED.parent_slug, updated_at = now()""".update.run()
+  private def putIn(slug: String, in: GoalPut, period: Option[String])(using DbCon): Unit =
+    sql"""INSERT INTO goals (slug, title, status, notes, tags, regions, period, parent_slug, updated_at)
+          VALUES ($slug, ${in.title}, ${in.status}, ${in.notes},
+                  ${in.tags}::text[], ${in.regions}::text[],
+                  $period::int8range, ${in.parentSlug}, now())
+          ON CONFLICT (slug) DO UPDATE SET
+            title = EXCLUDED.title, status = EXCLUDED.status, notes = EXCLUDED.notes,
+            tags = EXCLUDED.tags, regions = EXCLUDED.regions, period = EXCLUDED.period,
+            parent_slug = EXCLUDED.parent_slug, updated_at = now()""".update.run()
 
   def patch(ds: DataSource, slug: String, p: GoalPatch): Either[ApiError, Unit] =
     transact(ds):

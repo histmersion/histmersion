@@ -201,7 +201,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
       .filter(_.managerId.exists(_.startsWith("watch:")))
       .foreach(r => a.engine.execute(r.id))
 
-  private def status(g: String): String = GoalRepo.get(ds, g).get.status
+  private def status(g: String): String = connect(ds)(GoalRepo.get(g)).get.status
 
   /** A clock from the wall clock (the switch records real times) that moves six minutes a tick — past the autopilot's
     * ensure interval every tick.
@@ -420,7 +420,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
       "the person's pause holds"
     )
     assertEquals(ManagerRepo.list(ds).count(m => (m.kind == "seed" || m.kind == "watch") && m.state == "active"), 5)
-    assertEquals(AutopilotRepo.get(ds).paused, Nil)
+    assertEquals(transact(ds)(AutopilotRepo.get()).paused, Nil)
     // a goal added while it is on gets its managers at the next ensure
     assert(h.putGoal("zzagent-aplate", GoalPut("Zz later")).isRight)
     Clock(Instant.now(suiteClock).plusSeconds(3600)).tick(a)
@@ -600,7 +600,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     a.managing.setAutopilot(AutopilotSet(on = true)).fold(e => fail(e.message), identity)
     val out = a.autopilot.tick(t0)
     assert(out.contains("lint --fix started"), out)
-    assert(AutopilotRepo.get(ds).lastLintAt.isDefined)
+    assert(transact(ds)(AutopilotRepo.get()).lastLintAt.isDefined)
     val deadline = System.currentTimeMillis() + 60000
     while !QueueRows.list(ds, Queue.Kind.Log, all = true).exists(_.text.startsWith("autopilot: lint --fix")) &&
       System.currentTimeMillis() < deadline

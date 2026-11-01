@@ -10,7 +10,7 @@ import com.histmersion.domain.AutopilotPolicy.{GoalFacts, GoalRow, ManagerRow, S
 import com.histmersion.api.GoalPlans.LinkKind
 import com.histmersion.api.Managers.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.{AgentRepo, AutopilotRepo, GoalLinkRepo, GoalRepo, ManagerRepo}
+import com.histmersion.db.{AgentRepo, AutopilotRepo, ManagerRepo}
 
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicBoolean
@@ -44,7 +44,7 @@ final class AutopilotService(
   private def acfg = cfg.autopilot
 
   /** Whether it is on (one row read). */
-  def on: Boolean = AutopilotRepo.get(ds).enabled
+  def on: Boolean = agents.autopilotRow.row().enabled
 
   /** Today's shared ingest cap: `ingest-per-day` (0 = none), scaled to the watchers' ingest backlog when
     * `ingest-backlog-share` is above 0 (at most `ingest-ceiling`).
@@ -69,7 +69,7 @@ final class AutopilotService(
       agents.workflows.managerKinds.map(_.ingestedToday(now)).sum
 
   /** Make sure of the goals' managers at the next tick (a plan created sub-goals). */
-  def soon(): Unit = AutopilotRepo.ensureSoon(ds)
+  def soon(): Unit = agents.autopilotRow.ensureSoon()
 
   // ── the switch ─────────────────────────────────────────────────────────────────────────────────
 
@@ -78,12 +78,12 @@ final class AutopilotService(
     */
   def set(in: AutopilotSet, now: Instant = Instant.now(agents.clock)): AutopilotStatus =
     val by = in.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")
-    val row = AutopilotRepo.get(ds)
+    val row = agents.autopilotRow.row()
     val changes =
       if in.on then
-        val turned = AutopilotRepo.set(ds, enabled = true, by, row.paused)
+        val turned = agents.autopilotRow.set(enabled = true, by, row.paused)
         // turning it on lifts a drain: the person wants it running
-        val undrained = Option.when(AutopilotRepo.setDrain(ds, on = false, by))(s"drain lifted by $by")
+        val undrained = Option.when(agents.autopilotRow.setDrain(on = false, by))(s"drain lifted by $by")
         (if turned then List(s"turned on by $by") else List("already on")) ++ undrained ++ ensureNow(now) ++ advance(
           now
         )
@@ -101,7 +101,7 @@ final class AutopilotService(
             s"paused: the autopilot was turned off by $by (its runs in flight go on)"
           )
         }
-        val _ = AutopilotRepo.set(ds, enabled = false, by, ids)
+        val _ = agents.autopilotRow.set(enabled = false, by, ids)
         List(s"turned off by $by", s"paused ${Plural.count(ids.size, "manager")} it ran (turning it on resumes them)")
     log(s"autopilot ${if in.on then "on" else "off"} (by $by): ${changes.mkString("; ")}")
     agents.managers.nudge()
@@ -113,7 +113,7 @@ final class AutopilotService(
     * due.
     */
   def tick(now: Instant): List[String] =
-    val row = AutopilotRepo.get(ds)
+    val row = agents.autopilotRow.row()
     if !row.enabled then Nil
     else
       val last = row.lastEnsureAt.flatMap(ManagerPolicy.parseInstant)
@@ -142,9 +142,9 @@ final class AutopilotService(
 
   /** Every goal's managers ([[AutopilotPolicy.ensure]]), applied; one line per change. */
   def ensureNow(now: Instant): List[String] =
-    val goals = GoalRepo.all(ds)
-    val planned = GoalLinkRepo.planned(ds)
-    val links = GoalLinkRepo.linkCounts(ds)
+    val goals = agents.goals.all()
+    val planned = agents.goals.planned()
+    val links = agents.goals.linkCounts()
     val gs = goals.map(g =>
       GoalRow(
         g.slug,
@@ -152,9 +152,9 @@ final class AutopilotService(
         needsPlan = !planned(g.slug) && links.getOrElse((g.slug, LinkKind.SearchQuery.wire), 0) == 0
       )
     )
-    val steps = AutopilotPolicy.ensure(gs, rows(), AutopilotRepo.get(ds).paused.toSet, settings)
+    val steps = AutopilotPolicy.ensure(gs, rows(), agents.autopilotRow.row().paused.toSet, settings)
     val out = steps.flatMap(s => applyStep(s, now))
-    AutopilotRepo.ensured(ds, now)
+    agents.autopilotRow.ensured(now)
     if out.nonEmpty then agents.managers.nudge()
     out
 
@@ -195,7 +195,7 @@ final class AutopilotService(
         }
       case Step.Resume(id) =>
         Option.when(ManagerRepo.setState(ds, id, State.Active, pauseRuns = false)) {
-          AutopilotRepo.unpaused(ds, id)
+          agents.autopilotRow.unpaused(id)
           event(id, "resumed by the autopilot")
           s"$id resumed"
         }
@@ -257,7 +257,7 @@ final class AutopilotService(
     * sees its sub-goals' new status in the same pass; one line per goal moved.
     */
   def advance(now: Instant): List[String] =
-    val goals = GoalRepo.all(ds)
+    val goals = agents.goals.all()
     val parentOf = goals.map(g => g.slug -> g.parentSlug).toMap
     val managers = ManagerRepo.light(ds)
     val articles = agents.workflows.linked()
@@ -335,8 +335,8 @@ final class AutopilotService(
         case Some(why)                                            => List(s"housekeeping waits: $why")
         case None if !housekeepingBusy.compareAndSet(false, true) => Nil
         case None                                                 =>
-          if backupDue then AutopilotRepo.backedUp(ds, now)
-          if lintDue then AutopilotRepo.linted(ds, now)
+          if backupDue then agents.autopilotRow.backedUp(now)
+          if lintDue then agents.autopilotRow.linted(now)
           val work = agents.pins.carry {
             try
               if backupDue then backup()
@@ -384,11 +384,11 @@ final class AutopilotService(
     * once (readable with agents off).
     */
   def status(now: Instant = Instant.now(agents.clock)): AutopilotStatus =
-    val row = AutopilotRepo.get(ds)
-    val goals = GoalRepo.all(ds)
+    val row = agents.autopilotRow.row()
+    val goals = agents.goals.all()
     val managers = ManagerRepo.light(ds)
     val pace = ManagerRepo.pace(ds, now.minusSeconds(7L * 86400L))
-    val links = GoalLinkRepo.linkCounts(ds)
+    val links = agents.goals.linkCounts()
     val arts = agents.workflows.linked()
     val open = AgentRepo.openBySubject(ds)
     def brief(m: ManagerRepo.Light) = ManagerBrief(m.id, m.kind, m.state, m.statusNote)

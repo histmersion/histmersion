@@ -1,5 +1,7 @@
 package com.histmersion.server.acquire
 
+import com.augustnagro.magnum.{connect, transact}
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -45,8 +47,8 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
       sql"DELETE FROM goals WHERE slug = $Goal".update.run()
       sql"DELETE FROM sources WHERE citekey LIKE 'zzcand%'".update.run()
       sql"DELETE FROM queue_items WHERE text LIKE '%zzcand%'".update.run()
-    assert(GoalRepo.put(ds, Goal, GoalPut("Bronze Age collapse", status = "seeding")).isRight)
-    assert(GoalLinkRepo.link(ds, Goal, LinkKind.Query, "bronze age collapse", None))
+    assert(transact(ds)(GoalRepo.put(Goal, GoalPut("Bronze Age collapse", status = "seeding"))).isRight)
+    assert(transact(ds)(GoalLinkRepo.link(Goal, LinkKind.Query, "bronze age collapse", None)))
 
   private def search(idx: List[ScholarlyIndex], alerts: CitationAlerts, day: LocalDate) =
     CandidateSearch(
@@ -176,7 +178,7 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
       ),
       cfg.limits.chunkChars
     )
-    assert(GoalLinkRepo.link(ds, Goal, LinkKind.Source, "zzcand_src", None))
+    assert(transact(ds)(GoalLinkRepo.link(Goal, LinkKind.Source, "zzcand_src", None)))
     val alerts = FakeAlerts()
     val s = search(Nil, alerts, LocalDate.of(2026, 10, 24)).sweep(Goal, dryRun = false).toOption.get
     assertEquals(alerts.asked.toArray.toList, List("citing 10.5555/zzcand.src", "author A1", "author A3"))
@@ -192,8 +194,8 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
 
   test("an index that may not be asked (CORE's budget, CORE's block) is left out of the sweep, which says so"):
     fresh()
-    assert(GoalLinkRepo.link(ds, Goal, LinkKind.Query, "late bronze age", None))
-    assert(GoalLinkRepo.link(ds, Goal, LinkKind.Query, "sea peoples", None))
+    assert(transact(ds)(GoalLinkRepo.link(Goal, LinkKind.Query, "late bronze age", None)))
+    assert(transact(ds)(GoalLinkRepo.link(Goal, LinkKind.Query, "sea peoples", None)))
     val oa = FakeIndex("openalex", Right(List(work("10.5555/zzcand.a"))))
     // the first CORE search answers 429: from then on CORE says to wait
     final class Throttled extends ScholarlyIndex:

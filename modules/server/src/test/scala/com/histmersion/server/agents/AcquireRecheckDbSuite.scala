@@ -53,7 +53,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
       sql"DELETE FROM jobs WHERE kind = ${RecheckJob.JobKind}".update.run()
       sql"UPDATE agent_autopilot SET enabled = false, paused = '{}', changed_by = '', last_ensure_at = NULL".update
         .run()
-    val _ = AutopilotRepo.setDrain(ds, on = false, "test")
+    val _ = transact(ds)(AutopilotRepo.setDrain(on = false, "test"))
 
   override def beforeEach(context: BeforeEach): Unit = clean()
   override def afterEach(context: AfterEach): Unit = clean()
@@ -239,13 +239,13 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
   test("draining: the managers' pass does nothing and a pass by hand is refused, a dry run still lists"):
     val (a, h, up) = setup()
     val _ = item(h, "d1")
-    val _ = AutopilotRepo.setDrain(ds, on = true, "test")
+    val _ = transact(ds)(AutopilotRepo.setDrain(on = true, "test"))
     assertEquals(a.acquireRecheck.tick(Instant.now()), Nil)
     val r = a.acquireRecheck.run(RecheckRequest()).toOption.get
     assert(r.note.exists(_.contains("draining")), r.toString)
     assertEquals(a.acquireRecheck.run(RecheckRequest(dryRun = true)).toOption.get.due, 1)
     assertEquals(asked(up), Nil)
-    val _ = AutopilotRepo.setDrain(ds, on = false, "test")
+    val _ = transact(ds)(AutopilotRepo.setDrain(on = false, "test"))
     assert(a.acquireRecheck.tick(Instant.now()).exists(_.startsWith("acquire re-check:")))
     assertEquals(asked(up).size, 1)
     assertEquals(a.acquireRecheck.tick(Instant.now()), Nil, "the next pass waits pass-minutes")
@@ -501,7 +501,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     up.answer = (d, _) => gate.hold(d)
     val job = jobOf(a.acquireRecheck.run(RecheckRequest(all = true, by = Some("test"))))
     assert(gate.started.await(30, java.util.concurrent.TimeUnit.SECONDS))
-    val _ = AutopilotRepo.setDrain(ds, on = true, "test")
+    val _ = transact(ds)(AutopilotRepo.setDrain(on = true, "test"))
     assertEquals(a.drain.tick(Instant.now()), Nil, "not drained while the job's item is in flight")
     gate.release.countDown()
     val stopped = ended(a, job.id)
@@ -513,7 +513,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
       AcquireChecksMarkdown.line(a.acquireRecheck.status()).contains(s"job ${job.id} stopped"),
       "the status names it"
     )
-    val _ = AutopilotRepo.setDrain(ds, on = false, "test")
+    val _ = transact(ds)(AutopilotRepo.setDrain(on = false, "test"))
     up.answer = (d, _) => Left(s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found")
     val resumed = a.acquireRecheck.tick(Instant.now())
     assert(

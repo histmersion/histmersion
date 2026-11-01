@@ -1,5 +1,7 @@
 package com.histmersion.server.acquire
 
+import com.augustnagro.magnum.{connect, transact}
+
 import com.histmersion.domain.automation.worklists.QueueScope
 
 import com.histmersion.api.*
@@ -45,7 +47,7 @@ final class CandidateSearch(
 
   /** Sweep `goal` now; a dry run reads, but stores neither candidates nor watermarks. */
   def sweep(goal: String, dryRun: Boolean): Either[ApiError, CandidateSweep] =
-    GoalRepo.get(ds, goal).toRight(ApiError(s"no goal '$goal'", Some(Write.CodeNotFound))).map { g =>
+    connect(ds)(GoalRepo.get(goal)).toRight(ApiError(s"no goal '$goal'", Some(Write.CodeNotFound))).map { g =>
       val c = cfg
       val now = today()
       val stored = CandidateRepo.watches(ds, g.slug).map(w => (w.kind, w.subject, w.index) -> w).toMap

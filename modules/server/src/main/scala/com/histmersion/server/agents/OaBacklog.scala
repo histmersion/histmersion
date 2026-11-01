@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.augustnagro.magnum.{connect, transact}
+
 import com.histmersion.domain.automation.agents.AgentsHandlers
 import com.histmersion.domain.automation.managers.ManagerDefaultsViews
 
@@ -58,10 +60,12 @@ final class OaBacklog(
     IngestBacklog.place(ManagerRepo.citekeyOfDoi(ds, doi), acquire, open.map(_.id), settled) match
       case p @ Placement.InCorpus(ck) =>
         val _ =
-          GoalLinkRepo.link(ds, goal, LinkKind.Source, ck, Some(s"found again by a watcher sweep: ${w.why}".take(500)))
+          transact(ds)(
+            GoalLinkRepo.link(goal, LinkKind.Source, ck, Some(s"found again by a watcher sweep: ${w.why}".take(500)))
+          )
         p
       case p @ Placement.JoinAcquire(id) =>
-        val _ = GoalLinkRepo.link(ds, goal, LinkKind.QueueItem, id.toString, Some(doi))
+        val _ = transact(ds)(GoalLinkRepo.link(goal, LinkKind.QueueItem, id.toString, Some(doi)))
         p
       case p @ Placement.JoinBacklog(id) =>
         open.foreach { i =>
@@ -220,7 +224,7 @@ final class OaBacklog(
     ManagerRepo.citekeyOfDoi(ds, doi) match
       case Some(ck) =>
         goals.foreach(g =>
-          GoalLinkRepo.link(ds, g, LinkKind.Source, ck, Some(s"found by a watcher sweep: ${w.why}".take(500)))
+          transact(ds)(GoalLinkRepo.link(g, LinkKind.Source, ck, Some(s"found by a watcher sweep: ${w.why}".take(500))))
         )
         settle(
           ItemStatus.Done,
@@ -233,12 +237,13 @@ final class OaBacklog(
         upstream().ingestLegal(doi) match
           case Right(r) =>
             goals.foreach(g =>
-              GoalLinkRepo.link(
-                ds,
-                g,
-                LinkKind.Source,
-                r.citekey,
-                Some(s"ingested from a watcher's backlog: ${w.why}".take(500))
+              transact(ds)(
+                GoalLinkRepo.link(
+                  g,
+                  LinkKind.Source,
+                  r.citekey,
+                  Some(s"ingested from a watcher's backlog: ${w.why}".take(500))
+                )
               )
             )
             settle(
@@ -318,7 +323,7 @@ final class OaBacklog(
         .toOption
         .map(_.id)
     }
-    id.foreach(i => goals.foreach(g => GoalLinkRepo.link(ds, g, LinkKind.QueueItem, i.toString, Some(doi))))
+    id.foreach(i => goals.foreach(g => transact(ds)(GoalLinkRepo.link(g, LinkKind.QueueItem, i.toString, Some(doi)))))
     id
 
   // ── the one-shot repair ────────────────────────────────────────────────────────────────────────
@@ -351,7 +356,9 @@ final class OaBacklog(
         case RepairAction.Keep(why)  => RepairRow(item, first.doi, goals, first.managerId, Keep, why)
         case RepairAction.Remove(ck) =>
           if !in.dryRun then
-            goals.foreach(g => GoalLinkRepo.link(ds, g, LinkKind.Source, ck, Some("found by a watcher sweep")))
+            goals.foreach(g =>
+              transact(ds)(GoalLinkRepo.link(g, LinkKind.Source, ck, Some("found by a watcher sweep")))
+            )
             removeAcquire(item, goals)
           RepairRow(item, first.doi, goals, first.managerId, Remove, s"in the corpus already: [[$ck]]")
         case RepairAction.Move =>
@@ -448,7 +455,7 @@ final class OaBacklog(
 
   private def removeAcquire(item: Int, goals: List[String]): Unit =
     val _ = h.ops.queueDelete(item)
-    goals.foreach(g => GoalLinkRepo.unlink(ds, g, LinkKind.QueueItem, item.toString))
+    goals.foreach(g => transact(ds)(GoalLinkRepo.unlink(g, LinkKind.QueueItem, item.toString)))
 
 object OaBacklog:
   /** The backlog per watcher (pending + held, and the days its pending items take to drain at the current allowance),

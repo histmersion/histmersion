@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.augustnagro.magnum.{connect, transact}
+
 import com.histmersion.domain.automation.agents.{AnswerSchemas, Checked, Halt, Prompt, RunCtx, StepAgent}
 import com.histmersion.domain.automation.approvals.AutoApprovals
 import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
@@ -67,18 +69,20 @@ final class ProposeArticlesPipeline(h: Handlers, ds: DataSource, cfg: => AgentsC
     */
   private def family(slug: String): List[String] =
     val up = Iterator
-      .iterate(GoalRepo.get(ds, slug).flatMap(_.parentSlug))(_.flatMap(p => GoalRepo.get(ds, p).flatMap(_.parentSlug)))
+      .iterate(connect(ds)(GoalRepo.get(slug)).flatMap(_.parentSlug))(
+        _.flatMap(p => connect(ds)(GoalRepo.get(p)).flatMap(_.parentSlug))
+      )
       .takeWhile(_.isDefined)
       .take(16)
       .flatten
       .toList
     def down(s: String, depth: Int): List[String] =
-      if depth > 16 then Nil else GoalRepo.children(ds, s).flatMap(c => c.slug :: down(c.slug, depth + 1))
+      if depth > 16 then Nil else connect(ds)(GoalRepo.children(s)).flatMap(c => c.slug :: down(c.slug, depth + 1))
     (up ++ down(slug, 0)).distinct.filterNot(_ == slug)
 
   private def load(slug: String): Either[String, Loaded] =
     h.getGoal(slug).left.map(_.message).map { g =>
-      val links = GoalLinkRepo.links(ds, g.slug)
+      val links = connect(ds)(GoalLinkRepo.links(g.slug))
       val area = g.slug :: family(g.slug)
       val articles = area.flatMap(a => GoalLinkRepo.refs(ds, a, LinkKind.Article)).distinct.flatMap { ref =>
         h.getArticle(ref).toOption.map { v =>

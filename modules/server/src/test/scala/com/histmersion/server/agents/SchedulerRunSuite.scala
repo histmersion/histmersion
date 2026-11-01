@@ -69,7 +69,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
     assert(h.putSource(Ck, SourcePut(title = "Old tin", year = Some(2000), doi = Some("10.5555/zzagent.old"))).isRight)
     assert(h.putSource(Ck2, SourcePut(title = "New tin", year = Some(2024), doi = Some("10.5555/zzagent.new"))).isRight)
     assert(h.putGoal(Goal, GoalPut("Zz scheduled tin")).isRight)
-    assert(GoalLinkRepo.link(ds, Goal, LinkKind.Source, Ck, None))
+    assert(transact(ds)(GoalLinkRepo.link(Goal, LinkKind.Source, Ck, None)))
 
   private def start(a: AgentsHandlers, req: RunRequest): RunInfo =
     val run = a.startRun(req).fold(e => fail(e.message), identity)
@@ -114,7 +114,11 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
     assertEquals(h.neighbors(Ck2, List("refutes")), Nil, "nothing applied before approval")
     def queued = h.ops.queueList("acquire", all = true).toOption.get.items.filter(_.text.contains("zzagent.out"))
     assertEquals(queued.size, 1)
-    assert(GoalLinkRepo.links(ds, Goal).exists(l => l.kind == LinkKind.QueueItem && l.ref == queued.head.id.toString))
+    assert(
+      connect(ds)(GoalLinkRepo.links(Goal)).exists(l =>
+        l.kind == LinkKind.QueueItem && l.ref == queued.head.id.toString
+      )
+    )
     assert(run.progress.exists(_.contains("1 edge(s) proposed, 1 paper(s) queued")), run.progress)
 
     // again (as a schedule would): the open proposal and the queued paper are not doubled
@@ -300,29 +304,31 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
   ):
     cleanManagers()
     val (a, h, _) = handlers(ScriptedClient(Model)); seed(h)
-    GoalLinkRepo.setSchedule(
-      ds,
-      Goal,
-      ScheduleKind.Currency,
-      "@daily",
-      true,
-      Some(BigDecimal("0.1")),
-      Some(Instant.parse("2026-10-05T00:00:00Z"))
+    transact(ds)(
+      GoalLinkRepo.setSchedule(
+        Goal,
+        ScheduleKind.Currency,
+        "@daily",
+        true,
+        Some(BigDecimal("0.1")),
+        Some(Instant.parse("2026-10-05T00:00:00Z"))
+      )
     )
-    GoalLinkRepo.setSchedule(
-      ds,
-      Goal,
-      ScheduleKind.Acquisition,
-      "@monthly",
-      true,
-      Some(BigDecimal("0.25")),
-      Some(Instant.parse("2026-11-01T00:00:00Z"))
+    transact(ds)(
+      GoalLinkRepo.setSchedule(
+        Goal,
+        ScheduleKind.Acquisition,
+        "@monthly",
+        true,
+        Some(BigDecimal("0.25")),
+        Some(Instant.parse("2026-11-01T00:00:00Z"))
+      )
     )
     // before the move, the goal shows the rows as they are
     assertEquals(a.goalView(Goal).toOption.get.schedules.size, 2)
     val out = a.managers.migrateSchedules(Now)
     assertEquals(out, List(s"${Managers.watchId(Goal)}: migrated"))
-    assertEquals(GoalLinkRepo.schedules(ds, Some(Goal)), Nil, "the rows are gone")
+    assertEquals(connect(ds)(GoalLinkRepo.schedules(Some(Goal))), Nil, "the rows are gone")
     val w = a.managing.get(Managers.watchId(Goal)).toOption.get.manager
     assertEquals(
       (w.state, w.cron, w.nextTickAt, w.config.sweeps, w.config.budgetUsd),
@@ -338,7 +344,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
     assert(log.exists(_.contains("2 goal schedules moved into this watcher")), log)
     assertEquals(a.managers.migrateSchedules(Now), Nil, "idempotent")
     // a schedule brought in later (a bundle import) joins the watcher, which keeps its own cron
-    GoalLinkRepo.setSchedule(ds, Goal, ScheduleKind.Currency, "@monthly", false, None, None)
+    transact(ds)(GoalLinkRepo.setSchedule(Goal, ScheduleKind.Currency, "@monthly", false, None, None))
     assertEquals(a.managers.migrateSchedules(Now).size, 1)
     val w2 = a.managing.get(Managers.watchId(Goal)).toOption.get.manager
     assertEquals((w2.cron, w2.config.sweeps), (Some("@daily"), Some(List("acquisition", "currency"))))
@@ -346,7 +352,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
       ManagerRepo.events(ds, w.id, None, 10).exists(e => e.kind == Managers.Feed.Migrated && e.text.contains("was off"))
     )
     // the tick migrates too (with agents on)
-    GoalLinkRepo.setSchedule(ds, Goal, ScheduleKind.Acquisition, "@weekly", true, None, None)
+    transact(ds)(GoalLinkRepo.setSchedule(Goal, ScheduleKind.Acquisition, "@weekly", true, None, None))
     assert(a.managers.tick(Now).contains(s"${Managers.watchId(Goal)}: migrated"))
     cleanManagers()
 

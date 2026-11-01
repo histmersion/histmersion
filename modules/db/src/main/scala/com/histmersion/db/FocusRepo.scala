@@ -177,5 +177,6 @@ object FocusRepo:
     connect(ds)(sql"SELECT max_active_goals FROM agent_autopilot WHERE id".query[Option[Int]].run().headOption.flatten)
 
   def setMaxOverride(ds: DataSource, n: Option[Int]): Unit =
-    val _ = AutopilotRepo.get(ds)
-    val _ = transact(ds)(sql"UPDATE agent_autopilot SET max_active_goals = $n WHERE id".update.run())
+    val _ = transact(ds):
+      sql"INSERT INTO agent_autopilot (id) VALUES (true) ON CONFLICT DO NOTHING".update.run()
+      sql"UPDATE agent_autopilot SET max_active_goals = $n WHERE id".update.run()

@@ -28,7 +28,7 @@ object TransitionWorkflows:
     val pipelines: List[PipelineDef] = List(
       EnrichSourcePipeline(h, ds, cfg, upstream, proposals),
       ReviewArticlePipeline(h, ds, cfg, proposals, a.definitions),
-      PlanGoalPipeline(a.host, deps.queues, deps.workLists, ds, cfg),
+      PlanGoalPipeline(a.host, deps.queues, deps.workLists, a.goals, ds, cfg),
       CompileArticlePipeline(h, ds, cfg, (req, parent) => a.startRunAs(req, Origin.Run, Some(parent))),
       CurrencyCheckPipeline(h, ds, cfg, upstream, proposals),
       AcquisitionSweepPipeline(h, ds, cfg, upstream, work.oaBacklog),

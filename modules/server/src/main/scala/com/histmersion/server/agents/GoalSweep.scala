@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.augustnagro.magnum.{connect, transact}
+
 import com.histmersion.domain.automation.agents.RunCtx
 import com.histmersion.domain.automation.workflows.Pipelines
 
@@ -57,13 +59,13 @@ private[agents] trait GoalSweep:
         ctx.write(
           s"link queue item $id to goal $goal",
           io.circe.Json.obj("goal" -> goal.asJson, "item" -> id.asJson, "doi" -> doi.asJson)
-        ) { val _ = GoalLinkRepo.link(ds, goal, LinkKind.QueueItem, id.toString, Some(doi)) }(())
+        ) { val _ = transact(ds)(GoalLinkRepo.link(goal, LinkKind.QueueItem, id.toString, Some(doi))) }(())
         Right(false)
       case None =>
         val item = QueueAdd(text, topic = Some(s"goal $goal"), goal = Some(goal), job = Some(ctx.run.id))
         ctx.write(s"acquire item for $doi, linked to goal $goal", item.asJson)(
           h.ops.queueAdd("acquire", item).left.map(_.message).map { added =>
-            val _ = GoalLinkRepo.link(ds, goal, LinkKind.QueueItem, added.id.toString, Some(doi))
+            val _ = transact(ds)(GoalLinkRepo.link(goal, LinkKind.QueueItem, added.id.toString, Some(doi)))
             true
           }
         )(Right(true))

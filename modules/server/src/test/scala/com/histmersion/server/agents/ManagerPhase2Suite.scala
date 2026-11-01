@@ -289,7 +289,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     val chained = item(ReviewId, ArticleReview, "zzagent_new")
     assertEquals((chained.origin, chained.priority, chained.status), ("chain", 2, "pending"))
     assertEquals(ManagerRepo.get(ds, ReviewId).map(_.state), Some("paused"))
-    assert(GoalLinkRepo.links(ds, Goal).exists(l => l.kind == LinkKind.Article && l.ref == "zzagent_new"))
+    assert(connect(ds)(GoalLinkRepo.links(Goal)).exists(l => l.kind == LinkKind.Article && l.ref == "zzagent_new"))
 
   test("seed: a rejected plan compiles nothing; Extend on a goal queues the next proposal"):
     val c = ScriptedClient(Model)
