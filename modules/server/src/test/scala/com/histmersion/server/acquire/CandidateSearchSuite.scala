@@ -5,7 +5,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.GoalPlans.LinkKind
 import com.histmersion.db.{CandidateRepo, GoalLinkRepo, GoalRepo, Migrate, QueueRows, SourceRepo}
-import com.histmersion.domain.automation.managers.ManagerSupervisor
+import com.histmersion.server.agents.WatchManagerKind
 
 import java.time.LocalDate
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -129,9 +129,9 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
     assertEquals(ws("openalex"), (Some("2026-10-24"), None))
     assertEquals(ws("crossref"), (Some("2026-10-01"), Some("HTTP 503")), "a failed read skips nothing next time")
     // the supervisor: unseen candidates → an agent run; none → no run; the search not connected → as before
-    assert(!ManagerSupervisor.nothingNew(Right(s2)))
-    assert(ManagerSupervisor.nothingNew(Right(s2.copy(unseen = 0))))
-    assert(!ManagerSupervisor.nothingNew(Left("not connected")))
+    assert(!WatchManagerKind.nothingNew(Right(s2)))
+    assert(WatchManagerKind.nothingNew(Right(s2.copy(unseen = 0))))
+    assert(!WatchManagerKind.nothingNew(Left("not connected")))
 
   test("a dry run reads but stores nothing; marking moves candidates out of the unseen"):
     fresh()

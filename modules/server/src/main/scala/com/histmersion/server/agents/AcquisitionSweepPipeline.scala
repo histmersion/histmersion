@@ -318,6 +318,11 @@ final class AcquisitionSweepPipeline(
     }
 
 object AcquisitionSweepPipeline:
+
+  /** What an acquisition sweep picked (its `rank` step's checked answer). */
+  def picked(c: com.histmersion.domain.automation.managers.ManagerContext, run: String): List[Picked] =
+    c.stepOutput(run, "rank").flatMap(o => io.circe.parser.decode[List[Picked]](o).toOption).getOrElse(Nil)
+
   /** `stored`: the candidates' ids in the store (#3761), by DOI — none when the live search found them. */
   final case class Found(
       title: String,

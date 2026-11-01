@@ -1,7 +1,7 @@
 package com.histmersion.domain.automation.managers
 
 import com.histmersion.domain.automation.agents.*
-import com.histmersion.server.agents.OaBacklog
+import com.histmersion.domain.automation.workflows.AutomationHost
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -24,7 +24,7 @@ final class ManagersHandlers(
     limits: => Limits,
     agents: AgentsHandlers,
     supervisor: ManagerSupervisor,
-    h: com.histmersion.server.Handlers
+    host: AutomationHost
 ):
 
   private def mcfg = cfg.managers
@@ -42,23 +42,28 @@ final class ManagersHandlers(
   /** The settings in effect: the saved config over the server's defaults for its kind; a watcher's ingest backlog and
     * the days it takes to drain (`backlog` = one snapshot for every manager listed).
     */
-  private def withEffective(m: ManagerInfo, backlog: => OaBacklog.Snapshot): ManagerInfo =
+  private def kinds: List[ManagerKindDefinition] = agents.workflows.managerKinds
+
+  /** Every manager's backlog, by id, as its kind's domain counts it (one reading for every manager listed). */
+  private def backlogs(): Map[String, (Int, Option[Int])] = kinds.foldLeft(Map.empty)(_ ++ _.backlog())
+
+  private def withEffective(m: ManagerInfo, backlog: => Map[String, (Int, Option[Int])]): ManagerInfo =
     val e = m.copy(effective =
       ReviewSettings
         .defaultsFor(kindOf(m), ManagerDefaultsViews.defaults(mcfg), ManagerDefaultsViews.seedPlan(cfg.seed))
         .merge(m.config)
     )
     if kindOf(m) != Kind.Watch then e
-    else backlog.perManager.get(m.id).fold(e)((n, days) => e.copy(backlog = n, backlogDays = days))
+    else backlog.get(m.id).fold(e)((n, days) => e.copy(backlog = n, backlogDays = days))
 
   private def manager(id: String): Either[ApiError, ManagerInfo] =
     ManagerRepo
       .get(ds, id.trim)
-      .map(m => withEffective(m, agents.oaBacklog.snapshot()))
+      .map(m => withEffective(m, backlogs()))
       .toRight(notFound(s"No manager '$id'"))
 
   def list: List[ManagerInfo] =
-    lazy val snap = agents.oaBacklog.snapshot()
+    lazy val snap = backlogs()
     ManagerRepo.list(ds).map(withEffective(_, snap))
 
   def get(id: String): Either[ApiError, ManagerDetail] =
@@ -122,7 +127,7 @@ final class ManagersHandlers(
       case Some(Kind.Seed)                     =>
         for
           g <- goal.toRight(ApiError("a seeding manager is for one research area: give its goal"))
-          gl <- h.getGoal(g)
+          gl <- host.goal(g)
           m <- make(Kind.Seed, seedId(gl.slug), Some(gl.slug))
           _ <- addItem(m.id, EnqueueRequest(ProposeArticles, gl.slug))
           out <- manager(m.id)
@@ -130,7 +135,7 @@ final class ManagersHandlers(
       case Some(Kind.Watch) =>
         for
           g <- goal.toRight(ApiError("a watcher is for one research area: give its goal"))
-          gl <- h.getGoal(g)
+          gl <- host.goal(g)
           m <- make(Kind.Watch, watchId(gl.slug), Some(gl.slug), in.cron.orElse(Some(mcfg.watch.cron)))
           _ = Sweep
             .of(in.config)
@@ -184,7 +189,7 @@ final class ManagersHandlers(
 
   /** The rounds within the cap, every model override for a role the manager's pipelines use. */
   private def validate(k: Kind, c: ManagerConfig): Either[ApiError, Unit] =
-    val roles = ManagerSupervisor.roles(k)
+    val roles = supervisor.roles(k)
     c.models
       .getOrElse(Nil)
       .foldLeft[Either[ApiError, Unit]](
@@ -312,34 +317,9 @@ final class ManagersHandlers(
     * A compile item is never added by hand: it comes from an approved plan.
     */
   private def targetOf(m: ManagerInfo, kind: String, raw: String): Either[ApiError, String] =
-    kind match
-      case ArticleReview | InferFilter | ArticleExtend => h.getArticle(raw.trim).map(_.article.slug)
-      case SourceEnrich                                => h.getSource(raw.trim, body = false).map(_.source.citekey)
-      case ProposeArticles | PlanGoalItem              =>
-        val g = Option(raw.trim).filter(_.nonEmpty).orElse(m.goal).getOrElse("")
-        h.getGoal(g)
-          .map(_.slug)
-          .flatMap(s =>
-            Either.cond(
-              m.goal.forall(_ == s),
-              s,
-              ApiError(s"manager ${m.id} plans the articles of ${m.goal.getOrElse("?")}, not of $s")
-            )
-          )
-      case ArticleCompile =>
-        Left(ApiError(s"'$ArticleCompile' items come from an approved article plan (propose-articles)"))
-      case OaIngest =>
-        Acquire
-          .normalizeDoi(raw)
-          .toRight(ApiError(s"'$raw' is not a DOI (an ingest-backlog item is one legal open-access work)"))
-      case AcquisitionSweep | CurrencyCheck =>
-        val g = Option(raw.trim).filter(_.nonEmpty).orElse(m.goal).getOrElse("")
-        h.getGoal(g)
-          .map(_.slug)
-          .flatMap(s =>
-            Either.cond(m.goal.forall(_ == s), s, ApiError(s"manager ${m.id} watches ${m.goal.getOrElse("?")}, not $s"))
-          )
-      case other => Left(ApiError(s"unknown item kind '$other'"))
+    kinds.find(_.items.contains(kind)) match
+      case Some(k) => k.target(m, kind, raw)
+      case None    => Left(ApiError(s"unknown item kind '$kind'"))
 
   /** Add (or bring back) a target: `in.kind` names the item kind (`review`, `extend`, `filter`, `enrich`, `propose`, or
     * the kind itself; blank = the manager's default). An article's review whose article records no filter brings an
@@ -363,28 +343,11 @@ final class ManagersHandlers(
         Feed.Evaluated,
         s"$label ${if isNew then "enqueued" else "enqueued again"} by a ${origin.wire} (priority $prio)"
       )
-      _ = if kind == ArticleReview then filterFirst(m, target, prio)
+      _ = kinds.find(_.items.contains(kind)).foreach(_.added(supervisor, m, kind, target, prio))
       item <- ManagerRepo.item(ds, itemId).toRight(notFound(s"item $itemId vanished"))
     yield
       supervisor.nudge()
       item
-
-  /** An article that records no filter and never had an infer-filter item gets one, at its review's priority, so its
-    * review waits for it (when the manager's `inferFilter` is on).
-    */
-  private def filterFirst(m: ManagerInfo, slug: String, priority: Int): Unit =
-    val on = m.config.inferFilter.getOrElse(mcfg.review.inferFilter)
-    val has = com.histmersion.db.ArticleRepo.load(ds, slug).flatMap(_.filter).isDefined
-    if on && !has && !ManagerRepo.hasItem(ds, m.id, InferFilter, slug) then
-      val (fid, _) = ManagerRepo.upsert(ds, m.id, InferFilter, slug, ItemOrigin.Chain, priority, reopen = false)
-      ManagerRepo.event(
-        ds,
-        m.id,
-        Some(fid),
-        None,
-        Feed.Evaluated,
-        s"$slug ($InferFilter): it records no coverage filter — inferred before its review"
-      )
 
   /** `POST /api/agents/enqueue` — a page button: `review` or `extend` an article (the review manager), `enrich` a
     * source or the unenriched sources an article cites or a goal links (the enrich manager), `seed` a research area
@@ -401,49 +364,25 @@ final class ManagersHandlers(
         supervisor.ensureDefaults()
         addItem(ReviewId, in.copy(kind = ArticleExtend)).map(i => EnqueueResult(ReviewId, List(i)))
       case Some(EnqueueKind.Seed) =>
-        h.getGoal(in.target.trim).flatMap { g =>
+        host.goal(in.target.trim).flatMap { g =>
           val id = seedId(g.slug)
           val _ = supervisor.ensure(Kind.Seed, id, Some(g.slug))
           addItem(id, in.copy(kind = ProposeArticles, target = g.slug)).map(i => EnqueueResult(id, List(i)))
         }
       case Some(EnqueueKind.Enrich) =>
         supervisor.ensureDefaults()
-        enrichTargets(in.target.trim).map { (cks, skipped) =>
-          val items = cks.flatMap(ck => addItem(EnrichId, EnqueueRequest(SourceEnrich, ck, in.priority)).toOption)
-          EnqueueResult(EnrichId, items, skipped)
-        }
-
-  /** What an Enrich button names: a source itself (enriched again even if it was), or the sources an article cites / a
-    * goal links that are NOT enriched yet ([[AutoEnrich.enrichedBy]]; the others are reported as skipped, with why).
-    */
-  private def enrichTargets(raw: String): Either[ApiError, (List[String], List[String])] =
-    h.getSource(raw, body = false).map(s => (List(s.source.citekey), Nil)).orElse {
-      val cited = h
-        .getArticle(raw)
-        .map(v => h.citedSources(v.article.body))
-        .orElse(h.getGoal(raw).map(g => GoalLinkRepo.links(ds, g.slug).filter(_.kind == LinkKind.Source).map(_.ref)))
-      cited.left.map(_ => notFound(s"'$raw' is no source, article or goal")).map { cks =>
-        val (todo, done) = cks.distinct.map(ck => ck -> enrichedWhy(ck)).partition(_._2.isEmpty)
-        (todo.map(_._1), done.map((ck, why) => s"[[$ck]]: ${why.getOrElse("")}"))
-      }
-    }
-
-  /** Why a source counts as enriched already (findings, notes, a live enrich run), if it does. */
-  private def enrichedWhy(ck: String): Option[String] =
-    h.getSource(ck, body = false).toOption match
-      case None      => Some("no such source")
-      case Some(src) =>
-        val runs = AgentRepo
-          .forTarget(ds, Pipeline.EnrichSource, src.source.citekey)
-          .toList
-          .filterNot(_.dryRun)
-          .flatMap(r => RunState.parse(r.status).map(AutoEnrich.PriorRun(r.id, _)))
-        AutoEnrich.enrichedBy(src.findings.size, src.source.notes, runs)
+        kinds
+          .find(_.kind == Kind.Enrich)
+          .fold(Right((List(in.target.trim), Nil)))(_.expand(supervisor, in.target.trim))
+          .map { (cks, skipped) =>
+            val items = cks.flatMap(ck => addItem(EnrichId, EnqueueRequest(SourceEnrich, ck, in.priority)).toOption)
+            EnqueueResult(EnrichId, items, skipped)
+          }
 
   /** `agents.auto-enrich` with the managers on: the ingested source becomes an item of the enrich manager (created
-    * paused if missing). Answers the ingest job's progress note.
+    * paused if missing). Answers the item and the manager's state, for the ingest job's progress note.
     */
-  def ingested(citekey: String): String =
+  def ingested(citekey: String): (Long, String) =
     supervisor.ensureDefaults()
     val (itemId, isNew) = ManagerRepo.upsert(ds, EnrichId, SourceEnrich, citekey, ItemOrigin.Ingest, 0, reopen = true)
     ManagerRepo.event(
@@ -456,7 +395,7 @@ final class ManagersHandlers(
     )
     supervisor.nudge()
     val state = ManagerRepo.get(ds, EnrichId).map(_.state).getOrElse(State.Paused.wire)
-    AutoEnrich.managed(itemId, state)
+    (itemId, state)
 
   def patchItem(id: String, ref: String, in: ItemPatch): Either[ApiError, ManagerItem] =
     for
@@ -838,18 +777,6 @@ final class ManagersHandlers(
 
   /** `GET /api/agents/autopilot` — readable with agents off. */
   def autopilot: Autopilot.AutopilotStatus = agents.autopilot.status()
-
-  /** `POST /api/agents/autopilot/repair-acquire {dryRun}` — the one-shot repair of the acquisition list
-    * ([[OaBacklog.repair]]); readable and runnable with agents off (nothing is ingested until they are on).
-    */
-  def repairAcquire(in: RepairAcquire.RepairRequest): Either[ApiError, RepairAcquire.RepairResult] =
-    Right(agents.oaBacklog.repair(in))
-
-  /** `POST /api/queue/acquire/recheck` — the acquisition list's legal re-check now ([[AcquireRecheckService.run]]);
-    * runnable with agents off.
-    */
-  def acquireRecheck(in: AcquireChecks.RecheckRequest): Either[ApiError, AcquireChecks.RecheckResult] =
-    agents.acquireRecheck.run(in)
 
   /** `GET /api/agents/autopilot/focus` — readable with agents off (what it would focus on). */
   def focus: Autopilot.FocusInfo = agents.focus.info()

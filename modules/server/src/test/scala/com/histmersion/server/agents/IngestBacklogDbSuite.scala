@@ -345,7 +345,7 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
       .update(m.id, ManagerUpdate(Some(m.config.copy(autoIngest = Some(true)))))
       .fold(e => fail(e.message), identity)
 
-    val dry = a.managing.repairAcquire(RepairRequest(dryRun = true, Some("test"))).fold(e => fail(e.message), identity)
+    val dry = a.oaBacklog.repair(RepairRequest(dryRun = true, Some("test")))
     assertEquals(
       dry.rows.map(r => (r.doi, r.action)).sortBy(_._1),
       List(doi("a") -> RepairAcquire.Move, doi("b") -> RepairAcquire.Keep, doi("c") -> RepairAcquire.Remove)
@@ -356,7 +356,7 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     assertEquals(backlog(m.id), Nil)
     assert(RepairAcquire.markdown(dry).contains("would move 1 legal open-access work"))
 
-    val done = a.managing.repairAcquire(RepairRequest(by = Some("test"))).fold(e => fail(e.message), identity)
+    val done = a.oaBacklog.repair(RepairRequest(by = Some("test")))
     assertEquals((done.moved, done.removed, done.kept), (1, 1, 1))
     val left = acquire(h)
     assertEquals(
@@ -378,7 +378,7 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
       h.ops.queueList("log", all = true).toOption.get.items.exists(_.text.startsWith("repair-acquire (test): 1 legal"))
     )
     // idempotent
-    val again = a.managing.repairAcquire(RepairRequest()).fold(e => fail(e.message), identity)
+    val again = a.oaBacklog.repair(RepairRequest())
     assertEquals((again.moved, again.removed), (0, 0))
     // and the moved work drains like any other
     a.managers.tick(Instant.now())
@@ -389,7 +389,7 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     val (a, h, _) = handlers(ScriptedClient(Model)); seed(a, h)
     val m = watcher(a, Goal, perDay = 5)
     a.oaBacklog.add(m.id, Goal, OaWork(doi("q"), "Q"))
-    assertEquals(a.managing.repairAcquire(RepairRequest(dryRun = true)).map(_.backlog), Right(1))
+    assertEquals(a.oaBacklog.repair(RepairRequest(dryRun = true)).backlog, 1)
     val on = a.managing.setAutopilot(AutopilotSet(on = true, Some("test"))).fold(e => fail(e.message), identity)
     assertEquals(on.backlog, 1)
     // a person can reprioritise or skip an entry like any item, by its DOI

@@ -322,6 +322,11 @@ final class CompileArticlePipeline(
   private def log(ctx: RunCtx, line: String): Either[String, String] = Pipelines.log(h, ctx, line)
 
 object CompileArticlePipeline:
+
+  /** What a compile-article run's write step did (None: it never got there). */
+  def written(c: com.histmersion.domain.automation.managers.ManagerContext, run: String): Option[Written] =
+    c.stepOutput(run, "write").flatMap(o => io.circe.parser.decode[Written](o).toOption)
+
   /** The kind of a new article when the run names none. */
   val DefaultKind = "concept"
 

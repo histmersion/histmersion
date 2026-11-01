@@ -160,6 +160,10 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** Embedded research agents (docs/research-embedded-agents.md) — off unless `agents.enabled`. Constructing it starts
     * nothing; `Main` starts its run pool after the OCR pool.
     */
+  /** What the engine asks of the handlers until each owner offers its service. */
+  lazy val automationHost: com.histmersion.domain.automation.workflows.AutomationHost =
+    com.histmersion.server.agents.TransitionHost(this)
+
   val agents: com.histmersion.domain.automation.agents.AgentsHandlers =
     com.histmersion.domain.automation.agents.AgentsHandlers(deps, this)
 
@@ -314,7 +318,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       plugins = deps.plugins.report,
       storage = storageNow(now),
       upstreams = upstreamQuotas(now),
-      acquireRecheck = scala.util.Try(agents.acquireRecheck.status(now)).toOption
+      acquireRecheck = scala.util
+        .Try(com.histmersion.server.agents.TransitionWorkflows.work(agents).acquireRecheck.status(now))
+        .toOption
     )
 
   /** The corpus About counts: what the owners count of their records. */
@@ -1830,6 +1836,12 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   /** How many sources the filter article `slug` records returns now (None: no article, or no filter) — the review
     * manager's stale check.
     */
+  /** An article's review ledger (none: never reviewed, or one that no longer decodes) — the review manager kind's. */
+  def reviewLedger(slug: String): Option[ReviewLedger.Ledger] = ReviewLedgerRepo.get(ds, slug).toOption.flatten
+
+  /** The coverage filter an article records, as stored (no alias followed) — the review manager kind's. */
+  def recordedFilter(slug: String): Option[ArticleFilter] = ArticleRepo.load(ds, slug).flatMap(_.filter)
+
   def articleFilterTotal(slug: String): Option[Int] =
     ArticleRepo.load(ds, ArticleRepo.canonical(ds, norm(slug))).flatMap(_.filter).map(af => filterReach(af, Nil, 0)._1)
 

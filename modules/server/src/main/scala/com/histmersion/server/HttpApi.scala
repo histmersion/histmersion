@@ -288,7 +288,10 @@ final class HttpApi(
     com.histmersion.server.events.EventCatalogRoutes(h) ++ rest ++ ArticlesApi(h).endpoints ++ OpsRoutes(
       h.ops
     ) ++ com.histmersion.domain.automation.agents.AgentsRoutes(h.agents) ++ com.histmersion.domain.automation.managers
-      .ManagersRoutes(h.agents.managing) ++ acquireRoutes ++
+      .ManagersRoutes(
+        h.agents.managing,
+        com.histmersion.server.agents.TransitionRoutes.acquisition(h)
+      ) ++ acquireRoutes ++
       List(iiifInfoRoute, iiifImageRoute, sourcePage, static, apiNotFound, index)
 
 /** Pure helpers for the article pages. */

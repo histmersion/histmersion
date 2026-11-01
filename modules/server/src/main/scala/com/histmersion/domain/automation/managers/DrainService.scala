@@ -56,7 +56,7 @@ final class DrainService(
     AutopilotRepo.drain(ds) match
       case None                 => Nil
       case Some((since, _, at)) =>
-        val active = AgentRepo.active(ds) + (if agents.acquireRecheck.jobRunning then 1 else 0)
+        val active = AgentRepo.active(ds) + (if agents.workflows.managerKinds.exists(_.busy) then 1 else 0)
         if active == 0 && at.isEmpty then
           AutopilotRepo.drained(ds, Some(now))
           log(
