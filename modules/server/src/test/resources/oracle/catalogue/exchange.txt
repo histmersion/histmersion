@@ -1,0 +1,4415 @@
+# both sides' changes
+== home: event battle patched
+200 {
+  "articles" : [
+  ],
+  "candidates" : [
+  ],
+  "catalogue" : [
+  ],
+  "children" : [
+    {
+      "central" : null,
+      "citekey" : null,
+      "datingMethod" : null,
+      "description" : null,
+      "historicity" : "attested",
+      "id" : "zz_fire",
+      "kind" : "destruction",
+      "label" : "Zzhill burns",
+      "parentId" : "zz_battle",
+      "placeId" : "zz_hill",
+      "plusMinus" : null,
+      "precision" : "precise",
+      "scale" : "local",
+      "scaleStated" : false,
+      "tier" : "catalogue",
+      "timeSpan" : {
+        "beginBy" : null,
+        "endFrom" : null,
+        "notAfter" : -1270,
+        "notBefore" : -1290
+      }
+    }
+  ],
+  "corrections" : [
+  ],
+  "datings" : [
+    {
+      "citekey" : "zzhill1990_battle",
+      "eventId" : "zz_battle",
+      "method" : "historical",
+      "note" : null,
+      "timeSpan" : {
+        "beginBy" : null,
+        "endFrom" : null,
+        "notAfter" : -1290,
+        "notBefore" : -1310
+      }
+    }
+  ],
+  "edges" : [
+    {
+      "citekey" : "zzhill1990_battle",
+      "dstId" : "zz_battle",
+      "kind" : "after",
+      "note" : null,
+      "srcId" : "zz_fire"
+    }
+  ],
+  "event" : {
+    "central" : null,
+    "citekey" : "zzhill1990_battle",
+    "datingMethod" : null,
+    "description" : "fought below the walls, at dusk",
+    "historicity" : "attested",
+    "id" : "zz_battle",
+    "kind" : "battle",
+    "label" : "Battle of Zzhill",
+    "parentId" : null,
+    "placeId" : "zz_hill",
+    "plusMinus" : null,
+    "precision" : "precise",
+    "scale" : "local",
+    "scaleStated" : false,
+    "tier" : "attested",
+    "timeSpan" : {
+      "beginBy" : null,
+      "endFrom" : null,
+      "notAfter" : -1290,
+      "notBefore" : -1310
+    }
+  },
+  "findings" : [
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "the battle of Zzhill was fought around 1300 BC",
+      "id" : "zzhill1990_battle#0",
+      "km" : 0.0,
+      "periodEnd" : -1290,
+      "periodStart" : -1310,
+      "yearGap" : 0
+    },
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "the Zzwell is of the Zzmarch period",
+      "id" : "zzhill1990_battle#2",
+      "km" : 42.05567572254,
+      "periodEnd" : -1300,
+      "periodStart" : -1500,
+      "yearGap" : 0
+    },
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "Zzport sent ships to Zzhill",
+      "id" : "zzhill1990_battle#1",
+      "km" : 117.74707255148,
+      "periodEnd" : -1290,
+      "periodStart" : -1310,
+      "yearGap" : 0
+    }
+  ],
+  "geometry" : null,
+  "leads" : [
+  ],
+  "media" : [
+  ],
+  "names" : [
+  ],
+  "parent" : null,
+  "participants" : [
+    {
+      "actor" : "the Zzport fleet",
+      "citekey" : null,
+      "eventId" : "zz_battle",
+      "role" : "ally"
+    }
+  ],
+  "sources" : [
+    {
+      "citekey" : "zzhill1990_battle",
+      "quote" : null,
+      "title" : "The Battle of Zzhill",
+      "via" : "citekey",
+      "year" : 1990
+    }
+  ],
+  "tier" : "attested",
+  "wikidata" : null
+}
+== home: imported event corrected
+200 {
+  "articles" : [
+  ],
+  "candidates" : [
+  ],
+  "catalogue" : [
+    {
+      "citation" : "Global Volcanism Program, Volcanoes of the World (v. 5.x), Smithsonian Institution, compiled by Venzke, E. https://doi.org/10.5479/si.GVP.VOTW5-2024.5.2",
+      "deaths" : null,
+      "licence" : "Smithsonian Terms of Use (non-commercial use with attribution)",
+      "magnitude" : null,
+      "provider" : "gvp",
+      "providerId" : "13879",
+      "retrievedAt" : "TS",
+      "title" : "Smithsonian Global Volcanism Program",
+      "url" : "https://volcano.si.edu/volcano.cfm?vn=212040",
+      "vei" : 7
+    }
+  ],
+  "children" : [
+  ],
+  "corrections" : [
+    {
+      "checkedAt" : null,
+      "createdAt" : "TS",
+      "field" : "description",
+      "id" : 1,
+      "label" : null,
+      "status" : "active",
+      "targetId" : "gvp_13879",
+      "targetKind" : "event",
+      "upstream" : "gvp",
+      "upstreamNow" : null,
+      "upstreamValue" : "\"Confirmed Eruption at Santorini; VEI 7\"",
+      "value" : "\"home\""
+    },
+    {
+      "checkedAt" : null,
+      "createdAt" : "TS",
+      "field" : "label",
+      "id" : 2,
+      "label" : null,
+      "status" : "active",
+      "targetId" : "gvp_13879",
+      "targetKind" : "event",
+      "upstream" : "gvp",
+      "upstreamNow" : null,
+      "upstreamValue" : "\"Eruption of Santorini\"",
+      "value" : "\"An eruption, as home names it\""
+    }
+  ],
+  "datings" : [
+  ],
+  "edges" : [
+  ],
+  "event" : {
+    "central" : -1610,
+    "citekey" : null,
+    "datingMethod" : "Isotopic: 14C (calibrated)",
+    "description" : "home",
+    "historicity" : "attested",
+    "id" : "gvp_13879",
+    "kind" : "eruption",
+    "label" : "An eruption, as home names it",
+    "parentId" : null,
+    "placeId" : null,
+    "plusMinus" : 14,
+    "precision" : "precise",
+    "scale" : "local",
+    "scaleStated" : false,
+    "tier" : "catalogue",
+    "timeSpan" : {
+      "beginBy" : null,
+      "endFrom" : null,
+      "notAfter" : -1596,
+      "notBefore" : -1624
+    }
+  },
+  "findings" : [
+  ],
+  "geometry" : "{\"type\":\"Point\",\"coordinates\":[25.396,36.404]}",
+  "leads" : [
+    {
+      "actions" : [
+        {
+          "command" : "histmersion discover search \"An eruption, as home names it\" --not-in-db",
+          "kind" : "discover",
+          "label" : "search the literature",
+          "query" : "An eruption, as home names it"
+        },
+        {
+          "command" : "histmersion queue acquire add \"literature on An eruption, as home names it (1624 BCE–1596 BCE)\" --topic events",
+          "kind" : "acquire",
+          "label" : "add to the acquire queue",
+          "query" : null
+        },
+        {
+          "command" : "histmersion goals link <goal> --query \"An eruption, as home names it\"",
+          "kind" : "goal",
+          "label" : "link to a goal",
+          "query" : "An eruption, as home names it"
+        }
+      ],
+      "candidates" : 0,
+      "eventId" : "gvp_13879",
+      "findingsNear" : 0,
+      "kind" : "eruption",
+      "label" : "An eruption, as home names it",
+      "text" : "No source in the corpus discusses this VEI 7 eruption (1624 BCE–1596 BCE) — 0 findings in the corpus within 300 km and ±100 years",
+      "tier" : "catalogue",
+      "years" : "1624 BCE–1596 BCE"
+    }
+  ],
+  "media" : [
+  ],
+  "names" : [
+    "Eruption of Santorini",
+    "Santorini eruption"
+  ],
+  "parent" : null,
+  "participants" : [
+  ],
+  "sources" : [
+  ],
+  "tier" : "catalogue",
+  "wikidata" : null
+}
+== home: event links ash confirmed
+200 {
+  "attested" : [
+  ],
+  "links" : {
+    "candidates" : [
+      {
+        "citekey" : "zzvolc2004_ash",
+        "eventId" : "zz_ashfall",
+        "findings" : [
+          "zzvolc2004_ash#0"
+        ],
+        "passages" : [
+        ],
+        "reasons" : [
+          "1 finding within 48 km (nearest 48 km), 1 overlapping in time"
+        ],
+        "score" : 0.409,
+        "status" : "proposed",
+        "title" : "Ash over Zzport"
+      }
+    ],
+    "eventId" : "zz_ashfall",
+    "label" : "Ash over Zzport"
+  },
+  "refused" : [
+    "zzvolc2004_ash: no passage of its text names the event (Ash over Zzport) — not attested"
+  ],
+  "rejected" : [
+  ]
+}
+== home: place both
+200 {
+  "contested" : false,
+  "dating" : "stated",
+  "id" : "zz_both",
+  "importSource" : null,
+  "kind" : "site",
+  "label" : "Zzboth",
+  "names" : "Zzboth",
+  "periodEnd" : null,
+  "periodStart" : null,
+  "source" : "home's map"
+}
+== home: place tower
+200 {
+  "contested" : false,
+  "dating" : "stated",
+  "id" : "zz_tower_h",
+  "importSource" : null,
+  "kind" : "site",
+  "label" : "Zztower",
+  "names" : "Zztower",
+  "periodEnd" : null,
+  "periodStart" : null,
+  "source" : "home's map"
+}
+== home: event tremor
+200 {
+  "articles" : [
+  ],
+  "candidates" : [
+  ],
+  "catalogue" : [
+  ],
+  "children" : [
+  ],
+  "corrections" : [
+  ],
+  "datings" : [
+  ],
+  "edges" : [
+  ],
+  "event" : {
+    "central" : null,
+    "citekey" : null,
+    "datingMethod" : null,
+    "description" : null,
+    "historicity" : "attested",
+    "id" : "zz_tremor",
+    "kind" : "earthquake",
+    "label" : "The great quake",
+    "parentId" : null,
+    "placeId" : "zz_hill",
+    "plusMinus" : null,
+    "precision" : "precise",
+    "scale" : "local",
+    "scaleStated" : false,
+    "tier" : "catalogue",
+    "timeSpan" : {
+      "beginBy" : null,
+      "endFrom" : null,
+      "notAfter" : -1195,
+      "notBefore" : -1205
+    }
+  },
+  "findings" : [
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "the battle of Zzhill was fought around 1300 BC",
+      "id" : "zzhill1990_battle#0",
+      "km" : 0.0,
+      "periodEnd" : -1290,
+      "periodStart" : -1310,
+      "yearGap" : 85
+    },
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "Zzport sent ships to Zzhill",
+      "id" : "zzhill1990_battle#1",
+      "km" : 117.74707255148,
+      "periodEnd" : -1290,
+      "periodStart" : -1310,
+      "yearGap" : 85
+    },
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "the Zzwell is of the Zzmarch period",
+      "id" : "zzhill1990_battle#2",
+      "km" : 42.05567572254,
+      "periodEnd" : -1300,
+      "periodStart" : -1500,
+      "yearGap" : 95
+    }
+  ],
+  "geometry" : null,
+  "leads" : [
+    {
+      "actions" : [
+        {
+          "command" : "histmersion discover search \"The great quake\" --not-in-db",
+          "kind" : "discover",
+          "label" : "search the literature",
+          "query" : "The great quake"
+        },
+        {
+          "command" : "histmersion queue acquire add \"literature on The great quake (1205 BCE–1195 BCE)\" --topic events",
+          "kind" : "acquire",
+          "label" : "add to the acquire queue",
+          "query" : null
+        },
+        {
+          "command" : "histmersion goals link <goal> --query \"The great quake\"",
+          "kind" : "goal",
+          "label" : "link to a goal",
+          "query" : "The great quake"
+        }
+      ],
+      "candidates" : 0,
+      "eventId" : "zz_tremor",
+      "findingsNear" : 3,
+      "kind" : "earthquake",
+      "label" : "The great quake",
+      "text" : "No source in the corpus discusses this earthquake (1205 BCE–1195 BCE) — 3 findings in the corpus within 300 km and ±100 years",
+      "tier" : "catalogue",
+      "years" : "1205 BCE–1195 BCE"
+    }
+  ],
+  "media" : [
+  ],
+  "names" : [
+  ],
+  "parent" : null,
+  "participants" : [
+  ],
+  "sources" : [
+  ],
+  "tier" : "catalogue",
+  "wikidata" : null
+}
+== home: event omen
+200 {
+  "articles" : [
+  ],
+  "candidates" : [
+  ],
+  "catalogue" : [
+  ],
+  "children" : [
+  ],
+  "corrections" : [
+  ],
+  "datings" : [
+  ],
+  "edges" : [
+  ],
+  "event" : {
+    "central" : null,
+    "citekey" : null,
+    "datingMethod" : null,
+    "description" : null,
+    "historicity" : "attested",
+    "id" : "zz_omen",
+    "kind" : "omen",
+    "label" : "An omen seen at home",
+    "parentId" : null,
+    "placeId" : null,
+    "plusMinus" : null,
+    "precision" : "precise",
+    "scale" : "local",
+    "scaleStated" : false,
+    "tier" : "catalogue",
+    "timeSpan" : {
+      "beginBy" : null,
+      "endFrom" : null,
+      "notAfter" : -1090,
+      "notBefore" : -1100
+    }
+  },
+  "findings" : [
+  ],
+  "geometry" : null,
+  "leads" : [
+    {
+      "actions" : [
+        {
+          "command" : "histmersion discover search \"An omen seen at home\" --not-in-db",
+          "kind" : "discover",
+          "label" : "search the literature",
+          "query" : "An omen seen at home"
+        },
+        {
+          "command" : "histmersion queue acquire add \"literature on An omen seen at home (1100 BCE–1090 BCE)\" --topic events",
+          "kind" : "acquire",
+          "label" : "add to the acquire queue",
+          "query" : null
+        },
+        {
+          "command" : "histmersion goals link <goal> --query \"An omen seen at home\"",
+          "kind" : "goal",
+          "label" : "link to a goal",
+          "query" : "An omen seen at home"
+        }
+      ],
+      "candidates" : 0,
+      "eventId" : "zz_omen",
+      "findingsNear" : 0,
+      "kind" : "omen",
+      "label" : "An omen seen at home",
+      "text" : "No source in the corpus discusses this omen (1100 BCE–1090 BCE) — 0 findings in the corpus within 300 km and ±100 years",
+      "tier" : "catalogue",
+      "years" : "1100 BCE–1090 BCE"
+    }
+  ],
+  "media" : [
+  ],
+  "names" : [
+  ],
+  "parent" : null,
+  "participants" : [
+  ],
+  "sources" : [
+  ],
+  "tier" : "catalogue",
+  "wikidata" : null
+}
+== home: pair a
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Roe, Rick"
+    ],
+    "citekey" : "zzpaira2001_home",
+    "doi" : "10.9999/zz.pair.a",
+    "notes" : null,
+    "ocrMarkdown" : "# The Zzwall\n\nThe walls of the citadel stood until the fire.\n",
+    "origin" : "instance:xhome",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "provenance" : null,
+    "regions" : [
+    ],
+    "status" : "unassessed",
+    "summary" : null,
+    "tags" : [
+    ],
+    "title" : "The Zzwall",
+    "topics" : [
+    ],
+    "uid" : "source:zzpaira2001_home",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 2001
+  }
+}
+== home: pair b
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Roe, Rick"
+    ],
+    "citekey" : "zzpairb2001_home",
+    "doi" : "10.9999/zz.pair.b",
+    "notes" : null,
+    "ocrMarkdown" : "# The Zzgate\n\nThe gate faced the sea. A tower guarded the road.\n",
+    "origin" : "instance:xhome",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "provenance" : null,
+    "regions" : [
+    ],
+    "status" : "unassessed",
+    "summary" : null,
+    "tags" : [
+    ],
+    "title" : "The Zzgate",
+    "topics" : [
+    ],
+    "uid" : "source:zzpairb2001_home",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 2001
+  }
+}
+== home: attestation in pair b
+200 {
+  "canvas" : null,
+  "charEnd" : null,
+  "charStart" : null,
+  "chunkOrd" : null,
+  "citekey" : "zzpairb2001_home",
+  "ctsUrn" : null,
+  "id" : 4,
+  "note" : null,
+  "page" : null,
+  "prefix" : null,
+  "quote" : "gate faced the sea",
+  "suffix" : null,
+  "targetId" : "zz_hill",
+  "targetType" : "place",
+  "xywh" : null
+}
+== home: attestation in pair b, lost
+200 {
+  "canvas" : null,
+  "charEnd" : null,
+  "charStart" : null,
+  "chunkOrd" : null,
+  "citekey" : "zzpairb2001_home",
+  "ctsUrn" : null,
+  "id" : 5,
+  "note" : null,
+  "page" : null,
+  "prefix" : null,
+  "quote" : "A tower guarded the road",
+  "suffix" : null,
+  "targetId" : "zz_port",
+  "targetType" : "place",
+  "xywh" : null
+}
+== cat: event battle patched
+200 {
+  "articles" : [
+  ],
+  "candidates" : [
+  ],
+  "catalogue" : [
+  ],
+  "children" : [
+    {
+      "central" : null,
+      "citekey" : null,
+      "datingMethod" : null,
+      "description" : null,
+      "historicity" : "attested",
+      "id" : "zz_fire",
+      "kind" : "destruction",
+      "label" : "Zzhill burns",
+      "parentId" : "zz_battle",
+      "placeId" : "zz_hill",
+      "plusMinus" : null,
+      "precision" : "precise",
+      "scale" : "local",
+      "scaleStated" : false,
+      "tier" : "catalogue",
+      "timeSpan" : {
+        "beginBy" : null,
+        "endFrom" : null,
+        "notAfter" : -1270,
+        "notBefore" : -1290
+      }
+    }
+  ],
+  "corrections" : [
+  ],
+  "datings" : [
+    {
+      "citekey" : "zzhill1990_battle",
+      "eventId" : "zz_battle",
+      "method" : "historical",
+      "note" : null,
+      "timeSpan" : {
+        "beginBy" : null,
+        "endFrom" : null,
+        "notAfter" : -1290,
+        "notBefore" : -1310
+      }
+    }
+  ],
+  "edges" : [
+    {
+      "citekey" : "zzhill1990_battle",
+      "dstId" : "zz_battle",
+      "kind" : "after",
+      "note" : null,
+      "srcId" : "zz_fire"
+    }
+  ],
+  "event" : {
+    "central" : null,
+    "citekey" : "zzhill1990_battle",
+    "datingMethod" : null,
+    "description" : "fought below the walls, at dawn",
+    "historicity" : "attested",
+    "id" : "zz_battle",
+    "kind" : "battle",
+    "label" : "Battle of Zzhill",
+    "parentId" : null,
+    "placeId" : "zz_hill",
+    "plusMinus" : null,
+    "precision" : "precise",
+    "scale" : "local",
+    "scaleStated" : false,
+    "tier" : "attested",
+    "timeSpan" : {
+      "beginBy" : null,
+      "endFrom" : null,
+      "notAfter" : -1290,
+      "notBefore" : -1310
+    }
+  },
+  "findings" : [
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "the battle of Zzhill was fought around 1300 BC",
+      "id" : "zzhill1990_battle#0",
+      "km" : 0.0,
+      "periodEnd" : -1290,
+      "periodStart" : -1310,
+      "yearGap" : 0
+    },
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "the Zzwell is of the Zzmarch period",
+      "id" : "zzhill1990_battle#2",
+      "km" : 42.05567572254,
+      "periodEnd" : -1300,
+      "periodStart" : -1500,
+      "yearGap" : 0
+    },
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "Zzport sent ships to Zzhill",
+      "id" : "zzhill1990_battle#1",
+      "km" : 117.74707255148,
+      "periodEnd" : -1290,
+      "periodStart" : -1310,
+      "yearGap" : 0
+    }
+  ],
+  "geometry" : null,
+  "leads" : [
+  ],
+  "media" : [
+  ],
+  "names" : [
+  ],
+  "parent" : null,
+  "participants" : [
+    {
+      "actor" : "the Zzport fleet",
+      "citekey" : null,
+      "eventId" : "zz_battle",
+      "role" : "ally"
+    }
+  ],
+  "sources" : [
+    {
+      "citekey" : "zzhill1990_battle",
+      "quote" : null,
+      "title" : "The Battle of Zzhill",
+      "via" : "citekey",
+      "year" : 1990
+    }
+  ],
+  "tier" : "attested",
+  "wikidata" : null
+}
+== cat: imported event corrected
+200 {
+  "articles" : [
+  ],
+  "candidates" : [
+  ],
+  "catalogue" : [
+    {
+      "citation" : "Global Volcanism Program, Volcanoes of the World (v. 5.x), Smithsonian Institution, compiled by Venzke, E. https://doi.org/10.5479/si.GVP.VOTW5-2024.5.2",
+      "deaths" : null,
+      "licence" : "Smithsonian Terms of Use (non-commercial use with attribution)",
+      "magnitude" : null,
+      "provider" : "gvp",
+      "providerId" : "13879",
+      "retrievedAt" : "TS",
+      "title" : "Smithsonian Global Volcanism Program",
+      "url" : "https://volcano.si.edu/volcano.cfm?vn=212040",
+      "vei" : 7
+    }
+  ],
+  "children" : [
+  ],
+  "corrections" : [
+    {
+      "checkedAt" : null,
+      "createdAt" : "TS",
+      "field" : "description",
+      "id" : 2,
+      "label" : null,
+      "status" : "active",
+      "targetId" : "gvp_13879",
+      "targetKind" : "event",
+      "upstream" : "gvp",
+      "upstreamNow" : null,
+      "upstreamValue" : "\"Confirmed Eruption at Santorini; VEI 7\"",
+      "value" : "\"edited\""
+    },
+    {
+      "checkedAt" : null,
+      "createdAt" : "TS",
+      "field" : "label",
+      "id" : 1,
+      "label" : null,
+      "status" : "active",
+      "targetId" : "gvp_13879",
+      "targetKind" : "event",
+      "upstream" : "gvp",
+      "upstreamNow" : null,
+      "upstreamValue" : "\"Eruption of Santorini\"",
+      "value" : "\"An eruption, as cat names it\""
+    }
+  ],
+  "datings" : [
+  ],
+  "edges" : [
+  ],
+  "event" : {
+    "central" : -1610,
+    "citekey" : null,
+    "datingMethod" : "Isotopic: 14C (calibrated)",
+    "description" : "edited",
+    "historicity" : "attested",
+    "id" : "gvp_13879",
+    "kind" : "eruption",
+    "label" : "An eruption, as cat names it",
+    "parentId" : null,
+    "placeId" : null,
+    "plusMinus" : 14,
+    "precision" : "precise",
+    "scale" : "local",
+    "scaleStated" : false,
+    "tier" : "catalogue",
+    "timeSpan" : {
+      "beginBy" : null,
+      "endFrom" : null,
+      "notAfter" : -1596,
+      "notBefore" : -1624
+    }
+  },
+  "findings" : [
+  ],
+  "geometry" : "{\"type\":\"Point\",\"coordinates\":[25.396,36.404]}",
+  "leads" : [
+    {
+      "actions" : [
+        {
+          "command" : "histmersion discover search \"An eruption, as cat names it\" --not-in-db",
+          "kind" : "discover",
+          "label" : "search the literature",
+          "query" : "An eruption, as cat names it"
+        },
+        {
+          "command" : "histmersion queue acquire add \"literature on An eruption, as cat names it (1624 BCE–1596 BCE)\" --topic events",
+          "kind" : "acquire",
+          "label" : "add to the acquire queue",
+          "query" : null
+        },
+        {
+          "command" : "histmersion goals link <goal> --query \"An eruption, as cat names it\"",
+          "kind" : "goal",
+          "label" : "link to a goal",
+          "query" : "An eruption, as cat names it"
+        }
+      ],
+      "candidates" : 0,
+      "eventId" : "gvp_13879",
+      "findingsNear" : 0,
+      "kind" : "eruption",
+      "label" : "An eruption, as cat names it",
+      "text" : "No source in the corpus discusses this VEI 7 eruption (1624 BCE–1596 BCE) — 0 findings in the corpus within 300 km and ±100 years",
+      "tier" : "catalogue",
+      "years" : "1624 BCE–1596 BCE"
+    }
+  ],
+  "media" : [
+  ],
+  "names" : [
+    "Eruption of Santorini",
+    "Santorini eruption"
+  ],
+  "parent" : null,
+  "participants" : [
+  ],
+  "sources" : [
+  ],
+  "tier" : "catalogue",
+  "wikidata" : null
+}
+== cat: event links ash recomputed
+200 {
+  "attested" : [
+  ],
+  "links" : {
+    "candidates" : [
+      {
+        "citekey" : "zzvolc2004_ash",
+        "eventId" : "zz_ashfall",
+        "findings" : [
+          "zzvolc2004_ash#0"
+        ],
+        "passages" : [
+        ],
+        "reasons" : [
+          "1 finding within 48 km (nearest 48 km), 1 overlapping in time"
+        ],
+        "score" : 0.409,
+        "status" : "proposed",
+        "title" : "Ash over Zzport"
+      }
+    ],
+    "eventId" : "zz_ashfall",
+    "label" : "Ash over Zzport"
+  },
+  "refused" : [
+  ],
+  "rejected" : [
+  ]
+}
+== cat: place renamed
+200 {
+  "entity" : "place",
+  "from" : "zz_port",
+  "rewritten" : [
+  ],
+  "to" : "zz_harbour"
+}
+== cat: place merged
+200 {
+  "findingsAfter" : 1,
+  "findingsBefore" : 2,
+  "into" : "zz_hill",
+  "intoLabel" : "Zzhill",
+  "label" : "Zzwell",
+  "placeId" : "zz_well",
+  "unlocated" : 0
+}
+== cat: event renamed
+200 {
+  "entity" : "event",
+  "from" : "zz_war",
+  "rewritten" : [
+  ],
+  "to" : "zz_march_war"
+}
+== cat: event flood
+200 {
+  "articles" : [
+  ],
+  "candidates" : [
+  ],
+  "catalogue" : [
+  ],
+  "children" : [
+  ],
+  "corrections" : [
+  ],
+  "datings" : [
+  ],
+  "edges" : [
+  ],
+  "event" : {
+    "central" : null,
+    "citekey" : null,
+    "datingMethod" : null,
+    "description" : null,
+    "historicity" : "attested",
+    "id" : "zz_flood",
+    "kind" : "flood",
+    "label" : "A flood",
+    "parentId" : null,
+    "placeId" : "zz_harbour",
+    "plusMinus" : null,
+    "precision" : "precise",
+    "scale" : "local",
+    "scaleStated" : false,
+    "tier" : "catalogue",
+    "timeSpan" : {
+      "beginBy" : null,
+      "endFrom" : null,
+      "notAfter" : -1240,
+      "notBefore" : -1250
+    }
+  },
+  "findings" : [
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "Zzport sent ships to Zzhill",
+      "id" : "zzhill1990_battle#1",
+      "km" : 7.03241600525,
+      "periodEnd" : -1290,
+      "periodStart" : -1310,
+      "yearGap" : 40
+    },
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "the battle of Zzhill was fought around 1300 BC",
+      "id" : "zzhill1990_battle#0",
+      "km" : 116.56191147043,
+      "periodEnd" : -1290,
+      "periodStart" : -1310,
+      "yearGap" : 40
+    },
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "the Zzwell is of the Zzmarch period",
+      "id" : "zzhill1990_battle#2",
+      "km" : 74.99379336168,
+      "periodEnd" : -1300,
+      "periodStart" : -1500,
+      "yearGap" : 50
+    }
+  ],
+  "geometry" : null,
+  "leads" : [
+    {
+      "actions" : [
+        {
+          "command" : "histmersion discover search \"A flood\" --not-in-db",
+          "kind" : "discover",
+          "label" : "search the literature",
+          "query" : "A flood"
+        },
+        {
+          "command" : "histmersion queue acquire add \"literature on A flood (1250 BCE–1240 BCE)\" --topic events",
+          "kind" : "acquire",
+          "label" : "add to the acquire queue",
+          "query" : null
+        },
+        {
+          "command" : "histmersion goals link <goal> --query \"A flood\"",
+          "kind" : "goal",
+          "label" : "link to a goal",
+          "query" : "A flood"
+        }
+      ],
+      "candidates" : 0,
+      "eventId" : "zz_flood",
+      "findingsNear" : 3,
+      "kind" : "flood",
+      "label" : "A flood",
+      "text" : "No source in the corpus discusses this flood (1250 BCE–1240 BCE) — 3 findings in the corpus within 300 km and ±100 years",
+      "tier" : "catalogue",
+      "years" : "1250 BCE–1240 BCE"
+    }
+  ],
+  "media" : [
+  ],
+  "names" : [
+  ],
+  "parent" : null,
+  "participants" : [
+  ],
+  "sources" : [
+  ],
+  "tier" : "catalogue",
+  "wikidata" : null
+}
+== cat: place both
+200 {
+  "contested" : false,
+  "dating" : "stated",
+  "id" : "zz_both",
+  "importSource" : null,
+  "kind" : "site",
+  "label" : "Zzboth",
+  "names" : "Zzboth",
+  "periodEnd" : null,
+  "periodStart" : null,
+  "source" : "cat's map"
+}
+== cat: place tower
+200 {
+  "contested" : false,
+  "dating" : "stated",
+  "id" : "zz_tower_c",
+  "importSource" : null,
+  "kind" : "site",
+  "label" : "Zztower",
+  "names" : "Zztower",
+  "periodEnd" : null,
+  "periodStart" : null,
+  "source" : "cat's map"
+}
+== cat: event quake
+200 {
+  "articles" : [
+  ],
+  "candidates" : [
+  ],
+  "catalogue" : [
+  ],
+  "children" : [
+  ],
+  "corrections" : [
+  ],
+  "datings" : [
+  ],
+  "edges" : [
+  ],
+  "event" : {
+    "central" : null,
+    "citekey" : null,
+    "datingMethod" : null,
+    "description" : null,
+    "historicity" : "attested",
+    "id" : "zz_quake",
+    "kind" : "earthquake",
+    "label" : "The great quake",
+    "parentId" : null,
+    "placeId" : "zz_hill",
+    "plusMinus" : null,
+    "precision" : "precise",
+    "scale" : "local",
+    "scaleStated" : false,
+    "tier" : "catalogue",
+    "timeSpan" : {
+      "beginBy" : null,
+      "endFrom" : null,
+      "notAfter" : -1195,
+      "notBefore" : -1205
+    }
+  },
+  "findings" : [
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "the battle of Zzhill was fought around 1300 BC",
+      "id" : "zzhill1990_battle#0",
+      "km" : 0.0,
+      "periodEnd" : -1290,
+      "periodStart" : -1310,
+      "yearGap" : 85
+    },
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "Zzport sent ships to Zzhill",
+      "id" : "zzhill1990_battle#1",
+      "km" : 117.74707255148,
+      "periodEnd" : -1290,
+      "periodStart" : -1310,
+      "yearGap" : 85
+    },
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "the Zzwell is of the Zzmarch period",
+      "id" : "zzhill1990_battle#2",
+      "km" : 42.05567572254,
+      "periodEnd" : -1300,
+      "periodStart" : -1500,
+      "yearGap" : 95
+    }
+  ],
+  "geometry" : null,
+  "leads" : [
+    {
+      "actions" : [
+        {
+          "command" : "histmersion discover search \"The great quake\" --not-in-db",
+          "kind" : "discover",
+          "label" : "search the literature",
+          "query" : "The great quake"
+        },
+        {
+          "command" : "histmersion queue acquire add \"literature on The great quake (1205 BCE–1195 BCE)\" --topic events",
+          "kind" : "acquire",
+          "label" : "add to the acquire queue",
+          "query" : null
+        },
+        {
+          "command" : "histmersion goals link <goal> --query \"The great quake\"",
+          "kind" : "goal",
+          "label" : "link to a goal",
+          "query" : "The great quake"
+        }
+      ],
+      "candidates" : 0,
+      "eventId" : "zz_quake",
+      "findingsNear" : 3,
+      "kind" : "earthquake",
+      "label" : "The great quake",
+      "text" : "No source in the corpus discusses this earthquake (1205 BCE–1195 BCE) — 3 findings in the corpus within 300 km and ±100 years",
+      "tier" : "catalogue",
+      "years" : "1205 BCE–1195 BCE"
+    }
+  ],
+  "media" : [
+  ],
+  "names" : [
+  ],
+  "parent" : null,
+  "participants" : [
+  ],
+  "sources" : [
+  ],
+  "tier" : "catalogue",
+  "wikidata" : null
+}
+== cat: event omen
+200 {
+  "articles" : [
+  ],
+  "candidates" : [
+  ],
+  "catalogue" : [
+  ],
+  "children" : [
+  ],
+  "corrections" : [
+  ],
+  "datings" : [
+  ],
+  "edges" : [
+  ],
+  "event" : {
+    "central" : null,
+    "citekey" : null,
+    "datingMethod" : null,
+    "description" : null,
+    "historicity" : "attested",
+    "id" : "zz_omen",
+    "kind" : "omen",
+    "label" : "An omen seen at cat",
+    "parentId" : null,
+    "placeId" : null,
+    "plusMinus" : null,
+    "precision" : "precise",
+    "scale" : "local",
+    "scaleStated" : false,
+    "tier" : "catalogue",
+    "timeSpan" : {
+      "beginBy" : null,
+      "endFrom" : null,
+      "notAfter" : -1290,
+      "notBefore" : -1300
+    }
+  },
+  "findings" : [
+  ],
+  "geometry" : null,
+  "leads" : [
+    {
+      "actions" : [
+        {
+          "command" : "histmersion discover search \"An omen seen at cat\" --not-in-db",
+          "kind" : "discover",
+          "label" : "search the literature",
+          "query" : "An omen seen at cat"
+        },
+        {
+          "command" : "histmersion queue acquire add \"literature on An omen seen at cat (1300 BCE–1290 BCE)\" --topic events",
+          "kind" : "acquire",
+          "label" : "add to the acquire queue",
+          "query" : null
+        },
+        {
+          "command" : "histmersion goals link <goal> --query \"An omen seen at cat\"",
+          "kind" : "goal",
+          "label" : "link to a goal",
+          "query" : "An omen seen at cat"
+        }
+      ],
+      "candidates" : 0,
+      "eventId" : "zz_omen",
+      "findingsNear" : 0,
+      "kind" : "omen",
+      "label" : "An omen seen at cat",
+      "text" : "No source in the corpus discusses this omen (1300 BCE–1290 BCE) — 0 findings in the corpus within 300 km and ±100 years",
+      "tier" : "catalogue",
+      "years" : "1300 BCE–1290 BCE"
+    }
+  ],
+  "media" : [
+  ],
+  "names" : [
+  ],
+  "parent" : null,
+  "participants" : [
+  ],
+  "sources" : [
+  ],
+  "tier" : "catalogue",
+  "wikidata" : null
+}
+== cat: pair a
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Roe, Rick"
+    ],
+    "citekey" : "zzpaira2001_cat",
+    "doi" : "10.9999/zz.pair.a",
+    "notes" : null,
+    "ocrMarkdown" : "# The Zzwall\n\nOf old, the walls of the citadel stood until the fire. Smoke rose.\n",
+    "origin" : "instance:xcat",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "provenance" : null,
+    "regions" : [
+    ],
+    "status" : "unassessed",
+    "summary" : null,
+    "tags" : [
+    ],
+    "title" : "The Zzwall",
+    "topics" : [
+    ],
+    "uid" : "source:zzpaira2001_cat",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 2001
+  }
+}
+== cat: pair b
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Roe, Rick"
+    ],
+    "citekey" : "zzpairb2001_cat",
+    "doi" : "10.9999/zz.pair.b",
+    "notes" : null,
+    "ocrMarkdown" : "# The Zzgate\n\nWe read that the gate faced the sea.\n",
+    "origin" : "instance:xcat",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "provenance" : null,
+    "regions" : [
+    ],
+    "status" : "unassessed",
+    "summary" : null,
+    "tags" : [
+    ],
+    "title" : "The Zzgate",
+    "topics" : [
+    ],
+    "uid" : "source:zzpairb2001_cat",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 2001
+  }
+}
+== cat: attestation in pair a
+200 {
+  "canvas" : null,
+  "charEnd" : null,
+  "charStart" : null,
+  "chunkOrd" : null,
+  "citekey" : "zzpaira2001_cat",
+  "ctsUrn" : null,
+  "id" : 4,
+  "note" : null,
+  "page" : null,
+  "prefix" : null,
+  "quote" : "walls of the citadel stood",
+  "suffix" : null,
+  "targetId" : "zz_hill",
+  "targetType" : "place",
+  "xywh" : null
+}
+== cat: attestation in pair a, lost
+200 {
+  "canvas" : null,
+  "charEnd" : null,
+  "charStart" : null,
+  "chunkOrd" : null,
+  "citekey" : "zzpaira2001_cat",
+  "ctsUrn" : null,
+  "id" : 5,
+  "note" : null,
+  "page" : null,
+  "prefix" : null,
+  "quote" : "Smoke rose",
+  "suffix" : null,
+  "targetId" : "zz_mound",
+  "targetType" : "place",
+  "xywh" : null
+}
+# the bundle's catalogue entries
+== manifest.json
+== entities/sources.ndjson
+== entities/findings.ndjson
+== entities/articles.ndjson
+== entities/article-versions.ndjson
+== entities/assets.ndjson
+== entities/asset-links.ndjson
+== entities/attestations.ndjson (5 lines)
+{ "charEnd" : 50, "charStart" : 30, "createdAt" : "TS", "origin" : "instance:xcat", "quote" : "The battle of Zzhill", "rev" : "DIGEST", "sourceUid" : "source:zzhill1990_battle", "targetId" : "zz_hill", "targetType" : "place", "uid" : "attestation:zzhill1990_battle:zz_hill", "updatedAt" : "TS" }
+{ "createdAt" : "TS", "origin" : "instance:xcat", "page" : "12", "quote" : "fought below the walls", "rev" : "DIGEST", "sourceUid" : "source:zzhill1990_battle", "targetId" : "zz_battle", "targetType" : "event", "targetUid" : "event:zz_battle", "uid" : "attestation:zzhill1990_battle:zz_battle", "updatedAt" : "TS" }
+{ "createdAt" : "TS", "note" : "patched", "origin" : "instance:xcat", "quote" : "Zzport", "rev" : "DIGEST", "sourceUid" : "source:zzvolc2004_ash", "targetId" : "zz_camp_north", "targetType" : "place", "uid" : "attestation:zzvolc2004_ash:zz_camp_north", "updatedAt" : "TS" }
+{ "createdAt" : "TS", "origin" : "instance:xcat", "quote" : "walls of the citadel stood", "rev" : "DIGEST", "sourceUid" : "source:zzpaira2001_cat", "targetId" : "zz_hill", "targetType" : "place", "uid" : "attestation:zzpaira2001_cat:zz_hill", "updatedAt" : "TS" }
+{ "createdAt" : "TS", "origin" : "instance:xcat", "quote" : "Smoke rose", "rev" : "DIGEST", "sourceUid" : "source:zzpaira2001_cat", "targetId" : "zz_mound", "targetType" : "place", "uid" : "attestation:zzpaira2001_cat:zz_mound", "updatedAt" : "TS" }
+== entities/events.ndjson (8 lines)
+{ "citekey" : "zzhill1990_battle", "datings" : [ { "citekey" : "zzhill1990_battle", "method" : "historical", "notAfter" : -1290, "notBefore" : -1310, "sourceUid" : "source:zzhill1990_battle" } ], "description" : "fought below the walls, at dawn", "edges" : [ ], "historicity" : "attested", "id" : "zz_battle", "kind" : "battle", "label" : "Battle of Zzhill", "notAfter" : -1290, "notBefore" : -1310, "origin" : "instance:xcat", "participants" : [ { "actor" : "the Zzport fleet", "role" : "ally" } ], "placeId" : "zz_hill", "rev" : "DIGEST", "sourceUid" : "source:zzhill1990_battle", "uid" : "event:zz_battle", "updatedAt" : "TS" }
+{ "datings" : [ ], "edges" : [ { "citekey" : "zzhill1990_battle", "dstUid" : "event:zz_battle", "kind" : "after", "sourceUid" : "source:zzhill1990_battle" } ], "historicity" : "attested", "id" : "zz_fire", "kind" : "destruction", "label" : "Zzhill burns", "notAfter" : -1270, "notBefore" : -1290, "origin" : "instance:xcat", "parentUid" : "event:zz_battle", "participants" : [ ], "placeId" : "zz_hill", "rev" : "DIGEST", "uid" : "event:zz_fire", "updatedAt" : "TS" }
+{ "datings" : [ ], "description" : "a war of the march lords", "edges" : [ ], "geom" : "0103000020e610000001000000050000000000000000c0404000000000004043406666666666e6414000000000004043406666666666e6414000000000004044400000000000c0404000000000004044400000000000c040400000000000404340", "historicity" : "attested", "id" : "zz_march_war", "kind" : "war", "label" : "The Zzmarch war", "notAfter" : -1280, "notBefore" : -1320, "origin" : "instance:xcat", "participants" : [ ], "rev" : "DIGEST", "scale" : "regional", "uid" : "event:zz_march_war", "updatedAt" : "TS" }
+{ "datings" : [ ], "edges" : [ ], "historicity" : "attested", "id" : "zz_ashfall", "kind" : "eruption", "label" : "Ash over Zzport", "notAfter" : -1600, "notBefore" : -1620, "origin" : "instance:xcat", "participants" : [ ], "placeId" : "zz_harbour", "rev" : "DIGEST", "uid" : "event:zz_ashfall", "updatedAt" : "TS" }
+{ "catalogue" : "gvp", "central" : -1610, "datingMethod" : "Isotopic: 14C (calibrated)", "datings" : [ ], "description" : "edited", "edges" : [ ], "geom" : "0101000020e61000004c37894160653940c1caa145b6334240", "historicity" : "attested", "id" : "gvp_13879", "kind" : "eruption", "label" : "An eruption, as cat names it", "names" : [ "Eruption of Santorini", "Santorini eruption" ], "notAfter" : -1596, "notBefore" : -1624, "origin" : "instance:xcat", "participants" : [ ], "plusMinus" : 14, "rev" : "DIGEST", "uid" : "event:gvp_13879", "updatedAt" : "TS" }
+{ "datings" : [ ], "edges" : [ ], "historicity" : "attested", "id" : "zz_flood", "kind" : "flood", "label" : "A flood", "notAfter" : -1240, "notBefore" : -1250, "origin" : "instance:xcat", "participants" : [ ], "placeId" : "zz_harbour", "rev" : "DIGEST", "uid" : "event:zz_flood", "updatedAt" : "TS" }
+{ "datings" : [ ], "edges" : [ ], "historicity" : "attested", "id" : "zz_quake", "kind" : "earthquake", "label" : "The great quake", "notAfter" : -1195, "notBefore" : -1205, "origin" : "instance:xcat", "participants" : [ ], "placeId" : "zz_hill", "rev" : "DIGEST", "uid" : "event:zz_quake", "updatedAt" : "TS" }
+{ "datings" : [ ], "edges" : [ ], "historicity" : "attested", "id" : "zz_omen", "kind" : "omen", "label" : "An omen seen at cat", "notAfter" : -1290, "notBefore" : -1300, "origin" : "instance:xcat", "participants" : [ ], "rev" : "DIGEST", "uid" : "event:zz_omen", "updatedAt" : "TS" }
+== entities/goals.ndjson
+== entities/queue.ndjson
+== entities/places.ndjson (9 lines)
+{ "geom" : "0103000020e610000001000000050000000000000000003e40000000000000424000000000000044400000000000004240000000000000444000000000000045400000000000003e4000000000000045400000000000003e400000000000004240", "id" : "zz_land", "kind" : "region", "label" : "Zzland", "links" : [ ], "names" : [ { "lang" : "en", "name" : "Zzland", "period" : {  } }, { "lang" : "la", "name" : "Zzlandia", "period" : {  } } ], "origin" : "instance:xcat", "period" : { "end" : -1000, "start" : -2000 }, "relations" : [ ], "rev" : "DIGEST", "types" : [ ], "uid" : "place:zz_land", "updatedAt" : "TS" }
+{ "geom" : "0103000020e610000001000000050000000000000000804040000000000000434000000000000042400000000000004340000000000000424000000000008044400000000000804040000000000080444000000000008040400000000000004340", "id" : "zz_march", "kind" : "region", "label" : "Zzmarch", "links" : [ ], "names" : [ { "lang" : "en", "name" : "Zzmarch", "period" : {  } } ], "origin" : "instance:xcat", "period" : { "end" : -1200, "start" : -1600 }, "relations" : [ { "kind" : "part_of", "parentId" : "zz_land", "period" : {  } } ], "rev" : "DIGEST", "types" : [ ], "uid" : "place:zz_march", "updatedAt" : "TS" }
+{ "geom" : "0103000020e6100000010000000500000000000000000034400000000000003e400000000000003d400000000000003e400000000000003d4000000000008041400000000000003440000000000080414000000000000034400000000000003e40", "id" : "zz_sea", "kind" : "region", "label" : "Zzsea", "links" : [ ], "names" : [ { "name" : "Zzsea", "period" : {  } } ], "origin" : "instance:xcat", "period" : {  }, "relations" : [ ], "rev" : "DIGEST", "types" : [ ], "uid" : "place:zz_sea", "updatedAt" : "TS" }
+{ "geom" : "0101000020e6100000cdcccccccc4c41400000000000004440", "id" : "zz_hill", "kind" : "site", "label" : "Zzhill", "links" : [ ], "names" : [ { "lang" : "en", "name" : "Zzhill", "period" : {  } }, { "lang" : "tr", "name" : "Zzhill Höyük", "period" : {  } }, { "lang" : "de", "name" : "Zzhügel", "period" : {  } } ], "origin" : "instance:xcat", "period" : { "end" : -1180, "start" : -1650 }, "relations" : [ { "kind" : "spatial_containment", "parentId" : "zz_land", "period" : { "end" : -1000, "start" : -2000 } }, { "kind" : "spatial_containment", "parentId" : "zz_march", "period" : { "end" : -1200, "start" : -1600 } } ], "rev" : "DIGEST", "types" : [ ], "uid" : "place:zz_hill", "updatedAt" : "TS" }
+{ "geom" : "0101000020e61000006666666666c641400000000000a04340", "id" : "zz_harbour", "kind" : "site", "label" : "Zzport", "links" : [ ], "names" : [ { "name" : "Zzport", "period" : {  } } ], "origin" : "instance:xcat", "period" : { "start" : -1400 }, "relations" : [ { "kind" : "spatial_containment", "parentId" : "zz_land", "period" : { "end" : -1000, "start" : -2000 } }, { "kind" : "spatial_containment", "parentId" : "zz_march", "period" : { "end" : -1200, "start" : -1600 } } ], "rev" : "DIGEST", "types" : [ ], "uid" : "place:zz_harbour", "updatedAt" : "TS" }
+{ "geom" : "0101000020e61000009a99999999994240cdcccccccc0c4340", "id" : "zz_mound", "kind" : "site", "label" : "Zzmound", "links" : [ ], "names" : [ { "name" : "Zzmound", "period" : {  } } ], "origin" : "instance:xcat", "period" : { "end" : -1300, "start" : -1500 }, "relations" : [ { "kind" : "spatial_containment", "parentId" : "zz_land", "period" : { "end" : -1000, "start" : -2000 } } ], "rev" : "DIGEST", "types" : [ ], "uid" : "place:zz_mound", "updatedAt" : "TS" }
+{ "geom" : "0101000020e610000033333333333342403333333333f34340", "id" : "zz_camp_north", "kind" : "site", "label" : "Zzcamp", "links" : [ ], "names" : [ { "name" : "Zzcamp", "period" : {  } }, { "lang" : "de", "name" : "Zzlager", "period" : {  } } ], "origin" : "instance:xcat", "period" : { "end" : -1250, "start" : -1350 }, "properties" : { "added" : true }, "relations" : [ { "kind" : "spatial_containment", "parentId" : "zz_land", "period" : { "end" : -1000, "start" : -2000 } } ], "rev" : "DIGEST", "source" : "a survey map", "types" : [ ], "uid" : "place:zz_camp_north", "updatedAt" : "TS" }
+{ "geom" : "0101000020e61000000000000000803f400000000000c04240", "id" : "zz_both", "kind" : "site", "label" : "Zzboth", "links" : [ ], "names" : [ { "name" : "Zzboth", "period" : {  } } ], "origin" : "instance:xcat", "period" : {  }, "properties" : { "added" : true }, "relations" : [ ], "rev" : "DIGEST", "source" : "cat's map", "types" : [ ], "uid" : "place:zz_both", "updatedAt" : "TS" }
+{ "geom" : "0101000020e61000009a99999999194240cdcccccccc4c4340", "id" : "zz_tower_c", "kind" : "site", "label" : "Zztower", "links" : [ ], "names" : [ { "name" : "Zztower", "period" : {  } } ], "origin" : "instance:xcat", "period" : {  }, "properties" : { "added" : true }, "relations" : [ ], "rev" : "DIGEST", "source" : "cat's map", "types" : [ ], "uid" : "place:zz_tower_c", "updatedAt" : "TS" }
+== entities/periods.ndjson (8 lines)
+{ "authority" : "PeriodO zzqauth", "id" : "zzqauth", "label" : "Zzq test chronology", "origin" : "instance:xcat", "period" : { "end" : -500, "start" : -3000 }, "rev" : "DIGEST", "uid" : "period:zzqauth", "updatedAt" : "TS" }
+{ "authority" : "PeriodO zzqother", "id" : "zzqother", "label" : "Zzq other chronology", "origin" : "instance:xcat", "period" : { "end" : 100, "start" : 1 }, "rev" : "DIGEST", "uid" : "period:zzqother", "updatedAt" : "TS" }
+{ "authority" : "PeriodO zzqauthbronze · Zzq test chronology (2020)", "id" : "zzqauthbronze", "label" : "Zzq Bronze Age", "origin" : "instance:xcat", "parentId" : "zzqauth", "period" : { "end" : -1200, "start" : -3000 }, "region" : "Zzqland", "rev" : "DIGEST", "uid" : "period:zzqauthbronze", "updatedAt" : "TS" }
+{ "authority" : "PeriodO zzqauthlba · Zzq test chronology (2020)", "id" : "zzqauthlba", "label" : "Zzq Late Bronze Age", "origin" : "instance:xcat", "parentId" : "zzqauthbronze", "period" : { "end" : -1200, "start" : -1600 }, "region" : "Zzqland", "rev" : "DIGEST", "uid" : "period:zzqauthlba", "updatedAt" : "TS" }
+{ "authority" : "PeriodO zzqauthiron · Zzq test chronology (2020)", "id" : "zzqauthiron", "label" : "Zzq Iron Age", "origin" : "instance:xcat", "parentId" : "zzqauth", "period" : { "end" : -500, "start" : -1200 }, "rev" : "DIGEST", "uid" : "period:zzqauthiron", "updatedAt" : "TS" }
+{ "authority" : "PeriodO zzqother01 · Zzq other chronology", "id" : "zzqother01", "label" : "Zzq Something", "origin" : "instance:xcat", "parentId" : "zzqother", "period" : { "end" : 100, "start" : 1 }, "rev" : "DIGEST", "uid" : "period:zzqother01", "updatedAt" : "TS" }
+{ "id" : "zz_age", "label" : "The Zz era", "origin" : "instance:xcat", "period" : { "end" : -1002, "start" : -1600 }, "region" : "Zzland", "rev" : "DIGEST", "uid" : "period:zz_age", "updatedAt" : "TS" }
+{ "id" : "zz_dusk_c", "label" : "The Zz dusk", "origin" : "instance:xcat", "period" : { "end" : -1002, "start" : -1200 }, "region" : "Zzland", "rev" : "DIGEST", "uid" : "period:zz_dusk_c", "updatedAt" : "TS" }
+== entities/edges.ndjson
+== entities/unresolved-edges.ndjson
+== entities/assessments.ndjson
+== entities/aliases.ndjson
+== entities/article-aliases.ndjson
+== entities/event-aliases.ndjson (2 lines)
+{ "alias" : "zz_ash", "createdAt" : "TS", "eventUid" : "event:zz_ashfall" }
+{ "alias" : "zz_war", "createdAt" : "TS", "eventUid" : "event:zz_march_war" }
+== entities/goal-aliases.ndjson
+== entities/place-aliases.ndjson (4 lines)
+{ "alias" : "zz_camp", "createdAt" : "TS", "placeUid" : "place:zz_camp_north" }
+{ "alias" : "zz_mound_dup", "createdAt" : "TS", "placeUid" : "place:zz_mound" }
+{ "alias" : "zz_port", "createdAt" : "TS", "placeUid" : "place:zz_harbour" }
+{ "alias" : "zz_well", "createdAt" : "TS", "placeUid" : "place:zz_hill" }
+== entities/event-catalogue.ndjson (1 lines)
+{ "eventUid" : "event:gvp_13879", "historicity" : "attested", "kind" : "eruption", "label" : "Eruption of Santorini", "lat" : 36.404, "lon" : 25.396, "notAfter" : -1596, "notBefore" : -1624, "provider" : "gvp", "providerId" : "13879", "record" : { "central" : -1610, "datingMethod" : "Isotopic: 14C (calibrated)", "description" : "Confirmed Eruption at Santorini; VEI 7", "group" : "volcano:212040", "historicity" : "attested", "kind" : "eruption", "label" : "Eruption of Santorini", "lat" : 36.404, "lon" : 25.396, "names" : [ "Santorini eruption" ], "plusMinus" : 14, "provider" : "gvp", "providerId" : "13879", "raw" : "{\"type\":\"Feature\",\"id\":\"Smithsonian_VOTW_Holocene_Eruptions.fid-5949073e_1a13b776a51_-7f7c\",\"geometry\":{\"type\":\"Point\",\"coordinates\":[25.396,36.404]},\"geometry_name\":\"GeoLocation\",\"properties\":{\"Volcano_Number\":212040,\"Volcano_Name\":\"Santorini\",\"Eruption_Number\":13879,\"Activity_Type\":\"Confirmed Eruption\",\"ExplosivityIndexMax\":7,\"ExplosivityIndexModifier\":\"?\",\"ActivityArea\":null,\"ActivityUnit\":null,\"StartEvidenceMethod\":\"Isotopic: 14C (calibrated)\",\"StartDateYearModifier\":null,\"StartDateYear\":-1610,\"StartDateYearUncertainty\":14,\"StartDateDayModifier\":null,\"StartDateMonth\":0,\"StartDateDay\":0,\"StartDateDayUncertainty\":null,\"EndDateYearModifier\":null,\"EndDateYear\":null,\"EndDateYearUncertainty\":null,\"EndDateDayModifier\":null,\"EndDateMonth\":null,\"EndDateDay\":null,\"EndDateDayUncertainty\":null}}", "timeSpan" : { "notAfter" : -1596, "notBefore" : -1624 }, "url" : "https://volcano.si.edu/volcano.cfm?vn=212040", "vei" : 7 }, "retrievedAt" : "TS", "url" : "https://volcano.si.edu/volcano.cfm?vn=212040", "vei" : 7 }
+== entities/event-candidates.ndjson (2 lines)
+{ "citekey" : "zzhill1990_battle", "computedAt" : "TS", "eventUid" : "event:zz_battle", "findings" : [ "zzhill1990_battle#0", "zzhill1990_battle#2", "zzhill1990_battle#1" ], "passages" : [ { "context" : "The battle of Zzhill was fought below the walls of Zzhill around 1300 BC; Zzport sent ships.", "end" : 20, "name" : "Battle of Zzhill", "quote" : "battle of Zzhill", "start" : 4 }, { "context" : "Zzhill burned soon after, and the battle of Zzhill was remembered in the songs of Zzland.", "end" : 143, "name" : "Battle of Zzhill", "quote" : "battle of Zzhill", "start" : 127 } ], "reasons" : [ "names it 2 times: \"battle of Zzhill\"", "3 findings within 118 km (nearest 0 km), 3 overlapping in time" ], "score" : 1.7, "sourceUid" : "source:zzhill1990_battle", "status" : "confirmed" }
+{ "citekey" : "zzvolc2004_ash", "computedAt" : "TS", "eventUid" : "event:zz_ashfall", "findings" : [ "zzvolc2004_ash#0" ], "passages" : [ ], "reasons" : [ "1 finding within 48 km (nearest 48 km), 1 overlapping in time" ], "score" : 0.409, "sourceUid" : "source:zzvolc2004_ash", "status" : "proposed" }
+== entities/event-checks.ndjson (2 lines)
+{ "checkedAt" : "TS", "eventUid" : "event:zz_battle" }
+{ "checkedAt" : "TS", "eventUid" : "event:zz_ashfall" }
+== entities/corrections.ndjson (2 lines)
+{ "createdAt" : "TS", "field" : "description", "status" : "active", "targetId" : "gvp_13879", "targetKind" : "event", "targetUid" : "event:gvp_13879", "updatedAt" : "TS", "upstream" : "gvp", "upstreamValue" : "\"Confirmed Eruption at Santorini; VEI 7\"", "value" : "\"edited\"" }
+{ "createdAt" : "TS", "field" : "label", "status" : "active", "targetId" : "gvp_13879", "targetKind" : "event", "targetUid" : "event:gvp_13879", "updatedAt" : "TS", "upstream" : "gvp", "upstreamValue" : "\"Eruption of Santorini\"", "value" : "\"An eruption, as cat names it\"" }
+== entities/site-types.ndjson (1 lines)
+{ "checkedAt" : "TS", "placeId" : "zz_hill", "siteType" : "Q839954" }
+== entities/tombstones.ndjson (4 lines)
+{ "deletedAt" : "TS", "kind" : "place", "origin" : "instance:xcat", "uid" : "tombstone:place" }
+{ "deletedAt" : "TS", "kind" : "place", "origin" : "instance:xcat", "uid" : "tombstone:place" }
+{ "deletedAt" : "TS", "kind" : "place", "origin" : "instance:xcat", "uid" : "tombstone:place" }
+{ "deletedAt" : "TS", "kind" : "event", "origin" : "instance:xcat", "uid" : "tombstone:event" }
+== blobs/sha256/05/SHA256
+== blobs/sha256/23/SHA256
+== blobs/sha256/61/SHA256
+== blobs/sha256/a9/SHA256
+# the plan, round 1
+{
+  "asOf" : "TS",
+  "bundleId" : "UUID",
+  "changes" : 15,
+  "formatVersion" : 1,
+  "from" : {
+    "id" : "instance:xcat",
+    "label" : null
+  },
+  "info" : [
+    "place zz_port: renamed zz_harbour in the bundle — renamed here too (the old id stays an alias)",
+    "event zz_battle: the same dating and place on both sides — one event, datings and participants unioned",
+    "event gvp_13879: the same dating and place on both sides — one event, datings and participants unioned",
+    "event zz_tremor: the bundle's zz_quake has the same label, dates and place — one event",
+    "place zz_tower_h: the bundle's zz_tower_c is the same place — one place, names unioned",
+    "named period zz_dusk_h: the bundle's zz_dusk_c is the same period — this collection's kept",
+    "old place id zz_well: names another place here — the bundle's is left out",
+    "the gazetteer/periods differ from the bundle's (bundle: 0 places, 280 periods) — events point into them by id"
+  ],
+  "into" : {
+    "id" : "instance:xhome",
+    "label" : null
+  },
+  "issues" : [
+    {
+      "condition" : null,
+      "decidedBy" : "default",
+      "decision" : "keep-left",
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "citekey",
+            "left" : "zzpaira2001_home",
+            "right" : "zzpaira2001_cat"
+          },
+          {
+            "field" : "title",
+            "left" : "The Zzwall",
+            "right" : "The Zzwall"
+          },
+          {
+            "field" : "authors",
+            "left" : "Roe, Rick",
+            "right" : "Roe, Rick"
+          },
+          {
+            "field" : "year",
+            "left" : "2001",
+            "right" : "2001"
+          },
+          {
+            "field" : "DOI",
+            "left" : "10.9999/zz.pair.a",
+            "right" : "10.9999/zz.pair.a"
+          },
+          {
+            "field" : "venue",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "status",
+            "left" : "unassessed",
+            "right" : "unassessed"
+          },
+          {
+            "field" : "period",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "tags",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "summary",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "notes",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "OCR body",
+            "left" : "sha256 3c30cb3d4b96…",
+            "right" : "sha256 05fe56b67fa9…"
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "source",
+      "id" : "O-issue:body-differs:zzpaira2001_cat:OCR bodies differ (MinHash 0.42)",
+      "kind" : "body-differs",
+      "left" : {
+        "label" : "zzpaira2001_home",
+        "lines" : [
+          "\"The Zzwall\"",
+          "Roe, Rick · 2001 · DOI 10.9999/zz.pair.a · unassessed"
+        ],
+        "uid" : "source:zzpaira2001_home"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right"
+      ],
+      "right" : {
+        "label" : "zzpaira2001_cat",
+        "lines" : [
+          "\"The Zzwall\"",
+          "Roe, Rick · 2001 · DOI 10.9999/zz.pair.a · unassessed"
+        ],
+        "uid" : "source:zzpaira2001_cat"
+      },
+      "severity" : "default",
+      "suggested" : "keep-left",
+      "title" : "OCR bodies differ (MinHash 0.42)",
+      "why" : [
+        "by default this collection's body stays; keep-right takes the bundle's (and its figures)"
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : "default",
+      "decision" : "keep-left",
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "citekey",
+            "left" : "zzpairb2001_home",
+            "right" : "zzpairb2001_cat"
+          },
+          {
+            "field" : "title",
+            "left" : "The Zzgate",
+            "right" : "The Zzgate"
+          },
+          {
+            "field" : "authors",
+            "left" : "Roe, Rick",
+            "right" : "Roe, Rick"
+          },
+          {
+            "field" : "year",
+            "left" : "2001",
+            "right" : "2001"
+          },
+          {
+            "field" : "DOI",
+            "left" : "10.9999/zz.pair.b",
+            "right" : "10.9999/zz.pair.b"
+          },
+          {
+            "field" : "venue",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "status",
+            "left" : "unassessed",
+            "right" : "unassessed"
+          },
+          {
+            "field" : "period",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "tags",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "summary",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "notes",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "OCR body",
+            "left" : "sha256 87d5fcf8e162…",
+            "right" : "sha256 237351de5ba4…"
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "source",
+      "id" : "O-issue:body-differs:zzpairb2001_cat:OCR bodies differ (MinHash 0.09)",
+      "kind" : "body-differs",
+      "left" : {
+        "label" : "zzpairb2001_home",
+        "lines" : [
+          "\"The Zzgate\"",
+          "Roe, Rick · 2001 · DOI 10.9999/zz.pair.b · unassessed"
+        ],
+        "uid" : "source:zzpairb2001_home"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right"
+      ],
+      "right" : {
+        "label" : "zzpairb2001_cat",
+        "lines" : [
+          "\"The Zzgate\"",
+          "Roe, Rick · 2001 · DOI 10.9999/zz.pair.b · unassessed"
+        ],
+        "uid" : "source:zzpairb2001_cat"
+      },
+      "severity" : "default",
+      "suggested" : "keep-left",
+      "title" : "OCR bodies differ (MinHash 0.09)",
+      "why" : [
+        "by default this collection's body stays; keep-right takes the bundle's (and its figures)"
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : null,
+      "decision" : null,
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "id",
+            "left" : "zz_omen",
+            "right" : "zz_omen"
+          },
+          {
+            "field" : "label",
+            "left" : "An omen seen at home",
+            "right" : "An omen seen at cat"
+          },
+          {
+            "field" : "kind",
+            "left" : "omen",
+            "right" : "omen"
+          },
+          {
+            "field" : "dates (not before · begin by · end from · not after)",
+            "left" : "-1100 · … · … · -1090",
+            "right" : "-1300 · … · … · -1290"
+          },
+          {
+            "field" : "place",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "historicity",
+            "left" : "attested",
+            "right" : "attested"
+          },
+          {
+            "field" : "description",
+            "left" : null,
+            "right" : null
+          }
+        ],
+        "place" : {
+          "leftGeometry" : null,
+          "leftSpan" : {
+            "end" : -1090,
+            "start" : -1100
+          },
+          "rightGeometry" : null,
+          "rightSpan" : {
+            "end" : -1290,
+            "start" : -1300
+          }
+        },
+        "text" : null
+      },
+      "entity" : "event",
+      "id" : "E-issue:label-taken:zz_omen:here that event id belongs to a differen",
+      "kind" : "label-taken",
+      "left" : {
+        "label" : "zz_omen",
+        "lines" : [
+        ],
+        "uid" : "event:zz_omen"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right",
+        "rename-right"
+      ],
+      "right" : {
+        "label" : "zz_omen",
+        "lines" : [
+        ],
+        "uid" : "event:zz_omen"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "here that event id belongs to a different record",
+      "why" : [
+        "keep-left leaves the bundle's record out (and whatever needs it)",
+        "keep-right makes them one, the bundle's fields winning; rename-right keeps both, the bundle's under a new id"
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : null,
+      "decision" : null,
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "label",
+            "left" : "The Zz age",
+            "right" : "The Zz era"
+          },
+          {
+            "field" : "span",
+            "left" : "-1500..-1002",
+            "right" : "-1600..-1002"
+          },
+          {
+            "field" : "authority",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "region",
+            "left" : "Zzland",
+            "right" : "Zzland"
+          }
+        ],
+        "place" : {
+          "leftGeometry" : null,
+          "leftSpan" : {
+            "end" : -1002,
+            "start" : -1500
+          },
+          "rightGeometry" : null,
+          "rightSpan" : {
+            "end" : -1002,
+            "start" : -1600
+          }
+        },
+        "text" : null
+      },
+      "entity" : "period",
+      "id" : "N-issue:named-period-differs:zz_age:named period zz_age was added on both si",
+      "kind" : "named-period-differs",
+      "left" : {
+        "label" : "zz_age",
+        "lines" : [
+          "The Zz age"
+        ],
+        "uid" : "period:zz_age"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right"
+      ],
+      "right" : {
+        "label" : "zz_age",
+        "lines" : [
+          "The Zz era"
+        ],
+        "uid" : "period:zz_age"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "named period zz_age was added on both sides and says something else: The Zz age -1500..-1002 here, The Zz era -1600..-1002 in the bundle",
+      "why" : [
+        "keep-left keeps this collection's period; keep-right takes the bundle's label and span"
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : null,
+      "decision" : null,
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "label",
+            "left" : "Zzboth",
+            "right" : "Zzboth"
+          },
+          {
+            "field" : "kind",
+            "left" : "site",
+            "right" : "site"
+          },
+          {
+            "field" : "span",
+            "left" : "always",
+            "right" : "always"
+          },
+          {
+            "field" : "names",
+            "left" : "Zzboth",
+            "right" : "Zzboth"
+          }
+        ],
+        "place" : {
+          "leftGeometry" : "{\"type\":\"Point\",\"coordinates\":[31,37]}",
+          "leftSpan" : {
+            "end" : null,
+            "start" : null
+          },
+          "rightGeometry" : "{\"type\":\"Point\",\"coordinates\":[31.5,37.5]}",
+          "rightSpan" : {
+            "end" : null,
+            "start" : null
+          }
+        },
+        "text" : null
+      },
+      "entity" : "place",
+      "id" : "P-issue:place-differs:zz_both:place zz_both was added on both sides, w",
+      "kind" : "place-differs",
+      "left" : {
+        "label" : "zz_both",
+        "lines" : [
+          "Zzboth"
+        ],
+        "uid" : "place:zz_both"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right"
+      ],
+      "right" : {
+        "label" : "zz_both",
+        "lines" : [
+          "Zzboth"
+        ],
+        "uid" : "place:zz_both"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "place zz_both was added on both sides, with different geometries",
+      "why" : [
+        "keep-left keeps this collection's place (the bundle's events point at it); keep-right takes the bundle's geometry and span"
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : null,
+      "decision" : null,
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "quote",
+            "left" : null,
+            "right" : "Smoke rose"
+          },
+          {
+            "field" : "before it",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "after it",
+            "left" : null,
+            "right" : null
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "attestation",
+      "id" : "T-issue:attestation-unanchored:place zz_mound:the bundle's attestation on zzpaira2001_",
+      "kind" : "attestation-unanchored",
+      "left" : {
+        "label" : "zzpaira2001_home",
+        "lines" : [
+          "\"The Zzwall\"",
+          "Roe, Rick · 2001 · DOI 10.9999/zz.pair.a · unassessed"
+        ],
+        "uid" : "source:zzpaira2001_home"
+      },
+      "options" : [
+        "drop",
+        "keep-unanchored"
+      ],
+      "right" : {
+        "label" : "place zz_mound",
+        "lines" : [
+          "«Smoke rose»"
+        ],
+        "uid" : "attestation:zzpaira2001_cat:zz_mound"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "the bundle's attestation on zzpaira2001_home: its quote is not in the body the merge keeps (if the body is keep-left)",
+      "why" : [
+        "the quote (with its prefix and suffix) was looked for, exactly and with spacing ignored"
+      ]
+    },
+    {
+      "condition" : {
+        "issue" : "O-issue:body-differs:zzpairb2001_cat:OCR bodies differ (MinHash 0.09)",
+        "when" : "keep-right"
+      },
+      "decidedBy" : null,
+      "decision" : null,
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "quote",
+            "left" : "A tower guarded the road",
+            "right" : null
+          },
+          {
+            "field" : "before it",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "after it",
+            "left" : null,
+            "right" : null
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "attestation",
+      "id" : "T-issue:attestation-unanchored:zzpairb2001_cat:this collection's attestation on zzpairb",
+      "kind" : "attestation-unanchored",
+      "left" : {
+        "label" : "place zz_port",
+        "lines" : [
+          "«A tower guarded the road»"
+        ],
+        "uid" : "attestation:zzpairb2001_home:zz_harbour"
+      },
+      "options" : [
+        "drop",
+        "keep-unanchored"
+      ],
+      "right" : {
+        "label" : "zzpairb2001_cat",
+        "lines" : [
+          "\"The Zzgate\"",
+          "Roe, Rick · 2001 · DOI 10.9999/zz.pair.b · unassessed"
+        ],
+        "uid" : "source:zzpairb2001_cat"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "this collection's attestation on zzpairb2001_home: its quote is not in the body the merge keeps (if the body is keep-right)",
+      "why" : [
+        "the quote (with its prefix and suffix) was looked for, exactly and with spacing ignored"
+      ]
+    }
+  ],
+  "matches" : {
+    "byLedger" : 0,
+    "byScore" : 0,
+    "byStrongKey" : 2,
+    "byUid" : 2,
+    "deletedHere" : 0,
+    "sources" : 4,
+    "undecided" : 0,
+    "unmatched" : 0
+  },
+  "planHash" : "DIGEST",
+  "problems" : [
+  ],
+  "resolutionErrors" : [
+  ],
+  "resolved" : 0,
+  "schemaVersion" : "109",
+  "sources" : [
+    {
+      "issue" : null,
+      "leftCitekey" : "zzpaira2001_home",
+      "leftUid" : "source:zzpaira2001_home",
+      "method" : "strongkey",
+      "outcome" : "auto-merge",
+      "rightCitekey" : "zzpaira2001_cat",
+      "rightUid" : "source:zzpaira2001_cat",
+      "score" : 20.0,
+      "why" : [
+        "DOI equal (strong key)",
+        "title the same (+9)",
+        "authors the same (+6)",
+        "year the same (+3)",
+        "OCR bodies partly alike (MinHash 0.42) (+2)"
+      ]
+    },
+    {
+      "issue" : null,
+      "leftCitekey" : "zzpairb2001_home",
+      "leftUid" : "source:zzpairb2001_home",
+      "method" : "strongkey",
+      "outcome" : "auto-merge",
+      "rightCitekey" : "zzpairb2001_cat",
+      "rightUid" : "source:zzpairb2001_cat",
+      "score" : 14.0,
+      "why" : [
+        "DOI equal (strong key)",
+        "title the same (+9)",
+        "authors the same (+6)",
+        "year the same (+3)",
+        "OCR bodies differ (MinHash 0.09) (-4)"
+      ]
+    }
+  ]
+}
+# the plan, round 2
+{
+  "asOf" : "TS",
+  "bundleId" : "UUID",
+  "changes" : 20,
+  "formatVersion" : 1,
+  "from" : {
+    "id" : "instance:xcat",
+    "label" : null
+  },
+  "info" : [
+    "place zz_port: renamed zz_harbour in the bundle — renamed here too (the old id stays an alias)",
+    "event zz_battle: the same dating and place on both sides — one event, datings and participants unioned",
+    "event gvp_13879: the same dating and place on both sides — one event, datings and participants unioned",
+    "event zz_tremor: the bundle's zz_quake has the same label, dates and place — one event",
+    "place zz_tower_h: the bundle's zz_tower_c is the same place — one place, names unioned",
+    "named period zz_dusk_h: the bundle's zz_dusk_c is the same period — this collection's kept",
+    "old place id zz_well: names another place here — the bundle's is left out",
+    "the gazetteer/periods differ from the bundle's (bundle: 0 places, 280 periods) — events point into them by id"
+  ],
+  "into" : {
+    "id" : "instance:xhome",
+    "label" : null
+  },
+  "issues" : [
+    {
+      "condition" : null,
+      "decidedBy" : "resolution",
+      "decision" : "drop",
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "quote",
+            "left" : null,
+            "right" : "Smoke rose"
+          },
+          {
+            "field" : "before it",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "after it",
+            "left" : null,
+            "right" : null
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "attestation",
+      "id" : "T-issue:attestation-unanchored:place zz_mound:the bundle's attestation on zzpaira2001_",
+      "kind" : "attestation-unanchored",
+      "left" : {
+        "label" : "zzpaira2001_home",
+        "lines" : [
+          "\"The Zzwall\"",
+          "Roe, Rick · 2001 · DOI 10.9999/zz.pair.a · unassessed"
+        ],
+        "uid" : "source:zzpaira2001_home"
+      },
+      "options" : [
+        "drop",
+        "keep-unanchored"
+      ],
+      "right" : {
+        "label" : "place zz_mound",
+        "lines" : [
+          "«Smoke rose»"
+        ],
+        "uid" : "attestation:zzpaira2001_cat:zz_mound"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "the bundle's attestation on zzpaira2001_home: its quote is not in the body the merge keeps (if the body is keep-left)",
+      "why" : [
+        "the quote (with its prefix and suffix) was looked for, exactly and with spacing ignored"
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : "resolution",
+      "decision" : "keep-left",
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "citekey",
+            "left" : "zzpaira2001_home",
+            "right" : "zzpaira2001_cat"
+          },
+          {
+            "field" : "title",
+            "left" : "The Zzwall",
+            "right" : "The Zzwall"
+          },
+          {
+            "field" : "authors",
+            "left" : "Roe, Rick",
+            "right" : "Roe, Rick"
+          },
+          {
+            "field" : "year",
+            "left" : "2001",
+            "right" : "2001"
+          },
+          {
+            "field" : "DOI",
+            "left" : "10.9999/zz.pair.a",
+            "right" : "10.9999/zz.pair.a"
+          },
+          {
+            "field" : "venue",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "status",
+            "left" : "unassessed",
+            "right" : "unassessed"
+          },
+          {
+            "field" : "period",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "tags",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "summary",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "notes",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "OCR body",
+            "left" : "sha256 3c30cb3d4b96…",
+            "right" : "sha256 05fe56b67fa9…"
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "source",
+      "id" : "O-issue:body-differs:zzpaira2001_cat:OCR bodies differ (MinHash 0.42)",
+      "kind" : "body-differs",
+      "left" : {
+        "label" : "zzpaira2001_home",
+        "lines" : [
+          "\"The Zzwall\"",
+          "Roe, Rick · 2001 · DOI 10.9999/zz.pair.a · unassessed"
+        ],
+        "uid" : "source:zzpaira2001_home"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right"
+      ],
+      "right" : {
+        "label" : "zzpaira2001_cat",
+        "lines" : [
+          "\"The Zzwall\"",
+          "Roe, Rick · 2001 · DOI 10.9999/zz.pair.a · unassessed"
+        ],
+        "uid" : "source:zzpaira2001_cat"
+      },
+      "severity" : "default",
+      "suggested" : "keep-left",
+      "title" : "OCR bodies differ (MinHash 0.42)",
+      "why" : [
+        "by default this collection's body stays; keep-right takes the bundle's (and its figures)"
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : "resolution",
+      "decision" : "keep-right",
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "citekey",
+            "left" : "zzpairb2001_home",
+            "right" : "zzpairb2001_cat"
+          },
+          {
+            "field" : "title",
+            "left" : "The Zzgate",
+            "right" : "The Zzgate"
+          },
+          {
+            "field" : "authors",
+            "left" : "Roe, Rick",
+            "right" : "Roe, Rick"
+          },
+          {
+            "field" : "year",
+            "left" : "2001",
+            "right" : "2001"
+          },
+          {
+            "field" : "DOI",
+            "left" : "10.9999/zz.pair.b",
+            "right" : "10.9999/zz.pair.b"
+          },
+          {
+            "field" : "venue",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "status",
+            "left" : "unassessed",
+            "right" : "unassessed"
+          },
+          {
+            "field" : "period",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "tags",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "summary",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "notes",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "OCR body",
+            "left" : "sha256 87d5fcf8e162…",
+            "right" : "sha256 237351de5ba4…"
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "source",
+      "id" : "O-issue:body-differs:zzpairb2001_cat:OCR bodies differ (MinHash 0.09)",
+      "kind" : "body-differs",
+      "left" : {
+        "label" : "zzpairb2001_home",
+        "lines" : [
+          "\"The Zzgate\"",
+          "Roe, Rick · 2001 · DOI 10.9999/zz.pair.b · unassessed"
+        ],
+        "uid" : "source:zzpairb2001_home"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right"
+      ],
+      "right" : {
+        "label" : "zzpairb2001_cat",
+        "lines" : [
+          "\"The Zzgate\"",
+          "Roe, Rick · 2001 · DOI 10.9999/zz.pair.b · unassessed"
+        ],
+        "uid" : "source:zzpairb2001_cat"
+      },
+      "severity" : "default",
+      "suggested" : "keep-left",
+      "title" : "OCR bodies differ (MinHash 0.09)",
+      "why" : [
+        "by default this collection's body stays; keep-right takes the bundle's (and its figures)"
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : "resolution",
+      "decision" : "keep-right",
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "label",
+            "left" : "The Zz age",
+            "right" : "The Zz era"
+          },
+          {
+            "field" : "span",
+            "left" : "-1500..-1002",
+            "right" : "-1600..-1002"
+          },
+          {
+            "field" : "authority",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "region",
+            "left" : "Zzland",
+            "right" : "Zzland"
+          }
+        ],
+        "place" : {
+          "leftGeometry" : null,
+          "leftSpan" : {
+            "end" : -1002,
+            "start" : -1500
+          },
+          "rightGeometry" : null,
+          "rightSpan" : {
+            "end" : -1002,
+            "start" : -1600
+          }
+        },
+        "text" : null
+      },
+      "entity" : "period",
+      "id" : "N-issue:named-period-differs:zz_age:named period zz_age was added on both si",
+      "kind" : "named-period-differs",
+      "left" : {
+        "label" : "zz_age",
+        "lines" : [
+          "The Zz age"
+        ],
+        "uid" : "period:zz_age"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right"
+      ],
+      "right" : {
+        "label" : "zz_age",
+        "lines" : [
+          "The Zz era"
+        ],
+        "uid" : "period:zz_age"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "named period zz_age was added on both sides and says something else: The Zz age -1500..-1002 here, The Zz era -1600..-1002 in the bundle",
+      "why" : [
+        "keep-left keeps this collection's period; keep-right takes the bundle's label and span"
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : "resolution",
+      "decision" : "keep-right",
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "label",
+            "left" : "Zzboth",
+            "right" : "Zzboth"
+          },
+          {
+            "field" : "kind",
+            "left" : "site",
+            "right" : "site"
+          },
+          {
+            "field" : "span",
+            "left" : "always",
+            "right" : "always"
+          },
+          {
+            "field" : "names",
+            "left" : "Zzboth",
+            "right" : "Zzboth"
+          }
+        ],
+        "place" : {
+          "leftGeometry" : "{\"type\":\"Point\",\"coordinates\":[31,37]}",
+          "leftSpan" : {
+            "end" : null,
+            "start" : null
+          },
+          "rightGeometry" : "{\"type\":\"Point\",\"coordinates\":[31.5,37.5]}",
+          "rightSpan" : {
+            "end" : null,
+            "start" : null
+          }
+        },
+        "text" : null
+      },
+      "entity" : "place",
+      "id" : "P-issue:place-differs:zz_both:place zz_both was added on both sides, w",
+      "kind" : "place-differs",
+      "left" : {
+        "label" : "zz_both",
+        "lines" : [
+          "Zzboth"
+        ],
+        "uid" : "place:zz_both"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right"
+      ],
+      "right" : {
+        "label" : "zz_both",
+        "lines" : [
+          "Zzboth"
+        ],
+        "uid" : "place:zz_both"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "place zz_both was added on both sides, with different geometries",
+      "why" : [
+        "keep-left keeps this collection's place (the bundle's events point at it); keep-right takes the bundle's geometry and span"
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : "resolution",
+      "decision" : "rename-right:zz_omen_cat",
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "id",
+            "left" : "zz_omen",
+            "right" : "zz_omen"
+          },
+          {
+            "field" : "label",
+            "left" : "An omen seen at home",
+            "right" : "An omen seen at cat"
+          },
+          {
+            "field" : "kind",
+            "left" : "omen",
+            "right" : "omen"
+          },
+          {
+            "field" : "dates (not before · begin by · end from · not after)",
+            "left" : "-1100 · … · … · -1090",
+            "right" : "-1300 · … · … · -1290"
+          },
+          {
+            "field" : "place",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "historicity",
+            "left" : "attested",
+            "right" : "attested"
+          },
+          {
+            "field" : "description",
+            "left" : null,
+            "right" : null
+          }
+        ],
+        "place" : {
+          "leftGeometry" : null,
+          "leftSpan" : {
+            "end" : -1090,
+            "start" : -1100
+          },
+          "rightGeometry" : null,
+          "rightSpan" : {
+            "end" : -1290,
+            "start" : -1300
+          }
+        },
+        "text" : null
+      },
+      "entity" : "event",
+      "id" : "E-issue:label-taken:zz_omen:here that event id belongs to a differen",
+      "kind" : "label-taken",
+      "left" : {
+        "label" : "zz_omen",
+        "lines" : [
+        ],
+        "uid" : "event:zz_omen"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right",
+        "rename-right"
+      ],
+      "right" : {
+        "label" : "zz_omen",
+        "lines" : [
+        ],
+        "uid" : "event:zz_omen"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "here that event id belongs to a different record",
+      "why" : [
+        "keep-left leaves the bundle's record out (and whatever needs it)",
+        "keep-right makes them one, the bundle's fields winning; rename-right keeps both, the bundle's under a new id"
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : null,
+      "decision" : null,
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "quote",
+            "left" : "A tower guarded the road",
+            "right" : null
+          },
+          {
+            "field" : "before it",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "after it",
+            "left" : null,
+            "right" : null
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "attestation",
+      "id" : "T-issue:attestation-unanchored:zzpairb2001_cat:this collection's attestation on zzpairb",
+      "kind" : "attestation-unanchored",
+      "left" : {
+        "label" : "place zz_port",
+        "lines" : [
+          "«A tower guarded the road»"
+        ],
+        "uid" : "attestation:zzpairb2001_home:zz_harbour"
+      },
+      "options" : [
+        "drop",
+        "keep-unanchored"
+      ],
+      "right" : {
+        "label" : "zzpairb2001_cat",
+        "lines" : [
+          "\"The Zzgate\"",
+          "Roe, Rick · 2001 · DOI 10.9999/zz.pair.b · unassessed"
+        ],
+        "uid" : "source:zzpairb2001_cat"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "this collection's attestation on zzpairb2001_home: its quote is not in the body the merge keeps (if the body is keep-right)",
+      "why" : [
+        "the quote (with its prefix and suffix) was looked for, exactly and with spacing ignored"
+      ]
+    }
+  ],
+  "matches" : {
+    "byLedger" : 0,
+    "byScore" : 0,
+    "byStrongKey" : 2,
+    "byUid" : 2,
+    "deletedHere" : 0,
+    "sources" : 4,
+    "undecided" : 0,
+    "unmatched" : 0
+  },
+  "planHash" : "DIGEST",
+  "problems" : [
+  ],
+  "resolutionErrors" : [
+  ],
+  "resolved" : 6,
+  "schemaVersion" : "109",
+  "sources" : [
+    {
+      "issue" : null,
+      "leftCitekey" : "zzpaira2001_home",
+      "leftUid" : "source:zzpaira2001_home",
+      "method" : "strongkey",
+      "outcome" : "auto-merge",
+      "rightCitekey" : "zzpaira2001_cat",
+      "rightUid" : "source:zzpaira2001_cat",
+      "score" : 20.0,
+      "why" : [
+        "DOI equal (strong key)",
+        "title the same (+9)",
+        "authors the same (+6)",
+        "year the same (+3)",
+        "OCR bodies partly alike (MinHash 0.42) (+2)"
+      ]
+    },
+    {
+      "issue" : null,
+      "leftCitekey" : "zzpairb2001_home",
+      "leftUid" : "source:zzpairb2001_home",
+      "method" : "strongkey",
+      "outcome" : "auto-merge",
+      "rightCitekey" : "zzpairb2001_cat",
+      "rightUid" : "source:zzpairb2001_cat",
+      "score" : 14.0,
+      "why" : [
+        "DOI equal (strong key)",
+        "title the same (+9)",
+        "authors the same (+6)",
+        "year the same (+3)",
+        "OCR bodies differ (MinHash 0.09) (-4)"
+      ]
+    }
+  ]
+}
+# the plan, round 3
+{
+  "asOf" : "TS",
+  "bundleId" : "UUID",
+  "changes" : 20,
+  "formatVersion" : 1,
+  "from" : {
+    "id" : "instance:xcat",
+    "label" : null
+  },
+  "info" : [
+    "place zz_port: renamed zz_harbour in the bundle — renamed here too (the old id stays an alias)",
+    "event zz_battle: the same dating and place on both sides — one event, datings and participants unioned",
+    "event gvp_13879: the same dating and place on both sides — one event, datings and participants unioned",
+    "event zz_tremor: the bundle's zz_quake has the same label, dates and place — one event",
+    "place zz_tower_h: the bundle's zz_tower_c is the same place — one place, names unioned",
+    "named period zz_dusk_h: the bundle's zz_dusk_c is the same period — this collection's kept",
+    "old place id zz_well: names another place here — the bundle's is left out",
+    "the gazetteer/periods differ from the bundle's (bundle: 0 places, 280 periods) — events point into them by id"
+  ],
+  "into" : {
+    "id" : "instance:xhome",
+    "label" : null
+  },
+  "issues" : [
+    {
+      "condition" : null,
+      "decidedBy" : "resolution",
+      "decision" : "drop",
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "quote",
+            "left" : null,
+            "right" : "Smoke rose"
+          },
+          {
+            "field" : "before it",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "after it",
+            "left" : null,
+            "right" : null
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "attestation",
+      "id" : "T-issue:attestation-unanchored:place zz_mound:the bundle's attestation on zzpaira2001_",
+      "kind" : "attestation-unanchored",
+      "left" : {
+        "label" : "zzpaira2001_home",
+        "lines" : [
+          "\"The Zzwall\"",
+          "Roe, Rick · 2001 · DOI 10.9999/zz.pair.a · unassessed"
+        ],
+        "uid" : "source:zzpaira2001_home"
+      },
+      "options" : [
+        "drop",
+        "keep-unanchored"
+      ],
+      "right" : {
+        "label" : "place zz_mound",
+        "lines" : [
+          "«Smoke rose»"
+        ],
+        "uid" : "attestation:zzpaira2001_cat:zz_mound"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "the bundle's attestation on zzpaira2001_home: its quote is not in the body the merge keeps (if the body is keep-left)",
+      "why" : [
+        "the quote (with its prefix and suffix) was looked for, exactly and with spacing ignored"
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : "resolution",
+      "decision" : "keep-left",
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "citekey",
+            "left" : "zzpaira2001_home",
+            "right" : "zzpaira2001_cat"
+          },
+          {
+            "field" : "title",
+            "left" : "The Zzwall",
+            "right" : "The Zzwall"
+          },
+          {
+            "field" : "authors",
+            "left" : "Roe, Rick",
+            "right" : "Roe, Rick"
+          },
+          {
+            "field" : "year",
+            "left" : "2001",
+            "right" : "2001"
+          },
+          {
+            "field" : "DOI",
+            "left" : "10.9999/zz.pair.a",
+            "right" : "10.9999/zz.pair.a"
+          },
+          {
+            "field" : "venue",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "status",
+            "left" : "unassessed",
+            "right" : "unassessed"
+          },
+          {
+            "field" : "period",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "tags",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "summary",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "notes",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "OCR body",
+            "left" : "sha256 3c30cb3d4b96…",
+            "right" : "sha256 05fe56b67fa9…"
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "source",
+      "id" : "O-issue:body-differs:zzpaira2001_cat:OCR bodies differ (MinHash 0.42)",
+      "kind" : "body-differs",
+      "left" : {
+        "label" : "zzpaira2001_home",
+        "lines" : [
+          "\"The Zzwall\"",
+          "Roe, Rick · 2001 · DOI 10.9999/zz.pair.a · unassessed"
+        ],
+        "uid" : "source:zzpaira2001_home"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right"
+      ],
+      "right" : {
+        "label" : "zzpaira2001_cat",
+        "lines" : [
+          "\"The Zzwall\"",
+          "Roe, Rick · 2001 · DOI 10.9999/zz.pair.a · unassessed"
+        ],
+        "uid" : "source:zzpaira2001_cat"
+      },
+      "severity" : "default",
+      "suggested" : "keep-left",
+      "title" : "OCR bodies differ (MinHash 0.42)",
+      "why" : [
+        "by default this collection's body stays; keep-right takes the bundle's (and its figures)"
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : "resolution",
+      "decision" : "keep-right",
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "citekey",
+            "left" : "zzpairb2001_home",
+            "right" : "zzpairb2001_cat"
+          },
+          {
+            "field" : "title",
+            "left" : "The Zzgate",
+            "right" : "The Zzgate"
+          },
+          {
+            "field" : "authors",
+            "left" : "Roe, Rick",
+            "right" : "Roe, Rick"
+          },
+          {
+            "field" : "year",
+            "left" : "2001",
+            "right" : "2001"
+          },
+          {
+            "field" : "DOI",
+            "left" : "10.9999/zz.pair.b",
+            "right" : "10.9999/zz.pair.b"
+          },
+          {
+            "field" : "venue",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "status",
+            "left" : "unassessed",
+            "right" : "unassessed"
+          },
+          {
+            "field" : "period",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "tags",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "summary",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "notes",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "OCR body",
+            "left" : "sha256 87d5fcf8e162…",
+            "right" : "sha256 237351de5ba4…"
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "source",
+      "id" : "O-issue:body-differs:zzpairb2001_cat:OCR bodies differ (MinHash 0.09)",
+      "kind" : "body-differs",
+      "left" : {
+        "label" : "zzpairb2001_home",
+        "lines" : [
+          "\"The Zzgate\"",
+          "Roe, Rick · 2001 · DOI 10.9999/zz.pair.b · unassessed"
+        ],
+        "uid" : "source:zzpairb2001_home"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right"
+      ],
+      "right" : {
+        "label" : "zzpairb2001_cat",
+        "lines" : [
+          "\"The Zzgate\"",
+          "Roe, Rick · 2001 · DOI 10.9999/zz.pair.b · unassessed"
+        ],
+        "uid" : "source:zzpairb2001_cat"
+      },
+      "severity" : "default",
+      "suggested" : "keep-left",
+      "title" : "OCR bodies differ (MinHash 0.09)",
+      "why" : [
+        "by default this collection's body stays; keep-right takes the bundle's (and its figures)"
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : "resolution",
+      "decision" : "keep-right",
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "label",
+            "left" : "The Zz age",
+            "right" : "The Zz era"
+          },
+          {
+            "field" : "span",
+            "left" : "-1500..-1002",
+            "right" : "-1600..-1002"
+          },
+          {
+            "field" : "authority",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "region",
+            "left" : "Zzland",
+            "right" : "Zzland"
+          }
+        ],
+        "place" : {
+          "leftGeometry" : null,
+          "leftSpan" : {
+            "end" : -1002,
+            "start" : -1500
+          },
+          "rightGeometry" : null,
+          "rightSpan" : {
+            "end" : -1002,
+            "start" : -1600
+          }
+        },
+        "text" : null
+      },
+      "entity" : "period",
+      "id" : "N-issue:named-period-differs:zz_age:named period zz_age was added on both si",
+      "kind" : "named-period-differs",
+      "left" : {
+        "label" : "zz_age",
+        "lines" : [
+          "The Zz age"
+        ],
+        "uid" : "period:zz_age"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right"
+      ],
+      "right" : {
+        "label" : "zz_age",
+        "lines" : [
+          "The Zz era"
+        ],
+        "uid" : "period:zz_age"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "named period zz_age was added on both sides and says something else: The Zz age -1500..-1002 here, The Zz era -1600..-1002 in the bundle",
+      "why" : [
+        "keep-left keeps this collection's period; keep-right takes the bundle's label and span"
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : "resolution",
+      "decision" : "keep-right",
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "label",
+            "left" : "Zzboth",
+            "right" : "Zzboth"
+          },
+          {
+            "field" : "kind",
+            "left" : "site",
+            "right" : "site"
+          },
+          {
+            "field" : "span",
+            "left" : "always",
+            "right" : "always"
+          },
+          {
+            "field" : "names",
+            "left" : "Zzboth",
+            "right" : "Zzboth"
+          }
+        ],
+        "place" : {
+          "leftGeometry" : "{\"type\":\"Point\",\"coordinates\":[31,37]}",
+          "leftSpan" : {
+            "end" : null,
+            "start" : null
+          },
+          "rightGeometry" : "{\"type\":\"Point\",\"coordinates\":[31.5,37.5]}",
+          "rightSpan" : {
+            "end" : null,
+            "start" : null
+          }
+        },
+        "text" : null
+      },
+      "entity" : "place",
+      "id" : "P-issue:place-differs:zz_both:place zz_both was added on both sides, w",
+      "kind" : "place-differs",
+      "left" : {
+        "label" : "zz_both",
+        "lines" : [
+          "Zzboth"
+        ],
+        "uid" : "place:zz_both"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right"
+      ],
+      "right" : {
+        "label" : "zz_both",
+        "lines" : [
+          "Zzboth"
+        ],
+        "uid" : "place:zz_both"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "place zz_both was added on both sides, with different geometries",
+      "why" : [
+        "keep-left keeps this collection's place (the bundle's events point at it); keep-right takes the bundle's geometry and span"
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : "resolution",
+      "decision" : "keep-unanchored",
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "quote",
+            "left" : "A tower guarded the road",
+            "right" : null
+          },
+          {
+            "field" : "before it",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "after it",
+            "left" : null,
+            "right" : null
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "attestation",
+      "id" : "T-issue:attestation-unanchored:zzpairb2001_cat:this collection's attestation on zzpairb",
+      "kind" : "attestation-unanchored",
+      "left" : {
+        "label" : "place zz_port",
+        "lines" : [
+          "«A tower guarded the road»"
+        ],
+        "uid" : "attestation:zzpairb2001_home:zz_harbour"
+      },
+      "options" : [
+        "drop",
+        "keep-unanchored"
+      ],
+      "right" : {
+        "label" : "zzpairb2001_cat",
+        "lines" : [
+          "\"The Zzgate\"",
+          "Roe, Rick · 2001 · DOI 10.9999/zz.pair.b · unassessed"
+        ],
+        "uid" : "source:zzpairb2001_cat"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "this collection's attestation on zzpairb2001_home: its quote is not in the body the merge keeps (if the body is keep-right)",
+      "why" : [
+        "the quote (with its prefix and suffix) was looked for, exactly and with spacing ignored"
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : "resolution",
+      "decision" : "rename-right:zz_omen_cat",
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "id",
+            "left" : "zz_omen",
+            "right" : "zz_omen"
+          },
+          {
+            "field" : "label",
+            "left" : "An omen seen at home",
+            "right" : "An omen seen at cat"
+          },
+          {
+            "field" : "kind",
+            "left" : "omen",
+            "right" : "omen"
+          },
+          {
+            "field" : "dates (not before · begin by · end from · not after)",
+            "left" : "-1100 · … · … · -1090",
+            "right" : "-1300 · … · … · -1290"
+          },
+          {
+            "field" : "place",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "historicity",
+            "left" : "attested",
+            "right" : "attested"
+          },
+          {
+            "field" : "description",
+            "left" : null,
+            "right" : null
+          }
+        ],
+        "place" : {
+          "leftGeometry" : null,
+          "leftSpan" : {
+            "end" : -1090,
+            "start" : -1100
+          },
+          "rightGeometry" : null,
+          "rightSpan" : {
+            "end" : -1290,
+            "start" : -1300
+          }
+        },
+        "text" : null
+      },
+      "entity" : "event",
+      "id" : "E-issue:label-taken:zz_omen:here that event id belongs to a differen",
+      "kind" : "label-taken",
+      "left" : {
+        "label" : "zz_omen",
+        "lines" : [
+        ],
+        "uid" : "event:zz_omen"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right",
+        "rename-right"
+      ],
+      "right" : {
+        "label" : "zz_omen",
+        "lines" : [
+        ],
+        "uid" : "event:zz_omen"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "here that event id belongs to a different record",
+      "why" : [
+        "keep-left leaves the bundle's record out (and whatever needs it)",
+        "keep-right makes them one, the bundle's fields winning; rename-right keeps both, the bundle's under a new id"
+      ]
+    }
+  ],
+  "matches" : {
+    "byLedger" : 0,
+    "byScore" : 0,
+    "byStrongKey" : 2,
+    "byUid" : 2,
+    "deletedHere" : 0,
+    "sources" : 4,
+    "undecided" : 0,
+    "unmatched" : 0
+  },
+  "planHash" : "DIGEST",
+  "problems" : [
+  ],
+  "resolutionErrors" : [
+  ],
+  "resolved" : 7,
+  "schemaVersion" : "109",
+  "sources" : [
+    {
+      "issue" : null,
+      "leftCitekey" : "zzpaira2001_home",
+      "leftUid" : "source:zzpaira2001_home",
+      "method" : "strongkey",
+      "outcome" : "auto-merge",
+      "rightCitekey" : "zzpaira2001_cat",
+      "rightUid" : "source:zzpaira2001_cat",
+      "score" : 20.0,
+      "why" : [
+        "DOI equal (strong key)",
+        "title the same (+9)",
+        "authors the same (+6)",
+        "year the same (+3)",
+        "OCR bodies partly alike (MinHash 0.42) (+2)"
+      ]
+    },
+    {
+      "issue" : null,
+      "leftCitekey" : "zzpairb2001_home",
+      "leftUid" : "source:zzpairb2001_home",
+      "method" : "strongkey",
+      "outcome" : "auto-merge",
+      "rightCitekey" : "zzpairb2001_cat",
+      "rightUid" : "source:zzpairb2001_cat",
+      "score" : 14.0,
+      "why" : [
+        "DOI equal (strong key)",
+        "title the same (+9)",
+        "authors the same (+6)",
+        "year the same (+3)",
+        "OCR bodies differ (MinHash 0.09) (-4)"
+      ]
+    }
+  ]
+}
+# applied
+200 {
+  "bundle" : "SHA256",
+  "elapsedMs" : N,
+  "error" : null,
+  "job" : "UUID",
+  "planHash" : "DIGEST",
+  "result" : {
+    "applied" : true,
+    "backup" : "histmersion-STAMP.dump",
+    "bundleId" : "UUID",
+    "counts" : [
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "source",
+        "skippedDeleted" : 0,
+        "unchanged" : 3,
+        "updated" : 1
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "finding",
+        "skippedDeleted" : 0,
+        "unchanged" : 4,
+        "updated" : 0
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 1,
+        "keptLocal" : 1,
+        "kind" : "attestation",
+        "skippedDeleted" : 0,
+        "unchanged" : 3,
+        "updated" : 0
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 2,
+        "keptLocal" : 0,
+        "kind" : "event",
+        "skippedDeleted" : 0,
+        "unchanged" : 5,
+        "updated" : 2
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 1,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "place",
+        "skippedDeleted" : 0,
+        "unchanged" : 9,
+        "updated" : 2
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "period",
+        "skippedDeleted" : 0,
+        "unchanged" : 7,
+        "updated" : 1
+      }
+    ],
+    "from" : {
+      "id" : "instance:xcat",
+      "label" : null
+    },
+    "issues" : [
+    ],
+    "logEntry" : 1,
+    "mergeId" : "UUID",
+    "notes" : [
+      "old place id zz_well: names another place here — the bundle's is left out",
+      "the gazetteer/periods differ from the bundle's (bundle: 0 places, 280 periods) — events point into them by id"
+    ],
+    "planHash" : "DIGEST",
+    "problems" : [
+    ],
+    "replanChanges" : 0,
+    "reviews" : [
+    ],
+    "tally" : {
+      "aliases" : 2,
+      "articlesBoth" : 0,
+      "articlesFastForward" : 0,
+      "articlesFromFile" : 0,
+      "articlesThreeWay" : 0,
+      "assetsMerged" : 0,
+      "attestationsDropped" : 1,
+      "attestationsReanchored" : 2,
+      "eventsMerged" : 3,
+      "findingsMerged" : 0,
+      "goalsMerged" : 0,
+      "periodsMerged" : 2,
+      "placesMerged" : 2,
+      "queueMerged" : 0,
+      "redirects" : 7,
+      "selfLoopsDropped" : 0,
+      "sourcesByScore" : 0,
+      "sourcesMerged" : 2,
+      "sourcesRenamed" : 0
+    }
+  },
+  "state" : "done"
+}
+# merges
+200 [
+  {
+    "appliedAt" : "TS",
+    "backup" : "histmersion-STAMP.dump",
+    "bundleId" : "UUID",
+    "bundleSha256" : "SHA256",
+    "from" : {
+      "id" : "instance:xcat",
+      "label" : null
+    },
+    "id" : "UUID",
+    "ledgerRows" : 16,
+    "planHash" : "DIGEST",
+    "redirects" : 7
+  },
+  {
+    "appliedAt" : "TS",
+    "backup" : null,
+    "bundleId" : "UUID",
+    "bundleSha256" : "SHA256",
+    "from" : {
+      "id" : "instance:xcat",
+      "label" : null
+    },
+    "id" : "UUID",
+    "ledgerRows" : 25,
+    "planHash" : null,
+    "redirects" : 0
+  }
+]
+# the merge
+200 {
+  "applied" : {
+    "applied" : true,
+    "backup" : "histmersion-STAMP.dump",
+    "bundleId" : "UUID",
+    "counts" : [
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "source",
+        "skippedDeleted" : 0,
+        "unchanged" : 3,
+        "updated" : 1
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "finding",
+        "skippedDeleted" : 0,
+        "unchanged" : 4,
+        "updated" : 0
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 1,
+        "keptLocal" : 1,
+        "kind" : "attestation",
+        "skippedDeleted" : 0,
+        "unchanged" : 3,
+        "updated" : 0
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 2,
+        "keptLocal" : 0,
+        "kind" : "event",
+        "skippedDeleted" : 0,
+        "unchanged" : 5,
+        "updated" : 2
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 1,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "place",
+        "skippedDeleted" : 0,
+        "unchanged" : 9,
+        "updated" : 2
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 0,
+        "keptLocal" : 0,
+        "kind" : "period",
+        "skippedDeleted" : 0,
+        "unchanged" : 7,
+        "updated" : 1
+      }
+    ],
+    "from" : {
+      "id" : "instance:xcat",
+      "label" : null
+    },
+    "issues" : [
+    ],
+    "logEntry" : null,
+    "mergeId" : null,
+    "notes" : [
+      "old place id zz_well: names another place here — the bundle's is left out",
+      "the gazetteer/periods differ from the bundle's (bundle: 0 places, 280 periods) — events point into them by id"
+    ],
+    "planHash" : "DIGEST",
+    "problems" : [
+    ],
+    "replanChanges" : null,
+    "reviews" : [
+    ],
+    "tally" : {
+      "aliases" : 2,
+      "articlesBoth" : 0,
+      "articlesFastForward" : 0,
+      "articlesFromFile" : 0,
+      "articlesThreeWay" : 0,
+      "assetsMerged" : 0,
+      "attestationsDropped" : 1,
+      "attestationsReanchored" : 2,
+      "eventsMerged" : 3,
+      "findingsMerged" : 0,
+      "goalsMerged" : 0,
+      "periodsMerged" : 2,
+      "placesMerged" : 2,
+      "queueMerged" : 0,
+      "redirects" : 7,
+      "selfLoopsDropped" : 0,
+      "sourcesByScore" : 0,
+      "sourcesMerged" : 2,
+      "sourcesRenamed" : 0
+    }
+  },
+  "imported" : null,
+  "merge" : {
+    "appliedAt" : "TS",
+    "backup" : "histmersion-STAMP.dump",
+    "bundleId" : "UUID",
+    "bundleSha256" : "SHA256",
+    "from" : {
+      "id" : "instance:xcat",
+      "label" : null
+    },
+    "id" : "UUID",
+    "ledgerRows" : 16,
+    "planHash" : "DIGEST",
+    "redirects" : 7
+  },
+  "remembered" : [
+    {
+      "decision" : "drop",
+      "issue" : "T-issue:attestation-unanchored:place zz_mound:the bundle's attestation on zzpaira2001_",
+      "text" : null
+    },
+    {
+      "decision" : "keep-left",
+      "issue" : "O-issue:body-differs:zzpaira2001_cat:OCR bodies differ (MinHash 0.42)",
+      "text" : null
+    },
+    {
+      "decision" : "keep-right",
+      "issue" : "N-issue:named-period-differs:zz_age:named period zz_age was added on both si",
+      "text" : null
+    },
+    {
+      "decision" : "keep-right",
+      "issue" : "O-issue:body-differs:zzpairb2001_cat:OCR bodies differ (MinHash 0.09)",
+      "text" : null
+    },
+    {
+      "decision" : "keep-right",
+      "issue" : "P-issue:place-differs:zz_both:place zz_both was added on both sides, w",
+      "text" : null
+    },
+    {
+      "decision" : "keep-unanchored",
+      "issue" : "T-issue:attestation-unanchored:zzpairb2001_cat:this collection's attestation on zzpairb",
+      "text" : null
+    },
+    {
+      "decision" : "rename-right:zz_omen_cat",
+      "issue" : "E-issue:label-taken:zz_omen:here that event id belongs to a differen",
+      "text" : null
+    }
+  ],
+  "resolutions" : {
+    "bundle" : null,
+    "policy" : {
+      "editions" : null
+    },
+    "resolve" : [
+      {
+        "decision" : "drop",
+        "issue" : "T-issue:attestation-unanchored:place zz_mound:the bundle's attestation on zzpaira2001_",
+        "text" : null
+      },
+      {
+        "decision" : "keep-left",
+        "issue" : "O-issue:body-differs:zzpaira2001_cat:OCR bodies differ (MinHash 0.42)",
+        "text" : null
+      },
+      {
+        "decision" : "keep-right",
+        "issue" : "N-issue:named-period-differs:zz_age:named period zz_age was added on both si",
+        "text" : null
+      },
+      {
+        "decision" : "keep-right",
+        "issue" : "O-issue:body-differs:zzpairb2001_cat:OCR bodies differ (MinHash 0.09)",
+        "text" : null
+      },
+      {
+        "decision" : "keep-right",
+        "issue" : "P-issue:place-differs:zz_both:place zz_both was added on both sides, w",
+        "text" : null
+      },
+      {
+        "decision" : "keep-unanchored",
+        "issue" : "T-issue:attestation-unanchored:zzpairb2001_cat:this collection's attestation on zzpairb",
+        "text" : null
+      },
+      {
+        "decision" : "rename-right:zz_omen_cat",
+        "issue" : "E-issue:label-taken:zz_omen:here that event id belongs to a differen",
+        "text" : null
+      }
+    ]
+  }
+}
+# the ledger
+200 {
+  "entries" : [
+    {
+      "decision" : "FastForward",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "place:zz_harbour",
+      "kind" : "place",
+      "label" : "zz_harbour",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "place:zz_harbour",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Delete",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "tombstone:place",
+      "kind" : "place",
+      "label" : null,
+      "localRevAfter" : null,
+      "localUid" : "tombstone:place",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Unchanged",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "event:zz_battle",
+      "kind" : "event",
+      "label" : "zz_battle",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "event:zz_battle",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "FastForward",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "event:zz_march_war",
+      "kind" : "event",
+      "label" : "zz_march_war",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "event:zz_march_war",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "FastForward",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "event:zz_ashfall",
+      "kind" : "event",
+      "label" : "zz_ashfall",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "event:zz_ashfall",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Unchanged",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "event:gvp_13879",
+      "kind" : "event",
+      "label" : "gvp_13879",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "event:gvp_13879",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "event:zz_flood",
+      "kind" : "event",
+      "label" : "zz_flood",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "event:zz_flood",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "FastForward",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "place:zz_both",
+      "kind" : "place",
+      "label" : "zz_both",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "place:zz_both",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Unchanged",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "place:zz_tower_c",
+      "kind" : "place",
+      "label" : "zz_tower_h",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "place:zz_tower_h",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "FastForward",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "period:zz_age",
+      "kind" : "period",
+      "label" : "zz_age",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "period:zz_age",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Unchanged",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "period:zz_dusk_c",
+      "kind" : "period",
+      "label" : "zz_dusk_h",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "period:zz_dusk_h",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Unchanged",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "event:zz_quake",
+      "kind" : "event",
+      "label" : "zz_tremor",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "event:zz_tremor",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "event:zz_omen",
+      "kind" : "event",
+      "label" : "zz_omen_cat",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "event:zz_omen",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Unchanged",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "source:zzpaira2001_cat",
+      "kind" : "source",
+      "label" : "zzpaira2001_home",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "source:zzpaira2001_home",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "FastForward",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "source:zzpairb2001_cat",
+      "kind" : "source",
+      "label" : "zzpairb2001_home",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "source:zzpairb2001_home",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "attestation:zzpaira2001_cat:zz_hill",
+      "kind" : "attestation",
+      "label" : null,
+      "localRevAfter" : "DIGEST",
+      "localUid" : "attestation:zzpaira2001_cat:zz_hill",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "period:zzqauth",
+      "kind" : "period",
+      "label" : "zzqauth",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "period:zzqauth",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "period:zzqother",
+      "kind" : "period",
+      "label" : "zzqother",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "period:zzqother",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "period:zzqauthbronze",
+      "kind" : "period",
+      "label" : "zzqauthbronze",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "period:zzqauthbronze",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "period:zzqauthlba",
+      "kind" : "period",
+      "label" : "zzqauthlba",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "period:zzqauthlba",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "period:zzqauthiron",
+      "kind" : "period",
+      "label" : "zzqauthiron",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "period:zzqauthiron",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "period:zzqother01",
+      "kind" : "period",
+      "label" : "zzqother01",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "period:zzqother01",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "place:zz_land",
+      "kind" : "place",
+      "label" : "zz_land",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "place:zz_land",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "place:zz_march",
+      "kind" : "place",
+      "label" : "zz_march",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "place:zz_march",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "place:zz_sea",
+      "kind" : "place",
+      "label" : "zz_sea",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "place:zz_sea",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "place:zz_hill",
+      "kind" : "place",
+      "label" : "zz_hill",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "place:zz_hill",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "place:zz_mound",
+      "kind" : "place",
+      "label" : "zz_mound",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "place:zz_mound",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "RecordTombstone",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "tombstone:place",
+      "kind" : "place",
+      "label" : null,
+      "localRevAfter" : null,
+      "localUid" : "tombstone:place",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "RecordTombstone",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "tombstone:place",
+      "kind" : "place",
+      "label" : null,
+      "localRevAfter" : null,
+      "localUid" : "tombstone:place",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "place:zz_camp_north",
+      "kind" : "place",
+      "label" : "zz_camp_north",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "place:zz_camp_north",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "source:zzhill1990_battle",
+      "kind" : "source",
+      "label" : "zzhill1990_battle",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "source:zzhill1990_battle",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "finding:zzhill1990_battle#0",
+      "kind" : "finding",
+      "label" : "zzhill1990_battle#0",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "finding:zzhill1990_battle#0",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "finding:zzhill1990_battle#1",
+      "kind" : "finding",
+      "label" : "zzhill1990_battle#1",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "finding:zzhill1990_battle#1",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "finding:zzhill1990_battle#2",
+      "kind" : "finding",
+      "label" : "zzhill1990_battle#2",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "finding:zzhill1990_battle#2",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "source:zzvolc2004_ash",
+      "kind" : "source",
+      "label" : "zzvolc2004_ash",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "source:zzvolc2004_ash",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "finding:zzvolc2004_ash#0",
+      "kind" : "finding",
+      "label" : "zzvolc2004_ash#0",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "finding:zzvolc2004_ash#0",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "event:zz_fire",
+      "kind" : "event",
+      "label" : "zz_fire",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "event:zz_fire",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "RecordTombstone",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "tombstone:event",
+      "kind" : "event",
+      "label" : null,
+      "localRevAfter" : null,
+      "localUid" : "tombstone:event",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "attestation:zzhill1990_battle:zz_hill",
+      "kind" : "attestation",
+      "label" : null,
+      "localRevAfter" : "DIGEST",
+      "localUid" : "attestation:zzhill1990_battle:zz_hill",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "attestation:zzhill1990_battle:zz_battle",
+      "kind" : "attestation",
+      "label" : null,
+      "localRevAfter" : "DIGEST",
+      "localUid" : "attestation:zzhill1990_battle:zz_battle",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "attestation:zzvolc2004_ash:zz_camp_north",
+      "kind" : "attestation",
+      "label" : null,
+      "localRevAfter" : "DIGEST",
+      "localUid" : "attestation:zzvolc2004_ash:zz_camp_north",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    }
+  ],
+  "query" : null,
+  "redirects" : [
+  ]
+}
+# home's rows
+## places 9 rows
+{ "dataset" : "local", "geom" : { "coordinates" : [ 31.5, 37.5 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "zz_both", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "site", "label" : "Zzboth", "label_norm" : "zzboth", "location_precision" : null, "origin" : "instance:xhome", "period" : "(,)", "properties" : { "added" : true }, "shape_area" : 0, "shape_box" : "BOX(31.5 37.5,31.5 37.5)", "shape_dim" : 0, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : "cat's map", "start_unknown" : false, "uid" : "place:zz_both", "updated_at" : "TS", "web_geojson" : null }
+{ "dataset" : "local", "geom" : { "coordinates" : [ 34.6, 40 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "zz_hill", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "site", "label" : "Zzhill", "label_norm" : "zzhill", "location_precision" : null, "origin" : "instance:xcat", "period" : "[-1650,-1179)", "properties" : null, "shape_area" : 0, "shape_box" : "BOX(34.6 40,34.6 40)", "shape_dim" : 0, "shape_valid" : true, "site_type" : "Q839954", "site_type_checked_at" : "TS", "source" : null, "start_unknown" : false, "uid" : "place:zz_hill", "updated_at" : "TS", "web_geojson" : null }
+{ "dataset" : "local", "geom" : { "coordinates" : [ 35.55, 39.25 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "zz_harbour", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "site", "label" : "Zzport", "label_norm" : "zzport", "location_precision" : null, "origin" : "instance:xcat", "period" : "[-1400,)", "properties" : null, "shape_area" : 0, "shape_box" : "BOX(35.55 39.25,35.55 39.25)", "shape_dim" : 0, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : null, "start_unknown" : false, "uid" : "place:zz_harbour", "updated_at" : "TS", "web_geojson" : null }
+{ "dataset" : "local", "geom" : { "coordinates" : [ 36.2, 38.6 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "zz_tower_h", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "site", "label" : "Zztower", "label_norm" : "zztower", "location_precision" : null, "origin" : "instance:xhome", "period" : "(,)", "properties" : { "added" : true }, "shape_area" : 0, "shape_box" : "BOX(36.2 38.6,36.2 38.6)", "shape_dim" : 0, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : "home's map", "start_unknown" : false, "uid" : "place:zz_tower_h", "updated_at" : "TS", "web_geojson" : null }
+{ "dataset" : "local", "geom" : { "coordinates" : [ 36.4, 39.9 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "zz_camp_north", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "site", "label" : "Zzcamp", "label_norm" : "zzcamp", "location_precision" : null, "origin" : "instance:xcat", "period" : "[-1350,-1249)", "properties" : { "added" : true }, "shape_area" : 0, "shape_box" : "BOX(36.4 39.9,36.4 39.9)", "shape_dim" : 0, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : "a survey map", "start_unknown" : false, "uid" : "place:zz_camp_north", "updated_at" : "TS", "web_geojson" : null }
+{ "dataset" : "local", "geom" : { "coordinates" : [ 37.2, 38.1 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "zz_mound", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "site", "label" : "Zzmound", "label_norm" : "zzmound", "location_precision" : null, "origin" : "instance:xcat", "period" : "[-1500,-1299)", "properties" : null, "shape_area" : 0, "shape_box" : "BOX(37.2 38.1,37.2 38.1)", "shape_dim" : 0, "shape_valid" : true, "site_type" : "Q839954", "site_type_checked_at" : "TS", "source" : null, "start_unknown" : false, "uid" : "place:zz_mound", "updated_at" : "TS", "web_geojson" : null }
+{ "dataset" : "local", "geom" : { "coordinates" : [ [ [ 20, 30 ], [ 29, 30 ], [ 29, 35 ], [ 20, 35 ], [ 20, 30 ] ] ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Polygon" }, "geom_clipped" : null, "id" : "zz_sea", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "region", "label" : "Zzsea", "label_norm" : "zzsea", "location_precision" : null, "origin" : "instance:xcat", "period" : "(,)", "properties" : null, "shape_area" : 45, "shape_box" : "BOX(20 30,29 35)", "shape_dim" : 2, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : null, "start_unknown" : false, "uid" : "place:zz_sea", "updated_at" : "TS", "web_geojson" : "{\"type\":\"Polygon\",\"coordinates\":[[[20,30],[29,30],[29,35],[20,35],[20,30]]]}" }
+{ "dataset" : "local", "geom" : { "coordinates" : [ [ [ 30, 36 ], [ 40, 36 ], [ 40, 42 ], [ 30, 42 ], [ 30, 36 ] ] ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Polygon" }, "geom_clipped" : null, "id" : "zz_land", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "region", "label" : "Zzland", "label_norm" : "zzland", "location_precision" : null, "origin" : "instance:xcat", "period" : "[-2000,-999)", "properties" : null, "shape_area" : 60, "shape_box" : "BOX(30 36,40 42)", "shape_dim" : 2, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : null, "start_unknown" : false, "uid" : "place:zz_land", "updated_at" : "TS", "web_geojson" : "{\"type\":\"Polygon\",\"coordinates\":[[[30,36],[40,36],[40,42],[30,42],[30,36]]]}" }
+{ "dataset" : "local", "geom" : { "coordinates" : [ [ [ 33, 38 ], [ 36, 38 ], [ 36, 41 ], [ 33, 41 ], [ 33, 38 ] ] ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Polygon" }, "geom_clipped" : null, "id" : "zz_march", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "region", "label" : "Zzmarch", "label_norm" : "zzmarch", "location_precision" : null, "origin" : "instance:xcat", "period" : "[-1600,-1199)", "properties" : null, "shape_area" : 9, "shape_box" : "BOX(33 38,36 41)", "shape_dim" : 2, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : null, "start_unknown" : false, "uid" : "place:zz_march", "updated_at" : "TS", "web_geojson" : "{\"type\":\"Polygon\",\"coordinates\":[[[33,38],[36,38],[36,41],[33,41],[33,38]]]}" }
+## place_names 13 rows
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "", "manual" : false, "name" : "Zzboth", "period" : "(,)", "place_id" : "zz_both" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "", "manual" : false, "name" : "Zzcamp", "period" : "(,)", "place_id" : "zz_camp_north" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "", "manual" : false, "name" : "Zzmound", "period" : "(,)", "place_id" : "zz_mound" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "", "manual" : false, "name" : "Zzport", "period" : "(,)", "place_id" : "zz_harbour" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "", "manual" : false, "name" : "Zzsea", "period" : "(,)", "place_id" : "zz_sea" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "", "manual" : false, "name" : "Zztower", "period" : "(,)", "place_id" : "zz_tower_h" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "de", "manual" : false, "name" : "Zzhügel", "period" : "(,)", "place_id" : "zz_hill" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "de", "manual" : false, "name" : "Zzlager", "period" : "(,)", "place_id" : "zz_camp_north" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "en", "manual" : false, "name" : "Zzhill", "period" : "(,)", "place_id" : "zz_hill" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "en", "manual" : false, "name" : "Zzland", "period" : "(,)", "place_id" : "zz_land" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "en", "manual" : false, "name" : "Zzmarch", "period" : "(,)", "place_id" : "zz_march" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "la", "manual" : false, "name" : "Zzlandia", "period" : "(,)", "place_id" : "zz_land" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "tr", "manual" : false, "name" : "Zzhill Höyük", "period" : "(,)", "place_id" : "zz_hill" }
+## place_relations 7 rows
+{ "child_id" : "zz_camp_north", "kind" : "spatial_containment", "parent_id" : "zz_land", "period" : "[-2000,-999)" }
+{ "child_id" : "zz_harbour", "kind" : "spatial_containment", "parent_id" : "zz_land", "period" : "[-2000,-999)" }
+{ "child_id" : "zz_harbour", "kind" : "spatial_containment", "parent_id" : "zz_march", "period" : "[-1600,-1199)" }
+{ "child_id" : "zz_hill", "kind" : "spatial_containment", "parent_id" : "zz_land", "period" : "[-2000,-999)" }
+{ "child_id" : "zz_hill", "kind" : "spatial_containment", "parent_id" : "zz_march", "period" : "[-1600,-1199)" }
+{ "child_id" : "zz_march", "kind" : "part_of", "parent_id" : "zz_land", "period" : "(,)" }
+{ "child_id" : "zz_mound", "kind" : "spatial_containment", "parent_id" : "zz_land", "period" : "[-2000,-999)" }
+## place_links 0 rows
+## place_types 0 rows
+## place_aliases 3 rows
+{ "alias" : "zz_camp", "created_at" : "TS", "place_id" : "zz_camp_north" }
+{ "alias" : "zz_mound_dup", "created_at" : "TS", "place_id" : "zz_mound" }
+{ "alias" : "zz_port", "created_at" : "TS", "place_id" : "zz_harbour" }
+## periods 8 rows
+{ "authority" : "PeriodO zzqauth", "dataset" : "local", "id" : "zzqauth", "label" : "Zzq test chronology", "origin" : "instance:xcat", "parent_id" : null, "period" : "[-3000,-499)", "preset" : null, "region" : null, "uid" : "period:zzqauth", "updated_at" : "TS" }
+{ "authority" : "PeriodO zzqauthbronze · Zzq test chronology (2020)", "dataset" : "local", "id" : "zzqauthbronze", "label" : "Zzq Bronze Age", "origin" : "instance:xcat", "parent_id" : "zzqauth", "period" : "[-3000,-1199)", "preset" : null, "region" : "Zzqland", "uid" : "period:zzqauthbronze", "updated_at" : "TS" }
+{ "authority" : "PeriodO zzqauthiron · Zzq test chronology (2020)", "dataset" : "local", "id" : "zzqauthiron", "label" : "Zzq Iron Age", "origin" : "instance:xcat", "parent_id" : "zzqauth", "period" : "[-1200,-499)", "preset" : null, "region" : null, "uid" : "period:zzqauthiron", "updated_at" : "TS" }
+{ "authority" : "PeriodO zzqauthlba · Zzq test chronology (2020)", "dataset" : "local", "id" : "zzqauthlba", "label" : "Zzq Late Bronze Age", "origin" : "instance:xcat", "parent_id" : "zzqauthbronze", "period" : "[-1600,-1199)", "preset" : null, "region" : "Zzqland", "uid" : "period:zzqauthlba", "updated_at" : "TS" }
+{ "authority" : "PeriodO zzqother", "dataset" : "local", "id" : "zzqother", "label" : "Zzq other chronology", "origin" : "instance:xcat", "parent_id" : null, "period" : "[1,101)", "preset" : null, "region" : null, "uid" : "period:zzqother", "updated_at" : "TS" }
+{ "authority" : "PeriodO zzqother01 · Zzq other chronology", "dataset" : "local", "id" : "zzqother01", "label" : "Zzq Something", "origin" : "instance:xcat", "parent_id" : "zzqother", "period" : "[1,101)", "preset" : null, "region" : null, "uid" : "period:zzqother01", "updated_at" : "TS" }
+{ "authority" : null, "dataset" : "local", "id" : "zz_age", "label" : "The Zz era", "origin" : "instance:xhome", "parent_id" : null, "period" : "[-1600,-1001)", "preset" : null, "region" : "Zzland", "uid" : "period:zz_age", "updated_at" : "TS" }
+{ "authority" : null, "dataset" : "local", "id" : "zz_dusk_h", "label" : "The Zz dusk", "origin" : "instance:xhome", "parent_id" : null, "period" : "[-1200,-1001)", "preset" : null, "region" : "Zzland", "uid" : "period:zz_dusk_h", "updated_at" : "TS" }
+## events 9 rows
+{ "begin_by" : null, "catalogue" : "gvp", "central" : -1610, "citekey" : null, "dating_method" : "Isotopic: 14C (calibrated)", "description" : "home", "end_from" : null, "geom" : { "coordinates" : [ 25.396, 36.404 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "historicity" : "attested", "id" : "gvp_13879", "inner_span" : null, "kind" : "eruption", "label" : "An eruption, as home names it", "names" : [ "Eruption of Santorini", "Santorini eruption" ], "not_after" : -1596, "not_before" : -1624, "origin" : "instance:xcat", "outer_span" : "[-1624,-1595)", "parent_id" : null, "place_id" : null, "plus_minus" : 14, "scale" : null, "uid" : "event:gvp_13879", "uncertainty" : 14, "updated_at" : "TS", "wikidata" : null }
+{ "begin_by" : null, "catalogue" : null, "central" : null, "citekey" : "zzhill1990_battle", "dating_method" : null, "description" : "fought below the walls, at dusk", "end_from" : null, "geom" : null, "historicity" : "attested", "id" : "zz_battle", "inner_span" : null, "kind" : "battle", "label" : "Battle of Zzhill", "names" : [ ], "not_after" : -1290, "not_before" : -1310, "origin" : "instance:xcat", "outer_span" : "[-1310,-1289)", "parent_id" : null, "place_id" : "zz_hill", "plus_minus" : null, "scale" : null, "uid" : "event:zz_battle", "uncertainty" : 10, "updated_at" : "TS", "wikidata" : null }
+{ "begin_by" : null, "catalogue" : null, "central" : null, "citekey" : null, "dating_method" : null, "description" : "a war of the march lords", "end_from" : null, "geom" : { "coordinates" : [ [ [ 33.5, 38.5 ], [ 35.8, 38.5 ], [ 35.8, 40.5 ], [ 33.5, 40.5 ], [ 33.5, 38.5 ] ] ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Polygon" }, "historicity" : "attested", "id" : "zz_march_war", "inner_span" : null, "kind" : "war", "label" : "The Zzmarch war", "names" : [ ], "not_after" : -1280, "not_before" : -1320, "origin" : "instance:xcat", "outer_span" : "[-1320,-1279)", "parent_id" : null, "place_id" : null, "plus_minus" : null, "scale" : "regional", "uid" : "event:zz_march_war", "uncertainty" : 20, "updated_at" : "TS", "wikidata" : null }
+{ "begin_by" : null, "catalogue" : null, "central" : null, "citekey" : null, "dating_method" : null, "description" : null, "end_from" : null, "geom" : null, "historicity" : "attested", "id" : "zz_ashfall", "inner_span" : null, "kind" : "eruption", "label" : "Ash over Zzport", "names" : [ ], "not_after" : -1600, "not_before" : -1620, "origin" : "instance:xcat", "outer_span" : "[-1620,-1599)", "parent_id" : null, "place_id" : "zz_harbour", "plus_minus" : null, "scale" : null, "uid" : "event:zz_ashfall", "uncertainty" : 10, "updated_at" : "TS", "wikidata" : null }
+{ "begin_by" : null, "catalogue" : null, "central" : null, "citekey" : null, "dating_method" : null, "description" : null, "end_from" : null, "geom" : null, "historicity" : "attested", "id" : "zz_fire", "inner_span" : null, "kind" : "destruction", "label" : "Zzhill burns", "names" : [ ], "not_after" : -1270, "not_before" : -1290, "origin" : "instance:xcat", "outer_span" : "[-1290,-1269)", "parent_id" : "zz_battle", "place_id" : "zz_hill", "plus_minus" : null, "scale" : null, "uid" : "event:zz_fire", "uncertainty" : 10, "updated_at" : "TS", "wikidata" : null }
+{ "begin_by" : null, "catalogue" : null, "central" : null, "citekey" : null, "dating_method" : null, "description" : null, "end_from" : null, "geom" : null, "historicity" : "attested", "id" : "zz_flood", "inner_span" : null, "kind" : "flood", "label" : "A flood", "names" : [ ], "not_after" : -1240, "not_before" : -1250, "origin" : "instance:xcat", "outer_span" : "[-1250,-1239)", "parent_id" : null, "place_id" : "zz_harbour", "plus_minus" : null, "scale" : null, "uid" : "event:zz_flood", "uncertainty" : 5, "updated_at" : "TS", "wikidata" : null }
+{ "begin_by" : null, "catalogue" : null, "central" : null, "citekey" : null, "dating_method" : null, "description" : null, "end_from" : null, "geom" : null, "historicity" : "attested", "id" : "zz_omen", "inner_span" : null, "kind" : "omen", "label" : "An omen seen at home", "names" : [ ], "not_after" : -1090, "not_before" : -1100, "origin" : "instance:xhome", "outer_span" : "[-1100,-1089)", "parent_id" : null, "place_id" : null, "plus_minus" : null, "scale" : null, "uid" : "event:zz_omen", "uncertainty" : 5, "updated_at" : "TS", "wikidata" : null }
+{ "begin_by" : null, "catalogue" : null, "central" : null, "citekey" : null, "dating_method" : null, "description" : null, "end_from" : null, "geom" : null, "historicity" : "attested", "id" : "zz_omen_cat", "inner_span" : null, "kind" : "omen", "label" : "An omen seen at cat", "names" : [ ], "not_after" : -1290, "not_before" : -1300, "origin" : "instance:xcat", "outer_span" : "[-1300,-1289)", "parent_id" : null, "place_id" : null, "plus_minus" : null, "scale" : null, "uid" : "event:zz_omen", "uncertainty" : 5, "updated_at" : "TS", "wikidata" : null }
+{ "begin_by" : null, "catalogue" : null, "central" : null, "citekey" : null, "dating_method" : null, "description" : null, "end_from" : null, "geom" : null, "historicity" : "attested", "id" : "zz_tremor", "inner_span" : null, "kind" : "earthquake", "label" : "The great quake", "names" : [ ], "not_after" : -1195, "not_before" : -1205, "origin" : "instance:xhome", "outer_span" : "[-1205,-1194)", "parent_id" : null, "place_id" : "zz_hill", "plus_minus" : null, "scale" : null, "uid" : "event:zz_tremor", "uncertainty" : 5, "updated_at" : "TS", "wikidata" : null }
+## event_aliases 2 rows
+{ "alias" : "zz_ash", "created_at" : "TS", "event_id" : "zz_ashfall" }
+{ "alias" : "zz_war", "created_at" : "TS", "event_id" : "zz_march_war" }
+## event_datings 1 rows
+{ "begin_by" : null, "citekey" : "zzhill1990_battle", "end_from" : null, "event_id" : "zz_battle", "method" : "historical", "not_after" : -1290, "not_before" : -1310, "note" : null }
+## event_edges 1 rows
+{ "citekey" : "zzhill1990_battle", "dst_id" : "zz_battle", "kind" : "after", "note" : null, "src_id" : "zz_fire" }
+## event_participants 1 rows
+{ "actor" : "the Zzport fleet", "citekey" : null, "event_id" : "zz_battle", "role" : "ally" }
+## event_catalogue 1 rows
+{ "begin_by" : null, "deaths" : null, "end_from" : null, "event_id" : "gvp_13879", "historicity" : "attested", "kind" : "eruption", "label" : "Eruption of Santorini", "lat" : 36.404, "lon" : 25.396, "magnitude" : null, "not_after" : -1596, "not_before" : -1624, "provider" : "gvp", "provider_id" : "13879", "record" : { "central" : -1610, "datingMethod" : "Isotopic: 14C (calibrated)", "description" : "Confirmed Eruption at Santorini; VEI 7", "group" : "volcano:212040", "historicity" : "attested", "kind" : "eruption", "label" : "Eruption of Santorini", "lat" : 36.404, "lon" : 25.396, "names" : [ "Santorini eruption" ], "plusMinus" : 14, "provider" : "gvp", "providerId" : "13879", "raw" : "{\"type\":\"Feature\",\"id\":\"Smithsonian_VOTW_Holocene_Eruptions.fid-5949073e_1a13b776a51_-7f7c\",\"geometry\":{\"type\":\"Point\",\"coordinates\":[25.396,36.404]},\"geometry_name\":\"GeoLocation\",\"properties\":{\"Volcano_Number\":212040,\"Volcano_Name\":\"Santorini\",\"Eruption_Number\":13879,\"Activity_Type\":\"Confirmed Eruption\",\"ExplosivityIndexMax\":7,\"ExplosivityIndexModifier\":\"?\",\"ActivityArea\":null,\"ActivityUnit\":null,\"StartEvidenceMethod\":\"Isotopic: 14C (calibrated)\",\"StartDateYearModifier\":null,\"StartDateYear\":-1610,\"StartDateYearUncertainty\":14,\"StartDateDayModifier\":null,\"StartDateMonth\":0,\"StartDateDay\":0,\"StartDateDayUncertainty\":null,\"EndDateYearModifier\":null,\"EndDateYear\":null,\"EndDateYearUncertainty\":null,\"EndDateDayModifier\":null,\"EndDateMonth\":null,\"EndDateDay\":null,\"EndDateDayUncertainty\":null}}", "timeSpan" : { "notAfter" : -1596, "notBefore" : -1624 }, "url" : "https://volcano.si.edu/volcano.cfm?vn=212040", "vei" : 7 }, "retrieved_at" : "TS", "url" : "https://volcano.si.edu/volcano.cfm?vn=212040", "vei" : 7 }
+## event_link_candidates 2 rows
+{ "citekey" : "zzhill1990_battle", "computed_at" : "TS", "event_id" : "zz_battle", "findings" : [ "zzhill1990_battle#0", "zzhill1990_battle#2", "zzhill1990_battle#1" ], "passages" : [ { "context" : "The battle of Zzhill was fought below the walls of Zzhill around 1300 BC; Zzport sent ships.", "end" : 20, "name" : "Battle of Zzhill", "quote" : "battle of Zzhill", "start" : 4 }, { "context" : "Zzhill burned soon after, and the battle of Zzhill was remembered in the songs of Zzland.", "end" : 143, "name" : "Battle of Zzhill", "quote" : "battle of Zzhill", "start" : 127 } ], "reasons" : [ "names it 2 times: \"battle of Zzhill\"", "3 findings within 118 km (nearest 0 km), 3 overlapping in time" ], "score" : 1.7, "status" : "confirmed" }
+{ "citekey" : "zzvolc2004_ash", "computed_at" : "TS", "event_id" : "zz_ashfall", "findings" : [ "zzvolc2004_ash#0" ], "passages" : [ ], "reasons" : [ "1 finding within 48 km (nearest 48 km), 1 overlapping in time" ], "score" : 0.409, "status" : "proposed" }
+## event_link_checks 2 rows
+{ "checked_at" : "TS", "event_id" : "zz_ashfall" }
+{ "checked_at" : "TS", "event_id" : "zz_battle" }
+## corrections 2 rows
+{ "checked_at" : null, "created_at" : "TS", "field" : "description", "id" : 1, "status" : "active", "target_id" : "gvp_13879", "target_kind" : "event", "updated_at" : "TS", "upstream" : "gvp", "upstream_now" : null, "upstream_value" : "Confirmed Eruption at Santorini; VEI 7", "value" : "home" }
+{ "checked_at" : null, "created_at" : "TS", "field" : "label", "id" : 2, "status" : "active", "target_id" : "gvp_13879", "target_kind" : "event", "updated_at" : "TS", "upstream" : "gvp", "upstream_now" : null, "upstream_value" : "Eruption of Santorini", "value" : "An eruption, as cat names it" }
+## attestations 6 rows
+{ "canvas" : null, "char_end" : 44, "char_start" : 18, "chunk_ord" : 0, "citekey" : "zzpaira2001_home", "created_at" : "TS", "cts_urn" : null, "id" : 6, "note" : null, "origin" : "instance:xcat", "page" : null, "prefix" : null, "quote" : "walls of the citadel stood", "suffix" : null, "target_id" : "zz_hill", "target_type" : "place", "uid" : "attestation:zzpaira2001_cat:zz_hill", "updated_at" : "TS", "xywh" : null }
+{ "canvas" : null, "char_end" : 49, "char_start" : 31, "chunk_ord" : 0, "citekey" : "zzpairb2001_home", "created_at" : "TS", "cts_urn" : null, "id" : 4, "note" : null, "origin" : "instance:xhome", "page" : null, "prefix" : null, "quote" : "gate faced the sea", "suffix" : null, "target_id" : "zz_hill", "target_type" : "place", "uid" : "attestation:zzpairb2001_home:zz_hill", "updated_at" : "TS", "xywh" : null }
+{ "canvas" : null, "char_end" : 50, "char_start" : 30, "chunk_ord" : null, "citekey" : "zzhill1990_battle", "created_at" : "TS", "cts_urn" : null, "id" : 1, "note" : null, "origin" : "instance:xcat", "page" : null, "prefix" : null, "quote" : "The battle of Zzhill", "suffix" : null, "target_id" : "zz_hill", "target_type" : "place", "uid" : "attestation:zzhill1990_battle:zz_hill", "updated_at" : "TS", "xywh" : null }
+{ "canvas" : null, "char_end" : null, "char_start" : null, "chunk_ord" : null, "citekey" : "zzhill1990_battle", "created_at" : "TS", "cts_urn" : null, "id" : 2, "note" : null, "origin" : "instance:xcat", "page" : "12", "prefix" : null, "quote" : "fought below the walls", "suffix" : null, "target_id" : "zz_battle", "target_type" : "event", "uid" : "attestation:zzhill1990_battle:zz_battle", "updated_at" : "TS", "xywh" : null }
+{ "canvas" : null, "char_end" : null, "char_start" : null, "chunk_ord" : null, "citekey" : "zzpairb2001_home", "created_at" : "TS", "cts_urn" : null, "id" : 5, "note" : null, "origin" : "instance:xhome", "page" : null, "prefix" : null, "quote" : "A tower guarded the road", "suffix" : null, "target_id" : "zz_harbour", "target_type" : "place", "uid" : "attestation:zzpairb2001_home:zz_harbour", "updated_at" : "TS", "xywh" : null }
+{ "canvas" : null, "char_end" : null, "char_start" : null, "chunk_ord" : null, "citekey" : "zzvolc2004_ash", "created_at" : "TS", "cts_urn" : null, "id" : 3, "note" : "patched", "origin" : "instance:xcat", "page" : null, "prefix" : null, "quote" : "Zzport", "suffix" : null, "target_id" : "zz_camp_north", "target_type" : "place", "uid" : "attestation:zzvolc2004_ash:zz_camp_north", "updated_at" : "TS", "xywh" : null }
+## finding_places 10 rows
+{ "finding_id" : "zzhill1990_battle#0", "place_id" : "zz_hill" }
+{ "finding_id" : "zzhill1990_battle#0", "place_id" : "zz_land" }
+{ "finding_id" : "zzhill1990_battle#0", "place_id" : "zz_march" }
+{ "finding_id" : "zzhill1990_battle#1", "place_id" : "zz_harbour" }
+{ "finding_id" : "zzhill1990_battle#1", "place_id" : "zz_land" }
+{ "finding_id" : "zzhill1990_battle#1", "place_id" : "zz_march" }
+{ "finding_id" : "zzhill1990_battle#2", "place_id" : "zz_land" }
+{ "finding_id" : "zzhill1990_battle#2", "place_id" : "zz_march" }
+{ "finding_id" : "zzvolc2004_ash#0", "place_id" : "zz_land" }
+{ "finding_id" : "zzvolc2004_ash#0", "place_id" : "zz_march" }
+## uid_aliases 7 rows
+{ "alias_uid" : "event:zz_quake", "created_at" : "TS", "kind" : "event", "merge_id" : "UUID", "uid" : "event:zz_tremor" }
+{ "alias_uid" : "period:zz_age", "created_at" : "TS", "kind" : "period", "merge_id" : "UUID", "uid" : "period:zz_age" }
+{ "alias_uid" : "period:zz_dusk_c", "created_at" : "TS", "kind" : "period", "merge_id" : "UUID", "uid" : "period:zz_dusk_h" }
+{ "alias_uid" : "place:zz_both", "created_at" : "TS", "kind" : "place", "merge_id" : "UUID", "uid" : "place:zz_both" }
+{ "alias_uid" : "place:zz_tower_c", "created_at" : "TS", "kind" : "place", "merge_id" : "UUID", "uid" : "place:zz_tower_h" }
+{ "alias_uid" : "source:zzpaira2001_cat", "created_at" : "TS", "kind" : "source", "merge_id" : "UUID", "uid" : "source:zzpaira2001_home" }
+{ "alias_uid" : "source:zzpairb2001_cat", "created_at" : "TS", "kind" : "source", "merge_id" : "UUID", "uid" : "source:zzpairb2001_home" }
+## tombstones 5 rows
+{ "deleted_at" : "TS", "kind" : "attestation", "origin" : "instance:xcat", "uid" : "attestation:zzpaira2001_cat:zz_mound" }
+{ "deleted_at" : "TS", "kind" : "event", "origin" : "instance:xcat", "uid" : "tombstone:event" }
+{ "deleted_at" : "TS", "kind" : "place", "origin" : "instance:xcat", "uid" : "tombstone:place" }
+{ "deleted_at" : "TS", "kind" : "place", "origin" : "instance:xcat", "uid" : "tombstone:place" }
+{ "deleted_at" : "TS", "kind" : "place", "origin" : "instance:xcat", "uid" : "tombstone:place" }
+# the changes since the shared history imported into a copy
+200 {
+  "applied" : true,
+  "blobs" : 2,
+  "bundleId" : "UUID",
+  "conflicts" : [
+  ],
+  "counts" : [
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 2,
+      "keptLocal" : 0,
+      "kind" : "source",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 2,
+      "keptLocal" : 0,
+      "kind" : "attestation",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 3,
+      "keptLocal" : 0,
+      "kind" : "event",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 4
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 1,
+      "held" : 0,
+      "inserted" : 2,
+      "keptLocal" : 0,
+      "kind" : "place",
+      "skippedDeleted" : 0,
+      "unchanged" : 1,
+      "updated" : 1
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 2,
+      "keptLocal" : 0,
+      "kind" : "period",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    }
+  ],
+  "dryRun" : false,
+  "from" : {
+    "id" : "instance:xcat",
+    "label" : null
+  },
+  "issues" : [
+  ],
+  "mergeId" : "UUID",
+  "notes" : [
+    "old place id zz_well: names another place here — the bundle's is left out",
+    "the gazetteer/periods differ from the bundle's (bundle: 0 places, 280 periods) — events point into them by id"
+  ],
+  "planHash" : "DIGEST",
+  "problems" : [
+  ]
+}
+# the copy's rows
+## places 9 rows
+{ "dataset" : "local", "geom" : { "coordinates" : [ 31.5, 37.5 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "zz_both", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "site", "label" : "Zzboth", "label_norm" : "zzboth", "location_precision" : null, "origin" : "instance:xcat", "period" : "(,)", "properties" : { "added" : true }, "shape_area" : 0, "shape_box" : "BOX(31.5 37.5,31.5 37.5)", "shape_dim" : 0, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : "cat's map", "start_unknown" : false, "uid" : "place:zz_both", "updated_at" : "TS", "web_geojson" : null }
+{ "dataset" : "local", "geom" : { "coordinates" : [ 34.6, 40 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "zz_hill", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "site", "label" : "Zzhill", "label_norm" : "zzhill", "location_precision" : null, "origin" : "instance:xcat", "period" : "[-1650,-1179)", "properties" : null, "shape_area" : 0, "shape_box" : "BOX(34.6 40,34.6 40)", "shape_dim" : 0, "shape_valid" : true, "site_type" : "Q839954", "site_type_checked_at" : "TS", "source" : null, "start_unknown" : false, "uid" : "place:zz_hill", "updated_at" : "TS", "web_geojson" : null }
+{ "dataset" : "local", "geom" : { "coordinates" : [ 35.55, 39.25 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "zz_harbour", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "site", "label" : "Zzport", "label_norm" : "zzport", "location_precision" : null, "origin" : "instance:xcat", "period" : "[-1400,)", "properties" : null, "shape_area" : 0, "shape_box" : "BOX(35.55 39.25,35.55 39.25)", "shape_dim" : 0, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : null, "start_unknown" : false, "uid" : "place:zz_harbour", "updated_at" : "TS", "web_geojson" : null }
+{ "dataset" : "local", "geom" : { "coordinates" : [ 36.2, 38.6 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "zz_tower_c", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "site", "label" : "Zztower", "label_norm" : "zztower", "location_precision" : null, "origin" : "instance:xcat", "period" : "(,)", "properties" : { "added" : true }, "shape_area" : 0, "shape_box" : "BOX(36.2 38.6,36.2 38.6)", "shape_dim" : 0, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : "cat's map", "start_unknown" : false, "uid" : "place:zz_tower_c", "updated_at" : "TS", "web_geojson" : null }
+{ "dataset" : "local", "geom" : { "coordinates" : [ 36.4, 39.9 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "zz_camp_north", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "site", "label" : "Zzcamp", "label_norm" : "zzcamp", "location_precision" : null, "origin" : "instance:xcat", "period" : "[-1350,-1249)", "properties" : { "added" : true }, "shape_area" : 0, "shape_box" : "BOX(36.4 39.9,36.4 39.9)", "shape_dim" : 0, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : "a survey map", "start_unknown" : false, "uid" : "place:zz_camp_north", "updated_at" : "TS", "web_geojson" : null }
+{ "dataset" : "local", "geom" : { "coordinates" : [ 37.2, 38.1 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "geom_clipped" : null, "id" : "zz_mound", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "site", "label" : "Zzmound", "label_norm" : "zzmound", "location_precision" : null, "origin" : "instance:xcat", "period" : "[-1500,-1299)", "properties" : null, "shape_area" : 0, "shape_box" : "BOX(37.2 38.1,37.2 38.1)", "shape_dim" : 0, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : null, "start_unknown" : false, "uid" : "place:zz_mound", "updated_at" : "TS", "web_geojson" : null }
+{ "dataset" : "local", "geom" : { "coordinates" : [ [ [ 20, 30 ], [ 29, 30 ], [ 29, 35 ], [ 20, 35 ], [ 20, 30 ] ] ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Polygon" }, "geom_clipped" : null, "id" : "zz_sea", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "region", "label" : "Zzsea", "label_norm" : "zzsea", "location_precision" : null, "origin" : "instance:xcat", "period" : "(,)", "properties" : null, "shape_area" : 45, "shape_box" : "BOX(20 30,29 35)", "shape_dim" : 2, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : null, "start_unknown" : false, "uid" : "place:zz_sea", "updated_at" : "TS", "web_geojson" : "{\"type\":\"Polygon\",\"coordinates\":[[[20,30],[29,30],[29,35],[20,35],[20,30]]]}" }
+{ "dataset" : "local", "geom" : { "coordinates" : [ [ [ 30, 36 ], [ 40, 36 ], [ 40, 42 ], [ 30, 42 ], [ 30, 36 ] ] ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Polygon" }, "geom_clipped" : null, "id" : "zz_land", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "region", "label" : "Zzland", "label_norm" : "zzland", "location_precision" : null, "origin" : "instance:xcat", "period" : "[-2000,-999)", "properties" : null, "shape_area" : 60, "shape_box" : "BOX(30 36,40 42)", "shape_dim" : 2, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : null, "start_unknown" : false, "uid" : "place:zz_land", "updated_at" : "TS", "web_geojson" : "{\"type\":\"Polygon\",\"coordinates\":[[[30,36],[40,36],[40,42],[30,42],[30,36]]]}" }
+{ "dataset" : "local", "geom" : { "coordinates" : [ [ [ 33, 38 ], [ 36, 38 ], [ 36, 41 ], [ 33, 41 ], [ 33, 38 ] ] ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Polygon" }, "geom_clipped" : null, "id" : "zz_march", "import_ref" : null, "import_source" : null, "import_version" : null, "kind" : "region", "label" : "Zzmarch", "label_norm" : "zzmarch", "location_precision" : null, "origin" : "instance:xcat", "period" : "[-1600,-1199)", "properties" : null, "shape_area" : 9, "shape_box" : "BOX(33 38,36 41)", "shape_dim" : 2, "shape_valid" : true, "site_type" : null, "site_type_checked_at" : null, "source" : null, "start_unknown" : false, "uid" : "place:zz_march", "updated_at" : "TS", "web_geojson" : "{\"type\":\"Polygon\",\"coordinates\":[[[33,38],[36,38],[36,41],[33,41],[33,38]]]}" }
+## place_names 13 rows
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "", "manual" : false, "name" : "Zzboth", "period" : "(,)", "place_id" : "zz_both" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "", "manual" : false, "name" : "Zzcamp", "period" : "(,)", "place_id" : "zz_camp_north" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "", "manual" : false, "name" : "Zzmound", "period" : "(,)", "place_id" : "zz_mound" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "", "manual" : false, "name" : "Zzport", "period" : "(,)", "place_id" : "zz_harbour" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "", "manual" : false, "name" : "Zzsea", "period" : "(,)", "place_id" : "zz_sea" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "", "manual" : false, "name" : "Zztower", "period" : "(,)", "place_id" : "zz_tower_c" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "de", "manual" : false, "name" : "Zzhügel", "period" : "(,)", "place_id" : "zz_hill" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "de", "manual" : false, "name" : "Zzlager", "period" : "(,)", "place_id" : "zz_camp_north" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "en", "manual" : false, "name" : "Zzhill", "period" : "(,)", "place_id" : "zz_hill" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "en", "manual" : false, "name" : "Zzland", "period" : "(,)", "place_id" : "zz_land" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "en", "manual" : false, "name" : "Zzmarch", "period" : "(,)", "place_id" : "zz_march" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "la", "manual" : false, "name" : "Zzlandia", "period" : "(,)", "place_id" : "zz_land" }
+{ "citation" : null, "import_ref" : "", "import_source" : "", "import_version" : null, "lang" : "tr", "manual" : false, "name" : "Zzhill Höyük", "period" : "(,)", "place_id" : "zz_hill" }
+## place_relations 7 rows
+{ "child_id" : "zz_camp_north", "kind" : "spatial_containment", "parent_id" : "zz_land", "period" : "[-2000,-999)" }
+{ "child_id" : "zz_harbour", "kind" : "spatial_containment", "parent_id" : "zz_land", "period" : "[-2000,-999)" }
+{ "child_id" : "zz_harbour", "kind" : "spatial_containment", "parent_id" : "zz_march", "period" : "[-1600,-1199)" }
+{ "child_id" : "zz_hill", "kind" : "spatial_containment", "parent_id" : "zz_land", "period" : "[-2000,-999)" }
+{ "child_id" : "zz_hill", "kind" : "spatial_containment", "parent_id" : "zz_march", "period" : "[-1600,-1199)" }
+{ "child_id" : "zz_march", "kind" : "part_of", "parent_id" : "zz_land", "period" : "(,)" }
+{ "child_id" : "zz_mound", "kind" : "spatial_containment", "parent_id" : "zz_land", "period" : "[-2000,-999)" }
+## place_links 0 rows
+## place_types 0 rows
+## place_aliases 3 rows
+{ "alias" : "zz_camp", "created_at" : "TS", "place_id" : "zz_camp_north" }
+{ "alias" : "zz_mound_dup", "created_at" : "TS", "place_id" : "zz_mound" }
+{ "alias" : "zz_port", "created_at" : "TS", "place_id" : "zz_harbour" }
+## periods 8 rows
+{ "authority" : "PeriodO zzqauth", "dataset" : "local", "id" : "zzqauth", "label" : "Zzq test chronology", "origin" : "instance:xcat", "parent_id" : null, "period" : "[-3000,-499)", "preset" : null, "region" : null, "uid" : "period:zzqauth", "updated_at" : "TS" }
+{ "authority" : "PeriodO zzqauthbronze · Zzq test chronology (2020)", "dataset" : "local", "id" : "zzqauthbronze", "label" : "Zzq Bronze Age", "origin" : "instance:xcat", "parent_id" : "zzqauth", "period" : "[-3000,-1199)", "preset" : null, "region" : "Zzqland", "uid" : "period:zzqauthbronze", "updated_at" : "TS" }
+{ "authority" : "PeriodO zzqauthiron · Zzq test chronology (2020)", "dataset" : "local", "id" : "zzqauthiron", "label" : "Zzq Iron Age", "origin" : "instance:xcat", "parent_id" : "zzqauth", "period" : "[-1200,-499)", "preset" : null, "region" : null, "uid" : "period:zzqauthiron", "updated_at" : "TS" }
+{ "authority" : "PeriodO zzqauthlba · Zzq test chronology (2020)", "dataset" : "local", "id" : "zzqauthlba", "label" : "Zzq Late Bronze Age", "origin" : "instance:xcat", "parent_id" : "zzqauthbronze", "period" : "[-1600,-1199)", "preset" : null, "region" : "Zzqland", "uid" : "period:zzqauthlba", "updated_at" : "TS" }
+{ "authority" : "PeriodO zzqother", "dataset" : "local", "id" : "zzqother", "label" : "Zzq other chronology", "origin" : "instance:xcat", "parent_id" : null, "period" : "[1,101)", "preset" : null, "region" : null, "uid" : "period:zzqother", "updated_at" : "TS" }
+{ "authority" : "PeriodO zzqother01 · Zzq other chronology", "dataset" : "local", "id" : "zzqother01", "label" : "Zzq Something", "origin" : "instance:xcat", "parent_id" : "zzqother", "period" : "[1,101)", "preset" : null, "region" : null, "uid" : "period:zzqother01", "updated_at" : "TS" }
+{ "authority" : null, "dataset" : "local", "id" : "zz_age", "label" : "The Zz era", "origin" : "instance:xcat", "parent_id" : null, "period" : "[-1600,-1001)", "preset" : null, "region" : "Zzland", "uid" : "period:zz_age", "updated_at" : "TS" }
+{ "authority" : null, "dataset" : "local", "id" : "zz_dusk_c", "label" : "The Zz dusk", "origin" : "instance:xcat", "parent_id" : null, "period" : "[-1200,-1001)", "preset" : null, "region" : "Zzland", "uid" : "period:zz_dusk_c", "updated_at" : "TS" }
+## events 8 rows
+{ "begin_by" : null, "catalogue" : "gvp", "central" : -1610, "citekey" : null, "dating_method" : "Isotopic: 14C (calibrated)", "description" : "edited", "end_from" : null, "geom" : { "coordinates" : [ 25.396, 36.404 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "historicity" : "attested", "id" : "gvp_13879", "inner_span" : null, "kind" : "eruption", "label" : "An eruption, as cat names it", "names" : [ "Eruption of Santorini", "Santorini eruption" ], "not_after" : -1596, "not_before" : -1624, "origin" : "instance:xcat", "outer_span" : "[-1624,-1595)", "parent_id" : null, "place_id" : null, "plus_minus" : 14, "scale" : null, "uid" : "event:gvp_13879", "uncertainty" : 14, "updated_at" : "TS", "wikidata" : null }
+{ "begin_by" : null, "catalogue" : null, "central" : null, "citekey" : "zzhill1990_battle", "dating_method" : null, "description" : "fought below the walls, at dawn", "end_from" : null, "geom" : null, "historicity" : "attested", "id" : "zz_battle", "inner_span" : null, "kind" : "battle", "label" : "Battle of Zzhill", "names" : [ ], "not_after" : -1290, "not_before" : -1310, "origin" : "instance:xcat", "outer_span" : "[-1310,-1289)", "parent_id" : null, "place_id" : "zz_hill", "plus_minus" : null, "scale" : null, "uid" : "event:zz_battle", "uncertainty" : 10, "updated_at" : "TS", "wikidata" : null }
+{ "begin_by" : null, "catalogue" : null, "central" : null, "citekey" : null, "dating_method" : null, "description" : "a war of the march lords", "end_from" : null, "geom" : { "coordinates" : [ [ [ 33.5, 38.5 ], [ 35.8, 38.5 ], [ 35.8, 40.5 ], [ 33.5, 40.5 ], [ 33.5, 38.5 ] ] ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Polygon" }, "historicity" : "attested", "id" : "zz_march_war", "inner_span" : null, "kind" : "war", "label" : "The Zzmarch war", "names" : [ ], "not_after" : -1280, "not_before" : -1320, "origin" : "instance:xcat", "outer_span" : "[-1320,-1279)", "parent_id" : null, "place_id" : null, "plus_minus" : null, "scale" : "regional", "uid" : "event:zz_march_war", "uncertainty" : 20, "updated_at" : "TS", "wikidata" : null }
+{ "begin_by" : null, "catalogue" : null, "central" : null, "citekey" : null, "dating_method" : null, "description" : null, "end_from" : null, "geom" : null, "historicity" : "attested", "id" : "zz_ashfall", "inner_span" : null, "kind" : "eruption", "label" : "Ash over Zzport", "names" : [ ], "not_after" : -1600, "not_before" : -1620, "origin" : "instance:xcat", "outer_span" : "[-1620,-1599)", "parent_id" : null, "place_id" : "zz_harbour", "plus_minus" : null, "scale" : null, "uid" : "event:zz_ashfall", "uncertainty" : 10, "updated_at" : "TS", "wikidata" : null }
+{ "begin_by" : null, "catalogue" : null, "central" : null, "citekey" : null, "dating_method" : null, "description" : null, "end_from" : null, "geom" : null, "historicity" : "attested", "id" : "zz_fire", "inner_span" : null, "kind" : "destruction", "label" : "Zzhill burns", "names" : [ ], "not_after" : -1270, "not_before" : -1290, "origin" : "instance:xcat", "outer_span" : "[-1290,-1269)", "parent_id" : "zz_battle", "place_id" : "zz_hill", "plus_minus" : null, "scale" : null, "uid" : "event:zz_fire", "uncertainty" : 10, "updated_at" : "TS", "wikidata" : null }
+{ "begin_by" : null, "catalogue" : null, "central" : null, "citekey" : null, "dating_method" : null, "description" : null, "end_from" : null, "geom" : null, "historicity" : "attested", "id" : "zz_flood", "inner_span" : null, "kind" : "flood", "label" : "A flood", "names" : [ ], "not_after" : -1240, "not_before" : -1250, "origin" : "instance:xcat", "outer_span" : "[-1250,-1239)", "parent_id" : null, "place_id" : "zz_harbour", "plus_minus" : null, "scale" : null, "uid" : "event:zz_flood", "uncertainty" : 5, "updated_at" : "TS", "wikidata" : null }
+{ "begin_by" : null, "catalogue" : null, "central" : null, "citekey" : null, "dating_method" : null, "description" : null, "end_from" : null, "geom" : null, "historicity" : "attested", "id" : "zz_omen", "inner_span" : null, "kind" : "omen", "label" : "An omen seen at cat", "names" : [ ], "not_after" : -1290, "not_before" : -1300, "origin" : "instance:xcat", "outer_span" : "[-1300,-1289)", "parent_id" : null, "place_id" : null, "plus_minus" : null, "scale" : null, "uid" : "event:zz_omen", "uncertainty" : 5, "updated_at" : "TS", "wikidata" : null }
+{ "begin_by" : null, "catalogue" : null, "central" : null, "citekey" : null, "dating_method" : null, "description" : null, "end_from" : null, "geom" : null, "historicity" : "attested", "id" : "zz_quake", "inner_span" : null, "kind" : "earthquake", "label" : "The great quake", "names" : [ ], "not_after" : -1195, "not_before" : -1205, "origin" : "instance:xcat", "outer_span" : "[-1205,-1194)", "parent_id" : null, "place_id" : "zz_hill", "plus_minus" : null, "scale" : null, "uid" : "event:zz_quake", "uncertainty" : 5, "updated_at" : "TS", "wikidata" : null }
+## event_aliases 2 rows
+{ "alias" : "zz_ash", "created_at" : "TS", "event_id" : "zz_ashfall" }
+{ "alias" : "zz_war", "created_at" : "TS", "event_id" : "zz_march_war" }
+## event_datings 1 rows
+{ "begin_by" : null, "citekey" : "zzhill1990_battle", "end_from" : null, "event_id" : "zz_battle", "method" : "historical", "not_after" : -1290, "not_before" : -1310, "note" : null }
+## event_edges 1 rows
+{ "citekey" : "zzhill1990_battle", "dst_id" : "zz_battle", "kind" : "after", "note" : null, "src_id" : "zz_fire" }
+## event_participants 1 rows
+{ "actor" : "the Zzport fleet", "citekey" : null, "event_id" : "zz_battle", "role" : "ally" }
+## event_catalogue 1 rows
+{ "begin_by" : null, "deaths" : null, "end_from" : null, "event_id" : "gvp_13879", "historicity" : "attested", "kind" : "eruption", "label" : "Eruption of Santorini", "lat" : 36.404, "lon" : 25.396, "magnitude" : null, "not_after" : -1596, "not_before" : -1624, "provider" : "gvp", "provider_id" : "13879", "record" : { "central" : -1610, "datingMethod" : "Isotopic: 14C (calibrated)", "description" : "Confirmed Eruption at Santorini; VEI 7", "group" : "volcano:212040", "historicity" : "attested", "kind" : "eruption", "label" : "Eruption of Santorini", "lat" : 36.404, "lon" : 25.396, "names" : [ "Santorini eruption" ], "plusMinus" : 14, "provider" : "gvp", "providerId" : "13879", "raw" : "{\"type\":\"Feature\",\"id\":\"Smithsonian_VOTW_Holocene_Eruptions.fid-5949073e_1a13b776a51_-7f7c\",\"geometry\":{\"type\":\"Point\",\"coordinates\":[25.396,36.404]},\"geometry_name\":\"GeoLocation\",\"properties\":{\"Volcano_Number\":212040,\"Volcano_Name\":\"Santorini\",\"Eruption_Number\":13879,\"Activity_Type\":\"Confirmed Eruption\",\"ExplosivityIndexMax\":7,\"ExplosivityIndexModifier\":\"?\",\"ActivityArea\":null,\"ActivityUnit\":null,\"StartEvidenceMethod\":\"Isotopic: 14C (calibrated)\",\"StartDateYearModifier\":null,\"StartDateYear\":-1610,\"StartDateYearUncertainty\":14,\"StartDateDayModifier\":null,\"StartDateMonth\":0,\"StartDateDay\":0,\"StartDateDayUncertainty\":null,\"EndDateYearModifier\":null,\"EndDateYear\":null,\"EndDateYearUncertainty\":null,\"EndDateDayModifier\":null,\"EndDateMonth\":null,\"EndDateDay\":null,\"EndDateDayUncertainty\":null}}", "timeSpan" : { "notAfter" : -1596, "notBefore" : -1624 }, "url" : "https://volcano.si.edu/volcano.cfm?vn=212040", "vei" : 7 }, "retrieved_at" : "TS", "url" : "https://volcano.si.edu/volcano.cfm?vn=212040", "vei" : 7 }
+## event_link_candidates 2 rows
+{ "citekey" : "zzhill1990_battle", "computed_at" : "TS", "event_id" : "zz_battle", "findings" : [ "zzhill1990_battle#0", "zzhill1990_battle#2", "zzhill1990_battle#1" ], "passages" : [ { "context" : "The battle of Zzhill was fought below the walls of Zzhill around 1300 BC; Zzport sent ships.", "end" : 20, "name" : "Battle of Zzhill", "quote" : "battle of Zzhill", "start" : 4 }, { "context" : "Zzhill burned soon after, and the battle of Zzhill was remembered in the songs of Zzland.", "end" : 143, "name" : "Battle of Zzhill", "quote" : "battle of Zzhill", "start" : 127 } ], "reasons" : [ "names it 2 times: \"battle of Zzhill\"", "3 findings within 118 km (nearest 0 km), 3 overlapping in time" ], "score" : 1.7, "status" : "confirmed" }
+{ "citekey" : "zzvolc2004_ash", "computed_at" : "TS", "event_id" : "zz_ashfall", "findings" : [ "zzvolc2004_ash#0" ], "passages" : [ ], "reasons" : [ "1 finding within 48 km (nearest 48 km), 1 overlapping in time" ], "score" : 0.409, "status" : "proposed" }
+## event_link_checks 2 rows
+{ "checked_at" : "TS", "event_id" : "zz_ashfall" }
+{ "checked_at" : "TS", "event_id" : "zz_battle" }
+## corrections 2 rows
+{ "checked_at" : null, "created_at" : "TS", "field" : "description", "id" : 1, "status" : "active", "target_id" : "gvp_13879", "target_kind" : "event", "updated_at" : "TS", "upstream" : "gvp", "upstream_now" : null, "upstream_value" : "Confirmed Eruption at Santorini; VEI 7", "value" : "edited" }
+{ "checked_at" : null, "created_at" : "TS", "field" : "label", "id" : 2, "status" : "active", "target_id" : "gvp_13879", "target_kind" : "event", "updated_at" : "TS", "upstream" : "gvp", "upstream_now" : null, "upstream_value" : "Eruption of Santorini", "value" : "An eruption, as cat names it" }
+## attestations 5 rows
+{ "canvas" : null, "char_end" : 50, "char_start" : 30, "chunk_ord" : null, "citekey" : "zzhill1990_battle", "created_at" : "TS", "cts_urn" : null, "id" : 1, "note" : null, "origin" : "instance:xcat", "page" : null, "prefix" : null, "quote" : "The battle of Zzhill", "suffix" : null, "target_id" : "zz_hill", "target_type" : "place", "uid" : "attestation:zzhill1990_battle:zz_hill", "updated_at" : "TS", "xywh" : null }
+{ "canvas" : null, "char_end" : null, "char_start" : null, "chunk_ord" : null, "citekey" : "zzhill1990_battle", "created_at" : "TS", "cts_urn" : null, "id" : 2, "note" : null, "origin" : "instance:xcat", "page" : "12", "prefix" : null, "quote" : "fought below the walls", "suffix" : null, "target_id" : "zz_battle", "target_type" : "event", "uid" : "attestation:zzhill1990_battle:zz_battle", "updated_at" : "TS", "xywh" : null }
+{ "canvas" : null, "char_end" : null, "char_start" : null, "chunk_ord" : null, "citekey" : "zzpaira2001_cat", "created_at" : "TS", "cts_urn" : null, "id" : 4, "note" : null, "origin" : "instance:xcat", "page" : null, "prefix" : null, "quote" : "walls of the citadel stood", "suffix" : null, "target_id" : "zz_hill", "target_type" : "place", "uid" : "attestation:zzpaira2001_cat:zz_hill", "updated_at" : "TS", "xywh" : null }
+{ "canvas" : null, "char_end" : null, "char_start" : null, "chunk_ord" : null, "citekey" : "zzpaira2001_cat", "created_at" : "TS", "cts_urn" : null, "id" : 5, "note" : null, "origin" : "instance:xcat", "page" : null, "prefix" : null, "quote" : "Smoke rose", "suffix" : null, "target_id" : "zz_mound", "target_type" : "place", "uid" : "attestation:zzpaira2001_cat:zz_mound", "updated_at" : "TS", "xywh" : null }
+{ "canvas" : null, "char_end" : null, "char_start" : null, "chunk_ord" : null, "citekey" : "zzvolc2004_ash", "created_at" : "TS", "cts_urn" : null, "id" : 3, "note" : "patched", "origin" : "instance:xcat", "page" : null, "prefix" : null, "quote" : "Zzport", "suffix" : null, "target_id" : "zz_camp_north", "target_type" : "place", "uid" : "attestation:zzvolc2004_ash:zz_camp_north", "updated_at" : "TS", "xywh" : null }
+## finding_places 10 rows
+{ "finding_id" : "zzhill1990_battle#0", "place_id" : "zz_hill" }
+{ "finding_id" : "zzhill1990_battle#0", "place_id" : "zz_land" }
+{ "finding_id" : "zzhill1990_battle#0", "place_id" : "zz_march" }
+{ "finding_id" : "zzhill1990_battle#1", "place_id" : "zz_harbour" }
+{ "finding_id" : "zzhill1990_battle#1", "place_id" : "zz_land" }
+{ "finding_id" : "zzhill1990_battle#1", "place_id" : "zz_march" }
+{ "finding_id" : "zzhill1990_battle#2", "place_id" : "zz_land" }
+{ "finding_id" : "zzhill1990_battle#2", "place_id" : "zz_march" }
+{ "finding_id" : "zzvolc2004_ash#0", "place_id" : "zz_land" }
+{ "finding_id" : "zzvolc2004_ash#0", "place_id" : "zz_march" }
+## uid_aliases 0 rows
+## tombstones 4 rows
+{ "deleted_at" : "TS", "kind" : "event", "origin" : "instance:xcat", "uid" : "tombstone:event" }
+{ "deleted_at" : "TS", "kind" : "place", "origin" : "instance:xcat", "uid" : "tombstone:place" }
+{ "deleted_at" : "TS", "kind" : "place", "origin" : "instance:xcat", "uid" : "tombstone:place" }
+{ "deleted_at" : "TS", "kind" : "place", "origin" : "instance:xcat", "uid" : "tombstone:place" }
