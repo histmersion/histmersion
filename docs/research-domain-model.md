@@ -1,6 +1,6 @@
 # Domain model, package by feature, first-party plugins out of the server (refactor step 3, design)
 
-Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18; slice 7 part 2 built — §19; slice 7 part 3 built — §20; slice 8 part 1 built — §21; slice 8 part 2 built (events, evidence, map tiles) — §21; slice 8 part 3 built (places, the catalogue's own data contribution but its carried kinds and merge rules, which are part 4) — §21; slice 8 part 4 built (the catalogue's carried kinds and merge rules) — §21: slice 8 is complete.** Written 2026-10-30 on master
+Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18; slice 7 part 2 built — §19; slice 7 part 3 built — §20; slice 8 part 1 built — §21; slice 8 part 2 built (events, evidence, map tiles) — §21; slice 8 part 3 built (places, the catalogue's own data contribution but its carried kinds and merge rules, which are part 4) — §21; slice 8 part 4 built (the catalogue's carried kinds and merge rules) — §21: slice 8 is complete; slice 9 built (media) — §22.** Written 2026-10-30 on master
 58de5489 (branch `domain-design`); revised after the user's reviews of §3: domains above features, measured;
 `personal` with its own interface; `library`, `research`, `catalogue`, `media` named; acquisition and OCR
 dissolved (2026-10-30); automation as a generic workflow engine fed by the domains, data management and file
@@ -16,6 +16,7 @@ Inventories too long for this page are in `research-domain-model/`:
 | [`objects.md`](research-domain-model/objects.md) | all 645 top-level objects without a same-named type, each with its destination and a one-line reason |
 | [`primitives.md`](research-domain-model/primitives.md) | primitive parameters and fields by name, measured per module, and the counts behind §4 |
 | `catalogue-live-*.tsv` | slice 8's live-volume measurements (§21, parts 1–3): per request its status, length, SHA-256, ETag and the median and p95 of 20 runs — digests and timings only |
+| `media-live-*.tsv` | slice 9's live-volume measurements (§22), the same driver and columns |
 
 `catalogue` is the domain of places, periods and events (Q17, decided 2026-10-30): the catalogue of data points the
 map and the timeline show. The name is one package segment (`domain.catalogue`, `api.catalogue`,
@@ -3117,3 +3118,203 @@ pluginVaults 29 (1 skipped), pluginsFetchers 15, pluginsEvents 18, pluginsMedia 
 26, pluginsCalibre 45, pluginResolver 23, chimneyIronTests 10, db 524, cli 232, web 639, server 1 443 (1 skipped, 1
 ignored; 1 new, the exchange oracle). The clean build reformatted no file: every commit passes `fmt-check` as it is.
 
+## 22. Slice 9 as built (media: pictures and their rights, 2026-11-01)
+
+Branch `refactor-s9` from master 5b1b4138 (slice 8 deployed). Six commits, each green on its own: the oracle on the
+unchanged code, the shared `Licence` and `Attribution`, media in its own domain with its services, its data
+contribution, the repositories narrowed with the native metadata, this section. Endpoints, MCP tools, CLI commands,
+bundle entries, merge plans, the media imports' stored and refused records with their reasons, licence classifications
+and attributions, IIIF manifests and media map tiles are unchanged: `ContractSnapshotSuite`, `CliHelpSnapshotSuite`,
+`AutomationOracleSuite`, `DataOracleSuite`, `CatalogueOracleSuite` and the new `MediaOracleSuite` held byte for byte
+after every commit; no oracle or snapshot was re-recorded, and no migration was added.
+
+**The oracle, first** (`MediaOracleSuite`, server, DB; `oracle/media/*.txt`, `HISTMERSION_UPDATE_ORACLE=1` rewrites
+them; recorded on the unchanged code and stable twice in a row before anything moved):
+
+| part | what it records |
+|---|---|
+| `licences.txt` (pure) | every licence statement the providers give (ids, short names, CC and public-domain URLs, free text, nothing) classified, its family, whether it needs a credit, whether the default allowlist and each provider's allows it, the attribution line made of it |
+| `pictures.txt` | a crafted collection over REST and MCP: a source's figures put, listed, read, patched (licence, caption, kind, point, period), refused; their links (depicts a place, an event, a finding), listed and deleted; a provider's pictures stored through the media store, their rights refreshed, thumbnails, the list, facets, a picture's detail, the map's picture layer (each tile's digest, length and ETag), place and event cards with their pictures, IIIF manifests and info, a bookmark on a picture, `lint --rule media-licence` |
+| `imports.txt` | the collection loop over fixture plugins (one with its own match rule, one searched) and the built-in Open Library covers: dry runs and import jobs, every record stored or refused with its reason, the checks recorded, the job's progress lines and summary |
+| `covers.txt` | `media covers` over a fixture Calibre library (never the user's): the covers chosen, stored and skipped |
+| `exchange.txt` | the media's bundle entries line by line, an import into an empty collection, a merge plan with its rounds and its apply (figures folded by their bytes, a taken name relabelled, a body following a renamed figure, links folded), an incremental bundle; every row of the media's tables |
+
+UUIDs, timestamps, bundle digests and the random hex of a stored name are masked; a tile's bytes are hashed after its
+uids are replaced. `server/media/MediaWire` (the suite's wiring of the media store and the imports) was extracted from
+`MediaTrafficSuite`, whose transcript did not change.
+
+**The shared licence** (the kernel, `domain`): `Licence(id: LicenceId, family: LicenceFamily)` with its functions on
+the companion (`classify`, `ofUrl`, `ofStatement`, `parse`, `firstKnown`, `allowed`, `allowList`), `LicenceFamily`
+(the enum with its wire strings, `needsAttribution`, `isPublicDomain`, `allowable`, `fromWire`) and `Attribution`
+(the credit line, CC0 and the public-domain mark). `LicenceId` is an Iron newtype in `values`. `MediaLicence` and
+`MediaRights` are gone: the plugin host (`HostLicences`, `PluginMedia`, `MediaSettings`) judges a plugin's statement
+with the same code. The media keeps `LicencePolicy` (`domain.media.imports`): the allowed families, read from a
+built-in's own `media.<provider>.licences` key or a plugin's `media.collections` ones — both key families, no key
+changed (Q13). There is no second copy of the classification.
+
+**`domain.media`, by feature** (db module for the repositories, core for the pure parts, server for the services):
+
+- **`assets`** — `AssetService` (a source's figures: replace, add, list, read, detail, patch; the collections'
+  pictures: list, show, thumbnail, file, facets, geo; a place's, an event's and a source's pictures for its card;
+  `geoOf` for the map) over `AssetRepo` and `MediaRepo`; `AssetsControllers`, `IiifControllers` and `IiifRoutes`;
+  `MediaMapLayer` (the catalogue's `MapLayer`, over the service); `PictureReferable`; `NewFigure` and `Reconciled`
+  (core); `AssetPlan` (core: what a merge plan decides of figures, below); `AssetsData` (the `media-licence` check).
+- **`links`** — `AssetLinkService` (what a figure depicts: list, put, delete) over `AssetLinkRepo`;
+  `AssetLinksControllers`.
+- **`imports`** — `ImportService` (the targets and pending work of a collection, a place's facts and external ids,
+  the checks recorded) over `ImportRepo`; `MediaStore` (where an import stores a record: over `AssetService` and
+  `ImportService`); the collection loop: `MediaImporter`, `MediaImporters`, `MediaStep`, `OwnImport`,
+  `CollectionImport`, `SearchedCollection` (was `Collection`), `PluginCollection`, `BuiltinMedia`;
+  `ImportsControllers`; `LicencePolicy`, `MediaRecord`, `MediaMatch` (core).
+- **`covers`** — `CoverService` (the sources with an ISBN and no cover, the covers kept) over `CoverRepo`;
+  `SourcePictures` (a source's cover and illustration, Open Library's and the Calibre store's), `CoversControllers`;
+  `CoverChoice` and `OpenLibrary` (files module, package `domain.media.covers`).
+- **`figures`** — `FigureService` (the licence a source's figures inherit) over `FigureRepo`; `FiguresControllers`;
+  `Figures` and `FigurePick` (core).
+
+`MediaState` is the record the `InMemory` services share, `MediaJobs` runs the media's background jobs one at a time,
+`MediaTools` holds its four MCP tools (`assets`, `patch_asset`, `asset_links`, `delete_asset_link`, out of
+`McpTools`), `MediaRoutes` its routes in today's order, and `MediaSources` is what it reads of the library's sources
+(`domain.library.sources.SourceMedia` implements it over `SourceRepo`). The composition root builds it all in
+`server/MediaWiring`; a source's figures read from disk at seed time are `server/SeedFigureFiles` (the importer is
+handed `Importer.SeedFigures`, so `Importer` names no media repository). `MediaHandlers`, `DbMediaStore` and
+`db/Figures` are gone.
+
+**Services and their twins.** Each service is a trait with `Implementation` (over a `Transactor`, owning its
+transactions) and `InMemory` (over `MediaState`, a clock and an id source) and one contract suite run on both
+(`AssetServiceContract`, `AssetLinkServiceContract`, `ImportServiceContract`, `CoverServiceContract`,
+`FigureServiceContract`, gathered in `MediaStoreSuite`); the controllers have their own suites
+(`AssetsControllersSuite`, `AssetLinksControllersSuite`, `FiguresControllersSuite`). The in-memory `ImportService`,
+`CoverService` and `FigureService` hold no places, events or sources, so they answer the empty case (no target, no
+candidate, nothing to fill); their database answers are in the oracle and the db suites.
+
+**Its data contribution** (`MediaData`, registered in `Deps.data` through `TransitionContributions.withOwn` beside
+`CatalogueData`): its tables (`assets`, `asset_links`, `media_links`, `media_checks`), the thumbnails cache, the
+`media-licence` check (its SQL moved out of `LintRepo.projections` into `MediaRepo.licenceGaps`), its carried kinds and
+merge rules (`MediaExchange`, db module). The adapters' media branches are gone (`TablesAdapter`, `MaintenanceAdapter`,
+`CheckRulesAdapter`, `CarriedKindsAdapter`, `MergeRulesAdapter`).
+
+- **Carried kinds.** `AssetsCarried` (the figures: each line stamped with its rev, its bytes a blob; the metadata of a
+  figure whose bytes are here already at rank 51 among the rows, the rest as their bytes arrive) over
+  `AssetBundleRepo`, and `AssetLinksCarried` (after the blobs, rank 102) over `AssetLinkBundleRepo` — the readers and
+  steps that left `BundleRepo` and `BundleImport.Writer`, at the same stages and ranks. The Writer gained
+  `touchSource` (a source a kind's step wrote under is placed again in the derived step) and `once` with
+  `BundleImport.Once` (an index of the bundle's lines a kind computes once per import); an asset's bytes are no longer
+  the Writer's to sink.
+- **Merge rules.** `AssetMergeRules` (the ledger names a figure by its name; referable; it gathers the names the
+  figures of the bundle's sources have here, out of `MergeState`) and `AssetLinkMergeRules`. `AssetPlan` (core) is the
+  media's `PlanRules`: the source a figure or link belongs to, the figure folds of a pair of sources that fold (the same
+  bytes are one figure, a taken name gets the other collection's label, a body taken from the bundle follows the new
+  name, a link the survivor's figure has is one), the relabelling of an inserted figure whose name another figure of
+  its source has here, the body renames and the final lines. Two `PlanRun` hooks were added at the places the planner
+  did this before: `foldPairFirst` (in a pair's fold, before every kind's `foldPair`) and `relabel` (after the
+  findings' renumbering, given `PlanRelabels`); `bodyRenames` is a run's member. `MergeFold.freeAssetName` is
+  `AssetPlan.freeName`; the link-safe name both the planner and the media use is `util.text.SafeName` (api module;
+  `AssetLinks.safeName` forwards to it).
+
+**The repositories narrowed.** `AssetRepo`, `MediaRepo` and `AssetBundleRepo` are `private[assets]` (their rows too),
+`AssetLinkRepo` and `AssetLinkBundleRepo` `private[links]`, `ImportRepo` `private[imports]`, `CoverRepo`
+`private[covers]`, `FigureRepo` `private[figures]`; no code outside its feature names one. The db suites reach them
+through `AssetFixtures`, `AssetLinkFixtures`, `ImportFixtures`, `CoverFixtures` and `FigureFixtures`.
+
+**Equivalence.** The six oracles and both snapshots identical after every commit. The pictures' map layer, a place's and an event's
+card now reach the pictures through `AssetService` (the same SQL), so the live-volume comparison was run: a `*_test`
+database restored from the newest live dump (16 GB; 1.8 million places, 4 247 events, 14 411 findings, 3 140 placed
+pictures) on a scratch cluster (`shared_buffers` 512 MB), its statistics taken once (`vacuumdb --analyze-only`) and
+kept as the template each run copies; a scratch server (`-Xmx4g`, `sandbox-exec` refusing every connection but
+loopback, scratch home, settings and data directory, the converter pointed at nothing, the tile cache at its 1 MB
+floor) on a class path frozen from each build (5b1b4138 built from a `git archive` of it; this branch), driven by
+`scripts/perf/catalogue_live.py` (242 requests: every layer's tiles, `findings`, `events`, `events/geo`,
+`events/leads`, `places/geo`, place searches, three places' detail, children, tree, footprints, links and what they
+select, the histogram). Each build ran twice, each run on a fresh copy of the template (`media-live-before.tsv`,
+`media-live-before-2.tsv`, `media-live.tsv`, `media-live-2.tsv`): all 242 answers — every tile's bytes and ETag, the
+media layer's among them, and every other response — identical in all four runs, both passes stable. Medians summed
+per kind of request, the unchanged code's second run against the branch's second:
+
+| requests | n | unchanged (ms) | branch (ms) | ratio |
+|---|---:|---:|---:|---:|
+| tiles (sites, events, media) | 160 | 1 181.6 | 1 178.6 | 1.00 |
+| — of which the media layer | 40 | 91.2 | 90.4 | 0.99 |
+| `findings` (geo-when) | 9 | 47.9 | 47.1 | 0.98 |
+| `events` | 6 | 32.9 | 32.5 | 0.99 |
+| `events/geo` | 6 | 48.9 | 48.5 | 0.99 |
+| `events/leads` | 6 | 45.4 | 44.7 | 0.98 |
+| `places/geo` | 5 | 186.3 | 181.6 | 0.97 |
+| `places` (search) | 10 | 134.9 | 187.8 | 1.39 |
+| a place: detail, children, tree, footprints, links | 27 | 106.1 | 101.8 | 0.96 |
+| what `place=<id>` selects | 9 | 517.5 | 504.4 | 0.97 |
+| `aggregate` (histogram) | 4 | 2 358.7 | 2 333.1 | 0.99 |
+
+(The media layer's row compares the first runs.) The requests slower by more than 10 % at a median of 5 ms or more
+move between runs of the same code: two undated-sites tiles at zoom 8 took 5.0 and 5.4 ms in the unchanged code's first
+run and 12.2 and 5.3 ms in its second, 11.8 and 13.0 ms in both of the branch's; the `bab` search took 6.9 ms in the
+unchanged code's second run, 15.5 ms in the branch's second and 195.0 against 132.0 ms summed over all searches between
+the first runs (each server start ANALYZEs the tables that have no statistics from a random sample, as §21 found). No
+code on those paths changed; totals: 4 660.2 ms unchanged, 4 660.1 ms branch. The databases were dropped and the
+cluster removed afterwards.
+
+**Architecture.** `exceptions.tsv` 362 → 344 rows, deletions only: direction 239 → 229 (`MediaRepo` naming
+`ExternalIds`; `Migrate` naming `Collection`; `MediaHandlers` naming `SourceCoverParams` and `Deps`; `MediaImporter`
+and `MediaImporters` naming `Deps`; `SourcePictures` naming `SourceCoverParams`; `MergeFold` naming `AssetLinks`;
+`MergePlanner` naming `AssetLink` and `AssetLinks`), filesystem 54 → 52 (`db/Figures` with `Files.*` and
+`java.nio.file`), repository 65 → 59 (`Importer` and `IngestHandlers` and `AcquireHandlers` naming `AssetRepo`;
+`Handlers` naming `AssetLinkRepo`, `AssetMetaRepo` and `MediaRepo`); process (4) unchanged. `places.tsv`: the moved
+files' rows gone; `server/MediaWiring.scala` and `server/SeedFigureFiles.scala` placed in `server`,
+`api/AssetsMarkdown.scala` (the assets' Markdown, out of `IngestMarkdown`) in `media.assets`, `api/SourceCoverParams`
+re-placed from `library.sources` to `media.covers`.
+
+The media rows that remain, by owner:
+
+| rows | owner | why |
+|---|---|---|
+| `api/AssetLinkTarget` naming `Finding` | library (slice 10) | a figure's link names a finding; the record's other end is the library's |
+| `api/EventDetail`, `api/PlaceDetail` naming `MediaThumb` | slice 12 (wire records) | the catalogue's cards carry the media's thumbnails |
+| `api/Markdown` (14: `AssetDetail`, `AssetLink`, `AssetLinkList`, `FigureLicenceFill`, `MediaCount`, `MediaCoversReport`, `MediaFacets`, `MediaImportReport`, `MediaItem`, `MediaList`, `MediaProvider`, `MediaProviderInfo`, `MediaSample`, `MediaThumb`) | slice 12 | `api.media.*` |
+| `files/BundleEntities` naming `AssetLink` | slice 12 (the format's vocabulary) | `BundleKind.AssetLink`, the format's own word |
+
+**Deviations.**
+
+- `ExternalIds` and `Wikidata` are in `domain.catalogue.places`, not media: the events' imports read them too, and a
+  place's external ids are the catalogue's.
+- A Commons category found by an import is written to `place_links` by the media's `ImportRepo`, as before; the
+  covers' and imports' SQL still join the library's `sources` and the catalogue's `places` and `events`, and
+  `AssetRepo` touches `sources.updated_at` when a source's figures change (as the leads did in slice 8).
+- `MediaSources` is the media's interface the library implements (the sources' current citekey, whether one exists, its
+  body) rather than the media reading `SourceRepo`.
+- `DataCredit` stays a wire record: `Attribution` is not yet applied to the catalogue's datasets or `sources.license`
+  (slice 10, Q26).
+- The import job's `since` reads the service's clock instead of `System.currentTimeMillis`, so the in-memory twin and
+  the tests can fix it; the job's lines are unchanged.
+- `media covers`' read of the Calibre library stays host-side in the CLI (the CLI commands are byte-identical; the CLI's
+  own slice is 13).
+- A figure folder is listed with `Using.resource` (the stream is closed), which it was not before.
+- `IngestHandlers` takes the `AssetService` (a source's figures stored at ingest) until the library's slice.
+- The bundle readers' blob of a figure and the planner's hooks keep today's order exactly: the media's
+  `foldPairFirst` runs where the planner folded figures, before the catalogue's `foldPair`.
+
+**Native image.** `reachability-metadata.json` (server), compared field by field with the compiled classes: renamed
+`db.AssetBytesRow$`, `AssetDetailRow$`, `AssetInfoRow$`, `MediaGeoRow$`, `MediaItemRow$`, `MediaThumbRow$` →
+`domain.media.assets.*$`, `db.BAssetRow$` → `domain.media.assets.AssetBundleRow$` (each `derived$DbCodec$lzy1`);
+`db.AssetLinkRepo$package$`'s `given_DbCodec_AssetLink` → `domain.media.links.AssetLinkRepo$`
+(`given_DbCodec_AssetLink$lzy1`); `server.McpTools$AssetsInput$`, `PatchAssetInput$`, `AssetLinksInput$`,
+`DeleteAssetLinkInput$` → `domain.media.MediaTools$…$` (their codec and schema fields as `javap -p` reads them);
+`server.media.SourcePictures` → `domain.media.covers.SourcePictures` (`openLibraryClient$lzy1`); the inputs left in
+`McpTools` gained the renumbered fields `javap -p` reads (`AgentStateInput$` lzy28, `DeleteAgentStateInput$` lzy29,
+`GoalsInput$` lzy27); removed `db.AssetRepo$package$`, `MediaRepo$package$`, `MediaTargetRow$` and `BundleRepo$package$`'s
+`given_DbCodec_BAssetRow`. The new services, plans and kinds hold eager values and anonymous classes only. One entry
+not this slice's names a class that no longer exists (`db.JobRepo$package$`, left as it was). No tracing-agent run, no
+native build. To check at the bundle: `--self-check`; `smoke.sh`; `histmersion assets`, `asset-links` and `media`
+(list, show, a figure's detail and patch, `fill-licences`) and the MCP `assets`, `patch_asset`, `asset_links`, `delete_asset_link`; the web UI's pictures (a place's and an event's
+card, the media layer, a picture's page, IIIF); `media import <provider> --dry-run` and an import job; `media covers`
+(Open Library and Calibre); `bundle export|import` and `merge plan|apply` with figures; `lint --rule media-licence`.
+
+**Tests.** After `sbt clean`, with the sbt disk cache moved aside so nothing was replayed, every module's suites with the
+DB suites on a throwaway database (`just test-quick` with every module named; its `fmt-check` passed first): 5 158
+tests, 0 failed — values 21, valuesJS 21, api 823, apiJS 84, config 67, files 73, core 765 (10 new: `LicenceFamilySuite`,
+`LicencePolicySuite`, `FiguresSuite`, `AssetPlanSuite`), pluginApi 45, upstreams 57, pluginHost 39, pluginTestkit 19,
+pluginVaults 29 (1 skipped), pluginsFetchers 15, pluginsEvents 18, pluginsMedia 52, pluginsGazetteers 58,
+pluginsAiHttp 26, pluginsCalibre 45, pluginResolver 23, chimneyIronTests 10, db 517 (524 at slice 8; the figures-on-disk suite moved to
+the server as `SeedFigureFilesSuite`), cli 232, web 639, server
+1 480 (1 skipped, 1 ignored; the media oracle, the five contract suites on both twins, the three controller suites).
+Two intermediate commits (the domain move and the data contribution) left a few lines unformatted that the next commit
+formatted (the formatter's cache had replayed); every commit from the narrowing on passes `fmt-check` as it is.
