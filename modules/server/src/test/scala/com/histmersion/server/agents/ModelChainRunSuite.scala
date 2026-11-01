@@ -96,7 +96,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   /** Spend `tokens` on `model`, finished `minutesAgo`, as a recorded LLM attempt of a run of its own. */
   private def spend(model: ModelRef, tokens: Long, minutesAgo: Int = 1): String =
-    val run = AgentRepo.create(
+    val run = TestRuns.create(
       ds,
       Pipeline.EnrichSource,
       "zzchain_spent",

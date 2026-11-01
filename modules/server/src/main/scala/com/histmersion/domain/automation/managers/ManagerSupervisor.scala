@@ -667,20 +667,22 @@ final class ManagerSupervisor(
         val id =
           try
             Some(transact(ds) {
-              val id = AgentRepo.createIn(
-                pr.pipeline,
-                pr.target,
-                pr.model,
-                BigDecimal(pr.usd),
-                pr.tokens,
-                params,
-                None,
-                pr.goal,
-                None,
-                Origin.Manager,
-                pr.dryRun,
-                Some(m.id),
-                Some(item.id)
+              val id = agents.jobRuns.createIn(
+                AgentRepo.runRow(
+                  pr.pipeline,
+                  pr.target,
+                  pr.model,
+                  BigDecimal(pr.usd),
+                  pr.tokens,
+                  params,
+                  None,
+                  pr.goal,
+                  None,
+                  Origin.Manager,
+                  pr.dryRun,
+                  Some(m.id),
+                  Some(item.id)
+                )
               )
               if !ManagerRepo.dispatchIn(item.id, id, state) then throw Lost()
               ManagerRepo.usedIn(hints, id)
@@ -740,6 +742,7 @@ final class ManagerSupervisor(
     def target(m: ManagerInfo, itemKind: String, raw: String): Either[ApiError, String] =
       Left(ApiError(s"unknown item kind '$itemKind'"))
     def pipelineOf(itemKind: String): Pipeline = ManagerSupervisor.this.pipelineOf(itemKind)
+    def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig = ManagerConfig()
 
   def event(id: String, item: Option[Long], run: Option[String], feed: String, text: String): Unit =
     ManagerRepo.event(ds, id, item, run, feed, text)

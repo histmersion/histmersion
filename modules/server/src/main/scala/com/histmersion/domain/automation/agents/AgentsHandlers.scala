@@ -26,6 +26,7 @@ import com.histmersion.domain.automation.workflows.{ToolName, Workflows}
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.pluginhost.HostAiHttp
 
+import com.histmersion.util.database.Transactor
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -75,6 +76,9 @@ final class AgentsHandlers(
 
   /** The work lists' operations as a person's go: the worklog lines of the engine's services. */
   val workLists: com.histmersion.domain.automation.worklists.WorkListControllers = deps.workLists
+
+  /** The runs' rows, recorded through the jobs area that owns the `jobs` table. */
+  val jobRuns: com.histmersion.util.jobs.JobRuns = com.histmersion.util.jobs.JobRuns(Transactor(ds))
 
   /** The work lists' kernel (the runs' log lines, the review's tasks). */
   val queues: com.histmersion.domain.automation.worklists.QueueService = deps.queues
@@ -481,26 +485,28 @@ final class AgentsHandlers(
       tweak: RunParams => RunParams
   ): Either[ApiError, RunInfo] =
     prepare(req, parent).map { pr =>
-      val run = AgentRepo.create(
-        ds,
-        pr.pipeline,
-        pr.target,
-        pr.model,
-        BigDecimal(pr.usd),
-        pr.tokens,
-        tweak(pr.params),
-        req.acquireItem,
-        pr.goal,
-        parent.map(_.id),
-        origin,
-        dryRun = pr.dryRun
+      val id = jobRuns.create(
+        AgentRepo.runRow(
+          pr.pipeline,
+          pr.target,
+          pr.model,
+          BigDecimal(pr.usd),
+          pr.tokens,
+          tweak(pr.params),
+          req.acquireItem,
+          pr.goal,
+          parent.map(_.id),
+          origin,
+          dryRun = pr.dryRun
+        )
       )
+      val run = AgentRepo.get(ds, id).get
       engine.submit(run.id)
       run
     }
 
   /** A run request checked and resolved, ready to be created (a manager creates it inside its own transaction,
-    * [[AgentRepo.createIn]], and submits it after the commit).
+    * [[com.histmersion.util.jobs.JobRuns.createIn]], and submits it after the commit).
     */
   final case class Prepared(
       pipeline: Pipeline,

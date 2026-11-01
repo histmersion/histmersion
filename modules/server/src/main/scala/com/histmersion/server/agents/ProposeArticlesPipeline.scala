@@ -44,7 +44,7 @@ final class ProposeArticlesPipeline(h: Handlers, ds: DataSource, cfg: => AgentsC
         "propose",
         StepAgent.ArticlePlanner,
         input(ctx, loaded),
-        AnswerSchemas.articles
+        ResearchAnswers.articles
       )((a, last) => check(ctx, loaded, a, last).map(Checked(_, Nil)))
       recorded <- ctx.code[Recorded]("record")(record(ctx, goal, plan))
       closed <- ctx.code[String]("close")(

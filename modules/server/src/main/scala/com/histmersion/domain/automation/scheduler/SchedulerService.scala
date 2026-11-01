@@ -216,7 +216,7 @@ final class SchedulerService(
     val caps = ms.flatMap(m => m.config.maxRuns.map(m.id -> _)).toMap
     val res = Resources(
       maxRuns = cfg.maxConcurrentRuns,
-      occupied = AgentRepo.active(ds),
+      occupied = agents.jobRuns.count(Agents.JobKind, (Agents.RunState.Queued.wire, Agents.RunState.Running.wire)),
       poolCap = PlanQuota.PoolId.values.toList.map(p => p.wire -> poolCap(p)).toMap,
       poolUsed = runs.flatMap((p, _) => poolsOfRun(p)).groupMapReduce(_.wire)(_ => 1)(_ + _),
       managerCap = caps,

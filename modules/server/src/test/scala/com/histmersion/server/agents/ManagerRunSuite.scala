@@ -123,11 +123,11 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   /** Settle a manager's run by hand: done (with a ledger of `majors` open MAJORs raised by it), or another state. */
   private def settle(run: String, slug: String, majors: List[Finding], status: RunState = RunState.Done): Unit =
-    assert(AgentRepo.transition(ds, run, RunState.Queued, RunState.Running).isDefined)
+    assert(TestRuns.transition(ds, run, RunState.Queued, RunState.Running).isDefined)
     val l = absorb(Ledger(slug), majors, run, 1)._1
     ReviewLedgerRepo.put(ds, l)
     assert(
-      AgentRepo
+      TestRuns
         .transition(ds, run, RunState.Running, status, error = Option.when(status == RunState.Failed)("boom"))
         .isDefined
     )
@@ -400,7 +400,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     a.managing.addItem(ReviewId, EnqueueRequest(ArticleReview, "zzagent_b1"))
     a.managers.tick(t0)
     val run = item("zzagent_b1").runId.get
-    assert(AgentRepo.transition(ds, run, RunState.Queued, RunState.Running).isDefined)
+    assert(TestRuns.transition(ds, run, RunState.Queued, RunState.Running).isDefined)
     val (b, _) = handlers(PanelClient(Model))
     b.engine.reconcile()
     val r = AgentRepo.get(ds, run).get
@@ -419,10 +419,10 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     a.managers.tick(t0)
     val (run1, run2) = (item("zzagent_r1").runId.get, item("zzagent_r2").runId.get)
     // at the crash: r1 was running, r2 had stalled (paused, resuming by itself); two more items wait
-    assert(AgentRepo.transition(ds, run1, RunState.Queued, RunState.Running).isDefined)
-    assert(AgentRepo.transition(ds, run2, RunState.Queued, RunState.Running).isDefined)
+    assert(TestRuns.transition(ds, run1, RunState.Queued, RunState.Running).isDefined)
+    assert(TestRuns.transition(ds, run2, RunState.Queued, RunState.Running).isDefined)
     assert(
-      AgentRepo
+      TestRuns
         .transition(
           ds,
           run2,
@@ -464,7 +464,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     // a pause only a person lifts frees its place: resuming it is their call
     val run3 = item("zzagent_r3").runId.get
     assert(
-      AgentRepo
+      TestRuns
         .transition(ds, run3, RunState.Queued, RunState.Paused, error = Some("requested: paused on request"))
         .isDefined
     )

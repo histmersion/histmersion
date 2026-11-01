@@ -340,10 +340,10 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val c = ScriptedClient(Model)
     val (a, h) = handlers(c); seed(h)
     val run = a.startRun(RunRequest("enrich-source", Ck)).toOption.get
-    assert(AgentRepo.transition(ds, run.id, RunState.Queued, RunState.Running).isDefined)
+    assert(TestRuns.transition(ds, run.id, RunState.Queued, RunState.Running).isDefined)
     JobRepo.failInterrupted(ds)
     assertEquals(AgentRepo.get(ds, run.id).get.status, "running")
-    val (paused, _) = AgentRepo.reconcile(ds)
+    val (paused, _) = TestRuns.reconcile(ds)
     assert(paused.nonEmpty)
     val r = AgentRepo.get(ds, run.id).get
     assertEquals(r.status, "paused")
@@ -838,9 +838,13 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def notesOnly(cap: Option[Int] = None): PipelineDef = new PipelineDef:
     def pipeline: Pipeline = Pipeline.EnrichSource
     def run(ctx: RunCtx): Either[Halt, String] =
-      ctx.llm[EnrichSource.Notes, String]("notes", StepAgent.EnrichNotes, "Write the notes.", AnswerSchemas.notes, cap)(
-        (n, _) => Right(Checked(n.notes))
-      )
+      ctx.llm[EnrichSource.Notes, String](
+        "notes",
+        StepAgent.EnrichNotes,
+        "Write the notes.",
+        LibraryAnswers.notes,
+        cap
+      )((n, _) => Right(Checked(n.notes)))
 
   /** A run of `pipeline` on the fake `claude`, configured with `agents.step.max-tokens = stepCap`. */
   private def claudeRun(fake: FakeCli.Fake, stepCap: Int, pipeline: PipelineDef): (AgentsHandlers, String) =
@@ -921,13 +925,13 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
             "notes-1",
             StepAgent.EnrichNotes,
             "Write the notes.",
-            AnswerSchemas.notes
+            LibraryAnswers.notes
           )((n, _) => Right(Checked(n.notes)))
           b <- ctx.llm[EnrichSource.Notes, String](
             "notes-2",
             StepAgent.EnrichNotes,
             "Write the notes.",
-            AnswerSchemas.notes
+            LibraryAnswers.notes
           )((n, _) => Right(Checked(n.notes)))
         yield a + b
     // 301k raw tokens per step against a 400k budget: counted in full the second step would not run
@@ -960,10 +964,10 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   test("restart: an interrupted run nobody watches resumes by itself; a person's run waits for them"):
     val (a, h) = handlers(ScriptedClient(Model)); seed(h)
     val mine = a.startRun(RunRequest("enrich-source", Ck)).toOption.get
-    val sched = AgentRepo.create(ds, Pipeline.EnrichSource, Ck, None, BigDecimal(1), 1000L, origin = Origin.Scheduler)
-    val mgr = AgentRepo.create(ds, Pipeline.EnrichSource, Ck, None, BigDecimal(1), 1000L, origin = Origin.Manager)
+    val sched = TestRuns.create(ds, Pipeline.EnrichSource, Ck, None, BigDecimal(1), 1000L, origin = Origin.Scheduler)
+    val mgr = TestRuns.create(ds, Pipeline.EnrichSource, Ck, None, BigDecimal(1), 1000L, origin = Origin.Manager)
     List(mine, sched, mgr).foreach(r =>
-      assert(AgentRepo.transition(ds, r.id, RunState.Queued, RunState.Running).isDefined)
+      assert(TestRuns.transition(ds, r.id, RunState.Queued, RunState.Running).isDefined)
     )
     val (n, _) = a.engine.reconcile()
     assert(n >= 3, n)
@@ -1009,7 +1013,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val dir = java.nio.file.Files.createTempDirectory("hm-stall-")
     val engine =
       Engine(ds, baseCfg.agents, a, a.engine.workflows.replaced(PipelineWorkflow.of(Hang(dir), a.definitions)))
-    val run = AgentRepo.create(ds, Pipeline.EnrichSource, Ck, None, BigDecimal(1), 1000L, origin = Origin.Manager)
+    val run = TestRuns.create(ds, Pipeline.EnrichSource, Ck, None, BigDecimal(1), 1000L, origin = Origin.Manager)
     val limit = baseCfg.agents.watchdog.stallMinutesFor(baseCfg.agents.providers).toLong * 60000L
     def once(): RunInfo =
       val t = Thread.ofVirtual().start(() => engine.execute(run.id))
@@ -1025,9 +1029,9 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(first.error.exists(_.startsWith("stalled:")), first.error)
     assert(first.resumeAt.isDefined)
     assert(first.heartbeatAt.isDefined, "the heartbeat was never written")
-    assert(AgentRepo.transition(ds, run.id, RunState.Paused, RunState.Queued).isDefined)
+    assert(TestRuns.transition(ds, run.id, RunState.Paused, RunState.Queued).isDefined)
     assertEquals(once().status, "paused")
-    assert(AgentRepo.transition(ds, run.id, RunState.Paused, RunState.Queued).isDefined)
+    assert(TestRuns.transition(ds, run.id, RunState.Paused, RunState.Queued).isDefined)
     val third = once()
     assertEquals(third.status, "failed")
     assert(third.error.exists(_.contains("stalled 3 times")), third.error)

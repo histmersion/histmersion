@@ -2,17 +2,15 @@ package com.histmersion.domain.automation.agents
 
 import com.histmersion.server.agents.{ClaudeCode, Codex, Opencode}
 
-import com.histmersion.api.{Geocode, Period, PlanQuota}
+import com.histmersion.api.PlanQuota
 import com.histmersion.config.{
   AgentApprovalsConfig,
-  AgentEnrichGuardsConfig,
-  AgentInferFilterConfig,
   AgentPlanConfig,
   AgentProviderConfig,
   AgentsConfig,
   ScheduledRefresh
 }
-import com.histmersion.domain.{ApprovalModes, EnrichSource, FilterInference, PlanGoal, ReadSchedule}
+import com.histmersion.domain.{ApprovalModes, PlanGoal, ReadSchedule}
 import com.histmersion.values.{AgentRole, ApprovalKind, ApprovalMode, ProviderKind}
 
 import java.time.Duration
@@ -61,19 +59,8 @@ extension (c: AgentsConfig)
   def logins: PlanQuota.Logins =
     PlanQuota.Logins(c.providers.claudeCode.useApiKey, c.providers.codex.useApiKey, c.providers.opencode.chatgptLogin)
 
-extension (c: AgentInferFilterConfig)
-  def limits: FilterInference.Limits = FilterInference.Limits(
-    math.max(1, c.minHits),
-    math.max(c.minHits, c.maxHits),
-    math.min(1.0, math.max(0.0, c.minCitedShare))
-  )
-
 extension (c: AgentPlanConfig)
   def caps: PlanGoal.Caps = PlanGoal.Caps(c.maxSubGoals, c.maxQueries, c.maxWorks, c.queryChars)
-
-extension (c: AgentEnrichGuardsConfig)
-  def guards(resolves: (String, Geocode.KindHint, Option[Period]) => Boolean): EnrichSource.FindingGuards =
-    EnrichSource.FindingGuards(c.minPlacedShare, c.centuryGapYears.toLong, c.phrases, resolves)
 
 extension (s: ScheduledRefresh)
   def readSchedule: ReadSchedule = s match

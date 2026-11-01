@@ -58,7 +58,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       case Some(h) => Left(h)
       case None    => Right(results.collect { case Right(a) => a }.toList)
 
-  def warn(w: String): Unit = AgentRepo.addWarning(ds, run.id, w.take(500))
+  def warn(w: String): Unit = engine.agents.jobRuns.warn(JobKind, run.id, w.take(500))
 
   /** A DRY run (#992) reads and calls models as usual but writes nothing to the corpus. */
   def dryRun: Boolean = run.dryRun
@@ -82,7 +82,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       skipped.add(WouldWrite(what, payload.noSpaces))
       simulated
 
-  def progress(p: String): Unit = AgentRepo.progress(ds, run.id, p)
+  def progress(p: String): Unit = engine.agents.jobRuns.progress(JobKind, run.id, p)
 
   /** Replay step `seq` if it finished before; a recorded step of another NAME means the pipeline changed under a paused
     * run, which is refused rather than misread.

@@ -114,7 +114,7 @@ final class Engine(
       seq.foreach(c.seq = _)
       if now - c.persisted >= math.max(1, cfg.watchdog.heartbeatSeconds).toLong * 1000L then
         c.persisted = now
-        try AgentRepo.heartbeat(ds, id)
+        try agents.jobRuns.heartbeat(JobKind, id)
         catch case e: Exception => scribe.warn(s"agent run $id: heartbeat not written: ${e.getMessage}")
     }
 
@@ -140,7 +140,11 @@ final class Engine(
       val mark = s"${Engine.StallMark} ${c.seq}"
       val prior = AgentRepo.get(ds, id).toList.flatMap(_.warnings).count(_.startsWith(mark + " "))
       val n = prior + 1
-      AgentRepo.addWarning(ds, id, s"$mark (${n}x): no sign of life for $mins min; its processes were killed".take(500))
+      agents.jobRuns.warn(
+        JobKind,
+        id,
+        s"$mark (${n}x): no sign of life for $mins min; its processes were killed".take(500)
+      )
       c.stalled = Some(if n >= math.max(1, cfg.watchdog.maxStalls) then
         Halt.Fail(s"stalled $n times at step ${c.seq} (no sign of life for $mins min each time; agents.watchdog)")
       else
@@ -188,13 +192,20 @@ final class Engine(
     // config reload that swapped back to its database must leave them be (docs/research-plugins.md §3.6)
     import scala.jdk.CollectionConverters.*
     val inQueue = queue.asScala.map(_.id).toSet
-    val (paused, queuedAll) = AgentRepo.reconcile(ds, running.keySet.asScala.toList)
+    val (paused, queuedAll) = agents.jobRuns.reconcile(
+      JobKind,
+      RunState.Running.wire,
+      RunState.Paused.wire,
+      PauseReason.Interrupted.wire,
+      RunState.Queued.wire,
+      running.keySet.asScala.toList
+    )
     val queued = queuedAll.filterNot(inQueue)
     // a run nobody is watching goes on by itself after a restart; a person's waits for them
     val at = java.time.Instant.now().plusSeconds(math.max(0, cfg.watchdog.interruptedResumeMinutes).toLong * 60L)
     paused.foreach { (id, origin) =>
       if origin.flatMap(Origin.parse).exists(_.unattended) then
-        val _ = AgentRepo.resumeAt(ds, id, at)
+        val _ = agents.jobRuns.resumeAt(JobKind, id, RunState.Paused.wire, at)
     }
     (paused.size, queued)
 
@@ -224,8 +235,8 @@ final class Engine(
     * time.
     */
   def resumeDue(now: java.time.Instant): List[String] =
-    AgentRepo.dueToResume(ds, now).toList.filter { id =>
-      AgentRepo.transition(ds, id, RunState.Paused, RunState.Queued).map(_ => submit(id)).isDefined
+    agents.jobRuns.due(JobKind, RunState.Paused.wire, now).toList.filter { id =>
+      transition(id, RunState.Paused, RunState.Queued).map(_ => submit(id)).isDefined
     }
 
   /** Re-queue every run paused on a plan pool (`plan-quota`) that would get a model NOW, before the reset it waits for:
@@ -234,29 +245,36 @@ final class Engine(
     * paused; nothing is read for a server with no such run. Returns the ids.
     */
   def resumeFreed(now: java.time.Instant): List[String] =
-    AgentRepo.pausedFor(ds, PauseReason.PlanQuota, now).toList.flatMap { (id, pipeline, model, error) =>
-      val roles = ModelPicker
-        .pausedRole(error)
-        .map(List(_))
-        .getOrElse(Pipeline.parse(pipeline).map(_.roles).getOrElse(Nil))
-      val notes = List.newBuilder[String]
-      // the run's own model for the role: its --model-for, else its --model
-      val run = AgentRepo.get(ds, id)
-      def modelOf(r: Role) = run.fold(model)(_.modelFor(r))
-      val free = roles.find(r =>
-        agents.picker
-          .pick(r, modelOf(r), now.toEpochMilli, Some(PlanQuota.RefreshTrigger.Paused), n => notes += s"${r.wire}: $n")
-          .isRight
-      )
-      free.flatMap { r =>
-        AgentRepo.transition(ds, id, RunState.Paused, RunState.Queued).map { _ =>
-          (notes.result() :+ s"resumed before its reset: the ${r.wire} chain has a usable model again")
-            .foreach(w => AgentRepo.addWarning(ds, id, w.take(500)))
-          scribe.info(s"agent run $id resumed: the ${r.wire} chain has a usable model again")
-          submit(id)
-          id
+    agents.jobRuns.pausedWith(JobKind, RunState.Paused.wire, s"${PauseReason.PlanQuota.wire}:", now).toList.flatMap {
+      (id, pipeline, model, error) =>
+        val roles = ModelPicker
+          .pausedRole(error)
+          .map(List(_))
+          .getOrElse(Pipeline.parse(pipeline).map(_.roles).getOrElse(Nil))
+        val notes = List.newBuilder[String]
+        // the run's own model for the role: its --model-for, else its --model
+        val run = AgentRepo.get(ds, id)
+        def modelOf(r: Role) = run.fold(model)(_.modelFor(r))
+        val free = roles.find(r =>
+          agents.picker
+            .pick(
+              r,
+              modelOf(r),
+              now.toEpochMilli,
+              Some(PlanQuota.RefreshTrigger.Paused),
+              n => notes += s"${r.wire}: $n"
+            )
+            .isRight
+        )
+        free.flatMap { r =>
+          transition(id, RunState.Paused, RunState.Queued).map { _ =>
+            (notes.result() :+ s"resumed before its reset: the ${r.wire} chain has a usable model again")
+              .foreach(w => agents.jobRuns.warn(JobKind, id, w.take(500)))
+            scribe.info(s"agent run $id resumed: the ${r.wire} chain has a usable model again")
+            submit(id)
+            id
+          }
         }
-      }
     }
 
   /** Set by [[stop]] before the pool is interrupted. A worker clears its thread's interrupt after each run (a cancel
@@ -274,6 +292,24 @@ final class Engine(
     scope = None
     waker.foreach(_.interrupt())
     waker = None
+
+  /** Compare-and-set state change through [[RunState.next]]: `None` when refused or when the row had already moved on
+    * (another worker, a concurrent cancel). `resumeAt` is when a run paused for an allowance may go on; every
+    * transition sets it (None clears it).
+    */
+  def transition(
+      id: String,
+      from: RunState,
+      to: RunState,
+      error: Option[String] = None,
+      progress: Option[String] = None,
+      resumeAt: Option[java.time.Instant] = None
+  ): Option[RunState] =
+    RunState
+      .next(from, to)
+      .flatMap(target =>
+        Option.when(agents.jobRuns.move(JobKind, id, from.wire, target.wire, error, progress, resumeAt))(target)
+      )
 
   def submit(id: String): Unit = queue.put(Queued(id, agents.pins.carry(execute(id))))
 
@@ -307,8 +343,8 @@ final class Engine(
       case None      => ()
       case Some(run) =>
         val pipe = workflows.parse(run.pipeline)
-        val sameVersion = pipe.forall(w => AgentRepo.pipelineVersion(ds, id).forall(_ == w.version))
-        if AgentRepo.transition(ds, id, RunState.Queued, RunState.Running).isDefined then
+        val sameVersion = pipe.forall(w => agents.jobRuns.pipelineVersion(id).forall(_ == w.version))
+        if transition(id, RunState.Queued, RunState.Running).isDefined then
           val ctl = Control(Thread.currentThread())
           running.put(id, ctl)
           val outcome: Either[Halt, String] =
@@ -343,14 +379,13 @@ final class Engine(
           val settled = if ctl.cancel then Left(Halt.Cancel) else ctl.stalled.map(Left(_)).getOrElse(outcome)
           val _ = settled match
             case Right(summary) =>
-              AgentRepo.transition(ds, id, RunState.Running, RunState.Done, progress = Some(summary.take(500)))
+              transition(id, RunState.Running, RunState.Done, progress = Some(summary.take(500)))
             case Left(Halt.Cancel) =>
-              AgentRepo.transition(ds, id, RunState.Running, RunState.Cancelled, error = Some("cancelled"))
+              transition(id, RunState.Running, RunState.Cancelled, error = Some("cancelled"))
             case Left(Halt.Fail(m)) =>
-              AgentRepo.transition(ds, id, RunState.Running, RunState.Failed, error = Some(m.take(2000)))
+              transition(id, RunState.Running, RunState.Failed, error = Some(m.take(2000)))
             case Left(Halt.Pause(reason, why, at)) =>
-              AgentRepo.transition(
-                ds,
+              transition(
                 id,
                 RunState.Running,
                 RunState.Paused,
@@ -359,7 +394,7 @@ final class Engine(
               )
             case Left(Halt.Wait(approval, why)) =>
               val waiting =
-                AgentRepo.transition(ds, id, RunState.Running, RunState.WaitingApproval, progress = Some(why.take(500)))
+                transition(id, RunState.Running, RunState.WaitingApproval, progress = Some(why.take(500)))
               // decided in the instant between opening it and this transition: go straight back to the queue
               if waiting.isDefined && AgentRepo.approval(ds, approval).exists(_.state != ApprovalState.Open.wire) then
                 val _ = wake(id)
@@ -407,7 +442,7 @@ final class Engine(
 
   /** A waiting run whose approval was decided goes back to the queue. `false` = it was not waiting. */
   def wake(id: String): Boolean =
-    AgentRepo.transition(ds, id, RunState.WaitingApproval, RunState.Queued).map(_ => submit(id)).isDefined
+    transition(id, RunState.WaitingApproval, RunState.Queued).map(_ => submit(id)).isDefined
 
   /** Between steps: a requested pause or cancel takes effect here. */
   private[histmersion] def checkControl(id: String): Either[Halt, Unit] =
@@ -476,14 +511,12 @@ final class Engine(
           Option(running.get(id)).foreach(_.pause = true)
           Right(r)
         case Some(RunState.Queued) =>
-          AgentRepo
-            .transition(
-              ds,
-              id,
-              RunState.Queued,
-              RunState.Paused,
-              error = Some(s"${PauseReason.Requested.wire}: paused before it started")
-            )
+          transition(
+            id,
+            RunState.Queued,
+            RunState.Paused,
+            error = Some(s"${PauseReason.Requested.wire}: paused before it started")
+          )
             .toRight(conflict(s"run $id moved on; look again"))
             .flatMap(_ => get(id))
         case _ => Left(conflict(s"run $id is ${r.status}; only a queued or running run can be paused"))
@@ -494,9 +527,8 @@ final class Engine(
       if !RunState.parse(r.status).contains(RunState.Paused) then
         Left(conflict(s"run $id is ${r.status}; only a paused run can be resumed"))
       else
-        AgentRepo.setBudget(ds, id, budgetUsd.map(BigDecimal(_)), budgetTokens)
-        AgentRepo
-          .transition(ds, id, RunState.Paused, RunState.Queued)
+        agents.jobRuns.budget(JobKind, id, budgetUsd.map(BigDecimal(_)), budgetTokens)
+        transition(id, RunState.Paused, RunState.Queued)
           .toRight(conflict(s"run $id moved on; look again"))
           .flatMap { _ => submit(id); get(id) }
     }
@@ -508,8 +540,7 @@ final class Engine(
           Option(running.get(id)).foreach { c => c.cancel = true; c.thread.interrupt() }
           Right(r)
         case Some(s @ (RunState.Queued | RunState.Paused | RunState.WaitingApproval)) =>
-          AgentRepo
-            .transition(ds, id, s, RunState.Cancelled, error = Some("cancelled"))
+          transition(id, s, RunState.Cancelled, error = Some("cancelled"))
             .toRight(conflict(s"run $id moved on; look again"))
             .flatMap { _ =>
               val _ = AgentRepo.closeForRun(ds, id, "rejected: the run was cancelled")

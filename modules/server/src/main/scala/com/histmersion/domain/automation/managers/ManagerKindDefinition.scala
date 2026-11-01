@@ -4,7 +4,9 @@ import com.histmersion.api.ApiError
 import com.histmersion.api.Agents.{Pipeline, RunState}
 import com.histmersion.api.Autopilot.AutopilotStatus
 import com.histmersion.api.Managers
-import com.histmersion.api.Managers.{Kind, ManagerInfo, ManagerItem}
+import com.histmersion.api.Managers.{Kind, ManagerConfig, ManagerInfo, ManagerItem}
+import com.histmersion.config.AgentsConfig
+import com.histmersion.domain.ManagerDefaults
 import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts}
 
 import java.time.Instant
@@ -20,6 +22,9 @@ trait ManagerKindDefinition:
 
   /** The item kinds it drives: an item is evaluated, followed up and started by the kind that lists its kind. */
   def items: List[String] = Managers.itemKinds(kind)
+
+  /** A manager's settings when it saves none: the server's defaults for its kind. */
+  def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig
 
   /** The pipeline an item of `itemKind` runs. */
   def pipelineOf(itemKind: String): Pipeline

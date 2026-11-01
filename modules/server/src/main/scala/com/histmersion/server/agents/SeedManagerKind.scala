@@ -7,6 +7,8 @@ import com.histmersion.api.{ApiError, GoalPlans}
 import com.histmersion.api.Managers.*
 import com.histmersion.domain.{AutopilotPolicy, ManagerPolicy}
 import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts}
+import com.histmersion.config.AgentsConfig
+import com.histmersion.domain.ManagerDefaults
 import com.histmersion.server.Handlers
 
 import java.time.Instant
@@ -18,6 +20,9 @@ import scala.collection.mutable.Builder
   */
 final class SeedManagerKind(h: Handlers) extends ManagerKindDefinition:
   val kind: Kind = Kind.Seed
+
+  def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig =
+    ReviewSettings.defaultsFor(kind, m, cfg.seed.seedPlan)
 
   def pipelineOf(itemKind: String): Pipeline = itemKind match
     case ProposeArticles => Pipeline.ProposeArticles

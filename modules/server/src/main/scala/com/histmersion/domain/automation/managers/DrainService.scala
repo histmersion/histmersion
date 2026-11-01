@@ -31,7 +31,7 @@ final class DrainService(
   /** The drain as shown (None: not draining). */
   def info(): Option[DrainInfo] =
     AutopilotRepo.drain(ds).map { (since, by, at) =>
-      val active = AgentRepo.active(ds)
+      val active = agents.jobRuns.count(Agents.JobKind, (Agents.RunState.Queued.wire, Agents.RunState.Running.wire))
       DrainInfo(since, by, at.isDefined && active == 0, at, active)
     }
 
@@ -55,7 +55,10 @@ final class DrainService(
     AutopilotRepo.drain(ds) match
       case None                 => Nil
       case Some((since, _, at)) =>
-        val active = AgentRepo.active(ds) + (if agents.workflows.managerKinds.exists(_.busy) then 1 else 0)
+        val active = agents.jobRuns.count(
+          Agents.JobKind,
+          (Agents.RunState.Queued.wire, Agents.RunState.Running.wire)
+        ) + (if agents.workflows.managerKinds.exists(_.busy) then 1 else 0)
         if active == 0 && at.isEmpty then
           AutopilotRepo.drained(ds, Some(now))
           log(
