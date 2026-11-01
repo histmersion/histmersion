@@ -4,7 +4,8 @@ import com.histmersion.config.AppConfig
 import com.histmersion.domain.automation.agents.{ApprovalService, RunService}
 import com.histmersion.domain.automation.autopilot.AutopilotRowService
 import com.histmersion.util.jobs.{JobRuns, JobRunState}
-import com.histmersion.domain.automation.goals.{GoalLinkTargets, GoalService}
+import com.histmersion.domain.automation.goals.{FocusService, GoalLinkTargets, GoalService}
+import com.histmersion.domain.automation.managers.ManagerService
 import com.histmersion.util.database.Transactor
 import com.histmersion.values.GoalLinkKind
 import com.augustnagro.magnum.*
@@ -71,6 +72,8 @@ object EngineStoreSuite:
         val approvals = ApprovalService.InMemory(state, jobs, clock)
         val runs = jobs
         val agentRuns = RunService.InMemory(state, jobs, clock)
+        val managers = ManagerService.InMemory(state, jobs, clock)
+        val focus = FocusService.InMemory(state, clock)
         def article(slug: String, title: String): Unit = titles.update((GoalLinkKind.Article, slug), title)
         def source(citekey: String, title: String): Unit = titles.update((GoalLinkKind.Source, citekey), title)
         def within[A](work: DbCon ?=> A): A = connect(NoDatabase)(work))
@@ -96,6 +99,8 @@ object EngineStoreSuite:
           val approvals = ApprovalService(db, Clock.systemUTC())
           val runs = JobRuns(db)
           val agentRuns = RunService(db)
+          val managers = ManagerService(db)
+          val focus = FocusService(db)
           def article(slug: String, title: String): Unit =
             connect(ds)(
               sql"INSERT INTO articles (slug, title, kind, body) VALUES ($slug, $title, 'concept', '')".update.run()

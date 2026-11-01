@@ -29,17 +29,16 @@ object FocusRepo:
       leftWhy: Option[String]
   ) derives DbCodec
 
-  def goals(ds: DataSource): List[GoalRow] =
-    connect(ds):
-      Sql
-        .raw(s"""SELECT g.slug, g.title, g.parent_slug, g.status, ${at("g.created_at")},
-                         coalesce(f.active, false), coalesce(f.pinned, false), coalesce(f.priority, 0),
-                         ${at("f.since")}, f.why, ${at("f.left_at")}, f.left_why
-                  FROM goals g LEFT JOIN goal_focus f ON f.slug = g.slug ORDER BY g.slug""")
-        .frag
-        .query[GoalRow]
-        .run()
-        .toList
+  def goals()(using DbCon): List[GoalRow] =
+    Sql
+      .raw(s"""SELECT g.slug, g.title, g.parent_slug, g.status, ${at("g.created_at")},
+                       coalesce(f.active, false), coalesce(f.pinned, false), coalesce(f.priority, 0),
+                       ${at("f.since")}, f.why, ${at("f.left_at")}, f.left_why
+                FROM goals g LEFT JOIN goal_focus f ON f.slug = g.slug ORDER BY g.slug""")
+      .frag
+      .query[GoalRow]
+      .run()
+      .toList
 
   /** One open model-using item of a seeding manager, a watcher or the review manager: `goals` = its manager's goal, or
     * (a review item) the goals its article is linked to; `personHeld` = held by a person (not for an approval, not by
@@ -95,15 +94,14 @@ object FocusRepo:
   /** Per goal: the outcome of its LAST settled model-using item when that one stopped or failed (a goal whose newest
     * settled item is done has no stop to report).
     */
-  def lastStops(ds: DataSource): Map[String, String] =
-    connect(ds):
-      sql"""SELECT goal, outcome FROM (
-              SELECT DISTINCT ON (m.goal_slug) m.goal_slug AS goal, i.status, coalesce(i.outcome, i.status) AS outcome
-              FROM manager_items i JOIN agent_managers m ON m.id = i.manager_id
-              WHERE m.goal_slug IS NOT NULL AND i.kind NOT IN ('oa-ingest', 'currency-check')
-                AND i.status IN ('done', 'stopped', 'failed')
-              ORDER BY m.goal_slug, i.updated_at DESC, i.id DESC) t
-            WHERE status IN ('stopped', 'failed')""".query[(String, String)].run().toMap
+  def lastStops()(using DbCon): Map[String, String] =
+    sql"""SELECT goal, outcome FROM (
+            SELECT DISTINCT ON (m.goal_slug) m.goal_slug AS goal, i.status, coalesce(i.outcome, i.status) AS outcome
+            FROM manager_items i JOIN agent_managers m ON m.id = i.manager_id
+            WHERE m.goal_slug IS NOT NULL AND i.kind NOT IN ('oa-ingest', 'currency-check')
+              AND i.status IN ('done', 'stopped', 'failed')
+            ORDER BY m.goal_slug, i.updated_at DESC, i.id DESC) t
+          WHERE status IN ('stopped', 'failed')""".query[(String, String)].run().toMap
 
   /** Open goal-plan approvals (what a person has to decide). */
   def openGoalPlans(ds: DataSource): Int =
@@ -112,23 +110,21 @@ object FocusRepo:
     )
 
   /** Per goal: its sources (goal links of kind source). */
-  def sourceCounts(ds: DataSource): Map[String, Int] =
-    connect(ds):
-      sql"""SELECT goal_slug, count(*)::int FROM goal_links WHERE kind = 'source' GROUP BY goal_slug"""
-        .query[(String, Int)]
-        .run()
-        .toMap
+  def sourceCounts()(using DbCon): Map[String, Int] =
+    sql"""SELECT goal_slug, count(*)::int FROM goal_links WHERE kind = 'source' GROUP BY goal_slug"""
+      .query[(String, Int)]
+      .run()
+      .toMap
 
   /** The goals linked to each of `refs` by a link of `kind` (source: a citekey, article: a slug). */
-  def goalsOf(ds: DataSource, kind: String, refs: List[String]): Map[String, List[String]] =
+  def goalsOf(kind: String, refs: List[String])(using DbCon): Map[String, List[String]] =
     if refs.isEmpty then Map.empty
     else
-      connect(ds):
-        sql"""SELECT ref, goal_slug FROM goal_links WHERE kind = $kind AND ref = ANY($refs::text[]) ORDER BY ref, goal_slug"""
-          .query[(String, String)]
-          .run()
-          .toList
-          .groupMap(_._1)(_._2)
+      sql"""SELECT ref, goal_slug FROM goal_links WHERE kind = $kind AND ref = ANY($refs::text[]) ORDER BY ref, goal_slug"""
+        .query[(String, String)]
+        .run()
+        .toList
+        .groupMap(_._1)(_._2)
 
   /** The targets of a manager's newest runs, newest first (what the fair order counts on from). */
   def recentTargets(ds: DataSource, managerId: String, n: Int): List[String] =
@@ -139,31 +135,29 @@ object FocusRepo:
   // ── writes ─────────────────────────────────────────────────────────────────────────────────────
 
   /** The goal became active now, `why`. */
-  def joined(ds: DataSource, slug: String, why: String, now: java.time.Instant): Unit =
+  def joined(slug: String, why: String, now: java.time.Instant)(using DbCon): Unit =
     val t = now.toString
-    val _ = transact(ds):
+    val _ =
       sql"""INSERT INTO goal_focus (slug, active, since, why, updated_at) VALUES ($slug, true, $t::timestamptz, $why, now())
             ON CONFLICT (slug) DO UPDATE SET active = true, since = $t::timestamptz, why = $why, updated_at = now()""".update
         .run()
 
   /** The goal left the active set now, `why`. */
-  def left(ds: DataSource, slug: String, why: String, now: java.time.Instant): Unit =
+  def left(slug: String, why: String, now: java.time.Instant)(using DbCon): Unit =
     val t = now.toString
-    val _ = transact(ds):
+    val _ =
       sql"""UPDATE goal_focus SET active = false, left_at = $t::timestamptz, left_why = $why, updated_at = now()
             WHERE slug = $slug""".update.run()
 
   /** A person's pin. False = no such goal. */
-  def pin(ds: DataSource, slug: String, pinned: Boolean): Boolean =
-    transact(ds):
-      sql"""INSERT INTO goal_focus (slug, pinned) SELECT slug, $pinned FROM goals WHERE slug = $slug
-            ON CONFLICT (slug) DO UPDATE SET pinned = $pinned, updated_at = now()""".update.run() > 0
+  def pin(slug: String, pinned: Boolean)(using DbCon): Boolean =
+    sql"""INSERT INTO goal_focus (slug, pinned) SELECT slug, $pinned FROM goals WHERE slug = $slug
+          ON CONFLICT (slug) DO UPDATE SET pinned = $pinned, updated_at = now()""".update.run() > 0
 
   /** A person's priority (higher first). False = no such goal. */
-  def priority(ds: DataSource, slug: String, n: Int): Boolean =
-    transact(ds):
-      sql"""INSERT INTO goal_focus (slug, priority) SELECT slug, $n FROM goals WHERE slug = $slug
-            ON CONFLICT (slug) DO UPDATE SET priority = $n, updated_at = now()""".update.run() > 0
+  def priority(slug: String, n: Int)(using DbCon): Boolean =
+    sql"""INSERT INTO goal_focus (slug, priority) SELECT slug, $n FROM goals WHERE slug = $slug
+          ON CONFLICT (slug) DO UPDATE SET priority = $n, updated_at = now()""".update.run() > 0
 
   /** Every goal leaves the active set (the focus is not in force any more): how many did. */
   def clearActive(ds: DataSource, why: String, now: java.time.Instant): Int =

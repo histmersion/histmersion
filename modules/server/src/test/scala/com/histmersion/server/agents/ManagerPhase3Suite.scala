@@ -101,10 +101,10 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
         )
       )
 
-  private def item(mid: String, kind: String): ManagerItem = ManagerRepo.itemFor(ds, mid, kind, Goal).get
+  private def item(mid: String, kind: String): ManagerItem = connect(ds)(ManagerRepo.itemFor(mid, kind, Goal)).get
 
   private def events(mid: String, kind: String): List[ManagerEvent] =
-    ManagerRepo.events(ds, mid, None, 200).filter(_.kind == kind)
+    connect(ds)(ManagerRepo.events(mid, None, 200)).filter(_.kind == kind)
 
   private def acquire(h: Handlers): List[Queue.QueueItem] =
     h.ops.queueList("acquire", all = true).toOption.get.items.filter(_.text.contains("zzagent"))
@@ -285,7 +285,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(a.managers.tick(Instant.parse("2026-10-17T13:00:00Z")).filter(_.contains("cron")), Nil, "not due yet")
     val out = a.managers.tick(sunday)
     assert(out.contains(s"${m.id}: cron fired"), out)
-    assertEquals(ManagerRepo.get(ds, m.id).get.nextTickAt, Some("2026-10-25T00:00:00Z"))
+    assertEquals(connect(ds)(ManagerRepo.get(m.id)).get.nextTickAt, Some("2026-10-25T00:00:00Z"))
     assertEquals((item(m.id, AcquisitionSweep).status, item(m.id, AcquisitionSweep).origin), ("pending", "cron"))
     assertEquals(item(m.id, CurrencyCheck).status, "pending")
     assert(
@@ -301,7 +301,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       events(m.id, Feed.Cron).head.text.contains("acquisition-sweep still open"),
       events(m.id, Feed.Cron).head.text
     )
-    assertEquals(ManagerRepo.get(ds, m.id).get.nextTickAt, Some("2026-11-15T00:00:00Z"))
+    assertEquals(connect(ds)(ManagerRepo.get(m.id)).get.nextTickAt, Some("2026-11-15T00:00:00Z"))
     // agents.scheduler.enabled = false stops every cron
     val off = baseCfg.copy(agents = baseCfg.agents.copy(scheduler = baseCfg.agents.scheduler.copy(enabled = false)))
     val (b, _, _) = handlers(ScriptedClient(Model), off)
@@ -351,7 +351,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       a.managing.addItem(EnrichId, EnqueueRequest("enrich", ck, Some(0))).fold(e => fail(e.message), identity)
     )
 
-  private def enrichItem(ck: String): ManagerItem = ManagerRepo.itemFor(ds, EnrichId, SourceEnrich, ck).get
+  private def enrichItem(ck: String): ManagerItem = connect(ds)(ManagerRepo.itemFor(EnrichId, SourceEnrich, ck)).get
 
   private def openHintApprovals(a: AgentsHandlers): List[ApprovalInfo] =
     a.approvalsList(None, None).toOption.get.filter(_.kind == "hint-effect")
@@ -475,8 +475,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     assertEquals(ap.head.runId, Some(run.id))
     assert(
-      ManagerRepo
-        .events(ds, EnrichId, None, 20)
+      connect(ds)(ManagerRepo.events(EnrichId, None, 20))
         .exists(e => e.kind == Feed.Hint && e.text.contains("a model proposed hold"))
     )
     assertEquals(a.decide(ap.head.id, "approve", DecisionRequest()).map(_.state), Right("approved"))
@@ -535,7 +534,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     val now = Instant.now()
     assertEquals(a.managers.tick(now).filter(_.contains("started")), Nil)
     assertEquals(item(m.id, CurrencyCheck).status, "pending")
-    val note = ManagerRepo.get(ds, m.id).get.statusNote.getOrElse("")
+    val note = connect(ds)(ManagerRepo.get(m.id)).get.statusNote.getOrElse("")
     assert(
       note.startsWith("budget: its spend today (0.0200 USD, metered calls only) reached its daily-usd (0.0100)"),
       note

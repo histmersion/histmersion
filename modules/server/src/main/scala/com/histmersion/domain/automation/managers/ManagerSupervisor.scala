@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.managers
 
+import com.augustnagro.magnum.{connect, transact}
+
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.goals.GoalFocusService
 import com.histmersion.domain.automation.scheduler.SchedulerService
@@ -87,10 +89,9 @@ final class ManagerSupervisor(
     */
   def ensure(k: Kind, id: String, goal: Option[String]): Boolean =
     val auto = agents.autopilot.on
-    val made = ManagerRepo.create(ds, id, k, goal, if auto then State.Active else State.Paused, ManagerConfig())
+    val made = agents.managerStore.create(id, k, goal, if auto then State.Active else State.Paused, ManagerConfig())
     if made then
-      ManagerRepo.event(
-        ds,
+      agents.managerStore.event(
         id,
         None,
         None,
@@ -149,7 +150,7 @@ final class ManagerSupervisor(
       // draining: no approval decided by code (a decision wakes a waiting run: new work)
       if !agents.drain.draining then out ++= guarded("auto-approvals", out)(agents.autoApprovals.sweep(now))
       out ++= guarded("digest", out)(agents.digest.tick(now))
-      val managers = ManagerRepo.list(ds).filter(m => State.parse(m.state).exists(_ != State.Stopped))
+      val managers = connect(ds)(ManagerRepo.list()).filter(m => State.parse(m.state).exists(_ != State.Stopped))
       managers.foreach { m =>
         guarded(m.id, out)(evaluate(m, now, out))
         guarded(m.id, out)(releaseHolds(m, now, out))
@@ -158,8 +159,7 @@ final class ManagerSupervisor(
       // sweep is dispatched (a sweep gets what it leaves)
       kinds.flatMap(_.housework(now, agents.drain.draining)).foreach((name, work) => out ++= guarded(name, out)(work()))
       // the ones that may start runs, refilled, then dispatched round-robin over the global room
-      val live = ManagerRepo
-        .list(ds)
+      val live = connect(ds)(ManagerRepo.list())
         .filter(m =>
           State.parse(m.state).contains(State.Active) &&
             Kind.parse(m.kind).exists(byKind.contains)
@@ -203,8 +203,7 @@ final class ManagerSupervisor(
       case (item, None) =>
         // its run row is gone (deleted by hand): the item goes back to the queue
         if ManagerRepo.requeue(ds, item.id, "its run disappeared; queued again") then
-          ManagerRepo.event(
-            ds,
+          agents.managerStore.event(
             m.id,
             Some(item.id),
             item.runId,
@@ -238,8 +237,7 @@ final class ManagerSupervisor(
         Some(s"$note; retry after $notBefore")
       )
     then
-      ManagerRepo.event(
-        ds,
+      agents.managerStore.event(
         m.id,
         Some(item.id),
         Some(run),
@@ -274,8 +272,7 @@ final class ManagerSupervisor(
     ) match
       case Next.Done(outcome, state) =>
         if ManagerRepo.evaluated(ds, item.id, Some(run), ItemStatus.Done, None, None, state, Some(outcome)) then
-          ManagerRepo.event(
-            ds,
+          agents.managerStore.event(
             m.id,
             Some(item.id),
             Some(run),
@@ -298,7 +295,7 @@ final class ManagerSupervisor(
             Some(hold)
           )
         then
-          ManagerRepo.event(ds, m.id, Some(item.id), Some(run), Feed.Held, s"${item.target} (${item.kind}): $note")
+          agents.managerStore.event(m.id, Some(item.id), Some(run), Feed.Held, s"${item.target} (${item.kind}): $note")
           out += s"${item.target}: waits for approval $approval"
       case Next.Retry(notBefore, failures, note) => retry(m, item, run, notBefore, failures, note, out)
       case Next.Stop(outcome, task, state)       =>
@@ -324,11 +321,17 @@ final class ManagerSupervisor(
             Some(text)
           )
         then
-          ManagerRepo.event(ds, m.id, Some(item.id), Some(run), Feed.Stopped, s"${item.target} (${item.kind}): $text")
+          agents.managerStore.event(
+            m.id,
+            Some(item.id),
+            Some(run),
+            Feed.Stopped,
+            s"${item.target} (${item.kind}): $text"
+          )
           out += s"${item.target}: stopped"
       case Next.Again(notBefore, state, note) =>
         if ManagerRepo.evaluated(ds, item.id, Some(run), ItemStatus.Pending, notBefore, None, state, Some(note)) then
-          ManagerRepo.event(ds, m.id, Some(item.id), Some(run), Feed.Evaluated, s"${item.target}: $note")
+          agents.managerStore.event(m.id, Some(item.id), Some(run), Feed.Evaluated, s"${item.target}: $note")
 
   /** The approval of `kind` a run opened: none (nothing passed its checks), open (the item waits for it), or decided
     * already (approved automatically, say).
@@ -350,9 +353,15 @@ final class ManagerSupervisor(
       out: collection.mutable.Builder[String, List[String]]
   ): Unit =
     val (itemId, isNew) =
-      ManagerRepo.upsert(ds, id, ArticleReview, slug, ItemOrigin.Chain, ManagerSupervisor.ChainPriority, reopen = true)
-    ManagerRepo.event(
-      ds,
+      agents.managerStore.upsert(
+        id,
+        ArticleReview,
+        slug,
+        ItemOrigin.Chain,
+        ManagerSupervisor.ChainPriority,
+        reopen = true
+      )
+    agents.managerStore.event(
       id,
       Some(itemId),
       None,
@@ -372,13 +381,12 @@ final class ManagerSupervisor(
         val _ = ensure(Kind.Seed, id, Some(goal))
         val added = plan.articles.count { p =>
           val spec = ArticleSpec(p.title, p.kind, p.filter, p.why)
-          ManagerRepo
-            .upsert(ds, id, ArticleCompile, p.slug, ItemOrigin.Chain, 0, reopen = false, ItemState(spec = Some(spec)))
+          agents.managerStore
+            .upsert(id, ArticleCompile, p.slug, ItemOrigin.Chain, 0, reopen = false, ItemState(spec = Some(spec)))
             ._2
         }
         if added > 0 then
-          ManagerRepo.event(
-            ds,
+          agents.managerStore.event(
             id,
             None,
             None,
@@ -394,15 +402,16 @@ final class ManagerSupervisor(
   // ── 2. holds ───────────────────────────────────────────────────────────────────────────────────
 
   private def releaseHolds(m: ManagerInfo, now: Instant, out: collection.mutable.Builder[String, List[String]]): Unit =
-    ManagerRepo.withStatus(ds, m.id, ItemStatus.Held).foreach { i =>
+    connect(ds)(ManagerRepo.withStatus(m.id, ItemStatus.Held)).foreach { i =>
       i.hold.flatMap(_.untilApproval) match
         case Some(aid) => settleOnApproval(m, i, aid, out)
         case None      =>
           if i.hold
-              .exists(ManagerPolicy.released(_, now, ManagerRepo.sourceExists(ds, _))) && ManagerRepo.release(ds, i.id)
+              .exists(ManagerPolicy.released(_, now, ManagerRepo.sourceExists(ds, _))) && transact(ds)(
+              ManagerRepo.release(i.id)
+            )
           then
-            ManagerRepo.event(
-              ds,
+            agents.managerStore.event(
               m.id,
               Some(i.id),
               None,
@@ -426,22 +435,18 @@ final class ManagerSupervisor(
   ): Unit =
     agents.approvalStore.approval(aid) match
       case None =>
-        if ManagerRepo.settle(ds, i.id, ItemStatus.Stopped, s"approval #$aid is gone", List(ItemStatus.Held)) then
-          ManagerRepo.event(ds, m.id, Some(i.id), None, Feed.Stopped, s"${i.target}: approval #$aid is gone")
+        if transact(ds)(ManagerRepo.settle(i.id, ItemStatus.Stopped, s"approval #$aid is gone", List(ItemStatus.Held)))
+        then agents.managerStore.event(m.id, Some(i.id), None, Feed.Stopped, s"${i.target}: approval #$aid is gone")
       case Some(a) =>
         ManagerPolicy.decided(a.state, a.result).foreach { decided =>
           val ok = a.state == ApprovalState.Approved.wire
           val outcome = s"approval #$aid $decided"
-          if ManagerRepo.settle(
-              ds,
-              i.id,
-              if ok then ItemStatus.Done else ItemStatus.Stopped,
-              outcome,
-              List(ItemStatus.Held)
+          if transact(ds)(
+              ManagerRepo
+                .settle(i.id, if ok then ItemStatus.Done else ItemStatus.Stopped, outcome, List(ItemStatus.Held))
             )
           then
-            ManagerRepo.event(
-              ds,
+            agents.managerStore.event(
               m.id,
               Some(i.id),
               i.runId,
@@ -468,7 +473,7 @@ final class ManagerSupervisor(
         val moved = transact(ds) {
           val rows = agents.goals.takeSchedulesIn(g)
           Option.when(rows.nonEmpty) {
-            val existing = ManagerRepo.get(ds, id)
+            val existing = agents.managerStore.get(id)
             val plan = WatchSchedules.migrate(
               existing.map(m => WatchSchedules.Existing(m.config, m.cron, m.nextTickAt)),
               rows,
@@ -516,8 +521,7 @@ final class ManagerSupervisor(
         case ManagerPolicy.CronStep.Fire(next) =>
           val _ = ManagerRepo.setNextTick(ds, m.id, next)
           val what = byKind.get(kindOf(m)).fold(Nil)(_.fire(this, m, now))
-          ManagerRepo.event(
-            ds,
+          agents.managerStore.event(
             m.id,
             None,
             None,
@@ -550,7 +554,7 @@ final class ManagerSupervisor(
         guardedOpt(m.id, out)(dispatch(m, settings(m), item, now, out)) match
           case Some(_) => Right(())
           case None    =>
-            if ManagerRepo.item(ds, item.id).exists(_.status == ItemStatus.Pending.wire) then
+            if agents.managerStore.item(item.id).exists(_.status == ItemStatus.Pending.wire) then
               Left("it could not start now (its manager's events say why)")
             else Left("settled without a run")
     }
@@ -567,14 +571,14 @@ final class ManagerSupervisor(
       val full = waits.exists(w =>
         List(SchedulerPolicy.Code.Capacity, SchedulerPolicy.Code.Pool, SchedulerPolicy.Code.Manager).contains(w.code)
       )
-      val pending = math.max(0, ManagerRepo.counts(ds, m.id).pending)
+      val pending = math.max(0, connect(ds)(ManagerRepo.counts(m.id)).pending)
       val base = ManagerPolicy.statusNote(
         State.Active,
         starved,
         if full then 0 else 1,
         pending,
         waits.size,
-        ManagerRepo.running(ds, m.id),
+        agents.managerStore.running(m.id),
         blocked
       )
       val note = waits.headOption.filter(_ => blocked.isEmpty && starved.isEmpty) match
@@ -583,12 +587,12 @@ final class ManagerSupervisor(
       ManagerRepo.setStatusNote(ds, m.id, note)
       // a starved (or budget-blocked) manager says so once per change, not every tick
       blocked.orElse(starved.map(x => s"starved: $x")).foreach { b =>
-        if !ManagerRepo.lastEventOf(ds, m.id, Feed.Starved).exists(_.text == b) then
-          ManagerRepo.event(ds, m.id, None, None, Feed.Starved, b)
+        if !agents.managerStore.lastEventOf(m.id, Feed.Starved).exists(_.text == b) then
+          agents.managerStore.event(m.id, None, None, Feed.Starved, b)
       }
     }
     // paused/stopped managers show it too
-    ManagerRepo.list(ds).filterNot(m => byId.contains(m.id)).foreach { m =>
+    connect(ds)(ManagerRepo.list()).filterNot(m => byId.contains(m.id)).foreach { m =>
       State
         .parse(m.state)
         .foreach(st =>
@@ -612,9 +616,8 @@ final class ManagerSupervisor(
 
   /** Settle a pending item without a run (its target is gone, or its work is done already). */
   def settleNow(m: ManagerInfo, item: ManagerItem, status: ItemStatus, why: String): Option[String] =
-    if ManagerRepo.settle(ds, item.id, status, why, List(ItemStatus.Pending)) then
-      ManagerRepo.event(
-        ds,
+    if transact(ds)(ManagerRepo.settle(item.id, status, why, List(ItemStatus.Pending))) then
+      agents.managerStore.event(
         m.id,
         Some(item.id),
         None,
@@ -657,8 +660,8 @@ final class ManagerSupervisor(
     agents.prepare(req, None) match
       case Left(e) =>
         val note = s"not started: ${e.message}".take(500)
-        if !ManagerRepo.lastEventOf(ds, m.id, Feed.Starved).exists(_.text == note) then
-          ManagerRepo.event(ds, m.id, Some(item.id), None, Feed.Starved, note)
+        if !agents.managerStore.lastEventOf(m.id, Feed.Starved).exists(_.text == note) then
+          agents.managerStore.event(m.id, Some(item.id), None, Feed.Starved, note)
         None
       case Right(pr) =>
         val hints = ManagerPolicy.notesFor(ManagerRepo.hints(ds, m.id, live = true), item.id)
@@ -745,8 +748,8 @@ final class ManagerSupervisor(
     def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig = ManagerConfig()
 
   def event(id: String, item: Option[Long], run: Option[String], feed: String, text: String): Unit =
-    ManagerRepo.event(ds, id, item, run, feed, text)
-  def lastEventOf(id: String, feed: String): Option[ManagerEvent] = ManagerRepo.lastEventOf(ds, id, feed)
+    agents.managerStore.event(id, item, run, feed, text)
+  def lastEventOf(id: String, feed: String): Option[ManagerEvent] = agents.managerStore.lastEventOf(id, feed)
   def countEvents(id: String, feed: String, since: Instant): Int = ManagerRepo.countEvents(ds, id, feed, since)
   def upsert(
       id: String,
@@ -756,13 +759,14 @@ final class ManagerSupervisor(
       priority: Int,
       reopen: Boolean,
       state: ItemState = ItemState()
-  ): (Long, Boolean) = ManagerRepo.upsert(ds, id, kind, target, origin, priority, reopen, state)
-  def item(itemId: Long): Option[ManagerItem] = ManagerRepo.item(ds, itemId)
-  def itemFor(id: String, kind: String, target: String): Option[ManagerItem] = ManagerRepo.itemFor(ds, id, kind, target)
+  ): (Long, Boolean) = agents.managerStore.upsert(id, kind, target, origin, priority, reopen, state)
+  def item(itemId: Long): Option[ManagerItem] = agents.managerStore.item(itemId)
+  def itemFor(id: String, kind: String, target: String): Option[ManagerItem] =
+    agents.managerStore.itemFor(id, kind, target)
   def hasItem(id: String, kind: String, target: String): Boolean = ManagerRepo.hasItem(ds, id, kind, target)
   def restale(itemId: Long, priority: Int, why: String): Boolean = ManagerRepo.restale(ds, itemId, priority, why)
-  def pending(id: String): Int = ManagerRepo.counts(ds, id).pending
-  def openKeys(id: String): List[(String, String)] = ManagerRepo.openKeys(ds, id)
+  def pending(id: String): Int = connect(ds)(ManagerRepo.counts(id)).pending
+  def openKeys(id: String): List[(String, String)] = agents.managerStore.openKeys(id)
   def evaluated(
       itemId: Long,
       run: Option[String],
@@ -773,7 +777,7 @@ final class ManagerSupervisor(
       outcome: Option[String]
   ): Boolean = ManagerRepo.evaluated(ds, itemId, run, status, notBefore, failures, state, outcome)
   def hints(id: String): List[ManagerHint] = ManagerRepo.hints(ds, id, live = true)
-  def state(id: String): Option[String] = ManagerRepo.get(ds, id).map(_.state)
+  def state(id: String): Option[String] = agents.managerStore.get(id).map(_.state)
   def openMajorArticles(id: String, tags: List[String], goal: Option[String], limit: Int): List[(String, Int)] =
     ManagerRepo.openMajorArticles(ds, id, ArticleReview, tags, goal, limit)
   def unreviewedArticles(id: String, tags: List[String], goal: Option[String], limit: Int): List[String] =
@@ -821,7 +825,7 @@ final class ManagerSupervisor(
     r.managerId.foreach { mid =>
       val stalled = r.error.exists(_.startsWith(PauseReason.Stalled.wire + ":"))
       val text = s"${r.target}: run ${r.status}" + r.error.filter(_.nonEmpty).fold("")(e => s" — ${e.take(300)}")
-      ManagerRepo.event(ds, mid, r.managerItem, Some(r.id), if stalled then Feed.Stall else Feed.Settled, text)
+      agents.managerStore.event(mid, r.managerItem, Some(r.id), if stalled then Feed.Stall else Feed.Settled, text)
       nudge()
     }
 

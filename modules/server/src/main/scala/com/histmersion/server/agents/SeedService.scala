@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.augustnagro.magnum.{connect, transact}
+
 import com.histmersion.domain.automation.agents.AgentsHandlers
 
 import com.histmersion.api.*
@@ -57,10 +59,13 @@ final class SeedService(
     if n <= 0 || !agents.autopilot.on || agents.drain.draining then Nil
     else
       val watchers =
-        ManagerRepo.light(ds).filter(m => m.kind == Kind.Watch.wire && m.state == State.Active.wire).map(_.id).toSet
+        connect(ds)(ManagerRepo.light())
+          .filter(m => m.kind == Kind.Watch.wire && m.state == State.Active.wire)
+          .map(_.id)
+          .toSet
       val goals = due(
-        FocusRepo.goals(ds),
-        FocusRepo.sourceCounts(ds),
+        connect(ds)(FocusRepo.goals()),
+        connect(ds)(FocusRepo.sourceCounts()),
         watchers,
         g =>
           (CandidateRepo.watches(ds, g).flatMap(_.lastRun).flatMap(ManagerPolicy.parseInstant) ++ Option(
@@ -104,5 +109,7 @@ final class SeedService(
         val _ = acquisition().markCandidates(oa.map(_.id), Candidates.State.Queued.wire)
         val line = s"$goal: ${sw.found} found, ${sw.added} new candidate(s), " +
           s"${Plural.count(queued, "legal open-access work")} queued for ingest (the plan is not needed for this)"
-        ManagerRepo.event(ds, watchId(goal), None, None, Feed.Swept, s"seed before the plan — $line".take(2000))
+        transact(ds)(
+          ManagerRepo.event(watchId(goal), None, None, Feed.Swept, s"seed before the plan — $line".take(2000))
+        )
         Some(line)

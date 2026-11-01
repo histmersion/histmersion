@@ -334,7 +334,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
       (w.state, w.cron, w.nextTickAt, w.config.sweeps, w.config.budgetUsd),
       ("paused", Some("@daily"), Some("2026-10-05T00:00:00Z"), Some(List("acquisition", "currency")), Some(0.25))
     )
-    val ev = ManagerRepo.events(ds, w.id, None, 10).filter(_.kind == Managers.Feed.Migrated)
+    val ev = connect(ds)(ManagerRepo.events(w.id, None, 10)).filter(_.kind == Managers.Feed.Migrated)
     assertEquals(ev.size, 1)
     assert(
       ev.head.text.contains("created paused") && ev.head.text.contains("`@daily` (fires most often)"),
@@ -349,7 +349,9 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
     val w2 = a.managing.get(Managers.watchId(Goal)).toOption.get.manager
     assertEquals((w2.cron, w2.config.sweeps), (Some("@daily"), Some(List("acquisition", "currency"))))
     assert(
-      ManagerRepo.events(ds, w.id, None, 10).exists(e => e.kind == Managers.Feed.Migrated && e.text.contains("was off"))
+      connect(ds)(ManagerRepo.events(w.id, None, 10)).exists(e =>
+        e.kind == Managers.Feed.Migrated && e.text.contains("was off")
+      )
     )
     // the tick migrates too (with agents on)
     transact(ds)(GoalLinkRepo.setSchedule(Goal, ScheduleKind.Acquisition, "@weekly", true, None, None))

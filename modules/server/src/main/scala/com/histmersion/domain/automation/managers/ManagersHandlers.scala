@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.managers
 
+import com.augustnagro.magnum.{connect, transact}
+
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.workflows.AutomationHost
 
@@ -58,22 +60,22 @@ final class ManagersHandlers(
     else backlog.get(m.id).fold(e)((n, days) => e.copy(backlog = n, backlogDays = days))
 
   private def manager(id: String): Either[ApiError, ManagerInfo] =
-    ManagerRepo
-      .get(ds, id.trim)
+    agents.managerStore
+      .get(id.trim)
       .map(m => withEffective(m, backlogs()))
       .toRight(notFound(s"No manager '$id'"))
 
   def list: List[ManagerInfo] =
     lazy val snap = backlogs()
-    ManagerRepo.list(ds).map(withEffective(_, snap))
+    connect(ds)(ManagerRepo.list()).map(withEffective(_, snap))
 
   def get(id: String): Either[ApiError, ManagerDetail] =
     manager(id).map { m =>
       ManagerDetail(
         m,
-        withRuns(ManagerRepo.withStatus(ds, m.id, ItemStatus.Active)),
+        withRuns(connect(ds)(ManagerRepo.withStatus(m.id, ItemStatus.Active))),
         ManagerRepo.hints(ds, m.id, live = true),
-        ManagerRepo.events(ds, m.id, None, limits.page(None, 20))
+        connect(ds)(ManagerRepo.events(m.id, None, limits.page(None, 20)))
       )
     }
 
@@ -101,12 +103,11 @@ final class ManagersHandlers(
           .filter(_.trim.nonEmpty)
           .fold[Either[ApiError, Option[Cron]]](Right(None))(t => checkCron(k, t, now).map(Some(_)))
         _ <- Either.cond(
-          ManagerRepo.create(ds, id, k, g, state, in.config, c.map(_.text), c.flatMap(_.next(now))),
+          agents.managerStore.create(id, k, g, state, in.config, c.map(_.text), c.flatMap(_.next(now))),
           (),
           conflict(s"the manager '$id' exists already")
         )
-        _ = ManagerRepo.event(
-          ds,
+        _ = agents.managerStore.event(
           id,
           None,
           None,
@@ -168,9 +169,8 @@ final class ManagersHandlers(
         if in.cron.isDefined || m.nextTickAt.isEmpty then x.next(now)
         else m.nextTickAt.flatMap(ManagerPolicy.parseInstant)
       )
-      _ = ManagerRepo.setConfig(ds, m.id, c, cron.map(_.text), next)
-      _ = ManagerRepo.event(
-        ds,
+      _ = agents.managerStore.setConfig(m.id, c, cron.map(_.text), next)
+      _ = agents.managerStore.event(
         m.id,
         None,
         None,
@@ -239,14 +239,13 @@ final class ManagersHandlers(
       val withRuns = runs.contains(true)
       action.trim.toLowerCase match
         case "pause" =>
-          ManagerRepo.setState(ds, m.id, State.Paused, withRuns)
+          agents.managerStore.setState(m.id, State.Paused, withRuns)
           val paused = if withRuns then
             inFlight(m.id)
               .filter(r => r.status == RunState.Running.wire || r.status == RunState.Queued.wire)
               .count(r => agents.engine.pause(r.id).isRight)
           else 0
-          ManagerRepo.event(
-            ds,
+          agents.managerStore.event(
             m.id,
             None,
             None,
@@ -256,14 +255,13 @@ final class ManagersHandlers(
           )
           manager(m.id)
         case "resume" =>
-          ManagerRepo.setState(ds, m.id, State.Active, pauseRuns = false)
+          agents.managerStore.setState(m.id, State.Active, pauseRuns = false)
           val resumed = if m.pauseRuns && cfg.enabled then
             inFlight(m.id)
               .filter(r => r.status == RunState.Paused.wire && r.error.exists(_.startsWith(PauseReason.Requested.wire)))
               .count(r => agents.engine.resume(r.id, None, None).isRight)
           else 0
-          ManagerRepo.event(
-            ds,
+          agents.managerStore.event(
             m.id,
             None,
             None,
@@ -274,11 +272,10 @@ final class ManagersHandlers(
           supervisor.nudge()
           manager(m.id)
         case "stop" =>
-          ManagerRepo.setState(ds, m.id, State.Stopped, pauseRuns = false)
+          agents.managerStore.setState(m.id, State.Stopped, pauseRuns = false)
           val cancelled = inFlight(m.id).count(r => agents.engine.cancel(r.id).isRight)
           val items = ManagerRepo.cancelOpen(ds, m.id, "the manager was stopped")
-          ManagerRepo.event(
-            ds,
+          agents.managerStore.event(
             m.id,
             None,
             None,
@@ -310,10 +307,11 @@ final class ManagersHandlers(
   private def itemOf(m: ManagerInfo, ref: String): Either[ApiError, ManagerItem] =
     val r = ref.trim
     r.toLongOption
-      .flatMap(ManagerRepo.item(ds, _))
+      .flatMap(agents.managerStore.item(_))
       .filter(_.managerId == m.id)
-      .orElse(itemKinds(kindOf(m)).iterator.map(k => ManagerRepo.itemFor(ds, m.id, k, r)).collectFirst { case Some(i) =>
-        i
+      .orElse(itemKinds(kindOf(m)).iterator.map(k => agents.managerStore.itemFor(m.id, k, r)).collectFirst {
+        case Some(i) =>
+          i
       })
       .toRight(notFound(s"No item '$ref' of manager ${m.id}"))
 
@@ -337,10 +335,9 @@ final class ManagersHandlers(
       )
       target <- targetOf(m, kind, in.target)
       prio = in.priority.getOrElse(ManagerSupervisor.PersonPriority)
-      (itemId, isNew) = ManagerRepo.upsert(ds, m.id, kind, target, origin, prio, reopen = true)
+      (itemId, isNew) = agents.managerStore.upsert(m.id, kind, target, origin, prio, reopen = true)
       label = if kind == itemKinds(kindOf(m)).head then target else s"$target ($kind)"
-      _ = ManagerRepo.event(
-        ds,
+      _ = agents.managerStore.event(
         m.id,
         Some(itemId),
         None,
@@ -348,7 +345,7 @@ final class ManagersHandlers(
         s"$label ${if isNew then "enqueued" else "enqueued again"} by a ${origin.wire} (priority $prio)"
       )
       _ = kinds.find(_.items.contains(kind)).foreach(_.added(supervisor, m, kind, target, prio))
-      item <- ManagerRepo.item(ds, itemId).toRight(notFound(s"item $itemId vanished"))
+      item <- agents.managerStore.item(itemId).toRight(notFound(s"item $itemId vanished"))
     yield
       supervisor.nudge()
       item
@@ -402,12 +399,11 @@ final class ManagersHandlers(
                 .toRight(ApiError(s"'$u' is not a date (2026-11-01) or an instant"))
             )
             _ <- Either.cond(
-              ManagerRepo.hold(ds, i.id, h),
+              transact(ds)(ManagerRepo.hold(i.id, h)),
               (),
               conflict(s"item #${i.id} is ${i.status}; only a pending or held item can be held")
             )
-          yield ManagerRepo.event(
-            ds,
+          yield agents.managerStore.event(
             m.id,
             Some(i.id),
             None,
@@ -425,12 +421,14 @@ final class ManagersHandlers(
           )
         case "release" =>
           Either
-            .cond(ManagerRepo.release(ds, i.id), (), conflict(s"item #${i.id} is ${i.status}, not held"))
-            .map(_ => ManagerRepo.event(ds, m.id, Some(i.id), None, Feed.Held, s"${i.target}: released by a person"))
+            .cond(transact(ds)(ManagerRepo.release(i.id)), (), conflict(s"item #${i.id} is ${i.status}, not held"))
+            .map(_ =>
+              agents.managerStore.event(m.id, Some(i.id), None, Feed.Held, s"${i.target}: released by a person")
+            )
         case "priority" =>
           in.priority.toRight(ApiError("give `priority`")).map { p =>
             ManagerRepo.setPriority(ds, i.id, p)
-            ManagerRepo.event(ds, m.id, Some(i.id), None, Feed.Hint, s"${i.target}: priority $p")
+            agents.managerStore.event(m.id, Some(i.id), None, Feed.Hint, s"${i.target}: priority $p")
           }
         case "skip" =>
           // an active item's run is cancelled first; the item is then stopped as skipped
@@ -438,17 +436,14 @@ final class ManagersHandlers(
           val why = in.reason.filter(_.trim.nonEmpty).fold("skipped by a person")(r => s"skipped by a person: $r")
           Either
             .cond(
-              ManagerRepo.settle(
-                ds,
-                i.id,
-                ItemStatus.Stopped,
-                why,
-                List(ItemStatus.Pending, ItemStatus.Held, ItemStatus.Active)
+              transact(ds)(
+                ManagerRepo
+                  .settle(i.id, ItemStatus.Stopped, why, List(ItemStatus.Pending, ItemStatus.Held, ItemStatus.Active))
               ),
               (),
               conflict(s"item #${i.id} is ${i.status} already")
             )
-            .map(_ => ManagerRepo.event(ds, m.id, Some(i.id), i.runId, Feed.Stopped, s"${i.target}: $why"))
+            .map(_ => agents.managerStore.event(m.id, Some(i.id), i.runId, Feed.Stopped, s"${i.target}: $why"))
         case "reopen" =>
           Either
             .cond(
@@ -457,10 +452,10 @@ final class ManagersHandlers(
               conflict(s"item #${i.id} is ${i.status}; only a settled item can be re-opened")
             )
             .map(_ =>
-              ManagerRepo.event(ds, m.id, Some(i.id), None, Feed.Evaluated, s"${i.target}: re-opened by a person")
+              agents.managerStore.event(m.id, Some(i.id), None, Feed.Evaluated, s"${i.target}: re-opened by a person")
             )
         case other => Left(ApiError(s"unknown item action '$other' (one of: ${ItemPatch.Actions.mkString(", ")})"))
-      out <- ManagerRepo.item(ds, i.id).toRight(notFound(s"item ${i.id} vanished"))
+      out <- agents.managerStore.item(i.id).toRight(notFound(s"item ${i.id} vanished"))
     yield
       supervisor.nudge()
       withRuns(List(out)).head
@@ -516,8 +511,7 @@ final class ManagersHandlers(
             .startRunWith(RunRequest(Pipeline.HintEffect.wire, m.id), Origin.Person, None, _.copy(hint = Some(hint.id)))
             .map(r => s" — a model reads it for an action (run ${r.id.take(8)}); a person approves what it proposes")
         else Right("")
-      _ = ManagerRepo.event(
-        ds,
+      _ = agents.managerStore.event(
         m.id,
         item.map(_.id),
         None,
@@ -582,16 +576,15 @@ final class ManagersHandlers(
       m <- manager(p.managerId).left.map(_.message)
       ht <- ManagerRepo.hint(ds, p.hint).filter(_.managerId == m.id).toRight(s"hint #${p.hint} of ${m.id} is gone")
       _ <- Either.cond(ht.retiredAt.isEmpty, (), s"hint #${ht.id} was retired meanwhile")
-      e <- checkEffect(m, p.effect, ht.itemId.flatMap(ManagerRepo.item(ds, _)), proposal = true).left.map(_.message)
+      e <- checkEffect(m, p.effect, ht.itemId.flatMap(agents.managerStore.item(_)), proposal = true).left.map(_.message)
       w <- e.action match
         case HintEffect.Config =>
           val c = m.config.merge(e.config.getOrElse(ManagerConfig()))
-          val _ = ManagerRepo.setConfig(ds, m.id, c, m.cron, m.nextTickAt.flatMap(ManagerPolicy.parseInstant))
+          val _ = agents.managerStore.setConfig(m.id, c, m.cron, m.nextTickAt.flatMap(ManagerPolicy.parseInstant))
           Right(s" — settings now: ${ManagersHandlers.describe(c)}")
         case _ => Right(applyEffect(m, ht.id, ht.text, e))
       _ = ManagerRepo.setHintEffect(ds, ht.id, Some(e))
-      _ = ManagerRepo.event(
-        ds,
+      _ = agents.managerStore.event(
         m.id,
         ht.itemId,
         None,
@@ -607,7 +600,9 @@ final class ManagersHandlers(
     // ones are the open items
     val kind = itemKinds(kindOf(m)).headOption.getOrElse(ArticleReview)
     val named = e.targets.flatMap(t => targetOf(m, kind, t).toOption).distinct
-    val open = ManagerRepo.withStatus(ds, m.id, ItemStatus.Pending) ++ ManagerRepo.withStatus(ds, m.id, ItemStatus.Held)
+    val open = connect(ds)(ManagerRepo.withStatus(m.id, ItemStatus.Pending)) ++ connect(ds)(
+      ManagerRepo.withStatus(m.id, ItemStatus.Held)
+    )
     val matched = open.filter { i =>
       named.contains(i.target) || ((e.tag.isDefined || e.topic.isDefined || e.goal.isDefined) && {
         val (tags, goals) = ManagerRepo.articleFacets(ds, i.target)
@@ -618,7 +613,7 @@ final class ManagersHandlers(
       case HintEffect.Prioritise =>
         val p = e.priority.getOrElse(ManagerSupervisor.HintPriority)
         val added = named.filterNot(t => open.exists(_.target == t)).count { t =>
-          ManagerRepo.upsert(ds, m.id, kind, t, ItemOrigin.Hint, p, reopen = true)
+          agents.managerStore.upsert(m.id, kind, t, ItemOrigin.Hint, p, reopen = true)
           true
         }
         matched.foreach(i => ManagerRepo.setPriority(ds, i.id, math.max(i.priority, p)))
@@ -626,18 +621,19 @@ final class ManagersHandlers(
       case HintEffect.HoldAction =>
         val hold = Hold(e.until, e.untilSource, s"hint #$hintId: ${text.take(200)}", Some(hintId))
         val added = named.filterNot(t => open.exists(_.target == t)).flatMap { t =>
-          val (id, _) = ManagerRepo.upsert(ds, m.id, kind, t, ItemOrigin.Hint, 0, reopen = true)
-          ManagerRepo.item(ds, id).filter(_.status == ItemStatus.Pending.wire)
+          val (id, _) = agents.managerStore.upsert(m.id, kind, t, ItemOrigin.Hint, 0, reopen = true)
+          agents.managerStore.item(id).filter(_.status == ItemStatus.Pending.wire)
         }
-        (matched ++ added).count(i => ManagerRepo.hold(ds, i.id, hold))
+        (matched ++ added).count(i => transact(ds)(ManagerRepo.hold(i.id, hold)))
       case HintEffect.Skip =>
         matched.count(i =>
-          ManagerRepo.settle(
-            ds,
-            i.id,
-            ItemStatus.Stopped,
-            s"skipped (hint #$hintId)",
-            List(ItemStatus.Pending, ItemStatus.Held)
+          transact(ds)(
+            ManagerRepo.settle(
+              i.id,
+              ItemStatus.Stopped,
+              s"skipped (hint #$hintId)",
+              List(ItemStatus.Pending, ItemStatus.Held)
+            )
           )
         )
       case _ => 0
@@ -646,7 +642,7 @@ final class ManagersHandlers(
   def deleteHint(id: String, hint: Long): Either[ApiError, Removed] =
     manager(id).map { m =>
       val gone = ManagerRepo.retireHint(ds, m.id, hint)
-      if gone then ManagerRepo.event(ds, m.id, None, None, Feed.Hint, s"hint #$hint retired by a person")
+      if gone then agents.managerStore.event(m.id, None, None, Feed.Hint, s"hint #$hint retired by a person")
       Removed(gone)
     }
 
@@ -656,8 +652,7 @@ final class ManagersHandlers(
     * ([[WatchSchedules.view]]), and any `goal_schedules` row the managers have not moved yet.
     */
   def goalSchedules(goal: Option[String]): List[GoalPlans.GoalSchedule] =
-    ManagerRepo
-      .list(ds)
+    connect(ds)(ManagerRepo.list())
       .filter(m => m.kind == Kind.Watch.wire && goal.forall(g => m.goal.contains(g)))
       .flatMap(m => WatchSchedules.view(m, ManagerRepo.items(ds, m.id, None, 0, 20)._1)) ++ agents.goals.schedules(goal)
 
@@ -677,12 +672,12 @@ final class ManagersHandlers(
     val sw = WatchSchedules.sweepOf(kind)
     for
       cron <- ManagerPolicy.checkCron(in.cron, now, cfg.scheduler.minIntervalMinutes).left.map(ApiError(_))
-      _ = ManagerRepo.get(ds, id) match
+      _ = agents.managerStore.get(id) match
         case None =>
           val c = ManagerConfig(sweeps = Some(if in.enabled then List(sw.wire) else Nil), budgetUsd = in.budgetUsd)
-          val _ = ManagerRepo.create(ds, id, Kind.Watch, Some(goal), State.Paused, c, Some(cron.text), cron.next(now))
-          ManagerRepo.event(
-            ds,
+          val _ =
+            agents.managerStore.create(id, Kind.Watch, Some(goal), State.Paused, c, Some(cron.text), cron.next(now))
+          agents.managerStore.event(
             id,
             None,
             None,
@@ -697,10 +692,9 @@ final class ManagersHandlers(
           val next = if m.cron.contains(cron.text) && m.nextTickAt.isDefined then
             m.nextTickAt.flatMap(ManagerPolicy.parseInstant)
           else cron.next(now)
-          val _ = ManagerRepo.setConfig(ds, id, c, Some(cron.text), next)
+          val _ = agents.managerStore.setConfig(id, c, Some(cron.text), next)
           if !in.enabled then cancelSweep(m, sw, "its schedule was turned off")
-          ManagerRepo.event(
-            ds,
+          agents.managerStore.event(
             id,
             None,
             None,
@@ -725,18 +719,16 @@ final class ManagersHandlers(
   def removeSchedule(goal: String, kind: GoalPlans.ScheduleKind): GoalPlans.Removed =
     val legacy = agents.goals.removeSchedule(goal, kind)
     val sw = WatchSchedules.sweepOf(kind)
-    val fromWatcher = ManagerRepo.get(ds, watchId(goal)).filter(m => Sweep.of(m.config).contains(sw)).exists { m =>
+    val fromWatcher = agents.managerStore.get(watchId(goal)).filter(m => Sweep.of(m.config).contains(sw)).exists { m =>
       val rest = Sweep.of(m.config).filterNot(_ == sw)
-      val _ = ManagerRepo.setConfig(
-        ds,
+      val _ = agents.managerStore.setConfig(
         m.id,
         m.config.copy(sweeps = Some(rest.map(_.wire))),
         m.cron,
         m.nextTickAt.flatMap(ManagerPolicy.parseInstant)
       )
       cancelSweep(m, sw, "its schedule was removed")
-      ManagerRepo.event(
-        ds,
+      agents.managerStore.event(
         m.id,
         None,
         None,
@@ -750,9 +742,9 @@ final class ManagersHandlers(
 
   /** A sweep the watcher no longer runs: its pending or held item is cancelled (a running one finishes). */
   private def cancelSweep(m: ManagerInfo, sw: Sweep, why: String): Unit =
-    m.goal.flatMap(g => ManagerRepo.itemFor(ds, m.id, sw.itemKind, g)).foreach { i =>
-      if ManagerRepo.settle(ds, i.id, ItemStatus.Cancelled, why, List(ItemStatus.Pending, ItemStatus.Held)) then
-        ManagerRepo.event(ds, m.id, Some(i.id), None, Feed.Stopped, s"${i.target} (${i.kind}): $why")
+    m.goal.flatMap(g => agents.managerStore.itemFor(m.id, sw.itemKind, g)).foreach { i =>
+      if transact(ds)(ManagerRepo.settle(i.id, ItemStatus.Cancelled, why, List(ItemStatus.Pending, ItemStatus.Held)))
+      then agents.managerStore.event(m.id, Some(i.id), None, Feed.Stopped, s"${i.target} (${i.kind}): $why")
     }
 
   // ── the autopilot ──────────────────────────────────────────────────────────────────────────────
@@ -815,7 +807,7 @@ final class ManagersHandlers(
   def events(id: String, before: Option[Long], limit: Option[Int]): Either[ApiError, EventPage] =
     manager(id).map { m =>
       val lim = limits.page(limit, 50)
-      val es = ManagerRepo.events(ds, m.id, before, lim)
+      val es = connect(ds)(ManagerRepo.events(m.id, before, lim))
       EventPage(es, Option.when(es.size == lim)(es.last.id))
     }
 

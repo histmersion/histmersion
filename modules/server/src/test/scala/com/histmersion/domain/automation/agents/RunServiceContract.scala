@@ -2,7 +2,7 @@ package com.histmersion.domain.automation.agents
 
 import com.histmersion.api.Agents.*
 import com.histmersion.db.AgentRepo
-import com.histmersion.domain.automation.{EngineStoreSuite, EngineStores}
+import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
 
 import java.time.Instant
 
@@ -37,9 +37,16 @@ abstract class RunServiceContract extends EngineStoreSuite:
   stest("a run reads back with its steps' usage summed; attempts, checkpoints and the trace in their order") { s =>
     val id = s.run("zz2020_a", goal = Some("zz-g"))
     val fresh = r(s).get(id).get
-    assertEquals((fresh.pipeline, fresh.target, fresh.status, fresh.usage, fresh.costUsd, fresh.goal), ("enrich-source", "zz2020_a", "queued", Usage.Zero, 0.0, Some("zz-g")))
+    assertEquals(
+      (fresh.pipeline, fresh.target, fresh.status, fresh.usage, fresh.costUsd, fresh.goal),
+      ("enrich-source", "zz2020_a", "queued", Usage.Zero, 0.0, Some("zz-g"))
+    )
     assertEquals((r(s).attempts(id, 1), r(s).checkpoint(id, 1)), (0, None))
-    r(s).record(id, step(1, 1, StepStatus.Failed, "openai:gpt-5", "0.10", None), List(AgentRepo.MessageRecord(1, "user", Some("hi"), None, None, None, None)))
+    r(s).record(
+      id,
+      step(1, 1, StepStatus.Failed, "openai:gpt-5", "0.10", None),
+      List(AgentRepo.MessageRecord(1, "user", Some("hi"), None, None, None, None))
+    )
     assertEquals((r(s).attempts(id, 1), r(s).checkpoint(id, 1)), (1, None))
     r(s).record(
       id,
@@ -55,17 +62,28 @@ abstract class RunServiceContract extends EngineStoreSuite:
     assertEquals((run.usage, run.costUsd), (Usage(30, 4, 2, 0), 0.35))
     assertEquals(r(s).runSpend(id), (Usage(30, 4, 2, 0), BigDecimal("0.35")))
     val steps = r(s).steps(id, 3)
-    assertEquals(steps.map(x => (x.seq, x.attempt, x.status, x.output, x.error)), List((1, 1, "failed", None, Some("boom")), (1, 2, "done", Some("\"ab"), None)))
+    assertEquals(
+      steps.map(x => (x.seq, x.attempt, x.status, x.output, x.error)),
+      List((1, 1, "failed", None, Some("boom")), (1, 2, "done", Some("\"ab"), None))
+    )
     assertEquals(steps.head.wouldWrite, List(WouldWrite("w", "p")))
-    assertEquals((steps.head.firstCallTokens, steps.last.turns, steps.head.startedAt), (Some(7L), Some(2), "2026-10-31T10:00:00Z"))
-    assertEquals(r(s).messages(id).map(m => (m.seq, m.n, m.role)), List((1, 1, "user"), (1, 1, "user"), (1, 2, "assistant")))
+    assertEquals(
+      (steps.head.firstCallTokens, steps.last.turns, steps.head.startedAt),
+      (Some(7L), Some(2), "2026-10-31T10:00:00Z")
+    )
+    assertEquals(
+      r(s).messages(id).map(m => (m.seq, m.n, m.role)),
+      List((1, 1, "user"), (1, 1, "user"), (1, 2, "assistant"))
+    )
     val (day, month) = r(s).spendDayMonth()
     assert(day >= BigDecimal("0.35") && month >= day, (day, month).toString)
     assertEquals(r(s).pruneMessages(0), 0)
     assertEquals(r(s).pruneMessages(1), 0, "nothing a day old")
   }
 
-  stest("lists: newest first by state and goal; a target's and a manager's runs; the unsettled ones; counts per state") { s =>
+  stest(
+    "lists: newest first by state and goal; a target's and a manager's runs; the unsettled ones; counts per state"
+  ) { s =>
     val a = s.run("zz2020_a", goal = Some("zz-g"))
     val b = s.run("zz2020_b", manager = Some("watch:zz-g"), item = Some(1L))
     val c = s.run("zz2020_a", manager = Some("watch:zz-g"), pipeline = "currency-check")
@@ -86,7 +104,9 @@ abstract class RunServiceContract extends EngineStoreSuite:
     assertEquals(r(s).get(b).flatMap(_.managerItem), Some(1L))
   }
 
-  stest("pages newest first with cursors; filters by state, pipeline, manager, goal, model (a step's too), provider, text; facets") { s =>
+  stest(
+    "pages newest first with cursors; filters by state, pipeline, manager, goal, model (a step's too), provider, text; facets"
+  ) { s =>
     val a = s.run("zz2020_tin", goal = Some("zz-g"))
     val b = s.run("zz2020_copper", manager = Some("watch:zz-g"))
     val c = s.run("zz2020_tin_b", pipeline = "currency-check")
@@ -98,7 +118,9 @@ abstract class RunServiceContract extends EngineStoreSuite:
     assertEquals((rest.map(_.id), none), (Vector(a), false))
     val Right((upTo, older)) = r(s).page(None, 5, upTo = Some(b)): @unchecked
     assertEquals((upTo.map(_.id), older), (Vector(c, b), true))
-    assert(r(s).page(None, 2, before = Some("00000000-0000-0000-0000-000000000000")).left.exists(_.contains("No agent run")))
+    assert(
+      r(s).page(None, 2, before = Some("00000000-0000-0000-0000-000000000000")).left.exists(_.contains("No agent run"))
+    )
     def page(q: RunQuery) = r(s).page(q, 10, None, None).map(_._1.map(_.id))
     assertEquals(page(RunQuery(status = List("running"))), Right(Vector(c)))
     assertEquals(page(RunQuery(pipelines = List("currency-check"))), Right(Vector(c)))

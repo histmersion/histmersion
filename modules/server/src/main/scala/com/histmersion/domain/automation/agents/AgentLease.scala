@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.agents
 
-import com.histmersion.db.ManagerRepo
+import com.augustnagro.magnum.{connect, transact}
 
 import javax.sql.DataSource
 
@@ -29,7 +29,7 @@ final class AgentLease(ds: DataSource, ttlSeconds: Int, val owner: String = Agen
     if !started then false
     else
       val ok =
-        try ManagerRepo.claim(target, AgentLease.Name, owner, ttlSeconds)
+        try transact(target)(LeaseRepo.claim(AgentLease.Name, owner, ttlSeconds))
         catch
           case e: Exception =>
             scribe.warn(s"agent lease: could not claim it on the new database: ${e.getMessage}")
@@ -42,13 +42,13 @@ final class AgentLease(ds: DataSource, ttlSeconds: Int, val owner: String = Agen
     */
   def releaseOn(target: DataSource): Unit =
     if started then
-      try ManagerRepo.release(target, AgentLease.Name, owner)
+      try transact(target)(LeaseRepo.release(AgentLease.Name, owner))
       catch case e: Exception => scribe.warn(s"agent lease: could not release it on the old database: ${e.getMessage}")
 
   /** Claim or renew now; `true` = held. A database error is a lost renewal, logged. */
   def claim(): Boolean =
     val ok =
-      try ManagerRepo.claim(ds, AgentLease.Name, owner, ttlSeconds)
+      try transact(ds)(LeaseRepo.claim(AgentLease.Name, owner, ttlSeconds))
       catch
         case e: Exception =>
           scribe.warn(s"agent lease: could not claim or renew: ${e.getMessage}")
@@ -59,7 +59,7 @@ final class AgentLease(ds: DataSource, ttlSeconds: Int, val owner: String = Agen
     ok
 
   def holderText: String =
-    try ManagerRepo.holder(ds, AgentLease.Name).fold("nobody")((o, until, _) => s"$o until $until")
+    try connect(ds)(LeaseRepo.holder(AgentLease.Name)).fold("nobody")((o, until, _) => s"$o until $until")
     catch case _: Exception => "unknown"
 
   /** Keep the lease: claim now and every ttl/3. `onAcquired` runs (once) on the renewing thread the first time the
@@ -92,13 +92,13 @@ final class AgentLease(ds: DataSource, ttlSeconds: Int, val owner: String = Agen
     thread.foreach(_.interrupt())
     thread = None
     if held then
-      try ManagerRepo.release(ds, AgentLease.Name, owner)
+      try transact(ds)(LeaseRepo.release(AgentLease.Name, owner))
       catch case _: Exception => ()
       held = false
 
   /** For About and the doctor: (holder, until, expired, held by this server). */
   def status: Option[(String, String, Boolean, Boolean)] =
-    try ManagerRepo.holder(ds, AgentLease.Name).map((o, u, expired) => (o, u, expired, o == owner))
+    try connect(ds)(LeaseRepo.holder(AgentLease.Name)).map((o, u, expired) => (o, u, expired, o == owner))
     catch case _: Exception => None
 
 object AgentLease:

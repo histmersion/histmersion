@@ -12,7 +12,7 @@ import com.histmersion.api.Autopilot.*
 import com.histmersion.domain.GoalFocus.{Facts, Plan, Work}
 import com.histmersion.api.Managers.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.{FocusRepo, ManagerRepo}
+import com.histmersion.db.FocusRepo
 
 import java.time.Instant
 import javax.sql.DataSource
@@ -89,7 +89,7 @@ final class GoalFocusService(
   )
 
   private def read(): Read =
-    val goals = FocusRepo.goals(ds)
+    val goals = agents.focusStore.goals()
     val rows = FocusRepo.work(ds)
     val work = rows.map(r =>
       r.goals -> Work(
@@ -119,11 +119,11 @@ final class GoalFocusService(
     val facts = GoalFocus.build(
       base,
       work,
-      FocusRepo.sourceCounts(ds),
+      agents.focusStore.sourceCounts(),
       agents.workflows.linked(),
       agents.workflows.finished(),
       FocusRepo.compileOpen(ds),
-      FocusRepo.lastStops(ds)
+      agents.focusStore.lastStops()
     )
     Read(
       facts,
@@ -148,7 +148,7 @@ final class GoalFocusService(
     if !inForce then
       current = None
       queued = Set.empty
-      val released = ManagerRepo.focusReleaseAll(ds)
+      val released = agents.managerStore.focusReleaseAll()
       val cleared = FocusRepo.clearActive(ds, notInForce, now)
       if released + cleared == 0 then Nil
       else
@@ -169,20 +169,20 @@ final class GoalFocusService(
 
   /** The goal's manager an event about it goes to: its seeding manager, else its watcher. */
   private def managerOf(goal: String): Option[String] =
-    List(seedId(goal), watchId(goal)).find(id => ManagerRepo.get(ds, id).isDefined)
+    List(seedId(goal), watchId(goal)).find(id => agents.managerStore.get(id).isDefined)
 
   private def event(goal: String, text: String): Unit =
-    managerOf(goal).foreach(id => ManagerRepo.event(ds, id, None, None, Feed.Autopilot, text.take(2000)))
+    managerOf(goal).foreach(id => agents.managerStore.event(id, None, None, Feed.Autopilot, text.take(2000)))
 
   /** The goals that joined and left, recorded with why. */
   private def record(plan: Plan, r: Read, now: Instant): List[String] =
     val joined = plan.joined.flatMap(g => plan.active.find(_.slug == g)).map { p =>
-      FocusRepo.joined(ds, p.slug, p.why, now)
+      agents.focusStore.joined(p.slug, p.why, now)
       event(p.slug, s"focus: active — ${p.why}")
       s"+${p.slug} (${p.stage.wire})"
     }
     val left = plan.left.map { (g, why) =>
-      FocusRepo.left(ds, g, why, now)
+      agents.focusStore.left(g, why, now)
       event(g, s"focus: no longer active — $why")
       s"-$g ($why)"
     }
@@ -193,12 +193,12 @@ final class GoalFocusService(
     val items = r.work.map(w => GoalFocus.Item(w.id, w.kind, w.status, w.goals, w.person, w.focusHeld))
     val hs = GoalFocus.holds(items, plan, r.facts)
     val mgr = r.work.map(w => w.id -> w.managerId).toMap
-    val held = hs.hold.filter((id, goal, why) => ManagerRepo.focusHold(ds, id, Hold(reason = why, focus = Some(goal))))
-    val released = if hs.release.isEmpty then 0 else ManagerRepo.focusRelease(ds, hs.release)
+    val held =
+      hs.hold.filter((id, goal, why) => agents.managerStore.focusHold(id, Hold(reason = why, focus = Some(goal))))
+    val released = if hs.release.isEmpty then 0 else agents.managerStore.focusRelease(hs.release)
     val heldBy = held.groupBy((id, _, _) => mgr.getOrElse(id, ""))
     heldBy.toList.sortBy(_._1).foreach { (m, xs) =>
-      ManagerRepo.event(
-        ds,
+      agents.managerStore.event(
         m,
         None,
         None,
@@ -207,8 +207,7 @@ final class GoalFocusService(
       )
     }
     hs.release.groupBy(id => mgr.getOrElse(id, "")).toList.sortBy(_._1).foreach { (m, xs) =>
-      ManagerRepo.event(
-        ds,
+      agents.managerStore.event(
         m,
         None,
         None,
@@ -235,7 +234,7 @@ final class GoalFocusService(
         val link = if m.id == EnrichId then GoalPlans.LinkKind.Source.wire else GoalPlans.LinkKind.Article.wire
         val ratio = acfg.focusRatio
         val recent = FocusRepo.recentTargets(ds, m.id, math.max(1, ratio))
-        val goalsOf = FocusRepo.goalsOf(ds, link, (due.map(_.target) ++ recent).distinct)
+        val goalsOf = agents.focusStore.goalsOf(link, (due.map(_.target) ++ recent).distinct)
         def mine(t: String) = goalsOf.getOrElse(t, Nil).exists(active)
         val person = pending.filter(_.origin == ItemOrigin.Person.wire).map(_.id).toSet
         GoalFocus.fairOrder(due, c => person(c.id) || mine(c.target), recent.map(mine), ratio)
@@ -250,7 +249,7 @@ final class GoalFocusService(
     * decided its plan).
     */
   def goalPlanBlock(goal: String, proposed: Int): Option[String] =
-    val goals = FocusRepo.goals(ds)
+    val goals = agents.focusStore.goals()
     val kids = goals.filter(_.parent.isDefined).groupMap(_.parent.get)(identity)
     def open(s: String, seen: Set[String]): Int =
       kids
@@ -264,7 +263,7 @@ final class GoalFocusService(
 
   /** How many goals with an approved plan are unfinished now. */
   def unfinishedPlanned(): Int =
-    AutopilotPolicy.unfinishedPlanned(FocusRepo.goals(ds).map(g => g.slug -> g.status), agents.goals.planned())
+    AutopilotPolicy.unfinishedPlanned(agents.focusStore.goals().map(g => g.slug -> g.status), agents.goals.planned())
 
   /** Why goal plans are not offered now, if they are not ([[AutopilotPolicy.goalPlansWait]]). */
   def goalPlansWait(): Option[String] =
@@ -278,7 +277,7 @@ final class GoalFocusService(
     val (max, from) = cap
     val r = read()
     val plan = GoalFocus.select(r.facts, settings(r, if max > 0 then max else acfg.maxActiveGoals))
-    val pace = ManagerRepo.pace(ds, now.minusSeconds(7L * 86400L))
+    val pace = agents.managerStore.pace(now.minusSeconds(7L * 86400L))
     val byGoal = r.facts.map(f => f.slug -> f).toMap
     def goal(p: GoalFocus.Pick, active: Boolean): FocusGoal =
       val f = byGoal.get(p.slug)
@@ -320,7 +319,7 @@ final class GoalFocusService(
       plan.queue.take(shown).map(goal(_, active = false)),
       plan.queue.size,
       plan.waiting.map((s, c, w) => FocusWaiting(s, c, w, byGoal.get(s).exists(_.pinned))),
-      ManagerRepo.focusHeldCount(ds),
+      agents.managerStore.focusHeldCount(),
       note,
       changes
     )
@@ -337,7 +336,7 @@ final class GoalFocusService(
     val done: Either[ApiError, String] = in.action.trim.toLowerCase match
       case "pin" | "unpin" =>
         val on = in.action.trim.equalsIgnoreCase("pin")
-        goal.flatMap(g => Either.cond(FocusRepo.pin(ds, g, on), g, missing(g))).map { g =>
+        goal.flatMap(g => Either.cond(agents.focusStore.pin(g, on), g, missing(g))).map { g =>
           event(g, s"focus: ${if on then "pinned" else "unpinned"} by $by")
           s"$g ${if on then "pinned: it is active from the next tick" else "unpinned"} (by $by)"
         }
@@ -345,7 +344,7 @@ final class GoalFocusService(
         for
           g <- goal
           n <- in.value.toRight(ApiError("`priority` needs `value` (higher first)"))
-          _ <- Either.cond(FocusRepo.priority(ds, g, n), (), missing(g))
+          _ <- Either.cond(agents.focusStore.priority(g, n), (), missing(g))
         yield
           event(g, s"focus: priority $n set by $by")
           s"$g priority $n (by $by)"

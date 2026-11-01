@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.scheduler
 
+import com.augustnagro.magnum.{connect, transact}
+
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.{ManagerDefaultsViews, ManagerSupervisor}
 
@@ -11,7 +13,6 @@ import com.histmersion.api.Managers.*
 import com.histmersion.api.Queue.QueueAdd
 import com.histmersion.domain.SchedulerPolicy.*
 import com.histmersion.api.AgentScheduler.*
-import com.histmersion.db.{FocusRepo, ManagerRepo}
 
 import java.time.Instant
 import javax.sql.DataSource
@@ -122,14 +123,14 @@ final class SchedulerService(
   def inputs(ms: List[ManagerInfo], now: Instant, stop: Option[Block]): Inputs =
     val gs = goals()
     val perManager = ms.map { m =>
-      m -> ManagerRepo
-        .pending(ds, m.id)
+      m -> agents.managerStore
+        .pending(m.id)
         .filterNot(_.kind == OaIngest)
         .filter(i => i.notBefore.flatMap(ManagerPolicy.parseInstant).forall(!_.isAfter(now)))
     }
     def targetsOf(id: String) = perManager.filter(_._1.id == id).flatMap(_._2.map(_.target))
-    val articleGoals = FocusRepo.goalsOf(ds, GoalPlans.LinkKind.Article.wire, targetsOf(ReviewId))
-    val sourceGoals = FocusRepo.goalsOf(ds, GoalPlans.LinkKind.Source.wire, targetsOf(EnrichId))
+    val articleGoals = agents.focusStore.goalsOf(GoalPlans.LinkKind.Article.wire, targetsOf(ReviewId))
+    val sourceGoals = agents.focusStore.goalsOf(GoalPlans.LinkKind.Source.wire, targetsOf(EnrichId))
 
     /** The goal an item advances: its manager's, else the best of the goals its target is linked to. */
     def goalOf(m: ManagerInfo, i: ManagerItem): Option[String] =
@@ -150,7 +151,7 @@ final class SchedulerService(
         BigDecimal(m.spentTodayUsd)
       )
       val open = if items.exists(i => i.kind == ArticleReview || i.kind == ProposeArticles) then
-        ManagerRepo.openKeys(ds, m.id)
+        agents.managerStore.openKeys(m.id)
       else Nil
       val over = m.config.models.getOrElse(Nil)
       val memo = collection.mutable.Map.empty[Pipeline, Either[String, List[PlanQuota.PoolId]]] // per manager and pass
@@ -209,7 +210,7 @@ final class SchedulerService(
         )
       }
     }
-    val runs = ManagerRepo.occupyingRuns(ds)
+    val runs = agents.managerStore.occupyingRuns()
     val pipePools = collection.mutable.Map.empty[Pipeline, List[PlanQuota.PoolId]] // per pass
     def poolsOfRun(p: String): List[PlanQuota.PoolId] =
       Pipeline.parse(p).toList.flatMap(pl => pipePools.getOrElseUpdate(pl, poolIds(Nil, now, List(pl)).getOrElse(Nil)))
@@ -220,10 +221,10 @@ final class SchedulerService(
       poolCap = PlanQuota.PoolId.values.toList.map(p => p.wire -> poolCap(p)).toMap,
       poolUsed = runs.flatMap((p, _) => poolsOfRun(p)).groupMapReduce(_.wire)(_ => 1)(_ + _),
       managerCap = caps,
-      managerUsed = caps.keys.map(id => id -> ManagerRepo.running(ds, id)).toMap,
+      managerUsed = caps.keys.map(id => id -> agents.managerStore.running(id)).toMap,
       gatheringUsed = runs.count(_._2.exists(g => gs.get(g).exists(_.gathering))),
       stop = stop.orElse(budgetBlock()),
-      recent = ManagerRepo.recentKinds(ds, math.max(1, cfg.scheduler.shareWindow)).map(JobType.of)
+      recent = agents.managerStore.recentKinds(math.max(1, cfg.scheduler.shareWindow)).map(JobType.of)
     )
     Inputs(cands, perManager.flatMap((m, is) => is.map(i => i.id -> (m, i))).toMap, res)
 
@@ -274,8 +275,8 @@ final class SchedulerService(
 
   /** The managers that may start runs (active, of a kind the supervisor runs). */
   def live(): List[ManagerInfo] =
-    ManagerRepo
-      .list(ds)
+    agents.managerStore
+      .list()
       .filter(m =>
         State.parse(m.state).contains(State.Active) &&
           Kind.parse(m.kind).exists(k => k == Kind.Review || k == Kind.Enrich || k == Kind.Seed || k == Kind.Watch)
@@ -324,7 +325,7 @@ final class SchedulerService(
       ),
       waits.take(shown).map(wire),
       waits.size,
-      ManagerRepo.forPerson(ds),
+      agents.managerStore.forPerson(),
       res.stop.map(_.why),
       List(
         s"aging: 1 level per ${s.agingHours} h",
@@ -364,8 +365,8 @@ final class SchedulerService(
     val item = r
       .stripPrefix("#")
       .toLongOption
-      .flatMap(ManagerRepo.item(ds, _))
-      .orElse(ManagerRepo.openFor(ds, r).headOption)
+      .flatMap(agents.managerStore.item(_))
+      .orElse(agents.managerStore.openFor(r).headOption)
     item
       .toRight(ApiError(s"no manager item '$r' (an item id, or the target of an open item)", Some(Write.CodeNotFound)))
       .map { i =>
@@ -380,7 +381,7 @@ final class SchedulerService(
                   case Some((_, w)) => base.copy(code = w.code, why = w.why, behind = w.behind, position = w.position)
                   case None         =>
                     val notBefore = i.notBefore.flatMap(ManagerPolicy.parseInstant).filter(_.isAfter(now))
-                    val paused = ManagerRepo.get(ds, i.managerId).filterNot(_.state == State.Active.wire)
+                    val paused = agents.managerStore.get(i.managerId).filterNot(_.state == State.Active.wire)
                     if i.kind == OaIngest then
                       base.copy(
                         code = AgentScheduler.Code.NotDue,
@@ -450,23 +451,23 @@ final class SchedulerService(
     */
   def stalls(days: Option[Int] = None, now: Instant = Instant.now(agents.clock)): Stalls.StallReport =
     val n = math.max(0, days.getOrElse(cfg.autopilot.stallDays))
-    val goals = FocusRepo.goals(ds).filterNot(g => GoalFocus.finished(g.status))
-    val progress = ManagerRepo.lastProgress(ds)
+    val goals = agents.focusStore.goals().filterNot(g => GoalFocus.finished(g.status))
+    val progress = agents.managerStore.lastProgress()
     val articles = agents.workflows.linked()
     val bySubj = agents.approvalStore.openLight().groupBy(_.subject)
-    val held = ManagerRepo.personHeldByGoal(ds)
-    val paused = ManagerRepo
-      .light(ds)
+    val held = agents.managerStore.personHeldByGoal()
+    val paused = agents.managerStore
+      .light()
       .filter(_.state == State.Paused.wire)
       .flatMap(m => m.goal.map(_ -> m.id))
       .groupMap(_._1)(_._2)
     val snap = last.getOrElse(dry(now))
     val waits = snap.d.waiting.groupMap(_._1.c.goal)(x => Stalls.SchedWait(x._2.code, x._2.why, x._2.position))
-    val stops = FocusRepo.lastStops(ds)
-    val sources = FocusRepo.sourceCounts(ds)
-    val sweeps = ManagerRepo.sweepOutcomes(ds)
-    val pace = ManagerRepo.pace(ds, now.minusSeconds(7L * 86400L))
-    val running = ManagerRepo.runningByGoal(ds)
+    val stops = agents.focusStore.lastStops()
+    val sources = agents.focusStore.sourceCounts()
+    val sweeps = agents.managerStore.sweepOutcomes()
+    val pace = agents.managerStore.pace(now.minusSeconds(7L * 86400L))
+    val running = agents.managerStore.runningByGoal()
     val draining = agents.drain.draining
     val facts = goals.map { g =>
       val last = (progress.get(g.slug).toList :+ g.createdAt).flatMap(ManagerPolicy.parseInstant).maxOption

@@ -132,7 +132,7 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     m
 
   private def sweepRun(mid: String, goal: String): RunInfo =
-    connect(ds)(AgentRepo.get(ManagerRepo.itemFor(ds, mid, AcquisitionSweep, goal).get.runId.get)).get
+    connect(ds)(AgentRepo.get(connect(ds)(ManagerRepo.itemFor(mid, AcquisitionSweep, goal)).get.runId.get)).get
 
   private def acquire(h: Handlers): List[Queue.QueueItem] =
     h.ops.queueList("acquire", all = false).toOption.get.items.filter(_.text.contains("zzagent"))
@@ -194,7 +194,11 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     c.scripts += Seq(picks(Seq("x1")))
     up.found = Map(Query -> List(work("x1")))
     b.managing
-      .patchItem(m.id, ManagerRepo.itemFor(ds, m.id, AcquisitionSweep, Goal).get.id.toString, ItemPatch("reopen"))
+      .patchItem(
+        m.id,
+        connect(ds)(ManagerRepo.itemFor(m.id, AcquisitionSweep, Goal)).get.id.toString,
+        ItemPatch("reopen")
+      )
       .fold(e => fail(e.message), identity)
     b.managers.tick(now)
     val again = sweepRun(m.id, Goal)
@@ -204,8 +208,7 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
       "0 left: no ingest step, the backlog keeps them"
     )
     assert(
-      ManagerRepo
-        .events(ds, m.id, None, 50)
+      connect(ds)(ManagerRepo.events(m.id, None, 50))
         .exists(e => e.kind == Feed.Started && e.text.contains("10 works wait in the ingest backlog first"))
     )
     b.engine.execute(again.id)
@@ -222,8 +225,7 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     assertEquals(ingestCalls(upb).last, s"ingest ${doi("x1")}", "the later find last")
     assert(connect(ds)(GoalLinkRepo.links(Goal)).exists(l => l.kind == LinkKind.Source && l.ref == ck0(doi("w30"))))
     assertEquals(
-      ManagerRepo
-        .events(ds, m.id, None, 200)
+      connect(ds)(ManagerRepo.events(m.id, None, 200))
         .count(e => e.kind == Feed.Ingested && e.text.contains("from the backlog")),
       11
     )
@@ -245,7 +247,9 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     val w2 = watcher(a, Goal2, perDay = 2)
     // both spent today's allowance already
     List(w1, w2).foreach(w =>
-      (1 to 2).foreach(_ => ManagerRepo.event(ds, w.id, None, None, Feed.Ingested, "[[zzagent_earlier]] ingested"))
+      (1 to 2).foreach(_ =>
+        transact(ds)(ManagerRepo.event(w.id, None, None, Feed.Ingested, "[[zzagent_earlier]] ingested"))
+      )
     )
     val now = Instant.now()
     a.managers.tick(now)
@@ -261,13 +265,13 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     val tomorrow = now.plus(1, ChronoUnit.DAYS)
     a.managers.tick(tomorrow)
     a.managers.tick(tomorrow)
-    assertEquals(ManagerRepo.itemFor(ds, w1.id, OaIngest, doi("x")).get.status, "done")
+    assertEquals(connect(ds)(ManagerRepo.itemFor(w1.id, OaIngest, doi("x"))).get.status, "done")
     assert(
       List(Goal, Goal2).forall(g =>
         connect(ds)(GoalLinkRepo.links(g)).exists(l => l.kind == LinkKind.Source && l.ref == ck0(doi("x")))
       )
     )
-    val y = ManagerRepo.itemFor(ds, w1.id, OaIngest, doi("y")).get
+    val y = connect(ds)(ManagerRepo.itemFor(w1.id, OaIngest, doi("y"))).get
     assertEquals(y.status, "stopped")
     assert(y.outcome.exists(_.contains("to the acquisition list")), y.outcome)
     val ys = acquire(h).filter(i => Scheduling.dois(i.text).contains(doi("y")))
