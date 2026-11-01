@@ -1,0 +1,139 @@
+== GET /api/sources/zzhill1990_battle/passages?q=battle+of+Zzhill
+200 {
+  "bodyChars" : 236,
+  "capped" : false,
+  "citekey" : "zzhill1990_battle",
+  "matches" : 2,
+  "passages" : [
+    {
+      "heading" : "Zzhill > The battle",
+      "matches" : [
+        {
+          "end" : 20,
+          "start" : 4
+        },
+        {
+          "end" : 143,
+          "start" : 127
+        }
+      ],
+      "offset" : 0,
+      "text" : "The battle of Zzhill was fought below the walls of Zzhill around 1300 BC; Zzport sent ships.\nZzhill burned soon after, and the battle of Zzhill was remembered in the songs of Zzland.\n\nThe Zzwell was dug in the time of the Zzmarch kings."
+    }
+  ],
+  "query" : "battle of Zzhill",
+  "regex" : false,
+  "total" : 1
+}
+== GET /api/sources/zzhill1990_battle/passages?q=zzhill&context=20&limit=2
+200 {
+  "bodyChars" : 236,
+  "capped" : false,
+  "citekey" : "zzhill1990_battle",
+  "matches" : 4,
+  "passages" : [
+    {
+      "heading" : "Zzhill > The battle",
+      "matches" : [
+        {
+          "end" : 16,
+          "start" : 10
+        }
+      ],
+      "offset" : 4,
+      "text" : "battle of Zzhill was"
+    },
+    {
+      "heading" : "Zzhill > The battle",
+      "matches" : [
+        {
+          "end" : 15,
+          "start" : 9
+        }
+      ],
+      "offset" : 42,
+      "text" : "walls of Zzhill around"
+    }
+  ],
+  "query" : "zzhill",
+  "regex" : false,
+  "total" : 4
+}
+== GET /api/sources/zzhill1990_battle/passages?q=%5CbZz%28port%7Cwell%29%5Cb&regex=true
+200 {
+  "bodyChars" : 236,
+  "capped" : false,
+  "citekey" : "zzhill1990_battle",
+  "matches" : 2,
+  "passages" : [
+    {
+      "heading" : "Zzhill > The battle",
+      "matches" : [
+        {
+          "end" : 80,
+          "start" : 74
+        },
+        {
+          "end" : 194,
+          "start" : 188
+        }
+      ],
+      "offset" : 0,
+      "text" : "The battle of Zzhill was fought below the walls of Zzhill around 1300 BC; Zzport sent ships.\nZzhill burned soon after, and the battle of Zzhill was remembered in the songs of Zzland.\n\nThe Zzwell was dug in the time of the Zzmarch kings."
+    }
+  ],
+  "query" : "\\bZz(port|well)\\b",
+  "regex" : true,
+  "total" : 1
+}
+== GET /api/sources/zzvolc2004_ash/passages?q=eruption
+200 {
+  "bodyChars" : 110,
+  "capped" : false,
+  "citekey" : "zzvolc2004_ash",
+  "matches" : 2,
+  "passages" : [
+    {
+      "heading" : "Eruptions",
+      "matches" : [
+        {
+          "end" : 12,
+          "start" : 4
+        },
+        {
+          "end" : 94,
+          "start" : 86
+        }
+      ],
+      "offset" : 0,
+      "text" : "The eruption of Mount Zzvolc buried the fields east of Zzport in ash. Pumice from the eruption reached Zzhill."
+    }
+  ],
+  "query" : "eruption",
+  "regex" : false,
+  "total" : 1
+}
+== GET /api/sources/zznone1900_x/passages?q=x
+404 {
+  "code" : "not_found",
+  "message" : "No source 'zznone1900_x'"
+}
+== tool passages {"citekey":"zzhill1990_battle","query":"Zzport"}
+## Passages: "Zzport" in `zzhill1990_battle`
+
+_1 match in 1 passage · showing 1 · matches in **bold** · `get_source` with a passage's `offset` reads on from it_
+
+### 1 · offset 0 · § Zzhill > The battle
+
+The battle of Zzhill was fought below the walls of Zzhill around 1300 BC; **Zzport** sent ships.
+Zzhill burned soon after, and the battle of Zzhill was remembered in the songs of Zzland.
+
+The Zzwell was dug in the time of the Zzmarch kings.
+== tool passages {"citekey":"zzvolc2004_ash","query":"Zzvolc","context":10}
+## Passages: "Zzvolc" in `zzvolc2004_ash`
+
+_1 match in 1 passage · showing 1 · matches in **bold** · `get_source` with a passage's `offset` reads on from it_
+
+### 1 · offset 22 · § Eruptions
+
+**Zzvolc**

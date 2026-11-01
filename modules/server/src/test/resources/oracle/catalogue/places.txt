@@ -1,0 +1,1603 @@
+== GET /api/places
+200 [
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "findings" : 4,
+    "id" : "zz_land",
+    "importSource" : null,
+    "kind" : "region",
+    "label" : "Zzland",
+    "matchedName" : "Zzland",
+    "names" : "Zzland, Zzlandia",
+    "periodEnd" : -1000,
+    "periodStart" : -2000,
+    "source" : null
+  },
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "findings" : 4,
+    "id" : "zz_march",
+    "importSource" : null,
+    "kind" : "region",
+    "label" : "Zzmarch",
+    "matchedName" : "Zzmarch",
+    "names" : "Zzmarch",
+    "periodEnd" : -1200,
+    "periodStart" : -1600,
+    "source" : null
+  },
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "findings" : 1,
+    "id" : "zz_hill",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zzhill",
+    "matchedName" : "Zzhill",
+    "names" : "Zzhill, Zzhill Höyük, Zzhügel",
+    "periodEnd" : -1180,
+    "periodStart" : -1650,
+    "source" : null
+  },
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "findings" : 1,
+    "id" : "zz_port",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zzport",
+    "matchedName" : "Zzport",
+    "names" : "Zzport",
+    "periodEnd" : null,
+    "periodStart" : -1400,
+    "source" : null
+  },
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "findings" : 1,
+    "id" : "zz_well",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zzwell",
+    "matchedName" : "Zzwell",
+    "names" : "Zzwell",
+    "periodEnd" : -1100,
+    "periodStart" : -1500,
+    "source" : null
+  },
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "findings" : 0,
+    "id" : "zz_sea",
+    "importSource" : null,
+    "kind" : "region",
+    "label" : "Zzsea",
+    "matchedName" : "Zzsea",
+    "names" : "Zzsea",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "source" : null
+  },
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "findings" : 0,
+    "id" : "zz_camp_north",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zzcamp",
+    "matchedName" : "Zzcamp",
+    "names" : "Zzcamp, Zzlager",
+    "periodEnd" : -1250,
+    "periodStart" : -1350,
+    "source" : "a survey map"
+  },
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "findings" : 0,
+    "id" : "zz_mound",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zzmound",
+    "matchedName" : "Zzmound",
+    "names" : "Zzmound",
+    "periodEnd" : -1300,
+    "periodStart" : -1500,
+    "source" : null
+  }
+]
+== GET /api/places?q=zz
+200 [
+]
+== GET /api/places?q=Zzhill
+200 [
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "findings" : 1,
+    "id" : "zz_hill",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zzhill",
+    "matchedName" : "Zzhill",
+    "names" : "Zzhill, Zzhill Höyük, Zzhügel",
+    "periodEnd" : -1180,
+    "periodStart" : -1650,
+    "source" : null
+  }
+]
+== GET /api/places?q=zzmound
+200 [
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "findings" : 0,
+    "id" : "zz_mound",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zzmound",
+    "matchedName" : "Zzmound",
+    "names" : "Zzmound",
+    "periodEnd" : -1300,
+    "periodStart" : -1500,
+    "source" : null
+  }
+]
+== GET /api/places?q=Zzhügel
+200 [
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "findings" : 1,
+    "id" : "zz_hill",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zzhill",
+    "matchedName" : "Zzhügel",
+    "names" : "Zzhill, Zzhill Höyük, Zzhügel",
+    "periodEnd" : -1180,
+    "periodStart" : -1650,
+    "source" : null
+  }
+]
+== GET /api/places?q=zz&asOf=-1700
+200 [
+]
+== GET /api/places?q=zz&asOf=-1300&limit=3
+200 [
+]
+== GET /api/places/zz_hill
+200 {
+  "asOf" : null,
+  "children" : [
+  ],
+  "contested" : false,
+  "counts" : null,
+  "descriptions" : [
+  ],
+  "findings" : 1,
+  "footprints" : [
+    {
+      "accuracyM" : null,
+      "certainty" : "approximate",
+      "citekey" : null,
+      "id" : 4,
+      "period" : {
+        "end" : -1180,
+        "start" : -1650
+      },
+      "placeId" : "zz_hill",
+      "role" : "extent"
+    }
+  ],
+  "geometry" : "{\"type\":\"Point\",\"coordinates\":[34.6,40]}",
+  "hasBoundary" : false,
+  "links" : [
+  ],
+  "locationPrecision" : "stated",
+  "media" : [
+  ],
+  "parents" : [
+    {
+      "contested" : false,
+      "dating" : "stated",
+      "id" : "zz_land",
+      "importSource" : null,
+      "kind" : "region",
+      "label" : "Zzland",
+      "names" : "Zzland, Zzlandia",
+      "periodEnd" : -1000,
+      "periodStart" : -2000,
+      "source" : null
+    },
+    {
+      "contested" : false,
+      "dating" : "stated",
+      "id" : "zz_march",
+      "importSource" : null,
+      "kind" : "region",
+      "label" : "Zzmarch",
+      "names" : "Zzmarch",
+      "periodEnd" : -1200,
+      "periodStart" : -1600,
+      "source" : null
+    }
+  ],
+  "place" : {
+    "contested" : false,
+    "dating" : "stated",
+    "id" : "zz_hill",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zzhill",
+    "names" : "Zzhill, Zzhill Höyük, Zzhügel",
+    "periodEnd" : -1180,
+    "periodStart" : -1650,
+    "source" : null
+  },
+  "record" : {
+    "dateSource" : null,
+    "designations" : [
+    ],
+    "periods" : [
+    ],
+    "registers" : [
+    ]
+  },
+  "siteType" : null,
+  "timeBasis" : "dated",
+  "types" : [
+  ]
+}
+== GET /api/places/zz_hill?counts=true
+200 {
+  "asOf" : null,
+  "children" : [
+  ],
+  "contested" : false,
+  "counts" : {
+    "articles" : 0,
+    "events" : 1,
+    "findings" : 1,
+    "sources" : 1
+  },
+  "descriptions" : [
+  ],
+  "findings" : 1,
+  "footprints" : [
+    {
+      "accuracyM" : null,
+      "certainty" : "approximate",
+      "citekey" : null,
+      "id" : 4,
+      "period" : {
+        "end" : -1180,
+        "start" : -1650
+      },
+      "placeId" : "zz_hill",
+      "role" : "extent"
+    }
+  ],
+  "geometry" : "{\"type\":\"Point\",\"coordinates\":[34.6,40]}",
+  "hasBoundary" : false,
+  "links" : [
+  ],
+  "locationPrecision" : "stated",
+  "media" : [
+  ],
+  "parents" : [
+    {
+      "contested" : false,
+      "dating" : "stated",
+      "id" : "zz_land",
+      "importSource" : null,
+      "kind" : "region",
+      "label" : "Zzland",
+      "names" : "Zzland, Zzlandia",
+      "periodEnd" : -1000,
+      "periodStart" : -2000,
+      "source" : null
+    },
+    {
+      "contested" : false,
+      "dating" : "stated",
+      "id" : "zz_march",
+      "importSource" : null,
+      "kind" : "region",
+      "label" : "Zzmarch",
+      "names" : "Zzmarch",
+      "periodEnd" : -1200,
+      "periodStart" : -1600,
+      "source" : null
+    }
+  ],
+  "place" : {
+    "contested" : false,
+    "dating" : "stated",
+    "id" : "zz_hill",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zzhill",
+    "names" : "Zzhill, Zzhill Höyük, Zzhügel",
+    "periodEnd" : -1180,
+    "periodStart" : -1650,
+    "source" : null
+  },
+  "record" : {
+    "dateSource" : null,
+    "designations" : [
+    ],
+    "periods" : [
+    ],
+    "registers" : [
+    ]
+  },
+  "siteType" : null,
+  "timeBasis" : "dated",
+  "types" : [
+  ]
+}
+== GET /api/places/zz_hill?asOf=-1300
+200 {
+  "asOf" : -1300,
+  "children" : [
+  ],
+  "contested" : false,
+  "counts" : null,
+  "descriptions" : [
+  ],
+  "findings" : 1,
+  "footprints" : [
+    {
+      "accuracyM" : null,
+      "certainty" : "approximate",
+      "citekey" : null,
+      "id" : 4,
+      "period" : {
+        "end" : -1180,
+        "start" : -1650
+      },
+      "placeId" : "zz_hill",
+      "role" : "extent"
+    }
+  ],
+  "geometry" : "{\"type\":\"Point\",\"coordinates\":[34.6,40]}",
+  "hasBoundary" : false,
+  "links" : [
+  ],
+  "locationPrecision" : "stated",
+  "media" : [
+  ],
+  "parents" : [
+    {
+      "contested" : false,
+      "dating" : "stated",
+      "id" : "zz_land",
+      "importSource" : null,
+      "kind" : "region",
+      "label" : "Zzland",
+      "names" : "Zzland, Zzlandia",
+      "periodEnd" : -1000,
+      "periodStart" : -2000,
+      "source" : null
+    },
+    {
+      "contested" : false,
+      "dating" : "stated",
+      "id" : "zz_march",
+      "importSource" : null,
+      "kind" : "region",
+      "label" : "Zzmarch",
+      "names" : "Zzmarch",
+      "periodEnd" : -1200,
+      "periodStart" : -1600,
+      "source" : null
+    }
+  ],
+  "place" : {
+    "contested" : false,
+    "dating" : "stated",
+    "id" : "zz_hill",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zzhill",
+    "names" : "Zzhill, Zzhill Höyük, Zzhügel",
+    "periodEnd" : -1180,
+    "periodStart" : -1650,
+    "source" : null
+  },
+  "record" : {
+    "dateSource" : null,
+    "designations" : [
+    ],
+    "periods" : [
+    ],
+    "registers" : [
+    ]
+  },
+  "siteType" : null,
+  "timeBasis" : "dated",
+  "types" : [
+  ]
+}
+== GET /api/places/zz_mound_dup
+200 {
+  "asOf" : null,
+  "children" : [
+  ],
+  "contested" : false,
+  "counts" : null,
+  "descriptions" : [
+  ],
+  "findings" : 0,
+  "footprints" : [
+    {
+      "accuracyM" : null,
+      "certainty" : "approximate",
+      "citekey" : null,
+      "id" : 7,
+      "period" : {
+        "end" : -1300,
+        "start" : -1500
+      },
+      "placeId" : "zz_mound",
+      "role" : "extent"
+    }
+  ],
+  "geometry" : "{\"type\":\"Point\",\"coordinates\":[37.2,38.1]}",
+  "hasBoundary" : false,
+  "links" : [
+  ],
+  "locationPrecision" : "stated",
+  "media" : [
+  ],
+  "parents" : [
+    {
+      "contested" : false,
+      "dating" : "stated",
+      "id" : "zz_land",
+      "importSource" : null,
+      "kind" : "region",
+      "label" : "Zzland",
+      "names" : "Zzland, Zzlandia",
+      "periodEnd" : -1000,
+      "periodStart" : -2000,
+      "source" : null
+    }
+  ],
+  "place" : {
+    "contested" : false,
+    "dating" : "stated",
+    "id" : "zz_mound",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zzmound",
+    "names" : "Zzmound",
+    "periodEnd" : -1300,
+    "periodStart" : -1500,
+    "source" : null
+  },
+  "record" : {
+    "dateSource" : null,
+    "designations" : [
+    ],
+    "periods" : [
+    ],
+    "registers" : [
+    ]
+  },
+  "siteType" : null,
+  "timeBasis" : "dated",
+  "types" : [
+  ]
+}
+== GET /api/places/zz_camp
+200 {
+  "asOf" : null,
+  "children" : [
+  ],
+  "contested" : false,
+  "counts" : null,
+  "descriptions" : [
+  ],
+  "findings" : 0,
+  "footprints" : [
+    {
+      "accuracyM" : null,
+      "certainty" : "approximate",
+      "citekey" : "a survey map",
+      "id" : 10,
+      "period" : {
+        "end" : -1250,
+        "start" : -1350
+      },
+      "placeId" : "zz_camp_north",
+      "role" : "extent"
+    }
+  ],
+  "geometry" : "{\"type\":\"Point\",\"coordinates\":[36.4,39.9]}",
+  "hasBoundary" : false,
+  "links" : [
+  ],
+  "locationPrecision" : "stated",
+  "media" : [
+  ],
+  "parents" : [
+    {
+      "contested" : false,
+      "dating" : "stated",
+      "id" : "zz_land",
+      "importSource" : null,
+      "kind" : "region",
+      "label" : "Zzland",
+      "names" : "Zzland, Zzlandia",
+      "periodEnd" : -1000,
+      "periodStart" : -2000,
+      "source" : null
+    }
+  ],
+  "place" : {
+    "contested" : false,
+    "dating" : "stated",
+    "id" : "zz_camp_north",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zzcamp",
+    "names" : "Zzcamp, Zzlager",
+    "periodEnd" : -1250,
+    "periodStart" : -1350,
+    "source" : "a survey map"
+  },
+  "record" : {
+    "dateSource" : null,
+    "designations" : [
+    ],
+    "periods" : [
+    ],
+    "registers" : [
+    ]
+  },
+  "siteType" : null,
+  "timeBasis" : "dated",
+  "types" : [
+  ]
+}
+== GET /api/places/zz_lonely
+404 {
+  "code" : null,
+  "message" : "No place 'zz_lonely'"
+}
+== GET /api/places/zz_none
+404 {
+  "code" : null,
+  "message" : "No place 'zz_none'"
+}
+== GET /api/places/zz_land/children
+200 [
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "id" : "zz_camp_north",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zzcamp",
+    "names" : "Zzcamp, Zzlager",
+    "periodEnd" : -1250,
+    "periodStart" : -1350,
+    "source" : "a survey map"
+  },
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "id" : "zz_hill",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zzhill",
+    "names" : "Zzhill, Zzhill Höyük, Zzhügel",
+    "periodEnd" : -1180,
+    "periodStart" : -1650,
+    "source" : null
+  },
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "id" : "zz_march",
+    "importSource" : null,
+    "kind" : "region",
+    "label" : "Zzmarch",
+    "names" : "Zzmarch",
+    "periodEnd" : -1200,
+    "periodStart" : -1600,
+    "source" : null
+  },
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "id" : "zz_mound",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zzmound",
+    "names" : "Zzmound",
+    "periodEnd" : -1300,
+    "periodStart" : -1500,
+    "source" : null
+  },
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "id" : "zz_port",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zzport",
+    "names" : "Zzport",
+    "periodEnd" : null,
+    "periodStart" : -1400,
+    "source" : null
+  },
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "id" : "zz_well",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zzwell",
+    "names" : "Zzwell",
+    "periodEnd" : -1100,
+    "periodStart" : -1500,
+    "source" : null
+  }
+]
+== GET /api/places/zz_land/children?asOf=-1300
+200 [
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "id" : "zz_camp_north",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zzcamp",
+    "names" : "Zzcamp, Zzlager",
+    "periodEnd" : -1250,
+    "periodStart" : -1350,
+    "source" : "a survey map"
+  },
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "id" : "zz_hill",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zzhill",
+    "names" : "Zzhill, Zzhill Höyük, Zzhügel",
+    "periodEnd" : -1180,
+    "periodStart" : -1650,
+    "source" : null
+  },
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "id" : "zz_march",
+    "importSource" : null,
+    "kind" : "region",
+    "label" : "Zzmarch",
+    "names" : "Zzmarch",
+    "periodEnd" : -1200,
+    "periodStart" : -1600,
+    "source" : null
+  },
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "id" : "zz_mound",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zzmound",
+    "names" : "Zzmound",
+    "periodEnd" : -1300,
+    "periodStart" : -1500,
+    "source" : null
+  },
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "id" : "zz_port",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zzport",
+    "names" : "Zzport",
+    "periodEnd" : null,
+    "periodStart" : -1400,
+    "source" : null
+  },
+  {
+    "contested" : false,
+    "dating" : "stated",
+    "id" : "zz_well",
+    "importSource" : null,
+    "kind" : "site",
+    "label" : "Zzwell",
+    "names" : "Zzwell",
+    "periodEnd" : -1100,
+    "periodStart" : -1500,
+    "source" : null
+  }
+]
+== GET /api/places/zz_land/tree
+200 [
+  {
+    "contested" : false,
+    "depth" : 0,
+    "findings" : 4,
+    "id" : "zz_land",
+    "kind" : "region",
+    "label" : "Zzland"
+  },
+  {
+    "contested" : false,
+    "depth" : 1,
+    "findings" : 0,
+    "id" : "zz_camp_north",
+    "kind" : "site",
+    "label" : "Zzcamp"
+  },
+  {
+    "contested" : false,
+    "depth" : 1,
+    "findings" : 1,
+    "id" : "zz_hill",
+    "kind" : "site",
+    "label" : "Zzhill"
+  },
+  {
+    "contested" : false,
+    "depth" : 1,
+    "findings" : 4,
+    "id" : "zz_march",
+    "kind" : "region",
+    "label" : "Zzmarch"
+  },
+  {
+    "contested" : false,
+    "depth" : 2,
+    "findings" : 1,
+    "id" : "zz_hill",
+    "kind" : "site",
+    "label" : "Zzhill"
+  },
+  {
+    "contested" : false,
+    "depth" : 2,
+    "findings" : 1,
+    "id" : "zz_port",
+    "kind" : "site",
+    "label" : "Zzport"
+  },
+  {
+    "contested" : false,
+    "depth" : 2,
+    "findings" : 1,
+    "id" : "zz_well",
+    "kind" : "site",
+    "label" : "Zzwell"
+  },
+  {
+    "contested" : false,
+    "depth" : 1,
+    "findings" : 0,
+    "id" : "zz_mound",
+    "kind" : "site",
+    "label" : "Zzmound"
+  },
+  {
+    "contested" : false,
+    "depth" : 1,
+    "findings" : 1,
+    "id" : "zz_port",
+    "kind" : "site",
+    "label" : "Zzport"
+  },
+  {
+    "contested" : false,
+    "depth" : 1,
+    "findings" : 1,
+    "id" : "zz_well",
+    "kind" : "site",
+    "label" : "Zzwell"
+  }
+]
+== GET /api/places/zz_land/tree?asOf=-1300&depth=1
+200 [
+  {
+    "contested" : false,
+    "depth" : 0,
+    "findings" : 4,
+    "id" : "zz_land",
+    "kind" : "region",
+    "label" : "Zzland"
+  },
+  {
+    "contested" : false,
+    "depth" : 1,
+    "findings" : 0,
+    "id" : "zz_camp_north",
+    "kind" : "site",
+    "label" : "Zzcamp"
+  },
+  {
+    "contested" : false,
+    "depth" : 1,
+    "findings" : 1,
+    "id" : "zz_hill",
+    "kind" : "site",
+    "label" : "Zzhill"
+  },
+  {
+    "contested" : false,
+    "depth" : 1,
+    "findings" : 4,
+    "id" : "zz_march",
+    "kind" : "region",
+    "label" : "Zzmarch"
+  },
+  {
+    "contested" : false,
+    "depth" : 1,
+    "findings" : 0,
+    "id" : "zz_mound",
+    "kind" : "site",
+    "label" : "Zzmound"
+  },
+  {
+    "contested" : false,
+    "depth" : 1,
+    "findings" : 1,
+    "id" : "zz_port",
+    "kind" : "site",
+    "label" : "Zzport"
+  },
+  {
+    "contested" : false,
+    "depth" : 1,
+    "findings" : 1,
+    "id" : "zz_well",
+    "kind" : "site",
+    "label" : "Zzwell"
+  }
+]
+== GET /api/places/zz_march/footprints
+200 [
+  {
+    "accuracyM" : null,
+    "certainty" : "approximate",
+    "citekey" : null,
+    "id" : 2,
+    "period" : {
+      "end" : -1200,
+      "start" : -1600
+    },
+    "placeId" : "zz_march",
+    "role" : "extent"
+  }
+]
+== GET /api/places/zz_march/footprints?asOf=-1400
+200 [
+  {
+    "accuracyM" : null,
+    "certainty" : "approximate",
+    "citekey" : null,
+    "id" : 2,
+    "period" : {
+      "end" : -1200,
+      "start" : -1600
+    },
+    "placeId" : "zz_march",
+    "role" : "extent"
+  }
+]
+== GET /api/places/zz_hill/links
+200 [
+]
+== GET /api/places/names
+200 [
+  {
+    "label" : "Zzhill",
+    "lang" : "tr",
+    "name" : "Zzhill Höyük",
+    "placeId" : "zz_hill"
+  }
+]
+== GET /api/places/names?place=zz_hill
+200 [
+  {
+    "label" : "Zzhill",
+    "lang" : "tr",
+    "name" : "Zzhill Höyük",
+    "placeId" : "zz_hill"
+  }
+]
+== GET /api/places/overrides
+200 [
+  {
+    "kind" : null,
+    "label" : "Zzport",
+    "lat" : 39.25,
+    "lon" : 35.55,
+    "periodEnd" : null,
+    "periodSet" : false,
+    "periodStart" : null,
+    "placeId" : "zz_port",
+    "reason" : "the harbour survey",
+    "sourceKind" : "site",
+    "sourceLat" : 39.2,
+    "sourceLon" : 35.5,
+    "sourcePeriodEnd" : null,
+    "sourcePeriodStart" : -1400,
+    "updatedAt" : "TS"
+  },
+  {
+    "kind" : "site",
+    "label" : "Zzwell",
+    "lat" : null,
+    "lon" : null,
+    "periodEnd" : -1100,
+    "periodSet" : true,
+    "periodStart" : -1500,
+    "placeId" : "zz_well",
+    "reason" : "the excavation report dates the well",
+    "sourceKind" : "site",
+    "sourceLat" : null,
+    "sourceLon" : null,
+    "sourcePeriodEnd" : null,
+    "sourcePeriodStart" : null,
+    "updatedAt" : "TS"
+  }
+]
+== GET /api/places/overrides?place=zz_well
+200 [
+  {
+    "kind" : "site",
+    "label" : "Zzwell",
+    "lat" : null,
+    "lon" : null,
+    "periodEnd" : -1100,
+    "periodSet" : true,
+    "periodStart" : -1500,
+    "placeId" : "zz_well",
+    "reason" : "the excavation report dates the well",
+    "sourceKind" : "site",
+    "sourceLat" : null,
+    "sourceLon" : null,
+    "sourcePeriodEnd" : null,
+    "sourcePeriodStart" : null,
+    "updatedAt" : "TS"
+  }
+]
+== GET /api/places/geo?kind=region
+200 {
+  "features" : [
+    {
+      "geometry" : {
+        "coordinates" : [
+          [
+            [
+              30,
+              36
+            ],
+            [
+              40,
+              36
+            ],
+            [
+              40,
+              42
+            ],
+            [
+              30,
+              42
+            ],
+            [
+              30,
+              36
+            ]
+          ]
+        ],
+        "type" : "Polygon"
+      },
+      "properties" : {
+        "basis" : "dated",
+        "dating" : "stated",
+        "hasBoundary" : true,
+        "id" : "zz_land",
+        "kind" : "region",
+        "label" : "Zzland",
+        "periodEnd" : -1000,
+        "periodStart" : -2000
+      },
+      "type" : "Feature"
+    },
+    {
+      "geometry" : {
+        "coordinates" : [
+          [
+            [
+              20,
+              30
+            ],
+            [
+              29,
+              30
+            ],
+            [
+              29,
+              35
+            ],
+            [
+              20,
+              35
+            ],
+            [
+              20,
+              30
+            ]
+          ]
+        ],
+        "type" : "Polygon"
+      },
+      "properties" : {
+        "basis" : "findings",
+        "dating" : "stated",
+        "hasBoundary" : true,
+        "id" : "zz_sea",
+        "kind" : "region",
+        "label" : "Zzsea"
+      },
+      "type" : "Feature"
+    },
+    {
+      "geometry" : {
+        "coordinates" : [
+          [
+            [
+              33,
+              38
+            ],
+            [
+              36,
+              38
+            ],
+            [
+              36,
+              41
+            ],
+            [
+              33,
+              41
+            ],
+            [
+              33,
+              38
+            ]
+          ]
+        ],
+        "type" : "Polygon"
+      },
+      "properties" : {
+        "basis" : "dated",
+        "dating" : "stated",
+        "hasBoundary" : true,
+        "id" : "zz_march",
+        "kind" : "region",
+        "label" : "Zzmarch",
+        "periodEnd" : -1200,
+        "periodStart" : -1600
+      },
+      "type" : "Feature"
+    }
+  ],
+  "type" : "FeatureCollection"
+}
+== GET /api/places/geo?kind=region&asOf=-1500
+200 {
+  "features" : [
+    {
+      "geometry" : {
+        "coordinates" : [
+          [
+            [
+              30,
+              36
+            ],
+            [
+              40,
+              36
+            ],
+            [
+              40,
+              42
+            ],
+            [
+              30,
+              42
+            ],
+            [
+              30,
+              36
+            ]
+          ]
+        ],
+        "type" : "Polygon"
+      },
+      "properties" : {
+        "basis" : "dated",
+        "dating" : "stated",
+        "hasBoundary" : true,
+        "id" : "zz_land",
+        "kind" : "region",
+        "label" : "Zzland",
+        "periodEnd" : -1000,
+        "periodStart" : -2000
+      },
+      "type" : "Feature"
+    },
+    {
+      "geometry" : {
+        "coordinates" : [
+          [
+            [
+              33,
+              38
+            ],
+            [
+              36,
+              38
+            ],
+            [
+              36,
+              41
+            ],
+            [
+              33,
+              41
+            ],
+            [
+              33,
+              38
+            ]
+          ]
+        ],
+        "type" : "Polygon"
+      },
+      "properties" : {
+        "basis" : "dated",
+        "dating" : "stated",
+        "hasBoundary" : true,
+        "id" : "zz_march",
+        "kind" : "region",
+        "label" : "Zzmarch",
+        "periodEnd" : -1200,
+        "periodStart" : -1600
+      },
+      "type" : "Feature"
+    }
+  ],
+  "type" : "FeatureCollection"
+}
+== GET /api/places/geo?kind=region&from=-1700&to=-1100
+200 {
+  "features" : [
+    {
+      "geometry" : {
+        "coordinates" : [
+          [
+            [
+              30,
+              36
+            ],
+            [
+              40,
+              36
+            ],
+            [
+              40,
+              42
+            ],
+            [
+              30,
+              42
+            ],
+            [
+              30,
+              36
+            ]
+          ]
+        ],
+        "type" : "Polygon"
+      },
+      "properties" : {
+        "basis" : "dated",
+        "dating" : "stated",
+        "hasBoundary" : true,
+        "id" : "zz_land",
+        "kind" : "region",
+        "label" : "Zzland",
+        "periodEnd" : -1000,
+        "periodStart" : -2000
+      },
+      "type" : "Feature"
+    },
+    {
+      "geometry" : {
+        "coordinates" : [
+          [
+            [
+              33,
+              38
+            ],
+            [
+              36,
+              38
+            ],
+            [
+              36,
+              41
+            ],
+            [
+              33,
+              41
+            ],
+            [
+              33,
+              38
+            ]
+          ]
+        ],
+        "type" : "Polygon"
+      },
+      "properties" : {
+        "basis" : "dated",
+        "dating" : "stated",
+        "hasBoundary" : true,
+        "id" : "zz_march",
+        "kind" : "region",
+        "label" : "Zzmarch",
+        "periodEnd" : -1200,
+        "periodStart" : -1600
+      },
+      "type" : "Feature"
+    }
+  ],
+  "type" : "FeatureCollection"
+}
+== GET /api/places/geo?kind=region&from=-1700&to=-1100&pick=latest
+200 {
+  "features" : [
+    {
+      "geometry" : {
+        "coordinates" : [
+          [
+            [
+              30,
+              36
+            ],
+            [
+              40,
+              36
+            ],
+            [
+              40,
+              42
+            ],
+            [
+              30,
+              42
+            ],
+            [
+              30,
+              36
+            ]
+          ]
+        ],
+        "type" : "Polygon"
+      },
+      "properties" : {
+        "basis" : "dated",
+        "dating" : "stated",
+        "hasBoundary" : true,
+        "id" : "zz_land",
+        "kind" : "region",
+        "label" : "Zzland",
+        "periodEnd" : -1000,
+        "periodStart" : -2000
+      },
+      "type" : "Feature"
+    },
+    {
+      "geometry" : {
+        "coordinates" : [
+          [
+            [
+              33,
+              38
+            ],
+            [
+              36,
+              38
+            ],
+            [
+              36,
+              41
+            ],
+            [
+              33,
+              41
+            ],
+            [
+              33,
+              38
+            ]
+          ]
+        ],
+        "type" : "Polygon"
+      },
+      "properties" : {
+        "basis" : "dated",
+        "dating" : "stated",
+        "hasBoundary" : true,
+        "id" : "zz_march",
+        "kind" : "region",
+        "label" : "Zzmarch",
+        "periodEnd" : -1200,
+        "periodStart" : -1600
+      },
+      "type" : "Feature"
+    }
+  ],
+  "type" : "FeatureCollection"
+}
+== GET /api/places/geo?kind=site&asOf=-1300
+200 {
+  "features" : [
+    {
+      "geometry" : {
+        "coordinates" : [
+          36.4,
+          39.9
+        ],
+        "type" : "Point"
+      },
+      "properties" : {
+        "basis" : "dated",
+        "dating" : "stated",
+        "hasBoundary" : false,
+        "id" : "zz_camp_north",
+        "kind" : "site",
+        "label" : "Zzcamp",
+        "periodEnd" : -1250,
+        "periodStart" : -1350
+      },
+      "type" : "Feature"
+    },
+    {
+      "geometry" : {
+        "coordinates" : [
+          34.6,
+          40
+        ],
+        "type" : "Point"
+      },
+      "properties" : {
+        "basis" : "dated",
+        "dating" : "stated",
+        "hasBoundary" : false,
+        "id" : "zz_hill",
+        "kind" : "site",
+        "label" : "Zzhill",
+        "periodEnd" : -1180,
+        "periodStart" : -1650
+      },
+      "type" : "Feature"
+    },
+    {
+      "geometry" : {
+        "coordinates" : [
+          37.2,
+          38.1
+        ],
+        "type" : "Point"
+      },
+      "properties" : {
+        "basis" : "dated",
+        "dating" : "stated",
+        "hasBoundary" : false,
+        "id" : "zz_mound",
+        "kind" : "site",
+        "label" : "Zzmound",
+        "periodEnd" : -1300,
+        "periodStart" : -1500
+      },
+      "type" : "Feature"
+    },
+    {
+      "geometry" : {
+        "coordinates" : [
+          35.55,
+          39.25
+        ],
+        "type" : "Point"
+      },
+      "properties" : {
+        "basis" : "dated",
+        "dating" : "stated",
+        "hasBoundary" : false,
+        "id" : "zz_port",
+        "kind" : "site",
+        "label" : "Zzport",
+        "periodStart" : -1400
+      },
+      "type" : "Feature"
+    },
+    {
+      "geometry" : {
+        "coordinates" : [
+          34.9,
+          39.7
+        ],
+        "type" : "Point"
+      },
+      "properties" : {
+        "basis" : "dated",
+        "dating" : "stated",
+        "hasBoundary" : false,
+        "id" : "zz_well",
+        "kind" : "site",
+        "label" : "Zzwell",
+        "periodEnd" : -1100,
+        "periodStart" : -1500
+      },
+      "type" : "Feature"
+    }
+  ],
+  "type" : "FeatureCollection"
+}
+== GET /api/places/geo?kind=site&from=-1400&to=-1200&pick=start
+200 {
+  "features" : [
+    {
+      "geometry" : {
+        "coordinates" : [
+          34.6,
+          40
+        ],
+        "type" : "Point"
+      },
+      "properties" : {
+        "basis" : "dated",
+        "dating" : "stated",
+        "hasBoundary" : false,
+        "id" : "zz_hill",
+        "kind" : "site",
+        "label" : "Zzhill",
+        "periodEnd" : -1180,
+        "periodStart" : -1650
+      },
+      "type" : "Feature"
+    },
+    {
+      "geometry" : {
+        "coordinates" : [
+          37.2,
+          38.1
+        ],
+        "type" : "Point"
+      },
+      "properties" : {
+        "basis" : "dated",
+        "dating" : "stated",
+        "hasBoundary" : false,
+        "id" : "zz_mound",
+        "kind" : "site",
+        "label" : "Zzmound",
+        "periodEnd" : -1300,
+        "periodStart" : -1500
+      },
+      "type" : "Feature"
+    },
+    {
+      "geometry" : {
+        "coordinates" : [
+          35.55,
+          39.25
+        ],
+        "type" : "Point"
+      },
+      "properties" : {
+        "basis" : "dated",
+        "dating" : "stated",
+        "hasBoundary" : false,
+        "id" : "zz_port",
+        "kind" : "site",
+        "label" : "Zzport",
+        "periodStart" : -1400
+      },
+      "type" : "Feature"
+    },
+    {
+      "geometry" : {
+        "coordinates" : [
+          34.9,
+          39.7
+        ],
+        "type" : "Point"
+      },
+      "properties" : {
+        "basis" : "dated",
+        "dating" : "stated",
+        "hasBoundary" : false,
+        "id" : "zz_well",
+        "kind" : "site",
+        "label" : "Zzwell",
+        "periodEnd" : -1100,
+        "periodStart" : -1500
+      },
+      "type" : "Feature"
+    }
+  ],
+  "type" : "FeatureCollection"
+}
+== GET /api/places/geo?pick=nonsense
+400 {
+  "code" : null,
+  "message" : "unknown pick 'nonsense': one of mid, start, end, earliest, latest"
+}
+== tool places {"query":"zz"}
+_No matching places._
+== tool places {"id":"zz_hill"}
+# Zzhill
+
+_`zz_hill` · site · 1650 BCE–1180 BCE · 1 finding(s)_  
+**Also known as:** Zzhill, Zzhill Höyük, Zzhügel  
+**Geometry:** {"type":"Point"… (GeoJSON)
+
+**Footprints (1)**
+- extent · 1650 BCE–1180 BCE · _approximate_
+
+**Part of**
+- Zzland `zz_land` _(region)_
+- Zzmarch `zz_march` _(region)_
+
+## Hierarchy
+
+- **Zzhill** `zz_hill` _(site, 1 finding(s))_
+== tool places {"name":"Zzhill","asOf":-1300}
+### 1 place(s) · as of 1300 BCE
+
+- **Zzhill** — `zz_hill`  
+  _site · 1650 BCE–1180 BCE · 1 finding(s)_
+== tool places {"id":"zz_camp"}
+# Zzcamp
+
+_`zz_camp_north` · site · 1350 BCE–1250 BCE · 0 finding(s)_  
+**Source:** a survey map  
+**Also known as:** Zzcamp, Zzlager  
+**Geometry:** {"type":"Point"… (GeoJSON)
+
+**Footprints (1)**
+- extent · 1350 BCE–1250 BCE · _approximate_ [[a survey map]]
+
+**Part of**
+- Zzland `zz_land` _(region)_
+
+## Hierarchy
+
+- **Zzcamp** `zz_camp_north` _(site)_
+== tool place_names {"placeId":"zz_hill"}
+1 name(s) added by hand:
+
+- **Zzhill Höyük** (tr) → Zzhill `zz_hill`

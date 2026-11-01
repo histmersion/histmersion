@@ -1,0 +1,1438 @@
+== periods seed
+200 {
+  "periods" : 280,
+  "presets" : 149,
+  "removed" : 0,
+  "roots" : 0,
+  "skipped" : [
+    {
+      "detail" : "-14000001 → -250001 lies outside -3000000..2100",
+      "id" : "p0m64tdgpvd",
+      "label" : "Palaeolithic, Lower",
+      "reason" : "out_of_range"
+    },
+    {
+      "detail" : "-14000001 → -18001 lies outside -3000000..2100",
+      "id" : "p0m64tdp282",
+      "label" : "Palaeolithic",
+      "reason" : "out_of_range"
+    }
+  ],
+  "skippedCount" : 2
+}
+== periods import
+200 {
+  "periods" : 6,
+  "presets" : 149,
+  "removed" : 0,
+  "roots" : 2,
+  "skipped" : [
+  ],
+  "skippedCount" : 0
+}
+== places import regions
+200 {
+  "failed" : [
+  ],
+  "job" : null,
+  "names" : 4,
+  "places" : 3,
+  "relations" : 1
+}
+== places import sites
+200 {
+  "failed" : [
+  ],
+  "job" : null,
+  "names" : 7,
+  "places" : 6,
+  "relations" : 0
+}
+== places add
+200 {
+  "contested" : false,
+  "dating" : "stated",
+  "id" : "zz_camp",
+  "importSource" : null,
+  "kind" : "site",
+  "label" : "Zzcamp",
+  "names" : "Zzcamp, Zzlager",
+  "periodEnd" : -1250,
+  "periodStart" : -1350,
+  "source" : "a survey map"
+}
+== places add, refused
+400 {
+  "code" : "invalid",
+  "message" : "the label is empty"
+}
+== places build-hierarchy
+200 {
+  "edgesCreated" : 0,
+  "job" : "UUID",
+  "pointPlaces" : 0,
+  "polygonPlaces" : 0
+}
+== places build-hierarchy job
+200 {
+  "acquireItem" : null,
+  "citekey" : null,
+  "createdAt" : "TS",
+  "detail" : {
+    "about" : "build the spatial hierarchy",
+    "eventImport" : null,
+    "eventRederive" : null,
+    "events" : null,
+    "init" : null,
+    "media" : null,
+    "planHash" : null,
+    "recheck" : null,
+    "skippedPeriodCount" : 0,
+    "skippedPeriods" : [
+    ],
+    "vacuum" : null
+  },
+  "error" : null,
+  "id" : "UUID",
+  "kind" : "places-hierarchy",
+  "progress" : "10 edges from 3 polygons × 7 points",
+  "sha256" : null,
+  "status" : "done",
+  "updatedAt" : "TS"
+}
+== places name add
+200 {
+  "added" : true,
+  "changed" : true,
+  "label" : "Zzhill",
+  "lang" : "tr",
+  "name" : "Zzhill Höyük",
+  "placeId" : "zz_hill",
+  "wasImported" : false
+}
+== places name add 2
+200 {
+  "added" : true,
+  "changed" : true,
+  "label" : "Zzport",
+  "lang" : "",
+  "name" : "Old Zzport",
+  "placeId" : "zz_port",
+  "wasImported" : false
+}
+== places name remove
+200 {
+  "added" : false,
+  "changed" : true,
+  "label" : "Zzport",
+  "lang" : "",
+  "name" : "Old Zzport",
+  "placeId" : "zz_port",
+  "wasImported" : false
+}
+== places name remove, imported
+400 {
+  "code" : "invalid",
+  "message" : "'Zzhügel' is a name the gazetteer seed or an imported source gives 'Zzhill' [zz_hill], not one added by hand — removing it would last only until the next import"
+}
+== places override kind and period
+200 {
+  "findingsAfter" : 0,
+  "findingsBefore" : 0,
+  "kindAfter" : "site",
+  "kindBefore" : "site",
+  "label" : "Zzwell",
+  "latAfter" : 39.7,
+  "latBefore" : 39.7,
+  "lonAfter" : 34.9,
+  "lonBefore" : 34.9,
+  "periodAfter" : "1500 BCE–1100 BCE",
+  "periodBefore" : "undated",
+  "placeId" : "zz_well",
+  "reset" : false,
+  "unlocated" : 0
+}
+== places override point
+200 {
+  "findingsAfter" : 0,
+  "findingsBefore" : 0,
+  "kindAfter" : "site",
+  "kindBefore" : "site",
+  "label" : "Zzport",
+  "latAfter" : 39.25,
+  "latBefore" : 39.2,
+  "lonAfter" : 35.55,
+  "lonBefore" : 35.5,
+  "periodAfter" : "from 1400 BCE",
+  "periodBefore" : "from 1400 BCE",
+  "placeId" : "zz_port",
+  "reset" : false,
+  "unlocated" : 0
+}
+== places merge
+200 {
+  "findingsAfter" : 0,
+  "findingsBefore" : 0,
+  "into" : "zz_mound",
+  "intoLabel" : "Zzmound",
+  "label" : "Zzmound (again)",
+  "placeId" : "zz_mound_dup",
+  "unlocated" : 0
+}
+== places remove
+200 {
+  "findingsAfter" : 0,
+  "findingsBefore" : 0,
+  "into" : null,
+  "intoLabel" : null,
+  "label" : "Zzlonely",
+  "placeId" : "zz_lonely",
+  "unlocated" : 0
+}
+== places rename
+200 {
+  "entity" : "place",
+  "from" : "zz_camp",
+  "rewritten" : [
+  ],
+  "to" : "zz_camp_north"
+}
+== source hill
+200 {
+  "findings" : [
+    {
+      "claim" : "the battle of Zzhill was fought around 1300 BC",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1290,
+      "periodName" : null,
+      "periodStart" : -1310,
+      "regionName" : "Zzhill",
+      "significance" : null,
+      "tags" : [
+        "oracle"
+      ],
+      "uid" : "finding:zzhill1990_battle#0"
+    },
+    {
+      "claim" : "Zzport sent ships to Zzhill",
+      "confidence" : "high",
+      "lat" : 39.2,
+      "lon" : 35.5,
+      "periodEnd" : -1290,
+      "periodName" : null,
+      "periodStart" : -1310,
+      "regionName" : "Zzport",
+      "significance" : null,
+      "tags" : [
+        "oracle"
+      ],
+      "uid" : "finding:zzhill1990_battle#1"
+    },
+    {
+      "claim" : "the Zzwell is of the Zzmarch period",
+      "confidence" : "high",
+      "lat" : 39.7,
+      "lon" : 34.9,
+      "periodEnd" : -1300,
+      "periodName" : null,
+      "periodStart" : -1500,
+      "regionName" : "Zzwell",
+      "significance" : null,
+      "tags" : [
+        "oracle"
+      ],
+      "uid" : "finding:zzhill1990_battle#2"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Doe, Jane"
+    ],
+    "citekey" : "zzhill1990_battle",
+    "doi" : null,
+    "notes" : null,
+    "ocrMarkdown" : "# Zzhill\n\n## The battle\n\nThe battle of Zzhill was fought below the walls of Zzhill around 1300 BC; Zzport sent ships.\nZzhill burned soon after, and the battle of Zzhill was remembered in the songs of Zzland.\n\n## The well\n\nThe Zzwell was dug in the time of the Zzmarch kings.\n",
+    "origin" : "instance:cat",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "provenance" : null,
+    "regions" : [
+      "Zzland"
+    ],
+    "status" : "unassessed",
+    "summary" : null,
+    "tags" : [
+      "zz-oracle"
+    ],
+    "title" : "The Battle of Zzhill",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zzhill1990_battle",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 1990
+  }
+}
+== source volcano
+200 {
+  "findings" : [
+    {
+      "claim" : "ash from Mount Zzvolc fell east of Zzport",
+      "confidence" : "high",
+      "lat" : 39.0,
+      "lon" : 36.0,
+      "periodEnd" : -1600,
+      "periodName" : null,
+      "periodStart" : -1620,
+      "regionName" : "Zzland",
+      "significance" : null,
+      "tags" : [
+        "oracle"
+      ],
+      "uid" : "finding:zzvolc2004_ash#0"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Doe, Jane"
+    ],
+    "citekey" : "zzvolc2004_ash",
+    "doi" : null,
+    "notes" : null,
+    "ocrMarkdown" : "# Eruptions\n\nThe eruption of Mount Zzvolc buried the fields east of Zzport in ash. Pumice from the eruption reached Zzhill.\n",
+    "origin" : "instance:cat",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "provenance" : null,
+    "regions" : [
+      "Zzland"
+    ],
+    "status" : "unassessed",
+    "summary" : null,
+    "tags" : [
+      "zz-oracle"
+    ],
+    "title" : "Ash over Zzport",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zzvolc2004_ash",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 2004
+  }
+}
+== places rebuild
+200 {
+  "byGeometry" : 11,
+  "byName" : 0,
+  "links" : 11,
+  "located" : 4,
+  "places" : 8,
+  "unlocated" : 0
+}
+== figures
+400 {
+  "code" : null,
+  "message" : "asset 'fig2.png': not valid base64 (Input byte array has incorrect ending byte at 16)"
+}
+== figure placed
+400 {
+  "code" : "not_found",
+  "message" : "No asset 'zzhill1990_battle/fig1.png'"
+}
+== figure placed 2
+400 {
+  "code" : "not_found",
+  "message" : "No asset 'zzhill1990_battle/fig2.png'"
+}
+== event battle
+200 {
+  "articles" : [
+  ],
+  "candidates" : [
+  ],
+  "catalogue" : [
+  ],
+  "children" : [
+  ],
+  "corrections" : [
+  ],
+  "datings" : [
+    {
+      "citekey" : "zzhill1990_battle",
+      "eventId" : "zz_battle",
+      "method" : "historical",
+      "note" : null,
+      "timeSpan" : {
+        "beginBy" : null,
+        "endFrom" : null,
+        "notAfter" : -1290,
+        "notBefore" : -1310
+      }
+    }
+  ],
+  "edges" : [
+  ],
+  "event" : {
+    "central" : null,
+    "citekey" : "zzhill1990_battle",
+    "datingMethod" : null,
+    "description" : "fought below the walls",
+    "historicity" : "attested",
+    "id" : "zz_battle",
+    "kind" : "battle",
+    "label" : "Battle of Zzhill",
+    "parentId" : null,
+    "placeId" : "zz_hill",
+    "plusMinus" : null,
+    "precision" : "precise",
+    "scale" : "local",
+    "scaleStated" : false,
+    "tier" : "attested",
+    "timeSpan" : {
+      "beginBy" : null,
+      "endFrom" : null,
+      "notAfter" : -1290,
+      "notBefore" : -1310
+    }
+  },
+  "findings" : [
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "the battle of Zzhill was fought around 1300 BC",
+      "id" : "zzhill1990_battle#0",
+      "km" : 0.0,
+      "periodEnd" : -1290,
+      "periodStart" : -1310,
+      "yearGap" : 0
+    },
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "the Zzwell is of the Zzmarch period",
+      "id" : "zzhill1990_battle#2",
+      "km" : 42.05567572254,
+      "periodEnd" : -1300,
+      "periodStart" : -1500,
+      "yearGap" : 0
+    },
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "Zzport sent ships to Zzhill",
+      "id" : "zzhill1990_battle#1",
+      "km" : 117.74707255148,
+      "periodEnd" : -1290,
+      "periodStart" : -1310,
+      "yearGap" : 0
+    }
+  ],
+  "geometry" : null,
+  "leads" : [
+  ],
+  "media" : [
+  ],
+  "names" : [
+  ],
+  "parent" : null,
+  "participants" : [
+    {
+      "actor" : "the Zzport fleet",
+      "citekey" : null,
+      "eventId" : "zz_battle",
+      "role" : "ally"
+    }
+  ],
+  "sources" : [
+    {
+      "citekey" : "zzhill1990_battle",
+      "quote" : null,
+      "title" : "The Battle of Zzhill",
+      "via" : "citekey",
+      "year" : 1990
+    }
+  ],
+  "tier" : "attested",
+  "wikidata" : null
+}
+== event fire
+200 {
+  "articles" : [
+  ],
+  "candidates" : [
+  ],
+  "catalogue" : [
+  ],
+  "children" : [
+  ],
+  "corrections" : [
+  ],
+  "datings" : [
+  ],
+  "edges" : [
+    {
+      "citekey" : "zzhill1990_battle",
+      "dstId" : "zz_battle",
+      "kind" : "after",
+      "note" : null,
+      "srcId" : "zz_fire"
+    }
+  ],
+  "event" : {
+    "central" : null,
+    "citekey" : null,
+    "datingMethod" : null,
+    "description" : null,
+    "historicity" : "attested",
+    "id" : "zz_fire",
+    "kind" : "destruction",
+    "label" : "Zzhill burns",
+    "parentId" : "zz_battle",
+    "placeId" : "zz_hill",
+    "plusMinus" : null,
+    "precision" : "precise",
+    "scale" : "local",
+    "scaleStated" : false,
+    "tier" : "catalogue",
+    "timeSpan" : {
+      "beginBy" : null,
+      "endFrom" : null,
+      "notAfter" : -1270,
+      "notBefore" : -1290
+    }
+  },
+  "findings" : [
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "the battle of Zzhill was fought around 1300 BC",
+      "id" : "zzhill1990_battle#0",
+      "km" : 0.0,
+      "periodEnd" : -1290,
+      "periodStart" : -1310,
+      "yearGap" : 0
+    },
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "Zzport sent ships to Zzhill",
+      "id" : "zzhill1990_battle#1",
+      "km" : 117.74707255148,
+      "periodEnd" : -1290,
+      "periodStart" : -1310,
+      "yearGap" : 0
+    },
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "the Zzwell is of the Zzmarch period",
+      "id" : "zzhill1990_battle#2",
+      "km" : 42.05567572254,
+      "periodEnd" : -1300,
+      "periodStart" : -1500,
+      "yearGap" : 10
+    }
+  ],
+  "geometry" : null,
+  "leads" : [
+    {
+      "actions" : [
+        {
+          "command" : "histmersion discover search \"Zzhill burns\" --not-in-db",
+          "kind" : "discover",
+          "label" : "search the literature",
+          "query" : "Zzhill burns"
+        },
+        {
+          "command" : "histmersion queue acquire add \"literature on Zzhill burns (1290 BCE–1270 BCE)\" --topic events",
+          "kind" : "acquire",
+          "label" : "add to the acquire queue",
+          "query" : null
+        },
+        {
+          "command" : "histmersion goals link <goal> --query \"Zzhill burns\"",
+          "kind" : "goal",
+          "label" : "link to a goal",
+          "query" : "Zzhill burns"
+        }
+      ],
+      "candidates" : 0,
+      "eventId" : "zz_fire",
+      "findingsNear" : 3,
+      "kind" : "destruction",
+      "label" : "Zzhill burns",
+      "text" : "No source in the corpus discusses this destruction (1290 BCE–1270 BCE) — 3 findings in the corpus within 300 km and ±100 years",
+      "tier" : "catalogue",
+      "years" : "1290 BCE–1270 BCE"
+    }
+  ],
+  "media" : [
+  ],
+  "names" : [
+  ],
+  "parent" : {
+    "central" : null,
+    "citekey" : "zzhill1990_battle",
+    "datingMethod" : null,
+    "description" : "fought below the walls",
+    "historicity" : "attested",
+    "id" : "zz_battle",
+    "kind" : "battle",
+    "label" : "Battle of Zzhill",
+    "parentId" : null,
+    "placeId" : "zz_hill",
+    "plusMinus" : null,
+    "precision" : "precise",
+    "scale" : "local",
+    "scaleStated" : false,
+    "tier" : "attested",
+    "timeSpan" : {
+      "beginBy" : null,
+      "endFrom" : null,
+      "notAfter" : -1290,
+      "notBefore" : -1310
+    }
+  },
+  "participants" : [
+  ],
+  "sources" : [
+  ],
+  "tier" : "catalogue",
+  "wikidata" : null
+}
+== event war
+200 {
+  "articles" : [
+  ],
+  "candidates" : [
+  ],
+  "catalogue" : [
+  ],
+  "children" : [
+  ],
+  "corrections" : [
+  ],
+  "datings" : [
+  ],
+  "edges" : [
+  ],
+  "event" : {
+    "central" : null,
+    "citekey" : null,
+    "datingMethod" : null,
+    "description" : null,
+    "historicity" : "attested",
+    "id" : "zz_war",
+    "kind" : "war",
+    "label" : "The Zzmarch war",
+    "parentId" : null,
+    "placeId" : null,
+    "plusMinus" : null,
+    "precision" : "precise",
+    "scale" : "regional",
+    "scaleStated" : false,
+    "tier" : "catalogue",
+    "timeSpan" : {
+      "beginBy" : null,
+      "endFrom" : null,
+      "notAfter" : -1280,
+      "notBefore" : -1320
+    }
+  },
+  "findings" : [
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "the Zzwell is of the Zzmarch period",
+      "id" : "zzhill1990_battle#2",
+      "km" : 30.889258052469998,
+      "periodEnd" : -1300,
+      "periodStart" : -1500,
+      "yearGap" : 0
+    },
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "the battle of Zzhill was fought around 1300 BC",
+      "id" : "zzhill1990_battle#0",
+      "km" : 55.680057108250004,
+      "periodEnd" : -1290,
+      "periodStart" : -1310,
+      "yearGap" : 0
+    },
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "Zzport sent ships to Zzhill",
+      "id" : "zzhill1990_battle#1",
+      "km" : 80.48292384319001,
+      "periodEnd" : -1290,
+      "periodStart" : -1310,
+      "yearGap" : 0
+    }
+  ],
+  "geometry" : "{\"type\":\"Polygon\",\"coordinates\":[[[33.5,38.5],[35.8,38.5],[35.8,40.5],[33.5,40.5],[33.5,38.5]]]}",
+  "leads" : [
+    {
+      "actions" : [
+        {
+          "command" : "histmersion discover search \"The Zzmarch war\" --not-in-db",
+          "kind" : "discover",
+          "label" : "search the literature",
+          "query" : "The Zzmarch war"
+        },
+        {
+          "command" : "histmersion queue acquire add \"literature on The Zzmarch war (1320 BCE–1280 BCE)\" --topic events",
+          "kind" : "acquire",
+          "label" : "add to the acquire queue",
+          "query" : null
+        },
+        {
+          "command" : "histmersion goals link <goal> --query \"The Zzmarch war\"",
+          "kind" : "goal",
+          "label" : "link to a goal",
+          "query" : "The Zzmarch war"
+        }
+      ],
+      "candidates" : 0,
+      "eventId" : "zz_war",
+      "findingsNear" : 3,
+      "kind" : "war",
+      "label" : "The Zzmarch war",
+      "text" : "No source in the corpus discusses this war (1320 BCE–1280 BCE) — 3 findings in the corpus within 300 km and ±100 years",
+      "tier" : "catalogue",
+      "years" : "1320 BCE–1280 BCE"
+    }
+  ],
+  "media" : [
+  ],
+  "names" : [
+  ],
+  "parent" : null,
+  "participants" : [
+  ],
+  "sources" : [
+  ],
+  "tier" : "catalogue",
+  "wikidata" : null
+}
+== event ash
+200 {
+  "articles" : [
+  ],
+  "candidates" : [
+  ],
+  "catalogue" : [
+  ],
+  "children" : [
+  ],
+  "corrections" : [
+  ],
+  "datings" : [
+  ],
+  "edges" : [
+  ],
+  "event" : {
+    "central" : null,
+    "citekey" : null,
+    "datingMethod" : null,
+    "description" : null,
+    "historicity" : "attested",
+    "id" : "zz_ash",
+    "kind" : "eruption",
+    "label" : "Ash over Zzport",
+    "parentId" : null,
+    "placeId" : "zz_port",
+    "plusMinus" : null,
+    "precision" : "precise",
+    "scale" : "local",
+    "scaleStated" : false,
+    "tier" : "catalogue",
+    "timeSpan" : {
+      "beginBy" : null,
+      "endFrom" : null,
+      "notAfter" : -1600,
+      "notBefore" : -1620
+    }
+  },
+  "findings" : [
+    {
+      "citekey" : "zzvolc2004_ash",
+      "claim" : "ash from Mount Zzvolc fell east of Zzport",
+      "id" : "zzvolc2004_ash#0",
+      "km" : 47.796833123030005,
+      "periodEnd" : -1600,
+      "periodStart" : -1620,
+      "yearGap" : 0
+    },
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "the Zzwell is of the Zzmarch period",
+      "id" : "zzhill1990_battle#2",
+      "km" : 74.99379336168,
+      "periodEnd" : -1300,
+      "periodStart" : -1500,
+      "yearGap" : 100
+    }
+  ],
+  "geometry" : null,
+  "leads" : [
+    {
+      "actions" : [
+        {
+          "command" : "histmersion discover search \"Ash over Zzport\" --not-in-db",
+          "kind" : "discover",
+          "label" : "search the literature",
+          "query" : "Ash over Zzport"
+        },
+        {
+          "command" : "histmersion queue acquire add \"literature on Ash over Zzport (1620 BCE–1600 BCE)\" --topic events",
+          "kind" : "acquire",
+          "label" : "add to the acquire queue",
+          "query" : null
+        },
+        {
+          "command" : "histmersion goals link <goal> --query \"Ash over Zzport\"",
+          "kind" : "goal",
+          "label" : "link to a goal",
+          "query" : "Ash over Zzport"
+        }
+      ],
+      "candidates" : 0,
+      "eventId" : "zz_ash",
+      "findingsNear" : 2,
+      "kind" : "eruption",
+      "label" : "Ash over Zzport",
+      "text" : "No source in the corpus discusses this eruption (1620 BCE–1600 BCE) — 2 findings in the corpus within 300 km and ±100 years",
+      "tier" : "catalogue",
+      "years" : "1620 BCE–1600 BCE"
+    }
+  ],
+  "media" : [
+  ],
+  "names" : [
+  ],
+  "parent" : null,
+  "participants" : [
+  ],
+  "sources" : [
+  ],
+  "tier" : "catalogue",
+  "wikidata" : null
+}
+== event gone
+200 {
+  "articles" : [
+  ],
+  "candidates" : [
+  ],
+  "catalogue" : [
+  ],
+  "children" : [
+  ],
+  "corrections" : [
+  ],
+  "datings" : [
+  ],
+  "edges" : [
+  ],
+  "event" : {
+    "central" : null,
+    "citekey" : null,
+    "datingMethod" : null,
+    "description" : null,
+    "historicity" : "attested",
+    "id" : "zz_gone",
+    "kind" : "event",
+    "label" : "A deleted event",
+    "parentId" : null,
+    "placeId" : null,
+    "plusMinus" : null,
+    "precision" : "precise",
+    "scale" : "local",
+    "scaleStated" : false,
+    "tier" : "catalogue",
+    "timeSpan" : {
+      "beginBy" : null,
+      "endFrom" : null,
+      "notAfter" : -800,
+      "notBefore" : -900
+    }
+  },
+  "findings" : [
+  ],
+  "geometry" : null,
+  "leads" : [
+    {
+      "actions" : [
+        {
+          "command" : "histmersion discover search \"A deleted event\" --not-in-db",
+          "kind" : "discover",
+          "label" : "search the literature",
+          "query" : "A deleted event"
+        },
+        {
+          "command" : "histmersion queue acquire add \"literature on A deleted event (900 BCE–800 BCE)\" --topic events",
+          "kind" : "acquire",
+          "label" : "add to the acquire queue",
+          "query" : null
+        },
+        {
+          "command" : "histmersion goals link <goal> --query \"A deleted event\"",
+          "kind" : "goal",
+          "label" : "link to a goal",
+          "query" : "A deleted event"
+        }
+      ],
+      "candidates" : 0,
+      "eventId" : "zz_gone",
+      "findingsNear" : 0,
+      "kind" : "event",
+      "label" : "A deleted event",
+      "text" : "No source in the corpus discusses this event (900 BCE–800 BCE) — 0 findings in the corpus within 300 km and ±100 years",
+      "tier" : "catalogue",
+      "years" : "900 BCE–800 BCE"
+    }
+  ],
+  "media" : [
+  ],
+  "names" : [
+  ],
+  "parent" : null,
+  "participants" : [
+  ],
+  "sources" : [
+  ],
+  "tier" : "catalogue",
+  "wikidata" : null
+}
+== event refused
+400 {
+  "code" : "invalid",
+  "message" : "scale 'huge' is not local | regional | auto"
+}
+== event patch
+200 {
+  "articles" : [
+  ],
+  "candidates" : [
+  ],
+  "catalogue" : [
+  ],
+  "children" : [
+  ],
+  "corrections" : [
+  ],
+  "datings" : [
+  ],
+  "edges" : [
+  ],
+  "event" : {
+    "central" : null,
+    "citekey" : null,
+    "datingMethod" : null,
+    "description" : "a war of the march lords",
+    "historicity" : "attested",
+    "id" : "zz_war",
+    "kind" : "war",
+    "label" : "The Zzmarch war",
+    "parentId" : null,
+    "placeId" : null,
+    "plusMinus" : null,
+    "precision" : "precise",
+    "scale" : "regional",
+    "scaleStated" : true,
+    "tier" : "catalogue",
+    "timeSpan" : {
+      "beginBy" : null,
+      "endFrom" : null,
+      "notAfter" : -1280,
+      "notBefore" : -1320
+    }
+  },
+  "findings" : [
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "the Zzwell is of the Zzmarch period",
+      "id" : "zzhill1990_battle#2",
+      "km" : 30.889258052469998,
+      "periodEnd" : -1300,
+      "periodStart" : -1500,
+      "yearGap" : 0
+    },
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "the battle of Zzhill was fought around 1300 BC",
+      "id" : "zzhill1990_battle#0",
+      "km" : 55.680057108250004,
+      "periodEnd" : -1290,
+      "periodStart" : -1310,
+      "yearGap" : 0
+    },
+    {
+      "citekey" : "zzhill1990_battle",
+      "claim" : "Zzport sent ships to Zzhill",
+      "id" : "zzhill1990_battle#1",
+      "km" : 80.48292384319001,
+      "periodEnd" : -1290,
+      "periodStart" : -1310,
+      "yearGap" : 0
+    }
+  ],
+  "geometry" : "{\"type\":\"Polygon\",\"coordinates\":[[[33.5,38.5],[35.8,38.5],[35.8,40.5],[33.5,40.5],[33.5,38.5]]]}",
+  "leads" : [
+    {
+      "actions" : [
+        {
+          "command" : "histmersion discover search \"The Zzmarch war\" --not-in-db",
+          "kind" : "discover",
+          "label" : "search the literature",
+          "query" : "The Zzmarch war"
+        },
+        {
+          "command" : "histmersion queue acquire add \"literature on The Zzmarch war (1320 BCE–1280 BCE)\" --topic events",
+          "kind" : "acquire",
+          "label" : "add to the acquire queue",
+          "query" : null
+        },
+        {
+          "command" : "histmersion goals link <goal> --query \"The Zzmarch war\"",
+          "kind" : "goal",
+          "label" : "link to a goal",
+          "query" : "The Zzmarch war"
+        }
+      ],
+      "candidates" : 0,
+      "eventId" : "zz_war",
+      "findingsNear" : 3,
+      "kind" : "war",
+      "label" : "The Zzmarch war",
+      "text" : "No source in the corpus discusses this war (1320 BCE–1280 BCE) — 3 findings in the corpus within 300 km and ±100 years",
+      "tier" : "catalogue",
+      "years" : "1320 BCE–1280 BCE"
+    }
+  ],
+  "media" : [
+  ],
+  "names" : [
+  ],
+  "parent" : null,
+  "participants" : [
+  ],
+  "sources" : [
+  ],
+  "tier" : "catalogue",
+  "wikidata" : null
+}
+== event rename
+200 {
+  "entity" : "event",
+  "from" : "zz_ash",
+  "rewritten" : [
+  ],
+  "to" : "zz_ashfall"
+}
+== event delete
+200 {
+  "deleted" : true,
+  "id" : "zz_gone"
+}
+== events import gvp
+200 {
+  "acquireItem" : null,
+  "citekey" : null,
+  "createdAt" : "TS",
+  "detail" : {
+    "about" : null,
+    "eventImport" : {
+      "byKind" : [
+        {
+          "key" : "eruption",
+          "n" : 1
+        }
+      ],
+      "citation" : "Global Volcanism Program, Volcanoes of the World (v. 5.x), Smithsonian Institution, compiled by Venzke, E. https://doi.org/10.5479/si.GVP.VOTW5-2024.5.2",
+      "corrections" : {
+        "conflicts" : 0,
+        "kept" : 0,
+        "retired" : 0
+      },
+      "created" : 1,
+      "dryRun" : false,
+      "failed" : [
+      ],
+      "kept" : 1,
+      "licence" : "Smithsonian Terms of Use (non-commercial use with attribution)",
+      "matched" : 0,
+      "matchedEvents" : [
+      ],
+      "merged" : 0,
+      "parts" : 2,
+      "pending" : 0,
+      "provider" : "gvp",
+      "records" : 3,
+      "requests" : 2,
+      "skipped" : [
+        {
+          "key" : "after -1000",
+          "n" : 2
+        }
+      ],
+      "updated" : 0
+    },
+    "eventRederive" : null,
+    "events" : "Smithsonian Global Volcanism Program events",
+    "init" : null,
+    "media" : null,
+    "planHash" : null,
+    "recheck" : null,
+    "skippedPeriodCount" : 0,
+    "skippedPeriods" : [
+    ],
+    "vacuum" : null
+  },
+  "error" : null,
+  "id" : "UUID",
+  "kind" : "events-import",
+  "progress" : "gvp: 3 record(s) read, 1 kept · created 1 event(s), 0 merged with another record of the same thing, 0 matched to stored events · kinds: eruption 1 · skipped: after -1000 2",
+  "sha256" : null,
+  "status" : "done",
+  "updatedAt" : "TS"
+}
+== event patch imported
+200 {
+  "articles" : [
+  ],
+  "candidates" : [
+  ],
+  "catalogue" : [
+    {
+      "citation" : "Global Volcanism Program, Volcanoes of the World (v. 5.x), Smithsonian Institution, compiled by Venzke, E. https://doi.org/10.5479/si.GVP.VOTW5-2024.5.2",
+      "deaths" : null,
+      "licence" : "Smithsonian Terms of Use (non-commercial use with attribution)",
+      "magnitude" : null,
+      "provider" : "gvp",
+      "providerId" : "13879",
+      "retrievedAt" : "TS",
+      "title" : "Smithsonian Global Volcanism Program",
+      "url" : "https://volcano.si.edu/volcano.cfm?vn=212040",
+      "vei" : 7
+    }
+  ],
+  "children" : [
+  ],
+  "corrections" : [
+    {
+      "checkedAt" : null,
+      "createdAt" : "TS",
+      "field" : "description",
+      "id" : 2,
+      "label" : null,
+      "status" : "active",
+      "targetId" : "gvp_13879",
+      "targetKind" : "event",
+      "upstream" : "gvp",
+      "upstreamNow" : null,
+      "upstreamValue" : "\"Confirmed Eruption at Santorini; VEI 7\"",
+      "value" : "\"edited\""
+    },
+    {
+      "checkedAt" : null,
+      "createdAt" : "TS",
+      "field" : "label",
+      "id" : 1,
+      "label" : null,
+      "status" : "active",
+      "targetId" : "gvp_13879",
+      "targetKind" : "event",
+      "upstream" : "gvp",
+      "upstreamNow" : null,
+      "upstreamValue" : "\"Eruption of Santorini\"",
+      "value" : "\"An eruption, named by a person\""
+    }
+  ],
+  "datings" : [
+  ],
+  "edges" : [
+  ],
+  "event" : {
+    "central" : -1610,
+    "citekey" : null,
+    "datingMethod" : "Isotopic: 14C (calibrated)",
+    "description" : "edited",
+    "historicity" : "attested",
+    "id" : "gvp_13879",
+    "kind" : "eruption",
+    "label" : "An eruption, named by a person",
+    "parentId" : null,
+    "placeId" : null,
+    "plusMinus" : 14,
+    "precision" : "precise",
+    "scale" : "local",
+    "scaleStated" : false,
+    "tier" : "catalogue",
+    "timeSpan" : {
+      "beginBy" : null,
+      "endFrom" : null,
+      "notAfter" : -1596,
+      "notBefore" : -1624
+    }
+  },
+  "findings" : [
+  ],
+  "geometry" : "{\"type\":\"Point\",\"coordinates\":[25.396,36.404]}",
+  "leads" : [
+    {
+      "actions" : [
+        {
+          "command" : "histmersion discover search \"An eruption, named by a person\" --not-in-db",
+          "kind" : "discover",
+          "label" : "search the literature",
+          "query" : "An eruption, named by a person"
+        },
+        {
+          "command" : "histmersion queue acquire add \"literature on An eruption, named by a person (1624 BCE–1596 BCE)\" --topic events",
+          "kind" : "acquire",
+          "label" : "add to the acquire queue",
+          "query" : null
+        },
+        {
+          "command" : "histmersion goals link <goal> --query \"An eruption, named by a person\"",
+          "kind" : "goal",
+          "label" : "link to a goal",
+          "query" : "An eruption, named by a person"
+        }
+      ],
+      "candidates" : 0,
+      "eventId" : "gvp_13879",
+      "findingsNear" : 0,
+      "kind" : "eruption",
+      "label" : "An eruption, named by a person",
+      "text" : "No source in the corpus discusses this VEI 7 eruption (1624 BCE–1596 BCE) — 0 findings in the corpus within 300 km and ±100 years",
+      "tier" : "catalogue",
+      "years" : "1624 BCE–1596 BCE"
+    }
+  ],
+  "media" : [
+  ],
+  "names" : [
+    "Eruption of Santorini",
+    "Santorini eruption"
+  ],
+  "parent" : null,
+  "participants" : [
+  ],
+  "sources" : [
+  ],
+  "tier" : "catalogue",
+  "wikidata" : null
+}
+== attestation place
+200 {
+  "canvas" : null,
+  "charEnd" : 50,
+  "charStart" : 30,
+  "chunkOrd" : null,
+  "citekey" : "zzhill1990_battle",
+  "ctsUrn" : null,
+  "id" : 1,
+  "note" : null,
+  "page" : null,
+  "prefix" : null,
+  "quote" : "The battle of Zzhill",
+  "suffix" : null,
+  "targetId" : "zz_hill",
+  "targetType" : "place",
+  "xywh" : null
+}
+== attestation event
+200 {
+  "canvas" : null,
+  "charEnd" : null,
+  "charStart" : null,
+  "chunkOrd" : null,
+  "citekey" : "zzhill1990_battle",
+  "ctsUrn" : null,
+  "id" : 2,
+  "note" : null,
+  "page" : "12",
+  "prefix" : null,
+  "quote" : "fought below the walls",
+  "suffix" : null,
+  "targetId" : "zz_battle",
+  "targetType" : "event",
+  "xywh" : null
+}
+== attestation renamed place
+200 {
+  "canvas" : null,
+  "charEnd" : null,
+  "charStart" : null,
+  "chunkOrd" : null,
+  "citekey" : "zzvolc2004_ash",
+  "ctsUrn" : null,
+  "id" : 3,
+  "note" : "by its old id",
+  "page" : null,
+  "prefix" : null,
+  "quote" : "Zzport",
+  "suffix" : null,
+  "targetId" : "zz_camp_north",
+  "targetType" : "place",
+  "xywh" : null
+}
+== attestation refused
+400 {
+  "code" : "invalid",
+  "message" : "unknown target type 'planet' (finding, event, event_dating, place, edge)"
+}
+== attestation missing source
+404 {
+  "code" : "not_found",
+  "message" : "No source 'zznone1900_x'"
+}
+== attestation patch
+200 {
+  "canvas" : null,
+  "charEnd" : null,
+  "charStart" : null,
+  "chunkOrd" : null,
+  "citekey" : "zzvolc2004_ash",
+  "ctsUrn" : null,
+  "id" : 3,
+  "note" : "patched",
+  "page" : null,
+  "prefix" : null,
+  "quote" : "Zzport",
+  "suffix" : null,
+  "targetId" : "zz_camp_north",
+  "targetType" : "place",
+  "xywh" : null
+}
+== event links recompute
+200 {
+  "attested" : [
+  ],
+  "links" : {
+    "candidates" : [
+      {
+        "citekey" : "zzhill1990_battle",
+        "eventId" : "zz_battle",
+        "findings" : [
+          "zzhill1990_battle#0",
+          "zzhill1990_battle#2",
+          "zzhill1990_battle#1"
+        ],
+        "passages" : [
+          {
+            "context" : "The battle of Zzhill was fought below the walls of Zzhill around 1300 BC; Zzport sent ships.",
+            "end" : 20,
+            "name" : "Battle of Zzhill",
+            "quote" : "battle of Zzhill",
+            "start" : 4
+          },
+          {
+            "context" : "Zzhill burned soon after, and the battle of Zzhill was remembered in the songs of Zzland.",
+            "end" : 143,
+            "name" : "Battle of Zzhill",
+            "quote" : "battle of Zzhill",
+            "start" : 127
+          }
+        ],
+        "reasons" : [
+          "names it 2 times: \"battle of Zzhill\"",
+          "3 findings within 118 km (nearest 0 km), 3 overlapping in time"
+        ],
+        "score" : 1.7,
+        "status" : "proposed",
+        "title" : "The Battle of Zzhill"
+      }
+    ],
+    "eventId" : "zz_battle",
+    "label" : "Battle of Zzhill"
+  },
+  "refused" : [
+  ],
+  "rejected" : [
+  ]
+}
+== event links confirm
+200 {
+  "attested" : [
+  ],
+  "links" : {
+    "candidates" : [
+      {
+        "citekey" : "zzhill1990_battle",
+        "eventId" : "zz_battle",
+        "findings" : [
+          "zzhill1990_battle#0",
+          "zzhill1990_battle#2",
+          "zzhill1990_battle#1"
+        ],
+        "passages" : [
+          {
+            "context" : "The battle of Zzhill was fought below the walls of Zzhill around 1300 BC; Zzport sent ships.",
+            "end" : 20,
+            "name" : "Battle of Zzhill",
+            "quote" : "battle of Zzhill",
+            "start" : 4
+          },
+          {
+            "context" : "Zzhill burned soon after, and the battle of Zzhill was remembered in the songs of Zzland.",
+            "end" : 143,
+            "name" : "Battle of Zzhill",
+            "quote" : "battle of Zzhill",
+            "start" : 127
+          }
+        ],
+        "reasons" : [
+          "names it 2 times: \"battle of Zzhill\"",
+          "3 findings within 118 km (nearest 0 km), 3 overlapping in time"
+        ],
+        "score" : 1.7,
+        "status" : "confirmed",
+        "title" : "The Battle of Zzhill"
+      }
+    ],
+    "eventId" : "zz_battle",
+    "label" : "Battle of Zzhill"
+  },
+  "refused" : [
+    "zzhill1990_battle: already attests it"
+  ],
+  "rejected" : [
+  ]
+}
+== event links ash recompute
+200 {
+  "attested" : [
+  ],
+  "links" : {
+    "candidates" : [
+      {
+        "citekey" : "zzvolc2004_ash",
+        "eventId" : "zz_ashfall",
+        "findings" : [
+          "zzvolc2004_ash#0"
+        ],
+        "passages" : [
+        ],
+        "reasons" : [
+          "1 finding within 48 km (nearest 48 km), 1 overlapping in time"
+        ],
+        "score" : 0.409,
+        "status" : "proposed",
+        "title" : "Ash over Zzport"
+      }
+    ],
+    "eventId" : "zz_ashfall",
+    "label" : "Ash over Zzport"
+  },
+  "refused" : [
+  ],
+  "rejected" : [
+  ]
+}
