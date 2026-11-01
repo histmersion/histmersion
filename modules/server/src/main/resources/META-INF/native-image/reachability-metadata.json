@@ -13352,50 +13352,50 @@
       ]
     },
     {
-      "type": "com.histmersion.db.BAttestationFullRow$",
+      "type": "com.histmersion.domain.catalogue.evidence.BAttestationFullRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy23"
+          "name": "derived$DbCodec$lzy1"
         }
       ]
     },
     {
-      "type": "com.histmersion.db.BCandidateRow$",
+      "type": "com.histmersion.domain.catalogue.evidence.BCandidateRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy9"
+          "name": "derived$DbCodec$lzy1"
         }
       ]
     },
     {
-      "type": "com.histmersion.db.BCatalogueRow$",
+      "type": "com.histmersion.domain.catalogue.events.BCatalogueRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy8"
+          "name": "derived$DbCodec$lzy1"
         }
       ]
     },
     {
-      "type": "com.histmersion.db.BDatingRow$",
+      "type": "com.histmersion.domain.catalogue.events.BDatingRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy10"
+          "name": "derived$DbCodec$lzy1"
         }
       ]
     },
     {
-      "type": "com.histmersion.db.BEventEdgeRow$",
+      "type": "com.histmersion.domain.catalogue.events.BEventEdgeRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy11"
+          "name": "derived$DbCodec$lzy1"
         }
       ]
     },
     {
-      "type": "com.histmersion.db.BEventRow$",
+      "type": "com.histmersion.domain.catalogue.events.BEventRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy7"
+          "name": "derived$DbCodec$lzy1"
         }
       ]
     },
@@ -13411,7 +13411,7 @@
       "type": "com.histmersion.db.BGoalLinkRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy14"
+          "name": "derived$DbCodec$lzy8"
         }
       ]
     },
@@ -13419,7 +13419,7 @@
       "type": "com.histmersion.db.BGoalRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy13"
+          "name": "derived$DbCodec$lzy7"
         }
       ]
     },
@@ -13427,55 +13427,55 @@
       "type": "com.histmersion.db.BGoalScheduleRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy15"
+          "name": "derived$DbCodec$lzy9"
         }
       ]
     },
     {
-      "type": "com.histmersion.db.BParticipantRow$",
+      "type": "com.histmersion.domain.catalogue.events.BParticipantRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy12"
+          "name": "derived$DbCodec$lzy1"
         }
       ]
     },
     {
-      "type": "com.histmersion.db.BPeriodRow$",
+      "type": "com.histmersion.domain.catalogue.periods.BPeriodRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy20"
+          "name": "derived$DbCodec$lzy1"
         }
       ]
     },
     {
-      "type": "com.histmersion.db.BPlaceNameRow$",
+      "type": "com.histmersion.domain.catalogue.places.BPlaceNameRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy17"
+          "name": "derived$DbCodec$lzy1"
         }
       ]
     },
     {
-      "type": "com.histmersion.db.BPlaceRelRow$",
+      "type": "com.histmersion.domain.catalogue.places.BPlaceRelRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy18"
+          "name": "derived$DbCodec$lzy1"
         }
       ]
     },
     {
-      "type": "com.histmersion.db.BPlaceRow$",
+      "type": "com.histmersion.domain.catalogue.places.BPlaceRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy16"
+          "name": "derived$DbCodec$lzy1"
         }
       ]
     },
     {
-      "type": "com.histmersion.db.BPlaceTypeRow$",
+      "type": "com.histmersion.domain.catalogue.places.BPlaceTypeRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy19"
+          "name": "derived$DbCodec$lzy1"
         }
       ]
     },
@@ -13483,7 +13483,7 @@
       "type": "com.histmersion.db.BQueueRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy21"
+          "name": "derived$DbCodec$lzy10"
         }
       ]
     },
@@ -13499,7 +13499,7 @@
       "type": "com.histmersion.db.BTombstoneRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy22"
+          "name": "derived$DbCodec$lzy11"
         }
       ]
     },
@@ -13524,24 +13524,6 @@
           "name": "given_DbCodec_BAssetRow$lzy1"
         },
         {
-          "name": "given_DbCodec_BAttestationFullRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_BCandidateRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_BCatalogueRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_BDatingRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_BEventEdgeRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_BEventRow$lzy1"
-        },
-        {
           "name": "given_DbCodec_BFindingRow$lzy1"
         },
         {
@@ -13554,24 +13536,6 @@
           "name": "given_DbCodec_BGoalScheduleRow$lzy1"
         },
         {
-          "name": "given_DbCodec_BParticipantRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_BPeriodRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_BPlaceNameRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_BPlaceRelRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_BPlaceRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_BPlaceTypeRow$lzy1"
-        },
-        {
           "name": "given_DbCodec_BQueueRow$lzy1"
         },
         {
@@ -13582,9 +13546,6 @@
         },
         {
           "name": "given_DbCodec_BVersionRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_BundleCorrection$lzy1"
         },
         {
           "name": "given_DbCodec_InstanceInfo$lzy1"
@@ -14082,14 +14043,6 @@
       ]
     },
     {
-      "type": "com.histmersion.util.data.exchange.CarriedKinds$",
-      "fields": [
-        {
-          "name": "transition$lzy1"
-        }
-      ]
-    },
-    {
       "type": "com.histmersion.util.data.exchange.LedgerRow$",
       "fields": [
         {
@@ -14102,14 +14055,6 @@
       "fields": [
         {
           "name": "derived$DbCodec$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.util.data.exchange.MergeRuleSet$",
-      "fields": [
-        {
-          "name": "transition$lzy1"
         }
       ]
     },
@@ -19831,6 +19776,14 @@
           "java.sql.Connection"
         ]
       }
+    },
+    {
+      "type": "com.histmersion.domain.catalogue.events.EventBundleRepo$",
+      "fields": [
+        {
+          "name": "given_DbCodec_BundleCorrection$lzy1"
+        }
+      ]
     }
   ],
   "resources": [

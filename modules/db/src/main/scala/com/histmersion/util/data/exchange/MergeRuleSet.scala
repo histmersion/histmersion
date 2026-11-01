@@ -1,6 +1,10 @@
 package com.histmersion.util.data.exchange
 
+import com.histmersion.domain.{MergePlanner, MergeSettings}
+import com.histmersion.files.BundleEntities
 import com.histmersion.util.data.TableName
+
+import com.augustnagro.magnum.DbCon
 
 /** The merge rules a plan and the ledger run over, from the registry. */
 final class MergeRuleSet(val all: List[MergeRules]):
@@ -15,6 +19,15 @@ final class MergeRuleSet(val all: List[MergeRules]):
   def referableTables(carried: CarriedKinds): List[TableName] =
     all.filter(_.referable).map(r => carried.tableOf(r.kind)).distinct
 
-object MergeRuleSet:
-  /** Today's rules as the transition adapters register them, for the callers that are not given the registry. */
-  lazy val transition: MergeRuleSet = MergeRuleSet(MergeRulesAdapter.all)
+  /** What the plan knows of this collection, every kind's share added in turn. */
+  def gather(
+      bundle: BundleEntities,
+      localized: BundleEntities,
+      in: MergePlanner.Input,
+      settings: MergeSettings
+  )(using DbCon): MergePlanner.Input =
+    @annotation.tailrec
+    def loop(rest: List[MergeRules], acc: MergePlanner.Input): MergePlanner.Input = rest match
+      case r :: tail => loop(tail, r.gather(bundle, localized, acc, settings))
+      case Nil       => acc
+    loop(all, in)

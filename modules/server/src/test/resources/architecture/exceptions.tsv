@@ -188,8 +188,6 @@ direction	db:db/AgentRepo.scala	automation -> research: ArticlePlans	1
 direction	db:db/BundleImport.scala	util.data -> automation: GoalRepo	1
 direction	db:db/BundleImport.scala	util.data -> automation: Queue	1
 direction	db:db/BundleImport.scala	util.data -> automation: QueueRepo	1
-direction	db:db/BundleImport.scala	util.data -> catalogue: EventRepo	1
-direction	db:db/BundleImport.scala	util.data -> catalogue: PlaceRepo	1
 direction	db:db/BundleImport.scala	util.data -> library: Edge	1
 direction	db:db/BundleImport.scala	util.data -> library: SourceRepo	1
 direction	db:db/BundleImport.scala	util.data -> research: ArticleRepo	1
@@ -207,7 +205,6 @@ direction	db:db/LintRepo.scala	util.data -> research: CoverageEdge	1
 direction	db:db/LintRepo.scala	util.data -> research: CritiquePairing	1
 direction	db:db/ListSql.scala	util.database -> automation: ListFilters	1
 direction	db:db/MediaRepo.scala	media -> library: ExternalIds	1
-direction	db:db/MergeState.scala	util.data -> catalogue: PlaceRepo	1
 direction	db:db/MergeState.scala	util.data -> library: MergeText	1
 direction	db:db/Migrate.scala	util.common -> media: Collection	1
 direction	db:db/SourceDeleteRepo.scala	library -> research: ArticleLinks	1
@@ -310,9 +307,7 @@ process	server:server/agents/PlanPools.scala	ProcessBuilder	2
 repository	db:db/AcquireRepo.scala	SourceRepo of library.sources	1
 repository	db:db/ArticleRepo.scala	SourceRepo of library.sources	1
 repository	db:db/BundleImport.scala	ArticleRepo of research.articles	1
-repository	db:db/BundleImport.scala	EventRepo of catalogue.events	1
 repository	db:db/BundleImport.scala	GoalRepo of automation.goals	1
-repository	db:db/BundleImport.scala	PlaceRepo of catalogue.places	1
 repository	db:db/BundleImport.scala	QueueRepo of automation.worklists	1
 repository	db:db/BundleImport.scala	SourceRepo of library.sources	1
 repository	db:db/CritiqueRepo.scala	SourceRepo of library.sources	1
@@ -320,7 +315,6 @@ repository	db:db/Importer.scala	AssetRepo of media	1
 repository	db:db/Importer.scala	SourceRepo of library.sources	1
 repository	db:db/LintRepo.scala	PlaceRepo of catalogue.places	1
 repository	db:db/LintRepo.scala	SourceRepo of library.sources	1
-repository	db:db/MergeState.scala	PlaceRepo of catalogue.places	1
 repository	db:db/SourceDeleteRepo.scala	QueueRepo of automation.worklists	1
 repository	db:db/SourceRepo.scala	ArticleRepo of research.articles	1
 repository	server:server/Bootstrap.scala	JobRepo of util.jobs	1

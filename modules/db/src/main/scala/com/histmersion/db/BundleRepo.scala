@@ -12,6 +12,7 @@ import java.util.UUID
 import javax.sql.DataSource
 import com.histmersion.values.{BundleKind, Confidence, SourceStatus}
 import com.histmersion.util.data.exchange.BundleScope
+import com.histmersion.util.data.exchange.BundleSql.*
 import com.histmersion.util.storage.ContentStore
 
 // ── flat rows (Magnum maps a SELECT's columns positionally) ─────────────────────────────────────────
@@ -115,89 +116,6 @@ final private[histmersion] case class BAssetRow(
     pHi: Option[Long],
     updatedAt: String
 ) derives DbCodec
-final private[histmersion] case class BEventRow(
-    uid: UUID,
-    origin: UUID,
-    id: String,
-    label: String,
-    kind: String,
-    notBefore: Option[Long],
-    beginBy: Option[Long],
-    endFrom: Option[Long],
-    notAfter: Option[Long],
-    historicity: String,
-    geom: Option[String],
-    placeId: Option[String],
-    parentUid: Option[UUID],
-    description: Option[String],
-    citekey: Option[String],
-    sourceUid: Option[UUID],
-    updatedAt: String,
-    scale: Option[String],
-    catalogue: Option[String],
-    names: List[String],
-    wikidata: Option[String],
-    central: Option[Long],
-    plusMinus: Option[Long],
-    datingMethod: Option[String]
-) derives DbCodec
-final private[histmersion] case class BCatalogueRow(
-    eventUid: UUID,
-    provider: String,
-    providerId: String,
-    url: Option[String],
-    label: String,
-    kind: String,
-    notBefore: Option[Long],
-    beginBy: Option[Long],
-    endFrom: Option[Long],
-    notAfter: Option[Long],
-    lat: Option[Double],
-    lon: Option[Double],
-    vei: Option[Int],
-    magnitude: Option[Double],
-    deaths: Option[Long],
-    historicity: String,
-    record: String,
-    retrievedAt: String
-) derives DbCodec
-final private[histmersion] case class BCandidateRow(
-    eventUid: UUID,
-    sourceUid: UUID,
-    citekey: String,
-    score: Double,
-    status: String,
-    findings: List[String],
-    passages: String,
-    reasons: List[String],
-    computedAt: String
-) derives DbCodec
-final private[histmersion] case class BDatingRow(
-    eventUid: UUID,
-    citekey: String,
-    sourceUid: Option[UUID],
-    notBefore: Option[Long],
-    beginBy: Option[Long],
-    endFrom: Option[Long],
-    notAfter: Option[Long],
-    method: Option[String],
-    note: Option[String]
-) derives DbCodec
-final private[histmersion] case class BEventEdgeRow(
-    eventUid: UUID,
-    dstUid: UUID,
-    kind: String,
-    citekey: String,
-    sourceUid: Option[UUID],
-    note: Option[String]
-) derives DbCodec
-final private[histmersion] case class BParticipantRow(
-    eventUid: UUID,
-    actor: String,
-    role: String,
-    citekey: Option[String],
-    sourceUid: Option[UUID]
-) derives DbCodec
 final private[histmersion] case class BGoalRow(
     uid: UUID,
     origin: UUID,
@@ -232,57 +150,6 @@ final private[histmersion] case class BGoalScheduleRow(
     enabled: Boolean,
     budgetUsd: Option[BigDecimal]
 ) derives DbCodec
-final private[histmersion] case class BPlaceRow(
-    uid: UUID,
-    origin: UUID,
-    id: String,
-    label: String,
-    kind: String,
-    geom: Option[String],
-    pNull: Boolean,
-    pLo: Option[Long],
-    pHi: Option[Long],
-    source: Option[String],
-    properties: Option[String],
-    updatedAt: String
-) derives DbCodec
-final private[histmersion] case class BPlaceNameRow(
-    placeId: String,
-    name: String,
-    lang: String,
-    pNull: Boolean,
-    pLo: Option[Long],
-    pHi: Option[Long]
-) derives DbCodec
-final private[histmersion] case class BPlaceRelRow(
-    childId: String,
-    parentId: String,
-    kind: String,
-    pNull: Boolean,
-    pLo: Option[Long],
-    pHi: Option[Long]
-) derives DbCodec
-final private[histmersion] case class BPlaceTypeRow(
-    placeId: String,
-    typeLabel: String,
-    pNull: Boolean,
-    pLo: Option[Long],
-    pHi: Option[Long],
-    citekey: Option[String]
-) derives DbCodec
-final private[histmersion] case class BPeriodRow(
-    uid: UUID,
-    origin: UUID,
-    id: String,
-    label: String,
-    authority: Option[String],
-    pNull: Boolean,
-    pLo: Option[Long],
-    pHi: Option[Long],
-    region: Option[String],
-    parentId: Option[String],
-    updatedAt: String
-) derives DbCodec
 final private[histmersion] case class BQueueRow(
     uid: UUID,
     origin: UUID,
@@ -299,43 +166,18 @@ final private[histmersion] case class BTombstoneRow(uid: UUID, kind: String, ori
     derives DbCodec
 
 // a finding's confidence reads through `DbCodec[Option[Confidence]]` (Codecs): an unknown word is "not stated"
-given DbCodec[BundleCorrection] = DbCodec.derived
 given DbCodec[InstanceInfo] = DbCodec.derived
 
-/** The bundle's view of the database (docs/research-merge-import.md §4): every table a bundle carries, read as the
-  * [[Bundle]] line types, in a deterministic order (by uid; owned sets by their owner's uid, then their own key, in the
-  * "C" collation). One read per kind; `scope` selects the rows.
+/** The bundle's view of the database (docs/research-merge-import.md §4): the tables a bundle carries for the owners
+  * that do not read their own lines yet (the catalogue's are its features'), read as the [[Bundle]] line types, in a
+  * deterministic order (by uid; owned sets by their owner's uid, then their own key, in the "C" collation). One read
+  * per kind; `scope` selects the rows.
   *
   * Shared by the export (`BundleExport`) and the import (`BundleImport`), which reads the LOCAL rows with the uids a
   * bundle carries through the very same code — so "the same content" means the same line, and the same rev, on both
   * sides.
   */
 object BundleRepo:
-
-  /** `timestamptz` as the wire carries it everywhere: UTC, microseconds, `Z`. */
-  private[histmersion] def ts(col: String): String =
-    s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')"""
-
-  /** A range as the three columns [[range]] reads back. */
-  private def rangeCols(col: String): String = s"$col IS NULL, ${RangeSql.cols(col)}"
-
-  private[histmersion] def range(isNull: Boolean, lo: Option[Long], hi: Option[Long]): Option[BundleRange] =
-    Option.when(!isNull)(BundleRange(lo, hi))
-
-  /** `WHERE` for the scope, on a table's uid and change-clock columns. */
-  private def where(scope: BundleScope, uid: String, clock: String): Sql = scope match
-    case BundleScope.All       => Sql.raw("TRUE")
-    case BundleScope.Since(at) => Sql.of(s"$clock > ?::timestamptz", Param.S(at))
-    case BundleScope.Uids(us)  => Sql.of(s"$uid = ANY(?::uuid[])", Param.A(us.map(_.toString)))
-
-  /** The uid of whatever a label names, for a target that HAS a uid — the label of an attestation's or an asset link's
-    * target is kept, and its uid travels beside it for the matcher to come (M3).
-    */
-  private def targetUid(tt: String, tid: String): String =
-    s"""CASE $tt WHEN 'finding' THEN (SELECT uid FROM findings WHERE id = $tid)
-                 WHEN 'source'  THEN (SELECT uid FROM sources WHERE citekey = $tid)
-                 WHEN 'article' THEN (SELECT uid FROM articles WHERE slug = $tid)
-                 WHEN 'event'   THEN (SELECT uid FROM events WHERE id = $tid) END"""
 
   // ── this instance ──────────────────────────────────────────────────────────────────────────
 
@@ -476,203 +318,6 @@ object BundleRepo:
       .run()
       .map(BundleAssetLink.apply(_, _, _, _, _, _, _, _, _, _))
 
-  private[histmersion] def attestations(scope: BundleScope)(using DbCon): Vector[BundleAttestation] =
-    (Sql.raw(s"""SELECT t.uid, t.origin, s.uid, t.target_type, t.target_id,
-                       ${targetUid("t.target_type", "t.target_id")}, t.quote, t.prefix, t.suffix,
-                       t.char_start, t.char_end, t.chunk_ord, t.page, t.canvas, t.xywh, t.cts_urn, t.note,
-                       ${ts("t.created_at")}, ${ts("t.updated_at")}
-                FROM attestations t JOIN sources s ON s.citekey = t.citekey WHERE """) ++
-      where(scope, "t.uid", "t.updated_at") ++ " ORDER BY t.uid").frag
-      .query[BAttestationFullRow]
-      .run()
-      .map(r =>
-        BundleAttestation(
-          r.uid,
-          r.origin,
-          r.sourceUid,
-          r.targetType,
-          r.targetId,
-          r.targetUid,
-          r.quote,
-          r.prefix,
-          r.suffix,
-          r.charStart,
-          r.charEnd,
-          r.chunkOrd,
-          r.page,
-          r.canvas,
-          r.xywh,
-          r.ctsUrn,
-          r.note,
-          r.createdAt,
-          r.updatedAt
-        )
-      )
-
-  private[histmersion] def events(scope: BundleScope)(using DbCon): Vector[BundleEvent] =
-    val w = where(scope, "e.uid", "e.updated_at")
-    val rows = (Sql.raw(s"""SELECT e.uid, e.origin, e.id, e.label, e.kind, e.not_before, e.begin_by,
-                                  e.end_from, e.not_after, e.historicity, encode(ST_AsEWKB(e.geom), 'hex'),
-                                  e.place_id, p.uid, e.description, e.citekey, s.uid, ${ts("e.updated_at")}, e.scale,
-                                  e.catalogue, e.names, e.wikidata, e.central, e.plus_minus, e.dating_method
-                           FROM events e LEFT JOIN events p ON p.id = e.parent_id
-                           LEFT JOIN sources s ON s.citekey = e.citekey WHERE """) ++ w ++ " ORDER BY e.uid").frag
-      .query[BEventRow]
-      .run()
-    val datings = (Sql.raw("""SELECT e.uid, d.citekey, s.uid, d.not_before, d.begin_by, d.end_from,
-                                     d.not_after, d.method, d.note
-                              FROM event_datings d JOIN events e ON e.id = d.event_id
-                              LEFT JOIN sources s ON s.citekey = d.citekey WHERE """) ++ w ++
-      """ ORDER BY e.uid, d.citekey COLLATE "C"""").frag.query[BDatingRow].run().groupBy(_.eventUid)
-    val edges = (Sql.raw("""SELECT e.uid, b.uid, g.kind, g.citekey, s.uid, g.note
-                            FROM event_edges g JOIN events e ON e.id = g.src_id JOIN events b ON b.id = g.dst_id
-                            LEFT JOIN sources s ON s.citekey = g.citekey WHERE """) ++ w ++
-      """ ORDER BY e.uid, b.uid, g.kind COLLATE "C"""").frag.query[BEventEdgeRow].run().groupBy(_.eventUid)
-    val people = (Sql.raw("""SELECT e.uid, p.actor, p.role, p.citekey, s.uid
-                             FROM event_participants p JOIN events e ON e.id = p.event_id
-                             LEFT JOIN sources s ON s.citekey = p.citekey WHERE """) ++ w ++
-      """ ORDER BY e.uid, p.actor COLLATE "C", p.role COLLATE "C"""").frag
-      .query[BParticipantRow]
-      .run()
-      .groupBy(_.eventUid)
-    rows.map { r =>
-      BundleEvent(
-        r.uid,
-        r.origin,
-        r.id,
-        r.label,
-        r.kind,
-        r.notBefore,
-        r.beginBy,
-        r.endFrom,
-        r.notAfter,
-        r.historicity,
-        r.geom,
-        r.placeId,
-        r.parentUid,
-        r.description,
-        r.citekey,
-        r.sourceUid,
-        datings
-          .getOrElse(r.uid, Vector.empty)
-          .toList
-          .map(d =>
-            BundleEventDating(d.citekey, d.sourceUid, d.notBefore, d.beginBy, d.endFrom, d.notAfter, d.method, d.note)
-          ),
-        edges
-          .getOrElse(r.uid, Vector.empty)
-          .toList
-          .map(g => BundleEventEdge(g.dstUid, g.kind, g.citekey, g.sourceUid, g.note)),
-        people
-          .getOrElse(r.uid, Vector.empty)
-          .toList
-          .map(p => BundleEventParticipant(p.actor, p.role, p.citekey, p.sourceUid)),
-        r.updatedAt,
-        scale = r.scale,
-        catalogue = r.catalogue,
-        names = Option(r.names).filter(_.nonEmpty),
-        wikidata = r.wikidata,
-        central = r.central,
-        plusMinus = r.plusMinus,
-        datingMethod = r.datingMethod
-      )
-    }
-
-  // ── the event-catalogue sets (#1647): beside their events, by the event's uid ──────────────────
-
-  /** What the catalogues say about the events in scope (`event_catalogue`): by event, then the record's key. */
-  private[histmersion] def eventCatalogue(scope: BundleScope)(using DbCon): Vector[BundleEventCatalogue] =
-    (Sql.raw(s"""SELECT e.uid, c.provider, c.provider_id, c.url, c.label, c.kind, c.not_before, c.begin_by,
-                       c.end_from, c.not_after, c.lat, c.lon, c.vei, c.magnitude, c.deaths, c.historicity,
-                       c.record::text, ${ts("c.retrieved_at")}
-                FROM event_catalogue c JOIN events e ON e.id = c.event_id WHERE """) ++
-      where(scope, "e.uid", "c.retrieved_at") ++
-      """ ORDER BY e.uid, c.provider COLLATE "C", c.provider_id COLLATE "C"""").frag.query[BCatalogueRow].run().map { r =>
-      BundleEventCatalogue(
-        r.eventUid,
-        r.provider,
-        r.providerId,
-        r.url,
-        r.label,
-        r.kind,
-        r.notBefore,
-        r.beginBy,
-        r.endFrom,
-        r.notAfter,
-        r.lat,
-        r.lon,
-        r.vei,
-        r.magnitude,
-        r.deaths,
-        r.historicity,
-        io.circe.parser.parse(r.record).getOrElse(io.circe.Json.obj()),
-        r.retrievedAt
-      )
-    }
-
-  /** The sources that possibly discuss the events in scope (`event_link_candidates`). An incremental bundle carries
-    * those recomputed after `since` and every DECISION (a status change does not move `computed_at`, and the decisions
-    * are few).
-    */
-  private[histmersion] def eventCandidates(scope: BundleScope)(using DbCon): Vector[BundleEventCandidate] =
-    val w = scope match
-      case BundleScope.Since(_) =>
-        Sql.raw("(c.status <> 'proposed' OR ") ++ where(scope, "e.uid", "c.computed_at") ++ ")"
-      case _ => where(scope, "e.uid", "c.computed_at")
-    (Sql.raw(s"""SELECT e.uid, s.uid, c.citekey, c.score, c.status, c.findings, c.passages::text, c.reasons,
-                       ${ts("c.computed_at")}
-                FROM event_link_candidates c JOIN events e ON e.id = c.event_id
-                JOIN sources s ON s.citekey = c.citekey WHERE """) ++ w ++ " ORDER BY e.uid, s.uid").frag
-      .query[BCandidateRow]
-      .run()
-      .map { r =>
-        BundleEventCandidate(
-          r.eventUid,
-          r.sourceUid,
-          r.citekey,
-          r.score,
-          r.status,
-          r.findings,
-          io.circe.parser.parse(r.passages).getOrElse(io.circe.Json.arr()),
-          r.reasons,
-          r.computedAt
-        )
-      }
-
-  /** When the candidates of the events in scope were last computed (`event_link_checks`). */
-  private[histmersion] def eventChecks(scope: BundleScope)(using DbCon): Vector[BundleEventCheck] =
-    (Sql.raw(s"""SELECT e.uid, ${ts("k.checked_at")}
-                FROM event_link_checks k JOIN events e ON e.id = k.event_id WHERE """) ++
-      where(scope, "e.uid", "k.checked_at") ++ " ORDER BY e.uid").frag
-      .query[(UUID, String)]
-      .run()
-      .map(BundleEventCheck.apply)
-
-  /** The corrections by hand (`corrections`, V088); an event's carries its uid. The clock is the later of the person's
-    * change and the last refresh.
-    */
-  private[histmersion] def corrections(scope: BundleScope)(using DbCon): Vector[BundleCorrection] =
-    val eventUid = "(SELECT x.uid FROM events x WHERE c.target_kind = 'event' AND x.id = c.target_id)"
-    (Sql.raw(s"""SELECT c.target_kind, c.target_id, $eventUid, c.field, c.value::text, c.upstream,
-                       c.upstream_value::text, c.upstream_now::text, c.status, ${ts("c.created_at")},
-                       ${ts("c.updated_at")}, ${ts("c.checked_at")}
-                FROM corrections c WHERE """) ++
-      where(scope, eventUid, "greatest(c.updated_at, coalesce(c.checked_at, c.updated_at))") ++
-      """ ORDER BY c.target_kind COLLATE "C", c.target_id COLLATE "C", c.field COLLATE "C"""").frag
-      .query[BundleCorrection]
-      .run()
-
-  /** The site types refined from outside (`places.site_type`, V085) — of ANY place, the gazetteer's seeds included —
-    * and the places asked about with no answer (so the other side does not ask again).
-    */
-  private[histmersion] def siteTypes(scope: BundleScope)(using DbCon): Vector[BundleSiteType] =
-    (Sql.raw(s"""SELECT p.id, p.site_type, ${ts("p.site_type_checked_at")} FROM places p
-                WHERE (p.site_type IS NOT NULL OR p.site_type_checked_at IS NOT NULL) AND """) ++
-      where(scope, "p.uid", "p.site_type_checked_at") ++ """ ORDER BY p.id COLLATE "C"""").frag
-      .query[(String, Option[String], Option[String])]
-      .run()
-      .map(BundleSiteType.apply)
-
   private[histmersion] def goals(scope: BundleScope)(using DbCon): Vector[BundleGoal] =
     val w = where(scope, "g.uid", "g.updated_at")
     val rows = (Sql.raw(s"""SELECT g.uid, g.origin, g.slug, g.title, g.status, g.notes, g.tags, g.regions,
@@ -736,89 +381,6 @@ object BundleRepo:
       )
     }
 
-  /** The places of this collection's own (`dataset = 'local'`, V052) in scope — or, with `alsoIds`, any place with one
-    * of those ids as well (what a merge compares the bundle's against).
-    */
-  private[histmersion] def places(scope: BundleScope, alsoIds: List[String] = Nil)(using DbCon): Vector[BundlePlace] =
-    val own = Sql.raw("p.dataset = 'local' AND ") ++ where(scope, "p.uid", "p.updated_at")
-    val sel = if alsoIds.isEmpty then own
-    else Sql.raw("((") ++ own ++ Sql.of(") OR p.id = ANY(?::text[]))", Param.A(alsoIds.distinct))
-    val rows = (Sql.raw(s"""SELECT p.uid, p.origin, p.id, p.label, p.kind, encode(ST_AsEWKB(p.geom), 'hex'),
-                       ${rangeCols("p.period")}, p.source, p.properties::text, ${ts("p.updated_at")}
-                FROM places p WHERE """) ++ sel ++ " ORDER BY p.uid").frag.query[BPlaceRow].run()
-    val ids = rows.map(_.id).toList
-    if ids.isEmpty then Vector.empty
-    else
-      val names = sql"""SELECT place_id, name, lang, ${SqlLiteral(rangeCols("period"))} FROM place_names
-                        WHERE place_id = ANY($ids::text[]) AND import_source = '' ORDER BY place_id, name COLLATE "C", lang COLLATE "C""""
-        .query[BPlaceNameRow]
-        .run()
-        .groupBy(_.placeId)
-      val rels = sql"""SELECT child_id, parent_id, kind, ${SqlLiteral(rangeCols("period"))} FROM place_relations
-                       WHERE child_id = ANY($ids::text[]) ORDER BY child_id, parent_id COLLATE "C", kind COLLATE "C""""
-        .query[BPlaceRelRow]
-        .run()
-        .groupBy(_.childId)
-      val links =
-        sql"""SELECT place_id, scheme, external_id, relation FROM place_links WHERE place_id = ANY($ids::text[])
-                        ORDER BY place_id, scheme COLLATE "C", external_id COLLATE "C""""
-          .query[(String, String, String, String)]
-          .run()
-          .groupBy(_._1)
-      val types = sql"""SELECT place_id, type_label, ${SqlLiteral(rangeCols("period"))}, citekey
-                        FROM place_types WHERE place_id = ANY($ids::text[]) ORDER BY place_id, type_label COLLATE "C""""
-        .query[BPlaceTypeRow]
-        .run()
-        .groupBy(_.placeId)
-      rows.map { r =>
-        BundlePlace(
-          r.uid,
-          r.origin,
-          r.id,
-          r.label,
-          r.kind,
-          r.geom,
-          range(r.pNull, r.pLo, r.pHi),
-          r.source,
-          r.properties.flatMap(Jsonb.read[io.circe.Json]),
-          names
-            .getOrElse(r.id, Vector.empty)
-            .toList
-            .map(n => BundlePlaceName(n.name, Option(n.lang).filter(_.nonEmpty), range(n.pNull, n.pLo, n.pHi))),
-          rels
-            .getOrElse(r.id, Vector.empty)
-            .toList
-            .map(x => BundlePlaceRelation(x.parentId, x.kind, range(x.pNull, x.pLo, x.pHi))),
-          links.getOrElse(r.id, Vector.empty).toList.map((_, sc, ex, rel) => BundlePlaceLink(sc, ex, rel)),
-          types
-            .getOrElse(r.id, Vector.empty)
-            .toList
-            .map(t => BundlePlaceType(t.typeLabel, range(t.pNull, t.pLo, t.pHi), t.citekey)),
-          r.updatedAt
-        )
-      }
-
-  /** The named periods of this collection's own in scope, or with one of `alsoIds`. */
-  private[histmersion] def periods(scope: BundleScope, alsoIds: List[String] = Nil)(using DbCon): Vector[BundlePeriod] =
-    val own = Sql.raw("p.dataset = 'local' AND ") ++ where(scope, "p.uid", "p.updated_at")
-    val sel = if alsoIds.isEmpty then own
-    else Sql.raw("((") ++ own ++ Sql.of(") OR p.id = ANY(?::text[]))", Param.A(alsoIds.distinct))
-    (Sql.raw(s"""SELECT p.uid, p.origin, p.id, p.label, p.authority, ${rangeCols("p.period")}, p.region, p.parent_id,
-                       ${ts("p.updated_at")}
-                FROM periods p WHERE """) ++ sel ++ " ORDER BY p.uid").frag.query[BPeriodRow].run().map { r =>
-      BundlePeriod(
-        r.uid,
-        r.origin,
-        r.id,
-        r.label,
-        r.authority,
-        range(r.pNull, r.pLo, r.pHi),
-        r.region,
-        r.parentId,
-        r.updatedAt
-      )
-    }
-
   /** Old article slugs (V042) of the articles in scope. */
   private[histmersion] def articleAliases(scope: BundleScope)(using DbCon): Vector[BundleArticleAlias] =
     (Sql.raw(s"""SELECT x.alias, a.uid, ${ts("x.created_at")}
@@ -828,15 +390,6 @@ object BundleRepo:
       .run()
       .map(BundleArticleAlias.apply)
 
-  /** Old event ids and goal slugs (V053) of the events and goals in scope. */
-  private[histmersion] def eventAliases(scope: BundleScope)(using DbCon): Vector[BundleEventAlias] =
-    (Sql.raw(s"""SELECT x.alias, e.uid, ${ts("x.created_at")}
-                FROM event_aliases x JOIN events e ON e.id = x.event_id WHERE """) ++
-      where(scope, "e.uid", "x.created_at") ++ """ ORDER BY x.alias COLLATE "C"""").frag
-      .query[(String, UUID, String)]
-      .run()
-      .map(BundleEventAlias.apply)
-
   private[histmersion] def goalAliases(scope: BundleScope)(using DbCon): Vector[BundleGoalAlias] =
     (Sql.raw(s"""SELECT x.alias, g.uid, ${ts("x.created_at")}
                 FROM goal_aliases x JOIN goals g ON g.slug = x.goal_slug WHERE """) ++
@@ -844,17 +397,6 @@ object BundleRepo:
       .query[(String, UUID, String)]
       .run()
       .map(BundleGoalAlias.apply)
-
-  /** Old place ids (V055) of the places a bundle carries — this collection's own (as [[places]]): a gazetteer seed
-    * place travels as the reference fingerprint, not as a row.
-    */
-  private[histmersion] def placeAliases(scope: BundleScope)(using DbCon): Vector[BundlePlaceAlias] =
-    (Sql.raw(s"""SELECT x.alias, p.uid, ${ts("x.created_at")}
-                FROM place_aliases x JOIN places p ON p.id = x.place_id WHERE p.dataset = 'local' AND """) ++
-      where(scope, "p.uid", "x.created_at") ++ """ ORDER BY x.alias COLLATE "C"""").frag
-      .query[(String, UUID, String)]
-      .run()
-      .map(BundlePlaceAlias.apply)
 
   private[histmersion] def queue(scope: BundleScope)(using DbCon): Vector[BundleQueueItem] =
     (Sql.raw(s"""SELECT q.uid, q.origin, q.list, q.text, q.topic, q.status, q.reason,
@@ -950,71 +492,7 @@ object BundleRepo:
       r.updatedAt
     )
 
-  /** Everything in scope, as the bundle's lines. The three reads whose rows also locate the blobs can be passed in, so
-    * an export does not run them twice.
-    */
-  private[histmersion] def entities(scope: BundleScope, originals: ContentStore)(using DbCon): BundleEntities =
-    entities(scope, originals, sources(scope), versions(scope), assets(scope))
-
-  private[histmersion] def entities(
-      scope: BundleScope,
-      originals: ContentStore,
-      srcRows: Vector[BSourceRow],
-      verRows: Vector[BVersionRow],
-      assetRows: Vector[BAssetRow]
-  )(using DbCon): BundleEntities =
-    BundleEntities(
-      sources = srcRows.toList.map(sourceLine(_, originals)),
-      findings = findings(scope).toList,
-      edges = edges(scope).toList,
-      unresolvedEdges = unresolvedEdges(scope).toList,
-      assessments = assessments(scope).toList,
-      aliases = aliases(scope).toList,
-      articles = articles(scope).toList,
-      versions = verRows.toList.map(versionLine),
-      assets = assetRows.toList.map(assetLine),
-      assetLinks = assetLinks(scope).toList,
-      attestations = attestations(scope).toList,
-      events = events(scope).toList,
-      goals = goals(scope).toList,
-      queue = queue(scope).toList,
-      tombstones = tombstones(scope).toList,
-      places = places(scope).toList,
-      periods = periods(scope).toList,
-      articleAliases = articleAliases(scope).toList,
-      eventAliases = eventAliases(scope).toList,
-      goalAliases = goalAliases(scope).toList,
-      placeAliases = placeAliases(scope).toList,
-      eventCatalogue = eventCatalogue(scope).toList,
-      eventCandidates = eventCandidates(scope).toList,
-      eventChecks = eventChecks(scope).toList,
-      corrections = corrections(scope).toList,
-      siteTypes = siteTypes(scope).toList
-    )
-
   /** The Flyway version of this database, read in the caller's transaction ("33"). */
   private[histmersion] def schemaVersion(using DbCon): Option[String] =
     sql"""SELECT version FROM flyway_schema_history WHERE success AND version IS NOT NULL
           ORDER BY installed_rank DESC LIMIT 1""".query[String].run().headOption
-
-final private[histmersion] case class BAttestationFullRow(
-    uid: UUID,
-    origin: UUID,
-    sourceUid: UUID,
-    targetType: String,
-    targetId: String,
-    targetUid: Option[UUID],
-    quote: Option[String],
-    prefix: Option[String],
-    suffix: Option[String],
-    charStart: Option[Int],
-    charEnd: Option[Int],
-    chunkOrd: Option[Int],
-    page: Option[String],
-    canvas: Option[String],
-    xywh: Option[String],
-    ctsUrn: Option[String],
-    note: Option[String],
-    createdAt: String,
-    updatedAt: String
-) derives DbCodec

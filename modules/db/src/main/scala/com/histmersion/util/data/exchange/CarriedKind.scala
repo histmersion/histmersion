@@ -1,12 +1,14 @@
 package com.histmersion.util.data.exchange
 
 import com.histmersion.db.BundleImport
+import com.histmersion.files.BundleEntities
 import com.histmersion.files.BundleEntities.BlobUse
 import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.storage.ContentStore
 import com.histmersion.values.BundleKind
 
 import com.augustnagro.magnum.DbCon
+import io.circe.Encoder
 
 /** A kind of record a bundle carries for its owner: one entry of the archive, its lines out for a scope (with the blobs
   * they use and where their bytes are read from), the blobs it takes in, and its rows in.
@@ -29,8 +31,53 @@ trait CarriedKind:
   /** Its lines in `scope`, read in the export's transaction. */
   def out(scope: BundleScope, files: ContentStore)(using DbCon): CarriedOut
 
+  /** Its lines in `scope` put into the bundle's in-memory form: what a merge compares a bundle's lines with. */
+  def into(scope: BundleScope, files: ContentStore)(using DbCon): BundleEntities => BundleEntities
+
   /** Where an import puts a blob its lines use; `None` for a use it does not own. */
   def blobIn(use: BlobUse, sha256: String, writer: BundleImport.Writer, files: ContentStore): Option[BlobSink] = None
 
   /** Its steps of an import. */
   def rowsIn: List[RowsIn] = Nil
+
+object CarriedKind:
+
+  /** A kind of record whose lines use no blob: its lines stamped with their revs, `clock` the change each carries. */
+  def records[A: Encoder.AsObject](owner: DataOwner, kind: BundleKind, table: TableName, steps: List[RowsIn])(
+      lines: BundleScope => DbCon ?=> List[A]
+  )(clock: A => String, set: (BundleEntities, List[A]) => BundleEntities): CarriedKind =
+    Lines(
+      owner,
+      BundleEntry(kind.file),
+      Some(kind),
+      Some(table),
+      steps,
+      lines,
+      BundleFormat.stamp(_).line,
+      a => Some(clock(a)),
+      set
+    )
+
+  /** A set its records own: its lines as they are, with no rev; `clock` the change a line carries, when it has one. */
+  def owned[A: Encoder.AsObject](owner: DataOwner, entry: BundleEntry, steps: List[RowsIn])(
+      lines: BundleScope => DbCon ?=> List[A]
+  )(clock: A => Option[String], set: (BundleEntities, List[A]) => BundleEntities): CarriedKind =
+    Lines(owner, entry, None, None, steps, lines, BundleFormat.line(_), clock, set)
+
+  final private class Lines[A](
+      val owner: DataOwner,
+      val entry: BundleEntry,
+      override val record: Option[BundleKind],
+      override val table: Option[TableName],
+      override val rowsIn: List[RowsIn],
+      lines: BundleScope => DbCon ?=> List[A],
+      line: A => String,
+      clock: A => Option[String],
+      set: (BundleEntities, List[A]) => BundleEntities
+  ) extends CarriedKind:
+    def out(scope: BundleScope, files: ContentStore)(using DbCon): CarriedOut =
+      val as = lines(scope)
+      CarriedOut(BundleFormat.ndjson(as.map(line)), as.flatMap(clock).maxOption)
+    def into(scope: BundleScope, files: ContentStore)(using DbCon): BundleEntities => BundleEntities =
+      val as = lines(scope)
+      es => set(es, as)

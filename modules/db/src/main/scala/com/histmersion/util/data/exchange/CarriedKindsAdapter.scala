@@ -3,16 +3,18 @@ package com.histmersion.util.data.exchange
 import com.histmersion.api.*
 import com.histmersion.api.given
 import com.histmersion.db.{BundleImport, BundleRepo, Param, Sql}
+import com.histmersion.files.BundleEntities
 import com.histmersion.files.BundleEntities.BlobUse
 import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.storage.ContentStore
 import com.histmersion.values.BundleKind
 
 import com.augustnagro.magnum.*
+import hearth.kindlings.optics.syntax.*
 import io.circe.Encoder
 
-/** Today's carried kinds, registered by owner until each owner registers its own: the lines through `BundleRepo`'s
-  * reads, the rows in through the steps of `BundleImport.Writer`.
+/** Today's carried kinds of the owners that do not register their own yet (the catalogue does), by owner: the lines
+  * through `BundleRepo`'s reads, the rows in through the steps of `BundleImport.Writer`.
   *
   * The ranks are the import's dependency order: tombstones first (a deleted row makes room for one created in its
   * place); a source's rows, then what hangs off it; places and periods before the events that point at them; every
@@ -23,7 +25,6 @@ object CarriedKindsAdapter:
 
   private val Library = DataOwner("library")
   private val Research = DataOwner("research")
-  private val Catalogue = DataOwner("catalogue")
   private val Media = DataOwner("media")
   private val Automation = DataOwner("automation")
   private val Identity = DataOwner("util.identity")
@@ -35,10 +36,13 @@ object CarriedKindsAdapter:
       override val record: Option[BundleKind],
       override val table: Option[TableName],
       read: (BundleScope, ContentStore) => DbCon ?=> CarriedOut,
+      lines: (BundleScope, ContentStore) => DbCon ?=> BundleEntities => BundleEntities,
       takes: BlobUse => Boolean,
       override val rowsIn: List[RowsIn]
   ) extends CarriedKind:
     def out(scope: BundleScope, files: ContentStore)(using DbCon): CarriedOut = read(scope, files)
+    def into(scope: BundleScope, files: ContentStore)(using DbCon): BundleEntities => BundleEntities =
+      lines(scope, files)
     override def blobIn(
         use: BlobUse,
         sha256: String,
@@ -60,14 +64,20 @@ object CarriedKindsAdapter:
   /** The entry of a set records own, by its file's stem. */
   private def set(stem: String): String = s"entities/$stem.ndjson"
 
-  /** A kind of record: its lines stamped with their revs. */
+  /** A kind of record: its lines stamped with their revs; `entities` its lines without their blobs, where reading the
+    * blobs costs more than the lines.
+    */
   private def records[A: Encoder.AsObject](
       owner: DataOwner,
       kind: BundleKind,
       table: String,
       steps: List[RowsIn],
-      takes: BlobUse => Boolean = _ => false
-  )(lines: (BundleScope, ContentStore) => DbCon ?=> (List[A], List[BlobOut]))(clock: A => String): CarriedKind =
+      takes: BlobUse => Boolean = _ => false,
+      entities: Option[(BundleScope, ContentStore) => DbCon ?=> List[A]] = None
+  )(lines: (BundleScope, ContentStore) => DbCon ?=> (List[A], List[BlobOut]))(
+      clock: A => String,
+      set: (BundleEntities, List[A]) => BundleEntities
+  ): CarriedKind =
     Adapted(
       owner,
       BundleEntry(kind.file),
@@ -77,6 +87,10 @@ object CarriedKindsAdapter:
         val (as, blobs) = lines(scope, files)
         CarriedOut(BundleFormat.ndjson(as.map(BundleFormat.stamp(_).line)), as.map(clock).maxOption, blobs)
       ,
+      (scope, files) =>
+        val as = entities.fold(lines(scope, files)._1)(_(scope, files))
+        es => set(es, as)
+      ,
       takes,
       steps
     )
@@ -84,7 +98,7 @@ object CarriedKindsAdapter:
   /** A set a record owns: its lines as they are, with no rev. */
   private def owned[A: Encoder.AsObject](owner: DataOwner, file: String, steps: List[RowsIn])(
       lines: BundleScope => DbCon ?=> Vector[A]
-  )(clock: A => Option[String]): CarriedKind =
+  )(clock: A => Option[String], set: (BundleEntities, List[A]) => BundleEntities): CarriedKind =
     Adapted(
       owner,
       BundleEntry(file),
@@ -93,6 +107,10 @@ object CarriedKindsAdapter:
       (scope, _) =>
         val as = lines(scope).toList
         CarriedOut(BundleFormat.ndjson(as.map(BundleFormat.line(_))), as.flatMap(clock).maxOption)
+      ,
+      (scope, _) =>
+        val as = lines(scope).toList
+        es => set(es, as)
       ,
       _ => false,
       steps
@@ -110,7 +128,8 @@ object CarriedKindsAdapter:
     {
       case _: BlobUse.Body | _: BlobUse.Original => true
       case _                                     => false
-    }
+    },
+    Some((scope, files) => BundleRepo.sources(scope).toList.map(BundleRepo.sourceLine(_, files)))
   ) { (scope, files) =>
     val rs = BundleRepo.sources(scope).toList
     val bodies = rs.flatMap(r =>
@@ -135,18 +154,18 @@ object CarriedKindsAdapter:
       )
     )
     (rs.map(BundleRepo.sourceLine(_, files)), bodies ++ stored)
-  }(_.updatedAt)
+  }(_.updatedAt, (es, ls) => es.modify(_.sources).setTo(ls))
 
   private val findings = records[BundleFinding](Library, kind("finding"), "findings", List(rows(23)(_.findings()))) {
     (scope, _) => (BundleRepo.findings(scope).toList, Nil)
-  }(_.updatedAt)
+  }(_.updatedAt, (es, ls) => es.modify(_.findings).setTo(ls))
 
   private val articles = records[BundleArticle](
     Research,
     kind("article"),
     "articles",
     List(rows(40)(_.articleRenames()), rows(43)(_.articles()), derived(201)(_.articleLinks()))
-  )((scope, _) => (BundleRepo.articles(scope).toList, Nil))(_.updatedAt)
+  )((scope, _) => (BundleRepo.articles(scope).toList, Nil))(_.updatedAt, (es, ls) => es.modify(_.articles).setTo(ls))
 
   private val versions = records[BundleArticleVersion](
     Research,
@@ -167,7 +186,7 @@ object CarriedKindsAdapter:
       )
     )
     (rs.map(BundleRepo.versionLine), bodies)
-  }(_.updatedAt)
+  }(_.updatedAt, (es, ls) => es.modify(_.versions).setTo(ls))
 
   private val assets = records[BundleAsset](
     Media,
@@ -182,103 +201,55 @@ object CarriedKindsAdapter:
     val rs = BundleRepo.assets(scope).toList
     val bytes = rs.map(r => BlobOut(r.sha, r.bytes, column("SELECT bytes FROM assets WHERE uid = ?::uuid", r.uid)))
     (rs.map(BundleRepo.assetLine), bytes)
-  }(_.updatedAt)
+  }(_.updatedAt, (es, ls) => es.modify(_.assets).setTo(ls))
 
   private val assetLinks =
     records[BundleAssetLink](Media, kind("asset-link"), "asset_links", List(afterBlobs(102)(_.assetLinks()))) {
       (scope, _) => (BundleRepo.assetLinks(scope).toList, Nil)
-    }(_.updatedAt)
-
-  private val attestations = records[BundleAttestation](
-    Catalogue,
-    kind("attestation"),
-    "attestations",
-    List(afterBlobs(101)(_.attestationFixes()), afterBlobs(103)(_.attestations()))
-  )((scope, _) => (BundleRepo.attestations(scope).toList, Nil))(_.updatedAt)
-
-  private val events = records[BundleEvent](
-    Catalogue,
-    kind("event"),
-    "events",
-    List(rows(41)(_.eventRenames()), rows(46)(_.events()))
-  )((scope, _) => (BundleRepo.events(scope).toList, Nil))(_.updatedAt)
+    }(_.updatedAt, (es, ls) => es.modify(_.assetLinks).setTo(ls))
 
   private val goals = records[BundleGoal](
     Automation,
     kind("goal"),
     "goals",
     List(rows(42)(_.goalRenames()), rows(48)(_.goals()))
-  )((scope, _) => (BundleRepo.goals(scope).toList, Nil))(_.updatedAt)
+  )((scope, _) => (BundleRepo.goals(scope).toList, Nil))(_.updatedAt, (es, ls) => es.modify(_.goals).setTo(ls))
 
   private val queue =
     records[BundleQueueItem](Automation, kind("queue-item"), "queue_items", List(rows(50)(_.queueItems()))) {
       (scope, _) => (BundleRepo.queue(scope).toList, Nil)
-    }(_.updatedAt)
-
-  private val places = records[BundlePlace](
-    Catalogue,
-    kind("place"),
-    "places",
-    List(rows(30)(_.placeRenames()), rows(31)(_.places()))
-  )((scope, _) => (BundleRepo.places(scope).toList, Nil))(_.updatedAt)
-
-  private val periods = records[BundlePeriod](Catalogue, kind("period"), "periods", List(rows(32)(_.periods()))) {
-    (scope, _) => (BundleRepo.periods(scope).toList, Nil)
-  }(_.updatedAt)
+    }(_.updatedAt, (es, ls) => es.modify(_.queue).setTo(ls))
 
   private val edges =
-    owned[BundleEdge](Library, set("edges"), List(rows(20)(_.edges())))(BundleRepo.edges(_))(_ => None)
+    owned[BundleEdge](Library, set("edges"), List(rows(20)(_.edges())))(BundleRepo.edges(_))(
+      _ => None,
+      (es, ls) => es.modify(_.edges).setTo(ls)
+    )
   private val unresolvedEdges =
     owned[BundleUnresolvedEdge](Library, set("unresolved-edges"), List(rows(21)(_.unresolvedEdges())))(
       BundleRepo.unresolvedEdges(_)
-    )(_ => None)
+    )(_ => None, (es, ls) => es.modify(_.unresolvedEdges).setTo(ls))
   private val assessments =
     owned[BundleAssessment](Library, set("assessments"), List(rows(24)(_.assessments())))(
       BundleRepo.assessments(_)
-    )(a => Some(a.checkedAt))
+    )(a => Some(a.checkedAt), (es, ls) => es.modify(_.assessments).setTo(ls))
   private val aliases =
-    owned[BundleAlias](Library, set("aliases"), List(rows(22)(_.aliases())))(BundleRepo.aliases(_))(a =>
-      Some(a.createdAt)
+    owned[BundleAlias](Library, set("aliases"), List(rows(22)(_.aliases())))(BundleRepo.aliases(_))(
+      a => Some(a.createdAt),
+      (es, ls) => es.modify(_.aliases).setTo(ls)
     )
   private val articleAliases =
     owned[BundleArticleAlias](Research, set("article-aliases"), List(rows(44)(_.articleAliases())))(
       BundleRepo.articleAliases(_)
-    )(a => Some(a.createdAt))
-  private val eventAliases =
-    owned[BundleEventAlias](Catalogue, set("event-aliases"), List(rows(47)(_.eventAliases())))(
-      BundleRepo.eventAliases(_)
-    )(a => Some(a.createdAt))
+    )(a => Some(a.createdAt), (es, ls) => es.modify(_.articleAliases).setTo(ls))
   private val goalAliases =
     owned[BundleGoalAlias](Automation, set("goal-aliases"), List(rows(49)(_.goalAliases())))(
       BundleRepo.goalAliases(_)
-    )(a => Some(a.createdAt))
-  private val placeAliases =
-    owned[BundlePlaceAlias](Catalogue, set("place-aliases"), List(rows(33)(_.placeAliases())))(
-      BundleRepo.placeAliases(_)
-    )(a => Some(a.createdAt))
-  private val eventCatalogue =
-    owned[BundleEventCatalogue](Catalogue, set("event-catalogue"), List(rows(60)(_.eventCatalogue())))(
-      BundleRepo.eventCatalogue(_)
-    )(c => Some(c.retrievedAt))
-  private val eventCandidates =
-    owned[BundleEventCandidate](Catalogue, set("event-candidates"), List(rows(61)(_.eventCandidates())))(
-      BundleRepo.eventCandidates(_)
-    )(c => Some(c.computedAt))
-  private val eventChecks =
-    owned[BundleEventCheck](Catalogue, set("event-checks"), List(rows(62)(_.eventChecks())))(
-      BundleRepo.eventChecks(_)
-    )(c => Some(c.checkedAt))
-  private val corrections =
-    owned[BundleCorrection](Catalogue, set("corrections"), List(rows(63)(_.corrections())))(
-      BundleRepo.corrections(_)
-    )(c => Some(c.updatedAt))
-  private val siteTypes =
-    owned[BundleSiteType](Catalogue, set("site-types"), List(rows(64)(_.siteTypes())))(BundleRepo.siteTypes(_))(
-      _.checkedAt
-    )
+    )(a => Some(a.createdAt), (es, ls) => es.modify(_.goalAliases).setTo(ls))
   private val tombstones =
-    owned[BundleTombstone](Identity, set("tombstones"), List(rows(0)(_.tombstones())))(BundleRepo.tombstones(_))(t =>
-      Some(t.deletedAt)
+    owned[BundleTombstone](Identity, set("tombstones"), List(rows(0)(_.tombstones())))(BundleRepo.tombstones(_))(
+      t => Some(t.deletedAt),
+      (es, ls) => es.modify(_.tombstones).setTo(ls)
     )
 
   /** Every kind, by owner. */
@@ -286,17 +257,6 @@ object CarriedKindsAdapter:
     goals,
     queue,
     goalAliases,
-    places,
-    periods,
-    events,
-    attestations,
-    placeAliases,
-    eventAliases,
-    eventCatalogue,
-    eventCandidates,
-    eventChecks,
-    corrections,
-    siteTypes,
     assets,
     assetLinks,
     sources,

@@ -12,6 +12,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.Queue.{Kind, QueueAdd, QueuePatch}
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.data.exchange.TestExchange
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import java.util.UUID
@@ -303,7 +304,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private def exportOf(ds: DataSource, originals: Path, since: Option[String] = None): Array[Byte] =
     val out = java.io.ByteArrayOutputStream()
-    BundleExport.write(ds, out, since, Originals.inDir(originals)).fold(e => fail(e), identity)
+    BundleExport.write(ds, out, since, Originals.inDir(originals), TestExchange.kinds).fold(e => fail(e), identity)
     out.toByteArray
 
   private def entries(bundle: Array[Byte]): List[(String, Array[Byte])] =
@@ -335,7 +336,9 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
         BundleImport.Options(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm),
         Originals.inDir(originals),
         resolutions,
-        merge
+        merge,
+        TestExchange.kinds,
+        TestExchange.rules
       )
       .fold(e => fail(e), identity)
 

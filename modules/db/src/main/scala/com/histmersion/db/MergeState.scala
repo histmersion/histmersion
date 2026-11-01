@@ -1,9 +1,5 @@
 package com.histmersion.db
 
-import com.histmersion.domain.catalogue.places.PlaceRepo
-
-import com.histmersion.util.database.RangeSql
-
 import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*
@@ -30,8 +26,9 @@ import com.histmersion.util.data.exchange.{
 import com.histmersion.util.storage.{ByteSource, ContentStore}
 
 /** What this collection knows that a merge plan needs (docs/research-merge-import.md §5–§6, milestone M3): the plan's
-  * input stage — its rows, labels, ledger, redirects, matched places and periods, article histories and OCR bodies.
-  * [[MergePlanner]] is the pure rest; [[MergePlans]] puts the two together.
+  * input stage — its rows, labels, ledger, redirects, article histories and OCR bodies, and what each kind's merge
+  * rules add (the catalogue's matched places and periods). [[MergePlanner]] is the pure rest; [[MergePlans]] puts the
+  * two together.
   */
 object MergeState:
 
@@ -42,9 +39,10 @@ object MergeState:
       m: BundleManifest,
       readProblems: List[String],
       originals: ContentStore,
-      chunkChars: Int = 0,
-      cfg: Option[MergeSettings] = None,
-      referable: List[TableName] = MergeRuleSet.transition.referableTables(CarriedKinds.transition)
+      chunkChars: Int,
+      cfg: MergeSettings,
+      kinds: CarriedKinds,
+      rules: MergeRuleSet
   )(using DbCon): Input =
     val inst = BundleRepo.instance
     val schema = BundleRepo.schemaVersion
@@ -62,7 +60,7 @@ object MergeState:
     val mapped = foreignUids.map(f => f -> idOf(f)).filter((f, l) => f != l).toMap
     val localUids = foreignUids.map(idOf)
 
-    // who has the bundle's labels here
+    // who has the bundle's labels here (the owners that register their own merge rules add theirs to the input)
     def owners(q: String, labels: List[String]): Map[String, UUID] =
       if labels.isEmpty then Map.empty
       else Sql.of(q, Param.A(labels.distinct)).frag.query[(String, UUID)].run().toMap
@@ -77,10 +75,6 @@ object MergeState:
       slugs = owners(
         "SELECT slug, uid FROM articles WHERE slug = ANY(?::text[])",
         es.articles.map(_.slug) ++ es.articleAliases.map(_.alias)
-      ),
-      events = owners(
-        "SELECT id, uid FROM events WHERE id = ANY(?::text[])",
-        es.events.map(_.id) ++ es.eventAliases.map(_.alias)
       ),
       goals = owners(
         "SELECT slug, uid FROM goals WHERE slug = ANY(?::text[])",
@@ -101,50 +95,19 @@ object MergeState:
         "SELECT x.alias, a.uid FROM article_aliases x JOIN articles a ON a.slug = x.slug WHERE x.alias = ANY(?::text[])",
         es.articles.map(_.slug) ++ es.articleAliases.map(_.alias)
       ),
-      eventAliases = owners(
-        "SELECT x.alias, e.uid FROM event_aliases x JOIN events e ON e.id = x.event_id WHERE x.alias = ANY(?::text[])",
-        es.events.map(_.id) ++ es.eventAliases.map(_.alias)
-      ),
       goalAliases = owners(
         "SELECT x.alias, g.uid FROM goal_aliases x JOIN goals g ON g.slug = x.goal_slug WHERE x.alias = ANY(?::text[])",
         es.goals.map(_.slug) ++ es.goalAliases.map(_.alias)
-      ),
-      places = owners("SELECT id, uid FROM places WHERE id = ANY(?::text[])", es.placeAliases.map(_.alias)),
-      placeAliases = owners(
-        "SELECT x.alias, p.uid FROM place_aliases x JOIN places p ON p.id = x.place_id WHERE x.alias = ANY(?::text[])",
-        es.places.map(_.id) ++ es.placeAliases.map(_.alias)
       )
     )
     // every row here: a merged pair needs the survivor's findings, assets, attestations and edges, a
     // label taken needs the record that has it (only metadata — bodies and bytes stay in the database)
-    val local0 = BundleRepo.entities(BundleScope.All, originals)
-
-    // places and named periods: the bundle's that have no uid here are matched by id, else by label
-    // and geometry (span); the rows here they could be one with are read too, whatever their dataset
-    val ownPlaceUids = local0.places.map(_.uid).toSet
-    val ownPeriodUids = local0.periods.map(_.uid).toSet
-    val newPlaces = localized.places.filterNot(p => ownPlaceUids(p.uid))
-    val newPeriods = localized.periods.filterNot(p => ownPeriodUids(p.uid))
-    // …and a place of ours the bundle renamed: whether its new id is some other place's here (#888)
-    val ownPlaceIds = local0.places.map(p => p.uid -> p.id).toMap
-    val renamedIds = localized.places.filter(p => ownPlaceIds.get(p.uid).exists(_ != p.id)).map(_.id)
-    val placeIdsHere = idsPresent("places", newPlaces.map(_.id) ++ renamedIds)
-    val placeMatches =
-      cfg.fold(Map.empty[UUID, String])(c => matchPlaces(newPlaces.filterNot(p => placeIdsHere(p.id)), c))
-    val periodIdsHere = idsPresent("periods", newPeriods.map(_.id))
-    val periodMatches = matchPeriods(newPeriods.filterNot(p => periodIdsHere(p.id)))
-    val placeRows = BundleRepo.places(BundleScope.All, (placeIdsHere ++ placeMatches.values).toList).toList
-    val periodRows = BundleRepo.periods(BundleScope.All, (periodIdsHere ++ periodMatches.values).toList).toList
-    val local = local0.copy(places = placeRows, periods = periodRows)
+    val local = kinds.entities(BundleScope.All, originals)
 
     val referenced = localized.references.map(_.uid)
     val asked = (localUids ++ referenced ++ labels.citekeys.values ++ labels.aliases.values).distinct
     val tombstoned = sql"SELECT uid FROM tombstones WHERE uid = ANY(${ids(asked)}::uuid[])".query[UUID].run().toSet
-    val live = liveUids(referenced.distinct, referable)
-    val placeIds = (es.events.flatMap(_.placeId) ++ placeMatches.values).distinct
-    val places =
-      if placeIds.isEmpty then Set.empty[String]
-      else sql"SELECT id FROM places WHERE id = ANY($placeIds::text[])".query[String].run().toSet
+    val live = liveUids(referenced.distinct, rules.referableTables(kinds))
     // the recorded versions of the articles the bundle names (by uid or by slug): where a three-way
     // merge finds its common base
     val articleUids = (localUids ++ labels.slugs.values).distinct
@@ -161,7 +124,7 @@ object MergeState:
       .run()
       .flatMap((id, d) => MergeDecision.parse(d).toOption.map(id -> _))
       .toMap
-    Input(
+    val known = Input(
       m,
       BundleInstance(inst.id, inst.label),
       BundleFormat.compatible(m, schema),
@@ -174,84 +137,16 @@ object MergeState:
       local.sources,
       labels,
       live,
-      places,
+      Set.empty,
       BundleRepo.reference,
-      // the same rendering as BundleRepo.ts, so a bundle alias's createdAt compares as a string
+      // the same rendering as BundleSql.ts, so a bundle alias's createdAt compares as a string
       aliasTombstones = sql"""SELECT alias, to_char(deleted_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')
                FROM alias_tombstones""".query[(String, String)].run().toMap,
       articleHistory = history,
       remembered = remembered,
-      chunkChars = chunkChars,
-      placeMatches = placeMatches,
-      periodMatches = periodMatches
+      chunkChars = chunkChars
     )
-
-  /** Which of `ids` name a row of `table` here. */
-  private def idsPresent(table: String, ids: List[String])(using DbCon): Set[String] =
-    if ids.isEmpty then Set.empty
-    else
-      Sql.of(s"SELECT id FROM $table WHERE id = ANY(?::text[])", Param.A(ids.distinct)).frag.query[String].run().toSet
-
-  /** A bundle place with no id here that names a place here: the same label (reduced as the gazetteer reduces it: case,
-    * filler words, punctuation) and kind, and — when both have a geometry — points within `merge.place-within-km` or
-    * shapes overlapping by `merge.place-overlap-at-least` (the intersection over the union); two places without a
-    * geometry match on the label alone. The nearest (most overlapping) place wins; a local place is preferred to a seed
-    * one.
-    */
-  private[db] def matchPlaces(ps: List[BundlePlace], cfg: MergeSettings)(using DbCon): Map[UUID, String] =
-    val norm = PlaceRepo.normLabelSql("p.label")
-    ps.flatMap { b =>
-      val within = cfg.placeWithinKm * 1000.0
-      Sql
-        .of(
-          s"""WITH b AS (SELECT ST_GeomFromEWKB(decode(nullif(?, ''), 'hex')) AS g)
-            SELECT p.id FROM places p, b
-            WHERE $norm = ${PlaceRepo.normLabelSql("?")} AND p.kind = ?
-              AND CASE WHEN p.geom IS NULL OR b.g IS NULL THEN p.geom IS NULL AND b.g IS NULL
-                       WHEN GeometryType(p.geom) = 'POINT' AND GeometryType(b.g) = 'POINT'
-                         THEN ST_DWithin(p.geom::geography, b.g::geography, ?)
-                       WHEN ST_Area(p.geom) > 0 AND ST_Area(b.g) > 0
-                         THEN ST_Area(ST_Intersection(p.geom, b.g)) / NULLIF(ST_Area(ST_Union(p.geom, b.g)), 0) >= ?
-                       ELSE false END
-            ORDER BY CASE WHEN p.dataset = 'local' THEN 0 ELSE 1 END,
-                     CASE WHEN p.geom IS NULL OR b.g IS NULL THEN 0 ELSE ST_Distance(ST_Centroid(p.geom), ST_Centroid(b.g)) END,
-                     p.id
-            LIMIT 1""",
-          Param.S(b.geom.getOrElse("")),
-          Param.S(b.label),
-          Param.S(b.kind),
-          Param.D(within),
-          Param.D(cfg.placeOverlapAtLeast)
-        )
-        .frag
-        .query[String]
-        .run()
-        .headOption
-        .map(b.uid -> _)
-    }.toMap
-
-  /** A bundle period with no id here that names a period here: the same label (reduced) and spans sharing a year.
-    */
-  private[db] def matchPeriods(ps: List[BundlePeriod])(using DbCon): Map[UUID, String] =
-    val norm = PlaceRepo.normLabelSql("p.label")
-    ps.flatMap { b =>
-      val (lo, hi) = (b.period.flatMap(_.start), b.period.flatMap(_.end))
-      Sql
-        .of(
-          s"""SELECT p.id FROM periods p
-            WHERE $norm = ${PlaceRepo.normLabelSql("?")}
-              AND p.period && ${RangeSql.range("nullif(?, '')::bigint", "nullif(?, '')::bigint")}
-            ORDER BY CASE WHEN p.dataset = 'local' THEN 0 ELSE 1 END, p.id LIMIT 1""",
-          Param.S(b.label),
-          Param.S(lo.fold("")(_.toString)),
-          Param.S(hi.fold("")(_.toString))
-        )
-        .frag
-        .query[String]
-        .run()
-        .headOption
-        .map(b.uid -> _)
-    }.toMap
+    rules.gather(es, localized, known, cfg)
 
   /** The plan's issues with their geometries (hex EWKB from the planner) turned into GeoJSON, which the review screen
     * draws — one query for every geometry of the plan.
@@ -383,8 +278,10 @@ object MergeState:
       resolutions: MergeResolutions,
       cfg: MergeSettings,
       originals: ContentStore,
-      chunkChars: Int = 0
+      chunkChars: Int,
+      kinds: CarriedKinds,
+      rules: MergeRuleSet
   ): Either[String, MergePlan] =
-    MergePlans.planFile(ds, ByteSource.file(file), resolutions, cfg, originals, chunkChars)
+    MergePlans.planFile(ds, ByteSource.file(file), resolutions, cfg, originals, chunkChars, kinds, rules)
 
   private[db] def withFile[A](file: Path)(f: InputStream => A): A = ByteSource.file(file).read(f)

@@ -190,6 +190,8 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
 
   test("a bundle carries a stated scale, and leaves a derived one out"):
     val events =
-      connect(ds)(BundleRepo.events(BundleScope.All)).filter(_.id.startsWith("zqes")).map(e => e.id -> e.scale).toMap
+      connect(ds)(
+        com.histmersion.util.data.exchange.TestExchange.kinds.entities(BundleScope.All, Originals.none).events
+      ).filter(_.id.startsWith("zqes")).map(e => e.id -> e.scale).toMap
     assertEquals(events("zqes_stated"), Some("regional"))
     assertEquals(events("zqes_migration"), None)

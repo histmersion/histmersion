@@ -9,26 +9,29 @@ import com.histmersion.values.BundleKind
   */
 class CarriedKindsSuite extends munit.FunSuite:
 
-  private val kinds = CarriedKinds.transition
+  private val kinds = TestExchange.kinds
 
   test("today's kinds carry every entry of the bundle format once, in the format's order"):
     assertEquals(kinds.inBundleOrder.map(_.entry.value), BundleFiles.all)
 
   test("the order of the entries does not depend on the order the kinds were registered in"):
     assertEquals(
-      CarriedKinds(CarriedKindsAdapter.all.reverse).inBundleOrder.map(_.entry.value),
+      CarriedKinds(TestExchange.carried.reverse).inBundleOrder.map(_.entry.value),
       kinds.inBundleOrder.map(_.entry.value)
     )
 
   test("a registry missing an entry, carrying one twice or one the format does not have is refused, each named"):
-    val sources = CarriedKindsAdapter.all.find(_.entry.value == BundleKind.Source.file).get
+    val sources = TestExchange.carried.find(_.entry.value == BundleKind.Source.file).get
     val odd = new CarriedKind:
       def owner: DataOwner = DataOwner("x")
       def entry: BundleEntry = BundleEntry("entities/odd.ndjson")
       def out(scope: BundleScope, files: com.histmersion.util.storage.ContentStore)(using
           com.augustnagro.magnum.DbCon
       ): CarriedOut = CarriedOut(Array.emptyByteArray, None)
-    val withoutTombstones = CarriedKindsAdapter.all.filterNot(_.entry.value == BundleFiles.Tombstones)
+      def into(scope: BundleScope, files: com.histmersion.util.storage.ContentStore)(using
+          com.augustnagro.magnum.DbCon
+      ): com.histmersion.files.BundleEntities => com.histmersion.files.BundleEntities = identity
+    val withoutTombstones = TestExchange.carried.filterNot(_.entry.value == BundleFiles.Tombstones)
     assertEquals(
       CarriedKinds.of(sources :: odd :: withoutTombstones).left.toOption,
       Some(
@@ -56,15 +59,15 @@ class CarriedKindsSuite extends munit.FunSuite:
 
   test("every carried kind and merge rule is registered by one of the owners"):
     val owners = Set("automation", "catalogue", "media", "library", "research", "util.identity")
-    assertEquals(CarriedKindsAdapter.all.map(_.owner.value).filterNot(owners), Nil)
-    assertEquals(MergeRulesAdapter.all.map(_.owner.value).filterNot(owners), Nil)
+    assertEquals(TestExchange.carried.map(_.owner.value).filterNot(owners), Nil)
+    assertEquals(TestExchange.rules.all.map(_.owner.value).filterNot(owners), Nil)
     assertEquals(
-      owners.toList.sorted.map(o => o -> CarriedKindsAdapter.of(DataOwner(o)).size),
+      owners.toList.sorted.map(o => o -> TestExchange.carried.count(_.owner == DataOwner(o))),
       List("automation" -> 3, "catalogue" -> 11, "library" -> 6, "media" -> 2, "research" -> 3, "util.identity" -> 1)
     )
 
   test("merge rules: the ledger names the records of every kind it has a label for; lines point at five kinds"):
-    val rules = MergeRuleSet.transition
+    val rules = TestExchange.rules
     List("source", "finding", "article", "asset", "event", "goal", "place", "period", "queue-item").foreach { k =>
       assert(rules.ledgerLabelSql.contains(s"WHEN '$k' THEN ("), k)
     }
@@ -73,4 +76,4 @@ class CarriedKindsSuite extends munit.FunSuite:
       rules.referableTables(kinds).map(_.value).sorted,
       List("articles", "assets", "events", "goals", "sources")
     )
-    assertEquals(MergeRulesAdapter.all.map(_.kind).sortBy(_.ordinal), BundleKind.values.toList)
+    assertEquals(rules.all.map(_.kind).sortBy(_.ordinal), BundleKind.values.toList)
