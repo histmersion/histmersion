@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.augustnagro.magnum.{connect, transact}
+
 import com.histmersion.domain.automation.agents.{
   AgentDefinitions,
   AnswerSchemas,
@@ -788,7 +790,9 @@ final class ReviewArticlePipeline(
           Right(ReviewArticle.Patched(written = false, None, conflict = false))
         case Right(_) =>
           persist(ctx, after)
-          Right(ReviewArticle.Patched(written = true, AgentRepo.latestArticleVersion(ds, s.slug), conflict = false))
+          Right(
+            ReviewArticle.Patched(written = true, connect(ds)(AgentRepo.latestArticleVersion(s.slug)), conflict = false)
+          )
         case Left(e) if e.code.contains(Write.CodePrecondition) =>
           ctx.warn(s"round $r: the article changed while the fixer worked; the fix was not written")
           Right(ReviewArticle.Patched(written = false, None, conflict = true))

@@ -146,7 +146,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   /** The runs the managers dispatched on these goals (and the article), by pipeline. */
   private def runs(): Vector[RunInfo] =
-    AgentRepo.list(ds, None, 1000).filter(r => r.managerId.isDefined && r.target.startsWith("zzfocus"))
+    connect(ds)(AgentRepo.list(None, 1000)).filter(r => r.managerId.isDefined && r.target.startsWith("zzfocus"))
 
   final private class Clock(var now: Instant = Instant.now()): // a var: the test's own moving time
     def tick(a: AgentsHandlers, minutes: Int = 6): List[String] =

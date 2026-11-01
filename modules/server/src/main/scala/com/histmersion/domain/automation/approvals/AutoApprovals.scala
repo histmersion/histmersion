@@ -10,7 +10,7 @@ import com.histmersion.domain.AutopilotPolicy.{DraftFacts, GoalPlanFacts, Planne
 import com.histmersion.api.GoalPlans.DraftMode
 import com.histmersion.api.Managers.Feed
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.{AgentRepo, ManagerRepo}
+import com.histmersion.db.ManagerRepo
 
 import java.time.Instant
 import javax.sql.DataSource
@@ -38,7 +38,7 @@ final class AutoApprovals(
   private val PerTick = 50
 
   /** The run that opened an approval, and the manager that dispatched that run. */
-  private def runOf(a: ApprovalInfo): Option[RunInfo] = a.runId.flatMap(AgentRepo.get(ds, _))
+  private def runOf(a: ApprovalInfo): Option[RunInfo] = a.runId.flatMap(agents.runs.get(_))
 
   /** Does the supervisor decide `a`? The manager's `autoApprove` wins; else `agents.approvals.<kind>`. */
   def checked(a: ApprovalInfo, manager: Option[Managers.ManagerInfo]): Boolean =
@@ -182,13 +182,13 @@ final class AutoApprovals(
       case _ => Verdict.Leave("not a kind the autopilot decides")
 
   def checkpoint(run: String, step: String): Option[String] =
-    AgentRepo
-      .steps(ds, run, 100000)
+    agents.runs
+      .steps(run, 100000)
       .filter(s => s.name == step && s.status == StepStatus.Done.wire)
       .lastOption
       .flatMap(_.output)
 
   def config: AgentsConfig = cfg
-  def slugExists(slug: String): Boolean = AgentRepo.slugExists(ds, slug)
+  def slugExists(slug: String): Boolean = agents.host.articleExists(slug)
   def autoApprovedSince(kind: ApprovalKind, since: Instant): List[ApprovalInfo] =
     agents.approvalStore.autoApprovedSince(kind, since)

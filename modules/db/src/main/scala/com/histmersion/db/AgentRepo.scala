@@ -6,6 +6,7 @@ import com.histmersion.api.{ArticlePlans, GoalPlans, ListFilters}
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.ApprovalDigest
+import com.histmersion.domain.automation.agents.RunQuery
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 import javax.sql.DataSource
 import com.histmersion.values.{EdgeKind, SourceStatus}
@@ -127,69 +128,26 @@ object AgentRepo:
       r.heartbeatAt
     )
 
-  /** A new run's row: `queued`, of pipeline `p` on `target`; `goal` is the goal it works for, `parent` the run that
-    * started it, `origin` who; `dryRun` is fixed here, once — a resumed dry run is still one.
-    * `managerId`/`managerItem`: the manager and work item it is for. The jobs area records it (`util.jobs.JobRuns`).
-    */
-  def runRow(
-      p: Pipeline,
-      target: String,
-      model: Option[String],
-      budgetUsd: BigDecimal,
-      budgetTokens: Long,
-      params: RunParams,
-      acquireItem: Option[Int],
-      goal: Option[String],
-      parent: Option[String],
-      origin: Origin,
-      dryRun: Boolean,
-      managerId: Option[String] = None,
-      managerItem: Option[Long] = None
-  ): com.histmersion.util.jobs.RunRow =
-    com.histmersion.util.jobs.RunRow(
-      JobKind,
-      RunState.Queued.wire,
-      p.wire,
-      p.version,
-      p.targetKind.wire,
-      target,
-      Option.when(p.targetKind == TargetKind.Source)(target),
-      model,
-      budgetUsd,
-      budgetTokens,
-      Jsonb.write(params, dropNulls = true),
-      acquireItem,
-      goal,
-      parent,
-      origin.wire,
-      dryRun,
-      managerId,
-      managerItem
-    )
+  def get(id: String)(using DbCon): Option[RunInfo] =
+    (runSelect ++ Sql.of(" AND j.id = ?", Param.S(id))).frag.query[RunRow].run().headOption.map(toInfo)
 
-  def get(ds: DataSource, id: String): Option[RunInfo] =
-    connect(ds)((runSelect ++ Sql.of(" AND j.id = ?", Param.S(id))).frag.query[RunRow].run().headOption.map(toInfo))
-
-  def list(ds: DataSource, status: Option[String], limit: Int, goal: Option[String] = None): Vector[RunInfo] =
-    connect(ds):
-      (runSelect ++ runStatus(status) ++ runGoal(goal) ++ Keyset.orderBy("j.") ++ Sql.of(
-        " LIMIT ?",
-        Param.I(math.max(1, limit))
-      )).frag.query[RunRow].run().map(toInfo)
+  def list(status: Option[String], limit: Int, goal: Option[String] = None)(using DbCon): Vector[RunInfo] =
+    (runSelect ++ runStatus(status) ++ runGoal(goal) ++ Keyset.orderBy("j.") ++ Sql.of(
+      " LIMIT ?",
+      Param.I(math.max(1, limit))
+    )).frag.query[RunRow].run().map(toInfo)
 
   /** One page of the newest-first runs ([[com.histmersion.api.Paging]]), `status` and `goal` as in [[list]]; `before` /
     * `upTo` are run ids. Left: a cursor that names no job.
     */
   def page(
-      ds: DataSource,
       status: Option[String],
       limit: Int,
       goal: Option[String] = None,
       before: Option[String] = None,
       upTo: Option[String] = None
-  ): Either[String, (Vector[RunInfo], Boolean)] =
+  )(using DbCon): Either[String, (Vector[RunInfo], Boolean)] =
     page(
-      ds,
       RunQuery(
         status = status.map(_.trim.toLowerCase).filter(_.nonEmpty).toList,
         goal = goal.map(_.trim).filter(_.nonEmpty)
@@ -198,22 +156,6 @@ object AgentRepo:
       before,
       upTo
     )
-
-  /** What the runs list is filtered by (core `ListFilters.RunFilter`, validated): the lists match any of their values;
-    * `since` / `until` bound `created_at` (until exclusive); `q` = text in the target.
-    */
-  final case class RunQuery(
-      status: List[String] = Nil,
-      pipelines: List[String] = Nil,
-      managers: List[String] = Nil,
-      goal: Option[String] = None,
-      models: List[String] = Nil,
-      providers: List[String] = Nil,
-      origins: List[String] = Nil,
-      since: Option[java.time.Instant] = None,
-      until: Option[java.time.Instant] = None,
-      q: Option[String] = None
-  )
 
   /** A run that predates `jobs.origin` was started by a person. */
   private val originExpr = s"coalesce(j.origin, '${Origin.Person.wire}')"
@@ -249,17 +191,15 @@ object AgentRepo:
 
   /** One page of the runs that match `q`, newest first. Left: a cursor that names no job. */
   def page(
-      ds: DataSource,
       q: RunQuery,
       limit: Int,
       before: Option[String],
       upTo: Option[String]
-  ): Either[String, (Vector[RunInfo], Boolean)] =
-    (before.toList ++ upTo.toList).find(c => !Keyset.exists(ds, "jobs", Param.S(c))) match
+  )(using DbCon): Either[String, (Vector[RunInfo], Boolean)] =
+    (before.toList ++ upTo.toList).find(c => !Keyset.existsOn("jobs", Param.S(c))) match
       case Some(c) => Left(s"No agent run '$c' to page from")
       case None    =>
-        val (rows, more) = Keyset.page[RunRow](
-          ds,
+        val (rows, more) = Keyset.pageOn[RunRow](
           runFrom,
           Sql.raw(runsOnly) ++ runConds(q).all,
           "j.",
@@ -275,7 +215,7 @@ object AgentRepo:
     * facets — each under every filter but its own. A run's models are the one it was started with and every one its
     * steps reported; the provider is a model's `provider:` part.
     */
-  def runFacets(ds: DataSource, q: RunQuery): (List[(String, Int)], List[(String, List[(String, Int)])]) =
+  def runFacets(q: RunQuery)(using DbCon): (List[(String, Int)], List[(String, List[(String, Int)])]) =
     val c = runConds(q)
     def from(except: String) = Sql.raw(" FROM jobs j") ++ Sql.raw(runsOnly) ++ c.except(except)
     def used(except: String): Sql =
@@ -285,19 +225,19 @@ object AgentRepo:
       ) ++ Sql.raw(runsOnly) ++ c.except(except) ++
         Sql.raw(" AND x.m IS NOT NULL) u WHERE true")
     (
-      Keyset.counts(ds, from("status"), "j.status"),
+      Keyset.countsOn(from("status"), "j.status"),
       List(
-        "pipeline" -> ListSql.facet(ds, from("pipeline"), "j.pipeline"),
-        "origin" -> ListSql.facet(ds, from("origin"), originExpr),
-        "manager" -> ListSql.facet(ds, from("manager"), "j.manager_id"),
-        "model" -> ListSql.facet(ds, used("model"), "u.m"),
-        "provider" -> ListSql.facet(ds, used("provider"), provider("u.m"), "count(DISTINCT u.id)")
+        "pipeline" -> ListSql.facetOn(from("pipeline"), "j.pipeline"),
+        "origin" -> ListSql.facetOn(from("origin"), originExpr),
+        "manager" -> ListSql.facetOn(from("manager"), "j.manager_id"),
+        "model" -> ListSql.facetOn(used("model"), "u.m"),
+        "provider" -> ListSql.facetOn(used("provider"), provider("u.m"), "count(DISTINCT u.id)")
       )
     )
 
   /** How many runs are in each state — of one goal, when given. */
-  def stateCounts(ds: DataSource, goal: Option[String] = None): List[(String, Int)] =
-    Keyset.counts(ds, Sql.raw(" FROM jobs j") ++ Sql.raw(runsOnly) ++ runGoal(goal), "j.status")
+  def stateCounts(goal: Option[String] = None)(using DbCon): List[(String, Int)] =
+    Keyset.countsOn(Sql.raw(" FROM jobs j") ++ Sql.raw(runsOnly) ++ runGoal(goal), "j.status")
 
   private def runStatus(status: Option[String]): Sql =
     status.map(_.trim.toLowerCase).filter(_.nonEmpty).fold(Sql.empty)(s => Sql.of(" AND j.status = ?", Param.S(s)))
@@ -306,59 +246,54 @@ object AgentRepo:
     goal.map(_.trim).filter(_.nonEmpty).fold(Sql.empty)(g => Sql.of(" AND j.goal_slug = ?", Param.S(g)))
 
   /** Every run of `p` on `target`, newest first (what auto-enrich asks before queueing another). */
-  def forTarget(ds: DataSource, p: Pipeline, target: String): Vector[RunInfo] =
-    connect(ds):
-      (runSelect ++ Sql.of(
-        " AND j.pipeline = ? AND j.target_id = ? ORDER BY j.created_at DESC, j.id",
-        Param.S(p.wire),
-        Param.S(target)
-      )).frag.query[RunRow].run().map(toInfo)
+  def forTarget(p: Pipeline, target: String)(using DbCon): Vector[RunInfo] =
+    (runSelect ++ Sql.of(
+      " AND j.pipeline = ? AND j.target_id = ? ORDER BY j.created_at DESC, j.id",
+      Param.S(p.wire),
+      Param.S(target)
+    )).frag.query[RunRow].run().map(toInfo)
 
   /** The runs a manager dispatched, newest first (`active` = only those not settled yet: queued, running, paused or
     * waiting).
     */
-  def forManager(ds: DataSource, managerId: String, active: Boolean = false, limit: Int = 200): Vector[RunInfo] =
+  def forManager(managerId: String, active: Boolean = false, limit: Int = 200)(using DbCon): Vector[RunInfo] =
     val open = if active then Sql.of(" AND j.status IN ('queued', 'running', 'paused', 'waiting')") else Sql.empty
-    connect(ds):
-      (runSelect ++ Sql.of(" AND j.manager_id = ?", Param.S(managerId)) ++ open ++
-        Sql.of(" ORDER BY j.created_at DESC, j.id DESC LIMIT ?", Param.I(math.max(1, limit)))).frag
-        .query[RunRow]
-        .run()
-        .map(toInfo)
+    (runSelect ++ Sql.of(" AND j.manager_id = ?", Param.S(managerId)) ++ open ++
+      Sql.of(" ORDER BY j.created_at DESC, j.id DESC LIMIT ?", Param.I(math.max(1, limit)))).frag
+      .query[RunRow]
+      .run()
+      .map(toInfo)
 
   /** Every run on an article or source `target` that has not settled (any pipeline, any origin): a manager does not
     * start a second writer on it.
     */
-  def unsettledOn(ds: DataSource, target: String): Vector[RunInfo] =
-    connect(ds):
-      (runSelect ++ Sql.of(
-        " AND j.target_id = ? AND j.status IN ('queued', 'running', 'paused', 'waiting')",
-        Param.S(target)
-      )).frag.query[RunRow].run().map(toInfo)
+  def unsettledOn(target: String)(using DbCon): Vector[RunInfo] =
+    (runSelect ++ Sql.of(
+      " AND j.target_id = ? AND j.status IN ('queued', 'running', 'paused', 'waiting')",
+      Param.S(target)
+    )).frag.query[RunRow].run().map(toInfo)
 
   // ── steps: checkpoints and attempts ────────────────────────────────────────────────────────────
 
   /** The checkpoint of step `seq`: its name and recorded output, if an attempt finished. */
-  def checkpoint(ds: DataSource, jobId: String, seq: Int): Option[(String, String)] =
-    connect(ds):
-      sql"""SELECT name, output::text FROM agent_steps
-            WHERE job_id = $jobId AND seq = $seq AND status = ${StepStatus.Done.wire}
-            ORDER BY attempt DESC LIMIT 1"""
-        .query[(String, Option[String])]
-        .run()
-        .headOption
-        .map((n, o) => (n, o.getOrElse("null")))
+  def checkpoint(jobId: String, seq: Int)(using DbCon): Option[(String, String)] =
+    sql"""SELECT name, output::text FROM agent_steps
+          WHERE job_id = $jobId AND seq = $seq AND status = ${StepStatus.Done.wire}
+          ORDER BY attempt DESC LIMIT 1"""
+      .query[(String, Option[String])]
+      .run()
+      .headOption
+      .map((n, o) => (n, o.getOrElse("null")))
 
   /** How many attempts step `seq` already has (failed ones included) — a resumed step continues the count rather than
     * restarting it, so `max-retries` holds across a restart.
     */
-  def attempts(ds: DataSource, jobId: String, seq: Int): Int =
-    connect(ds)(
-      sql"SELECT coalesce(max(attempt), 0) FROM agent_steps WHERE job_id = $jobId AND seq = $seq"
-        .query[Int]
-        .run()
-        .head
-    )
+  def attempts(jobId: String, seq: Int)(using DbCon): Int =
+
+    sql"SELECT coalesce(max(attempt), 0) FROM agent_steps WHERE job_id = $jobId AND seq = $seq"
+      .query[Int]
+      .run()
+      .head
 
   /** One attempt. `actualModel`: what the provider reported serving; `wouldWrite`: a dry run's skipped writes (JSON
     * array of [[WouldWrite]]); `firstCallTokens`: the input of the attempt's first model call; `turns`: the model turns
@@ -395,91 +330,84 @@ object AgentRepo:
 
   /** One attempt and its trace, in ONE transaction (a checkpoint without its trace, or the reverse, is never visible).
     */
-  def record(ds: DataSource, jobId: String, s: StepRecord, messages: List[MessageRecord]): Unit =
+  def record(jobId: String, s: StepRecord, messages: List[MessageRecord])(using DbCon): Unit =
     val started = s.startedAt.toString
-    transact(ds):
-      val would = Option.when(s.wouldWrite.nonEmpty)(Jsonb.write(s.wouldWrite))
-      sql"""INSERT INTO agent_steps (job_id, seq, attempt, name, kind, status, output, prompt_hash, model,
-                                     tokens_in, tokens_out, tokens_cache_read, tokens_cache_write, cost_usd,
-                                     error, started_at, finished_at, actual_model, would_write, first_call_tokens, turns)
-            VALUES ($jobId, ${s.seq}, ${s.attempt}, ${s.name}, ${s.kind.wire}, ${s.status.wire}, ${s.output}::jsonb,
-                    ${s.promptHash}, ${s.model}, ${s.usage.input}, ${s.usage.output}, ${s.usage.cacheRead},
-                    ${s.usage.cacheWrite}, ${s.costUsd}, ${s.error}, $started::timestamptz, now(), ${s.actualModel},
-                    $would::jsonb, ${s.firstCallTokens}, ${s.turns})""".update.run()
-      messages.foreach { m =>
-        sql"""INSERT INTO agent_messages (job_id, seq, attempt, n, role, content, tool_name, tool_input,
-                                          tool_result, latency_ms)
-              VALUES ($jobId, ${s.seq}, ${s.attempt}, ${m.n}, ${m.role}, ${m.content}, ${m.toolName},
-                      ${m.toolInput}, ${m.toolResult}, ${m.latencyMs})""".update.run()
-      }
-      sql"UPDATE jobs SET updated_at = now() WHERE id = $jobId".update.run()
+    val would = Option.when(s.wouldWrite.nonEmpty)(Jsonb.write(s.wouldWrite))
+    sql"""INSERT INTO agent_steps (job_id, seq, attempt, name, kind, status, output, prompt_hash, model,
+                                   tokens_in, tokens_out, tokens_cache_read, tokens_cache_write, cost_usd,
+                                   error, started_at, finished_at, actual_model, would_write, first_call_tokens, turns)
+          VALUES ($jobId, ${s.seq}, ${s.attempt}, ${s.name}, ${s.kind.wire}, ${s.status.wire}, ${s.output}::jsonb,
+                  ${s.promptHash}, ${s.model}, ${s.usage.input}, ${s.usage.output}, ${s.usage.cacheRead},
+                  ${s.usage.cacheWrite}, ${s.costUsd}, ${s.error}, $started::timestamptz, now(), ${s.actualModel},
+                  $would::jsonb, ${s.firstCallTokens}, ${s.turns})""".update.run()
+    messages.foreach { m =>
+      sql"""INSERT INTO agent_messages (job_id, seq, attempt, n, role, content, tool_name, tool_input,
+                                        tool_result, latency_ms)
+            VALUES ($jobId, ${s.seq}, ${s.attempt}, ${m.n}, ${m.role}, ${m.content}, ${m.toolName},
+                    ${m.toolInput}, ${m.toolResult}, ${m.latencyMs})""".update.run()
+    }
+    sql"UPDATE jobs SET updated_at = now() WHERE id = $jobId".update.run()
 
-  def steps(ds: DataSource, jobId: String, outputChars: Int): List[StepInfo] =
-    connect(ds):
-      sql"""SELECT seq, name, kind, attempt, status, model, prompt_hash, tokens_in, tokens_out, tokens_cache_read,
-                   tokens_cache_write, cost_usd, error, left(output::text, $outputChars),
-                   to_char(started_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}),
-                   to_char(finished_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}), actual_model, would_write::text,
-                   first_call_tokens, turns
-            FROM agent_steps WHERE job_id = $jobId ORDER BY seq, attempt""".query[StepRow].run().toList.map { r =>
-        StepInfo(
-          r.seq,
-          r.name,
-          r.kind,
-          r.attempt,
-          r.status,
-          r.model,
-          r.promptHash,
-          Usage(r.tin, r.tout, r.tcr, r.tcw),
-          r.cost.toDouble,
-          r.error,
-          r.output,
-          r.startedAt,
-          r.finishedAt,
-          r.actualModel,
-          r.wouldWrite.flatMap(Jsonb.read[List[WouldWrite]]).getOrElse(Nil),
-          r.firstCallTokens,
-          r.turns
-        )
-      }
+  def steps(jobId: String, outputChars: Int)(using DbCon): List[StepInfo] =
+    sql"""SELECT seq, name, kind, attempt, status, model, prompt_hash, tokens_in, tokens_out, tokens_cache_read,
+                 tokens_cache_write, cost_usd, error, left(output::text, $outputChars),
+                 to_char(started_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}),
+                 to_char(finished_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}), actual_model, would_write::text,
+                 first_call_tokens, turns
+          FROM agent_steps WHERE job_id = $jobId ORDER BY seq, attempt""".query[StepRow].run().toList.map { r =>
+      StepInfo(
+        r.seq,
+        r.name,
+        r.kind,
+        r.attempt,
+        r.status,
+        r.model,
+        r.promptHash,
+        Usage(r.tin, r.tout, r.tcr, r.tcw),
+        r.cost.toDouble,
+        r.error,
+        r.output,
+        r.startedAt,
+        r.finishedAt,
+        r.actualModel,
+        r.wouldWrite.flatMap(Jsonb.read[List[WouldWrite]]).getOrElse(Nil),
+        r.firstCallTokens,
+        r.turns
+      )
+    }
 
-  def messages(ds: DataSource, jobId: String): List[MessageInfo] =
-    connect(ds):
-      sql"""SELECT seq, n, role, content, tool_name, tool_input, tool_result, latency_ms
-            FROM agent_messages WHERE job_id = $jobId ORDER BY seq, attempt, n""".query[MessageInfo].run().toList
+  def messages(jobId: String)(using DbCon): List[MessageInfo] =
+    sql"""SELECT seq, n, role, content, tool_name, tool_input, tool_result, latency_ms
+          FROM agent_messages WHERE job_id = $jobId ORDER BY seq, attempt, n""".query[MessageInfo].run().toList
 
   // ── spend ──────────────────────────────────────────────────────────────────────────────────────
 
   /** What one run has spent (every attempt counts — a rejected answer was still paid for). */
-  def runSpend(ds: DataSource, jobId: String): (Usage, BigDecimal) =
-    connect(ds):
-      sql"""SELECT coalesce(sum(tokens_in), 0)::bigint, coalesce(sum(tokens_out), 0)::bigint,
-                   coalesce(sum(tokens_cache_read), 0)::bigint, coalesce(sum(tokens_cache_write), 0)::bigint,
-                   coalesce(sum(cost_usd), 0)
-            FROM agent_steps WHERE job_id = $jobId""".query[(Long, Long, Long, Long, BigDecimal)].run().head match
-        case (i, o, cr, cw, c) => (Usage(i, o, cr, cw), c)
+  def runSpend(jobId: String)(using DbCon): (Usage, BigDecimal) =
+    sql"""SELECT coalesce(sum(tokens_in), 0)::bigint, coalesce(sum(tokens_out), 0)::bigint,
+                 coalesce(sum(tokens_cache_read), 0)::bigint, coalesce(sum(tokens_cache_write), 0)::bigint,
+                 coalesce(sum(cost_usd), 0)
+          FROM agent_steps WHERE job_id = $jobId""".query[(Long, Long, Long, Long, BigDecimal)].run().head match
+      case (i, o, cr, cw, c) => (Usage(i, o, cr, cw), c)
 
   /** Cost of every run since the start of the current UTC day and month — the global caps. */
-  def spendDayMonth(ds: DataSource): (BigDecimal, BigDecimal) =
-    connect(ds):
-      sql"""SELECT coalesce(sum(cost_usd) FILTER (WHERE finished_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'), 0),
-                   coalesce(sum(cost_usd) FILTER (WHERE finished_at >= date_trunc('month', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'), 0)
-            FROM agent_steps
-            WHERE finished_at >= date_trunc('month', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'"""
-        .query[(BigDecimal, BigDecimal)]
-        .run()
-        .head
+  def spendDayMonth()(using DbCon): (BigDecimal, BigDecimal) =
+    sql"""SELECT coalesce(sum(cost_usd) FILTER (WHERE finished_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'), 0),
+                 coalesce(sum(cost_usd) FILTER (WHERE finished_at >= date_trunc('month', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'), 0)
+          FROM agent_steps
+          WHERE finished_at >= date_trunc('month', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'"""
+      .query[(BigDecimal, BigDecimal)]
+      .run()
+      .head
 
   // ── trace retention ────────────────────────────────────────────────────────────────────────────
 
   /** Delete traced messages older than `days` (0 or less = keep everything). The steps — checkpoints, tokens, cost —
     * are never pruned: a resume and the budget sums need them. Returns how many rows went.
     */
-  def pruneMessages(ds: DataSource, days: Int): Int =
+  def pruneMessages(days: Int)(using DbCon): Int =
     if days <= 0 then 0
-    else
-      transact(ds):
-        sql"""DELETE FROM agent_messages WHERE created_at < now() - make_interval(days => $days)""".update.run()
+    else sql"""DELETE FROM agent_messages WHERE created_at < now() - make_interval(days => $days)""".update.run()
 
   // ── approvals: what runs proposed for a person to decide (`ApprovalService` opens the connection) ────
 
@@ -804,11 +732,10 @@ object AgentRepo:
 
   // ── corpus facts the verifiers need ────────────────────────────────────────────────────────────
 
-  def slugExists(ds: DataSource, slug: String): Boolean =
-    connect(ds)(sql"SELECT count(*) FROM articles WHERE slug = $slug".query[Long].run().head > 0)
+  def slugExists(slug: String)(using DbCon): Boolean =
+    sql"SELECT count(*) FROM articles WHERE slug = $slug".query[Long].run().head > 0
 
   /** The newest saved version of an article: after a patch, the row holding the text it replaced. */
-  def latestArticleVersion(ds: DataSource, slug: String): Option[Long] =
-    connect(ds)(
-      sql"SELECT max(id) FROM article_versions WHERE slug = $slug".query[Option[Long]].run().headOption.flatten
-    )
+  def latestArticleVersion(slug: String)(using DbCon): Option[Long] =
+
+    sql"SELECT max(id) FROM article_versions WHERE slug = $slug".query[Option[Long]].run().headOption.flatten

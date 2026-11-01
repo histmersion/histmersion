@@ -1,7 +1,7 @@
 package com.histmersion.domain.automation
 
 import com.histmersion.config.AppConfig
-import com.histmersion.domain.automation.agents.ApprovalService
+import com.histmersion.domain.automation.agents.{ApprovalService, RunService}
 import com.histmersion.domain.automation.autopilot.AutopilotRowService
 import com.histmersion.util.jobs.{JobRuns, JobRunState}
 import com.histmersion.domain.automation.goals.{GoalLinkTargets, GoalService}
@@ -70,6 +70,7 @@ object EngineStoreSuite:
         val goals = GoalService.InMemory(state, clock, targets)
         val approvals = ApprovalService.InMemory(state, jobs, clock)
         val runs = jobs
+        val agentRuns = RunService.InMemory(state, jobs, clock)
         def article(slug: String, title: String): Unit = titles.update((GoalLinkKind.Article, slug), title)
         def source(citekey: String, title: String): Unit = titles.update((GoalLinkKind.Source, citekey), title)
         def within[A](work: DbCon ?=> A): A = connect(NoDatabase)(work))
@@ -94,6 +95,7 @@ object EngineStoreSuite:
           val goals = GoalService(db)
           val approvals = ApprovalService(db, Clock.systemUTC())
           val runs = JobRuns(db)
+          val agentRuns = RunService(db)
           def article(slug: String, title: String): Unit =
             connect(ds)(
               sql"INSERT INTO articles (slug, title, kind, body) VALUES ($slug, $title, 'concept', '')".update.run()

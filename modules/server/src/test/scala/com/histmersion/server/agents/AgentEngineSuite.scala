@@ -127,7 +127,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def startAndRun(a: AgentsHandlers, req: RunRequest = RunRequest("enrich-source", Ck)): RunInfo =
     val run = a.startRun(req).fold(e => fail(e.message), identity)
     a.engine.execute(run.id)
-    AgentRepo.get(ds, run.id).get
+    connect(ds)(AgentRepo.get(run.id)).get
 
   test("enrich-source: verified answers become one patch; quotes checked, places geocoded, steps checkpointed"):
     val c = ScriptedClient(Model); happyScripts(c)
@@ -146,7 +146,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals((f.lon, f.lat), (Some(31.4), Some(36.1)), "coordinates come from the gazetteer")
     assertEquals(f.periodStart, Some(-1320L))
 
-    val steps = AgentRepo.steps(ds, run.id, 200)
+    val steps = connect(ds)(AgentRepo.steps(run.id, 200))
     assertEquals(
       steps.map(s => (s.name, s.attempt, s.status)),
       List(
@@ -181,7 +181,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val retry = c.steps(2).head.history.entries.collectFirst { case ConversationEntry.UserPrompt(p) => p }.get
     assert(retry.contains("rejected by validation") && retry.contains("quote is not in the text"), retry)
     // the trace holds the tool call and its result
-    val msgs = AgentRepo.messages(ds, run.id)
+    val msgs = connect(ds)(AgentRepo.messages(run.id))
     assert(msgs.exists(m => m.toolName.contains("facets") && m.role == "tool"))
     // bookkeeping: one log line
     val log = h.ops.queueList("log", all = true).toOption.get.items.filter(_.text.contains(Ck))
@@ -246,7 +246,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val (a2, h2) = handlers(second)
     assert(a2.control(paused.id, "resume", None, None).isRight)
     a2.engine.execute(paused.id)
-    val done = AgentRepo.get(ds, paused.id).get
+    val done = connect(ds)(AgentRepo.get(paused.id)).get
     assertEquals(done.status, "done", done.error)
     assertEquals(second.steps.size, 1, "only the unfinished notes step reached the model")
     assertEquals(first.steps.size, 2)
@@ -294,7 +294,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     java.util.Locale.setDefault(java.util.Locale.forLanguageTag("pl-PL"))
     try a.engine.execute(run.id)
     finally java.util.Locale.setDefault(locale)
-    val again = AgentRepo.get(ds, run.id).get
+    val again = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(again.status, "paused")
     assert(again.error.exists(_.contains("spent 0.0024 of its 0.0010 USD")), again.error)
     assertEquals(c.steps.size, 1)
@@ -302,7 +302,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     c.scripts ++= List(Seq(text(classifyJson)), Seq(text(s"""{"findings":[$goodFinding]}""")), Seq(text(notesJson)))
     assert(a.control(run.id, "resume", Some(1.0), None).isRight)
     a.engine.execute(run.id)
-    assertEquals(AgentRepo.get(ds, run.id).get.status, "done")
+    assertEquals(connect(ds)(AgentRepo.get(run.id)).get.status, "done")
 
   test("refused up front: agents off, an unpriced model, an unknown pipeline, a missing source"):
     val c = ScriptedClient(Model)
@@ -324,7 +324,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val run = a.startRun(RunRequest("enrich-source", Ck)).toOption.get
     assertEquals(a.control(run.id, "cancel", None, None).map(_.status), Right("cancelled"))
     a.engine.execute(run.id) // a cancelled run is not picked up
-    assertEquals(AgentRepo.get(ds, run.id).get.status, "cancelled")
+    assertEquals(connect(ds)(AgentRepo.get(run.id)).get.status, "cancelled")
     assertEquals(c.steps.size, 0)
     assert(a.control(run.id, "resume", None, None).left.exists(_.code.contains(AgentsApi.CodeConflict)))
     assert(a.control(run.id, "frobnicate", None, None).isLeft)
@@ -342,10 +342,10 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val run = a.startRun(RunRequest("enrich-source", Ck)).toOption.get
     assert(TestRuns.transition(ds, run.id, RunState.Queued, RunState.Running).isDefined)
     JobRepo.failInterrupted(ds)
-    assertEquals(AgentRepo.get(ds, run.id).get.status, "running")
+    assertEquals(connect(ds)(AgentRepo.get(run.id)).get.status, "running")
     val (paused, _) = TestRuns.reconcile(ds)
     assert(paused.nonEmpty)
-    val r = AgentRepo.get(ds, run.id).get
+    val r = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(r.status, "paused")
     assertEquals(r.error, Some("interrupted"))
 
@@ -494,17 +494,17 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val c = ScriptedClient(Model); happyScripts(c)
     val (a, h) = handlers(c); seed(h)
     val run = startAndRun(a)
-    val before = AgentRepo.messages(ds, run.id).size
+    val before = connect(ds)(AgentRepo.messages(run.id)).size
     assert(before > 2, before)
     connect(ds):
       sql"""UPDATE agent_messages SET created_at = now() - interval '45 days'
             WHERE job_id = ${run.id} AND seq = (SELECT min(seq) FROM agent_messages WHERE job_id = ${run.id})""".update
         .run()
-    val firstSeq = AgentRepo.messages(ds, run.id).map(_.seq).min
-    val old = AgentRepo.messages(ds, run.id).count(_.seq == firstSeq)
+    val firstSeq = connect(ds)(AgentRepo.messages(run.id)).map(_.seq).min
+    val old = connect(ds)(AgentRepo.messages(run.id)).count(_.seq == firstSeq)
     assertEquals(a.engine.pruneTrace(force = true), old)
-    assertEquals(AgentRepo.messages(ds, run.id).size, before - old)
-    assertEquals(AgentRepo.steps(ds, run.id, 10).size, 12, "steps are never pruned")
+    assertEquals(connect(ds)(AgentRepo.messages(run.id)).size, before - old)
+    assertEquals(connect(ds)(AgentRepo.steps(run.id, 10)).size, 12, "steps are never pruned")
     // not again within prune-every-minutes, and never with keep-messages-days = 0
     assertEquals(a.engine.pruneTrace(), 0)
     val (keepAll, _) =
@@ -527,16 +527,16 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
             // the person decides NOW: the run is still `running`, so the wake this triggers is a no-op
             val decided = a.decide(id, "approve", DecisionRequest(Some("zzagent race")))
             assert(decided.isRight, decided)
-            assertEquals(AgentRepo.get(ds, ctx.run.id).map(_.status), Some("running"))
+            assertEquals(connect(ds)(AgentRepo.get(ctx.run.id)).map(_.status), Some("running"))
             Left(w)
           case Left(other) => Left(other)
           case Right(d)    => seen += d; Right("published")
     val engine = Engine(ds, a.engine.cfg, a, a.engine.workflows.replaced(PipelineWorkflow.of(racing, a.definitions)))
     engine.execute(run.id)
     // not stranded in `waiting`: the engine saw the decision after its transition and re-queued the run
-    assertEquals(AgentRepo.get(ds, run.id).map(_.status), Some("queued"))
+    assertEquals(connect(ds)(AgentRepo.get(run.id)).map(_.status), Some("queued"))
     engine.execute(run.id)
-    val after = AgentRepo.get(ds, run.id).get
+    val after = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(after.status, "done", after.error)
     assertEquals(seen.toList.map(_.approved), List(true))
 
@@ -564,7 +564,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     engine.stop()
     mine.head.join(10_000)
     assert(!mine.head.isAlive, "the pool thread is still alive 10 s after stop()")
-    assertEquals(AgentRepo.get(ds, run.id).map(_.status), Some("paused"))
+    assertEquals(connect(ds)(AgentRepo.get(run.id)).map(_.status), Some("paused"))
 
   // ── #992: dry runs, a role's own model, the model that served, compare ──────────────────────────
 
@@ -607,7 +607,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(c.steps.size, 3, "every model step ran")
     assertEquals(up.applies.asScala.toList, List(false, false), "refs and assess only read")
 
-    val steps = AgentRepo.steps(ds, run.id, 100000)
+    val steps = connect(ds)(AgentRepo.steps(run.id, 100000))
     def would(n: String) = steps.filter(_.name == n).flatMap(_.wouldWrite)
     val patch = would("patch")
     assertEquals(patch.size, 1)
@@ -648,11 +648,11 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val (a2, _) = handlersFor(byModel(second))
     assert(a2.control(paused.id, "resume", None, None).exists(_.dryRun))
     a2.engine.execute(paused.id)
-    val done = AgentRepo.get(ds, paused.id).get
+    val done = connect(ds)(AgentRepo.get(paused.id)).get
     assertEquals(done.status, "done", done.error)
     assert(done.dryRun)
     assertEquals(CorpusSnapshot.of(ds), before)
-    assert(AgentRepo.steps(ds, done.id, 100000).exists(s => s.name == "patch" && s.wouldWrite.nonEmpty))
+    assert(connect(ds)(AgentRepo.steps(done.id, 100000)).exists(s => s.name == "patch" && s.wouldWrite.nonEmpty))
 
   test("a role's own model (--model-for) is checked before the run is queued"):
     val (a, h) = handlersFor(byModel(ScriptedClient(Model), ScriptedClient(Haiku))); seed(h)
@@ -700,7 +700,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         )((n, _) => Right(Checked(n.notes)))
     Engine(ds, a.engine.cfg, a, a.engine.workflows.replaced(PipelineWorkflow.of(notesOnly, a.definitions)))
       .execute(run.id)
-    assertEquals(AgentRepo.get(ds, run.id).map(_.status), Some("done"))
+    assertEquals(connect(ds)(AgentRepo.get(run.id)).map(_.status), Some("done"))
     val step = a.run(run.id).toOption.get.steps.find(_.name == "notes").get
     assertEquals(step.model, Some("claude-code:haiku"))
     assertEquals(step.actualModel, Some("claude-haiku-5-5 + claude-haiku-4-5-20251001"), "the busiest first")
@@ -872,12 +872,12 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   test("#1450 agents.step.max-tokens reaches claude -p as CLAUDE_CODE_MAX_OUTPUT_TOKENS; a step's own cap wins"):
     val fake = FakeCli("claude", List(ClaudeStreams.Init, notesResult))
     val (a, id) = claudeRun(fake, 16000, notesOnly())
-    assertEquals(AgentRepo.get(ds, id).map(_.status), Some("done"))
+    assertEquals(connect(ds)(AgentRepo.get(id)).map(_.status), Some("done"))
     assertEquals(fake.env("CLAUDE_CODE_MAX_OUTPUT_TOKENS"), "16000", "the configured step cap, not 4096")
     clean(); beforeEach(null)
     val own = FakeCli("claude", List(ClaudeStreams.Init, notesResult))
     val (_, id2) = claudeRun(own, 16000, notesOnly(Some(24000)))
-    assertEquals(AgentRepo.get(ds, id2).map(_.status), Some("done"))
+    assertEquals(connect(ds)(AgentRepo.get(id2)).map(_.status), Some("done"))
     assertEquals(own.env("CLAUDE_CODE_MAX_OUTPUT_TOKENS"), "24000", "the fixer's/writer's own cap overrides the step's")
 
   test("#1450 an answer over the output cap pauses the run at once — a configuration error, no retry spent"):
@@ -887,7 +887,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         """"usage":{"input_tokens":70000,"output_tokens":16384}}"""
     val fake = FakeCli("claude", List(ClaudeStreams.Init, over))
     val (a, id) = claudeRun(fake, 4096, notesOnly())
-    val run = AgentRepo.get(ds, id).get
+    val run = connect(ds)(AgentRepo.get(id)).get
     assertEquals(run.status, "paused")
     val steps = a.run(id).toOption.get.steps.filter(_.name == "notes")
     assertEquals(steps.size, 1, "one attempt: the same cap would fail the same way")
@@ -905,7 +905,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val run = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
     Engine(ds, a.engine.cfg, a, a.engine.workflows.replaced(PipelineWorkflow.of(notesOnly(), a.definitions)))
       .execute(run.id)
-    assertEquals(AgentRepo.get(ds, run.id).map(_.status), Some("done"))
+    assertEquals(connect(ds)(AgentRepo.get(run.id)).map(_.status), Some("done"))
     val first = a.run(run.id).toOption.get.steps.find(s => s.name == "notes" && s.attempt == 1).get
     val err = first.error.getOrElse("")
     assert(err.contains("at .notes") && err.contains("expecting string"), err)
@@ -942,7 +942,11 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       a.startRun(RunRequest("enrich-source", Ck, budgetTokens = Some(400000L))).fold(e => fail(e.message), identity)
     Engine(ds, a.engine.cfg, a, a.engine.workflows.replaced(PipelineWorkflow.of(twoNotes, a.definitions)))
       .execute(run.id)
-    assertEquals(AgentRepo.get(ds, run.id).map(_.status), Some("done"), "2 × (10k + 1k + 29k) = 80k budget tokens")
+    assertEquals(
+      connect(ds)(AgentRepo.get(run.id)).map(_.status),
+      Some("done"),
+      "2 × (10k + 1k + 29k) = 80k budget tokens"
+    )
     // counted in full (weight 1) the same run pauses before its second step
     val full = evalCfg.copy(agents = evalCfg.agents.copy(budgets = evalCfg.agents.budgets.copy(cacheReadWeight = 1.0)))
     val c2 = ScriptedClient(Model)
@@ -953,7 +957,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       a2.startRun(RunRequest("enrich-source", Ck, budgetTokens = Some(300000L))).fold(e => fail(e.message), identity)
     Engine(ds, a2.engine.cfg, a2, a2.engine.workflows.replaced(PipelineWorkflow.of(twoNotes, a2.definitions)))
       .execute(run2.id)
-    assertEquals(AgentRepo.get(ds, run2.id).map(_.status), Some("paused"))
+    assertEquals(connect(ds)(AgentRepo.get(run2.id)).map(_.status), Some("paused"))
 
   test("#1461 a review-article run gets its pipeline's run-tokens default; another pipeline the global one"):
     val (a, h) = handlersFor((_, _) => Right(ScriptedClient(Model))); seed(h)
@@ -973,7 +977,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     val (n, _) = a.engine.reconcile()
     assert(n >= 3, n)
-    val after = List(mine, sched, mgr).map(r => AgentRepo.get(ds, r.id).get)
+    val after = List(mine, sched, mgr).map(r => connect(ds)(AgentRepo.get(r.id)).get)
     assert(after.forall(r => r.status == "paused" && r.error.contains("interrupted")), after)
     assertEquals(after.map(_.resumeAt.isDefined), List(false, true, true))
     val due = a.engine.resumeDue(java.time.Instant.now().plusSeconds(120))
@@ -1025,7 +1029,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       t.join(java.time.Duration.ofSeconds(20))
       assert(!t.isAlive, "the run did not settle")
       assert(dead(cli) && dead(child), "the CLI or its child is still alive")
-      AgentRepo.get(ds, run.id).get
+      connect(ds)(AgentRepo.get(run.id)).get
     val first = once()
     assertEquals(first.status, "paused")
     assert(first.error.exists(_.startsWith("stalled:")), first.error)

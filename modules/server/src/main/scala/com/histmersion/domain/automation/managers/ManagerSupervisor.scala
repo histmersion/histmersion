@@ -14,7 +14,7 @@ import com.histmersion.api.Agents.*
 import com.histmersion.domain.ManagerPolicy.{Next, ReviewSettings, StepFacts}
 import com.histmersion.api.Managers.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.{AgentRepo, ManagerRepo}
+import com.histmersion.db.ManagerRepo
 
 import java.time.Instant
 import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
@@ -545,7 +545,7 @@ final class ManagerSupervisor(
   ): Unit =
     val byId = ms.map(m => m.id -> m).toMap
     val decision = agents.scheduler.pass(ms, now, agents.drain.block) { (m, item) =>
-      if blocks(item.kind, AgentRepo.unsettledOn(ds, item.target)) then Left("another run is writing its target")
+      if blocks(item.kind, agents.runs.unsettledOn(item.target)) then Left("another run is writing its target")
       else
         guardedOpt(m.id, out)(dispatch(m, settings(m), item, now, out)) match
           case Some(_) => Right(())
@@ -631,7 +631,7 @@ final class ManagerSupervisor(
       now: Instant,
       out: collection.mutable.Builder[String, List[String]]
   ): Option[String] =
-    if blocks(item.kind, AgentRepo.unsettledOn(ds, item.target)) then None // another run writes it: wait
+    if blocks(item.kind, agents.runs.unsettledOn(item.target)) then None // another run writes it: wait
     else
       byItem.get(item.kind) match
         case Some(k) => k.dispatch(this, m, s, item, now, out)
@@ -668,7 +668,7 @@ final class ManagerSupervisor(
           try
             Some(transact(ds) {
               val id = agents.jobRuns.createIn(
-                AgentRepo.runRow(
+                RunService.row(
                   pr.pipeline,
                   pr.target,
                   pr.model,
@@ -794,18 +794,18 @@ final class ManagerSupervisor(
     ManagerRepo.extendCandidates(ds, id, tags, goal, limit)
   def articleFacets(slug: String): (List[String], List[String]) = ManagerRepo.articleFacets(ds, slug)
 
-  def progress(run: String): String = AgentRepo.get(ds, run).flatMap(_.progress).filter(_.nonEmpty).getOrElse("")
+  def progress(run: String): String = agents.runs.get(run).flatMap(_.progress).filter(_.nonEmpty).getOrElse("")
   def stepOutput(run: String, step: String): Option[String] =
-    AgentRepo
-      .steps(ds, run, 100000)
+    agents.runs
+      .steps(run, 100000)
       .filter(s => s.name == step && s.status == StepStatus.Done.wire)
       .lastOption
       .flatMap(_.output)
   def approvalsOf(run: String, kind: ApprovalKind): List[ApprovalInfo] =
     agents.approvalStore.approvalsOf(run, Some(kind))
-  def unsettledOn(target: String): Seq[RunInfo] = AgentRepo.unsettledOn(ds, target)
-  def runsFor(p: Pipeline, target: String): Seq[RunInfo] = AgentRepo.forTarget(ds, p, target)
-  def slugExists(slug: String): Boolean = AgentRepo.slugExists(ds, slug)
+  def unsettledOn(target: String): Seq[RunInfo] = agents.runs.unsettledOn(target)
+  def runsFor(p: Pipeline, target: String): Seq[RunInfo] = agents.runs.forTarget(p, target)
+  def slugExists(slug: String): Boolean = agents.host.articleExists(slug)
   def parentOf(slug: String): Option[String] = agents.goals.get(slug).flatMap(_.parentSlug)
   def linkGoal(goal: String, kind: GoalPlans.LinkKind, ref: String, note: Option[String]): Unit =
     val _ = agents.goals.link(goal, kind, ref, note)

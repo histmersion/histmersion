@@ -20,7 +20,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.GoalPlans.*
-import com.histmersion.db.{AgentRepo, ModelSettingsRepo}
+import com.histmersion.db.ModelSettingsRepo
 
 /** The ONE implementation of the embedded-agent operations (docs/research-embedded-agents.md): the model check, the
   * probe and (through [[Engine]]) pipeline runs. REST ([[AgentsRoutes]]) and the CLI reach it; it is held as
@@ -60,6 +60,9 @@ final class AgentsHandlers(
   /** The goals: their sub-goals, links, plans and the schedules not moved into a watcher yet. */
   val goals: com.histmersion.domain.automation.goals.GoalService =
     com.histmersion.domain.automation.goals.GoalService(Transactor(ds))
+
+  /** The agent runs and their steps, as the engine's features read them. */
+  val runs: RunService = RunService(Transactor(ds))
 
   /** The approvals: what runs proposed for a person to decide. */
   val approvalStore: com.histmersion.domain.automation.agents.ApprovalService =
@@ -494,7 +497,7 @@ final class AgentsHandlers(
   ): Either[ApiError, RunInfo] =
     prepare(req, parent).map { pr =>
       val id = jobRuns.create(
-        AgentRepo.runRow(
+        RunService.row(
           pr.pipeline,
           pr.target,
           pr.model,
@@ -508,7 +511,7 @@ final class AgentsHandlers(
           dryRun = pr.dryRun
         )
       )
-      val run = AgentRepo.get(ds, id).get
+      val run = runs.get(id).get
       engine.submit(run.id)
       run
     }
@@ -631,7 +634,7 @@ final class AgentsHandlers(
     status.map(_.trim).filter(_.nonEmpty) match
       case Some(st) if RunState.parse(st).isEmpty =>
         Left(ApiError(s"unknown status '$st' (one of: ${RunState.values.map(_.wire).mkString(", ")})"))
-      case st => Right(AgentRepo.list(ds, st, site.config.limits.page(limit, site.config.limits.search), goal).toList)
+      case st => Right(runs.list(st, site.config.limits.page(limit, site.config.limits.search), goal).toList)
 
   /** `GET /api/agents/runs` — one page, newest first ([[Paging]]), with the per-state counts of the runs (of `goal`,
     * when given).
@@ -656,22 +659,22 @@ final class AgentsHandlers(
   ): Either[ApiError, (List[RunInfo], Paging.Page)] =
     for
       q <- com.histmersion.server.ListQueries.runs(f, java.time.Instant.now(clock))
-      page <- AgentRepo
-        .page(ds, q, site.config.limits.page(limit, site.config.limits.search), cursor(before), cursor(upTo))
+      page <- runs
+        .page(q, site.config.limits.page(limit, site.config.limits.search), cursor(before), cursor(upTo))
         .left
         .map(ApiError(_, Some(Write.CodeNotFound)))
     yield
       val (rows, more) = page
-      val (counts, facets) = AgentRepo.runFacets(ds, q)
+      val (counts, facets) = runs.runFacets(q)
       (rows.toList, Paging.Page.filtered(counts, q.status, Option.when(more)(rows.last.id), facets))
 
   private def cursor(c: Option[String]): Option[String] = c.map(_.trim).filter(_.nonEmpty)
 
   def run(id: String): Either[ApiError, RunDetail] =
-    AgentRepo
-      .get(ds, id)
+    runs
+      .get(id)
       .toRight(ApiError(s"No agent run '$id'", Some(Write.CodeNotFound)))
-      .map(r => RunDetail(r, AgentRepo.steps(ds, id, cfg.trace.maxToolResultChars), AgentRepo.messages(ds, id)))
+      .map(r => RunDetail(r, runs.steps(id, cfg.trace.maxToolResultChars), runs.messages(id)))
 
   /** `GET /api/agents/compare?id=…` (#992) — runs of one pipeline on one target side by side, from their recorded steps
     * (full outputs, not the display cut). How each configured model is paid for is named from the server's prices and
@@ -682,10 +685,10 @@ final class AgentsHandlers(
     for
       runs <- wanted.foldLeft[Either[ApiError, List[RunDetail]]](Right(Nil)) { (acc, id) =>
         acc.flatMap(rs =>
-          AgentRepo
-            .get(ds, id)
+          runs
+            .get(id)
             .toRight(ApiError(s"No agent run '$id'", Some(Write.CodeNotFound)))
-            .map(r => rs :+ RunDetail(r, AgentRepo.steps(ds, r.id, Int.MaxValue), Nil))
+            .map(r => rs :+ RunDetail(r, runs.steps(r.id, Int.MaxValue), Nil))
         )
       }
       cmp <- CompareRuns.compare(runs.map(CompareRunsViews.run), billingOf).left.map(ApiError(_))

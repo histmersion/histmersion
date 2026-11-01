@@ -261,7 +261,7 @@ final class CompileArticlePipeline(
     else
       d.mode match
         case DraftMode.Create =>
-          if AgentRepo.slugExists(ds, s.slug) then
+          if connect(ds)(AgentRepo.slugExists(s.slug)) then
             task("an article with this slug was created while the draft waited; it was NOT overwritten")
             Right(Written(written = false, "the slug was taken meanwhile", None))
           else
@@ -283,7 +283,8 @@ final class CompileArticlePipeline(
             h.patchArticle(s.slug, patch).map(_ => true)
           )(Right(false)) match
             case Right(false) => Right(Written(written = false, AgentsMarkdown.DryRunNote, None))
-            case Right(_)     => Right(Written(written = true, "appended", AgentRepo.latestArticleVersion(ds, s.slug)))
+            case Right(_)     =>
+              Right(Written(written = true, "appended", connect(ds)(AgentRepo.latestArticleVersion(s.slug))))
             case Left(e) if e.code.contains(Write.CodePrecondition) =>
               task(
                 "the article changed while the draft waited for approval; the section was NOT appended — compile again"

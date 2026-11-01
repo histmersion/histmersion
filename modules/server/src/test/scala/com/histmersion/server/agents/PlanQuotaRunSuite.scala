@@ -105,7 +105,7 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def startAndRun(a: AgentsHandlers): RunInfo =
     val run = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
     a.engine.execute(run.id)
-    AgentRepo.get(ds, run.id).get
+    connect(ds)(AgentRepo.get(run.id)).get
 
   test("a plan below its floor PAUSES the run (plan-quota) until the reset — never falls through to the paid key"):
     val (plan, paid) = (ScriptedClient(Plan), ScriptedClient(Paid))
@@ -124,7 +124,7 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     enrichScripts(plan)
     assertEquals(a.engine.resumeDue(java.time.Instant.now()), List(run.id))
     a.engine.execute(run.id)
-    val done = AgentRepo.get(ds, run.id).get
+    val done = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(done.status, "done", done.error)
     assertEquals(paid.steps.size, 0)
 
@@ -164,7 +164,7 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     enrichScripts(plan)
     assertEquals(a.engine.resumeDue(java.time.Instant.ofEpochMilli(reset + 1000)), List(run.id))
     a.engine.execute(run.id)
-    val done = AgentRepo.get(ds, run.id).get
+    val done = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(done.status, "done", done.error)
     assertEquals(gpt.steps.size, 0, "the held pool was never drawn on")
 
@@ -243,14 +243,14 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       .startRun(RunRequest("enrich-source", Ck, budgetUsd = Some(0.000001), budgetTokens = Some(1500)))
       .fold(e => fail(e.message), identity)
     a.engine.execute(run.id)
-    val r = AgentRepo.get(ds, run.id).get
+    val r = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(r.status, "paused", r.error)
     assert(r.error.exists(e => e.startsWith("budget:") && e.contains("tokens")), r.error)
     assertEquals((r.costUsd, r.usage.total), (0.0, 2200L))
     // with room, it finishes on the plan for 0 USD
     a.control(run.id, "resume", None, Some(100000L)).fold(e => fail(e.message), identity)
     a.engine.execute(run.id)
-    val done = AgentRepo.get(ds, run.id).get
+    val done = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals((done.status, done.costUsd), ("done", 0.0), done.error)
 
   test("a METERED unpriced model is still refused; claude-code set to use an API key needs a price"):

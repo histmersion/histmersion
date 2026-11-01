@@ -162,7 +162,7 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite with RunTranscripts
   private def startAndRun(a: AgentsHandlers): RunInfo =
     val run = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
     a.engine.execute(run.id)
-    AgentRepo.get(ds, run.id).get
+    connect(ds)(AgentRepo.get(run.id)).get
 
   test("#989: a run wanting a pool paused only on a STALE reading takes a fresh one first, and goes on"):
     val reads = Reads(); reads.probeOut = List(event(20, 30), Result)
@@ -235,13 +235,13 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite with RunTranscripts
     val later = java.time.Instant.now().plusSeconds(11 * 60)
     assertEquals(a.engine.resumeFreed(later), List(run.id))
     assertEquals(reads.probes.get(), 2)
-    val queued = AgentRepo.get(ds, run.id).get
+    val queued = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(queued.status, "queued")
     assert(queued.warnings.exists(_.contains("resumed before its reset")), queued.warnings)
     assert(queued.warnings.exists(_.contains("fresh reading (probe: five_hour 20% used")), queued.warnings)
     enrichScripts(plan)
     a.engine.execute(run.id)
-    val done = AgentRepo.get(ds, run.id).get
+    val done = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(done.status, "done", done.error)
     assertEquals(paid.steps.size, 0)
     assertEquals(PlanQuotaRepo.refreshes(ds, PoolId.ClaudePlan, 0)._1, 2)
@@ -256,7 +256,7 @@ class PlanRefreshRunSuite extends com.histmersion.db.DbSuite with RunTranscripts
     assertEquals(run.status, "paused", "the fresh reading shows 5% left: below the floor")
     assertEquals(reads.probes.get(), 1)
     assertEquals(a.engine.resumeFreed(java.time.Instant.now().plusSeconds(11 * 60)), Nil)
-    assertEquals(AgentRepo.get(ds, run.id).get.status, "paused")
+    assertEquals(connect(ds)(AgentRepo.get(run.id)).get.status, "paused")
 
   test("#989: no reading yet — the pool is read before its first use"):
     val reads = Reads(); reads.probeOut = List(event(10, 10), Result)

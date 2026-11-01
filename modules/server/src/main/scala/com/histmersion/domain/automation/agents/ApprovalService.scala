@@ -134,7 +134,9 @@ object ApprovalService:
         state: ApprovalState,
         result: Option[String]
     ): Option[ApprovalInfo] =
-      db.transact(AgentRepo.record(jobId, kind, citekey, status, current, edgeKind, target, payload, state, result, now))
+      db.transact(
+        AgentRepo.record(jobId, kind, citekey, status, current, edgeKind, target, payload, state, result, now)
+      )
     def payload(id: Long): Option[String] = db.read(AgentRepo.payload(id))
     def proposedBefore(
         kind: ApprovalKind,
@@ -335,9 +337,8 @@ object ApprovalService:
         def key(r: ApprovalRecord) = (r.createdAt, r.id)
         val ordering = summon[Ordering[(Instant, Long)]]
         val all = newest(rows.filter(matches(q, "")))
-        val bounded = all.filter(r =>
-          b.forall(c => ordering.lt(key(r), key(c))) && u.forall(c => ordering.gteq(key(r), key(c)))
-        )
+        val bounded =
+          all.filter(r => b.forall(c => ordering.lt(key(r), key(c))) && u.forall(c => ordering.gteq(key(r), key(c))))
         val (shown, more) = Paging.cut(bounded.take(math.max(1, limit) + 1), math.max(1, limit))
         val older =
           if more || u.isEmpty then more
@@ -420,7 +421,9 @@ object ApprovalService:
     def autoApprovedSince(kind: ApprovalKind, since: Instant): List[ApprovalInfo] =
       rows
         .filter(r =>
-          r.kind == kind.wire && r.note.exists(_.startsWith("autopilot: approved")) && r.decidedAt.exists(!_.isBefore(since))
+          r.kind == kind.wire && r.note.exists(_.startsWith("autopilot: approved")) && r.decidedAt.exists(
+            !_.isBefore(since)
+          )
         )
         .sortBy(_.id)
         .toList

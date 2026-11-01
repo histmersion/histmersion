@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation
 
-import com.histmersion.domain.automation.agents.ApprovalService
+import com.histmersion.domain.automation.agents.{ApprovalService, RunService}
 import com.histmersion.domain.automation.autopilot.AutopilotRowService
 import com.histmersion.util.jobs.{JobRuns, RunRow}
 import com.histmersion.domain.automation.goals.GoalService
@@ -15,6 +15,7 @@ trait EngineStores:
   def goals: GoalService
   def approvals: ApprovalService
   def runs: JobRuns
+  def agentRuns: RunService
   def article(slug: String, title: String): Unit
   def source(citekey: String, title: String): Unit
   def within[A](work: DbCon ?=> A): A

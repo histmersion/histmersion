@@ -11,7 +11,7 @@ import com.histmersion.api.Managers.*
 import com.histmersion.api.Queue.QueueAdd
 import com.histmersion.domain.SchedulerPolicy.*
 import com.histmersion.api.AgentScheduler.*
-import com.histmersion.db.{AgentRepo, FocusRepo, ManagerRepo}
+import com.histmersion.db.{FocusRepo, ManagerRepo}
 
 import java.time.Instant
 import javax.sql.DataSource
@@ -72,7 +72,7 @@ final class SchedulerService(
 
   /** Why nothing may start for any manager now (a spend cap reached), if so. */
   def budgetBlock(): Option[Block] =
-    val (day, month) = AgentRepo.spendDayMonth(ds)
+    val (day, month) = agents.runs.spendDayMonth()
     if day >= BigDecimal(cfg.budgets.dailyUsd) then
       Some(Block("budget", s"budget: today's agent spend reached agents.budgets.daily-usd (${cfg.budgets.dailyUsd})"))
     else if month >= BigDecimal(cfg.budgets.monthlyUsd) then
@@ -419,7 +419,7 @@ final class SchedulerService(
                 )
               case None => base.copy(code = AgentScheduler.Code.Held, why = "held")
           case Some(ItemStatus.Active) =>
-            val run = i.runId.flatMap(AgentRepo.get(ds, _))
+            val run = i.runId.flatMap(agents.runs.get(_))
             run.map(_.status).flatMap(RunState.parse) match
               case Some(RunState.WaitingApproval) =>
                 val open = run.toList

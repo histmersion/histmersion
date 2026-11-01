@@ -132,7 +132,7 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     m
 
   private def sweepRun(mid: String, goal: String): RunInfo =
-    AgentRepo.get(ds, ManagerRepo.itemFor(ds, mid, AcquisitionSweep, goal).get.runId.get).get
+    connect(ds)(AgentRepo.get(ManagerRepo.itemFor(ds, mid, AcquisitionSweep, goal).get.runId.get)).get
 
   private def acquire(h: Handlers): List[Queue.QueueItem] =
     h.ops.queueList("acquire", all = false).toOption.get.items.filter(_.text.contains("zzagent"))
@@ -160,20 +160,20 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     val run = sweepRun(m.id, Goal)
     assertEquals((run.params.autoIngest, run.params.oaBacklog), (Some(20), Some(true)))
     b.engine.execute(run.id)
-    val done = AgentRepo.get(ds, run.id).get
+    val done = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(done.status, "done", done.error)
     assertEquals(ingestCalls(upb).size, 20)
     assertEquals(backlog(m.id).map(_.status).distinct, List("pending"))
     assertEquals(backlog(m.id).size, 10)
     assertEquals(acquire(hb), Nil, "no legal open-access work reaches the person's acquisition list")
-    val closed = AgentRepo.steps(ds, run.id, 100000).find(_.name == "close").flatMap(_.output).getOrElse("")
+    val closed = connect(ds)(AgentRepo.steps(run.id, 100000)).find(_.name == "close").flatMap(_.output).getOrElse("")
     assert(
       closed.contains("30 picked, 20 ingested") && closed.contains("10 to the ingest backlog") &&
         closed.contains(" 0 queued for acquisition"),
       closed
     )
     assertEquals(
-      AgentRepo.steps(ds, run.id, 100).map(_.name),
+      connect(ds)(AgentRepo.steps(run.id, 100)).map(_.name),
       List("discover", "rank", "ingest", "backlog", "queue", "close")
     )
     val first = backlog(m.id).minBy(_.id)

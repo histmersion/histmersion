@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation
 
-import com.histmersion.domain.automation.agents.ApprovalRecord
+import com.histmersion.domain.automation.agents.{ApprovalRecord, MessageRecordState, StepRecordState}
 import com.histmersion.domain.automation.autopilot.AutopilotRowState
 import com.histmersion.domain.automation.goals.{GoalLinkRecord, GoalRecord, GoalScheduleRecord}
 
@@ -17,11 +17,14 @@ final case class AutomationState(
     links: Vector[GoalLinkRecord],
     schedules: Vector[GoalScheduleRecord],
     approvals: Vector[ApprovalRecord],
-    lastApprovalId: Long
+    lastApprovalId: Long,
+    steps: Vector[StepRecordState],
+    messages: Vector[MessageRecordState]
 )
 
 object AutomationState:
-  val empty: AutomationState = AutomationState(None, Map.empty, Vector.empty, Vector.empty, Vector.empty, 0L)
+  val empty: AutomationState =
+    AutomationState(None, Map.empty, Vector.empty, Vector.empty, Vector.empty, 0L, Vector.empty, Vector.empty)
 
   /** An instant as the repositories read one back (`to_char` to the second, UTC). */
   def text(at: Instant): String = at.truncatedTo(ChronoUnit.SECONDS).toString

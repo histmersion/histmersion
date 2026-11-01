@@ -3,7 +3,6 @@ package com.histmersion.server
 import com.histmersion.api.{ApiError, JobState, ListFilters}
 import com.histmersion.api.Agents.{ApprovalKind, ApprovalState, Origin, Pipeline, RunState}
 import com.histmersion.api.ListFilters.{ApprovalFilter, DecidedBy, JobFilter, RunFilter}
-import com.histmersion.db.AgentRepo
 import com.histmersion.util.jobs.JobRepo
 
 import java.time.Instant
@@ -39,14 +38,25 @@ object ListQueries:
       by.flatMap(DecidedBy.parse)
     )
 
-  def runs(f: RunFilter, now: Instant): Either[ApiError, AgentRepo.RunQuery] =
+  def runs(f: RunFilter, now: Instant): Either[ApiError, com.histmersion.domain.automation.agents.RunQuery] =
     val n = f.normalized
     for
       st <- ListFilters.known("status", n.status, RunState.values.map(_.wire).toSeq).left.map(bad)
       ps <- ListFilters.known("pipeline", n.pipeline, Pipeline.values.map(_.wire).toSeq).left.map(bad)
       os <- ListFilters.known("origin", n.origin, Origin.values.map(_.wire).toSeq).left.map(bad)
       tr <- ListFilters.range(n.since, n.until, now).left.map(bad)
-    yield AgentRepo.RunQuery(st, ps, n.manager, n.goal, n.model, n.provider, os, tr._1, tr._2, n.subject)
+    yield com.histmersion.domain.automation.agents.RunQuery(
+      st,
+      ps,
+      n.manager,
+      n.goal,
+      n.model,
+      n.provider,
+      os,
+      tr._1,
+      tr._2,
+      n.subject
+    )
 
   /** The states a job can be in: a background job's, and — the agent runs being jobs too — a run's. */
   val JobStatuses: Seq[String] = (JobState.values.map(_.wire) ++ RunState.values.map(_.wire)).distinct.toSeq

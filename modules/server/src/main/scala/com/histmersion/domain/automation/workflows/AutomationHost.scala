@@ -11,6 +11,9 @@ import com.histmersion.domain.PlanGoal
   * service as its slice comes.
   */
 trait AutomationHost:
+  /** Is there an article with this slug? */
+  def articleExists(slug: String): Boolean
+
   /** A goal by its slug, a renamed goal's old slug answering as the goal it was renamed to. */
   def goal(slug: String): Either[ApiError, Goal]
 

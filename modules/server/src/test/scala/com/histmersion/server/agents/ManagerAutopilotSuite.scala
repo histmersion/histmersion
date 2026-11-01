@@ -176,28 +176,25 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
   private def item(mid: String, kind: String, target: String): ManagerItem =
     ManagerRepo.itemFor(ds, mid, kind, target).get
   private def runOf(mid: String, kind: String, target: String): RunInfo =
-    AgentRepo
-      .get(
-        ds,
+    connect(ds)(
+      AgentRepo.get(
         item(mid, kind, target).runId.getOrElse(fail(s"$mid $kind $target has no run: ${item(mid, kind, target)}"))
       )
-      .get
+    ).get
 
   private def why(r: RunInfo): String =
-    (r.error.toList ++ AgentRepo
-      .steps(ds, r.id, 200)
+    (r.error.toList ++ connect(ds)(AgentRepo.steps(r.id, 200))
       .filter(_.error.isDefined)
       .map(s => s"${s.name}#${s.attempt}: ${s.error.get}"))
       .mkString("\n")
 
   private def exec(a: AgentsHandlers, id: String): RunInfo =
     a.engine.execute(id)
-    AgentRepo.get(ds, id).get
+    connect(ds)(AgentRepo.get(id)).get
 
   /** The watchers' sweeps need no model (offline: nothing found): run what they queued. */
   private def drainWatchers(a: AgentsHandlers): Unit =
-    AgentRepo
-      .list(ds, Some("queued"), 200)
+    connect(ds)(AgentRepo.list(Some("queued"), 200))
       .filter(_.managerId.exists(_.startsWith("watch:")))
       .foreach(r => a.engine.execute(r.id))
 
@@ -248,13 +245,13 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val plan = runOf(seedId(Goal), PlanGoalItem, Goal)
     assertEquals((plan.pipeline, plan.params.subGoals), ("plan-goal", None), "a root goal may be split")
     drainWatchers(a)
-    assertEquals(exec(a, plan.id).status, "waiting", why(AgentRepo.get(ds, plan.id).get))
+    assertEquals(exec(a, plan.id).status, "waiting", why(connect(ds)(AgentRepo.get(plan.id)).get))
     clock.tick(a)
     val gp =
       a.approvalsList(Some("all"), None).toOption.get.find(a => a.kind == "goal-plan" && a.subject.contains(Goal)).get
     assertEquals(gp.state, "approved")
     assert(gp.note.exists(_.startsWith("autopilot: approved — 0 sub-goals, 1 query")), gp.note)
-    assertEquals(exec(a, plan.id).status, "done", why(AgentRepo.get(ds, plan.id).get))
+    assertEquals(exec(a, plan.id).status, "done", why(connect(ds)(AgentRepo.get(plan.id)).get))
     assertEquals(GoalLinkRepo.refs(ds, Goal, LinkKind.Query), List("Bronze Age tin isotopes"))
     assert(
       ManagerRepo
@@ -288,7 +285,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     // 3. the compile: its draft passes the checks and is published; the review follows as an item
     val comp = runOf(seedId(Goal), ArticleCompile, "zzagent_new")
     assertEquals(comp.params.chainReview, Some(false))
-    assertEquals(exec(a, comp.id).status, "waiting", why(AgentRepo.get(ds, comp.id).get))
+    assertEquals(exec(a, comp.id).status, "waiting", why(connect(ds)(AgentRepo.get(comp.id)).get))
     clock.tick(a)
     val pub = a
       .approvalsList(Some("all"), None)
@@ -298,7 +295,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
       .get
     assertEquals(pub.state, "approved")
     assert(pub.note.exists(_.startsWith("autopilot: approved — filter 2 sources")), pub.note)
-    assertEquals(exec(a, comp.id).status, "done", why(AgentRepo.get(ds, comp.id).get))
+    assertEquals(exec(a, comp.id).status, "done", why(connect(ds)(AgentRepo.get(comp.id)).get))
     assert(h.getArticle("zzagent_new").isRight)
     clock.tick(a)
     assertEquals(item(seedId(Goal), ArticleCompile, "zzagent_new").status, "done")
@@ -343,7 +340,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     (1 to 3).foreach(_ => clock.tick(a))
     val open = a.approvalsList(None, None).toOption.get.filter(_.subject.contains(Goal))
     assertEquals(open.map(a => (a.kind, a.state)), List(("goal-plan", "open")))
-    assertEquals(AgentRepo.get(ds, plan.id).get.status, "waiting")
+    assertEquals(connect(ds)(AgentRepo.get(plan.id)).get.status, "waiting")
     // the proposal waits for the plan, which waits for a person: nothing is held for a focus; the scheduler
     // keeps the proposal back (its plan comes first), and the waiting plan run holds no place
     val waits = item(seedId(Goal), ProposeArticles, Goal)
