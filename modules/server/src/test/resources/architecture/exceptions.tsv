@@ -190,7 +190,6 @@ direction	db:db/Codecs.scala	util.common -> catalogue: PlaceTimeBasis	1
 direction	db:db/Codecs.scala	util.common -> library: NeighborTarget	1
 direction	db:db/Db.scala	util.common -> library: QueryConfig	1
 direction	db:db/LintRepo.scala	util.data -> catalogue: Geocoder	1
-direction	db:db/LintRepo.scala	util.data -> catalogue: PlaceRepo	1
 direction	db:db/LintRepo.scala	util.data -> library: Edge	1
 direction	db:db/LintRepo.scala	util.data -> library: Hit	1
 direction	db:db/LintRepo.scala	util.data -> library: SourceRepo	1
@@ -306,7 +305,6 @@ repository	db:db/BundleImport.scala	SourceRepo of library.sources	1
 repository	db:db/CritiqueRepo.scala	SourceRepo of library.sources	1
 repository	db:db/Importer.scala	AssetRepo of media	1
 repository	db:db/Importer.scala	SourceRepo of library.sources	1
-repository	db:db/LintRepo.scala	PlaceRepo of catalogue.places	1
 repository	db:db/LintRepo.scala	SourceRepo of library.sources	1
 repository	db:db/SourceDeleteRepo.scala	QueueRepo of automation.worklists	1
 repository	db:db/SourceRepo.scala	ArticleRepo of research.articles	1

@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.domain.catalogue.places.{Geocoder, PlaceRepo}
+import com.histmersion.domain.catalogue.places.Geocoder
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -156,7 +156,7 @@ object LintRepo:
     case NoteFormat             => List(noteTextsSql)
     case FindingGeocode         => List(Geocoder.legacySql)
     case FindingUnplaced        => List(Geocoder.unplacedSql)
-    case FindingPlaceholder     => List(PlaceRepo.placeholderFindingsSql)
+    case FindingPlaceholder     => List(SourceRepo.placeholderFindingsSql)
     case r                      => projections.get(r).toList
 
   private def pairs(sql: String)(using DbCon): List[(String, String)] =
@@ -254,7 +254,7 @@ object LintRepo:
         )
       case FindingGeocode     => Geocoder.movesIn(c.geocode).map(m => LintItem(m.citekey, m.describe))
       case FindingUnplaced    => Geocoder.placementsIn(c.geocode).map(p => LintItem(p.citekey, p.describe))
-      case FindingPlaceholder => PlaceRepo.unresolvedPlaceholdersIn().map((ck, detail) => LintItem(ck, detail))
+      case FindingPlaceholder => SourceRepo.unresolvedPlaceholdersIn().map((ck, detail) => LintItem(ck, detail))
       case name               =>
         projections.get(name).toList.flatMap(pairs).map((ck, detail) => LintItem(ck, detail))
     Lint.report(r, items, maxItems)

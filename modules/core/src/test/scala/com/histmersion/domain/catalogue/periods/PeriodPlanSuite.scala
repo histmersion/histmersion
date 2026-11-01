@@ -20,8 +20,12 @@ class PeriodPlanSuite extends munit.FunSuite:
       "2026-01-01T00:00:00.000000Z"
     )
 
-  test("a period matched to one here under another id is its children's parent under that id; no match changes nothing"):
-    val es = BundleEntities(periods = List(period("b_child", "Child", -1500, -1400, Some("b_age")), period("b_age", "Age", -2000, -1000)))
+  test(
+    "a period matched to one here under another id is its children's parent under that id; no match changes nothing"
+  ):
+    val es = BundleEntities(periods =
+      List(period("b_child", "Child", -1500, -1400, Some("b_age")), period("b_age", "Age", -2000, -1000))
+    )
     assertEquals(PeriodPlan.repoint(es, Map("b_age" -> "h_age")).periods.map(_.parentId), List(Some("h_age"), None))
     assertEquals(PeriodPlan.repoint(es, Map.empty), es)
 

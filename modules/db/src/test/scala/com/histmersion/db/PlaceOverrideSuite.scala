@@ -2,8 +2,6 @@ package com.histmersion.db
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
-import com.histmersion.domain.catalogue.places.PlaceReviewRepo
-
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -216,7 +214,7 @@ class PlaceOverrideSuite extends com.histmersion.db.DbSuite with Bounded:
 
   test("the place-kind lint no longer lists a place a person decided"):
     seed()
-    def listed = connect(ds)(PlaceReviewRepo.proposals()).map(_.id).filter(_.startsWith("zzpo")).toSet
+    def listed = PlaceFixtures.proposals(ds).map(_.id).filter(_.startsWith("zzpo")).toSet
     assertEquals(listed, Set(Tribe), "a people filed as a region")
     val _ = PlaceFixtures.setOverride(
       ds,
@@ -350,10 +348,10 @@ class PlaceOverrideSuite extends com.histmersion.db.DbSuite with Bounded:
       val _ = sql"""INSERT INTO place_links (place_id, scheme, external_id, relation, item_geom)
                     VALUES ($id, 'wikidata', 'Qzzpo', 'exact_match', ST_SetSRID(ST_MakePoint(151.1, -31.3), 4326))""".update
         .run()
-    def listed = connect(ds)(PlaceReviewRepo.relocationsIn()).map(_.id).filter(_ == id)
+    def listed = PlaceFixtures.relocations(ds).map(_.id).filter(_ == id)
     assertEquals(listed, List(id), "a grid square's centre with a linked point elsewhere")
     assertEquals(
-      transact(ds)(PlaceReviewRepo.relocate(connect(ds)(PlaceReviewRepo.relocationsIn()).filter(_.id == id), tol)),
+      PlaceFixtures.relocate(ds, PlaceFixtures.relocations(ds).filter(_.id == id), tol),
       1
     )
     assertEquals(geom(id), "POINT(151.1 -31.3)")

@@ -11,8 +11,9 @@ import java.util.UUID
 /** Several runs as one, each stage in the order the runs are given: what one kind's run answers first is the answer. */
 final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
 
-  @tailrec private def through(rest: List[PlanRun], es: BundleEntities)(f: (PlanRun, BundleEntities) => BundleEntities)
-      : BundleEntities =
+  @tailrec private def through(rest: List[PlanRun], es: BundleEntities)(
+      f: (PlanRun, BundleEntities) => BundleEntities
+  ): BundleEntities =
     rest match
       case r :: tail => through(tail, f(r, es))(f)
       case Nil       => es

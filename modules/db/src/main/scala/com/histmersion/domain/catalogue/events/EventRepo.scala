@@ -25,7 +25,7 @@ import com.histmersion.db.given_DbCodec_List
   * `event_participants`) and the old ids of renamed ones (`event_aliases`). Every method runs on the connection it is
   * given.
   */
-private[histmersion] object EventRepo:
+private[events] object EventRepo:
 
   /** How many events the catalogue holds. */
   def count()(using DbCon): Long = sql"SELECT count(*)::int FROM events".query[Int].run().head.toLong

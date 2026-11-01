@@ -6,7 +6,8 @@ import com.histmersion.values.{BundleKind, DecisionKind, IssueKind, IssueSeverit
 
 import java.util.UUID
 
-/** Several kinds' runs of a plan as one: each stage in the given order; the first answer wins where one is asked for. */
+/** Several kinds' runs of a plan as one: each stage in the given order; the first answer wins where one is asked for.
+  */
 class PlanRunsSuite extends munit.FunSuite:
 
   private def uid(s: String) = UUID.nameUUIDFromBytes(s.getBytes)

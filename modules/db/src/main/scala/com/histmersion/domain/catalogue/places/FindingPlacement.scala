@@ -22,5 +22,15 @@ object FindingPlacement:
 
   def apply(toleranceKm: Double = DefaultToleranceKm): FindingPlacement = Implementation(toleranceKm)
 
+  /** Every finding on a placeholder point (one standing for a named place), as `lint --rule finding-placeholder` reads
+    * them: id, place name, period, citekey and point.
+    */
+  def placeholderFindingsSql: String = FindingPlaceRepo.placeholderFindingsSql
+
+  /** The findings on a placeholder point whose place name the geocoder does not resolve, or that have none: (citekey,
+    * line), by citekey and finding id.
+    */
+  def unresolvedPlaceholdersIn()(using DbCon): List[(String, String)] = FindingPlaceRepo.unresolvedPlaceholdersIn()
+
   final private class Implementation(val toleranceKm: Double) extends FindingPlacement:
     def placeSource(citekey: String)(using DbCon): Int = FindingPlaceRepo.materialiseFor(citekey, toleranceKm)

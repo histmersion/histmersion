@@ -19,7 +19,7 @@ import javax.sql.DataSource
   * A place an attestation or an asset link names, or one a person curated (`place_overrides`, `places set`), is listed
   * but never removed: that is a person's evidence or decision, and it is theirs to move or reset first.
   */
-private[histmersion] object PointAreaRepo:
+private[places] object PointAreaRepo:
 
   /** `kinds` is `places.sources.point-area-kinds`; `batch` places per transaction; `budgetMs` the time one call may
     * spend before it returns what is left (an HTTP request must end well inside netty's idle timeout); `toleranceKm`
@@ -124,7 +124,7 @@ private[histmersion] object PointAreaRepo:
     * keeps the cascade idle); an event naming one keeps its row and loses its place (`SET NULL`). Returns the places
     * deleted. Shared with the importer's prune ([[GazetteerRepo.Session.prune]]).
     */
-  private[histmersion] def deletePlacesIn(ids: List[String])(using DbCon): Int =
+  private[places] def deletePlacesIn(ids: List[String])(using DbCon): Int =
     if ids.isEmpty then 0
     else
       val _ = sql"DELETE FROM finding_places WHERE place_id = ANY($ids::text[])".update.run()
@@ -143,7 +143,7 @@ private[histmersion] object PointAreaRepo:
   /** The ids of `source`'s places the importer no longer keeps: an area kind, only a point, and no evidence naming it
     * ([[GazetteerRepo.Session.prune]]).
     */
-  private[histmersion] def ofSourceIn(source: String, kinds: List[String])(using DbCon): List[String] =
+  private[places] def ofSourceIn(source: String, kinds: List[String])(using DbCon): List[String] =
     sql"""SELECT p.id FROM places p
           WHERE p.import_source = $source AND p.kind = ANY($kinds::text[])
             AND (p.geom IS NULL OR ST_Dimension(p.geom) = 0)
