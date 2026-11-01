@@ -342,7 +342,7 @@ The places and what each may depend on (`docs/research-domain-model.md` §3):
 |---|---|---|
 | `util.<area>` (`database`, `json`, `mcp`, `storage`, `data`, `jobs`, `identity`, `plugins`, `settings`, `basemap`, `ocr`, `process`, …) | a mechanism: no research words | other supporting areas, the shared kernel, `values` — never a domain |
 | `domain.automation` | the workflow engine, by feature: `agents` (runs, steps, the toolbox, model chains, the definitions and their generator), `approvals`, `autopilot`, `goals`, `managers`, `scheduler`, `worklists` (the ACQUIRE/TASKS/LOG kernel); `workflows` holds what the domains contribute to it (`WorkflowDefinition`, `ToolContribution`, `ManagerKindDefinition`, `ObjectiveProgress`, the `Workflows` registry) and what the engine asks of the rest of the server (`AutomationHost`) | supporting areas |
-| `domain.catalogue` | places, periods, events and what attests them | supporting areas, automation |
+| `domain.catalogue` | places, periods, events and what attests them, by feature: `periods` (`PeriodService`, the seed and PeriodO imports), `evidence` (`AttestationService`; `evidence.passages` holds `PassageSource`, which the library implements for the sources' texts); `CatalogueState` is the record its `InMemory` services share | supporting areas, automation |
 | `domain.media` | pictures and their rights | supporting areas, automation, catalogue |
 | `domain.library` | sources, findings, citations, acquisition, ingest | supporting areas, automation, catalogue, media |
 | `domain.research` | research results: articles, their review | supporting areas, automation, catalogue, media, library |
@@ -364,6 +364,10 @@ tools, manager kinds and effects are registered by transition adapters in the co
 `PipelineWorkflow`, `TransitionTools`, `TransitionWorkflows`, `TransitionSite`, `TransitionHost`, the four
 `…ManagerKind`s, `ArticleObjectives`, `TransitionApprovalEffects`) until their domains define their own;
 `server/agents` also keeps the library's and research's pipelines and the command-line AI runtimes until their slices.
+The catalogue's moved features follow the same shape: their repositories (db module, the feature's package) take the
+connection, a service per feature with an `InMemory` over `domain.catalogue.CatalogueState` and one contract suite
+(`CatalogueStoreSuite`) run on both; the int8range spelling of a deep-time column is `util.database.RangeSql`, a
+user's text as a LIKE pattern `util.database.LikePattern`.
 Files and directories are reached through `util.storage`, processes launched through `util.process`, and a
 repository is used only inside its feature. `ArchitectureSuite` (server tests) enforces the table, the file and
 process rule and the repository rule. A file not in its feature package yet has its destination in

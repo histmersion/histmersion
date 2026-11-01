@@ -1,6 +1,6 @@
 # Domain model, package by feature, first-party plugins out of the server (refactor step 3, design)
 
-Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18; slice 7 part 2 built — §19; slice 7 part 3 built — §20.** Written 2026-10-30 on master
+Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18; slice 7 part 2 built — §19; slice 7 part 3 built — §20; slice 8 part 1 built — §21.** Written 2026-10-30 on master
 58de5489 (branch `domain-design`); revised after the user's reviews of §3: domains above features, measured;
 `personal` with its own interface; `library`, `research`, `catalogue`, `media` named; acquisition and OCR
 dissolved (2026-10-30); automation as a generic workflow engine fed by the domains, data management and file
@@ -15,6 +15,7 @@ Inventories too long for this page are in `research-domain-model/`:
 | [`files.md`](research-domain-model/files.md) | every source file of `server`, `core`, `db`, `api`, `config`, `files` mapped to its target domain or supporting area and feature |
 | [`objects.md`](research-domain-model/objects.md) | all 645 top-level objects without a same-named type, each with its destination and a one-line reason |
 | [`primitives.md`](research-domain-model/primitives.md) | primitive parameters and fields by name, measured per module, and the counts behind §4 |
+| `catalogue-live-*.tsv` | slice 8's live-volume measurements (§21): per request its status, length, SHA-256, ETag and the median and p95 of 20 runs — digests and timings only |
 
 `catalogue` is the domain of places, periods and events (Q17, decided 2026-10-30): the catalogue of data points the
 map and the timeline show. The name is one package segment (`domain.catalogue`, `api.catalogue`,
@@ -2498,3 +2499,141 @@ watchdog test (its child process had not written its pid file within the wait wh
 server's suites run again on the last commit passed, 1 369 with none failed. `ContractSnapshotSuite`,
 `CliHelpSnapshotSuite`, `AutomationOracleSuite`, `DataOracleSuite`, `NativeMetadataSuite` and `ArchitectureSuite`
 passed; the six contracts 44 tests in all.
+
+## 21. Slice 8 as built, part 1 (the catalogue: oracles, periods, attestations and their passage source, 2026-11-01)
+
+Branch `refactor-s8` from master 485daa59 (slices 1–7 deployed). The slice is built in two parts (part 2 below); part 1
+is green on its own and leaves no code half-moved. Endpoints, MCP tools, CLI commands, tile bytes and agent
+definitions are unchanged: `ContractSnapshotSuite`, `CliHelpSnapshotSuite`, `AutomationOracleSuite`, `DataOracleSuite`
+and the new catalogue oracle held byte for byte after every commit; no oracle or snapshot was re-recorded, and no
+migration was added.
+
+**The oracles** (recorded on the unchanged code, committed before anything moved):
+
+| oracle | what it records | result |
+|---|---|---|
+| `CatalogueOracleSuite` (server, DB; `oracle/catalogue/*.txt`, `HISTMERSION_UPDATE_ORACLE=1` rewrites them) | a crafted collection written over REST — regions and sites imported as LPF, a place added and refused, the hierarchy built, names added and removed (an imported one refused), a kind, period and point overridden, a merge, a removal and a rename; the bundled period seed and a PeriodO dump; sources with findings and bodies, figures placed on the map; events put (datings, edges, participants, a geometry), refused, patched, renamed and deleted; a GVP import from its fixture through the import job, and an imported event edited (corrections); attestations made, refused and patched; an event's links recomputed and confirmed — every write's answer, then every read over REST and the catalogue's MCP tools: places (search, detail with counts, children, tree, footprints, links, names, overrides, the map's shapes for each time pick), periods (search by label, region and span, detail), events (list and geo under every filter, detail, corrections, catalogues, leads), attestations and links, `findings` (geo-when) and `aggregate` (the histogram) under place, span, box and region, the digest, length and ETag of every layer's tiles (sites, events, media) at five zooms under eleven variants, passages, `lint`, the bundle's catalogue entries line by line, the bundle imported into an empty collection (every row of the catalogue's tables) and a merge plan over a changed copy | identical after every commit, twice in a row on the unchanged code |
+| the live volumes (scratch, not committed but the digests and timings) | a `*_test` database restored from the newest live dump (21 GB on disk; 1.8 million places, 4 247 events, 14 377 findings, 3 140 placed pictures) on a scratch cluster (`shared_buffers` 512 MB), copied once as the pristine template each run starts from; a scratch server (`-Xmx4g`, a sandbox refusing every connection but loopback, scratch home and settings, the tile cache at its 1 MB floor) driven by `scripts/perf/catalogue_live.py`: 200 fixed requests — every layer's tiles over five places at six zooms, with and without a span and undated sites; `findings`, `events` and `events/geo` over three boxes and two spans; `places/geo` at four time picks; place searches; the histogram — a warm-up pass, a pause, the recorded pass (status, length, SHA-256, ETag) and a second for stability, then 20 timed rounds | see below |
+
+The tile set holds 2.07 MB of tiles, the largest 137 kB: with the cache at 1 MB a round-robin pass never meets a tile
+it kept, so every timed tile request is cut from the database. The baseline (unchanged code, a classpath frozen at
+485daa59's build) is `docs/research-domain-model/catalogue-live-before.tsv`; the branch's run is compared to it below.
+
+Results (`docs/research-domain-model/catalogue-live-part1.tsv`): all 200 answers — every tile's bytes and ETag, every
+`findings`, `events`, `places` and histogram response — identical to the baseline's. Each server start ANALYZEs the
+restored tables that have no statistics, and the sample it reads is random: the first branch run against a fresh copy
+of the template found the place-name search (`places?q=…`) at 16–45 ms where the baseline's run had found 6–11 ms. The
+unchanged jar, started again on that same database, answered those searches in the same 16–48 ms, so the unchanged code
+was run through the whole driver there as well (`catalogue-live-before-same-state.tsv`) — on one database state, unchanged
+code against this branch, medians summed per kind of request:
+
+| requests | n | unchanged (ms) | branch (ms) | ratio |
+|---|---:|---:|---:|---:|
+| tiles (sites, events, media) | 160 | 1 296.3 | 1 266.3 | 0.98 |
+| `findings` (geo-when) | 9 | 54.3 | 52.3 | 0.96 |
+| `events` | 6 | 40.2 | 37.6 | 0.94 |
+| `events/geo` | 6 | 58.5 | 53.3 | 0.91 |
+| `places/geo` | 5 | 194.0 | 187.7 | 0.97 |
+| `places` (search) | 10 | 187.8 | 181.8 | 0.97 |
+| `aggregate` (histogram) | 4 | 2 482.7 | 2 471.9 | 1.00 |
+
+No request whose median is 5 ms or more is slower by more than 10 %. The databases were dropped and the scratch cluster
+removed afterwards.
+
+**`util.database`: deep-time ranges and LIKE patterns.** `PeriodSql` is `util.database.RangeSql` (how an `int8range`
+column's inclusive bounds are read, written and merged — no research meaning, used by every domain), the LIKE escape
+`util.database.LikePattern` (`FilterSql` delegates to it). The SQL text is unchanged.
+
+**`domain.catalogue.periods`.** `PeriodService` (`get`, `children`, `search` by `PeriodSearch`, `count`,
+`presetCount`, `placement`, `write`, `retainPresets`, `deleteSeedExcept`, the seed versions): `Implementation` over a
+`Transactor`, `InMemory` over `domain.catalogue.CatalogueState` (the catalogue's state record of §6.3), the foreign
+key's refusal of a part before its parent kept. `PeriodRepo` and its row moved into the feature (db module,
+`private[periods]`, every method on the connection it is given), with the period search that was
+`PlaceRepo.listPeriods`; `PlaceRepo.upsertPeriod`, unused, is gone. `PeriodImports` holds what `Bootstrap` did with
+periods (the bundled seed applied, its version checked, a dataset written, the live dump's collections fetched), told
+the seed's text and the download by the composition; `PeriodsControllers`, `PeriodsRoutes` and `PeriodsTools` bind the
+five endpoints and the `periods` tool in their old places. `Bootstrap` (the composition root) keeps the seed file's
+read and the init job, now over the service.
+
+**`domain.catalogue.evidence`.** `AttestationService` (list, get, create, patch, delete; `InMemory` giving ids in order
+as the sequence does) with `AttestationRepo` moved into the feature; `AttestationsControllers` resolve the old ids of
+renamed kinds (`util.identity`'s alias tables, passed in as `current`) and check the target kind and the source first,
+as `Handlers` did; `AttestationsRoutes` and `AttestationsTools` in their old places. **`evidence.passages`** — the
+interface package of §3.3 — holds `PassageSource` (the citekey a source has now; a `PassageReader` over its text, read
+once however many searches) and `Passage`; the library's `domain.library.sources.SourcePassages` implements it over
+`SourceRepo` and `PassageFinder` (`Deps.passages`). The event links read the sources through it, and through
+`AttestationService` their attestations.
+
+**Contract suites.** `CatalogueStoreSuite` gives each test new stores, in memory or on a scratch database of its own
+(gated on `HISTMERSION_TEST_DB_URL`), and seeds a source where an attestation needs one: `PeriodServiceContract` 7
+tests (the scenarios of the old `PeriodRepoSuite`, which it replaces, and the literal `%`), `AttestationServiceContract`
+1, each on both. `PeriodsControllersSuite` and `AttestationsControllersSuite` run over the in-memory services with a
+fake passage source and a held lock. The db suites that seeded through the moved repositories write their rows with
+SQL (`AttestationRows`, a period insert); `BootstrapSuite` reaches the periods through the controllers.
+
+**Architecture.** `exceptions.tsv` 428 → 420 rows, deletions only: direction 271 → 267 (`GoalRepo` and `BundleImport`
+naming `PeriodSql`; `EventCatalogHandlers` naming `PassageFinder` and `SourceRepo`), repository 93 → 89 (`Bootstrap`
+naming `PeriodRepo`; `Handlers` and `EventCatalogHandlers` naming `AttestationRepo`; `EventCatalogHandlers` naming
+`SourceRepo`); filesystem (60) and process (4) unchanged. Slice 7's acceptance stays met: none of its 30 repository rows
+is back, and of part 2's 37 rows only the 7 file rows of `AgentTrees` and `Prompts` remain. `places.tsv` 1 057 → 1 054
+(`PeriodSql`, `PeriodRepo`, `AttestationRepo`, now in their packages).
+
+**Deviations.**
+
+- Wire records stay in `com.histmersion.api` and settings in `config`, as slices 5–7 left theirs (the OpenAPI component
+  names and the snapshots stay as they are); `api.catalogue.*` comes with slice 12's edges.
+- The services speak the wire records (`HistoricalPeriod`, `Attestation`), as the engine's do (§20); newtyping their
+  identifiers waits for the features that pass them on.
+- `PeriodOFetch` stays in `server/importers` beside the gazetteer importers whose download it shares; `PeriodImports`
+  is given the download.
+- The library implements `PassageSource` in `library.sources` (where `SourceRepo` and `PassageFinder` are placed), not
+  `library.search`, so the implementer names no repository of another feature.
+- `EventCatalogHandlers` gets the passage source from `Deps` (it names `Deps` already, a row of part 2) rather than a
+  new constructor parameter every events suite would have to pass.
+- The attestations' SQL that reads another domain's table (`sourceExists`) left the catalogue: the controller asks the
+  passage source.
+
+**Part 2 (to build).** The rest of §9.2's row 8:
+
+- `catalogue.events`: `EventRepo`, `EventCatalogRepo`'s import half, `CorrectionRepo`, `CatalogMerge`,
+  `CatalogProvider`, `EventProviders`, `StoredEvent`, `BuiltinCatalogues`, `EventsSettings`, the events' share of
+  `Handlers` (list, geo, get, put, patch, delete, rename) and `EventCatalogHandlers`' import, rederive and corrections
+  as `EventService`, `CorrectionService` and the import loop's controllers. `EventRepo`'s two upward references go:
+  `FilterSql.eventWhere` (the events of the filter's sources) through an interface the library implements, the event
+  detail's pictures (`MediaRepo.thumbsIn`) and its articles into a `server.views` page.
+- `catalogue.evidence`, the rest: the link candidates, checks and leads (`EventCatalogRepo`'s other half, `LeadRow`,
+  `EventMatcher`, `MatchWeights`) with their service.
+- `catalogue.places`: `PlaceRepo` (1.7 k lines), `GazetteerRepo`, `Geocoder`, `PlaceOverrideRepo`, `PlaceReviewRepo`,
+  `PointAreaRepo`, `TreeRepo`, `LandRepo`, `PlaceScope`, `SiteTypesSql`, the gazetteer import loop (`GazetteerLoad`,
+  `ImportRunner`, `NaturalEarthLand`, `PeriodOFetch`), `PlaceReview`, `PointAreas`, the places' share of `Handlers` and
+  `Bootstrap`; the library's callers of `PlaceRepo` (`SourceRepo`, `AcquireRepo`, `Importer`, the ingest) through the
+  places' service.
+- `catalogue.maptiles` with `MapLayer` (`catalogue.maptiles.layers`): `TileRepo`, `UndatedSiteRepo`, `MapTileService`,
+  `MapTiles`, `TileCache`, `UndatedSites`, the tile geometry types; the media layer and `TileFeatures.media` implemented
+  by media, so the tiles name no media type.
+- The catalogue's data contributions replacing its adapters: the 11 carried kinds (their readers out of `BundleRepo`,
+  their steps out of `BundleImport.Writer`, which then exposes the cross-kind state a step needs), the event and place
+  merge rules out of `MergePlanner` and `MergeState`, the 4 check rules out of `LintRepo`, the caches and the
+  gazetteer extracts store out of `MaintenanceAdapter`, the tables out of `TablesAdapter`.
+- The live-volume comparison again, after the places and the tiles move.
+
+**Native image.** `reachability-metadata.json`: renamed `db.HistPeriodRow$` → `domain.catalogue.periods.PeriodRow$`
+(`derived$DbCodec$lzy1`), `db.AttestationRepo$package$` → `domain.catalogue.evidence.AttestationRepo$`
+(`given_DbCodec_Attestation$lzy1`, now a given of the repository), `McpTools$PeriodsInput$` →
+`periods.PeriodsTools$PeriodsInput$`, `McpTools$AttestationsInput$`, `$AttestationPutInput$`, `$DeleteAttestationInput$`
+→ `evidence.AttestationsTools$…`; `PlaceRepo$package$` lost `given_DbCodec_HistPeriodRow$lzy1`; added
+`Deps.passages$lzy1`, `Handlers.attestations$lzy1`, `SourcePassages$Text.chunks$lzy1`; the derived codecs of the
+`McpTools` inputs declared after the removed ones (`AgentStateInput`, `AssetLinksInput`, `DeleteAgentStateInput`,
+`DeleteAssetLinkInput`, `GoalsInput`) and `PlaceRepo`'s `Named`/`Placeholder` rows renumbered as `javap -p` reads them.
+A script compared every reflective field the metadata names with the compiled classes on master and on the branch: the
+branch names every field its classes have and adds no stale one. No tracing-agent run. To check at the bundle:
+`--self-check`; `smoke.sh`; `histmersion periods search|show|seed|import|fetch` (network off: its refusal), `init`; `histmersion
+attestations search|show|add|rm`; `events links --recompute|--apply`; the MCP tools `periods`, `attestations`, `put_attestation`, `delete_attestation`, `event_links`.
+
+**Tests.** After `sbt clean`, every module's suites with the DB suites on a throwaway database (`just test-quick` with
+every module named): 0 failed — values 20, valuesJS 20, api 823, apiJS 84, config 67, files 73, core 749, pluginApi 45,
+upstreams 57, pluginHost 39, pluginTestkit 19, pluginVaults 29 (1 skipped), pluginsFetchers 15, pluginsEvents 18,
+pluginsMedia 52, pluginsGazetteers 58, pluginsAiHttp 26, pluginsCalibre 45, pluginResolver 23, chimneyIronTests 10,
+db 527 (the 8 of `PeriodRepoSuite` became the periods' contract), cli 232, web 639, server 1 391 (1 skipped, 1
+ignored). `ContractSnapshotSuite`, `CliHelpSnapshotSuite`, `AutomationOracleSuite`, `DataOracleSuite`,
+`CatalogueOracleSuite`, `EventTrafficSuite`, `NativeMetadataSuite` and `ArchitectureSuite` passed.
