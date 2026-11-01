@@ -97,25 +97,6 @@ final private[histmersion] case class BVersionRow(
     versionOf: String,
     createdAt: String
 ) derives DbCodec
-final private[histmersion] case class BAssetRow(
-    uid: UUID,
-    origin: UUID,
-    sourceUid: UUID,
-    name: String,
-    mime: String,
-    sha: String,
-    bytes: Long,
-    width: Option[Int],
-    height: Option[Int],
-    kind: Option[String],
-    caption: Option[String],
-    license: Option[String],
-    geom: Option[String],
-    pNull: Boolean,
-    pLo: Option[Long],
-    pHi: Option[Long],
-    updatedAt: String
-) derives DbCodec
 final private[histmersion] case class BGoalRow(
     uid: UUID,
     origin: UUID,
@@ -302,22 +283,6 @@ object BundleRepo:
                 FROM article_versions v JOIN articles a ON a.slug = v.slug WHERE """) ++
       where(scope, "v.uid", "v.created_at") ++ " ORDER BY v.uid").frag.query[BVersionRow].run()
 
-  private[histmersion] def assets(scope: BundleScope)(using DbCon): Vector[BAssetRow] =
-    (Sql.raw(s"""SELECT x.uid, x.origin, s.uid, x.name, x.mime, x.sha256, length(x.bytes)::bigint,
-                       x.width, x.height, x.kind, x.caption, x.license, encode(ST_AsEWKB(x.geom), 'hex'),
-                       ${rangeCols("x.period")}, ${ts("x.updated_at")}
-                FROM assets x JOIN sources s ON s.citekey = x.citekey WHERE """) ++
-      where(scope, "x.uid", "x.updated_at") ++ " ORDER BY x.uid").frag.query[BAssetRow].run()
-
-  private[histmersion] def assetLinks(scope: BundleScope)(using DbCon): Vector[BundleAssetLink] =
-    (Sql.raw(s"""SELECT l.uid, l.origin, x.uid, l.relation, l.target_type, l.target_id,
-                       ${targetUid("l.target_type", "l.target_id")}, l.xywh, l.notes, ${ts("l.updated_at")}
-                FROM asset_links l JOIN assets x ON x.citekey = l.citekey AND x.name = l.asset_name WHERE """) ++
-      where(scope, "l.uid", "l.updated_at") ++ " ORDER BY l.uid").frag
-      .query[(UUID, UUID, UUID, String, String, String, Option[UUID], Option[String], Option[String], String)]
-      .run()
-      .map(BundleAssetLink.apply(_, _, _, _, _, _, _, _, _, _))
-
   private[histmersion] def goals(scope: BundleScope)(using DbCon): Vector[BundleGoal] =
     val w = where(scope, "g.uid", "g.updated_at")
     val rows = (Sql.raw(s"""SELECT g.uid, g.origin, g.slug, g.title, g.status, g.notes, g.tags, g.regions,
@@ -473,24 +438,6 @@ object BundleRepo:
 
   private[histmersion] def versionLine(r: BVersionRow): BundleArticleVersion =
     BundleArticleVersion(r.uid, r.origin, r.articleUid, r.bodySha, r.summary, r.versionOf, r.createdAt)
-
-  private[histmersion] def assetLine(r: BAssetRow): BundleAsset =
-    BundleAsset(
-      r.uid,
-      r.origin,
-      r.sourceUid,
-      r.name,
-      r.mime,
-      r.sha,
-      r.width,
-      r.height,
-      r.kind,
-      r.caption,
-      r.license,
-      r.geom,
-      range(r.pNull, r.pLo, r.pHi),
-      r.updatedAt
-    )
 
   /** The Flyway version of this database, read in the caller's transaction ("33"). */
   private[histmersion] def schemaVersion(using DbCon): Option[String] =

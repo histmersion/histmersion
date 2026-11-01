@@ -39,9 +39,15 @@ object NewFigure:
       .map(b => f"${b & 0xff}%02x")
       .mkString
 
-  /** First writer of a given sha256 wins; later duplicates are dropped (not stored twice), as are later uses of a name. */
+  /** First writer of a given sha256 wins; later duplicates are dropped (not stored twice), as are later uses of a name.
+    */
   def dedupe(figures: List[NewFigure]): List[NewFigure] =
-    @tailrec def loop(rest: List[NewFigure], shas: Set[String], names: Set[String], acc: List[NewFigure]): List[NewFigure] =
+    @tailrec def loop(
+        rest: List[NewFigure],
+        shas: Set[String],
+        names: Set[String],
+        acc: List[NewFigure]
+    ): List[NewFigure] =
       rest match
         case Nil       => acc.reverse
         case a :: tail =>

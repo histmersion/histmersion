@@ -13,8 +13,8 @@ import com.augustnagro.magnum.*
 import hearth.kindlings.optics.syntax.*
 import io.circe.Encoder
 
-/** Today's carried kinds of the owners that do not register their own yet (the catalogue does), by owner: the lines
-  * through `BundleRepo`'s reads, the rows in through the steps of `BundleImport.Writer`.
+/** Today's carried kinds of the owners that do not register their own yet (the catalogue and the media do), by owner:
+  * the lines through `BundleRepo`'s reads, the rows in through the steps of `BundleImport.Writer`.
   *
   * The ranks are the import's dependency order: tombstones first (a deleted row makes room for one created in its
   * place); a source's rows, then what hangs off it; places and periods before the events that point at them; every
@@ -25,7 +25,6 @@ object CarriedKindsAdapter:
 
   private val Library = DataOwner("library")
   private val Research = DataOwner("research")
-  private val Media = DataOwner("media")
   private val Automation = DataOwner("automation")
   private val Identity = DataOwner("util.identity")
 
@@ -188,26 +187,6 @@ object CarriedKindsAdapter:
     (rs.map(BundleRepo.versionLine), bodies)
   }(_.updatedAt, (es, ls) => es.modify(_.versions).setTo(ls))
 
-  private val assets = records[BundleAsset](
-    Media,
-    kind("asset"),
-    "assets",
-    List(rows(51)(_.assetMetadata())),
-    {
-      case _: BlobUse.AssetBytes => true
-      case _                     => false
-    }
-  ) { (scope, _) =>
-    val rs = BundleRepo.assets(scope).toList
-    val bytes = rs.map(r => BlobOut(r.sha, r.bytes, column("SELECT bytes FROM assets WHERE uid = ?::uuid", r.uid)))
-    (rs.map(BundleRepo.assetLine), bytes)
-  }(_.updatedAt, (es, ls) => es.modify(_.assets).setTo(ls))
-
-  private val assetLinks =
-    records[BundleAssetLink](Media, kind("asset-link"), "asset_links", List(afterBlobs(102)(_.assetLinks()))) {
-      (scope, _) => (BundleRepo.assetLinks(scope).toList, Nil)
-    }(_.updatedAt, (es, ls) => es.modify(_.assetLinks).setTo(ls))
-
   private val goals = records[BundleGoal](
     Automation,
     kind("goal"),
@@ -257,8 +236,6 @@ object CarriedKindsAdapter:
     goals,
     queue,
     goalAliases,
-    assets,
-    assetLinks,
     sources,
     findings,
     edges,

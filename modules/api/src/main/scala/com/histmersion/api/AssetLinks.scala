@@ -94,13 +94,7 @@ object AssetLinks:
     BareImg.replaceAllIn(html, _ => java.util.regex.Matcher.quoteReplacement("""<img loading="lazy" """))
 
   /** Must match the converter's `_safe_name`: either side may name a file. */
-  def safeName(raw: String): String =
-    val base = raw.replace('\\', '/').split('/').lastOption.getOrElse("")
-    val cleaned = base
-      .map(c => if c.isLetterOrDigit || c == '.' || c == '_' || c == '-' then c else '-')
-      .mkString
-      .replaceAll("^-+|-+$", "")
-    if cleaned.isEmpty then "image.png" else cleaned
+  def safeName(raw: String): String = com.histmersion.util.text.SafeName.of(raw)
 
   def mimeOf(name: String): String =
     name.toLowerCase.reverse.takeWhile(_ != '.').reverse match

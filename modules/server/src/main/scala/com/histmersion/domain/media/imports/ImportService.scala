@@ -55,7 +55,7 @@ trait ImportService:
 object ImportService:
   def apply(db: Transactor): ImportService = Implementation(db)
 
-  private final class Implementation(db: Transactor) extends ImportService:
+  final private class Implementation(db: Transactor) extends ImportService:
     def targets(
         provider: String,
         place: Option[String],
@@ -91,12 +91,15 @@ object ImportService:
       db.transact(ImportRepo.checked(provider, targetType, targetId, found, qid))
 
   /** Media's checks alone, in memory: no place, event or finding is held, so nothing is on the map to ask about — a
-    * place or event named by id is not there, a batch is empty, no place has facts — and a Commons category has no place
-    * to be recorded on. `clock` stamps a check as the database's `clock_timestamp()` does.
+    * place or event named by id is not there, a batch is empty, no place has facts — and a Commons category has no
+    * place to be recorded on. `clock` stamps a check as the database's `clock_timestamp()` does.
     */
   final class InMemory(state: AtomicReference[MediaState], clock: Clock) extends ImportService:
     private def one(place: Option[String], event: Option[String]): Option[String] =
-      place.map(_.trim).filter(_.nonEmpty).map(p => s"No place '$p'")
+      place
+        .map(_.trim)
+        .filter(_.nonEmpty)
+        .map(p => s"No place '$p'")
         .orElse(event.map(_.trim).filter(_.nonEmpty).map(e => s"No event '$e'"))
 
     def targets(
@@ -119,7 +122,7 @@ object ImportService:
         pleiadesOnly: Boolean
     ): Either[String, List[Target]] =
       (place.map(_.trim).filter(_.nonEmpty), event.map(_.trim).filter(_.nonEmpty)) match
-        case (Some(_), _) if !places => Left("this import is about events: name one with --event")
+        case (Some(_), _) if !places   => Left("this import is about events: name one with --event")
         case (None, Some(_)) if places => Left("this import is about places: name one with --place")
         case _                         => one(place, event).toLeft(Nil)
     def collectionPending(check: String, places: Boolean, since: Option[Long], pleiadesOnly: Boolean): Int = 0
@@ -136,6 +139,8 @@ object ImportService:
       val _ = state.updateAndGet { s =>
         if s.checks.exists(same) then
           s.modify(_.checks)
-            .using(_.map(c => if same(c) then HeldCheck(provider, targetType, targetId, found, qid.orElse(c.qid), at) else c))
+            .using(
+              _.map(c => if same(c) then HeldCheck(provider, targetType, targetId, found, qid.orElse(c.qid), at) else c)
+            )
         else s.modify(_.checks).using(_ :+ HeldCheck(provider, targetType, targetId, found, qid, at))
       }

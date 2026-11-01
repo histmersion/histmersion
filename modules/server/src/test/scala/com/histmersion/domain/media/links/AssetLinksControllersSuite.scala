@@ -21,7 +21,8 @@ class AssetLinksControllersSuite extends munit.FunSuite:
 
   private def controllers(gate: WriteGate = WriteGate()) =
     val state = AtomicReference(MediaState.empty)
-    val _ = AssetService.InMemory(state, MediaStoreSuite.Ticking())
+    val _ = AssetService
+      .InMemory(state, MediaStoreSuite.Ticking())
       .addFigures("zqnew2001_x", List(NewFigure("a.png", "image/png", Array[Byte](1), None, None)))
     AssetLinksControllers(AssetLinkService.InMemory(state), current, gate)
 

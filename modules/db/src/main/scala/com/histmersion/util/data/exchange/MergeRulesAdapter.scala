@@ -3,7 +3,7 @@ package com.histmersion.util.data.exchange
 import com.histmersion.util.data.DataOwner
 import com.histmersion.values.BundleKind
 
-/** Today's merge rules of the owners that do not register their own yet (the catalogue does), by owner. */
+/** Today's merge rules of the owners that do not register their own yet (the catalogue and the media do), by owner. */
 object MergeRulesAdapter:
 
   final private case class Adapted(
@@ -22,8 +22,6 @@ object MergeRulesAdapter:
   val all: List[MergeRules] = List(
     Adapted(DataOwner("automation"), kind("goal"), label("slug", "goals"), referable = true),
     Adapted(DataOwner("automation"), kind("queue-item"), label("left(text, 60)", "queue_items"), referable = false),
-    Adapted(DataOwner("media"), kind("asset"), label("name", "assets"), referable = true),
-    Adapted(DataOwner("media"), kind("asset-link"), None, referable = false),
     Adapted(DataOwner("library"), kind("source"), label("citekey", "sources"), referable = true),
     Adapted(DataOwner("library"), kind("finding"), label("id", "findings"), referable = false),
     Adapted(DataOwner("research"), kind("article"), label("slug", "articles"), referable = true),

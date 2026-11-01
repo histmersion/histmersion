@@ -13,8 +13,8 @@ import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 
 /** The pictures (`assets`) and where they are shown (`media_links`): a source's figures stored, read, described and
-  * patched; a provider's pictures stored, re-read and given thumbnails; the places, events and sources they are shown on;
-  * the media list, its facets, a picture, its file and thumbnail, the map feed and the cards' pictures.
+  * patched; a provider's pictures stored, re-read and given thumbnails; the places, events and sources they are shown
+  * on; the media list, its facets, a picture, its file and thumbnail, the map feed and the cards' pictures.
   */
 trait AssetService:
 
@@ -88,15 +88,15 @@ trait AssetService:
   /** A place's, an event's or a source's pictures for its card, best first. */
   def thumbs(targetType: String, targetId: String, limit: Int): List[MediaThumb]
 
-  /** A place's pictures for its card, through its equivalents (its old ids, its Wikidata items, a point of the same name
-    * within `sameSiteKm`).
+  /** A place's pictures for its card, through its equivalents (its old ids, its Wikidata items, a point of the same
+    * name within `sameSiteKm`).
     */
   def placeThumbs(placeId: String, sameSiteKm: Double, limit: Int): List[MediaThumb]
 
 object AssetService:
   def apply(db: Transactor): AssetService = Implementation(db)
 
-  private final class Implementation(db: Transactor) extends AssetService:
+  final private class Implementation(db: Transactor) extends AssetService:
     def figures(citekey: String): List[AssetInfo] = db.read(AssetRepo.list(citekey)).toList
     def figure(citekey: String, name: String): Option[(String, Array[Byte])] = db.read(AssetRepo.read(citekey, name))
     def figureCount(citekey: String): Int = db.read(AssetRepo.count(citekey))
@@ -161,9 +161,13 @@ object AssetService:
       val _ = state.updateAndGet(_.modify(_.assets).using(_.map(a => if a.uid == uid then f(a) else a)))
 
     def figures(citekey: String): List[AssetInfo] =
-      ofSource(citekey).sortBy(_.name).toList.map(a => AssetInfo(a.name, a.mime, a.bytes.length, a.sha256, a.width, a.height))
+      ofSource(citekey)
+        .sortBy(_.name)
+        .toList
+        .map(a => AssetInfo(a.name, a.mime, a.bytes.length, a.sha256, a.width, a.height))
 
-    def figure(citekey: String, name: String): Option[(String, Array[Byte])] = named(citekey, name).map(a => (a.mime, a.bytes))
+    def figure(citekey: String, name: String): Option[(String, Array[Byte])] =
+      named(citekey, name).map(a => (a.mime, a.bytes))
 
     def figureCount(citekey: String): Int = ofSource(citekey).size
 
@@ -188,10 +192,14 @@ object AssetService:
         val goneUids = mine.filter(a => gone(a.name)).map(_.uid).toSet
         val kept = s.assets
           .filterNot(a => goneUids(a.uid))
-          .map(a => if a.citekey.contains(citekey) then renamed.get(a.name).fold(a)(n => a.modify(_.name).setTo(n)) else a)
+          .map(a =>
+            if a.citekey.contains(citekey) then renamed.get(a.name).fold(a)(n => a.modify(_.name).setTo(n)) else a
+          )
         val links = s.assetLinks
           .filterNot(l => l.citekey == citekey && gone(l.assetName))
-          .map(l => if l.citekey == citekey then renamed.get(l.assetName).fold(l)(n => l.modify(_.assetName).setTo(n)) else l)
+          .map(l =>
+            if l.citekey == citekey then renamed.get(l.assetName).fold(l)(n => l.modify(_.assetName).setTo(n)) else l
+          )
         val written = incoming.foldLeft(kept) { (as, f) =>
           as.indexWhere(a => a.citekey.contains(citekey) && a.name == f.name) match
             case -1 => as :+ newFigure(citekey, f)
@@ -263,9 +271,12 @@ object AssetService:
             .merge(stored, p.periodStart, p.periodEnd, s"asset '$citekey/$name'")
             .getOrElse(Right(stored))
             .map { (s, e) =>
-              if (s, e) != stored then change(a.uid)(_.modify(_.period).setTo(Option.when(s.isDefined || e.isDefined)((s, e))))
+              if (s, e) != stored then
+                change(a.uid)(_.modify(_.period).setTo(Option.when(s.isDefined || e.isDefined)((s, e))))
             }
-            .flatMap(_ => detail(citekey, name).toRight(ApiError(s"No asset '$citekey/$name'", Some(Write.CodeNotFound))))
+            .flatMap(_ =>
+              detail(citekey, name).toRight(ApiError(s"No asset '$citekey/$name'", Some(Write.CodeNotFound)))
+            )
 
     def sourceFigures(citekey: String): List[SourceFigure] =
       ofSource(citekey)
@@ -396,8 +407,15 @@ object AssetService:
       val before = state.getAndUpdate { s =>
         if s.mediaLinks.exists(same) then
           s.modify(_.mediaLinks)
-            .using(_.map(m => if same(m) then HeldMediaLink(uid, targetType, targetId, role, property, item, rank, basis.orElse(m.basis)) else m))
-        else s.modify(_.mediaLinks).using(_ :+ HeldMediaLink(uid, targetType, targetId, role, property, item, rank, basis))
+            .using(
+              _.map(m =>
+                if same(m) then
+                  HeldMediaLink(uid, targetType, targetId, role, property, item, rank, basis.orElse(m.basis))
+                else m
+              )
+            )
+        else
+          s.modify(_.mediaLinks).using(_ :+ HeldMediaLink(uid, targetType, targetId, role, property, item, rank, basis))
       }
       !before.mediaLinks.exists(same)
 
@@ -459,22 +477,29 @@ object AssetService:
       license.forall(l => (l == "none" && a.license.forall(_.trim.isEmpty)) || a.license.contains(l))
 
     private def shownOn(a: HeldAsset, targetType: String, id: Option[String]): Boolean =
-      id.forall(i => state.get.mediaLinks.exists(m => m.assetUid == a.uid && m.targetType == targetType && m.targetId == i))
+      id.forall(i =>
+        state.get.mediaLinks.exists(m => m.assetUid == a.uid && m.targetType == targetType && m.targetId == i)
+      )
 
     def list(q: Api.MediaQuery, limit: Int): MediaList =
       val (provider, license) = (clean(q.provider), clean(q.license))
       val text = clean(q.q).map(_.toLowerCase)
       val offset = q.offset.getOrElse(0).max(0)
-      def matches(a: HeldAsset) = text.forall(t =>
-        List(Some(a.name), a.credit, a.providerKey).flatten.exists(_.toLowerCase.contains(t))
-      )
+      def matches(a: HeldAsset) =
+        text.forall(t => List(Some(a.name), a.credit, a.providerKey).flatten.exists(_.toLowerCase.contains(t)))
       val all = held
         .filter(a =>
           ofProvider(a, provider) && underLicence(a, license) && shownOn(a, PictureTarget.Place.wire, clean(q.place)) &&
             shownOn(a, PictureTarget.Event.wire, clean(q.event)) && matches(a)
         )
         .sortBy(a =>
-          (a.retrievedAt.isEmpty, a.retrievedAt.map(t => -(t.getEpochSecond * 1000000L + t.getNano / 1000)), a.citekey.isEmpty, a.citekey, a.name)
+          (
+            a.retrievedAt.isEmpty,
+            a.retrievedAt.map(t => -(t.getEpochSecond * 1000000L + t.getNano / 1000)),
+            a.citekey.isEmpty,
+            a.citekey,
+            a.name
+          )
         )
       MediaList.of(all.size, all.slice(offset, offset + limit.max(1)).toList.map(item), offset)
 
@@ -485,7 +510,8 @@ object AssetService:
         a.thumb match
           case Some(t) => Some((a.thumbMime.getOrElse(a.mime), t))
           case None
-              if a.provider.isEmpty || a.provider.exists(p => p == MediaProvider.Calibre || p == MediaProvider.OpenLibrary) =>
+              if a.provider.isEmpty || a.provider
+                .exists(p => p == MediaProvider.Calibre || p == MediaProvider.OpenLibrary) =>
             Some((a.mime, a.bytes))
           case None => None
       }

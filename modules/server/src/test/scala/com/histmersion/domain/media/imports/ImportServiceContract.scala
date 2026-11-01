@@ -1,9 +1,9 @@
 package com.histmersion.domain.media.imports
 
-import com.histmersion.domain.media.{MediaStoreSuite, MediaStores}
+import com.histmersion.domain.media.{MediaStores, MediaStoreSuite}
 
-/** What the imports' store answers on a collection that holds no place and no event — the same on the database and
-  * in memory: a target named by id is not there, a batch is empty, nothing is pending, a check is recorded.
+/** What the imports' store answers on a collection that holds no place and no event — the same on the database and in
+  * memory: a target named by id is not there, a batch is empty, nothing is pending, a check is recorded.
   */
 abstract class ImportServiceContract extends MediaStoreSuite:
 
@@ -21,7 +21,10 @@ abstract class ImportServiceContract extends MediaStoreSuite:
       i.collectionTargets("zq", places = true, None, Some("zq_e"), 10, false, None, false),
       Left("this import is about places: name one with --place")
     )
-    assertEquals(i.collectionTargets("zq", places = true, Some("zq_p"), None, 10, false, None, true), Left("No place 'zq_p'"))
+    assertEquals(
+      i.collectionTargets("zq", places = true, Some("zq_p"), None, 10, false, None, true),
+      Left("No place 'zq_p'")
+    )
     assertEquals(i.collectionTargets("zq", places = true, None, None, 10, false, None, false), Right(Nil))
     assertEquals(i.collectionPending("zq", places = false, None, pleiadesOnly = false), 0)
     assertEquals(i.placeFacts(List("zq_p")), Map.empty)

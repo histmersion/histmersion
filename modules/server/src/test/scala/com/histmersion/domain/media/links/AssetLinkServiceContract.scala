@@ -1,11 +1,11 @@
 package com.histmersion.domain.media.links
 
 import com.histmersion.api.*
-import com.histmersion.domain.media.{MediaStoreSuite, MediaStores}
+import com.histmersion.domain.media.{MediaStores, MediaStoreSuite}
 import com.histmersion.domain.media.assets.NewFigure
 
-/** What the figures' links answer, the same on the database and in memory: a link needs its figure, follows its
-  * rename and goes with it.
+/** What the figures' links answer, the same on the database and in memory: a link needs its figure, follows its rename
+  * and goes with it.
   */
 abstract class AssetLinkServiceContract extends MediaStoreSuite:
 
@@ -39,7 +39,10 @@ abstract class AssetLinkServiceContract extends MediaStoreSuite:
     val _ = s.links.create(AssetLinkPut(Ck, "a.png", "depicts", "place", "zq_x"))
     val _ = s.links.create(AssetLinkPut(Ck, "b.png", "depicts", "place", "zq_y"))
     val _ = s.assets.replaceFigures(Ck, List(fig("a2.png", "a")))
-    assertEquals(s.links.list(None, None, None, None).links.map(l => (l.assetName, l.targetId)), List("a2.png" -> "zq_x"))
+    assertEquals(
+      s.links.list(None, None, None, None).links.map(l => (l.assetName, l.targetId)),
+      List("a2.png" -> "zq_x")
+    )
   }
 
 class AssetLinkServiceInMemorySuite extends AssetLinkServiceContract with MediaStoreSuite.InMemory

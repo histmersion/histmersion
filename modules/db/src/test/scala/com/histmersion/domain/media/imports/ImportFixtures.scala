@@ -43,10 +43,18 @@ object ImportFixtures:
     connect(ds)(ImportRepo.mapPlacesNamed(keys))
   def placeExternalIds(ds: DataSource, ids: List[String]): Map[String, Set[(String, String)]] =
     connect(ds)(ImportRepo.placeExternalIds(ids))
-  def pleiadesIds(ds: DataSource, ids: List[String]): Map[String, List[String]] = connect(ds)(ImportRepo.pleiadesIds(ids))
+  def pleiadesIds(ds: DataSource, ids: List[String]): Map[String, List[String]] =
+    connect(ds)(ImportRepo.pleiadesIds(ids))
   def mapPlacesWithIds(ds: DataSource, ids: List[(String, String)]): Map[(String, String), List[PlaceFacts]] =
     connect(ds)(ImportRepo.mapPlacesWithIds(ids))
   def commonsCategory(ds: DataSource, placeId: String, category: String, qid: String): Boolean =
     transact(ds)(ImportRepo.commonsCategory(placeId, category, qid))
-  def checked(ds: DataSource, provider: String, targetType: String, targetId: String, found: Int, qid: Option[String] = None): Unit =
+  def checked(
+      ds: DataSource,
+      provider: String,
+      targetType: String,
+      targetId: String,
+      found: Int,
+      qid: Option[String] = None
+  ): Unit =
     transact(ds)(ImportRepo.checked(provider, targetType, targetId, found, qid))

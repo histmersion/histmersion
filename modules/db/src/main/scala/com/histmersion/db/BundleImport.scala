@@ -126,6 +126,11 @@ object BundleImport:
 
   private def rLit(p: Option[BundleRange]): Option[String] = BundleSql.rangeLiteral(p)
 
+  /** What an import's steps compute once, the first time one asks ([[Writer.once]]): an index of the bundle's lines a
+    * kind's steps share.
+    */
+  final class Once[A](val make: Writer => A)
+
   /** Applies the decided lines, one step per kind's part. One instance per import; it remembers what the later steps
     * need, and gives every kind's steps what they share: the lines and this collection's rows, which lines are written,
     * what the merge decided besides them, the labels records have here now, and the rows written as this collection's
@@ -189,8 +194,14 @@ object BundleImport:
     private val bodyChanged = scala.collection.mutable.LinkedHashSet.empty[UUID]
     private val sourcesTouched = scala.collection.mutable.LinkedHashSet.empty[UUID]
     private val insertedSources = scala.collection.mutable.LinkedHashSet.empty[UUID]
-    private val assetsBy = es.assets.map(a => a.uid -> a).toMap
     private val versionsBy = es.versions.map(v => v.uid -> v).toMap
+    private val computed = scala.collection.mutable.Map.empty[Once[?], Any]
+
+    /** A source a kind's step wrote under: its finding places are placed again in the derived step. */
+    def touchSource(u: UUID): Unit = sourcesTouched += u
+
+    /** What `o` computes of this import, computed the first time a step asks. */
+    def once[A](o: Once[A]): A = computed.getOrElseUpdate(o, o.make(this)).asInstanceOf[A]
 
     /** Tombstones first: a row the other side deleted makes room for one it created in its place. */
     def tombstones(): Unit =
@@ -478,39 +489,10 @@ object BundleImport:
                 updated_at = EXCLUDED.updated_at""".update.run()
       }
 
-    /** Asset metadata whose bytes are already here (same sha): no blob needed. */
-    def assetMetadata(): Unit =
-      val localSha = local.assets.map(a => a.uid -> a.sha256).toMap
-      es.assets.filter(a => writes(a.uid) && localSha.get(a.uid).contains(a.sha256)).foreach(writeAsset(_, None))
-
-    private def writeAsset(a: BundleAsset, bytes: Option[Array[Byte]]): Unit =
-      sourcesTouched += a.sourceUid
-      val ck = citekeyOf(a.sourceUid)
-      bytes match
-        case Some(b) =>
-          sql"""INSERT INTO assets (uid, origin, citekey, name, mime, bytes, sha256, width, height, kind, caption,
-                  license, geom, period, updated_at)
-                VALUES (${a.uid}, ${a.origin}, $ck, ${a.name}, ${a.mime}, $b, ${a.sha256}, ${a.width}, ${a.height},
-                  ${a.kind}, ${a.caption}, ${a.license}, ST_GeomFromEWKB(decode(${a.geom}, 'hex')),
-                  ${rLit(a.period)}::int8range,
-                  ${a.updatedAt}::timestamptz)
-                ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, name = EXCLUDED.name,
-                  mime = EXCLUDED.mime, bytes = EXCLUDED.bytes, sha256 = EXCLUDED.sha256, width = EXCLUDED.width,
-                  height = EXCLUDED.height, kind = EXCLUDED.kind, caption = EXCLUDED.caption,
-                  license = EXCLUDED.license, geom = EXCLUDED.geom, period = EXCLUDED.period,
-                  updated_at = EXCLUDED.updated_at""".update.run()
-        case None =>
-          sql"""UPDATE assets SET origin = ${a.origin}, name = ${a.name}, mime = ${a.mime}, width = ${a.width},
-                  height = ${a.height}, kind = ${a.kind}, caption = ${a.caption}, license = ${a.license},
-                  geom = ST_GeomFromEWKB(decode(${a.geom}, 'hex')),
-                  period = ${rLit(a.period)}::int8range,
-                  updated_at = ${a.updatedAt}::timestamptz
-                WHERE uid = ${a.uid}""".update.run()
-
     // ── pass 2: the blobs, each use by its kind ──
 
-    /** Where a blob use of these lines goes: a body, a version's text and an asset's bytes into their rows, a stored
-      * original into `files`.
+    /** Where a blob use of these lines goes: a body and a version's text into their rows, a stored original into
+      * `files`. An asset's bytes are taken by the media's own kind.
       */
     def blobSink(use: BlobUse, sha: String, files: ContentStore): BlobSink = use match
       case BlobUse.Body(u) =>
@@ -529,7 +511,7 @@ object BundleImport:
                   body = EXCLUDED.body, summary = EXCLUDED.summary,
                   updated_at = EXCLUDED.updated_at, created_at = EXCLUDED.created_at""".update.run(): Unit
         }
-      case BlobUse.AssetBytes(u) => BlobSink.Held(bytes => writeAsset(assetsBy(u), Some(bytes)))
+      case BlobUse.AssetBytes(u) => throw IllegalArgumentException(s"asset $u: its bytes are the media's kind to take")
 
     // ── after the blobs ──
 
@@ -541,20 +523,6 @@ object BundleImport:
                 WHERE uid = $u""".update.run()
         }
         bodyChanged += u
-      }
-
-    def assetLinks(): Unit =
-      es.assetLinks.filter(l => writes(l.uid)).foreach { l =>
-        val (ck, name) =
-          sql"""SELECT citekey, name FROM assets WHERE uid = ${l.assetUid}""".query[(String, String)].run().head
-        val target = targetLabel(l.targetType, l.targetId, l.targetUid)
-        sql"""INSERT INTO asset_links (uid, origin, citekey, asset_name, relation, target_type, target_id, xywh, notes, updated_at)
-              VALUES (${l.uid}, ${l.origin}, $ck, $name, ${l.relation}, ${l.targetType}, $target, ${l.xywh},
-                ${l.notes}, ${l.updatedAt}::timestamptz)
-              ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, citekey = EXCLUDED.citekey,
-                asset_name = EXCLUDED.asset_name, relation = EXCLUDED.relation,
-                target_type = EXCLUDED.target_type, target_id = EXCLUDED.target_id, xywh = EXCLUDED.xywh,
-                notes = EXCLUDED.notes, updated_at = EXCLUDED.updated_at""".update.run()
       }
 
     // ── the derived state, recomputed for what changed (with the import flag OFF: local consequences) ──

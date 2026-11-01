@@ -52,8 +52,17 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
 
   override def pairIssue(kind: IssueKind): Boolean = runs.exists(_.pairIssue(kind))
 
+  override def foldPairFirst(
+      right: BundleSource,
+      left: BundleSource,
+      keepsBundleBody: Boolean,
+      folds: PlanFolds
+  ): Unit = runs.foreach(_.foldPairFirst(right, left, keepsBundleBody, folds))
+
   override def foldPair(right: BundleSource, left: BundleSource, alt: Option[DecisionKind], folds: PlanFolds): Unit =
     runs.foreach(_.foldPair(right, left, alt, folds))
+
+  override def relabel(relabels: PlanRelabels): Unit = runs.foreach(_.relabel(relabels))
 
   override def decided(issue: MergeIssue, folds: PlanFolds): Unit = runs.foreach(_.decided(issue, folds))
 
@@ -67,3 +76,5 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
   override def fixes: List[MergePlanner.AttestationFix] = runs.flatMap(_.fixes)
 
   override def tombstones: List[(UUID, BundleKind, UUID)] = runs.flatMap(_.tombstones)
+
+  override def bodyRenames: Map[UUID, List[(String, String)]] = runs.flatMap(_.bodyRenames).toMap

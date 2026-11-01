@@ -3,7 +3,6 @@ package com.histmersion.domain
 import com.histmersion.util.data.exchange.{BundleFormat, Diff3}
 import scala.annotation.tailrec
 import com.histmersion.api.{
-  AssetLinks,
   BundleArticle,
   BundleFinding,
   BundleGoal,
@@ -272,17 +271,6 @@ object MergeFold:
     val Num = s"""^${java.util.regex.Pattern.quote(citekey)}#(\\d+)$$""".r
     val top = taken.toList.collect { case Num(n) => n.toInt }.maxOption.getOrElse(0)
     Iterator.from(top + 1).map(n => s"$citekey#$n").filterNot(taken).take(count).toList
-
-  // ── assets ──────────────────────────────────────────────────────────────────────────────────
-
-  /** An asset name not taken in the survivor: `<stem>-<label>.<ext>` (then `-2`, `-3`…). `~` of the design is not
-    * link-safe in Markdown, so a hyphen.
-    */
-  def freeAssetName(name: String, label: String, taken: Set[String]): String =
-    val dot = name.lastIndexOf('.')
-    val (stem, ext) = if dot > 0 then (name.take(dot), name.drop(dot)) else (name, "")
-    val tag = AssetLinks.safeName(label)
-    Iterator.from(1).map(i => s"$stem-$tag${if i == 1 then "" else s"-$i"}$ext").find(n => !taken(n)).get
 
   // ── goals ───────────────────────────────────────────────────────────────────────────────────
 

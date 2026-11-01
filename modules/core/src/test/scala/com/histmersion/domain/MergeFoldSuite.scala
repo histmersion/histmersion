@@ -140,15 +140,12 @@ class MergeFoldSuite extends munit.FunSuite:
     assert(!MergeFold.samePlace(lefts.head, far, 50))
     assert(MergeFold.samePlace(lefts.head, far.copy(region = Some("anatolia")), 50))
 
-  test("finding ids continue after the highest; asset names take the other collection's label"):
+  test("finding ids continue after the highest"):
     assertEquals(
       MergeFold.nextFindingIds("a2000_x", Set("a2000_x#1", "a2000_x#7", "b2000_y#9"), 2),
       List("a2000_x#8", "a2000_x#9")
     )
     assertEquals(MergeFold.nextFindingIds("a2000_x", Set.empty, 1), List("a2000_x#1"))
-    assertEquals(MergeFold.freeAssetName("fig3.png", "work", Set("fig3.png")), "fig3-work.png")
-    assertEquals(MergeFold.freeAssetName("fig3.png", "work", Set("fig3.png", "fig3-work.png")), "fig3-work-2.png")
-    assertEquals(MergeFold.freeAssetName("README", "my laptop", Set("README")), "README-my-laptop")
 
   test("goals, queue items and events folded"):
     val gl = MergeFixture.goal("g1", "zz_g", "Goal", home, Some("home's plan")).copy(status = GoalStatus.Seeding)

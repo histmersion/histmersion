@@ -92,5 +92,4 @@ object CheckRulesAdapter:
       listed(owner, DanglingArticleLinks, ArticleFiller, ArticleUncitedParagraph, ArticleThinSummary) ++
         List(fixed(owner, ArticleCritiquePairing, FixWhen.WhenNamed)(pairCritiques)) ++
         listed(owner, ArticleFormat)
-    case TablesAdapter.MediaOwner => listed(owner, MediaLicenceRule)
-    case _                        => Nil
+    case _ => Nil

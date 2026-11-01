@@ -2,10 +2,10 @@ package com.histmersion.domain.media.assets
 
 import scala.annotation.tailrec
 
-/** What replacing a source's figures does to the rows already there (#826), given (name, sha256) of the existing and the
-  * incoming set: an incoming name that exists is that row (updated in place); an incoming name that does not exist takes
-  * over an existing row with the same sha256 that no name claimed (`renames`, existing → incoming); every existing row
-  * left over is `deletes`.
+/** What replacing a source's figures does to the rows already there (#826), given (name, sha256) of the existing and
+  * the incoming set: an incoming name that exists is that row (updated in place); an incoming name that does not exist
+  * takes over an existing row with the same sha256 that no name claimed (`renames`, existing → incoming); every
+  * existing row left over is `deletes`.
   */
 final case class Reconciled(renames: List[(String, String)], deletes: List[String])
 
