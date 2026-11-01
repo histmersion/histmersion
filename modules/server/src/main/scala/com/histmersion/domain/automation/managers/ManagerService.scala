@@ -5,16 +5,16 @@ import com.histmersion.api.Managers.*
 import com.histmersion.db.ManagerRepo
 import com.histmersion.domain.automation.AutomationState
 import com.histmersion.util.database.Transactor
-import com.histmersion.util.jobs.{JobRunState, JobRuns}
+import com.histmersion.util.jobs.{JobRuns, JobRunState}
 import com.histmersion.values.GoalLinkKind
 import hearth.kindlings.optics.syntax.*
 
 import java.time.{Clock, Instant, ZoneOffset}
 import java.util.concurrent.atomic.AtomicReference
 
-/** The process managers as the engine's other features reach them: a manager and its settings, its items (added,
-  * held and released for the focus), its events, and the few reads over every manager at once that the autopilot, the
-  * focus, the scheduler and the digest make.
+/** The process managers as the engine's other features reach them: a manager and its settings, its items (added, held
+  * and released for the focus), its events, and the few reads over every manager at once that the autopilot, the focus,
+  * the scheduler and the digest make.
   */
 trait ManagerService:
   def get(id: String): Option[ManagerInfo]
@@ -260,9 +260,7 @@ object ManagerService:
           text(m.createdAt),
           text(m.updatedAt),
           ItemCounts.of(counted(items.filter(_.managerId == id).map(_.status)).toList),
-          runs.count(r =>
-            r.row.managerId.contains(id) && Set("queued", "running", "paused", "waiting")(r.row.status)
-          ),
+          runs.count(r => r.row.managerId.contains(id) && Set("queued", "running", "paused", "waiting")(r.row.status)),
           events.filter(_.managerId == id).maxByOption(_.id).map(view),
           today.map(_.costUsd).sum.toDouble,
           today.map(s => s.usage.input + s.usage.output).sum
@@ -270,7 +268,11 @@ object ManagerService:
       }
     def list(): List[ManagerInfo] = managers.sortBy(m => (m.createdAt, m.id)).toList.flatMap(m => get(m.id))
     def pending(managerId: String): List[ManagerItem] =
-      items.filter(i => i.managerId == managerId && i.status == "pending").sortBy(i => (-i.priority, i.id)).toList.map(view)
+      items
+        .filter(i => i.managerId == managerId && i.status == "pending")
+        .sortBy(i => (-i.priority, i.id))
+        .toList
+        .map(view)
     def light(): List[ManagerLight] =
       managers
         .sortBy(_.id)
@@ -501,7 +503,9 @@ object ManagerService:
     def runningByGoal(): Map[String, Int] =
       counted(
         items
-          .filter(i => i.status == "active" && runOf(i).exists(r => r.row.status == "queued" || r.row.status == "running"))
+          .filter(i =>
+            i.status == "active" && runOf(i).exists(r => r.row.status == "queued" || r.row.status == "running")
+          )
           .flatMap(goalOf)
       )
     def sweepOutcomes(): Map[String, String] =

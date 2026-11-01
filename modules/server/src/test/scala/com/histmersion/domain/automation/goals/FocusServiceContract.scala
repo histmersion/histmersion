@@ -2,7 +2,7 @@ package com.histmersion.domain.automation.goals
 
 import com.histmersion.api.GoalPut
 import com.histmersion.api.Managers.*
-import com.histmersion.domain.automation.{EngineStoreSuite, EngineStores}
+import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
 import com.histmersion.values.GoalLinkKind
 
 import java.time.Instant
@@ -14,9 +14,16 @@ abstract class FocusServiceContract extends EngineStoreSuite:
   private def f(s: EngineStores) = s.focus
   private val t = Instant.parse("2026-11-03T06:00:00Z")
 
-  stest("every goal with what the focus recorded: joined, left, a person's pin and priority (only of a goal that exists)") { s =>
-    List("zz-a", "zz-b").foreach(g => assert(s.goals.put(g, GoalPut(g, parentSlug = Option.when(g == "zz-b")("zz-a"))).isRight))
-    assertEquals(f(s).goals().map(g => (g.slug, g.active, g.pinned, g.priority, g.parent)), List(("zz-a", false, false, 0, None), ("zz-b", false, false, 0, Some("zz-a"))))
+  stest(
+    "every goal with what the focus recorded: joined, left, a person's pin and priority (only of a goal that exists)"
+  ) { s =>
+    List("zz-a", "zz-b").foreach(g =>
+      assert(s.goals.put(g, GoalPut(g, parentSlug = Option.when(g == "zz-b")("zz-a"))).isRight)
+    )
+    assertEquals(
+      f(s).goals().map(g => (g.slug, g.active, g.pinned, g.priority, g.parent)),
+      List(("zz-a", false, false, 0, None), ("zz-b", false, false, 0, Some("zz-a")))
+    )
     f(s).joined("zz-a", "pinned", t)
     assert(f(s).pin("zz-a", pinned = true))
     assert(f(s).priority("zz-b", 5))
@@ -26,7 +33,10 @@ abstract class FocusServiceContract extends EngineStoreSuite:
     assertEquals((a.active, a.pinned, a.since, a.why), (true, true, Some("2026-11-03T06:00:00Z"), Some("pinned")))
     f(s).left("zz-a", "done", t.plusSeconds(60))
     val Some(a2) = f(s).goals().find(_.slug == "zz-a"): @unchecked
-    assertEquals((a2.active, a2.leftAt, a2.leftWhy, a2.pinned), (false, Some("2026-11-03T06:01:00Z"), Some("done"), true))
+    assertEquals(
+      (a2.active, a2.leftAt, a2.leftWhy, a2.pinned),
+      (false, Some("2026-11-03T06:01:00Z"), Some("done"), true)
+    )
     assertEquals(f(s).goals().find(_.slug == "zz-b").map(_.priority), Some(5))
     assert(f(s).goals().forall(_.createdAt.nonEmpty))
   }
