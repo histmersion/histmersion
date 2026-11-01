@@ -1,6 +1,6 @@
 """Live-volume driver: fixed requests against a scratch server; digests, counts and timings only.
 usage: live_driver.py BASE_URL OUT_TSV [ROUNDS]"""
-import sys, math, hashlib, time, json, urllib.request, urllib.error, statistics
+import sys, math, hashlib, time, json, urllib.request, urllib.error, urllib.parse, statistics
 
 base, out = sys.argv[1], sys.argv[2]
 rounds = int(sys.argv[3]) if len(sys.argv) > 3 else 20
@@ -39,6 +39,24 @@ for p in periods:
     reqs.append(("histogram", f"/api/aggregate?{p}"))
     reqs.append(("histogram", f"/api/aggregate?by=region&{p}"))
 
+# one place of each search's first answer: its detail, counts, children, tree, footprints and links, and what its id
+# selects; recorded under a symbolic name (the place's id is looked up at run time and never written)
+labels = {}
+def first_place(q):
+    with urllib.request.urlopen(base + f"/api/places?q={q}&limit=1", timeout=600) as r:
+        hits = json.loads(r.read())
+    return hits[0]["id"] if hits else None
+for q in ("hatt", "myc", "bab"):
+    pid = first_place(q)
+    if pid is None: continue
+    ref = urllib.parse.quote(pid, safe="")
+    for suffix in ("", "?counts=true", "?asOf=-1300", "/children", "/children?asOf=-1300", "/tree", "/tree?asOf=-1300&depth=2", "/footprints", "/links"):
+        path = f"/api/places/{ref}{suffix}"
+        reqs.append(("place", path)); labels[path] = f"/api/places/{{{q}}}{suffix}"
+    for sel in ("findings?place=", "events?place=", "aggregate?by=region&place="):
+        path = f"/api/{sel}{ref}"
+        reqs.append(("place-scope", path)); labels[path] = f"/api/{sel}{{{q}}}"
+
 def fetch(path):
     t0 = time.perf_counter()
     try:
@@ -69,5 +87,5 @@ with open(out, "w") as f:
     for i, (k, p) in enumerate(reqs):
         ts = sorted(times[p]); med = statistics.median(ts); p95 = ts[max(0, math.ceil(0.95 * len(ts)) - 1)]
         s, n, h, e = first[p]
-        f.write(f"{i:03d}\t{k}\t{p}\t{s}\t{n}\t{h}\t{e}\t{med:.1f}\t{p95:.1f}\n")
-print(f"{len(reqs)} requests, unstable {len(unstable)}: {unstable[:5]}")
+        f.write(f"{i:03d}\t{k}\t{labels.get(p, p)}\t{s}\t{n}\t{h}\t{e}\t{med:.1f}\t{p95:.1f}\n")
+print(f"{len(reqs)} requests, unstable {len(unstable)}: {[labels.get(u, u) for u in unstable[:5]]}")

@@ -64,9 +64,11 @@ class CatalogueOracleSuite extends DbSuite:
       basemap = base.basemap.copy(dir = tmp.resolve(s"$name-basemap").toString)
     )
 
-  private def withServer[A](name: String)(body: String => A): A =
+  private def withServer[A](name: String)(body: String => A): A = withServerOn(cfgFor(name))(body)
+
+  private def withServerOn[A](cfg: AppConfig)(body: String => A): A =
     supervised {
-      val b = Composition.server(cfgFor(name), "127.0.0.1", 0, OfflineConverter()).start()
+      val b = Composition.server(cfg, "127.0.0.1", 0, OfflineConverter()).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }
@@ -919,6 +921,158 @@ class CatalogueOracleSuite extends DbSuite:
         s"# imported into an empty collection\n${answers(homeImport, n)}${rows(home, n)}" +
         s"# the merge plan of the next bundle\n${json(plan, n)}\n"
     )
+
+  // ── the gazetteer's own loads: the bundled seed, a pinned extract, an LPF drop, the geocoder ──────
+
+  /** A seed of the gazetteer as the bundle ships it: a top-level file, then a directory whose name gives the kind. */
+  private val seedRegions =
+    s"""{"type":"FeatureCollection","features":[
+       |{"@id":"zzs_shore","type":"Feature","properties":{"title":"Zzshore"},
+       | "names":[{"toponym":"Zzshore","lang":"en"},{"toponym":"Zzküste","lang":"de"}],
+       | "geometry":${polygon(30, 36, 40, 42)}},
+       |{"@id":"zzs_vale","type":"Feature","properties":{"title":"Zzvale"},
+       | "when":{"timespans":[{"start":{"in":"-1800"},"end":{"in":"-1100"}}]},
+       | "geometry":${polygon(33, 38, 36, 41)},
+       | "relations":[{"relationType":"gvp:broaderPartitive","relationTo":"zzs_shore"}]}
+       |]}""".stripMargin
+
+  private val seedSites =
+    """{"type":"FeatureCollection","features":[
+      |{"@id":"zzs_tell","type":"Feature","properties":{"title":"Zztell"},
+      | "when":{"timespans":[{"start":{"in":"-1700"},"end":{"in":"-1200"}}]},
+      | "names":[{"toponym":"Zztell","lang":"en"},{"toponym":"Zzhöyük","lang":"tr"}],
+      | "geometry":{"type":"Point","coordinates":[34.6,40.0]}},
+      |{"@id":"zzs_ford","type":"Feature","properties":{"title":"Zzford"},
+      | "geometry":{"type":"Point","coordinates":[35.1,39.4]}},
+      |{"@id":"zzs_orphan","type":"Feature","properties":{"title":"Zzorphan"},
+      | "geometry":{"type":"Point","coordinates":[34.0,39.0]},
+      | "relations":[{"relationType":"gvp:broaderPartitive","relationTo":"zzs_nowhere"}]}
+      |]}""".stripMargin
+
+  private val FixtureSha = "20af2b1dd68f5bce2a5c9ea67bb06862038a7e007eb2d7872a4dfdb763954e5b"
+
+  private def copyFixture(name: String, to: Path): Unit =
+    val in = getClass.getResourceAsStream(s"/gazetteer/$name")
+    try { val _ = Files.copy(in, to, java.nio.file.StandardCopyOption.REPLACE_EXISTING) }
+    finally in.close()
+
+  /** An init data directory with the seed, the period presets and a manifest pinning the GeoNames fixture (and a TGN
+    * pin whose file is not there); the fixture in the extracts directory; the LPF fixtures in the drop folder.
+    */
+  private lazy val gazetteerCfg: AppConfig =
+    val d = tmp.resolve("gaz-init")
+    Files.createDirectories(d.resolve("places/sites"))
+    Files.createDirectories(d.resolve("periods"))
+    Files.createDirectories(d.resolve("gazetteer"))
+    val _ = Files.copy(Path.of("db/periods/periodo-seed.json"), d.resolve("periods/periodo-seed.json"))
+    val _ = Files.writeString(d.resolve("places/regions.json"), seedRegions, UTF_8)
+    val _ = Files.writeString(d.resolve("places/sites/sites.json"), seedSites, UTF_8)
+    val pins = List(
+      GazetteerExtract(
+        "geonames",
+        "geonames-fixture.ndjson.gz",
+        FixtureSha,
+        438,
+        2,
+        "fixture-1",
+        "GeoNames fixture",
+        "CC BY 4.0",
+        Some("GeoNames (geonames.org)")
+      ),
+      GazetteerExtract("tgn", "tgn-absent.ndjson.gz", "0" * 64, 1, 1, "fixture-2", "TGN fixture", "ODC-By 1.0")
+    )
+    val _ = Files.writeString(d.resolve("gazetteer/extracts.json"), GazetteerManifest(pins).asJson.spaces2, UTF_8)
+    val extracts = tmp.resolve("gaz-extracts")
+    Files.createDirectories(extracts)
+    copyFixture("geonames-fixture.ndjson.gz", extracts.resolve("geonames-fixture.ndjson.gz"))
+    val lpf = tmp.resolve("gaz-lpf")
+    Files.createDirectories(lpf)
+    List("zzgaz_hittite.jsonld", "zzgaz_kultepe.tsv", "zzgaz_kultepe.meta.json").foreach(f =>
+      copyFixture(s"lpf/$f", lpf.resolve(f))
+    )
+    val c = cfgFor("gaz")
+    c.copy(
+      init = c.init.copy(dataDir = d.toString),
+      places = c.places.copy(sources = c.places.sources.copy(dir = extracts.toString, lpfDir = lpf.toString))
+    )
+
+  private def gazetteer(url: String, ds: DataSource): String =
+    val log = StringBuilder()
+    def step(name: String, answer: String): String =
+      log ++= s"== $name\n$answer\n"
+      answer
+    def job(name: String, answer: String): Unit =
+      val started = step(name, answer)
+      if started.startsWith("200 ") then
+        val _ = step(s"$name, the job", awaitJob(url, field(started, "id")))
+    val _ = step("sources before", get(s"$url/api/places/sources"))
+    job("init", post(s"$url/api/init"))
+    val _ = step("places after the seed", get(s"$url/api/places?q=Zztell"))
+    val _ = step("the seed's tree", get(s"$url/api/places/zzs_shore/tree"))
+    job("load geonames, a dry run", post(s"$url/api/places/load?source=geonames"))
+    job("load geonames", post(s"$url/api/places/load?source=geonames&apply=true"))
+    job("load tgn, its file missing", post(s"$url/api/places/load?source=tgn&apply=true"))
+    job("load lpf", post(s"$url/api/places/load?source=lpf&apply=true"))
+    val _ = step("load, unknown source", post(s"$url/api/places/load?source=nowhere"))
+    val _ = step("sources after", get(s"$url/api/places/sources"))
+    val _ = step("places after the loads", get(s"$url/api/places?q=zzgaz"))
+    val _ = step("a loaded place", get(s"$url/api/places?q=Hattusas"))
+    val _ = step("a name by hand", post(s"$url/api/places/zzs_ford/names", """{"name":"Zzcrossing","lang":"en"}"""))
+    val _ = step(
+      "an override",
+      post(
+        s"$url/api/places/zzs_ford/override",
+        """{"kind":"polity","periodStart":-1500,"periodEnd":-1000,"reason":"dug"}"""
+      )
+    )
+    val _ = step(
+      "a place by hand",
+      post(s"$url/api/places", """{"label":"Zzcairn","kind":"site","lon":34.7,"lat":40.1,"source":"survey"}""")
+    )
+    val _ = step("rebuild", post(s"$url/api/places/rebuild"))
+    val tools = List(
+      "place_names" -> Json.obj(),
+      "place_names" -> Json.obj("placeId" -> "zzs_ford".asJson),
+      "place_names" -> Json.obj("placeId" -> "zzs_tell".asJson, "name" -> "Zzmound of ash".asJson),
+      "place_names" -> Json
+        .obj("placeId" -> "zzs_tell".asJson, "name" -> "Zzmound of ash".asJson, "remove" -> true.asJson),
+      "place_names" -> Json.obj("placeId" -> "zzs_tell".asJson, "name" -> "Zztell".asJson, "remove" -> true.asJson),
+      "place_override" -> Json.obj(),
+      "place_override" -> Json.obj("placeId" -> "zzs_ford".asJson),
+      "places" -> Json.obj("query" -> "zzs".asJson),
+      "places" -> Json.obj("id" -> "zzs_vale".asJson, "asOf" -> (-1500).asJson)
+    )
+    tools.foreach((n, a) => step(s"tool $n ${a.noSpaces}", tool(url, n, a)))
+    // the geocoder, as the enrichment and the checks ask it
+    val asks = List(
+      ("Zztell", Geocode.KindHint.Site, Some(Period(-1500, -1400))),
+      ("Zzhöyük", Geocode.KindHint.Unknown, None),
+      ("Zzcrossing", Geocode.KindHint.Site, None),
+      ("Zzvale", Geocode.KindHint.Region, Some(Period(-1300, -1200))),
+      ("Eastern Zzshore", Geocode.KindHint.Region, None),
+      ("Zztell, Zzshore", Geocode.KindHint.Site, None),
+      ("Zzgaz Hattusas", Geocode.KindHint.Unknown, None),
+      ("Zznowhere", Geocode.KindHint.Unknown, None)
+    )
+    asks.foreach { (name, hint, at) =>
+      val r = Geocoder.resolve(ds, name, hint, at, 4)
+      val _ = step(
+        s"geocode $name ${hint.wire} ${at.map(p => s"${p.start}..${p.end}").getOrElse("-")}",
+        r.fold("none")(r =>
+          s"${r.describe} at ${r.lon} ${r.lat} approximate=${r.approximate.map(_.describe).mkString("; ")}"
+        )
+      )
+    }
+    val _ = step("lint", get(s"$url/api/lint"))
+    log.toString
+
+  test(
+    "the gazetteer: the bundled seed, its sources, a pinned extract and a drop folder loaded, names, overrides, the geocoder, as recorded"
+  ):
+    val gaz = scratch("gaz")
+    val text = withServerOn(gazetteerCfg)(url => gazetteer(url, gaz))
+    val n = names(List("gaz" -> gaz))
+    compare("gazetteer.txt", answers(text, n) + rows(gaz, n))
 
   private def postBytes(url: String, body: Array[Byte]): String =
     val r = raw(
