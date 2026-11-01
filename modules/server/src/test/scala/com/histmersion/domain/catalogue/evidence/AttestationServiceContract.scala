@@ -33,7 +33,10 @@ abstract class AttestationServiceContract extends CatalogueStoreSuite:
     val third = a.create(AttestationPut("zzat2021_two", "place", "zz_hill"))
     assert(first.id < second.id && second.id < third.id)
     assertEquals(a.get(first.id), Some(first))
-    assertEquals((first.quote, first.charEnd, first.ctsUrn, first.note), (Some("the hill"), Some(11), Some("urn:cts:x"), Some("n")))
+    assertEquals(
+      (first.quote, first.charEnd, first.ctsUrn, first.note),
+      (Some("the hill"), Some(11), Some("urn:cts:x"), Some("n"))
+    )
     assertEquals(a.get(third.id + 100), None)
     val all = a.list(None, None, None, 10, 0)
     assertEquals((all.total, all.attestations.map(_.id)), (3, List(first.id, second.id, third.id)))
@@ -45,7 +48,9 @@ abstract class AttestationServiceContract extends CatalogueStoreSuite:
     assertEquals(a.list(None, None, None, 0, -5).attestations.map(_.id), List(first.id))
     val patched = a.patch(first.id, AttestationPatch(note = Some("changed"), page = Some("13"))).toOption.get
     assertEquals(patched, first.copy(note = Some("changed"), page = Some("13")))
-    assert(a.patch(third.id + 100, AttestationPatch(note = Some("x"))).left.exists(_.message.contains("No attestation")))
+    assert(
+      a.patch(third.id + 100, AttestationPatch(note = Some("x"))).left.exists(_.message.contains("No attestation"))
+    )
     assert(a.delete(second.id))
     assert(!a.delete(second.id))
     assertEquals(a.list(None, None, None, 10, 0).attestations.map(_.id), List(first.id, third.id))
