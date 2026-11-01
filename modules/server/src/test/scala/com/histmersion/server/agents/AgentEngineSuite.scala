@@ -997,8 +997,9 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         Right(r.lines.mkString)
       }
 
+  /** Waits for the scripted process to write a pid; a minute, since every module's test JVMs may be running at once. */
   private def awaitFile(f: java.nio.file.Path): Long =
-    val deadline = System.currentTimeMillis() + 10000
+    val deadline = System.currentTimeMillis() + 60000
     while (!java.nio.file.Files.exists(f) || java.nio.file.Files.readString(f).trim.isEmpty) && System
         .currentTimeMillis() < deadline
     do Thread.sleep(50)
