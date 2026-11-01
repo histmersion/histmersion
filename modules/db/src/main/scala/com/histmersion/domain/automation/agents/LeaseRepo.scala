@@ -27,7 +27,10 @@ object LeaseRepo:
   /** Who holds it, until when, and whether that is in the past. */
   def holder(name: String)(using DbCon): Option[(String, String, Boolean)] =
     Sql
-      .of(s"SELECT owner, to_char(until AT TIME ZONE 'UTC', $ts), until < now() FROM agent_leases WHERE name = ?", Param.S(name))
+      .of(
+        s"SELECT owner, to_char(until AT TIME ZONE 'UTC', $ts), until < now() FROM agent_leases WHERE name = ?",
+        Param.S(name)
+      )
       .frag
       .query[(String, String, Boolean)]
       .run()

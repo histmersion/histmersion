@@ -14028,9 +14028,6 @@
           "name": "given_DbCodec_ItemRow$lzy1"
         },
         {
-          "name": "given_DbCodec_Light$lzy1"
-        },
-        {
           "name": "given_DbCodec_ManagerEvent$lzy1"
         },
         {
@@ -14051,7 +14048,7 @@
       "type": "com.histmersion.db.ManagerRepo$HintRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy5"
+          "name": "derived$DbCodec$lzy4"
         }
       ]
     },
@@ -14060,14 +14057,6 @@
       "fields": [
         {
           "name": "derived$DbCodec$lzy2"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.db.ManagerRepo$Light$",
-      "fields": [
-        {
-          "name": "derived$DbCodec$lzy3"
         }
       ]
     },
@@ -14083,7 +14072,7 @@
       "type": "com.histmersion.db.ManagerRepo$SweepAcquireItem$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy4"
+          "name": "derived$DbCodec$lzy3"
         }
       ]
     },
@@ -16981,6 +16970,17 @@
         },
         {
           "name": "given_Schema_FollowupsInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.automation.managers.ManagerLight$",
+      "fields": [
+        {
+          "name": "given_DbCodec_ManagerConfig$lzy1"
+        },
+        {
+          "name": "given_DbCodec_ManagerLight$lzy1"
         }
       ]
     },

@@ -3,13 +3,13 @@ package com.histmersion.domain.automation.managers
 import com.histmersion.api.GoalPut
 import com.histmersion.api.Agents.JobKind
 import com.histmersion.api.Managers.*
-import com.histmersion.domain.automation.{EngineStoreSuite, EngineStores}
+import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
 import com.histmersion.values.GoalLinkKind
 
 import java.time.Instant
 
-/** The contract the managers keep: made once, their settings; items added once and brought back, held and released
-  * (for a person, for the focus), settled and dispatched; events; the reads over every manager at once.
+/** The contract the managers keep: made once, their settings; items added once and brought back, held and released (for
+  * a person, for the focus), settled and dispatched; events; the reads over every manager at once.
   */
 abstract class ManagerServiceContract extends EngineStoreSuite:
   private def m(s: EngineStores) = s.managers
@@ -18,7 +18,17 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
 
   stest("a manager is made once; its state, settings and cron; light, with whether it has a plan-goal item") { s =>
     goal(s, "zz-g")
-    assert(m(s).create("seed:zz-g", Kind.Seed, Some("zz-g"), State.Active, ManagerConfig(maxRuns = Some(2)), Some("@daily"), Some(t)))
+    assert(
+      m(s).create(
+        "seed:zz-g",
+        Kind.Seed,
+        Some("zz-g"),
+        State.Active,
+        ManagerConfig(maxRuns = Some(2)),
+        Some("@daily"),
+        Some(t)
+      )
+    )
     assert(!m(s).create("seed:zz-g", Kind.Seed, Some("zz-g"), State.Paused, ManagerConfig()), "the id is taken")
     assert(m(s).create("review", Kind.Review, None, State.Paused, ManagerConfig()))
     val got = m(s).get("seed:zz-g").get
@@ -60,7 +70,10 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     val run = s.run("zz-a", manager = Some("review"), item = Some(a))
     assert(m(s).dispatch(a, run, ItemState(before = Some(2))))
     assert(!m(s).dispatch(a, run, ItemState()), "not pending")
-    assertEquals(m(s).item(a).map(i => (i.status, i.runId, i.attempts, i.state.before)), Some(("active", Some(run), 1, Some(2))))
+    assertEquals(
+      m(s).item(a).map(i => (i.status, i.runId, i.attempts, i.state.before)),
+      Some(("active", Some(run), 1, Some(2)))
+    )
     assertEquals(m(s).openFor("zz-a").map(_.id), List(a))
     assertEquals(m(s).openKeys("review").toSet, Set(("article-review", "zz-a"), ("article-review", "zz-b")))
     assertEquals(m(s).openOf("review", List("article-review"), List("active")), 1)
@@ -74,7 +87,9 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
 
   stest("the focus holds pending items only, and releases only its own holds") { s =>
     assert(m(s).create("watch:zz", Kind.Watch, None, State.Active, ManagerConfig()))
-    val ids = (1 to 3).toList.map(i => m(s).upsert("watch:zz", OaIngest, s"10.1/$i", ItemOrigin.Selection, 0, reopen = false)._1)
+    val ids = (1 to 3).toList.map(i =>
+      m(s).upsert("watch:zz", OaIngest, s"10.1/$i", ItemOrigin.Selection, 0, reopen = false)._1
+    )
     assert(m(s).focusHold(ids(0), Hold(reason = "focus", focus = Some("zz"))))
     assert(m(s).focusHold(ids(1), Hold(reason = "focus", focus = Some("zz"))))
     assert(!m(s).focusHold(ids(1), Hold(reason = "again", focus = Some("zz"))), "not pending")
@@ -104,9 +119,15 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     assertEquals(m(s).countEventsAll(Feed.Ingested, Instant.parse("2099-01-01T00:00:00Z")), 0)
     val (i, _) = m(s).upsert("watch:zz-g", AcquisitionSweep, "zz-g", ItemOrigin.Selection, 0, reopen = false)
     val _ = m(s).upsert("watch:zz-g", OaIngest, "10.1/x", ItemOrigin.Selection, 0, reopen = false)
-    assertEquals(m(s).pace(Instant.parse("2000-01-01T00:00:00Z")).get("watch:zz-g").map(p => (p._1, p._2, p._3.isDefined)), Some((1, 0, true)))
+    assertEquals(
+      m(s).pace(Instant.parse("2000-01-01T00:00:00Z")).get("watch:zz-g").map(p => (p._1, p._2, p._3.isDefined)),
+      Some((1, 0, true))
+    )
     assert(m(s).settle(i, ItemStatus.Done, "swept 3", List(ItemStatus.Pending)))
-    assertEquals(m(s).pace(Instant.parse("2000-01-01T00:00:00Z")).get("watch:zz-g").map(p => (p._1, p._2)), Some((0, 1)))
+    assertEquals(
+      m(s).pace(Instant.parse("2000-01-01T00:00:00Z")).get("watch:zz-g").map(p => (p._1, p._2)),
+      Some((0, 1))
+    )
     assertEquals(m(s).pace(Instant.parse("2099-01-01T00:00:00Z")).get("watch:zz-g").map(_._2), Some(0))
     assertEquals(m(s).sweepOutcomes(), Map("zz-g" -> "swept 3"))
     assert(m(s).lastProgress().contains("zz-g"))
@@ -128,12 +149,20 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     assert(s.runs.move(JobKind, r2, "queued", "running", None, None, None))
     assert(s.runs.move(JobKind, r2, "running", "waiting", None, None, None))
     assertEquals(m(s).running("seed:zz-g"), 1)
-    assertEquals(m(s).occupyingRuns().toSet, Set[(String, Option[String])](("propose-articles", Some("zz-g")), ("enrich-source", None)))
+    assertEquals(
+      m(s).occupyingRuns().toSet,
+      Set[(String, Option[String])](("propose-articles", Some("zz-g")), ("enrich-source", None))
+    )
     assertEquals(m(s).recentKinds(5), List(ArticleCompile, ProposeArticles))
     assertEquals(m(s).recentKinds(1), List(ArticleCompile))
     assertEquals(m(s).runningByGoal(), Map("zz-g" -> 1))
     assertEquals(m(s).forPerson(), 1, "an active item whose run waits for an approval")
-    assert(m(s).hold(m(s).upsert("seed:zz-g", PlanGoalItem, "zz-g", ItemOrigin.Selection, 0, reopen = false)._1, Hold(reason = "p")))
+    assert(
+      m(s).hold(
+        m(s).upsert("seed:zz-g", PlanGoalItem, "zz-g", ItemOrigin.Selection, 0, reopen = false)._1,
+        Hold(reason = "p")
+      )
+    )
     assertEquals(m(s).personHeldByGoal(), Map("zz-g" -> 1))
     assertEquals(mine.nonEmpty, true)
   }
