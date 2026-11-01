@@ -113,8 +113,12 @@ object PluginAiClient:
     * failures are whole descriptions); its plan's own limit is [[ModelLimitReached]] (the chain's next model takes
     * over).
     */
-  final private[automation] class Turns(model: ModelRef, provider: AiProvider, http: AiHttp, conf: AgentConfig[Identity])
-      extends AgentBackend[Identity]:
+  final private[automation] class Turns(
+      model: ModelRef,
+      provider: AiProvider,
+      http: AiHttp,
+      conf: AgentConfig[Identity]
+  ) extends AgentBackend[Identity]:
     def tools: Seq[AgentTool[Identity, ?]] = conf.userTools
     def systemPrompt: Option[String] = conf.systemPrompt
 

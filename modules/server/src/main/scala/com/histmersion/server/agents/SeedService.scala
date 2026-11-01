@@ -26,7 +26,9 @@ final class SeedService(
     ds: DataSource,
     cfg: => AgentsConfig,
     h: com.histmersion.server.Handlers,
-    agents: AgentsHandlers
+    agents: AgentsHandlers,
+    acquisition: () => AgentUpstream,
+    backlog: OaBacklog
 ):
 
   /** The goals to seed now, in the scheduler's order: unfinished, no source linked, a watcher, not swept in
@@ -76,15 +78,15 @@ final class SeedService(
 
   /** Sweep one goal's candidates and queue its legal open-access ones for ingest. */
   def seed(goal: String): Option[String] =
-    agents.acquisition.sweepCandidates(goal, dryRun = false) match
+    acquisition().sweepCandidates(goal, dryRun = false) match
       case Left(why) =>
         scribe.info(s"seed before the plan: goal $goal not swept: $why")
         None
       case Right(sw) =>
-        val fresh = agents.acquisition.candidates(goal, Candidates.State.New.wire, 200).getOrElse(Nil)
+        val fresh = acquisition().candidates(goal, Candidates.State.New.wire, 200).getOrElse(Nil)
         val oa = fresh.filter(_.isOa).take(math.max(0, cfg.scheduler.seedIngestPerGoal))
         val placed = oa.map { c =>
-          c -> agents.oaBacklog.add(
+          c -> backlog.add(
             watchId(goal),
             goal,
             OaWork(
@@ -99,7 +101,7 @@ final class SeedService(
           )
         }
         val queued = placed.count(_._2 == IngestBacklog.Placement.New)
-        val _ = agents.acquisition.markCandidates(oa.map(_.id), Candidates.State.Queued.wire)
+        val _ = acquisition().markCandidates(oa.map(_.id), Candidates.State.Queued.wire)
         val line = s"$goal: ${sw.found} found, ${sw.added} new candidate(s), " +
           s"${Plural.count(queued, "legal open-access work")} queued for ingest (the plan is not needed for this)"
         ManagerRepo.event(ds, watchId(goal), None, None, Feed.Swept, s"seed before the plan — $line".take(2000))

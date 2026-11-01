@@ -156,7 +156,7 @@ final class SchedulerService(
       val over = m.config.models.getOrElse(Nil)
       val memo = collection.mutable.Map.empty[Pipeline, Either[String, List[PlanQuota.PoolId]]] // per manager and pass
       items.map { i =>
-        val pipeline = ManagerSupervisor.pipelineOf(i.kind)
+        val pipeline = agents.managers.pipelineOf(i.kind)
         val pools =
           if daily.isDefined then Right(Nil) else memo.getOrElseUpdate(pipeline, poolIds(over, now, List(pipeline)))
         val block = daily
@@ -263,7 +263,7 @@ final class SchedulerService(
   /** The pools every model of `c`'s role chains draws on, whether or not it is usable now. */
   private def chainPools(in: Inputs, c: Candidate): List[String] =
     val over = in.items.get(c.id).flatMap(_._1.config.models).getOrElse(Nil)
-    ManagerSupervisor
+    agents.managers
       .pipelineOf(c.kind)
       .roles
       .flatMap { r =>

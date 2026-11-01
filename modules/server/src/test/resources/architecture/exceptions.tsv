@@ -258,7 +258,6 @@ direction	server:domain/automation/agents/AgentsSettings.scala	automation -> lib
 direction	server:domain/automation/agents/AgentsSettings.scala	automation -> library: EnrichSource	1
 direction	server:domain/automation/agents/AgentsSettings.scala	automation -> research: AgentInferFilterConfig	1
 direction	server:domain/automation/agents/AgentsSettings.scala	automation -> research: FilterInference	1
-direction	server:domain/automation/agents/AgentsTools.scala	automation -> library: RepairAcquire	1
 direction	server:domain/automation/agents/AnswerSchemas.scala	automation -> library: EnrichSource	1
 direction	server:domain/automation/agents/AnswerSchemas.scala	automation -> research: CompileArticle	1
 direction	server:domain/automation/agents/AnswerSchemas.scala	automation -> research: FilterInference	1
@@ -286,28 +285,7 @@ direction	server:domain/automation/managers/DrainService.scala	automation -> spl
 direction	server:domain/automation/managers/HintEffectPipeline.scala	automation -> split: Handlers	1
 direction	server:domain/automation/managers/ManagerDefaultsViews.scala	automation -> library: AgentSeedConfig	1
 direction	server:domain/automation/managers/ManagerDefaultsViews.scala	automation -> library: SeedPlanDefaults	1
-direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> library: AcquisitionSweepPipeline	1
-direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> library: AutoEnrich	1
-direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> library: CandidateSweep	1
-direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> library: EnrichSource	1
-direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> library: IngestBacklog	1
-direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> research: ArticleFilter	1
-direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> research: ArticleRepo	1
-direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> research: CompileArticle	1
-direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> research: CompileArticlePipeline	1
-direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> research: ReviewArticle	1
-direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> research: ReviewLedger	1
-direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> research: ReviewLedgerRepo	1
-direction	server:domain/automation/managers/ManagerSupervisor.scala	automation -> split: Handlers	1
-direction	server:domain/automation/managers/ManagersHandlers.scala	automation -> library: Acquire	1
-direction	server:domain/automation/managers/ManagersHandlers.scala	automation -> library: AcquireChecks	1
-direction	server:domain/automation/managers/ManagersHandlers.scala	automation -> library: AutoEnrich	1
-direction	server:domain/automation/managers/ManagersHandlers.scala	automation -> library: EnrichSource	1
 direction	server:domain/automation/managers/ManagersHandlers.scala	automation -> library: Ingest	1
-direction	server:domain/automation/managers/ManagersHandlers.scala	automation -> library: OaBacklog	1
-direction	server:domain/automation/managers/ManagersHandlers.scala	automation -> library: RepairAcquire	1
-direction	server:domain/automation/managers/ManagersHandlers.scala	automation -> research: ArticleRepo	1
-direction	server:domain/automation/managers/ManagersHandlers.scala	automation -> split: Handlers	1
 direction	server:domain/automation/scheduler/SchedulerService.scala	automation -> split: Handlers	1
 direction	server:domain/automation/workflows/Pipelines.scala	automation -> split: Handlers	1
 direction	server:server/IngestHandlers.scala	library -> server: Deps	1
@@ -459,12 +437,9 @@ repository	server:domain/automation/managers/DrainService.scala	AgentRepo of aut
 repository	server:domain/automation/managers/DrainService.scala	AutopilotRepo of automation.autopilot	1
 repository	server:domain/automation/managers/HintEffectPipeline.scala	AgentRepo of automation.agents	1
 repository	server:domain/automation/managers/ManagerSupervisor.scala	AgentRepo of automation.agents	1
-repository	server:domain/automation/managers/ManagerSupervisor.scala	ArticleRepo of research.articles	1
 repository	server:domain/automation/managers/ManagerSupervisor.scala	GoalLinkRepo of automation.goals	1
 repository	server:domain/automation/managers/ManagerSupervisor.scala	GoalRepo of automation.goals	1
-repository	server:domain/automation/managers/ManagerSupervisor.scala	ReviewLedgerRepo of research.workflows	1
 repository	server:domain/automation/managers/ManagersHandlers.scala	AgentRepo of automation.agents	1
-repository	server:domain/automation/managers/ManagersHandlers.scala	ArticleRepo of research.articles	1
 repository	server:domain/automation/managers/ManagersHandlers.scala	GoalLinkRepo of automation.goals	1
 repository	server:domain/automation/scheduler/SchedulerService.scala	AgentRepo of automation.agents	1
 repository	server:domain/automation/scheduler/SchedulerService.scala	AutopilotRepo of automation.autopilot	1

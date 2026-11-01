@@ -3,9 +3,21 @@ package com.histmersion.domain.automation.agents
 import com.histmersion.domain.automation.approvals.{ApprovalDigestService, Approvals, AutoApprovals}
 import com.histmersion.domain.automation.autopilot.AutopilotService
 import com.histmersion.domain.automation.goals.GoalFocusService
-import com.histmersion.domain.automation.managers.{DrainService, ManagerSupervisor, ManagersHandlers, Zero}
+import com.histmersion.domain.automation.managers.{DrainService, ManagersHandlers, ManagerSupervisor, Zero}
 import com.histmersion.domain.automation.scheduler.SchedulerService
-import com.histmersion.server.agents.{AcquireRecheckService, AgentDoctor, AgentUpstream, BuiltinAi, ClaudeCode, CliRuntime, Codex, OaBacklog, Opencode, PlanPools, SeedService}
+import com.histmersion.server.agents.{
+  AcquireRecheckService,
+  AgentDoctor,
+  AgentUpstream,
+  BuiltinAi,
+  ClaudeCode,
+  CliRuntime,
+  Codex,
+  OaBacklog,
+  Opencode,
+  PlanPools,
+  SeedService
+}
 
 import com.histmersion.domain.automation.worklists.QueueItemId
 
@@ -64,17 +76,6 @@ final class AgentsHandlers(
   /** A person's pause and cancel of the server's long background jobs. */
   val jobStops: com.histmersion.util.jobs.JobStops = deps.jobStops
 
-  /** The acquisition toolset (OpenAlex/Crossref, refs, assess, followups). A `var` because it is built AFTER
-    * [[Handlers]] (it needs the ingest queue), and attached by `Main` before the pool starts; until then — and in a
-    * test that attaches nothing — the steps that need it say it is offline.
-    */
-  @volatile private var upstream: AgentUpstream = AgentUpstream.Offline
-
-  def attach(u: AgentUpstream): Unit = upstream = u
-
-  /** The acquisition operations as attached now (the supervisor's candidate sweep, #3761). */
-  def acquisition: AgentUpstream = upstream
-
   val definitions: AgentDefinitions = cli.definitions
   val tokens: RunTokens = cli.tokens
 
@@ -86,15 +87,6 @@ final class AgentsHandlers(
     * reference to [[managing]] is safe).
     */
   val approvals: Approvals = Approvals(h, ds, cfg, p => managing.applyProposal(p))
-
-  /** The watchers' ingest backlog: the legal open-access picks past a day's allowance, ingested on later days (the
-    * sweep parks them, the managers' tick drains them).
-    */
-  val oaBacklog: OaBacklog = OaBacklog(ds, cfg, h, () => upstream, this)
-
-  /** The acquisition list's legal re-check (the managers' tick runs it; `queue acquire recheck` by hand). */
-  val acquireRecheck: AcquireRecheckService =
-    AcquireRecheckService(ds, deps.cfg.acquire.recheck, h, () => upstream, this)
 
   /** What the domains register into the engine: their workflows and agent tools. A registration the engine refuses (two
     * workflows with one identifier, a tool nobody contributes) stops the server here.
@@ -109,11 +101,11 @@ final class AgentsHandlers(
   val engine: Engine = Engine(ds, cfg, this, workflows)
 
   /** The process managers' supervisor (started with the pool), nudged whenever a run settles. */
-  val managers: ManagerSupervisor = ManagerSupervisor(ds, cfg, this, h)
+  val managers: ManagerSupervisor = ManagerSupervisor(ds, cfg, this, deps.workLists, workflows.managerKinds)
   engine.onSettled(managers.settled)
 
   /** The operations on the managers (REST, MCP, CLI). */
-  val managing: ManagersHandlers = ManagersHandlers(ds, cfg, deps.cfg.limits, this, managers, h)
+  val managing: ManagersHandlers = ManagersHandlers(ds, cfg, deps.cfg.limits, this, managers, h.automationHost)
 
   /** The checked auto approvals the managers' tick runs (article-plan, goal-plan, article-publish). */
   val autoApprovals: AutoApprovals = AutoApprovals(ds, cfg, h, this)
@@ -134,9 +126,6 @@ final class AgentsHandlers(
 
   /** Drain mode: nothing new starts while the runs in flight finish (a deploy). */
   val drain: DrainService = DrainService(ds, cfg, h, this)
-
-  /** Seed before the plan: goals with no source gather candidates (no model) before their plan is approved. */
-  val seeding: SeedService = SeedService(ds, cfg, h, this)
 
   /** One agent server per database: the engine and the managers start only in the server that holds it (ttl 3 × the
     * managers' tick).
@@ -581,7 +570,7 @@ final class AgentsHandlers(
               .flatMap(r => RunState.parse(r.status).map(AutoEnrich.PriorRun(r.id, _)))
             AutoEnrich.decide(cfg.enabled, cfg.autoEnrich, src.findings.size, src.source.notes, runs) match
               case Left(skip)                        => AutoEnrich.note(skip)
-              case Right(()) if cfg.managers.enabled => Some(managing.ingested(ck))
+              case Right(()) if cfg.managers.enabled => Some(AutoEnrich.managed.tupled(managing.ingested(ck)))
               case Right(())                         =>
                 Some(
                   startRunAs(RunRequest(Pipeline.EnrichSource.wire, ck), Origin.Ingest, None)

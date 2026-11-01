@@ -21,7 +21,10 @@ import com.histmersion.api.VocabularyCodecs.given
 object AgentsTools:
   import com.histmersion.util.mcp.ToolInputs.given
 
-  def apply(a: AgentsHandlers) =
+  /** `repairAcquire`: the acquisition list's one-shot repair (dry run or not), as Markdown — the library's, bound by
+    * the composition.
+    */
+  def apply(a: AgentsHandlers, repairAcquire: Boolean => Either[ApiError, String]) =
     val start =
       tool("start_run")
         .description(
@@ -350,7 +353,7 @@ object AgentsTools:
                 case None    => Right(AutopilotMarkdown.status(m.autopilot))
                 case Some(b) => m.setAutopilot(Autopilot.AutopilotSet(b, Some("mcp"))).map(AutopilotMarkdown.status)
             case "repair-acquire" =>
-              m.repairAcquire(RepairAcquire.RepairRequest(in.dryRun, Some("mcp"))).map(RepairAcquire.markdown)
+              repairAcquire(in.dryRun)
             case "drain" =>
               m.drain(Autopilot.DrainSet(in.on.getOrElse(true), Some("mcp"))).map(AutopilotMarkdown.status)
             case "mode" =>

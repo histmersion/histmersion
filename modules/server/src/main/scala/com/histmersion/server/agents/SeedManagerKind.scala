@@ -1,0 +1,176 @@
+package com.histmersion.server.agents
+
+import com.histmersion.domain.automation.managers.{ManagerContext, ManagerKindDefinition}
+
+import com.histmersion.api.Agents.*
+import com.histmersion.api.{ApiError, GoalPlans}
+import com.histmersion.api.Managers.*
+import com.histmersion.domain.{AutopilotPolicy, ManagerPolicy}
+import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts}
+import com.histmersion.server.Handlers
+
+import java.time.Instant
+import scala.collection.mutable.Builder
+
+/** The `seed:<goal>` manager kind (propose-articles, then one article-compile item per article a person approved — a
+  * compiled article is queued for the review manager — and the goal's plan), registered by this transition adapter
+  * until research contributes it.
+  */
+final class SeedManagerKind(h: Handlers) extends ManagerKindDefinition:
+  val kind: Kind = Kind.Seed
+
+  def pipelineOf(itemKind: String): Pipeline = itemKind match
+    case ProposeArticles => Pipeline.ProposeArticles
+    case ArticleCompile  => Pipeline.CompileArticle
+    case PlanGoalItem    => Pipeline.PlanGoal
+    case _               => Pipeline.ReviewArticle
+
+  /** A firing proposes the goal's next articles. */
+  def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[String] =
+    m.goal.toList.map { g =>
+      val (_, isNew) = c.upsert(m.id, ProposeArticles, g, ItemOrigin.Cron, 0, reopen = true)
+      s"$ProposeArticles ${if isNew then "added" else "due"}"
+    }
+
+  def facts(c: ManagerContext, item: ManagerItem, run: String): StepFacts =
+    lazy val progress = c.progress(run)
+    item.kind match
+      case ProposeArticles => c.approvalFacts(run, ApprovalKind.ArticlePlan, s"no article proposed — $progress")
+      case ArticleCompile  =>
+        CompileArticlePipeline.written(c, run) match
+          case Some(w) if w.written => StepFacts.Finished(s"compiled (${w.why})")
+          case Some(w)              =>
+            // a draft the autopilot's checks rejected is compiled again (a new draft may pass them)
+            c.approvalsOf(run, ApprovalKind.ArticlePublish)
+              .lastOption
+              .filter(a =>
+                a.state == ApprovalState.Rejected.wire && a.note.exists(_.startsWith(AutopilotPolicy.NotePrefix))
+              ) match
+              case Some(a) =>
+                StepFacts.Redo(
+                  s"draft rejected by the autopilot's checks (approval #${a.id}: " +
+                    a.note.getOrElse("").stripPrefix(AutopilotPolicy.NotePrefix).trim.take(300) + ")"
+                )
+              case None => StepFacts.NotDone(s"stopped: no article written — ${w.why}", None)
+          case None => StepFacts.NotDone(s"stopped: nothing compiled — $progress", None)
+      case PlanGoalItem =>
+        // a blocking approval: the run ends only once its plan was decided
+        c.approvalsOf(run, ApprovalKind.GoalPlan).lastOption match
+          case None    => StepFacts.Finished(s"nothing planned — $progress")
+          case Some(a) =>
+            StepFacts.Finished(
+              s"plan #${a.id} " + ManagerPolicy.decided(a.state, a.result.orElse(a.note)).getOrElse(a.state)
+            )
+      case _ => StepFacts.Finished("enriched")
+
+  /** A compiled article is linked to its research area and queued for the review manager; an approved plan becomes
+    * compile items; an approved goal plan may have created sub-goals.
+    */
+  override def afterDone(
+      c: ManagerContext,
+      m: ManagerInfo,
+      item: ManagerItem,
+      run: Option[String],
+      out: Builder[String, List[String]]
+  ): Unit =
+    item.kind match
+      case ArticleCompile if h.getArticle(item.target).isRight =>
+        m.goal.foreach(g => c.linkGoal(g, GoalPlans.LinkKind.Article, item.target, Some(s"compiled by ${m.id}")))
+        val _ = c.ensure(Kind.Review, ReviewId, None)
+        c.chainReview(ReviewId, item.target, s"compiled by ${m.id}", out)
+        c.event(m.id, Some(item.id), run, Feed.Evaluated, s"${item.target}: queued for the review manager")
+      case ProposeArticles =>
+        run.toList
+          .flatMap(r => c.approvalsOf(r, ApprovalKind.ArticlePlan))
+          .filter(_.state == ApprovalState.Approved.wire)
+          .foreach(a => c.applyPlan(a, out): Unit)
+      case PlanGoalItem =>
+        // an approved plan may have created sub-goals: the autopilot gives them their managers next tick
+        if run.toList
+            .flatMap(r => c.approvalsOf(r, ApprovalKind.GoalPlan))
+            .exists(_.state == ApprovalState.Approved.wire)
+        then c.autopilotSoon()
+      case _ => ()
+
+  def target(m: ManagerInfo, itemKind: String, raw: String): Either[ApiError, String] =
+    itemKind match
+      case ProposeArticles | PlanGoalItem =>
+        val g = Option(raw.trim).filter(_.nonEmpty).orElse(m.goal).getOrElse("")
+        h.getGoal(g)
+          .map(_.slug)
+          .flatMap(s =>
+            Either.cond(
+              m.goal.forall(_ == s),
+              s,
+              ApiError(s"manager ${m.id} plans the articles of ${m.goal.getOrElse("?")}, not of $s")
+            )
+          )
+      case ArticleCompile =>
+        Left(ApiError(s"'$ArticleCompile' items come from an approved article plan (propose-articles)"))
+      case other => Left(ApiError(s"unknown item kind '$other'"))
+
+  def dispatch(
+      c: ManagerContext,
+      m: ManagerInfo,
+      s: ReviewSettings,
+      item: ManagerItem,
+      now: Instant,
+      out: Builder[String, List[String]]
+  ): Option[String] =
+    item.kind match
+      case ProposeArticles =>
+        h.getGoal(item.target) match
+          case Left(_)  => c.settleNow(m, item, ItemStatus.Cancelled, "the goal no longer exists")
+          case Right(g) =>
+            c.start(
+              m,
+              item,
+              RunRequest(Pipeline.ProposeArticles.wire, g.slug, budgetUsd = m.config.budgetUsd),
+              _.copy(minSources = m.config.minSources, maxArticles = m.config.maxArticles),
+              item.state,
+              "propose-articles",
+              out
+            )
+      case ArticleCompile =>
+        item.state.spec match
+          case None                                      => c.settleNow(m, item, ItemStatus.Cancelled, "no approved article to compile")
+          case Some(_) if c.slugExists(item.target) =>
+            c.settleNow(m, item, ItemStatus.Cancelled, "an article with this slug was created meanwhile")
+          case Some(sp) =>
+            c.start(
+              m,
+              item,
+              RunRequest(
+                Pipeline.CompileArticle.wire,
+                item.target,
+                budgetUsd = m.config.budgetUsd,
+                title = Some(sp.title),
+                kind = Some(sp.kind),
+                query = sp.filter.query,
+                topics = sp.filter.topics,
+                tags = sp.filter.tags,
+                goal = m.goal
+              ),
+              _.copy(chainReview = Some(false)),
+              item.state,
+              "compile-article (new; its review follows as an item)",
+              out
+            )
+      case PlanGoalItem =>
+        h.getGoal(item.target) match
+          case Left(_)  => c.settleNow(m, item, ItemStatus.Cancelled, "the goal no longer exists")
+          case Right(g) =>
+            // sub-goals only above the depth limit (a goal there gets queries and works, no children)
+            val depth = AutopilotPolicy.depth(g.slug, c.parentOf)
+            val leaf = depth >= c.cfg.approvals.auto.maxGoalDepth
+            c.start(
+              m,
+              item,
+              RunRequest(Pipeline.PlanGoal.wire, g.slug, budgetUsd = m.config.budgetUsd),
+              p => if leaf then p.copy(subGoals = Some(0)) else p,
+              item.state,
+              s"plan-goal (depth $depth${if leaf then ": queries and works, no sub-goals" else ""})",
+              out
+            )
+      case other =>
+        c.settleNow(m, item, ItemStatus.Cancelled, s"'$other' items are not driven by a ${m.kind} manager")

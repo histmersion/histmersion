@@ -142,8 +142,10 @@ object OpsTools:
               case Left(e)  => McpOut.refusal(e)
           case None => "_done needs an `id` (run action=list to see them)_"
       case "recheck" =>
-        h.agents.managing
-          .acquireRecheck(AcquireChecks.RecheckRequest(in.dryRun, in.limit, in.id, Some("mcp"), in.all))
+        com.histmersion.server.agents.TransitionWorkflows
+          .work(h.agents)
+          .acquireRecheck
+          .run(AcquireChecks.RecheckRequest(in.dryRun, in.limit, in.id, Some("mcp"), in.all))
           .fold(McpOut.refusal, AcquireChecksMarkdown.result)
       case other =>
         s"_unknown action '$other' — use list, add, done or recheck_"

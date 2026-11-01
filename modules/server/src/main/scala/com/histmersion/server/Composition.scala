@@ -117,7 +117,9 @@ object Composition:
     // embedded agents: the acquisition toolset first (enrich-source checks metadata, refs, assess;
     // the skeptic reads followups); then an interrupted run is PAUSED (resumable), queued ones
     // re-enqueued; no pool at all unless agents.enabled
-    h.agents.attach(com.histmersion.server.agents.AgentUpstream.of(acq))
+    com.histmersion.server.agents.TransitionWorkflows
+      .work(h.agents)
+      .attach(com.histmersion.server.agents.AgentUpstream.of(acq))
     val collections = collectionsControllers(sg, deps, h, acq)
     val mcp = McpTools(h, acq, collections)
     h.agents.attachTools(mcp.toolNames) // what the generated definitions' placeholders may name

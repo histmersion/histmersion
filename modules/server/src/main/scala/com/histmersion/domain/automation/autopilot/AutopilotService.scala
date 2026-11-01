@@ -66,7 +66,8 @@ final class AutopilotService(
 
   /** The legal open-access ingests today: every watcher's, and the acquisition list's re-check's. */
   def ingestedToday(now: Instant): Int =
-    ManagerRepo.countEventsAll(ds, Feed.Ingested, ManagerPolicy.dayStart(now)) + agents.acquireRecheck.fetchedToday(now)
+    ManagerRepo.countEventsAll(ds, Feed.Ingested, ManagerPolicy.dayStart(now)) +
+      agents.workflows.managerKinds.map(_.ingestedToday(now)).sum
 
   /** Make sure of the goals' managers at the next tick (a plan created sub-goals). */
   def soon(): Unit = AutopilotRepo.ensureSoon(ds)
@@ -387,7 +388,6 @@ final class AutopilotService(
     val links = GoalLinkRepo.linkCounts(ds)
     val arts = GoalLinkRepo.articlesByGoal(ds)
     val open = AgentRepo.openBySubject(ds)
-    val backlog = agents.oaBacklog.snapshot(now)
     def brief(m: ManagerRepo.Light) = ManagerBrief(m.id, m.kind, m.state, m.statusNote)
     val progress = goals.sortBy(_.slug).map { g =>
       val mine = managers.filter(_.goal.contains(g.slug))
@@ -414,7 +414,7 @@ final class AutopilotService(
         case r if k == Agents.ApprovalKind.ArticlePublish && cfg.approvals.publishMode == Agents.ApprovalMode.Auto =>
           r.copy(mode = "auto (in the run, unchecked)")
         case r => r
-    AutopilotStatus(
+    val st = AutopilotStatus(
       row.enabled,
       Some(row.changedAt),
       Option(row.changedBy).filter(_.nonEmpty),
@@ -450,11 +450,9 @@ final class AutopilotService(
       row.lastLintAt,
       managers.filter(m => m.id == ReviewId || m.id == EnrichId).map(brief),
       progress,
-      backlog = backlog.total,
-      backlogDays = backlog.totalDays,
       focus = Some(agents.focus.info(now)),
       drain = agents.drain.info(),
-      goalPlansWait = agents.focus.goalPlansWait(),
-      upstreams = h.upstreamQuotas(now),
-      acquireRecheck = Some(agents.acquireRecheck.status(now))
+      goalPlansWait = agents.focus.goalPlansWait()
     )
+    // the domains' parts: the ingest backlog, the upstreams' quotas, the acquisition list's re-check
+    agents.workflows.managerKinds.foldLeft(st)((s, k) => k.status(s, now))
