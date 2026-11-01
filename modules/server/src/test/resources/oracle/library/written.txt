@@ -1,0 +1,879 @@
+== places import regions
+200 {
+  "failed" : [
+  ],
+  "job" : null,
+  "names" : 2,
+  "places" : 2,
+  "relations" : 0
+}
+== places import sites
+200 {
+  "failed" : [
+  ],
+  "job" : null,
+  "names" : 2,
+  "places" : 2,
+  "relations" : 0
+}
+== places build-hierarchy
+200 {
+  "edgesCreated" : 0,
+  "job" : "UUID",
+  "pointPlaces" : 0,
+  "polygonPlaces" : 0
+}
+== places build-hierarchy job
+200 {
+  "acquireItem" : null,
+  "citekey" : null,
+  "createdAt" : "TS",
+  "detail" : {
+    "about" : "build the spatial hierarchy",
+    "eventImport" : null,
+    "eventRederive" : null,
+    "events" : null,
+    "init" : null,
+    "media" : null,
+    "planHash" : null,
+    "recheck" : null,
+    "skippedPeriodCount" : 0,
+    "skippedPeriods" : [
+    ],
+    "vacuum" : null
+  },
+  "error" : null,
+  "id" : "UUID",
+  "kind" : "places-hierarchy",
+  "progress" : "2 edges from 2 polygons × 2 points",
+  "sha256" : null,
+  "status" : "done",
+  "updatedAt" : "TS"
+}
+== put alpha (an edge to a source not stored yet, to an article, to a work)
+200 {
+  "findings" : [
+    {
+      "claim" : "the walls of Zqtell were raised around 1500 BC",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1480,
+      "periodName" : "Zq period",
+      "periodStart" : -1520,
+      "regionName" : "Zqtell",
+      "significance" : null,
+      "tags" : [
+        "zq-claim"
+      ],
+      "uid" : "finding:zqalpha1990_tell#0"
+    },
+    {
+      "claim" : "Zqcove sent tin to Zqtell",
+      "confidence" : "high",
+      "lat" : 39.2,
+      "lon" : 35.5,
+      "periodEnd" : -1300,
+      "periodName" : "Zq period",
+      "periodStart" : -1400,
+      "regionName" : "Zqcove",
+      "significance" : null,
+      "tags" : [
+        "zq-trade"
+      ],
+      "uid" : "finding:zqalpha1990_tell#1"
+    },
+    {
+      "claim" : "the sea peoples reached Zqtell",
+      "confidence" : "contested",
+      "lat" : 40.01,
+      "lon" : 34.61,
+      "periodEnd" : -1180,
+      "periodName" : "Zq period",
+      "periodStart" : -1200,
+      "regionName" : "Zqtell",
+      "significance" : null,
+      "tags" : [
+        "zq-claim"
+      ],
+      "uid" : "finding:zqalpha1990_tell#2"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqwriter, Bo"
+    ],
+    "citekey" : "zqalpha1990_tell",
+    "doi" : null,
+    "notes" : "Notes on The Walls of Zqtell.",
+    "ocrMarkdown" : "# Zqtell\n\n## The walls\n\nThe walls of Zqtell were raised in the Zq period; the Ḫattuša-style gate faced the “sea road”.\nThe sea peoples came to Zqtell — twice — and the walls of Zqtell fell.\n\n## The harbour\n\nThe harbour of Zqcove sent tin and copper to Zqtell.\n\n## References\n\nZqauthor 1950; Zqtell excavations.\n",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : null,
+    "regions" : [
+      "Zqland"
+    ],
+    "status" : "current",
+    "summary" : "A study of The Walls of Zqtell.",
+    "tags" : [
+      "zq-walls",
+      "zq-oracle"
+    ],
+    "title" : "The Walls of Zqtell",
+    "topics" : [
+      "bronze age",
+      "fortification"
+    ],
+    "uid" : "source:zqalpha1990_tell",
+    "updatedAt" : "TS",
+    "venue" : "Journal of Zq Studies",
+    "year" : 1990
+  }
+}
+== put beta (promotes the parked edge)
+200 {
+  "findings" : [
+    {
+      "claim" : "Zqcove traded tin with the islands",
+      "confidence" : "high",
+      "lat" : 39.2,
+      "lon" : 35.5,
+      "periodEnd" : -1250,
+      "periodName" : "Zq period",
+      "periodStart" : -1450,
+      "regionName" : "Zqcove",
+      "significance" : null,
+      "tags" : [
+        "zq-trade"
+      ],
+      "uid" : "finding:zqbeta2001_harbour#0"
+    },
+    {
+      "claim" : "ships of Zqcove reached the Zqisles",
+      "confidence" : "high",
+      "lat" : -17.0,
+      "lon" : 178.0,
+      "periodEnd" : -1200,
+      "periodName" : "Zq period",
+      "periodStart" : -1300,
+      "regionName" : "Zqisles",
+      "significance" : null,
+      "tags" : [
+        "zq-claim"
+      ],
+      "uid" : "finding:zqbeta2001_harbour#1"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqwriter, Bo"
+    ],
+    "citekey" : "zqbeta2001_cove",
+    "doi" : null,
+    "notes" : "Notes on The Harbour at Zqcove.",
+    "ocrMarkdown" : "# Zqcove\n\nThe harbour at Zqcove traded tin with the islands. Ships of Zqcove reached the Zqisles.\n",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : null,
+    "regions" : [
+      "Zqland"
+    ],
+    "status" : "contested",
+    "summary" : "A study of The Harbour at Zqcove.",
+    "tags" : [
+      "zq-trade",
+      "zq-oracle"
+    ],
+    "title" : "The Harbour at Zqcove",
+    "topics" : [
+      "bronze age",
+      "trade"
+    ],
+    "uid" : "source:zqbeta2001_harbour",
+    "updatedAt" : "TS",
+    "venue" : "Journal of Zq Studies",
+    "year" : 2001
+  }
+}
+== put gamma (a short form of alpha's challenge)
+200 {
+  "findings" : [
+    {
+      "claim" : "the kings of Zqland ruled from Zqtell",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zq period",
+      "periodStart" : -1600,
+      "regionName" : "Zqland",
+      "significance" : null,
+      "tags" : [
+        "zq-claim"
+      ],
+      "uid" : "tombstone:finding"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann"
+    ],
+    "citekey" : "zqgamma1975_kings",
+    "doi" : null,
+    "notes" : "Notes on Kings of Zqland.",
+    "ocrMarkdown" : "# Kings of Zqland\n\nThe kings of Zqland ruled from Zqtell; a later dynasty moved the court to Zqcove.\n",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : null,
+    "regions" : [
+      "Zqland"
+    ],
+    "status" : "superseded",
+    "summary" : "A study of Kings of Zqland.",
+    "tags" : [
+      "zq-kings",
+      "zq-oracle"
+    ],
+    "title" : "Kings of Zqland",
+    "topics" : [
+      "kingship"
+    ],
+    "uid" : "source:zqgamma1975_kings",
+    "updatedAt" : "TS",
+    "venue" : "Journal of Zq Studies",
+    "year" : 1975
+  }
+}
+== put delta (to be deleted)
+200 {
+  "findings" : [
+    {
+      "claim" : "nothing survives",
+      "confidence" : "high",
+      "lat" : 40.1,
+      "lon" : 34.7,
+      "periodEnd" : -1200,
+      "periodName" : "Zq period",
+      "periodStart" : -1300,
+      "regionName" : "Zqtell",
+      "significance" : null,
+      "tags" : [
+        "zq-claim"
+      ],
+      "uid" : "tombstone:finding"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqother, Cy"
+    ],
+    "citekey" : "zqdelta2010_gone",
+    "doi" : null,
+    "notes" : "Notes on A Lost Report.",
+    "ocrMarkdown" : "# A lost report\n\nNothing of Zqtell survives here.\n",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : null,
+    "regions" : [
+      "Zqland"
+    ],
+    "status" : "current",
+    "summary" : "A study of A Lost Report.",
+    "tags" : [
+      "zq-oracle"
+    ],
+    "title" : "A Lost Report",
+    "topics" : [
+      "archive"
+    ],
+    "uid" : "tombstone:source",
+    "updatedAt" : "TS",
+    "venue" : "Journal of Zq Studies",
+    "year" : 2010
+  }
+}
+== put epsilon (cited by an article)
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqother, Cy"
+    ],
+    "citekey" : "zqeps1999_cited",
+    "doi" : null,
+    "notes" : "Notes on A Cited Survey.",
+    "ocrMarkdown" : "# Survey\n\nThe survey of Zqcove.\n",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : null,
+    "regions" : [
+      "Zqland"
+    ],
+    "status" : "current",
+    "summary" : "A study of A Cited Survey.",
+    "tags" : [
+      "zq-oracle"
+    ],
+    "title" : "A Cited Survey",
+    "topics" : [
+      "survey"
+    ],
+    "uid" : "source:zqeps1999_cited",
+    "updatedAt" : "TS",
+    "venue" : "Journal of Zq Studies",
+    "year" : 1999
+  }
+}
+== put refused: a bad citekey
+400 {
+  "code" : "invalid",
+  "message" : "invalid citekey 'Bad Key' — lower-case, start with a letter, then letters, digits, '_', '.' or '-' (2-121 characters), e.g. anthony2007_horse"
+}
+== put refused: an unknown key
+400 Invalid value for: body (unknown key 'nope'; expected only: title, authors, doi, year, venue, status, topics, regions, tags, periodStart, periodEnd, summary, body, notes, citedByCount, influentialCitations, provenance, calibreId, findings, edges)
+== put refused: an edge from another source
+400 {
+  "code" : "invalid",
+  "message" : "edges: src 'zqgamma1975_kings' is not the source being put 'zqx2000_x'. An edge is stored on its source: patch 'zqgamma1975_kings' to record 'zqgamma1975_kings' --references--> 'zqbeta2001_cove' (src may be omitted; it defaults to the source being put)"
+}
+== put refused: strict, a formatting error
+400 {
+  "code" : "invalid",
+  "message" : "refused (strict): 1 formatting error — notes L1:1 error html-tag — `<div>` is never closed — everything after it is inside it · `<div> never closed`"
+}
+== article citing alpha, its short form, epsilon
+200 {
+  "article" : {
+    "body" : "The walls fell [[zqalpha1990_tell]]; see also [[zqalpha1990|the walls]] and [[zqeps1999_cited#Survey]].\n\nThe harbour [[zqbeta2001_cove]].",
+    "kind" : "concept",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "regions" : [
+    ],
+    "slug" : "zq_article",
+    "summary" : "On [[zqalpha1990_tell]].",
+    "tags" : [
+    ],
+    "title" : "Zq walls",
+    "uid" : "article:zq_article",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+  ],
+  "coverage" : {
+    "checked" : 5,
+    "cited" : [
+      {
+        "authors" : [
+          "Zqauthor, Ann",
+          "Zqwriter, Bo"
+        ],
+        "citekey" : "zqalpha1990_tell",
+        "status" : "current",
+        "title" : "The Walls of Zqtell",
+        "year" : 1990
+      },
+      {
+        "authors" : [
+          "Zqwriter, Bo"
+        ],
+        "citekey" : "zqbeta2001_cove",
+        "status" : "contested",
+        "title" : "The Harbour at Zqcove",
+        "year" : 2001
+      },
+      {
+        "authors" : [
+          "Zqother, Cy"
+        ],
+        "citekey" : "zqeps1999_cited",
+        "status" : "current",
+        "title" : "A Cited Survey",
+        "year" : 1999
+      }
+    ],
+    "citedOutside" : [
+    ],
+    "critiques" : [
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zqalpha1990_tell",
+          "mentions" : 1,
+          "title" : "The Walls of Zqtell",
+          "year" : 1990
+        },
+        "kinds" : [
+          "refutes"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : true,
+          "citekey" : "zqbeta2001_cove",
+          "mentions" : 1,
+          "title" : "The Harbour at Zqcove",
+          "year" : 2001
+        },
+        "state" : "open"
+      },
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zqalpha1990_tell",
+          "mentions" : 1,
+          "title" : "The Walls of Zqtell",
+          "year" : 1990
+        },
+        "kinds" : [
+          "superseded_by"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : false,
+          "citekey" : "zqgamma1975_kings",
+          "mentions" : 0,
+          "title" : "Kings of Zqland",
+          "year" : 1975
+        },
+        "state" : "open"
+      }
+    ],
+    "drift" : [
+      {
+        "citekeys" : [
+          "zqgamma1975_kings"
+        ],
+        "kind" : "unplaced"
+      }
+    ],
+    "edges" : [
+      {
+        "from" : "zqbeta2001_cove",
+        "kind" : "refutes",
+        "to" : "zqalpha1990_tell"
+      },
+      {
+        "from" : "zqgamma1975_kings",
+        "kind" : "superseded_by",
+        "to" : "zqalpha1990_tell"
+      }
+    ],
+    "eventLeads" : [
+    ],
+    "filter" : {
+      "authors" : [
+      ],
+      "extraQueries" : [
+      ],
+      "from" : null,
+      "places" : [
+      ],
+      "query" : null,
+      "status" : [
+      ],
+      "tags" : [
+        "zq-oracle"
+      ],
+      "to" : null,
+      "topics" : [
+      ]
+    },
+    "filterLine" : "search {tags: [\"zq-oracle\"]}",
+    "notUsed" : [
+      {
+        "reason" : "lost",
+        "source" : {
+          "authors" : [
+            "Zqother, Cy"
+          ],
+          "citekey" : "zqdelta2010_gone",
+          "status" : "current",
+          "title" : "A Lost Report",
+          "year" : 2010
+        }
+      },
+      {
+        "reason" : null,
+        "source" : {
+          "authors" : [
+            "Zqauthor, Ann"
+          ],
+          "citekey" : "zqgamma1975_kings",
+          "status" : "superseded",
+          "title" : "Kings of Zqland",
+          "year" : 1975
+        }
+      }
+    ],
+    "reasons" : [
+      {
+        "citekey" : "zqdelta2010_gone",
+        "reason" : "lost"
+      }
+    ],
+    "searches" : [
+    ],
+    "slug" : "zq_article",
+    "statuses" : [
+      {
+        "count" : 3,
+        "status" : "current"
+      },
+      {
+        "count" : 1,
+        "status" : "contested"
+      },
+      {
+        "count" : 1,
+        "status" : "superseded"
+      }
+    ],
+    "total" : 5
+  },
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zqauthor, Ann",
+        "Zqwriter, Bo"
+      ],
+      "citekey" : "zqalpha1990_tell",
+      "doi" : null,
+      "status" : "current",
+      "title" : "The Walls of Zqtell",
+      "year" : 1990
+    },
+    {
+      "authors" : [
+        "Zqwriter, Bo"
+      ],
+      "citekey" : "zqbeta2001_cove",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour at Zqcove",
+      "year" : 2001
+    },
+    {
+      "authors" : [
+        "Zqother, Cy"
+      ],
+      "citekey" : "zqeps1999_cited",
+      "doi" : null,
+      "status" : "current",
+      "title" : "A Cited Survey",
+      "year" : 1999
+    }
+  ]
+}
+== figures of beta
+200 {
+  "citekey" : "zqbeta2001_cove",
+  "stored" : 1
+}
+== asset link to source zqalpha1990_tell
+200 {
+  "assetName" : "fig-1.png",
+  "citekey" : "zqbeta2001_cove",
+  "id" : 1,
+  "notes" : null,
+  "relation" : "depicts",
+  "targetId" : "zqalpha1990_tell",
+  "targetType" : "source",
+  "xywh" : null
+}
+== asset link to finding zqalpha1990_tell#1
+200 {
+  "assetName" : "fig-1.png",
+  "citekey" : "zqbeta2001_cove",
+  "id" : 2,
+  "notes" : null,
+  "relation" : "depicts",
+  "targetId" : "zqalpha1990_tell#1",
+  "targetType" : "finding",
+  "xywh" : null
+}
+== asset link to source zqdelta2010_gone
+200 {
+  "assetName" : "fig-1.png",
+  "citekey" : "zqbeta2001_cove",
+  "id" : 3,
+  "notes" : null,
+  "relation" : "depicts",
+  "targetId" : "zqdelta2010_gone",
+  "targetType" : "source",
+  "xywh" : null
+}
+== asset link to finding zqdelta2010_gone#0
+200 {
+  "assetName" : "fig-1.png",
+  "citekey" : "zqbeta2001_cove",
+  "id" : 4,
+  "notes" : null,
+  "relation" : "depicts",
+  "targetId" : "zqdelta2010_gone#0",
+  "targetType" : "finding",
+  "xywh" : null
+}
+== attestation by beta of finding zqalpha1990_tell#0
+200 {
+  "canvas" : null,
+  "charEnd" : null,
+  "charStart" : null,
+  "chunkOrd" : null,
+  "citekey" : "zqbeta2001_cove",
+  "ctsUrn" : null,
+  "id" : 1,
+  "note" : null,
+  "page" : null,
+  "prefix" : null,
+  "quote" : "Zqcove",
+  "suffix" : null,
+  "targetId" : "zqalpha1990_tell#0",
+  "targetType" : "finding",
+  "xywh" : null
+}
+== attestation by beta of edge zqalpha1990_tell|zqbeta2001_cove|references
+200 {
+  "canvas" : null,
+  "charEnd" : null,
+  "charStart" : null,
+  "chunkOrd" : null,
+  "citekey" : "zqbeta2001_cove",
+  "ctsUrn" : null,
+  "id" : 2,
+  "note" : null,
+  "page" : null,
+  "prefix" : null,
+  "quote" : "Zqcove",
+  "suffix" : null,
+  "targetId" : "zqalpha1990_tell|zqbeta2001_cove|references",
+  "targetType" : "edge",
+  "xywh" : null
+}
+== attestation by beta of finding zqdelta2010_gone#0
+200 {
+  "canvas" : null,
+  "charEnd" : null,
+  "charStart" : null,
+  "chunkOrd" : null,
+  "citekey" : "zqbeta2001_cove",
+  "ctsUrn" : null,
+  "id" : 3,
+  "note" : null,
+  "page" : null,
+  "prefix" : null,
+  "quote" : "Zqcove",
+  "suffix" : null,
+  "targetId" : "zqdelta2010_gone#0",
+  "targetType" : "finding",
+  "xywh" : null
+}
+== event sourced to epsilon, dated by alpha and delta
+200 {
+  "articles" : [
+    {
+      "citekey" : "zqeps1999_cited",
+      "slug" : "zq_article",
+      "title" : "Zq walls"
+    }
+  ],
+  "candidates" : [
+  ],
+  "catalogue" : [
+  ],
+  "children" : [
+  ],
+  "corrections" : [
+  ],
+  "datings" : [
+    {
+      "citekey" : "zqalpha1990_tell",
+      "eventId" : "zq_siege",
+      "method" : "historical",
+      "note" : null,
+      "timeSpan" : {
+        "beginBy" : null,
+        "endFrom" : null,
+        "notAfter" : -1180,
+        "notBefore" : -1200
+      }
+    },
+    {
+      "citekey" : "zqdelta2010_gone",
+      "eventId" : "zq_siege",
+      "method" : "historical",
+      "note" : null,
+      "timeSpan" : {
+        "beginBy" : null,
+        "endFrom" : null,
+        "notAfter" : -1170,
+        "notBefore" : -1210
+      }
+    }
+  ],
+  "edges" : [
+  ],
+  "event" : {
+    "central" : null,
+    "citekey" : "zqeps1999_cited",
+    "datingMethod" : null,
+    "description" : null,
+    "historicity" : "attested",
+    "id" : "zq_siege",
+    "kind" : "siege",
+    "label" : "The siege of Zqtell",
+    "parentId" : null,
+    "placeId" : "zq_tell",
+    "plusMinus" : null,
+    "precision" : "precise",
+    "scale" : "local",
+    "scaleStated" : false,
+    "tier" : "attested",
+    "timeSpan" : {
+      "beginBy" : null,
+      "endFrom" : null,
+      "notAfter" : -1180,
+      "notBefore" : -1200
+    }
+  },
+  "findings" : [
+    {
+      "citekey" : "zqalpha1990_tell",
+      "claim" : "the sea peoples reached Zqtell",
+      "id" : "zqalpha1990_tell#2",
+      "km" : 1.40070546395,
+      "periodEnd" : -1180,
+      "periodStart" : -1200,
+      "yearGap" : 0
+    },
+    {
+      "citekey" : "zqdelta2010_gone",
+      "claim" : "nothing survives",
+      "id" : "zqdelta2010_gone#0",
+      "km" : 14.00370249811,
+      "periodEnd" : -1200,
+      "periodStart" : -1300,
+      "yearGap" : 0
+    },
+    {
+      "citekey" : "zqbeta2001_cove",
+      "claim" : "Zqcove traded tin with the islands",
+      "id" : "zqbeta2001_cove#0",
+      "km" : 117.74707255148,
+      "periodEnd" : -1250,
+      "periodStart" : -1450,
+      "yearGap" : 50
+    },
+    {
+      "citekey" : "zqalpha1990_tell",
+      "claim" : "Zqcove sent tin to Zqtell",
+      "id" : "zqalpha1990_tell#1",
+      "km" : 117.74707255148,
+      "periodEnd" : -1300,
+      "periodStart" : -1400,
+      "yearGap" : 100
+    }
+  ],
+  "geometry" : null,
+  "leads" : [
+  ],
+  "media" : [
+  ],
+  "names" : [
+  ],
+  "parent" : null,
+  "participants" : [
+  ],
+  "sources" : [
+    {
+      "citekey" : "zqeps1999_cited",
+      "quote" : null,
+      "title" : "A Cited Survey",
+      "via" : "citekey",
+      "year" : 1999
+    }
+  ],
+  "tier" : "attested",
+  "wikidata" : null
+}
+== a place whose source is alpha
+200 {
+  "contested" : false,
+  "dating" : "stated",
+  "id" : "zq_gate",
+  "importSource" : null,
+  "kind" : "site",
+  "label" : "Zqgate",
+  "names" : "Zqgate",
+  "periodEnd" : null,
+  "periodStart" : null,
+  "source" : "zqalpha1990_tell"
+}
+== a goal
+200 {
+  "notes" : null,
+  "parentSlug" : null,
+  "periodEnd" : null,
+  "periodStart" : null,
+  "regions" : [
+  ],
+  "slug" : "zq-goal",
+  "status" : "active",
+  "tags" : [
+  ],
+  "title" : "Understand Zqtell",
+  "updatedAt" : "TS"
+}
+== a task mentioning delta
+200 {
+  "closedBy" : null,
+  "createdAt" : "TS",
+  "createdBy" : null,
+  "doneAt" : null,
+  "goal" : null,
+  "id" : 1,
+  "list" : "tasks",
+  "reason" : null,
+  "status" : "open",
+  "text" : "re-read [[zqdelta2010_gone]]",
+  "topic" : null
+}
+== a task mentioning alpha
+200 {
+  "closedBy" : null,
+  "createdAt" : "TS",
+  "createdBy" : null,
+  "doneAt" : null,
+  "goal" : null,
+  "id" : 2,
+  "list" : "tasks",
+  "reason" : null,
+  "status" : "open",
+  "text" : "check zqalpha1990_tell",
+  "topic" : null
+}

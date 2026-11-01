@@ -1,0 +1,2200 @@
+== GET /api/sources/zqalpha1990_tell
+200 {
+  "findings" : [
+    {
+      "claim" : "the walls of Zqtell were raised around 1500 BC",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1480,
+      "periodName" : "Zq period",
+      "periodStart" : -1520,
+      "regionName" : "Zqtell",
+      "significance" : null,
+      "tags" : [
+        "zq-claim"
+      ],
+      "uid" : "finding:zqalpha1990_tell#0"
+    },
+    {
+      "claim" : "Zqcove sent tin to Zqtell",
+      "confidence" : "high",
+      "lat" : 39.2,
+      "lon" : 35.5,
+      "periodEnd" : -1300,
+      "periodName" : "Zq period",
+      "periodStart" : -1400,
+      "regionName" : "Zqcove",
+      "significance" : null,
+      "tags" : [
+        "zq-trade"
+      ],
+      "uid" : "finding:zqalpha1990_tell#1"
+    },
+    {
+      "claim" : "the sea peoples reached Zqtell",
+      "confidence" : "contested",
+      "lat" : 40.01,
+      "lon" : 34.61,
+      "periodEnd" : -1180,
+      "periodName" : "Zq period",
+      "periodStart" : -1200,
+      "regionName" : "Zqtell",
+      "significance" : null,
+      "tags" : [
+        "zq-claim"
+      ],
+      "uid" : "finding:zqalpha1990_tell#2"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqwriter, Bo"
+    ],
+    "citekey" : "zqalpha1990_tell",
+    "doi" : null,
+    "notes" : "Notes on The Walls of Zqtell.",
+    "ocrMarkdown" : "# Zqtell\n\n## The walls\n\nThe walls of Zqtell were raised in the Zq period; the Ḫattuša-style gate faced the “sea road”.\nThe sea peoples came to Zqtell — twice — and the walls of Zqtell fell.\n\n## The harbour\n\nThe harbour of Zqcove sent tin and copper to Zqtell.\n\n## References\n\nZqauthor 1950; Zqtell excavations.\n",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : null,
+    "regions" : [
+      "Zqland"
+    ],
+    "status" : "current",
+    "summary" : "A study of The Walls of Zqtell.",
+    "tags" : [
+      "zq-walls",
+      "zq-oracle"
+    ],
+    "title" : "The Walls of Zqtell",
+    "topics" : [
+      "bronze age",
+      "fortification"
+    ],
+    "uid" : "source:zqalpha1990_tell",
+    "updatedAt" : "TS",
+    "venue" : "Journal of Zq Studies",
+    "year" : 1990
+  }
+}
+== GET /api/sources/zqalpha1990_tell?body=false
+200 {
+  "findings" : [
+    {
+      "claim" : "the walls of Zqtell were raised around 1500 BC",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1480,
+      "periodName" : "Zq period",
+      "periodStart" : -1520,
+      "regionName" : "Zqtell",
+      "significance" : null,
+      "tags" : [
+        "zq-claim"
+      ],
+      "uid" : "finding:zqalpha1990_tell#0"
+    },
+    {
+      "claim" : "Zqcove sent tin to Zqtell",
+      "confidence" : "high",
+      "lat" : 39.2,
+      "lon" : 35.5,
+      "periodEnd" : -1300,
+      "periodName" : "Zq period",
+      "periodStart" : -1400,
+      "regionName" : "Zqcove",
+      "significance" : null,
+      "tags" : [
+        "zq-trade"
+      ],
+      "uid" : "finding:zqalpha1990_tell#1"
+    },
+    {
+      "claim" : "the sea peoples reached Zqtell",
+      "confidence" : "contested",
+      "lat" : 40.01,
+      "lon" : 34.61,
+      "periodEnd" : -1180,
+      "periodName" : "Zq period",
+      "periodStart" : -1200,
+      "regionName" : "Zqtell",
+      "significance" : null,
+      "tags" : [
+        "zq-claim"
+      ],
+      "uid" : "finding:zqalpha1990_tell#2"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqwriter, Bo"
+    ],
+    "citekey" : "zqalpha1990_tell",
+    "doi" : null,
+    "notes" : "Notes on The Walls of Zqtell.",
+    "ocrMarkdown" : null,
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : null,
+    "regions" : [
+      "Zqland"
+    ],
+    "status" : "current",
+    "summary" : "A study of The Walls of Zqtell.",
+    "tags" : [
+      "zq-walls",
+      "zq-oracle"
+    ],
+    "title" : "The Walls of Zqtell",
+    "topics" : [
+      "bronze age",
+      "fortification"
+    ],
+    "uid" : "source:zqalpha1990_tell",
+    "updatedAt" : "TS",
+    "venue" : "Journal of Zq Studies",
+    "year" : 1990
+  }
+}
+== GET /api/sources/zqnone2000_x
+404 {
+  "code" : null,
+  "message" : "No source 'zqnone2000_x'"
+}
+== GET /api/sources/zqalpha1990_tell/view
+200 # The Walls of Zqtell
+
+_[Zqauthor, Ann](/#author=Zqauthor%2C%20Ann), [Zqwriter, Bo](/#author=Zqwriter%2C%20Bo) · 1990 · Journal of Zq Studies · current · 1700 BCE–1100 BCE_
+
+**Topics:** [bronze age](/#topic=bronze%20age), [fortification](/#topic=fortification)  
+**Regions:** [Zqland](/#place=Zqland)  
+**Tags:** [zq-walls](/#tag=zq-walls), [zq-oracle](/#tag=zq-oracle)  
+**Uid:** source:zqalpha1990_tell
+
+A study of The Walls of Zqtell.
+
+## Notes
+
+Notes on The Walls of Zqtell.
+
+## Findings (3)
+- the walls of Zqtell were raised around 1500 BC  
+  _@ Zqtell (40.0, 34.6) · 1520 BCE–1480 BCE · (high)_
+- Zqcove sent tin to Zqtell  
+  _@ Zqcove (39.2, 35.5) · 1400 BCE–1300 BCE · (high)_
+- the sea peoples reached Zqtell  
+  _@ Zqtell (40.01, 34.61) · 1200 BCE–1180 BCE · (contested)_
+
+## Mentioned in articles (1)
+- [Zq walls](/article/zq_article)
+== GET /api/sources/zqalpha1990_tell/view?fullText=true
+200 # The Walls of Zqtell
+
+_[Zqauthor, Ann](/#author=Zqauthor%2C%20Ann), [Zqwriter, Bo](/#author=Zqwriter%2C%20Bo) · 1990 · Journal of Zq Studies · current · 1700 BCE–1100 BCE_
+
+**Topics:** [bronze age](/#topic=bronze%20age), [fortification](/#topic=fortification)  
+**Regions:** [Zqland](/#place=Zqland)  
+**Tags:** [zq-walls](/#tag=zq-walls), [zq-oracle](/#tag=zq-oracle)  
+**Uid:** source:zqalpha1990_tell
+
+A study of The Walls of Zqtell.
+
+## Notes
+
+Notes on The Walls of Zqtell.
+
+## Findings (3)
+- the walls of Zqtell were raised around 1500 BC  
+  _@ Zqtell (40.0, 34.6) · 1520 BCE–1480 BCE · (high)_
+- Zqcove sent tin to Zqtell  
+  _@ Zqcove (39.2, 35.5) · 1400 BCE–1300 BCE · (high)_
+- the sea peoples reached Zqtell  
+  _@ Zqtell (40.01, 34.61) · 1200 BCE–1180 BCE · (contested)_
+
+---
+
+# Zqtell
+
+## The walls
+
+The walls of Zqtell were raised in the Zq period; the Ḫattuša-style gate faced the “sea road”.
+The sea peoples came to Zqtell — twice — and the walls of Zqtell fell.
+
+## The harbour
+
+The harbour of Zqcove sent tin and copper to Zqtell.
+
+## References
+
+Zqauthor 1950; Zqtell excavations.
+
+## Mentioned in articles (1)
+- [Zq walls](/article/zq_article)
+== GET /api/sources/zqalpha1990_tell/view?section=summary
+200 # The Walls of Zqtell
+
+_[Zqauthor, Ann](/#author=Zqauthor%2C%20Ann), [Zqwriter, Bo](/#author=Zqwriter%2C%20Bo) · 1700 BCE–1100 BCE_
+
+A study of The Walls of Zqtell.
+== GET /api/sources/zqalpha1990_tell/view?section=findings
+200 ## Findings (3)
+- the walls of Zqtell were raised around 1500 BC  
+  _@ Zqtell (40.0, 34.6) · 1520 BCE–1480 BCE · (high)_
+- Zqcove sent tin to Zqtell  
+  _@ Zqcove (39.2, 35.5) · 1400 BCE–1300 BCE · (high)_
+- the sea peoples reached Zqtell  
+  _@ Zqtell (40.01, 34.61) · 1200 BCE–1180 BCE · (contested)_
+== GET /api/sources/zqalpha1990_tell/view?section=notes
+200 ## Notes
+
+Notes on The Walls of Zqtell.
+== GET /api/sources/zqalpha1990_tell/view?section=toc
+200 ### Table of Contents (3 heading(s))
+
+- **Zqtell > The walls** — ord 0, 165 chars
+- **Zqtell > The harbour** — ord 1, 52 chars
+- **Zqtell > References** — ord 2, 34 chars
+== GET /api/sources/zqalpha1990_tell/view?section=body
+200 The walls of Zqtell were raised in the Zq period; the Ḫattuša-style gate faced the “sea road”.
+The sea peoples came to Zqtell — twice — and the walls of Zqtell fell.
+
+The harbour of Zqcove sent tin and copper to Zqtell.
+
+Zqauthor 1950; Zqtell excavations.
+== GET /api/sources/zqalpha1990_tell/view?section=body&offset=20&chars=60
+200 were raised in the Zq period; the Ḫattuša-style gate faced t
+
+_…175 more chars — pass offset=80_
+== GET /api/sources/zqalpha1990_tell/view?section=body&heading=the%20harb
+200 
+== GET /api/sources/zqalpha1990_tell/view?section=all
+200 # The Walls of Zqtell
+
+_[Zqauthor, Ann](/#author=Zqauthor%2C%20Ann), [Zqwriter, Bo](/#author=Zqwriter%2C%20Bo) · 1990 · Journal of Zq Studies · current · 1700 BCE–1100 BCE_
+
+**Topics:** [bronze age](/#topic=bronze%20age), [fortification](/#topic=fortification)  
+**Regions:** [Zqland](/#place=Zqland)  
+**Tags:** [zq-walls](/#tag=zq-walls), [zq-oracle](/#tag=zq-oracle)  
+**Uid:** source:zqalpha1990_tell
+
+A study of The Walls of Zqtell.
+
+## Notes
+
+Notes on The Walls of Zqtell.
+
+## Findings (3)
+- the walls of Zqtell were raised around 1500 BC  
+  _@ Zqtell (40.0, 34.6) · 1520 BCE–1480 BCE · (high)_
+- Zqcove sent tin to Zqtell  
+  _@ Zqcove (39.2, 35.5) · 1400 BCE–1300 BCE · (high)_
+- the sea peoples reached Zqtell  
+  _@ Zqtell (40.01, 34.61) · 1200 BCE–1180 BCE · (contested)_
+
+## Mentioned in articles (1)
+- [Zq walls](/article/zq_article)
+== GET /api/sources/zqalpha1990_tell/view?section=all&offset=10&chars=40
+200 # The Walls of Zqtell
+
+_[Zqauthor, Ann](/#author=Zqauthor%2C%20Ann), [Zqwriter, Bo](/#author=Zqwriter%2C%20Bo) · 1990 · Journal of Zq Studies · current · 1700 BCE–1100 BCE_
+
+**Topics:** [bronze age](/#topic=bronze%20age), [fortification](/#topic=fortification)  
+**Regions:** [Zqland](/#place=Zqland)  
+**Tags:** [zq-walls](/#tag=zq-walls), [zq-oracle](/#tag=zq-oracle)  
+**Uid:** source:zqalpha1990_tell
+
+A study of The Walls of Zqtell.
+
+## Notes
+
+Notes on The Walls of Zqtell.
+
+## Findings (3)
+- the walls of Zqtell were raised around 1500 BC  
+  _@ Zqtell (40.0, 34.6) · 1520 BCE–1480 BCE · (high)_
+- Zqcove sent tin to Zqtell  
+  _@ Zqcove (39.2, 35.5) · 1400 BCE–1300 BCE · (high)_
+- the sea peoples reached Zqtell  
+  _@ Zqtell (40.01, 34.61) · 1200 BCE–1180 BCE · (contested)_
+
+---
+
+of Zqtell were raised in the Zq period; 
+
+_…205 more chars — pass offset=50_
+
+## Mentioned in articles (1)
+- [Zq walls](/article/zq_article)
+== GET /api/sources/zqalpha1990_tell/view?section=nonsense
+404 {
+  "code" : null,
+  "message" : "unknown section 'nonsense' — one of: summary, findings, notes, toc, body, all"
+}
+== GET /api/sources/zqalpha1990_tell/view?offset=5&chars=30&fullText=true
+200 # The Walls of Zqtell
+
+_[Zqauthor, Ann](/#author=Zqauthor%2C%20Ann), [Zqwriter, Bo](/#author=Zqwriter%2C%20Bo) · 1990 · Journal of Zq Studies · current · 1700 BCE–1100 BCE_
+
+**Topics:** [bronze age](/#topic=bronze%20age), [fortification](/#topic=fortification)  
+**Regions:** [Zqland](/#place=Zqland)  
+**Tags:** [zq-walls](/#tag=zq-walls), [zq-oracle](/#tag=zq-oracle)  
+**Uid:** source:zqalpha1990_tell
+
+A study of The Walls of Zqtell.
+
+## Notes
+
+Notes on The Walls of Zqtell.
+
+## Findings (3)
+- the walls of Zqtell were raised around 1500 BC  
+  _@ Zqtell (40.0, 34.6) · 1520 BCE–1480 BCE · (high)_
+- Zqcove sent tin to Zqtell  
+  _@ Zqcove (39.2, 35.5) · 1400 BCE–1300 BCE · (high)_
+- the sea peoples reached Zqtell  
+  _@ Zqtell (40.01, 34.61) · 1200 BCE–1180 BCE · (contested)_
+
+---
+
+alls of Zqtell were raised in 
+
+_…220 more chars — pass offset=35_
+
+## Mentioned in articles (1)
+- [Zq walls](/article/zq_article)
+== GET /api/sources/zqalpha1990_tell/passages?q=walls
+200 {
+  "bodyChars" : 255,
+  "capped" : false,
+  "citekey" : "zqalpha1990_tell",
+  "matches" : 2,
+  "passages" : [
+    {
+      "heading" : "Zqtell > The walls",
+      "matches" : [
+        {
+          "end" : 9,
+          "start" : 4
+        },
+        {
+          "end" : 149,
+          "start" : 144
+        }
+      ],
+      "offset" : 0,
+      "text" : "The walls of Zqtell were raised in the Zq period; the Ḫattuša-style gate faced the “sea road”.\nThe sea peoples came to Zqtell — twice — and the walls of Zqtell fell.\n\nThe harbour of Zqcove sent tin and copper to Zqtell.\n\nZqauthor 1950; Zqtell excavations."
+    }
+  ],
+  "query" : "walls",
+  "regex" : false,
+  "total" : 1
+}
+== GET /api/sources/zqalpha1990_tell/passages?q=hattusa
+200 {
+  "bodyChars" : 255,
+  "capped" : false,
+  "citekey" : "zqalpha1990_tell",
+  "matches" : 1,
+  "passages" : [
+    {
+      "heading" : "Zqtell > The walls",
+      "matches" : [
+        {
+          "end" : 61,
+          "start" : 54
+        }
+      ],
+      "offset" : 0,
+      "text" : "The walls of Zqtell were raised in the Zq period; the Ḫattuša-style gate faced the “sea road”.\nThe sea peoples came to Zqtell — twice — and the walls of Zqtell fell.\n\nThe harbour of Zqcove sent tin and copper to Zqtell.\n\nZqauthor 1950; Zqtell excavations."
+    }
+  ],
+  "query" : "hattusa",
+  "regex" : false,
+  "total" : 1
+}
+== GET /api/sources/zqalpha1990_tell/passages?q=%22sea%20road%22
+200 {
+  "bodyChars" : 255,
+  "capped" : false,
+  "citekey" : "zqalpha1990_tell",
+  "matches" : 1,
+  "passages" : [
+    {
+      "heading" : "Zqtell > The walls",
+      "matches" : [
+        {
+          "end" : 93,
+          "start" : 83
+        }
+      ],
+      "offset" : 0,
+      "text" : "The walls of Zqtell were raised in the Zq period; the Ḫattuša-style gate faced the “sea road”.\nThe sea peoples came to Zqtell — twice — and the walls of Zqtell fell.\n\nThe harbour of Zqcove sent tin and copper to Zqtell.\n\nZqauthor 1950; Zqtell excavations."
+    }
+  ],
+  "query" : "\"sea road\"",
+  "regex" : false,
+  "total" : 1
+}
+== GET /api/sources/zqalpha1990_tell/passages?q=sea%20peoples&context=12&limit=1
+200 {
+  "bodyChars" : 255,
+  "capped" : false,
+  "citekey" : "zqalpha1990_tell",
+  "matches" : 1,
+  "passages" : [
+    {
+      "heading" : "Zqtell > The walls",
+      "matches" : [
+        {
+          "end" : 15,
+          "start" : 4
+        }
+      ],
+      "offset" : 95,
+      "text" : "The sea peoples came"
+    }
+  ],
+  "query" : "sea peoples",
+  "regex" : false,
+  "total" : 1
+}
+== GET /api/sources/zqalpha1990_tell/passages?q=Zq%5Ba-z%5D%2B&regex=true&limit=3
+200 {
+  "bodyChars" : 255,
+  "capped" : false,
+  "citekey" : "zqalpha1990_tell",
+  "matches" : 7,
+  "passages" : [
+    {
+      "heading" : "Zqtell > The walls",
+      "matches" : [
+        {
+          "end" : 19,
+          "start" : 13
+        },
+        {
+          "end" : 125,
+          "start" : 119
+        },
+        {
+          "end" : 159,
+          "start" : 153
+        },
+        {
+          "end" : 188,
+          "start" : 182
+        },
+        {
+          "end" : 218,
+          "start" : 212
+        },
+        {
+          "end" : 229,
+          "start" : 221
+        },
+        {
+          "end" : 242,
+          "start" : 236
+        }
+      ],
+      "offset" : 0,
+      "text" : "The walls of Zqtell were raised in the Zq period; the Ḫattuša-style gate faced the “sea road”.\nThe sea peoples came to Zqtell — twice — and the walls of Zqtell fell.\n\nThe harbour of Zqcove sent tin and copper to Zqtell.\n\nZqauthor 1950; Zqtell excavations."
+    }
+  ],
+  "query" : "Zq[a-z]+",
+  "regex" : true,
+  "total" : 1
+}
+== GET /api/sources/zqalpha1990_tell/passages?q=%5B&regex=true
+400 {
+  "code" : "invalid",
+  "message" : "not a valid regex: Unclosed character class at position 0 in `[` (leave regex off to match the text literally)"
+}
+== GET /api/sources/zqalpha1990_tell/passages?q=
+400 {
+  "code" : "invalid",
+  "message" : "the query is empty — give the words to find"
+}
+== GET /api/sources/zqnone2000_x/passages?q=x
+404 {
+  "code" : "not_found",
+  "message" : "No source 'zqnone2000_x'"
+}
+== GET /api/sources/zqalpha1990_tell/export
+200 ---
+citekey: zqalpha1990_tell
+doi: null
+title: The Walls of Zqtell
+authors:
+- Zqauthor, Ann
+- Zqwriter, Bo
+year: 1990
+venue: Journal of Zq Studies
+source: null
+calibre_id: null
+status: current
+superseded_by: null
+topics:
+- bronze age
+- fortification
+regions:
+- Zqland
+tags:
+- zq-walls
+- zq-oracle
+period_start: -1700
+period_end: -1100
+cited_by_count: null
+influential_citations: null
+summary: A study of The Walls of Zqtell.
+findings:
+- claim: the walls of Zqtell were raised around 1500 BC
+  region: Zqtell
+  lat: 40.0
+  lon: 34.6
+  period_start: -1520
+  period_end: -1480
+  period_name: Zq period
+  tags:
+  - zq-claim
+  confidence: high
+  significance: null
+- claim: Zqcove sent tin to Zqtell
+  region: Zqcove
+  lat: 39.2
+  lon: 35.5
+  period_start: -1400
+  period_end: -1300
+  period_name: Zq period
+  tags:
+  - zq-trade
+  confidence: high
+  significance: null
+- claim: the sea peoples reached Zqtell
+  region: Zqtell
+  lat: 40.01
+  lon: 34.61
+  period_start: -1200
+  period_end: -1180
+  period_name: Zq period
+  tags:
+  - zq-claim
+  confidence: contested
+  significance: null
+---
+
+Notes on The Walls of Zqtell.
+
+== GET /api/sources/zqalpha1990_tell/lint
+200 {
+  "fixed" : [
+  ],
+  "issues" : [
+  ],
+  "subject" : "zqalpha1990_tell",
+  "text" : null
+}
+== GET /api/sources/zqalpha1990_tell/articles
+200 [
+  {
+    "id" : "zq_article",
+    "kind" : "article",
+    "title" : "Zq walls"
+  }
+]
+== GET /api/sources/zqnone2000_x/articles
+404 {
+  "code" : null,
+  "message" : "No source 'zqnone2000_x'"
+}
+== GET /api/resolve/zqalpha1990_tell
+200 {
+  "article" : null,
+  "id" : "zqalpha1990_tell",
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqwriter, Bo"
+    ],
+    "citekey" : "zqalpha1990_tell",
+    "doi" : null,
+    "status" : "current",
+    "title" : "The Walls of Zqtell",
+    "year" : 1990
+  }
+}
+== GET /api/resolve/zq_article
+200 {
+  "article" : {
+    "slug" : "zq_article",
+    "title" : "Zq walls"
+  },
+  "id" : "zq_article",
+  "source" : null
+}
+== GET /api/resolve/zq_nothing
+200 {
+  "article" : null,
+  "id" : "zq_nothing",
+  "source" : null
+}
+== GET /api/citekeys
+200 [
+  "zqalpha1990_tell",
+  "zqbeta2001_cove",
+  "zqdelta2010_gone",
+  "zqeps1999_cited",
+  "zqgamma1975_kings"
+]
+== GET /api/source-aliases
+200 [
+]
+== tool get_source {"citekey":"zqalpha1990_tell"}
+# The Walls of Zqtell
+
+_[Zqauthor, Ann](/#author=Zqauthor%2C%20Ann), [Zqwriter, Bo](/#author=Zqwriter%2C%20Bo) · 1990 · Journal of Zq Studies · current · 1700 BCE–1100 BCE_
+
+**Topics:** [bronze age](/#topic=bronze%20age), [fortification](/#topic=fortification)  
+**Regions:** [Zqland](/#place=Zqland)  
+**Tags:** [zq-walls](/#tag=zq-walls), [zq-oracle](/#tag=zq-oracle)  
+**Uid:** source:zqalpha1990_tell
+
+A study of The Walls of Zqtell.
+
+## Notes
+
+Notes on The Walls of Zqtell.
+
+## Findings (3)
+- the walls of Zqtell were raised around 1500 BC  
+  _@ Zqtell (40.0, 34.6) · 1520 BCE–1480 BCE · (high)_
+- Zqcove sent tin to Zqtell  
+  _@ Zqcove (39.2, 35.5) · 1400 BCE–1300 BCE · (high)_
+- the sea peoples reached Zqtell  
+  _@ Zqtell (40.01, 34.61) · 1200 BCE–1180 BCE · (contested)_
+
+## Mentioned in articles (1)
+- [Zq walls](/article/zq_article)
+== tool get_source {"citekey":"zqalpha1990_tell","section":"toc"}
+### Table of Contents (3 heading(s))
+
+- **Zqtell > The walls** — ord 0, 165 chars
+- **Zqtell > The harbour** — ord 1, 52 chars
+- **Zqtell > References** — ord 2, 34 chars
+== tool get_source {"citekey":"zqalpha1990_tell","section":"body","heading":"The walls"}
+
+== tool get_source {"citekey":"zqalpha1990_tell","fullText":true,"offset":3}
+# The Walls of Zqtell
+
+_[Zqauthor, Ann](/#author=Zqauthor%2C%20Ann), [Zqwriter, Bo](/#author=Zqwriter%2C%20Bo) · 1990 · Journal of Zq Studies · current · 1700 BCE–1100 BCE_
+
+**Topics:** [bronze age](/#topic=bronze%20age), [fortification](/#topic=fortification)  
+**Regions:** [Zqland](/#place=Zqland)  
+**Tags:** [zq-walls](/#tag=zq-walls), [zq-oracle](/#tag=zq-oracle)  
+**Uid:** source:zqalpha1990_tell
+
+A study of The Walls of Zqtell.
+
+## Notes
+
+Notes on The Walls of Zqtell.
+
+## Findings (3)
+- the walls of Zqtell were raised around 1500 BC  
+  _@ Zqtell (40.0, 34.6) · 1520 BCE–1480 BCE · (high)_
+- Zqcove sent tin to Zqtell  
+  _@ Zqcove (39.2, 35.5) · 1400 BCE–1300 BCE · (high)_
+- the sea peoples reached Zqtell  
+  _@ Zqtell (40.01, 34.61) · 1200 BCE–1180 BCE · (contested)_
+
+---
+
+ walls of Zqtell were raised in the Zq period; the Ḫattuša-style gate faced the “sea road”.
+The sea peoples came to Zqtell — twice — and the walls of Zqtell fell.
+
+The harbour of Zqcove sent tin and copper to Zqtell.
+
+Zqauthor 1950; Zqtell excavations.
+
+## Mentioned in articles (1)
+- [Zq walls](/article/zq_article)
+== tool get_source {"citekey":"zqnone2000_x"}
+_No source 'zqnone2000_x' — find a citekey with search._
+== tool passages {"citekey":"zqalpha1990_tell","query":"Zqcove"}
+## Passages: "Zqcove" in `zqalpha1990_tell`
+
+_1 match in 1 passage · showing 1 · matches in **bold** · `get_source` with a passage's `offset` reads on from it_
+
+### 1 · offset 0 · § Zqtell > The harbour
+
+The walls of Zqtell were raised in the Zq period; the Ḫattuša-style gate faced the “sea road”.
+The sea peoples came to Zqtell — twice — and the walls of Zqtell fell.
+
+The harbour of **Zqcove** sent tin and copper to Zqtell.
+
+Zqauthor 1950; Zqtell excavations.
+== tool passages {"citekey":"zqalpha1990_tell","query":"(","regex":true}
+_not a valid regex: Unclosed group at position 1 in `(` (leave regex off to match the text literally)_
+== tool passages {"citekey":"zqnone2000_x","query":"x"}
+_No source 'zqnone2000_x' — find a citekey with search._
+== tool export_source {"citekey":"zqalpha1990_tell"}
+---
+citekey: zqalpha1990_tell
+doi: null
+title: The Walls of Zqtell
+authors:
+- Zqauthor, Ann
+- Zqwriter, Bo
+year: 1990
+venue: Journal of Zq Studies
+source: null
+calibre_id: null
+status: current
+superseded_by: null
+topics:
+- bronze age
+- fortification
+regions:
+- Zqland
+tags:
+- zq-walls
+- zq-oracle
+period_start: -1700
+period_end: -1100
+cited_by_count: null
+influential_citations: null
+summary: A study of The Walls of Zqtell.
+findings:
+- claim: the walls of Zqtell were raised around 1500 BC
+  region: Zqtell
+  lat: 40.0
+  lon: 34.6
+  period_start: -1520
+  period_end: -1480
+  period_name: Zq period
+  tags:
+  - zq-claim
+  confidence: high
+  significance: null
+- claim: Zqcove sent tin to Zqtell
+  region: Zqcove
+  lat: 39.2
+  lon: 35.5
+  period_start: -1400
+  period_end: -1300
+  period_name: Zq period
+  tags:
+  - zq-trade
+  confidence: high
+  significance: null
+- claim: the sea peoples reached Zqtell
+  region: Zqtell
+  lat: 40.01
+  lon: 34.61
+  period_start: -1200
+  period_end: -1180
+  period_name: Zq period
+  tags:
+  - zq-claim
+  confidence: contested
+  significance: null
+---
+
+Notes on The Walls of Zqtell.
+
+== tool export_source {"citekey":"zqnone2000_x"}
+_No source 'zqnone2000_x'_
+== tool lint {"source":"zqalpha1990_tell"}
+### zqalpha1990_tell: no formatting problems
+== PATCH zqgamma1975_kings: metadata
+200 {
+  "findings" : [
+    {
+      "claim" : "the kings of Zqland ruled from Zqtell",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zq period",
+      "periodStart" : -1600,
+      "regionName" : "Zqland",
+      "significance" : null,
+      "tags" : [
+        "zq-claim"
+      ],
+      "uid" : "tombstone:finding"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqhelper, Di"
+    ],
+    "citekey" : "zqgamma1975_kings",
+    "doi" : "10.9999/zq.1976",
+    "notes" : "Notes on Kings of Zqland.",
+    "ocrMarkdown" : "# Kings of Zqland\n\nThe kings of Zqland ruled from Zqtell; a later dynasty moved the court to Zqcove.\n",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : "zq-press",
+    "regions" : [
+      "Zqland"
+    ],
+    "status" : "contested",
+    "summary" : "A study of Kings of Zqland.",
+    "tags" : [
+      "zq-kings",
+      "zq-oracle"
+    ],
+    "title" : "Kings of Zqland, revised",
+    "topics" : [
+      "kingship"
+    ],
+    "uid" : "source:zqgamma1975_kings",
+    "updatedAt" : "TS",
+    "venue" : "Zq Review",
+    "year" : 1976
+  }
+}
+== PATCH zqgamma1975_kings: metadata cleared
+200 {
+  "findings" : [
+    {
+      "claim" : "the kings of Zqland ruled from Zqtell",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zq period",
+      "periodStart" : -1600,
+      "regionName" : "Zqland",
+      "significance" : null,
+      "tags" : [
+        "zq-claim"
+      ],
+      "uid" : "tombstone:finding"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqhelper, Di"
+    ],
+    "citekey" : "zqgamma1975_kings",
+    "doi" : "10.9999/zq.1976",
+    "notes" : "Notes on Kings of Zqland.",
+    "ocrMarkdown" : "# Kings of Zqland\n\nThe kings of Zqland ruled from Zqtell; a later dynasty moved the court to Zqcove.\n",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : "zq-press",
+    "regions" : [
+      "Zqland"
+    ],
+    "status" : "contested",
+    "summary" : "A study of Kings of Zqland.",
+    "tags" : [
+      "zq-kings",
+      "zq-oracle"
+    ],
+    "title" : "Kings of Zqland, revised",
+    "topics" : [
+      "kingship"
+    ],
+    "uid" : "source:zqgamma1975_kings",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 1976
+  }
+}
+== PATCH zqgamma1975_kings: metadata refused: a null title
+400 Invalid value for: body (metadata.title cannot be cleared — null is accepted only on year, venue, doi, provenance, calibreId; omit a field to leave it alone at 'metadata')
+== PATCH zqgamma1975_kings: summary
+200 {
+  "findings" : [
+    {
+      "claim" : "the kings of Zqland ruled from Zqtell",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zq period",
+      "periodStart" : -1600,
+      "regionName" : "Zqland",
+      "significance" : null,
+      "tags" : [
+        "zq-claim"
+      ],
+      "uid" : "tombstone:finding"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqhelper, Di"
+    ],
+    "citekey" : "zqgamma1975_kings",
+    "doi" : "10.9999/zq.1976",
+    "notes" : "Notes on Kings of Zqland.",
+    "ocrMarkdown" : "# Kings of Zqland\n\nThe kings of Zqland ruled from Zqtell; a later dynasty moved the court to Zqcove.\n",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : "zq-press",
+    "regions" : [
+      "Zqland"
+    ],
+    "status" : "contested",
+    "summary" : "Kings, again; see [[zqalpha1990_tell]].",
+    "tags" : [
+      "zq-kings",
+      "zq-oracle"
+    ],
+    "title" : "Kings of Zqland, revised",
+    "topics" : [
+      "kingship"
+    ],
+    "uid" : "source:zqgamma1975_kings",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 1976
+  }
+}
+== PATCH zqgamma1975_kings: body
+200 {
+  "findings" : [
+    {
+      "claim" : "the kings of Zqland ruled from Zqtell",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zq period",
+      "periodStart" : -1600,
+      "regionName" : "Zqland",
+      "significance" : null,
+      "tags" : [
+        "zq-claim"
+      ],
+      "uid" : "tombstone:finding"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqhelper, Di"
+    ],
+    "citekey" : "zqgamma1975_kings",
+    "doi" : "10.9999/zq.1976",
+    "notes" : "Notes on Kings of Zqland.",
+    "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : "zq-press",
+    "regions" : [
+      "Zqland"
+    ],
+    "status" : "contested",
+    "summary" : "Kings, again; see [[zqalpha1990_tell]].",
+    "tags" : [
+      "zq-kings",
+      "zq-oracle"
+    ],
+    "title" : "Kings of Zqland, revised",
+    "topics" : [
+      "kingship"
+    ],
+    "uid" : "source:zqgamma1975_kings",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 1976
+  }
+}
+== PATCH zqgamma1975_kings: notes
+200 {
+  "findings" : [
+    {
+      "claim" : "the kings of Zqland ruled from Zqtell",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zq period",
+      "periodStart" : -1600,
+      "regionName" : "Zqland",
+      "significance" : null,
+      "tags" : [
+        "zq-claim"
+      ],
+      "uid" : "tombstone:finding"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqhelper, Di"
+    ],
+    "citekey" : "zqgamma1975_kings",
+    "doi" : "10.9999/zq.1976",
+    "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
+    "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : "zq-press",
+    "regions" : [
+      "Zqland"
+    ],
+    "status" : "contested",
+    "summary" : "Kings, again; see [[zqalpha1990_tell]].",
+    "tags" : [
+      "zq-kings",
+      "zq-oracle"
+    ],
+    "title" : "Kings of Zqland, revised",
+    "topics" : [
+      "kingship"
+    ],
+    "uid" : "source:zqgamma1975_kings",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 1976
+  }
+}
+== PATCH zqgamma1975_kings: topics
+200 {
+  "findings" : [
+    {
+      "claim" : "the kings of Zqland ruled from Zqtell",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zq period",
+      "periodStart" : -1600,
+      "regionName" : "Zqland",
+      "significance" : null,
+      "tags" : [
+        "zq-claim"
+      ],
+      "uid" : "tombstone:finding"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqhelper, Di"
+    ],
+    "citekey" : "zqgamma1975_kings",
+    "doi" : "10.9999/zq.1976",
+    "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
+    "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : "zq-press",
+    "regions" : [
+      "Zqland"
+    ],
+    "status" : "contested",
+    "summary" : "Kings, again; see [[zqalpha1990_tell]].",
+    "tags" : [
+      "zq-kings",
+      "zq-oracle"
+    ],
+    "title" : "Kings of Zqland, revised",
+    "topics" : [
+      "kingship",
+      "dynasties"
+    ],
+    "uid" : "source:zqgamma1975_kings",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 1976
+  }
+}
+== PATCH zqgamma1975_kings: regions
+200 {
+  "findings" : [
+    {
+      "claim" : "the kings of Zqland ruled from Zqtell",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zq period",
+      "periodStart" : -1600,
+      "regionName" : "Zqland",
+      "significance" : null,
+      "tags" : [
+        "zq-claim"
+      ],
+      "uid" : "tombstone:finding"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqhelper, Di"
+    ],
+    "citekey" : "zqgamma1975_kings",
+    "doi" : "10.9999/zq.1976",
+    "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
+    "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : "zq-press",
+    "regions" : [
+      "Zqland",
+      "Zqisles"
+    ],
+    "status" : "contested",
+    "summary" : "Kings, again; see [[zqalpha1990_tell]].",
+    "tags" : [
+      "zq-kings",
+      "zq-oracle"
+    ],
+    "title" : "Kings of Zqland, revised",
+    "topics" : [
+      "kingship",
+      "dynasties"
+    ],
+    "uid" : "source:zqgamma1975_kings",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 1976
+  }
+}
+== PATCH zqgamma1975_kings: period
+200 {
+  "findings" : [
+    {
+      "claim" : "the kings of Zqland ruled from Zqtell",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zq period",
+      "periodStart" : -1600,
+      "regionName" : "Zqland",
+      "significance" : null,
+      "tags" : [
+        "zq-claim"
+      ],
+      "uid" : "tombstone:finding"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqhelper, Di"
+    ],
+    "citekey" : "zqgamma1975_kings",
+    "doi" : "10.9999/zq.1976",
+    "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
+    "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1350,
+    "periodStart" : -1650,
+    "provenance" : "zq-press",
+    "regions" : [
+      "Zqland",
+      "Zqisles"
+    ],
+    "status" : "contested",
+    "summary" : "Kings, again; see [[zqalpha1990_tell]].",
+    "tags" : [
+      "zq-kings",
+      "zq-oracle"
+    ],
+    "title" : "Kings of Zqland, revised",
+    "topics" : [
+      "kingship",
+      "dynasties"
+    ],
+    "uid" : "source:zqgamma1975_kings",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 1976
+  }
+}
+== PATCH zqgamma1975_kings: tags add
+200 {
+  "findings" : [
+    {
+      "claim" : "the kings of Zqland ruled from Zqtell",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zq period",
+      "periodStart" : -1600,
+      "regionName" : "Zqland",
+      "significance" : null,
+      "tags" : [
+        "zq-claim"
+      ],
+      "uid" : "tombstone:finding"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqhelper, Di"
+    ],
+    "citekey" : "zqgamma1975_kings",
+    "doi" : "10.9999/zq.1976",
+    "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
+    "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1350,
+    "periodStart" : -1650,
+    "provenance" : "zq-press",
+    "regions" : [
+      "Zqland",
+      "Zqisles"
+    ],
+    "status" : "contested",
+    "summary" : "Kings, again; see [[zqalpha1990_tell]].",
+    "tags" : [
+      "zq-kings",
+      "zq-oracle",
+      "zq-court"
+    ],
+    "title" : "Kings of Zqland, revised",
+    "topics" : [
+      "kingship",
+      "dynasties"
+    ],
+    "uid" : "source:zqgamma1975_kings",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 1976
+  }
+}
+== PATCH zqgamma1975_kings: tags remove
+200 {
+  "findings" : [
+    {
+      "claim" : "the kings of Zqland ruled from Zqtell",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zq period",
+      "periodStart" : -1600,
+      "regionName" : "Zqland",
+      "significance" : null,
+      "tags" : [
+        "zq-claim"
+      ],
+      "uid" : "tombstone:finding"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqhelper, Di"
+    ],
+    "citekey" : "zqgamma1975_kings",
+    "doi" : "10.9999/zq.1976",
+    "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
+    "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1350,
+    "periodStart" : -1650,
+    "provenance" : "zq-press",
+    "regions" : [
+      "Zqland",
+      "Zqisles"
+    ],
+    "status" : "contested",
+    "summary" : "Kings, again; see [[zqalpha1990_tell]].",
+    "tags" : [
+      "zq-oracle",
+      "zq-court"
+    ],
+    "title" : "Kings of Zqland, revised",
+    "topics" : [
+      "kingship",
+      "dynasties"
+    ],
+    "uid" : "source:zqgamma1975_kings",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 1976
+  }
+}
+== PATCH zqgamma1975_kings: tags replace
+200 {
+  "findings" : [
+    {
+      "claim" : "the kings of Zqland ruled from Zqtell",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zq period",
+      "periodStart" : -1600,
+      "regionName" : "Zqland",
+      "significance" : null,
+      "tags" : [
+        "zq-claim"
+      ],
+      "uid" : "tombstone:finding"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqhelper, Di"
+    ],
+    "citekey" : "zqgamma1975_kings",
+    "doi" : "10.9999/zq.1976",
+    "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
+    "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1350,
+    "periodStart" : -1650,
+    "provenance" : "zq-press",
+    "regions" : [
+      "Zqland",
+      "Zqisles"
+    ],
+    "status" : "contested",
+    "summary" : "Kings, again; see [[zqalpha1990_tell]].",
+    "tags" : [
+      "zq-oracle",
+      "zq-court",
+      "zq-dynasty"
+    ],
+    "title" : "Kings of Zqland, revised",
+    "topics" : [
+      "kingship",
+      "dynasties"
+    ],
+    "uid" : "source:zqgamma1975_kings",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 1976
+  }
+}
+== PATCH zqgamma1975_kings: findings add
+200 {
+  "findings" : [
+    {
+      "claim" : "the kings of Zqland ruled from Zqtell",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zq period",
+      "periodStart" : -1600,
+      "regionName" : "Zqland",
+      "significance" : null,
+      "tags" : [
+        "zq-claim"
+      ],
+      "uid" : "tombstone:finding"
+    },
+    {
+      "claim" : "the court moved to Zqcove",
+      "confidence" : "medium",
+      "lat" : 39.2,
+      "lon" : 35.5,
+      "periodEnd" : -1350,
+      "periodName" : null,
+      "periodStart" : -1400,
+      "regionName" : "Zqcove",
+      "significance" : null,
+      "tags" : [
+        "zq-court"
+      ],
+      "uid" : "finding:zqgamma1975_kings#1"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqhelper, Di"
+    ],
+    "citekey" : "zqgamma1975_kings",
+    "doi" : "10.9999/zq.1976",
+    "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
+    "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1350,
+    "periodStart" : -1650,
+    "provenance" : "zq-press",
+    "regions" : [
+      "Zqland",
+      "Zqisles"
+    ],
+    "status" : "contested",
+    "summary" : "Kings, again; see [[zqalpha1990_tell]].",
+    "tags" : [
+      "zq-oracle",
+      "zq-court",
+      "zq-dynasty"
+    ],
+    "title" : "Kings of Zqland, revised",
+    "topics" : [
+      "kingship",
+      "dynasties"
+    ],
+    "uid" : "source:zqgamma1975_kings",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 1976
+  }
+}
+== PATCH zqgamma1975_kings: findings remove #0
+200 {
+  "findings" : [
+    {
+      "claim" : "the court moved to Zqcove",
+      "confidence" : "medium",
+      "lat" : 39.2,
+      "lon" : 35.5,
+      "periodEnd" : -1350,
+      "periodName" : null,
+      "periodStart" : -1400,
+      "regionName" : "Zqcove",
+      "significance" : null,
+      "tags" : [
+        "zq-court"
+      ],
+      "uid" : "finding:zqgamma1975_kings#1"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqhelper, Di"
+    ],
+    "citekey" : "zqgamma1975_kings",
+    "doi" : "10.9999/zq.1976",
+    "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
+    "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1350,
+    "periodStart" : -1650,
+    "provenance" : "zq-press",
+    "regions" : [
+      "Zqland",
+      "Zqisles"
+    ],
+    "status" : "contested",
+    "summary" : "Kings, again; see [[zqalpha1990_tell]].",
+    "tags" : [
+      "zq-oracle",
+      "zq-court",
+      "zq-dynasty"
+    ],
+    "title" : "Kings of Zqland, revised",
+    "topics" : [
+      "kingship",
+      "dynasties"
+    ],
+    "uid" : "source:zqgamma1975_kings",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 1976
+  }
+}
+== PATCH zqgamma1975_kings: findings add again (the next id)
+200 {
+  "findings" : [
+    {
+      "claim" : "the kings of Zqland ruled from Zqtell",
+      "confidence" : null,
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : null,
+      "periodStart" : -1600,
+      "regionName" : "Zqtell",
+      "significance" : null,
+      "tags" : [
+      ],
+      "uid" : "finding:zqgamma1975_kings#0"
+    },
+    {
+      "claim" : "the court moved to Zqcove",
+      "confidence" : "medium",
+      "lat" : 39.2,
+      "lon" : 35.5,
+      "periodEnd" : -1350,
+      "periodName" : null,
+      "periodStart" : -1400,
+      "regionName" : "Zqcove",
+      "significance" : null,
+      "tags" : [
+        "zq-court"
+      ],
+      "uid" : "finding:zqgamma1975_kings#1"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqhelper, Di"
+    ],
+    "citekey" : "zqgamma1975_kings",
+    "doi" : "10.9999/zq.1976",
+    "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
+    "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1350,
+    "periodStart" : -1650,
+    "provenance" : "zq-press",
+    "regions" : [
+      "Zqland",
+      "Zqisles"
+    ],
+    "status" : "contested",
+    "summary" : "Kings, again; see [[zqalpha1990_tell]].",
+    "tags" : [
+      "zq-oracle",
+      "zq-court",
+      "zq-dynasty"
+    ],
+    "title" : "Kings of Zqland, revised",
+    "topics" : [
+      "kingship",
+      "dynasties"
+    ],
+    "uid" : "source:zqgamma1975_kings",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 1976
+  }
+}
+== PATCH zqgamma1975_kings: findings replace
+200 {
+  "findings" : [
+    {
+      "claim" : "one claim only",
+      "confidence" : null,
+      "lat" : null,
+      "lon" : null,
+      "periodEnd" : null,
+      "periodName" : null,
+      "periodStart" : null,
+      "regionName" : "Zqland",
+      "significance" : null,
+      "tags" : [
+      ],
+      "uid" : "finding:zqgamma1975_kings#0"
+    },
+    {
+      "claim" : "and another",
+      "confidence" : null,
+      "lat" : 38.0,
+      "lon" : 36.0,
+      "periodEnd" : null,
+      "periodName" : null,
+      "periodStart" : null,
+      "regionName" : null,
+      "significance" : null,
+      "tags" : [
+      ],
+      "uid" : "finding:zqgamma1975_kings#1"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqhelper, Di"
+    ],
+    "citekey" : "zqgamma1975_kings",
+    "doi" : "10.9999/zq.1976",
+    "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
+    "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1350,
+    "periodStart" : -1650,
+    "provenance" : "zq-press",
+    "regions" : [
+      "Zqland",
+      "Zqisles"
+    ],
+    "status" : "contested",
+    "summary" : "Kings, again; see [[zqalpha1990_tell]].",
+    "tags" : [
+      "zq-oracle",
+      "zq-court",
+      "zq-dynasty"
+    ],
+    "title" : "Kings of Zqland, revised",
+    "topics" : [
+      "kingship",
+      "dynasties"
+    ],
+    "uid" : "source:zqgamma1975_kings",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 1976
+  }
+}
+== PATCH zqgamma1975_kings: edges add
+200 {
+  "findings" : [
+    {
+      "claim" : "one claim only",
+      "confidence" : null,
+      "lat" : null,
+      "lon" : null,
+      "periodEnd" : null,
+      "periodName" : null,
+      "periodStart" : null,
+      "regionName" : "Zqland",
+      "significance" : null,
+      "tags" : [
+      ],
+      "uid" : "finding:zqgamma1975_kings#0"
+    },
+    {
+      "claim" : "and another",
+      "confidence" : null,
+      "lat" : 38.0,
+      "lon" : 36.0,
+      "periodEnd" : null,
+      "periodName" : null,
+      "periodStart" : null,
+      "regionName" : null,
+      "significance" : null,
+      "tags" : [
+      ],
+      "uid" : "finding:zqgamma1975_kings#1"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqhelper, Di"
+    ],
+    "citekey" : "zqgamma1975_kings",
+    "doi" : "10.9999/zq.1976",
+    "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
+    "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1350,
+    "periodStart" : -1650,
+    "provenance" : "zq-press",
+    "regions" : [
+      "Zqland",
+      "Zqisles"
+    ],
+    "status" : "contested",
+    "summary" : "Kings, again; see [[zqalpha1990_tell]].",
+    "tags" : [
+      "zq-oracle",
+      "zq-court",
+      "zq-dynasty"
+    ],
+    "title" : "Kings of Zqland, revised",
+    "topics" : [
+      "kingship",
+      "dynasties"
+    ],
+    "uid" : "source:zqgamma1975_kings",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 1976
+  }
+}
+== PATCH zqgamma1975_kings: edges remove
+200 {
+  "findings" : [
+    {
+      "claim" : "one claim only",
+      "confidence" : null,
+      "lat" : null,
+      "lon" : null,
+      "periodEnd" : null,
+      "periodName" : null,
+      "periodStart" : null,
+      "regionName" : "Zqland",
+      "significance" : null,
+      "tags" : [
+      ],
+      "uid" : "finding:zqgamma1975_kings#0"
+    },
+    {
+      "claim" : "and another",
+      "confidence" : null,
+      "lat" : 38.0,
+      "lon" : 36.0,
+      "periodEnd" : null,
+      "periodName" : null,
+      "periodStart" : null,
+      "regionName" : null,
+      "significance" : null,
+      "tags" : [
+      ],
+      "uid" : "finding:zqgamma1975_kings#1"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqhelper, Di"
+    ],
+    "citekey" : "zqgamma1975_kings",
+    "doi" : "10.9999/zq.1976",
+    "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
+    "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1350,
+    "periodStart" : -1650,
+    "provenance" : "zq-press",
+    "regions" : [
+      "Zqland",
+      "Zqisles"
+    ],
+    "status" : "contested",
+    "summary" : "Kings, again; see [[zqalpha1990_tell]].",
+    "tags" : [
+      "zq-oracle",
+      "zq-court",
+      "zq-dynasty"
+    ],
+    "title" : "Kings of Zqland, revised",
+    "topics" : [
+      "kingship",
+      "dynasties"
+    ],
+    "uid" : "source:zqgamma1975_kings",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 1976
+  }
+}
+== PATCH zqgamma1975_kings: refused: an unknown key
+400 Invalid value for: body (unknown key 'status' — 'status' belongs under 'metadata' (metadata.status); expected only: metadata, summary, body, notes, topics, regions, period, tags, findings, edges, ifUpdatedAt)
+== PATCH zqgamma1975_kings: refused: a stale token
+412 {
+  "code" : "precondition_failed",
+  "message" : "'zqgamma1975_kings' has moved on: you sent ifUpdatedAt='TS' but the stored updatedAt is 'TS'. Re-read the source and re-apply your patch."
+}
+== PATCH zqgamma1975_kings: refused: an edge from another source
+400 {
+  "code" : "invalid",
+  "message" : "edges.add: src 'zqalpha1990_tell' is not the patched source 'zqgamma1975_kings'. An edge is stored on its source: patch 'zqalpha1990_tell' to record 'zqalpha1990_tell' --references--> 'zqbeta2001_cove' (src may be omitted; it defaults to the patched source)"
+}
+== PATCH zqgamma1975_kings: refused: a self edge
+400 {
+  "code" : "invalid",
+  "message" : "edges.add: 'zqgamma1975_kings' --references--> itself is a self-edge; dst must be another source"
+}
+== PATCH strict, a formatting error
+400 {
+  "code" : "invalid",
+  "message" : "refused (strict): 1 formatting error — notes L1:1 error html-tag — `<div>` is never closed — everything after it is inside it · `<div> never closed`"
+}
+== PATCH an unknown source
+404 {
+  "code" : "not_found",
+  "message" : "No source 'zqnone2000_x'"
+}
+== notes with a formatting problem (no strict)
+200 {
+  "findings" : [
+    {
+      "claim" : "one claim only",
+      "confidence" : null,
+      "lat" : null,
+      "lon" : null,
+      "periodEnd" : null,
+      "periodName" : null,
+      "periodStart" : null,
+      "regionName" : "Zqland",
+      "significance" : null,
+      "tags" : [
+      ],
+      "uid" : "finding:zqgamma1975_kings#0"
+    },
+    {
+      "claim" : "and another",
+      "confidence" : null,
+      "lat" : 38.0,
+      "lon" : 36.0,
+      "periodEnd" : null,
+      "periodName" : null,
+      "periodStart" : null,
+      "regionName" : null,
+      "significance" : null,
+      "tags" : [
+      ],
+      "uid" : "finding:zqgamma1975_kings#1"
+    }
+  ],
+  "formatting" : [
+    {
+      "column" : 1,
+      "excerpt" : "\\[\\[zqalpha1990_tell\\]\\] and a bare zqbeta2001_cove",
+      "field" : "notes",
+      "fix" : "remove the backslashes",
+      "line" : 1,
+      "message" : "an escaped wikilink `\\[\\[…\\]\\]` — the page un-escapes it, but every other reader (Obsidian, the exported wiki) shows the brackets as text",
+      "rule" : "wikilink",
+      "severity" : "warning"
+    },
+    {
+      "column" : 37,
+      "excerpt" : "…tell\\]\\] and a bare zqbeta2001_cove",
+      "field" : "notes",
+      "fix" : null,
+      "line" : 1,
+      "message" : "`zqbeta2001_cove` is a citekey written as plain text — not a link and not counted as cited; write [[zqbeta2001_cove]]",
+      "rule" : "bare-citekey",
+      "severity" : "warning"
+    }
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqhelper, Di"
+    ],
+    "citekey" : "zqgamma1975_kings",
+    "doi" : "10.9999/zq.1976",
+    "notes" : "\\[\\[zqalpha1990_tell\\]\\] and a bare zqbeta2001_cove",
+    "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1350,
+    "periodStart" : -1650,
+    "provenance" : "zq-press",
+    "regions" : [
+      "Zqland",
+      "Zqisles"
+    ],
+    "status" : "contested",
+    "summary" : "Kings, again; see [[zqalpha1990_tell]].",
+    "tags" : [
+      "zq-oracle",
+      "zq-court",
+      "zq-dynasty"
+    ],
+    "title" : "Kings of Zqland, revised",
+    "topics" : [
+      "kingship",
+      "dynasties"
+    ],
+    "uid" : "source:zqgamma1975_kings",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 1976
+  }
+}
+== GET lint
+200 {
+  "fixed" : [
+  ],
+  "issues" : [
+    {
+      "column" : 1,
+      "excerpt" : "\\[\\[zqalpha1990_tell\\]\\] and a bare zqbeta2001_cove",
+      "field" : "notes",
+      "fix" : "remove the backslashes",
+      "line" : 1,
+      "message" : "an escaped wikilink `\\[\\[…\\]\\]` — the page un-escapes it, but every other reader (Obsidian, the exported wiki) shows the brackets as text",
+      "rule" : "wikilink",
+      "severity" : "warning"
+    },
+    {
+      "column" : 37,
+      "excerpt" : "…tell\\]\\] and a bare zqbeta2001_cove",
+      "field" : "notes",
+      "fix" : null,
+      "line" : 1,
+      "message" : "`zqbeta2001_cove` is a citekey written as plain text — not a link and not counted as cited; write [[zqbeta2001_cove]]",
+      "rule" : "bare-citekey",
+      "severity" : "warning"
+    }
+  ],
+  "subject" : "zqgamma1975_kings",
+  "text" : null
+}
+== POST lint/fix
+200 {
+  "fixed" : [
+    "notes: wikilink at line 1: remove the backslashes"
+  ],
+  "issues" : [
+    {
+      "column" : 33,
+      "excerpt" : "…0_tell]] and a bare zqbeta2001_cove",
+      "field" : "notes",
+      "fix" : null,
+      "line" : 1,
+      "message" : "`zqbeta2001_cove` is a citekey written as plain text — not a link and not counted as cited; write [[zqbeta2001_cove]]",
+      "rule" : "bare-citekey",
+      "severity" : "warning"
+    }
+  ],
+  "subject" : "zqgamma1975_kings",
+  "text" : null
+}
+== GET after
+200 {
+  "findings" : [
+    {
+      "claim" : "one claim only",
+      "confidence" : null,
+      "lat" : null,
+      "lon" : null,
+      "periodEnd" : null,
+      "periodName" : null,
+      "periodStart" : null,
+      "regionName" : "Zqland",
+      "significance" : null,
+      "tags" : [
+      ],
+      "uid" : "finding:zqgamma1975_kings#0"
+    },
+    {
+      "claim" : "and another",
+      "confidence" : null,
+      "lat" : 38.0,
+      "lon" : 36.0,
+      "periodEnd" : null,
+      "periodName" : null,
+      "periodStart" : null,
+      "regionName" : null,
+      "significance" : null,
+      "tags" : [
+      ],
+      "uid" : "finding:zqgamma1975_kings#1"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor, Ann",
+      "Zqhelper, Di"
+    ],
+    "citekey" : "zqgamma1975_kings",
+    "doi" : "10.9999/zq.1976",
+    "notes" : "[[zqalpha1990_tell]] and a bare zqbeta2001_cove",
+    "ocrMarkdown" : null,
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : -1350,
+    "periodStart" : -1650,
+    "provenance" : "zq-press",
+    "regions" : [
+      "Zqland",
+      "Zqisles"
+    ],
+    "status" : "contested",
+    "summary" : "Kings, again; see [[zqalpha1990_tell]].",
+    "tags" : [
+      "zq-oracle",
+      "zq-court",
+      "zq-dynasty"
+    ],
+    "title" : "Kings of Zqland, revised",
+    "topics" : [
+      "kingship",
+      "dynasties"
+    ],
+    "uid" : "source:zqgamma1975_kings",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 1976
+  }
+}
+== tool patch_source
+# Kings of Zqland, revised
+
+_[Zqauthor, Ann](/#author=Zqauthor%2C%20Ann), [Zqhelper, Di](/#author=Zqhelper%2C%20Di) · 1976 · contested · 1650 BCE–1350 BCE_
+
+**Topics:** [kingship](/#topic=kingship), [dynasties](/#topic=dynasties)  
+**Regions:** [Zqland](/#place=Zqland), [Zqisles](/#place=Zqisles)  
+**Tags:** [zq-oracle](/#tag=zq-oracle), [zq-court](/#tag=zq-court), [zq-dynasty](/#tag=zq-dynasty), [zq-mcp](/#tag=zq-mcp)  
+**DOI:** 10.9999/zq.1976  
+**Provenance:** zq-press  
+**Uid:** source:zqgamma1975_kings
+
+Kings, again; see [[zqalpha1990_tell]].
+
+## Notes
+
+[[zqalpha1990_tell]] and a bare zqbeta2001_cove
+
+## Findings (2)
+- one claim only  
+  _@ Zqland_
+- and another  
+  _@ (38.0, 36.0)_
+
+## Formatting: 1 formatting problem
+
+- notes L1:33 warning bare-citekey — `zqbeta2001_cove` is a citekey written as plain text — not a link and not counted as cited; write [[zqbeta2001_cove]] · `…0_tell]] and a bare zqbeta2001_cove`
+== tool patch_source refused
+200 {
+  "error" : {
+    "code" : -32602,
+    "message" : "Invalid arguments: DecodingFailure at .patch: patch: unknown key 'nope'; expected only: metadata, summary, body, notes, topics, regions, period, tags, findings, edges, ifUpdatedAt. Input: {\"citekey\":\"zqgamma1975_kings\",\"patch\":{\"nope\":1}}"
+  },
+  "id" : 1,
+  "jsonrpc" : "2.0"
+}
+== tool put_source
+# Put over MCP
+
+_n.d. · unassessed_  
+**Tags:** [zq-oracle](/#tag=zq-oracle)  
+**Uid:** source:zqzeta2015_mcp
+
+## Findings (1)
+- an MCP claim  
+  _@ (39.0, 34.0)_
+== import a note
+200 {
+  "edgesResolved" : 0,
+  "failed" : [
+  ],
+  "imported" : 1,
+  "skipped" : [
+  ]
+}
+== import a note, refused
+400 {
+  "code" : null,
+  "message" : "no YAML frontmatter in the note"
+}
+== GET the imported note
+200 {
+  "findings" : [
+    {
+      "claim" : "a claim from a note",
+      "confidence" : null,
+      "lat" : 39.9,
+      "lon" : 34.5,
+      "periodEnd" : -1250,
+      "periodName" : null,
+      "periodStart" : -1300,
+      "regionName" : null,
+      "significance" : null,
+      "tags" : [
+      ],
+      "uid" : "finding:zqeta2020_note#0"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zqauthor",
+      "Ann"
+    ],
+    "citekey" : "zqeta2020_note",
+    "doi" : null,
+    "notes" : "A note about [[zqalpha1990_tell]].",
+    "ocrMarkdown" : "# Body\n\ntext",
+    "origin" : "origin-of:zqeps1999_cited",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "provenance" : null,
+    "regions" : [
+    ],
+    "status" : "unassessed",
+    "summary" : null,
+    "tags" : [
+      "zq-oracle",
+      "zq-note"
+    ],
+    "title" : "An Imported Note",
+    "topics" : [
+    ],
+    "uid" : "source:zqeta2020_note",
+    "updatedAt" : "TS",
+    "venue" : null,
+    "year" : 2020
+  }
+}
+== reindex
+200 {
+  "chunks" : 8,
+  "lastCitekey" : "zqzeta2015_mcp",
+  "remaining" : 0,
+  "sources" : 7
+}
+== reindex after
+200 {
+  "chunks" : 1,
+  "lastCitekey" : "zqdelta2010_gone",
+  "remaining" : 4,
+  "sources" : 1
+}
