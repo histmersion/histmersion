@@ -19,5 +19,5 @@ trait DiscoveryClient:
 
 object DiscoveryClient:
   /** Crossref's notices as the wire shows them. */
-  def notices(found: List[com.histmersion.upstreams.UpdateNotice]): List[UpdateNotice] =
+  def notices(found: List[com.histmersion.domain.library.acquisition.UpdateNotice]): List[UpdateNotice] =
     found.map(n => UpdateNotice(n.kind, n.label, n.doi))

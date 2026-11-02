@@ -48,7 +48,7 @@ final class EventImports(
   /** The limits of `provider`'s dating, the ONE rule of the import and of rederive: the present for every catalogue,
     * and the catalogue's own floor (the GVP's Holocene one) while it is registered.
     */
-  private def limitsOf(provider: String, present: Long): com.histmersion.upstreams.CatalogDating.Limits =
+  private def limitsOf(provider: String, present: Long): com.histmersion.upstreams.dating.CatalogDating.Limits =
     PluginEvents.limits(registered().get(provider), present)
 
   /** A catalogue's terms: a registered one's, else a built-in's (its records outlive its plugin). */

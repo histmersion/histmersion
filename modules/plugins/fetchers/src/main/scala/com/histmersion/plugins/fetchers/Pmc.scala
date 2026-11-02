@@ -1,17 +1,13 @@
 package com.histmersion.plugins.fetchers
 
 import com.histmersion.plugin.{FetchContext, FetchedFile, PluginHttp, SourceFetcher}
-import com.histmersion.upstreams.{
-  json,
-  text,
-  AcquireParse,
-  EuropePmcHit,
-  Jats,
-  PmcObject,
-  PmcRecord,
-  UpstreamSettings,
-  Url
-}
+import com.histmersion.upstreams.http.{json, text}
+import com.histmersion.upstreams.parse.AcquireParse
+import com.histmersion.upstreams.europepmc.EuropePmcHit
+import com.histmersion.upstreams.jats.Jats
+import com.histmersion.upstreams.pmc.{PmcObject, PmcRecord}
+import com.histmersion.upstreams.settings.UpstreamSettings
+import com.histmersion.upstreams.http.Url
 
 /** The `pmc` plugin's two fetchers, by DOI: `pmc`, the PDF — Europe PMC's free links, else the one NCBI's PMC Article
   * Datasets publish — and `pmc-text`, the record's JATS full text when there is no PDF anywhere (the chain runs it

@@ -1,36 +1,4 @@
 # rule	file	detail	count — the known violations of AGENTS.md's rules 1–14; shrink, never grow
-bucket	upstreams:upstreams/AcquireParse.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/ArchiveFile.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/ArchiveItem.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/ArchiveOrg.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/CatalogDating.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/CoreApi.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/CoreEndpoint.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/CoreFailure.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/Endpoint.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/EuropePmcHit.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/FollowupRow.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/Identifiers.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/Jats.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/LandingSettings.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/MediaText.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/OaAccess.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/OpenAlexCrossref.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/PmcObject.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/PmcRecord.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/RefRow.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/RepositoryLanding.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/SearchDefaults.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/UpdateNotice.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/UpstreamHttp.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/UpstreamSettings.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/Url.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/WikidataClasses.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/WikidataEntities.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/WikidataItem.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/WikidataStatement.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/WorkLookup.scala	package com.histmersion.upstreams	1
-bucket	upstreams:upstreams/WorkRef.scala	package com.histmersion.upstreams	1
 bucket	values:values/AgentRole.scala	package com.histmersion.values	1
 bucket	values:values/ApprovalDecidedBy.scala	package com.histmersion.values	1
 bucket	values:values/ApprovalKind.scala	package com.histmersion.values	1
@@ -251,8 +219,8 @@ copy	server:util/data/diagnostics/StorageCache.scala	.copy(	1
 copy	server:util/jobs/JobControlService.scala	.copy(	1
 copy	server:util/settings/StoredSettingsFile.scala	.copy(	1
 copy	server:util/storage/DiskStore.scala	.copy(	1
-copy	upstreams:upstreams/Jats.scala	.copy(	1
-copy	upstreams:upstreams/WorkLookup.scala	.copy(	1
+copy	upstreams:domain/library/acquisition/WorkLookup.scala	.copy(	1
+copy	upstreams:upstreams/jats/Jats.scala	.copy(	1
 copy	web:web/ApiClient.scala	.copy(	2
 copy	web:web/App.scala	.copy(	1
 copy	web:web/ApprovalsView.scala	.copy(	1
@@ -1714,10 +1682,10 @@ prefix	server:util/storage/StoreKey.scala	StoreKeyRule → Store.KeyRule	1
 prefix	server:util/storage/StoreMeasure.scala	StoreMeasure → Store.Measure	1
 prefix	server:util/storage/StoreVolume.scala	StoreVolume → Store.Volume	1
 prefix	server:util/storage/StoredKind.scala	StoredKind → Stored.Kind	1
-prefix	upstreams:upstreams/WikidataClasses.scala	WikidataClasses → Wikidata.Classes	1
-prefix	upstreams:upstreams/WikidataEntities.scala	WikidataEntities → Wikidata.Entities	1
-prefix	upstreams:upstreams/WikidataItem.scala	WikidataItem → Wikidata.Item	1
-prefix	upstreams:upstreams/WikidataStatement.scala	WikidataStatement → Wikidata.Statement	1
+prefix	upstreams:upstreams/wikidata/WikidataClasses.scala	WikidataClasses → Wikidata.Classes	1
+prefix	upstreams:upstreams/wikidata/WikidataEntities.scala	WikidataEntities → Wikidata.Entities	1
+prefix	upstreams:upstreams/wikidata/WikidataItem.scala	WikidataItem → Wikidata.Item	1
+prefix	upstreams:upstreams/wikidata/WikidataStatement.scala	WikidataStatement → Wikidata.Statement	1
 prefix	values:values/ArticleUid.scala	ArticleUid → Article.Uid	1
 prefix	values:values/DecidedBy.scala	DecidedBy → Decided.By	1
 prefix	values:values/LicenceId.scala	LicenceId → Licence.Id	1

@@ -5,7 +5,7 @@ import com.histmersion.domain.library.acquisition.DiscoveryClient
 import com.histmersion.upstreams
 
 /** Discovery over OpenAlex and Crossref ([[upstreams.OpenAlexCrossref]]), its records as the wire shows them. */
-final class OpenAlexDiscovery(client: upstreams.OpenAlexCrossref) extends DiscoveryClient:
+final class OpenAlexDiscovery(client: upstreams.openalex.OpenAlexCrossref) extends DiscoveryClient:
   def search(query: String, since: Option[Int], sort: Option[String], limit: Int): Either[String, List[WorkRef]] =
     client.search(query, since, sort, limit).map(_.map(_.wire))
   def meta(doi: String): Either[String, WorkRef] = client.meta(doi).map(_.wire)

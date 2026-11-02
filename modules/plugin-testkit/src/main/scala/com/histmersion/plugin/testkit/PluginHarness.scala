@@ -23,7 +23,7 @@ import com.histmersion.pluginhost.{
   ReservedNames,
   SpiValues
 }
-import com.histmersion.upstreams.WorkLookup
+import com.histmersion.domain.library.acquisition.WorkLookup
 import org.ekrich.config.{Config, ConfigFactory, ConfigValueFactory}
 
 import com.histmersion.plugin.testkit.internal.{Lines, Scrubber, TestVaults, Wire}

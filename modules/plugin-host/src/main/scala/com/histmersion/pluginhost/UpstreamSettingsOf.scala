@@ -1,7 +1,8 @@
 package com.histmersion.pluginhost
 
 import com.histmersion.config.{AcquireConfig, LandingConfig}
-import com.histmersion.upstreams.{CoreEndpoint, Endpoint, LandingSettings, SearchDefaults, UpstreamSettings}
+import com.histmersion.domain.library.acquisition.{CoreEndpoint, Endpoint, LandingSettings, SearchDefaults}
+import com.histmersion.upstreams.settings.UpstreamSettings
 
 extension (c: AcquireConfig)
   /** The upstreams' settings as `histmersion.acquire` holds them: what the host's own upstream clients are built with,

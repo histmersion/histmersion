@@ -13542,7 +13542,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.Codecs$package$",
+      "type": "com.histmersion.util.database.Codecs$package$",
       "fields": [
         {
           "name": "given_DbCodec_Confidence$lzy1"

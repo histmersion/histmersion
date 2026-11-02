@@ -1,7 +1,11 @@
 package com.histmersion.plugins.fetchers
 
 import com.histmersion.plugin.{PluginHttp, PluginLog}
-import com.histmersion.upstreams.{json, OpenAlexCrossref, RepositoryLanding, UpstreamSettings, Url}
+import com.histmersion.upstreams.http.json
+import com.histmersion.upstreams.openalex.OpenAlexCrossref
+import com.histmersion.upstreams.landing.RepositoryLanding
+import com.histmersion.upstreams.settings.UpstreamSettings
+import com.histmersion.upstreams.http.Url
 import io.circe.Json
 
 /** The open-access indexes' records of one DOI, asked lazily and at most once per fetch, shared through the fetch's

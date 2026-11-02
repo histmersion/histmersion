@@ -463,7 +463,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
     "a plugin catalogue's record is dated as the host dates its own: a stated year ± when no span, held inside the limits"
   ):
     import com.histmersion.api.TimeSpan
-    import com.histmersion.upstreams.CatalogDating
+    import com.histmersion.upstreams.dating.CatalogDating
     val base = PluginEvents
       .record(
         "zq",
@@ -518,7 +518,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
       override def floorYear = throw IllegalStateException("boom")
       def parts(q: CatalogueQuery) = Nil
       def read(p: String, q: CatalogueQuery, h: PluginHttp) = Left("no")
-    import com.histmersion.upstreams.CatalogDating.Limits
+    import com.histmersion.upstreams.dating.CatalogDating.Limits
     assertEquals(PluginEvents.limits(Some(floored), 2026), Limits(2026, Some(-9700L)))
     assertEquals(PluginEvents.limits(Some(throws), 2026), Limits(2026, None))
     assertEquals(PluginEvents.limits(None, 2026), Limits(2026, None))

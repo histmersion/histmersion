@@ -1,6 +1,7 @@
 package com.histmersion.upstreams
 
 import com.histmersion.plugin.{Doi, WorkKey, Year}
+import com.histmersion.domain.library.acquisition.{WorkLookup, WorkRef}
 
 /** What the acquisition chain is asked for one work. */
 class WorkLookupSuite extends munit.FunSuite:

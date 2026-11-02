@@ -2,7 +2,7 @@ package com.histmersion.domain.library.acquisition
 
 import com.histmersion.api.*
 import com.histmersion.domain.*
-import com.histmersion.upstreams.CoreApi
+import com.histmersion.upstreams.core.CoreApi
 
 import java.time.LocalDate
 

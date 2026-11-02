@@ -1,7 +1,7 @@
 package com.histmersion.plugins.events
 
 import com.histmersion.plugin.*
-import com.histmersion.upstreams.CatalogDating
+import com.histmersion.upstreams.dating.CatalogDating
 import io.circe.Json
 
 import java.net.URLEncoder

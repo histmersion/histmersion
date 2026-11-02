@@ -10,16 +10,13 @@ import com.histmersion.plugin.{
   UpstreamQuota,
   WorkKey
 }
-import com.histmersion.upstreams.{
-  json,
-  AcquireParse,
-  CoreApi,
-  CoreFailure,
-  OpenAlexCrossref,
-  RepositoryLanding,
-  UpstreamSettings,
-  Url
-}
+import com.histmersion.upstreams.http.json
+import com.histmersion.upstreams.parse.AcquireParse
+import com.histmersion.upstreams.core.{CoreApi, CoreFailure}
+import com.histmersion.upstreams.openalex.OpenAlexCrossref
+import com.histmersion.upstreams.landing.RepositoryLanding
+import com.histmersion.upstreams.settings.UpstreamSettings
+import com.histmersion.upstreams.http.Url
 import io.circe.Json
 
 /** The fetchers of the four open-access index plugins, all by DOI: Unpaywall's best OA location (`oa-unpaywall`),

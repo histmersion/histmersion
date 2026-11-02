@@ -22,6 +22,7 @@ import com.histmersion.plugin.{Access, Fetch, FetchContext, FetchedFile, SourceF
 import com.histmersion.pluginhost.FetchChain
 import com.histmersion.server.{Deps, ServerWiring}
 import com.histmersion.domain.library.acquisition.*
+import com.histmersion.api.{FollowupRow, RefRow, UpdateNotice, WorkRef}
 
 import java.time.Instant
 import com.histmersion.db.*

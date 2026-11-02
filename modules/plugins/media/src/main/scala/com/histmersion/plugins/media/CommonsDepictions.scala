@@ -1,7 +1,7 @@
 package com.histmersion.plugins.media
 
 import com.histmersion.plugin.*
-import com.histmersion.upstreams.{WikidataEntities, WikidataStatement}
+import com.histmersion.upstreams.wikidata.{WikidataEntities, WikidataStatement}
 
 /** `depicts`: pictures that DEPICT an event, from Wikimedia Commons: for each event with a Wikidata item,
   *   1. the works its item lists as `P1299 depicted by` (a painting, a relief) — each work's own image (P18) — when

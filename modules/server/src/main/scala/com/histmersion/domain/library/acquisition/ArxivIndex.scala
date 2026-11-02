@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.acquisition
 
-import com.histmersion.upstreams.Url
+import com.histmersion.upstreams.http.Url
 
 import com.histmersion.api.*
 import com.histmersion.config.*

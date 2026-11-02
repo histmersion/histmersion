@@ -6,7 +6,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.pluginhost.upstreamSettings
-import com.histmersion.upstreams.CoreApi
+import com.histmersion.upstreams.core.CoreApi
 
 object Indexes:
   /** The indexes `acquire.candidates.indexes` names, in its order (an unknown name is left out). `coreKey` is CORE's

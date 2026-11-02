@@ -28,7 +28,7 @@ class AcquireLiveSuite extends munit.FunSuite:
   private lazy val http = SttpHttp(cfg)
   private lazy val openalex =
     OpenAlexDiscovery(
-      com.histmersion.upstreams.OpenAlexCrossref(
+      com.histmersion.upstreams.openalex.OpenAlexCrossref(
         com.histmersion.pluginhost.upstreamSettings(cfg),
         HttpPlugin(http),
         com.histmersion.pluginhost.HostLog.scribe.plugin
@@ -73,7 +73,7 @@ class AcquireLiveSuite extends munit.FunSuite:
     (f.source, f.extension) match
       case ("europepmc", "pdf") => assert(new String(f.bytes.take(8), "ISO-8859-1").contains("%PDF"))
       case ("pmc", "xml")       =>
-        val md = com.histmersion.upstreams.Jats.toMarkdown(new String(f.bytes, "UTF-8"))
+        val md = com.histmersion.upstreams.jats.Jats.toMarkdown(new String(f.bytes, "UTF-8"))
         assert(md.startsWith("# The First Horse Herders"), md.take(200))
       case other => fail(s"unexpected copy $other")
 

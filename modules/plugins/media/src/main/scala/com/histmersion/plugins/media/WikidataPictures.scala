@@ -1,7 +1,7 @@
 package com.histmersion.plugins.media
 
 import com.histmersion.plugin.*
-import com.histmersion.upstreams.{WikidataEntities, WikidataStatement}
+import com.histmersion.upstreams.wikidata.{WikidataEntities, WikidataStatement}
 
 /** `wikidata`: the pictures of places and events from their Wikidata items, licensed on Wikimedia Commons.
   *

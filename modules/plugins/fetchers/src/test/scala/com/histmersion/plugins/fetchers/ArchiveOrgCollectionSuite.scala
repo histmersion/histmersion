@@ -1,7 +1,8 @@
 package com.histmersion.plugins.fetchers
 
 import com.histmersion.plugin.*
-import com.histmersion.upstreams.{ArchiveOrg, Endpoint}
+import com.histmersion.upstreams.archiveorg.ArchiveOrg
+import com.histmersion.domain.library.acquisition.Endpoint
 
 import java.nio.charset.StandardCharsets.UTF_8
 

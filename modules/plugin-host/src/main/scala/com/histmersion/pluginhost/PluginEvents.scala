@@ -1,7 +1,7 @@
 package com.histmersion.pluginhost
 
 import com.histmersion.api.{BBox, CatalogRecord, EventTaxonomy, TimeSpan}
-import com.histmersion.upstreams.CatalogDating
+import com.histmersion.upstreams.dating.CatalogDating
 import com.histmersion.config.MediaConfig
 import com.histmersion.plugin.*
 

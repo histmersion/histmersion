@@ -1,7 +1,7 @@
 package com.histmersion.plugins.fetchers
 
 import com.histmersion.plugin.PluginConfig.given
-import com.histmersion.upstreams.UpstreamSettings
+import com.histmersion.upstreams.settings.UpstreamSettings
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** `oa-unpaywall`'s settings. `contact-email`: the e-mail Unpaywall requires with every request (its `email` parameter,
