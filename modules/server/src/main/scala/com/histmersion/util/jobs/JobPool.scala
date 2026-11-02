@@ -1,5 +1,7 @@
 package com.histmersion.util.jobs
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.api.JobState
 import com.histmersion.util.jobs.JobRepo
 
@@ -63,7 +65,7 @@ final class JobPool(
     */
   def start(): Int =
     import scala.jdk.CollectionConverters.*
-    val interrupted = JobRepo.failInterrupted(ds, held.asScala.toList)
+    val interrupted = Transactor(ds).transact(JobRepo.failInterrupted(held.asScala.toList))
     if scope.isEmpty then
       val t = Thread.ofPlatform().daemon(true).name("histmersion-jobs").unstarted(() => pool())
       scope = Some(t)
@@ -91,12 +93,13 @@ final class JobPool(
       case e: Throwable            =>
         // a worker must outlive one bad job: record the failure and take the next id
         scribe.error(s"job $id failed unexpectedly: ${e.getMessage}", e)
-        val _ = JobRepo.transition(
-          ds,
-          id,
-          JobState.Running,
-          JobState.Failed,
-          error = Some(s"${e.getClass.getSimpleName}: ${e.getMessage}")
+        val _ = Transactor(ds).transact(
+          JobRepo.transition(
+            id,
+            JobState.Running,
+            JobState.Failed,
+            error = Some(s"${e.getClass.getSimpleName}: ${e.getMessage}")
+          )
         )
 
   /** Stop the pool (tests, shutdown). Interrupting the scope thread cancels every fork. */

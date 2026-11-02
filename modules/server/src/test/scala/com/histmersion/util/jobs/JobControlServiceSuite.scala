@@ -1,5 +1,7 @@
 package com.histmersion.util.jobs
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.util.jobs.BackgroundJob
 
 import com.histmersion.api.{ApiError, JobInfo}
@@ -75,7 +77,7 @@ class JobControlServiceSuite extends com.histmersion.db.DbSuite:
     test(name)(if testDb.isEmpty then assume(false, "HISTMERSION_TEST_DB_URL is unset") else body)
 
   private def until(id: String, status: String, left: Int = 400): JobInfo =
-    val j = JobRepo.get(ds, id).getOrElse(fail(s"no job $id"))
+    val j = Transactor(ds).read(JobRepo.get(id)).getOrElse(fail(s"no job $id"))
     if j.status == status then j
     else if left == 0 then fail(s"job $id is ${j.status}, not $status (${j.progress})")
     else { Thread.sleep(25); until(id, status, left - 1) }
@@ -151,17 +153,25 @@ class JobControlServiceSuite extends com.histmersion.db.DbSuite:
     assert(service(stops).control(j.id, JobAction.Resume).isLeft)
 
   dbTest("a job that runs as one piece is refused; a paused job is failed as interrupted by a restart"):
-    val vac = JobRepo.create(ds, "vacuum", None, None)
+    val vac = Transactor(ds).transact(JobRepo.create("vacuum", None, None))
     assert(service(JobStops()).control(vac.id, JobAction.Pause).left.exists(_.message.contains("one piece")))
-    val p = JobRepo.create(ds, com.histmersion.api.media.imports.ImportJobKinds.MediaImport.kind.value, None, None)
-    val _ = JobRepo.transition(ds, p.id, com.histmersion.api.JobState.Queued, com.histmersion.api.JobState.Running)
-    val _ = JobRepo.transition(
-      ds,
-      p.id,
-      com.histmersion.api.JobState.Running,
-      com.histmersion.api.JobState.Paused,
-      Some("paused after: 1/6")
+    val p = Transactor(ds).transact(
+      JobRepo.create(com.histmersion.api.media.imports.ImportJobKinds.MediaImport.kind.value, None, None)
+    )
+    val _ = Transactor(ds).transact(
+      JobRepo.transition(p.id, com.histmersion.api.JobState.Queued, com.histmersion.api.JobState.Running)
+    )
+    val _ = Transactor(ds).transact(
+      JobRepo.transition(
+        p.id,
+        com.histmersion.api.JobState.Running,
+        com.histmersion.api.JobState.Paused,
+        Some("paused after: 1/6")
+      )
     )
     assert(service(JobStops()).control(p.id, JobAction.Resume).left.exists(_.message.contains("restarted")))
-    val _ = JobRepo.failInterrupted(ds)
-    assertEquals(JobRepo.get(ds, p.id).map(j => (j.status, j.error)), Some(("failed", Some("interrupted"))))
+    val _ = Transactor(ds).transact(JobRepo.failInterrupted())
+    assertEquals(
+      Transactor(ds).read(JobRepo.get(p.id)).map(j => (j.status, j.error)),
+      Some(("failed", Some("interrupted")))
+    )

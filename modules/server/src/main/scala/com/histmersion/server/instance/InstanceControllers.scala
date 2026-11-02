@@ -1,5 +1,7 @@
 package com.histmersion.server.instance
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.api.*
 import com.histmersion.domain.personal.seen.{SeenBoard, SeenService}
 import com.histmersion.server.{BuildMeta, Deps, StorageLocations, Supervisor}
@@ -143,8 +145,9 @@ final class InstanceControllers(
     */
   def uiCounters: UiNotices.Counters =
     val marks = seen.marks(UserId.Local).map((b, at) => (b.value: String) -> at.iso)
-    val counters = UiRepo.counters(deps.ds, marks)
-    if cfg.agents.enabled then counters.modify(_.agents).setTo(Some(UiRepo.agents(deps.ds))) else counters
+    val counters = Transactor(deps.ds).read(UiRepo.counters(marks))
+    if cfg.agents.enabled then counters.modify(_.agents).setTo(Some(Transactor(deps.ds).read(UiRepo.agents)))
+    else counters
 
   /** `POST /api/ui/seen/{board}` — the reader opened that window, which showed items up to `mark.at`. Answers the
     * counters after the mark moved.

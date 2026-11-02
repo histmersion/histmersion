@@ -1,5 +1,7 @@
 package com.histmersion.util.basemap
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -23,7 +25,7 @@ class BasemapServiceSuite extends com.histmersion.db.DbSuite:
     Migrate.run(d); d
 
   private def await(id: String, left: Int = 400): JobInfo =
-    val j = JobRepo.get(ds, id).getOrElse(fail(s"no job $id"))
+    val j = Transactor(ds).read(JobRepo.get(id)).getOrElse(fail(s"no job $id"))
     if j.isTerminal || left == 0 then j else { Thread.sleep(25); await(id, left - 1) }
 
   /** A service over `dir`, its provider serving `vector`/`terrain` fixture archives from `src`. */

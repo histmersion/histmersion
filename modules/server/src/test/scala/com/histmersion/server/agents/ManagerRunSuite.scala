@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.domain.automation.agents.LeaseRepo
 
 import com.histmersion.domain.automation.agents.{AgentLease, AgentsHandlers, LlmClient}
@@ -531,9 +533,9 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       connect(ds)(AgentRepo.get(run)).get.params.notes,
       Some(List("Prefer the 2019 dating.", "Check the tin isotopes this time."))
     )
-    assert(ManagerRepo.hint(ds, once.id).get.retiredAt.isDefined, "a once-hint is used up")
-    assert(ManagerRepo.hint(ds, standing.id).get.retiredAt.isEmpty)
-    assertEquals(ManagerRepo.hint(ds, standing.id).get.uses, 1)
+    assert(Transactor(ds).read(ManagerRepo.hint(once.id)).get.retiredAt.isDefined, "a once-hint is used up")
+    assert(Transactor(ds).read(ManagerRepo.hint(standing.id)).get.retiredAt.isEmpty)
+    assertEquals(Transactor(ds).read(ManagerRepo.hint(standing.id)).get.uses, 1)
     // the run: a rules MAJOR, the fixer's gloss, verified, then a clean final panel
     def text(j: String) = AgentResponse(j, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
     c.add("rules", Seq(text(rulesMajor)), Seq(text(glossFixed)), Seq(text(rulesPass)))

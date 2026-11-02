@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.domain.automation.agents.{AgentsHandlers, LlmClient}
 import com.histmersion.domain.automation.managers.Zero
 
@@ -138,7 +140,7 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     h.workListView.list("acquire", all = false).toOption.get.items.filter(_.text.contains("zzagent"))
 
   private def backlog(mid: String): List[ManagerItem] =
-    ManagerRepo.items(ds, mid, None, 0, 500)._1.filter(_.kind == OaIngest)
+    Transactor(ds).read(ManagerRepo.itemPage(mid, None, 0, 500))._1.filter(_.kind == OaIngest)
 
   private def ingestCalls(up: StubUpstream): List[String] =
     import scala.jdk.CollectionConverters.*
@@ -256,7 +258,7 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     a.engine.execute(sweepRun(w1.id, Goal).id)
     a.engine.execute(sweepRun(w2.id, Goal2).id)
     assertEquals(ingestCalls(up), Nil)
-    val open = ManagerRepo.backlogOpen(ds)
+    val open = Transactor(ds).read(ManagerRepo.backlogOpenIn())
     assertEquals(open.map(_.target).sorted, List(doi("x"), doi("y")), "x once, though both goals found it")
     val x = open.find(_.target == doi("x")).get
     assertEquals((x.managerId, x.state.oa.map(_.goals)), (w1.id, Some(List(Goal, Goal2))))

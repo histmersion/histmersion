@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 
 import com.histmersion.util.jobs.JobRepo
@@ -54,38 +56,44 @@ class PagingRepoSuite extends com.histmersion.db.DbSuite:
   test("jobs: newest first, ties broken by id, the cursor continues exactly, the counts are the table's"):
     val st = s"${tag}j"
     val all = jobs(s"$tag-j", st, 7)
-    val (p1, more1) = JobRepo.page(ds, Some(st), 3).toOption.get
+    val (p1, more1) = Transactor(ds).read(JobRepo.page(Some(st), 3)).toOption.get
     assertEquals(p1.map(_.id).toList, all.take(3))
     assert(more1)
-    val (p2, more2) = JobRepo.page(ds, Some(st), 3, before = Some(p1.last.id)).toOption.get
+    val (p2, more2) = Transactor(ds).read(JobRepo.page(Some(st), 3, before = Some(p1.last.id))).toOption.get
     assertEquals(p2.map(_.id).toList, all.slice(3, 6))
     assert(more2)
-    val (p3, more3) = JobRepo.page(ds, Some(st), 3, before = Some(p2.last.id)).toOption.get
+    val (p3, more3) = Transactor(ds).read(JobRepo.page(Some(st), 3, before = Some(p2.last.id))).toOption.get
     assertEquals(p3.map(_.id).toList, all.drop(6))
     assert(!more3, "the last page says nothing is older")
     // ties: -006 and -007 share their second; -007 (the higher id) comes first
     assertEquals(all.take(2), List(s"$tag-j-007", s"$tag-j-006"))
-    assertEquals(JobRepo.stateCounts(ds).find(_._1 == st), Some(st -> 7))
+    assertEquals(Transactor(ds).read(JobRepo.stateCounts).find(_._1 == st), Some(st -> 7))
     // the old list reads the same order
-    assertEquals(JobRepo.list(ds, Some(st), 7).map(_.id).toList, all)
+    assertEquals(Transactor(ds).read(JobRepo.list(Some(st), 7)).map(_.id).toList, all)
 
   test("jobs: upTo is every row down to that one; a filter narrows the page, not the cursor's place"):
     val st = s"${tag}u"
     val all = jobs(s"$tag-u", st, 6)
-    val (rows, more) = JobRepo.page(ds, Some(st), 10, upTo = Some(all(3))).toOption.get
+    val (rows, more) = Transactor(ds).read(JobRepo.page(Some(st), 10, upTo = Some(all(3)))).toOption.get
     assertEquals(rows.map(_.id).toList, all.take(4))
     assert(more, "rows older than the upTo row exist")
-    val (whole, none) = JobRepo.page(ds, Some(st), 10, upTo = Some(all.last)).toOption.get
+    val (whole, none) = Transactor(ds).read(JobRepo.page(Some(st), 10, upTo = Some(all.last))).toOption.get
     assertEquals((whole.size, none), (6, false))
     // more rows down to the upTo row than the limit: the newest `limit`, and more
-    val (cut, cutMore) = JobRepo.page(ds, Some(st), 2, upTo = Some(all.last)).toOption.get
+    val (cut, cutMore) = Transactor(ds).read(JobRepo.page(Some(st), 2, upTo = Some(all.last))).toOption.get
     assertEquals((cut.map(_.id).toList, cutMore), (all.take(2), true))
     // a cursor from another state still marks a place: the page is this state's rows older than it
     val other = s"$tag-o-1"
     transact(ds)(sql"""INSERT INTO jobs (id, kind, status, created_at)
                        VALUES ($other, 'ingest', ${s"${tag}o"}, '2001-01-01T00:00:01.5Z'::timestamptz)""".update.run())
-    assertEquals(JobRepo.page(ds, Some(st), 10, before = Some(other)).toOption.get._1.map(_.id).toList, all.drop(2))
-    assert(JobRepo.page(ds, Some(st), 10, before = Some(s"$tag-nope")).isLeft, "a cursor naming no job")
+    assertEquals(
+      Transactor(ds).read(JobRepo.page(Some(st), 10, before = Some(other))).toOption.get._1.map(_.id).toList,
+      all.drop(2)
+    )
+    assert(
+      Transactor(ds).read(JobRepo.page(Some(st), 10, before = Some(s"$tag-nope"))).isLeft,
+      "a cursor naming no job"
+    )
 
   test("agent runs: one goal's runs page by keyset, and the counts are that goal's, per state"):
     val goal = s"${tag}g"

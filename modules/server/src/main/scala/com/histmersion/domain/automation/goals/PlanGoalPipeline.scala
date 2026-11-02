@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.goals
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.approvals.Decided
 import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
@@ -45,7 +47,8 @@ final class PlanGoalPipeline(
   /** A sub-goal slug is taken by a goal OR by an old slug of one: a put to an old slug follows the alias (#1799) and
     * would replace the renamed goal.
     */
-  private def taken(s: String): Boolean = GoalRepo.exists(ds, s) || GoalRepo.renamedTo(ds, s).isDefined
+  private def taken(s: String): Boolean =
+    Transactor(ds).read(GoalRepo.exists(s)) || Transactor(ds).read(GoalRepo.renamedTo(s)).isDefined
 
   def run(ctx: RunCtx): Either[Halt, String] =
     val slug = ctx.run.target
@@ -160,7 +163,7 @@ final class PlanGoalPipeline(
   private def applyApproved(ctx: RunCtx, slug: String, plan: Plan): Either[String, Applied] =
     val parent = host.goal(slug).toOption
     val created = plan.subGoals.filter { g =>
-      if GoalRepo.exists(ds, g.slug) then {
+      if Transactor(ds).read(GoalRepo.exists(g.slug)) then {
         ctx.warn(s"apply: '${g.slug}' became a goal meanwhile; left as it is"); false
       } else
         host.putGoal(

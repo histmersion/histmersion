@@ -14,13 +14,11 @@ import com.histmersion.db.*
 import com.histmersion.db.given
 
 import com.augustnagro.magnum.*
-import javax.sql.DataSource
 import com.histmersion.values.SourceStatus
 
 /** The library's sources: a record with its findings and the edges it makes, written and read whole or by part, its old
-  * citekeys, its rename, its full-text chunks and body. Every method runs on the connection it is given; the
-  * `DataSource` forms are the entry points of the callers that move with the library's later parts (acquisition,
-  * ingest, the bundle and the checks) and of research's article writes.
+  * citekeys, its rename, its full-text chunks and body. Every method runs on the connection or in the transaction its
+  * caller opened.
   */
 private[sources] object SourceRepo:
 
@@ -48,45 +46,10 @@ private[sources] object SourceRepo:
       sql"SELECT count(*)::int FROM findings".query[Int].run().head.toLong
     )
 
-  /** Full replace of a source and everything under it, in ONE transaction. Kept as the original `Unit` signature;
-    * [[put]] is the same write returning the new `updated_at` token.
-    */
-  def upsert(
-      ds: DataSource,
-      s: Source,
-      chunkChars: Int,
-      toleranceKm: Double = FindingPlacement.DefaultToleranceKm
-  ): Unit =
-    val _ = put(ds, s, chunkChars, toleranceKm)
-
-  /** Full replace (`put_source`). Returns the fresh `updatedAt` concurrency token. `chunkChars` (config
-    * `histmersion.limits.chunk-chars`) sizes the FTS body chunks rewritten with it.
-    */
-  def put(
-      ds: DataSource,
-      s: Source,
-      chunkChars: Int,
-      toleranceKm: Double = FindingPlacement.DefaultToleranceKm
-  ): String =
-    transact(ds)(putIn(s, chunkChars, toleranceKm))
-
   /** [[put]] inside the caller's transaction. */
   def putIn(s: Source, chunkChars: Int, toleranceKm: Double)(using DbCon): String =
     write(s, chunkChars, toleranceKm)
     token(s.citekey).getOrElse("")
-
-  /** Selective merge (`patch_source`): read → [[SourceWrite.applyPatch]] → write, all in one transaction, so two
-    * concurrent patches cannot interleave. The precondition is checked against the row we just read inside that
-    * transaction, which is what makes `ifUpdatedAt` meaningful.
-    */
-  def patch(
-      ds: DataSource,
-      requested: String,
-      p: SourcePatch,
-      chunkChars: Int,
-      toleranceKm: Double = FindingPlacement.DefaultToleranceKm
-  ): Either[ApiError, String] =
-    transact(ds)(patchIn(requested, p, chunkChars, toleranceKm))
 
   /** [[patch]] inside the caller's transaction. */
   def patchIn(requested: String, p: SourcePatch, chunkChars: Int, toleranceKm: Double)(using
@@ -213,11 +176,6 @@ private[sources] object SourceRepo:
     sql"""SELECT to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')
           FROM sources WHERE citekey = $citekey""".query[String].run().headOption
 
-  /** Read a whole source back as the DOMAIN model (findings + edges included) — the input side of a patch, and what
-    * `export` renders.
-    */
-  def load(ds: DataSource, citekey: String): Option[Source] = connect(ds)(load(citekey))
-
   def load(citekey: String)(using DbCon): Option[Source] =
     sql"""SELECT citekey, title, authors, doi, year, venue, status, topics, regions, tags,
                  ${SqlLiteral(RangeSql.cols("period"))}, summary, cited_by_count, influential_citations,
@@ -279,13 +237,8 @@ private[sources] object SourceRepo:
       )
     }
 
-  def citekeys(ds: DataSource): Vector[String] = connect(ds)(citekeys())
-
   def citekeys()(using DbCon): Vector[String] =
     sql"""SELECT citekey FROM sources ORDER BY citekey COLLATE "C"""".query[String].run()
-
-  /** `citekey -> updated_at` in epoch millis, for the seed guard (one query for the whole corpus). */
-  def updatedAtMillis(ds: DataSource): Map[String, Long] = connect(ds)(updatedAtMillis())
 
   def updatedAtMillis()(using DbCon): Map[String, Long] =
     sql"SELECT citekey, (extract(epoch from updated_at) * 1000)::bigint FROM sources"
@@ -306,59 +259,16 @@ private[sources] object SourceRepo:
               VALUES ($citekey, ${c.ord}, ${c.heading}, ${c.body})""".update)
     chunks.size
 
-  /** Rebuild the chunk index — `POST /api/reindex`. Needed once after V004 (the existing corpus was imported before
-    * chunking existed) and after any bulk edit of `ocr_markdown` that bypassed [[upsert]]. One transaction per source,
-    * so an 89 MB corpus never sits in memory.
-    *
-    * RESUMABLE, because the whole corpus takes minutes (Postgres spends ~2 ms per chunk on the generated tsvector plus
-    * the GIN insert — 38 000 chunks ≈ 2.5 min) and the server's request timeout is 20 s: sources are walked in citekey
-    * order from `after`, and the call stops once `maxChars` of body text have been re-chunked (always at least one
-    * source, so progress is guaranteed). The result carries the cursor and how many sources are left.
-    */
-  def reindexChunks(
-      ds: DataSource,
-      chunkChars: Int,
-      after: Option[String] = None,
-      maxSources: Option[Int] = None,
-      maxChars: Long = Long.MaxValue
-  ): ReindexResult =
-    val pending = connect(ds):
-      sql"""SELECT citekey, coalesce(length(ocr_markdown), 0)
-            FROM sources WHERE $after IS NULL OR citekey > $after
-            ORDER BY citekey""".query[(String, Int)].run()
+  /** The sources after `after`, in citekey order, each with its body's length: what a re-chunk of the corpus walks. */
+  def bodiesAfter(after: Option[String])(using DbCon): Vector[(String, Int)] =
+    sql"""SELECT citekey, coalesce(length(ocr_markdown), 0)
+          FROM sources WHERE $after IS NULL OR citekey > $after
+          ORDER BY citekey""".query[(String, Int)].run()
 
-    // take sources until the character budget is spent (never fewer than one)
-    val batch = pending
-      .scanLeft(("", 0L)) { case ((_, spent), (ck, len)) => (ck, spent + len.toLong) }
-      .drop(1)
-      .takeWhile((_, spent) => spent <= maxChars)
-      .map(_._1)
-      .take(maxSources.getOrElse(Int.MaxValue))
-    val take = if batch.isEmpty then pending.take(1).map(_._1) else batch
-
-    val counts = take.map { ck =>
-      transact(ds):
-        val md = sql"SELECT ocr_markdown FROM sources WHERE citekey = $ck".query[Option[String]].run()
-        replaceChunks(ck, md.headOption.flatten, chunkChars)
-    }
-    ReindexResult(take.size, counts.sum, take.lastOption, pending.size - take.size)
-
-  /** Rebuild every chunk in one go (tests, offline tools) — no budget, so it can run for minutes. */
-  def reindexAll(ds: DataSource, chunkChars: Int): ReindexResult =
-    @annotation.tailrec
-    def go(after: Option[String], sources: Int, chunks: Int): ReindexResult =
-      val r = reindexChunks(ds, chunkChars, after)
-      val (s, c) = (sources + r.sources, chunks + r.chunks)
-      if r.remaining > 0 && r.lastCitekey.isDefined then go(r.lastCitekey, s, c)
-      else ReindexResult(s, c, r.lastCitekey, r.remaining)
-    go(None, 0, 0)
-
-  /** Promote parked edges (`unresolved_edges`, V026) whose target now resolves to a stored source — exactly, or by the
-    * UNIQUE `<target>_%` prefix (`heggarty2023` → `heggarty2023_language`), the rule [[resolveAliases]] applies to
-    * wikilinks. Run after a full import and by `edges/resolve`. Ambiguous targets stay parked for a human (`lint --rule
-    * unresolved-short-citekeys`). Returns how many edges were promoted.
-    */
-  def resolveEdges(ds: DataSource): Int = transact(ds)(resolveEdges())
+  /** One source's full-text chunks rebuilt from its stored body; how many chunks it now has. */
+  def rechunk(citekey: String, chunkChars: Int)(using DbCon): Int =
+    val md = sql"SELECT ocr_markdown FROM sources WHERE citekey = $citekey".query[Option[String]].run()
+    replaceChunks(citekey, md.headOption.flatten, chunkChars)
 
   def resolveEdges()(using DbCon): Int =
     val parked = sql"SELECT src, dst, kind FROM unresolved_edges".query[EdgeRow].run().toList
@@ -631,13 +541,6 @@ private[sources] object SourceRepo:
       .getOrElse("")
 
   // ── the uploaded ORIGINAL's digest, on `sources.sha256` (V001 already has the column) ─────────
-
-  /** The citekey that already holds this upload, if any — `POST /api/ingest` refuses a duplicate with it unless `force`
-    * (plan §1.8).
-    */
-  def citekeyOfSha256(ds: DataSource, sha: String): Option[String] = connect(ds)(citekeyOfSha256(sha))
-  def setSha256(ds: DataSource, citekey: String, sha: String): Unit = transact(ds)(setSha256(citekey, sha))
-  def sha256Of(ds: DataSource, citekey: String): Option[String] = connect(ds)(sha256Of(citekey))
 
   def citekeyOfSha256(sha: String)(using DbCon): Option[String] =
     sql"SELECT citekey FROM sources WHERE sha256 = $sha ORDER BY citekey LIMIT 1".query[String].run().headOption

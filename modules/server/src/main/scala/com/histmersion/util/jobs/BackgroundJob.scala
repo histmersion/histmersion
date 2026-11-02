@@ -1,5 +1,7 @@
 package com.histmersion.util.jobs
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -65,7 +67,9 @@ object BackgroundJob:
 
   /** Change the detail the job `id` records. */
   def amendDetail(ds: DataSource, id: String)(change: JobDetail => JobDetail): Unit =
-    JobRepo.get(ds, id).foreach(j => JobRepo.setDetail(ds, id, change(j.detail.getOrElse(JobDetail.empty))))
+    Transactor(ds)
+      .read(JobRepo.get(id))
+      .foreach(j => Transactor(ds).transact(JobRepo.setDetail(id, change(j.detail.getOrElse(JobDetail.empty)))))
 
   /** Start `body` as a job of `kind` (with `detail` stored on its row) in `slot`; `Left` — naming the running one —
     * when the slot is held. `what` names this kind of work in that refusal ("a vacuum job"), `busyCode` is its error
@@ -92,13 +96,13 @@ object BackgroundJob:
     if !slot.claim("starting") then Left(busy(what, slot.current, busyCode))
     else
       val job =
-        try JobRepo.create(ds, kind, None, None, detail = detail)
+        try Transactor(ds).transact(JobRepo.create(kind, None, None, detail = detail))
         catch
           case e: Throwable =>
             slot.free()
             throw e
       launch(ds, job, kind, slot, what, busyCode, pins, stops, JobState.Queued, body)
-      Right(JobRepo.get(ds, job.id).getOrElse(job))
+      Right(Transactor(ds).read(JobRepo.get(job.id)).getOrElse(job))
 
   /** The job's body on its own daemon thread, its row moved from `from` to running and on to how it ended. The slot is
     * held by the caller and freed when the run ends.
@@ -121,10 +125,11 @@ object BackgroundJob:
       // a report closes a part: what it says is kept, and a stop asked meanwhile takes effect there
       def report(text: String): Unit =
         last.set(Some(text))
-        JobRepo.progress(ds, job.id, text)
+        Transactor(ds).transact(JobRepo.progress(job.id, text))
         stops.flatMap(_.requestedFor(job.id)).foreach(stop => throw JobStopped(stop))
       try
-        val _ = JobRepo.transition(ds, job.id, from, JobState.Running, last.get.orElse(Some("starting")))
+        val _ =
+          Transactor(ds).transact(JobRepo.transition(job.id, from, JobState.Running, last.get.orElse(Some("starting"))))
         val (out, thrown) =
           try (body(job, report), None)
           catch
@@ -138,25 +143,31 @@ object BackgroundJob:
         val _ = ending(out, thrown, asked) match
           case Right(o) =>
             o.error match
-              case None    => JobRepo.transition(ds, job.id, JobState.Running, JobState.Done, o.summary)
-              case Some(e) => JobRepo.transition(ds, job.id, JobState.Running, JobState.Failed, o.summary, Some(e))
+              case None =>
+                Transactor(ds).transact(JobRepo.transition(job.id, JobState.Running, JobState.Done, o.summary))
+              case Some(e) =>
+                Transactor(ds).transact(
+                  JobRepo.transition(job.id, JobState.Running, JobState.Failed, o.summary, Some(e))
+                )
           case Left(JobStop.Pause) =>
             stops.foreach(_.pausedWith(job.id, () => resume(ds, job, kind, slot, what, busyCode, pins, stops, body)))
-            JobRepo.transition(
-              ds,
-              job.id,
-              JobState.Running,
-              JobState.Paused,
-              Some(JobControlRules.stoppedLine(JobStop.Pause, last.get))
+            Transactor(ds).transact(
+              JobRepo.transition(
+                job.id,
+                JobState.Running,
+                JobState.Paused,
+                Some(JobControlRules.stoppedLine(JobStop.Pause, last.get))
+              )
             )
           case Left(JobStop.Cancel) =>
-            JobRepo.transition(
-              ds,
-              job.id,
-              JobState.Running,
-              JobState.Cancelled,
-              Some(JobControlRules.stoppedLine(JobStop.Cancel, last.get)),
-              Some(JobControlRules.CancelledByPerson)
+            Transactor(ds).transact(
+              JobRepo.transition(
+                job.id,
+                JobState.Running,
+                JobState.Cancelled,
+                Some(JobControlRules.stoppedLine(JobStop.Cancel, last.get)),
+                Some(JobControlRules.CancelledByPerson)
+              )
             )
       finally slot.free()
     }

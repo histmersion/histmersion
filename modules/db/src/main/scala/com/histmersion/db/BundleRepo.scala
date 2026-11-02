@@ -9,7 +9,6 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import java.util.UUID
-import javax.sql.DataSource
 import com.histmersion.values.{BundleKind, Confidence, SourceStatus}
 import com.histmersion.util.data.exchange.BundleScope
 import com.histmersion.util.data.exchange.BundleSql.*
@@ -24,17 +23,14 @@ object BundleRepo:
 
   // ── this instance ──────────────────────────────────────────────────────────────────────────
 
-  def instance(ds: DataSource): InstanceInfo = connect(ds)(instance)
-
-  private[histmersion] def instance(using DbCon): InstanceInfo =
+  def instance(using DbCon): InstanceInfo =
     Sql.raw(s"SELECT id, label, ${ts("created_at")} FROM instance").frag.query[InstanceInfo].run().head
 
   /** Name this instance; a blank label clears it. */
-  def setLabel(ds: DataSource, label: Option[String]): InstanceInfo =
-    transact(ds):
-      val l = label.map(_.trim).filter(_.nonEmpty)
-      sql"UPDATE instance SET label = $l".update.run()
-      instance
+  def setLabel(label: Option[String])(using DbCon): InstanceInfo =
+    val l = label.map(_.trim).filter(_.nonEmpty)
+    sql"UPDATE instance SET label = $l".update.run()
+    instance
 
   // ── reads, one per file ────────────────────────────────────────────────────────────────────
 

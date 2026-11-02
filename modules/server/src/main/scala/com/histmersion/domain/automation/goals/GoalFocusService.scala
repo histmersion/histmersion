@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.goals
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.approvals.AutoApprovals
 import com.histmersion.domain.automation.scheduler.SchedulerService
@@ -43,7 +45,9 @@ final class GoalFocusService(
 
   /** The cap and where it comes from: a person's (`focus max`) or the config's. */
   def cap: (Int, String) =
-    FocusRepo.maxOverride(ds).fold((math.max(0, acfg.maxActiveGoals), "config"))(n => (math.max(0, n), "person"))
+    Transactor(ds)
+      .read(FocusRepo.maxOverride)
+      .fold((math.max(0, acfg.maxActiveGoals), "config"))(n => (math.max(0, n), "person"))
 
   /** The focus is in force — never since the central scheduler (#3933, [[SchedulerService]]) admits the managers' work:
     * the focus holds nothing; it ranks the goals (what [[info]] shows), and its pins and priorities are the goals'
@@ -90,7 +94,7 @@ final class GoalFocusService(
 
   private def read(): Read =
     val goals = agents.focusStore.goals()
-    val rows = FocusRepo.work(ds)
+    val rows = Transactor(ds).read(FocusRepo.work)
     val work = rows.map(r =>
       r.goals -> Work(
         r.id,
@@ -122,7 +126,7 @@ final class GoalFocusService(
       agents.focusStore.sourceCounts(),
       agents.workflows.linked(),
       agents.workflows.finished(),
-      FocusRepo.compileOpen(ds),
+      Transactor(ds).read(FocusRepo.compileOpen),
       agents.focusStore.lastStops()
     )
     Read(
@@ -130,7 +134,7 @@ final class GoalFocusService(
       rows,
       goals.map(g => g.slug -> g.title).toMap,
       goals.map(g => g.slug -> (g.leftAt, g.leftWhy)).toMap,
-      FocusRepo.openGoalPlans(ds)
+      Transactor(ds).read(FocusRepo.openGoalPlans)
     )
 
   private def settings(r: Read, max: Int): GoalFocus.Settings =
@@ -149,7 +153,7 @@ final class GoalFocusService(
       current = None
       queued = Set.empty
       val released = agents.managerStore.focusReleaseAll()
-      val cleared = FocusRepo.clearActive(ds, notInForce, now)
+      val cleared = Transactor(ds).transact(FocusRepo.clearActive(notInForce, now))
       if released + cleared == 0 then Nil
       else
         val line = s"autopilot focus: not in force ($notInForce): ${Plural.count(released, "item")} released, " +
@@ -233,7 +237,7 @@ final class GoalFocusService(
       case Some(active) if m.id == EnrichId || m.id == ReviewId =>
         val link = if m.id == EnrichId then GoalPlans.LinkKind.Source.wire else GoalPlans.LinkKind.Article.wire
         val ratio = acfg.focusRatio
-        val recent = FocusRepo.recentTargets(ds, m.id, math.max(1, ratio))
+        val recent = Transactor(ds).read(FocusRepo.recentTargets(m.id, math.max(1, ratio)))
         val goalsOf = agents.focusStore.goalsOf(link, (due.map(_.target) ++ recent).distinct)
         def mine(t: String) = goalsOf.getOrElse(t, Nil).exists(active)
         val person = pending.filter(_.origin == ItemOrigin.Person.wire).map(_.id).toSet
@@ -352,7 +356,7 @@ final class GoalFocusService(
         in.value match
           case Some(n) if n < 0 => Left(ApiError("`max` is 0 (no cap) or more"))
           case v                =>
-            FocusRepo.setMaxOverride(ds, v)
+            Transactor(ds).transact(FocusRepo.setMaxOverride(v))
             Right(
               v.fold(s"cap back to agents.autopilot.max-active-goals (${acfg.maxActiveGoals}) (by $by)")(n =>
                 s"cap $n${if n == 0 then " (no cap)" else ""} (by $by)"

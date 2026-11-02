@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.domain.library.workflows.*
 
 import com.histmersion.domain.automation.agents.*
@@ -344,7 +346,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val (a, h) = handlers(c); seed(h)
     val run = a.startRun(RunRequest("enrich-source", Ck)).toOption.get
     assert(TestRuns.transition(ds, run.id, RunState.Queued, RunState.Running).isDefined)
-    JobRepo.failInterrupted(ds)
+    Transactor(ds).transact(JobRepo.failInterrupted())
     assertEquals(connect(ds)(AgentRepo.get(run.id)).get.status, "running")
     val (paused, _) = TestRuns.reconcile(ds)
     assert(paused.nonEmpty)

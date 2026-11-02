@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.managers
 
+import com.histmersion.util.database.Transactor
+
 import com.augustnagro.magnum.{connect, transact}
 
 import com.histmersion.domain.automation.agents.*
@@ -177,7 +179,7 @@ final class ManagerSupervisor(
       out ++= guarded("drain", out)(agents.drain.tick(now))
       if now.toEpochMilli - lastPrune.get() > 3600000L then
         lastPrune.set(now.toEpochMilli)
-        val _ = ManagerRepo.pruneEvents(ds, mcfg.keepEventsDays)
+        val _ = Transactor(ds).transact(ManagerRepo.pruneEvents(mcfg.keepEventsDays))
       out.result()
   }
 
@@ -204,10 +206,10 @@ final class ManagerSupervisor(
 
   private def evaluate(m: ManagerInfo, now: Instant, out: collection.mutable.Builder[String, List[String]]): Unit =
     val s = settings(m)
-    ManagerRepo.toEvaluate(ds, m.id).foreach {
+    Transactor(ds).read(ManagerRepo.toEvaluate(m.id)).foreach {
       case (item, None) =>
         // its run row is gone (deleted by hand): the item goes back to the queue
-        if ManagerRepo.requeue(ds, item.id, "its run disappeared; queued again") then
+        if Transactor(ds).transact(ManagerRepo.requeue(item.id, "its run disappeared; queued again")) then
           agents.managerStore.event(
             m.id,
             Some(item.id),
@@ -231,15 +233,16 @@ final class ManagerSupervisor(
       note: String,
       out: collection.mutable.Builder[String, List[String]]
   ): Unit =
-    if ManagerRepo.evaluated(
-        ds,
-        item.id,
-        Some(run),
-        ItemStatus.Pending,
-        Some(notBefore),
-        Some(failures),
-        item.state,
-        Some(s"$note; retry after $notBefore")
+    if Transactor(ds).transact(
+        ManagerRepo.evaluated(
+          item.id,
+          Some(run),
+          ItemStatus.Pending,
+          Some(notBefore),
+          Some(failures),
+          item.state,
+          Some(s"$note; retry after $notBefore")
+        )
       )
     then
       agents.managerStore.event(
@@ -276,7 +279,10 @@ final class ManagerSupervisor(
       now
     ) match
       case Next.Done(outcome, state) =>
-        if ManagerRepo.evaluated(ds, item.id, Some(run), ItemStatus.Done, None, None, state, Some(outcome)) then
+        if Transactor(ds).transact(
+            ManagerRepo.evaluated(item.id, Some(run), ItemStatus.Done, None, None, state, Some(outcome))
+          )
+        then
           agents.managerStore.event(
             m.id,
             Some(item.id),
@@ -288,16 +294,8 @@ final class ManagerSupervisor(
           kind.afterDone(this, m, item, Some(run), out)
       case Next.Wait(approval, note) =>
         val hold = Hold(reason = note, untilApproval = Some(approval))
-        if ManagerRepo.evaluated(
-            ds,
-            item.id,
-            Some(run),
-            ItemStatus.Held,
-            None,
-            None,
-            item.state,
-            Some(note),
-            Some(hold)
+        if Transactor(ds).transact(
+            ManagerRepo.evaluated(item.id, Some(run), ItemStatus.Held, None, None, item.state, Some(note), Some(hold))
           )
         then
           agents.managerStore.event(m.id, Some(item.id), Some(run), Feed.Held, s"${item.target} (${item.kind}): $note")
@@ -315,15 +313,16 @@ final class ManagerSupervisor(
             .map(_.id)
         )
         val text = outcome + filed.fold("")(id => s" (task #$id)")
-        if ManagerRepo.evaluated(
-            ds,
-            item.id,
-            Some(run),
-            if failed then ItemStatus.Failed else ItemStatus.Stopped,
-            None,
-            Option.when(failed)(item.failures + 1),
-            state,
-            Some(text)
+        if Transactor(ds).transact(
+            ManagerRepo.evaluated(
+              item.id,
+              Some(run),
+              if failed then ItemStatus.Failed else ItemStatus.Stopped,
+              None,
+              Option.when(failed)(item.failures + 1),
+              state,
+              Some(text)
+            )
           )
         then
           agents.managerStore.event(
@@ -335,8 +334,10 @@ final class ManagerSupervisor(
           )
           out += s"${item.target}: stopped"
       case Next.Again(notBefore, state, note) =>
-        if ManagerRepo.evaluated(ds, item.id, Some(run), ItemStatus.Pending, notBefore, None, state, Some(note)) then
-          agents.managerStore.event(m.id, Some(item.id), Some(run), Feed.Evaluated, s"${item.target}: $note")
+        if Transactor(ds).transact(
+            ManagerRepo.evaluated(item.id, Some(run), ItemStatus.Pending, notBefore, None, state, Some(note))
+          )
+        then agents.managerStore.event(m.id, Some(item.id), Some(run), Feed.Evaluated, s"${item.target}: $note")
 
   /** The approval of `kind` a run opened: none (nothing passed its checks), open (the item waits for it), or decided
     * already (approved automatically, say).
@@ -412,7 +413,9 @@ final class ManagerSupervisor(
         case Some(aid) => settleOnApproval(m, i, aid, out)
         case None      =>
           if i.hold
-              .exists(ManagerPolicy.released(_, now, ManagerRepo.sourceExists(ds, _))) && transact(ds)(
+              .exists(
+                ManagerPolicy.released(_, now, r => Transactor(ds).read(ManagerRepo.sourceExists(r)))
+              ) && transact(ds)(
               ManagerRepo.release(i.id)
             )
           then
@@ -521,10 +524,10 @@ final class ManagerSupervisor(
       ManagerPolicy.cronStep(cron, m.nextTickAt.flatMap(ManagerPolicy.parseInstant), now) match
         case ManagerPolicy.CronStep.Idle           => false
         case ManagerPolicy.CronStep.Schedule(next) =>
-          val _ = ManagerRepo.setNextTick(ds, m.id, next)
+          val _ = Transactor(ds).transact(ManagerRepo.setNextTick(m.id, next))
           false
         case ManagerPolicy.CronStep.Fire(next) =>
-          val _ = ManagerRepo.setNextTick(ds, m.id, next)
+          val _ = Transactor(ds).transact(ManagerRepo.setNextTick(m.id, next))
           val what = byKind.get(kindOf(m)).fold(Nil)(_.fire(this, m, now))
           agents.managerStore.event(
             m.id,
@@ -589,7 +592,7 @@ final class ManagerSupervisor(
       val note = waits.headOption.filter(_ => blocked.isEmpty && starved.isEmpty) match
         case Some(w) => s"$base; the scheduler: ${w.code} — ${w.why.take(200)}"
         case None    => base
-      ManagerRepo.setStatusNote(ds, m.id, note)
+      Transactor(ds).transact(ManagerRepo.setStatusNote(m.id, note))
       // a starved (or budget-blocked) manager says so once per change, not every tick
       blocked.orElse(starved.map(x => s"starved: $x")).foreach { b =>
         if !agents.managerStore.lastEventOf(m.id, Feed.Starved).exists(_.text == b) then
@@ -601,8 +604,10 @@ final class ManagerSupervisor(
       State
         .parse(m.state)
         .foreach(st =>
-          ManagerRepo
-            .setStatusNote(ds, m.id, ManagerPolicy.statusNote(st, None, 0, m.counts.pending, 0, m.inFlight, None))
+          Transactor(ds).transact(
+            ManagerRepo
+              .setStatusNote(m.id, ManagerPolicy.statusNote(st, None, 0, m.counts.pending, 0, m.inFlight, None))
+          )
         )
     }
 
@@ -669,7 +674,7 @@ final class ManagerSupervisor(
           agents.managerStore.event(m.id, Some(item.id), None, Feed.Starved, note)
         None
       case Right(pr) =>
-        val hints = ManagerPolicy.notesFor(ManagerRepo.hints(ds, m.id, live = true), item.id)
+        val hints = ManagerPolicy.notesFor(Transactor(ds).read(ManagerRepo.hints(m.id, live = true)), item.id)
         val notes = hints.map(_.text.trim)
         val params = tweak(pr.params).copy(notes = Option.when(notes.nonEmpty)(notes))
         val id =
@@ -755,7 +760,8 @@ final class ManagerSupervisor(
   def event(id: String, item: Option[Long], run: Option[String], feed: String, text: String): Unit =
     agents.managerStore.event(id, item, run, feed, text)
   def lastEventOf(id: String, feed: String): Option[ManagerEvent] = agents.managerStore.lastEventOf(id, feed)
-  def countEvents(id: String, feed: String, since: Instant): Int = ManagerRepo.countEvents(ds, id, feed, since)
+  def countEvents(id: String, feed: String, since: Instant): Int =
+    Transactor(ds).read(ManagerRepo.countEvents(id, feed, since))
   def upsert(
       id: String,
       kind: String,
@@ -768,8 +774,10 @@ final class ManagerSupervisor(
   def item(itemId: Long): Option[ManagerItem] = agents.managerStore.item(itemId)
   def itemFor(id: String, kind: String, target: String): Option[ManagerItem] =
     agents.managerStore.itemFor(id, kind, target)
-  def hasItem(id: String, kind: String, target: String): Boolean = ManagerRepo.hasItem(ds, id, kind, target)
-  def restale(itemId: Long, priority: Int, why: String): Boolean = ManagerRepo.restale(ds, itemId, priority, why)
+  def hasItem(id: String, kind: String, target: String): Boolean =
+    Transactor(ds).read(ManagerRepo.hasItem(id, kind, target))
+  def restale(itemId: Long, priority: Int, why: String): Boolean =
+    Transactor(ds).transact(ManagerRepo.restale(itemId, priority, why))
   def pending(id: String): Int = connect(ds)(ManagerRepo.counts(id)).pending
   def openKeys(id: String): List[(String, String)] = agents.managerStore.openKeys(id)
   def evaluated(
@@ -780,28 +788,28 @@ final class ManagerSupervisor(
       failures: Option[Int],
       state: ItemState,
       outcome: Option[String]
-  ): Boolean = ManagerRepo.evaluated(ds, itemId, run, status, notBefore, failures, state, outcome)
-  def hints(id: String): List[ManagerHint] = ManagerRepo.hints(ds, id, live = true)
+  ): Boolean = Transactor(ds).transact(ManagerRepo.evaluated(itemId, run, status, notBefore, failures, state, outcome))
+  def hints(id: String): List[ManagerHint] = Transactor(ds).read(ManagerRepo.hints(id, live = true))
   def state(id: String): Option[String] = agents.managerStore.get(id).map(_.state)
   def openMajorArticles(id: String, tags: List[String], goal: Option[String], limit: Int): List[(String, Int)] =
-    ManagerRepo.openMajorArticles(ds, id, ArticleReview, tags, goal, limit)
+    Transactor(ds).read(ManagerRepo.openMajorArticles(id, ArticleReview, tags, goal, limit))
   def unreviewedArticles(id: String, tags: List[String], goal: Option[String], limit: Int): List[String] =
-    ManagerRepo.unreviewedArticles(ds, id, ArticleReview, tags, goal, limit)
+    Transactor(ds).read(ManagerRepo.unreviewedArticles(id, ArticleReview, tags, goal, limit))
   def staleCandidates(
       id: String,
       tags: List[String],
       goal: Option[String],
       limit: Int
   ): List[(String, String, Option[Int], Option[Long])] =
-    ManagerRepo.staleCandidates(ds, id, ArticleReview, tags, goal, limit)
+    Transactor(ds).read(ManagerRepo.staleCandidates(id, ArticleReview, tags, goal, limit))
   def extendCandidates(
       id: String,
       tags: List[String],
       goal: Option[String],
       limit: Int
   ): List[(String, Option[String])] =
-    ManagerRepo.extendCandidates(ds, id, tags, goal, limit)
-  def articleFacets(slug: String): (List[String], List[String]) = ManagerRepo.articleFacets(ds, slug)
+    Transactor(ds).read(ManagerRepo.extendCandidates(id, tags, goal, limit))
+  def articleFacets(slug: String): (List[String], List[String]) = Transactor(ds).read(ManagerRepo.articleFacets(slug))
 
   def progress(run: String): String = agents.runs.get(run).flatMap(_.progress).filter(_.nonEmpty).getOrElse("")
   def stepOutput(run: String, step: String): Option[String] =

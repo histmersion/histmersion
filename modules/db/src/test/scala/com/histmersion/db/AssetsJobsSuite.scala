@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.media.assets.AssetFixtures
@@ -157,65 +159,78 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
 
   // ── jobs ───────────────────────────────────────────────────────────────────────────────────
   test("job lifecycle: queued → running → done, with progress"):
-    val j = JobRepo.create(ds, Ingest.KindIngest, Some(ck), Some("abc"))
+    val j = Transactor(ds).transact(JobRepo.create(Ingest.KindIngest, Some(ck), Some("abc")))
     assertEquals(j.status, JobState.Queued.wire)
     assertEquals(
-      JobRepo.transition(ds, j.id, JobState.Queued, JobState.Running, Some("converting")),
+      Transactor(ds).transact(JobRepo.transition(j.id, JobState.Queued, JobState.Running, Some("converting"))),
       Some(JobState.Running)
     )
-    JobRepo.progress(ds, j.id, "storing 3 asset(s)")
-    assertEquals(JobRepo.get(ds, j.id).flatMap(_.progress), Some("storing 3 asset(s)"))
-    assertEquals(JobRepo.transition(ds, j.id, JobState.Running, JobState.Done, Some("1 page(s)")), Some(JobState.Done))
-    val done = JobRepo.get(ds, j.id).get
+    Transactor(ds).transact(JobRepo.progress(j.id, "storing 3 asset(s)"))
+    assertEquals(Transactor(ds).read(JobRepo.get(j.id)).flatMap(_.progress), Some("storing 3 asset(s)"))
+    assertEquals(
+      Transactor(ds).transact(JobRepo.transition(j.id, JobState.Running, JobState.Done, Some("1 page(s)"))),
+      Some(JobState.Done)
+    )
+    val done = Transactor(ds).read(JobRepo.get(j.id)).get
     assertEquals(done.status, JobState.Done.wire)
     assert(done.succeeded && done.isTerminal)
 
   test("a job remembers the acquisition item it ticks off; one without an item reads back none"):
-    val j = JobRepo.create(ds, Ingest.KindIngest, Some(ck), None, acquireItem = Some(4242))
+    val j = Transactor(ds).transact(JobRepo.create(Ingest.KindIngest, Some(ck), None, acquireItem = Some(4242)))
     assertEquals(j.acquireItem, Some(4242))
-    assertEquals(JobRepo.get(ds, j.id).flatMap(_.acquireItem), Some(4242))
-    assert(JobRepo.list(ds, None, 50).exists(x => x.id == j.id && x.acquireItem.contains(4242)))
-    assertEquals(JobRepo.get(ds, JobRepo.create(ds, Ingest.KindIngest, Some(ck), None).id).flatMap(_.acquireItem), None)
+    assertEquals(Transactor(ds).read(JobRepo.get(j.id)).flatMap(_.acquireItem), Some(4242))
+    assert(Transactor(ds).read(JobRepo.list(None, 50)).exists(x => x.id == j.id && x.acquireItem.contains(4242)))
+    assertEquals(
+      Transactor(ds)
+        .read(JobRepo.get(Transactor(ds).transact(JobRepo.create(Ingest.KindIngest, Some(ck), None)).id))
+        .flatMap(_.acquireItem),
+      None
+    )
 
   test("a transition from the wrong state is refused — two workers cannot claim one job"):
-    val j = JobRepo.create(ds, Ingest.KindIngest, Some(ck), None)
-    assertEquals(JobRepo.transition(ds, j.id, JobState.Queued, JobState.Running), Some(JobState.Running))
+    val j = Transactor(ds).transact(JobRepo.create(Ingest.KindIngest, Some(ck), None))
+    assertEquals(
+      Transactor(ds).transact(JobRepo.transition(j.id, JobState.Queued, JobState.Running)),
+      Some(JobState.Running)
+    )
     // the second worker sees the row already moved on
-    assertEquals(JobRepo.transition(ds, j.id, JobState.Queued, JobState.Running), None)
+    assertEquals(Transactor(ds).transact(JobRepo.transition(j.id, JobState.Queued, JobState.Running)), None)
     // and an illegal transition is refused by the state machine before SQL runs
-    assertEquals(JobRepo.transition(ds, j.id, JobState.Running, JobState.Queued), None)
+    assertEquals(Transactor(ds).transact(JobRepo.transition(j.id, JobState.Running, JobState.Queued)), None)
 
   test("failure records the reason"):
-    val j = JobRepo.create(ds, Ingest.KindReocr, Some(ck), None)
-    JobRepo.transition(ds, j.id, JobState.Queued, JobState.Running)
-    JobRepo.transition(ds, j.id, JobState.Running, JobState.Failed, error = Some("converter unreachable"))
-    val f = JobRepo.get(ds, j.id).get
+    val j = Transactor(ds).transact(JobRepo.create(Ingest.KindReocr, Some(ck), None))
+    Transactor(ds).transact(JobRepo.transition(j.id, JobState.Queued, JobState.Running))
+    Transactor(ds).transact(
+      JobRepo.transition(j.id, JobState.Running, JobState.Failed, error = Some("converter unreachable"))
+    )
+    val f = Transactor(ds).read(JobRepo.get(j.id)).get
     assertEquals(f.status, JobState.Failed.wire)
     assertEquals(f.error, Some("converter unreachable"))
     assert(!f.succeeded)
 
   test("a restart fails whatever was unfinished, and leaves terminal rows alone"):
-    val done = JobRepo.create(ds, Ingest.KindIngest, Some(ck), None)
-    JobRepo.transition(ds, done.id, JobState.Queued, JobState.Running)
-    JobRepo.transition(ds, done.id, JobState.Running, JobState.Done)
-    val running = JobRepo.create(ds, Ingest.KindIngest, Some(ck), None)
-    JobRepo.transition(ds, running.id, JobState.Queued, JobState.Running)
-    val queued = JobRepo.create(ds, Ingest.KindIngest, Some(ck), None)
+    val done = Transactor(ds).transact(JobRepo.create(Ingest.KindIngest, Some(ck), None))
+    Transactor(ds).transact(JobRepo.transition(done.id, JobState.Queued, JobState.Running))
+    Transactor(ds).transact(JobRepo.transition(done.id, JobState.Running, JobState.Done))
+    val running = Transactor(ds).transact(JobRepo.create(Ingest.KindIngest, Some(ck), None))
+    Transactor(ds).transact(JobRepo.transition(running.id, JobState.Queued, JobState.Running))
+    val queued = Transactor(ds).transact(JobRepo.create(Ingest.KindIngest, Some(ck), None))
 
-    assert(JobRepo.failInterrupted(ds) >= 2)
-    assertEquals(JobRepo.get(ds, running.id).map(_.error), Some(Some(JobState.Interrupted)))
-    assertEquals(JobRepo.get(ds, queued.id).map(_.status), Some(JobState.Failed.wire))
-    assertEquals(JobRepo.get(ds, done.id).map(_.status), Some(JobState.Done.wire))
+    assert(Transactor(ds).transact(JobRepo.failInterrupted()) >= 2)
+    assertEquals(Transactor(ds).read(JobRepo.get(running.id)).map(_.error), Some(Some(JobState.Interrupted)))
+    assertEquals(Transactor(ds).read(JobRepo.get(queued.id)).map(_.status), Some(JobState.Failed.wire))
+    assertEquals(Transactor(ds).read(JobRepo.get(done.id)).map(_.status), Some(JobState.Done.wire))
 
   test("jobs list is newest-first and filterable by status"):
-    JobRepo.failInterrupted(ds)
-    val a = JobRepo.create(ds, Ingest.KindIngest, Some(ck), None)
-    val all = JobRepo.list(ds, None, 10)
+    Transactor(ds).transact(JobRepo.failInterrupted())
+    val a = Transactor(ds).transact(JobRepo.create(Ingest.KindIngest, Some(ck), None))
+    val all = Transactor(ds).read(JobRepo.list(None, 10))
     assertEquals(all.headOption.map(_.id), Some(a.id))
-    assert(JobRepo.list(ds, Some("queued"), 10).forall(_.status == "queued"))
-    assert(JobRepo.list(ds, Some("done"), 10).forall(_.status == "done"))
-    assertEquals(JobRepo.list(ds, Some("nonsense"), 10), Vector.empty)
-    assertEquals(JobRepo.get(ds, "no-such-job"), None)
+    assert(Transactor(ds).read(JobRepo.list(Some("queued"), 10)).forall(_.status == "queued"))
+    assert(Transactor(ds).read(JobRepo.list(Some("done"), 10)).forall(_.status == "done"))
+    assertEquals(Transactor(ds).read(JobRepo.list(Some("nonsense"), 10)), Vector.empty)
+    assertEquals(Transactor(ds).read(JobRepo.get("no-such-job")), None)
 
   private def connectForTest(sql: String): Unit =
     val c = ds.getConnection()

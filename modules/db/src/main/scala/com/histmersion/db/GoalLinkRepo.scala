@@ -6,7 +6,6 @@ import com.histmersion.domain.*
 import com.histmersion.api.GoalPlans.*
 
 import com.augustnagro.magnum.*
-import javax.sql.DataSource
 
 /** What hangs off a goal (migrations V046, V049): its links (sources, articles, search queries, queue items), its
   * approved plan and run cap, and its schedules. Stateless, like every repo.
@@ -41,11 +40,6 @@ object GoalLinkRepo:
       LinkKind.parse(r.kind).map(k => GoalLink(k, r.ref, r.note, r.title, r.createdAt, r.queue))
     }
 
-  /** The goals that link each of these queue items, by item: (item id, goal slug, goal title), the goals of an item by
-    * title.
-    */
-  def goalsOfItems(ds: DataSource, items: List[Int]): List[(Int, String, String)] = connect(ds)(goalsOfItemsIn(items))
-
   /** [[goalsOfItems]] on the caller's connection. */
   def goalsOfItemsIn(items: List[Int])(using DbCon): List[(Int, String, String)] =
     if items.isEmpty then Nil
@@ -59,9 +53,6 @@ object GoalLinkRepo:
           .run()
           .toList
           .flatMap((ref, slug, title) => ref.toIntOption.map((_, slug, title)))
-
-  /** The refs of one kind (a sweep's queries, a currency check's sources). */
-  def refs(ds: DataSource, goal: String, kind: LinkKind): List[String] = connect(ds)(refsIn(goal, kind))
 
   /** [[refs]] on the caller's connection. */
   def refsIn(goal: String, kind: LinkKind)(using DbCon): List[String] =
@@ -160,13 +151,12 @@ object GoalLinkRepo:
       .flatMap(toSchedule)
 
   /** One row here (a bundle's import, before the managers move it into its goal's watcher). */
-  def schedule(ds: DataSource, goal: String, kind: ScheduleKind): Option[GoalSchedule] =
-    connect(ds):
-      (scheduleSelect ++ Sql.of(" WHERE goal_slug = ? AND kind = ?", Param.S(goal), Param.S(kind.wire))).frag
-        .query[ScheduleRow]
-        .run()
-        .headOption
-        .flatMap(toSchedule)
+  def schedule(goal: String, kind: ScheduleKind)(using DbCon): Option[GoalSchedule] =
+    (scheduleSelect ++ Sql.of(" WHERE goal_slug = ? AND kind = ?", Param.S(goal), Param.S(kind.wire))).frag
+      .query[ScheduleRow]
+      .run()
+      .headOption
+      .flatMap(toSchedule)
 
   /** A row here (tests, a bundle's import) before the managers move it into its goal's watcher. */
   def setSchedule(

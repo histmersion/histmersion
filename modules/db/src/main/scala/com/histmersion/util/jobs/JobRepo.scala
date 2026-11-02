@@ -8,7 +8,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
-import javax.sql.DataSource
 
 /** Flat projection of `jobs` (positional, like the other write-path rows). */
 final private[jobs] case class JobRow(
@@ -63,58 +62,54 @@ object JobRepo:
     * acquisition item the job ticks off when it succeeds; `detail` what the job is about beyond its citekey.
     */
   def create(
-      ds: DataSource,
       kind: String,
       citekey: Option[String],
       sha256: Option[String],
       acquireItem: Option[Int] = None,
       detail: Option[JobDetail] = None
-  ): JobInfo =
+  )(using DbCon): JobInfo =
     val id = java.util.UUID.randomUUID().toString
     val js = detail.map(json)
-    transact(ds):
-      sql"""INSERT INTO jobs (id, kind, citekey, status, sha256, acquire_item, detail)
-            VALUES ($id, $kind, $citekey, ${JobState.Queued.wire}, $sha256, $acquireItem, $js::jsonb)""".update.run()
-    get(ds, id).getOrElse(
+    sql"""INSERT INTO jobs (id, kind, citekey, status, sha256, acquire_item, detail)
+          VALUES ($id, $kind, $citekey, ${JobState.Queued.wire}, $sha256, $acquireItem, $js::jsonb)""".update.run()
+    get(id).getOrElse(
       JobInfo(id, kind, JobState.Queued.wire, citekey, None, None, sha256, acquireItem = acquireItem, detail = detail)
     )
 
   /** Replace a job's [[JobDetail]] — e.g. an init job adding the periods it skipped. */
-  def setDetail(ds: DataSource, id: String, detail: JobDetail): Unit =
+  def setDetail(id: String, detail: JobDetail)(using DbCon): Unit =
     val js = json(detail)
-    val _ = transact(ds)(sql"UPDATE jobs SET detail = $js::jsonb WHERE id = $id".update.run())
+    val _ = (sql"UPDATE jobs SET detail = $js::jsonb WHERE id = $id".update.run())
 
-  def get(ds: DataSource, id: String): Option[JobInfo] =
-    connect(ds):
-      (select ++ Sql.of(" WHERE id = ?", Param.S(id))).frag.query[JobRow].run().headOption.map(toInfo)
+  def get(id: String)(using DbCon): Option[JobInfo] =
+    (select ++ Sql.of(" WHERE id = ?", Param.S(id))).frag.query[JobRow].run().headOption.map(toInfo)
 
   /** Newest first; `status` (when given) narrows to one state. */
-  def list(ds: DataSource, status: Option[String], limit: Int): Vector[JobInfo] =
+  def list(status: Option[String], limit: Int)(using DbCon): Vector[JobInfo] =
     val where = status.map(_.trim.toLowerCase).filter(_.nonEmpty) match
       case Some(s) => Sql.of(" WHERE status = ?", Param.S(s))
       case None    => Sql.empty
     val q = select ++ where ++ Keyset.orderBy("") ++ Sql.of(" LIMIT ?", Param.I(math.max(1, limit)))
-    connect(ds)(q.frag.query[JobRow].run().map(toInfo))
+    (q.frag.query[JobRow].run().map(toInfo))
 
   /** One page of the newest-first list ([[com.histmersion.api.Paging]]): `before` = only jobs older than that one,
     * `upTo` = only jobs down to and including it. Left: a cursor that names no job. Returns the page and whether older
     * jobs exist.
     */
   def page(
-      ds: DataSource,
       status: Option[String],
       limit: Int,
       before: Option[String] = None,
       upTo: Option[String] = None
-  ): Either[String, (Vector[JobInfo], Boolean)] =
-    page(ds, JobQuery(status = status.map(_.trim.toLowerCase).filter(_.nonEmpty).toList), limit, before, upTo)
+  )(using DbCon): Either[String, (Vector[JobInfo], Boolean)] =
+    page(JobQuery(status = status.map(_.trim.toLowerCase).filter(_.nonEmpty).toList), limit, before, upTo)
 
-  /** How many jobs are in each state — the whole table (one `GROUP BY` over the status index). */
   /** The job queue by state, on the caller's connection (the jobs' figures). */
   def states(using DbCon): List[(String, Int)] =
     sql"SELECT status, count(*)::int FROM jobs GROUP BY status".query[(String, Int)].run().toList
 
-  def stateCounts(ds: DataSource): List[(String, Int)] = Keyset.counts(ds, Sql.raw(" FROM jobs"), "status")
+  /** How many jobs are in each state — the whole table (one `GROUP BY` over the status index). */
+  def stateCounts(using DbCon): List[(String, Int)] = Keyset.countsOn(Sql.raw(" FROM jobs"), "status")
 
   private def conds(q: JobQuery): ListSql.Conds =
     val text = q.q.fold(Sql.empty) { t =>
@@ -139,17 +134,15 @@ object JobRepo:
 
   /** One page of the jobs that match `q`, newest first. Left: a cursor that names no job. */
   def page(
-      ds: DataSource,
       q: JobQuery,
       limit: Int,
       before: Option[String],
       upTo: Option[String]
-  ): Either[String, (Vector[JobInfo], Boolean)] =
-    (before.toList ++ upTo.toList).find(c => !Keyset.exists(ds, "jobs", Param.S(c))) match
+  )(using DbCon): Either[String, (Vector[JobInfo], Boolean)] =
+    (before.toList ++ upTo.toList).find(c => !Keyset.existsOn("jobs", Param.S(c))) match
       case Some(c) => Left(s"No job '$c' to page from")
       case None    =>
-        val (rows, more) = Keyset.page[JobRow](
-          ds,
+        val (rows, more) = Keyset.pageOn[JobRow](
           select,
           Sql.raw(" WHERE true") ++ conds(q).all,
           "",
@@ -161,17 +154,17 @@ object JobRepo:
         )
         Right((rows.map(toInfo), more))
 
-  /** The counts that go with a filtered page: per state, and the `kind` facet — each under every filter but its own.
+  /** The counts that go with a filtered page: per state, and the `kind` facet (at most `facetMax` kinds) — each under
+    * every filter but its own.
     */
-  /** The per-state counts and the kind facet (at most `facetMax` kinds) under `q`. */
-  def facets(ds: DataSource, q: JobQuery, facetMax: Int): (List[(String, Int)], List[(String, List[(String, Int)])]) =
+  def facets(q: JobQuery, facetMax: Int)(using DbCon): (List[(String, Int)], List[(String, List[(String, Int)])]) =
     val c = conds(q)
     def from(except: String) = Sql.raw(" FROM jobs WHERE true") ++ c.except(except)
-    (Keyset.counts(ds, from("status"), "status"), List("kind" -> ListSql.facet(ds, from("kind"), "kind", facetMax)))
+    (Keyset.countsOn(from("status"), "status"), List("kind" -> ListSql.facetOn(from("kind"), "kind", facetMax)))
 
   /** Free-text progress on a `running` job — what the CLI's progress line prints. */
-  def progress(ds: DataSource, id: String, text: String): Unit =
-    val _ = transact(ds):
+  def progress(id: String, text: String)(using DbCon): Unit =
+    val _ =
       sql"UPDATE jobs SET progress = $text, updated_at = now() WHERE id = $id AND status = ${JobState.Running.wire}".update
         .run()
 
@@ -180,15 +173,14 @@ object JobRepo:
     * state, or `None` when the transition was refused.
     */
   def transition(
-      ds: DataSource,
       id: String,
       from: JobState,
       to: JobState,
       progress: Option[String] = None,
       error: Option[String] = None
-  ): Option[JobState] =
+  )(using DbCon): Option[JobState] =
     JobState.next(from, to).flatMap { target =>
-      val updated = transact(ds):
+      val updated =
         sql"""UPDATE jobs SET status = ${target.wire}, progress = $progress, error = $error, updated_at = now()
               WHERE id = $id AND status = ${from.wire}""".update.run()
       if updated > 0 then Some(target) else None
@@ -200,13 +192,12 @@ object JobRepo:
     * (`JobRuns.reconcile`). * `except`: the jobs this process is still running or holding queued — a config reload that
     * swapped back to a database (docs/research-plugins.md §3.6) must not fail its own work there.
     */
-  def failInterrupted(ds: DataSource, except: List[String] = Nil): Int =
-    transact(ds):
-      sql"""UPDATE jobs SET status = ${JobState.Failed.wire}, error = ${JobState.Interrupted},
-                            progress = NULL, updated_at = now()
-            WHERE status IN (${JobState.Running.wire}, ${JobState.Queued.wire}, ${JobState.Paused.wire})
-              AND kind <> ${Agents.JobKind}
-              AND NOT (id = ANY($except::text[]))""".update.run()
+  def failInterrupted(except: List[String] = Nil)(using DbCon): Int =
+    sql"""UPDATE jobs SET status = ${JobState.Failed.wire}, error = ${JobState.Interrupted},
+                          progress = NULL, updated_at = now()
+          WHERE status IN (${JobState.Running.wire}, ${JobState.Queued.wire}, ${JobState.Paused.wire})
+            AND kind <> ${Agents.JobKind}
+            AND NOT (id = ANY($except::text[]))""".update.run()
 
   // ── runs: jobs that run as checkpointed steps (agent runs) ───────────────────────────────────
 
@@ -311,54 +302,51 @@ object JobRepo:
     * its plan in `detail`. A restart fails it as `interrupted` like every other unfinished job ([[failInterrupted]]),
     * so a poll never sees it running forever.
     */
-  def startMergeApply(ds: DataSource, bundle: String, planHash: String): String =
+  def startMergeApply(bundle: String, planHash: String)(using DbCon): String =
     val id = java.util.UUID.randomUUID().toString
     val js = json(com.histmersion.util.data.exchange.ExchangeJobKinds.PlanHash(Some(planHash)))
-    transact(ds):
-      sql"""INSERT INTO jobs (id, kind, status, sha256, detail)
-            VALUES ($id, ${MergeApplyJob.JobKind}, ${JobState.Running.wire}, $bundle, $js::jsonb)""".update.run()
+    sql"""INSERT INTO jobs (id, kind, status, sha256, detail)
+          VALUES ($id, ${MergeApplyJob.JobKind}, ${JobState.Running.wire}, $bundle, $js::jsonb)""".update.run()
     id
 
   /** Record how a merge apply ended: `done` with its report (applied or refused), or `failed` with why. A row a restart
     * already failed is left as it is.
     */
-  def finishMergeApply(ds: DataSource, id: String, outcome: Either[String, MergeApplyResult]): Unit =
+  def finishMergeApply(id: String, outcome: Either[String, MergeApplyResult])(using DbCon): Unit =
     val (status, error, result) = outcome match
       case Right(r) => (JobState.Done, None, Some(Jsonb.write(r)))
       case Left(e)  => (JobState.Failed, Some(e), None)
-    val _ = transact(ds):
+    val _ =
       sql"""UPDATE jobs SET status = ${status.wire}, error = $error, result = $result::jsonb, updated_at = now()
             WHERE id = $id AND kind = ${MergeApplyJob.JobKind} AND status = ${JobState.Running.wire}""".update.run()
 
   /** One merge apply as the API answers it; `None` for an unknown id (or another kind of job). The time so far of a
     * running one is measured against the database's clock.
     */
-  def mergeApply(ds: DataSource, id: String): Option[MergeApplyJob] =
-    connect(ds):
-      sql"""SELECT id, status, coalesce(sha256, ''), coalesce(detail->>'planHash', ''),
-                   (extract(epoch FROM (CASE WHEN status = ${JobState.Running.wire} THEN clock_timestamp()
-                                            ELSE updated_at END) - created_at) * 1000)::bigint,
-                   error, result::text
-            FROM jobs WHERE id = $id AND kind = ${MergeApplyJob.JobKind}"""
-        .query[(String, String, String, String, Long, Option[String], Option[String])]
-        .run()
-        .headOption
-        .map { (id, status, bundle, plan, ms, error, result) =>
-          MergeApplyJob.of(
-            id,
-            JobState.parse(status).getOrElse(JobState.Failed),
-            bundle,
-            plan,
-            math.max(0L, ms),
-            error,
-            result.flatMap(Jsonb.read[MergeApplyResult])
-          )
-        }
+  def mergeApply(id: String)(using DbCon): Option[MergeApplyJob] =
+    sql"""SELECT id, status, coalesce(sha256, ''), coalesce(detail->>'planHash', ''),
+                 (extract(epoch FROM (CASE WHEN status = ${JobState.Running.wire} THEN clock_timestamp()
+                                          ELSE updated_at END) - created_at) * 1000)::bigint,
+                 error, result::text
+          FROM jobs WHERE id = $id AND kind = ${MergeApplyJob.JobKind}"""
+      .query[(String, String, String, String, Long, Option[String], Option[String])]
+      .run()
+      .headOption
+      .map { (id, status, bundle, plan, ms, error, result) =>
+        MergeApplyJob.of(
+          id,
+          JobState.parse(status).getOrElse(JobState.Failed),
+          bundle,
+          plan,
+          math.max(0L, ms),
+          error,
+          result.flatMap(Jsonb.read[MergeApplyResult])
+        )
+      }
 
   /** Is a merge apply running? One at a time. */
-  def mergeApplyRunning(ds: DataSource): Boolean =
-    connect(ds):
-      sql"SELECT 1 FROM jobs WHERE kind = ${MergeApplyJob.JobKind} AND status = ${JobState.Running.wire} LIMIT 1"
-        .query[Int]
-        .run()
-        .nonEmpty
+  def mergeApplyRunning(using DbCon): Boolean =
+    sql"SELECT 1 FROM jobs WHERE kind = ${MergeApplyJob.JobKind} AND status = ${JobState.Running.wire} LIMIT 1"
+      .query[Int]
+      .run()
+      .nonEmpty

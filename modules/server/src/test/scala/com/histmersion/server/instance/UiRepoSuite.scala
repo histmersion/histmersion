@@ -1,5 +1,7 @@
 package com.histmersion.server.instance
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -52,7 +54,7 @@ class UiRepoSuite extends com.histmersion.db.DbSuite:
     )
 
   private def board(b: Board) =
-    UiRepo.counters(ds, seen()).boards.find(_.key == b.wire).getOrElse(fail(s"no ${b.wire}"))
+    Transactor(ds).read(UiRepo.counters(seen())).boards.find(_.key == b.wire).getOrElse(fail(s"no ${b.wire}"))
 
   private def now(): String =
     connect(ds)(
@@ -60,7 +62,7 @@ class UiRepoSuite extends com.histmersion.db.DbSuite:
     )
 
   test("every board is listed in order; the counted ones carry a count"):
-    val cs = UiRepo.counters(ds, seen()).boards
+    val cs = Transactor(ds).read(UiRepo.counters(seen())).boards
     assertEquals(cs.map(_.key), Board.wires)
     assertEquals(cs.filter(_.count.isDefined).map(_.key), List("tasks", "approvals", "acquire"))
     assert(cs.forall(_.count.forall(_ >= 0)))
@@ -123,6 +125,6 @@ class UiRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(g.count, None, "goals are not counted")
 
   test("a board's counter carries the seen mark it is given, and none for a board never opened"):
-    val cs = UiRepo.counters(ds, Map(Board.Log.wire -> "2026-10-31T12:00:00.000000Z")).boards
+    val cs = Transactor(ds).read(UiRepo.counters(Map(Board.Log.wire -> "2026-10-31T12:00:00.000000Z"))).boards
     assertEquals(cs.find(_.key == Board.Log.wire).flatMap(_.seen), Some("2026-10-31T12:00:00.000000Z"))
     assertEquals(cs.find(_.key == Board.Tasks.wire).flatMap(_.seen), None)

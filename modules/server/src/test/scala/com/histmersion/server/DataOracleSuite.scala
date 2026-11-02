@@ -189,7 +189,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
     * articles; a goal; a place, a period and an event at the place; figures and a link; an attestation; work items.
     */
   private def craftWork(ds: DataSource): Unit =
-    BundleRepo.setLabel(ds, Some("work"))
+    com.histmersion.util.database.Transactor(ds).transact(BundleRepo.setLabel(Some("work")))
     SourceFixtures.upsert(
       ds,
       src(
@@ -316,7 +316,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       )
     // a deleted event and a deleted goal at work
     val _ = EventFixtures.delete(work, "zz_event_gone")
-    val _ = GoalRepo.delete(work, "zz_goal_gone")
+    val _ = com.histmersion.util.database.Transactor(work).transact(GoalRepo.deleteIn("zz_goal_gone"))
     // something new at work
     SourceFixtures.upsert(work, src("zzdelta2020_new", "A New Book", 2020, findings = List("new at work")), chunk)
     val _ = QueueRows.add(work, Queue.Kind.Tasks, Queue.QueueAdd("a task work added", topic = Some("oracle")))

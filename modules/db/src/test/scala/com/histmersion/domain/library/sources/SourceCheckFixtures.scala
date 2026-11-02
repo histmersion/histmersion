@@ -6,13 +6,16 @@ import com.histmersion.domain.catalogue.places.GeocodeSettings
 import com.histmersion.util.data.checks.CheckRun
 import com.augustnagro.magnum.connect
 
+import com.histmersion.api.ReindexResult
+import com.histmersion.util.database.Transactor
 import javax.sql.DataSource
 
 /** The library's and the articles' lint rules as the db suites run them: one connection for the lot, each rule by its
   * owner's repository; and the SQL each rule reads.
   */
 object SourceCheckFixtures:
-  export SourceCheckRepo.reindexStale
+  def reindexStale(ds: DataSource, chunkChars: Int, maxChars: Long): ReindexResult =
+    SourceRepairs(Transactor(ds)).reindexStale(chunkChars, maxChars)
 
   def run(
       ds: DataSource,

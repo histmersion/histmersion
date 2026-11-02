@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.domain.automation.agents.{AgentsHandlers, LlmClient}
 import com.histmersion.domain.automation.managers.{ManagerDefaultsViews, Zero}
 
@@ -120,7 +122,11 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(m.nextTickAt, Some("2026-10-18T00:00:00Z"))
     assertEquals(m.effective.autoIngest, Some(false), "auto-ingest is opt-in")
     assertEquals(
-      ManagerRepo.items(ds, m.id, None, 0, 10)._1.map(i => (i.kind, i.target, i.status)).sortBy(_._1),
+      Transactor(ds)
+        .read(ManagerRepo.itemPage(m.id, None, 0, 10))
+        ._1
+        .map(i => (i.kind, i.target, i.status))
+        .sortBy(_._1),
       List((AcquisitionSweep, Goal, "pending"), (CurrencyCheck, Goal, "pending"))
     )
     assert(a.managing.create(ManagerCreate("watch", Some(Goal))).left.exists(_.message.contains("exists already")))
@@ -192,7 +198,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(queued.size, 2, queued.mkString("\n"))
     assert(List("zzagent.b", "zzagent.c").forall(d => queued.exists(_.contains(d))), queued)
     assertEquals(
-      ManagerRepo.backlogOpen(ds).map(i => (i.managerId, i.target)),
+      Transactor(ds).read(ManagerRepo.backlogOpenIn()).map(i => (i.managerId, i.target)),
       List(m.id -> "10.5555/zzagent.e"),
       "the open-access pick past the cap waits in the ingest backlog, not on the acquisition list"
     )
@@ -239,7 +245,10 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       !acquire(h).exists(_.text.contains("zzagent.f")),
       "an open-access find past the cap is not the person's to buy"
     )
-    assertEquals(ManagerRepo.backlogOpen(ds).map(_.target), List("10.5555/zzagent.e", "10.5555/zzagent.f"))
+    assertEquals(
+      Transactor(ds).read(ManagerRepo.backlogOpenIn()).map(_.target),
+      List("10.5555/zzagent.e", "10.5555/zzagent.f")
+    )
 
   test("watch sweep with auto-ingest OFF (the default): every pick goes to the acquisition list, nothing is ingested"):
     val c = ScriptedClient(Model)
@@ -251,7 +260,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       .create(ManagerCreate("watch", Some(Goal), ManagerConfig(sweeps = Some(List("acquisition")))))
       .fold(e => fail(e.message), identity)
     assertEquals(
-      ManagerRepo.items(ds, m.id, None, 0, 10)._1.map(_.kind),
+      Transactor(ds).read(ManagerRepo.itemPage(m.id, None, 0, 10))._1.map(_.kind),
       List(AcquisitionSweep),
       "only the sweeps it names"
     )
@@ -386,7 +395,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(decided.result.exists(_.contains("hold")), decided.result)
     assertEquals((enrichItem(CkA).status, enrichItem(CkA).hold.flatMap(_.until)), ("held", Some("2026-12-01")))
     assertEquals(enrichItem(CkB).status, "pending")
-    val after = ManagerRepo.hint(ds, hint.id).get
+    val after = Transactor(ds).read(ManagerRepo.hint(hint.id)).get
     assertEquals((after.effect.map(_.action), after.proposal), (Some("hold"), None))
     // a rejected one changes nothing
     val skip = a.managing
@@ -395,7 +404,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     val ap2 = openHintApprovals(a).head
     assertEquals(a.decide(ap2.id, "reject", DecisionRequest()).map(_.state), Right("rejected"))
     assertEquals(enrichItem(CkB).status, "pending")
-    assertEquals(ManagerRepo.hint(ds, skip.id).get.effect, None)
+    assertEquals(Transactor(ds).read(ManagerRepo.hint(skip.id)).get.effect, None)
 
   test(
     "a proposed settings change applies on approval; a person's own hint cannot carry one; a bad one is refused up front"
@@ -488,11 +497,11 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     val off = baseCfg.copy(agents = baseCfg.agents.copy(enabled = false))
     val (b, _, _) = handlers(ScriptedClient(Model), off)
-    val before = ManagerRepo.hints(ds, EnrichId, live = false).size
+    val before = Transactor(ds).read(ManagerRepo.hints(EnrichId, live = false)).size
     assert(
       b.managing.addHint(EnrichId, HintAdd("x", suggest = Some(true))).left.exists(_.message.contains("agents are off"))
     )
-    assertEquals(ManagerRepo.hints(ds, EnrichId, live = false).size, before)
+    assertEquals(Transactor(ds).read(ManagerRepo.hints(EnrichId, live = false)).size, before)
 
   // ── the per-manager daily cap ──────────────────────────────────────────────────────────────────
 

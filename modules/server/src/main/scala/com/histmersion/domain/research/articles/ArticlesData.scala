@@ -1,5 +1,7 @@
 package com.histmersion.domain.research.articles
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.api.Lint
 import com.histmersion.api.Lint.*
 import com.histmersion.util.data.DataOwner
@@ -32,7 +34,9 @@ object ArticlesData:
     */
   private def pairCritiques(context: CheckContext): LintFixResult =
     val written =
-      ArticleCheckRepo.pairingRepairs(context.dataSource).filter(r => context.write(r.slug, r.body, r.updatedAt))
+      Transactor(context.dataSource)
+        .read(ArticleCheckRepo.pairingRepairs)
+        .filter(r => context.write(r.slug, r.body, r.updatedAt))
     val citations = written.map(_.applied.size).sum
     LintFixResult(
       List(

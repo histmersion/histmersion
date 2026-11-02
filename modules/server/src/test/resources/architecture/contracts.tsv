@@ -739,8 +739,8 @@ one-type	web:web/map/maplibre/MapLibre.scala	MapLibre LngLat LngLatBounds Screen
 one-type	web:web/map/maplibre/MapLibreSurface.scala	MapLibreSurface GlShapes GlPointTiles	3
 primitive	db:db/AgentRepo.scala	String/Int/Long for a concept with a newtype	15
 primitive	db:db/FocusRepo.scala	String/Int/Long for a concept with a newtype	4
-primitive	db:db/GoalRepo.scala	String/Int/Long for a concept with a newtype	13
-primitive	db:db/ManagerRepo.scala	String/Int/Long for a concept with a newtype	11
+primitive	db:db/GoalRepo.scala	String/Int/Long for a concept with a newtype	8
+primitive	db:db/ManagerRepo.scala	String/Int/Long for a concept with a newtype	9
 primitive	db:db/ModelSettingsRepo.scala	String/Int/Long for a concept with a newtype	1
 primitive	db:domain/automation/agents/LeaseRepo.scala	String/Int/Long for a concept with a newtype	1
 primitive	db:domain/automation/worklists/QueueRepo.scala	String/Int/Long for a concept with a newtype	1
@@ -757,7 +757,7 @@ primitive	db:domain/library/acquisition/AcquireCheckRepo.scala	String/Int/Long f
 primitive	db:domain/library/acquisition/AssessmentRepo.scala	String/Int/Long for a concept with a newtype	2
 primitive	db:domain/library/acquisition/CandidateRepo.scala	String/Int/Long for a concept with a newtype	4
 primitive	db:domain/library/citations/CitationRepo.scala	String/Int/Long for a concept with a newtype	3
-primitive	db:domain/library/sources/SourceRepo.scala	String/Int/Long for a concept with a newtype	26
+primitive	db:domain/library/sources/SourceRepo.scala	String/Int/Long for a concept with a newtype	22
 primitive	db:domain/media/assets/AssetRepo.scala	String/Int/Long for a concept with a newtype	8
 primitive	db:domain/media/assets/MediaRepo.scala	String/Int/Long for a concept with a newtype	4
 primitive	db:domain/media/imports/ImportRepo.scala	String/Int/Long for a concept with a newtype	1
@@ -816,33 +816,6 @@ service	server:domain/library/search/SearchService.scala	SearchService without I
 service	server:domain/research/articles/CoverageService.scala	CoverageService without InMemory	1
 service	server:domain/research/articles/review/ReviewStateService.scala	ReviewStateService without InMemory	1
 service	server:util/data/exchange/BundleService.scala	BundleService without InMemory	1
-transaction	db:db/BundleRepo.scala	opens a connection or transaction	2
-transaction	db:db/BundleRepo.scala	takes a DataSource	2
-transaction	db:db/FocusRepo.scala	opens a connection or transaction	7
-transaction	db:db/FocusRepo.scala	takes a DataSource	7
-transaction	db:db/GoalLinkRepo.scala	opens a connection or transaction	3
-transaction	db:db/GoalLinkRepo.scala	takes a DataSource	3
-transaction	db:db/GoalRepo.scala	opens a connection or transaction	5
-transaction	db:db/GoalRepo.scala	takes a DataSource	6
-transaction	db:db/ManagerRepo.scala	opens a connection or transaction	36
-transaction	db:db/ManagerRepo.scala	takes a DataSource	35
-transaction	db:db/ModelSettingsRepo.scala	opens a connection or transaction	7
-transaction	db:db/ModelSettingsRepo.scala	takes a DataSource	7
-transaction	db:db/PlanQuotaRepo.scala	opens a connection or transaction	10
-transaction	db:db/PlanQuotaRepo.scala	takes a DataSource	10
-transaction	db:domain/library/search/QueryRepo.scala	takes a DataSource	2
-transaction	db:domain/library/sources/SourceCheckRepo.scala	opens a connection or transaction	6
-transaction	db:domain/library/sources/SourceCheckRepo.scala	takes a DataSource	5
-transaction	db:domain/library/sources/SourceRepo.scala	opens a connection or transaction	11
-transaction	db:domain/library/sources/SourceRepo.scala	takes a DataSource	12
-transaction	db:domain/research/articles/ArticleCheckRepo.scala	opens a connection or transaction	1
-transaction	db:domain/research/articles/ArticleCheckRepo.scala	takes a DataSource	1
-transaction	db:util/data/exchange/MergeRepo.scala	opens a connection or transaction	6
-transaction	db:util/data/exchange/MergeRepo.scala	takes a DataSource	6
-transaction	db:util/jobs/JobRepo.scala	opens a connection or transaction	11
-transaction	db:util/jobs/JobRepo.scala	takes a DataSource	15
-transaction	server:server/instance/UiRepo.scala	opens a connection or transaction	2
-transaction	server:server/instance/UiRepo.scala	takes a DataSource	2
 unwrap	api:api/AcquireChecks.scala	.value outside a boundary	1
 unwrap	api:api/Agents.scala	.value outside a boundary	1
 unwrap	api:api/Articles.scala	.value outside a boundary	1

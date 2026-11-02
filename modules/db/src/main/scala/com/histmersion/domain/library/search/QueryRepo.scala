@@ -6,7 +6,7 @@ import com.histmersion.db.given
 import com.histmersion.api.Query.*
 
 import java.sql.{Connection, ResultSet, SQLException}
-import javax.sql.DataSource
+import com.augustnagro.magnum.DbCon
 
 /** The read-only SQL escape hatch (`POST /api/query`, `histmersion query`, MCP `query`; plan §5.2 2.8), plus the live
   * `information_schema` shape the tool description is generated from.
@@ -16,9 +16,9 @@ import javax.sql.DataSource
   *   1. [[com.histmersion.api.Query.check]] — ONE top-level statement, and not a session/transaction-control one.
   *      Without it, pgjdbc runs a `;`-batch and `SET TRANSACTION READ WRITE; DELETE …` beat the guard below by turning
   *      it off first.
-  *   2. `ds` is the DataSource of the dedicated **`histmersion_query`** role (migration V011) — SELECT and nothing
-  *      else, `default_transaction_read_only = on` baked in. This is what actually stops a superuser-only
-  *      `pg_read_file()`; the transaction settings never could.
+  *   2. the caller's connection comes from the DataSource of the dedicated **`histmersion_query`** role (migration
+  *      V011) — SELECT and nothing else, `default_transaction_read_only = on` baked in. This is what actually stops a
+  *      superuser-only `pg_read_file()`; the transaction settings never could.
   *   3. `SET TRANSACTION READ ONLY` + `SET LOCAL statement_timeout` here, so `WITH x AS (DELETE …) SELECT …` — the
   *      classic blacklist escape — still fails on a database where layer 2 could not be provisioned. `maxRows` bounds
   *      the rows, `maxCellChars` bounds one cell.
@@ -32,24 +32,25 @@ private[search] object QueryRepo:
     * an expected outcome of handing SQL to a model.
     */
   def run(
-      ds: DataSource,
       statement: String,
       timeoutMs: Int,
       maxRows: Int,
       maxCellChars: Int
-  ): Either[String, QueryResult] =
-    com.histmersion.api.Query.check(statement).flatMap(text => exec(ds, text, timeoutMs, maxRows, maxCellChars))
+  )(using DbCon): Either[String, QueryResult] =
+    com.histmersion.api.Query.check(statement).flatMap(text => exec(text, timeoutMs, maxRows, maxCellChars))
 
+  /** On the caller's connection, in a read-only transaction of its own that is always rolled back (the connection's
+    * auto-commit is restored afterwards).
+    */
   private def exec(
-      ds: DataSource,
       text: String,
       timeoutMs: Int,
       maxRows: Int,
       maxCellChars: Int
-  ): Either[String, QueryResult] =
-    var c: Connection = null
+  )(using con: DbCon): Either[String, QueryResult] =
+    val c: Connection = con.connection
+    val autoCommit = c.getAutoCommit
     try
-      c = ds.getConnection
       c.setAutoCommit(false)
       c.setReadOnly(true)
       val st = c.createStatement()
@@ -71,11 +72,12 @@ private[search] object QueryRepo:
       finally st.close()
     catch case e: SQLException => Left(message(e))
     finally
-      if c != null then
-        try c.rollback()
-        catch case _: SQLException => ()
-        try c.close()
-        catch case _: SQLException => ()
+      try c.rollback()
+      catch case _: SQLException => ()
+      try
+        c.setReadOnly(false)
+        c.setAutoCommit(autoCommit)
+      catch case _: SQLException => ()
 
   /** Postgres's own words, with the driver's stack noise stripped. */
   private def message(e: SQLException): String =
@@ -111,9 +113,9 @@ private[search] object QueryRepo:
   /** `information_schema` for the public schema, tables and views alike. Read at request time, which is the point: the
     * `query` tool's description can then name the tables that exist TODAY.
     */
-  def tables(ds: DataSource): List[SchemaTable] =
-    val c = ds.getConnection
-    try
+  def tables(using con: DbCon): List[SchemaTable] =
+    val c = con.connection
+    locally:
       val st = c.createStatement()
       try
         val rs = st.executeQuery("""SELECT t.table_name, t.table_type, c.column_name, c.data_type, c.is_nullable
@@ -141,4 +143,3 @@ private[search] object QueryRepo:
             )
           }
       finally st.close()
-    finally c.close()

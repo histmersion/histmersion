@@ -7,7 +7,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
-import javax.sql.DataSource
 
 final private[db] case class GoalRow(
     slug: String,
@@ -28,9 +27,6 @@ object GoalRepo:
   private val cols =
     "g.slug, g.title, g.status, g.notes, g.tags, g.regions, " +
       s"${RangeSql.cols("g.period")}, g.parent_slug, g.updated_at::text"
-
-  def list(ds: DataSource, status: Option[String], limit: Int, offset: Int): GoalList =
-    connect(ds)(listIn(status, limit, offset))
 
   /** One page of the goals (of one status), by slug, on the caller's connection. */
   def listIn(status: Option[String], limit: Int, offset: Int)(using DbCon): GoalList =
@@ -64,8 +60,8 @@ object GoalRepo:
       .toList
       .map(_.toDto)
 
-  def exists(ds: DataSource, slug: String): Boolean =
-    connect(ds)(sql"SELECT 1 FROM goals WHERE slug = $slug".query[Int].run().nonEmpty)
+  def exists(slug: String)(using DbCon): Boolean =
+    (sql"SELECT 1 FROM goals WHERE slug = $slug".query[Int].run().nonEmpty)
 
   /** Create or replace a goal. Either bound of its period may be given alone (an open period); one that starts after it
     * ends is refused.
@@ -85,8 +81,6 @@ object GoalRepo:
             title = EXCLUDED.title, status = EXCLUDED.status, notes = EXCLUDED.notes,
             tags = EXCLUDED.tags, regions = EXCLUDED.regions, period = EXCLUDED.period,
             parent_slug = EXCLUDED.parent_slug, updated_at = now()""".update.run()
-
-  def patch(ds: DataSource, slug: String, p: GoalPatch): Either[ApiError, Unit] = transact(ds)(patchIn(slug, p))
 
   /** A goal's fields changed as given, in the caller's transaction. */
   def patchIn(slug: String, p: GoalPatch)(using DbCon): Either[ApiError, Unit] =
@@ -147,15 +141,9 @@ object GoalRepo:
             ON CONFLICT (alias) DO UPDATE SET goal_slug = EXCLUDED.goal_slug""".update.run()
       Right(())
 
-  /** `histmersion goals rename`: a new slug, the old one kept as an alias (V053). One transaction. */
-  def rename(ds: DataSource, oldSlug: String, newSlug: String): Either[ApiError, Unit] =
-    transact(ds)(renameIn(oldSlug.trim, newSlug.trim))
-
   /** The slug an OLD slug was renamed to — `None` when it is a live slug, or nothing. */
-  def renamedTo(ds: DataSource, slug: String): Option[String] =
-    com.histmersion.domain.automation.goals.GoalAliasTable.table.renamedTo(ds, slug)
-
-  def delete(ds: DataSource, slug: String): Boolean = transact(ds)(deleteIn(slug))
+  def renamedTo(slug: String)(using DbCon): Option[String] =
+    com.histmersion.domain.automation.goals.GoalAliasTable.table.renamedToIn(slug)
 
   /** A goal removed in the caller's transaction; false when there was none. */
   def deleteIn(slug: String)(using DbCon): Boolean =

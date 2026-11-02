@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.domain.automation.agents.*
 
 import com.histmersion.config.{AgentsConfig, ScheduledRefresh}
@@ -55,7 +57,7 @@ final class PlanPools(
     * nothing it could not read, and says so).
     */
   def floors(p: PoolId): (Floors, String, Option[String]) =
-    val saved = PlanQuotaRepo.pool(ds, p).floors
+    val saved = Transactor(ds).read(PlanQuotaRepo.pool(p)).floors
     saved.map(Floors.parse) match
       case Some(Right(f)) => (f, "saved", None)
       case Some(Left(m))  => (Floors.Empty, "saved", Some(s"saved floors do not parse: $m"))
@@ -73,9 +75,9 @@ final class PlanPools(
     */
   def verdict(p: PoolId, model: Option[String], now: Long = System.currentTimeMillis()): (Verdict, List[WindowState]) =
     if p == PoolId.ChatgptPlan then poll(now)
-    val pool = PlanQuotaRepo.pool(ds, p)
+    val pool = Transactor(ds).read(PlanQuotaRepo.pool(p))
     PlanQuota.verdict(
-      PlanQuotaRepo.readings(ds, p),
+      Transactor(ds).read(PlanQuotaRepo.readings(p)),
       pool.held,
       pool.refusal.map(_ -> pool.refusalUntil),
       rules(p),
@@ -85,9 +87,9 @@ final class PlanPools(
 
   /** Why `p`'s verdict would wait for a fresh reading now (None = it decides by itself). */
   def need(p: PoolId, model: Option[String], now: Long): Option[RefreshNeed] =
-    val pool = PlanQuotaRepo.pool(ds, p)
+    val pool = Transactor(ds).read(PlanQuotaRepo.pool(p))
     PlanQuota.refreshNeed(
-      PlanQuotaRepo.readings(ds, p),
+      Transactor(ds).read(PlanQuotaRepo.readings(p)),
       pool.held,
       pool.refusal.map(_ -> pool.refusalUntil),
       rules(p),
@@ -117,10 +119,10 @@ final class PlanPools(
           val (v2, s2) = verdict(p, model, System.currentTimeMillis())
           (v2, s2, Some(r))
 
-  def record(p: PoolId, rs: List[Reading]): Unit = PlanQuotaRepo.record(ds, p, rs)
+  def record(p: PoolId, rs: List[Reading]): Unit = Transactor(ds).transact(PlanQuotaRepo.record(p, rs))
 
   /** When `p`'s newest reading was observed (epoch ms), if it has one. */
-  def lastObserved(p: PoolId): Option[Long] = PlanQuotaRepo.readings(ds, p).map(_.observedAt).maxOption
+  def lastObserved(p: PoolId): Option[Long] = Transactor(ds).read(PlanQuotaRepo.readings(p)).map(_.observedAt).maxOption
 
   def blocked(p: PoolId, model: Option[String]): Option[(String, Option[Long])] =
     verdict(p, model)._1 match
@@ -129,11 +131,11 @@ final class PlanPools(
 
   def refresh(now: Long): Unit = { val _ = poll(now) }
 
-  def hold(p: PoolId, on: Boolean): Unit = PlanQuotaRepo.setHold(ds, p, on)
+  def hold(p: PoolId, on: Boolean): Unit = Transactor(ds).transact(PlanQuotaRepo.setHold(p, on))
 
   /** Whether a person holds `p` (no run draws on it until it is released). */
-  def held(p: PoolId): Boolean = PlanQuotaRepo.pool(ds, p).held
-  def setFloors(p: PoolId, f: Option[String]): Unit = PlanQuotaRepo.setFloors(ds, p, f)
+  def held(p: PoolId): Boolean = Transactor(ds).read(PlanQuotaRepo.pool(p)).held
+  def setFloors(p: PoolId, f: Option[String]): Unit = Transactor(ds).transact(PlanQuotaRepo.setFloors(p, f))
 
   // ── logins ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -263,7 +265,7 @@ final class PlanPools(
     val r = take(p, now)
     val line = s"plan refresh ${p.wire} ($why) ${r.text}"
     if r.ok then scribe.info(line) else scribe.warn(line)
-    PlanQuotaRepo.logRefresh(ds, p, r.mode, trigger.wire, r.ok, r.detail)
+    Transactor(ds).transact(PlanQuotaRepo.logRefresh(p, r.mode, trigger.wire, r.ok, r.detail))
     r
 
   /** One reading of `p`, recorded: the Claude probe or the ChatGPT app-server read. */
@@ -271,7 +273,8 @@ final class PlanPools(
     case PoolId.ChatgptPlan =>
       poll(now, force = true) match
         case Some(why) => Refreshed("app-server", ok = false, why)
-        case None      => Refreshed("app-server", ok = true, PlanPools.summary(PlanQuotaRepo.readings(ds, p), now))
+        case None      =>
+          Refreshed("app-server", ok = true, PlanPools.summary(Transactor(ds).read(PlanQuotaRepo.readings(p)), now))
     case PoolId.ClaudePlan =>
       val cc = cfg.providers.claudeCode
       val qc = cfg.quota.claudePlan
@@ -311,7 +314,9 @@ final class PlanPools(
             case Right(json) =>
               val (rs, refusal, plan) = PlanPools.codexReadings(json, now)
               record(PoolId.ChatgptPlan, rs)
-              PlanQuotaRepo.setRefusal(ds, PoolId.ChatgptPlan, refusal.map(_._1), refusal.flatMap(_._2), plan)
+              Transactor(ds).transact(
+                PlanQuotaRepo.setRefusal(PoolId.ChatgptPlan, refusal.map(_._1), refusal.flatMap(_._2), plan)
+              )
               None
 
   /** A mod's report: recorded, and answered with whether the run may go on. */
@@ -335,7 +340,7 @@ final class PlanPools(
     PoolId.values.toList.map { p =>
       val (v, states) = verdict(p, None, now)
       val (f, src, problem) = floors(p)
-      val pool = PlanQuotaRepo.pool(ds, p)
+      val pool = Transactor(ds).read(PlanQuotaRepo.pool(p))
       val iso = (ms: Long) => java.time.Instant.ofEpochMilli(ms).toString
       val ws = states.map { s =>
         WindowStatus(
@@ -362,7 +367,7 @@ final class PlanPools(
         case (Verdict.Usable(n), None)     => (true, n, None)
         case (Verdict.Blocked(w, u), None) => (false, Some(w), u.map(iso))
       val modeProblem = Option.when(p == PoolId.ClaudePlan)(claudeMode.left.toOption).flatten
-      val (n, last) = PlanQuotaRepo.refreshes(ds, p, today)
+      val (n, last) = Transactor(ds).read(PlanQuotaRepo.refreshes(p, today))
       PoolStatus(
         p.wire,
         p.title,

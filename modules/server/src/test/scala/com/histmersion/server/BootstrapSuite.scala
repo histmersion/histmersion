@@ -147,14 +147,14 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
     val job = b.init(fetch = false).fold(e => fail(e.message), identity)
     assertEquals(job.kind, Bootstrap.JobKind)
     val end = Iterator
-      .continually { Thread.sleep(100); JobRepo.get(ds, job.id).get }
+      .continually { Thread.sleep(100); Transactor(ds).read(JobRepo.get(job.id)).get }
       .take(300)
       .find(_.isTerminal)
       .getOrElse(fail("the init job did not finish"))
     assertEquals(end.state, JobState.Failed)
     assert(end.error.exists(_.contains("gazetteer: no gazetteer seed at")), end.toString)
     assert(end.progress.exists(_.contains("period presets:")), end.toString) // the periods still went in
-    assert(JobRepo.list(ds, None, 50).exists(_.id == job.id), "`histmersion jobs` lists it")
+    assert(Transactor(ds).read(JobRepo.list(None, 50)).exists(_.id == job.id), "`histmersion jobs` lists it")
     // #770: the job says what it imports from the start; #771: and which period definitions it left out
     assertEquals(job.detail.flatMap(InitPlan.Detail.of), Some(InitPlan(gazetteer = true, periodPresets = true)))
     assertEquals(end.detail.flatMap(InitPlan.Detail.of), job.detail.flatMap(InitPlan.Detail.of))

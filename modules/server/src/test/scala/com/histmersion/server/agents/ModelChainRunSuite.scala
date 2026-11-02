@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.Zero
 
@@ -264,7 +266,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       List(("saved", List("2M tokens/5h"))),
       "the saved allowance replaces config's for the same target"
     )
-    assertEquals(ModelSettingsRepo.chains(ds).get("extractor"), Some(List(B.wire, A.wire)))
+    assertEquals(Transactor(ds).read(ModelSettingsRepo.chains).get("extractor"), Some(List(B.wire, A.wire)))
     // reset
     assertEquals(
       again.resetChain("extractor").map(c => (c.source, c.models.map(_.model))),

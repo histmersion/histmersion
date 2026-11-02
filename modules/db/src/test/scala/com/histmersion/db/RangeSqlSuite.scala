@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.util.database.Transactor
+
 import com.histmersion.util.database.RangeSql
 
 import com.histmersion.api.*
@@ -73,14 +75,20 @@ class RangeSqlSuite extends com.histmersion.db.DbSuite:
       ),
       Right(())
     )
-    assertEquals(GoalRepo.patch(ds, "zz_period_goal", GoalPatch(periodStart = Some(-1300))), Right(()))
+    assertEquals(
+      Transactor(ds).transact(GoalRepo.patchIn("zz_period_goal", GoalPatch(periodStart = Some(-1300)))),
+      Right(())
+    )
     val g = connect(ds)(GoalRepo.get("zz_period_goal")).get
     assertEquals((g.periodStart, g.periodEnd), (Some(-1300L), Some(-1000L)))
-    assertEquals(GoalRepo.patch(ds, "zz_period_goal", GoalPatch(periodEnd = Some(-1100))), Right(()))
+    assertEquals(
+      Transactor(ds).transact(GoalRepo.patchIn("zz_period_goal", GoalPatch(periodEnd = Some(-1100)))),
+      Right(())
+    )
     val g2 = connect(ds)(GoalRepo.get("zz_period_goal")).get
     assertEquals((g2.periodStart, g2.periodEnd), (Some(-1300L), Some(-1100L)))
     // inverted: refused, stored period unchanged
-    assert(GoalRepo.patch(ds, "zz_period_goal", GoalPatch(periodStart = Some(-1000))).isLeft)
+    assert(Transactor(ds).transact(GoalRepo.patchIn("zz_period_goal", GoalPatch(periodStart = Some(-1000)))).isLeft)
     assertEquals(
       connect(ds)(GoalRepo.get("zz_period_goal")).map(x => (x.periodStart, x.periodEnd)),
       Some((Some(-1300L), Some(-1100L)))
