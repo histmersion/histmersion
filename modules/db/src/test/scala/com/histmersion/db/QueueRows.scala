@@ -8,6 +8,7 @@ import com.histmersion.domain.automation.worklists.QueueRepo
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
 import com.histmersion.api.Api
+import com.histmersion.util.database.given
 
 /** Work-list rows written and read straight through the repository, each call in a transaction of its own: how the
   * suites of other features seed and inspect the lists (the work lists' own behaviour is the server's

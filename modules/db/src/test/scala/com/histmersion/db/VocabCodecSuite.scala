@@ -9,6 +9,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.{Jsonb, Migrate}
 import com.histmersion.api.library.{Finding, Source}
+import com.histmersion.util.database.given
 
 /** The vocabulary codecs (#1798 item 11): a stored value the vocabulary does not know reads as its UNKNOWN — a
   * confidence as "not stated", a status as unassessed, a place's dating as unknown — never as a confident member (an

@@ -4,6 +4,7 @@ import com.augustnagro.magnum.*
 
 import javax.sql.DataSource
 import com.histmersion.api.catalogue.Attestation
+import com.histmersion.util.database.given
 
 /** Attestations written for a db suite's fixture, as the catalogue's evidence stores them; the new row's id. */
 object AttestationRows:

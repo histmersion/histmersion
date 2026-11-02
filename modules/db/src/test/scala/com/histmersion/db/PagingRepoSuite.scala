@@ -14,6 +14,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.automation.Agents
+import com.histmersion.util.database.given
 
 /** Keyset paging of the jobs, agent-runs and approvals lists (core `Paging`, V086) against a real Postgres
   * (HISTMERSION_TEST_DB_URL; skipped otherwise). Other suites write jobs and approvals at the same time, so each

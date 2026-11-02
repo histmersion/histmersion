@@ -12,6 +12,7 @@ import com.histmersion.util.database.Migrate
 import com.histmersion.domain.library.sources.SourceNote
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Edge, Finding, FindingsPatch, Source}
+import com.histmersion.util.database.given
 
 /** The write paths against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise. Covers the acceptance
   * lines of plan §1.9a that need a database: put→get, patch semantics, id allocation, the `ifUpdatedAt` precondition,

@@ -9,6 +9,7 @@ package com.histmersion.db
   */
 
 import com.histmersion.util.database.Migrate
+import com.histmersion.util.database.given
 object TestDb:
   val Env = "HISTMERSION_TEST_DB_URL"
 

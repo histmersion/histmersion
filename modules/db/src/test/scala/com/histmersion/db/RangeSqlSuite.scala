@@ -13,6 +13,7 @@ import com.histmersion.domain.automation.goals.GoalRepo
 import com.histmersion.util.database.{Migrate, Param}
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.automation.Goal
+import com.histmersion.util.database.given
 
 /** [[RangeSql]] (#1798 item 9): the pure literal/merge rules, and — on a test database — a goal or an asset patched
   * with ONE bound (it used to be silently ignored), read back through [[RangeSql.cols]].

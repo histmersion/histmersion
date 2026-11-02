@@ -16,6 +16,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.{Migrate, Param}
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Filter, Finding, Source}
+import com.histmersion.util.database.given
 
 /** The small, sharp-edged repo fixes: the `ts_headline` word bounds, the assets contract, and the `findings_flat` upper
   * bound.

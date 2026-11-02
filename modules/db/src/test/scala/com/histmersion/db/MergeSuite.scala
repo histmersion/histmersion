@@ -45,6 +45,7 @@ import com.histmersion.util.data.exchange.Bundle
 import com.histmersion.util.data.exchange.Issue
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.catalogue.Attestation
+import com.histmersion.util.database.given
 
 /** `merge plan` against real Postgres (docs/research-merge-import.md §8, milestone M3): the crafted pair of
   * collections, "work" and "home", built through the repositories in two databases of their own; work's bundle planned

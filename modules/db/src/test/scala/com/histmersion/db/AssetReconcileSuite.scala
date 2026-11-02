@@ -1,6 +1,7 @@
 package com.histmersion.db
 
 import com.histmersion.domain.media.assets.Reconciled
+import com.histmersion.util.database.given
 
 /** What a re-conversion does to the asset rows already stored (#826) — pure, no database. */
 class AssetReconcileSuite extends munit.FunSuite:

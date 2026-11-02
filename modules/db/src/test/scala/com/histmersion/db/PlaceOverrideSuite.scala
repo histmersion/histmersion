@@ -12,6 +12,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{Period, Place}
 import com.histmersion.api.library.{Finding, Source}
+import com.histmersion.util.database.given
 
 /** A person's kind and period for a place (V080), against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise):
   * setting one re-matches the place's findings; every writer of `places` — a re-seed, a gazetteer-style upsert, the

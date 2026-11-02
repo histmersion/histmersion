@@ -7,6 +7,7 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.catalogue.{Geocode, Place}
+import com.histmersion.util.database.given
 
 /** Point-only seed regions (2026-10-09), against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise):
   *   - a region, polity or people known only by a point, and any atlas grid square's centre, takes a finding only by an

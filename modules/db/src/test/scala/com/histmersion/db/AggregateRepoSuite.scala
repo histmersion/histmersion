@@ -9,6 +9,7 @@ import com.histmersion.domain.*
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Aggregate, Filter, Finding, Source}
+import com.histmersion.util.database.given
 
 /** `periods` against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise. The bucketing itself is pure
   * and covered by `core/AggregateSuite`.

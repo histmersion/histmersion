@@ -15,6 +15,7 @@ import com.histmersion.api.library.{Filter, Sort}
 import com.histmersion.domain.library.Source
 import com.histmersion.api.library.Facet
 import com.histmersion.api.library.Finding
+import com.histmersion.util.database.given
 
 /** `Filter → SQL` is a pure function (plan §1.0), so it is tested WITHOUT a database: the SQL text and the bound
   * parameters are asserted directly.

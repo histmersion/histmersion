@@ -12,6 +12,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.library.{Finding, Source}
+import com.histmersion.util.database.given
 
 /** The fixtures of [[RegionCleanupSuite]] and [[PlaceReviewSuite]]: a city with two Regiones, an Athenian tribe beside
   * Athens, provinces and a site on atlas grid squares' centres, a withdrawn duplicate and its replacement, a deme filed

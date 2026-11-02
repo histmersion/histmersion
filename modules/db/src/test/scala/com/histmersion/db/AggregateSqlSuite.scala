@@ -11,6 +11,7 @@ import com.histmersion.util.database.Param.*
 import com.histmersion.util.database.Sql
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.Filter
+import com.histmersion.util.database.given
 
 /** `AggregateRepo.periodsQuery` is a pure `Filter → SQL` value like the rest of [[FilterSql]], so the histogram's
   * predicate is asserted here WITHOUT a database (the DB behaviour lives in `AggregateRepoSuite`).

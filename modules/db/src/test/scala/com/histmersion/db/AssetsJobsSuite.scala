@@ -18,6 +18,7 @@ import com.histmersion.util.database.Migrate
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.library.{Ingest, Source}
 import com.histmersion.api.media.AssetLink
+import com.histmersion.util.database.given
 
 /** V006 round-trips against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. */
 class AssetsJobsSuite extends com.histmersion.db.DbSuite:

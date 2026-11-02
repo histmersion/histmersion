@@ -22,6 +22,7 @@ import com.histmersion.api.catalogue.{Geocode, Lpf, Period}
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.library.{Finding, Source}
 import com.histmersion.domain.catalogue.Place
+import com.histmersion.util.database.given
 
 /** #987 against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise), on the REAL bundled seed: the places a
   * finding names in plain English are read out of `db/places` itself (Natural Earth physical + cities, Pleiades with

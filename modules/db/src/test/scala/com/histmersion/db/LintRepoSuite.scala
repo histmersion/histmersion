@@ -19,6 +19,7 @@ import com.histmersion.api.catalogue.Period
 import com.histmersion.api.checks.{FormatIssue, FormatRule, FormatSeverity, Lint}
 import com.histmersion.api.library.{Edge, Finding, Source}
 import com.histmersion.api.research.Article
+import com.histmersion.util.database.given
 
 /** Every lint rule, against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise.
   *

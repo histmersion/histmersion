@@ -12,6 +12,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.{Migrate, Sql}
 import com.histmersion.api.catalogue.{Period, Place}
 import com.histmersion.api.library.{Finding, Source}
+import com.histmersion.util.database.given
 
 /** A finding whose POINT is a placeholder (2026-10-09), against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped
   * otherwise). 12 findings on "Greece" sat on 37.5 N 22.5 E, an atlas grid square's centre near Tegea, and had joined

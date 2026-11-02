@@ -1,4 +1,5 @@
 package com.histmersion.db
+import com.histmersion.util.database.given
 
 class TestDbSuite extends munit.FunSuite:
 
