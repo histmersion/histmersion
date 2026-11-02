@@ -69,9 +69,9 @@ selfcheck() { # <password> → the report in $data/self-check.out, the exit code
 rc="$(selfcheck smoke-master)"
 sed 's/^/  /' "$data/self-check.out"
 [ "$rc" = 0 ] || fail "--self-check exited $rc: $(cat "$data/self-check.out")"
-grep -qF "keepassxc 1.0.0 — registered (secret-vault:keepassxc)" "$data/self-check.out" || fail "--self-check: keepassxc not registered"
-grep -qF "bitwarden 1.0.0 — registered (secret-vault:bitwarden)" "$data/self-check.out" || fail "--self-check: bitwarden not registered"
-grep -qF "1password 1.0.0 — disabled" "$data/self-check.out" || fail "--self-check: 1password is not reported disabled"
+grep -qF "keepassxc 0.1.0 — registered (secret-vault:keepassxc)" "$data/self-check.out" || fail "--self-check: keepassxc not registered"
+grep -qF "bitwarden 0.1.0 — registered (secret-vault:bitwarden)" "$data/self-check.out" || fail "--self-check: bitwarden not registered"
+grep -qF "1password 0.1.0 — disabled" "$data/self-check.out" || fail "--self-check: 1password is not reported disabled"
 grep -qF "session = keepassxc:Smoke/bw#password" "$data/self-check.out" || fail "--self-check: the secret reference is not shown"
 if grep -qE "smoke-master|session-from" "$data/self-check.out"; then fail "--self-check printed a secret value"; fi
 grep -q "self-check passed" "$data/self-check.out" || fail "--self-check gave no verdict"
@@ -84,13 +84,13 @@ rc=0; TZ=Australia/Lord_Howe "$b/bin/histmersion-server" --self-check > "$data/t
   || fail "--self-check under TZ=Australia/Lord_Howe (exit $rc): $(grep 'time zones' "$data/tz.out")"
 echo "  $(grep '^- time zones' "$data/tz.out")"
 # the built-in acquisition plugins: in the binary, enabled by default, their fetchers registered
-for line in "archive-org 1.0.0 — registered (source-fetcher:archive-org, source-collection:archive-org)" \
-    "arxiv 1.0.0 — registered (source-fetcher:arxiv)" \
-    "oa-unpaywall 1.0.0 — registered (source-fetcher:unpaywall)" \
-    "oa-core 1.0.0 — registered (source-fetcher:core)" \
-    "oa-openalex 1.0.0 — registered (source-fetcher:openalex)" \
-    "oa-landing 1.0.0 — registered (source-fetcher:landing)" \
-    "pmc 1.0.0 — registered (source-fetcher:pmc, source-fetcher:pmc-text)"; do
+for line in "archive-org 0.1.0 — registered (source-fetcher:archive-org, source-collection:archive-org)" \
+    "arxiv 0.1.0 — registered (source-fetcher:arxiv)" \
+    "oa-unpaywall 0.1.0 — registered (source-fetcher:unpaywall)" \
+    "oa-core 0.1.0 — registered (source-fetcher:core)" \
+    "oa-openalex 0.1.0 — registered (source-fetcher:openalex)" \
+    "oa-landing 0.1.0 — registered (source-fetcher:landing)" \
+    "pmc 0.1.0 — registered (source-fetcher:pmc, source-fetcher:pmc-text)"; do
   grep -qF "$line" "$data/self-check.out" || fail "--self-check: not reported: $line"
 done
 # the built-in media collections and event catalogues (#2018 phase 6): registered by default
@@ -104,21 +104,21 @@ for id in media-smithsonian media-europeana; do
 done
 # the built-in AI providers (docs/research-plugins.md §23): registered by default, one switch each
 for p in anthropic openai local claude-code codex opencode; do
-  grep -qF "ai-$p 1.0.0 — registered (ai-provider:$p)" "$data/self-check.out" || fail "--self-check: ai-$p is not registered"
+  grep -qF "ai-$p 0.1.0 — registered (ai-provider:$p)" "$data/self-check.out" || fail "--self-check: ai-$p is not registered"
 done
 printf 'histmersion.plugins.arxiv.enabled = false\nhistmersion.plugins.ai-codex.enabled = false\n' > "$data/fetchers.conf"
 HISTMERSION_CONFIG="$data/fetchers.conf" "$b/bin/histmersion-server" --self-check > "$data/fetchers.out" 2>&1 \
   || fail "--self-check with arxiv switched off failed: $(cat "$data/fetchers.out")"
-grep -qF "arxiv 1.0.0 — disabled" "$data/fetchers.out" || fail "--self-check: arxiv is not reported disabled"
-grep -qF "ai-codex 1.0.0 — disabled" "$data/fetchers.out" || fail "--self-check: ai-codex is not reported disabled"
+grep -qF "arxiv 0.1.0 — disabled" "$data/fetchers.out" || fail "--self-check: arxiv is not reported disabled"
+grep -qF "ai-codex 0.1.0 — disabled" "$data/fetchers.out" || fail "--self-check: ai-codex is not reported disabled"
 # one plugin per open-access index (D4): the former oa-index's switch still turns all four off — a
 # successor's own setting wins — with a deprecation warning; oa-core's key is a secret reference
 printf 'histmersion.plugins {\n  oa-index.enabled = false\n  oa-core { enabled = true, api-key = "env:SMOKE_CORE_KEY" }\n}\n' > "$data/legacy.conf"
 HISTMERSION_CONFIG="$data/legacy.conf" SMOKE_CORE_KEY=smoke-core-secret "$b/bin/histmersion-server" --self-check > "$data/legacy.out" 2>&1 \
   || fail "--self-check with the former oa-index switched off failed: $(cat "$data/legacy.out")"
 sed -n '/oa-/p' "$data/legacy.out" | sed 's/^/  /'
-for line in "oa-unpaywall 1.0.0 — disabled" "oa-openalex 1.0.0 — disabled" "oa-landing 1.0.0 — disabled" \
-    "oa-core 1.0.0 — registered (source-fetcher:core)" "api-key = env:SMOKE_CORE_KEY" "histmersion.plugins.oa-index is deprecated"; do
+for line in "oa-unpaywall 0.1.0 — disabled" "oa-openalex 0.1.0 — disabled" "oa-landing 0.1.0 — disabled" \
+    "oa-core 0.1.0 — registered (source-fetcher:core)" "api-key = env:SMOKE_CORE_KEY" "histmersion.plugins.oa-index is deprecated"; do
   grep -qF "$line" "$data/legacy.out" || fail "--self-check (oa-index): not reported: $line"
 done
 if grep -q smoke-core-secret "$data/legacy.out"; then fail "--self-check printed oa-core's key"; fi
@@ -145,7 +145,7 @@ HISTMERSION_CONFIG="$data/yubikey.conf" SMOKE_KP_PASSWORD=smoke-master PATH="$fa
   || fail "--self-check with a YubiKey list failed: $(cat "$data/yubikey.out")"
 grep -F 'yubikey' "$data/yubikey.out" | sed 's/^/  /'
 grep -qF 'yubikey = ["2:111","2:222"]' "$data/yubikey.out" || fail "--self-check: the yubikey setting is not shown"
-grep -qF "bitwarden 1.0.0 — registered (secret-vault:bitwarden)" "$data/yubikey.out" || fail "--self-check: the YubiKey did not open the vault"
+grep -qF "bitwarden 0.1.0 — registered (secret-vault:bitwarden)" "$data/yubikey.out" || fail "--self-check: the YubiKey did not open the vault"
 if grep -qE "smoke-master|session-from" "$data/yubikey.out"; then fail "--self-check (yubikey) printed a secret value"; fi
 [ ! -e "$data/pg" ] && ! curl -fsS http://127.0.0.1:18000/api/health >/dev/null 2>&1 \
   || fail "--self-check started the bundled runtime or a listener"
