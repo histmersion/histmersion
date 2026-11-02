@@ -7,14 +7,6 @@ import com.histmersion.api.given
 import java.util.UUID
 import com.histmersion.util.data.exchange.BundlePlan
 import com.histmersion.util.data.exchange.BundleEntities
-import com.histmersion.api.exchange.{
-  BundleCorrection,
-  BundleEvent,
-  BundleEventCandidate,
-  BundleEventCatalogue,
-  BundleEventCheck,
-  BundleKindCounts
-}
 import com.histmersion.util.data.exchange.Bundle
 
 /** The merge's side of the `.hmx` bundle: localizing the event-catalogue sets, folding two events, and the import
@@ -28,8 +20,10 @@ class BundleMergeSuite extends munit.FunSuite:
   private val I = UUID.fromString("01910000-0000-7000-8000-0000000000aa")
   // ── the event-catalogue sets (#1647) ─────────────────────────────────────────────────────────
 
-  private def event(extra: BundleEvent => BundleEvent = identity) = extra(
-    BundleEvent(
+  private def event(
+      extra: com.histmersion.api.exchange.Bundle.Event => com.histmersion.api.exchange.Bundle.Event = identity
+  ) = extra(
+    com.histmersion.api.exchange.Bundle.Event(
       U1,
       I,
       "e1",
@@ -56,7 +50,7 @@ class BundleMergeSuite extends munit.FunSuite:
   test("the event-catalogue sets localize: a matched event's uid is replaced by the local one"):
     val es = BundleEntities(
       eventCatalogue = List(
-        BundleEventCatalogue(
+        com.histmersion.api.exchange.Bundle.EventCatalogue(
           U1,
           "gvp",
           "1",
@@ -78,7 +72,7 @@ class BundleMergeSuite extends munit.FunSuite:
         )
       ),
       eventCandidates = List(
-        BundleEventCandidate(
+        com.histmersion.api.exchange.Bundle.EventCandidate(
           U1,
           U2,
           "ck",
@@ -90,9 +84,9 @@ class BundleMergeSuite extends munit.FunSuite:
           "2026-10-05T00:00:00.000000Z"
         )
       ),
-      eventChecks = List(BundleEventCheck(U1, "2026-10-05T00:00:00.000000Z")),
+      eventChecks = List(com.histmersion.api.exchange.Bundle.EventCheck(U1, "2026-10-05T00:00:00.000000Z")),
       corrections = List(
-        BundleCorrection(
+        com.histmersion.api.exchange.Bundle.Correction(
           "event",
           "e1",
           Some(U1),
@@ -185,5 +179,9 @@ class BundleMergeSuite extends munit.FunSuite:
       Bundle.Kind.Goal,
       List(Decision.Insert, Decision.Insert, Decision.Conflict, Decision.RecordTombstone, Decision.Delete)
     )
-    assertEquals(c, BundleKindCounts(Bundle.Kind.Goal, inserted = 2, conflicts = 1, unchanged = 1, deleted = 1))
+    assertEquals(
+      c,
+      com.histmersion.api.exchange.Bundle
+        .KindCounts(Bundle.Kind.Goal, inserted = 2, conflicts = 1, unchanged = 1, deleted = 1)
+    )
     assertEquals(c.changed, 3)

@@ -311,7 +311,7 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
           """{"edits":[{"op":"replace","anchor":"by sea.","text":"by sea [[zzhttp_ghost]]."},{"op":"delete","anchor":"nowhere"}]}"""
         val (s, r) = post(s"$url/api/articles/zzhttp_check/check", edits)
         assertEquals(s, 200, r)
-        val check = io.circe.parser.decode[com.histmersion.api.research.ArticleEdits.ArticleCheck](r).toOption.get
+        val check = io.circe.parser.decode[com.histmersion.api.research.Article.Edits.ArticleCheck](r).toOption.get
         assertEquals(check.edits.map(_.applied), List(false, false))
         assert(
           check.problems.exists(_.contains("zzhttp_ghost")) && check.problems.exists(_.startsWith("edit 2 (delete")),

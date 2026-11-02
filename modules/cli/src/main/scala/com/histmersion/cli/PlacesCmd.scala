@@ -9,23 +9,10 @@ import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
 import com.histmersion.domain.catalogue.places.PlaceSeed
-import com.histmersion.api.catalogue.{
-  EventsApi,
-  Lpf,
-  PlaceAdd,
-  PlaceEdits,
-  PlaceHit,
-  PlaceImportResult,
-  PlaceMergeIn,
-  PlaceNameAdd,
-  PlaceNameRemove,
-  PlaceOverrides,
-  PlaceOverrideSet,
-  PlaceRemoveIn,
-  SiteTypesRequest
-}
+import com.histmersion.api.catalogue.{EventsApi, Lpf}
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.api.catalogue.SiteTypes
 
 /** `histmersion places …` — the gazetteer subcommands (plan §1.6a). Kept in its own file so the shared `Cli` only gains
   * one line.
@@ -46,7 +33,7 @@ object PlacesCmd:
   private val asOfOpt =
     Opts.option[Long]("as-of", "Signed year the gazetteer is read at (BCE negative, e.g. -1400)").orNone
 
-  private def show(rows: List[PlaceHit], asOf: Option[Long]): Unit =
+  private def show(rows: List[com.histmersion.api.catalogue.Place.Hit], asOf: Option[Long]): Unit =
     println(PlacesMarkdown.places(rows.toVector, asOf))
 
   private val search = Opts.subcommand("search", "Find places by name; the `id` it prints is what `--place` wants") {
@@ -87,7 +74,7 @@ object PlacesCmd:
       kind: Option[String],
       batch: Int,
       dataset: Dataset = Dataset.Local
-  ): Either[CliError, PlaceImportResult] =
+  ): Either[CliError, com.histmersion.api.catalogue.Place.ImportResult] =
     if !Files.isRegularFile(file) then Left(CliError(s"no such file: $file", exitCode = ExitCode.Usage))
     else
       Lpf.parse(Files.readString(file), kind.getOrElse(Place.Kind.Region)) match
@@ -96,21 +83,22 @@ object PlacesCmd:
           val groups = items.grouped(batch.max(1)).toList
           val total = groups.size
           groups.zipWithIndex
-            .foldLeft[Either[CliError, PlaceImportResult]](Right(PlaceImportResult(0, 0, 0, Nil))) {
-              case (acc, (g, i)) =>
-                acc.flatMap { sum =>
-                  if total > 1 then
-                    Console.err.print(s"\r${file.getFileName}: batch ${i + 1}/$total (${sum.places} place(s))")
-                  c.importPlaces(kind, Lpf.render(g), dataset)
-                    .map(r =>
-                      PlaceImportResult(
-                        sum.places + r.places,
-                        sum.names + r.names,
-                        sum.relations + r.relations,
-                        (sum.failed ++ r.failed).take(20)
-                      )
+            .foldLeft[Either[CliError, com.histmersion.api.catalogue.Place.ImportResult]](
+              Right(com.histmersion.api.catalogue.Place.ImportResult(0, 0, 0, Nil))
+            ) { case (acc, (g, i)) =>
+              acc.flatMap { sum =>
+                if total > 1 then
+                  Console.err.print(s"\r${file.getFileName}: batch ${i + 1}/$total (${sum.places} place(s))")
+                c.importPlaces(kind, Lpf.render(g), dataset)
+                  .map(r =>
+                    com.histmersion.api.catalogue.Place.ImportResult(
+                      sum.places + r.places,
+                      sum.names + r.names,
+                      sum.relations + r.relations,
+                      (sum.failed ++ r.failed).take(20)
                     )
-                }
+                  )
+              }
             }
             .map { r =>
               if total > 1 then Console.err.print("\r" + " " * 72 + "\r")
@@ -315,7 +303,8 @@ object PlacesCmd:
     "Give a place a further name (kept by every re-seed): `places name add pleiades_678430 'Lake Kinneret' --lang en`"
   ) {
     (Opts.argument[String]("place-id"), Opts.argument[String]("name"), langOpt).mapN { (id, name, lang) => (c: Client) =>
-      c.addPlaceName(id, PlaceNameAdd(name, lang)).map(r => println(PlacesMarkdown.placeNameChanged(r)))
+      c.addPlaceName(id, com.histmersion.api.catalogue.Place.NameAdd(name, lang))
+        .map(r => println(PlacesMarkdown.placeNameChanged(r)))
     }
   }
 
@@ -323,7 +312,8 @@ object PlacesCmd:
     Opts.subcommand("rm", "Remove a name added by hand (a name the seed gives cannot be removed)") {
       (Opts.argument[String]("place-id"), Opts.argument[String]("name"), langOpt).mapN {
         (id, name, lang) => (c: Client) =>
-          c.removePlaceName(id, PlaceNameRemove(name, lang)).map(r => println(PlacesMarkdown.placeNameChanged(r)))
+          c.removePlaceName(id, com.histmersion.api.catalogue.Place.NameRemove(name, lang))
+            .map(r => println(PlacesMarkdown.placeNameChanged(r)))
       }
     }
 
@@ -337,7 +327,10 @@ object PlacesCmd:
     )
       .mapN { (place, csv) => (c: Client) =>
         c.placeNames(place)
-          .map(rows => print(if csv then PlaceEdits.csv(rows) else PlacesMarkdown.manualPlaceNames(rows) + "\n"))
+          .map(rows =>
+            print(if csv then com.histmersion.api.catalogue.Place.Edits.csv(rows)
+            else PlacesMarkdown.manualPlaceNames(rows) + "\n")
+          )
       }
   }
 
@@ -358,14 +351,16 @@ object PlacesCmd:
         "source",
         "Where the coordinates come from: a gazetteer or Wikidata id, a map, a publication"
       ),
-      Opts.option[String]("id", s"The place id (default ${PlaceEdits.LocalPrefix}<label>)").orNone,
+      Opts
+        .option[String]("id", s"The place id (default ${com.histmersion.api.catalogue.Place.Edits.LocalPrefix}<label>)")
+        .orNone,
       Opts.options[String]("name", "A further name (repeatable)").orEmpty,
       langOpt,
       Opts.option[Long]("from", "Signed year the place begins (BCE negative)").orNone,
       Opts.option[Long]("to", "Signed year the place ends (BCE negative)").orNone
     )
       .mapN { (label, kind, lon, lat, source, id, names, lang, from, to) => (c: Client) =>
-        c.addPlace(PlaceAdd(label, kind, lon, lat, source, id, names, lang, from, to))
+        c.addPlace(com.histmersion.api.catalogue.Place.Add(label, kind, lon, lat, source, id, names, lang, from, to))
           .map(p => println(PlacesMarkdown.placeAdded(p)))
       }
   }
@@ -391,14 +386,17 @@ object PlacesCmd:
           "point",
           "Its corrected point, latitude,longitude (a place known by a point only; --reason must name the gazetteer value)"
         )
-        .mapValidated(p => PlaceOverrides.parsePoint(p).toValidatedNel)
+        .mapValidated(p => com.histmersion.api.catalogue.Place.Overrides.parsePoint(p).toValidatedNel)
         .orNone,
       Opts.option[String]("reason", "Why: the evidence the decision rests on").orNone,
       Opts.flag("reset", "Drop the override: the kind, period and point its source states come back").orFalse
     )
       .mapN { (id, kind, from, to, point, reason, reset) => (c: Client) =>
-        c.setPlaceOverride(id, PlaceOverrideSet(kind, from, to, reason, reset, point.map(_._1), point.map(_._2)))
-          .map(r => println(PlacesMarkdown.placeOverrideChanged(r)))
+        c.setPlaceOverride(
+          id,
+          com.histmersion.api.catalogue.Place
+            .OverrideSet(kind, from, to, reason, reset, point.map(_._1), point.map(_._2))
+        ).map(r => println(PlacesMarkdown.placeOverrideChanged(r)))
       }
   }
 
@@ -412,7 +410,8 @@ object PlacesCmd:
       Opts.option[String]("reason", "Why: the evidence the decision rests on").orNone
     )
       .mapN { (id, into, reason) => (c: Client) =>
-        c.mergePlace(id, PlaceMergeIn(into, reason)).map(r => println(PlacesMarkdown.placeGone(r)))
+        c.mergePlace(id, com.histmersion.api.catalogue.Place.MergeIn(into, reason))
+          .map(r => println(PlacesMarkdown.placeGone(r)))
       }
   }
 
@@ -422,7 +421,8 @@ object PlacesCmd:
   ) {
     (Opts.argument[String]("place-id"), Opts.option[String]("reason", "Why: the evidence the decision rests on").orNone)
       .mapN { (id, reason) => (c: Client) =>
-        c.removePlace(id, PlaceRemoveIn(reason)).map(r => println(PlacesMarkdown.placeGone(r)))
+        c.removePlace(id, com.histmersion.api.catalogue.Place.RemoveIn(reason))
+          .map(r => println(PlacesMarkdown.placeGone(r)))
       }
   }
 
@@ -448,7 +448,8 @@ object PlacesCmd:
       Opts.flag("no-wait", "Print the job id and return").orFalse
     )
       .mapN { (dry, limit, refresh, noWait) => (c: Client) =>
-        c.call(EventsApi.refineSiteTypes)(SiteTypesRequest(dry, limit, refresh)).flatMap(EventsCmd.follow(c, _, noWait))
+        c.call(EventsApi.refineSiteTypes)(SiteTypes.Request(dry, limit, refresh))
+          .flatMap(EventsCmd.follow(c, _, noWait))
       }
   }
 

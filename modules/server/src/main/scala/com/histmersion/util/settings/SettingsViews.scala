@@ -1,8 +1,8 @@
 package com.histmersion.util.settings
 
-import com.histmersion.api.ApiError
 import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.config.edit.*
+import com.histmersion.api.Api
 
 /** Settings as the wire shows them ([[SettingShown]]: a credential's value never crosses). */
 object SettingsViews:
@@ -55,7 +55,7 @@ object SettingsViews:
       restartable
     )
 
-  def error(e: SettingError): ApiError = e match
-    case SettingError.Changed                        => ApiError(e.message, Some(ConfigEdit.CodeChanged))
-    case SettingError.NoFile(_) | SettingError.Io(_) => ApiError(e.message, Some(ConfigEdit.CodeUnavailable))
-    case _                                           => ApiError(e.message, Some(ConfigEdit.CodeRefused))
+  def error(e: SettingError): Api.Error = e match
+    case SettingError.Changed                        => Api.Error(e.message, Some(ConfigEdit.CodeChanged))
+    case SettingError.NoFile(_) | SettingError.Io(_) => Api.Error(e.message, Some(ConfigEdit.CodeUnavailable))
+    case _                                           => Api.Error(e.message, Some(ConfigEdit.CodeRefused))

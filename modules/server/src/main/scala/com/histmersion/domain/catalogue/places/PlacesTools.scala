@@ -3,22 +3,15 @@ package com.histmersion.domain.catalogue.places
 import com.histmersion.api.catalogue.PlacesMarkdown
 
 import chimp.server.*
-import com.histmersion.api.{ApiError, StrictJson}
+import com.histmersion.api.StrictJson
 import com.histmersion.domain.Caller
 import com.histmersion.util.mcp.McpOut
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import sttp.tapir.Schema
-import com.histmersion.api.catalogue.{
-  PlaceAdd,
-  PlaceMergeIn,
-  PlaceNameAdd,
-  PlaceNameRemove,
-  PlaceOverrideSet,
-  PlaceRemoveIn
-}
 import com.histmersion.domain.catalogue.Place
+import com.histmersion.api.Api
 
 /** The gazetteer for agents: `places` (search, or show one place with its hierarchy), `place_names` (a person's names),
   * `place_override` (a person's kind, period and point; merge, remove) and `add_place`.
@@ -146,8 +139,9 @@ object PlacesTools:
               ToolResult.text("_`placeId` is required to add or remove a name — find it with `places`_")
             case (Some(pid), Some(n)) =>
               val r =
-                if in.remove.getOrElse(false) then places.removeName(me, pid, PlaceNameRemove(n, in.lang))
-                else places.addName(me, pid, PlaceNameAdd(n, in.lang))
+                if in.remove.getOrElse(false) then
+                  places.removeName(me, pid, com.histmersion.api.catalogue.Place.NameRemove(n, in.lang))
+                else places.addName(me, pid, com.histmersion.api.catalogue.Place.NameAdd(n, in.lang))
               r.fold(McpOut.error, x => ToolResult.text(PlacesMarkdown.placeNameChanged(x)))
         },
       /** A person's kind and period for a place (V080): list, set or reset — kept by every re-import. */
@@ -175,7 +169,7 @@ object PlacesTools:
           val gone = into.isDefined || in.remove.getOrElse(false)
           val ask = gone || in.kind.exists(_.trim.nonEmpty) || in.periodStart.isDefined || in.periodEnd.isDefined ||
             in.pointLat.isDefined || in.pointLon.isDefined || in.reset.getOrElse(false)
-          def text(r: Either[ApiError, String]) = ToolResult.text(r.fold(McpOut.refusal, identity))
+          def text(r: Either[Api.Error, String]) = ToolResult.text(r.fold(McpOut.refusal, identity))
           (id, ask) match
             case (_, false)   => ToolResult.text(PlacesMarkdown.placeOverrides(places.overrides(id)))
             case (None, true) =>
@@ -184,16 +178,24 @@ object PlacesTools:
               (into, in.remove.getOrElse(false)) match
                 case (Some(_), true)  => ToolResult.text("_`mergeInto` and `remove` exclude each other_")
                 case (Some(t), false) =>
-                  text(places.merge(me, pid, PlaceMergeIn(t, in.reason)).map(PlacesMarkdown.placeGone))
+                  text(
+                    places
+                      .merge(me, pid, com.histmersion.api.catalogue.Place.MergeIn(t, in.reason))
+                      .map(PlacesMarkdown.placeGone)
+                  )
                 case (None, true) =>
-                  text(places.remove(me, pid, PlaceRemoveIn(in.reason)).map(PlacesMarkdown.placeGone))
+                  text(
+                    places
+                      .remove(me, pid, com.histmersion.api.catalogue.Place.RemoveIn(in.reason))
+                      .map(PlacesMarkdown.placeGone)
+                  )
                 case (None, false) =>
                   text(
                     places
                       .setOverride(
                         me,
                         pid,
-                        PlaceOverrideSet(
+                        com.histmersion.api.catalogue.Place.OverrideSet(
                           in.kind,
                           in.periodStart,
                           in.periodEnd,
@@ -217,6 +219,6 @@ object PlacesTools:
             "place existed only then. The place is this collection's own (`local_<label>` unless `id` is " +
             "given), carried in a bundle and never touched by a re-seed. Refused when the id is taken."
         )
-        .input[PlaceAdd]
+        .input[com.histmersion.api.catalogue.Place.Add]
         .handle(in => places.add(me, in).fold(McpOut.error, p => ToolResult.text(PlacesMarkdown.placeAdded(p))))
     )

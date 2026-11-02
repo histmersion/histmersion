@@ -6,7 +6,7 @@ import com.histmersion.config.given
 
 import com.histmersion.domain.AgentProposals.*
 import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalMode}
-import com.histmersion.api.library.{EdgeInput, MetadataPatch, SourcePatch}
+import com.histmersion.api.library.MetadataPatch
 import com.histmersion.domain.library.Edge
 import com.histmersion.domain.library.Source
 
@@ -32,7 +32,10 @@ class AgentProposalsSuite extends munit.FunSuite:
       )
     ).toOption.get
     assertEquals((p.kind, p.status), (ApprovalKind.StatusChange, Some(Source.Status.Contested)))
-    assertEquals(p.patch, SourcePatch(metadata = Some(MetadataPatch(status = Some(Source.Status.Contested)))))
+    assertEquals(
+      p.patch,
+      com.histmersion.api.library.Source.Patch(metadata = Some(MetadataPatch(status = Some(Source.Status.Contested))))
+    )
 
   test("an edge: the quote may come from either end; references and self-edges are refused"):
     val p = check(
@@ -46,7 +49,10 @@ class AgentProposalsSuite extends munit.FunSuite:
         "the tin of the Uluburun cargo came from Central Asia"
       )
     ).toOption.get
-    assertEquals(p.patch.edges.map(_.add), Some(List(EdgeInput("jones2021_tin", Edge.Kind.SupersededBy))))
+    assertEquals(
+      p.patch.edges.map(_.add),
+      Some(List(com.histmersion.api.library.Edge.Input("jones2021_tin", Edge.Kind.SupersededBy)))
+    )
     assert(p.describe.contains("superseded_by"))
     assert(
       check(

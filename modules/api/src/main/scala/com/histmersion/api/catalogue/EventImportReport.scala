@@ -22,15 +22,15 @@ final case class EventImportReport(
     failed: List[String] = Nil,
     licence: String = "",
     citation: String = "",
-    corrections: CorrectionCounts = CorrectionCounts()
+    corrections: Correction.Counts = Correction.Counts()
 ) derives KindlingsCodecAsObject,
       KindlingsSchema
 object EventImportReport:
   given Schema[EventImportReport] = summon[KindlingsSchema[EventImportReport]].schema
 
   /** An events import job's report, in its detail. */
-  val Detail: com.histmersion.api.jobs.JobDetailField[Option[EventImportReport]] =
-    com.histmersion.api.jobs.JobDetailField("eventImport", None)
+  val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[EventImportReport]] =
+    com.histmersion.api.jobs.JobDetail.Field("eventImport", None)
 
   def combine(a: EventImportReport, b: EventImportReport): EventImportReport =
     EventImportReport(

@@ -2,15 +2,30 @@
 direction	api:api/VocabularyCodecs.scala	util.common -> automation: Goal	1
 direction	api:api/VocabularyCodecs.scala	util.common -> catalogue: Place	1
 direction	api:api/VocabularyCodecs.scala	util.common -> library: Edge	1
-direction	api:api/automation/Agents.scala	automation -> research: ArticlePlans	1
-direction	api:api/automation/AgentsMarkdown.scala	automation -> research: ArticlePlans	1
-direction	api:api/automation/GoalPlans.scala	automation -> research: CoverageReason	1
-direction	api:api/automation/Managers.scala	automation -> research: ArticleFilter	1
+direction	api:api/automation/Agents.scala	automation -> research: Article	1
+direction	api:api/automation/AgentsMarkdown.scala	automation -> research: Article	1
+direction	api:api/automation/Goal.scala	automation -> research: Coverage	1
+direction	api:api/automation/Managers.scala	automation -> research: Article	1
 direction	api:api/automation/Queue.scala	automation -> library: Acquire	1
-direction	api:api/exchange/MergeIssueDetail.scala	util.data -> automation: GoalPlans	1
-direction	api:api/library/DeleteBlockerKind.scala	library -> research: Article	1
+direction	api:api/catalogue/Place.scala	catalogue -> library: Hit	1
+direction	api:api/exchange/Bundle.scala	util.data -> automation: Goal	1
+direction	api:api/exchange/Bundle.scala	util.data -> catalogue: Attestation	1
+direction	api:api/exchange/Bundle.scala	util.data -> catalogue: Correction	1
+direction	api:api/exchange/Bundle.scala	util.data -> catalogue: EventDating	1
+direction	api:api/exchange/Bundle.scala	util.data -> catalogue: EventEdge	1
+direction	api:api/exchange/Bundle.scala	util.data -> catalogue: EventParticipant	1
+direction	api:api/exchange/Bundle.scala	util.data -> catalogue: Place	1
+direction	api:api/exchange/Bundle.scala	util.data -> library: Assessment	1
+direction	api:api/exchange/Bundle.scala	util.data -> library: Edge	1
+direction	api:api/exchange/Bundle.scala	util.data -> library: Finding	1
+direction	api:api/exchange/Bundle.scala	util.data -> library: Upload	1
+direction	api:api/exchange/Bundle.scala	util.data -> media: AssetLink	1
+direction	api:api/exchange/Bundle.scala	util.data -> research: Article	1
+direction	api:api/exchange/MergeIssue.scala	util.data -> automation: Goal	1
+direction	api:api/library/DeleteBlocker.scala	library -> research: Article	1
 direction	api:api/library/NeighborTarget.scala	library -> research: Article	1
 direction	api:api/maintenance/StorageMarkdown.scala	util.data -> server: AboutMarkdown	1
+direction	api:api/research/Article.scala	research -> server: Version	1
 direction	core:domain/MergeFold.scala	util.data -> automation: Goal	1
 direction	core:domain/MergeFold.scala	util.data -> automation: Queue	1
 direction	core:domain/MergePlanner.scala	util.data -> automation: Queue	1
@@ -18,35 +33,42 @@ direction	db:domain/automation/agents/AgentRepo.scala	automation -> library: Edg
 direction	db:domain/automation/goals/GoalSourceReferrer.scala	automation -> library: DeleteCount	1
 direction	db:domain/automation/goals/GoalSourceReferrer.scala	automation -> library: DeletePart	1
 direction	db:domain/catalogue/events/EventSourceReferrer.scala	catalogue -> library: DeleteBlocker	1
-direction	db:domain/catalogue/events/EventSourceReferrer.scala	catalogue -> library: DeleteBlockerKind	1
 direction	db:domain/catalogue/events/EventSourceReferrer.scala	catalogue -> library: DeleteCount	1
 direction	db:domain/catalogue/events/EventSourceReferrer.scala	catalogue -> library: DeletePart	1
-direction	db:domain/catalogue/events/EventSourceReferrer.scala	catalogue -> library: RenameCount	1
+direction	db:domain/catalogue/events/EventSourceReferrer.scala	catalogue -> library: Rename	1
 direction	db:domain/catalogue/evidence/AttestationSourceReferrer.scala	catalogue -> library: DeleteCount	1
 direction	db:domain/catalogue/evidence/AttestationSourceReferrer.scala	catalogue -> library: DeletePart	1
-direction	db:domain/catalogue/evidence/AttestationSourceReferrer.scala	catalogue -> library: RenameCount	1
+direction	db:domain/catalogue/evidence/AttestationSourceReferrer.scala	catalogue -> library: Rename	1
 direction	db:domain/catalogue/places/PlaceSourceReferrer.scala	catalogue -> library: DeleteCount	1
 direction	db:domain/catalogue/places/PlaceSourceReferrer.scala	catalogue -> library: DeletePart	1
-direction	db:domain/catalogue/places/PlaceSourceReferrer.scala	catalogue -> library: RenameCount	1
+direction	db:domain/catalogue/places/PlaceSourceReferrer.scala	catalogue -> library: Rename	1
 direction	db:domain/media/links/AssetLinkSourceReferrer.scala	media -> library: DeleteCount	1
 direction	db:domain/media/links/AssetLinkSourceReferrer.scala	media -> library: DeletePart	1
-direction	db:domain/media/links/AssetLinkSourceReferrer.scala	media -> library: RenameCount	1
+direction	db:domain/media/links/AssetLinkSourceReferrer.scala	media -> library: Rename	1
 direction	db:util/database/Codecs.scala	util.database -> catalogue: Place	1
 direction	db:util/database/Codecs.scala	util.database -> library: Edge	1
 direction	db:util/jobs/JobRepo.scala	util.jobs -> automation: Agents	1
 direction	db:util/jobs/JobSourceReferrer.scala	util.jobs -> library: DeleteBlocker	1
-direction	db:util/jobs/JobSourceReferrer.scala	util.jobs -> library: DeleteBlockerKind	1
-direction	db:util/jobs/JobSourceReferrer.scala	util.jobs -> library: RenameCount	1
+direction	db:util/jobs/JobSourceReferrer.scala	util.jobs -> library: Rename	1
 direction	server:domain/automation/agents/ApprovalService.scala	automation -> library: Edge	1
 direction	server:domain/automation/approvals/Approvals.scala	automation -> library: Edge	1
 direction	server:domain/research/articles/ArticleRoutes.scala	research -> server: ArticleHtml	1
 direction	server:domain/research/articles/PageBuilder.scala	research -> server: ArticleHtml	1
 direction	server:server/Pages.scala	research -> server: ArticleHtml	1
 direction	server:util/ocr/HttpConverterClient.scala	util.ocr -> media: AssetLinks	1
+filesystem	api:api/Api.scala	Files.*	2
+filesystem	api:api/Api.scala	Path.of	1
+filesystem	api:api/Api.scala	java.nio.file	3
 filesystem	config:config/UserConfigFile.scala	java.nio.file	1
+filesystem	db:domain/catalogue/events/EventsCarried.scala	Files.*	3
+filesystem	db:domain/catalogue/evidence/EvidenceCarried.scala	Files.*	2
+filesystem	db:domain/catalogue/places/PlacesCarried.scala	Files.*	2
+filesystem	db:util/data/exchange/CarriedKinds.scala	Files.*	3
 filesystem	db:util/data/exchange/MergeState.scala	java.nio.file	1
 filesystem	files:domain/library/sources/SourceNote.scala	Files.*	3
 filesystem	files:domain/library/sources/SourceNote.scala	java.nio.file	1
+filesystem	files:util/data/exchange/BundleEntities.scala	Files.*	28
+filesystem	files:util/data/exchange/BundleReader.scala	Files.*	1
 filesystem	files:util/plugins/PluginKit.scala	File(	1
 filesystem	server:domain/automation/agents/AgentTrees.scala	Files.*	14
 filesystem	server:domain/automation/agents/AgentTrees.scala	Path.of	3

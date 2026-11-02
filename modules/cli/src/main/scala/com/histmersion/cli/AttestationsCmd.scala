@@ -8,7 +8,7 @@ import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.Api
 import com.histmersion.config.*
-import com.histmersion.api.catalogue.AttestationPut
+import com.histmersion.api.catalogue.Attestation
 
 object AttestationsCmd:
 
@@ -43,7 +43,7 @@ object AttestationsCmd:
       Opts.option[String]("note", "Note").orNone
     )
       .mapN { (ck, tt, ti, quote, page, chunk, note) => (c: Client) =>
-        c.createAttestation(AttestationPut(ck, tt, ti, quote = quote, page = page, chunkOrd = chunk, note = note))
+        c.createAttestation(Attestation.Put(ck, tt, ti, quote = quote, page = page, chunkOrd = chunk, note = note))
           .map(a => println(AttestationsMarkdown.attestation(a)))
       }
   }

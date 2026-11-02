@@ -1,6 +1,6 @@
 package com.histmersion.domain.research.articles
 
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 import com.histmersion.domain.Caller
 import com.histmersion.domain.research.ResearchState
 import com.histmersion.util.database.Transactor
@@ -13,20 +13,8 @@ import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
 import com.histmersion.api.catalogue.EventArticleRef
-import com.histmersion.api.research.{
-  Article,
-  ArticleLinks,
-  ArticlePatch,
-  ArticleRef,
-  ArticleRow,
-  Articles,
-  ArticleVersion,
-  ArticleVersionFull,
-  ArticleView,
-  Backlink,
-  CitedSource,
-  CritiqueReason
-}
+import com.histmersion.api.research.{Article, Articles, Backlink, CitedSource, CritiqueReason}
+import com.histmersion.api.Api
 
 /** Research's articles as records: one article with the links it makes and what links to it, written whole or merged
   * from a patch (its critique reasons beside it), renamed (the old slug kept, every `[[old]]` rewritten), deleted, and
@@ -41,7 +29,7 @@ trait ArticleService:
   def load(slug: String): Option[Article]
 
   /** The article an old slug or its own names, with both directions of its link graph. */
-  def view(requested: String): Option[ArticleView]
+  def view(requested: String): Option[Article.View]
 
   /** Whether an article has this slug, as stored. */
   def exists(slug: String): Boolean
@@ -53,7 +41,7 @@ trait ArticleService:
   def updatedAtMillis: Map[String, Long]
 
   /** The link view of the stored articles among `slugs`, in slug order. */
-  def refs(slugs: List[String]): List[ArticleRef]
+  def refs(slugs: List[String]): List[Article.Ref]
 
   /** The articles that cite a source, by title. */
   def backlinksForSource(citekey: String): List[Backlink]
@@ -65,9 +53,9 @@ trait ArticleService:
   def sourcesCited(slug: String): List[CitedSource]
 
   /** The versions of an article, newest first, at most twenty. */
-  def versions(slug: String): List[ArticleVersion]
+  def versions(slug: String): List[Article.Version]
 
-  def version(slug: String, id: Long): Option[ArticleVersionFull]
+  def version(slug: String, id: Long): Option[Article.VersionFull]
 
   /** The newest saved version of an article: after a write, the one holding the text it replaced. */
   def latestVersion(slug: String): Option[Long]
@@ -82,12 +70,12 @@ trait ArticleService:
   def put(article: Article, caller: Caller): String
 
   /** Merge `patch` into the article `slug`, its critique reasons beside it; the new last-write token. */
-  def patch(slug: String, patch: ArticlePatch, caller: Caller): Either[ApiError, String]
+  def patch(slug: String, patch: Article.Patch, caller: Caller): Either[Api.Error, String]
 
   def delete(slug: String, caller: Caller): Boolean
 
   /** A new slug, the old one kept as an alias, every `[[old]]` rewritten; the articles rewritten. */
-  def rename(from: String, to: String, caller: Caller): Either[ApiError, List[String]]
+  def rename(from: String, to: String, caller: Caller): Either[Api.Error, List[String]]
 
 object ArticleService:
 
@@ -96,25 +84,25 @@ object ArticleService:
   final private class Implementation(db: Transactor) extends ArticleService:
     def canonical(slug: String): String = db.read(ArticleRepo.canonical(slug))
     def load(slug: String): Option[Article] = db.read(ArticleRepo.load(slug))
-    def view(requested: String): Option[ArticleView] = db.read(ArticleRepo.view(requested))
+    def view(requested: String): Option[Article.View] = db.read(ArticleRepo.view(requested))
     def exists(slug: String): Boolean = db.read(ArticleRepo.slugExists(slug))
     def slugs: List[String] = db.read(ArticleRepo.slugs).toList
     def updatedAtMillis: Map[String, Long] = db.read(ArticleRepo.updatedAtMillis)
-    def refs(slugs: List[String]): List[ArticleRef] = db.read(ArticleRepo.refs(slugs))
+    def refs(slugs: List[String]): List[Article.Ref] = db.read(ArticleRepo.refs(slugs))
     def backlinksForSource(citekey: String): List[Backlink] = db.read(ArticleRepo.backlinksForSource(citekey))
     def citing(citekeys: List[String], limit: Int): List[EventArticleRef] =
       if citekeys.isEmpty then Nil else db.read(ArticleRepo.citing(citekeys, limit))
     def sourcesCited(slug: String): List[CitedSource] = db.read(ArticleRepo.sourcesCited(slug))
-    def versions(slug: String): List[ArticleVersion] = db.read(ArticleRepo.listVersions(slug))
-    def version(slug: String, id: Long): Option[ArticleVersionFull] = db.read(ArticleRepo.getVersion(slug, id))
+    def versions(slug: String): List[Article.Version] = db.read(ArticleRepo.listVersions(slug))
+    def version(slug: String, id: Long): Option[Article.VersionFull] = db.read(ArticleRepo.getVersion(slug, id))
     def latestVersion(slug: String): Option[Long] = db.read(ArticleRepo.latestVersion(slug))
     def critiqueReasons(slug: String): List[CritiqueReason] = db.read(CritiqueRepo.list(slug))
     def articlesByGoal: Map[String, List[String]] = db.read(ArticleRepo.articlesByGoal)
     def put(article: Article, caller: Caller): String = db.transact(ArticleRepo.put(article))
-    def patch(slug: String, patch: ArticlePatch, caller: Caller): Either[ApiError, String] =
+    def patch(slug: String, patch: Article.Patch, caller: Caller): Either[Api.Error, String] =
       db.transact(ArticleRepo.patch(slug, patch))
     def delete(slug: String, caller: Caller): Boolean = db.transact(ArticleRepo.delete(slug))
-    def rename(from: String, to: String, caller: Caller): Either[ApiError, List[String]] =
+    def rename(from: String, to: String, caller: Caller): Either[Api.Error, List[String]] =
       db.transact(ArticleRepo.rename(from, to))
 
   /** Over the articles of `state`, as a database holding only research's rows answers: no source is stored, so every
@@ -135,12 +123,12 @@ object ArticleService:
     def canonical(slug: String): String = canonicalIn(state.get, slug)
     def load(slug: String): Option[Article] = state.get.articles.get(slug).map(loaded)
 
-    def view(requested: String): Option[ArticleView] =
+    def view(requested: String): Option[Article.View] =
       val st = state.get
       val slug = canonicalIn(st, requested)
       st.articles.get(slug).map { stored =>
         val a = stored.article
-        val row = ArticleRow(
+        val row = Article.Row(
           a.slug,
           a.title,
           a.kind,
@@ -157,33 +145,33 @@ object ArticleService:
           .filter(o => o.article.slug != slug && o.links.contains(slug))
           .map(o => Backlink("article", o.article.slug, Some(o.article.title)))
           .sortBy(_.id)
-        ArticleView(row, backlinks, Nil)
+        Article.View(row, backlinks, Nil)
       }
 
     def exists(slug: String): Boolean = state.get.articles.contains(slug)
     def slugs: List[String] = state.get.articles.keys.toList.sorted
     def updatedAtMillis: Map[String, Long] = state.get.articles.view.mapValues(_.updatedAt.toEpochMilli).toMap
 
-    def refs(slugs: List[String]): List[ArticleRef] =
+    def refs(slugs: List[String]): List[Article.Ref] =
       val st = state.get
       slugs
         .map(_.trim.toLowerCase)
         .filter(_.nonEmpty)
         .distinct
         .sorted
-        .flatMap(s => st.articles.get(s).map(o => ArticleRef(s, o.article.title, o.article.summary)))
+        .flatMap(s => st.articles.get(s).map(o => Article.Ref(s, o.article.title, o.article.summary)))
 
     def backlinksForSource(citekey: String): List[Backlink] = Nil
     def citing(citekeys: List[String], limit: Int): List[EventArticleRef] = Nil
     def sourcesCited(slug: String): List[CitedSource] = Nil
 
-    def versions(slug: String): List[ArticleVersion] =
+    def versions(slug: String): List[Article.Version] =
       state.get.versions
         .filter(_.slug == slug)
         .sortBy(v => (-v.createdAt.toEpochMilli, -v.id))
         .take(20)
         .map(v =>
-          ArticleVersion(
+          Article.Version(
             v.id,
             v.slug,
             v.summary.map(_.take(200)),
@@ -198,10 +186,10 @@ object ArticleService:
     private def wordCount(body: String): Int =
       body.dropWhile(_ == ' ').reverse.dropWhile(_ == ' ').reverse.split("\\s+", -1).length
 
-    def version(slug: String, id: Long): Option[ArticleVersionFull] =
+    def version(slug: String, id: Long): Option[Article.VersionFull] =
       state.get.versions
         .find(v => v.slug == slug && v.id == id)
-        .map(v => ArticleVersionFull(v.id, v.slug, v.body, v.summary, token(v.updatedAt), token(v.createdAt)))
+        .map(v => Article.VersionFull(v.id, v.slug, v.body, v.summary, token(v.updatedAt), token(v.createdAt)))
 
     def latestVersion(slug: String): Option[Long] = state.get.versions.filter(_.slug == slug).map(_.id).maxOption
 
@@ -219,7 +207,7 @@ object ArticleService:
           .modify(_.nextVersion)
           .using(_ + 1)
       )
-      val links = ArticleLinks.targets(a.body).filter(_ != a.slug).distinct
+      val links = Article.Links.targets(a.body).filter(_ != a.slug).distinct
       val stored = ResearchState.Stored(
         a.modify(_.updatedAt).setTo(None),
         before.fold(UUID.randomUUID())(_.uid),
@@ -233,18 +221,18 @@ object ArticleService:
       state.updateAndGet(written(_, article, now))
       token(now)
 
-    def patch(slug: String, patch: ArticlePatch, caller: Caller): Either[ApiError, String] =
+    def patch(slug: String, patch: Article.Patch, caller: Caller): Either[Api.Error, String] =
       val now = Instant.now(clock)
-      @tailrec def attempt(): Either[ApiError, String] =
+      @tailrec def attempt(): Either[Api.Error, String] =
         val st = state.get
         val outcome = st.articles.get(slug).map(loaded) match
           case None           => Left(Articles.notFound(slug))
           case Some(existing) =>
             Articles.precondition(existing, patch) match
-              case Left(msg) => Left(ApiError(msg, Some(Write.CodePrecondition)))
+              case Left(msg) => Left(Api.Error(msg, Some(Write.CodePrecondition)))
               case Right(_)  =>
                 Articles.applyPatch(existing, patch) match
-                  case Left(msg)      => Left(ApiError(msg, Some(Write.CodeInvalid)))
+                  case Left(msg)      => Left(Api.Error(msg, Some(Write.CodeInvalid)))
                   case Right(updated) =>
                     critiqueRefusal(patch.critiqueReasons) match
                       case Some(refused) => Left(refused)
@@ -259,11 +247,11 @@ object ArticleService:
     /** A reason names its two sources by citekey; with no source stored, the first reason is refused as the database
       * refuses it (its text checked first).
       */
-    private def critiqueRefusal(reasons: List[CritiqueReason]): Option[ApiError] =
+    private def critiqueRefusal(reasons: List[CritiqueReason]): Option[Api.Error] =
       val tidy = reasons.map(CritiqueReason.tidy)
-      tidy.collectFirst { case Left(m) => ApiError(m, Some(Write.CodeInvalid)) }.orElse {
+      tidy.collectFirst { case Left(m) => Api.Error(m, Some(Write.CodeInvalid)) }.orElse {
         tidy.collectFirst { case Right(r) =>
-          ApiError(s"critique reason ${r.ref.wire}: '${r.src}' is not a citekey", Some(Write.CodeInvalid))
+          Api.Error(s"critique reason ${r.ref.wire}: '${r.src}' is not a citekey", Some(Write.CodeInvalid))
         }
       }
 
@@ -284,19 +272,19 @@ object ArticleService:
       }
       before.articles.contains(slug)
 
-    def rename(from: String, to: String, caller: Caller): Either[ApiError, List[String]] =
+    def rename(from: String, to: String, caller: Caller): Either[Api.Error, List[String]] =
       val (oldSlug, newSlug) = (from.trim, to.trim)
       val now = Instant.now(clock)
-      @tailrec def attempt(): Either[ApiError, List[String]] =
+      @tailrec def attempt(): Either[Api.Error, List[String]] =
         val st = state.get
         val aliasOf = st.aliases.get(newSlug)
         val outcome =
           if !st.articles.contains(oldSlug) then Left(Articles.notFound(oldSlug))
           else if st.articles.contains(newSlug) then
-            Left(ApiError(s"'$newSlug' is already the slug of another article", Some(Write.CodeInvalid)))
+            Left(Api.Error(s"'$newSlug' is already the slug of another article", Some(Write.CodeInvalid)))
           else if aliasOf.exists(_ != oldSlug) then
             Left(
-              ApiError(
+              Api.Error(
                 s"'$newSlug' is an old slug of '${aliasOf.get}' and still resolves to it — pick another",
                 Some(Write.CodeInvalid)
               )
@@ -344,8 +332,8 @@ object ArticleService:
           case Nil       => (acc, done.reverse)
           case s :: tail =>
             val a = loaded(acc.articles(s))
-            val (body, nb) = ArticleLinks.retarget(a.body, to)
-            val summary = a.summary.map(ArticleLinks.retarget(_, to))
+            val (body, nb) = Article.Links.retarget(a.body, to)
+            val summary = a.summary.map(Article.Links.retarget(_, to))
             val reasons = a.reasons.map((ck, r) => to(ck).getOrElse(ck) -> r)
             val count = nb + summary.fold(0)(_._2) + a.reasons.keys.count(to(_).isDefined)
             if count == 0 then loop(tail, acc, done)

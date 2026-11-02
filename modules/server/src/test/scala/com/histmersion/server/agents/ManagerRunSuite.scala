@@ -25,9 +25,10 @@ import sttp.ai.core.agent.*
 import java.time.Instant
 import scala.jdk.CollectionConverters.*
 import com.histmersion.api.automation.Queue
-import com.histmersion.api.library.{EdgeInput, EdgesPatch, SourcePatch, SourcePut}
-import com.histmersion.api.research.{ArticlePatch, ArticlePut}
+import com.histmersion.api.library.EdgesPatch
 import com.histmersion.domain.library.Edge
+import com.histmersion.api.library.Source
+import com.histmersion.api.research.Article
 
 /** The process managers against a `*_test` database (docs/research-process-managers.md §6): the supervisor's tick with
   * a fixed clock — selection, dispatch, evaluation and the stop rules over several runs, holds, pause (with and without
@@ -112,7 +113,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       h.library.sources
         .put(
           Ck,
-          SourcePut(
+          Source.Put(
             title = "Bronze Age tin",
             year = Some(2019),
             body = Some(
@@ -123,7 +124,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         .isRight
     )
     slugs.foreach(s =>
-      assert(h.research.articles.put(s, ArticlePut(s"Tin $s", "concept", Body, tags = List(Tag))).isRight)
+      assert(h.research.articles.put(s, Article.Put(s"Tin $s", "concept", Body, tags = List(Tag))).isRight)
     )
 
   /** The review manager, active, narrowed to this suite's articles. */
@@ -233,13 +234,18 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         h.library.sources
           .put(
             ck,
-            SourcePut(title = s"Against $ck", year = Some(2020), body = Some("The tin was not from Anatolia."))
+            Source.Put(title = s"Against $ck", year = Some(2020), body = Some("The tin was not from Anatolia."))
           )
           .isRight
       )
       assert(
         h.library.sources
-          .patch(ck, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Ck, Edge.Kind.Refutes))))))
+          .patch(
+            ck,
+            Source.Patch(edges =
+              Some(EdgesPatch(add = List(com.histmersion.api.library.Edge.Input(Ck, Edge.Kind.Refutes))))
+            )
+          )
           .isRight
       )
     }
@@ -254,7 +260,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       s"Tin reached the Aegean by sea [[$Ck]].",
       s"Tin reached the Aegean by sea [[$Ck]], which [[zzagent2020_critic]] disputes."
     )
-    assert(h.research.articles.patch("zzagent_m5", ArticlePatch(body = Some(addressed))).isRight)
+    assert(h.research.articles.patch("zzagent_m5", Article.Patch(body = Some(addressed))).isRight)
     assertEquals(h.research.articles.openCritiques("zzagent_m5"), Some(1))
     // (no cooldown: the tick that evaluates a run dispatches the next)
     a.managers.tick(t0)
@@ -385,7 +391,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       .fold(e => fail(e.message), identity)
     a.managers.tick(t0)
     assertEquals(List("zzagent_h1", "zzagent_h2").map(item(_).status), List("held", "held"))
-    assert(h.library.sources.put("zzagent2030_new", SourcePut(title = "New", year = Some(2030))).isRight)
+    assert(h.library.sources.put("zzagent2030_new", Source.Put(title = "New", year = Some(2030))).isRight)
     a.managers.tick(t0)
     assertEquals(item("zzagent_h2").status, "active")
     a.managers.tick(Instant.parse("2026-10-16T00:00:01Z"))

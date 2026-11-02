@@ -5,7 +5,7 @@ import com.histmersion.api.automation.AgentStateMarkdown
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.config.*
-import com.histmersion.api.automation.GoalPlans.*
+import com.histmersion.api.automation.Goal.Plans.*
 import com.histmersion.api.automation.AgentStatePut
 
 object AgentStateCmd:

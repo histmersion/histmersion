@@ -15,11 +15,6 @@ import MergeFixture.*
 import com.histmersion.util.data.exchange.DecisionKind
 import com.histmersion.domain.library.{EditionsPolicy, MatchMethod, MatchOutcome}
 import com.histmersion.api.exchange.{
-  BundleArticleVersion,
-  BundleAttestation,
-  BundleEdge,
-  BundleInstance,
-  BundleKindCounts,
   IssueCondition,
   MatchCounts,
   MergeApplyResult,
@@ -349,8 +344,13 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
   // ── what a pair owns (M4) ─────────────────────────────────────────────────────────────────
 
   private val At = "2026-10-01T09:00:00.000000Z"
-  private def att(id: String, source: String, quote: String, origin: java.util.UUID): BundleAttestation =
-    BundleAttestation(
+  private def att(
+      id: String,
+      source: String,
+      quote: String,
+      origin: java.util.UUID
+  ): com.histmersion.api.exchange.Bundle.Attestation =
+    com.histmersion.api.exchange.Bundle.Attestation(
       uid(id),
       origin,
       uid(source),
@@ -437,12 +437,15 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     // olsen (a redirect from an earlier merge): folding the two would make olsen cite itself
     val earlier = uid("w-olsen-earlier")
     val es = foreign.copy(edges =
-      List(BundleEdge(uid("w-olsen"), earlier, "superseded_by"), BundleEdge(uid("w-olsen"), uid("w-new"), "references"))
+      List(
+        com.histmersion.api.exchange.Bundle.Edge(uid("w-olsen"), earlier, "superseded_by"),
+        com.histmersion.api.exchange.Bundle.Edge(uid("w-olsen"), uid("w-new"), "references")
+      )
     )
     val in = input(es).copy(uidAliases = Map(earlier -> uid("h-olsen")))
     val r = MergePlanner.plan(in, sketches, MergeResolutions(), cfg, List(CataloguePlan, LibraryPlan, ResearchPlan))
     val olsen = r.localized.edges.filter(_.srcUid == uid("h-olsen"))
-    assertEquals(olsen, List(BundleEdge(uid("h-olsen"), uid("w-new"), "references")))
+    assertEquals(olsen, List(com.histmersion.api.exchange.Bundle.Edge(uid("h-olsen"), uid("w-new"), "references")))
     assertEquals(r.apply.tally.selfLoopsDropped, 1)
     assert(r.plan.info.exists(_.contains("from a source to itself")), r.plan.info.mkString("\n"))
 
@@ -454,7 +457,8 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     val shared = article("shared-art", "zz_shared", base)
     val theirs = shared.copy(body = "Intro (work).\n\nMiddle.\n\nEnd.")
     val ours = shared.copy(body = "Intro.\n\nMiddle.\n\nEnd (home).", origin = work)
-    val version = BundleArticleVersion(uid("v-base"), work, shared.uid, baseSha, None, At, At)
+    val version =
+      com.histmersion.api.exchange.Bundle.ArticleVersion(uid("v-base"), work, shared.uid, baseSha, None, At, At)
     val es = foreign.copy(articles = foreign.articles :+ theirs, versions = List(version))
     val in0 = input(es)
     val ledgered = in0.ledger + (shared.uid -> MergePlanner.LedgerEntry(
@@ -521,12 +525,12 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     val r = plan()
     val done = MergeApplyResult(
       foreign.sources.head.uid,
-      BundleInstance(work, Some("work")),
+      com.histmersion.api.exchange.Bundle.Instance(work, Some("work")),
       applied = true,
       r.plan.planHash,
       mergeId = Some(uid("merge")),
       backup = Some("histmersion-20261004-1000.dump"),
-      counts = List(BundleKindCounts(Bundle.Kind.Source, inserted = 2)),
+      counts = List(com.histmersion.api.exchange.Bundle.KindCounts(Bundle.Kind.Source, inserted = 2)),
       tally = r.apply.tally,
       reviews = List("zz_shared"),
       logEntry = Some(590),

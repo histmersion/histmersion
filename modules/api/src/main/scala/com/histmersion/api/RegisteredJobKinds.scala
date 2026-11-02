@@ -15,8 +15,8 @@ import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.catalogue.{EventImportReport, EventRederiveReport, SkippedPeriod}
 import com.histmersion.api.exchange.InitPlan
 import com.histmersion.api.jobs.JobDetail
-import com.histmersion.api.library.AcquireChecks
 import com.histmersion.api.maintenance.VacuumPlan
+import com.histmersion.api.library.Acquire
 
 /** Every kind of background job the server runs, each registered by its owner, in the order the jobs window has always
   * listed them (as `Api.all` lists the features' endpoints): what the server, the web page and the CLI name a job by;
@@ -53,6 +53,6 @@ object RegisteredJobKinds:
       EventImportReport.Detail,
       EventRederiveReport.Detail,
       JobDetail.Purpose,
-      AcquireChecks.RecheckJob.Detail
+      Acquire.Checks.RecheckJob.Detail
     )
   )

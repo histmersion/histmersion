@@ -6,7 +6,8 @@ import com.raquo.laminar.api.L.*
 import com.histmersion.api.automation.ListFilters
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import com.histmersion.api.automation.{GoalPlans, ManagersMarkdown}
+import com.histmersion.api.automation.ManagersMarkdown
+import com.histmersion.api.automation.Goal
 
 /** The approvals window (docs/research-embedded-agents.md §5.2): changes agent runs PROPOSED — a source's status, a
   * disagreement edge — each with its evidence and the quote code verified, and approve / reject behind the write gate.
@@ -84,7 +85,7 @@ object ApprovalsView:
           s"${Plural.count(p.fold(0)(_.queries.size), "query", "queries")}, ${Plural.count(p.fold(0)(_.works.size), "work")}"
       case Some(ApprovalKind.ArticlePublish) =>
         a.article match
-          case Some(d) if d.mode == GoalPlans.DraftMode.Create =>
+          case Some(d) if d.mode == Goal.Plans.DraftMode.Create =>
             s"publish the new article ${a.subject.getOrElse("?")}: ${d.title}"
           case _ => s"append a section to the article ${a.subject.getOrElse("?")}"
       case Some(ApprovalKind.ArticleFilter) =>
@@ -160,12 +161,12 @@ object ApprovalsView:
   def decidedLine(a: ApprovalInfo): Option[String] = ListFilters.DecidedBy.of(a.state, a.note, a.result).map(_.describe)
 
   /** The self-check line of a draft. */
-  def selfCheck(d: GoalPlans.ArticleDraft): String =
+  def selfCheck(d: Goal.Plans.ArticleDraft): String =
     if d.problems.isEmpty then "The code self-check found nothing."
     else s"The code self-check still found ${Plural.count(d.problems.size, "problem")} after the writer's last attempt:"
 
   /** A plan, as a person weighs it: sub-goals, queries, works (in the corpus or to acquire), dropped. */
-  private[web] def planBlock(plan: GoalPlans.Plan): HtmlElement =
+  private[web] def planBlock(plan: Goal.Plans.Plan): HtmlElement =
     div(
       cls := "approval-plan",
       Option(plan.rationale).filter(_.nonEmpty).map(r => p(cls := "approval-evidence", r)),
@@ -202,7 +203,7 @@ object ApprovalsView:
     )
 
   /** A draft: its self-check, what it cites and leaves out, and the text itself. */
-  private[web] def draftBlock(d: GoalPlans.ArticleDraft): HtmlElement =
+  private[web] def draftBlock(d: Goal.Plans.ArticleDraft): HtmlElement =
     div(
       cls := "approval-draft",
       p(
@@ -534,10 +535,10 @@ object ApprovalsView:
               )
             case Some(ApprovalKind.ArticlePublish) =>
               span(
-                if a.article.exists(_.mode == GoalPlans.DraftMode.Create) then "publish the new article "
+                if a.article.exists(_.mode == Goal.Plans.DraftMode.Create) then "publish the new article "
                 else "append a section to ",
                 a.subject.fold(span("?"))(s =>
-                  if a.article.exists(_.mode == GoalPlans.DraftMode.Create) then strong(s)
+                  if a.article.exists(_.mode == Goal.Plans.DraftMode.Create) then strong(s)
                   else com.histmersion.web.ArticleLink(s, s)
                 )
               )

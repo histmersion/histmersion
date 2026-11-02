@@ -12,7 +12,7 @@ import com.histmersion.server.SeedNoteFiles
 import com.histmersion.util.database.Transactor
 
 import java.nio.file.Files
-import com.histmersion.api.library.SourcePatch
+import com.histmersion.api.library.Source
 
 /** The seed over a folder of notes, against a real Postgres (HISTMERSION_TEST_DB_URL; skipped otherwise): a note older
   * than the stored source is skipped and `force` overwrites it, and an exported note imports back to the same note.
@@ -41,7 +41,7 @@ class SeedImportSuite extends com.histmersion.db.DbSuite:
     assertEquals(first.skipped, Nil)
 
     // an agent enriches the row → updated_at now newer than the file's mtime
-    assert(sources.patch(ckS, SourcePatch(tags = Some(ListPatch(add = List("enriched")))), Caller.Local).isRight)
+    assert(sources.patch(ckS, Source.Patch(tags = Some(ListPatch(add = List("enriched")))), Caller.Local).isRight)
 
     // 2nd seed: the file is older than the row → skipped, enrichment preserved
     val second = run(dir)

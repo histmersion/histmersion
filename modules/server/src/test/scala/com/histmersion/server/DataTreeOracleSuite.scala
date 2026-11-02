@@ -18,8 +18,8 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
-import com.histmersion.api.basemap.{BasemapFetchQuery, BasemapRemoveQuery}
 import com.histmersion.api.jobs.JobInfo
+import com.histmersion.api.basemap.Basemap
 
 /** The files a run of the server leaves in its directories, as a smoke run makes them: one scratch root holding the
   * settings file, the data directory, the converter's and the acquisition's spools, the backups and bundles directories
@@ -177,12 +177,12 @@ class DataTreeOracleSuite extends DbSuite:
       val j = Transactor(ds).read(JobRepo.get(id)).getOrElse(fail(s"no job $id"))
       if j.isTerminal || left == 0 then j else { Thread.sleep(25); await(id, left - 1) }
     val svc = BasemapWiring.service(Deps(cfg, ds), () => router, _ => Long.MaxValue / 4)
-    def fetched(q: BasemapFetchQuery): Unit =
+    def fetched(q: Basemap.FetchQuery): Unit =
       val j = await(svc.fetch(q).fold(e => fail(e.message), _.id))
       assert(j.succeeded, j.toString)
-    fetched(BasemapFetchQuery())
-    fetched(BasemapFetchQuery(focus = Some("crete")))
-    fetched(BasemapFetchQuery(layer = "terrain", maxZoom = Some(4), bbox = Some("22.5,37.4,23.2,37.9")))
+    fetched(Basemap.FetchQuery())
+    fetched(Basemap.FetchQuery(focus = Some("crete")))
+    fetched(Basemap.FetchQuery(layer = "terrain", maxZoom = Some(4), bbox = Some("22.5,37.4,23.2,37.9")))
     List(
       ("vector", 4, 9L, 6L),
       ("vector", 4, 0L, 0L),
@@ -192,7 +192,7 @@ class DataTreeOracleSuite extends DbSuite:
     )
       .foreach((layer, z, x, y) => assert(svc.tile(layer, z, x, y).isRight, s"$layer $z/$x/$y"))
     assert(svc.status.available)
-    assert(svc.remove(BasemapRemoveQuery("none", focus = Some("crete"))).isRight)
+    assert(svc.remove(Basemap.RemoveQuery("none", focus = Some("crete"))).isRight)
 
   /** A file the acquisition spools for the converter. */
   private def spoolRun(): Unit =

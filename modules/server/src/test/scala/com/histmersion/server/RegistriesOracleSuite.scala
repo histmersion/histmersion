@@ -9,8 +9,8 @@ import java.nio.file.{Files, Path}
 import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.exchange.InitPlan
 import com.histmersion.api.jobs.{JobActions, JobDetail, JobInfo}
-import com.histmersion.api.library.AcquireChecks
 import com.histmersion.api.maintenance.VacuumPlan
+import com.histmersion.api.library.Acquire
 
 /** Every job kind and every alias table the server registers, written as text to `src/test/resources/oracle/` and
   * compared byte for byte: for a job kind its identifier, the name a person reads, whether it can be paused and
@@ -41,8 +41,8 @@ class RegistriesOracleSuite extends munit.FunSuite:
     "media" -> com.histmersion.api.media.ImportJobKinds.Media(Some("pictures of 3 places")),
     "events" -> com.histmersion.api.catalogue.EventsJobKinds.Catalogue(Some("gvp: 10 parts")),
     "about" -> JobDetail.Purpose(Some("the vector map of crete")),
-    "recheck" -> AcquireChecks.RecheckJob.Detail(
-      Some(AcquireChecks.RecheckJob(all = true, upTo = 7, since = "2026-10-01"))
+    "recheck" -> Acquire.Checks.RecheckJob.Detail(
+      Some(Acquire.Checks.RecheckJob(all = true, upTo = 7, since = "2026-10-01"))
     )
   )
 

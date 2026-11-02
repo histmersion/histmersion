@@ -2,12 +2,13 @@ package com.histmersion.util.jobs
 
 import com.histmersion.util.database.Transactor
 
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 import com.histmersion.api.jobs.{JobInfo, JobState}
 import com.histmersion.util.jobs.JobRepo
 
 import java.util.concurrent.atomic.AtomicReference
 import javax.sql.DataSource
+import com.histmersion.api.Api
 
 /** Pause, resume and cancel a job: a long background job cooperatively (it stops at its next part boundary, keeping
   * what it did; resumed, it skips that), an agent run by its own control.
@@ -16,24 +17,24 @@ trait JobControlService:
   /** Answer `action` on job `id`, with the job as it stands after it. A pause or cancel of a running background job is
     * asked of it: the answer is still `running`, and the job stops after its current part.
     */
-  def control(id: String, action: JobAction): Either[ApiError, JobInfo]
+  def control(id: String, action: JobAction): Either[Api.Error, JobInfo]
 
 object JobControlService:
 
-  private def notFound(id: String) = ApiError(s"No job '$id'", Some(Write.CodeNotFound))
-  private def conflict(why: String) = ApiError(why, Some(com.histmersion.api.jobs.JobActions.CodeConflict))
+  private def notFound(id: String) = Api.Error(s"No job '$id'", Some(Write.CodeNotFound))
+  private def conflict(why: String) = Api.Error(why, Some(com.histmersion.api.jobs.JobActions.CodeConflict))
 
   /** Over the jobs table; `runs` is the agent runs' own pause, resume and cancel. */
-  def apply(ds: DataSource, stops: JobStops, runs: (String, JobAction) => Either[ApiError, Unit]): JobControlService =
+  def apply(ds: DataSource, stops: JobStops, runs: (String, JobAction) => Either[Api.Error, Unit]): JobControlService =
     Implementation(ds, stops, runs)
 
   final private class Implementation(
       ds: DataSource,
       stops: JobStops,
-      runs: (String, JobAction) => Either[ApiError, Unit]
+      runs: (String, JobAction) => Either[Api.Error, Unit]
   ) extends JobControlService:
 
-    def control(id: String, action: JobAction): Either[ApiError, JobInfo] =
+    def control(id: String, action: JobAction): Either[Api.Error, JobInfo] =
       def current = Transactor(ds).read(JobRepo.get(id)).toRight(notFound(id))
       current.flatMap { job =>
         JobControlRules.decide(job, action, stops.canResume(id)).left.map(conflict).flatMap {
@@ -58,7 +59,7 @@ object JobControlService:
   final class InMemory(
       jobs: AtomicReference[Map[String, JobInfo]],
       stops: JobStops,
-      runs: (String, JobAction) => Either[ApiError, Unit] = (_, _) => Right(())
+      runs: (String, JobAction) => Either[Api.Error, Unit] = (_, _) => Right(())
   ) extends JobControlService:
 
     /** A job, as the store would hold it. */
@@ -87,7 +88,7 @@ object JobControlService:
           )
       ): Unit
 
-    def control(id: String, action: JobAction): Either[ApiError, JobInfo] =
+    def control(id: String, action: JobAction): Either[Api.Error, JobInfo] =
       def current = get(id).toRight(notFound(id))
       current.flatMap { job =>
         JobControlRules.decide(job, action, stops.canResume(id)).left.map(conflict).flatMap {

@@ -1,7 +1,6 @@
 package com.histmersion.util.data.exchange
 
 import scala.annotation.tailrec
-import com.histmersion.api.exchange.BundleKindCounts
 import com.histmersion.api.given
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.Bundle
@@ -90,7 +89,7 @@ object BundlePlan:
   /** The per-kind tally of the report. A recorded tombstone of a row that never existed here changes nothing visible,
     * so it counts as unchanged.
     */
-  def counts(kind: Bundle.Kind, ds: Iterable[Decision]): BundleKindCounts =
+  def counts(kind: Bundle.Kind, ds: Iterable[Decision]): com.histmersion.api.exchange.Bundle.KindCounts =
     val decisions = ds.iterator
     @tailrec def loop(
         inserted: Int,
@@ -101,9 +100,19 @@ object BundlePlan:
         deleted: Int,
         skippedDeleted: Int,
         held: Int
-    ): BundleKindCounts =
+    ): com.histmersion.api.exchange.Bundle.KindCounts =
       if !decisions.hasNext then
-        BundleKindCounts(kind, inserted, updated, unchanged, keptLocal, conflicts, deleted, skippedDeleted, held = held)
+        com.histmersion.api.exchange.Bundle.KindCounts(
+          kind,
+          inserted,
+          updated,
+          unchanged,
+          keptLocal,
+          conflicts,
+          deleted,
+          skippedDeleted,
+          held = held
+        )
       else
         decisions.next() match
           case Decision.Insert =>

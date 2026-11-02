@@ -5,7 +5,7 @@ import com.histmersion.domain.automation.managers.ManagerDefaultsViews
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.automation.GoalPlans.LinkKind
+import com.histmersion.api.automation.Goal.Plans.LinkKind
 import com.histmersion.domain.IngestBacklog.{Entry, Failure, Lane, Placement, RepairAction, RepairFacts}
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.api.automation.Queue.QueueAdd

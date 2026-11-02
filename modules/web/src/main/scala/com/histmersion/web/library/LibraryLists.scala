@@ -1,7 +1,6 @@
 package com.histmersion.web.library
 
 import com.histmersion.api.Api
-import com.histmersion.api.research.ArticleSummary
 import com.histmersion.api.library.{Filter, Hit}
 import com.histmersion.web.{ApiClient, Latest, LibrarySection, UiState}
 import com.histmersion.web.ui.Layout
@@ -10,6 +9,7 @@ import org.scalajs.dom
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.api.research.Article
 
 /** Library's two lists, a page at a time: the sources and the articles the filter panel selects (the map's view never
   * narrows them: Library lists everywhere), the sources in [[LibrarySort]]'s order. Both are read whenever the filter
@@ -19,7 +19,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 object LibraryLists:
 
   val sources: Var[ListPage[Hit]] = Var(ListPage())
-  val articles: Var[ListPage[ArticleSummary]] = Var(ListPage())
+  val articles: Var[ListPage[Article.Summary]] = Var(ListPage())
 
   private val latestSources = Latest()
   private val latestArticles = Latest()

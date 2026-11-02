@@ -19,17 +19,7 @@ import com.histmersion.domain.*
 import com.augustnagro.magnum.*
 import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.{Migrate, Param, Sql}
-import com.histmersion.api.catalogue.{
-  EventPut,
-  Geocode,
-  Period,
-  Place,
-  PlaceCounts,
-  PlaceHit,
-  PlaceInput,
-  PlaceName,
-  PlaceRelation
-}
+import com.histmersion.api.catalogue.{EventPut, Geocode, Period, Place}
 import com.histmersion.api.library.{Filter, Finding, Source}
 import com.histmersion.api.research.Article
 
@@ -53,16 +43,16 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
 
   // a region > polity > site chain far from every other fixture, plus look-alike labels for search
   private val places = List(
-    PlaceInput(
+    Place.Input(
       Place(
         "zzi_land",
         "Zzia Land",
         com.histmersion.domain.catalogue.Place.Kind.Region,
         Some(box(-130, -40, -120, -30))
       ),
-      List(PlaceName("Zzia Land"), PlaceName("Zzialand", "xx"))
+      List(Place.Name("Zzia Land"), Place.Name("Zzialand", "xx"))
     ),
-    PlaceInput(
+    Place.Input(
       Place(
         "zzi_realm",
         "Zzia Realm",
@@ -70,47 +60,47 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
         Some(box(-129, -39, -125, -35)),
         Some(Period(-1600, -1000))
       ),
-      List(PlaceName("Zzia Realm"), PlaceName("Old Zziarealm", "xx", Some(Period(-1600, -1300)))),
-      List(PlaceRelation("zzi_realm", "zzi_land", PlaceRelation.PartOf, Some(Period(-1600, -1000))))
+      List(Place.Name("Zzia Realm"), Place.Name("Old Zziarealm", "xx", Some(Period(-1600, -1300)))),
+      List(Place.Relation("zzi_realm", "zzi_land", Place.Relation.PartOf, Some(Period(-1600, -1000))))
     ),
-    PlaceInput(
+    Place.Input(
       Place(
         "zzi_town",
         "Zzia Town",
         com.histmersion.domain.catalogue.Place.Kind.Site,
         Some("""{"type":"Point","coordinates":[-128.0,-37.0]}""")
       ),
-      List(PlaceName("Zzia Town")),
-      List(PlaceRelation("zzi_town", "zzi_realm"))
+      List(Place.Name("Zzia Town")),
+      List(Place.Relation("zzi_town", "zzi_realm"))
     ),
-    PlaceInput(
+    Place.Input(
       Place(
         "zzi_east",
         "Zzia East",
         com.histmersion.domain.catalogue.Place.Kind.Region,
         Some(box(-122, -40, -120, -38))
       ),
-      List(PlaceName("Zzia East"))
+      List(Place.Name("Zzia East"))
     ),
     // contains the query but does not START with it, and is only findable by a period-scoped name
-    PlaceInput(
+    Place.Input(
       Place("zzi_hidden", "Hidden Place", com.histmersion.domain.catalogue.Place.Kind.Site),
-      List(PlaceName("Hidden Place"), PlaceName("Zzia Hidden", "xx", Some(Period(-1500, -1200))))
+      List(Place.Name("Hidden Place"), Place.Name("Zzia Hidden", "xx", Some(Period(-1500, -1200))))
     ),
-    PlaceInput(
+    Place.Input(
       Place("zzi_inner", "The Zzia", com.histmersion.domain.catalogue.Place.Kind.Site),
-      List(PlaceName("The Zzia"))
+      List(Place.Name("The Zzia"))
     ),
-    PlaceInput(Place("zzi_exact", "Zzia", com.histmersion.domain.catalogue.Place.Kind.Site), List(PlaceName("Zzia"))),
+    Place.Input(Place("zzi_exact", "Zzia", com.histmersion.domain.catalogue.Place.Kind.Site), List(Place.Name("Zzia"))),
     // a present-day GeoNames/Wikidata place (made one in beforeAll): never in a search before modern-from
-    PlaceInput(
+    Place.Input(
       Place(
         "zzi_wd_now",
         "Zzia Wikitown",
         com.histmersion.domain.catalogue.Place.Kind.Site,
         Some("""{"type":"Point","coordinates":[-127.0,-36.0]}""")
       ),
-      List(PlaceName("Zzia Wikitown"), PlaceName("Wikizzia", "xx"))
+      List(Place.Name("Zzia Wikitown"), Place.Name("Wikizzia", "xx"))
     )
   )
 
@@ -298,7 +288,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
       val sc = scope(f)
       assertEquals(
         SearchFixtures.selectionCounts(ds, f, sc),
-        PlaceCounts(
+        Place.Counts(
           sources = SearchFixtures.count(ds, f, sc),
           findings = FindingFixtures.findingsCount(ds, f, sc),
           articles = ArticleFixtures.list(ds, f, sc, None, None, 1, 0).total,
@@ -319,7 +309,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
   // CTE `tw` in front and `PlaceFixtures.inTimeSql` where `p.period @> asOf` was — so the rank-first
   // rewrite is held to the rule, not to the plain period containment it replaced.
 
-  private def referenceSearch(q: Option[String], asOf: Option[Long], limit: Int): Vector[PlaceHit] =
+  private def referenceSearch(q: Option[String], asOf: Option[Long], limit: Int): Vector[Place.Hit] =
     val text = q.map(_.trim).filter(_.nonEmpty)
     val cont = text.map(FilterSql.contains).getOrElse("%")
     val pre = text.map(FilterSql.startsWith).getOrElse("%")
@@ -366,7 +356,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
                      (p.label ILIKE $pre ESCAPE '\\') DESC,
                      ${SqlLiteral(PlaceFixtures.tierSql)},
                      fc.n DESC, length(p.label), p.id
-            LIMIT ${limit.max(1)}""").query[PlaceHit].run()
+            LIMIT ${limit.max(1)}""").query[Place.Hit].run()
 
   test("place search ranks and decorates exactly as the single statement did"):
     val queries = List(
@@ -472,7 +462,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(
-        PlaceInput(
+        Place.Input(
           Place(
             "zzi_pol_ohm",
             "Zzi Kingdom",
@@ -480,9 +470,9 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
             Some(box(-140, -40, -135, -35)),
             Some(Period(-1500, -1000))
           ),
-          List(PlaceName("Zzi Kingdom"))
+          List(Place.Name("Zzi Kingdom"))
         ),
-        PlaceInput(
+        Place.Input(
           Place(
             "zzi_pol_cl",
             "Zzi Kingdom",
@@ -490,47 +480,47 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
             Some(box(-139.5, -39.5, -135, -35)),
             Some(Period(-1500, -1000))
           ),
-          List(PlaceName("Zzi Kingdom"))
+          List(Place.Name("Zzi Kingdom"))
         ),
-        PlaceInput(
+        Place.Input(
           Place(
             "zzi_imp_hit",
             "Zzi Imported Hit",
             com.histmersion.domain.catalogue.Place.Kind.Site,
             Some("""{"type":"Point","coordinates":[-128.0,-37.0]}""")
           ),
-          List(PlaceName("Zzi Imported Hit"))
+          List(Place.Name("Zzi Imported Hit"))
         ),
-        PlaceInput(
+        Place.Input(
           Place(
             "zzi_imp_miss",
             "Zzi Imported Miss",
             com.histmersion.domain.catalogue.Place.Kind.Site,
             Some("""{"type":"Point","coordinates":[-139.0,-36.0]}""")
           ),
-          List(PlaceName("Zzi Imported Miss"))
+          List(Place.Name("Zzi Imported Miss"))
         ),
         // the time rule's bases among equal (point) areas: an undated curated site shown only by a
         // finding dated then, a physical feature at any time, a present-day place from modern-from
-        PlaceInput(
+        Place.Input(
           Place(
             "zzi_und_site",
             "Zzi Undated Site",
             com.histmersion.domain.catalogue.Place.Kind.Site,
             Some("""{"type":"Point","coordinates":[-121.0,-39.0]}""")
           ),
-          List(PlaceName("Zzi Undated Site"))
+          List(Place.Name("Zzi Undated Site"))
         ),
-        PlaceInput(
+        Place.Input(
           Place(
             "zzi_feat",
             "Zzi Feature",
             com.histmersion.domain.catalogue.Place.Kind.Feature,
             Some("""{"type":"Point","coordinates":[-122.0,-39.0]}""")
           ),
-          List(PlaceName("Zzi Feature"))
+          List(Place.Name("Zzi Feature"))
         ),
-        PlaceInput(
+        Place.Input(
           Place(
             "zzi_mod",
             "Zzi Modern Town",
@@ -538,20 +528,20 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
             Some("""{"type":"Point","coordinates":[-123.0,-39.0]}"""),
             properties = Some("""{"modern":true}""")
           ),
-          List(PlaceName("Zzi Modern Town"))
+          List(Place.Name("Zzi Modern Town"))
         ),
         // region-cleanup: an undated polity known only by a point (never on a map at a year, even with a
         // finding dated then), a dated one (drawn as usual), and an undated people (drawn by its findings)
-        PlaceInput(
+        Place.Input(
           Place(
             "zzi_und_pol",
             "Zzi Undated Province",
             com.histmersion.domain.catalogue.Place.Kind.Polity,
             Some("""{"type":"Point","coordinates":[-124.0,-39.0]}""")
           ),
-          List(PlaceName("Zzi Undated Province"))
+          List(Place.Name("Zzi Undated Province"))
         ),
-        PlaceInput(
+        Place.Input(
           Place(
             "zzi_dat_pol",
             "Zzi Dated Province",
@@ -559,16 +549,16 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
             Some("""{"type":"Point","coordinates":[-125.0,-39.0]}"""),
             Some(Period(-1500, -1000))
           ),
-          List(PlaceName("Zzi Dated Province"))
+          List(Place.Name("Zzi Dated Province"))
         ),
-        PlaceInput(
+        Place.Input(
           Place(
             "zzi_people",
             "Zzi Tribe",
             com.histmersion.domain.catalogue.Place.Kind.People,
             Some("""{"type":"Point","coordinates":[-126.0,-39.0]}""")
           ),
-          List(PlaceName("Zzi Tribe"))
+          List(Place.Name("Zzi Tribe"))
         )
       )
     )

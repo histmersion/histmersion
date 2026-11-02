@@ -26,7 +26,7 @@ object CritiqueReason:
     )
     .modify(_.by)(_.description("Who set it (filled by the server when left out)"))
 
-  val MaxChars: Int = CoverageReason.MaxChars
+  val MaxChars: Int = Coverage.Reason.MaxChars
 
   def parse(s: String): Either[String, CritiqueReason] =
     val i = s.indexOf('=')

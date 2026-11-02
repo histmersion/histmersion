@@ -4,7 +4,8 @@ import com.histmersion.util.database.given
 import com.histmersion.domain.library.Confidence
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.library.{GeoHit, SourceKinds}
+import com.histmersion.api.library.GeoHit
+import com.histmersion.api.library.Source
 
 /** One map-feed row: a [[GeoHit]] and what [[SourceKinds.of]] reads to say what its source is. */
 final private[findings] case class GeoFeedRow(
@@ -38,5 +39,5 @@ final private[findings] case class GeoFeedRow(
       confidence,
       significance,
       doi,
-      Some(SourceKinds.of(doi, venue, provenance, tags, topics, hasCover))
+      Some(Source.Kinds.of(doi, venue, provenance, tags, topics, hasCover))
     )

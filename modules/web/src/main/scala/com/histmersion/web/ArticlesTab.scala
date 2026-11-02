@@ -7,7 +7,8 @@ import com.histmersion.web.ui.Layout
 import org.scalajs.dom
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import com.histmersion.api.research.{ArticleKindCount, ArticleList, ArticleSummary, ReviewBadge, ReviewState}
+import com.histmersion.api.research.{ReviewBadge, ReviewState}
+import com.histmersion.api.research.Article
 
 object ArticlesTab:
 
@@ -15,7 +16,7 @@ object ArticlesTab:
     * to articles (see [[Api.ArticleQuery]]), so the two lists cannot disagree about what is filtered. A page at a time;
     * "show more" fetches past the first.
     */
-  private val tab = FilterTab[Api.ArticleQuery, ArticleSummary](
+  private val tab = FilterTab[Api.ArticleQuery, Article.Summary](
     name = "articles",
     singular = "article",
     noun = "articles",
@@ -40,7 +41,7 @@ object ArticlesTab:
   /** An article's row: its link (in Explore's results a plain click shows its detail there; elsewhere it opens its
     * window) and "open in a new tab".
     */
-  private[web] def renderArticle(art: ArticleSummary, inPanel: Boolean = false): HtmlElement =
+  private[web] def renderArticle(art: Article.Summary, inPanel: Boolean = false): HtmlElement =
     li(
       cls := "article-row",
       marks.RowActions(marks.ItemRef.article(art.slug, art.title), Route.Article(art.slug).path, Fmt.display(art.kind)),
@@ -73,8 +74,8 @@ object ArticlesTab:
     )
 
   /** The count line's per-kind counts: `200 concepts`, `3 indexes`, the largest first. */
-  def kindCounts(kinds: List[ArticleKindCount]): List[String] =
-    ArticleList
+  def kindCounts(kinds: List[Article.KindCount]): List[String] =
+    Article.List
       .byKind(kinds)
       .map(k => Plural.count(k.count.toLong, k.kind, if k.kind.endsWith("x") then k.kind + "es" else ""))
 

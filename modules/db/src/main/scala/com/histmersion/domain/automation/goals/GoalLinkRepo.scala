@@ -1,7 +1,7 @@
 package com.histmersion.domain.automation.goals
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.automation.GoalPlans.*
+import com.histmersion.api.automation.Goal.Plans.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.{Param, Sql}

@@ -62,7 +62,10 @@ object PeriodO:
         )
     }
 
-  private def authority(id: String, c: ACursor): (PeriodOAuthority, List[SkippedPeriod]) =
+  private def authority(
+      id: String,
+      c: ACursor
+  ): (com.histmersion.api.catalogue.PeriodO.Authority, List[SkippedPeriod]) =
     val src = c.downField("source")
     val title = str(src, "title").orElse(str(src.downField("partOf"), "title")).getOrElse(id)
     val year = int(src, "yearPublished").orElse(int(src.downField("partOf"), "yearPublished"))
@@ -74,11 +77,16 @@ object PeriodO:
       .getOrElse(Nil)
       .map((pid, p) => definition(pid, p.hcursor))
     val (implausible, kept) = implausibleSpans(defs.flatMap(_.toOption))
-    (PeriodOAuthority(id, title, year, kept), defs.flatMap(_.left.toOption) ++ implausible)
+    (
+      com.histmersion.api.catalogue.PeriodO.Authority(id, title, year, kept),
+      defs.flatMap(_.left.toOption) ++ implausible
+    )
 
-  def implausibleSpans(defs: List[PeriodODefinition]): (List[SkippedPeriod], List[PeriodODefinition]) =
+  def implausibleSpans(
+      defs: List[com.histmersion.api.catalogue.PeriodO.Definition]
+  ): (List[SkippedPeriod], List[com.histmersion.api.catalogue.PeriodO.Definition]) =
     val umbrellas = defs.flatMap(_.broader).toSet
-    def span(d: PeriodODefinition) = d.period.end - d.period.start
+    def span(d: com.histmersion.api.catalogue.PeriodO.Definition) = d.period.end - d.period.start
     val judged = defs.filterNot(d => umbrellas.contains(d.id))
     val verdicts = defs.map { d =>
       val others = judged.filter(o => o.id != d.id && o.region == d.region)
@@ -92,7 +100,7 @@ object PeriodO:
           SkippedPeriod(
             d.id,
             d.label,
-            PeriodSkip.ImplausibleSpan,
+            Period.Skip.ImplausibleSpan,
             s"spans ${span(d)} years (${d.period.start} → ${d.period.end}), more than $SpanFactor× the longest " +
               s"other ${d.region.getOrElse("unlocated")} period of its authority ($longest years)"
           )
@@ -100,7 +108,10 @@ object PeriodO:
     }
     (verdicts.flatMap(_.left.toOption), verdicts.flatMap(_.toOption))
 
-  private def definition(id: String, c: ACursor): Either[SkippedPeriod, PeriodODefinition] =
+  private def definition(
+      id: String,
+      c: ACursor
+  ): Either[SkippedPeriod, com.histmersion.api.catalogue.PeriodO.Definition] =
     // FASTI labels its Ukrainian periods in Ukrainian, with the English label as an alternative
     val own = str(c, "label").map(_.trim).filter(_.nonEmpty)
     val english = str(c, "languageTag").exists(_.toLowerCase.startsWith("en"))
@@ -130,15 +141,15 @@ object PeriodO:
         .filter(_.nonEmpty)
       Option.when(labels.nonEmpty)(labels.mkString(", "))
     }
-    def skip(reason: PeriodSkip, detail: String) = Left(SkippedPeriod(id, label, reason, detail))
+    def skip(reason: Period.Skip, detail: String) = Left(SkippedPeriod(id, label, reason, detail))
     def outside(y: Long) = y < MinYear || y > MaxYear
     (start, stop) match
       case (Some(s), Some(e)) if outside(s) || outside(e) =>
-        skip(PeriodSkip.OutOfRange, s"$s → $e lies outside $MinYear..$MaxYear")
+        skip(Period.Skip.OutOfRange, s"$s → $e lies outside $MinYear..$MaxYear")
       case (Some(s), Some(e)) if s <= e =>
-        Right(PeriodODefinition(id, label, Period(s, e), region, str(c, "broader")))
-      case (Some(s), Some(e)) => skip(PeriodSkip.EndsBeforeStart, s"starts after it ends ($s > $e)")
-      case _                  => skip(PeriodSkip.NoSpan, "no readable start or stop year")
+        Right(com.histmersion.api.catalogue.PeriodO.Definition(id, label, Period(s, e), region, str(c, "broader")))
+      case (Some(s), Some(e)) => skip(Period.Skip.EndsBeforeStart, s"starts after it ends ($s > $e)")
+      case _                  => skip(Period.Skip.NoSpan, "no readable start or stop year")
 
   private def bound(in: ACursor, outer: String): Option[Long] =
     yearAt(in, "year").orElse(yearAt(in, outer))
@@ -201,3 +212,16 @@ object PeriodO:
           case None => out(r.id) = r
     rows.foreach(r => visit(r, Set(r.id)))
     out.values.toList
+
+  final case class Authority(id: String, title: String, year: Option[Int], periods: List[Definition]):
+    /** A PeriodO id resolves as `http://n2t.net/ark:/99152/<id>`. */
+    def cite(periodId: String): String =
+      s"PeriodO $periodId · $title${year.fold("")(y => s" ($y)")}"
+
+  final case class Definition(
+      id: String,
+      label: String,
+      period: Period,
+      region: Option[String],
+      broader: Option[String]
+  )

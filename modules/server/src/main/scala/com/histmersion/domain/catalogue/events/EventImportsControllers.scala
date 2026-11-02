@@ -1,11 +1,8 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.{ApiError, BBox, Write}
+import com.histmersion.api.{BBox, Write}
 import com.histmersion.api.catalogue.{
   CatalogProviderInfo,
-  CorrectionList,
-  CorrectionStatus,
-  CorrectionTarget,
   EventImportReport,
   EventImportRequest,
   EventRederiveReport,
@@ -15,6 +12,8 @@ import com.histmersion.api.jobs.JobInfo
 import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.CatalogueJobs
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.api.Api
+import com.histmersion.api.catalogue.Correction
 
 /** The event catalogues' operations as REST, MCP and the CLI reach them: the catalogues, an import (a job, dry run or
   * not), a re-derivation of the stored records' dating (a job), and the corrections by hand. `page` is the page size a
@@ -27,11 +26,11 @@ final class EventImportsControllers(
     jobs: CatalogueJobs,
     page: (Option[Int], Int) => Int
 ):
-  private def invalid(m: String) = ApiError(m, Some(Write.CodeInvalid))
+  private def invalid(m: String) = Api.Error(m, Some(Write.CodeInvalid))
 
   def catalogues: List[CatalogProviderInfo] = imports.catalogues
 
-  def importJob(caller: Caller, req: EventImportRequest): Either[ApiError, JobInfo] =
+  def importJob(caller: Caller, req: EventImportRequest): Either[Api.Error, JobInfo] =
     for
       provider <- imports.resolve(req.provider).left.map(invalid)
       area <- req.bbox.map(_.trim).filter(_.nonEmpty) match
@@ -48,7 +47,7 @@ final class EventImportsControllers(
       }
     yield job
 
-  def rederiveJob(caller: Caller, req: EventRederiveRequest): Either[ApiError, JobInfo] =
+  def rederiveJob(caller: Caller, req: EventRederiveRequest): Either[Api.Error, JobInfo] =
     for
       provider <- req.provider.map(_.trim).filter(_.nonEmpty) match
         // no network: a built-in catalogue switched off since still has its records to re-derive
@@ -72,14 +71,14 @@ final class EventImportsControllers(
       event: Option[String],
       limit: Option[Int],
       offset: Option[Int]
-  ): Either[ApiError, CorrectionList] =
+  ): Either[Api.Error, Correction.List] =
     status.map(_.trim.toLowerCase).filter(_.nonEmpty) match
-      case Some(s) if !CorrectionStatus.all.contains(s) =>
-        Left(invalid(s"status '$s' is not ${CorrectionStatus.all.mkString(" | ")}"))
+      case Some(s) if !Correction.Status.all.contains(s) =>
+        Left(invalid(s"status '$s' is not ${Correction.Status.all.mkString(" | ")}"))
       case st =>
         Right(
           corrections.list(
-            CorrectionTarget.Event,
+            Correction.Target.Event,
             event.map(id => events.renamedTo(id).getOrElse(id)),
             st,
             page(limit, 50),

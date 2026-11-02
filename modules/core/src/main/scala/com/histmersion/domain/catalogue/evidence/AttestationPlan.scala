@@ -1,15 +1,6 @@
 package com.histmersion.domain.catalogue.evidence
 
-import com.histmersion.api.exchange.{
-  BundleAttestation,
-  BundleSource,
-  IssueCondition,
-  IssueDetail,
-  IssueField,
-  IssueSide,
-  MergeIssue,
-  MergeIssueDetail
-}
+import com.histmersion.api.exchange.{IssueCondition, IssueDetail, IssueField, IssueSide, MergeIssue}
 import com.histmersion.domain.MergePlanner
 import com.histmersion.domain.MergePlanner.AttestationFix
 import com.histmersion.util.data.exchange.BundleEntities
@@ -35,7 +26,8 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
   // per pair and per alternative of the body question (the body issue's decision, or None when there is no
   // question): the attestations tried against the body it keeps
   private val anchors = scala.collection.mutable.Map.empty[UUID, Map[Option[DecisionKind], List[AnchorTry]]]
-  private val attLine = scala.collection.mutable.Map.empty[UUID, BundleEntities => BundleAttestation]
+  private val attLine =
+    scala.collection.mutable.Map.empty[UUID, BundleEntities => com.histmersion.api.exchange.Bundle.Attestation]
   private val droppedUids = scala.collection.mutable.LinkedHashSet.empty[UUID] // bundle uids left out for good
   private val attFixes = List.newBuilder[AttestationFix]
   private val attSource = in.foreign.attestations.map(t => t.uid -> t.sourceUid).toMap
@@ -43,13 +35,18 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
   private def attIn(es: BundleEntities, u: UUID) = es.attestations.find(_.uid == u).get
 
   /** The bundle's attestations that have no uid here yet, by their source. */
-  private def foreignAttsOf(here: UUID => Boolean, toLocal: UUID => UUID): Map[UUID, List[BundleAttestation]] =
+  private def foreignAttsOf(
+      here: UUID => Boolean,
+      toLocal: UUID => UUID
+  ): Map[UUID, List[com.histmersion.api.exchange.Bundle.Attestation]] =
     in.foreign.attestations.filterNot(t => here(toLocal(t.uid))).groupBy(_.sourceUid)
 
   override def ownerSource(foreign: UUID, kind: Bundle.Kind): Option[UUID] =
     if kind == Bundle.Kind.Attestation then attSource.get(foreign) else None
 
-  override def bodiesWanted(pairs: List[(BundleSource, BundleSource)]): Set[String] =
+  override def bodiesWanted(
+      pairs: List[(com.histmersion.api.exchange.Bundle.Source, com.histmersion.api.exchange.Bundle.Source)]
+  ): Set[String] =
     val withAtts = (in.foreign.attestations ++ in.local.attestations).filter(anchored).map(_.sourceUid).toSet
     pairs.flatMap { (r, l) =>
       val (a, b) = (r.bodySha256, l.bodySha256)
@@ -57,8 +54,8 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
     }.toSet
 
   override def pair(
-      r: BundleSource,
-      l: BundleSource,
+      r: com.histmersion.api.exchange.Bundle.Source,
+      l: com.histmersion.api.exchange.Bundle.Source,
       cond: Option[IssueCondition],
       bodyIssue: Option[String],
       q: PairQuestions
@@ -100,7 +97,7 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
               val att = IssueSide(
                 s"${t.targetType} ${t.targetId}",
                 t.uid,
-                t.quote.map(quote => s"«${MergeIssueDetail.preview(quote)}»").toList
+                t.quote.map(quote => s"«${MergeIssue.Detail.preview(quote)}»").toList
               )
               val whose = if foreign then "the bundle's" else "this collection's"
               q.ask(
@@ -111,8 +108,8 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
                   Bundle.Kind.Attestation,
                   s"$whose attestation on ${l.citekey}: its quote is not in the body the merge keeps" +
                     alt.fold("")(k => s" (if the body is ${DecisionKind.wireOf(k)})"),
-                  if foreign then Some(MergeIssueDetail.side(l)) else Some(att),
-                  if foreign then Some(att) else Some(MergeIssueDetail.side(r)),
+                  if foreign then Some(MergeIssue.Detail.side(l)) else Some(att),
+                  if foreign then Some(att) else Some(MergeIssue.Detail.side(r)),
                   List(if t.quote.exists(_.nonEmpty) then
                     "the quote (with its prefix and suffix) was looked for, exactly and with spacing ignored"
                   else "it has a position but no quote, so it cannot be found again"),
@@ -147,10 +144,15 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
   override def pairIssue(kind: Issue.Kind): Boolean = kind == Issue.Kind.AttestationUnanchored
 
   // attestations: re-anchored into the body kept, or as decided; one already here is one
-  override def foldPair(r: BundleSource, l: BundleSource, alt: Option[DecisionKind], f: PlanFolds): Unit =
+  override def foldPair(
+      r: com.histmersion.api.exchange.Bundle.Source,
+      l: com.histmersion.api.exchange.Bundle.Source,
+      alt: Option[DecisionKind],
+      f: PlanFolds
+  ): Unit =
     val tries = anchors.get(r.uid).flatMap(_.get(alt)).getOrElse(Nil)
     val localAtts = localAttsOf.getOrElse(l.uid, Nil)
-    def targetKey(t: BundleAttestation): String =
+    def targetKey(t: com.histmersion.api.exchange.Bundle.Attestation): String =
       t.targetUid.map(u => f.foldedTo(u).getOrElse(f.toLocal(u)).toString).getOrElse(t.targetId)
     foreignAttsOf(f.here, f.toLocal).getOrElse(r.uid, Nil).foreach { t =>
       localAtts.find(x => x.targetType == t.targetType && targetKey(x) == targetKey(t) && x.quote == t.quote) match
@@ -198,11 +200,12 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
 object AttestationPlan:
 
   /** An attestation that points into the text (a quote, or offsets): it must move with a body. */
-  def anchored(t: BundleAttestation): Boolean = t.quote.exists(_.nonEmpty) || t.charStart.isDefined
+  def anchored(t: com.histmersion.api.exchange.Bundle.Attestation): Boolean =
+    t.quote.exists(_.nonEmpty) || t.charStart.isDefined
 
   /** An attestation of a pair tried against the body one alternative keeps. */
   final private case class AnchorTry(
-      att: BundleAttestation,
+      att: com.histmersion.api.exchange.Bundle.Attestation,
       foreign: Boolean,
       anchor: Option[Anchor],
       chunkOrd: Option[Int],

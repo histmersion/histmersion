@@ -14,7 +14,7 @@ import sttp.ai.core.agent.*
 import java.nio.file.Files
 import com.histmersion.db.*
 import com.histmersion.api.automation.AgentsMarkdown
-import com.histmersion.api.library.SourcePut
+import com.histmersion.api.library.Source
 
 /** `agent probe` against a `*_test` database with a scripted model: an answer that leaves the title empty and the year
   * null (2026-10-08, codex:gpt-6-luna: `{"citekey":"huxley1956_catalogue", "title":"","year":null}`) is not an answer —
@@ -57,7 +57,7 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def handlers(c: ScriptedClient): AgentsHandlers =
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
-    assert(h.library.sources.put(Ck, SourcePut(title = "A Catalogue of Fishes", year = Some(1956))).isRight)
+    assert(h.library.sources.put(Ck, Source.Put(title = "A Catalogue of Fishes", year = Some(1956))).isRight)
     AgentsHandlers(
       ServerEngineSite(deps, h),
       (_, ref) => Option.when(ref == Model)(c).toRight(s"no scripted client for ${ref.wire}")
@@ -105,7 +105,7 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
-    assert(h.library.sources.put(Ck, SourcePut(title = "A Catalogue of Fishes", year = Some(1956))).isRight)
+    assert(h.library.sources.put(Ck, Source.Put(title = "A Catalogue of Fishes", year = Some(1956))).isRight)
     AgentsHandlers(
       ServerEngineSite(deps, h),
       (_, ref) => Option.when(ref == Model)(client).toRight(s"no client for ${ref.wire}")

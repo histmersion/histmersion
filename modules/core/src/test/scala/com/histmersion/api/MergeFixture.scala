@@ -12,20 +12,7 @@ import java.util.UUID
 import com.histmersion.util.data.exchange.DecisionKind
 import com.histmersion.util.data.exchange.BundleFormat
 import com.histmersion.util.data.exchange.BundleEntities
-import com.histmersion.api.exchange.{
-  Bundle,
-  BundleAlias,
-  BundleArticle,
-  BundleBlobs,
-  BundleEvent,
-  BundleGoal,
-  BundleInstance,
-  BundleManifest,
-  BundleReference,
-  BundleSource,
-  BundleTombstone,
-  MergePlan
-}
+import com.histmersion.api.exchange.{Bundle, MergePlan}
 import com.histmersion.domain.library.Source
 import com.histmersion.util.data.exchange.Issue
 
@@ -58,8 +45,8 @@ object MergeFixture:
       notes: Option[String] = None,
       venue: Option[String] = None,
       origin: UUID = work
-  ): BundleSource =
-    BundleSource(
+  ): Bundle.Source =
+    Bundle.Source(
       uid(id),
       origin,
       ck,
@@ -85,8 +72,8 @@ object MergeFixture:
       At
     )
 
-  def article(id: String, slug: String, body: String, origin: UUID = work): BundleArticle =
-    BundleArticle(uid(id), origin, slug, slug.replace('_', ' '), "concept", body, None, Nil, Nil, None, At)
+  def article(id: String, slug: String, body: String, origin: UUID = work): Bundle.Article =
+    Bundle.Article(uid(id), origin, slug, slug.replace('_', ' '), "concept", body, None, Nil, Nil, None, At)
 
   def event(
       id: String,
@@ -95,8 +82,8 @@ object MergeFixture:
       origin: UUID = work,
       from: Long = -1200,
       to: Long = -1190
-  ): BundleEvent =
-    BundleEvent(
+  ): Bundle.Event =
+    Bundle.Event(
       uid(id),
       origin,
       eventId,
@@ -119,21 +106,21 @@ object MergeFixture:
       At
     )
 
-  def goal(id: String, slug: String, title: String, origin: UUID = work, notes: Option[String] = None): BundleGoal =
-    BundleGoal(uid(id), origin, slug, title, "planned", notes, Nil, Nil, None, None, At, At)
+  def goal(id: String, slug: String, title: String, origin: UUID = work, notes: Option[String] = None): Bundle.Goal =
+    Bundle.Goal(uid(id), origin, slug, title, "planned", notes, Nil, Nil, None, None, At, At)
 
-  def manifest(es: BundleEntities): BundleManifest =
-    BundleManifest(
+  def manifest(es: BundleEntities): Bundle.Manifest =
+    Bundle.Manifest(
       Bundle.Format,
       Bundle.FormatVersion,
       "36",
       uid("bundle"),
-      BundleInstance(work, Some("work")),
+      Bundle.Instance(work, Some("work")),
       None,
       es.asOf,
       Nil,
-      BundleBlobs(0, 0),
-      BundleReference(0, "", 0, "")
+      Bundle.Blobs(0, 0),
+      Bundle.Reference(0, "", 0, "")
     )
 
   val bodyOlsen: String =
@@ -146,12 +133,12 @@ object MergeFixture:
   val kuhrtSha = "9f2e" + "0" * 60
 
   // ── the shared history: a source and a goal both sides got from an earlier import ──
-  val sharedOriginal: BundleSource =
+  val sharedOriginal: Bundle.Source =
     src("shared", "zzshared2001_alpha", "Alpha", List("Doe, John"), Some(2001), summary = Some("as imported"))
-  val sharedThere: BundleSource = sharedOriginal.copy(summary = Some("edited at work"))
-  val sharedHere: BundleSource = sharedOriginal.copy(summary = Some("edited at home"))
-  val goalOriginal: BundleGoal = goal("goal-shared", "zz_shared_goal", "Shared goal")
-  val goalHere: BundleGoal = goalOriginal.copy(notes = Some("edited at home"))
+  val sharedThere: Bundle.Source = sharedOriginal.copy(summary = Some("edited at work"))
+  val sharedHere: Bundle.Source = sharedOriginal.copy(summary = Some("edited at home"))
+  val goalOriginal: Bundle.Goal = goal("goal-shared", "zz_shared_goal", "Shared goal")
+  val goalHere: Bundle.Goal = goalOriginal.copy(notes = Some("edited at home"))
 
   /** The bundle from work. */
   val foreign: BundleEntities = BundleEntities(
@@ -230,7 +217,7 @@ object MergeFixture:
       // nothing like it at home
       src("w-new", "zznew2020_only", "A Book Only Work Has", List("Roe, Richard"), Some(2020))
     ),
-    aliases = List(BundleAlias("harrison1903_old", uid("w-harrison"), At)),
+    aliases = List(Bundle.Alias("harrison1903_old", uid("w-harrison"), At)),
     articles = List(
       article("w-bac", "bronze_age_collapse", "Work's account of the collapse, citing [[kuhrt1995_near]]."),
       article("w-same", "zz_same_text", "Identical on both sides.")
@@ -238,11 +225,11 @@ object MergeFixture:
     events = List(event("w-siege", "zz_siege", "Siege of Troy (work)")),
     goals = List(goal("w-goal", "zz_goal_both", "Goal created at work")),
     tombstones =
-      List(BundleTombstone(uid("goal-shared"), com.histmersion.util.data.exchange.Bundle.Kind.Goal, work, At))
+      List(Bundle.Tombstone(uid("goal-shared"), com.histmersion.util.data.exchange.Bundle.Kind.Goal, work, At))
   )
 
   /** Home's sources. */
-  val here: List[BundleSource] = List(
+  val here: List[Bundle.Source] = List(
     src(
       "h-guterbock",
       "guterbock1997_hittite",
@@ -319,7 +306,7 @@ object MergeFixture:
     sharedHere
   )
 
-  val localArticles: List[BundleArticle] = List(
+  val localArticles: List[Bundle.Article] = List(
     article("h-bac", "bronze_age_collapse", "Home's account of the collapse.", home),
     article("h-same", "zz_same_text", "Identical on both sides.", home)
   )
@@ -334,13 +321,13 @@ object MergeFixture:
     }
 
   /** Home's event under work's event id, dated differently: not the same event without asking. */
-  val localEvent: BundleEvent = event("h-siege", "zz_siege", "Siege of Troy (home)", home, -1210, -1180)
+  val localEvent: Bundle.Event = event("h-siege", "zz_siege", "Siege of Troy (home)", home, -1210, -1180)
 
   /** Home's goal under work's goal slug: one goal, folded. */
-  val localGoal: BundleGoal = goal("h-goal", "zz_goal_both", "Goal created at home", home)
+  val localGoal: Bundle.Goal = goal("h-goal", "zz_goal_both", "Goal created at home", home)
 
   /** Home as the database gathers it: every row (`MergeState` reads them all). */
-  def input(es: BundleEntities = foreign, local: List[BundleSource] = here): Input =
+  def input(es: BundleEntities = foreign, local: List[Bundle.Source] = here): Input =
     val localLines = BundleEntities(
       sources = local,
       articles = localArticles,
@@ -349,7 +336,7 @@ object MergeFixture:
     )
     Input(
       manifest = manifest(es),
-      here = BundleInstance(home, Some("home")),
+      here = Bundle.Instance(home, Some("home")),
       compat = Nil,
       readProblems = Nil,
       foreign = es,
@@ -378,7 +365,7 @@ object MergeFixture:
       ),
       live = Set.empty,
       places = Set.empty,
-      reference = BundleReference(0, "", 0, "")
+      reference = Bundle.Reference(0, "", 0, "")
     )
 
   /** An issue as the expected list names it: kind, letter, the two labels, severity, conditional on. */

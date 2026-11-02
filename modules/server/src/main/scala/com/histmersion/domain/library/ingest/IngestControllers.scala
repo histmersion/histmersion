@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.ingest
 
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueService}
 import com.histmersion.domain.library.sources.SourceService
@@ -12,9 +12,10 @@ import hearth.kindlings.optics.syntax.*
 
 import scala.util.Using
 import com.histmersion.api.automation.Queue
-import com.histmersion.api.library.{Ingest, IngestAccepted, IngestParams}
+import com.histmersion.api.library.Ingest
 import com.histmersion.api.media.AssetLinks
 import com.histmersion.api.library.of
+import com.histmersion.api.Api
 
 /** The ingest surface (plan §1.8) — REST routes, MCP tools and the CLI all reach these:
   *
@@ -38,18 +39,18 @@ final class IngestControllers(
   /** `POST /api/ingest`. `upload` is copied into the originals' store BEFORE returning: the HTTP layer deletes its file
     * as soon as the request completes, and the job runs long after that.
     */
-  def ingest(p: IngestParams, upload: Upload): Either[ApiError, IngestAccepted] =
+  def ingest(p: Ingest.Params, upload: Upload): Either[Api.Error, Ingest.Accepted] =
     maintenance.guard("ingest")(ingestNow(p, upload))
 
-  private def ingestNow(p: IngestParams, upload: Upload): Either[ApiError, IngestAccepted] =
+  private def ingestNow(p: Ingest.Params, upload: Upload): Either[Api.Error, Ingest.Accepted] =
     // VALIDATED, not merely non-empty: the citekey becomes part of a stored file's report below.
     Citekey.of(p.citekey).flatMap { validated =>
       val citekey: String = validated.value
       val size = upload.size
       val limits = cfg().limits
-      if size <= 0 then Left(ApiError("the upload is empty"))
+      if size <= 0 then Left(Api.Error("the upload is empty"))
       else if size > limits.uploadBytes then
-        Left(ApiError(s"upload is $size bytes, over the ${limits.uploadBytes}-byte limit (limits.upload-bytes)"))
+        Left(Api.Error(s"upload is $size bytes, over the ${limits.uploadBytes}-byte limit (limits.upload-bytes)"))
       else
         for
           _ <- acquireItemOk(p.acquireItem)
@@ -80,15 +81,15 @@ final class IngestControllers(
       year: Option[Int],
       doi: Option[String],
       acquireItem: Option[Int] = None
-  ): Either[ApiError, IngestAccepted] =
+  ): Either[Api.Error, Ingest.Accepted] =
     def params(name: String) =
-      IngestParams(citekey.trim, Some(name), quality, force, title, authors, year, doi, acquireItem = acquireItem)
+      Ingest.Params(citekey.trim, Some(name), quality, force, title, authors, year, doi, acquireItem = acquireItem)
     (path.map(_.trim).filter(_.nonEmpty), base64.map(_.trim).filter(_.nonEmpty)) match
       case (Some(p), _) =>
-        tools.file(p).left.map(ApiError(_)).flatMap {
+        tools.file(p).left.map(Api.Error(_)).flatMap {
           case None =>
             Left(
-              ApiError(
+              Api.Error(
                 s"the server cannot see a file at '$p' (paths are resolved INSIDE the " +
                   "server, not on your machine) — use `base64`, or `histmersion ingest <file>` from the host"
               )
@@ -100,12 +101,12 @@ final class IngestControllers(
           .Try(java.util.Base64.getDecoder.decode(b64))
           .toEither
           .left
-          .map(e => ApiError(s"base64 payload is not decodable: ${e.getMessage}"))
+          .map(e => Api.Error(s"base64 payload is not decodable: ${e.getMessage}"))
           .flatMap { raw =>
             val limit = cfg().limits.inlineBytes
             if raw.length > limit then
               Left(
-                ApiError(
+                Api.Error(
                   s"payload is ${raw.length} bytes, over the $limit-byte " +
                     "limit (limits.inline-bytes) — pass `path` instead, or upload with `histmersion ingest`"
                 )
@@ -115,22 +116,22 @@ final class IngestControllers(
               ingest(params(name), Upload.inline(name, raw))
           }
       case (None, None) =>
-        Left(ApiError("give either `path` (a file the SERVER can see) or `base64` (the document itself)"))
+        Left(Api.Error("give either `path` (a file the SERVER can see) or `base64` (the document itself)"))
 
   /** `POST /api/sources/{ck}/reocr` — convert the stored original again (a scan first read on the fast path, re-run
     * under docling with `quality`).
     */
-  def reocr(citekey: String, quality: Boolean): Either[ApiError, IngestAccepted] =
+  def reocr(citekey: String, quality: Boolean): Either[Api.Error, Ingest.Accepted] =
     maintenance.guard("reocr")(Citekey.of(citekey).flatMap(_ => reocrValid(citekey, quality)))
 
-  private def reocrValid(citekey: String, quality: Boolean): Either[ApiError, IngestAccepted] =
+  private def reocrValid(citekey: String, quality: Boolean): Either[Api.Error, Ingest.Accepted] =
     sources.load(citekey) match
       case None    => Left(Write.notFound(citekey))
       case Some(_) =>
         sources.original(citekey).flatMap(sha => storedFor(sha).map(sha -> _)) match
           case None =>
             Left(
-              ApiError(
+              Api.Error(
                 s"no original stored for '$citekey' — the server keeps uploads in " +
                   s"${cfg().converter.spoolDir}; re-run `histmersion ingest <file> --citekey $citekey --force`"
               )
@@ -142,14 +143,14 @@ final class IngestControllers(
                 citekey,
                 sha,
                 file,
-                IngestParams(citekey, Some(file.name), quality = quality)
+                Ingest.Params(citekey, Some(file.name), quality = quality)
               )
             )
 
   /** `GET /api/sources/{ck}/original` — the stored original and its download name. Read-only, so no maintenance guard;
     * 404 when the source or its stored file is missing.
     */
-  def original(citekey: String): Either[ApiError, (Blob, String)] =
+  def original(citekey: String): Either[Api.Error, (Blob, String)] =
     Citekey.of(citekey).flatMap { _ =>
       sources.load(citekey) match
         case None    => Left(Write.notFound(citekey))
@@ -157,7 +158,7 @@ final class IngestControllers(
           sources.original(s.citekey).flatMap(storedFor).flatMap(originals().get) match
             case None =>
               Left(
-                ApiError(
+                Api.Error(
                   s"no original stored for '${s.citekey}' — the server keeps uploads in " +
                     s"${cfg().converter.spoolDir}; pass the file yourself (--file)",
                   Some(Write.CodeNotFound)
@@ -171,20 +172,20 @@ final class IngestControllers(
   /** Refuse an upload that names an item it cannot fulfil — BEFORE the file is stored and a long OCR is started for
     * nothing.
     */
-  private def acquireItemOk(item: Option[Int]): Either[ApiError, Unit] =
-    item.fold(Right(()))(id => Queue.fulfillable(id, queues.get(QueueItemId(id))).map(_ => ()).left.map(ApiError(_)))
+  private def acquireItemOk(item: Option[Int]): Either[Api.Error, Unit] =
+    item.fold(Right(()))(id => Queue.fulfillable(id, queues.get(QueueItemId(id))).map(_ => ()).left.map(Api.Error(_)))
 
   // ── the originals' store ───────────────────────────────────────────────────────────────────
 
   /** `<sha256>.<ext>` — content-addressed, so the same file uploaded twice is stored once and `reocr` can find the
     * original from `sources.sha256` alone.
     */
-  private def store(upload: Upload, sha: String, filename: String): Either[ApiError, StoreKey] =
+  private def store(upload: Upload, sha: String, filename: String): Either[Api.Error, StoreKey] =
     val ext = AssetLinks.safeName(filename).reverse.takeWhile(_ != '.').reverse match
       case e if e.nonEmpty && e.length <= 8 && e.forall(_.isLetterOrDigit) => e.toLowerCase
       case _                                                               => "bin"
     val key = StoreKey.applyUnsafe(s"$sha.$ext")
-    def failed(why: String) = ApiError(s"cannot spool the upload into ${cfg().converter.spoolDir}: $why")
+    def failed(why: String) = Api.Error(s"cannot spool the upload into ${cfg().converter.spoolDir}: $why")
     val store = originals()
     if store.exists(key) then Right(key)
     else
@@ -208,7 +209,7 @@ final class IngestControllers(
   private def storedFor(sha: String): Option[StoreKey] =
     originals().names().find(_.startsWith(sha + ".")).map(StoreKey.applyUnsafe)
 
-  private def digest(upload: Upload): Either[ApiError, String] =
+  private def digest(upload: Upload): Either[Api.Error, String] =
     scala.util
       .Try {
         val md = java.security.MessageDigest.getInstance("SHA-256")
@@ -226,14 +227,14 @@ final class IngestControllers(
       }
       .toEither
       .left
-      .map(e => ApiError(s"cannot read the upload: ${e.getMessage}"))
+      .map(e => Api.Error(s"cannot read the upload: ${e.getMessage}"))
 
   /** 409 unless `force`: the same bytes are already stored under another citekey. */
-  private def duplicate(sha: String, citekey: String, force: Boolean): Either[ApiError, Unit] =
+  private def duplicate(sha: String, citekey: String, force: Boolean): Either[Api.Error, Unit] =
     sources.holderOf(sha) match
       case Some(other) if other != citekey && !force =>
         Left(
-          ApiError(
+          Api.Error(
             s"this file is already stored as '$other' (sha256 ${sha.take(12)}…) — " +
               "pass force to ingest it again under a different citekey",
             Some(Ingest.CodeConflict)

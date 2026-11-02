@@ -17,8 +17,8 @@ object InitPlan:
   given Schema[InitPlan] = summon[KindlingsSchema[InitPlan]].schema
 
   /** What an init job imports, in its detail. */
-  val Detail: com.histmersion.api.jobs.JobDetailField[Option[InitPlan]] =
-    com.histmersion.api.jobs.JobDetailField("init", None)
+  val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[InitPlan]] =
+    com.histmersion.api.jobs.JobDetail.Field("init", None)
 
   val JobKind = com.histmersion.api.exchange.ExchangeJobKinds.Init.kind.value
 

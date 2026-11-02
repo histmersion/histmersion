@@ -1,10 +1,10 @@
 package com.histmersion.api
 
-import com.histmersion.api.research.ArticleLint
-
 import com.histmersion.api.research.CritiquePairing.*
 import com.histmersion.api.checks.Lint
-import com.histmersion.api.research.{CoverageEdge, CritiquePair, Critiques, CritiqueSide, CritiqueState}
+import com.histmersion.api.research.{CritiquePair, Critiques, CritiqueSide, CritiqueState}
+import com.histmersion.api.research.Article
+import com.histmersion.api.research.Coverage
 
 /** The pairing rule (docs/research-review-convergence.md §6.9), pure: the names a source is called by, the paragraphs
   * that name a disagreement partner they do not cite, which of them code may repair, the repair itself, the instruction
@@ -21,15 +21,15 @@ class CritiquePairingSuite extends munit.FunSuite:
 
   /** The live edges around those sources. */
   private val edges = List(
-    CoverageEdge("bachvarova2016_hittite", "challenges", "burkert1992_orientalizing"),
-    CoverageEdge("bachvarova2016_hittite", "challenges", "latacz2004_troy"),
-    CoverageEdge("bachvarova2016_hittite", "challenges", "west1997_helicon"),
-    CoverageEdge("ballesteros2024_naming", "challenges", "lord1960_singer"),
-    CoverageEdge("fantuzzi2015_greek", "challenges", "west2011_making"),
-    CoverageEdge("kelly2021_gods", "challenges", "bachvarova2016_hittite"),
-    CoverageEdge("latacz2004_troy", "challenges", "kullmann1999_memory"),
-    CoverageEdge("latacz2004_troy", "challenges", "page1959_history"),
-    CoverageEdge("kelly2021_gods", "references", "lord1960_singer")
+    Coverage.Edge("bachvarova2016_hittite", "challenges", "burkert1992_orientalizing"),
+    Coverage.Edge("bachvarova2016_hittite", "challenges", "latacz2004_troy"),
+    Coverage.Edge("bachvarova2016_hittite", "challenges", "west1997_helicon"),
+    Coverage.Edge("ballesteros2024_naming", "challenges", "lord1960_singer"),
+    Coverage.Edge("fantuzzi2015_greek", "challenges", "west2011_making"),
+    Coverage.Edge("kelly2021_gods", "challenges", "bachvarova2016_hittite"),
+    Coverage.Edge("latacz2004_troy", "challenges", "kullmann1999_memory"),
+    Coverage.Edge("latacz2004_troy", "challenges", "page1959_history"),
+    Coverage.Edge("kelly2021_gods", "references", "lord1960_singer")
   ) // not a disagreement kind
 
   /** The live authors (as stored) and years. */
@@ -96,8 +96,8 @@ class CritiquePairingSuite extends munit.FunSuite:
 
   test("not mechanical: a name two partners share; a work already cited by that name; only another year beside it"):
     val es = List(
-      CoverageEdge("a2000_x", "challenges", "west1997_helicon"),
-      CoverageEdge("a2000_x", "challenges", "west2011_making")
+      Coverage.Edge("a2000_x", "challenges", "west1997_helicon"),
+      Coverage.Edge("a2000_x", "challenges", "west2011_making")
     )
     val w: String => Option[Work] = Map(
       "a2000_x" -> Work("a2000_x", List("Alpha"), Some(2000)),
@@ -123,7 +123,7 @@ class CritiquePairingSuite extends munit.FunSuite:
     // only another year beside every mention: another work of the author — no hit at all
     assertEquals(hits("Alpha answers West's 1988 article [[a2000_x]].", r, es.take(1), w), Nil)
     // the critic named by its own name is no mention of the partner
-    val self = List(CoverageEdge("west1997_helicon", "updates", "west2011_making"))
+    val self = List(Coverage.Edge("west1997_helicon", "updates", "west2011_making"))
     assertEquals(
       hits("West revised his view [[west1997_helicon]]." + cited, r, self, w).filter(_.unit == 0).map(_.mechanical),
       List(false)
@@ -167,7 +167,7 @@ class CritiquePairingSuite extends munit.FunSuite:
     )
 
   test("the lint rule: one item per hit, per article"):
-    val items = ArticleLint.articleCritiquePairing(
+    val items = Article.Lint.articleCritiquePairing(
       List("achilles_origins" -> excerpt, "clean" -> "Nothing here [[lord1960_singer]]."),
       resolve,
       edges,

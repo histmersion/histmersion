@@ -13,8 +13,10 @@ import com.histmersion.domain.media.MediaRole
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.api.catalogue.Period
-import com.histmersion.api.library.{FacetField, Filter, FindingMatch, SearchHit, Sort}
+import com.histmersion.api.library.{Filter, SearchHit, Sort}
 import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Facet
+import com.histmersion.api.library.Finding
 
 /** `Filter` → SQL, as a **pure function** (plan §1.0/§2.2): every builder here returns a value that can be asserted on
   * in a unit test without a database. `SourceRepo` is the only thing that turns one into a Magnum [[Frag]] and runs it.
@@ -429,21 +431,21 @@ object FilterSql:
       Sql.raw("), (SELECT count(*)::int FROM events e WHERE ") ++ eventWhere(f, scope) ++ Sql.raw(")")
 
   /** The set of values a facet dimension draws from, as a LATERAL sub-select correlated on `s`. */
-  def facetValues(field: FacetField): String = field match
-    case FacetField.Tags =>
+  def facetValues(field: Facet.Field): String = field match
+    case Facet.Field.Tags =>
       "SELECT x FROM unnest(s.tags) x" +
         " UNION SELECT y FROM findings f, unnest(f.tags) y WHERE f.citekey = s.citekey"
-    case FacetField.Authors => "SELECT x FROM unnest(s.authors) x"
-    case FacetField.Places  =>
+    case Facet.Field.Authors => "SELECT x FROM unnest(s.authors) x"
+    case Facet.Field.Places  =>
       // author labels (wave 1) UNION the gazetteer labels the findings were materialised into (§1.6a)
       "SELECT x FROM unnest(s.regions) x" +
         " UNION SELECT f.region_name FROM findings f" +
         " WHERE f.citekey = s.citekey AND f.region_name IS NOT NULL" +
         " UNION SELECT p.label FROM findings f JOIN finding_places fp ON fp.finding_id = f.id" +
         " JOIN places p ON p.id = fp.place_id WHERE f.citekey = s.citekey"
-    case FacetField.Topics     => "SELECT x FROM unnest(s.topics) x"
-    case FacetField.Status     => "SELECT s.status"
-    case FacetField.Provenance => "SELECT coalesce(s.source, 'unknown')"
+    case Facet.Field.Topics     => "SELECT x FROM unnest(s.topics) x"
+    case Facet.Field.Status     => "SELECT s.status"
+    case Facet.Field.Provenance => "SELECT coalesce(s.source, 'unknown')"
 
   /** `(value, count(DISTINCT source))` for one dimension inside the current filter, most-used first. `prefix` is a
     * case-insensitive prefix match (for chip autocomplete).
@@ -454,7 +456,7 @@ object FilterSql:
     * spelling finds the whole bucket.
     */
   def facetsQuery(
-      field: FacetField,
+      field: Facet.Field,
       prefix: Option[String],
       f: Filter,
       limit: Int,
@@ -475,7 +477,7 @@ object FilterSql:
         " WHERE lower(pn.name) = min(lower(v))" +
         " ORDER BY (lower(p.label) = min(lower(v))) DESC, p.id LIMIT 1)"
     val idCol =
-      if field == FacetField.Places then
+      if field == Facet.Field.Places then
         s", ${gazetteer("pn.place_id")} AS place_id" +
           s", coalesce(${gazetteer("(p.properties->>'contested')::boolean")}, false) AS contested"
       else ", NULL::text AS place_id, FALSE AS contested"
@@ -574,7 +576,7 @@ object FilterSql:
     */
   def findingWhy(
       f: Filter,
-      m: FindingMatch,
+      m: Finding.Match,
       placeIds: List[String] = Nil,
       scope: PlaceScope = PlaceScope.empty
   ): List[String] =

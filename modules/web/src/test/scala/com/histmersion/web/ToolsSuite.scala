@@ -2,17 +2,18 @@ package com.histmersion.web
 
 import com.histmersion.domain.library.Citekey
 
-import com.histmersion.api.ApiError
 import sttp.model.Method
 import com.histmersion.api.automation.{Agents, AgentScheduler, ListFilters, Managers, Queue}
-import com.histmersion.api.catalogue.{EventTier, PeriodSkip, SkippedPeriod}
+import com.histmersion.api.catalogue.{EventTier, SkippedPeriod}
 import com.histmersion.api.exchange.{InitPlan, MergeApplyJob}
 import com.histmersion.api.jobs.{JobInfo, JobState}
-import com.histmersion.api.library.{Ingest, IngestParams}
+import com.histmersion.api.library.Ingest
 import com.histmersion.api.maintenance.Vacuum
 import com.histmersion.domain.automation.Approval
 import com.histmersion.domain.automation.Manager
 import com.histmersion.domain.automation.Run
+import com.histmersion.api.Api
+import com.histmersion.api.catalogue.Period
 
 /** The pure parts of the tool windows: window keys, the write gate, the jobs poll, the upload form, the bookkeeping
   * lists' text and order.
@@ -86,9 +87,9 @@ class ToolsSuite extends munit.FunSuite:
   test("a failed response is classified by its status, with the server's message when there is one") {
     assert(ApiFailure.of(401, None).unauthorized)
     assert(ApiFailure.of(403, None).unauthorized)
-    assert(ApiFailure(412, ApiError("moved on")).conflict)
-    assert(ApiFailure(409, ApiError("dup")).duplicate)
-    assertEquals(ApiFailure.of(400, Some(ApiError("bad year"))).getMessage, "bad year")
+    assert(ApiFailure(412, Api.Error("moved on")).conflict)
+    assert(ApiFailure(409, Api.Error("dup")).duplicate)
+    assertEquals(ApiFailure.of(400, Some(Api.Error("bad year"))).getMessage, "bad year")
     assert(ApiFailure.of(0, None).getMessage.contains("could not be reached"))
   }
 
@@ -219,7 +220,10 @@ class ToolsSuite extends munit.FunSuite:
     val skipped = init.copy(detail =
       init.detail.map(
         _.set(SkippedPeriod.SkippedCount, 3)
-          .set(SkippedPeriod.Skipped, List(SkippedPeriod("p0x1", "Old Kingdom", PeriodSkip.OutOfRange, "-2701 → 2150")))
+          .set(
+            SkippedPeriod.Skipped,
+            List(SkippedPeriod("p0x1", "Old Kingdom", Period.Skip.OutOfRange, "-2701 → 2150"))
+          )
       )
     )
     assertEquals(JobsView.skippedLine(skipped), Some("skipped 3 period definitions: p0x1 and 2 more"))
@@ -263,7 +267,7 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(
       ok,
       Right(
-        IngestParams(
+        Ingest.Params(
           citekey = "anthony2007_horse",
           filename = Some("a.pdf"),
           quality = true,
@@ -278,11 +282,11 @@ class ToolsSuite extends munit.FunSuite:
 
   test("an upload refusal lands next to the field it is about") {
     assertEquals(
-      UploadView.fieldOf(ApiFailure(409, ApiError("already stored as x", Some(Ingest.CodeConflict)))),
+      UploadView.fieldOf(ApiFailure(409, Api.Error("already stored as x", Some(Ingest.CodeConflict)))),
       UploadView.Field.File
     )
-    assertEquals(UploadView.fieldOf(ApiFailure(400, ApiError("invalid citekey 'X'"))), UploadView.Field.Citekey)
-    assertEquals(UploadView.fieldOf(ApiFailure(400, ApiError("upload too large"))), UploadView.Field.Form)
+    assertEquals(UploadView.fieldOf(ApiFailure(400, Api.Error("invalid citekey 'X'"))), UploadView.Field.Citekey)
+    assertEquals(UploadView.fieldOf(ApiFailure(400, Api.Error("upload too large"))), UploadView.Field.Form)
   }
 
   // ── the bookkeeping lists (acquire · tasks · log) ───────────────────────────────────────────────────────────────────────────

@@ -1,6 +1,5 @@
 package com.histmersion.domain.automation.goals
 
-import com.histmersion.api.automation.GoalPut
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
 
@@ -18,7 +17,11 @@ abstract class FocusServiceContract extends EngineStoreSuite:
     "every goal with what the focus recorded: joined, left, a person's pin and priority (only of a goal that exists)"
   ) { s =>
     List("zz-a", "zz-b").foreach(g =>
-      assert(s.goals.put(g, GoalPut(g, parentSlug = Option.when(g == "zz-b")("zz-a"))).isRight)
+      assert(
+        s.goals
+          .put(g, com.histmersion.api.automation.Goal.Put(g, parentSlug = Option.when(g == "zz-b")("zz-a")))
+          .isRight
+      )
     )
     assertEquals(
       f(s).goals().map(g => (g.slug, g.active, g.pinned, g.priority, g.parent)),
@@ -42,7 +45,7 @@ abstract class FocusServiceContract extends EngineStoreSuite:
   }
 
   stest("the goals linked to sources and articles; each goal's sources; its last stop") { s =>
-    List("zz-a", "zz-b").foreach(g => assert(s.goals.put(g, GoalPut(g)).isRight))
+    List("zz-a", "zz-b").foreach(g => assert(s.goals.put(g, com.histmersion.api.automation.Goal.Put(g)).isRight))
     assert(s.goals.link("zz-b", Goal.LinkKind.Source, "zz2020_s", None))
     assert(s.goals.link("zz-a", Goal.LinkKind.Source, "zz2020_s", None))
     assert(s.goals.link("zz-a", Goal.LinkKind.Article, "zz-art", None))

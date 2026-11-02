@@ -3,7 +3,7 @@ package com.histmersion.domain.automation.agents
 import com.histmersion.domain.automation.workflows.Pipelines
 import com.histmersion.server.agents.CliProcess
 
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
@@ -18,6 +18,7 @@ import java.util.concurrent.{ConcurrentHashMap, LinkedBlockingQueue, Semaphore}
 import javax.sql.DataSource
 import scala.jdk.CollectionConverters.*
 import com.histmersion.api.automation.{AgentsApi, AgentsMarkdown, PlanQuota}
+import com.histmersion.api.Api
 
 /** The run pool: `agents.max-concurrent-runs` workers draining a queue of run ids, on one daemon thread hosting an Ox
   * scope (the same arrangement as the OCR [[com.histmersion.server.Jobs]]). Runs are durable — `jobs` + `agent_steps` —
@@ -480,9 +481,9 @@ final class Engine(
 
   // ── control ────────────────────────────────────────────────────────────────────────────────────
 
-  private def conflict(m: String) = ApiError(m, Some(AgentsApi.CodeConflict))
+  private def conflict(m: String) = Api.Error(m, Some(AgentsApi.CodeConflict))
 
-  def pause(id: String): Either[ApiError, RunInfo] =
+  def pause(id: String): Either[Api.Error, RunInfo] =
     withRun(id) { r =>
       RunState.parse(r.status) match
         case Some(RunState.Running) =>
@@ -500,7 +501,7 @@ final class Engine(
         case _ => Left(conflict(s"run $id is ${r.status}; only a queued or running run can be paused"))
     }
 
-  def resume(id: String, budgetUsd: Option[Double], budgetTokens: Option[Long]): Either[ApiError, RunInfo] =
+  def resume(id: String, budgetUsd: Option[Double], budgetTokens: Option[Long]): Either[Api.Error, RunInfo] =
     withRun(id) { r =>
       if !RunState.parse(r.status).contains(RunState.Paused) then
         Left(conflict(s"run $id is ${r.status}; only a paused run can be resumed"))
@@ -511,7 +512,7 @@ final class Engine(
           .flatMap { _ => submit(id); get(id) }
     }
 
-  def cancel(id: String): Either[ApiError, RunInfo] =
+  def cancel(id: String): Either[Api.Error, RunInfo] =
     withRun(id) { r =>
       RunState.parse(r.status) match
         case Some(RunState.Running) =>
@@ -527,10 +528,10 @@ final class Engine(
         case _ => Left(conflict(s"run $id is ${r.status}; it has already finished"))
     }
 
-  private def get(id: String): Either[ApiError, RunInfo] =
-    agents.runs.get(id).toRight(ApiError(s"No agent run '$id'", Some(Write.CodeNotFound)))
+  private def get(id: String): Either[Api.Error, RunInfo] =
+    agents.runs.get(id).toRight(Api.Error(s"No agent run '$id'", Some(Write.CodeNotFound)))
 
-  private def withRun[A](id: String)(f: RunInfo => Either[ApiError, A]): Either[ApiError, A] = get(id).flatMap(f)
+  private def withRun[A](id: String)(f: RunInfo => Either[Api.Error, A]): Either[Api.Error, A] = get(id).flatMap(f)
 
 /** The trace of one LLM step, from the conversation sttp-ai's loop built: prompts, assistant turns, tool calls with
   * their results — every body truncated to `max` characters.

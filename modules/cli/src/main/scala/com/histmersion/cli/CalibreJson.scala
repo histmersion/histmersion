@@ -2,13 +2,8 @@ package com.histmersion.cli
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import com.histmersion.api.VocabularyCodecs.given
-import com.histmersion.api.library.{
-  CollectionAuditRow,
-  CollectionEntry,
-  CollectionGapRow,
-  CollectionGaps,
-  CollectionUpdateRow
-}
+import com.histmersion.api.library.{CollectionEntry, CollectionGapRow, CollectionGaps, CollectionUpdateRow}
+import com.histmersion.api.library.CollectionAudit
 
 /** What the `calibre … --json` commands print: case classes with derived codecs, printed through [[Output.emit]] like
   * every other `--json`, never `Json.obj` assembled by hand. The field names are the ones those commands always
@@ -83,7 +78,7 @@ object CalibreJson:
   object AuditRow:
     def of(f: AuditFinding): AuditRow =
       AuditRow(f.calibreId, f.citekeys, f.issues.map(_.toString), Option.when(f.fixable)(f.record.citekey))
-    def of(r: CollectionAuditRow): AuditRow = AuditRow(r.id.toIntOption.getOrElse(0), r.citekeys, r.codes, r.fix)
+    def of(r: CollectionAudit.Row): AuditRow = AuditRow(r.id.toIntOption.getOrElse(0), r.citekeys, r.codes, r.fix)
 
   /** `calibre gaps --json` / `calibre sync --json`: EVERY source the server lists, each with where its original is
     * (`local` | `stored` | `none` | `unknown`) and whether it `counted` as a gap. `count` is the counted ones (what

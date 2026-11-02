@@ -3,7 +3,7 @@ package com.histmersion.domain.research.workflows
 import com.histmersion.domain.automation.managers.{ManagerContext, ManagerKindDefinition, ManagerSupervisor}
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope}
 
-import com.histmersion.api.{ApiError, Plural}
+import com.histmersion.api.Plural
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.api.automation.Queue.{QueueAdd, QueuePatch}
@@ -17,6 +17,7 @@ import io.scalaland.chimney.dsl.*
 import java.time.Instant
 import scala.collection.mutable.Builder
 import com.histmersion.api.automation.Queue
+import com.histmersion.api.Api
 
 /** The `review` manager kind (library-wide: article-review, infer-filter and article-extend items), research's: the
   * review's own evaluation over the article's review ledger, the selection that refills the queue (open MAJORs,
@@ -295,10 +296,10 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
 
   // ── what a person adds ─────────────────────────────────────────────────────────────────────────
 
-  def target(m: ManagerInfo, itemKind: String, raw: String): Either[ApiError, String] =
+  def target(m: ManagerInfo, itemKind: String, raw: String): Either[Api.Error, String] =
     itemKind match
       case ArticleReview | InferFilter | ArticleExtend => site.articles.get(raw.trim).map(_.article.slug)
-      case other                                       => Left(ApiError(s"unknown item kind '$other'"))
+      case other                                       => Left(Api.Error(s"unknown item kind '$other'"))
 
   /** An article that records no filter and never had an infer-filter item gets one, at its review's priority, so its
     * review waits for it (when the manager's `inferFilter` is on).

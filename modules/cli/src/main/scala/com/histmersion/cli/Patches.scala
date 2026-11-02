@@ -5,10 +5,11 @@ import com.histmersion.config.*
 
 import io.circe.parser.decode
 import java.nio.file.{Files, Path}
-import com.histmersion.api.catalogue.PeriodInput
-import com.histmersion.api.library.{EdgeInput, EdgesPatch, FindingInput, FindingsPatch, MetadataPatch, SourcePatch}
+import com.histmersion.api.library.{EdgesPatch, FindingsPatch, MetadataPatch}
 import com.histmersion.domain.library.Edge
 import com.histmersion.domain.library.Source
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.library.Finding
 
 /** Assemble a [[SourcePatch]] from `histmersion patch` flags.
   *
@@ -36,13 +37,15 @@ object Patches:
       ifUpdatedAt: Option[String],
       addEdges: List[String] = Nil,
       removeEdges: List[String] = Nil
-  ): Either[CliError, SourcePatch] =
+  ): Either[CliError, com.histmersion.api.library.Source.Patch] =
     for
-      base <- json.fold[Either[CliError, SourcePatch]](Right(SourcePatch()))(parse[SourcePatch]("--json", _))
-      adds <- traverse(addFindings)(parse[FindingInput]("--add-finding", _))
+      base <- json.fold[Either[CliError, com.histmersion.api.library.Source.Patch]](
+        Right(com.histmersion.api.library.Source.Patch())
+      )(parse[com.histmersion.api.library.Source.Patch]("--json", _))
+      adds <- traverse(addFindings)(parse[Finding.Input]("--add-finding", _))
       eAdd <- traverse(addEdges)(parseEdge("--add-edge", _))
       eRem <- traverse(removeEdges)(parseEdge("--remove-edge", _))
-      p <- period.fold[Either[CliError, Option[PeriodInput]]](Right(base.period))(parsePeriod(_).map(Some(_)))
+      p <- period.fold[Either[CliError, Option[Period.Input]]](Right(base.period))(parsePeriod(_).map(Some(_)))
       notes <- notesFile.fold[Either[CliError, Option[String]]](Right(base.notes))(
         readFile("--notes-file", _).map(Some(_))
       )
@@ -89,13 +92,17 @@ object Patches:
         )
       )
 
-  private def mergeFindings(base: Option[FindingsPatch], add: List[FindingInput], remove: List[String]) =
+  private def mergeFindings(base: Option[FindingsPatch], add: List[Finding.Input], remove: List[String]) =
     if add.isEmpty && remove.isEmpty then base
     else
       val f = base.getOrElse(FindingsPatch())
       Some(f.copy(add = f.add ++ add, remove = f.remove ++ remove))
 
-  private def mergeEdges(base: Option[EdgesPatch], add: List[EdgeInput], remove: List[EdgeInput]) =
+  private def mergeEdges(
+      base: Option[EdgesPatch],
+      add: List[com.histmersion.api.library.Edge.Input],
+      remove: List[com.histmersion.api.library.Edge.Input]
+  ) =
     if add.isEmpty && remove.isEmpty then base
     else
       val e = base.getOrElse(EdgesPatch())
@@ -112,12 +119,12 @@ object Patches:
   /** `--add-edge refutes:heggarty2023_language` — an edge FROM the patched source, so only the kind and the target are
     * given.
     */
-  private[cli] def parseEdge(flag: String, s: String): Either[CliError, EdgeInput] =
+  private[cli] def parseEdge(flag: String, s: String): Either[CliError, com.histmersion.api.library.Edge.Input] =
     s.split(":", 2).map(_.trim) match
       case Array(k, dst) if dst.nonEmpty =>
         Edge.Kind
           .fromWire(k)
-          .map(EdgeInput(dst, _))
+          .map(com.histmersion.api.library.Edge.Input(dst, _))
           .toRight(
             CliError(
               s"$flag: unknown edge kind '$k' (one of: ${Edge.Kind.allWire.mkString(", ")})",
@@ -132,9 +139,9 @@ object Patches:
           )
         )
 
-  private def parsePeriod(s: String): Either[CliError, PeriodInput] =
+  private def parsePeriod(s: String): Either[CliError, Period.Input] =
     csv(s).map(_.toLongOption) match
-      case List(Some(a), Some(b)) => Right(PeriodInput(a, b))
+      case List(Some(a), Some(b)) => Right(Period.Input(a, b))
       case _ => Left(CliError(s"--period: expected 'start,end' as signed years, got '$s'", exitCode = ExitCode.Usage))
 
   /** A file a flag names, read whole — a large body (a book's OCR) cannot travel through `--json`. */

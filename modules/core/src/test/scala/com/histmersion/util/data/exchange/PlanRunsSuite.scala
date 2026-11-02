@@ -1,14 +1,6 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.exchange.{
-  BundleAlias,
-  BundleInstance,
-  BundleSource,
-  MatchCounts,
-  MergeDecision,
-  MergeIssue,
-  MergePlan
-}
+import com.histmersion.api.exchange.{MatchCounts, MergeDecision, MergeIssue, MergePlan}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.DecisionKind
 
@@ -25,10 +17,14 @@ class PlanRunsSuite extends munit.FunSuite:
 
   final private class Named(name: String, answers: Boolean) extends PlanRun:
     override def localized(es: BundleEntities, mapped: Map[UUID, UUID]): BundleEntities =
-      es.copy(aliases = es.aliases :+ BundleAlias(name, uid(name), "2026-01-01T00:00:00.000000Z"))
+      es.copy(aliases =
+        es.aliases :+ com.histmersion.api.exchange.Bundle.Alias(name, uid(name), "2026-01-01T00:00:00.000000Z")
+      )
     override def notices: List[String] = List(s"$name notice")
     override def ownerSource(foreign: UUID, kind: Bundle.Kind): Option[UUID] = Option.when(answers)(uid(name))
-    override def bodiesWanted(pairs: List[(BundleSource, BundleSource)]): Set[String] = Set(name)
+    override def bodiesWanted(
+        pairs: List[(com.histmersion.api.exchange.Bundle.Source, com.histmersion.api.exchange.Bundle.Source)]
+    ): Set[String] = Set(name)
     override def argument(issue: MergeIssue, decision: MergeDecision): Option[Either[String, Unit]] =
       Option.when(answers)(Left(name))
     override def pairIssue(kind: Issue.Kind): Boolean = answers && kind == Issue.Kind.AttestationUnanchored
@@ -36,7 +32,12 @@ class PlanRunsSuite extends munit.FunSuite:
     override def bodyIssue(right: UUID): Option[String] = Option.when(answers)(name)
     override def citekeyArgument(issue: MergeIssue, decision: MergeDecision): Option[Either[String, Unit]] =
       Option.when(answers)(Left(s"$name citekey"))
-    override def foldSources(right: BundleSource, left: BundleSource, citekey: String, folds: PlanFolds): Boolean =
+    override def foldSources(
+        right: com.histmersion.api.exchange.Bundle.Source,
+        left: com.histmersion.api.exchange.Bundle.Source,
+        citekey: String,
+        folds: PlanFolds
+    ): Boolean =
       seen += s"$name fold"
       answers && name == "c"
     override def renamed(source: UUID, citekey: String): Unit = seen += s"$name renamed $citekey"
@@ -88,7 +89,7 @@ class PlanRunsSuite extends munit.FunSuite:
 
   test("the sources' fold and rename reach every kind; the plan passes through each in turn"):
     seen.clear()
-    val s = BundleSource(
+    val s = com.histmersion.api.exchange.Bundle.Source(
       uid("s"),
       uid("o"),
       "a2000_x",
@@ -120,7 +121,7 @@ class PlanRunsSuite extends munit.FunSuite:
       seen.toList,
       List("a fold", "b fold", "c fold", "a fold", "a renamed a2000_y", "b renamed a2000_y", "c renamed a2000_y")
     )
-    val inst = BundleInstance(uid("i"), None)
+    val inst = com.histmersion.api.exchange.Bundle.Instance(uid("i"), None)
     val plan =
       MergePlan(uid("p"), inst, inst, 1, "1", None, "h", MatchCounts(), PlanMatches.empty, Nil, Nil, Nil, Nil, 0)
     assertEquals(runs.planned(plan).info, List("a", "b", "c"))

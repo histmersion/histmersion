@@ -11,8 +11,10 @@ import com.histmersion.domain.*
 import com.histmersion.util.database.Param.*
 import com.histmersion.util.database.Sql
 import com.histmersion.api.catalogue.Period
-import com.histmersion.api.library.{FacetField, Filter, FindingMatch, Sort}
+import com.histmersion.api.library.{Filter, Sort}
 import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Facet
+import com.histmersion.api.library.Finding
 
 /** `Filter → SQL` is a pure function (plan §1.0), so it is tested WITHOUT a database: the SQL text and the bound
   * parameters are asserted directly.
@@ -260,14 +262,14 @@ class FilterSqlSuite extends munit.FunSuite:
     assertEquals(s.params, List(S("a"), S("b"), S("c")))
 
   test("facetsQuery matches the prefix as displayed: an underscore and a space are the same"):
-    val spaced = FilterSql.facetsQuery(FacetField.Topics, Some("bronze age"), Filter(), 10)
-    val under = FilterSql.facetsQuery(FacetField.Topics, Some("bronze_age"), Filter(), 10)
+    val spaced = FilterSql.facetsQuery(Facet.Field.Topics, Some("bronze age"), Filter(), 10)
+    val under = FilterSql.facetsQuery(Facet.Field.Topics, Some("bronze_age"), Filter(), 10)
     assert(spaced.text.contains("replace(v, '_', ' ') ILIKE ?"), spaced.text)
     assertEquals(spaced.params, List(S("bronze age%"), I(10)))
     assertEquals(under.params, spaced.params)
 
   test("facetsQuery: distinct-source counts, filter applied, prefix is a prefix"):
-    val s = FilterSql.facetsQuery(FacetField.Tags, Some("in"), Filter(status = List("current")), 25)
+    val s = FilterSql.facetsQuery(Facet.Field.Tags, Some("in"), Filter(status = List("current")), 25)
     assert(s.text.startsWith("SELECT mode() WITHIN GROUP (ORDER BY v) AS value"), s.text)
     assert(s.text.contains("count(DISTINCT s.citekey)::int AS count"), s.text)
     assert(s.text.contains("CROSS JOIN LATERAL"), s.text)
@@ -275,7 +277,7 @@ class FilterSqlSuite extends munit.FunSuite:
     assertEquals(s.params, List(S("current"), S("in%"), I(25)))
 
   test("facetsQuery groups values case-insensitively and labels them with the commonest spelling"):
-    val s = FilterSql.facetsQuery(FacetField.Places, None, Filter(), 10)
+    val s = FilterSql.facetsQuery(Facet.Field.Places, None, Filter(), 10)
     // one bucket for Anatolia/anatolia …
     assert(s.text.contains("GROUP BY lower(v)"), s.text)
     // … labelled by the most frequent original spelling, ordered by distinct sources then the label
@@ -375,9 +377,9 @@ class FilterSqlSuite extends munit.FunSuite:
     assertEquals(n.params, feed.params.dropRight(2))
 
   test("facet dimensions: places and tags union the source and its findings"):
-    assert(FilterSql.facetValues(FacetField.Tags).contains("unnest(f.tags)"))
-    assert(FilterSql.facetValues(FacetField.Places).contains("f.region_name"))
-    assertEquals(FilterSql.facetValues(FacetField.Status), "SELECT s.status")
+    assert(FilterSql.facetValues(Facet.Field.Tags).contains("unnest(f.tags)"))
+    assert(FilterSql.facetValues(Facet.Field.Places).contains("f.region_name"))
+    assertEquals(FilterSql.facetValues(Facet.Field.Status), "SELECT s.status")
 
   // ── pure match explanation ──────────────────────────────────────────────────────────────────
   // the columns arrive as `text[]` lists, so a value containing a comma still matches exactly
@@ -464,7 +466,7 @@ class FilterSqlSuite extends munit.FunSuite:
     assertEquals(r.toHit.topics, List("collapse", "trade"))
 
   test("findingWhy compares exact tag values"):
-    val m = FindingMatch(
+    val m = Finding.Match(
       "x#0",
       "claim",
       None,
@@ -491,7 +493,7 @@ class FilterSqlSuite extends munit.FunSuite:
       end: Option[Long],
       tags: String
   ) =
-    FindingMatch(
+    Finding.Match(
       "x#0",
       "claim",
       region,

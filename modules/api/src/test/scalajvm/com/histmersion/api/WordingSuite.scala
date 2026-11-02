@@ -5,12 +5,13 @@ import com.histmersion.api.automation.Agents
 import com.histmersion.api.exchange.{InitPlan, MergeApplyJob}
 import com.histmersion.api.instance.UiNotices
 import com.histmersion.api.jobs.JobState
-import com.histmersion.api.library.{AcquireChecks, Ingest}
+import com.histmersion.api.library.Ingest
 import com.histmersion.api.maintenance.Vacuum
 import com.histmersion.domain.automation.Approval
 import com.histmersion.domain.automation.Manager
 import com.histmersion.domain.automation.Run
 import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Acquire
 
 /** The label dictionary covers every identifier the UI shows: a pipeline, an approval kind or a job kind added without
   * wording fails here, not in front of a reader.
@@ -61,7 +62,7 @@ class WordingSuite extends munit.FunSuite:
         Vacuum.JobKind,
         Agents.JobKind,
         MergeApplyJob.JobKind,
-        AcquireChecks.RecheckJob.JobKind
+        Acquire.Checks.RecheckJob.JobKind
       ).filterNot(k => RegisteredJobKinds.all.parse(k).isDefined),
       Nil
     )

@@ -7,8 +7,8 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import com.histmersion.api.catalogue.{EventGeo, EventPrecision, EventTaxonomy, EventTier}
-import com.histmersion.api.library.SourceKinds
 import com.histmersion.api.media.MediaGeoHit
+import com.histmersion.api.library.Source
 
 /** The four kinds of point (docs/map-layers.md): findings, sites, events, pictures — each a descriptor of
   * [[PointLayer]].
@@ -29,7 +29,7 @@ object PointKinds:
     def at(s: Spot): (Double, Double) = (s.lat, s.lon)
     def inner(s: Spot): String =
       if s.items.size > 1 then s"""<span class="hd-find-count">${s.items.size}</span>"""
-      else Glyphs.badge(CardIcons.sourceKind(s.items.head.sourceKind.getOrElse(SourceKinds.Unknown), marker = true))
+      else Glyphs.badge(CardIcons.sourceKind(s.items.head.sourceKind.getOrElse(Source.Kinds.Unknown), marker = true))
     override def classes(s: Spot): String =
       val n = s.items.size
       val span = if n == 1 then for a <- s.items.head.periodStart; b <- s.items.head.periodEnd yield b - a else None

@@ -1,13 +1,13 @@
 package com.histmersion.db
 
-import com.histmersion.api.catalogue.AttestationPut
 import com.augustnagro.magnum.*
 
 import javax.sql.DataSource
+import com.histmersion.api.catalogue.Attestation
 
 /** Attestations written for a db suite's fixture, as the catalogue's evidence stores them; the new row's id. */
 object AttestationRows:
-  def create(ds: DataSource, in: AttestationPut): Long =
+  def create(ds: DataSource, in: Attestation.Put): Long =
     transact(ds):
       sql"""INSERT INTO attestations (citekey, target_type, target_id,
                 quote, prefix, suffix, char_start, char_end, chunk_ord,

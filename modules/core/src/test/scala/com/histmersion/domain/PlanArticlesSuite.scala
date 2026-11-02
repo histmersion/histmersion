@@ -6,7 +6,7 @@ import com.histmersion.config.given
 
 import com.histmersion.domain.PlanArticles.*
 import com.histmersion.domain.PlanArticles.Limits
-import com.histmersion.api.research.ArticleFilter
+import com.histmersion.api.research.Article
 
 /** propose-articles' code checks: the shape of each proposed article, then the seeding rules — a free slug, a filter
   * returning at least minSources, less than maxOverlap shared with any article of the area or with a proposal kept
@@ -58,7 +58,7 @@ class PlanArticlesSuite extends munit.FunSuite:
       "old" -> Set("a", "b", "c", "x"),
       "dup" -> Set("e", "f", "g", "h")
     )
-    def c(slug: String, topic: String) = Candidate(slug, slug, "concept", ArticleFilter(topics = List(topic)), "w")
+    def c(slug: String, topic: String) = Candidate(slug, slug, "concept", Article.Filter(topics = List(topic)), "w")
     val plan = verify(
       "goal",
       " r ",

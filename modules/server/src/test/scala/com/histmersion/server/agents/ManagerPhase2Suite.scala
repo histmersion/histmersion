@@ -10,7 +10,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.research.workflows.ReviewManagerPolicy
 import com.histmersion.api.automation.Agents.*
-import com.histmersion.api.automation.GoalPlans.LinkKind
+import com.histmersion.api.automation.Goal.Plans.LinkKind
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.util.database.{Db, Migrate}
@@ -22,10 +22,10 @@ import sttp.ai.core.agent.*
 
 import java.time.Instant
 import com.histmersion.db.*
-import com.histmersion.api.automation.{Goal, GoalPut}
-import com.histmersion.api.library.{MetadataPatch, SourcePatch, SourcePut}
-import com.histmersion.api.research.{ArticleFilter, ArticlePut}
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.library.MetadataPatch
 import com.histmersion.domain.library.Source
+import com.histmersion.api.research.Article
 
 /** The process managers' phase 2 against a `*_test` database (docs/research-process-managers.md §4, §6): infer-filter
   * before a review (the filter checked against the corpus, held for its approval, the review waiting for it), the
@@ -100,7 +100,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       h.library.sources
         .put(
           Ck,
-          SourcePut(
+          com.histmersion.api.library.Source.Put(
             title = "Bronze Age tin",
             year = Some(2019),
             topics = List("zzagent_tin"),
@@ -117,7 +117,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       h.library.sources
         .put(
           Ck2,
-          SourcePut(
+          com.histmersion.api.library.Source.Put(
             title = "Tin isotopes",
             year = Some(2024),
             topics = List("zzagent_tin"),
@@ -128,10 +128,21 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     assert(
       h.library.sources
-        .patch(Ck2, SourcePatch(metadata = Some(MetadataPatch(status = Some(Source.Status.Contested)))))
+        .patch(
+          Ck2,
+          com.histmersion.api.library.Source
+            .Patch(metadata = Some(MetadataPatch(status = Some(Source.Status.Contested))))
+        )
         .isRight
     )
-    assert(h.goals.put(Goal, GoalPut("Zz tin in the Bronze Age", notes = Some("where the tin came from"))).isRight)
+    assert(
+      h.goals
+        .put(
+          Goal,
+          com.histmersion.api.automation.Goal.Put("Zz tin in the Bronze Age", notes = Some("where the tin came from"))
+        )
+        .isRight
+    )
 
   private val articleBody =
     s"""Tin reached the Aegean by sea [[$Ck]].
@@ -166,7 +177,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     val (a, h) = handlers(c); seed(h)
     assert(
-      h.research.articles.put("zzagent_f1", ArticlePut("Zz tin", "concept", articleBody, tags = List(Tag))).isRight
+      h.research.articles.put("zzagent_f1", Article.Put("Zz tin", "concept", articleBody, tags = List(Tag))).isRight
     )
     a.managers.ensureDefaults()
     a.managing
@@ -206,7 +217,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(a.decide(appr.id, "approve", DecisionRequest()).map(_.state), Right("approved"))
     assertEquals(
       ArticleFixtures.load(ds, "zzagent_f1").flatMap(_.filter),
-      Some(ArticleFilter(topics = List("zzagent_tin")))
+      Some(Article.Filter(topics = List("zzagent_tin")))
     )
     a.managers.tick(t0)
     assertEquals(item(ReviewId, InferFilter, "zzagent_f1").status, "done")
@@ -224,7 +235,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       baseCfg.copy(agents = baseCfg.agents.copy(approvals = baseCfg.agents.approvals.copy(articleFilter = "auto")))
     val (a, h) = handlers(c, auto); seed(h)
     assert(
-      h.research.articles.put("zzagent_f2", ArticlePut("Zz tin", "concept", articleBody, tags = List(Tag))).isRight
+      h.research.articles.put("zzagent_f2", Article.Put("Zz tin", "concept", articleBody, tags = List(Tag))).isRight
     )
     val r = a.managing.enqueue(EnqueueRequest("review", "zzagent_f2")).fold(e => fail(e.message), identity)
     a.managing.update(ReviewId, ManagerUpdate(Some(ManagerConfig(includeTags = Some(List(Tag))))))
@@ -263,7 +274,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       )
     )
     val (a, h) = handlers(c); seed(h)
-    assert(h.research.articles.put("zzagent_old", ArticlePut("Old", "concept", "Old text.")).isRight)
+    assert(h.research.articles.put("zzagent_old", Article.Put("Old", "concept", "Old text.")).isRight)
     val m =
       a.managing.create(ManagerCreate("seed", Some(Goal), paused = Some(false))).fold(e => fail(e.message), identity)
     assertEquals((m.id, m.kind, m.goal), (seedId(Goal), "seed", Some(Goal)))
@@ -353,13 +364,15 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     a.autoEnrich(Ck)
     assertEquals(connect(ds)(ManagerRepo.counts(EnrichId)).pending, 1)
     // the source got findings meanwhile: the manager settles the item without a run
-    assert(h.library.sources.patch(Ck, SourcePatch(notes = Some("enriched by hand"))).isRight)
+    assert(
+      h.library.sources.patch(Ck, com.histmersion.api.library.Source.Patch(notes = Some("enriched by hand"))).isRight
+    )
     a.managing.action(EnrichId, "resume", None)
     a.managers.tick(t0)
     assertEquals(item(EnrichId, SourceEnrich, Ck).status, "done")
     assert(item(EnrichId, SourceEnrich, Ck).outcome.exists(_.contains("already enriched")))
     // Enrich on an article: only its unenriched cited sources
-    assert(h.research.articles.put("zzagent_e1", ArticlePut("Zz", "concept", articleBody)).isRight)
+    assert(h.research.articles.put("zzagent_e1", Article.Put("Zz", "concept", articleBody)).isRight)
     val r = a.managing.enqueue(EnqueueRequest("enrich", "zzagent_e1")).fold(e => fail(e.message), identity)
     assertEquals(r.items.map(_.target), List(Ck2))
     assert(r.skipped.exists(_.contains(Ck)), r.skipped)
@@ -382,12 +395,12 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       h.research.articles
         .put(
           "zzagent_s1",
-          ArticlePut(
+          Article.Put(
             "Zz tin",
             "concept",
             articleBody,
             tags = List(Tag),
-            filter = Some(ArticleFilter(topics = List("zzagent_tin")))
+            filter = Some(Article.Filter(topics = List("zzagent_tin")))
           )
         )
         .isRight
@@ -425,7 +438,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       h.research.articles
         .put(
           "zzagent_x1",
-          ArticlePut("Zz tin", "concept", s"Tin [[$Ck]].", filter = Some(ArticleFilter(topics = List("zzagent_tin"))))
+          Article.Put("Zz tin", "concept", s"Tin [[$Ck]].", filter = Some(Article.Filter(topics = List("zzagent_tin"))))
         )
         .isRight
     )

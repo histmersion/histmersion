@@ -3,8 +3,7 @@ package com.histmersion.domain.library.workflows
 import com.histmersion.domain.automation.agents.AgentsHandlers
 import com.histmersion.domain.automation.managers.{ManagerContext, ManagerKindDefinition}
 
-import com.histmersion.api.{ApiError, Write}
-import com.histmersion.api.automation.GoalPlans
+import com.histmersion.api.Write
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.AutoEnrich
@@ -14,6 +13,8 @@ import com.histmersion.domain.ManagerDefaults
 
 import java.time.Instant
 import scala.collection.mutable.Builder
+import com.histmersion.api.Api
+import com.histmersion.api.automation.Goal
 
 /** The `enrich` manager kind (library-wide: source-enrich items, what `agents.auto-enrich` feeds), registered by this
   * transition adapter until the library contributes it: a source already enriched is settled without a run, unless a
@@ -33,20 +34,20 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsHandlers) extends Mana
 
   def facts(c: ManagerContext, item: ManagerItem, run: String): StepFacts = StepFacts.Finished("enriched")
 
-  def target(m: ManagerInfo, itemKind: String, raw: String): Either[ApiError, String] =
+  def target(m: ManagerInfo, itemKind: String, raw: String): Either[Api.Error, String] =
     itemKind match
       case SourceEnrich => site.sources.get(raw.trim, body = false).map(_.source.citekey)
-      case other        => Left(ApiError(s"unknown item kind '$other'"))
+      case other        => Left(Api.Error(s"unknown item kind '$other'"))
 
   /** What an Enrich button names: a source itself (enriched again even if it was), or the sources an article cites / a
     * goal links that are NOT enriched yet ([[AutoEnrich.enrichedBy]]; the others are reported as skipped, with why).
     */
-  override def expand(c: ManagerContext, raw: String): Either[ApiError, (List[String], List[String])] =
+  override def expand(c: ManagerContext, raw: String): Either[Api.Error, (List[String], List[String])] =
     site.sources.get(raw, body = false).map(s => (List(s.source.citekey), Nil)).orElse {
       val cited = site
         .articleSources(raw)
-        .orElse(a.host.goal(raw).map(g => c.goalLinks(g.slug, GoalPlans.LinkKind.Source)))
-      cited.left.map(_ => ApiError(s"'$raw' is no source, article or goal", Some(Write.CodeNotFound))).map { cks =>
+        .orElse(a.host.goal(raw).map(g => c.goalLinks(g.slug, Goal.Plans.LinkKind.Source)))
+      cited.left.map(_ => Api.Error(s"'$raw' is no source, article or goal", Some(Write.CodeNotFound))).map { cks =>
         val (todo, done) = cks.distinct.map(ck => ck -> enrichedWhy(c, ck)).partition(_._2.isEmpty)
         (todo.map(_._1), done.map((ck, why) => s"[[$ck]]: ${why.getOrElse("")}"))
       }

@@ -1,7 +1,7 @@
 package com.histmersion.web
 
-import com.histmersion.api.research.ArticleKindCount
 import com.histmersion.api.library.TimeHistogram
+import com.histmersion.api.research.Article
 
 /** The sidebar tabs' one pagination form: the count line and the "show more" label every tab uses, and what each tab
   * adds to the line.
@@ -27,10 +27,10 @@ class ResultsPagingSuite extends munit.FunSuite:
     assertEquals(
       ArticlesTab.kindCounts(
         List(
-          ArticleKindCount("myth", 3),
-          ArticleKindCount("concept", 200),
-          ArticleKindCount("index", 2),
-          ArticleKindCount("report", 0)
+          Article.KindCount("myth", 3),
+          Article.KindCount("concept", 200),
+          Article.KindCount("index", 2),
+          Article.KindCount("report", 0)
         )
       ),
       List("200 concepts", "3 myths", "2 indexes")

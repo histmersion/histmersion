@@ -6,7 +6,7 @@ object BaseMapSource:
   val Online = "online"
   val All: List[String] = List(Auto, Local, Online)
 
-  def resolve(setting: String, status: BasemapStatus): String =
+  def resolve(setting: String, status: Basemap.Status): String =
     setting.trim.toLowerCase(java.util.Locale.ROOT) match
       case Local  => Local
       case Online => Online

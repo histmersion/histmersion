@@ -9,16 +9,9 @@ import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewLedger.*
 import io.circe.parser.decode
 import io.circe.syntax.*
-import com.histmersion.api.research.{
-  ArticleEdits,
-  CoverageEdge,
-  CritiquePair,
-  CritiquePairing,
-  CritiqueRef,
-  Critiques,
-  CritiqueSide,
-  CritiqueState
-}
+import com.histmersion.api.research.{CritiquePair, CritiquePairing, CritiqueRef, Critiques, CritiqueSide, CritiqueState}
+import com.histmersion.api.research.Article
+import com.histmersion.api.research.Coverage
 
 /** Convergence of the review (docs/research-review-convergence.md §6.9), pure: the final pass that defers what it finds
   * new, the regression guard, a "fixed" check held to the checklist, the fixer's guards (the pairing repair, a claimed
@@ -239,9 +232,9 @@ class ReviewConvergenceSuite extends munit.FunSuite:
   private val keys = Set("knapp2016_tin", "zz2024_iso", "zz2015_kull", "zz2011_west", "zz2020_new", "zz2021_crit")
   private val corpus = BodyCorpus(keys, keys, _ => Nil)
   private val edges = List(
-    CoverageEdge("zz2024_iso", "refutes", "knapp2016_tin"),
-    CoverageEdge("zz2015_kull", "challenges", "zz2011_west"),
-    CoverageEdge("zz2021_crit", "challenges", "zz2020_new")
+    Coverage.Edge("zz2024_iso", "refutes", "knapp2016_tin"),
+    Coverage.Edge("zz2015_kull", "challenges", "zz2011_west"),
+    Coverage.Edge("zz2021_crit", "challenges", "zz2020_new")
   )
   private val works: String => Option[CritiquePairing.Work] = Map(
     "zz2011_west" -> CritiquePairing.Work("zz2011_west", List("West"), Some(2011)),
@@ -267,7 +260,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       pair = CritiqueRef.parse(pair).toOption
     )
   private def edit(op: String, anchor: String, text: String) =
-    ArticleEdits.EditAnswer(ArticleEdits.Op.parse(op).get, anchor, Some(text))
+    Article.Edits.EditAnswer(Article.Edits.Op.parse(op).get, anchor, Some(text))
   private def fix(m: Merged, a: FixerAnswer, last: Boolean, l: Ledger = Ledger("tin")) =
     checkFix(a, m, "tin", body, "concept", corpus, keys, _ => None, 0.9, last, None, pairsOf(body), Some(guards(l)))
 

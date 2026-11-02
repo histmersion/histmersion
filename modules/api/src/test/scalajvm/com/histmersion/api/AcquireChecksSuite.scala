@@ -1,6 +1,6 @@
 package com.histmersion.api
 
-import com.histmersion.api.library.AcquireChecks.*
+import com.histmersion.api.library.Acquire.Checks.*
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.jobs.{JobDetail, JobInfo}
 import com.histmersion.api.library.AcquireChecksMarkdown

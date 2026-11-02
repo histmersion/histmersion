@@ -23,7 +23,7 @@ import com.histmersion.util.data.exchange.{
 import com.histmersion.util.storage.{ByteSource, ContentStore}
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.given
-import com.histmersion.api.exchange.{Bundle, BundleInstance, BundleManifest, MergeDecision, MergePlan, MergeResolutions}
+import com.histmersion.api.exchange.{Bundle, MergeDecision, MergePlan, MergeResolutions}
 
 /** What this collection knows that a merge plan needs (docs/research-merge-import.md §5–§6, milestone M3): the plan's
   * input stage — its rows, labels, ledger, redirects, article histories and OCR bodies, and what each kind's merge
@@ -36,7 +36,7 @@ object MergeState:
 
   def load(
       es: BundleEntities,
-      m: BundleManifest,
+      m: Bundle.Manifest,
       readProblems: List[String],
       originals: ContentStore,
       chunkChars: Int,
@@ -115,7 +115,7 @@ object MergeState:
       .toMap
     val known = Input(
       m,
-      BundleInstance(inst.id, inst.label),
+      Bundle.Instance(inst.id, inst.label),
       BundleFormat.compatible(m, schema),
       readProblems,
       es,

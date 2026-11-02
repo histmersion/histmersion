@@ -5,7 +5,7 @@ import com.histmersion.api.given
 
 import MergeFixture.{uid, work}
 import com.histmersion.domain.library.Confidence
-import com.histmersion.api.exchange.{BundleFinding, BundleRange}
+import com.histmersion.api.exchange.Bundle
 
 /** The findings of a pair that is one matched, folded and numbered (docs/research-merge-import.md §5.4). */
 class FindingPlanSuite extends munit.FunSuite:
@@ -15,13 +15,13 @@ class FindingPlanSuite extends munit.FunSuite:
       id: String,
       ck: String,
       claim: String,
-      period: Option[BundleRange] = Some(BundleRange(Some(-1400), Some(-1200))),
+      period: Option[Bundle.Range] = Some(Bundle.Range(Some(-1400), Some(-1200))),
       lonLat: Option[(Double, Double)] = Some((34.6, 40.0)),
       tags: List[String] = Nil,
       confidence: Option[Confidence] = Some(Confidence.High),
       region: Option[String] = Some("Anatolia")
-  ): BundleFinding =
-    BundleFinding(
+  ): Bundle.Finding =
+    Bundle.Finding(
       uid(id),
       work,
       uid(ck),
@@ -47,7 +47,7 @@ class FindingPlanSuite extends munit.FunSuite:
       finding("w#1", "w", "the storm god of Hatti is Tarhunna", tags = List("work"), confidence = Some(Confidence.Low)),
       finding("w#2", "w", "Tarhunna the storm god ruled Hatti and Arinna"),
       finding("w#3", "w", "Hattusa burned around 1180 BC"),
-      finding("w#4", "w", "Tarhunna is the storm god of Hatti", period = Some(BundleRange(Some(-500), Some(-400))))
+      finding("w#4", "w", "Tarhunna is the storm god of Hatti", period = Some(Bundle.Range(Some(-500), Some(-400))))
     )
     val ms = FindingPlan.matches(lefts, rights, 50, 0.6)
     assertEquals(ms.collect { case FindingPlan.Match.Same(r, l) => r.id -> l.id }, List("w#1" -> "h#1"))

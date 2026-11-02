@@ -12,7 +12,6 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.util.data.exchange.DecisionKind
 import com.histmersion.domain.library.MatchOutcome
 import com.histmersion.api.exchange.{
-  BundleUpload,
   IssueField,
   IssuePlace,
   IssueSide,
@@ -26,15 +25,13 @@ import com.histmersion.api.exchange.{
   MergeJobState,
   MergeMarkdown,
   MergePlan,
-  MergePlanRequest,
   MergeResolution,
-  MergeResolutions,
-  MergeResolutionsText
+  MergeResolutions
 }
 import com.histmersion.api.instance.{MapStartConfig, UiConfig}
-import com.histmersion.api.library.SourceMatch
 import com.histmersion.util.data.exchange.Bundle
 import com.histmersion.util.data.exchange.Issue
+import com.histmersion.api.library.Source
 
 /** The merge review screen (`/merge`, docs/research-merge-import.md §6.5, milestone M6): upload another collection's
   * bundle, read its plan — the matched sources, every issue grouped (open first, then decided, conditional, defaults,
@@ -73,7 +70,7 @@ object MergeView:
 
   /** The counter: the blocking questions still open, of all the blocking ones that apply ("3 of 9"). */
   /** How each of the bundle's sources was matched. */
-  def matched(p: MergePlan): List[SourceMatch] = RegisteredPlanMatches.kind.all(p.sources)
+  def matched(p: MergePlan): List[Source.Match] = RegisteredPlanMatches.kind.all(p.sources)
 
   def counter(p: MergePlan): (Int, Int) =
     val blocking = p.issues.filter(i => i.severity == Issue.Severity.Blocking && i.condition.isEmpty)
@@ -217,7 +214,7 @@ object MergeView:
   // ── state ───────────────────────────────────────────────────────────────────────────────────────
 
   /** The window's state: one review at a time (the bundle named in the URL, `bundle=`). */
-  private val upload = Var(Option.empty[BundleUpload])
+  private val upload = Var(Option.empty[com.histmersion.api.exchange.Bundle.Upload])
   private val plan = Var(Option.empty[MergePlan])
   private val res = Var(MergeResolutions())
   private val selected = Var(Option.empty[String])
@@ -257,7 +254,7 @@ object MergeView:
       planReq += 1
       val mine = planReq
       planning.set(true)
-      ApiClient.mergePlan(MergePlanRequest(sha, res.now())).onComplete { r =>
+      ApiClient.mergePlan(MergePlan.Request(sha, res.now())).onComplete { r =>
         if mine == planReq then
           planning.set(false)
           r.fold(
@@ -302,7 +299,7 @@ object MergeView:
 
   private def download(): Unit =
     plan.now().foreach { p =>
-      val text = MergeResolutionsText.template(p, res.now())
+      val text = MergeResolutions.Text.template(p, res.now())
       val blob = dom.Blob(js.Array(text), new dom.BlobPropertyBag { `type` = "application/yaml" })
       val url = dom.URL.createObjectURL(blob)
       val a = dom.document.createElement("a").asInstanceOf[dom.HTMLAnchorElement]

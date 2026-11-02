@@ -22,14 +22,13 @@ import com.histmersion.api.library.{
   ArchiveItem,
   AssessRequest,
   CalibrePushRequest,
-  FindingInput,
   FindingsPatch,
   FollowupsRequest,
-  IngestRequest,
   RefsRequest,
-  Source,
-  SourcePatch
+  Source
 }
+import com.histmersion.api.library.Finding
+import com.histmersion.api.library.Ingest
 
 /** The acquisition handlers against a real Postgres (`HISTMERSION_TEST_DB_URL`), with every upstream replaced by a
   * fake. What is exercised here is the part fixtures cannot reach: resolving references to stored citekeys, writing
@@ -394,7 +393,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     wipe("zzacq_ingested", "zzacq_ref", "zzacq_bydoi")
     SourceFixtures.upsert(ds, source("zzacq_ref", Some("10.1038/zzref001")), cfg.limits.chunkChars)
     val h = handlers(FakeDiscovery(refs = List(RefRow(doi = Some("10.1038/zzref001")))), oa = SomePdf())
-    val r = h.ingest(IngestRequest("10.1038/zztest001")).fold(e => fail(e.message), identity)
+    val r = h.ingest(Ingest.Request("10.1038/zztest001")).fold(e => fail(e.message), identity)
 
     assertEquals(r.citekey, "zzacq_ingested")
     assert(r.created)
@@ -425,14 +424,14 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     )
     wipe("zzacq_ingested")
     val r = handlers(oa = SomePdf("oabooks", Some(" CC-BY-4.0 ")))
-      .ingest(IngestRequest("10.1038/zztest001"))
+      .ingest(Ingest.Request("10.1038/zztest001"))
       .fold(e => fail(e.message), identity)
     assert(r.steps.exists(s => s.step == "fetch" && s.detail.contains("licence CC-BY-4.0")), r.steps.toString)
     assert(r.steps.exists(s => s.step == "licence" && s.ok), r.steps.toString)
     assertEquals(license, Some("CC-BY-4.0"))
     // a re-fetch with another licence keeps the one recorded; a copy without one changes nothing
     val again = handlers(oa = SomePdf("oabooks", Some("CC-BY-NC-4.0")))
-      .ingest(IngestRequest("10.1038/zztest001", refetch = true))
+      .ingest(Ingest.Request("10.1038/zztest001", refetch = true))
       .fold(e => fail(e.message), identity)
     assert(!again.steps.exists(_.step == "licence"), again.steps.toString)
     assertEquals(license, Some("CC-BY-4.0"))
@@ -452,7 +451,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     wipe("zzacq_ingested"); dropItems()
     val gold =
       FakeDiscovery(target.copy(isOa = true, oaStatus = Some("gold"), oaUrl = Some("https://press.example.org/a/1")))
-    val r = handlers(gold, oa = NoPdf).ingest(IngestRequest("10.1038/zztest001")).fold(e => fail(e.message), identity)
+    val r = handlers(gold, oa = NoPdf).ingest(Ingest.Request("10.1038/zztest001")).fold(e => fail(e.message), identity)
     assertEquals(items.size, 1, items.toString)
     assertEquals(items.head.topic, Some(Acquire.BrowserDownloadTopic))
     assert(
@@ -461,12 +460,12 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     )
     assert(r.steps.exists(s => s.step == "acquire" && s.detail.contains(s"#${items.head.id}")), r.steps.toString)
     // again: the item that names it is reported, no second one
-    val _ = handlers(gold, oa = NoPdf).ingest(IngestRequest("10.1038/zztest001")).fold(e => fail(e.message), identity)
+    val _ = handlers(gold, oa = NoPdf).ingest(Ingest.Request("10.1038/zztest001")).fold(e => fail(e.message), identity)
     assertEquals(items.size, 1)
     // a closed work, or a watcher's legal-only ingest, adds none
     dropItems(); wipe("zzacq_ingested")
-    val _ = handlers(oa = NoPdf).ingest(IngestRequest("10.1038/zztest001"))
-    val _ = handlers(gold, oa = NoPdf).ingestLegal(IngestRequest("10.1038/zztest001"))
+    val _ = handlers(oa = NoPdf).ingest(Ingest.Request("10.1038/zztest001"))
+    val _ = handlers(gold, oa = NoPdf).ingestLegal(Ingest.Request("10.1038/zztest001"))
     assertEquals(items.size, 0)
     dropItems(); wipe("zzacq_ingested")
 
@@ -487,7 +486,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     )
     val open =
       FakeDiscovery(target.copy(isOa = true, oaStatus = Some("gold"), oaUrl = Some("https://press.example.org/a/1")))
-    val _ = handlers(open, oa = chain).ingest(IngestRequest("10.1038/zztest001")).fold(e => fail(e.message), identity)
+    val _ = handlers(open, oa = chain).ingest(Ingest.Request("10.1038/zztest001")).fold(e => fail(e.message), identity)
     assertEquals(items.size, 1, items.toString)
     assert(
       items.head.text.contains(s"download it in the browser (oapen: $why), then histmersion ingest"),
@@ -512,7 +511,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       oaLocations = List("https://www.mdpi.com/zz/1")
     )
     // the watcher's legal-only path: no source, but the item, with the location, the DOI, the licence and the command
-    val legal = handlers(FakeDiscovery(gold), oa = NoPdf).ingestLegal(IngestRequest("10.1038/zztest001"))
+    val legal = handlers(FakeDiscovery(gold), oa = NoPdf).ingestLegal(Ingest.Request("10.1038/zztest001"))
     assert(legal.left.exists(e => IngestBacklog.isNoLegalCopy(e.message)), legal.toString)
     assertEquals(items.map(_.topic), Vector(Some(Acquire.BrowserDownloadTopic)))
     val text = items.head.text
@@ -529,7 +528,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assert(SourceFixtures.load(ds, "zzacq_ingested").isEmpty, "the legal path creates no metadata-only source")
     // a person's ingest of the same work: the item is reported, not doubled
     val r = handlers(FakeDiscovery(gold), oa = NoPdf)
-      .ingest(IngestRequest("10.1038/zztest001"))
+      .ingest(Ingest.Request("10.1038/zztest001"))
       .fold(e => fail(e.message), identity)
     assertEquals(items.size, 1)
     assert(
@@ -539,13 +538,13 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     // hybrid on the same host, or gold on a host that does not refuse scripts: the watcher adds nothing
     dropItems(); wipe("zzacq_ingested")
     val _ = handlers(FakeDiscovery(gold.copy(oaStatus = Some("hybrid"))), oa = NoPdf)
-      .ingestLegal(IngestRequest("10.1038/zztest001"))
+      .ingestLegal(Ingest.Request("10.1038/zztest001"))
     val _ =
       handlers(FakeDiscovery(gold.copy(oaUrl = Some("https://zenodo.org/records/1"), oaLocations = Nil)), oa = NoPdf)
-        .ingestLegal(IngestRequest("10.1038/zztest001"))
+        .ingestLegal(Ingest.Request("10.1038/zztest001"))
     assertEquals(items.size, 0)
     // a copy found: nothing to download by hand
-    val _ = handlers(FakeDiscovery(gold), oa = SomePdf()).ingest(IngestRequest("10.1038/zztest001"))
+    val _ = handlers(FakeDiscovery(gold), oa = SomePdf()).ingest(Ingest.Request("10.1038/zztest001"))
     assertEquals(items.size, 0)
     dropItems(); wipe("zzacq_ingested")
 
@@ -561,7 +560,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
         "oapen" -> answering(Fetch.Refused("20.500.12657/23223: bot challenge"))
       )
     )
-    val r = handlers(oa = chain).ingest(IngestRequest("10.1038/zztest001")).fold(e => fail(e.message), identity)
+    val r = handlers(oa = chain).ingest(Ingest.Request("10.1038/zztest001")).fold(e => fail(e.message), identity)
     assertEquals(
       r.steps.find(_.step == "chain").map(_.detail),
       Some("unpaywall: no copy — no open-access location; oapen: refused — 20.500.12657/23223: bot challenge")
@@ -582,7 +581,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     val chain = FetchChain(List("unpaywall" -> open, "stub-unauthorised" -> unauthorised), allowUnauthorised = true)
     val allowing = cfg.copy(acquire = cfg.acquire.copy(allowUnauthorised = true))
     val r = handlers(oa = chain, app = allowing)
-      .ingest(IngestRequest("10.1038/zztest001", legalOnly = true))
+      .ingest(Ingest.Request("10.1038/zztest001", legalOnly = true))
       .fold(e => fail(e.message), identity)
     assertEquals(asked.get, 0, "no fetcher the config marks unauthorised is asked")
     assert(r.steps.exists(_.step == "legal-only"), r.steps.toString)
@@ -590,10 +589,10 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assert(SourceFixtures.load(ds, "zzacq_ingested").isDefined, "the metadata-only source is created")
     // without the flag the person's path asks it (the switch is on), and the watcher's never does
     wipe("zzacq_ingested")
-    val _ = handlers(oa = chain, app = allowing).ingest(IngestRequest("10.1038/zztest001"))
+    val _ = handlers(oa = chain, app = allowing).ingest(Ingest.Request("10.1038/zztest001"))
     assertEquals(asked.get, 1)
     wipe("zzacq_ingested")
-    val legal = handlers(oa = chain, app = allowing).ingestLegal(IngestRequest("10.1038/zztest001"))
+    val legal = handlers(oa = chain, app = allowing).ingestLegal(Ingest.Request("10.1038/zztest001"))
     assertEquals(asked.get, 1)
     assert(legal.left.exists(_.message.contains("unpaywall: no copy — no open-access location")), legal.toString)
     wipe("zzacq_ingested")
@@ -601,7 +600,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
   test("no open-access copy: the source is still created and the manual drop-in is explained"):
     wipe("zzacq_ingested")
     val r = handlers(oa = NoPdf)
-      .ingest(IngestRequest("10.1038/zztest001"))
+      .ingest(Ingest.Request("10.1038/zztest001"))
       .fold(e => fail(e.message), identity)
     assertEquals(r.pdf, None)
     assert(r.dropIn.exists(_.contains("--citekey zzacq_ingested")), r.dropIn.toString)
@@ -613,18 +612,18 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     wipe("zzacq_ingested")
     // first ingest, then an agent enriches it
     val h = handlers(oa = SomePdf())
-    val _ = h.ingest(IngestRequest("10.1038/zztest001"))
-    val enriched = SourcePatch(
+    val _ = h.ingest(Ingest.Request("10.1038/zztest001"))
+    val enriched = Source.Patch(
       notes = Some("The compiled article."),
       topics = Some(List("indo-european")),
       tags = Some(ListPatch(add = List("steppe"))),
-      findings = Some(FindingsPatch(add = List(FindingInput("a claim", region = Some("Pontic steppe")))))
+      findings = Some(FindingsPatch(add = List(Finding.Input("a claim", region = Some("Pontic steppe")))))
     )
     SourceFixtures
       .patch(ds, "zzacq_ingested", enriched, cfg.limits.chunkChars)
       .fold(e => fail(e.message), identity)
 
-    val again = h.ingest(IngestRequest("10.1038/zztest001")).fold(e => fail(e.message), identity)
+    val again = h.ingest(Ingest.Request("10.1038/zztest001")).fold(e => fail(e.message), identity)
     assert(!again.created, "an existing citekey must be updated, not recreated")
     val after = SourceFixtures.load(ds, "zzacq_ingested").getOrElse(fail("gone"))
     assertEquals(after.notes, Some("The compiled article."))
@@ -637,13 +636,13 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     "re-ingesting a METADATA-ONLY source (no OA copy the first time) fetches and converts it, keeping its enrichment"
   ):
     wipe("zzacq_ingested")
-    val _ = handlers(oa = NoPdf).ingest(IngestRequest("10.1038/zztest001")).fold(e => fail(e.message), identity)
+    val _ = handlers(oa = NoPdf).ingest(Ingest.Request("10.1038/zztest001")).fold(e => fail(e.message), identity)
     SourceFixtures
-      .patch(ds, "zzacq_ingested", SourcePatch(notes = Some("Compiled.")), cfg.limits.chunkChars)
+      .patch(ds, "zzacq_ingested", Source.Patch(notes = Some("Compiled.")), cfg.limits.chunkChars)
       .fold(e => fail(e.message), identity)
     val jobs = RecordingJobs(); val pdf = CountingPdf()
     val r = handlers(oa = pdf, jobs = jobs)
-      .ingest(IngestRequest("10.16993/zzbay", citekey = Some("zzacq_ingested")))
+      .ingest(Ingest.Request("10.16993/zzbay", citekey = Some("zzacq_ingested")))
       .fold(e => fail(e.message), identity)
     assertEquals(pdf.calls.get, 1)
     assert(
@@ -657,13 +656,13 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
 
   test("re-ingesting a source that HAS its original fetches nothing and leaves the body; --refetch converts again"):
     wipe("zzacq_ingested")
-    val _ = handlers(oa = NoPdf).ingest(IngestRequest("10.1038/zztest001")).fold(e => fail(e.message), identity)
+    val _ = handlers(oa = NoPdf).ingest(Ingest.Request("10.1038/zztest001")).fold(e => fail(e.message), identity)
     SourceFixtures
-      .patch(ds, "zzacq_ingested", SourcePatch(body = Some("# The converted text")), cfg.limits.chunkChars)
+      .patch(ds, "zzacq_ingested", Source.Patch(body = Some("# The converted text")), cfg.limits.chunkChars)
       .fold(e => fail(e.message), identity)
     val jobs = RecordingJobs(); val pdf = CountingPdf()
     val r =
-      handlers(oa = pdf, jobs = jobs).ingest(IngestRequest("10.1038/zztest001")).fold(e => fail(e.message), identity)
+      handlers(oa = pdf, jobs = jobs).ingest(Ingest.Request("10.1038/zztest001")).fold(e => fail(e.message), identity)
     assertEquals(pdf.calls.get, 0, "nothing fetched")
     assertEquals(jobs.files.toArray.toList, List(None), "no file, so no OCR job")
     val fetch = r.steps.find(_.step == "fetch").get
@@ -676,7 +675,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assertEquals(SourceFixtures.load(ds, "zzacq_ingested").flatMap(_.ocrMarkdown), Some("# The converted text"))
     // asked for: fetched and handed to the job, which replaces the body
     val again = handlers(oa = pdf, jobs = jobs)
-      .ingest(IngestRequest("10.1038/zztest001", refetch = true))
+      .ingest(Ingest.Request("10.1038/zztest001", refetch = true))
       .fold(e => fail(e.message), identity)
     assertEquals(pdf.calls.get, 1)
     assert(jobs.files.toArray.toList.last.asInstanceOf[Option[FetchedCopy]].isDefined)
@@ -791,7 +790,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     val h = handlers()
     assert(h.assess(AssessRequest("this is not an id")).left.exists(_.message.contains("neither a DOI")))
     assert(h.refs(RefsRequest("also not an id")).isLeft)
-    assert(h.ingest(IngestRequest("")).isLeft)
+    assert(h.ingest(Ingest.Request("")).isLeft)
 
   test("a DOI no upstream knows is refused rather than stored as an `anonnd` junk source"):
     // the metadata guard, the counterpart of the Calibre one: no title upstream and no citekey given
@@ -801,14 +800,14 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       def references(doi: String) = Right(("crossref", Nil))
       def updates(doi: String) = Right(Nil)
     val h = handlers(blind)
-    val r = h.ingest(IngestRequest("10.1017/zzdoesnotexist"))
+    val r = h.ingest(Ingest.Request("10.1017/zzdoesnotexist"))
     assert(r.left.exists(_.message.contains("no upstream record")), r.toString)
     assert(SourceFixtures.load(ds, "anonnd").isEmpty, "no junk source may be created")
 
     // …but an explicit citekey is a deliberate act, so that DOES create the source
     wipe("zzacq_manual")
     val forced = h
-      .ingest(IngestRequest("10.1017/zzdoesnotexist", citekey = Some("zzacq_manual")))
+      .ingest(Ingest.Request("10.1017/zzdoesnotexist", citekey = Some("zzacq_manual")))
       .fold(e => fail(e.message), identity)
     assertEquals(forced.citekey, "zzacq_manual")
     assert(SourceFixtures.load(ds, "zzacq_manual").isDefined)

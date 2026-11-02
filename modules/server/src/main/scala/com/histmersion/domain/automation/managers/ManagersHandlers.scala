@@ -7,11 +7,11 @@ import com.augustnagro.magnum.{connect, transact}
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.workflows.AutomationHost
 
-import com.histmersion.api.{ApiError, Plural, Write}
+import com.histmersion.api.{Plural, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
-import com.histmersion.api.automation.GoalPlans.{LinkKind, Removed}
+import com.histmersion.api.automation.Goal.Plans.{LinkKind, Removed}
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.automation.managers.ManagerRepo
 
@@ -22,11 +22,12 @@ import com.histmersion.api.automation.{
   AgentScheduler,
   ApprovalDigest,
   Autopilot,
-  GoalPlans,
   ManagersMarkdown,
   ModelChains,
   Stalls
 }
+import com.histmersion.api.Api
+import com.histmersion.api.automation.Goal
 
 /** The ONE implementation of the process-manager operations (docs/research-process-managers.md §5): REST
   * ([[AgentsRoutes]]), the MCP tool `manager` ([[AgentsTools]]) and the CLI (over REST) call these. Reading and
@@ -48,8 +49,8 @@ final class ManagersHandlers(
     val st = status.map(_.trim).filter(_.nonEmpty)
     agents.runs.forManager(id.trim, limit = limits.page(limit, 50)).toList.filter(r => st.forall(_ == r.status))
 
-  private def notFound(what: String) = ApiError(what, Some(Write.CodeNotFound))
-  private def conflict(m: String) = ApiError(m, Some(AgentsApi.CodeConflict))
+  private def notFound(what: String) = Api.Error(what, Some(Write.CodeNotFound))
+  private def conflict(m: String) = Api.Error(m, Some(AgentsApi.CodeConflict))
 
   private def kindOf(m: ManagerInfo): Kind = Kind.parse(m.kind).getOrElse(Kind.Review)
 
@@ -71,7 +72,7 @@ final class ManagersHandlers(
     if kindOf(m) != Kind.Watch then e
     else backlog.get(m.id).fold(e)((n, days) => e.copy(backlog = n, backlogDays = days))
 
-  private def manager(id: String): Either[ApiError, ManagerInfo] =
+  private def manager(id: String): Either[Api.Error, ManagerInfo] =
     agents.managerStore
       .get(id.trim)
       .map(m => withEffective(m, backlogs()))
@@ -81,7 +82,7 @@ final class ManagersHandlers(
     lazy val snap = backlogs()
     agents.managerStore.list().map(withEffective(_, snap))
 
-  def get(id: String): Either[ApiError, ManagerDetail] =
+  def get(id: String): Either[Api.Error, ManagerDetail] =
     manager(id).map { m =>
       ManagerDetail(
         m,
@@ -103,17 +104,17 @@ final class ManagersHandlers(
   def create(
       in: ManagerCreate,
       now: java.time.Instant = java.time.Instant.now(agents.clock)
-  ): Either[ApiError, ManagerInfo] =
+  ): Either[Api.Error, ManagerInfo] =
     // created paused unless asked otherwise — or, when nothing is asked, while the autopilot runs the goals
     val state =
       if in.paused.contains(false) || (in.paused.isEmpty && agents.autopilot.on) then State.Active else State.Paused
     val goal = in.goal.map(_.trim).filter(_.nonEmpty)
-    def make(k: Kind, id: String, g: Option[String], cron: Option[String] = None): Either[ApiError, ManagerInfo] =
+    def make(k: Kind, id: String, g: Option[String], cron: Option[String] = None): Either[Api.Error, ManagerInfo] =
       for
         _ <- validate(k, in.config)
         c <- cron
           .filter(_.trim.nonEmpty)
-          .fold[Either[ApiError, Option[Cron]]](Right(None))(t => checkCron(k, t, now).map(Some(_)))
+          .fold[Either[Api.Error, Option[Cron]]](Right(None))(t => checkCron(k, t, now).map(Some(_)))
         _ <- Either.cond(
           agents.managerStore.create(id, k, g, state, in.config, c.map(_.text), c.flatMap(_.next(now))),
           (),
@@ -135,15 +136,15 @@ final class ManagersHandlers(
       yield m
     Kind.parse(in.kind) match
       case None =>
-        Left(ApiError(s"unknown manager kind '${in.kind}' (one of: ${Kind.values.map(_.wire).mkString(", ")})"))
+        Left(Api.Error(s"unknown manager kind '${in.kind}' (one of: ${Kind.values.map(_.wire).mkString(", ")})"))
       case Some(Kind.Review) if goal.isDefined =>
-        Left(ApiError("the review manager is library-wide: give no goal (narrow it with config includeGoal)"))
+        Left(Api.Error("the review manager is library-wide: give no goal (narrow it with config includeGoal)"))
       case Some(Kind.Review)                   => make(Kind.Review, ReviewId, None)
-      case Some(Kind.Enrich) if goal.isDefined => Left(ApiError("the enrich manager is library-wide: give no goal"))
+      case Some(Kind.Enrich) if goal.isDefined => Left(Api.Error("the enrich manager is library-wide: give no goal"))
       case Some(Kind.Enrich)                   => make(Kind.Enrich, EnrichId, None)
       case Some(Kind.Seed)                     =>
         for
-          g <- goal.toRight(ApiError("a seeding manager is for one research area: give its goal"))
+          g <- goal.toRight(Api.Error("a seeding manager is for one research area: give its goal"))
           gl <- host.goal(g)
           m <- make(Kind.Seed, seedId(gl.slug), Some(gl.slug))
           _ <- addItem(m.id, EnqueueRequest(ProposeArticles, gl.slug))
@@ -151,7 +152,7 @@ final class ManagersHandlers(
         yield out
       case Some(Kind.Watch) =>
         for
-          g <- goal.toRight(ApiError("a watcher is for one research area: give its goal"))
+          g <- goal.toRight(Api.Error("a watcher is for one research area: give its goal"))
           gl <- host.goal(g)
           m <- make(
             Kind.Watch,
@@ -173,7 +174,7 @@ final class ManagersHandlers(
       id: String,
       in: ManagerUpdate,
       now: java.time.Instant = java.time.Instant.now(agents.clock)
-  ): Either[ApiError, ManagerInfo] =
+  ): Either[Api.Error, ManagerInfo] =
     for
       m <- manager(id)
       c = in.config.getOrElse(m.config)
@@ -203,21 +204,21 @@ final class ManagersHandlers(
       out
 
   /** A cron a person sets on a manager of kind `k`: the enrich manager has none (ingests feed it). */
-  private def checkCron(k: Kind, text: String, now: java.time.Instant): Either[ApiError, Cron] =
+  private def checkCron(k: Kind, text: String, now: java.time.Instant): Either[Api.Error, Cron] =
     if k == Kind.Enrich then
-      Left(ApiError("the enrich manager has no cron: the ingests and the Enrich buttons feed it"))
-    else ManagerPolicy.checkCron(text, now, cfg.scheduler.minIntervalMinutes).left.map(ApiError(_))
+      Left(Api.Error("the enrich manager has no cron: the ingests and the Enrich buttons feed it"))
+    else ManagerPolicy.checkCron(text, now, cfg.scheduler.minIntervalMinutes).left.map(Api.Error(_))
 
   /** The rounds within the cap, every model override for a role the manager's pipelines use. */
-  private def validate(k: Kind, c: ManagerConfig): Either[ApiError, Unit] =
+  private def validate(k: Kind, c: ManagerConfig): Either[Api.Error, Unit] =
     val roles = supervisor.roles(k)
     c.models
       .getOrElse(Nil)
-      .foldLeft[Either[ApiError, Unit]](
+      .foldLeft[Either[Api.Error, Unit]](
         Either.cond(
           c.rounds.forall(r => r >= 2 && r <= agents.roundsCap),
           (),
-          ApiError(s"rounds must be between 2 and ${agents.roundsCap} (agents.review.rounds-cap)")
+          Api.Error(s"rounds must be between 2 and ${agents.roundsCap} (agents.review.rounds-cap)")
         )
       ) { (acc, o) =>
         acc.flatMap(_ =>
@@ -225,7 +226,7 @@ final class ManagersHandlers(
             .parse(o.role)
             .filter(roles.contains)
             .toRight(
-              ApiError(
+              Api.Error(
                 s"models: '${o.role}' is not a role a ${k.wire} manager runs (${roles.map(_.wire).mkString(", ")})"
               )
             )
@@ -233,13 +234,13 @@ final class ManagersHandlers(
               ModelChains
                 .parseChain(o.model, agents.knownProviders)
                 .left
-                .map(e => ApiError(s"models ${o.role}: $e"))
+                .map(e => Api.Error(s"models ${o.role}: $e"))
                 .map(_ => ())
             )
         )
       }
 
-  def delete(id: String): Either[ApiError, Removed] =
+  def delete(id: String): Either[Api.Error, Removed] =
     manager(id).map { m =>
       inFlight(m.id).foreach(r => agents.engine.cancel(r.id))
       Removed(Transactor(ds).transact(ManagerRepo.delete(m.id)))
@@ -251,7 +252,7 @@ final class ManagersHandlers(
     * runs are paused too, cooperatively); resume reverses both (only the runs paused on request); stop cancels its
     * in-flight runs and its open items.
     */
-  def action(id: String, action: String, runs: Option[Boolean]): Either[ApiError, ManagerInfo] =
+  def action(id: String, action: String, runs: Option[Boolean]): Either[Api.Error, ManagerInfo] =
     manager(id).flatMap { m =>
       val withRuns = runs.contains(true)
       action.trim.toLowerCase match
@@ -300,12 +301,12 @@ final class ManagersHandlers(
             s"stopped by a person: ${Plural.count(cancelled, "run")} cancelled, ${Plural.count(items, "item")} cancelled"
           )
           manager(m.id)
-        case other => Left(ApiError(s"unknown action '$other' (one of: ${Actions.mkString(", ")})"))
+        case other => Left(Api.Error(s"unknown action '$other' (one of: ${Actions.mkString(", ")})"))
     }
 
   // ── items ──────────────────────────────────────────────────────────────────────────────────────
 
-  def items(id: String, status: Option[String], offset: Option[Int], limit: Option[Int]): Either[ApiError, ItemPage] =
+  def items(id: String, status: Option[String], offset: Option[Int], limit: Option[Int]): Either[Api.Error, ItemPage] =
     for
       m <- manager(id)
       st <- status.map(_.trim).filter(_.nonEmpty) match
@@ -313,7 +314,7 @@ final class ManagersHandlers(
           ItemStatus
             .parse(s)
             .map(Some(_))
-            .toRight(ApiError(s"unknown item status '$s' (one of: ${ItemStatus.values.map(_.wire).mkString(", ")})"))
+            .toRight(Api.Error(s"unknown item status '$s' (one of: ${ItemStatus.values.map(_.wire).mkString(", ")})"))
         case None => Right(None)
     yield
       val (off, lim) = (math.max(0, offset.getOrElse(0)), limits.page(limit, 25))
@@ -321,7 +322,7 @@ final class ManagersHandlers(
       ItemPage(withRuns(rows), total, off, lim)
 
   /** The item an id or a target names, in manager `m` (its default item kind first, then the others). */
-  private def itemOf(m: ManagerInfo, ref: String): Either[ApiError, ManagerItem] =
+  private def itemOf(m: ManagerInfo, ref: String): Either[Api.Error, ManagerItem] =
     val r = ref.trim
     r.toLongOption
       .flatMap(agents.managerStore.item(_))
@@ -335,20 +336,20 @@ final class ManagersHandlers(
   /** A target as an item of `kind` names it: an article's slug, a source's citekey, the goal (a seeding manager's own).
     * A compile item is never added by hand: it comes from an approved plan.
     */
-  private def targetOf(m: ManagerInfo, kind: String, raw: String): Either[ApiError, String] =
+  private def targetOf(m: ManagerInfo, kind: String, raw: String): Either[Api.Error, String] =
     kinds.find(_.items.contains(kind)) match
       case Some(k) => k.target(m, kind, raw)
-      case None    => Left(ApiError(s"unknown item kind '$kind'"))
+      case None    => Left(Api.Error(s"unknown item kind '$kind'"))
 
   /** Add (or bring back) a target: `in.kind` names the item kind (`review`, `extend`, `filter`, `enrich`, `propose`, or
     * the kind itself; blank = the manager's default). An article's review whose article records no filter brings an
     * infer-filter item with it (the review manager's `inferFilter`).
     */
-  def addItem(id: String, in: EnqueueRequest, origin: ItemOrigin = ItemOrigin.Person): Either[ApiError, ManagerItem] =
+  def addItem(id: String, in: EnqueueRequest, origin: ItemOrigin = ItemOrigin.Person): Either[Api.Error, ManagerItem] =
     for
       m <- manager(id)
       kind <- itemKindOf(kindOf(m), in.kind).toRight(
-        ApiError(s"manager ${m.id} drives ${itemKinds(kindOf(m)).mkString(", ")} items, not '${in.kind}'")
+        Api.Error(s"manager ${m.id} drives ${itemKinds(kindOf(m)).mkString(", ")} items, not '${in.kind}'")
       )
       target <- targetOf(m, kind, in.target)
       prio = in.priority.getOrElse(ManagerSupervisor.PersonPriority)
@@ -371,10 +372,12 @@ final class ManagersHandlers(
     * source or the unenriched sources an article cites or a goal links (the enrich manager), `seed` a research area
     * (its seeding manager proposes its next articles). A manager that does not exist yet is created PAUSED.
     */
-  def enqueue(in: EnqueueRequest): Either[ApiError, EnqueueResult] =
+  def enqueue(in: EnqueueRequest): Either[Api.Error, EnqueueResult] =
     EnqueueKind.parse(in.kind) match
       case None =>
-        Left(ApiError(s"nothing manages '${in.kind}' items (one of: ${EnqueueKind.values.map(_.wire).mkString(", ")})"))
+        Left(
+          Api.Error(s"nothing manages '${in.kind}' items (one of: ${EnqueueKind.values.map(_.wire).mkString(", ")})")
+        )
       case Some(EnqueueKind.Review) =>
         supervisor.ensureDefaults()
         addItem(ReviewId, in.copy(kind = ArticleReview)).map(i => EnqueueResult(ReviewId, List(i)))
@@ -397,7 +400,7 @@ final class ManagersHandlers(
             EnqueueResult(EnrichId, items, skipped)
           }
 
-  def patchItem(id: String, ref: String, in: ItemPatch): Either[ApiError, ManagerItem] =
+  def patchItem(id: String, ref: String, in: ItemPatch): Either[Api.Error, ManagerItem] =
     for
       m <- manager(id)
       i <- itemOf(m, ref)
@@ -409,11 +412,11 @@ final class ManagersHandlers(
             in.reason.getOrElse("held by a person")
           )
           for
-            _ <- h.until.fold[Either[ApiError, Unit]](Right(()))(u =>
+            _ <- h.until.fold[Either[Api.Error, Unit]](Right(()))(u =>
               ManagerPolicy
                 .parseInstant(u)
                 .map(_ => ())
-                .toRight(ApiError(s"'$u' is not a date (2026-11-01) or an instant"))
+                .toRight(Api.Error(s"'$u' is not a date (2026-11-01) or an instant"))
             )
             _ <- Either.cond(
               transact(ds)(ManagerRepo.hold(i.id, h)),
@@ -443,7 +446,7 @@ final class ManagersHandlers(
               agents.managerStore.event(m.id, Some(i.id), None, Feed.Held, s"${i.target}: released by a person")
             )
         case "priority" =>
-          in.priority.toRight(ApiError("give `priority`")).map { p =>
+          in.priority.toRight(Api.Error("give `priority`")).map { p =>
             Transactor(ds).transact(ManagerRepo.setPriority(i.id, p))
             agents.managerStore.event(m.id, Some(i.id), None, Feed.Hint, s"${i.target}: priority $p")
           }
@@ -471,7 +474,7 @@ final class ManagersHandlers(
             .map(_ =>
               agents.managerStore.event(m.id, Some(i.id), None, Feed.Evaluated, s"${i.target}: re-opened by a person")
             )
-        case other => Left(ApiError(s"unknown item action '$other' (one of: ${ItemPatch.Actions.mkString(", ")})"))
+        case other => Left(Api.Error(s"unknown item action '$other' (one of: ${ItemPatch.Actions.mkString(", ")})"))
       out <- agents.managerStore.item(i.id).toRight(notFound(s"item ${i.id} vanished"))
     yield
       supervisor.nudge()
@@ -479,7 +482,7 @@ final class ManagersHandlers(
 
   // ── hints ──────────────────────────────────────────────────────────────────────────────────────
 
-  def hints(id: String, all: Boolean): Either[ApiError, List[ManagerHint]] =
+  def hints(id: String, all: Boolean): Either[Api.Error, List[ManagerHint]] =
     manager(id).map(m => Transactor(ds).read(ManagerRepo.hints(m.id, live = !all)))
 
   /** A hint: its text reaches the next runs' fixer and skeptic as the person's notes (a once-hint the next run only).
@@ -489,23 +492,23 @@ final class ManagersHandlers(
     * ([[applyProposal]]). `suggest` asks the server's planner model to read the text and propose the action (a
     * `hint-effect` run, started for the person; its proposal waits for approval the same way).
     */
-  def addHint(id: String, in: HintAdd): Either[ApiError, ManagerHint] =
+  def addHint(id: String, in: HintAdd): Either[Api.Error, ManagerHint] =
     val propose = in.propose.contains(true)
     val suggest = in.suggest.contains(true)
     for
       m <- manager(id)
-      text <- Option(in.text.trim).filter(_.nonEmpty).toRight(ApiError("a hint needs text"))
+      text <- Option(in.text.trim).filter(_.nonEmpty).toRight(Api.Error("a hint needs text"))
       item <- in.item
         .map(_.trim)
         .filter(_.nonEmpty)
-        .fold[Either[ApiError, Option[ManagerItem]]](Right(None))(r => itemOf(m, r).map(Some(_)))
-      eff <- in.effect.fold[Either[ApiError, Option[HintEffect]]](Right(None))(e =>
+        .fold[Either[Api.Error, Option[ManagerItem]]](Right(None))(r => itemOf(m, r).map(Some(_)))
+      eff <- in.effect.fold[Either[Api.Error, Option[HintEffect]]](Right(None))(e =>
         checkEffect(m, e, item, propose).map(Some(_))
       )
       _ <- Either.cond(
         !(suggest && eff.isDefined),
         (),
-        ApiError("`suggest` asks a model for the action: give no effect with it")
+        Api.Error("`suggest` asks a model for the action: give no effect with it")
       )
       // a suggestion needs a run that can start: checked before the hint is recorded
       _ <- if suggest then agents.prepare(RunRequest(Pipeline.HintEffect.wire, m.id), None).map(_ => ()) else Right(())
@@ -550,12 +553,12 @@ final class ManagersHandlers(
       e: HintEffect,
       item: Option[ManagerItem],
       proposal: Boolean
-  ): Either[ApiError, HintEffect] =
+  ): Either[Api.Error, HintEffect] =
     val a = e.action.trim.toLowerCase
     val allowed = if proposal then HintEffect.Proposable else HintEffect.Actions
     if !allowed.contains(a) then
       Left(
-        ApiError(
+        Api.Error(
           s"unknown hint action '${e.action}' (one of: ${allowed.mkString(", ")})" +
             (if !proposal && a == HintEffect.Config then " — change the settings with the manager's config instead"
              else "")
@@ -564,14 +567,14 @@ final class ManagersHandlers(
     else if a == HintEffect.Config then
       e.config
         .filter(c => ManagersMarkdown.configLine(c) != "the defaults")
-        .toRight(ApiError("a config action names the settings it changes"))
+        .toRight(Api.Error("a config action names the settings it changes"))
         .flatMap(c => validate(kindOf(m), m.config.merge(c)).map(_ => e.copy(action = a)))
     else if e.targets.isEmpty && e.tag.isEmpty && e.topic.isEmpty && e.goal.isEmpty && item.isEmpty then
-      Left(ApiError("a structured hint names its targets, a tag, a topic or a goal (or is about one item)"))
+      Left(Api.Error("a structured hint names its targets, a tag, a topic or a goal (or is about one item)"))
     else if a == HintEffect.HoldAction && e.until.isEmpty && e.untilSource.isEmpty then
-      Left(ApiError("a hold hint needs `until` (a date) or `untilSource` (a DOI or citekey)"))
+      Left(Api.Error("a hold hint needs `until` (a date) or `untilSource` (a DOI or citekey)"))
     else if e.until.exists(u => ManagerPolicy.parseInstant(u).isEmpty) then
-      Left(ApiError(s"'${e.until.getOrElse("")}' is not a date (2026-11-01) or an instant"))
+      Left(Api.Error(s"'${e.until.getOrElse("")}' is not a date (2026-11-01) or an instant"))
     else Right(e.copy(action = a, targets = (e.targets ++ item.map(_.target).toList).distinct))
 
   /** A model's effect, recorded for a person: an open `hint-effect` approval about the manager. */
@@ -660,7 +663,7 @@ final class ManagersHandlers(
       case _ => 0
     s" — ${e.action}: ${Plural.count(n, "item")}"
 
-  def deleteHint(id: String, hint: Long): Either[ApiError, Removed] =
+  def deleteHint(id: String, hint: Long): Either[Api.Error, Removed] =
     manager(id).map { m =>
       val gone = Transactor(ds).transact(ManagerRepo.retireHint(m.id, hint))
       if gone then agents.managerStore.event(m.id, None, None, Feed.Hint, s"hint #$hint retired by a person")
@@ -672,7 +675,7 @@ final class ManagersHandlers(
   /** A goal's schedules (every goal's: None) as the goal surfaces show them — its watcher's sweeps
     * ([[WatchSchedules.view]]), and any `goal_schedules` row the managers have not moved yet.
     */
-  def goalSchedules(goal: Option[String]): List[GoalPlans.GoalSchedule] =
+  def goalSchedules(goal: Option[String]): List[Goal.Plans.GoalSchedule] =
     agents.managerStore
       .list()
       .filter(m => m.kind == Kind.Watch.wire && goal.forall(g => m.goal.contains(g)))
@@ -688,14 +691,14 @@ final class ManagersHandlers(
     */
   def setSchedule(
       goal: String,
-      kind: GoalPlans.ScheduleKind,
-      in: GoalPlans.ScheduleSet,
+      kind: Goal.Plans.ScheduleKind,
+      in: Goal.Plans.ScheduleSet,
       now: java.time.Instant
-  ): Either[ApiError, GoalPlans.GoalSchedule] =
+  ): Either[Api.Error, Goal.Plans.GoalSchedule] =
     val id = watchId(goal)
     val sw = WatchSchedules.sweepOf(kind)
     for
-      cron <- ManagerPolicy.checkCron(in.cron, now, cfg.scheduler.minIntervalMinutes).left.map(ApiError(_))
+      cron <- ManagerPolicy.checkCron(in.cron, now, cfg.scheduler.minIntervalMinutes).left.map(Api.Error(_))
       _ = agents.managerStore.get(id) match
         case None =>
           val c = ManagerConfig(sweeps = Some(if in.enabled then List(sw.wire) else Nil), budgetUsd = in.budgetUsd)
@@ -735,12 +738,12 @@ final class ManagersHandlers(
       WatchSchedules
         .view(m, Transactor(ds).read(ManagerRepo.itemPage(id, None, 0, 20))._1)
         .find(_.kind == kind)
-        .getOrElse(GoalPlans.GoalSchedule(goal, kind, cron.text, enabled = false, in.budgetUsd))
+        .getOrElse(Goal.Plans.GoalSchedule(goal, kind, cron.text, enabled = false, in.budgetUsd))
 
   /** `DELETE /api/goals/{slug}/schedules/{kind}` — the sweep leaves the watcher (its open item is cancelled); the
     * watcher itself stays.
     */
-  def removeSchedule(goal: String, kind: GoalPlans.ScheduleKind): GoalPlans.Removed =
+  def removeSchedule(goal: String, kind: Goal.Plans.ScheduleKind): Goal.Plans.Removed =
     val legacy = agents.goals.removeSchedule(goal, kind)
     val sw = WatchSchedules.sweepOf(kind)
     val fromWatcher = agents.managerStore.get(watchId(goal)).filter(m => Sweep.of(m.config).contains(sw)).exists { m =>
@@ -762,7 +765,7 @@ final class ManagersHandlers(
       )
       true
     }
-    GoalPlans.Removed(legacy || fromWatcher)
+    Goal.Plans.Removed(legacy || fromWatcher)
 
   /** A sweep the watcher no longer runs: its pending or held item is cancelled (a running one finishes). */
   private def cancelSweep(m: ManagerInfo, sw: Sweep, why: String): Unit =
@@ -783,11 +786,11 @@ final class ManagersHandlers(
   def scheduler(limit: Option[Int]): AgentScheduler.SchedulerStatus = agents.scheduler.status(limit)
 
   /** `POST /api/agents/scheduler {strategy}` — switch the strategy live. */
-  def setScheduler(in: AgentScheduler.SchedulerSet): Either[ApiError, AgentScheduler.SchedulerStatus] =
+  def setScheduler(in: AgentScheduler.SchedulerSet): Either[Api.Error, AgentScheduler.SchedulerStatus] =
     agents.scheduler.set(in)
 
   /** `POST /api/agents/autopilot/drain {on}`. */
-  def drain(in: Autopilot.DrainSet): Either[ApiError, Autopilot.EngineStatus] = Right(agents.drain.set(in))
+  def drain(in: Autopilot.DrainSet): Either[Api.Error, Autopilot.EngineStatus] = Right(agents.drain.set(in))
 
   /** `GET /api/agents/stalls[?days=]` — readable with agents off. */
   def stalls(days: Option[Int]): Stalls.StallReport = agents.scheduler.stalls(days)
@@ -796,22 +799,22 @@ final class ManagersHandlers(
   def digest: ApprovalDigest.Digest = agents.digest.digest()
 
   /** `POST /api/agents/approvals/decide` — a whole group at once. */
-  def decideAll(in: ApprovalDigest.BulkDecide): Either[ApiError, ApprovalDigest.BulkResult] =
+  def decideAll(in: ApprovalDigest.BulkDecide): Either[Api.Error, ApprovalDigest.BulkResult] =
     agents.digest.decideAll(in)
 
   /** `GET /api/agents/scheduler/why/{item}`. */
-  def schedulerWhy(item: String): Either[ApiError, AgentScheduler.WhyInfo] = agents.scheduler.why(item)
+  def schedulerWhy(item: String): Either[Api.Error, AgentScheduler.WhyInfo] = agents.scheduler.why(item)
 
   /** `POST /api/agents/autopilot/focus {action, goal?, value?}` — pin, unpin, priority, max. */
-  def setFocus(in: Autopilot.FocusSet): Either[ApiError, Autopilot.FocusInfo] = agents.focus.set(in)
+  def setFocus(in: Autopilot.FocusSet): Either[Api.Error, Autopilot.FocusInfo] = agents.focus.set(in)
 
   /** `POST /api/agents/autopilot/mode {mode}` — the three-way control ([[AgentMode]]): the autopilot and the drain
     * moved, in order, to what the mode stands for. Idempotent.
     */
-  def setMode(in: AgentMode.ModeSet): Either[ApiError, Autopilot.EngineStatus] =
+  def setMode(in: AgentMode.ModeSet): Either[Api.Error, Autopilot.EngineStatus] =
     AgentMode
       .parse(in.mode)
-      .toRight(ApiError(s"unknown mode '${in.mode}' — one of: ${AgentMode.values.map(_.wire).mkString(", ")}"))
+      .toRight(Api.Error(s"unknown mode '${in.mode}' — one of: ${AgentMode.values.map(_.wire).mkString(", ")}"))
       .map { to =>
         val now = agents.autopilot.status()
         val by = in.by.map(_.trim).filter(_.nonEmpty).orElse(Some("person"))
@@ -823,12 +826,12 @@ final class ManagersHandlers(
       }
 
   /** `POST /api/agents/autopilot {on}` — idempotent; the answer says what it did. */
-  def setAutopilot(in: Autopilot.AutopilotSet): Either[ApiError, Autopilot.EngineStatus] =
+  def setAutopilot(in: Autopilot.AutopilotSet): Either[Api.Error, Autopilot.EngineStatus] =
     Right(agents.autopilot.set(in))
 
   // ── events ─────────────────────────────────────────────────────────────────────────────────────
 
-  def events(id: String, before: Option[Long], limit: Option[Int]): Either[ApiError, EventPage] =
+  def events(id: String, before: Option[Long], limit: Option[Int]): Either[Api.Error, EventPage] =
     manager(id).map { m =>
       val lim = limits.page(limit, 50)
       val es = connect(ds)(ManagerRepo.events(m.id, before, lim))

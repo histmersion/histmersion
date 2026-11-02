@@ -7,7 +7,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.instance.{About, AboutMarkdown}
 import com.histmersion.api.jobs.JobState
-import com.histmersion.api.maintenance.{Storage, StorageReport}
+import com.histmersion.api.maintenance.Storage
 import com.histmersion.api.plugins.{PluginsReport, PluginState}
 
 /** The About window: `GET /api/about` — the server's build, its health, the job queue, the newest backup and how big
@@ -107,7 +107,7 @@ object AboutView:
     * to delete when it runs low). Nothing from an older server; "measuring…" while the first measurement runs (the
     * window asks again).
     */
-  private[web] def storage(r: StorageReport): List[Section] =
+  private[web] def storage(r: Storage.Report): List[Section] =
     if r.entries.isEmpty && !r.measuring && r.problems.isEmpty then Nil
     else
       val when = (r.ageSeconds.map(s => s"measured ${AboutMarkdown.age(s)} ago") ++

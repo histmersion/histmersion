@@ -17,16 +17,6 @@ import com.histmersion.util.data.exchange.{
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.Plural
 import com.histmersion.api.exchange.{
-  BundleAlias,
-  BundleArticle,
-  BundleEdge,
-  BundleGoal,
-  BundleGoalLink,
-  BundleInstance,
-  BundleManifest,
-  BundleQueueItem,
-  BundleReference,
-  BundleSource,
   IssueCondition,
   IssueDetail,
   IssueField,
@@ -36,7 +26,6 @@ import com.histmersion.api.exchange.{
   MatchCounts,
   MergeDecision,
   MergeIssue,
-  MergeIssueDetail,
   MergePlan,
   MergeResolutions,
   MergeTally
@@ -119,8 +108,8 @@ object MergePlanner:
   )
 
   final case class Input(
-      manifest: BundleManifest,
-      here: BundleInstance,
+      manifest: com.histmersion.api.exchange.Bundle.Manifest,
+      here: com.histmersion.api.exchange.Bundle.Instance,
       /** Format and schema against this server (`BundleFormat.compatible`). */
       compat: List[String],
       /** What reading the bundle found wrong (bad lines, checksums, missing blobs). */
@@ -135,13 +124,13 @@ object MergePlanner:
         */
       local: BundleEntities,
       /** Every source here, for the matcher. */
-      sources: List[BundleSource],
+      sources: List[com.histmersion.api.exchange.Bundle.Source],
       labels: Labels,
       /** Uids alive here, among those the bundle's lines refer to. */
       live: Set[UUID],
       /** Gazetteer ids present here, among those the bundle's events name. */
       places: Set[String],
-      reference: BundleReference,
+      reference: com.histmersion.api.exchange.Bundle.Reference,
       /** Old citekeys dropped here by renaming back (V050), with when — ISO-8601 UTC, as bundle timestamps are written,
         * so the two compare as strings.
         */
@@ -205,7 +194,7 @@ object MergePlanner:
       snapshots: Set[UUID] = Set.empty,
       versions: List[ExtraVersion] = Nil,
       /** Articles added beside one here (`both` on an article changed on both sides): a new record. */
-      copies: List[BundleArticle] = Nil,
+      copies: List[com.histmersion.api.exchange.Bundle.Article] = Nil,
       attestations: List[AttestationFix] = Nil,
       /** Bundle records left out for good (an attestation dropped): recorded as deleted here, so the next plan does not
         * bring them back. (uid, kind, origin.)
@@ -363,7 +352,7 @@ object MergePlanner:
   private def relinkGoals(es: BundleEntities, in: Input): BundleEntities =
     val citekeys = in.sources.map(s => s.uid -> s.citekey).toMap ++ es.sources.map(s => s.uid -> s.citekey)
     val slugs = in.local.articles.map(a => a.uid -> a.slug).toMap ++ es.articles.map(a => a.uid -> a.slug)
-    def label(k: BundleGoalLink): Option[String] = k.kind match
+    def label(k: com.histmersion.api.exchange.Bundle.GoalLink): Option[String] = k.kind match
       case "source"  => k.refUid.flatMap(citekeys.get)
       case "article" => k.refUid.flatMap(slugs.get)
       case _         => None
@@ -507,13 +496,13 @@ object MergePlanner:
                 s"old citekey ${a.alias} names ${src.fold(a.sourceUid.toString)(_.citekey)} in the bundle, " +
                   s"but ${sourcesByUid.get(o).fold(o.toString)(_.citekey)} here" + (if asCitekey then " (its citekey)"
                                                                                     else ""),
-                sourcesByUid.get(o).map(MergeIssueDetail.side),
-                src.map(MergeIssueDetail.side),
+                sourcesByUid.get(o).map(MergeIssue.Detail.side),
+                src.map(MergeIssue.Detail.side),
                 List("keep-left drops the bundle's old citekey; this collection's meaning stays"),
                 if asCitekey then List(km.KeepLeft) else lr,
                 Some(MergeDecision.of(km.KeepLeft)),
                 cond,
-                detail = sourcesByUid.get(o).zip(src).map((x, y) => IssueDetail(MergeIssueDetail.sourceFields(x, y)))
+                detail = sourcesByUid.get(o).zip(src).map((x, y) => IssueDetail(MergeIssue.Detail.sourceFields(x, y)))
               ),
               Set(km.KeepLeft)
             )
@@ -588,7 +577,7 @@ object MergePlanner:
     val localQueue = in.local.queue.map(q => q.uid -> q).toMap
     val rawArticle = fes.articles.map(a => a.uid -> a).toMap
     def foreignHistory(f: UUID): Set[String] = fes.versions.filter(_.articleUid == f).map(_.bodySha256).toSet
-    def outcome(local: BundleArticle, foreignUid: UUID): ArticleOutcome =
+    def outcome(local: com.histmersion.api.exchange.Bundle.Article, foreignUid: UUID): ArticleOutcome =
       MergeFold.articleOutcome(
         local.body,
         in.articleHistory.getOrElse(local.uid, Nil),
@@ -913,7 +902,7 @@ object MergePlanner:
               detail = Some(
                 IssueDetail(fields =
                   List(
-                    IssueField("plan", l.plan.map(MergeIssueDetail.planText), r.plan.map(MergeIssueDetail.planText)),
+                    IssueField("plan", l.plan.map(MergeIssue.Detail.planText), r.plan.map(MergeIssue.Detail.planText)),
                     IssueField("approved", l.planApprovedAt, r.planApprovedAt)
                   )
                 )
@@ -1046,9 +1035,9 @@ object MergePlanner:
     val foldMap = scala.collection.mutable.LinkedHashMap.empty[UUID, (UUID, Bundle.Kind)]
     val overrides = scala.collection.mutable.Map.empty[UUID, Decision]
     type Line[A] = BundleEntities => A
-    val articleLine = scala.collection.mutable.Map.empty[UUID, Line[BundleArticle]]
-    val goalLine = scala.collection.mutable.Map.empty[UUID, Line[BundleGoal]]
-    val queueLine = scala.collection.mutable.Map.empty[UUID, Line[BundleQueueItem]]
+    val articleLine = scala.collection.mutable.Map.empty[UUID, Line[com.histmersion.api.exchange.Bundle.Article]]
+    val goalLine = scala.collection.mutable.Map.empty[UUID, Line[com.histmersion.api.exchange.Bundle.Goal]]
+    val queueLine = scala.collection.mutable.Map.empty[UUID, Line[com.histmersion.api.exchange.Bundle.QueueItem]]
     def articleIn(es: BundleEntities, u: UUID) = es.articles.find(_.uid == u).get
     def goalIn(es: BundleEntities, u: UUID) = es.goals.find(_.uid == u).get
     def queueIn(es: BundleEntities, u: UUID) = es.queue.find(_.uid == u).get
@@ -1056,7 +1045,7 @@ object MergePlanner:
     val renames = List.newBuilder[(UUID, String, String)]
     val snapshots = scala.collection.mutable.LinkedHashSet.empty[UUID]
     val versions = List.newBuilder[ExtraVersion]
-    val copies = List.newBuilder[Line[BundleArticle]]
+    val copies = List.newBuilder[Line[com.histmersion.api.exchange.Bundle.Article]]
     val reviews = scala.collection.mutable.LinkedHashSet.empty[String]
     var tally = MergeTally() // the apply's report, added to as each fold is decided
     def fold(f: UUID, l: UUID, kind: Bundle.Kind): Unit = foldMap(f) = l -> kind
@@ -1247,7 +1236,7 @@ object MergePlanner:
       Option.when(
         raw.citekey != finalCitekey(f) && !citekeysHere(raw.citekey) &&
           in.labels.aliases.get(raw.citekey).forall(_ == l) && !fes.aliases.exists(_.alias == raw.citekey)
-      )(BundleAlias(raw.citekey, l, raw.updatedAt))
+      )(com.histmersion.api.exchange.Bundle.Alias(raw.citekey, l, raw.updatedAt))
     }
     // …and where it cannot, it is said
     foldedSources.foreach { (f, l) =>
@@ -1337,7 +1326,7 @@ object MergePlanner:
     val dropped = run.dropped // bundle uids left out for good
     val finalRevs = finalEs.revs
     // a merged source whose own line is unchanged is still written when its edge set grows
-    def edgeSet(es: List[BundleEdge], u: UUID) = es.filter(_.srcUid == u).toSet
+    def edgeSet(es: List[com.histmersion.api.exchange.Bundle.Edge], u: UUID) = es.filter(_.srcUid == u).toSet
     val edgesGrow: Set[UUID] = foldedHere.filter(u =>
       edgeSet(finalEs.edges, u) != edgeSet(in.local.edges, u) ||
         finalEs.unresolvedEdges.filter(_.srcUid == u).toSet != in.local.unresolvedEdges.filter(_.srcUid == u).toSet
@@ -1482,7 +1471,7 @@ object MergePlanner:
     // ── counts and info ──
     @annotation.tailrec
     def countMatches(
-        rest: List[BundleSource],
+        rest: List[com.histmersion.api.exchange.Bundle.Source],
         byUid: Int,
         byLedger: Int,
         byStrongKey: Int,
@@ -1540,7 +1529,7 @@ object MergePlanner:
         case Merges.GoalFold =>
           info += s"goal $label: the same goal on both sides — the status further along, notes joined"
         case Merges.QueueFold =>
-          info += s"queue item «${MergeIssueDetail.preview(label, 50)}»: the same item on both sides — one item, done if done anywhere"
+          info += s"queue item «${MergeIssue.Detail.preview(label, 50)}»: the same item on both sides — one item, done if done anywhere"
         case Merges.Contributed(m) => info += m.info(label, rawRevs.get(f).fold("")(_.label))
     }
     val problems = (in.compat ++ in.readProblems ++ fatal.result()).distinct

@@ -2,8 +2,8 @@ package com.histmersion.domain
 
 import scala.annotation.tailrec
 import com.histmersion.api.ListPatch
-import com.histmersion.api.library.{FindingInput, FindingsPatch, MetadataPatch, SourcePatch, WorkRef}
-import com.histmersion.api.catalogue.{Geocode, Period, PeriodInput}
+import com.histmersion.api.library.{FindingsPatch, MetadataPatch, WorkRef}
+import com.histmersion.api.catalogue.{Geocode, Period}
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.given
 
@@ -11,6 +11,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Finding
 
 /** The `enrich-source` pipeline's typed answers and its pure logic (docs/research-embedded-agents.md §4.2): what each
   * LLM step must return, how the body is cut into windows, how an answer is verified, and how the verified result
@@ -168,7 +169,7 @@ object EnrichSource:
   ) derives KindlingsCodecAsObject
 
   /** The `geocode` step: the findings with their points, and every choice behind them. */
-  final case class Geocoded(findings: List[FindingInput], choices: List[GeocodeChoice]) derives KindlingsCodecAsObject
+  final case class Geocoded(findings: List[Finding.Input], choices: List[GeocodeChoice]) derives KindlingsCodecAsObject
 
   /** A classification whose period has been converted to signed years. */
   final case class Classified(
@@ -520,9 +521,9 @@ object EnrichSource:
   def patch(
       l: Loaded,
       c: Classified,
-      findings: List[FindingInput],
+      findings: List[Finding.Input],
       notes: Option[String]
-  ): (SourcePatch, List[String], Option[String]) =
+  ): (com.histmersion.api.library.Source.Patch, List[String], Option[String]) =
     val merge = (have: List[String], add: List[String]) =>
       Option.when(add.exists(a => !have.contains(a)))((have ++ add).distinct)
     val setStatus = Option.when(
@@ -532,13 +533,13 @@ object EnrichSource:
     val proposal = Option.when(setStatus.isEmpty && c.status != Source.Status.Unassessed && c.status.wire != l.status)(
       s"${c.status.wire}: ${c.statusEvidence}"
     )
-    val p = SourcePatch(
+    val p = com.histmersion.api.library.Source.Patch(
       metadata = setStatus.map(s => MetadataPatch(status = Some(s))),
       summary = Option.when(!l.hasSummary)(c.summary),
       notes = notes.filter(_ => !l.hasNotes),
       topics = merge(l.topics, c.topics),
       regions = merge(l.regions, c.regions),
-      period = c.period.filter(_ => !l.hasPeriod).map(p => PeriodInput(p.start, p.end)),
+      period = c.period.filter(_ => !l.hasPeriod).map(p => Period.Input(p.start, p.end)),
       tags = Some(c.tags.filterNot(l.tags.contains)).filter(_.nonEmpty).map(t => ListPatch(add = t)),
       findings = Option.when(findings.nonEmpty)(FindingsPatch(add = findings)),
       ifUpdatedAt = l.updatedAt

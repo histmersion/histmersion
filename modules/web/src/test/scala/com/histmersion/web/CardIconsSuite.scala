@@ -2,13 +2,13 @@ package com.histmersion.web
 
 import com.histmersion.domain.library.Confidence
 import com.histmersion.domain.media.MediaRole
-import com.histmersion.api.catalogue.{PlaceSummary, SiteTypes}
-import com.histmersion.api.library.{GeoHit, SourceDetail, SourceKinds, SourceWithFindings}
+import com.histmersion.api.catalogue.SiteTypes
+import com.histmersion.api.library.GeoHit
 import com.histmersion.api.media.MediaThumb
-import com.histmersion.api.research.{ArticleRow, ArticleView}
 import com.histmersion.api.views.PlaceDetail
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.library.Source
+import com.histmersion.api.research.Article
 
 /** Every card kind leads with an icon from the one registry (#1449): sources by what they are, places by kind and site
   * type, regions and polities a map, events their kind, articles and pictures theirs. And the map's clusters: what a
@@ -24,7 +24,7 @@ class CardIconsSuite extends munit.FunSuite:
       provenance: Option[String] = None,
       tags: List[String] = Nil
   ) =
-    SourceDetail(
+    com.histmersion.api.library.Source.Detail(
       "zz2020",
       "Zz",
       Nil,
@@ -43,7 +43,9 @@ class CardIconsSuite extends munit.FunSuite:
     )
 
   test("every icon a card or a marker can name is in the registry"):
-    val names = SourceKinds.all.flatMap(k => List(CardIcons.sourceKind(k), CardIcons.sourceKind(k, marker = true))) ++
+    val names = com.histmersion.api.library.Source.Kinds.all.flatMap(k =>
+      List(CardIcons.sourceKind(k), CardIcons.sourceKind(k, marker = true))
+    ) ++
       Place.Kind.all.map(CardIcons.place(_, None)) ++ SiteTypes.all.map(t =>
         CardIcons.place(Place.Kind.Site, Some(t.id))
       ) ++
@@ -53,28 +55,52 @@ class CardIconsSuite extends munit.FunSuite:
   test(
     "a source's kind: thesis, dataset, book or chapter by ISBN DOI, paper by any other DOI, book by cover or provenance"
   ):
-    assertEquals(CardIcons.kindOf(src(tags = List("PhD-thesis"))), SourceKinds.Thesis)
-    assertEquals(CardIcons.kindOf(src(venue = Some("Doctoral dissertation, Uppsala"))), SourceKinds.Thesis)
-    assertEquals(CardIcons.kindOf(src(doi = Some("10.5061/dryad.abc"))), SourceKinds.Dataset)
-    assertEquals(CardIcons.kindOf(src(doi = Some("10.1007/978-3-030-12345-6"))), SourceKinds.Book)
-    assertEquals(CardIcons.kindOf(src(doi = Some("10.1007/978-3-030-12345-6_7"))), SourceKinds.Chapter)
-    assertEquals(CardIcons.kindOf(src(doi = Some("10.1017/CBO9780511607066.004"))), SourceKinds.Chapter)
-    assertEquals(CardIcons.kindOf(src(doi = Some("10.4324/9781315123456"))), SourceKinds.Book)
-    assertEquals(CardIcons.kindOf(src(doi = Some("10.1038/nature14317"))), SourceKinds.Paper)
-    assertEquals(CardIcons.kindOf(src(provenance = Some("calibre"))), SourceKinds.Book)
-    assertEquals(CardIcons.kindOf(src(), hasCover = true), SourceKinds.Book)
-    assertEquals(CardIcons.kindOf(src()), SourceKinds.Unknown)
+    assertEquals(CardIcons.kindOf(src(tags = List("PhD-thesis"))), com.histmersion.api.library.Source.Kinds.Thesis)
+    assertEquals(
+      CardIcons.kindOf(src(venue = Some("Doctoral dissertation, Uppsala"))),
+      com.histmersion.api.library.Source.Kinds.Thesis
+    )
+    assertEquals(
+      CardIcons.kindOf(src(doi = Some("10.5061/dryad.abc"))),
+      com.histmersion.api.library.Source.Kinds.Dataset
+    )
+    assertEquals(
+      CardIcons.kindOf(src(doi = Some("10.1007/978-3-030-12345-6"))),
+      com.histmersion.api.library.Source.Kinds.Book
+    )
+    assertEquals(
+      CardIcons.kindOf(src(doi = Some("10.1007/978-3-030-12345-6_7"))),
+      com.histmersion.api.library.Source.Kinds.Chapter
+    )
+    assertEquals(
+      CardIcons.kindOf(src(doi = Some("10.1017/CBO9780511607066.004"))),
+      com.histmersion.api.library.Source.Kinds.Chapter
+    )
+    assertEquals(
+      CardIcons.kindOf(src(doi = Some("10.4324/9781315123456"))),
+      com.histmersion.api.library.Source.Kinds.Book
+    )
+    assertEquals(
+      CardIcons.kindOf(src(doi = Some("10.1038/nature14317"))),
+      com.histmersion.api.library.Source.Kinds.Paper
+    )
+    assertEquals(CardIcons.kindOf(src(provenance = Some("calibre"))), com.histmersion.api.library.Source.Kinds.Book)
+    assertEquals(CardIcons.kindOf(src(), hasCover = true), com.histmersion.api.library.Source.Kinds.Book)
+    assertEquals(CardIcons.kindOf(src()), com.histmersion.api.library.Source.Kinds.Unknown)
 
   test("ISBN DOIs: the book, a part of it, and DOIs that are not books"):
-    assertEquals(SourceKinds.isbnDoi("10.1007/978-3-030-12345-6"), Some(false))
-    assertEquals(SourceKinds.isbnDoi("10.4324/9781315123456-5"), Some(true))
-    assertEquals(SourceKinds.isbnDoi("10.1038/nature14317"), None)
-    assertEquals(SourceKinds.isbnDoi("10.1000/978123"), None, "too short for an ISBN")
+    assertEquals(com.histmersion.api.library.Source.Kinds.isbnDoi("10.1007/978-3-030-12345-6"), Some(false))
+    assertEquals(com.histmersion.api.library.Source.Kinds.isbnDoi("10.4324/9781315123456-5"), Some(true))
+    assertEquals(com.histmersion.api.library.Source.Kinds.isbnDoi("10.1038/nature14317"), None)
+    assertEquals(com.histmersion.api.library.Source.Kinds.isbnDoi("10.1000/978123"), None, "too short for an ISBN")
 
   test("source icons: a card's generic document for an unknown kind, the map's exclamation mark"):
-    assertEquals(CardIcons.sourceKind(SourceKinds.Book), "book")
-    assertEquals(CardIcons.sourceKind(SourceKinds.Unknown), CardIcons.GenericSource)
-    assertEquals(CardIcons.sourceKind(SourceKinds.Unknown, marker = true), CardIcons.Unknown)
+    assertEquals(CardIcons.sourceKind(com.histmersion.api.library.Source.Kinds.Book), "book")
+    assertEquals(CardIcons.sourceKind(com.histmersion.api.library.Source.Kinds.Unknown), CardIcons.GenericSource)
+    assertEquals(
+      CardIcons.sourceKind(com.histmersion.api.library.Source.Kinds.Unknown, marker = true),
+      CardIcons.Unknown
+    )
 
   test("place icons: a site its type's (a pin untyped), a region or polity a map, a people a group"):
     assertEquals(CardIcons.place(Place.Kind.Site, Some("fortification")), "castle")
@@ -89,9 +115,12 @@ class CardIconsSuite extends munit.FunSuite:
     val s = src(doi = Some("10.1038/nature14317"))
     assertEquals(Preview.card(s).icon, Some("file-text"))
     val cover = MediaThumb("u", MediaRole.Cover, "/m/u/thumb", "c")
-    assertEquals(Preview.card(SourceWithFindings(src(), Nil, illustration = Some(cover))).icon, Some("book"))
+    assertEquals(
+      Preview.card(com.histmersion.api.library.Source.WithFindings(src(), Nil, illustration = Some(cover))).icon,
+      Some("book")
+    )
     val fort = PlaceDetail(
-      PlaceSummary("zz_f", "Zz fort", Place.Kind.Site, None, None, None, "Zz fort"),
+      com.histmersion.api.catalogue.Place.Summary("zz_f", "Zz fort", Place.Kind.Site, None, None, None, "Zz fort"),
       None,
       Nil,
       Nil,
@@ -104,7 +133,7 @@ class CardIconsSuite extends munit.FunSuite:
       Preview.card(fort.copy(place = fort.place.copy(kind = Place.Kind.Polity), siteType = None)).icon,
       Some("map")
     )
-    val art = ArticleView(ArticleRow("zz", "Zz", "concept", "", None, Nil, Nil, None, None), Nil, Nil)
+    val art = Article.View(Article.Row("zz", "Zz", "concept", "", None, Nil, Nil, None, None), Nil, Nil)
     assertEquals(Preview.card(art).icon, Some(CardIcons.Article))
 
   test("the HTML card icon is the same element as the card view's"):

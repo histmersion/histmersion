@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.{ApiError, TimeSpan, Write}
+import com.histmersion.api.{TimeSpan, Write}
 import com.histmersion.api.catalogue.{
   EventDating,
   EventEdge,
@@ -14,6 +14,7 @@ import com.histmersion.api.catalogue.{
 }
 import com.histmersion.api.library.Filter
 import com.histmersion.domain.catalogue.CatalogueStoreSuite
+import com.histmersion.api.Api
 
 /** The contract the events keep: every field read back, with its datings, edges (both ends) and participants in their
   * order; the list narrowed by text, kind, historicity, period and tier, in time order and paged; the map drawing the
@@ -122,7 +123,7 @@ abstract class EventServiceContract extends CatalogueStoreSuite:
     assertEquals(e.renamedTo("zz_old"), Some("zz_new"))
     assertEquals(e.renamedTo("zz_new"), None, "a live id")
     assertEquals(e.get("zz_child").flatMap(_.event.parentId), Some("zz_new"), "its parts follow")
-    def refused(r: Either[ApiError, Unit]) = r.left.map(_.code)
+    def refused(r: Either[Api.Error, Unit]) = r.left.map(_.code)
     assertEquals(refused(e.rename("zz_other", "zz_new")), Left(Some(Write.CodeInvalid)), "taken")
     assertEquals(refused(e.rename("zz_other", "zz_old")), Left(Some(Write.CodeInvalid)), "an old id of another")
     assertEquals(refused(e.rename("zz_none", "zz_x")), Left(Some(Write.CodeNotFound)))

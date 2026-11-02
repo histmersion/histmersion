@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.exchange.{BundlePlace, IssueDetail, IssueSide, MergeIssue, MergeIssueDetail}
+import com.histmersion.api.exchange.{IssueDetail, IssueSide, MergeIssue}
 import com.histmersion.domain.MergePlanner
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.{PlanFolds, PlanMerge, PlanQuestions, PlanRun}
@@ -22,8 +22,10 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
   private val km = DecisionKind
   private val lr = List(km.KeepLeft, km.KeepRight)
   private val localPlace = in.local.places.map(p => p.uid -> p).toMap
-  private val placeLine = scala.collection.mutable.Map.empty[UUID, BundleEntities => BundlePlace]
-  private val renames = scala.collection.mutable.ListBuffer.empty[(BundlePlace, String, Boolean)]
+  private val placeLine =
+    scala.collection.mutable.Map.empty[UUID, BundleEntities => com.histmersion.api.exchange.Bundle.Place]
+  private val renames =
+    scala.collection.mutable.ListBuffer.empty[(com.histmersion.api.exchange.Bundle.Place, String, Boolean)]
   private def placeIn(es: BundleEntities, u: UUID) = es.places.find(_.uid == u).get
 
   /** The same place: ours, with the bundle's names, parents, external ids and types. */
@@ -59,7 +61,7 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
 
   override def rowDetail(kind: Bundle.Kind, u: UUID, localized: BundleEntities): Option[IssueDetail] =
     if kind != Bundle.Kind.Place then None
-    else in.local.places.find(_.uid == u).zip(localized.places.find(_.uid == u)).map(MergeIssueDetail.placeDetail)
+    else in.local.places.find(_.uid == u).zip(localized.places.find(_.uid == u)).map(MergeIssue.Detail.placeDetail)
 
   // places added on both sides: one id is one place when where and when agree, a question when they do not; a place
   // under another id is one when its label and geometry are
@@ -93,7 +95,7 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
                   "geometry and span"
               ),
               lr,
-              detail = Some(MergeIssueDetail.placeDetail(o, p))
+              detail = Some(MergeIssue.Detail.placeDetail(o, p))
             ),
             Set.empty
           )
@@ -115,7 +117,10 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
       case _ => ()
 
   override def lines(es: BundleEntities, es0: BundleEntities): BundleEntities =
-    es.modify(_.places).setTo(MergePlanner.replaced(es0.places, _.uid, placeLine, es0, (_: BundlePlace) => true))
+    es.modify(_.places)
+      .setTo(
+        MergePlanner.replaced(es0.places, _.uid, placeLine, es0, (_: com.histmersion.api.exchange.Bundle.Place) => true)
+      )
 
 object PlacePlan:
 
@@ -139,10 +144,10 @@ object PlacePlan:
     * place a redirect maps (`mapped`) is localized already. Pure.
     */
   def renamedPlaces(
-      bundle: List[BundlePlace],
-      here: List[BundlePlace],
+      bundle: List[com.histmersion.api.exchange.Bundle.Place],
+      here: List[com.histmersion.api.exchange.Bundle.Place],
       mapped: Set[UUID]
-  ): List[(BundlePlace, String, Boolean)] =
+  ): List[(com.histmersion.api.exchange.Bundle.Place, String, Boolean)] =
     val ourId = here.map(p => p.uid -> p.id).toMap
     val owner = here.map(p => p.id -> p.uid).toMap
     bundle
@@ -154,12 +159,16 @@ object PlacePlan:
       )
 
   /** What decides whether two records of one place id are the same place: where and when. */
-  def samePlace(l: BundlePlace, r: BundlePlace): Boolean = l.geom == r.geom && l.period == r.period
+  def samePlace(l: com.histmersion.api.exchange.Bundle.Place, r: com.histmersion.api.exchange.Bundle.Place): Boolean =
+    l.geom == r.geom && l.period == r.period
 
   /** One place out of two that are the same place: ours, with the bundle's names, parents, external ids and types that
     * ours lacks.
     */
-  def foldPlace(l: BundlePlace, r: BundlePlace): BundlePlace =
+  def foldPlace(
+      l: com.histmersion.api.exchange.Bundle.Place,
+      r: com.histmersion.api.exchange.Bundle.Place
+  ): com.histmersion.api.exchange.Bundle.Place =
     l.copy(
       names = (l.names ++ r.names.filterNot(n => l.names.exists(m => m.name == n.name && m.lang == n.lang)))
         .sortBy(n => (n.name, n.lang.getOrElse(""))),

@@ -1,7 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
 import com.histmersion.api.Dataset
-import com.histmersion.api.catalogue.{GazetteerKind, GazetteerLoadCounts, GazetteerSourceInfo, Lpf, PlaceImportResult}
+import com.histmersion.api.catalogue.Lpf
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.catalogue.places.PlaceSeed
 import com.histmersion.plugin.{GazetteerSource, PluginHttp}
@@ -10,6 +10,7 @@ import com.histmersion.util.storage.{Store, StoreKey}
 
 import scala.collection.immutable.ListMap
 import com.histmersion.domain.catalogue.Place
+import com.histmersion.api.catalogue.Gazetteer
 
 /** How the gazetteer comes in: the bundled seed, the pinned extracts and the drop folder ([[GazetteerLoad]]), a source
   * a plugin registers ([[ImportRunner]]) and the land ([[NaturalEarthLand]]). The composition root gives the stores,
@@ -30,10 +31,10 @@ final class GazetteerImports(
   private def settings: GazetteerLoad.Settings = GazetteerLoad.settings(cfg(), stores())
 
   /** `GET /api/places/sources` — the pinned extracts, the LPF drop folder, and what was imported. */
-  def sources(): List[GazetteerSourceInfo] = GazetteerLoad.list(db, settings)
+  def sources(): List[Gazetteer.SourceInfo] = GazetteerLoad.list(db, settings)
 
   /** One external source imported (or, `apply = false`, dry-run); `note` reports progress on the job. */
-  def load(kind: GazetteerKind, apply: Boolean, note: String => Unit): Either[String, List[GazetteerLoadCounts]] =
+  def load(kind: Gazetteer.Kind, apply: Boolean, note: String => Unit): Either[String, List[Gazetteer.LoadCounts]] =
     GazetteerLoad.load(db, settings, kind, apply, note, download)
 
   /** The bundled gazetteer, the way `histmersion places seed` imports it: [[PlaceSeed.files]] order, then a second pass
@@ -49,14 +50,17 @@ final class GazetteerImports(
           .map(e => PlaceSeed.Entry(e.key.name, e.isDirectory, e.key))
       val files = PlaceSeed.files(entries(StoreKey.Root), entries)
       val batch = math.max(1, cfg().places.importBatch)
-      def importFile(f: StoreKey, kind: Option[String]): Either[String, PlaceImportResult] =
+      def importFile(
+          f: StoreKey,
+          kind: Option[String]
+      ): Either[String, com.histmersion.api.catalogue.Place.ImportResult] =
         seed
           .get(f)
           .toRight(s"${f.value}: not found")
           .flatMap(blob => Lpf.parse(blob.text(), kind.getOrElse(Place.Kind.Region)).left.map(e => s"${f.value}: $e"))
-          .map(_.grouped(batch).foldLeft(PlaceImportResult(0, 0, 0, Nil)) { (sum, b) =>
+          .map(_.grouped(batch).foldLeft(com.histmersion.api.catalogue.Place.ImportResult(0, 0, 0, Nil)) { (sum, b) =>
             val r = places.importPlaces(b, Dataset.Seed)
-            PlaceImportResult(
+            com.histmersion.api.catalogue.Place.ImportResult(
               sum.places + r.places,
               sum.names + r.names,
               sum.relations + r.relations,
@@ -82,7 +86,8 @@ final class GazetteerImports(
           s"${first._1} place(s) from ${files.size} file(s); ${r.links} finding→place link(s)"
 
   /** Natural Earth's land downloaded and every polity clipped to it again (a dry run counts the polygons). */
-  def land(dryRun: Boolean): Either[String, PlaceImportResult] = NaturalEarthLand.run(text, geometry, dryRun)
+  def land(dryRun: Boolean): Either[String, com.histmersion.api.catalogue.Place.ImportResult] =
+    NaturalEarthLand.run(text, geometry, dryRun)
 
   /** The source a plugin registered under `name` (or a built-in's), `unknown` when there is none. */
   def source(name: String, unknown: String): Either[String, GazetteerSource] =
@@ -95,5 +100,8 @@ final class GazetteerImports(
   def thirdParty: List[String] = BuiltinGazetteers.thirdParty(registered())
 
   /** A plugin's source read and its places upserted in batches (a dry run counts them), then the findings matched. */
-  def fetch(source: GazetteerSource, dryRun: Boolean): Either[String, PlaceImportResult] =
+  def fetch(
+      source: GazetteerSource,
+      dryRun: Boolean
+  ): Either[String, com.histmersion.api.catalogue.Place.ImportResult] =
     ImportRunner.fetchAndImport(source, http(), places, geometry, dryRun, cfg().places.pointToleranceKm)

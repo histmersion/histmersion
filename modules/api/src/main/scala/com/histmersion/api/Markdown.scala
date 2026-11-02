@@ -1,6 +1,6 @@
 package com.histmersion.api
 
-import com.histmersion.api.backup.{Backup, BackupInfo, BackupResult, BackupState, BackupStatus, RestoreResult}
+import com.histmersion.api.backup.{Backup, RestoreResult}
 import com.histmersion.api.library.Label
 object Markdown:
 
@@ -32,7 +32,7 @@ object Markdown:
     if remaining > 0 then s"$text\n\n_…$remaining more chars — pass offset=${offset + text.length}_"
     else text
 
-  def backup(r: BackupResult): String =
+  def backup(r: Backup.Result): String =
     s"""### Backup written
        |
        |- **file:** ${r.file}
@@ -42,16 +42,16 @@ object Markdown:
       (if r.pruned.isEmpty then ""
        else s"\n- **pruned** (older than the newest kept): ${r.pruned.mkString(", ")}")
 
-  def backupStatus(s: BackupStatus): String =
+  def backupStatus(s: Backup.Status): String =
     s.stateOf match
-      case Some(BackupState.Done)   => s.result.map(backup).getOrElse(s"### Backup written\n\n- **file:** ${s.file}")
-      case Some(BackupState.Failed) =>
+      case Some(Backup.State.Done)   => s.result.map(backup).getOrElse(s"### Backup written\n\n- **file:** ${s.file}")
+      case Some(Backup.State.Failed) =>
         s"### Backup failed\n\n- **file:** ${s.file}\n- **error:** ${s.error.getOrElse("unknown")}"
       case _ =>
         s"### Backup running\n\n- **file:** ${s.file}\n- **for:** ${s.durationMs / 1000} s — " +
           "`histmersion backup` waits for it; `GET /api/backup/status` reports when it is written"
 
-  def backups(rows: Vector[BackupInfo]): String =
+  def backups(rows: Vector[Backup.Info]): String =
     if rows.isEmpty then "_No backups on the server yet._"
     else
       val items = rows.map(b => s"- **${b.file}** — ${Backup.humanBytes(b.bytes)} · ${b.createdAt}")

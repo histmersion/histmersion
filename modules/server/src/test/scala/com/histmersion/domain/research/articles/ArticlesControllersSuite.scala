@@ -19,16 +19,9 @@ import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.aliases.LabelRename
 import com.histmersion.api.checks.{FormatField, FormatIssue, FormatSeverity}
 import com.histmersion.api.library.Filter
-import com.histmersion.api.research.{
-  ArticleFilter,
-  ArticleImport,
-  ArticleList,
-  ArticlePatch,
-  ArticlePut,
-  CoverageEdge,
-  CoverageSource,
-  ReviewGoal
-}
+import com.histmersion.api.research.ReviewGoal
+import com.histmersion.api.research.Article
+import com.histmersion.api.research.Coverage
 
 /** The articles' controllers over the in-memory services, with no source stored: a slug that is not one and a strict
   * write refused by the formatting check, an old slug followed by every read and write, a coverage with no source, a
@@ -39,9 +32,9 @@ class ArticlesControllersSuite extends munit.FunSuite:
 
   /** The library's reads as a database with no source answers them. */
   private val noSources = new CoverageService:
-    def sourceSet(filter: Filter, scope: PlaceScope, cap: Int): (Int, List[CoverageSource]) = (0, Nil)
+    def sourceSet(filter: Filter, scope: PlaceScope, cap: Int): (Int, List[Coverage.Source]) = (0, Nil)
     def members(filter: Filter, scope: PlaceScope, citekeys: List[String]): (Int, Set[String]) = (0, Set.empty)
-    def edgesTouching(citekeys: List[String], kinds: List[String]): List[CoverageEdge] = Nil
+    def edgesTouching(citekeys: List[String], kinds: List[String]): List[Coverage.Edge] = Nil
 
   /** The engine's records as a database with no manager item, ledger, run or goal answers them. */
   private val noReviews = new ReviewStateService:
@@ -52,8 +45,8 @@ class ArticlesControllersSuite extends munit.FunSuite:
 
   /** Not reached by these tests: the list is a mechanism over the library's filter SQL. */
   private val noSearch = new ArticleSearch:
-    def list(f: Filter, s: PlaceScope, k: Option[String], t: Option[String], l: Int, o: Int): ArticleList =
-      ArticleList.of(0, Nil, 0)
+    def list(f: Filter, s: PlaceScope, k: Option[String], t: Option[String], l: Int, o: Int): Article.List =
+      Article.List.of(0, Nil, 0)
 
   private val formatting = new SourceFormatting:
     def issues(summary: Option[String], notes: Option[String]): List[FormatIssue] = Nil
@@ -113,11 +106,11 @@ class ArticlesControllersSuite extends munit.FunSuite:
     )
     c
 
-  private val put = ArticlePut(
+  private val put = Article.Put(
     title = "Walls",
     kind = "concept",
     body = "## Overview\n\nThe walls of Zrtown.\n",
-    filter = Some(ArticleFilter(tags = List("zr-oracle")))
+    filter = Some(Article.Filter(tags = List("zr-oracle")))
   )
 
   test("a slug that is not one is refused; a strict write with a formatting error too, a lenient one carries it"):
@@ -136,7 +129,7 @@ class ArticlesControllersSuite extends munit.FunSuite:
     assertEquals(c.rename("zr_walls", LabelRename("zr_city_walls")).map(_.rewritten), Right(List("zr_index")))
     assertEquals(c.get("ZR_WALLS").map(_.article.slug), Right("zr_city_walls"))
     assertEquals(
-      c.patch("zr_walls", ArticlePatch(title = Some("City walls"))).map(_.article.title),
+      c.patch("zr_walls", Article.Patch(title = Some("City walls"))).map(_.article.title),
       Right("City walls")
     )
     assertEquals(c.versions("zr_walls").map(_.size), Right(1))
@@ -153,11 +146,11 @@ class ArticlesControllersSuite extends munit.FunSuite:
     val c = controllers()
     val _ = c.put("zr_walls", put)
     val note = c.exportNote("zr_walls").toOption.get
-    assertEquals(c.importNote(ArticleImport(note, mtime = Some(1000L))).map(_.skipped), Right(List("zr_walls")))
-    assertEquals(c.importNote(ArticleImport(note, mtime = Some(1000L), force = true)).map(_.imported), Right(1))
+    assertEquals(c.importNote(Article.Import(note, mtime = Some(1000L))).map(_.skipped), Right(List("zr_walls")))
+    assertEquals(c.importNote(Article.Import(note, mtime = Some(1000L), force = true)).map(_.imported), Right(1))
     val _ = c.rename("zr_walls", LabelRename("zr_city_walls"))
-    assertEquals(c.importNote(ArticleImport(note)).left.map(_.code), Left(Some(Write.CodeInvalid)))
-    assertEquals(c.importNote(ArticleImport("no frontmatter")).isLeft, true)
+    assertEquals(c.importNote(Article.Import(note)).left.map(_.code), Left(Some(Write.CodeInvalid)))
+    assertEquals(c.importNote(Article.Import("no frontmatter")).isLeft, true)
 
   test("a held lock refuses every write"):
     val gate = WriteGate()
@@ -167,11 +160,11 @@ class ArticlesControllersSuite extends munit.FunSuite:
       Right(
         List(
           c.put("zr_harbour", put).isLeft,
-          c.patch("zr_walls", ArticlePatch(title = Some("x"))).isLeft,
+          c.patch("zr_walls", Article.Patch(title = Some("x"))).isLeft,
           c.rename("zr_walls", LabelRename("zr_city_walls")).isLeft,
           c.delete("zr_walls").isLeft,
           c.fix("zr_walls").isLeft,
-          c.importNote(ArticleImport("---\nslug: zr_n\ntitle: N\nkind: concept\n---\n")).isLeft
+          c.importNote(Article.Import("---\nslug: zr_n\ntitle: N\nkind: concept\n---\n")).isLeft
         )
       )
     )

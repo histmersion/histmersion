@@ -9,8 +9,8 @@ import com.histmersion.util.data.exchange.Issue
 
 final case class MergePlan(
     bundleId: UUID,
-    from: BundleInstance,
-    into: BundleInstance,
+    from: Bundle.Instance,
+    into: Bundle.Instance,
     formatVersion: Int,
     schemaVersion: String,
     asOf: Option[String],
@@ -30,3 +30,9 @@ final case class MergePlan(
   def defaults: List[MergeIssue] = issues.filter(_.severity == Issue.Severity.Default)
 object MergePlan:
   given Schema[MergePlan] = summon[KindlingsSchema[MergePlan]].schema
+
+  final case class Request(bundle: String, resolutions: MergeResolutions = MergeResolutions())
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
+  object Request:
+    given Schema[Request] = summon[KindlingsSchema[Request]].schema

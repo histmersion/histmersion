@@ -2,7 +2,6 @@ package com.histmersion.server
 
 import com.histmersion.util.jobs.BackgroundJob
 
-import com.histmersion.api.ApiError
 import com.histmersion.api.jobs.{JobDetail, JobInfo}
 import com.histmersion.api.instance.Version
 import com.histmersion.config.{BasemapConfig, SeaFloorSource}
@@ -20,6 +19,7 @@ import com.histmersion.util.storage.Store
 
 import java.net.http.HttpClient
 import java.time.{Duration, Instant}
+import com.histmersion.api.Api
 
 /** The base map wired into the server: its store, the configuration read at each use, its fetch run as a background
   * job, the sea floor the settings choose, and the providers' client under the product's outbound-HTTP policy.
@@ -86,13 +86,13 @@ object BasemapWiring:
 
     def running: Option[String] = slot.current
 
-    def guarded[A](op: String)(body: => Either[ApiError, A]): Either[ApiError, A] = deps.maintenance.guard(op)(body)
+    def guarded[A](op: String)(body: => Either[Api.Error, A]): Either[Api.Error, A] = deps.maintenance.guard(op)(body)
 
-    def busy(what: String, busyCode: Option[String]): ApiError = BackgroundJob.busy(what, slot.current, busyCode)
+    def busy(what: String, busyCode: Option[String]): Api.Error = BackgroundJob.busy(what, slot.current, busyCode)
 
     def start(kind: String, about: String, what: String, busyCode: Option[String])(
         body: (String => Unit) => Either[String, String]
-    ): Either[ApiError, JobInfo] =
+    ): Either[Api.Error, JobInfo] =
       BackgroundJob.start(
         deps.ds,
         kind,

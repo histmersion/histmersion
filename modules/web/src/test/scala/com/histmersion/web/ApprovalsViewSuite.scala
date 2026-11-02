@@ -1,7 +1,7 @@
 package com.histmersion.web
 
 import com.histmersion.api.automation.Agents.ApprovalInfo
-import com.histmersion.api.automation.GoalPlans.Plan
+import com.histmersion.api.automation.Goal.Plans.Plan
 
 /** The pure parts of the approvals window. */
 class ApprovalsViewSuite extends munit.FunSuite:

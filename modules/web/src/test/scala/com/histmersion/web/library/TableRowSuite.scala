@@ -1,8 +1,8 @@
 package com.histmersion.web.library
 
-import com.histmersion.api.research.ArticleSummary
 import com.histmersion.api.library.{Hit, SearchHit}
 import com.histmersion.domain.library.Source
+import com.histmersion.api.research.Article
 
 class TableRowSuite extends munit.FunSuite:
 
@@ -47,7 +47,7 @@ class TableRowSuite extends munit.FunSuite:
 
   test("an article's row: its kind in words, its regions under the title, no status"):
     val r = TableRow.of(
-      ArticleSummary("sea-peoples", "The Sea Peoples", "concept", None, Nil, List("eastern_mediterranean"), None, None)
+      Article.Summary("sea-peoples", "The Sea Peoples", "concept", None, Nil, List("eastern_mediterranean"), None, None)
     )
     assertEquals(
       r,

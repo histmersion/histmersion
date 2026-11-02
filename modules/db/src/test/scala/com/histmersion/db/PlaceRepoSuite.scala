@@ -14,8 +14,9 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.Migrate
-import com.histmersion.api.catalogue.{Period, Place, PlaceInput, PlaceName, PlaceRelation}
-import com.histmersion.api.library.{FacetField, Filter, Finding, Source, SourcePatch}
+import com.histmersion.api.catalogue.{Period, Place}
+import com.histmersion.api.library.{Filter, Finding, Source}
+import com.histmersion.api.library.Facet
 
 /** The gazetteer against a real PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise. Covers what cannot be asserted
   * purely: containment, the point tolerance, period overlap, the recursive hierarchy and the `Filter.places` resolution
@@ -54,27 +55,27 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
     )
 
   private val batch = List(
-    PlaceInput(asia, List(PlaceName("Asia"))),
-    PlaceInput(
+    Place.Input(asia, List(Place.Name("Asia"))),
+    Place.Input(
       turkey,
-      List(PlaceName("Turkey"), PlaceName("Zzpland"), PlaceName("Türkiye", "tr")),
-      List(PlaceRelation("zzp_turkey", "zzp_asia"))
+      List(Place.Name("Turkey"), Place.Name("Zzpland"), Place.Name("Türkiye", "tr")),
+      List(Place.Relation("zzp_turkey", "zzp_asia"))
     ),
-    PlaceInput(
+    Place.Input(
       hatti,
-      List(PlaceName("Hittite Empire"), PlaceName("Hatti", "hit")),
-      List(PlaceRelation("zzp_hatti", "zzp_turkey", PlaceRelation.PartOf, Some(Period(-1650, -1180))))
+      List(Place.Name("Hittite Empire"), Place.Name("Hatti", "hit")),
+      List(Place.Relation("zzp_hatti", "zzp_turkey", Place.Relation.PartOf, Some(Period(-1650, -1180))))
     ),
-    PlaceInput(
+    Place.Input(
       hattusa,
-      List(PlaceName("Hattusa"), PlaceName("Boğazkale", "tr")),
-      List(PlaceRelation("zzp_hattusa", "zzp_hatti"))
+      List(Place.Name("Hattusa"), Place.Name("Boğazkale", "tr")),
+      List(Place.Relation("zzp_hattusa", "zzp_hatti"))
     ),
     // a relation to a place nobody declared → reported, not fatal
-    PlaceInput(
+    Place.Input(
       Place("zzp_orphan", "Orphan", com.histmersion.domain.catalogue.Place.Kind.Site),
       Nil,
-      List(PlaceRelation("zzp_orphan", "zzp_nowhere"))
+      List(Place.Relation("zzp_orphan", "zzp_nowhere"))
     )
   )
 
@@ -188,7 +189,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
     val east = Place("zzp_east", "East", com.histmersion.domain.catalogue.Place.Kind.Polity, Some(box(10, 0, 20, 10)))
     val _ = PlaceFixtures.upsertPlaces(
       ds,
-      List(PlaceInput(west, List(PlaceName("West"))), PlaceInput(east, List(PlaceName("East"))))
+      List(Place.Input(west, List(Place.Name("West"))), Place.Input(east, List(Place.Name("East"))))
     )
     val border = src.copy(
       citekey = "zzp_border",
@@ -227,9 +228,9 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
     val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(
-        PlaceInput(
+        Place.Input(
           Place("zzp_under", "Zzp_Under 50%", com.histmersion.domain.catalogue.Place.Kind.Site),
-          List(PlaceName("Zzp_Under 50%"))
+          List(Place.Name("Zzp_Under 50%"))
         )
       )
     )
@@ -308,7 +309,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
 
   test("the places facet reports the gazetteer label AND the id behind it"):
     seed()
-    val rows = LabelFixtures.facets(ds, FacetField.Places, Some("Tur"), Filter(), 20)
+    val rows = LabelFixtures.facets(ds, Facet.Field.Places, Some("Tur"), Filter(), 20)
     val turkey = rows.find(_.value == "Turkey")
     assert(turkey.isDefined, rows.toString)
     assertEquals(turkey.get.id, Some("zzp_turkey"))
@@ -327,7 +328,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
         .patch(
           ds,
           "zzp_src",
-          SourcePatch(notes = Some("an agent wrote a note")),
+          Source.Patch(notes = Some("an agent wrote a note")),
           cfg.limits.chunkChars,
           cfg.places.pointToleranceKm
         )
@@ -369,14 +370,14 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
     // close the loop: Asia is part of Hattusa, which is (transitively) part of Asia
     val _ = PlaceFixtures.upsertPlaces(
       ds,
-      List(PlaceInput(asia, List(PlaceName("Asia")), List(PlaceRelation("zzp_asia", "zzp_hattusa"))))
+      List(Place.Input(asia, List(Place.Name("Asia")), List(Place.Relation("zzp_asia", "zzp_hattusa"))))
     )
     val rows = PlaceFixtures.hierarchy(ds, None, Some("zzp_turkey"), 20, 500)
     val ids = rows.map(_.id)
     assertEquals(ids.size, ids.distinct.size, s"a place appears twice on one walk: $ids")
     assert(ids.contains("zzp_hatti"), ids.toString)
     // put the gazetteer back the way the other tests expect it
-    val _ = PlaceFixtures.upsertPlaces(ds, List(PlaceInput(asia, List(PlaceName("Asia")))))
+    val _ = PlaceFixtures.upsertPlaces(ds, List(Place.Input(asia, List(Place.Name("Asia")))))
 
   test("depthCap bounds a caller asking for an absurd depth"):
     seed()

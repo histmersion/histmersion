@@ -1,7 +1,6 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.ApiError
-import com.histmersion.api.catalogue.{EventCount, SiteTypes, SiteTypesReport, SiteTypesRequest}
+import com.histmersion.api.catalogue.{EventCount, SiteTypes}
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.Caller
@@ -11,6 +10,7 @@ import com.histmersion.pluginhost.{HttpTransport, PluginEvents, Polite}
 
 import java.time.Clock
 import scala.annotation.tailrec
+import com.histmersion.api.Api
 
 /** The refinement of the Wikidata sites' types (a job, dry run or not): each site on the map asked for its classes
   * (P31) and their superclasses (P279), and given the curated type they fall under.
@@ -27,18 +27,18 @@ final class SiteTypesControllers(
   /** A polite client at `intervalMs` between requests to one host; the media politeness otherwise. */
   private def polite(intervalMs: Int): Polite = PluginEvents.polite(http, settings().media, intervalMs)
 
-  def refineSiteTypes(caller: Caller, req: SiteTypesRequest): Either[ApiError, JobInfo] =
+  def refineSiteTypes(caller: Caller, req: SiteTypes.Request): Either[Api.Error, JobInfo] =
     jobs.start(
       SiteTypesControllers.SiteTypesJobKind,
       s"site types of the Wikidata sites on the map${if req.dryRun then " (dry run)" else ""}",
       write = !req.dryRun
     ) { (_, progress) =>
-      Right(SiteTypesReport.summary(runSiteTypes(req, progress)))
+      Right(SiteTypes.Report.summary(runSiteTypes(req, progress)))
     }
 
-  def runSiteTypes(req: SiteTypesRequest, progress: String => Unit): SiteTypesReport =
+  def runSiteTypes(req: SiteTypes.Request, progress: String => Unit): SiteTypes.Report =
     val started = clock.millis()
-    if req.dryRun then SiteTypesReport(dryRun = true, pending = sites.countSitesToType(req.refresh, None))
+    if req.dryRun then SiteTypes.Report(dryRun = true, pending = sites.countSitesToType(req.refresh, None))
     else
       val c = polite(ec.wikidata.apiIntervalMs)
       val cap = req.limit.filter(_ > 0).getOrElse(Int.MaxValue)
@@ -70,7 +70,7 @@ final class SiteTypesControllers(
             walk(steps - 1, next.filterNot(SiteTypes.wikidataClasses.contains), acc ++ next)
         walk(ec.siteTypes.superclassDepth.max(0), unknown, Nil)
       // `var`s: the walk
-      var report = SiteTypesReport(dryRun = false)
+      var report = SiteTypes.Report(dryRun = false)
       var batch = sites.sitesToType(ec.siteTypes.batch.min(cap), req.refresh, Some(started))
       while batch.nonEmpty && report.asked < cap && !jobs.held do
         val p31 = claims(batch.map(_._2), "P31")

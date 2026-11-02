@@ -2,6 +2,9 @@ package com.histmersion.api.media
 
 import com.histmersion.api.library.Source
 import com.histmersion.api.given
+import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import hearth.kindlings.tapirschemaderivation.KindlingsSchema
+import sttp.tapir.Schema
 object MediaProvider:
   val Source = "source"
   val Commons = "wikimedia-commons"
@@ -59,3 +62,16 @@ object MediaProvider:
     case Smithsonian       => "Smithsonian Institution"
     case Europeana         => "Europeana"
     case other             => other
+
+  final case class Info(
+      name: String,
+      title: String,
+      over: String,
+      description: String,
+      plugin: String,
+      builtin: Boolean,
+      licences: String
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
+  object Info:
+    given Schema[Info] = summon[KindlingsSchema[Info]].schema

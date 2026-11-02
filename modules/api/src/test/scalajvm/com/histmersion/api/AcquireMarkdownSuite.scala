@@ -15,14 +15,13 @@ import com.histmersion.api.library.{
   DiscoverResult,
   FollowupRow,
   FollowupsResult,
-  IngestReport,
-  IngestStep,
   RefRow,
   RefsResult,
   RetractionNotice,
   UpdateNotice,
   WorkRef
 }
+import com.histmersion.api.library.Ingest
 class AcquireMarkdownSuite extends munit.FunSuite:
 
   private val work = WorkRef(
@@ -138,7 +137,7 @@ class AcquireMarkdownSuite extends munit.FunSuite:
     assert(md.contains("borrowed") || md.contains("BORROWED"))
 
   test("an ingest report lists every step and the manual drop-in when there was no PDF"):
-    val r = IngestReport(
+    val r = Ingest.Report(
       "haak2015_massive",
       Some("10.1038/x"),
       Some("T"),
@@ -146,7 +145,7 @@ class AcquireMarkdownSuite extends munit.FunSuite:
       pdf = None,
       edgesAdded = 0,
       assessment = None,
-      steps = List(IngestStep("metadata", true, "ok"), IngestStep("fetch", false, "no OA copy")),
+      steps = List(Ingest.Step("metadata", true, "ok"), Ingest.Step("fetch", false, "no OA copy")),
       dropIn = Some("Drop it at …")
     )
     val md = AcquireMarkdown.ingest(r)
@@ -167,7 +166,7 @@ class AcquireMarkdownSuite extends munit.FunSuite:
     val sep = lines.filter(_.contains("---"))
     assert(sep.nonEmpty && sep.forall(_.startsWith("|")), lines.mkString("\n"))
     val ing = AcquireMarkdown.ingest(
-      IngestReport(
+      Ingest.Report(
         "k",
         None,
         Some("T"),
@@ -177,7 +176,7 @@ class AcquireMarkdownSuite extends munit.FunSuite:
         Some(
           Assessment("k", None, None, None, Some(9), None, false, Nil, Nil, false, Acquire.Verdicts.Current, "KEEP")
         ),
-        List(IngestStep("metadata", true, "ok"))
+        List(Ingest.Step("metadata", true, "ok"))
       )
     )
     assert(ing.contains("✓ **metadata**"))

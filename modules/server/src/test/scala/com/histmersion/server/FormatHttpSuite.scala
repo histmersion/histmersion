@@ -7,11 +7,11 @@ import io.circe.parser
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.api.aliases.LabelRenamed
-import com.histmersion.api.catalogue.{Lpf, Place, PlaceInput, PlaceName}
+import com.histmersion.api.catalogue.{Lpf, Place}
 import com.histmersion.api.checks.{FormatField, FormatReport, FormatRule, Lint}
-import com.histmersion.api.library.SourceWithFindings
-import com.histmersion.api.research.ArticleView
 import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.api.library.Source
+import com.histmersion.api.research.Article
 
 /** The formatting lint over real HTTP and MCP: an article write answers with its formatting problems (and
   * `?strict=true` refuses one with an error), `GET …/lint` and `POST …/lint/fix` for an article and a source,
@@ -91,14 +91,14 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       val (ps, pb) =
         put(s"$url/api/articles/$slug", s"""{"title":"Formatting","kind":"concept","body":"${esc(broken)}"}""")
       assertEquals(ps, 200, pb)
-      val v = decode[ArticleView](pb)
+      val v = decode[Article.View](pb)
       assertEquals(
         v.formatting.map(_.rule).toSet,
         Set(FormatRule.TableNotRendered, FormatRule.Emphasis, FormatRule.LinkSyntax, FormatRule.Wikilink)
       )
       assertEquals(v.formatting.find(_.rule == FormatRule.TableNotRendered).map(i => (i.line, i.column)), Some((4, 1)))
       // a read says the same
-      assertEquals(decode[ArticleView](get(s"$url/api/articles/$slug")._2).formatting, v.formatting)
+      assertEquals(decode[Article.View](get(s"$url/api/articles/$slug")._2).formatting, v.formatting)
       val lint = decode[FormatReport](get(s"$url/api/articles/$slug/lint")._2)
       assertEquals(lint.issues, v.formatting)
       assertEquals(lint.subject, slug)
@@ -121,7 +121,7 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       val fixed = decode[FormatReport](fb)
       assertEquals(fixed.fixed.size, 4, fixed.fixed.mkString("\n"))
       assertEquals(fixed.issues, Nil)
-      val body = decode[ArticleView](get(s"$url/api/articles/$slug")._2).article.body
+      val body = decode[Article.View](get(s"$url/api/articles/$slug")._2).article.body
       assert(
         body.contains("**reliefs**") && body.contains("[the letters](https://example.org/x)") &&
           body.contains("and [[zz_fmt2020_source]].") && body.contains(":\n\n| Festival"),
@@ -166,7 +166,7 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       assertEquals(rs, 400, rb) // the double-escaped entity is an error
       val (ps, pb) = patch(s"$url/api/sources/$ck", s"""{"notes":"${esc(notes)}"}""")
       assertEquals(ps, 200, pb)
-      val sw = decode[SourceWithFindings](pb)
+      val sw = decode[Source.WithFindings](pb)
       assertEquals(
         sw.formatting.map(i => (i.field, i.rule)).toSet,
         Set((FormatField.Notes, FormatRule.Wikilink), (FormatField.Notes, FormatRule.HtmlEntity))
@@ -192,23 +192,23 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
         sql"DELETE FROM places WHERE id LIKE 'zz_fmt_place%'".update.run()
       val geo = Lpf.render(
         List(
-          PlaceInput(
+          Place.Input(
             Place(
               "zz_fmt_place_a",
               "Fmt A",
               com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[30.0,39.0]}""")
             ),
-            List(PlaceName("Fmt A"))
+            List(Place.Name("Fmt A"))
           ),
-          PlaceInput(
+          Place.Input(
             Place(
               "zz_fmt_place_other",
               "Fmt Other",
               com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[31.0,39.0]}""")
             ),
-            List(PlaceName("Fmt Other"))
+            List(Place.Name("Fmt Other"))
           )
         )
       )

@@ -1,9 +1,9 @@
 package com.histmersion.domain.research.articles
 
-import com.histmersion.api.research.ArticleList
 import com.histmersion.api.library.Filter
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.util.database.Transactor
+import com.histmersion.api.research.Article
 
 /** The articles related to a filter's sources, narrowed by kind and searched by their own text: a mechanism over the
   * library's filter SQL and the articles' full-text index, so it has no in-memory twin.
@@ -16,7 +16,7 @@ trait ArticleSearch:
       text: Option[String],
       limit: Int,
       offset: Int
-  ): ArticleList
+  ): Article.List
 
 object ArticleSearch:
 
@@ -30,4 +30,4 @@ object ArticleSearch:
         text: Option[String],
         limit: Int,
         offset: Int
-    ): ArticleList = db.read(ArticleRepo.list(filter, scope, kind, text, limit, offset))
+    ): Article.List = db.read(ArticleRepo.list(filter, scope, kind, text, limit, offset))

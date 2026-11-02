@@ -4,12 +4,12 @@ import com.histmersion.api.backup.Backup
 import com.histmersion.api.given
 object BasemapMarkdown:
 
-  def status(s: BasemapStatus): String =
+  def status(s: Basemap.Status): String =
     val head =
       if s.available then "The local base map is downloaded."
       else s"The local base map is not downloaded — run `${s.fetchCommand}`."
     val rows = s.layers.map { l =>
-      val what = BasemapLayer.parse(l.layer).map(_.title).getOrElse(l.layer)
+      val what = Basemap.Layer.parse(l.layer).map(_.title).getOrElse(l.layer)
       if !l.present then s"| ${l.layer} | $what | not downloaded | | | |"
       else
         val zoom = (l.minZoom, l.maxZoom) match
@@ -22,16 +22,16 @@ object BasemapMarkdown:
     }
     val table = ("| layer | what | size | zoom | region | source, fetched |" :: "|---|---|---|---|---|---|" :: rows)
       .mkString("\n")
-    val kept = s.layers.find(l => l.layer == BasemapLayer.Vector.wire && l.present).flatMap(_.kept)
-    val terrain = s.layers.find(_.layer == BasemapLayer.Terrain.wire)
+    val kept = s.layers.find(l => l.layer == Basemap.Layer.Vector.wire && l.present).flatMap(_.kept)
+    val terrain = s.layers.find(_.layer == Basemap.Layer.Terrain.wire)
     val focus =
       terrain.toList.flatMap(_.focus).map(f => s"- focus region `${f.name}`: zoom ${f.minZoom}–${f.maxZoom}, ${f.bbox}, ${Backup.humanBytes(f.bytes)}${f.fetchedAt.fold("")(t => s", $t")}")
     val notes = List(
       kept.map(k => s"The vector layer keeps $k."),
       terrain.flatMap(_.onDemand).map(onDemand),
-      s.layers.find(_.layer == BasemapLayer.Vector.wire).flatMap(_.onDemand).map(outside("The map", "vector", _)),
+      s.layers.find(_.layer == Basemap.Layer.Vector.wire).flatMap(_.onDemand).map(outside("The map", "vector", _)),
       s.layers
-        .find(_.layer == BasemapLayer.Bathymetry.wire)
+        .find(_.layer == Basemap.Layer.Bathymetry.wire)
         .flatMap(_.onDemand)
         .map(outside("The sea floor", "bathymetry", _)),
       Option.when(focus.nonEmpty)(("Relief kept deeper for:" :: focus).mkString("\n")),
@@ -53,14 +53,14 @@ object BasemapMarkdown:
     ).flatten
     (head :: "" :: table :: "" :: notes).mkString("\n")
 
-  def onDemand(o: BasemapOnDemand): String =
+  def onDemand(o: Basemap.OnDemand): String =
     if !o.enabled then "Relief deeper than the extract: off (basemap.terrain.on-demand.enabled)."
     else
       s"Relief deeper than the extract: read when a page shows an area, to zoom ${o.maxZoom}; cached " +
         s"${o.tiles} tiles, ${Backup.humanBytes(o.bytes)} of ${Backup.humanBytes(o.maxBytes)} at `${o.dir}`" +
         o.offlineUntil.fold(".")(t => s" — the provider was unreachable; asked again after $t.")
 
-  def outside(what: String, key: String, o: BasemapOnDemand): String =
+  def outside(what: String, key: String, o: Basemap.OnDemand): String =
     if !o.enabled then s"$what outside the downloaded region: off (basemap.$key.on-demand.enabled)."
     else
       s"$what outside the downloaded region (and deeper than it): read when a page shows it, to zoom ${o.maxZoom}; cached " +
@@ -69,6 +69,6 @@ object BasemapMarkdown:
 
   def plain(html: String): String = html.replaceAll("<[^>]+>", "")
 
-  def removed(r: BasemapRemoved): String =
+  def removed(r: Basemap.Removed): String =
     if r.removed.isEmpty then "Nothing to remove: no base-map file is downloaded."
     else s"Removed ${Backup.humanBytes(r.bytes)}:\n" + r.removed.map(f => s"- `$f`").mkString("\n")

@@ -2,14 +2,15 @@ package com.histmersion.domain
 
 import scala.annotation.tailrec
 import com.histmersion.api.Plural
-import com.histmersion.api.research.{ArticleFilter, Articles}
+import com.histmersion.api.research.Articles
 import com.histmersion.api.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-import com.histmersion.api.research.ArticlePlans.{ArticlePlan, ProposedArticle}
+import com.histmersion.api.research.Article.Plans.{ArticlePlan, ProposedArticle}
+import com.histmersion.api.research.Article
 
 /** The `propose-articles` pipeline's typed answer and its pure checks (docs/research-process-managers.md §4 (b), phase
   * 2): a planner proposes the articles a research area (a goal) should have — each a new slug, a title, a kind and the
@@ -56,7 +57,7 @@ object PlanArticles:
   final case class Limits(minSources: Int, maxOverlap: Double, maxArticles: Int)
 
   /** One proposal whose shape passed: what [[verify]] measures. */
-  final case class Candidate(slug: String, title: String, kind: String, filter: ArticleFilter, why: String)
+  final case class Candidate(slug: String, title: String, kind: String, filter: Article.Filter, why: String)
 
   /** The share of `mine` that `theirs` holds already (0 when `mine` is empty). */
   def overlap(mine: Set[String], theirs: Set[String]): Double =
@@ -80,7 +81,7 @@ object PlanArticles:
             Articles.kindOf(kind) match
               case Left(m)  => problems += s"article '$s': $m"; acc
               case Right(k) =>
-                ArticleFilter.normalise(ArticleFilter(query = x.query, topics = x.topics, tags = x.tags)) match
+                Article.Filter.normalise(Article.Filter(query = x.query, topics = x.topics, tags = x.tags)) match
                   case Left(m)        => problems += s"article '$s': $m"; acc
                   case Right(None)    => problems += s"article '$s' has no filter: give a query, topics or tags"; acc
                   case Right(Some(f)) =>
@@ -105,7 +106,7 @@ object PlanArticles:
       cs: List[Candidate],
       dropped: List[String],
       slugFree: String => Boolean,
-      hits: ArticleFilter => (Int, Set[String]),
+      hits: Article.Filter => (Int, Set[String]),
       existing: List[(String, Set[String])],
       limits: Limits
   ): ArticlePlan =

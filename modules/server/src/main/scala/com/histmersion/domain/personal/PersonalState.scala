@@ -1,9 +1,10 @@
 package com.histmersion.domain.personal
 
-import com.histmersion.api.personal.{BookmarkId, BookmarkLabel, NoteId, NoteText}
 import com.histmersion.domain.ItemRef
 import com.histmersion.domain.personal.seen.SeenBoard
 import com.histmersion.UserId
+import com.histmersion.api.personal.Bookmark
+import com.histmersion.api.personal.Note
 
 /** What the in-memory bookmarks, notes, read marks and seen marks hold together, as the database's tables hold it:
   * every row with its tombstone.
@@ -19,9 +20,9 @@ object PersonalState:
 
   final case class StoredBookmark(
       user: UserId,
-      id: BookmarkId,
+      id: Bookmark.Id,
       target: MarkTarget,
-      label: Option[BookmarkLabel],
+      label: Option[Bookmark.Label],
       targetLabel: Option[TargetLabel],
       createdAt: MarkTime,
       updatedAt: MarkTime,
@@ -30,9 +31,9 @@ object PersonalState:
 
   final case class StoredNote(
       user: UserId,
-      id: NoteId,
+      id: Note.Id,
       target: MarkTarget,
-      text: NoteText,
+      text: Note.Text,
       targetLabel: Option[TargetLabel],
       createdAt: MarkTime,
       updatedAt: MarkTime,

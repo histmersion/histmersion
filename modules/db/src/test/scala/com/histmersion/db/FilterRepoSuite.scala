@@ -11,7 +11,8 @@ import com.histmersion.domain.*
 import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.Period
-import com.histmersion.api.library.{FacetField, Filter, Finding, Hit, SearchResult, Sort, Source}
+import com.histmersion.api.library.{Filter, Finding, Hit, SearchResult, Sort, Source}
+import com.histmersion.api.library.Facet
 
 /** `sources(filter)` / `facets(...)` against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise.
   * Three synthetic sources exercise the plan §1.0 rules: the SOURCE is the unit, a source matches through its own
@@ -186,7 +187,7 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
     SearchFixtures.sources(ds, f.copy(limit = if f.limit <= 0 then 50 else f.limit), words)
   // scoped to this suite's fixtures (the test DB is shared with other suites' rows)
   private val own = Filter(places = List("Levant", "Pontic", "Oceania"))
-  private def facetMap(field: FacetField, prefix: Option[String] = None, f: Filter = own) =
+  private def facetMap(field: Facet.Field, prefix: Option[String] = None, f: Filter = own) =
     LabelFixtures.facets(ds, field, prefix, f.copy(limit = 200), 200).map(x => x.value -> x.count).toMap
 
   test("acceptance: --tag sea-peoples --from -1300 --to -1100 returns sources WITH matched findings"):
@@ -281,35 +282,35 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
     )
 
   test("facets count DISTINCT sources, not findings"):
-    val tags = facetMap(FacetField.Tags)
+    val tags = facetMap(Facet.Field.Tags)
     assertEquals(tags.get("sea-peoples"), Some(2)) // alpha + gamma
     assertEquals(tags.get("island"), Some(1)) // two findings, ONE source
     assertEquals(tags.get("steppe"), Some(1)) // source tag and finding tag, one source
     assertEquals(tags.get("destruction"), Some(1))
 
   test("facets are computed inside the current filter"):
-    val tags = facetMap(FacetField.Tags, f = Filter(period = Some(Period(-1300, -1100))))
+    val tags = facetMap(Facet.Field.Tags, f = Filter(period = Some(Period(-1300, -1100))))
     assertEquals(tags.get("sea-peoples"), Some(1))
     assertEquals(tags.get("island"), None)
 
   test("facet prefix is a case-insensitive prefix, not a substring"):
-    assertEquals(facetMap(FacetField.Places, Some("pon")).get("Pontic Steppe"), Some(1))
-    assertEquals(facetMap(FacetField.Places, Some("steppe")).get("Pontic Steppe"), None)
+    assertEquals(facetMap(Facet.Field.Places, Some("pon")).get("Pontic Steppe"), Some(1))
+    assertEquals(facetMap(Facet.Field.Places, Some("steppe")).get("Pontic Steppe"), None)
 
   test("places facet unions sources.regions with findings.region_name"):
-    val places = facetMap(FacetField.Places)
+    val places = facetMap(Facet.Field.Places)
     assertEquals(places.get("Levant"), Some(1))
     assertEquals(places.get("Ugarit"), Some(1))
     assertEquals(places.get("Fiji"), Some(1))
 
   test("author, topic and status facets"):
-    assertEquals(facetMap(FacetField.Authors).get("David W. Anthony"), Some(1))
-    assertEquals(facetMap(FacetField.Topics).get("collapse"), Some(1))
-    assertEquals(facetMap(FacetField.Status).get("foundational"), Some(1))
+    assertEquals(facetMap(Facet.Field.Authors).get("David W. Anthony"), Some(1))
+    assertEquals(facetMap(Facet.Field.Topics).get("collapse"), Some(1))
+    assertEquals(facetMap(Facet.Field.Status).get("foundational"), Some(1))
 
   test("facets are ordered by count desc, then value"):
     val rows = LabelFixtures
-      .facets(ds, FacetField.Tags, None, Filter(limit = 200), 200)
+      .facets(ds, Facet.Field.Tags, None, Filter(limit = 200), 200)
       .filter(f => Set("sea-peoples", "destruction", "island")(f.value))
     assertEquals(rows.map(_.value).toList, List("sea-peoples", "destruction", "island"))
 
@@ -365,16 +366,16 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
     r.hits.map(_.source.citekey).filter(_.startsWith("zzc_")).sorted
 
   test("facets group values case-insensitively, labelled with the commonest spelling"):
-    val places = facetMap(FacetField.Places, f = caseScope)
+    val places = facetMap(Facet.Field.Places, f = caseScope)
     assertEquals(places.get("Zzftolia"), Some(3))
     assertEquals(places.get("zzftolia"), None)
-    val tags = facetMap(FacetField.Tags, f = caseScope)
+    val tags = facetMap(Facet.Field.Tags, f = caseScope)
     assertEquals(tags.get("Zzftag"), Some(3))
     assertEquals(tags.get("zzftag"), None)
 
   test("a facet prefix stays case-insensitive over the folded bucket"):
-    assertEquals(facetMap(FacetField.Places, Some("ZZFT"), caseScope).get("Zzftolia"), Some(3))
-    assertEquals(facetMap(FacetField.Places, Some("zzft"), caseScope).get("Zzftolia"), Some(3))
+    assertEquals(facetMap(Facet.Field.Places, Some("ZZFT"), caseScope).get("Zzftolia"), Some(3))
+    assertEquals(facetMap(Facet.Field.Places, Some("zzft"), caseScope).get("Zzftolia"), Some(3))
 
   test("tags and places match case-insensitively, so either spelling finds the whole bucket"):
     val all = List("zzc_one", "zzc_three", "zzc_two")

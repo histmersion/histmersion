@@ -1,6 +1,5 @@
 package com.histmersion.domain.library.acquisition
 
-import com.histmersion.api.ApiError
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.mcp.McpOut
@@ -17,11 +16,12 @@ import com.histmersion.api.library.{
   CandidateMark,
   Candidates,
   CandidatesMarkdown,
-  CandidateSweepRequest,
   FollowupsRequest,
-  IngestRequest,
   RefsRequest
 }
+import com.histmersion.api.Api
+import com.histmersion.api.library.CandidateSweep
+import com.histmersion.api.library.Ingest
 
 /** The acquisition's MCP tools. Every tool returns Markdown and delegates to the same [[AcquisitionControllers]] the
   * REST routes call, so the two surfaces cannot drift.
@@ -34,7 +34,7 @@ final class AcquisitionTools(
 ):
   import AcquisitionTools.*
 
-  private def render[A](r: Either[ApiError, A])(f: A => String) =
+  private def render[A](r: Either[Api.Error, A])(f: A => String) =
     ToolResult.text(r.fold(McpOut.refusal, f))
 
   private val discover =
@@ -131,7 +131,7 @@ final class AcquisitionTools(
       )
       .input[IngestInput]
       .handle(in =>
-        render(h.ingest(IngestRequest(in.id, in.citekey, in.arxiv, in.refetch, in.legalOnly)))(AcquireMarkdown.ingest)
+        render(h.ingest(Ingest.Request(in.id, in.citekey, in.arxiv, in.refetch, in.legalOnly)))(AcquireMarkdown.ingest)
       )
 
   private val archive =
@@ -170,7 +170,7 @@ final class AcquisitionTools(
       .handle { in =>
         if in.sweep then
           in.goal.map(_.trim).filter(_.nonEmpty) match
-            case Some(g) => render(h.sweepCandidates(CandidateSweepRequest(g, in.dryRun)))(CandidatesMarkdown.sweep)
+            case Some(g) => render(h.sweepCandidates(CandidateSweep.Request(g, in.dryRun)))(CandidatesMarkdown.sweep)
             case None    => ToolResult.text("_give `goal` to sweep_")
         else if in.mark.nonEmpty then
           render(h.markCandidates(CandidateMark(in.mark, in.as.getOrElse(Candidates.State.Seen.wire))))(

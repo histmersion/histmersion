@@ -1,12 +1,10 @@
 package com.histmersion.domain.library.ingest
 
-import com.histmersion.api.library.SourceWrite
-
 import com.histmersion.domain.Caller
 import com.histmersion.domain.library.sources.SourceService
 
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.api.library.{MetadataPatch, SourcePatch, SourcePut}
+import com.histmersion.api.library.MetadataPatch
 import com.histmersion.domain.library.Source
 
 /** The synchronous, metadata-only half of an acquisition.
@@ -38,10 +36,10 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
     }
 
   private def create(citekey: String, meta: IngestMeta): Either[String, Unit] =
-    SourceWrite
+    com.histmersion.api.library.Source.Write
       .applyPut(
         citekey,
-        SourcePut(
+        com.histmersion.api.library.Source.Put(
           title = meta.title,
           authors = meta.authors,
           doi = meta.doi,
@@ -62,7 +60,7 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
     sources
       .patch(
         citekey,
-        SourcePatch(
+        com.histmersion.api.library.Source.Patch(
           metadata = Some(
             MetadataPatch(
               title = Some(meta.title).filter(_.nonEmpty),

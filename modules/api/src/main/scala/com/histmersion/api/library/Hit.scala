@@ -4,7 +4,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 
-final case class Hit(source: SearchHit, matched: List[FindingMatch], why: List[String])
+final case class Hit(source: SearchHit, matched: List[Finding.Match], why: List[String])
     derives KindlingsCodecAsObject,
       KindlingsSchema
 object Hit:

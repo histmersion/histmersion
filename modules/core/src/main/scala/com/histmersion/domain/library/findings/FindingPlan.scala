@@ -1,15 +1,6 @@
 package com.histmersion.domain.library.findings
 
-import com.histmersion.api.exchange.{
-  BundleFinding,
-  BundleSource,
-  IssueCondition,
-  IssueDetail,
-  IssueField,
-  IssueSide,
-  MergeIssue,
-  MergeIssueDetail
-}
+import com.histmersion.api.exchange.{IssueCondition, IssueDetail, IssueField, IssueSide, MergeIssue}
 import com.histmersion.domain.{MergeFold, MergePlanner, MergeSettings}
 import com.histmersion.domain.library.sources.{MergeText, SourceMatcher}
 import com.histmersion.util.data.exchange.BundleEntities
@@ -38,7 +29,7 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
   private val localFindingsOf = in.local.findings.groupBy(_.sourceUid)
   private val nearIssue = mutable.Map.empty[UUID, String] // the bundle's finding → its question
   private val findingMatches = mutable.Map.empty[UUID, List[Match]] // the bundle's source → its findings' matches
-  private val findingLine = mutable.Map.empty[UUID, BundleEntities => BundleFinding]
+  private val findingLine = mutable.Map.empty[UUID, BundleEntities => com.histmersion.api.exchange.Bundle.Finding]
   private val assignedIds = mutable.Set.from(in.local.findings.map(_.id))
   private def findingIn(es: BundleEntities, u: UUID) = es.findings.find(_.uid == u).get
 
@@ -47,8 +38,8 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
 
   // rows of the bundle that already have their own uid here are not matched again inside a pair
   override def pairFirst(
-      right: BundleSource,
-      left: BundleSource,
+      right: com.histmersion.api.exchange.Bundle.Source,
+      left: com.histmersion.api.exchange.Bundle.Source,
       cond: Option[IssueCondition],
       cfg: MergeSettings,
       questions: PairQuestions
@@ -78,8 +69,8 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
             Issue.Severity.Default,
             Bundle.Kind.Finding,
             s"near-duplicate findings (claim words alike, Jaccard ${SourceMatcher.fixed(j, 2)})",
-            Some(IssueSide(lf.id, lf.uid, List(MergeIssueDetail.preview(lf.claim)))),
-            Some(IssueSide(rf.id, rf.uid, List(MergeIssueDetail.preview(rf.claim)))),
+            Some(IssueSide(lf.id, lf.uid, List(MergeIssue.Detail.preview(lf.claim)))),
+            Some(IssueSide(rf.id, rf.uid, List(MergeIssue.Detail.preview(rf.claim)))),
             List("by default both are kept; merge makes them one finding"),
             List(km.Both, km.Merge),
             Some(com.histmersion.api.exchange.MergeDecision.of(km.Both)),
@@ -91,8 +82,8 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
                     IssueField("claim", Some(lf.claim), Some(rf.claim)),
                     IssueField(
                       "period",
-                      lf.period.map(x => MergeIssueDetail.rangeText(Some(x))),
-                      rf.period.map(x => MergeIssueDetail.rangeText(Some(x)))
+                      lf.period.map(x => MergeIssue.Detail.rangeText(Some(x))),
+                      rf.period.map(x => MergeIssue.Detail.rangeText(Some(x)))
                     ),
                     IssueField("region", lf.region, rf.region),
                     IssueField(
@@ -117,9 +108,15 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
 
   // the same claim folds, a near duplicate folds when decided `merge`, the rest arrive under the survivor's citekey,
   // numbered after its last
-  override def foldSources(right: BundleSource, left: BundleSource, citekey: String, folds: PlanFolds): Boolean =
+  override def foldSources(
+      right: com.histmersion.api.exchange.Bundle.Source,
+      left: com.histmersion.api.exchange.Bundle.Source,
+      citekey: String,
+      folds: PlanFolds
+  ): Boolean =
     val ms = findingMatches.getOrElse(right.uid, Nil)
-    def merging(rf: BundleFinding) = nearIssue.get(rf.uid).flatMap(folds.decisionIn).exists(_.kind == km.Merge)
+    def merging(rf: com.histmersion.api.exchange.Bundle.Finding) =
+      nearIssue.get(rf.uid).flatMap(folds.decisionIn).exists(_.kind == km.Merge)
     val renumbered =
       localFindingsOf.getOrElse(left.uid, Nil).map(f => s"$citekey#${f.id.dropWhile(_ != '#').drop(1)}").toSet
     val incoming = ms.collect {
@@ -179,20 +176,27 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
 
   override def lines(es: BundleEntities, es0: BundleEntities): BundleEntities =
     es.modify(_.findings)
-      .setTo(MergePlanner.replaced(es0.findings, _.uid, findingLine, es0, (_: BundleFinding) => true))
+      .setTo(
+        MergePlanner
+          .replaced(es0.findings, _.uid, findingLine, es0, (_: com.histmersion.api.exchange.Bundle.Finding) => true)
+      )
 
 object FindingPlan:
 
   /** How a bundle finding of a merged pair relates to this collection's findings of the survivor. */
   enum Match:
     /** The same claim (and a compatible time and place): one finding. */
-    case Same(right: BundleFinding, left: BundleFinding)
+    case Same(right: com.histmersion.api.exchange.Bundle.Finding, left: com.histmersion.api.exchange.Bundle.Finding)
 
     /** Nearly the same claim at an overlapping time: kept apart unless the user says `merge`. */
-    case Near(right: BundleFinding, left: BundleFinding, jaccard: Double)
+    case Near(
+        right: com.histmersion.api.exchange.Bundle.Finding,
+        left: com.histmersion.api.exchange.Bundle.Finding,
+        jaccard: Double
+    )
 
     /** Nothing here like it: a new finding of the survivor. */
-    case Unmatched(right: BundleFinding)
+    case Unmatched(right: com.histmersion.api.exchange.Bundle.Finding)
 
   private def text(o: Option[String]): Option[String] = o.map(_.trim).filter(_.nonEmpty)
 
@@ -212,7 +216,11 @@ object FindingPlan:
   /** The same place, as far as two findings say: points within `withinKm`, or the same region name (fingerprint), or
     * one of them says nothing about where.
     */
-  def samePlace(a: BundleFinding, b: BundleFinding, withinKm: Double): Boolean =
+  def samePlace(
+      a: com.histmersion.api.exchange.Bundle.Finding,
+      b: com.histmersion.api.exchange.Bundle.Finding,
+      withinKm: Double
+  ): Boolean =
     val points = for { x <- a.lon; y <- a.lat; u <- b.lon; v <- b.lat } yield km(x, y, u, v) <= withinKm
     val regions = text(a.region).zip(text(b.region)).map((x, y) => MergeText.fingerprint(x) == MergeText.fingerprint(y))
     points.orElse(regions).forall(identity) || points.contains(true) || regions.contains(true)
@@ -228,18 +236,18 @@ object FindingPlan:
     * near-duplicate (token Jaccard ≥ `nearAtLeast` and overlapping periods).
     */
   def matches(
-      lefts: List[BundleFinding],
-      rights: List[BundleFinding],
+      lefts: List[com.histmersion.api.exchange.Bundle.Finding],
+      rights: List[com.histmersion.api.exchange.Bundle.Finding],
       withinKm: Double,
       nearAtLeast: Double
   ): List[Match] =
     val rs = rights.sortBy(_.id)
     val ls = lefts.sortBy(_.id)
     @tailrec def pairSame(
-        rest: List[BundleFinding],
-        acc: Map[UUID, BundleFinding],
+        rest: List[com.histmersion.api.exchange.Bundle.Finding],
+        acc: Map[UUID, com.histmersion.api.exchange.Bundle.Finding],
         taken: Set[UUID]
-    ): (Map[UUID, BundleFinding], Set[UUID]) =
+    ): (Map[UUID, com.histmersion.api.exchange.Bundle.Finding], Set[UUID]) =
       rest match
         case Nil       => (acc, taken)
         case r :: tail =>
@@ -251,10 +259,10 @@ object FindingPlan:
             case None    => pairSame(tail, acc, taken)
     val (same, takenBySame) = pairSame(rs, Map.empty, Set.empty)
     @tailrec def pairNear(
-        rest: List[BundleFinding],
-        acc: Map[UUID, (BundleFinding, Double)],
+        rest: List[com.histmersion.api.exchange.Bundle.Finding],
+        acc: Map[UUID, (com.histmersion.api.exchange.Bundle.Finding, Double)],
         taken: Set[UUID]
-    ): Map[UUID, (BundleFinding, Double)] =
+    ): Map[UUID, (com.histmersion.api.exchange.Bundle.Finding, Double)] =
       rest match
         case Nil       => acc
         case r :: tail =>
@@ -279,7 +287,10 @@ object FindingPlan:
   /** One finding out of two (§5.4): left's identity and claim, tags unioned, the more specific period and the point
     * where only one has it, the more cautious confidence.
     */
-  def fold(l: BundleFinding, r: BundleFinding): BundleFinding =
+  def fold(
+      l: com.histmersion.api.exchange.Bundle.Finding,
+      r: com.histmersion.api.exchange.Bundle.Finding
+  ): com.histmersion.api.exchange.Bundle.Finding =
     val period = MergeFold.narrower(l.period, r.period)
     val conf = (l.confidence, r.confidence) match
       case (Some(a), Some(b)) => Some(if caution(b) < caution(a) then b else a)

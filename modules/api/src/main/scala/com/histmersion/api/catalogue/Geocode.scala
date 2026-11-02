@@ -190,7 +190,7 @@ object Geocode:
   private def broad(kind: String) =
     kind == com.histmersion.domain.catalogue.Place.Kind.Region || kind == com.histmersion.domain.catalogue.Place.Kind.Polity
 
-  def tierOf(importSource: Option[String]): Int = Gazetteer.rank(PlaceMatch("", importSource))
+  def tierOf(importSource: Option[String]): Int = Gazetteer.rank(Place.Match("", importSource))
 
   def isPlaceholder(c: Candidate, placeholderMin: Int): Boolean = c.dimension == 0 && c.shared >= placeholderMin
 

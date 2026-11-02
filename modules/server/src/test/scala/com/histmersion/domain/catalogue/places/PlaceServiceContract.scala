@@ -2,16 +2,7 @@ package com.histmersion.domain.catalogue.places
 
 import com.histmersion.api.{Dataset, Write}
 import com.histmersion.domain.catalogue.CatalogueStoreSuite
-import com.histmersion.api.catalogue.{
-  Period,
-  Place,
-  PlaceInput,
-  PlaceName,
-  PlaceOverrideChanged,
-  PlaceOverrideEdit,
-  PlaceOverrides,
-  PlaceRelation
-}
+import com.histmersion.api.catalogue.{Period, Place}
 
 /** The contract the gazetteer's records keep, alike in memory and in the database: an import's places, names and edges
   * read back (a dangling parent reported, never fatal); the search's order; a person's names (an imported one is kept);
@@ -30,23 +21,27 @@ abstract class PlaceServiceContract extends CatalogueStoreSuite:
 
   /** A region, a region inside it, two sites in that, one named twice; a site whose parent is nowhere. */
   private val batch = List(
-    PlaceInput(place("zzp_land", "Zzpland", "region", square(30, 36, 40, 42)), List(PlaceName("Zzpland", "en"))),
-    PlaceInput(
+    Place.Input(place("zzp_land", "Zzpland", "region", square(30, 36, 40, 42)), List(Place.Name("Zzpland", "en"))),
+    Place.Input(
       place("zzp_march", "Zzpmarch", "region", square(33, 38, 36, 41), Some(Period(-1600, -1200))),
       Nil,
-      List(PlaceRelation("zzp_march", "zzp_land"))
+      List(Place.Relation("zzp_march", "zzp_land"))
     ),
-    PlaceInput(
+    Place.Input(
       place("zzp_hill", "Zzphill", "site", point(34.6, 40.0), Some(Period(-1650, -1180))),
-      List(PlaceName("Zzphill", "en"), PlaceName("Zzphügel", "de")),
-      List(PlaceRelation("zzp_hill", "zzp_march"))
+      List(Place.Name("Zzphill", "en"), Place.Name("Zzphügel", "de")),
+      List(Place.Relation("zzp_hill", "zzp_march"))
     ),
-    PlaceInput(
+    Place.Input(
       place("zzp_well", "Zzpwell", "site", point(34.9, 39.7)),
       Nil,
-      List(PlaceRelation("zzp_well", "zzp_march"))
+      List(Place.Relation("zzp_well", "zzp_march"))
     ),
-    PlaceInput(place("zzp_lost", "Zzplost", "site", point(25, 32)), Nil, List(PlaceRelation("zzp_lost", "zzp_nowhere")))
+    Place.Input(
+      place("zzp_lost", "Zzplost", "site", point(25, 32)),
+      Nil,
+      List(Place.Relation("zzp_lost", "zzp_nowhere"))
+    )
   )
 
   stest("an import's places, names and edges, read back; a dangling parent reported, not fatal") { s =>
@@ -98,10 +93,10 @@ abstract class PlaceServiceContract extends CatalogueStoreSuite:
       val p = s.places
       val _ = p.importPlaces(
         List(
-          PlaceInput(place("zzq_c", "Bzzqa town", "site", point(1, 1))),
-          PlaceInput(place("zzq_b", "Zzqa harbour", "site", point(1, 2))),
-          PlaceInput(place("zzq_a", "Zzqa", "site", point(1, 3))),
-          PlaceInput(place("zzq_d", "Elsewhere", "site", point(1, 4)), List(PlaceName("Old Zzqa", "en")))
+          Place.Input(place("zzq_c", "Bzzqa town", "site", point(1, 1))),
+          Place.Input(place("zzq_b", "Zzqa harbour", "site", point(1, 2))),
+          Place.Input(place("zzq_a", "Zzqa", "site", point(1, 3))),
+          Place.Input(place("zzq_d", "Elsewhere", "site", point(1, 4)), List(Place.Name("Old Zzqa", "en")))
         ),
         Dataset.Seed
       )
@@ -152,16 +147,16 @@ abstract class PlaceServiceContract extends CatalogueStoreSuite:
   stest("a person's own place: added once, refused when its id is taken or an old id") { s =>
     val p = s.places
     val _ = p.importPlaces(batch, Dataset.Seed)
-    val own = PlaceInput(place("local_zzp_cairn", "Zzpcairn", "site", point(34.7, 40.1)), List(PlaceName("Zzpcairn")))
+    val own = Place.Input(place("local_zzp_cairn", "Zzpcairn", "site", point(34.7, 40.1)), List(Place.Name("Zzpcairn")))
     assertEquals(p.add(own).map(x => (x.id, x.label, x.kind)), Right(("local_zzp_cairn", "Zzpcairn", "site")))
     assertEquals(p.add(own).left.map(_.code), Left(Some(Write.CodeInvalid)))
     assertEquals(p.rename("zzp_well", "zzp_spring"), Right(()))
-    val again = PlaceInput(place("zzp_well", "Zzpwell", "site", point(1, 1)))
+    val again = Place.Input(place("zzp_well", "Zzpwell", "site", point(1, 1)))
     assertEquals(p.add(again).left.map(_.code), Left(Some(Write.CodeInvalid)), "an old id")
     assertEquals(p.count(), 6)
   }
 
-  private def changed(c: PlaceOverrideChanged) =
+  private def changed(c: Place.OverrideChanged) =
     (c.placeId, c.label, c.reset, c.kindBefore, c.kindAfter, c.periodBefore, c.periodAfter)
 
   stest("a kind and period set over the source's, listed, kept by the next import, and reset") { s =>
@@ -169,7 +164,7 @@ abstract class PlaceServiceContract extends CatalogueStoreSuite:
     val _ = p.importPlaces(batch, Dataset.Seed)
     val set = p.setOverride(
       "zzp_hill",
-      PlaceOverrideEdit.Put(Some("polity"), Some((Some(-1500L), Some(-1100L))), Some("the survey")),
+      Place.OverrideEdit.Put(Some("polity"), Some((Some(-1500L), Some(-1100L))), Some("the survey")),
       10.0
     )
     assertEquals(
@@ -181,8 +176,8 @@ abstract class PlaceServiceContract extends CatalogueStoreSuite:
           false,
           "site",
           "polity",
-          PlaceOverrides.periodText(Some(-1650), Some(-1180)),
-          PlaceOverrides.periodText(Some(-1500), Some(-1100))
+          Place.Overrides.periodText(Some(-1650), Some(-1180)),
+          Place.Overrides.periodText(Some(-1500), Some(-1100))
         )
       )
     )
@@ -199,15 +194,15 @@ abstract class PlaceServiceContract extends CatalogueStoreSuite:
     assertEquals(p.overrides(None).map(_.placeId), List("zzp_hill"))
     val _ = p.importPlaces(batch, Dataset.Seed)
     assertEquals(p.get("zzp_hill").map(_.place.kind), Some("polity"), "the next import keeps it")
-    val reset = p.setOverride("zzp_hill", PlaceOverrideEdit.Reset, 10.0)
+    val reset = p.setOverride("zzp_hill", Place.OverrideEdit.Reset, 10.0)
     assertEquals(reset.map(c => (c.reset, c.kindAfter)), Right((true, "site")))
     assertEquals(p.get("zzp_hill").map(d => (d.place.kind, d.place.periodStart)), Some(("site", Some(-1650L))))
     assertEquals(
-      p.setOverride("zzp_hill", PlaceOverrideEdit.Reset, 10.0).left.map(_.code),
+      p.setOverride("zzp_hill", Place.OverrideEdit.Reset, 10.0).left.map(_.code),
       Left(Some(Write.CodeNotFound))
     )
     assertEquals(
-      p.setOverride("zzp_none", PlaceOverrideEdit.Reset, 10.0).left.map(_.code),
+      p.setOverride("zzp_none", Place.OverrideEdit.Reset, 10.0).left.map(_.code),
       Left(Some(Write.CodeNotFound))
     )
     assertEquals(p.overrides(None), Nil)

@@ -1,7 +1,7 @@
 package com.histmersion.pluginhost
 
 import com.histmersion.api.OpenSide
-import com.histmersion.api.catalogue.{Period as ApiPeriod, Place, PlaceInput, PlaceName, PlaceRelation}
+import com.histmersion.api.catalogue.{Period as ApiPeriod, Place}
 import com.histmersion.plugin.*
 
 /** The host's reading of a plugin's gazetteer places: each converted to the store's shape unchanged (its source its
@@ -27,7 +27,7 @@ class PluginGazetteersSuite extends munit.FunSuite:
     assertEquals(
       PluginGazetteers.input(slice, " Atlas, CC BY 4.0 "),
       Right(
-        PlaceInput(
+        Place.Input(
           Place(
             "zz_slice_-1650_-1401",
             " Hittite Empire ",
@@ -38,8 +38,8 @@ class PluginGazetteersSuite extends munit.FunSuite:
             Some("""{"wikidata":"Q170494"}"""),
             None
           ),
-          List(PlaceName("Hatti", "hit", Some(ApiPeriod(-1650, -1200)), Some(OpenSide.End))),
-          List(PlaceRelation("zz_slice_-1650_-1401", "zz_hittites", "part_of", Some(ApiPeriod(-1650, -1401)), None))
+          List(Place.Name("Hatti", "hit", Some(ApiPeriod(-1650, -1200)), Some(OpenSide.End))),
+          List(Place.Relation("zz_slice_-1650_-1401", "zz_hittites", "part_of", Some(ApiPeriod(-1650, -1401)), None))
         )
       )
     )

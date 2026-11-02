@@ -1,12 +1,12 @@
 package com.histmersion.web
 
-import com.histmersion.api.library.{GraphLink, GraphNode, SourceGraph}
+import com.histmersion.api.library.{GraphLink, GraphNode}
 import com.histmersion.domain.library.Edge
 import com.histmersion.domain.library.Source
 
 class GraphPanelSuite extends munit.FunSuite:
 
-  private val g = SourceGraph(
+  private val g = com.histmersion.api.library.Source.Graph(
     "a2020_x",
     2,
     List(

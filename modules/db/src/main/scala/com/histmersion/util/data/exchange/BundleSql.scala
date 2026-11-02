@@ -1,6 +1,5 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.exchange.BundleRange
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.RangeSql
 
@@ -16,14 +15,16 @@ object BundleSql:
   /** A range as the three columns [[range]] reads back. */
   def rangeCols(col: String): String = s"$col IS NULL, ${RangeSql.cols(col)}"
 
-  def range(isNull: Boolean, lo: Option[Long], hi: Option[Long]): Option[BundleRange] =
-    Option.when(!isNull)(BundleRange(lo, hi))
+  def range(isNull: Boolean, lo: Option[Long], hi: Option[Long]): Option[com.histmersion.api.exchange.Bundle.Range] =
+    Option.when(!isNull)(com.histmersion.api.exchange.Bundle.Range(lo, hi))
 
   /** A bundle range as the `int8range` literal ([[RangeSql.bounds]]), NULL when the bundle has none. */
-  def rangeLiteral(p: Option[BundleRange]): Option[String] = p.map(r => RangeSql.bounds(r.start, r.end))
+  def rangeLiteral(p: Option[com.histmersion.api.exchange.Bundle.Range]): Option[String] =
+    p.map(r => RangeSql.bounds(r.start, r.end))
 
   /** A bundle range where no range means every year (`(,)`) — places, relations, types, periods. */
-  def rangeOrAll(p: Option[BundleRange]): String = RangeSql.bounds(p.flatMap(_.start), p.flatMap(_.end))
+  def rangeOrAll(p: Option[com.histmersion.api.exchange.Bundle.Range]): String =
+    RangeSql.bounds(p.flatMap(_.start), p.flatMap(_.end))
 
   /** `WHERE` for the scope, on a table's uid and change-clock columns. */
   def where(scope: BundleScope, uid: String, clock: String): Sql = scope match

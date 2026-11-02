@@ -82,7 +82,7 @@ object ReservedNames:
     */
   val gazetteerSources: Set[String] =
     Set("cliopatria", "awmc", "chronontology", "land", "periodo") ++
-      com.histmersion.api.catalogue.GazetteerKind.values.map(_.wire).toSet
+      com.histmersion.api.catalogue.Gazetteer.Kind.values.map(_.wire).toSet
 
   /** Histmersion's own source collections: the Calibre library and archive.org. */
   val sourceCollections: Set[String] = Set("calibre", "archive-org")

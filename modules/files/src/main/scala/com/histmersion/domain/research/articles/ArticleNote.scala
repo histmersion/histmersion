@@ -6,7 +6,7 @@ import org.yaml.snakeyaml.Yaml
 import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
 import com.histmersion.api.catalogue.Period
-import com.histmersion.api.research.{Article, ArticleCoverage, ArticleFilter, Articles}
+import com.histmersion.api.research.{Article, Articles}
 
 /** `wiki/<kind>/<slug>.md` ⇄ [[Article]] — the same frontmatter-plus-body shape as [[Export.note]] /
   * [[Frontmatter.parseNote]], for articles.
@@ -44,7 +44,7 @@ object ArticleNote:
     MirrorFrontmatter(fields).note(Option.when(body.nonEmpty)(body))
 
   /** The filter as a frontmatter map: only the parts it has, in a fixed order. */
-  private def filterMap(f: ArticleFilter): java.util.Map[String, Any] =
+  private def filterMap(f: Article.Filter): java.util.Map[String, Any] =
     val m = new java.util.LinkedHashMap[String, Any]()
     f.query.foreach(m.put("query", _))
     def lst(k: String, xs: List[String]) = if xs.nonEmpty then m.put(k, xs.asJava)
@@ -66,7 +66,7 @@ object ArticleNote:
   def parse(text: String, fallbackSlug: String, fallbackKind: String): Option[Article] =
     split(text).map { (yaml, rawBody) =>
       val m = parseYaml(yaml)
-      val body = ArticleCoverage.stripGenerated(rawBody).trim
+      val body = Article.Coverage.stripGenerated(rawBody).trim
       val slug = str(m, "slug").getOrElse(fallbackSlug).trim.toLowerCase
       Article(
         slug = slug,
@@ -86,9 +86,9 @@ object ArticleNote:
         filter = raw(m, "filter")
           .collect { case f: java.util.Map[?, ?] => f.asScala.toMap.map((k, v) => k.toString -> v) }
           .flatMap(f =>
-            ArticleFilter
+            Article.Filter
               .normalise(
-                ArticleFilter(
+                Article.Filter(
                   str(f, "query"),
                   list(f, "topics"),
                   list(f, "tags"),

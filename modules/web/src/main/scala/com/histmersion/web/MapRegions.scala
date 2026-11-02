@@ -3,7 +3,7 @@ package com.histmersion.web
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import com.histmersion.api.basemap.{Basemap, BasemapFetchQuery, BasemapLayer, BasemapStatus}
+import com.histmersion.api.basemap.Basemap
 
 /** What a person downloads of the base map from the About window, as data: the regions to pick from, the fetch a choice
   * asks for, and the dry run's sizes zoom by zoom.
@@ -27,7 +27,7 @@ object MapRegions:
   val OwnBox = "own"
 
   /** The configured region first — the whole world by default, then listed once, as itself. */
-  def choices(s: BasemapStatus): List[RegionChoice] =
+  def choices(s: Basemap.Status): List[RegionChoice] =
     val world = RegionChoice("world", "the whole world", Some("world"))
     val configured =
       if s.bbox.trim.equalsIgnoreCase("world") then
@@ -45,7 +45,7 @@ object MapRegions:
       named: Option[String],
       maxZoom: String,
       dryRun: Boolean
-  ): Either[String, BasemapFetchQuery] =
+  ): Either[String, Basemap.FetchQuery] =
     for
       b <- Basemap.validBBox(box.trim)
       z <- maxZoom.trim match
@@ -56,10 +56,10 @@ object MapRegions:
             .map(Some(_))
             .toRight(s"the deepest zoom is a number from 0 to ${Basemap.MaxZoomCap}")
     yield content match
-      case Content.Map    => BasemapFetchQuery(bbox = Some(box.trim), maxZoom = z, dryRun = dryRun)
+      case Content.Map    => Basemap.FetchQuery(bbox = Some(box.trim), maxZoom = z, dryRun = dryRun)
       case Content.Relief =>
-        BasemapFetchQuery(
-          layer = BasemapLayer.Terrain.wire,
+        Basemap.FetchQuery(
+          layer = Basemap.Layer.Terrain.wire,
           bbox = Some(box.trim),
           terrainMaxZoom = z,
           dryRun = dryRun,

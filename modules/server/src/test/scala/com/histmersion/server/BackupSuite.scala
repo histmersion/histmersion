@@ -3,13 +3,14 @@ package com.histmersion.server
 import com.histmersion.util.data.backup.BackupJobs
 import com.histmersion.util.data.maintenance.WriteGate
 
-import com.histmersion.api.{ApiError, Markdown, Write}
+import com.histmersion.api.{Markdown, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import java.nio.file.{Files, Path}
 import java.time.Instant
 import scala.jdk.CollectionConverters.*
-import com.histmersion.api.backup.{Backup, BackupState}
+import com.histmersion.api.backup.Backup
+import com.histmersion.api.Api
 
 /** The parts of the server-side backup machinery that need no database and no `pg_dump`: the maintenance lock, and the
   * listing/resolution that keeps a client-supplied name inside `backups.dir`.
@@ -52,7 +53,7 @@ class BackupSuite extends munit.FunSuite:
   test("a second concurrent restore is refused, and the lock is released afterwards"):
     val m = WriteGate()
     // the inner attempt cannot take the flag the outer one holds, so its Left is what comes back
-    val nested: Either[ApiError, String] = m.exclusively("restore")(m.exclusively("restore")(Right("inner")))
+    val nested: Either[Api.Error, String] = m.exclusively("restore")(m.exclusively("restore")(Right("inner")))
     assertEquals(nested, Left(Backup.maintenance("restore")))
     assertEquals(m.active, false)
     assertEquals(m.exclusively("restore")(Right("again")), Right("again"))
@@ -223,14 +224,14 @@ class BackupSuite extends munit.FunSuite:
     val bin = fakeDump(d, sleepS = 2)
     val j = jobs(d, bin, waitS = 0)
     val first = j.start(Instant.now())
-    assertEquals(first.map(_.stateOf), Right(Some(BackupState.Running)), first.toString)
+    assertEquals(first.map(_.stateOf), Right(Some(Backup.State.Running)), first.toString)
     assert(j.running)
     // a second request while it runs joins the same job instead of dumping twice
     assertEquals(j.start(Instant.now()).map(_.file), first.map(_.file))
     val deadline = System.nanoTime() + 15_000_000_000L
     while j.running && System.nanoTime() < deadline do Thread.sleep(100)
     val done = j.status
-    assertEquals(done.flatMap(_.stateOf), Some(BackupState.Done), done.toString)
+    assertEquals(done.flatMap(_.stateOf), Some(Backup.State.Done), done.toString)
     assert(done.flatMap(_.result).exists(r => r.bytes > 0 && r.sha256.length == 64), done.toString)
     assert(Files.exists(d.resolve(first.toOption.get.file)), "the archive is in place")
     cleanBin(bin)
@@ -239,7 +240,7 @@ class BackupSuite extends munit.FunSuite:
   tmp.test("a dump that fits in the wait is answered done in the same request") { d =>
     val bin = fakeDump(d, sleepS = 0)
     val r = jobs(d, bin, waitS = 10).start(Instant.now())
-    assertEquals(r.map(_.stateOf), Right(Some(BackupState.Done)), r.toString)
+    assertEquals(r.map(_.stateOf), Right(Some(Backup.State.Done)), r.toString)
     cleanBin(bin)
   }
 
@@ -247,9 +248,9 @@ class BackupSuite extends munit.FunSuite:
     val bin = fakeDump(d, sleepS = 0, fail = true)
     val j = jobs(d, bin, waitS = 10)
     val r = j.start(Instant.now())
-    assertEquals(r.map(_.stateOf), Right(Some(BackupState.Failed)), r.toString)
+    assertEquals(r.map(_.stateOf), Right(Some(Backup.State.Failed)), r.toString)
     assert(r.toOption.flatMap(_.error).exists(_.contains("connection refused")), r.toString)
-    assertEquals(j.status.flatMap(_.stateOf), Some(BackupState.Failed))
+    assertEquals(j.status.flatMap(_.stateOf), Some(Backup.State.Failed))
     cleanBin(bin)
   }
 

@@ -6,7 +6,7 @@ import com.histmersion.domain.automation.workflows.PipelineDef
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.Pipeline
-import com.histmersion.api.automation.GoalPlans.LinkKind
+import com.histmersion.api.automation.Goal.Plans.LinkKind
 import AcquisitionSweepRules.{Candidate, Ranking}
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*

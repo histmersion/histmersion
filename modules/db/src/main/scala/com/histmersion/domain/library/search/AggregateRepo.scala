@@ -13,8 +13,8 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.Sql
-import com.histmersion.api.catalogue.PeriodRow
 import com.histmersion.api.library.Filter
+import com.histmersion.api.catalogue.Period
 
 /** Period bounds of everything matching a filter — the raw input of [[com.histmersion.api.library.Aggregate]].
   *
@@ -23,7 +23,7 @@ import com.histmersion.api.library.Filter
   */
 private[search] object AggregateRepo:
 
-  private given DbCodec[PeriodRow] = DbCodec.derived
+  private given DbCodec[Period.Row] = DbCodec.derived
 
   /** The SQL behind [[periods]] — a **pure** value (plan §1.0/§2.2), so the predicate can be asserted on without a
     * database.
@@ -64,8 +64,8 @@ private[search] object AggregateRepo:
         Sql.raw(" AND (") ++ ownPeriod ++ Sql.raw(" OR fp.in_window > 0)")
 
   /** Run [[periodsQuery]]. `unit` is `sources` (default) or `findings`. */
-  def periods(unit: String, filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Vector[PeriodRow] =
-    periodsQuery(unit, filter, scope).frag.query[PeriodRow].run()
+  def periods(unit: String, filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Vector[Period.Row] =
+    periodsQuery(unit, filter, scope).frag.query[Period.Row].run()
 
   /** One row as SQL returns it — the place ids arrive as a `text[]`. */
   final private[search] case class TreeRowRaw(

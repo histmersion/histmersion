@@ -3,8 +3,8 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.automation.Queue
-import com.histmersion.api.library.AcquireChecks
 import com.histmersion.api.given
+import com.histmersion.api.library.Acquire
 
 /** A work list as `GET /api/queue/{list}` shows it: its items as the automation keeps them, the library's last legal
   * check of each ACQUIRE item, and the goals each item belongs to or is linked from.
@@ -12,7 +12,7 @@ import com.histmersion.api.given
 final case class QueueListing(
     list: String,
     items: List[Queue.QueueItem],
-    checks: List[AcquireChecks.AcquireCheck] = Nil,
+    checks: List[Acquire.Checks.AcquireCheck] = Nil,
     goals: List[Queue.ItemGoals] = Nil
 ) derives KindlingsCodecAsObject,
       KindlingsSchema:

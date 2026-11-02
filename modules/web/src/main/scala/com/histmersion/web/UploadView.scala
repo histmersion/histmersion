@@ -8,7 +8,8 @@ import org.scalajs.dom
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.automation.Queue
-import com.histmersion.api.library.{Filter, IngestAccepted, IngestParams}
+import com.histmersion.api.library.Filter
+import com.histmersion.api.library.Ingest
 
 /** Upload a document for OCR ingest (`POST /api/ingest`): pick or drop a file, give it a citekey and the metadata the
   * endpoint takes, watch the upload, then follow the OCR job in the jobs window. The form can start from an item of the
@@ -58,7 +59,7 @@ object UploadView:
     Option(slug).filter(Citekey.valid)
 
   /** The parameters to send, or what is wrong, field by field. */
-  def validate(d: Draft): Either[List[(Field, String)], IngestParams] =
+  def validate(d: Draft): Either[List[(Field, String)], Ingest.Params] =
     val file = Option.when(d.fileName.isEmpty)(Field.File -> "choose a file to upload")
     val ck = Citekey.parse(d.citekey).left.toOption.map(Field.Citekey -> _)
     val year = d.year.trim match
@@ -77,7 +78,7 @@ object UploadView:
     if errors.nonEmpty then Left(errors)
     else
       Right(
-        IngestParams(
+        Ingest.Params(
           citekey = d.citekey.trim,
           filename = d.fileName,
           quality = d.quality,
@@ -144,7 +145,7 @@ object UploadView:
   private val progress = Var(Option.empty[Double])
 
   /** The accepted upload, and the acquisition item its job will tick off. */
-  private val accepted = Var(Option.empty[(IngestAccepted, Option[Int])])
+  private val accepted = Var(Option.empty[(Ingest.Accepted, Option[Int])])
   private val dragging = Var(false)
 
   /** The open acquisition items the picker offers; reloaded when the list changes elsewhere. */

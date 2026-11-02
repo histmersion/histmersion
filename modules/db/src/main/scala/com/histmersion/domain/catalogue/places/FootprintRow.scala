@@ -2,7 +2,8 @@ package com.histmersion.domain.catalogue.places
 
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
-import com.histmersion.api.catalogue.{Period, PlaceFootprint}
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.catalogue.Place
 
 final private[places] case class FootprintRow(
     id: Int,
@@ -14,8 +15,8 @@ final private[places] case class FootprintRow(
     accuracyM: Option[Float],
     citekey: Option[String]
 ) derives DbCodec:
-  def toDto: PlaceFootprint =
-    PlaceFootprint(
+  def toDto: Place.Footprint =
+    Place.Footprint(
       id,
       placeId,
       role,

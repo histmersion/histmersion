@@ -10,19 +10,21 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.circe.Codec
-import com.histmersion.api.{Api, ApiError, Markdown, Paging, StrictJson}
+import com.histmersion.api.{Api, Markdown, Paging, StrictJson}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.library.EditionsPolicy
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.util.mcp.McpOut
 import com.histmersion.api.aliases.{Aliases, LabelRename}
-import com.histmersion.api.automation.{ActivityMarkdown, AgentsMarkdown, AgentStatePut, GoalPatch, GoalPut, ListFilters}
-import com.histmersion.api.exchange.{MergeMarkdown, MergePlanRequest, MergePolicy, MergeResolution, MergeResolutions}
+import com.histmersion.api.automation.{ActivityMarkdown, AgentsMarkdown, AgentStatePut, ListFilters}
+import com.histmersion.api.exchange.{MergeMarkdown, MergePolicy, MergeResolution, MergeResolutions}
 import com.histmersion.api.library.{IngestMarkdown, RepairAcquire}
-import com.histmersion.api.maintenance.VacuumRequest
 import com.histmersion.api.settings.{ConfigEditMarkdown, ReloadMarkdown}
 import com.histmersion.domain.catalogue.Place
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.exchange.MergePlan
+import com.histmersion.api.maintenance.Vacuum
 
 /** MCP tools (Chimp). Every tool returns Markdown and delegates to the same controllers as REST ([[ServerWiring]]). */
 final class McpTools(
@@ -179,7 +181,7 @@ final class McpTools(
               case None    => page(ConfigEditMarkdown.page, in.prefix)
           case "set" | "unset" =>
             in.key.map(_.trim).filter(_.nonEmpty) match
-              case None    => McpOut.error(ApiError(s"`${in.action}` needs a `key`"))
+              case None    => McpOut.error(Api.Error(s"`${in.action}` needs a `key`"))
               case Some(k) =>
                 val value = if in.action.trim.equalsIgnoreCase("unset") then None else Some(in.value.getOrElse(""))
                 h.settings
@@ -191,7 +193,7 @@ final class McpTools(
                   )
                   .fold(McpOut.error, w => ToolResult.text(ConfigEditMarkdown.written(w)))
           case "restart" => h.settings.restart().fold(McpOut.error, r => ToolResult.text(ConfigEditMarkdown.restart(r)))
-          case other => McpOut.error(ApiError(s"unknown action '$other' (one of: get, set, unset, reload, restart)"))
+          case other => McpOut.error(Api.Error(s"unknown action '$other' (one of: get, set, unset, reload, restart)"))
       }
 
   private val backup =
@@ -222,7 +224,7 @@ final class McpTools(
           "It runs as a server job, one table at a time, outside any transaction (no data changes, no table " +
           "lock beyond VACUUM's own); it answers with the job — follow it with `job_status`."
       )
-      .input[VacuumRequest]
+      .input[Vacuum.Request]
       .handle(in => h.upkeep.vacuum(in).fold(McpOut.error, j => ToolResult.text(IngestMarkdown.job(j))))
 
   // DELETE /api/articles/{slug} is deliberately NOT an MCP tool: dropping compiled knowledge is a
@@ -260,7 +262,7 @@ final class McpTools(
       .input[GoalPutInput]
       .handle { in =>
         val put =
-          GoalPut(in.title, in.status, in.notes, in.tags, in.regions, in.periodStart, in.periodEnd, in.parentSlug)
+          Goal.Put(in.title, in.status, in.notes, in.tags, in.regions, in.periodStart, in.periodEnd, in.parentSlug)
         h.goals.put(in.slug, put) match
           case Right(g) =>
             ToolResult.text(Aliases.note(AliasKinds.GoalRecords, in.slug, g.slug)(GoalsMarkdown.goal(g)))
@@ -272,7 +274,7 @@ final class McpTools(
       .description("Update specific fields of a goal without replacing the whole row.")
       .input[GoalPatchInput]
       .handle { in =>
-        val p = GoalPatch(
+        val p = Goal.Patch(
           in.title,
           in.status,
           in.notes,
@@ -346,7 +348,7 @@ final class McpTools(
               in.resolve.toList.sortBy(_._1).map((k, v) => MergeResolution(k, v)),
               MergePolicy(other.flatMap(_.toOption))
             )
-            h.bundles.plan(MergePlanRequest(in.bundle, res)) match
+            h.bundles.plan(MergePlan.Request(in.bundle, res)) match
               case Right(p) => ToolResult.text(MergeMarkdown.plan(p, in.all))
               case Left(e)  => McpOut.error(e)
       }

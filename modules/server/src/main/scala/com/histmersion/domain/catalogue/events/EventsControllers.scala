@@ -9,16 +9,8 @@ import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
-import com.histmersion.api.{Api, ApiError, BBox, Write}
-import com.histmersion.api.catalogue.{
-  EventDeleted,
-  EventGeoList,
-  EventGeometry,
-  EventList,
-  EventPatch,
-  EventPut,
-  EventScale
-}
+import com.histmersion.api.{Api, BBox, Write}
+import com.histmersion.api.catalogue.{EventDeleted, EventGeometry, EventList, EventPatch, EventPut, EventScale}
 import com.histmersion.api.library.Filter
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.Caller
@@ -26,6 +18,7 @@ import com.histmersion.domain.catalogue.places.Wikidata
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.aliases.AliasKind
 import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.api.catalogue.EventGeo
 
 /** The events' operations as REST, MCP and the CLI reach them. An old event id answers as the event it was renamed to,
   * and a write to one goes to that event. `card` is what an event's page shows beside its own fields (its catalogues,
@@ -55,23 +48,26 @@ final class EventsControllers(
     events.list(selection(q, f), f.limit, f.offset)
 
   /** `GET /api/events/geo` — the map's events with their scale, anchor and outline. */
-  def geo(q: Api.EventQuery): EventGeoList =
+  def geo(q: Api.EventQuery): EventGeo.List =
     val (limit, tolerance) = mapView()
     events.geo(selection(q, q.filter), limit, tolerance)
 
   /** A stated scale must be `local`, `regional` or (to clear it) `auto`. */
-  private def validScale(scale: Option[String]): Either[ApiError, Unit] =
+  private def validScale(scale: Option[String]): Either[Api.Error, Unit] =
     scale match
       case Some(v) if EventScale.parse(v).isEmpty =>
         Left(
-          ApiError(s"scale '$v' is not ${(EventScale.all :+ EventScale.Auto).mkString(" | ")}", Some(Write.CodeInvalid))
+          Api.Error(
+            s"scale '$v' is not ${(EventScale.all :+ EventScale.Auto).mkString(" | ")}",
+            Some(Write.CodeInvalid)
+          )
         )
       case _ => Right(())
 
   /** An event's geometry is a GeoJSON geometry the store reads: WKT, a Feature or bad coordinates are a 400 naming the
     * problem, not a failed statement. Blank passes (none / clear).
     */
-  private def validGeometry(g: Option[String]): Either[ApiError, Unit] =
+  private def validGeometry(g: Option[String]): Either[Api.Error, Unit] =
     g.map(_.trim).filter(_.nonEmpty) match
       case None    => Right(())
       case Some(v) =>
@@ -79,22 +75,22 @@ final class EventsControllers(
           .check(v)
           .flatMap(gj => events.geometryError(gj).map(m => s"geometry is not a valid GeoJSON geometry: $m").toLeft(()))
           .left
-          .map(m => ApiError(m, Some(Write.CodeInvalid)))
+          .map(m => Api.Error(m, Some(Write.CodeInvalid)))
 
   /** An event's Wikidata item is a `Q…` id; `""` clears it. */
-  private def validWikidata(q: Option[String]): Either[ApiError, Unit] =
+  private def validWikidata(q: Option[String]): Either[Api.Error, Unit] =
     q.map(_.trim) match
       case Some(v) if v.nonEmpty && !Wikidata.isQid(v) =>
-        Left(ApiError(s"wikidata '$v' is not a Wikidata item id (Q followed by digits)", Some(Write.CodeInvalid)))
+        Left(Api.Error(s"wikidata '$v' is not a Wikidata item id (Q followed by digits)", Some(Write.CodeInvalid)))
       case _ => Right(())
 
   private def now(id: String): String = current(AliasKinds.EventRecords, id)
 
-  def get(id: String): Either[ApiError, EventEntry] =
-    events.get(now(id)).map(card).toRight(ApiError(s"No event '$id'", Some(Write.CodeNotFound)))
+  def get(id: String): Either[Api.Error, EventEntry] =
+    events.get(now(id)).map(card).toRight(Api.Error(s"No event '$id'", Some(Write.CodeNotFound)))
 
   /** A put to an old id replaces the event it was renamed to, never creates a second one under the old id. */
-  def put(caller: Caller, id: String, in: EventPut): Either[ApiError, EventEntry] =
+  def put(caller: Caller, id: String, in: EventPut): Either[Api.Error, EventEntry] =
     maintenance.guard("put_event"):
       val to = now(id)
       validScale(in.scale).flatMap(_ => validGeometry(in.geometry)).flatMap { _ =>
@@ -102,7 +98,7 @@ final class EventsControllers(
         get(to)
       }
 
-  def patch(caller: Caller, id: String, p: EventPatch): Either[ApiError, EventEntry] =
+  def patch(caller: Caller, id: String, p: EventPatch): Either[Api.Error, EventEntry] =
     maintenance.guard("patch_event"):
       val to = now(id)
       validScale(p.scale)
@@ -110,21 +106,21 @@ final class EventsControllers(
         .flatMap(_ => validGeometry(p.geometry))
         .flatMap(_ => events.patch(to, p).flatMap(_ => get(to)))
 
-  def delete(caller: Caller, id: String): Either[ApiError, EventDeleted] =
+  def delete(caller: Caller, id: String): Either[Api.Error, EventDeleted] =
     maintenance.guard("delete_event"):
       val to = now(id)
       if events.delete(to) then Right(EventDeleted(to, true))
-      else Left(ApiError(s"No event '$id'", Some(Write.CodeNotFound)))
+      else Left(Api.Error(s"No event '$id'", Some(Write.CodeNotFound)))
 
   /** `POST /api/events/{id}/rename` — a new id (`to` checks the one asked for against the current one); the old one
     * keeps resolving. Answers the event's id before and after.
     */
   /** `POST /api/events/{id}/rename` — a new id; the old one keeps resolving (V053). */
-  def renamed(id: String, req: LabelRename): Either[ApiError, LabelRenamed] =
+  def renamed(id: String, req: LabelRename): Either[Api.Error, LabelRenamed] =
     rename(Caller.Local, id, from => LabelRenames.validate(Bundle.Kind.Event, from, req.to))
       .map((from, to) => LabelRenamed(Bundle.Kind.Event, from, to))
 
-  def rename(caller: Caller, id: String, to: String => Either[ApiError, String]): Either[ApiError, (String, String)] =
+  def rename(caller: Caller, id: String, to: String => Either[Api.Error, String]): Either[Api.Error, (String, String)] =
     maintenance.guard("rename_event"):
       val from = now(id)
       for

@@ -7,11 +7,12 @@ import io.circe.parser
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.api.aliases.LabelRenamed
-import com.histmersion.api.automation.{Goal, GoalDeleted}
-import com.histmersion.api.catalogue.{Attestation, AttestationList, EventDeleted, Lpf, Place, PlaceInput, PlaceName}
-import com.histmersion.api.library.{SearchResult, SourceWithFindings}
-import com.histmersion.api.research.{ArticleDeleted, ArticleView}
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.catalogue.{Attestation, EventDeleted, Lpf, Place}
+import com.histmersion.api.library.SearchResult
 import com.histmersion.api.views.EventDetail
+import com.histmersion.api.library.Source
+import com.histmersion.api.research.Article
 
 /** The alias rule over real HTTP and MCP (#1799, #890): for every renamed kind — source, article, event, goal, place —
   * a put, a patch, a delete and a rename naming the OLD identifier go to the record under its current one, and the
@@ -90,7 +91,7 @@ class AliasRuleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion
         "zz-alias-g2"
       )
       assertEquals(decode[Goal](ok(get(s"$url/api/goals/zz-alias-g1"))).slug, "zz-alias-g3")
-      assertEquals(decode[GoalDeleted](ok(delete(s"$url/api/goals/zz-alias-g2"))).slug, "zz-alias-g3")
+      assertEquals(decode[Goal.Deleted](ok(delete(s"$url/api/goals/zz-alias-g2"))).slug, "zz-alias-g3")
       assertEquals(get(s"$url/api/goals/zz-alias-g3")._1, 404)
 
       ok(
@@ -116,7 +117,7 @@ class AliasRuleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion
       )
       assertEquals(a.targetId, "zz_alias_e2")
       assertEquals(
-        decode[AttestationList](ok(get(s"$url/api/attestations?targetType=event&targetId=zz_alias_e1"))).total,
+        decode[Attestation.List](ok(get(s"$url/api/attestations?targetType=event&targetId=zz_alias_e1"))).total,
         1
       )
       assertEquals(decode[EventDeleted](ok(delete(s"$url/api/events/zz_alias_e1"))).id, "zz_alias_e2")
@@ -127,7 +128,7 @@ class AliasRuleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion
     withServer { url =>
       ok(put(s"$url/api/sources/zzalias2020_old", """{"title":"Old key source"}"""))
       ok(post(s"$url/api/sources/zzalias2020_old/rename", """{"newCitekey":"zzalias2021_new"}"""))
-      val sw = decode[SourceWithFindings](
+      val sw = decode[Source.WithFindings](
         ok(put(s"$url/api/sources/zzalias2020_old", """{"title":"Replaced by the old key"}"""))
       )
       assertEquals((sw.source.citekey, sw.source.title), ("zzalias2021_new", "Replaced by the old key"))
@@ -141,7 +142,7 @@ class AliasRuleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion
         )
       )
       ok(post(s"$url/api/articles/zz_alias_a1/rename", """{"to":"zz_alias_a2"}"""))
-      val v = decode[ArticleView](
+      val v = decode[Article.View](
         ok(
           put(
             s"$url/api/articles/zz_alias_a1",
@@ -151,7 +152,7 @@ class AliasRuleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion
       )
       assertEquals(v.article.slug, "zz_alias_a2")
       assertEquals(
-        decode[ArticleView](
+        decode[Article.View](
           ok(patch(s"$url/api/articles/zz_alias_a1", """{"summary":"by the old slug"}"""))
         ).article.slug,
         "zz_alias_a2"
@@ -164,7 +165,7 @@ class AliasRuleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion
       )
       assertEquals(is, 400, ib)
       assert(ib.contains("renamed to 'zz_alias_a2'"), ib)
-      assertEquals(decode[ArticleDeleted](ok(delete(s"$url/api/articles/zz_alias_a1"))).slug, "zz_alias_a2")
+      assertEquals(decode[Article.Deleted](ok(delete(s"$url/api/articles/zz_alias_a1"))).slug, "zz_alias_a2")
     }
 
   test("places: writes by the old id follow, and place=<old id> selects what place=<new id> does (#890)"):
@@ -172,14 +173,14 @@ class AliasRuleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion
     withServer { url =>
       val geo = Lpf.render(
         List(
-          PlaceInput(
+          Place.Input(
             Place(
               "zz_alias_p1",
               "Zzalias Hill",
               com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[30.5,39.5]}""")
             ),
-            List(PlaceName("Zzalias Hill"))
+            List(Place.Name("Zzalias Hill"))
           )
         )
       )

@@ -6,7 +6,7 @@ import com.histmersion.util.storage.{ContentDirectory, ContentStore}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Files
 import java.util.UUID
-import com.histmersion.api.exchange.{Bundle, BundleBlobs, BundleInstance, BundleManifest, BundleReference}
+import com.histmersion.api.exchange.Bundle
 
 /** The pure parts of the bundle endpoints, and the stored-originals directory a bundle reads and fills. No database.
   */
@@ -23,17 +23,17 @@ class BundleControllersSuite extends munit.FunSuite:
     assert(BundleControllers.since(Some("2026-10-03")).isLeft)
 
   test("the download is named after the instance and the moment it is as of"):
-    val m = BundleManifest(
+    val m = Bundle.Manifest(
       Bundle.Format,
       1,
       "33",
       UUID.randomUUID(),
-      BundleInstance(UUID.fromString("01910000-0000-7000-8000-0000000000aa"), Some("my work")),
+      Bundle.Instance(UUID.fromString("01910000-0000-7000-8000-0000000000aa"), Some("my work")),
       None,
       Some("2026-10-03T09:12:00.123456Z"),
       Nil,
-      BundleBlobs(0, 0),
-      BundleReference(0, "", 0, "")
+      Bundle.Blobs(0, 0),
+      Bundle.Reference(0, "", 0, "")
     )
     assertEquals(BundleControllers.disposition(m), """attachment; filename="histmersion-my-work-20261003091200.hmx"""")
     assertEquals(

@@ -19,7 +19,7 @@ import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.db.*
 import com.histmersion.api.automation.PlanQuota
-import com.histmersion.api.library.SourcePut
+import com.histmersion.api.library.Source
 
 /** Plan pools end to end against a `*_test` database (docs/research-plan-quotas.md §5): the pick with plan readings — a
   * window below its floor, a hold, a provider refusal — pauses a run with `plan-quota` until the reset instead of
@@ -107,7 +107,9 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   override def afterEach(context: AfterEach): Unit = clean()
 
   private def seed(h: ServerWiring): Unit =
-    assert(h.library.sources.put(Ck, SourcePut(title = "Bronze Age tin", year = Some(2019), body = Some(Body))).isRight)
+    assert(
+      h.library.sources.put(Ck, Source.Put(title = "Bronze Age tin", year = Some(2019), body = Some(Body))).isRight
+    )
 
   private val now = () => System.currentTimeMillis()
   private def low(resetIn: Long = 3600000L) =

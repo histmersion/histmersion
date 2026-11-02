@@ -3,18 +3,9 @@ package com.histmersion.api
 import com.histmersion.api.library.SearchMarkdown
 
 import com.histmersion.api.catalogue.Period
-import com.histmersion.api.library.{
-  Facet,
-  FacetField,
-  Filter,
-  FilterQuery,
-  FindingMatch,
-  Hit,
-  SearchHit,
-  SearchResult,
-  Sort
-}
+import com.histmersion.api.library.{Facet, Filter, Hit, SearchHit, SearchResult, Sort}
 import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Finding
 
 /** The `Filter` contract (plan §1.0): the flat wire shape, its interpretation, and the Markdown that shows a human/LLM
   * *why* each source matched. All pure.
@@ -55,10 +46,10 @@ class FilterSuite extends munit.FunSuite:
     assertEquals(Filter.of(sort = Some("nonsense")).sort, Sort.Relevance)
 
   test("FacetField parses its wire labels"):
-    assertEquals(FacetField.parse("places"), Some(FacetField.Places))
-    assertEquals(FacetField.parse("Tags"), Some(FacetField.Tags))
-    assertEquals(FacetField.parse("colour"), None)
-    assertEquals(FacetField.all, List("tags", "authors", "places", "topics", "status", "provenance"))
+    assertEquals(Facet.Field.parse("places"), Some(Facet.Field.Places))
+    assertEquals(Facet.Field.parse("Tags"), Some(Facet.Field.Tags))
+    assertEquals(Facet.Field.parse("colour"), None)
+    assertEquals(Facet.Field.all, List("tags", "authors", "places", "topics", "status", "provenance"))
 
   test("BBox.parse reads the CLI spelling"):
     assertEquals(BBox.parse("25,30, 45 ,42"), Some(BBox(25, 30, 45, 42)))
@@ -95,16 +86,16 @@ class FilterSuite extends munit.FunSuite:
       offset = Some(10),
       title = Some("troy")
     )
-    assertEquals(FilterQuery.from(f).toFilter, f)
+    assertEquals(Filter.Query.from(f).toFilter, f)
     assertEquals(f.title, Some("troy"))
 
   test("half-open ranges survive the round-trip as half-open"):
     val f = Filter.of(from = Some(-1300))
-    assertEquals(FilterQuery.from(f).to, None)
-    assertEquals(FilterQuery.from(f).toFilter, f)
+    assertEquals(Filter.Query.from(f).to, None)
+    assertEquals(Filter.Query.from(f).toFilter, f)
 
   test("an empty Filter round-trips to an empty query"):
-    val q = FilterQuery.from(Filter())
+    val q = Filter.Query.from(Filter())
     assertEquals(q.tag, Nil)
     assertEquals(q.limit, None)
     assertEquals(q.toFilter, Filter())
@@ -133,7 +124,7 @@ class FilterSuite extends munit.FunSuite:
       Some("Systems collapse.")
     ),
     List(
-      FindingMatch(
+      Finding.Match(
         "cline2014_collapse#0",
         "Ugarit destroyed",
         Some("Ugarit"),

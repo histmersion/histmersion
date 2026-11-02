@@ -4,20 +4,11 @@ import io.circe.Json
 import io.circe.syntax.*
 
 import java.util.UUID
-import com.histmersion.api.automation.GoalPlans
-import com.histmersion.api.exchange.{
-  BundleEvent,
-  BundlePlace,
-  BundlePlaceName,
-  BundleRange,
-  BundleSource,
-  IssueField,
-  IssuePlace,
-  IssueSide,
-  IssueSpan,
-  MergeIssueDetail
-}
+import com.histmersion.api.exchange.{IssueField, IssuePlace, IssueSide, IssueSpan}
 import com.histmersion.domain.library.Source
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.exchange.MergeIssue
 
 class MergeIssueDetailSuite extends munit.FunSuite:
 
@@ -26,7 +17,7 @@ class MergeIssueDetailSuite extends munit.FunSuite:
   private val I = UUID.fromString("01910000-0000-7000-8000-0000000000aa")
 
   private def source(authors: List[String], doi: Option[String] = None) =
-    BundleSource(
+    Bundle.Source(
       U1,
       I,
       "ck2001_a",
@@ -39,7 +30,7 @@ class MergeIssueDetailSuite extends munit.FunSuite:
       Nil,
       Nil,
       List("b", "a"),
-      Some(BundleRange(Some(-1650), None)),
+      Some(Bundle.Range(Some(-1650), None)),
       Some("  a summary  "),
       None,
       None,
@@ -52,7 +43,7 @@ class MergeIssueDetailSuite extends munit.FunSuite:
       "2026-10-02T00:00:00.000000Z"
     )
 
-  private def event(uid: UUID, geom: Option[String]) = BundleEvent(
+  private def event(uid: UUID, geom: Option[String]) = Bundle.Event(
     uid,
     I,
     "e1",
@@ -75,8 +66,8 @@ class MergeIssueDetailSuite extends munit.FunSuite:
     "2026-10-03T00:00:00.000000Z"
   )
 
-  private def place(uid: UUID, period: Option[BundleRange], names: List[String]) =
-    BundlePlace(
+  private def place(uid: UUID, period: Option[Bundle.Range], names: List[String]) =
+    Bundle.Place(
       uid,
       I,
       "pl1",
@@ -86,7 +77,7 @@ class MergeIssueDetailSuite extends munit.FunSuite:
       period,
       None,
       None,
-      names.map(BundlePlaceName(_, None, None)),
+      names.map(Bundle.PlaceName(_, None, None)),
       Nil,
       Nil,
       Nil,
@@ -95,29 +86,29 @@ class MergeIssueDetailSuite extends munit.FunSuite:
 
   test("a source is described by its title, first two authors, year, DOI and status"):
     assertEquals(
-      MergeIssueDetail.describe(source(List("A", "B", "C"), Some("10.1/x"))),
+      MergeIssue.Detail.describe(source(List("A", "B", "C"), Some("10.1/x"))),
       List("\"Tin\"", "A; B et al. · 2001 · DOI 10.1/x · current")
     )
-    assertEquals(MergeIssueDetail.describe(source(Nil)), List("\"Tin\"", "2001 · no DOI · current"))
+    assertEquals(MergeIssue.Detail.describe(source(Nil)), List("\"Tin\"", "2001 · no DOI · current"))
     assertEquals(
-      MergeIssueDetail.side(source(List("A"))),
+      MergeIssue.Detail.side(source(List("A"))),
       IssueSide("ck2001_a", U1, List("\"Tin\"", "A · 2001 · no DOI · current"))
     )
 
   test("a range reads none, always, or its two ends with … for an open one"):
-    assertEquals(MergeIssueDetail.rangeText(None), "none")
-    assertEquals(MergeIssueDetail.rangeText(Some(BundleRange(None, None))), "always")
-    assertEquals(MergeIssueDetail.rangeText(Some(BundleRange(Some(-1650), None))), "-1650..…")
+    assertEquals(MergeIssue.Detail.rangeText(None), "none")
+    assertEquals(MergeIssue.Detail.rangeText(Some(Bundle.Range(None, None))), "always")
+    assertEquals(MergeIssue.Detail.rangeText(Some(Bundle.Range(Some(-1650), None))), "-1650..…")
 
   test("preview folds whitespace and cuts to n characters; clip trims, drops blanks and cuts"):
-    assertEquals(MergeIssueDetail.preview("a \n  b"), "a b")
-    assertEquals(MergeIssueDetail.preview("abcdef", 4), "abc…")
-    assertEquals(MergeIssueDetail.clip(Some("  x  ")), Some("x"))
-    assertEquals(MergeIssueDetail.clip(Some("   ")), None)
-    assertEquals(MergeIssueDetail.clip(Some("abcdef"), 4), Some("abc…"))
+    assertEquals(MergeIssue.Detail.preview("a \n  b"), "a b")
+    assertEquals(MergeIssue.Detail.preview("abcdef", 4), "abc…")
+    assertEquals(MergeIssue.Detail.clip(Some("  x  ")), Some("x"))
+    assertEquals(MergeIssue.Detail.clip(Some("   ")), None)
+    assertEquals(MergeIssue.Detail.clip(Some("abcdef"), 4), Some("abc…"))
 
   test("a source pair, field by field: the OCR body by its hash prefix"):
-    val fs = MergeIssueDetail.sourceFields(source(List("A")), source(List("A", "B")).copy(bodySha256 = None))
+    val fs = MergeIssue.Detail.sourceFields(source(List("A")), source(List("A", "B")).copy(bodySha256 = None))
     assertEquals(
       fs.map(_.field),
       List(
@@ -141,7 +132,7 @@ class MergeIssueDetailSuite extends munit.FunSuite:
     assertEquals(fs.find(_.field == "OCR body").get, IssueField("OCR body", Some(s"sha256 ${"f" * 12}…"), None))
 
   test("an event pair: its dates, geometries and the span of its outer dates"):
-    val d = MergeIssueDetail.eventDetail(event(U1, Some("01")), event(U2, None))
+    val d = MergeIssue.Detail.eventDetail(event(U1, Some("01")), event(U2, None))
     assertEquals(d.fields.find(_.field.startsWith("dates")).get.left, Some("-1600 · … · … · -1500"))
     assertEquals(
       d.place,
@@ -154,11 +145,11 @@ class MergeIssueDetailSuite extends munit.FunSuite:
         )
       )
     )
-    assertEquals(MergeIssueDetail.eventSpan(event(U1, None).copy(notBefore = None, notAfter = None)), None)
+    assertEquals(MergeIssue.Detail.eventSpan(event(U1, None).copy(notBefore = None, notAfter = None)), None)
 
   test("a place pair: its span and names, and both periods as spans"):
-    val d = MergeIssueDetail.placeDetail(
-      place(U1, Some(BundleRange(Some(-2000), Some(-1600))), List("Thera", "Santorini")),
+    val d = MergeIssue.Detail.placeDetail(
+      place(U1, Some(Bundle.Range(Some(-2000), Some(-1600))), List("Thera", "Santorini")),
       place(U2, None, Nil)
     )
     assertEquals(d.fields.find(_.field == "span").get, IssueField("span", Some("-2000..-1600"), Some("none")))
@@ -166,12 +157,12 @@ class MergeIssueDetailSuite extends munit.FunSuite:
     assertEquals(d.place.flatMap(_.leftSpan), Some(IssueSpan(Some(-2000), Some(-1600))))
 
   test("an approved plan as one line; anything else as a JSON preview"):
-    val p = GoalPlans.Plan(
+    val p = Goal.Plans.Plan(
       "g",
       "why so",
-      List(GoalPlans.PlannedGoal("sub", "Sub")),
+      List(Goal.Plans.PlannedGoal("sub", "Sub")),
       List("q1", "q2"),
-      List(GoalPlans.PlannedWork("10.1/x"))
+      List(Goal.Plans.PlannedWork("10.1/x"))
     )
-    assertEquals(MergeIssueDetail.planText(p.asJson), "why so · sub-goals: sub · queries: q1; q2 · 1 work")
-    assertEquals(MergeIssueDetail.planText(Json.obj("x" -> Json.fromInt(1))), """{"x":1}""")
+    assertEquals(MergeIssue.Detail.planText(p.asJson), "why so · sub-goals: sub · queries: q1; q2 · 1 work")
+    assertEquals(MergeIssue.Detail.planText(Json.obj("x" -> Json.fromInt(1))), """{"x":1}""")

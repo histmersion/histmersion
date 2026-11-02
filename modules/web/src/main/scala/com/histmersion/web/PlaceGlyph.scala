@@ -1,8 +1,8 @@
 package com.histmersion.web
 
-import com.histmersion.api.catalogue.PlaceShape
 import com.histmersion.web.map.*
 import com.histmersion.web.ui.Layout
+import com.histmersion.api.catalogue.Place
 
 /** How a gazetteer place is drawn on the map, from its kind and its geometry:
   *   - [[Area]]: a polygon — its outline, as before;
@@ -23,7 +23,7 @@ object PlaceGlyph:
   def of(kind: String, geometryType: String): PlaceGlyph =
     val point = geometryType == "Point" || geometryType == "MultiPoint"
     if !point then Area
-    else if PlaceShape.isArea(kind) || PlaceShape.isPeople(kind) then Label
+    else if Place.Shape.isArea(kind) || Place.Shape.isPeople(kind) then Label
     else Dot
 
   /** The words under a point-only region's name. */
@@ -41,7 +41,7 @@ object PlaceGlyph:
       hidden: Boolean = false
   ): String =
     val (note, title) =
-      if PlaceShape.isPeople(kind) then (People, PlaceShape.PeopleNote) else (NoBoundary, PlaceShape.NoBoundaryNote)
+      if Place.Shape.isPeople(kind) then (People, Place.Shape.PeopleNote) else (NoBoundary, Place.Shape.NoBoundaryNote)
     val cls = if hidden then "hd-area-point is-culled" else "hd-area-point"
     s"""<span class="$cls" title="${Fmt.esc(label)} — $title">""" +
       s"""<span class="hd-area-point-name">${Fmt.esc(label)}</span>""" +

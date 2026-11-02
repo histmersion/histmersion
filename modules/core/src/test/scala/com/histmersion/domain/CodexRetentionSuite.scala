@@ -5,7 +5,7 @@ import com.histmersion.api.given
 import com.histmersion.config.given
 
 import CodexRetention.FileInfo
-import com.histmersion.api.maintenance.StorageAdvice
+import com.histmersion.api.maintenance.Storage
 
 /** What a retention pass of the runs' Codex home may remove (#2582). Pure. */
 class CodexRetentionSuite extends munit.FunSuite:
@@ -43,4 +43,4 @@ class CodexRetentionSuite extends munit.FunSuite:
   test("the configured defaults, and About's shrink hint"):
     val c = AppConfig.load().agents.providers.codex
     assertEquals((c.keepSessionsDays, c.vacuum, c.retentionEveryHours, c.sqlite), (14, true, 24, "sqlite3"))
-    assert(StorageAdvice.shrink("codex-home", 0).exists(_.contains("keep-sessions-days")))
+    assert(Storage.Advice.shrink("codex-home", 0).exists(_.contains("keep-sessions-days")))

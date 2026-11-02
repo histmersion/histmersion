@@ -6,17 +6,9 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
-import com.histmersion.api.research.{
-  ArticleCoverage,
-  ArticleMarkdown,
-  ArticleView,
-  Coverage,
-  CoverageDrift,
-  CoverageEdge,
-  CritiqueState,
-  DriftKind
-}
+import com.histmersion.api.research.{ArticleMarkdown, Coverage, CritiqueState, DriftKind}
 import com.histmersion.domain.library.Source
+import com.histmersion.api.research.Article
 
 /** #958 — an article's coverage computed from its recorded filter against seeded sources, over every surface:
   * `GET /api/articles/{slug}/coverage`, the generated sections in `GET /api/articles/{slug}` (and so `article get`),
@@ -139,18 +131,18 @@ class ArticleCoverageHttpSuite extends com.histmersion.db.DbSuite:
         )
         assertEquals(c.citedOutside, List(Outside))
         assertEquals(c.statuses, List(StatusCount(Source.Status.Current, 4), StatusCount(Source.Status.Contested, 1)))
-        assertEquals(c.edges, List(CoverageEdge(Critic, "challenges", Cited2)))
+        assertEquals(c.edges, List(Coverage.Edge(Critic, "challenges", Cited2)))
         assertEquals(c.searches.map(s => (s.query, s.cited)), List(("synoikism", List(Outside))))
         assertEquals(
           c.drift,
           List(
-            CoverageDrift(DriftKind.Unplaced, List(NoWhy, Dispute).sorted),
-            CoverageDrift(DriftKind.ReasonForCited, List(Cited1))
+            Coverage.Drift(DriftKind.Unplaced, List(NoWhy, Dispute).sorted),
+            Coverage.Drift(DriftKind.ReasonForCited, List(Cited1))
           )
         )
 
         // ── the article as every reader sees it: the generated sections after the body ────────
-        val view = io.circe.parser.decode[ArticleView](get(s"$url/api/articles/$Slug")._2).toOption.get
+        val view = io.circe.parser.decode[Article.View](get(s"$url/api/articles/$Slug")._2).toOption.get
         assertEquals(view.coverage, Some(c))
         assertEquals(view.article.body.trim, Body.trim, "the body never holds the generated sections")
         val md = ArticleMarkdown.article(view)
@@ -161,12 +153,12 @@ class ArticleCoverageHttpSuite extends com.histmersion.db.DbSuite:
         assert(md.contains(s"- [[$NoWhy]], [[$Dispute]] (contested) — not yet assessed"), md)
         assert(md.contains("The filter returns 5 sources. 2 of them are cited above; the other 3 are listed"), md)
         assert(md.contains(s"[[$Critic]] challenges [[$Cited2]]"), md)
-        assertEquals(ArticleMarkdown.article(view, List("coverage")), ArticleCoverage.sections(c))
+        assertEquals(ArticleMarkdown.article(view, List("coverage")), Article.Coverage.sections(c))
         // the "Sources cited" footer lists what the body cites — not the generated list
         assert(!view.sourcesCited.exists(_.citekey == NoWhy), view.sourcesCited)
 
         // ── brief (the link preview's read): the same article, without the per-read work ─────
-        val brief = io.circe.parser.decode[ArticleView](get(s"$url/api/articles/$Slug?brief=true")._2).toOption.get
+        val brief = io.circe.parser.decode[Article.View](get(s"$url/api/articles/$Slug?brief=true")._2).toOption.get
         assertEquals(brief.coverage, None)
         assertEquals(brief.formatting, Nil)
         assertEquals(brief.copy(formatting = view.formatting, coverage = view.coverage), view)
@@ -180,13 +172,13 @@ class ArticleCoverageHttpSuite extends com.histmersion.db.DbSuite:
         // ── the export carries it between markers, and an import drops it again ───────────────
         val (es, exported) = get(s"$url/api/articles/$Slug/export")
         assertEquals(es, 200)
-        assert(exported.contains(ArticleCoverage.GeneratedStart) && exported.contains("## Not used"), exported)
+        assert(exported.contains(Article.Coverage.GeneratedStart) && exported.contains("## Not used"), exported)
         assert(exported.contains(s"filter:\n  topics:\n  - $Topic\n  extra_queries:\n  - synoikism\n"), exported)
         assert(exported.contains(s"reasons:\n  $Why: About Egypt, not the Aegean\n  $Cited1: stale\n"), exported)
         val imp =
           io.circe.Json.obj("text" -> io.circe.Json.fromString(exported), "force" -> io.circe.Json.True).noSpaces
         assertEquals(post(s"$url/api/articles/import", imp)._1, 200)
-        val again = io.circe.parser.decode[ArticleView](get(s"$url/api/articles/$Slug")._2).toOption.get
+        val again = io.circe.parser.decode[Article.View](get(s"$url/api/articles/$Slug")._2).toOption.get
         assertEquals(again.article.body.trim, Body.trim, "the import kept the body, not the generated block")
         assertEquals(again.coverage.map(_.reasons), Some(c.reasons), "and the reasons came back from the frontmatter")
 
@@ -223,7 +215,7 @@ class ArticleCoverageHttpSuite extends com.histmersion.db.DbSuite:
           s"""{"critiqueReasons":[{"src":"$Cited2","dst":"$Critic","reason":"The article cites it for the wreck's date only."}]}"""
         )
         assertEquals(rs, 200, rb)
-        val reasoned = io.circe.parser.decode[ArticleView](get(s"$url/api/articles/$Slug")._2).toOption.get
+        val reasoned = io.circe.parser.decode[Article.View](get(s"$url/api/articles/$Slug")._2).toOption.get
         assertEquals(
           reasoned.coverage.toList.flatMap(_.critiques).map(p => (p.ref.wire, p.state, p.reason, p.reasonBy)),
           List(

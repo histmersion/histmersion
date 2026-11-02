@@ -1,9 +1,8 @@
 package com.histmersion.util.data.diagnostics
 
-import com.histmersion.api.maintenance.StorageReport
-
 import java.util.concurrent.{CompletableFuture, ExecutionException, TimeoutException, TimeUnit}
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.api.maintenance.Storage
 
 /** The last [[StorageFigures]] measurement, reused for `ttl` and measured again in the background after it — ONE
   * measurement at a time, however many Abouts ask. A request that finds nothing measured yet waits up to `wait` for the
@@ -17,16 +16,16 @@ import java.util.concurrent.atomic.AtomicReference
   *   runs it (a virtual thread; a test runs it inline or holds it)
   */
 final class StorageCache(
-    prepare: () => () => StorageReport,
+    prepare: () => () => Storage.Report,
     ttlMillis: () => Long,
     clock: () => Long = () => System.currentTimeMillis(),
     spawn: (() => Unit) => Unit = r => { val _ = Thread.ofVirtual().name("histmersion-storage").start(() => r()) }
 ):
 
-  private val last = AtomicReference[Option[(Long, StorageReport)]](None)
-  private val running = AtomicReference[Option[CompletableFuture[StorageReport]]](None)
+  private val last = AtomicReference[Option[(Long, Storage.Report)]](None)
+  private val running = AtomicReference[Option[CompletableFuture[Storage.Report]]](None)
 
-  def get(waitMillis: Long): StorageReport =
+  def get(waitMillis: Long): Storage.Report =
     last.get match
       case Some((at, r)) if clock() - at < ttlMillis() => r
       case Some((_, r))                                =>
@@ -36,18 +35,18 @@ final class StorageCache(
         val f = kick()
         try f.get(math.max(0L, waitMillis), TimeUnit.MILLISECONDS)
         catch
-          case _: TimeoutException   => StorageReport(measuring = true)
+          case _: TimeoutException   => Storage.Report(measuring = true)
           case e: ExecutionException =>
-            StorageReport(problems = List(s"storage: ${Option(e.getCause).getOrElse(e).getMessage}"))
-          case _: InterruptedException => StorageReport(measuring = true)
+            Storage.Report(problems = List(s"storage: ${Option(e.getCause).getOrElse(e).getMessage}"))
+          case _: InterruptedException => Storage.Report(measuring = true)
 
   /** The measurement under way, or a new one. */
-  private def kick(): CompletableFuture[StorageReport] =
+  private def kick(): CompletableFuture[Storage.Report] =
     running.get match
       case Some(f) => f
       case None    =>
-        val f = CompletableFuture[StorageReport]()
-        val claimed: Option[CompletableFuture[StorageReport]] = Some(f)
+        val f = CompletableFuture[Storage.Report]()
+        val claimed: Option[CompletableFuture[Storage.Report]] = Some(f)
         if !running.compareAndSet(None, claimed) then kick()
         else
           val work = scala.util.Try(prepare())

@@ -14,7 +14,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import scala.collection.mutable
 import scala.util.Using
 import com.histmersion.api.backup.Backup
-import com.histmersion.api.basemap.{Basemap, BasemapLayer}
+import com.histmersion.api.basemap.Basemap
 import com.histmersion.api.library.Source
 
 /** A regional extract of a remote PMTiles archive (a Protomaps build, Mapterhorn's planet), read with HTTP range
@@ -370,7 +370,7 @@ object BasemapFetch:
       dropped: Set[String],
       attribution: String,
       fetchedAt: String,
-      layer: BasemapLayer,
+      layer: Basemap.Layer,
       filter: Option[(Boolean, String)] = None
   ): Json =
     val src = p.metadata.asObject.getOrElse(io.circe.JsonObject.empty)

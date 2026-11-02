@@ -5,7 +5,8 @@ import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.automation.Queue
-import com.histmersion.api.library.{AcquireChecks, Filter, Label, SearchHit}
+import com.histmersion.api.library.{Filter, Label, SearchHit}
+import com.histmersion.api.library.Acquire
 
 /** The three bookkeeping lists — the acquisition queue, the backlog and the worklog — each a window of the main UI,
   * drawn by this ONE implementation parameterised by [[Queue.Kind]] (`/acquire`, `/tasks` and `/log` open the app with
@@ -231,9 +232,9 @@ object QueueView:
   /** A list's page; with `goal`, only the items that serve that research goal. */
   def pane(kind: Queue.Kind, goal: Option[String] = None): HtmlElement =
     val sp = spec(kind)
-    val recheck = Var(Option.empty[Either[String, AcquireChecks.RecheckResult]])
+    val recheck = Var(Option.empty[Either[String, Acquire.Checks.RecheckResult]])
     val items = Var(List.empty[Queue.QueueItem])
-    val checks = Var(Map.empty[Int, AcquireChecks.AcquireCheck])
+    val checks = Var(Map.empty[Int, Acquire.Checks.AcquireCheck])
     val goals = Var(Map.empty[Int, List[Queue.GoalRef]])
     // the item a link pointed at (`?item=`): marked, and scrolled to once it is listed
     val target = targetItem(org.scalajs.dom.window.location.search)
@@ -295,14 +296,14 @@ object QueueView:
       recheck = item =>
         write(
           s"re-check item ${item.id}",
-          ApiClient.acquireRecheck(AcquireChecks.RecheckRequest(id = Some(item.id), by = Some("web")))
+          ApiClient.acquireRecheck(Acquire.Checks.RecheckRequest(id = Some(item.id), by = Some("web")))
         )(r => recheck.set(Some(Right(r))))
     )
 
     def recheckAll(): Unit =
       if !Auth.writableNow then WindowManager.open(WindowKey.ApiKey)
       else
-        ApiClient.acquireRecheck(AcquireChecks.RecheckRequest(all = true, by = Some("web"))).onComplete { r =>
+        ApiClient.acquireRecheck(Acquire.Checks.RecheckRequest(all = true, by = Some("web"))).onComplete { r =>
           recheck.set(Some(r.toEither.left.map(_.getMessage)))
           load()
         }
@@ -495,7 +496,7 @@ object QueueView:
       its: List[Queue.QueueItem],
       ops: Ops,
       topicsId: String,
-      checks: Map[Int, AcquireChecks.AcquireCheck],
+      checks: Map[Int, Acquire.Checks.AcquireCheck],
       goals: Map[Int, List[Queue.GoalRef]],
       target: Option[Int]
   ): HtmlElement =
@@ -517,7 +518,7 @@ object QueueView:
       item: Queue.QueueItem,
       ops: Ops,
       topicsId: String,
-      check: Option[AcquireChecks.AcquireCheck],
+      check: Option[Acquire.Checks.AcquireCheck],
       goals: List[Queue.GoalRef],
       isTarget: Boolean
   ): HtmlElement =

@@ -3,7 +3,7 @@ package com.histmersion.domain.library.ingest
 import com.histmersion.domain.library.sources.SourceService
 
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.api.library.IngestParams
+import com.histmersion.api.library.Ingest
 
 /** [[IngestJobs]] backed by the OCR job queue.
   *
@@ -55,7 +55,7 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
     val upload = spooled(file).getOrElse(Upload.inline(file.key.name, Array.emptyByteArray))
     ingest
       .ingest(
-        IngestParams(
+        Ingest.Params(
           citekey = citekey,
           filename = Some(file.key.name),
           force = true, // the channel chose the citekey; the duplicate guard is for human uploads

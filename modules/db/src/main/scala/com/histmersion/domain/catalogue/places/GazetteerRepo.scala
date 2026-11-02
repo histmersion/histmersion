@@ -11,8 +11,9 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import io.circe.Json
-import com.histmersion.api.catalogue.{Gazetteer, GazetteerKind, GazetteerLoadCounts, GazGeometry, GazRecord, PlaceMatch}
+import com.histmersion.api.catalogue.{Gazetteer, GazGeometry, GazRecord}
 import com.histmersion.api.library.ExternalId
+import com.histmersion.api.catalogue.Place
 
 /** The gazetteer's external sources in the store (#1064, V071): joining a batch of [[GazRecord]]s to the places already
   * here BY IDENTIFIER, writing what each record says (its place, if it is the first to bring it; its names and links,
@@ -70,7 +71,7 @@ private[places] object GazetteerRepo:
   /** Record a finished import: what was read, and what it now holds in the store. */
   def recordSource(
       key: String,
-      kind: GazetteerKind,
+      kind: Gazetteer.Kind,
       title: String,
       version: String,
       sha256: String,
@@ -100,7 +101,7 @@ private[places] object GazetteerRepo:
 
   /** A stored place a lookup returned, with who wrote it. */
   final case class Stored(id: String, importSource: Option[String], importRef: Option[String]):
-    def toMatch: PlaceMatch = PlaceMatch(id, importSource)
+    def toMatch: Place.Match = Place.Match(id, importSource)
 
   /** Where one record's names go. */
   enum Placement:
@@ -122,8 +123,8 @@ private[places] object GazetteerRepo:
     */
   def place(
       r: GazRecord,
-      byOwn: List[PlaceMatch],
-      byLinks: List[PlaceMatch],
+      byOwn: List[Place.Match],
+      byLinks: List[Place.Match],
       byId: Option[Stored],
       own: Option[Stored]
   ): (Placement, Option[String]) =
@@ -161,7 +162,7 @@ private[places] object GazetteerRepo:
     private val jdbc = con.connection
 
     /** One batch, in its own transaction. */
-    def batch(records: List[GazRecord]): GazetteerLoadCounts =
+    def batch(records: List[GazRecord]): Gazetteer.LoadCounts =
       @tailrec def dedupe(
           rest: List[GazRecord],
           ok: Vector[GazRecord],
@@ -213,7 +214,7 @@ private[places] object GazetteerRepo:
     /** Remove what the source no longer says: the rows of records this run has not seen. Run once, after the last
       * batch, and only when the whole source was read.
       */
-    def sweep(): GazetteerLoadCounts =
+    def sweep(): Gazetteer.LoadCounts =
       jdbc.setAutoCommit(false)
       try
         val names = sql"""DELETE FROM place_names n WHERE n.import_source = $source
@@ -225,7 +226,7 @@ private[places] object GazetteerRepo:
         val places = sql"""DELETE FROM places p WHERE p.import_source = $source
                            AND NOT EXISTS (SELECT 1 FROM gaz_seen s WHERE s.ref = p.import_ref)""".update.run()
         if apply then jdbc.commit() else jdbc.rollback()
-        GazetteerLoadCounts(
+        Gazetteer.LoadCounts(
           source,
           version,
           namesRemoved = names,
@@ -239,8 +240,8 @@ private[places] object GazetteerRepo:
           throw e
       finally jdbc.setAutoCommit(true)
 
-    private def write(rs: List[GazRecord]): GazetteerLoadCounts =
-      if rs.isEmpty then GazetteerLoadCounts(source, version)
+    private def write(rs: List[GazRecord]): Gazetteer.LoadCounts =
+      if rs.isEmpty then Gazetteer.LoadCounts(source, version)
       else
         val keys = Json.arr(
           rs.flatMap(_.identifiers)
@@ -267,9 +268,9 @@ private[places] object GazetteerRepo:
             .map(Stored.apply)
         // the in-memory view grows as the batch is placed, so two records of ONE batch that share an
         // id meet exactly as they would across batches (the second joins the first's place)
-        val linked = scala.collection.mutable.Map.empty[(String, String), List[PlaceMatch]]
+        val linked = scala.collection.mutable.Map.empty[(String, String), List[Place.Match]]
         linkedRows.foreach { (s, e, id, src, native) =>
-          linked((s, e)) = PlaceMatch(id, src, native) :: linked.getOrElse((s, e), Nil)
+          linked((s, e)) = Place.Match(id, src, native) :: linked.getOrElse((s, e), Nil)
         }
         val byId = scala.collection.mutable.Map.from(stored.map(s => s.id -> s))
         val own = stored.filter(_.importSource.contains(source)).flatMap(s => s.importRef.map(_ -> s)).toMap
@@ -307,7 +308,7 @@ private[places] object GazetteerRepo:
             val native = !pl.isInstanceOf[Placement.Join]
             r.placeLinks.foreach(l =>
               linked((l.id.scheme.wire, l.id.id)) =
-                PlaceMatch(pl.placeId, Some(source), native) :: linked.getOrElse((l.id.scheme.wire, l.id.id), Nil)
+                Place.Match(pl.placeId, Some(source), native) :: linked.getOrElse((l.id.scheme.wire, l.id.id), Nil)
             )
             if pl.isInstanceOf[Placement.Create] then byId(pl.placeId) = Stored(pl.placeId, Some(source), Some(r.ref))
             Right((r, pl, stale))
@@ -336,7 +337,7 @@ private[places] object GazetteerRepo:
         val (nAdd, nDel, nChg) = writeNames(placed.map((r, pl, _) => (r, pl.placeId)))
         val (lAdd, lDel, lChg) = writeLinks(placed.map((r, pl, _) => (r, pl.placeId)))
         val (dAdd, dDel, dChg) = writeDescriptions(placed.map((r, pl, _) => (r, pl.placeId)))
-        GazetteerLoadCounts(
+        Gazetteer.LoadCounts(
           source,
           version,
           records = rs.size,

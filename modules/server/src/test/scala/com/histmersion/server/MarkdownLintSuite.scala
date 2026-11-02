@@ -4,15 +4,10 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import MarkdownLint.Context
 import com.histmersion.api.checks.{FormatField, FormatIssue, FormatRule, FormatSeverity}
-import com.histmersion.api.research.{
-  ArticleCoverage,
-  ArticleFilter,
-  ArticleRow,
-  CoverageEdge,
-  CoverageSearch,
-  CoverageSource
-}
+import com.histmersion.api.research.CoverageSearch
 import com.histmersion.domain.library.Source
+import com.histmersion.api.research.Article
+import com.histmersion.api.research.Coverage
 
 /** The formatting lint, pure: real-looking article and note Markdown in, findings out — and, for each problem the lint
   * calls an error, the rendered HTML to prove the page really does get it wrong (the lint parses with the page's own
@@ -391,7 +386,7 @@ class MarkdownLintSuite extends munit.FunSuite:
     assert(html.contains("<code>histmersion article lint sea_peoples --fix</code> repairs all of them"), html)
     assertEquals(Pages.formatNotice(Nil, "This article", None), "")
     // on the article page it sits under the meta line, above the prose
-    val row = ArticleRow(
+    val row = Article.Row(
       "sea_peoples",
       "Sea Peoples",
       "concept",
@@ -412,10 +407,10 @@ class MarkdownLintSuite extends munit.FunSuite:
   test(
     "#958: the generated coverage sections have no formatting problem, and the page renders them as a list and one note"
   ):
-    val src = (ck: String, st: Source.Status) => CoverageSource(ck, ck, Some(2000), st)
-    val c = ArticleCoverage.compute(
+    val src = (ck: String, st: Source.Status) => Coverage.Source(ck, ck, Some(2000), st)
+    val c = Article.Coverage.compute(
       "tin",
-      ArticleFilter(query = Some("tin_trade *x*"), topics = List("bronze_age")),
+      Article.Filter(query = Some("tin_trade *x*"), topics = List("bronze_age")),
       812,
       List(
         src("knapp2016_tin", Source.Status.Current),
@@ -425,14 +420,14 @@ class MarkdownLintSuite extends munit.FunSuite:
       Set("knapp2016_tin"),
       List("knapp2016_tin", "other2020_x"),
       Map("egypt2001_old" -> "About Egypt, not the Aegean"),
-      List(CoverageEdge("crit2022_x", "superseded_by", "knapp2016_tin")),
+      List(Coverage.Edge("crit2022_x", "superseded_by", "knapp2016_tin")),
       List(CoverageSearch("synoikism", 3, Nil))
     )
-    val md = "# Tin\n\nTin moved [[knapp2016_tin]].\n\n" + ArticleCoverage.sections(c)
+    val md = "# Tin\n\nTin moved [[knapp2016_tin]].\n\n" + Article.Coverage.sections(c)
     assertEquals(body(md), Nil)
     val page = Pages.article(
       ArticlePage(
-        ArticleRow("tin", "Tin", "concept", "# Tin\n\nTin moved [[knapp2016_tin]].", None, Nil, Nil, None, None),
+        Article.Row("tin", "Tin", "concept", "# Tin\n\nTin moved [[knapp2016_tin]].", None, Nil, Nil, None, None),
         Nil,
         Nil,
         Nil,

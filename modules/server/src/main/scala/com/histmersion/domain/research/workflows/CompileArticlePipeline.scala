@@ -4,12 +4,12 @@ import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.approvals.Decided
 import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
 
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.{ApprovalKind, Pipeline, Role, RunInfo, RunRequest}
 import com.histmersion.domain.CompileArticle.*
-import com.histmersion.api.automation.GoalPlans.{ArticleDraft, DraftMode, LinkKind}
+import com.histmersion.api.automation.Goal.Plans.{ArticleDraft, DraftMode, LinkKind}
 import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.api.VocabularyCodecs.given
@@ -17,7 +17,9 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
 import com.histmersion.api.automation.AgentsMarkdown
 import com.histmersion.api.library.NeighborTarget
-import com.histmersion.api.research.{ArticleFilter, ArticlePatch, ArticlePut, CoverageReason}
+import com.histmersion.api.Api
+import com.histmersion.api.research.Article
+import com.histmersion.api.research.Coverage
 
 /** `compile-article <slug>` (docs/research-embedded-agents.md §4.5, §14): the five phases of the writing guide, run by
   * the server.
@@ -47,7 +49,7 @@ final class CompileArticlePipeline(
     cfg: => AgentsConfig,
     research: => ResearchAgentsConfig,
     lib: => LibraryAgentsConfig,
-    startChild: (RunRequest, RunInfo) => Either[ApiError, RunInfo]
+    startChild: (RunRequest, RunInfo) => Either[Api.Error, RunInfo]
 ) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.CompileArticle
   import CompileArticlePipeline.*
@@ -121,7 +123,7 @@ final class CompileArticlePipeline(
             f.fold(Nil)(_.topics),
             f.fold(Nil)(_.tags),
             f,
-            stored.fold(Nil)(x => CoverageReason.list(x.reasons))
+            stored.fold(Nil)(x => Coverage.Reason.list(x.reasons))
           )
         )
       case Left(e) if e.code.contains(Write.CodeNotFound) =>
@@ -145,7 +147,7 @@ final class CompileArticlePipeline(
   private def isCitekey(ck: String): Boolean = site.sources.get(ck, body = false).isRight
 
   private def filter(ctx: RunCtx, s: Snap): Either[String, Found] =
-    val af = s.filter.getOrElse(ArticleFilter(query = s.query, topics = s.topics, tags = s.tags))
+    val af = s.filter.getOrElse(Article.Filter(query = s.query, topics = s.topics, tags = s.tags))
     val f = af.toFilter.copy(limit = research.compile.maxSources)
     val res = site.search.sources(f)
     val line = af.line
@@ -266,14 +268,14 @@ final class CompileArticlePipeline(
             task("an article with this slug was created while the draft waited; it was NOT overwritten")
             Right(Written(written = false, "the slug was taken meanwhile", None))
           else
-            val put = ArticlePut(d.title, d.kind, d.text, d.summary, s.tags, filter = s.filter, reasons = d.reasons)
+            val put = Article.Put(d.title, d.kind, d.text, d.summary, s.tags, filter = s.filter, reasons = d.reasons)
             ctx.write(s"create article [[${s.slug}]]", put.asJson)(
               site.articles.put(s.slug, put).left.map(_.message).map(_ => Written(written = true, "created", None))
             )(Right(Written(written = false, AgentsMarkdown.DryRunNote, None)))
         case DraftMode.Extend =>
           // a stored reason for a source the new text now cites is dropped (an empty reason removes it)
           val stale = s.reasons.filter(r => d.cited.contains(r.citekey)).map(_.copy(reason = ""))
-          val patch = ArticlePatch(
+          val patch = Article.Patch(
             append = Some(d.text),
             section = d.section,
             ifUpdatedAt = s.updatedAt,
@@ -347,8 +349,8 @@ object CompileArticlePipeline:
       query: Option[String],
       topics: List[String],
       tags: List[String],
-      filter: Option[ArticleFilter] = None,
-      reasons: List[CoverageReason] = Nil
+      filter: Option[Article.Filter] = None,
+      reasons: List[Coverage.Reason] = Nil
   ) derives KindlingsCodecAsObject
 
   /** The filter's sources, and the ones to extract (when extending: not cited yet). */

@@ -1,10 +1,10 @@
 package com.histmersion.util.data.mirror
 
-import com.histmersion.api.ApiError
 import com.histmersion.domain.research.ResearchData
 import com.histmersion.server.Deps
 import com.histmersion.domain.library.LibraryData
 import com.histmersion.util.data.DataOwner
+import com.histmersion.api.Api
 
 /** The mirror over the registered notes: a kind's note from its owner's renderer, an unregistered kind refused; today's
   * registration — the library's source notes in `sources/`, research's article notes by kind.
@@ -13,12 +13,12 @@ class MirrorSuite extends munit.FunSuite:
 
   private val sources = new MirrorNote:
     val records: MirrorRecords = LibraryData.SourceNotes
-    def note(citekey: String): Either[ApiError, String] = Right(s"source $citekey")
+    def note(citekey: String): Either[Api.Error, String] = Right(s"source $citekey")
 
   private val articles = new MirrorNote:
     val records: MirrorRecords = ResearchData.ArticleNotes
-    def note(slug: String): Either[ApiError, String] =
-      if slug == "gone" then Left(ApiError("no such article")) else Right(s"article $slug")
+    def note(slug: String): Either[Api.Error, String] =
+      if slug == "gone" then Left(Api.Error("no such article")) else Right(s"article $slug")
 
   private val mirror = Mirror(Deps.data.mirror, List(sources, articles))
 

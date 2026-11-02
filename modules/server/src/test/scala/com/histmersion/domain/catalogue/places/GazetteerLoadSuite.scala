@@ -10,7 +10,7 @@ import com.histmersion.util.storage.{Location, Storage}
 
 import com.augustnagro.magnum.*
 import java.nio.file.{Files, Path, StandardCopyOption}
-import com.histmersion.api.catalogue.{GazetteerExtract, GazetteerKind, GazetteerManifest}
+import com.histmersion.api.catalogue.Gazetteer
 
 /** The external gazetteer sources end to end (#1064): a pinned extract (checksum verified BEFORE anything is read, a
   * mismatch refused, a missing file downloaded through the seam), and the LPF drop folder (a hand-written Linked Places
@@ -41,7 +41,7 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
       url: Option[String] = None
   ): GazetteerLoad.Settings =
     val d = Files.createTempDirectory("histmersion-gaz")
-    val x = GazetteerExtract(
+    val x = Gazetteer.Extract(
       "geonames",
       "geonames-fixture.ndjson.gz",
       sha,
@@ -54,7 +54,10 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
       url
     )
     Files.createDirectories(d.resolve("extracts"))
-    Files.writeString(d.resolve("extracts.json"), io.circe.syntax.EncoderOps(GazetteerManifest(List(x))).asJson.spaces2)
+    Files.writeString(
+      d.resolve("extracts.json"),
+      io.circe.syntax.EncoderOps(Gazetteer.Manifest(List(x))).asJson.spaces2
+    )
     if withFile then copyResource("geonames-fixture.ndjson.gz", d.resolve("extracts/geonames-fixture.ndjson.gz"))
     val lpf = d.resolve("lpf")
     Files.createDirectories(lpf)
@@ -177,7 +180,7 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
     val p = stores(Files.createTempDirectory("gaz"), Path.of("/nowhere"), root.resolve("db/gazetteer/extracts.json"))
     val m = GazetteerLoad.manifest(p).fold(e => fail(e), identity)
     assertEquals(m.extracts.map(_.name), List("geonames", "tgn", "wikidata"))
-    assert(m.extracts.forall(x => GazetteerKind.parse(x.name).isDefined))
+    assert(m.extracts.forall(x => Gazetteer.Kind.parse(x.name).isDefined))
     val tgn = m.extracts.find(_.name == "tgn").get
     assertEquals(tgn.licence, "ODC-By 1.0")
     assert(m.extracts.forall(x => x.sha256.matches("[0-9a-f]{64}") && x.file.nonEmpty), m.extracts.toString)
@@ -220,7 +223,7 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
     "LPF then GeoNames: dataset provenance, open-ended dated names, and a GeoNames record joining by a shared Wikidata id"
   ):
     val s = layout()
-    val lpf = GazetteerLoad.load(db, s, GazetteerKind.Lpf, apply = true, _ => (), noNet).fold(e => fail(e), identity)
+    val lpf = GazetteerLoad.load(db, s, Gazetteer.Kind.Lpf, apply = true, _ => (), noNet).fold(e => fail(e), identity)
     assertEquals(lpf.map(c => c.source -> c.created), List("lpf:zzgaz_hittite" -> 2L, "lpf:zzgaz_kultepe" -> 1L))
     val rows = PlaceFixtures.gazetteerSources(ds).filter(_.key.startsWith("lpf:zzgaz")).map(r => r.key -> r).toMap
     val hit = rows("lpf:zzgaz_hittite")
@@ -249,7 +252,7 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
 
     // GeoNames 999000202 names wd:Q999000101, which the LPF record links: its names go to the LPF place
     val gn =
-      GazetteerLoad.load(db, s, GazetteerKind.Geonames, apply = true, _ => (), noNet).fold(e => fail(e), identity).head
+      GazetteerLoad.load(db, s, Gazetteer.Kind.Geonames, apply = true, _ => (), noNet).fold(e => fail(e), identity).head
     assertEquals((gn.records, gn.created, gn.joined), (2L, 1L, 1L))
     val names = connect(ds)(
       sql"SELECT name FROM place_names WHERE place_id = $hattusa AND import_source = 'geonames' ORDER BY name"
@@ -264,8 +267,8 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
     )
 
     // idempotent: the same versions again change nothing
-    val again = GazetteerLoad.load(db, s, GazetteerKind.Lpf, apply = true, _ => (), noNet).toOption.get ++
-      GazetteerLoad.load(db, s, GazetteerKind.Geonames, apply = true, _ => (), noNet).toOption.get
+    val again = GazetteerLoad.load(db, s, Gazetteer.Kind.Lpf, apply = true, _ => (), noNet).toOption.get ++
+      GazetteerLoad.load(db, s, Gazetteer.Kind.Geonames, apply = true, _ => (), noNet).toOption.get
     assert(again.forall(_.unchanged), again.map(_.describe).mkString("; "))
 
   private val TgnSha = "2c386aa87210da40fc3bcba558ebfd99ff6fa3924c4139f139212095882c4384"
@@ -274,7 +277,7 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
   private def withTgn(s: GazetteerLoad.Settings): GazetteerLoad.Settings =
     copyResource("tgn-fixture.ndjson.gz", extractsOf(s).resolve("tgn-fixture.ndjson.gz"))
     val m = GazetteerLoad.manifest(s.stores).toOption.get
-    val x = GazetteerExtract(
+    val x = Gazetteer.Extract(
       "tgn",
       "tgn-fixture.ndjson.gz",
       TgnSha,
@@ -285,17 +288,18 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
       "ODC-By 1.0",
       Some("Getty Thesaurus of Geographic Names (TGN), ODC-By 1.0")
     )
-    Files.writeString(manifestOf(s), io.circe.syntax.EncoderOps(GazetteerManifest(m.extracts :+ x)).asJson.spaces2)
+    Files.writeString(manifestOf(s), io.circe.syntax.EncoderOps(Gazetteer.Manifest(m.extracts :+ x)).asJson.spaces2)
     s
 
   dbTest("Getty TGN (#1403): joins by a shared tgn id only, keeps open name spans, drops a point-only region"):
     val s = withTgn(layout())
-    val _ = GazetteerLoad.load(db, s, GazetteerKind.Lpf, apply = true, _ => (), noNet).fold(e => fail(e), identity)
+    val _ = GazetteerLoad.load(db, s, Gazetteer.Kind.Lpf, apply = true, _ => (), noNet).fold(e => fail(e), identity)
     val hattusa = "lpf_zzgaz_hittite_hattusa"
     // what the Wikidata extract does for 25 753 items: a tgn: link on a place (here, by hand)
     connect(ds)(sql"""INSERT INTO place_links (place_id, scheme, external_id, relation)
                       VALUES ($hattusa, 'tgn', '999000301', 'close_match')""".update.run())
-    val c = GazetteerLoad.load(db, s, GazetteerKind.Tgn, apply = true, _ => (), noNet).fold(e => fail(e), identity).head
+    val c =
+      GazetteerLoad.load(db, s, Gazetteer.Kind.Tgn, apply = true, _ => (), noNet).fold(e => fail(e), identity).head
     assertEquals((c.source, c.records, c.joined, c.created, c.pointAreasSkipped), ("tgn", 3L, 1L, 1L, 1L), c.describe)
     val span = connect(ds)(
       sql"""SELECT lower(period), upper(period) - 1 FROM place_names
@@ -322,13 +326,16 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
         .toList
     )
     assertEquals(desc, List("Capital of the Hittites."))
-    val again = GazetteerLoad.load(db, s, GazetteerKind.Tgn, apply = true, _ => (), noNet).fold(e => fail(e), identity)
+    val again = GazetteerLoad.load(db, s, Gazetteer.Kind.Tgn, apply = true, _ => (), noNet).fold(e => fail(e), identity)
     assert(again.forall(_.unchanged), again.map(_.describe).mkString("; "))
 
   dbTest("a dry run counts and keeps nothing"):
     val s = layout()
     val c =
-      GazetteerLoad.load(db, s, GazetteerKind.Geonames, apply = false, _ => (), noNet).fold(e => fail(e), identity).head
+      GazetteerLoad
+        .load(db, s, Gazetteer.Kind.Geonames, apply = false, _ => (), noNet)
+        .fold(e => fail(e), identity)
+        .head
     assertEquals(c.created, 2L)
     assertEquals(
       connect(ds)(sql"SELECT count(*)::int FROM places WHERE import_source = 'geonames'".query[Int].run().head),

@@ -9,7 +9,7 @@ import ox.supervised
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.file.{Files, Path}
-import com.histmersion.api.basemap.{Basemap, BasemapStatus}
+import com.histmersion.api.basemap.Basemap
 import com.histmersion.api.instance.UiConfig
 
 /** The terrain base map over HTTP, on a server whose `basemap.dir` holds a fixture extract: the status, a tile as
@@ -54,7 +54,7 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
     val dir = Files.createTempDirectory("basemap-http")
     withServer(dir) { url =>
       // nothing downloaded yet: the status says so, and how to fetch it
-      val s0 = io.circe.parser.decode[BasemapStatus](String(get(url).body)).fold(e => fail(e.toString), identity)
+      val s0 = io.circe.parser.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
       assert(!s0.available)
       assertEquals(s0.fetchCommand, "histmersion basemap fetch")
       assertEquals(s0.dir, dir.toString)
@@ -62,7 +62,7 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
 
       BasemapFixtures.vectorArchive(dir.resolve("vector.pmtiles"), maxZoom = 3)
       BasemapFixtures.terrainArchive(dir.resolve("terrain.pmtiles"), maxZoom = 2)
-      val s1 = io.circe.parser.decode[BasemapStatus](String(get(url).body)).fold(e => fail(e.toString), identity)
+      val s1 = io.circe.parser.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
       assert(s1.available, s1.toString)
       val v = s1.layers.find(_.layer == "vector").get
       assertEquals((v.present, v.maxZoom, v.tileType), (true, Some(3), Some("application/vnd.mapbox-vector-tile")))
@@ -113,7 +113,7 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
           "histmersion" -> io.circe.Json.obj("drop" -> io.circe.Json.fromString("roads; places; boundaries"))
         )
       )
-      val st = io.circe.parser.decode[BasemapStatus](String(get(url).body)).fold(e => fail(e.toString), identity)
+      val st = io.circe.parser.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
       assertEquals(st.missing("readable"), List("boundaries", "places", "roads"))
       assertEquals(st.missing("physical"), Nil)
       assertEquals(source(), "local", "Physical draws nothing the default drop list leaves out")
@@ -169,7 +169,7 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
         assertEquals(od.get[Int]("maxZoom"), Right(AppConfig.load().basemap.terrain.onDemand.maxZoom))
         assert(od.get[Long]("maxBytes").isRight && od.get[String]("dir").isRight, od.focus.toString)
         // and the typed status a page decodes says the same
-        val st = io.circe.parser.decode[BasemapStatus](String(get(url).body)).fold(e => fail(e.toString), identity)
+        val st = io.circe.parser.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
         val info = st.layers.find(_.layer == "terrain").get
         assertEquals(info.focus.map(_.name), List("argolid"))
         assertEquals(info.onDemand.map(_.enabled), Some(onDemand && AppConfig.load().basemap.terrain.onDemand.enabled))
@@ -182,7 +182,7 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
     Files.createDirectories(dir.resolve("terrain-focus"))
     Files.copy(fixture.resolve("terrain-focus/argolid.pmtiles"), dir.resolve("terrain-focus/argolid.pmtiles"))
     withServer(dir, onDemand = false) { url =>
-      val st = io.circe.parser.decode[BasemapStatus](String(get(url).body)).fold(e => fail(e.toString), identity)
+      val st = io.circe.parser.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
       val t = st.layers.find(_.layer == "terrain").get
       assertEquals((t.maxZoom, t.deepest), (Some(6), Some(11)))
       def tile(z: Int, lon: Double, lat: Double) =
@@ -211,6 +211,6 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
       assertEquals(tile(9, -40.0, 10.0).statusCode, 204)
       // the tiles' URLs change with the focus regions: a resampled tile is never kept past a new region
       Files.delete(dir.resolve("terrain-focus/argolid.pmtiles"))
-      val after = io.circe.parser.decode[BasemapStatus](String(get(url).body)).fold(e => fail(e.toString), identity)
+      val after = io.circe.parser.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
       assertNotEquals(after.layers.find(_.layer == "terrain").get.version, t.version)
     }

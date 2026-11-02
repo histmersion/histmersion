@@ -5,15 +5,15 @@ import com.histmersion.api.ItemKind
 
 class PersonalMarkdownSuite extends munit.FunSuite:
 
-  private val id = BookmarkId.parse("0190f3c2-1111-7000-8000-000000000001").toOption.get
-  private val nid = NoteId.parse("0190f3c2-1111-7000-8000-000000000002").toOption.get
+  private val id = Bookmark.Id.parse("0190f3c2-1111-7000-8000-000000000001").toOption.get
+  private val nid = Note.Id.parse("0190f3c2-1111-7000-8000-000000000002").toOption.get
 
   test("a bookmark line: its name, the item's title when renamed, what and where, when, its id"):
     val b = Bookmark(
       id,
       Target.item(ItemKind.Source, "cline2014_1177"),
       "1177 B.C.",
-      Some(BookmarkLabel("the collapse book")),
+      Some(Bookmark.Label("the collapse book")),
       "2026-10-30T12:40:00.123456Z"
     )
     assertEquals(
@@ -26,7 +26,7 @@ class PersonalMarkdownSuite extends munit.FunSuite:
     val n = Note(
       nid,
       Target(ItemKind.Point, lat = Some(Latitude(37.5)), lon = Some(Longitude(22.75))),
-      NoteText("\n\nBridge here?\nSecond line."),
+      Note.Text("\n\nBridge here?\nSecond line."),
       "Place on the map",
       "2026-10-30T12:40:00Z",
       "2026-10-31T09:00:00Z"

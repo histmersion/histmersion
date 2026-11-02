@@ -1,6 +1,6 @@
 package com.histmersion.domain.personal
 
-import com.histmersion.api.personal.{BookmarkLabel, MapZoom, NoteText, Target, ViewState}
+import com.histmersion.api.personal.{MapZoom, Target, ViewState}
 import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.domain.{Described, ItemKey, ItemRef, ItemUid, RecordState}
 import com.histmersion.{Latitude, Longitude, Year}
@@ -8,6 +8,8 @@ import com.histmersion.domain.library.Title
 
 import java.time.Instant
 import java.util.UUID
+import com.histmersion.api.personal.Bookmark
+import com.histmersion.api.personal.Note
 
 class PersonalTypesSuite extends munit.FunSuite:
 
@@ -35,10 +37,10 @@ class PersonalTypesSuite extends munit.FunSuite:
     assertEquals(now._2.value: String, "zz2")
 
   test("labels and texts tidied and bounded"):
-    assertEquals(BookmarkLabel.tidy(Some(BookmarkLabel("  "))), Right(None))
-    assert(BookmarkLabel.tidy(Some(BookmarkLabel("x" * 201))).isLeft)
-    assertEquals(NoteText.tidy(NoteText("a\r\nb  \n\n")).map(_.value.toString), Right("a\nb"))
-    assert(NoteText.tidy(NoteText("x" * (NoteText.MaxChars + 1))).isLeft)
+    assertEquals(Bookmark.Label.tidy(Some(Bookmark.Label("  "))), Right(None))
+    assert(Bookmark.Label.tidy(Some(Bookmark.Label("x" * 201))).isLeft)
+    assertEquals(Note.Text.tidy(Note.Text("a\r\nb  \n\n")).map(_.value.toString), Right("a\nb"))
+    assert(Note.Text.tidy(Note.Text("x" * (Note.Text.MaxChars + 1))).isLeft)
     assertEquals(TargetLabel.tidy(" a \t b ").map(_.value: String), Some("a b"))
     assertEquals(TargetLabel.tidy("x" * 400).map(_.value.length), Some(TargetLabel.MaxChars))
     assertEquals(TargetLabel.tidy(Some("   ")), None)

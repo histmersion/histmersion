@@ -1,14 +1,9 @@
 package com.histmersion.domain
 
-import com.histmersion.api.research.ArticleLint
-
 import com.histmersion.api.{Plural, WireEnum}
 import com.histmersion.api.research.{
-  ArticleCoverage,
-  ArticleEdits,
   CitedSource,
   Coverage,
-  CoverageReason,
   CritiquePair,
   CritiquePairing,
   CritiqueReason,
@@ -28,6 +23,7 @@ import sttp.tapir.Schema
 import com.histmersion.domain.AgentProposals.{Proposal, ProposalAnswer}
 import com.histmersion.WireEnumValues
 import com.histmersion.domain.automation.Approval
+import com.histmersion.api.research.Article
 
 /** The `review-article` pipeline's typed answers and its pure logic (docs/research-embedded-agents.md §4.3): the
   * mechanical checks, the validation of each reviewer's answer, the merge of the panel (worst verdict wins,
@@ -347,12 +343,12 @@ object ReviewArticle:
       )
 
   final case class FixerAnswer(
-      edits: List[ArticleEdits.EditAnswer] = Nil,
+      edits: List[Article.Edits.EditAnswer] = Nil,
       applied: List[String] = Nil,
       rejected: List[RejectionAnswer] = Nil,
       unresolvedMoved: List[String] = Nil,
       notes: String,
-      reasons: List[CoverageReason] = Nil,
+      reasons: List[Coverage.Reason] = Nil,
       wontFix: List[WontFixAnswer] = Nil,
       setAside: List[SetAsideAnswer] = Nil
   ) derives KindlingsCodecAsObject
@@ -506,7 +502,7 @@ object ReviewArticle:
       critiques: List[CritiquePair] = Nil
   ) derives KindlingsCodecAsObject:
     /** The sections code generates from the filter (#958), as the page shows them after the body. */
-    def generated: Option[String] = coverage.map(ArticleCoverage.sections)
+    def generated: Option[String] = coverage.map(Article.Coverage.sections)
 
   /** One line per source the article cites — `[[citekey]] · year · status · title` — so a reviewer reads every cited
     * status from the brief instead of querying for it (a Codex rules step selected the whole `sources` table for it,
@@ -546,7 +542,7 @@ object ReviewArticle:
     */
   final case class Fix(
       body: String,
-      edits: List[ArticleEdits.EditResult],
+      edits: List[Article.Edits.EditResult],
       applied: List[String],
       rejected: List[Rejection],
       unverified: List[String],
@@ -555,7 +551,7 @@ object ReviewArticle:
       wordsBefore: Int,
       wordsAfter: Int,
       /** The coverage reasons the fixer set (an empty one removes), already checked against the coverage. */
-      reasons: List[CoverageReason] = Nil,
+      reasons: List[Coverage.Reason] = Nil,
       /** Minor findings declined, with the reason. */
       wontFix: List[WontFix] = Nil,
       /** Missing-critique findings set aside as not material, each with the pair and the reason stored. */
@@ -633,7 +629,7 @@ object ReviewArticle:
     val hs = headings(body)
     def f(sev: Severity, kind: String, where: String, quote: String, problem: String, fix: String) =
       (sev, kind, where, quote, problem, fix)
-    val filler = ArticleLint
+    val filler = Article.Lint
       .articleFiller(List(slug -> body))
       .map(i =>
         f(
@@ -648,7 +644,7 @@ object ReviewArticle:
     // the lint rule's own test, one paragraph at a time (a link to an article is not a citation)
     val uncited = Lint
       .extractParagraphs(body)
-      .filter(p => ArticleLint.articleUncitedParagraphs(List(slug -> p)).nonEmpty)
+      .filter(p => Article.Lint.articleUncitedParagraphs(List(slug -> p)).nonEmpty)
       .map(p =>
         f(
           Severity.Major,
@@ -777,7 +773,16 @@ object ReviewArticle:
             s"a reason is stored for ${Plural.count(d.citekeys.size, "source")} the filter no longer returns: ${keys(d.citekeys)}",
             "remove the reason (an empty one in `reasons`)"
           )
-      Finding(s"M${from + i}", Reviewer.Mechanical, sev, CoverageKind, ArticleCoverage.NotUsedHeading, "", problem, fix)
+      Finding(
+        s"M${from + i}",
+        Reviewer.Mechanical,
+        sev,
+        CoverageKind,
+        Article.Coverage.NotUsedHeading,
+        "",
+        problem,
+        fix
+      )
     }
 
   // ── validating a reviewer's answer ──────────────────────────────────────────────────────────────
@@ -1626,18 +1631,18 @@ object ReviewArticle:
       slug: String,
       before: String,
       kind: String,
-      draft: ArticleEdits.Draft,
+      draft: Article.Edits.Draft,
       corpus: BodyCorpus
-  ): ArticleEdits.ArticleCheck =
+  ): Article.Edits.ArticleCheck =
     def links(t: String) = AgentVerify.linkProblems(t, corpus.isCitekey, corpus.isTarget)
     val applied = draft match
-      case ArticleEdits.Draft.Edits(es) =>
-        ArticleEdits.applyAll(
+      case Article.Edits.Draft.Edits(es) =>
+        Article.Edits.applyAll(
           before,
           es,
           a => a.text.flatMap(t => links(t).headOption).map(p => s"its text is refused: $p")
         )
-      case ArticleEdits.Draft.Body(t) => ArticleEdits.Applied(t.trim, Nil)
+      case Article.Edits.Draft.Body(t) => Article.Edits.Applied(t.trim, Nil)
     val body = applied.body
     val bodyProblems =
       if body.trim.isEmpty then List("the body is empty")
@@ -1654,7 +1659,7 @@ object ReviewArticle:
           again.filter(_.kind == "language").map(_.problem) ++
           corpus.formatErrors(body).filterNot(formatBefore).map(e => s"formatting: $e")
     val fatal = body.trim.isEmpty || links(body).toSet.diff(links(before).toSet).nonEmpty
-    ArticleEdits.ArticleCheck(
+    Article.Edits.ArticleCheck(
       slug,
       kind,
       applied.results,
@@ -1679,7 +1684,7 @@ object ReviewArticle:
     * and the closed findings it would reopen.
     */
   final private case class Revision(
-      check: ArticleEdits.ArticleCheck,
+      check: Article.Edits.ArticleCheck,
       body: String,
       hits: List[CritiquePairing.Hit],
       pairs: List[CritiquePair],
@@ -1755,8 +1760,8 @@ object ReviewArticle:
     }
     val edits = Option(a.edits).getOrElse(Nil)
 
-    def evaluate(es: List[ArticleEdits.EditAnswer]): Revision =
-      val check = checkBody(slug, before, kind, ArticleEdits.Draft.Edits(es), corpus)
+    def evaluate(es: List[Article.Edits.EditAnswer]): Revision =
+      val check = checkBody(slug, before, kind, Article.Edits.Draft.Edits(es), corpus)
       guards match
         case Some(g) if !check.fatal =>
           val (body, hits) = g.repair(check.body)
@@ -1935,13 +1940,13 @@ object ReviewArticle:
     * problems.
     */
   def checkReasons(
-      stated: List[CoverageReason],
+      stated: List[Coverage.Reason],
       coverage: Option[Coverage],
       body: String,
       isCitekey: String => Boolean,
       m: Merged,
       applied: Set[String]
-  ): (List[CoverageReason], List[String]) =
+  ): (List[Coverage.Reason], List[String]) =
     coverage match
       case None =>
         (
@@ -1954,7 +1959,7 @@ object ReviewArticle:
             .toList
         )
       case Some(c) =>
-        val citedAfter = AgentVerify.wikilinks(ArticleCoverage.withoutNotUsed(body)).filter(isCitekey).toSet
+        val citedAfter = AgentVerify.wikilinks(Article.Coverage.withoutNotUsed(body)).filter(isCitekey).toSet
         val inFilter = (c.notUsed.map(_.source.citekey) ++ c.cited.map(_.citekey)).toSet
         val stored = c.reasons.map(r => r.citekey -> r.reason).toMap
         val checked = stated.map { r =>
@@ -1966,17 +1971,17 @@ object ReviewArticle:
             Left(s"reason for [[$ck]]: the filter does not return it — give reasons only for its sources")
           else if citedAfter(ck) then
             Left(s"reason for [[$ck]]: the article cites it — a reason is only for a source it leaves out")
-          else CoverageReason.merge(Map.empty, List(r.copy(citekey = ck))).map(_ => r.copy(citekey = ck))
+          else Coverage.Reason.merge(Map.empty, List(r.copy(citekey = ck))).map(_ => r.copy(citekey = ck))
         }
         val ok = checked.collect { case Right(r) => r }
-        val merged = CoverageReason.merge(stored, ok).getOrElse(stored)
+        val merged = Coverage.Reason.merge(stored, ok).getOrElse(stored)
         val unplacedIds = m.findings
           .filter(f =>
             f.reviewer == Reviewer.Mechanical && f.kind == CoverageKind &&
               f.major && f.problem.contains("neither cited nor given a reason")
           )
           .map(_.id)
-        val left = ArticleCoverage.unplacedAfter(c, citedAfter, merged)
+        val left = Article.Coverage.unplacedAfter(c, citedAfter, merged)
         val still = Option.when(unplacedIds.exists(applied) && left.nonEmpty)(
           s"${unplacedIds.filter(applied).mkString(", ")}: still neither cited nor given a reason: " +
             left.take(20).map(ck => s"[[$ck]]").mkString(", ") + (if left.size > 20 then s" (+${left.size - 20} more)"

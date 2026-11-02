@@ -9,7 +9,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
-import com.histmersion.api.automation.GoalPlans.*
+import com.histmersion.api.automation.Goal.Plans.*
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.domain.automation.goals.GoalLinkRepo
@@ -19,8 +19,9 @@ import sttp.ai.core.agent.*
 
 import java.time.Instant
 import com.histmersion.db.*
-import com.histmersion.api.automation.{Goal, GoalPut, Managers, Queue}
-import com.histmersion.api.library.{CandidateSweep, CandidateWatch, FollowupRow, SourceCandidate, SourcePut, WorkRef}
+import com.histmersion.api.automation.{Goal, Managers, Queue}
+import com.histmersion.api.library.{CandidateSweep, CandidateWatch, FollowupRow, WorkRef}
+import com.histmersion.api.library.Source
 
 /** The goal sweeps and the goal schedules, against a `*_test` database: a currency check (assess and followups over a
   * goal's sources; a disagreeing paper in the corpus becomes ONE edge proposal, one outside it ONE acquisition item,
@@ -75,15 +76,15 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
   private def seed(h: ServerWiring): Unit =
     assert(
       h.library.sources
-        .put(Ck, SourcePut(title = "Old tin", year = Some(2000), doi = Some("10.5555/zzagent.old")))
+        .put(Ck, Source.Put(title = "Old tin", year = Some(2000), doi = Some("10.5555/zzagent.old")))
         .isRight
     )
     assert(
       h.library.sources
-        .put(Ck2, SourcePut(title = "New tin", year = Some(2024), doi = Some("10.5555/zzagent.new")))
+        .put(Ck2, Source.Put(title = "New tin", year = Some(2024), doi = Some("10.5555/zzagent.new")))
         .isRight
     )
-    assert(h.goals.put(Goal, GoalPut("Zz scheduled tin")).isRight)
+    assert(h.goals.put(Goal, com.histmersion.api.automation.Goal.Put("Zz scheduled tin")).isRight)
     assert(transact(ds)(GoalLinkRepo.link(Goal, LinkKind.Source, Ck, None)))
 
   private def start(a: AgentsHandlers, req: RunRequest): RunInfo =
@@ -194,7 +195,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
   /** The candidate search (#3761) answered from memory: what the goal's watches stored, and the marks set. */
   final private class CandidateUpstream extends AgentUpstream:
     // `var`: the stored candidates, changed by the marks
-    @volatile var stored: List[SourceCandidate] = Nil
+    @volatile var stored: List[Source.Candidate] = Nil
     val sweeps = java.util.concurrent.atomic.AtomicInteger(0)
     def meta(doi: String) = Left("not stubbed")
     def refs(citekey: String, apply: Boolean) = Left("not stubbed")
@@ -233,7 +234,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
     val up = CandidateUpstream()
     a.attach(up)
     up.stored = List(
-      SourceCandidate(
+      Source.Candidate(
         1,
         Goal,
         "10.5555/zzagent.a",
@@ -242,7 +243,7 @@ class SchedulerRunSuite extends com.histmersion.db.DbSuite with com.histmersion.
         List("Zz"),
         foundBy = List("openalex query \"zzagent tin trade\"")
       ),
-      SourceCandidate(
+      Source.Candidate(
         2,
         Goal,
         "10.5555/zzagent.b",

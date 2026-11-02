@@ -7,8 +7,8 @@ import com.histmersion.pluginhost.{HttpTransport, PluginGazetteers}
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
-import com.histmersion.api.catalogue.{PlaceImportResult, PlaceInput}
 import com.histmersion.api.instance.Version
+import com.histmersion.api.catalogue.Place
 
 /** The recorded traffic and results of the network gazetteers (Cliopatria, AWMC, ChronOntology): each download answered
   * by a loopback server from a fixture (Cliopatria's zipped, as its upstream ships it) — the request it sent, every
@@ -54,10 +54,10 @@ class GazetteerTrafficSuite extends munit.FunSuite:
       def get(url: String, headers: Map[String, String]) = wire.get(loop.local(url), headers))
 
   /** Every place a download of `name` makes, in the order the runner upserts them. */
-  private def places(name: String): Either[String, List[PlaceInput]] =
+  private def places(name: String): Either[String, List[Place.Input]] =
     ImportRunner.places(sources(name), http).map(_._1)
 
-  private def dryRun(name: String): Either[String, PlaceImportResult] =
+  private def dryRun(name: String): Either[String, Place.ImportResult] =
     ImportRunner.fetchAndImport(sources(name), http, null, null, dryRun = true, 0.0)
 
   // ── the transcript ──────────────────────────────────────────────────────────────────────────

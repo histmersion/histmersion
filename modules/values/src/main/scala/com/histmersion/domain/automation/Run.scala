@@ -10,9 +10,9 @@ object Run:
 
   object Id extends RefinedType[String, Match["[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"]]
 
-  /** An agent run's state, stored in `jobs.status`. `Paused` is resumable (a budget breach, a server restart, a person's
-    * pause); `WaitingApproval` holds no worker and goes back to the queue when a person decides the approval it waits on;
-    * `Cancelled` and the other terminal states are final.
+  /** An agent run's state, stored in `jobs.status`. `Paused` is resumable (a budget breach, a server restart, a
+    * person's pause); `WaitingApproval` holds no worker and goes back to the queue when a person decides the approval
+    * it waits on; `Cancelled` and the other terminal states are final.
     */
   enum State(val wire: String):
     case Queued extends State("queued")

@@ -8,8 +8,10 @@ import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
-import com.histmersion.api.catalogue.PeriodInput
-import com.histmersion.api.research.{ArticleFilter, ArticlePatch, CoverageReason, CritiqueReason}
+import com.histmersion.api.research.CritiqueReason
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.research.Article
+import com.histmersion.api.research.Coverage
 
 /** Build an [[ArticlePatch]] from CLI flags — pure, so the flag semantics are unit-tested without a server. Mirrors
   * [[Patches]] on the source side: `--json` is the baseline, each flag overrides the part it names, and an absent part
@@ -30,7 +32,7 @@ object ArticlePatches:
       regions: Option[String],
       period: Option[String],
       ifUpdatedAt: Option[String]
-  ): Either[CliError, ArticlePatch] =
+  ): Either[CliError, Article.Patch] =
     for
       base <- parse(json)
       body <- read(bodyFile)
@@ -70,7 +72,7 @@ object ArticlePatches:
     * spell (the server validates it); `--clear-filter` sends the empty filter that clears it; each `--reason ck=text`
     * sets one reason, `ck=` removes it. Both override `--json`.
     */
-  def withCoverage(p: ArticlePatch, f: FilterFlags, reasons: List[String]): Either[CliError, ArticlePatch] =
+  def withCoverage(p: Article.Patch, f: FilterFlags, reasons: List[String]): Either[CliError, Article.Patch] =
     for
       period <- periodOf(f.period)
       _ <- Either.cond(
@@ -80,15 +82,15 @@ object ArticlePatches:
       )
       rs <- reasons.traverse { r =>
         r.indexOf('=') match
-          case i if i > 0 => Right(CoverageReason(r.take(i).trim, r.drop(i + 1).trim))
+          case i if i > 0 => Right(Coverage.Reason(r.take(i).trim, r.drop(i + 1).trim))
           case _          => Left(CliError(s"--reason: '$r' is not <citekey>=<reason>", exitCode = ExitCode.Usage))
       }
     yield
       val filter =
-        if f.clear then Some(ArticleFilter())
+        if f.clear then Some(Article.Filter())
         else if f.anyGiven then
           Some(
-            ArticleFilter(
+            Article.Filter(
               f.query.map(_.trim).filter(_.nonEmpty),
               csv(f.topics),
               csv(f.tags),
@@ -106,18 +108,18 @@ object ArticlePatches:
   /** Each `--critique-reason src>dst=text` sets the reason of one critique-checklist pair, `src>dst=` removes it; added
     * to those of `--json`.
     */
-  def withCritiques(p: ArticlePatch, reasons: List[String]): Either[CliError, ArticlePatch] =
+  def withCritiques(p: Article.Patch, reasons: List[String]): Either[CliError, Article.Patch] =
     reasons
       .traverse(r =>
         CritiqueReason.parse(r).left.map(m => CliError(s"--critique-reason: $m", exitCode = ExitCode.Usage))
       )
       .map(rs => if rs.isEmpty then p else p.copy(critiqueReasons = p.critiqueReasons ++ rs))
 
-  private def parse(json: Option[String]): Either[CliError, ArticlePatch] = json match
-    case None    => Right(ArticlePatch())
+  private def parse(json: Option[String]): Either[CliError, Article.Patch] = json match
+    case None    => Right(Article.Patch())
     case Some(s) =>
       io.circe.parser
-        .decode[ArticlePatch](s)
+        .decode[Article.Patch](s)
         .left
         .map(e => CliError(s"--json: ${e.getMessage}", exitCode = ExitCode.Usage))
 
@@ -128,13 +130,13 @@ object ArticlePatches:
       if java.nio.file.Files.isRegularFile(p) then Right(Some(java.nio.file.Files.readString(p)))
       else Left(CliError(s"no such file: $f", exitCode = ExitCode.Usage))
 
-  private def periodOf(s: Option[String]): Either[CliError, Option[PeriodInput]] = s match
+  private def periodOf(s: Option[String]): Either[CliError, Option[Period.Input]] = s match
     case None    => Right(None)
     case Some(v) =>
       v.split(",").map(_.trim).toList match
         case a :: b :: Nil =>
           (a.toLongOption, b.toLongOption) match
-            case (Some(x), Some(y)) => Right(Some(PeriodInput(x, y)))
+            case (Some(x), Some(y)) => Right(Some(Period.Input(x, y)))
             case _                  => Left(CliError(s"--period: '$v' is not start,end", exitCode = ExitCode.Usage))
         case _ => Left(CliError(s"--period: '$v' is not start,end", exitCode = ExitCode.Usage))
 

@@ -8,7 +8,7 @@ import com.augustnagro.magnum.transact
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.automation.GoalPlans.LinkKind
+import com.histmersion.api.automation.Goal.Plans.LinkKind
 import com.histmersion.db.QueueRows
 import com.histmersion.domain.automation.goals.{GoalLinkRepo, GoalRepo}
 import com.histmersion.util.database.Migrate
@@ -16,7 +16,7 @@ import com.histmersion.domain.library.workflows.WatchManagerKind
 
 import java.time.LocalDate
 import java.util.concurrent.ConcurrentLinkedQueue
-import com.histmersion.api.automation.{Goal, GoalPut, Queue}
+import com.histmersion.api.automation.{Goal, Queue}
 import com.histmersion.api.library.{Source, WorkRef}
 
 /** The deterministic new-source search (#3761) over fake indexes: what a sweep stores, the watermarks it keeps,
@@ -53,7 +53,11 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
       sql"DELETE FROM goals WHERE slug = $Goal".update.run()
       sql"DELETE FROM sources WHERE citekey LIKE 'zzcand%'".update.run()
       sql"DELETE FROM queue_items WHERE text LIKE '%zzcand%'".update.run()
-    assert(transact(ds)(GoalRepo.put(Goal, GoalPut("Bronze Age collapse", status = "seeding"))).isRight)
+    assert(
+      transact(ds)(
+        GoalRepo.put(Goal, com.histmersion.api.automation.Goal.Put("Bronze Age collapse", status = "seeding"))
+      ).isRight
+    )
     assert(transact(ds)(GoalLinkRepo.link(Goal, LinkKind.Query, "bronze age collapse", None)))
 
   private lazy val db = com.histmersion.util.database.Transactor(ds)

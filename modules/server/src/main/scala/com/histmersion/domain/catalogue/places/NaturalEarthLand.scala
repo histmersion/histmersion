@@ -1,7 +1,5 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.catalogue.PlaceImportResult
-
 /** Natural Earth land for clipping polities to the coastline (V025) — `histmersion places fetch land`.
   *
   * Source: https://www.naturalearthdata.com (public domain), via the nvkelso/natural-earth-vector GeoJSON mirror. 1:10
@@ -9,6 +7,7 @@ import com.histmersion.api.catalogue.PlaceImportResult
   * gazetteer places: the rows go to `land`, never to `places`, so "land" is neither searchable nor a place a finding
   * can be assigned to.
   */
+import com.histmersion.api.catalogue.Place
 object NaturalEarthLand:
 
   val name = "land"
@@ -44,7 +43,7 @@ object NaturalEarthLand:
       download: String => Either[String, String],
       geometry: PlaceGeometry,
       dryRun: Boolean
-  ): Either[String, PlaceImportResult] =
+  ): Either[String, Place.ImportResult] =
     for
       raws <- urls.foldLeft[Either[String, List[String]]](Right(Nil))((acc, u) =>
         acc.flatMap(l => download(u).map(l :+ _))
@@ -54,10 +53,10 @@ object NaturalEarthLand:
       )
       _ <- if geoms.isEmpty then Left("no land polygons in the download") else Right(())
     yield
-      if dryRun then PlaceImportResult(0, 0, 0, List(s"dry run: ${geoms.size} land polygons"))
+      if dryRun then Place.ImportResult(0, 0, 0, List(s"dry run: ${geoms.size} land polygons"))
       else
         scribe.info(s"[import] land: storing ${geoms.size} polygons…")
         val pieces = geometry.replaceLand(geoms)
         scribe.info(s"[import] land: $pieces pieces; clipping polities…")
         val clipped = geometry.reclip()
-        PlaceImportResult(clipped, 0, 0, List(s"$pieces land pieces from ${geoms.size} polygons"))
+        Place.ImportResult(clipped, 0, 0, List(s"$pieces land pieces from ${geoms.size} polygons"))

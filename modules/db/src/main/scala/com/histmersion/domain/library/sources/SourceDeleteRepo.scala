@@ -1,12 +1,14 @@
 package com.histmersion.domain.library.sources
 
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 import com.histmersion.domain.library.sources.referrers.{DeleteReport, SourceKeys, SourceReferrers}
 
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.library.{DeleteCount, DeletePart, Edge, SourceDelete, SourceDeletion}
+import com.histmersion.api.library.{DeleteCount, DeletePart, Edge}
+import com.histmersion.api.Api
+import com.histmersion.api.library.Source
 
 /** Deleting a source (#969) — the database half of `POST /api/sources/{ck}/delete`. The rules are
   * [[com.histmersion.api.library.SourceDelete]]'s; this reads what a delete would touch ([[planIn]]) and does it
@@ -25,17 +27,17 @@ private[sources] object SourceDeleteRepo:
     */
   def applyIn(requested: String, logTopic: String, files: SourceDeletePlan => List[String], referrers: SourceReferrers)(
       using DbCon
-  ): Either[ApiError, SourceDeletePlan] =
+  ): Either[Api.Error, SourceDeletePlan] =
     val _ = sql"SELECT citekey FROM sources WHERE citekey = $requested FOR UPDATE".query[String].run()
     planIn(requested, referrers).flatMap { p0 =>
       val d0 = p0.deletion
-      if d0.refused then Left(ApiError(SourceDelete.refusal(d0.citekey, d0.blockers), Some(Write.CodeInvalid)))
+      if d0.refused then Left(Api.Error(Source.Delete.refusal(d0.citekey, d0.blockers), Some(Write.CodeInvalid)))
       else
         val p = p0.copy(deletion = d0.copy(files = files(p0)))
         val source = keysOf(p.deletion.citekey, p.keys)
         deleteNow(p, source, referrers)
         val d = p.deletion.copy(applied = true)
-        val log = referrers.recorded(source, SourceDelete.logText(d), logTopic)
+        val log = referrers.recorded(source, Source.Delete.logText(d), logTopic)
         Right(p.copy(deletion = d.copy(logEntry = log)))
     }
 
@@ -45,7 +47,7 @@ private[sources] object SourceDeleteRepo:
   private def keysOf(ck: String, keys: List[String])(using DbCon): SourceKeys =
     SourceKeys(ck, keys, targets => SourceRepo.resolveAliases(targets))
 
-  def planIn(requested: String, referrers: SourceReferrers)(using DbCon): Either[ApiError, SourceDeletePlan] =
+  def planIn(requested: String, referrers: SourceReferrers)(using DbCon): Either[Api.Error, SourceDeletePlan] =
     sql"SELECT citekey, title, calibre_id, sha256 FROM sources WHERE citekey = $requested"
       .query[Row]
       .run()
@@ -53,7 +55,7 @@ private[sources] object SourceDeleteRepo:
       case None =>
         Left(sql"SELECT citekey FROM source_aliases WHERE alias = $requested".query[String].run().headOption match
           case Some(now) =>
-            ApiError(s"'$requested' is an old citekey of '$now' — delete '$now' instead", Some(Write.CodeInvalid))
+            Api.Error(s"'$requested' is an old citekey of '$now' — delete '$now' instead", Some(Write.CodeInvalid))
           case None => Write.notFound(requested))
       case Some(r) =>
         val ck = r.citekey
@@ -71,7 +73,7 @@ private[sources] object SourceDeleteRepo:
           .toList
           .map((s, d, k) => Edge(s, d, k))
         val report = referrers.report(DeleteReport(counts = counts(ck, aliases.size, edgesIn.size)), keysOf(ck, keys))
-        val d = SourceDeletion(
+        val d = Source.Deletion(
           citekey = ck,
           title = r.title,
           applied = false,

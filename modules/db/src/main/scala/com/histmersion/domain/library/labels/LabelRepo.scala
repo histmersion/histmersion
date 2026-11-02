@@ -5,7 +5,7 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.library.search.FilterSql
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.library.{Facet, FacetField, Filter}
+import com.histmersion.api.library.{Facet, Filter}
 
 /** The labels' vocabulary: the values of one dimension (tags, authors, places, topics, statuses, provenances) with the
   * sources each would leave inside a filter.
@@ -16,7 +16,7 @@ private[labels] object LabelRepo:
 
   /** Facet vocabulary of one dimension within the current filter; counts are DISTINCT sources. */
   def facets(
-      field: FacetField,
+      field: Facet.Field,
       prefix: Option[String],
       filter: Filter,
       limit: Int,

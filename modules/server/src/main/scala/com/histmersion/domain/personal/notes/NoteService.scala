@@ -1,6 +1,5 @@
 package com.histmersion.domain.personal.notes
 
-import com.histmersion.api.personal.{NoteId, NoteText}
 import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.domain.{ItemKey, Referables}
 import com.histmersion.domain.personal.PersonalState.StoredNote
@@ -28,20 +27,26 @@ trait NoteService:
       words: SearchWords,
       size: PageSize
   ): List[Note]
-  def get(user: UserId, id: NoteId): Option[Note]
-  def add(user: UserId, target: MarkTarget, text: NoteText, title: Option[TargetLabel], at: MarkTime): Note
+  def get(user: UserId, id: com.histmersion.api.personal.Note.Id): Option[Note]
+  def add(
+      user: UserId,
+      target: MarkTarget,
+      text: com.histmersion.api.personal.Note.Text,
+      title: Option[TargetLabel],
+      at: MarkTime
+  ): Note
 
   /** The note's new text, unless it is gone or changed since `unchangedSince`. */
   def edit(
       user: UserId,
-      id: NoteId,
-      text: NoteText,
+      id: com.histmersion.api.personal.Note.Id,
+      text: com.histmersion.api.personal.Note.Text,
       unchangedSince: Option[MarkTime],
       at: MarkTime
   ): Either[NoteEditRefused, Note]
 
   /** The note as it was before it was removed. */
-  def remove(user: UserId, id: NoteId, at: MarkTime): Option[Note]
+  def remove(user: UserId, id: com.histmersion.api.personal.Note.Id, at: MarkTime): Option[Note]
 
 object NoteService:
 
@@ -75,10 +80,16 @@ object NoteService:
       val rows = db.read(NoteRepo.list(user, kind, about, Option.when(words.isEmpty)(size)))
       page(shown(rows.flatMap(_.stored(user)), items), words, size)
 
-    def get(user: UserId, id: NoteId): Option[Note] =
+    def get(user: UserId, id: com.histmersion.api.personal.Note.Id): Option[Note] =
       db.read(NoteRepo.live(user, id).flatMap(_.stored(user))).map(s => shown(List(s), items).head)
 
-    def add(user: UserId, target: MarkTarget, text: NoteText, title: Option[TargetLabel], at: MarkTime): Note =
+    def add(
+        user: UserId,
+        target: MarkTarget,
+        text: com.histmersion.api.personal.Note.Text,
+        title: Option[TargetLabel],
+        at: MarkTime
+    ): Note =
       val t = resolved(target, items)
       val stored = db.transact:
         val id = NoteRepo.insert(user, TargetColumns.of(t), text, title, at)
@@ -90,8 +101,8 @@ object NoteService:
 
     def edit(
         user: UserId,
-        id: NoteId,
-        text: NoteText,
+        id: com.histmersion.api.personal.Note.Id,
+        text: com.histmersion.api.personal.Note.Text,
         unchangedSince: Option[MarkTime],
         at: MarkTime
     ): Either[NoteEditRefused, Note] =
@@ -104,7 +115,7 @@ object NoteService:
             NoteRepo.live(user, id).flatMap(_.stored(user)).toRight(NoteEditRefused.Missing)
       }.map(s => shown(List(s), items).head)
 
-    def remove(user: UserId, id: NoteId, at: MarkTime): Option[Note] =
+    def remove(user: UserId, id: com.histmersion.api.personal.Note.Id, at: MarkTime): Option[Note] =
       db.transact {
         val before = NoteRepo.live(user, id).flatMap(_.stored(user))
         before.foreach(_ => NoteRepo.tombstone(user, id, at))
@@ -122,9 +133,12 @@ object NoteService:
     private def live(s: PersonalState, user: UserId): Vector[StoredNote] =
       s.notes.filter(n => n.user == user && n.deletedAt.isEmpty)
 
-    private def stored(user: UserId, id: NoteId): Option[StoredNote] = live(state.get, user).find(_.id == id)
+    private def stored(user: UserId, id: com.histmersion.api.personal.Note.Id): Option[StoredNote] =
+      live(state.get, user).find(_.id == id)
 
-    private def changed(user: UserId, id: NoteId)(change: StoredNote => StoredNote): Unit =
+    private def changed(user: UserId, id: com.histmersion.api.personal.Note.Id)(
+        change: StoredNote => StoredNote
+    ): Unit =
       state.updateAndGet(
         _.modify(_.notes)
           .using(_.map(n => if n.id == id && n.user == user && n.deletedAt.isEmpty then change(n) else n))
@@ -141,18 +155,26 @@ object NoteService:
       val mine = live(state.get, user).filter(n => kind.forall(_ == n.target.kind) && about.forall(_.holds(n)))
       page(shown(PersonalState.newestFirst(mine)(_.updatedAt, _.id.value), items), words, size)
 
-    def get(user: UserId, id: NoteId): Option[Note] = stored(user, id).map(s => shown(List(s), items).head)
+    def get(user: UserId, id: com.histmersion.api.personal.Note.Id): Option[Note] =
+      stored(user, id).map(s => shown(List(s), items).head)
 
-    def add(user: UserId, target: MarkTarget, text: NoteText, title: Option[TargetLabel], at: MarkTime): Note =
-      val id = NoteId.parse(newId().toString).fold(e => throw IllegalStateException(e), identity)
+    def add(
+        user: UserId,
+        target: MarkTarget,
+        text: com.histmersion.api.personal.Note.Text,
+        title: Option[TargetLabel],
+        at: MarkTime
+    ): Note =
+      val id =
+        com.histmersion.api.personal.Note.Id.parse(newId().toString).fold(e => throw IllegalStateException(e), identity)
       val note = StoredNote(user, id, resolved(target, items), text, title, at, at)
       state.updateAndGet(_.modify(_.notes).using(_ :+ note)): Unit
       shown(List(note), items).head
 
     def edit(
         user: UserId,
-        id: NoteId,
-        text: NoteText,
+        id: com.histmersion.api.personal.Note.Id,
+        text: com.histmersion.api.personal.Note.Text,
         unchangedSince: Option[MarkTime],
         at: MarkTime
     ): Either[NoteEditRefused, Note] =
@@ -163,7 +185,7 @@ object NoteService:
           changed(user, id)(_.copy(text = text, updatedAt = at))
           get(user, id).toRight(NoteEditRefused.Missing)
 
-    def remove(user: UserId, id: NoteId, at: MarkTime): Option[Note] =
+    def remove(user: UserId, id: com.histmersion.api.personal.Note.Id, at: MarkTime): Option[Note] =
       val found = get(user, id)
       found.foreach(_ => changed(user, id)(_.copy(deletedAt = Some(at), updatedAt = at)))
       found

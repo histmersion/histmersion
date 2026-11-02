@@ -5,8 +5,9 @@ import com.histmersion.api.media.MediaMarkdown
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.config.*
-import com.histmersion.api.media.{AssetLinkPut, AssetRelation}
+import com.histmersion.api.media.AssetRelation
 import com.histmersion.domain.media.Asset
+import com.histmersion.api.media.AssetLink
 
 object AssetLinksCmd:
 
@@ -33,7 +34,7 @@ object AssetLinksCmd:
       Opts.option[String]("notes", "Free-text notes").orNone
     )
       .mapN { (ck, asset, rel, tt, ti, xywh, notes) => (c: Client) =>
-        c.createAssetLink(AssetLinkPut(ck, asset, rel, tt, ti, xywh, notes))
+        c.createAssetLink(AssetLink.Put(ck, asset, rel, tt, ti, xywh, notes))
           .map(l => println(MediaMarkdown.assetLink(l)))
       }
   }

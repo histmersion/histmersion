@@ -19,7 +19,7 @@ import java.net.{InetSocketAddress, URI, URLDecoder}
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.db.*
-import com.histmersion.api.catalogue.{Place, PlaceInput, PlaceName}
+import com.histmersion.api.catalogue.Place
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.media.{MediaImportReport, MediaItem, MediaProvider}
 
@@ -170,17 +170,17 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
       val _ = PlaceFixtures.upsertPlaces(
         ds,
         List(
-          PlaceInput(
+          Place.Input(
             Place("zqmp_site", "Zqmpetra", com.histmersion.domain.catalogue.Place.Kind.Site, pt(140.0)),
-            List(PlaceName("Zqmpetra"))
+            List(Place.Name("Zqmpetra"))
           ),
-          PlaceInput(
+          Place.Input(
             Place("zqmp_region", "Zqmpjordan", com.histmersion.domain.catalogue.Place.Kind.Region, pt(141.0)),
-            List(PlaceName("Zqmpjordan"))
+            List(Place.Name("Zqmpjordan"))
           ),
-          PlaceInput(
+          Place.Input(
             Place("pleiades_99900002", "Zqmp Zygouries", com.histmersion.domain.catalogue.Place.Kind.Site, pt(142.0)),
-            List(PlaceName("Zqmp Zygouries"))
+            List(Place.Name("Zqmp Zygouries"))
           )
         )
       )

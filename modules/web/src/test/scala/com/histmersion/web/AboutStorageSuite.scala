@@ -4,7 +4,7 @@ import com.histmersion.api.{ServiceState, TableSize}
 import com.histmersion.api.backup.BackupsUsage
 import com.histmersion.api.instance.{About, BuildStamp, Health}
 import com.histmersion.api.jobs.JobCounts
-import com.histmersion.api.maintenance.{Storage, StorageAdvice, StorageEntry, StorageReport, StorageVolume}
+import com.histmersion.api.maintenance.Storage
 
 /** The About window's Storage and Disk space sections, in their pure part. */
 class AboutStorageSuite extends munit.FunSuite:
@@ -15,11 +15,11 @@ class AboutStorageSuite extends munit.FunSuite:
   private val about =
     About("histmersion", BuildStamp("1.2.3"), Health("ok", "ok", Some("97"), Some("ok")), JobCounts(), None, None, None)
 
-  private val report = StorageReport(
+  private val report = Storage.Report(
     ageSeconds = Some(30),
     entries = Storage.nest(
       List(
-        StorageEntry(
+        Storage.Entry(
           "database",
           "database (Postgres)",
           "database",
@@ -28,7 +28,7 @@ class AboutStorageSuite extends munit.FunSuite:
           within = Some("database-cluster"),
           detail = Some("histmersion")
         ),
-        StorageEntry(
+        Storage.Entry(
           "database-cluster",
           "database files (bundled Postgres)",
           "database",
@@ -37,7 +37,7 @@ class AboutStorageSuite extends munit.FunSuite:
           Some(3000L),
           volume = Some(vol)
         ),
-        StorageEntry(
+        Storage.Entry(
           "backups",
           "backups",
           "backups",
@@ -45,10 +45,10 @@ class AboutStorageSuite extends munit.FunSuite:
           Some(28 * GB),
           Some(5L),
           volume = Some(vol),
-          shrink = StorageAdvice.shrink("backups", 5)
+          shrink = Storage.Advice.shrink("backups", 5)
         ),
-        StorageEntry("plugins", "plugins", "install", Some("/d/plugins"), None, None, exists = false),
-        StorageEntry(
+        Storage.Entry("plugins", "plugins", "install", Some("/d/plugins"), None, None, exists = false),
+        Storage.Entry(
           "basemap",
           "terrain base map (cache)",
           "caches",
@@ -58,7 +58,7 @@ class AboutStorageSuite extends munit.FunSuite:
           partial = true,
           volume = Some(vol)
         ),
-        StorageEntry(
+        Storage.Entry(
           "calibre-originals",
           "originals folder (cli.calibre.originals-dir)",
           "corpus",
@@ -70,7 +70,7 @@ class AboutStorageSuite extends munit.FunSuite:
       )
     ),
     tables = List(TableSize("sources", 5 * GB)),
-    volumes = List(StorageVolume(vol, 994 * GB, 5 * GB)),
+    volumes = List(Storage.Volume(vol, 994 * GB, 5 * GB)),
     backups = Some(BackupsUsage(5, 28 * GB, Some("histmersion-1.dump"), 5))
   )
 
@@ -104,12 +104,12 @@ class AboutStorageSuite extends munit.FunSuite:
     assertEquals((rows.head.label, rows.head.value, rows.head.state), (vol, "5.0 GB free", Some(ServiceState.Down)))
     assert(rows(1).value.startsWith(s"Low disk space on $vol"), rows)
     assert(rows(1).value.contains("backups 28.0 GB (lower backups.keep (now 5)"), rows)
-    val roomy = AboutView.storage(report.copy(volumes = List(StorageVolume(vol, 994 * GB, 500 * GB))))
+    val roomy = AboutView.storage(report.copy(volumes = List(Storage.Volume(vol, 994 * GB, 500 * GB))))
     assertEquals(roomy.last.rows.map(_.state), List(Some(ServiceState.Ok)))
 
   test("measuring: the window says so; an older server's About has no Storage section"):
-    assertEquals(AboutView.storage(StorageReport()), Nil)
-    val m = AboutView.storage(StorageReport(measuring = true))
+    assertEquals(AboutView.storage(Storage.Report()), Nil)
+    val m = AboutView.storage(Storage.Report(measuring = true))
     assertEquals(m.map(_.title), List("Storage"))
     assertEquals(m.head.rows, List(AboutView.Row("", "measuring…")))
     val again = AboutView.storage(report.copy(measuring = true))

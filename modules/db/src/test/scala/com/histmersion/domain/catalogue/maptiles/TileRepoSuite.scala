@@ -15,8 +15,9 @@ import com.histmersion.domain.*
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.{Migrate, Param, Sql}
 import com.histmersion.db.*
-import com.histmersion.api.catalogue.{Period, PlaceDesignation, PlaceRegister, SiteTile}
+import com.histmersion.api.catalogue.{Period, SiteTile}
 import com.histmersion.api.library.Filter
+import com.histmersion.api.catalogue.Place
 
 /** The map's tiles (`TileRepo`, V105) against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): which sites,
   * events and pictures a tile holds for a span (a RANGE: every item whose dates overlap it), the grouping that keeps a
@@ -218,10 +219,10 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
     val r = PlaceFixtures.get(ds, "zztile_r1").get.record
     assertEquals(r.dateSource, Some("wikidata-p571"))
     assertEquals(r.periods, List("Byzantine"))
-    assertEquals(r.designations, List(PlaceDesignation("Q2", Some("listed monument"), Some("1922"), None)))
+    assertEquals(r.designations, List(Place.Designation("Q2", Some("listed monument"), Some("1922"), None)))
     assertEquals(
       r.registers,
-      List(PlaceRegister("P1936", "99"), PlaceRegister("P2186", "GR-1"), PlaceRegister("P2186", "GR-2"))
+      List(Place.Register("P1936", "99"), Place.Register("P2186", "GR-1"), Place.Register("P2186", "GR-2"))
     )
     assert(PlaceFixtures.get(ds, "zztile_r2").get.record.isEmpty)
 

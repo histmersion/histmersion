@@ -16,7 +16,7 @@ import javax.imageio.ImageIO
 import javax.sql.DataSource
 import com.histmersion.util.database.Sql
 import com.histmersion.db.*
-import com.histmersion.api.exchange.{MergePlan, MergeResolutions, MergeResolutionsText}
+import com.histmersion.api.exchange.{MergePlan, MergeResolutions}
 
 /** What the library answers, on a crafted collection, recorded on the code before the library's sources, findings,
   * citations, labels and search moved into their own domain:
@@ -1489,7 +1489,7 @@ class LibraryOracleSuite extends DbSuite:
     val p1 = ok(post(s"$url/api/merge/plan", s"""{"bundle":"$sha","resolutions":$resolutions}"""))
     val decided = parser.decode[MergeResolutions](resolutions).fold(e => fail(e.toString), identity)
     val template =
-      MergeResolutionsText.template(parser.decode[MergePlan](p1).fold(e => fail(e.toString), identity), decided)
+      MergeResolutions.Text.template(parser.decode[MergePlan](p1).fold(e => fail(e.toString), identity), decided)
     val read = ok(post(s"$url/api/merge/resolutions", template, "text/plain"))
     val hash = field(p1, "planHash")
     val job = ok(post(s"$url/api/merge/apply", s"""{"bundle":"$sha","planHash":"$hash","resolutions":$resolutions}"""))

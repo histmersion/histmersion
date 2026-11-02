@@ -4,7 +4,7 @@ import com.histmersion.api.media.MediaMarkdown
 
 import chimp.server.*
 import com.histmersion.api.Markdown
-import com.histmersion.api.media.{AssetLinkPut, AssetPatch, AssetsMarkdown}
+import com.histmersion.api.media.{AssetPatch, AssetsMarkdown}
 import com.histmersion.domain.media.assets.AssetsControllers
 import com.histmersion.domain.media.links.AssetLinksControllers
 import com.histmersion.api.StrictJson
@@ -13,6 +13,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import sttp.tapir.Schema
+import com.histmersion.api.media.AssetLink
 
 /** Media's agent tools, in their place among `/mcp`'s: a source's figures, a figure's description, its links. The
   * imports and the sources' pictures are not tools, on purpose (an operator's decision; a picture is for the reader).
@@ -119,7 +120,7 @@ object MediaTools:
         .handle { in =>
           in.relation match
             case Some(rel) =>
-              val put = AssetLinkPut(
+              val put = AssetLink.Put(
                 citekey = in.citekey.getOrElse(""),
                 assetName = in.asset.getOrElse(""),
                 relation = rel,

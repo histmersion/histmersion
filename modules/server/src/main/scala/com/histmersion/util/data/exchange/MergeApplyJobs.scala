@@ -1,11 +1,11 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.ApiError
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.exchange.{MergeApplyJob, MergeApplyResult, MergeJobState}
 import com.histmersion.util.jobs.{MergeApplyRuns, WorkCarrier}
 
 import java.util.concurrent.{CompletableFuture, TimeoutException, TimeUnit}
+import com.histmersion.api.Api
 
 /** `merge apply` in the background (docs/research-merge-import.md §7.7, open question 3): the apply takes a `pg_dump`
   * before it writes, which on a large collection outlasts an HTTP request. One apply at a time — a second is refused
@@ -22,11 +22,11 @@ final class MergeApplyJobs(runs: MergeApplyRuns, waitSeconds: => Int, carrier: W
   /** Start `run` on its own thread and wait up to `waitSeconds` for it. */
   def start(bundle: String, planHash: String)(
       run: () => Either[String, MergeApplyResult]
-  ): Either[ApiError, MergeApplyJob] =
+  ): Either[Api.Error, MergeApplyJob] =
     synchronized {
       if runs.running then
         Left(
-          ApiError(
+          Api.Error(
             "a merge apply is still running — follow it with " +
               "`GET /api/merge/apply/{job}` and apply again when it is done",
             Some(Backup.CodeMaintenance)

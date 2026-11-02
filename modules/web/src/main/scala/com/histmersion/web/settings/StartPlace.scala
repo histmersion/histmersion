@@ -1,13 +1,13 @@
 package com.histmersion.web.settings
 
 import com.histmersion.api.instance.{MapStartConfig, MapStartMode}
-import com.histmersion.api.catalogue.PlaceHit
 import com.histmersion.web.ApiClient
 import com.histmersion.web.map.{GeoBounds, LatLon, TheMap}
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
+import com.histmersion.api.catalogue.Place
 
 /** "Where should the map open?" — where this browser last left it, or at a place: one found by its name in the
   * gazetteer, or the map's view now. The choice is held in `choice` until the form saves it.
@@ -41,14 +41,14 @@ object StartPlace:
 
   def chooser(choice: Var[MapStartConfig], name: String, showLegend: Boolean = true): HtmlElement =
     val query = Var("")
-    val hits = Var(List.empty[PlaceHit])
+    val hits = Var(List.empty[Place.Hit])
     val problem = Var(Option.empty[String])
     def search(q: String): Unit =
       query.set(q)
       if q.trim.length >= 2 then
         ApiClient.places(Some(q.trim), None, Some(6)).foreach(hs => if query.now() == q then hits.set(hs))
       else hits.set(Nil)
-    def pick(h: PlaceHit): Unit =
+    def pick(h: Place.Hit): Unit =
       ApiClient.place(h.id, None).foreach { d =>
         d.geometry.flatMap(viewOf) match
           case Some((at, zoom)) =>

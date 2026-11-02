@@ -1,11 +1,12 @@
 package com.histmersion.domain.research.articles
 
-import com.histmersion.api.library.{DeleteBlocker, DeleteBlockerKind, DeleteCount, DeletePart, RenameCount}
+import com.histmersion.api.library.{DeleteBlocker, DeleteCount, DeletePart}
 import com.histmersion.domain.library.sources.referrers.*
 
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
+import com.histmersion.api.library.Rename
 
 /** The articles that cite a source (`[[citekey]]`, the link graph) or keep a coverage reason for it: a rename rewrites
   * their links through the article write path (each rewrite a recorded version), a citing article refuses a delete, and
@@ -17,14 +18,14 @@ final class ArticleSourceReferrer extends SourceReferrer:
     val links = sql"""UPDATE article_links SET target = ${rename.to}
                       WHERE target_kind = 'source' AND target = ${rename.from}""".update.run()
     RenamedReferences(
-      List("article_links.target" -> links).collect { case (t, n) if n > 0 => RenameCount(t, n) },
+      List("article_links.target" -> links).collect { case (t, n) if n > 0 => Rename.Count(t, n) },
       ArticleRepo.retargetLinks(rename.needle, rename.target)
     )
 
   override def report(source: SourceKeys)(using DbCon): DeleteReport =
     val coverage = coverageOf(source.keys)
     DeleteReport(
-      blockers = citing(source).map((slug, title) => DeleteBlocker(DeleteBlockerKind.Article, slug, Some(title))),
+      blockers = citing(source).map((slug, title) => DeleteBlocker(DeleteBlocker.Kind.Article, slug, Some(title))),
       counts = List(DeletePart.CoverageReasons -> coverage.size).collect {
         case (p, rows) if rows > 0 => DeleteCount(p, rows)
       },

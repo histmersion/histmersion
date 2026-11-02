@@ -10,7 +10,7 @@ import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
-import com.histmersion.api.exchange.{BundleArticle, BundleArticleAlias, BundleArticleVersion}
+import com.histmersion.api.exchange.Bundle
 
 /** The articles as a bundle carries them (docs/research-merge-import.md §4): each article, its versions (their bodies
   * as blobs) and its old slugs, read out in a deterministic order (by uid; the old slugs by alias, in the "C"
@@ -21,14 +21,14 @@ private[articles] object ArticleBundleRepo:
 
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 
-  def articles(scope: BundleScope)(using DbCon): Vector[BundleArticle] =
+  def articles(scope: BundleScope)(using DbCon): Vector[Bundle.Article] =
     (Sql.raw(s"""SELECT a.uid, a.origin, a.slug, a.title, a.kind, a.body, a.summary, a.tags, a.regions,
                        ${rangeCols("a.period")}, ${ts("a.updated_at")}
                 FROM articles a WHERE """) ++ where(scope, "a.uid", "a.updated_at") ++ " ORDER BY a.uid").frag
       .query[BArticleRow]
       .run()
       .map { r =>
-        BundleArticle(
+        Bundle.Article(
           r.uid,
           r.origin,
           r.slug,
@@ -51,16 +51,16 @@ private[articles] object ArticleBundleRepo:
       where(scope, "v.uid", "v.created_at") ++ " ORDER BY v.uid").frag.query[BVersionRow].run()
 
   /** Old article slugs (V042) of the articles in scope. */
-  def articleAliases(scope: BundleScope)(using DbCon): Vector[BundleArticleAlias] =
+  def articleAliases(scope: BundleScope)(using DbCon): Vector[Bundle.ArticleAlias] =
     (Sql.raw(s"""SELECT x.alias, a.uid, ${ts("x.created_at")}
                 FROM article_aliases x JOIN articles a ON a.slug = x.slug WHERE """) ++
       where(scope, "a.uid", "x.created_at") ++ """ ORDER BY x.alias COLLATE "C"""").frag
       .query[(String, UUID, String)]
       .run()
-      .map(BundleArticleAlias.apply)
+      .map(Bundle.ArticleAlias.apply)
 
-  def versionLine(r: BVersionRow): BundleArticleVersion =
-    BundleArticleVersion(r.uid, r.origin, r.articleUid, r.bodySha, r.summary, r.versionOf, r.createdAt)
+  def versionLine(r: BVersionRow): Bundle.ArticleVersion =
+    Bundle.ArticleVersion(r.uid, r.origin, r.articleUid, r.bodySha, r.summary, r.versionOf, r.createdAt)
 
   /** The bytes of a version's body, written as a blob. */
   def versionBody(uid: UUID)(using DbCon): java.io.OutputStream => Unit =

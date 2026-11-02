@@ -6,13 +6,14 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.domain.AutopilotPolicy.{DraftFacts, GoalPlanFacts, PlannedFacts, Verdict}
-import com.histmersion.api.automation.GoalPlans.DraftMode
+import com.histmersion.api.automation.Goal.Plans.DraftMode
 import com.histmersion.api.automation.Managers.Feed
 import com.histmersion.api.automation.Queue.QueueAdd
 
 import java.time.Instant
 import javax.sql.DataSource
-import com.histmersion.api.automation.{GoalPlans, Managers}
+import com.histmersion.api.automation.Managers
+import com.histmersion.api.automation.Goal
 
 /** The checked auto approvals (docs/research-process-managers.md "As built: the autopilot"): on every managers' tick,
   * each OPEN approval of the kinds a person used to decide by hand — an `article-plan` (propose-articles), a
@@ -60,7 +61,7 @@ final class AutoApprovals(
     }
     val goals = agents.focusStore.goals().map(g => g.slug -> g).toMap
     val linked = agents.focusStore
-      .goalsOf(GoalPlans.LinkKind.Article.wire, open.flatMap(_.approval.subject).distinct)
+      .goalsOf(Goal.Plans.LinkKind.Article.wire, open.flatMap(_.approval.subject).distinct)
     def goalOf(a: ApprovalInfo) =
       a.subject.flatMap(s => goals.get(s).orElse(linked.getOrElse(s, Nil).flatMap(goals.get).headOption))
     val ordered = open.sortBy { c =>

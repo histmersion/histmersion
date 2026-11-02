@@ -5,7 +5,7 @@ import com.histmersion.config.*
 import java.nio.file.{Files, Path}
 import com.histmersion.api.instance.{About, AboutMarkdown, BuildStamp, Health}
 import com.histmersion.api.jobs.JobCounts
-import com.histmersion.api.maintenance.{StorageEntry, StorageReport}
+import com.histmersion.api.maintenance.Storage
 
 /** `histmersion about`'s own locations: added only when the server is on this machine, never twice. */
 class LocalStorageSuite extends munit.FunSuite:
@@ -19,7 +19,7 @@ class LocalStorageSuite extends munit.FunSuite:
     None,
     None,
     storage =
-      StorageReport(entries = List(StorageEntry("backups", "backups", "backups", Some("/srv/backups"), Some(10L))))
+      Storage.Report(entries = List(Storage.Entry("backups", "backups", "backups", Some("/srv/backups"), Some(10L))))
   )
 
   private def config(originals: Path, install: Path): AppConfig =
@@ -61,7 +61,7 @@ class LocalStorageSuite extends munit.FunSuite:
     val known = about.copy(storage =
       about.storage.copy(entries =
         about.storage.entries :+
-          StorageEntry(
+          Storage.Entry(
             "install",
             "install",
             "install",

@@ -18,3 +18,7 @@ final case class CandidateSweep(
       KindlingsSchema
 object CandidateSweep:
   given Schema[CandidateSweep] = summon[KindlingsSchema[CandidateSweep]].schema
+
+  final case class Request(goal: String, dryRun: Boolean = false) derives KindlingsCodecAsObject, KindlingsSchema
+  object Request:
+    given Schema[Request] = summon[KindlingsSchema[Request]].schema

@@ -21,7 +21,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Path
 import com.histmersion.db.*
 import com.histmersion.api.automation.{AgentsMarkdown, ModelChains}
-import com.histmersion.api.library.SourcePut
+import com.histmersion.api.library.Source
 
 /** A THIRD-PARTY AI provider end to end (docs/research-plugins.md §23): the hello-ai test plugin's own jar
   * (modules/plugin-fixtures/hello-ai — compiled against plugin-api alone, never on the server's class path) is
@@ -141,7 +141,9 @@ class PluginAiRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     (h.agents, h)
 
   private def startAndRun(a: AgentsHandlers, h: ServerWiring): RunInfo =
-    assert(h.library.sources.put(Ck, SourcePut(title = "Bronze Age tin", year = Some(2019), body = Some(Body))).isRight)
+    assert(
+      h.library.sources.put(Ck, Source.Put(title = "Bronze Age tin", year = Some(2019), body = Some(Body))).isRight
+    )
     val run = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
     a.engine.execute(run.id)
     connect(ds)(AgentRepo.get(run.id)).get

@@ -13,7 +13,6 @@ import com.histmersion.domain.library.workflows.EnrichComparison
 import com.histmersion.domain.research.workflows.ReviewComparison
 import io.circe.syntax.*
 import com.histmersion.api.catalogue.Period
-import com.histmersion.api.library.FindingInput
 import com.histmersion.domain.library.Source
 
 /** `agent compare` (#992), the pure half: what can be compared, the step union, the verifier's quote check read back
@@ -181,7 +180,12 @@ class CompareRunsSuite extends munit.FunSuite:
     assertEquals(EnrichComparison.quoteCheck(steps), (2 + 1 + 3 + 2, 1 + 1 + 1 + 2))
 
   test("enrich-source: findings, places, dates, period, text lengths, and the claims only one run made"):
-    def enrich(id: String, claims: List[FindingInput], choices: List[GeocodeChoice], notes: String) = run(
+    def enrich(
+        id: String,
+        claims: List[com.histmersion.api.library.Finding.Input],
+        choices: List[GeocodeChoice],
+        notes: String
+    ) = run(
       id,
       "enrich-source",
       "x2020",
@@ -215,14 +219,25 @@ class CompareRunsSuite extends munit.FunSuite:
     )
     val a = enrich(
       "a",
-      List(FindingInput("Tin came by sea.", periodStart = Some(-1300)), FindingInput("Copper came from Cyprus.")),
+      List(
+        com.histmersion.api.library.Finding.Input("Tin came by sea.", periodStart = Some(-1300)),
+        com.histmersion.api.library.Finding.Input("Copper came from Cyprus.")
+      ),
       List(
         GeocodeChoice("Tin came by sea.", "Uluburun", Some("p1"), Some("Uluburun"), None),
         GeocodeChoice("Copper came from Cyprus.", "Atlantis", None, None, None)
       ),
       "Notes [[x2020]]."
     )
-    val b = enrich("b", List(FindingInput("tin  came by SEA."), FindingInput("Tin was rare.")), Nil, "N.")
+    val b = enrich(
+      "b",
+      List(
+        com.histmersion.api.library.Finding.Input("tin  came by SEA."),
+        com.histmersion.api.library.Finding.Input("Tin was rare.")
+      ),
+      Nil,
+      "N."
+    )
     val cmp = compare(List(a, b)).fold(fail(_), identity)
     assertEquals(
       cmp.enrich,

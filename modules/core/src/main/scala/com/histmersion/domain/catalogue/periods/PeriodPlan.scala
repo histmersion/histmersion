@@ -1,14 +1,6 @@
 package com.histmersion.domain.catalogue.periods
 
-import com.histmersion.api.exchange.{
-  BundlePeriod,
-  IssueDetail,
-  IssueField,
-  IssuePlace,
-  IssueSide,
-  MergeIssue,
-  MergeIssueDetail
-}
+import com.histmersion.api.exchange.{IssueDetail, IssueField, IssuePlace, IssueSide, MergeIssue}
 import com.histmersion.domain.MergePlanner
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.{PlanFolds, PlanMerge, PlanQuestions, PlanRun}
@@ -30,7 +22,8 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
   private val km = DecisionKind
   private val lr = List(km.KeepLeft, km.KeepRight)
   private val localPeriod = in.local.periods.map(p => p.uid -> p).toMap
-  private val periodLine = scala.collection.mutable.Map.empty[UUID, BundleEntities => BundlePeriod]
+  private val periodLine =
+    scala.collection.mutable.Map.empty[UUID, BundleEntities => com.histmersion.api.exchange.Bundle.Period]
   private def periodIn(es: BundleEntities, u: UUID) = es.periods.find(_.uid == u).get
 
   /** The same period: this collection's is kept. */
@@ -69,7 +62,7 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
               Issue.Severity.Blocking,
               Bundle.Kind.Period,
               s"named period ${p.id} was added on both sides and says something else: " +
-                s"${o.label} ${MergeIssueDetail.rangeText(o.period)} here, ${p.label} ${MergeIssueDetail.rangeText(p.period)} in the bundle",
+                s"${o.label} ${MergeIssue.Detail.rangeText(o.period)} here, ${p.label} ${MergeIssue.Detail.rangeText(p.period)} in the bundle",
               Some(IssueSide(o.id, o.uid, List(o.label))),
               Some(IssueSide(p.id, f, List(p.label))),
               List("keep-left keeps this collection's period; keep-right takes the bundle's label and span"),
@@ -80,16 +73,16 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
                     IssueField("label", Some(o.label), Some(p.label)),
                     IssueField(
                       "span",
-                      Some(MergeIssueDetail.rangeText(o.period)),
-                      Some(MergeIssueDetail.rangeText(p.period))
+                      Some(MergeIssue.Detail.rangeText(o.period)),
+                      Some(MergeIssue.Detail.rangeText(p.period))
                     ),
                     IssueField("authority", o.authority, p.authority),
                     IssueField("region", o.region, p.region)
                   ),
                   place = Some(
                     IssuePlace(
-                      leftSpan = o.period.map(MergeIssueDetail.span),
-                      rightSpan = p.period.map(MergeIssueDetail.span)
+                      leftSpan = o.period.map(MergeIssue.Detail.span),
+                      rightSpan = p.period.map(MergeIssue.Detail.span)
                     )
                   )
                 )
@@ -115,7 +108,11 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
       case _ => ()
 
   override def lines(es: BundleEntities, es0: BundleEntities): BundleEntities =
-    es.modify(_.periods).setTo(MergePlanner.replaced(es0.periods, _.uid, periodLine, es0, (_: BundlePeriod) => true))
+    es.modify(_.periods)
+      .setTo(
+        MergePlanner
+          .replaced(es0.periods, _.uid, periodLine, es0, (_: com.histmersion.api.exchange.Bundle.Period) => true)
+      )
 
 object PeriodPlan:
 
@@ -129,5 +126,8 @@ object PeriodPlan:
         .setTo(es.periods.map(p => p.parentId.flatMap(periods.get).fold(p)(x => p.copy(parentId = Some(x)))))
 
   /** Two records of one period id that say the same: the same span and label. */
-  def samePeriod(l: BundlePeriod, r: BundlePeriod): Boolean =
+  def samePeriod(
+      l: com.histmersion.api.exchange.Bundle.Period,
+      r: com.histmersion.api.exchange.Bundle.Period
+  ): Boolean =
     l.period == r.period && Fingerprint.of(l.label) == Fingerprint.of(r.label)

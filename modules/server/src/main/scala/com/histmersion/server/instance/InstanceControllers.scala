@@ -2,7 +2,6 @@ package com.histmersion.server.instance
 
 import com.histmersion.util.database.Transactor
 
-import com.histmersion.api.ApiError
 import com.histmersion.domain.personal.seen.{SeenBoard, SeenService}
 import com.histmersion.server.{BuildMeta, Deps, StorageLocations, Supervisor}
 import com.histmersion.server.UiConfigViews
@@ -19,11 +18,13 @@ import java.time.Instant
 import scala.util.Try
 import com.histmersion.api.automation.AgentLeaseInfo
 import com.histmersion.api.basemap.BaseMapSource
-import com.histmersion.api.instance.{About, BuildStamp, CorpusCounts, Health, UiConfig, UiNotices, Version, VersionInfo}
+import com.histmersion.api.instance.{About, BuildStamp, CorpusCounts, Health, UiConfig, UiNotices, Version}
 import com.histmersion.api.jobs.JobCounts
-import com.histmersion.api.library.{AcquireChecks, CorrespondingSource, UpstreamQuota}
-import com.histmersion.api.maintenance.StorageReport
+import com.histmersion.api.library.{CorrespondingSource, UpstreamQuota}
 import com.histmersion.api.settings.ReloadReport
+import com.histmersion.api.Api
+import com.histmersion.api.library.Acquire
+import com.histmersion.api.maintenance.Storage
 
 /** This server as REST, MCP and the CLI ask about it, over the diagnostics: its version and health, About (the build,
   * the job queue, the newest backup, the store's counts, the storage, the plugins, the agent lease, the metered
@@ -39,13 +40,13 @@ final class InstanceControllers(
     basemap: BasemapService,
     agentLease: () => Option[AgentLeaseInfo],
     upstreams: Instant => List[UpstreamQuota],
-    acquireRecheck: Instant => Option[AcquireChecks.RecheckStatus],
+    acquireRecheck: Instant => Option[Acquire.Checks.RecheckStatus],
     setupDue: () => Boolean
 ):
   /** Read at each use: a config reload switches it (Deps). */
   private def cfg = deps.cfg
 
-  def version: VersionInfo = VersionInfo(Version.name, Version.version)
+  def version: Version.Info = Version.Info(Version.name, Version.version)
 
   /** The Storage part of About: measured in the background, at most once per `storage.ttl-seconds` ([[StorageCache]]),
     * so `about` itself never walks a disk.
@@ -138,7 +139,7 @@ final class InstanceControllers(
     )
 
   /** The last storage measurement, with its age as of `now`. */
-  private def storageNow(now: Instant): StorageReport =
+  private def storageNow(now: Instant): Storage.Report =
     val r = storage.get(cfg.storage.waitMillis.toLong)
     r.modify(_.ageSeconds)
       .setTo(
@@ -159,16 +160,16 @@ final class InstanceControllers(
   /** `POST /api/ui/seen/{board}` — the reader opened that window, which showed items up to `mark.at`. Answers the
     * counters after the mark moved.
     */
-  def markSeen(board: String, mark: UiNotices.SeenMark): Either[ApiError, UiNotices.Counters] =
+  def markSeen(board: String, mark: UiNotices.SeenMark): Either[Api.Error, UiNotices.Counters] =
     deps.maintenance.guard("mark_seen"):
       for
         b <- UiNotices.Board
           .parse(board)
-          .toRight(ApiError(s"unknown board '$board' — one of: ${UiNotices.Board.wires.mkString(", ")}"))
+          .toRight(Api.Error(s"unknown board '$board' — one of: ${UiNotices.Board.wires.mkString(", ")}"))
         at <- mark.at.map(_.trim).filter(_.nonEmpty) match
           case None    => Right(None)
           case Some(s) =>
-            Try(Instant.parse(s)).toOption.map(Some(_)).toRight(ApiError(s"'at' is not an ISO-8601 instant: $s"))
+            Try(Instant.parse(s)).toOption.map(Some(_)).toRight(Api.Error(s"'at' is not an ISO-8601 instant: $s"))
       yield
         val _ = seen.mark(UserId.Local, SeenBoard(b.wire), at)
         uiCounters

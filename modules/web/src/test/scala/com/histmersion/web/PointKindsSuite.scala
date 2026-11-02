@@ -3,9 +3,10 @@ package com.histmersion.web
 import com.histmersion.api.TimeSpan
 import com.histmersion.domain.library.Confidence
 import com.histmersion.api.catalogue.EventGeo
-import com.histmersion.api.library.{GeoHit, SourceKinds}
+import com.histmersion.api.library.GeoHit
 import com.histmersion.api.media.MediaGeoHit
 import com.histmersion.domain.catalogue.Place
+import com.histmersion.api.library.Source
 
 /** The four kinds of point are four descriptors of ONE layer (docs/map-layers.md): the same assertions run over every
   * one of them, so they cannot drift apart — the marker's shape, glyph, fill and accessible name, what a bubble counts,
@@ -30,7 +31,7 @@ class PointKindsSuite extends munit.FunSuite:
     Some(-1300L),
     Some(-1250L),
     Some(Confidence.High),
-    sourceKind = Some(SourceKinds.Paper)
+    sourceKind = Some(Source.Kinds.Paper)
   )
   private val site = SitePoint(
     Some("zz_fort"),

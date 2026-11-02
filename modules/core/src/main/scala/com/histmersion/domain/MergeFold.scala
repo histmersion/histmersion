@@ -2,14 +2,6 @@ package com.histmersion.domain
 
 import com.histmersion.util.data.exchange.{BundleFormat, Diff3}
 import com.histmersion.util.text.Fingerprint
-import com.histmersion.api.exchange.{
-  BundleArticle,
-  BundleGoal,
-  BundleGoalLink,
-  BundleGoalSchedule,
-  BundleQueueItem,
-  BundleRange
-}
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.given
@@ -17,6 +9,7 @@ import com.histmersion.api.given
 import com.histmersion.util.data.exchange.DecisionKind
 import com.histmersion.domain.automation.Goal
 import com.histmersion.util.data.exchange.Issue
+import com.histmersion.api.exchange.Bundle
 
 /** How two records that are one are folded into one (docs/research-merge-import.md §5.4, milestones M4–M5): goals,
   * queue items and articles, and the small rules every kind's folds share (a source's and a finding's are the library's
@@ -52,18 +45,18 @@ object MergeFold:
   private def text(o: Option[String]): Option[String] = o.map(_.trim).filter(_.nonEmpty)
 
   /** The smallest range covering both; an open bound stays open. */
-  def hull(a: BundleRange, b: BundleRange): BundleRange =
-    BundleRange(a.start.zip(b.start).map((x, y) => math.min(x, y)), a.end.zip(b.end).map((x, y) => math.max(x, y)))
+  def hull(a: Bundle.Range, b: Bundle.Range): Bundle.Range =
+    Bundle.Range(a.start.zip(b.start).map((x, y) => math.min(x, y)), a.end.zip(b.end).map((x, y) => math.max(x, y)))
 
   /** Two ranges share a year (an open bound reaches any year; no range is compatible with any). */
-  def overlap(a: Option[BundleRange], b: Option[BundleRange]): Boolean =
+  def overlap(a: Option[Bundle.Range], b: Option[Bundle.Range]): Boolean =
     a.zip(b).forall { (x, y) =>
       x.start.zip(y.end).forall((s, e) => s <= e) && y.start.zip(x.end).forall((s, e) => s <= e)
     }
 
   /** The narrower of two ranges (an open one is the widest); a missing one is no choice. */
-  def narrower(a: Option[BundleRange], b: Option[BundleRange]): Option[BundleRange] =
-    def width(r: BundleRange): Long = r.start.zip(r.end).map((s, e) => e - s).getOrElse(Long.MaxValue)
+  def narrower(a: Option[Bundle.Range], b: Option[Bundle.Range]): Option[Bundle.Range] =
+    def width(r: Bundle.Range): Long = r.start.zip(r.end).map((s, e) => e - s).getOrElse(Long.MaxValue)
     (a, b) match
       case (Some(x), Some(y)) => Some(if width(y) < width(x) then y else x)
       case _                  => a.orElse(b)
@@ -75,7 +68,7 @@ object MergeFold:
     * ([[keepLocalSchedules]]), the run cap ours unless we have none, and the plan as [[planOutcome]] says —
     * `planDecision` answers a [[IssueKind.GoalPlanDiffers]].
     */
-  def foldGoal(l: BundleGoal, r: BundleGoal, from: String, planDecision: Option[DecisionKind] = None): BundleGoal =
+  def foldGoal(l: Bundle.Goal, r: Bundle.Goal, from: String, planDecision: Option[DecisionKind] = None): Bundle.Goal =
     def rank(s: String) = Goal.Status.all.indexOf(s)
     val notes = (text(l.notes), text(r.notes)) match
       case (Some(a), Some(b)) if a == b || a.contains(b) => Some(a)
@@ -115,7 +108,7 @@ object MergeFold:
   /** "Newer approved wins" (#881): equal or one missing is no question; two different plans are decided by their
     * approval times when both have one and they differ, else they are a question.
     */
-  def planOutcome(l: BundleGoal, r: BundleGoal): PlanOutcome =
+  def planOutcome(l: Bundle.Goal, r: Bundle.Goal): PlanOutcome =
     (l.plan, r.plan) match
       case (_, None)                    => PlanOutcome.Ours
       case (None, Some(_))              => PlanOutcome.Theirs
@@ -130,8 +123,8 @@ object MergeFold:
     * stable order; `l`'s schedules, and `r`'s of a kind `l` has none of — this collection's schedules are kept (#881),
     * differences are reported by the plan. Absent when empty.
     */
-  def keepLocalSchedules(l: BundleGoal, r: BundleGoal): BundleGoal =
-    def key(k: BundleGoalLink) = (k.kind, k.refUid.fold(k.ref)(_.toString))
+  def keepLocalSchedules(l: Bundle.Goal, r: Bundle.Goal): Bundle.Goal =
+    def key(k: Bundle.GoalLink) = (k.kind, k.refUid.fold(k.ref)(_.toString))
     val ls = l.links.getOrElse(Nil)
     val links = (ls ++ r.links.getOrElse(Nil).filterNot(x => ls.exists(y => key(y) == key(x))))
       .sortBy(k => (k.kind, k.ref, k.refUid.fold("")(_.toString)))
@@ -140,7 +133,7 @@ object MergeFold:
     l.copy(links = Option(links).filter(_.nonEmpty), schedules = Option(schedules).filter(_.nonEmpty))
 
   /** The schedules of one kind that both goals have and that differ: (kind, ours, theirs). */
-  def scheduleDifferences(l: BundleGoal, r: BundleGoal): List[(String, BundleGoalSchedule, BundleGoalSchedule)] =
+  def scheduleDifferences(l: Bundle.Goal, r: Bundle.Goal): List[(String, Bundle.GoalSchedule, Bundle.GoalSchedule)] =
     l.schedules
       .getOrElse(Nil)
       .flatMap(a => r.schedules.getOrElse(Nil).find(_.kind == a.kind).filter(_ != a).map(b => (a.kind, a, b)))
@@ -151,7 +144,7 @@ object MergeFold:
   def queueKey(t: String): String = Fingerprint.fold(t).trim.replaceAll("\\s+", " ")
 
   /** One queue item out of two: `done` anywhere is done. */
-  def foldQueue(l: BundleQueueItem, r: BundleQueueItem): BundleQueueItem =
+  def foldQueue(l: Bundle.QueueItem, r: Bundle.QueueItem): Bundle.QueueItem =
     val done = l.status == Queue.Done || r.status == Queue.Done
     l.copy(
       status = if done then Queue.Done else l.status,
@@ -206,7 +199,7 @@ object MergeFold:
   /** The fields of an article folded around a chosen body: left's title and kind, the summary that is there, tags and
     * regions unioned.
     */
-  def foldArticle(l: BundleArticle, r: BundleArticle, body: String): BundleArticle =
+  def foldArticle(l: Bundle.Article, r: Bundle.Article, body: String): Bundle.Article =
     l.copy(
       body = body,
       summary = if text(l.summary).isDefined then l.summary else r.summary.orElse(l.summary),

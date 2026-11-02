@@ -1,6 +1,5 @@
 package com.histmersion.server
 
-import com.histmersion.api.ApiError
 import com.histmersion.api.automation.Goal
 import com.histmersion.domain.automation.worklists.{QueueService, WorkListControllers}
 import com.histmersion.domain.library.citations.CitationsControllers
@@ -9,6 +8,7 @@ import com.histmersion.domain.library.search.SearchControllers
 import com.histmersion.domain.library.sources.{SourcesControllers, SourceService}
 import com.histmersion.domain.research.articles.{ArticlesControllers, ArticleService}
 import com.histmersion.domain.research.workflows.{ResearchSite, ReviewLedgerService}
+import com.histmersion.api.Api
 
 /** Research's workflows' site over the composition: research's and the library's wiring, the work lists and the goals
   * as the composition wires them.
@@ -24,4 +24,4 @@ final class ResearchWorkflowSite(h: ServerWiring, deps: Deps) extends ResearchSi
   def citations: CitationsControllers = h.library.citations
   def search: SearchControllers = h.library.search
   def labels: LabelsControllers = h.library.labels
-  def goal(slug: String): Either[ApiError, Goal] = h.goals.get(slug)
+  def goal(slug: String): Either[Api.Error, Goal] = h.goals.get(slug)

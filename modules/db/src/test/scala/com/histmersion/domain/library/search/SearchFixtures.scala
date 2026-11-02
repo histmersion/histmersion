@@ -7,8 +7,9 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
-import com.histmersion.api.catalogue.{PeriodRow, PlaceCounts}
 import com.histmersion.api.library.{Filter, SearchResult}
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.catalogue.Place
 
 /** The db suites' reads of the search on a database of their own. */
 object SearchFixtures:
@@ -18,9 +19,9 @@ object SearchFixtures:
     connect(ds)(SearchRepo.count(filter, scope))
   def unlocated(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): Int =
     connect(ds)(SearchRepo.unlocated(filter, scope))
-  def selectionCounts(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): PlaceCounts =
+  def selectionCounts(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): Place.Counts =
     connect(ds)(SearchRepo.selectionCounts(filter, scope))
-  def periods(ds: DataSource, unit: String, filter: Filter, scope: PlaceScope = PlaceScope.empty): Vector[PeriodRow] =
+  def periods(ds: DataSource, unit: String, filter: Filter, scope: PlaceScope = PlaceScope.empty): Vector[Period.Row] =
     connect(ds)(AggregateRepo.periods(unit, filter, scope))
   def treeRows(
       ds: DataSource,

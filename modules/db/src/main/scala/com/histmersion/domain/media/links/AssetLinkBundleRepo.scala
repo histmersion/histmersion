@@ -1,6 +1,5 @@
 package com.histmersion.domain.media.links
 
-import com.histmersion.api.exchange.BundleAssetLink
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.database.Sql
 import com.histmersion.util.data.exchange.BundleScope
@@ -8,6 +7,7 @@ import com.histmersion.util.data.exchange.BundleSql.*
 
 import com.augustnagro.magnum.*
 import java.util.UUID
+import com.histmersion.api.exchange.Bundle
 
 /** The figures' links as a bundle carries them: each with its figure's uid and its target's uid when the target is a
   * record — read out in uid order, and written in by an import once every figure is here, the target named by its label
@@ -15,14 +15,14 @@ import java.util.UUID
   */
 private[links] object AssetLinkBundleRepo:
 
-  def assetLinks(scope: BundleScope)(using DbCon): Vector[BundleAssetLink] =
+  def assetLinks(scope: BundleScope)(using DbCon): Vector[Bundle.AssetLink] =
     (Sql.raw(s"""SELECT l.uid, l.origin, x.uid, l.relation, l.target_type, l.target_id,
                        ${targetUid("l.target_type", "l.target_id")}, l.xywh, l.notes, ${ts("l.updated_at")}
                 FROM asset_links l JOIN assets x ON x.citekey = l.citekey AND x.name = l.asset_name WHERE """) ++
       where(scope, "l.uid", "l.updated_at") ++ " ORDER BY l.uid").frag
       .query[(UUID, UUID, UUID, String, String, String, Option[UUID], Option[String], Option[String], String)]
       .run()
-      .map(BundleAssetLink.apply(_, _, _, _, _, _, _, _, _, _))
+      .map(Bundle.AssetLink.apply(_, _, _, _, _, _, _, _, _, _))
 
   def assetLinksIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction

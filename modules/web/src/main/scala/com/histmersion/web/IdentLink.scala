@@ -4,7 +4,7 @@ import com.histmersion.web.ArticleLink
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.js
-import com.histmersion.api.library.{Label, Source, SourceRef}
+import com.histmersion.api.library.{Label, Source}
 import com.histmersion.api.research.Article
 
 /** A bare corpus identifier met in free text (`cline2014_year`, `achilles_origins`): shown readable at once, then —
@@ -13,7 +13,7 @@ import com.histmersion.api.research.Article
   */
 object IdentLink:
   enum Resolved:
-    case Source(ref: SourceRef)
+    case Source(ref: com.histmersion.api.library.Source.Ref)
     case Article(slug: String, title: String)
 
   private val cache =

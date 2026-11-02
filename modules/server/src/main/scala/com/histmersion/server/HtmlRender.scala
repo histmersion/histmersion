@@ -4,9 +4,10 @@ import com.histmersion.api.{HtmlAtoms, Wording, YearFmt}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.library.Confidence
-import com.histmersion.api.library.{FindingRow, Label, SourceRef}
-import com.histmersion.api.research.ArticleRef
+import com.histmersion.api.library.Label
 import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Finding
+import com.histmersion.api.research.Article
 
 /** The HTML atoms of the server-rendered pages — PURE string builders, one shape per thing, so a source reference looks
   * and behaves the same in an article's prose, its "Sources cited" footer, a source's "Cites / Cited by" list and the
@@ -32,27 +33,27 @@ object HtmlRender:
     HtmlAtoms.sourceLink(citekey, doi, label)
 
   /** A source reference labelled with its IDENTIFIER — the DOI when it has one, else the citekey. */
-  def sourceRef(r: SourceRef): String = sourceLink(r.citekey, r.doi, r.idLabel)
+  def sourceRef(r: com.histmersion.api.library.Source.Ref): String = sourceLink(r.citekey, r.doi, r.idLabel)
 
-  def sourceRef(r: SourceRef, label: String): String = sourceLink(r.citekey, r.doi, label)
+  def sourceRef(r: com.histmersion.api.library.Source.Ref, label: String): String = sourceLink(r.citekey, r.doi, label)
 
   /** Where a READABLE label is wanted (prose, lists): "Cline 2014", or the title when the source has no authors — never
     * a bare year.
     */
-  def readable(r: SourceRef): String =
+  def readable(r: com.histmersion.api.library.Source.Ref): String =
     if r.authors.exists(_.trim.nonEmpty) then r.shortCite else r.title
 
   /** THE article anchor: `<a class="art-ref" data-slug href="/article/slug">label</a>`. */
-  def articleRef(r: ArticleRef): String = articleRef(r, r.title)
+  def articleRef(r: Article.Ref): String = articleRef(r, r.title)
 
-  def articleRef(r: ArticleRef, label: String): String = HtmlAtoms.articleLink(r.slug, label)
+  def articleRef(r: Article.Ref, label: String): String = HtmlAtoms.articleLink(r.slug, label)
 
   /** A link nothing in the corpus answers to: text, marked, never a link to a 404. */
   def dangling(label: String): String =
     s"""<span class="dangling" title="unresolved link">${esc(label)}</span>"""
 
   /** The identifier line of a source: its DOI as a resolver link, else our own citekey. */
-  def identifier(r: SourceRef): String = identifier(r.citekey, r.doi)
+  def identifier(r: com.histmersion.api.library.Source.Ref): String = identifier(r.citekey, r.doi)
 
   def identifier(citekey: String, doi: Option[String]): String = doi.filter(_.nonEmpty) match
     case Some(d) => s"""<a class="doi" href="https://doi.org/${esc(d)}" rel="noopener">${esc(d)}</a>"""
@@ -83,7 +84,7 @@ object HtmlRender:
 
   // ── findings ─────────────────────────────────────────────────────────────────────────────────
 
-  def finding(f: FindingRow): String =
+  def finding(f: Finding.Row): String =
     val where = (f.regionName.map(_.trim).filter(_.nonEmpty).map(Label.display), f.lat, f.lon) match
       // Locale.ROOT: JDK 25's CLDR renders `35,60` under a comma-decimal default locale
       case (r, Some(la), Some(lo)) =>

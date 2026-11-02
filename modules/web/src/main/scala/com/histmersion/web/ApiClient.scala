@@ -14,7 +14,7 @@ import sttp.model.Method
 import sttp.tapir.{DecodeResult, PublicEndpoint}
 import sttp.tapir.client.sttp4.SttpClientInterpreter
 
-import com.histmersion.api.{personal, Api, ApiError, OpsApi, Paging}
+import com.histmersion.api.{personal, Api, OpsApi, Paging}
 import com.histmersion.api.automation.{
   Activity,
   AgentMode,
@@ -24,9 +24,6 @@ import com.histmersion.api.automation.{
   ApprovalDigest,
   Autopilot,
   Goal,
-  GoalList,
-  GoalPlans,
-  GoalPut,
   ListFilters,
   Managers,
   ManagersApi,
@@ -35,52 +32,43 @@ import com.histmersion.api.automation.{
   Queue,
   Stalls
 }
-import com.histmersion.api.backup.{BackupInfo, BackupStatus}
-import com.histmersion.api.basemap.{BasemapApi, BasemapFetchQuery, BasemapRemoved, BasemapRemoveQuery, BasemapStatus}
+import com.histmersion.api.basemap.BasemapApi
 import com.histmersion.api.catalogue.{
   CatalogProviderInfo,
-  EventGeoList,
   EventImportRequest,
   EventList,
   EventsApi,
-  GazetteerSourceInfo,
   HistoricalPeriod,
-  PlaceHit,
   TilesApi
 }
-import com.histmersion.api.exchange.{
-  BundleUpload,
-  MergeApplyJob,
-  MergeApplyRequest,
-  MergePlan,
-  MergePlanRequest,
-  MergeResolutions,
-  MergeSession
-}
+import com.histmersion.api.exchange.{MergeApplyJob, MergeApplyRequest, MergePlan, MergeResolutions, MergeSession}
 import com.histmersion.api.instance.{About, UiApi, UiConfig, UiNotices}
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.library.{
   AcquireApi,
-  AcquireChecks,
   DiscoverResult,
   Facet,
   Filter,
   GeoHit,
-  IngestAccepted,
-  IngestParams,
-  IngestReport,
-  IngestRequest,
   NeighborRow,
   SearchResult,
-  SourceGraph,
-  SourcePatch,
-  SourceWithFindings,
   TimeHistogram
 }
-import com.histmersion.api.media.{MediaFacets, MediaGeoHit, MediaImportRequest, MediaProviderInfo}
-import com.histmersion.api.research.{ArticleList, ArticleView, Backlink}
+import com.histmersion.api.media.{MediaFacets, MediaGeoHit, MediaImportRequest}
+import com.histmersion.api.research.Backlink
 import com.histmersion.api.settings.{ConfigEdit, ConfigEditApi}
 import com.histmersion.api.views.{AutopilotApi, AutopilotStatus, EventDetail, PlaceDetail, QueueListing, ResolvedId}
+import com.histmersion.api.backup.Backup
+import com.histmersion.api.basemap.Basemap
+import com.histmersion.api.catalogue.EventGeo
+import com.histmersion.api.catalogue.Gazetteer
+import com.histmersion.api.catalogue.Place
+import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.library.Acquire
+import com.histmersion.api.library.Ingest
+import com.histmersion.api.library.Source
+import com.histmersion.api.media.MediaProvider
+import com.histmersion.api.research.Article
 
 object ApiClient:
 
@@ -99,7 +87,7 @@ object ApiClient:
     if f.unauthorized then Auth.rejected()
     f
 
-  private def call[I, O](ep: PublicEndpoint[I, ApiError, O, Any])(in: I): Future[O] =
+  private def call[I, O](ep: PublicEndpoint[I, Api.Error, O, Any])(in: I): Future[O] =
     val req = authorize(interp.toRequest(ep, None).apply(in))
     req.send(backend).flatMap { resp =>
       val code = resp.code.code
@@ -108,7 +96,7 @@ object ApiClient:
         case DecodeResult.Value(Right(o))    => Future.successful(o)
         case DecodeResult.Value(Left(e))     => Future.failed(refuse(ApiFailure(code, e)))
         case other                           =>
-          Future.failed(ApiFailure(code, ApiError(s"could not read the server's answer (HTTP $code): $other")))
+          Future.failed(ApiFailure(code, Api.Error(s"could not read the server's answer (HTTP $code): $other")))
     }
 
   /** The URL template of a layer's tiles (`{z}`, `{x}`, `{y}` for the map to fill in): `q`'s request as the tile
@@ -128,7 +116,7 @@ object ApiClient:
   def facets(field: String, prefix: Option[String], f: Filter): Future[List[Facet]] =
     call(Api.facets)((field, prefix, f))
   def resolveId(id: String): Future[ResolvedId] = call(Api.resolveId)(id)
-  def getSource(ck: String, body: Boolean = true): Future[SourceWithFindings] =
+  def getSource(ck: String, body: Boolean = true): Future[Source.WithFindings] =
     call(Api.getSource)((ck, body))
 
   /** The articles that cite a source (`GET /api/sources/{citekey}/articles`). */
@@ -138,19 +126,19 @@ object ApiClient:
     * open-access chain only, whatever the request says: the server may be configured to allow fetchers without the
     * rights holder's authorisation, and the web UI never sets them off.
     */
-  def ingestId(req: IngestRequest): Future[IngestReport] = call(AcquireApi.ingest)(req.copy(legalOnly = true))
+  def ingestId(req: Ingest.Request): Future[Ingest.Report] = call(AcquireApi.ingest)(req.copy(legalOnly = true))
   def neighbors(ck: String, kinds: List[String] = Nil): Future[List[NeighborRow]] =
     call(Api.neighbors)((ck, kinds))
-  def articles(q: Api.ArticleQuery): Future[ArticleList] = call(Api.articles)(q)
-  def getArticle(slug: String, brief: Boolean = false): Future[ArticleView] = call(Api.getArticle)((slug, brief))
-  def places(q: Option[String], asOf: Option[Long], limit: Option[Int]): Future[List[PlaceHit]] =
+  def articles(q: Api.ArticleQuery): Future[Article.List] = call(Api.articles)(q)
+  def getArticle(slug: String, brief: Boolean = false): Future[Article.View] = call(Api.getArticle)((slug, brief))
+  def places(q: Option[String], asOf: Option[Long], limit: Option[Int]): Future[List[Place.Hit]] =
     call(Api.places)((q, asOf, limit))
   def place(id: String, asOf: Option[Long], counts: Boolean = false): Future[PlaceDetail] =
     call(Api.place)((id, asOf, Option.when(counts)(true)))
   def about(): Future[About] = call(Api.about)(())
-  def basemap(): Future[BasemapStatus] = call(BasemapApi.status)(())
-  def basemapFetch(q: BasemapFetchQuery): Future[JobInfo] = call(BasemapApi.fetch)(q)
-  def basemapRemove(q: BasemapRemoveQuery): Future[BasemapRemoved] = call(BasemapApi.remove)(q)
+  def basemap(): Future[Basemap.Status] = call(BasemapApi.status)(())
+  def basemapFetch(q: Basemap.FetchQuery): Future[JobInfo] = call(BasemapApi.fetch)(q)
+  def basemapRemove(q: Basemap.RemoveQuery): Future[Basemap.Removed] = call(BasemapApi.remove)(q)
   def job(id: String): Future[JobInfo] = call(Api.job)(id)
   def uiCounters(): Future[UiNotices.Counters] = call(UiApi.counters)(())
   def markSeen(board: String, at: String): Future[UiNotices.Counters] =
@@ -175,18 +163,21 @@ object ApiClient:
 
   def bookmarks(): Future[List[personal.Bookmark]] =
     call(personal.PersonalApi.bookmarks)((None, None, Some(personal.PersonalIds.MaxLimit)))
-  def addBookmark(b: personal.BookmarkNew): Future[personal.Bookmark] = call(personal.PersonalApi.addBookmark)(b)
-  def editBookmark(id: String, e: personal.BookmarkEdit): Future[personal.Bookmark] =
+  def addBookmark(b: com.histmersion.api.personal.Bookmark.New): Future[personal.Bookmark] =
+    call(personal.PersonalApi.addBookmark)(b)
+  def editBookmark(id: String, e: com.histmersion.api.personal.Bookmark.Edit): Future[personal.Bookmark] =
     call(personal.PersonalApi.editBookmark)((id, e))
   def removeBookmark(id: String): Future[personal.Bookmark] = call(personal.PersonalApi.removeBookmark)(id)
   def notes(): Future[List[personal.Note]] =
     call(personal.PersonalApi.notes)((None, None, None, Some(personal.PersonalIds.MaxLimit)))
-  def addNote(n: personal.NoteNew): Future[personal.Note] = call(personal.PersonalApi.addNote)(n)
-  def editNote(id: String, e: personal.NoteEdit): Future[personal.Note] = call(personal.PersonalApi.editNote)((id, e))
+  def addNote(n: com.histmersion.api.personal.Note.New): Future[personal.Note] = call(personal.PersonalApi.addNote)(n)
+  def editNote(id: String, e: com.histmersion.api.personal.Note.Edit): Future[personal.Note] =
+    call(personal.PersonalApi.editNote)((id, e))
   def removeNote(id: String): Future[personal.Note] = call(personal.PersonalApi.removeNote)(id)
   def readMarks(): Future[List[personal.ReadMark]] =
     call(personal.PersonalApi.reading)((None, Some("all"), Some(personal.PersonalIds.MaxLimit)))
-  def setRead(m: personal.ReadMarkSet): Future[personal.ReadMark] = call(personal.PersonalApi.setRead)(m)
+  def setRead(m: com.histmersion.api.personal.ReadMark.Set): Future[personal.ReadMark] =
+    call(personal.PersonalApi.setRead)(m)
   def opened(o: personal.ReadOpened): Future[personal.ReadMark] = call(personal.PersonalApi.opened)(o)
   def unread(kind: String, limit: Int, offset: Int): Future[personal.UnreadPage] =
     call(personal.PersonalApi.unread)((Some(kind), Some(limit), Some(offset)))
@@ -196,20 +187,20 @@ object ApiClient:
   def settings(prefix: Option[String] = None): Future[ConfigEdit.Page] = call(ConfigEditApi.get)(prefix)
   def writeSettings(w: ConfigEdit.Write): Future[ConfigEdit.Written] = call(ConfigEditApi.write)(w)
   def restartServer(): Future[ConfigEdit.Restart] = call(ConfigEditApi.restart)(())
-  def backupNow(): Future[BackupStatus] = call(Api.backup)(())
-  def backups(): Future[List[BackupInfo]] = call(Api.backups)(())
+  def backupNow(): Future[Backup.Status] = call(Api.backup)(())
+  def backups(): Future[List[Backup.Info]] = call(Api.backups)(())
   def initData(fetch: Boolean): Future[JobInfo] = call(Api.init)(fetch)
-  def placeSources(): Future[List[GazetteerSourceInfo]] = call(Api.placeSources)(())
+  def placeSources(): Future[List[Gazetteer.SourceInfo]] = call(Api.placeSources)(())
   def loadPlaces(source: String): Future[JobInfo] = call(Api.loadPlaces)((source, true))
   def eventCatalogues(): Future[List[CatalogProviderInfo]] = call(EventsApi.catalogues)(())
   def importEvents(provider: String): Future[JobInfo] =
     call(EventsApi.importEvents)(EventImportRequest(provider, dryRun = false))
-  def mediaProviders(): Future[List[MediaProviderInfo]] = call(Api.mediaProviders)(())
+  def mediaProviders(): Future[List[MediaProvider.Info]] = call(Api.mediaProviders)(())
   def importMedia(provider: String): Future[JobInfo] =
     call(Api.mediaImportJob)(MediaImportRequest(provider, dryRun = false))
   def setAgentMode(mode: AgentMode): Future[AutopilotStatus] =
     call(AutopilotApi.setMode)(AgentMode.ModeSet(mode.wire, Some("web")))
-  def acquireRecheck(in: AcquireChecks.RecheckRequest): Future[AcquireChecks.RecheckResult] =
+  def acquireRecheck(in: Acquire.Checks.RecheckRequest): Future[Acquire.Checks.RecheckResult] =
     call(com.histmersion.api.library.AcquisitionWorkApi.acquireRecheck)(in)
   def queuePatch(id: Int, p: Queue.QueuePatch): Future[Queue.QueueItem] =
     call(OpsApi.queuePatch)((id, p))
@@ -218,7 +209,7 @@ object ApiClient:
   def queueDelete(id: Int): Future[Queue.QueueItem] =
     call(OpsApi.queueDelete)(id)
 
-  def graph(citekey: String, depth: Option[Int] = None): Future[SourceGraph] =
+  def graph(citekey: String, depth: Option[Int] = None): Future[Source.Graph] =
     call(Api.graph)((citekey, depth))
 
   def periods(
@@ -237,7 +228,7 @@ object ApiClient:
   def getEvent(id: String): Future[EventDetail] = call(Api.getEvent)(id)
 
   def events(q: Api.EventQuery): Future[EventList] = call(Api.events)(q)
-  def eventsGeo(q: Api.EventQuery): Future[EventGeoList] = call(Api.eventsGeo)(q)
+  def eventsGeo(q: Api.EventQuery): Future[EventGeo.List] = call(Api.eventsGeo)(q)
 
   /** The literature search for `q`, works not in the corpus yet (an event card's lead, #1449). */
   def discover(q: String, limit: Int): Future[DiscoverResult] =
@@ -252,7 +243,7 @@ object ApiClient:
   ): Future[(List[JobInfo], Paging.Page)] =
     call(Api.jobs)((f, limit, before, upTo))
 
-  def patchSource(ck: String, p: SourcePatch): Future[SourceWithFindings] = call(Api.patchSource)((ck, p, false))
+  def patchSource(ck: String, p: Source.Patch): Future[Source.WithFindings] = call(Api.patchSource)((ck, p, false))
 
   // ── embedded agents ──────────────────────────────────────────────────────────────────────────────
 
@@ -274,7 +265,7 @@ object ApiClient:
     call(AgentsApi.setChain)((role, ModelChains.ChainSet(models)))
   def resetChain(role: String): Future[ModelChains.RoleChain] = call(AgentsApi.resetChain)(role)
   def setAllowance(in: ModelChains.AllowanceSet): Future[ModelChains.AllowanceStatus] = call(AgentsApi.setAllowance)(in)
-  def removeAllowance(target: String): Future[GoalPlans.Removed] = call(AgentsApi.removeAllowance)(target)
+  def removeAllowance(target: String): Future[Goal.Plans.Removed] = call(AgentsApi.removeAllowance)(target)
   def agentDoctor(offline: Boolean): Future[Agents.DoctorReport] = call(AgentsApi.doctor)(Some(offline))
   def agentQuota: Future[PlanQuota.QuotaInfo] = call(AgentsApi.quota)(())
   def setPool(pool: String, in: PlanQuota.PoolSet): Future[PlanQuota.PoolStatus] = call(AgentsApi.setPool)((pool, in))
@@ -292,32 +283,32 @@ object ApiClient:
 
   // ── goals: the list, one goal's view, its links and schedules ───────────────────────────────────
 
-  def goals(limit: Option[Int]): Future[GoalList] = call(Api.goals)(Api.GoalQuery(None, limit, None))
-  def goalView(slug: String): Future[GoalPlans.GoalView] = call(AgentsApi.goalView)(slug)
+  def goals(limit: Option[Int]): Future[Goal.List] = call(Api.goals)(Api.GoalQuery(None, limit, None))
+  def goalView(slug: String): Future[Goal.Plans.GoalView] = call(AgentsApi.goalView)(slug)
   def getGoal(slug: String): Future[Goal] = call(Api.getGoal)(slug)
 
   /** Create (or REPLACE) a goal — the New research area form checks the slug is free first. */
-  def putGoal(slug: String, in: GoalPut): Future[Goal] = call(Api.putGoal)((slug, in))
-  def addGoalLink(slug: String, in: GoalPlans.LinkAdd): Future[GoalPlans.GoalLink] =
+  def putGoal(slug: String, in: Goal.Put): Future[Goal] = call(Api.putGoal)((slug, in))
+  def addGoalLink(slug: String, in: Goal.Plans.LinkAdd): Future[Goal.Plans.GoalLink] =
     call(AgentsApi.addGoalLink)((slug, in))
-  def removeGoalLink(slug: String, kind: GoalPlans.LinkKind, ref: String): Future[GoalPlans.Removed] =
+  def removeGoalLink(slug: String, kind: Goal.Plans.LinkKind, ref: String): Future[Goal.Plans.Removed] =
     call(AgentsApi.removeGoalLink)((slug, kind.wire, ref))
   def setSchedule(
       slug: String,
-      kind: GoalPlans.ScheduleKind,
-      in: GoalPlans.ScheduleSet
-  ): Future[GoalPlans.GoalSchedule] =
+      kind: Goal.Plans.ScheduleKind,
+      in: Goal.Plans.ScheduleSet
+  ): Future[Goal.Plans.GoalSchedule] =
     call(AgentsApi.setSchedule)((slug, kind.wire, in))
-  def removeSchedule(slug: String, kind: GoalPlans.ScheduleKind): Future[GoalPlans.Removed] =
+  def removeSchedule(slug: String, kind: Goal.Plans.ScheduleKind): Future[Goal.Plans.Removed] =
     call(AgentsApi.removeSchedule)((slug, kind.wire))
 
   /** `POST /api/ingest`, with upload progress (`fetch` reports none, so this one request goes through
     * `XMLHttpRequest`). The URL and its query parameters still come from the tapir endpoint, and the key from
     * [[authorize]] — the same two places as every other call.
     */
-  def ingest(params: IngestParams, file: dom.File, progress: Double => Unit): Future[IngestAccepted] =
+  def ingest(params: Ingest.Params, file: dom.File, progress: Double => Unit): Future[Ingest.Accepted] =
     val req = authorize(interp.toRequest(Api.ingest, None).apply((params, file)))
-    val result = Promise[IngestAccepted]()
+    val result = Promise[Ingest.Accepted]()
     val xhr = new dom.XMLHttpRequest()
     xhr.open("POST", req.uri.toString)
     req.headers
@@ -330,14 +321,14 @@ object ApiClient:
       val body = Option(xhr.responseText).getOrElse("")
       if xhr.status == 202 || xhr.status == 200 then
         io.circe.parser
-          .decode[IngestAccepted](body)
+          .decode[Ingest.Accepted](body)
           .fold(
             e =>
-              result.failure(ApiFailure(xhr.status, ApiError(s"could not read the server's answer: ${e.getMessage}"))),
+              result.failure(ApiFailure(xhr.status, Api.Error(s"could not read the server's answer: ${e.getMessage}"))),
             ok => result.success(ok)
           )
       else
-        val decoded = io.circe.parser.decode[ApiError](body).toOption
+        val decoded = io.circe.parser.decode[Api.Error](body).toOption
         result.failure(refuse(ApiFailure.of(xhr.status, decoded)))
     xhr.onerror = (_: dom.Event) => result.failure(ApiFailure.of(0, None))
     xhr.send(file)
@@ -345,7 +336,7 @@ object ApiClient:
 
   // ── merging another collection's bundle (the /merge review screen) ──────────────────────────────
 
-  def mergePlan(req: MergePlanRequest): Future[MergePlan] = call(Api.mergePlan)(req)
+  def mergePlan(req: MergePlan.Request): Future[MergePlan] = call(Api.mergePlan)(req)
   def mergeSession(bundle: String): Future[MergeSession] = call(Api.mergeSession)(bundle)
   def putMergeSession(bundle: String, r: MergeResolutions): Future[MergeSession] =
     call(Api.putMergeSession)((bundle, r))
@@ -356,9 +347,9 @@ object ApiClient:
   /** `POST /api/bundle/upload`, with upload progress — a bundle can be large; through `XMLHttpRequest` for the same
     * reason as [[ingest]].
     */
-  def uploadBundle(file: dom.File, progress: Double => Unit): Future[BundleUpload] =
+  def uploadBundle(file: dom.File, progress: Double => Unit): Future[Bundle.Upload] =
     val req = authorize(interp.toRequest(Api.uploadBundle, None).apply(file))
-    val result = Promise[BundleUpload]()
+    val result = Promise[Bundle.Upload]()
     val xhr = new dom.XMLHttpRequest()
     xhr.open("POST", req.uri.toString)
     req.headers
@@ -371,14 +362,14 @@ object ApiClient:
       val body = Option(xhr.responseText).getOrElse("")
       if xhr.status == 200 then
         io.circe.parser
-          .decode[BundleUpload](body)
+          .decode[Bundle.Upload](body)
           .fold(
             e =>
-              result.failure(ApiFailure(xhr.status, ApiError(s"could not read the server's answer: ${e.getMessage}"))),
+              result.failure(ApiFailure(xhr.status, Api.Error(s"could not read the server's answer: ${e.getMessage}"))),
             ok => result.success(ok)
           )
       else
-        val decoded = io.circe.parser.decode[ApiError](body).toOption
+        val decoded = io.circe.parser.decode[Api.Error](body).toOption
         result.failure(refuse(ApiFailure.of(xhr.status, decoded)))
     xhr.onerror = (_: dom.Event) => result.failure(ApiFailure.of(0, None))
     xhr.send(file)
@@ -423,7 +414,7 @@ object ApiClient:
     call(ManagersApi.patchItem)((id, item, p))
   def managerAddHint(id: String, in: Managers.HintAdd): Future[Managers.ManagerHint] =
     call(ManagersApi.addHint)((id, in))
-  def managerRemoveHint(id: String, hint: Long): Future[GoalPlans.Removed] = call(ManagersApi.removeHint)((id, hint))
+  def managerRemoveHint(id: String, hint: Long): Future[Goal.Plans.Removed] = call(ManagersApi.removeHint)((id, hint))
   def managerEvents(id: String, before: Option[Long], limit: Int): Future[Managers.EventPage] =
     call(ManagersApi.events)((id, before, Some(limit)))
 
@@ -447,14 +438,14 @@ object ApiClient:
     * `Response.text()` decodes natively. The request is still the endpoint's own (its path and query, from the same
     * Tapir definition); a GET, so no key.
     */
-  private def text[I](ep: PublicEndpoint[I, ApiError, String, Any])(in: I): Future[String] =
+  private def text[I](ep: PublicEndpoint[I, Api.Error, String, Any])(in: I): Future[String] =
     fetchText(interp.toRequest(ep, None).apply(in).uri.toString).flatMap { (status, body) =>
       if status >= 200 && status < 300 then Future.successful(body)
       else Future.failed(ApiFailure.of(status, decodeError(body)))
     }
 
-  private def decodeError(body: String): Option[ApiError] =
-    io.circe.parser.decode[ApiError](body).toOption
+  private def decodeError(body: String): Option[Api.Error] =
+    io.circe.parser.decode[Api.Error](body).toOption
 
   /** GET `url`: the status and the body, decoded by the browser. */
   private def fetchText(url: String): Future[(Int, String)] =

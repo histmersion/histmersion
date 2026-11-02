@@ -4,7 +4,7 @@ import com.histmersion.api.Plural
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.given
 object AcquireChecksMarkdown:
-  import AcquireChecks.*
+  import com.histmersion.api.library.Acquire.Checks.*
 
   def line(s: RecheckStatus): String =
     val job = s.job.fold("")(j => s" — $j")

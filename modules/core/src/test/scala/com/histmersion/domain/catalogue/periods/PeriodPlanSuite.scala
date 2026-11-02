@@ -1,20 +1,20 @@
 package com.histmersion.domain.catalogue.periods
 
-import com.histmersion.api.exchange.{BundlePeriod, BundleRange}
 import com.histmersion.util.data.exchange.BundleEntities
 
 import java.util.UUID
+import com.histmersion.api.exchange.Bundle
 
 class PeriodPlanSuite extends munit.FunSuite:
 
   private def period(id: String, label: String, from: Long, to: Long, parent: Option[String] = None) =
-    BundlePeriod(
+    Bundle.Period(
       UUID.nameUUIDFromBytes(id.getBytes),
       UUID.nameUUIDFromBytes("origin".getBytes),
       id,
       label,
       None,
-      Some(BundleRange(Some(from), Some(to))),
+      Some(Bundle.Range(Some(from), Some(to))),
       None,
       parent,
       "2026-01-01T00:00:00.000000Z"
@@ -33,4 +33,4 @@ class PeriodPlanSuite extends munit.FunSuite:
     val a = period("zz_age", "The Zz Age", -1500, -1000)
     assert(PeriodPlan.samePeriod(a, a.copy(label = "zz age, the")))
     assert(!PeriodPlan.samePeriod(a, a.copy(label = "The Zz Era")))
-    assert(!PeriodPlan.samePeriod(a, a.copy(period = Some(BundleRange(Some(-1600), Some(-1000))))))
+    assert(!PeriodPlan.samePeriod(a, a.copy(period = Some(Bundle.Range(Some(-1600), Some(-1000))))))

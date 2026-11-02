@@ -1,11 +1,11 @@
 package com.histmersion.domain.activity
 
-import com.histmersion.api.ApiError
 import com.histmersion.api.automation.{Activity, ListFilters}
 import com.histmersion.api.automation.Activity.{Entry, EntryKind, Show, Writer}
 
 import java.time.Instant
 import scala.annotation.tailrec
+import com.histmersion.api.Api
 
 /** What the activity list's filters mean, entry by entry, and how a page of it is cut: the rules the database's query
   * follows in SQL, and the in-memory list follows here. Pure.
@@ -75,8 +75,8 @@ object ActivityRules:
       limit: Option[Int],
       before: Option[String],
       now: Instant
-  ): Either[ApiError, ActivityQuery] =
-    def bad(m: String) = ApiError(m)
+  ): Either[Api.Error, ActivityQuery] =
+    def bad(m: String) = Api.Error(m)
     for
       s <- show
         .map(_.trim)

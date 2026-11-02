@@ -15,9 +15,7 @@ import scala.util.Random
 import com.histmersion.api.catalogue.{
   CatalogRecord,
   Correction,
-  CorrectionCounts,
   Corrections,
-  CorrectionStatus,
   EventFields,
   EventPatch,
   EventPrecision,
@@ -88,10 +86,10 @@ class EventDatingSuite extends munit.FunSuite:
     assertEquals(Corrections.reconcile(y, x, x), Corrections.Outcome.Keep)
     assertEquals(Corrections.reconcile(y, x, y), Corrections.Outcome.Retire)
     assertEquals(Corrections.reconcile(y, x, z), Corrections.Outcome.Conflict)
-    assertEquals(Corrections.status(Corrections.Outcome.Conflict), CorrectionStatus.Conflict)
+    assertEquals(Corrections.status(Corrections.Outcome.Conflict), Correction.Status.Conflict)
     assertEquals(
       Corrections.counts(List(Corrections.Outcome.Keep, Corrections.Outcome.Conflict, Corrections.Outcome.Keep)),
-      CorrectionCounts(2, 0, 1)
+      Correction.Counts(2, 0, 1)
     )
     val c = Correction(
       1,
@@ -100,7 +98,7 @@ class EventDatingSuite extends munit.FunSuite:
       "label",
       y.noSpaces,
       x.noSpaces,
-      CorrectionStatus.Conflict,
+      Correction.Status.Conflict,
       Some("gvp"),
       Some(z.noSpaces)
     )

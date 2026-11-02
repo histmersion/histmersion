@@ -15,13 +15,15 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.pluginhost.HostAiHttp
 
 import com.histmersion.util.database.Transactor
-import com.histmersion.api.{ApiError, Paging, Write}
+import com.histmersion.api.{Paging, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
-import com.histmersion.api.automation.GoalPlans.*
+import com.histmersion.api.automation.Goal.Plans.*
 import com.histmersion.domain.automation.agents.ModelSettingsRepo
-import com.histmersion.api.automation.{Agents, AgentsApi, GoalPlans, ListFilters, ModelChains, PlanQuota, RunCompare}
+import com.histmersion.api.automation.{Agents, AgentsApi, ListFilters, ModelChains, PlanQuota, RunCompare}
+import com.histmersion.api.Api
+import com.histmersion.api.automation.Goal
 
 /** The ONE implementation of the embedded-agent operations (docs/research-embedded-agents.md): the model check, the
   * probe and (through [[Engine]]) pipeline runs. REST ([[AgentsRoutes]]) and the CLI reach it; it is held as
@@ -213,7 +215,7 @@ final class AgentsHandlers(
   /** `POST /api/agents/generate` — works with agents off too: the interactive plugin the research workspace installs is
     * one of the trees.
     */
-  def generate(req: GenerateRequest): Either[ApiError, GenerateResult] =
+  def generate(req: GenerateRequest): Either[Api.Error, GenerateResult] =
     for
       rts <- req.runtimes
         .map(r => AgentRuntime.parse(r).filter(AgentRuntime.Generated.contains).toRight(r))
@@ -221,11 +223,11 @@ final class AgentsHandlers(
         case (Nil, ok) => Right(if ok.isEmpty then AgentRuntime.Generated else ok)
         case (bad, _)  =>
           Left(
-            ApiError(
+            Api.Error(
               s"unknown runtime(s) ${bad.mkString(", ")} (one of: ${AgentRuntime.Generated.map(_.wire).mkString(", ")})"
             )
           )
-      r <- cli.trees.generate(knownTools, rts, AgentTrees.out(req.out, site.userPaths)).left.map(ApiError(_))
+      r <- cli.trees.generate(knownTools, rts, AgentTrees.out(req.out, site.userPaths)).left.map(Api.Error(_))
     yield r
 
   // ── plan pools ─────────────────────────────────────────────────────────────────────────────────
@@ -250,26 +252,26 @@ final class AgentsHandlers(
       picker.cooldowns(now).map((m, u) => PlanQuota.Cooldown(m, u.toString, ModelPicker.CoolingWhy))
     )
 
-  private def poolOf(raw: String): Either[ApiError, PlanQuota.PoolId] =
+  private def poolOf(raw: String): Either[Api.Error, PlanQuota.PoolId] =
     PlanQuota.PoolId
       .parse(raw)
-      .toRight(ApiError(s"unknown pool '$raw' (one of: ${PlanQuota.PoolId.values.map(_.wire).mkString(", ")})"))
+      .toRight(Api.Error(s"unknown pool '$raw' (one of: ${PlanQuota.PoolId.values.map(_.wire).mkString(", ")})"))
 
   /** `PUT /api/agents/quota/{pool}` — the hold switch and the floors. */
-  def setPool(pool: String, in: PlanQuota.PoolSet): Either[ApiError, PlanQuota.PoolStatus] =
+  def setPool(pool: String, in: PlanQuota.PoolSet): Either[Api.Error, PlanQuota.PoolStatus] =
     for
       p <- poolOf(pool)
       f <- in.floors.map(_.trim) match
         case Some("") => Right(Some(None))
-        case Some(t)  => PlanQuota.Floors.parse(t).left.map(ApiError(_)).map(fs => Some(Some(fs.text)))
+        case Some(t)  => PlanQuota.Floors.parse(t).left.map(Api.Error(_)).map(fs => Some(Some(fs.text)))
         case None     => Right(None)
       _ = in.hold.foreach(pools.hold(p, _))
       _ = f.foreach(pools.setFloors(p, _))
-      st <- pools.statuses(covers).find(_.pool == p.wire).toRight(ApiError(s"no pool ${p.wire}"))
+      st <- pools.statuses(covers).find(_.pool == p.wire).toRight(Api.Error(s"no pool ${p.wire}"))
     yield st
 
   /** `PUT /api/agents/quota/fallthrough/{role}`. */
-  def setFallthrough(role: String, in: PlanQuota.FallthroughSet): Either[ApiError, PlanQuota.QuotaInfo] =
+  def setFallthrough(role: String, in: PlanQuota.FallthroughSet): Either[Api.Error, PlanQuota.QuotaInfo] =
     roleOf(role).map { r =>
       Transactor(ds).transact(
         com.histmersion.domain.automation.agents.PlanQuotaRepo.setFallthrough(r.wire, in.fallthrough)
@@ -281,7 +283,7 @@ final class AgentsHandlers(
     * ChatGPT plan from the app-server (free), the Claude plan from its probe (one minimal `claude -p` turn) unless
     * `refresh = off`. The login is checked again first; a pool without one is not read.
     */
-  def refreshQuota(in: PlanQuota.QuotaRefresh): Either[ApiError, PlanQuota.QuotaRefreshed] =
+  def refreshQuota(in: PlanQuota.QuotaRefresh): Either[Api.Error, PlanQuota.QuotaRefreshed] =
     in.pool
       .map(_.trim)
       .filter(_.nonEmpty)
@@ -330,9 +332,9 @@ final class AgentsHandlers(
       scribe.info(s"agents: running on the new database ($paused interrupted run(s) paused there)")
 
   /** Off unless `agents.enabled`: every agent operation but the read-only model listing refuses. */
-  private def enabled: Either[ApiError, Unit] =
+  private def enabled: Either[Api.Error, Unit] =
     if cfg.enabled then Right(())
-    else Left(ApiError("embedded agents are off — set HISTMERSION_AGENTS_ENABLED=true on the server to use them"))
+    else Left(Api.Error("embedded agents are off — set HISTMERSION_AGENTS_ENABLED=true on the server to use them"))
 
   /** The price table, parsed once per call (config is immutable; parsing is microseconds). */
   private def prices: Either[String, Map[String, Price]] =
@@ -419,31 +421,31 @@ final class AgentsHandlers(
 
   // ── chains and allowances: saved over config ───────────────────────────────────────────────────
 
-  private def roleOf(raw: String): Either[ApiError, Role] =
-    Role.parse(raw).toRight(ApiError(s"unknown role '$raw' (one of: ${Role.values.map(_.wire).mkString(", ")})"))
+  private def roleOf(raw: String): Either[Api.Error, Role] =
+    Role.parse(raw).toRight(Api.Error(s"unknown role '$raw' (one of: ${Role.values.map(_.wire).mkString(", ")})"))
 
-  private def chainOf(role: Role): Either[ApiError, ModelChains.RoleChain] =
-    picker.roleChains(System.currentTimeMillis()).find(_.role == role.wire).toRight(ApiError(s"no role ${role.wire}"))
+  private def chainOf(role: Role): Either[Api.Error, ModelChains.RoleChain] =
+    picker.roleChains(System.currentTimeMillis()).find(_.role == role.wire).toRight(Api.Error(s"no role ${role.wire}"))
 
   /** `PUT /api/agents/models/{role}` — the role's chain, saved over `agents.roles.<role>`. Every model must be a
     * `provider:model`; one that is not priced or buildable yet is accepted and shown as not ready (a price or key may
     * come next). Works with agents off.
     */
-  def setChain(role: String, in: ModelChains.ChainSet): Either[ApiError, ModelChains.RoleChain] =
+  def setChain(role: String, in: ModelChains.ChainSet): Either[Api.Error, ModelChains.RoleChain] =
     for
       r <- roleOf(role)
-      ms <- ModelChains.parseModels(in.models, knownProviders).left.map(ApiError(_))
+      ms <- ModelChains.parseModels(in.models, knownProviders).left.map(Api.Error(_))
       _ <- Either.cond(
         ms.nonEmpty,
         (),
-        ApiError("a chain needs at least one provider:model (reset the role to go back to config)")
+        Api.Error("a chain needs at least one provider:model (reset the role to go back to config)")
       )
       _ = Transactor(ds).transact(ModelSettingsRepo.setChain(r.wire, ms.map(_.wire)))
       c <- chainOf(r)
     yield c
 
   /** `DELETE /api/agents/models/{role}` — back to `agents.roles.<role>`. */
-  def resetChain(role: String): Either[ApiError, ModelChains.RoleChain] =
+  def resetChain(role: String): Either[Api.Error, ModelChains.RoleChain] =
     for
       r <- roleOf(role)
       _ = Transactor(ds).transact(ModelSettingsRepo.removeChain(r.wire))
@@ -451,27 +453,27 @@ final class AgentsHandlers(
     yield c
 
   /** `PUT /api/agents/allowances` — one model's or provider's limits and reserve, saved over config. */
-  def setAllowance(in: ModelChains.AllowanceSet): Either[ApiError, ModelChains.AllowanceStatus] =
+  def setAllowance(in: ModelChains.AllowanceSet): Either[Api.Error, ModelChains.AllowanceStatus] =
     for
-      t <- ModelChains.Target.parse(in.target, knownProviders).left.map(ApiError(_))
+      t <- ModelChains.Target.parse(in.target, knownProviders).left.map(Api.Error(_))
       ls <- in.limits.map(ModelChains.Limit.fromSpec).partitionMap(identity) match
         case (Nil, ok) => Right(ok)
-        case (errs, _) => Left(ApiError(errs.mkString("; ")))
-      a <- ModelChains.Allowance.of(t, ls, in.reservePct).left.map(ApiError(_))
+        case (errs, _) => Left(Api.Error(errs.mkString("; ")))
+      a <- ModelChains.Allowance.of(t, ls, in.reservePct).left.map(Api.Error(_))
       _ = Transactor(ds).transact(ModelSettingsRepo.setAllowance(t.wire, a.limits.map(_.spec), a.reservePct))
       st <- picker
         .allowanceStatuses(System.currentTimeMillis())
         .find(_.target == t.wire)
-        .toRight(ApiError(s"the allowance of ${t.wire} was not recorded"))
+        .toRight(Api.Error(s"the allowance of ${t.wire} was not recorded"))
     yield st
 
   /** `DELETE /api/agents/allowances?target=…` — the saved allowance goes; config's (if any) applies again. */
-  def removeAllowance(target: String): Either[ApiError, GoalPlans.Removed] =
+  def removeAllowance(target: String): Either[Api.Error, Goal.Plans.Removed] =
     ModelChains.Target
       .parse(target, knownProviders)
       .left
-      .map(ApiError(_))
-      .map(t => GoalPlans.Removed(Transactor(ds).transact(ModelSettingsRepo.removeAllowance(t.wire))))
+      .map(Api.Error(_))
+      .map(t => Goal.Plans.Removed(Transactor(ds).transact(ModelSettingsRepo.removeAllowance(t.wire))))
 
   /** `GET /api/agents/doctor` — every provider checked without spending anything. */
   def doctor(offline: Boolean): Agents.DoctorReport =
@@ -504,12 +506,12 @@ final class AgentsHandlers(
   /** `POST /api/agents/runs` — validated up front (pipeline, target, model, prices, budgets) so a mistake is a 400 now,
     * not a failed run later; then queued.
     */
-  def startRun(req: RunRequest): Either[ApiError, RunInfo] = startRunAs(req, Origin.Person, None)
+  def startRun(req: RunRequest): Either[Api.Error, RunInfo] = startRunAs(req, Origin.Person, None)
 
   /** [[startRun]] for a schedule or another run: `parent` is the run that starts this one (its goal and model carry
     * over when the request names none).
     */
-  def startRunAs(req: RunRequest, origin: Origin, parent: Option[RunInfo]): Either[ApiError, RunInfo] =
+  def startRunAs(req: RunRequest, origin: Origin, parent: Option[RunInfo]): Either[Api.Error, RunInfo] =
     startRunWith(req, origin, parent, identity)
 
   /** [[startRunAs]] with the options a request does not carry set by `tweak` (a hint-effect run's hint). */
@@ -518,7 +520,7 @@ final class AgentsHandlers(
       origin: Origin,
       parent: Option[RunInfo],
       tweak: RunParams => RunParams
-  ): Either[ApiError, RunInfo] =
+  ): Either[Api.Error, RunInfo] =
     prepare(req, parent).map { pr =>
       val id = jobRuns.create(
         RunService.row(
@@ -557,25 +559,25 @@ final class AgentsHandlers(
   /** Everything [[startRunAs]] checks before it queues a run — pipeline, target, models, options, goal, budgets —
     * without creating it.
     */
-  def prepare(req: RunRequest, parent: Option[RunInfo]): Either[ApiError, Prepared] =
+  def prepare(req: RunRequest, parent: Option[RunInfo]): Either[Api.Error, Prepared] =
     for
       _ <- enabled
       p <- Pipeline
         .parse(req.pipeline)
         .toRight(
-          ApiError(s"unknown pipeline '${req.pipeline}' (one of: ${Pipeline.values.map(_.wire).mkString(", ")})")
+          Api.Error(s"unknown pipeline '${req.pipeline}' (one of: ${Pipeline.values.map(_.wire).mkString(", ")})")
         )
       target <- targetOf(p, req.target)
       over <- overrides(p, req.modelFor)
       // every role the pipeline uses must have a chain with a priced model it can build, NOW — its
       // own --model-for when it has one, else --model, else its chain
-      _ <- p.roles.foldLeft[Either[ApiError, Unit]](Right(())) { (acc, role) =>
-        acc.flatMap(_ => runnable(role, over.get(role).orElse(req.model)).left.map(ApiError(_)))
+      _ <- p.roles.foldLeft[Either[Api.Error, Unit]](Right(())) { (acc, role) =>
+        acc.flatMap(_ => runnable(role, over.get(role).orElse(req.model)).left.map(Api.Error(_)))
       }
       // and an override for a role the pipeline only reaches through a chained run (compile-article's
       // review) is checked the same way
-      _ <- over.toList.filterNot((r, _) => p.roles.contains(r)).foldLeft[Either[ApiError, Unit]](Right(())) {
-        case (acc, (role, ref)) => acc.flatMap(_ => runnable(role, Some(ref)).left.map(ApiError(_)))
+      _ <- over.toList.filterNot((r, _) => p.roles.contains(r)).foldLeft[Either[Api.Error, Unit]](Right(())) {
+        case (acc, (role, ref)) => acc.flatMap(_ => runnable(role, Some(ref)).left.map(Api.Error(_)))
       }
       _ <- host.runOptions(p, req, target, roundsCap)
       goal <- goalOf(p, target, req.goal.orElse(parent.flatMap(_.goal)))
@@ -601,46 +603,46 @@ final class AgentsHandlers(
     * ref (or `a > b` chain) that parses. Whether that model can run is checked with the rest of the roles (the
     * readiness `models set` shows).
     */
-  private def overrides(p: Pipeline, asked: List[ModelOverride]): Either[ApiError, Map[Role, String]] =
+  private def overrides(p: Pipeline, asked: List[ModelOverride]): Either[Api.Error, Map[Role, String]] =
     val roles = host.runRoles(p)
-    asked.foldLeft[Either[ApiError, Map[Role, String]]](Right(Map.empty)) { (acc, o) =>
+    asked.foldLeft[Either[Api.Error, Map[Role, String]]](Right(Map.empty)) { (acc, o) =>
       acc.flatMap { m =>
         for
           r <- Role
             .parse(o.role)
             .toRight(
-              ApiError(s"--model-for: unknown role '${o.role}' (one of: ${Role.values.map(_.wire).mkString(", ")})")
+              Api.Error(s"--model-for: unknown role '${o.role}' (one of: ${Role.values.map(_.wire).mkString(", ")})")
             )
           _ <- Either.cond(
             roles.contains(r),
             (),
-            ApiError(
+            Api.Error(
               s"--model-for: ${p.wire} uses no ${r.wire} role " +
                 s"(its roles: ${
                     if roles.isEmpty then "none — it calls no model" else roles.map(_.wire).mkString(", ")
                   })"
             )
           )
-          _ <- Either.cond(!m.contains(r), (), ApiError(s"--model-for: the ${r.wire} role is given twice"))
-          _ <- ModelChains.parseChain(o.model, knownProviders).left.map(e => ApiError(s"--model-for ${r.wire}: $e"))
+          _ <- Either.cond(!m.contains(r), (), Api.Error(s"--model-for: the ${r.wire} role is given twice"))
+          _ <- ModelChains.parseChain(o.model, knownProviders).left.map(e => Api.Error(s"--model-for ${r.wire}: $e"))
         yield m + (r -> o.model.trim)
       }
     }
 
   /** The target as the pipeline names it (its workflow's domain resolves it), or a manager. */
-  private def targetOf(p: Pipeline, raw: String): Either[ApiError, String] =
+  private def targetOf(p: Pipeline, raw: String): Either[Api.Error, String] =
     host
       .runTarget(p, raw)
       .getOrElse(
         managerStore
           .get(raw.trim)
           .map(_.id)
-          .toRight(ApiError(s"No manager '$raw'", Some(Write.CodeNotFound)))
+          .toRight(Api.Error(s"No manager '$raw'", Some(Write.CodeNotFound)))
       )
 
   /** The goal a run works for: the target of a goal pipeline, else the one the request names (which must exist).
     */
-  private def goalOf(p: Pipeline, target: String, named: Option[String]): Either[ApiError, Option[String]] =
+  private def goalOf(p: Pipeline, target: String, named: Option[String]): Either[Api.Error, Option[String]] =
     if p.targetKind == TargetKind.Goal then Right(Some(target))
     else
       named.map(_.trim).filter(_.nonEmpty) match
@@ -651,13 +653,13 @@ final class AgentsHandlers(
     goals.planAndBudget(goal).flatMap(_._2).map(_.toDouble)
 
   /** Budgets are stored to the micro-dollar (numeric(12,6)): anything smaller would round to 0. */
-  private def positive(v: Double, what: String): Either[ApiError, Double] =
-    if v >= 0.000001 then Right(v) else Left(ApiError(s"$what must be at least 0.000001"))
+  private def positive(v: Double, what: String): Either[Api.Error, Double] =
+    if v >= 0.000001 then Right(v) else Left(Api.Error(s"$what must be at least 0.000001"))
 
-  def runs(status: Option[String], limit: Option[Int], goal: Option[String] = None): Either[ApiError, List[RunInfo]] =
+  def runs(status: Option[String], limit: Option[Int], goal: Option[String] = None): Either[Api.Error, List[RunInfo]] =
     status.map(_.trim).filter(_.nonEmpty) match
       case Some(st) if RunState.parse(st).isEmpty =>
-        Left(ApiError(s"unknown status '$st' (one of: ${RunState.values.map(_.wire).mkString(", ")})"))
+        Left(Api.Error(s"unknown status '$st' (one of: ${RunState.values.map(_.wire).mkString(", ")})"))
       case st => Right(runs.list(st, site.config.limits.page(limit, site.config.limits.search), goal).toList)
 
   /** `GET /api/agents/runs` — one page, newest first ([[Paging]]), with the per-state counts of the runs (of `goal`,
@@ -669,7 +671,7 @@ final class AgentsHandlers(
       goal: Option[String] = None,
       before: Option[String] = None,
       upTo: Option[String] = None
-  ): Either[ApiError, (List[RunInfo], Paging.Page)] =
+  ): Either[Api.Error, (List[RunInfo], Paging.Page)] =
     runsPage(ListFilters.RunFilter(status = status.toList, goal = goal), limit, before, upTo)
 
   /** `GET /api/agents/runs` filtered ([[ListFilters.RunFilter]]): one page, newest first, with the per-state counts and
@@ -680,13 +682,13 @@ final class AgentsHandlers(
       limit: Option[Int],
       before: Option[String],
       upTo: Option[String]
-  ): Either[ApiError, (List[RunInfo], Paging.Page)] =
+  ): Either[Api.Error, (List[RunInfo], Paging.Page)] =
     for
       q <- com.histmersion.server.ListQueries.runs(f, java.time.Instant.now(clock))
       page <- runs
         .page(q, site.config.limits.page(limit, site.config.limits.search), cursor(before), cursor(upTo))
         .left
-        .map(ApiError(_, Some(Write.CodeNotFound)))
+        .map(Api.Error(_, Some(Write.CodeNotFound)))
     yield
       val (rows, more) = page
       val (counts, facets) = runs.runFacets(q)
@@ -694,24 +696,24 @@ final class AgentsHandlers(
 
   private def cursor(c: Option[String]): Option[String] = c.map(_.trim).filter(_.nonEmpty)
 
-  def run(id: String): Either[ApiError, RunDetail] =
+  def run(id: String): Either[Api.Error, RunDetail] =
     runs
       .get(id)
-      .toRight(ApiError(s"No agent run '$id'", Some(Write.CodeNotFound)))
+      .toRight(Api.Error(s"No agent run '$id'", Some(Write.CodeNotFound)))
       .map(r => RunDetail(r, runs.steps(id, cfg.trace.maxToolResultChars), runs.messages(id)))
 
   /** `GET /api/agents/compare?id=…` (#992) — runs of one pipeline on one target side by side, from their recorded steps
     * (full outputs, not the display cut). How each configured model is paid for is named from the server's prices and
     * plan pools.
     */
-  def compare(ids: List[String]): Either[ApiError, RunCompare.Comparison] =
+  def compare(ids: List[String]): Either[Api.Error, RunCompare.Comparison] =
     val wanted = ids.flatMap(_.split(',')).map(_.trim).filter(_.nonEmpty)
     for
-      runs <- wanted.foldLeft[Either[ApiError, List[RunDetail]]](Right(Nil)) { (acc, id) =>
+      runs <- wanted.foldLeft[Either[Api.Error, List[RunDetail]]](Right(Nil)) { (acc, id) =>
         acc.flatMap(rs =>
           runs
             .get(id)
-            .toRight(ApiError(s"No agent run '$id'", Some(Write.CodeNotFound)))
+            .toRight(Api.Error(s"No agent run '$id'", Some(Write.CodeNotFound)))
             .map(r => rs :+ RunDetail(r, runs.steps(r.id, Int.MaxValue), Nil))
         )
       }
@@ -720,7 +722,7 @@ final class AgentsHandlers(
       outputs = compared.headOption
         .flatMap(r => workflows.parse(r.run.pipeline))
         .fold(OutputComparison.none)(_.outputs)
-      cmp <- CompareRuns.compare(compared, billingOf, outputs).left.map(ApiError(_))
+      cmp <- CompareRuns.compare(compared, billingOf, outputs).left.map(Api.Error(_))
     yield CompareRunsViews.comparison(cmp)
 
   /** How a configured model is paid for, as `agent models` words it (None: it cannot be read). */
@@ -736,19 +738,19 @@ final class AgentsHandlers(
       action: String,
       budgetUsd: Option[Double],
       budgetTokens: Option[Long]
-  ): Either[ApiError, RunInfo] =
+  ): Either[Api.Error, RunInfo] =
     action.trim.toLowerCase match
       case "pause"  => engine.pause(id)
       case "resume" => enabled.flatMap(_ => engine.resume(id, budgetUsd, budgetTokens))
       case "cancel" => engine.cancel(id)
-      case other    => Left(ApiError(s"unknown action '$other' (one of: ${AgentsApi.Actions.mkString(", ")})"))
+      case other    => Left(Api.Error(s"unknown action '$other' (one of: ${AgentsApi.Actions.mkString(", ")})"))
 
   // ── approvals ──────────────────────────────────────────────────────────────────────────────────
 
   /** `GET /api/agents/approvals` — readable whether or not agents are on (a person can still decide what an earlier run
     * proposed).
     */
-  def approvalsList(state: Option[String], limit: Option[Int]): Either[ApiError, List[ApprovalInfo]] =
+  def approvalsList(state: Option[String], limit: Option[Int]): Either[Api.Error, List[ApprovalInfo]] =
     approvals.list(state, limit, site.config.limits.page(limit, site.config.limits.search))
 
   /** One page of [[approvalsList]] ([[Paging]]), with the per-state counts of every approval. */
@@ -757,7 +759,7 @@ final class AgentsHandlers(
       limit: Option[Int],
       before: Option[String] = None,
       upTo: Option[String] = None
-  ): Either[ApiError, (List[ApprovalInfo], Paging.Page)] =
+  ): Either[Api.Error, (List[ApprovalInfo], Paging.Page)] =
     approvalsPage(ListFilters.ApprovalFilter(state = state), limit, before, upTo)
 
   /** `GET /api/agents/approvals` filtered ([[ListFilters.ApprovalFilter]]): one page, with the per-state and facet
@@ -768,13 +770,13 @@ final class AgentsHandlers(
       limit: Option[Int],
       before: Option[String],
       upTo: Option[String]
-  ): Either[ApiError, (List[ApprovalInfo], Paging.Page)] =
+  ): Either[Api.Error, (List[ApprovalInfo], Paging.Page)] =
     approvals.page(f, site.config.limits.page(limit, site.config.limits.search), cursor(before), cursor(upTo))
 
   /** `POST /api/agents/approvals/{id}/{approve|reject}`. Deciding works with agents off too: it only applies a change a
     * person accepts, through the ordinary patch.
     */
-  def decide(id: Long, decision: String, req: DecisionRequest): Either[ApiError, ApprovalInfo] =
+  def decide(id: Long, decision: String, req: DecisionRequest): Either[Api.Error, ApprovalInfo] =
     approvals.decide(id, decision, req.note).map { a =>
       // a blocking approval: the run waiting on it goes back to the queue (it applies the decision)
       if a.approvalKind.exists(_.blocking) then a.runId.foreach(r => engine.wake(r))
@@ -788,7 +790,7 @@ final class AgentsHandlers(
   // ── goals: view, links, schedules (P3) ─────────────────────────────────────────────────────────
 
   /** `GET /api/goals/{slug}/view` — readable whether or not agents are on. */
-  def goalView(slug: String): Either[ApiError, GoalView] =
+  def goalView(slug: String): Either[Api.Error, GoalView] =
     host.goal(slug).map { g =>
       val (plan, budget) = goals.planAndBudget(g.slug).getOrElse((None, None))
       GoalView(
@@ -801,7 +803,7 @@ final class AgentsHandlers(
       )
     }
 
-  def addGoalLink(slug: String, in: LinkAdd): Either[ApiError, GoalLink] =
+  def addGoalLink(slug: String, in: LinkAdd): Either[Api.Error, GoalLink] =
     val ref = in.ref.trim
     for
       g <- host.goal(slug)
@@ -812,32 +814,32 @@ final class AgentsHandlers(
           ref.toIntOption
             .flatMap(i => site.queues.get(QueueItemId(i)))
             .map(_.id.toString)
-            .toRight(ApiError(s"No queue item '$ref'", Some(Write.CodeNotFound)))
+            .toRight(Api.Error(s"No queue item '$ref'", Some(Write.CodeNotFound)))
         case LinkKind.SearchQuery =>
           Either.cond(
             ref.nonEmpty && ref.length <= cfg.plan.queryChars,
             ref,
-            ApiError(s"a query is 1 to ${cfg.plan.queryChars} characters")
+            Api.Error(s"a query is 1 to ${cfg.plan.queryChars} characters")
           )
       _ = goals.link(g.slug, in.kind, r, in.note.map(_.trim).filter(_.nonEmpty))
       l <- goals
         .links(g.slug)
         .find(l => l.kind == in.kind && l.ref == r)
-        .toRight(ApiError(s"the link to $r was not recorded"))
+        .toRight(Api.Error(s"the link to $r was not recorded"))
     yield l
 
-  def removeGoalLink(slug: String, kind: String, ref: String): Either[ApiError, Removed] =
+  def removeGoalLink(slug: String, kind: String, ref: String): Either[Api.Error, Removed] =
     for
       g <- host.goal(slug)
       k <- LinkKind
         .parse(kind)
-        .toRight(ApiError(s"unknown link kind '$kind' (one of: ${LinkKind.values.map(_.wire).mkString(", ")})"))
+        .toRight(Api.Error(s"unknown link kind '$kind' (one of: ${LinkKind.values.map(_.wire).mkString(", ")})"))
     yield Removed(goals.unlink(g.slug, k, ref.trim))
 
-  private def scheduleKind(kind: String): Either[ApiError, ScheduleKind] =
+  private def scheduleKind(kind: String): Either[Api.Error, ScheduleKind] =
     ScheduleKind
       .parse(kind)
-      .toRight(ApiError(s"unknown schedule '$kind' (one of: ${ScheduleKind.values.map(_.wire).mkString(", ")})"))
+      .toRight(Api.Error(s"unknown schedule '$kind' (one of: ${ScheduleKind.values.map(_.wire).mkString(", ")})"))
 
   /** `PUT /api/goals/{slug}/schedules/{kind}` — a sweep of the goal's watcher since phase 3
     * ([[ManagersHandlers.setSchedule]]: created paused when it does not exist; the cron is checked, no more often than
@@ -849,15 +851,15 @@ final class AgentsHandlers(
       kind: String,
       in: ScheduleSet,
       now: java.time.Instant = java.time.Instant.now(clock)
-  ): Either[ApiError, GoalSchedule] =
+  ): Either[Api.Error, GoalSchedule] =
     for
       g <- host.goal(slug)
       k <- scheduleKind(kind)
-      _ <- in.budgetUsd.fold[Either[ApiError, Double]](Right(0))(positive(_, "budget-usd"))
+      _ <- in.budgetUsd.fold[Either[Api.Error, Double]](Right(0))(positive(_, "budget-usd"))
       out <- managing.setSchedule(g.slug, k, in, now)
     yield out
 
-  def removeSchedule(slug: String, kind: String): Either[ApiError, Removed] =
+  def removeSchedule(slug: String, kind: String): Either[Api.Error, Removed] =
     for
       g <- host.goal(slug)
       k <- scheduleKind(kind)
@@ -870,21 +872,21 @@ final class AgentsHandlers(
     * answer about one source. It proves, end to end, that the model is reachable, calls tools, and returns structured
     * output — and the answer is checked against the record.
     */
-  def probe(req: ProbeRequest): Either[ApiError, ProbeResult] =
+  def probe(req: ProbeRequest): Either[Api.Error, ProbeResult] =
     for
       _ <- enabled
       src <- host.probeSubject(req.citekey)
       picked <- picker.pick(Role.Probe, req.model).left.map {
-        case PickFailure.Unavailable(m)     => ApiError(m)
-        case PickFailure.Exhausted(m, _, _) => ApiError(m)
+        case PickFailure.Unavailable(m)     => Api.Error(m)
+        case PickFailure.Exhausted(m, _, _) => Api.Error(m)
       }
       result <- probeWith(picked.client, picked.billing, src)
     yield result
 
-  private def probeWith(client: LlmClient, billing: Billing, src: ProbeAnswer): Either[ApiError, ProbeResult] =
+  private def probeWith(client: LlmClient, billing: Billing, src: ProbeAnswer): Either[Api.Error, ProbeResult] =
     for
-      d <- definitions.agent(StepAgent.Probe).left.map(ApiError(_))
-      sys <- definitions.system(d, ToolStyle.Bare).left.map(ApiError(_))
+      d <- definitions.agent(StepAgent.Probe).left.map(Api.Error(_))
+      sys <- definitions.system(d, ToolStyle.Bare).left.map(Api.Error(_))
       r <- probeCall(client, billing, src, d, sys)
     yield r
 
@@ -900,7 +902,7 @@ final class AgentsHandlers(
       src: ProbeAnswer,
       d: AgentDef,
       system: String
-  ): Either[ApiError, ProbeResult] =
+  ): Either[Api.Error, ProbeResult] =
     val ask = s"Call get_source with citekey \"${src.citekey}\" and section \"summary\", then " +
       "reply with that source's citekey, exact title and publication year."
     def call(user: String) = LlmCall[ProbeAnswer](
@@ -915,7 +917,7 @@ final class AgentsHandlers(
     val maxAttempts = 1 + math.max(0, cfg.step.maxRetries)
     val t0 = System.nanoTime()
     @annotation.tailrec
-    def go(attempt: Int, user: String, used: Usage, calls: List[String]): Either[ApiError, ProbeResult] =
+    def go(attempt: Int, user: String, used: Usage, calls: List[String]): Either[Api.Error, ProbeResult] =
       AgentsHandlers.attempt(client.model)(client.run(call(user))) match
         case Left(e)    => Left(e)
         case Right(res) =>
@@ -960,7 +962,7 @@ object AgentsHandlers:
   /** [[attempt]], telling the plan's own usage limit (a model to pass over, [[ModelLimitReached]]) apart from a broken
     * provider.
     */
-  def call[A](model: ModelRef)(a: => A): Either[Either[ModelLimitReached, ApiError], A] =
+  def call[A](model: ModelRef)(a: => A): Either[Either[ModelLimitReached, Api.Error], A] =
     try Right(a)
     catch
       case e: ModelLimitReached =>
@@ -972,7 +974,7 @@ object AgentsHandlers:
   /** A provider call that threw (unreachable host, an API error, a malformed response) → a value, logged with the model
     * but never with the request (which can carry an API key header).
     */
-  def attempt[A](model: ModelRef)(a: => A): Either[ApiError, A] =
+  def attempt[A](model: ModelRef)(a: => A): Either[Api.Error, A] =
     try Right(a)
     catch
       case e: InterruptedException => throw e
@@ -981,4 +983,4 @@ object AgentsHandlers:
           case v: VerbatimFailure => v.description
           case _                  => s"${e.getClass.getSimpleName}: ${e.getMessage}"
         scribe.warn(s"agent call to ${model.wire} failed: $logged")
-        Left(ApiError(s"the call to ${model.wire} failed: ${VerbatimFailure.describe(e)}".take(600)))
+        Left(Api.Error(s"the call to ${model.wire} failed: ${VerbatimFailure.describe(e)}".take(600)))

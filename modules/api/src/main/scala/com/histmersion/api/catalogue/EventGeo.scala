@@ -34,3 +34,9 @@ object EventGeo:
     if hasStart && !hasEnd then Some("end not recorded")
     else if hasEnd && !hasStart then Some("start not recorded")
     else None
+
+  final case class List(events: scala.List[EventGeo], unplaced: Int = 0, imprecise: Int = 0)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
+  object List:
+    given Schema[List] = summon[KindlingsSchema[List]].schema

@@ -19,7 +19,7 @@ import io.circe.parser.decode
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.db.*
-import com.histmersion.api.catalogue.{EventPut, Period, Place, PlaceInput, PlaceName}
+import com.histmersion.api.catalogue.{EventPut, Period, Place}
 import com.histmersion.api.media.{
   FigureLicenceFill,
   MediaFacets,
@@ -83,7 +83,7 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
       val _ = PlaceFixtures.upsertPlaces(
         ds,
         List(
-          PlaceInput(
+          Place.Input(
             Place(
               "zqmh_mycenae",
               "Zqmh Mycenae",
@@ -91,16 +91,16 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
               Some("""{"type":"Point","coordinates":[22.75,37.73]}"""),
               Some(Period(-1600, -1100))
             ),
-            List(PlaceName("Zqmh Mycenae"))
+            List(Place.Name("Zqmh Mycenae"))
           ),
-          PlaceInput(
+          Place.Input(
             Place(
               "zqmh_nolink",
               "Zqmh no link",
               com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[22.0,37.0]}""")
             ),
-            List(PlaceName("Zqmh no link"))
+            List(Place.Name("Zqmh no link"))
           )
         )
       )

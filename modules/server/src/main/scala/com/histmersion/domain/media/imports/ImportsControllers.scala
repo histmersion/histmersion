@@ -1,6 +1,6 @@
 package com.histmersion.domain.media.imports
 
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 import com.histmersion.config.MediaConfig
 import com.histmersion.domain.media.MediaJobs
 import com.histmersion.plugin.MediaCollection
@@ -11,7 +11,9 @@ import hearth.kindlings.optics.syntax.*
 
 import scala.collection.immutable.ListMap
 import com.histmersion.api.jobs.JobInfo
-import com.histmersion.api.media.{MediaImportReport, MediaImportRequest, MediaProviderInfo}
+import com.histmersion.api.media.{MediaImportReport, MediaImportRequest}
+import com.histmersion.api.Api
+import com.histmersion.api.media.MediaProvider
 
 /** Media from outside providers (#1446): the collections `media import` can run, one import run (a dry run, or one
   * place or event), and the import as a JOB over every place not asked yet. Every collection — first-party or a
@@ -35,14 +37,14 @@ final class ImportsControllers(
   /** The importer an import request names, or why it cannot run (unknown, its plugin switched off, or its own
     * `media.<provider>.enabled` off).
     */
-  private def providerOf(p: String): Either[ApiError, MediaImporter] =
+  private def providerOf(p: String): Either[Api.Error, MediaImporter] =
     MediaImporters
       .resolve(p, collections()._1, imports, store, cfg, http, converter)
       .left
-      .map(ApiError(_, Some(Write.CodeInvalid)))
+      .map(Api.Error(_, Some(Write.CodeInvalid)))
 
   /** `GET /api/media/providers`: what `media import` can run, as the registries hold it. */
-  def providers: List[MediaProviderInfo] =
+  def providers: List[MediaProvider.Info] =
     val (registered, owner) = collections()
     MediaImporters.infos(registered, n => owner.getOrElse(n, ""), n => cfg().collections.licencesFor(n))
 
@@ -50,14 +52,14 @@ final class ImportsControllers(
     * A real run over many is a job ([[importJob]], #1491): asked here it outlived the CLI's request while the server
     * kept going.
     */
-  def importMedia(req: MediaImportRequest): Either[ApiError, MediaImportReport] =
-    def go: Either[ApiError, MediaImportReport] =
+  def importMedia(req: MediaImportRequest): Either[Api.Error, MediaImportReport] =
+    def go: Either[Api.Error, MediaImportReport] =
       providerOf(req.provider).flatMap { imp =>
         jobs.exclusive("media import") {
           imp
             .targets(req.place, req.event, cfg().limit(req.limit), req.refresh, None)
             .left
-            .map(ApiError(_, Some(Write.CodeNotFound)))
+            .map(Api.Error(_, Some(Write.CodeNotFound)))
             .map { targets =>
               val run = imp.start()
               val report = run.run(targets, req.dryRun, req.refresh)
@@ -72,7 +74,7 @@ final class ImportsControllers(
     if req.dryRun then go
     else if !ImportsControllers.single(req) then
       Left(
-        ApiError(
+        Api.Error(
           "an import over many places/events is a job: POST /api/media/import/job " +
             "(`histmersion media import wikidata` starts and follows it)",
           Some(Write.CodeInvalid)
@@ -84,9 +86,9 @@ final class ImportsControllers(
     * next (so a stopped job resumes after the last one), until none is left, `limit` targets are done, or a batch gets
     * no answer at all.
     */
-  def importJob(req: MediaImportRequest): Either[ApiError, JobInfo] =
+  def importJob(req: MediaImportRequest): Either[Api.Error, JobInfo] =
     providerOf(req.provider).flatMap { imp =>
-      if req.dryRun then Left(ApiError("a dry run answers at once: POST /api/media/import", Some(Write.CodeInvalid)))
+      if req.dryRun then Left(Api.Error("a dry run answers at once: POST /api/media/import", Some(Write.CodeInvalid)))
       else
         val single = ImportsControllers.single(req)
         // the one target must exist (and have an item) before a job is started for it
@@ -95,7 +97,7 @@ final class ImportsControllers(
             imp
               .targets(req.place, req.event, 1, req.refresh, None)
               .left
-              .map(ApiError(_, Some(Write.CodeNotFound)))
+              .map(Api.Error(_, Some(Write.CodeNotFound)))
               .map(_ => ())
           else Right(())
         check.flatMap { _ =>

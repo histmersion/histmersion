@@ -1,21 +1,12 @@
 package com.histmersion.web
 
-import com.histmersion.api.catalogue.{
-  PlaceDating,
-  PlaceDescription,
-  PlaceLink,
-  PlaceShape,
-  PlaceSummary,
-  PlaceTimeBasis
-}
-import com.histmersion.api.library.SourceDetail
 import com.histmersion.api.views.PlaceDetail
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.library.Source
 
 class PreviewSuite extends munit.FunSuite:
 
-  private val detail = SourceDetail(
+  private val detail = com.histmersion.api.library.Source.Detail(
     "cline2014_year",
     "1177 BC",
     List("Eric H. Cline"),
@@ -61,7 +52,7 @@ class PreviewSuite extends munit.FunSuite:
   // ── a place's card says what the place is (2026-10-09) ─────────────────────────────────────────
 
   private val patones = PlaceDetail(
-    PlaceSummary(
+    com.histmersion.api.catalogue.Place.Summary(
       "wikidata_q131839713",
       "Kingdom of Patones",
       Place.Kind.Polity,
@@ -69,7 +60,7 @@ class PreviewSuite extends munit.FunSuite:
       Some(1769L),
       Some("Wikidata (wikidata.org), CC0"),
       "Kingdom of Patones, Reino de Patones",
-      dating = PlaceDating.EndOnly,
+      dating = com.histmersion.api.catalogue.Place.Dating.EndOnly,
       importSource = Some("wikidata")
     ),
     geometry = Some("""{"type":"Point","coordinates":[-3.48,40.88]}"""),
@@ -77,11 +68,12 @@ class PreviewSuite extends munit.FunSuite:
     children = Nil,
     findings = 0,
     asOf = Some(-3900L),
-    links = List(PlaceLink("wikidata_q131839713", "wikidata", "Q131839713", "exact_match")),
+    links =
+      List(com.histmersion.api.catalogue.Place.Link("wikidata_q131839713", "wikidata", "Q131839713", "exact_match")),
     hasBoundary = false,
     descriptions = List(
-      PlaceDescription("former country in Modern Day Spain", "en", "wikidata"),
-      PlaceDescription("microestado de Europa (siglo VIII-1769)", "es", "wikidata")
+      com.histmersion.api.catalogue.Place.Description("former country in Modern Day Spain", "en", "wikidata"),
+      com.histmersion.api.catalogue.Place.Description("microestado de Europa (siglo VIII-1769)", "es", "wikidata")
     )
   )
 
@@ -90,7 +82,7 @@ class PreviewSuite extends munit.FunSuite:
     assertEquals(c.title, "Kingdom of Patones")
     assertEquals(c.byline, "Polity · end 1769 CE, start unknown")
     assertEquals(c.summary, Some("former country in Modern Day Spain · microestado de Europa (siglo VIII-1769) (es)"))
-    assert(c.facts.contains(PlaceShape.NoBoundaryNote), c.facts.toString)
+    assert(c.facts.contains(com.histmersion.api.catalogue.Place.Shape.NoBoundaryNote), c.facts.toString)
     assert(c.facts.contains("source: Wikidata"), c.facts.toString)
     assertEquals(c.links, List("Wikidata Q131839713" -> "https://www.wikidata.org/wiki/Q131839713"))
 
@@ -101,21 +93,21 @@ class PreviewSuite extends munit.FunSuite:
         label = "Boğazkale",
         kind = Place.Kind.Site,
         periodEnd = None,
-        dating = PlaceDating.Unknown,
+        dating = com.histmersion.api.catalogue.Place.Dating.Unknown,
         importSource = Some("geonames")
       ),
-      links = List(PlaceLink("geonames_1", "geonames", "1", "exact_match")),
+      links = List(com.histmersion.api.catalogue.Place.Link("geonames_1", "geonames", "1", "exact_match")),
       descriptions = Nil
     )
     val c = Preview.card(gn)
     assertEquals(c.byline, "Site · date unknown")
-    assert(!c.facts.contains(PlaceShape.NoBoundaryNote))
+    assert(!c.facts.contains(com.histmersion.api.catalogue.Place.Shape.NoBoundaryNote))
     assertEquals(c.links, List("GeoNames 1" -> "https://www.geonames.org/1"))
     assertEquals(c.summary, None)
     val seed = gn.copy(
       place = gn.place.copy(
         importSource = None,
-        dating = PlaceDating.Stated,
+        dating = com.histmersion.api.catalogue.Place.Dating.Stated,
         kind = Place.Kind.Region,
         periodStart = Some(-1650L),
         periodEnd = Some(-1180L),
@@ -127,19 +119,28 @@ class PreviewSuite extends munit.FunSuite:
     val s = Preview.card(seed)
     assertEquals(s.byline, "Region · 1650 BCE–1180 BCE")
     assert(s.facts.contains("source: Pleiades (pleiades.stoa.org), CC-BY"))
-    assert(!s.facts.contains(PlaceShape.NoBoundaryNote))
+    assert(!s.facts.contains(com.histmersion.api.catalogue.Place.Shape.NoBoundaryNote))
 
   test("a place card at a time says when an undated place is there only by its findings"):
     val anatolia = patones.copy(
-      place = PlaceSummary("anatolia", "Anatolia", Place.Kind.Region, None, None, None, ""),
+      place =
+        com.histmersion.api.catalogue.Place.Summary("anatolia", "Anatolia", Place.Kind.Region, None, None, None, ""),
       links = Nil,
       descriptions = Nil,
-      timeBasis = PlaceTimeBasis.Findings
+      timeBasis = com.histmersion.api.catalogue.Place.TimeBasis.Findings
     )
-    assertEquals(Preview.card(anatolia).facts.headOption, Some(PlaceTimeBasis.FindingsNote))
+    assertEquals(
+      Preview.card(anatolia).facts.headOption,
+      Some(com.histmersion.api.catalogue.Place.TimeBasis.FindingsNote)
+    )
     // across all time nothing is filtered, so nothing needs saying; a dated place never says it
-    assert(!Preview.card(anatolia.copy(asOf = None)).facts.contains(PlaceTimeBasis.FindingsNote))
-    assert(!Preview.card(patones).facts.contains(PlaceTimeBasis.FindingsNote))
+    assert(
+      !Preview
+        .card(anatolia.copy(asOf = None))
+        .facts
+        .contains(com.histmersion.api.catalogue.Place.TimeBasis.FindingsNote)
+    )
+    assert(!Preview.card(patones).facts.contains(com.histmersion.api.catalogue.Place.TimeBasis.FindingsNote))
 
   test("a place card: a grid-square point says it is approximate; a people is a group, not a missing boundary"):
     val thessalia = patones.copy(
@@ -148,7 +149,7 @@ class PreviewSuite extends munit.FunSuite:
         label = "Thessalia",
         kind = Place.Kind.Region,
         importSource = None,
-        dating = PlaceDating.Stated,
+        dating = com.histmersion.api.catalogue.Place.Dating.Stated,
         periodEnd = None
       ),
       links = Nil,
@@ -157,13 +158,13 @@ class PreviewSuite extends munit.FunSuite:
     )
     val t = Preview.card(thessalia)
     assert(t.facts.contains("location: approximate (atlas grid square)"), t.facts.toString)
-    assert(t.facts.contains(PlaceShape.NoBoundaryNote), t.facts.toString)
+    assert(t.facts.contains(com.histmersion.api.catalogue.Place.Shape.NoBoundaryNote), t.facts.toString)
     val ubii = thessalia.copy(
       place = thessalia.place.copy(id = "pleiades_109400", label = "Ubii", kind = Place.Kind.People),
       locationPrecision = Place.Precision.Stated
     )
     val u = Preview.card(ubii)
     assertEquals(u.byline.takeWhile(_ != ' '), "People")
-    assert(u.facts.contains(PlaceShape.PeopleNote), u.facts.toString)
-    assert(!u.facts.contains(PlaceShape.NoBoundaryNote), u.facts.toString)
+    assert(u.facts.contains(com.histmersion.api.catalogue.Place.Shape.PeopleNote), u.facts.toString)
+    assert(!u.facts.contains(com.histmersion.api.catalogue.Place.Shape.NoBoundaryNote), u.facts.toString)
     assert(!u.facts.exists(_.contains("approximate")), u.facts.toString)

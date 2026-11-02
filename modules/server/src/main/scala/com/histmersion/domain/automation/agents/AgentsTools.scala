@@ -6,7 +6,7 @@ import chimp.server.*
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import com.histmersion.api.{ApiError, Paging}
+import com.histmersion.api.Paging
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.{DecisionRequest, RunRequest}
@@ -22,7 +22,6 @@ import com.histmersion.api.automation.{
   ApprovalDigestMarkdown,
   Autopilot,
   AutopilotMarkdown,
-  GoalPlans,
   ListFilters,
   Managers,
   ManagersMarkdown,
@@ -30,6 +29,8 @@ import com.histmersion.api.automation.{
   PlanQuota,
   StallsMarkdown
 }
+import com.histmersion.api.Api
+import com.histmersion.api.automation.Goal
 
 /** The MCP half of the embedded agents: an external session can hand a whole pipeline to the server with ONE call
   * (`start_run` — e.g. the whole review panel of an article, instead of spawning four subagents), check on it
@@ -44,7 +45,7 @@ object AgentsTools:
     */
   def apply(
       a: AgentsHandlers,
-      repairAcquire: Boolean => Either[ApiError, String],
+      repairAcquire: Boolean => Either[Api.Error, String],
       autopilotPage: Autopilot.EngineStatus => String
   ) =
     val start =
@@ -192,11 +193,11 @@ object AgentsTools:
         )
         .input[GoalLinkInput]
         .handle { in =>
-          val kind = GoalPlans.LinkKind.parse(in.kind)
+          val kind = Goal.Plans.LinkKind.parse(in.kind)
           val done =
-            kind.toRight(ApiError(s"unknown link kind '${in.kind}' (source, article, query, queue-item)")).flatMap { k =>
+            kind.toRight(Api.Error(s"unknown link kind '${in.kind}' (source, article, query, queue-item)")).flatMap { k =>
               if in.remove then a.removeGoalLink(in.goal, k.wire, in.ref).map(_ => ())
-              else a.addGoalLink(in.goal, GoalPlans.LinkAdd(k, in.ref, in.note)).map(_ => ())
+              else a.addGoalLink(in.goal, Goal.Plans.LinkAdd(k, in.ref, in.note)).map(_ => ())
             }
           ToolResult.text(done.flatMap(_ => a.goalView(in.goal)).fold(McpOut.refusal, AgentsMarkdown.goalView))
         }
@@ -219,13 +220,13 @@ object AgentsTools:
               a.removeSchedule(g, k).map(_ => AgentsMarkdown.schedules(a.schedules))
             case (Some(g), Some(k)) =>
               in.cron
-                .toRight(ApiError("give `cron` to set a schedule (or `remove: true`)"))
+                .toRight(Api.Error("give `cron` to set a schedule (or `remove: true`)"))
                 .flatMap(c =>
-                  a.setSchedule(g, k, GoalPlans.ScheduleSet(c, in.enabled, in.budgetUsd))
+                  a.setSchedule(g, k, Goal.Plans.ScheduleSet(c, in.enabled, in.budgetUsd))
                     .map(s => AgentsMarkdown.scheduleLine(s))
                 )
             case (None, None) => Right(AgentsMarkdown.schedules(a.schedules))
-            case _            => Left(ApiError("give both `goal` and `kind`, or neither to list the schedules"))
+            case _            => Left(Api.Error("give both `goal` and `kind`, or neither to list the schedules"))
           ToolResult.text(out.fold(McpOut.refusal, identity))
         }
 
@@ -265,7 +266,7 @@ object AgentsTools:
           val out = (in.role.map(_.trim).filter(_.nonEmpty), in.target.map(_.trim).filter(_.nonEmpty)) match
             case _ if in.refresh => a.refreshQuota(PlanQuota.QuotaRefresh(in.pool)).map(AgentsMarkdown.refreshed)
             case _ if in.pool.exists(_.trim.nonEmpty) =>
-              if in.hold.isEmpty && in.floors.isEmpty then Left(ApiError("with `pool`, give `hold` and/or `floors`"))
+              if in.hold.isEmpty && in.floors.isEmpty then Left(Api.Error("with `pool`, give `hold` and/or `floors`"))
               else a.setPool(in.pool.get.trim, PlanQuota.PoolSet(in.hold, in.floors)).map(AgentsMarkdown.pool)
             case (Some(r), None) if in.fallthrough.isDefined =>
               a.setFallthrough(r, PlanQuota.FallthroughSet(in.fallthrough.get)).map(AgentsMarkdown.quota)
@@ -279,8 +280,8 @@ object AgentsTools:
                 case (Nil, ls) =>
                   a.setAllowance(ModelChains.AllowanceSet(t, ls.map(_.spec), in.reservePct))
                     .map(AgentsMarkdown.allowance)
-                case (errs, _) => Left(ApiError(errs.mkString("; ")))
-            case _ => Left(ApiError("give `role` (with `models`) or `target` (with `limits`), not both"))
+                case (errs, _) => Left(Api.Error(errs.mkString("; ")))
+            case _ => Left(Api.Error("give `role` (with `models`) or `target` (with `limits`), not both"))
           ToolResult.text(out.fold(McpOut.refusal, identity))
         }
 
@@ -322,8 +323,8 @@ object AgentsTools:
         .handle { in =>
           val m = a.managing
           val id = in.id.map(_.trim).filter(_.nonEmpty).getOrElse(Managers.ReviewId)
-          def target = in.target.map(_.trim).filter(_.nonEmpty).toRight(ApiError(s"`${in.action}` needs `target`"))
-          val out: Either[ApiError, String] = in.action.trim.toLowerCase match
+          def target = in.target.map(_.trim).filter(_.nonEmpty).toRight(Api.Error(s"`${in.action}` needs `target`"))
+          val out: Either[Api.Error, String] = in.action.trim.toLowerCase match
             case "list"   => Right(ManagersMarkdown.list(m.list))
             case "show"   => m.get(id).map(ManagersMarkdown.detail)
             case "pause"  => m.action(id, "pause", Some(in.runs)).map(ManagersMarkdown.line)
@@ -354,7 +355,7 @@ object AgentsTools:
               in.text
                 .map(_.trim)
                 .filter(_.nonEmpty)
-                .toRight(ApiError("`hint` needs `text`"))
+                .toRight(Api.Error("`hint` needs `text`"))
                 .flatMap(t =>
                   m.addHint(
                     id,
@@ -382,7 +383,7 @@ object AgentsTools:
               in.mode
                 .map(_.trim)
                 .filter(_.nonEmpty)
-                .toRight(ApiError("`mode` needs `mode`: working, finish or pause"))
+                .toRight(Api.Error("`mode` needs `mode`: working, finish or pause"))
                 .flatMap(md => m.setMode(AgentMode.ModeSet(md, Some("mcp"))))
                 .map(autopilotPage)
             case "focus" =>
@@ -392,7 +393,7 @@ object AgentsTools:
                   m.setFocus(Autopilot.FocusSet(v, in.goal, in.value, Some("mcp"))).map(AutopilotMarkdown.focus)
             case other =>
               Left(
-                ApiError(
+                Api.Error(
                   s"unknown action '$other' (list, show, create, pause, resume, enqueue, hold, hint, autopilot, mode, " +
                     "drain, repair-acquire, focus)"
                 )
@@ -419,7 +420,7 @@ object AgentsTools:
         .input[SchedulerInput]
         .handle { in =>
           val m = a.managing
-          val out: Either[ApiError, String] = in.action.trim.toLowerCase match
+          val out: Either[Api.Error, String] = in.action.trim.toLowerCase match
             case "status" | "" => Right(AgentSchedulerMarkdown.status(m.scheduler(in.limit)))
             case "queue"       =>
               val st = m.scheduler(in.limit.orElse(Some(200)))
@@ -431,18 +432,18 @@ object AgentsTools:
               in.item
                 .map(_.trim)
                 .filter(_.nonEmpty)
-                .toRight(ApiError("`why` needs `item`"))
+                .toRight(Api.Error("`why` needs `item`"))
                 .flatMap(m.schedulerWhy)
                 .map(AgentSchedulerMarkdown.why)
             case "strategy" =>
               in.strategy
                 .map(_.trim)
                 .filter(_.nonEmpty)
-                .toRight(ApiError("`strategy` needs `strategy`"))
+                .toRight(Api.Error("`strategy` needs `strategy`"))
                 .flatMap(n => m.setScheduler(AgentScheduler.SchedulerSet(n, Some("mcp"))))
                 .map(AgentSchedulerMarkdown.status)
             case "stalls" => Right(StallsMarkdown.report(m.stalls(in.days)))
-            case other    => Left(ApiError(s"unknown action '$other' (status, queue, why, strategy, stalls)"))
+            case other    => Left(Api.Error(s"unknown action '$other' (status, queue, why, strategy, stalls)"))
           ToolResult.text(out.fold(McpOut.refusal, identity))
         }
 

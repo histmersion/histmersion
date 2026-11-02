@@ -24,7 +24,7 @@ class SettingsControllersSuite extends munit.FunSuite:
   private def write(
       f: Fixture,
       changes: (String, Option[String])*
-  ): Either[com.histmersion.api.ApiError, ConfigEdit.Written] =
+  ): Either[com.histmersion.api.Api.Error, ConfigEdit.Written] =
     f.c.write(ConfigEdit.Write(changes.toList.map((k, v) => ConfigEdit.Change(k, v))))
 
   test("the page: every setting with what the file says, what applies and from where"):

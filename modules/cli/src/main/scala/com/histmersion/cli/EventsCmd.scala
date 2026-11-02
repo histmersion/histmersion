@@ -9,7 +9,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.catalogue.Historicity
 import com.histmersion.api.catalogue.{
   Corrections,
-  CorrectionStatus,
   EventCandidatesRequest,
   EventGeometry,
   EventImportReport,
@@ -26,6 +25,7 @@ import com.histmersion.api.catalogue.{
 }
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.api.catalogue.Correction
 
 object EventsCmd:
 
@@ -213,7 +213,7 @@ object EventsCmd:
       "first — the catalogue changed a corrected field to something else"
   ) {
     (
-      Opts.option[String]("status", s"${CorrectionStatus.all.mkString(" | ")} (default: all but agreed)").orNone,
+      Opts.option[String]("status", s"${Correction.Status.all.mkString(" | ")} (default: all but agreed)").orNone,
       Opts.option[String]("event", "Only this event's").orNone,
       Opts.option[Int]("limit", "At most this many").orNone
     )

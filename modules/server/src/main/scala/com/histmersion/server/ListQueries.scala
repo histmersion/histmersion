@@ -1,11 +1,11 @@
 package com.histmersion.server
 
-import com.histmersion.api.ApiError
 import com.histmersion.api.automation.ListFilters
 import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState, Origin, Pipeline, RunState}
 import com.histmersion.api.automation.ListFilters.{ApprovalFilter, DecidedBy, RunFilter}
 
 import java.time.Instant
+import com.histmersion.api.Api
 
 /** The engine's list filters a client sent (core [[ListFilters]]: the approvals' and the runs'; the jobs' are
   * `util.jobs.JobListing.query`), checked and turned into the repos' queries: a value outside a closed vocabulary (a
@@ -14,10 +14,10 @@ import java.time.Instant
   */
 object ListQueries:
 
-  private def bad(m: String): ApiError = ApiError(m)
+  private def bad(m: String): Api.Error = Api.Error(m)
 
   /** No `state` = the open ones (what the list always showed); `all` = every state. */
-  def approvals(f: ApprovalFilter): Either[ApiError, com.histmersion.domain.automation.approvals.ApprovalQuery] =
+  def approvals(f: ApprovalFilter): Either[Api.Error, com.histmersion.domain.automation.approvals.ApprovalQuery] =
     val n = f.normalized
     for
       state <- n.state match
@@ -38,7 +38,7 @@ object ListQueries:
       by.flatMap(DecidedBy.parse)
     )
 
-  def runs(f: RunFilter, now: Instant): Either[ApiError, com.histmersion.domain.automation.agents.RunQuery] =
+  def runs(f: RunFilter, now: Instant): Either[Api.Error, com.histmersion.domain.automation.agents.RunQuery] =
     val n = f.normalized
     for
       st <- ListFilters.known("status", n.status, RunState.values.map(_.wire).toSeq).left.map(bad)

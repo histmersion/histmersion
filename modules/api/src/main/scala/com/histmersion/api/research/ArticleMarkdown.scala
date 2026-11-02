@@ -2,17 +2,18 @@ package com.histmersion.api.research
 
 import com.histmersion.api.{Markdown, OffsetPage, Plural, YearFmt}
 import com.histmersion.api.checks.{FormatField, FormatMarkdown}
-import com.histmersion.api.library.{Label, SourceRef}
+import com.histmersion.api.library.Label
 import com.histmersion.api.given
+import com.histmersion.api.library.Source
 object ArticleMarkdown:
 
   val AllParts = List("body", "summary", "coverage", "cited", "backlinks")
 
-  def article(v: ArticleView, parts: List[String] = Nil): String =
+  def article(v: Article.View, parts: List[String] = Nil): String =
     if parts.isEmpty then articleFull(v)
     else articleParts(v, parts.filter(AllParts.contains))
 
-  private def articleFull(v: ArticleView): String =
+  private def articleFull(v: Article.View): String =
     val a = v.article
     val body = a.body.trim
     val line = metaLine(a.kind, a.regions, YearFmt.period(a.periodStart, a.periodEnd), a.tags)
@@ -27,7 +28,7 @@ object ArticleMarkdown:
     val trimmed = if footer.isEmpty then head else stripSourcesSection(head)
     trimmed + coverage(v) + backlinks(v.backlinks) + footer + FormatMarkdown.notice(v.formatting)
 
-  private def coverage(v: ArticleView): String = v.coverage.fold("")(c => "\n\n" + ArticleCoverage.sections(c))
+  private def coverage(v: Article.View): String = v.coverage.fold("")(c => "\n\n" + Article.Coverage.sections(c))
 
   private[api] def metaLine(kind: String, regions: List[String], period: String, tags: List[String]): String =
     val parts = List(Label.display(kind.trim), chipLinksList(regions, "place"), period.trim, chipLinksList(tags, "tag"))
@@ -51,7 +52,7 @@ object ArticleMarkdown:
         then lines.take(i).mkString("\n").stripTrailing
         else body
 
-  private def articleParts(v: ArticleView, show: List[String]): String =
+  private def articleParts(v: Article.View, show: List[String]): String =
     val a = v.article
     val out = List.newBuilder[String]
 
@@ -70,7 +71,7 @@ object ArticleMarkdown:
             case i  => s"${body.take(i)}\n\n$line${body.drop(i)}"
       out += head
 
-    if show.contains("coverage") then v.coverage.foreach(c => out += ArticleCoverage.sections(c))
+    if show.contains("coverage") then v.coverage.foreach(c => out += Article.Coverage.sections(c))
 
     if show.contains("backlinks") then
       val bl = backlinks(v.backlinks, truncate = true)
@@ -111,7 +112,7 @@ object ArticleMarkdown:
         val t = s.title
           .map(v => if truncate then stripMd(v).take(200) else v)
           .getOrElse("_(not in the corpus)_")
-        val auth = SourceRef.shortAuthors(s.authors)
+        val auth = Source.Ref.shortAuthors(s.authors)
         val yr = s.year.map(_.toString).getOrElse("")
         val byline = List(auth, yr).filter(_.nonEmpty).mkString(" ")
         val tail = List(byline, s"_${t}_", s.status.map(st => s"**${st.wire}**").getOrElse(""))
@@ -121,7 +122,7 @@ object ArticleMarkdown:
       }
       s"\n\n## Sources cited (${rows.size})\n\n${items.mkString("\n")}"
 
-  def versions(slug: String, vs: List[ArticleVersion]): String =
+  def versions(slug: String, vs: List[Article.Version]): String =
     if vs.isEmpty then s"_No versions recorded for **$slug**._"
     else
       val items = vs.map { v =>
@@ -130,11 +131,11 @@ object ArticleMarkdown:
       }
       s"### ${vs.size} version(s) of $slug\n\n${items.mkString("\n")}"
 
-  def version(v: ArticleVersionFull): String =
+  def version(v: Article.VersionFull): String =
     val sum = v.summary.map(s => s"\n\n_${s.take(200)}_").getOrElse("")
     s"### Version ${v.id} of ${v.slug}\n\n_saved ${v.updatedAt}, archived ${v.createdAt}_$sum\n\n---\n\n${v.body}"
 
-  def list(r: ArticleList): String =
+  def list(r: Article.List): String =
     OffsetPage.markdown(r.page, "article(s)", "_No matching articles._", r.articles) { a =>
       val tagsStr = a.tags.mkString(", ")
       val meta = List(a.kind, YearFmt.period(a.periodStart, a.periodEnd), tagsStr)

@@ -13,7 +13,6 @@ import com.histmersion.util.storage.ContentStore
 import com.histmersion.util.database.Sql
 import com.histmersion.util.database.given
 import com.histmersion.api.aliases.InstanceInfo
-import com.histmersion.api.exchange.BundleReference
 import com.histmersion.domain.library.Source
 import com.histmersion.util.data.exchange.Bundle
 
@@ -38,7 +37,7 @@ object BundleRepo:
   // ── reads, one per file ────────────────────────────────────────────────────────────────────
 
   /** The gazetteer and the named periods, fingerprinted: not carried, compared ([[BundleReference]]). */
-  private[histmersion] def reference(using DbCon): BundleReference =
+  private[histmersion] def reference(using DbCon): com.histmersion.api.exchange.Bundle.Reference =
     // the SEED rows only: a place or period of this collection's own travels in the bundle itself
     def digest(table: String): (Int, String) =
       Sql
@@ -50,7 +49,7 @@ object BundleRepo:
         .head
     val (np, dp) = digest("places")
     val (nq, dq) = digest("periods")
-    BundleReference(np, dp, nq, dq)
+    com.histmersion.api.exchange.Bundle.Reference(np, dp, nq, dq)
 
   // ── the schema ─────────────────────────────────────────────────────────────────────────────
 

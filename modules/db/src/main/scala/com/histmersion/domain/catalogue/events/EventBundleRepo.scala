@@ -9,16 +9,7 @@ import com.histmersion.util.data.exchange.BundleSql.*
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import java.util.UUID
-import com.histmersion.api.exchange.{
-  BundleCorrection,
-  BundleEvent,
-  BundleEventAlias,
-  BundleEventCatalogue,
-  BundleEventDating,
-  BundleEventEdge,
-  BundleEventParticipant,
-  BundleEventSets
-}
+import com.histmersion.api.exchange.Bundle
 
 /** The events as a bundle carries them (docs/research-merge-import.md §4, §7.3): the events with their datings, edges
   * and participants, their old ids, what the catalogues say about them and the corrections by hand — read out in a
@@ -26,11 +17,11 @@ import com.histmersion.api.exchange.{
   */
 private[events] object EventBundleRepo:
 
-  given DbCodec[BundleCorrection] = DbCodec.derived
+  given given_DbCodec_BundleCorrection: DbCodec[Bundle.Correction] = DbCodec.derived
 
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 
-  def events(scope: BundleScope)(using DbCon): Vector[BundleEvent] =
+  def events(scope: BundleScope)(using DbCon): Vector[Bundle.Event] =
     val w = where(scope, "e.uid", "e.updated_at")
     val rows = (Sql.raw(s"""SELECT e.uid, e.origin, e.id, e.label, e.kind, e.not_before, e.begin_by,
                                   e.end_from, e.not_after, e.historicity, encode(ST_AsEWKB(e.geom), 'hex'),
@@ -57,7 +48,7 @@ private[events] object EventBundleRepo:
       .run()
       .groupBy(_.eventUid)
     rows.map { r =>
-      BundleEvent(
+      Bundle.Event(
         r.uid,
         r.origin,
         r.id,
@@ -78,16 +69,16 @@ private[events] object EventBundleRepo:
           .getOrElse(r.uid, Vector.empty)
           .toList
           .map(d =>
-            BundleEventDating(d.citekey, d.sourceUid, d.notBefore, d.beginBy, d.endFrom, d.notAfter, d.method, d.note)
+            Bundle.EventDating(d.citekey, d.sourceUid, d.notBefore, d.beginBy, d.endFrom, d.notAfter, d.method, d.note)
           ),
         edges
           .getOrElse(r.uid, Vector.empty)
           .toList
-          .map(g => BundleEventEdge(g.dstUid, g.kind, g.citekey, g.sourceUid, g.note)),
+          .map(g => Bundle.EventEdge(g.dstUid, g.kind, g.citekey, g.sourceUid, g.note)),
         people
           .getOrElse(r.uid, Vector.empty)
           .toList
-          .map(p => BundleEventParticipant(p.actor, p.role, p.citekey, p.sourceUid)),
+          .map(p => Bundle.EventParticipant(p.actor, p.role, p.citekey, p.sourceUid)),
         r.updatedAt,
         scale = r.scale,
         catalogue = r.catalogue,
@@ -100,23 +91,23 @@ private[events] object EventBundleRepo:
     }
 
   /** Old event ids and goal slugs (V053) of the events and goals in scope. */
-  def eventAliases(scope: BundleScope)(using DbCon): Vector[BundleEventAlias] =
+  def eventAliases(scope: BundleScope)(using DbCon): Vector[Bundle.EventAlias] =
     (Sql.raw(s"""SELECT x.alias, e.uid, ${ts("x.created_at")}
                 FROM event_aliases x JOIN events e ON e.id = x.event_id WHERE """) ++
       where(scope, "e.uid", "x.created_at") ++ """ ORDER BY x.alias COLLATE "C"""").frag
       .query[(String, UUID, String)]
       .run()
-      .map(BundleEventAlias.apply)
+      .map(Bundle.EventAlias.apply)
 
   /** What the catalogues say about the events in scope (`event_catalogue`): by event, then the record's key. */
-  def eventCatalogue(scope: BundleScope)(using DbCon): Vector[BundleEventCatalogue] =
+  def eventCatalogue(scope: BundleScope)(using DbCon): Vector[Bundle.EventCatalogue] =
     (Sql.raw(s"""SELECT e.uid, c.provider, c.provider_id, c.url, c.label, c.kind, c.not_before, c.begin_by,
                        c.end_from, c.not_after, c.lat, c.lon, c.vei, c.magnitude, c.deaths, c.historicity,
                        c.record::text, ${ts("c.retrieved_at")}
                 FROM event_catalogue c JOIN events e ON e.id = c.event_id WHERE """) ++
       where(scope, "e.uid", "c.retrieved_at") ++
       """ ORDER BY e.uid, c.provider COLLATE "C", c.provider_id COLLATE "C"""").frag.query[BCatalogueRow].run().map { r =>
-      BundleEventCatalogue(
+      Bundle.EventCatalogue(
         r.eventUid,
         r.provider,
         r.providerId,
@@ -141,7 +132,7 @@ private[events] object EventBundleRepo:
   /** The corrections by hand (`corrections`, V088); an event's carries its uid. The clock is the later of the person's
     * change and the last refresh.
     */
-  def corrections(scope: BundleScope)(using DbCon): Vector[BundleCorrection] =
+  def corrections(scope: BundleScope)(using DbCon): Vector[Bundle.Correction] =
     val eventUid = "(SELECT x.uid FROM events x WHERE c.target_kind = 'event' AND x.id = c.target_id)"
     (Sql.raw(s"""SELECT c.target_kind, c.target_id, $eventUid, c.field, c.value::text, c.upstream,
                        c.upstream_value::text, c.upstream_now::text, c.status, ${ts("c.created_at")},
@@ -149,7 +140,7 @@ private[events] object EventBundleRepo:
                 FROM corrections c WHERE """) ++
       where(scope, eventUid, "greatest(c.updated_at, coalesce(c.checked_at, c.updated_at))") ++
       """ ORDER BY c.target_kind COLLATE "C", c.target_id COLLATE "C", c.field COLLATE "C"""").frag
-      .query[BundleCorrection]
+      .query[Bundle.Correction]
       .run()
 
   // ── what a merge plan compares ───────────────────────────────────────────────────────────────
@@ -263,7 +254,7 @@ private[events] object EventBundleRepo:
   def eventCatalogueIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     val eventIds = eventIdsOf()
-    import com.histmersion.api.exchange.BundleEventSets.newer
+    import com.histmersion.api.exchange.Bundle.EventSets.newer
     if w.es.eventCatalogue.nonEmpty then
       val here = Sql
         .raw(s"SELECT provider, provider_id, ${ts("retrieved_at")} FROM event_catalogue")
@@ -295,7 +286,7 @@ private[events] object EventBundleRepo:
     given DbCon = w.transaction
     val eventIds = eventIdsOf()
     val placeHere = PlacesCarried.placeHere(w)
-    import com.histmersion.api.exchange.BundleEventSets.newer
+    import com.histmersion.api.exchange.Bundle.EventSets.newer
     if w.es.corrections.nonEmpty then
       val clock = s"greatest(${ts("updated_at")}, coalesce(${ts("checked_at")}, ''))"
       val here = Sql

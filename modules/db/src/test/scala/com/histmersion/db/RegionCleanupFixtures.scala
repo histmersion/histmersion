@@ -10,7 +10,7 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.Migrate
-import com.histmersion.api.catalogue.{Place, PlaceInput, PlaceName}
+import com.histmersion.api.catalogue.Place
 import com.histmersion.api.library.{Finding, Source}
 
 /** The fixtures of [[RegionCleanupSuite]] and [[PlaceReviewSuite]]: a city with two Regiones, an Athenian tribe beside
@@ -133,7 +133,7 @@ trait RegionCleanupFixtures extends com.histmersion.db.DbSuite with Bounded:
   ) // round numbers ON a grid centre
 
   protected def seed(): Unit =
-    val _ = PlaceFixtures.upsertPlaces(ds, places.map(p => PlaceInput(p, List(PlaceName(p.label)))))
+    val _ = PlaceFixtures.upsertPlaces(ds, places.map(p => Place.Input(p, List(Place.Name(p.label)))))
     SourceFixtures.upsert(
       ds,
       Source(

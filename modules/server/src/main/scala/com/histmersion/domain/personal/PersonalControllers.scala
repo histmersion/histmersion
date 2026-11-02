@@ -1,21 +1,12 @@
 package com.histmersion.domain.personal
 
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 import com.histmersion.api.personal.{
   Bookmark as WireBookmark,
-  BookmarkEdit,
-  BookmarkId,
-  BookmarkLabel,
-  BookmarkNew,
   ItemKey as WireKey,
   Note as WireNote,
-  NoteEdit,
-  NoteId,
-  NoteNew,
-  NoteText,
   PersonalIds,
   ReadMark as WireReadMark,
-  ReadMarkSet,
   ReadOpened,
   Target,
   UnreadPage,
@@ -31,6 +22,7 @@ import com.histmersion.{Offset, PageSize, UserId}
 
 import java.time.{Clock, Instant}
 import scala.util.Try
+import com.histmersion.api.Api
 
 /** The bookmarks', notes' and read marks' endpoints, the `bookmarks` and `notes` tools (reads only) and
   * `histmersion bookmarks|notes`: what was asked checked, then the caller's own. Writes wait while a restore holds the
@@ -44,14 +36,14 @@ final class PersonalControllers(
     clock: Clock
 ):
 
-  private def bad(why: String): ApiError = ApiError(why)
-  private def missing(what: String): ApiError = ApiError(s"No $what", Some(Write.CodeNotFound))
+  private def bad(why: String): Api.Error = Api.Error(why)
+  private def missing(what: String): Api.Error = Api.Error(s"No $what", Some(Write.CodeNotFound))
   private def now(): MarkTime = MarkTime.at(Instant.now(clock))
 
-  private def person(caller: Caller): Either[ApiError, UserId] =
+  private def person(caller: Caller): Either[Api.Error, UserId] =
     caller.person.toRight(bad("bookmarks, notes and read marks are a person's own; an automated run has none"))
 
-  private def kindOf(raw: Option[String], allowed: Set[MarkKind]): Either[ApiError, Option[MarkKind]] =
+  private def kindOf(raw: Option[String], allowed: Set[MarkKind]): Either[Api.Error, Option[MarkKind]] =
     raw.map(_.trim).filter(_.nonEmpty) match
       case None    => Right(None)
       case Some(k) =>
@@ -63,7 +55,7 @@ final class PersonalControllers(
 
   private def size(raw: Option[Int]): PageSize = PageSize.applyUnsafe(PersonalIds.limit(raw))
 
-  private def target(t: Target, allowed: Set[MarkKind], what: String): Either[ApiError, MarkTarget] =
+  private def target(t: Target, allowed: Set[MarkKind], what: String): Either[Api.Error, MarkTarget] =
     Target
       .check(t, allowed, what)
       .flatMap(MarkTarget.fromWire(_).toRight(s"a $what on a ${t.kind.label.toLowerCase} names it"))
@@ -77,34 +69,38 @@ final class PersonalControllers(
       kind: Option[String],
       q: Option[String],
       max: Option[Int]
-  ): Either[ApiError, List[WireBookmark]] =
+  ): Either[Api.Error, List[WireBookmark]] =
     for
       user <- person(caller)
       k <- kindOf(kind, MarkKind.Bookmarkable)
     yield bookmarks.list(user, k, SearchWords.of(q), size(max)).map(_.wire)
 
-  def addBookmark(caller: Caller, in: BookmarkNew): Either[ApiError, WireBookmark] =
+  def addBookmark(caller: Caller, in: com.histmersion.api.personal.Bookmark.New): Either[Api.Error, WireBookmark] =
     maintenance.guard("add_bookmark"):
       for
         user <- person(caller)
         t <- target(in.target, MarkKind.Bookmarkable, "bookmark")
-        label <- BookmarkLabel.tidy(in.label).left.map(bad)
+        label <- com.histmersion.api.personal.Bookmark.Label.tidy(in.label).left.map(bad)
       yield bookmarks.add(user, t, label, TargetLabel.tidy(in.title), now()).wire
 
-  def editBookmark(caller: Caller, id: String, in: BookmarkEdit): Either[ApiError, WireBookmark] =
+  def editBookmark(
+      caller: Caller,
+      id: String,
+      in: com.histmersion.api.personal.Bookmark.Edit
+  ): Either[Api.Error, WireBookmark] =
     maintenance.guard("edit_bookmark"):
       for
         user <- person(caller)
-        bid <- BookmarkId.parse(id).left.map(bad)
-        label <- BookmarkLabel.tidy(in.label).left.map(bad)
+        bid <- com.histmersion.api.personal.Bookmark.Id.parse(id).left.map(bad)
+        label <- com.histmersion.api.personal.Bookmark.Label.tidy(in.label).left.map(bad)
         b <- bookmarks.rename(user, bid, label, now()).toRight(missing(s"bookmark $id"))
       yield b.wire
 
-  def removeBookmark(caller: Caller, id: String): Either[ApiError, WireBookmark] =
+  def removeBookmark(caller: Caller, id: String): Either[Api.Error, WireBookmark] =
     maintenance.guard("remove_bookmark"):
       for
         user <- person(caller)
-        bid <- BookmarkId.parse(id).left.map(bad)
+        bid <- com.histmersion.api.personal.Bookmark.Id.parse(id).left.map(bad)
         b <- bookmarks.remove(user, bid, now()).toRight(missing(s"bookmark $id"))
       yield b.wire
 
@@ -116,7 +112,7 @@ final class PersonalControllers(
       itemKey: Option[String],
       q: Option[String],
       max: Option[Int]
-  ): Either[ApiError, List[WireNote]] =
+  ): Either[Api.Error, List[WireNote]] =
     for
       user <- person(caller)
       k <- kindOf(kind, MarkKind.Notable)
@@ -124,31 +120,31 @@ final class PersonalControllers(
       .list(user, k, itemKey.map(_.trim).filter(_.nonEmpty).map(ItemKey(_)), SearchWords.of(q), size(max))
       .map(_.wire)
 
-  def note(caller: Caller, id: String): Either[ApiError, WireNote] =
+  def note(caller: Caller, id: String): Either[Api.Error, WireNote] =
     for
       user <- person(caller)
-      nid <- NoteId.parse(id).left.map(bad)
+      nid <- com.histmersion.api.personal.Note.Id.parse(id).left.map(bad)
       n <- notes.get(user, nid).toRight(missing(s"note $id"))
     yield n.wire
 
-  def addNote(caller: Caller, in: NoteNew): Either[ApiError, WireNote] =
+  def addNote(caller: Caller, in: com.histmersion.api.personal.Note.New): Either[Api.Error, WireNote] =
     maintenance.guard("add_note"):
       for
         user <- person(caller)
         t <- target(in.target, MarkKind.Notable, "note")
-        text <- NoteText.tidy(in.text).left.map(bad)
+        text <- com.histmersion.api.personal.Note.Text.tidy(in.text).left.map(bad)
       yield notes.add(user, t, text, TargetLabel.tidy(in.title), now()).wire
 
-  def editNote(caller: Caller, id: String, in: NoteEdit): Either[ApiError, WireNote] =
+  def editNote(caller: Caller, id: String, in: com.histmersion.api.personal.Note.Edit): Either[Api.Error, WireNote] =
     maintenance.guard("edit_note"):
       for
         user <- person(caller)
-        nid <- NoteId.parse(id).left.map(bad)
-        text <- NoteText.tidy(in.text).left.map(bad)
+        nid <- com.histmersion.api.personal.Note.Id.parse(id).left.map(bad)
+        text <- com.histmersion.api.personal.Note.Text.tidy(in.text).left.map(bad)
         n <- edited(user, nid, text, in.ifUpdatedAt.map(_.trim).filter(_.nonEmpty)).left.map {
           case NoteEditRefused.Missing      => missing(s"note $id")
           case NoteEditRefused.Changed(was) =>
-            ApiError(
+            Api.Error(
               s"the note changed since it was opened (now ${was.iso}); open it again",
               Some(Write.CodePrecondition)
             )
@@ -156,17 +152,22 @@ final class PersonalControllers(
       yield n.wire
 
   /** A time last seen that is no time at all never matches the note's: the edit is refused as a stale one. */
-  private def edited(user: UserId, id: NoteId, text: NoteText, seen: Option[String]) =
+  private def edited(
+      user: UserId,
+      id: com.histmersion.api.personal.Note.Id,
+      text: com.histmersion.api.personal.Note.Text,
+      seen: Option[String]
+  ) =
     seen.map(s => Try(MarkTime.parse(s)).toOption) match
       case Some(None) =>
         notes.get(user, id).toRight(NoteEditRefused.Missing).flatMap(n => Left(NoteEditRefused.Changed(n.updatedAt)))
       case asked => notes.edit(user, id, text, asked.flatten, now())
 
-  def removeNote(caller: Caller, id: String): Either[ApiError, WireNote] =
+  def removeNote(caller: Caller, id: String): Either[Api.Error, WireNote] =
     maintenance.guard("remove_note"):
       for
         user <- person(caller)
-        nid <- NoteId.parse(id).left.map(bad)
+        nid <- com.histmersion.api.personal.Note.Id.parse(id).left.map(bad)
         n <- notes.remove(user, nid, now()).toRight(missing(s"note $id"))
       yield n.wire
 
@@ -177,26 +178,26 @@ final class PersonalControllers(
       kind: Option[String],
       show: Option[String],
       max: Option[Int]
-  ): Either[ApiError, List[WireReadMark]] =
+  ): Either[Api.Error, List[WireReadMark]] =
     for
       user <- person(caller)
       k <- kindOf(kind, MarkKind.Readable)
       s <- ReadingShow.parse(show).left.map(bad)
     yield reading.list(user, k.map(MarkTarget.itemKind), s, size(max)).map(_.wire)
 
-  private def readable(kind: MarkKind, key: WireKey): Either[ApiError, ItemKey] =
+  private def readable(kind: MarkKind, key: WireKey): Either[Api.Error, ItemKey] =
     if !MarkKind.Readable.contains(kind) then
       Left(bad(s"only sources and articles are marked read, not a ${kind.label.toLowerCase}"))
     else Option(key.value.trim).filter(_.nonEmpty).map(ItemKey(_)).toRight(bad("which one? (its id)"))
 
-  def setRead(caller: Caller, in: ReadMarkSet): Either[ApiError, WireReadMark] =
+  def setRead(caller: Caller, in: com.histmersion.api.personal.ReadMark.Set): Either[Api.Error, WireReadMark] =
     maintenance.guard("set_read"):
       for
         user <- person(caller)
         key <- readable(in.kind, in.id)
       yield reading.setRead(user, MarkTarget.itemKind(in.kind), key, in.read, TargetLabel.tidy(in.title), now()).wire
 
-  def opened(caller: Caller, in: ReadOpened): Either[ApiError, WireReadMark] =
+  def opened(caller: Caller, in: ReadOpened): Either[Api.Error, WireReadMark] =
     maintenance.guard("opened"):
       for
         user <- person(caller)
@@ -208,7 +209,7 @@ final class PersonalControllers(
       kind: Option[String],
       max: Option[Int],
       offset: Option[Int]
-  ): Either[ApiError, UnreadPage] =
+  ): Either[Api.Error, UnreadPage] =
     for
       user <- person(caller)
       k <- kindOf(kind, MarkKind.Readable)

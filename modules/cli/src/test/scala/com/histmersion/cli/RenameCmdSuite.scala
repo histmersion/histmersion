@@ -1,6 +1,7 @@
 package com.histmersion.cli
 
 import com.monovore.decline.Command
+import com.histmersion.api.library.Source
 
 /** `histmersion rename <old> <new> [--json]`: the arguments parse, and a new citekey the server would refuse is a usage
   * error here, before any request.
@@ -45,7 +46,6 @@ class RenameCmdSuite extends munit.FunSuite:
     assert(top.parse(List("rename", "--help"), Map.empty).left.exists(_.toString.contains("alias")))
 
   test("a full export removes the mirror notes of renamed citekeys, and nothing else"):
-    import com.histmersion.api.library.SourceAlias
     import java.nio.file.Files
     val dir = Files.createTempDirectory("rename-prune")
     try
@@ -53,9 +53,9 @@ class RenameCmdSuite extends munit.FunSuite:
       val out = RenameCmd.pruneRenamed(
         dir,
         List(
-          SourceAlias("old2020_a", "new1999_a"),
-          SourceAlias("gone2020_c", "new1999_c"), // no file: nothing to report
-          SourceAlias("../keep2020_b", "x2020_y")
+          Source.Alias("old2020_a", "new1999_a"),
+          Source.Alias("gone2020_c", "new1999_c"), // no file: nothing to report
+          Source.Alias("../keep2020_b", "x2020_y")
         )
       ) // not a citekey: never a path outside `dir`
       assertEquals(out, List(Right("old2020_a → new1999_a")))

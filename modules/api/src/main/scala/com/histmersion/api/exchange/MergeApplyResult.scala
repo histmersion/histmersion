@@ -8,12 +8,12 @@ import com.histmersion.api.given
 
 final case class MergeApplyResult(
     bundleId: UUID,
-    from: BundleInstance,
+    from: Bundle.Instance,
     applied: Boolean,
     planHash: String,
     mergeId: Option[UUID] = None,
     backup: Option[String] = None,
-    counts: List[BundleKindCounts] = Nil,
+    counts: List[Bundle.KindCounts] = Nil,
     tally: MergeTally = MergeTally(),
     reviews: List[String] = Nil,
     logEntry: Option[Int] = None,

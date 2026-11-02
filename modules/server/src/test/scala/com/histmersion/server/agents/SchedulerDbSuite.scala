@@ -8,7 +8,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.Autopilot.{AutopilotSet, FocusSet}
 import com.histmersion.api.automation.Autopilot
-import com.histmersion.api.automation.GoalPlans.*
+import com.histmersion.api.automation.Goal.Plans.*
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.domain.automation.goals.{FocusRepo, GoalLinkRepo}
@@ -24,13 +24,15 @@ import com.histmersion.api.automation.{
   AgentScheduler,
   AgentSchedulerMarkdown,
   ApprovalDigest,
-  GoalPut,
   Queue,
   Stalls,
   StallsMarkdown
 }
-import com.histmersion.api.library.{IngestReport, PdfInfo, SourceCandidate, SourcePut}
-import com.histmersion.api.research.{ArticleFilter, ArticlePut}
+import com.histmersion.api.library.PdfInfo
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.library.Ingest
+import com.histmersion.api.library.Source
+import com.histmersion.api.research.Article
 
 /** The central scheduler against a `*_test` database (docs/research-goal-advancement.md "As built"): 20 goals under the
   * autopilot — `goal-first` with 3 runs at once gives every place to the best goal (a pin, then a person's priority,
@@ -113,13 +115,13 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   /** 20 goals with a query each (no plan needed): g05 has an article to review, g10 enough sources. */
   private def seed(a: AgentsHandlers, h: ServerWiring, up: StubUpstream): Unit =
     goals.foreach { s =>
-      assert(h.goals.put(s, GoalPut(s"Zz $s")).isRight)
+      assert(h.goals.put(s, Goal.Put(s"Zz $s")).isRight)
       assert(a.addGoalLink(s, LinkAdd(LinkKind.Query, s"zzfocus query $s")).isRight)
     }
     List("zzfocus_s1", "zzfocus_s2").foreach { c =>
       assert(
         h.library.sources
-          .put(c, SourcePut(title = s"Zz $c", year = Some(2020), topics = List("zzfocus_t"), body = Some("Tin.")))
+          .put(c, Source.Put(title = s"Zz $c", year = Some(2020), topics = List("zzfocus_t"), body = Some("Tin.")))
           .isRight
       )
       assert(transact(ds)(GoalLinkRepo.link(g(10), LinkKind.Source, c, None)))
@@ -128,20 +130,20 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       h.research.articles
         .put(
           Art,
-          ArticlePut(
+          Article.Put(
             "Zz art",
             "concept",
             "Tin came by sea [[zzfocus_s1]].",
-            filter = Some(ArticleFilter(topics = List("zzfocus_t")))
+            filter = Some(Article.Filter(topics = List("zzfocus_t")))
           )
         )
         .isRight
     )
     assert(transact(ds)(GoalLinkRepo.link(g(5), LinkKind.Article, Art, None)))
     up.onIngest = d =>
-      assert(h.library.sources.put(ck(d), SourcePut(title = s"Ingested $d", year = Some(2023), doi = Some(d))).isRight)
+      assert(h.library.sources.put(ck(d), Source.Put(title = s"Ingested $d", year = Some(2023), doi = Some(d))).isRight)
       Right(
-        IngestReport(
+        Ingest.Report(
           ck(d),
           Some(d),
           Some(s"Ingested $d"),
@@ -260,7 +262,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val one = cfg.copy(agents = cfg.agents.copy(maxConcurrentRuns = 1))
     val (a, h, up) = handlers(one); seed(a, h, up)
     val planned = "zzfocus-plan"
-    assert(h.goals.put(planned, GoalPut("Zz a goal with no plan")).isRight)
+    assert(h.goals.put(planned, Goal.Put("Zz a goal with no plan")).isRight)
     on(a)
     a.focus.set(FocusSet("pin", Some(planned))).fold(e => fail(e.message), identity)
     val clock = Clock()
@@ -328,7 +330,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     val (a, h, up) = handlers(auto); seed(a, h, up)
     val unplanned = "zzfocus-plan"
-    assert(h.goals.put(unplanned, GoalPut("Zz a goal with no plan")).isRight)
+    assert(h.goals.put(unplanned, Goal.Put("Zz a goal with no plan")).isRight)
     // three goals with an approved plan, none reviewed: one more than the limit
     List(g(1), g(2), g(3)).foreach(s =>
       connect(ds)(sql"UPDATE goals SET plan = '{}'::jsonb WHERE slug = $s".update.run())
@@ -486,7 +488,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   ):
     val (a, h, up) = handlers(); seed(a, h, up)
     def cand(id: Long, goal: String, oa: Boolean) =
-      SourceCandidate(id, goal, s"10.5555/zzseed.$id", s"Zz seed $id", isOa = oa)
+      Source.Candidate(id, goal, s"10.5555/zzseed.$id", s"Zz seed $id", isOa = oa)
     up.sweepFinds = Map(
       g(1) -> List(cand(1, g(1), oa = true), cand(2, g(1), oa = false)),
       g(2) -> List(cand(3, g(2), oa = true)),

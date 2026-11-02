@@ -1,11 +1,12 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.library.{DeleteCount, DeletePart, RenameCount}
+import com.histmersion.api.library.{DeleteCount, DeletePart}
 import com.histmersion.domain.library.sources.referrers.*
 
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
+import com.histmersion.api.library.Rename
 
 /** The gazetteer's provenance that names a source (a person's place types and footprints, a place's `source`), which a
   * delete keeps as history, and the places its findings were assigned to, which go with them.
@@ -19,7 +20,7 @@ final class PlaceSourceReferrer extends SourceReferrer:
         "place_types.citekey" -> sql"UPDATE place_types SET citekey = $to WHERE citekey = $from".update.run(),
         "place_footprints.citekey" -> sql"UPDATE place_footprints SET citekey = $to WHERE citekey = $from".update.run(),
         "places.source" -> sql"UPDATE places SET source = $to WHERE source = $from".update.run()
-      ).collect { case (t, n) if n > 0 => RenameCount(t, n) }
+      ).collect { case (t, n) if n > 0 => Rename.Count(t, n) }
     )
 
   override def report(source: SourceKeys)(using DbCon): DeleteReport =

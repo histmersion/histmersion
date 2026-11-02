@@ -628,8 +628,8 @@
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
           "$defs" : {
-            "SourcePut" : {
-              "title" : "SourcePut",
+            "Put" : {
+              "title" : "Put",
               "type" : "object",
               "required" : [
                 "title"
@@ -709,19 +709,19 @@
                 "findings" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/$defs/FindingInput"
+                    "$ref" : "#/$defs/Input"
                   }
                 },
                 "edges" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/$defs/EdgeInput"
+                    "$ref" : "#/$defs/Input1"
                   }
                 }
               }
             },
-            "FindingInput" : {
-              "title" : "FindingInput",
+            "Input" : {
+              "title" : "Input",
               "type" : "object",
               "required" : [
                 "claim"
@@ -767,8 +767,8 @@
                 }
               }
             },
-            "EdgeInput" : {
-              "title" : "EdgeInput",
+            "Input1" : {
+              "title" : "Input",
               "type" : "object",
               "required" : [
                 "dst",
@@ -798,7 +798,7 @@
               "type" : "string"
             },
             "source" : {
-              "$ref" : "#/$defs/SourcePut"
+              "$ref" : "#/$defs/Put"
             },
             "strict" : {
               "description" : "Refuse the write when its Markdown has a formatting ERROR (a table that will not render, unpaired **, a broken link). Default false: the write goes through and the problems are listed under 'Formatting'.",
@@ -813,8 +813,8 @@
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
           "$defs" : {
-            "SourcePatch" : {
-              "title" : "SourcePatch",
+            "Patch" : {
+              "title" : "Patch",
               "type" : "object",
               "properties" : {
                 "metadata" : {
@@ -842,7 +842,7 @@
                   }
                 },
                 "period" : {
-                  "$ref" : "#/$defs/PeriodInput"
+                  "$ref" : "#/$defs/Input"
                 },
                 "tags" : {
                   "$ref" : "#/$defs/ListPatch"
@@ -898,8 +898,8 @@
                 }
               }
             },
-            "PeriodInput" : {
-              "title" : "PeriodInput",
+            "Input" : {
+              "title" : "Input",
               "type" : "object",
               "required" : [
                 "start",
@@ -947,7 +947,7 @@
                 "add" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/$defs/FindingInput"
+                    "$ref" : "#/$defs/Input1"
                   }
                 },
                 "remove" : {
@@ -959,13 +959,13 @@
                 "replace" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/$defs/FindingInput"
+                    "$ref" : "#/$defs/Input1"
                   }
                 }
               }
             },
-            "FindingInput" : {
-              "title" : "FindingInput",
+            "Input1" : {
+              "title" : "Input",
               "type" : "object",
               "required" : [
                 "claim"
@@ -1018,19 +1018,19 @@
                 "add" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/$defs/EdgeInput"
+                    "$ref" : "#/$defs/Input2"
                   }
                 },
                 "remove" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/$defs/EdgeInput"
+                    "$ref" : "#/$defs/Input2"
                   }
                 }
               }
             },
-            "EdgeInput" : {
-              "title" : "EdgeInput",
+            "Input2" : {
+              "title" : "Input",
               "type" : "object",
               "required" : [
                 "dst",
@@ -1060,7 +1060,7 @@
               "type" : "string"
             },
             "patch" : {
-              "$ref" : "#/$defs/SourcePatch"
+              "$ref" : "#/$defs/Patch"
             },
             "strict" : {
               "description" : "Refuse the write when its Markdown has a formatting ERROR (a table that will not render, unpaired **, a broken link). Default false: the write goes through and the problems are listed under 'Formatting'.",
@@ -1157,7 +1157,7 @@
         "description" : "Run PostgreSQL VACUUM — with `analyze: true`, VACUUM (ANALYZE), which also refreshes the planner's statistics — over the named `tables`, or over the gazetteer and finding tables a re-seed rewrites (config maintenance.vacuum-tables) when none is named. Use it after `places seed`, a gazetteer load or a place clean-up (`lint --fix` on the place rules), which leave dead row versions behind. It runs as a server job, one table at a time, outside any transaction (no data changes, no table lock beyond VACUUM's own); it answers with the job — follow it with `job_status`.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
-          "title" : "VacuumRequest",
+          "title" : "Request",
           "type" : "object",
           "properties" : {
             "analyze" : {
@@ -1237,8 +1237,8 @@
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
           "$defs" : {
-            "ArticlePut" : {
-              "title" : "ArticlePut",
+            "Put" : {
+              "title" : "Put",
               "type" : "object",
               "required" : [
                 "title",
@@ -1279,18 +1279,18 @@
                   "format" : "int64"
                 },
                 "filter" : {
-                  "$ref" : "#/$defs/ArticleFilter"
+                  "$ref" : "#/$defs/Filter"
                 },
                 "reasons" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/$defs/CoverageReason"
+                    "$ref" : "#/$defs/Reason"
                   }
                 }
               }
             },
-            "ArticleFilter" : {
-              "title" : "ArticleFilter",
+            "Filter" : {
+              "title" : "Filter",
               "description" : "The filter the article is compiled from; an empty one ({}) clears it",
               "type" : "object",
               "properties" : {
@@ -1352,8 +1352,8 @@
                 }
               }
             },
-            "CoverageReason" : {
-              "title" : "CoverageReason",
+            "Reason" : {
+              "title" : "Reason",
               "description" : "Why the article does not cite one source its filter returns",
               "type" : "object",
               "required" : [
@@ -1383,7 +1383,7 @@
               "type" : "string"
             },
             "article" : {
-              "$ref" : "#/$defs/ArticlePut"
+              "$ref" : "#/$defs/Put"
             },
             "strict" : {
               "description" : "Refuse the write when its Markdown has a formatting ERROR (a table that will not render, unpaired **, a broken link). Default false: the write goes through and the problems are listed under 'Formatting'.",
@@ -1398,8 +1398,8 @@
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
           "$defs" : {
-            "ArticlePatch" : {
-              "title" : "ArticlePatch",
+            "Patch" : {
+              "title" : "Patch",
               "type" : "object",
               "properties" : {
                 "title" : {
@@ -1427,7 +1427,7 @@
                   }
                 },
                 "period" : {
-                  "$ref" : "#/$defs/PeriodInput"
+                  "$ref" : "#/$defs/Input"
                 },
                 "kind" : {
                   "type" : "string"
@@ -1436,12 +1436,12 @@
                   "type" : "string"
                 },
                 "filter" : {
-                  "$ref" : "#/$defs/ArticleFilter"
+                  "$ref" : "#/$defs/Filter"
                 },
                 "reasons" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/$defs/CoverageReason"
+                    "$ref" : "#/$defs/Reason"
                   }
                 },
                 "critiqueReasons" : {
@@ -1476,8 +1476,8 @@
                 }
               }
             },
-            "PeriodInput" : {
-              "title" : "PeriodInput",
+            "Input" : {
+              "title" : "Input",
               "type" : "object",
               "required" : [
                 "start",
@@ -1494,8 +1494,8 @@
                 }
               }
             },
-            "ArticleFilter" : {
-              "title" : "ArticleFilter",
+            "Filter" : {
+              "title" : "Filter",
               "description" : "The filter the article is compiled from; an empty one ({}) clears it",
               "type" : "object",
               "properties" : {
@@ -1557,8 +1557,8 @@
                 }
               }
             },
-            "CoverageReason" : {
-              "title" : "CoverageReason",
+            "Reason" : {
+              "title" : "Reason",
               "description" : "Why the article does not cite one source its filter returns",
               "type" : "object",
               "required" : [
@@ -1616,7 +1616,7 @@
               "type" : "string"
             },
             "patch" : {
-              "$ref" : "#/$defs/ArticlePatch"
+              "$ref" : "#/$defs/Patch"
             },
             "strict" : {
               "description" : "Refuse the write when its Markdown has a formatting ERROR (a table that will not render, unpaired **, a broken link). Default false: the write goes through and the problems are listed under 'Formatting'.",
@@ -1897,7 +1897,7 @@
         "description" : "Add a POINT place to the gazetteer that it does not have — only after `places` found nothing under any of its names (otherwise give the existing place a name with `place_names`). `source` is required and must say where the coordinates come from (a gazetteer or Wikidata id, a map, a publication): never estimate a point. `kind`: site | region | feature | polity; `names` are further names; `periodStart`/`periodEnd` are signed years (BCE negative) when the place existed only then. The place is this collection's own (`local_<label>` unless `id` is given), carried in a bundle and never touched by a re-seed. Refused when the id is taken.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
-          "title" : "PlaceAdd",
+          "title" : "Add",
           "type" : "object",
           "required" : [
             "label",

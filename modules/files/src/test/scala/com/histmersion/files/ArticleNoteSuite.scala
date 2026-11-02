@@ -3,8 +3,9 @@ package com.histmersion.files
 import com.histmersion.api.given
 import com.histmersion.domain.research.articles.ArticleNote
 import com.histmersion.api.catalogue.Period
-import com.histmersion.api.research.{Article, ArticleCoverage, ArticleFilter, Articles, CoverageSource}
+import com.histmersion.api.research.{Article, Articles}
 import com.histmersion.domain.library.Source
+import com.histmersion.api.research.Coverage
 
 /** `wiki/<kind>/<slug>.md` ⇄ [[Article]] (plan §5.2 stream 2.7). The shapes asserted here are the ones the existing
   * research wiki actually writes — that is what "the 40+ existing articles import" means in the acceptance line.
@@ -112,7 +113,7 @@ class ArticleNoteSuite extends munit.FunSuite:
       body = "# Theseus\n\nAn Attic hero [[walker1995_theseus]].",
       summary = Some("Where the hero Theseus came from."),
       filter = Some(
-        ArticleFilter(
+        Article.Filter(
           query = Some("Theseus"),
           topics = List("greek_myth"),
           from = Some(-1500),
@@ -122,18 +123,18 @@ class ArticleNoteSuite extends munit.FunSuite:
       ),
       reasons = Map("graves2017_greek" -> "retells the myths", "nilsson1927_minoan" -> "Attic origin only in passing")
     )
-    val c = ArticleCoverage.compute(
+    val c = Article.Coverage.compute(
       a.slug,
       a.filter.get,
       1,
-      List(CoverageSource("graves2017_greek", "Greek Myths", Some(2017), Source.Status.Current)),
+      List(Coverage.Source("graves2017_greek", "Greek Myths", Some(2017), Source.Status.Current)),
       Set.empty,
       List("walker1995_theseus"),
       a.reasons,
       Nil,
       Nil
     )
-    val text = ArticleNote.render(a, Some(ArticleCoverage.exported(c)))
+    val text = ArticleNote.render(a, Some(Article.Coverage.exported(c)))
     assert(
       text.contains(
         "filter:\n  query: Theseus\n  topics:\n  - greek_myth\n  from: -1500\n  to: -400\n  extra_queries:\n  - synoikism\n"
@@ -142,13 +143,13 @@ class ArticleNoteSuite extends munit.FunSuite:
     )
     assert(text.contains("reasons:\n  graves2017_greek: retells the myths\n"), text)
     assert(
-      text.contains("## Not used") && text.contains(ArticleCoverage.GeneratedStart) && text.contains("_Method: "),
+      text.contains("## Not used") && text.contains(Article.Coverage.GeneratedStart) && text.contains("_Method: "),
       text
     )
     val back = ArticleNote.parse(text, "zz", "zz").get
     assertEquals(back.body, a.body, "the generated sections never reach the stored body")
     assertEquals((back.filter, back.reasons), (a.filter, a.reasons))
     // and the round trip stays byte-stable
-    assertEquals(ArticleNote.render(back, Some(ArticleCoverage.exported(c))), text)
+    assertEquals(ArticleNote.render(back, Some(Article.Coverage.exported(c))), text)
     // an article with none exports exactly as before
     assert(!ArticleNote.render(a.copy(filter = None, reasons = Map.empty)).contains("filter:"))

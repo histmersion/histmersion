@@ -1,10 +1,10 @@
 package com.histmersion.web.library
 
-import com.histmersion.api.library.IngestReport
 import com.histmersion.web.{ApiClient, Auth, ErrorLine, SourceLink}
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.api.library.Ingest
 
 /** "Add by DOI": a DOI or an arXiv id, looked up and brought in through the legal open-access chain only
   * ([[DoiIngest]]); the answer says what was found and links to the new source.
@@ -15,7 +15,7 @@ object DoiForm:
     case Idle
     case Adding
     case Failed(message: String)
-    case Added(report: IngestReport)
+    case Added(report: Ingest.Report)
 
   def pane: HtmlElement =
     val typed = Var("")
@@ -77,7 +77,7 @@ object DoiForm:
       }
     )
 
-  private def result(r: IngestReport): HtmlElement =
+  private def result(r: Ingest.Report): HtmlElement =
     div(
       cls := "doi-result",
       role := "status",

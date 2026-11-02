@@ -9,11 +9,10 @@ import com.histmersion.domain.library.sources.SourceFixtures
 import com.histmersion.domain.automation.agents.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.ApiError
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
-import com.histmersion.api.library.AcquireChecks.*
+import com.histmersion.api.library.Acquire.Checks.*
 import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.automation.autopilot.AutopilotRepo
 import com.histmersion.util.database.Migrate
@@ -28,7 +27,10 @@ import java.time.Instant
 import com.histmersion.db.*
 import com.histmersion.api.automation.{AgentsApi, Queue}
 import com.histmersion.api.jobs.{JobInfo, JobState}
-import com.histmersion.api.library.{AcquireChecksMarkdown, IngestReport, PdfInfo, SourcePut}
+import com.histmersion.api.library.{AcquireChecksMarkdown, PdfInfo}
+import com.histmersion.api.Api
+import com.histmersion.api.library.Ingest
+import com.histmersion.api.library.Source
 
 /** The acquisition list's legal re-check against a `*_test` database (docs/research-process-managers.md "As built: the
   * acquisition list's re-check"): an item the corpus holds with its text is closed, a metadata-only source is fetched
@@ -73,7 +75,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
   /** The fixture's legal ingest: what `answer` says for each DOI; records the DOI and the source it was asked into. */
   final private class RecheckUpstream extends AgentUpstream:
     @volatile var generation = "g1"
-    @volatile var answer: (String, Option[String]) => Either[String, IngestReport] = (d, _) =>
+    @volatile var answer: (String, Option[String]) => Either[String, Ingest.Report] = (d, _) =>
       Left(s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found — unpaywall: no copy — none")
     val asked = java.util.concurrent.ConcurrentLinkedQueue[(String, Option[String])]()
     def meta(doi: String) = Left("not stubbed")
@@ -104,7 +106,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     up.asked.asScala.toList
   private def found(d: String, ck: String) =
     Right(
-      IngestReport(
+      Ingest.Report(
         ck,
         Some(d),
         Some("found"),
@@ -117,8 +119,8 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     )
 
   /** A pass at once, as the managers' tick runs it (a person's pass of more than one item is a job). */
-  private def passNow(a: AgentsHandlers, in: RecheckRequest): Either[ApiError, RecheckResult] =
-    a.acquireRecheck.pass(in, Instant.now()).toRight(ApiError("a pass is running"))
+  private def passNow(a: AgentsHandlers, in: RecheckRequest): Either[Api.Error, RecheckResult] =
+    a.acquireRecheck.pass(in, Instant.now()).toRight(Api.Error("a pass is running"))
   private def status(h: ServerWiring, id: Int): String =
     h.workListView.list("acquire", all = true).toOption.get.items.find(_.id == id).get.status
 
@@ -128,12 +130,12 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val (a, h, up) = setup()
     assert(
       h.library.sources
-        .put("zzrecheck_full", SourcePut(title = "Full", doi = Some(doi("full")), body = Some("The text.")))
+        .put("zzrecheck_full", Source.Put(title = "Full", doi = Some(doi("full")), body = Some("The text.")))
         .isRight
     )
     assert(
       h.library.sources
-        .put("zzrecheck_meta", SourcePut(title = "Meta", doi = Some(doi("meta")), notes = Some("Compiled.")))
+        .put("zzrecheck_meta", Source.Put(title = "Meta", doi = Some(doi("meta")), notes = Some("Compiled.")))
         .isRight
     )
     val full = item(h, "full"); val meta = item(h, "meta"); val none = item(h, "none")
@@ -326,7 +328,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     a.attach(AgentUpstream.of(acq))
     assert(
       h.library.sources
-        .put("zzrecheck_kept", SourcePut(title = "Kept", doi = Some(doi("oa")), notes = Some("Compiled.")))
+        .put("zzrecheck_kept", Source.Put(title = "Kept", doi = Some(doi("oa")), notes = Some("Compiled.")))
         .isRight
     )
     val oa = item(h, "oa"); val closed = item(h, "closed")
@@ -353,7 +355,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
 
   // ── the re-check job ───────────────────────────────────────────────────────────────────────────
 
-  private def jobOf(r: Either[ApiError, RecheckResult]): JobInfo =
+  private def jobOf(r: Either[Api.Error, RecheckResult]): JobInfo =
     r.fold(e => fail(e.message), res => res.job.getOrElse(fail(s"not a job: $res")))
 
   /** The job once it ended (it runs on its own thread) and its slot is free. */
@@ -374,7 +376,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
   final private class Gate:
     val started = java.util.concurrent.CountDownLatch(1)
     val release = java.util.concurrent.CountDownLatch(1)
-    def hold(d: String): Either[String, IngestReport] =
+    def hold(d: String): Either[String, Ingest.Report] =
       started.countDown()
       val _ = release.await(30, java.util.concurrent.TimeUnit.SECONDS)
       Left(s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found — unpaywall: no copy — none")
@@ -409,7 +411,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(asked(up), Nil)
     assert(
       h.library.sources
-        .put("zzrecheck_full", SourcePut(title = "Full", doi = Some(doi("full")), body = Some("The text.")))
+        .put("zzrecheck_full", Source.Put(title = "Full", doi = Some(doi("full")), body = Some("The text.")))
         .isRight
     )
     val full = item(h, "full")

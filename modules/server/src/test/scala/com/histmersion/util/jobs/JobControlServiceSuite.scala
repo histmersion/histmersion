@@ -4,7 +4,6 @@ import com.histmersion.util.database.Transactor
 
 import com.histmersion.util.jobs.BackgroundJob
 
-import com.histmersion.api.ApiError
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.config.AppConfig
 import com.histmersion.util.database.Migrate
@@ -13,6 +12,7 @@ import com.histmersion.util.jobs.JobRepo
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.util.jobs.Job
+import com.histmersion.api.Api
 
 /** Pause, resume and cancel: the in-memory service, then a long background job on a test database (gated on
   * HISTMERSION_TEST_DB_URL) that stops at a part boundary and, resumed, does only the parts it had not done.
@@ -102,7 +102,7 @@ class JobControlServiceSuite extends com.histmersion.db.DbSuite:
       BackgroundJob.Outcome.done("6/6 parts")
 
   private def service(stops: JobStops) =
-    JobControlService(ds, stops, (_, _) => Left(ApiError("no agent runs here")))
+    JobControlService(ds, stops, (_, _) => Left(Api.Error("no agent runs here")))
 
   dbTest("a paused job stops at a part boundary, keeps its progress, and resumed does only the parts it had not done"):
     val stops = JobStops()

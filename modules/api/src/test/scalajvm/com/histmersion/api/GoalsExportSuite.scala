@@ -1,6 +1,6 @@
 package com.histmersion.api
 
-import com.histmersion.api.automation.GoalPlans.*
+import com.histmersion.api.automation.Goal.Plans.*
 import com.histmersion.api.automation.{Goal, GoalsExport}
 
 /** `meta/GOALS.md` (task #906): the pure renderer. The fixture mirrors the live goals' shape — a few top-level goals

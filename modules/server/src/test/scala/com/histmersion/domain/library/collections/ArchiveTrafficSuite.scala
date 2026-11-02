@@ -2,7 +2,6 @@ package com.histmersion.domain.library.collections
 
 import com.histmersion.server.ServerPlugins
 
-import com.histmersion.api.ApiError
 import com.histmersion.config.{AcquireConfig, AppConfig, LoadedConfig}
 import com.histmersion.pluginhost.{FetchChain, Generation, HttpAnswer, HttpTransport, PolicyHttp}
 import com.histmersion.server.Deps
@@ -14,7 +13,9 @@ import org.ekrich.config.ConfigFactory
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
-import com.histmersion.api.library.{ArchiveFile, ArchiveImportRequest, ArchiveItem, ArchiveSearchResult, IngestReport}
+import com.histmersion.api.library.{ArchiveFile, ArchiveImportRequest, ArchiveItem, ArchiveSearchResult}
+import com.histmersion.api.Api
+import com.histmersion.api.library.Ingest
 
 /** The recorded traffic of `archive search|info|import`: every request the server sends to archive.org for them, on the
   * wire below the outbound policy (URL and every header, in order), and what each answers — the search hits, an item,
@@ -100,7 +101,7 @@ class ArchiveTrafficSuite extends com.histmersion.db.DbSuite:
       wire.out.clear()
       val a = answer
       sb ++= s"## $name\n" + wire.out.result() + a + "\n\n"
-    def show[A: io.circe.Encoder](r: Either[ApiError, A]): String =
+    def show[A: io.circe.Encoder](r: Either[Api.Error, A]): String =
       r.fold(e => s"refused: ${e.message}", _.asJson.spaces2)
     step("archive search bronze")(show(surface.search("bronze", None)))
     step("archive search bronze --rows 2")(show(surface.search("bronze", Some(2))))
@@ -134,9 +135,9 @@ object ArchiveTrafficSuite:
 
   /** The archive.org operations as the server runs them, over the generation `g` (built on `wire`). */
   final case class Surface(
-      search: (String, Option[Int]) => Either[ApiError, ArchiveSearchResult],
-      info: String => Either[ApiError, ArchiveItem],
-      importItem: ArchiveImportRequest => Either[ApiError, IngestReport]
+      search: (String, Option[Int]) => Either[Api.Error, ArchiveSearchResult],
+      info: String => Either[Api.Error, ArchiveItem],
+      importItem: ArchiveImportRequest => Either[Api.Error, Ingest.Report]
   )
 
   def surface(app: AppConfig, ds: javax.sql.DataSource, g: Generation, wire: HttpTransport): Surface =

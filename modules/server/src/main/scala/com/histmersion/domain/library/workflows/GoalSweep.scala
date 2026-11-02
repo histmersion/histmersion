@@ -7,7 +7,7 @@ import com.histmersion.domain.automation.worklists.QueueScope
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.automation.GoalPlans.LinkKind
+import com.histmersion.api.automation.Goal.Plans.LinkKind
 import com.histmersion.api.automation.Queue.QueueAdd
 import io.circe.syntax.*
 import com.histmersion.api.VocabularyCodecs.given

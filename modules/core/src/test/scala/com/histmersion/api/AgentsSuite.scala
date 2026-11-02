@@ -6,7 +6,7 @@ import com.histmersion.config.given
 import com.histmersion.domain.given
 
 import com.histmersion.api.automation.Agents.*
-import com.histmersion.api.automation.{AgentsMarkdown, Goal, GoalPlans, PlanQuota}
+import com.histmersion.api.automation.{AgentsMarkdown, Goal, PlanQuota}
 
 class AgentsSuite extends munit.FunSuite:
 
@@ -153,13 +153,13 @@ class AgentsSuite extends munit.FunSuite:
     assertEquals(Pipeline.AcquisitionSweep.roles, List(Role.Planner))
     assert(ApprovalKind.GoalPlan.blocking && ApprovalKind.ArticlePublish.blocking)
     assert(!ApprovalKind.StatusChange.blocking && !ApprovalKind.Edge.blocking)
-    assertEquals(GoalPlans.ScheduleKind.parse("acquisition").map(_.pipeline), Some(Pipeline.AcquisitionSweep))
+    assertEquals(Goal.Plans.ScheduleKind.parse("acquisition").map(_.pipeline), Some(Pipeline.AcquisitionSweep))
     assertEquals(Origin.parse("scheduler"), Some(Origin.Scheduler))
     // a run stored before P3 reads its new options as absent
     assertEquals(io.circe.parser.decode[RunParams]("""{"fix":true}"""), Right(RunParams(fix = Some(true))))
 
   test("Markdown: a plan and a draft as a person reads them before approving; a goal with its links and schedules"):
-    import com.histmersion.api.automation.GoalPlans.*
+    import com.histmersion.api.automation.Goal.Plans.*
     val plan = Plan(
       "g",
       "covers it",

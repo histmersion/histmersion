@@ -1,9 +1,9 @@
 package com.histmersion.domain.activity
 
-import com.histmersion.api.ApiError
 import com.histmersion.api.automation.Activity
 
 import java.time.Instant
+import com.histmersion.api.Api
 
 /** `GET /api/activity`, the `activity` tool and `histmersion activity`: the filters checked, then a page. */
 final class ActivityControllers(activity: ActivityService, now: () => Instant):
@@ -14,6 +14,6 @@ final class ActivityControllers(activity: ActivityService, now: () => Instant):
       goal: Option[String],
       limit: Option[Int],
       before: Option[String]
-  ): Either[ApiError, Activity.Page] =
+  ): Either[Api.Error, Activity.Page] =
     val at = now()
     ActivityRules.query(show, since, goal, limit, before, at).map(activity.page(_, at))

@@ -13,7 +13,7 @@ import com.augustnagro.magnum.*
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import javax.sql.DataSource
-import com.histmersion.api.catalogue.PlaceImportResult
+import com.histmersion.api.catalogue.Place
 
 /** What the network gazetteers store: each fixture imported through the real runner (download from a loopback server,
   * transform, batch upsert, `finding_places` rebuilt) into a scratch database of its own, then its `places`,
@@ -51,7 +51,7 @@ class GazetteerStoreSuite extends com.histmersion.db.DbSuite:
     PluginGazetteers.http(new HttpTransport:
       def get(url: String, headers: Map[String, String]) = wire.get(loop.local(url), headers))
 
-  private def importOnce(name: String): Either[String, PlaceImportResult] =
+  private def importOnce(name: String): Either[String, Place.ImportResult] =
     val db = com.histmersion.util.database.Transactor(ds)
     ImportRunner.fetchAndImport(
       sources(name),

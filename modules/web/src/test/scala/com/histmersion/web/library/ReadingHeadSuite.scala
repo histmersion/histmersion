@@ -1,14 +1,15 @@
 package com.histmersion.web.library
 
-import com.histmersion.api.library.{FindingRow, SearchHit, SourceDetail, SourceWithFindings}
+import com.histmersion.api.library.SearchHit
 import com.histmersion.api.media.MediaThumb
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.web.map.GeoBounds
 import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Finding
 
 class ReadingHeadSuite extends munit.FunSuite:
 
-  private val detail = SourceDetail(
+  private val detail = com.histmersion.api.library.Source.Detail(
     "cline2014_year",
     "1177 B.C.",
     List("Eric H. Cline"),
@@ -55,19 +56,22 @@ class ReadingHeadSuite extends munit.FunSuite:
     )
 
   test("once read: type · venue · year, the regions in words, the summary trimmed"):
-    val h = ReadingHead.of(SourceWithFindings(detail, Nil))
+    val h = ReadingHead.of(com.histmersion.api.library.Source.WithFindings(detail, Nil))
     assertEquals(h.what, "Book · Princeton University Press · 2014")
     assertEquals(h.regions, "levant · anatolia")
     assertEquals(h.summary, Some("Several pressures together."))
 
   test("an unknown type is left out, not called unknown"):
     val paperless = detail.copy(provenance = None, venue = None)
-    assertEquals(ReadingHead.of(SourceWithFindings(paperless, Nil)).what, "2014")
+    assertEquals(ReadingHead.of(com.histmersion.api.library.Source.WithFindings(paperless, Nil)).what, "2014")
     val cover = MediaThumb("u", MediaRole.Cover, "/x.jpg", "credit")
-    assertEquals(ReadingHead.of(SourceWithFindings(paperless, Nil, illustration = Some(cover))).what, "Book · 2014")
+    assertEquals(
+      ReadingHead.of(com.histmersion.api.library.Source.WithFindings(paperless, Nil, illustration = Some(cover))).what,
+      "Book · 2014"
+    )
 
   test("the map shows the box around a source's located findings; none when none is located"):
-    def f(lat: Option[Double], lon: Option[Double]) = FindingRow("c", None, lon, lat, None, None, None, Nil, None)
+    def f(lat: Option[Double], lon: Option[Double]) = Finding.Row("c", None, lon, lat, None, None, None, Nil, None)
     assertEquals(
       ReadingPane.bounds(List(f(Some(35.6), Some(35.8)), f(Some(40.0), Some(34.6)), f(None, None))),
       Some(GeoBounds(35.6, 34.6, 40.0, 35.8))

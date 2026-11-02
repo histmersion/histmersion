@@ -1,6 +1,6 @@
 package com.histmersion.server.instance
 
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.domain.library.search.QueryAccess
 import com.histmersion.server.Deps
@@ -9,9 +9,11 @@ import com.histmersion.util.data.maintenance.{CacheEvent, CacheName, Maintenance
 import com.histmersion.util.data.maintenance.{MaintenanceTaskName, VacuumJobs}
 
 import java.time.Instant
-import com.histmersion.api.backup.{Backup, BackupInfo, BackupStatus, RestoreRequest, RestoreResult}
+import com.histmersion.api.backup.{Backup, RestoreRequest, RestoreResult}
 import com.histmersion.api.jobs.JobInfo
-import com.histmersion.api.maintenance.{ReindexResult, VacuumRequest}
+import com.histmersion.api.maintenance.ReindexResult
+import com.histmersion.api.Api
+import com.histmersion.api.maintenance.Vacuum
 
 /** This server's upkeep as REST, MCP and the CLI reach it: the backups (a `pg_dump` as a job, its status, the listing
   * and an archive), the restore under the maintenance lock, the vacuum and the reindex the registry runs, and why a
@@ -34,20 +36,20 @@ final class MaintenanceControllers(
   /** `pg_dump -Fc` of the server's own database into `backups.dir`, as a job (see [[BackupJobs]]): the answer is the
     * finished backup, or `running` when it outlasts the request.
     */
-  def backup(): Either[ApiError, BackupStatus] =
+  def backup(): Either[Api.Error, Backup.Status] =
     maintenance.guard("backup")(backupJobs.start(Instant.now()))
 
   /** `POST /api/maintenance/vacuum` (#1445) — VACUUM [(ANALYZE)] of the named tables (default
     * `maintenance.vacuum-tables`) as a job (see [[VacuumJobs]]).
     */
-  def vacuum(in: VacuumRequest): Either[ApiError, JobInfo] = vacuumJobs.start(in)
+  def vacuum(in: Vacuum.Request): Either[Api.Error, JobInfo] = vacuumJobs.start(in)
 
   /** One resumable slice of the FTS chunk rebuild (plan §1.4); loop on `remaining` > 0. */
-  def reindex(after: Option[String], limit: Option[Int]): Either[ApiError, ReindexResult] =
+  def reindex(after: Option[String], limit: Option[Int]): Either[Api.Error, ReindexResult] =
     maintenance.guard("reindex"):
       Deps.data
         .task(MaintenanceTaskName("reindex"))
-        .toRight(ApiError("no reindex is registered"))
+        .toRight(Api.Error("no reindex is registered"))
         .map(
           _.run(MaintenanceSlice(after.map(_.trim).filter(_.nonEmpty), limit.filter(_ > 0)), MaintenanceSite(ds, cfg))
         )
@@ -62,26 +64,26 @@ final class MaintenanceControllers(
     else if vacuumJobs.isRunning then Some("a vacuum is still running")
     else None
 
-  def backupStatus: Either[ApiError, BackupStatus] =
-    backupJobs.status.toRight(ApiError("no backup has run since the server started", Some(Write.CodeNotFound)))
+  def backupStatus: Either[Api.Error, Backup.Status] =
+    backupJobs.status.toRight(Api.Error("no backup has run since the server started", Some(Write.CodeNotFound)))
 
-  def backupList: Either[ApiError, List[BackupInfo]] = backups.list
+  def backupList: Either[Api.Error, List[Backup.Info]] = backups.list
 
   /** The archive itself, for `GET /api/backups/{file}` — validated against the listing first. */
-  def backupFile(file: String): Either[ApiError, java.io.File] = backups.archive(file)
+  def backupFile(file: String): Either[Api.Error, java.io.File] = backups.archive(file)
 
   /** Restore under the maintenance lock: every other write is answered 503 until it returns. Refuses a database that
     * still holds sources unless `force` (`pg_restore --clean` DROPS them), and re-validates the schema with Flyway
     * afterwards so a stale dump cannot pass silently.
     */
-  def restore(req: RestoreRequest): Either[ApiError, RestoreResult] =
+  def restore(req: RestoreRequest): Either[Api.Error, RestoreResult] =
     if backupJobs.running then
       Left(
-        ApiError("a backup is still running — wait for `histmersion backup` to finish", Some(Backup.CodeMaintenance))
+        Api.Error("a backup is still running — wait for `histmersion backup` to finish", Some(Backup.CodeMaintenance))
       )
     else if vacuumJobs.isRunning then
       Left(
-        ApiError(
+        Api.Error(
           "a vacuum is still running — wait for its job (`histmersion jobs`) to finish",
           Some(Backup.CodeMaintenance)
         )
@@ -94,7 +96,7 @@ final class MaintenanceControllers(
         try restoreNow(req)
         finally resumeIngest()
 
-  private def restoreNow(req: RestoreRequest): Either[ApiError, RestoreResult] =
+  private def restoreNow(req: RestoreRequest): Either[Api.Error, RestoreResult] =
     val before = backups.guardedRows
     for
       archive <- backups.resolve(req.file)
@@ -110,7 +112,7 @@ final class MaintenanceControllers(
         .Try(Migrate.run(ds))
         .toEither
         .left
-        .map(e => ApiError(s"restored ${req.file}, but migrating it failed: ${e.getMessage}"))
+        .map(e => Api.Error(s"restored ${req.file}, but migrating it failed: ${e.getMessage}"))
       _ = Db.ensureDatabaseSettings(ds)
       role = QueryAccess
         .provision(ds, cfg.query)
@@ -121,7 +123,7 @@ final class MaintenanceControllers(
       _ = { Db.evict(ds); Db.evict(deps.queryDs) }
       // the restored versions of what the map's tiles read may be ones the kept tiles were cut under
       _ = clearOnRestore()
-      v <- Migrate.validate(ds).left.map(m => ApiError(s"restored ${req.file}, but the schema does not validate: $m"))
+      v <- Migrate.validate(ds).left.map(m => Api.Error(s"restored ${req.file}, but the schema does not validate: $m"))
     yield RestoreResult(req.file, v, before, backups.guardedRows, r._1, r._2 ++ role)
 
   /** The registered caches a restore makes stale, cleared: what this server holds of each. */

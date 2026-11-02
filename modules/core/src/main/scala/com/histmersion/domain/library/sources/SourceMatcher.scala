@@ -4,7 +4,6 @@ import com.histmersion.domain.MergeSettings
 import com.histmersion.util.data.exchange.MatchWeights
 
 import scala.annotation.tailrec
-import com.histmersion.api.exchange.BundleSource
 import com.histmersion.api.given
 
 import MergeText.AuthorAgreement
@@ -12,6 +11,7 @@ import com.histmersion.util.text.MinHash
 
 import java.util.UUID
 import com.histmersion.domain.library.EditionsPolicy
+import com.histmersion.api.exchange.Bundle
 
 /** Is a bundle's source the same work as one here? (docs/research-merge-import.md §5.2, stages B–D.) Pure.
   *
@@ -28,7 +28,7 @@ import com.histmersion.domain.library.EditionsPolicy
 object SourceMatcher:
 
   /** A source with the old citekeys (aliases) that still name it. */
-  final case class Side(source: BundleSource, aliases: Set[String]):
+  final case class Side(source: Bundle.Source, aliases: Set[String]):
     def uid: UUID = source.uid
     def labels: Set[String] = aliases + source.citekey
 
@@ -69,9 +69,9 @@ object SourceMatcher:
       s.labels.map("k:" + _) ++
       doi(src).map("d:" + _) ++ sha(src).map("h:" + _) ++ isbns(src).map("i:" + _)
 
-  private def doi(s: BundleSource): Option[String] = s.doi.flatMap(MergeText.doiKey)
-  private def sha(s: BundleSource): Option[String] = s.originalSha256.map(_.trim.toLowerCase).filter(_.nonEmpty)
-  private def isbns(s: BundleSource): Set[String] = s.isbns.getOrElse(Nil).flatMap(MergeText.isbn13).toSet
+  private def doi(s: Bundle.Source): Option[String] = s.doi.flatMap(MergeText.doiKey)
+  private def sha(s: Bundle.Source): Option[String] = s.originalSha256.map(_.trim.toLowerCase).filter(_.nonEmpty)
+  private def isbns(s: Bundle.Source): Set[String] = s.isbns.getOrElse(Nil).flatMap(MergeText.isbn13).toSet
 
   // ── stage B + D ─────────────────────────────────────────────────────────────────────────────
 

@@ -2,16 +2,16 @@ package com.histmersion.web
 
 import com.histmersion.api.ListPatch
 import SourceEditor.{Draft, Field}
-import com.histmersion.api.catalogue.PeriodInput
-import com.histmersion.api.library.{MetadataPatch, SourceDetail}
+import com.histmersion.api.library.MetadataPatch
 import com.histmersion.domain.library.Source
+import com.histmersion.api.catalogue.Period
 
 /** The metadata editor's pure half: the form ↔ patch mapping (only what changed, with the precondition), BCE/CE years,
   * and where a server refusal is shown.
   */
 class SourceEditorSuite extends munit.FunSuite:
 
-  private val orig = SourceDetail(
+  private val orig = com.histmersion.api.library.Source.Detail(
     citekey = "anthony2007_horse",
     title = "The Horse, the Wheel, and Language",
     authors = List("David W. Anthony"),
@@ -55,7 +55,7 @@ class SourceEditorSuite extends munit.FunSuite:
     val p = SourceEditor.toPatch(orig, d).toOption.flatten.get
     assertEquals(p.metadata, Some(MetadataPatch(title = Some("The Horse"), status = Some(Source.Status.Contested))))
     assertEquals(p.tags, Some(ListPatch(add = List("wheel"), remove = List("steppe"))))
-    assertEquals(p.period, Some(PeriodInput(-4200, -3000)))
+    assertEquals(p.period, Some(Period.Input(-4200, -3000)))
     assertEquals(p.topics, None)
     assertEquals(p.regions, None)
     assertEquals(p.summary, None)
@@ -74,7 +74,7 @@ class SourceEditorSuite extends munit.FunSuite:
     assertEquals(p.topics, Some(List("pie_origins", "domestication")))
     assertEquals(p.regions, Some(Nil))
     assertEquals(p.metadata.flatMap(_.doi), Some("10.1515/9781400831104"))
-    assertEquals(p.period, Some(PeriodInput(-100, 200)))
+    assertEquals(p.period, Some(Period.Input(-100, 200)))
   }
 
   test("what the patch cannot express, or the server would refuse, is caught per field") {

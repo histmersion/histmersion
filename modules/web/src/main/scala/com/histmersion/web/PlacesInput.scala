@@ -13,10 +13,10 @@ import scala.scalajs.js.JSConverters.*
 import scala.util.{Failure, Success}
 
 import com.raquo.laminar.codecs.StringAsIsCodec
-import com.histmersion.api.catalogue.PlaceHit
 import com.histmersion.api.instance.UiConfig
 import com.histmersion.api.library.Label
 import com.histmersion.api.views.PlaceDetail
+import com.histmersion.api.catalogue.Place
 
 /** Gazetteer place picker for the filter bar. Ported from places.js (241 lines).
   *
@@ -144,7 +144,7 @@ object PlacesInput:
       val q = inputEl.value.trim
       if q.isEmpty then close()
       else
-        val show: List[PlaceHit] => Unit = rows =>
+        val show: List[Place.Hit] => Unit = rows =>
           if inputEl == null || dom.document.activeElement != inputEl then ()
           else
             val gaz = Option(rows)

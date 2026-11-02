@@ -1,27 +1,27 @@
 package com.histmersion.domain.automation.worklists
 
 import com.histmersion.util.database.given
-import com.histmersion.api.exchange.BundleQueueItem
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.database.Sql
 import com.histmersion.util.data.exchange.BundleScope
 import com.histmersion.util.data.exchange.BundleSql.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.api.exchange.Bundle
 
 /** What a bundle carries of the work lists: their items, read as the bundle's lines by uid, and the import's step that
   * writes them.
   */
 object QueueBundleRepo:
 
-  def queue(scope: BundleScope)(using DbCon): Vector[BundleQueueItem] =
+  def queue(scope: BundleScope)(using DbCon): Vector[Bundle.QueueItem] =
     (Sql.raw(s"""SELECT q.uid, q.origin, q.list, q.text, q.topic, q.status, q.reason,
                        ${ts("q.created_at")}, ${ts("q.done_at")}, ${ts("q.updated_at")}
                 FROM queue_items q WHERE """) ++ where(scope, "q.uid", "q.updated_at") ++ " ORDER BY q.uid").frag
       .query[BQueueRow]
       .run()
       .map { r =>
-        BundleQueueItem(
+        Bundle.QueueItem(
           r.uid,
           r.origin,
           r.list,

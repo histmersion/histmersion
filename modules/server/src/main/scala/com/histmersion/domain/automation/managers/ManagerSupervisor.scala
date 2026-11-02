@@ -11,7 +11,7 @@ import com.histmersion.domain.automation.scheduler.SchedulerService
 import com.histmersion.domain.automation.worklists.WorkListControllers
 
 import com.augustnagro.magnum.transact
-import com.histmersion.api.{ApiError, Plural}
+import com.histmersion.api.Plural
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
@@ -23,7 +23,9 @@ import com.histmersion.domain.automation.managers.ManagerRepo
 import java.time.Instant
 import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
 import javax.sql.DataSource
-import com.histmersion.api.automation.{Agents, GoalPlans, Queue}
+import com.histmersion.api.automation.{Agents, Queue}
+import com.histmersion.api.Api
+import com.histmersion.api.automation.Goal
 
 /** The process managers' supervisor (docs/research-process-managers.md §3): a daemon thread that ticks every
   * `agents.managers.tick-seconds`, and at once when a manager's run settles ([[Engine.onSettled]] → [[nudge]]). One
@@ -753,8 +755,8 @@ final class ManagerSupervisor(
         now: Instant,
         out: collection.mutable.Builder[String, List[String]]
     ): Option[String] = None
-    def target(m: ManagerInfo, itemKind: String, raw: String): Either[ApiError, String] =
-      Left(ApiError(s"unknown item kind '$itemKind'"))
+    def target(m: ManagerInfo, itemKind: String, raw: String): Either[Api.Error, String] =
+      Left(Api.Error(s"unknown item kind '$itemKind'"))
     def pipelineOf(itemKind: String): Pipeline = ManagerSupervisor.this.pipelineOf(itemKind)
     def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig = ManagerConfig()
 
@@ -825,9 +827,9 @@ final class ManagerSupervisor(
   def runsFor(p: Pipeline, target: String): Seq[RunInfo] = agents.runs.forTarget(p, target)
   def slugExists(slug: String): Boolean = agents.host.articleExists(slug)
   def parentOf(slug: String): Option[String] = agents.goals.get(slug).flatMap(_.parentSlug)
-  def linkGoal(goal: String, kind: GoalPlans.LinkKind, ref: String, note: Option[String]): Unit =
+  def linkGoal(goal: String, kind: Goal.Plans.LinkKind, ref: String, note: Option[String]): Unit =
     val _ = agents.goals.link(goal, kind, ref, note)
-  def goalLinks(goal: String, kind: GoalPlans.LinkKind): List[String] =
+  def goalLinks(goal: String, kind: Goal.Plans.LinkKind): List[String] =
     agents.goals.links(goal).filter(_.kind == kind).map(_.ref)
   def sharedIngestLeft(now: Instant): Option[Int] = agents.autopilot.sharedIngestLeft(now)
   def autopilotSoon(): Unit = agents.autopilot.soon()

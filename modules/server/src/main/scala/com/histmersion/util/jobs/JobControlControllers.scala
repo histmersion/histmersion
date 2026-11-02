@@ -1,13 +1,13 @@
 package com.histmersion.util.jobs
 
-import com.histmersion.api.ApiError
 import com.histmersion.api.jobs.JobInfo
+import com.histmersion.api.Api
 
 /** `POST /api/jobs/{id}/{action}`, the `job_control` tool and `histmersion jobs pause|resume|cancel`. */
 final class JobControlControllers(jobs: JobControlService):
 
-  def control(id: String, action: String): Either[ApiError, JobInfo] =
+  def control(id: String, action: String): Either[Api.Error, JobInfo] =
     JobAction
       .parse(action)
-      .toRight(ApiError(s"unknown action '$action' — one of: ${JobAction.values.map(_.wire).mkString(", ")}"))
+      .toRight(Api.Error(s"unknown action '$action' — one of: ${JobAction.values.map(_.wire).mkString(", ")}"))
       .flatMap(jobs.control(id.trim, _))

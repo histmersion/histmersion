@@ -12,14 +12,8 @@ import io.circe.Codec
 import sttp.tapir.Schema
 import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.library.Filter
-import com.histmersion.api.research.{
-  ArticleCoverage,
-  ArticleEdits,
-  ArticleMarkdown,
-  ArticlePatch,
-  ArticlePut,
-  ArticleReviewView
-}
+import com.histmersion.api.research.ArticleMarkdown
+import com.histmersion.api.research.Article
 
 /** The articles' MCP tools, in their place among `/mcp`'s: the list, one article read, its writes, a draft checked, its
   * coverage and review, its note and its versions. The delete is deliberately not a tool: dropping compiled knowledge
@@ -262,7 +256,7 @@ object ArticleTools:
 
   /** `article_coverage`: the one handler, rendered. */
   def articleCoverageMarkdown(articles: ArticlesControllers, in: ArticleCoverageInput): String =
-    articles.coverage(in.slug).fold(McpOut.refusal, ArticleCoverage.markdown)
+    articles.coverage(in.slug).fold(McpOut.refusal, Article.Coverage.markdown)
 
   /** `article_review` as `/mcp` describes it. */
   val ArticleReviewDoc: String =
@@ -275,7 +269,7 @@ object ArticleTools:
 
   /** `article_review`: the one handler, rendered. */
   def articleReviewMarkdown(articles: ArticlesControllers, in: ArticleReviewInput): String =
-    articles.review(in.slug).fold(McpOut.refusal, ArticleReviewView.markdown)
+    articles.review(in.slug).fold(McpOut.refusal, Article.ReviewView.markdown)
 
   final case class ArticleReviewInput(slug: String) derives KindlingsCodecAsObject
   object ArticleReviewInput:
@@ -304,12 +298,12 @@ object ArticleTools:
   /** `check_edits`: the one handler, rendered. */
   def checkEdits(articles: ArticlesControllers, in: CheckEditsInput): String =
     articles
-      .check(in.slug, ArticleEdits.ArticleCheckRequest(in.edits, in.body, in.kind))
-      .fold(McpOut.refusal, ArticleEdits.markdown)
+      .check(in.slug, Article.Edits.ArticleCheckRequest(in.edits, in.body, in.kind))
+      .fold(McpOut.refusal, Article.Edits.markdown)
 
   final case class CheckEditsInput(
       slug: String,
-      edits: List[ArticleEdits.EditAnswer] = Nil,
+      edits: List[Article.Edits.EditAnswer] = Nil,
       body: Option[String] = None,
       kind: Option[String] = None
   ) derives KindlingsCodecAsObject
@@ -326,7 +320,7 @@ object ArticleTools:
         )
       )
 
-  final case class PutArticleInput(slug: String, article: ArticlePut, strict: Boolean = false)
+  final case class PutArticleInput(slug: String, article: Article.Put, strict: Boolean = false)
   object PutArticleInput:
     given Schema[PutArticleInput] = KindlingsSchema
       .derived[PutArticleInput]
@@ -334,7 +328,7 @@ object ArticleTools:
       .modify(_.strict)(_.description(com.histmersion.domain.library.LibraryTools.StrictDoc))
     given Codec.AsObject[PutArticleInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PutArticleInput]) // #813
 
-  final case class PatchArticleInput(slug: String, patch: ArticlePatch, strict: Boolean = false)
+  final case class PatchArticleInput(slug: String, patch: Article.Patch, strict: Boolean = false)
   object PatchArticleInput:
     given Schema[PatchArticleInput] = KindlingsSchema
       .derived[PatchArticleInput]

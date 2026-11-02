@@ -2,19 +2,20 @@ package com.histmersion.util.jobs
 
 import com.histmersion.util.database.Transactor
 
-import com.histmersion.api.{ApiError, Paging, Write}
+import com.histmersion.api.{Paging, Write}
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.config.AppConfig
 
 import javax.sql.DataSource
+import com.histmersion.api.Api
 
 /** The background jobs as `job_status` and `GET /api/jobs` list them: one job, or a page newest first under a query,
   * with the per-state and per-kind counts under the same query.
   */
 final class JobListing(ds: DataSource, cfg: () => AppConfig):
 
-  def job(id: String): Either[ApiError, JobInfo] =
-    Transactor(ds).read(JobRepo.get(id)).toRight(ApiError(s"No job '$id'", Some(Write.CodeNotFound)))
+  def job(id: String): Either[Api.Error, JobInfo] =
+    Transactor(ds).read(JobRepo.get(id)).toRight(Api.Error(s"No job '$id'", Some(Write.CodeNotFound)))
 
   def jobs(status: Option[String], limit: Option[Int]): List[JobInfo] =
     val c = cfg()
@@ -29,12 +30,12 @@ final class JobListing(ds: DataSource, cfg: () => AppConfig):
       before: Option[String],
       upTo: Option[String],
       facetMax: Int
-  ): Either[ApiError, (List[JobInfo], Paging.Page)] =
+  ): Either[Api.Error, (List[JobInfo], Paging.Page)] =
     val c = cfg()
     Transactor(ds)
       .read(JobRepo.page(q, c.limits.page(limit, c.limits.search), clean(before), clean(upTo)))
       .left
-      .map(ApiError(_, Some(Write.CodeNotFound)))
+      .map(Api.Error(_, Some(Write.CodeNotFound)))
       .map { (rows, more) =>
         val (counts, facets) = Transactor(ds).read(JobRepo.facets(q, facetMax))
         (rows.toList, Paging.Page.filtered(counts, q.status, Option.when(more)(rows.last.id), facets))

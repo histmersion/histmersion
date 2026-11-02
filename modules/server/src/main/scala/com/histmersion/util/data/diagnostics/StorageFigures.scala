@@ -1,9 +1,7 @@
 package com.histmersion.util.data.diagnostics
 
 import com.histmersion.api.{Plural, TableSize}
-import com.histmersion.api.backup.{Backup, BackupInfo, BackupsUsage}
-import com.histmersion.api.basemap.BasemapLayer
-import com.histmersion.api.maintenance.{StorageAdvice, StorageEntry, StorageReport, StorageVolume}
+import com.histmersion.api.backup.{Backup, BackupsUsage}
 import com.histmersion.api.maintenance.Storage as StorageReports
 import com.histmersion.config.AppConfig
 import com.histmersion.util.data.DataContributions
@@ -11,6 +9,7 @@ import com.histmersion.util.data.maintenance.{CacheHolding, CacheSpec}
 import com.histmersion.util.storage.{Location, MeasureBudget, Storage, Store, StoreKey}
 
 import java.time.Instant
+import com.histmersion.api.basemap.Basemap
 
 /** The Storage part of About, from the registry: an entry for every store an owner registered and every place of the
   * install, where `storage` puts them, each measured with a bounded walk (`MeasureBudget`); the database's size and its
@@ -69,7 +68,7 @@ final class StorageFigures(registry: DataContributions):
 
   /** The base-map files, one by one, an unfinished download (`.<layer>.part`), and the registered caches it holds. */
   private def basemapDetail(store: Store, budget: MeasureBudget): Option[String] =
-    val parts = BasemapLayer.values.toList.flatMap { l =>
+    val parts = Basemap.Layer.values.toList.flatMap { l =>
       val file = StoreKey.applyUnsafe(l.file)
       val part = StoreKey.applyUnsafe(s".${l.wire}.part")
       Option.when(store.isFile(file))(
@@ -91,10 +90,10 @@ final class StorageFigures(registry: DataContributions):
       installed: List[Location],
       settings: AppConfig,
       database: Option[DiagnosticsService],
-      backups: => Either[String, List[BackupInfo]],
+      backups: => Either[String, List[Backup.Info]],
       budget: MeasureBudget,
       now: () => Instant = () => Instant.now()
-  ): StorageReport =
+  ): com.histmersion.api.maintenance.Storage.Report =
     val started = System.nanoTime()
     val spotted = spots(storage, installed)
     val problems = List.newBuilder[String]
@@ -104,7 +103,7 @@ final class StorageFigures(registry: DataContributions):
       val unread = results.map(_.unreadable).sum
       if unread > 0 then problems += s"${spot.label}: ${Plural.count(unread, "entry", "entries")} could not be read"
       val extra = if spot.key == ShownStore.Basemap.key then spot.shown.flatMap(basemapDetail(_, budget)) else None
-      StorageEntry(
+      com.histmersion.api.maintenance.Storage.Entry(
         key = spot.key,
         label = spot.label,
         group = spot.group,
@@ -114,7 +113,7 @@ final class StorageFigures(registry: DataContributions):
         exists = exists,
         partial = results.exists(_.partial),
         detail = (spot.detail.toList ++ extra.toList).reduceOption(_ + " · " + _),
-        shrink = StorageAdvice.shrink(spot.key, settings.backups.keep),
+        shrink = com.histmersion.api.maintenance.Storage.Advice.shrink(spot.key, settings.backups.keep),
         volume = spot.stores.headOption.flatMap(_.volume).map(_.id)
       )
     }
@@ -126,41 +125,42 @@ final class StorageFigures(registry: DataContributions):
       .map(_.head)
       .toList
       .sortBy(_.id)
-      .map(v => StorageVolume(v.id, v.total.value, v.usable.value))
-    val (dbEntry, tables) = database.fold((Option.empty[StorageEntry], List.empty[TableSize])) { d =>
-      val size = scala.util.Try(d.databaseSize).toEither.left.map(e => s"database size: ${e.getMessage}")
-      val top = scala.util
-        .Try(d.largestTables(settings.storage.topTables))
-        .toEither
-        .left
-        .map(e => s"largest tables: ${e.getMessage}")
-      size.left.foreach(problems += _)
-      top.left.foreach(problems += _)
-      (
-        Some(
-          StorageEntry(
-            "database",
-            "database (Postgres)",
-            "database",
-            bytes = size.toOption.map(_._2.value),
-            exists = size.isRight,
-            within = Option.when(measured.exists(e => e.key == ShownStore.DatabaseCluster.key && e.exists))(
-              ShownStore.DatabaseCluster.key
-            ),
-            detail = size.toOption.map(_._1),
-            shrink = StorageAdvice.shrink("database", settings.backups.keep)
-          )
-        ),
-        top.getOrElse(Nil)
-      )
-    }
+      .map(v => com.histmersion.api.maintenance.Storage.Volume(v.id, v.total.value, v.usable.value))
+    val (dbEntry, tables) =
+      database.fold((Option.empty[com.histmersion.api.maintenance.Storage.Entry], List.empty[TableSize])) { d =>
+        val size = scala.util.Try(d.databaseSize).toEither.left.map(e => s"database size: ${e.getMessage}")
+        val top = scala.util
+          .Try(d.largestTables(settings.storage.topTables))
+          .toEither
+          .left
+          .map(e => s"largest tables: ${e.getMessage}")
+        size.left.foreach(problems += _)
+        top.left.foreach(problems += _)
+        (
+          Some(
+            com.histmersion.api.maintenance.Storage.Entry(
+              "database",
+              "database (Postgres)",
+              "database",
+              bytes = size.toOption.map(_._2.value),
+              exists = size.isRight,
+              within = Option.when(measured.exists(e => e.key == ShownStore.DatabaseCluster.key && e.exists))(
+                ShownStore.DatabaseCluster.key
+              ),
+              detail = size.toOption.map(_._1),
+              shrink = com.histmersion.api.maintenance.Storage.Advice.shrink("database", settings.backups.keep)
+            )
+          ),
+          top.getOrElse(Nil)
+        )
+      }
     val listed = backups
     listed.left.foreach(e => problems += s"backups: $e")
     val usage =
       listed.toOption.map(bs =>
         BackupsUsage(bs.size, bs.map(_.bytes).sum, bs.headOption.map(_.file), settings.backups.keep)
       )
-    val report = StorageReport(
+    val report = com.histmersion.api.maintenance.Storage.Report(
       measuredAt = Some(now().toString),
       tookMillis = Some((System.nanoTime() - started) / 1_000_000L),
       entries = StorageReports.nest(dbEntry.toList ++ measured),

@@ -3,8 +3,9 @@ package com.histmersion.cli
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.config.*
-import com.histmersion.api.basemap.{BasemapFetchQuery, BasemapMarkdown, BasemapRemoveQuery}
+import com.histmersion.api.basemap.BasemapMarkdown
 import com.histmersion.api.jobs.JobDetail
+import com.histmersion.api.basemap.Basemap
 
 /** `histmersion basemap status|fetch|rm` — the local base map's extracts on the SERVER's machine
   * (docs/user-guide/how-to/open-data.md): what is there (and which of the two styles it draws whole), downloading them
@@ -62,7 +63,7 @@ object BasemapCmd:
     )
       .mapN { (layer, z, tz, bbox, focus, dry, keepAll, noWait) => (c: Client) =>
         c.basemapFetch(
-          BasemapFetchQuery(if focus.isDefined then "terrain" else layer, z, tz, bbox, dry, keepAll, focus)
+          Basemap.FetchQuery(if focus.isDefined then "terrain" else layer, z, tz, bbox, dry, keepAll, focus)
         ).flatMap { j =>
           println(
             s"base-map job `${j.id}` started: ${j.detail.flatMap(JobDetail.Purpose.of).getOrElse("")} (`histmersion jobs` lists it)"
@@ -93,7 +94,7 @@ object BasemapCmd:
         .orFalse
     ).mapN { (layer, focus, cache) => (c: Client) =>
       val l = layer.getOrElse(if focus.isDefined || cache then "none" else "all")
-      c.basemapRemove(BasemapRemoveQuery(l, focus, cache)).map(r => println(BasemapMarkdown.removed(r)))
+      c.basemapRemove(Basemap.RemoveQuery(l, focus, cache)).map(r => println(BasemapMarkdown.removed(r)))
     }
   }
 

@@ -1,38 +1,12 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.catalogue.PlaceEntry
-
 import com.histmersion.api.aliases.LabelRename
 import com.histmersion.api.aliases.LabelRenames
 import com.histmersion.api.aliases.LabelRenamed
 import com.histmersion.api.aliases.AliasKinds
 
-import com.histmersion.api.{Api, ApiError, Dataset, GeoPick}
-import com.histmersion.api.catalogue.{
-  Geocode,
-  Lpf,
-  ManualPlaceName,
-  Period,
-  PlaceAdd,
-  PlaceEdits,
-  PlaceFootprint,
-  PlaceGone,
-  PlaceHit,
-  PlaceImportResult,
-  PlaceLink,
-  PlaceMergeIn,
-  PlaceNameAdd,
-  PlaceNameChanged,
-  PlaceNameRemove,
-  PlaceOverride,
-  PlaceOverrideChanged,
-  PlaceOverrides,
-  PlaceOverrideSet,
-  PlaceRebuildResult,
-  PlaceRemoveIn,
-  PlaceSummary,
-  PlaceTreeRow
-}
+import com.histmersion.api.{Api, Dataset, GeoPick}
+import com.histmersion.api.catalogue.{Geocode, Lpf, ManualPlaceName, Period}
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.Caller
 import com.histmersion.util.data.maintenance.WriteGate
@@ -70,27 +44,31 @@ final class PlacesControllers(
     geocoder.resolve(name, hint, at, cfg().places.geocodePlaceholderMin)
 
   /** `GET /api/places` — name search; `limit <= 0` means the configured `places.search-limit`. */
-  def search(q: Option[String], asOf: Option[Long], n: Option[Int]): List[PlaceHit] =
+  def search(q: Option[String], asOf: Option[Long], n: Option[Int]): List[com.histmersion.api.catalogue.Place.Hit] =
     places.search(q, asOf, limit(n, cfg().places.searchLimit), modernFrom)
 
   /** `GET /api/places/geo` — the map layers' shapes for the time [[GeoPick.resolve]] makes of the query. */
-  def shapes(q: Api.PlacesGeoQuery): Either[ApiError, String] =
+  def shapes(q: Api.PlacesGeoQuery): Either[Api.Error, String] =
     q.pick.map(_.trim).filter(_.nonEmpty) match
       case Some(p) if GeoPick.parse(p).isEmpty =>
-        Left(ApiError(s"unknown pick '$p': one of ${GeoPick.values.map(_.wire).mkString(", ")}"))
+        Left(Api.Error(s"unknown pick '$p': one of ${GeoPick.values.map(_.wire).mkString(", ")}"))
       case p =>
         val time = GeoPick.resolve(q.asOf, q.from, q.to, p.flatMap(GeoPick.parse).getOrElse(GeoPick.Mid))
         Right(shapes.shapes(q.kind, time, cfg().places.geoLimit(q.limit, 100), modernFrom))
 
   /** `GET /api/places/{id}` — the row, its GeoJSON geometry and the hierarchy around it at `asOf`. */
-  def get(id: String, asOf: Option[Long]): Either[ApiError, PlaceEntry] =
-    places.get(placeId(id), asOf, modernFrom).toRight(ApiError(s"No place '$id'"))
+  def get(id: String, asOf: Option[Long]): Either[Api.Error, com.histmersion.api.catalogue.Place.Entry] =
+    places.get(placeId(id), asOf, modernFrom).toRight(Api.Error(s"No place '$id'"))
 
-  def children(id: String, asOf: Option[Long]): Either[ApiError, List[PlaceSummary]] =
+  def children(id: String, asOf: Option[Long]): Either[Api.Error, List[com.histmersion.api.catalogue.Place.Summary]] =
     get(id, asOf).map(d => places.children(d.place.id, asOf, cfg().places.childrenLimit, modernFrom))
 
   /** The subtree under one place, depth-tagged; `depth <= 0` means the configured `places.tree-depth`. */
-  def tree(id: String, asOf: Option[Long], depth: Option[Int]): Either[ApiError, List[PlaceTreeRow]] =
+  def tree(
+      id: String,
+      asOf: Option[Long],
+      depth: Option[Int]
+  ): Either[Api.Error, List[com.histmersion.api.catalogue.Place.TreeRow]] =
     get(id, asOf).map(d =>
       places.hierarchy(
         asOf,
@@ -102,12 +80,15 @@ final class PlacesControllers(
       )
     )
 
-  def footprints(id: String, asOf: Option[Long]): Either[ApiError, List[PlaceFootprint]] =
+  def footprints(
+      id: String,
+      asOf: Option[Long]
+  ): Either[Api.Error, List[com.histmersion.api.catalogue.Place.Footprint]] =
     get(id, asOf).map(d => places.footprints(d.place.id, asOf))
 
-  def links(id: String): Either[ApiError, List[PlaceLink]] =
+  def links(id: String): Either[Api.Error, List[com.histmersion.api.catalogue.Place.Link]] =
     val now = placeId(id)
-    places.get(now, None, modernFrom).map(_ => places.links(now)).toRight(ApiError(s"No place '$id'"))
+    places.get(now, None, modernFrom).map(_ => places.links(now)).toRight(Api.Error(s"No place '$id'"))
 
   /** `POST /api/places/import` — an LPF document or a plain GeoJSON FeatureCollection. Parsing is pure ([[Lpf]]) and
     * all-or-nothing: a malformed document is a 400, never a half import.
@@ -117,32 +98,40 @@ final class PlacesControllers(
       kind: Option[String],
       dataset: Option[String],
       body: String
-  ): Either[ApiError, PlaceImportResult] =
+  ): Either[Api.Error, com.histmersion.api.catalogue.Place.ImportResult] =
     maintenance.guard("places/import"):
       val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(Place.Kind.Region)
       if !Place.Kind.all.contains(k) then
-        Left(ApiError(s"unknown kind '$k' (one of: ${Place.Kind.all.mkString(", ")})"))
+        Left(Api.Error(s"unknown kind '$k' (one of: ${Place.Kind.all.mkString(", ")})"))
       else
         for
           set <- Dataset.ofParam(dataset)
-          in <- Lpf.parse(body, k).left.map(ApiError(_))
+          in <- Lpf.parse(body, k).left.map(Api.Error(_))
         yield places.importPlaces(in, set)
 
   /** `POST /api/places/{id}/names` (#987) — a name a person gives a place, stored as MANUAL: no re-seed deletes it. */
-  def addName(caller: Caller, id: String, in: PlaceNameAdd): Either[ApiError, PlaceNameChanged] =
+  def addName(
+      caller: Caller,
+      id: String,
+      in: com.histmersion.api.catalogue.Place.NameAdd
+  ): Either[Api.Error, com.histmersion.api.catalogue.Place.NameChanged] =
     maintenance.guard("places/names/add"):
       for
-        n <- PlaceEdits.name(in.name)
-        l <- PlaceEdits.lang(in.lang)
+        n <- com.histmersion.api.catalogue.Place.Edits.name(in.name)
+        l <- com.histmersion.api.catalogue.Place.Edits.lang(in.lang)
         r <- places.addName(placeId(id.trim), n, l)
       yield r
 
   /** `POST /api/places/{id}/names/remove` — only a name a person added; an imported one is refused. */
-  def removeName(caller: Caller, id: String, in: PlaceNameRemove): Either[ApiError, PlaceNameChanged] =
+  def removeName(
+      caller: Caller,
+      id: String,
+      in: com.histmersion.api.catalogue.Place.NameRemove
+  ): Either[Api.Error, com.histmersion.api.catalogue.Place.NameChanged] =
     maintenance.guard("places/names/remove"):
       for
-        n <- PlaceEdits.name(in.name)
-        l <- PlaceEdits.lang(in.lang)
+        n <- com.histmersion.api.catalogue.Place.Edits.name(in.name)
+        l <- com.histmersion.api.catalogue.Place.Edits.lang(in.lang)
         r <- places.removeName(placeId(id.trim), n, l)
       yield r
 
@@ -152,29 +141,48 @@ final class PlacesControllers(
   /** `POST /api/places/{id}/override` (V080) — a person's kind, period and/or point for a place, kept by every
     * re-import, or `reset` back to the source's; the place's findings are matched again at once.
     */
-  def setOverride(caller: Caller, id: String, in: PlaceOverrideSet): Either[ApiError, PlaceOverrideChanged] =
+  def setOverride(
+      caller: Caller,
+      id: String,
+      in: com.histmersion.api.catalogue.Place.OverrideSet
+  ): Either[Api.Error, com.histmersion.api.catalogue.Place.OverrideChanged] =
     maintenance.guard("places/override"):
-      PlaceOverrides.edit(in).flatMap(e => places.setOverride(placeId(id.trim), e, tolKm))
+      com.histmersion.api.catalogue.Place.Overrides
+        .edit(in)
+        .flatMap(e => places.setOverride(placeId(id.trim), e, tolKm))
 
   /** `POST /api/places/{id}/merge` (V080) — the place is `into`; its id resolves there from then on. */
-  def merge(caller: Caller, id: String, in: PlaceMergeIn): Either[ApiError, PlaceGone] =
+  def merge(
+      caller: Caller,
+      id: String,
+      in: com.histmersion.api.catalogue.Place.MergeIn
+  ): Either[Api.Error, com.histmersion.api.catalogue.Place.Gone] =
     maintenance.guard("places/merge"):
-      PlaceOverrides.reason(in.reason).flatMap(_ => places.merge(placeId(id.trim), placeId(in.into.trim), tolKm))
+      com.histmersion.api.catalogue.Place.Overrides
+        .reason(in.reason)
+        .flatMap(_ => places.merge(placeId(id.trim), placeId(in.into.trim), tolKm))
 
   /** `POST /api/places/{id}/remove` (V080) — only a place nothing refers to; no re-seed brings it back. */
-  def remove(caller: Caller, id: String, in: PlaceRemoveIn): Either[ApiError, PlaceGone] =
+  def remove(
+      caller: Caller,
+      id: String,
+      in: com.histmersion.api.catalogue.Place.RemoveIn
+  ): Either[Api.Error, com.histmersion.api.catalogue.Place.Gone] =
     maintenance.guard("places/remove"):
-      PlaceOverrides.reason(in.reason).flatMap(r => places.remove(placeId(id.trim), r))
+      com.histmersion.api.catalogue.Place.Overrides.reason(in.reason).flatMap(r => places.remove(placeId(id.trim), r))
 
   /** `GET /api/places/overrides?place=` — the kinds and periods people set, every place's or one's. */
-  def overrides(id: Option[String]): List[PlaceOverride] = places.overrides(named(id))
+  def overrides(id: Option[String]): List[com.histmersion.api.catalogue.Place.Override] = places.overrides(named(id))
 
   /** `POST /api/places` (#987) — a point place of a person's own (`local`, carried in a bundle, never touched by a
     * re-seed). Its findings are matched by the next `places rebuild`.
     */
-  def add(caller: Caller, in: PlaceAdd): Either[ApiError, PlaceSummary] =
+  def add(
+      caller: Caller,
+      in: com.histmersion.api.catalogue.Place.Add
+  ): Either[Api.Error, com.histmersion.api.catalogue.Place.Summary] =
     maintenance.guard("places/add"):
-      PlaceEdits.toInput(in).flatMap(places.add)
+      com.histmersion.api.catalogue.Place.Edits.toInput(in).flatMap(places.add)
 
   /** `POST /api/places/{id}/rename` — a new gazetteer id; the old one keeps resolving (V055). `validate` is the label
     * renames' shape rule, given the old id; the answer is the old id and the new.
@@ -182,8 +190,8 @@ final class PlacesControllers(
   def rename(
       caller: Caller,
       id: String,
-      validate: String => Either[ApiError, String]
-  ): Either[ApiError, (String, String)] =
+      validate: String => Either[Api.Error, String]
+  ): Either[Api.Error, (String, String)] =
     maintenance.guard("rename_place"):
       val from = placeId(id)
       for
@@ -194,13 +202,13 @@ final class PlacesControllers(
   /** `POST /api/places/{id}/rename` — a new gazetteer id; the old one keeps resolving (V055), in
     * `GET /api/places/{old}` and in a `place=<old>` filter alike.
     */
-  def renamed(id: String, req: LabelRename): Either[ApiError, LabelRenamed] =
+  def renamed(id: String, req: LabelRename): Either[Api.Error, LabelRenamed] =
     rename(Caller.Local, id, from => LabelRenames.validate(Bundle.Kind.Place, from, req.to))
       .map((from, to) => LabelRenamed(Bundle.Kind.Place, from, to))
 
   /** `POST /api/places/rebuild` — re-materialise `finding_places`; a rebuild arriving during a restore is refused like
     * every other write.
     */
-  def rebuild(caller: Caller): Either[ApiError, PlaceRebuildResult] =
+  def rebuild(caller: Caller): Either[Api.Error, com.histmersion.api.catalogue.Place.RebuildResult] =
     maintenance.guard("places/rebuild"):
       Right(geometry.rebuildFindingPlaces(tolKm))

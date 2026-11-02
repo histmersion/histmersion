@@ -1,6 +1,5 @@
 package com.histmersion.domain.personal.notes
 
-import com.histmersion.api.personal.{NoteId, NoteText}
 import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.personal.{MarkTime, TargetColumns, TargetLabel}
@@ -35,7 +34,7 @@ private[notes] object NoteRepo:
       Sql.raw(" ORDER BY n.updated_at DESC, n.id DESC") ++
       size.fold(Sql.empty)(s => Sql.of(" LIMIT ?", Param.I(s.value)))).frag.query[NoteRow].run().toList
 
-  def live(user: UserId, id: NoteId)(using DbCon): Option[NoteRow] =
+  def live(user: UserId, id: com.histmersion.api.personal.Note.Id)(using DbCon): Option[NoteRow] =
     Sql
       .of(
         s"$Projection WHERE n.user_id = ? AND n.deleted_at IS NULL AND n.id = ?::uuid",
@@ -47,22 +46,33 @@ private[notes] object NoteRepo:
       .run()
       .headOption
 
-  def insert(user: UserId, c: TargetColumns, text: NoteText, targetLabel: Option[TargetLabel], at: MarkTime)(using
+  def insert(
+      user: UserId,
+      c: TargetColumns,
+      text: com.histmersion.api.personal.Note.Text,
+      targetLabel: Option[TargetLabel],
+      at: MarkTime
+  )(using
       DbCon
-  ): NoteId =
+  ): com.histmersion.api.personal.Note.Id =
     val stamp = at.iso
     sql"""INSERT INTO notes (user_id, target_kind, target_id, target_uid, target_label, lat, lon, period_start,
                              period_end, body, created_at, updated_at)
           VALUES (${user.value}, ${c.kind}, ${c.key}, ${c.uid}, $targetLabel, ${c.lat}, ${c.lon}, ${c.from},
                   ${c.to}, $text, $stamp::timestamptz, $stamp::timestamptz)
-          RETURNING id::text""".query[NoteId].run().head
+          RETURNING id::text""".query[com.histmersion.api.personal.Note.Id].run().head
 
-  def rewrite(user: UserId, id: NoteId, text: NoteText, at: MarkTime)(using DbCon): Int =
+  def rewrite(
+      user: UserId,
+      id: com.histmersion.api.personal.Note.Id,
+      text: com.histmersion.api.personal.Note.Text,
+      at: MarkTime
+  )(using DbCon): Int =
     val stamp = at.iso
     sql"""UPDATE notes SET body = $text, updated_at = $stamp::timestamptz
           WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update.run()
 
-  def tombstone(user: UserId, id: NoteId, at: MarkTime)(using DbCon): Int =
+  def tombstone(user: UserId, id: com.histmersion.api.personal.Note.Id, at: MarkTime)(using DbCon): Int =
     val stamp = at.iso
     sql"""UPDATE notes SET deleted_at = $stamp::timestamptz, updated_at = $stamp::timestamptz
           WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update.run()

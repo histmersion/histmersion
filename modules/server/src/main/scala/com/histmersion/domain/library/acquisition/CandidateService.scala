@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.acquisition
 
-import com.histmersion.api.library.{CandidateCount, Candidates, CandidateWatch, SourceCandidate}
+import com.histmersion.api.library.{CandidateCount, Candidates, CandidateWatch}
 import com.histmersion.util.database.Transactor
 
 import hearth.kindlings.optics.syntax.*
@@ -8,6 +8,7 @@ import hearth.kindlings.optics.syntax.*
 import java.time.{Clock, ZoneOffset}
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.api.library.Source
 
 /** The new-source search's records: each goal's watches with their watermarks, and the candidates found, one per goal
   * and DOI.
@@ -21,13 +22,13 @@ trait CandidateService:
   def recordWatch(watch: CandidateWatch, watermark: Option[String], error: Option[String], found: Int): Unit
 
   /** Store a candidate: a new one (`true`), or one found again. */
-  def upsert(candidate: SourceCandidate): Boolean
+  def upsert(candidate: Source.Candidate): Boolean
 
   /** The DOIs a goal has candidates for, in any state. */
   def dois(goal: String): Set[String]
 
   /** A page of the candidates of one goal (every goal: `None`) in one state, oldest found first. */
-  def list(goal: Option[String], state: String, limit: Int, offset: Int): List[SourceCandidate]
+  def list(goal: Option[String], state: String, limit: Int, offset: Int): List[Source.Candidate]
 
   /** How many candidates there are in each state, in the states' order. */
   def counts(goal: Option[String]): List[CandidateCount]
@@ -45,9 +46,9 @@ object CandidateService:
     def watches(goal: String): List[CandidateWatch] = db.read(CandidateRepo.watches(goal))
     def recordWatch(watch: CandidateWatch, watermark: Option[String], error: Option[String], found: Int): Unit =
       db.transact(CandidateRepo.recordWatch(watch, watermark, error, found))
-    def upsert(candidate: SourceCandidate): Boolean = db.transact(CandidateRepo.upsert(candidate))
+    def upsert(candidate: Source.Candidate): Boolean = db.transact(CandidateRepo.upsert(candidate))
     def dois(goal: String): Set[String] = db.read(CandidateRepo.dois(goal))
-    def list(goal: Option[String], state: String, limit: Int, offset: Int): List[SourceCandidate] =
+    def list(goal: Option[String], state: String, limit: Int, offset: Int): List[Source.Candidate] =
       db.read(CandidateRepo.list(goal, state, limit, offset))
     def counts(goal: Option[String]): List[CandidateCount] = db.read(CandidateRepo.counts(goal))
     def mark(ids: List[Long], state: String): Int =
@@ -86,7 +87,7 @@ object CandidateService:
         }
       )
 
-    def upsert(candidate: SourceCandidate): Boolean =
+    def upsert(candidate: Source.Candidate): Boolean =
       val at = now
       var created = false
       val _ = state.updateAndGet { st =>
@@ -128,7 +129,7 @@ object CandidateService:
 
     def dois(goal: String): Set[String] = state.get.candidates.filter(_.goal == goal).map(_.doi).toSet
 
-    def list(goal: Option[String], st: String, limit: Int, offset: Int): List[SourceCandidate] =
+    def list(goal: Option[String], st: String, limit: Int, offset: Int): List[Source.Candidate] =
       state.get.candidates
         .filter(c => goal.forall(_ == c.goal) && c.state == st)
         .sortBy(_.id)
@@ -142,7 +143,7 @@ object CandidateService:
         .sortBy((s, _) => Order.indexOf(s) match { case -1 => Order.size; case i => i })
         .map((s, cs) => CandidateCount(s, cs.size))
 
-    private def marked(pick: SourceCandidate => Boolean, to: String): Int =
+    private def marked(pick: Source.Candidate => Boolean, to: String): Int =
       var n = 0
       val _ = state.updateAndGet { st =>
         n = st.candidates.count(pick)

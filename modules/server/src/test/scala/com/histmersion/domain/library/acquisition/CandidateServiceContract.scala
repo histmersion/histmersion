@@ -1,6 +1,7 @@
 package com.histmersion.domain.library.acquisition
 
-import com.histmersion.api.library.{CandidateCount, CandidateWatch, SourceCandidate}
+import com.histmersion.api.library.{CandidateCount, CandidateWatch}
+import com.histmersion.api.library.Source
 
 /** What the new-source search's store answers, the same on the database and in memory: a watch read keeps its watermark
   * when a read failed, a candidate found again keeps its state and gathers every watch that found it, a page in id
@@ -9,7 +10,7 @@ import com.histmersion.api.library.{CandidateCount, CandidateWatch, SourceCandid
 abstract class CandidateServiceContract extends AcquisitionStoreSuite:
 
   private def candidate(goal: String, doi: String, by: String) =
-    SourceCandidate(0, goal, doi, s"Work $doi", Some(2025), List("Zq Author"), None, None, false, None, List(by))
+    Source.Candidate(0, goal, doi, s"Work $doi", Some(2025), List("Zq Author"), None, None, false, None, List(by))
 
   stest("a watch keeps its watermark when a read fails, and is listed by kind, subject and index") { s =>
     s.goal("zq-goal")

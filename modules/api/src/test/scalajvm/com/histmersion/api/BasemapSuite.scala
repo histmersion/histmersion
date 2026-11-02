@@ -2,31 +2,18 @@ package com.histmersion.api
 
 /** The terrain base map's shared pure parts: layer names, the status as Markdown. */
 
-import com.histmersion.api.basemap.{
-  Basemap,
-  BasemapApi,
-  BasemapFocus,
-  BasemapLayer,
-  BasemapLayerInfo,
-  BasemapMarkdown,
-  BasemapOnDemand,
-  BasemapRemoved,
-  BaseMapSource,
-  BasemapStatus,
-  BasemapStyleState,
-  BaseStyles
-}
+import com.histmersion.api.basemap.{Basemap, BasemapApi, BasemapMarkdown, BaseMapSource, BaseStyles}
 class BasemapSuite extends munit.FunSuite:
 
   test("layers by name; all is every one"):
     assertEquals(
-      BasemapLayer.parseMany("all"),
-      Right(List(BasemapLayer.Vector, BasemapLayer.Terrain, BasemapLayer.Labels, BasemapLayer.Bathymetry))
+      Basemap.Layer.parseMany("all"),
+      Right(List(Basemap.Layer.Vector, Basemap.Layer.Terrain, Basemap.Layer.Labels, Basemap.Layer.Bathymetry))
     )
-    assertEquals(BasemapLayer.parseMany("labels"), Right(List(BasemapLayer.Labels)))
-    assertEquals(BasemapLayer.parseMany(" Terrain "), Right(List(BasemapLayer.Terrain)))
-    assert(BasemapLayer.parseMany("roads").isLeft)
-    assertEquals(BasemapApi.tileTemplate(BasemapLayer.Vector, "v1"), "/api/basemap/vector/{z}/{x}/{y}?v=v1")
+    assertEquals(Basemap.Layer.parseMany("labels"), Right(List(Basemap.Layer.Labels)))
+    assertEquals(Basemap.Layer.parseMany(" Terrain "), Right(List(Basemap.Layer.Terrain)))
+    assert(Basemap.Layer.parseMany("roads").isLeft)
+    assertEquals(BasemapApi.tileTemplate(Basemap.Layer.Vector, "v1"), "/api/basemap/vector/{z}/{x}/{y}?v=v1")
 
   test("a tile subset: layers, their geometries and kinds, merged, written back sorted"):
     import com.histmersion.api.basemap.Basemap.Read
@@ -57,7 +44,7 @@ class BasemapSuite extends munit.FunSuite:
     assertEquals(Basemap.parseSubset(Basemap.subsetParam(m)), Right(m))
 
   test("the status reads as Markdown: what is there, the command when nothing is, credits without links"):
-    val v = BasemapLayerInfo(
+    val v = Basemap.LayerInfo(
       "vector",
       present = true,
       file = "/c/vector.pmtiles",
@@ -68,16 +55,16 @@ class BasemapSuite extends munit.FunSuite:
       source = Some("20261019.pmtiles"),
       attribution = """© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>"""
     )
-    val t = BasemapLayerInfo("terrain", present = false, file = "/c/terrain.pmtiles")
+    val t = Basemap.LayerInfo("terrain", present = false, file = "/c/terrain.pmtiles")
     val md = BasemapMarkdown.status(
-      BasemapStatus(available = true, "/c", "-12,20,90,62", List(v, t), Basemap.FetchCommand, 5000000000L)
+      Basemap.Status(available = true, "/c", "-12,20,90,62", List(v, t), Basemap.FetchCommand, 5000000000L)
     )
     assert(md.startsWith("The local base map is downloaded."), md)
     assert(md.contains("| vector | coast, water and land cover | 138.0 MB | 0–10 |"), md)
     assert(md.contains("| terrain | relief | not downloaded |"), md)
     assert(md.contains("Credits: © OpenStreetMap"), md)
     val hinted = BasemapMarkdown.status(
-      BasemapStatus(
+      Basemap.Status(
         available = true,
         "/c",
         "x",
@@ -87,9 +74,9 @@ class BasemapSuite extends munit.FunSuite:
       )
     )
     assert(hinted.contains("Run `histmersion basemap fetch --layer labels`."), hinted)
-    val none = BasemapMarkdown.status(BasemapStatus(available = false, "/c", "x", List(t), Basemap.FetchCommand))
+    val none = BasemapMarkdown.status(Basemap.Status(available = false, "/c", "x", List(t), Basemap.FetchCommand))
     assert(none.contains("run `histmersion basemap fetch`"), none)
-    assertEquals(BasemapMarkdown.removed(BasemapRemoved(Nil, 0)), "Nothing to remove: no base-map file is downloaded.")
+    assertEquals(BasemapMarkdown.removed(Basemap.Removed(Nil, 0)), "Nothing to remove: no base-map file is downloaded.")
 
   test("a subset by zoom: a layer drawn only closer in is not asked for in shallower tiles"):
     val q = Basemap.subsetParam(
@@ -105,23 +92,23 @@ class BasemapSuite extends munit.FunSuite:
     )
 
   test("focus regions, the on-demand relief and the sea floor in the status, in Markdown"):
-    val t = BasemapLayerInfo(
+    val t = Basemap.LayerInfo(
       "terrain",
       present = true,
       "/c/terrain.pmtiles",
       bytes = 1,
       maxZoom = Some(8),
-      onDemand = Some(BasemapOnDemand(true, 12, "/c/terrain-cache", 3, 300000, 3000000000L)),
+      onDemand = Some(Basemap.OnDemand(true, 12, "/c/terrain-cache", 3, 300000, 3000000000L)),
       focus =
-        List(BasemapFocus("aegean", "/c/terrain-focus/aegean.pmtiles", 430000000, "21.5,35,28.5,41.5", 9, 12, 10299))
+        List(Basemap.Focus("aegean", "/c/terrain-focus/aegean.pmtiles", 430000000, "21.5,35,28.5,41.5", 9, 12, 10299))
     )
     assertEquals(t.deepest, Some(12))
     assertEquals(t.copy(onDemand = None, focus = Nil).deepest, Some(8))
-    val md = BasemapMarkdown.status(BasemapStatus(available = true, "/c", "x", List(t), Basemap.FetchCommand))
+    val md = BasemapMarkdown.status(Basemap.Status(available = true, "/c", "x", List(t), Basemap.FetchCommand))
     assert(md.contains("read when a page shows an area, to zoom 12; cached 3 tiles"), md)
     assert(md.contains("focus region `aegean`: zoom 9–12"), md)
-    assert(BasemapMarkdown.onDemand(BasemapOnDemand(false, 12, "/c", 0, 0, 1)).contains("off"))
-    assertEquals(BasemapLayer.parseMany("bathymetry"), Right(List(BasemapLayer.Bathymetry)))
+    assert(BasemapMarkdown.onDemand(Basemap.OnDemand(false, 12, "/c", 0, 0, 1)).contains("off"))
+    assertEquals(Basemap.Layer.parseMany("bathymetry"), Right(List(Basemap.Layer.Bathymetry)))
     assertEquals(Basemap.validFocusName(" Nile-Delta "), Right("nile-delta"))
     assertEquals(Basemap.focusNameOf(BBox(-1.5, 35, 2, 40.25)), "bbox-m1p5-35-2-40p25")
   test("what an extract left out, and what a style that draws some layers lacks in it"):
@@ -150,14 +137,14 @@ class BasemapSuite extends munit.FunSuite:
     assertEquals(BaseStyles.states(None).map(_.missing), List(Nil, Nil))
 
   test("the base-map source: local and online as set; auto is local once a vector style can be drawn whole"):
-    def st(available: Boolean, readable: List[String], physical: List[String] = Nil) = BasemapStatus(
+    def st(available: Boolean, readable: List[String], physical: List[String] = Nil) = Basemap.Status(
       available,
       "/c",
       "x",
       Nil,
       Basemap.FetchCommand,
       styles =
-        List(BasemapStyleState("readable", "Readable", readable), BasemapStyleState("physical", "Physical", physical))
+        List(Basemap.StyleState("readable", "Readable", readable), Basemap.StyleState("physical", "Physical", physical))
     )
     assertEquals(BaseMapSource.resolve("local", st(false, Nil)), "local")
     assertEquals(BaseMapSource.resolve(" Online ", st(true, Nil)), "online")
@@ -168,17 +155,17 @@ class BasemapSuite extends munit.FunSuite:
     assertEquals(BaseMapSource.resolve("whatever", st(true, Nil)), "local", "anything else is auto")
 
   test("the status says which styles lack layers"):
-    val v = BasemapLayerInfo("vector", present = true, file = "/c/vector.pmtiles", dropped = List("places", "roads"))
+    val v = Basemap.LayerInfo("vector", present = true, file = "/c/vector.pmtiles", dropped = List("places", "roads"))
     val md = BasemapMarkdown.status(
-      BasemapStatus(
+      Basemap.Status(
         available = true,
         "/c",
         "x",
         List(v),
         Basemap.FetchCommand,
         styles = List(
-          BasemapStyleState("readable", "Readable", List("places", "roads")),
-          BasemapStyleState("physical", "Physical")
+          Basemap.StyleState("readable", "Readable", List("places", "roads")),
+          Basemap.StyleState("physical", "Physical")
         )
       )
     )
@@ -193,7 +180,7 @@ class BasemapSuite extends munit.FunSuite:
     val on = BasemapMarkdown.outside(
       "The map",
       "vector",
-      BasemapOnDemand(true, 12, "/c/vector-cache", 3, 3000, 2_000_000_000L, None)
+      Basemap.OnDemand(true, 12, "/c/vector-cache", 3, 3000, 2_000_000_000L, None)
     )
     assert(
       on.startsWith(
@@ -203,6 +190,6 @@ class BasemapSuite extends munit.FunSuite:
     )
     assert(on.contains("`/c/vector-cache`"), on)
     assertEquals(
-      BasemapMarkdown.outside("The sea floor", "bathymetry", BasemapOnDemand(false, 7, "/c", 0, 0, 0, None)),
+      BasemapMarkdown.outside("The sea floor", "bathymetry", Basemap.OnDemand(false, 7, "/c", 0, 0, 0, None)),
       "The sea floor outside the downloaded region: off (basemap.bathymetry.on-demand.enabled)."
     )

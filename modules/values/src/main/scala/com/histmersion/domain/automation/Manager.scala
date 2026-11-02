@@ -15,8 +15,8 @@ object Manager:
   object Kind:
     def parse(s: String): Option[Kind] = values.find(_.wire == s.trim.toLowerCase)
 
-  /** The person's switch: `paused` starts nothing new (in-flight runs go on unless paused with them), `stopped` cancelled
-    * its in-flight runs and items.
+  /** The person's switch: `paused` starts nothing new (in-flight runs go on unless paused with them), `stopped`
+    * cancelled its in-flight runs and items.
     */
   enum State(val wire: String):
     case Active extends State("active")

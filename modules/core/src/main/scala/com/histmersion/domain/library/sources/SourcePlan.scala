@@ -1,17 +1,7 @@
 package com.histmersion.domain.library.sources
 
-import com.histmersion.api.exchange.{
-  BundleRange,
-  BundleSource,
-  IssueCondition,
-  IssueDetail,
-  MergeDecision,
-  MergeIssue,
-  MergeIssueDetail,
-  MergePlan
-}
+import com.histmersion.api.exchange.{IssueCondition, IssueDetail, MergeDecision, MergeIssue, MergePlan}
 import com.histmersion.api.checks.Lint
-import com.histmersion.api.library.SourceMatch
 import com.histmersion.domain.{MergeFold, MergePlanner, MergeSettings}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.{
@@ -52,10 +42,10 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
   private val pairOf = mutable.LinkedHashMap.empty[UUID, Pair] // the bundle's source → its pair
   private val pairFieldIds = mutable.Map.empty[UUID, Map[Issue.Kind, String]] // the fields' issues, by pair
   private val fatesSeen = mutable.Map.empty[UUID, SourceFate]
-  private val sourceLine = mutable.Map.empty[UUID, BundleEntities => BundleSource]
+  private val sourceLine = mutable.Map.empty[UUID, BundleEntities => com.histmersion.api.exchange.Bundle.Source]
 
   private def leftRev(u: UUID): String = sourcesByUid.get(u).map(s => BundleFormat.stamp(s).rev).getOrElse("")
-  private def rightRev(s: BundleSource): String = BundleFormat.stamp(s).rev
+  private def rightRev(s: com.histmersion.api.exchange.Bundle.Source): String = BundleFormat.stamp(s).rev
 
   override def sketchesWanted(cfg: MergeSettings): Set[String] =
     val byKey = lefts.flatMap(l => SourceMatcher.blockingKeys(l).map(_ -> l)).groupMap(_._1)(_._2)
@@ -120,12 +110,12 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
           Issue.Severity.Blocking,
           Bundle.Kind.Source,
           title,
-          Some(MergeIssueDetail.side(p.left.source)),
-          Some(MergeIssueDetail.side(p.right.source)),
+          Some(MergeIssue.Detail.side(p.left.source)),
+          Some(MergeIssue.Detail.side(p.right.source)),
           ev.why ++ p.alsoLike.take(3).map((ck, sc) => s"also resembles $ck (score ${SourceMatcher.signed(sc)})"),
           List(km.Map, km.Both),
           Option.when(ev.score >= cfg.autoMerge)(MergeDecision.withArg(km.Map, p.left.source.citekey)),
-          detail = Some(IssueDetail(MergeIssueDetail.sourceFields(p.left.source, p.right.source)))
+          detail = Some(IssueDetail(MergeIssue.Detail.sourceFields(p.left.source, p.right.source)))
         ),
         Set(km.Both)
       )
@@ -161,13 +151,13 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         sev,
         Bundle.Kind.Source,
         title,
-        Some(MergeIssueDetail.side(l)),
-        Some(MergeIssueDetail.side(r)),
+        Some(MergeIssue.Detail.side(l)),
+        Some(MergeIssue.Detail.side(r)),
         why,
         opts,
         suggested,
         cond,
-        detail = Some(IssueDetail(MergeIssueDetail.sourceFields(l, r)))
+        detail = Some(IssueDetail(MergeIssue.Detail.sourceFields(l, r)))
       )
     val doiR = r.doi.flatMap(MergeText.doiKey)
     val doiL = l.doi.flatMap(MergeText.doiKey)
@@ -217,7 +207,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         .map((a, b) =>
           mk(
             Issue.Kind.PeriodDiffers,
-            s"period differs: ${MergeIssueDetail.rangeText(Some(b))} here, ${MergeIssueDetail.rangeText(Some(a))} in the bundle",
+            s"period differs: ${MergeIssue.Detail.rangeText(Some(b))} here, ${MergeIssue.Detail.rangeText(Some(a))} in the bundle",
             List(km.KeepLeft, km.KeepRight, km.Hull),
             Some(MergeDecision.of(km.Hull))
           )
@@ -243,7 +233,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
 
   /** A bundle source that would be new: is its citekey taken here? */
   private def collision(
-      s: BundleSource,
+      s: com.histmersion.api.exchange.Bundle.Source,
       cond: Option[IssueCondition],
       sketches: Map[String, MinHash],
       cfg: MergeSettings
@@ -274,14 +264,14 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         Issue.Severity.Blocking,
         Bundle.Kind.Source,
         title,
-        Some(MergeIssueDetail.side(o)),
-        Some(MergeIssueDetail.side(s)),
+        Some(MergeIssue.Detail.side(o)),
+        Some(MergeIssue.Detail.side(s)),
         if asAlias then List("rename-left cannot free an old citekey: the bundle's source takes a new one")
         else Nil,
         if asAlias then List(km.RenameRight) else List(km.RenameRight, km.RenameLeft),
         Some(MergeDecision.withArg(km.RenameRight, suggestion)),
         cond,
-        detail = Some(IssueDetail(MergeIssueDetail.sourceFields(o, s)))
+        detail = Some(IssueDetail(MergeIssue.Detail.sourceFields(o, s)))
       )
     }
 
@@ -293,19 +283,21 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
       sourcesByUid
         .get(u)
         .zip(localized.sources.find(_.uid == u))
-        .map((l, r) => IssueDetail(MergeIssueDetail.sourceFields(l, r)))
+        .map((l, r) => IssueDetail(MergeIssue.Detail.sourceFields(l, r)))
 
   override def labelsTakenFirst(questions: PlanQuestions): Unit =
     questions.labelTaken(
       Bundle.Kind.Source,
       questions.localized.sources.filter(s => questions.here(s.uid)),
-      (s: BundleSource) => s.uid,
-      (s: BundleSource) => s.citekey,
-      (s: BundleSource) => in.labels.citekeys.get(s.citekey).orElse(in.labels.aliases.get(s.citekey)),
+      (s: com.histmersion.api.exchange.Bundle.Source) => s.uid,
+      (s: com.histmersion.api.exchange.Bundle.Source) => s.citekey,
+      (s: com.histmersion.api.exchange.Bundle.Source) =>
+        in.labels.citekeys.get(s.citekey).orElse(in.labels.aliases.get(s.citekey)),
       "citekey",
       lr,
-      (_: BundleSource, _: UUID) => None,
-      (s: BundleSource, o: UUID) => sourcesByUid.get(o).map(l => IssueDetail(MergeIssueDetail.sourceFields(l, s)))
+      (_: com.histmersion.api.exchange.Bundle.Source, _: UUID) => None,
+      (s: com.histmersion.api.exchange.Bundle.Source, o: UUID) =>
+        sourcesByUid.get(o).map(l => IssueDetail(MergeIssue.Detail.sourceFields(l, s)))
     )
 
   override def citekeyArgument(i: MergeIssue, dec: MergeDecision): Option[Either[String, Unit]] =
@@ -333,7 +325,12 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
 
   override def pairIssue(kind: Issue.Kind): Boolean = PairKinds(kind)
 
-  override def foldSources(right: BundleSource, left: BundleSource, citekey: String, folds: PlanFolds): Boolean =
+  override def foldSources(
+      right: com.histmersion.api.exchange.Bundle.Source,
+      left: com.histmersion.api.exchange.Bundle.Source,
+      citekey: String,
+      folds: PlanFolds
+  ): Boolean =
     pairOf
       .get(right.uid)
       .filterNot(_.evidence.strongKey)
@@ -347,22 +344,33 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
     sourceLine(source) = es => es.sources.find(_.uid == source).get.modify(_.citekey).setTo(citekey)
 
   override def lines(es: BundleEntities, es0: BundleEntities): BundleEntities =
-    es.modify(_.sources).setTo(MergePlanner.replaced(es0.sources, _.uid, sourceLine, es0, (_: BundleSource) => true))
+    es.modify(_.sources)
+      .setTo(
+        MergePlanner
+          .replaced(es0.sources, _.uid, sourceLine, es0, (_: com.histmersion.api.exchange.Bundle.Source) => true)
+      )
 
   override def planned(plan: MergePlan): MergePlan =
-    plan.modify(_.sources).setTo(SourceMatch.Matches.matches(matches))
+    plan.modify(_.sources).setTo(com.histmersion.api.library.Source.Match.Matches.matches(matches))
 
   /** How each of the bundle's sources was matched, by citekey; one known by its uid or the ledger is not listed. */
-  private def matches: List[SourceMatch] = fes.sources.sortBy(_.citekey).flatMap { s =>
+  private def matches: List[com.histmersion.api.library.Source.Match] = fes.sources.sortBy(_.citekey).flatMap { s =>
     fatesSeen.get(s.uid).flatMap {
       case SourceFate.Same(_, _) => None
       case SourceFate.Deleted    =>
-        Some(SourceMatch(s.uid, s.citekey, None, None, MatchMethod.Unmatched, MatchOutcome.DeletedHere))
-      case SourceFate.New => Some(SourceMatch(s.uid, s.citekey, None, None, MatchMethod.Unmatched, MatchOutcome.New))
+        Some(
+          com.histmersion.api.library.Source
+            .Match(s.uid, s.citekey, None, None, MatchMethod.Unmatched, MatchOutcome.DeletedHere)
+        )
+      case SourceFate.New =>
+        Some(
+          com.histmersion.api.library.Source
+            .Match(s.uid, s.citekey, None, None, MatchMethod.Unmatched, MatchOutcome.New)
+        )
       case SourceFate.Auto(p) =>
         val ev = pairOf(s.uid).evidence
         Some(
-          SourceMatch(
+          com.histmersion.api.library.Source.Match(
             s.uid,
             s.citekey,
             Some(p.left.uid),
@@ -376,7 +384,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
       case SourceFate.Gate(p, g) =>
         val ev = pairOf(s.uid).evidence
         Some(
-          SourceMatch(
+          com.histmersion.api.library.Source.Match(
             s.uid,
             s.citekey,
             Some(p.left.uid),
@@ -436,7 +444,11 @@ object SourcePlan:
     * (`smith2019_ritual` → `smith2019_ritualkingship`), else a letter (`smith2019_ritualb`). Never one in use here or
     * in the bundle. Pure.
     */
-  def renameSuggestion(s: BundleSource, in: MergePlanner.Input, fes: BundleEntities): String =
+  def renameSuggestion(
+      s: com.histmersion.api.exchange.Bundle.Source,
+      in: MergePlanner.Input,
+      fes: BundleEntities
+  ): String =
     val usedHere = in.labels.citekeys.keySet ++ in.labels.aliases.keySet ++ fes.sources.map(_.citekey) ++
       fes.aliases.map(_.alias)
     val suffix = s.citekey.dropWhile(_ != '_').drop(1)
@@ -462,11 +474,11 @@ object SourcePlan:
     * rule. `citekey` is the label the survivor keeps (`map:<citekey>`). The survivor is this collection's (left).
     */
   def fold(
-      l: BundleSource,
-      r: BundleSource,
+      l: com.histmersion.api.exchange.Bundle.Source,
+      r: com.histmersion.api.exchange.Bundle.Source,
       decided: Map[Issue.Kind, MergeDecision],
       citekey: String
-  ): BundleSource =
+  ): com.histmersion.api.exchange.Bundle.Source =
     def pick[A](k: Issue.Kind, auto: => A, left: => A, right: => A): A = decided.get(k).map(_.kind) match
       case Some(DecisionKind.KeepRight) => right
       case Some(DecisionKind.KeepLeft)  => left
@@ -483,7 +495,7 @@ object SourcePlan:
         case _            => a
     val keepRightBody = decided.get(Issue.Kind.BodyDiffers).exists(_.kind == DecisionKind.KeepRight) ||
       (l.bodySha256.isEmpty && r.bodySha256.isDefined)
-    val period: Option[BundleRange] = (l.period, r.period) match
+    val period: Option[com.histmersion.api.exchange.Bundle.Range] = (l.period, r.period) match
       case (Some(a), Some(b)) if a != b =>
         decided.get(Issue.Kind.PeriodDiffers).map(_.kind) match
           case Some(DecisionKind.KeepRight) => Some(b)

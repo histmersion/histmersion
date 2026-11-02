@@ -19,12 +19,8 @@ import com.histmersion.api.library.{
   CollectionsApi,
   CollectionSetRequest,
   CollectionsMarkdown,
-  CollectionSyncRequest,
   Ingest,
-  MetadataPatch,
-  SourcePatch,
-  SourcePut,
-  SourceWithFindings
+  MetadataPatch
 }
 import com.histmersion.api.media.MediaCoversRequest
 
@@ -289,7 +285,7 @@ object CalibreCmd:
       ck: String,
       b: CalibreBook,
       target: ImportTarget
-  ): Either[CliError, SourceWithFindings] =
+  ): Either[CliError, Source.WithFindings] =
     val summary = b.comments.map(stripHtml).filter(_.nonEmpty).map(_.take(500))
     target match
       case ImportTarget.Update(_) =>
@@ -297,7 +293,7 @@ object CalibreCmd:
           current <- c.call(Api.getSource)((ck, false))
           res <- c.patchSource(
             ck,
-            SourcePatch(
+            Source.Patch(
               metadata = Some(
                 MetadataPatch(
                   title = Some(b.title),
@@ -315,7 +311,7 @@ object CalibreCmd:
       case ImportTarget.Create =>
         c.putSource(
           ck,
-          SourcePut(
+          Source.Put(
             title = b.title,
             authors = b.authors,
             doi = b.doi,
@@ -348,7 +344,7 @@ object CalibreCmd:
           case None =>
             for
               book <- calibre(c).byId(id).left.map(fail).flatMap(_.toRight(fail(s"no Calibre book with id $id")))
-              sw <- c.patchSource(ck, SourcePatch(metadata = Some(MetadataPatch(calibreId = Some(id.toString)))))
+              sw <- c.patchSource(ck, Source.Patch(metadata = Some(MetadataPatch(calibreId = Some(id.toString)))))
             yield Output.emit(json, CalibreJson.Linked(sw.source.citekey, id))(l =>
               s"linked `${l.citekey}` to Calibre id $id — ${book.title}"
             )
@@ -692,7 +688,7 @@ object CalibreCmd:
       limit: Option[Int],
       json: Boolean
   ): Either[CliError, Unit] =
-    s.sync(CollectionSyncRequest(apply, limit)).flatMap { r =>
+    s.sync(CollectionSync.Request(apply, limit)).flatMap { r =>
       if json && !apply then
         Right(Output.emit(json, CalibreJson.Gaps.of(r.gaps))(_ => CollectionsMarkdown.gaps(r.gaps.gaps)))
       else

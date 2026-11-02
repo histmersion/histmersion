@@ -2,7 +2,6 @@ package com.histmersion.api
 
 import com.histmersion.api.catalogue.PlacesMarkdown
 
-import com.histmersion.api.catalogue.{PlaceShape, PlaceSummary}
 import com.histmersion.api.views.PlaceDetail
 import com.histmersion.domain.catalogue.Place
 
@@ -34,13 +33,13 @@ class PlaceCleanupSuite extends munit.FunSuite:
     assert(Place.Kind.all.contains(Place.Kind.People))
     assertEquals(Place.Kind.parse("people, tribe"), Some(Place.Kind.People))
     assertEquals(Place.Kind.parse("tribe"), Some(Place.Kind.People))
-    assert(!PlaceShape.isArea(Place.Kind.People))
-    assert(!PlaceShape.pointOnlyArea(Place.Kind.People, hasBoundary = false))
+    assert(!com.histmersion.api.catalogue.Place.Shape.isArea(Place.Kind.People))
+    assert(!com.histmersion.api.catalogue.Place.Shape.pointOnlyArea(Place.Kind.People, hasBoundary = false))
 
   test("a place's Markdown: the shape and, for a grid-square point, the location"):
     val pt = Some("""{"type":"Point","coordinates":[22.5,37.5]}""")
     def detail(kind: String, precision: Place.Precision) = PlaceDetail(
-      PlaceSummary("pleiades_1001895", "Thessalia", kind, None, None, None, ""),
+      com.histmersion.api.catalogue.Place.Summary("pleiades_1001895", "Thessalia", kind, None, None, None, ""),
       pt,
       Nil,
       Nil,
@@ -49,11 +48,16 @@ class PlaceCleanupSuite extends munit.FunSuite:
       locationPrecision = precision
     )
     val thess = PlacesMarkdown.place(detail(Place.Kind.Polity, Place.Precision.GridCell))
-    assert(thess.contains(s"**Shape:** ${PlaceShape.NoBoundaryNote}"), thess)
+    assert(thess.contains(s"**Shape:** ${com.histmersion.api.catalogue.Place.Shape.NoBoundaryNote}"), thess)
     assert(thess.contains("**Location:** approximate (atlas grid square)"), thess)
     assertEquals(
       detail(Place.Kind.Polity, Place.Precision.GridCell).shapeNotes,
-      List(PlaceShape.NoBoundaryNote, "location: approximate (atlas grid square)")
+      List(com.histmersion.api.catalogue.Place.Shape.NoBoundaryNote, "location: approximate (atlas grid square)")
     )
     val ubii = PlacesMarkdown.place(detail(Place.Kind.People, Place.Precision.Stated))
-    assert(ubii.contains(s"**Shape:** ${PlaceShape.PeopleNote}") && !ubii.contains("**Location:**"), ubii)
+    assert(
+      ubii.contains(s"**Shape:** ${com.histmersion.api.catalogue.Place.Shape.PeopleNote}") && !ubii.contains(
+        "**Location:**"
+      ),
+      ubii
+    )

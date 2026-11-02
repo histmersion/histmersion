@@ -17,17 +17,9 @@ import java.nio.file.{Files, Path, Paths}
 import java.util.UUID
 import com.histmersion.domain.library.{Confidence, EditionsPolicy}
 import com.histmersion.util.data.exchange.BundleEntities
-import com.histmersion.api.exchange.{
-  BundleAlias,
-  BundleFinding,
-  BundleRange,
-  BundleSource,
-  MergePlan,
-  MergePolicy,
-  MergeResolution,
-  MergeResolutions
-}
+import com.histmersion.api.exchange.{MergePlan, MergePolicy, MergeResolution, MergeResolutions}
 import com.histmersion.util.data.exchange.Issue
+import com.histmersion.api.exchange.Bundle
 
 /** The merge plan's source and finding stages, recorded (`oracle/merge/plans.txt`, written on the code before the
   * library's rules of the plan left the planner): the crafted fixture under no resolutions, under a set that answers
@@ -67,8 +59,8 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
       region: Option[String] = None,
       confidence: Option[Confidence] = Some(Confidence.High),
       origin: UUID = work
-  ): BundleFinding =
-    BundleFinding(
+  ): Bundle.Finding =
+    Bundle.Finding(
       uid(id),
       origin,
       uid(source),
@@ -77,7 +69,7 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
       region,
       at.map(_._1),
       at.map(_._2),
-      period.map((a, b) => BundleRange(Some(a), Some(b))),
+      period.map((a, b) => Bundle.Range(Some(a), Some(b))),
       None,
       List("zz"),
       confidence,
@@ -142,7 +134,7 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
   // ── the fixture's findings ───────────────────────────────────────────────────────────────────
 
   /** Findings on the bundle's merged and new sources and on the ones here they meet. */
-  private val foreignFindings: List[BundleFinding] = List(
+  private val foreignFindings: List[Bundle.Finding] = List(
     // guterbock (merged by score): the same claim at another confidence, a near duplicate, one of its own
     finding(
       "wf-g1",
@@ -198,7 +190,7 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
     finding("wf-n2", "w-new", "zznew2020_only#2", "And this one")
   )
 
-  private val localFindings: List[BundleFinding] = List(
+  private val localFindings: List[Bundle.Finding] = List(
     finding(
       "hf-g1",
       "h-guterbock",
@@ -256,7 +248,7 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
   private val bodyB = edited(bodyA, 3)
   private val bodyC = body(12)
 
-  private val edgeForeign: List[BundleSource] = List(
+  private val edgeForeign: List[Bundle.Source] = List(
     src("e-jw", "zzhrozny1931_empire", "The Hittite Empire and its Neighbours", List("Hrozny, B."), Some(1931)),
     src(
       "e-tok",
@@ -314,9 +306,9 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
     src("e-ambiguous", "zzdurand2010_rites", "Rites of Hatti", List("Durand, J."), Some(2010))
   )
 
-  private val edgeAliases: List[BundleAlias] = List(BundleAlias("zzseeher_old", uid("e-alias"), At))
+  private val edgeAliases: List[Bundle.Alias] = List(Bundle.Alias("zzseeher_old", uid("e-alias"), At))
 
-  private val edgeHere: List[BundleSource] = List(
+  private val edgeHere: List[Bundle.Source] = List(
     src(
       "f-jw",
       "zzhrozny1931_empires",

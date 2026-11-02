@@ -1,7 +1,7 @@
 package com.histmersion.domain.automation.agents
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.domain.automation.approvals.ProposalEvidence
-import com.histmersion.api.automation.{GoalPlans, ListFilters}
+import com.histmersion.api.automation.ListFilters
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.automation.ApprovalDigest
@@ -11,6 +11,7 @@ import com.histmersion.util.database.{Jsonb, Keyset, ListSql, Param, Sql}
 import com.histmersion.util.database.given
 import com.histmersion.domain.library.Edge
 import com.histmersion.domain.library.Source
+import com.histmersion.api.automation.Goal
 
 /** The store of embedded agent runs (migrations V035, V040, V041): a run is a `jobs` row with kind `agent` (its options
   * in `params`), its steps are `agent_steps` (one row per attempt; a `done` row is the checkpoint a resume replays),
@@ -460,10 +461,10 @@ object AgentRepo:
     )
     ApprovalKind.parse(r.kind) match
       case Some(ApprovalKind.GoalPlan) =>
-        val p = Jsonb.read[GoalPlans.Plan](r.proposal)
+        val p = Jsonb.read[Goal.Plans.Plan](r.proposal)
         base.copy(plan = p, evidence = p.map(_.rationale).getOrElse(""))
       case Some(ApprovalKind.ArticlePublish) =>
-        val d = Jsonb.read[GoalPlans.ArticleDraft](r.proposal)
+        val d = Jsonb.read[Goal.Plans.ArticleDraft](r.proposal)
         base.copy(article = d, evidence = d.flatMap(_.summary).getOrElse(""))
       case Some(ApprovalKind.HintEffect) =>
         val p = Jsonb.read[com.histmersion.api.automation.Managers.HintProposal](r.proposal)

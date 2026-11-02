@@ -1,8 +1,8 @@
 package com.histmersion.api.automation
 import com.histmersion.api.automation.GoalsMarkdown
 import com.histmersion.api.{Markdown, Paging, Plural}
-import com.histmersion.api.research.ArticlePlans
 import com.histmersion.api.given
+import com.histmersion.api.research.Article
 
 object AgentsMarkdown:
   import Agents.*
@@ -293,7 +293,7 @@ object AgentsMarkdown:
           s"${p.fold(0)(_.queries.size)} query(ies), ${p.fold(0)(_.works.size)} work(s)"
       case Some(ApprovalKind.ArticlePublish) =>
         val what = a.article.fold("an article")(d =>
-          if d.mode == GoalPlans.DraftMode.Create then s"new article \"${d.title}\"" else "a section appended to"
+          if d.mode == Goal.Plans.DraftMode.Create then s"new article \"${d.title}\"" else "a section appended to"
         )
         s"publish $what [[${a.subject.getOrElse("?")}]]"
       case Some(ApprovalKind.ArticleFilter) =>
@@ -329,8 +329,8 @@ object AgentsMarkdown:
           val detail = a.plan
             .map(planBlock)
             .orElse(a.article.map(draftBlock(_, 1500)))
-            .orElse(a.filter.map(ArticlePlans.filterBlock))
-            .orElse(a.articles.map(ArticlePlans.planBlock))
+            .orElse(a.filter.map(Article.Plans.filterBlock))
+            .orElse(a.articles.map(Article.Plans.planBlock))
             .fold("")(b => "\n\n" + indent(b) + "\n")
           val evidence =
             if a.plan.isDefined || a.articles.isDefined then "" else s"\n  ${a.evidence.replace("\n", " ").take(400)}"
@@ -340,7 +340,7 @@ object AgentsMarkdown:
 
   private def indent(b: String): String = b.linesIterator.map(l => if l.isEmpty then l else s"  $l").mkString("\n")
 
-  def planBlock(p: GoalPlans.Plan): String =
+  def planBlock(p: Goal.Plans.Plan): String =
     val goals = p.subGoals.map(g => s"- sub-goal `${g.slug}` — ${g.title}${g.notes.fold("")(n => s": $n")}")
     val queries = p.queries.map(q => s"- query: $q")
     val works = p.works.map { w =>
@@ -356,7 +356,7 @@ object AgentsMarkdown:
       .filter(_.nonEmpty)
       .mkString("\n\n")
 
-  def draftBlock(d: GoalPlans.ArticleDraft, chars: Int): String =
+  def draftBlock(d: Goal.Plans.ArticleDraft, chars: Int): String =
     val head = s"${d.mode.wire} · ${d.kind} · \"${d.title}\"${d.section.fold("")(s => s" · under '$s'")} · " +
       s"cites ${d.cited.size} source(s) · ${d.filter}"
     val problems =
@@ -366,25 +366,25 @@ object AgentsMarkdown:
     else d.text
     s"$head\n\n$problems\n\n```markdown\n$text\n```"
 
-  def scheduleLine(s: GoalPlans.GoalSchedule): String =
+  def scheduleLine(s: Goal.Plans.GoalSchedule): String =
     val state = if s.enabled then "on" else "off"
     val budget = s.budgetUsd.fold("")(b => s" · cap ${usd(b)} USD")
     s"${s.goal} · ${s.kind.wire} · `${s.cron}` · $state$budget" +
       s.nextRunAt.fold("")(n => s" · next $n") + s.lastRun.fold("")(r => s" · last run ${r.take(8)}") +
       s.lastNote.filter(_.nonEmpty).fold("")(n => s" · $n")
 
-  def schedules(ss: List[GoalPlans.GoalSchedule]): String =
+  def schedules(ss: List[Goal.Plans.GoalSchedule]): String =
     if ss.isEmpty then "_No schedules._" else "# Schedules\n\n" + ss.map(s => s"- ${scheduleLine(s)}").mkString("\n")
 
-  def linkLine(l: GoalPlans.GoalLink): String =
+  def linkLine(l: Goal.Plans.GoalLink): String =
     val ref = l.kind match
-      case GoalPlans.LinkKind.Source | GoalPlans.LinkKind.Article => s"[[${l.ref}]]"
-      case GoalPlans.LinkKind.QueueItem                           => s"queue item ${l.ref}"
-      case GoalPlans.LinkKind.Query                               => s"\"${l.ref}\""
-    val title = l.title.fold(if l.kind == GoalPlans.LinkKind.Query then "" else " (missing)")(t => s" — $t")
+      case Goal.Plans.LinkKind.Source | Goal.Plans.LinkKind.Article => s"[[${l.ref}]]"
+      case Goal.Plans.LinkKind.QueueItem                            => s"queue item ${l.ref}"
+      case Goal.Plans.LinkKind.Query                                => s"\"${l.ref}\""
+    val title = l.title.fold(if l.kind == Goal.Plans.LinkKind.Query then "" else " (missing)")(t => s" — $t")
     s"${l.kind.wire}: $ref$title${l.note.filter(_.nonEmpty).fold("")(n => s" · $n")}"
 
-  def goalView(v: GoalPlans.GoalView): String =
+  def goalView(v: Goal.Plans.GoalView): String =
     val children = if v.children.isEmpty then ""
     else
       "\n\n## Sub-goals\n\n" +

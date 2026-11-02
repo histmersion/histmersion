@@ -11,8 +11,7 @@ import com.histmersion.api.library.{
   GraphLink,
   GraphNode,
   NeighborRow,
-  NeighborTarget,
-  SourceGraph
+  NeighborTarget
 }
 import com.histmersion.domain.library.Source
 
@@ -54,7 +53,7 @@ private[citations] object CitationRepo:
     * joins two stored sources (V026's foreign keys), and a link is kept only when BOTH ends are nodes of the result —
     * the depth cut-off never leaves a dangling line.
     */
-  def graph(citekey: String, maxDepth: Int)(using DbCon): SourceGraph =
+  def graph(citekey: String, maxDepth: Int)(using DbCon): com.histmersion.api.library.Source.Graph =
     val depth = maxDepth.max(0).min(4)
     @annotation.tailrec
     def walk(
@@ -83,7 +82,7 @@ private[citations] object CitationRepo:
           walk(d + 1, next, grown, links ++ touching)
     val (nodes, links) = walk(0, List(citekey), Vector.empty, Set.empty)
     val ids = nodes.iterator.map(_.id).toSet
-    SourceGraph(
+    com.histmersion.api.library.Source.Graph(
       citekey,
       depth,
       nodes.toList,

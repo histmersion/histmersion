@@ -1,15 +1,6 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.exchange.{
-  Bundle,
-  BundleImportResult,
-  BundleKindCounts,
-  BundleManifest,
-  MergeApplyResult,
-  MergeIssue,
-  MergeResolutions,
-  MergeTally
-}
+import com.histmersion.api.exchange.{Bundle, MergeApplyResult, MergeIssue, MergeResolutions, MergeTally}
 import com.histmersion.api.given
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.database.Jsonb
@@ -52,7 +43,7 @@ object BundleImporter:
       merge: MergeSettings,
       kinds: CarriedKinds,
       rules: MergeRuleSet
-  ): Either[String, BundleImportResult] =
+  ): Either[String, Bundle.ImportResult] =
     val loaded = bundle.read(BundleReader.read(_, hashBlobs = false))
     loaded.manifest match
       case None    => Left(("not a readable bundle" :: loaded.problems).mkString("; "))
@@ -65,15 +56,15 @@ object BundleImporter:
           )
         catch case a: ImportAbort => Right(failed(m, opts, a.problems))
 
-  private def failed(m: BundleManifest, opts: ImportOptions, problems: List[String]): BundleImportResult =
-    BundleImportResult(m.bundleId, m.instance, opts.dryRun, applied = false, Nil, 0, problems, Nil, Nil)
+  private def failed(m: Bundle.Manifest, opts: ImportOptions, problems: List[String]): Bundle.ImportResult =
+    Bundle.ImportResult(m.bundleId, m.instance, opts.dryRun, applied = false, Nil, 0, problems, Nil, Nil)
 
   /** The issue as a problem line names it. */
   private def named(i: MergeIssue): String =
     s"${i.id} ${i.entity.wire} ${i.right.orElse(i.left).fold("")(_.label)} — ${i.title}"
 
   /** What the decided rows do, per kind of record, for the kinds they touch. */
-  private def counted(decided: List[MergePlanner.Row]): List[BundleKindCounts] =
+  private def counted(decided: List[MergePlanner.Row]): List[Bundle.KindCounts] =
     com.histmersion.util.data.exchange.Bundle.Kind.values.toList
       .map(k => BundlePlan.counts(k, decided.filter(_.kind == k).map(_.decision)))
       .filter(c =>
@@ -91,7 +82,7 @@ object BundleImporter:
   private def importIn(
       bundle: ByteSource,
       bundleSha: String,
-      m: BundleManifest,
+      m: Bundle.Manifest,
       loaded: BundleReader.Loaded,
       opts: ImportOptions,
       files: ContentStore,
@@ -99,7 +90,7 @@ object BundleImporter:
       merge: MergeSettings,
       kinds: CarriedKinds,
       rules: MergeRuleSet
-  )(using DbCon): BundleImportResult =
+  )(using DbCon): Bundle.ImportResult =
     MergeRepo.lockImports()
     val (input, planned) = MergePlans.plan(bundle, m, loaded, resolutions, merge, files, opts.chunkChars, kinds, rules)
     val plan = planned.plan
@@ -122,7 +113,7 @@ object BundleImporter:
     val shown =
       holding ++ plan.issues.filter(i => i.decision.isDefined && planned.needsApply.exists(_.startsWith(i.id)))
     def result(applied: Boolean, mergeId: Option[UUID]) =
-      BundleImportResult(
+      Bundle.ImportResult(
         m.bundleId,
         m.instance,
         opts.dryRun,
@@ -282,7 +273,7 @@ object BundleImporter:
   private def applyIn(
       bundle: ByteSource,
       bundleSha: String,
-      m: BundleManifest,
+      m: Bundle.Manifest,
       loaded: BundleReader.Loaded,
       opts: ImportOptions,
       files: ContentStore,

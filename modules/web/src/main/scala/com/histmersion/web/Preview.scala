@@ -11,20 +11,10 @@ import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.util.{Failure, Success}
 import com.histmersion.domain.media.MediaRole
-import com.histmersion.api.catalogue.{
-  Corrections,
-  EventGeo,
-  EventLeads,
-  EventPrecision,
-  EventTier,
-  Place,
-  PlaceLink,
-  PlaceSummary,
-  PlaceTimeBasis
-}
-import com.histmersion.api.library.{DiscoverResult, Label, Source, SourceDetail, SourceRef, SourceWithFindings}
+import com.histmersion.api.catalogue.{Corrections, EventGeo, EventLeads, EventPrecision, EventTier, Place}
+import com.histmersion.api.library.{DiscoverResult, Label, Source}
 import com.histmersion.api.media.MediaThumb
-import com.histmersion.api.research.{Article, ArticleView}
+import com.histmersion.api.research.Article
 import com.histmersion.api.views.{EventDetail, PlaceDetail}
 
 /** THE link preview. One delegated hover handler on the document answers for every element that carries `data-ck` (a
@@ -97,8 +87,8 @@ object Preview:
 
   private val SummaryChars = 300
 
-  def card(s: SourceDetail): Card =
-    val ref = SourceRef(s.citekey, s.doi, s.authors, s.year, s.title, s.status)
+  def card(s: com.histmersion.api.library.Source.Detail): Card =
+    val ref = com.histmersion.api.library.Source.Ref(s.citekey, s.doi, s.authors, s.year, s.title, s.status)
     Card(
       title = s.title,
       byline = List(s.authors.mkString(", "), s.year.fold("")(_.toString), s.venue.getOrElse(""))
@@ -118,13 +108,13 @@ object Preview:
     )
 
   /** A source's card with its picture — a book's cover, else a paper's illustration (#1446). */
-  def card(sw: SourceWithFindings): Card =
+  def card(sw: com.histmersion.api.library.Source.WithFindings): Card =
     card(sw.source).copy(
       media = sw.illustration,
       icon = Some(CardIcons.source(sw.source, hasCover = sw.illustration.exists(_.role == MediaRole.Cover)))
     )
 
-  def card(a: ArticleView): Card =
+  def card(a: com.histmersion.api.research.Article.View): Card =
     Card(
       a.article.title,
       Label.display(a.article.kind),
@@ -141,10 +131,11 @@ object Preview:
   /** Where a place comes from, in words: the external source that brought it in, else the seed's own source line
     * ("Pleiades (pleiades.stoa.org), CC-BY").
     */
-  private[web] def datasetOf(p: PlaceSummary): Option[String] =
+  private[web] def datasetOf(p: com.histmersion.api.catalogue.Place.Summary): Option[String] =
     p.importSource
       .map { k =>
-        if k.startsWith("lpf:") then s"LPF dataset ${k.drop(4)}" else PlaceLink.schemeTitle(k)
+        if k.startsWith("lpf:") then s"LPF dataset ${k.drop(4)}"
+        else com.histmersion.api.catalogue.Place.Link.schemeTitle(k)
       }
       .orElse(p.source)
       .map(_.trim)
@@ -165,7 +156,9 @@ object Preview:
         Some(first.text + other.getOrElse(""))
     val links = d.links
       .flatMap(l =>
-        PlaceLink.url(l.scheme, l.externalId).map(u => s"${PlaceLink.schemeTitle(l.scheme)} ${l.externalId}" -> u)
+        com.histmersion.api.catalogue.Place.Link
+          .url(l.scheme, l.externalId)
+          .map(u => s"${com.histmersion.api.catalogue.Place.Link.schemeTitle(l.scheme)} ${l.externalId}" -> u)
       )
       .distinct
       .take(4)
@@ -179,7 +172,7 @@ object Preview:
       chips = Nil,
       where = if d.parents.isEmpty then "" else "part of " + d.parents.map(_.label).mkString(", "),
       summary = description,
-      facts = Option.when(d.datedByFindings)(PlaceTimeBasis.FindingsNote).toList ++
+      facts = Option.when(d.datedByFindings)(com.histmersion.api.catalogue.Place.TimeBasis.FindingsNote).toList ++
         d.shapeNotes ++
         datasetOf(p).map(s => s"source: $s").toList ++
         d.counts.toList.map(c =>
@@ -212,7 +205,9 @@ object Preview:
         .map(_.trim)
         .filter(_.nonEmpty)
         .map(t => if t.length > SummaryChars then t.take(SummaryChars - 1) + "…" else t),
-      links = d.wikidata.flatMap(q => PlaceLink.url("wikidata", q).map(u => s"Wikidata $q" -> u)).toList,
+      links = d.wikidata
+        .flatMap(q => com.histmersion.api.catalogue.Place.Link.url("wikidata", q).map(u => s"Wikidata $q" -> u))
+        .toList,
       facts = eventFacts(d, years),
       media = d.media.headOption,
       icon = Some(CardIcons.event(e.kind)),

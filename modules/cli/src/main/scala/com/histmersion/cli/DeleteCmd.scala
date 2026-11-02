@@ -6,8 +6,9 @@ import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.Plural
 import com.histmersion.config.*
-import com.histmersion.api.library.{CalibreEntryCheck, SourceDelete}
+import com.histmersion.api.library.CalibreEntryCheck
 import com.histmersion.api.library.of
+import com.histmersion.api.library.Source
 
 /** `histmersion delete <citekey> [--apply]` — delete a source (`POST /api/sources/{ck}/delete`, #969).
   *
@@ -61,9 +62,9 @@ object DeleteCmd:
         val lib = Calibre(cfg)
         calibreCheck(id, lib.libraryExists, cfg.library, lib.byId)
       }
-      Output.emit(a.json, d)(SourceDelete.markdown(_, check))
+      Output.emit(a.json, d)(Source.Delete.markdown(_, check))
       // a refused dry run is not a success: a script that goes on to `--apply` would fail anyway
-      if d.refused then Left(CliError(SourceDelete.refusal(d.citekey, d.blockers), exitCode = ExitCode.Refused))
+      if d.refused then Left(CliError(Source.Delete.refusal(d.citekey, d.blockers), exitCode = ExitCode.Refused))
       else if d.filesFailed.nonEmpty then
         Left(
           CliError(

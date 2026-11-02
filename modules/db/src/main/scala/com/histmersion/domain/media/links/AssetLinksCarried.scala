@@ -1,6 +1,5 @@
 package com.histmersion.domain.media.links
 
-import com.histmersion.api.exchange.BundleAssetLink
 import com.histmersion.api.given
 import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.{CarriedKind, ImportRank, ImportStage, RowsIn}
@@ -13,7 +12,7 @@ import com.histmersion.util.data.exchange.Bundle
   */
 object AssetLinksCarried:
 
-  val assetLinks: CarriedKind = CarriedKind.records[BundleAssetLink](
+  val assetLinks: CarriedKind = CarriedKind.records[com.histmersion.api.exchange.Bundle.AssetLink](
     DataOwner("media"),
     Bundle.Kind.AssetLink,
     TableName("asset_links"),

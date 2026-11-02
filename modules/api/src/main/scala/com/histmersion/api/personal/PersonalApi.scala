@@ -1,6 +1,6 @@
 package com.histmersion.api.personal
 
-import com.histmersion.api.{Api, ApiError}
+import com.histmersion.api.Api
 import sttp.tapir.*
 import sttp.tapir.json.circe.*
 import com.histmersion.api.ItemKind
@@ -14,7 +14,7 @@ object PersonalApi:
   private def limitQuery = query[Option[Int]]("limit")
     .description(s"how many (default ${PersonalIds.DefaultLimit}, at most ${PersonalIds.MaxLimit})")
 
-  lazy val bookmarks: PublicEndpoint[(Option[String], Option[String], Option[Int]), ApiError, List[Bookmark], Any] =
+  lazy val bookmarks: PublicEndpoint[(Option[String], Option[String], Option[Int]), Api.Error, List[Bookmark], Any] =
     endpoint.get
       .in("api" / "bookmarks")
       .in(kindQuery)
@@ -23,21 +23,21 @@ object PersonalApi:
       .errorOut(errors)
       .out(jsonBody[List[Bookmark]])
 
-  lazy val addBookmark: PublicEndpoint[BookmarkNew, ApiError, Bookmark, Any] =
-    endpoint.post.in("api" / "bookmarks").in(jsonBody[BookmarkNew]).errorOut(errors).out(jsonBody[Bookmark])
+  lazy val addBookmark: PublicEndpoint[Bookmark.New, Api.Error, Bookmark, Any] =
+    endpoint.post.in("api" / "bookmarks").in(jsonBody[Bookmark.New]).errorOut(errors).out(jsonBody[Bookmark])
 
-  lazy val editBookmark: PublicEndpoint[(String, BookmarkEdit), ApiError, Bookmark, Any] =
+  lazy val editBookmark: PublicEndpoint[(String, Bookmark.Edit), Api.Error, Bookmark, Any] =
     endpoint.patch
       .in("api" / "bookmarks" / path[String]("id"))
-      .in(jsonBody[BookmarkEdit])
+      .in(jsonBody[Bookmark.Edit])
       .errorOut(errors)
       .out(jsonBody[Bookmark])
 
-  lazy val removeBookmark: PublicEndpoint[String, ApiError, Bookmark, Any] =
+  lazy val removeBookmark: PublicEndpoint[String, Api.Error, Bookmark, Any] =
     endpoint.delete.in("api" / "bookmarks" / path[String]("id")).errorOut(errors).out(jsonBody[Bookmark])
 
   lazy val notes
-      : PublicEndpoint[(Option[String], Option[String], Option[String], Option[Int]), ApiError, List[Note], Any] =
+      : PublicEndpoint[(Option[String], Option[String], Option[String], Option[Int]), Api.Error, List[Note], Any] =
     endpoint.get
       .in("api" / "notes")
       .in(kindQuery)
@@ -47,19 +47,19 @@ object PersonalApi:
       .errorOut(errors)
       .out(jsonBody[List[Note]])
 
-  lazy val note: PublicEndpoint[String, ApiError, Note, Any] =
+  lazy val note: PublicEndpoint[String, Api.Error, Note, Any] =
     endpoint.get.in("api" / "notes" / path[String]("id")).errorOut(errors).out(jsonBody[Note])
 
-  lazy val addNote: PublicEndpoint[NoteNew, ApiError, Note, Any] =
-    endpoint.post.in("api" / "notes").in(jsonBody[NoteNew]).errorOut(errors).out(jsonBody[Note])
+  lazy val addNote: PublicEndpoint[Note.New, Api.Error, Note, Any] =
+    endpoint.post.in("api" / "notes").in(jsonBody[Note.New]).errorOut(errors).out(jsonBody[Note])
 
-  lazy val editNote: PublicEndpoint[(String, NoteEdit), ApiError, Note, Any] =
-    endpoint.patch.in("api" / "notes" / path[String]("id")).in(jsonBody[NoteEdit]).errorOut(errors).out(jsonBody[Note])
+  lazy val editNote: PublicEndpoint[(String, Note.Edit), Api.Error, Note, Any] =
+    endpoint.patch.in("api" / "notes" / path[String]("id")).in(jsonBody[Note.Edit]).errorOut(errors).out(jsonBody[Note])
 
-  lazy val removeNote: PublicEndpoint[String, ApiError, Note, Any] =
+  lazy val removeNote: PublicEndpoint[String, Api.Error, Note, Any] =
     endpoint.delete.in("api" / "notes" / path[String]("id")).errorOut(errors).out(jsonBody[Note])
 
-  lazy val reading: PublicEndpoint[(Option[String], Option[String], Option[Int]), ApiError, List[ReadMark], Any] =
+  lazy val reading: PublicEndpoint[(Option[String], Option[String], Option[Int]), Api.Error, List[ReadMark], Any] =
     endpoint.get
       .in("api" / "reading")
       .in(kindQuery)
@@ -68,13 +68,13 @@ object PersonalApi:
       .errorOut(errors)
       .out(jsonBody[List[ReadMark]])
 
-  lazy val setRead: PublicEndpoint[ReadMarkSet, ApiError, ReadMark, Any] =
-    endpoint.put.in("api" / "reading").in(jsonBody[ReadMarkSet]).errorOut(errors).out(jsonBody[ReadMark])
+  lazy val setRead: PublicEndpoint[ReadMark.Set, Api.Error, ReadMark, Any] =
+    endpoint.put.in("api" / "reading").in(jsonBody[ReadMark.Set]).errorOut(errors).out(jsonBody[ReadMark])
 
-  lazy val opened: PublicEndpoint[ReadOpened, ApiError, ReadMark, Any] =
+  lazy val opened: PublicEndpoint[ReadOpened, Api.Error, ReadMark, Any] =
     endpoint.post.in("api" / "reading" / "opened").in(jsonBody[ReadOpened]).errorOut(errors).out(jsonBody[ReadMark])
 
-  lazy val unread: PublicEndpoint[(Option[String], Option[Int], Option[Int]), ApiError, UnreadPage, Any] =
+  lazy val unread: PublicEndpoint[(Option[String], Option[Int], Option[Int]), Api.Error, UnreadPage, Any] =
     endpoint.get
       .in("api" / "reading" / "unread")
       .in(kindQuery)

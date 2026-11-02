@@ -8,8 +8,8 @@ import com.histmersion.api.Plural
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.{ApprovalKind, Pipeline}
-import com.histmersion.api.research.ArticlePlans.ArticlePlan
-import com.histmersion.api.automation.GoalPlans.LinkKind
+import com.histmersion.api.research.Article.Plans.ArticlePlan
+import com.histmersion.api.automation.Goal.Plans.LinkKind
 import com.histmersion.domain.PlanArticles.ArticlesAnswer
 import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.domain.automation.managers.ManagerService
@@ -18,7 +18,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
 import com.histmersion.api.automation.{AgentsMarkdown, Managers}
 import com.histmersion.api.library.Filter
-import com.histmersion.api.research.ArticleFilter
+import com.histmersion.api.research.Article
 
 /** `propose-articles <goal>` (docs/research-process-managers.md §4 (b), phase 2): the seeding manager's planner step. A
   * model proposes the articles a research area should have; CODE keeps the ones that can be compiled and are new
@@ -194,7 +194,7 @@ object ProposeArticlesPipeline:
   val OverlapCap = 1000
 
   /** An article of the area (linked to the goal, or planned by its seeding manager). */
-  final case class Existing(slug: String, title: String, filter: Option[ArticleFilter], cited: List[String])
+  final case class Existing(slug: String, title: String, filter: Option[Article.Filter], cited: List[String])
       derives KindlingsCodecAsObject
 
   /** The area as the planner sees it (checkpointed). `tags0` = the corpus's tags. */

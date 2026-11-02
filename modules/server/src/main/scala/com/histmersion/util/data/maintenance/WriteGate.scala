@@ -1,9 +1,9 @@
 package com.histmersion.util.data.maintenance
 
-import com.histmersion.api.ApiError
 import com.histmersion.api.backup.Backup
 
 import java.util.concurrent.atomic.AtomicBoolean
+import com.histmersion.api.Api
 
 /** The maintenance lock. A restore drops and recreates every table, so no other write may run while it does:
   * [[exclusively]] takes the flag, every write goes through [[guard]] and is answered 503 while it is held.
@@ -18,11 +18,11 @@ final class WriteGate:
   def active: Boolean = busy.get()
 
   /** Run `f` unless a restore is in progress, in which case answer 503. */
-  def guard[A](op: String)(f: => Either[ApiError, A]): Either[ApiError, A] =
+  def guard[A](op: String)(f: => Either[Api.Error, A]): Either[Api.Error, A] =
     if active then Left(Backup.maintenance(op)) else f
 
   /** Run `f` holding the lock; a second concurrent attempt is refused rather than queued. */
-  def exclusively[A](op: String)(f: => Either[ApiError, A]): Either[ApiError, A] =
+  def exclusively[A](op: String)(f: => Either[Api.Error, A]): Either[Api.Error, A] =
     if !busy.compareAndSet(false, true) then Left(Backup.maintenance(op))
     else
       try f

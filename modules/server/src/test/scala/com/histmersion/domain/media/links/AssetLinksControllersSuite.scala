@@ -8,7 +8,7 @@ import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.aliases.AliasKind
 
 import java.util.concurrent.atomic.AtomicReference
-import com.histmersion.api.media.{AssetLinkDeleted, AssetLinkPut}
+import com.histmersion.api.media.AssetLink
 
 /** The figures' links' controllers over the in-memory services: a source and a target named by an old identifier are
   * resolved first; a link that is not there is not found; a held lock refuses every write.
@@ -30,17 +30,17 @@ class AssetLinksControllersSuite extends munit.FunSuite:
 
   test("old identifiers resolved on a write and a read; a missing link not found"):
     val c = controllers()
-    val made = c.create(AssetLinkPut("zqold", "a.png", "depicts", "place", "zq_oldplace"))
+    val made = c.create(AssetLink.Put("zqold", "a.png", "depicts", "place", "zq_oldplace"))
     assertEquals(made.map(l => (l.citekey, l.targetId)), Right(("zqnew2001_x", "zq_place")))
     assertEquals(c.list(Some("zqold"), None, Some("place"), Some("zq_oldplace")).links.map(_.id), List(1L))
     assertEquals(c.delete(9L).left.map(_.message), Left("No asset link #9"))
-    assertEquals(c.delete(1L), Right(AssetLinkDeleted(1L, true)))
+    assertEquals(c.delete(1L), Right(AssetLink.Deleted(1L, true)))
 
   test("a held lock refuses every write"):
     val gate = WriteGate()
     val c = controllers(gate)
     val held = gate.exclusively("restore")(
-      Right((c.create(AssetLinkPut("zqold", "a.png", "depicts", "place", "zq_x")), c.delete(1L)))
+      Right((c.create(AssetLink.Put("zqold", "a.png", "depicts", "place", "zq_x")), c.delete(1L)))
     )
     val (a, b) = held.fold(e => fail(e.message), identity)
     assert(a.isLeft && b.isLeft, (a, b))

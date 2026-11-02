@@ -2,10 +2,10 @@ package com.histmersion.api
 
 import com.histmersion.domain.library.Confidence
 import com.histmersion.WireEnumValues
-import com.histmersion.api.library.{Label, SourceRef}
-import com.histmersion.api.research.ArticleKind
+import com.histmersion.api.library.Label
 import com.histmersion.domain.library.Edge
 import com.histmersion.domain.library.Source
+import com.histmersion.api.research.Article
 
 class DomainSuite extends munit.FunSuite:
 
@@ -86,42 +86,56 @@ class DomainSuite extends munit.FunSuite:
 
   // ── ArticleKind ────────────────────────────────────────────────────────────────────────────────
   test("ArticleKind.fromString case-insensitive"):
-    assertEquals(ArticleKind.fromString("concept"), Some(ArticleKind.Concept))
-    assertEquals(ArticleKind.fromString("TIMELINE"), Some(ArticleKind.Timeline))
+    assertEquals(Article.Kind.fromString("concept"), Some(Article.Kind.Concept))
+    assertEquals(Article.Kind.fromString("TIMELINE"), Some(Article.Kind.Timeline))
 
   test("ArticleKind.fromString returns None for unknown"):
-    assertEquals(ArticleKind.fromString("bogus"), None)
+    assertEquals(Article.Kind.fromString("bogus"), None)
 
   // ── SourceRef ──────────────────────────────────────────────────────────────────────────────────
   test("SourceRef.idLabel prefers DOI"):
-    val r = SourceRef("haak2015", Some("10.1038/nature14317"), Nil, Some(2015), "Title", Source.Status.Current)
+    val r = com.histmersion.api.library.Source.Ref(
+      "haak2015",
+      Some("10.1038/nature14317"),
+      Nil,
+      Some(2015),
+      "Title",
+      Source.Status.Current
+    )
     assertEquals(r.idLabel, "10.1038/nature14317")
 
   test("SourceRef.idLabel falls back to citekey"):
-    val r = SourceRef("haak2015", None, Nil, Some(2015), "Title", Source.Status.Current)
+    val r = com.histmersion.api.library.Source.Ref("haak2015", None, Nil, Some(2015), "Title", Source.Status.Current)
     assertEquals(r.idLabel, "haak2015")
 
   test("SourceRef.surname handles Firstname Lastname"):
-    assertEquals(SourceRef.surname("Walter Burkert"), "Burkert")
+    assertEquals(com.histmersion.api.library.Source.Ref.surname("Walter Burkert"), "Burkert")
 
   test("SourceRef.surname handles Lastname, Firstname"):
-    assertEquals(SourceRef.surname("Beekes, Robert"), "Beekes")
+    assertEquals(com.histmersion.api.library.Source.Ref.surname("Beekes, Robert"), "Beekes")
 
   test("SourceRef.shortAuthors single author"):
-    assertEquals(SourceRef.shortAuthors(List("Walter Burkert")), "Burkert")
+    assertEquals(com.histmersion.api.library.Source.Ref.shortAuthors(List("Walter Burkert")), "Burkert")
 
   test("SourceRef.shortAuthors two authors"):
-    assertEquals(SourceRef.shortAuthors(List("Haak, Wolfgang", "Lazaridis, Iosif")), "Haak & Lazaridis")
+    assertEquals(
+      com.histmersion.api.library.Source.Ref.shortAuthors(List("Haak, Wolfgang", "Lazaridis, Iosif")),
+      "Haak & Lazaridis"
+    )
 
   test("SourceRef.shortAuthors three+ authors"):
-    assertEquals(SourceRef.shortAuthors(List("Haak, Wolfgang", "Lazaridis, Iosif", "Patterson, Nick")), "Haak et al.")
+    assertEquals(
+      com.histmersion.api.library.Source.Ref
+        .shortAuthors(List("Haak, Wolfgang", "Lazaridis, Iosif", "Patterson, Nick")),
+      "Haak et al."
+    )
 
   test("SourceRef.shortAuthors empty list"):
-    assertEquals(SourceRef.shortAuthors(Nil), "")
+    assertEquals(com.histmersion.api.library.Source.Ref.shortAuthors(Nil), "")
 
   test("SourceRef.shortCite combines authors and year"):
     val r =
-      SourceRef(
+      com.histmersion.api.library.Source.Ref(
         "haak2015",
         None,
         List("Haak, Wolfgang", "Lazaridis, Iosif"),

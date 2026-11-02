@@ -17,7 +17,7 @@ import java.nio.file.{Files, Path}
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.library.{Ingest, Source}
-import com.histmersion.api.media.AssetLinkPut
+import com.histmersion.api.media.AssetLink
 
 /** V006 round-trips against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. */
 class AssetsJobsSuite extends com.histmersion.db.DbSuite:
@@ -115,13 +115,13 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
     def links = AssetLinkFixtures.list(ds, Some(ck), None, None, None).links.map(l => l.assetName -> l.targetId).sorted
     val (u1, u2) = (uid("fig-1.png"), uid("fig-2.png"))
     AssetLinkFixtures
-      .create(ds, AssetLinkPut(ck, "fig-1.png", "depicts", "place", "hattusa"))
+      .create(ds, AssetLink.Put(ck, "fig-1.png", "depicts", "place", "hattusa"))
       .fold(e => fail(e.message), _ => ())
     AssetLinkFixtures
-      .create(ds, AssetLinkPut(ck, "fig-2.png", "depicts", "place", "troy"))
+      .create(ds, AssetLink.Put(ck, "fig-2.png", "depicts", "place", "troy"))
       .fold(e => fail(e.message), _ => ())
     AssetLinkFixtures
-      .create(ds, AssetLinkPut(ck, "fig-3.png", "depicts", "place", "mycenae"))
+      .create(ds, AssetLink.Put(ck, "fig-3.png", "depicts", "place", "mycenae"))
       .fold(e => fail(e.message), _ => ())
     // re-OCR: fig-1 re-rendered under its name, fig-2's picture now numbered fig-4, fig-3 gone
     AssetFixtures.replace(

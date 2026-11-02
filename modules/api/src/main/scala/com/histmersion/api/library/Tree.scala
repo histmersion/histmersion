@@ -1,7 +1,8 @@
 package com.histmersion.api.library
 import com.histmersion.api.Markdown
 import com.histmersion.api.catalogue.RegionNode
-import com.histmersion.api.catalogue.{Period, PeriodRow, PlaceRelation}
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.catalogue.Place
 
 object Tree:
 
@@ -21,7 +22,7 @@ object Tree:
       end: Option[Long] = None,
       placeIds: List[String] = Nil
   ):
-    def toPeriodRow: PeriodRow = PeriodRow(start, end)
+    def toPeriodRow: Period.Row = Period.Row(start, end)
 
   def coversAsOf(p: Option[Period], asOf: Option[Long]): Boolean = (p, asOf) match
     case (None, _)                     => true
@@ -86,7 +87,7 @@ object Tree:
   def regionTree(
       rows: List[TreeRow],
       nodes: List[RegionNode],
-      relations: List[PlaceRelation],
+      relations: List[Place.Relation],
       asOf: Option[Long],
       depth: Int,
       samples: Int = 0,
@@ -99,7 +100,7 @@ object Tree:
       from: Long,
       to: Long,
       nodes: List[RegionNode],
-      relations: List[PlaceRelation],
+      relations: List[Place.Relation],
       depth: Int,
       samples: Int = 0
   ): List[Bucket] =
@@ -120,7 +121,7 @@ object Tree:
       from: Long,
       to: Long,
       nodes: List[RegionNode],
-      relations: List[PlaceRelation],
+      relations: List[Place.Relation],
       asOf: Option[Long],
       depth: Int,
       samples: Int = 0,
@@ -141,7 +142,7 @@ object Tree:
   private def regions(
       rows: List[TreeRow],
       nodes: List[RegionNode],
-      relations: List[PlaceRelation],
+      relations: List[Place.Relation],
       asOf: Option[Long],
       depth: Int,
       samples: Int,
@@ -151,7 +152,7 @@ object Tree:
     val byId = nodes.iterator.map(n => n.id -> n).toMap
     def live(id: String) = byId.get(id).exists(n => coversAsOf(n.period, asOf))
     val edges = relations.filter(r =>
-      r.kind == PlaceRelation.PartOf && coversAsOf(r.period, asOf) && live(r.childId) && live(r.parentId)
+      r.kind == Place.Relation.PartOf && coversAsOf(r.period, asOf) && live(r.childId) && live(r.parentId)
     )
     val kidsOf = edges.groupMap(_.parentId)(_.childId).view.mapValues(_.distinct).toMap
     val parents = edges.groupMap(_.childId)(_.parentId).view.mapValues(_.distinct).toMap
@@ -244,9 +245,9 @@ object Tree:
     if sets.sizeIs < 2 then 0
     else rows.iterator.map(_.key).toSet.count(k => sets.count(_.contains(k)) > 1)
 
-  private def sampleOf(rows: List[TreeRow], n: Int): List[BucketSample] =
+  private def sampleOf(rows: List[TreeRow], n: Int): List[Bucket.Sample] =
     if n <= 0 then Nil
-    else rows.iterator.map(r => BucketSample(r.citekey, r.title)).distinctBy(_.citekey).take(n).toList
+    else rows.iterator.map(r => Bucket.Sample(r.citekey, r.title)).distinctBy(_.citekey).take(n).toList
 
   private def clamp(depth: Int): Int = depth.max(1).min(MaxDepth)
   private def order(a: Long, b: Long): (Long, Long) = if a <= b then (a, b) else (b, a)

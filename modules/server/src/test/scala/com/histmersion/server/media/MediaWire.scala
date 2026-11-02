@@ -12,7 +12,7 @@ import org.ekrich.config.ConfigFactory
 import java.nio.charset.StandardCharsets.UTF_8
 import javax.sql.DataSource
 import scala.jdk.CollectionConverters.*
-import com.histmersion.api.catalogue.{Period, Place, PlaceInput, PlaceName}
+import com.histmersion.api.catalogue.{Period, Place}
 import com.histmersion.api.ocr.ConvertedDoc
 
 /** The answers of every first-party media collection's provider, the settings that switch them all on at no pause, the
@@ -149,9 +149,9 @@ object MediaWire:
     AppConfig.loadWithUserText(ConfigFactory.parseMap(env.asJava), text + more)
 
   private def place(id: String, label: String, kind: String, lon: Double, lat: Double, period: Option[(Long, Long)]) =
-    PlaceInput(
+    Place.Input(
       Place(id, label, kind, Some(s"""{"type":"Point","coordinates":[$lon,$lat]}"""), period.map(Period(_, _))),
-      List(PlaceName(label))
+      List(Place.Name(label))
     )
 
   /** The places on the map (each holds a finding), their Wikidata and Pleiades links, and two events. */

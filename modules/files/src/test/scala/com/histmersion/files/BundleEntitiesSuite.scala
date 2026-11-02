@@ -7,26 +7,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
 import com.histmersion.util.data.exchange.{BundleFormat, BundleReader, BundleTar}
 import com.histmersion.util.data.exchange.BundleEntities
-import com.histmersion.api.exchange.{
-  Bundle,
-  BundleBlobs,
-  BundleCorrection,
-  BundleEdge,
-  BundleEvent,
-  BundleEventCandidate,
-  BundleEventCatalogue,
-  BundleEventCheck,
-  BundleEventSets,
-  BundleFiles,
-  BundleFinding,
-  BundleGoal,
-  BundleInstance,
-  BundleManifest,
-  BundleRange,
-  BundleReference,
-  BundleSiteType,
-  BundleSource
-}
+import com.histmersion.api.exchange.Bundle
 import com.histmersion.domain.library.Source
 
 /** The `.hmx` bundle's content in memory: its entities (blob and dangling references, the event-catalogue sets, a
@@ -40,7 +21,7 @@ class BundleEntitiesSuite extends munit.FunSuite:
   private val I = UUID.fromString("01910000-0000-7000-8000-0000000000aa")
 
   private def goal(slug: String, updated: String = "2026-10-03T09:00:00.000000Z", notes: Option[String] = None) =
-    BundleGoal(
+    Bundle.Goal(
       U1,
       I,
       slug,
@@ -49,7 +30,7 @@ class BundleEntitiesSuite extends munit.FunSuite:
       notes,
       List("b", "a"),
       Nil,
-      Some(BundleRange(Some(-1650), None)),
+      Some(Bundle.Range(Some(-1650), None)),
       None,
       "2026-10-01T00:00:00.000000Z",
       updated
@@ -74,7 +55,7 @@ class BundleEntitiesSuite extends munit.FunSuite:
       .toList
 
   test("entities: blob references, dangling references and asOf"):
-    val src = BundleSource(
+    val src = Bundle.Source(
       U1,
       I,
       "ck2001_a",
@@ -102,7 +83,7 @@ class BundleEntitiesSuite extends munit.FunSuite:
     val es = BundleEntities(
       sources = List(src),
       findings = List(
-        BundleFinding(
+        Bundle.Finding(
           U2,
           I,
           U1,
@@ -119,7 +100,7 @@ class BundleEntitiesSuite extends munit.FunSuite:
           "2026-10-03T00:00:00.000000Z"
         )
       ),
-      edges = List(BundleEdge(U1, U3, "references"))
+      edges = List(Bundle.Edge(U1, U3, "references"))
     )
     assertEquals(es.blobRefs.keySet, Set("b" * 64, "c" * 64))
     assertEquals(es.asOf, Some("2026-10-03T00:00:00.000000Z"))
@@ -134,8 +115,8 @@ class BundleEntitiesSuite extends munit.FunSuite:
 
   // ── the event-catalogue sets (#1647) ─────────────────────────────────────────────────────────
 
-  private def event(extra: BundleEvent => BundleEvent = identity) = extra(
-    BundleEvent(
+  private def event(extra: Bundle.Event => Bundle.Event = identity) = extra(
+    Bundle.Event(
       U1,
       I,
       "e1",
@@ -165,7 +146,7 @@ class BundleEntitiesSuite extends munit.FunSuite:
     List("catalogue", "names", "wikidata", "central", "plusMinus", "datingMethod").foreach(f =>
       assert(!plain.line.contains(s"\"$f\""), plain.line)
     )
-    assertEquals(BundleFormat.decodeLine[BundleEvent](plain.line, stamped = true).map(_.names), Right(None))
+    assertEquals(BundleFormat.decodeLine[Bundle.Event](plain.line, stamped = true).map(_.names), Right(None))
     val gvp = BundleFormat.stamp(
       event(
         _.copy(
@@ -180,7 +161,7 @@ class BundleEntitiesSuite extends munit.FunSuite:
     )
     assertNotEquals(gvp.rev, plain.rev)
     assertEquals(
-      BundleFormat.decodeLine[BundleEvent](gvp.line, stamped = true).map(e => (e.catalogue, e.names, e.plusMinus)),
+      BundleFormat.decodeLine[Bundle.Event](gvp.line, stamped = true).map(e => (e.catalogue, e.names, e.plusMinus)),
       Right((Some("gvp"), Some(List("Thera", "Santorini")), Some(10L)))
     )
 
@@ -189,7 +170,7 @@ class BundleEntitiesSuite extends munit.FunSuite:
     val es = BundleEntities(
       events = List(event()),
       eventCatalogue = List(
-        BundleEventCatalogue(
+        Bundle.EventCatalogue(
           U1,
           "gvp",
           "212040",
@@ -211,7 +192,7 @@ class BundleEntitiesSuite extends munit.FunSuite:
         )
       ),
       eventCandidates = List(
-        BundleEventCandidate(
+        Bundle.EventCandidate(
           U1,
           U2,
           "ck2001_a",
@@ -223,9 +204,9 @@ class BundleEntitiesSuite extends munit.FunSuite:
           at
         )
       ),
-      eventChecks = List(BundleEventCheck(U1, at)),
+      eventChecks = List(Bundle.EventCheck(U1, at)),
       corrections = List(
-        BundleCorrection(
+        Bundle.Correction(
           "event",
           "e1",
           Some(U1),
@@ -240,15 +221,15 @@ class BundleEntitiesSuite extends munit.FunSuite:
           None
         )
       ),
-      siteTypes = List(BundleSiteType("pleiades:599928", Some("settlement"), Some(at)))
+      siteTypes = List(Bundle.SiteType("pleiades:599928", Some("settlement"), Some(at)))
     )
     val payloads = es.payloads.toMap
     List(
-      BundleFiles.EventCatalogue,
-      BundleFiles.EventCandidates,
-      BundleFiles.EventChecks,
-      BundleFiles.EventCorrections,
-      BundleFiles.PlaceSiteTypes
+      Bundle.Files.EventCatalogue,
+      Bundle.Files.EventCandidates,
+      Bundle.Files.EventChecks,
+      Bundle.Files.EventCorrections,
+      Bundle.Files.PlaceSiteTypes
     ).foreach(f => assertEquals(BundleFormat.lines(payloads(f)), 1, f))
     val (back, problems) = BundleEntities.decode(payloads)
     assertEquals(problems, Nil)
@@ -258,11 +239,11 @@ class BundleEntitiesSuite extends munit.FunSuite:
     // a bundle written before these files existed: they read as empty
     val (old, oldProblems) = BundleEntities.decode(
       payloads -- List(
-        BundleFiles.EventCatalogue,
-        BundleFiles.EventCandidates,
-        BundleFiles.EventChecks,
-        BundleFiles.EventCorrections,
-        BundleFiles.PlaceSiteTypes
+        Bundle.Files.EventCatalogue,
+        Bundle.Files.EventCandidates,
+        Bundle.Files.EventChecks,
+        Bundle.Files.EventCorrections,
+        Bundle.Files.PlaceSiteTypes
       )
     )
     assertEquals(oldProblems, Nil)
@@ -273,7 +254,7 @@ class BundleEntitiesSuite extends munit.FunSuite:
     assertEquals(old.events.map(_.id), List("e1"))
 
   test("merging the sets: a decision is kept over a proposal, never a proposal over a decision; the newer row wins"):
-    import com.histmersion.api.exchange.BundleEventSets.*
+    import com.histmersion.api.exchange.Bundle.EventSets.*
     assertEquals(candidateStatus("proposed", "confirmed"), "confirmed")
     assertEquals(candidateStatus("proposed", "rejected"), "rejected")
     assertEquals(candidateStatus("proposed", "proposed"), "proposed")
@@ -289,17 +270,17 @@ class BundleEntitiesSuite extends munit.FunSuite:
   test("the reader reports every problem of a bundle, not just the first"):
     val es = BundleEntities(goals = List(goal("g")))
     val ps = es.payloads
-    val m = BundleManifest(
+    val m = Bundle.Manifest(
       Bundle.Format,
       1,
       "33",
       U1,
-      BundleInstance(I),
+      Bundle.Instance(I),
       None,
       None,
       ps.map((p, b) => BundleFormat.fileInfo(p, b)),
-      BundleBlobs(1, 3),
-      BundleReference(0, "", 0, "")
+      Bundle.Blobs(1, 3),
+      Bundle.Reference(0, "", 0, "")
     )
     val ok = tar(
       (Bundle.ManifestPath -> BundleFormat.manifestBytes(m)) :: ps.map(identity) ++

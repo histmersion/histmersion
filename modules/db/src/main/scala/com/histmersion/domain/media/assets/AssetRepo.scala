@@ -2,11 +2,12 @@ package com.histmersion.domain.media.assets
 
 import com.histmersion.util.database.RangeSql
 
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import com.histmersion.api.media.{AssetDetail, AssetInfo, AssetPatch}
+import com.histmersion.api.Api
 
 /** The figures that belong with a source's Markdown (plan §1.8).
   *
@@ -130,8 +131,8 @@ private[assets] object AssetRepo:
   /** A figure's description changed: each field given, its point when both coordinates are, a bound of its period given
     * alone replacing that bound ([[RangeSql.merge]]). The figure must exist.
     */
-  def patch(citekey: String, name: String, p: AssetPatch)(using DbCon): Either[ApiError, Unit] =
-    if !exists(citekey, name) then Left(ApiError(s"No asset '$citekey/$name'", Some(Write.CodeNotFound)))
+  def patch(citekey: String, name: String, p: AssetPatch)(using DbCon): Either[Api.Error, Unit] =
+    if !exists(citekey, name) then Left(Api.Error(s"No asset '$citekey/$name'", Some(Write.CodeNotFound)))
     else
       p.kind.foreach(v => sql"UPDATE assets SET kind = $v WHERE citekey = $citekey AND name = $name".update.run())
       p.caption.foreach(v => sql"UPDATE assets SET caption = $v WHERE citekey = $citekey AND name = $name".update.run())

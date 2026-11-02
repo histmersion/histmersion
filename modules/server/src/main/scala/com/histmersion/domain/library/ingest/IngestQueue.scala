@@ -1,8 +1,5 @@
 package com.histmersion.domain.library.ingest
 
-import com.histmersion.api.library.SourceWrite
-
-import com.histmersion.api.ApiError
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.{AcquireMatch, Caller}
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope, QueueService}
@@ -22,10 +19,11 @@ import javax.sql.DataSource
 import scala.jdk.OptionConverters.*
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.jobs.JobState
-import com.histmersion.api.library.{Ingest, IngestAccepted, IngestParams, SourcePatch, SourcePut}
+import com.histmersion.api.library.Ingest
 import com.histmersion.api.media.AssetInput
 import com.histmersion.api.ocr.ConvertedDoc
 import com.histmersion.domain.library.Source
+import com.histmersion.api.Api
 
 /** The ingest's job queue (plan §1.8): a job is created and queued, and a worker of the bounded pool calls the
   * converter on the stored original, then writes body + figures — a `patch` when the source already exists (so agent
@@ -76,11 +74,11 @@ final class IngestQueue(
   def paused: Boolean = pool.isPaused
 
   /** Queue the conversion of the stored original `file`; the job as the caller is told of it. */
-  def enqueue(kind: String, citekey: String, sha: String, file: StoreKey, params: IngestParams): IngestAccepted =
+  def enqueue(kind: String, citekey: String, sha: String, file: StoreKey, params: Ingest.Params): Ingest.Accepted =
     val job = jobs.create(kind, Some(citekey), Some(sha), params.acquireItem)
     val _ = pending.put(job.id, IngestPending(params, file, sha, kind))
     pool.submit(job.id)
-    IngestAccepted(job.id, citekey, job.status, Some(sha))
+    Ingest.Accepted(job.id, citekey, job.status, Some(sha))
 
   // ── the converter's health ─────────────────────────────────────────────────────────────────
 
@@ -126,9 +124,9 @@ final class IngestQueue(
   // ── the job body ───────────────────────────────────────────────────────────────────────────
 
   /** A conversion's figures → storable ones, failing the whole batch on the first unusable payload. */
-  private def decode(in: List[AssetInput]): Either[ApiError, List[NewFigure]] =
-    in.foldLeft[Either[ApiError, List[NewFigure]]](Right(Nil)) { (acc, a) =>
-      acc.flatMap(xs => NewFigure.of(a, cfg().limits.assetBytes).left.map(ApiError(_)).map(xs :+ _))
+  private def decode(in: List[AssetInput]): Either[Api.Error, List[NewFigure]] =
+    in.foldLeft[Either[Api.Error, List[NewFigure]]](Right(Nil)) { (acc, a) =>
+      acc.flatMap(xs => NewFigure.of(a, cfg().limits.assetBytes).left.map(Api.Error(_)).map(xs :+ _))
     }
 
   private def runJob(id: String): Unit =
@@ -200,9 +198,13 @@ final class IngestQueue(
       jobs.progress(jobId, s"storing ${stored.size} asset(s)")
       val written =
         if sources.load(citekey).isDefined then
-          sources.patch(citekey, SourcePatch(body = Some(body)), Caller.Local).map(_ => ()).left.map(_.message)
+          sources
+            .patch(citekey, com.histmersion.api.library.Source.Patch(body = Some(body)), Caller.Local)
+            .map(_ => ())
+            .left
+            .map(_.message)
         else
-          SourceWrite
+          com.histmersion.api.library.Source.Write
             .applyPut(citekey, skeleton(job.params, body))
             .map(s =>
               val _ = sources.put(s, Caller.Local)
@@ -267,8 +269,8 @@ final class IngestQueue(
   /** The minimal source an ingest creates when nothing is there yet: enough to find it, no invented enrichment.
     * Everything else is the agent's job, through `patch_source`.
     */
-  private def skeleton(p: IngestParams, body: String): SourcePut =
-    SourcePut(
+  private def skeleton(p: Ingest.Params, body: String): com.histmersion.api.library.Source.Put =
+    com.histmersion.api.library.Source.Put(
       title = p.title.map(_.trim).filter(_.nonEmpty).getOrElse(p.citekey),
       authors = p.authors.map(_.trim).filter(_.nonEmpty),
       doi = p.doi.map(_.trim).filter(_.nonEmpty),

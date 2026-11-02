@@ -2,7 +2,6 @@ package com.histmersion.domain.automation.approvals
 
 import com.histmersion.domain.automation.agents.*
 
-import com.histmersion.api.ApiError
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.{ApprovalKind, Decision, DecisionRequest}
@@ -12,6 +11,7 @@ import com.histmersion.api.automation.Queue.QueueAdd
 import java.time.Instant
 import javax.sql.DataSource
 import com.histmersion.api.automation.ApprovalDigest
+import com.histmersion.api.Api
 
 /** The approval digest (#3762 proposal 3): everything waiting for a person in one view ([[digest]]), ONE worklog line a
   * UTC day after `agents.autopilot.digest-hour` ([[tick]], from the managers' tick), and a whole group decided at once
@@ -61,21 +61,21 @@ final class ApprovalDigestService(
   /** Decide every open approval `b` matches (a kind, a subject, ids), oldest first; a refused one does not stop the
     * rest.
     */
-  def decideAll(b: BulkDecide): Either[ApiError, BulkResult] =
+  def decideAll(b: BulkDecide): Either[Api.Error, BulkResult] =
     for
-      d <- Decision.parse(b.decision).toRight(ApiError(s"unknown decision '${b.decision}' (approve or reject)"))
+      d <- Decision.parse(b.decision).toRight(Api.Error(s"unknown decision '${b.decision}' (approve or reject)"))
       _ <- Either.cond(
         b.kind.exists(_.trim.nonEmpty) || b.subject.exists(_.trim.nonEmpty) || b.ids.nonEmpty,
         (),
-        ApiError("give a kind, a subject or ids: a bulk decision never takes every open approval")
+        Api.Error("give a kind, a subject or ids: a bulk decision never takes every open approval")
       )
       _ <- b.kind
         .map(_.trim)
         .filter(_.nonEmpty)
-        .fold[Either[ApiError, Unit]](Right(()))(k =>
+        .fold[Either[Api.Error, Unit]](Right(()))(k =>
           ApprovalKind
             .parse(k)
-            .toRight(ApiError(s"unknown approval kind '$k' (${ApprovalKind.values.map(_.wire).mkString(", ")})"))
+            .toRight(Api.Error(s"unknown approval kind '$k' (${ApprovalKind.values.map(_.wire).mkString(", ")})"))
             .map(_ => ())
         )
     yield

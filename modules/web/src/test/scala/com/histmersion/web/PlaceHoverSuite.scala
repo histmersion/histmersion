@@ -3,13 +3,13 @@ package com.histmersion.web
 import com.histmersion.api.{ServiceState, Wording}
 
 import scala.collection.mutable
-import com.histmersion.api.backup.BackupInfo
-import com.histmersion.api.catalogue.{PlaceCounts, PlaceSummary}
 import com.histmersion.api.instance.{About, BuildStamp, CorpusCounts, Health}
 import com.histmersion.api.jobs.JobCounts
 import com.histmersion.api.plugins.{PluginSetting, PluginsReport, PluginStatus}
 import com.histmersion.api.settings.ConfigFileInfo
 import com.histmersion.api.views.PlaceDetail
+import com.histmersion.api.backup.Backup
+import com.histmersion.api.catalogue.Place
 
 /** #716/#717/#718 — the map's place card, click-to-filter and the About window, in their pure parts. */
 class PlaceHoverSuite extends munit.FunSuite:
@@ -62,7 +62,7 @@ class PlaceHoverSuite extends munit.FunSuite:
 
   test("#716: a place card shows kind, validity in BCE/CE, the parents and the counts") {
     def summary(id: String, label: String, kind: String, ps: Option[Long] = None, pe: Option[Long] = None) =
-      PlaceSummary(id, label, kind, ps, pe, None, "")
+      Place.Summary(id, label, kind, ps, pe, None, "")
     val d = PlaceDetail(
       place = summary("hatti", "Hittite Empire", "polity", Some(-1650), Some(-1180)),
       geometry = None,
@@ -70,7 +70,7 @@ class PlaceHoverSuite extends munit.FunSuite:
       children = Nil,
       findings = 3,
       asOf = Some(-1300),
-      counts = Some(PlaceCounts(sources = 12, findings = 1, articles = 0, events = 2))
+      counts = Some(Place.Counts(sources = 12, findings = 1, articles = 0, events = 2))
     )
     val c = Preview.card(d)
     assertEquals(c.title, "Hittite Empire")
@@ -160,7 +160,7 @@ class PlaceHoverSuite extends munit.FunSuite:
     health = Health("degraded", "ok", Some("28"), Some("busy: converting 2 documents")),
     jobs = JobCounts(1, 2, 3, 4),
     counts = Some(CorpusCounts(10, 200, 5, 7, 15000, 40, 12)),
-    lastBackup = Some(BackupInfo("histmersion-20261001.dump", 2_500_000, "2026-10-01T08:00:00Z")),
+    lastBackup = Some(Backup.Info("histmersion-20261001.dump", 2_500_000, "2026-10-01T08:00:00Z")),
     lastBackupAgeSeconds = Some(90000)
   )
 

@@ -15,15 +15,15 @@ final case class EventRederiveReport(
     after: List[EventCount] = Nil,
     offMap: Int = 0,
     examples: List[String] = Nil,
-    corrections: CorrectionCounts = CorrectionCounts()
+    corrections: Correction.Counts = Correction.Counts()
 ) derives KindlingsCodecAsObject,
       KindlingsSchema
 object EventRederiveReport:
   given Schema[EventRederiveReport] = summon[KindlingsSchema[EventRederiveReport]].schema
 
   /** An events re-dating job's report, in its detail. */
-  val Detail: com.histmersion.api.jobs.JobDetailField[Option[EventRederiveReport]] =
-    com.histmersion.api.jobs.JobDetailField("eventRederive", None)
+  val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[EventRederiveReport]] =
+    com.histmersion.api.jobs.JobDetail.Field("eventRederive", None)
 
   def summary(r: EventRederiveReport): String =
     def counts(cs: List[EventCount]) = cs.map(c => s"${c.key} ${c.n}").mkString(", ")

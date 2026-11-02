@@ -2,6 +2,9 @@ package com.histmersion.api.basemap
 
 import com.histmersion.api.BBox
 import com.histmersion.api.given
+import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import hearth.kindlings.tapirschemaderivation.KindlingsSchema
+import sttp.tapir.Schema
 object Basemap:
 
   val FetchCommand = "histmersion basemap fetch"
@@ -170,3 +173,129 @@ object Basemap:
         case Some(d) if d.trim.isEmpty => "everything (nothing dropped)"
         case Some(d)                   => s"all but: $d"
         case None                      => "earth, water and land cover only (fetched before the drop list)"
+
+  final case class FetchQuery(
+      layer: String = "all",
+      maxZoom: Option[Int] = None,
+      terrainMaxZoom: Option[Int] = None,
+      bbox: Option[String] = None,
+      dryRun: Boolean = false,
+      keepAll: Boolean = false,
+      focus: Option[String] = None
+  )
+
+  final case class Focus(
+      name: String,
+      file: String,
+      bytes: Long,
+      bbox: String,
+      minZoom: Int,
+      maxZoom: Int,
+      tiles: Long,
+      fetchedAt: Option[String] = None
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
+
+  object Focus:
+    given Schema[Focus] = summon[KindlingsSchema[Focus]].schema
+
+  enum Layer(val wire: String, val title: String):
+    case Vector extends Layer("vector", "coast, water and land cover")
+
+    case Terrain extends Layer("terrain", "relief")
+
+    case Labels extends Layer("labels", "physical names")
+
+    /** The relief's own tiles have the sea flat at 0; these carry its depth (ETOPO1 from NOAA, or the GEBCO grid). */
+    case Bathymetry extends Layer("bathymetry", "sea floor")
+
+    def file: String = s"$wire.pmtiles"
+
+  object Layer:
+    def parse(s: String): Option[Layer] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+
+    def parseMany(s: String): Either[String, List[Layer]] =
+      s.trim.toLowerCase(java.util.Locale.ROOT) match
+        case "" | "all" => Right(values.toList)
+        case other      =>
+          parse(other).map(List(_)).toRight(s"unknown base-map layer '$s' (vector, terrain, labels, bathymetry or all)")
+
+  final case class LayerInfo(
+      layer: String,
+      present: Boolean,
+      file: String,
+      bytes: Long = 0,
+      minZoom: Option[Int] = None,
+      maxZoom: Option[Int] = None,
+      bbox: Option[String] = None,
+      tiles: Option[Long] = None,
+      tileType: Option[String] = None,
+      source: Option[String] = None,
+      fetchedAt: Option[String] = None,
+      /** Changes with every fetch: the tile URLs carry it, so a browser never shows a stale cached tile. */
+      version: Option[String] = None,
+      attribution: String = "",
+      kept: Option[String] = None,
+      dropped: List[String] = Nil,
+      error: Option[String] = None,
+      onDemand: Option[OnDemand] = None,
+      focus: List[Focus] = Nil
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema:
+    def deepest: Option[Int] =
+      (maxZoom.toList ++ focus.map(_.maxZoom) ++ onDemand.filter(_.enabled).map(_.maxZoom).toList).maxOption
+
+  object LayerInfo:
+    given Schema[LayerInfo] = summon[KindlingsSchema[LayerInfo]].schema
+
+  final case class OnDemand(
+      enabled: Boolean,
+      maxZoom: Int,
+      dir: String,
+      tiles: Long,
+      bytes: Long,
+      maxBytes: Long,
+      offlineUntil: Option[String] = None
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
+
+  object OnDemand:
+    given Schema[OnDemand] = summon[KindlingsSchema[OnDemand]].schema
+
+  final case class Region(name: String, bbox: String) derives KindlingsCodecAsObject, KindlingsSchema
+
+  object Region:
+    given Schema[Region] = summon[KindlingsSchema[Region]].schema
+
+  final case class RemoveQuery(layer: String = "all", focus: Option[String] = None, cache: Boolean = false)
+
+  final case class Removed(removed: List[String], bytes: Long) derives KindlingsCodecAsObject, KindlingsSchema
+
+  object Removed:
+    given Schema[Removed] = summon[KindlingsSchema[Removed]].schema
+
+  final case class Status(
+      available: Boolean,
+      dir: String,
+      bbox: String,
+      layers: List[LayerInfo],
+      fetchCommand: String,
+      freeBytes: Long = 0,
+      running: Option[String] = None,
+      hints: List[String] = Nil,
+      styles: List[StyleState] = Nil,
+      mapMaxZoom: Int = 16,
+      regions: List[Region] = Nil
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema:
+    def missing(id: String): List[String] = styles.find(_.id == id).fold(Nil)(_.missing)
+
+  object Status:
+    given Schema[Status] = summon[KindlingsSchema[Status]].schema
+
+  final case class StyleState(id: String, name: String, missing: List[String] = Nil)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
+
+  object StyleState:
+    given Schema[StyleState] = summon[KindlingsSchema[StyleState]].schema

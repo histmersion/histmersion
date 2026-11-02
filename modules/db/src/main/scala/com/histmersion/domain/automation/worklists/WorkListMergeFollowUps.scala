@@ -1,7 +1,6 @@
 package com.histmersion.domain.automation.worklists
 
 import com.histmersion.api.Plural
-import com.histmersion.api.exchange.{BundleKindCounts, BundleManifest}
 import com.histmersion.api.automation.Queue
 import com.histmersion.domain.MergePlanner
 import com.histmersion.util.data.exchange.MergeFollowUps
@@ -15,11 +14,11 @@ import com.histmersion.util.data.exchange.Bundle
   */
 object WorkListMergeFollowUps extends MergeFollowUps:
   def recordIn(
-      m: BundleManifest,
+      m: com.histmersion.api.exchange.Bundle.Manifest,
       from: String,
       mergeId: UUID,
       ap: MergePlanner.Apply,
-      counts: List[BundleKindCounts],
+      counts: List[com.histmersion.api.exchange.Bundle.KindCounts],
       dump: String
   )(using DbCon): (List[String], Int) =
     val short = mergeId.toString.take(8)

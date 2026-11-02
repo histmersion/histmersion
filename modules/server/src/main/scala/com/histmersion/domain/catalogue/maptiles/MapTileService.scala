@@ -2,7 +2,6 @@ package com.histmersion.domain.catalogue.maptiles
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
-import com.histmersion.api.ApiError
 import com.histmersion.api.library.Filter
 import com.histmersion.api.catalogue.{TileLayer, TilesApi}
 import com.histmersion.config.UiMapTilesSettings
@@ -12,6 +11,7 @@ import com.histmersion.domain.catalogue.maptiles.layers.MapLayer
 import com.histmersion.util.database.Transactor
 
 import sttp.model.StatusCode
+import com.histmersion.api.Api
 
 /** `GET /api/tiles/{layer}/{z}/{x}/{y}` ([[TilesApi]]): a layer's tile cut from the database, kept ([[TileCache]])
   * under the versions of what it reads, and answered 304 when the browser holds it. The sites and the events are the
@@ -32,13 +32,13 @@ final class MapTileService(
 
   val cache: TileCache = TileCache(() => settings().cacheMb.toLong.max(1) * 1024 * 1024)
 
-  def tile(q: TilesApi.TileQuery): Either[ApiError, TilesApi.TileAnswer] =
+  def tile(q: TilesApi.TileQuery): Either[Api.Error, TilesApi.TileAnswer] =
     val s = settings()
     for
       layer <- TileLayer
         .parse(q.layer)
-        .toRight(ApiError(s"unknown layer '${q.layer}': one of ${TileLayer.values.map(_.wire).mkString(", ")}"))
-      coord <- TileCoord.of(q.z, q.x, q.y, s.maxZoom).left.map(ApiError(_))
+        .toRight(Api.Error(s"unknown layer '${q.layer}': one of ${TileLayer.values.map(_.wire).mkString(", ")}"))
+      coord <- TileCoord.of(q.z, q.x, q.y, s.maxZoom).left.map(Api.Error(_))
     yield
       val versions = currentVersions()
       val k = key(layer, coord, q, versions)

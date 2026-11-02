@@ -1,26 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.catalogue.PlaceEntry
-
-import com.histmersion.api.{ApiError, Dataset, Write}
-import com.histmersion.api.catalogue.{
-  ManualPlaceName,
-  Period,
-  PlaceFootprint,
-  PlaceGone,
-  PlaceHit,
-  PlaceImportResult,
-  PlaceInput,
-  PlaceLink,
-  PlaceNameChanged,
-  PlaceOverride,
-  PlaceOverrideChanged,
-  PlaceOverrideEdit,
-  PlaceOverrides,
-  PlaceRelation,
-  PlaceSummary,
-  PlaceTreeRow
-}
+import com.histmersion.api.{Dataset, Write}
+import com.histmersion.api.catalogue.{ManualPlaceName, Period}
 import com.histmersion.api.catalogue.RegionNode
 import com.histmersion.domain.catalogue.CatalogueState
 import com.histmersion.domain.catalogue.places.PlaceSql.DefaultModernFrom
@@ -30,6 +11,8 @@ import hearth.kindlings.optics.syntax.*
 import java.time.{Clock, Instant}
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
+import com.histmersion.api.Api
+import com.histmersion.api.catalogue.Place
 
 /** The gazetteer's records: the places, their names (a person's among them), their old ids, the kinds and periods a
   * person set over a source's, and the hierarchy — imported, searched, read at a year, curated by hand. A finding's
@@ -39,15 +22,15 @@ trait PlaceService:
   def count(): Int
 
   /** A batch upserted in one transaction: rows, then names, then the edges whose parent exists by then. */
-  def importPlaces(batch: List[PlaceInput], dataset: Dataset): PlaceImportResult
+  def importPlaces(batch: List[Place.Input], dataset: Dataset): Place.ImportResult
 
   /** The places a name search finds, valid at `asOf`: exact labels first, then prefixes. */
-  def search(q: Option[String], asOf: Option[Long], limit: Int, modernFrom: Long = DefaultModernFrom): List[PlaceHit]
+  def search(q: Option[String], asOf: Option[Long], limit: Int, modernFrom: Long = DefaultModernFrom): List[Place.Hit]
 
   /** One place with the hierarchy around it at `asOf`. */
-  def get(id: String, asOf: Option[Long] = None, modernFrom: Long = DefaultModernFrom): Option[PlaceEntry]
+  def get(id: String, asOf: Option[Long] = None, modernFrom: Long = DefaultModernFrom): Option[Place.Entry]
 
-  def children(id: String, asOf: Option[Long], limit: Int, modernFrom: Long = DefaultModernFrom): List[PlaceSummary]
+  def children(id: String, asOf: Option[Long], limit: Int, modernFrom: Long = DefaultModernFrom): List[Place.Summary]
 
   /** The hierarchy at `asOf` as a depth-tagged pre-order walk, from `root` or from every place that heads it. */
   def hierarchy(
@@ -57,53 +40,53 @@ trait PlaceService:
       limit: Int,
       depthCap: Int = Int.MaxValue,
       modernFrom: Long = DefaultModernFrom
-  ): List[PlaceTreeRow]
+  ): List[Place.TreeRow]
 
-  def footprints(id: String, asOf: Option[Long]): List[PlaceFootprint]
-  def links(id: String): List[PlaceLink]
+  def footprints(id: String, asOf: Option[Long]): List[Place.Footprint]
+  def links(id: String): List[Place.Link]
 
   /** Which of a filter's `places` values are places, and what each stands for: itself and its descendants. */
   def scopeFor(values: List[String], period: Option[Period]): PlaceScope
 
   /** The places `placeIds` and all their ancestors, with the edges between them. */
-  def gazetteer(placeIds: List[String]): (List[RegionNode], List[PlaceRelation])
+  def gazetteer(placeIds: List[String]): (List[RegionNode], List[Place.Relation])
 
   /** A new id; the old one stays an alias of it. */
-  def rename(from: String, to: String): Either[ApiError, Unit]
+  def rename(from: String, to: String): Either[Api.Error, Unit]
 
-  def addName(id: String, name: String, lang: String): Either[ApiError, PlaceNameChanged]
+  def addName(id: String, name: String, lang: String): Either[Api.Error, Place.NameChanged]
 
   /** Only a name a person added; an imported one is refused. */
-  def removeName(id: String, name: String, lang: String): Either[ApiError, PlaceNameChanged]
+  def removeName(id: String, name: String, lang: String): Either[Api.Error, Place.NameChanged]
 
   def manualNames(id: Option[String]): List[ManualPlaceName]
 
   /** A person's own point place (`local`); refused when its id is taken, removed or an old id. */
-  def add(in: PlaceInput): Either[ApiError, PlaceSummary]
+  def add(in: Place.Input): Either[Api.Error, Place.Summary]
 
-  def overrides(id: Option[String]): List[PlaceOverride]
+  def overrides(id: Option[String]): List[Place.Override]
 
   /** A person's kind, period or point set over the source's (or reset), and the place's findings matched again. */
-  def setOverride(id: String, edit: PlaceOverrideEdit, toleranceKm: Double): Either[ApiError, PlaceOverrideChanged]
+  def setOverride(id: String, edit: Place.OverrideEdit, toleranceKm: Double): Either[Api.Error, Place.OverrideChanged]
 
   /** `from` merged into `into`: what refers to it moves, its id resolves there. */
-  def merge(from: String, into: String, toleranceKm: Double): Either[ApiError, PlaceGone]
+  def merge(from: String, into: String, toleranceKm: Double): Either[Api.Error, Place.Gone]
 
   /** A place nothing refers to, removed for good. */
-  def remove(id: String, reason: Option[String]): Either[ApiError, PlaceGone]
+  def remove(id: String, reason: Option[String]): Either[Api.Error, Place.Gone]
 
 object PlaceService:
   def apply(db: Transactor): PlaceService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends PlaceService:
     def count(): Int = db.read(PlaceRepo.count())
-    def importPlaces(batch: List[PlaceInput], dataset: Dataset): PlaceImportResult =
-      if batch.isEmpty then PlaceImportResult(0, 0, 0, Nil) else db.transact(PlaceRepo.upsertPlaces(batch, dataset))
-    def search(q: Option[String], asOf: Option[Long], limit: Int, modernFrom: Long): List[PlaceHit] =
+    def importPlaces(batch: List[Place.Input], dataset: Dataset): Place.ImportResult =
+      if batch.isEmpty then Place.ImportResult(0, 0, 0, Nil) else db.transact(PlaceRepo.upsertPlaces(batch, dataset))
+    def search(q: Option[String], asOf: Option[Long], limit: Int, modernFrom: Long): List[Place.Hit] =
       db.read(PlaceRepo.search(q, asOf, limit, modernFrom)).toList
-    def get(id: String, asOf: Option[Long], modernFrom: Long): Option[PlaceEntry] =
+    def get(id: String, asOf: Option[Long], modernFrom: Long): Option[Place.Entry] =
       db.read(PlaceRepo.get(id, asOf, modernFrom))
-    def children(id: String, asOf: Option[Long], limit: Int, modernFrom: Long): List[PlaceSummary] =
+    def children(id: String, asOf: Option[Long], limit: Int, modernFrom: Long): List[Place.Summary] =
       db.read(PlaceRepo.children(id, asOf, limit, modernFrom)).toList
     def hierarchy(
         asOf: Option[Long],
@@ -112,27 +95,31 @@ object PlaceService:
         limit: Int,
         depthCap: Int,
         modernFrom: Long
-    ): List[PlaceTreeRow] =
+    ): List[Place.TreeRow] =
       db.read(PlaceRepo.hierarchy(asOf, root, maxDepth, limit, depthCap, modernFrom)).toList
-    def footprints(id: String, asOf: Option[Long]): List[PlaceFootprint] =
+    def footprints(id: String, asOf: Option[Long]): List[Place.Footprint] =
       db.read(PlaceRepo.footprints(id, asOf)).toList
-    def links(id: String): List[PlaceLink] = db.read(PlaceRepo.links(id)).toList
+    def links(id: String): List[Place.Link] = db.read(PlaceRepo.links(id)).toList
     def scopeFor(values: List[String], period: Option[Period]): PlaceScope = db.read(PlaceRepo.scopeFor(values, period))
-    def gazetteer(placeIds: List[String]): (List[RegionNode], List[PlaceRelation]) =
+    def gazetteer(placeIds: List[String]): (List[RegionNode], List[Place.Relation]) =
       db.read(TreeRepo.gazetteer(placeIds))
-    def rename(from: String, to: String): Either[ApiError, Unit] = db.transact(PlaceRepo.rename(from, to))
-    def addName(id: String, name: String, lang: String): Either[ApiError, PlaceNameChanged] =
+    def rename(from: String, to: String): Either[Api.Error, Unit] = db.transact(PlaceRepo.rename(from, to))
+    def addName(id: String, name: String, lang: String): Either[Api.Error, Place.NameChanged] =
       db.transact(PlaceRepo.addName(id, name, lang))
-    def removeName(id: String, name: String, lang: String): Either[ApiError, PlaceNameChanged] =
+    def removeName(id: String, name: String, lang: String): Either[Api.Error, Place.NameChanged] =
       db.transact(PlaceRepo.removeName(id, name, lang))
     def manualNames(id: Option[String]): List[ManualPlaceName] = db.read(PlaceRepo.manualNames(id))
-    def add(in: PlaceInput): Either[ApiError, PlaceSummary] = db.transact(PlaceRepo.addPlace(in))
-    def overrides(id: Option[String]): List[PlaceOverride] = db.read(PlaceOverrideRepo.list(id))
-    def setOverride(id: String, edit: PlaceOverrideEdit, toleranceKm: Double): Either[ApiError, PlaceOverrideChanged] =
+    def add(in: Place.Input): Either[Api.Error, Place.Summary] = db.transact(PlaceRepo.addPlace(in))
+    def overrides(id: Option[String]): List[Place.Override] = db.read(PlaceOverrideRepo.list(id))
+    def setOverride(
+        id: String,
+        edit: Place.OverrideEdit,
+        toleranceKm: Double
+    ): Either[Api.Error, Place.OverrideChanged] =
       db.transact(PlaceOverrideRepo.set(id, edit, toleranceKm))
-    def merge(from: String, into: String, toleranceKm: Double): Either[ApiError, PlaceGone] =
+    def merge(from: String, into: String, toleranceKm: Double): Either[Api.Error, Place.Gone] =
       db.transact(PlaceOverrideRepo.merge(from, into, toleranceKm))
-    def remove(id: String, reason: Option[String]): Either[ApiError, PlaceGone] =
+    def remove(id: String, reason: Option[String]): Either[Api.Error, Place.Gone] =
       db.transact(PlaceOverrideRepo.remove(id, reason))
 
   /** The places as a database holding only the catalogue's rows answers: no finding is stored, so none is matched to a
@@ -144,19 +131,19 @@ object PlaceService:
 
     private def places: Vector[HeldPlace] = state.get.places
     private def find(id: String): Option[HeldPlace] = places.find(_.id == id)
-    private def notFound(id: String): ApiError = ApiError(s"No place '$id'", Some(Write.CodeNotFound))
+    private def notFound(id: String): Api.Error = Api.Error(s"No place '$id'", Some(Write.CodeNotFound))
 
     def count(): Int = places.size
 
-    def importPlaces(batch: List[PlaceInput], dataset: Dataset): PlaceImportResult =
-      if batch.isEmpty then PlaceImportResult(0, 0, 0, Nil)
+    def importPlaces(batch: List[Place.Input], dataset: Dataset): Place.ImportResult =
+      if batch.isEmpty then Place.ImportResult(0, 0, 0, Nil)
       else
         val s0 = state.get
         val skip = batch.map(_.place.id).filter(id => s0.placeRemovals(id) || s0.placeAliases.contains(id)).toSet
         val kept = batch.filterNot(in => skip(in.place.id))
         val ids = kept.map(_.place.id).distinct
         val names = kept.flatMap(in => in.names.map(in.place.id -> _))
-        @tailrec def rows(rest: List[PlaceInput], held: Vector[HeldPlace]): Vector[HeldPlace] = rest match
+        @tailrec def rows(rest: List[Place.Input], held: Vector[HeldPlace]): Vector[HeldPlace] = rest match
           case Nil        => held
           case in :: tail =>
             val i = held.indexWhere(_.id == in.place.id)
@@ -192,14 +179,14 @@ object PlaceService:
           else p.modify(_.parents).setTo(ok.filter(_.childId == p.id).distinctBy(r => (r.parentId, r.kind)).toVector)
         }
         val _ = state.updateAndGet(_.modify(_.places).setTo(related))
-        PlaceImportResult(
+        Place.ImportResult(
           places = ids.size,
           names = names.size,
           relations = ok.size,
           failed = dangling.map(r => s"${r.childId}: no such parent '${r.parentId}'").distinct.take(20)
         )
 
-    def search(q: Option[String], asOf: Option[Long], limit: Int, modernFrom: Long): List[PlaceHit] =
+    def search(q: Option[String], asOf: Option[Long], limit: Int, modernFrom: Long): List[Place.Hit] =
       val text = q.map(_.trim).filter(_.nonEmpty)
       val t = text.map(lower)
       def named(p: HeldPlace) = p.names.filter(n => HeldPlace.covers(n.period, asOf))
@@ -229,7 +216,7 @@ object PlaceService:
               .map(_.name)
           )
           val s = p.summary
-          PlaceHit(
+          Place.Hit(
             s.id,
             s.label,
             s.kind,
@@ -245,7 +232,7 @@ object PlaceService:
           )
         }
 
-    private def parentsOf(p: HeldPlace, asOf: Option[Long]): List[PlaceSummary] =
+    private def parentsOf(p: HeldPlace, asOf: Option[Long]): List[Place.Summary] =
       p.parents
         .filter(r => HeldPlace.covers(r.period, asOf))
         .flatMap(r => find(r.parentId))
@@ -260,9 +247,9 @@ object PlaceService:
         .filter(c => c.parents.exists(r => r.parentId == id && HeldPlace.covers(r.period, asOf)) && c.validAt(asOf))
         .sortBy(c => (c.place.label, c.id))
 
-    def get(id: String, asOf: Option[Long], modernFrom: Long): Option[PlaceEntry] =
+    def get(id: String, asOf: Option[Long], modernFrom: Long): Option[Place.Entry] =
       find(id).map { p =>
-        PlaceEntry(
+        Place.Entry(
           p.summary,
           p.place.geometry,
           parentsOf(p, asOf),
@@ -274,7 +261,7 @@ object PlaceService:
         )
       }
 
-    def children(id: String, asOf: Option[Long], limit: Int, modernFrom: Long): List[PlaceSummary] =
+    def children(id: String, asOf: Option[Long], limit: Int, modernFrom: Long): List[Place.Summary] =
       kidsOf(id, asOf).take(limit.max(1)).toList.map(_.summary)
 
     def hierarchy(
@@ -284,7 +271,7 @@ object PlaceService:
         limit: Int,
         depthCap: Int,
         modernFrom: Long
-    ): List[PlaceTreeRow] =
+    ): List[Place.TreeRow] =
       val depth = math.max(0, math.min(maxDepth, depthCap))
       val heads = root match
         case Some(r) => find(r).toVector
@@ -293,8 +280,8 @@ object PlaceService:
             InMemory.RootKinds(p.place.kind) && !places.exists(_.id == p.id && p.parents.nonEmpty) &&
               places.exists(_.parents.exists(_.parentId == p.id))
           )
-      def row(p: HeldPlace, d: Int) = PlaceTreeRow(p.id, p.place.label, p.place.kind, d, 0, p.contested)
-      def walk(p: HeldPlace, d: Int, seen: Set[String]): List[PlaceTreeRow] =
+      def row(p: HeldPlace, d: Int) = Place.TreeRow(p.id, p.place.label, p.place.kind, d, 0, p.contested)
+      def walk(p: HeldPlace, d: Int, seen: Set[String]): List[Place.TreeRow] =
         row(p, d) :: (if d >= depth then Nil
                       else
                         kidsOf(p.id, asOf).filterNot(c => seen(c.id)).toList.flatMap(c => walk(c, d + 1, seen + c.id)))
@@ -305,15 +292,15 @@ object PlaceService:
         .flatMap(h => walk(h, 0, Set(h.id)))
         .take(limit.max(1))
 
-    def footprints(id: String, asOf: Option[Long]): List[PlaceFootprint] = Nil
-    def links(id: String): List[PlaceLink] = find(id).toList.flatMap(_.links).sortBy(l => (l.scheme, l.externalId))
+    def footprints(id: String, asOf: Option[Long]): List[Place.Footprint] = Nil
+    def links(id: String): List[Place.Link] = find(id).toList.flatMap(_.links).sortBy(l => (l.scheme, l.externalId))
 
     def scopeFor(values: List[String], period: Option[Period]): PlaceScope =
       val s = state.get
       val wanted = values.map(_.trim).filter(_.nonEmpty).distinct
       val target = wanted.map(v => v -> s.placeAliases.getOrElse(v, v)).toMap
       val known = wanted.filter(v => find(target(v)).isDefined)
-      def overlaps(r: PlaceRelation) =
+      def overlaps(r: Place.Relation) =
         period.forall(w => r.period.forall(p => p.start <= w.end && w.start <= p.end))
       @tailrec def down(frontier: List[String], seen: Vector[String]): Vector[String] = frontier match
         case Nil       => seen
@@ -328,11 +315,11 @@ object PlaceService:
           known.map(v => v -> find(target(v)).fold(v)(_.place.label)).toMap
         )
 
-    def gazetteer(placeIds: List[String]): (List[RegionNode], List[PlaceRelation]) =
+    def gazetteer(placeIds: List[String]): (List[RegionNode], List[Place.Relation]) =
       @tailrec def up(frontier: List[String], seen: Vector[String]): Vector[String] = frontier match
         case Nil       => seen
         case id :: are =>
-          val parents = find(id).toVector.flatMap(_.parents.filter(_.kind == PlaceRelation.PartOf).map(_.parentId))
+          val parents = find(id).toVector.flatMap(_.parents.filter(_.kind == Place.Relation.PartOf).map(_.parentId))
           val fresh = parents.filter(p => find(p).isDefined && !seen.contains(p)).distinct
           up(are ++ fresh, seen ++ fresh)
       val ids = up(placeIds.distinct.filter(find(_).isDefined), placeIds.distinct.filter(find(_).isDefined).toVector)
@@ -343,14 +330,15 @@ object PlaceService:
       val edges = ids.flatMap(find).flatMap(_.parents).filter(r => ids.contains(r.parentId)).toList
       (nodes, edges)
 
-    def rename(from: String, to: String): Either[ApiError, Unit] =
+    def rename(from: String, to: String): Either[Api.Error, Unit] =
       val (o, n) = (from.trim, to.trim)
       val aliasOf = state.get.placeAliases.get(n)
       if find(o).isEmpty then Left(notFound(o))
-      else if find(n).isDefined then Left(ApiError(s"'$n' is already the id of another place", Some(Write.CodeInvalid)))
+      else if find(n).isDefined then
+        Left(Api.Error(s"'$n' is already the id of another place", Some(Write.CodeInvalid)))
       else if aliasOf.exists(_ != o) then
         Left(
-          ApiError(
+          Api.Error(
             s"'$n' is an old id of '${aliasOf.get}' and still resolves to it — pick another",
             Some(Write.CodeInvalid)
           )
@@ -369,7 +357,7 @@ object PlaceService:
         )
         Right(())
 
-    def addName(id: String, name: String, lang: String): Either[ApiError, PlaceNameChanged] =
+    def addName(id: String, name: String, lang: String): Either[Api.Error, Place.NameChanged] =
       find(id).toRight(notFound(id)).map { p =>
         val before = p.names.find(n => n.name == name && n.lang == lang).map(_.manual)
         if !before.contains(true) then
@@ -380,10 +368,10 @@ object PlaceService:
                 .using(_.map(n => if n.name == name && n.lang == lang then n.modify(_.manual).setTo(true) else n))
             else q.modify(_.names).using(_ :+ HeldPlace.Name(name, lang, None, manual = true))
           }))
-        PlaceNameChanged(id, p.place.label, name, lang, true, !before.contains(true), before.contains(false))
+        Place.NameChanged(id, p.place.label, name, lang, true, !before.contains(true), before.contains(false))
       }
 
-    def removeName(id: String, name: String, lang: String): Either[ApiError, PlaceNameChanged] =
+    def removeName(id: String, name: String, lang: String): Either[Api.Error, Place.NameChanged] =
       find(id).toRight(notFound(id)).flatMap { p =>
         val same = p.names.filter(n => n.name == name && n.lang == lang)
         if same.isEmpty then
@@ -391,14 +379,14 @@ object PlaceService:
             p.names.filter(n => n.name == name && n.manual).map(n => if n.lang.isEmpty then "no language" else n.lang)
           val hint = if langs.isEmpty then "" else s" (it has it with ${langs.mkString(", ")} — pass that language)"
           Left(
-            ApiError(
+            Api.Error(
               s"'${p.place.label}' [$id] has no name '$name'${if lang.isEmpty then "" else s" in $lang"}$hint",
               Some(Write.CodeNotFound)
             )
           )
         else if !same.exists(_.manual) then
           Left(
-            ApiError(
+            Api.Error(
               s"'$name' is a name the gazetteer seed or an imported source gives '${p.place.label}' [$id], not one added by hand — " +
                 "removing it would last only until the next import",
               Some(Write.CodeInvalid)
@@ -409,7 +397,7 @@ object PlaceService:
             if q.id != id then q
             else q.modify(_.names).using(_.filterNot(n => n.name == name && n.lang == lang && n.manual))
           }))
-          Right(PlaceNameChanged(id, p.place.label, name, lang, added = false, changed = true))
+          Right(Place.NameChanged(id, p.place.label, name, lang, added = false, changed = true))
       }
 
     def manualNames(id: Option[String]): List[ManualPlaceName] =
@@ -419,25 +407,25 @@ object PlaceService:
         .sortBy(m => (m.placeId, m.name, m.lang))
         .toList
 
-    def add(in: PlaceInput): Either[ApiError, PlaceSummary] =
+    def add(in: Place.Input): Either[Api.Error, Place.Summary] =
       val id = in.place.id
       val s = state.get
       if find(id).isDefined then
-        Left(ApiError(s"'$id' is already the id of a place — choose another id", Some(Write.CodeInvalid)))
+        Left(Api.Error(s"'$id' is already the id of a place — choose another id", Some(Write.CodeInvalid)))
       else if s.placeRemovals(id) then
-        Left(ApiError(s"'$id' is the id of a place that was removed — choose another id", Some(Write.CodeInvalid)))
+        Left(Api.Error(s"'$id' is the id of a place that was removed — choose another id", Some(Write.CodeInvalid)))
       else if s.placeAliases.contains(id) then
         Left(
-          ApiError(
+          Api.Error(
             s"'$id' is an old id of '${s.placeAliases(id)}' and still resolves to it — choose another id",
             Some(Write.CodeInvalid)
           )
         )
       else
         val _ = importPlaces(List(in), Dataset.Local)
-        find(id).map(_.summary).toRight(ApiError(s"place '$id' was not stored"))
+        find(id).map(_.summary).toRight(Api.Error(s"place '$id' was not stored"))
 
-    def overrides(id: Option[String]): List[PlaceOverride] =
+    def overrides(id: Option[String]): List[Place.Override] =
       state.get.placeOverrides
         .filter(o => id.forall(_ == o.placeId))
         .sortBy(_.placeId)
@@ -445,7 +433,7 @@ object PlaceService:
         .flatMap(o =>
           find(o.placeId).map { p =>
             val period = o.period.flatMap(InMemory.periodOf)
-            PlaceOverride(
+            Place.Override(
               o.placeId,
               p.place.label,
               o.kind,
@@ -461,30 +449,34 @@ object PlaceService:
           }
         )
 
-    def setOverride(id: String, edit: PlaceOverrideEdit, toleranceKm: Double): Either[ApiError, PlaceOverrideChanged] =
+    def setOverride(
+        id: String,
+        edit: Place.OverrideEdit,
+        toleranceKm: Double
+    ): Either[Api.Error, Place.OverrideChanged] =
       find(id).toRight(notFound(id)).flatMap { before =>
         val s = state.get
         val had = s.placeOverrides.find(_.placeId == id)
         val now = InMemory.timestamp(Instant.now(clock))
-        val done: Either[ApiError, Option[HeldOverride]] = edit match
-          case PlaceOverrideEdit.Reset =>
+        val done: Either[Api.Error, Option[HeldOverride]] = edit match
+          case Place.OverrideEdit.Reset =>
             had
               .toRight(
-                ApiError(
+                Api.Error(
                   s"'${before.place.label}' [$id] has no kind, period or point set by hand",
                   Some(Write.CodeNotFound)
                 )
               )
               .map(_ => None)
-          case PlaceOverrideEdit.Put(_, _, _, Some(_)) if before.place.geometry.exists(!InMemory.isPoint(_)) =>
+          case Place.OverrideEdit.Put(_, _, _, Some(_)) if before.place.geometry.exists(!InMemory.isPoint(_)) =>
             Left(
-              ApiError(
+              Api.Error(
                 s"'${before.place.label}' [$id] has a shape, not a point — a point set by hand moves only a place " +
                   "known by a point",
                 Some(Write.CodeInvalid)
               )
             )
-          case PlaceOverrideEdit.Put(kind, period, reason, _) =>
+          case Place.OverrideEdit.Put(kind, period, reason, _) =>
             val base = had.getOrElse(HeldOverride(id, None, None, None, before.place.kind, before.place.period, now))
             val merged =
               period.map((lo, hi) => base.period.fold((lo, hi))((plo, phi) => (lo.orElse(plo), hi.orElse(phi))))
@@ -523,14 +515,14 @@ object PlaceService:
               })
           )
           val after = find(id).getOrElse(before)
-          PlaceOverrideChanged(
+          Place.OverrideChanged(
             id,
             before.place.label,
-            edit == PlaceOverrideEdit.Reset,
+            edit == Place.OverrideEdit.Reset,
             before.place.kind,
             after.place.kind,
-            PlaceOverrides.periodText(before.place.period.map(_.start), before.place.period.map(_.end)),
-            PlaceOverrides.periodText(after.place.period.map(_.start), after.place.period.map(_.end)),
+            Place.Overrides.periodText(before.place.period.map(_.start), before.place.period.map(_.end)),
+            Place.Overrides.periodText(after.place.period.map(_.start), after.place.period.map(_.end)),
             0,
             0,
             0
@@ -538,11 +530,11 @@ object PlaceService:
         }
       }
 
-    def merge(from: String, into: String, toleranceKm: Double): Either[ApiError, PlaceGone] =
+    def merge(from: String, into: String, toleranceKm: Double): Either[Api.Error, Place.Gone] =
       (find(from), find(into)) match
         case (None, _)          => Left(notFound(from))
         case (_, None)          => Left(notFound(into))
-        case _ if from == into  => Left(ApiError("a place cannot be merged into itself", Some(Write.CodeInvalid)))
+        case _ if from == into  => Left(Api.Error("a place cannot be merged into itself", Some(Write.CodeInvalid)))
         case (Some(f), Some(i)) =>
           val _ = state.updateAndGet(s =>
             s.modify(_.places)
@@ -557,9 +549,9 @@ object PlaceService:
               .modify(_.placeOverrides)
               .using(_.filterNot(_.placeId == from))
           )
-          Right(PlaceGone(from, f.place.label, Some(into), Some(i.place.label), 0, 0, 0))
+          Right(Place.Gone(from, f.place.label, Some(into), Some(i.place.label), 0, 0, 0))
 
-    def remove(id: String, reason: Option[String]): Either[ApiError, PlaceGone] =
+    def remove(id: String, reason: Option[String]): Either[Api.Error, Place.Gone] =
       find(id).toRight(notFound(id)).flatMap { p =>
         val s = state.get
         val refs = List(
@@ -570,7 +562,7 @@ object PlaceService:
         ).filter(_._2 > 0)
         if refs.nonEmpty then
           Left(
-            ApiError(
+            Api.Error(
               s"'${p.place.label}' [$id] is referred to by ${refs.map((w, c) => s"$c $w").mkString(", ")} — " +
                 "merge it into the place it is the same as instead, or move those first",
               Some(Write.CodeInvalid)
@@ -580,7 +572,7 @@ object PlaceService:
           val _ = state.updateAndGet(
             _.modify(_.places).using(_.filterNot(_.id == id)).modify(_.placeRemovals).using(_ + id)
           )
-          Right(PlaceGone(id, p.place.label, None, None, 0, 0, 0))
+          Right(Place.Gone(id, p.place.label, None, None, 0, 0, 0))
       }
 
   object InMemory:

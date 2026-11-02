@@ -25,10 +25,10 @@ import com.histmersion.api.catalogue.{
   EventPrecision,
   EventRederiveReport,
   EventTier,
-  Period,
-  SiteTypesRequest
+  Period
 }
 import com.histmersion.api.library.{Filter, Finding, Source}
+import com.histmersion.api.catalogue.SiteTypes
 
 /** #1449 end to end against FAKE catalogues (recorded answers, no socket) and a real PostGIS (HISTMERSION_TEST_DB_URL;
   * skipped otherwise): a dry run stores nothing; GVP then NOAA merge the same eruption into one event; a second run
@@ -230,8 +230,8 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
                       ('zqei_sites2020#0', 'wikidata_q9100001'), ('zqei_sites2020#0', 'wikidata_q9100002')""".update
         .run()
     val h = CatalogueWiring(deps(cfg), http)
-    assertEquals(h.siteTypes.runSiteTypes(SiteTypesRequest(dryRun = true), _ => ()).pending, 2)
-    val r = h.siteTypes.runSiteTypes(SiteTypesRequest(), _ => ())
+    assertEquals(h.siteTypes.runSiteTypes(SiteTypes.Request(dryRun = true), _ => ()).pending, 2)
+    val r = h.siteTypes.runSiteTypes(SiteTypes.Request(), _ => ())
     assertEquals((r.asked, r.pending), (2, 0))
     val types = connect(ds)(
       sql"""SELECT id, site_type FROM places WHERE id LIKE 'wikidata_q91%' ORDER BY id"""
@@ -240,7 +240,7 @@ class EventImportSuite extends com.histmersion.db.DbSuite:
         .toList
     )
     assertEquals(types, List("wikidata_q9100001" -> Some("settlement"), "wikidata_q9100002" -> Some("burial")))
-    assertEquals(h.siteTypes.runSiteTypes(SiteTypesRequest(), _ => ()).asked, 0, "asked once")
+    assertEquals(h.siteTypes.runSiteTypes(SiteTypes.Request(), _ => ()).asked, 0, "asked once")
 
   // ── the P0 dating fixes ─────────────────────────────────────────────────────────────────────
 

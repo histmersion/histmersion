@@ -29,10 +29,9 @@ import com.histmersion.util.data.exchange.{BundleExport, BundleScope}
 import com.histmersion.domain.automation.goals.GoalRepo
 import com.histmersion.util.data.exchange.{BundleImport, BundleRepo, MergeState}
 import com.histmersion.util.database.{Param, Sql}
-import com.histmersion.api.automation.{GoalPatch, GoalPut, Queue}
-import com.histmersion.api.catalogue.{AttestationPut, EventPut, Period}
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.catalogue.{EventPut, Period}
 import com.histmersion.api.exchange.{
-  BundleImportResult,
   MatchCounts,
   MergeApplyResult,
   MergeIssue,
@@ -40,10 +39,12 @@ import com.histmersion.api.exchange.{
   MergeResolution,
   MergeResolutions
 }
-import com.histmersion.api.library.{Edge, Finding, Source, SourcePatch}
+import com.histmersion.api.library.{Edge, Finding, Source}
 import com.histmersion.api.research.Article
 import com.histmersion.util.data.exchange.Bundle
 import com.histmersion.util.data.exchange.Issue
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.catalogue.Attestation
 
 /** `merge plan` against real Postgres (docs/research-merge-import.md §8, milestone M3): the crafted pair of
   * collections, "work" and "home", built through the repositories in two databases of their own; work's bundle planned
@@ -111,7 +112,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       originals: Path,
       res: MergeResolutions = MergeResolutions(),
       dryRun: Boolean = false
-  ): BundleImportResult =
+  ): com.histmersion.api.exchange.Bundle.ImportResult =
     com.histmersion.util.data.exchange.BundleImporter
       .run(
         ds,
@@ -184,7 +185,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
   private def attest(ds: DataSource, ck: String, quote: String, target: String): Unit =
     val _ = AttestationRows.create(
       ds,
-      AttestationPut(ck, "place", target, quote = Some(quote), charStart = Some(0), charEnd = Some(quote.length))
+      Attestation.Put(ck, "place", target, quote = Some(quote), charStart = Some(0), charEnd = Some(quote.length))
     )
 
   private def put(ds: DataSource, s: Source): Unit = SourceFixtures.upsert(ds, s, cfg.limits.chunkChars)
@@ -205,7 +206,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     Transactor(home).transact(BundleRepo.setLabel(Some("home")))
     // ── the shared history ──
     put(work, src("zzshared2001_alpha", "Alpha", List("Doe, John"), 2001, summary = Some("as imported")))
-    transact(work)(GoalRepo.put("zz_shared_goal", GoalPut("Shared goal")))
+    transact(work)(GoalRepo.put("zz_shared_goal", Goal.Put("Shared goal")))
     // two articles both sides will edit: in different places (a clean three-way merge), in one place
     val _ = ArticleFixtures.put(work, Article("zz_shared_art", "Shared", "concept", "Intro.\n\nMiddle.\n\nEnd."))
     val _ = ArticleFixtures.put(work, Article("zz_shared_conf", "Conflict", "concept", "One.\n\nTwo.\n\nThree."))
@@ -216,18 +217,18 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       SourceFixtures.patch(
         work,
         "zzshared2001_alpha",
-        SourcePatch(summary = Some("edited at work")),
+        Source.Patch(summary = Some("edited at work")),
         cfg.limits.chunkChars
       )
     val _ =
       SourceFixtures.patch(
         home,
         "zzshared2001_alpha",
-        SourcePatch(summary = Some("edited at home")),
+        Source.Patch(summary = Some("edited at home")),
         cfg.limits.chunkChars
       )
     val _ = Transactor(work).transact(GoalRepo.deleteIn("zz_shared_goal"))
-    val _ = Transactor(home).transact(GoalRepo.patchIn("zz_shared_goal", GoalPatch(notes = Some("edited at home"))))
+    val _ = Transactor(home).transact(GoalRepo.patchIn("zz_shared_goal", Goal.Patch(notes = Some("edited at home"))))
     val _ = ArticleFixtures.put(work, Article("zz_shared_art", "Shared", "concept", "Intro (work).\n\nMiddle.\n\nEnd."))
     val _ = ArticleFixtures.put(home, Article("zz_shared_art", "Shared", "concept", "Intro.\n\nMiddle.\n\nEnd (home)."))
     val _ =
@@ -341,7 +342,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       "zz_ev_same",
       EventPut("Fall of Hattusa (work)", "destruction", TimeSpan(Some(-1190), None, None, Some(-1180)))
     )
-    transact(work)(GoalRepo.put("zz_goal_both", GoalPut("Goal created at work", status = "seeding")))
+    transact(work)(GoalRepo.put("zz_goal_both", Goal.Put("Goal created at work", status = "seeding")))
     val _ = QueueRows.add(work, Queue.Kind.Tasks, Queue.QueueAdd("Find the  Kuhrt reprint"))
 
     // ── home ──
@@ -433,7 +434,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       "zz_ev_same",
       EventPut("Fall of Hattusa (home)", "destruction", TimeSpan(Some(-1190), None, None, Some(-1180)))
     )
-    transact(home)(GoalRepo.put("zz_goal_both", GoalPut("Goal created at home", notes = Some("home's plan"))))
+    transact(home)(GoalRepo.put("zz_goal_both", Goal.Put("Goal created at home", notes = Some("home's plan"))))
     val task = QueueRows.add(home, Queue.Kind.Tasks, Queue.QueueAdd("Find the Kuhrt reprint"))
     val _ = QueueRows.patch(home, task.id, Queue.QueuePatch(status = Some(Queue.Done)))
     (work, home, sw, sh)
@@ -565,7 +566,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     )
     // it changes over there; ours has not changed since the merge → fast-forward onto OUR row
     val _ =
-      SourceFixtures.patch(a, "zzx2001_there", SourcePatch(summary = Some("v2 from there")), cfg.limits.chunkChars)
+      SourceFixtures.patch(a, "zzx2001_there", Source.Patch(summary = Some("v2 from there")), cfg.limits.chunkChars)
     val bundle = exportOf(a, sa)
     val p = planIn(b, bundle, sb)
     assertEquals(p.issues, Nil)
@@ -942,7 +943,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = ArticleFixtures.put(a, Article("zz_old_slug", "Old", "concept", "Text."))
     val _ = ArticleFixtures.put(a, Article("zz_linker", "Linker", "concept", "See [[zz_old_slug]]."))
     EventFixtures.put(a, "zz_old_event", EventPut("An event", "battle", TimeSpan(Some(-1200), None, None, Some(-1190))))
-    transact(a)(GoalRepo.put("zz_old_goal", GoalPut("A goal")))
+    transact(a)(GoalRepo.put("zz_old_goal", Goal.Put("A goal")))
     val first = importInto(b, exportOf(a, sa), sb)
     assert(first.applied, first.problems.mkString("\n"))
     transact(a) {

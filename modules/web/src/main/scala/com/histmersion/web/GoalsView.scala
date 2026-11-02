@@ -2,11 +2,11 @@ package com.histmersion.web
 
 import com.histmersion.api.Wording
 import com.histmersion.api.automation.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, Pipeline, RunInfo, RunRequest}
-import com.histmersion.api.automation.GoalPlans.*
+import com.histmersion.api.automation.Goal.Plans.*
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import com.histmersion.api.automation.{Agents, AgentsMarkdown, Goal, GoalPut, GoalStages, ListFilters, Managers, Queue}
+import com.histmersion.api.automation.{Agents, AgentsMarkdown, Goal, ListFilters, Managers, Queue}
 import com.histmersion.api.research.Articles
 
 /** The research goals (docs/research-embedded-agents.md §14): the goals window (the goals as a tree) and one window per
@@ -39,9 +39,9 @@ object GoalsView:
   /** What each goal stage means, in the order a goal moves through them; the legend above the tree and the tooltip of
     * every status badge.
     */
-  val stages: List[(String, String)] = GoalStages.all
+  val stages: List[(String, String)] = Goal.Stages.all
 
-  def meaning(status: String): Option[String] = GoalStages.meaning(status)
+  def meaning(status: String): Option[String] = Goal.Stages.meaning(status)
 
   /** The open plan approval of a goal, if a plan run is waiting on one. */
   def pendingPlan(as: List[ApprovalInfo], slug: String): Option[ApprovalInfo] =
@@ -73,7 +73,7 @@ object GoalsView:
     */
   final case class NewArea(
       slug: String,
-      put: GoalPut,
+      put: Goal.Put,
       plan: Boolean,
       seed: Boolean,
       watch: Option[Managers.ManagerConfig] = None
@@ -112,7 +112,7 @@ object GoalsView:
           Right(
             NewArea(
               ok,
-              GoalPut(
+              Goal.Put(
                 t,
                 com.histmersion.domain.automation.Goal.Status.Planned,
                 Option(notes.trim).filter(_.nonEmpty),

@@ -3,8 +3,9 @@ package com.histmersion.domain.catalogue.evidence
 import com.histmersion.domain.catalogue.AttestationTarget
 
 import com.histmersion.api.Plural
-import com.histmersion.api.catalogue.{AttestationPut, EventLinkCandidate, EventPassage, EventTaxonomy}
+import com.histmersion.api.catalogue.{EventLinkCandidate, EventPassage, EventTaxonomy}
 import com.histmersion.domain.catalogue.Event
+import com.histmersion.api.catalogue.Attestation
 
 /** The matcher. Pure: the database gives it the findings near an event and the passages naming it. */
 object EventMatcher:
@@ -99,8 +100,8 @@ object EventMatcher:
   /** Pure: the attestation a confirmed passage becomes — the quote and its offsets (W3C TextQuoteSelector +
     * TextPositionSelector), and a note saying how it was found.
     */
-  def attestation(eventId: String, citekey: String, p: EventPassage): AttestationPut =
-    AttestationPut(
+  def attestation(eventId: String, citekey: String, p: EventPassage): Attestation.Put =
+    Attestation.Put(
       citekey,
       AttestationTarget.Event,
       eventId,

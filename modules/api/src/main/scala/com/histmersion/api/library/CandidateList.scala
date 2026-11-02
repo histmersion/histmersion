@@ -7,7 +7,7 @@ import com.histmersion.api.given
 final case class CandidateList(
     goal: Option[String],
     state: String,
-    candidates: List[SourceCandidate],
+    candidates: List[Source.Candidate],
     counts: List[CandidateCount],
     offset: Int = 0,
     next: Option[Int] = None

@@ -19,8 +19,8 @@ import com.histmersion.api.catalogue.{
   EventScale,
   EventSummary
 }
-import com.histmersion.api.exchange.BundleEvent
 import com.histmersion.api.views.EventDetail
+import com.histmersion.api.exchange.Bundle
 
 /** An event's scale (#1440): parsing, the defaults from the kind, the sub-event rule, the place's kind and the
   * geometry; the point an event can be given; the years it covers on the map; the Markdown.
@@ -168,7 +168,7 @@ class EventScaleSuite extends munit.FunSuite:
     )
 
   test("a bundle event that states no scale has the rev it had before V078"):
-    val ev = BundleEvent(
+    val ev = Bundle.Event(
       java.util.UUID.fromString("00000000-0000-0000-0000-000000000001"),
       java.util.UUID.fromString("00000000-0000-0000-0000-000000000002"),
       "e",

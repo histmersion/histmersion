@@ -1,7 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
 import com.histmersion.api.Dataset
-import com.histmersion.api.catalogue.{Place, PlaceDating, PlaceLink, PlaceName, PlaceRelation, PlaceSummary}
+import com.histmersion.api.catalogue.Place
 
 import java.util.Locale
 
@@ -12,8 +12,8 @@ final case class HeldPlace(
     place: Place,
     dataset: Dataset,
     names: Vector[HeldPlace.Name] = Vector.empty,
-    parents: Vector[PlaceRelation] = Vector.empty,
-    links: Vector[PlaceLink] = Vector.empty
+    parents: Vector[Place.Relation] = Vector.empty,
+    links: Vector[Place.Link] = Vector.empty
 ):
   def id: String = place.id
 
@@ -29,8 +29,8 @@ final case class HeldPlace(
       io.circe.parser.parse(p).toOption.flatMap(_.hcursor.downField("contested").as[Boolean].toOption).contains(true)
     )
 
-  def summary: PlaceSummary =
-    PlaceSummary(
+  def summary: Place.Summary =
+    Place.Summary(
       id,
       place.label,
       place.kind,
@@ -39,7 +39,7 @@ final case class HeldPlace(
       place.source,
       namesAt(None),
       contested,
-      PlaceDating.Stated,
+      Place.Dating.Stated,
       None
     )
 
@@ -54,7 +54,7 @@ object HeldPlace:
   )
 
   object Name:
-    def of(n: PlaceName): Name = Name(n.name, n.lang, n.period, manual = false)
+    def of(n: Place.Name): Name = Name(n.name, n.lang, n.period, manual = false)
 
   /** Does `period` (none: always) contain the year `asOf` (none: any time)? */
   def covers(period: Option[com.histmersion.api.catalogue.Period], asOf: Option[Long]): Boolean =

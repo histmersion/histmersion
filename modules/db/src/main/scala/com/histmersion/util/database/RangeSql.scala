@@ -1,9 +1,10 @@
 package com.histmersion.util.database
 
-import com.histmersion.api.{ApiError, Write, YearFmt}
+import com.histmersion.api.{Write, YearFmt}
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.*
 import com.histmersion.api.catalogue.Period
+import com.histmersion.api.Api
 
 /** The ONE spelling of a deep-time `int8range` column in SQL (#1798 item 9): how its inclusive bounds are read, how
   * optional bounds are written, and how a PATCH that names one bound merges with the stored other one.
@@ -77,13 +78,13 @@ object RangeSql:
       start: Option[Long],
       end: Option[Long],
       what: String
-  ): Option[Either[ApiError, (Option[Long], Option[Long])]] =
+  ): Option[Either[Api.Error, (Option[Long], Option[Long])]] =
     Option.when(start.isDefined || end.isDefined) {
       val (s, e) = (start.orElse(stored._1), end.orElse(stored._2))
       (s, e) match
         case (Some(a), Some(b)) if a > b =>
           Left(
-            ApiError(
+            Api.Error(
               s"$what: the period would start (${YearFmt(a)}) after it ends (${YearFmt(b)})",
               Some(Write.CodeInvalid)
             )

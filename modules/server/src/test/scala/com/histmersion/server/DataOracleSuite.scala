@@ -31,11 +31,13 @@ import com.histmersion.domain.automation.goals.GoalRepo
 import com.histmersion.util.data.exchange.BundleRepo
 import com.histmersion.util.database.Sql
 import com.histmersion.db.*
-import com.histmersion.api.automation.{GoalPut, Queue}
-import com.histmersion.api.catalogue.{AttestationPut, EventPut, HistoricalPeriod, Period, Place, PlaceInput, PlaceName}
-import com.histmersion.api.exchange.{MergePlan, MergeResolutions, MergeResolutionsText}
-import com.histmersion.api.library.{Edge, Finding, Source, SourcePatch}
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.catalogue.{EventPut, HistoricalPeriod, Period, Place}
+import com.histmersion.api.exchange.{MergePlan, MergeResolutions}
+import com.histmersion.api.library.{Edge, Finding, Source}
 import com.histmersion.api.research.Article
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.catalogue.Attestation
 
 /** What data management answers over HTTP, on a crafted pair of collections ("work" and "home"), recorded on the code
   * before data management moved into its own area: the whole bundle of work and the part changed since a moment (every
@@ -179,8 +181,8 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       edges = edges.map((dst, kind) => Edge(ck, dst, kind))
     )
 
-  private def site(id: String, label: String, lon: Double, lat: Double): PlaceInput =
-    PlaceInput(
+  private def site(id: String, label: String, lon: Double, lat: Double): Place.Input =
+    Place.Input(
       Place(
         id,
         label,
@@ -188,7 +190,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
         Some(s"""{"type":"Point","coordinates":[$lon,$lat]}"""),
         Some(Period(-1650, -1180))
       ),
-      List(PlaceName(label))
+      List(Place.Name(label))
     )
 
   private def png(n: Byte): Array[Byte] = Array[Byte](0x89.toByte, 'P', 'N', 'G', 13, 10, 26, 10, n, n, n)
@@ -233,8 +235,8 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       Article("zz_storm", "Storm gods", "concept", "Intro [[zzalpha2001_storm]].\n\nMiddle part.\n\nEnd.")
     )
     val _ = ArticleFixtures.put(ds, Article("zz_kingdom", "Kingdoms", "culture", "One [[zzbeta2005_kingdom]].\n\nTwo."))
-    val _ = transact(ds)(GoalRepo.put("zz_goal", GoalPut("Know the storm gods")))
-    val _ = transact(ds)(GoalRepo.put("zz_goal_gone", GoalPut("A goal deleted later")))
+    val _ = transact(ds)(GoalRepo.put("zz_goal", Goal.Put("Know the storm gods")))
+    val _ = transact(ds)(GoalRepo.put("zz_goal_gone", Goal.Put("A goal deleted later")))
     val _ = PlaceFixtures.upsertPlaces(ds, List(site("zz_site", "Storm hill", 34.6, 40.0)), Dataset.Local)
     val _ = com.histmersion.domain.catalogue.periods
       .PeriodService(com.histmersion.util.database.Transactor(ds))
@@ -265,7 +267,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
     val _ = com.histmersion.domain.catalogue.evidence
       .AttestationService(com.histmersion.util.database.Transactor(ds))
       .create(
-        AttestationPut(
+        Attestation.Put(
           "zzalpha2001_storm",
           "place",
           "zz_site",
@@ -299,7 +301,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       chunk
     )
     // the same summary edited at home: a conflict
-    val _ = SourceFixtures.patch(home, "zzalpha2001_storm", SourcePatch(summary = Some("edited at home")), chunk)
+    val _ = SourceFixtures.patch(home, "zzalpha2001_storm", Source.Patch(summary = Some("edited at home")), chunk)
     // a renamed citekey at work
     val _ = SourceFixtures.rename(work, "zzbeta2005_kingdom", "zzbeta2005_hittites")
     // one paragraph both edited
@@ -548,7 +550,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       )
       val p1 = ok(postJson(s"$url/api/merge/plan", s"""{"bundle":"$sha","resolutions":$resolutions}"""))
       val decided = parser.decode[MergeResolutions](resolutions).fold(e => fail(e.toString), identity)
-      val template = MergeResolutionsText.template(
+      val template = MergeResolutions.Text.template(
         parser.decode[MergePlan](p1).fold(e => fail(e.toString), identity),
         decided
       )

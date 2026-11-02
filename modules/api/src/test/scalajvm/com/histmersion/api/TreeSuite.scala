@@ -6,7 +6,7 @@ import com.histmersion.api.library.SearchMarkdown
 
 import com.histmersion.api.library.Tree.TreeRow
 import com.histmersion.api.catalogue.RegionNode
-import com.histmersion.api.catalogue.{Period, PlaceRelation}
+import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Bucket, TimeHistogram}
 import com.histmersion.domain.catalogue.Place
 
@@ -31,7 +31,7 @@ class TreeSuite extends munit.FunSuite:
   private val nodes = List(asia, anatolia, nearEast, hatti, phrygia, mitanni, hattusa)
 
   private def part(child: String, parent: String, p: Option[Period] = None) =
-    PlaceRelation(child, parent, PlaceRelation.PartOf, p)
+    com.histmersion.api.catalogue.Place.Relation(child, parent, com.histmersion.api.catalogue.Place.Relation.PartOf, p)
 
   private val relations = List(
     part("anatolia", "asia"),
@@ -333,7 +333,10 @@ class TreeRootsSuite extends munit.FunSuite:
   test("ineligible nodes are dropped from the ROOTS, not from the tree"):
     val rows = List(Tree.TreeRow("s1", "s1", "S1", Some(-1500), Some(-1400), List("river")))
     val nodes = List(node("asia", "Asia", "region"), node("river", "Asopos (river)", "feature"))
-    val rels = List(PlaceRelation("river", "asia", PlaceRelation.PartOf, None))
+    val rels = List(
+      com.histmersion.api.catalogue.Place
+        .Relation("river", "asia", com.histmersion.api.catalogue.Place.Relation.PartOf, None)
+    )
     val tree = Tree.regionTree(rows, nodes, rels, None, depth = 2)
     assertEquals(tree.map(_.label), List("Asia"))
     assertEquals(tree.head.children.map(_.label), List("Asopos (river)"))
@@ -346,8 +349,10 @@ class TreeRootsSuite extends munit.FunSuite:
     val nodes =
       List(node("asia", "Asia", "region"), node("europe", "Europe", "region"), node("anatolia", "Anatolia", "region"))
     val rels = List(
-      PlaceRelation("anatolia", "asia", PlaceRelation.PartOf, None),
-      PlaceRelation("anatolia", "europe", PlaceRelation.PartOf, None)
+      com.histmersion.api.catalogue.Place
+        .Relation("anatolia", "asia", com.histmersion.api.catalogue.Place.Relation.PartOf, None),
+      com.histmersion.api.catalogue.Place
+        .Relation("anatolia", "europe", com.histmersion.api.catalogue.Place.Relation.PartOf, None)
     )
     val tree = Tree.regionTree(rows, nodes, rels, None, depth = 2)
     val under = tree.flatMap(b => b.children.map(c => (b.label, c.label, c.alsoUnder)))

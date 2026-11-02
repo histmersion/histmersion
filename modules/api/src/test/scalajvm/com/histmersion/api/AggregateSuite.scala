@@ -1,13 +1,13 @@
 package com.histmersion.api
 
 import com.histmersion.api.library.SearchMarkdown
-import com.histmersion.api.catalogue.PeriodRow
 import com.histmersion.api.library.{Aggregate, TimeHistogram}
+import com.histmersion.api.catalogue.Period
 
 /** Pure tests for the timeline bucketing (plan §1.6 sizes, §1.7 strip). No DB involved. */
 class AggregateSuite extends munit.FunSuite:
 
-  private def row(a: Long, b: Long) = PeriodRow(Some(a), Some(b))
+  private def row(a: Long, b: Long) = Period.Row(Some(a), Some(b))
 
   // ── bucket sizes, at the boundaries ────────────────────────────────────────────────────────
   test("bucketSize: ≥20k → 5k, ≥5k → 1k, ≥1k → 100, else 10"):
@@ -77,7 +77,7 @@ class AggregateSuite extends munit.FunSuite:
     assertEquals(Aggregate.histogram(List(row(-900, -800)), -1600, -1200, 100).map(_.count).sum, 0)
 
   test("undated rows are ignored; half-dated rows collapse to a point"):
-    val rows = List(PeriodRow(None, None), PeriodRow(Some(-1250), None), PeriodRow(None, Some(-1450)))
+    val rows = List(Period.Row(None, None), Period.Row(Some(-1250), None), Period.Row(None, Some(-1450)))
     val h = Aggregate.histogram(rows, -1600, -1200, 100)
     assertEquals(h.map(b => (b.start, b.count)), List((-1600L, 0), (-1500L, 1), (-1400L, 0), (-1300L, 1), (-1200L, 0)))
 
@@ -143,7 +143,7 @@ class AggregateSuite extends munit.FunSuite:
 class AggregateStartsSuite extends munit.FunSuite:
   import com.histmersion.api.library.Aggregate.Counting
 
-  private def row(a: Long, b: Long) = PeriodRow(Some(a), Some(b))
+  private def row(a: Long, b: Long) = Period.Row(Some(a), Some(b))
 
   test("Starts counts a long-range source ONCE, where it begins"):
     val rows = List(row(-3300, -1200))
@@ -163,7 +163,7 @@ class AggregateStartsSuite extends munit.FunSuite:
     assertEquals(st.map(_.count).sum, 0)
 
   test("undated rows are dropped by both countings"):
-    val rows = List(PeriodRow(None, None), row(-1500, -1400))
+    val rows = List(Period.Row(None, None), row(-1500, -1400))
     assertEquals(Aggregate.histogram(rows, -2000, -1000, 100, Counting.Starts).map(_.count).sum, 1)
 
   test("Overlap stays the default, byte for byte"):

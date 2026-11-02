@@ -3,30 +3,14 @@ package com.histmersion.domain.catalogue.places
 import com.histmersion.api.catalogue.RegionNode
 import com.histmersion.api.library.Tree
 
-import com.histmersion.api.{ApiError, Dataset}
+import com.histmersion.api.Dataset
 import com.histmersion.domain.catalogue.places.PlaceAliasTable
 import com.augustnagro.magnum.{connect, transact, DbCon}
 
 import javax.sql.DataSource
-import com.histmersion.api.catalogue.{
-  GeoTime,
-  ManualPlaceName,
-  Period,
-  PlaceFootprint,
-  PlaceGone,
-  PlaceHit,
-  PlaceImportResult,
-  PlaceInput,
-  PlaceLink,
-  PlaceNameChanged,
-  PlaceOverride,
-  PlaceOverrideChanged,
-  PlaceOverrideEdit,
-  PlaceRebuildResult,
-  PlaceRelation,
-  PlaceSummary,
-  PlaceTreeRow
-}
+import com.histmersion.api.catalogue.{GeoTime, ManualPlaceName, Period}
+import com.histmersion.api.Api
+import com.histmersion.api.catalogue.Place
 
 /** The places' repository as the db suites seed and read it: each call on a connection (a write in a transaction) of
   * the suite's own `ds`, and the SQL the suites assert on.
@@ -37,8 +21,8 @@ object PlaceFixtures:
   export FindingPlaceRepo.{placeholderSql, DefaultPlaceholderAreaShare, DefaultPlaceholderMin}
   export Geocoder.{apply as applyMoves, candidates, moves, place, placements, resolve, tierSql}
 
-  def upsertPlaces(ds: DataSource, batch: List[PlaceInput], dataset: Dataset = Dataset.Seed): PlaceImportResult =
-    if batch.isEmpty then PlaceImportResult(0, 0, 0, Nil) else transact(ds)(PlaceRepo.upsertPlaces(batch, dataset))
+  def upsertPlaces(ds: DataSource, batch: List[Place.Input], dataset: Dataset = Dataset.Seed): Place.ImportResult =
+    if batch.isEmpty then Place.ImportResult(0, 0, 0, Nil) else transact(ds)(PlaceRepo.upsertPlaces(batch, dataset))
 
   def search(
       ds: DataSource,
@@ -46,14 +30,14 @@ object PlaceFixtures:
       asOf: Option[Long],
       limit: Int,
       modernFrom: Long = PlaceSql.DefaultModernFrom
-  ): Vector[PlaceHit] = connect(ds)(PlaceRepo.search(q, asOf, limit, modernFrom))
+  ): Vector[Place.Hit] = connect(ds)(PlaceRepo.search(q, asOf, limit, modernFrom))
 
   def get(
       ds: DataSource,
       id: String,
       asOf: Option[Long] = None,
       modernFrom: Long = PlaceSql.DefaultModernFrom
-  ): Option[com.histmersion.api.catalogue.PlaceEntry] = connect(ds)(PlaceRepo.get(id, asOf, modernFrom))
+  ): Option[com.histmersion.api.catalogue.Place.Entry] = connect(ds)(PlaceRepo.get(id, asOf, modernFrom))
 
   def children(
       ds: DataSource,
@@ -61,7 +45,7 @@ object PlaceFixtures:
       asOf: Option[Long],
       limit: Int,
       modernFrom: Long = PlaceSql.DefaultModernFrom
-  ): Vector[PlaceSummary] = connect(ds)(PlaceRepo.children(id, asOf, limit, modernFrom))
+  ): Vector[Place.Summary] = connect(ds)(PlaceRepo.children(id, asOf, limit, modernFrom))
 
   def hierarchy(
       ds: DataSource,
@@ -71,9 +55,9 @@ object PlaceFixtures:
       limit: Int,
       depthCap: Int = Int.MaxValue,
       modernFrom: Long = PlaceSql.DefaultModernFrom
-  ): Vector[PlaceTreeRow] = connect(ds)(PlaceRepo.hierarchy(asOf, root, maxDepth, limit, depthCap, modernFrom))
+  ): Vector[Place.TreeRow] = connect(ds)(PlaceRepo.hierarchy(asOf, root, maxDepth, limit, depthCap, modernFrom))
 
-  def placesOf(ds: DataSource, findingId: String): Vector[PlaceSummary] = connect(ds)(PlaceRepo.placesOf(findingId))
+  def placesOf(ds: DataSource, findingId: String): Vector[Place.Summary] = connect(ds)(PlaceRepo.placesOf(findingId))
 
   def geoJson(
       ds: DataSource,
@@ -94,29 +78,29 @@ object PlaceFixtures:
   def scopeFor(ds: DataSource, values: List[String], period: Option[Period]): PlaceScope =
     connect(ds)(PlaceRepo.scopeFor(values, period))
 
-  def footprints(ds: DataSource, placeId: String, asOf: Option[Long]): Vector[PlaceFootprint] =
+  def footprints(ds: DataSource, placeId: String, asOf: Option[Long]): Vector[Place.Footprint] =
     connect(ds)(PlaceRepo.footprints(placeId, asOf))
 
-  def links(ds: DataSource, placeId: String): Vector[PlaceLink] = connect(ds)(PlaceRepo.links(placeId))
+  def links(ds: DataSource, placeId: String): Vector[Place.Link] = connect(ds)(PlaceRepo.links(placeId))
 
-  def rename(ds: DataSource, oldId: String, newId: String): Either[ApiError, Unit] =
+  def rename(ds: DataSource, oldId: String, newId: String): Either[Api.Error, Unit] =
     transact(ds)(PlaceRepo.rename(oldId, newId))
 
   def renamedTo(ds: DataSource, id: String): Option[String] = PlaceAliasTable.table.renamedTo(ds, id)
 
-  def addName(ds: DataSource, id: String, name: String, lang: String): Either[ApiError, PlaceNameChanged] =
+  def addName(ds: DataSource, id: String, name: String, lang: String): Either[Api.Error, Place.NameChanged] =
     transact(ds)(PlaceRepo.addName(id, name, lang))
 
-  def removeName(ds: DataSource, id: String, name: String, lang: String): Either[ApiError, PlaceNameChanged] =
+  def removeName(ds: DataSource, id: String, name: String, lang: String): Either[Api.Error, Place.NameChanged] =
     transact(ds)(PlaceRepo.removeName(id, name, lang))
 
   def manualNames(ds: DataSource, id: Option[String]): List[ManualPlaceName] = connect(ds)(PlaceRepo.manualNames(id))
 
-  def addPlace(ds: DataSource, in: PlaceInput): Either[ApiError, PlaceSummary] = transact(ds)(PlaceRepo.addPlace(in))
+  def addPlace(ds: DataSource, in: Place.Input): Either[Api.Error, Place.Summary] = transact(ds)(PlaceRepo.addPlace(in))
 
   def count(ds: DataSource): Int = connect(ds)(PlaceRepo.count())
 
-  def rebuildFindingPlaces(ds: DataSource, toleranceKm: Double): PlaceRebuildResult =
+  def rebuildFindingPlaces(ds: DataSource, toleranceKm: Double): Place.RebuildResult =
     transact(ds)(FindingPlaceRepo.rebuildFindingPlaces(toleranceKm))
 
   def materialisePlaces(ds: DataSource, placeIds: List[String], toleranceKm: Double): Int =
@@ -130,23 +114,23 @@ object PlaceFixtures:
     connect(ds)(FindingPlaceRepo.unresolvedPlaceholdersIn())
 
   /** The places of the gazetteer slice the rows of a tree hang off. */
-  def gazetteer(ds: DataSource, rows: Seq[Tree.TreeRow]): (List[RegionNode], List[PlaceRelation]) =
+  def gazetteer(ds: DataSource, rows: Seq[Tree.TreeRow]): (List[RegionNode], List[Place.Relation]) =
     connect(ds)(TreeRepo.gazetteer(rows.iterator.flatMap(_.placeIds).toList))
 
   def setOverride(
       ds: DataSource,
       id: String,
-      edit: PlaceOverrideEdit,
+      edit: Place.OverrideEdit,
       toleranceKm: Double
-  ): Either[ApiError, PlaceOverrideChanged] = transact(ds)(PlaceOverrideRepo.set(id, edit, toleranceKm))
+  ): Either[Api.Error, Place.OverrideChanged] = transact(ds)(PlaceOverrideRepo.set(id, edit, toleranceKm))
 
-  def merge(ds: DataSource, from: String, into: String, toleranceKm: Double): Either[ApiError, PlaceGone] =
+  def merge(ds: DataSource, from: String, into: String, toleranceKm: Double): Either[Api.Error, Place.Gone] =
     transact(ds)(PlaceOverrideRepo.merge(from, into, toleranceKm))
 
-  def remove(ds: DataSource, id: String, reason: Option[String]): Either[ApiError, PlaceGone] =
+  def remove(ds: DataSource, id: String, reason: Option[String]): Either[Api.Error, Place.Gone] =
     transact(ds)(PlaceOverrideRepo.remove(id, reason))
 
-  def overrides(ds: DataSource, id: Option[String]): List[PlaceOverride] = connect(ds)(PlaceOverrideRepo.list(id))
+  def overrides(ds: DataSource, id: Option[String]): List[Place.Override] = connect(ds)(PlaceOverrideRepo.list(id))
 
   def replaceLand(ds: DataSource, geometries: List[String]): Int =
     val n = transact(ds)(LandRepo.replace(geometries))

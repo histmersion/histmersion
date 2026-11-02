@@ -6,13 +6,12 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.config.given
 import com.histmersion.domain.given
-import com.histmersion.api.catalogue.{PlaceSummary, PlaceTimeBasis}
 import com.histmersion.api.views.PlaceDetail
 import com.histmersion.domain.catalogue.Place
 
 /** The time rule of the place views (2026-10-09): on what ground a view at a time shows a place. */
 class PlaceTimeBasisSuite extends munit.FunSuite:
-  import com.histmersion.api.catalogue.PlaceTimeBasis.*
+  import com.histmersion.api.catalogue.Place.TimeBasis.*
 
   private def of(
       kind: String,
@@ -20,7 +19,7 @@ class PlaceTimeBasisSuite extends munit.FunSuite:
       imported: Boolean = false,
       undated: Boolean = false,
       geometry: Boolean = true
-  ) = PlaceTimeBasis.of(kind, modern, imported, undated, geometry)
+  ) = com.histmersion.api.catalogue.Place.TimeBasis.of(kind, modern, imported, undated, geometry)
 
   test("a dated place, also one whose unknown start is a stored window, is judged by its period"):
     assertEquals(of(Place.Kind.Site), Dated)
@@ -50,8 +49,8 @@ class PlaceTimeBasisSuite extends munit.FunSuite:
     assertEquals(of(Place.Kind.People, imported = true, undated = true), Findings)
 
   test("visible: only what the basis allows"):
-    def vis(b: PlaceTimeBasis, hi: Long, overlaps: Boolean, evidence: Boolean) =
-      PlaceTimeBasis.visible(b, hi, modernFrom = 1500, overlaps, evidence)
+    def vis(b: com.histmersion.api.catalogue.Place.TimeBasis, hi: Long, overlaps: Boolean, evidence: Boolean) =
+      com.histmersion.api.catalogue.Place.TimeBasis.visible(b, hi, modernFrom = 1500, overlaps, evidence)
     assert(vis(Dated, -2500, overlaps = true, evidence = false))
     assert(!vis(Dated, -2500, overlaps = false, evidence = true), "a finding does not date a dated place")
     assert(vis(Timeless, -2500, overlaps = false, evidence = false))
@@ -67,7 +66,7 @@ class PlaceTimeBasisSuite extends munit.FunSuite:
     assertEquals(parse("sometimes"), None)
 
   test("a card at a time says a place is there by its findings; with no time, or dated, it says nothing"):
-    val p = PlaceSummary("x", "Anatolia", Place.Kind.Region, None, None, None, "")
+    val p = com.histmersion.api.catalogue.Place.Summary("x", "Anatolia", Place.Kind.Region, None, None, None, "")
     val d = PlaceDetail(p, None, Nil, Nil, 0, Some(-2500L), timeBasis = Findings)
     assert(d.datedByFindings)
     assert(!d.copy(asOf = None).datedByFindings)

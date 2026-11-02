@@ -4,8 +4,12 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Locale
-import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.Write
 import com.histmersion.api.given
+import com.histmersion.api.Api
+import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import hearth.kindlings.tapirschemaderivation.KindlingsSchema
+import sttp.tapir.Schema
 
 object Backup:
 
@@ -47,11 +51,12 @@ object Backup:
       scala.util.Try(Instant.from(Stamp.parse(stamp))).getOrElse(mtime)
     case _ => mtime
 
-  def newestFirst(bs: List[BackupInfo]): List[BackupInfo] =
+  def newestFirst(bs: List[com.histmersion.api.backup.Backup.Info]): List[com.histmersion.api.backup.Backup.Info] =
     def suffix(n: String) = n match
       case AnyStamp(_, sfx) => Option(sfx).flatMap(_.toIntOption).getOrElse(1)
       case _                => 0
-    def at(b: BackupInfo) = scala.util.Try(Instant.parse(b.createdAt)).getOrElse(Instant.EPOCH)
+    def at(b: com.histmersion.api.backup.Backup.Info) =
+      scala.util.Try(Instant.parse(b.createdAt)).getOrElse(Instant.EPOCH)
     bs.sortBy(b => (at(b), suffix(b.file), b.file)).reverse
 
   private val Safe = "[A-Za-z0-9][A-Za-z0-9._-]*".r
@@ -120,11 +125,11 @@ object Backup:
 
   val CodeMaintenance = "maintenance"
 
-  def maintenance(op: String): ApiError =
-    ApiError(s"$op is unavailable: a restore is in progress on this server", Some(CodeMaintenance))
+  def maintenance(op: String): Api.Error =
+    Api.Error(s"$op is unavailable: a restore is in progress on this server", Some(CodeMaintenance))
 
-  def missing(file: String): ApiError =
-    ApiError(s"no backup named '$file' in the backups directory", Some(Write.CodeNotFound))
+  def missing(file: String): Api.Error =
+    Api.Error(s"no backup named '$file' in the backups directory", Some(Write.CodeNotFound))
 
   /** Formatted against `Locale.ROOT`: the string goes onto the wire, and JDK 25's CLDR renders `%.1f` as `2,5` under
     * locales such as `en_PL`.
@@ -136,3 +141,47 @@ object Backup:
       val exp = math.min(units.size, (math.log(n.toDouble) / math.log(1000)).toInt)
       val v = n.toDouble / math.pow(1000, exp.toDouble)
       String.format(Locale.ROOT, "%.1f %s", v, units(exp - 1))
+
+  final case class Info(file: String, bytes: Long, createdAt: String) derives KindlingsCodecAsObject, KindlingsSchema
+  object Info:
+    given Schema[Info] = summon[KindlingsSchema[Info]].schema
+
+  final case class Result(
+      file: String,
+      bytes: Long,
+      sha256: String,
+      durationMs: Long,
+      pruned: List[String] = Nil
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema
+  object Result:
+    given Schema[Result] = summon[KindlingsSchema[Result]].schema
+
+  enum State:
+    case Running, Done, Failed
+    def wire: String = toString.toLowerCase(java.util.Locale.ROOT)
+
+  object State:
+    def parse(s: String): Option[State] = values.find(_.wire == s)
+
+  final case class Status(
+      file: String,
+      state: String,
+      durationMs: Long,
+      bytes: Option[Long] = None,
+      sha256: Option[String] = None,
+      error: Option[String] = None,
+      pruned: List[String] = Nil
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema:
+    def stateOf: Option[State] = State.parse(state)
+    def result: Option[Result] =
+      for b <- bytes; h <- sha256 if stateOf.contains(State.Done) yield Result(file, b, h, durationMs, pruned)
+
+  object Status:
+    given Schema[Status] = summon[KindlingsSchema[Status]].schema
+    def running(file: String, elapsedMs: Long): Status = Status(file, State.Running.wire, elapsedMs)
+    def done(r: Result): Status =
+      Status(r.file, State.Done.wire, r.durationMs, Some(r.bytes), Some(r.sha256), pruned = r.pruned)
+    def failed(file: String, elapsedMs: Long, error: String): Status =
+      Status(file, State.Failed.wire, elapsedMs, error = Some(error))

@@ -28,9 +28,8 @@ import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.db.*
-import com.histmersion.api.catalogue.{Place, PlaceInput, PlaceName}
+import com.histmersion.api.catalogue.Place
 import com.histmersion.api.jobs.JobInfo
-import com.histmersion.api.library.SourceWithFindings
 import com.histmersion.api.media.{
   MediaCoversReport,
   MediaCoversRequest,
@@ -41,6 +40,7 @@ import com.histmersion.api.media.{
 }
 import com.histmersion.api.ocr.ConvertedDoc
 import com.histmersion.api.views.PlaceDetail
+import com.histmersion.api.library.Source
 
 /** The second slice of #1446 through the server, against the test database (HISTMERSION_TEST_DB_URL; skipped otherwise)
   * and fakes only — no network, no sidecar: a paper's illustration chosen from its figures with a thumbnail from the
@@ -135,23 +135,23 @@ class MediaSourcesSuite extends com.histmersion.db.DbSuite:
       val _ = PlaceFixtures.upsertPlaces(
         ds,
         List(
-          PlaceInput(
+          Place.Input(
             Place(
               "zqms_site",
               "Zqms Mykenai",
               com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[-60,-50]}""")
             ),
-            List(PlaceName("Zqms Mykenai"))
+            List(Place.Name("Zqms Mykenai"))
           ),
-          PlaceInput(
+          Place.Input(
             Place(
               "zqms_dup",
               "Zqms Mykenai",
               com.histmersion.domain.catalogue.Place.Kind.Site,
               Some("""{"type":"Point","coordinates":[-60.005,-50]}""")
             ),
-            List(PlaceName("Zqms Mykenai"))
+            List(Place.Name("Zqms Mykenai"))
           )
         )
       )
@@ -234,7 +234,7 @@ class MediaSourcesSuite extends com.histmersion.db.DbSuite:
         assertEquals(m.targets.map(t => (t.targetType, t.targetId, t.role)), List(("source", Paper, "cover")))
         val (ss, sb) = get(s"$url/api/sources/$Paper?body=false")
         assertEquals(ss, 200, sb)
-        val sw = decode[SourceWithFindings](sb).fold(e => fail(e.getMessage), identity)
+        val sw = decode[Source.WithFindings](sb).fold(e => fail(e.getMessage), identity)
         assertEquals(sw.illustration.map(t => (t.uid, t.role)), Some((m.uid, "cover")))
         val (ts, _) = get(s"$url${sw.illustration.get.url}")
         assertEquals(ts, 200)

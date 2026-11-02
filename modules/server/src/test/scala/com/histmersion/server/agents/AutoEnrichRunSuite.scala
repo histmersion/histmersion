@@ -14,8 +14,11 @@ import com.histmersion.util.ocr.ConverterClient
 import java.nio.file.{Files, Path}
 import com.histmersion.db.*
 import com.histmersion.api.jobs.{JobInfo, JobState}
-import com.histmersion.api.library.{FindingInput, IngestMarkdown, IngestParams, SourcePut}
+import com.histmersion.api.library.IngestMarkdown
 import com.histmersion.api.ocr.ConvertedDoc
+import com.histmersion.api.library.Finding
+import com.histmersion.api.library.Ingest
+import com.histmersion.api.library.Source
 
 /** #986 `agents.auto-enrich` against a `*_test` database, the converter stubbed: an ingest job that stores a source
   * queues exactly one `enrich-source` run for it and says so in its progress line; nothing is queued with the switch
@@ -89,7 +92,7 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   /** Ingest the fixture file and wait for its job to settle. */
   private def ingest(h: ServerWiring): JobInfo =
     val accepted = h.ingest.controllers
-      .ingest(IngestParams(Ck, Some("tin.pdf")), com.histmersion.domain.library.ingest.Upload.handed(pdf.toFile))
+      .ingest(Ingest.Params(Ck, Some("tin.pdf")), com.histmersion.domain.library.ingest.Upload.handed(pdf.toFile))
       .fold(e => fail(e.message), identity)
     def go(n: Int): JobInfo =
       val j = h.jobs.job(accepted.jobId).fold(e => fail(e.message), identity)
@@ -164,10 +167,10 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         h.library.sources
           .put(
             Ck,
-            SourcePut(
+            Source.Put(
               title = "Bronze Age tin",
               year = Some(2020),
-              findings = List(FindingInput("The Uluburun ship carried copper."))
+              findings = List(Finding.Input("The Uluburun ship carried copper."))
             )
           )
           .isRight

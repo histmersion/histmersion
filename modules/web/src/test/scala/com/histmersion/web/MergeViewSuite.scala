@@ -5,7 +5,6 @@ import com.histmersion.api.YearFmt
 import java.util.UUID
 import com.histmersion.util.data.exchange.DecisionKind
 import com.histmersion.api.exchange.{
-  BundleInstance,
   IssueCondition,
   IssueField,
   IssueHunk,
@@ -52,8 +51,8 @@ class MergeViewSuite extends munit.FunSuite:
   private def plan(is: List[MergeIssue], changes: Int = 3): MergePlan =
     MergePlan(
       U,
-      BundleInstance(U, Some("work")),
-      BundleInstance(U, Some("home")),
+      com.histmersion.api.exchange.Bundle.Instance(U, Some("work")),
+      com.histmersion.api.exchange.Bundle.Instance(U, Some("home")),
       1,
       "54",
       None,

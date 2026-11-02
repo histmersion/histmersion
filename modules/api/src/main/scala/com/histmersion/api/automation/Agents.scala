@@ -4,9 +4,9 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.WireEnumValues
 import com.histmersion.api.WireEnum
-import com.histmersion.api.research.ArticlePlans
 import com.histmersion.api.given
 import com.histmersion.domain.automation.Approval
+import com.histmersion.api.research.Article
 
 object Agents:
 
@@ -456,10 +456,10 @@ object Agents:
       createdAt: String = "",
       decidedAt: Option[String] = None,
       subject: Option[String] = None,
-      plan: Option[GoalPlans.Plan] = None,
-      article: Option[GoalPlans.ArticleDraft] = None,
-      filter: Option[ArticlePlans.FilterProposal] = None,
-      articles: Option[ArticlePlans.ArticlePlan] = None,
+      plan: Option[Goal.Plans.Plan] = None,
+      article: Option[Goal.Plans.ArticleDraft] = None,
+      filter: Option[Article.Plans.FilterProposal] = None,
+      articles: Option[Article.Plans.ArticlePlan] = None,
       hintEffect: Option[Managers.HintProposal] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema:
@@ -470,10 +470,10 @@ object Agents:
       */
     def withArticleProposal(payload: Option[io.circe.Json]): Option[ApprovalInfo] =
       if approvalKind.exists(_.proposesFilter) then
-        val f = payload.flatMap(_.as[ArticlePlans.FilterProposal].toOption)
+        val f = payload.flatMap(_.as[Article.Plans.FilterProposal].toOption)
         Some(copy(filter = f, evidence = f.map(_.rationale).getOrElse("")))
       else if approvalKind.exists(_.proposesArticles) then
-        val p = payload.flatMap(_.as[ArticlePlans.ArticlePlan].toOption)
+        val p = payload.flatMap(_.as[Article.Plans.ArticlePlan].toOption)
         Some(copy(articles = p, evidence = p.map(_.rationale).getOrElse("")))
       else None
   object ApprovalInfo:

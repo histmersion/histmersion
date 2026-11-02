@@ -5,22 +5,13 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 // explicit: pins `Article` to the page helpers in HttpApi.scala over `core.Article` (see ArticlesApi)
 import com.histmersion.server.ArticleHtml
-import com.histmersion.api.automation.GoalStages
 import com.histmersion.api.checks.{FormatField, FormatIssue, FormatMarkdown, FormatSeverity}
-import com.histmersion.api.library.{Label, SourceRef}
+import com.histmersion.api.library.Label
 import com.histmersion.api.media.AssetLinks
-import com.histmersion.api.research.{
-  ArticleCoverage,
-  ArticleLinks,
-  ArticleMarkdown,
-  ArticleRef,
-  ArticleReviewView,
-  Articles,
-  Backlink,
-  CitedSource,
-  ReviewBadge,
-  ReviewGoal
-}
+import com.histmersion.api.research.{ArticleMarkdown, Articles, Backlink, CitedSource, ReviewBadge, ReviewGoal}
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.library.Source
+import com.histmersion.api.research.Article
 
 /** PURE rendering of the typed page models to HTML. Wikilinks resolve through `links` (one lookup for the whole page,
   * done by [[PageBuilder]]) into the [[HtmlRender]] anchors.
@@ -34,13 +25,13 @@ object Pages:
     * `number` appends the citation number to a source reference.
     */
   def linkProse(md: String, links: String => Option[LinkTarget], number: String => Option[Int] = _ => None): String =
-    ArticleLinks.rewriteLinks(md) { (t, explicit, written) =>
+    Article.Links.rewriteLinks(md) { (t, explicit, written) =>
       val own = explicit.filter(_.nonEmpty)
       links(t) match
-        case Some(r: SourceRef) =>
+        case Some(r: Source.Ref) =>
           sourceRef(r, own.getOrElse(readable(r))) + number(r.citekey).fold("")(citeNumber)
-        case Some(a: ArticleRef) => articleRef(a, own.getOrElse(a.title))
-        case None                => dangling(own.getOrElse(Label.display(written)))
+        case Some(a: Article.Ref) => articleRef(a, own.getOrElse(a.title))
+        case None                 => dangling(own.getOrElse(Label.display(written)))
     }
 
   private def citeNumber(n: Int): String =
@@ -54,9 +45,9 @@ object Pages:
 
   /** Citation numbers by first appearance in `md` (the argument part of an article). */
   def numbering(md: String, links: String => Option[LinkTarget]): Map[String, Int] =
-    ArticleLinks
+    Article.Links
       .targets(md)
-      .flatMap(t => links(t).collect { case r: SourceRef => r.citekey })
+      .flatMap(t => links(t).collect { case r: Source.Ref => r.citekey })
       .distinct
       .zipWithIndex
       .map((ck, i) => ck -> (i + 1))
@@ -176,7 +167,7 @@ object Pages:
       case None    => (body, "")
     val numbers = numbering(argument, links)
     // the generated sections (#958) follow the body; like a hand-written Not used, their links get no number
-    val generated = p.coverage.fold("")(c => "\n\n" + ArticleCoverage.sections(c))
+    val generated = p.coverage.fold("")(c => "\n\n" + Article.Coverage.sections(c))
     val prose = MarkdownHtml.render(linkProse(argument, links, numbers.get) + linkProse(notUsed + generated, links))
     val meta = List(
       esc(Label.display(a.kind.trim)),
@@ -205,7 +196,7 @@ object Pages:
     * its window).
     */
   def goalBadgeLink(g: ReviewGoal): String =
-    val meaning = GoalStages.meaning(g.status).fold("")(m => s""" title="${esc(s"${g.status}: $m")}"""")
+    val meaning = Goal.Stages.meaning(g.status).fold("")(m => s""" title="${esc(s"${g.status}: $m")}"""")
     s"""<a class="goal-ref" href="/research/goals/${esc(HtmlAtoms.segment(g.slug))}" title="${esc(g.slug)}">""" +
       s"""<span class="job-state goal-status state-${esc(g.status)}"$meaning>${esc(
           Wording.capitalize(g.status)
@@ -218,7 +209,7 @@ object Pages:
     case other                       => other
 
   /** Under the title: the review badge, and the research goals that link the article. */
-  def reviewLine(r: ArticleReviewView): String =
+  def reviewLine(r: Article.ReviewView): String =
     val goals = if r.goals.isEmpty then ""
     else
       s""" <span class="muted">· ${if r.goals.size == 1 then "goal" else "goals"}:</span> """ +
@@ -228,7 +219,7 @@ object Pages:
   /** Every finding the review panel raised, run by run and round by round, with what became of it; collapsed, its
     * summary saying how many there were and how many are open.
     */
-  def reviewHistory(r: ArticleReviewView): String =
+  def reviewHistory(r: Article.ReviewView): String =
     if r.rounds.isEmpty then ""
     else
       val all = r.rounds.flatMap(_.findings)
@@ -241,12 +232,12 @@ object Pages:
         val when = rd.startedAt.fold("")(t => s""" <span class="muted">· run started ${esc(readableUtc(t))}</span>""")
         val items = rd.findings.map { f =>
           val facts =
-            List(ArticleReviewView.reviewerName(f.reviewer), f.kind, f.where).map(_.trim).filter(_.nonEmpty).map(esc)
+            List(Article.ReviewView.reviewerName(f.reviewer), f.kind, f.where).map(_.trim).filter(_.nonEmpty).map(esc)
           s"""<li class="review-finding outcome-${esc(f.outcome)}"><span class="review-sev sev-${esc(
               f.severity
             )}">${esc(f.severity)}</span> """ +
             s"""<b>${esc(f.id)}</b> <span class="muted">${facts.mkString(" · ")}</span> — ${esc(f.problem)}""" +
-            s"""<div class="review-outcome">${esc(ArticleReviewView.outcomeLine(f))}</div></li>"""
+            s"""<div class="review-outcome">${esc(Article.ReviewView.outcomeLine(f))}</div></li>"""
         }
         s"""<h3>Run ${rd.runNumber}, round ${rd.round}$when</h3><ul class="review-findings">${items.mkString}</ul>"""
       }
@@ -265,7 +256,7 @@ object Pages:
       byCk
         .get(ck)
         .map(c => CitedEntry(Some(n), ck, c.doi, c.authors, c.year, c.title, c.status))
-        .orElse(links(ck).collect { case r: SourceRef =>
+        .orElse(links(ck).collect { case r: Source.Ref =>
           CitedEntry(Some(n), ck, r.doi, r.authors, r.year, Some(r.title), Some(r.status))
         })
     }
@@ -284,7 +275,7 @@ object Pages:
           case None    => s"""<li$id>${dangling(e.citekey)} <span class="muted">not in the corpus</span></li>"""
           case Some(t) =>
             val byline =
-              List(SourceRef.shortAuthors(e.authors), e.year.fold("")(_.toString)).filter(_.nonEmpty).mkString(" ")
+              List(Source.Ref.shortAuthors(e.authors), e.year.fold("")(_.toString)).filter(_.nonEmpty).mkString(" ")
             val status = e.status.fold("")(s => " " + statusBadge(s))
             val ident = identifier(e.citekey, e.doi)
             s"""<li$id>${sourceLink(e.citekey, e.doi, if byline.nonEmpty then byline else t)} <i>${esc(
@@ -300,8 +291,8 @@ object Pages:
       val items = rows.map { b =>
         val label = b.title.filter(_.trim.nonEmpty).getOrElse(Label.display(b.id))
         val link =
-          if b.kind == ArticleLinks.TargetSource then sourceLink(b.id, None, label)
-          else articleRef(ArticleRef(b.id, label), label)
+          if b.kind == Article.Links.TargetSource then sourceLink(b.id, None, label)
+          else articleRef(Article.Ref(b.id, label), label)
         s"<li>$link</li>"
       }
       s"""<h2>Backlinks (${rows.size})</h2><ul class="backlinks">${items.mkString}</ul>"""

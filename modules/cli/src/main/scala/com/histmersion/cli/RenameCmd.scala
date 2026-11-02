@@ -12,7 +12,8 @@ import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
 import com.histmersion.api.aliases.Aliases
-import com.histmersion.api.library.{Rename, SourceAlias}
+import com.histmersion.api.library.Rename
+import com.histmersion.api.library.Source
 
 /** `histmersion rename <old> <new>` — give a source a new citekey (`POST /api/sources/{old}/rename`). The new key is
   * checked HERE with the same pure rule the server applies ([[Rename.validate]]), so a typo is a usage error before
@@ -50,7 +51,7 @@ object RenameCmd:
     * `Right("old → new")` per file removed, `Left(reason)` per file that could not be; an alias with no file is
     * neither. Only ever touches `<alias>.md` directly inside `sources`.
     */
-  def pruneRenamed(sources: Path, aliases: List[SourceAlias]): List[Either[String, String]] =
+  def pruneRenamed(sources: Path, aliases: List[Source.Alias]): List[Either[String, String]] =
     aliases.filter(a => Citekey.valid(a.alias)).flatMap { a =>
       val f = sources.resolve(s"${a.alias}.md")
       scala.util

@@ -10,7 +10,8 @@ import com.histmersion.api.catalogue.RegionNode
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.{Param, Sql}
-import com.histmersion.api.catalogue.{Period, PlaceRelation}
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.catalogue.Place
 
 /** The gazetteer behind the §1.6 aggregation tree: the places a tree's rows were placed in, their ancestors and the
   * edges between them. The library counts the rows (the search's `AggregateRepo.treeRows`);
@@ -45,8 +46,8 @@ private[places] object TreeRepo:
       periodStart: Option[Long],
       periodEnd: Option[Long]
   ) derives DbCodec:
-    def toRelation: PlaceRelation =
-      PlaceRelation(childId, parentId, kind, periodOf(periodStart, periodEnd))
+    def toRelation: Place.Relation =
+      Place.Relation(childId, parentId, kind, periodOf(periodStart, periodEnd))
 
   // ── the gazetteer the rows hang off ──────────────────────────────────────────────────────────
 
@@ -59,7 +60,7 @@ private[places] object TreeRepo:
           SELECT p.id FROM places p WHERE p.id = ANY(?::text[])
           UNION
           SELECT r.parent_id FROM place_relations r JOIN up ON r.child_id = up.id
-          WHERE r.kind = '${PlaceRelation.PartOf}'
+          WHERE r.kind = '${Place.Relation.PartOf}'
         )"""
 
   private def closureParams(ids: List[String]) = List(Param.A(ids))
@@ -92,7 +93,7 @@ private[places] object TreeRepo:
   /** The gazetteer slice a tree's rows need: every place they were materialised into (`placeIds`) plus all its
     * ancestors, and the edges between them. Empty when nothing is located — no query is run then.
     */
-  def gazetteer(placeIds: List[String])(using DbCon): (List[RegionNode], List[PlaceRelation]) =
+  def gazetteer(placeIds: List[String])(using DbCon): (List[RegionNode], List[Place.Relation]) =
     val ids = placeIds.distinct
     if ids.isEmpty then (Nil, Nil)
     else

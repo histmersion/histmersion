@@ -9,7 +9,7 @@ import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.instance.UiConfig
-import com.histmersion.api.library.{Bucket, BucketSample, TimeHistogram}
+import com.histmersion.api.library.{Bucket, TimeHistogram}
 
 object TreeTab:
 
@@ -226,7 +226,7 @@ object TreeTab:
 
   private def fillWith(
       kids: List[Bucket],
-      samples: List[BucketSample],
+      samples: List[Bucket.Sample],
       depth: Int,
       data: TimeHistogram,
       kidElements: Var[List[HtmlElement]]
@@ -237,7 +237,7 @@ object TreeTab:
     else Nil
     kidElements.set(kidNodes ++ sampleNodes ++ empty)
 
-  private def renderSample(s: BucketSample, depth: Int): HtmlElement =
+  private def renderSample(s: Bucket.Sample, depth: Int): HtmlElement =
     div(
       cls := "tsample",
       styleAttr := s"--tdepth: $depth",

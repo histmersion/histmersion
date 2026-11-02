@@ -10,8 +10,8 @@ import java.nio.file.Files
 import com.histmersion.domain.library.Confidence
 import com.histmersion.util.database.Migrate
 import com.histmersion.domain.library.sources.SourceNote
-import com.histmersion.api.catalogue.{Period, PeriodInput}
-import com.histmersion.api.library.{Edge, Finding, FindingInput, FindingsPatch, Source, SourcePatch}
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.library.{Edge, Finding, FindingsPatch, Source}
 
 /** The write paths against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise. Covers the acceptance
   * lines of plan §1.9a that need a database: put→get, patch semantics, id allocation, the `ifUpdatedAt` precondition,
@@ -98,7 +98,7 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
   test("patch {tags:{add:[sea-peoples]}} leaves findings and body untouched"):
     val _ = fresh()
     val before = SourceFixtures.load(ds, ck).get
-    val r = SourceFixtures.patch(ds, ck, SourcePatch(tags = Some(ListPatch(add = List("sea-peoples")))), 4000)
+    val r = SourceFixtures.patch(ds, ck, Source.Patch(tags = Some(ListPatch(add = List("sea-peoples")))), 4000)
     assert(r.isRight, r.toString)
     val after = SourceFixtures.load(ds, ck).get
     assertEquals(after.tags, List("adna", "yamnaya", "sea-peoples"))
@@ -110,8 +110,8 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
   test("patch {findings:{add}} twice adds two findings with distinct ids"):
     val _ = fresh()
     val add = (claim: String) =>
-      SourcePatch(findings =
-        Some(FindingsPatch(add = List(FindingInput(claim = claim, lon = Some(1.0), lat = Some(2.0)))))
+      Source.Patch(findings =
+        Some(FindingsPatch(add = List(Finding.Input(claim = claim, lon = Some(1.0), lat = Some(2.0)))))
       )
     assert(SourceFixtures.patch(ds, ck, add("second"), 4000).isRight)
     assert(SourceFixtures.patch(ds, ck, add("third"), 4000).isRight)
@@ -127,38 +127,38 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
         .patch(
           ds,
           ck,
-          SourcePatch(findings = Some(FindingsPatch(add = List(FindingInput("second"), FindingInput("third"))))),
+          Source.Patch(findings = Some(FindingsPatch(add = List(Finding.Input("second"), Finding.Input("third"))))),
           4000
         )
         .isRight
     )
     assert(
-      SourceFixtures.patch(ds, ck, SourcePatch(findings = Some(FindingsPatch(remove = List(s"$ck#1")))), 4000).isRight
+      SourceFixtures.patch(ds, ck, Source.Patch(findings = Some(FindingsPatch(remove = List(s"$ck#1")))), 4000).isRight
     )
     assertEquals(SourceFixtures.load(ds, ck).get.findings.map(_.claim), List("claim one", "third"))
 
   test("patch bumps updatedAt; an unrelated source is untouched"):
     val t1 = fresh()
     val _ = fresh("zz_write_other")
-    val t2 = SourceFixtures.patch(ds, ck, SourcePatch(summary = Some("new")), 4000).toOption.get
+    val t2 = SourceFixtures.patch(ds, ck, Source.Patch(summary = Some("new")), 4000).toOption.get
     assertNotEquals(t1, t2)
     assertEquals(SourceFixtures.load(ds, "zz_write_other").get.summary, Some("sum"))
 
   test("patch of a missing citekey is not_found, not a crash"):
-    val e = SourceFixtures.patch(ds, "zz_no_such_source", SourcePatch(summary = Some("x")), 4000).swap.toOption.get
+    val e = SourceFixtures.patch(ds, "zz_no_such_source", Source.Patch(summary = Some("x")), 4000).swap.toOption.get
     assertEquals(e.code, Some(Write.CodeNotFound))
 
   test("ifUpdatedAt: current token succeeds, stale token is refused and changes nothing"):
     val t1 = fresh()
-    assert(SourceFixtures.patch(ds, ck, SourcePatch(summary = Some("one"), ifUpdatedAt = Some(t1)), 4000).isRight)
+    assert(SourceFixtures.patch(ds, ck, Source.Patch(summary = Some("one"), ifUpdatedAt = Some(t1)), 4000).isRight)
     val e =
-      SourceFixtures.patch(ds, ck, SourcePatch(summary = Some("two"), ifUpdatedAt = Some(t1)), 4000).swap.toOption.get
+      SourceFixtures.patch(ds, ck, Source.Patch(summary = Some("two"), ifUpdatedAt = Some(t1)), 4000).swap.toOption.get
     assertEquals(e.code, Some(Write.CodePrecondition))
     assertEquals(SourceFixtures.load(ds, ck).get.summary, Some("one"))
 
   test("an invalid patch is rejected as invalid and writes nothing"):
     val _ = fresh()
-    val e = SourceFixtures.patch(ds, ck, SourcePatch(period = Some(PeriodInput(-100, -900))), 4000).swap.toOption.get
+    val e = SourceFixtures.patch(ds, ck, Source.Patch(period = Some(Period.Input(-100, -900))), 4000).swap.toOption.get
     assertEquals(e.code, Some(Write.CodeInvalid))
     assertEquals(SourceFixtures.load(ds, ck).get.period, Some(Period(-2000, -1500)))
 

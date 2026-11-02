@@ -2,7 +2,7 @@ package com.histmersion.domain.media.links
 
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
-import com.histmersion.api.media.{AssetLink, AssetLinkPut}
+import com.histmersion.api.media.AssetLink
 
 /** A source's figure tied to a place, an event, a finding, a source or an article (plan §1.6): what it depicts, where
   * it was taken, what it illustrates, whose page it is. Every method runs on the connection it is given.
@@ -29,7 +29,7 @@ private[links] object AssetLinkRepo:
   def figureExists(citekey: String, name: String)(using DbCon): Boolean =
     sql"SELECT 1 FROM assets WHERE citekey = $citekey AND name = $name".query[Int].run().nonEmpty
 
-  def insert(in: AssetLinkPut)(using DbCon): AssetLink =
+  def insert(in: AssetLink.Put)(using DbCon): AssetLink =
     val id = sql"""INSERT INTO asset_links (citekey, asset_name, relation, target_type, target_id, xywh, notes)
           VALUES (${in.citekey}, ${in.assetName}, ${in.relation}, ${in.targetType}, ${in.targetId},
                   ${in.xywh}, ${in.notes})

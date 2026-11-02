@@ -9,16 +9,7 @@ import com.histmersion.util.data.exchange.BundleSql.*
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import java.util.UUID
-import com.histmersion.api.exchange.{
-  BundleEventSets,
-  BundlePlace,
-  BundlePlaceAlias,
-  BundlePlaceLink,
-  BundlePlaceName,
-  BundlePlaceRelation,
-  BundlePlaceType,
-  BundleSiteType
-}
+import com.histmersion.api.exchange.Bundle
 
 /** The places as a bundle carries them (docs/research-merge-import.md §4, §7.3): this collection's own places with
   * their names, parents, links and types, their old ids and the site types refined from outside — read out in a
@@ -31,7 +22,7 @@ private[places] object PlaceBundleRepo:
   /** The places of this collection's own (`dataset = 'local'`, V052) in scope — or, with `alsoIds`, any place with one
     * of those ids as well (what a merge compares the bundle's against).
     */
-  def places(scope: BundleScope, alsoIds: List[String] = Nil)(using DbCon): Vector[BundlePlace] =
+  def places(scope: BundleScope, alsoIds: List[String] = Nil)(using DbCon): Vector[Bundle.Place] =
     val own = Sql.raw("p.dataset = 'local' AND ") ++ where(scope, "p.uid", "p.updated_at")
     val sel = if alsoIds.isEmpty then own
     else Sql.raw("((") ++ own ++ Sql.of(") OR p.id = ANY(?::text[]))", Param.A(alsoIds.distinct))
@@ -63,7 +54,7 @@ private[places] object PlaceBundleRepo:
         .run()
         .groupBy(_.placeId)
       rows.map { r =>
-        BundlePlace(
+        Bundle.Place(
           r.uid,
           r.origin,
           r.id,
@@ -76,16 +67,16 @@ private[places] object PlaceBundleRepo:
           names
             .getOrElse(r.id, Vector.empty)
             .toList
-            .map(n => BundlePlaceName(n.name, Option(n.lang).filter(_.nonEmpty), range(n.pNull, n.pLo, n.pHi))),
+            .map(n => Bundle.PlaceName(n.name, Option(n.lang).filter(_.nonEmpty), range(n.pNull, n.pLo, n.pHi))),
           rels
             .getOrElse(r.id, Vector.empty)
             .toList
-            .map(x => BundlePlaceRelation(x.parentId, x.kind, range(x.pNull, x.pLo, x.pHi))),
-          links.getOrElse(r.id, Vector.empty).toList.map((_, sc, ex, rel) => BundlePlaceLink(sc, ex, rel)),
+            .map(x => Bundle.PlaceRelation(x.parentId, x.kind, range(x.pNull, x.pLo, x.pHi))),
+          links.getOrElse(r.id, Vector.empty).toList.map((_, sc, ex, rel) => Bundle.PlaceLink(sc, ex, rel)),
           types
             .getOrElse(r.id, Vector.empty)
             .toList
-            .map(t => BundlePlaceType(t.typeLabel, range(t.pNull, t.pLo, t.pHi), t.citekey)),
+            .map(t => Bundle.PlaceType(t.typeLabel, range(t.pNull, t.pLo, t.pHi), t.citekey)),
           r.updatedAt
         )
       }
@@ -93,24 +84,24 @@ private[places] object PlaceBundleRepo:
   /** Old place ids (V055) of the places a bundle carries — this collection's own (as [[places]]): a gazetteer seed
     * place travels as the reference fingerprint, not as a row.
     */
-  def placeAliases(scope: BundleScope)(using DbCon): Vector[BundlePlaceAlias] =
+  def placeAliases(scope: BundleScope)(using DbCon): Vector[Bundle.PlaceAlias] =
     (Sql.raw(s"""SELECT x.alias, p.uid, ${ts("x.created_at")}
                 FROM place_aliases x JOIN places p ON p.id = x.place_id WHERE p.dataset = 'local' AND """) ++
       where(scope, "p.uid", "x.created_at") ++ """ ORDER BY x.alias COLLATE "C"""").frag
       .query[(String, UUID, String)]
       .run()
-      .map(BundlePlaceAlias.apply)
+      .map(Bundle.PlaceAlias.apply)
 
   /** The site types refined from outside (`places.site_type`, V085) — of ANY place, the gazetteer's seeds included —
     * and the places asked about with no answer (so the other side does not ask again).
     */
-  def siteTypes(scope: BundleScope)(using DbCon): Vector[BundleSiteType] =
+  def siteTypes(scope: BundleScope)(using DbCon): Vector[Bundle.SiteType] =
     (Sql.raw(s"""SELECT p.id, p.site_type, ${ts("p.site_type_checked_at")} FROM places p
                 WHERE (p.site_type IS NOT NULL OR p.site_type_checked_at IS NOT NULL) AND """) ++
       where(scope, "p.uid", "p.site_type_checked_at") ++ """ ORDER BY p.id COLLATE "C"""").frag
       .query[(String, Option[String], Option[String])]
       .run()
-      .map(BundleSiteType.apply)
+      .map(Bundle.SiteType.apply)
 
   // ── what a merge plan compares ───────────────────────────────────────────────────────────────
 
@@ -141,7 +132,7 @@ private[places] object PlaceBundleRepo:
     * geometry match on the label alone. The nearest (most overlapping) place wins; a local place is preferred to a seed
     * one.
     */
-  def matchPlaces(ps: List[BundlePlace], cfg: MergeSettings)(using DbCon): Map[UUID, String] =
+  def matchPlaces(ps: List[Bundle.Place], cfg: MergeSettings)(using DbCon): Map[UUID, String] =
     val norm = PlaceRepo.normLabelSql("p.label")
     ps.flatMap { b =>
       val within = cfg.placeWithinKm * 1000.0
@@ -253,7 +244,7 @@ private[places] object PlaceBundleRepo:
 
   /** The site types the other side refined: the newer answer wins, as for the event-catalogue sets. */
   def siteTypesIn(w: BundleImport.Writer): Unit =
-    import com.histmersion.api.exchange.BundleEventSets.newer
+    import com.histmersion.api.exchange.Bundle.EventSets.newer
     given DbCon = w.transaction
     if w.es.siteTypes.nonEmpty then
       val placeHere = this.placeHere(w)

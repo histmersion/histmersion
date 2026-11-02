@@ -1,6 +1,6 @@
 package com.histmersion.domain.media.assets
 
-import com.histmersion.api.{Api, ApiError, Write}
+import com.histmersion.api.{Api, Write}
 import com.histmersion.domain.media.MediaState
 import com.histmersion.util.database.{RangeSql, Transactor}
 import com.histmersion.domain.media.MediaRole
@@ -51,7 +51,7 @@ trait AssetService:
   def detail(citekey: String, name: String): Option[AssetDetail]
 
   /** A figure's description changed; a period that would end before it starts is refused, the other fields kept. */
-  def patch(citekey: String, name: String, p: AssetPatch): Either[ApiError, AssetDetail]
+  def patch(citekey: String, name: String, p: AssetPatch): Either[Api.Error, AssetDetail]
 
   /** A source's image figures, as the illustration's choice weighs them. */
   def sourceFigures(citekey: String): List[SourceFigure]
@@ -117,9 +117,9 @@ object AssetService:
     def replaceFigures(citekey: String, figures: List[NewFigure]): Int =
       db.transact(AssetRepo.replace(citekey, figures))
     def detail(citekey: String, name: String): Option[AssetDetail] = db.read(AssetRepo.detail(citekey, name))
-    def patch(citekey: String, name: String, p: AssetPatch): Either[ApiError, AssetDetail] =
+    def patch(citekey: String, name: String, p: AssetPatch): Either[Api.Error, AssetDetail] =
       db.transact(AssetRepo.patch(citekey, name, p))
-        .flatMap(_ => detail(citekey, name).toRight(ApiError(s"No asset '$citekey/$name'", Some(Write.CodeNotFound))))
+        .flatMap(_ => detail(citekey, name).toRight(Api.Error(s"No asset '$citekey/$name'", Some(Write.CodeNotFound))))
     def sourceFigures(citekey: String): List[SourceFigure] = db.read(MediaRepo.sourceFigures(citekey))
     def known(provider: String, keys: List[String]): Map[String, Known] = db.read(MediaRepo.known(provider, keys))
     def save(a: ProviderAsset, firstTarget: (String, String)): (String, Boolean) =
@@ -264,9 +264,9 @@ object AssetService:
         )
       }
 
-    def patch(citekey: String, name: String, p: AssetPatch): Either[ApiError, AssetDetail] =
+    def patch(citekey: String, name: String, p: AssetPatch): Either[Api.Error, AssetDetail] =
       named(citekey, name) match
-        case None    => Left(ApiError(s"No asset '$citekey/$name'", Some(Write.CodeNotFound)))
+        case None    => Left(Api.Error(s"No asset '$citekey/$name'", Some(Write.CodeNotFound)))
         case Some(a) =>
           change(a.uid) { x =>
             val point = (p.lat, p.lon) match
@@ -290,7 +290,7 @@ object AssetService:
                 change(a.uid)(_.modify(_.period).setTo(Option.when(s.isDefined || e.isDefined)((s, e))))
             }
             .flatMap(_ =>
-              detail(citekey, name).toRight(ApiError(s"No asset '$citekey/$name'", Some(Write.CodeNotFound)))
+              detail(citekey, name).toRight(Api.Error(s"No asset '$citekey/$name'", Some(Write.CodeNotFound)))
             )
 
     def sourceFigures(citekey: String): List[SourceFigure] =

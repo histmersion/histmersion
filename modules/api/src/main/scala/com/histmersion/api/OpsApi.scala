@@ -15,42 +15,42 @@ object OpsApi:
   import com.histmersion.api.library.Query.{QueryRequest, QueryResult, SchemaTables}
   import com.histmersion.api.automation.Queue.{QueueAdd, QueueImport, QueueImported, QueueItem, QueuePatch}
 
-  private lazy val base = endpoint.in("api").errorOut(jsonBody[ApiError])
+  private lazy val base = endpoint.in("api").errorOut(jsonBody[Api.Error])
 
   private lazy val opsErrors =
-    oneOf[ApiError](
-      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[ApiError])(ApiError.hasCode(Write.CodeNotFound)),
-      oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[ApiError]))
+    oneOf[Api.Error](
+      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[Api.Error])(Api.Error.hasCode(Write.CodeNotFound)),
+      oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[Api.Error]))
     )
 
-  lazy val lint: PublicEndpoint[List[String], ApiError, LintReport, Any] =
+  lazy val lint: PublicEndpoint[List[String], Api.Error, LintReport, Any] =
     endpoint.get
       .in("api" / "lint")
       .in(sttp.tapir.query[List[String]]("rule"))
       .errorOut(opsErrors)
       .out(jsonBody[LintReport])
 
-  lazy val lintFix: PublicEndpoint[List[String], ApiError, LintFixResult, Any] =
+  lazy val lintFix: PublicEndpoint[List[String], Api.Error, LintFixResult, Any] =
     base.post.in("lint" / "fix").in(sttp.tapir.query[List[String]]("rule")).out(jsonBody[LintFixResult])
 
-  lazy val lintMarkdown: PublicEndpoint[FormatCheck, ApiError, FormatReport, Any] =
+  lazy val lintMarkdown: PublicEndpoint[FormatCheck, Api.Error, FormatReport, Any] =
     base.post.in("lint" / "markdown").in(jsonBody[FormatCheck]).out(jsonBody[FormatReport])
 
   /** Declared before the `{list}` routes so `items` is never read as a list name. */
-  lazy val queuePatch: PublicEndpoint[(Int, QueuePatch), ApiError, QueueItem, Any] =
+  lazy val queuePatch: PublicEndpoint[(Int, QueuePatch), Api.Error, QueueItem, Any] =
     endpoint.patch
       .in("api" / "queue" / "items" / path[Int]("id"))
       .in(jsonBody[QueuePatch])
       .errorOut(opsErrors)
       .out(jsonBody[QueueItem])
 
-  lazy val queueDelete: PublicEndpoint[Int, ApiError, QueueItem, Any] =
+  lazy val queueDelete: PublicEndpoint[Int, Api.Error, QueueItem, Any] =
     endpoint.delete
       .in("api" / "queue" / "items" / path[Int]("id"))
       .errorOut(opsErrors)
       .out(jsonBody[QueueItem])
 
-  lazy val queueList: PublicEndpoint[(String, Boolean, Option[String], Option[String]), ApiError, QueueListing, Any] =
+  lazy val queueList: PublicEndpoint[(String, Boolean, Option[String], Option[String]), Api.Error, QueueListing, Any] =
     endpoint.get
       .in("api" / "queue" / path[String]("list"))
       .in(sttp.tapir.query[Boolean]("all").default(false))
@@ -63,20 +63,20 @@ object OpsApi:
       .errorOut(opsErrors)
       .out(jsonBody[QueueListing])
 
-  lazy val queueAdd: PublicEndpoint[(String, QueueAdd), ApiError, QueueItem, Any] =
+  lazy val queueAdd: PublicEndpoint[(String, QueueAdd), Api.Error, QueueItem, Any] =
     endpoint.post
       .in("api" / "queue" / path[String]("list"))
       .in(jsonBody[QueueAdd])
       .errorOut(opsErrors)
       .out(jsonBody[QueueItem])
 
-  lazy val queueExport: PublicEndpoint[String, ApiError, String, Any] =
+  lazy val queueExport: PublicEndpoint[String, Api.Error, String, Any] =
     endpoint.get
       .in("api" / "queue" / path[String]("list") / "export")
       .errorOut(opsErrors)
       .out(stringBody)
 
-  lazy val queueImport: PublicEndpoint[(String, QueueImport), ApiError, QueueImported, Any] =
+  lazy val queueImport: PublicEndpoint[(String, QueueImport), Api.Error, QueueImported, Any] =
     endpoint.post
       .in("api" / "queue" / path[String]("list") / "import")
       .in(jsonBody[QueueImport])
@@ -84,13 +84,13 @@ object OpsApi:
       .out(jsonBody[QueueImported])
 
   /** Under `export/` rather than `goals/` so it is never read as a goal slug. */
-  lazy val goalsExport: PublicEndpoint[Unit, ApiError, String, Any] =
+  lazy val goalsExport: PublicEndpoint[Unit, Api.Error, String, Any] =
     base.get.in("export" / "goals").out(stringBody)
 
-  lazy val query: PublicEndpoint[QueryRequest, ApiError, QueryResult, Any] =
+  lazy val query: PublicEndpoint[QueryRequest, Api.Error, QueryResult, Any] =
     base.post.in("query").in(jsonBody[QueryRequest]).out(jsonBody[QueryResult])
 
-  lazy val schemaTables: PublicEndpoint[Unit, ApiError, SchemaTables, Any] =
+  lazy val schemaTables: PublicEndpoint[Unit, Api.Error, SchemaTables, Any] =
     base.get.in("schema" / "tables").out(jsonBody[SchemaTables])
 
   /** Order matters: the two `queue/items/{id}` routes precede the `queue/{list}` ones. */

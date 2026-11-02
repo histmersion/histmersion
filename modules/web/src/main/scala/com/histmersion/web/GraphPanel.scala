@@ -7,7 +7,7 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import com.histmersion.api.library.{GraphNode, Label, SourceGraph}
+import com.histmersion.api.library.{GraphNode, Label}
 import com.histmersion.domain.library.Edge
 import com.histmersion.domain.library.Source
 
@@ -30,7 +30,7 @@ object GraphPanel:
   /** The legend: the statuses and edge kinds this graph actually uses, in their enums' order — typed, so a new kind is
     * a compile-time decision, not a stray string.
     */
-  def legend(g: SourceGraph): (List[Source.Status], List[Edge.Kind]) =
+  def legend(g: com.histmersion.api.library.Source.Graph): (List[Source.Status], List[Edge.Kind]) =
     val statuses = g.nodes.map(_.status.getOrElse(Source.Status.Unassessed)).toSet
     val kinds = g.links.flatMap(l => Edge.Kind.fromWire(l.kind)).toSet
     (Source.Status.values.toList.filter(statuses), Edge.Kind.values.toList.filter(kinds))
@@ -38,7 +38,7 @@ object GraphPanel:
   /** Links as node-index pairs. Every link of a V026 graph joins two of its nodes, so none is lost; a link to a node
     * the graph does not carry is dropped rather than drawn to nowhere.
     */
-  def indexLinks(g: SourceGraph): List[(Int, Int, String)] =
+  def indexLinks(g: com.histmersion.api.library.Source.Graph): List[(Int, Int, String)] =
     val idx = g.nodes.zipWithIndex.map((n, i) => n.id -> i).toMap
     g.links.flatMap(l => for s <- idx.get(l.source); t <- idx.get(l.target) yield (s, t, l.kind))
 
@@ -47,7 +47,7 @@ object GraphPanel:
   private enum Load:
     case Loading
     case Failed(message: String)
-    case Loaded(g: SourceGraph)
+    case Loaded(g: com.histmersion.api.library.Source.Graph)
 
   def element(citekey: String): HtmlElement =
     val state = Var[Load](Load.Loading)
@@ -74,7 +74,7 @@ object GraphPanel:
       }
     )
 
-  private def legendView(g: SourceGraph): HtmlElement =
+  private def legendView(g: com.histmersion.api.library.Source.Graph): HtmlElement =
     val (statuses, kinds) = legend(g)
     div(
       cls := "graph-legend",
@@ -119,7 +119,7 @@ object GraphPanel:
   )
 
   /** The canvas and its simulation. Everything mutable lives inside this one mount. */
-  private def stage(g: SourceGraph, hovered: Var[Option[GraphNode]]): HtmlElement =
+  private def stage(g: com.histmersion.api.library.Source.Graph, hovered: Var[Option[GraphNode]]): HtmlElement =
     // the drawing area in CSS pixels — THE size: every frame reads it, so a resize re-centres
     val size = Var((0.0, 0.0))
     div(
@@ -154,7 +154,7 @@ object GraphPanel:
     * start, and world (0,0) is kept at the canvas centre.
     */
   final private class Simulation(
-      g: SourceGraph,
+      g: com.histmersion.api.library.Source.Graph,
       canvas: dom.html.Canvas,
       size: () => (Double, Double),
       hovered: Var[Option[GraphNode]]

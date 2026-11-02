@@ -11,8 +11,8 @@ import com.histmersion.domain.*
 import java.util.concurrent.{CountDownLatch, Executors, TimeUnit}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.util.database.Migrate
-import com.histmersion.api.library.{Source, SourcePatch}
-import com.histmersion.api.research.{Article, ArticlePatch}
+import com.histmersion.api.library.Source
+import com.histmersion.api.research.Article
 
 /** `ifUpdatedAt` is a compare-and-swap, and it was not one: `patch` read the row, compared the token, then wrote — with
   * nothing stopping a second patch from doing all three in between. Both saw the token they were given, both
@@ -80,14 +80,14 @@ class WriteRaceSuite extends com.histmersion.db.DbSuite:
         SourceFixtures.patch(
           ds,
           ck,
-          SourcePatch(summary = Some("A"), ifUpdatedAt = Some(token)),
+          Source.Patch(summary = Some("A"), ifUpdatedAt = Some(token)),
           cfg.limits.chunkChars,
           cfg.places.pointToleranceKm
         ),
         SourceFixtures.patch(
           ds,
           ck,
-          SourcePatch(summary = Some("B"), ifUpdatedAt = Some(token)),
+          Source.Patch(summary = Some("B"), ifUpdatedAt = Some(token)),
           cfg.limits.chunkChars,
           cfg.places.pointToleranceKm
         )
@@ -119,8 +119,8 @@ class WriteRaceSuite extends com.histmersion.db.DbSuite:
     (1 to Rounds).foreach { round =>
       val token = seedArticle()
       val (a, b) = race(
-        ArticleFixtures.patch(ds, slug, ArticlePatch(body = Some("A"), ifUpdatedAt = Some(token))),
-        ArticleFixtures.patch(ds, slug, ArticlePatch(body = Some("B"), ifUpdatedAt = Some(token)))
+        ArticleFixtures.patch(ds, slug, Article.Patch(body = Some("A"), ifUpdatedAt = Some(token))),
+        ArticleFixtures.patch(ds, slug, Article.Patch(body = Some("B"), ifUpdatedAt = Some(token)))
       )
       assertEquals(List(a, b).count(_.isRight), 1, s"round $round: a=$a b=$b — a lost update slipped through")
       assertEquals(List(a, b).collectFirst { case Left(e) => e }.get.code, Some(Write.CodePrecondition))

@@ -6,8 +6,8 @@ import com.histmersion.domain.*
 import io.circe.parser
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
-import com.histmersion.api.automation.GoalList
 import com.histmersion.api.library.GeoHitPage
+import com.histmersion.api.automation.Goal
 
 /** Offset paging over real HTTP and MCP (#1798 item 8): a cut list's JSON carries `offset` and `next`, its Markdown
   * says `next: offset=N`, and `geo_when` pages (`GET /api/findings/page`). Skipped without HISTMERSION_TEST_DB_URL.
@@ -51,10 +51,10 @@ class PagingHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
       )
       val (s, b) = get(s"$url/api/goals?status=planned&limit=2")
       assertEquals(s, 200, b)
-      val l = decode[GoalList](b)
+      val l = decode[Goal.List](b)
       assert(l.total >= 3, b)
       assertEquals((l.offset, l.next), (0, Some(2)))
-      val last = decode[GoalList](get(s"$url/api/goals?status=planned&limit=2&offset=${l.total - 1}")._2)
+      val last = decode[Goal.List](get(s"$url/api/goals?status=planned&limit=2&offset=${l.total - 1}")._2)
       assertEquals((last.offset, last.next), (l.total - 1, None))
       val (_, md) = mcp(url, "goals", """{"status":"planned","limit":2}""")
       assert(md.contains("next: offset=2"), md)

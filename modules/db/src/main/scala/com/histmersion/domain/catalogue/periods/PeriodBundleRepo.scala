@@ -10,7 +10,7 @@ import com.histmersion.util.database.RangeSql
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import java.util.UUID
-import com.histmersion.api.exchange.BundlePeriod
+import com.histmersion.api.exchange.Bundle
 
 /** The named periods as a bundle carries them (docs/research-merge-import.md §4, §7.3): this collection's own, read out
   * in a deterministic order, and written in by an import.
@@ -18,14 +18,14 @@ import com.histmersion.api.exchange.BundlePeriod
 private[periods] object PeriodBundleRepo:
 
   /** The named periods of this collection's own in scope, or with one of `alsoIds`. */
-  def periods(scope: BundleScope, alsoIds: List[String] = Nil)(using DbCon): Vector[BundlePeriod] =
+  def periods(scope: BundleScope, alsoIds: List[String] = Nil)(using DbCon): Vector[Bundle.Period] =
     val own = Sql.raw("p.dataset = 'local' AND ") ++ where(scope, "p.uid", "p.updated_at")
     val sel = if alsoIds.isEmpty then own
     else Sql.raw("((") ++ own ++ Sql.of(") OR p.id = ANY(?::text[]))", Param.A(alsoIds.distinct))
     (Sql.raw(s"""SELECT p.uid, p.origin, p.id, p.label, p.authority, ${rangeCols("p.period")}, p.region, p.parent_id,
                        ${ts("p.updated_at")}
                 FROM periods p WHERE """) ++ sel ++ " ORDER BY p.uid").frag.query[BPeriodRow].run().map { r =>
-      BundlePeriod(
+      Bundle.Period(
         r.uid,
         r.origin,
         r.id,
@@ -45,7 +45,7 @@ private[periods] object PeriodBundleRepo:
 
   /** A bundle period with no id here that names a period here: the same label (reduced) and spans sharing a year.
     */
-  def matchPeriods(ps: List[BundlePeriod])(using DbCon): Map[UUID, String] =
+  def matchPeriods(ps: List[Bundle.Period])(using DbCon): Map[UUID, String] =
     val norm = PlaceSql.normLabelSql("p.label")
     ps.flatMap { b =>
       val (lo, hi) = (b.period.flatMap(_.start), b.period.flatMap(_.end))

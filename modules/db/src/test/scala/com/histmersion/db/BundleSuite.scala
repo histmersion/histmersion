@@ -33,29 +33,15 @@ import com.histmersion.util.data.exchange.BundleExport
 import com.histmersion.domain.automation.goals.GoalRepo
 import com.histmersion.util.data.exchange.{BundleImport, BundleRepo}
 import com.histmersion.util.database.Sql
-import com.histmersion.api.automation.GoalPut
-import com.histmersion.api.catalogue.{
-  AttestationPut,
-  EventDating,
-  EventEdge,
-  EventParticipant,
-  EventPut,
-  Period,
-  Place,
-  PlaceInput
-}
-import com.histmersion.api.exchange.{
-  Bundle,
-  BundleFiles,
-  BundleImportResult,
-  BundleManifest,
-  MergeResolution,
-  MergeResolutions
-}
-import com.histmersion.api.library.{Edge, Finding, Source, SourcePatch}
-import com.histmersion.api.media.{AssetLinkPut, AssetPatch}
+import com.histmersion.api.catalogue.{EventDating, EventEdge, EventParticipant, EventPut, Period, Place}
+import com.histmersion.api.exchange.{Bundle, MergeResolution, MergeResolutions}
+import com.histmersion.api.library.{Edge, Finding, Source}
+import com.histmersion.api.media.AssetPatch
 import com.histmersion.api.research.Article
 import com.histmersion.util.data.exchange.Issue
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.catalogue.Attestation
+import com.histmersion.api.media.AssetLink
 
 /** The portable bundle against real Postgres (docs/research-merge-import.md, milestones M0–M2): identity and tombstones
   * (M0), a deterministic export (M1), and an import without matching — into an empty instance and back into its own —
@@ -89,7 +75,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     // the reference data both sides share (an event points into it)
     val _ = PlaceFixtures.upsertPlaces(
       ds,
-      List(PlaceInput(Place("zzb_place", "Hattusa", "site", Some("""{"type":"Point","coordinates":[34.61,40.02]}"""))))
+      List(Place.Input(Place("zzb_place", "Hattusa", "site", Some("""{"type":"Point","coordinates":[34.61,40.02]}"""))))
     )
     ds
 
@@ -236,10 +222,13 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
       )
     )
     val _ =
-      AssetLinkFixtures.create(ds, AssetLinkPut(A1, "fig1.png", "depicts", "finding", s"$A1#0", xywh = Some("0,0,1,1")))
+      AssetLinkFixtures.create(
+        ds,
+        AssetLink.Put(A1, "fig1.png", "depicts", "finding", s"$A1#0", xywh = Some("0,0,1,1"))
+      )
     val _ = AttestationRows.create(
       ds,
-      AttestationPut(
+      Attestation.Put(
         A1,
         "finding",
         s"$A1#1",
@@ -299,9 +288,9 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     )
     eventSets(ds)
     transact(ds)(
-      GoalRepo.put("zzb_goal", GoalPut("Hittites", "seeding", Some("notes"), List("t"), Nil, Some(-1650), Some(-1180)))
+      GoalRepo.put("zzb_goal", Goal.Put("Hittites", "seeding", Some("notes"), List("t"), Nil, Some(-1650), Some(-1180)))
     )
-    transact(ds)(GoalRepo.put("zzb_goal_sub", GoalPut("Sub", parentSlug = Some("zzb_goal"))))
+    transact(ds)(GoalRepo.put("zzb_goal_sub", Goal.Put("Sub", parentSlug = Some("zzb_goal"))))
     val q1 = QueueRows.add(ds, Kind.Tasks, QueueAdd("read alpha", Some("Hittites"), reason = Some("why")))
     val _ = QueueRows.add(ds, Kind.Log, QueueAdd("2026-10-03: did things", createdAt = Some("2026-10-03T09:00:00Z")))
     val q3 = QueueRows.add(ds, Kind.Acquire, QueueAdd("buy a book"))
@@ -358,7 +347,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
       .map(e => e.name -> r.readAll())
       .toList
 
-  private def manifestOf(bundle: Array[Byte]): BundleManifest =
+  private def manifestOf(bundle: Array[Byte]): Bundle.Manifest =
     BundleFormat.parseManifest(entries(bundle).head._2).fold(e => fail(e), identity)
 
   private def importInto(
@@ -367,7 +356,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
       originals: Path,
       dryRun: Boolean = false,
       resolutions: MergeResolutions = MergeResolutions()
-  ): BundleImportResult =
+  ): Bundle.ImportResult =
     val f = Files.createTempFile(tmp, "in-", ".hmx")
     Files.write(f, bundle)
     com.histmersion.util.data.exchange.BundleImporter
@@ -473,7 +462,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(es.head._1, Bundle.ManifestPath)
     val m = manifestOf(one)
     assertEquals(m.instance.id, instanceId(ds))
-    assertEquals(m.files.map(_.path), BundleFiles.all)
+    assertEquals(m.files.map(_.path), Bundle.Files.all)
     assertEquals(
       m.files.find(_.path == com.histmersion.util.data.exchange.Bundle.Kind.Source.file).map(_.lines),
       Some(3)
@@ -486,8 +475,8 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(!all.contains(Calibre), "the calibre id was exported")
     assert(!all.toLowerCase.contains("calibre"), "a calibre field was exported")
     // tombstones travel; the renamed source's alias too
-    assert(text(es, BundleFiles.Tombstones).contains("\"kind\":\"article\""))
-    assert(text(es, BundleFiles.Aliases).contains(B0))
+    assert(text(es, Bundle.Files.Tombstones).contains("\"kind\":\"article\""))
+    assert(text(es, Bundle.Files.Aliases).contains(B0))
 
   test("M1: --since carries only what changed after it, plus the deletions"):
     val ds = fresh("since")
@@ -497,7 +486,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     val asOf = full.asOf.getOrElse(fail("no asOf"))
     Thread.sleep(5)
     exec(ds, "DELETE FROM asset_links")
-    val _ = SourceFixtures.patch(ds, G1, SourcePatch(summary = Some("changed")), cfg.limits.chunkChars)
+    val _ = SourceFixtures.patch(ds, G1, Source.Patch(summary = Some("changed")), cfg.limits.chunkChars)
     val inc = exportOf(ds, sp, Some(asOf))
     val es = entries(inc)
     val m = manifestOf(inc)
@@ -511,8 +500,8 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
       m.files.find(_.path == com.histmersion.util.data.exchange.Bundle.Kind.Finding.file).map(_.lines),
       Some(0)
     )
-    assert(text(es, BundleFiles.Tombstones).contains("asset-link"))
-    assert(text(es, BundleFiles.Edges).nonEmpty, "the changed source carries its edges")
+    assert(text(es, Bundle.Files.Tombstones).contains("asset-link"))
+    assert(text(es, Bundle.Files.Edges).nonEmpty, "the changed source carries its edges")
     // the one blob a changed line refers to: gamma's body (the receiver may not have it yet)
     assertEquals(m.blobs.count, 1)
     assert(es.exists(_._1.startsWith("blobs/")))
@@ -574,11 +563,11 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
   /** The bundle with the event-catalogue files taken out, as a bundle written before they existed. */
   private def withoutEventSets(bundle: Array[Byte]): Array[Byte] =
     val gone = Set(
-      BundleFiles.EventCatalogue,
-      BundleFiles.EventCandidates,
-      BundleFiles.EventChecks,
-      BundleFiles.EventCorrections,
-      BundleFiles.PlaceSiteTypes
+      Bundle.Files.EventCatalogue,
+      Bundle.Files.EventCandidates,
+      Bundle.Files.EventChecks,
+      Bundle.Files.EventCorrections,
+      Bundle.Files.PlaceSiteTypes
     )
     val m = manifestOf(bundle)
     val out = java.io.ByteArrayOutputStream()
@@ -596,11 +585,11 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     val first = exportOf(a, sa)
     val es = entries(first)
     List(
-      BundleFiles.EventCatalogue -> 1,
-      BundleFiles.EventCandidates -> 2,
-      BundleFiles.EventChecks -> 1,
-      BundleFiles.EventCorrections -> 2,
-      BundleFiles.PlaceSiteTypes -> 1
+      Bundle.Files.EventCatalogue -> 1,
+      Bundle.Files.EventCandidates -> 2,
+      Bundle.Files.EventChecks -> 1,
+      Bundle.Files.EventCorrections -> 2,
+      Bundle.Files.PlaceSiteTypes -> 1
     ).foreach((f, n) => assertEquals(manifestOf(first).files.find(_.path == f).map(_.lines), Some(n), f))
     assert(
       text(es, com.histmersion.util.data.exchange.Bundle.Kind.Event.file).contains("\"catalogue\":\"gvp\""),
@@ -681,7 +670,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(count(a, "SELECT count(*)::int FROM merge_ledger"), 0)
     assert(java.util.Arrays.equals(exportOf(a, sa), before), "importing its own bundle changed the export")
     // …and after a local change, an OLD own bundle never wins over it
-    val _ = SourceFixtures.patch(a, A1, SourcePatch(summary = Some("newer here")), cfg.limits.chunkChars)
+    val _ = SourceFixtures.patch(a, A1, Source.Patch(summary = Some("newer here")), cfg.limits.chunkChars)
     val r2 = importInto(a, before, sa)
     assertEquals(r2.changed, 0)
     assertEquals(
@@ -696,7 +685,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     populate(a, sa)
     val _ = importInto(b, exportOf(a, sa), sb)
     // changed over there only → fast-forward
-    val _ = SourceFixtures.patch(a, A1, SourcePatch(summary = Some("work edit")), cfg.limits.chunkChars)
+    val _ = SourceFixtures.patch(a, A1, Source.Patch(summary = Some("work edit")), cfg.limits.chunkChars)
     val r1 = importInto(b, exportOf(a, sa), sb)
     assertEquals(
       r1.counts.find(_.kind == com.histmersion.util.data.exchange.Bundle.Kind.Source).map(_.updated),
@@ -705,7 +694,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     )
     assertEquals(SourceFixtures.load(b, A1).flatMap(_.summary), Some("work edit"))
     // changed here only → kept
-    val _ = SourceFixtures.patch(b, A1, SourcePatch(notes = Some("home edit")), cfg.limits.chunkChars)
+    val _ = SourceFixtures.patch(b, A1, Source.Patch(notes = Some("home edit")), cfg.limits.chunkChars)
     val r2 = importInto(b, exportOf(a, sa), sb)
     assertEquals(
       r2.counts.find(_.kind == com.histmersion.util.data.exchange.Bundle.Kind.Source).map(_.keptLocal),
@@ -714,7 +703,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     )
     assertEquals(SourceFixtures.load(b, A1).flatMap(_.notes), Some("home edit"))
     // changed on both sides → an open issue: the import is refused, nothing written (M3)…
-    val _ = SourceFixtures.patch(a, A1, SourcePatch(summary = Some("work again")), cfg.limits.chunkChars)
+    val _ = SourceFixtures.patch(a, A1, Source.Patch(summary = Some("work again")), cfg.limits.chunkChars)
     val third = exportOf(a, sa)
     val r3 = importInto(b, third, sb)
     assert(!r3.applied)

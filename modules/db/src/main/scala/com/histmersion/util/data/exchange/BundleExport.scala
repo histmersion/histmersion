@@ -6,7 +6,7 @@ import com.histmersion.util.storage.ContentStore
 import com.augustnagro.magnum.*
 import java.io.OutputStream
 import javax.sql.DataSource
-import com.histmersion.api.exchange.{Bundle, BundleBlobs, BundleInstance, BundleManifest}
+import com.histmersion.api.exchange.Bundle
 
 /** `bundle export` (docs/research-merge-import.md §4, milestone M1): the database as a `.hmx` bundle, written to a
   * stream, from the carried kinds of the registry.
@@ -27,7 +27,7 @@ object BundleExport:
       since: Option[String],
       files: ContentStore,
       kinds: CarriedKinds
-  ): Either[String, BundleManifest] =
+  ): Either[String, Bundle.Manifest] =
     transact(ds):
       sql"SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY".update.run()
       val scope = since.fold(BundleScope.All)(BundleScope.Since(_))
@@ -43,16 +43,16 @@ object BundleExport:
       val shas = blobs.keys.toList.sorted
       val payloads = carried.map((entry, o) => entry -> o.payload)
       val listed = payloads.map((p, b) => BundleFormat.fileInfo(p, b))
-      val manifest = BundleManifest(
+      val manifest = Bundle.Manifest(
         format = Bundle.Format,
         formatVersion = Bundle.FormatVersion,
         schemaVersion = schema.getOrElse("0"),
         bundleId = BundleFormat.bundleId(inst.id, since, listed, shas),
-        instance = BundleInstance(inst.id, inst.label),
+        instance = Bundle.Instance(inst.id, inst.label),
         since = since,
         asOf = carried.flatMap(_._2.asOf).maxOption,
         files = listed,
-        blobs = BundleBlobs(shas.size, shas.map(blobs(_).size).sum),
+        blobs = Bundle.Blobs(shas.size, shas.map(blobs(_).size).sum),
         reference = BundleRepo.reference
       )
 

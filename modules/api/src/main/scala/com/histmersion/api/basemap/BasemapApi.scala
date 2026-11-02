@@ -2,19 +2,19 @@ package com.histmersion.api.basemap
 import sttp.tapir.*
 import sttp.tapir.json.circe.*
 import sttp.model.{Header, HeaderNames, StatusCode}
-import com.histmersion.api.ApiError
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.given
+import com.histmersion.api.Api
 
 object BasemapApi:
 
-  private lazy val base = endpoint.in("api" / "basemap").errorOut(jsonBody[ApiError])
+  private lazy val base = endpoint.in("api" / "basemap").errorOut(jsonBody[Api.Error])
 
-  lazy val status: PublicEndpoint[Unit, ApiError, BasemapStatus, Any] =
-    base.get.out(jsonBody[BasemapStatus])
+  lazy val status: PublicEndpoint[Unit, Api.Error, Basemap.Status, Any] =
+    base.get.out(jsonBody[Basemap.Status])
 
-  lazy val fetch: PublicEndpoint[BasemapFetchQuery, ApiError, JobInfo, Any] =
+  lazy val fetch: PublicEndpoint[Basemap.FetchQuery, Api.Error, JobInfo, Any] =
     endpoint.post
       .in("api" / "basemap" / "fetch")
       .in(
@@ -26,12 +26,12 @@ object BasemapApi:
           .and(query[Boolean]("dryRun").default(false))
           .and(query[Boolean]("keepAll").default(false))
           .and(query[Option[String]]("focus"))
-          .mapTo[BasemapFetchQuery]
+          .mapTo[Basemap.FetchQuery]
       )
       .errorOut(fetchErrors)
       .out(jsonBody[JobInfo])
 
-  lazy val remove: PublicEndpoint[BasemapRemoveQuery, ApiError, BasemapRemoved, Any] =
+  lazy val remove: PublicEndpoint[Basemap.RemoveQuery, Api.Error, Basemap.Removed, Any] =
     endpoint.delete
       .in("api" / "basemap")
       .in(
@@ -39,14 +39,14 @@ object BasemapApi:
           .default("all")
           .and(query[Option[String]]("focus"))
           .and(query[Boolean]("cache").default(false))
-          .mapTo[BasemapRemoveQuery]
+          .mapTo[Basemap.RemoveQuery]
       )
       .errorOut(fetchErrors)
-      .out(jsonBody[BasemapRemoved])
+      .out(jsonBody[Basemap.Removed])
 
   lazy val tile: PublicEndpoint[
     (String, Int, Long, Long, Option[String], Option[String]),
-    ApiError,
+    Api.Error,
     (Array[Byte], String, Option[String], String, StatusCode),
     Any
   ] =
@@ -55,7 +55,7 @@ object BasemapApi:
       .in(query[Option[String]]("layers"))
       .in(query[Option[String]]("keys"))
       .errorOut(statusCode(StatusCode.NotFound))
-      .errorOut(jsonBody[ApiError])
+      .errorOut(jsonBody[Api.Error])
       .out(byteArrayBody)
       .out(header[String](HeaderNames.ContentType))
       .out(header[Option[String]](HeaderNames.ContentEncoding))
@@ -63,17 +63,17 @@ object BasemapApi:
       .out(statusCode)
 
   private def fetchErrors =
-    oneOf[ApiError](
-      oneOfVariantValueMatcher(StatusCode.ServiceUnavailable, jsonBody[ApiError])(
-        ApiError.hasCode(Backup.CodeMaintenance)
+    oneOf[Api.Error](
+      oneOfVariantValueMatcher(StatusCode.ServiceUnavailable, jsonBody[Api.Error])(
+        Api.Error.hasCode(Backup.CodeMaintenance)
       ),
-      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[ApiError])(ApiError.hasCode(Busy)),
-      oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[ApiError]))
+      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[Api.Error])(Api.Error.hasCode(Busy)),
+      oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[Api.Error]))
     )
 
   val Busy = "basemap_busy"
 
-  def tileTemplate(layer: BasemapLayer, version: String): String =
+  def tileTemplate(layer: Basemap.Layer, version: String): String =
     s"/api/basemap/${layer.wire}/{z}/{x}/{y}?v=$version"
 
   lazy val all: List[AnyEndpoint] = List(status, fetch, remove, tile)

@@ -13,10 +13,10 @@ import com.histmersion.domain.library.Confidence
 import com.histmersion.util.data.exchange.DecisionKind
 import com.histmersion.util.data.exchange.BundleFormat
 import com.histmersion.api.automation.Queue
-import com.histmersion.api.exchange.{BundleEventDating, BundleQueueItem}
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.library.Source
 import com.histmersion.util.data.exchange.Issue
+import com.histmersion.api.exchange.Bundle
 
 /** Folding two records that are one into one (docs/research-merge-import.md §5.4): goals, queue items, events and
   * articles (a source's and a finding's folds are the library's: `SourcePlanSuite`, `FindingPlanSuite`).
@@ -31,7 +31,7 @@ class MergeFoldSuite extends munit.FunSuite:
     assertEquals(g.status, Goal.Status.Compiled)
     assertEquals(g.notes, Some("home's plan\n\n### From work\n\nwork's plan"))
     assertEquals(MergeFold.foldGoal(gl, gl.copy(uid = gr.uid), "work").notes, gl.notes)
-    val q = BundleQueueItem(uid("q1"), home, "tasks", "Find the Kuhrt reprint", None, Queue.Open, None, At, None, At)
+    val q = Bundle.QueueItem(uid("q1"), home, "tasks", "Find the Kuhrt reprint", None, Queue.Open, None, At, None, At)
     val qd = q.copy(uid = uid("q2"), text = "find the  kuhrt reprint", status = Queue.Done, doneAt = Some(At))
     assertEquals(MergeFold.queueKey(q.text), MergeFold.queueKey(qd.text))
     assertEquals(MergeFold.foldQueue(q, qd).status, Queue.Done)
@@ -39,7 +39,7 @@ class MergeFoldSuite extends munit.FunSuite:
     val e1 = MergeFixture.event("e1", "zz_e", "Here", home)
     val e2 = MergeFixture
       .event("e2", "zz_e", "There", work)
-      .copy(datings = List(BundleEventDating("a2000_x", None, Some(-1200), None, None, Some(-1190), None, None)))
+      .copy(datings = List(Bundle.EventDating("a2000_x", None, Some(-1200), None, None, Some(-1190), None, None)))
     assert(EventPlan.sameCore(e1, e2))
     assert(!EventPlan.sameCore(e1, e2.copy(notAfter = Some(-1100))))
     val e = EventPlan.foldEvent(e1, e2)

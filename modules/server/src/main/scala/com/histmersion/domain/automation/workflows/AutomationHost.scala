@@ -1,12 +1,12 @@
 package com.histmersion.domain.automation.workflows
 
-import com.histmersion.api.ApiError
-import com.histmersion.api.backup.BackupStatus
-import com.histmersion.api.automation.{Goal, GoalPatch, GoalPut}
+import com.histmersion.api.automation.Goal
 import com.histmersion.api.automation.Agents.{Pipeline, ProbeAnswer, Role, RunRequest}
-import com.histmersion.api.automation.GoalPlans.LinkKind
+import com.histmersion.api.automation.Goal.Plans.LinkKind
 import com.histmersion.api.checks.Lint.LintFixResult
 import com.histmersion.domain.PlanGoal
+import com.histmersion.api.Api
+import com.histmersion.api.backup.Backup
 
 /** What the engine asks of the rest of the server (a port the engine owns): its goals, a run's target and options, a
   * link's reference and the probe's subject in the domains' terms, the plan's works and vocabulary, and the
@@ -17,32 +17,32 @@ trait AutomationHost:
   def articleExists(slug: String): Boolean
 
   /** A goal by its slug, a renamed goal's old slug answering as the goal it was renamed to. */
-  def goal(slug: String): Either[ApiError, Goal]
+  def goal(slug: String): Either[Api.Error, Goal]
 
   /** A goal written as a person would (`PUT`), an old slug writing to the goal it was renamed to. */
-  def putGoal(slug: String, in: GoalPut): Either[ApiError, Goal]
+  def putGoal(slug: String, in: Goal.Put): Either[Api.Error, Goal]
 
   /** A goal changed as a person would (`PATCH`). */
-  def patchGoal(slug: String, patch: GoalPatch): Either[ApiError, Goal]
+  def patchGoal(slug: String, patch: Goal.Patch): Either[Api.Error, Goal]
 
   // ── a run's request, checked by the workflow it names ─────────────────────────────────────────
 
   /** The target as pipeline `p` names it: an existing source or article, a goal — or, for compile-article, any valid
     * slug (a new article is created, an existing one extended). None: a target kind the engine resolves itself.
     */
-  def runTarget(p: Pipeline, raw: String): Option[Either[ApiError, String]]
+  def runTarget(p: Pipeline, raw: String): Option[Either[Api.Error, String]]
 
   /** The options pipeline `p` understands, checked before a run is queued (`roundsCap`: the review's round cap). */
-  def runOptions(p: Pipeline, req: RunRequest, target: String, roundsCap: Int): Either[ApiError, Unit]
+  def runOptions(p: Pipeline, req: RunRequest, target: String, roundsCap: Int): Either[Api.Error, Unit]
 
   /** The roles a run of `p` may give a model of its own: its own, and those of the run it chains. */
   def runRoles(p: Pipeline): List[Role]
 
   /** A source or an article a goal links, as its canonical key (a citekey, a slug). */
-  def linkRef(kind: LinkKind, raw: String): Either[ApiError, String]
+  def linkRef(kind: LinkKind, raw: String): Either[Api.Error, String]
 
   /** What the probe asks a model about one source, and the answer it must give: (citekey, title, year). */
-  def probeSubject(citekey: String): Either[ApiError, ProbeAnswer]
+  def probeSubject(citekey: String): Either[Api.Error, ProbeAnswer]
 
   /** Whether a model's title names the record's (after normalisation). */
   def sameTitle(answered: String, record: String): Boolean
@@ -61,10 +61,10 @@ trait AutomationHost:
   def housekeepingBlock: Option[String]
 
   /** Start a backup; its status at once. */
-  def backup(): Either[ApiError, BackupStatus]
+  def backup(): Either[Api.Error, Backup.Status]
 
   /** The backup's status now. */
-  def backupStatus: Either[ApiError, BackupStatus]
+  def backupStatus: Either[Api.Error, Backup.Status]
 
   /** The safe `lint --fix` repairs, under the maintenance lock. */
-  def lintFix(): Either[ApiError, LintFixResult]
+  def lintFix(): Either[Api.Error, LintFixResult]

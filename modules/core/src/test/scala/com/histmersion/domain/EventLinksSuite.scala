@@ -14,7 +14,6 @@ import io.circe.parser.parse
 import com.histmersion.api.catalogue.{
   ArticleEventLead,
   EventLead,
-  EventLeadList,
   EventLeads,
   EventLinkCandidate,
   EventLinkList,
@@ -126,7 +125,7 @@ class EventLinksSuite extends munit.FunSuite:
     val l = EventLinkList("e", "E", List(EventLinkCandidate("e", "a2020", 1.1, reasons = List("names it 1 time"))))
     assert(EventLinksMarkdown.list(l).contains("unconfirmed"))
     val md = EventLeads.markdown(
-      EventLeadList(
+      EventLead.List(
         1,
         List(
           EventLead("e", "E", "eruption", "catalogue", "1 CE", "No source…", EventLeads.actions("e", "E", "1 CE", 0))

@@ -3,7 +3,6 @@ package com.histmersion.web
 import com.histmersion.api.TimeSpan
 import com.histmersion.api.catalogue.{
   Correction,
-  CorrectionStatus,
   EventCatalogueRef,
   EventGeo,
   EventLead,
@@ -15,9 +14,9 @@ import com.histmersion.api.catalogue.{
   EventTier,
   SiteTypes
 }
-import com.histmersion.api.library.SourceKinds
 import com.histmersion.api.views.EventDetail
 import com.histmersion.domain.catalogue.Place
+import com.histmersion.api.library.Source
 
 /** #1449, the web's pure half: the one icon registry covers every kind and site type, an event marker carries its
   * kind's icon, its tier and its card's attribute, a typed site's icon its colour, the key names every icon, the menus
@@ -39,7 +38,7 @@ class EventMarkersSuite extends munit.FunSuite:
     def dupes(xs: List[String]) = xs.groupBy(identity).collect { case (k, v) if v.size > 1 => k }.toList
     assertEquals(dupes(EventTaxonomy.kinds.map(_.icon)), Nil)
     assertEquals(dupes(SiteTypes.all.map(_.icon) :+ CardIcons.Unknown), Nil)
-    assertEquals(dupes(SourceKinds.all.map(CardIcons.sourceKind(_, marker = true))), Nil)
+    assertEquals(dupes(Source.Kinds.all.map(CardIcons.sourceKind(_, marker = true))), Nil)
     // the glyphs that blurred at ~15 px are gone from the markers: they are no longer vendored at all
     List("biohazard", "wheat-off", "handshake", "theater", "newspaper", "cog").foreach(n =>
       assert(!Glyphs.inner.contains(n), n)
@@ -282,7 +281,7 @@ class EventMarkersSuite extends munit.FunSuite:
           "label",
           "\"Hekla 3\"",
           "\"Eruption of Hekla\"",
-          CorrectionStatus.Conflict,
+          Correction.Status.Conflict,
           Some("gvp"),
           Some("\"Eruption of Hekla volcano\"")
         )

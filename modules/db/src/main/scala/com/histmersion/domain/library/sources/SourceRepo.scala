@@ -1,7 +1,5 @@
 package com.histmersion.domain.library.sources
 
-import com.histmersion.api.library.SourceWrite
-
 import com.histmersion.domain.catalogue.places.FindingPlacement
 import com.histmersion.domain.library.sources.referrers.{SourceReferrers, SourceRename}
 
@@ -9,25 +7,13 @@ import com.histmersion.util.database.RangeSql
 import com.histmersion.util.ocr.{Chunk, Chunker}
 import com.histmersion.api.text.WikiLinks
 
-import com.histmersion.api.{ApiError, GeoPoint, Write}
+import com.histmersion.api.{GeoPoint, Write}
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.catalogue.Period
-import com.histmersion.api.library.{
-  CalibreGap,
-  Edge,
-  Finding,
-  FindingRow,
-  Rename,
-  RenameCounts,
-  Source,
-  SourceAlias,
-  SourceDetail,
-  SourcePatch,
-  SourceRef,
-  TocEntry
-}
+import com.histmersion.api.library.{CalibreGap, Edge, Finding, Rename, Source, TocEntry}
+import com.histmersion.api.Api
 
 /** The library's sources: a record with its findings and the edges it makes, written and read whole or by part, its old
   * citekeys, its rename, its full-text chunks and body. Every method runs on the connection or in the transaction its
@@ -36,9 +22,9 @@ import com.histmersion.api.library.{
 private[sources] object SourceRepo:
 
   private given DbCodec[TocEntry] = DbCodec.derived
-  private given DbCodec[SourceDetail] = DbCodec.derived
-  private given DbCodec[FindingRow] = DbCodec.derived
-  private given DbCodec[SourceRef] = DbCodec.derived
+  private given DbCodec[Source.Detail] = DbCodec.derived
+  private given DbCodec[Finding.Row] = DbCodec.derived
+  private given DbCodec[Source.Ref] = DbCodec.derived
 
   /** The sources whose chunks contain `name` as a phrase (the FTS index), most chunks first, at most `limit`. */
   def naming(name: String, limit: Int)(using DbCon): List[String] =
@@ -65,9 +51,9 @@ private[sources] object SourceRepo:
     token(s.citekey).getOrElse("")
 
   /** [[patch]] inside the caller's transaction. */
-  def patchIn(requested: String, p: SourcePatch, chunkChars: Int, toleranceKm: Double)(using
+  def patchIn(requested: String, p: Source.Patch, chunkChars: Int, toleranceKm: Double)(using
       DbCon
-  ): Either[ApiError, String] =
+  ): Either[Api.Error, String] =
     // an OLD citekey (V027) patches the source it was renamed to — see [[canonical]]
     val citekey = canonical(requested).getOrElse(requested)
     // FOR UPDATE, not a plain read: `ifUpdatedAt` is a compare-and-swap, and two patches that both
@@ -78,11 +64,11 @@ private[sources] object SourceRepo:
     load(citekey) match
       case None           => Left(Write.notFound(citekey))
       case Some(existing) =>
-        SourceWrite.precondition(existing, p) match
-          case Left(msg) => Left(ApiError(msg, Some(Write.CodePrecondition)))
+        Source.Write.precondition(existing, p) match
+          case Left(msg) => Left(Api.Error(msg, Some(Write.CodePrecondition)))
           case Right(_)  =>
-            SourceWrite.applyPatch(existing, SourceWrite.srcAliased(p, requested, citekey)) match
-              case Left(msg)      => Left(ApiError(msg, Some(Write.CodeInvalid)))
+            Source.Write.applyPatch(existing, Source.Write.srcAliased(p, requested, citekey)) match
+              case Left(msg)      => Left(Api.Error(msg, Some(Write.CodeInvalid)))
               case Right(updated) =>
                 write(updated, chunkChars, toleranceKm); Right(token(citekey).getOrElse(""))
 
@@ -362,13 +348,13 @@ private[sources] object SourceRepo:
     (sql"SELECT calibre_id FROM sources WHERE citekey = $ck".query[Option[String]].run().headOption.flatten)
 
   /** Every old citekey and the source it names now, by alias. */
-  def aliases(using DbCon): List[SourceAlias] =
+  def aliases(using DbCon): List[Source.Alias] =
     (
       sql"""SELECT alias, citekey FROM source_aliases ORDER BY alias COLLATE "C""""
         .query[(String, String)]
         .run()
         .toList
-        .map(SourceAlias(_, _))
+        .map(Source.Alias(_, _))
     )
 
   /** Rename a source's citekey, in the caller's transaction — all of it happens or none of it does.
@@ -389,7 +375,7 @@ private[sources] object SourceRepo:
     *   - Parked edges that named `new` (or a short form now unique to it) become real edges.
     *   - `old` becomes an alias of `new`, so it keeps resolving.
     */
-  def rename(oldCk: String, newRaw: String, referrers: SourceReferrers)(using DbCon): Either[ApiError, RenameCounts] =
+  def rename(oldCk: String, newRaw: String, referrers: SourceReferrers)(using DbCon): Either[Api.Error, Rename.Counts] =
     Rename.validate(oldCk, newRaw).flatMap(validated => renameIn(oldCk, validated.value, referrers))
 
   /** [[rename]] inside the caller's transaction, `newCk` already validated — also what a bundle import does when a
@@ -397,7 +383,7 @@ private[sources] object SourceRepo:
     */
   private[histmersion] def renameIn(oldCk: String, newCk: String, referrers: SourceReferrers)(using
       DbCon
-  ): Either[ApiError, RenameCounts] =
+  ): Either[Api.Error, Rename.Counts] =
     lockRow(oldCk)
     def taken(ck: String) = sql"SELECT citekey FROM sources WHERE citekey = $ck".query[String].run().nonEmpty
     val findingIdsTaken =
@@ -408,15 +394,15 @@ private[sources] object SourceRepo:
     if !taken(oldCk) then
       Left(aliasTarget(oldCk) match
         case Some(now) =>
-          ApiError(s"'$oldCk' is an old citekey of '$now' — rename '$now' instead", Some(Write.CodeInvalid))
+          Api.Error(s"'$oldCk' is an old citekey of '$now' — rename '$now' instead", Some(Write.CodeInvalid))
         case None => Write.notFound(oldCk))
     else if taken(newCk) then
-      Left(ApiError(s"'$newCk' is already the citekey of another source", Some(Write.CodeInvalid)))
+      Left(Api.Error(s"'$newCk' is already the citekey of another source", Some(Write.CodeInvalid)))
     else
       aliasTarget(newCk) match
         case Some(other) if other != oldCk =>
           Left(
-            ApiError(
+            Api.Error(
               s"'$newCk' is an old citekey of '$other' and still resolves to it — pick another",
               Some(Write.CodeInvalid)
             )
@@ -425,7 +411,7 @@ private[sources] object SourceRepo:
           findingIdsTaken match
             case Some(id) =>
               Left(
-                ApiError(s"finding id '$id' already exists — '$newCk' would collide with it", Some(Write.CodeInvalid))
+                Api.Error(s"finding id '$id' already exists — '$newCk' would collide with it", Some(Write.CodeInvalid))
               )
             case None =>
               if back.isDefined then
@@ -438,7 +424,7 @@ private[sources] object SourceRepo:
                   .run()
               Right(renameNow(oldCk, newCk, referrers))
 
-  private def renameNow(oldCk: String, newCk: String, referrers: SourceReferrers)(using DbCon): RenameCounts =
+  private def renameNow(oldCk: String, newCk: String, referrers: SourceReferrers)(using DbCon): Rename.Counts =
     // the short forms that pointed at the old key — decided BEFORE it moves
     val forms = Rename.shortForms(oldCk)
     val shorts = resolveAliases(forms).collect { case (f, ck) if ck == oldCk => f }.toSet
@@ -471,7 +457,7 @@ private[sources] object SourceRepo:
     // an alias that exists again is no longer deleted
     sql"DELETE FROM alias_tombstones WHERE alias = $oldCk".update.run()
 
-    RenameCounts(
+    Rename.Counts(
       findings,
       referred.texts.map(_._1),
       sources.map(_._1),
@@ -513,24 +499,24 @@ private[sources] object SourceRepo:
   /** The citation-link view of the given stored sources (unknown citekeys are simply absent) — what a page needs to
     * render a reference with its DOI, byline and status. One query, in citekey order.
     */
-  def refs(citekeys: List[String])(using DbCon): List[SourceRef] =
+  def refs(citekeys: List[String])(using DbCon): List[Source.Ref] =
     val wanted = citekeys.distinct
     if wanted.isEmpty then Nil
     else sql"""SELECT citekey, doi, authors, year, title, status FROM sources
-              WHERE citekey = ANY($wanted::text[]) ORDER BY citekey""".query[SourceRef].run().toList
+              WHERE citekey = ANY($wanted::text[]) ORDER BY citekey""".query[Source.Ref].run().toList
 
-  def get(citekey: String)(using DbCon): Option[(SourceDetail, Vector[FindingRow])] =
+  def get(citekey: String)(using DbCon): Option[(Source.Detail, Vector[Finding.Row])] =
     val src = sql"""SELECT citekey, title, authors, year, venue, status, topics, regions, tags,
                              ${SqlLiteral(RangeSql.cols("period"))},
                              summary, doi, ocr_markdown, notes,
                              to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'),
                              source, uid, origin
-                      FROM sources WHERE citekey = $citekey""".query[SourceDetail].run().headOption
+                      FROM sources WHERE citekey = $citekey""".query[Source.Detail].run().headOption
     src.map { r =>
       val fs = sql"""SELECT claim, region_name, ST_X(geom), ST_Y(geom),
                               ${SqlLiteral(RangeSql.cols("period"))}, period_name,
                               tags, confidence, significance, uid
-                       FROM findings WHERE citekey = $citekey ORDER BY id""".query[FindingRow].run()
+                       FROM findings WHERE citekey = $citekey ORDER BY id""".query[Finding.Row].run()
       (r, fs)
     }
 

@@ -13,15 +13,7 @@ import java.util.zip.GZIPInputStream
 import scala.annotation.tailrec
 import scala.util.Using
 import com.histmersion.api.backup.Backup
-import com.histmersion.api.catalogue.{
-  Gazetteer,
-  GazetteerExtract,
-  GazetteerKind,
-  GazetteerLoadCounts,
-  GazetteerManifest,
-  GazetteerSourceInfo,
-  GazRecord
-}
+import com.histmersion.api.catalogue.{Gazetteer, GazRecord}
 
 /** The gazetteer's external sources (#1064) — the `geonames`, `wikidata`, `tgn` (#1403) and `lpf` steps of the one-time
   * gazetteer import job (the init job, the same that imports the bundled seed and fetches Cliopatria or PeriodO).
@@ -62,20 +54,20 @@ object GazetteerLoad:
       .flatMap(k => (p.extracts :: p.legacy.toList).find(_.isFile(k)).map(_ -> k))
 
   /** Every name `histmersion places load` and `init.fetch-sources` accept for these sources. */
-  val names: List[String] = GazetteerKind.values.toList.map(_.wire)
+  val names: List[String] = Gazetteer.Kind.values.toList.map(_.wire)
 
   // ── the manifest ───────────────────────────────────────────────────────────────────────────────
 
-  def manifest(p: Stores): Either[String, GazetteerManifest] =
+  def manifest(p: Stores): Either[String, Gazetteer.Manifest] =
     p.manifestText()
       .flatMap(text =>
         io.circe.parser
-          .decode[GazetteerManifest](text)
+          .decode[Gazetteer.Manifest](text)
           .left
           .map(e => s"${p.manifestAt}: ${e.getMessage}")
       )
 
-  private def pin(p: Stores, kind: GazetteerKind): Either[String, GazetteerExtract] =
+  private def pin(p: Stores, kind: Gazetteer.Kind): Either[String, Gazetteer.Extract] =
     manifest(p).flatMap(
       _.extracts
         .find(_.name == kind.wire)
@@ -87,7 +79,7 @@ object GazetteerLoad:
   /** Is the file at `key` the pinned one? `Left` says why not — a missing file or a checksum mismatch, which is
     * REFUSED: an extract that is not the pinned one is never imported.
     */
-  def verify(store: Store, key: StoreKey, x: GazetteerExtract): Either[String, Blob] =
+  def verify(store: Store, key: StoreKey, x: Gazetteer.Extract): Either[String, Blob] =
     store.get(key) match
       case None    => Left(s"${store.where(key)} is missing")
       case Some(f) =>
@@ -108,7 +100,7 @@ object GazetteerLoad:
     * pin has no download url (the extracts are not hosted) must be PUT at the exact path the import reads — named here
     * with its checksum and size, and the setting that moves it.
     */
-  def missing(p: Stores, x: GazetteerExtract): String =
+  def missing(p: Stores, x: Gazetteer.Extract): String =
     if x.sha256.trim.isEmpty || x.file.trim.isEmpty then
       s"${x.name} is not pinned yet (${p.manifestAt} names no built file or sha256 for it) — build it with " +
         s"db/gazetteer/build.py and pin it (db/gazetteer/README.md, \"Rebuilding and re-pinning\")"
@@ -124,7 +116,7 @@ object GazetteerLoad:
     * that kept its extracts in `<data dir>/gazetteer` keeps them. When the move fails it is read where it is. Importing
     * is idempotent either way: what was imported stays imported.
     */
-  private def adopt(p: Stores, x: GazetteerExtract, old: Store, key: StoreKey): Either[String, Blob] =
+  private def adopt(p: Stores, x: Gazetteer.Extract, old: Store, key: StoreKey): Either[String, Blob] =
     verify(old, key, x).map { found =>
       val moved =
         for
@@ -152,7 +144,7 @@ object GazetteerLoad:
   /** The pinned extract (moved over from the legacy place once), fetched first when it is missing and its pin names a
     * url.
     */
-  def extract(p: Stores, x: GazetteerExtract, download: Download, timeoutSeconds: Int): Either[String, Blob] =
+  def extract(p: Stores, x: Gazetteer.Extract, download: Download, timeoutSeconds: Int): Either[String, Blob] =
     if x.sha256.trim.isEmpty || x.file.trim.isEmpty then Left(missing(p, x))
     else
       StoreKey.of(x.file) match
@@ -194,10 +186,10 @@ object GazetteerLoad:
     }
 
   /** Feed the records of one file to `sink` in batches; a malformed record is skipped and named. */
-  final private class Batcher(size: Int, sink: List[GazRecord] => GazetteerLoadCounts):
+  final private class Batcher(size: Int, sink: List[GazRecord] => Gazetteer.LoadCounts):
     private val buf = List.newBuilder[GazRecord] // the batch being filled
     private var n = 0 // its size
-    var total: GazetteerLoadCounts = GazetteerLoadCounts("", "") // the running sum
+    var total: Gazetteer.LoadCounts = Gazetteer.LoadCounts("", "") // the running sum
     var span: Span = Span.always // the widest known years of the records, for an LPF dataset that states none
 
     def add(r: Either[String, GazRecord]): Unit = r match
@@ -245,14 +237,14 @@ object GazetteerLoad:
   def load(
       db: Transactor,
       s: Settings,
-      kind: GazetteerKind,
+      kind: Gazetteer.Kind,
       apply: Boolean,
       note: String => Unit,
       download: Download
-  ): Either[String, List[GazetteerLoadCounts]] =
+  ): Either[String, List[Gazetteer.LoadCounts]] =
     val result = kind match
-      case GazetteerKind.Lpf => loadLpf(db, s, apply, note)
-      case k                 =>
+      case Gazetteer.Kind.Lpf => loadLpf(db, s, apply, note)
+      case k                  =>
         for
           x <- pin(s.stores, k)
           f <- extract(s.stores, x, download, s.downloadTimeoutSeconds)
@@ -299,7 +291,7 @@ object GazetteerLoad:
       apply: Boolean,
       note: String => Unit,
       label: String
-  )(feed: Batcher => Unit): (GazetteerLoadCounts, Span) =
+  )(feed: Batcher => Unit): (Gazetteer.LoadCounts, Span) =
     db.read:
       val session = GazetteerRepo.session(key, version, apply, s.openStartWindowYears, s.pointAreaKinds)
       val pruned = session.prune(s.batch)
@@ -317,7 +309,7 @@ object GazetteerLoad:
       b.flush()
       val swept = session.sweep()
       (
-        (b.total + swept + GazetteerLoadCounts(key, version, placesRemoved = pruned))
+        (b.total + swept + Gazetteer.LoadCounts(key, version, placesRemoved = pruned))
           .copy(source = key, version = version),
         b.span
       )
@@ -345,12 +337,12 @@ object GazetteerLoad:
       s: Settings,
       apply: Boolean,
       note: String => Unit
-  ): Either[String, List[GazetteerLoadCounts]] =
+  ): Either[String, List[Gazetteer.LoadCounts]] =
     val files = lpfFiles(s.stores.lpf)
     if files.isEmpty then
       Left(s"no LPF files in ${s.stores.lpf.where()} (put World Historical Gazetteer downloads there)")
     else
-      files.foldLeft[Either[String, List[GazetteerLoadCounts]]](Right(Nil)) { (acc, f) =>
+      files.foldLeft[Either[String, List[Gazetteer.LoadCounts]]](Right(Nil)) { (acc, f) =>
         acc.flatMap(done => loadLpfFile(db, s, f, apply, note).map(done :+ _))
       }
 
@@ -360,10 +352,10 @@ object GazetteerLoad:
       f: Blob,
       apply: Boolean,
       note: String => Unit
-  ): Either[String, GazetteerLoadCounts] =
+  ): Either[String, Gazetteer.LoadCounts] =
     val name = f.key.name
     val slug = Gazetteer.datasetSlug(name)
-    val key = Gazetteer.sourceKey(GazetteerKind.Lpf, Some(slug))
+    val key = Gazetteer.sourceKey(Gazetteer.Kind.Lpf, Some(slug))
     val sha = f.sha256().toString
     val version = sha.take(12)
     val side = sidecar(s.stores.lpf, f)
@@ -420,7 +412,7 @@ object GazetteerLoad:
         db.read(
           GazetteerRepo.recordSource(
             key,
-            GazetteerKind.Lpf,
+            Gazetteer.Kind.Lpf,
             meta.title.getOrElse(name),
             version,
             sha,
@@ -439,9 +431,9 @@ object GazetteerLoad:
   /** `GET /api/places/sources`: the pinned extracts, the LPF files in the drop folder, and what the store last imported
     * from each.
     */
-  def list(db: Transactor, s: Settings): List[GazetteerSourceInfo] =
+  def list(db: Transactor, s: Settings): List[Gazetteer.SourceInfo] =
     val stored = db.read(GazetteerRepo.sources()).map(r => r.key -> r).toMap
-    def withStored(i: GazetteerSourceInfo): GazetteerSourceInfo =
+    def withStored(i: Gazetteer.SourceInfo): Gazetteer.SourceInfo =
       stored
         .get(i.key)
         .fold(i)(r =>
@@ -458,11 +450,11 @@ object GazetteerLoad:
           )
         )
     val pinned = manifest(s.stores).toOption.toList.flatMap(_.extracts).flatMap { x =>
-      GazetteerKind.parse(x.name).filter(_ != GazetteerKind.Lpf).map { k =>
+      Gazetteer.Kind.parse(x.name).filter(_ != Gazetteer.Kind.Lpf).map { k =>
         val built = x.file.trim.nonEmpty && x.sha256.trim.nonEmpty // a pin not built yet names no file
         val at = Option.when(built)(locate(s.stores, x.file)).flatten
         def expected = StoreKey.of(x.file).toOption.fold(s.stores.extracts.where())(s.stores.extracts.where(_))
-        GazetteerSourceInfo(
+        Gazetteer.SourceInfo(
           Gazetteer.sourceKey(k),
           k,
           x.title,
@@ -475,11 +467,13 @@ object GazetteerLoad:
       }
     }
     val lpf = lpfFiles(s.stores.lpf).map { f =>
-      val key = Gazetteer.sourceKey(GazetteerKind.Lpf, Some(Gazetteer.datasetSlug(f.key.name)))
-      GazetteerSourceInfo(key, GazetteerKind.Lpf, f.key.name, Some(f.where), present = true, None)
+      val key = Gazetteer.sourceKey(Gazetteer.Kind.Lpf, Some(Gazetteer.datasetSlug(f.key.name)))
+      Gazetteer.SourceInfo(key, Gazetteer.Kind.Lpf, f.key.name, Some(f.where), present = true, None)
     }
     val onDisk = (pinned ++ lpf).map(_.key).toSet
     val gone = stored.values.filterNot(r => onDisk.contains(r.key)).toList.sortBy(_.key).flatMap { r =>
-      GazetteerKind.parse(r.kind).map(k => GazetteerSourceInfo(r.key, k, r.title, Some(r.file), present = false, None))
+      Gazetteer.Kind
+        .parse(r.kind)
+        .map(k => Gazetteer.SourceInfo(r.key, k, r.title, Some(r.file), present = false, None))
     }
     (pinned ++ lpf ++ gone).map(withStored)

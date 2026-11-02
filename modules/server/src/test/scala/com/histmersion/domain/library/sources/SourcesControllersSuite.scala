@@ -11,7 +11,9 @@ import com.histmersion.api.aliases.AliasKind
 import java.time.{Clock, Instant, ZoneOffset}
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.checks.{FormatField, FormatIssue, FormatRule, FormatSeverity}
-import com.histmersion.api.library.{NoteImport, RenameRequest, SourceAlias, SourceDeleteRequest, SourcePatch, SourcePut}
+import com.histmersion.api.library.NoteImport
+import com.histmersion.api.library.Rename
+import com.histmersion.api.library.Source
 
 /** A source's controllers over the in-memory services: a citekey that is not one, a strict write refused by the
   * formatting check, an old citekey followed, a section that is not one, passages of a source not there, a delete's dry
@@ -63,7 +65,7 @@ class SourcesControllersSuite extends munit.FunSuite:
     )
 
   private val put =
-    SourcePut(title = "Walls", body = Some("# Walls\n\n## Gate\n\nThe gate of Zqtell.\n"), notes = Some("ok"))
+    Source.Put(title = "Walls", body = Some("# Walls\n\n## Gate\n\nThe gate of Zqtell.\n"), notes = Some("ok"))
 
   test("a put under a citekey that is not one is refused; a strict put with a formatting error too"):
     val c = controllers()
@@ -78,25 +80,28 @@ class SourcesControllersSuite extends munit.FunSuite:
   test("an old citekey is followed by every read and write; a section that is not one, passages of no source"):
     val c = controllers()
     val _ = c.put("zqa1990_walls", put)
-    val _ = c.rename("zqa1990_walls", RenameRequest("zqa1991_walls"))
+    val _ = c.rename("zqa1990_walls", Rename.Request("zqa1991_walls"))
     assertEquals(c.get("zqa1990_walls", body = false).map(_.source.citekey), Right("zqa1991_walls"))
     assertEquals(c.canonical("zqa1990_walls"), "zqa1991_walls")
-    assertEquals(c.patch("zqa1990_walls", SourcePatch(summary = Some("s"))).map(_.source.summary), Right(Some("s")))
+    assertEquals(c.patch("zqa1990_walls", Source.Patch(summary = Some("s"))).map(_.source.summary), Right(Some("s")))
     assert(c.markdown("zqa1990_walls", fullText = false).toOption.get.endsWith("(mentioned: zqa1991_walls)"))
     assert(c.markdown("zqa1990_walls", false, Some("toc")).toOption.get.contains("Gate"))
     assert(c.markdown("zqa1990_walls", false, Some("nonsense")).left.exists(_.message.startsWith("unknown section")))
     assertEquals(c.passages(Api.PassagesQuery("zqa1990_walls", "gate")).map(_.matches), Right(1))
     assertEquals(c.passages(Api.PassagesQuery("zqnone2000_x", "gate")).left.map(_.code), Left(Some(Write.CodeNotFound)))
-    assertEquals(c.aliases, List(SourceAlias("zqa1990_walls", "zqa1991_walls")))
+    assertEquals(c.aliases, List(Source.Alias("zqa1990_walls", "zqa1991_walls")))
 
   test("formatting repaired as one guarded patch; a delete's dry run names the originals, its apply removes them"):
     val c = controllers()
     val _ = c.put("zqa1990_walls", put.copy(notes = Some("two  spaces")))
     assertEquals(c.fix("zqa1990_walls").map(_.fixed), Right(List("notes: double space")))
     assertEquals(c.get("zqa1990_walls").map(_.source.notes), Right(Some("two spaces")))
-    assertEquals(c.delete("zqa1990_walls", SourceDeleteRequest()).map(_.files), Right(List("/spool/zqa1990_walls.pdf")))
+    assertEquals(
+      c.delete("zqa1990_walls", Source.DeleteRequest()).map(_.files),
+      Right(List("/spool/zqa1990_walls.pdf"))
+    )
     assertEquals(c.get("zqa1990_walls").isRight, true)
-    val gone = c.delete("zqa1990_walls", SourceDeleteRequest(apply = true)).toOption.get
+    val gone = c.delete("zqa1990_walls", Source.DeleteRequest(apply = true)).toOption.get
     assertEquals((gone.applied, gone.filesFailed, removed.get), (true, Nil, List("/spool/zqa1990_walls.pdf")))
     assertEquals(c.get("zqa1990_walls").left.map(_.message), Left("No source 'zqa1990_walls'"))
 
@@ -108,9 +113,9 @@ class SourcesControllersSuite extends munit.FunSuite:
       Right(
         List(
           c.put("zqb2001_cove", put).isLeft,
-          c.patch("zqa1990_walls", SourcePatch(summary = Some("x"))).isLeft,
-          c.rename("zqa1990_walls", RenameRequest("zqa1991_walls")).isLeft,
-          c.delete("zqa1990_walls", SourceDeleteRequest(apply = true)).isLeft,
+          c.patch("zqa1990_walls", Source.Patch(summary = Some("x"))).isLeft,
+          c.rename("zqa1990_walls", Rename.Request("zqa1991_walls")).isLeft,
+          c.delete("zqa1990_walls", Source.DeleteRequest(apply = true)).isLeft,
           c.fix("zqa1990_walls").isLeft,
           c.importNote(NoteImport("---\ncitekey: zqn2000_n\ntitle: N\n---\n")).isLeft
         )

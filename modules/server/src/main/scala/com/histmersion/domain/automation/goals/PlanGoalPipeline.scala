@@ -9,7 +9,7 @@ import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalMode, Pipeline, Role}
-import com.histmersion.api.automation.GoalPlans.{LinkKind, Plan}
+import com.histmersion.api.automation.Goal.Plans.{LinkKind, Plan}
 import com.histmersion.domain.PlanGoal.*
 import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.automation.goals.GoalRepo
@@ -20,7 +20,7 @@ import io.circe.syntax.*
 
 import javax.sql.DataSource
 import com.histmersion.api.VocabularyCodecs.given
-import com.histmersion.api.automation.{AgentsMarkdown, GoalPut}
+import com.histmersion.api.automation.AgentsMarkdown
 import com.histmersion.domain.automation.Goal
 
 /** `plan-goal <goal>` (docs/research-embedded-agents.md §7 P3, §14): the planner proposes sub-goals, search queries and
@@ -168,7 +168,7 @@ final class PlanGoalPipeline(
       } else
         host.putGoal(
           g.slug,
-          GoalPut(
+          com.histmersion.api.automation.Goal.Put(
             g.title,
             Goal.Status.Planned,
             g.notes,

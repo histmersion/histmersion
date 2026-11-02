@@ -9,16 +9,7 @@ import com.histmersion.api.aliases.AliasKind
 
 import java.time.{Clock, Instant, ZoneOffset}
 import java.util.concurrent.atomic.AtomicReference
-import com.histmersion.api.catalogue.{
-  Geocode,
-  PlaceAdd,
-  PlaceMergeIn,
-  PlaceNameAdd,
-  PlaceNameRemove,
-  PlaceOverrideSet,
-  PlaceRebuildResult,
-  PlaceRemoveIn
-}
+import com.histmersion.api.catalogue.Geocode
 import com.histmersion.domain.catalogue.Place
 
 /** The gazetteer's controllers over the in-memory records, no server and no database: an LPF document imported (a bad
@@ -32,7 +23,7 @@ class PlacesControllersSuite extends munit.FunSuite:
 
   private val shapes: PlaceMap = (kind, time, limit, _) => s"$kind $time $limit"
   private val geometry: PlaceGeometry = new PlaceGeometry:
-    def rebuildFindingPlaces(toleranceKm: Double) = PlaceRebuildResult(0, 0, 0, 0, 0, 0)
+    def rebuildFindingPlaces(toleranceKm: Double) = com.histmersion.api.catalogue.Place.RebuildResult(0, 0, 0, 0, 0, 0)
     def buildHierarchy() = SpatialHierarchyResult(0, 0, 0)
     def replaceLand(geometries: List[String]) = geometries.size
     def reclip() = 0
@@ -75,10 +66,21 @@ class PlacesControllersSuite extends munit.FunSuite:
   test("names and overrides parsed at the boundary; the map's pick checked; the geocoder asked"):
     val (c, _) = controllers()
     val _ = c.importPlaces(Caller.Local, Some("site"), None, doc)
-    assert(c.addName(Caller.Local, "zzcl_hill", PlaceNameAdd("  ")).isLeft, "a blank name")
-    assertEquals(c.addName(Caller.Local, "zzcl_hill", PlaceNameAdd("Zzcl Höyük", Some("tr"))).map(_.added), Right(true))
+    assert(
+      c.addName(Caller.Local, "zzcl_hill", com.histmersion.api.catalogue.Place.NameAdd("  ")).isLeft,
+      "a blank name"
+    )
+    assertEquals(
+      c.addName(Caller.Local, "zzcl_hill", com.histmersion.api.catalogue.Place.NameAdd("Zzcl Höyük", Some("tr")))
+        .map(_.added),
+      Right(true)
+    )
     assertEquals(c.manualNames(Some(" zzcl_hill ")).map(_.name), List("Zzcl Höyük"))
-    val set = c.setOverride(Caller.Local, "zzcl_hill", PlaceOverrideSet(kind = Some("region"), reason = Some("dug")))
+    val set = c.setOverride(
+      Caller.Local,
+      "zzcl_hill",
+      com.histmersion.api.catalogue.Place.OverrideSet(kind = Some("region"), reason = Some("dug"))
+    )
     assertEquals(set.map(_.kindAfter), Right("region"))
     assertEquals(c.overrides(None).map(_.placeId), List("zzcl_hill"))
     assert(c.shapes(Api.PlacesGeoQuery(pick = Some("nonsense"))).left.exists(_.message.contains("unknown pick")))
@@ -93,12 +95,13 @@ class PlacesControllersSuite extends munit.FunSuite:
       Right(
         List(
           c.importPlaces(Caller.Local, None, None, doc).isLeft,
-          c.addName(Caller.Local, "zzcl_hill", PlaceNameAdd("x")).isLeft,
-          c.removeName(Caller.Local, "zzcl_hill", PlaceNameRemove("x")).isLeft,
-          c.setOverride(Caller.Local, "zzcl_hill", PlaceOverrideSet(reset = true)).isLeft,
-          c.merge(Caller.Local, "zzcl_hill", PlaceMergeIn("zzcl_land")).isLeft,
-          c.remove(Caller.Local, "zzcl_hill", PlaceRemoveIn()).isLeft,
-          c.add(Caller.Local, PlaceAdd("Zzcl", Place.Kind.Site, 0, 0, "fixture")).isLeft,
+          c.addName(Caller.Local, "zzcl_hill", com.histmersion.api.catalogue.Place.NameAdd("x")).isLeft,
+          c.removeName(Caller.Local, "zzcl_hill", com.histmersion.api.catalogue.Place.NameRemove("x")).isLeft,
+          c.setOverride(Caller.Local, "zzcl_hill", com.histmersion.api.catalogue.Place.OverrideSet(reset = true))
+            .isLeft,
+          c.merge(Caller.Local, "zzcl_hill", com.histmersion.api.catalogue.Place.MergeIn("zzcl_land")).isLeft,
+          c.remove(Caller.Local, "zzcl_hill", com.histmersion.api.catalogue.Place.RemoveIn()).isLeft,
+          c.add(Caller.Local, com.histmersion.api.catalogue.Place.Add("Zzcl", Place.Kind.Site, 0, 0, "fixture")).isLeft,
           c.rename(Caller.Local, "zzcl_hill", _ => Right("x")).isLeft,
           c.rebuild(Caller.Local).isLeft
         )

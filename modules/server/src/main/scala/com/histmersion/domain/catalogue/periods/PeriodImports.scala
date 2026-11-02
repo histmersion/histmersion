@@ -1,7 +1,8 @@
 package com.histmersion.domain.catalogue.periods
 
 import com.histmersion.api.{Dataset, PeriodODataset}
-import com.histmersion.api.catalogue.{PeriodImportResult, PeriodO}
+import com.histmersion.api.catalogue.PeriodO
+import com.histmersion.api.catalogue.Period
 
 /** How periods come in: the bundled seed (its rows upserted, its presets made the only presets, its version recorded),
   * a PeriodO dataset a client sends, and the live PeriodO dump's configured collections. `seed` reads the bundled
@@ -18,7 +19,7 @@ final class PeriodImports(
   private def bundled: Either[String, PeriodODataset] = seed().flatMap(PeriodO.parse)
 
   /** Apply the bundled seed — with `replace`, the seed rows it no longer has are deleted as well. */
-  def applySeed(replace: Boolean): Either[String, PeriodImportResult] =
+  def applySeed(replace: Boolean): Either[String, Period.ImportResult] =
     bundled.map { d =>
       val r = write(d, Dataset.Seed)
       val ids = d.authorities.flatMap(_.periods.map(_.id))
@@ -35,7 +36,7 @@ final class PeriodImports(
       .exists(v => periods.seedVersion(PeriodImports.SeedName).forall(_ < v))
 
   /** The live PeriodO dump, the named collections only (the configured ones when none is named). */
-  def fetch(collections: List[String]): Either[String, PeriodImportResult] =
+  def fetch(collections: List[String]): Either[String, Period.ImportResult] =
     val s = sources()
     val wanted = collections.map(_.trim).filter(_.nonEmpty) match
       case Nil => s.collections
@@ -52,12 +53,12 @@ final class PeriodImports(
   /** Upsert a dataset. A raw PeriodO dump (no curated overlay) is grouped under one node per authority, and every
     * period already in the store keeps its place; a curated seed places its own rows ([[PeriodO.toPeriods]]).
     */
-  def write(d: PeriodODataset, dataset: Dataset): PeriodImportResult =
+  def write(d: PeriodODataset, dataset: Dataset): Period.ImportResult =
     val roots = !d.curated
     val ids = d.authorities.flatMap(a => a.id :: a.periods.map(_.id))
     val rows = PeriodO.toPeriods(d, periods.placement(ids), roots)
     val n = periods.write(rows, dataset)
-    PeriodImportResult(
+    Period.ImportResult(
       n,
       if roots then d.authorities.count(_.periods.nonEmpty) else 0,
       periods.presetCount(),

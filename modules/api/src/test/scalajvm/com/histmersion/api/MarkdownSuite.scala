@@ -5,23 +5,15 @@ import com.histmersion.api.library.SourcesMarkdown
 import com.histmersion.api.research.BacklinksMarkdown
 
 import com.histmersion.domain.library.Confidence
-import com.histmersion.api.library.{
-  FindingRow,
-  Hit,
-  NeighborRow,
-  NeighborTarget,
-  SearchHit,
-  SearchResult,
-  SourceDetail,
-  TimeBucket
-}
+import com.histmersion.api.library.{Hit, NeighborRow, NeighborTarget, SearchHit, SearchResult, TimeBucket}
 import com.histmersion.api.research.{ArticleMarkdown, Backlink}
 import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Finding
 
 /** [[SourcesMarkdown.source]] — what MCP `get_source` returns and what the HTML article page renders. Pure. */
 class MarkdownSuite extends munit.FunSuite:
 
-  private val detail = SourceDetail(
+  private val detail = com.histmersion.api.library.Source.Detail(
     citekey = "cline2014_collapse",
     title = "1177 BC",
     authors = List("Eric H. Cline"),
@@ -38,7 +30,7 @@ class MarkdownSuite extends munit.FunSuite:
     ocrMarkdown = Some("BODY TEXT")
   )
 
-  private val finding = FindingRow(
+  private val finding = Finding.Row(
     "Ugarit destroyed",
     Some("Ugarit"),
     Some(35.78),
@@ -160,7 +152,7 @@ class MarkdownSuite extends munit.FunSuite:
 /** The source page's two-way hops (UX item 4) and the article's de-duplicated footer (item 23). */
 class MarkdownHopsSuite extends munit.FunSuite:
 
-  private val src = SourceDetail(
+  private val src = com.histmersion.api.library.Source.Detail(
     citekey = "x2020_y",
     title = "T",
     authors = List("A"),

@@ -17,7 +17,7 @@ object AttestationsMarkdown:
     val n = a.note.map(n => s" — $n").getOrElse("")
     s"- `#${a.id}` [[${a.citekey}]] → ${a.targetType}:`${a.targetId}`$locStr$q$n"
 
-  def attestationList(result: AttestationList): String =
+  def attestationList(result: Attestation.List): String =
     OffsetPage.markdown(result.page, "attestation(s)", "_No matching attestations._", result.attestations)(
       attestationLine
     )

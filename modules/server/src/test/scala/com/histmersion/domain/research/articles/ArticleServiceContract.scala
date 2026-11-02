@@ -4,7 +4,7 @@ import com.histmersion.api.Write
 import com.histmersion.domain.Caller
 import com.histmersion.domain.research.{ResearchStores, ResearchStoreSuite}
 import com.histmersion.api.catalogue.Period
-import com.histmersion.api.research.{Article, ArticleFilter, ArticlePatch, Backlink, CritiqueReason}
+import com.histmersion.api.research.{Article, Backlink, CritiqueReason}
 
 /** What research's articles answer, the same on the database and in memory: an article written whole and merged from
   * patches with its token and versions, its link graph, a critique reason refused when no source is stored, renamed
@@ -26,7 +26,7 @@ abstract class ArticleServiceContract extends ResearchStoreSuite:
       List("Zrland"),
       Some(Period(-1600, -1400)),
       None,
-      Some(ArticleFilter(tags = List("zr-oracle"))),
+      Some(Article.Filter(tags = List("zr-oracle"))),
       Map("zrdelta2010_survey" -> "Region-wide.")
     )
 
@@ -40,7 +40,7 @@ abstract class ArticleServiceContract extends ResearchStoreSuite:
     val _ = s.articles.put(article(Index, "Index", s"- [[$Walls]]\n- [[$Harbour]]\n- [[$Index]]\n"), Me)
     val loaded = s.articles.load(Walls).get
     assertEquals(loaded.updatedAt, Some(token))
-    assertEquals(loaded.filter, Some(ArticleFilter(tags = List("zr-oracle"))))
+    assertEquals(loaded.filter, Some(Article.Filter(tags = List("zr-oracle"))))
     assertEquals(loaded.reasons, Map("zrdelta2010_survey" -> "Region-wide."))
     assertEquals(loaded.period, Some(Period(-1600, -1400)))
     val view = s.articles.view(Walls).get
@@ -65,23 +65,23 @@ abstract class ArticleServiceContract extends ResearchStoreSuite:
   stest("a patch merges what it names and records the version it replaces; a stale token, a bad kind and no article") {
     s =>
       val first = s.articles.put(article(Walls, "Walls", "## Overview\n\nThe walls.\n"), Me)
-      val second = s.articles.patch(Walls, ArticlePatch(append = Some("A gate."), section = Some("Overview")), Me)
+      val second = s.articles.patch(Walls, Article.Patch(append = Some("A gate."), section = Some("Overview")), Me)
       assert(second.isRight, second)
       assertNotEquals(second.toOption, Some(first))
       assertEquals(s.articles.load(Walls).map(_.body), Some("## Overview\n\nThe walls.\n\nA gate."))
-      val third = s.articles.patch(Walls, ArticlePatch(title = Some("City walls"), ifUpdatedAt = second.toOption), Me)
+      val third = s.articles.patch(Walls, Article.Patch(title = Some("City walls"), ifUpdatedAt = second.toOption), Me)
       assert(third.isRight, third)
       assertEquals(s.articles.load(Walls).map(_.title), Some("City walls"))
       assertEquals(
-        s.articles.patch(Walls, ArticlePatch(title = Some("x"), ifUpdatedAt = Some(first)), Me).left.map(_.code),
+        s.articles.patch(Walls, Article.Patch(title = Some("x"), ifUpdatedAt = Some(first)), Me).left.map(_.code),
         Left(Some(Write.CodePrecondition))
       )
       assertEquals(
-        s.articles.patch(Walls, ArticlePatch(kind = Some("Not A Kind!")), Me).left.map(_.code),
+        s.articles.patch(Walls, Article.Patch(kind = Some("Not A Kind!")), Me).left.map(_.code),
         Left(Some(Write.CodeInvalid))
       )
       assertEquals(
-        s.articles.patch("zr_nothing", ArticlePatch(title = Some("x")), Me).left.map(_.code),
+        s.articles.patch("zr_nothing", Article.Patch(title = Some("x")), Me).left.map(_.code),
         Left(Some(Write.CodeNotFound))
       )
       val versions = s.articles.versions(Walls)
@@ -100,13 +100,13 @@ abstract class ArticleServiceContract extends ResearchStoreSuite:
     val token = s.articles.put(article(Walls, "Walls", "## Overview\n\nThe walls.\n"), Me)
     val refused = s.articles.patch(
       Walls,
-      ArticlePatch(title = Some("x"), critiqueReasons = List(CritiqueReason("zra", "zrb", "Not about the walls."))),
+      Article.Patch(title = Some("x"), critiqueReasons = List(CritiqueReason("zra", "zrb", "Not about the walls."))),
       Me
     )
     assertEquals(refused.left.map(_.message), Left("critique reason zra>zrb: 'zra' is not a citekey"))
     val long = s.articles.patch(
       Walls,
-      ArticlePatch(critiqueReasons = List(CritiqueReason("zra", "zrb", "w" * 501))),
+      Article.Patch(critiqueReasons = List(CritiqueReason("zra", "zrb", "w" * 501))),
       Me
     )
     assertEquals(long.left.map(_.code), Left(Some(Write.CodeInvalid)))
@@ -118,7 +118,7 @@ abstract class ArticleServiceContract extends ResearchStoreSuite:
 
   stest("a rename keeps the old slug, moves the versions and rewrites the links of the others") { s =>
     val _ = s.articles.put(article(Walls, "Walls", "## Overview\n\nThe walls.\n"), Me)
-    val _ = s.articles.patch(Walls, ArticlePatch(append = Some("A gate.")), Me)
+    val _ = s.articles.patch(Walls, Article.Patch(append = Some("A gate.")), Me)
     val _ = s.articles.put(article(Harbour, "Harbour", s"## Story\n\nSee [[$Walls]] and [[$Walls|the walls]].\n"), Me)
     val _ = s.articles.put(article(Index, "Index", "- nothing about it\n"), Me)
     assertEquals(s.articles.rename(Walls, "zr_city_walls", Me), Right(List(Harbour)))
@@ -141,7 +141,7 @@ abstract class ArticleServiceContract extends ResearchStoreSuite:
 
   stest("a delete takes the article's versions and old slugs with it") { s =>
     val _ = s.articles.put(article(Walls, "Walls", "## Overview\n\nThe walls.\n"), Me)
-    val _ = s.articles.patch(Walls, ArticlePatch(title = Some("City walls")), Me)
+    val _ = s.articles.patch(Walls, Article.Patch(title = Some("City walls")), Me)
     val _ = s.articles.rename(Walls, "zr_city_walls", Me)
     assert(s.articles.delete("zr_city_walls", Me))
     assert(!s.articles.delete("zr_city_walls", Me))

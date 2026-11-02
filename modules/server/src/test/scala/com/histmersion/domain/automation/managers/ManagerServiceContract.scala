@@ -1,6 +1,5 @@
 package com.histmersion.domain.automation.managers
 
-import com.histmersion.api.automation.GoalPut
 import com.histmersion.api.automation.Agents.JobKind
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
@@ -14,7 +13,9 @@ import com.histmersion.domain.automation.Goal
 abstract class ManagerServiceContract extends EngineStoreSuite:
   private def m(s: EngineStores) = s.managers
   private val t = Instant.parse("2026-11-03T06:00:00Z")
-  private def goal(s: EngineStores, slug: String) = assert(s.goals.put(slug, GoalPut(slug)).isRight)
+  private def goal(s: EngineStores, slug: String) = assert(
+    s.goals.put(slug, com.histmersion.api.automation.Goal.Put(slug)).isRight
+  )
 
   stest("a manager is made once; its state, settings and cron; light, with whether it has a plan-goal item") { s =>
     goal(s, "zz-g")

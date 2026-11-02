@@ -1,6 +1,6 @@
 package com.histmersion.domain.personal.bookmarks
 
-import com.histmersion.api.personal.{BookmarkId, BookmarkLabel, MapZoom, ViewState}
+import com.histmersion.api.personal.{MapZoom, ViewState}
 import com.histmersion.domain.personal.PersonalState.StoredBookmark
 import com.histmersion.domain.personal.{MarkTarget, MarkTime, TargetLabel}
 import com.histmersion.domain.{ItemKey, ItemUid}
@@ -11,7 +11,7 @@ import com.augustnagro.magnum.DbCodec
 
 /** A live bookmark as the table answers it. */
 final private[bookmarks] case class BookmarkRow(
-    id: BookmarkId,
+    id: com.histmersion.api.personal.Bookmark.Id,
     kind: String,
     key: Option[ItemKey],
     uid: Option[ItemUid],
@@ -21,7 +21,7 @@ final private[bookmarks] case class BookmarkRow(
     from: Option[Year],
     to: Option[Year],
     view: Option[ViewState],
-    label: Option[BookmarkLabel],
+    label: Option[com.histmersion.api.personal.Bookmark.Label],
     targetLabel: Option[TargetLabel],
     createdAt: String,
     updatedAt: String

@@ -1,10 +1,10 @@
 package com.histmersion.web.library
 
 import com.histmersion.api.{Wording, YearFmt}
-import com.histmersion.api.research.{ArticleSummary, ArticleView}
-import com.histmersion.api.library.{Label, SearchHit, SourceKinds, SourceWithFindings}
+import com.histmersion.api.library.{Label, SearchHit}
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.domain.library.Source
+import com.histmersion.api.research.Article
 
 /** The top of the reading pane, as it reads: what the item is (a source's type, venue and year; an article's kind), its
   * title, its authors, its status, its period, its regions and its summary. A row of the table already holds most of
@@ -28,7 +28,7 @@ object ReadingHead:
 
   /** A source's type as a word (`Book`), none when it is not known. */
   def kindWord(kind: String): Option[String] =
-    Option.when(kind != SourceKinds.Unknown)(Wording.capitalize(kind))
+    Option.when(kind != com.histmersion.api.library.Source.Kinds.Unknown)(Wording.capitalize(kind))
 
   /** From a row of the table: no type or venue yet. */
   def of(h: SearchHit): ReadingHead =
@@ -42,9 +42,9 @@ object ReadingHead:
       text(h.summary)
     )
 
-  def of(sw: SourceWithFindings): ReadingHead =
+  def of(sw: com.histmersion.api.library.Source.WithFindings): ReadingHead =
     val s = sw.source
-    val kind = SourceKinds.of(
+    val kind = com.histmersion.api.library.Source.Kinds.of(
       s.doi,
       s.venue,
       s.provenance,
@@ -62,7 +62,7 @@ object ReadingHead:
       text(s.summary)
     )
 
-  def of(a: ArticleSummary): ReadingHead =
+  def of(a: Article.Summary): ReadingHead =
     ReadingHead(
       line(Some("Article"), Some(Wording.capitalize(Label.display(a.kind)))),
       a.title,
@@ -73,7 +73,7 @@ object ReadingHead:
       text(a.summary)
     )
 
-  def of(v: ArticleView): ReadingHead =
+  def of(v: Article.View): ReadingHead =
     val a = v.article
     ReadingHead(
       line(Some("Article"), Some(Wording.capitalize(Label.display(a.kind)))),

@@ -19,9 +19,9 @@ import io.circe.syntax.*
 
 import java.nio.file.Path
 import com.histmersion.db.*
-import com.histmersion.api.library.{FindingInput, SourcePut}
 import com.histmersion.api.ocr.ConvertedDoc
 import com.histmersion.domain.library.Source
+import com.histmersion.api.library.Finding
 
 /** The agent tools under `agents.tools` against a real Postgres (#token-diet, 2026-10-16): a record keeps its findings
   * and loses the notes' tail, a body read without `chars` is a short slice that says where to read on, `passages` still
@@ -63,7 +63,7 @@ class AgentToolCapSuite extends com.histmersion.db.DbSuite:
 
   override def beforeEach(context: BeforeEach): Unit =
     clean()
-    val put = SourcePut(
+    val put = com.histmersion.api.library.Source.Put(
       "How to Kill a Dragon",
       authors = List("Calvert Watkins"),
       year = Some(1995),
@@ -73,8 +73,8 @@ class AgentToolCapSuite extends com.histmersion.db.DbSuite:
       body = Some(Body),
       notes = Some(Notes),
       findings = List(
-        FindingInput("The formula *gʷhen- dhgʷhim recurs across the traditions."),
-        FindingInput("The formula is Proto-Indo-European.")
+        Finding.Input("The formula *gʷhen- dhgʷhim recurs across the traditions."),
+        Finding.Input("The formula is Proto-Indo-European.")
       )
     )
     assert(h.library.sources.put(Ck, put).isRight)

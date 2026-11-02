@@ -1,12 +1,13 @@
 package com.histmersion.api.media
-import com.histmersion.api.jobs.{JobDetailField, JobKindEntry}
+import com.histmersion.api.jobs.JobKindEntry
 import com.histmersion.util.jobs.Job
+import com.histmersion.api.jobs.JobDetail
 
 /** The media's imports, as it registers them: pictures asked of a provider. */
 object ImportJobKinds:
 
   /** What a media job does, as a person reads it, in the job's detail. */
-  val Media: JobDetailField[Option[String]] = JobDetailField("media", None)
+  val Media: JobDetail.Field[Option[String]] = JobDetail.Field("media", None)
 
   val MediaImport: JobKindEntry = JobKindEntry.of(
     Job.Kind("media-import"),

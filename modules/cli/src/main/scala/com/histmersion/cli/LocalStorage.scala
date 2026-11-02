@@ -5,7 +5,7 @@ import com.histmersion.config.*
 import java.nio.file.Path
 import com.histmersion.util.plugins.PluginKit
 import com.histmersion.api.instance.About
-import com.histmersion.api.maintenance.{Storage, StorageEntry}
+import com.histmersion.api.maintenance.Storage
 
 /** The Storage part of `histmersion about` that only the CLI can see: the locations on the machine the CLI runs on that
   * the server knows nothing of — the host directory of Calibre originals (`cli.calibre.originals-dir`) and the install
@@ -45,7 +45,7 @@ object LocalStorage:
       val locs = locations(cfg, env, osName, exe).map((k, l, p) => (k, l, p.toAbsolutePath.normalize))
       val entries = locs.map { (key, label, p) =>
         val r = DirSize.measure(p, budget)
-        StorageEntry(
+        Storage.Entry(
           key,
           label,
           if key == "install" then "install" else "corpus",

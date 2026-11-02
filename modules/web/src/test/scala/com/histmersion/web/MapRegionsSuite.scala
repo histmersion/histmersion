@@ -1,18 +1,18 @@
 package com.histmersion.web
 
 import com.histmersion.web.MapRegions.*
-import com.histmersion.api.basemap.{BasemapFetchQuery, BasemapRegion, BasemapStatus}
+import com.histmersion.api.basemap.Basemap
 
 /** The About window's map regions, as data: what may be picked, the fetch a choice asks for, the sizes. */
 class MapRegionsSuite extends munit.FunSuite:
 
-  private val status = BasemapStatus(
+  private val status = Basemap.Status(
     available = true,
     dir = "/d",
     bbox = "-12,20,90,62",
     layers = Nil,
     fetchCommand = "",
-    regions = List(BasemapRegion("argolid", "22.5,37.4,23.2,37.9"))
+    regions = List(Basemap.Region("argolid", "22.5,37.4,23.2,37.9"))
   )
 
   test("the regions: the configured one, the named ones, the world, a box of one's own"):
@@ -37,16 +37,21 @@ class MapRegionsSuite extends munit.FunSuite:
   test("the fetch: the map for a box replaces the region; the relief of a named region or of a box of one's own"):
     assertEquals(
       request(" 20,30,40,50 ", Content.Map, None, "", dryRun = true),
-      Right(BasemapFetchQuery(bbox = Some("20,30,40,50"), dryRun = true))
+      Right(Basemap.FetchQuery(bbox = Some("20,30,40,50"), dryRun = true))
     )
     assertEquals(
       request("world", Content.Map, None, "6", dryRun = false),
-      Right(BasemapFetchQuery(bbox = Some("world"), maxZoom = Some(6)))
+      Right(Basemap.FetchQuery(bbox = Some("world"), maxZoom = Some(6)))
     )
     assertEquals(
       request("22.5,37.4,23.2,37.9", Content.Relief, Some("argolid"), "", dryRun = true),
       Right(
-        BasemapFetchQuery(layer = "terrain", bbox = Some("22.5,37.4,23.2,37.9"), dryRun = true, focus = Some("argolid"))
+        Basemap.FetchQuery(
+          layer = "terrain",
+          bbox = Some("22.5,37.4,23.2,37.9"),
+          dryRun = true,
+          focus = Some("argolid")
+        )
       )
     )
     assertEquals(
