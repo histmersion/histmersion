@@ -3,7 +3,7 @@ package com.histmersion.util.data.exchange
 import scala.annotation.tailrec
 import com.histmersion.api.BundleKindCounts
 import com.histmersion.api.given
-import com.histmersion.files.BundleEntities
+import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.values.BundleKind
 
 /** What an import does with each line of a bundle — milestone M2, WITHOUT matching (docs/research-merge-import.md

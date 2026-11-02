@@ -2,7 +2,7 @@ package com.histmersion.domain.catalogue.places
 
 import com.histmersion.api.{Dataset, GazetteerKind, GazetteerLoadCounts, GazetteerSourceInfo, Lpf, PlaceImportResult}
 import com.histmersion.config.AppConfig
-import com.histmersion.files.PlaceSeed
+import com.histmersion.domain.catalogue.places.PlaceSeed
 import com.histmersion.plugin.{GazetteerSource, PluginHttp}
 import com.histmersion.util.database.Transactor
 import com.histmersion.util.storage.{Store, StoreKey}

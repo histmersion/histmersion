@@ -13,7 +13,7 @@ import com.histmersion.api.{
   SourceMatch
 }
 import com.histmersion.domain.{MergeFold, MergePlanner, MergeSettings}
-import com.histmersion.files.BundleEntities
+import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.{
   BundleFormat,
   PairQuestions,

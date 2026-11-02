@@ -2,7 +2,7 @@ package com.histmersion.util.data.exchange
 
 import com.histmersion.api.{BundleSource, IssueCondition, IssueDetail, MergeDecision, MergeIssue, MergePlan}
 import com.histmersion.domain.{MergePlanner, MergeSettings}
-import com.histmersion.files.BundleEntities
+import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.text.MinHash
 import com.histmersion.values.{BundleKind, DecisionKind, EditionsPolicy, IssueKind}
 

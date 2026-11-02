@@ -3,11 +3,12 @@ package com.histmersion.files
 import com.histmersion.api.*
 import com.histmersion.api.given
 import com.histmersion.values.{Confidence, SourceStatus}
+import com.histmersion.domain.library.sources.SourceNote
 
-/** `Export.note` must be the inverse of `Frontmatter.parseNote` — that round trip is what lets the Markdown wiki stay a
-  * faithful mirror of the database (plan §1.9a `export` / `seed --force`).
+/** `SourceNote.note` must be the inverse of `SourceNote.parseNote` — that round trip is what lets the Markdown wiki
+  * stay a faithful mirror of the database (plan §1.9a `export` / `seed --force`).
   */
-class ExportSuite extends munit.FunSuite:
+class SourceNoteSuite extends munit.FunSuite:
 
   private val ck = "haak2015_massive"
 
@@ -49,7 +50,7 @@ class ExportSuite extends munit.FunSuite:
   )
 
   test("export then parse round-trips every frontmatter field"):
-    val back = Frontmatter.parseNote(Export.note(source), "wrong_fallback").get
+    val back = SourceNote.parseNote(SourceNote.note(source), "wrong_fallback").get
     assertEquals(back.citekey, source.citekey)
     assertEquals(back.title, source.title)
     assertEquals(back.authors, source.authors)
@@ -68,21 +69,21 @@ class ExportSuite extends munit.FunSuite:
     assertEquals(back.calibreId, source.calibreId)
 
   test("export then parse round-trips findings, including the empty one"):
-    val back = Frontmatter.parseNote(Export.note(source), ck).get
+    val back = SourceNote.parseNote(SourceNote.note(source), ck).get
     assertEquals(back.findings, source.findings)
 
   test("the notes article is the BODY, and comes back as notes"):
-    val text = Export.note(source)
+    val text = SourceNote.note(source)
     assert(text.contains("\n---\n"), text.take(200))
     assert(text.endsWith("- one\n"), text.takeRight(80))
-    assertEquals(Frontmatter.parseNote(text, ck).get.notes, source.notes)
+    assertEquals(SourceNote.parseNote(text, ck).get.notes, source.notes)
 
   test("ocrMarkdown is NOT exported — the paper body lives in md/<citekey>/paper.md"):
-    assert(!Export.note(source).contains("MEGABYTES"))
+    assert(!SourceNote.note(source).contains("MEGABYTES"))
 
   test("export is stable: exporting a parsed export gives the identical text"):
-    val once = Export.note(source)
-    val twice = Export.note(Frontmatter.parseNote(once, ck).get)
+    val once = SourceNote.note(source)
+    val twice = SourceNote.note(SourceNote.parseNote(once, ck).get)
     assertEquals(twice, once)
 
   test("a source with no findings, notes or optional metadata still round-trips"):
@@ -104,7 +105,7 @@ class ExportSuite extends munit.FunSuite:
       provenance = None,
       calibreId = None
     )
-    val back = Frontmatter.parseNote(Export.note(bare), "fallback").get
+    val back = SourceNote.parseNote(SourceNote.note(bare), "fallback").get
     assertEquals(back.citekey, "bare_one")
     assertEquals(back.findings, Nil)
     assertEquals(back.notes, None)
@@ -112,9 +113,9 @@ class ExportSuite extends munit.FunSuite:
 
   test("superseded_by is exported from the edge and parsed back into it"):
     val s = source.copy(edges = List(Edge(ck, "reich2018_who", "superseded_by")))
-    val back = Frontmatter.parseNote(Export.note(s), ck).get
+    val back = SourceNote.parseNote(SourceNote.note(s), ck).get
     assert(back.edges.contains(Edge(ck, "reich2018_who", "superseded_by")), back.edges.toString)
 
   test("wikilinks in the notes body are re-derived as reference edges"):
-    val back = Frontmatter.parseNote(Export.note(source), ck).get
+    val back = SourceNote.parseNote(SourceNote.note(source), ck).get
     assert(back.edges.contains(Edge(ck, "anthony2007_horse", "references")), back.edges.toString)

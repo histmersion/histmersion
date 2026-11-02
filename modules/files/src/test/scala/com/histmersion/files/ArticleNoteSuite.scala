@@ -3,6 +3,7 @@ package com.histmersion.files
 import com.histmersion.api.*
 import com.histmersion.api.given
 import com.histmersion.values.SourceStatus
+import com.histmersion.domain.research.articles.ArticleNote
 
 /** `wiki/<kind>/<slug>.md` ⇄ [[Article]] (plan §5.2 stream 2.7). The shapes asserted here are the ones the existing
   * research wiki actually writes — that is what "the 40+ existing articles import" means in the acceptance line.

@@ -30,7 +30,8 @@ class CarriedKindsSuite extends munit.FunSuite:
       ): CarriedOut = CarriedOut(Array.emptyByteArray, None)
       def into(scope: BundleScope, files: com.histmersion.util.storage.ContentStore)(using
           com.augustnagro.magnum.DbCon
-      ): com.histmersion.files.BundleEntities => com.histmersion.files.BundleEntities = identity
+      ): com.histmersion.util.data.exchange.BundleEntities => com.histmersion.util.data.exchange.BundleEntities =
+        identity
     val withoutTombstones = TestExchange.carried.filterNot(_.entry.value == BundleFiles.Tombstones)
     assertEquals(
       CarriedKinds.of(sources :: odd :: withoutTombstones).left.toOption,

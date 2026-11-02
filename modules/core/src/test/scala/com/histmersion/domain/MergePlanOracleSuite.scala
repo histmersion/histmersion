@@ -7,7 +7,6 @@ import com.histmersion.domain.media.assets.AssetPlan
 
 import com.histmersion.util.data.exchange.{BundleFormat, PlanRules}
 import com.histmersion.api.*
-import com.histmersion.files.*
 import com.histmersion.api.given
 
 import MergeFixture.*
@@ -17,6 +16,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path, Paths}
 import java.util.UUID
 import com.histmersion.values.{Confidence, EditionsPolicy, IssueKind}
+import com.histmersion.util.data.exchange.BundleEntities
 
 /** The merge plan's source and finding stages, recorded (`oracle/merge/plans.txt`, written on the code before the
   * library's rules of the plan left the planner): the crafted fixture under no resolutions, under a set that answers

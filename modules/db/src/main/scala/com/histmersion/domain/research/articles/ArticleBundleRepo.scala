@@ -3,7 +3,7 @@ package com.histmersion.domain.research.articles
 import com.histmersion.api.*
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.database.{Param, Sql}
-import com.histmersion.files.BundleEntities.BlobUse
+import com.histmersion.util.data.exchange.BundleEntities.BlobUse
 import com.histmersion.util.data.exchange.{BlobSink, BundleScope}
 import com.histmersion.util.data.exchange.BundleSql.*
 

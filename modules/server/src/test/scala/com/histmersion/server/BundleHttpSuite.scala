@@ -2,7 +2,6 @@ package com.histmersion.server
 
 import ox.supervised
 import com.histmersion.api.*
-import com.histmersion.files.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.{Db, Migrate}

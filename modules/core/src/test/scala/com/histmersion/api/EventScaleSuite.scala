@@ -3,7 +3,6 @@ package com.histmersion.api
 import com.histmersion.api.catalogue.events.EventsMarkdown
 
 import com.histmersion.config.*
-import com.histmersion.files.*
 import com.histmersion.domain.*
 import com.histmersion.config.given
 import com.histmersion.domain.given

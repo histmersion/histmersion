@@ -1,12 +1,12 @@
 package com.histmersion.api
 
 import com.histmersion.config.*
-import com.histmersion.files.*
 import com.histmersion.domain.*
 import com.histmersion.config.given
 import com.histmersion.domain.given
 
 import io.circe.syntax.*
+import com.histmersion.util.plugins.PluginKit
 
 class PluginsReportSuite extends munit.FunSuite:
 

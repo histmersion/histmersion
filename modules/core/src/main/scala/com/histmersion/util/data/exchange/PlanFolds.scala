@@ -2,7 +2,7 @@ package com.histmersion.util.data.exchange
 
 import com.histmersion.api.{MergeDecision, MergeTally}
 import com.histmersion.domain.MergePlanner
-import com.histmersion.files.BundleEntities
+import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.values.BundleKind
 
 import java.util.UUID

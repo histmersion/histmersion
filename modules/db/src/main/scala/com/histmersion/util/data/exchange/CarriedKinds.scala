@@ -2,8 +2,8 @@ package com.histmersion.util.data.exchange
 
 import com.histmersion.api.BundleFiles
 import com.histmersion.util.data.exchange.BundleImport
-import com.histmersion.files.BundleEntities
-import com.histmersion.files.BundleEntities.BlobUse
+import com.histmersion.util.data.exchange.BundleEntities
+import com.histmersion.util.data.exchange.BundleEntities.BlobUse
 import com.histmersion.util.data.TableName
 import com.histmersion.util.storage.ContentStore
 import com.histmersion.values.BundleKind

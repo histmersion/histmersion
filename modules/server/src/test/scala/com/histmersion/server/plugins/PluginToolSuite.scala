@@ -3,8 +3,7 @@ package com.histmersion.server.plugins
 import com.histmersion.util.plugins.PluginSetResource
 
 import com.histmersion.api.{PluginJar, PluginSet}
-import com.histmersion.files.*
-import com.histmersion.files.PluginKit
+import com.histmersion.util.plugins.PluginKit
 import com.histmersion.plugin.Spi
 
 import java.net.URLClassLoader

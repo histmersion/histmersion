@@ -9,7 +9,7 @@ import com.histmersion.api.{
   MergeIssue,
   MergePlan
 }
-import com.histmersion.files.BundleEntities
+import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.values.{BundleKind, DecisionKind, IssueKind, IssueSeverity}
 
 import java.util.UUID

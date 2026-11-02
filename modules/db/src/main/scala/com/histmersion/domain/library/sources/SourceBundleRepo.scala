@@ -3,7 +3,7 @@ package com.histmersion.domain.library.sources
 import com.histmersion.api.*
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.database.{Jsonb, Sql}
-import com.histmersion.files.BundleEntities.BlobUse
+import com.histmersion.util.data.exchange.BundleEntities.BlobUse
 import com.histmersion.util.data.exchange.{BlobSink, BundleFormat, BundleScope, ImportAbort}
 import com.histmersion.util.data.exchange.BundleSql.*
 import com.histmersion.util.storage.ContentStore

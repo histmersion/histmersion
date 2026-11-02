@@ -14,8 +14,8 @@ import com.histmersion.api.given
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.database.Jsonb
 import com.histmersion.domain.{MergePlanner, MergeSettings}
-import com.histmersion.files.BundleEntities
-import com.histmersion.files.BundleEntities.BlobUse
+import com.histmersion.util.data.exchange.BundleEntities
+import com.histmersion.util.data.exchange.BundleEntities.BlobUse
 import com.histmersion.util.data.exchange.BundlePlan.Decision
 import com.histmersion.util.storage.{ByteSource, ContentStore}
 import com.histmersion.values.{BundleKind, DecisionKind, IssueKind}

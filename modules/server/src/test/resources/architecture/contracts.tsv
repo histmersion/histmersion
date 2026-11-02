@@ -1,11 +1,4 @@
 # rule	file	detail	count — the known violations of AGENTS.md's rules 1–14; shrink, never grow
-bucket	files:files/ArticleNote.scala	package com.histmersion.files	1
-bucket	files:files/BundleEntities.scala	package com.histmersion.files	1
-bucket	files:files/Export.scala	package com.histmersion.files	1
-bucket	files:files/Frontmatter.scala	package com.histmersion.files	1
-bucket	files:files/PlaceSeed.scala	package com.histmersion.files	1
-bucket	files:files/PluginKit.scala	package com.histmersion.files	1
-bucket	files:files/SafePath.scala	package com.histmersion.files	1
 bucket	upstreams:upstreams/AcquireParse.scala	package com.histmersion.upstreams	1
 bucket	upstreams:upstreams/ArchiveFile.scala	package com.histmersion.upstreams	1
 bucket	upstreams:upstreams/ArchiveItem.scala	package com.histmersion.upstreams	1
@@ -123,7 +116,6 @@ client-refined	plugin-api:plugin/Latitude.scala	a refined constraint in a client
 client-refined	plugin-api:plugin/Longitude.scala	a refined constraint in a client	1
 client-refined	plugin-api:plugin/WikidataId.scala	a refined constraint in a client	1
 concept	layer api	ArticleLink in api:api/ArticleLink.scala web:web/ArticleLink.scala	2
-concept	layer core	Frontmatter in files:files/Frontmatter.scala files:util/data/mirror/Frontmatter.scala	2
 concept	layer core	Seconds in config:config/Seconds.scala server:util/ocr/Seconds.scala	2
 copy	api:api/Api.scala	.copy(	1
 copy	api:api/ArticleEdits.scala	.copy(	1
@@ -188,10 +180,10 @@ copy	db:domain/research/articles/ArticleRepo.scala	.copy(	1
 copy	db:util/data/exchange/BundleImporter.scala	.copy(	4
 copy	db:util/data/exchange/MergePlans.scala	.copy(	1
 copy	db:util/data/exchange/MergeState.scala	.copy(	4
-copy	files:files/Frontmatter.scala	.copy(	2
-copy	files:files/PluginKit.scala	.copy(	1
+copy	files:domain/library/sources/SourceNote.scala	.copy(	2
 copy	files:util/data/exchange/BundleFormat.scala	.copy(	1
 copy	files:util/data/exchange/MergeResolutionsFile.scala	.copy(	1
+copy	files:util/plugins/PluginKit.scala	.copy(	1
 copy	plugin-host:pluginhost/PluginEvents.scala	.copy(	3
 copy	plugin-host:pluginhost/PluginMedia.scala	.copy(	1
 copy	plugin-resolver:pluginresolver/Coursier.scala	.copy(	1
@@ -1158,6 +1150,8 @@ layer	db:domain/research/articles/ArticlesCarried.scala	a domain file names the 
 layer	db:domain/research/articles/CoverageRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/research/articles/CritiqueRepo.scala	a domain file names the api outside a boundary	1
 layer	db:domain/research/articles/review/ArticleReviewRepo.scala	a domain file names the api outside a boundary	1
+layer	files:domain/library/sources/SourceNote.scala	a domain file names the api outside a boundary	2
+layer	files:domain/research/articles/ArticleNote.scala	a domain file names the api outside a boundary	2
 layer	server:domain/activity/ActivityRepo.scala	a domain file names the api outside a boundary	2
 layer	server:domain/activity/ActivityRow.scala	a domain file names the api outside a boundary	2
 layer	server:domain/activity/ActivityService.scala	a domain file names the api outside a boundary	1
@@ -1639,7 +1633,7 @@ prefix	core:domain/CodexRetention.scala	CodexRetention → Codex.Retention	1
 prefix	core:domain/LicenceFamily.scala	LicenceFamily → Licence.Family	1
 prefix	core:domain/ReadSchedule.scala	ReadSchedule → Read.Schedule	1
 prefix	core:domain/catalogue/events/StoredEvent.scala	StoredEvent → Stored.Event	1
-prefix	files:files/ArticleNote.scala	ArticleNote → Article.Note	1
+prefix	files:domain/research/articles/ArticleNote.scala	ArticleNote → Article.Note	1
 prefix	files:util/data/mirror/MirrorPlacement.scala	MirrorPlacement → Mirror.Placement	1
 prefix	plugin-api:plugin/AiHttpResponse.scala	AiHttpResponse → AiHttp.Response	1
 prefix	plugin-api:plugin/AiToolCall.scala	AiToolCall → AiTool.Call	1

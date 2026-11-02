@@ -2,7 +2,7 @@ package com.histmersion.server
 
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.library.ingest.{ToolFiles, Upload}
-import com.histmersion.files.SafePath
+import com.histmersion.util.storage.SafePath
 
 import java.nio.file.Files
 

@@ -1,5 +1,4 @@
-package com.histmersion.files
-
+package com.histmersion.domain.research.articles
 import com.histmersion.api.*
 import com.histmersion.api.given
 

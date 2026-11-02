@@ -4,13 +4,13 @@ import scala.annotation.tailrec
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.*
-import com.histmersion.files.*
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.values.BundleKind
 import com.histmersion.util.data.mirror.MirrorPlacement
+import com.histmersion.domain.research.articles.ArticleNote
 
 /** `histmersion article …` — the compiled wiki over HTTP (plan §5.2 stream 2.7).
   *

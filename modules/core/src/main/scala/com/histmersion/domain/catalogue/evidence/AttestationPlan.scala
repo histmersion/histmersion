@@ -12,7 +12,7 @@ import com.histmersion.api.{
 }
 import com.histmersion.domain.MergePlanner
 import com.histmersion.domain.MergePlanner.AttestationFix
-import com.histmersion.files.BundleEntities
+import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.{PairQuestions, PlanFolds, PlanRun}
 import com.histmersion.util.text.Anchor
 import com.histmersion.values.{BundleKind, DecisionKind, IssueKind, IssueSeverity}

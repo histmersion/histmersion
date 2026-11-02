@@ -2,7 +2,7 @@ package com.histmersion.domain.catalogue.events
 
 import com.histmersion.api.{BundleEvent, BundleRange, IssueDetail, MergeDecision, MergeIssue, MergeIssueDetail}
 import com.histmersion.domain.{MergeFold, MergePlanner}
-import com.histmersion.files.BundleEntities
+import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.{PlanFolds, PlanMerge, PlanQuestions, PlanRun}
 import com.histmersion.util.text.Fingerprint
 import com.histmersion.values.{BundleKind, DecisionKind, IssueKind}
