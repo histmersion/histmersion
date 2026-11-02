@@ -21,9 +21,9 @@ class UpstreamQuotaSuite extends munit.FunSuite:
     assert(
       AboutMarkdown.render(about.copy(upstreams = List(q))).contains("- CORE today (UTC 2026-10-26): 14 of 900 tokens")
     )
-    val st = Autopilot.AutopilotStatus(on = true)
-    assert(!AutopilotMarkdown.status(st).contains("CORE today"))
-    val md = AutopilotMarkdown.status(st.copy(upstreams = List(q)))
+    val st = AutopilotStatus(on = true)
+    assert(!st.markdown.contains("CORE today"))
+    val md = st.copy(upstreams = List(q)).markdown
     assert(md.contains("- legal open-access ingests today: 0\n- CORE today (UTC 2026-10-26)"), md)
 
   test("a sweep says which index it did not ask, and why"):

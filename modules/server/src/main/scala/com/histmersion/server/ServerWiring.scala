@@ -461,6 +461,10 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
       () => settings.setupDue
     )
 
+  /** The autopilot's page: the automation's status with the library's upstreams and its acquisition list's re-check. */
+  lazy val autopilot: com.histmersion.server.views.AutopilotView =
+    com.histmersion.server.agents.EngineContributions.autopilot(agents)
+
   /** The metered upstreams' budgets as the database keeps them (CORE's: `upstream_quota`), under today's limits; none
     * before CORE was first asked, and none when the database cannot be read (`about` says that elsewhere).
     */

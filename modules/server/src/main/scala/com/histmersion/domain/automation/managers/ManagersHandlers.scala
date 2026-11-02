@@ -755,7 +755,7 @@ final class ManagersHandlers(
   // ── the autopilot ──────────────────────────────────────────────────────────────────────────────
 
   /** `GET /api/agents/autopilot` — readable with agents off. */
-  def autopilot: Autopilot.AutopilotStatus = agents.autopilot.status()
+  def autopilot: Autopilot.EngineStatus = agents.autopilot.status()
 
   /** `GET /api/agents/autopilot/focus` — readable with agents off (what it would focus on). */
   def focus: Autopilot.FocusInfo = agents.focus.info()
@@ -768,7 +768,7 @@ final class ManagersHandlers(
     agents.scheduler.set(in)
 
   /** `POST /api/agents/autopilot/drain {on}`. */
-  def drain(in: Autopilot.DrainSet): Either[ApiError, Autopilot.AutopilotStatus] = Right(agents.drain.set(in))
+  def drain(in: Autopilot.DrainSet): Either[ApiError, Autopilot.EngineStatus] = Right(agents.drain.set(in))
 
   /** `GET /api/agents/stalls[?days=]` — readable with agents off. */
   def stalls(days: Option[Int]): Stalls.StallReport = agents.scheduler.stalls(days)
@@ -789,7 +789,7 @@ final class ManagersHandlers(
   /** `POST /api/agents/autopilot/mode {mode}` — the three-way control ([[AgentMode]]): the autopilot and the drain
     * moved, in order, to what the mode stands for. Idempotent.
     */
-  def setMode(in: AgentMode.ModeSet): Either[ApiError, Autopilot.AutopilotStatus] =
+  def setMode(in: AgentMode.ModeSet): Either[ApiError, Autopilot.EngineStatus] =
     AgentMode
       .parse(in.mode)
       .toRight(ApiError(s"unknown mode '${in.mode}' — one of: ${AgentMode.values.map(_.wire).mkString(", ")}"))
@@ -804,7 +804,7 @@ final class ManagersHandlers(
       }
 
   /** `POST /api/agents/autopilot {on}` — idempotent; the answer says what it did. */
-  def setAutopilot(in: Autopilot.AutopilotSet): Either[ApiError, Autopilot.AutopilotStatus] =
+  def setAutopilot(in: Autopilot.AutopilotSet): Either[ApiError, Autopilot.EngineStatus] =
     Right(agents.autopilot.set(in))
 
   // ── events ─────────────────────────────────────────────────────────────────────────────────────

@@ -99,7 +99,7 @@ object OpsTools:
     def render(list: String) =
       h.workListView.list(list, in.all) match
         case Right(l) =>
-          Queue.Kind.parse(l.list).map(k => Queue.markdown(k, l.items, l.checks)).getOrElse(s"_unknown list ${l.list}_")
+          l.markdown.getOrElse(s"_unknown list ${l.list}_")
         case Left(e) => McpOut.refusal(e)
 
     in.action.trim.toLowerCase match

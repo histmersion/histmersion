@@ -74,7 +74,9 @@ api:api/AttestationList.scala	catalogue.evidence
 api:api/AttestationPatch.scala	catalogue.evidence
 api:api/AttestationPut.scala	catalogue.evidence
 api:api/Autopilot.scala	automation.autopilot
+api:api/AutopilotApi.scala	server.views
 api:api/AutopilotMarkdown.scala	automation.autopilot
+api:api/AutopilotStatus.scala	server.views
 api:api/BBox.scala	kernel
 api:api/Backlink.scala	research.articles
 api:api/Backup.scala	util.data.backup
@@ -471,6 +473,7 @@ api:api/PresetRegion.scala	catalogue.places
 api:api/Provenance.scala	library.sources
 api:api/Query.scala	library.search
 api:api/Queue.scala	automation.worklists
+api:api/QueueListing.scala	server.views
 api:api/RefRow.scala	library.citations
 api:api/RefsRequest.scala	library.citations
 api:api/RefsResult.scala	library.citations

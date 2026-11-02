@@ -6,8 +6,8 @@ import sttp.tapir.{FieldName, Schema}
 import sttp.tapir.SchemaType.SProductField
 
 /** One field of a job's detail, as the owner of the kinds that record it declares it: its name on the wire, its value
-  * when a job records none, and how it reads and writes. The jobs keep a detail as these fields' JSON
-  * ([[JobDetail]]); the kinds' registry lists every field in the order the detail shows them.
+  * when a job records none, and how it reads and writes. The jobs keep a detail as these fields' JSON ([[JobDetail]]);
+  * the kinds' registry lists every field in the order the detail shows them.
   */
 final class JobDetailField[A](val name: String, val default: A)(using
     encoder: Encoder[A],

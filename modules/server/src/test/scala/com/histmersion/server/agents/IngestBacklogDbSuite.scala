@@ -189,7 +189,7 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     )
     val st = b.managing.autopilot
     assertEquals((st.backlog, st.backlogDays), (10, Some(1)))
-    assert(AutopilotMarkdown.status(st).contains("10 legal open-access works in the ingest backlog"))
+    assert(b.autopilotPage(st).contains("10 legal open-access works in the ingest backlog"))
     // a new sweep the same day: its open-access finds wait behind the backlog
     c.scripts += Seq(picks(Seq("x1")))
     up.found = Map(Query -> List(work("x1")))

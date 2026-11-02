@@ -189,7 +189,7 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
 
         // the web UI's links both ways: an item names the goals that link it; a goal's link names the item's list
         val listing = io.circe.parser
-          .decode[com.histmersion.api.Queue.QueueListing](get(s"$url/api/queue/tasks?all=true")._2)
+          .decode[com.histmersion.api.QueueListing](get(s"$url/api/queue/tasks?all=true")._2)
           .fold(e => fail(e.toString), identity)
         assertEquals(listing.goals.find(_.item == gone).map(_.goals.map(_.slug)), Some(List("zzgoals-sub")))
         assertEquals(listing.goals.find(_.item == ok).flatMap(_.goals.headOption).map(_.title), Some("ZZ sub goal"))

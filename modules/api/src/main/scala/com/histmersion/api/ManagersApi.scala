@@ -7,7 +7,8 @@ import sttp.model.StatusCode
 object ManagersApi:
   import Managers.*
 
-  private lazy val errors =
+  /** The managers' errors: 404 for a missing one, 409 for a run in the way, 400 otherwise. */
+  lazy val errors =
     oneOf[ApiError](
       oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[ApiError])(ApiError.hasCode(Write.CodeNotFound)),
       oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[ApiError])(ApiError.hasCode(AgentsApi.CodeConflict)),
@@ -68,37 +69,6 @@ object ManagersApi:
       .in(jsonBody[EnqueueRequest])
       .out(jsonBody[EnqueueResult])
 
-  lazy val autopilot: PublicEndpoint[Unit, ApiError, Autopilot.AutopilotStatus, Any] =
-    endpoint.get.in("api" / "agents" / "autopilot").errorOut(errors).out(jsonBody[Autopilot.AutopilotStatus])
-
-  lazy val setAutopilot: PublicEndpoint[Autopilot.AutopilotSet, ApiError, Autopilot.AutopilotStatus, Any] =
-    endpoint.post
-      .in("api" / "agents" / "autopilot")
-      .errorOut(errors)
-      .in(jsonBody[Autopilot.AutopilotSet])
-      .out(jsonBody[Autopilot.AutopilotStatus])
-
-  lazy val setMode: PublicEndpoint[AgentMode.ModeSet, ApiError, Autopilot.AutopilotStatus, Any] =
-    endpoint.post
-      .in("api" / "agents" / "autopilot" / "mode")
-      .errorOut(errors)
-      .in(jsonBody[AgentMode.ModeSet])
-      .out(jsonBody[Autopilot.AutopilotStatus])
-
-  lazy val repairAcquire: PublicEndpoint[RepairAcquire.RepairRequest, ApiError, RepairAcquire.RepairResult, Any] =
-    endpoint.post
-      .in("api" / "agents" / "autopilot" / "repair-acquire")
-      .errorOut(errors)
-      .in(jsonBody[RepairAcquire.RepairRequest])
-      .out(jsonBody[RepairAcquire.RepairResult])
-
-  lazy val acquireRecheck: PublicEndpoint[AcquireChecks.RecheckRequest, ApiError, AcquireChecks.RecheckResult, Any] =
-    endpoint.post
-      .in("api" / "queue" / "acquire" / "recheck")
-      .errorOut(errors)
-      .in(jsonBody[AcquireChecks.RecheckRequest])
-      .out(jsonBody[AcquireChecks.RecheckResult])
-
   lazy val focus: PublicEndpoint[Unit, ApiError, Autopilot.FocusInfo, Any] =
     endpoint.get.in("api" / "agents" / "autopilot" / "focus").errorOut(errors).out(jsonBody[Autopilot.FocusInfo])
 
@@ -130,13 +100,6 @@ object ManagersApi:
       .in(jsonBody[ApprovalDigest.BulkDecide])
       .out(jsonBody[ApprovalDigest.BulkResult])
 
-  lazy val drain: PublicEndpoint[Autopilot.DrainSet, ApiError, Autopilot.AutopilotStatus, Any] =
-    endpoint.post
-      .in("api" / "agents" / "autopilot" / "drain")
-      .errorOut(errors)
-      .in(jsonBody[Autopilot.DrainSet])
-      .out(jsonBody[Autopilot.AutopilotStatus])
-
   lazy val stalls: PublicEndpoint[Option[Int], ApiError, Stalls.StallReport, Any] =
     endpoint.get
       .in("api" / "agents" / "stalls")
@@ -145,6 +108,7 @@ object ManagersApi:
       .out(jsonBody[Stalls.StallReport])
 
   /** The fixed-path endpoints come before `action`, whose last segment is a parameter. */
+  /** The managers themselves, their items, hints and events (first of the agents' endpoints in `Api.all`). */
   lazy val all: List[AnyEndpoint] = List(
     list,
     create,
@@ -159,19 +123,21 @@ object ManagersApi:
     removeHint,
     events,
     action,
-    enqueue,
-    autopilot,
-    setAutopilot,
-    setMode,
-    repairAcquire,
-    acquireRecheck,
+    enqueue
+  )
+
+  /** The steering of the managers: the focus, the scheduler, the approvals' digest (between the autopilot's switches
+    * and the drain, in `Api.all`).
+    */
+  lazy val steering: List[AnyEndpoint] = List(
     focus,
     setFocus,
     scheduler,
     setScheduler,
     schedulerWhy,
     digest,
-    decideAll,
-    drain,
-    stalls
+    decideAll
   )
+
+  /** What has stalled (after the drain, in `Api.all`). */
+  lazy val stalled: List[AnyEndpoint] = List(stalls)

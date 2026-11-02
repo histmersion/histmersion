@@ -91,7 +91,7 @@ object ResearchOverview:
   private def write(f: () => Unit): Unit = if Auth.writableNow then f() else WindowManager.open(WindowKey.ApiKey)
 
   /** The agents: one control of three choices, what is running and waiting, the weekly allowance. */
-  private def agentsCard(status: Var[Option[Autopilot.AutopilotStatus]]): HtmlElement =
+  private def agentsCard(status: Var[Option[AutopilotStatus]]): HtmlElement =
     val quota = Var(List.empty[String])
     val busy = Var(false)
     val failed = Var(Option.empty[String])
@@ -226,7 +226,7 @@ object ResearchOverview:
     )
 
   private def goalsCard(
-      status: Signal[Option[Autopilot.AutopilotStatus]],
+      status: Signal[Option[AutopilotStatus]],
       managers: Signal[List[Managers.ManagerInfo]]
   ): HtmlElement =
     sectionTag(
@@ -292,7 +292,7 @@ object ResearchOverview:
 
   /** The page. */
   def pane(ui: UiConfig): HtmlElement =
-    val status = Var(Option.empty[Autopilot.AutopilotStatus])
+    val status = Var(Option.empty[AutopilotStatus])
     val managers = Var(List.empty[Managers.ManagerInfo])
     div(
       cls := "research-overview",

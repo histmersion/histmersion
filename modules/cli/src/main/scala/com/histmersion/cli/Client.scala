@@ -266,7 +266,7 @@ final class Client(val serverUrl: String, token: Option[String] = None):
   // ── lint · queue · read-only query (plan §5.2 stream 2.8) ───────────────────────────────────
   def lint(rules: List[String]): Either[CliError, Lint.LintReport] = call(OpsApi.lint)(rules)
   def lintFix(rules: List[String]): Either[CliError, Lint.LintFixResult] = call(OpsApi.lintFix)(rules)
-  def queueList(list: String, all: Boolean): Either[CliError, Queue.QueueListing] =
+  def queueList(list: String, all: Boolean): Either[CliError, QueueListing] =
     call(OpsApi.queueList)((list, all, None, None))
   def queueAdd(list: String, in: Queue.QueueAdd): Either[CliError, Queue.QueueItem] =
     call(OpsApi.queueAdd)((list, in))

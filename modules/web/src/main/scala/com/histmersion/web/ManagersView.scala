@@ -499,7 +499,7 @@ object ManagersView:
     * approval rules, today's ingests, and every goal's stage, counts and pace.
     */
   def autopilotSection: HtmlElement =
-    val st = Var(Option.empty[Autopilot.AutopilotStatus])
+    val st = Var(Option.empty[AutopilotStatus])
     val pending = Var(Option.empty[Boolean])
     val failure = Var(Option.empty[String])
     def load(): Unit = ApiClient.autopilot.onComplete(
@@ -587,7 +587,7 @@ object ManagersView:
               .map(r => s"${ApprovalsView.kindLabel(r.kind).toLowerCase}: ${r.mode}")
               .mkString(" · ")
           ),
-          Option.when(!s.cronsEnabled)(p(cls := "form-error", role := "alert", Autopilot.AutopilotStatus.CronsOff)),
+          Option.when(!s.cronsEnabled)(p(cls := "form-error", role := "alert", Autopilot.EngineStatus.CronsOff)),
           Option.when(s.changes.nonEmpty)(div(cls := "form-ok", s.changes.mkString("; ").take(400))),
           s.focus.map(f => focusPanel(f, x => st.update(_.map(_.copy(focus = Some(x)))), failure)),
           ul(

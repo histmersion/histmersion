@@ -4,7 +4,7 @@ import com.histmersion.api.ApiError
 import com.histmersion.api.Agents.{ApprovalInfo, Pipeline, RunInfo, RunState}
 import com.histmersion.domain.AutopilotPolicy
 import com.histmersion.domain.automation.approvals.ApprovalChecks
-import com.histmersion.api.Autopilot.AutopilotStatus
+import com.histmersion.api.Autopilot.EngineStatus
 import com.histmersion.api.Managers
 import com.histmersion.api.Managers.{Kind, ManagerConfig, ManagerInfo, ManagerItem}
 import com.histmersion.config.AgentsConfig
@@ -111,7 +111,7 @@ trait ManagerKindDefinition:
   def backlog(): Map[String, (Int, Option[Int])] = Map.empty
 
   /** The autopilot's status with this kind's domain's part filled in. */
-  def status(st: AutopilotStatus, now: Instant): AutopilotStatus = st
+  def status(st: EngineStatus, now: Instant): EngineStatus = st
 
   /** What this kind's domain ingested today outside the managers' own events (the shared ingest cap counts it). */
   def ingestedToday(now: Instant): Int = 0

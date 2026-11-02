@@ -15,6 +15,8 @@ import scala.jdk.CollectionConverters.*
   *      `util.process`;
   *   3. repository — a `…Repo` object named outside its feature.
   *
+  * A member of a type (`Queue.Kind.Acquire`, and an enum case where the enum defines it) is the type's own word.
+  *
   * A file's place is its row in `architecture/places.tsv`, the design's table of where each file moves, while it is not
   * there yet; then its package (`com.histmersion.domain.<domain>.<feature>`, `com.histmersion.util.<area>`). The
   * violations that exist today are listed in `architecture/exceptions.tsv`; the list is exact both ways, so a new
@@ -215,11 +217,21 @@ object ArchitectureSuite:
     private def isMember(code: String, start: Int): Boolean =
       Member.findFirstIn(code.substring(math.max(0, start - 64), start)).isDefined
 
+    /** An enum's case defined (`case Acquire extends Kind(…)`): the enum's own word, as its uses (`Kind.Acquire`) are,
+      * never the top-level type of the same name — which a `case` of a match (`case Acquire =>`) may still name.
+      */
+    private val CaseDefinition = "\\bcase\\s+$".r
+    private val ExtendsAfter = "^\\s+extends\\b".r
+
+    private def isCaseDefinition(code: String, start: Int, end: Int): Boolean =
+      CaseDefinition.findFirstIn(code.substring(math.max(0, start - 16), start)).isDefined &&
+        ExtendsAfter.findFirstIn(code.substring(end, math.min(code.length, end + 16))).isDefined
+
     /** The names a file uses, each with the offset of its first use outside its own definitions. */
     private def uses(s: SourceFile): Map[String, Int] =
       Word
         .findAllMatchIn(s.code)
-        .filterNot(m => isMember(s.code, m.start))
+        .filterNot(m => isMember(s.code, m.start) || isCaseDefinition(s.code, m.start, m.end))
         .toList
         .groupBy(_.matched)
         .view

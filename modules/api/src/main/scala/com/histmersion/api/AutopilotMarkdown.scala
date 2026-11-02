@@ -53,7 +53,15 @@ object AutopilotMarkdown:
       .flatMap(l => List(l, "")) ++ List("### Active", "", active, "", s"### Queue (${f.queued})", "", queue) ++
       (if waits.isEmpty then Nil else List("", "### Cannot use a slot now", "") ++ waits)).mkString("\n")
 
-  def status(s: AutopilotStatus): String =
+  /** The autopilot's status; `ingestedBy` ends the line of today's ingests, `beforeBacklog` and `afterBacklog` are the
+    * lines the page shows around the backlog's (the library's upstreams and its re-check).
+    */
+  def status(
+      s: Autopilot.EngineStatus,
+      ingestedBy: String = "",
+      beforeBacklog: List[String] = Nil,
+      afterBacklog: List[String] = Nil
+  ): String =
     val head = s"# Autopilot: ${if s.on then "ON" else "off"}" +
       s.since.fold("")(t => s" (since $t${s.by.fold("")(b => s", by $b")})")
     val warn = List(
@@ -72,7 +80,7 @@ object AutopilotMarkdown:
       Option.when(s.agentsEnabled && !s.managersEnabled)(
         "the managers are disabled (agents.managers.enabled = false): nothing runs"
       ),
-      Option.when(!s.cronsEnabled)(AutopilotStatus.CronsOff),
+      Option.when(!s.cronsEnabled)(Autopilot.EngineStatus.CronsOff),
       s.goalPlansWait.map(w => s"$w; a person may still approve a plan")
     ).flatten.map(w => s"- **$w**")
     val rules =
@@ -81,15 +89,12 @@ object AutopilotMarkdown:
       s"- approvals: ${if rules.isEmpty then "a person's" else rules}",
       s"- legal open-access ingests today: ${s.ingestedToday}${
           if s.ingestCap > 0 then s" of ${s.ingestCap} (all watchers)" else ""
-        }" +
-        s.acquireRecheck
-          .filter(_.fetchedToday > 0)
-          .fold("")(r => s", ${r.fetchedToday} of them by the acquisition list's re-check")
+        }" + ingestedBy
     ) ++
-      s.upstreams.map(q => s"- ${UpstreamQuotaMarkdown.line(q)}") ++ List(
+      beforeBacklog ++ List(
         s"- ${ManagersMarkdown.backlog(s.backlog, s.backlogDays)}"
       ) ++
-      s.acquireRecheck.map(r => s"- ${AcquireChecksMarkdown.line(r)}").toList ++ List(
+      afterBacklog ++ List(
         s"- runs at once: at most ${s.maxConcurrentRuns} (agents.max-concurrent-runs)",
         s"- last backup: ${s.lastBackup.getOrElse("never by the autopilot")} · last lint --fix: ${s.lastLint.getOrElse("never by the autopilot")}",
         s"- library: ${

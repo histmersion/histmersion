@@ -118,17 +118,16 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
   /** Each watcher's ingest backlog and the days it takes to drain. */
   override def backlog(): Map[String, (Int, Option[Int])] = work.oaBacklog.snapshot().perManager
 
-  /** The ingest backlog's size, the upstreams' quotas and the acquisition list's re-check. */
-  override def status(st: Autopilot.AutopilotStatus, now: Instant): Autopilot.AutopilotStatus =
+  /** The ingest backlog's size (the page adds the upstreams' quotas and the acquisition list's re-check). */
+  override def status(st: Autopilot.EngineStatus, now: Instant): Autopilot.EngineStatus =
     val backlog = work.oaBacklog.snapshot(now)
     st.modify(_.backlog)
       .setTo(backlog.total)
       .modify(_.backlogDays)
       .setTo(backlog.totalDays)
-      .modify(_.upstreams)
-      .setTo(site.upstreamQuotas(now))
-      .modify(_.acquireRecheck)
-      .setTo(Some(work.acquireRecheck.status(now)))
+
+  /** The metered upstreams' budgets the autopilot's page shows. */
+  def upstreams(now: Instant): List[com.histmersion.api.UpstreamQuota] = site.upstreamQuotas(now)
 
   /** The acquisition list's re-check's finds count against the shared ingest cap too. */
   override def ingestedToday(now: Instant): Int = work.acquireRecheck.fetchedToday(now)

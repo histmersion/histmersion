@@ -315,13 +315,13 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     )
     assert(QueueRows.list(ds, Queue.Kind.Log, all = true).exists(_.text.contains(s"goal $Goal: compiled → reviewed")))
     val st = a.managing.autopilot
-    note("autopilot, the goal reviewed", AutopilotMarkdown.status(st))
+    note("autopilot, the goal reviewed", a.autopilotPage(st))
     val g = st.goals.find(_.slug == Goal).get
     assertEquals((g.status, g.articles, g.openApprovals), (GoalStatus.Reviewed, 1, 0))
     assert(g.doneLast7 >= 3, g)
-    assert(AutopilotMarkdown.status(st).contains(s"**$Goal** _(reviewed)_"))
-    assert(!AutopilotMarkdown.status(st).contains("crons are off"))
-    assert(AutopilotMarkdown.status(st.copy(cronsEnabled = false)).contains("crons are off"))
+    assert(a.autopilotPage(st).contains(s"**$Goal** _(reviewed)_"))
+    assert(!a.autopilotPage(st).contains("crons are off"))
+    assert(a.autopilotPage(st.copy(cronsEnabled = false)).contains("crons are off"))
 
   test("autopilot, approvals a person's (the defaults): managers and plans start, nothing is approved by itself"):
     val c = ScriptedClient(Model)
@@ -353,7 +353,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
       a.focus.info().waiting
     )
     assert(!a.approvalsList(Some("all"), None).toOption.get.exists(_.note.exists(_.startsWith("autopilot:"))))
-    note("autopilot, approvals a person's", AutopilotMarkdown.status(a.managing.autopilot))
+    note("autopilot, approvals a person's", a.autopilotPage(a.managing.autopilot))
     assertEquals(a.managing.autopilot.goals.find(_.slug == Goal).map(_.openApprovals), Some(1))
     assert(a.managing.autopilot.approvals.forall(_.mode == "person"), a.managing.autopilot.approvals)
     // a manager's own autoApprove wins over the defaults

@@ -2372,7 +2372,30 @@
       ]
     },
     {
-      "type": "com.histmersion.api.Autopilot$AutopilotStatus$",
+      "type": "com.histmersion.api.AutopilotApi$",
+      "fields": [
+        {
+          "name": "autopilot$lzy1"
+        },
+        {
+          "name": "drain$lzy1"
+        },
+        {
+          "name": "draining$lzy1"
+        },
+        {
+          "name": "setAutopilot$lzy1"
+        },
+        {
+          "name": "setMode$lzy1"
+        },
+        {
+          "name": "switches$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.AutopilotStatus$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy11"
@@ -6375,9 +6398,6 @@
       "type": "com.histmersion.api.ManagersApi$",
       "fields": [
         {
-          "name": "acquireRecheck$lzy1"
-        },
-        {
           "name": "action$lzy1"
         },
         {
@@ -6388,9 +6408,6 @@
         },
         {
           "name": "all$lzy1"
-        },
-        {
-          "name": "autopilot$lzy1"
         },
         {
           "name": "base$lzy1"
@@ -6406,9 +6423,6 @@
         },
         {
           "name": "digest$lzy1"
-        },
-        {
-          "name": "drain$lzy1"
         },
         {
           "name": "enqueue$lzy1"
@@ -6444,9 +6458,6 @@
           "name": "removeHint$lzy1"
         },
         {
-          "name": "repairAcquire$lzy1"
-        },
-        {
           "name": "sched$lzy1"
         },
         {
@@ -6456,19 +6467,19 @@
           "name": "schedulerWhy$lzy1"
         },
         {
-          "name": "setAutopilot$lzy1"
-        },
-        {
           "name": "setFocus$lzy1"
-        },
-        {
-          "name": "setMode$lzy1"
         },
         {
           "name": "setScheduler$lzy1"
         },
         {
+          "name": "stalled$lzy1"
+        },
+        {
           "name": "stalls$lzy1"
+        },
+        {
+          "name": "steering$lzy1"
         },
         {
           "name": "update$lzy1"
@@ -8443,7 +8454,7 @@
       ]
     },
     {
-      "type": "com.histmersion.api.Queue$QueueListing$",
+      "type": "com.histmersion.api.QueueListing$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy2"
@@ -10039,6 +10050,20 @@
       "fields": [
         {
           "name": "given_Configuration$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.api.library.acquisition.AcquisitionWorkApi$",
+      "fields": [
+        {
+          "name": "acquireRecheck$lzy1"
+        },
+        {
+          "name": "all$lzy1"
+        },
+        {
+          "name": "repairAcquire$lzy1"
         }
       ]
     },
@@ -15581,6 +15606,9 @@
         },
         {
           "name": "attestations$lzy1"
+        },
+        {
+          "name": "autopilot$lzy1"
         },
         {
           "name": "calibreGaps$lzy1"

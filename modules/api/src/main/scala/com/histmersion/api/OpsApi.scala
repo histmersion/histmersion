@@ -9,7 +9,7 @@ object OpsApi:
   // explicit imports: a wildcard would shadow tapir's `query`/`path` with this object's own members
   import Lint.{LintFixResult, LintReport}
   import Query.{QueryRequest, QueryResult, SchemaTables}
-  import Queue.{QueueAdd, QueueImport, QueueImported, QueueItem, QueueListing, QueuePatch}
+  import Queue.{QueueAdd, QueueImport, QueueImported, QueueItem, QueuePatch}
 
   private lazy val base = endpoint.in("api").errorOut(jsonBody[ApiError])
 

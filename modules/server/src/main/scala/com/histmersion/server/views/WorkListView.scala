@@ -1,9 +1,9 @@
 package com.histmersion.server.views
 
-import com.histmersion.api.{AcquireChecks, ApiError, Queue}
+import com.histmersion.api.{AcquireChecks, ApiError, Queue, QueueListing}
 import com.histmersion.api.Queue.GoalRef
 import com.histmersion.api.GoalPlans.LinkKind
-import com.histmersion.api.Queue.{Kind, QueueListing}
+import com.histmersion.api.Queue.Kind
 import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.domain.automation.worklists.{QueueScope, QueueService, WorkListControllers}
 import com.histmersion.domain.library.acquisition.AcquireCheckService

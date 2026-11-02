@@ -5,7 +5,7 @@ import com.histmersion.domain.automation.agents.AgentsHandlers
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Autopilot.{AutopilotStatus, DrainInfo, DrainSet}
+import com.histmersion.api.Autopilot.{DrainInfo, DrainSet, EngineStatus}
 import com.histmersion.api.Queue.QueueAdd
 
 import java.time.Instant
@@ -70,7 +70,7 @@ final class DrainService(
         else Nil
 
   /** Start or lift the drain; answers the autopilot's status with what it did. */
-  def set(in: DrainSet, now: Instant = Instant.now(agents.clock)): AutopilotStatus =
+  def set(in: DrainSet, now: Instant = Instant.now(agents.clock)): EngineStatus =
     val by = in.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")
     val changed = agents.autopilotRow.setDrain(in.on, by)
     val line =
