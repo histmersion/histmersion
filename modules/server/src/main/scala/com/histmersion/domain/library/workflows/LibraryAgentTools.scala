@@ -1,5 +1,8 @@
 package com.histmersion.domain.library.workflows
 
+import com.histmersion.api.library.search.SearchMarkdown
+import com.histmersion.api.library.sources.SourcesMarkdown
+
 import com.histmersion.domain.automation.agents.ToolResultCap
 
 import com.histmersion.api.{AcquireMarkdown, Markdown, Query}
@@ -81,7 +84,7 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
       ) { in =>
         val f = in.toFilter
         cap(
-          ToolResultCap.plainLinks(Markdown.briefResults(site.search.sources(f))),
+          ToolResultCap.plainLinks(SearchMarkdown.briefResults(site.search.sources(f))),
           max,
           "ask for fewer results (`limit`) or narrow the filters"
         )
@@ -94,7 +97,7 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
       ) { in =>
         site.labels
           .facets(in.field, in.prefix, FacetsInput(in.field, in.prefix).toFilter)
-          .fold(e => e.message, fs => cap(Markdown.facets(in.field, fs.toVector), max, "narrow it with `prefix`"))
+          .fold(e => e.message, fs => cap(SearchMarkdown.facets(in.field, fs.toVector), max, "narrow it with `prefix`"))
       }
     },
     contribution(LibraryAgentTools.Neighbors) {
@@ -104,7 +107,7 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
       ) { in =>
         val rows = site.citations.neighbors(in.citekey, in.kinds)
         if rows.isEmpty then s"No edges recorded for ${in.citekey}. An empty result is not evidence of agreement."
-        else cap(Markdown.neighbors(in.citekey, rows.toVector), max, "ask for one edge kind (`kinds`)")
+        else cap(SourcesMarkdown.neighbors(in.citekey, rows.toVector), max, "ask for one edge kind (`kinds`)")
       }
     },
     contribution(LibraryAgentTools.Query) {

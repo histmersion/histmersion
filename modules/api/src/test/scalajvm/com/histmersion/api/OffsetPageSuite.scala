@@ -1,5 +1,10 @@
 package com.histmersion.api
 
+import com.histmersion.api.automation.goals.GoalsMarkdown
+import com.histmersion.api.catalogue.events.EventsMarkdown
+import com.histmersion.api.catalogue.evidence.AttestationsMarkdown
+import com.histmersion.api.media.assets.MediaMarkdown
+
 /** [[OffsetPage]] (#1798 item 8): one page shape — total, offset, next — and one Markdown header and footer for every
   * offset-paged list, so a list that is cut says how to get the rest.
   */
@@ -40,15 +45,15 @@ class OffsetPageSuite extends munit.FunSuite:
   private def ev(i: Int) = EventSummary(s"e$i", s"Event $i", "battle", TimeSpan(), "attested")
 
   test("every paged list prints its footer: events, goals, attestations, asset links, pictures (#1798)"):
-    val events = Markdown.eventList(EventList.of(412, List(ev(1), ev(2)), 50))
+    val events = EventsMarkdown.eventList(EventList.of(412, List(ev(1), ev(2)), 50))
     assert(events.startsWith("### 2 of 412 event(s)") && events.contains("next: offset=52"), events)
-    val goals = Markdown.goalList(GoalList.of(30, List(g), 0))
+    val goals = GoalsMarkdown.goalList(GoalList.of(30, List(g), 0))
     assert(goals.contains("### 1 of 30 goal(s)") && goals.contains("next: offset=1"), goals)
-    val all = Markdown.goalList(GoalList.of(1, List(g), 0))
+    val all = GoalsMarkdown.goalList(GoalList.of(1, List(g), 0))
     assert(all.startsWith("### 1 goal(s)") && !all.contains("showing"), all)
-    val att = Markdown.attestationList(AttestationList.of(5, Nil, 10))
+    val att = AttestationsMarkdown.attestationList(AttestationList.of(5, Nil, 10))
     assert(att.contains("past the end"), att)
-    val links = Markdown.assetLinkList(AssetLinkList.of(0, Nil, 0))
+    val links = MediaMarkdown.assetLinkList(AssetLinkList.of(0, Nil, 0))
     assertEquals(links, "_No asset links._")
 
   test("the JSON carries offset and next; a body without them still decodes (older server)"):

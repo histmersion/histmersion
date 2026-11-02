@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.api.catalogue.places.PlacesMarkdown
+
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.config.given
@@ -68,8 +70,8 @@ class PlaceTimeBasisSuite extends munit.FunSuite:
     assert(d.datedByFindings)
     assert(!d.copy(asOf = None).datedByFindings)
     assert(!d.copy(timeBasis = Dated).datedByFindings)
-    assert(Markdown.place(d).contains(FindingsNote), Markdown.place(d))
-    assert(!Markdown.place(d.copy(asOf = None)).contains(FindingsNote))
+    assert(PlacesMarkdown.place(d).contains(FindingsNote), PlacesMarkdown.place(d))
+    assert(!PlacesMarkdown.place(d.copy(asOf = None)).contains(FindingsNote))
 
   test("places.modern-from is configured, 1500 by default"):
     assertEquals(AppConfig.load().places.modernFrom, 1500L)

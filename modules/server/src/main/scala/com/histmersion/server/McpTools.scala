@@ -1,5 +1,8 @@
 package com.histmersion.server
 
+import com.histmersion.api.automation.agents.AgentStateMarkdown
+import com.histmersion.api.automation.goals.GoalsMarkdown
+
 import chimp.server.*
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -235,7 +238,7 @@ final class McpTools(
               case Left(e)  => McpOut.error(e)
           case None =>
             val q = Api.GoalQuery(in.status, in.limit, in.offset)
-            ToolResult.text(Markdown.goalList(h.listGoals(q)))
+            ToolResult.text(GoalsMarkdown.goalList(h.listGoals(q)))
       }
 
   private val putGoalTool =
@@ -251,7 +254,7 @@ final class McpTools(
           GoalPut(in.title, in.status, in.notes, in.tags, in.regions, in.periodStart, in.periodEnd, in.parentSlug)
         h.putGoal(in.slug, put) match
           case Right(g) =>
-            ToolResult.text(Aliases.note(AliasKindsAdapter.GoalRecords, in.slug, g.slug)(Markdown.goal(g)))
+            ToolResult.text(Aliases.note(AliasKindsAdapter.GoalRecords, in.slug, g.slug)(GoalsMarkdown.goal(g)))
           case Left(e) => McpOut.error(e)
       }
 
@@ -273,7 +276,7 @@ final class McpTools(
         )
         h.patchGoal(in.slug, p) match
           case Right(g) =>
-            ToolResult.text(Aliases.note(AliasKindsAdapter.GoalRecords, in.slug, g.slug)(Markdown.goal(g)))
+            ToolResult.text(Aliases.note(AliasKindsAdapter.GoalRecords, in.slug, g.slug)(GoalsMarkdown.goal(g)))
           case Left(e) => McpOut.error(e)
       }
 
@@ -290,14 +293,14 @@ final class McpTools(
             in.value.map(_.trim).filter(_.nonEmpty) match
               case Some(v) =>
                 h.agentStateSet(key, AgentStatePut(v)) match
-                  case Right(e) => ToolResult.text(Markdown.agentState(e))
+                  case Right(e) => ToolResult.text(AgentStateMarkdown.agentState(e))
                   case Left(e)  => McpOut.error(e)
               case None =>
                 h.agentStateGet(key) match
-                  case Right(e) => ToolResult.text(Markdown.agentState(e))
+                  case Right(e) => ToolResult.text(AgentStateMarkdown.agentState(e))
                   case Left(e)  => McpOut.error(e)
           case None =>
-            ToolResult.text(Markdown.agentStateList(h.agentStateList()))
+            ToolResult.text(AgentStateMarkdown.agentStateList(h.agentStateList()))
       }
 
   private val deleteAgentStateTool =

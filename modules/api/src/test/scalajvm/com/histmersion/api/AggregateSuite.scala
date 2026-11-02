@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.api.library.search.SearchMarkdown
+
 /** Pure tests for the timeline bucketing (plan §1.6 sizes, §1.7 strip). No DB involved. */
 class AggregateSuite extends munit.FunSuite:
 
@@ -92,18 +94,18 @@ class AggregateSuite extends munit.FunSuite:
     assertEquals(Aggregate.histogram(Nil, -3500, -500).size, 31)
 
   // ── Markdown rendering (CLI + MCP surface) ────────────────────────────────────────────────
-  test("Markdown.histogram renders a table with a bar per non-empty bucket"):
+  test("SearchMarkdown.histogram renders a table with a bar per non-empty bucket"):
     val h = TimeHistogram(-1600, -1200, 100, Aggregate.histogram(List(row(-1250, -1250)), -1600, -1200, 100))
-    val md = Markdown.histogram(h, "sources")
+    val md = SearchMarkdown.histogram(h, "sources")
     assert(md.contains("| period | sources | |"), md)
     // every table row must keep its leading pipe (a stripMargin here would silently eat them)
     assert(md.linesIterator.filter(_.contains("BCE–")).forall(_.startsWith("| ")), md)
     assert(md.contains("| 1300 BCE–1201 BCE | 1 | █"), md)
     assert(md.contains("1 non-empty bucket(s); each source is counted"), md)
 
-  test("Markdown.histogram survives an all-empty histogram"):
+  test("SearchMarkdown.histogram survives an all-empty histogram"):
     val md =
-      Markdown.histogram(TimeHistogram(-1600, -1200, 100, Aggregate.histogram(Nil, -1600, -1200, 100)), "sources")
+      SearchMarkdown.histogram(TimeHistogram(-1600, -1200, 100, Aggregate.histogram(Nil, -1600, -1200, 100)), "sources")
     assert(md.contains("0 non-empty bucket(s)"), md)
 
   // ── unbounded windows and Long overflow ──────────────────────────────────────────────────────

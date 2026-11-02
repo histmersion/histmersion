@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.api.media.assets.MediaMarkdown
+
 import com.histmersion.domain.media.imports.ImportFixtures
 import com.histmersion.server.MediaWiring
 
@@ -215,7 +217,7 @@ class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
         )
         assertEquals(item.credit, Some("Zqmc work 9001, The Art Institute of Chicago, CC0"))
         assertEquals(item.targets.flatMap(_.basis), basis.toList)
-        assert(Markdown.mediaItem(item).contains("matched by place_of_origin = Zqmcenai"))
+        assert(MediaMarkdown.mediaItem(item).contains("matched by place_of_origin = Zqmcenai"))
         val found = connect(ds)(sql"""SELECT found FROM media_checks WHERE provider = ${MediaProvider.ArtInstitute}
               AND target_id = 'zqmc_site'""".query[Int].run().headOption)
         assertEquals(found, Some(1))

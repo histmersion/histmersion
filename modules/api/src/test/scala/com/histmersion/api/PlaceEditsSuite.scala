@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.api.catalogue.places.PlacesMarkdown
+
 import io.circe.parser.parse
 import com.histmersion.values.PlaceKind
 
@@ -94,16 +96,18 @@ class PlaceEditsSuite extends munit.FunSuite:
   test("the Markdown of an edit says what changed and that it survives a re-seed"):
     val added = PlaceNameChanged("ne_lake_1", "Sea of Galilee", "Lake Kinneret", "en", added = true, changed = true)
     assertEquals(
-      Markdown.placeNameChanged(added),
+      PlacesMarkdown.placeNameChanged(added),
       "added the name **Lake Kinneret** (en) to **Sea of Galilee** `ne_lake_1` — names added by hand survive every re-seed"
     )
-    assert(Markdown.placeNameChanged(added.copy(changed = false)).contains("was already a name added by hand"))
-    assert(Markdown.placeNameChanged(added.copy(wasImported = true)).contains("(a name the seed gives)"))
+    assert(PlacesMarkdown.placeNameChanged(added.copy(changed = false)).contains("was already a name added by hand"))
+    assert(PlacesMarkdown.placeNameChanged(added.copy(wasImported = true)).contains("(a name the seed gives)"))
     assert(
-      Markdown.placeNameChanged(added.copy(added = false)).startsWith("removed the name **Lake Kinneret** (en) from")
+      PlacesMarkdown
+        .placeNameChanged(added.copy(added = false))
+        .startsWith("removed the name **Lake Kinneret** (en) from")
     )
-    assertEquals(Markdown.manualPlaceNames(Nil), "_No names added by hand._")
-    assert(Markdown.manualPlaceNames(List(ManualPlaceName("p", "P", "N", ""))).contains("- **N** → P `p`"))
+    assertEquals(PlacesMarkdown.manualPlaceNames(Nil), "_No names added by hand._")
+    assert(PlacesMarkdown.manualPlaceNames(List(ManualPlaceName("p", "P", "N", ""))).contains("- **N** → P `p`"))
 
   // ── a person's kind and period for a place (V080) ───────────────────────────────────────────────
 
@@ -159,19 +163,21 @@ class PlaceEditsSuite extends munit.FunSuite:
       0
     )
     assertEquals(
-      Markdown.placeOverrideChanged(set),
+      PlacesMarkdown.placeOverrideChanged(set),
       "set **Regio XII (Piscina Publica)** `pleiades_886355306`: kind site → region, period undated — kept by every " +
         "re-seed and re-import\n\nfindings matched again: 59 → 0"
     )
-    assert(Markdown.placeOverrideChanged(set.copy(unlocated = 2)).endsWith("; **2** of them now have no place at all"))
     assert(
-      Markdown
+      PlacesMarkdown.placeOverrideChanged(set.copy(unlocated = 2)).endsWith("; **2** of them now have no place at all")
+    )
+    assert(
+      PlacesMarkdown
         .placeOverrideChanged(set.copy(reset = true, kindBefore = "region", kindAfter = "site"))
         .startsWith(
           "reset **Regio XII (Piscina Publica)** `pleiades_886355306` to what its source says: kind region → site"
         )
     )
-    assertEquals(Markdown.placeOverrides(Nil), "_No place has a kind, period or point set by hand._")
+    assertEquals(PlacesMarkdown.placeOverrides(Nil), "_No place has a kind, period or point set by hand._")
     val row = PlaceOverride(
       "pleiades_886355306",
       "Regio XII (Piscina Publica)",
@@ -186,7 +192,7 @@ class PlaceEditsSuite extends munit.FunSuite:
       "2026-10-09T16:00:00Z"
     )
     assertEquals(
-      Markdown.placeOverrides(List(row)),
+      PlacesMarkdown.placeOverrides(List(row)),
       "1 place(s) with a kind, period or point set by hand:\n\n- **Regio XII (Piscina Publica)** `pleiades_886355306`: " +
         "region, from 7 BCE _(the source says: site, undated)_ — one of the 14 regiones"
     )
@@ -267,7 +273,7 @@ class PlaceEditsSuite extends munit.FunSuite:
       Some(38.5),
       Some(57.5)
     )
-    val md = Markdown.placeOverrideChanged(moved)
+    val md = PlacesMarkdown.placeOverrideChanged(moved)
     assert(
       md.startsWith(
         "set **Parthyene/Parthia** `pleiades_952097`: kind region, period 900 BCE–300 CE, " +
@@ -279,7 +285,9 @@ class PlaceEditsSuite extends munit.FunSuite:
     val km = md.substring(md.indexOf("E (") + 3, md.indexOf(" km)")).toInt
     assert(km > 1200 && km < 1400, s"Ctesiphon to the grid square is about 1 300 km, not $km")
     assert(
-      !Markdown.placeOverrideChanged(moved.copy(latAfter = Some(33.09361), lonAfter = Some(44.58083))).contains("→ 33"),
+      !PlacesMarkdown
+        .placeOverrideChanged(moved.copy(latAfter = Some(33.09361), lonAfter = Some(44.58083)))
+        .contains("→ 33"),
       "an unmoved point is stated once"
     )
     val row = PlaceOverride(
@@ -300,7 +308,7 @@ class PlaceEditsSuite extends munit.FunSuite:
       Some(44.58083)
     )
     assertEquals(
-      Markdown.placeOverrides(List(row)),
+      PlacesMarkdown.placeOverrides(List(row)),
       "1 place(s) with a kind, period or point set by hand:\n\n- **Parthyene/Parthia** `pleiades_952097`: " +
         "point 38.5000 N 57.5000 E _(the source says: region, 900 BCE–300 CE, point 33.0936 N 44.5808 E)_ — Pleiades reprPoint"
     )

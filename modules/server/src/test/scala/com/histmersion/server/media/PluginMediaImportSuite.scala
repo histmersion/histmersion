@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.api.media.assets.MediaMarkdown
+
 import com.histmersion.domain.media.assets.AssetFixtures
 import com.histmersion.server.MediaWiring
 
@@ -256,7 +258,9 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
         assertEquals(ps.map(_.name).last, Collection)
         assert(ps.find(_.name == "met").exists(p => p.builtin && p.plugin == "media-met"), ps.toString)
         assert(
-          Markdown.mediaProviders(ps).contains(s"**`$Collection`** — Zq portal objects (places; plugin `zq-plugin`")
+          MediaMarkdown
+            .mediaProviders(ps)
+            .contains(s"**`$Collection`** — Zq portal objects (places; plugin `zq-plugin`")
         )
         // the about report lists the plugin and what it registered
         val about = client.send(

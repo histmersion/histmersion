@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.api.catalogue.evidence.AttestationsMarkdown
+
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.*
@@ -17,13 +19,13 @@ object AttestationsCmd:
     )
       .mapN { (ck, tt, ti, limit, offset) => (c: Client) =>
         c.listAttestations(Api.AttestationQuery(ck, tt, ti, limit, offset))
-          .map(r => println(Markdown.attestationList(r)))
+          .map(r => println(AttestationsMarkdown.attestationList(r)))
       }
   }
 
   private val showCmd = Opts.subcommand("show", "One attestation by id") {
     Opts.argument[Long]("id").map { id => (c: Client) =>
-      c.getAttestation(id).map(a => println(Markdown.attestation(a)))
+      c.getAttestation(id).map(a => println(AttestationsMarkdown.attestation(a)))
     }
   }
 
@@ -39,7 +41,7 @@ object AttestationsCmd:
     )
       .mapN { (ck, tt, ti, quote, page, chunk, note) => (c: Client) =>
         c.createAttestation(AttestationPut(ck, tt, ti, quote = quote, page = page, chunkOrd = chunk, note = note))
-          .map(a => println(Markdown.attestation(a)))
+          .map(a => println(AttestationsMarkdown.attestation(a)))
       }
   }
 

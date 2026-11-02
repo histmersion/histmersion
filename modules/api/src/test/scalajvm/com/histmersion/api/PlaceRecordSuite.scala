@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.api.catalogue.places.PlacesMarkdown
+
 /** What a place's own record says beyond its card (where its dates come from, its heritage designations, the registers
   * that list it), in words and in the place's Markdown.
   */
@@ -25,9 +27,9 @@ class PlaceRecordSuite extends munit.FunSuite:
       List(PlaceDesignation("Q1", Some("listed monument"), Some("1922"), None)),
       List(PlaceRegister("P2186", "GR-1"))
     )
-    val md = Markdown.place(PlaceDetail(p, None, Nil, Nil, 0, None, record = rec))
+    val md = PlacesMarkdown.place(PlaceDetail(p, None, Nil, Nil, 0, None, record = rec))
     assert(md.contains("**Dates from:** Wikidata: its start and end time"), md)
     assert(md.contains("- listed monument `Q1` (from 1922)"), md)
     assert(md.contains("- Wiki Loves Monuments: `GR-1`"), md)
-    assert(!Markdown.place(PlaceDetail(p, None, Nil, Nil, 0, None)).contains("Heritage"))
+    assert(!PlacesMarkdown.place(PlaceDetail(p, None, Nil, Nil, 0, None)).contains("Heritage"))
     assert(PlaceRecord().isEmpty)

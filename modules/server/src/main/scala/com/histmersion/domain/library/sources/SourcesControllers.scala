@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.sources
 
+import com.histmersion.api.library.sources.SourcesMarkdown
+
 import com.histmersion.api.*
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.library.ingest.SeedImport
@@ -246,7 +248,7 @@ final class SourcesControllers(
               s.summary.map(x => s"\n\n${x.trim}").getOrElse("")
 
           case Some(SourceSection.Findings) =>
-            Markdown.sourceFindingsOnly(sw.findings.toVector)
+            SourcesMarkdown.sourceFindingsOnly(sw.findings.toVector)
 
           case Some(SourceSection.Notes) =>
             sw.source.notes
@@ -259,19 +261,19 @@ final class SourcesControllers(
             val ft = fullText || offset.isDefined || heading.isDefined
             val md = if ft && (offset.isDefined || chars.isDefined) then
               val bodyText = bodySlice(citekey, heading, offset, chars)
-              Markdown.source(sw.source, sw.findings.toVector, false) + s"\n\n---\n\n$bodyText"
-            else Markdown.source(sw.source, sw.findings.toVector, ft)
+              SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + s"\n\n---\n\n$bodyText"
+            else SourcesMarkdown.source(sw.source, sw.findings.toVector, ft)
             AssetLinks.toAbsolute(md + mentions(citekey), citekey, publicUrl)
 
           case Some(_) =>
-            Markdown.source(sw.source, sw.findings.toVector, false)
+            SourcesMarkdown.source(sw.source, sw.findings.toVector, false)
 
           case None =>
             val md =
               if fullText && (offset.isDefined || chars.isDefined) then
                 val bodyText = bodySlice(citekey, heading, offset, chars)
-                Markdown.source(sw.source, sw.findings.toVector, false) + s"\n\n---\n\n$bodyText"
-              else Markdown.source(sw.source, sw.findings.toVector, fullText)
+                SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + s"\n\n---\n\n$bodyText"
+              else SourcesMarkdown.source(sw.source, sw.findings.toVector, fullText)
             AssetLinks.toAbsolute(md + mentions(citekey), citekey, publicUrl)
       }
 

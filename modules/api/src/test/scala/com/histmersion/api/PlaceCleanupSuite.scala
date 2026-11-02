@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.api.catalogue.places.PlacesMarkdown
+
 import com.histmersion.values.{LocationPrecision, PlaceKind}
 
 /** The point-only seed regions (2026-10-09): which points are only an atlas grid square's centre. */
@@ -44,12 +46,12 @@ class PlaceCleanupSuite extends munit.FunSuite:
       None,
       locationPrecision = precision
     )
-    val thess = Markdown.place(detail(PlaceKind.Polity, LocationPrecision.GridCell))
+    val thess = PlacesMarkdown.place(detail(PlaceKind.Polity, LocationPrecision.GridCell))
     assert(thess.contains(s"**Shape:** ${PlaceShape.NoBoundaryNote}"), thess)
     assert(thess.contains("**Location:** approximate (atlas grid square)"), thess)
     assertEquals(
       detail(PlaceKind.Polity, LocationPrecision.GridCell).shapeNotes,
       List(PlaceShape.NoBoundaryNote, "location: approximate (atlas grid square)")
     )
-    val ubii = Markdown.place(detail(PlaceKind.People, LocationPrecision.Stated))
+    val ubii = PlacesMarkdown.place(detail(PlaceKind.People, LocationPrecision.Stated))
     assert(ubii.contains(s"**Shape:** ${PlaceShape.PeopleNote}") && !ubii.contains("**Location:**"), ubii)

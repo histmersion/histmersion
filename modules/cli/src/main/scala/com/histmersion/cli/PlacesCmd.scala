@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.api.catalogue.places.PlacesMarkdown
+
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.*
@@ -29,7 +31,7 @@ object PlacesCmd:
     Opts.option[Long]("as-of", "Signed year the gazetteer is read at (BCE negative, e.g. -1400)").orNone
 
   private def show(rows: List[PlaceHit], asOf: Option[Long]): Unit =
-    println(Markdown.places(rows.toVector, asOf))
+    println(PlacesMarkdown.places(rows.toVector, asOf))
 
   private val search = Opts.subcommand("search", "Find places by name; the `id` it prints is what `--place` wants") {
     (Opts.argument[String]("query").orNone, asOfOpt, Opts.option[Int]("limit", "Max results").orNone)
@@ -49,7 +51,7 @@ object PlacesCmd:
         for
           d <- c.place(id, asOf)
           tree <- if noTree then Right(Nil) else c.placeTree(id, asOf, depth)
-        yield println(Markdown.place(d, tree.toVector))
+        yield println(PlacesMarkdown.place(d, tree.toVector))
       }
   }
 
@@ -120,7 +122,7 @@ object PlacesCmd:
     )
       .mapN { (file, kind, batch, dataset) => (c: Client) =>
         importFile(c, Path.of(file), kind, batch.getOrElse(defaultBatch), dataset)
-          .map(r => println(Markdown.placeImport(r)))
+          .map(r => println(PlacesMarkdown.placeImport(r)))
       }
   }
 
@@ -194,7 +196,7 @@ object PlacesCmd:
                 fs.foldLeft[Either[CliError, List[(Path, Option[String])]]](Right(Nil)) { case (acc, (f, kind)) =>
                   acc.flatMap { retry =>
                     importFile(c, f, kind, n, Dataset.Seed).map { r =>
-                      println(s"$label${d.relativize(f)}: ${Markdown.placeImport(r)}")
+                      println(s"$label${d.relativize(f)}: ${PlacesMarkdown.placeImport(r)}")
                       if r.failed.isEmpty then retry else retry :+ (f -> kind)
                     }
                   }
@@ -206,13 +208,13 @@ object PlacesCmd:
                   else pass(retry, "re-resolving parents: ")
                 _ <-
                   if noRebuild then Right(())
-                  else c.rebuildPlaces.map(r => println(Markdown.placeRebuild(r)))
+                  else c.rebuildPlaces.map(r => println(PlacesMarkdown.placeRebuild(r)))
               yield ()
         }
     }
 
   private val rebuild = Opts.subcommand("rebuild", "Re-materialise which findings fall in which places") {
-    Opts.unit.map(_ => (c: Client) => c.rebuildPlaces.map(r => println(Markdown.placeRebuild(r))))
+    Opts.unit.map(_ => (c: Client) => c.rebuildPlaces.map(r => println(PlacesMarkdown.placeRebuild(r))))
   }
 
   private val noWait = Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse
@@ -252,7 +254,7 @@ object PlacesCmd:
         c.fetchExternalPlaces(source, dryRun).flatMap { r =>
           r.job match
             case Some(id) => started(c, id, nw)
-            case None     => Right(println(s"${if dryRun then "[dry run] " else ""}${Markdown.placeImport(r)}"))
+            case None     => Right(println(s"${if dryRun then "[dry run] " else ""}${PlacesMarkdown.placeImport(r)}"))
         }
       }
   }
@@ -263,7 +265,7 @@ object PlacesCmd:
     "sources",
     "The external gazetteer sources: the pinned GeoNames and Wikidata extracts, the LPF files in the drop folder, and what was imported"
   ) {
-    Opts.unit.map(_ => (c: Client) => c.placeSources.map(rows => println(Markdown.gazetteerSources(rows))))
+    Opts.unit.map(_ => (c: Client) => c.placeSources.map(rows => println(PlacesMarkdown.gazetteerSources(rows))))
   }
 
   private val load = Opts.subcommand(
@@ -297,7 +299,7 @@ object PlacesCmd:
     "Give a place a further name (kept by every re-seed): `places name add pleiades_678430 'Lake Kinneret' --lang en`"
   ) {
     (Opts.argument[String]("place-id"), Opts.argument[String]("name"), langOpt).mapN { (id, name, lang) => (c: Client) =>
-      c.addPlaceName(id, PlaceNameAdd(name, lang)).map(r => println(Markdown.placeNameChanged(r)))
+      c.addPlaceName(id, PlaceNameAdd(name, lang)).map(r => println(PlacesMarkdown.placeNameChanged(r)))
     }
   }
 
@@ -305,7 +307,7 @@ object PlacesCmd:
     Opts.subcommand("rm", "Remove a name added by hand (a name the seed gives cannot be removed)") {
       (Opts.argument[String]("place-id"), Opts.argument[String]("name"), langOpt).mapN {
         (id, name, lang) => (c: Client) =>
-          c.removePlaceName(id, PlaceNameRemove(name, lang)).map(r => println(Markdown.placeNameChanged(r)))
+          c.removePlaceName(id, PlaceNameRemove(name, lang)).map(r => println(PlacesMarkdown.placeNameChanged(r)))
       }
     }
 
@@ -319,7 +321,7 @@ object PlacesCmd:
     )
       .mapN { (place, csv) => (c: Client) =>
         c.placeNames(place)
-          .map(rows => print(if csv then PlaceEdits.csv(rows) else Markdown.manualPlaceNames(rows) + "\n"))
+          .map(rows => print(if csv then PlaceEdits.csv(rows) else PlacesMarkdown.manualPlaceNames(rows) + "\n"))
       }
   }
 
@@ -348,7 +350,7 @@ object PlacesCmd:
     )
       .mapN { (label, kind, lon, lat, source, id, names, lang, from, to) => (c: Client) =>
         c.addPlace(PlaceAdd(label, kind, lon, lat, source, id, names, lang, from, to))
-          .map(p => println(Markdown.placeAdded(p)))
+          .map(p => println(PlacesMarkdown.placeAdded(p)))
       }
   }
 
@@ -380,7 +382,7 @@ object PlacesCmd:
     )
       .mapN { (id, kind, from, to, point, reason, reset) => (c: Client) =>
         c.setPlaceOverride(id, PlaceOverrideSet(kind, from, to, reason, reset, point.map(_._1), point.map(_._2)))
-          .map(r => println(Markdown.placeOverrideChanged(r)))
+          .map(r => println(PlacesMarkdown.placeOverrideChanged(r)))
       }
   }
 
@@ -394,7 +396,7 @@ object PlacesCmd:
       Opts.option[String]("reason", "Why: the evidence the decision rests on").orNone
     )
       .mapN { (id, into, reason) => (c: Client) =>
-        c.mergePlace(id, PlaceMergeIn(into, reason)).map(r => println(Markdown.placeGone(r)))
+        c.mergePlace(id, PlaceMergeIn(into, reason)).map(r => println(PlacesMarkdown.placeGone(r)))
       }
   }
 
@@ -404,7 +406,7 @@ object PlacesCmd:
   ) {
     (Opts.argument[String]("place-id"), Opts.option[String]("reason", "Why: the evidence the decision rests on").orNone)
       .mapN { (id, reason) => (c: Client) =>
-        c.removePlace(id, PlaceRemoveIn(reason)).map(r => println(Markdown.placeGone(r)))
+        c.removePlace(id, PlaceRemoveIn(reason)).map(r => println(PlacesMarkdown.placeGone(r)))
       }
   }
 
@@ -413,7 +415,7 @@ object PlacesCmd:
     "The kinds, periods and points set by hand (`places set`), with what each source says"
   ) {
     Opts.option[String]("place", "Only this place's (an id)").orNone.map { place => (c: Client) =>
-      c.placeOverrides(place).map(rows => println(Markdown.placeOverrides(rows)))
+      c.placeOverrides(place).map(rows => println(PlacesMarkdown.placeOverrides(rows)))
     }
   }
 

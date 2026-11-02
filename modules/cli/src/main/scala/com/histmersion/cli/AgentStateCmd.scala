@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.api.automation.agents.AgentStateMarkdown
+
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.*
@@ -9,12 +11,14 @@ import com.histmersion.api.GoalPlans.*
 object AgentStateCmd:
 
   private val list = Opts.subcommand("list", "List all agent state keys") {
-    Opts.unit.map(_ => (c: Client) => c.agentStateList().map(entries => println(Markdown.agentStateList(entries))))
+    Opts.unit.map(_ =>
+      (c: Client) => c.agentStateList().map(entries => println(AgentStateMarkdown.agentStateList(entries)))
+    )
   }
 
   private val get = Opts.subcommand("get", "Get one agent state entry") {
     Opts.argument[String]("key").map { key => (c: Client) =>
-      c.agentStateGet(key).map(e => println(Markdown.agentState(e)))
+      c.agentStateGet(key).map(e => println(AgentStateMarkdown.agentState(e)))
     }
   }
 
@@ -23,7 +27,7 @@ object AgentStateCmd:
       .mapN { (key, valueStr) => (c: Client) =>
         io.circe.parser.parse(valueStr) match
           case Right(_) =>
-            c.agentStateSet(key, AgentStatePut(valueStr)).map(e => println(Markdown.agentState(e)))
+            c.agentStateSet(key, AgentStatePut(valueStr)).map(e => println(AgentStateMarkdown.agentState(e)))
           case Left(err) =>
             Left(CliError(s"Invalid JSON: ${err.getMessage}", exitCode = ExitCode.Usage))
       }

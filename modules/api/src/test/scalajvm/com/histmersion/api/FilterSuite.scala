@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.api.library.search.SearchMarkdown
+
 import com.histmersion.values.SourceStatus
 
 /** The `Filter` contract (plan §1.0): the flat wire shape, its interpretation, and the Markdown that shows a human/LLM
@@ -136,7 +138,7 @@ class FilterSuite extends munit.FunSuite:
   )
 
   test("searchResults renders a matches: sub-list with claim, place, period and why"):
-    val md = Markdown.searchResults(SearchResult(1, List(hit)))
+    val md = SearchMarkdown.searchResults(SearchResult(1, List(hit)))
     assert(md.startsWith("### 1 source(s)"), md)
     assert(md.contains("- **cline2014_collapse** — 1177 BC"), md)
     assert(md.contains("why: tag: sea-peoples"), md)
@@ -145,20 +147,20 @@ class FilterSuite extends munit.FunSuite:
     assert(md.contains("Ugarit (35.6, 35.8) · 1190 BCE–1185 BCE · period, bbox"), md)
 
   test("searchResults shows the page size against the total when paging"):
-    assert(Markdown.searchResults(SearchResult(42, List(hit))).startsWith("### 1 of 42 source(s)"))
-    assertEquals(Markdown.searchResults(SearchResult(0, Nil)), "_No matching sources._")
+    assert(SearchMarkdown.searchResults(SearchResult(42, List(hit))).startsWith("### 1 of 42 source(s)"))
+    assertEquals(SearchMarkdown.searchResults(SearchResult(0, Nil)), "_No matching sources._")
 
   test("a hit with no matched findings renders without a matches: list"):
-    val md = Markdown.searchResults(SearchResult(1, List(hit.copy(matched = Nil, why = Nil))))
+    val md = SearchMarkdown.searchResults(SearchResult(1, List(hit.copy(matched = Nil, why = Nil))))
     assert(!md.contains("matches:"), md)
     assert(!md.contains("why:"), md)
 
   test("facets render value (count)"):
     assertEquals(
-      Markdown.facets("tags", Vector(Facet("sea-peoples", 12), Facet("steppe", 3))),
+      SearchMarkdown.facets("tags", Vector(Facet("sea-peoples", 12), Facet("steppe", 3))),
       "### tags (2)\n\n- sea-peoples (12)\n- steppe (3)"
     )
-    assertEquals(Markdown.facets("tags", Vector.empty), "_No tags in the current filter._")
+    assertEquals(SearchMarkdown.facets("tags", Vector.empty), "_No tags in the current filter._")
 
   test("periodLabel is shared by the renderers and the SQL layer's explanations"):
     assertEquals(Markdown.periodLabel(Some(-1300), Some(-1100)), "1300 BCE–1100 BCE")
