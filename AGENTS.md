@@ -15,31 +15,44 @@ The product plan and its waves: `docs/plan.md`. What it is: `README.md`; the doc
 ## Module boundaries (the most important rule)
 
 ```
-values ── the newtypes every layer speaks of: Citekey, Year, Period, Doi, WikidataId, LatLon.   Iron ONLY
-api   ── the CONTRACT on the wire (JVM + JS): wire records, Tapir endpoint defs, circe codecs + schemas,
-         Markdown, and the helpers they need.   NO database code, NO side effects.   depends on values ONLY
+values ── the domain's shared newtypes and vocabularies, in their owners' packages: the kernel `com.histmersion`
+         (Year, Period, Latitude, Longitude, LatLon, Sha256, ByteCount, PageSize, WireEnumValues, …) and the
+         domains' namespaces (`domain.library.Source.Status`, `domain.automation.Approval.Kind`, `util.jobs.Job.Id`,
+         …). Cross-built while the api still speaks these types; the api's own unrefined copies replace them
+         there. NO package `com.histmersion.values`.                                         Iron ONLY
+api   ── the CONTRACT on the wire (JVM + JS): wire records in `api.<domain>` (automation, catalogue, library,
+         media, research, personal) and `api.<area>` (aliases, backup, basemap, checks, exchange, instance,
+         jobs, json, maintenance, ocr, plugins, settings, text, ui, views), an entity's parts on its companion
+         (`Source.Patch`, `Article.View`); what every layer shares at the root (`Api`, `Markdown`, `Wording`,
+         `Write`, the vocabulary codecs). Tapir endpoint defs, circe codecs + schemas, Markdown.
+         NO database code, NO side effects, NO refined constraint (the server validates).   depends on values ONLY
 config ── AppConfig and its readers (sconfig, Kindlings), reference.conf.   JVM only.   depends on values ONLY
 files ── the local files client and server exchange or keep: the `.hmx` bundle's tar and canonical JSON and
          the merge resolution file (`util.data.exchange`), the Markdown mirror's layout and frontmatter
-         (`util.data.mirror`) and the source and article notes (package `files`), the plugin set.
+         (`util.data.mirror`), the source and article notes (`domain.library.sources.SourceNote`,
+         `domain.research.articles.ArticleNote`), the place seed, the plugin set (`util.plugins.PluginKit`).
          JVM only (snakeyaml).                                     depends on api ONLY
 core  ── the DOMAIN (package `domain`): the logic server and db run on. JVM only.
          NO database code, NO side effects.   depends on values, api, files — never config (its tests only)
-db    ── the STORE: Magnum repos, Flyway migrations.                          depends on config, core
+db    ── the STORE: the database primitives (`util.database`: Db, Sql, Param, Codecs, Migrate, …), Flyway
+         migrations, and the features' repositories in their packages.      depends on config, core
 server─ MCP + REST + web UI; the ONLY database client.  depends on core, db, plugin-api, plugin-host (+ plugin-vaults;
          plugins/fetchers, plugins/events, plugins/media, plugins/gazetteers, plugins/ai-http and plugins/calibre
          at run time only)
          (and through them on values, api and config)
 cli   ── a PURE HTTP CLIENT of the server.         depends on api, config and files — never core, never db
 web   ── the Scala.js page (Laminar) over the sttp client derived from api's endpoints.   depends on api ONLY
-plugin-api ── the plugin SPI (Plugin, PluginContext, Secret, SecretVault) and its own newtypes (Year, Doi, …):
+plugin-api ── the plugin SPI (Plugin, Plugin.Context, Secret, Secret.Vault) and its own newtypes (Year, Doi, …):
               sconfig + kindlings + iron ONLY
 plugin-host ── the host side of the SPI without server or DB: discovery, config, registration, the
               acquisition client, the chain, the first-party settings table, how plugin
               media/catalogues/AI are read.            core, config, upstreams + plugin-api
 upstreams ── the clients and parsers of the upstream services the host and first-party plugins share
               (OpenAlex/Crossref, archive.org, CORE, PMC, Europe PMC, landing pages, JATS, catalogue
-              datings); registers nothing.            depends on plugin-api ONLY (+ circe, sttp core)
+              datings), one package per service (`upstreams.openalex`, `.archiveorg`, `.core`, `.pmc`,
+              `.europepmc`, `.wikidata`, `.jats`, `.landing`, `.dating`, `.media`, `.unpaywall`) and the shared
+              mechanisms (`.parse`, `.http`, `.identifiers`, `.settings`); the host's own records of them in
+              `domain.library.acquisition`; registers nothing.   depends on plugin-api ONLY (+ circe, sttp core)
 plugins/fetchers ─ the first-party acquisition plugins (archive-org, oa-unpaywall, oa-core, oa-openalex,
               oa-landing, pmc, arxiv).                           upstreams (+ plugin-testkit for tests)
 plugins/events ─ the first-party event catalogues (events-gvp, events-noaa, events-wikidata).
@@ -124,10 +137,11 @@ settings and counters, backups, restore, vacuum, reindex, the seed) are `server.
 
 Adding an operation to a feature in its own package:
 
-1. `values` — a newtype for every new kind of value (rule 1). Its JSON, schema, column, setting and CLI argument
+1. The owner's package — a newtype for every new kind of value (rule 1), on its entity's companion when it is one
+   of the entity's properties (`Approval.Kind`). Its JSON, schema, column, setting and CLI argument
    come from the generic instances (`util.json.NewtypeCodecs`, `util.database.NewtypeColumns`,
    `config.NewtypeReaders`, `cli.NewtypeArguments`); add a round-trip test.
-2. `api.<domain>.<feature>` — the input and output records, one per file, `derives KindlingsCodecAsObject,
+2. `api.<domain>` — the input and output records, an entity's on the entity's companion (`Source.Patch`), `derives KindlingsCodecAsObject,
    KindlingsSchema`; the Tapir endpoint in the feature's endpoints object, added to `Api.all` in its place (route
    matching and `tools/list` depend on the order); how the output renders as Markdown. Every surface returns
    Markdown.
@@ -196,6 +210,13 @@ def neighbours(citekey: Citekey, depth: Int): List[Citekey]   // not (citekey: S
 
 ### 2. Parse, don't validate
 
+_Check: `ContractsSuite` rule `client-refined` (a refined, not `Pure`, constraint in api, web, cli or plugin-api)._
+
+Only the domain checks. A client's newtypes (api, web, cli, plugin-api) are opaque over `Pure`: distinct types that
+never judge validity, so a server that changes a rule changes it for every client at once. The server checks once,
+where an api value becomes a domain value (a route, an MCP tool, a CLI argument the server reads), and answers 400 with
+the reason; a hint a client shows comes from the server at run time.
+
 A type that needs checking can only be constructed valid: `final case class Foo private (…)`, with a
 smart constructor on the companion that returns `Either`. Scala 3 makes `apply` and `copy` private with
 the constructor, so all code goes through it, and nothing downstream checks again. A case class built
@@ -213,7 +234,9 @@ final case class Person(name: PersonName, born: Year)        // no invariant: pu
 
 ### 3. Separate models per layer
 
-_Check: `ContractsSuite` rule `concept` (one top-level type name defined twice within one layer)._
+_Check: `ContractsSuite` rules `concept` (one top-level type name defined twice within one layer) and `layer` (the
+client — api, web — naming a package outside `com.histmersion.api` and the web's own; a domain package naming the
+api outside a boundary file: routes, endpoints, tools, transformers, controllers)._
 
 API, database and domain may each have their own package and model, in the representation that is
 natural there and works with the library that serves it (Kindlings derivation for codecs and schemas,
@@ -268,6 +291,13 @@ source.transformInto[SourceView]              // field by field, no constraint r
 ```
 
 ### 5. Self-explanatory code
+
+_Check: `ContractsSuite` rule `prefix` (a type `<Entity><Property>` beside a type `<Entity>` in the same layer and
+package; a component of the entity — `…Service`, `…Routes`, `…Markdown`, `…Html`, … — is no property)._
+
+A property of an entity is a member of the entity's companion, not a prefixed name: `Approval.Kind`, `Source.Patch`,
+`Plugin.Context`. Where no record of the entity exists in that package, an object of its name is the namespace
+(`domain.automation.Approval`).
 
 What code does must be unambiguous from the names of its types (including their packages), methods,
 parameters and variables. A comment that describes how a piece of code works is, more often than not,
@@ -337,13 +367,15 @@ one file make the incremental compiler recompile every use site of all of them w
 - Types shared across the whole application (the shared kernel: `Caller`, `Licence`, …):
   `com.histmersion.domain`.
 - Each domain and its features: `com.histmersion.domain.<domain>.<feature>` (the pure part in `core`, services,
-  repositories and controllers in `server`), with `api.<domain>.<feature>` and `config.<domain>` beside them.
+  repositories and controllers in `server`), with `api.<domain>` and `config.<domain>` beside them.
 - Supporting areas (mechanisms with no research meaning): `com.histmersion.util.<area>`, e.g. `util.database`,
   `util.json`, `util.storage`.
 - What is shared only inside a (sub)domain is package-private, not public. A service and its repository
   live in the same package, and the repository is invisible outside it.
 - Subdomains follow functionality, not the shape of endpoints, MCP tools or CLI commands: one endpoint may
   use several subdomains.
+- No layer buckets: no type in `com.histmersion.db`, `com.histmersion.files`, `com.histmersion.values` or the flat
+  `com.histmersion.upstreams` (`ContractsSuite` rule `bucket`).
 - The `db` module holds database primitives only; migrations and repositories belong to the feature that
   owns the data.
 - Shared API types and API-specific types live apart.
@@ -482,11 +514,12 @@ without a same-named type is one of: a repository, a group of endpoints, CLI com
 givens, a codec of an external format, or a facade that names a composition. Entry points are `@main def`s.
 
 ```scala
-// no: object ApprovalModes { def configured(raw: String): ApprovalMode = … }
-enum ApprovalMode:
-  case Manual, Auto
-object ApprovalMode:
-  def configured(raw: String): ApprovalMode = parse(raw).getOrElse(Manual)
+// no: object ApprovalModes { def configured(raw: String): Approval.Mode = … }
+object Approval:
+  enum Mode:
+    case Manual, Auto
+  object Mode:
+    def configured(raw: String): Mode = parse(raw).getOrElse(Manual)
 
 @main def histmersionServer(args: String*): Unit = …          // not object Main { def main(…) }
 ```
