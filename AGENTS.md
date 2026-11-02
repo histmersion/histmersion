@@ -580,9 +580,11 @@ adjusted with media queries and swapped as a theme without touching Scala.
 `modules/db/src/main/resources/db/migration/V###__short_name.sql`, plain SQL, sequential.
 
 - The server runs `flyway.migrate()` at startup **before binding the port** and exits 3 on failure.
-- **Never edit an applied migration.** Add the next number. When an applied migration's text must
-  change anyway, list its old and new Flyway checksums in `Migrate.Replaced`, so that databases that
-  ran the old text still validate.
+- **Never edit an applied migration.** Add the next number (the next is `V110`).
+- The chain was squashed on 2026-11-02 into one migration, `V109__schema.sql` (the schema the 109 before
+  it built, from `pg_dump --schema-only`): the version keeps its number so backups and bundles keep
+  theirs. A database the old chain built has its history replaced by a baseline at 109 at start
+  (`Migrate.squashHistory`, rows untouched; one that chain had not finished is refused).
 - Flyway reads migrations through a `ResourceProvider` fed by a generated `db/migration/index.txt`
   (a `resourceGenerator` in `build.sbt`), because classpath scanning does not work under
   native-image. Dropping a new `V###__*.sql` in is enough; the index regenerates.

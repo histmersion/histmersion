@@ -199,7 +199,7 @@ class HotReloadSuite extends DbSuite:
       assertEquals(inFlight.get(30, TimeUnit.SECONDS), DbA)
       assertEquals(database(url), DbB)
       // B was migrated on the swap
-      assert(on(DbB, "SELECT count(*) FROM flyway_schema_history WHERE success") > 50)
+      assert(on(DbB, "SELECT count(*) FROM flyway_schema_history WHERE success") == 1)
 
       // the held job finishes on A — its row and its source are there, not in B
       conv.gate.countDown()

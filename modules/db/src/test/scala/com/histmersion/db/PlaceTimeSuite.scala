@@ -191,34 +191,3 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
       Set("zqtv_dated", "zqtv_evid", "zqtv_river"),
       "the place's own children follow the rule too"
     )
-
-  test("V076 dates a stored Cliopatria concept from its slices and leaves one with no dated slice alone"):
-    connect(ds):
-      val _ = sql"""INSERT INTO places (id, label, kind, period, source) VALUES
-                      ('cliopatria_zqtv_kingdom', 'zqtv kingdom', 'polity', int8range(NULL, NULL), 'Cliopatria (Seshat Databank), CC BY 4.0'),
-                      ('cliopatria_zqtv_kingdom_-900_-801', 'Zqtv Kingdom', 'polity', int8range(-900, -801, '[]'), 'Cliopatria (Seshat Databank), CC BY 4.0'),
-                      ('cliopatria_zqtv_kingdom_-700_-601', 'Zqtv Kingdom', 'polity', int8range(-700, -601, '[]'), 'Cliopatria (Seshat Databank), CC BY 4.0'),
-                      ('cliopatria_zqtv_nodates', 'zqtv nodates', 'polity', int8range(NULL, NULL), 'Cliopatria (Seshat Databank), CC BY 4.0'),
-                      ('cliopatria_zqtv_nodates_3', 'Zqtv Nodates', 'polity', int8range(NULL, NULL), 'Cliopatria (Seshat Databank), CC BY 4.0')
-                    ON CONFLICT (id) DO NOTHING""".update.run()
-      val _ = sql"""INSERT INTO place_relations (child_id, parent_id, kind, period) VALUES
-                      ('cliopatria_zqtv_kingdom_-900_-801', 'cliopatria_zqtv_kingdom', 'part_of', int8range(-900, -801, '[]')),
-                      ('cliopatria_zqtv_kingdom_-700_-601', 'cliopatria_zqtv_kingdom', 'part_of', int8range(-700, -601, '[]')),
-                      ('cliopatria_zqtv_nodates_3', 'cliopatria_zqtv_nodates', 'part_of', int8range(NULL, NULL))
-                    ON CONFLICT DO NOTHING""".update.run()
-    try
-      val migration = String(
-        getClass.getClassLoader
-          .getResourceAsStream("db/migration/V076__place_time_rule.sql")
-          .readAllBytes(),
-        java.nio.charset.StandardCharsets.UTF_8
-      )
-      connect(ds)(scala.util.Using.resource(summon[DbCon].connection.createStatement())(_.execute(migration)))
-      def span(id: String) = PlaceFixtures.get(ds, id).map(d => (d.place.periodStart, d.place.periodEnd))
-      assertEquals(span("cliopatria_zqtv_kingdom"), Some((Some(-900L), Some(-601L))))
-      assertEquals(span("cliopatria_zqtv_nodates"), Some((None, None)))
-      assert(
-        !PlaceFixtures.search(ds, Some("zqtv kingdom"), Some(-2500L), 10).exists(_.id == "cliopatria_zqtv_kingdom"),
-        "a dated concept is no longer in every time view"
-      )
-    finally connect(ds)(sql"DELETE FROM places WHERE id LIKE 'cliopatria_zqtv%'".update.run())

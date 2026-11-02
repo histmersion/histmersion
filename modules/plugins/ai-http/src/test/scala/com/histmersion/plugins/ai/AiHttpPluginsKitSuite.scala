@@ -46,7 +46,7 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
     Map("ai-anthropic" -> "anthropic", "ai-openai" -> "openai", "ai-local" -> "local").foreach { (id, name) =>
       val h = load(id, keys)
       assertEquals(h.contributions.aiProviders, List(name), id)
-      assertEquals(h.plugin.info.version, "1.0.0", id)
+      assertEquals(h.plugin.info.version, "0.1.0", id)
       assertEquals(h.requests, Nil, s"$id asked an upstream while registering")
     }
 

@@ -25,7 +25,7 @@ class GazetteerPluginsKitSuite extends munit.FunSuite:
     plugins.foreach { (id, source) =>
       val h = load(id)
       assertEquals(h.gazetteerSources, List(source), id)
-      assertEquals(h.plugin.info.version, "1.0.0", id)
+      assertEquals(h.plugin.info.version, "0.1.0", id)
       assertEquals(h.requests, Nil, s"$id asked an upstream while registering")
     }
 

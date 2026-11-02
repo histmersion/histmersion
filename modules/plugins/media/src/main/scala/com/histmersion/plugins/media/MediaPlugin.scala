@@ -10,4 +10,4 @@ trait MediaPlugin(id: String) extends Plugin:
   val info: PluginInfo = PluginInfo(id, MediaPlugin.Version, Spi.Version)
 
 object MediaPlugin:
-  val Version = "1.0.0"
+  val Version = "0.1.0"

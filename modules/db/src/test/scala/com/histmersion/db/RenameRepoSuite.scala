@@ -120,50 +120,6 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
       fks.foreach((t, n, _, del) => assertEquals(del, "c", s"$t.$n lost its ON DELETE CASCADE"))
       assertEquals(fks.count(_._1 == "edges"), 2) // src and dst
 
-  test("V027 replayed over pre-V027 data: rows are kept, and an UPDATE of the key cascades through them"):
-    val script = scala.io.Source.fromResource("db/migration/V027__citekey_rename.sql").mkString
-    val schema = "zz_v027_replay"
-    connect(ds):
-      val st = summon[DbCon].connection.createStatement()
-      try
-        st.execute(s"DROP SCHEMA IF EXISTS $schema CASCADE; CREATE SCHEMA $schema; SET search_path TO $schema, public")
-        st.execute("""CREATE TABLE sources (citekey text PRIMARY KEY);
-             CREATE TABLE findings (id text PRIMARY KEY,
-                                    citekey text NOT NULL REFERENCES sources(citekey) ON DELETE CASCADE);
-             CREATE TABLE finding_places (finding_id text NOT NULL REFERENCES findings(id) ON DELETE CASCADE,
-                                          place_id text NOT NULL);
-             CREATE TABLE assets (citekey text NOT NULL REFERENCES sources(citekey) ON DELETE CASCADE,
-                                  name text NOT NULL, PRIMARY KEY (citekey, name));
-             CREATE TABLE asset_links (citekey text NOT NULL, asset_name text NOT NULL,
-                                       FOREIGN KEY (citekey, asset_name) REFERENCES assets(citekey, name) ON DELETE CASCADE);
-             INSERT INTO sources VALUES ('a2020_x'), ('b2021_y');
-             INSERT INTO findings VALUES ('a2020_x#0', 'a2020_x'), ('b2021_y#0', 'b2021_y');
-             INSERT INTO finding_places VALUES ('a2020_x#0', 'p1');
-             INSERT INTO assets VALUES ('a2020_x', 'f.png');
-             INSERT INTO asset_links VALUES ('a2020_x', 'f.png');""")
-        st.execute(script)
-        def rows(q: String): List[String] =
-          val rs = st.executeQuery(q)
-          Iterator.continually(rs).takeWhile(_.next()).map(_.getString(1)).toList
-        assertEquals(
-          rows("SELECT id || '@' || citekey FROM findings ORDER BY id"),
-          List("a2020_x#0@a2020_x", "b2021_y#0@b2021_y")
-        )
-        st.execute("UPDATE sources SET citekey = 'a1999_x' WHERE citekey = 'a2020_x'")
-        st.execute("UPDATE findings SET id = 'a1999_x#0' WHERE id = 'a2020_x#0'")
-        assertEquals(
-          rows("SELECT id || '@' || citekey FROM findings ORDER BY id"),
-          List("a1999_x#0@a1999_x", "b2021_y#0@b2021_y")
-        )
-        assertEquals(rows("SELECT finding_id FROM finding_places"), List("a1999_x#0"))
-        assertEquals(rows("SELECT citekey FROM asset_links"), List("a1999_x"))
-        // the delete action is still CASCADE
-        st.execute("DELETE FROM sources WHERE citekey = 'a1999_x'")
-        assertEquals(rows("SELECT count(*) FROM findings"), List("1"))
-        assertEquals(rows("SELECT count(*) FROM asset_links"), List("0"))
-        assertEquals(rows("SELECT count(*) FROM source_aliases"), List("0"))
-      finally st.execute(s"RESET search_path; DROP SCHEMA IF EXISTS $schema CASCADE")
-
   test("a rename moves every table, finding id, link and parked edge, and leaves an alias"):
     // ── fixtures: the renamed source, a source citing it, one waiting for the NEW name ──
     put(source(Old, findings = 2, edges = List(Edge(Old, Other, "challenges")), notes = Some(s"Self link [[$Old]].")))

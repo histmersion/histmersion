@@ -14,7 +14,7 @@ import scala.concurrent.duration.*
   */
 object Vaults:
   /** The version these plugins report (they ship with the server, and change with it). */
-  val Version = "1.0.0"
+  val Version = "0.1.0"
 
   /** The vault's own settings, shared by all three. */
   private[vaults] def timeout(seconds: Int): FiniteDuration = seconds.max(1).seconds

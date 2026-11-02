@@ -276,29 +276,6 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
       1
     )
 
-  test("V074's repair of stored rows and the importer agree; a seed row with an open start is left alone"):
-    load("wikidata", "v1", List(Patones))
-    connect(ds):
-      // as the 2026-10-08 import stored it, and a seed row that is open on purpose
-      val _ =
-        sql"UPDATE places SET period = int8range(NULL, 1770), start_unknown = false WHERE id = $PatonesId".update.run()
-      val _ =
-        sql"""INSERT INTO places (id, label, kind, period) VALUES ('zzpt_seed_open', 'Zzpt Seed Open', 'polity', int8range(NULL, 1770))""".update
-          .run()
-    val migration = String(
-      getClass.getClassLoader.getResourceAsStream("db/migration/V074__imported_place_time.sql").readAllBytes(),
-      java.nio.charset.StandardCharsets.UTF_8
-    )
-    connect(ds)(scala.util.Using.resource(summon[DbCon].connection.createStatement())(_.execute(migration)))
-    assert(load("wikidata", "v1", List(Patones)).unchanged, "the repaired row is what the importer writes")
-    val seed = connect(ds)(
-      sql"SELECT lower_inf(period), start_unknown FROM places WHERE id = 'zzpt_seed_open'"
-        .query[(Boolean, Boolean)]
-        .run()
-        .head
-    )
-    assertEquals(seed, (true, false))
-
   // ── imported places are no part of the hierarchy and get no findings by proximity ──────────────
 
   test("a filter's scope, a place's children and the tree leave GeoNames/Wikidata places out"):

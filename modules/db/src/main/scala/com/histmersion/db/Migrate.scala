@@ -10,8 +10,8 @@ import scala.jdk.CollectionConverters.*
 
 /** Flyway schema versioning. Migrations are SQL resources under `db/migration/V###__name.sql`, enumerated by the
   * build-generated `db/migration/index.txt` (Flyway's classpath scanning does not work inside a native image; this
-  * provider works everywhere). `V001__baseline` is the original schema; an existing (pre-Flyway) database is baselined
-  * at 1.
+  * provider works everywhere). The chain was squashed into `V109__schema.sql` on 2026-11-02; a database the chain
+  * before it built is given a baseline at 109 instead ([[squashHistory]]).
   */
 object Migrate:
   private val Base = "db/migration"
@@ -47,8 +47,7 @@ object Migrate:
       .dataSource(ds)
       .locations(s"classpath:$Base")
       .resourceProvider(provider)
-      .baselineOnMigrate(true)
-      .baselineVersion("1")
+      .baselineOnMigrate(false)
       .loggers("slf4j")
       .load()
 
@@ -63,36 +62,63 @@ object Migrate:
     */
   def run(ds: DataSource): String =
     ensureRole(ds, QueryRole)
-    val _ = acceptReplacedChecksums(ds)
+    val _ = squashHistory(ds)
     retrying(MigrateAttempts)(flyway(ds).migrate())
     current(ds).getOrElse("?")
 
-  /** A migration whose text was replaced after it had run: the checksum Flyway recorded for the text it ran with, and
-    * the one it computes for the text it has now.
+  /** The version the chain was squashed at (2026-11-02): its one migration, `V109__schema.sql`, is the schema the 109
+    * migrations before it built, so the version every database, backup and bundle carries keeps its meaning.
     */
-  final private[db] case class ReplacedMigration(version: String, ranWith: Int, now: Int)
+  val SquashedAt = "109"
 
-  /** V097's text was replaced by a no-op after it had run: what it rewrote stays rewritten, and the text it ran with
-    * named a value this repository does not carry.
+  /** A database the chain before the squash built (its history starts at `001`): its history is replaced by one
+    * baseline at [[SquashedAt]], in one transaction, and nothing else is touched — the schema already is the one the
+    * squashed migration builds. A database that chain had not brought to [[SquashedAt]], or that has a failed
+    * migration, is refused: a build from before the squash brings it there first. Does nothing to a database without a
+    * history or with the squashed one. Returns whether it replaced the history.
     */
-  private[db] val Replaced: List[ReplacedMigration] = List(ReplacedMigration("097", 579586107, -983827574))
-
-  /** Move each history row that still carries a [[Replaced]] migration's old checksum to the new one, so that Flyway
-    * validates the replaced text instead of refusing to start. Touches those rows only (no other repair Flyway would
-    * make); does nothing before the history table exists or once the rows are moved. Returns how many rows it moved.
-    */
-  private[db] def acceptReplacedChecksums(ds: DataSource): Int =
+  private[db] def squashHistory(ds: DataSource): Boolean =
     val c = ds.getConnection
     try
-      if !historyExists(c) then 0
+      if !historyExists(c) then false
       else
-        val st = c.prepareStatement("UPDATE flyway_schema_history SET checksum = ? WHERE version = ? AND checksum = ?")
+        c.setAutoCommit(false)
         try
-          Replaced.map { m =>
-            st.setInt(1, m.now); st.setString(2, m.version); st.setInt(3, m.ranWith)
-            st.executeUpdate()
-          }.sum
-        finally st.close()
+          val st = c.createStatement()
+          try
+            val _ = st.execute("LOCK TABLE flyway_schema_history IN EXCLUSIVE MODE")
+            val rs = st.executeQuery(
+              """SELECT count(*) FILTER (WHERE version IN ('1', '001')),
+                |       count(*) FILTER (WHERE NOT success),
+                |       (SELECT version FROM flyway_schema_history WHERE version IS NOT NULL
+                |         ORDER BY string_to_array(version, '.')::int[] DESC LIMIT 1)
+                |FROM flyway_schema_history""".stripMargin
+            )
+            val _ = rs.next()
+            val (old, failed, top) = (rs.getInt(1), rs.getInt(2), Option(rs.getString(3)))
+            if old == 0 then { c.rollback(); false }
+            else if failed > 0 || !top.exists(_.toIntOption.contains(SquashedAt.toInt)) then
+              throw IllegalStateException(
+                s"this database is at schema ${top.getOrElse("?")} of the migration chain before the 2026-11-02 " +
+                  s"squash${if failed > 0 then s", with $failed failed migration(s)" else ""}; start it once with a " +
+                  s"build from before the squash, which brings it to $SquashedAt, then with this one"
+              )
+            else
+              val _ = st.executeUpdate("DELETE FROM flyway_schema_history")
+              val _ = st.executeUpdate(
+                s"""INSERT INTO flyway_schema_history
+                   |  (installed_rank, version, description, type, script, checksum, installed_by, execution_time, success)
+                   |VALUES (1, '$SquashedAt', '<< Flyway Baseline >>', 'BASELINE', '<< Flyway Baseline >>', NULL,
+                   |        current_user, 0, true)""".stripMargin
+              )
+              c.commit()
+              scribe.info(s"migration history before the squash replaced by a baseline at $SquashedAt")
+              true
+          finally st.close()
+        catch
+          case e: Throwable =>
+            c.rollback()
+            throw e
     finally c.close()
 
   /** The read-only login role migration V011 creates (and `QueryAccess.provision` configures). */
@@ -159,10 +185,11 @@ object Migrate:
     * build expects. Right = the current version, Left = why validation failed.
     */
   def validate(ds: DataSource): Either[String, String] =
-    val _ = acceptReplacedChecksums(ds)
-    val r = flyway(ds).validateWithResult()
-    if r.validationSuccessful then Right(current(ds).getOrElse("?"))
-    else Left(Option(r.getAllErrorMessages).map(_.trim).filter(_.nonEmpty).getOrElse("schema validation failed"))
+    scala.util.Try(squashHistory(ds)).toEither.left.map(e => Option(e.getMessage).getOrElse(e.toString)).flatMap { _ =>
+      val r = flyway(ds).validateWithResult()
+      if r.validationSuccessful then Right(current(ds).getOrElse("?"))
+      else Left(Option(r.getAllErrorMessages).map(_.trim).filter(_.nonEmpty).getOrElse("schema validation failed"))
+    }
 
   /** The schema version: the highest successfully applied versioned migration, as Flyway's `info().current()` reports
     * it (`"050"`), or `None` before the first migration.
