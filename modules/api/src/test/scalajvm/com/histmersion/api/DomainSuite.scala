@@ -1,6 +1,8 @@
 package com.histmersion.api
 
 import com.histmersion.values.{Confidence, EdgeKind, SourceStatus, WireEnumValues}
+import com.histmersion.api.library.{Label, SourceRef}
+import com.histmersion.api.research.ArticleKind
 
 class DomainSuite extends munit.FunSuite:
 

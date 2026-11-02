@@ -1,10 +1,10 @@
 package com.histmersion.domain.library.findings
 
-import com.histmersion.api.*
 import com.histmersion.util.database.given
 import com.histmersion.values.Confidence
 
 import com.augustnagro.magnum.*
+import com.histmersion.api.library.{GeoHit, SourceKinds}
 
 /** One map-feed row: a [[GeoHit]] and what [[SourceKinds.of]] reads to say what its source is. */
 final private[findings] case class GeoFeedRow(

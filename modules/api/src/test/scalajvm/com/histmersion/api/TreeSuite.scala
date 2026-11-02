@@ -1,12 +1,14 @@
 package com.histmersion.api
 
-import com.histmersion.api.library.search.Tree
+import com.histmersion.api.library.Tree
 
-import com.histmersion.api.library.search.SearchMarkdown
+import com.histmersion.api.library.SearchMarkdown
 
-import com.histmersion.api.library.search.Tree.TreeRow
-import com.histmersion.api.catalogue.places.RegionNode
+import com.histmersion.api.library.Tree.TreeRow
+import com.histmersion.api.catalogue.RegionNode
 import com.histmersion.values.PlaceKind
+import com.histmersion.api.catalogue.{Period, PlaceRelation}
+import com.histmersion.api.library.{Bucket, TimeHistogram}
 
 /** The §1.6 / §1.6a nesting, purely: adaptive time levels, the as-of hierarchy walk, non-additive counts with their
   * `overlap`, the `unlocated` leaf, samples and the depth clamp. No database.

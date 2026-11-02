@@ -1,6 +1,7 @@
 package com.histmersion.util.data.backup
 
-import com.histmersion.api.{ApiError, BackupResult, BackupStatus}
+import com.histmersion.api.ApiError
+import com.histmersion.api.backup.{BackupResult, BackupStatus}
 import com.histmersion.util.jobs.WorkCarrier
 
 import java.time.Instant

@@ -1,6 +1,6 @@
 package com.histmersion.server.instance
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Write}
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.domain.library.search.QueryAccess
 import com.histmersion.server.Deps
@@ -9,6 +9,9 @@ import com.histmersion.util.data.maintenance.{CacheEvent, CacheName, Maintenance
 import com.histmersion.util.data.maintenance.{MaintenanceTaskName, VacuumJobs}
 
 import java.time.Instant
+import com.histmersion.api.backup.{Backup, BackupInfo, BackupStatus, RestoreRequest, RestoreResult}
+import com.histmersion.api.jobs.JobInfo
+import com.histmersion.api.maintenance.{ReindexResult, VacuumRequest}
 
 /** This server's upkeep as REST, MCP and the CLI reach it: the backups (a `pg_dump` as a job, its status, the listing
   * and an archive), the restore under the maintenance lock, the vacuum and the reindex the registry runs, and why a

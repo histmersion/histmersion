@@ -35,12 +35,12 @@ class UpstreamRecordsSuite extends munit.FunSuite:
     val ups = com.histmersion.domain.library.acquisition.DiscoveryClient
       .notices(AcquireParse.crossrefUpdates(fixture("crossref_retracted.json")))
     assertEquals(
-      api.Acquire.verdict(Nil, ups, false, Some(5), Some(2019), 50, 3, 2018),
-      api.Acquire.Verdicts.Retracted
+      api.library.Acquire.verdict(Nil, ups, false, Some(5), Some(2019), 50, 3, 2018),
+      api.library.Acquire.Verdicts.Retracted
     )
     val rows = AcquireParse.s2Citations(fixture("s2_citations.json")).map(_.wire)
-    val kinds = rows.map(r => api.Acquire.classify(r.intents, r.contexts, r.isInfluential, r.year, Some(2015)))
-    assert(kinds.forall(api.Acquire.EdgeKinds.all.contains), kinds)
+    val kinds = rows.map(r => api.library.Acquire.classify(r.intents, r.contexts, r.isInfluential, r.year, Some(2015)))
+    assert(kinds.forall(api.library.Acquire.EdgeKinds.all.contains), kinds)
 
   test("the upstreams' DOI and arXiv rules are the wire's"):
     val inputs = List(
@@ -58,6 +58,6 @@ class UpstreamRecordsSuite extends munit.FunSuite:
       "math.AG/0309136"
     )
     inputs.foreach { s =>
-      assertEquals(Identifiers.doi(s), api.Acquire.normalizeDoi(s), s)
-      assertEquals(Identifiers.arxiv(s), api.Acquire.normalizeArxiv(s), s)
+      assertEquals(Identifiers.doi(s), api.library.Acquire.normalizeDoi(s), s)
+      assertEquals(Identifiers.arxiv(s), api.library.Acquire.normalizeArxiv(s), s)
     }

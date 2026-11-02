@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.ingest
 
-import com.histmersion.api.Edge
+import com.histmersion.api.library.Edge
 
 /** The metadata an ingest carries, whatever the acquisition channel was. */
 final case class IngestMeta(

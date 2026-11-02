@@ -1,6 +1,7 @@
 package com.histmersion.domain.catalogue.evidence
 
-import com.histmersion.api.{ApiError, Attestation, AttestationList, AttestationPatch, AttestationPut, Write}
+import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.catalogue.{Attestation, AttestationList, AttestationPatch, AttestationPut}
 import com.histmersion.domain.catalogue.CatalogueState
 import com.histmersion.util.database.Transactor
 import hearth.kindlings.optics.syntax.*

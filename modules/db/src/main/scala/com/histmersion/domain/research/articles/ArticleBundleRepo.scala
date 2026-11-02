@@ -1,6 +1,5 @@
 package com.histmersion.domain.research.articles
 
-import com.histmersion.api.*
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.data.exchange.BundleEntities.BlobUse
@@ -11,6 +10,7 @@ import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
+import com.histmersion.api.exchange.{BundleArticle, BundleArticleAlias, BundleArticleVersion}
 
 /** The articles as a bundle carries them (docs/research-merge-import.md §4): each article, its versions (their bodies
   * as blobs) and its old slugs, read out in a deterministic order (by uid; the old slugs by alias, in the "C"

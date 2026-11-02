@@ -1,10 +1,10 @@
 package com.histmersion.domain.media.assets
 
-import com.histmersion.api.{BundleAsset, BundleAssetLink, BundleSource}
+import com.histmersion.api.exchange.{BundleAsset, BundleAssetLink, BundleSource}
 import com.histmersion.domain.MergePlanner
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.{BundlePlan, PlanFolds, PlanRelabels, PlanRules, PlanRun}
-import com.histmersion.util.text.SafeName
+import com.histmersion.api.text.SafeName
 import com.histmersion.values.BundleKind
 
 import hearth.kindlings.optics.syntax.*

@@ -3,13 +3,17 @@ package com.histmersion.api
 import sttp.tapir.*
 import sttp.tapir.json.circe.*
 import sttp.model.StatusCode
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.checks.{FormatCheck, FormatReport, Lint}
+import com.histmersion.api.library.Query
+import com.histmersion.api.views.QueueListing
 
 object OpsApi:
 
   // explicit imports: a wildcard would shadow tapir's `query`/`path` with this object's own members
-  import Lint.{LintFixResult, LintReport}
-  import Query.{QueryRequest, QueryResult, SchemaTables}
-  import Queue.{QueueAdd, QueueImport, QueueImported, QueueItem, QueuePatch}
+  import com.histmersion.api.checks.Lint.{LintFixResult, LintReport}
+  import com.histmersion.api.library.Query.{QueryRequest, QueryResult, SchemaTables}
+  import com.histmersion.api.automation.Queue.{QueueAdd, QueueImport, QueueImported, QueueItem, QueuePatch}
 
   private lazy val base = endpoint.in("api").errorOut(jsonBody[ApiError])
 

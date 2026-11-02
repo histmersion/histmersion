@@ -1,8 +1,23 @@
 package com.histmersion.api
 
-import com.histmersion.api.research.articles.ArticleLint
+import com.histmersion.api.research.ArticleLint
 
 import com.histmersion.values.SourceStatus
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.checks.Lint
+import com.histmersion.api.research.{
+  ArticleCoverage,
+  ArticleFilter,
+  ArticlePatch,
+  ArticlePut,
+  Articles,
+  CoverageDrift,
+  CoverageEdge,
+  CoverageReason,
+  CoverageSearch,
+  CoverageSource,
+  DriftKind
+}
 
 /** #958 — an article's coverage is computed and rendered by code from its recorded filter: the uncited remainder, the
   * status breakdown, the counts sentence, the reasons (present or missing), the Method note, the drift, and Markdown

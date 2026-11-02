@@ -88,6 +88,6 @@ object MediaWiring:
         file: com.histmersion.util.storage.Blob,
         filename: String,
         quality: Boolean
-    ): Either[String, com.histmersion.api.ConvertedDoc] =
+    ): Either[String, com.histmersion.api.ocr.ConvertedDoc] =
       Left("no converter")
     def health: Either[String, String] = Left("no converter")

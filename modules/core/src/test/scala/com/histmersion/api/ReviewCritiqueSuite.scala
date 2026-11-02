@@ -6,10 +6,11 @@ import com.histmersion.config.given
 import com.histmersion.domain.given
 
 import com.histmersion.domain.AgentProposals.Proposal
-import com.histmersion.api.Agents.ApprovalKind
+import com.histmersion.api.automation.Agents.ApprovalKind
 import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewLedger.*
 import com.histmersion.values.EdgeKind
+import com.histmersion.api.research.{CritiquePair, CritiqueReason, CritiqueRef, CritiqueSide, CritiqueState}
 
 /** The critique checklist in the review (docs/research-review-convergence.md §6.8), pure: what a missing-critique MAJOR
   * is held to in each kind of pass, the skeptic's rulings on the open pairs, the fixer's set-asides and how the ledger

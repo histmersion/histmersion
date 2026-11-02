@@ -1,8 +1,9 @@
 package com.histmersion.web.settings
 
-import com.histmersion.api.{JobInfo, ListFilters}
+import com.histmersion.api.jobs.JobInfo
+import com.histmersion.api.automation.ListFilters
 import com.histmersion.values.JobKind
-import com.histmersion.api.Activity.Entry
+import com.histmersion.api.automation.Activity.Entry
 import com.histmersion.web.{ActivityView, ApiClient}
 import com.raquo.laminar.api.L.*
 
@@ -16,11 +17,11 @@ object DownloadJobs:
   /** The job kinds Data and downloads follows. */
   val Kinds: List[JobKind] =
     List(
-      com.histmersion.util.basemap.BasemapJobKinds.BasemapFetch.kind,
-      com.histmersion.util.data.exchange.ExchangeJobKinds.Init.kind,
-      com.histmersion.api.catalogue.places.PlacesJobKinds.PlacesFetch.kind,
-      com.histmersion.api.catalogue.events.EventsJobKinds.EventsImport.kind,
-      com.histmersion.api.media.imports.ImportJobKinds.MediaImport.kind
+      com.histmersion.api.basemap.BasemapJobKinds.BasemapFetch.kind,
+      com.histmersion.api.exchange.ExchangeJobKinds.Init.kind,
+      com.histmersion.api.catalogue.PlacesJobKinds.PlacesFetch.kind,
+      com.histmersion.api.catalogue.EventsJobKinds.EventsImport.kind,
+      com.histmersion.api.media.ImportJobKinds.MediaImport.kind
     )
 
   private val jobs = Var(List.empty[JobInfo])

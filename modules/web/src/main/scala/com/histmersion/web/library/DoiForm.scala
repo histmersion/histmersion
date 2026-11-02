@@ -1,6 +1,6 @@
 package com.histmersion.web.library
 
-import com.histmersion.api.IngestReport
+import com.histmersion.api.library.IngestReport
 import com.histmersion.web.{ApiClient, Auth, ErrorLine, SourceLink}
 import com.raquo.laminar.api.L.*
 

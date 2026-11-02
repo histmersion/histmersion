@@ -1,15 +1,17 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.util.identity.AliasKinds
+import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
-import com.histmersion.api.{Api, ApiError, EventPatch, EventPut, Filter, TimeSpan, Write}
+import com.histmersion.api.{Api, ApiError, TimeSpan, Write}
+import com.histmersion.api.catalogue.{EventPatch, EventPut}
+import com.histmersion.api.library.Filter
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.CatalogueState
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.util.identity.AliasKind
+import com.histmersion.api.aliases.AliasKind
 
 import java.util.concurrent.atomic.AtomicReference
 

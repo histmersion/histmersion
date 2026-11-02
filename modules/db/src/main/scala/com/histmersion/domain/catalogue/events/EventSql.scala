@@ -2,7 +2,9 @@ package com.histmersion.domain.catalogue.events
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
-import com.histmersion.api.{BBox, EventPrecision, EventTaxonomy, EventTier, Filter}
+import com.histmersion.api.BBox
+import com.histmersion.api.catalogue.{EventPrecision, EventTaxonomy, EventTier}
+import com.histmersion.api.library.Filter
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.{EnvelopeSql, LikePattern, RangeSql}
 

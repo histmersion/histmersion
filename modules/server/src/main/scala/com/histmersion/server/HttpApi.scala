@@ -6,10 +6,15 @@ import sttp.tapir.files.*
 import sttp.shared.Identity
 import sttp.model.{Header, MediaType, StatusCode}
 import sttp.tapir.json.circe.*
-import com.histmersion.api.*
+import com.histmersion.api.{Api, ApiError, OpsApi, WebPaths}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.server.Article
+import com.histmersion.api.basemap.BasemapApi
+import com.histmersion.api.catalogue.TilesApi
+import com.histmersion.api.instance.UiApi
+import com.histmersion.api.settings.ConfigEditApi
+import com.histmersion.api.views.AutopilotApi
 
 /** REST (the `Api` contract) + HTML article pages + the static web UI, all interpreted on the same netty-sync server as
   * MCP.

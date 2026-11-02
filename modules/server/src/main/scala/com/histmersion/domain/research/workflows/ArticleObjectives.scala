@@ -1,6 +1,6 @@
 package com.histmersion.domain.research.workflows
 
-import com.histmersion.api.Managers.ReviewId
+import com.histmersion.api.automation.Managers.ReviewId
 import com.histmersion.domain.automation.goals.ObjectiveProgress
 import com.histmersion.domain.research.articles.ArticleService
 

@@ -1,6 +1,6 @@
 package com.histmersion.domain.media.figures
 
-import com.histmersion.api.{FigureLicenceFill, MediaCount}
+import com.histmersion.api.media.{FigureLicenceFill, MediaCount}
 import com.histmersion.util.database.Sql
 
 import com.histmersion.util.database.given

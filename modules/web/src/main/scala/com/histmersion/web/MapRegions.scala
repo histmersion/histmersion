@@ -1,9 +1,9 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.api.basemap.{Basemap, BasemapFetchQuery, BasemapLayer, BasemapStatus}
 
 /** What a person downloads of the base map from the About window, as data: the regions to pick from, the fetch a choice
   * asks for, and the dry run's sizes zoom by zoom.

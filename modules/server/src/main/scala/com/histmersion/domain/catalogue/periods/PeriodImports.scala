@@ -1,6 +1,7 @@
 package com.histmersion.domain.catalogue.periods
 
-import com.histmersion.api.{Dataset, PeriodImportResult, PeriodO, PeriodODataset}
+import com.histmersion.api.{Dataset, PeriodODataset}
+import com.histmersion.api.catalogue.{PeriodImportResult, PeriodO}
 
 /** How periods come in: the bundled seed (its rows upserted, its presets made the only presets, its version recorded),
   * a PeriodO dataset a client sends, and the live PeriodO dump's configured collections. `seed` reads the bundled

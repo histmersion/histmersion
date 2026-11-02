@@ -3,7 +3,7 @@ package com.histmersion.domain.media.covers
 import com.histmersion.pluginhost.{figureRules, HttpTransport, Polite}
 import com.histmersion.upstreams.media.MediaText
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.media.assets.{AssetService, PictureTarget, ProviderAsset, SourceFigure}
 import com.histmersion.domain.media.figures.FigurePick
@@ -12,6 +12,17 @@ import com.histmersion.util.ocr.ConverterClient
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.values.MediaRole
+import com.histmersion.api.media.{
+  AssetKind,
+  ImageSize,
+  MediaCount,
+  MediaCoversReport,
+  MediaCoversRequest,
+  MediaItem,
+  MediaProvider,
+  MediaSourceLine,
+  SourceCoverParams
+}
 
 /** A source's picture on its hover card (#1446): a book's COVER — the local Calibre library's own (the CLI reads it
   * host-side and uploads it, [[storeCover]]) or the Open Library Covers API's by ISBN/OCLC ([[openLibrary]]) — and a

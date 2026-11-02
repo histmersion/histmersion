@@ -2,10 +2,11 @@ package com.histmersion.domain.media.assets
 
 import com.histmersion.util.database.RangeSql
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Write}
 
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
+import com.histmersion.api.media.{AssetDetail, AssetInfo, AssetPatch}
 
 /** The figures that belong with a source's Markdown (plan §1.8).
   *

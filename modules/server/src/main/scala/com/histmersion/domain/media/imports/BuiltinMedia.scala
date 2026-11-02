@@ -1,6 +1,6 @@
 package com.histmersion.domain.media.imports
 
-import com.histmersion.api.MediaProvider
+import com.histmersion.api.media.MediaProvider
 import com.histmersion.config.MediaConfig
 
 /** Histmersion's own media collections, by name only — the plugins of `plugins/media` implement them; the host keeps

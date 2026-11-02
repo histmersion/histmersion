@@ -1,6 +1,8 @@
 package com.histmersion.util.basemap
 
-import com.histmersion.api.{Backup, Basemap, BBox, Plural}
+import com.histmersion.api.{BBox, Plural}
+import com.histmersion.api.backup.Backup
+import com.histmersion.api.basemap.Basemap
 import com.histmersion.config.BasemapGebcoConfig
 import com.histmersion.util.storage.{Store, StoreKey}
 

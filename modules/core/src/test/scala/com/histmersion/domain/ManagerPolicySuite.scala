@@ -1,11 +1,10 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
 import com.histmersion.api.given
 
-import com.histmersion.api.Agents.RunState
+import com.histmersion.api.automation.Agents.RunState
 import com.histmersion.domain.ManagerPolicy.*
-import com.histmersion.api.Managers.*
+import com.histmersion.api.automation.Managers.*
 
 import java.time.Instant
 

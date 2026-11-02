@@ -1,6 +1,6 @@
 package com.histmersion.api
 
-import UiNotices.*
+import com.histmersion.api.instance.UiNotices.*
 
 class UiNoticesSuite extends munit.FunSuite:
 

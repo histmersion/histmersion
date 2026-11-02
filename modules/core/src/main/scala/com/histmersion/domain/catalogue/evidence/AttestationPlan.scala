@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.evidence
 
-import com.histmersion.api.{
+import com.histmersion.api.exchange.{
   BundleAttestation,
   BundleSource,
   IssueCondition,

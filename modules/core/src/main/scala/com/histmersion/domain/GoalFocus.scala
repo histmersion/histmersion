@@ -2,7 +2,7 @@ package com.histmersion.domain
 
 import com.histmersion.api.Plural
 
-import com.histmersion.api.Managers.*
+import com.histmersion.api.automation.Managers.*
 import com.histmersion.values.{GoalStatus, ItemStatus}
 
 /** The autopilot's FOCUS (docs/research-process-managers.md "As built: the focus"), pure: which research goals are

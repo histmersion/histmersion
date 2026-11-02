@@ -1,5 +1,4 @@
 package com.histmersion.util.data.exchange
-import com.histmersion.api.*
 import com.histmersion.api.given
 
 import io.circe.{Decoder, Encoder}
@@ -7,6 +6,35 @@ import io.circe.{Decoder, Encoder}
 import java.util.UUID
 import com.histmersion.values.BundleKind
 import com.histmersion.util.data.exchange.BundleFormat
+import com.histmersion.api.exchange.{
+  BundleAlias,
+  BundleArticle,
+  BundleArticleAlias,
+  BundleArticleVersion,
+  BundleAssessment,
+  BundleAsset,
+  BundleAssetLink,
+  BundleAttestation,
+  BundleCorrection,
+  BundleEdge,
+  BundleEvent,
+  BundleEventAlias,
+  BundleEventCandidate,
+  BundleEventCatalogue,
+  BundleEventCheck,
+  BundleFiles,
+  BundleFinding,
+  BundleGoal,
+  BundleGoalAlias,
+  BundlePeriod,
+  BundlePlace,
+  BundlePlaceAlias,
+  BundleQueueItem,
+  BundleSiteType,
+  BundleSource,
+  BundleTombstone,
+  BundleUnresolvedEdge
+}
 
 /** The entity content of a bundle, in memory — every NDJSON file of [[BundleFiles.all]] as its line type. Small by
   * construction: the large things (OCR bodies, version bodies, asset bytes, originals) are blobs, referenced by sha256

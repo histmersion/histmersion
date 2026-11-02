@@ -1,7 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
-import com.histmersion.api.TileProps as P
+import com.histmersion.api.catalogue.TileProps as P
 import com.histmersion.web.map.*
 import org.scalajs.dom
 

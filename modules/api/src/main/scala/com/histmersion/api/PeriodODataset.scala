@@ -1,5 +1,6 @@
 package com.histmersion.api
 
+import com.histmersion.api.catalogue.{PeriodOAuthority, PresetRegion, SkippedPeriod}
 final case class PeriodODataset(
     authorities: List[PeriodOAuthority],
     parents: Map[String, String] = Map.empty,

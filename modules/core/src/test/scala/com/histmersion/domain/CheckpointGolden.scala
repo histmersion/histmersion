@@ -1,21 +1,18 @@
 package com.histmersion.domain
 
-import com.histmersion.api.{
-  CritiqueReason,
-  CritiqueRef,
+import com.histmersion.api.ListPatch
+import com.histmersion.api.research.{CritiqueReason, CritiqueRef}
+import com.histmersion.api.library.{
   EdgeInput,
   EdgesPatch,
   FindingInput,
   FindingsPatch,
-  Geocode,
-  ListPatch,
   MetadataField,
   MetadataPatch,
-  Period,
-  PeriodInput,
   SourcePatch,
   WorkRef
 }
+import com.histmersion.api.catalogue.{Geocode, Period, PeriodInput}
 import com.histmersion.domain.AgentProposals.Proposal
 import com.histmersion.domain.EnrichSource.{
   Classified,

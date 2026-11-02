@@ -1,8 +1,15 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
+import com.histmersion.api.{ServiceState, Wording}
 
 import scala.collection.mutable
+import com.histmersion.api.backup.BackupInfo
+import com.histmersion.api.catalogue.{PlaceCounts, PlaceSummary}
+import com.histmersion.api.instance.{About, BuildStamp, CorpusCounts, Health}
+import com.histmersion.api.jobs.JobCounts
+import com.histmersion.api.plugins.{PluginSetting, PluginsReport, PluginStatus}
+import com.histmersion.api.settings.ConfigFileInfo
+import com.histmersion.api.views.PlaceDetail
 
 /** #716/#717/#718 — the map's place card, click-to-filter and the About window, in their pure parts. */
 class PlaceHoverSuite extends munit.FunSuite:

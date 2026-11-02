@@ -1,6 +1,6 @@
 package com.histmersion.domain.media.assets
 
-import com.histmersion.api.{AssetInput, AssetLinks, ImageSize}
+import com.histmersion.api.media.{AssetInput, AssetLinks, ImageSize}
 
 import scala.annotation.tailrec
 

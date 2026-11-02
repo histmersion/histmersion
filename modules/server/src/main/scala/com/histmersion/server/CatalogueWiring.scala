@@ -2,7 +2,7 @@ package com.histmersion.server
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
-import com.histmersion.api.Filter
+import com.histmersion.api.library.Filter
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.catalogue.CatalogueJobs
 import com.histmersion.domain.catalogue.events.{

@@ -45,7 +45,7 @@ class RenameCmdSuite extends munit.FunSuite:
     assert(top.parse(List("rename", "--help"), Map.empty).left.exists(_.toString.contains("alias")))
 
   test("a full export removes the mirror notes of renamed citekeys, and nothing else"):
-    import com.histmersion.api.SourceAlias
+    import com.histmersion.api.library.SourceAlias
     import java.nio.file.Files
     val dir = Files.createTempDirectory("rename-prune")
     try

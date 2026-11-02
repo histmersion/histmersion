@@ -2,7 +2,6 @@ package com.histmersion.server
 
 import com.histmersion.util.settings.ConfigSource
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -15,6 +14,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 import scala.jdk.CollectionConverters.*
 import scala.jdk.OptionConverters.*
+import com.histmersion.api.backup.Backup
 
 /** The native bundle (nothing installed system-wide): the server runs the bundled PostgreSQL and OCR converter as its
   * own child processes. Enabled by `runtime.enabled` (`HISTMERSION_RUNTIME=true`).

@@ -2,9 +2,11 @@ package com.histmersion.domain.library.workflows
 
 import com.histmersion.domain.automation.managers.{ManagerContext, ManagerDefaultsViews, ManagerKindDefinition}
 
-import com.histmersion.api.{Acquire, ApiError, Autopilot, CandidateSweep, Plural}
-import com.histmersion.api.Agents.*
-import com.histmersion.api.Managers.*
+import com.histmersion.api.{ApiError, Plural}
+import com.histmersion.api.library.{Acquire, CandidateSweep}
+import com.histmersion.api.automation.Autopilot
+import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.{IngestBacklog, ManagerPolicy, WatchManagerDefaults}
 import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts}
 import com.histmersion.config.{AgentsConfig, LibraryAgentsConfig}
@@ -127,7 +129,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
       .setTo(backlog.totalDays)
 
   /** The metered upstreams' budgets the autopilot's page shows. */
-  def upstreams(now: Instant): List[com.histmersion.api.UpstreamQuota] = site.upstreamQuotas(now)
+  def upstreams(now: Instant): List[com.histmersion.api.library.UpstreamQuota] = site.upstreamQuotas(now)
 
   /** The acquisition list's re-check's finds count against the shared ingest cap too. */
   override def ingestedToday(now: Instant): Int = work.acquireRecheck.fetchedToday(now)

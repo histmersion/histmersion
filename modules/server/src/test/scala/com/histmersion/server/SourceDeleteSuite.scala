@@ -7,7 +7,7 @@ import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.util.ocr.ConverterClient
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, GeoPoint, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.{Db, Migrate}
@@ -16,6 +16,20 @@ import com.augustnagro.magnum.*
 import java.nio.file.{Files, Path}
 import com.histmersion.values.{Confidence, SourceStatus}
 import com.histmersion.db.*
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.backup.Backup
+import com.histmersion.api.catalogue.{Period, Place}
+import com.histmersion.api.library.{
+  DeleteBlockerKind,
+  DeletePart,
+  Edge,
+  Finding,
+  Source,
+  SourceDeleteRequest,
+  SourceDeletion
+}
+import com.histmersion.api.ocr.ConvertedDoc
+import com.histmersion.api.research.Article
 
 /** Deleting a source (#969), against a real Postgres: the dry run lists everything and changes nothing; an article
   * citing the source (by its citekey, an old citekey or a short form), an event sourced to it, or a job still writing
@@ -185,7 +199,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     val d = h.library.sources.delete(Del, SourceDeleteRequest()).fold(e => fail(e.message), identity)
     assert(!d.applied && !d.refused, d.toString)
     assertEquals(d.title, s"Title $Old")
-    import DeletePart.*
+    import com.histmersion.api.library.DeletePart.*
     assertEquals(
       d.counts.map(c => c.part -> c.rows).toMap,
       Map(

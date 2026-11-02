@@ -21,7 +21,7 @@ object Attribution:
     * URL read as one, else its licence URL when the statement names no known licence — and the credit line it asks for.
     * What the credits show (`DataCredit`) stays as stated.
     */
-  def ofDataset(credit: com.histmersion.api.DataCredit): Attribution =
+  def ofDataset(credit: com.histmersion.api.media.DataCredit): Attribution =
     val stated = Licence.ofStatement(credit.licence)
     val licence =
       if stated.family != LicenceFamily.Unknown then stated

@@ -1,10 +1,10 @@
 package com.histmersion.cli
 
 import com.monovore.decline.*
-import com.histmersion.api.*
 import com.histmersion.config.*
 
 import java.nio.file.Files
+import com.histmersion.api.settings.ReloadMarkdown
 
 /** `histmersion config …` — the user config file. */
 object ConfigCmd:

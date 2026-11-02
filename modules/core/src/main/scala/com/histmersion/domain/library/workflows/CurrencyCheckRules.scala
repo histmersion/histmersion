@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.workflows
 
-import com.histmersion.api.{Acquire, FollowupRow}
+import com.histmersion.api.library.{Acquire, FollowupRow}
 import com.histmersion.api.given
 
 import com.histmersion.domain.AgentProposals.Proposal

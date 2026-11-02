@@ -1,6 +1,5 @@
 package com.histmersion.server
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.data.diagnostics.{StorageCache, StorageFigures}
@@ -9,6 +8,8 @@ import com.histmersion.util.storage.{Location, MeasureBudget}
 import java.nio.file.{Files, Path}
 import java.util.Comparator
 import java.util.concurrent.atomic.AtomicInteger
+import com.histmersion.api.backup.BackupsUsage
+import com.histmersion.api.maintenance.{Storage, StorageAdvice, StorageReport}
 
 /** The Storage part of About: the locations come from the config (the same resolvers the writers use), are measured
   * within the caps, and the cache measures once per TTL, in the background. All of it in a temp directory: no live data

@@ -1,6 +1,8 @@
 package com.histmersion.api
 
-import com.histmersion.api.automation.goals.GoalsMarkdown
+import com.histmersion.api.automation.GoalsMarkdown
+import com.histmersion.api.automation.{Goal, GoalList}
+import com.histmersion.api.catalogue.{HistoricalPeriod, Lpf, Period, PeriodsMarkdown, PlaceDating, PlaceOverrides}
 
 /** The one year module (#1798 item 4): parsing what a person types, the astronomical conversion, and every formatter
   * agreeing on BCE/CE and on year 0 (shown as 1 BCE, never "0 CE").

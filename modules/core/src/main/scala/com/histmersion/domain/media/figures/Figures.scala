@@ -1,6 +1,6 @@
 package com.histmersion.domain.media.figures
 
-import com.histmersion.api.{AssetLinks, ImageSize}
+import com.histmersion.api.media.{AssetLinks, ImageSize}
 import com.histmersion.domain.media.assets.NewFigure
 
 /** The figures the OLD file pipeline already produced (plan §1.8, last bullet).
@@ -8,8 +8,8 @@ import com.histmersion.domain.media.assets.NewFigure
   * `tools/convert.py` wrote `md/<citekey>/paper.md` plus `md/<citekey>/figures/…`, and the note's `md_path` frontmatter
   * key points at the former. Those figures are on disk for much of the corpus, so the seed importer picks them up
   * rather than making everyone re-OCR: the files become `assets` rows and the body's `figures/<name>` links are
-  * normalised to the canonical `assets/<name>` by [[com.histmersion.api.AssetLinks.fromFigures]]. Pure: the files are
-  * read where the folder is (the composition root's seed reading).
+  * normalised to the canonical `assets/<name>` by [[com.histmersion.api.media.AssetLinks.fromFigures]]. Pure: the files
+  * are read where the folder is (the composition root's seed reading).
   */
 object Figures:
 

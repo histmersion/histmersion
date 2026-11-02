@@ -1,8 +1,10 @@
 package com.histmersion.api
 
 /** The three-way agents control over the two switches underneath (autopilot on/off, drain on/off). */
+
+import com.histmersion.api.automation.AgentMode
 class AgentModeSuite extends munit.FunSuite:
-  import AgentMode.Step
+  import com.histmersion.api.automation.AgentMode.Step
 
   private val switches = for on <- List(false, true); draining <- List(false, true) yield (on, draining)
 

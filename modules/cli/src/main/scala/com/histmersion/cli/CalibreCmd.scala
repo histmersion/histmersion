@@ -3,12 +3,31 @@ package com.histmersion.cli
 import cats.data.Validated
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.*
+import com.histmersion.api.Api
 import com.histmersion.config.*
 
 import java.nio.file.Path
 import com.histmersion.values.SourceStatus
-import com.histmersion.api.library.collections.*
+import com.histmersion.api.library.*
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.library.{
+  CalibreGap,
+  CalibrePushRequest,
+  CollectionFieldValue,
+  CollectionImportRequest,
+  CollectionLinkRequest,
+  CollectionPushRequest,
+  CollectionsApi,
+  CollectionSetRequest,
+  CollectionsMarkdown,
+  CollectionSyncRequest,
+  Ingest,
+  MetadataPatch,
+  SourcePatch,
+  SourcePut,
+  SourceWithFindings
+}
+import com.histmersion.api.media.MediaCoversRequest
 
 /** `histmersion calibre search|import|link|push|update|set|audit|sync|gaps`.
   *

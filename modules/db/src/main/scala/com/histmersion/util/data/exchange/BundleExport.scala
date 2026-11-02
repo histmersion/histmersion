@@ -1,12 +1,12 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.*
 import com.histmersion.util.data.exchange.BundleRepo
 import com.histmersion.util.storage.ContentStore
 
 import com.augustnagro.magnum.*
 import java.io.OutputStream
 import javax.sql.DataSource
+import com.histmersion.api.exchange.{Bundle, BundleBlobs, BundleInstance, BundleManifest}
 
 /** `bundle export` (docs/research-merge-import.md §4, milestone M1): the database as a `.hmx` bundle, written to a
   * stream, from the carried kinds of the registry.

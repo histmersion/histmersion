@@ -1,6 +1,6 @@
 package com.histmersion.domain.media.figures
 
-import com.histmersion.api.FigureLicenceFill
+import com.histmersion.api.media.FigureLicenceFill
 import com.histmersion.domain.media.{MediaStores, MediaStoreSuite}
 
 /** The figures' licence fill, on a collection whose figures' sources record no licence: nothing to fill, on the

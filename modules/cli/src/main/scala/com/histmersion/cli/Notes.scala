@@ -1,10 +1,11 @@
 package com.histmersion.cli
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
+import com.histmersion.api.library.NoteImport
+import com.histmersion.api.media.{AssetInput, AssetLinks}
 
 /** Host-side note handling for `histmersion seed` / `put` / `export` (plan §1.9a, §2.5).
   *

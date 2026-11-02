@@ -1,7 +1,7 @@
 package com.histmersion.domain.library.collections
 
-import com.histmersion.api.*
-import com.histmersion.api.library.collections.*
+import com.histmersion.api.ApiError
+import com.histmersion.api.library.*
 import com.histmersion.domain.Caller
 import com.histmersion.domain.media.covers.CoverChoice
 import com.histmersion.plugin.{
@@ -25,6 +25,48 @@ import com.histmersion.values.SourceStatus
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
 import scala.collection.immutable.ListMap
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.library.{
+  ArchiveFile,
+  ArchiveImportRequest,
+  ArchiveItem,
+  ArchiveSearchResult,
+  CalibreGap,
+  CalibrePushRequest,
+  CollectionAudit,
+  CollectionAuditRow,
+  CollectionCover,
+  CollectionEntry,
+  CollectionFieldChange,
+  CollectionGaps,
+  CollectionImported,
+  CollectionImportRequest,
+  CollectionInfo,
+  CollectionLinked,
+  CollectionLinkRequest,
+  CollectionPushed,
+  CollectionPushRequest,
+  CollectionRecordView,
+  CollectionsApi,
+  CollectionSearch,
+  CollectionSetDone,
+  CollectionSetRequest,
+  CollectionSync,
+  CollectionSyncPush,
+  CollectionSyncRequest,
+  CollectionUpdateAll,
+  CollectionUpdatedOne,
+  CollectionUpdateRow,
+  Ingest,
+  IngestAccepted,
+  IngestParams,
+  IngestReport,
+  MetadataPatch,
+  SourcePatch,
+  SourcePut,
+  SourceWithFindings
+}
+import com.histmersion.api.media.{MediaCoversRequest, MediaProvider, SourceCoverParams}
 
 /** The library's source collections — the Calibre library, archive.org — run by the library: searching one, importing
   * an item into the library, linking a source to an item, pushing a source's original into one, rewriting its items

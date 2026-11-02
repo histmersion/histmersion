@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.evidence
 
-import com.histmersion.api.{BundleAttestation, BundleEventCandidate, BundleEventCheck, BundleFiles}
+import com.histmersion.api.exchange.{BundleAttestation, BundleEventCandidate, BundleEventCheck, BundleFiles}
 import com.histmersion.api.given
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.data.{DataOwner, TableName}

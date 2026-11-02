@@ -2,10 +2,11 @@ package com.histmersion.cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.*
+import com.histmersion.api.Api
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
+import com.histmersion.api.library.{IngestMarkdown, IngestParams}
 
 /** `histmersion ingest <file>` · `reocr` · `assets` · `jobs` — OCR that keeps the figures, as a job (plan §1.8).
   *

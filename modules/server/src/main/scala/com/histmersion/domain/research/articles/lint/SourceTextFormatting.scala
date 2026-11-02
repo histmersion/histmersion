@@ -1,6 +1,6 @@
 package com.histmersion.domain.research.articles.lint
 
-import com.histmersion.api.{FormatField, FormatIssue}
+import com.histmersion.api.checks.{FormatField, FormatIssue}
 import com.histmersion.domain.library.sources.SourceFormatting
 import com.histmersion.server.{LinkTarget, MarkdownLint}
 

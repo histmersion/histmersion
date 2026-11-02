@@ -1,11 +1,11 @@
 package com.histmersion.domain.library.acquisition
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import sttp.tapir.server.ServerEndpoint
 import sttp.shared.Identity
+import com.histmersion.api.library.AcquireApi
 
 /** The REST wiring of [[AcquireApi]] — every route delegates to the [[AcquisitionControllers]] the MCP tools also call;
   * `archive search|info|import` to the library's collections, which run archive.org, and the Calibre gaps to theirs.

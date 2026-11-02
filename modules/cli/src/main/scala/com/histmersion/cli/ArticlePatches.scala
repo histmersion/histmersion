@@ -3,11 +3,13 @@ package com.histmersion.cli
 import scala.annotation.tailrec
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.*
+import com.histmersion.api.ListPatch
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
+import com.histmersion.api.catalogue.PeriodInput
+import com.histmersion.api.research.{ArticleFilter, ArticlePatch, CoverageReason, CritiqueReason}
 
 /** Build an [[ArticlePatch]] from CLI flags — pure, so the flag semantics are unit-tested without a server. Mirrors
   * [[Patches]] on the source side: `--json` is the baseline, each flag overrides the part it names, and an absent part

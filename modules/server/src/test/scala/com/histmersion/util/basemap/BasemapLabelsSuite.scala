@@ -1,10 +1,11 @@
 package com.histmersion.util.basemap
 
-import com.histmersion.api.*
+import com.histmersion.api.BBox
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import io.circe.Json
 import io.circe.parser.parse
+import com.histmersion.api.basemap.Basemap
 
 /** The physical names: Natural Earth's classes and names, where a polygon's name goes, the zooms, the region,
   * simplifying and clipping rivers, and the tiles they are written as. Pure.

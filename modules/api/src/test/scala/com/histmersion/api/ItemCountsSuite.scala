@@ -1,6 +1,6 @@
 package com.histmersion.api
 
-import com.histmersion.api.Managers.ItemCounts
+import com.histmersion.api.automation.Managers.ItemCounts
 
 class ItemCountsSuite extends munit.FunSuite:
 

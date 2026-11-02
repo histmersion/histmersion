@@ -1,5 +1,6 @@
 package com.histmersion.api
 
+import com.histmersion.api.settings.{ReloadMarkdown, ReloadReport}
 class ReloadMarkdownSuite extends munit.FunSuite:
 
   test("ReloadMarkdown: failed, unchanged and published reports"):

@@ -9,6 +9,16 @@ import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewLedger.*
 import io.circe.parser.decode
 import io.circe.syntax.*
+import com.histmersion.api.research.{
+  ArticleEdits,
+  CoverageEdge,
+  CritiquePair,
+  CritiquePairing,
+  CritiqueRef,
+  Critiques,
+  CritiqueSide,
+  CritiqueState
+}
 
 /** Convergence of the review (docs/research-review-convergence.md §6.9), pure: the final pass that defers what it finds
   * new, the regression guard, a "fixed" check held to the checklist, the fixer's guards (the pairing repair, a claimed

@@ -1,9 +1,10 @@
 package com.histmersion.domain.library.citations
 
-import com.histmersion.api.*
+import com.histmersion.api.ApiError
 import com.histmersion.domain.Caller
 import com.histmersion.domain.library.sources.SourceService
 import com.histmersion.util.data.maintenance.WriteGate
+import com.histmersion.api.library.{ContradictionsResult, EdgesResolved, NeighborRow, SourceGraph}
 
 /** The citation graph over REST and MCP. Each row's far end arrives classified ([[NeighborTarget]]), so every renderer
   * (MCP, the CLI over HTTP, the HTML page) links sources, articles and unresolved targets without a second lookup. A

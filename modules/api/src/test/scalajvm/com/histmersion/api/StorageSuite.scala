@@ -1,5 +1,16 @@
 package com.histmersion.api
 
+import com.histmersion.api.backup.BackupsUsage
+import com.histmersion.api.instance.{About, AboutMarkdown, BuildStamp, Health}
+import com.histmersion.api.jobs.JobCounts
+import com.histmersion.api.maintenance.{
+  Storage,
+  StorageAdvice,
+  StorageEntry,
+  StorageMarkdown,
+  StorageReport,
+  StorageVolume
+}
 class StorageSuite extends munit.FunSuite:
 
   private val GB = 1000L * 1000 * 1000

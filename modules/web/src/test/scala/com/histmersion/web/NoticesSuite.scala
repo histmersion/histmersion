@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.api.UiNotices.{Board, Counter}
+import com.histmersion.api.instance.UiNotices.{Board, Counter}
 
 /** The pure parts of the toolbar's notices: which window watches which board, which open windows are marked read and at
   * what, and what a button says.
@@ -11,7 +11,7 @@ class NoticesSuite extends munit.FunSuite:
   private val t2 = "2026-10-11T09:00:00.000000Z"
 
   private def c(key: String, latest: Option[String], seen: Option[String], count: Option[Int] = None) =
-    Counter(key, count, latest, seen, com.histmersion.api.UiNotices.fresh(latest, seen))
+    Counter(key, count, latest, seen, com.histmersion.api.instance.UiNotices.fresh(latest, seen))
 
   test("each watched window is its own board; the others watch none"):
     assertEquals(Notices.boardOf(WindowKey.Goals), Some(Board.Goals))

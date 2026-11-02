@@ -1,12 +1,12 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
 import com.histmersion.domain.HintProposals.*
-import com.histmersion.api.Managers.HintEffect
+import com.histmersion.api.automation.Managers.HintEffect
+import com.histmersion.api.automation.Managers
 
 /** A model's proposed hint action, checked by code before a person sees it (phase 3). */
 class HintProposalsSuite extends munit.FunSuite:

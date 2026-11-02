@@ -1,7 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
 import com.augustnagro.magnum.DbCodec
-import com.histmersion.api.{PlaceDating, PlaceTimeBasis}
+import com.histmersion.api.catalogue.{PlaceDating, PlaceTimeBasis}
 import com.histmersion.util.database.Vocab
 
 /** An unknown dating is `unknown` (it used to read as `stated`, a date the place does not have). */

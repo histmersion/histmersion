@@ -4,11 +4,12 @@ import com.histmersion.domain.library.search.FilterSql
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
-import com.histmersion.api.*
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
+import com.histmersion.api.library.Filter
+import com.histmersion.api.research.{CoverageEdge, CoverageSource}
 
 /** What an article's coverage (#958) reads from the corpus: the whole source set of its filter (not a ranked page — no
   * FTS ranking, no snippets), which of a set of citekeys the filter returns, and the disagreement edges touching the

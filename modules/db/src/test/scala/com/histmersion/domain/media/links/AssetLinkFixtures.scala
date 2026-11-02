@@ -1,9 +1,10 @@
 package com.histmersion.domain.media.links
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Write}
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
+import com.histmersion.api.media.{AssetLink, AssetLinkList, AssetLinkPut}
 
 /** The figures' links' repository as the db suites reach it from outside the feature. */
 object AssetLinkFixtures:

@@ -2,13 +2,13 @@ package com.histmersion.server
 
 import com.histmersion.util.ocr.{ConverterClient, JatsConverter}
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.library.acquisition.*
 import io.circe.Json
 
 import java.nio.file.Files
+import com.histmersion.api.ocr.ConvertedDoc
 
 /** The Europe PMC / PMC Article Datasets step of the OA chain (#1523), against a fake upstream that answers from the
   * responses captured on 2026-10-11 — no network.

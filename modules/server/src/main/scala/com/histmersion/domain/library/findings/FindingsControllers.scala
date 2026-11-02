@@ -1,10 +1,11 @@
 package com.histmersion.domain.library.findings
 
-import com.histmersion.api.*
+import com.histmersion.api.Api
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.library.search.SearchFilters
 
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.api.library.{GeoHit, GeoHitPage}
 
 /** The map feed over REST and MCP: the same query parameters as the search; `limit <= 0` means the configured
   * `limits.findings`, which is both the default and the ceiling.

@@ -2,11 +2,12 @@ package com.histmersion.web
 
 import hearth.kindlings.optics.syntax.*
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.*
+import com.histmersion.api.{Api, YearFmt}
 import com.histmersion.web.ui.Layout
 import org.scalajs.dom
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.api.catalogue.{EventPrecision, EventSummary, EventTaxonomy, EventTier}
 
 object EventsTab:
 
@@ -43,7 +44,7 @@ object EventsTab:
       cls := "event-row",
       marks.RowActions(
         marks.ItemRef(
-          com.histmersion.api.personal.Target.item(com.histmersion.api.personal.ItemKind.Event, evt.id),
+          com.histmersion.api.personal.Target.item(com.histmersion.api.ItemKind.Event, evt.id),
           evt.label
         ),
         Route.Event(evt.id).path,

@@ -2,11 +2,11 @@ package com.histmersion.domain.library.acquisition
 
 import com.histmersion.upstreams.http.Url
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import java.time.LocalDate
+import com.histmersion.api.library.Candidates
 
 /** arXiv: newest submissions first; the Atom feed has no date filter, so what is older than `since`'s year is dropped
   * here (the stored candidates keep a work found twice from counting as new).

@@ -1,6 +1,6 @@
 package com.histmersion.util.data.maintenance
 
-import com.histmersion.api.Vacuum
+import com.histmersion.api.maintenance.Vacuum
 
 import com.augustnagro.magnum.*
 

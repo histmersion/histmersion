@@ -14,10 +14,21 @@ import sttp.tapir.server.netty.sync.{NettySyncServer, NettySyncServerOptions}
 import sttp.tapir.server.netty.NettyConfig
 import scala.concurrent.duration.*
 import com.histmersion.config.{AppConfig, LoadedConfig, UserConfigFile}
-import com.histmersion.api.ConfigFileInfo
+import com.histmersion.api.settings.ConfigFileInfo
 import com.histmersion.domain.library.acquisition.*
 import com.histmersion.server.hot.{Hot, PinRequests}
 import ox.{releaseAfterScope, Ox}
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.library.{
+  ArchiveFile,
+  ArchiveImportRequest,
+  ArchiveItem,
+  CalibrePushRequest,
+  IngestParams,
+  SourcePatch,
+  SourcePut
+}
+import com.histmersion.api.media.{MediaCoversRequest, SourceCoverParams}
 
 /** The server's wiring: the hot component graph (pools, migrations, plugins) → ServerWiring → HTTP (REST + pages +
   * static) and MCP endpoints → bind. The entry point ([[histmersionServer]]) loads the config and calls it; a test

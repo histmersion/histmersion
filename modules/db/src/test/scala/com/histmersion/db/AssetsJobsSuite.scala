@@ -10,13 +10,15 @@ import com.histmersion.domain.media.assets.NewFigure
 
 import com.histmersion.util.jobs.JobRepo
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import java.nio.file.{Files, Path}
 import com.histmersion.values.SourceStatus
 import com.histmersion.util.database.Migrate
+import com.histmersion.api.jobs.JobState
+import com.histmersion.api.library.{Ingest, Source}
+import com.histmersion.api.media.AssetLinkPut
 
 /** V006 round-trips against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. */
 class AssetsJobsSuite extends com.histmersion.db.DbSuite:

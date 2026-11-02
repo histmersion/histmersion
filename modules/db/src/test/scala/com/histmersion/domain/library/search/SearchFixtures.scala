@@ -1,13 +1,14 @@
 package com.histmersion.domain.library.search
 
-import com.histmersion.api.library.search.Tree
+import com.histmersion.api.library.Tree
 
-import com.histmersion.api.*
-import com.histmersion.api.Query.{QueryResult, SchemaTable}
+import com.histmersion.api.library.Query.{QueryResult, SchemaTable}
 import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
+import com.histmersion.api.catalogue.{PeriodRow, PlaceCounts}
+import com.histmersion.api.library.{Filter, SearchResult}
 
 /** The db suites' reads of the search on a database of their own. */
 object SearchFixtures:

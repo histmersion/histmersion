@@ -5,11 +5,13 @@ import com.histmersion.domain.library.labels.LabelFixtures
 import com.histmersion.domain.library.search.SearchFixtures
 import com.histmersion.domain.library.sources.SourceFixtures
 
-import com.histmersion.api.*
+import com.histmersion.api.{BBox, GeoPoint}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.{Confidence, SourceStatus}
 import com.histmersion.util.database.Migrate
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.library.{FacetField, Filter, Finding, Hit, SearchResult, Sort, Source}
 
 /** `sources(filter)` / `facets(...)` against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise.
   * Three synthetic sources exercise the plan §1.0 rules: the SOURCE is the unit, a source matches through its own

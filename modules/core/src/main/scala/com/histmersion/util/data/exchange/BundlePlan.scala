@@ -1,7 +1,7 @@
 package com.histmersion.util.data.exchange
 
 import scala.annotation.tailrec
-import com.histmersion.api.BundleKindCounts
+import com.histmersion.api.exchange.BundleKindCounts
 import com.histmersion.api.given
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.values.BundleKind

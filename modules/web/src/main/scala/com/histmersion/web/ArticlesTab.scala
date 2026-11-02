@@ -2,11 +2,12 @@ package com.histmersion.web
 
 import hearth.kindlings.optics.syntax.*
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.*
+import com.histmersion.api.{Api, Plural, Wording}
 import com.histmersion.web.ui.Layout
 import org.scalajs.dom
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.api.research.{ArticleKindCount, ArticleList, ArticleSummary, ReviewBadge, ReviewState}
 
 object ArticlesTab:
 

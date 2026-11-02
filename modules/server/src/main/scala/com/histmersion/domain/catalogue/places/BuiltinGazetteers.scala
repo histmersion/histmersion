@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.GazetteerKind
+import com.histmersion.api.catalogue.GazetteerKind
 import com.histmersion.plugin.GazetteerSource
 import com.histmersion.domain.catalogue.periods.PeriodOFetch
 

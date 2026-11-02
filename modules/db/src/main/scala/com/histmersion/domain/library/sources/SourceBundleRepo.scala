@@ -1,6 +1,5 @@
 package com.histmersion.domain.library.sources
 
-import com.histmersion.api.*
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.database.{Jsonb, Sql}
 import com.histmersion.util.data.exchange.BundleEntities.BlobUse
@@ -12,6 +11,15 @@ import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
+import com.histmersion.api.exchange.{
+  BundleAlias,
+  BundleAssessment,
+  BundleEdge,
+  BundleFinding,
+  BundleSource,
+  BundleUnresolvedEdge
+}
+import com.histmersion.api.library.Edge
 
 /** The sources as a bundle carries them (docs/research-merge-import.md §4): each source with its findings, its edges in
   * and out, its parked edges, its old citekeys and its assessment, read out in a deterministic order (by uid; owned

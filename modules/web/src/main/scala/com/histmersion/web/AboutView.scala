@@ -1,9 +1,14 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
+import com.histmersion.api.{ServiceState, Wording}
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.api.backup.Backup
+import com.histmersion.api.instance.{About, AboutMarkdown}
+import com.histmersion.api.jobs.JobState
+import com.histmersion.api.maintenance.{Storage, StorageReport}
+import com.histmersion.api.plugins.{PluginsReport, PluginState}
 
 /** The About window: `GET /api/about` — the server's build, its health, the job queue, the newest backup and how big
   * the store is. Read once when the window opens, and again on "refresh".

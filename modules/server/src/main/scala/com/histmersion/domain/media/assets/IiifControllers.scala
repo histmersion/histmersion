@@ -1,10 +1,11 @@
 package com.histmersion.domain.media.assets
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Write}
 
 import java.awt.image.BufferedImage
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import javax.imageio.ImageIO
+import com.histmersion.api.media.{AssetLinks, Iiif}
 
 /** Server-side implementation of the IIIF Image API Level 1 (plan §4.3).
   *

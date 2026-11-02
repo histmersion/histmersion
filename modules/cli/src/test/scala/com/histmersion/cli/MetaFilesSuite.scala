@@ -1,6 +1,6 @@
 package com.histmersion.cli
 
-import com.histmersion.api.GoalsExport
+import com.histmersion.api.automation.GoalsExport
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
 import java.net.InetSocketAddress
 import java.nio.file.{Files, Path}

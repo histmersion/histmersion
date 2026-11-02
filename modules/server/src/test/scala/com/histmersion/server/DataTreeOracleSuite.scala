@@ -4,7 +4,6 @@ import com.histmersion.util.database.Transactor
 
 import com.histmersion.util.settings.ConfigSource
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.db.{DbSuite, TestDb}
 import com.histmersion.util.database.Migrate
@@ -19,6 +18,8 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
+import com.histmersion.api.basemap.{BasemapFetchQuery, BasemapRemoveQuery}
+import com.histmersion.api.jobs.JobInfo
 
 /** The files a run of the server leaves in its directories, as a smoke run makes them: one scratch root holding the
   * settings file, the data directory, the converter's and the acquisition's spools, the backups and bundles directories

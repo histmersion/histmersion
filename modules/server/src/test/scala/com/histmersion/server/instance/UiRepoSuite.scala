@@ -2,10 +2,9 @@ package com.histmersion.server.instance
 
 import com.histmersion.util.database.Transactor
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.UiNotices.Board
+import com.histmersion.api.instance.UiNotices.Board
 import com.histmersion.util.database.Migrate
 
 import com.augustnagro.magnum.*

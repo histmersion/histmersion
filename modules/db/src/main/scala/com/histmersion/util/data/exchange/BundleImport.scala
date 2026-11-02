@@ -1,5 +1,5 @@
 package com.histmersion.util.data.exchange
-import com.histmersion.api.*
+import com.histmersion.api.ApiError
 import com.histmersion.config.*
 import com.histmersion.domain.*
 

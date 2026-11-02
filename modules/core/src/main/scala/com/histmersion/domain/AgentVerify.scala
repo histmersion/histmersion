@@ -1,6 +1,7 @@
 package com.histmersion.domain
 
-import com.histmersion.api.{Period, Years}
+import com.histmersion.api.Years
+import com.histmersion.api.catalogue.Period
 
 import com.histmersion.util.text.ComparedText
 import com.histmersion.values.{Confidence, SourceStatus}

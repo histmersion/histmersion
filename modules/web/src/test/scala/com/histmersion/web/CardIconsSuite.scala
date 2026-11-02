@@ -1,7 +1,11 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
 import com.histmersion.values.{Confidence, MediaRole, PlaceKind, SourceStatus}
+import com.histmersion.api.catalogue.{PlaceSummary, SiteTypes}
+import com.histmersion.api.library.{GeoHit, SourceDetail, SourceKinds, SourceWithFindings}
+import com.histmersion.api.media.MediaThumb
+import com.histmersion.api.research.{ArticleRow, ArticleView}
+import com.histmersion.api.views.PlaceDetail
 
 /** Every card kind leads with an icon from the one registry (#1449): sources by what they are, places by kind and site
   * type, regions and polities a map, events their kind, articles and pictures theirs. And the map's clusters: what a

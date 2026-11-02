@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.worklists
 
-import com.histmersion.api.Queue.*
+import com.histmersion.api.automation.Queue.*
 import com.histmersion.domain.Scheduling
 
 import com.histmersion.util.database.given_DbCodec_List
@@ -11,8 +11,8 @@ import com.augustnagro.magnum.*
   * Every method runs on the connection it is given; the service ([[QueueService]], in the server) or the import that
   * writes a list's rows in its own transaction opens it.
   *
-  * All the shape lives in the pure [[com.histmersion.api.Queue]] parser and renderer. Timestamps go out as the same UTC
-  * ISO-8601 strings the rest of the wire uses.
+  * All the shape lives in the pure [[com.histmersion.api.automation.Queue]] parser and renderer. Timestamps go out as
+  * the same UTC ISO-8601 strings the rest of the wire uses.
   */
 object QueueRepo:
 

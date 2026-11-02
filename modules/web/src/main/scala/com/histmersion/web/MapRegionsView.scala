@@ -1,10 +1,14 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
+import com.histmersion.api.ServiceState
 import com.raquo.laminar.api.L.*
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.api.backup.Backup
+import com.histmersion.api.basemap.{BasemapFetchQuery, BasemapLayer, BasemapRemoveQuery, BasemapStatus}
+import com.histmersion.api.instance.UiConfig
+import com.histmersion.api.jobs.{JobDetail, JobInfo}
 
 /** The About window's "Map regions" panel: pick a named region or type a box, see what it would download zoom by zoom
   * (a dry run of the fetch job), download it and follow the job, and remove what was downloaded. Over the base map's

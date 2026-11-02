@@ -1,6 +1,6 @@
 package com.histmersion.web.library
 
-import com.histmersion.api.IngestRequest
+import com.histmersion.api.library.IngestRequest
 
 /** "Add by DOI": what a person types — a DOI, a doi.org link, `arxiv:<id>` or a bare arXiv id — as the ingest the
   * server is asked for. The web UI asks the LEGAL open-access chain only, always: the server's configuration may allow

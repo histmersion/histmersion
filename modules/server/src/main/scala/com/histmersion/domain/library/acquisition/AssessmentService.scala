@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.acquisition
 
-import com.histmersion.api.{Acquire, RetractionNotice}
+import com.histmersion.api.library.{Acquire, RetractionNotice}
 import com.histmersion.util.database.Transactor
 
 import hearth.kindlings.optics.syntax.*

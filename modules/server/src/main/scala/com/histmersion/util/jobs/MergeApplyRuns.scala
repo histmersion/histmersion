@@ -2,7 +2,8 @@ package com.histmersion.util.jobs
 
 import com.histmersion.util.database.Transactor
 
-import com.histmersion.api.{JobState, MergeApplyJob, MergeApplyResult}
+import com.histmersion.api.jobs.JobState
+import com.histmersion.api.exchange.{MergeApplyJob, MergeApplyResult}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -57,7 +58,8 @@ object MergeApplyRuns:
     def status(id: String): Option[MergeApplyJob] =
       state.get().get(id.trim).map { r =>
         r.outcome match
-          case None => MergeApplyJob(id.trim, com.histmersion.api.MergeJobState.Running, r.bundle, r.planHash, 0)
+          case None =>
+            MergeApplyJob(id.trim, com.histmersion.api.exchange.MergeJobState.Running, r.bundle, r.planHash, 0)
           case Some(Right(a)) => MergeApplyJob.of(id.trim, JobState.Done, r.bundle, r.planHash, 0, None, Some(a))
           case Some(Left(e))  => MergeApplyJob.of(id.trim, JobState.Failed, r.bundle, r.planHash, 0, Some(e), None)
       }

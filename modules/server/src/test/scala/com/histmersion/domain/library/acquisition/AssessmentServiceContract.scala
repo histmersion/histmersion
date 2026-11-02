@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.acquisition
 
-import com.histmersion.api.{Acquire, RetractionNotice}
+import com.histmersion.api.library.{Acquire, RetractionNotice}
 
 /** What the assessments' store answers, the same on the database and in memory: the mirror replaced whole (a DOI listed
   * twice keeps its last row), its notices by DOI whatever its case, a verdict recorded and replaced.
@@ -34,7 +34,7 @@ abstract class AssessmentServiceContract extends AcquisitionStoreSuite:
 
   stest("a verdict is recorded with its stamp, and a later one replaces it") { s =>
     val _ = s.sources.put(
-      com.histmersion.api.Source(
+      com.histmersion.api.library.Source(
         "zqa_one",
         "One",
         Nil,

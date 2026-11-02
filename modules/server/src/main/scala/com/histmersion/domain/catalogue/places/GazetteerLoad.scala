@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.*
+import com.histmersion.api.{LpfDataset, Span}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.Transactor
@@ -12,6 +12,16 @@ import java.nio.charset.StandardCharsets
 import java.util.zip.GZIPInputStream
 import scala.annotation.tailrec
 import scala.util.Using
+import com.histmersion.api.backup.Backup
+import com.histmersion.api.catalogue.{
+  Gazetteer,
+  GazetteerExtract,
+  GazetteerKind,
+  GazetteerLoadCounts,
+  GazetteerManifest,
+  GazetteerSourceInfo,
+  GazRecord
+}
 
 /** The gazetteer's external sources (#1064) — the `geonames`, `wikidata`, `tgn` (#1403) and `lpf` steps of the one-time
   * gazetteer import job (the init job, the same that imports the bundled seed and fetches Cliopatria or PeriodO).

@@ -2,11 +2,11 @@ package com.histmersion.cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.*
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path, StandardCopyOption}
 import com.histmersion.util.data.exchange.{BundleFormat, BundleTar}
+import com.histmersion.api.exchange.{Bundle, BundleImportResult, BundleManifest, BundleMarkdown, MergeImportRequest}
 
 /** `histmersion bundle export|verify|import|instance` — the portable bundle (docs/research-merge-import.md, milestones
   * M0–M2). The server builds and reads bundles; the CLI moves the file: an export is streamed to disk, a verify/import

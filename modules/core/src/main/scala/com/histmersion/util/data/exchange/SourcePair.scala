@@ -1,6 +1,6 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.BundleSource
+import com.histmersion.api.exchange.BundleSource
 
 /** A source of the bundle (`right`) and one here (`left`) that the sources' rules found to be, or perhaps to be, one
   * work: `gate` is the question that decides it when a person must, `byKey` whether a strong key (a DOI, the original

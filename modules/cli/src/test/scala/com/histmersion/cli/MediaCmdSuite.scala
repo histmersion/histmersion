@@ -1,6 +1,5 @@
 package com.histmersion.cli
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.monovore.decline.Command
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
@@ -10,6 +9,7 @@ import java.net.InetSocketAddress
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.concurrent.ConcurrentLinkedQueue
 import scala.jdk.CollectionConverters.*
+import com.histmersion.api.jobs.JobInfo
 
 /** #1491: `histmersion media import wikidata` starts the server's import JOB — the request answers at once — and
   * follows it with the `n/total` progress line the job reports, to its summary; `--no-wait` prints the id and returns;
@@ -23,7 +23,7 @@ class MediaCmdSuite extends munit.FunSuite:
     "running",
     progress = Some("100/300 place(s)/event(s) asked · batch 2"),
     detail = Some(
-      com.histmersion.api.media.imports.ImportJobKinds
+      com.histmersion.api.media.ImportJobKinds
         .Media(Some("Wikidata pictures of up to 300 places/events not asked yet"))
     )
   )

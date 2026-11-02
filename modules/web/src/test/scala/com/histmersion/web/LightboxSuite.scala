@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.api.MediaProvider
+import com.histmersion.api.media.MediaProvider
 
 class LightboxSuite extends munit.FunSuite:
 

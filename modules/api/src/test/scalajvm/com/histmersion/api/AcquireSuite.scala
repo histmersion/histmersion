@@ -1,7 +1,8 @@
 package com.histmersion.api
 
-import com.histmersion.api.Acquire.{EdgeKinds, Ident, Verdicts}
+import com.histmersion.api.library.Acquire.{EdgeKinds, Ident, Verdicts}
 import com.histmersion.values.SourceStatus
+import com.histmersion.api.library.{Acquire, FollowupRow, RetractionNotice, UpdateNotice, WorkRef}
 
 /** The pure rules of stream 2.6: citekeys, identifier parsing, verdicts, follow-up classification and the Retraction
   * Watch CSV. No network, no database.

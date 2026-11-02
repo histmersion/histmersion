@@ -1,6 +1,6 @@
 package com.histmersion.web.map
 
-import com.histmersion.api.MapStartConfig
+import com.histmersion.api.instance.MapStartConfig
 
 class MapStartSuite extends munit.FunSuite:
   private val anatolia = MapStartConfig("last", 37.0, 30.0, 5, "Anatolia")

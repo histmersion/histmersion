@@ -2,10 +2,9 @@ package com.histmersion.domain.automation.workflows
 
 import com.histmersion.domain.automation.agents.{Halt, RunCtx}
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.*
+import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.VocabularyCodecs.given
 import io.circe.parser.decode
 import io.circe.syntax.*

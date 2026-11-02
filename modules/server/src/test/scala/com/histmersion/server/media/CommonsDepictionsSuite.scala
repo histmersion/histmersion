@@ -5,10 +5,10 @@ import com.histmersion.domain.media.imports.Target
 
 import com.histmersion.pluginhost.HttpAnswer
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.MediaRole
+import com.histmersion.api.media.{MediaCount, MediaProvider}
 
 /** Pictures that depict events (#1446) against a FAKE Wikidata and Commons — the `media-depicts` plugin's collection,
   * as the host builds it, run by the host's import of a collection of its targets' own pictures: P1299 works' images

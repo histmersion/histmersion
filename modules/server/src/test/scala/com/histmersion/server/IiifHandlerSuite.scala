@@ -1,12 +1,12 @@
 package com.histmersion.server
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
+import com.histmersion.api.media.Iiif
 
 /** Unit tests for [[IiifHandler]]'s pure image processing: region cropping, size scaling, and format encoding. No
   * database — a synthetic test image is used.

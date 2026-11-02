@@ -1,6 +1,8 @@
 package com.histmersion.server
 
-import com.histmersion.api.{Api, ConfigEdit, PluginsReport}
+import com.histmersion.api.Api
+import com.histmersion.api.settings.ConfigEdit
+import com.histmersion.api.plugins.PluginsReport
 import com.histmersion.config.{AppConfig, LoadedConfig}
 import com.histmersion.util.settings.{SettingsService, SettingsViews}
 import com.histmersion.server.agents.{Generated, PromptBudget, ToolboxOrder}

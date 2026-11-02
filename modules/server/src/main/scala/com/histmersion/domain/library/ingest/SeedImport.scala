@@ -1,6 +1,7 @@
 package com.histmersion.domain.library.ingest
 
-import com.histmersion.api.{AssetLinks, SeedResult}
+import com.histmersion.api.media.AssetLinks
+import com.histmersion.api.library.SeedResult
 import com.histmersion.domain.Caller
 import com.histmersion.domain.library.sources.SourceService
 import com.histmersion.domain.media.assets.NewFigure

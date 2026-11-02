@@ -7,13 +7,15 @@ import com.histmersion.domain.catalogue.places.PlaceFixtures
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
-import com.histmersion.api.*
+import com.histmersion.api.{GeoPoint, TimeSpan}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.values.{PlaceKind, SourceStatus}
 import com.histmersion.util.database.Migrate
+import com.histmersion.api.catalogue.{EventPut, Period, Place, PlaceInput, PlaceName, PlaceRelation, PlaceTimeBasis}
+import com.histmersion.api.library.{Finding, Source}
 
 /** The time rule of the place views (2026-10-09, [[PlaceTimeBasis]]) against a real PostGIS (HISTMERSION_TEST_DB_URL;
   * skipped otherwise), on every surface that reads places at a time: the map feed, search and suggestions, a place's

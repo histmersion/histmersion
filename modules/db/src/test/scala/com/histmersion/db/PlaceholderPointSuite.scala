@@ -4,13 +4,15 @@ import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
-import com.histmersion.api.*
+import com.histmersion.api.GeoPoint
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.values.{PlaceKind, SourceStatus}
 import com.histmersion.util.database.{Migrate, Sql}
+import com.histmersion.api.catalogue.{Period, Place, PlaceInput, PlaceName}
+import com.histmersion.api.library.{Finding, Source}
 
 /** A finding whose POINT is a placeholder (2026-10-09), against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped
   * otherwise). 12 findings on "Greece" sat on 37.5 N 22.5 E, an atlas grid square's centre near Tegea, and had joined

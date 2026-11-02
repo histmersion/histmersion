@@ -15,12 +15,13 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.pluginhost.HostAiHttp
 
 import com.histmersion.util.database.Transactor
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Paging, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.*
-import com.histmersion.api.GoalPlans.*
+import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.automation.GoalPlans.*
 import com.histmersion.domain.automation.agents.ModelSettingsRepo
+import com.histmersion.api.automation.{Agents, AgentsApi, GoalPlans, ListFilters, ModelChains, PlanQuota, RunCompare}
 
 /** The ONE implementation of the embedded-agent operations (docs/research-embedded-agents.md): the model check, the
   * probe and (through [[Engine]]) pipeline runs. REST ([[AgentsRoutes]]) and the CLI reach it; it is held as

@@ -1,12 +1,12 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
 import com.histmersion.domain.AgentVerify.*
 import com.histmersion.values.SourceStatus
+import com.histmersion.api.catalogue.Period
 
 class AgentVerifySuite extends munit.FunSuite:
 

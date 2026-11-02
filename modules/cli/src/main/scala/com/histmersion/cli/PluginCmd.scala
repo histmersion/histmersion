@@ -2,12 +2,12 @@ package com.histmersion.cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.*
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.util.plugins.PluginKit
+import com.histmersion.api.plugins.PluginsReport
 
 object PluginCmd:
 

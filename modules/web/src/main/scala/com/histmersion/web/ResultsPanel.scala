@@ -1,11 +1,12 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
+import com.histmersion.api.Wording
 import com.histmersion.web.ui.{Layout, SidebarTab}
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
 import scala.scalajs.js
+import com.histmersion.api.instance.UiConfig
 
 /** The results on Explore's right: "On the map" (what the map's view holds) or "Everywhere", the tabs — sources,
   * articles, events, places, pictures, each with its count —, the sort, and the rows, every one a real link (a plain

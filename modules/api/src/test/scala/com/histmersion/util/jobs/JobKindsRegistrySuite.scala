@@ -1,7 +1,8 @@
 package com.histmersion.util.jobs
 
-import com.histmersion.api.{JobDetail, JobInfo}
+import com.histmersion.api.jobs.{JobDetail, JobInfo}
 import com.histmersion.values.JobKind
+import com.histmersion.api.jobs.{JobKindEntry, JobKindMeaning, JobKindName, JobKinds}
 
 class JobKindsRegistrySuite extends munit.FunSuite:
   private val a = JobKindEntry(JobKind("alpha"), JobKindName("Alpha"), JobKindMeaning("Does alpha."), stoppable = true)

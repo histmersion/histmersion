@@ -1,7 +1,8 @@
 package com.histmersion.cli
 
-import com.histmersion.api.*
 import com.histmersion.config.*
+import com.histmersion.api.backup.BackupStatus
+import com.histmersion.api.jobs.JobInfo
 
 /** [[JobFollow]] (#1798 item 14): a followed job or backup that ends badly exits 2 (the server said no), never 0 or 1;
   * one that succeeds is `Right`. No server, no clock: the fetch and sleep are fakes.

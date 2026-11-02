@@ -1,6 +1,8 @@
 package com.histmersion.api
 
-import com.histmersion.api.catalogue.places.PlacesMarkdown
+import com.histmersion.api.catalogue.PlacesMarkdown
+import com.histmersion.api.catalogue.{PlaceDesignation, PlaceRecord, PlaceRegister, PlaceSummary}
+import com.histmersion.api.views.PlaceDetail
 
 /** What a place's own record says beyond its card (where its dates come from, its heritage designations, the registers
   * that list it), in words and in the place's Markdown.

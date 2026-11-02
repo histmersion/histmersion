@@ -2,12 +2,14 @@ package com.histmersion.util.jobs
 
 import com.histmersion.util.database.given
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.{Jsonb, Keyset, ListSql, Param, Sql}
+import com.histmersion.api.automation.Agents
+import com.histmersion.api.exchange.{MergeApplyJob, MergeApplyResult}
+import com.histmersion.api.jobs.{JobDetail, JobInfo, JobState}
 
 /** OCR jobs (plan §1.8). The row is the durable part of a job; the queue itself is in memory, which is precisely why a
   * restart must reconcile: [[failInterrupted]] turns every `running` row into `failed: interrupted` at startup, so no
@@ -289,7 +291,7 @@ object JobRepo:
     */
   def startMergeApply(bundle: String, planHash: String)(using DbCon): String =
     val id = java.util.UUID.randomUUID().toString
-    val js = json(com.histmersion.util.data.exchange.ExchangeJobKinds.PlanHash(Some(planHash)))
+    val js = json(com.histmersion.api.exchange.ExchangeJobKinds.PlanHash(Some(planHash)))
     sql"""INSERT INTO jobs (id, kind, status, sha256, detail)
           VALUES ($id, ${MergeApplyJob.JobKind}, ${JobState.Running.wire}, $bundle, $js::jsonb)""".update.run()
     id

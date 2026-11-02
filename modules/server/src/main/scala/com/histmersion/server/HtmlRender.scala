@@ -1,9 +1,11 @@
 package com.histmersion.server
 
-import com.histmersion.api.*
+import com.histmersion.api.{HtmlAtoms, Wording, YearFmt}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.{Confidence, SourceStatus}
+import com.histmersion.api.library.{FindingRow, Label, SourceRef}
+import com.histmersion.api.research.ArticleRef
 
 /** The HTML atoms of the server-rendered pages — PURE string builders, one shape per thing, so a source reference looks
   * and behaves the same in an article's prose, its "Sources cited" footer, a source's "Cites / Cited by" list and the

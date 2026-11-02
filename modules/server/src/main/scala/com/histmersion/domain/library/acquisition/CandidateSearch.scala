@@ -4,14 +4,16 @@ import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.domain.automation.worklists.{QueueScope, QueueService}
 import com.histmersion.domain.library.sources.SourceService
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Plural, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.GoalPlans.LinkKind
+import com.histmersion.api.automation.GoalPlans.LinkKind
 
 import hearth.kindlings.optics.syntax.*
 
 import java.time.{LocalDate, ZoneOffset}
+import com.histmersion.api.automation.{Goal, Queue}
+import com.histmersion.api.library.{Acquire, Candidates, CandidateSweep, CandidateWatch, SourceCandidate, WorkRef}
 
 /** The deterministic new-source search of one goal (#3761, docs/research-goal-advancement.md): its WATCHES — every
   * saved query (its linked `query` links, else its title) on every index of `acquire.candidates.indexes`, and for up to

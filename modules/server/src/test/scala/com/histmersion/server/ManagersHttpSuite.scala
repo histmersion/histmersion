@@ -3,7 +3,7 @@ package com.histmersion.server
 import ox.supervised
 import com.augustnagro.magnum.*
 import com.histmersion.config.AppConfig
-import com.histmersion.api.Managers
+import com.histmersion.api.automation.Managers
 import io.circe.parser.decode
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
@@ -116,7 +116,8 @@ class ManagersHttpSuite extends com.histmersion.db.DbSuite:
         // the central scheduler: its status (a dry pass with agents off), why one item waits, the live switch
         val (ss, sb) = get(s"$url/api/agents/scheduler?limit=5")
         assertEquals(ss, 200, sb)
-        val st = decode[com.histmersion.api.AgentScheduler.SchedulerStatus](sb).fold(e => fail(s"$e: $sb"), identity)
+        val st = decode[com.histmersion.api.automation.AgentScheduler.SchedulerStatus](sb)
+          .fold(e => fail(s"$e: $sb"), identity)
         assertEquals((st.strategy, st.strategyFrom), (cfg.agents.scheduler.strategy, "config"))
         assert(st.strategies.map(_.name).contains("goal-first"), st.strategies)
         val (ws, wb) = get(s"$url/api/agents/scheduler/why/zqmgr2019_tin")
@@ -139,7 +140,7 @@ class ManagersHttpSuite extends com.histmersion.db.DbSuite:
         // the approval digest and a group decision
         val (ds_, db_) = get(s"$url/api/agents/approvals/digest")
         assertEquals(ds_, 200, db_)
-        assert(decode[com.histmersion.api.ApprovalDigest.Digest](db_).isRight, db_)
+        assert(decode[com.histmersion.api.automation.ApprovalDigest.Digest](db_).isRight, db_)
         assertEquals(
           post(s"$url/api/agents/approvals/decide", """{"decision":"approve"}""")._1,
           400,
@@ -157,7 +158,10 @@ class ManagersHttpSuite extends com.histmersion.db.DbSuite:
         // the stall report and drain mode
         val (ss2, sb2) = get(s"$url/api/agents/stalls?days=0")
         assertEquals(ss2, 200, sb2)
-        assert(decode[com.histmersion.api.Stalls.StallReport](sb2).exists(_.stalled.exists(_.slug == Goal)), sb2)
+        assert(
+          decode[com.histmersion.api.automation.Stalls.StallReport](sb2).exists(_.stalled.exists(_.slug == Goal)),
+          sb2
+        )
         val (dr, drb) = post(s"$url/api/agents/autopilot/drain", """{"on":true,"by":"test"}""")
         assertEquals(dr, 200, drb)
         assert(drb.contains("\"drain\""), drb)

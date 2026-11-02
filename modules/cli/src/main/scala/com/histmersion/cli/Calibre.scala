@@ -1,6 +1,7 @@
 package com.histmersion.cli
 
-import com.histmersion.api.{Acquire, CalibreGap, Plural}
+import com.histmersion.api.Plural
+import com.histmersion.api.library.{Acquire, CalibreGap}
 import com.histmersion.config.CalibreCliConfig
 
 import java.nio.file.{Files, Path}

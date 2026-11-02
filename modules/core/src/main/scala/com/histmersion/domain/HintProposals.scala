@@ -6,7 +6,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-import com.histmersion.api.Managers.{HintEffect, ManagerConfig}
+import com.histmersion.api.automation.Managers.{HintEffect, ManagerConfig}
 
 /** LLM-proposed hint effects (docs/research-process-managers.md §3.6, phase 3): a person writes a hint in words; a
   * model reads it and proposes the structured action it asks for — hold, prioritise or skip some of the manager's

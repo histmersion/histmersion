@@ -7,12 +7,11 @@ import com.augustnagro.magnum.{connect, transact}
 import com.histmersion.domain.automation.agents.{AnswerSchemas, Checked, Halt, Prompt, RunCtx, StepAgent}
 import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.{ApprovalKind, Pipeline}
+import com.histmersion.api.automation.Agents.{ApprovalKind, Pipeline}
 import com.histmersion.domain.HintProposals.{HintAnswer, Proposed}
-import com.histmersion.api.Managers.*
+import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.api.VocabularyCodecs.given
@@ -20,6 +19,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
 
 import javax.sql.DataSource
+import com.histmersion.api.automation.{AgentsMarkdown, ManagersMarkdown}
 
 /** `hint-effect <manager>` (docs/research-process-managers.md §3.6, phase 3): a person's hint, in words, read by the
   * planner model (the `hint-reader` definition: no tools — the hint, the manager's items and its settings are given as

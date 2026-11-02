@@ -1,6 +1,6 @@
 package com.histmersion.util.data.checks
 
-import com.histmersion.api.Lint.FormatChecker
+import com.histmersion.api.checks.Lint.FormatChecker
 import com.histmersion.config.AppConfig
 import javax.sql.DataSource
 

@@ -1,11 +1,14 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
+import com.histmersion.api.Palette
 import com.histmersion.web.map.*
 import com.histmersion.web.ui.Layout
 import org.scalajs.dom
 
 import scala.scalajs.js
+import com.histmersion.api.catalogue.{EventGeo, EventPrecision, EventTaxonomy, EventTier}
+import com.histmersion.api.library.SourceKinds
+import com.histmersion.api.media.MediaGeoHit
 
 /** The four kinds of point (docs/map-layers.md): findings, sites, events, pictures — each a descriptor of
   * [[PointLayer]].

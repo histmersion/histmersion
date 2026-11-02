@@ -2,7 +2,7 @@ package com.histmersion.server.instance
 
 import com.histmersion.util.database.Transactor
 
-import com.histmersion.api.*
+import com.histmersion.api.ApiError
 import com.histmersion.domain.personal.seen.{SeenBoard, SeenService}
 import com.histmersion.server.{BuildMeta, Deps, StorageLocations, Supervisor}
 import com.histmersion.server.UiConfigViews
@@ -17,6 +17,13 @@ import hearth.kindlings.optics.syntax.*
 
 import java.time.Instant
 import scala.util.Try
+import com.histmersion.api.automation.AgentLeaseInfo
+import com.histmersion.api.basemap.BaseMapSource
+import com.histmersion.api.instance.{About, BuildStamp, CorpusCounts, Health, UiConfig, UiNotices, Version, VersionInfo}
+import com.histmersion.api.jobs.JobCounts
+import com.histmersion.api.library.{AcquireChecks, CorrespondingSource, UpstreamQuota}
+import com.histmersion.api.maintenance.StorageReport
+import com.histmersion.api.settings.ReloadReport
 
 /** This server as REST, MCP and the CLI ask about it, over the diagnostics: its version and health, About (the build,
   * the job queue, the newest backup, the store's counts, the storage, the plugins, the agent lease, the metered

@@ -1,6 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.api.Managers.{ManagerConfig, Sweep}
+import com.histmersion.api.automation.Managers.{ManagerConfig, Sweep}
 
 /** A research area's watcher when it saves no settings of its own (`agents.managers.watch`): its runs at once and the
   * daily cap of its opt-in auto-ingest.

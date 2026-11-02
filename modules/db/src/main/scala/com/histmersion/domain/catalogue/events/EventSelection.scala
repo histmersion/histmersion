@@ -2,7 +2,7 @@ package com.histmersion.domain.catalogue.events
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
-import com.histmersion.api.Filter
+import com.histmersion.api.library.Filter
 import com.histmersion.util.database.Sql
 
 /** Which events a list, the map's events or the leads select: those related to the filter's sources (read with the

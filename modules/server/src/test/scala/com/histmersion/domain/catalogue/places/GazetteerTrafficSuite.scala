@@ -2,12 +2,13 @@ package com.histmersion.domain.catalogue.places
 
 import com.histmersion.server.ServerPlugins
 
-import com.histmersion.api.*
 import com.histmersion.plugin.PluginHttp
 import com.histmersion.pluginhost.{HttpTransport, PluginGazetteers}
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
+import com.histmersion.api.catalogue.{PlaceImportResult, PlaceInput}
+import com.histmersion.api.instance.Version
 
 /** The recorded traffic and results of the network gazetteers (Cliopatria, AWMC, ChronOntology): each download answered
   * by a loopback server from a fixture (Cliopatria's zipped, as its upstream ships it) — the request it sent, every

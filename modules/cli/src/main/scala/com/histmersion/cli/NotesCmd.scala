@@ -5,6 +5,7 @@ import com.monovore.decline.*
 import com.histmersion.api.personal.*
 
 import java.nio.file.{Files, Path}
+import com.histmersion.api.ItemKind
 
 /** `histmersion notes list|show|add|edit|rm` — your notes (Markdown), each left on an item or a place on the map.
   */

@@ -1,12 +1,14 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
-import com.histmersion.api.Agents.{Pipeline, RunDetail, RunInfo, RunState, TargetKind}
+import com.histmersion.api.{Paging, Plural, Wording}
+import com.histmersion.api.automation.Agents.{Pipeline, RunDetail, RunInfo, RunState, TargetKind}
 import com.raquo.laminar.api.L.*
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
+import com.histmersion.api.automation.{Agents, AgentsMarkdown, ListFilters}
+import com.histmersion.api.library.Label
 
 /** The embedded agent runs (docs/research-embedded-agents.md §5.3): the runs window (`GET /api/agents/runs`, filtered
   * on the server through [[UiState.runStatus]], a page at a time: [[ListPaging]]) and one window per run (`GET

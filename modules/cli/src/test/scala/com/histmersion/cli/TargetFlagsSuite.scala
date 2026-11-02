@@ -1,6 +1,6 @@
 package com.histmersion.cli
 
-import com.histmersion.api.personal.ItemKind
+import com.histmersion.api.ItemKind
 
 class TargetFlagsSuite extends munit.FunSuite:
 

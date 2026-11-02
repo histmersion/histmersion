@@ -3,7 +3,7 @@ package com.histmersion.domain.automation.agents
 import com.histmersion.server.agents.ClaudeCode
 
 import com.histmersion.config.{AgentsConfig, AppConfig, UserPaths}
-import com.histmersion.api.Agents.GenerateResult
+import com.histmersion.api.automation.Agents.GenerateResult
 import io.circe.Json
 import io.circe.syntax.*
 

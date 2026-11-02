@@ -1,6 +1,6 @@
 package com.histmersion.util.ocr
 
-import com.histmersion.api.ConvertedDoc
+import com.histmersion.api.ocr.ConvertedDoc
 import com.histmersion.util.storage.Blob
 
 import java.time.Duration

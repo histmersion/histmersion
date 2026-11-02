@@ -3,17 +3,18 @@ package com.histmersion.domain.automation.scheduler
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.{ManagerDefaultsViews, ManagerSupervisor}
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.{ApprovalState, Billing, PauseReason, Pipeline, Role, RunState}
-import com.histmersion.api.Managers.*
-import com.histmersion.api.Queue.QueueAdd
+import com.histmersion.api.automation.Agents.{ApprovalState, Billing, PauseReason, Pipeline, Role, RunState}
+import com.histmersion.api.automation.Managers.*
+import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.SchedulerPolicy.*
-import com.histmersion.api.AgentScheduler.*
+import com.histmersion.api.automation.AgentScheduler.*
 
 import java.time.Instant
 import javax.sql.DataSource
+import com.histmersion.api.automation.{Agents, AgentScheduler, GoalPlans, PlanQuota, Stalls}
 
 /** The central agent scheduler (docs/research-goal-advancement.md "As built"): the managers PRODUCE pending items; once
   * per managers' tick [[pass]] reads them all — with each goal's priority and age, the plan pools each would draw on,

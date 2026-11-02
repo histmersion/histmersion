@@ -1,16 +1,16 @@
 package com.histmersion.domain
 
-import com.histmersion.api.media.assets.MediaMarkdown
+import com.histmersion.api.media.MediaMarkdown
 
 import com.histmersion.domain.media.figures.FigurePick
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
 import io.circe.parser.parse
 import com.histmersion.values.MediaRole
+import com.histmersion.api.media.{MediaCount, MediaCoversReport, MediaImportReport, MediaProvider, MediaSourceLine}
 
 /** The pure half of a source's picture (#1446): which figure illustrates a paper ([[FigurePick]]) — on the fixture the
   * converter produced from a generated journal paper (converter/tests/test_figures.py) and on hand-made cases — and the

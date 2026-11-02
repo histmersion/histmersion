@@ -1,6 +1,6 @@
 package com.histmersion.util.basemap
 
-import com.histmersion.api.*
+import com.histmersion.api.BBox
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -9,6 +9,7 @@ import com.histmersion.util.storage.{Store, StoreKey}
 
 import java.nio.file.{Files, Path}
 import java.security.MessageDigest
+import com.histmersion.api.basemap.{Basemap, BasemapLayer}
 
 /** Measuring tools for docs/research-terrain-basemap.md (and how the browser fixture's vector extract was made), with
   * the fetch's own code — never run by the tests:

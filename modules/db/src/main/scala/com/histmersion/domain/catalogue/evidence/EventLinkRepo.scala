@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.evidence
 
-import com.histmersion.api.{EventLinkCandidate, EventPassage}
+import com.histmersion.api.catalogue.{EventLinkCandidate, EventPassage}
 import com.histmersion.util.database.Jsonb
 
 import com.augustnagro.magnum.*

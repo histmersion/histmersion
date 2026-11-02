@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.search
 
-import com.histmersion.api.library.search.Tree
+import com.histmersion.api.library.Tree
 
 import com.histmersion.util.database.given
 
@@ -8,14 +8,15 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.util.database.RangeSql
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.Sql
+import com.histmersion.api.catalogue.PeriodRow
+import com.histmersion.api.library.Filter
 
-/** Period bounds of everything matching a filter — the raw input of [[com.histmersion.api.Aggregate]].
+/** Period bounds of everything matching a filter — the raw input of [[com.histmersion.api.library.Aggregate]].
   *
   * The DB only SELECTS periods; **bucketing happens in Scala** (pure, unit-tested) so the strip (§1.7) and the wave-2
   * "by time" tree (§1.6) cannot drift apart, and so no SQL has to know about adaptive bucket sizes.
@@ -127,8 +128,8 @@ private[search] object AggregateRepo:
         Sql.raw(" AND (") ++ ownPeriod ++ Sql.raw(" OR fp.in_window > 0) ") ++
         FilterSql.orderBySql(filter)
 
-  /** Run [[treeRowsQuery]]: the rows the tree buckets and nests ([[com.histmersion.api.library.search.Tree]], pure),
-    * hung off the gazetteer the catalogue gives (`TreeRepo.gazetteer`). `unit` is `sources` (default) or `findings`.
+  /** Run [[treeRowsQuery]]: the rows the tree buckets and nests ([[com.histmersion.api.library.Tree]], pure), hung off
+    * the gazetteer the catalogue gives (`TreeRepo.gazetteer`). `unit` is `sources` (default) or `findings`.
     */
   def treeRows(unit: String, filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Vector[Tree.TreeRow] =
     treeRowsQuery(unit, filter, scope).frag.query[TreeRowRaw].run().map(_.toRow)

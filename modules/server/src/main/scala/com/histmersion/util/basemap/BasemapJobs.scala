@@ -1,6 +1,7 @@
 package com.histmersion.util.basemap
 
-import com.histmersion.api.{ApiError, JobInfo}
+import com.histmersion.api.ApiError
+import com.histmersion.api.jobs.JobInfo
 
 /** The background job a base-map fetch runs as: one at a time, behind the server's write guard, its row in the jobs
   * table (`histmersion jobs` follows it). The composition root runs it on the server's database, on the generation the

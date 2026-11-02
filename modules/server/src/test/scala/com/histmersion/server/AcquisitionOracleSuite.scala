@@ -1,6 +1,5 @@
 package com.histmersion.server
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.plugins.calibre.{CalibreFixture, CalibrePlugin}
 import com.histmersion.plugin as spi
@@ -20,6 +19,8 @@ import javax.sql.DataSource
 import scala.jdk.CollectionConverters.*
 import com.histmersion.util.database.Sql
 import com.histmersion.db.*
+import com.histmersion.api.media.DataCredits
+import com.histmersion.api.ocr.{ConvertedDoc, ConvertedImage}
 
 /** What acquisition, ingest and the collections answer, recorded on the code before they moved into the library's
   * domain. A server on its own scratch database, every upstream a fixture on a loopback port (never the network), the

@@ -6,6 +6,7 @@ import com.histmersion.config.given
 import com.histmersion.domain.given
 
 import com.histmersion.domain.EnrichSource.*
+import com.histmersion.api.catalogue.{Geocode, Period}
 
 /** #1424: the findings step's guards against what a smaller extractor (Haiku) got wrong — places the gazetteer does not
   * know, centuries stored as years, claims that point at a table. Each sends the answer back while attempts remain and

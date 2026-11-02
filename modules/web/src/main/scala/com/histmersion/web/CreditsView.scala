@@ -1,8 +1,8 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
 import com.raquo.laminar.api.L.*
 import com.histmersion.web.map.TheMap
+import com.histmersion.api.media.DataCredits
 
 /** Settings › Credits: what the base map shown now credits, then every dataset Histmersion draws or reads with its
   * licence and the credit it asks for ([[DataCredits]]), and the software's licences.

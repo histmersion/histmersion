@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
+import com.histmersion.api.HtmlAtoms
 import com.raquo.laminar.api.L
 import com.raquo.laminar.api.L.*
 

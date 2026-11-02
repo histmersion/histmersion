@@ -1,7 +1,7 @@
 package com.histmersion.web
 
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.*
+import com.histmersion.api.Wording
 import org.scalajs.dom
 
 import scala.concurrent.Future
@@ -9,6 +9,8 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 
 import com.raquo.laminar.codecs.StringAsIsCodec
+import com.histmersion.api.instance.UiConfig
+import com.histmersion.api.library.Label
 
 /** The filter panel on Explore's left (shared with Library: one filter state, [[UiState]]): the words, the place, the
   * period (the timeline's span, echoed and editable) and the topic in view; authors, status, tags and the publication

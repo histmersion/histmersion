@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.EventsApi
+import com.histmersion.api.catalogue.EventsApi
 import com.histmersion.domain.Caller
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint

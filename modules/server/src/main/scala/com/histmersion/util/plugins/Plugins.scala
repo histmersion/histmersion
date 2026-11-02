@@ -3,7 +3,7 @@ package com.histmersion.util.plugins
 import com.histmersion.pluginhost.{FirstPartySettings, Generation, HostServices, PluginHost, Registries, ReservedNames}
 
 import com.histmersion.config.{AppConfig, HotPlan, LoadedConfig}
-import com.histmersion.api.{PluginSet, PluginState, PluginStatus}
+import com.histmersion.api.plugins.{PluginSet, PluginState, PluginStatus}
 import org.ekrich.config.{ConfigFactory, ConfigUtil}
 import hearth.kindlings.optics.syntax.*
 import scala.jdk.CollectionConverters.*

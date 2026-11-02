@@ -8,11 +8,29 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.util.database.RangeSql
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Write}
 import com.histmersion.util.database.{Jsonb, Param, Sql}
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
+import com.histmersion.api.catalogue.{EventArticleRef, Period}
+import com.histmersion.api.library.Filter
+import com.histmersion.api.research.{
+  Article,
+  ArticleFilter,
+  ArticleKindCount,
+  ArticleLinks,
+  ArticleList,
+  ArticlePatch,
+  ArticleRef,
+  ArticleRow,
+  Articles,
+  ArticleVersion,
+  ArticleVersionFull,
+  ArticleView,
+  Backlink,
+  CitedSource
+}
 
 /** Magnum codecs for the article wire DTOs (the types live in `core`, which knows nothing about JDBC). */
 given DbCodec[Backlink] = DbCodec.derived

@@ -2,7 +2,6 @@ package com.histmersion.server
 
 import com.histmersion.util.ocr.ConverterClient
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.Db
@@ -12,6 +11,9 @@ import com.augustnagro.magnum.*
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.file.{Files, Path}
+import com.histmersion.api.jobs.JobInfo
+import com.histmersion.api.library.IngestMarkdown
+import com.histmersion.api.ocr.ConvertedDoc
 
 /** #970 over real HTTP, the converter stubbed: an import that names no acquisition item closes the open items that name
   * its DOI (whatever case, prefix or punctuation they write it with), and only LISTS the items that resemble it — a

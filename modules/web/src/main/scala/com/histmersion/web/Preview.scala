@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
+import com.histmersion.api.YearFmt
 import com.raquo.laminar.api.L.*
 import com.histmersion.web.ui.Layout
 import org.scalajs.dom
@@ -11,6 +11,21 @@ import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.util.{Failure, Success}
 import com.histmersion.values.{MediaRole, SourceStatus}
+import com.histmersion.api.catalogue.{
+  Corrections,
+  EventGeo,
+  EventLeads,
+  EventPrecision,
+  EventTier,
+  Place,
+  PlaceLink,
+  PlaceSummary,
+  PlaceTimeBasis
+}
+import com.histmersion.api.library.{DiscoverResult, Label, Source, SourceDetail, SourceRef, SourceWithFindings}
+import com.histmersion.api.media.MediaThumb
+import com.histmersion.api.research.{Article, ArticleView}
+import com.histmersion.api.views.{EventDetail, PlaceDetail}
 
 /** THE link preview. One delegated hover handler on the document answers for every element that carries `data-ck` (a
   * source) or `data-slug` (an article) — server-rendered anchors in a window or on a standalone page, and the web UI's

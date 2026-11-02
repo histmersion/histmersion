@@ -1,10 +1,10 @@
 package com.histmersion.domain.research.articles
 
-import com.histmersion.util.identity.AliasKinds
+import com.histmersion.api.aliases.AliasKinds
 
-import com.histmersion.api.research.articles.BacklinksMarkdown
+import com.histmersion.api.research.BacklinksMarkdown
 
-import com.histmersion.api.*
+import com.histmersion.api.{Api, ApiError, Write}
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.{ArticleReviewStatus, Caller, ReviewArticle, ReviewLedger}
 import com.histmersion.domain.catalogue.places.PlaceScope
@@ -15,7 +15,38 @@ import com.histmersion.domain.research.articles.review.ReviewStateService
 import com.histmersion.domain.research.articles.ArticleNote
 import com.histmersion.server.{LinkTarget, MarkdownLint}
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.util.identity.AliasKind
+import com.histmersion.api.aliases.AliasKind
+import com.histmersion.api.aliases.{LabelRename, LabelRenamed, LabelRenames}
+import com.histmersion.api.catalogue.{ArticleEventLead, Period}
+import com.histmersion.api.checks.{FormatField, FormatIssue, FormatReport, FormatSeverity}
+import com.histmersion.api.library.{Filter, SeedResult, SourceRef}
+import com.histmersion.api.research.{
+  Article,
+  ArticleCoverage,
+  ArticleDeleted,
+  ArticleEdits,
+  ArticleFilter,
+  ArticleImport,
+  ArticleLinks,
+  ArticleList,
+  ArticlePatch,
+  ArticlePut,
+  ArticleReviewView,
+  Articles,
+  ArticleVersion,
+  ArticleVersionFull,
+  ArticleView,
+  Backlink,
+  Coverage,
+  CoverageEdge,
+  CoverageReason,
+  CoverageSearch,
+  CritiquePair,
+  CritiquePairing,
+  CritiqueReason,
+  Critiques,
+  ResolvedArticle
+}
 
 /** The articles' operations, each the one implementation REST, MCP and the agents' tools call: the list and one article
   * in every view, the writes (put, patch, delete, rename, a note imported) with the strict formatting gate, the

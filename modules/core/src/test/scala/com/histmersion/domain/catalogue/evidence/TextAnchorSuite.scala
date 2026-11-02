@@ -1,6 +1,5 @@
 package com.histmersion.domain.catalogue.evidence
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given

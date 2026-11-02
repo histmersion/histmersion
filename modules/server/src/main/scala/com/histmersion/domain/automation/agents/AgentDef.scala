@@ -1,7 +1,7 @@
 package com.histmersion.domain.automation.agents
 
 import scala.annotation.tailrec
-import com.histmersion.api.Agents.Role
+import com.histmersion.api.automation.Agents.Role
 import com.histmersion.domain.automation.workflows.ToolName
 
 import scala.compiletime.asMatchable

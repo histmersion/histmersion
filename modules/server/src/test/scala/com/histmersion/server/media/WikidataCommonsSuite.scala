@@ -3,11 +3,11 @@ package com.histmersion.server.media
 import com.histmersion.domain.media.imports.MediaStore
 import com.histmersion.domain.media.imports.OwnImport
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.media.assets.{Known, ProviderAsset, Rights}
 import com.histmersion.domain.media.imports.Target
+import com.histmersion.api.media.{AssetKind, MediaCount, MediaImportReport, MediaProvider}
 
 /** The Wikidata → Commons provider (#1446) end to end against a FAKE provider (captured answers, trimmed) and an
   * in-memory store — the `media-wikidata` plugin's collection, as the host builds it, run by the host's import of a

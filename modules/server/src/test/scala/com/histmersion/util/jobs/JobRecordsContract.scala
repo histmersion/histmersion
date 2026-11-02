@@ -1,6 +1,6 @@
 package com.histmersion.util.jobs
 
-import com.histmersion.api.{JobInfo, JobState}
+import com.histmersion.api.jobs.{JobInfo, JobState}
 import com.histmersion.config.AppConfig
 
 import java.time.Clock

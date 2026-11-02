@@ -1,6 +1,7 @@
 package com.histmersion.domain.research.articles
 
-import com.histmersion.api.{ArticleList, Filter}
+import com.histmersion.api.research.ArticleList
+import com.histmersion.api.library.Filter
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.util.database.Transactor
 

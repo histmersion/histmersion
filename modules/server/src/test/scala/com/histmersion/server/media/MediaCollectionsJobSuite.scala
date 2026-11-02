@@ -1,6 +1,6 @@
 package com.histmersion.server.media
 
-import com.histmersion.api.media.assets.MediaMarkdown
+import com.histmersion.api.media.MediaMarkdown
 
 import com.histmersion.domain.media.imports.ImportFixtures
 import com.histmersion.server.MediaWiring
@@ -9,7 +9,6 @@ import com.histmersion.domain.catalogue.places.PlaceFixtures
 
 import ox.supervised
 import com.augustnagro.magnum.*
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.{Db, Migrate}
@@ -21,6 +20,9 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.values.{MediaRole, PlaceKind}
 import com.histmersion.db.*
+import com.histmersion.api.catalogue.{Place, PlaceInput, PlaceName}
+import com.histmersion.api.jobs.JobInfo
+import com.histmersion.api.media.{AssetKind, MediaImportReport, MediaItem, MediaProvider}
 
 /** A collection import (#1446) through the real server and database (HISTMERSION_TEST_DB_URL; skipped otherwise): the
   * places on the map and their name keys and periods as the match reads them (V094), a dry run's matches with their
@@ -194,7 +196,7 @@ class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
         val job = decode[JobInfo](jb).fold(e => fail(s"$e: $jb"), identity)
         assert(
           job.detail
-            .flatMap(com.histmersion.api.media.imports.ImportJobKinds.Media.of)
+            .flatMap(com.histmersion.api.media.ImportJobKinds.Media.of)
             .exists(_.contains("Art Institute of Chicago objects of zqmc_site")),
           job.toString
         )

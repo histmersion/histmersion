@@ -189,7 +189,7 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
 
         // the web UI's links both ways: an item names the goals that link it; a goal's link names the item's list
         val listing = io.circe.parser
-          .decode[com.histmersion.api.QueueListing](get(s"$url/api/queue/tasks?all=true")._2)
+          .decode[com.histmersion.api.views.QueueListing](get(s"$url/api/queue/tasks?all=true")._2)
           .fold(e => fail(e.toString), identity)
         assertEquals(listing.goals.find(_.item == gone).map(_.goals.map(_.slug)), Some(List("zzgoals-sub")))
         assertEquals(listing.goals.find(_.item == ok).flatMap(_.goals.headOption).map(_.title), Some("ZZ sub goal"))
@@ -198,7 +198,7 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
 
         val (es, eb) = get(s"$url/api/export/goals")
         assertEquals(es, 200, eb)
-        assert(eb.startsWith(com.histmersion.api.GoalsExport.Header), eb.take(200))
+        assert(eb.startsWith(com.histmersion.api.automation.GoalsExport.Header), eb.take(200))
         assert(eb.contains("Do not edit"), eb.take(400))
         val top = eb.indexOf("\n## ZZ top goal\n")
         val sub = eb.indexOf("\n### ZZ sub goal\n")
@@ -311,7 +311,7 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
           """{"edits":[{"op":"replace","anchor":"by sea.","text":"by sea [[zzhttp_ghost]]."},{"op":"delete","anchor":"nowhere"}]}"""
         val (s, r) = post(s"$url/api/articles/zzhttp_check/check", edits)
         assertEquals(s, 200, r)
-        val check = io.circe.parser.decode[com.histmersion.api.ArticleEdits.ArticleCheck](r).toOption.get
+        val check = io.circe.parser.decode[com.histmersion.api.research.ArticleEdits.ArticleCheck](r).toOption.get
         assertEquals(check.edits.map(_.applied), List(false, false))
         assert(
           check.problems.exists(_.contains("zzhttp_ghost")) && check.problems.exists(_.startsWith("edit 2 (delete")),

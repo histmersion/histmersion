@@ -1,13 +1,15 @@
 package com.histmersion.web
 
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.*
+import com.histmersion.api.GeoPick
 import com.histmersion.web.map.MapMotion
 import com.histmersion.api.VocabularyCodecs.given
 import org.scalajs.dom
 import org.scalajs.dom.window
 
 import scala.scalajs.js
+import com.histmersion.api.automation.Agents
+import com.histmersion.api.jobs.JobState
 
 /** How a field's value crosses a string boundary — the URL hash (repeated keys for a list) or the browser's storage.
   * `decode` of nothing, or of garbage, is `None`: the field falls back to its default rather than to a half-parsed

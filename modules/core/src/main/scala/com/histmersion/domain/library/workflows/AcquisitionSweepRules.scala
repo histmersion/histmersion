@@ -1,7 +1,7 @@
 package com.histmersion.domain.library.workflows
 
 import scala.annotation.tailrec
-import com.histmersion.api.{Acquire, WorkRef}
+import com.histmersion.api.library.{Acquire, WorkRef}
 import com.histmersion.api.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject

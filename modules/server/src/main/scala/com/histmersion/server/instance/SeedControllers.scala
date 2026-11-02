@@ -1,6 +1,7 @@
 package com.histmersion.server.instance
 
-import com.histmersion.api.{ApiError, SeedRequest, SeedResult}
+import com.histmersion.api.ApiError
+import com.histmersion.api.library.{SeedRequest, SeedResult}
 import com.histmersion.domain.library.ingest.SeedImport
 import com.histmersion.util.storage.SafePath
 import com.histmersion.server.{Deps, SeedNoteFiles}

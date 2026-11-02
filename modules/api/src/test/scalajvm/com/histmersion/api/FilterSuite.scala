@@ -1,8 +1,20 @@
 package com.histmersion.api
 
-import com.histmersion.api.library.search.SearchMarkdown
+import com.histmersion.api.library.SearchMarkdown
 
 import com.histmersion.values.SourceStatus
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.library.{
+  Facet,
+  FacetField,
+  Filter,
+  FilterQuery,
+  FindingMatch,
+  Hit,
+  SearchHit,
+  SearchResult,
+  Sort
+}
 
 /** The `Filter` contract (plan §1.0): the flat wire shape, its interpretation, and the Markdown that shows a human/LLM
   * *why* each source matched. All pure.

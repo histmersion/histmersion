@@ -1,6 +1,7 @@
 package com.histmersion.domain.catalogue.evidence
 
-import com.histmersion.api.{EventLinkCandidate, EventPassage, EventPut, TimeSpan}
+import com.histmersion.api.TimeSpan
+import com.histmersion.api.catalogue.{EventLinkCandidate, EventPassage, EventPut}
 import com.histmersion.domain.catalogue.CatalogueStoreSuite
 import com.histmersion.values.EventLinkStatus
 

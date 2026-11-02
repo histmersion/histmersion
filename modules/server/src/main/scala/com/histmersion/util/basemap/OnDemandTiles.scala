@@ -1,6 +1,6 @@
 package com.histmersion.util.basemap
 
-import com.histmersion.api.BasemapOnDemand
+import com.histmersion.api.basemap.BasemapOnDemand
 import com.histmersion.config.BasemapOnDemandConfig
 import com.histmersion.util.storage.{Store, StoreError, StoreKey}
 

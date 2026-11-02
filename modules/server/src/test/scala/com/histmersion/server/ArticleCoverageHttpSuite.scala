@@ -1,12 +1,22 @@
 package com.histmersion.server
 
 import ox.supervised
-import com.histmersion.api.*
+import com.histmersion.api.StatusCount
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.values.SourceStatus
+import com.histmersion.api.research.{
+  ArticleCoverage,
+  ArticleMarkdown,
+  ArticleView,
+  Coverage,
+  CoverageDrift,
+  CoverageEdge,
+  CritiqueState,
+  DriftKind
+}
 
 /** #958 — an article's coverage computed from its recorded filter against seeded sources, over every surface:
   * `GET /api/articles/{slug}/coverage`, the generated sections in `GET /api/articles/{slug}` (and so `article get`),

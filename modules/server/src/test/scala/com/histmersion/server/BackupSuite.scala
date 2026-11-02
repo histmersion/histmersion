@@ -3,12 +3,13 @@ package com.histmersion.server
 import com.histmersion.util.data.backup.BackupJobs
 import com.histmersion.util.data.maintenance.WriteGate
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Markdown, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import java.nio.file.{Files, Path}
 import java.time.Instant
 import scala.jdk.CollectionConverters.*
+import com.histmersion.api.backup.{Backup, BackupState}
 
 /** The parts of the server-side backup machinery that need no database and no `pg_dump`: the maintenance lock, and the
   * listing/resolution that keeps a client-supplied name inside `backups.dir`.

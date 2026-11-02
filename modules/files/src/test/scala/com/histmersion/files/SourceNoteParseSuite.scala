@@ -1,9 +1,11 @@
 package com.histmersion.files
 
-import com.histmersion.api.*
+import com.histmersion.api.GeoPoint
 import com.histmersion.api.given
 import com.histmersion.values.SourceStatus
 import com.histmersion.domain.library.sources.SourceNote
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.library.Edge
 
 class SourceNoteParseSuite extends munit.FunSuite:
   val note =

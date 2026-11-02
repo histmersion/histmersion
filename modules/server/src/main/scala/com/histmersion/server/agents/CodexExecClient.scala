@@ -3,8 +3,8 @@ package com.histmersion.server.agents
 import com.histmersion.domain.automation.agents.{AgentDef, FirstCallProbe, LlmCall, LlmClient, ModelLimitReached}
 
 import com.histmersion.config.CodexConfig
-import com.histmersion.api.Agents.ModelRef
-import com.histmersion.api.PlanQuota
+import com.histmersion.api.automation.Agents.ModelRef
+import com.histmersion.api.automation.PlanQuota
 import io.circe.{parser, Json}
 import io.circe.syntax.*
 import sttp.ai.core.agent.*

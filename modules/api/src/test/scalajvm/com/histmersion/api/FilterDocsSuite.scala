@@ -3,6 +3,7 @@ package com.histmersion.api
 import sttp.tapir.{Schema, SchemaType}
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
+import com.histmersion.api.library.FilterDocs
 
 /** [[FilterDocs]] (#1946): the filter is described once, and that description reaches a schema. */
 class FilterDocsSuite extends munit.FunSuite:

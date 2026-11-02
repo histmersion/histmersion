@@ -1,9 +1,10 @@
 package com.histmersion.server
 
 import ox.supervised
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.api.jobs.JobInfo
+import com.histmersion.api.maintenance.{Vacuum, VacuumPlan}
 
 /** `POST /api/maintenance/vacuum` and the MCP `vacuum` tool (#1445) over real HTTP: the request answers at once with a
   * `vacuum` job, the job runs VACUUM (ANALYZE) outside any transaction (inside one, Postgres refuses it: "VACUUM cannot

@@ -1,6 +1,6 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.{BundleKindCounts, BundleManifest}
+import com.histmersion.api.exchange.{BundleKindCounts, BundleManifest}
 import com.histmersion.domain.MergePlanner
 
 import com.augustnagro.magnum.DbCon

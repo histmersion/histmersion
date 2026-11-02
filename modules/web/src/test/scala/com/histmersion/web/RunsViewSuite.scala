@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.api.Agents.*
+import com.histmersion.api.automation.Agents.*
 
 /** The pure parts of the agent runs and approvals windows: what is live, the poll schedule, the filter, the actions a
   * state allows, why a run paused, the typed budget, an approval in words, and the state filters' round trip through
@@ -117,17 +117,17 @@ class RunsViewSuite extends munit.FunSuite:
       "",
       subject = Some("bronze-age"),
       plan = Some(
-        com.histmersion.api.GoalPlans.Plan(
+        com.histmersion.api.automation.GoalPlans.Plan(
           "bronze-age",
           queries = List("tin"),
-          subGoals = List(com.histmersion.api.GoalPlans.PlannedGoal("tin", "Tin"))
+          subGoals = List(com.histmersion.api.automation.GoalPlans.PlannedGoal("tin", "Tin"))
         )
       )
     )
     assertEquals(ApprovalsView.describe(plan), "plan for goal bronze-age: 1 sub-goal, 1 query, 0 works")
-    val draft = com.histmersion.api.GoalPlans.ArticleDraft(
+    val draft = com.histmersion.api.automation.GoalPlans.ArticleDraft(
       "tin",
-      com.histmersion.api.GoalPlans.DraftMode.Create,
+      com.histmersion.api.automation.GoalPlans.DraftMode.Create,
       "Tin",
       "concept",
       "x"
@@ -136,7 +136,7 @@ class RunsViewSuite extends munit.FunSuite:
     assertEquals(ApprovalsView.describe(pub), "publish the new article tin: Tin")
     assertEquals(
       ApprovalsView.describe(
-        pub.copy(article = Some(draft.copy(mode = com.histmersion.api.GoalPlans.DraftMode.Extend)))
+        pub.copy(article = Some(draft.copy(mode = com.histmersion.api.automation.GoalPlans.DraftMode.Extend)))
       ),
       "append a section to the article tin"
     )

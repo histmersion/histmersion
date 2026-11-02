@@ -12,7 +12,7 @@ import com.histmersion.domain.media.assets.NewFigure
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
-import com.histmersion.api.*
+import com.histmersion.api.{GeoPoint, RegisteredPlanMatches, TimeSpan}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -28,6 +28,19 @@ import com.histmersion.util.data.exchange.{BundleExport, BundleScope}
 import com.histmersion.domain.automation.goals.GoalRepo
 import com.histmersion.util.data.exchange.{BundleImport, BundleRepo, MergeState}
 import com.histmersion.util.database.{Param, Sql}
+import com.histmersion.api.automation.{GoalPatch, GoalPut, Queue}
+import com.histmersion.api.catalogue.{AttestationPut, EventPut, Period}
+import com.histmersion.api.exchange.{
+  BundleImportResult,
+  MatchCounts,
+  MergeApplyResult,
+  MergeIssue,
+  MergePlan,
+  MergeResolution,
+  MergeResolutions
+}
+import com.histmersion.api.library.{Edge, Finding, Source, SourcePatch}
+import com.histmersion.api.research.Article
 
 /** `merge plan` against real Postgres (docs/research-merge-import.md §8, milestone M3): the crafted pair of
   * collections, "work" and "home", built through the repositories in two databases of their own; work's bundle planned

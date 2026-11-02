@@ -1,6 +1,6 @@
 package com.histmersion.domain.research
 
-import com.histmersion.api.ArticleLinks
+import com.histmersion.api.research.ArticleLinks
 import com.histmersion.domain.MergePlanner
 import com.histmersion.util.data.exchange.{PlanRules, PlanRun}
 

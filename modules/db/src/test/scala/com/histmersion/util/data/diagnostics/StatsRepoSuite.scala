@@ -1,6 +1,6 @@
 package com.histmersion.util.data.diagnostics
 
-import com.histmersion.api.*
+import com.histmersion.api.TableSize
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -8,6 +8,8 @@ import com.histmersion.util.database.{Migrate, Sql}
 
 import com.augustnagro.magnum.*
 import com.histmersion.db.*
+import com.histmersion.api.instance.CorpusCounts
+import com.histmersion.api.jobs.{JobCounts, JobState}
 
 /** The About counts against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. Other suites write into the
   * same database at the same time, so each count is compared with its own table read in the same breath, not with a

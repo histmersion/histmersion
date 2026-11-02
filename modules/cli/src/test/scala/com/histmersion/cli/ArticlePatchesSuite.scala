@@ -1,7 +1,9 @@
 package com.histmersion.cli
 
-import com.histmersion.api.*
+import com.histmersion.api.ListPatch
 import com.histmersion.config.*
+import com.histmersion.api.catalogue.PeriodInput
+import com.histmersion.api.research.{ArticleFilter, ArticlePatch, CoverageReason, CritiqueReason}
 
 /** `histmersion article patch` flag → [[ArticlePatch]]. Pure: the semantics of "only what you pass changes" is asserted
   * without a server.

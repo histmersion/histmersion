@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.ingest
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Write}
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueService}
 import com.histmersion.domain.library.sources.SourceService
@@ -11,6 +11,10 @@ import com.histmersion.values.Citekey
 import hearth.kindlings.optics.syntax.*
 
 import scala.util.Using
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.library.{Ingest, IngestAccepted, IngestParams}
+import com.histmersion.api.media.AssetLinks
+import com.histmersion.api.library.of
 
 /** The ingest surface (plan §1.8) — REST routes, MCP tools and the CLI all reach these:
   *

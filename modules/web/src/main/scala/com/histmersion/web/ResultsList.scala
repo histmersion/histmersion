@@ -1,11 +1,12 @@
 package com.histmersion.web
 
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.*
+import com.histmersion.api.Plural
 import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.api.library.{Filter, GeoHit, Hit, SearchResult}
 
 object ResultsList:
 

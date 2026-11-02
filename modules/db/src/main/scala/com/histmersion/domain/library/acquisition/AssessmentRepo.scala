@@ -1,9 +1,8 @@
 package com.histmersion.domain.library.acquisition
 
-import com.histmersion.api.*
-
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
+import com.histmersion.api.library.{Acquire, RetractionNotice}
 
 /** The assessments' store: the local Retraction Watch mirror and the verdict recorded for each stored source. Every
   * method runs on the connection it is given.

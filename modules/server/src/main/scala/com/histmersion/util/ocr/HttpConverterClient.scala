@@ -1,11 +1,12 @@
 package com.histmersion.util.ocr
 
-import com.histmersion.api.*
 import com.histmersion.util.storage.Blob
 
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.time.Duration
+import com.histmersion.api.media.AssetLinks
+import com.histmersion.api.ocr.ConvertedDoc
 
 /** Multipart `POST /convert` against the sidecar. Stateless and thread-safe: one `HttpClient` is shared by the worker
   * pool, and every request carries its own body.

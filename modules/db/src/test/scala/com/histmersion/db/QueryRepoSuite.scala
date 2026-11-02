@@ -5,13 +5,14 @@ import com.histmersion.domain.library.search.QueryAccess
 import com.histmersion.domain.library.search.SearchFixtures
 import com.histmersion.domain.library.sources.SourceFixtures
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.values.SourceStatus
 import com.histmersion.util.database.{Db, Migrate}
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.library.Source
 
 /** The read-only query path against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise.
   *
@@ -187,7 +188,8 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
 
   test("the generated tool description names the tables that exist"):
     // `Query` alone is ambiguous here — magnum exports one too
-    val d = com.histmersion.api.Query.toolDescription(com.histmersion.api.Query.SchemaTables(SearchFixtures.tables(ds)))
+    val d = com.histmersion.api.library.Query
+      .toolDescription(com.histmersion.api.library.Query.SchemaTables(SearchFixtures.tables(ds)))
     assert(d.contains("sources("), d)
     assert(d.contains("queue_items("), d)
 

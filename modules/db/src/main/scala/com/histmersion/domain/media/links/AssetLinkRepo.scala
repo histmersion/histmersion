@@ -1,9 +1,8 @@
 package com.histmersion.domain.media.links
 
-import com.histmersion.api.*
-
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
+import com.histmersion.api.media.{AssetLink, AssetLinkPut}
 
 /** A source's figure tied to a place, an event, a finding, a source or an article (plan §1.6): what it depicts, where
   * it was taken, what it illustrates, whose page it is. Every method runs on the connection it is given.

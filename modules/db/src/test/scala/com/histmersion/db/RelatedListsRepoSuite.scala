@@ -10,11 +10,14 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
-import com.histmersion.api.*
+import com.histmersion.api.TimeSpan
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.SourceStatus
 import com.histmersion.util.database.Migrate
+import com.histmersion.api.catalogue.{EventPut, Period}
+import com.histmersion.api.library.{Filter, Source}
+import com.histmersion.api.research.Article
 
 /** #406 against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. The Articles and Events lists are the
   * items RELATED to the sources the global filter selects: an article that cites a matching source is listed, one

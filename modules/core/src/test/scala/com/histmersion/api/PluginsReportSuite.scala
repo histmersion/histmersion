@@ -7,6 +7,18 @@ import com.histmersion.domain.given
 
 import io.circe.syntax.*
 import com.histmersion.util.plugins.PluginKit
+import com.histmersion.api.instance.{About, AboutMarkdown, BuildStamp, Health}
+import com.histmersion.api.jobs.JobCounts
+import com.histmersion.api.plugins.{
+  PluginJar,
+  PluginSet,
+  PluginSetting,
+  PluginsMarkdown,
+  PluginsReport,
+  PluginState,
+  PluginStatus
+}
+import com.histmersion.api.settings.ConfigFileInfo
 
 class PluginsReportSuite extends munit.FunSuite:
 

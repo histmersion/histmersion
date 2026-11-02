@@ -2,7 +2,7 @@ package com.histmersion.cli
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import com.histmersion.api.VocabularyCodecs.given
-import com.histmersion.api.library.collections.{
+import com.histmersion.api.library.{
   CollectionAuditRow,
   CollectionEntry,
   CollectionGapRow,

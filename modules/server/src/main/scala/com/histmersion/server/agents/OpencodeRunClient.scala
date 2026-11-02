@@ -3,7 +3,7 @@ package com.histmersion.server.agents
 import com.histmersion.domain.automation.agents.{FirstCallProbe, LlmCall, LlmClient, ModelLimitReached}
 
 import com.histmersion.config.OpencodeConfig
-import com.histmersion.api.Agents.ModelRef
+import com.histmersion.api.automation.Agents.ModelRef
 import io.circe.{parser, Json}
 import io.circe.syntax.*
 import sttp.ai.core.agent.*

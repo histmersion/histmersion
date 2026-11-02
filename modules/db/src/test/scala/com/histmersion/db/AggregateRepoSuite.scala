@@ -3,11 +3,13 @@ package com.histmersion.db
 import com.histmersion.domain.library.search.SearchFixtures
 import com.histmersion.domain.library.sources.SourceFixtures
 
-import com.histmersion.api.*
+import com.histmersion.api.{BBox, GeoPoint}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.SourceStatus
 import com.histmersion.util.database.Migrate
+import com.histmersion.api.catalogue.{Period, PeriodRow}
+import com.histmersion.api.library.{Aggregate, Filter, Finding, Source}
 
 /** `periods` against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise. The bucketing itself is pure
   * and covered by `core/AggregateSuite`.

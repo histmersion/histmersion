@@ -1,6 +1,27 @@
 package com.histmersion.cli
 
-import com.histmersion.api.library.collections.*
+import com.histmersion.api.library.*
+import com.histmersion.api.library.{
+  CollectionAudit,
+  CollectionGaps,
+  CollectionImported,
+  CollectionImportRequest,
+  CollectionInfo,
+  CollectionLinked,
+  CollectionLinkRequest,
+  CollectionPushed,
+  CollectionPushRequest,
+  CollectionsApi,
+  CollectionSearch,
+  CollectionSetDone,
+  CollectionSetRequest,
+  CollectionSync,
+  CollectionSyncRequest,
+  CollectionUpdateAll,
+  CollectionUpdateAllRequest,
+  CollectionUpdatedOne,
+  CollectionUpdateOne
+}
 
 /** The typed client for the library's source collections (`CollectionsApi`), over [[Client]]'s transport. */
 final class CollectionsClient(c: Client, name: String):

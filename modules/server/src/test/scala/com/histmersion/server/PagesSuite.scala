@@ -1,9 +1,20 @@
 package com.histmersion.server
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.{Confidence, SourceStatus}
+import com.histmersion.api.library.{FindingRow, SourceRef}
+import com.histmersion.api.research.{
+  ArticleRef,
+  ArticleReviewView,
+  ArticleRow,
+  CitedSource,
+  ReviewBadge,
+  ReviewFinding,
+  ReviewGoal,
+  ReviewRound,
+  ReviewState
+}
 
 /** The server's HTML pages, pure: the anchor/chip/badge atoms and the typed page models rendered from them. No database
   * — the link resolver is a Map.

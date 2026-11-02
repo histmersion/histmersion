@@ -1,9 +1,9 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.js
+import com.histmersion.api.library.Label
 
 /** The one chip: a readable label (never an underscore — [[Label.display]]), an optional prefix, and an optional remove
   * button. Editable chip inputs, the empty-state list, article cards and the link preview all draw theirs with it.

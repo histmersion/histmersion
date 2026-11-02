@@ -1,13 +1,13 @@
 package com.histmersion.api
 
-import com.histmersion.api.catalogue.events.EventsMarkdown
+import com.histmersion.api.catalogue.EventsMarkdown
 
-import com.histmersion.api.automation.agents.AgentStateMarkdown
-import com.histmersion.api.catalogue.evidence.AttestationsMarkdown
-import com.histmersion.api.catalogue.places.PlacesMarkdown
-import com.histmersion.api.library.search.SearchMarkdown
-import com.histmersion.api.library.sources.SourcesMarkdown
-import com.histmersion.api.media.assets.MediaMarkdown
+import com.histmersion.api.automation.AgentStateMarkdown
+import com.histmersion.api.catalogue.AttestationsMarkdown
+import com.histmersion.api.catalogue.PlacesMarkdown
+import com.histmersion.api.library.SearchMarkdown
+import com.histmersion.api.library.SourcesMarkdown
+import com.histmersion.api.media.MediaMarkdown
 
 import com.histmersion.values.{Confidence, LocationPrecision, SourceStatus}
 import hearth.kindlings.optics.syntax.*
@@ -15,6 +15,50 @@ import io.circe.syntax.*
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
+import com.histmersion.api.automation.AgentStateEntry
+import com.histmersion.api.backup.BackupStatus
+import com.histmersion.api.catalogue.{
+  Attestation,
+  EventDating,
+  EventSummary,
+  GazetteerKind,
+  GazetteerSourceInfo,
+  PlaceGone,
+  PlaceLink,
+  PlaceRebuildResult,
+  PlaceSummary,
+  SkippedPeriod
+}
+import com.histmersion.api.exchange.InitPlan
+import com.histmersion.api.jobs.JobDetail
+import com.histmersion.api.library.{
+  ContradictionRow,
+  ContradictionsResult,
+  FindingRow,
+  GeoHit,
+  GeoHitPage,
+  GraphLink,
+  GraphNode,
+  Hit,
+  ResolvedSource,
+  SearchHit,
+  SearchResult,
+  SourceGraph
+}
+import com.histmersion.api.maintenance.VacuumPlan
+import com.histmersion.api.media.{
+  AssetDetail,
+  AssetLink,
+  FigureLicenceFill,
+  MediaCount,
+  MediaFacets,
+  MediaItem,
+  MediaList,
+  MediaTarget,
+  MediaThumb
+}
+import com.histmersion.api.research.ResolvedArticle
+import com.histmersion.api.views.{EventDetail, PlaceDetail, ResolvedId}
 
 /** The Markdown and JSON of the wire records slice 12 moves, over synthetic fixture values: the renderers no other
   * suite asserts on (the brief search, a source's findings, the graph, the contradictions, the map feed, the body
@@ -280,10 +324,10 @@ class WireSnapshotSuite extends munit.FunSuite:
       "job detail json" -> InitPlan
         .Detail(Some(InitPlan(gazetteer = true, fetch = List("zq-gaz"))))
         .set(SkippedPeriod.SkippedCount, 2)
-        .set(com.histmersion.util.data.exchange.ExchangeJobKinds.PlanHash, Some("zq-hash"))
+        .set(com.histmersion.api.exchange.ExchangeJobKinds.PlanHash, Some("zq-hash"))
         .set(VacuumPlan.Detail, Some(VacuumPlan(analyze = true, List("sources"))))
-        .set(com.histmersion.api.media.imports.ImportJobKinds.Media, Some("a media run"))
-        .set(com.histmersion.api.catalogue.events.EventsJobKinds.Catalogue, Some("zq-catalogue"))
+        .set(com.histmersion.api.media.ImportJobKinds.Media, Some("a media run"))
+        .set(com.histmersion.api.catalogue.EventsJobKinds.Catalogue, Some("zq-catalogue"))
         .set(JobDetail.Purpose, Some("zq_alpha_2001"))
         .asJson
         .spaces2

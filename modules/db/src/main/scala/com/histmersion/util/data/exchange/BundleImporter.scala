@@ -1,6 +1,6 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.{
+import com.histmersion.api.exchange.{
   Bundle,
   BundleImportResult,
   BundleKindCounts,

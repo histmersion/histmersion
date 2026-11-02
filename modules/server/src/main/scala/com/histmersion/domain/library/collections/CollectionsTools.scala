@@ -1,12 +1,23 @@
 package com.histmersion.domain.library.collections
 
 import chimp.server.*
-import com.histmersion.api.library.collections.*
+import com.histmersion.api.library.*
 import com.histmersion.domain.Caller
 import com.histmersion.util.mcp.McpOut
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import com.histmersion.api.library.{
+  CollectionFieldValue,
+  CollectionImportRequest,
+  CollectionLinkRequest,
+  CollectionPushRequest,
+  CollectionSetRequest,
+  CollectionsMarkdown,
+  CollectionSyncRequest,
+  CollectionUpdateAllRequest,
+  CollectionUpdateOne
+}
 
 /** The collections as one MCP tool, `collection`: the same controllers the REST routes call, every answer Markdown. */
 object CollectionsTools:

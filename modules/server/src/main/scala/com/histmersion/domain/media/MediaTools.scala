@@ -1,9 +1,10 @@
 package com.histmersion.domain.media
 
-import com.histmersion.api.media.assets.MediaMarkdown
+import com.histmersion.api.media.MediaMarkdown
 
 import chimp.server.*
-import com.histmersion.api.{AssetLinkPut, AssetPatch, AssetsMarkdown, Markdown}
+import com.histmersion.api.Markdown
+import com.histmersion.api.media.{AssetLinkPut, AssetPatch, AssetsMarkdown}
 import com.histmersion.domain.media.assets.AssetsControllers
 import com.histmersion.domain.media.links.AssetLinksControllers
 import com.histmersion.api.StrictJson

@@ -6,15 +6,14 @@ import com.histmersion.domain.automation.agents.{AgentsHandlers, LlmClient}
 import com.histmersion.domain.automation.managers.Zero
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.*
-import com.histmersion.api.Autopilot.AutopilotSet
-import com.histmersion.api.GoalPlans.*
-import com.histmersion.api.Managers.*
-import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.api.RepairAcquire.RepairRequest
+import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.automation.Autopilot.AutopilotSet
+import com.histmersion.api.automation.GoalPlans.*
+import com.histmersion.api.automation.Managers.*
+import com.histmersion.api.automation.Queue.QueueAdd
+import com.histmersion.api.library.RepairAcquire.RepairRequest
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.domain.automation.goals.GoalLinkRepo
 import com.histmersion.domain.automation.managers.ManagerRepo
@@ -25,6 +24,8 @@ import sttp.ai.core.agent.*
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import com.histmersion.db.*
+import com.histmersion.api.automation.{Goal, GoalPut, ManagersMarkdown, Queue}
+import com.histmersion.api.library.{IngestReport, PdfInfo, Query, RepairAcquire, SourcePut, WorkRef}
 
 /** The watchers' ingest backlog against a `*_test` database (docs/research-process-managers.md "As built: the ingest
   * backlog"): a sweep's legal open-access picks past the day's allowance wait in the backlog — never the acquisition

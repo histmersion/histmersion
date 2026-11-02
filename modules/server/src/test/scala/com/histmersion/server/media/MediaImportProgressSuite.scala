@@ -2,9 +2,9 @@ package com.histmersion.server.media
 
 import com.histmersion.domain.media.imports.ImportsControllers
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.api.media.{MediaImportReport, MediaImportRequest, MediaProvider}
 
 /** #1491: what a running media import job says — `n/total` asked — and which requests name ONE place or event (the only
   * real import the synchronous endpoint still runs). Pure.

@@ -1,7 +1,6 @@
 package com.histmersion.web
 
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.*
 import com.histmersion.api.VocabularyCodecs.given
 import org.scalajs.dom
 import org.scalajs.dom.window

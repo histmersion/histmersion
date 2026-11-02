@@ -1,9 +1,23 @@
 package com.histmersion.domain.library.sources
 
-import com.histmersion.api.*
+import com.histmersion.api.{GeoPoint, ListPatch, Write}
 import com.histmersion.domain.Caller
 import com.histmersion.domain.library.{LibraryStores, LibraryStoreSuite}
 import com.histmersion.values.{Confidence, SourceStatus}
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.library.{
+  DeletePart,
+  Edge,
+  Finding,
+  FindingInput,
+  FindingsPatch,
+  MetadataField,
+  MetadataPatch,
+  NeighborTarget,
+  Source,
+  SourceAlias,
+  SourcePatch
+}
 
 /** What the library's sources answer, the same on the database and in memory: a source written whole and in part, its
   * findings kept by id, its edges routed and promoted, its body read by part, renamed with its old citekey kept and its

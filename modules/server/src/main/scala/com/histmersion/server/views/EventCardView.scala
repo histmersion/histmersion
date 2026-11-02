@@ -1,7 +1,10 @@
 package com.histmersion.server.views
 
-import com.histmersion.api.catalogue.events.EventEntry
-import com.histmersion.api.{ApiError, EventArticleRef, EventDetail, EventPatch, EventPut, MediaThumb}
+import com.histmersion.api.catalogue.EventEntry
+import com.histmersion.api.ApiError
+import com.histmersion.api.catalogue.{EventArticleRef, EventPatch, EventPut}
+import com.histmersion.api.views.EventDetail
+import com.histmersion.api.media.MediaThumb
 import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.events.EventsControllers
 import hearth.kindlings.optics.syntax.*

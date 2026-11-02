@@ -2,7 +2,7 @@ package com.histmersion.domain
 
 import com.histmersion.domain.catalogue.events.EventPlan
 
-import com.histmersion.api.*
+import com.histmersion.api.MergeFixture
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
@@ -11,6 +11,8 @@ import MergeFixture.{home, src, uid, work}
 import MergeFold.ArticleOutcome
 import com.histmersion.values.{Confidence, DecisionKind, GoalStatus, IssueKind, SourceStatus}
 import com.histmersion.util.data.exchange.BundleFormat
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.exchange.{BundleEventDating, BundleQueueItem}
 
 /** Folding two records that are one into one (docs/research-merge-import.md §5.4): goals, queue items, events and
   * articles (a source's and a finding's folds are the library's: `SourcePlanSuite`, `FindingPlanSuite`).

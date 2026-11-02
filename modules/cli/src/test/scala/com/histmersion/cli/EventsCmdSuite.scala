@@ -1,6 +1,6 @@
 package com.histmersion.cli
 
-import com.histmersion.api.EventPatch
+import com.histmersion.api.catalogue.EventPatch
 import com.monovore.decline.Command
 
 /** `histmersion events patch <id> …` (#1440): the flags make the patch the server is sent — a scale, a place, a point

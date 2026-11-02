@@ -10,10 +10,10 @@ import com.histmersion.domain.automation.managers.Zero
 import com.histmersion.domain.automation.workflows.PipelineDef
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.*
+import com.histmersion.api.Write
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.*
+import com.histmersion.api.automation.Agents.*
 import com.histmersion.db.QueueRows
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.util.database.{Db, Migrate}
@@ -28,6 +28,8 @@ import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
 import com.histmersion.values.SourceStatus
 import com.histmersion.api.VocabularyCodecs.given
+import com.histmersion.api.automation.{AgentsApi, AgentsMarkdown, Queue}
+import com.histmersion.api.library.{Assessment, MetadataPatch, RefsResult, SourcePatch, SourcePut, WorkRef}
 
 /** A scripted stand-in for a provider: each LLM step (each `run`) consumes the next script — the real sttp-ai loop runs
   * against it, the real tools execute in process. Records every request and counts the steps it served. `fail` makes

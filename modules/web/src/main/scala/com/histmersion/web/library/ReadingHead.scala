@@ -1,15 +1,8 @@
 package com.histmersion.web.library
 
-import com.histmersion.api.{
-  ArticleSummary,
-  ArticleView,
-  Label,
-  SearchHit,
-  SourceKinds,
-  SourceWithFindings,
-  Wording,
-  YearFmt
-}
+import com.histmersion.api.{Wording, YearFmt}
+import com.histmersion.api.research.{ArticleSummary, ArticleView}
+import com.histmersion.api.library.{Label, SearchHit, SourceKinds, SourceWithFindings}
 import com.histmersion.values.{MediaRole, SourceStatus}
 
 /** The top of the reading pane, as it reads: what the item is (a source's type, venue and year; an article's kind), its

@@ -91,8 +91,9 @@ final private[maplibre] class GlPointTiles(gl: GlMap, id: String, layer: String,
         .toSeq
         .flatMap { f =>
           val props = f.properties.asInstanceOf[js.Dictionary[js.Any]]
-          val atZoom = props.get(com.histmersion.api.TileProps.Zoom).forall(v => v.asInstanceOf[Double].toInt == z)
-          val key = props.get(com.histmersion.api.TileProps.Key).map(_.toString).getOrElse("")
+          val atZoom =
+            props.get(com.histmersion.api.catalogue.TileProps.Zoom).forall(v => v.asInstanceOf[Double].toInt == z)
+          val key = props.get(com.histmersion.api.catalogue.TileProps.Key).map(_.toString).getOrElse("")
           if !atZoom || !seen.add(key) then None
           else ShapeHits.point(f.geometry).map(TilePointFeature(_, props))
         }

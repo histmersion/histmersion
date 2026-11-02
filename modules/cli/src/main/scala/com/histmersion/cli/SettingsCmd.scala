@@ -2,10 +2,10 @@ package com.histmersion.cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.config.edit.*
 import org.ekrich.config.ConfigFactory
+import com.histmersion.api.settings.{ConfigEdit, ConfigEditMarkdown}
 
 /** `histmersion config get|set|unset|restart` — the settings file. Through the server, which writes the file it reads
   * and reloads it; with `--local`, or when the server does not answer, the file on THIS machine is read and changed

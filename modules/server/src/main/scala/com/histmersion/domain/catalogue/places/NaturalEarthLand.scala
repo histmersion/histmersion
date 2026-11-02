@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.PlaceImportResult
+import com.histmersion.api.catalogue.PlaceImportResult
 
 /** Natural Earth land for clipping polities to the coastline (V025) — `histmersion places fetch land`.
   *

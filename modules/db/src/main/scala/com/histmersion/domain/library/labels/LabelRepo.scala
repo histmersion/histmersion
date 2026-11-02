@@ -1,11 +1,11 @@
 package com.histmersion.domain.library.labels
 
-import com.histmersion.api.*
 import com.histmersion.util.database.given
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.library.search.FilterSql
 
 import com.augustnagro.magnum.*
+import com.histmersion.api.library.{Facet, FacetField, Filter}
 
 /** The labels' vocabulary: the values of one dimension (tags, authors, places, topics, statuses, provenances) with the
   * sources each would leave inside a filter.

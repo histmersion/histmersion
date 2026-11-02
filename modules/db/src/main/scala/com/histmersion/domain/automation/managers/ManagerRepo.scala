@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.managers
-import com.histmersion.api.Agents.{JobKind, PauseReason, RunState}
-import com.histmersion.api.Managers.*
+import com.histmersion.api.automation.Agents.{JobKind, PauseReason, RunState}
+import com.histmersion.api.automation.Managers.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.domain.automation.managers.SweepAcquireItem

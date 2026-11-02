@@ -1,6 +1,5 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.*
 import com.histmersion.domain.catalogue.places.PlacesCarried
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.database.{Param, Sql}
@@ -10,6 +9,16 @@ import com.histmersion.util.data.exchange.BundleSql.*
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import java.util.UUID
+import com.histmersion.api.exchange.{
+  BundleCorrection,
+  BundleEvent,
+  BundleEventAlias,
+  BundleEventCatalogue,
+  BundleEventDating,
+  BundleEventEdge,
+  BundleEventParticipant,
+  BundleEventSets
+}
 
 /** The events as a bundle carries them (docs/research-merge-import.md §4, §7.3): the events with their datings, edges
   * and participants, their old ids, what the catalogues say about them and the corrections by hand — read out in a
@@ -195,7 +204,7 @@ private[events] object EventBundleRepo:
             VALUES (${e.uid}, ${e.origin}, ${e.id}, ${e.label}, ${e.kind}, ${e.notBefore}, ${e.beginBy},
               ${e.endFrom}, ${e.notAfter}, ${e.historicity}, ST_GeomFromEWKB(decode(${e.geom}, 'hex')),
               ${e.placeId.map(placeHere)}, ${e.description}, ${e.citekey}, ${e.updatedAt}::timestamptz,
-              ${e.scale.flatMap(com.histmersion.api.EventScale.parse(_).flatten)},
+              ${e.scale.flatMap(com.histmersion.api.catalogue.EventScale.parse(_).flatten)},
               ${e.catalogue}, $names::text[], ${e.wikidata}, ${e.central}, ${e.plusMinus}, ${e.datingMethod})
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label,
               kind = EXCLUDED.kind, not_before = EXCLUDED.not_before, begin_by = EXCLUDED.begin_by,
@@ -254,7 +263,7 @@ private[events] object EventBundleRepo:
   def eventCatalogueIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     val eventIds = eventIdsOf()
-    import BundleEventSets.newer
+    import com.histmersion.api.exchange.BundleEventSets.newer
     if w.es.eventCatalogue.nonEmpty then
       val here = Sql
         .raw(s"SELECT provider, provider_id, ${ts("retrieved_at")} FROM event_catalogue")
@@ -286,7 +295,7 @@ private[events] object EventBundleRepo:
     given DbCon = w.transaction
     val eventIds = eventIdsOf()
     val placeHere = PlacesCarried.placeHere(w)
-    import BundleEventSets.newer
+    import com.histmersion.api.exchange.BundleEventSets.newer
     if w.es.corrections.nonEmpty then
       val clock = s"greatest(${ts("updated_at")}, coalesce(${ts("checked_at")}, ''))"
       val here = Sql

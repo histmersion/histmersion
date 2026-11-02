@@ -1,7 +1,7 @@
 package com.histmersion.domain.library.workflows
 
-import com.histmersion.api.Agents.ApprovalState
-import com.histmersion.api.ListFilters
+import com.histmersion.api.automation.Agents.ApprovalState
+import com.histmersion.api.automation.ListFilters
 import com.histmersion.config.AgentsConfig
 import com.histmersion.domain.AgentProposals
 import com.histmersion.domain.AgentProposals.{Proposal, Route}
@@ -85,4 +85,4 @@ object SourceProposals:
       case AlreadyOpen(w) => s"already waiting for a person: $w"
       case Skipped(w)     => s"nothing to do: $w"
       case Failed(w)      => s"not applied: $w"
-      case NotProposed(w) => s"${com.histmersion.api.AgentsMarkdown.DryRunNote}: $w"
+      case NotProposed(w) => s"${com.histmersion.api.automation.AgentsMarkdown.DryRunNote}: $w"

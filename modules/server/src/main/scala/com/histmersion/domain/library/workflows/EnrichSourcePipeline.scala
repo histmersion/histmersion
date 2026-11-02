@@ -5,14 +5,17 @@ import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
 
 import com.histmersion.domain.automation.worklists.QueueItemId
 
-import com.histmersion.api.*
+import com.histmersion.api.Write
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.{ApprovalKind, Pipeline, Role}
+import com.histmersion.api.automation.Agents.{ApprovalKind, Pipeline, Role}
 import com.histmersion.domain.EnrichSource.*
 import io.circe.syntax.*
 
 import com.histmersion.values.SourceStatus
+import com.histmersion.api.automation.{AgentsMarkdown, Queue}
+import com.histmersion.api.catalogue.{Geocode, Period}
+import com.histmersion.api.library.FindingInput
 
 /** `enrich-source <citekey>` (docs/research-embedded-agents.md §4.2): read one source and propose its summary,
   * classification, period, quoted findings and notes; CODE verifies every answer and writes ONE patch. The LLM steps

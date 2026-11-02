@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.sources
 
-import com.histmersion.api.SourceDeletion
+import com.histmersion.api.library.SourceDeletion
 import com.histmersion.domain.library.sources.referrers.DeleteReport
 
 /** What deleting a source does: the answer, plus what finding its stored original needs — its digest, and whether

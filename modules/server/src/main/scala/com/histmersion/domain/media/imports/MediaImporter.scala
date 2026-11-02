@@ -2,10 +2,10 @@ package com.histmersion.domain.media.imports
 
 import com.histmersion.pluginhost.{HttpTransport, PluginMedia, Polite}
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.plugin.{MediaCollection, MediaMatchRule, MediaTarget}
 import com.histmersion.util.ocr.ConverterClient
+import com.histmersion.api.media.MediaImportReport
 
 /** One of the imports `media import <provider>` runs (#1446) — what it asks about, what it has still to ask, and a run
   * over a batch of targets. The one-run endpoint and the job share it, so every provider gets the same dry run,

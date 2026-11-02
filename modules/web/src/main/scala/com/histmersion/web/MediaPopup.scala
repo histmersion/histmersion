@@ -2,13 +2,13 @@ package com.histmersion.web
 
 import scala.annotation.tailrec
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.*
 import com.histmersion.web.map.*
 import org.scalajs.dom
 
 import scala.compiletime.uninitialized
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
+import com.histmersion.api.media.{MediaGeoHit, MediaProvider}
 
 /** The media layer's popup (#1446): a source's figure names its source; a provider's picture shows its local thumbnail
   * with the credit line and licence its licence requires — the licence's name, linked to its text. A click on the

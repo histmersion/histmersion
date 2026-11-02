@@ -4,7 +4,6 @@ import com.histmersion.util.ocr.ConverterClient
 
 import com.histmersion.util.settings.ConfigSource
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.{DbSuite, TestDb}
@@ -16,6 +15,7 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.file.{Files, Path}
 import java.util.concurrent.{CompletableFuture, CountDownLatch, TimeUnit}
 import javax.sql.DataSource
+import com.histmersion.api.ocr.ConvertedDoc
 
 /** A config reload against a running server (docs/research-plugins.md §3.5, §3.6): the database swapped between two
   * test databases on the same Postgres, with a request and an OCR job that started on the old one finishing there and

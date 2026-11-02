@@ -1,6 +1,7 @@
 package com.histmersion.web.settings
 
-import com.histmersion.api.{ConfigEdit, Wording}
+import com.histmersion.api.Wording
+import com.histmersion.api.settings.ConfigEdit
 import com.raquo.laminar.api.L.*
 
 /** One setting in a form: its name and what it does, the control for its kind, and where its value comes from — the

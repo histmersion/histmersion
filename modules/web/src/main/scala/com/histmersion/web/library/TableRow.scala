@@ -1,6 +1,8 @@
 package com.histmersion.web.library
 
-import com.histmersion.api.{ArticleSummary, Hit, Label, Wording, YearFmt}
+import com.histmersion.api.{Wording, YearFmt}
+import com.histmersion.api.research.ArticleSummary
+import com.histmersion.api.library.{Hit, Label}
 import com.histmersion.values.SourceStatus
 import com.histmersion.web.{ArticleLink, SourceLink}
 

@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.{CorrectionList, CorrectionStatus}
+import com.histmersion.api.catalogue.{CorrectionList, CorrectionStatus}
 import com.histmersion.domain.catalogue.CatalogueState
 import com.histmersion.util.database.Transactor
 import hearth.kindlings.optics.syntax.*

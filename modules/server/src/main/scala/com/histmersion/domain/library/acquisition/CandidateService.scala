@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.acquisition
 
-import com.histmersion.api.{CandidateCount, Candidates, CandidateWatch, SourceCandidate}
+import com.histmersion.api.library.{CandidateCount, Candidates, CandidateWatch, SourceCandidate}
 import com.histmersion.util.database.Transactor
 
 import hearth.kindlings.optics.syntax.*

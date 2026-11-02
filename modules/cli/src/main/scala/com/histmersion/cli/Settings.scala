@@ -1,7 +1,6 @@
 package com.histmersion.cli
 
 import com.monovore.decline.*
-import com.histmersion.api.*
 import com.histmersion.config.*
 
 /** The configuration as the CLI reads it: reference.conf < the user config file < the environment, the same layers as

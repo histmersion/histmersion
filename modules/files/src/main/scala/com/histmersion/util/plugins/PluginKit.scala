@@ -1,5 +1,4 @@
 package com.histmersion.util.plugins
-import com.histmersion.api.*
 import com.histmersion.api.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -9,6 +8,7 @@ import io.circe.syntax.*
 import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
 import java.security.MessageDigest
+import com.histmersion.api.plugins.{PluginDescription, PluginFile, PluginJar, PluginSet}
 
 /** The pure half of user-added plugins and the relink kit (docs/research-plugins.md §7, §8): the plugin-set digest and
   * what `histmersion plugin status` concludes from it, the plugins directory's index, Maven coordinates, and the kit's

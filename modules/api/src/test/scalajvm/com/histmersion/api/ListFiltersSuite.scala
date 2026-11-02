@@ -1,6 +1,6 @@
 package com.histmersion.api
 
-import com.histmersion.api.ListFilters.*
+import com.histmersion.api.automation.ListFilters.*
 
 import java.time.Instant
 

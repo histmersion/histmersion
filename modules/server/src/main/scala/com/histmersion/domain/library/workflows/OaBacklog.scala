@@ -3,18 +3,18 @@ package com.histmersion.domain.library.workflows
 import com.histmersion.domain.automation.agents.AgentsHandlers
 import com.histmersion.domain.automation.managers.ManagerDefaultsViews
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.GoalPlans.LinkKind
+import com.histmersion.api.automation.GoalPlans.LinkKind
 import com.histmersion.domain.IngestBacklog.{Entry, Failure, Lane, Placement, RepairAction, RepairFacts}
-import com.histmersion.api.Managers.*
-import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.api.RepairAcquire.*
+import com.histmersion.api.automation.Managers.*
+import com.histmersion.api.automation.Queue.QueueAdd
+import com.histmersion.api.library.RepairAcquire.*
 import com.histmersion.domain.automation.worklists.QueueScope
 import com.histmersion.domain.library.workflows.OaBacklog.Snapshot
 
 import java.time.Instant
+import com.histmersion.api.automation.Queue
 
 /** The watchers' INGEST BACKLOG (docs/research-process-managers.md "As built: the ingest backlog"). A watcher with
   * auto-ingest on used to send every legal open-access pick past the day's allowance to the acquisition list — the

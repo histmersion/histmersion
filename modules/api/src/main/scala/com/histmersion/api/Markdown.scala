@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.api.backup.{Backup, BackupInfo, BackupResult, BackupState, BackupStatus, RestoreResult}
+import com.histmersion.api.library.Label
 object Markdown:
 
   private[api] def year(y: Option[Int]): String = y.map(_.toString).getOrElse("n.d.")

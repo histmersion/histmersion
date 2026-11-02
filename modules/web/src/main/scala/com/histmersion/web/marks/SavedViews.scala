@@ -1,6 +1,7 @@
 package com.histmersion.web.marks
 
-import com.histmersion.api.personal.{Bookmark, ItemKind, MapZoom, Target, ViewState}
+import com.histmersion.api.personal.{Bookmark, MapZoom, Target, ViewState}
+import com.histmersion.api.ItemKind
 import com.histmersion.values.{Latitude, Longitude, Year}
 import com.histmersion.web.*
 import com.histmersion.web.map.TheMap

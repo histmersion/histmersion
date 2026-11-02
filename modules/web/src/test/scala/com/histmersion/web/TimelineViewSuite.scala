@@ -90,7 +90,7 @@ class TimelineViewSuite extends munit.FunSuite:
 
   // ── underlayBuckets: the overview slice drawn beneath a stale detail curve ─────────────────
 
-  private val ov = (0 until 10).toList.map(i => com.histmersion.api.TimeBucket(i * 100L, i * 100L + 99, i))
+  private val ov = (0 until 10).toList.map(i => com.histmersion.api.library.TimeBucket(i * 100L, i * 100L + 99, i))
 
   test("underlayBuckets keeps the overlapping buckets plus one neighbour each side") {
     assertEquals(TimelineView.underlayBuckets(ov, 300, 450).map(_.start), List(200L, 300L, 400L, 500L))

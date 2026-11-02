@@ -1,12 +1,15 @@
 package com.histmersion.web
 
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.*
+import com.histmersion.api.{Api, Plural}
 import org.scalajs.dom
 
 import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.instance.UiConfig
+import com.histmersion.api.library.{Bucket, BucketSample, TimeHistogram}
 
 object TreeTab:
 

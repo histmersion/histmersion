@@ -6,13 +6,12 @@ import com.histmersion.domain.automation.agents.{AgentsHandlers, LlmClient}
 import com.histmersion.domain.automation.managers.Zero
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.research.workflows.ReviewManagerPolicy
-import com.histmersion.api.Agents.*
-import com.histmersion.api.GoalPlans.LinkKind
-import com.histmersion.api.Managers.*
+import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.automation.GoalPlans.LinkKind
+import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.domain.automation.goals.GoalLinkRepo
@@ -24,6 +23,9 @@ import sttp.ai.core.agent.*
 import java.time.Instant
 import com.histmersion.values.SourceStatus
 import com.histmersion.db.*
+import com.histmersion.api.automation.{Goal, GoalPut}
+import com.histmersion.api.library.{MetadataPatch, SourcePatch, SourcePut}
+import com.histmersion.api.research.{ArticleFilter, ArticlePut}
 
 /** The process managers' phase 2 against a `*_test` database (docs/research-process-managers.md §4, §6): infer-filter
   * before a review (the filter checked against the corpus, held for its approval, the review waiting for it), the

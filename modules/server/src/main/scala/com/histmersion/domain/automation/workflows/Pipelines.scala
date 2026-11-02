@@ -2,7 +2,7 @@ package com.histmersion.domain.automation.workflows
 
 import com.histmersion.domain.automation.agents.RunCtx
 
-import com.histmersion.api.Queue.QueueAdd
+import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import io.circe.syntax.*
 
@@ -13,7 +13,7 @@ import io.circe.syntax.*
 private[histmersion] object Pipelines:
 
   /** The goal a run works for: its own, else the goal it targets. */
-  def goalOf(run: com.histmersion.api.Agents.RunInfo): Option[String] =
+  def goalOf(run: com.histmersion.api.automation.Agents.RunInfo): Option[String] =
     run.goal
       .orElse(Option.when(run.targetKind == com.histmersion.values.TargetKind.Goal.wire)(run.target))
       .filter(_.nonEmpty)

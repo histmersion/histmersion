@@ -1,13 +1,12 @@
 package com.histmersion.domain.research.workflows
 
-import com.histmersion.api.*
 import com.histmersion.api.given
 
-import com.histmersion.api.Agents.RunState
+import com.histmersion.api.automation.Agents.RunState
 import com.histmersion.domain.{ManagerDefaults, ManagerPolicy, ManagerRunDefaults, ReviewManagerDefaults}
 import com.histmersion.domain.ManagerPolicy.{Next, ReviewSettings}
 import com.histmersion.domain.research.workflows.ReviewManagerPolicy.*
-import com.histmersion.api.Managers.*
+import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewArticle.Finding
 import com.histmersion.domain.ReviewLedger.*

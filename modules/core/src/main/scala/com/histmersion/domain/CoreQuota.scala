@@ -1,7 +1,7 @@
 package com.histmersion.domain
 
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.api.UpstreamQuota
+import com.histmersion.api.library.UpstreamQuota
 
 import java.time.{Instant, LocalDate, OffsetDateTime, ZoneOffset}
 import java.time.format.DateTimeFormatter

@@ -1,6 +1,7 @@
 package com.histmersion.util.identity
 
 import javax.sql.DataSource
+import com.histmersion.api.aliases.AliasKind
 
 /** Every alias table the owners registered, by kind: how an old identifier of any kind is followed. */
 final class AliasTables(val tables: List[AliasTable]):

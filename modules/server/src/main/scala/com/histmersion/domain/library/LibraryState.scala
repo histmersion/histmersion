@@ -1,6 +1,6 @@
 package com.histmersion.domain.library
 
-import com.histmersion.api.{Edge, Source}
+import com.histmersion.api.library.{Edge, Source}
 import com.histmersion.util.ocr.Chunk
 
 import java.time.Instant

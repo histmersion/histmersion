@@ -1,6 +1,6 @@
 package com.histmersion.web.map.maplibre
 
-import com.histmersion.api.{BasemapLayerInfo, BasemapStatus}
+import com.histmersion.api.basemap.{BasemapLayerInfo, BasemapStatus}
 import com.histmersion.web.map.*
 import com.histmersion.web.ui.ThemeTokens
 import org.scalajs.dom

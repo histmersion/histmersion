@@ -1,8 +1,8 @@
 package com.histmersion.domain.automation.managers
 
-import com.histmersion.api.GoalPut
-import com.histmersion.api.Agents.JobKind
-import com.histmersion.api.Managers.*
+import com.histmersion.api.automation.GoalPut
+import com.histmersion.api.automation.Agents.JobKind
+import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
 import com.histmersion.values.GoalLinkKind
 

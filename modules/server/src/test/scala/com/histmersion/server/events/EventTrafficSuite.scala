@@ -4,7 +4,6 @@ import com.histmersion.server.CatalogueWiring
 
 import com.histmersion.server.ServerPlugins
 
-import com.histmersion.api.*
 import com.histmersion.config.{AppConfig, LoadedConfig}
 import com.histmersion.db.TestDb
 import com.histmersion.util.database.Migrate
@@ -18,6 +17,7 @@ import org.ekrich.config.ConfigFactory
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
+import com.histmersion.api.catalogue.EventImportRequest
 
 /** The recorded traffic and the stored results of the event catalogues: imports of GVP, NOAA and Wikidata from the
   * fixtures (no socket) on the stock generation's catalogues — every request with its headers, in order — then the

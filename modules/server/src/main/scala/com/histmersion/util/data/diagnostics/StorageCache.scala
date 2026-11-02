@@ -1,6 +1,6 @@
 package com.histmersion.util.data.diagnostics
 
-import com.histmersion.api.StorageReport
+import com.histmersion.api.maintenance.StorageReport
 
 import java.util.concurrent.{CompletableFuture, ExecutionException, TimeoutException, TimeUnit}
 import java.util.concurrent.atomic.AtomicReference

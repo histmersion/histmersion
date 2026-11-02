@@ -1,7 +1,7 @@
 package com.histmersion.domain.library.search
 
 import chimp.server.*
-import com.histmersion.api.Query
+import com.histmersion.api.library.Query
 import com.histmersion.util.mcp.McpOut
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema

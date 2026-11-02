@@ -1,6 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.api.Managers.ManagerConfig
+import com.histmersion.api.automation.Managers.ManagerConfig
 
 /** The checks a seeding manager's plan is held to when it saves none (`agents.seed.*`). */
 final case class SeedPlanDefaults(maxArticles: Int, minSources: Int):

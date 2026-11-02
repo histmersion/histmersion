@@ -1,6 +1,9 @@
 package com.histmersion.api
 
 import io.circe.parser.parse
+import com.histmersion.api.jobs.{JobDetail, JobInfo}
+import com.histmersion.api.library.IngestMarkdown
+import com.histmersion.api.maintenance.{Vacuum, VacuumPlan, VacuumRequest}
 
 /** `histmersion maintenance vacuum` (#1445): which tables a request names, the statement for each, and how a job says
   * what it does.

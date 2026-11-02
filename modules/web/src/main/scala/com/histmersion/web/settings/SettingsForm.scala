@@ -1,6 +1,6 @@
 package com.histmersion.web.settings
 
-import com.histmersion.api.ConfigEdit
+import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.web.Auth
 import com.raquo.laminar.api.L.*
 

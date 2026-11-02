@@ -8,7 +8,8 @@ class MediaMapLayerSuite extends munit.FunSuite:
   test(
     "a picture's feature carries what its full-size view shows: the provider's page, the licence's text, the author"
   ):
-    import com.histmersion.api.{MediaGeoHit, TileProps as P}
+    import com.histmersion.api.media.MediaGeoHit
+    import com.histmersion.api.catalogue.TileProps as P
     val h = MediaGeoHit(
       None,
       "Lions_Gate.jpg",

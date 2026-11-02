@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.periods
 
-import com.histmersion.api.BundlePeriod
+import com.histmersion.api.exchange.BundlePeriod
 import com.histmersion.api.given
 import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.{CarriedKind, ImportRank, ImportStage, RowsIn}

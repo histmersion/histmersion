@@ -1,7 +1,9 @@
 package com.histmersion.web.marks
 
-import com.histmersion.api.{ConfigEdit, MapStartConfig, MapStartMode}
-import com.histmersion.api.personal.{ItemKind, MapZoom, Target}
+import com.histmersion.api.settings.ConfigEdit
+import com.histmersion.api.instance.{MapStartConfig, MapStartMode}
+import com.histmersion.api.personal.{MapZoom, Target}
+import com.histmersion.api.ItemKind
 import com.histmersion.values.{Latitude, Longitude, Year}
 import com.histmersion.web.*
 import com.histmersion.web.map.{Corner, LatLon, MapSurface, ScreenPt}

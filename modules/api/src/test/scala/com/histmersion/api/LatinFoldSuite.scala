@@ -3,6 +3,8 @@ package com.histmersion.api
 /** The diacritic folding table and the citekeys built on it (#878). Shared, so it runs on the JVM AND on Scala.js — the
   * reason the table exists is that Scala.js has no `java.text.Normalizer`.
   */
+
+import com.histmersion.api.library.Acquire
 class LatinFoldSuite extends munit.FunSuite:
 
   test("Latin-1, Extended-A/B and Extended Additional letters fold to their base letter, case kept"):

@@ -1,6 +1,7 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.{
+import com.histmersion.api.TimeSpan
+import com.histmersion.api.catalogue.{
   EventDating,
   EventEdge,
   EventGeo,
@@ -8,8 +9,7 @@ import com.histmersion.api.{
   EventPrecision,
   EventScale,
   EventSummary,
-  EventTier,
-  TimeSpan
+  EventTier
 }
 
 /** An event as the in-memory catalogue keeps it: the columns of its `events` row, with its datings, edges and

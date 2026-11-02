@@ -2,7 +2,7 @@ package com.histmersion.server
 
 import com.histmersion.util.ocr.ConverterClient
 
-import com.histmersion.api.*
+import com.histmersion.api.Paging
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import ox.supervised
@@ -11,6 +11,8 @@ import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.file.{Files, Path}
 import java.util.concurrent.{CountDownLatch, TimeUnit}
+import com.histmersion.api.library.Ingest
+import com.histmersion.api.ocr.{ConvertedDoc, ConvertedImage}
 
 /** The whole §1.8 path over real HTTP, with the converter STUBBED: upload → job → body + assets → the bytes served with
   * the right headers → the figure rendered as a lazy `<img>` → the absolute URLs MCP hands out. Skipped without

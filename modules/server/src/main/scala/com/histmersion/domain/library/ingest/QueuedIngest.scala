@@ -1,9 +1,9 @@
 package com.histmersion.domain.library.ingest
 
-import com.histmersion.api.*
 import com.histmersion.domain.library.sources.SourceService
 
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.api.library.IngestParams
 
 /** [[IngestJobs]] backed by the OCR job queue.
   *

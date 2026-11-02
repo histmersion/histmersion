@@ -1,6 +1,8 @@
 package com.histmersion.server
 
-import com.histmersion.api.{DebounceConfig, EventsUiConfig, MapTilesUiConfig, PluginsReport, TimeConfig, UiConfig}
+import com.histmersion.api.instance.{DebounceConfig, EventsUiConfig, TimeConfig, UiConfig}
+import com.histmersion.api.catalogue.MapTilesUiConfig
+import com.histmersion.api.plugins.PluginsReport
 import com.histmersion.config.AppConfig
 
 class UiConfigViewsSuite extends munit.FunSuite:
@@ -49,7 +51,7 @@ class UiConfigViewsSuite extends munit.FunSuite:
         ui.docsUrl,
         baseMapSource = "local",
         mapLanguage = "de",
-        com.histmersion.api
+        com.histmersion.api.instance
           .MapStartConfig(ui.mapStart.mode, ui.mapStart.lat, ui.mapStart.lon, ui.mapStart.zoom, ui.mapStart.label),
         setupDue = true
       )

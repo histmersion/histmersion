@@ -1,6 +1,7 @@
 package com.histmersion.web.library
 
-import com.histmersion.api.personal.{Bookmark, ItemKind, Note, PersonalMarkdown, ReadMark, Target, UnreadRow}
+import com.histmersion.api.personal.{Bookmark, Note, PersonalMarkdown, ReadMark, Target, UnreadRow}
+import com.histmersion.api.ItemKind
 import com.histmersion.api.YearFmt
 import com.histmersion.web.marks.Ago
 

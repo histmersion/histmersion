@@ -4,17 +4,17 @@ import com.histmersion.util.database.given
 
 import com.histmersion.util.database.RangeSql
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.catalogue.places.RegionNode
+import com.histmersion.api.catalogue.RegionNode
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.{Param, Sql}
+import com.histmersion.api.catalogue.{Period, PlaceRelation}
 
 /** The gazetteer behind the §1.6 aggregation tree: the places a tree's rows were placed in, their ancestors and the
   * edges between them. The library counts the rows (the search's `AggregateRepo.treeRows`);
-  * [[com.histmersion.api.library.search.Tree]] (pure) buckets and nests.
+  * [[com.histmersion.api.library.Tree]] (pure) buckets and nests.
   */
 private[places] object TreeRepo:
 

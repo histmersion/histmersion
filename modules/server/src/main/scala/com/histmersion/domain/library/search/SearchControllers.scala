@@ -1,12 +1,14 @@
 package com.histmersion.domain.library.search
 
-import com.histmersion.api.library.search.Tree
+import com.histmersion.api.library.Tree
 
-import com.histmersion.api.*
+import com.histmersion.api.{Api, ApiError}
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.catalogue.places.{PlaceScope, PlaceService}
 
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.api.catalogue.{Period, PlaceCounts}
+import com.histmersion.api.library.{Aggregate, Filter, SearchHit, SearchResult, TimeHistogram}
 
 /** The search over REST and MCP: the sources a filter selects with their matched findings and why, the histogram and
   * its nested tree, and the counts of what a filter selects. The gazetteer (`places`) is the catalogue's: the tree's

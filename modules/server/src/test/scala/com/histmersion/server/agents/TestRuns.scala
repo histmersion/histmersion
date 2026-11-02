@@ -4,7 +4,7 @@ import com.histmersion.domain.library.workflows.*
 
 import com.augustnagro.magnum.connect
 
-import com.histmersion.api.Agents.*
+import com.histmersion.api.automation.Agents.*
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.util.database.Transactor
 import com.histmersion.util.jobs.JobRuns

@@ -1,13 +1,13 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.{
+import com.histmersion.api.TimeSpan
+import com.histmersion.api.catalogue.{
   CatalogRecord,
   CorrectionCounts,
   CorrectionStatus,
   CorrectionTarget,
   EventPatch,
-  EventPut,
-  TimeSpan
+  EventPut
 }
 import com.histmersion.domain.catalogue.CatalogueStoreSuite
 

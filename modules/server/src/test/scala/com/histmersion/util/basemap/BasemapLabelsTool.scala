@@ -1,6 +1,6 @@
 package com.histmersion.util.basemap
 
-import com.histmersion.api.*
+import com.histmersion.api.BBox
 import com.histmersion.config.*
 import com.histmersion.domain.*
 

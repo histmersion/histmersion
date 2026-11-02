@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.GeoTime
+import com.histmersion.api.catalogue.GeoTime
 import com.histmersion.util.database.Transactor
 
 /** The map's area and site layers as one GeoJSON FeatureCollection for a time the map picked: each state drawn once,

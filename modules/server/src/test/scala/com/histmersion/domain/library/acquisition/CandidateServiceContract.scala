@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.acquisition
 
-import com.histmersion.api.{CandidateCount, CandidateWatch, SourceCandidate}
+import com.histmersion.api.library.{CandidateCount, CandidateWatch, SourceCandidate}
 
 /** What the new-source search's store answers, the same on the database and in memory: a watch read keeps its watermark
   * when a read failed, a candidate found again keeps its state and gathers every watch that found it, a page in id

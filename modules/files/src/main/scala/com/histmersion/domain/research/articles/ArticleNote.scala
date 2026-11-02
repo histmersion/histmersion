@@ -1,11 +1,12 @@
 package com.histmersion.domain.research.articles
-import com.histmersion.api.*
 import com.histmersion.api.given
 
 import com.histmersion.util.data.mirror.Frontmatter as MirrorFrontmatter
 import org.yaml.snakeyaml.Yaml
 import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.research.{Article, ArticleCoverage, ArticleFilter, Articles}
 
 /** `wiki/<kind>/<slug>.md` ⇄ [[Article]] — the same frontmatter-plus-body shape as [[Export.note]] /
   * [[Frontmatter.parseNote]], for articles.

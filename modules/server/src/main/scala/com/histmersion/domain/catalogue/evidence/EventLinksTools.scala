@@ -1,7 +1,9 @@
 package com.histmersion.domain.catalogue.evidence
 
 import chimp.server.*
-import com.histmersion.api.{Api, EventLeads, EventLinksMarkdown, EventLinksRequest, Filter}
+import com.histmersion.api.Api
+import com.histmersion.api.catalogue.{EventLeads, EventLinksMarkdown, EventLinksRequest}
+import com.histmersion.api.library.Filter
 import com.histmersion.domain.Caller
 import com.histmersion.util.mcp.McpOut
 import hearth.kindlings.circederivation.KindlingsCodecAsObject

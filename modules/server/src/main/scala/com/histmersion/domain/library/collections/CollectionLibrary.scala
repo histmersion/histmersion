@@ -1,6 +1,23 @@
 package com.histmersion.domain.library.collections
 
-import com.histmersion.api.*
+import com.histmersion.api.ApiError
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.library.{
+  ArchiveFile,
+  ArchiveImportRequest,
+  ArchiveItem,
+  CalibreGap,
+  CalibreGaps,
+  CalibrePushRequest,
+  CalibrePushResult,
+  IngestAccepted,
+  IngestParams,
+  IngestReport,
+  SourcePatch,
+  SourcePut,
+  SourceWithFindings
+}
+import com.histmersion.api.media.{MediaCoversReport, MediaCoversRequest, MediaItem, SourceCoverParams}
 
 /** What the collections' operations read and write of the library, lent by the composition: the records (as their
   * endpoints write them), the Calibre push metadata and gaps, the stored originals, the acquisition list, the ingest

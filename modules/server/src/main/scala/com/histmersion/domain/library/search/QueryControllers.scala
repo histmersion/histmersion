@@ -1,8 +1,9 @@
 package com.histmersion.domain.library.search
 
-import com.histmersion.api.*
-import com.histmersion.api.Query.*
+import com.histmersion.api.ApiError
+import com.histmersion.api.library.Query.*
 import com.histmersion.config.AppConfig
+import com.histmersion.api.library.Query
 
 /** `POST /api/query` and `GET /api/schema/tables` (MCP `query`, `schema`). */
 final class QueryControllers(queries: QueryService, cfg: () => AppConfig):

@@ -1,9 +1,9 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.catalogue.events.EventEntry
+import com.histmersion.api.catalogue.EventEntry
 
-import com.histmersion.api.{
-  ApiError,
+import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.catalogue.{
   CorrectionTarget,
   EventCatalogueRef,
   EventFields,
@@ -17,8 +17,7 @@ import com.histmersion.api.{
   EventScale,
   EventSummary,
   EventTaxonomy,
-  EventTier,
-  Write
+  EventTier
 }
 import com.histmersion.domain.catalogue.CatalogueState
 import com.histmersion.util.database.Transactor
@@ -98,20 +97,20 @@ object EventService:
     */
   final class InMemory(
       state: AtomicReference[CatalogueState],
-      selectedSources: com.histmersion.api.Filter => Option[Set[String]] = _ => None
+      selectedSources: com.histmersion.api.library.Filter => Option[Set[String]] = _ => None
   ) extends EventService:
 
     private def attested(s: CatalogueState, id: String): Boolean =
       s.attestations.exists(a => a.targetType == "event" && a.targetId == id)
 
-    private def overlaps(e: HeldEvent, period: Option[com.histmersion.api.Period]): Boolean =
+    private def overlaps(e: HeldEvent, period: Option[com.histmersion.api.catalogue.Period]): Boolean =
       period.forall(p => e.outer.forall((a, b) => a <= p.end && b >= p.start))
 
     private def containsText(field: Option[String], t: String): Boolean =
       field.exists(_.toLowerCase(Locale.ROOT).contains(t.toLowerCase(Locale.ROOT)))
 
     /** The part of the selection the library answers in the database: its sources, its period, its title. */
-    private def related(s: CatalogueState, e: HeldEvent, f: com.histmersion.api.Filter): Option[Boolean] =
+    private def related(s: CatalogueState, e: HeldEvent, f: com.histmersion.api.library.Filter): Option[Boolean] =
       val sources = selectedSources(f.sourceSet.modify(_.period).setTo(None))
       val title = f.title.map(_.trim).filter(_.nonEmpty)
       if sources.isEmpty && f.period.isEmpty && title.isEmpty then None
@@ -259,7 +258,7 @@ object EventService:
         e <- s.events.find(_.id == id)
         cat <- e.catalogue
         recs = s.catalogueRecords.filter((ev, r) => ev == id && r.provider == cat).map(_._2)
-        key <- com.histmersion.api.CatalogRecord.owner(id, cat, recs.map(_.key).toList)
+        key <- com.histmersion.api.catalogue.CatalogRecord.owner(id, cat, recs.map(_.key).toList)
         rec <- recs.find(_.key == key)
       yield cat -> rec
       upstream.fold(s) { (provider, rec) =>
@@ -284,14 +283,14 @@ object EventService:
       if value == upstream then s.modify(_.corrections).setTo(others)
       else
         val n = s.lastCorrectionId + 1
-        val c = com.histmersion.api.Correction(
+        val c = com.histmersion.api.catalogue.Correction(
           n,
           CorrectionTarget.Event,
           id,
           field,
           value.noSpaces,
           upstream.noSpaces,
-          com.histmersion.api.CorrectionStatus.Active,
+          com.histmersion.api.catalogue.CorrectionStatus.Active,
           Some(provider)
         )
         s.modify(_.corrections).setTo(others :+ c).modify(_.lastCorrectionId).setTo(n)

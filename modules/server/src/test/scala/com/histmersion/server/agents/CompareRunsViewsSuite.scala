@@ -6,11 +6,11 @@ import com.histmersion.domain.automation.agents.{CompareRunsViews, OutputCompari
 import com.histmersion.domain.library.workflows.EnrichComparison
 import com.histmersion.domain.automation.managers.Zero
 
-import com.histmersion.api.*
-import com.histmersion.api.Agents.*
+import com.histmersion.api.automation.Agents.*
 import com.histmersion.domain.CompareRuns
 import com.histmersion.domain.ReviewArticle.{Finding, Merged, Report, Reviewer, Severity, Verdict}
 import io.circe.syntax.*
+import com.histmersion.api.automation.{AgentsMarkdown, RunCompare}
 
 /** `agent compare` at the server's edge: recorded runs as the store reads them, compared by the domain, shown on the
   * wire and in Markdown as before the domain had records of its own.

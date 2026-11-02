@@ -1,9 +1,10 @@
 package com.histmersion.domain.catalogue.evidence
 
-import com.histmersion.api.catalogue.evidence.AttestationsMarkdown
+import com.histmersion.api.catalogue.AttestationsMarkdown
 
 import chimp.server.*
-import com.histmersion.api.{AttestationPut, Markdown, StrictJson}
+import com.histmersion.api.{Markdown, StrictJson}
+import com.histmersion.api.catalogue.AttestationPut
 import com.histmersion.domain.Caller
 import com.histmersion.util.mcp.McpOut
 import hearth.kindlings.circederivation.KindlingsCodecAsObject

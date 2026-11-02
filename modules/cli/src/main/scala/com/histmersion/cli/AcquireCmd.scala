@@ -2,10 +2,18 @@ package com.histmersion.cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.*
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
+import com.histmersion.api.library.{
+  AcquireMarkdown,
+  ArchiveImportRequest,
+  AssessRequest,
+  FollowupsRequest,
+  IngestRequest,
+  RefsRequest,
+  RetractionsUpdate
+}
 
 /** `histmersion discover|refs|assess|followups|ingest|archive` — the acquisition & assessment commands (plan §5.2
   * stream 2.6), each a thin wrapper over one endpoint that prints the SHARED Markdown rendering, or the raw JSON with

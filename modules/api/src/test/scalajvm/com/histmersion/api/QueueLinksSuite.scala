@@ -1,6 +1,6 @@
 package com.histmersion.api
 
-import com.histmersion.api.Queue.*
+import com.histmersion.api.automation.Queue.*
 
 /** A list item's goal and the run or job that wrote it and that ticked it off. */
 class QueueLinksSuite extends munit.FunSuite:

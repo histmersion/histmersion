@@ -3,15 +3,37 @@ package com.histmersion.domain.catalogue.places
 import com.histmersion.util.database.given
 
 import com.histmersion.util.database.{LikePattern, RangeSql}
-import com.histmersion.api.catalogue.places.PlaceEntry
+import com.histmersion.api.catalogue.PlaceEntry
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Dataset, SpatialHierarchyResult, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.values.{LocationPrecision, PlaceKind}
 import com.histmersion.util.database.{Param, Sql}
+import com.histmersion.api.catalogue.{
+  Geocode,
+  GeoTime,
+  ManualPlaceName,
+  Period,
+  PlaceDating,
+  PlaceDescription,
+  PlaceDesignation,
+  PlaceFootprint,
+  PlaceHit,
+  PlaceImportResult,
+  PlaceInput,
+  PlaceLink,
+  PlaceNameChanged,
+  PlaceRecord,
+  PlaceRegister,
+  PlaceSummary,
+  PlaceTimeBasis,
+  PlaceTreeRow,
+  PlaceType,
+  SiteTypes
+}
 
 /** The gazetteer store (plan §1.6a): import, search, hierarchy, and the MATERIALISATION of `finding_places` — the only
   * place that decides which findings belong to which places.
@@ -392,7 +414,7 @@ private[places] object PlaceRepo:
             AND ${SqlLiteral(inTimeSql("p", asOf))}
           ORDER BY p.label, p.id LIMIT ${limit.max(1)}""").query[PlaceSummary].run()
 
-  /** SQL twin of [[com.histmersion.api.catalogue.places.RegionNode.rootEligible]]: a place that may head the hierarchy.
+  /** SQL twin of [[com.histmersion.api.catalogue.RegionNode.rootEligible]]: a place that may head the hierarchy.
     * Region, polity or continent; not a Pleiades `withdrawn` record (marked as a property in part of the export and
     * only in the label in the rest); not an uncertain identification (`Theren? (river)`) or a reconstructed name
     * (`*Granouas`). Applies ONLY to root selection — a river still appears under the region that contains it.

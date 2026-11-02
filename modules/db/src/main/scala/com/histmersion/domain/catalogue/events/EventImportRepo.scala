@@ -1,14 +1,14 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.{
+import com.histmersion.api.TimeSpan
+import com.histmersion.api.catalogue.{
   CatalogRecord,
   CorrectionCounts,
   Corrections,
   CorrectionTarget,
   EventCatalogueRef,
   EventFields,
-  EventTaxonomy,
-  TimeSpan
+  EventTaxonomy
 }
 import com.histmersion.util.database.Jsonb
 

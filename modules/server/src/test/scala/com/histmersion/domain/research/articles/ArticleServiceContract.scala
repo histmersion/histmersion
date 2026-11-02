@@ -1,8 +1,10 @@
 package com.histmersion.domain.research.articles
 
-import com.histmersion.api.*
+import com.histmersion.api.Write
 import com.histmersion.domain.Caller
 import com.histmersion.domain.research.{ResearchStores, ResearchStoreSuite}
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.research.{Article, ArticleFilter, ArticlePatch, Backlink, CritiqueReason}
 
 /** What research's articles answer, the same on the database and in memory: an article written whole and merged from
   * patches with its token and versions, its link graph, a critique reason refused when no source is stored, renamed

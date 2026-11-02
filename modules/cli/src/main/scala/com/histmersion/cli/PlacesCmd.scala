@@ -1,15 +1,30 @@
 package com.histmersion.cli
 
-import com.histmersion.api.catalogue.places.PlacesMarkdown
+import com.histmersion.api.catalogue.PlacesMarkdown
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.*
+import com.histmersion.api.Dataset
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
 import com.histmersion.values.{BundleKind, PlaceKind}
 import com.histmersion.domain.catalogue.places.PlaceSeed
+import com.histmersion.api.catalogue.{
+  EventsApi,
+  Lpf,
+  PlaceAdd,
+  PlaceEdits,
+  PlaceHit,
+  PlaceImportResult,
+  PlaceMergeIn,
+  PlaceNameAdd,
+  PlaceNameRemove,
+  PlaceOverrides,
+  PlaceOverrideSet,
+  PlaceRemoveIn,
+  SiteTypesRequest
+}
 
 /** `histmersion places …` — the gazetteer subcommands (plan §1.6a). Kept in its own file so the shared `Cli` only gains
   * one line.

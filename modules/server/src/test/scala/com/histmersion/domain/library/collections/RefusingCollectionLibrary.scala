@@ -1,6 +1,23 @@
 package com.histmersion.domain.library.collections
 
-import com.histmersion.api.*
+import com.histmersion.api.ApiError
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.library.{
+  ArchiveFile,
+  ArchiveImportRequest,
+  ArchiveItem,
+  CalibreGap,
+  CalibreGaps,
+  CalibrePushRequest,
+  CalibrePushResult,
+  IngestAccepted,
+  IngestParams,
+  IngestReport,
+  SourcePatch,
+  SourcePut,
+  SourceWithFindings
+}
+import com.histmersion.api.media.{MediaCoversReport, MediaCoversRequest, MediaItem, SourceCoverParams}
 
 /** A library a suite's collections write through that refuses everything; a suite overrides what it uses. */
 open class RefusingCollectionLibrary extends CollectionLibrary:

@@ -1,6 +1,6 @@
 package com.histmersion.domain.research.articles
 
-import com.histmersion.api.Lint.{FormatChecker, LintRuleReport, Rule}
+import com.histmersion.api.checks.Lint.{FormatChecker, LintRuleReport, Rule}
 import com.histmersion.util.data.checks.CheckRun
 import com.augustnagro.magnum.DbCon
 

@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.evidence
 
-import com.histmersion.api.{Attestation, AttestationList, AttestationPatch, AttestationPut}
+import com.histmersion.api.catalogue.{Attestation, AttestationList, AttestationPatch, AttestationPut}
 
 import com.augustnagro.magnum.*
 

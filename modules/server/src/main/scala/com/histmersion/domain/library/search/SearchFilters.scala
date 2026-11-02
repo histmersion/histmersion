@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.search
 
-import com.histmersion.api.Filter
+import com.histmersion.api.library.Filter
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.catalogue.places.{PlaceScope, PlaceService}
 

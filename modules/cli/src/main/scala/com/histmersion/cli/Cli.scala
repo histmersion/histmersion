@@ -1,20 +1,25 @@
 package com.histmersion.cli
 
-import com.histmersion.api.library.search.Tree
+import com.histmersion.api.library.Tree
 
-import com.histmersion.api.library.search.SearchMarkdown
-import com.histmersion.api.library.sources.SourcesMarkdown
+import com.histmersion.api.library.SearchMarkdown
+import com.histmersion.api.library.SourcesMarkdown
 
 import scala.annotation.tailrec
 import hearth.kindlings.optics.syntax.*
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.*
+import com.histmersion.api.{Api, Markdown}
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
 import com.histmersion.values.{EdgeKind, SourceStatus}
 import com.histmersion.util.data.mirror.MirrorPlacement
+import com.histmersion.api.backup.{Backup, RestoreRequest}
+import com.histmersion.api.checks.FormatMarkdown
+import com.histmersion.api.instance.{AboutMarkdown, Version}
+import com.histmersion.api.library.{FacetField, PassagesMarkdown, SeedRequest, SeedResult, SourceSection}
+import com.histmersion.api.maintenance.{Vacuum, VacuumPlan, VacuumRequest}
 
 /** Histmersion CLI — a pure HTTP client of the server (no DB access on the host). Every command maps to one `Api`
   * endpoint and prints the shared Markdown rendering, so CLI and MCP output agree.

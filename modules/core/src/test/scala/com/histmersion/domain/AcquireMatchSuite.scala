@@ -1,12 +1,12 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
 import com.histmersion.domain.AcquireMatch.Decision
-import com.histmersion.api.Queue.QueueItem
+import com.histmersion.api.automation.Queue.QueueItem
+import com.histmersion.api.automation.Queue
 
 /** #970: which open acquisition items an import closes (its DOI, exactly) and which it only proposes (a similar title
   * and first author) — with the false positives seen in the real queue.

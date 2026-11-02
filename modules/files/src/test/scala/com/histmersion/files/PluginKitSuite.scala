@@ -1,9 +1,9 @@
 package com.histmersion.files
 
-import com.histmersion.api.*
 import com.histmersion.api.given
 
 import com.histmersion.util.plugins.PluginKit.*
+import com.histmersion.api.plugins.{PluginDescription, PluginJar, PluginSet}
 
 class PluginKitSuite extends munit.FunSuite:
 

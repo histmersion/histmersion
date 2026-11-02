@@ -1,6 +1,5 @@
 package com.histmersion.cli
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.sun.net.httpserver.HttpServer
 
@@ -11,6 +10,7 @@ import java.nio.file.attribute.PosixFilePermissions
 import java.security.MessageDigest
 import scala.jdk.CollectionConverters.*
 import com.histmersion.util.plugins.PluginKit
+import com.histmersion.api.plugins.{PluginJar, PluginsReport}
 
 /** `histmersion plugin …` against a TEMPORARY install and data directory: the kit's scripts are fakes
   * (`histmersion-relink --describe` prints the JSON the test chose, `--resolve` records its arguments and answers what

@@ -1,7 +1,6 @@
 package com.histmersion.util.data.exchange
 import com.histmersion.util.database.RangeSql
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -13,6 +12,8 @@ import com.histmersion.util.data.exchange.BundleSql.*
 import com.histmersion.util.storage.ContentStore
 import com.histmersion.util.database.Sql
 import com.histmersion.util.database.given
+import com.histmersion.api.aliases.InstanceInfo
+import com.histmersion.api.exchange.BundleReference
 
 given DbCodec[InstanceInfo] = DbCodec.derived
 

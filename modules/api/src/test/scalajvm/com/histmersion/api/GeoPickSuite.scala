@@ -3,8 +3,10 @@ package com.histmersion.api
 /** How `GET /api/places/geo` reads its time parameters ([[GeoPick.resolve]]) — the map's "States shown" menu over a
   * range.
   */
+
+import com.histmersion.api.catalogue.GeoTime
 class GeoPickSuite extends munit.FunSuite:
-  import GeoTime.*
+  import com.histmersion.api.catalogue.GeoTime.*
 
   test("every pick round-trips its wire name; an unknown one is none"):
     GeoPick.values.foreach(p => assertEquals(GeoPick.parse(p.wire), Some(p)))

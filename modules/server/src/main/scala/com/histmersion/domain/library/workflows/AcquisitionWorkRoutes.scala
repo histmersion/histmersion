@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.workflows
 
-import com.histmersion.api.library.acquisition.AcquisitionWorkApi
+import com.histmersion.api.library.AcquisitionWorkApi
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
 

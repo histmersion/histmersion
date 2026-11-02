@@ -1,22 +1,21 @@
 package com.histmersion.domain.catalogue.evidence
 
-import com.histmersion.util.identity.AliasKinds
+import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.values.AttestationTarget
 
-import com.histmersion.api.{
-  ApiError,
+import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.catalogue.{
   Attestation,
   AttestationDeleted,
   AttestationList,
   AttestationPatch,
-  AttestationPut,
-  Write
+  AttestationPut
 }
 import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.evidence.passages.PassageSource
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.util.identity.AliasKind
+import com.histmersion.api.aliases.AliasKind
 
 import java.util.Locale
 

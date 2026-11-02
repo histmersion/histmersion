@@ -1,9 +1,9 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.catalogue.events.EventEntry
+import com.histmersion.api.catalogue.EventEntry
 
-import com.histmersion.api.{
-  ApiError,
+import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.catalogue.{
   CorrectionTarget,
   EventEdge,
   EventFields,
@@ -14,8 +14,7 @@ import com.histmersion.api.{
   EventPrecision,
   EventPut,
   EventScale,
-  EventSummary,
-  Write
+  EventSummary
 }
 import com.histmersion.util.database.{Param, Sql}
 
@@ -96,7 +95,7 @@ private[events] object EventRepo:
   /** The events of `ids` as the map's tiles draw one ([[geo]]'s rows, without an outline), by id; an id with no
     * position, or dated too loosely, is left out as [[geo]] leaves it out.
     */
-  def geoOf(ids: List[String])(using DbCon): Map[String, com.histmersion.api.EventGeo] =
+  def geoOf(ids: List[String])(using DbCon): Map[String, com.histmersion.api.catalogue.EventGeo] =
     if ids.isEmpty then Map.empty
     else
       (geoSelect ++ Sql.of(

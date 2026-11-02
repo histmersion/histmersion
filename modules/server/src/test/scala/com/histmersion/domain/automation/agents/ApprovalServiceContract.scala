@@ -1,7 +1,7 @@
 package com.histmersion.domain.automation.agents
 
-import com.histmersion.api.Agents.{ApprovalKind, ApprovalState}
-import com.histmersion.api.ListFilters.DecidedBy
+import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState}
+import com.histmersion.api.automation.ListFilters.DecidedBy
 import com.histmersion.domain.AgentProposals.Proposal
 import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
 import com.histmersion.domain.automation.approvals.ApprovalQuery

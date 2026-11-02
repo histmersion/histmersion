@@ -1,6 +1,5 @@
 package com.histmersion.domain.catalogue.periods
 
-import com.histmersion.api.*
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.data.exchange.BundleScope
@@ -11,6 +10,7 @@ import com.histmersion.util.database.RangeSql
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import java.util.UUID
+import com.histmersion.api.exchange.BundlePeriod
 
 /** The named periods as a bundle carries them (docs/research-merge-import.md §4, §7.3): this collection's own, read out
   * in a deterministic order, and written in by an import.

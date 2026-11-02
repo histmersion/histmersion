@@ -1,8 +1,8 @@
 package com.histmersion.domain.library.acquisition
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.api.library.{RefRow, UpdateNotice, WorkRef}
 
 /** OpenAlex + Crossref: search, metadata, deposited reference lists and amendment notices. */
 trait DiscoveryClient:

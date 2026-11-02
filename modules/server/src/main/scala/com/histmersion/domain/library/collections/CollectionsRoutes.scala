@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.collections
 
-import com.histmersion.api.library.collections.CollectionsApi
+import com.histmersion.api.library.CollectionsApi
 import com.histmersion.domain.Caller
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint

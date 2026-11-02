@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.Correction
+import com.histmersion.api.catalogue.Correction
 import com.histmersion.util.database.Jsonb
 import com.augustnagro.magnum.DbCodec
 import io.circe.Json

@@ -14,7 +14,73 @@ import sttp.model.Method
 import sttp.tapir.{DecodeResult, PublicEndpoint}
 import sttp.tapir.client.sttp4.SttpClientInterpreter
 
-import com.histmersion.api.*
+import com.histmersion.api.{personal, Api, ApiError, OpsApi, Paging}
+import com.histmersion.api.automation.{
+  Activity,
+  AgentMode,
+  Agents,
+  AgentsApi,
+  AgentScheduler,
+  ApprovalDigest,
+  Autopilot,
+  Goal,
+  GoalList,
+  GoalPlans,
+  GoalPut,
+  ListFilters,
+  Managers,
+  ManagersApi,
+  ModelChains,
+  PlanQuota,
+  Queue,
+  Stalls
+}
+import com.histmersion.api.backup.{BackupInfo, BackupStatus}
+import com.histmersion.api.basemap.{BasemapApi, BasemapFetchQuery, BasemapRemoved, BasemapRemoveQuery, BasemapStatus}
+import com.histmersion.api.catalogue.{
+  CatalogProviderInfo,
+  EventGeoList,
+  EventImportRequest,
+  EventList,
+  EventsApi,
+  GazetteerSourceInfo,
+  HistoricalPeriod,
+  PlaceHit,
+  TilesApi
+}
+import com.histmersion.api.exchange.{
+  BundleUpload,
+  MergeApplyJob,
+  MergeApplyRequest,
+  MergePlan,
+  MergePlanRequest,
+  MergeResolutions,
+  MergeSession
+}
+import com.histmersion.api.instance.{About, UiApi, UiConfig, UiNotices}
+import com.histmersion.api.jobs.JobInfo
+import com.histmersion.api.library.{
+  AcquireApi,
+  AcquireChecks,
+  DiscoverResult,
+  Facet,
+  Filter,
+  GeoHit,
+  IngestAccepted,
+  IngestParams,
+  IngestReport,
+  IngestRequest,
+  NeighborRow,
+  SearchResult,
+  SourceGraph,
+  SourcePatch,
+  SourceWithFindings,
+  TimeHistogram
+}
+import com.histmersion.api.media.{MediaFacets, MediaGeoHit, MediaImportRequest, MediaProviderInfo}
+import com.histmersion.api.research.{ArticleList, ArticleView, Backlink}
+import com.histmersion.api.settings.{ConfigEdit, ConfigEditApi}
+import com.histmersion.api.views.{AutopilotApi, AutopilotStatus, EventDetail, PlaceDetail, QueueListing, ResolvedId}
 
 object ApiClient:
 
@@ -144,7 +210,7 @@ object ApiClient:
   def setAgentMode(mode: AgentMode): Future[AutopilotStatus] =
     call(AutopilotApi.setMode)(AgentMode.ModeSet(mode.wire, Some("web")))
   def acquireRecheck(in: AcquireChecks.RecheckRequest): Future[AcquireChecks.RecheckResult] =
-    call(com.histmersion.api.library.acquisition.AcquisitionWorkApi.acquireRecheck)(in)
+    call(com.histmersion.api.library.AcquisitionWorkApi.acquireRecheck)(in)
   def queuePatch(id: Int, p: Queue.QueuePatch): Future[Queue.QueueItem] =
     call(OpsApi.queuePatch)((id, p))
   def queueAdd(list: String, in: Queue.QueueAdd): Future[Queue.QueueItem] =

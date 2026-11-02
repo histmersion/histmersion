@@ -5,9 +5,9 @@ import com.histmersion.domain.library.acquisition.wire
 import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.http.Url
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.api.library.{FollowupRow, WorkRef}
 
 final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsClient:
 

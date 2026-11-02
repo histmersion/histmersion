@@ -5,6 +5,19 @@ import io.circe.syntax.*
 
 import java.util.UUID
 import com.histmersion.values.SourceStatus
+import com.histmersion.api.automation.GoalPlans
+import com.histmersion.api.exchange.{
+  BundleEvent,
+  BundlePlace,
+  BundlePlaceName,
+  BundleRange,
+  BundleSource,
+  IssueField,
+  IssuePlace,
+  IssueSide,
+  IssueSpan,
+  MergeIssueDetail
+}
 
 class MergeIssueDetailSuite extends munit.FunSuite:
 

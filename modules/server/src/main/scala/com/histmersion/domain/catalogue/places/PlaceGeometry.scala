@@ -1,6 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.{PlaceRebuildResult, SpatialHierarchyResult}
+import com.histmersion.api.SpatialHierarchyResult
+import com.histmersion.api.catalogue.PlaceRebuildResult
 import com.histmersion.util.database.Transactor
 
 import scala.annotation.tailrec

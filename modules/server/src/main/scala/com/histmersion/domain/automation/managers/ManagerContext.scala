@@ -1,8 +1,8 @@
 package com.histmersion.domain.automation.managers
 
-import com.histmersion.api.Agents.{ApprovalInfo, Pipeline, RunInfo, RunParams, RunRequest, RunState}
-import com.histmersion.api.GoalPlans.LinkKind
-import com.histmersion.api.Managers.*
+import com.histmersion.api.automation.Agents.{ApprovalInfo, Pipeline, RunInfo, RunParams, RunRequest, RunState}
+import com.histmersion.api.automation.GoalPlans.LinkKind
+import com.histmersion.api.automation.Managers.*
 import com.histmersion.config.AgentsConfig
 import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts}
 import com.histmersion.values.ApprovalKind

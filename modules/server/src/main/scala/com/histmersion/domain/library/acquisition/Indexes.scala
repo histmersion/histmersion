@@ -2,7 +2,6 @@ package com.histmersion.domain.library.acquisition
 
 import com.histmersion.domain.library.acquisition.CoreQuotaLend
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.pluginhost.upstreamSettings

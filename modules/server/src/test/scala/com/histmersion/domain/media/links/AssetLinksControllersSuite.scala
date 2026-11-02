@@ -1,14 +1,14 @@
 package com.histmersion.domain.media.links
 
-import com.histmersion.util.identity.AliasKinds
+import com.histmersion.api.aliases.AliasKinds
 
-import com.histmersion.api.*
 import com.histmersion.domain.media.{MediaState, MediaStoreSuite}
 import com.histmersion.domain.media.assets.{AssetService, NewFigure}
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.util.identity.AliasKind
+import com.histmersion.api.aliases.AliasKind
 
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.api.media.{AssetLinkDeleted, AssetLinkPut}
 
 /** The figures' links' controllers over the in-memory services: a source and a target named by an old identifier are
   * resolved first; a link that is not there is not found; a held lock refuses every write.

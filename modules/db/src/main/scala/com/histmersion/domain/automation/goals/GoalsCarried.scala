@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.goals
 
-import com.histmersion.api.{BundleGoal, BundleGoalAlias}
+import com.histmersion.api.exchange.{BundleGoal, BundleGoalAlias}
 import com.histmersion.api.given
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.data.{DataOwner, TableName}

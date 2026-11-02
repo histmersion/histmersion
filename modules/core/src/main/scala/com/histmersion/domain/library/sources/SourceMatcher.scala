@@ -4,7 +4,7 @@ import com.histmersion.domain.MergeSettings
 import com.histmersion.util.data.exchange.MatchWeights
 
 import scala.annotation.tailrec
-import com.histmersion.api.BundleSource
+import com.histmersion.api.exchange.BundleSource
 import com.histmersion.api.given
 
 import MergeText.AuthorAgreement

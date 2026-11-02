@@ -1,6 +1,8 @@
 package com.histmersion.api
 
 /** A provenance is free text; a file brought in from elsewhere classifies as a book. */
+
+import com.histmersion.api.library.{Provenance, SourceKinds}
 class ProvenanceSuite extends munit.FunSuite:
   test("a file brought in from elsewhere is a book when nothing else says what it is"):
     def kind(p: String) = SourceKinds.of(None, None, Some(p), Nil, Nil, hasCover = false)

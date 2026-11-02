@@ -1,5 +1,5 @@
 package com.histmersion.domain.library.sources
-import com.histmersion.api.*
+import com.histmersion.api.GeoPoint
 import com.histmersion.api.given
 
 import org.yaml.snakeyaml.Yaml
@@ -9,6 +9,9 @@ import java.nio.file.{Files, Path}
 import com.histmersion.util.data.mirror.Frontmatter
 import com.histmersion.values.{Confidence, SourceStatus}
 import com.histmersion.util.storage.SafePath
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.checks.Lint
+import com.histmersion.api.library.{Edge, Finding, Source}
 
 /** A source's note in the Markdown mirror (`wiki/sources/<citekey>.md`): its YAML frontmatter carries the catalog
   * fields and findings, its body [[Source.notes]], the agent-written article about the source. [[note]] renders a

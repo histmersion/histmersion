@@ -1,8 +1,9 @@
 package com.histmersion.domain.media.links
 
-import com.histmersion.api.*
+import com.histmersion.api.Write
 import com.histmersion.domain.media.{MediaStores, MediaStoreSuite}
 import com.histmersion.domain.media.assets.NewFigure
+import com.histmersion.api.media.AssetLinkPut
 
 /** What the figures' links answer, the same on the database and in memory: a link needs its figure, follows its rename
   * and goes with it.

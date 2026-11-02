@@ -1,6 +1,6 @@
 package com.histmersion.domain.research
 
-import com.histmersion.api.{Article, CritiqueReason}
+import com.histmersion.api.research.{Article, CritiqueReason}
 import com.histmersion.domain.ReviewLedger.Ledger
 
 import java.time.Instant

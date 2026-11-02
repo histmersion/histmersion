@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
+import com.histmersion.api.TimeSpan
 import com.histmersion.web.map.{GeoBounds, LatLon, TilePointFeature}
 import com.histmersion.web.ui.SidebarTab
 

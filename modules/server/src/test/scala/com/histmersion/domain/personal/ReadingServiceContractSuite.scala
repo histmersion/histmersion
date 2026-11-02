@@ -1,6 +1,6 @@
 package com.histmersion.domain.personal
 
-import com.histmersion.api.personal.ItemKind as MarkKind
+import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.domain.ItemKey
 import com.histmersion.domain.personal.reading.ReadingShow
 import com.histmersion.values.{Offset, PageSize, UserId}

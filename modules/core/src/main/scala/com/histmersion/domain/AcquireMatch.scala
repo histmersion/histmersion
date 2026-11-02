@@ -1,6 +1,7 @@
 package com.histmersion.domain
 
-import com.histmersion.api.{LatinFold, Queue}
+import com.histmersion.api.LatinFold
+import com.histmersion.api.automation.Queue
 import com.histmersion.api.given
 
 /** Which open acquisition items a source that just came in fulfils (#970).

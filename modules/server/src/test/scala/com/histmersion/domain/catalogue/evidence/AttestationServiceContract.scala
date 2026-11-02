@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.evidence
 
-import com.histmersion.api.{AttestationPatch, AttestationPut}
+import com.histmersion.api.catalogue.{AttestationPatch, AttestationPut}
 import com.histmersion.domain.catalogue.CatalogueStoreSuite
 
 /** The contract the attestations keep: ids in the order they were made, every field read back, the list narrowed by

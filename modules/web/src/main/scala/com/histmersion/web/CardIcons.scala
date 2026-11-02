@@ -1,7 +1,9 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
 import com.histmersion.values.PlaceKind
+import com.histmersion.api.catalogue.{EventTaxonomy, SiteTypes}
+import com.histmersion.api.library.{SourceDetail, SourceKinds}
+import com.histmersion.api.research.Article
 
 /** The icon at the head of every card ([[Preview.cardView]]) and of every row a map cluster lists — one per KIND of
   * thing, from the one registry ([[Glyphs]]), so a reader sees what a card is about before reading it, whichever layer

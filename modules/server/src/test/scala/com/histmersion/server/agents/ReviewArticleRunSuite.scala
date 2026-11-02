@@ -6,11 +6,10 @@ import com.histmersion.domain.automation.agents.{AgentsHandlers, LlmCall, LlmCli
 import com.histmersion.domain.automation.managers.Zero
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.*
-import com.histmersion.api.Queue.QueueAdd
+import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.server.{Deps, ServerWiring}
@@ -23,6 +22,10 @@ import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.values.EdgeKind
 import com.histmersion.db.*
+import com.histmersion.api.aliases.LabelRename
+import com.histmersion.api.automation.{AgentsMarkdown, RunCompare}
+import com.histmersion.api.library.{EdgeInput, EdgesPatch, SourcePatch, SourcePut}
+import com.histmersion.api.research.{ArticleEdits, ArticleFilter, ArticlePatch, ArticlePut}
 
 /** A scripted model for steps that run IN PARALLEL: each call is routed by its system prompt to the script queue of its
   * reviewer, so the order the three panel calls arrive in does not matter. A reviewer with no script left answers as an

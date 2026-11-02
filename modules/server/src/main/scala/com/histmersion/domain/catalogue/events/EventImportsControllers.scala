@@ -1,8 +1,7 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.{
-  ApiError,
-  BBox,
+import com.histmersion.api.{ApiError, BBox, Write}
+import com.histmersion.api.catalogue.{
   CatalogProviderInfo,
   CorrectionList,
   CorrectionStatus,
@@ -10,10 +9,9 @@ import com.histmersion.api.{
   EventImportReport,
   EventImportRequest,
   EventRederiveReport,
-  EventRederiveRequest,
-  JobInfo,
-  Write
+  EventRederiveRequest
 }
+import com.histmersion.api.jobs.JobInfo
 import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.CatalogueJobs
 import hearth.kindlings.optics.syntax.*
@@ -90,5 +88,5 @@ final class EventImportsControllers(
         )
 
 object EventImportsControllers:
-  val ImportJobKind: String = com.histmersion.api.catalogue.events.EventsJobKinds.EventsImport.kind.value
-  val RederiveJobKind: String = com.histmersion.api.catalogue.events.EventsJobKinds.EventsRederive.kind.value
+  val ImportJobKind: String = com.histmersion.api.catalogue.EventsJobKinds.EventsImport.kind.value
+  val RederiveJobKind: String = com.histmersion.api.catalogue.EventsJobKinds.EventsRederive.kind.value

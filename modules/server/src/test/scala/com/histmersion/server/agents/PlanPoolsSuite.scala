@@ -1,6 +1,6 @@
 package com.histmersion.server.agents
 
-import com.histmersion.api.PlanQuota.*
+import com.histmersion.api.automation.PlanQuota.*
 import io.circe.parser
 
 import java.nio.file.Files

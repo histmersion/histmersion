@@ -2,7 +2,7 @@ package com.histmersion.domain.catalogue.events
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
-import com.histmersion.api.Filter
+import com.histmersion.api.library.Filter
 import com.histmersion.util.database.Sql
 
 /** How an event relates to what a filter selects, as the library answers it — the WHERE over `events e`: its own

@@ -1,6 +1,6 @@
 package com.histmersion.domain.media.assets
 
-import com.histmersion.api.BundleAsset
+import com.histmersion.api.exchange.BundleAsset
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.data.exchange.BundleScope

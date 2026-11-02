@@ -1,34 +1,31 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.catalogue.events.EventEntry
+import com.histmersion.api.catalogue.EventEntry
 
-import com.histmersion.api.LabelRename
-import com.histmersion.api.LabelRenames
-import com.histmersion.api.LabelRenamed
+import com.histmersion.api.aliases.LabelRename
+import com.histmersion.api.aliases.LabelRenames
+import com.histmersion.api.aliases.LabelRenamed
 import com.histmersion.values.BundleKind
-import com.histmersion.util.identity.AliasKinds
+import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
-import com.histmersion.api.{
-  Api,
-  ApiError,
-  BBox,
+import com.histmersion.api.{Api, ApiError, BBox, Write}
+import com.histmersion.api.catalogue.{
   EventDeleted,
   EventGeoList,
   EventGeometry,
   EventList,
   EventPatch,
   EventPut,
-  EventScale,
-  Filter,
-  Write
+  EventScale
 }
+import com.histmersion.api.library.Filter
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.places.Wikidata
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.util.identity.AliasKind
+import com.histmersion.api.aliases.AliasKind
 
 /** The events' operations as REST, MCP and the CLI reach them. An old event id answers as the event it was renamed to,
   * and a write to one goes to that event. `card` is what an event's page shows beside its own fields (its catalogues,

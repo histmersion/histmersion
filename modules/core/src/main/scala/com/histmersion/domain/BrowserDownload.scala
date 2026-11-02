@@ -1,6 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.api.WorkRef
+import com.histmersion.api.library.WorkRef
 
 import com.histmersion.values.{Citekey, Doi}
 

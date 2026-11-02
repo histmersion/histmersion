@@ -1,12 +1,13 @@
 package com.histmersion.server
 
 import ox.supervised
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import io.circe.parser
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
+import com.histmersion.api.automation.GoalList
+import com.histmersion.api.library.GeoHitPage
 
 /** Offset paging over real HTTP and MCP (#1798 item 8): a cut list's JSON carries `offset` and `next`, its Markdown
   * says `next: offset=N`, and `geo_when` pages (`GET /api/findings/page`). Skipped without HISTMERSION_TEST_DB_URL.

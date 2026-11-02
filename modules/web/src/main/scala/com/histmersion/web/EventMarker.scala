@@ -1,10 +1,10 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
 import com.histmersion.web.map.*
 import org.scalajs.dom
 
 import scala.scalajs.js
+import com.histmersion.api.catalogue.{EventGeo, EventPrecision, EventTier}
 
 /** The pure half of the map's EVENT markers (#1449). */
 object EventMarker:

@@ -1,18 +1,10 @@
 package com.histmersion.domain
 
 import scala.annotation.tailrec
-import com.histmersion.api.{
-  FindingInput,
-  FindingsPatch,
-  Geocode,
-  Lint,
-  ListPatch,
-  MetadataPatch,
-  Period,
-  PeriodInput,
-  SourcePatch,
-  WorkRef
-}
+import com.histmersion.api.ListPatch
+import com.histmersion.api.library.{FindingInput, FindingsPatch, MetadataPatch, SourcePatch, WorkRef}
+import com.histmersion.api.catalogue.{Geocode, Period, PeriodInput}
+import com.histmersion.api.checks.Lint
 import com.histmersion.api.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject

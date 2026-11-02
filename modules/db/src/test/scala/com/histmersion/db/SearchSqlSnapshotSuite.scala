@@ -7,12 +7,14 @@ import com.histmersion.domain.library.search.Search
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
-import com.histmersion.api.*
+import com.histmersion.api.BBox
 import com.histmersion.domain.*
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import com.histmersion.util.database.Sql
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.library.{FacetField, Filter, Sort}
 
 /** The SQL the filter's builders generate, recorded for every combination the search exercises: each criterion alone
   * (text, tags, authors, places by name and by gazetteer id, topics, statuses, publication years, deep time, a box and

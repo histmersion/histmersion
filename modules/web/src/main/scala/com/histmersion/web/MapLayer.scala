@@ -1,6 +1,5 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.js

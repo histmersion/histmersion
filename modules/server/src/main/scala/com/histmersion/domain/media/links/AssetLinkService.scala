@@ -1,6 +1,7 @@
 package com.histmersion.domain.media.links
 
-import com.histmersion.api.{ApiError, AssetLink, AssetLinkList, AssetLinkPut, Write}
+import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.media.{AssetLink, AssetLinkList, AssetLinkPut}
 import com.histmersion.domain.media.MediaState
 import com.histmersion.util.database.Transactor
 

@@ -1,7 +1,7 @@
 package com.histmersion.domain.automation.worklists
 
-import com.histmersion.api.Queue
-import com.histmersion.api.Queue.{Kind, QueueAdd, QueueItem}
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.automation.Queue.{Kind, QueueAdd, QueueItem}
 import com.histmersion.domain.Scheduling
 
 import hearth.kindlings.optics.syntax.*

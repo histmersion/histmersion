@@ -1,6 +1,6 @@
 package com.histmersion.util.ocr
 
-import com.histmersion.util.text.SafeName
+import com.histmersion.api.text.SafeName
 import com.histmersion.util.storage.{Store, StoreKey}
 import com.histmersion.values.Citekey
 

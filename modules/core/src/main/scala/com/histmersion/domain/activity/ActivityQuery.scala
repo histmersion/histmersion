@@ -1,6 +1,6 @@
 package com.histmersion.domain.activity
 
-import com.histmersion.api.Activity
+import com.histmersion.api.automation.Activity
 
 import java.time.Instant
 

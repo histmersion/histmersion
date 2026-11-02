@@ -1,10 +1,10 @@
 package com.histmersion.domain.library.findings
 
-import com.histmersion.api.*
 import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
+import com.histmersion.api.library.{Filter, GeoHit}
 
 /** The db suites' reads of the map feed on a database of their own. */
 object FindingFixtures:

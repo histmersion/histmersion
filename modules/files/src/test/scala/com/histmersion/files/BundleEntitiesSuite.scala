@@ -1,6 +1,5 @@
 package com.histmersion.files
 
-import com.histmersion.api.*
 import com.histmersion.api.given
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
@@ -9,6 +8,26 @@ import java.util.UUID
 import com.histmersion.values.{BundleKind, SourceStatus}
 import com.histmersion.util.data.exchange.{BundleFormat, BundleReader, BundleTar}
 import com.histmersion.util.data.exchange.BundleEntities
+import com.histmersion.api.exchange.{
+  Bundle,
+  BundleBlobs,
+  BundleCorrection,
+  BundleEdge,
+  BundleEvent,
+  BundleEventCandidate,
+  BundleEventCatalogue,
+  BundleEventCheck,
+  BundleEventSets,
+  BundleFiles,
+  BundleFinding,
+  BundleGoal,
+  BundleInstance,
+  BundleManifest,
+  BundleRange,
+  BundleReference,
+  BundleSiteType,
+  BundleSource
+}
 
 /** The `.hmx` bundle's content in memory: its entities (blob and dangling references, the event-catalogue sets, a
   * decode round trip) and the reader's problem reports.
@@ -254,7 +273,7 @@ class BundleEntitiesSuite extends munit.FunSuite:
     assertEquals(old.events.map(_.id), List("e1"))
 
   test("merging the sets: a decision is kept over a proposal, never a proposal over a decision; the newer row wins"):
-    import BundleEventSets.*
+    import com.histmersion.api.exchange.BundleEventSets.*
     assertEquals(candidateStatus("proposed", "confirmed"), "confirmed")
     assertEquals(candidateStatus("proposed", "rejected"), "rejected")
     assertEquals(candidateStatus("proposed", "proposed"), "proposed")

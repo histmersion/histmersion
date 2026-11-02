@@ -51,6 +51,6 @@ class StorageFiguresSuite extends munit.FunSuite:
     assertEquals((entry.bytes, entry.files), (Some(6000L), Some(3L)))
     assertEquals(
       r.entries.find(_.key == "backups").map(_.shrink),
-      Some(com.histmersion.api.StorageAdvice.shrink("backups", cfg.backups.keep))
+      Some(com.histmersion.api.maintenance.StorageAdvice.shrink("backups", cfg.backups.keep))
     )
     assertEquals(r.problems, Nil)

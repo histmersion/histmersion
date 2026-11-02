@@ -1,12 +1,15 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
-import com.histmersion.api.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, Decision}
+import com.histmersion.api.Wording
+import com.histmersion.api.automation.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, Decision}
 import com.raquo.laminar.api.L
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
+import com.histmersion.api.automation.{AgentMode, Autopilot, ListFilters, Managers, PlanQuota}
+import com.histmersion.api.instance.{UiConfig, UiNotices}
+import com.histmersion.api.views.AutopilotStatus
 
 /** Research › Overview: the agents' state as ONE three-way control with what they are doing and the AI plan's weekly
   * allowance; the oldest decisions waiting for the person, each with its reason and what to read first BEFORE the

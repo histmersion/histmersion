@@ -1,10 +1,11 @@
 package com.histmersion.domain.research.articles
 
-import com.histmersion.api.*
 import com.histmersion.domain.Highlight
 import com.histmersion.domain.library.citations.CitationsControllers
 import com.histmersion.domain.library.sources.{SourcesControllers, SourceService}
 import com.histmersion.server.{Article, ArticlePage, Citation, FullText, Pages, SourcePage}
+import com.histmersion.api.library.{Label, NeighborRow, NeighborTarget, SourceRef}
+import com.histmersion.api.research.{ArticleCoverage, ArticleLinks, ArticleRef}
 
 /** Assembles the typed page models from the library's and research's controllers — the one impure step between the
   * database and [[Pages]]. Each page resolves its links with ONE [[ArticlesControllers.pageLinks]] call.

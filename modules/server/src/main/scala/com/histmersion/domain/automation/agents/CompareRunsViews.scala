@@ -1,7 +1,7 @@
 package com.histmersion.domain.automation.agents
 
-import com.histmersion.api.Agents.{RunDetail, RunInfo}
-import com.histmersion.api.RunCompare
+import com.histmersion.api.automation.Agents.{RunDetail, RunInfo}
+import com.histmersion.api.automation.RunCompare
 import com.histmersion.domain.CompareRuns
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl.*

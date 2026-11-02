@@ -1,8 +1,25 @@
 package com.histmersion.api
 
-import com.histmersion.api.library.sources.SourceWrite
+import com.histmersion.api.library.SourceWrite
 
 import com.histmersion.values.{Confidence, EdgeKind, SourceStatus}
+import com.histmersion.api.automation.{GoalPatch, Queue}
+import com.histmersion.api.catalogue.{AttestationPatch, EventPatch, Period, PeriodInput}
+import com.histmersion.api.library.{
+  Edge,
+  EdgeInput,
+  EdgesPatch,
+  Filter,
+  Finding,
+  FindingInput,
+  FindingsPatch,
+  MetadataField,
+  MetadataPatch,
+  Source,
+  SourcePatch,
+  SourcePut
+}
+import com.histmersion.api.research.{ArticlePatch, ArticlePut}
 
 /** Pure tests for the patch-merge (plan §1.9a). No database: `applyPatch` is a total function of (existing, patch),
   * which is exactly why the merge rules live in `core`.

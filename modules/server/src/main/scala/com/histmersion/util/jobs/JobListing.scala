@@ -2,7 +2,8 @@ package com.histmersion.util.jobs
 
 import com.histmersion.util.database.Transactor
 
-import com.histmersion.api.{ApiError, JobInfo, Paging, Write}
+import com.histmersion.api.{ApiError, Paging, Write}
+import com.histmersion.api.jobs.JobInfo
 import com.histmersion.config.AppConfig
 
 import javax.sql.DataSource

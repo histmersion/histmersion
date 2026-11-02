@@ -6,13 +6,12 @@ import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.Zero
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.*
-import com.histmersion.api.Autopilot.AutopilotSet
-import com.histmersion.api.GoalPlans.LinkKind
-import com.histmersion.api.Managers.*
+import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.automation.Autopilot.AutopilotSet
+import com.histmersion.api.automation.GoalPlans.LinkKind
+import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.ReviewLedger.{absorb, Ledger}
 import com.histmersion.db.QueueRows
 import com.histmersion.domain.automation.agents.AgentRepo
@@ -27,6 +26,9 @@ import sttp.ai.core.agent.*
 
 import java.time.Instant
 import com.histmersion.values.{GoalStatus, SourceStatus}
+import com.histmersion.api.automation.{AgentScheduler, Goal, GoalPatch, GoalPut, Queue}
+import com.histmersion.api.library.{MetadataPatch, SourcePatch, SourcePut}
+import com.histmersion.api.research.{ArticleFilter, ArticlePatch, ArticlePlans, ArticlePut, CoverageReason}
 
 /** The autopilot against a `*_test` database (docs/research-process-managers.md "As built: the autopilot"): one switch
   * carries a planned goal through plan → sources → articles → review to `reviewed` with the checked auto approvals on —

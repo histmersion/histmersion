@@ -11,7 +11,7 @@ import com.histmersion.util.plugins.Plugins
 import com.histmersion.pluginhost.{Generation, PluginHost}
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.*
+import com.histmersion.api.TimeSpan
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.TestDb
@@ -21,6 +21,7 @@ import com.histmersion.server.Deps
 import com.histmersion.server.media.FakeMediaHttp
 import com.histmersion.api.VocabularyCodecs.given
 import org.ekrich.config.ConfigFactory
+import com.histmersion.api.catalogue.{EventImportReport, EventImportRequest}
 
 /** A THIRD-PARTY plugin's event catalogue (docs/research-plugins.md §6) read by `events import` through the registries,
   * against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): its parts in order, a paged part followed, a

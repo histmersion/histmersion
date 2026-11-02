@@ -1,13 +1,17 @@
 package com.histmersion.server
 
 import ox.supervised
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import io.circe.parser
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.values.{BundleKind, PlaceKind}
+import com.histmersion.api.aliases.LabelRenamed
+import com.histmersion.api.catalogue.{Lpf, Place, PlaceInput, PlaceName}
+import com.histmersion.api.checks.{FormatField, FormatReport, FormatRule, Lint}
+import com.histmersion.api.library.SourceWithFindings
+import com.histmersion.api.research.ArticleView
 
 /** The formatting lint over real HTTP and MCP: an article write answers with its formatting problems (and
   * `?strict=true` refuses one with an error), `GET …/lint` and `POST …/lint/fix` for an article and a source,

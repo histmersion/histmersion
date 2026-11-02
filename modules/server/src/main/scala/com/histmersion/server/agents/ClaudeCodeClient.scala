@@ -3,7 +3,7 @@ package com.histmersion.server.agents
 import com.histmersion.domain.automation.agents.{AgentGenerator, FirstCallProbe, LlmCall, LlmClient, ModelLimitReached}
 
 import com.histmersion.config.ClaudeCodeConfig
-import com.histmersion.api.Agents.ModelRef
+import com.histmersion.api.automation.Agents.ModelRef
 import io.circe.{parser, Json}
 import io.circe.syntax.*
 import sttp.ai.core.agent.*
@@ -104,14 +104,14 @@ final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: Cli
         }
         val o = out.get().getOrElse(throw IllegalStateException("claude-code: no outcome"))
         // every reading of the run is in the pool (also the ones the watch already recorded: newest wins)
-        pool.foreach(p => p.record(com.histmersion.api.PlanQuota.PoolId.ClaudePlan, o.readings))
+        pool.foreach(p => p.record(com.histmersion.api.automation.PlanQuota.PoolId.ClaudePlan, o.readings))
         val guard = stopped
           .get()
           .orElse(o.result.filter(ClaudeCode.abortedByGuard).map(_ => "the quota-guard mod ended the turn"))
         guard match
           case Some(why) =>
             val until = pool
-              .flatMap(_.blocked(com.histmersion.api.PlanQuota.PoolId.ClaudePlan, Some(model.model)))
+              .flatMap(_.blocked(com.histmersion.api.automation.PlanQuota.PoolId.ClaudePlan, Some(model.model)))
               .flatMap(_._2)
               .map(java.time.Instant.ofEpochMilli)
             throw ModelLimitReached(model, until, s"claude -p stopped by the quota guard: $why")

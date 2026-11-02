@@ -2,12 +2,13 @@ package com.histmersion.web
 
 import com.histmersion.values.Citekey
 
-import com.histmersion.api.*
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.library.{Filter, IngestAccepted, IngestParams}
 
 /** Upload a document for OCR ingest (`POST /api/ingest`): pick or drop a file, give it a citekey and the metadata the
   * endpoint takes, watch the upload, then follow the OCR job in the jobs window. The form can start from an item of the

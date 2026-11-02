@@ -1,6 +1,7 @@
 package com.histmersion.domain.automation.goals
 
-import com.histmersion.util.identity.{AliasKinds, AliasTable}
+import com.histmersion.util.identity.AliasTable
+import com.histmersion.api.aliases.AliasKinds
 
 /** Where a goal's old slugs are kept: the alias table they are followed through. */
 object GoalAliasTable:

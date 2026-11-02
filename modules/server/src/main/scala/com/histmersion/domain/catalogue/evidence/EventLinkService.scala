@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.evidence
 
-import com.histmersion.api.EventLinkCandidate
+import com.histmersion.api.catalogue.EventLinkCandidate
 import com.histmersion.domain.catalogue.CatalogueState
 import com.histmersion.util.database.Transactor
 import com.histmersion.values.EventLinkStatus

@@ -2,16 +2,16 @@ package com.histmersion.domain
 
 import com.histmersion.util.data.exchange.{BundleFormat, Diff3}
 import com.histmersion.util.text.Fingerprint
-import com.histmersion.api.{
+import com.histmersion.api.exchange.{
   BundleArticle,
   BundleGoal,
   BundleGoalLink,
   BundleGoalSchedule,
   BundleQueueItem,
-  BundleRange,
-  Lint,
-  Queue
+  BundleRange
 }
+import com.histmersion.api.checks.Lint
+import com.histmersion.api.automation.Queue
 import com.histmersion.api.given
 
 import com.histmersion.values.{DecisionKind, GoalStatus, IssueKind}

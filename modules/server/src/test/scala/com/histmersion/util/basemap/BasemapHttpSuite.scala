@@ -1,6 +1,6 @@
 package com.histmersion.util.basemap
 
-import com.histmersion.api.*
+import com.histmersion.api.BBox
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.server.Composition
@@ -9,6 +9,8 @@ import ox.supervised
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.file.{Files, Path}
+import com.histmersion.api.basemap.{Basemap, BasemapStatus}
+import com.histmersion.api.instance.UiConfig
 
 /** The terrain base map over HTTP, on a server whose `basemap.dir` holds a fixture extract: the status, a tile as
   * stored (gzip-encoded vector, image terrain), 204 outside the extract, 404 for an unknown layer, the fetch's

@@ -2,7 +2,7 @@ package com.histmersion.server.agents
 
 import com.histmersion.domain.automation.agents.ToolResultCap
 
-import com.histmersion.api.Query.QueryResult
+import com.histmersion.api.library.Query.QueryResult
 
 /** What one agent tool call may return (`agents.tools`): a cut is at a line and says how to read on, a source record
   * keeps its findings whole by shortening its notes first, UI chip links lose their targets, a query shows few rows.
@@ -94,7 +94,7 @@ class ToolResultCapSuite extends munit.FunSuite:
     val few = r.copy(rows = r.rows.take(3), rowCount = 3)
     assertEquals(
       com.histmersion.domain.library.workflows.LibraryAgentTools.queryResult(few, 50, 100000),
-      com.histmersion.api.Query.markdown(few)
+      com.histmersion.api.library.Query.markdown(few)
     )
     assert(
       com.histmersion.domain.library.workflows.LibraryAgentTools.queryResult(r, 0, 600).length <= 600,

@@ -1,6 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.api.{ReviewApproval, ReviewState}
+import com.histmersion.api.research.{ReviewApproval, ReviewState}
 import com.histmersion.domain.ArticleReviewStatus.*
 import com.histmersion.domain.ReviewArticle.{Finding, Reviewer, Severity}
 import com.histmersion.domain.ReviewLedger.{Closure, Entry, Ledger, Status}

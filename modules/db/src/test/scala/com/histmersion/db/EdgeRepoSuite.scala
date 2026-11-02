@@ -5,13 +5,14 @@ import com.histmersion.domain.research.articles.ArticleFixtures
 import com.histmersion.domain.library.citations.CitationFixtures
 import com.histmersion.domain.library.sources.SourceFixtures
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.values.SourceStatus
 import com.histmersion.util.database.Migrate
+import com.histmersion.api.library.{Edge, NeighborTarget, Source}
+import com.histmersion.api.research.Article
 
 /** `edges` connects stored sources only (V026): the migration's data move, the write-path routing into
   * `unresolved_edges`, promotion when the target arrives, and the graph/neighbors reads built on that invariant.

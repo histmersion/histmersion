@@ -1,11 +1,11 @@
 package com.histmersion.cli
 
 import com.monovore.decline.Command
-import com.histmersion.api.*
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
+import com.histmersion.api.automation.Queue
 
 class OutputSuite extends munit.FunSuite:
 

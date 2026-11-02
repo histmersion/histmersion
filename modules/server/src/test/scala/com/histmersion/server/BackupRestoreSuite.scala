@@ -1,6 +1,5 @@
 package com.histmersion.server
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.{Db, Migrate}
@@ -11,6 +10,8 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.file.{Files, Path}
 import com.histmersion.values.SourceStatus
 import com.histmersion.db.*
+import com.histmersion.api.backup.{Backup, BackupState, RestoreRequest}
+import com.histmersion.api.library.{Filter, FindingInput, SourcePut}
 
 /** The acceptance line of plan §4 wave 2.5: `backup` then `restore --force` reproduces `search` results. Runs
   * `pg_dump`/`pg_restore` for real, over the real HTTP endpoints, against a SCRATCH database created next to

@@ -1,13 +1,32 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.catalogue.places.RegionNode
-import com.histmersion.api.library.search.Tree
+import com.histmersion.api.catalogue.RegionNode
+import com.histmersion.api.library.Tree
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Dataset}
 import com.histmersion.domain.catalogue.places.PlaceAliasTable
 import com.augustnagro.magnum.{connect, transact, DbCon}
 
 import javax.sql.DataSource
+import com.histmersion.api.catalogue.{
+  GeoTime,
+  ManualPlaceName,
+  Period,
+  PlaceFootprint,
+  PlaceGone,
+  PlaceHit,
+  PlaceImportResult,
+  PlaceInput,
+  PlaceLink,
+  PlaceNameChanged,
+  PlaceOverride,
+  PlaceOverrideChanged,
+  PlaceOverrideEdit,
+  PlaceRebuildResult,
+  PlaceRelation,
+  PlaceSummary,
+  PlaceTreeRow
+}
 
 /** The places' repository as the db suites seed and read it: each call on a connection (a write in a transaction) of
   * the suite's own `ds`, and the SQL the suites assert on.
@@ -34,7 +53,7 @@ object PlaceFixtures:
       id: String,
       asOf: Option[Long] = None,
       modernFrom: Long = PlaceSql.DefaultModernFrom
-  ): Option[com.histmersion.api.catalogue.places.PlaceEntry] = connect(ds)(PlaceRepo.get(id, asOf, modernFrom))
+  ): Option[com.histmersion.api.catalogue.PlaceEntry] = connect(ds)(PlaceRepo.get(id, asOf, modernFrom))
 
   def children(
       ds: DataSource,

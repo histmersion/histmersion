@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.agents
 
-import com.histmersion.api.Agents.*
+import com.histmersion.api.automation.Agents.*
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
 

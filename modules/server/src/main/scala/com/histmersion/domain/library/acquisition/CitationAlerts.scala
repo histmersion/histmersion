@@ -1,10 +1,10 @@
 package com.histmersion.domain.library.acquisition
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import java.time.LocalDate
+import com.histmersion.api.library.WorkRef
 
 /** The forward-citation and same-author alerts of a goal's sources (OpenAlex): the works citing one, a work's authors,
   * and an author's newer works.

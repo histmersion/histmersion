@@ -1,7 +1,8 @@
 package com.histmersion.cli
 
-import com.histmersion.api.*
 import com.histmersion.config.*
+import com.histmersion.api.backup.{BackupResult, BackupState, BackupStatus}
+import com.histmersion.api.jobs.JobInfo
 
 /** ONE way the CLI follows server work to its end (#1798 item 14): a background job (`jobs`) and a backup. A run that
   * ends badly is ALWAYS `ExitCode.Refused` (2) — a script that follows a job must not read a failure as success, nor as

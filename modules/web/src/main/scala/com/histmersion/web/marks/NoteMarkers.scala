@@ -1,6 +1,7 @@
 package com.histmersion.web.marks
 
-import com.histmersion.api.personal.{ItemKind, Note, PersonalMarkdown, Target}
+import com.histmersion.api.personal.{Note, PersonalMarkdown, Target}
+import com.histmersion.api.ItemKind
 import com.histmersion.api.MapStack
 import com.histmersion.web.Icon
 import com.histmersion.web.map.{DomMarker, LatLon, MarkerHandlers, TheMap}

@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.periods
 
-import com.histmersion.api.{HistoricalPeriod, Period, PresetRegion}
+import com.histmersion.api.catalogue.{HistoricalPeriod, Period, PresetRegion}
 import com.augustnagro.magnum.DbCodec
 
 /** A `periods` row as the reads select it: the span's inclusive bounds read back. */

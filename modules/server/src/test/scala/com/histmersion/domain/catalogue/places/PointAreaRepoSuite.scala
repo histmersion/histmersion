@@ -4,7 +4,7 @@ import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.util.database.given
 
-import com.histmersion.api.*
+import com.histmersion.api.GeoPoint
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.catalogue.places.PointAreas.Dating
@@ -13,6 +13,9 @@ import com.augustnagro.magnum.*
 import com.histmersion.values.{PlaceKind, SourceStatus}
 import com.histmersion.util.database.Migrate
 import com.histmersion.db.*
+import com.histmersion.api.catalogue.{Gazetteer, Place, PlaceInput, PlaceName}
+import com.histmersion.api.checks.Lint
+import com.histmersion.api.library.{Finding, Source}
 
 /** `lint --rule place-imported-point-area` (2026-10-09), against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped
   * otherwise): the listing (counts, every finding holder, evidence keeping a place) and `--fix` — bounded per call,

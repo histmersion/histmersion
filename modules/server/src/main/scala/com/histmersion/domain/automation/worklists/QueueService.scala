@@ -1,7 +1,7 @@
 package com.histmersion.domain.automation.worklists
 
-import com.histmersion.api.Queue
-import com.histmersion.api.Queue.{Kind, QueueAdd, QueueItem, QueuePatch}
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.automation.Queue.{Kind, QueueAdd, QueueItem, QueuePatch}
 import com.histmersion.util.database.Transactor
 
 import java.time.{Clock, Instant}

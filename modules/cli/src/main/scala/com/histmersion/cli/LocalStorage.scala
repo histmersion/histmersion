@@ -1,10 +1,11 @@
 package com.histmersion.cli
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 
 import java.nio.file.Path
 import com.histmersion.util.plugins.PluginKit
+import com.histmersion.api.instance.About
+import com.histmersion.api.maintenance.{Storage, StorageEntry}
 
 /** The Storage part of `histmersion about` that only the CLI can see: the locations on the machine the CLI runs on that
   * the server knows nothing of — the host directory of Calibre originals (`cli.calibre.originals-dir`) and the install

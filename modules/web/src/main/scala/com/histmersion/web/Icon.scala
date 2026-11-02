@@ -1,9 +1,10 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.js
+import com.histmersion.api.automation.Managers
+import com.histmersion.api.library.{Acquire, Filter}
 
 /** The web UI's shared building blocks. Each thing the UI shows in more than one place — a source link, a chip, a
   * confidence mark, a layer switch, an icon — is built HERE, once, so the sidebar, the tabs, the map popup and the

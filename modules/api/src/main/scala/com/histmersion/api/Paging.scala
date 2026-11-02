@@ -1,6 +1,7 @@
 package com.histmersion.api
 
 import sttp.tapir.*
+import com.histmersion.api.automation.ListFilters
 
 /** Paging travels in response headers so the JSON body stays the plain array older CLIs and MCP clients read. */
 object Paging:

@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.worklists
 
-import com.histmersion.api.Queue
+import com.histmersion.api.automation.Queue
 import com.histmersion.domain.library.sources.referrers.*
 
 import com.histmersion.util.database.given

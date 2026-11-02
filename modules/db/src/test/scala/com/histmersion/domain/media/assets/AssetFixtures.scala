@@ -1,10 +1,20 @@
 package com.histmersion.domain.media.assets
 
-import com.histmersion.api.*
+import com.histmersion.api.{Api, ApiError, Write}
 import com.histmersion.util.database.Sql
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
+import com.histmersion.api.media.{
+  AssetDetail,
+  AssetInfo,
+  AssetPatch,
+  MediaFacets,
+  MediaGeoHit,
+  MediaItem,
+  MediaList,
+  MediaThumb
+}
 
 /** The pictures' repositories as the db suites reach them from outside the feature: each call on a connection or in a
   * transaction of its own, as the service runs it.

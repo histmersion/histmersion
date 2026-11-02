@@ -1,6 +1,6 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.MergeIssue
+import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.domain.MergePlanner
 import com.histmersion.values.DecisionKind
 

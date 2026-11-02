@@ -1,8 +1,9 @@
 package com.histmersion.domain.media.assets
 
-import com.histmersion.api.*
+import com.histmersion.api.{Api, Write}
 import com.histmersion.domain.media.{MediaStores, MediaStoreSuite}
 import com.histmersion.values.MediaRole
+import com.histmersion.api.media.{AssetKind, AssetPatch, MediaProvider}
 
 /** What the pictures' service answers, the same on the database and in memory. */
 abstract class AssetServiceContract extends MediaStoreSuite:

@@ -1,7 +1,8 @@
 package com.histmersion.domain.activity
 
-import com.histmersion.api.{Activity, ApiError, ListFilters}
-import com.histmersion.api.Activity.{Entry, EntryKind, Show, Writer}
+import com.histmersion.api.ApiError
+import com.histmersion.api.automation.{Activity, ListFilters}
+import com.histmersion.api.automation.Activity.{Entry, EntryKind, Show, Writer}
 
 import java.time.Instant
 import scala.annotation.tailrec

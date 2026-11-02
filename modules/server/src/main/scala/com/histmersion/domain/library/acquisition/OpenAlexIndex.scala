@@ -5,11 +5,11 @@ import com.histmersion.domain.library.acquisition.wire
 import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.http.Url
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import java.time.LocalDate
+import com.histmersion.api.library.{Candidates, WorkRef}
 
 /** OpenAlex: search by publication date, `cites:` and `authorships.author.id:` filters. */
 final class OpenAlexIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex with CitationAlerts:

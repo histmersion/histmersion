@@ -1,6 +1,7 @@
 package com.histmersion.web
 
-import com.histmersion.api.{ArticleKindCount, TimeHistogram}
+import com.histmersion.api.research.ArticleKindCount
+import com.histmersion.api.library.TimeHistogram
 
 /** The sidebar tabs' one pagination form: the count line and the "show more" label every tab uses, and what each tab
   * adds to the line.

@@ -1,6 +1,8 @@
 package com.histmersion.api
 
 import java.util.UUID
+import com.histmersion.api.exchange.{BundleInstance, MergeApplyJob, MergeApplyResult, MergeJobState, MergeMarkdown}
+import com.histmersion.api.jobs.{JobDetail, JobInfo, JobState}
 
 /** #888: a merge apply is a `jobs` row, so `GET /api/merge/apply/{job}` answers across a restart. How a stored row
   * reads back ([[MergeApplyJob.of]]) — above all, an apply a restart cut short is `interrupted`, never `running`
@@ -45,6 +47,6 @@ class MergeApplyJobSuite extends munit.FunSuite:
       "j1",
       MergeApplyJob.JobKind,
       "running",
-      detail = Some(com.histmersion.util.data.exchange.ExchangeJobKinds.PlanHash(Some("abc123")))
+      detail = Some(com.histmersion.api.exchange.ExchangeJobKinds.PlanHash(Some("abc123")))
     )
     assertEquals(JobDetail.subject(j), Some("merge plan abc123"))

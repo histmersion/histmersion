@@ -1,10 +1,9 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.catalogue.places.PlaceEntry
+import com.histmersion.api.catalogue.PlaceEntry
 
-import com.histmersion.api.{
-  ApiError,
-  Dataset,
+import com.histmersion.api.{ApiError, Dataset, Write}
+import com.histmersion.api.catalogue.{
   ManualPlaceName,
   Period,
   PlaceFootprint,
@@ -20,10 +19,9 @@ import com.histmersion.api.{
   PlaceOverrides,
   PlaceRelation,
   PlaceSummary,
-  PlaceTreeRow,
-  Write
+  PlaceTreeRow
 }
-import com.histmersion.api.catalogue.places.RegionNode
+import com.histmersion.api.catalogue.RegionNode
 import com.histmersion.domain.catalogue.CatalogueState
 import com.histmersion.domain.catalogue.places.PlaceSql.DefaultModernFrom
 import com.histmersion.util.database.Transactor

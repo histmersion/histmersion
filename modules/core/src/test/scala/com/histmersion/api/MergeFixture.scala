@@ -12,6 +12,20 @@ import java.util.UUID
 import com.histmersion.values.{BundleKind, DecisionKind, IssueKind, IssueSeverity, SourceStatus}
 import com.histmersion.util.data.exchange.BundleFormat
 import com.histmersion.util.data.exchange.BundleEntities
+import com.histmersion.api.exchange.{
+  Bundle,
+  BundleAlias,
+  BundleArticle,
+  BundleBlobs,
+  BundleEvent,
+  BundleGoal,
+  BundleInstance,
+  BundleManifest,
+  BundleReference,
+  BundleSource,
+  BundleTombstone,
+  MergePlan
+}
 
 /** A crafted pair of collections, in memory (docs/research-merge-import.md §8): "work" exported a bundle, "home" plans
   * it. One case per row of the scenario catalogue the pure planner can see. The database twin of this fixture is

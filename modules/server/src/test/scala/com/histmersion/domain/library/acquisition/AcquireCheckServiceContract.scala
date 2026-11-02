@@ -1,6 +1,7 @@
 package com.histmersion.domain.library.acquisition
 
-import com.histmersion.api.{Queue, Source}
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.library.Source
 import com.histmersion.domain.{AcquireRecheck, Caller}
 import com.histmersion.values.SourceStatus
 

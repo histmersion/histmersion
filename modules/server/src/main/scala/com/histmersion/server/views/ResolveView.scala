@@ -1,6 +1,9 @@
 package com.histmersion.server.views
 
-import com.histmersion.api.{ApiError, ResolvedArticle, ResolvedId, ResolvedSource}
+import com.histmersion.api.ApiError
+import com.histmersion.api.research.ResolvedArticle
+import com.histmersion.api.views.ResolvedId
+import com.histmersion.api.library.ResolvedSource
 
 /** `GET /api/resolve/{id}`: what an identifier names across the library and research — a stored source, else an
   * article, else nothing; never an error.

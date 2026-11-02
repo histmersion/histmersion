@@ -1,6 +1,7 @@
 package com.histmersion.web
 
-import com.histmersion.api.{HtmlAtoms, Queue}
+import com.histmersion.api.HtmlAtoms
+import com.histmersion.api.automation.Queue
 
 import scala.scalajs.js
 

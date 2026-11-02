@@ -1,10 +1,18 @@
 package com.histmersion.server
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import MarkdownLint.Context
 import com.histmersion.values.SourceStatus
+import com.histmersion.api.checks.{FormatField, FormatIssue, FormatRule, FormatSeverity}
+import com.histmersion.api.research.{
+  ArticleCoverage,
+  ArticleFilter,
+  ArticleRow,
+  CoverageEdge,
+  CoverageSearch,
+  CoverageSource
+}
 
 /** The formatting lint, pure: real-looking article and note Markdown in, findings out — and, for each problem the lint
   * calls an error, the rendered HTML to prove the page really does get it wrong (the lint parses with the page's own

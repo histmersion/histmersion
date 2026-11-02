@@ -3,8 +3,8 @@ package com.histmersion.server.agents
 import com.histmersion.domain.automation.agents.ModelPicker
 
 import com.histmersion.config.ClaudeCodeConfig
-import com.histmersion.api.Agents.Role
-import com.histmersion.api.PlanQuota.*
+import com.histmersion.api.automation.Agents.Role
+import com.histmersion.api.automation.PlanQuota.*
 
 import java.nio.file.Files
 import java.util.concurrent.{CountDownLatch, TimeUnit}
@@ -185,7 +185,7 @@ class PlanRefreshSuite extends munit.FunSuite:
     assert(!ModelPicker.lifts(1000L, None, usable = true), "no reading at all")
 
   test("a held pool in the chain does not hide another pool's reset: the earliest one counts, the held one is named"):
-    import com.histmersion.api.Agents.{ModelRef, ProviderKind}
+    import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
     val (opus, gpt) = (ModelRef(ProviderKind.ClaudeCode, "opus"), ModelRef(ProviderKind.Codex, "gpt-6-luna"))
     val reset = java.time.Instant.parse("2026-10-09T00:20:00Z").toEpochMilli
     val (at, text) = ModelPicker.whenFrees(List((opus, Some(reset), None), (gpt, None, Some(PoolId.ChatgptPlan))))

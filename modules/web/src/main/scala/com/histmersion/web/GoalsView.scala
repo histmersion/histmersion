@@ -1,12 +1,14 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
-import com.histmersion.api.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, Pipeline, RunInfo, RunRequest}
-import com.histmersion.api.GoalPlans.*
+import com.histmersion.api.Wording
+import com.histmersion.api.automation.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, Pipeline, RunInfo, RunRequest}
+import com.histmersion.api.automation.GoalPlans.*
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.values.GoalStatus
+import com.histmersion.api.automation.{Agents, AgentsMarkdown, Goal, GoalPut, GoalStages, ListFilters, Managers, Queue}
+import com.histmersion.api.research.Articles
 
 /** The research goals (docs/research-embedded-agents.md §14): the goals window (the goals as a tree) and one window per
   * goal — its sub-goals and links (sources, articles, search queries, queue items), the plan waiting for approval with

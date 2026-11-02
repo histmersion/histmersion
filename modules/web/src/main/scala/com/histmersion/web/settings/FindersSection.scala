@@ -1,6 +1,7 @@
 package com.histmersion.web.settings
 
-import com.histmersion.api.{UiConfig, Wording}
+import com.histmersion.api.Wording
+import com.histmersion.api.instance.UiConfig
 import com.raquo.laminar.api.L.*
 
 /** Settings › Where to look for sources: the open-access finders the acquisition asks, in order, for a paper's free
@@ -9,7 +10,7 @@ import com.raquo.laminar.api.L.*
 object FindersSection:
 
   /** The finders among the plugins: those that register a source fetcher. Pure. */
-  def finders(ui: UiConfig): List[com.histmersion.api.PluginStatus] =
+  def finders(ui: UiConfig): List[com.histmersion.api.plugins.PluginStatus] =
     ui.plugins.plugins.filter(p => p.provides.exists(_.startsWith("source-fetcher:")) || FinderIds(p.id))
 
   /** The built-in finders, also when they are off (an off plugin registers nothing). */

@@ -1,6 +1,6 @@
 package com.histmersion.web.map
 
-import com.histmersion.api.{MapStartConfig, MapStartMode}
+import com.histmersion.api.instance.{MapStartConfig, MapStartMode}
 
 import scala.util.Try
 

@@ -1,8 +1,8 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.*
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
+import com.histmersion.api.catalogue.{Period, PlaceType}
 
 final private[places] case class PlaceTypeRow(
     placeId: String,

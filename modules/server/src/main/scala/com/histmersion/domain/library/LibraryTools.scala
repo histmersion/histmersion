@@ -1,12 +1,12 @@
 package com.histmersion.domain.library
 
-import com.histmersion.util.identity.AliasKinds
+import com.histmersion.api.aliases.AliasKinds
 
-import com.histmersion.api.library.search.SearchMarkdown
-import com.histmersion.api.library.sources.SourcesMarkdown
+import com.histmersion.api.library.SearchMarkdown
+import com.histmersion.api.library.SourcesMarkdown
 
 import chimp.server.*
-import com.histmersion.api.*
+import com.histmersion.api.{Api, ApiError, StrictJson, Write}
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.domain.library.citations.CitationsControllers
 import com.histmersion.domain.library.findings.FindingsControllers
@@ -18,6 +18,9 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import sttp.tapir.Schema
+import com.histmersion.api.aliases.Aliases
+import com.histmersion.api.checks.FormatMarkdown
+import com.histmersion.api.library.{Filter, FilterDocs, PassagesMarkdown, RenameRequest, SourcePatch, SourcePut}
 
 /** The library's MCP tools, in their place among `/mcp`'s: the search and its vocabulary, one source read whole or by
   * part and its passages, the map feed, the histogram, the citation graph, and the writes of one source. `exportNote`
@@ -320,8 +323,8 @@ object LibraryTools:
       exportSource
     )
 
-  /** The MCP spelling of [[com.histmersion.api.Filter]] — flat and all-optional, so a model can fill in only what it
-    * knows. `Filter.of` is the single interpreter of this shape (REST and CLI share it).
+  /** The MCP spelling of [[com.histmersion.api.library.Filter]] — flat and all-optional, so a model can fill in only
+    * what it knows. `Filter.of` is the single interpreter of this shape (REST and CLI share it).
     */
   final case class SearchInput(
       query: Option[String] = None,
@@ -491,7 +494,7 @@ object LibraryTools:
       .modify(_.limit)(_.description("Passages to show (default 10, max 50)"))
       .modify(_.context)(_.description("Characters of context around each match (default 600, max 3000)"))
 
-  /** The MCP spelling of [[com.histmersion.api.Filter]] for `geo_when` — now the FULL filter shape (A2), so
+  /** The MCP spelling of [[com.histmersion.api.library.Filter]] for `geo_when` — now the FULL filter shape (A2), so
     * `tags`/`authors`/`status`/`topics` work. `region` is an alias for a `places` entry (A1). `periodStart`/`periodEnd`
     * are deprecated aliases for `from`/`to` — kept for one release.
     */
@@ -614,7 +617,7 @@ object LibraryTools:
   object ExportSourceInput:
     given Schema[ExportSourceInput] = summon[KindlingsSchema[ExportSourceInput]].schema
 
-  /** The MCP spelling of [[com.histmersion.api.Filter]] for `histogram` — now the FULL filter shape (A2).
+  /** The MCP spelling of [[com.histmersion.api.library.Filter]] for `histogram` — now the FULL filter shape (A2).
     * `periodStart`/`periodEnd` and `region` are deprecated aliases (A1).
     */
   final case class HistogramInput(

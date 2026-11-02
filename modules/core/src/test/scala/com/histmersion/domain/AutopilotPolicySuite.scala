@@ -1,17 +1,17 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
-import com.histmersion.api.Agents.{ApprovalKind, RunState}
+import com.histmersion.api.automation.Agents.{ApprovalKind, RunState}
 import com.histmersion.domain.AutopilotPolicy.*
 import com.histmersion.domain.ManagerPolicy.{Next, ReviewSettings, StepFacts}
-import com.histmersion.api.Managers.*
+import com.histmersion.api.automation.Managers.*
 
 import java.time.Instant
 import com.histmersion.values.GoalStatus
+import com.histmersion.api.automation.ManagersMarkdown
 
 /** The autopilot's pure rules (docs/research-process-managers.md "As built: the autopilot"): the checked auto approvals
   * and their caps, the goal-status advance, the managers every goal has, the spread crons, the extend threshold, the
@@ -304,7 +304,7 @@ class ScaledCapSuite extends munit.FunSuite:
 /** #3763: new articles only once the current ones are done. */
 class NextArticleSuite extends munit.FunSuite:
   import AutopilotPolicy.{articlesInProgress, nextArticle, NextFacts}
-  import com.histmersion.api.Managers.{ItemStatus, State}
+  import com.histmersion.api.automation.Managers.{ItemStatus, State}
 
   private val now = java.time.Instant.parse("2026-10-24T12:00:00Z")
   private val done = NextFacts(

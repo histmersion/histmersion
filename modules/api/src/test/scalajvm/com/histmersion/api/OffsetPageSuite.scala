@@ -1,9 +1,12 @@
 package com.histmersion.api
 
-import com.histmersion.api.automation.goals.GoalsMarkdown
-import com.histmersion.api.catalogue.events.EventsMarkdown
-import com.histmersion.api.catalogue.evidence.AttestationsMarkdown
-import com.histmersion.api.media.assets.MediaMarkdown
+import com.histmersion.api.automation.GoalsMarkdown
+import com.histmersion.api.catalogue.EventsMarkdown
+import com.histmersion.api.catalogue.AttestationsMarkdown
+import com.histmersion.api.media.MediaMarkdown
+import com.histmersion.api.automation.{Goal, GoalList}
+import com.histmersion.api.catalogue.{AttestationList, EventList, EventSummary}
+import com.histmersion.api.media.AssetLinkList
 
 /** [[OffsetPage]] (#1798 item 8): one page shape — total, offset, next — and one Markdown header and footer for every
   * offset-paged list, so a list that is cut says how to get the rest.

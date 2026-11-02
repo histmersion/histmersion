@@ -2,8 +2,9 @@ package com.histmersion.cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.*
+import com.histmersion.api.BBox
 import com.histmersion.config.*
+import com.histmersion.api.library.{Filter, FilterDocs}
 
 /** The shared [[Filter]] flags (plan §1.0): ONE definition, on every command that takes the filter — `search`,
   * `facets`, `histogram`, `geo-when`, `article list`, `events search`. An object of its own so every command object can

@@ -15,8 +15,8 @@ import com.histmersion.domain.automation.agents.{
 import com.histmersion.domain.automation.managers.Zero
 
 import com.histmersion.config.ClaudeCodeConfig
-import com.histmersion.api.Agents.{ModelRef, ProbeAnswer, ProviderKind}
-import com.histmersion.api.PlanQuota.PoolId
+import com.histmersion.api.automation.Agents.{ModelRef, ProbeAnswer, ProviderKind}
+import com.histmersion.api.automation.PlanQuota.PoolId
 import com.histmersion.api.VocabularyCodecs.given
 import sttp.ai.core.agent.*
 import sttp.shared.Identity

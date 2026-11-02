@@ -1,6 +1,5 @@
 package com.histmersion.cli
 
-import com.histmersion.api.*
 import com.histmersion.api.given
 
 import java.nio.file.{Files, Path}

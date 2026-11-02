@@ -1,8 +1,8 @@
 package com.histmersion.web
 
-import com.histmersion.api.Goal
-import com.histmersion.api.Agents.ApprovalInfo
-import com.histmersion.api.GoalPlans.*
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.automation.Agents.ApprovalInfo
+import com.histmersion.api.automation.GoalPlans.*
 
 /** The pure parts of the goals windows: the tree, the open plan of a goal, the schedule editor's defaults, and a link
   * to add.

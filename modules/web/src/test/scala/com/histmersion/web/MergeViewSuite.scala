@@ -1,9 +1,24 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
+import com.histmersion.api.YearFmt
 
 import java.util.UUID
 import com.histmersion.values.{BundleKind, DecisionKind, IssueKind, IssueSeverity}
+import com.histmersion.api.exchange.{
+  BundleInstance,
+  IssueCondition,
+  IssueField,
+  IssueHunk,
+  IssueSide,
+  IssueSpan,
+  IssueText,
+  MatchCounts,
+  MergeDecision,
+  MergeIssue,
+  MergePlan,
+  MergeResolution,
+  MergeResolutions
+}
 
 /** The pure parts of the merge review screen: grouping and counting the issues, the filter, keeping a decision, the
   * field table's result column, the diff3 editor's starting text, the span bars.
@@ -42,7 +57,7 @@ class MergeViewSuite extends munit.FunSuite:
       None,
       "cafe0123",
       MatchCounts(),
-      com.histmersion.util.data.exchange.PlanMatches.empty,
+      com.histmersion.api.exchange.PlanMatches.empty,
       is,
       Nil,
       Nil,

@@ -1,12 +1,20 @@
 package com.histmersion.domain.library.citations
 
-import com.histmersion.api.*
 import com.histmersion.domain.library.LibraryState
 import com.histmersion.util.database.Transactor
 import com.histmersion.values.SourceStatus
 
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
+import com.histmersion.api.library.{
+  ContradictionRow,
+  ContradictionsResult,
+  GraphLink,
+  GraphNode,
+  NeighborRow,
+  NeighborTarget,
+  SourceGraph
+}
 
 /** The citation graph: a source's typed edges both ways (each far end classified), the graph around it, the
   * disagreements — edges that challenge, refute, update or supersede, and the statuses that say so.

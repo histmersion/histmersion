@@ -1,6 +1,6 @@
 package com.histmersion.web.marks
 
-import com.histmersion.api.personal.ItemKind
+import com.histmersion.api.ItemKind
 import com.histmersion.web.ui.{Clipboard, ContextMenu}
 import org.scalajs.dom
 

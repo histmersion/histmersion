@@ -1,6 +1,7 @@
 package com.histmersion.api
 
-import com.histmersion.api.Stalls.*
+import com.histmersion.api.automation.Stalls.*
+import com.histmersion.api.automation.StallsMarkdown
 
 /** The stall report, pure (#3762 proposal 4): which goals count as stalled, the one reason each stands still (in order:
   * draining, a person, a hold, paused managers, a budget, quota, the queue, a block, running, a failed item, no

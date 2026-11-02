@@ -1,8 +1,9 @@
 package com.histmersion.api
 
-import com.histmersion.util.identity.AliasKinds
+import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.values.BundleKind
+import com.histmersion.api.aliases.Aliases
 
 /** The one alias rule's words (#1799): every kind's rename says the same thing, and an answer to a call that named an
   * old identifier says where it went.

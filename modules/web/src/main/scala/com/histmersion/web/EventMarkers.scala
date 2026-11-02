@@ -1,10 +1,11 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
 import com.histmersion.web.map.*
 import org.scalajs.dom
 
 import scala.scalajs.js
+import com.histmersion.api.catalogue.{EventGeo, Period, TileLayer, TilesApi}
+import com.histmersion.api.library.Filter
 
 /** The EVENTS layer (#1449): every event of the span shown — the corpus's and the catalogues' — read from the server's
   * tiles (`/api/tiles/events/…`, the filter's selection: its sources, the span, the kind and tier menus); the points

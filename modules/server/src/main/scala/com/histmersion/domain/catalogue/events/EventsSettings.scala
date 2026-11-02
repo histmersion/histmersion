@@ -1,7 +1,7 @@
 package com.histmersion.domain.catalogue.events
 
 import com.histmersion.api.BBox
-import com.histmersion.api.EventTaxonomy
+import com.histmersion.api.catalogue.EventTaxonomy
 import com.histmersion.config.{EventsConfig, EventsLinksConfig, EventsWikidataConfig}
 import com.histmersion.domain.catalogue.evidence.EventMatcher
 import com.histmersion.upstreams.wikidata.WikidataClasses

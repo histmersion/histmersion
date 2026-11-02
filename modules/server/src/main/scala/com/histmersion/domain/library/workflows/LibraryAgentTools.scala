@@ -1,11 +1,12 @@
 package com.histmersion.domain.library.workflows
 
-import com.histmersion.api.library.search.SearchMarkdown
-import com.histmersion.api.library.sources.SourcesMarkdown
+import com.histmersion.api.library.SearchMarkdown
+import com.histmersion.api.library.SourcesMarkdown
 
 import com.histmersion.domain.automation.agents.ToolResultCap
 
-import com.histmersion.api.{AcquireMarkdown, Markdown, Query}
+import com.histmersion.api.Markdown
+import com.histmersion.api.library.{AcquireMarkdown, Query}
 import com.histmersion.config.AgentToolsConfig
 import com.histmersion.domain.automation.workflows.{ToolContribution, ToolName}
 import com.histmersion.domain.library.LibraryTools.{FacetsInput, NeighborsInput, PassagesInput}
@@ -141,7 +142,7 @@ object LibraryAgentTools:
   /** A `query` result as an agent sees it: at most `maxRows` rows, marked as cut (the row cap's own flag), then
     * [[cap]]ped like any result.
     */
-  def queryResult(r: com.histmersion.api.Query.QueryResult, maxRows: Int, max: Int): String =
+  def queryResult(r: com.histmersion.api.library.Query.QueryResult, maxRows: Int, max: Int): String =
     val shown = if maxRows > 0 && r.rows.size > maxRows then
       r.copy(rows = r.rows.take(maxRows), rowCount = maxRows, truncated = true)
     else r
@@ -152,7 +153,7 @@ object LibraryAgentTools:
         "(`WHERE citekey IN (…)`, `LIMIT`), never a whole table_"
     else ""
     ToolResultCap.cap(
-      com.histmersion.api.Query.markdown(shown) + more,
+      com.histmersion.api.library.Query.markdown(shown) + more,
       max,
       "select fewer columns or rows (`WHERE … IN (…)`, `LIMIT`)"
     )

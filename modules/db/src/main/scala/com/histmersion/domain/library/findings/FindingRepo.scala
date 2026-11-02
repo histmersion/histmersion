@@ -1,11 +1,11 @@
 package com.histmersion.domain.library.findings
 
-import com.histmersion.api.*
 import com.histmersion.util.database.given
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.library.search.FilterSql
 
 import com.augustnagro.magnum.*
+import com.histmersion.api.library.{Filter, GeoHit}
 
 /** The map feed (`geo-when`): the findings a filter selects, and how many. */
 private[findings] object FindingRepo:

@@ -1,7 +1,7 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
 import com.histmersion.web.MapRegions.*
+import com.histmersion.api.basemap.{BasemapFetchQuery, BasemapRegion, BasemapStatus}
 
 /** The About window's map regions, as data: what may be picked, the fetch a choice asks for, the sizes. */
 class MapRegionsSuite extends munit.FunSuite:

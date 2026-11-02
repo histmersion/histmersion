@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.api.PlaceShape
+import com.histmersion.api.catalogue.PlaceShape
 import com.histmersion.web.map.*
 import com.histmersion.web.ui.Layout
 

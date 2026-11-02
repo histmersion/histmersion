@@ -1,12 +1,13 @@
 package com.histmersion.domain.media.assets
 
-import com.histmersion.api.*
+import com.histmersion.api.Write
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.media.{MediaSources, MediaState, MediaStoreSuite}
 import com.histmersion.util.data.maintenance.WriteGate
 
 import java.util.Base64
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.api.media.{AssetInput, AssetPatch}
 
 /** The pictures' controllers over the in-memory service: a figure's URL under an old citekey, an upload to a source
   * that is not there or that does not decode, a picture's uid that is not one, and every write refused while the

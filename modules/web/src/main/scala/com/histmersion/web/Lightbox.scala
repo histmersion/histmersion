@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.api.MediaProvider
+import com.histmersion.api.media.MediaProvider
 import org.scalajs.dom
 import org.scalajs.dom.document
 

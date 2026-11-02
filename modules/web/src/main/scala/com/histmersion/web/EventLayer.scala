@@ -1,12 +1,14 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
+import com.histmersion.api.{Api, MapStack}
 import com.histmersion.api.MapStack
 import com.histmersion.web.map.*
 import org.scalajs.dom
 
 import scala.collection.mutable
 import scala.scalajs.js
+import com.histmersion.api.catalogue.{EventGeo, EventScale}
+import com.histmersion.api.instance.EventsUiConfig
 
 /** The events on the map while the timeline plays (#1440). Fetched ONCE when playback starts (the filter's events over
   * the span played — `/api/events/geo`); every frame after that is local: each event's visibility is computed from the

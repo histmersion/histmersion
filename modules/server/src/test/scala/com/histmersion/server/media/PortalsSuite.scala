@@ -13,11 +13,12 @@ import com.histmersion.domain.catalogue.places.ExternalIds
 
 import com.histmersion.pluginhost.HttpAnswer
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.ocr.ConverterClient
 import com.histmersion.values.MediaRole
+import com.histmersion.api.media.{AssetKind, MediaCount, MediaImportReport, MediaProvider}
+import com.histmersion.api.ocr.ConvertedDoc
 
 /** The store as a few maps, with the gazetteer facts and ids the keyless portals read. */
 final class PortalStore(

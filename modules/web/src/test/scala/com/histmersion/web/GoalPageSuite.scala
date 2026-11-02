@@ -1,7 +1,7 @@
 package com.histmersion.web
 
-import com.histmersion.api.{Goal, Managers}
-import com.histmersion.api.GoalPlans.{GoalSchedule, GoalView, ScheduleKind}
+import com.histmersion.api.automation.{Goal, Managers}
+import com.histmersion.api.automation.GoalPlans.{GoalSchedule, GoalView, ScheduleKind}
 
 /** A goal page's pure parts: the plan's steps and marks, the schedule line, pausing, its filtered lists. */
 class GoalPageSuite extends munit.FunSuite:

@@ -1,10 +1,12 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
+import com.histmersion.api.{ListPatch, Wording, YearFmt, Years}
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.values.SourceStatus
+import com.histmersion.api.catalogue.{Period, PeriodInput}
+import com.histmersion.api.library.{FacetField, Filter, MetadataPatch, SourceDetail, SourcePatch}
 
 /** Edit a source's metadata — the [[SourcePatch]] fields a person maintains: title, authors, year, venue, DOI, status,
   * topics, regions, tags, the period it is about, and the summary. Sent as ONE `PATCH` carrying only what changed, with

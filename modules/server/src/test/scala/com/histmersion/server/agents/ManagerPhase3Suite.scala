@@ -6,12 +6,11 @@ import com.histmersion.domain.automation.agents.{AgentsHandlers, LlmClient}
 import com.histmersion.domain.automation.managers.{ManagerDefaultsViews, Zero}
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.*
-import com.histmersion.api.GoalPlans.*
-import com.histmersion.api.Managers.*
+import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.automation.GoalPlans.*
+import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.domain.automation.goals.GoalLinkRepo
@@ -21,6 +20,8 @@ import sttp.ai.core.agent.*
 
 import java.time.Instant
 import com.histmersion.db.*
+import com.histmersion.api.automation.{AgentsMarkdown, Goal, GoalPut, ManagersMarkdown, Queue}
+import com.histmersion.api.library.{IngestReport, PdfInfo, Query, SourcePut, WorkRef}
 
 /** The process managers' phase 3 against a `*_test` database (docs/research-process-managers.md §4 (c), §6): the
   * watcher (created paused with its cron and one item per sweep; an acquisition sweep whose OPT-IN auto-ingest takes

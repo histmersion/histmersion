@@ -6,12 +6,30 @@ import chimp.server.*
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Paging}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.{DecisionRequest, RunRequest}
+import com.histmersion.api.automation.Agents.{DecisionRequest, RunRequest}
 import com.histmersion.util.mcp.McpOut
 import com.histmersion.api.VocabularyCodecs.given
+import com.histmersion.api.automation.{
+  AgentMode,
+  Agents,
+  AgentScheduler,
+  AgentSchedulerMarkdown,
+  AgentsMarkdown,
+  ApprovalDigest,
+  ApprovalDigestMarkdown,
+  Autopilot,
+  AutopilotMarkdown,
+  GoalPlans,
+  ListFilters,
+  Managers,
+  ManagersMarkdown,
+  ModelChains,
+  PlanQuota,
+  StallsMarkdown
+}
 
 /** The MCP half of the embedded agents: an external session can hand a whole pipeline to the server with ONE call
   * (`start_run` — e.g. the whole review panel of an article, instead of spawning four subagents), check on it

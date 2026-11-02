@@ -1,9 +1,9 @@
 package com.histmersion.domain.library.citations
 
-import com.histmersion.api.*
 import com.histmersion.domain.Caller
 import com.histmersion.domain.library.LibraryStoreSuite
 import com.histmersion.values.SourceStatus
+import com.histmersion.api.library.{Edge, GraphLink, NeighborTarget, Source}
 
 /** What the citation graph answers, the same on the database and in memory: a source's edges both ways by kind, the
   * graph around it to a depth, the disagreements by edge and by status.

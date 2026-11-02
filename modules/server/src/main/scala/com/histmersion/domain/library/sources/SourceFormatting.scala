@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.sources
 
-import com.histmersion.api.{FormatField, FormatIssue}
+import com.histmersion.api.checks.{FormatField, FormatIssue}
 
 /** How a source's agent-written Markdown (its summary and notes) will display: what will not display as meant, its
   * wording-safe repair, and the refusal a strict write gets for a formatting error. Research implements it with its

@@ -2,7 +2,7 @@ package com.histmersion.server
 
 import com.histmersion.util.jobs.BackgroundJob
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Plural, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.catalogue.periods.{PeriodImports, PeriodOFetch, PeriodService, PeriodSources}
@@ -16,6 +16,9 @@ import com.histmersion.domain.catalogue.places.{
 import com.histmersion.util.storage.Location
 
 import java.nio.file.{Files, Path}
+import com.histmersion.api.catalogue.{GazetteerKind, GazetteerSourceInfo, PeriodImportResult, SkippedPeriod}
+import com.histmersion.api.exchange.InitPlan
+import com.histmersion.api.jobs.{JobDetail, JobInfo}
 
 /** Named periods (#719) and first-run data (#720): the period-preset write path and the `init` job.
   *

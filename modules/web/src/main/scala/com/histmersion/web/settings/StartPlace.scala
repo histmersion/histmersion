@@ -1,6 +1,7 @@
 package com.histmersion.web.settings
 
-import com.histmersion.api.{MapStartConfig, MapStartMode, PlaceHit}
+import com.histmersion.api.instance.{MapStartConfig, MapStartMode}
+import com.histmersion.api.catalogue.PlaceHit
 import com.histmersion.web.ApiClient
 import com.histmersion.web.map.{GeoBounds, LatLon, TheMap}
 import com.raquo.laminar.api.L.*

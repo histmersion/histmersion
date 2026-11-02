@@ -1,15 +1,15 @@
 package com.histmersion.domain.library.sources
 
-import com.histmersion.api.library.sources.SourceWrite
+import com.histmersion.api.library.SourceWrite
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Write}
 import com.histmersion.domain.{Caller, Licence}
 import com.histmersion.values.LicenceId
 import com.histmersion.domain.library.LibraryState
 import com.histmersion.domain.library.sources.referrers.{DeleteReport, SourceReferrers}
 import com.histmersion.util.database.Transactor
 import com.histmersion.util.ocr.{Chunk, Chunker}
-import com.histmersion.util.text.WikiLinks
+import com.histmersion.api.text.WikiLinks
 
 import hearth.kindlings.optics.syntax.*
 
@@ -18,6 +18,22 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
+import com.histmersion.api.library.{
+  CalibreGap,
+  DeleteCount,
+  DeletePart,
+  Edge,
+  FindingRow,
+  Rename,
+  RenameCounts,
+  Source,
+  SourceAlias,
+  SourceDeletion,
+  SourceDetail,
+  SourcePatch,
+  SourceRef,
+  TocEntry
+}
 
 /** The library's sources: a record with its findings and the edges it makes, its old citekeys, its rename and delete
   * (what other domains hold of it follows through the referrers), and its body as read by part.
@@ -537,7 +553,7 @@ object SourceService:
           val ck = requested
           val aliases = st.aliases.collect { case (a, c) if c == ck => a }.toList.sorted
           val edgesIn = st.edges.filter(e => e.dst == ck && e.src != ck).toList.sortBy(e => (e.src, e.kind))
-          import DeletePart.*
+          import com.histmersion.api.library.DeletePart.*
           val counts = List(
             Findings -> x.source.findings.size,
             EdgesOut -> st.edges.count(_.src == ck),

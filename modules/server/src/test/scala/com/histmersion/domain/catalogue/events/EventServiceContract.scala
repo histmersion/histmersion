@@ -1,7 +1,7 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.{
-  ApiError,
+import com.histmersion.api.{ApiError, TimeSpan, Write}
+import com.histmersion.api.catalogue.{
   EventDating,
   EventEdge,
   EventParticipant,
@@ -10,11 +10,9 @@ import com.histmersion.api.{
   EventPut,
   EventScale,
   EventTier,
-  Filter,
-  Period,
-  TimeSpan,
-  Write
+  Period
 }
+import com.histmersion.api.library.Filter
 import com.histmersion.domain.catalogue.CatalogueStoreSuite
 
 /** The contract the events keep: every field read back, with its datings, edges (both ends) and participants in their

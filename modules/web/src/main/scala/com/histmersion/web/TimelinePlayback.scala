@@ -1,11 +1,14 @@
 package com.histmersion.web
 
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.*
+import com.histmersion.api.Api
 import com.histmersion.web.ui.Layout
 import org.scalajs.dom
 
 import scala.scalajs.js
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.instance.{EventsUiConfig, UiConfig}
+import com.histmersion.api.library.{Filter, GeoHit}
 
 object TimelinePlayback:
 

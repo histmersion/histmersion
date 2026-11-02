@@ -5,7 +5,7 @@ import com.histmersion.domain.library.sources.SourceFixtures
 import ox.supervised
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.PassageFinder
-import com.histmersion.api.PassageResult
+import com.histmersion.api.library.PassageResult
 import com.histmersion.util.database.{Db, Migrate}
 import com.augustnagro.magnum.*
 import java.net.{URI, URLEncoder}

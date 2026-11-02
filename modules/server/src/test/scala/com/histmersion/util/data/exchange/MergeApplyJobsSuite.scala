@@ -1,6 +1,6 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.{BundleInstance, MergeApplyResult, MergeJobState}
+import com.histmersion.api.exchange.{BundleInstance, MergeApplyResult, MergeJobState}
 import com.histmersion.util.jobs.MergeApplyRuns
 
 import java.util.UUID

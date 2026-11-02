@@ -2,15 +2,16 @@ package com.histmersion.domain.library.workflows
 
 import com.histmersion.domain.automation.agents.AgentsHandlers
 
-import com.histmersion.api.*
+import com.histmersion.api.Plural
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Managers.*
-import com.histmersion.api.Queue.QueueAdd
+import com.histmersion.api.automation.Managers.*
+import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.automation.goals.FocusService
 import com.histmersion.domain.library.acquisition.CandidateService
 
 import java.time.Instant
+import com.histmersion.api.library.Candidates
 
 /** SEED BEFORE THE PLAN (#3762 proposal 5): a research goal with no source does not wait for its plan to be approved
   * before it gathers. Each managers' tick (the autopilot on, not draining), up to

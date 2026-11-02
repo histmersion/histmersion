@@ -1,12 +1,12 @@
 package com.histmersion.domain
 
-import com.histmersion.api.media.assets.MediaMarkdown
+import com.histmersion.api.media.MediaMarkdown
 
 import com.histmersion.domain.catalogue.places.Wikidata
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.values.{LicenceId, MediaRole}
+import com.histmersion.api.media.{MediaCount, MediaImportReport, MediaProvider}
 
 /** The host's half of the media providers (#1446): how a stated licence is read and judged, the card's role order, the
   * counts, a gazetteer id that is a Wikidata item, the media config and the import report — no network, no database.

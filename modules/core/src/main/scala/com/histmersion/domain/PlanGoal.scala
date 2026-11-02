@@ -6,7 +6,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-import com.histmersion.api.GoalPlans.{Plan, PlannedGoal, PlannedWork}
+import com.histmersion.api.automation.GoalPlans.{Plan, PlannedGoal, PlannedWork}
 import com.histmersion.values.{Doi, Slug}
 
 /** The `plan-goal` pipeline's typed answer and its pure checks (docs/research-embedded-agents.md §14): the planner

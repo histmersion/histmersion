@@ -172,7 +172,7 @@ class AcquireRecheckSuite extends munit.FunSuite:
     assertEquals(jobPicks(JobPlan(all = false, 4, since), cs, 9, due), Nil)
 
   test("which stopped job a later one takes up: a restart's interrupted one, or one the drain stopped"):
-    assert(resumable("failed", Some(com.histmersion.api.JobState.Interrupted)))
+    assert(resumable("failed", Some(com.histmersion.api.jobs.JobState.Interrupted)))
     assert(resumable("failed", Some(StoppedDraining)))
     assert(!resumable("failed", Some("the acquisition toolset is not connected: nothing tried")))
     assert(!resumable("failed", Some("a restore started; stopped")))

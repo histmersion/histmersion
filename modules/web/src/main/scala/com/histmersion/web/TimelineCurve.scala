@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.api.TimeBucket
+import com.histmersion.api.library.TimeBucket
 
 /** The timeline's count curve, pure: buckets a few pixels wide, each one point at its middle, joined by a MONOTONE
   * cubic (Fritsch–Carlson, the rule of d3's `curveMonotoneX`). Between two points the curve never leaves the band their

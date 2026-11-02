@@ -1,7 +1,7 @@
 package com.histmersion.pluginhost
 
 import com.histmersion.config.EnvOverrides
-import com.histmersion.api.{PluginSetting, PluginsReport, PluginState, PluginStatus}
+import com.histmersion.api.plugins.{PluginSetting, PluginsReport, PluginState, PluginStatus}
 import com.histmersion.plugin.*
 import hearth.kindlings.sconfigderivation.ConfigDecodingError
 import org.ekrich.config.{

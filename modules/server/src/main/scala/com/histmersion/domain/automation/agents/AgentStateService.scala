@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.agents
 
-import com.histmersion.api.AgentStateEntry
+import com.histmersion.api.automation.AgentStateEntry
 import com.histmersion.domain.automation.AutomationState
 import com.histmersion.util.database.Transactor
 import hearth.kindlings.optics.syntax.*

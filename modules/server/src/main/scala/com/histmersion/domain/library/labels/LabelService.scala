@@ -1,8 +1,8 @@
 package com.histmersion.domain.library.labels
 
-import com.histmersion.api.*
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.util.database.Transactor
+import com.histmersion.api.library.{Facet, FacetField, Filter}
 
 /** The labels' vocabulary inside a filter: the values of one dimension (tags, authors, places, topics, statuses,
   * provenances), each with the number of distinct sources it would leave. A mechanism over the filter's SQL, so it has

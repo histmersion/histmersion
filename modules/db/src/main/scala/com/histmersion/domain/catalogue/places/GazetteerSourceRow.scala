@@ -3,7 +3,6 @@ package com.histmersion.domain.catalogue.places
 import com.histmersion.util.database.given
 
 import scala.annotation.tailrec
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 

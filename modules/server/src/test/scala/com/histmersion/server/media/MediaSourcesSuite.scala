@@ -17,7 +17,6 @@ import com.histmersion.pluginhost.HttpAnswer
 
 import ox.supervised
 import com.augustnagro.magnum.*
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.{Db, Migrate}
@@ -29,6 +28,19 @@ import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.values.{MediaRole, PlaceKind}
 import com.histmersion.db.*
+import com.histmersion.api.catalogue.{Place, PlaceInput, PlaceName}
+import com.histmersion.api.jobs.JobInfo
+import com.histmersion.api.library.SourceWithFindings
+import com.histmersion.api.media.{
+  MediaCoversReport,
+  MediaCoversRequest,
+  MediaImportRequest,
+  MediaItem,
+  MediaProvider,
+  MediaSourceLine
+}
+import com.histmersion.api.ocr.ConvertedDoc
+import com.histmersion.api.views.PlaceDetail
 
 /** The second slice of #1446 through the server, against the test database (HISTMERSION_TEST_DB_URL; skipped otherwise)
   * and fakes only — no network, no sidecar: a paper's illustration chosen from its figures with a thumbnail from the
@@ -273,7 +285,7 @@ class MediaSourcesSuite extends com.histmersion.db.DbSuite:
       h.imports.importJob(MediaImportRequest(dryRun = false, limit = Some(3))).fold(e => fail(e.message), identity)
     assertEquals(j.kind, ImportsControllers.ImportJobKind)
     assert(
-      j.detail.flatMap(com.histmersion.api.media.imports.ImportJobKinds.Media.of).exists(_.contains("up to 3")),
+      j.detail.flatMap(com.histmersion.api.media.ImportJobKinds.Media.of).exists(_.contains("up to 3")),
       j.toString
     )
     @annotation.tailrec

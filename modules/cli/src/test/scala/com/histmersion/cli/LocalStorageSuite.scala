@@ -1,9 +1,11 @@
 package com.histmersion.cli
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
+import com.histmersion.api.instance.{About, AboutMarkdown, BuildStamp, Health}
+import com.histmersion.api.jobs.JobCounts
+import com.histmersion.api.maintenance.{StorageEntry, StorageReport}
 
 /** `histmersion about`'s own locations: added only when the server is on this machine, never twice. */
 class LocalStorageSuite extends munit.FunSuite:

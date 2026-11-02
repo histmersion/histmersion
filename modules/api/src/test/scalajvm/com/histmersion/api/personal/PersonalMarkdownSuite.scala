@@ -1,6 +1,7 @@
 package com.histmersion.api.personal
 
 import com.histmersion.values.{Latitude, Longitude}
+import com.histmersion.api.ItemKind
 
 class PersonalMarkdownSuite extends munit.FunSuite:
 

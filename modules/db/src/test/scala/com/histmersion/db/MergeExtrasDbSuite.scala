@@ -13,10 +13,10 @@ import com.histmersion.domain.catalogue.evidence.*
 
 import com.histmersion.util.jobs.JobRepo
 
-import com.histmersion.api.*
+import com.histmersion.api.{Dataset, TimeSpan}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.GoalPlans.{LinkKind, ScheduleKind}
+import com.histmersion.api.automation.GoalPlans.{LinkKind, ScheduleKind}
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.data.exchange.TestExchange
@@ -31,6 +31,19 @@ import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.util.data.exchange.{BundleImport, MergeState}
 import com.histmersion.util.database.Sql
 import com.histmersion.util.data.exchange.BundleEntities
+import com.histmersion.api.automation.GoalPut
+import com.histmersion.api.catalogue.{EventPut, Period, Place, PlaceInput, PlaceName}
+import com.histmersion.api.exchange.{
+  BundleImportResult,
+  BundleInstance,
+  MergeApplyResult,
+  MergeJobState,
+  MergePlan,
+  MergeResolution,
+  MergeResolutions
+}
+import com.histmersion.api.library.{Ingest, Source}
+import com.histmersion.api.research.Article
 
 /** What a bundle carries and a merge decides beyond M5, against real Postgres (docs/research-merge-import.md §7.8): a
   * collection's own places and named periods (V052) and not its seeds, a goal's plan, links and schedules (#881, V054),
@@ -293,10 +306,11 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
       transact(work)(
         ManagerRepo.create(
           "watch:zz_goal",
-          com.histmersion.api.Managers.Kind.Watch,
+          com.histmersion.api.automation.Managers.Kind.Watch,
           Some("zz_goal"),
-          com.histmersion.api.Managers.State.Paused,
-          com.histmersion.api.Managers.ManagerConfig(sweeps = Some(List("acquisition")), budgetUsd = Some(0.3)),
+          com.histmersion.api.automation.Managers.State.Paused,
+          com.histmersion.api.automation.Managers
+            .ManagerConfig(sweeps = Some(List("acquisition")), budgetUsd = Some(0.3)),
           Some("@weekly"),
           None
         )

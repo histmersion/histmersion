@@ -12,13 +12,26 @@ import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 import com.histmersion.domain.catalogue.places.SiteTypeFixtures
 
-import com.histmersion.api.*
+import com.histmersion.api.{BBox, GeoPoint, TimeSpan}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.values.{Confidence, EventLinkStatus, PlaceKind, SourceStatus}
 import com.histmersion.util.database.{Migrate, Param, Sql}
+import com.histmersion.api.catalogue.{
+  AttestationPut,
+  CatalogRecord,
+  EventLinkCandidate,
+  EventPassage,
+  EventPut,
+  EventTier,
+  Period,
+  Place,
+  PlaceInput,
+  PlaceName
+}
+import com.histmersion.api.library.{Filter, Finding, Source}
 
 /** #1449 against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): V085's kinds and tables, writing placed
   * catalogue records (a compiled event matched, never overwritten), the tier and the kind-group / tier / area /

@@ -4,7 +4,7 @@ import com.histmersion.util.plugins.Plugins
 
 import com.histmersion.pluginhost.{Generation, HostServices, PluginHost, ReservedNames}
 
-import com.histmersion.api.{PluginSetting, PluginState, PluginStatus}
+import com.histmersion.api.plugins.{PluginSetting, PluginState, PluginStatus}
 import com.histmersion.plugin.*
 import com.histmersion.plugin.PluginConfig.given
 import com.histmersion.api.VocabularyCodecs.given

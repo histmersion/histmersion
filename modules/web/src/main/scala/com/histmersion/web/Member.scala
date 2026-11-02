@@ -1,9 +1,9 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
 import org.scalajs.dom
 
 import scala.scalajs.js
+import com.histmersion.api.library.GeoHit
 
 /** What one clustered marker holds, for the bubble it may be drawn in: its kind, how many things it counts for (a
   * findings' point counts its findings), their dated mids and least certainty ([[Certainty.NoSay]] for a dot that is

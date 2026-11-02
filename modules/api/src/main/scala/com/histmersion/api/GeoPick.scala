@@ -2,6 +2,7 @@ package com.histmersion.api
 
 import sttp.tapir.Schema
 import com.histmersion.values.WireEnumValues
+import com.histmersion.api.catalogue.GeoTime
 
 enum GeoPick:
   case Mid, Start, End, Earliest, Latest

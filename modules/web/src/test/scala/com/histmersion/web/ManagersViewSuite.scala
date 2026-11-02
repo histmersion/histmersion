@@ -1,7 +1,7 @@
 package com.histmersion.web
 
-import com.histmersion.api.Managers.*
-import com.histmersion.api.ManagersMarkdown
+import com.histmersion.api.automation.Managers.*
+import com.histmersion.api.automation.ManagersMarkdown
 
 /** The managers window's pure parts: the badge, the item actions per status, the settings form, the hint box, the pager
   * and the window keys.
@@ -55,7 +55,7 @@ class ManagersViewSuite extends munit.FunSuite:
     )
 
   test("the focus: its heading, an active goal's pace, the goals that cannot use a slot by why"):
-    import com.histmersion.api.Autopilot.*
+    import com.histmersion.api.automation.Autopilot.*
     assertEquals(
       ManagersView.focusHead(FocusInfo(on = true, max = 8, held = 3)),
       "Focus: at most 8 active goals · 3 items held"
@@ -79,7 +79,7 @@ class ManagersViewSuite extends munit.FunSuite:
     val c = ManagerConfig(
       maxRuns = Some(3),
       includeTags = Some(List("a", "b")),
-      models = Some(List(com.histmersion.api.Agents.ModelOverride("fixer", "claude-code:opus")))
+      models = Some(List(com.histmersion.api.automation.Agents.ModelOverride("fixer", "claude-code:opus")))
     )
     assertEquals(ManagersView.config(ManagersView.fields(c)), Right(c))
     assertEquals(ManagersView.config(Map.empty), Right(ManagerConfig()))
@@ -240,7 +240,7 @@ class ManagersViewSuite extends munit.FunSuite:
     assert(!ManagersView.settingsFor("watch").map(_._1).contains("extendMinNew"))
 
   test("autopilot status: a goal's line and the stages count"):
-    import com.histmersion.api.Autopilot.GoalProgress
+    import com.histmersion.api.automation.Autopilot.GoalProgress
     val gs = List(
       GoalProgress(
         "a",
@@ -264,7 +264,7 @@ class ManagersViewSuite extends munit.FunSuite:
 
 /** The scheduler panel's pure parts: the queue's filters and facets, and its heading. */
 class SchedulerPanelSuite extends munit.FunSuite:
-  import com.histmersion.api.AgentScheduler.*
+  import com.histmersion.api.automation.AgentScheduler.*
 
   private def w(id: Long, t: String, code: String, target: String = "", goal: Option[String] = None) =
     Waiting(id, "m", "k", t, if target.isEmpty then s"t$id" else target, goal, code = code)
@@ -294,7 +294,7 @@ class SchedulerPanelSuite extends munit.FunSuite:
 
 /** The approvals window's digest line. */
 class ApprovalDigestLineSuite extends munit.FunSuite:
-  import com.histmersion.api.ApprovalDigest.KindGroup
+  import com.histmersion.api.automation.ApprovalDigest.KindGroup
   test("a kind: how many, the oldest, who decides"):
     assertEquals(
       ApprovalsView.digestLine(KindGroup("goal-plan", 64, Some("2026-10-21"))),
@@ -311,7 +311,7 @@ class ApprovalDigestLineSuite extends munit.FunSuite:
 
 /** The autopilot section's drain line. */
 class DrainLineSuite extends munit.FunSuite:
-  import com.histmersion.api.Autopilot.DrainInfo
+  import com.histmersion.api.automation.Autopilot.DrainInfo
   test("draining with runs in flight, then drained"):
     assertEquals(
       ManagersView.drainLine(DrainInfo("2026-10-24T10:00:00Z", "cli", inFlight = 2)),

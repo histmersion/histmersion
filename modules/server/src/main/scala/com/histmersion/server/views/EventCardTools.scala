@@ -1,12 +1,15 @@
 package com.histmersion.server.views
 
-import com.histmersion.util.identity.AliasKinds
+import com.histmersion.api.aliases.AliasKinds
 
-import com.histmersion.api.catalogue.events.EventsMarkdown
+import com.histmersion.api.catalogue.EventsMarkdown
 import com.histmersion.domain.catalogue.events.EventsControllers
 
 import chimp.server.*
-import com.histmersion.api.{Aliases, Api, EventGeometry, EventPatch, Filter, Markdown, StrictJson}
+import com.histmersion.api.{Api, Markdown, StrictJson}
+import com.histmersion.api.aliases.Aliases
+import com.histmersion.api.catalogue.{EventGeometry, EventPatch}
+import com.histmersion.api.library.Filter
 import com.histmersion.domain.Caller
 import com.histmersion.util.mcp.McpOut
 import hearth.kindlings.circederivation.KindlingsCodecAsObject

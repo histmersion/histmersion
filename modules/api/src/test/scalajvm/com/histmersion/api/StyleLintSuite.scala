@@ -2,6 +2,7 @@ package com.histmersion.api
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
+import com.histmersion.api.library.Hit
 
 /** Styling lives in `style.css`, not in Scala: the web UI's look must be adjustable by media queries and swappable as a
   * theme without touching code. What code may still put on an element is DATA — a size, a position, a colour computed

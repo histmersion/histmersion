@@ -1,6 +1,6 @@
 package com.histmersion.domain.media.assets
 
-import com.histmersion.util.text.SafeName
+import com.histmersion.api.text.SafeName
 
 class AssetPlanSuite extends munit.FunSuite:
 

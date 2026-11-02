@@ -6,17 +6,17 @@ import com.histmersion.domain.automation.approvals.ApprovalQuery
 
 import com.histmersion.util.jobs.JobRepo
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.{ApprovalKind, ApprovalState, RunState}
-import com.histmersion.api.ListFilters.DecidedBy
+import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState, RunState}
+import com.histmersion.api.automation.ListFilters.DecidedBy
 
 import com.augustnagro.magnum.*
 
 import java.time.Instant
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.util.database.Migrate
+import com.histmersion.api.automation.Agents
 
 /** The server-side filters of the approvals, agent-runs and jobs lists and their facet counts (core `ListFilters`)
   * against a real Postgres (HISTMERSION_TEST_DB_URL; skipped otherwise). Other suites write the same tables at the same

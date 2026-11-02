@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.collections
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Write}
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.Caller
 import com.histmersion.domain.library.ingest.StoredOriginals
@@ -9,6 +9,8 @@ import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.values.Citekey
 
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.api.library.{CalibreGap, CalibreGaps, CalibrePushRequest, CalibrePushResult}
+import com.histmersion.api.library.of
 
 /** The sources not in Calibre yet, what a push names one by, and the Calibre id written back after a push — what the
   * Calibre collection and the CLI's host-side push read and write.

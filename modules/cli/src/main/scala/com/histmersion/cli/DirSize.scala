@@ -1,6 +1,5 @@
 package com.histmersion.cli
 
-import com.histmersion.api.*
 import com.histmersion.api.given
 
 import java.io.IOException
@@ -8,6 +7,7 @@ import java.nio.file.{Files, FileVisitOption, FileVisitResult, Path, SimpleFileV
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.atomic.AtomicLong
 import scala.jdk.CollectionConverters.*
+import com.histmersion.api.maintenance.StorageVolume
 
 /** How much a directory holds, measured by a BOUNDED walk — the Storage part of About ([[StorageReport]]) on the
   * server, and the CLI's own locations. Reads the file system and nothing else; writes nothing.

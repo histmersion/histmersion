@@ -2,7 +2,7 @@ package com.histmersion.domain.research.workflows
 
 import com.histmersion.api.Plural
 
-import com.histmersion.api.Managers.*
+import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.{ManagerDefaults, ManagerPolicy, ReviewArticle, ReviewManagerDefaults}
 import com.histmersion.domain.ManagerPolicy.{Next, ReviewSettings}
 import com.histmersion.domain.ReviewLedger.Ledger

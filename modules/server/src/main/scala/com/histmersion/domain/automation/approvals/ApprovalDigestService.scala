@@ -2,15 +2,16 @@ package com.histmersion.domain.automation.approvals
 
 import com.histmersion.domain.automation.agents.*
 
-import com.histmersion.api.*
+import com.histmersion.api.ApiError
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.{ApprovalKind, Decision, DecisionRequest}
-import com.histmersion.api.ApprovalDigest.*
-import com.histmersion.api.Queue.QueueAdd
+import com.histmersion.api.automation.Agents.{ApprovalKind, Decision, DecisionRequest}
+import com.histmersion.api.automation.ApprovalDigest.*
+import com.histmersion.api.automation.Queue.QueueAdd
 
 import java.time.Instant
 import javax.sql.DataSource
+import com.histmersion.api.automation.ApprovalDigest
 
 /** The approval digest (#3762 proposal 3): everything waiting for a person in one view ([[digest]]), ONE worklog line a
   * UTC day after `agents.autopilot.digest-hour` ([[tick]], from the managers' tick), and a whole group decided at once

@@ -1,10 +1,11 @@
 package com.histmersion.domain.library.sources
 
-import com.histmersion.api.*
+import com.histmersion.api.MergeFixture
 import com.histmersion.api.given
 
 import MergeFixture.{home, src, uid, work}
 import com.histmersion.values.{Confidence, DecisionKind, IssueKind, SourceStatus}
+import com.histmersion.api.exchange.{BundleRange, MergeDecision}
 
 /** A source folded field by field out of a pair that is one (docs/research-merge-import.md §5.3). */
 class SourcePlanSuite extends munit.FunSuite:

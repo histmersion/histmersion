@@ -1,6 +1,9 @@
 package com.histmersion.util.data.maintenance
 
-import com.histmersion.api.{ApiError, Backup, JobInfo, Vacuum, VacuumPlan, VacuumRequest}
+import com.histmersion.api.ApiError
+import com.histmersion.api.backup.Backup
+import com.histmersion.api.jobs.JobInfo
+import com.histmersion.api.maintenance.{Vacuum, VacuumPlan, VacuumRequest}
 import com.histmersion.util.data.DataContributions
 import com.histmersion.util.database.Transactor
 import com.histmersion.util.jobs.{BackgroundJob, WorkCarrier}

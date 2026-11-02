@@ -1,11 +1,11 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
 import com.histmersion.web.map.*
 import org.scalajs.dom
 
 import scala.scalajs.js
 import com.histmersion.values.PlaceKind
+import com.histmersion.api.catalogue.SiteTypes
 
 /** A site from the places feed (`/api/places/geo?kind=site`). */
 final case class SitePoint(

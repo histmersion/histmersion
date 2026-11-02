@@ -1,6 +1,8 @@
 package com.histmersion.api
 
 import com.histmersion.values.{ApprovalKind, ApprovalState, ManagerKind, Pipeline, RunState, SourceStatus}
+import com.histmersion.api.automation.AgentScheduler
+import com.histmersion.api.jobs.JobState
 
 /** The label the UI shows for an identifier of any of the vocabularies — job types, wait codes, strategies, job kinds,
   * approval kinds, pipelines, manager kinds, statuses and states — else the identifier humanised.

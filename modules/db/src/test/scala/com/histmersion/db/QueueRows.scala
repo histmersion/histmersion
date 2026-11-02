@@ -1,7 +1,8 @@
 package com.histmersion.db
 
-import com.histmersion.api.{ApiError, Queue, Write}
-import com.histmersion.api.Queue.{Kind, QueueAdd, QueueItem, QueuePatch}
+import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.automation.Queue.{Kind, QueueAdd, QueueItem, QueuePatch}
 import com.histmersion.domain.automation.worklists.QueueRepo
 
 import com.augustnagro.magnum.*

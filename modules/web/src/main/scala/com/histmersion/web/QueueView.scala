@@ -1,9 +1,11 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
+import com.histmersion.api.Wording
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.library.{AcquireChecks, Filter, Label, SearchHit}
 
 /** The three bookkeeping lists — the acquisition queue, the backlog and the worklog — each a window of the main UI,
   * drawn by this ONE implementation parameterised by [[Queue.Kind]] (`/acquire`, `/tasks` and `/log` open the app with

@@ -1,10 +1,11 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
 import com.histmersion.web.ArticleLink
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.js
+import com.histmersion.api.library.{Label, Source, SourceRef}
+import com.histmersion.api.research.Article
 
 /** A bare corpus identifier met in free text (`cline2014_year`, `achilles_origins`): shown readable at once, then —
   * when it names a stored source or article — upgraded to that link ("Cline 2014", the article's title). Lookups are

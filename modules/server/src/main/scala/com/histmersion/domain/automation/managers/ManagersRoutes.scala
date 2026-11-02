@@ -2,7 +2,7 @@ package com.histmersion.domain.automation.managers
 
 import sttp.tapir.server.ServerEndpoint
 import sttp.shared.Identity
-import com.histmersion.api.ManagersApi
+import com.histmersion.api.automation.ManagersApi
 
 /** REST wiring of the process managers — every route delegates to [[ManagersHandlers]]. The fixed paths come before
   * `{id}/{action}`.

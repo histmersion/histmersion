@@ -5,7 +5,8 @@ package com.histmersion.pluginhost
   * server suite fails when the two disagree.
   */
 object ReservedNames:
-  import com.histmersion.api.{Agents, MediaProvider}
+  import com.histmersion.api.automation.Agents
+  import com.histmersion.api.media.MediaProvider
   import com.histmersion.domain.catalogue.events.CatalogProvider
 
   /** The built-in media imports (`media import <name>`) and their aliases, and every provider pictures are stored
@@ -81,7 +82,7 @@ object ReservedNames:
     */
   val gazetteerSources: Set[String] =
     Set("cliopatria", "awmc", "chronontology", "land", "periodo") ++
-      com.histmersion.api.GazetteerKind.values.map(_.wire).toSet
+      com.histmersion.api.catalogue.GazetteerKind.values.map(_.wire).toSet
 
   /** Histmersion's own source collections: the Calibre library and archive.org. */
   val sourceCollections: Set[String] = Set("calibre", "archive-org")

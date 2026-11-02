@@ -1,6 +1,6 @@
 package com.histmersion.web.library
 
-import com.histmersion.api.{NeighborRow, NeighborTarget}
+import com.histmersion.api.library.{NeighborRow, NeighborTarget}
 
 class CitationCountsSuite extends munit.FunSuite:
 

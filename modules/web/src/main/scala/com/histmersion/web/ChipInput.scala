@@ -1,7 +1,6 @@
 package com.histmersion.web
 
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.*
 import org.scalajs.dom
 
 import scala.concurrent.Future
@@ -9,6 +8,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 
 import com.raquo.laminar.codecs.StringAsIsCodec
+import com.histmersion.api.library.{Facet, Label}
 
 /** Reusable autocomplete + chip component. Ported from chips.js (137 lines).
   *

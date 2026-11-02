@@ -3,7 +3,7 @@ package com.histmersion.domain
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
-import com.histmersion.api.*
+import com.histmersion.api.TimeSpan
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
@@ -12,6 +12,17 @@ import io.circe.Json
 import io.circe.syntax.*
 
 import scala.util.Random
+import com.histmersion.api.catalogue.{
+  CatalogRecord,
+  Correction,
+  CorrectionCounts,
+  Corrections,
+  CorrectionStatus,
+  EventFields,
+  EventPatch,
+  EventPrecision,
+  EventPut
+}
 
 /** The data-source assessment's P0 fixes, the host's pure half: the precision classes and the dating note; the
   * corrections' reconcile table and the event fields compared; and a merge that does not depend on the order of its

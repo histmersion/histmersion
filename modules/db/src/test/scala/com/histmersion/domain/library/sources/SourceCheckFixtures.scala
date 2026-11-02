@@ -1,12 +1,12 @@
 package com.histmersion.domain.library.sources
 
-import com.histmersion.api.Lint.{FormatChecker, LintReport, Rule}
+import com.histmersion.api.checks.Lint.{FormatChecker, LintReport, Rule}
 import com.histmersion.domain.research.articles.ArticleCheckFixtures
 import com.histmersion.domain.catalogue.places.GeocodeSettings
 import com.histmersion.util.data.checks.CheckRun
 import com.augustnagro.magnum.connect
 
-import com.histmersion.api.ReindexResult
+import com.histmersion.api.maintenance.ReindexResult
 import com.histmersion.util.database.Transactor
 import javax.sql.DataSource
 

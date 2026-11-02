@@ -1,6 +1,6 @@
 package com.histmersion.util.settings
 
-import com.histmersion.api.ConfigFileInfo
+import com.histmersion.api.settings.ConfigFileInfo
 import com.histmersion.config.UserConfigFile
 
 import java.nio.file.Path

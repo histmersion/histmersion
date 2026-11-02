@@ -1,14 +1,15 @@
 package com.histmersion.cli
 
-import com.histmersion.api.automation.goals.GoalsMarkdown
+import com.histmersion.api.automation.GoalsMarkdown
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.*
+import com.histmersion.api.Api
 import com.histmersion.config.*
-import com.histmersion.api.Agents.RunRequest
-import com.histmersion.api.GoalPlans.*
+import com.histmersion.api.automation.Agents.RunRequest
+import com.histmersion.api.automation.GoalPlans.*
 import com.histmersion.values.{BundleKind, GoalStatus}
+import com.histmersion.api.automation.{Agents, AgentsApi, AgentsMarkdown, GoalPatch}
 
 object GoalsCmd:
 

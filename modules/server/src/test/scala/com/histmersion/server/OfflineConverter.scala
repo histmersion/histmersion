@@ -2,7 +2,7 @@ package com.histmersion.server
 
 import com.histmersion.util.ocr.ConverterClient
 
-import com.histmersion.api.ConvertedDoc
+import com.histmersion.api.ocr.ConvertedDoc
 
 import java.nio.file.Path
 

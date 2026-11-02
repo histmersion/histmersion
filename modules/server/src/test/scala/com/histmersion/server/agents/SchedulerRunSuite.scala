@@ -6,11 +6,10 @@ import com.histmersion.domain.automation.agents.{AgentsHandlers, LlmClient}
 import com.histmersion.domain.automation.managers.Zero
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.*
-import com.histmersion.api.GoalPlans.*
+import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.automation.GoalPlans.*
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.domain.automation.goals.GoalLinkRepo
@@ -20,6 +19,8 @@ import sttp.ai.core.agent.*
 
 import java.time.Instant
 import com.histmersion.db.*
+import com.histmersion.api.automation.{Goal, GoalPut, Managers, Queue}
+import com.histmersion.api.library.{CandidateSweep, CandidateWatch, FollowupRow, SourceCandidate, SourcePut, WorkRef}
 
 /** The goal sweeps and the goal schedules, against a `*_test` database: a currency check (assess and followups over a
   * goal's sources; a disagreeing paper in the corpus becomes ONE edge proposal, one outside it ONE acquisition item,

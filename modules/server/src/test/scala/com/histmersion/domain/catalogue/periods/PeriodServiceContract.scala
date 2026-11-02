@@ -1,6 +1,7 @@
 package com.histmersion.domain.catalogue.periods
 
-import com.histmersion.api.{Dataset, HistoricalPeriod, Period, PresetRegion}
+import com.histmersion.api.Dataset
+import com.histmersion.api.catalogue.{HistoricalPeriod, Period, PresetRegion}
 import com.histmersion.domain.catalogue.{CatalogueStores, CatalogueStoreSuite}
 
 /** The contract the named periods keep: parents written before their parts and the inclusive span read back, the

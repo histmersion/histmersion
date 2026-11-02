@@ -5,12 +5,14 @@ import com.histmersion.domain.library.search.Search
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
-import com.histmersion.api.*
+import com.histmersion.api.BBox
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.Param.*
 import com.histmersion.values.SourceStatus
 import com.histmersion.util.database.Sql
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.library.{FacetField, Filter, FindingMatch, Sort}
 
 /** `Filter → SQL` is a pure function (plan §1.0), so it is tested WITHOUT a database: the SQL text and the bound
   * parameters are asserted directly.

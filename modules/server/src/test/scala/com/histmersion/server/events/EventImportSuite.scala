@@ -7,7 +7,7 @@ import com.histmersion.server.CatalogueWiring
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
-import com.histmersion.api.*
+import com.histmersion.api.{GeoPoint, TimeSpan}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.TestDb
@@ -17,6 +17,19 @@ import com.histmersion.server.media.FakeMediaHttp
 
 import com.augustnagro.magnum.*
 import com.histmersion.values.SourceStatus
+import com.histmersion.api.catalogue.{
+  EventCount,
+  EventImportReport,
+  EventImportRequest,
+  EventLinksRequest,
+  EventPatch,
+  EventPrecision,
+  EventRederiveReport,
+  EventTier,
+  Period,
+  SiteTypesRequest
+}
+import com.histmersion.api.library.{Filter, Finding, Source}
 
 /** #1449 end to end against FAKE catalogues (recorded answers, no socket) and a real PostGIS (HISTMERSION_TEST_DB_URL;
   * skipped otherwise): a dry run stores nothing; GVP then NOAA merge the same eruption into one event; a second run

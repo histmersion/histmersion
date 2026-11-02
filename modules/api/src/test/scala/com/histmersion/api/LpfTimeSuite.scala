@@ -3,6 +3,8 @@ package com.histmersion.api
 /** The LPF reader's years and timespans (#1403). Shared: it runs on the JVM AND under Scala.js, so a regex the JS
   * backend cannot compile (a look-behind) fails here rather than in the browser.
   */
+
+import com.histmersion.api.catalogue.{Lpf, Period}
 class LpfTimeSuite extends munit.FunSuite:
 
   private def json(s: String) = io.circe.parser.parse(s).toOption.get

@@ -1,12 +1,21 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
-import com.histmersion.api.Managers.*
+import com.histmersion.api.{Plural, Wording}
+import com.histmersion.api.automation.Managers.*
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.values.GoalStatus
+import com.histmersion.api.automation.{
+  Agents,
+  AgentScheduler,
+  AgentSchedulerMarkdown,
+  Autopilot,
+  ManagersMarkdown,
+  Stalls
+}
+import com.histmersion.api.views.AutopilotStatus
 
 /** The process managers (docs/research-process-managers.md §5): the managers window (each one's state — with what the
   * supervisor derived: starved, at capacity, idle — its items, runs in flight and last event) and one window per

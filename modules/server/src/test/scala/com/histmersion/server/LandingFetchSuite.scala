@@ -2,7 +2,6 @@ package com.histmersion.server
 
 import com.histmersion.pluginhost.Challenge
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.library.acquisition.*

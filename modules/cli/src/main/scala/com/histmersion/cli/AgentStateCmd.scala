@@ -1,12 +1,12 @@
 package com.histmersion.cli
 
-import com.histmersion.api.automation.agents.AgentStateMarkdown
+import com.histmersion.api.automation.AgentStateMarkdown
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.*
 import com.histmersion.config.*
-import com.histmersion.api.GoalPlans.*
+import com.histmersion.api.automation.GoalPlans.*
+import com.histmersion.api.automation.AgentStatePut
 
 object AgentStateCmd:
 

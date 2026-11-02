@@ -1,6 +1,7 @@
 package com.histmersion.server
 
-import com.histmersion.api.{ApiError, ArticleEventLead, Period}
+import com.histmersion.api.ApiError
+import com.histmersion.api.catalogue.{ArticleEventLead, Period}
 import com.histmersion.domain.research.articles.{
   ArticlesControllers,
   ArticleSearch,

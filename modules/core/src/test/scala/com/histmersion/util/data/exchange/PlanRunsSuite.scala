@@ -1,6 +1,6 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.{
+import com.histmersion.api.exchange.{
   BundleAlias,
   BundleInstance,
   BundleSource,
@@ -13,6 +13,7 @@ import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.values.{BundleKind, DecisionKind, IssueKind, IssueSeverity}
 
 import java.util.UUID
+import com.histmersion.api.exchange.PlanMatches
 
 /** Several kinds' runs of a plan as one: each stage in the given order; the first answer wins where one is asked for.
   */
@@ -50,7 +51,7 @@ class PlanRunsSuite extends munit.FunSuite:
     def here(u: UUID): Boolean = false
     def toLocal(u: UUID): UUID = u
     def decisionIn(issue: String): Option[MergeDecision] = None
-    def count(f: com.histmersion.api.MergeTally => com.histmersion.api.MergeTally): Unit = ()
+    def count(f: com.histmersion.api.exchange.MergeTally => com.histmersion.api.exchange.MergeTally): Unit = ()
     def keepLocal(foreign: UUID): Unit = ()
 
   private val runs = PlanRuns(List(Named("a", answers = false), Named("b", answers = true), Named("c", answers = true)))

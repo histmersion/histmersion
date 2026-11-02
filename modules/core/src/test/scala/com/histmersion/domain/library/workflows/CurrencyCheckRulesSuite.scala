@@ -1,14 +1,14 @@
 package com.histmersion.domain.library.workflows
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
-import com.histmersion.api.Agents.ApprovalKind
+import com.histmersion.api.automation.Agents.ApprovalKind
 import com.histmersion.domain.AgentProposals.Proposal
 import com.histmersion.values.EdgeKind
 import CurrencyCheckRules.*
+import com.histmersion.api.library.FollowupRow
 
 /** What a currency check makes of a paper citing a source. */
 class CurrencyCheckRulesSuite extends munit.FunSuite:

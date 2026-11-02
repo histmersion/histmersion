@@ -1,8 +1,8 @@
 package com.histmersion.domain.catalogue.maptiles
 
-/** How a layer's items become a tile's features ([[com.histmersion.api.TileLayer]]): below `maxZoom` a tile holding
-  * more than `maxPoints` items counts them by square cells of `cellUnits` tile units, one feature a cell; at `maxZoom`
-  * (the deepest tile cut — deeper views draw it larger) every item is one.
+/** How a layer's items become a tile's features ([[com.histmersion.api.catalogue.TileLayer]]): below `maxZoom` a tile
+  * holding more than `maxPoints` items counts them by square cells of `cellUnits` tile units, one feature a cell; at
+  * `maxZoom` (the deepest tile cut — deeper views draw it larger) every item is one.
   */
 final case class TileGrid private (maxZoom: Int, maxPoints: Int, cellUnits: Int):
   /** The most items `c` keeps as features of their own before it groups them by cell. */

@@ -1,9 +1,11 @@
 package com.histmersion.domain.media.covers
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Write}
 import com.histmersion.domain.media.MediaJobs
 
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.api.jobs.JobInfo
+import com.histmersion.api.media.{MediaCoversReport, MediaCoversRequest, MediaItem, SourceCoverParams}
 
 /** The sources' pictures (#1446): their covers and illustrations as one run (a dry run from the database alone, or one
   * source at once) or as a job over every source; a cover the CLI read from the local Calibre library; the picture a
@@ -41,4 +43,4 @@ final class CoversControllers(pictures: SourcePictures, jobs: MediaJobs):
   def afterIngest(citekey: String): Option[String] = pictures.afterIngest(citekey)
 
 object CoversControllers:
-  val CoversJobKind: String = com.histmersion.api.media.covers.CoversJobKinds.MediaCovers.kind.value
+  val CoversJobKind: String = com.histmersion.api.media.CoversJobKinds.MediaCovers.kind.value

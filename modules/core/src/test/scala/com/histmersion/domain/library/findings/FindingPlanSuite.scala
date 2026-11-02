@@ -1,10 +1,11 @@
 package com.histmersion.domain.library.findings
 
-import com.histmersion.api.*
+import com.histmersion.api.MergeFixture
 import com.histmersion.api.given
 
 import MergeFixture.{uid, work}
 import com.histmersion.values.Confidence
+import com.histmersion.api.exchange.{BundleFinding, BundleRange}
 
 /** The findings of a pair that is one matched, folded and numbered (docs/research-merge-import.md §5.4). */
 class FindingPlanSuite extends munit.FunSuite:

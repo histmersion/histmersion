@@ -3,7 +3,7 @@ package com.histmersion.cli
 import scala.annotation.tailrec
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.*
+import com.histmersion.api.Api
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
@@ -11,6 +11,9 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.values.BundleKind
 import com.histmersion.util.data.mirror.MirrorPlacement
 import com.histmersion.domain.research.articles.ArticleNote
+import com.histmersion.api.checks.FormatMarkdown
+import com.histmersion.api.library.SeedResult
+import com.histmersion.api.research.{ArticleCoverage, ArticleEdits, ArticleImport, ArticleMarkdown, ArticleReviewView}
 
 /** `histmersion article …` — the compiled wiki over HTTP (plan §5.2 stream 2.7).
   *
@@ -52,7 +55,7 @@ object ArticleCli:
     (top ++ sub).sortBy((p, _) => p.toString)
 
   private def kindOf(dir: Path): String =
-    com.histmersion.api.Articles.kindOfDir(Option(dir.getFileName).map(_.toString).getOrElse(""))
+    com.histmersion.api.research.Articles.kindOfDir(Option(dir.getFileName).map(_.toString).getOrElse(""))
 
   private def markdown(dir: Path): List[Path] =
     if !Files.isDirectory(dir) then Nil
@@ -137,7 +140,7 @@ object ArticleCli:
       .findFirstMatchIn(text)
       .map(_.group(1).trim)
       .filter(_.nonEmpty)
-      .getOrElse(com.histmersion.api.Articles.Kinds.head)
+      .getOrElse(com.histmersion.api.research.Articles.Kinds.head)
 
   // ── the `histmersion article …` subcommands ──────────────────────────────────────────────────────
 
@@ -154,7 +157,9 @@ object ArticleCli:
     Opts.subcommand("list", "List/search compiled articles (the filter flags select the sources they cite)") {
       (
         Opts.argument[String]("query").orNone,
-        Opts.option[String]("kind", s"Article kind (${com.histmersion.api.Articles.Kinds.mkString("|")})").orNone,
+        Opts
+          .option[String]("kind", s"Article kind (${com.histmersion.api.research.Articles.Kinds.mkString("|")})")
+          .orNone,
         FilterFlags.opts,
         Output.jsonFlag
       ).mapN { (q, kind, f, json) => (c: Client) =>
@@ -363,7 +368,7 @@ object ArticleCli:
       Opts.option[String]("json", "A whole ArticlePatch as JSON (the flags below override its parts)").orNone,
       Opts.option[String]("title", "New title").orNone,
       Opts.option[String]("summary", "New summary (the one-paragraph lede)").orNone,
-      Opts.option[String]("kind", s"New kind (${com.histmersion.api.Articles.Kinds.mkString("|")})").orNone,
+      Opts.option[String]("kind", s"New kind (${com.histmersion.api.research.Articles.Kinds.mkString("|")})").orNone,
       Opts.option[String]("body-file", "File whose Markdown REPLACES the body").orNone,
       Opts.option[String]("append-file", "File whose Markdown is APPENDED to the body").orNone,
       Opts.option[String]("tags-add", "Comma-separated tags to add").orNone,

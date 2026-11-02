@@ -3,16 +3,16 @@ package com.histmersion.domain.library.workflows
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.workflows.PipelineDef
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.Pipeline
+import com.histmersion.api.automation.Agents.Pipeline
 import CurrencyCheckRules.CurrencyAction
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
 
 import com.histmersion.values.EdgeKind
 import com.histmersion.api.VocabularyCodecs.given
+import com.histmersion.api.library.Acquire
 
 /** `currency-check <goal>` (docs/research-embedded-agents.md §4.5, §14): is what the goal rests on still accepted? For
   * each of the goal's sources with a DOI: `assess --apply` (a retraction overwrites the status, as `assess` always

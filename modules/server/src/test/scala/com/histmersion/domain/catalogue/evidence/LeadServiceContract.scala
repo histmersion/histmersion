@@ -1,6 +1,8 @@
 package com.histmersion.domain.catalogue.evidence
 
-import com.histmersion.api.{AttestationPut, CatalogRecord, EventLinkCandidate, EventPut, EventTier, Filter, TimeSpan}
+import com.histmersion.api.TimeSpan
+import com.histmersion.api.catalogue.{AttestationPut, CatalogRecord, EventLinkCandidate, EventPut, EventTier}
+import com.histmersion.api.library.Filter
 import com.histmersion.domain.catalogue.CatalogueStoreSuite
 import com.histmersion.domain.catalogue.events.{CatalogMerge, EventSelection, EventSql}
 import com.histmersion.values.EventLinkStatus
