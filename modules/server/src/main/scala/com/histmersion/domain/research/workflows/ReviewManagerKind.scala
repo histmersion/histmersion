@@ -3,10 +3,10 @@ package com.histmersion.domain.research.workflows
 import com.histmersion.domain.automation.managers.{ManagerContext, ManagerKindDefinition, ManagerSupervisor}
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope}
 
-import com.histmersion.api.*
-import com.histmersion.api.Agents.*
-import com.histmersion.api.Managers.*
-import com.histmersion.api.Queue.{QueueAdd, QueuePatch}
+import com.histmersion.api.{ApiError, Plural}
+import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.automation.Managers.*
+import com.histmersion.api.automation.Queue.{QueueAdd, QueuePatch}
 import com.histmersion.domain.*
 import com.histmersion.domain.ManagerPolicy.{Next, ReviewSettings, StepFacts}
 import com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts
@@ -16,6 +16,7 @@ import io.scalaland.chimney.dsl.*
 
 import java.time.Instant
 import scala.collection.mutable.Builder
+import com.histmersion.api.automation.Queue
 
 /** The `review` manager kind (library-wide: article-review, infer-filter and article-extend items), research's: the
   * review's own evaluation over the article's review ledger, the selection that refills the queue (open MAJORs,

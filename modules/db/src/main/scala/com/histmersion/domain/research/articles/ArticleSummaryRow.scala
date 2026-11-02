@@ -1,6 +1,6 @@
 package com.histmersion.domain.research.articles
 
-import com.histmersion.api.ArticleSummary
+import com.histmersion.api.research.ArticleSummary
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.DbCodec

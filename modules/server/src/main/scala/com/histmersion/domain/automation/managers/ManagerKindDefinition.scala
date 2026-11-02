@@ -1,12 +1,12 @@
 package com.histmersion.domain.automation.managers
 
 import com.histmersion.api.ApiError
-import com.histmersion.api.Agents.{ApprovalInfo, Pipeline, RunInfo, RunState}
+import com.histmersion.api.automation.Agents.{ApprovalInfo, Pipeline, RunInfo, RunState}
 import com.histmersion.domain.AutopilotPolicy
 import com.histmersion.domain.automation.approvals.ApprovalChecks
-import com.histmersion.api.Autopilot.EngineStatus
-import com.histmersion.api.Managers
-import com.histmersion.api.Managers.{Kind, ManagerConfig, ManagerInfo, ManagerItem}
+import com.histmersion.api.automation.Autopilot.EngineStatus
+import com.histmersion.api.automation.Managers
+import com.histmersion.api.automation.Managers.{Kind, ManagerConfig, ManagerInfo, ManagerItem}
 import com.histmersion.config.AgentsConfig
 import com.histmersion.domain.ManagerDefaults
 import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts}

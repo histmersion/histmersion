@@ -1,6 +1,8 @@
 package com.histmersion.api
 
-import com.histmersion.api.library.search.SearchMarkdown
+import com.histmersion.api.library.SearchMarkdown
+import com.histmersion.api.catalogue.PeriodRow
+import com.histmersion.api.library.{Aggregate, TimeHistogram}
 
 /** Pure tests for the timeline bucketing (plan §1.6 sizes, §1.7 strip). No DB involved. */
 class AggregateSuite extends munit.FunSuite:
@@ -139,7 +141,7 @@ class AggregateSuite extends munit.FunSuite:
 
 /** `unit=starts` — one bar per source, at the bucket its period begins in (UX item 11). Pure. */
 class AggregateStartsSuite extends munit.FunSuite:
-  import Aggregate.Counting
+  import com.histmersion.api.library.Aggregate.Counting
 
   private def row(a: Long, b: Long) = PeriodRow(Some(a), Some(b))
 

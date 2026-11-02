@@ -1,5 +1,6 @@
 package com.histmersion.api
 
+import com.histmersion.api.catalogue.Period
 enum OpenSide:
   case Start, End
 

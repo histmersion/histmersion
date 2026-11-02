@@ -9,12 +9,12 @@ import com.histmersion.domain.library.sources.SourceFixtures
 import com.histmersion.domain.automation.agents.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.*
+import com.histmersion.api.ApiError
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.*
-import com.histmersion.api.AcquireChecks.*
-import com.histmersion.api.Queue.QueueAdd
+import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.library.AcquireChecks.*
+import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.automation.autopilot.AutopilotRepo
 import com.histmersion.util.database.Migrate
 import com.histmersion.util.jobs.JobRepo
@@ -22,10 +22,13 @@ import com.histmersion.plugin.{Access, Fetch, FetchContext, FetchedFile, SourceF
 import com.histmersion.pluginhost.FetchChain
 import com.histmersion.server.{Deps, ServerWiring}
 import com.histmersion.domain.library.acquisition.*
-import com.histmersion.api.{FollowupRow, RefRow, UpdateNotice, WorkRef}
+import com.histmersion.api.library.{FollowupRow, RefRow, UpdateNotice, WorkRef}
 
 import java.time.Instant
 import com.histmersion.db.*
+import com.histmersion.api.automation.{AgentsApi, Queue}
+import com.histmersion.api.jobs.{JobInfo, JobState}
+import com.histmersion.api.library.{AcquireChecksMarkdown, IngestReport, PdfInfo, SourcePut}
 
 /** The acquisition list's legal re-check against a `*_test` database (docs/research-process-managers.md "As built: the
   * acquisition list's re-check"): an item the corpus holds with its text is closed, a metadata-only source is fetched

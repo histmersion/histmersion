@@ -1,7 +1,7 @@
 package com.histmersion.web.setup
 
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.api.*
+import com.histmersion.api.Wording
 import com.histmersion.web.{ApiClient, Auth, Route, RouteLink, Router, SettingsSection}
 import com.histmersion.web.settings.{Draft, FindersSection, SettingsStore, StartPlace}
 import com.raquo.laminar.api.L.*
@@ -11,6 +11,11 @@ import org.scalajs.dom
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
+import com.histmersion.api.backup.Backup
+import com.histmersion.api.basemap.BasemapFetchQuery
+import com.histmersion.api.catalogue.MapArea
+import com.histmersion.api.instance.{MapStartConfig, UiConfig}
+import com.histmersion.api.settings.ConfigEdit
 
 /** The first-run setup (`/setup`): seven steps with safe defaults — finding open papers, the maps, the background data,
   * research agents and Calibre (both optional) — then Ready. Nothing is written or downloaded until it is finished;

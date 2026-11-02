@@ -1,11 +1,13 @@
 package com.histmersion.cli
 
-import com.histmersion.api.*
+import com.histmersion.api.ListPatch
 import com.histmersion.config.*
 
 import io.circe.parser.decode
 import java.nio.file.{Files, Path}
 import com.histmersion.values.{EdgeKind, SourceStatus}
+import com.histmersion.api.catalogue.PeriodInput
+import com.histmersion.api.library.{EdgeInput, EdgesPatch, FindingInput, FindingsPatch, MetadataPatch, SourcePatch}
 
 /** Assemble a [[SourcePatch]] from `histmersion patch` flags.
   *

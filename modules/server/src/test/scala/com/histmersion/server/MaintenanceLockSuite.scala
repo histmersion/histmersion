@@ -2,12 +2,19 @@ package com.histmersion.server
 
 import com.histmersion.util.ocr.ConverterClient
 
-import com.histmersion.api.*
+import com.histmersion.api.ApiError
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.values.PlaceKind
 import com.histmersion.db.*
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.backup.Backup
+import com.histmersion.api.catalogue.{PlaceAdd, PlaceNameAdd, PlaceNameRemove}
+import com.histmersion.api.library.{IngestParams, NoteImport, SeedRequest, SourceDeleteRequest, SourcePatch, SourcePut}
+import com.histmersion.api.media.AssetInput
+import com.histmersion.api.ocr.ConvertedDoc
+import com.histmersion.api.research.{ArticleImport, ArticlePatch, ArticlePut}
 
 /** The restore lock (plan §1.10) must cover EVERY write, not the handful it started with.
   *

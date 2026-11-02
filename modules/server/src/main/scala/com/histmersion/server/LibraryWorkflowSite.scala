@@ -1,6 +1,8 @@
 package com.histmersion.server
 
-import com.histmersion.api.{ApiError, Geocode, Period, UpstreamQuota}
+import com.histmersion.api.ApiError
+import com.histmersion.api.catalogue.{Geocode, Period}
+import com.histmersion.api.library.UpstreamQuota
 import com.histmersion.domain.automation.worklists.{QueueService, WorkListControllers}
 import com.histmersion.domain.library.citations.CitationsControllers
 import com.histmersion.domain.library.labels.LabelsControllers

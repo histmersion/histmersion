@@ -3,7 +3,7 @@ package com.histmersion.web
 import com.raquo.airstream.core.Transaction
 
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.*
+import com.histmersion.api.{Api, GeoPick}
 import com.histmersion.web.map.{MapMotion, MotionPref}
 import com.histmersion.api.VocabularyCodecs.given
 import org.scalajs.dom
@@ -11,6 +11,11 @@ import org.scalajs.dom.window
 
 import scala.scalajs.js
 import scala.util.Try
+import com.histmersion.api.automation.Agents
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.instance.UiConfig
+import com.histmersion.api.jobs.JobState
+import com.histmersion.api.library.Filter
 
 object UiState:
 

@@ -1,9 +1,22 @@
 package com.histmersion.api
 
-import com.histmersion.api.catalogue.places.PlacesMarkdown
+import com.histmersion.api.catalogue.PlacesMarkdown
 
 import io.circe.parser.parse
 import com.histmersion.values.PlaceKind
+import com.histmersion.api.catalogue.{
+  ManualPlaceName,
+  Period,
+  PlaceAdd,
+  PlaceEdits,
+  PlaceName,
+  PlaceNameChanged,
+  PlaceOverride,
+  PlaceOverrideChanged,
+  PlaceOverrideEdit,
+  PlaceOverrides,
+  PlaceOverrideSet
+}
 
 /** A person's gazetteer edits (#987): what a name, a language tag and a hand-added place may be. */
 class PlaceEditsSuite extends munit.FunSuite:

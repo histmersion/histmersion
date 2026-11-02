@@ -1,9 +1,9 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.catalogue.places.PlacesMarkdown
+import com.histmersion.api.catalogue.PlacesMarkdown
 
 import chimp.server.*
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, StrictJson}
 import com.histmersion.domain.Caller
 import com.histmersion.util.mcp.McpOut
 import com.histmersion.values.PlaceKind
@@ -11,6 +11,14 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import sttp.tapir.Schema
+import com.histmersion.api.catalogue.{
+  PlaceAdd,
+  PlaceMergeIn,
+  PlaceNameAdd,
+  PlaceNameRemove,
+  PlaceOverrideSet,
+  PlaceRemoveIn
+}
 
 /** The gazetteer for agents: `places` (search, or show one place with its hierarchy), `place_names` (a person's names),
   * `place_override` (a person's kind, period and point; merge, remove) and `add_place`.

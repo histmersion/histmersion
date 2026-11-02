@@ -6,18 +6,19 @@ import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.approvals.AutoApprovals
 import com.histmersion.domain.automation.scheduler.SchedulerService
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Plural, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.ApprovalKind
-import com.histmersion.api.Autopilot.*
+import com.histmersion.api.automation.Agents.ApprovalKind
+import com.histmersion.api.automation.Autopilot.*
 import com.histmersion.domain.GoalFocus.{Facts, Plan, Work}
-import com.histmersion.api.Managers.*
-import com.histmersion.api.Queue.QueueAdd
+import com.histmersion.api.automation.Managers.*
+import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.automation.goals.FocusRepo
 
 import java.time.Instant
 import javax.sql.DataSource
+import com.histmersion.api.automation.GoalPlans
 
 /** The autopilot's FOCUS (docs/research-process-managers.md "As built: the focus"): while the autopilot is on and the
   * cap (`agents.autopilot.max-active-goals`, or a person's `focus max`) is above 0, at most that many research goals

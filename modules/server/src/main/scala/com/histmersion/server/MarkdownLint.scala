@@ -1,7 +1,7 @@
 package com.histmersion.server
 
 import scala.annotation.tailrec
-import com.histmersion.api.*
+import com.histmersion.api.Plural
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.vladsch.flexmark.ast.{
@@ -28,6 +28,9 @@ import com.vladsch.flexmark.util.ast.{Document, Node}
 
 import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
+import com.histmersion.api.checks.{FormatField, FormatIssue, FormatMarkdown, FormatRule, FormatSeverity}
+import com.histmersion.api.library.{Finding, Label, SourceRef}
+import com.histmersion.api.research.ArticleLinks
 
 /** The FORMATTING lint: what in an agent's Markdown will not display as it was meant (pure).
   *

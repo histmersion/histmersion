@@ -2,10 +2,11 @@ package com.histmersion.domain.research.articles
 
 import com.histmersion.domain.library.sources.CitekeyResolver
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Write}
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
+import com.histmersion.api.research.{CritiqueReason, Critiques}
 
 /** The critique checklist's stored reasons (V091): why one disagreement between two sources does not bear on an
   * article. The checklist itself is computed (`core.Critiques`); only the reasons are stored. Every method runs on the

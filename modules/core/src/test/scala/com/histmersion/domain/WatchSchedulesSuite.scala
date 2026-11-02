@@ -1,12 +1,11 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
-import com.histmersion.api.GoalPlans.{GoalSchedule, ScheduleKind}
-import com.histmersion.api.Managers.*
+import com.histmersion.api.automation.GoalPlans.{GoalSchedule, ScheduleKind}
+import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.WatchSchedules.*
 
 import java.time.Instant

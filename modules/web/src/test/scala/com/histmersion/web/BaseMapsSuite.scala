@@ -1,7 +1,16 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
+import com.histmersion.api.BBox
 import com.histmersion.web.map.*
+import com.histmersion.api.basemap.{
+  Basemap,
+  BasemapFocus,
+  BasemapLayerInfo,
+  BasemapOnDemand,
+  BasemapStatus,
+  BasemapStyleState
+}
+import com.histmersion.api.instance.{DebounceConfig, EventsUiConfig, TimeConfig, UiConfig}
 
 /** The base map's choices and what each draws, on the fake engine's terms (no browser). */
 class BaseMapsSuite extends munit.FunSuite:

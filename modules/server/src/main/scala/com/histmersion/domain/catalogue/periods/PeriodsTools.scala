@@ -1,7 +1,7 @@
 package com.histmersion.domain.catalogue.periods
 
 import chimp.server.*
-import com.histmersion.api.PeriodsMarkdown
+import com.histmersion.api.catalogue.PeriodsMarkdown
 import com.histmersion.util.mcp.McpOut
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema

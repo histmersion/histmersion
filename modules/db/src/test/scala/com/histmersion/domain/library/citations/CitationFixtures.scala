@@ -1,9 +1,8 @@
 package com.histmersion.domain.library.citations
 
-import com.histmersion.api.*
-
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
+import com.histmersion.api.library.{ContradictionsResult, NeighborRow, SourceGraph}
 
 /** The db suites' reads of the citation graph on a database of their own. */
 object CitationFixtures:

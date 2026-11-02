@@ -1,13 +1,14 @@
 package com.histmersion.server
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.*
+import com.histmersion.api.Paging
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import ox.supervised
 
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
+import com.histmersion.api.automation.{Agents, ListFilters}
 
 /** The list filters over real HTTP and MCP (core `ListFilters`): `/api/agents/approvals`, `/api/agents/runs` and
   * `/api/jobs` filter on the server, the body stays the plain array, the facet counts come back in their header, a bad

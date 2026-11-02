@@ -2,11 +2,11 @@ package com.histmersion.domain.library.acquisition
 
 import com.histmersion.upstreams.http.Url
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import java.time.LocalDate
+import com.histmersion.api.library.Candidates
 
 /** Europe PMC: first publication since, newest first. */
 final class EuropePmcIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex:

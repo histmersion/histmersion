@@ -2,10 +2,11 @@ package com.histmersion.domain
 
 import com.histmersion.util.ocr.{Chunk, Chunker}
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
+import com.histmersion.api.catalogue.MatchSpan
+import com.histmersion.api.library.{PassageHit, PassageResult, PassagesMarkdown}
 
 class PassageFinderSuite extends munit.FunSuite:
 

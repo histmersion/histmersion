@@ -1,11 +1,19 @@
 package com.histmersion.cli
 
-import com.histmersion.api.media.assets.MediaMarkdown
+import com.histmersion.api.media.MediaMarkdown
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.*
+import com.histmersion.api.Api
 import com.histmersion.config.*
+import com.histmersion.api.media.{
+  AssetKind,
+  AssetPatch,
+  MediaCoversReport,
+  MediaCoversRequest,
+  MediaImportRequest,
+  MediaProvider
+}
 
 object MediaCmd:
 
@@ -70,7 +78,7 @@ object MediaCmd:
         else
           c.mediaImportJob(req).flatMap { j =>
             println(
-              s"media import job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.media.imports.ImportJobKinds.Media.of).getOrElse("")} (`histmersion jobs` lists it)"
+              s"media import job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.media.ImportJobKinds.Media.of).getOrElse("")} (`histmersion jobs` lists it)"
             )
             if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
           }
@@ -173,7 +181,7 @@ object MediaCmd:
             else
               c.mediaCoversJob(req).flatMap { j =>
                 println(
-                  s"media covers job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.media.imports.ImportJobKinds.Media.of).getOrElse("")} (`histmersion jobs` lists it)"
+                  s"media covers job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.media.ImportJobKinds.Media.of).getOrElse("")} (`histmersion jobs` lists it)"
                 )
                 if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
               }

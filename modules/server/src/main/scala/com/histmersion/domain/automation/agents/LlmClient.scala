@@ -5,8 +5,8 @@ import com.histmersion.server.agents.{BuiltinAi, ClaudeCode, CliRuntime, Codex, 
 import com.histmersion.pluginhost.HostAiHttp
 
 import com.histmersion.config.AgentsConfig
-import com.histmersion.api.Agents
-import com.histmersion.api.Agents.{ModelRef, ProviderKind}
+import com.histmersion.api.automation.Agents
+import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
 import sttp.ai.core.agent.*
 import sttp.ai.core.model.{AIModel, Capability}
 import sttp.shared.Identity

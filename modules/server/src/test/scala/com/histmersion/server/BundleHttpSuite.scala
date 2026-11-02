@@ -1,7 +1,6 @@
 package com.histmersion.server
 
 import ox.supervised
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.{Db, Migrate}
@@ -12,6 +11,25 @@ import java.nio.file.Files
 import com.histmersion.values.BundleKind
 import com.histmersion.util.data.exchange.{BundleFormat, BundleTar}
 import com.histmersion.db.*
+import com.histmersion.api.aliases.{InstanceInfo, LabelRenamed}
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.exchange.{
+  Bundle,
+  BundleImportResult,
+  BundleInstance,
+  BundleUpload,
+  BundleVerifyResult,
+  MergeApplyJob,
+  MergeDetail,
+  MergeInfo,
+  MergeJobState,
+  MergeLedger,
+  MergePlan,
+  MergeResolution,
+  MergeResolutions,
+  MergeSession
+}
+import com.histmersion.api.jobs.{JobInfo, JobState}
 
 /** The portable bundle over real HTTP: `GET/PUT /api/instance`, `GET /api/bundle`, `POST /api/bundle/verify` and
   * `POST /api/bundle/import` — the wiring, the write gate, the download name, and an instance importing its own bundle

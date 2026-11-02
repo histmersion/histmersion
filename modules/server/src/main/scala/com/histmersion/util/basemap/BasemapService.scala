@@ -1,6 +1,6 @@
 package com.histmersion.util.basemap
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, BBox, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.storage.{Location, Storage, Store, StoreError, StoreKey}
@@ -10,6 +10,22 @@ import sttp.model.StatusCode
 import java.io.IOException
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
+import com.histmersion.api.backup.Backup
+import com.histmersion.api.basemap.{
+  Basemap,
+  BasemapApi,
+  BasemapFetchQuery,
+  BasemapFocus,
+  BasemapLayer,
+  BasemapLayerInfo,
+  BasemapRegion,
+  BasemapRemoved,
+  BasemapRemoveQuery,
+  BasemapStatus,
+  BasemapStyleState,
+  BaseStyles
+}
+import com.histmersion.api.jobs.JobInfo
 
 /** The terrain base map on this machine (docs/research-terrain-basemap.md): where its two extracts are, the fetch job
   * that downloads them, their removal, and the tiles served to the web page.
@@ -1050,7 +1066,7 @@ object BasemapService:
       )
     )
 
-  val JobKind = com.histmersion.util.basemap.BasemapJobKinds.BasemapFetch.kind.value
+  val JobKind = com.histmersion.api.basemap.BasemapJobKinds.BasemapFetch.kind.value
 
   /** Where the focus regions' relief archives are, in the base map's store. */
   val FocusDir: StoreKey = StoreKey.applyUnsafe("terrain-focus")

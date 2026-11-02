@@ -1,6 +1,6 @@
 package com.histmersion.domain.media.figures
 
-import com.histmersion.api.FigureLicenceFill
+import com.histmersion.api.media.FigureLicenceFill
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource

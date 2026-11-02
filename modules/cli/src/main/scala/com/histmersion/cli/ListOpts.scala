@@ -2,8 +2,9 @@ package com.histmersion.cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.{JobState, ListFilters}
-import com.histmersion.api.Agents.{ApprovalKind, ApprovalState, Origin, Pipeline, RunState}
+import com.histmersion.api.jobs.JobState
+import com.histmersion.api.automation.ListFilters
+import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState, Origin, Pipeline, RunState}
 
 /** The filter options of the three listings — `agent approvals`, `agent runs`, `jobs` — over core [[ListFilters]]: the
   * same names as the REST query (kebab-case here), every list option repeatable or comma-separated, and the server

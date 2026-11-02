@@ -4,6 +4,7 @@ import com.histmersion.util.database.{Param, Sql}
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
+import com.histmersion.api.aliases.AliasKind
 
 /** Where an owner keeps a kind's records and their old identifiers: the table and its identifier column, the alias
   * table and its column naming the record. ONE resolution of an old identifier for every kind, so the rule cannot

@@ -1,6 +1,6 @@
 package com.histmersion.server
 
-import com.histmersion.util.identity.AliasKinds
+import com.histmersion.api.aliases.AliasKinds
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
@@ -51,10 +51,10 @@ class RegistrySnapshotSuite extends munit.FunSuite:
         s"  check\t${r.rule.name}\tfix=${r.fix.isDefined}"
       )
     }
-    val order = com.histmersion.util.data.checks.CheckOrder(com.histmersion.api.Lint.names)
+    val order = com.histmersion.util.data.checks.CheckOrder(com.histmersion.api.checks.Lint.names)
     val fixes = order.fixing(data.checks).filter(_.fix.isDefined).map(_.rule.name)
     val lint = List(s"lint report\t${order.report.mkString(",")}", s"lint fixes\t${fixes.mkString(",")}")
-    val aliases = com.histmersion.util.identity.AliasKinds.all.map(k => s"alias kind\t${k.noun}\t${k.idWord}")
+    val aliases = com.histmersion.api.aliases.AliasKinds.all.map(k => s"alias kind\t${k.noun}\t${k.idWord}")
     check("data.txt", (owners ++ lint ++ aliases).mkString("", "\n", "\n"))
 
   private val loaded = com.histmersion.config.AppConfig

@@ -3,6 +3,12 @@ package com.histmersion.api
 /** Pure tests for the ingest contract (plan §1.8): the four spellings of an image link, the job state machine and the
   * Markdown renderers. No database, no HTTP.
   */
+
+import com.histmersion.api.catalogue.{PeriodSkip, SkippedPeriod}
+import com.histmersion.api.exchange.InitPlan
+import com.histmersion.api.jobs.{JobDetail, JobInfo, JobState}
+import com.histmersion.api.library.{Ingest, IngestMarkdown}
+import com.histmersion.api.media.{AssetInfo, AssetLinks, ImageSize}
 class IngestSuite extends munit.FunSuite:
 
   private val md =
@@ -213,7 +219,7 @@ class IngestSuite extends munit.FunSuite:
 
   // ── the job state machine ────────────────────────────────────────────────────────────────────
   test("legal job transitions and nothing else"):
-    import JobState.*
+    import com.histmersion.api.jobs.JobState.*
     assertEquals(JobState.next(Queued, Running), Some(Running))
     assertEquals(JobState.next(Running, Done), Some(Done))
     assertEquals(JobState.next(Running, Failed), Some(Failed))
@@ -233,7 +239,7 @@ class IngestSuite extends munit.FunSuite:
     assertEquals(JobState.values.filter(_.isTerminal).toSet, Set(JobState.Done, JobState.Failed, JobState.Cancelled))
 
   test("a person's pause and cancel: a running job pauses and resumes; a paused, queued or running one is cancelled"):
-    import JobState.*
+    import com.histmersion.api.jobs.JobState.*
     assertEquals(JobState.next(Running, Paused), Some(Paused))
     assertEquals(JobState.next(Paused, Running), Some(Running))
     List(Queued, Running, Paused).foreach(s => assertEquals(JobState.next(s, Cancelled), Some(Cancelled), s.toString))

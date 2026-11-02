@@ -1,6 +1,6 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.IssueDetail
+import com.histmersion.api.exchange.IssueDetail
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.values.{BundleKind, DecisionKind}
 

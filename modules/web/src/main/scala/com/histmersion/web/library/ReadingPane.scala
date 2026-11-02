@@ -1,6 +1,8 @@
 package com.histmersion.web.library
 
-import com.histmersion.api.{ArticleView, FindingRow, YearFmt}
+import com.histmersion.api.YearFmt
+import com.histmersion.api.research.ArticleView
+import com.histmersion.api.library.FindingRow
 import com.histmersion.web.*
 import com.histmersion.web.map.{GeoBounds, TheMap}
 import com.histmersion.web.ui.Layout

@@ -2,7 +2,7 @@ package com.histmersion.domain.automation.agents
 
 import com.histmersion.server.agents.{ClaudeCode, Codex, Opencode}
 
-import com.histmersion.api.PlanQuota
+import com.histmersion.api.automation.PlanQuota
 import com.histmersion.config.{
   AgentApprovalsConfig,
   AgentPlanConfig,

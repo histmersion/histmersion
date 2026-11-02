@@ -2,7 +2,8 @@ package com.histmersion.util.jobs
 
 import com.histmersion.util.database.Transactor
 
-import com.histmersion.api.{ApiError, JobInfo, JobState, Write}
+import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.jobs.{JobInfo, JobState}
 import com.histmersion.util.jobs.JobRepo
 
 import java.util.concurrent.atomic.AtomicReference
@@ -20,7 +21,7 @@ trait JobControlService:
 object JobControlService:
 
   private def notFound(id: String) = ApiError(s"No job '$id'", Some(Write.CodeNotFound))
-  private def conflict(why: String) = ApiError(why, Some(com.histmersion.api.JobActions.CodeConflict))
+  private def conflict(why: String) = ApiError(why, Some(com.histmersion.api.jobs.JobActions.CodeConflict))
 
   /** Over the jobs table; `runs` is the agent runs' own pause, resume and cancel. */
   def apply(ds: DataSource, stops: JobStops, runs: (String, JobAction) => Either[ApiError, Unit]): JobControlService =

@@ -1,10 +1,26 @@
 package com.histmersion.server
 
-import com.histmersion.api.*
+import com.histmersion.api.{HtmlAtoms, Plural, Wording, YearFmt}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 // explicit: pins `Article` to the page helpers in HttpApi.scala over `core.Article` (see ArticlesApi)
 import com.histmersion.server.Article
+import com.histmersion.api.automation.GoalStages
+import com.histmersion.api.checks.{FormatField, FormatIssue, FormatMarkdown, FormatSeverity}
+import com.histmersion.api.library.{Label, SourceRef}
+import com.histmersion.api.media.AssetLinks
+import com.histmersion.api.research.{
+  ArticleCoverage,
+  ArticleLinks,
+  ArticleMarkdown,
+  ArticleRef,
+  ArticleReviewView,
+  Articles,
+  Backlink,
+  CitedSource,
+  ReviewBadge,
+  ReviewGoal
+}
 
 /** PURE rendering of the typed page models to HTML. Wikilinks resolve through `links` (one lookup for the whole page,
   * done by [[PageBuilder]]) into the [[HtmlRender]] anchors.

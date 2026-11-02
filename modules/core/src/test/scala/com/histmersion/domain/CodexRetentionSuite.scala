@@ -1,11 +1,11 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
 import CodexRetention.FileInfo
+import com.histmersion.api.maintenance.StorageAdvice
 
 /** What a retention pass of the runs' Codex home may remove (#2582). Pure. */
 class CodexRetentionSuite extends munit.FunSuite:

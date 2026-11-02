@@ -1,6 +1,7 @@
 package com.histmersion.api
 
-import com.histmersion.api.Queue.*
+import com.histmersion.api.automation.Queue.*
+import com.histmersion.api.automation.Queue
 
 /** The bookkeeping parser/renderer (plan §5.2 stream 2.8), tested against the REAL `meta/{ACQUIRE,TASKS,LOG}.md` from
   * the research workspace, copied verbatim into `src/test/resources/meta/`. Pure: no database, no server.

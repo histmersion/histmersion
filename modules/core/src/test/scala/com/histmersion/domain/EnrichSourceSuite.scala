@@ -1,12 +1,14 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
 import com.histmersion.domain.EnrichSource.*
 import com.histmersion.values.SourceStatus
+import com.histmersion.api.catalogue.{Geocode, Period, PeriodInput}
+import com.histmersion.api.checks.Lint
+import com.histmersion.api.library.{FindingInput, WorkRef}
 
 class EnrichSourceSuite extends munit.FunSuite:
 

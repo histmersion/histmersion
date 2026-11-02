@@ -3,6 +3,149 @@ package com.histmersion.api
 import sttp.tapir.*
 import sttp.tapir.json.circe.*
 import sttp.model.StatusCode
+import com.histmersion.api.aliases.{InstanceInfo, LabelRename, LabelRenamed}
+import com.histmersion.api.automation.{
+  Activity,
+  AgentsApi,
+  AgentStateDeleted,
+  AgentStateEntry,
+  AgentStatePut,
+  Goal,
+  GoalDeleted,
+  GoalList,
+  GoalPatch,
+  GoalPut,
+  ListFilters,
+  ManagersApi
+}
+import com.histmersion.api.backup.{Backup, BackupInfo, BackupStatus, RestoreRequest, RestoreResult}
+import com.histmersion.api.basemap.BasemapApi
+import com.histmersion.api.catalogue.{
+  Attestation,
+  AttestationDeleted,
+  AttestationList,
+  AttestationPatch,
+  AttestationPut,
+  EventDeleted,
+  EventGeoList,
+  EventList,
+  EventPatch,
+  EventPut,
+  EventsApi,
+  GazetteerSourceInfo,
+  HistoricalPeriod,
+  ManualPlaceName,
+  PeriodDetail,
+  PeriodImportResult,
+  PlaceAdd,
+  PlaceFootprint,
+  PlaceGone,
+  PlaceHit,
+  PlaceImportResult,
+  PlaceLink,
+  PlaceMergeIn,
+  PlaceNameAdd,
+  PlaceNameChanged,
+  PlaceNameRemove,
+  PlaceOverride,
+  PlaceOverrideChanged,
+  PlaceOverrideSet,
+  PlaceRebuildResult,
+  PlaceRemoveIn,
+  PlaceSummary,
+  PlaceTreeRow,
+  TilesApi
+}
+import com.histmersion.api.checks.FormatReport
+import com.histmersion.api.exchange.{
+  BundleImportResult,
+  BundleUpload,
+  BundleVerifyResult,
+  MergeApplyJob,
+  MergeApplyRequest,
+  MergeDetail,
+  MergeImportRequest,
+  MergeInfo,
+  MergeLedger,
+  MergePlan,
+  MergePlanRequest,
+  MergeResolutions,
+  MergeSession
+}
+import com.histmersion.api.instance.{About, Health, UiApi, UiConfig, VersionInfo}
+import com.histmersion.api.jobs.{JobActions, JobInfo}
+import com.histmersion.api.library.{
+  AcquireApi,
+  ContradictionsResult,
+  EdgesResolved,
+  Facet,
+  Filter,
+  FilterDocs,
+  FilterQuery,
+  GeoHit,
+  GeoHitPage,
+  Ingest,
+  IngestAccepted,
+  IngestParams,
+  InstanceLabel,
+  NeighborRow,
+  NoteImport,
+  PassageResult,
+  RenameRequest,
+  SearchHit,
+  SearchResult,
+  SeedRequest,
+  SeedResult,
+  SourceAlias,
+  SourceDeleteRequest,
+  SourceDeletion,
+  SourceGraph,
+  SourcePatch,
+  SourcePut,
+  SourceRenamed,
+  SourceWithFindings,
+  TimeHistogram
+}
+import com.histmersion.api.maintenance.{ReindexResult, VacuumRequest}
+import com.histmersion.api.media.{
+  AssetDetail,
+  AssetInfo,
+  AssetInput,
+  AssetLink,
+  AssetLinkDeleted,
+  AssetLinkList,
+  AssetLinkPut,
+  AssetPatch,
+  AssetsStored,
+  FigureLicenceFill,
+  MediaCoversReport,
+  MediaCoversRequest,
+  MediaFacets,
+  MediaGeoHit,
+  MediaImportReport,
+  MediaImportRequest,
+  MediaItem,
+  MediaList,
+  MediaProvider,
+  MediaProviderInfo,
+  SourceCoverParams
+}
+import com.histmersion.api.research.{
+  ArticleDeleted,
+  ArticleEdits,
+  ArticleImport,
+  ArticleList,
+  ArticlePatch,
+  ArticlePut,
+  ArticleReviewView,
+  ArticleVersion,
+  ArticleVersionFull,
+  ArticleView,
+  Backlink,
+  Coverage
+}
+import com.histmersion.api.settings.{ConfigEditApi, ReloadReport}
+import com.histmersion.api.views.{AutopilotApi, EventDetail, PlaceDetail, ResolvedId}
 
 /** Every endpoint here and in the other `*Api` objects is a `lazy val`: initialising an object runs all of its strict
   * vals, so Scala.js would link every endpoint and every codec it names into the web bundle as soon as the page used
@@ -25,8 +168,8 @@ object Api:
 
   /** The parameter names are fixed: saved links, the web UI and the CLI rely on them. */
   lazy val filterQuery: EndpointInput[Filter] =
-    import FilterDocs as D
-    def q[A](p: FilterDocs.Param)(using Codec[List[String], A, CodecFormat.TextPlain]) =
+    import com.histmersion.api.library.FilterDocs as D
+    def q[A](p: D.Param)(using Codec[List[String], A, CodecFormat.TextPlain]) =
       query[A](p.rest).description(p.doc)
     q[Option[String]](D.query)
       .and(q[List[String]](D.tags))
@@ -655,9 +798,9 @@ object Api:
     iiifImage,
     resolveId,
     backupStatus
-  ) ++ OpsApi.all ++ AgentsApi.all ++ ManagersApi.all ++ AutopilotApi.switches ++ library.acquisition.AcquisitionWorkApi.all ++
+  ) ++ OpsApi.all ++ AgentsApi.all ++ ManagersApi.all ++ AutopilotApi.switches ++ library.AcquisitionWorkApi.all ++
     ManagersApi.steering ++ AutopilotApi.draining ++ ManagersApi.stalled ++ UiApi.all ++ EventsApi.all ++ AcquireApi.all ++ BasemapApi.all ++ TilesApi.all ++ ConfigEditApi.all ++ personal.PersonalApi.all ++
-    library.collections.CollectionsApi.all
+    library.CollectionsApi.all
 
   lazy val places: PublicEndpoint[(Option[String], Option[Long], Option[Int]), ApiError, List[PlaceHit], Any] =
     base.get

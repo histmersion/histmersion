@@ -3,16 +3,17 @@ package com.histmersion.domain.library.workflows
 import com.histmersion.domain.automation.agents.{Checked, Halt, Prompt, RunCtx, StepAgent}
 import com.histmersion.domain.automation.workflows.PipelineDef
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.Pipeline
-import com.histmersion.api.GoalPlans.LinkKind
+import com.histmersion.api.automation.Agents.Pipeline
+import com.histmersion.api.automation.GoalPlans.LinkKind
 import AcquisitionSweepRules.{Candidate, Ranking}
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
 
 import com.histmersion.api.VocabularyCodecs.given
+import com.histmersion.api.automation.{AgentsMarkdown, Managers}
+import com.histmersion.api.library.Candidates
 
 /** `acquisition-sweep <goal>` (docs/research-embedded-agents.md §4.5, §14): code searches OpenAlex with the goal's
   * linked queries (its title when it has none) and drops every work the corpus or the acquisition queue already has;

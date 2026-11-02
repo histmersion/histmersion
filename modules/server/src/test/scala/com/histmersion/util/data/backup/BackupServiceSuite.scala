@@ -1,6 +1,7 @@
 package com.histmersion.util.data.backup
 
-import com.histmersion.api.{Backup, Write}
+import com.histmersion.api.Write
+import com.histmersion.api.backup.Backup
 import com.histmersion.server.Deps
 import com.histmersion.util.storage.{Location, Storage, StoreKey}
 

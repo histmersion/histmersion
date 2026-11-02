@@ -5,11 +5,13 @@ import com.histmersion.domain.library.citations.CitationFixtures
 import com.histmersion.domain.library.findings.FindingFixtures
 import com.histmersion.domain.library.sources.SourceFixtures
 
-import com.histmersion.api.*
+import com.histmersion.api.{BBox, GeoPoint}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.{Confidence, SourceStatus}
 import com.histmersion.util.database.Migrate
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.library.{Edge, Filter, Finding, NeighborTarget, Source, SourceKinds}
 
 /** Round-trips against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise. */
 class RepoSuite extends com.histmersion.db.DbSuite:

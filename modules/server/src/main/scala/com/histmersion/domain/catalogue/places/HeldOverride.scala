@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.Period
+import com.histmersion.api.catalogue.Period
 
 /** A person's kind and period for a place as the in-memory catalogue holds it, with what the place's source said
   * before: a reset puts that back.

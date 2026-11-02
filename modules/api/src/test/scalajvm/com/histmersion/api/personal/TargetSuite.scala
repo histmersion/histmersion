@@ -3,6 +3,7 @@ package com.histmersion.api.personal
 import com.histmersion.values.{Latitude, Longitude, Year}
 import io.circe.parser.decode
 import io.circe.syntax.*
+import com.histmersion.api.ItemKind
 
 class TargetSuite extends munit.FunSuite:
 

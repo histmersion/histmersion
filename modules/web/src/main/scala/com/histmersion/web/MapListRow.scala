@@ -1,6 +1,5 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -16,5 +15,5 @@ final case class MapListRow(
     href: String,
     open: () => Unit,
     undated: Boolean = false,
-    kind: com.histmersion.api.personal.ItemKind = com.histmersion.api.personal.ItemKind.Place
+    kind: com.histmersion.api.ItemKind = com.histmersion.api.ItemKind.Place
 )

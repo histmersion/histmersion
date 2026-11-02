@@ -1,6 +1,7 @@
 package com.histmersion.domain.catalogue
 
-import com.histmersion.api.{ApiError, JobDetail, JobInfo}
+import com.histmersion.api.ApiError
+import com.histmersion.api.jobs.{JobDetail, JobInfo}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.jobs.{BackgroundJob, JobStops, WorkCarrier}
 
@@ -27,7 +28,7 @@ final class CatalogueJobs(
       BackgroundJob.start(
         ds,
         kind,
-        Some(com.histmersion.api.catalogue.events.EventsJobKinds.Catalogue(Some(describe))),
+        Some(com.histmersion.api.catalogue.EventsJobKinds.Catalogue(Some(describe))),
         slot,
         "an events run",
         pins = pins,

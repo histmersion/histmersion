@@ -12,14 +12,48 @@ import com.histmersion.values.{Citekey, LicenceId}
 import com.histmersion.pluginhost.{FetchChain, OaFetcher}
 import com.histmersion.domain.library.acquisition.WorkLookup
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Acquire.Ident
+import com.histmersion.api.library.Acquire.Ident
 
 import hearth.kindlings.optics.syntax.*
 import io.circe.Json
 import io.circe.syntax.*
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.library.{
+  Acquire,
+  ArchiveFile,
+  ArchiveImportRequest,
+  ArchiveItem,
+  Assessment,
+  AssessRequest,
+  CandidateList,
+  CandidateMark,
+  CandidateMarked,
+  Candidates,
+  CandidateSweep,
+  CandidateSweepRequest,
+  DiscoverResult,
+  Edge,
+  FollowupsRequest,
+  FollowupsResult,
+  IngestReport,
+  IngestRequest,
+  IngestStep,
+  MetadataPatch,
+  PdfInfo,
+  RefRow,
+  RefsRequest,
+  RefsResult,
+  RetractionNotice,
+  RetractionsUpdate,
+  SourcePatch,
+  UpdateNotice,
+  WikirefsResult,
+  WorkRef
+}
+import com.histmersion.api.library.of
 
 /** Every acquisition & assessment operation (stream 2.6): discovery, a paper's references and follow-ups, its
   * assessment, the Retraction Watch mirror, an ingest by identifier, archive.org's import, the goals' candidates. REST

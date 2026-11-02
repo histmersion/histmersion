@@ -2,8 +2,29 @@ package com.histmersion.cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.*
 import com.histmersion.config.*
+import com.histmersion.api.library.{
+  AcquireApi,
+  ArchiveImportRequest,
+  ArchiveItem,
+  ArchiveSearchResult,
+  Assessment,
+  AssessRequest,
+  CalibreGap,
+  CalibreGaps,
+  CalibrePushRequest,
+  CalibrePushResult,
+  DiscoverResult,
+  FollowupsRequest,
+  FollowupsResult,
+  IngestReport,
+  IngestRequest,
+  RefsRequest,
+  RefsResult,
+  RetractionsUpdate,
+  WikirefsResult,
+  WorkRef
+}
 
 /** The typed client for the acquisition endpoints — the same `AcquireApi` values the server interprets, so the CLI
   * cannot drift from the REST/MCP surface. It reuses [[Client]]'s transport rather than opening a second one.

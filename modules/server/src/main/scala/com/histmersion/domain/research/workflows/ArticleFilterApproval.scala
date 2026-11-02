@@ -1,6 +1,6 @@
 package com.histmersion.domain.research.workflows
 
-import com.histmersion.api.Agents.ApprovalInfo
+import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.domain.automation.approvals.SubjectEffect
 import com.histmersion.domain.research.articles.{ArticlesControllers, ArticleService}
 import com.histmersion.values.ApprovalKind

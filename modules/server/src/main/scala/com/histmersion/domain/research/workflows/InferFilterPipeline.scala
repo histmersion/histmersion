@@ -3,16 +3,19 @@ package com.histmersion.domain.research.workflows
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
 
-import com.histmersion.api.*
+import com.histmersion.api.Plural
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.{ApprovalKind, ApprovalMode, ApprovalState, Pipeline}
-import com.histmersion.api.ArticlePlans.FilterProposal
+import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalMode, ApprovalState, Pipeline}
+import com.histmersion.api.research.ArticlePlans.FilterProposal
 import com.histmersion.domain.FilterInference.{FilterAnswer, Inferred}
 import com.histmersion.domain.research.articles.{ArticlesControllers, ArticleService}
 import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
+import com.histmersion.api.automation.AgentsMarkdown
+import com.histmersion.api.library.Filter
+import com.histmersion.api.research.ArticlePatch
 
 /** `infer-filter <article>` (docs/research-process-managers.md §4 (a), phase 2): an article that records no coverage
   * filter (#958) gets one proposed — the review manager runs it BEFORE the article's review, so the review's coverage

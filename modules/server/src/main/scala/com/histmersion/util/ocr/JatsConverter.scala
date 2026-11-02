@@ -2,7 +2,7 @@ package com.histmersion.util.ocr
 
 import com.histmersion.upstreams.jats.Jats
 
-import com.histmersion.api.ConvertedDoc
+import com.histmersion.api.ocr.ConvertedDoc
 import com.histmersion.util.storage.Blob
 
 /** A JATS article (`*.xml` whose root is `<article>` — PMC's full text, fetched when no PDF exists, #1523) is rendered

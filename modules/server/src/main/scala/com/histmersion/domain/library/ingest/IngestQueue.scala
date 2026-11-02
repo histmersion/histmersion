@@ -1,8 +1,8 @@
 package com.histmersion.domain.library.ingest
 
-import com.histmersion.api.library.sources.SourceWrite
+import com.histmersion.api.library.SourceWrite
 
-import com.histmersion.api.*
+import com.histmersion.api.ApiError
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.{AcquireMatch, Caller}
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope, QueueService}
@@ -21,6 +21,11 @@ import java.util.concurrent.{CompletableFuture, ConcurrentHashMap, TimeoutExcept
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 import javax.sql.DataSource
 import scala.jdk.OptionConverters.*
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.jobs.JobState
+import com.histmersion.api.library.{Ingest, IngestAccepted, IngestParams, SourcePatch, SourcePut}
+import com.histmersion.api.media.AssetInput
+import com.histmersion.api.ocr.ConvertedDoc
 
 /** The ingest's job queue (plan §1.8): a job is created and queued, and a worker of the bounded pool calls the
   * converter on the stored original, then writes body + figures — a `patch` when the source already exists (so agent

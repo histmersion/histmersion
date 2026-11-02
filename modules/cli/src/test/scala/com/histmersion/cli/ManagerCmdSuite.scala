@@ -1,6 +1,6 @@
 package com.histmersion.cli
 
-import com.histmersion.api.RepairAcquire
+import com.histmersion.api.library.RepairAcquire
 import com.monovore.decline.Command
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
 import io.circe.syntax.*
@@ -44,7 +44,7 @@ class ManagerCmdSuite extends munit.FunSuite:
     assert(agent.parse(List("agent", "enqueue", "review", "x"), Map.empty).isRight)
 
   test("autopilot focus: list, pin, unpin, priority, max parse into the request; a malformed one is a usage error"):
-    import com.histmersion.api.Autopilot.FocusSet
+    import com.histmersion.api.automation.Autopilot.FocusSet
     assertEquals(ManagerCmd.focusRequest(Nil), Right(None))
     assertEquals(ManagerCmd.focusRequest(List("list")), Right(None))
     assertEquals(

@@ -1,6 +1,7 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.{BBox, CatalogRecord, EventTaxonomy}
+import com.histmersion.api.BBox
+import com.histmersion.api.catalogue.{CatalogRecord, EventTaxonomy}
 
 import io.circe.Json
 

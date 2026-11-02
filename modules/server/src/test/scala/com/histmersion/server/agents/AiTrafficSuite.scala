@@ -6,7 +6,7 @@ import com.histmersion.domain.automation.agents.*
 
 import com.histmersion.server.ServerPlugins
 
-import com.histmersion.api.Agents.{ModelRef, ProviderKind}
+import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
 import com.histmersion.config.{AppConfig, LoadedConfig}
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
 import org.ekrich.config.ConfigFactory
@@ -691,7 +691,7 @@ class AiTrafficSuite extends munit.FunSuite:
 
   /** The User-Agent the host's AI client sends (its policy: the project, never an e-mail). */
   private val hostAgent =
-    com.histmersion.domain.HttpPolicy.userAgent(s"Histmersion/${com.histmersion.api.Version.version} (agents)")
+    com.histmersion.domain.HttpPolicy.userAgent(s"Histmersion/${com.histmersion.api.instance.Version.version} (agents)")
 
   /** The transcript as the host's AI client sends it: the two headers that belonged to the transport the providers had
     * before (sttp's java.net.http backend: the JDK's default User-Agent and a gzip `Accept-Encoding`, which it decoded)

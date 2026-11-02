@@ -1,6 +1,7 @@
 package com.histmersion.domain.personal
 
-import com.histmersion.api.personal.{ItemKey as WireKey, ItemKind as MarkKind, MapZoom, Target, ViewState}
+import com.histmersion.api.personal.{ItemKey as WireKey, MapZoom, Target, ViewState}
+import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.domain.{Described, ItemKey, ItemKind, ItemRef, ItemUid}
 import com.histmersion.values.{Latitude, Longitude, Title, Year}
 

@@ -1,8 +1,10 @@
 package com.histmersion.cli
 
-import com.histmersion.api.*
+import com.histmersion.api.ListPatch
 import com.histmersion.config.*
 import com.histmersion.values.{EdgeKind, SourceStatus}
+import com.histmersion.api.catalogue.PeriodInput
+import com.histmersion.api.library.{EdgeInput, EdgesPatch, FindingInput, MetadataPatch, SourcePatch}
 
 /** `histmersion patch` flags must produce a patch whose ABSENT parts stay absent — a flag nobody passed must not turn
   * into an empty list that wipes the stored value.

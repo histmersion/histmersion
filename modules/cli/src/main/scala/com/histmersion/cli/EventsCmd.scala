@@ -1,12 +1,30 @@
 package com.histmersion.cli
 
-import com.histmersion.api.catalogue.events.EventsMarkdown
+import com.histmersion.api.catalogue.EventsMarkdown
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.*
+import com.histmersion.api.Api
 import com.histmersion.config.*
 import com.histmersion.values.{BundleKind, Historicity}
+import com.histmersion.api.catalogue.{
+  Corrections,
+  CorrectionStatus,
+  EventCandidatesRequest,
+  EventGeometry,
+  EventImportReport,
+  EventImportRequest,
+  EventLeads,
+  EventLinksMarkdown,
+  EventLinksRequest,
+  EventPatch,
+  EventRederiveReport,
+  EventRederiveRequest,
+  EventsApi,
+  EventScale,
+  EventTaxonomy
+}
+import com.histmersion.api.jobs.JobInfo
 
 object EventsCmd:
 
@@ -122,7 +140,7 @@ object EventsCmd:
   /** Follow a job, then print what it left (an import's report). */
   private[cli] def follow(c: Client, j: JobInfo, noWait: Boolean): Either[CliError, Unit] =
     println(
-      s"job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.catalogue.events.EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"
+      s"job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.catalogue.EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"
     )
     if noWait then Right(())
     else
@@ -177,7 +195,7 @@ object EventsCmd:
       .mapN { (p, dry, noWait) => (c: Client) =>
         c.call(EventsApi.rederive)(EventRederiveRequest(p, dry)).flatMap { j =>
           println(
-            s"job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.catalogue.events.EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"
+            s"job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.catalogue.EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"
           )
           if noWait then Right(())
           else

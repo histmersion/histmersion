@@ -6,7 +6,7 @@ import com.histmersion.server.MediaWiring
 
 import com.histmersion.server.ServerPlugins
 
-import com.histmersion.api.*
+import com.histmersion.api.ApiError
 import com.histmersion.config.LoadedConfig
 import com.histmersion.db.TestDb
 import com.histmersion.util.jobs.JobRepo
@@ -14,6 +14,8 @@ import com.histmersion.server.Deps
 import io.circe.syntax.*
 
 import java.nio.charset.StandardCharsets.UTF_8
+import com.histmersion.api.jobs.JobInfo
+import com.histmersion.api.media.{MediaImportReport, MediaImportRequest}
 
 /** The recorded traffic of the media imports: every request each of the ten first-party collections sends through
   * `media import` (dry runs over every place and event the map holds, single-target imports, a refresh, a job), on the
@@ -65,7 +67,7 @@ class MediaTrafficSuite extends com.histmersion.db.DbSuite:
         case Right(j) =>
           val end = until(j.id, 600)
           sb ++= s"## job $name\n" + wire.take() +
-            s"job: ${end.status} ${end.detail.flatMap(com.histmersion.api.media.imports.ImportJobKinds.Media.of).getOrElse("")} — ${end.progress.getOrElse("")}\n"
+            s"job: ${end.status} ${end.detail.flatMap(com.histmersion.api.media.ImportJobKinds.Media.of).getOrElse("")} — ${end.progress.getOrElse("")}\n"
 
     sb ++= s"providers: ${handlers.imports.providers.asJson.noSpaces}\n"
     sb ++= wire.take()

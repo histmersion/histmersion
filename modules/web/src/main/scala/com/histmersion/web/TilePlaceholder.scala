@@ -8,8 +8,6 @@ import org.scalajs.dom
 
 import sttp.client4.*
 
-import com.histmersion.api.*
-
 /** The placeholders of a tile URL template ([[ApiClient.tileTemplate]]). Pure. */
 object TilePlaceholder:
   val Z: Int = 900000001

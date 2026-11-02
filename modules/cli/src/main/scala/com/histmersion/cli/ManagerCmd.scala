@@ -2,9 +2,22 @@ package com.histmersion.cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.*
 import com.histmersion.config.*
-import com.histmersion.api.Managers.*
+import com.histmersion.api.automation.Managers.*
+import com.histmersion.api.automation.{
+  AgentMode,
+  AgentScheduler,
+  AgentSchedulerMarkdown,
+  ApprovalDigest,
+  ApprovalDigestMarkdown,
+  Autopilot,
+  AutopilotMarkdown,
+  ManagersApi,
+  ManagersMarkdown,
+  StallsMarkdown
+}
+import com.histmersion.api.library.RepairAcquire
+import com.histmersion.api.views.{AutopilotApi, AutopilotStatus}
 
 /** `histmersion agent managers` and `histmersion agent manager <id> …` — the persistent process managers
   * (docs/research-process-managers.md). The server runs them; this reads and steers them over HTTP.
@@ -113,7 +126,7 @@ object ManagerCmd:
         case "drain"   => status(c.call(AutopilotApi.drain)(Autopilot.DrainSet(on = true, Some("cli"))))
         case "undrain" => status(c.call(AutopilotApi.drain)(Autopilot.DrainSet(on = false, Some("cli"))))
         case "repair-acquire" =>
-          c.call(com.histmersion.api.library.acquisition.AcquisitionWorkApi.repairAcquire)(
+          c.call(com.histmersion.api.library.AcquisitionWorkApi.repairAcquire)(
             RepairAcquire.RepairRequest(dry, Some("cli"))
           ).map(r => Output.emit(json, r)(RepairAcquire.markdown))
         case "focus" =>

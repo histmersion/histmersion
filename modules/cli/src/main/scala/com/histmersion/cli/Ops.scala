@@ -2,11 +2,13 @@ package com.histmersion.cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.*
 import com.histmersion.config.*
-import com.histmersion.api.Queue.{QueueAdd, QueueImport, QueuePatch}
+import com.histmersion.api.automation.Queue.{QueueAdd, QueueImport, QueuePatch}
 
 import java.nio.file.{Files, Path}
+import com.histmersion.api.automation.{GoalsExport, Queue}
+import com.histmersion.api.checks.{FormatCheck, FormatField, FormatMarkdown, FormatReport, Lint}
+import com.histmersion.api.library.{AcquireChecks, AcquireChecksMarkdown, Query}
 
 /** The CLI commands of stream 2.8 — `lint`, `queue`, `query`, `schema` — plus the pure argument parsing they need. Like
   * every other command they are HTTP clients of the server; the host never touches Postgres.
@@ -293,7 +295,7 @@ object Ops:
     case QueueCmd.Import(dir) =>
       readMeta(c, Path.of(dir), replace = true).map(_.foreach(l => println(s"  $l")))
     case QueueCmd.Recheck(dryRun, limit, id, all, noWait) =>
-      c.call(com.histmersion.api.library.acquisition.AcquisitionWorkApi.acquireRecheck)(
+      c.call(com.histmersion.api.library.AcquisitionWorkApi.acquireRecheck)(
         AcquireChecks.RecheckRequest(dryRun, limit, id, Some("cli"), all)
       ).flatMap { r =>
         Output.emit(json, r)(AcquireChecksMarkdown.result)

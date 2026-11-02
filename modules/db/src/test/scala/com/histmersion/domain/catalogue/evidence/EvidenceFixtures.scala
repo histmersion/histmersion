@@ -1,6 +1,7 @@
 package com.histmersion.domain.catalogue.evidence
 
-import com.histmersion.api.{EventFindingRef, EventLinkCandidate, EventSourceRef, TimeSpan}
+import com.histmersion.api.TimeSpan
+import com.histmersion.api.catalogue.{EventFindingRef, EventLinkCandidate, EventSourceRef}
 import com.histmersion.util.database.Sql
 
 import com.augustnagro.magnum.{connect, transact}

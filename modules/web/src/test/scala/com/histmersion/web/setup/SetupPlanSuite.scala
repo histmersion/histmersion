@@ -1,6 +1,8 @@
 package com.histmersion.web.setup
 
-import com.histmersion.api.{ConfigEdit, MapArea, MapStartConfig, UiConfig}
+import com.histmersion.api.settings.ConfigEdit
+import com.histmersion.api.catalogue.MapArea
+import com.histmersion.api.instance.{MapStartConfig, UiConfig}
 
 class SetupPlanSuite extends munit.FunSuite:
 
@@ -91,12 +93,12 @@ class SetupPlanSuite extends munit.FunSuite:
       1,
       1,
       1,
-      com.histmersion.api.DebounceConfig(1, 1, 1, 1),
-      com.histmersion.api.TimeConfig(0, 1, 0, 1),
+      com.histmersion.api.instance.DebounceConfig(1, 1, 1, 1),
+      com.histmersion.api.instance.TimeConfig(0, 1, 0, 1),
       1,
       1,
       1,
-      com.histmersion.api.EventsUiConfig(1, 1, 1, 1)
+      com.histmersion.api.instance.EventsUiConfig(1, 1, 1, 1)
     )
     val c = SetupPage.choicesOf(page, ui)
     assertEquals(c.email, "someone@example.org")

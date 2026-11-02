@@ -2,7 +2,7 @@ package com.histmersion.server.agents
 
 import com.histmersion.domain.automation.agents.*
 
-import com.histmersion.api.Agents.Role
+import com.histmersion.api.automation.Agents.Role
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*

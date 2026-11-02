@@ -1,6 +1,6 @@
 package com.histmersion.util.identity
 
-import com.histmersion.api.BundleTombstone
+import com.histmersion.api.exchange.BundleTombstone
 import com.histmersion.api.given
 import com.histmersion.util.data.DataOwner
 import com.histmersion.util.data.exchange.{BundleEntry, CarriedKind, ImportRank, ImportStage, RowsIn}

@@ -1,11 +1,13 @@
 package com.histmersion.domain.automation.goals
 
-import com.histmersion.api.{Api, ApiError, Goal, GoalDeleted, GoalList, GoalPatch, GoalPut, GoalsExport}
-import com.histmersion.api.{LabelRename, LabelRenames, Write}
-import com.histmersion.api.GoalPlans.{GoalView, LinkKind, Plan}
+import com.histmersion.api.{Api, ApiError}
+import com.histmersion.api.automation.{Goal, GoalDeleted, GoalList, GoalPatch, GoalPut, GoalsExport}
+import com.histmersion.api.Write
+import com.histmersion.api.aliases.{LabelRename, LabelRenames}
+import com.histmersion.api.automation.GoalPlans.{GoalView, LinkKind, Plan}
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueService}
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.api.LabelRenamed
+import com.histmersion.api.aliases.LabelRenamed
 import com.histmersion.values.BundleKind
 
 /** The goals' operations as REST, MCP and the CLI reach them: list, read, put, patch, delete and rename a goal, and the

@@ -3,9 +3,9 @@ package com.histmersion.domain.library.acquisition
 import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.http.Url
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.api.library.WikirefsResult
 
 final class Wikipedia(cfg: AcquireConfig, http: Http) extends WikiClient:
   def refs(articleUrl: String): Either[String, WikirefsResult] =

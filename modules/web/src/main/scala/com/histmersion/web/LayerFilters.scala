@@ -1,11 +1,11 @@
 package com.histmersion.web
 
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.*
 import com.histmersion.web.map.*
 import org.scalajs.dom
 
 import scala.scalajs.js
+import com.histmersion.api.catalogue.{EventTaxonomy, EventTier, SiteTypes}
 
 /** The events and sites layers' menus (#1449): fixed vocabularies — the kind taxonomy, listed under its two groups
   * (each group's "all" first), and the tiers; the site types. "all" is no filter. Each option shows what the map draws

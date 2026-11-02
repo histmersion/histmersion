@@ -1,6 +1,6 @@
 package com.histmersion.util.settings
 
-import com.histmersion.api.{ConfigEdit, ReloadReport}
+import com.histmersion.api.settings.{ConfigEdit, ReloadReport}
 import org.ekrich.config.ConfigFactory
 
 import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}

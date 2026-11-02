@@ -5,6 +5,7 @@ import com.histmersion.domain.catalogue.events.EventAliasTable
 import com.histmersion.domain.catalogue.places.PlaceAliasTable
 import com.histmersion.domain.library.sources.SourceAliasTable
 import com.histmersion.domain.research.articles.ArticleAliasTable
+import com.histmersion.api.aliases.AliasKinds
 
 class AliasTablesSuite extends munit.FunSuite:
 

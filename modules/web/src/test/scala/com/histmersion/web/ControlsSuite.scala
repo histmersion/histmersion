@@ -1,6 +1,7 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
+import com.histmersion.api.BBox
+import com.histmersion.api.catalogue.{HistoricalPeriod, Period, PresetMenu, PresetRegion}
 
 /** The pure halves of the shared controls: the playback speed menu, and the period-preset menu's grouping by region.
   */

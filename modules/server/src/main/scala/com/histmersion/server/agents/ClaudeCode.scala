@@ -4,7 +4,7 @@ import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.Zero
 
 import com.histmersion.config.ClaudeCodeConfig
-import com.histmersion.api.Agents.{ModelRef, ProviderKind}
+import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
 import io.circe.{parser, Json}
 import io.circe.syntax.*
 import sttp.ai.core.agent.*
@@ -172,10 +172,10 @@ object ClaudeCode:
           val rs = j.hcursor
             .downField("rate_limit_info")
             .focus
-            .map(PlanPools.claudeReadings(_, com.histmersion.api.PlanQuota.Source.Run, now))
+            .map(PlanPools.claudeReadings(_, com.histmersion.api.automation.PlanQuota.Source.Run, now))
             .getOrElse(Nil)
-          pools.record(com.histmersion.api.PlanQuota.PoolId.ClaudePlan, rs)
-          pools.blocked(com.histmersion.api.PlanQuota.PoolId.ClaudePlan, None).map(_._1)
+          pools.record(com.histmersion.api.automation.PlanQuota.PoolId.ClaudePlan, rs)
+          pools.blocked(com.histmersion.api.automation.PlanQuota.PoolId.ClaudePlan, None).map(_._1)
       }
 
   /** A turn the quota-guard mod aborted: not an error result, but `terminal_reason: "aborted_streaming"` with an empty
@@ -211,7 +211,7 @@ object ClaudeCode:
       usage: TokenUsage,
       modelId: Option[String],
       mcpProblem: Option[String],
-      readings: List[com.histmersion.api.PlanQuota.Reading] = Nil,
+      readings: List[com.histmersion.api.automation.PlanQuota.Reading] = Nil,
       served: List[(String, TokenUsage)] = Nil,
       firstCall: Option[Long] = None
   )
@@ -263,7 +263,7 @@ object ClaudeCode:
     var served: List[(String, TokenUsage)] = Nil
     var mcpProblem: Option[String] = None
     var firstCall: Option[Long] = None
-    val readings = List.newBuilder[com.histmersion.api.PlanQuota.Reading]
+    val readings = List.newBuilder[com.histmersion.api.automation.PlanQuota.Reading]
     val now = System.currentTimeMillis()
     def strip(n: String) = n.stripPrefix(s"mcp__${McpServer}__")
     events.foreach { e =>
@@ -310,7 +310,9 @@ object ClaudeCode:
         case "rate_limit_event" =>
           c.downField("rate_limit_info")
             .focus
-            .foreach(i => readings ++= PlanPools.claudeReadings(i, com.histmersion.api.PlanQuota.Source.Run, now))
+            .foreach(i =>
+              readings ++= PlanPools.claudeReadings(i, com.histmersion.api.automation.PlanQuota.Source.Run, now)
+            )
         // a model that backgrounds a subagent makes TWO result events: the last one is the answer (§3a)
         case "result" =>
           val modelUsage = c.downField("modelUsage").focus.flatMap(_.asObject).toList.flatMap(_.toList)

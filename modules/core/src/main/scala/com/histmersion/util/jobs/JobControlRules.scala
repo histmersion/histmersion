@@ -1,12 +1,12 @@
 package com.histmersion.util.jobs
 
-import com.histmersion.api.{JobInfo, JobState}
+import com.histmersion.api.jobs.{JobInfo, JobState}
 
 /** Which background jobs a person may pause and cancel, and what an action on a job in a given state does. Pure.
   */
 object JobControlRules:
 
-  def stoppable(kind: String): Boolean = com.histmersion.api.JobActions.Stoppable.contains(kind)
+  def stoppable(kind: String): Boolean = com.histmersion.api.jobs.JobActions.Stoppable.contains(kind)
 
   /** The step that answers `action` on `job` (a kind whose runner controls its own jobs is handed the action); `Left`
     * says why it cannot be done. `resumable`: this server holds the paused job's way to go on (a restart loses it).

@@ -1,6 +1,6 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.BundleRange
+import com.histmersion.api.exchange.BundleRange
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.RangeSql
 

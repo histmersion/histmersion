@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.{EventGeo, EventLeads}
+import com.histmersion.api.catalogue.{EventGeo, EventLeads}
 import com.augustnagro.magnum.DbCodec
 
 /** One event on the map before its outline is read (the map's events). */

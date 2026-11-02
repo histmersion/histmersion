@@ -1,6 +1,7 @@
 package com.histmersion.util.jobs
 
-import com.histmersion.api.{ApiError, JobInfo}
+import com.histmersion.api.ApiError
+import com.histmersion.api.jobs.JobInfo
 
 /** `POST /api/jobs/{id}/{action}`, the `job_control` tool and `histmersion jobs pause|resume|cancel`. */
 final class JobControlControllers(jobs: JobControlService):

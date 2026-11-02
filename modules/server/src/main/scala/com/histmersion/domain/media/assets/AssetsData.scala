@@ -1,7 +1,7 @@
 package com.histmersion.domain.media.assets
 
-import com.histmersion.api.Lint
-import com.histmersion.api.Lint.*
+import com.histmersion.api.checks.Lint
+import com.histmersion.api.checks.Lint.*
 import com.histmersion.util.data.DataOwner
 import com.histmersion.util.data.checks.{CheckContext, CheckRule, CheckRun}
 

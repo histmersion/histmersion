@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.worklists
 
-import com.histmersion.api.BundleQueueItem
+import com.histmersion.api.exchange.BundleQueueItem
 import com.histmersion.api.given
 import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.{CarriedKind, ImportRank, ImportStage, RowsIn}

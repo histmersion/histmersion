@@ -1,6 +1,21 @@
 package com.histmersion.api
 
 /** The terrain base map's shared pure parts: layer names, the status as Markdown. */
+
+import com.histmersion.api.basemap.{
+  Basemap,
+  BasemapApi,
+  BasemapFocus,
+  BasemapLayer,
+  BasemapLayerInfo,
+  BasemapMarkdown,
+  BasemapOnDemand,
+  BasemapRemoved,
+  BaseMapSource,
+  BasemapStatus,
+  BasemapStyleState,
+  BaseStyles
+}
 class BasemapSuite extends munit.FunSuite:
 
   test("layers by name; all is every one"):
@@ -14,7 +29,7 @@ class BasemapSuite extends munit.FunSuite:
     assertEquals(BasemapApi.tileTemplate(BasemapLayer.Vector, "v1"), "/api/basemap/vector/{z}/{x}/{y}?v=v1")
 
   test("a tile subset: layers, their geometries and kinds, merged, written back sorted"):
-    import Basemap.Read
+    import com.histmersion.api.basemap.Basemap.Read
     assertEquals(
       Basemap.parseSubset("earth:a, water:pl,pois"),
       Right(Map("earth" -> Read(Set(3)), "water" -> Read(Set(1, 2)), "pois" -> Read()))

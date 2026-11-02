@@ -2,8 +2,8 @@ package com.histmersion.domain.research.articles
 
 import com.histmersion.util.database.Transactor
 
-import com.histmersion.api.Lint
-import com.histmersion.api.Lint.*
+import com.histmersion.api.checks.Lint
+import com.histmersion.api.checks.Lint.*
 import com.histmersion.util.data.DataOwner
 import com.histmersion.util.data.checks.{CheckContext, CheckRule, CheckRun, FixRank, FixWhen, SafeFix}
 import com.histmersion.util.data.diagnostics.DataCount

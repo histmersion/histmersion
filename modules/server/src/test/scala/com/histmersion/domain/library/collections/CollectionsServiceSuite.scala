@@ -1,12 +1,21 @@
 package com.histmersion.domain.library.collections
 
-import com.histmersion.api.*
-import com.histmersion.api.library.collections.*
+import com.histmersion.api.ApiError
+import com.histmersion.api.library.*
 import com.histmersion.domain.Caller
 import com.histmersion.plugin.*
 
 import java.util.concurrent.atomic.AtomicReference
 import scala.collection.immutable.ListMap
+import com.histmersion.api.library.{
+  CalibreGap,
+  CalibreGaps,
+  CalibrePushRequest,
+  CalibrePushResult,
+  CollectionPushRequest,
+  CollectionsApi,
+  CollectionsMarkdown
+}
 
 /** The collections' rules on the in-memory service (the database one runs the same rules; the calibre commands' suite
   * runs it end to end): what a listing leaves out, what a push sends and records, what an update and an audit are

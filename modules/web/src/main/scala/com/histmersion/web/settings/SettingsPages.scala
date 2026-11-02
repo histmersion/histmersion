@@ -1,6 +1,6 @@
 package com.histmersion.web.settings
 
-import com.histmersion.api.UiConfig
+import com.histmersion.api.instance.UiConfig
 import com.histmersion.web.{AboutView, Auth, CreditsView, Route, SettingsSection}
 import com.raquo.laminar.api.L.*
 

@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.api.Queue
+import com.histmersion.api.automation.Queue
 
 /** What a window shows — the typed form of an entry of [[UiState.open]]. The wire spelling (`source:ck`, `jobs`, …) is
   * what the URL hash carries, so a reload or a shared link reopens the same windows; everything else in the UI works

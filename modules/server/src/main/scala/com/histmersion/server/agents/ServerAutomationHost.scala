@@ -2,13 +2,17 @@ package com.histmersion.server.agents
 
 import com.histmersion.domain.library.workflows.{AgentUpstream, SourceProposals}
 
-import com.histmersion.api.{ApiError, Articles, BackupStatus, Filter, Goal, GoalPatch, GoalPut, Queue}
-import com.histmersion.api.Agents.{Pipeline, ProbeAnswer, Role, RunRequest}
-import com.histmersion.api.GoalPlans.LinkKind
+import com.histmersion.api.ApiError
+import com.histmersion.api.research.Articles
+import com.histmersion.api.backup.BackupStatus
+import com.histmersion.api.library.Filter
+import com.histmersion.api.automation.{Goal, GoalPatch, GoalPut, Queue}
+import com.histmersion.api.automation.Agents.{Pipeline, ProbeAnswer, Role, RunRequest}
+import com.histmersion.api.automation.GoalPlans.LinkKind
 import com.histmersion.domain.AgentVerify
 import com.histmersion.domain.automation.worklists.QueueItemId
 import com.histmersion.values.TargetKind
-import com.histmersion.api.Lint.LintFixResult
+import com.histmersion.api.checks.Lint.LintFixResult
 import com.histmersion.domain.PlanGoal
 import com.histmersion.domain.automation.workflows.AutomationHost
 import com.histmersion.server.ServerWiring

@@ -1,6 +1,6 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.BundleFiles
+import com.histmersion.api.exchange.BundleFiles
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.BundleEntities.BlobUse

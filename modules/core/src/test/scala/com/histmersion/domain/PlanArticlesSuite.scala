@@ -1,12 +1,12 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
 import com.histmersion.domain.PlanArticles.*
 import com.histmersion.domain.PlanArticles.Limits
+import com.histmersion.api.research.ArticleFilter
 
 /** propose-articles' code checks: the shape of each proposed article, then the seeding rules — a free slug, a filter
   * returning at least minSources, less than maxOverlap shared with any article of the area or with a proposal kept

@@ -5,7 +5,7 @@ import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.pluginhost.Generation
 
 import com.histmersion.config.{AppConfig, Environment, LoadedConfig, UserConfigFile, UserPaths}
-import com.histmersion.api.{ConfigFileInfo, ReloadReport}
+import com.histmersion.api.settings.{ConfigFileInfo, ReloadReport}
 import com.histmersion.util.jobs.Pinning
 import com.histmersion.util.database.Transactor
 import java.time.Clock

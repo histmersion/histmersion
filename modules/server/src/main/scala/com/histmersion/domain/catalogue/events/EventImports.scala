@@ -1,7 +1,7 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.{
-  BBox,
+import com.histmersion.api.{BBox, YearFmt}
+import com.histmersion.api.catalogue.{
   CatalogProviderInfo,
   CatalogRecord,
   CorrectionCounts,
@@ -11,8 +11,7 @@ import com.histmersion.api.{
   EventImportRequest,
   EventPrecision,
   EventRederiveReport,
-  EventTaxonomy,
-  YearFmt
+  EventTaxonomy
 }
 import com.histmersion.config.AppConfig
 import com.histmersion.pluginhost.{HttpTransport, PluginEvents, Polite}

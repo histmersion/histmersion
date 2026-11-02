@@ -2,8 +2,9 @@ package com.histmersion.cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.*
 import com.histmersion.config.*
+import com.histmersion.api.basemap.{BasemapFetchQuery, BasemapMarkdown, BasemapRemoveQuery}
+import com.histmersion.api.jobs.JobDetail
 
 /** `histmersion basemap status|fetch|rm` — the local base map's extracts on the SERVER's machine
   * (docs/user-guide/how-to/open-data.md): what is there (and which of the two styles it draws whole), downloading them

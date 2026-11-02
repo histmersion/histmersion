@@ -1,7 +1,7 @@
 package com.histmersion.web
 
-import com.histmersion.api.Activity
-import com.histmersion.api.Activity.Entry
+import com.histmersion.api.automation.Activity
+import com.histmersion.api.automation.Activity.Entry
 
 /** The activity list's pure parts: the chips, a row's first words and its controls, the page's query. */
 class ActivityViewSuite extends munit.FunSuite:

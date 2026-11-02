@@ -8,7 +8,7 @@ import com.histmersion.domain.automation.goals.PlanGoalPipeline
 import com.histmersion.domain.automation.managers.HintEffectPipeline
 import com.histmersion.domain.automation.workflows.{PipelineDef, WorkflowDefinition}
 
-import com.histmersion.api.Agents.Pipeline
+import com.histmersion.api.automation.Agents.Pipeline
 import com.histmersion.values.AgentRole
 import com.histmersion.domain.automation.workflows.Contributions
 import com.histmersion.server.{Deps, ServerWiring}

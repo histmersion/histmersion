@@ -1,6 +1,6 @@
 package com.histmersion.domain.media.imports
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Write}
 import com.histmersion.config.MediaConfig
 import com.histmersion.domain.media.MediaJobs
 import com.histmersion.plugin.MediaCollection
@@ -10,6 +10,8 @@ import com.histmersion.util.ocr.ConverterClient
 import hearth.kindlings.optics.syntax.*
 
 import scala.collection.immutable.ListMap
+import com.histmersion.api.jobs.JobInfo
+import com.histmersion.api.media.{MediaImportReport, MediaImportRequest, MediaProviderInfo}
 
 /** Media from outside providers (#1446): the collections `media import` can run, one import run (a dry run, or one
   * place or event), and the import as a JOB over every place not asked yet. Every collection — first-party or a
@@ -167,7 +169,7 @@ final class ImportsControllers(
     out.modify(_.pending).setTo(imp.pending(since))
 
 object ImportsControllers:
-  val ImportJobKind: String = com.histmersion.api.media.imports.ImportJobKinds.MediaImport.kind.value
+  val ImportJobKind: String = com.histmersion.api.media.ImportJobKinds.MediaImport.kind.value
 
   /** Pure: does the request name one place or event (not "every one not asked yet")? */
   def single(req: MediaImportRequest): Boolean =

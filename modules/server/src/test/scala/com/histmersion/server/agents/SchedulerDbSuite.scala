@@ -3,14 +3,13 @@ package com.histmersion.server.agents
 import com.histmersion.domain.automation.agents.AgentsHandlers
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.*
-import com.histmersion.api.Autopilot.{AutopilotSet, FocusSet}
-import com.histmersion.api.Autopilot
-import com.histmersion.api.GoalPlans.*
-import com.histmersion.api.Managers.*
+import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.automation.Autopilot.{AutopilotSet, FocusSet}
+import com.histmersion.api.automation.Autopilot
+import com.histmersion.api.automation.GoalPlans.*
+import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.domain.automation.goals.{FocusRepo, GoalLinkRepo}
 import com.histmersion.domain.automation.managers.ManagerRepo
@@ -21,6 +20,17 @@ import io.circe.syntax.*
 
 import java.time.Instant
 import com.histmersion.db.*
+import com.histmersion.api.automation.{
+  AgentScheduler,
+  AgentSchedulerMarkdown,
+  ApprovalDigest,
+  GoalPut,
+  Queue,
+  Stalls,
+  StallsMarkdown
+}
+import com.histmersion.api.library.{IngestReport, PdfInfo, SourceCandidate, SourcePut}
+import com.histmersion.api.research.{ArticleFilter, ArticlePut}
 
 /** The central scheduler against a `*_test` database (docs/research-goal-advancement.md "As built"): 20 goals under the
   * autopilot — `goal-first` with 3 runs at once gives every place to the best goal (a pin, then a person's priority,

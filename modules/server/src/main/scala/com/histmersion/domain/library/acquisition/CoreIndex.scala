@@ -1,10 +1,10 @@
 package com.histmersion.domain.library.acquisition
 
-import com.histmersion.api.*
 import com.histmersion.domain.*
 import com.histmersion.upstreams.core.CoreApi
 
 import java.time.LocalDate
+import com.histmersion.api.library.Candidates
 
 /** CORE: only with a key (its search refuses anonymous use) — the `oa-core` plugin's resolved `api-key`, else
   * `acquire.core.api-key` — and through the server's CORE budget, at most `acquire.core.search-daily-tokens` a day.

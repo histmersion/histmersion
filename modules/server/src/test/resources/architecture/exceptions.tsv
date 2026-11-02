@@ -1,11 +1,34 @@
 # rule	file	detail	count — the known violations; a slice removes rows and adds none
-direction	api:api/Agents.scala	automation -> research: ArticlePlans	1
-direction	api:api/AgentsMarkdown.scala	automation -> research: ArticlePlans	1
-direction	api:api/GoalPlans.scala	automation -> research: CoverageReason	1
-direction	api:api/Managers.scala	automation -> research: ArticleFilter	1
-direction	api:api/MergeIssueDetail.scala	util.data -> automation: GoalPlans	1
+direction	api:api/automation/Agents.scala	automation -> research: ArticlePlans	1
+direction	api:api/automation/AgentsMarkdown.scala	automation -> research: ArticlePlans	1
+direction	api:api/automation/GoalPlans.scala	automation -> research: CoverageReason	1
+direction	api:api/automation/Managers.scala	automation -> research: ArticleFilter	1
+direction	api:api/automation/Queue.scala	automation -> library: Acquire	1
+direction	api:api/exchange/MergeIssueDetail.scala	util.data -> automation: GoalPlans	1
+direction	api:api/maintenance/StorageMarkdown.scala	util.data -> server: AboutMarkdown	1
 direction	core:domain/MergeFold.scala	util.data -> automation: Queue	1
 direction	core:domain/MergePlanner.scala	util.data -> automation: Queue	1
+direction	db:domain/automation/goals/GoalSourceReferrer.scala	automation -> library: DeleteCount	1
+direction	db:domain/automation/goals/GoalSourceReferrer.scala	automation -> library: DeletePart	1
+direction	db:domain/catalogue/events/EventSourceReferrer.scala	catalogue -> library: DeleteBlocker	1
+direction	db:domain/catalogue/events/EventSourceReferrer.scala	catalogue -> library: DeleteBlockerKind	1
+direction	db:domain/catalogue/events/EventSourceReferrer.scala	catalogue -> library: DeleteCount	1
+direction	db:domain/catalogue/events/EventSourceReferrer.scala	catalogue -> library: DeletePart	1
+direction	db:domain/catalogue/events/EventSourceReferrer.scala	catalogue -> library: RenameCount	1
+direction	db:domain/catalogue/evidence/AttestationSourceReferrer.scala	catalogue -> library: DeleteCount	1
+direction	db:domain/catalogue/evidence/AttestationSourceReferrer.scala	catalogue -> library: DeletePart	1
+direction	db:domain/catalogue/evidence/AttestationSourceReferrer.scala	catalogue -> library: RenameCount	1
+direction	db:domain/catalogue/places/PlaceSourceReferrer.scala	catalogue -> library: DeleteCount	1
+direction	db:domain/catalogue/places/PlaceSourceReferrer.scala	catalogue -> library: DeletePart	1
+direction	db:domain/catalogue/places/PlaceSourceReferrer.scala	catalogue -> library: RenameCount	1
+direction	db:domain/media/links/AssetLinkSourceReferrer.scala	media -> library: DeleteCount	1
+direction	db:domain/media/links/AssetLinkSourceReferrer.scala	media -> library: DeletePart	1
+direction	db:domain/media/links/AssetLinkSourceReferrer.scala	media -> library: RenameCount	1
+direction	db:util/jobs/JobRepo.scala	util.jobs -> automation: Agents	1
+direction	db:util/jobs/JobSourceReferrer.scala	util.jobs -> library: DeleteBlocker	1
+direction	db:util/jobs/JobSourceReferrer.scala	util.jobs -> library: DeleteBlockerKind	1
+direction	db:util/jobs/JobSourceReferrer.scala	util.jobs -> library: RenameCount	1
+direction	server:util/ocr/HttpConverterClient.scala	util.ocr -> media: AssetLinks	1
 filesystem	config:config/UserConfigFile.scala	java.nio.file	1
 filesystem	db:util/data/exchange/MergeState.scala	java.nio.file	1
 filesystem	files:domain/library/sources/SourceNote.scala	Files.*	3

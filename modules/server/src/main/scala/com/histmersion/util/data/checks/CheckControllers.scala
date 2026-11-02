@@ -1,7 +1,7 @@
 package com.histmersion.util.data.checks
 
 import com.histmersion.api.ApiError
-import com.histmersion.api.Lint.{FormatChecker, LintFixResult, LintReport}
+import com.histmersion.api.checks.Lint.{FormatChecker, LintFixResult, LintReport}
 import com.histmersion.config.AppConfig
 import com.histmersion.util.data.maintenance.WriteGate
 import hearth.kindlings.optics.syntax.*

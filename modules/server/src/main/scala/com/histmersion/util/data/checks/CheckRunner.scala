@@ -1,6 +1,6 @@
 package com.histmersion.util.data.checks
 
-import com.histmersion.api.Lint.{LintFixResult, LintReport}
+import com.histmersion.api.checks.Lint.{LintFixResult, LintReport}
 import com.histmersion.util.database.Transactor
 
 /** The lint runner over the registered checks: selects rules, runs them on one connection into the report, and applies

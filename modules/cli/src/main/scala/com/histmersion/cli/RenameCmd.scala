@@ -1,17 +1,18 @@
 package com.histmersion.cli
 
-import com.histmersion.util.identity.AliasKinds
+import com.histmersion.api.aliases.AliasKinds
 
-import com.histmersion.api.library.sources.SourcesMarkdown
+import com.histmersion.api.library.SourcesMarkdown
 
 import com.histmersion.values.Citekey
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.*
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
+import com.histmersion.api.aliases.Aliases
+import com.histmersion.api.library.{Rename, SourceAlias}
 
 /** `histmersion rename <old> <new>` — give a source a new citekey (`POST /api/sources/{old}/rename`). The new key is
   * checked HERE with the same pure rule the server applies ([[Rename.validate]]), so a typo is a usage error before

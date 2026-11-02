@@ -1,9 +1,9 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.*
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import com.histmersion.values.LocationPrecision
+import com.histmersion.api.catalogue.{PlaceDating, PlaceSummary, PlaceTimeBasis}
 
 /** One row of [[PlaceRepo.get]] — a [[PlaceSummary]] plus the geometry and the finding count. */
 final private[places] case class PlaceDetailRow(

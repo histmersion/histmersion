@@ -1,6 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.api.JobState
+import com.histmersion.api.jobs.JobState
 
 import java.nio.charset.StandardCharsets
 import java.time.{Instant, LocalDate, ZoneOffset}

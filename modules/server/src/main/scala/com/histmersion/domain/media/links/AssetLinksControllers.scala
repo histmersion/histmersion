@@ -1,12 +1,13 @@
 package com.histmersion.domain.media.links
 
-import com.histmersion.util.identity.AliasKinds
+import com.histmersion.api.aliases.AliasKinds
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Write}
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.util.identity.AliasKind
+import com.histmersion.api.aliases.AliasKind
 
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.api.media.{AssetLink, AssetLinkDeleted, AssetLinkList, AssetLinkPut}
 
 /** A figure's links over REST and MCP: listed, made and removed. A citekey or a target named by an old identifier is
   * resolved first (`current`, the alias tables), as every read and write of a renamed kind is.

@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.api.ReviewState
+import com.histmersion.api.research.ReviewState
 
 /** The articles list's review badge: one class per state, the classes the article page's badge uses. */
 class ArticlesTabSuite extends munit.FunSuite:

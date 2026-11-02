@@ -3,6 +3,8 @@ package com.histmersion.api
 /** Pure tests for the IIIF Image API parameter parsing (plan §4.3). No database, no HTTP — only the [[Iiif]] object's
   * parse/format logic.
   */
+
+import com.histmersion.api.media.Iiif
 class IiifSuite extends munit.FunSuite:
 
   // ── Region parsing ────────────────────────────────────────────────────────────────────────────

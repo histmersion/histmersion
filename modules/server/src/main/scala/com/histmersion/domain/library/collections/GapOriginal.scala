@@ -1,7 +1,7 @@
 package com.histmersion.domain.library.collections
 
-import com.histmersion.api.CalibreGap
-import com.histmersion.api.library.collections.CollectionGapRow
+import com.histmersion.api.library.CalibreGap
+import com.histmersion.api.library.CollectionGapRow
 
 /** Where the file a push would add comes from, as the gaps and the sync report it. */
 enum GapOriginal(val label: String):

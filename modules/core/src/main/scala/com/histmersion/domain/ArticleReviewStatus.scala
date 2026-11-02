@@ -1,6 +1,7 @@
 package com.histmersion.domain
 
-import com.histmersion.api.{Plural, ReviewApproval, ReviewBadge, ReviewFinding, ReviewRound, ReviewState}
+import com.histmersion.api.Plural
+import com.histmersion.api.research.{ReviewApproval, ReviewBadge, ReviewFinding, ReviewRound, ReviewState}
 import com.histmersion.domain.ReviewLedger.{Entry, Ledger}
 import com.histmersion.values.ItemStatus
 

@@ -4,7 +4,7 @@ import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.Zero
 
 import com.histmersion.config.CodexConfig
-import com.histmersion.api.Agents.{ModelRef, ProviderKind}
+import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
 import io.circe.{parser, Json}
 import io.circe.syntax.*
 import sttp.ai.core.agent.*

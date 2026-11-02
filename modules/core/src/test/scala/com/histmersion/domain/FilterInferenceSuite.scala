@@ -1,12 +1,12 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
 import com.histmersion.domain.FilterInference.*
 import com.histmersion.domain.FilterInference.Limits
+import com.histmersion.api.research.ArticleFilter
 
 /** infer-filter's code checks: the answer's shape, then what the filter returns against the article's citations and the
   * hit bounds; a failing filter goes back, and on the last attempt nothing is proposed.

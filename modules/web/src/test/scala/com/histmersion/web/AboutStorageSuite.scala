@@ -1,6 +1,10 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
+import com.histmersion.api.{ServiceState, TableSize}
+import com.histmersion.api.backup.BackupsUsage
+import com.histmersion.api.instance.{About, BuildStamp, Health}
+import com.histmersion.api.jobs.JobCounts
+import com.histmersion.api.maintenance.{Storage, StorageAdvice, StorageEntry, StorageReport, StorageVolume}
 
 /** The About window's Storage and Disk space sections, in their pure part. */
 class AboutStorageSuite extends munit.FunSuite:

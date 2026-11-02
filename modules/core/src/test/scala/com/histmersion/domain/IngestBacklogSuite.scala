@@ -1,14 +1,15 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
 import com.histmersion.domain.IngestBacklog.*
-import com.histmersion.api.Managers.*
+import com.histmersion.api.automation.Managers.*
 
 import java.time.Instant
+import com.histmersion.api.automation.ManagersMarkdown
+import com.histmersion.api.library.RepairAcquire
 
 /** The watchers' ingest backlog, pure: a sweep's allowance after the backlog, the drain's order and caps, where a pick
   * goes when it is not ingested, what a failed ingest leads to, the days to drain, and the repair's decision per

@@ -1,7 +1,7 @@
 package com.histmersion.util.identity
 
 import com.histmersion.util.database.given
-import com.histmersion.api.BundleTombstone
+import com.histmersion.api.exchange.BundleTombstone
 import com.histmersion.util.database.Sql
 import com.histmersion.util.data.exchange.BundleScope
 import com.histmersion.util.data.exchange.BundleSql.*

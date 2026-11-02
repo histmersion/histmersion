@@ -1,9 +1,10 @@
 package com.histmersion.domain
 
-import com.histmersion.api.{ManagersMarkdown, Plural}
+import com.histmersion.api.Plural
+import com.histmersion.api.automation.ManagersMarkdown
 import com.histmersion.api.given
 
-import com.histmersion.api.Managers.*
+import com.histmersion.api.automation.Managers.*
 
 import java.time.{Duration, Instant}
 import com.histmersion.values.{ApprovalState, ManagerKind, ManagerState, RunState}

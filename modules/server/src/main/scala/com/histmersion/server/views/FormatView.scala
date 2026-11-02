@@ -1,6 +1,6 @@
 package com.histmersion.server.views
 
-import com.histmersion.api.{FormatCheck, FormatField, FormatReport}
+import com.histmersion.api.checks.{FormatCheck, FormatField, FormatReport}
 import com.histmersion.domain.library.sources.SourcesControllers
 import com.histmersion.domain.research.articles.ArticlesControllers
 import com.histmersion.server.MarkdownLint

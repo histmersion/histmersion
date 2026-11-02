@@ -2,7 +2,8 @@ package com.histmersion.domain.catalogue.evidence
 
 import com.histmersion.values.AttestationTarget
 
-import com.histmersion.api.{AttestationPut, EventLinkCandidate, EventPassage, EventTaxonomy, Plural}
+import com.histmersion.api.Plural
+import com.histmersion.api.catalogue.{AttestationPut, EventLinkCandidate, EventPassage, EventTaxonomy}
 import com.histmersion.values.EventLinkStatus
 
 /** The matcher. Pure: the database gives it the findings near an event and the passages naming it. */

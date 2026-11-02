@@ -1,11 +1,15 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
+import com.histmersion.api.{Paging, Plural, Wording}
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
+import com.histmersion.api.automation.{ListFilters, Queue}
+import com.histmersion.api.catalogue.SkippedPeriod
+import com.histmersion.api.jobs.{JobDetail, JobInfo, JobState}
+import com.histmersion.api.library.Ingest
 
 /** The background (OCR) jobs window: `GET /api/jobs`, filtered by state through [[UiState.jobStatus]] (on the server),
   * a page at a time ([[ListPaging]]: the heading says how many of how many, "Show older" loads the next page, the
@@ -294,7 +298,7 @@ object JobsView:
         div(
           cls := "job-meta muted",
           // an agent run is a job: its row leads to the run; any other job, to its own page
-          if j.kind == com.histmersion.api.automation.agents.AgentJobKinds.Agent.kind.value then
+          if j.kind == com.histmersion.api.automation.AgentJobKinds.Agent.kind.value then
             WinLink(WindowKey.Run(j.id), title := s"agent run ${j.id}", s"run ${j.id.take(8)}")
           else RouteLink(Route.Job(j.id), cls := "link-btn", title := s"job ${j.id}", s"job ${j.id.take(8)}"),
           Option(j.createdAt).filter(_.nonEmpty).map(c => span(title := c, s" · started ${agoOf(c)}")),

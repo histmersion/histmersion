@@ -1,11 +1,24 @@
 package com.histmersion.domain.research.articles
 
-import com.histmersion.api.*
+import com.histmersion.api.ApiError
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.util.database.Sql
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
+import com.histmersion.api.library.Filter
+import com.histmersion.api.research.{
+  Article,
+  ArticleList,
+  ArticlePatch,
+  ArticleRow,
+  ArticleVersion,
+  ArticleVersionFull,
+  ArticleView,
+  Backlink,
+  CitedSource,
+  CritiqueReason
+}
 
 /** The db suites' reads and writes of research's articles on a database of their own, each write in a transaction of
   * its own and each read on a connection of its own, as the service runs them.

@@ -2,7 +2,7 @@ package com.histmersion.server
 
 import com.histmersion.domain.media.imports.BuiltinMedia
 
-import com.histmersion.api.*
+import com.histmersion.api.ApiError
 import com.histmersion.config.*
 import com.histmersion.domain.{Attribution, Licence, LicenceFamily}
 import com.histmersion.values.LicenceId
@@ -25,6 +25,7 @@ import javax.imageio.ImageIO
 import javax.sql.DataSource
 import com.histmersion.util.database.Sql
 import com.histmersion.db.*
+import com.histmersion.api.media.{MediaCoversRequest, MediaImportReport, MediaImportRequest}
 
 /** What media answers, recorded on the code before media moved into its own domain:
   *

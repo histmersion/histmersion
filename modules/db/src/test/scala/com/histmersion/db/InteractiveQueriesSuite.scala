@@ -13,12 +13,25 @@ import com.histmersion.domain.catalogue.places.given
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
-import com.histmersion.api.*
+import com.histmersion.api.{GeoPoint, TimeSpan}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.augustnagro.magnum.*
 import com.histmersion.values.{Confidence, PlaceKind, SourceStatus}
 import com.histmersion.util.database.{Migrate, Param, Sql}
+import com.histmersion.api.catalogue.{
+  EventPut,
+  Geocode,
+  Period,
+  Place,
+  PlaceCounts,
+  PlaceHit,
+  PlaceInput,
+  PlaceName,
+  PlaceRelation
+}
+import com.histmersion.api.library.{Filter, Finding, Source}
+import com.histmersion.api.research.Article
 
 /** The interactive-latency rewrites (docs/research-interactive-performance.md) return EXACTLY what the shapes they
   * replaced returned, against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. Each test runs the new

@@ -4,15 +4,32 @@ import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.util.database.given
 
-import com.histmersion.api.*
+import com.histmersion.api.{GeoPoint, Span}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Geocode.KindHint
+import com.histmersion.api.catalogue.Geocode.KindHint
 
 import com.augustnagro.magnum.*
 import com.histmersion.values.{PlaceKind, SourceStatus}
 import com.histmersion.util.database.Migrate
 import com.histmersion.db.*
+import com.histmersion.api.catalogue.{
+  GazDescription,
+  Gazetteer,
+  GazetteerLoadCounts,
+  GazGeometry,
+  GazName,
+  GazRecord,
+  Geocode,
+  LinkScheme,
+  Period,
+  Place,
+  PlaceDating,
+  PlaceInput,
+  PlaceName,
+  PlaceRelation
+}
+import com.histmersion.api.library.{ExternalId, Finding, Source}
 
 /** What an imported place's silence about time means (V074, 2026-10-09), against a real PostGIS
   * (HISTMERSION_TEST_DB_URL; skipped otherwise):

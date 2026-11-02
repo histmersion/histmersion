@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.api.GeoHit
+import com.histmersion.api.library.GeoHit
 import com.histmersion.web.map.ClusterMotion
 
 class PlaybackFramesSuite extends munit.FunSuite:

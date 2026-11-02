@@ -1,7 +1,16 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
 import com.histmersion.values.{LocationPrecision, PlaceKind, SourceStatus}
+import com.histmersion.api.catalogue.{
+  PlaceDating,
+  PlaceDescription,
+  PlaceLink,
+  PlaceShape,
+  PlaceSummary,
+  PlaceTimeBasis
+}
+import com.histmersion.api.library.SourceDetail
+import com.histmersion.api.views.PlaceDetail
 
 class PreviewSuite extends munit.FunSuite:
 

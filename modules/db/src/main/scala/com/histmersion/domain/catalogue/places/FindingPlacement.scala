@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.Geocode
+import com.histmersion.api.catalogue.Geocode
 import com.augustnagro.magnum.DbCon
 
 /** What the places decide for the library: which places a source's findings belong to (`finding_places`), placed again

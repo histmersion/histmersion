@@ -1,6 +1,7 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.{CatalogRecord, EventGeo, EventTaxonomy, Geocode, TimeSpan, Years}
+import com.histmersion.api.{TimeSpan, Years}
+import com.histmersion.api.catalogue.{CatalogRecord, EventGeo, EventTaxonomy, Geocode}
 
 /** The pure half of events from catalogues: the providers' identities and terms, the mapping of their datings onto the
   * four-point time-span, and how records from several catalogues and the events already stored are merged into ONE

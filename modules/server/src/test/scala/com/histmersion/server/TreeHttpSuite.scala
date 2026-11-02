@@ -1,10 +1,10 @@
 package com.histmersion.server
 
 import ox.supervised
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.PlaceKind
+import com.histmersion.api.catalogue.{Lpf, Place, PlaceInput, PlaceName, PlaceRelation}
 
 /** `/api/aggregate` with the §1.6 axes over real HTTP: the nested tree, its parameters and its errors. Gated on
   * HISTMERSION_TEST_DB_URL like every other server suite.

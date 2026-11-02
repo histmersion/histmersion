@@ -1,6 +1,8 @@
 package com.histmersion.pluginhost
 
-import com.histmersion.api.{OpenSide, Period as ApiPeriod, Place, PlaceInput, PlaceName, PlaceRelation, Version}
+import com.histmersion.api.OpenSide
+import com.histmersion.api.catalogue.{Period as ApiPeriod, Place, PlaceInput, PlaceName, PlaceRelation}
+import com.histmersion.api.instance.Version
 import com.histmersion.config.PlacesConfig
 import com.histmersion.plugin.*
 

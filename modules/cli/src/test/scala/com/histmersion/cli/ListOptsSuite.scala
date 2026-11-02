@@ -1,6 +1,6 @@
 package com.histmersion.cli
 
-import com.histmersion.api.ListFilters.{ApprovalFilter, JobFilter, RunFilter}
+import com.histmersion.api.automation.ListFilters.{ApprovalFilter, JobFilter, RunFilter}
 import com.monovore.decline.Command
 
 /** The filter options of `agent approvals`, `agent runs` and `jobs`: repeatable or comma-separated, parsed into the

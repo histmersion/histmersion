@@ -1,7 +1,7 @@
 package com.histmersion.web
 
-import com.histmersion.api.{UiConfig, UiNotices}
-import com.histmersion.api.UiNotices.{Board, Counter, Counters}
+import com.histmersion.api.instance.{UiConfig, UiNotices}
+import com.histmersion.api.instance.UiNotices.{Board, Counter, Counters}
 import com.histmersion.web.ui.Layout
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom

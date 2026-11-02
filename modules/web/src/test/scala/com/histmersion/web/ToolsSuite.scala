@@ -2,8 +2,14 @@ package com.histmersion.web
 
 import com.histmersion.values.Citekey
 
-import com.histmersion.api.*
+import com.histmersion.api.ApiError
 import sttp.model.Method
+import com.histmersion.api.automation.{Agents, AgentScheduler, ListFilters, Managers, Queue}
+import com.histmersion.api.catalogue.{EventTier, PeriodSkip, SkippedPeriod}
+import com.histmersion.api.exchange.{InitPlan, MergeApplyJob}
+import com.histmersion.api.jobs.{JobInfo, JobState}
+import com.histmersion.api.library.{Ingest, IngestParams}
+import com.histmersion.api.maintenance.Vacuum
 
 /** The pure parts of the tool windows: window keys, the write gate, the jobs poll, the upload form, the bookkeeping
   * lists' text and order.

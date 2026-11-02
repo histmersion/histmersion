@@ -1,8 +1,9 @@
 package com.histmersion.util.database
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Write, YearFmt}
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.*
+import com.histmersion.api.catalogue.Period
 
 /** The ONE spelling of a deep-time `int8range` column in SQL (#1798 item 9): how its inclusive bounds are read, how
   * optional bounds are written, and how a PATCH that names one bound merges with the stored other one.

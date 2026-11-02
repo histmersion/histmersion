@@ -1,6 +1,6 @@
 package com.histmersion.util.basemap
 
-import com.histmersion.api.*
+import com.histmersion.api.BBox
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -8,6 +8,7 @@ import com.histmersion.util.storage.Reservation
 
 import java.nio.file.{Files, Path}
 import java.util.concurrent.atomic.AtomicInteger
+import com.histmersion.api.basemap.Basemap
 
 /** The on-demand relief: the bounded tile cache (eviction by last use, kept across a restart) and the reads from a fake
   * provider — once per tile, a missing tile remembered, nothing asked while offline, a replaced planet file read again,

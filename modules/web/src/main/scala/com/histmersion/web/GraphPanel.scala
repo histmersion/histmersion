@@ -1,13 +1,14 @@
 package com.histmersion.web
 
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.*
+import com.histmersion.api.{Palette, Wording}
 import com.histmersion.web.ui.{GraphLayout as GL, ThemeTokens}
 import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.values.{EdgeKind, SourceStatus}
+import com.histmersion.api.library.{GraphNode, Label, SourceGraph}
 
 /** The citation graph of one source, in a window: a force layout on a canvas, a legend and the hovered node as a
   * [[SourceLink]].

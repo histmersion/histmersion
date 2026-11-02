@@ -1,6 +1,6 @@
 package com.histmersion.server
 
-import com.histmersion.api.Version
+import com.histmersion.api.instance.Version
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.domain.catalogue.places.GazetteerLoad
 

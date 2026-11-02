@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.worklists
 
-import com.histmersion.api.Queue.{Kind, QueueAdd, QueuePatch}
+import com.histmersion.api.automation.Queue.{Kind, QueueAdd, QueuePatch}
 import com.histmersion.util.data.maintenance.WriteGate
 
 import java.time.{Clock, Instant, ZoneOffset}
@@ -35,7 +35,8 @@ class WorkListControllersSuite extends munit.FunSuite:
   test("an import counts the items and the notes apart; the export renders what was imported"):
     val c = controllers()
     val file = "# TASKS\n\n## Backlog\n- [ ] read Cline\n- [x] read Kuhrt\n"
-    val r = c.importText("tasks", com.histmersion.api.Queue.QueueImport(file)).fold(e => fail(e.message), identity)
+    val r =
+      c.importText("tasks", com.histmersion.api.automation.Queue.QueueImport(file)).fold(e => fail(e.message), identity)
     assertEquals((r.list, r.items, r.replaced), ("tasks", 2, 0))
     assertEquals(c.exportText("tasks").map(_.contains("- [x] read Kuhrt")), Right(true))
     assertEquals(c.files().map(_._1), Kind.values.toList.map(_.file))

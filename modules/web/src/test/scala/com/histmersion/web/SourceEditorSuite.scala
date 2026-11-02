@@ -1,8 +1,10 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
+import com.histmersion.api.ListPatch
 import SourceEditor.{Draft, Field}
 import com.histmersion.values.SourceStatus
+import com.histmersion.api.catalogue.PeriodInput
+import com.histmersion.api.library.{MetadataPatch, SourceDetail}
 
 /** The metadata editor's pure half: the form ↔ patch mapping (only what changed, with the precondition), BCE/CE years,
   * and where a server refusal is shown.

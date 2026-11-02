@@ -1,6 +1,7 @@
 package com.histmersion.web
 
-import com.histmersion.api.{UiConfig, Wording}
+import com.histmersion.api.Wording
+import com.histmersion.api.instance.UiConfig
 import com.raquo.laminar.api.L.*
 
 /** Every active filter as a chip with its remove button, the period among them once it is not the default span — the

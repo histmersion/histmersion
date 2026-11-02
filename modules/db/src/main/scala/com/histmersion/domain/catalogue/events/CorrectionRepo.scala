@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.{CorrectionList, Corrections, CorrectionStatus}
+import com.histmersion.api.catalogue.{CorrectionList, Corrections, CorrectionStatus}
 import com.histmersion.util.database.{Param, Sql}
 
 import com.augustnagro.magnum.*

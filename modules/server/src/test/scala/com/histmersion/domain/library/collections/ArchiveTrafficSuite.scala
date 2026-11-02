@@ -2,18 +2,19 @@ package com.histmersion.domain.library.collections
 
 import com.histmersion.server.ServerPlugins
 
-import com.histmersion.api.*
+import com.histmersion.api.ApiError
 import com.histmersion.config.{AcquireConfig, AppConfig, LoadedConfig}
 import com.histmersion.pluginhost.{FetchChain, Generation, HttpAnswer, HttpTransport, PolicyHttp}
 import com.histmersion.server.Deps
 import com.histmersion.domain.library.acquisition.*
-import com.histmersion.api.WorkRef
+import com.histmersion.api.library.WorkRef
 import io.circe.syntax.*
 import org.ekrich.config.ConfigFactory
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
+import com.histmersion.api.library.{ArchiveFile, ArchiveImportRequest, ArchiveItem, ArchiveSearchResult, IngestReport}
 
 /** The recorded traffic of `archive search|info|import`: every request the server sends to archive.org for them, on the
   * wire below the outbound policy (URL and every header, in order), and what each answers — the search hits, an item,

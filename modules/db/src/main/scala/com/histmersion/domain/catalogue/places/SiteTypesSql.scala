@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.SiteTypes
+import com.histmersion.api.catalogue.SiteTypes
 import com.histmersion.values.PlaceKind
 
 /** [[SiteTypes.of]] in SQL, over a `places` row aliased `a` (a site or a feature): the stored type, else the Pleiades

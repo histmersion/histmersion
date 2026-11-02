@@ -1,6 +1,6 @@
 package com.histmersion.web.library
 
-import com.histmersion.api.IngestRequest
+import com.histmersion.api.library.IngestRequest
 
 class DoiIngestSuite extends munit.FunSuite:
 

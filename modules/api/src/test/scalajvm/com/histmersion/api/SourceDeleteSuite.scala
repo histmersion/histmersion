@@ -2,6 +2,17 @@ package com.histmersion.api
 
 import io.circe.parser.decode
 import io.circe.syntax.*
+import com.histmersion.api.library.{
+  CalibreEntryCheck,
+  DeleteBlocker,
+  DeleteBlockerKind,
+  DeleteCount,
+  DeletePart,
+  Edge,
+  SourceDelete,
+  SourceDeleteRequest,
+  SourceDeletion
+}
 
 /** #969: the pure half of deleting a source — the refusal message, the log line, the rendering and the wire shape. */
 class SourceDeleteSuite extends munit.FunSuite:

@@ -7,14 +7,18 @@ import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.catalogue.places.GeocodeSettings
 
-import com.histmersion.api.*
+import com.histmersion.api.GeoPoint
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Lint.*
+import com.histmersion.api.checks.Lint.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.values.{Confidence, SourceStatus}
 import com.histmersion.util.database.Migrate
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.checks.{FormatIssue, FormatRule, FormatSeverity, Lint}
+import com.histmersion.api.library.{Edge, Finding, Source}
+import com.histmersion.api.research.Article
 
 /** Every lint rule, against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise.
   *

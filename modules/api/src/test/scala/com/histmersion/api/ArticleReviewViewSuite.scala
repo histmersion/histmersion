@@ -2,6 +2,16 @@ package com.histmersion.api
 
 import io.circe.parser.decode
 import io.circe.syntax.*
+import com.histmersion.api.automation.GoalStages
+import com.histmersion.api.research.{
+  ArticleReviewView,
+  ReviewApproval,
+  ReviewBadge,
+  ReviewFinding,
+  ReviewGoal,
+  ReviewRound,
+  ReviewState
+}
 
 /** The review view's words: reviewer names, a finding's fate, the Markdown every surface returns, and the wire shape of
   * the state.

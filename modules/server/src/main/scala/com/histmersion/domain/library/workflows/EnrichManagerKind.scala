@@ -3,9 +3,10 @@ package com.histmersion.domain.library.workflows
 import com.histmersion.domain.automation.agents.AgentsHandlers
 import com.histmersion.domain.automation.managers.{ManagerContext, ManagerKindDefinition}
 
-import com.histmersion.api.{ApiError, GoalPlans, Write}
-import com.histmersion.api.Agents.*
-import com.histmersion.api.Managers.*
+import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.automation.GoalPlans
+import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.AutoEnrich
 import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts}
 import com.histmersion.config.AgentsConfig

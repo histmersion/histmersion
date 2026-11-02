@@ -8,7 +8,6 @@ import com.histmersion.api.personal.{
   BookmarkLabel,
   BookmarkNew,
   ItemKey as WireKey,
-  ItemKind as MarkKind,
   Note as WireNote,
   NoteEdit,
   NoteId,
@@ -22,6 +21,7 @@ import com.histmersion.api.personal.{
   UnreadPage,
   UnreadRow
 }
+import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.domain.{Caller, ItemKey}
 import com.histmersion.domain.personal.bookmarks.BookmarkService
 import com.histmersion.domain.personal.notes.{NoteEditRefused, NoteService}

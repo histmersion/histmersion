@@ -1,13 +1,13 @@
 package com.histmersion.domain
 
-import com.histmersion.api.{ArticleCoverage, ArticleFilter, Articles, CoverageReason}
+import com.histmersion.api.research.{ArticleCoverage, ArticleFilter, Articles, CoverageReason}
 import com.histmersion.api.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-import com.histmersion.api.GoalPlans.ArticleDraft
+import com.histmersion.api.automation.GoalPlans.ArticleDraft
 import com.histmersion.values.{Confidence, DraftMode, SourceStatus}
 
 /** The `compile-article` pipeline's typed answers and its pure logic (docs/research-embedded-agents.md §4.5, §14; the

@@ -1,10 +1,12 @@
 package com.histmersion.cli
 
-import com.histmersion.api.*
+import com.histmersion.api.{Api, ApiError}
 import com.histmersion.config.*
 import sttp.client4.*
 import sttp.model.Uri
 import sttp.tapir.client.sttp4.SttpClientInterpreter
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.library.Filter
 
 /** The CLI's requests are DERIVED from the same `Api` endpoints the server interprets, so this pins the wire spelling
   * of the `Filter` query parameters without needing a server: other streams (web UI, chips, timeline) build the very

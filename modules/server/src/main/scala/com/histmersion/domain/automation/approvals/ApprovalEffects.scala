@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.approvals
 
-import com.histmersion.api.Agents.ApprovalInfo
+import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.values.ApprovalKind
 
 /** What approving a proposal does, contributed by the domain the proposal is about: a source's status or edge (the

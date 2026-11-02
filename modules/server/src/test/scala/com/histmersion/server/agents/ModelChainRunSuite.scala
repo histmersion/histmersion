@@ -6,11 +6,10 @@ import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.Zero
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.*
-import com.histmersion.api.ModelChains.*
+import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.automation.ModelChains.*
 import com.histmersion.domain.automation.agents.{AgentRepo, ModelSettingsRepo}
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.server.{Composition, Deps, ServerWiring}
@@ -21,6 +20,8 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.file.Files
 import java.time.Instant
 import com.histmersion.db.*
+import com.histmersion.api.automation.AgentsMarkdown
+import com.histmersion.api.library.SourcePut
 
 /** Model chains and allowances end to end against a `*_test` database, with sttp-ai's scripted model per chained model:
   * the chain's next model takes over when the first is below its allowance (before a step, during one, or when its plan

@@ -4,6 +4,20 @@ package com.histmersion.api
   * judged in, the pair states (alias resolution, both sides cited or one), the ranking and the bound of the skeptic's
   * brief, the generated Method part and the wire forms.
   */
+
+import com.histmersion.api.research.{
+  ArticleCoverage,
+  ArticleFilter,
+  ArticlePatch,
+  Coverage,
+  CoverageEdge,
+  CritiquePair,
+  CritiqueReason,
+  CritiqueRef,
+  Critiques,
+  CritiqueSide,
+  CritiqueState
+}
 class CritiquesSuite extends munit.FunSuite:
 
   /** `[[x]]` → its canonical citekey: two aliases, one article slug, the rest themselves. */

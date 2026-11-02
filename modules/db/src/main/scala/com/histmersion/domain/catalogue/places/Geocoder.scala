@@ -4,14 +4,14 @@ import com.histmersion.util.database.given
 
 import com.histmersion.util.database.RangeSql
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Geocode.{Attempt, Candidate, KindHint, Move, Placement, Resolution}
+import com.histmersion.api.catalogue.Geocode.{Attempt, Candidate, KindHint, Move, Placement, Resolution}
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
 import com.histmersion.util.database.Sql
+import com.histmersion.api.catalogue.{Geocode, Period}
 
 /** Place NAME → gazetteer point (#981): the ONE geocoder. It fetches the places a name can mean and hands them to
   * [[Geocode]] (core), which reads the name ([[Geocode.attempts]]) and ranks the candidates ([[Geocode.rank]]) — the

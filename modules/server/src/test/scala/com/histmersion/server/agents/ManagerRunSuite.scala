@@ -8,11 +8,10 @@ import com.histmersion.domain.automation.agents.{AgentLease, AgentsHandlers, Llm
 import com.histmersion.domain.automation.managers.Zero
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.*
-import com.histmersion.api.Managers.*
+import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.ReviewArticle.{Finding, Reviewer, Severity}
 import com.histmersion.domain.ReviewLedger.*
 import com.histmersion.db.QueueRows
@@ -26,6 +25,9 @@ import sttp.ai.core.agent.*
 import java.time.Instant
 import scala.jdk.CollectionConverters.*
 import com.histmersion.values.EdgeKind
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.library.{EdgeInput, EdgesPatch, SourcePatch, SourcePut}
+import com.histmersion.api.research.{ArticlePatch, ArticlePut}
 
 /** The process managers against a `*_test` database (docs/research-process-managers.md §6): the supervisor's tick with
   * a fixed clock — selection, dispatch, evaluation and the stop rules over several runs, holds, pause (with and without

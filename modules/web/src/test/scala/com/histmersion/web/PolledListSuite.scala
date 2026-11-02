@@ -1,10 +1,12 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
-import com.histmersion.api.Agents.RunState
+import com.histmersion.api.Paging
+import com.histmersion.api.automation.Agents.RunState
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Promise}
+import com.histmersion.api.jobs.{JobInfo, JobState}
+import com.histmersion.api.library.Ingest
 
 /** [[PolledList]] (#1798 item 6) — the one controller of the jobs, runs and approvals windows — with a fake server
   * (promises completed by hand) and a fake clock: a poll keeps the pages loaded, a gone cursor restarts, a closed

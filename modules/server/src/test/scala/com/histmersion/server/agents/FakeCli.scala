@@ -3,7 +3,7 @@ package com.histmersion.server.agents
 import com.histmersion.domain.automation.agents.PoolSink
 
 import com.histmersion.config.AppConfig
-import com.histmersion.api.PlanQuota.{PoolId, Reading}
+import com.histmersion.api.automation.PlanQuota.{PoolId, Reading}
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*

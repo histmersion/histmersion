@@ -1,6 +1,7 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.{EventPrecision, EventScale, EventSummary, TimeSpan}
+import com.histmersion.api.TimeSpan
+import com.histmersion.api.catalogue.{EventPrecision, EventScale, EventSummary}
 import com.augustnagro.magnum.DbCodec
 
 /** An `events` row as the reads select it, with what its scale is derived from (its place's kind, its geometry's type)

@@ -1,7 +1,8 @@
 package com.histmersion.domain.library.labels
 
-import com.histmersion.api.*
+import com.histmersion.api.ApiError
 import com.histmersion.domain.library.search.SearchFilters
+import com.histmersion.api.library.{Facet, FacetField, Filter}
 
 /** `GET /api/facets` — the vocabulary of one dimension inside the current filter. */
 final class LabelsControllers(labels: LabelService, filters: SearchFilters):

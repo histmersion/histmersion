@@ -1,6 +1,6 @@
 package com.histmersion.domain.media.links
 
-import com.histmersion.api.BundleAssetLink
+import com.histmersion.api.exchange.BundleAssetLink
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.database.Sql
 import com.histmersion.util.data.exchange.BundleScope

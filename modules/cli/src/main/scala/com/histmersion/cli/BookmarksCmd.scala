@@ -3,6 +3,7 @@ package com.histmersion.cli
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.personal.*
+import com.histmersion.api.ItemKind
 
 /** `histmersion bookmarks list|add|rm` — your bookmarks: items of the collection, places on the map, saved views of
   * Explore and periods.

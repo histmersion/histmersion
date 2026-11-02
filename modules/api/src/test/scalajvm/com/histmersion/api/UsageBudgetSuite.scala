@@ -1,6 +1,6 @@
 package com.histmersion.api
 
-import com.histmersion.api.Agents.Usage
+import com.histmersion.api.automation.Agents.Usage
 
 /** #1461 what counts against a run's token budget: cache reads at their weight. */
 class UsageBudgetSuite extends munit.FunSuite:

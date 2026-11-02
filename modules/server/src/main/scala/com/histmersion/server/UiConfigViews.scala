@@ -1,6 +1,7 @@
 package com.histmersion.server
 
-import com.histmersion.api.{PluginsReport, UiConfig}
+import com.histmersion.api.plugins.PluginsReport
+import com.histmersion.api.instance.UiConfig
 import com.histmersion.config.UiSettings
 import io.scalaland.chimney.dsl.*
 

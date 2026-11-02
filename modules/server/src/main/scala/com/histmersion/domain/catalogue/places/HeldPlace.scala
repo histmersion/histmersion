@@ -1,6 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.{Dataset, Place, PlaceDating, PlaceLink, PlaceName, PlaceRelation, PlaceSummary}
+import com.histmersion.api.Dataset
+import com.histmersion.api.catalogue.{Place, PlaceDating, PlaceLink, PlaceName, PlaceRelation, PlaceSummary}
 
 import java.util.Locale
 
@@ -45,13 +46,18 @@ final case class HeldPlace(
 object HeldPlace:
 
   /** One name: `manual` when a person added it. */
-  final case class Name(name: String, lang: String, period: Option[com.histmersion.api.Period], manual: Boolean)
+  final case class Name(
+      name: String,
+      lang: String,
+      period: Option[com.histmersion.api.catalogue.Period],
+      manual: Boolean
+  )
 
   object Name:
     def of(n: PlaceName): Name = Name(n.name, n.lang, n.period, manual = false)
 
   /** Does `period` (none: always) contain the year `asOf` (none: any time)? */
-  def covers(period: Option[com.histmersion.api.Period], asOf: Option[Long]): Boolean =
+  def covers(period: Option[com.histmersion.api.catalogue.Period], asOf: Option[Long]): Boolean =
     asOf.forall(y => period.forall(p => p.start <= y && y <= p.end))
 
   /** The case-insensitive form a search compares. */

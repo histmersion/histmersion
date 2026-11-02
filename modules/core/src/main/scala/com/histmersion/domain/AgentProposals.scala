@@ -1,6 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.api.{EdgeInput, EdgesPatch, MetadataPatch, SourcePatch}
+import com.histmersion.api.library.{EdgeInput, EdgesPatch, MetadataPatch, SourcePatch}
 import com.histmersion.api.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject

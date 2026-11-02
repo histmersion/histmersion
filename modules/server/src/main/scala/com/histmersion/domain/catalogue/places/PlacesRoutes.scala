@@ -1,6 +1,8 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.{Api, ApiError, GazetteerSourceInfo, JobInfo}
+import com.histmersion.api.{Api, ApiError}
+import com.histmersion.api.catalogue.GazetteerSourceInfo
+import com.histmersion.api.jobs.JobInfo
 import com.histmersion.domain.Caller
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint

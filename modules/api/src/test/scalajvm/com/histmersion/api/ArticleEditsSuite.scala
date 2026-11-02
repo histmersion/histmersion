@@ -1,6 +1,6 @@
 package com.histmersion.api
 
-import com.histmersion.api.ArticleEdits.*
+import com.histmersion.api.research.ArticleEdits.*
 
 /** Edits anchored on an article's own text: the four operations, the anchor rules (exactly once, whitespace
   * normalised), the order they apply in, and skipped edits.

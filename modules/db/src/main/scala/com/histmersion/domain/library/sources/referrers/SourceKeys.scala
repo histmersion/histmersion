@@ -1,7 +1,7 @@
 package com.histmersion.domain.library.sources.referrers
 
-import com.histmersion.api.Rename
-import com.histmersion.util.text.WikiLinks
+import com.histmersion.api.library.Rename
+import com.histmersion.api.text.WikiLinks
 
 /** A source a delete would touch: its citekey, and every key it answers to (the citekey and its old ones). `resolve`
   * gives the citekey each wikilink target names now, as the library resolves `[[x]]` (an unambiguous short form

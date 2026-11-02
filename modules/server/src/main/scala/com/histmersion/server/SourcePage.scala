@@ -1,8 +1,9 @@
 package com.histmersion.server
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.api.checks.FormatIssue
+import com.histmersion.api.library.{FindingRow, SourceRef}
 
 /** Everything a `/source/{citekey}` page shows, typed. Built by [[PageBuilder]], rendered by [[Pages.source]] —
   * Markdown bodies stay Markdown until rendering, so the page model is testable without flexmark in the way.

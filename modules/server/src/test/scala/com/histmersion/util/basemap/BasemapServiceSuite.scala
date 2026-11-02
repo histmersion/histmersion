@@ -2,7 +2,7 @@ package com.histmersion.util.basemap
 
 import com.histmersion.util.database.Transactor
 
-import com.histmersion.api.*
+import com.histmersion.api.BBox
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.Migrate
@@ -11,6 +11,8 @@ import com.histmersion.server.{BasemapWiring, Deps}
 import com.histmersion.util.storage.Reservation
 
 import java.nio.file.{Files, Path}
+import com.histmersion.api.basemap.{Basemap, BasemapFetchQuery, BasemapMarkdown, BasemapRemoveQuery, BaseMapSource}
+import com.histmersion.api.jobs.JobInfo
 
 /** The fetch JOB end to end, with a fake provider (a local archive behind [[BasemapFixtures.LocalRange]]) and a fake
   * disk: a dry run, a fetch that writes both layers, the free-space refusal, the provider's list of builds. Job rows

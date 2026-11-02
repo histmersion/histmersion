@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.acquisition
 
-import com.histmersion.api.Queue
+import com.histmersion.api.automation.Queue
 import com.histmersion.domain.AcquireRecheck
 import com.histmersion.domain.automation.worklists.{QueueScope, QueueService}
 import com.histmersion.domain.library.sources.SourceService

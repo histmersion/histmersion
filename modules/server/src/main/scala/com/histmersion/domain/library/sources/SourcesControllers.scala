@@ -1,12 +1,12 @@
 package com.histmersion.domain.library.sources
 
-import com.histmersion.util.identity.AliasKinds
+import com.histmersion.api.aliases.AliasKinds
 
-import com.histmersion.api.library.sources.SourceWrite
+import com.histmersion.api.library.SourceWrite
 
-import com.histmersion.api.library.sources.SourcesMarkdown
+import com.histmersion.api.library.SourcesMarkdown
 
-import com.histmersion.api.*
+import com.histmersion.api.{Api, ApiError, Markdown, Write}
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.library.ingest.SeedImport
 import com.histmersion.domain.Caller
@@ -14,12 +14,31 @@ import com.histmersion.domain.PassageFinder
 import com.histmersion.domain.media.assets.AssetsControllers
 import com.histmersion.domain.library.sources.SourceNote
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.util.identity.AliasKind
+import com.histmersion.api.aliases.AliasKind
 import com.histmersion.values.Citekey
 
 import hearth.kindlings.optics.syntax.*
 
 import java.time.{Clock, LocalDate, ZoneOffset}
+import com.histmersion.api.checks.{FormatField, FormatIssue, FormatReport}
+import com.histmersion.api.library.{
+  NoteImport,
+  PassageResult,
+  RenameRequest,
+  SeedResult,
+  SourceAlias,
+  SourceDelete,
+  SourceDeleteRequest,
+  SourceDeletion,
+  SourcePatch,
+  SourcePut,
+  SourceRenamed,
+  SourceSection,
+  SourceWithFindings,
+  TocEntry
+}
+import com.histmersion.api.media.AssetLinks
+import com.histmersion.api.library.of
 
 /** A source over REST and MCP: read whole or by section, its passages, its note, written whole or in part, renamed,
   * deleted, its formatting checked and repaired, a note imported. Every citekey asked for is resolved first (an old one

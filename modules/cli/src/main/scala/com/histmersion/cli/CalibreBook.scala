@@ -1,6 +1,6 @@
 package com.histmersion.cli
 
-import com.histmersion.api.Acquire
+import com.histmersion.api.library.Acquire
 
 import scala.jdk.CollectionConverters.*
 

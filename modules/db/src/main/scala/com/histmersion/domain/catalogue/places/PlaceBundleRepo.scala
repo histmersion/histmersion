@@ -1,6 +1,5 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.*
 import com.histmersion.domain.MergeSettings
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.database.{Jsonb, Param, Sql}
@@ -10,6 +9,16 @@ import com.histmersion.util.data.exchange.BundleSql.*
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import java.util.UUID
+import com.histmersion.api.exchange.{
+  BundleEventSets,
+  BundlePlace,
+  BundlePlaceAlias,
+  BundlePlaceLink,
+  BundlePlaceName,
+  BundlePlaceRelation,
+  BundlePlaceType,
+  BundleSiteType
+}
 
 /** The places as a bundle carries them (docs/research-merge-import.md §4, §7.3): this collection's own places with
   * their names, parents, links and types, their old ids and the site types refined from outside — read out in a
@@ -244,7 +253,7 @@ private[places] object PlaceBundleRepo:
 
   /** The site types the other side refined: the newer answer wins, as for the event-catalogue sets. */
   def siteTypesIn(w: BundleImport.Writer): Unit =
-    import BundleEventSets.newer
+    import com.histmersion.api.exchange.BundleEventSets.newer
     given DbCon = w.transaction
     if w.es.siteTypes.nonEmpty then
       val placeHere = this.placeHere(w)

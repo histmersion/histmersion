@@ -10,11 +10,10 @@ import com.histmersion.domain.automation.agents.{AgentsHandlers, Engine, LlmClie
 import com.histmersion.domain.automation.managers.Zero
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.*
-import com.histmersion.api.GoalPlans.*
+import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.automation.GoalPlans.*
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.domain.automation.goals.{GoalLinkRepo, GoalRepo}
@@ -23,6 +22,21 @@ import io.circe.Json
 import sttp.ai.core.agent.*
 import com.histmersion.values.SourceStatus
 import com.histmersion.db.*
+import com.histmersion.api.automation.{AgentsApi, Goal, GoalPut}
+import com.histmersion.api.library.{
+  Assessment,
+  CandidateSweep,
+  DiscoverResult,
+  FollowupRow,
+  FollowupsResult,
+  IngestReport,
+  MetadataPatch,
+  SourceCandidate,
+  SourcePatch,
+  SourcePut,
+  WorkRef
+}
+import com.histmersion.api.research.{ArticleFilter, ArticleMarkdown, ArticlePatch, ArticlePut}
 
 /** Answers from fixtures: DOI metadata, citing papers, searches; counts what was asked. */
 final class StubUpstream extends AgentUpstream:

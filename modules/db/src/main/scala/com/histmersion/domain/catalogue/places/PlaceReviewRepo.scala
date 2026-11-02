@@ -4,13 +4,13 @@ import com.histmersion.util.database.given
 
 import com.histmersion.util.database.RangeSql
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.catalogue.places.PlaceReview.{Candidate, Evidence, LinkedItem, Proposal}
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.Sql
+import com.histmersion.api.catalogue.Geocode
 
 /** The two gazetteer-cleanup lint rules (2026-10-09): `place-kind` — what a point-only seed region really is
   * ([[PlaceReview]]) — and `place-grid-point` — a better point than an atlas grid square's centre

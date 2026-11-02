@@ -8,10 +8,9 @@ import com.histmersion.util.plugins.Plugins
 import com.histmersion.pluginhost.{FirstPartySettings, Generation, PluginHost}
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.*
+import com.histmersion.api.automation.Agents.*
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.util.database.Migrate
 import com.histmersion.server.{Deps, ServerWiring}
@@ -21,6 +20,8 @@ import java.net.URLClassLoader
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Path
 import com.histmersion.db.*
+import com.histmersion.api.automation.{AgentsMarkdown, ModelChains}
+import com.histmersion.api.library.SourcePut
 
 /** A THIRD-PARTY AI provider end to end (docs/research-plugins.md §23): the hello-ai test plugin's own jar
   * (modules/plugin-fixtures/hello-ai — compiled against plugin-api alone, never on the server's class path) is

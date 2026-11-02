@@ -2,7 +2,9 @@ package com.histmersion.server
 
 import com.histmersion.util.jobs.BackgroundJob
 
-import com.histmersion.api.{ApiError, JobDetail, JobInfo, Version}
+import com.histmersion.api.ApiError
+import com.histmersion.api.jobs.{JobDetail, JobInfo}
+import com.histmersion.api.instance.Version
 import com.histmersion.config.{BasemapConfig, SeaFloorSource}
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.util.basemap.{

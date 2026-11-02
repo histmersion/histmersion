@@ -7,6 +7,24 @@ import com.histmersion.domain.given
 
 import io.circe.parser.parse
 import com.histmersion.values.PlaceKind
+import com.histmersion.api.catalogue.{
+  GazDescription,
+  Gazetteer,
+  GazetteerKind,
+  GazetteerLoadCounts,
+  GazGeometry,
+  GazLink,
+  GazName,
+  GazRecord,
+  Geocode,
+  LinkMatch,
+  LinkScheme,
+  PlaceDating,
+  PlaceLink,
+  PlaceMatch,
+  PlaceShape
+}
+import com.histmersion.api.library.ExternalId
 
 /** The external gazetteer sources' pure half (#1064), on the JVM (Lpf's year parser uses a look-behind Scala.js cannot
   * compile): identifiers, open time spans, the LPF and LP-TSV readers, name merging, and which place a record joins.

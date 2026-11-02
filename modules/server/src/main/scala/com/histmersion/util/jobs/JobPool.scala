@@ -2,7 +2,7 @@ package com.histmersion.util.jobs
 
 import com.histmersion.util.database.Transactor
 
-import com.histmersion.api.JobState
+import com.histmersion.api.jobs.JobState
 import com.histmersion.util.jobs.JobRepo
 
 import javax.sql.DataSource

@@ -1,10 +1,21 @@
 package com.histmersion.api
 
-import com.histmersion.api.library.search.SearchMarkdown
-import com.histmersion.api.library.sources.SourcesMarkdown
-import com.histmersion.api.research.articles.BacklinksMarkdown
+import com.histmersion.api.library.SearchMarkdown
+import com.histmersion.api.library.SourcesMarkdown
+import com.histmersion.api.research.BacklinksMarkdown
 
 import com.histmersion.values.{Confidence, SourceStatus}
+import com.histmersion.api.library.{
+  FindingRow,
+  Hit,
+  NeighborRow,
+  NeighborTarget,
+  SearchHit,
+  SearchResult,
+  SourceDetail,
+  TimeBucket
+}
+import com.histmersion.api.research.{ArticleMarkdown, Backlink}
 
 /** [[SourcesMarkdown.source]] — what MCP `get_source` returns and what the HTML article page renders. Pure. */
 class MarkdownSuite extends munit.FunSuite:

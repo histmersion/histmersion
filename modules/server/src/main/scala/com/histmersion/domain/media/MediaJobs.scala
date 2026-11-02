@@ -1,6 +1,7 @@
 package com.histmersion.domain.media
 
-import com.histmersion.api.{ApiError, JobInfo}
+import com.histmersion.api.ApiError
+import com.histmersion.api.jobs.JobInfo
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.jobs.{BackgroundJob, JobStops, WorkCarrier}
 
@@ -48,7 +49,7 @@ final class MediaJobs(ds: DataSource, maintenance: WriteGate, pins: WorkCarrier,
       BackgroundJob.start(
         ds,
         kind,
-        Some(com.histmersion.api.media.imports.ImportJobKinds.Media(Some(describe))),
+        Some(com.histmersion.api.media.ImportJobKinds.Media(Some(describe))),
         jobSlot,
         "a media run",
         pins = pins,

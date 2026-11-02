@@ -2,7 +2,8 @@ package com.histmersion.domain.catalogue.evidence
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
-import com.histmersion.api.{EventLinksRequest, EventPut, MatchSpan, TimeSpan, Write}
+import com.histmersion.api.{TimeSpan, Write}
+import com.histmersion.api.catalogue.{EventLinksRequest, EventPut, MatchSpan}
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.Caller

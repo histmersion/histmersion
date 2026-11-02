@@ -4,13 +4,13 @@ import com.histmersion.domain.library.workflows.guards
 
 import com.histmersion.domain.automation.agents.*
 
-import com.histmersion.api.*
-import com.histmersion.api.Agents.*
-import com.histmersion.api.ModelChains.*
+import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.automation.ModelChains.*
 import com.histmersion.config.*
 import com.histmersion.domain.ReadSchedule
 
 import java.time.Duration
+import com.histmersion.api.automation.Agents
 
 /** The agents' settings as the server reads them from config: approval modes, roles, providers and their defaults, the
   * enrichment guards, a plan pool's read schedule.

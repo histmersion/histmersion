@@ -1,6 +1,12 @@
 package com.histmersion.api
 
 import com.histmersion.values.{ApprovalKind, ApprovalState, ManagerKind, Pipeline, RunState, SourceStatus}
+import com.histmersion.api.automation.Agents
+import com.histmersion.api.exchange.{InitPlan, MergeApplyJob}
+import com.histmersion.api.instance.UiNotices
+import com.histmersion.api.jobs.JobState
+import com.histmersion.api.library.{AcquireChecks, Ingest}
+import com.histmersion.api.maintenance.Vacuum
 
 /** The label dictionary covers every identifier the UI shows: a pipeline, an approval kind or a job kind added without
   * wording fails here, not in front of a reader.
@@ -34,14 +40,14 @@ class WordingSuite extends munit.FunSuite:
     RegisteredJobKinds.all.kinds.foreach(k => readable(Wording.jobKind(k), k.value))
     assertEquals(RegisteredJobKinds.all.kinds.map(_.value).distinct.length, RegisteredJobKinds.all.kinds.length)
     assertEquals(
-      Wording.jobKind(com.histmersion.util.basemap.BasemapJobKinds.BasemapFetch.kind),
+      Wording.jobKind(com.histmersion.api.basemap.BasemapJobKinds.BasemapFetch.kind),
       "Download the background map"
     )
     assertEquals(
-      Wording.jobKind(com.histmersion.api.catalogue.events.EventsJobKinds.EventsImport.kind),
+      Wording.jobKind(com.histmersion.api.catalogue.EventsJobKinds.EventsImport.kind),
       "Import events"
     )
-    assertEquals(Wording.jobKind(com.histmersion.api.media.imports.ImportJobKinds.MediaImport.kind), "Fetch pictures")
+    assertEquals(Wording.jobKind(com.histmersion.api.media.ImportJobKinds.MediaImport.kind), "Fetch pictures")
     // the constants the api module names are registered kinds
     assertEquals(
       List(

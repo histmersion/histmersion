@@ -1,6 +1,6 @@
 package com.histmersion.domain.media.covers
 
-import com.histmersion.api.MediaProvider
+import com.histmersion.api.media.MediaProvider
 import com.histmersion.values.MediaRole
 
 import com.histmersion.util.database.given

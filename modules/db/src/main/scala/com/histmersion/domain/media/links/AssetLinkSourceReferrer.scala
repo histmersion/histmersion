@@ -1,6 +1,6 @@
 package com.histmersion.domain.media.links
 
-import com.histmersion.api.{DeleteCount, DeletePart, RenameCount}
+import com.histmersion.api.library.{DeleteCount, DeletePart, RenameCount}
 import com.histmersion.domain.library.sources.referrers.*
 
 import com.histmersion.util.database.given

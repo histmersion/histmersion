@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.evidence.passages
 
-import com.histmersion.api.MatchSpan
+import com.histmersion.api.catalogue.MatchSpan
 
 /** A passage of a source's text a search found: where it starts in the body, its text, and where in it the matches are.
   */

@@ -1,9 +1,9 @@
 package com.histmersion.domain.library.acquisition
 
-import com.histmersion.api.*
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
+import com.histmersion.api.library.{CandidateCount, CandidateWatch, SourceCandidate}
 
 /** The deterministic new-source search's store (V099, #3761): each goal's watches with their watermarks, and the
   * candidates found, one per goal and DOI. Every method runs on the connection it is given.

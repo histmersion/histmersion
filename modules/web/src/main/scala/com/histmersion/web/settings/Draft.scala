@@ -1,6 +1,6 @@
 package com.histmersion.web.settings
 
-import com.histmersion.api.ConfigEdit
+import com.histmersion.api.settings.ConfigEdit
 import com.raquo.laminar.api.L.*
 
 /** The changes a Settings form holds before they are saved: each key's text to write, or `None` to take the setting out

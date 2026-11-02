@@ -1,10 +1,10 @@
 package com.histmersion.cli
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.monovore.decline.Command
 import java.nio.file.Files
 import com.histmersion.values.EditionsPolicy
+import com.histmersion.api.exchange.{MergeResolution, MergeResolutions}
 
 /** `histmersion merge plan` and the resolution flags of `bundle import`: they parse, and the file plus the flags make
   * one resolution set, flags winning, every bad line reported. No server.

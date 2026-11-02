@@ -1,6 +1,7 @@
 package com.histmersion.plugins.events
 
-import com.histmersion.api.{CatalogRecord, EventPrecision, TimeSpan}
+import com.histmersion.api.TimeSpan
+import com.histmersion.api.catalogue.{CatalogRecord, EventPrecision}
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.PluginEvents
 import com.histmersion.upstreams.dating.CatalogDating

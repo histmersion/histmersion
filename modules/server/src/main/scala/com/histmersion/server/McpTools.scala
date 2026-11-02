@@ -1,21 +1,27 @@
 package com.histmersion.server
 
-import com.histmersion.util.identity.AliasKinds
+import com.histmersion.api.aliases.AliasKinds
 
-import com.histmersion.api.automation.agents.AgentStateMarkdown
-import com.histmersion.api.automation.goals.GoalsMarkdown
+import com.histmersion.api.automation.AgentStateMarkdown
+import com.histmersion.api.automation.GoalsMarkdown
 
 import chimp.server.*
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.circe.Codec
-import com.histmersion.api.*
+import com.histmersion.api.{Api, ApiError, Markdown, Paging, StrictJson}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.{EditionsPolicy, PlaceKind}
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.util.mcp.McpOut
+import com.histmersion.api.aliases.{Aliases, LabelRename}
+import com.histmersion.api.automation.{ActivityMarkdown, AgentsMarkdown, AgentStatePut, GoalPatch, GoalPut, ListFilters}
+import com.histmersion.api.exchange.{MergeMarkdown, MergePlanRequest, MergePolicy, MergeResolution, MergeResolutions}
+import com.histmersion.api.library.{IngestMarkdown, RepairAcquire}
+import com.histmersion.api.maintenance.VacuumRequest
+import com.histmersion.api.settings.{ConfigEditMarkdown, ReloadMarkdown}
 
 /** MCP tools (Chimp). Every tool returns Markdown and delegates to the same controllers as REST ([[ServerWiring]]). */
 final class McpTools(
@@ -162,7 +168,7 @@ final class McpTools(
       )
       .input[ConfigInput]
       .handle { in =>
-        def page(f: com.histmersion.api.ConfigEdit.Page => String, prefix: Option[String]) =
+        def page(f: com.histmersion.api.settings.ConfigEdit.Page => String, prefix: Option[String]) =
           h.settings.page(prefix).fold(McpOut.error, p => ToolResult.text(f(p)))
         in.action.trim.toLowerCase(java.util.Locale.ROOT) match
           case "reload" => ToolResult.text(ReloadMarkdown.report(h.instance.configReload()))
@@ -177,8 +183,8 @@ final class McpTools(
                 val value = if in.action.trim.equalsIgnoreCase("unset") then None else Some(in.value.getOrElse(""))
                 h.settings
                   .write(
-                    com.histmersion.api.ConfigEdit.Write(
-                      List(com.histmersion.api.ConfigEdit.Change(k, value)),
+                    com.histmersion.api.settings.ConfigEdit.Write(
+                      List(com.histmersion.api.settings.ConfigEdit.Change(k, value)),
                       literalConsent = in.literalConsent.getOrElse(false)
                     )
                   )

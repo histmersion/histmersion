@@ -1,15 +1,17 @@
 package com.histmersion.domain.library.sources
 
-import com.histmersion.api.*
+import com.histmersion.api.{Api, Write}
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.library.{LibraryState, LibraryStoreSuite}
 import com.histmersion.domain.media.{MediaSources, MediaState, MediaStoreSuite}
 import com.histmersion.domain.media.assets.{AssetsControllers, AssetService}
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.util.identity.AliasKind
+import com.histmersion.api.aliases.AliasKind
 
 import java.time.{Clock, Instant, ZoneOffset}
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.api.checks.{FormatField, FormatIssue, FormatRule, FormatSeverity}
+import com.histmersion.api.library.{NoteImport, RenameRequest, SourceAlias, SourceDeleteRequest, SourcePatch, SourcePut}
 
 /** A source's controllers over the in-memory services: a citekey that is not one, a strict write refused by the
   * formatting check, an old citekey followed, a section that is not one, passages of a source not there, a delete's dry

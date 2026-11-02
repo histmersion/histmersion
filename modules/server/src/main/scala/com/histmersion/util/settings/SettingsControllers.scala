@@ -1,6 +1,7 @@
 package com.histmersion.util.settings
 
-import com.histmersion.api.{ApiError, ConfigEdit, ReloadReport}
+import com.histmersion.api.ApiError
+import com.histmersion.api.settings.{ConfigEdit, ReloadReport}
 import com.histmersion.config.edit.*
 
 /** `GET|POST /api/settings`, `POST /api/server/restart`, the `config` tool's `get`, `set`, `unset` and `restart`, and

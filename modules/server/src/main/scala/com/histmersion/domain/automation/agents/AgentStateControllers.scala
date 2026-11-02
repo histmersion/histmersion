@@ -1,6 +1,7 @@
 package com.histmersion.domain.automation.agents
 
-import com.histmersion.api.{AgentStateDeleted, AgentStateEntry, AgentStatePut, ApiError, Write}
+import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.automation.{AgentStateDeleted, AgentStateEntry, AgentStatePut}
 import com.histmersion.util.data.maintenance.WriteGate
 
 /** The agents' scratch state as REST, MCP and the CLI reach it; every write holds the maintenance guard. */

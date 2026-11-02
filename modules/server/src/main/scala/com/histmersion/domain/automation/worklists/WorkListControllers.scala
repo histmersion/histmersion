@@ -1,7 +1,8 @@
 package com.histmersion.domain.automation.worklists
 
-import com.histmersion.api.{ApiError, Queue, Write}
-import com.histmersion.api.Queue.{Kind, QueueAdd, QueueImport, QueueImported, QueueItem, QueuePatch}
+import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.automation.Queue.{Kind, QueueAdd, QueueImport, QueueImported, QueueItem, QueuePatch}
 import com.histmersion.util.data.maintenance.WriteGate
 
 import java.time.{Clock, LocalDate}

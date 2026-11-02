@@ -1,6 +1,7 @@
 package com.histmersion.api
 
-import com.histmersion.api.ApprovalDigest.*
+import com.histmersion.api.automation.ApprovalDigest.*
+import com.histmersion.api.automation.ApprovalDigestMarkdown
 
 /** The approval digest, pure (#3762 proposal 3): the grouping by kind, what a bulk decision matches, the worklog line
   * and the Markdown.

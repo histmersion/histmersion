@@ -1,13 +1,18 @@
 package com.histmersion.server
 
 import ox.supervised
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import io.circe.parser
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.values.PlaceKind
+import com.histmersion.api.aliases.LabelRenamed
+import com.histmersion.api.automation.{Goal, GoalDeleted}
+import com.histmersion.api.catalogue.{Attestation, AttestationList, EventDeleted, Lpf, Place, PlaceInput, PlaceName}
+import com.histmersion.api.library.{SearchResult, SourceWithFindings}
+import com.histmersion.api.research.{ArticleDeleted, ArticleView}
+import com.histmersion.api.views.EventDetail
 
 /** The alias rule over real HTTP and MCP (#1799, #890): for every renamed kind — source, article, event, goal, place —
   * a put, a patch, a delete and a rename naming the OLD identifier go to the record under its current one, and the

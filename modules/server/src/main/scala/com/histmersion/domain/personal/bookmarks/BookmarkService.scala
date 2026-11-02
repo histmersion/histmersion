@@ -1,6 +1,7 @@
 package com.histmersion.domain.personal.bookmarks
 
-import com.histmersion.api.personal.{BookmarkId, BookmarkLabel, ItemKind as MarkKind}
+import com.histmersion.api.personal.{BookmarkId, BookmarkLabel}
+import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.domain.Referables
 import com.histmersion.domain.personal.PersonalState.StoredBookmark
 import com.histmersion.domain.personal.{MarkTarget, MarkTime, PersonalState, SearchWords, TargetColumns, TargetLabel}

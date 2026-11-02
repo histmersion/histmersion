@@ -1,19 +1,16 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.catalogue.places.PlaceEntry
+import com.histmersion.api.catalogue.PlaceEntry
 
-import com.histmersion.api.LabelRename
-import com.histmersion.api.LabelRenames
-import com.histmersion.api.LabelRenamed
+import com.histmersion.api.aliases.LabelRename
+import com.histmersion.api.aliases.LabelRenames
+import com.histmersion.api.aliases.LabelRenamed
 import com.histmersion.values.BundleKind
-import com.histmersion.util.identity.AliasKinds
+import com.histmersion.api.aliases.AliasKinds
 
-import com.histmersion.api.{
-  Api,
-  ApiError,
-  Dataset,
+import com.histmersion.api.{Api, ApiError, Dataset, GeoPick}
+import com.histmersion.api.catalogue.{
   Geocode,
-  GeoPick,
   Lpf,
   ManualPlaceName,
   Period,
@@ -40,7 +37,7 @@ import com.histmersion.api.{
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.Caller
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.util.identity.AliasKind
+import com.histmersion.api.aliases.AliasKind
 import com.histmersion.values.PlaceKind
 
 /** The gazetteer's operations as REST, MCP and the CLI reach them: search, a place and the hierarchy around it, the

@@ -1,12 +1,25 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.*
 import com.histmersion.api.given
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
 import com.histmersion.values.{BundleKind, SourceStatus}
+import com.histmersion.api.exchange.{
+  Bundle,
+  BundleBlobs,
+  BundleFileInfo,
+  BundleFiles,
+  BundleGoal,
+  BundleImportResult,
+  BundleInstance,
+  BundleKindCounts,
+  BundleManifest,
+  BundleMarkdown,
+  BundleRange,
+  BundleReference
+}
 
 /** The pure half of the `.hmx` bundle: the tar container, canonical lines and revs, the bundle id, manifest checks, the
   * bundle's kinds and the import report.

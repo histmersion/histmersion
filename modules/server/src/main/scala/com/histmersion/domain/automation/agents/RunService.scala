@@ -1,7 +1,8 @@
 package com.histmersion.domain.automation.agents
 
-import com.histmersion.api.Agents.*
-import com.histmersion.api.{ListFilters, Paging}
+import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.Paging
+import com.histmersion.api.automation.ListFilters
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.util.database.Jsonb
 import com.histmersion.domain.automation.AutomationState

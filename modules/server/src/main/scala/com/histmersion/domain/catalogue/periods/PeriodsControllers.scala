@@ -1,6 +1,7 @@
 package com.histmersion.domain.catalogue.periods
 
-import com.histmersion.api.{ApiError, Dataset, HistoricalPeriod, PeriodDetail, PeriodImportResult, PeriodO, Write}
+import com.histmersion.api.{ApiError, Dataset, Write}
+import com.histmersion.api.catalogue.{HistoricalPeriod, PeriodDetail, PeriodImportResult, PeriodO}
 import com.histmersion.domain.Caller
 import com.histmersion.util.data.maintenance.WriteGate
 

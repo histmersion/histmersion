@@ -16,13 +16,15 @@ import com.histmersion.domain.catalogue.places.PlaceFixtures
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
-import com.histmersion.api.*
+import com.histmersion.api.{Api, TimeSpan}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.values.{MediaRole, PlaceKind}
 import com.histmersion.util.database.Migrate
+import com.histmersion.api.catalogue.{EventPatch, EventPut, Period, Place, PlaceInput, PlaceName}
+import com.histmersion.api.media.{AssetKind, AssetLinkPut, MediaProvider, MediaTarget, MediaThumb}
 
 /** Pictures from outside providers (V082, #1446) against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise):
   * the reshaped `assets` key (a source's figures keep `(citekey, name)` and their links; a provider's picture has no

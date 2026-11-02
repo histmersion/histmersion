@@ -1,9 +1,12 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
+import com.histmersion.api.TimeSpan
 import com.histmersion.web.map.{GeoBounds, LatLon, TilePointFeature}
 
 import scala.scalajs.js
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.library.Filter
+import com.histmersion.api.media.MediaGeoHit
 
 /** The tiled layers' pure half: a tile feature read back as the app's records (an item, a cell), the playback buckets,
   * the tile URL template, and what a cell counts for in a bubble.

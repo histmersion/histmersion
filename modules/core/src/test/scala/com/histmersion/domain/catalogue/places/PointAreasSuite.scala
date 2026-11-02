@@ -2,12 +2,12 @@ package com.histmersion.domain.catalogue.places
 
 import com.histmersion.domain.*
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
 import com.histmersion.domain.catalogue.places.PointAreas.{Dating, Group, Listed}
+import com.histmersion.api.checks.Lint
 
 /** `lint --rule place-imported-point-area`'s pure half: how a period reads, the listing (group counts and every finding
   * holder always, then a sample) and the fix line.

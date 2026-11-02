@@ -1,11 +1,11 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.*
 import com.histmersion.api.given
 import com.histmersion.util.data.exchange.BundleEntities
 
 import java.io.InputStream
 import java.security.{DigestInputStream, MessageDigest}
+import com.histmersion.api.exchange.{Bundle, BundleFiles, BundleManifest, BundleVerifyResult}
 
 /** Reading a `.hmx` bundle off a stream: the manifest, every entity file, and the blobs' names — checking each against
   * the manifest, and collecting EVERY problem rather than stopping at the first (the user fixes them all in one go,

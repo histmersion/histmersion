@@ -1,8 +1,10 @@
 package com.histmersion.server.views
 
-import com.histmersion.api.{ApiError, JobInfo, JobState, ListFilters, Paging}
-import com.histmersion.api.Agents.RunState
-import com.histmersion.api.ListFilters.JobFilter
+import com.histmersion.api.{ApiError, Paging}
+import com.histmersion.api.jobs.{JobInfo, JobState}
+import com.histmersion.api.automation.ListFilters
+import com.histmersion.api.automation.Agents.RunState
+import com.histmersion.api.automation.ListFilters.JobFilter
 import com.histmersion.util.jobs.{JobListing, JobQuery}
 
 import java.time.Instant

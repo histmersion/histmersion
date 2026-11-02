@@ -8,12 +8,16 @@ import com.histmersion.util.data.maintenance.{CacheName, WriteGate}
 
 import com.histmersion.util.ocr.ConverterClient
 
-import com.histmersion.util.identity.AliasKind
+import com.histmersion.api.aliases.AliasKind
 import com.histmersion.util.data.mirror.Mirror
 
-import com.histmersion.api.*
+import com.histmersion.api.ApiError
 import com.histmersion.domain.*
 import java.time.Instant
+import com.histmersion.api.automation.AgentLeaseInfo
+import com.histmersion.api.catalogue.{Geocode, Period, PlaceCounts}
+import com.histmersion.api.checks.Lint
+import com.histmersion.api.library.{Filter, ResolvedSource, UpstreamQuota}
 
 /** The composition root's object graph over one server's `Deps`: every domain's wiring and controllers, the views that
   * join several of them (`server.views`) and this instance's own (`server.instance`). REST routes ([[HttpApi]]) and MCP
@@ -54,7 +58,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
 
   /** The first acquisition item (any status) whose text names `doi`. */
   def acquisitionItemNaming(doi: String): Option[Int] =
-    queues.naming(com.histmersion.api.Queue.Kind.Acquire, doi).headOption.map(_.id)
+    queues.naming(com.histmersion.api.automation.Queue.Kind.Acquire, doi).headOption.map(_.id)
 
   /** Media's pictures, their links, the imports from outside providers (#1446), the sources' covers and illustrations.
     * Thumbnails come from the converter.
@@ -391,7 +395,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     com.histmersion.domain.automation.goals.GoalsControllers(
       com.histmersion.domain.automation.goals.GoalService(deps.transactor),
       deps.queues,
-      current(com.histmersion.util.identity.AliasKinds.GoalRecords, _),
+      current(com.histmersion.api.aliases.AliasKinds.GoalRecords, _),
       limit => cfg.limits.page(limit, cfg.limits.search),
       maintenance
     )

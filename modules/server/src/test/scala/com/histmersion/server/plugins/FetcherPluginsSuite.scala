@@ -5,7 +5,6 @@ import com.histmersion.util.plugins.{LegacyPlugins, Plugins}
 
 import com.histmersion.pluginhost.{FetchChain, Generation}
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.plugin.{Fetch, FetchContext, PluginHttp, PluginLog, WorkKey}

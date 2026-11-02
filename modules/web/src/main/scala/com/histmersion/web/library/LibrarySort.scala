@@ -1,6 +1,6 @@
 package com.histmersion.web.library
 
-import com.histmersion.api.Sort
+import com.histmersion.api.library.Sort
 
 /** How Library's table of sources is ordered — its own choice, kept in the address (`lsort=`), apart from Explore's:
   * the reader names an order of publication here, not a ranking of the map's results.

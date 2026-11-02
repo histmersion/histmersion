@@ -2,7 +2,7 @@ package com.histmersion.domain.research.workflows
 
 import com.histmersion.domain.automation.agents.ToolResultCap
 
-import com.histmersion.api.ArticleMarkdown
+import com.histmersion.api.research.ArticleMarkdown
 import com.histmersion.config.AgentToolsConfig
 import com.histmersion.domain.automation.workflows.{ToolContribution, ToolName}
 import com.histmersion.domain.research.articles.{ArticlesControllers, ArticleTools}

@@ -1,13 +1,14 @@
 package com.histmersion.domain
 
-import com.histmersion.api.{ArticleFilter, Plural}
+import com.histmersion.api.Plural
+import com.histmersion.api.research.ArticleFilter
 import com.histmersion.api.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-import com.histmersion.api.ArticlePlans.FilterProposal
+import com.histmersion.api.research.ArticlePlans.FilterProposal
 
 /** The `infer-filter` pipeline's typed answer and its pure checks (docs/research-process-managers.md §4 (a), phase 2):
   * an article that records no coverage filter (#958) gets one proposed by a model — free text, topics, tags and the

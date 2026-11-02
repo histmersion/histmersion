@@ -1,6 +1,6 @@
 package com.histmersion.domain.research.articles
 
-import com.histmersion.api.*
+import com.histmersion.api.Write
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.catalogue.CatalogueState
 import com.histmersion.domain.catalogue.places.{PlaceScope, PlaceService}
@@ -12,10 +12,23 @@ import com.histmersion.domain.media.assets.{AssetsControllers, AssetService}
 import com.histmersion.domain.research.ResearchState
 import com.histmersion.domain.research.articles.review.ReviewStateService
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.util.identity.AliasKind
+import com.histmersion.api.aliases.AliasKind
 
 import java.time.{Clock, Instant, ZoneOffset}
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.api.aliases.LabelRename
+import com.histmersion.api.checks.{FormatField, FormatIssue, FormatSeverity}
+import com.histmersion.api.library.Filter
+import com.histmersion.api.research.{
+  ArticleFilter,
+  ArticleImport,
+  ArticleList,
+  ArticlePatch,
+  ArticlePut,
+  CoverageEdge,
+  CoverageSource,
+  ReviewGoal
+}
 
 /** The articles' controllers over the in-memory services, with no source stored: a slug that is not one and a strict
   * write refused by the formatting check, an old slug followed by every read and write, a coverage with no source, a

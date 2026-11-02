@@ -1,17 +1,18 @@
 package com.histmersion.domain.library.sources
 
-import com.histmersion.api.library.citations.CitationLint
+import com.histmersion.api.library.CitationLint
 
 import com.histmersion.domain.catalogue.places.{FindingPlacement, GeocodeSettings}
 
-import com.histmersion.api.*
 import com.histmersion.config.*
-import com.histmersion.api.Lint.*
+import com.histmersion.api.checks.Lint.*
 import com.histmersion.util.database.Sql
 import com.histmersion.util.data.checks.{CheckInput, CheckRun}
 
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
+import com.histmersion.api.checks.{FormatField, Lint}
+import com.histmersion.api.library.Edge
 
 /** The SQL half of the library's lint rules: what each rule reads of the sources, their findings and edges, and the
   * safe repairs.

@@ -1,8 +1,9 @@
 package com.histmersion.server
 
-import com.histmersion.api.{ApiError, ListFilters}
-import com.histmersion.api.Agents.{ApprovalKind, ApprovalState, Origin, Pipeline, RunState}
-import com.histmersion.api.ListFilters.{ApprovalFilter, DecidedBy, RunFilter}
+import com.histmersion.api.ApiError
+import com.histmersion.api.automation.ListFilters
+import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState, Origin, Pipeline, RunState}
+import com.histmersion.api.automation.ListFilters.{ApprovalFilter, DecidedBy, RunFilter}
 
 import java.time.Instant
 

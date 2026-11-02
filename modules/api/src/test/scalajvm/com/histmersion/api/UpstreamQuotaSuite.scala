@@ -1,6 +1,11 @@
 package com.histmersion.api
 
 /** CORE's budget as `histmersion about`, the autopilot status and a candidate sweep show it. */
+
+import com.histmersion.api.instance.{About, AboutMarkdown, BuildStamp, Health}
+import com.histmersion.api.jobs.JobCounts
+import com.histmersion.api.library.{CandidatesMarkdown, CandidateSweep, UpstreamQuota, UpstreamQuotaMarkdown}
+import com.histmersion.api.views.AutopilotStatus
 class UpstreamQuotaSuite extends munit.FunSuite:
 
   private val q =

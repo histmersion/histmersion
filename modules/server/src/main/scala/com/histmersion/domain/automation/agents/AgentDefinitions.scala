@@ -3,7 +3,7 @@ package com.histmersion.domain.automation.agents
 import com.histmersion.server.agents.Codex
 
 import scala.annotation.tailrec
-import com.histmersion.api.Agents.Role
+import com.histmersion.api.automation.Agents.Role
 import com.histmersion.domain.automation.workflows.ToolName
 import org.yaml.snakeyaml.{LoaderOptions, Yaml}
 import org.yaml.snakeyaml.constructor.SafeConstructor

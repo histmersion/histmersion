@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.ingest
 
-import com.histmersion.api.*
+import com.histmersion.api.ListPatch
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.Caller
 import com.histmersion.domain.library.sources.{SourceFixtures, SourceService, SourceSettings}
@@ -12,6 +12,7 @@ import com.histmersion.server.SeedNoteFiles
 import com.histmersion.util.database.Transactor
 
 import java.nio.file.Files
+import com.histmersion.api.library.SourcePatch
 
 /** The seed over a folder of notes, against a real Postgres (HISTMERSION_TEST_DB_URL; skipped otherwise): a note older
   * than the stored source is skipped and `force` overwrites it, and an exported note imports back to the same note.

@@ -1,7 +1,10 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
+import com.histmersion.api.Paging
 import com.histmersion.web.ListPaging.Listing
+import com.histmersion.api.automation.Agents
+import com.histmersion.api.jobs.{JobInfo, JobState}
+import com.histmersion.api.library.Ingest
 
 /** The paged list windows (jobs, runs, approvals): the heading's wording, when "Show older" is there, what a poll asks
   * for and how its answer, or an older page, lands.
@@ -78,5 +81,8 @@ class ListPagingSuite extends munit.FunSuite:
     val run = Agents.RunInfo("r1", "enrich-source", "a2020_b", "done")
     assert(RunsView.anyLive(List(run), page(2, None, "done" -> 1, "queued" -> 1)))
     assert(!RunsView.anyLive(List(run), page(1, None, "done" -> 1)))
-    assertEquals(ApprovalsView.qualifier(com.histmersion.api.ListFilters.ApprovalFilter()), Some("open"))
-    assertEquals(ApprovalsView.qualifier(com.histmersion.api.ListFilters.ApprovalFilter(state = Some("all"))), None)
+    assertEquals(ApprovalsView.qualifier(com.histmersion.api.automation.ListFilters.ApprovalFilter()), Some("open"))
+    assertEquals(
+      ApprovalsView.qualifier(com.histmersion.api.automation.ListFilters.ApprovalFilter(state = Some("all"))),
+      None
+    )

@@ -1,8 +1,9 @@
 package com.histmersion.domain
 
-import com.histmersion.api.research.articles.ArticleLint
+import com.histmersion.api.research.ArticleLint
 
-import com.histmersion.api.{
+import com.histmersion.api.{Plural, WireEnum}
+import com.histmersion.api.research.{
   ArticleCoverage,
   ArticleEdits,
   CitedSource,
@@ -14,11 +15,9 @@ import com.histmersion.api.{
   CritiqueRef,
   Critiques,
   CritiqueState,
-  DriftKind,
-  Lint,
-  Plural,
-  WireEnum
+  DriftKind
 }
+import com.histmersion.api.checks.Lint
 import com.histmersion.api.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject

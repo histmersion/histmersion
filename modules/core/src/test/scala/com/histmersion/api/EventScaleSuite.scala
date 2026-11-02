@@ -1,6 +1,6 @@
 package com.histmersion.api
 
-import com.histmersion.api.catalogue.events.EventsMarkdown
+import com.histmersion.api.catalogue.EventsMarkdown
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -10,6 +10,17 @@ import com.histmersion.domain.given
 import io.circe.parser.decode
 import io.circe.syntax.*
 import com.histmersion.util.data.exchange.BundleFormat
+import com.histmersion.api.catalogue.{
+  EventGeo,
+  EventGeometry,
+  EventList,
+  EventPatch,
+  EventPut,
+  EventScale,
+  EventSummary
+}
+import com.histmersion.api.exchange.BundleEvent
+import com.histmersion.api.views.EventDetail
 
 /** An event's scale (#1440): parsing, the defaults from the kind, the sub-event rule, the place's kind and the
   * geometry; the point an event can be given; the years it covers on the map; the Markdown.

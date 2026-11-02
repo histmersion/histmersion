@@ -1,10 +1,10 @@
 package com.histmersion.domain.research.workflows
 
-import com.histmersion.api.*
 import com.histmersion.domain.Caller
 import com.histmersion.domain.ReviewArticle.{Finding, Reviewer, Severity}
 import com.histmersion.domain.ReviewLedger.{Entry, Ledger, Status}
 import com.histmersion.domain.research.{ResearchStores, ResearchStoreSuite}
+import com.histmersion.api.research.Article
 
 /** What the review ledgers answer, the same on the database and in memory: a ledger written and read back, none for an
   * article never reviewed, refused for an article that does not exist, passed once no MAJOR is open, following its

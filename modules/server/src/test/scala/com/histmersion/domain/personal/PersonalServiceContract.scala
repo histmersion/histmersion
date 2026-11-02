@@ -1,6 +1,7 @@
 package com.histmersion.domain.personal
 
-import com.histmersion.api.personal.{ItemKind as MarkKind, MapZoom}
+import com.histmersion.api.personal.MapZoom
+import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.library.sources.{SourceReadable, SourceReferable}
 import com.histmersion.domain.personal.bookmarks.BookmarkService

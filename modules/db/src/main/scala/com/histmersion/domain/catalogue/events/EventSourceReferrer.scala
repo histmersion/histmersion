@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.{DeleteBlocker, DeleteBlockerKind, DeleteCount, DeletePart, RenameCount}
+import com.histmersion.api.library.{DeleteBlocker, DeleteBlockerKind, DeleteCount, DeletePart, RenameCount}
 import com.histmersion.domain.library.sources.referrers.*
 
 import com.histmersion.util.database.given

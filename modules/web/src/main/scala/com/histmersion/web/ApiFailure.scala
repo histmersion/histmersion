@@ -8,7 +8,7 @@ import org.scalajs.dom
 
 import sttp.client4.*
 
-import com.histmersion.api.*
+import com.histmersion.api.ApiError
 
 /** A request the server answered with an error status: the status and the server's own message. `unauthorized` is a
   * write refused by the API-key gate; `conflict` a stale `ifUpdatedAt`.

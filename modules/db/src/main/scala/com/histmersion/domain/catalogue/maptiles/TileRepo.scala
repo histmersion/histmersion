@@ -2,7 +2,7 @@ package com.histmersion.domain.catalogue.maptiles
 
 import com.histmersion.util.database.RangeSql
 
-import com.histmersion.api.{SiteTile, TileLayer}
+import com.histmersion.api.catalogue.{SiteTile, TileLayer}
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.catalogue.events.EventSql
 import com.histmersion.domain.catalogue.places.{PlaceSql, SiteTypesSql}

@@ -2,7 +2,7 @@ package com.histmersion.db
 
 import com.histmersion.domain.library.sources.SourceFixtures
 
-import com.histmersion.api.*
+import com.histmersion.api.{GeoPoint, ListPatch, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -10,6 +10,8 @@ import java.nio.file.Files
 import com.histmersion.values.{Confidence, SourceStatus}
 import com.histmersion.util.database.Migrate
 import com.histmersion.domain.library.sources.SourceNote
+import com.histmersion.api.catalogue.{Period, PeriodInput}
+import com.histmersion.api.library.{Edge, Finding, FindingInput, FindingsPatch, Source, SourcePatch}
 
 /** The write paths against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise. Covers the acceptance
   * lines of plan §1.9a that need a database: put→get, patch semantics, id allocation, the `ifUpdatedAt` precondition,

@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.api.AttestationPut
+import com.histmersion.api.catalogue.AttestationPut
 import com.augustnagro.magnum.*
 
 import javax.sql.DataSource

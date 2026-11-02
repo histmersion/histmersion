@@ -1,6 +1,6 @@
 package com.histmersion.web.settings
 
-import com.histmersion.api.{Backup, BackupInfo}
+import com.histmersion.api.backup.{Backup, BackupInfo}
 import com.histmersion.web.{ApiClient, Auth}
 import com.raquo.laminar.api.L.*
 

@@ -5,7 +5,7 @@ import com.histmersion.domain.library.LibraryPlan
 import com.histmersion.domain.research.ResearchPlan
 
 import com.histmersion.util.data.exchange.{BundleFormat, BundlePlan, MergeResolutionsFile}
-import com.histmersion.api.*
+import com.histmersion.api.MergeFixture
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
@@ -21,6 +21,23 @@ import com.histmersion.values.{
   IssueSeverity,
   MatchMethod,
   MatchOutcome
+}
+import com.histmersion.api.exchange.{
+  BundleArticleVersion,
+  BundleAttestation,
+  BundleEdge,
+  BundleInstance,
+  BundleKindCounts,
+  IssueCondition,
+  MatchCounts,
+  MergeApplyResult,
+  MergeDecision,
+  MergeIssue,
+  MergeMarkdown,
+  MergePlan,
+  MergePolicy,
+  MergeResolution,
+  MergeResolutions
 }
 
 /** `merge plan` as a pure function over the crafted fixture (docs/research-merge-import.md §8): the whole issue list in

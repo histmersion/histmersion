@@ -5,12 +5,14 @@ import com.histmersion.util.database.given
 import com.histmersion.util.database.RangeSql
 
 import scala.annotation.tailrec
-import com.histmersion.api.*
+import com.histmersion.api.Span
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import io.circe.Json
+import com.histmersion.api.catalogue.{Gazetteer, GazetteerKind, GazetteerLoadCounts, GazGeometry, GazRecord, PlaceMatch}
+import com.histmersion.api.library.ExternalId
 
 /** The gazetteer's external sources in the store (#1064, V071): joining a batch of [[GazRecord]]s to the places already
   * here BY IDENTIFIER, writing what each record says (its place, if it is the first to bring it; its names and links,

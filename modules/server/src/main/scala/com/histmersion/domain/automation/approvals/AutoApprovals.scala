@@ -2,17 +2,17 @@ package com.histmersion.domain.automation.approvals
 
 import com.histmersion.domain.automation.agents.*
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.*
+import com.histmersion.api.automation.Agents.*
 import com.histmersion.domain.AutopilotPolicy.{DraftFacts, GoalPlanFacts, PlannedFacts, Verdict}
-import com.histmersion.api.GoalPlans.DraftMode
-import com.histmersion.api.Managers.Feed
-import com.histmersion.api.Queue.QueueAdd
+import com.histmersion.api.automation.GoalPlans.DraftMode
+import com.histmersion.api.automation.Managers.Feed
+import com.histmersion.api.automation.Queue.QueueAdd
 
 import java.time.Instant
 import javax.sql.DataSource
+import com.histmersion.api.automation.{GoalPlans, Managers}
 
 /** The checked auto approvals (docs/research-process-managers.md "As built: the autopilot"): on every managers' tick,
   * each OPEN approval of the kinds a person used to decide by hand — an `article-plan` (propose-articles), a

@@ -2,10 +2,11 @@ package com.histmersion.domain.catalogue.places
 
 import com.histmersion.domain.*
 
-import com.histmersion.api.{Lint, Plural}
+import com.histmersion.api.Plural
+import com.histmersion.api.checks.Lint
 import com.histmersion.api.given
 
-import com.histmersion.api.Lint.{LintItem, LintRuleReport, Rule}
+import com.histmersion.api.checks.Lint.{LintItem, LintRuleReport, Rule}
 
 /** `lint --rule place-imported-point-area` (2026-10-09): the GeoNames and Wikidata places of an area kind (region,
   * polity, people — `places.sources.point-area-kinds`) that an import stored with only a point, before the importer

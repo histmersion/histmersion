@@ -6,7 +6,7 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.domain.catalogue.evidence.*
 
-import com.histmersion.api.*
+import com.histmersion.api.TimeSpan
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -15,6 +15,19 @@ import scala.util.Random
 import com.histmersion.values.Historicity
 import com.histmersion.util.database.Migrate
 import com.histmersion.db.*
+import com.histmersion.api.catalogue.{
+  CatalogRecord,
+  CorrectionCounts,
+  Corrections,
+  CorrectionStatus,
+  CorrectionTarget,
+  EventFields,
+  EventPatch,
+  EventPrecision,
+  EventPut,
+  Period
+}
+import com.histmersion.api.library.Filter
 
 /** The data-source assessment's P0 fixes against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): V088's
   * generated uncertainty agrees with core.EventPrecision; the map's feed leaves the imprecise events out (and counts

@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.maptiles.layers
 
-import com.histmersion.api.TilesApi
+import com.histmersion.api.catalogue.TilesApi
 import com.histmersion.util.database.Sql
 import com.histmersion.domain.catalogue.maptiles.{TileCell, TilePoint}
 

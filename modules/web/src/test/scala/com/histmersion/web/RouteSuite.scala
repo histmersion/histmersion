@@ -1,6 +1,7 @@
 package com.histmersion.web
 
-import com.histmersion.api.{Queue, WebPaths}
+import com.histmersion.api.WebPaths
+import com.histmersion.api.automation.Queue
 
 /** The web UI's addresses: every page has a path that reads back as the same page, sits under one of the four places,
   * and is one the server serves the app for; the old toolbar's windows each have exactly one page now; old addresses

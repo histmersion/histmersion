@@ -1,6 +1,5 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
@@ -9,6 +8,15 @@ import com.histmersion.domain.AgentProposals.ProposalAnswer
 import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewArticle.Finding
 import com.histmersion.values.SourceStatus
+import com.histmersion.api.research.{
+  ArticleCoverage,
+  ArticleEdits,
+  ArticleFilter,
+  CitedSource,
+  Coverage,
+  CoverageReason,
+  CoverageSource
+}
 
 /** The pure half of `review-article`: mechanical checks, reviewer validation, the merge (dedupe, worst verdict,
   * escalation), the gate, the rounds, the fixer's validation, the bookkeeping lines.
@@ -265,7 +273,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     Nil
   )
 
-  import ArticleEdits.{EditAnswer, Op}
+  import com.histmersion.api.research.ArticleEdits.{EditAnswer, Op}
   private def edit(op: Op, anchor: String, text: String = null) = EditAnswer(op, anchor, Option(text))
 
   /** The glossed sentence the fixer adds for C1. */

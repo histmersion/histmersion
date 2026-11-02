@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.goals
 
-import com.histmersion.api.{GoalPatch, GoalPut}
+import com.histmersion.api.automation.{GoalPatch, GoalPut}
 import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
 import com.histmersion.values.{GoalLinkKind, ScheduleKind}
 

@@ -1,11 +1,13 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
-import com.histmersion.api.TileProps as P
+import com.histmersion.api.TimeSpan
+import com.histmersion.api.catalogue.TileProps as P
 import com.histmersion.web.map.*
 import org.scalajs.dom
 
 import scala.scalajs.js
+import com.histmersion.api.catalogue.{EventGeo, EventPrecision, EventScale, EventTier}
+import com.histmersion.api.media.{MediaGeoHit, MediaThumb}
 
 /** The pure half of the tiled layers: a tile feature as the app's own point records. */
 object TileDecode:

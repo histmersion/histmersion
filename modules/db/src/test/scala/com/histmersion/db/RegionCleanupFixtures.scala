@@ -4,13 +4,15 @@ import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
-import com.histmersion.api.*
+import com.histmersion.api.GeoPoint
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.values.{PlaceKind, SourceStatus}
 import com.histmersion.util.database.Migrate
+import com.histmersion.api.catalogue.{Place, PlaceInput, PlaceName}
+import com.histmersion.api.library.{Finding, Source}
 
 /** The fixtures of [[RegionCleanupSuite]] and [[PlaceReviewSuite]]: a city with two Regiones, an Athenian tribe beside
   * Athens, provinces and a site on atlas grid squares' centres, a withdrawn duplicate and its replacement, a deme filed

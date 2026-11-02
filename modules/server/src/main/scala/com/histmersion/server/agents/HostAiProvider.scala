@@ -1,6 +1,6 @@
 package com.histmersion.server.agents
 
-import com.histmersion.api.Agents.ProviderKind
+import com.histmersion.api.automation.Agents.ProviderKind
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.HostOwned
 

@@ -2,7 +2,7 @@ package com.histmersion.domain.media.imports
 
 import com.histmersion.pluginhost.{PluginMedia, Polite, SpiValues}
 
-import com.histmersion.api.{ImageSize, MediaCount, MediaImportReport, MediaSample}
+import com.histmersion.api.media.{ImageSize, MediaCount, MediaImportReport, MediaSample}
 import com.histmersion.config.MediaConfig
 import com.histmersion.domain.{Licence, LicenceFamily}
 import com.histmersion.domain.media.assets.{ProviderAsset, Rights}

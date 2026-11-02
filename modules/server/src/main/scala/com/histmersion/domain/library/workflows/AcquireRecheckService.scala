@@ -7,11 +7,11 @@ import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope}
 import com.histmersion.util.jobs.BackgroundJob
 
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.AcquireChecks.*
-import com.histmersion.api.Queue.QueueAdd
+import com.histmersion.api.library.AcquireChecks.*
+import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.library.acquisition.{AcquireCheckRow, AcquireCheckService}
 import com.histmersion.domain.AcquireRecheck.{Action, Candidate, Held, JobPlan, Outcome, Settings, Shared, Tally}
 
@@ -19,6 +19,9 @@ import java.time.Instant
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantLock
 import javax.sql.DataSource
+import com.histmersion.api.automation.{AgentsApi, Queue}
+import com.histmersion.api.jobs.{JobInfo, JobState}
+import com.histmersion.api.library.AcquireChecks
 
 /** The acquisition list's LEGAL RE-CHECK (docs/research-process-managers.md "As built: the acquisition list's
   * re-check"), a model-free pass of the managers' tick like the ingest backlog's drain, every

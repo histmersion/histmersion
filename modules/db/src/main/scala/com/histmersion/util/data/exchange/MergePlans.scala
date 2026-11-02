@@ -1,6 +1,6 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.{BundleManifest, MergePlan, MergeResolutions}
+import com.histmersion.api.exchange.{BundleManifest, MergePlan, MergeResolutions}
 import com.histmersion.util.data.exchange.MergeState
 import com.histmersion.domain.{MergePlanner, MergeSettings}
 import com.histmersion.util.storage.{ByteSource, ContentStore}

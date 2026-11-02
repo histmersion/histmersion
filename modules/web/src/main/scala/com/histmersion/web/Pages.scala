@@ -1,12 +1,15 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
+import com.histmersion.api.Wording
 import com.histmersion.web.library
-import com.histmersion.api.UiNotices.Board
+import com.histmersion.api.instance.UiNotices.Board
 import com.raquo.laminar.api.L.*
 import com.raquo.laminar.codecs.StringAsIsCodec
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.instance.{UiConfig, UiNotices}
+import com.histmersion.api.jobs.JobInfo
 
 /** The pages of Library, Research and Settings, and of single items (a run, a goal, a place…), shown over Explore —
   * which stays as it is underneath, hidden, so coming back finds the map where it was. Each section shows the view that
@@ -165,7 +168,7 @@ object Pages:
     else
       div(
         cls := "activity-detail",
-        ActivityView.chips(ui, None, None, Val(com.histmersion.api.Activity.Counts())),
+        ActivityView.chips(ui, None, None, Val(com.histmersion.api.automation.Activity.Counts())),
         p(
           cls := "muted",
           RouteLink(Route.Activity(ActivityTab.Everything), "← The whole activity list"),
@@ -222,7 +225,7 @@ object Pages:
       child <-- job.signal.map {
         case None          => p(cls := "muted", "Loading…")
         case Some(Left(m)) => p(cls := "form-error", role := "alert", s"Could not read job $id: $m")
-        case Some(Right(j)) if j.kind == com.histmersion.api.automation.agents.AgentJobKinds.Agent.kind.value =>
+        case Some(Right(j)) if j.kind == com.histmersion.api.automation.AgentJobKinds.Agent.kind.value =>
           Router.go(Route.Run(j.id), push = false)
           p(cls := "muted", "Loading…")
         case Some(Right(j)) =>
@@ -234,7 +237,7 @@ object Pages:
 
   /** Pause, resume and cancel of a long background job, on its page. */
   private def jobControls(j: JobInfo): HtmlElement =
-    val e = com.histmersion.api.Activity.Entry(
+    val e = com.histmersion.api.automation.Activity.Entry(
       s"job:${j.id}",
       "job",
       j.createdAt,

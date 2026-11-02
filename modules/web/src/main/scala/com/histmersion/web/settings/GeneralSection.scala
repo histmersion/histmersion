@@ -1,6 +1,7 @@
 package com.histmersion.web.settings
 
-import com.histmersion.api.{ConfigEdit, MapStartConfig, UiConfig}
+import com.histmersion.api.settings.ConfigEdit
+import com.histmersion.api.instance.{MapStartConfig, UiConfig}
 import com.histmersion.web.{Auth, Theme, ThemeChoice, UiState}
 import com.histmersion.web.map.MapMotion
 import com.raquo.laminar.api.L.*

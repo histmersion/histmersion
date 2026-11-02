@@ -1,6 +1,6 @@
 package com.histmersion.web.setup
 
-import com.histmersion.api.MapArea
+import com.histmersion.api.catalogue.MapArea
 
 /** The settings and the downloads a setup's choices come to. Pure. */
 object SetupPlan:

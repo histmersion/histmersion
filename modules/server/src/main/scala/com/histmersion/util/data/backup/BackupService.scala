@@ -1,6 +1,7 @@
 package com.histmersion.util.data.backup
 
-import com.histmersion.api.{ApiError, Backup, BackupInfo, BackupResult}
+import com.histmersion.api.ApiError
+import com.histmersion.api.backup.{Backup, BackupInfo, BackupResult}
 import com.histmersion.config.AppConfig
 import com.histmersion.util.data.DataContributions
 import com.histmersion.util.database.Transactor

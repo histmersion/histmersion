@@ -1,11 +1,11 @@
 package com.histmersion.cli
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.monovore.decline.Command
 import java.nio.file.Files
 import java.util.UUID
 import com.histmersion.util.data.exchange.{BundleFormat, BundleTar}
+import com.histmersion.api.exchange.{Bundle, BundleBlobs, BundleInstance, BundleManifest, BundleReference}
 
 /** `histmersion bundle …`: the subcommands parse, and the manifest of a downloaded bundle is read locally (it is
   * printed after an export). No server.

@@ -1,13 +1,12 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.{
-  ApiError,
+import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.exchange.{
   Bundle,
   BundleImportResult,
   BundleManifest,
   BundleUpload,
   BundleVerifyResult,
-  InstanceInfo,
   MergeApplyJob,
   MergeApplyRequest,
   MergeDetail,
@@ -17,9 +16,9 @@ import com.histmersion.api.{
   MergePlan,
   MergePlanRequest,
   MergeResolutions,
-  MergeSession,
-  Write
+  MergeSession
 }
+import com.histmersion.api.aliases.InstanceInfo
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.storage.{ByteSource, HandedFile}
 

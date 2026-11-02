@@ -2,12 +2,12 @@ package com.histmersion.domain.catalogue.places
 
 import com.histmersion.util.database.given
 
-import com.histmersion.api.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.RangeSql
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.{Param, Sql}
+import com.histmersion.api.catalogue.{Geocode, PlaceRebuildResult}
 
 /** The MATERIALISATION of `finding_places` — the only place that decides which findings belong to which places: the
   * whole table rebuilt, one source's findings or some places' findings placed again inside the caller's transaction,

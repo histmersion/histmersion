@@ -7,7 +7,7 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
-import com.histmersion.api.*
+import com.histmersion.api.TimeSpan
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -15,6 +15,8 @@ import com.augustnagro.magnum.*
 import com.histmersion.values.PlaceKind
 import com.histmersion.util.data.exchange.BundleScope
 import com.histmersion.util.database.Migrate
+import com.histmersion.api.catalogue.{EventGeoList, EventPatch, EventPut, EventSummary, Place, PlaceInput, PlaceName}
+import com.histmersion.api.library.Filter
 
 /** An event's scale (V078, #1440) and the map's events feed against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped
   * otherwise): the column and its check, the scale derived from the kind, the sub-event rule, the place's kind and the

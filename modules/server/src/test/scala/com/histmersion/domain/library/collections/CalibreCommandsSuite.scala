@@ -2,7 +2,6 @@ package com.histmersion.domain.library.collections
 
 import com.histmersion.domain.library.sources.SourceFixtures
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.server.{Composition, OfflineConverter}
 import com.histmersion.values.SourceStatus
@@ -12,6 +11,7 @@ import ox.supervised
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
+import com.histmersion.api.library.Source
 
 /** Every `histmersion calibre …` command, run end to end over a fixture library: a server on port 0 over a database of
   * this suite's own, seeded with sources, and the CLI as a separate process (its stdout, stderr and exit code are what

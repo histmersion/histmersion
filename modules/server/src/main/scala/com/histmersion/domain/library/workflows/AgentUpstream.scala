@@ -1,9 +1,24 @@
 package com.histmersion.domain.library.workflows
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.library.acquisition.AcquisitionControllers
+import com.histmersion.api.library.{
+  Assessment,
+  AssessRequest,
+  CandidateMark,
+  CandidateSweep,
+  CandidateSweepRequest,
+  DiscoverResult,
+  FollowupsRequest,
+  FollowupsResult,
+  IngestReport,
+  IngestRequest,
+  RefsRequest,
+  RefsResult,
+  SourceCandidate,
+  WorkRef
+}
 
 /** The acquisition operations an agent run uses — OpenAlex/Crossref metadata, the deposited reference list, the
   * retraction/impact assessment, the citation graph forward — as a small seam over [[AcquisitionControllers]] (built

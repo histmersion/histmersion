@@ -5,8 +5,136 @@ import sttp.client4.httpclient.HttpClientSyncBackend
 import sttp.tapir.client.sttp4.{SttpClientInterpreter, SttpClientOptions}
 import sttp.tapir.PublicEndpoint
 import sttp.model.Uri
-import com.histmersion.api.*
+import com.histmersion.api.{Api, ApiError, Dataset, OpsApi, Paging, SpatialHierarchyResult}
 import com.histmersion.config.*
+import com.histmersion.api.aliases.{InstanceInfo, LabelRename, LabelRenamed}
+import com.histmersion.api.automation.{
+  AgentStateDeleted,
+  AgentStateEntry,
+  AgentStatePut,
+  Goal,
+  GoalDeleted,
+  GoalList,
+  GoalPatch,
+  GoalPut,
+  ListFilters,
+  Queue
+}
+import com.histmersion.api.backup.{BackupInfo, BackupStatus, RestoreRequest, RestoreResult}
+import com.histmersion.api.basemap.{BasemapApi, BasemapFetchQuery, BasemapRemoved, BasemapRemoveQuery, BasemapStatus}
+import com.histmersion.api.catalogue.{
+  Attestation,
+  AttestationDeleted,
+  AttestationList,
+  AttestationPatch,
+  AttestationPut,
+  EventDeleted,
+  EventList,
+  EventPatch,
+  EventPut,
+  GazetteerSourceInfo,
+  HistoricalPeriod,
+  ManualPlaceName,
+  PeriodDetail,
+  PeriodImportResult,
+  PlaceAdd,
+  PlaceGone,
+  PlaceHit,
+  PlaceImportResult,
+  PlaceMergeIn,
+  PlaceNameAdd,
+  PlaceNameChanged,
+  PlaceNameRemove,
+  PlaceOverride,
+  PlaceOverrideChanged,
+  PlaceOverrideSet,
+  PlaceRebuildResult,
+  PlaceRemoveIn,
+  PlaceSummary,
+  PlaceTreeRow
+}
+import com.histmersion.api.checks.{FormatCheck, FormatReport, Lint}
+import com.histmersion.api.exchange.{
+  BundleImportResult,
+  BundleUpload,
+  BundleVerifyResult,
+  MergeApplyJob,
+  MergeApplyRequest,
+  MergeDetail,
+  MergeImportRequest,
+  MergeInfo,
+  MergeLedger,
+  MergePlan,
+  MergePlanRequest
+}
+import com.histmersion.api.instance.{About, Health, VersionInfo}
+import com.histmersion.api.jobs.JobInfo
+import com.histmersion.api.library.{
+  ContradictionsResult,
+  EdgesResolved,
+  Facet,
+  Filter,
+  GeoHit,
+  GeoHitPage,
+  IngestAccepted,
+  IngestParams,
+  InstanceLabel,
+  NeighborRow,
+  NoteImport,
+  PassageResult,
+  Query,
+  RenameRequest,
+  SearchHit,
+  SearchResult,
+  SeedRequest,
+  SeedResult,
+  SourceAlias,
+  SourceDeleteRequest,
+  SourceDeletion,
+  SourceGraph,
+  SourcePatch,
+  SourcePut,
+  SourceRenamed,
+  SourceWithFindings,
+  TimeHistogram
+}
+import com.histmersion.api.maintenance.{ReindexResult, VacuumRequest}
+import com.histmersion.api.media.{
+  AssetDetail,
+  AssetInfo,
+  AssetInput,
+  AssetLink,
+  AssetLinkDeleted,
+  AssetLinkList,
+  AssetLinkPut,
+  AssetPatch,
+  AssetsStored,
+  FigureLicenceFill,
+  MediaCoversReport,
+  MediaCoversRequest,
+  MediaFacets,
+  MediaImportReport,
+  MediaImportRequest,
+  MediaItem,
+  MediaList,
+  MediaProviderInfo,
+  SourceCoverParams
+}
+import com.histmersion.api.research.{
+  ArticleDeleted,
+  ArticleEdits,
+  ArticleImport,
+  ArticleList,
+  ArticlePatch,
+  ArticlePut,
+  ArticleReviewView,
+  ArticleVersion,
+  ArticleVersionFull,
+  ArticleView,
+  Coverage
+}
+import com.histmersion.api.settings.{ConfigEdit, ConfigEditApi, ReloadReport}
+import com.histmersion.api.views.{EventDetail, PlaceDetail, QueueListing}
 
 /** Typed HTTP client over the `Api` contract: each call is derived from the same Tapir endpoint the server interprets,
   * so request/response shapes cannot drift. Sync (java.net.http), native-safe. `token` is the
@@ -55,7 +183,7 @@ final class Client(val serverUrl: String, token: Option[String] = None):
           case sttp.tapir.DecodeResult.Value(Left(e))  =>
             // a refusal of the request itself (a collection's citekey collision) exits as a bad command line does
             val code =
-              if e.code.contains(com.histmersion.api.library.collections.CollectionsApi.Usage) then ExitCode.Usage
+              if e.code.contains(com.histmersion.api.library.CollectionsApi.Usage) then ExitCode.Usage
               else ExitCode.Refused
             Left(CliError(e.message, exitCode = code))
           case _ =>

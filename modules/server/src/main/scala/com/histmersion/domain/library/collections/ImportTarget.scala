@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.collections
 
-import com.histmersion.api.Acquire
+import com.histmersion.api.library.Acquire
 import com.histmersion.plugin.CollectionItem
 
 /** Where an import writes, once the citekey is known. */

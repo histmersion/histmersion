@@ -1,6 +1,7 @@
 package com.histmersion.domain.personal
 
-import com.histmersion.api.personal.{ItemKind as MarkKind, NoteText}
+import com.histmersion.api.personal.NoteText
+import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.domain.ItemKey
 import com.histmersion.domain.personal.notes.NoteEditRefused
 

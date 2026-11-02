@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.{BundleCorrection, BundleEvent, BundleEventAlias, BundleEventCatalogue, BundleFiles}
+import com.histmersion.api.exchange.{BundleCorrection, BundleEvent, BundleEventAlias, BundleEventCatalogue, BundleFiles}
 import com.histmersion.api.given
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.data.{DataOwner, TableName}

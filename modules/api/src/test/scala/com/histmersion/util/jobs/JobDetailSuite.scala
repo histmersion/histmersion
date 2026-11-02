@@ -1,6 +1,9 @@
 package com.histmersion.util.jobs
 
-import com.histmersion.api.{InitPlan, JobDetail, SkippedPeriod, VacuumPlan}
+import com.histmersion.api.exchange.InitPlan
+import com.histmersion.api.jobs.JobDetail
+import com.histmersion.api.catalogue.SkippedPeriod
+import com.histmersion.api.maintenance.VacuumPlan
 import io.circe.parser.decode
 import io.circe.syntax.*
 

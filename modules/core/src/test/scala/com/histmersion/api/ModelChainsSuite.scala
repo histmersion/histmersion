@@ -5,8 +5,9 @@ import com.histmersion.domain.*
 import com.histmersion.config.given
 import com.histmersion.domain.given
 
-import com.histmersion.api.Agents.{ModelRef, ProviderKind}
-import com.histmersion.api.ModelChains.*
+import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
+import com.histmersion.api.automation.ModelChains.*
+import com.histmersion.api.automation.{Agents, AgentsMarkdown}
 
 class ModelChainsSuite extends munit.FunSuite:
 
@@ -141,7 +142,7 @@ class ModelChainsSuite extends munit.FunSuite:
     assertEquals(verdict(List(s.copy(freesAt = None))), (false, None))
 
   test("Markdown: the chains with the model a call would use, the allowances with use and reset, the doctor"):
-    import Agents.*
+    import com.histmersion.api.automation.Agents.*
     val m = ModelsInfo(
       enabled = true,
       Nil,

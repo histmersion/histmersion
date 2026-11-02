@@ -1,6 +1,10 @@
 package com.histmersion.api
 
-import com.histmersion.api.AcquireChecks.*
+import com.histmersion.api.library.AcquireChecks.*
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.jobs.{JobDetail, JobInfo}
+import com.histmersion.api.library.AcquireChecksMarkdown
+import com.histmersion.api.views.{AutopilotStatus, QueueListing}
 
 /** The acquisition list's re-check as every surface shows it: an item's last check under it in `queue acquire`, the
   * status line (`agent autopilot status`, `about`) and a pass's report. Pure.

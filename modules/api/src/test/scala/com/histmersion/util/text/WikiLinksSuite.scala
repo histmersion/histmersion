@@ -1,6 +1,8 @@
 package com.histmersion.util.text
 
 /** The `[[target]]` links of wiki text, whatever record holds it. */
+
+import com.histmersion.api.text.WikiLinks
 class WikiLinksSuite extends munit.FunSuite:
 
   test("targets: links with a label or an anchor, escaped ones too; not embeds or in-page anchors"):

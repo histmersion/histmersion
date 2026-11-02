@@ -1,7 +1,7 @@
 package com.histmersion.util.data.checks
 
-import com.histmersion.api.Lint
-import com.histmersion.api.Lint.{LintFixResult, LintItem, LintRuleReport, Rule}
+import com.histmersion.api.checks.Lint
+import com.histmersion.api.checks.Lint.{LintFixResult, LintItem, LintRuleReport, Rule}
 import com.histmersion.config.AppConfig
 import com.histmersion.util.data.DataOwner
 import com.histmersion.util.database.Transactor

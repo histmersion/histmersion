@@ -252,7 +252,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assertEquals(infos.map(_.name).take(2), List("wikidata", "depicts"))
     assertEquals(
       infos.last,
-      com.histmersion.api
+      com.histmersion.api.media
         .MediaProviderInfo("zq-portal", "Zq portal objects", "places", "", "zq-plugin", builtin = false, "cc0,cc-by")
     )
     assert(infos.find(_.name == "met").exists(i => i.builtin && i.plugin == "media-met"), infos.toString)
@@ -260,7 +260,8 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assertEquals(cats.map(_.id), List("gvp", "noaa", "wikidata", "zq-quakes"))
     assertEquals(
       cats.last,
-      com.histmersion.api.CatalogProviderInfo("zq-quakes", "Zq quakes", "CC0-1.0", "Zq (2026)", "https://zq.example")
+      com.histmersion.api.catalogue
+        .CatalogProviderInfo("zq-quakes", "Zq quakes", "CC0-1.0", "Zq (2026)", "https://zq.example")
     )
     assertEquals(BuiltinCatalogues.resolve("zq-quakes", g.registries.eventCatalogues), Right("zq-quakes"))
 

@@ -2,10 +2,9 @@ package com.histmersion.server.agents
 
 import com.histmersion.domain.automation.agents.*
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.*
+import com.histmersion.api.automation.Agents.*
 import io.circe.parser
 
 import java.net.URI
@@ -14,6 +13,7 @@ import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 import scala.jdk.CollectionConverters.*
+import com.histmersion.api.automation.Agents
 
 /** `agent doctor`: every provider, checked WITHOUT spending anything (docs/research-embedded-agents.md §15). Per
   * provider: whether a role's chain uses it, its key (never shown), its base URL, the free model listing (`GET

@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.acquisition
 
-import com.histmersion.api.{Acquire, SourceCandidate}
+import com.histmersion.api.library.{Acquire, SourceCandidate}
 import com.histmersion.domain.CoreQuota
 
 /** The acquisition's records the in-memory services share: the Retraction Watch mirror, the recorded assessments (each
@@ -11,7 +11,7 @@ final case class AcquisitionState(
     retractions: Map[String, Acquire.RetractionRow],
     assessments: Map[String, (AssessmentRecord, String)],
     candidates: List[SourceCandidate],
-    watches: Map[(String, String, String, String), com.histmersion.api.CandidateWatch],
+    watches: Map[(String, String, String, String), com.histmersion.api.library.CandidateWatch],
     quotas: Map[String, CoreQuota.State],
     checks: Map[Int, AcquireCheckRow]
 )

@@ -3,12 +3,13 @@ package com.histmersion.domain.research.workflows
 import com.histmersion.domain.automation.approvals.ApprovalChecks
 import com.histmersion.domain.automation.managers.{ManagerContext, ManagerKindDefinition}
 
-import com.histmersion.api.Agents.*
-import com.histmersion.api.{ApiError, GoalPlans}
-import com.histmersion.api.Managers.*
+import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.ApiError
+import com.histmersion.api.automation.GoalPlans
+import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.{AutopilotPolicy, ManagerPolicy}
 import com.histmersion.domain.AutopilotPolicy.{DraftFacts, PlannedFacts, Verdict}
-import com.histmersion.api.GoalPlans.DraftMode
+import com.histmersion.api.automation.GoalPlans.DraftMode
 import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts}
 import com.histmersion.config.{AgentsConfig, AgentSeedConfig, LibraryAgentsConfig}
 import com.histmersion.domain.{ManagerDefaults, SeedPlanDefaults}

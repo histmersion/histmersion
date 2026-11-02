@@ -1,6 +1,6 @@
 package com.histmersion.domain.media.figures
 
-import com.histmersion.api.FigureLicenceFill
+import com.histmersion.api.media.FigureLicenceFill
 import com.histmersion.util.database.Transactor
 
 /** A source's figures take the source's licence: the figures with no licence whose source records one, counted, and

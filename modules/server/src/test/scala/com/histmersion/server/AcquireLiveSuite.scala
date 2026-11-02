@@ -2,10 +2,10 @@ package com.histmersion.server
 
 import com.histmersion.domain.library.acquisition.OpenAlexDiscovery
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.library.acquisition.*
+import com.histmersion.api.library.Acquire
 
 /** ONE live call to the real upstreams, gated on `HISTMERSION_LIVE_APIS=1`.
   *

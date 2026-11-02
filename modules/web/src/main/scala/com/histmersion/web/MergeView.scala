@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
+import com.histmersion.api.{Plural, RegisteredPlanMatches, YearFmt}
 import com.histmersion.web.map.*
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
@@ -10,6 +10,28 @@ import scala.scalajs.js
 import scala.scalajs.js.Thenable.Implicits.*
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.values.{BundleKind, DecisionKind, IssueKind, IssueSeverity, MatchOutcome}
+import com.histmersion.api.exchange.{
+  BundleUpload,
+  IssueField,
+  IssuePlace,
+  IssueSide,
+  IssueSpan,
+  IssueText,
+  MergeApplyJob,
+  MergeApplyRequest,
+  MergeApplyResult,
+  MergeDecision,
+  MergeIssue,
+  MergeJobState,
+  MergeMarkdown,
+  MergePlan,
+  MergePlanRequest,
+  MergeResolution,
+  MergeResolutions,
+  MergeResolutionsText
+}
+import com.histmersion.api.instance.{MapStartConfig, UiConfig}
+import com.histmersion.api.library.SourceMatch
 
 /** The merge review screen (`/merge`, docs/research-merge-import.md §6.5, milestone M6): upload another collection's
   * bundle, read its plan — the matched sources, every issue grouped (open first, then decided, conditional, defaults,

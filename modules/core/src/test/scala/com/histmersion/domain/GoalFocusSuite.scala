@@ -1,14 +1,14 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
-import com.histmersion.api.Autopilot.{FocusGoal, FocusInfo, FocusWaiting}
+import com.histmersion.api.automation.Autopilot.{FocusGoal, FocusInfo, FocusWaiting}
 import com.histmersion.domain.GoalFocus.*
-import com.histmersion.api.Managers.*
+import com.histmersion.api.automation.Managers.*
 import com.histmersion.values.GoalStatus
+import com.histmersion.api.automation.{Autopilot, AutopilotMarkdown}
 
 /** The autopilot's focus, pure (docs/research-process-managers.md "As built: the focus"): the selection order (closest
   * to done, depth-first, pins, a person's priority, ties), the sticky active set and what frees a slot (reviewed,

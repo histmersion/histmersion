@@ -2,12 +2,13 @@ package com.histmersion.domain.catalogue.places
 
 import com.histmersion.util.database.given
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.catalogue.places.PointAreas.{Dating, Group, Listed}
 
 import com.augustnagro.magnum.*
+import com.histmersion.api.catalogue.{Gazetteer, Geocode}
+import com.histmersion.api.checks.Lint
 
 /** `lint --rule place-imported-point-area` (2026-10-09): the GeoNames and Wikidata places of an area kind stored with
   * only a point — what the importer no longer creates ([[Gazetteer.dropsPointArea]]). The listing reads; [[remove]]

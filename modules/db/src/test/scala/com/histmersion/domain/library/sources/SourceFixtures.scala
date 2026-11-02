@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.sources
 
-import com.histmersion.api.*
+import com.histmersion.api.ApiError
 import com.histmersion.domain.library.sources.referrers.SourceReferrers
 import com.histmersion.util.ocr.Chunk
 
@@ -8,6 +8,8 @@ import com.augustnagro.magnum.*
 import com.histmersion.domain.catalogue.places.FindingPlacement
 import com.histmersion.util.database.Transactor
 import javax.sql.DataSource
+import com.histmersion.api.library.{Edge, FindingRow, RenameCounts, Source, SourceAlias, SourceDetail, SourcePatch}
+import com.histmersion.api.maintenance.ReindexResult
 
 /** The db suites' reads and writes of the library's sources on a database of their own, each in a transaction of its
   * own as the service runs them. A rename follows into every domain's records through the same referrers the server

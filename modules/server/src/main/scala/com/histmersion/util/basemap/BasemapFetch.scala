@@ -1,6 +1,6 @@
 package com.histmersion.util.basemap
 
-import com.histmersion.api.*
+import com.histmersion.api.BBox
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -13,6 +13,9 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets.UTF_8
 import scala.collection.mutable
 import scala.util.Using
+import com.histmersion.api.backup.Backup
+import com.histmersion.api.basemap.{Basemap, BasemapLayer}
+import com.histmersion.api.library.Source
 
 /** A regional extract of a remote PMTiles archive (a Protomaps build, Mapterhorn's planet), read with HTTP range
   * requests — the way `pmtiles extract` reads it, and what both providers document for a partial download — and written
@@ -82,7 +85,7 @@ object BasemapFetch:
   def perZoomLine(rows: List[(Int, Int, Long)]): String =
     rows
       .map((z, n, b) =>
-        s"zoom $z: ${com.histmersion.api.Plural.count(n, "tile")}, ${com.histmersion.api.Backup.humanBytes(b)}"
+        s"zoom $z: ${com.histmersion.api.Plural.count(n, "tile")}, ${com.histmersion.api.backup.Backup.humanBytes(b)}"
       )
       .mkString(" · ")
 

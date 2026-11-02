@@ -6,10 +6,9 @@ import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.augustnagro.magnum.transact
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.GoalPlans.LinkKind
+import com.histmersion.api.automation.GoalPlans.LinkKind
 import com.histmersion.db.QueueRows
 import com.histmersion.domain.automation.goals.{GoalLinkRepo, GoalRepo}
 import com.histmersion.util.database.Migrate
@@ -18,6 +17,8 @@ import com.histmersion.domain.library.workflows.WatchManagerKind
 import java.time.LocalDate
 import java.util.concurrent.ConcurrentLinkedQueue
 import com.histmersion.values.SourceStatus
+import com.histmersion.api.automation.{Goal, GoalPut, Queue}
+import com.histmersion.api.library.{Source, WorkRef}
 
 /** The deterministic new-source search (#3761) over fake indexes: what a sweep stores, the watermarks it keeps,
   * deduplication across indexes and against the corpus and the acquisition list, a failed index, a dry run, marking —

@@ -2,13 +2,20 @@ package com.histmersion.domain
 
 import com.histmersion.domain.catalogue.events.EventPlan
 
-import com.histmersion.api.*
 import com.histmersion.api.given
 
 import java.util.UUID
 import com.histmersion.values.BundleKind
 import com.histmersion.util.data.exchange.BundlePlan
 import com.histmersion.util.data.exchange.BundleEntities
+import com.histmersion.api.exchange.{
+  BundleCorrection,
+  BundleEvent,
+  BundleEventCandidate,
+  BundleEventCatalogue,
+  BundleEventCheck,
+  BundleKindCounts
+}
 
 /** The merge's side of the `.hmx` bundle: localizing the event-catalogue sets, folding two events, and the import
   * decisions.

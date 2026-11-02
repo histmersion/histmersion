@@ -1,6 +1,6 @@
 package com.histmersion.domain.research.articles
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Write}
 import com.histmersion.domain.Caller
 import com.histmersion.domain.research.ResearchState
 import com.histmersion.util.database.Transactor
@@ -12,6 +12,21 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
+import com.histmersion.api.catalogue.EventArticleRef
+import com.histmersion.api.research.{
+  Article,
+  ArticleLinks,
+  ArticlePatch,
+  ArticleRef,
+  ArticleRow,
+  Articles,
+  ArticleVersion,
+  ArticleVersionFull,
+  ArticleView,
+  Backlink,
+  CitedSource,
+  CritiqueReason
+}
 
 /** Research's articles as records: one article with the links it makes and what links to it, written whole or merged
   * from a patch (its critique reasons beside it), renamed (the old slug kept, every `[[old]]` rewritten), deleted, and

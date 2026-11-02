@@ -1,12 +1,13 @@
 package com.histmersion.server
 
 import ox.supervised
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.ReviewArticle.{Finding, Reviewer, Severity}
 import com.histmersion.domain.ReviewLedger.{Closure, Entry, Ledger, Status}
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
+import com.histmersion.api.automation.{Agents, Goal}
+import com.histmersion.api.research.{ArticleList, ArticleReviewView, ReviewGoal, ReviewState}
 
 /** An article's review state and history over every surface: the badge on each `GET /api/articles` row (derived from
   * the review manager's item and the ledger counted in SQL), `GET /api/articles/{slug}/review` (the history from the

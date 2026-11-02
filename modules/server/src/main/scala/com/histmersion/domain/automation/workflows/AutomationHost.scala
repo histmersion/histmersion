@@ -1,9 +1,11 @@
 package com.histmersion.domain.automation.workflows
 
-import com.histmersion.api.{ApiError, BackupStatus, Goal, GoalPatch, GoalPut}
-import com.histmersion.api.Agents.{Pipeline, ProbeAnswer, Role, RunRequest}
-import com.histmersion.api.GoalPlans.LinkKind
-import com.histmersion.api.Lint.LintFixResult
+import com.histmersion.api.ApiError
+import com.histmersion.api.backup.BackupStatus
+import com.histmersion.api.automation.{Goal, GoalPatch, GoalPut}
+import com.histmersion.api.automation.Agents.{Pipeline, ProbeAnswer, Role, RunRequest}
+import com.histmersion.api.automation.GoalPlans.LinkKind
+import com.histmersion.api.checks.Lint.LintFixResult
 import com.histmersion.domain.PlanGoal
 
 /** What the engine asks of the rest of the server (a port the engine owns): its goals, a run's target and options, a

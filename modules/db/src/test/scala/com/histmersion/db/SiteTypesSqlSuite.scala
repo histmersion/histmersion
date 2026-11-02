@@ -2,11 +2,11 @@ package com.histmersion.db
 
 import com.histmersion.domain.catalogue.places.SiteTypesSql
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.{Param, Sql}
+import com.histmersion.api.catalogue.SiteTypes
 
 /** `SiteTypesSql.expr` — the map tiles' site type in SQL — answers what [[SiteTypes.of]] answers, for every entry of
   * its tables and the cases between them (HISTMERSION_TEST_DB_URL; skipped otherwise).

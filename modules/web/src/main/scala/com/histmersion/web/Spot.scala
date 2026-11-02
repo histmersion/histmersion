@@ -1,10 +1,10 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
 import com.histmersion.web.map.*
 import org.scalajs.dom
 
 import scala.scalajs.js
+import com.histmersion.api.library.GeoHit
 
 /** Findings at one point: one marker, counting them all (a point holds several claims). */
 final case class Spot(lat: Double, lon: Double, items: List[GeoHit])

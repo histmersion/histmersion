@@ -1,11 +1,13 @@
 package com.histmersion.web
 
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.*
+import com.histmersion.api.{BBox, GeoPick}
 import com.histmersion.web.map.*
 import org.scalajs.dom
 
 import scala.scalajs.js
+import com.histmersion.api.instance.UiConfig
+import com.histmersion.api.media.MediaProvider
 
 /** "Only sources in view" toggle: mirrors the map's viewport into UiState.bbox so the server-side filter and the
   * shareable URL hash always agree with what the user is looking at.

@@ -1,6 +1,6 @@
 package com.histmersion.pluginhost
 
-import com.histmersion.api.{PluginsReport, PluginStatus}
+import com.histmersion.api.plugins.{PluginsReport, PluginStatus}
 import com.histmersion.plugin.*
 import org.ekrich.config.Config
 

@@ -1,5 +1,5 @@
 package com.histmersion.domain.automation.agents
-import com.histmersion.api.ModelChains.{LimitSpec, Spend}
+import com.histmersion.api.automation.ModelChains.{LimitSpec, Spend}
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.Jsonb

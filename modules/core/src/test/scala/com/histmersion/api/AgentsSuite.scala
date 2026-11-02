@@ -5,7 +5,8 @@ import com.histmersion.domain.*
 import com.histmersion.config.given
 import com.histmersion.domain.given
 
-import com.histmersion.api.Agents.*
+import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.automation.{AgentsMarkdown, Goal, GoalPlans, PlanQuota}
 
 class AgentsSuite extends munit.FunSuite:
 
@@ -158,7 +159,7 @@ class AgentsSuite extends munit.FunSuite:
     assertEquals(io.circe.parser.decode[RunParams]("""{"fix":true}"""), Right(RunParams(fix = Some(true))))
 
   test("Markdown: a plan and a draft as a person reads them before approving; a goal with its links and schedules"):
-    import GoalPlans.*
+    import com.histmersion.api.automation.GoalPlans.*
     val plan = Plan(
       "g",
       "covers it",

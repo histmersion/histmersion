@@ -1,6 +1,5 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.TestDb
@@ -11,6 +10,7 @@ import com.histmersion.util.storage.{Location, Storage}
 
 import com.augustnagro.magnum.*
 import java.nio.file.{Files, Path, StandardCopyOption}
+import com.histmersion.api.catalogue.{GazetteerExtract, GazetteerKind, GazetteerManifest}
 
 /** The external gazetteer sources end to end (#1064): a pinned extract (checksum verified BEFORE anything is read, a
   * mismatch refused, a missing file downloaded through the seam), and the LPF drop folder (a hand-written Linked Places

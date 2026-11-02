@@ -1,17 +1,15 @@
 package com.histmersion.domain.catalogue.evidence
 
-import com.histmersion.api.catalogue.events.EventEntry
+import com.histmersion.api.catalogue.EventEntry
 
 import com.histmersion.values.AttestationTarget
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
-import com.histmersion.api.{
-  Api,
-  ApiError,
+import com.histmersion.api.{Api, ApiError, BBox, TimeSpan, Write}
+import com.histmersion.api.catalogue.{
   ArticleEventLead,
   Attestation,
-  BBox,
   CatalogProviderInfo,
   EventCandidatesRequest,
   EventLead,
@@ -24,13 +22,11 @@ import com.histmersion.api.{
   EventPassage,
   EventTaxonomy,
   EventTier,
-  Filter,
-  JobInfo,
   LeadFacts,
-  Period,
-  TimeSpan,
-  Write
+  Period
 }
+import com.histmersion.api.library.Filter
+import com.histmersion.api.jobs.JobInfo
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.Caller
@@ -324,4 +320,4 @@ final class EventLinksControllers(
       )
 
 object EventLinksControllers:
-  val CandidatesJobKind: String = com.histmersion.api.catalogue.evidence.EvidenceJobKinds.EventsCandidates.kind.value
+  val CandidatesJobKind: String = com.histmersion.api.catalogue.EvidenceJobKinds.EventsCandidates.kind.value

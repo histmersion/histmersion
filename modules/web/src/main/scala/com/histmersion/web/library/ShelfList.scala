@@ -1,6 +1,7 @@
 package com.histmersion.web.library
 
-import com.histmersion.api.personal.{ItemKind, UnreadPage}
+import com.histmersion.api.personal.UnreadPage
+import com.histmersion.api.ItemKind
 import com.histmersion.web.*
 import com.histmersion.web.marks.{ItemRef, MyItems, NoteEditor, OpenBack}
 import com.histmersion.web.ui.Layout

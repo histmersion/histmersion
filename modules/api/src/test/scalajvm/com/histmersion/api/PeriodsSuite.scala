@@ -1,6 +1,17 @@
 package com.histmersion.api
 
 import java.nio.file.{Files, Path}
+import com.histmersion.api.catalogue.{
+  HistoricalPeriod,
+  Period,
+  PeriodImportResult,
+  PeriodO,
+  PeriodSkip,
+  PeriodsMarkdown,
+  PresetMenu,
+  PresetRegion,
+  SkippedPeriod
+}
 
 /** The PeriodO reader (#719): pure, so every rule is pinned here — ISO years, outer bounds, English labels, regions,
   * unreadable spans, the parent rules and the parents-first order — plus the committed seed itself, which is what a

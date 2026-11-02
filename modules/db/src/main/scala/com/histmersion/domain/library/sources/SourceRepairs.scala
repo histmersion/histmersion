@@ -1,10 +1,10 @@
 package com.histmersion.domain.library.sources
 
-import com.histmersion.api.*
-import com.histmersion.api.Lint.*
+import com.histmersion.api.checks.Lint.*
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.catalogue.places.FindingPlacement
 import com.histmersion.util.database.Transactor
+import com.histmersion.api.maintenance.ReindexResult
 
 /** The library's repairs that run as several transactions: the re-chunk of the corpus and of the stale sources (one
   * transaction per source, so a large corpus never sits in one) and the safe fixes of `lint --fix`.

@@ -1,7 +1,7 @@
 package com.histmersion.web
 
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.*
+import com.histmersion.api.{Api, Plural}
 import com.histmersion.web.library
 import com.histmersion.web.ui.SidebarTab
 import org.scalajs.dom
@@ -9,6 +9,8 @@ import org.scalajs.dom
 import scala.compiletime.uninitialized
 import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.api.instance.UiConfig
+import com.histmersion.api.library.{Filter, GeoHit}
 
 object App:
 

@@ -2,13 +2,14 @@ package com.histmersion.domain.automation.approvals
 
 import com.histmersion.domain.automation.agents.*
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Paging, Plural, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.*
+import com.histmersion.api.automation.Agents.*
 
 import javax.sql.DataSource
 import com.histmersion.values.{EdgeKind, SourceStatus}
+import com.histmersion.api.automation.{AgentsApi, ListFilters, Managers}
 
 /** The approval gate (docs/research-embedded-agents.md §5.2): what an agent run PROPOSES — a status, a disagreement
   * edge, a filter, a plan — becomes an `approvals` row a person decides from the web UI or the CLI (the library routes

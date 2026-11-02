@@ -1,10 +1,24 @@
 package com.histmersion.domain.media.assets
 
-import com.histmersion.api.*
+import com.histmersion.api.{Api, ApiError, Write}
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.media.MediaSources
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.values.Citekey
+import com.histmersion.api.media.{
+  AssetDetail,
+  AssetInfo,
+  AssetInput,
+  AssetLinks,
+  AssetPatch,
+  AssetsStored,
+  MediaFacets,
+  MediaGeoHit,
+  MediaItem,
+  MediaList,
+  MediaThumb
+}
+import com.histmersion.api.library.of
 
 /** The pictures over REST and MCP: a source's figures listed, read, uploaded, described and patched (plan §1.8, §1.6);
   * the media list, its facets, one picture, its file and thumbnail, the map feed (#1446); the cards' pictures of a

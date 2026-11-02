@@ -15,10 +15,10 @@ import com.histmersion.domain.catalogue.places.PlaceFixtures
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
-import com.histmersion.api.*
+import com.histmersion.api.{GeoPoint, TimeSpan}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Queue.{Kind, QueueAdd, QueuePatch}
+import com.histmersion.api.automation.Queue.{Kind, QueueAdd, QueuePatch}
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.data.exchange.TestExchange
@@ -33,6 +33,28 @@ import com.histmersion.util.data.exchange.BundleExport
 import com.histmersion.domain.automation.goals.GoalRepo
 import com.histmersion.util.data.exchange.{BundleImport, BundleRepo}
 import com.histmersion.util.database.Sql
+import com.histmersion.api.automation.GoalPut
+import com.histmersion.api.catalogue.{
+  AttestationPut,
+  EventDating,
+  EventEdge,
+  EventParticipant,
+  EventPut,
+  Period,
+  Place,
+  PlaceInput
+}
+import com.histmersion.api.exchange.{
+  Bundle,
+  BundleFiles,
+  BundleImportResult,
+  BundleManifest,
+  MergeResolution,
+  MergeResolutions
+}
+import com.histmersion.api.library.{Edge, Finding, Source, SourcePatch}
+import com.histmersion.api.media.{AssetLinkPut, AssetPatch}
+import com.histmersion.api.research.Article
 
 /** The portable bundle against real Postgres (docs/research-merge-import.md, milestones M0–M2): identity and tombstones
   * (M0), a deterministic export (M1), and an import without matching — into an empty instance and back into its own —

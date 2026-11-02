@@ -6,9 +6,9 @@ import com.histmersion.domain.automation.agents.*
 
 import com.histmersion.config.{AgentsConfig, ScheduledRefresh}
 import com.histmersion.domain.{PlanReadSchedule, ScheduledRead}
-import com.histmersion.api.PlanQuota
-import com.histmersion.api.Agents.{ModelRef, ProviderKind}
-import com.histmersion.api.PlanQuota.*
+import com.histmersion.api.automation.PlanQuota
+import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
+import com.histmersion.api.automation.PlanQuota.*
 import com.histmersion.domain.automation.agents.PlanQuotaRepo
 import io.circe.{parser, Json}
 

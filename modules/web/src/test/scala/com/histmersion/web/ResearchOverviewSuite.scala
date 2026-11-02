@@ -1,7 +1,7 @@
 package com.histmersion.web
 
-import com.histmersion.api.{Autopilot, Managers, PlanQuota}
-import com.histmersion.api.Agents.ApprovalInfo
+import com.histmersion.api.automation.{Autopilot, Managers, PlanQuota}
+import com.histmersion.api.automation.Agents.ApprovalInfo
 
 /** The overview's pure parts: what to read before a decision, the oldest first, a goal's progress and what blocks it,
   * the weekly allowance.

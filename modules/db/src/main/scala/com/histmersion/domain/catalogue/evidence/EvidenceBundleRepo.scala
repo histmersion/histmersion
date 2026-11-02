@@ -1,6 +1,5 @@
 package com.histmersion.domain.catalogue.evidence
 
-import com.histmersion.api.*
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.database.Sql
 import com.histmersion.util.data.exchange.{BundleFormat, BundleScope}
@@ -9,6 +8,7 @@ import com.histmersion.util.data.exchange.BundleSql.*
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import java.util.UUID
+import com.histmersion.api.exchange.{BundleAttestation, BundleEventCandidate, BundleEventCheck, BundleEventSets}
 
 /** The evidence as a bundle carries it (docs/research-merge-import.md §4, §7.3): the attestations, the sources that
   * possibly discuss an event and when they were last computed — read out in a deterministic order, and written in by an
@@ -100,7 +100,7 @@ private[evidence] object EvidenceBundleRepo:
   def candidatesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     val eventIds = eventIdsOf()
-    import BundleEventSets.newer
+    import com.histmersion.api.exchange.BundleEventSets.newer
     if w.es.eventCandidates.nonEmpty then
       val here = Sql
         .raw(s"SELECT event_id, citekey, status, ${ts("computed_at")} FROM event_link_candidates")
@@ -132,7 +132,7 @@ private[evidence] object EvidenceBundleRepo:
   def checksIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     val eventIds = eventIdsOf()
-    import BundleEventSets.newer
+    import com.histmersion.api.exchange.BundleEventSets.newer
     if w.es.eventChecks.nonEmpty then
       val here = Sql
         .raw(s"SELECT event_id, ${ts("checked_at")} FROM event_link_checks")

@@ -1,11 +1,25 @@
 package com.histmersion.web.settings
 
-import com.histmersion.api.*
+import com.histmersion.api.Plural
 import com.histmersion.web.{ApiClient, Auth, MapRegionsView}
 import com.raquo.laminar.api.L.*
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.api.backup.Backup
+import com.histmersion.api.basemap.{
+  BasemapFetchQuery,
+  BasemapLayer,
+  BasemapLayerInfo,
+  BasemapRemoveQuery,
+  BasemapStatus
+}
+import com.histmersion.api.catalogue.{CatalogProviderInfo, GazetteerKind, GazetteerSourceInfo}
+import com.histmersion.api.instance.{About, UiConfig}
+import com.histmersion.api.jobs.{JobDetail, JobInfo}
+import com.histmersion.api.maintenance.{Storage, StorageReport}
+import com.histmersion.api.media.MediaProviderInfo
+import com.histmersion.api.plugins.PluginState
 
 /** Settings › Data and downloads: the reference data Histmersion keeps on this computer — the background map, places,
   * periods and events, pictures — each with what it is, whether it is there, and Update / Remove; the downloads under

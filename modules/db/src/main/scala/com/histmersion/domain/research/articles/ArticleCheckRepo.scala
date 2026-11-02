@@ -1,15 +1,16 @@
 package com.histmersion.domain.research.articles
 
-import com.histmersion.api.research.articles.ArticleLint
+import com.histmersion.api.research.ArticleLint
 
-import com.histmersion.api.*
-import com.histmersion.api.Lint.*
+import com.histmersion.api.checks.Lint.*
 import com.histmersion.util.database.Sql
 
 import com.histmersion.util.data.checks.{CheckInput, CheckRun}
 
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
+import com.histmersion.api.checks.{FormatField, Lint}
+import com.histmersion.api.research.{CoverageEdge, CritiquePairing}
 
 /** The SQL half of the articles' lint rules (the library's are its sources' `SourceCheckRepo`).
   *

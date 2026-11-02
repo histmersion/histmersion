@@ -3,7 +3,6 @@ package com.histmersion.server.media
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.*
 import com.histmersion.config.{AppConfig, LoadedConfig}
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport}
 import com.histmersion.util.ocr.ConverterClient
@@ -14,6 +13,8 @@ import org.ekrich.config.ConfigFactory
 import java.nio.charset.StandardCharsets.UTF_8
 import javax.sql.DataSource
 import scala.jdk.CollectionConverters.*
+import com.histmersion.api.catalogue.{Period, Place, PlaceInput, PlaceName}
+import com.histmersion.api.ocr.ConvertedDoc
 
 /** The answers of every first-party media collection's provider, the settings that switch them all on at no pause, the
   * places and events a map holds for them, and what an import stored — the fixtures the media traffic and the media

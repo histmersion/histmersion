@@ -1,17 +1,17 @@
 package com.histmersion.domain.library.sources
 
-import com.histmersion.api.{
+import com.histmersion.api.exchange.{
   BundleRange,
   BundleSource,
   IssueCondition,
   IssueDetail,
-  Lint,
   MergeDecision,
   MergeIssue,
   MergeIssueDetail,
-  MergePlan,
-  SourceMatch
+  MergePlan
 }
+import com.histmersion.api.checks.Lint
+import com.histmersion.api.library.SourceMatch
 import com.histmersion.domain.{MergeFold, MergePlanner, MergeSettings}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.{

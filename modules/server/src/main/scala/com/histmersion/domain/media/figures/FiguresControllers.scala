@@ -1,6 +1,7 @@
 package com.histmersion.domain.media.figures
 
-import com.histmersion.api.{ApiError, FigureLicenceFill}
+import com.histmersion.api.ApiError
+import com.histmersion.api.media.FigureLicenceFill
 import com.histmersion.util.data.maintenance.WriteGate
 
 /** `media fill-licences`: the figures with no licence take their source's — counted, and written with `apply`. */

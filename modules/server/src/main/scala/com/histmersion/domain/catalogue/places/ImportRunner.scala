@@ -1,6 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.{Dataset, PlaceImportResult, PlaceInput}
+import com.histmersion.api.Dataset
+import com.histmersion.api.catalogue.{PlaceImportResult, PlaceInput}
 import com.histmersion.plugin.{GazetteerSource, PluginHttp}
 import com.histmersion.pluginhost.PluginGazetteers
 

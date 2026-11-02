@@ -1,9 +1,28 @@
 package com.histmersion.api
 
-import com.histmersion.api.catalogue.places.PlacesMarkdown
-import com.histmersion.api.library.search.SearchMarkdown
+import com.histmersion.api.catalogue.PlacesMarkdown
+import com.histmersion.api.library.SearchMarkdown
 
 import com.histmersion.values.PlaceKind
+import com.histmersion.api.catalogue.{
+  Lpf,
+  Period,
+  PlaceDating,
+  PlaceDescription,
+  PlaceFootprint,
+  PlaceHit,
+  PlaceImportResult,
+  PlaceInput,
+  PlaceLink,
+  PlaceRebuildResult,
+  PlaceRelation,
+  PlaceShape,
+  PlaceSummary,
+  PlaceTreeRow,
+  PlaceType
+}
+import com.histmersion.api.library.Facet
+import com.histmersion.api.views.PlaceDetail
 
 /** Pure tests for the gazetteer's Linked-Places / GeoJSON reader-writer (plan §1.6a). No database. */
 class PlacesSuite extends munit.FunSuite:

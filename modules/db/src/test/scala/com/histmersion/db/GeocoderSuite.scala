@@ -5,14 +5,17 @@ import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.catalogue.places.{GeocodeSettings, PlaceFixtures}
 
-import com.histmersion.api.*
+import com.histmersion.api.{GeoPoint, LatinFold}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Geocode.{Approximation, KindHint}
+import com.histmersion.api.catalogue.Geocode.{Approximation, KindHint}
 
 import com.augustnagro.magnum.*
 import com.histmersion.values.{Confidence, PlaceKind, SourceStatus}
 import com.histmersion.util.database.Migrate
+import com.histmersion.api.catalogue.{Geocode, Period}
+import com.histmersion.api.checks.Lint
+import com.histmersion.api.library.{Finding, Source}
 
 /** The geocoder against a real gazetteer (HISTMERSION_TEST_DB_URL; skipped otherwise), seeded to mirror the failures of
   * 2026-10-06 (#981). Every fixture name starts with "Zz" and every id with `zzgeo_`, so whatever else the shared test

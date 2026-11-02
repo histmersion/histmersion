@@ -1,8 +1,10 @@
 package com.histmersion.api
 
-import com.histmersion.api.research.articles.ArticleLint
+import com.histmersion.api.research.ArticleLint
 
-import com.histmersion.api.CritiquePairing.*
+import com.histmersion.api.research.CritiquePairing.*
+import com.histmersion.api.checks.Lint
+import com.histmersion.api.research.{CoverageEdge, CritiquePair, Critiques, CritiqueSide, CritiqueState}
 
 /** The pairing rule (docs/research-review-convergence.md §6.9), pure: the names a source is called by, the paragraphs
   * that name a disagreement partner they do not cite, which of them code may repair, the repair itself, the instruction

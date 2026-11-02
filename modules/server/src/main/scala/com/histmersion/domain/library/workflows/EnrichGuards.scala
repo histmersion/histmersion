@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.workflows
 
-import com.histmersion.api.{Geocode, Period}
+import com.histmersion.api.catalogue.{Geocode, Period}
 import com.histmersion.config.AgentEnrichGuardsConfig
 import com.histmersion.domain.EnrichSource
 

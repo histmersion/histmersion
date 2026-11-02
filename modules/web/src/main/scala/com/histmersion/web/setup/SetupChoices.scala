@@ -1,6 +1,6 @@
 package com.histmersion.web.setup
 
-import com.histmersion.api.MapStartConfig
+import com.histmersion.api.instance.MapStartConfig
 
 /** What a person chose in the setup. `area`: the background map's box to download (`None`: none); `finders`: each
   * open-access finder on or off.

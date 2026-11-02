@@ -1,6 +1,8 @@
 package com.histmersion.web.library
 
-import com.histmersion.api.{Api, ArticleSummary, Filter, Hit}
+import com.histmersion.api.Api
+import com.histmersion.api.research.ArticleSummary
+import com.histmersion.api.library.{Filter, Hit}
 import com.histmersion.web.{ApiClient, Latest, LibrarySection, UiState}
 import com.histmersion.web.ui.Layout
 import com.raquo.laminar.api.L.*

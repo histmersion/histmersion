@@ -1,9 +1,11 @@
 package com.histmersion.api
 
-import com.histmersion.api.library.citations.CitationLint
-import com.histmersion.api.research.articles.ArticleLint
+import com.histmersion.api.library.CitationLint
+import com.histmersion.api.research.ArticleLint
 
-import com.histmersion.api.Lint.*
+import com.histmersion.api.checks.Lint.*
+import com.histmersion.api.checks.{FormatField, FormatIssue, FormatRule, FormatSeverity, Lint}
+import com.histmersion.api.library.Edge
 
 /** The lint classifiers (plan §5.2 stream 2.8) — everything that decides whether a row offends and what the report says
   * about it, with no database in sight.

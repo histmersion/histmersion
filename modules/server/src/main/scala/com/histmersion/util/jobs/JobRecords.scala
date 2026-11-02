@@ -2,7 +2,7 @@ package com.histmersion.util.jobs
 
 import com.histmersion.util.database.Transactor
 
-import com.histmersion.api.{JobInfo, JobState}
+import com.histmersion.api.jobs.{JobInfo, JobState}
 
 import hearth.kindlings.optics.syntax.*
 

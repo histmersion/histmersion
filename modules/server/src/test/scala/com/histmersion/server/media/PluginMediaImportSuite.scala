@@ -1,6 +1,6 @@
 package com.histmersion.server.media
 
-import com.histmersion.api.media.assets.MediaMarkdown
+import com.histmersion.api.media.MediaMarkdown
 
 import com.histmersion.domain.media.assets.AssetFixtures
 import com.histmersion.server.MediaWiring
@@ -13,7 +13,6 @@ import com.histmersion.pluginhost.{Generation, HttpTransport, PluginHost}
 
 import ox.supervised
 import com.augustnagro.magnum.*
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.Migrate
@@ -26,6 +25,8 @@ import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.values.{MediaRole, PlaceKind}
 import com.histmersion.api.VocabularyCodecs.given
+import com.histmersion.api.catalogue.{Place, PlaceInput, PlaceName}
+import com.histmersion.api.media.{MediaImportRequest, MediaProviderInfo}
 
 /** A THIRD-PARTY plugin's media collection (docs/research-plugins.md §6, §11) run by `media import` through the
   * registries, against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): the plugin states each record's

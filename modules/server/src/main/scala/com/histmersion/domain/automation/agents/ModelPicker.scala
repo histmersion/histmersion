@@ -4,16 +4,16 @@ import com.histmersion.util.database.Transactor
 
 import com.histmersion.server.agents.{ClaudeCode, PlanPools}
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.*
-import com.histmersion.api.ModelChains.*
+import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.automation.ModelChains.*
 import com.histmersion.domain.automation.agents.{ModelSettingsRepo, PlanQuotaRepo}
 
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import javax.sql.DataSource
+import com.histmersion.api.automation.PlanQuota
 
 /** The model chains and allowances in effect — config (`agents.roles.*`, `agents.allowances`) with what was saved in
   * the database over it — and the choice the engine makes before every LLM call (docs/research-embedded-agents.md §15):

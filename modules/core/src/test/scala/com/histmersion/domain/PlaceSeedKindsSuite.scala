@@ -2,7 +2,7 @@ package com.histmersion.domain
 
 import com.histmersion.domain.catalogue.places.PlaceReview
 
-import com.histmersion.api.{Lpf, PlaceInput}
+import com.histmersion.api.catalogue.{Lpf, PlaceInput}
 
 import java.nio.file.{Files, Path}
 import com.histmersion.values.PlaceKind

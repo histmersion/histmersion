@@ -4,7 +4,7 @@ import com.histmersion.domain.research.articles.ArticleFixtures
 
 import com.histmersion.domain.library.sources.SourceFixtures
 
-import com.histmersion.api.*
+import com.histmersion.api.Write
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -12,6 +12,8 @@ import java.util.concurrent.{CountDownLatch, Executors, TimeUnit}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.values.SourceStatus
 import com.histmersion.util.database.Migrate
+import com.histmersion.api.library.{Source, SourcePatch}
+import com.histmersion.api.research.{Article, ArticlePatch}
 
 /** `ifUpdatedAt` is a compare-and-swap, and it was not one: `patch` read the row, compared the token, then wrote — with
   * nothing stopping a second patch from doing all three in between. Both saw the token they were given, both

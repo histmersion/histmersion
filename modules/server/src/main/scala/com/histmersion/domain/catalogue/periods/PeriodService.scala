@@ -1,6 +1,7 @@
 package com.histmersion.domain.catalogue.periods
 
-import com.histmersion.api.{Dataset, HistoricalPeriod}
+import com.histmersion.api.Dataset
+import com.histmersion.api.catalogue.HistoricalPeriod
 import com.histmersion.domain.catalogue.CatalogueState
 import com.histmersion.util.database.Transactor
 import hearth.kindlings.optics.syntax.*

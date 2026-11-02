@@ -5,16 +5,32 @@ import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.pluginhost.{FetchChain, OaFetcher}
 
-import com.histmersion.api.*
+import com.histmersion.api.ListPatch
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.db.QueueRows
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.domain.library.ingest.{FetchedCopy, IngestJobs, IngestMeta}
 import com.histmersion.domain.library.acquisition.*
-import com.histmersion.api.{FollowupRow, RefRow, UpdateNotice, WorkRef}
+import com.histmersion.api.library.{FollowupRow, RefRow, UpdateNotice, WorkRef}
 
 import com.histmersion.values.SourceStatus
+import com.histmersion.api.library.{
+  Acquire,
+  AcquireMarkdown,
+  ArchiveFile,
+  ArchiveImportRequest,
+  ArchiveItem,
+  AssessRequest,
+  CalibrePushRequest,
+  FindingInput,
+  FindingsPatch,
+  FollowupsRequest,
+  IngestRequest,
+  RefsRequest,
+  Source,
+  SourcePatch
+}
 
 /** The acquisition handlers against a real Postgres (`HISTMERSION_TEST_DB_URL`), with every upstream replaced by a
   * fake. What is exercised here is the part fixtures cannot reach: resolving references to stored citekeys, writing

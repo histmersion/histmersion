@@ -1,11 +1,14 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
-import com.histmersion.api.Activity.{Entry, EntryKind}
+import com.histmersion.api.Wording
+import com.histmersion.api.automation.Activity.{Entry, EntryKind}
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
+import com.histmersion.api.automation.{Activity, ActivityMarkdown, Agents, Queue}
+import com.histmersion.api.instance.UiConfig
+import com.histmersion.api.jobs.JobActions
 
 /** Research › Activity: ONE time-ordered list of agent runs, background jobs, worklog lines and the person's own
   * decisions ([[Activity]], merged and paged by the server), filtered by chips, each entry linked to what it touched.

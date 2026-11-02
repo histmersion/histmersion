@@ -1,6 +1,5 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.*
 import com.histmersion.api.given
 
 import io.circe.{Decoder, Encoder, Json, JsonObject, Printer}
@@ -9,6 +8,7 @@ import io.circe.parser
 import java.nio.charset.StandardCharsets.UTF_8
 import java.security.MessageDigest
 import java.util.UUID
+import com.histmersion.api.exchange.{Bundle, BundleFileInfo, BundleManifest}
 
 /** The pure half of the `.hmx` bundle (docs/research-merge-import.md §4): canonical JSON, record revisions, the
   * deterministic bundle id, and the checks a manifest must pass. The tar stream is [[BundleTar]]; reading the database

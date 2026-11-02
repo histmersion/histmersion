@@ -4,23 +4,22 @@ import com.histmersion.util.database.Transactor
 
 import com.histmersion.domain.library.sources.referrers.SourceReferrers
 
-import com.histmersion.api.{
-  ApiError,
+import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.exchange.{
   Bundle,
   BundleImportResult,
   BundleManifest,
   BundleUpload,
   BundleVerifyResult,
-  InstanceInfo,
   MergeApplyJob,
   MergeDetail,
   MergeInfo,
   MergeLedger,
   MergePlan,
   MergeResolutions,
-  MergeSession,
-  Write
+  MergeSession
 }
+import com.histmersion.api.aliases.InstanceInfo
 import com.histmersion.config.AppConfig
 import com.histmersion.util.data.exchange.BundleRepo
 import com.histmersion.util.database.Migrate

@@ -1,5 +1,4 @@
 package com.histmersion.util.storage
-import com.histmersion.api.*
 import com.histmersion.api.given
 
 import java.nio.file.{Path, Paths}

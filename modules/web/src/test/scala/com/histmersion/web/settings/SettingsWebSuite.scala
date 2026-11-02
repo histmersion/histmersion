@@ -1,6 +1,8 @@
 package com.histmersion.web.settings
 
-import com.histmersion.api.{ConfigEdit, MapStartConfig, PluginStatus}
+import com.histmersion.api.settings.ConfigEdit
+import com.histmersion.api.instance.MapStartConfig
+import com.histmersion.api.plugins.PluginStatus
 import com.histmersion.web.map.GeoBounds
 
 class SettingsWebSuite extends munit.FunSuite:

@@ -1,6 +1,6 @@
 package com.histmersion.web.settings
 
-import com.histmersion.api.{ConfigEdit, ReloadReport}
+import com.histmersion.api.settings.{ConfigEdit, ReloadReport}
 import com.histmersion.web.{ApiClient, ApiFailure}
 import com.raquo.laminar.api.L.*
 

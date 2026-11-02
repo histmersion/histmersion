@@ -1,5 +1,4 @@
 package com.histmersion.util.data.exchange
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.MergePlanner.{Input, Labels, LedgerEntry}
@@ -24,6 +23,7 @@ import com.histmersion.util.data.exchange.{
 import com.histmersion.util.storage.{ByteSource, ContentStore}
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.given
+import com.histmersion.api.exchange.{Bundle, BundleInstance, BundleManifest, MergeDecision, MergePlan, MergeResolutions}
 
 /** What this collection knows that a merge plan needs (docs/research-merge-import.md §5–§6, milestone M3): the plan's
   * input stage — its rows, labels, ledger, redirects, article histories and OCR bodies, and what each kind's merge

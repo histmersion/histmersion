@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.{BundleFiles, BundlePlace, BundlePlaceAlias, BundleSiteType}
+import com.histmersion.api.exchange.{BundleFiles, BundlePlace, BundlePlaceAlias, BundleSiteType}
 import com.histmersion.api.given
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.data.{DataOwner, TableName}

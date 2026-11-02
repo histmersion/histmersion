@@ -1,6 +1,7 @@
 package com.histmersion.domain.research.workflows
 
-import com.histmersion.api.{ApiError, Goal}
+import com.histmersion.api.ApiError
+import com.histmersion.api.automation.Goal
 import com.histmersion.domain.automation.worklists.{QueueService, WorkListControllers}
 import com.histmersion.domain.library.citations.CitationsControllers
 import com.histmersion.domain.library.labels.LabelsControllers

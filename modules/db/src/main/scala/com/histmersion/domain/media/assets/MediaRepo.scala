@@ -2,12 +2,22 @@ package com.histmersion.domain.media.assets
 
 import com.histmersion.util.database.RangeSql
 
-import com.histmersion.api.*
+import com.histmersion.api.Api
 import com.histmersion.util.database.{Param, Sql}
 
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import com.histmersion.values.MediaRole
+import com.histmersion.api.media.{
+  MediaCount,
+  MediaFacets,
+  MediaGeoHit,
+  MediaItem,
+  MediaList,
+  MediaProvider,
+  MediaTarget,
+  MediaThumb
+}
 
 /** Pictures (#1446, V082): one `assets` row each — a provider's with `provider` set instead of a `citekey`, a source's
   * figure with its citekey — and the places, events and sources they are shown on (`media_links`); the read paths every

@@ -11,6 +11,6 @@ extension (a: AgentsHandlers)
   def attach(u: AgentUpstream): Unit = EngineContributions.work(a).attach(u)
   def acquireRecheck: AcquireRecheckService = EngineContributions.work(a).acquireRecheck
   def oaBacklog: OaBacklog = EngineContributions.work(a).oaBacklog
-  def autopilotPage(st: com.histmersion.api.Autopilot.EngineStatus): String =
+  def autopilotPage(st: com.histmersion.api.automation.Autopilot.EngineStatus): String =
     EngineContributions.autopilot(a).page(st).markdown
   def autoEnrich(citekey: String): Option[String] = EngineContributions.enrich(a).autoEnrich(citekey)

@@ -3,10 +3,9 @@ package com.histmersion.domain.automation.agents
 import com.histmersion.domain.automation.workflows.Pipelines
 import com.histmersion.server.agents.CliProcess
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.*
+import com.histmersion.api.automation.Agents.*
 import com.histmersion.domain.automation.workflows.{ToolName, Workflows}
 import com.histmersion.api.VocabularyCodecs.given
 import io.circe.parser.decode

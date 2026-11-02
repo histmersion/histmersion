@@ -1,6 +1,7 @@
 package com.histmersion.web.marks
 
-import com.histmersion.api.personal.{ItemKind, Target}
+import com.histmersion.api.personal.Target
+import com.histmersion.api.ItemKind
 import com.histmersion.web.*
 import com.histmersion.web.library.LibraryAddress
 import com.histmersion.web.map.{LatLon, TheMap}

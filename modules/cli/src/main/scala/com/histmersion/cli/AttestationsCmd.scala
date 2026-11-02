@@ -2,12 +2,13 @@ package com.histmersion.cli
 
 import com.histmersion.values.AttestationTarget
 
-import com.histmersion.api.catalogue.evidence.AttestationsMarkdown
+import com.histmersion.api.catalogue.AttestationsMarkdown
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.*
+import com.histmersion.api.Api
 import com.histmersion.config.*
+import com.histmersion.api.catalogue.AttestationPut
 
 object AttestationsCmd:
 

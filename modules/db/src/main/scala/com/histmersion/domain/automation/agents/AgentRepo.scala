@@ -1,10 +1,10 @@
 package com.histmersion.domain.automation.agents
-import com.histmersion.api.Agents.*
+import com.histmersion.api.automation.Agents.*
 import com.histmersion.domain.automation.approvals.ProposalEvidence
-import com.histmersion.api.{GoalPlans, ListFilters}
+import com.histmersion.api.automation.{GoalPlans, ListFilters}
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.ApprovalDigest
+import com.histmersion.api.automation.ApprovalDigest
 import com.histmersion.domain.automation.agents.RunQuery
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 import com.histmersion.values.{EdgeKind, SourceStatus}
@@ -465,7 +465,7 @@ object AgentRepo:
         val d = Jsonb.read[GoalPlans.ArticleDraft](r.proposal)
         base.copy(article = d, evidence = d.flatMap(_.summary).getOrElse(""))
       case Some(ApprovalKind.HintEffect) =>
-        val p = Jsonb.read[com.histmersion.api.Managers.HintProposal](r.proposal)
+        val p = Jsonb.read[com.histmersion.api.automation.Managers.HintProposal](r.proposal)
         base.copy(
           hintEffect = p,
           evidence = p.map(x => Option(x.why).filter(_.nonEmpty).getOrElse(x.text)).getOrElse("")

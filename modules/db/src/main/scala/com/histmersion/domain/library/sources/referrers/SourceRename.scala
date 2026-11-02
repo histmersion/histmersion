@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.sources.referrers
 
-import com.histmersion.api.Rename
+import com.histmersion.api.library.Rename
 
 /** A source given a new citekey: `from` becomes `to`; `shortForms` are the short citekeys (`beckman2025` for
   * `beckman2025_ahhiyawa`) that resolved to it before the rename.

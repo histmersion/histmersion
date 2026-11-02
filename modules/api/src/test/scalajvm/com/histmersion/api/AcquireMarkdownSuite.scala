@@ -3,6 +3,26 @@ package com.histmersion.api
 /** The Markdown renderings of the acquisition results — what MCP returns and the CLI prints. Pure, so every branch is
   * cheap to pin: empty results, the `--apply` hints, and the safety notices that must never silently disappear.
   */
+
+import com.histmersion.api.library.{
+  Acquire,
+  AcquireMarkdown,
+  ArchiveFile,
+  ArchiveItem,
+  Assessment,
+  CalibreGap,
+  CalibreGaps,
+  DiscoverResult,
+  FollowupRow,
+  FollowupsResult,
+  IngestReport,
+  IngestStep,
+  RefRow,
+  RefsResult,
+  RetractionNotice,
+  UpdateNotice,
+  WorkRef
+}
 class AcquireMarkdownSuite extends munit.FunSuite:
 
   private val work = WorkRef(

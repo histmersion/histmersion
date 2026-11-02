@@ -1,6 +1,6 @@
 package com.histmersion.util.json
 
-import com.histmersion.util.json.NewtypeCodecs.given
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.values.*
 import io.circe.{Decoder, Encoder, Json}
 import io.circe.parser.decode

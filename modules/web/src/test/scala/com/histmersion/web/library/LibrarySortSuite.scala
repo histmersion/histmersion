@@ -1,6 +1,6 @@
 package com.histmersion.web.library
 
-import com.histmersion.api.Sort
+import com.histmersion.api.library.Sort
 
 class LibrarySortSuite extends munit.FunSuite:
 

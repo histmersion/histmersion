@@ -1,10 +1,11 @@
 package com.histmersion.domain.library.search
 
-import com.histmersion.api.library.search.Tree
+import com.histmersion.api.library.Tree
 
-import com.histmersion.api.*
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.util.database.Transactor
+import com.histmersion.api.catalogue.{PeriodRow, PlaceCounts}
+import com.histmersion.api.library.{Filter, SearchResult}
 
 /** The filter's reads over sources: the search, the counts of what a filter selects, and the rows the histogram and its
   * tree bucket. A mechanism over the filter's SQL (full-text ranking and headlines, PostGIS boxes, the gazetteer's

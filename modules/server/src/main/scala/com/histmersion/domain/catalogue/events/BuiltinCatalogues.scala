@@ -2,7 +2,7 @@ package com.histmersion.domain.catalogue.events
 
 import com.histmersion.pluginhost.{PluginEvents, SpiValues}
 
-import com.histmersion.api.CatalogProviderInfo
+import com.histmersion.api.catalogue.CatalogProviderInfo
 import com.histmersion.plugin.*
 
 import scala.collection.immutable.ListMap

@@ -1,6 +1,5 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
 import com.histmersion.web.map.*
 import org.scalajs.dom
 

@@ -6,11 +6,10 @@ import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.Zero
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.*
-import com.histmersion.api.PlanQuota.*
+import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.automation.PlanQuota.*
 import com.histmersion.domain.automation.agents.{AgentRepo, PlanQuotaRepo}
 import com.histmersion.domain.automation.autopilot.AutopilotRepo
 import com.histmersion.util.database.{Db, Migrate}
@@ -24,6 +23,8 @@ import java.nio.file.Files
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 import java.util.concurrent.atomic.AtomicInteger
 import com.histmersion.db.*
+import com.histmersion.api.automation.{AgentsMarkdown, PlanQuota}
+import com.histmersion.api.library.SourcePut
 
 /** #989 against a `*_test` database: a pool paused only because its reading is stale takes a fresh one before it pauses
   * (the Claude probe, the ChatGPT app-server read) — once per stale-minutes, one at a time; a run paused on such a pool

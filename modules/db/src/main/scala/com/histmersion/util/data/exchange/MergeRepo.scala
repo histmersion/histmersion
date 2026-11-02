@@ -1,7 +1,7 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.{
-  ApiError,
+import com.histmersion.api.{ApiError, Write}
+import com.histmersion.api.exchange.{
   BundleImportResult,
   BundleInstance,
   BundleManifest,
@@ -12,10 +12,9 @@ import com.histmersion.api.{
   MergeLedger,
   MergeResolution,
   MergeResolutions,
-  MergeSession,
-  UidRedirect,
-  Write
+  MergeSession
 }
+import com.histmersion.api.aliases.UidRedirect
 import com.histmersion.api.given
 import com.histmersion.util.database.{Jsonb, Param, Sql}
 import com.histmersion.util.database.given
@@ -163,7 +162,7 @@ object MergeRepo:
         .run()
         .toList
         .map(r =>
-          com.histmersion.api.LedgerRow(
+          com.histmersion.api.research.LedgerRow(
             r.foreignUid,
             r.kind,
             r.mergeId,

@@ -12,7 +12,7 @@ import com.histmersion.domain.catalogue.places.PlaceFixtures
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
-import com.histmersion.api.*
+import com.histmersion.api.{Dataset, GeoPoint, TimeSpan}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.{Confidence, PlaceKind, SourceStatus}
@@ -31,6 +31,11 @@ import com.histmersion.domain.automation.goals.GoalRepo
 import com.histmersion.util.data.exchange.BundleRepo
 import com.histmersion.util.database.Sql
 import com.histmersion.db.*
+import com.histmersion.api.automation.{GoalPut, Queue}
+import com.histmersion.api.catalogue.{AttestationPut, EventPut, HistoricalPeriod, Period, Place, PlaceInput, PlaceName}
+import com.histmersion.api.exchange.{MergePlan, MergeResolutions, MergeResolutionsText}
+import com.histmersion.api.library.{Edge, Finding, Source, SourcePatch}
+import com.histmersion.api.research.Article
 
 /** What data management answers over HTTP, on a crafted pair of collections ("work" and "home"), recorded on the code
   * before data management moved into its own area: the whole bundle of work and the part changed since a moment (every

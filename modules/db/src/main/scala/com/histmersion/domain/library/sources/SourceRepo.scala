@@ -1,19 +1,34 @@
 package com.histmersion.domain.library.sources
 
-import com.histmersion.api.library.sources.SourceWrite
+import com.histmersion.api.library.SourceWrite
 
 import com.histmersion.domain.catalogue.places.FindingPlacement
 import com.histmersion.domain.library.sources.referrers.{SourceReferrers, SourceRename}
 
 import com.histmersion.util.database.RangeSql
 import com.histmersion.util.ocr.{Chunk, Chunker}
-import com.histmersion.util.text.WikiLinks
+import com.histmersion.api.text.WikiLinks
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, GeoPoint, Write}
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
 import com.histmersion.values.SourceStatus
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.library.{
+  CalibreGap,
+  Edge,
+  Finding,
+  FindingRow,
+  Rename,
+  RenameCounts,
+  Source,
+  SourceAlias,
+  SourceDetail,
+  SourcePatch,
+  SourceRef,
+  TocEntry
+}
 
 /** The library's sources: a record with its findings and the edges it makes, written and read whole or by part, its old
   * citekeys, its rename, its full-text chunks and body. Every method runs on the connection or in the transaction its

@@ -2,14 +2,15 @@ package com.histmersion.domain.automation.managers
 
 import com.histmersion.domain.automation.agents.AgentsHandlers
 
-import com.histmersion.api.*
+import com.histmersion.api.Plural
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Autopilot.{DrainInfo, DrainSet, EngineStatus}
-import com.histmersion.api.Queue.QueueAdd
+import com.histmersion.api.automation.Autopilot.{DrainInfo, DrainSet, EngineStatus}
+import com.histmersion.api.automation.Queue.QueueAdd
 
 import java.time.Instant
 import javax.sql.DataSource
+import com.histmersion.api.automation.Agents
 
 /** Drain mode (#3762 proposal 4): `histmersion agent autopilot drain` stops the central scheduler from admitting
   * anything new — and the managers' tick from deciding approvals by code (a decision wakes a waiting run) and from

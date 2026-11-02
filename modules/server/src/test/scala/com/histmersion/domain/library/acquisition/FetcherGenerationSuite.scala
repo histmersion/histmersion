@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.acquisition
 
-import com.histmersion.api.{PluginSetting, PluginStatus}
+import com.histmersion.api.plugins.{PluginSetting, PluginStatus}
 import com.histmersion.plugin.Access
 
 /** The legal chain's generation, which makes the acquisition list due for a re-check again: a legal fetcher or a

@@ -1,6 +1,8 @@
 package com.histmersion.web.settings
 
-import com.histmersion.api.{PluginSet, PluginState, PluginStatus, UiConfig, Wording}
+import com.histmersion.api.Wording
+import com.histmersion.api.plugins.{PluginSet, PluginState, PluginStatus}
+import com.histmersion.api.instance.UiConfig
 import com.raquo.laminar.api.L.*
 
 /** Settings › Plugins: every plugin in this server — what it adds, whether it works — each turned on or off in the

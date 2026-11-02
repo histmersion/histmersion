@@ -1,6 +1,9 @@
 package com.histmersion.api
 
-import com.histmersion.api.Agents.{ApprovalInfo, RunInfo}
+import com.histmersion.api.automation.Agents.{ApprovalInfo, RunInfo}
+import com.histmersion.api.automation.AgentsMarkdown
+import com.histmersion.api.jobs.JobInfo
+import com.histmersion.api.library.{Ingest, IngestMarkdown}
 
 /** The paged lists' pure parts: the heading's wording, the counts header, the page from the counts, and how the jobs /
   * runs / approvals listings say there is more.

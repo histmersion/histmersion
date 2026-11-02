@@ -1,6 +1,7 @@
 package com.histmersion.web
 
-import com.histmersion.api.{UiConfig, UiNotices, Wording}
+import com.histmersion.api.Wording
+import com.histmersion.api.instance.{UiConfig, UiNotices}
 import com.raquo.laminar.api.L.*
 import com.raquo.laminar.codecs.StringAsIsCodec
 import org.scalajs.dom

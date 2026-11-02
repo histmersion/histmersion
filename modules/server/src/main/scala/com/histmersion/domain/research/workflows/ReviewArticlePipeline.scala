@@ -16,16 +16,26 @@ import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
 
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope}
 
-import com.histmersion.api.*
+import com.histmersion.api.{Plural, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.{Pipeline, Role}
-import com.histmersion.api.Queue.QueueAdd
+import com.histmersion.api.automation.Agents.{Pipeline, Role}
+import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewArticle.Finding
-import com.histmersion.api.Queue.QueuePatch
+import com.histmersion.api.automation.Queue.QueuePatch
 import com.histmersion.domain.ReviewLedger.Ledger
 import io.circe.syntax.*
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.research.{
+  ArticlePatch,
+  CritiquePair,
+  CritiquePairing,
+  CritiqueReason,
+  CritiqueRef,
+  Critiques,
+  CritiqueState
+}
 
 /** `review-article <slug> [fix] [rounds]` (docs/research-embedded-agents.md §4.3, docs/research-review-convergence.md
   * §6): the adversarial review panel of the `review-article` skill, run by the server, around the article's REVIEW

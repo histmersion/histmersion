@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.CatalogProviderInfo
+import com.histmersion.api.catalogue.CatalogProviderInfo
 
 object CatalogProvider:
   val Gvp = "gvp"

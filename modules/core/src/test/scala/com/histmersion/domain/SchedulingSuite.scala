@@ -1,11 +1,10 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
-import com.histmersion.api.Agents.{ApprovalKind, RunState}
+import com.histmersion.api.automation.Agents.{ApprovalKind, RunState}
 import com.histmersion.domain.Scheduling.*
 import com.histmersion.values.EdgeKind
 

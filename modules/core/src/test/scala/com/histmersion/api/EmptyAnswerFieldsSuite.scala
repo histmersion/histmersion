@@ -5,9 +5,10 @@ import com.histmersion.domain.*
 import com.histmersion.config.given
 import com.histmersion.domain.given
 
-import com.histmersion.api.Agents.ProbeAnswer
-import com.histmersion.api.GoalPlans.DraftMode
+import com.histmersion.api.automation.Agents.ProbeAnswer
+import com.histmersion.api.automation.GoalPlans.DraftMode
 import com.histmersion.values.{Confidence, SourceStatus}
+import com.histmersion.api.research.ArticleEdits
 
 /** A strict-schema provider (Codex) sends `""` or `null` for a field it has nothing for, and `null` decodes like an
   * absent field. An answer whose NEEDED field is empty or null must fail its step's check with a problem that says
@@ -194,7 +195,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     assert(ws.exists(_.contains("no evidence given")), ws)
 
   test("fixer: a replace with null text, an empty anchor, a rejection with no reason fail"):
-    import ArticleEdits.{EditAnswer, Op}
+    import com.histmersion.api.research.ArticleEdits.{EditAnswer, Op}
     val good =
       "Tin reached the Aegean by sea [[a2019_tin]].\n\n## Disagreements\n\nNone [[a2019_tin]].\n\n## Open questions\n\nOpen [[a2019_tin]]."
     val s1 = Finding("S1", Reviewer.Skeptic, Severity.Major, "date", "Intro", "", "the date is wrong", "")

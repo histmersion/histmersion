@@ -1,7 +1,17 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.*
+import com.histmersion.api.{Dataset, Write}
 import com.histmersion.domain.catalogue.CatalogueStoreSuite
+import com.histmersion.api.catalogue.{
+  Period,
+  Place,
+  PlaceInput,
+  PlaceName,
+  PlaceOverrideChanged,
+  PlaceOverrideEdit,
+  PlaceOverrides,
+  PlaceRelation
+}
 
 /** The contract the gazetteer's records keep, alike in memory and in the database: an import's places, names and edges
   * read back (a dangling parent reported, never fatal); the search's order; a person's names (an imported one is kept);

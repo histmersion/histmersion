@@ -1,6 +1,6 @@
 package com.histmersion.domain.media
 
-import com.histmersion.api.AssetLink
+import com.histmersion.api.media.AssetLink
 import com.histmersion.domain.media.assets.{HeldAsset, HeldMediaLink}
 import com.histmersion.domain.media.imports.HeldCheck
 

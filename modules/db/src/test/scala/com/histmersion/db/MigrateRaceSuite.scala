@@ -1,6 +1,5 @@
 package com.histmersion.db
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 

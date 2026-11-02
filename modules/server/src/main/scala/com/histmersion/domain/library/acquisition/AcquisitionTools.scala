@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.acquisition
 
-import com.histmersion.api.*
+import com.histmersion.api.ApiError
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.mcp.McpOut
@@ -10,6 +10,18 @@ import chimp.server.*
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import com.histmersion.api.library.{
+  AcquireMarkdown,
+  ArchiveImportRequest,
+  AssessRequest,
+  CandidateMark,
+  Candidates,
+  CandidatesMarkdown,
+  CandidateSweepRequest,
+  FollowupsRequest,
+  IngestRequest,
+  RefsRequest
+}
 
 /** The acquisition's MCP tools. Every tool returns Markdown and delegates to the same [[AcquisitionControllers]] the
   * REST routes call, so the two surfaces cannot drift.

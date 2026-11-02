@@ -1,12 +1,14 @@
 package com.histmersion.web
 
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.*
+import com.histmersion.api.BBox
 import com.histmersion.web.map.*
 import com.histmersion.web.ui.Layout
 import org.scalajs.dom
 
 import scala.scalajs.js
+import com.histmersion.api.basemap.{Basemap, BasemapLayer, BasemapLayerInfo, BaseMapSource, BasemapStatus, BaseStyles}
+import com.histmersion.api.instance.UiConfig
 
 /** The base map (docs/user-guide/exploring/web-ui.md, "The base map"; docs/research-map-styles.md):
   *

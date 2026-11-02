@@ -7,15 +7,26 @@ import com.augustnagro.magnum.{connect, transact}
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.workflows.AutomationHost
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Plural, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.*
-import com.histmersion.api.GoalPlans.{LinkKind, Removed}
-import com.histmersion.api.Managers.*
+import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.automation.GoalPlans.{LinkKind, Removed}
+import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.automation.managers.ManagerRepo
 
 import javax.sql.DataSource
+import com.histmersion.api.automation.{
+  AgentMode,
+  AgentsApi,
+  AgentScheduler,
+  ApprovalDigest,
+  Autopilot,
+  GoalPlans,
+  ManagersMarkdown,
+  ModelChains,
+  Stalls
+}
 
 /** The ONE implementation of the process-manager operations (docs/research-process-managers.md §5): REST
   * ([[AgentsRoutes]]), the MCP tool `manager` ([[AgentsTools]]) and the CLI (over REST) call these. Reading and

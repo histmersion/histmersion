@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.sources.referrers
 
-import com.histmersion.api.{DeleteBlocker, DeleteCount}
+import com.histmersion.api.library.{DeleteBlocker, DeleteCount}
 
 /** What a delete would touch of a referrer's records: what refuses it, how many go, the records whose reasons name it
   * (`coverage`) and the items that mention it and stay (`mentions`).

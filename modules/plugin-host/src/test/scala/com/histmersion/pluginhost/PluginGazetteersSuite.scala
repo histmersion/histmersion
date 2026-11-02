@@ -1,6 +1,7 @@
 package com.histmersion.pluginhost
 
-import com.histmersion.api.{OpenSide, Period as ApiPeriod, Place, PlaceInput, PlaceName, PlaceRelation}
+import com.histmersion.api.OpenSide
+import com.histmersion.api.catalogue.{Period as ApiPeriod, Place, PlaceInput, PlaceName, PlaceRelation}
 import com.histmersion.plugin.*
 
 /** The host's reading of a plugin's gazetteer places: each converted to the store's shape unchanged (its source its

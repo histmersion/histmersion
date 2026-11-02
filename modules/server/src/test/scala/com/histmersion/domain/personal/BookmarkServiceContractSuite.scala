@@ -1,6 +1,7 @@
 package com.histmersion.domain.personal
 
-import com.histmersion.api.personal.{BookmarkLabel, ItemKind as MarkKind, MapZoom, ViewState}
+import com.histmersion.api.personal.{BookmarkLabel, MapZoom, ViewState}
+import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.values.{Latitude, Longitude, PageSize}
 
 /** A person's bookmarks, in memory and in the database. */

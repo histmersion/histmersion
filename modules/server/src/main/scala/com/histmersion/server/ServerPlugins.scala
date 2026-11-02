@@ -1,7 +1,7 @@
 package com.histmersion.server
 
 import com.histmersion.config.{AppConfig, LoadedConfig}
-import com.histmersion.api.PluginStatus
+import com.histmersion.api.plugins.PluginStatus
 import com.histmersion.plugin.{Plugin, PluginHttp}
 import com.histmersion.pluginhost.{Generation, HostServices, HttpTransport, PolicyHttp, Registries}
 import com.histmersion.domain.library.acquisition.{CoreBudget, HttpPlugin, SttpHttp}

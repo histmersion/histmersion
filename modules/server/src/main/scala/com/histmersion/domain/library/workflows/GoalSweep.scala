@@ -5,13 +5,13 @@ import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.domain.automation.workflows.Pipelines
 import com.histmersion.domain.automation.worklists.QueueScope
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.GoalPlans.LinkKind
-import com.histmersion.api.Queue.QueueAdd
+import com.histmersion.api.automation.GoalPlans.LinkKind
+import com.histmersion.api.automation.Queue.QueueAdd
 import io.circe.syntax.*
 import com.histmersion.api.VocabularyCodecs.given
+import com.histmersion.api.automation.Queue
 
 /** What both goal sweeps share: the goal's sources, the DOIs already in the acquisition queue, and adding an item there
   * at most once.

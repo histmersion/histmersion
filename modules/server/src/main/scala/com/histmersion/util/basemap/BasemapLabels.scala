@@ -1,6 +1,6 @@
 package com.histmersion.util.basemap
 
-import com.histmersion.api.*
+import com.histmersion.api.BBox
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.storage.{Store, StoreKey}
@@ -8,6 +8,8 @@ import com.histmersion.util.storage.{Store, StoreKey}
 import io.circe.Json
 
 import scala.collection.mutable
+import com.histmersion.api.basemap.Basemap
+import com.histmersion.api.library.Label
 
 /** The base maps' physical names (docs/research-terrain-basemap.md, "Labels"): Natural Earth's label layers — public
   * domain — read from their GeoJSON, cut to the region, and written as a small vector archive the page labels from

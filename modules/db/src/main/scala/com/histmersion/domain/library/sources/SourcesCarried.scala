@@ -1,6 +1,5 @@
 package com.histmersion.domain.library.sources
 
-import com.histmersion.api.*
 import com.histmersion.api.given
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.database.{Param, Sql}
@@ -24,6 +23,7 @@ import com.histmersion.values.BundleKind
 
 import com.augustnagro.magnum.DbCon
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.api.exchange.{BundleAlias, BundleAssessment, BundleEdge, BundleFinding, BundleUnresolvedEdge}
 
 /** What a bundle carries of the library: the sources (each line stamped with its rev, its body and its stored original
   * blobs), their findings, the edges they make and the ones still parked, their assessments and their old citekeys.

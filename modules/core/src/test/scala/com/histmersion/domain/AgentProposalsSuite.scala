@@ -1,13 +1,13 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
 import com.histmersion.domain.AgentProposals.*
-import com.histmersion.api.Agents.{ApprovalKind, ApprovalMode}
+import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalMode}
 import com.histmersion.values.{EdgeKind, SourceStatus}
+import com.histmersion.api.library.{EdgeInput, MetadataPatch, SourcePatch}
 
 class AgentProposalsSuite extends munit.FunSuite:
 

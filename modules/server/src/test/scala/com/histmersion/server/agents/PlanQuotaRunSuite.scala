@@ -6,11 +6,10 @@ import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.Zero
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.*
-import com.histmersion.api.PlanQuota.*
+import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.automation.PlanQuota.*
 import com.histmersion.domain.automation.agents.{AgentRepo, PlanQuotaRepo}
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.server.{Composition, Deps, ServerWiring}
@@ -19,6 +18,8 @@ import sttp.ai.core.agent.*
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.db.*
+import com.histmersion.api.automation.PlanQuota
+import com.histmersion.api.library.SourcePut
 
 /** Plan pools end to end against a `*_test` database (docs/research-plan-quotas.md §5): the pick with plan readings — a
   * window below its floor, a hold, a provider refusal — pauses a run with `plan-quota` until the reset instead of

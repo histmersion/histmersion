@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.search
 
-import com.histmersion.api.Query.{QueryResult, SchemaTable}
+import com.histmersion.api.library.Query.{QueryResult, SchemaTable}
 
 import com.histmersion.util.database.Transactor
 

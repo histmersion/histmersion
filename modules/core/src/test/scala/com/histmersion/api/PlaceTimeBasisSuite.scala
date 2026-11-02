@@ -1,16 +1,18 @@
 package com.histmersion.api
 
-import com.histmersion.api.catalogue.places.PlacesMarkdown
+import com.histmersion.api.catalogue.PlacesMarkdown
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.config.given
 import com.histmersion.domain.given
 import com.histmersion.values.PlaceKind
+import com.histmersion.api.catalogue.{PlaceSummary, PlaceTimeBasis}
+import com.histmersion.api.views.PlaceDetail
 
 /** The time rule of the place views (2026-10-09): on what ground a view at a time shows a place. */
 class PlaceTimeBasisSuite extends munit.FunSuite:
-  import PlaceTimeBasis.*
+  import com.histmersion.api.catalogue.PlaceTimeBasis.*
 
   private def of(
       kind: String,

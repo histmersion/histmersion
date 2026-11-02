@@ -2,12 +2,12 @@ package com.histmersion.cli
 
 import com.histmersion.values.AssetLinkTarget
 
-import com.histmersion.api.media.assets.MediaMarkdown
+import com.histmersion.api.media.MediaMarkdown
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.*
 import com.histmersion.config.*
+import com.histmersion.api.media.{AssetLinkPut, AssetRelation}
 
 object AssetLinksCmd:
 

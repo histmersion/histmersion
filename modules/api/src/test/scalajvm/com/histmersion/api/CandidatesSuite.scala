@@ -3,6 +3,16 @@ package com.histmersion.api
 import io.circe.parser.parse
 
 import java.time.LocalDate
+import com.histmersion.api.library.{
+  CandidateCount,
+  CandidateList,
+  Candidates,
+  CandidatesMarkdown,
+  CandidateSweep,
+  CandidateWatch,
+  SourceCandidate,
+  WorkRef
+}
 
 /** The deterministic new-source search's pure half (#3761): keys, watermarks, deduplication, the indexes' answers, the
   * Markdown.

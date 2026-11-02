@@ -1,7 +1,7 @@
 package com.histmersion.domain.catalogue.events
 
 import chimp.server.*
-import com.histmersion.api.Corrections
+import com.histmersion.api.catalogue.Corrections
 import com.histmersion.util.mcp.McpOut
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema

@@ -1,18 +1,10 @@
 package com.histmersion.util.data.diagnostics
 
-import com.histmersion.api.{
-  Backup,
-  BackupInfo,
-  BackupsUsage,
-  BasemapLayer,
-  Plural,
-  StorageAdvice,
-  StorageEntry,
-  StorageReport,
-  StorageVolume,
-  TableSize
-}
-import com.histmersion.api.Storage as StorageReports
+import com.histmersion.api.{Plural, TableSize}
+import com.histmersion.api.backup.{Backup, BackupInfo, BackupsUsage}
+import com.histmersion.api.basemap.BasemapLayer
+import com.histmersion.api.maintenance.{StorageAdvice, StorageEntry, StorageReport, StorageVolume}
+import com.histmersion.api.maintenance.Storage as StorageReports
 import com.histmersion.config.AppConfig
 import com.histmersion.util.data.DataContributions
 import com.histmersion.util.data.maintenance.{CacheHolding, CacheSpec}

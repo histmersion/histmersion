@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.events
 
-import com.histmersion.api.{BundleEvent, BundleRange, IssueDetail, MergeDecision, MergeIssue, MergeIssueDetail}
+import com.histmersion.api.exchange.{BundleEvent, BundleRange, IssueDetail, MergeDecision, MergeIssue, MergeIssueDetail}
 import com.histmersion.domain.{MergeFold, MergePlanner}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.{PlanFolds, PlanMerge, PlanQuestions, PlanRun}

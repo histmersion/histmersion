@@ -1,13 +1,16 @@
 package com.histmersion.web
 
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.*
+import com.histmersion.api.{Api, BBox, Plural}
 import com.histmersion.web.ui.{AggregateBy, AggregateUnit, Layout}
 import org.scalajs.dom
 
 import scala.compiletime.uninitialized
 import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.api.catalogue.{HistoricalPeriod, Period, PresetMenu}
+import com.histmersion.api.instance.{TimeConfig, UiConfig}
+import com.histmersion.api.library.TimeBucket
 
 object TimelineView:
 

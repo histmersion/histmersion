@@ -3,6 +3,8 @@ package com.histmersion.api
 /** The wikilink graph (plan §5.2 stream 2.7). Pure: this is the function that decides what ends up in `article_links`,
   * so every shape the existing wiki actually contains is pinned here.
   */
+
+import com.histmersion.api.research.{ArticleLink, ArticleLinks}
 class ArticleLinksSuite extends munit.FunSuite:
 
   private val sources = Set("cline2014_year", "haak2015_massive")

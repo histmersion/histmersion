@@ -2,13 +2,14 @@ package com.histmersion.util.jobs
 
 import com.histmersion.util.database.Transactor
 
-import com.histmersion.api.*
+import com.histmersion.api.ApiError
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.jobs.JobRepo
 
 import java.util.concurrent.atomic.AtomicReference
 import javax.sql.DataSource
+import com.histmersion.api.jobs.{JobDetail, JobInfo, JobState}
 
 /** The ONE way the server runs work longer than a request as a background job (#1946): a `jobs` row (`histmersion jobs
   * <id>` follows it; a restart fails it as `interrupted` like every other unfinished job), on its own daemon thread, at

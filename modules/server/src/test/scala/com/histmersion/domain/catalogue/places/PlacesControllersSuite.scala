@@ -1,15 +1,25 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.*
+import com.histmersion.api.{Api, SpatialHierarchyResult}
 import com.histmersion.values.PlaceKind
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.CatalogueState
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.util.identity.AliasKind
+import com.histmersion.api.aliases.AliasKind
 
 import java.time.{Clock, Instant, ZoneOffset}
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.api.catalogue.{
+  Geocode,
+  PlaceAdd,
+  PlaceMergeIn,
+  PlaceNameAdd,
+  PlaceNameRemove,
+  PlaceOverrideSet,
+  PlaceRebuildResult,
+  PlaceRemoveIn
+}
 
 /** The gazetteer's controllers over the in-memory records, no server and no database: an LPF document imported (a bad
   * kind or document refused whole), an old id answering as its place, the tree's configured depth, a person's names and

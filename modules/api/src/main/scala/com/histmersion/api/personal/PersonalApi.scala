@@ -3,6 +3,7 @@ package com.histmersion.api.personal
 import com.histmersion.api.{Api, ApiError}
 import sttp.tapir.*
 import sttp.tapir.json.circe.*
+import com.histmersion.api.ItemKind
 
 object PersonalApi:
 

@@ -2,7 +2,9 @@ package com.histmersion.domain.catalogue.maptiles
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
-import com.histmersion.api.{ApiError, Filter, TileLayer, TilesApi}
+import com.histmersion.api.ApiError
+import com.histmersion.api.library.Filter
+import com.histmersion.api.catalogue.{TileLayer, TilesApi}
 import com.histmersion.config.UiMapTilesSettings
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.catalogue.events.{EventSelection, EventService, EventSourceFilter, EventSql}

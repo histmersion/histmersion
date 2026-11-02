@@ -6,7 +6,7 @@ import sttp.tapir.files.*
 import sttp.shared.Identity
 import sttp.model.{Header, MediaType, StatusCode}
 import sttp.tapir.json.circe.*
-import com.histmersion.api.*
+import com.histmersion.api.Plural
 import com.histmersion.config.*
 import com.histmersion.domain.*
 

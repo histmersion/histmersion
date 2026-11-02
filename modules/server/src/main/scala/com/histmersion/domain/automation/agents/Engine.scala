@@ -3,10 +3,10 @@ package com.histmersion.domain.automation.agents
 import com.histmersion.domain.automation.workflows.Pipelines
 import com.histmersion.server.agents.CliProcess
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.*
+import com.histmersion.api.automation.Agents.*
 import com.histmersion.domain.automation.workflows.{ToolName, Workflows}
 import com.histmersion.api.VocabularyCodecs.given
 import io.circe.parser.decode
@@ -17,6 +17,7 @@ import sttp.shared.Identity
 import java.util.concurrent.{ConcurrentHashMap, LinkedBlockingQueue, Semaphore}
 import javax.sql.DataSource
 import scala.jdk.CollectionConverters.*
+import com.histmersion.api.automation.{AgentsApi, AgentsMarkdown, PlanQuota}
 
 /** The run pool: `agents.max-concurrent-runs` workers draining a queue of run ids, on one daemon thread hosting an Ox
   * scope (the same arrangement as the OCR [[com.histmersion.server.Jobs]]). Runs are durable — `jobs` + `agent_steps` —
@@ -407,8 +408,8 @@ final class Engine(
             s"scheduled ${run.pipeline}${run.goal.fold("")(g => s" for goal $g")} (agent run ${run.id.take(8)}) $w"
           else s"${run.pipeline} of [[${run.target}]] queued by its import (agent run ${run.id.take(8)}) $w"
         val _ = agents.queues.add(
-          com.histmersion.api.Queue.Kind.Tasks,
-          com.histmersion.api.Queue.QueueAdd(
+          com.histmersion.api.automation.Queue.Kind.Tasks,
+          com.histmersion.api.automation.Queue.QueueAdd(
             text,
             topic = Some(if scheduled then "agent schedules" else "auto-enrich"),
             goal = Pipelines.goalOf(run),

@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.api.library.search.Tree
+import com.histmersion.api.library.Tree
 
 import com.histmersion.domain.library.search.SearchFixtures
 import com.histmersion.domain.library.sources.SourceFixtures
@@ -9,12 +9,14 @@ import com.histmersion.domain.catalogue.places.PlaceFixtures
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
-import com.histmersion.api.*
+import com.histmersion.api.GeoPoint
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.library.search.Tree.TreeRow
+import com.histmersion.api.library.Tree.TreeRow
 import com.histmersion.values.{Confidence, PlaceKind, SourceStatus}
 import com.histmersion.util.database.{Migrate, Param}
+import com.histmersion.api.catalogue.{Period, Place, PlaceInput, PlaceName, PlaceRelation}
+import com.histmersion.api.library.{Bucket, Filter, Finding, Source}
 
 /** [[TreeRepo]] against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise.
   *

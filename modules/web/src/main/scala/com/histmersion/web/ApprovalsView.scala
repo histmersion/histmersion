@@ -1,11 +1,12 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
-import com.histmersion.api.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, Decision}
+import com.histmersion.api.{Paging, Plural, Wording}
+import com.histmersion.api.automation.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, Decision}
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.ListFilters
+import com.histmersion.api.automation.ListFilters
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.api.automation.{GoalPlans, ManagersMarkdown}
 
 /** The approvals window (docs/research-embedded-agents.md §5.2): changes agent runs PROPOSED — a source's status, a
   * disagreement edge — each with its evidence and the quote code verified, and approve / reject behind the write gate.
@@ -260,7 +261,7 @@ object ApprovalsView:
       r.failed.foreach(e => list.failure.set(Some(e.getMessage)))
       refresh()
       // decided here or in a goal's window: the count drops, and the decision is not news to its maker
-      Notices.ownWrite(com.histmersion.api.UiNotices.Board.Approvals)
+      Notices.ownWrite(com.histmersion.api.instance.UiNotices.Board.Approvals)
     }
 
   /** A bulk decision, after the person confirmed it: one request per approval, ONE AFTER ANOTHER, each through the very
@@ -285,7 +286,7 @@ object ApprovalsView:
         Option.when(errs.nonEmpty)(s"${Plural.count(errs.size, "approval")} not decided: ${errs.mkString("; ")}")
       )
       refresh()
-      Notices.ownWrite(com.histmersion.api.UiNotices.Board.Approvals)
+      Notices.ownWrite(com.histmersion.api.instance.UiNotices.Board.Approvals)
     }
 
   /** The listing with the rows the filter shows — at once, from the rows loaded; the server's page replaces them a
@@ -357,18 +358,18 @@ object ApprovalsView:
     )
 
   /** One kind of the digest, in a line: how many, the oldest, who decides them now. */
-  def digestLine(g: com.histmersion.api.ApprovalDigest.KindGroup): String =
+  def digestLine(g: com.histmersion.api.automation.ApprovalDigest.KindGroup): String =
     s"${kindLabel(g.kind)} ${Paging.grouped(g.count)}" + g.oldest.fold("")(o => s" (oldest $o)") +
       (g.decidedBy match
-        case "checked"                                => " · the autopilot's checks decide them within the day's cap"
-        case com.histmersion.api.ApprovalDigest.Waits => " · waiting: nobody needs to decide them now"
-        case _                                        => " · a person decides")
+        case "checked" => " · the autopilot's checks decide them within the day's cap"
+        case com.histmersion.api.automation.ApprovalDigest.Waits => " · waiting: nobody needs to decide them now"
+        case _                                                   => " · a person decides")
 
   /** The digest (#3762 proposal 3): everything waiting for a person, by kind — a click shows one kind in the list below
     * (its kind filter), where the bulk bar decides them all at once.
     */
   private def digestBar: HtmlElement =
-    val d = Var(Option.empty[com.histmersion.api.ApprovalDigest.Digest])
+    val d = Var(Option.empty[com.histmersion.api.automation.ApprovalDigest.Digest])
     def load(): Unit = ApiClient.approvalDigest.onComplete(_.toOption.foreach(x => d.set(Some(x))))
     div(
       cls := "approvals-digest",

@@ -1,6 +1,6 @@
 package com.histmersion.server
 
-import com.histmersion.api.TilesApi
+import com.histmersion.api.catalogue.TilesApi
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.catalogue.maptiles.{TileCoord, VectorTileReader}
 import com.histmersion.util.database.Migrate

@@ -2,7 +2,7 @@ package com.histmersion.domain.library.search
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
-import com.histmersion.api.Filter
+import com.histmersion.api.library.Filter
 import com.histmersion.util.database.Sql
 import com.histmersion.domain.catalogue.events.EventSourceFilter
 

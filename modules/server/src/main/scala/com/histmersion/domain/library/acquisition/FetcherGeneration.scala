@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.acquisition
 
-import com.histmersion.api.PluginStatus
+import com.histmersion.api.plugins.PluginStatus
 import com.histmersion.domain.AcquireRecheck
 import com.histmersion.plugin.Access
 import com.histmersion.pluginhost.Registries

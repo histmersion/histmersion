@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.agents
 
-import com.histmersion.api.Agents.ModelRef
+import com.histmersion.api.automation.Agents.ModelRef
 import sttp.ai.core.agent.*
 
 import scala.concurrent.duration.*

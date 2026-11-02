@@ -1,9 +1,9 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
 import org.scalajs.dom
 
 import scala.scalajs.js
+import com.histmersion.api.library.Finding
 
 /** What a dot on the map stands for. Every kind but the areas (regions, polities: shapes, never dots) joins the one
   * cluster group of the map ([[MapView]]), so dots near each other are drawn as one bubble whatever layer they come

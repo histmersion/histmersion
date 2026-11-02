@@ -1,7 +1,10 @@
 package com.histmersion.server.views
 
-import com.histmersion.api.catalogue.places.PlaceEntry
-import com.histmersion.api.{ApiError, MediaThumb, PlaceCounts, PlaceDetail}
+import com.histmersion.api.catalogue.PlaceEntry
+import com.histmersion.api.ApiError
+import com.histmersion.api.media.MediaThumb
+import com.histmersion.api.catalogue.PlaceCounts
+import com.histmersion.api.views.PlaceDetail
 import hearth.kindlings.optics.syntax.*
 import io.scalaland.chimney.dsl.*
 

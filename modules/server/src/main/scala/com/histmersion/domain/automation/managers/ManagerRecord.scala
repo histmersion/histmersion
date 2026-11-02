@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.managers
 
-import com.histmersion.api.Managers.ManagerConfig
+import com.histmersion.api.automation.Managers.ManagerConfig
 
 import java.time.Instant
 

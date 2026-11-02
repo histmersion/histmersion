@@ -1,6 +1,7 @@
 package com.histmersion.util.data.maintenance
 
-import com.histmersion.api.{ApiError, Backup}
+import com.histmersion.api.ApiError
+import com.histmersion.api.backup.Backup
 
 import java.util.concurrent.atomic.AtomicBoolean
 

@@ -4,19 +4,21 @@ import com.histmersion.domain.automation.managers.ManagerLight
 
 import com.histmersion.domain.automation.agents.*
 
-import com.histmersion.api.*
+import com.histmersion.api.Plural
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Autopilot.*
+import com.histmersion.api.automation.Autopilot.*
 import com.histmersion.domain.AutopilotPolicy.{GoalFacts, GoalRow, ManagerRow, Step}
-import com.histmersion.api.GoalPlans.LinkKind
-import com.histmersion.api.Managers.*
-import com.histmersion.api.Queue.QueueAdd
+import com.histmersion.api.automation.GoalPlans.LinkKind
+import com.histmersion.api.automation.Managers.*
+import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.automation.autopilot.AutopilotRepo
 
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.sql.DataSource
+import com.histmersion.api.automation.{Agents, GoalPatch}
+import com.histmersion.api.backup.BackupState
 
 /** The autopilot (docs/research-process-managers.md "As built: the autopilot"): ONE switch, kept in the database, that
   * lets the process managers carry every research goal from planned to reviewed with no person in the loop — within the

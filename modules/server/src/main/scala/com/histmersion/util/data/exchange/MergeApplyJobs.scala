@@ -1,6 +1,8 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.{ApiError, Backup, MergeApplyJob, MergeApplyResult, MergeJobState}
+import com.histmersion.api.ApiError
+import com.histmersion.api.backup.Backup
+import com.histmersion.api.exchange.{MergeApplyJob, MergeApplyResult, MergeJobState}
 import com.histmersion.util.jobs.{MergeApplyRuns, WorkCarrier}
 
 import java.util.concurrent.{CompletableFuture, TimeoutException, TimeUnit}

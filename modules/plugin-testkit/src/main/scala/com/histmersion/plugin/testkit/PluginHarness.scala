@@ -2,7 +2,7 @@ package com.histmersion.plugin.testkit
 
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.config.{AppConfig, LoadedConfig}
-import com.histmersion.api.PluginState
+import com.histmersion.api.plugins.PluginState
 import com.histmersion.domain.media.imports.LicencePolicy
 import com.histmersion.pluginhost.allowed
 import com.histmersion.plugin.*

@@ -1,9 +1,11 @@
 package com.histmersion.files
 
-import com.histmersion.api.*
+import com.histmersion.api.GeoPoint
 import com.histmersion.api.given
 import com.histmersion.values.{Confidence, SourceStatus}
 import com.histmersion.domain.library.sources.SourceNote
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.library.{Edge, Finding, Source}
 
 /** `SourceNote.note` must be the inverse of `SourceNote.parseNote` — that round trip is what lets the Markdown wiki
   * stay a faithful mirror of the database (plan §1.9a `export` / `seed --force`).

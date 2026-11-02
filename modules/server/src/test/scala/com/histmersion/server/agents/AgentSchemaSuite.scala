@@ -6,7 +6,7 @@ import com.histmersion.domain.automation.agents.Toolbox
 
 import com.histmersion.domain.automation.workflows.ToolName
 
-import com.histmersion.api.Agents.ProbeAnswer
+import com.histmersion.api.automation.Agents.ProbeAnswer
 import com.histmersion.domain.library.LibraryTools.GetSourceInput
 import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject

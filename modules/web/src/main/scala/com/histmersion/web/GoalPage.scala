@@ -1,12 +1,14 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
-import com.histmersion.api.GoalPlans.{GoalView, LinkKind, ScheduleKind}
-import com.histmersion.api.Managers.{ManagerInfo, ManagerItem}
+import com.histmersion.api.{Plural, UiLabels, Wording}
+import com.histmersion.api.automation.GoalPlans.{GoalView, LinkKind, ScheduleKind}
+import com.histmersion.api.automation.Managers.{ManagerInfo, ManagerItem}
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
+import com.histmersion.api.automation.{Agents, Managers, Queue}
+import com.histmersion.api.instance.UiConfig
 
 /** One research goal's page: its question, state and schedule ("checked for new publications 3 days ago · next check
   * …"), its actions (check for new publications now, pause the goal, edit), its plan — each step linked to the agent

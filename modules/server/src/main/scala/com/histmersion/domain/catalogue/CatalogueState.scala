@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue
 
-import com.histmersion.api.{Attestation, CatalogRecord, Correction, EventLinkCandidate}
+import com.histmersion.api.catalogue.{Attestation, CatalogRecord, Correction, EventLinkCandidate}
 import com.histmersion.domain.catalogue.events.HeldEvent
 import com.histmersion.domain.catalogue.periods.StoredPeriod
 import com.histmersion.domain.catalogue.places.{HeldOverride, HeldPlace, HeldSite}

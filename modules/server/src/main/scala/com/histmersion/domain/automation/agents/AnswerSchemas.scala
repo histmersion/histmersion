@@ -1,7 +1,7 @@
 package com.histmersion.domain.automation.agents
 
 import com.histmersion.domain.{HintProposals, PlanGoal}
-import com.histmersion.api.Agents.ProbeAnswer
+import com.histmersion.api.automation.Agents.ProbeAnswer
 import com.histmersion.api.VocabularyCodecs.given
 import sttp.ai.core.agent.ResponseSchema
 

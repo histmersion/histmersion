@@ -149,11 +149,30 @@ object ArchitectureSuite:
         case "com" :: "histmersion" :: "domain" :: d :: rest if Domains.contains(d) || d == Personal =>
           Some((d :: rest).mkString("."))
         case "com" :: "histmersion" :: "util" :: area :: rest => Some(("util" :: area :: rest).mkString("."))
-        case "com" :: "histmersion" :: "api" :: d :: feature :: rest if Domains.contains(d) || d == Personal =>
-          Some((d :: feature :: rest).mkString("."))
+        case "com" :: "histmersion" :: "api" :: d :: rest if Domains.contains(d) || d == Personal =>
+          Some((d :: rest).mkString("."))
+        case "com" :: "histmersion" :: "api" :: area :: _ if ApiAreas.contains(area)   => ApiAreas.get(area)
         case "com" :: "histmersion" :: "server" :: (sub @ ("views" | "instance")) :: _ => Some(s"server.$sub")
         case "com" :: "histmersion" :: "domain" :: Nil                                 => Some("kernel")
         case _                                                                         => None
+
+    /** The api's packages of the supporting areas and the server's own pages: the place each stands for. */
+    val ApiAreas: Map[String, String] = Map(
+      "aliases" -> "util.identity",
+      "backup" -> "util.data.backup",
+      "basemap" -> "util.basemap",
+      "checks" -> "util.data.checks",
+      "exchange" -> "util.data.exchange",
+      "jobs" -> "util.jobs",
+      "json" -> "util.json",
+      "maintenance" -> "util.data.maintenance",
+      "ocr" -> "util.ocr",
+      "plugins" -> "util.plugins",
+      "settings" -> "util.settings",
+      "text" -> "util.text",
+      "instance" -> "server.instance",
+      "views" -> "server.views"
+    )
 
     /** The layer the direction rule compares: a domain, `util.<area>`, or a shared or composition place. */
     def layer(place: String): String = place.split('.').toList match

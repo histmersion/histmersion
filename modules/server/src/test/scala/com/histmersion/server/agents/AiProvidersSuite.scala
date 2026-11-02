@@ -9,8 +9,8 @@ import com.histmersion.util.plugins.Plugins
 import com.histmersion.pluginhost.{FirstPartySettings, Generation, PluginHost}
 
 import com.histmersion.config.AppConfig
-import com.histmersion.api.PlanQuota
-import com.histmersion.api.Agents.*
+import com.histmersion.api.automation.PlanQuota
+import com.histmersion.api.automation.Agents.*
 import com.histmersion.plugin.*
 import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject

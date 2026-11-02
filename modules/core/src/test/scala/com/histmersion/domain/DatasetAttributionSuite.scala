@@ -1,6 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.api.{DataCredit, DataCredits}
+import com.histmersion.api.media.{DataCredit, DataCredits}
 
 /** The datasets' credits read as the reuse they allow: the stated licence classified, its URL read when the statement
   * names none, the credit line kept, and what the credits page shows unchanged.

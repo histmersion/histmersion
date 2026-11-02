@@ -1,15 +1,25 @@
 package com.histmersion.domain.research.articles
 
-import com.histmersion.util.identity.AliasKinds
+import com.histmersion.api.aliases.AliasKinds
 
 import chimp.server.*
-import com.histmersion.api.*
+import com.histmersion.api.{Api, StrictJson}
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.util.mcp.McpOut
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import sttp.tapir.Schema
+import com.histmersion.api.aliases.Aliases
+import com.histmersion.api.library.Filter
+import com.histmersion.api.research.{
+  ArticleCoverage,
+  ArticleEdits,
+  ArticleMarkdown,
+  ArticlePatch,
+  ArticlePut,
+  ArticleReviewView
+}
 
 /** The articles' MCP tools, in their place among `/mcp`'s: the list, one article read, its writes, a draft checked, its
   * coverage and review, its note and its versions. The delete is deliberately not a tool: dropping compiled knowledge

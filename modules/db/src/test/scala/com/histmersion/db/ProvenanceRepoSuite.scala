@@ -2,13 +2,13 @@ package com.histmersion.db
 
 import com.histmersion.domain.library.sources.SourceFixtures
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.values.SourceStatus
 import com.histmersion.util.database.Migrate
+import com.histmersion.api.library.{MetadataPatch, Provenance, Source, SourcePatch}
 
 /** A provenance is free text: every write path stores it as written. Against a real Postgres (HISTMERSION_TEST_DB_URL);
   * skipped otherwise.

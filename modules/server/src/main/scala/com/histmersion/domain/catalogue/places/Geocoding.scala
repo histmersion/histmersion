@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.{Geocode, Period}
+import com.histmersion.api.catalogue.{Geocode, Period}
 import com.histmersion.util.database.Transactor
 
 /** A place NAME → its gazetteer point (#981): the one geocoder, for a finding about a place of kind `hint` dated `at`

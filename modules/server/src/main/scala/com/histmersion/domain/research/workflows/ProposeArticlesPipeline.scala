@@ -4,18 +4,21 @@ import com.histmersion.domain.automation.agents.{AnswerSchemas, Checked, Halt, P
 import com.histmersion.domain.automation.approvals.AutoApprovals
 import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
 
-import com.histmersion.api.*
+import com.histmersion.api.Plural
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.{ApprovalKind, Pipeline}
-import com.histmersion.api.ArticlePlans.ArticlePlan
-import com.histmersion.api.GoalPlans.LinkKind
+import com.histmersion.api.automation.Agents.{ApprovalKind, Pipeline}
+import com.histmersion.api.research.ArticlePlans.ArticlePlan
+import com.histmersion.api.automation.GoalPlans.LinkKind
 import com.histmersion.domain.PlanArticles.ArticlesAnswer
 import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.domain.automation.managers.ManagerService
 import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
+import com.histmersion.api.automation.{AgentsMarkdown, Managers}
+import com.histmersion.api.library.Filter
+import com.histmersion.api.research.ArticleFilter
 
 /** `propose-articles <goal>` (docs/research-process-managers.md §4 (b), phase 2): the seeding manager's planner step. A
   * model proposes the articles a research area should have; CODE keeps the ones that can be compiled and are new

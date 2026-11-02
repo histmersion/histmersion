@@ -2,12 +2,24 @@ package com.histmersion.cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.*
+import com.histmersion.api.Plural
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
 import com.histmersion.values.{DecisionKind, EditionsPolicy}
 import com.histmersion.util.data.exchange.MergeResolutionsFile
+import com.histmersion.api.exchange.{
+  BundleUpload,
+  MergeApplyJob,
+  MergeApplyRequest,
+  MergeApplyResult,
+  MergeDecision,
+  MergeJobState,
+  MergeMarkdown,
+  MergePlanRequest,
+  MergePolicy,
+  MergeResolutions
+}
 
 /** `histmersion merge plan` — what importing another collection's bundle would do, and every issue, in one run
   * (docs/research-merge-import.md §6, milestone M3). The bundle is uploaded to the server (it is planned there, against

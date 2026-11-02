@@ -2,7 +2,6 @@ package com.histmersion.domain.catalogue.places
 
 import com.histmersion.server.ServerPlugins
 
-import com.histmersion.api.*
 import com.histmersion.config.AppConfig
 import com.histmersion.db.TestDb
 import com.histmersion.plugin.PluginHttp
@@ -14,6 +13,7 @@ import com.augustnagro.magnum.*
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import javax.sql.DataSource
+import com.histmersion.api.catalogue.PlaceImportResult
 
 /** What the network gazetteers store: each fixture imported through the real runner (download from a loopback server,
   * transform, batch upsert, `finding_places` rebuilt) into a scratch database of its own, then its `places`,

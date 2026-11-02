@@ -1,6 +1,5 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.*
 import com.histmersion.api.given
 
 import java.io.{EOFException, FilterInputStream, InputStream, OutputStream}

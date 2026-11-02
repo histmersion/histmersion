@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.api.UiConfig
+import com.histmersion.api.instance.UiConfig
 import com.histmersion.web.LabelMotion.Motion
 import com.histmersion.web.LabelPlacement.{Pt, Rect}
 import com.histmersion.api.MapStack

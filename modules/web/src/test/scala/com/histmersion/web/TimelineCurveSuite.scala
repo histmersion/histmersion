@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.api.TimeBucket
+import com.histmersion.api.library.TimeBucket
 
 class TimelineCurveSuite extends munit.FunSuite:
   import TimelineCurve.*

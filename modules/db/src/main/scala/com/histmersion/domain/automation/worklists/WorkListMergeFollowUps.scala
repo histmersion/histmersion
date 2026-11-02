@@ -1,6 +1,8 @@
 package com.histmersion.domain.automation.worklists
 
-import com.histmersion.api.{BundleKindCounts, BundleManifest, Plural, Queue}
+import com.histmersion.api.Plural
+import com.histmersion.api.exchange.{BundleKindCounts, BundleManifest}
+import com.histmersion.api.automation.Queue
 import com.histmersion.domain.MergePlanner
 import com.histmersion.util.data.exchange.MergeFollowUps
 import com.histmersion.values.BundleKind

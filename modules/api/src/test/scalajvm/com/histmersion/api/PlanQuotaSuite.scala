@@ -1,7 +1,7 @@
 package com.histmersion.api
 
-import com.histmersion.api.Agents.{ModelRef, ProviderKind}
-import com.histmersion.api.PlanQuota.*
+import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
+import com.histmersion.api.automation.PlanQuota.*
 
 /** Plan floors (docs/research-plan-quotas.md §5): the pick with plan readings — floors, a provider refusal, a missing
   * window, a stale reading, a hold, a window whose reset passed.

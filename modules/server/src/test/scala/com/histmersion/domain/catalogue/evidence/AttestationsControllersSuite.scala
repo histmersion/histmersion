@@ -1,13 +1,13 @@
 package com.histmersion.domain.catalogue.evidence
 
-import com.histmersion.util.identity.AliasKinds
+import com.histmersion.api.aliases.AliasKinds
 
-import com.histmersion.api.AttestationPut
+import com.histmersion.api.catalogue.AttestationPut
 import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.CatalogueState
 import com.histmersion.domain.catalogue.evidence.passages.{PassageReader, PassageSource}
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.util.identity.AliasKind
+import com.histmersion.api.aliases.AliasKind
 
 import java.util.concurrent.atomic.AtomicReference
 
@@ -60,7 +60,7 @@ class AttestationsControllersSuite extends munit.FunSuite:
       Right(
         List(
           locked.create(Caller.Local, AttestationPut("zznew1990_x", "place", "zz_hill")).isLeft,
-          locked.patch(Caller.Local, 1, com.histmersion.api.AttestationPatch()).isLeft,
+          locked.patch(Caller.Local, 1, com.histmersion.api.catalogue.AttestationPatch()).isLeft,
           locked.delete(Caller.Local, 1).isLeft
         )
       )

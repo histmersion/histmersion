@@ -1,11 +1,12 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
+import com.histmersion.api.YearFmt
 import com.histmersion.web.map.*
 import org.scalajs.dom
 
 import scala.collection.mutable
 import scala.scalajs.js
+import com.histmersion.api.catalogue.{EventGeo, EventPrecision, EventScale, EventTaxonomy}
 
 /** The pure half of the events in playback (#1440): when an event shows and how strongly. */
 object EventPlayback:

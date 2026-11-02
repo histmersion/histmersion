@@ -1,7 +1,7 @@
 package com.histmersion.web
 
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.*
+import com.histmersion.api.MapStack
 import com.histmersion.api.MapStack
 import com.histmersion.web.map.*
 import org.scalajs.dom
@@ -13,6 +13,10 @@ import scala.scalajs.js.JSConverters.*
 import scala.util.{Failure, Success}
 
 import com.raquo.laminar.codecs.StringAsIsCodec
+import com.histmersion.api.catalogue.PlaceHit
+import com.histmersion.api.instance.UiConfig
+import com.histmersion.api.library.Label
+import com.histmersion.api.views.PlaceDetail
 
 /** Gazetteer place picker for the filter bar. Ported from places.js (241 lines).
   *

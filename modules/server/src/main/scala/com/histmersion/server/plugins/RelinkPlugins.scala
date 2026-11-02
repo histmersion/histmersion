@@ -4,7 +4,7 @@ import scala.annotation.tailrec
 import com.histmersion.pluginhost.{HostServices, PluginHost}
 
 import com.histmersion.config.AppConfig
-import com.histmersion.api.{PluginDescription, PluginJar, PluginSet, PluginState}
+import com.histmersion.api.plugins.{PluginDescription, PluginJar, PluginSet, PluginState}
 import com.histmersion.util.plugins.PluginKit
 import com.histmersion.plugin.{Plugin, PluginHttp, Spi}
 import com.histmersion.util.plugins.{HostProvided, LegacyPlugins, PluginSetResource}

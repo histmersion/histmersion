@@ -1,6 +1,9 @@
 package com.histmersion.server.views
 
-import com.histmersion.api.{AcquireChecks, AgentMode, ApiError, Autopilot, AutopilotStatus, UpstreamQuota}
+import com.histmersion.api.ApiError
+import com.histmersion.api.library.{AcquireChecks, UpstreamQuota}
+import com.histmersion.api.automation.{AgentMode, Autopilot}
+import com.histmersion.api.views.AutopilotStatus
 import com.histmersion.domain.automation.managers.ManagersHandlers
 import io.scalaland.chimney.dsl.*
 

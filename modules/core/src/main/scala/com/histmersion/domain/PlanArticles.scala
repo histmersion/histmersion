@@ -1,14 +1,15 @@
 package com.histmersion.domain
 
 import scala.annotation.tailrec
-import com.histmersion.api.{ArticleFilter, Articles, Plural}
+import com.histmersion.api.Plural
+import com.histmersion.api.research.{ArticleFilter, Articles}
 import com.histmersion.api.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-import com.histmersion.api.ArticlePlans.{ArticlePlan, ProposedArticle}
+import com.histmersion.api.research.ArticlePlans.{ArticlePlan, ProposedArticle}
 
 /** The `propose-articles` pipeline's typed answer and its pure checks (docs/research-process-managers.md §4 (b), phase
   * 2): a planner proposes the articles a research area (a goal) should have — each a new slug, a title, a kind and the

@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.api.GeoHit
+import com.histmersion.api.library.GeoHit
 import com.histmersion.values.Confidence
 
 class MapViewSuite extends munit.FunSuite:
@@ -181,7 +181,8 @@ class MapViewSuite extends munit.FunSuite:
   // ── the "States shown" menu (GeoPick) ──────────────────────────────────────────
 
   test("the boundaries follow the menu over the span; playback always draws the playhead's one year"):
-    import com.histmersion.api.{GeoPick, GeoTime}
+    import com.histmersion.api.GeoPick
+    import com.histmersion.api.catalogue.GeoTime
     assertEquals(MapView.areaTime((-2000L, -1000L), GeoPick.Mid, playback = false), GeoTime.At(-1500))
     assertEquals(MapView.areaTime((-2000L, -1000L), GeoPick.Start, playback = false), GeoTime.At(-2000))
     assertEquals(MapView.areaTime((-2000L, -1000L), GeoPick.End, playback = false), GeoTime.At(-1000))
@@ -192,7 +193,7 @@ class MapViewSuite extends munit.FunSuite:
     GeoPick.values.foreach(p => assertEquals(MapView.areaTime((-1210L, -1190L), p, playback = true), GeoTime.At(-1200)))
 
   test("the areas of a whole range are all asked for; a year keeps the year's limit"):
-    import com.histmersion.api.GeoTime
+    import com.histmersion.api.catalogue.GeoTime
     import com.histmersion.web.ui.Layout
     assertEquals(MapView.overlayLimit(GeoTime.Within(-3000, 2000, latest = false)), Layout.overlayRangeFetchLimit)
     assertEquals(MapView.overlayLimit(GeoTime.At(1500)), Layout.overlayFetchLimit)
@@ -204,10 +205,11 @@ class MapViewSuite extends munit.FunSuite:
     assertEquals(MapView.tileSpanOf((-1650L, -1550L), playback = true, 166.0, 1.0), (-1800L, -1401L))
     // the next frames stay in the same buckets: the same tiles
     assertEquals(MapView.tileSpanOf((-1640L, -1540L), playback = true, 166.0, 1.0), (-1800L, -1401L))
-    assertEquals(MapView.tileFilter((-10L, 20L)).period, Some(com.histmersion.api.Period(-10L, 20L)))
+    assertEquals(MapView.tileFilter((-10L, 20L)).period, Some(com.histmersion.api.catalogue.Period(-10L, 20L)))
 
   test("the query carries a snapshot as asOf and a whole range as from/to/pick"):
-    import com.histmersion.api.{Api, GeoTime}
+    import com.histmersion.api.Api
+    import com.histmersion.api.catalogue.GeoTime
     assertEquals(
       MapView.geoQuery("polity", GeoTime.At(-1200), 400),
       Api.PlacesGeoQuery(kind = Some("polity"), asOf = Some(-1200L), limit = Some(400))

@@ -1,7 +1,10 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
+import com.histmersion.api.TimeSpan
 import com.histmersion.values.{Confidence, PlaceKind}
+import com.histmersion.api.catalogue.EventGeo
+import com.histmersion.api.library.{GeoHit, SourceKinds}
+import com.histmersion.api.media.MediaGeoHit
 
 /** The four kinds of point are four descriptors of ONE layer (docs/map-layers.md): the same assertions run over every
   * one of them, so they cannot drift apart — the marker's shape, glyph, fill and accessible name, what a bubble counts,

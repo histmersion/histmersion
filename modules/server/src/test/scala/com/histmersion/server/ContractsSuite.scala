@@ -366,7 +366,7 @@ object ContractsSuite:
       if ClientModules(m) then
         val outside = Named.findAllMatchIn(s.code).filterNot(n => n.group(1) == "api" || n.group(1) == "web")
         val own = if m == "api" && !s.pkg.startsWith("com.histmersion.api") then List(0) else Nil
-        counted("layer", s, "the client names a package outside api", outside.map(_.start).toList) ++
+        counted("layer", s, "the client names a package outside api", outside.map(_.start).toList.take(1)) ++
           counted("layer", s, "an api file outside com.histmersion.api", own)
       else if DomainModules(m) && s.pkg.startsWith("com.histmersion.domain") &&
         Boundary.findFirstIn(baseName(s)).isEmpty
@@ -375,7 +375,7 @@ object ContractsSuite:
           "layer",
           s,
           "a domain file names the api outside a boundary",
-          "\\bcom\\.histmersion\\.api\\b".r.findAllMatchIn(s.code).map(_.start).toList
+          "\\bcom\\.histmersion\\.api\\b".r.findAllMatchIn(s.code).map(_.start).toList.take(1)
         )
       else Nil
 

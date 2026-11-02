@@ -1,7 +1,23 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
+import com.histmersion.api.TimeSpan
 import com.histmersion.values.PlaceKind
+import com.histmersion.api.catalogue.{
+  Correction,
+  CorrectionStatus,
+  EventCatalogueRef,
+  EventGeo,
+  EventLead,
+  EventLeads,
+  EventLinkCandidate,
+  EventPrecision,
+  EventSummary,
+  EventTaxonomy,
+  EventTier,
+  SiteTypes
+}
+import com.histmersion.api.library.SourceKinds
+import com.histmersion.api.views.EventDetail
 
 /** #1449, the web's pure half: the one icon registry covers every kind and site type, an event marker carries its
   * kind's icon, its tier and its card's attribute, a typed site's icon its colour, the key names every icon, the menus

@@ -2,7 +2,7 @@ package com.histmersion.domain
 
 import com.histmersion.api.Plural
 
-import com.histmersion.api.Managers.*
+import com.histmersion.api.automation.Managers.*
 
 import java.time.{Duration, Instant}
 import com.histmersion.values.{ApprovalDecidedBy, GoalStatus, ItemStatus, ManagerKind, ManagerState}

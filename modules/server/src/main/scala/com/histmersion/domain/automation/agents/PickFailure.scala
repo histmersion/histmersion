@@ -1,10 +1,9 @@
 package com.histmersion.domain.automation.agents
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.*
-import com.histmersion.api.ModelChains.*
+import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.automation.ModelChains.*
 
 import java.time.Instant
 

@@ -2,7 +2,7 @@ package com.histmersion.domain.library.search
 
 import com.histmersion.util.database.given
 
-import com.histmersion.api.Query.*
+import com.histmersion.api.library.Query.*
 
 import java.sql.{Connection, ResultSet, SQLException}
 import com.augustnagro.magnum.DbCon
@@ -10,11 +10,11 @@ import com.augustnagro.magnum.DbCon
 /** The read-only SQL escape hatch (`POST /api/query`, `histmersion query`, MCP `query`; plan §5.2 2.8), plus the live
   * `information_schema` shape the tool description is generated from.
   *
-  * **Three layers, none of which is sufficient alone** (the full argument is on [[com.histmersion.api.Query]]):
+  * **Three layers, none of which is sufficient alone** (the full argument is on [[com.histmersion.api.library.Query]]):
   *
-  *   1. [[com.histmersion.api.Query.check]] — ONE top-level statement, and not a session/transaction-control one.
-  *      Without it, pgjdbc runs a `;`-batch and `SET TRANSACTION READ WRITE; DELETE …` beat the guard below by turning
-  *      it off first.
+  *   1. [[com.histmersion.api.library.Query.check]] — ONE top-level statement, and not a session/transaction-control
+  *      one. Without it, pgjdbc runs a `;`-batch and `SET TRANSACTION READ WRITE; DELETE …` beat the guard below by
+  *      turning it off first.
   *   2. the caller's connection comes from the DataSource of the dedicated **`histmersion_query`** role (migration
   *      V011) — SELECT and nothing else, `default_transaction_read_only = on` baked in. This is what actually stops a
   *      superuser-only `pg_read_file()`; the transaction settings never could.
@@ -36,7 +36,7 @@ private[search] object QueryRepo:
       maxRows: Int,
       maxCellChars: Int
   )(using DbCon): Either[String, QueryResult] =
-    com.histmersion.api.Query.check(statement).flatMap(text => exec(text, timeoutMs, maxRows, maxCellChars))
+    com.histmersion.api.library.Query.check(statement).flatMap(text => exec(text, timeoutMs, maxRows, maxCellChars))
 
   /** On the caller's connection, in a read-only transaction of its own that is always rolled back (the connection's
     * auto-commit is restored afterwards).

@@ -1,8 +1,9 @@
 package com.histmersion.server.instance
 
-import com.histmersion.api.{Agents, UiNotices}
+import com.histmersion.api.automation.Agents
+import com.histmersion.api.instance.UiNotices
 import com.histmersion.values.RunState
-import com.histmersion.api.UiNotices.{Board, Counters}
+import com.histmersion.api.instance.UiNotices.{Board, Counters}
 
 import com.augustnagro.magnum.*
 

@@ -1,7 +1,7 @@
 package com.histmersion.domain.automation.worklists
 
-import com.histmersion.api.Queue
-import com.histmersion.api.Queue.*
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.automation.Queue.*
 
 /** The contract the work lists' kernel keeps, run on [[QueueService.InMemory]] and on the database (a scratch database
   * per test, gated on HISTMERSION_TEST_DB_URL): a row survives unchanged — multi-line text, unicode headings, status

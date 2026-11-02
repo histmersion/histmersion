@@ -1,6 +1,7 @@
 package com.histmersion.domain.activity
 
-import com.histmersion.api.{Activity, ApiError}
+import com.histmersion.api.ApiError
+import com.histmersion.api.automation.Activity
 
 import java.time.Instant
 

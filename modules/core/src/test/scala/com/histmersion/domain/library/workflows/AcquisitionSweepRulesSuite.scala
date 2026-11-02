@@ -1,11 +1,11 @@
 package com.histmersion.domain.library.workflows
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
 import AcquisitionSweepRules.*
+import com.histmersion.api.library.WorkRef
 
 /** An acquisition sweep's pure rules: what it may offer the ranking, how a ranking is checked, which picks are
   * ingested.

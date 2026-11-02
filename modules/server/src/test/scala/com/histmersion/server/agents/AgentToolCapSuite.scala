@@ -9,7 +9,6 @@ import com.histmersion.domain.automation.workflows.ToolName
 import com.histmersion.util.ocr.ConverterClient
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.{Db, Migrate}
@@ -21,6 +20,8 @@ import io.circe.syntax.*
 import java.nio.file.Path
 import com.histmersion.values.SourceStatus
 import com.histmersion.db.*
+import com.histmersion.api.library.{FindingInput, SourcePut}
+import com.histmersion.api.ocr.ConvertedDoc
 
 /** The agent tools under `agents.tools` against a real Postgres (#token-diet, 2026-10-16): a record keeps its findings
   * and loses the notes' tail, a body read without `chars` is a short slice that says where to read on, `passages` still

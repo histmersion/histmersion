@@ -44,9 +44,11 @@ object CodexHome:
   ):
     def summary: String = skipped.getOrElse {
       val v = vacuumed.map((n, b, a) =>
-        s"$n ${com.histmersion.api.Backup.humanBytes(b)} → ${com.histmersion.api.Backup.humanBytes(a)}"
+        s"$n ${com.histmersion.api.backup.Backup.humanBytes(b)} → ${com.histmersion.api.backup.Backup.humanBytes(a)}"
       )
-      (List(s"${Plural.count(deleted, "transcript")} deleted (${com.histmersion.api.Backup.humanBytes(freedBytes)})") ++
+      (List(
+        s"${Plural.count(deleted, "transcript")} deleted (${com.histmersion.api.backup.Backup.humanBytes(freedBytes)})"
+      ) ++
         Option.when(v.nonEmpty)(s"vacuumed ${v.mkString(", ")}") ++ problems).mkString("; ")
     }
 

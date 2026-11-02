@@ -2,7 +2,8 @@ package com.histmersion.domain
 
 import scala.annotation.tailrec
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.api.{CritiqueRef, Plural, WireEnum}
+import com.histmersion.api.{Plural, WireEnum}
+import com.histmersion.api.research.CritiqueRef
 import com.histmersion.api.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject

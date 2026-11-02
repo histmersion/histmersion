@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.managers
 
-import com.histmersion.api.Managers.{Hold, ItemState}
+import com.histmersion.api.automation.Managers.{Hold, ItemState}
 
 import java.time.Instant
 

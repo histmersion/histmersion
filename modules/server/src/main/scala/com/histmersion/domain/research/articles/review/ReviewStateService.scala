@@ -1,6 +1,6 @@
 package com.histmersion.domain.research.articles.review
 
-import com.histmersion.api.ReviewGoal
+import com.histmersion.api.research.ReviewGoal
 import com.histmersion.domain.ArticleReviewStatus.Facts
 import com.histmersion.util.database.Transactor
 

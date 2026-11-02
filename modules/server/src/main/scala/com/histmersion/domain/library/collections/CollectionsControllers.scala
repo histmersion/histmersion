@@ -1,10 +1,35 @@
 package com.histmersion.domain.library.collections
 
-import com.histmersion.api.*
-import com.histmersion.api.library.collections.*
+import com.histmersion.api.ApiError
+import com.histmersion.api.library.*
 import com.histmersion.domain.Caller
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.values.Citekey
+import com.histmersion.api.library.{
+  ArchiveImportRequest,
+  ArchiveItem,
+  ArchiveSearchResult,
+  CollectionAudit,
+  CollectionGaps,
+  CollectionImported,
+  CollectionImportRequest,
+  CollectionInfo,
+  CollectionLinked,
+  CollectionLinkRequest,
+  CollectionPushed,
+  CollectionPushRequest,
+  CollectionSearch,
+  CollectionSetDone,
+  CollectionSetRequest,
+  CollectionSync,
+  CollectionSyncRequest,
+  CollectionUpdateAll,
+  CollectionUpdateAllRequest,
+  CollectionUpdatedOne,
+  CollectionUpdateOne,
+  IngestReport
+}
+import com.histmersion.api.library.of
 
 /** The collections' endpoints and tools over [[CollectionsService]]: the citekey checked where one is named, every
   * write behind the maintenance lock.

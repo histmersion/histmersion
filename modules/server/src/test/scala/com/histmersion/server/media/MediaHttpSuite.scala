@@ -10,7 +10,7 @@ import com.histmersion.domain.catalogue.evidence.*
 
 import ox.supervised
 import com.augustnagro.magnum.*
-import com.histmersion.api.*
+import com.histmersion.api.TimeSpan
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.{Db, Migrate}
@@ -20,6 +20,17 @@ import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.values.PlaceKind
 import com.histmersion.db.*
+import com.histmersion.api.catalogue.{EventPut, Period, Place, PlaceInput, PlaceName}
+import com.histmersion.api.media.{
+  FigureLicenceFill,
+  MediaFacets,
+  MediaGeoHit,
+  MediaImportRequest,
+  MediaItem,
+  MediaList,
+  MediaProvider
+}
+import com.histmersion.api.views.{EventDetail, PlaceDetail}
 
 /** Media from outside providers (#1446) through the server: an import against a FAKE provider into the test database
   * (HISTMERSION_TEST_DB_URL; skipped otherwise), then what the web UI and the CLI read — the place card's thumbnail,

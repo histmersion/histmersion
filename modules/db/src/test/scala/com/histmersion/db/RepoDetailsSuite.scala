@@ -8,13 +8,15 @@ import com.histmersion.domain.library.sources.SourceFixtures
 import com.histmersion.domain.media.assets.AssetFixtures
 import com.histmersion.domain.media.assets.NewFigure
 
-import com.histmersion.api.*
+import com.histmersion.api.GeoPoint
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.values.SourceStatus
 import com.histmersion.util.database.{Migrate, Param}
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.library.{Filter, Finding, Source}
 
 /** The small, sharp-edged repo fixes: the `ts_headline` word bounds, the assets contract, and the `findings_flat` upper
   * bound.

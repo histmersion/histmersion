@@ -4,13 +4,14 @@ import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
-import com.histmersion.api.*
+import com.histmersion.api.GeoPoint
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.catalogue.places.PlaceReview.Proposal
 
 import com.augustnagro.magnum.*
 import com.histmersion.values.{LocationPrecision, PlaceKind, SourceStatus}
+import com.histmersion.api.library.{Finding, Source}
 
 /** `lint --rule place-kind` and `--rule place-grid-point` (2026-10-09), against a real PostGIS
   * (HISTMERSION_TEST_DB_URL; skipped otherwise): the dry run lists people, polities, a settlement and a merge and

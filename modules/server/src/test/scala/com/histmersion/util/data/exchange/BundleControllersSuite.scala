@@ -1,12 +1,12 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.storage.{ContentDirectory, ContentStore}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Files
 import java.util.UUID
+import com.histmersion.api.exchange.{Bundle, BundleBlobs, BundleInstance, BundleManifest, BundleReference}
 
 /** The pure parts of the bundle endpoints, and the stored-originals directory a bundle reads and fills. No database.
   */

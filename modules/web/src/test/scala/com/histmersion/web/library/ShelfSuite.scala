@@ -3,6 +3,7 @@ package com.histmersion.web.library
 import com.histmersion.api.personal.*
 import com.histmersion.values.Year
 import com.histmersion.web.LibrarySection
+import com.histmersion.api.ItemKind
 
 class ShelfSuite extends munit.FunSuite:
 

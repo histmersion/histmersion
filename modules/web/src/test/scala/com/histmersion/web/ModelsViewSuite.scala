@@ -1,7 +1,7 @@
 package com.histmersion.web
 
-import com.histmersion.api.Agents.*
-import com.histmersion.api.ModelChains.*
+import com.histmersion.api.automation.Agents.*
+import com.histmersion.api.automation.ModelChains.*
 
 /** The pure parts of the agent models window: what a person types (a chain, limits, a reserve), the used-share of a
   * limit, a chained model's state, and an allowance paused run's words.
@@ -52,7 +52,7 @@ class ModelsViewSuite extends munit.FunSuite:
     assert(RunsView.pausedText(r, "budget").contains("Raise the budget"))
 
   test("a plan window's bar: the used share and where the floor sits; a reading's age in words"):
-    val w = com.histmersion.api.PlanQuota.WindowStatus(
+    val w = com.histmersion.api.automation.PlanQuota.WindowStatus(
       "claude",
       "five_hour",
       62.4,

@@ -1,12 +1,13 @@
 package com.histmersion.domain.automation.goals
 import com.histmersion.util.database.RangeSql
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.given
+import com.histmersion.api.automation.{Goal, GoalList, GoalPatch, GoalPut}
 
 object GoalRepo:
 

@@ -1,9 +1,10 @@
 package com.histmersion.domain.catalogue.maptiles
 
-/** A layer's tile features, from its cells and the records of its items ([[com.histmersion.api.TileProps]]). Pure.
+/** A layer's tile features, from its cells and the records of its items ([[com.histmersion.api.catalogue.TileProps]]).
+  * Pure.
   */
 object TileFeatures:
-  import com.histmersion.api.{EventGeo, SiteTile, TileProps as P}
+  import com.histmersion.api.catalogue.{EventGeo, SiteTile, TileProps as P}
 
   /** A text property; none when there is no value. */
   def text(k: String, v: String): Seq[(String, TileValue)] = Seq(k -> TileValue.Text(v))

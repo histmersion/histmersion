@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.findings
 
-import com.histmersion.api.{
+import com.histmersion.api.exchange.{
   BundleFinding,
   BundleSource,
   IssueCondition,
@@ -79,7 +79,7 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
             Some(IssueSide(rf.id, rf.uid, List(MergeIssueDetail.preview(rf.claim)))),
             List("by default both are kept; merge makes them one finding"),
             List(km.Both, km.Merge),
-            Some(com.histmersion.api.MergeDecision.of(km.Both)),
+            Some(com.histmersion.api.exchange.MergeDecision.of(km.Both)),
             cond,
             detail =
               Some(

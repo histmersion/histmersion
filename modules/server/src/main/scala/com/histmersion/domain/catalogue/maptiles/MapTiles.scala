@@ -1,6 +1,7 @@
 package com.histmersion.domain.catalogue.maptiles
 
-import com.histmersion.api.{Filter, TileLayer, TilesApi}
+import com.histmersion.api.library.Filter
+import com.histmersion.api.catalogue.{TileLayer, TilesApi}
 
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest

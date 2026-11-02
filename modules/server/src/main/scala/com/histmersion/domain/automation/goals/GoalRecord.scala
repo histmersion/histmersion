@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.goals
 
-import com.histmersion.api.Goal
+import com.histmersion.api.automation.Goal
 
 import java.time.Instant
 

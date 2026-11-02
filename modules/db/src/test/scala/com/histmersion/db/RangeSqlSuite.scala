@@ -4,13 +4,15 @@ import com.histmersion.util.database.Transactor
 
 import com.histmersion.util.database.RangeSql
 
-import com.histmersion.api.*
+import com.histmersion.api.Write
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.domain.automation.goals.GoalRepo
 import com.histmersion.util.database.{Migrate, Param}
+import com.histmersion.api.automation.{GoalPatch, GoalPut}
+import com.histmersion.api.catalogue.Period
 
 /** [[RangeSql]] (#1798 item 9): the pure literal/merge rules, and — on a test database — a goal or an asset patched
   * with ONE bound (it used to be silently ignored), read back through [[RangeSql.cols]].

@@ -1,7 +1,8 @@
 package com.histmersion.domain.automation.goals
 
 import com.histmersion.util.database.given
-import com.histmersion.api.{ApiError, BundleGoal, BundleGoalAlias, BundleGoalLink, BundleGoalSchedule}
+import com.histmersion.api.ApiError
+import com.histmersion.api.exchange.{BundleGoal, BundleGoalAlias, BundleGoalLink, BundleGoalSchedule}
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.domain.automation.goals.GoalRepo
 import com.histmersion.util.database.{Jsonb, Sql}

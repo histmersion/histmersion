@@ -1,15 +1,16 @@
 package com.histmersion.domain.library.sources
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Write}
 import com.histmersion.domain.library.sources.referrers.{DeleteReport, SourceKeys, SourceReferrers}
 
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
+import com.histmersion.api.library.{DeleteCount, DeletePart, Edge, SourceDelete, SourceDeletion}
 
 /** Deleting a source (#969) — the database half of `POST /api/sources/{ck}/delete`. The rules are
-  * [[com.histmersion.api.SourceDelete]]'s; this reads what a delete would touch ([[planIn]]) and does it ([[applyIn]]),
-  * in the caller's transaction.
+  * [[com.histmersion.api.library.SourceDelete]]'s; this reads what a delete would touch ([[planIn]]) and does it
+  * ([[applyIn]]), in the caller's transaction.
   *
   * What goes by `ON DELETE CASCADE` with the `sources` row (findings and their place assignments, edges both ways,
   * parked edges from it, chunks, figures and their links, its attestations, the assessment, old citekeys, identifiers)
@@ -88,7 +89,7 @@ private[sources] object SourceDeleteRepo:
 
   /** What of the library goes with the source. */
   private def counts(ck: String, aliases: Int, edgesIn: Int)(using DbCon): List[DeleteCount] =
-    import DeletePart.*
+    import com.histmersion.api.library.DeletePart.*
     List(
       Findings -> n(sql"SELECT count(*)::int FROM findings WHERE citekey = $ck"),
       EdgesOut -> n(sql"SELECT count(*)::int FROM edges WHERE src = $ck"),

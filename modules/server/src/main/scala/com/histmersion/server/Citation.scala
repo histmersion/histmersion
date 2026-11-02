@@ -1,8 +1,9 @@
 package com.histmersion.server
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.api.library.SourceRef
+import com.histmersion.api.research.ArticleRef
 
 /** One entry of a source page's "Cites" / "Cited by" lists — edges AND article links, typed. */
 enum Citation:

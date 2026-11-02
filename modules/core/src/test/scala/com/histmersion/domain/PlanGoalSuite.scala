@@ -1,11 +1,10 @@
 package com.histmersion.domain
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
-import com.histmersion.api.GoalPlans.{PlannedGoal, PlannedWork}
+import com.histmersion.api.automation.GoalPlans.{PlannedGoal, PlannedWork}
 import com.histmersion.domain.PlanGoal.*
 
 /** plan-goal's pure checks: what a retry can fix is sent back, what it cannot is dropped with a note, DOIs are looked

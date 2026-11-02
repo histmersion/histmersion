@@ -7,10 +7,11 @@ import com.histmersion.domain.media.imports.Target
 
 import com.histmersion.pluginhost.HttpAnswer
 
-import com.histmersion.api.*
 import com.histmersion.domain.*
 import com.histmersion.plugin.Year
 import com.histmersion.util.ocr.ConverterClient
+import com.histmersion.api.media.{MediaImportReport, MediaProvider}
+import com.histmersion.api.ocr.ConvertedDoc
 
 /** The two key-gated collections end to end against FAKE providers and an in-memory store: what is matched, what is
   * refused and why, that the key travels only as a header to the API's own host — never in a URL, never to an image

@@ -1,6 +1,7 @@
 package com.histmersion.web.marks
 
-import com.histmersion.api.personal.{ItemKind, Target}
+import com.histmersion.api.personal.Target
+import com.histmersion.api.ItemKind
 import com.histmersion.web.{Preview, Route}
 import com.histmersion.web.library.LibraryAddress
 import com.histmersion.web.LibrarySection
@@ -38,7 +39,7 @@ object ItemRef:
         case ItemKind.Event   => Route.Event(key).path
         case ItemKind.Place   => Route.Place(key).path
         case ItemKind.Goal    => Route.Goal(key).path
-        case ItemKind.Picture => com.histmersion.api.MediaThumb.filePath(key)
+        case ItemKind.Picture => com.histmersion.api.media.MediaThumb.filePath(key)
         case _                => Route.Explore.path
     }
 

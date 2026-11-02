@@ -1,7 +1,5 @@
 package com.histmersion.web.map
 
-import com.histmersion.api.*
-
 import scala.scalajs.js
 
 /** The map layer's own logic on the fake engine ([[FakeSurface]]): clustering, what is drawn in view, the projection's

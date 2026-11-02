@@ -1,7 +1,8 @@
 package com.histmersion.domain.automation.agents
 
-import com.histmersion.api.{ApprovalDigest, ListFilters, Paging}
-import com.histmersion.api.Agents.{ApprovalInfo, ApprovalKind, ApprovalState}
+import com.histmersion.api.Paging
+import com.histmersion.api.automation.{ApprovalDigest, ListFilters}
+import com.histmersion.api.automation.Agents.{ApprovalInfo, ApprovalKind, ApprovalState}
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 import com.histmersion.domain.automation.AutomationState

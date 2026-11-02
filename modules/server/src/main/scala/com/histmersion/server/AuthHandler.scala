@@ -66,13 +66,16 @@ object AuthHandler:
     m == HttpMethod.POST || m == HttpMethod.PUT || m == HttpMethod.PATCH || m == HttpMethod.DELETE
 
   /** The one write that needs no key: the web UI marking a window as read (`POST /api/ui/seen/{board}`,
-    * [[com.histmersion.api.UiApi.markSeen]]). It changes nothing but that mark, and a reader without the key must still
-    * be able to clear what they have read.
+    * [[com.histmersion.api.instance.UiApi.markSeen]]). It changes nothing but that mark, and a reader without the key
+    * must still be able to clear what they have read.
     */
   def open(req: HttpRequest): Boolean =
     req.method() == HttpMethod.POST && isOpenPath(req.uri().takeWhile(_ != '?'))
 
   /** Pure: is this path one the gate lets by without a key? Exactly one segment after the prefix. */
   def isOpenPath(path: String): Boolean =
-    path.startsWith(com.histmersion.api.UiApi.SeenPathPrefix) &&
-      { val rest = path.drop(com.histmersion.api.UiApi.SeenPathPrefix.length); rest.nonEmpty && !rest.contains('/') }
+    path.startsWith(com.histmersion.api.instance.UiApi.SeenPathPrefix) &&
+      {
+        val rest = path.drop(com.histmersion.api.instance.UiApi.SeenPathPrefix.length);
+        rest.nonEmpty && !rest.contains('/')
+      }

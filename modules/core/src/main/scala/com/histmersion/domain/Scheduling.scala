@@ -1,6 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.api.AgentsMarkdown
+import com.histmersion.api.automation.AgentsMarkdown
 import com.histmersion.api.given
 
 import com.histmersion.values.{Doi, RunState}

@@ -1,7 +1,7 @@
 package com.histmersion.domain
 
-import com.histmersion.api.GoalPlans.GoalSchedule
-import com.histmersion.api.Managers.*
+import com.histmersion.api.automation.GoalPlans.GoalSchedule
+import com.histmersion.api.automation.Managers.*
 
 import java.time.Instant
 import com.histmersion.values.{ManagerState, ScheduleKind}

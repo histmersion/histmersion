@@ -1,6 +1,6 @@
 package com.histmersion.util.data.checks
 
-import com.histmersion.api.Lint
+import com.histmersion.api.checks.Lint
 import com.histmersion.server.Deps
 import com.histmersion.util.data.DataOwner
 

@@ -13,6 +13,7 @@ import com.histmersion.values.{Latitude, Longitude, RunId, Year}
 
 import java.time.{Clock, Instant, ZoneId, ZoneOffset}
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.api.ItemKind
 
 /** What the endpoints answer, over the in-memory services: inputs checked, the codes the statuses come from, the
   * caller's own marks.

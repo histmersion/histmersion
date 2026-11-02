@@ -1,6 +1,6 @@
 package com.histmersion.web.library
 
-import com.histmersion.api.SourceWithFindings
+import com.histmersion.api.library.SourceWithFindings
 
 /** What the reading pane reads of a source beyond its row: its record with its findings, and its place in the citation
   * graph.

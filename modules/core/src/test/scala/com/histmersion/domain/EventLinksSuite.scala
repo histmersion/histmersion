@@ -5,13 +5,27 @@ import com.histmersion.values.AttestationTarget
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
 
-import com.histmersion.api.*
+import com.histmersion.api.TimeSpan
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
 import io.circe.parser.parse
 import com.histmersion.values.EventLinkStatus
+import com.histmersion.api.catalogue.{
+  ArticleEventLead,
+  EventLead,
+  EventLeadList,
+  EventLeads,
+  EventLinkCandidate,
+  EventLinkList,
+  EventLinksMarkdown,
+  EventPassage,
+  EventTaxonomy,
+  EventTier,
+  LeadFacts,
+  SiteTypes
+}
 
 /** #1449: the deterministic matcher (time/space overlap, name matches, no attestation without a passage), the leads, an
   * article's catalogue leads, and the site types from each gazetteer.

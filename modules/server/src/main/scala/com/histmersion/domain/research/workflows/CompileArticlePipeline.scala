@@ -4,17 +4,20 @@ import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.approvals.Decided
 import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
 
-import com.histmersion.api.*
+import com.histmersion.api.{ApiError, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.{ApprovalKind, Pipeline, Role, RunInfo, RunRequest}
+import com.histmersion.api.automation.Agents.{ApprovalKind, Pipeline, Role, RunInfo, RunRequest}
 import com.histmersion.domain.CompileArticle.*
-import com.histmersion.api.GoalPlans.{ArticleDraft, DraftMode, LinkKind}
-import com.histmersion.api.Queue.QueueAdd
+import com.histmersion.api.automation.GoalPlans.{ArticleDraft, DraftMode, LinkKind}
+import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
+import com.histmersion.api.automation.AgentsMarkdown
+import com.histmersion.api.library.NeighborTarget
+import com.histmersion.api.research.{ArticleFilter, ArticlePatch, ArticlePut, CoverageReason}
 
 /** `compile-article <slug>` (docs/research-embedded-agents.md §4.5, §14): the five phases of the writing guide, run by
   * the server.

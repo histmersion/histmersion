@@ -1,9 +1,9 @@
 package com.histmersion.domain.library.search
 
-import com.histmersion.api.*
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
+import com.histmersion.api.library.FindingMatch
 
 /** One row of `FilterSql.findingsQuery`. */
 final private[search] case class FindingHitRow(

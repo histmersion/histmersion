@@ -4,16 +4,17 @@ import com.histmersion.domain.automation.agents.{AgentRuntime, AgentsHandlers}
 import com.histmersion.domain.automation.managers.Zero
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.Agents.*
+import com.histmersion.api.automation.Agents.*
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.server.{Deps, ServerWiring}
 import sttp.ai.core.agent.*
 
 import java.nio.file.Files
 import com.histmersion.db.*
+import com.histmersion.api.automation.AgentsMarkdown
+import com.histmersion.api.library.SourcePut
 
 /** `agent probe` against a `*_test` database with a scripted model: an answer that leaves the title empty and the year
   * null (2026-10-08, codex:gpt-6-luna: `{"citekey":"huxley1956_catalogue", "title":"","year":null}`) is not an answer —

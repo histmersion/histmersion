@@ -6,12 +6,14 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.util.database.RangeSql
 
-import com.histmersion.api.*
+import com.histmersion.api.{BBox, Markdown}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.{MediaRole, SourceStatus}
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.{Param, Sql}
+import com.histmersion.api.catalogue.Period
+import com.histmersion.api.library.{FacetField, Filter, FindingMatch, SearchHit, Sort}
 
 /** `Filter` → SQL, as a **pure function** (plan §1.0/§2.2): every builder here returns a value that can be asserted on
   * in a unit test without a database. `SourceRepo` is the only thing that turns one into a Magnum [[Frag]] and runs it.
@@ -389,7 +391,7 @@ object FilterSql:
       citekeys.map(S(_))
     )
 
-  /** Columns of [[com.histmersion.api.GeoHit]] — one map-feed row (a finding plus its source's title). */
+  /** Columns of [[com.histmersion.api.library.GeoHit]] — one map-feed row (a finding plus its source's title). */
   private val geoCols =
     "f.citekey, s.title, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom)," +
       s" ${RangeSql.cols("f.period")}, f.confidence, f.significance, s.doi," +

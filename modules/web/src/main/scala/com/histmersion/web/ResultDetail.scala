@@ -1,10 +1,10 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.api.catalogue.PlaceRecord
 
 /** An item chosen in the results or on the map, shown in place of the results: "← Results" back to them, its card, "Pin
   * as window" (it floats over whatever is shown next) and "Open in a new tab"; for a place, what its record holds

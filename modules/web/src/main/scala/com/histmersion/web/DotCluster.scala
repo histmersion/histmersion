@@ -1,9 +1,10 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
+import com.histmersion.api.Plural
 import org.scalajs.dom
 
 import scala.scalajs.js
+import com.histmersion.api.library.GeoHit
 
 /** The pure half of the mixed clusters: what a bubble holds, says and looks like. */
 object DotCluster:

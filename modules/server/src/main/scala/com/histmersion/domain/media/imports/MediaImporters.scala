@@ -2,7 +2,7 @@ package com.histmersion.domain.media.imports
 
 import com.histmersion.pluginhost.{HttpTransport, PluginMedia}
 
-import com.histmersion.api.MediaProviderInfo
+import com.histmersion.api.media.MediaProviderInfo
 import com.histmersion.config.MediaConfig
 import com.histmersion.plugin.*
 import com.histmersion.util.ocr.ConverterClient

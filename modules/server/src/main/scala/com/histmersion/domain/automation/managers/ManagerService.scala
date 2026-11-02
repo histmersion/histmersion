@@ -1,7 +1,7 @@
 package com.histmersion.domain.automation.managers
 
-import com.histmersion.api.Agents.{JobKind, PauseReason}
-import com.histmersion.api.Managers.*
+import com.histmersion.api.automation.Agents.{JobKind, PauseReason}
+import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.domain.automation.AutomationState
 import com.histmersion.util.database.Transactor

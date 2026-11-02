@@ -1,10 +1,11 @@
 package com.histmersion.web
 
-import com.histmersion.api.*
 import com.histmersion.web.map.*
 import org.scalajs.dom
 
 import scala.scalajs.js
+import com.histmersion.api.catalogue.{EventTaxonomy, SiteTypes}
+import com.histmersion.api.library.SourceKinds
 
 /** The map's KEY to its shapes and icons (#1449): what each shape is, the findings' source kinds, and — while their
   * layers are on — the event kinds (natural, human) and site types, each icon with its name. Pure markup.

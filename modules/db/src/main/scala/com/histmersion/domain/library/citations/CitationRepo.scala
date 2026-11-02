@@ -1,12 +1,20 @@
 package com.histmersion.domain.library.citations
 
-import com.histmersion.api.*
 import com.histmersion.util.database.Vocab
 import com.histmersion.util.database.given
 import com.histmersion.domain.library.sources.EdgeRow
 import com.histmersion.values.SourceStatus
 
 import com.augustnagro.magnum.*
+import com.histmersion.api.library.{
+  ContradictionRow,
+  ContradictionsResult,
+  GraphLink,
+  GraphNode,
+  NeighborRow,
+  NeighborTarget,
+  SourceGraph
+}
 
 /** The citation graph's reads: a source's typed edges both ways, the graph around it, the disagreements. The edges are
   * written with their source (`sources.SourceRepo`): an edge is stored on the source that makes it.

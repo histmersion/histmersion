@@ -1,7 +1,7 @@
 package com.histmersion.domain.automation.approvals
 
-import com.histmersion.api.Agents.{ApprovalKind, ApprovalState}
-import com.histmersion.api.ListFilters
+import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState}
+import com.histmersion.api.automation.ListFilters
 
 /** What the approvals list is filtered by (core `ListFilters.ApprovalFilter`, validated): `state` None = every state;
   * the lists match any of their values.

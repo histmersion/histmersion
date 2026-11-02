@@ -1,8 +1,9 @@
 package com.histmersion.server
 
-import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.api.checks.FormatIssue
+import com.histmersion.api.research.{ArticleReviewView, ArticleRow, Backlink, CitedSource, Coverage}
 
 /** Everything an `/article/{slug}` page shows, typed. */
 final case class ArticlePage(

@@ -15,7 +15,8 @@ import com.histmersion.util.data.exchange.{
   SourcePair
 }
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.api.{
+import com.histmersion.api.Plural
+import com.histmersion.api.exchange.{
   BundleAlias,
   BundleArticle,
   BundleEdge,
@@ -38,15 +39,15 @@ import com.histmersion.api.{
   MergeIssueDetail,
   MergePlan,
   MergeResolutions,
-  MergeTally,
-  Plural,
-  Queue
+  MergeTally
 }
+import com.histmersion.api.automation.Queue
 import com.histmersion.api.given
 
 import BundlePlan.{Decision, Ledger, Local}
 import MergeFold.ArticleOutcome
-import com.histmersion.util.text.{Anchor, MinHash, SafeName}
+import com.histmersion.util.text.{Anchor, MinHash}
+import com.histmersion.api.text.SafeName
 
 import io.circe.{Decoder, Encoder, Json}
 import java.util.UUID
@@ -1582,7 +1583,7 @@ object MergePlanner:
         in.manifest.asOf,
         hash,
         counts,
-        com.histmersion.util.data.exchange.PlanMatches.empty,
+        com.histmersion.api.exchange.PlanMatches.empty,
         sorted,
         info.result() ++ notes.result(),
         problems,
