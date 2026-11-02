@@ -48,7 +48,7 @@
     },
     {
       "id" : "ai-claude-code",
-      "version" : "1.0.0",
+      "version" : "0.1.0",
       "spiVersion" : 2,
       "enabled" : true,
       "state" : "registered",
@@ -63,7 +63,7 @@
     },
     {
       "id" : "ai-codex",
-      "version" : "1.0.0",
+      "version" : "0.1.0",
       "spiVersion" : 2,
       "enabled" : true,
       "state" : "registered",
@@ -108,7 +108,7 @@
     },
     {
       "id" : "ai-opencode",
-      "version" : "1.0.0",
+      "version" : "0.1.0",
       "spiVersion" : 2,
       "enabled" : true,
       "state" : "registered",

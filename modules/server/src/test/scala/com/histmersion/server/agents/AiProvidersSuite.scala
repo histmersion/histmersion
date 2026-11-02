@@ -105,12 +105,12 @@ class AiProvidersSuite extends munit.FunSuite:
     assertEquals(
       g.report.plugins.filter(p => BuiltinAi.pluginIds(p.id)).map(p => (p.id, p.version, p.provides)),
       List(
-        ("ai-anthropic", "1.0.0", List("ai-provider:anthropic")),
-        ("ai-claude-code", "1.0.0", List("ai-provider:claude-code")),
-        ("ai-codex", "1.0.0", List("ai-provider:codex")),
-        ("ai-local", "1.0.0", List("ai-provider:local")),
-        ("ai-openai", "1.0.0", List("ai-provider:openai")),
-        ("ai-opencode", "1.0.0", List("ai-provider:opencode"))
+        ("ai-anthropic", "0.1.0", List("ai-provider:anthropic")),
+        ("ai-claude-code", "0.1.0", List("ai-provider:claude-code")),
+        ("ai-codex", "0.1.0", List("ai-provider:codex")),
+        ("ai-local", "0.1.0", List("ai-provider:local")),
+        ("ai-openai", "0.1.0", List("ai-provider:openai")),
+        ("ai-opencode", "0.1.0", List("ai-provider:opencode"))
       )
     )
     assertEquals(BuiltinAi.known(g.registries.aiProviders), Set.empty[String])
