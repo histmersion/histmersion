@@ -142,7 +142,7 @@ object CatalogueWiring:
       places,
       PlaceGeometry(deps.transactor),
       () =>
-        val paths = GazetteerPaths.of(deps.cfg, deps.environment.lookup)
+        val paths = GazetteerPaths.of(deps.cfg, deps.environment.lookup, deps.userPaths.osName)
         GazetteerLoad.Stores(
           deps.storage.store(Location.GazetteerExtracts),
           deps.storage.find(Location.GazetteerFolder),

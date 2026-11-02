@@ -16,9 +16,10 @@ final case class GazetteerPaths(extracts: Path, lpf: Path, manifest: Path, legac
     else Right(Files.readString(manifest))
 
 object GazetteerPaths:
-  def of(cfg: AppConfig, env: String => Option[String] = sys.env.get): GazetteerPaths =
+  /** The paths in the process environment `env` (the entry point read it once) of the operating system `osName`. */
+  def of(cfg: AppConfig, env: String => Option[String], osName: String): GazetteerPaths =
     val data = UserPaths
-      .dataDir(cfg.runtime.dataDir, env, System.getProperty("os.name", ""))
+      .dataDir(cfg.runtime.dataDir, env, osName)
       .getOrElse(Path.of(cfg.init.dataDir))
       .resolve("gazetteer")
     val cache = UserPaths.cacheDir(env).map(_.resolve("gazetteer")).getOrElse(data)
@@ -26,7 +27,7 @@ object GazetteerPaths:
       Option(configured)
         .map(_.trim)
         .filter(_.nonEmpty)
-        .map(p => Path.of(p.replaceFirst("^~", System.getProperty("user.home"))))
+        .map(p => Path.of(com.histmersion.domain.automation.agents.AgentTrees.expandIn(p, env)))
         .getOrElse(fallback)
     val extracts = or(cfg.places.sources.dir, cache)
     GazetteerPaths(

@@ -59,15 +59,19 @@ object AgentStateService:
           )
       )
 
-    private val printer = io.circe.Printer.noSpaces.copy(colonRight = " ", objectCommaRight = " ", arrayCommaRight = " ")
+    private val printer =
+      io.circe.Printer.noSpaces.copy(colonRight = " ", objectCommaRight = " ", arrayCommaRight = " ")
 
     private def entry(key: String, r: AgentStateRecord) = AgentStateEntry(key, r.value, Some(updatedText(r.updatedAt)))
 
     def list(): List[AgentStateEntry] = state.get.agentState.toList.sortBy(_._1).map(entry)
     def get(key: String): Option[AgentStateEntry] = state.get.agentState.get(key).map(entry(key, _))
     def set(key: String, value: String): Unit =
-      val j = io.circe.parser.parse(value).fold(e => throw IllegalArgumentException(s"invalid input syntax for type json: $e"), identity)
+      val j = io.circe.parser
+        .parse(value)
+        .fold(e => throw IllegalArgumentException(s"invalid input syntax for type json: $e"), identity)
       val at = Instant.now(clock)
-      val _ = state.updateAndGet(_.modify(_.agentState).using(_.updated(key, AgentStateRecord(printer.print(jsonb(j)), at))))
+      val _ =
+        state.updateAndGet(_.modify(_.agentState).using(_.updated(key, AgentStateRecord(printer.print(jsonb(j)), at))))
     def delete(key: String): Boolean =
       state.getAndUpdate(_.modify(_.agentState).using(_ - key)).agentState.contains(key)

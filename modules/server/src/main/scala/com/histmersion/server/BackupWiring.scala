@@ -4,7 +4,7 @@ import com.histmersion.util.data.backup.BackupService
 import com.histmersion.util.process.Processes
 
 /** The backups of a server: its backups store, the PostgreSQL client tools of `backups.pg-bin-dir` or else of the
-  * process's `PATH` (read at each dump, as the shell would), and the registry's guarded tables on its database.
+  * `PATH` of the environment the entry point read, and the registry's guarded tables on its database.
   */
 object BackupWiring:
   def service(deps: Deps): BackupService =
@@ -12,7 +12,7 @@ object BackupWiring:
       () => deps.cfg,
       deps.storage,
       Processes(),
-      () => StorageLocations.searchPath(Option(System.getenv("PATH"))),
+      () => StorageLocations.searchPath(deps.environment.get("PATH")),
       deps.transactor,
       Deps.data
     )

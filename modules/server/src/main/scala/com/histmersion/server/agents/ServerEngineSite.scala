@@ -26,6 +26,7 @@ final class ServerEngineSite(deps: Deps, w: ServerWiring, digestOn: Option[java.
   def pins: Pinning = deps.pins
   def jobStops: JobStops = deps.jobStops
   def clock: java.time.Clock = deps.clock
+  override def userPaths: com.histmersion.config.UserPaths = deps.userPaths
   def digestClock: Option[java.time.Clock] = digestOn
   def aiProviders: () => ListMap[String, AiProvider] = () => deps.plugins.registries.aiProviders
   def roster: AgentRoster = EngineContributions.roster

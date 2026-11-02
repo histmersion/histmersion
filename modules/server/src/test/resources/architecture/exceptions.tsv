@@ -22,7 +22,6 @@ direction	api:api/personal/ItemKind.scala	personal -> automation: Goal	1
 direction	api:api/personal/ItemKind.scala	personal -> catalogue: Place	1
 direction	core:domain/MergeFold.scala	util.data -> automation: Queue	1
 direction	core:domain/MergePlanner.scala	util.data -> automation: Queue	1
-direction	db:db/ListSql.scala	util.database -> automation: ListFilters	1
 filesystem	config:config/UserConfigFile.scala	java.nio.file	1
 filesystem	db:db/MergeState.scala	java.nio.file	1
 filesystem	files:files/Frontmatter.scala	Files.*	3

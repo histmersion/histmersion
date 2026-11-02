@@ -227,11 +227,11 @@ object AgentRepo:
     (
       Keyset.countsOn(from("status"), "j.status"),
       List(
-        "pipeline" -> ListSql.facetOn(from("pipeline"), "j.pipeline"),
-        "origin" -> ListSql.facetOn(from("origin"), originExpr),
-        "manager" -> ListSql.facetOn(from("manager"), "j.manager_id"),
-        "model" -> ListSql.facetOn(used("model"), "u.m"),
-        "provider" -> ListSql.facetOn(used("provider"), provider("u.m"), "count(DISTINCT u.id)")
+        "pipeline" -> ListSql.facetOn(from("pipeline"), "j.pipeline", ListFilters.FacetMax),
+        "origin" -> ListSql.facetOn(from("origin"), originExpr, ListFilters.FacetMax),
+        "manager" -> ListSql.facetOn(from("manager"), "j.manager_id", ListFilters.FacetMax),
+        "model" -> ListSql.facetOn(used("model"), "u.m", ListFilters.FacetMax),
+        "provider" -> ListSql.facetOn(used("provider"), provider("u.m"), ListFilters.FacetMax, "count(DISTINCT u.id)")
       )
     )
 
@@ -609,8 +609,8 @@ object AgentRepo:
     (
       Keyset.countsOn(from("state"), "state"),
       List(
-        "kind" -> ListSql.facetOn(from("kind"), "kind"),
-        "decidedBy" -> ListSql.facetOn(from("decidedBy"), ApprovalQuery.decidedByExpr)
+        "kind" -> ListSql.facetOn(from("kind"), "kind", ListFilters.FacetMax),
+        "decidedBy" -> ListSql.facetOn(from("decidedBy"), ApprovalQuery.decidedByExpr, ListFilters.FacetMax)
       )
     )
 

@@ -200,7 +200,7 @@ class ListFilterRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(ids(mine.copy(until = Some(Instant.parse("2026-09-03T00:00:00Z")))), Set(i1, i2))
     // the start of an id finds that job
     assertEquals(ids(com.histmersion.util.jobs.JobQuery(q = Some(s"$tag-j3"))), Set(m1))
-    val (states, facets) = JobRepo.facets(ds, mine.copy(kinds = List("ingest"), status = List("done")))
+    val (states, facets) = JobRepo.facets(ds, mine.copy(kinds = List("ingest"), status = List("done")), 40)
     assertEquals(states.toMap, Map("done" -> 1, "failed" -> 1))
     assertEquals(facets.toMap.apply("kind").toMap, Map("ingest" -> 1, "media-import" -> 1, "agent" -> 1))
     // the old single-state page still reads through the same query
