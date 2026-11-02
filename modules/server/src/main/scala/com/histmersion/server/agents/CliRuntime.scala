@@ -12,7 +12,7 @@ import com.histmersion.domain.automation.agents.{
   RunTokens
 }
 
-import com.histmersion.config.AppConfig
+import com.histmersion.config.{AppConfig, UserPaths}
 import com.histmersion.domain.automation.agents.AgentRoster
 
 import scala.jdk.CollectionConverters.*
@@ -21,9 +21,13 @@ import scala.jdk.CollectionConverters.*
   * the run tokens their steps reach the agent MCP endpoint with, and the plan pools their streams report to. One per
   * server.
   */
-final class CliRuntime(val app: AppConfig, val definitions: AgentDefinitions):
+final class CliRuntime(
+    val app: AppConfig,
+    val definitions: AgentDefinitions,
+    paths: UserPaths = AgentTrees.NoEnvironment
+):
   val tokens: RunTokens = RunTokens()
-  val trees: AgentTrees = AgentTrees(app, definitions)
+  val trees: AgentTrees = AgentTrees(app, definitions, paths)
 
   /** Wired by [[AgentsHandlers]] (it needs the DataSource); `var` only for that late attachment. */
   @volatile var pools: Option[PoolSink] = None
@@ -43,5 +47,5 @@ object CliRuntime:
   /** `roster`: the agent tools the engine's toolbox holds and the contributed roles (what a definition may list and
     * take).
     */
-  def apply(app: AppConfig, roster: AgentRoster): CliRuntime =
-    new CliRuntime(app, AgentDefinitions(Prompts(app.agents.promptsDir), roster))
+  def apply(app: AppConfig, roster: AgentRoster, paths: UserPaths = AgentTrees.NoEnvironment): CliRuntime =
+    new CliRuntime(app, AgentDefinitions(Prompts(app.agents.promptsDir), roster), paths)

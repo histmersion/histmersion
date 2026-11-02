@@ -163,10 +163,11 @@ object JobRepo:
 
   /** The counts that go with a filtered page: per state, and the `kind` facet — each under every filter but its own.
     */
-  def facets(ds: DataSource, q: JobQuery): (List[(String, Int)], List[(String, List[(String, Int)])]) =
+  /** The per-state counts and the kind facet (at most `facetMax` kinds) under `q`. */
+  def facets(ds: DataSource, q: JobQuery, facetMax: Int): (List[(String, Int)], List[(String, List[(String, Int)])]) =
     val c = conds(q)
     def from(except: String) = Sql.raw(" FROM jobs WHERE true") ++ c.except(except)
-    (Keyset.counts(ds, from("status"), "status"), List("kind" -> ListSql.facet(ds, from("kind"), "kind")))
+    (Keyset.counts(ds, from("status"), "status"), List("kind" -> ListSql.facet(ds, from("kind"), "kind", facetMax)))
 
   /** Free-text progress on a `running` job — what the CLI's progress line prints. */
   def progress(ds: DataSource, id: String, text: String): Unit =

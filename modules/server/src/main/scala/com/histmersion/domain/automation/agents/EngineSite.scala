@@ -32,6 +32,11 @@ trait EngineSite:
     */
   def digestClock: Option[java.time.Clock]
 
+  /** The process environment and the operating system the entry point read once (the agents' homes are found by them);
+    * none by default (a test's site).
+    */
+  def userPaths: com.histmersion.config.UserPaths = AgentTrees.NoEnvironment
+
   /** The AI providers of the pinned plugin generation, by name. */
   def aiProviders: () => ListMap[String, AiProvider]
 

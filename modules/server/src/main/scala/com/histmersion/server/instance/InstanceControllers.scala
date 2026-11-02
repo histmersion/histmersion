@@ -18,8 +18,8 @@ import scala.util.Try
 
 /** This server as REST, MCP and the CLI ask about it, over the diagnostics: its version and health, About (the build,
   * the job queue, the newest backup, the store's counts, the storage, the plugins, the agent lease, the metered
-  * upstreams and the acquisition list's re-check), the web page's settings, the toolbar's counters and the windows' seen
-  * marks, and the config reload. Each part of About that cannot be read becomes a `problems` line.
+  * upstreams and the acquisition list's re-check), the web page's settings, the toolbar's counters and the windows'
+  * seen marks, and the config reload. Each part of About that cannot be read becomes a `problems` line.
   */
 final class InstanceControllers(
     deps: Deps,
@@ -46,7 +46,7 @@ final class InstanceControllers(
       val c = cfg
       val env = deps.environment.lookup
       val measured =
-        StorageLocations.measured(c, env, System.getProperty("os.name", ""), Supervisor.currentExecutable)
+        StorageLocations.measured(c, env, deps.userPaths.osName, Supervisor.currentExecutable)
       val run = deps.pins.carry(
         StorageFigures(Deps.data).measure(
           measured,

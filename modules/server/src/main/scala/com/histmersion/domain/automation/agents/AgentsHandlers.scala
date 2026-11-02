@@ -40,7 +40,7 @@ final class AgentsHandlers(
     * pool (a scripted model's test must never spend a real plan on a probe).
     */
   def this(site: EngineSite, clientFor: LlmClient.Factory) =
-    this(site, clientFor, CliRuntime(site.config, site.roster), PlanPools.Seams.Offline)
+    this(site, clientFor, CliRuntime(site.config, site.roster, site.userPaths), PlanPools.Seams.Offline)
 
   private def this(site: EngineSite, w: (LlmClient.Factory, CliRuntime)) =
     this(site, w._1, w._2, PlanPools.Seams.Real)
@@ -224,7 +224,7 @@ final class AgentsHandlers(
               s"unknown runtime(s) ${bad.mkString(", ")} (one of: ${AgentRuntime.Generated.map(_.wire).mkString(", ")})"
             )
           )
-      r <- cli.trees.generate(knownTools, rts, AgentTrees.out(req.out)).left.map(ApiError(_))
+      r <- cli.trees.generate(knownTools, rts, AgentTrees.out(req.out, site.userPaths)).left.map(ApiError(_))
     yield r
 
   // ── plan pools ─────────────────────────────────────────────────────────────────────────────────
@@ -473,7 +473,14 @@ final class AgentsHandlers(
   /** `GET /api/agents/doctor` — every provider checked without spending anything. */
   def doctor(offline: Boolean): Agents.DoctorReport =
     val r =
-      AgentDoctor(site.config, picker, resolve, registry = Some(site.aiProviders()), aiHttp = aiHttp)
+      AgentDoctor(
+        site.config,
+        picker,
+        resolve,
+        registry = Some(site.aiProviders()),
+        aiHttp = aiHttp,
+        paths = site.userPaths
+      )
         .report(online = !offline)
     val held = lease.status match
       case Some((o, u, false, true))  => DoctorCheck("agent lease", CheckLevel.Ok, s"held by this server ($o) until $u")
@@ -944,7 +951,7 @@ final class AgentsHandlers(
 object AgentsHandlers:
   /** The server's providers over one [[CliRuntime]]. */
   def serverWiring(site: EngineSite): (LlmClient.Factory, CliRuntime) =
-    val rt = CliRuntime(site.config, site.roster)
+    val rt = CliRuntime(site.config, site.roster, site.userPaths)
     (LlmClient.factory(rt, site.aiProviders), rt)
 
   /** [[attempt]], telling the plan's own usage limit (a model to pass over, [[ModelLimitReached]]) apart from a broken

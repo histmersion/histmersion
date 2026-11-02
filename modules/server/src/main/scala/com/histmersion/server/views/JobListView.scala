@@ -19,7 +19,7 @@ final class JobListView(jobs: JobListing):
       before: Option[String],
       upTo: Option[String]
   ): Either[ApiError, (List[JobInfo], Paging.Page)] =
-    JobListView.query(f, now).flatMap(jobs.page(_, limit, before, upTo))
+    JobListView.query(f, now).flatMap(jobs.page(_, limit, before, upTo, ListFilters.FacetMax))
 
 object JobListView:
 

@@ -17,12 +17,15 @@ final class JobListing(ds: DataSource, cfg: () => AppConfig):
     val c = cfg()
     JobRepo.list(ds, status, c.limits.page(limit, c.limits.search)).toList
 
-  /** One page under `q`: `before` = only jobs older than that one, `upTo` = only jobs down to it. */
+  /** One page under `q`: `before` = only jobs older than that one, `upTo` = only jobs down to it; at most `facetMax`
+    * kinds counted.
+    */
   def page(
       q: JobQuery,
       limit: Option[Int],
       before: Option[String],
-      upTo: Option[String]
+      upTo: Option[String],
+      facetMax: Int
   ): Either[ApiError, (List[JobInfo], Paging.Page)] =
     val c = cfg()
     JobRepo
@@ -30,7 +33,7 @@ final class JobListing(ds: DataSource, cfg: () => AppConfig):
       .left
       .map(ApiError(_, Some(Write.CodeNotFound)))
       .map { (rows, more) =>
-        val (counts, facets) = JobRepo.facets(ds, q)
+        val (counts, facets) = JobRepo.facets(ds, q, facetMax)
         (rows.toList, Paging.Page.filtered(counts, q.status, Option.when(more)(rows.last.id), facets))
       }
 

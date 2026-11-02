@@ -29,8 +29,8 @@ object StorageLocations:
       case Location.Basemap           => Some(UserPaths.basemapDir(cfg.basemap.dir, cfg.init.dataDir, env))
       case Location.Backups           => Some(Path.of(cfg.backups.dir).toAbsolutePath.normalize)
       case Location.Bundles           => Some(Path.of(cfg.bundles.dir))
-      case Location.GazetteerExtracts => Some(GazetteerPaths.of(cfg, env).extracts)
-      case Location.AgentHomes        => AgentTrees.root(cfg, env)
+      case Location.GazetteerExtracts => Some(GazetteerPaths.of(cfg, env, userPaths.osName).extracts)
+      case Location.AgentHomes        => AgentTrees.root(cfg, env, userPaths.osName)
       case Location.Plugins           => dataDir.map(_.resolve("plugins"))
       case Location.RelinkKit         =>
         Option(cfg.runtime.home).map(_.trim).filter(_.nonEmpty).map(h => Path.of(h).resolve("kit"))
@@ -40,14 +40,14 @@ object StorageLocations:
         loaded.file.path.orElse(userPaths.configFile).flatMap(p => Option(p.toAbsolutePath.getParent))
       case Location.Scratch         => Some(temp)
       case Location.DatabaseCluster => dataDir.map(_.resolve("pg"))
-      case Location.CorpusFolder    => configured(cfg.corpus.dir)
-      case Location.GazetteerFolder => GazetteerPaths.of(cfg, env).legacy
-      case Location.GazetteerDrop   => Some(GazetteerPaths.of(cfg, env).lpf)
+      case Location.CorpusFolder    => configured(cfg.corpus.dir, env)
+      case Location.GazetteerFolder => GazetteerPaths.of(cfg, env, userPaths.osName).legacy
+      case Location.GazetteerDrop   => Some(GazetteerPaths.of(cfg, env, userPaths.osName).lpf)
       case Location.GazetteerSeed   => Some(Path.of(cfg.init.dataDir).resolve("places"))
       case Location.Converter       =>
         Option(cfg.runtime.home).map(_.trim).filter(_.nonEmpty).map(h => Path.of(h).resolve("converter"))
       case Location.Toolchain      => dataDir.map(_.resolve("toolchain"))
-      case Location.CodexSessions  => AgentTrees.codexHome(cfg, env)
+      case Location.CodexSessions  => AgentTrees.codexHome(cfg, env, userPaths.osName)
       case Location.DataDirectory  => dataDir
       case Location.CacheDirectory => UserPaths.cacheDir(env)
       case Location.Postgres       =>
@@ -62,9 +62,9 @@ object StorageLocations:
       .filter(_.nonEmpty)
       .map(d => Storage.at(Location.Executables, Path.of(d)))
 
-  /** A configured directory: `None` when the setting is empty, a leading `~` the user's home directory. */
-  private def configured(s: String): Option[Path] =
-    Option(s).map(_.trim).filter(_.nonEmpty).map(p => Path.of(AgentTrees.expand(p)))
+  /** A configured directory: `None` when the setting is empty, a leading `~` the environment's `HOME`. */
+  private def configured(s: String, env: String => Option[String]): Option[Path] =
+    Option(s).map(_.trim).filter(_.nonEmpty).map(p => Path.of(AgentTrees.expandIn(p, env)))
 
   /** The install's own places About › Storage shows beside the owners' stores: no owner's data. */
   val install: List[Location] =
@@ -79,14 +79,14 @@ object StorageLocations:
     val bundled = cfg.runtime.enabled || (env("HISTMERSION_RUNTIME").forall(_.trim.isEmpty) && Supervisor.bundled(exe))
     val home = Option.when(bundled)(Supervisor.layout(cfg.runtime, exe, env, osName).toOption.map(_.home)).flatten
     val data = UserPaths.dataDir(cfg.runtime.dataDir, env, osName).map(_.toAbsolutePath.normalize)
-    val gazetteer = GazetteerPaths.of(cfg, env)
+    val gazetteer = GazetteerPaths.of(cfg, env, osName)
     def place(location: Location): Option[Path] = location match
       case Location.DatabaseCluster   => data.filter(_ => bundled).map(_.resolve("pg"))
       case Location.Backups           => Some(Path.of(cfg.backups.dir))
-      case Location.IngestOriginals   => configured(cfg.converter.spoolDir)
-      case Location.Spool             => configured(cfg.acquire.spoolDir)
-      case Location.CorpusFolder      => configured(cfg.corpus.dir)
-      case Location.Bundles           => configured(cfg.bundles.dir)
+      case Location.IngestOriginals   => configured(cfg.converter.spoolDir, env)
+      case Location.Spool             => configured(cfg.acquire.spoolDir, env)
+      case Location.CorpusFolder      => configured(cfg.corpus.dir, env)
+      case Location.Bundles           => configured(cfg.bundles.dir, env)
       case Location.GazetteerExtracts => Some(gazetteer.extracts)
       case Location.GazetteerFolder   => gazetteer.legacy
       case Location.GazetteerDrop     => Some(gazetteer.lpf)
@@ -96,8 +96,8 @@ object StorageLocations:
       case Location.RelinkKit         => home.map(_.resolve("kit"))
       case Location.Toolchain         => data.map(_.resolve("toolchain"))
       case Location.Plugins           => data.map(_.resolve("plugins"))
-      case Location.AgentHomes        => AgentTrees.root(cfg, env)
-      case Location.CodexSessions     => AgentTrees.codexHome(cfg, env)
+      case Location.AgentHomes        => AgentTrees.root(cfg, env, osName)
+      case Location.CodexSessions     => AgentTrees.codexHome(cfg, env, osName)
       case Location.Logs              => data.map(_.resolve("logs"))
       case Location.DataDirectory     => data
       case Location.CacheDirectory    => UserPaths.cacheDir(env)

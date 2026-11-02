@@ -19,15 +19,15 @@ import scala.jdk.CollectionConverters.*
   * login and sessions, and `claude-code/login` an optional CLAUDE_CONFIG_DIR. Login state is only ever created by the
   * vendor's own login command there.
   */
-final class AgentTrees(app: AppConfig, defs: AgentDefinitions):
+final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths = AgentTrees.NoEnvironment):
 
   private val cfg: AgentsConfig = app.agents
 
   /** The runtimes directory: `agents.runtimes.dir`, else `<data dir>/agents`. */
-  def root: Option[Path] = AgentTrees.root(app, sys.env.get)
+  def root: Option[Path] = AgentTrees.root(app, paths)
 
   /** The CODEX_HOME of the runs: `agents.providers.codex.home`, else the generated one. */
-  def codexHome: Option[Path] = AgentTrees.codexHome(app, sys.env.get)
+  def codexHome: Option[Path] = AgentTrees.codexHome(app, paths)
 
   def claudePlugin: Option[Path] = root.map(_.resolve("claude-code").resolve("headless"))
   def claudeRole(name: String): Option[Path] =
@@ -80,32 +80,53 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions):
 
 object AgentTrees:
 
-  /** The directory a request names for the trees (`~` expanded), absolute; none for a blank one. */
-  def out(raw: Option[String]): Option[Path] =
-    raw.map(_.trim).filter(_.nonEmpty).map(o => Path.of(expand(o)).toAbsolutePath.normalize)
+  /** No environment: the trees only where the settings put them (a test's). */
+  val NoEnvironment: UserPaths = UserPaths(com.histmersion.config.Environment.empty, "")
 
+  /** The directory a request names for the trees (`~` expanded), absolute; none for a blank one. */
+  def out(raw: Option[String], paths: UserPaths): Option[Path] =
+    raw.map(_.trim).filter(_.nonEmpty).map(o => Path.of(expandIn(o, paths)).toAbsolutePath.normalize)
+
+  /** `~` as the JVM's home directory: what the command-line runtimes still read (their slice gives them the injected
+    * environment, §25).
+    */
   def expand(p: String): String = p.replaceFirst("^~", System.getProperty("user.home"))
 
   /** `agents.runtimes.dir`, else the data directory the bundle uses (`runtime.data-dir`, else
     * `~/Library/Application Support/Histmersion` on macOS, `$XDG_DATA_HOME/histmersion` elsewhere) + `/agents`.
     */
-  def root(app: AppConfig, env: String => Option[String]): Option[Path] =
+  def root(app: AppConfig, paths: UserPaths): Option[Path] = root(app, paths.environment.lookup, paths.osName)
+
+  /** [[root]] in the environment `env` of the operating system `osName`. */
+  def root(app: AppConfig, env: String => Option[String], osName: String): Option[Path] =
     Option(app.agents.runtimes.dir)
       .map(_.trim)
       .filter(_.nonEmpty)
-      .map(d => Path.of(expand(d)))
-      .orElse {
-        UserPaths.dataDir(app.runtime.dataDir, env, System.getProperty("os.name", "")).map(_.resolve("agents"))
-      }
+      .map(d => Path.of(expandIn(d, env)))
+      .orElse(UserPaths.dataDir(app.runtime.dataDir, env, osName).map(_.resolve("agents")))
       .map(_.toAbsolutePath.normalize)
 
+  /** `~` at the start of `p` as the environment's `HOME` (left as it is when there is none). */
+  def expandIn(p: String, env: String => Option[String]): String =
+    env("HOME")
+      .map(_.trim)
+      .filter(_.nonEmpty)
+      .fold(p)(h => p.replaceFirst("^~", java.util.regex.Matcher.quoteReplacement(h)))
+
+  /** [[expandIn]] the injected environment. */
+  def expandIn(p: String, paths: UserPaths): String = expandIn(p, paths.environment.lookup)
+
   /** The CODEX_HOME of the runs: `agents.providers.codex.home`, else `<runtimes dir>/codex/home`. */
-  def codexHome(app: AppConfig, env: String => Option[String]): Option[Path] =
+  def codexHome(app: AppConfig, paths: UserPaths): Option[Path] =
+    codexHome(app, paths.environment.lookup, paths.osName)
+
+  /** [[codexHome]] in the environment `env` of the operating system `osName`. */
+  def codexHome(app: AppConfig, env: String => Option[String], osName: String): Option[Path] =
     Option(app.agents.providers.codex.home)
       .map(_.trim)
       .filter(_.nonEmpty)
-      .map(h => Path.of(expand(h)))
-      .orElse(root(app, env).map(_.resolve("codex").resolve("home")))
+      .map(h => Path.of(expandIn(h, env)))
+      .orElse(root(app, env, osName).map(_.resolve("codex").resolve("home")))
 
   /** The definitions' fingerprint: what the trees were generated from. */
   def sha(d: AgentGenerator.Defs): String =

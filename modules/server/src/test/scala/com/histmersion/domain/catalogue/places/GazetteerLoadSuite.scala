@@ -139,13 +139,14 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
       places = base.places.copy(sources = base.places.sources.copy(dir = "", lpfDir = "")),
       runtime = base.runtime.copy(dataDir = "/data")
     )
-    val p = GazetteerPaths.of(cfg, Map("HOME" -> "/home/u", "XDG_CACHE_HOME" -> "/xc").get)
+    val p = GazetteerPaths.of(cfg, Map("HOME" -> "/home/u", "XDG_CACHE_HOME" -> "/xc").get, "Linux")
     assertEquals(p.extracts, Path.of("/xc/histmersion/gazetteer"))
     assertEquals(p.lpf, Path.of("/data/gazetteer/lpf"))
     assertEquals(p.legacy, Some(Path.of("/data/gazetteer")), "the old default, adopted from")
     val own = GazetteerPaths.of(
       cfg.copy(places = cfg.places.copy(sources = cfg.places.sources.copy(dir = "/mine"))),
-      Map("HOME" -> "/home/u").get
+      Map("HOME" -> "/home/u").get,
+      "Linux"
     )
     assertEquals(own.extracts, Path.of("/mine"), "places.sources.dir still overrides")
 

@@ -33,6 +33,14 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private val Free = ModelRef(ProviderKind.Local, "zzFree")
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
 
+  /** A CODEX_HOME of the suite's own with a login in it (its `auth.json` is never read), so the ChatGPT plan's pool is
+    * judged by its readings and refusals, never by the machine running the suite.
+    */
+  private lazy val codexHome =
+    val h = java.nio.file.Files.createTempDirectory("hm-codex-home-")
+    java.nio.file.Files.writeString(h.resolve("auth.json"), "{}")
+    h
+
   private lazy val baseCfg =
     val b = AppConfig.load()
     b.copy(
@@ -42,7 +50,8 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         enabled = true,
         prices = "sonnet=0/0; zzPaid=3/15; zzFree=0/0",
         roles = b.agents.roles.copy(extractor = s"${Plan.wire} > ${Paid.wire}"),
-        providers = b.agents.providers.copy(codex = b.agents.providers.codex.copy(appServer = false))
+        providers =
+          b.agents.providers.copy(codex = b.agents.providers.codex.copy(appServer = false, home = codexHome.toString))
       ),
       libraryAgents = b.libraryAgents.copy(enrich = b.libraryAgents.enrich.copy(upstream = false))
     )

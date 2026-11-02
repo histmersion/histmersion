@@ -35,7 +35,9 @@ final class AgentDoctor(
       * and there is no plugin provider (a test's doctor).
       */
     registry: Option[scala.collection.immutable.ListMap[String, com.histmersion.plugin.AiProvider]] = None,
-    aiHttp: com.histmersion.plugin.AiHttp = com.histmersion.plugin.AiHttp.Offline
+    aiHttp: com.histmersion.plugin.AiHttp = com.histmersion.plugin.AiHttp.Offline,
+    /** The process environment the entry point read (none: a test's doctor). */
+    paths: com.histmersion.config.UserPaths = com.histmersion.domain.automation.agents.AgentTrees.NoEnvironment
 ):
 
   private val cfg = app.agents
@@ -211,7 +213,7 @@ final class AgentDoctor(
       (if cc.useApiKey then Map.empty else Map("ANTHROPIC_API_KEY" -> None, "ANTHROPIC_AUTH_TOKEN" -> None)) ++
         Option(cc.configDir.trim)
           .filter(_.nonEmpty)
-          .map(d => "CLAUDE_CONFIG_DIR" -> Some(d.replaceFirst("^~", System.getProperty("user.home"))))
+          .map(d => "CLAUDE_CONFIG_DIR" -> Some(AgentTrees.expandIn(d, paths)))
           .toMap
     val version = runCommand(List(cc.command, "--version"), childEnv, cfg.doctorTimeoutSeconds).flatMap {
       case (0, out)    => Right(out)
@@ -236,7 +238,11 @@ final class AgentDoctor(
             case Left(d)  => level("login", d)
     }.toList
     val keyInEnv = Option
-      .when(!cc.useApiKey && (sys.env.contains("ANTHROPIC_API_KEY") || sys.env.contains("ANTHROPIC_AUTH_TOKEN")))(
+      .when(
+        !cc.useApiKey && (paths.environment
+          .get("ANTHROPIC_API_KEY")
+          .isDefined || paths.environment.get("ANTHROPIC_AUTH_TOKEN").isDefined)
+      )(
         ok(
           "API key",
           "the server's environment has an Anthropic key; it is removed from claude's (use-api-key = false), " +
@@ -276,7 +282,7 @@ final class AgentDoctor(
 
   /** Whether the generated tree a CLI runtime launches exists. */
   private def generated(runtime: String): DoctorCheck =
-    AgentTrees.root(app, sys.env.get).map(_.resolve(runtime)) match
+    AgentTrees.root(app, paths).map(_.resolve(runtime)) match
       case Some(d) if java.nio.file.Files.isDirectory(d) => ok("generated", s"$d")
       case Some(d) => warn("generated", s"$d does not exist yet — run `histmersion agent generate`")
       case None    => warn("generated", "no runtimes directory — set agents.runtimes.dir")
@@ -298,7 +304,7 @@ final class AgentDoctor(
   private def codex(models: List[ModelRef]): List[DoctorCheck] =
     val cc = cfg.providers.codex
     val level = if models.nonEmpty then fail else warn
-    val home = AgentTrees(app, AgentDefinitions(Prompts(cfg.promptsDir), AgentRoster.none)).codexHome
+    val home = AgentTrees(app, AgentDefinitions(Prompts(cfg.promptsDir), AgentRoster.none), paths).codexHome
     val login = home.map { h =>
       if java.nio.file.Files.isRegularFile(h.resolve("auth.json")) then ok("login", s"$h has a login (never read here)")
       else level("login", s"no login in $h — run `CODEX_HOME=\"$h\" ${cc.command} login` once")

@@ -1,7 +1,6 @@
 package com.histmersion.db
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.ListFilters
 import javax.sql.DataSource
 
 import java.time.Instant
@@ -36,17 +35,17 @@ private[histmersion] object ListSql:
     since.fold(Sql.empty)(s => Sql.of(s" AND $col >= ?::timestamptz", Param.S(s.toString))) ++
       until.fold(Sql.empty)(u => Sql.of(s" AND $col < ?::timestamptz", Param.S(u.toString)))
 
-  /** `SELECT <expr>, <count> <from> … GROUP BY 1`, the largest first (then by value), at most [[ListFilters.FacetMax]]
-    * values; NULLs are not a value. `from` = `FROM … WHERE …` with the filters; `count` = what is counted
+  /** `SELECT <expr>, <count> <from> … GROUP BY 1`, the largest first (then by value), at most `max` values (the lists'
+    * filters give theirs); NULLs are not a value. `from` = `FROM … WHERE …` with the filters; `count` = what is counted
     * (`count(DISTINCT id)` where a row can appear twice).
     */
-  def facet(ds: DataSource, from: Sql, expr: String, count: String = "count(*)"): List[(String, Int)] =
-    connect(ds)(facetOn(from, expr, count))
+  def facet(ds: DataSource, from: Sql, expr: String, max: Int, count: String = "count(*)"): List[(String, Int)] =
+    connect(ds)(facetOn(from, expr, max, count))
 
   /** [[facet]] on the caller's connection. */
-  def facetOn(from: Sql, expr: String, count: String = "count(*)")(using DbCon): List[(String, Int)] =
+  def facetOn(from: Sql, expr: String, max: Int, count: String = "count(*)")(using DbCon): List[(String, Int)] =
     (Sql.raw(s"SELECT $expr, $count::int ") ++ from ++
-      Sql.of(s" AND $expr IS NOT NULL GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT ?", Param.I(ListFilters.FacetMax))).frag
+      Sql.of(s" AND $expr IS NOT NULL GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT ?", Param.I(max))).frag
       .query[(String, Int)]
       .run()
       .toList
