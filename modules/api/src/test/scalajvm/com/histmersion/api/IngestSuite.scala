@@ -301,12 +301,13 @@ class IngestSuite extends munit.FunSuite:
       InitPlan.JobKind,
       "done",
       detail = Some(
-        JobDetail(
-          init = Some(plan),
-          skippedPeriods =
-            List(SkippedPeriod("p0x1", "Old Kingdom", PeriodSkip.OutOfRange, "-2701 → 2150 lies outside")),
-          skippedPeriodCount = 1
-        )
+        InitPlan
+          .Detail(Some(plan))
+          .set(
+            SkippedPeriod.Skipped,
+            List(SkippedPeriod("p0x1", "Old Kingdom", PeriodSkip.OutOfRange, "-2701 → 2150 lies outside"))
+          )
+          .set(SkippedPeriod.SkippedCount, 1)
       )
     )
     val md = IngestMarkdown.job(j)

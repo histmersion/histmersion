@@ -11,5 +11,5 @@ object AcquisitionJobKinds:
     "Check what to acquire again",
     "Checks the to-acquire list again: which items have a legal open copy or are in the library now.",
     stoppable = true,
-    subject = _.recheck.map(AcquireChecks.RecheckJob.describe)
+    subject = AcquireChecks.RecheckJob.Detail.of(_).map(AcquireChecks.RecheckJob.describe)
   )

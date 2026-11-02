@@ -205,7 +205,7 @@ final class AcquireRecheckService(
     if in.all then
       val stopped = latestJob()
         .filter(j => AcquireRecheck.resumable(j.status, j.error))
-        .flatMap(j => j.detail.flatMap(_.recheck).filter(_.all).flatMap(planOf).map(j -> _))
+        .flatMap(j => j.detail.flatMap(AcquireChecks.RecheckJob.Detail.of).filter(_.all).flatMap(planOf).map(j -> _))
       val todo = fetchable(fs)
       stopped match
         case Some((j, plan)) =>
@@ -250,7 +250,7 @@ final class AcquireRecheckService(
     */
   private def resumeStopped(): Option[String] =
     latestJob().filter(j => AcquireRecheck.resumable(j.status, j.error)).flatMap { j =>
-      j.detail.flatMap(_.recheck).flatMap(d => planOf(d).map(d -> _)).flatMap { (d, plan) =>
+      j.detail.flatMap(AcquireChecks.RecheckJob.Detail.of).flatMap(d => planOf(d).map(d -> _)).flatMap { (d, plan) =>
         startJob(plan, d.by, Some(j.id)) match
           case Right(job) =>
             Some(s"acquire re-check: job ${j.id} (${j.error.getOrElse("stopped")}) resumed as job ${job.id}")
@@ -267,7 +267,7 @@ final class AcquireRecheckService(
     BackgroundJob.start(
       ds,
       RecheckJob.JobKind,
-      Some(JobDetail(recheck = Some(detail))),
+      Some(AcquireChecks.RecheckJob.Detail(Some(detail))),
       jobSlot,
       "an acquisition list re-check job",
       Some(AgentsApi.CodeConflict),
@@ -533,7 +533,7 @@ final class AcquireRecheckService(
           s"job ${j.id} stopped (${j.error.getOrElse("stopped")}" + j.progress.fold("")(p => s" at $p") + "): " +
             (if agents.drain.draining then "it resumes once the drain is lifted"
              else if agents.managers.running then "it resumes at the next managers' tick"
-             else if j.detail.flatMap(_.recheck).exists(_.all) then
+             else if j.detail.flatMap(AcquireChecks.RecheckJob.Detail.of).exists(_.all) then
                "`histmersion queue acquire recheck --all` resumes it"
              else "the managers' tick resumes it, which is not running on this server")
         )

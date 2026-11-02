@@ -64,7 +64,7 @@ object BasemapCmd:
           BasemapFetchQuery(if focus.isDefined then "terrain" else layer, z, tz, bbox, dry, keepAll, focus)
         ).flatMap { j =>
           println(
-            s"base-map job `${j.id}` started: ${j.detail.flatMap(_.about).getOrElse("")} (`histmersion jobs` lists it)"
+            s"base-map job `${j.id}` started: ${j.detail.flatMap(JobDetail.Purpose.of).getOrElse("")} (`histmersion jobs` lists it)"
           )
           if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
         }

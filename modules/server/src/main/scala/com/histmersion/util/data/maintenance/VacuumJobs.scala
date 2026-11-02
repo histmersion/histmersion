@@ -1,6 +1,6 @@
 package com.histmersion.util.data.maintenance
 
-import com.histmersion.api.{ApiError, Backup, JobDetail, JobInfo, Vacuum, VacuumPlan, VacuumRequest}
+import com.histmersion.api.{ApiError, Backup, JobInfo, Vacuum, VacuumPlan, VacuumRequest}
 import com.histmersion.util.data.DataContributions
 import com.histmersion.util.database.Transactor
 import com.histmersion.util.jobs.{BackgroundJob, WorkCarrier}
@@ -39,7 +39,7 @@ final class VacuumJobs(
         BackgroundJob.start(
           ds,
           Vacuum.JobKind,
-          Some(JobDetail(vacuum = Some(plan))),
+          Some(VacuumPlan.Detail(Some(plan))),
           slot,
           "a vacuum job",
           Some(Backup.CodeMaintenance),

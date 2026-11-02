@@ -16,6 +16,10 @@ final case class InitPlan(
 object InitPlan:
   given Schema[InitPlan] = summon[KindlingsSchema[InitPlan]].schema
 
+  /** What an init job imports, in its detail. */
+  val Detail: com.histmersion.util.jobs.JobDetailField[Option[InitPlan]] =
+    com.histmersion.util.jobs.JobDetailField("init", None)
+
   val JobKind = com.histmersion.util.data.exchange.ExchangeJobKinds.Init.kind.value
 
   def describe(p: InitPlan): String =

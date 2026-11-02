@@ -277,15 +277,16 @@ class WireSnapshotSuite extends munit.FunSuite:
         article = Some(ResolvedArticle("zq-article", "Zq article"))
       ).asJson.spaces2,
       "resolved none json" -> ResolvedId("zq-nothing").asJson.spaces2,
-      "job detail json" -> JobDetail(
-        init = Some(InitPlan(gazetteer = true, fetch = List("zq-gaz"))),
-        skippedPeriodCount = 2,
-        planHash = Some("zq-hash"),
-        vacuum = Some(VacuumPlan(analyze = true, List("sources"))),
-        media = Some("a media run"),
-        events = Some("zq-catalogue"),
-        about = Some("zq_alpha_2001")
-      ).asJson.spaces2
+      "job detail json" -> InitPlan
+        .Detail(Some(InitPlan(gazetteer = true, fetch = List("zq-gaz"))))
+        .set(SkippedPeriod.SkippedCount, 2)
+        .set(com.histmersion.util.data.exchange.ExchangeJobKinds.PlanHash, Some("zq-hash"))
+        .set(VacuumPlan.Detail, Some(VacuumPlan(analyze = true, List("sources"))))
+        .set(com.histmersion.api.media.imports.ImportJobKinds.Media, Some("a media run"))
+        .set(com.histmersion.api.catalogue.events.EventsJobKinds.Catalogue, Some("zq-catalogue"))
+        .set(JobDetail.Purpose, Some("zq_alpha_2001"))
+        .asJson
+        .spaces2
     )
     parts.map((k, v) => s"## $k\n$v\n").mkString("\n")
 

@@ -22,7 +22,10 @@ class MediaCmdSuite extends munit.FunSuite:
     "media-import",
     "running",
     progress = Some("100/300 place(s)/event(s) asked · batch 2"),
-    detail = Some(JobDetail(media = Some("Wikidata pictures of up to 300 places/events not asked yet")))
+    detail = Some(
+      com.histmersion.api.media.imports.ImportJobKinds
+        .Media(Some("Wikidata pictures of up to 300 places/events not asked yet"))
+    )
   )
   private val done =
     running.copy(status = "done", progress = Some("300 place(s)/event(s) asked in 6 batch(es) · 284 stored"))

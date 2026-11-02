@@ -585,7 +585,7 @@ object Cli:
         .mapN { (analyze, tables, noWait) => (c: Client) =>
           c.vacuum(VacuumRequest(analyze, tables)).flatMap { j =>
             println(
-              s"vacuum job `${j.id}` started: ${j.detail.flatMap(_.vacuum).map(Vacuum.describe).getOrElse("")} " +
+              s"vacuum job `${j.id}` started: ${j.detail.flatMap(VacuumPlan.Detail.of).map(Vacuum.describe).getOrElse("")} " +
                 "(`histmersion jobs` lists it)"
             )
             if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)

@@ -14,7 +14,8 @@ import com.histmersion.util.data.maintenance.MaintenanceJobKinds
 import com.histmersion.util.jobs.JobKinds
 
 /** Every kind of background job the server runs, each registered by its owner, in the order the jobs window has always
-  * listed them (as `Api.all` lists the features' endpoints): what the server, the web page and the CLI name a job by.
+  * listed them (as `Api.all` lists the features' endpoints): what the server, the web page and the CLI name a job by;
+  * and the fields of a job's detail, each declared by its owner, in the order the detail has always shown them.
   */
 object RegisteredJobKinds:
   val all: JobKinds = JobKinds(
@@ -35,5 +36,18 @@ object RegisteredJobKinds:
       PlacesJobKinds.SiteTypes,
       ImportJobKinds.MediaImport,
       CoversJobKinds.MediaCovers
+    ),
+    List(
+      InitPlan.Detail,
+      SkippedPeriod.Skipped,
+      SkippedPeriod.SkippedCount,
+      ExchangeJobKinds.PlanHash,
+      VacuumPlan.Detail,
+      ImportJobKinds.Media,
+      EventsJobKinds.Catalogue,
+      EventImportReport.Detail,
+      EventRederiveReport.Detail,
+      JobDetail.Purpose,
+      AcquireChecks.RecheckJob.Detail
     )
   )

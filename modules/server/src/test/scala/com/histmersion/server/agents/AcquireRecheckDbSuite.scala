@@ -414,7 +414,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val job = jobOf(r)
     assertEquals((r.toOption.get.withDoi, r.toOption.get.allowance), (7, 6))
     assertEquals(job.kind, RecheckJob.JobKind)
-    assertEquals(job.detail.flatMap(_.recheck).map(d => (d.all, d.by)), Some((true, "test")))
+    assertEquals(job.detail.flatMap(RecheckJob.Detail.of).map(d => (d.all, d.by)), Some((true, "test")))
     val done = ended(a, job.id)
     assertEquals(done.status, JobState.Done.wire, done.toString)
     assertEquals(
@@ -541,10 +541,10 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
       .get
       ._1
       .head
-    assertEquals(next.detail.flatMap(_.recheck).flatMap(_.resumes), Some(job.id))
+    assertEquals(next.detail.flatMap(RecheckJob.Detail.of).flatMap(_.resumes), Some(job.id))
     assertEquals(
-      next.detail.flatMap(_.recheck).map(_.since),
-      job.detail.flatMap(_.recheck).map(_.since),
+      next.detail.flatMap(RecheckJob.Detail.of).map(_.since),
+      job.detail.flatMap(RecheckJob.Detail.of).map(_.since),
       "the same start"
     )
     val end = ended(a, next.id)
@@ -574,7 +574,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
       RecheckJob.JobKind,
       None,
       None,
-      detail = Some(JobDetail(recheck = Some(RecheckJob(all = true, since = since.toString, by = "cli"))))
+      detail = Some(RecheckJob.Detail(Some(RecheckJob(all = true, since = since.toString, by = "cli"))))
     )
     val _ = JobRepo.transition(ds, j.id, JobState.Queued, JobState.Running)
     ids
@@ -593,7 +593,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(asked(up).map(_._1), List(doi("r3"), doi("r4")))
     // a fresh --all after a finished one starts over, every item again
     val again = jobOf(a.acquireRecheck.run(RecheckRequest(all = true)))
-    assertEquals(again.detail.flatMap(_.recheck).flatMap(_.resumes), None)
+    assertEquals(again.detail.flatMap(RecheckJob.Detail.of).flatMap(_.resumes), None)
     val _ = ended(a, again.id)
     assertEquals(asked(up).size, 6)
     // the tick resumes an interrupted one by itself
@@ -603,7 +603,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
       RecheckJob.JobKind,
       None,
       None,
-      detail = Some(JobDetail(recheck = Some(RecheckJob(all = true, since = Instant.now().toString, by = "cli"))))
+      detail = Some(RecheckJob.Detail(Some(RecheckJob(all = true, since = Instant.now().toString, by = "cli"))))
     )
     val _ = JobRepo.transition(ds, k.id, JobState.Queued, JobState.Running)
     val _ = JobRepo.transition(ds, k.id, JobState.Running, JobState.Failed, None, Some(JobState.Interrupted))

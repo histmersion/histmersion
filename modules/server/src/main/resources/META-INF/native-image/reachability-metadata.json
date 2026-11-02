@@ -5822,13 +5822,7 @@
       "type": "com.histmersion.api.JobDetail$",
       "fields": [
         {
-          "name": "derived$KindlingsCodecAsObject$lzy1"
-        },
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy2"
-        },
-        {
-          "name": "derived$KindlingsSchema$lzy1"
+          "name": "given_AsObject_JobDetail$lzy1"
         },
         {
           "name": "given_Schema_JobDetail$lzy1"
@@ -14227,6 +14221,14 @@
       "fields": [
         {
           "name": "derived$DbCodec$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.util.jobs.JobDetailField",
+      "fields": [
+        {
+          "name": "defaultJson$lzy1"
         }
       ]
     },

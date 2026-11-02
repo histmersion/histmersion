@@ -63,6 +63,10 @@ object AcquireChecks:
   object RecheckJob:
     given Schema[RecheckJob] = summon[KindlingsSchema[RecheckJob]].schema
 
+    /** A re-check job's plan, in its detail. */
+    val Detail: com.histmersion.util.jobs.JobDetailField[Option[RecheckJob]] =
+      com.histmersion.util.jobs.JobDetailField("recheck", None)
+
     val JobKind = com.histmersion.api.library.acquisition.AcquisitionJobKinds.AcquireRecheck.kind.value
 
     def describe(j: RecheckJob): String =

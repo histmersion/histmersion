@@ -190,7 +190,7 @@ object MapRegionsView:
     )
 
   private def jobView(j: JobInfo): HtmlElement =
-    val dry = j.detail.flatMap(_.about).exists(_.startsWith("dry run"))
+    val dry = j.detail.flatMap(JobDetail.Purpose.of).exists(_.startsWith("dry run"))
     val state = if j.succeeded then ServiceState.Ok else if j.isTerminal then ServiceState.Down else ServiceState.Busy
     div(
       cls := "map-region-job",
@@ -199,7 +199,7 @@ object MapRegionsView:
           cls := s"about-state state-${state.label}",
           if dry then s"size check: ${j.status}" else s"download: ${j.status}"
         ),
-        j.detail.flatMap(_.about).map(a => span(cls := "about-detail muted", a))
+        j.detail.flatMap(JobDetail.Purpose.of).map(a => span(cls := "about-detail muted", a))
       ),
       j.error.map(e => p(cls := "form-error", role := "alert", e)),
       j.progress.filter(_ => !j.isTerminal).map(t => p(cls := "muted map-region-progress", t)),

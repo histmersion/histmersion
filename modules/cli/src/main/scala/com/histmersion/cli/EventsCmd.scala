@@ -121,11 +121,13 @@ object EventsCmd:
 
   /** Follow a job, then print what it left (an import's report). */
   private[cli] def follow(c: Client, j: JobInfo, noWait: Boolean): Either[CliError, Unit] =
-    println(s"job `${j.id}` started: ${j.detail.flatMap(_.events).getOrElse(j.kind)} (`histmersion jobs` lists it)")
+    println(
+      s"job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.catalogue.events.EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"
+    )
     if noWait then Right(())
     else
       IngestCmd.pollJob(c, j.id, 0).flatMap(_ => c.job(j.id)).map { done =>
-        done.detail.flatMap(_.eventImport).foreach(r => println(EventImportReport.markdown(r)))
+        done.detail.flatMap(EventImportReport.Detail.of).foreach(r => println(EventImportReport.markdown(r)))
       }
 
   private val importCmd = Opts.subcommand(
@@ -175,12 +177,12 @@ object EventsCmd:
       .mapN { (p, dry, noWait) => (c: Client) =>
         c.call(EventsApi.rederive)(EventRederiveRequest(p, dry)).flatMap { j =>
           println(
-            s"job `${j.id}` started: ${j.detail.flatMap(_.events).getOrElse(j.kind)} (`histmersion jobs` lists it)"
+            s"job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.catalogue.events.EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"
           )
           if noWait then Right(())
           else
             IngestCmd.pollJob(c, j.id, 0).flatMap(_ => c.job(j.id)).map { done =>
-              done.detail.flatMap(_.eventRederive).foreach(r => println(EventRederiveReport.markdown(r)))
+              done.detail.flatMap(EventRederiveReport.Detail.of).foreach(r => println(EventRederiveReport.markdown(r)))
             }
         }
       }

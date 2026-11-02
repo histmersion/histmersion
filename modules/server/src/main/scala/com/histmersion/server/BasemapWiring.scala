@@ -94,7 +94,7 @@ object BasemapWiring:
       BackgroundJob.start(
         deps.ds,
         kind,
-        Some(JobDetail(about = Some(about))),
+        Some(JobDetail.Purpose(Some(about))),
         slot,
         what,
         busyCode,

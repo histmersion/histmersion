@@ -19,7 +19,7 @@ import javax.sql.DataSource
   * happens.
   *
   * Adopting it (the media import, #1946's follow-up): keep a `Slot`, and replace the hand-written `startJob` with
-  * `BackgroundJob.start(ds, kind, Some(JobDetail(media = Some(describe))), slot, "a media run")((job, progress) =>
+  * `BackgroundJob.start(ds, kind, Some(ImportJobKinds.Media(Some(describe))), slot, "a media run")((job, progress) =>
   * Outcome.of(…))`, inside `maintenance.guard(kind)` when it writes.
   */
 object BackgroundJob:
@@ -65,7 +65,7 @@ object BackgroundJob:
 
   /** Change the detail the job `id` records. */
   def amendDetail(ds: DataSource, id: String)(change: JobDetail => JobDetail): Unit =
-    JobRepo.get(ds, id).foreach(j => JobRepo.setDetail(ds, id, change(j.detail.getOrElse(JobDetail()))))
+    JobRepo.get(ds, id).foreach(j => JobRepo.setDetail(ds, id, change(j.detail.getOrElse(JobDetail.empty))))
 
   /** Start `body` as a job of `kind` (with `detail` stored on its row) in `slot`; `Left` — naming the running one —
     * when the slot is held. `what` names this kind of work in that refusal ("a vacuum job"), `busyCode` is its error

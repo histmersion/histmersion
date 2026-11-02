@@ -10,5 +10,5 @@ object BasemapJobKinds:
     "Download the background map",
     "Downloads and assembles base-map layers (vector map, terrain relief, sea floor) for an area.",
     stoppable = true,
-    subject = _.about
+    subject = com.histmersion.api.JobDetail.Purpose.of
   )

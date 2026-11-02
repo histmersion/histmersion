@@ -70,7 +70,7 @@ object MediaCmd:
         else
           c.mediaImportJob(req).flatMap { j =>
             println(
-              s"media import job `${j.id}` started: ${j.detail.flatMap(_.media).getOrElse("")} (`histmersion jobs` lists it)"
+              s"media import job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.media.imports.ImportJobKinds.Media.of).getOrElse("")} (`histmersion jobs` lists it)"
             )
             if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
           }
@@ -173,7 +173,7 @@ object MediaCmd:
             else
               c.mediaCoversJob(req).flatMap { j =>
                 println(
-                  s"media covers job `${j.id}` started: ${j.detail.flatMap(_.media).getOrElse("")} (`histmersion jobs` lists it)"
+                  s"media covers job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.media.imports.ImportJobKinds.Media.of).getOrElse("")} (`histmersion jobs` lists it)"
                 )
                 if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
               }

@@ -6,7 +6,7 @@ import com.histmersion.values.JobKind
 class JobKindsRegistrySuite extends munit.FunSuite:
   private val a = JobKindEntry(JobKind("alpha"), JobKindName("Alpha"), JobKindMeaning("Does alpha."), stoppable = true)
   private val b =
-    JobKindEntry(JobKind("beta-run"), JobKindName("Beta"), JobKindMeaning("Does beta."), subject = _.about)
+    JobKindEntry(JobKind("beta-run"), JobKindName("Beta"), JobKindMeaning("Does beta."), subject = JobDetail.Purpose.of)
   private val kinds = JobKinds(List(a, b))
 
   test("kinds in the order they were registered; looked up by kind or by the identifier as stored or typed"):
@@ -20,7 +20,7 @@ class JobKindsRegistrySuite extends munit.FunSuite:
     assertEquals(kinds.stoppableKinds, Set("alpha"))
 
   test("what a job is about: its source first, else the first registered reading of its detail"):
-    val job = JobInfo("j", "alpha", "done", detail = Some(JobDetail(about = Some("the map"))))
+    val job = JobInfo("j", "alpha", "done", detail = Some(JobDetail.Purpose(Some("the map"))))
     assertEquals(kinds.subject(job), Some("the map"))
     assertEquals(kinds.subject(job.copy(citekey = Some("ck"))), Some("ck"))
     assertEquals(kinds.subject(job.copy(detail = None)), None)

@@ -46,13 +46,13 @@ class BackgroundJobSuite extends com.histmersion.db.DbSuite:
     val slot = BackgroundJob.Slot()
     val go = CountDownLatch(1)
     val j = BackgroundJob
-      .start(ds, "zz-test", Some(JobDetail(about = Some("a test"))), slot, "a test job") { (job, progress) =>
+      .start(ds, "zz-test", Some(JobDetail.Purpose(Some("a test"))), slot, "a test job") { (job, progress) =>
         go.await()
         progress(s"working on ${job.kind}")
         Outcome.done("all done")
       }
       .fold(e => fail(e.message), identity)
-    assertEquals(j.detail.flatMap(_.about), Some("a test"))
+    assertEquals(j.detail.flatMap(JobDetail.Purpose.of), Some("a test"))
     assert(slot.isRunning, "the slot is held while the job runs")
     assertEquals(
       BackgroundJob.start(ds, "zz-test", None, slot, "a test job")((_, _) => Outcome.done("no")).left.map(_.message),

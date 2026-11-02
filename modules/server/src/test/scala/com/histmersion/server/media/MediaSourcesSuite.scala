@@ -269,7 +269,10 @@ class MediaSourcesSuite extends com.histmersion.db.DbSuite:
     val j =
       h.imports.importJob(MediaImportRequest(dryRun = false, limit = Some(3))).fold(e => fail(e.message), identity)
     assertEquals(j.kind, ImportsControllers.ImportJobKind)
-    assert(j.detail.flatMap(_.media).exists(_.contains("up to 3")), j.toString)
+    assert(
+      j.detail.flatMap(com.histmersion.api.media.imports.ImportJobKinds.Media.of).exists(_.contains("up to 3")),
+      j.toString
+    )
     @annotation.tailrec
     def await(n: Int): JobInfo =
       val now = JobRepo.get(ds, j.id).get

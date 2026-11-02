@@ -29,14 +29,16 @@ class RegistriesOracleSuite extends munit.FunSuite:
       assertNoDiff(actual, Files.readString(file, UTF_8))
 
   private val details: List[(String, JobDetail)] = List(
-    "none" -> JobDetail(),
-    "init" -> JobDetail(init = Some(InitPlan(gazetteer = true, periodPresets = true, fetch = List("land")))),
-    "plan" -> JobDetail(planHash = Some("abc123")),
-    "vacuum" -> JobDetail(vacuum = Some(VacuumPlan(analyze = true, tables = List("sources", "places")))),
-    "media" -> JobDetail(media = Some("pictures of 3 places")),
-    "events" -> JobDetail(events = Some("gvp: 10 parts")),
-    "about" -> JobDetail(about = Some("the vector map of crete")),
-    "recheck" -> JobDetail(recheck = Some(AcquireChecks.RecheckJob(all = true, upTo = 7, since = "2026-10-01")))
+    "none" -> JobDetail.empty,
+    "init" -> InitPlan.Detail(Some(InitPlan(gazetteer = true, periodPresets = true, fetch = List("land")))),
+    "plan" -> com.histmersion.util.data.exchange.ExchangeJobKinds.PlanHash(Some("abc123")),
+    "vacuum" -> VacuumPlan.Detail(Some(VacuumPlan(analyze = true, tables = List("sources", "places")))),
+    "media" -> com.histmersion.api.media.imports.ImportJobKinds.Media(Some("pictures of 3 places")),
+    "events" -> com.histmersion.api.catalogue.events.EventsJobKinds.Catalogue(Some("gvp: 10 parts")),
+    "about" -> JobDetail.Purpose(Some("the vector map of crete")),
+    "recheck" -> AcquireChecks.RecheckJob.Detail(
+      Some(AcquireChecks.RecheckJob(all = true, upTo = 7, since = "2026-10-01"))
+    )
   )
 
   test("job-kinds.txt: every job kind, its name, its controls and its subjects"):

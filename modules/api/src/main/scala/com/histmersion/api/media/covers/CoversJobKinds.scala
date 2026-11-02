@@ -10,5 +10,5 @@ object CoversJobKinds:
     "Fetch source covers",
     "Pictures of sources: Open Library covers by ISBN, and an illustration picked from a source's own figures.",
     stoppable = true,
-    subject = _.media
+    subject = com.histmersion.api.media.imports.ImportJobKinds.Media.of
   )

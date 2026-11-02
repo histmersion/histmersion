@@ -27,7 +27,7 @@ final class CatalogueJobs(
       BackgroundJob.start(
         ds,
         kind,
-        Some(JobDetail(events = Some(describe))),
+        Some(com.histmersion.api.catalogue.events.EventsJobKinds.Catalogue(Some(describe))),
         slot,
         "an events run",
         pins = pins,
