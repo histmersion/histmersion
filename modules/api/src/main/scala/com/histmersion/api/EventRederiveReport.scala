@@ -21,6 +21,10 @@ final case class EventRederiveReport(
 object EventRederiveReport:
   given Schema[EventRederiveReport] = summon[KindlingsSchema[EventRederiveReport]].schema
 
+  /** An events re-dating job's report, in its detail. */
+  val Detail: com.histmersion.util.jobs.JobDetailField[Option[EventRederiveReport]] =
+    com.histmersion.util.jobs.JobDetailField("eventRederive", None)
+
   def summary(r: EventRederiveReport): String =
     def counts(cs: List[EventCount]) = cs.map(c => s"${c.key} ${c.n}").mkString(", ")
     List(

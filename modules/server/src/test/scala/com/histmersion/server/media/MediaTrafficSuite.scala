@@ -63,7 +63,7 @@ class MediaTrafficSuite extends com.histmersion.db.DbSuite:
         case Right(j) =>
           val end = until(j.id, 600)
           sb ++= s"## job $name\n" + wire.take() +
-            s"job: ${end.status} ${end.detail.flatMap(_.media).getOrElse("")} — ${end.progress.getOrElse("")}\n"
+            s"job: ${end.status} ${end.detail.flatMap(com.histmersion.api.media.imports.ImportJobKinds.Media.of).getOrElse("")} — ${end.progress.getOrElse("")}\n"
 
     sb ++= s"providers: ${handlers.imports.providers.asJson.noSpaces}\n"
     sb ++= wire.take()

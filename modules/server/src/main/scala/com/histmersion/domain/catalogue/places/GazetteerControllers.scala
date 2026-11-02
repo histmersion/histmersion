@@ -22,7 +22,7 @@ final class GazetteerControllers(
 
   /** A places job: `about` says what it does (the jobs list shows it), `run` answers its summary or why it failed. */
   private def job(kind: String, about: String)(run: => Either[String, String]): Either[ApiError, JobInfo] =
-    BackgroundJob.start(ds, kind, Some(JobDetail(about = Some(about))), slot, "a places job", pins = pins)(
+    BackgroundJob.start(ds, kind, Some(JobDetail.Purpose(Some(about))), slot, "a places job", pins = pins)(
       (_, progress) =>
         progress(about)
         scribe.info(s"[import] $about…")

@@ -49,7 +49,7 @@ class VacuumSuite extends munit.FunSuite:
       None,
       "t",
       "t",
-      detail = Some(JobDetail(vacuum = Some(VacuumPlan(false, List("places")))))
+      detail = Some(VacuumPlan.Detail(Some(VacuumPlan(false, List("places")))))
     )
     assertEquals(JobDetail.subject(job), Some("VACUUM of places"))
     assert(IngestMarkdown.job(job).contains("- **vacuums:** VACUUM of places"))

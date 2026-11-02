@@ -16,7 +16,7 @@ object AcquireChecksMarkdown:
   private def started(r: RecheckResult, j: JobInfo): String =
     s"# Acquisition list re-check\n\n" +
       s"- ${Plural.count(r.open, "open item")}, ${r.withDoi} with a DOI; ${r.allowance} to try\n" +
-      s"- started as job `${j.id}`: ${j.detail.flatMap(_.recheck).fold("the acquisition list's legal re-check")(RecheckJob.describe)} " +
+      s"- started as job `${j.id}`: ${j.detail.flatMap(RecheckJob.Detail.of).fold("the acquisition list's legal re-check")(RecheckJob.describe)} " +
       s"— `histmersion jobs ${j.id}` follows it" + r.note.fold("")(n => s"\n- _${n}_")
 
   private def pass(r: RecheckResult): String =

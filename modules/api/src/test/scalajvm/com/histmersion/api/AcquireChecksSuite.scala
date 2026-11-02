@@ -104,7 +104,7 @@ class AcquireChecksSuite extends munit.FunSuite:
 
   test("a pass that runs as a job: what it re-checks and how to follow it; the jobs list names it"):
     val detail = RecheckJob(all = true, since = "2026-10-27T10:00:00Z", by = "cli")
-    val job = JobInfo("j-1", RecheckJob.JobKind, "running", detail = Some(JobDetail(recheck = Some(detail))))
+    val job = JobInfo("j-1", RecheckJob.JobKind, "running", detail = Some(RecheckJob.Detail(Some(detail))))
     val md = AcquireChecksMarkdown.result(
       RecheckResult(dryRun = false, open = 460, withDoi = 453, due = 453, allowance = 453, job = Some(job))
     )

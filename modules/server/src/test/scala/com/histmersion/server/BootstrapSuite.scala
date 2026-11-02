@@ -156,8 +156,8 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
     assert(end.progress.exists(_.contains("period presets:")), end.toString) // the periods still went in
     assert(JobRepo.list(ds, None, 50).exists(_.id == job.id), "`histmersion jobs` lists it")
     // #770: the job says what it imports from the start; #771: and which period definitions it left out
-    assertEquals(job.detail.flatMap(_.init), Some(InitPlan(gazetteer = true, periodPresets = true)))
-    assertEquals(end.detail.flatMap(_.init), job.detail.flatMap(_.init))
-    assertEquals(end.detail.map(_.skippedPeriodCount), Some(2))
-    assertEquals(end.detail.toList.flatMap(_.skippedPeriods.map(_.id)), List("p0m64tdgpvd", "p0m64tdp282"))
+    assertEquals(job.detail.flatMap(InitPlan.Detail.of), Some(InitPlan(gazetteer = true, periodPresets = true)))
+    assertEquals(end.detail.flatMap(InitPlan.Detail.of), job.detail.flatMap(InitPlan.Detail.of))
+    assertEquals(end.detail.map(SkippedPeriod.SkippedCount.of), Some(2))
+    assertEquals(end.detail.toList.flatMap(SkippedPeriod.Skipped.of(_).map(_.id)), List("p0m64tdgpvd", "p0m64tdp282"))
     assert(end.progress.exists(_.contains("2 skipped")), end.toString)

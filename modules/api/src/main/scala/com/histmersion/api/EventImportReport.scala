@@ -28,6 +28,10 @@ final case class EventImportReport(
 object EventImportReport:
   given Schema[EventImportReport] = summon[KindlingsSchema[EventImportReport]].schema
 
+  /** An events import job's report, in its detail. */
+  val Detail: com.histmersion.util.jobs.JobDetailField[Option[EventImportReport]] =
+    com.histmersion.util.jobs.JobDetailField("eventImport", None)
+
   def combine(a: EventImportReport, b: EventImportReport): EventImportReport =
     EventImportReport(
       b.provider,

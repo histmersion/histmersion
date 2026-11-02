@@ -313,7 +313,7 @@ object JobRepo:
     */
   def startMergeApply(ds: DataSource, bundle: String, planHash: String): String =
     val id = java.util.UUID.randomUUID().toString
-    val js = json(JobDetail(planHash = Some(planHash)))
+    val js = json(com.histmersion.util.data.exchange.ExchangeJobKinds.PlanHash(Some(planHash)))
     transact(ds):
       sql"""INSERT INTO jobs (id, kind, status, sha256, detail)
             VALUES ($id, ${MergeApplyJob.JobKind}, ${JobState.Running.wire}, $bundle, $js::jsonb)""".update.run()

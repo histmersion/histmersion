@@ -56,7 +56,10 @@ class VacuumHttpSuite extends munit.FunSuite:
       assertEquals(s, 200, body)
       val started = job(body)
       assertEquals(started.kind, Vacuum.JobKind)
-      assertEquals(started.detail.flatMap(_.vacuum), Some(VacuumPlan(true, List("place_overrides", "place_removals"))))
+      assertEquals(
+        started.detail.flatMap(VacuumPlan.Detail.of),
+        Some(VacuumPlan(true, List("place_overrides", "place_removals")))
+      )
       val done = await(url, started.id)
       assertEquals((done.status, done.error), ("done", None), done.toString)
       val summary = done.progress.getOrElse("")

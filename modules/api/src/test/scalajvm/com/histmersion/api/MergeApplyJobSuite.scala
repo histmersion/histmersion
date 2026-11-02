@@ -41,5 +41,10 @@ class MergeApplyJobSuite extends munit.FunSuite:
     assertEquals(of(JobState.Done).state, MergeJobState.Failed)
 
   test("the jobs list names what a merge apply is about: its plan"):
-    val j = JobInfo("j1", MergeApplyJob.JobKind, "running", detail = Some(JobDetail(planHash = Some("abc123"))))
+    val j = JobInfo(
+      "j1",
+      MergeApplyJob.JobKind,
+      "running",
+      detail = Some(com.histmersion.util.data.exchange.ExchangeJobKinds.PlanHash(Some("abc123")))
+    )
     assertEquals(JobDetail.subject(j), Some("merge plan abc123"))

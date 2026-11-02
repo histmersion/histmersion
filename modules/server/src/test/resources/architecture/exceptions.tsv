@@ -4,10 +4,6 @@ direction	api:api/AgentsMarkdown.scala	automation -> research: ArticlePlans	1
 direction	api:api/Autopilot.scala	automation -> library: AcquireChecks	1
 direction	api:api/Autopilot.scala	automation -> library: UpstreamQuota	1
 direction	api:api/GoalPlans.scala	automation -> research: CoverageReason	1
-direction	api:api/JobDetail.scala	util.jobs -> catalogue: EventImportReport	1
-direction	api:api/JobDetail.scala	util.jobs -> catalogue: EventRederiveReport	1
-direction	api:api/JobDetail.scala	util.jobs -> catalogue: SkippedPeriod	1
-direction	api:api/JobDetail.scala	util.jobs -> library: AcquireChecks	1
 direction	api:api/Managers.scala	automation -> research: ArticleFilter	1
 direction	api:api/ManagersApi.scala	automation -> library: AcquireChecks	1
 direction	api:api/ManagersApi.scala	automation -> library: RepairAcquire	1

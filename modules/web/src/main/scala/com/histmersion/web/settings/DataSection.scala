@@ -169,7 +169,8 @@ object DataSection:
       job.onComplete { r =>
         r.toEither.left.map(SettingsStore.message) match
           case Left(why) => said.set(Some(Left(why)))
-          case Right(j) if j.detail.flatMap(_.about).exists(_.startsWith("dry run")) || what.endsWith("-check") =>
+          case Right(j)
+              if j.detail.flatMap(JobDetail.Purpose.of).exists(_.startsWith("dry run")) || what.endsWith("-check") =>
             said.set(Some(Right(s"$text: checking…")))
             follow(text, j.id, 0)
           case Right(_) =>

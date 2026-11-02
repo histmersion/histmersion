@@ -192,7 +192,9 @@ class MediaCollectionsJobSuite extends com.histmersion.db.DbSuite:
         assertEquals(js, 202, jb)
         val job = decode[JobInfo](jb).fold(e => fail(s"$e: $jb"), identity)
         assert(
-          job.detail.flatMap(_.media).exists(_.contains("Art Institute of Chicago objects of zqmc_site")),
+          job.detail
+            .flatMap(com.histmersion.api.media.imports.ImportJobKinds.Media.of)
+            .exists(_.contains("Art Institute of Chicago objects of zqmc_site")),
           job.toString
         )
         @annotation.tailrec

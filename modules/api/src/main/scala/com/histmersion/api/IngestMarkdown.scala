@@ -15,15 +15,20 @@ object IngestMarkdown:
           case JobState.Failed => " (left open: the job failed)"
           case _               => " (ticked off when the job succeeds)")
       ),
-      j.detail.flatMap(_.init).map(p => s"- **imports:** ${InitPlan.describe(p)}"),
-      j.detail.flatMap(_.vacuum).map(p => s"- **vacuums:** ${Vacuum.describe(p)}"),
-      j.detail.flatMap(_.about).map(a => s"- **does:** $a"),
+      j.detail.flatMap(InitPlan.Detail.of).map(p => s"- **imports:** ${InitPlan.describe(p)}"),
+      j.detail.flatMap(VacuumPlan.Detail.of).map(p => s"- **vacuums:** ${Vacuum.describe(p)}"),
+      j.detail.flatMap(JobDetail.Purpose.of).map(a => s"- **does:** $a"),
       j.detail
-        .filter(_.skippedPeriodCount > 0)
+        .filter(SkippedPeriod.SkippedCount.of(_) > 0)
         .map(d =>
-          s"- **skipped:** ${Plural.count(d.skippedPeriodCount, "period definition")} (not imported)" +
-            (if d.skippedPeriods.isEmpty then ""
-             else "\n" + PeriodsMarkdown.skippedList(d.skippedPeriods).linesIterator.map("  " + _).mkString("\n"))
+          s"- **skipped:** ${Plural.count(SkippedPeriod.SkippedCount.of(d), "period definition")} (not imported)" +
+            (if SkippedPeriod.Skipped.of(d).isEmpty then ""
+             else
+               "\n" + PeriodsMarkdown
+                 .skippedList(SkippedPeriod.Skipped.of(d))
+                 .linesIterator
+                 .map("  " + _)
+                 .mkString("\n"))
         ),
       Some(s"- **updated:** ${j.updatedAt}")
     ).flatten

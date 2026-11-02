@@ -91,10 +91,10 @@ object JobsView:
 
   /** The period definitions an import left out (#771): how many, and which. */
   def skippedLine(j: JobInfo): Option[String] =
-    j.detail.filter(_.skippedPeriodCount > 0).map { d =>
-      val ids = d.skippedPeriods.map(_.id)
-      val more = d.skippedPeriodCount - ids.size
-      s"skipped ${Plural.count(d.skippedPeriodCount, "period definition")}: ${ids.mkString(", ")}" +
+    j.detail.filter(SkippedPeriod.SkippedCount.of(_) > 0).map { d =>
+      val ids = SkippedPeriod.Skipped.of(d).map(_.id)
+      val more = SkippedPeriod.SkippedCount.of(d) - ids.size
+      s"skipped ${Plural.count(SkippedPeriod.SkippedCount.of(d), "period definition")}: ${ids.mkString(", ")}" +
         (if more > 0 then s" and $more more" else "")
     }
 
@@ -285,7 +285,7 @@ object JobsView:
           div(
             cls := "job-skipped muted",
             title := j.detail.toList
-              .flatMap(_.skippedPeriods)
+              .flatMap(SkippedPeriod.Skipped.of)
               .map(sp => s"${sp.id} ${sp.label}: ${sp.detail}")
               .mkString("\n"),
             l

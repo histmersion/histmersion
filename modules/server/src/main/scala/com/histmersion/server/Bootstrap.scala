@@ -127,7 +127,7 @@ final class Bootstrap(
     BackgroundJob.start(
       ds,
       Bootstrap.JobKind,
-      Some(JobDetail(init = Some(p))),
+      Some(InitPlan.Detail(Some(p))),
       slot,
       "an init job",
       pins = deps.pins,
@@ -139,11 +139,9 @@ final class Bootstrap(
     def withSkipped(r: PeriodImportResult): PeriodImportResult =
       if r.skippedCount > 0 then
         BackgroundJob.amendDetail(ds, id) { found =>
-          val d = if found == JobDetail() then JobDetail(init = Some(p)) else found
-          d.copy(
-            skippedPeriods = (d.skippedPeriods ++ r.skipped).take(Bootstrap.SkippedListed),
-            skippedPeriodCount = d.skippedPeriodCount + r.skippedCount
-          )
+          val d = if found == JobDetail.empty then InitPlan.Detail(Some(p)) else found
+          d.change(SkippedPeriod.Skipped)(s => (s ++ r.skipped).take(Bootstrap.SkippedListed))
+            .change(SkippedPeriod.SkippedCount)(_ + r.skippedCount)
         }
       r
     val steps: List[(String, () => Either[String, String])] =
