@@ -2,7 +2,7 @@ package com.histmersion.domain.automation.goals
 
 import com.histmersion.api.{ApiError, Goal, GoalList, GoalPatch, GoalPut, Write, YearFmt}
 import com.histmersion.api.GoalPlans.{GoalLink, GoalSchedule}
-import com.histmersion.db.{GoalLinkRepo, GoalRepo}
+import com.histmersion.domain.automation.goals.{GoalLinkRepo, GoalRepo}
 import com.histmersion.domain.automation.AutomationState
 import com.histmersion.util.database.Transactor
 import com.histmersion.values.{GoalLinkKind, ScheduleKind}

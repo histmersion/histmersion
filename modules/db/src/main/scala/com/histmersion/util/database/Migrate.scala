@@ -1,5 +1,4 @@
-package com.histmersion.db
-
+package com.histmersion.util.database
 import javax.sql.DataSource
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.ResourceProvider
@@ -41,7 +40,7 @@ object Migrate:
         .map(r => r: LoadableResource)
         .asJavaCollection
 
-  private[db] def flyway(ds: DataSource): Flyway =
+  private[histmersion] def flyway(ds: DataSource): Flyway =
     Flyway
       .configure()
       .dataSource(ds)
@@ -77,7 +76,7 @@ object Migrate:
     * migration, is refused: a build from before the squash brings it there first. Does nothing to a database without a
     * history or with the squashed one. Returns whether it replaced the history.
     */
-  private[db] def squashHistory(ds: DataSource): Boolean =
+  private[histmersion] def squashHistory(ds: DataSource): Boolean =
     val c = ds.getConnection
     try
       if !historyExists(c) then false
@@ -167,7 +166,7 @@ object Migrate:
     }
 
   /** Run `f`, again (up to `attempts` times, with a short growing pause) while it fails [[transient]]ly. */
-  private[db] def retrying[A](attempts: Int)(f: => A): A =
+  private[histmersion] def retrying[A](attempts: Int)(f: => A): A =
     @annotation.tailrec
     def go(n: Int): A =
       scala.util.Try(f) match

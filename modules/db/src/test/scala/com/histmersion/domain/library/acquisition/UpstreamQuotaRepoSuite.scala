@@ -1,6 +1,7 @@
 package com.histmersion.domain.library.acquisition
 
-import com.histmersion.db.{Migrate, TestDb}
+import com.histmersion.db.TestDb
+import com.histmersion.util.database.Migrate
 
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.CoreQuota

@@ -7,7 +7,8 @@ import com.histmersion.util.ocr.ConverterClient
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{Db, Migrate, QueueRows, TestDb}
+import com.histmersion.db.{QueueRows, TestDb}
+import com.histmersion.util.database.{Db, Migrate}
 import java.nio.file.{Files, Path}
 
 /** A real queue write can throw instead of returning Left. Never turn stored OCR into a failed job because its optional

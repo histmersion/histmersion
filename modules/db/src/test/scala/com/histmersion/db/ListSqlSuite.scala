@@ -1,6 +1,7 @@
 package com.histmersion.db
 
 import java.time.Instant
+import com.histmersion.util.database.{ListSql, Param, Sql}
 
 /** The pure SQL fragments of the list filters (no database). */
 class ListSqlSuite extends munit.FunSuite:

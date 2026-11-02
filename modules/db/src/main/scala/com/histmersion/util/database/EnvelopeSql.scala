@@ -1,7 +1,7 @@
 package com.histmersion.util.database
 
 import com.histmersion.api.BBox
-import com.histmersion.db.{Param, Sql}
+import com.histmersion.util.database.{Param, Sql}
 
 /** The PostGIS predicate for a viewport over a geometry column. A box with `minLon > maxLon` crosses the antimeridian
   * and becomes two envelopes OR'ed together (`minLon…180` and `-180…maxLon`).

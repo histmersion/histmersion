@@ -7,6 +7,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.Migrate
 
 /** A one-ended LPF timespan is stored OPEN (#1403): `[start,)` / `(,end]`, never the one known year — for the place,
   * its names and its relations. Against a real PostGIS (HISTMERSION_TEST_DB_URL).

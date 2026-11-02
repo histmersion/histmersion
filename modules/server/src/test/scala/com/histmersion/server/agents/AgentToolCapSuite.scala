@@ -12,7 +12,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{Db, Migrate}
+import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.server.{Deps, ServerWiring}
 import com.histmersion.util.ocr.ConverterClient
 import io.circe.Json
@@ -20,6 +20,7 @@ import io.circe.syntax.*
 
 import java.nio.file.Path
 import com.histmersion.values.SourceStatus
+import com.histmersion.db.*
 
 /** The agent tools under `agents.tools` against a real Postgres (#token-diet, 2026-10-16): a record keeps its findings
   * and loses the notes' tail, a body read without `chars` is a short slice that says where to read on, `passages` still

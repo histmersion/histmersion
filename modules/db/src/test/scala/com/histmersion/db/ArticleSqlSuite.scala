@@ -9,6 +9,7 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.util.database.Param
 
 /** `ArticleFixtures.listWhere` is a pure function of the query parameters — asserted here without a database, like
   * `FilterSql` on the source side.

@@ -1,7 +1,6 @@
 package com.histmersion.util.jobs
 
-import com.histmersion.db.*
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 
 import com.histmersion.api.*
 import com.histmersion.config.*

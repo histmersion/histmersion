@@ -17,10 +17,10 @@ import com.histmersion.api.{
   EventSummary,
   Write
 }
-import com.histmersion.db.{Param, Sql}
+import com.histmersion.util.database.{Param, Sql}
 
 import com.augustnagro.magnum.*
-import com.histmersion.db.given_DbCodec_List
+import com.histmersion.util.database.given_DbCodec_List
 
 /** The events (`events`) with their datings, edges and participants (`event_datings`, `event_edges`,
   * `event_participants`) and the old ids of renamed ones (`event_aliases`). Every method runs on the connection it is

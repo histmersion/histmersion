@@ -3,7 +3,7 @@ package com.histmersion.domain.media.links
 import com.histmersion.api.{DeleteCount, DeletePart, RenameCount}
 import com.histmersion.domain.library.sources.referrers.*
 
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
 

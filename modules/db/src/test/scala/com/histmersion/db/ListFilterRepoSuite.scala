@@ -15,6 +15,8 @@ import com.histmersion.api.ListFilters.DecidedBy
 import com.augustnagro.magnum.*
 
 import java.time.Instant
+import com.histmersion.domain.automation.agents.AgentRepo
+import com.histmersion.util.database.Migrate
 
 /** The server-side filters of the approvals, agent-runs and jobs lists and their facet counts (core `ListFilters`)
   * against a real Postgres (HISTMERSION_TEST_DB_URL; skipped otherwise). Other suites write the same tables at the same

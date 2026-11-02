@@ -17,6 +17,7 @@ import com.augustnagro.magnum.*
 import scala.jdk.CollectionConverters.*
 import java.nio.file.{Files, Path}
 import com.histmersion.values.{Confidence, PlaceKind, SourceStatus}
+import com.histmersion.util.database.Migrate
 
 /** #987 against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise), on the REAL bundled seed: the places a
   * finding names in plain English are read out of `db/places` itself (Natural Earth physical + cities, Pleiades with

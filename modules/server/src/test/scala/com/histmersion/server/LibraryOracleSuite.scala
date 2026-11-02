@@ -2,7 +2,6 @@ package com.histmersion.server
 
 import com.histmersion.api.*
 import com.histmersion.config.*
-import com.histmersion.db.*
 import com.augustnagro.magnum.*
 import io.circe.{parser, Json}
 import io.circe.syntax.*
@@ -16,6 +15,8 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import javax.imageio.ImageIO
 import javax.sql.DataSource
+import com.histmersion.util.database.Sql
+import com.histmersion.db.*
 
 /** What the library answers, on a crafted collection, recorded on the code before the library's sources, findings,
   * citations, labels and search moved into their own domain:

@@ -1,6 +1,7 @@
-package com.histmersion.db
-
+package com.histmersion.domain.automation.autopilot
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.Sql
+import com.histmersion.util.database.given
 
 /** The autopilot's one row (V096, docs/research-process-managers.md "As built: the autopilot"): the switch, who turned
   * it and when, the managers it paused when it was turned off, and when it last ensured the goals' managers and ran its

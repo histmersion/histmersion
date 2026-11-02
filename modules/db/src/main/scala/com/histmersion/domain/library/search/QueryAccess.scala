@@ -1,7 +1,7 @@
 package com.histmersion.domain.library.search
 
 import com.histmersion.config.{DbConfig, QueryConfig}
-import com.histmersion.db.Db
+import com.histmersion.util.database.Db
 import com.zaxxer.hikari.HikariDataSource
 import java.sql.SQLException
 import javax.sql.DataSource

@@ -3,7 +3,7 @@ package com.histmersion.domain.automation.worklists
 import com.histmersion.api.Queue.*
 import com.histmersion.domain.Scheduling
 
-import com.histmersion.db.given_DbCodec_List
+import com.histmersion.util.database.given_DbCodec_List
 
 import com.augustnagro.magnum.*
 

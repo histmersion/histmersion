@@ -12,13 +12,15 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
-import com.histmersion.db.{AgentRepo, Migrate}
+import com.histmersion.domain.automation.agents.AgentRepo
+import com.histmersion.util.database.Migrate
 import com.histmersion.server.{Deps, ServerWiring}
 import org.ekrich.config.ConfigFactory
 
 import java.net.URLClassLoader
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Path
+import com.histmersion.db.*
 
 /** A THIRD-PARTY AI provider end to end (docs/research-plugins.md §23): the hello-ai test plugin's own jar
   * (modules/plugin-fixtures/hello-ai — compiled against plugin-api alone, never on the server's class path) is

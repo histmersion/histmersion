@@ -2,7 +2,7 @@ package com.histmersion.domain.automation.managers
 
 import com.histmersion.api.Agents.{JobKind, PauseReason}
 import com.histmersion.api.Managers.*
-import com.histmersion.db.ManagerRepo
+import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.domain.automation.AutomationState
 import com.histmersion.util.database.Transactor
 import com.histmersion.util.jobs.{JobRuns, JobRunState}

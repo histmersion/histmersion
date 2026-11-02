@@ -30,7 +30,7 @@ abstract class ApprovalServiceContract extends EngineStoreSuite:
       current,
       p.edgeKind,
       p.target,
-      com.histmersion.db.Jsonb.write(p),
+      com.histmersion.util.database.Jsonb.write(p),
       st,
       result
     )
@@ -48,7 +48,7 @@ abstract class ApprovalServiceContract extends EngineStoreSuite:
       )
       assertEquals(propose(s, status, None), None, "identical and open")
       assert(propose(s, edge, None).isDefined, "another change")
-      assertEquals(a(s).payload(first.id).flatMap(com.histmersion.db.Jsonb.read[Proposal]), Some(status))
+      assertEquals(a(s).payload(first.id).flatMap(com.histmersion.util.database.Jsonb.read[Proposal]), Some(status))
       assert(before(s, status))
       assert(!before(s, status.copy(citekey = "zz2020_z")))
       val auto = propose(s, status, None, ApprovalState.Approved, Some("applied automatically")).get

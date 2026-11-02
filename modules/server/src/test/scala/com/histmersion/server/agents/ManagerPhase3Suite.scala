@@ -12,11 +12,15 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.GoalPlans.*
 import com.histmersion.api.Managers.*
-import com.histmersion.db.{AgentRepo, Db, GoalLinkRepo, ManagerRepo, Migrate}
+import com.histmersion.domain.automation.agents.AgentRepo
+import com.histmersion.util.database.{Db, Migrate}
+import com.histmersion.domain.automation.goals.GoalLinkRepo
+import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.server.{Deps, ServerWiring}
 import sttp.ai.core.agent.*
 
 import java.time.Instant
+import com.histmersion.db.*
 
 /** The process managers' phase 3 against a `*_test` database (docs/research-process-managers.md §4 (c), §6): the
   * watcher (created paused with its cron and one item per sweep; an acquisition sweep whose OPT-IN auto-ingest takes

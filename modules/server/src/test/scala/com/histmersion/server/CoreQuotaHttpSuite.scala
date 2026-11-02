@@ -25,9 +25,9 @@ class CoreQuotaHttpSuite extends munit.FunSuite:
     val base = AppConfig.load()
     val cfg = base.copy(db = base.db.copy(url = testDb.get))
     import com.augustnagro.magnum.*
-    val clean = com.histmersion.db.Db.pool(cfg.db)
+    val clean = com.histmersion.util.database.Db.pool(cfg.db)
     try {
-      val _ = com.histmersion.db.Migrate.run(clean);
+      val _ = com.histmersion.util.database.Migrate.run(clean);
       val _ = connect(clean)(sql"DELETE FROM upstream_quota WHERE upstream = 'core'".update.run())
     } finally clean.close()
     val now = AtomicReference(Instant.now())

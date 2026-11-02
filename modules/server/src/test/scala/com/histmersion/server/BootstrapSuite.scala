@@ -3,7 +3,7 @@ package com.histmersion.server
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{Db, Migrate}
+import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.domain.catalogue.periods.{PeriodsControllers, PeriodService}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.database.Transactor
@@ -11,6 +11,7 @@ import com.histmersion.util.jobs.JobRepo
 
 import com.augustnagro.magnum.*
 import java.nio.file.{Files, Path}
+import com.histmersion.db.*
 
 /** Named periods and the first-run job against a real Postgres (#719, #720); skipped without HISTMERSION_TEST_DB_URL.
   * The network is a function the test supplies, and the data directory is a temporary one holding the REAL committed

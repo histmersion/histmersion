@@ -3,7 +3,7 @@ package com.histmersion.domain.media.covers
 import com.histmersion.api.MediaProvider
 import com.histmersion.values.MediaRole
 
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 
 /** The sources a run of covers and illustrations looks at (#1446): those with figures and no illustration yet, those

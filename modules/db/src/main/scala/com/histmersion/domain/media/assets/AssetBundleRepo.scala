@@ -1,11 +1,12 @@
 package com.histmersion.domain.media.assets
 
 import com.histmersion.api.BundleAsset
-import com.histmersion.db.{BundleImport, Param, Sql}
+import com.histmersion.util.data.exchange.BundleImport
+import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.data.exchange.BundleScope
 import com.histmersion.util.data.exchange.BundleSql.*
 
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import java.util.UUID
 

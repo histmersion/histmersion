@@ -8,7 +8,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
-import com.histmersion.db.AgentRepo
+import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.api.VocabularyCodecs.given
 import io.circe.{Decoder, Encoder}
 import io.circe.parser.decode

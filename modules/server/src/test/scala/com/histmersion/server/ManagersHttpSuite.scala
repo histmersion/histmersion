@@ -37,7 +37,7 @@ class ManagersHttpSuite extends com.histmersion.db.DbSuite:
 
   private def clean(cfg: AppConfig): Unit =
     val ds = testPool(cfg.db)
-    com.histmersion.db.Migrate.run(ds)
+    com.histmersion.util.database.Migrate.run(ds)
     connect(ds):
       sql"DELETE FROM agent_managers".update.run()
       sql"DELETE FROM articles WHERE slug LIKE 'zqmgr%'".update.run()

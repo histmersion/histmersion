@@ -1,8 +1,8 @@
-package com.histmersion.db
-
+package com.histmersion.domain.automation.agents
 import com.histmersion.api.PlanQuota.{PoolId, Reading, RefreshInfo, Source}
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.given
 
 /** The plan pools' readings, settings and refresh log (migrations V063–V065, V069). Stateless. */
 object PlanQuotaRepo:

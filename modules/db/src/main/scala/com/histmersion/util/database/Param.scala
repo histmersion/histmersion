@@ -1,8 +1,4 @@
-package com.histmersion.db
-
-/** A bound parameter. Typed (rather than `Any`) so tests can assert on it and the writer can bind it without reflection
-  * — which also keeps the native image happy.
-  */
+package com.histmersion.util.database
 enum Param:
   case S(v: String)
   case L(v: Long)

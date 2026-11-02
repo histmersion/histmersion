@@ -1,8 +1,8 @@
 package com.histmersion.domain.catalogue.periods
 
 import com.histmersion.api.{Dataset, HistoricalPeriod}
-import com.histmersion.db.{Param, Sql}
-import com.histmersion.db.given_DbCodec_List
+import com.histmersion.util.database.{Param, Sql}
+import com.histmersion.util.database.given_DbCodec_List
 import com.histmersion.util.database.{LikePattern, RangeSql}
 
 import com.augustnagro.magnum.*

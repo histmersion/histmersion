@@ -17,8 +17,8 @@ import com.histmersion.api.{
   Write
 }
 import com.histmersion.api.given
-import com.histmersion.db.{Jsonb, Param, Sql}
-import com.histmersion.db.given
+import com.histmersion.util.database.{Jsonb, Param, Sql}
+import com.histmersion.util.database.given
 import com.histmersion.domain.MergePlanner
 import com.histmersion.domain.MergePlanner.Fold
 import com.histmersion.util.data.exchange.BundlePlan.Ledger

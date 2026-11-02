@@ -6,7 +6,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.UiNotices.Board
-import com.histmersion.db.Migrate
+import com.histmersion.util.database.Migrate
 
 import com.augustnagro.magnum.*
 

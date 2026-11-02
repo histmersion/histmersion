@@ -6,7 +6,8 @@ import com.histmersion.util.settings.ConfigSource
 
 import com.histmersion.api.*
 import com.histmersion.config.*
-import com.histmersion.db.{DbSuite, Migrate, TestDb}
+import com.histmersion.db.{DbSuite, TestDb}
+import com.histmersion.util.database.Migrate
 import com.histmersion.util.jobs.JobRepo
 import com.histmersion.util.basemap.{BasemapFixtures, BasemapServiceSuite, RangeHttp}
 import com.histmersion.util.storage.Reservation

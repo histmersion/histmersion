@@ -15,7 +15,6 @@ import com.histmersion.domain.catalogue.evidence.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.*
 import com.histmersion.values.{Confidence, PlaceKind, SourceStatus}
 import com.augustnagro.magnum.*
 import io.circe.{parser, Json}
@@ -28,6 +27,10 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import javax.sql.DataSource
 import scala.jdk.CollectionConverters.*
+import com.histmersion.domain.automation.goals.GoalRepo
+import com.histmersion.util.data.exchange.BundleRepo
+import com.histmersion.util.database.Sql
+import com.histmersion.db.*
 
 /** What data management answers over HTTP, on a crafted pair of collections ("work" and "home"), recorded on the code
   * before data management moved into its own area: the whole bundle of work and the part changed since a moment (every

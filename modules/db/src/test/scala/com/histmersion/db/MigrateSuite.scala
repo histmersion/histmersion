@@ -1,5 +1,6 @@
 package com.histmersion.db
 
+import com.histmersion.util.database.Migrate
 class MigrateSuite extends munit.FunSuite:
   test("migration index lists every V*.sql, in order, and each is loadable"):
     val names = Migrate.migrationNames

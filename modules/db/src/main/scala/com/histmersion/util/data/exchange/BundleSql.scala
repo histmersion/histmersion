@@ -1,7 +1,7 @@
 package com.histmersion.util.data.exchange
 
 import com.histmersion.api.BundleRange
-import com.histmersion.db.{Param, Sql}
+import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.RangeSql
 
 /** The SQL every carried kind's lines are read with: a clock as the wire carries it, a range as three columns, the rows

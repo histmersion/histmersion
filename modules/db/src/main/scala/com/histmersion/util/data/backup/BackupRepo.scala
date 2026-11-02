@@ -1,7 +1,7 @@
 package com.histmersion.util.data.backup
 
 import com.augustnagro.magnum.*
-import com.histmersion.db.Sql
+import com.histmersion.util.database.Sql
 
 /** The one database question backup and restore ask: how many rows a table a restore must not drop unasked holds.
   */

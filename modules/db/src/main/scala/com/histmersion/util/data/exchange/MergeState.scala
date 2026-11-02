@@ -1,5 +1,4 @@
-package com.histmersion.db
-
+package com.histmersion.util.data.exchange
 import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*
@@ -24,6 +23,8 @@ import com.histmersion.util.data.exchange.{
   MergeRuleSet
 }
 import com.histmersion.util.storage.{ByteSource, ContentStore}
+import com.histmersion.util.database.{Param, Sql}
+import com.histmersion.util.database.given
 
 /** What this collection knows that a merge plan needs (docs/research-merge-import.md §5–§6, milestone M3): the plan's
   * input stage — its rows, labels, ledger, redirects, article histories and OCR bodies, and what each kind's merge
@@ -169,7 +170,7 @@ object MergeState:
       )
 
   /** The uids, among `uids`, of rows that exist here, in the tables of the kinds a line can refer to. */
-  private[db] def liveUids(uids: List[UUID], tables: List[TableName])(using DbCon): Set[UUID] =
+  private[histmersion] def liveUids(uids: List[UUID], tables: List[TableName])(using DbCon): Set[UUID] =
     if uids.isEmpty || tables.isEmpty then Set.empty
     else
       val us = ids(uids)
@@ -273,4 +274,4 @@ object MergeState:
   ): Either[String, MergePlan] =
     MergePlans.planFile(ds, ByteSource.file(file), resolutions, cfg, originals, chunkChars, kinds, rules)
 
-  private[db] def withFile[A](file: Path)(f: InputStream => A): A = ByteSource.file(file).read(f)
+  private[histmersion] def withFile[A](file: Path)(f: InputStream => A): A = ByteSource.file(file).read(f)

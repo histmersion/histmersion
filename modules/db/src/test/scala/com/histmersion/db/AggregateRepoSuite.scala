@@ -7,6 +7,7 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.values.SourceStatus
+import com.histmersion.util.database.Migrate
 
 /** `periods` against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise. The bucketing itself is pure
   * and covered by `core/AggregateSuite`.

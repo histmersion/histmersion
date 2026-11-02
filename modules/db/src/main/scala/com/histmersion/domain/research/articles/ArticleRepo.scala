@@ -9,8 +9,8 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.util.database.RangeSql
 
 import com.histmersion.api.*
-import com.histmersion.db.{Jsonb, Param, Sql}
-import com.histmersion.db.given
+import com.histmersion.util.database.{Jsonb, Param, Sql}
+import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
 

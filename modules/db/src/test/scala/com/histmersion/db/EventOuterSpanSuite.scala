@@ -10,6 +10,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.Migrate
 
 /** V089 (#1768) against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): the generated `events.outer_span`
   * is TimeSpan.outer — an open-ended event covers the end it states, not every year after it — and the map's feed

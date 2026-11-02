@@ -1,7 +1,7 @@
 package com.histmersion.domain.library.collections
 
 import com.augustnagro.magnum.*
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 
 /** The sources linked to Calibre entries: a numeric `calibre_id`, by citekey. Takes the connection it runs on. */
 private[collections] object CollectionLinksRepo:

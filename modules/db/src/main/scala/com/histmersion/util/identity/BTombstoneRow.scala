@@ -1,6 +1,6 @@
 package com.histmersion.util.identity
 
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 import com.augustnagro.magnum.DbCodec
 
 import java.util.UUID

@@ -5,8 +5,8 @@ import com.histmersion.domain.library.search.FilterSql
 import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.api.*
-import com.histmersion.db.{Param, Sql}
-import com.histmersion.db.given
+import com.histmersion.util.database.{Param, Sql}
+import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
 

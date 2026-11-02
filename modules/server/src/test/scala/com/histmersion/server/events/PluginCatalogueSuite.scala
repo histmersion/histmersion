@@ -14,7 +14,8 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{Migrate, TestDb}
+import com.histmersion.db.TestDb
+import com.histmersion.util.database.Migrate
 import com.histmersion.plugin as spi
 import com.histmersion.server.Deps
 import com.histmersion.server.media.FakeMediaHttp

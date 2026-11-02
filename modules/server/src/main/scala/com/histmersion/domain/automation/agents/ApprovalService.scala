@@ -2,7 +2,7 @@ package com.histmersion.domain.automation.agents
 
 import com.histmersion.api.{ApprovalDigest, ListFilters, Paging}
 import com.histmersion.api.Agents.{ApprovalInfo, ApprovalKind, ApprovalState}
-import com.histmersion.db.AgentRepo
+import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 import com.histmersion.domain.automation.AutomationState
 import com.histmersion.util.database.Transactor

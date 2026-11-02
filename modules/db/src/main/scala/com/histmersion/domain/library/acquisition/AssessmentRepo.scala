@@ -2,7 +2,7 @@ package com.histmersion.domain.library.acquisition
 
 import com.histmersion.api.*
 
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 
 /** The assessments' store: the local Retraction Watch mirror and the verdict recorded for each stored source. Every

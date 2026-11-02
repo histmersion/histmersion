@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.sources
 
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 import com.histmersion.values.SourceStatus
 
 import com.augustnagro.magnum.*

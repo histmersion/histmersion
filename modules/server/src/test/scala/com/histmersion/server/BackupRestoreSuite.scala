@@ -3,13 +3,14 @@ package com.histmersion.server
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{Db, Migrate}
+import com.histmersion.util.database.{Db, Migrate}
 import ox.supervised
 
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.file.{Files, Path}
 import com.histmersion.values.SourceStatus
+import com.histmersion.db.*
 
 /** The acceptance line of plan §4 wave 2.5: `backup` then `restore --force` reproduces `search` results. Runs
   * `pg_dump`/`pg_restore` for real, over the real HTTP endpoints, against a SCRATCH database created next to
@@ -232,7 +233,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
         assertEquals(field(fb, "schemaVersion"), Migrate.current(ds).getOrElse("?"))
         // the server evicted ITS pools; this suite's own pool (a second client of the same database, as
         // `h` is) holds sessions that cached the types the restore dropped — throw them away too
-        com.histmersion.db.Db.evict(ds)
+        com.histmersion.util.database.Db.evict(ds)
 
         // 8. …and search finds it again, findings and all
         val after = h.library.search.sources(Filter(tags = List("zz-backup-test"), limit = 10))

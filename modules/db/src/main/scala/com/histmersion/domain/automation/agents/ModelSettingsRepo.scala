@@ -1,8 +1,9 @@
-package com.histmersion.db
-
+package com.histmersion.domain.automation.agents
 import com.histmersion.api.ModelChains.{LimitSpec, Spend}
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.Jsonb
+import com.histmersion.util.database.given
 
 /** The model chains and allowances saved over config (migration V060), and the spends an allowance counts — summed from
   * `agent_steps`, the one place tokens and cost are written. Stateless.

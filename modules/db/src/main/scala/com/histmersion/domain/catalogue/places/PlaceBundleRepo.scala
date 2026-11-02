@@ -2,11 +2,12 @@ package com.histmersion.domain.catalogue.places
 
 import com.histmersion.api.*
 import com.histmersion.domain.MergeSettings
-import com.histmersion.db.{BundleImport, Jsonb, Param, Sql}
+import com.histmersion.util.data.exchange.BundleImport
+import com.histmersion.util.database.{Jsonb, Param, Sql}
 import com.histmersion.util.data.exchange.{BundleFormat, BundleScope}
 import com.histmersion.util.data.exchange.BundleSql.*
 
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import java.util.UUID
 

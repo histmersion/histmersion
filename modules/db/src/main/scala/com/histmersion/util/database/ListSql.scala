@@ -1,5 +1,4 @@
-package com.histmersion.db
-
+package com.histmersion.util.database
 import com.augustnagro.magnum.*
 
 import java.time.Instant

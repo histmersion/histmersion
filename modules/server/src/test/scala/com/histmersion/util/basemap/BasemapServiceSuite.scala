@@ -5,7 +5,7 @@ import com.histmersion.util.database.Transactor
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.Migrate
+import com.histmersion.util.database.Migrate
 import com.histmersion.util.jobs.JobRepo
 import com.histmersion.server.{BasemapWiring, Deps}
 import com.histmersion.util.storage.Reservation

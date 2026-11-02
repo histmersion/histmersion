@@ -1,7 +1,7 @@
 package com.histmersion.domain.library.search
 
-import com.histmersion.db.*
-import com.histmersion.db.given
+import com.histmersion.util.database.given
+import com.histmersion.util.database.{Param, Sql}
 
 /** Postgres full-text search, as composable SQL fragments (plan §1.4).
   *

@@ -1,5 +1,4 @@
-package com.histmersion.db
-
+package com.histmersion.util.database
 import com.augustnagro.magnum.*
 import io.circe.{Decoder, Encoder}
 import io.circe.syntax.*

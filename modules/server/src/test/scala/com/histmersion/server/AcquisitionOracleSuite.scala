@@ -2,7 +2,6 @@ package com.histmersion.server
 
 import com.histmersion.api.*
 import com.histmersion.config.*
-import com.histmersion.db.*
 import com.histmersion.plugins.calibre.{CalibreFixture, CalibrePlugin}
 import com.histmersion.plugin as spi
 import com.augustnagro.magnum.*
@@ -19,6 +18,8 @@ import java.nio.file.{Files, Path}
 import java.util.concurrent.ConcurrentLinkedQueue
 import javax.sql.DataSource
 import scala.jdk.CollectionConverters.*
+import com.histmersion.util.database.Sql
+import com.histmersion.db.*
 
 /** What acquisition, ingest and the collections answer, recorded on the code before they moved into the library's
   * domain. A server on its own scratch database, every upstream a fixture on a loopback port (never the network), the

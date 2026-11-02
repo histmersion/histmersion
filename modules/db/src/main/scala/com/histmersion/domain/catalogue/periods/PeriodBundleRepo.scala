@@ -1,13 +1,14 @@
 package com.histmersion.domain.catalogue.periods
 
 import com.histmersion.api.*
-import com.histmersion.db.{BundleImport, Param, Sql}
+import com.histmersion.util.data.exchange.BundleImport
+import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.data.exchange.BundleScope
 import com.histmersion.util.data.exchange.BundleSql.*
 import com.histmersion.domain.catalogue.places.PlaceSql
 import com.histmersion.util.database.RangeSql
 
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import java.util.UUID
 

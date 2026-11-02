@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.workflows
 
-import com.histmersion.db.Jsonb
+import com.histmersion.util.database.Jsonb
 import com.histmersion.domain.AgentProposals.Proposal
 import com.histmersion.domain.automation.approvals.ProposalEffect
 import com.histmersion.domain.library.sources.SourcesControllers

@@ -13,7 +13,7 @@ import com.histmersion.api.Agents.{ApprovalKind, ApprovalMode, Pipeline, Role}
 import com.histmersion.api.GoalPlans.{LinkKind, Plan}
 import com.histmersion.domain.PlanGoal.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.GoalRepo
+import com.histmersion.domain.automation.goals.GoalRepo
 import com.histmersion.domain.automation.workflows.AutomationHost
 import com.histmersion.domain.automation.worklists.{QueueScope, QueueService, WorkListControllers}
 import hearth.kindlings.circederivation.KindlingsCodecAsObject

@@ -7,10 +7,11 @@ import com.histmersion.util.jobs.BackgroundJob
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{Db, Migrate}
+import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.util.jobs.JobRepo
 
 import java.util.concurrent.CountDownLatch
+import com.histmersion.db.*
 
 /** [[BackgroundJob]] (#1946): the one runner of the server's long work. Pure parts always; the job rows on a test
   * database (gated on HISTMERSION_TEST_DB_URL).

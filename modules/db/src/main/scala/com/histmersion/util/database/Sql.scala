@@ -1,5 +1,4 @@
-package com.histmersion.db
-
+package com.histmersion.util.database
 import com.augustnagro.magnum.Frag
 
 /** A composable SQL fragment: text with `?` placeholders plus the parameters that fill them, in order.

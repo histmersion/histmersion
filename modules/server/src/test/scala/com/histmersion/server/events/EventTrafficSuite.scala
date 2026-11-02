@@ -6,7 +6,8 @@ import com.histmersion.server.ServerPlugins
 
 import com.histmersion.api.*
 import com.histmersion.config.{AppConfig, LoadedConfig}
-import com.histmersion.db.{Migrate, TestDb}
+import com.histmersion.db.TestDb
+import com.histmersion.util.database.Migrate
 import com.histmersion.pluginhost.HttpAnswer
 import com.histmersion.server.Deps
 import com.histmersion.server.media.FakeMediaHttp

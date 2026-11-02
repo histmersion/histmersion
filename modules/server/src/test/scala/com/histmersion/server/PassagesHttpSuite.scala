@@ -6,11 +6,12 @@ import ox.supervised
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.PassageFinder
 import com.histmersion.api.PassageResult
-import com.histmersion.db.{Db, Migrate}
+import com.histmersion.util.database.{Db, Migrate}
 import com.augustnagro.magnum.*
 import java.net.{URI, URLEncoder}
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets.UTF_8
+import com.histmersion.db.*
 
 /** `passages` (#954) over real HTTP and MCP against a seeded multi-heading body: hits, the offset round trip through
   * `get_source`'s body slice, headings, limit, errors, and an old (renamed) citekey resolving. Skipped without

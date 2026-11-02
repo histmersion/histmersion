@@ -1,7 +1,7 @@
 package com.histmersion.domain.catalogue.evidence
 
 import com.histmersion.api.{EventFindingRef, EventLinkCandidate, EventSourceRef, TimeSpan}
-import com.histmersion.db.Sql
+import com.histmersion.util.database.Sql
 
 import com.augustnagro.magnum.{connect, transact}
 import javax.sql.DataSource

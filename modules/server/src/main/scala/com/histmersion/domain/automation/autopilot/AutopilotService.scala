@@ -12,7 +12,7 @@ import com.histmersion.domain.AutopilotPolicy.{GoalFacts, GoalRow, ManagerRow, S
 import com.histmersion.api.GoalPlans.LinkKind
 import com.histmersion.api.Managers.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.AutopilotRepo
+import com.histmersion.domain.automation.autopilot.AutopilotRepo
 
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicBoolean

@@ -1,6 +1,6 @@
 package com.histmersion.util.data.exchange
 
-import com.histmersion.db.BundleImport
+import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.files.BundleEntities
 import com.histmersion.files.BundleEntities.BlobUse
 import com.histmersion.util.data.{DataOwner, TableName}

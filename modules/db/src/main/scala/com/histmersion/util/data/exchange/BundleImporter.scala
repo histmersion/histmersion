@@ -11,7 +11,8 @@ import com.histmersion.api.{
   MergeTally
 }
 import com.histmersion.api.given
-import com.histmersion.db.{BundleImport, Jsonb}
+import com.histmersion.util.data.exchange.BundleImport
+import com.histmersion.util.database.Jsonb
 import com.histmersion.domain.{MergePlanner, MergeSettings}
 import com.histmersion.files.BundleEntities
 import com.histmersion.files.BundleEntities.BlobUse

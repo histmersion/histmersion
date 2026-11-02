@@ -4,7 +4,7 @@ import com.histmersion.util.database.RangeSql
 
 import com.histmersion.api.*
 
-import com.histmersion.db.given
+import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 
 /** The figures that belong with a source's Markdown (plan §1.8).

@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.autopilot
 
-import com.histmersion.db.AutopilotRepo
+import com.histmersion.domain.automation.autopilot.AutopilotRepo
 import com.histmersion.domain.automation.AutomationState
 import com.histmersion.util.database.Transactor
 import hearth.kindlings.optics.syntax.*

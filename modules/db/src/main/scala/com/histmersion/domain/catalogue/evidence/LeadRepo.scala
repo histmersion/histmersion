@@ -1,12 +1,12 @@
 package com.histmersion.domain.catalogue.evidence
 
 import com.histmersion.api.{EventFindingRef, EventSourceRef, EventTier, TimeSpan}
-import com.histmersion.db.{Param, Sql}
+import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.catalogue.events.EventSql
 import com.histmersion.util.database.RangeSql
 
 import com.augustnagro.magnum.*
-import com.histmersion.db.given_DbCodec_List
+import com.histmersion.util.database.given_DbCodec_List
 
 /** What the events' leads and cards are computed from: the sources attesting an event, the findings near it, the facts
   * of its lead, the catalogue events an article's region and period hold. Every method runs on the connection it is

@@ -7,6 +7,7 @@ import com.histmersion.domain.*
 import java.util.concurrent.{CyclicBarrier, Executors, TimeUnit}
 import javax.sql.DataSource
 import scala.jdk.CollectionConverters.*
+import com.histmersion.util.database.Migrate
 
 /** Two servers migrating fresh databases of ONE cluster at the same moment (#828): the role V011 creates is
   * cluster-global, so both used to try to create it and the second failed. Works in databases of its own

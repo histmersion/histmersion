@@ -45,7 +45,7 @@ final class SourceProposals(
       now,
       p.edgeKind,
       p.target,
-      com.histmersion.db.Jsonb.write(p),
+      com.histmersion.util.database.Jsonb.write(p),
       state,
       result
     )

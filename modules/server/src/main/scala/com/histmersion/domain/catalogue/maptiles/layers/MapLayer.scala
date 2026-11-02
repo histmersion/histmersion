@@ -1,7 +1,7 @@
 package com.histmersion.domain.catalogue.maptiles.layers
 
 import com.histmersion.api.TilesApi
-import com.histmersion.db.Sql
+import com.histmersion.util.database.Sql
 import com.histmersion.domain.catalogue.maptiles.{TileCell, TilePoint}
 
 /** A point layer of the map that another domain draws: the map cuts its tiles, the domain says which of its items lie

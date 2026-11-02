@@ -1,5 +1,4 @@
-package com.histmersion.db
-
+package com.histmersion.domain.automation.agents
 import com.histmersion.api.Agents.*
 import com.histmersion.domain.automation.approvals.ProposalEvidence
 import com.histmersion.api.{GoalPlans, ListFilters}
@@ -9,6 +8,8 @@ import com.histmersion.api.ApprovalDigest
 import com.histmersion.domain.automation.agents.RunQuery
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 import com.histmersion.values.{EdgeKind, SourceStatus}
+import com.histmersion.util.database.{Jsonb, Keyset, ListSql, Param, Sql}
+import com.histmersion.util.database.given
 
 /** The store of embedded agent runs (migrations V035, V040, V041): a run is a `jobs` row with kind `agent` (its options
   * in `params`), its steps are `agent_steps` (one row per attempt; a `done` row is the checkpoint a resume replays),

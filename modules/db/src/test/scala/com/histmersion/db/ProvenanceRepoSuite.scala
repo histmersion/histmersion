@@ -8,6 +8,7 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.values.SourceStatus
+import com.histmersion.util.database.Migrate
 
 /** A provenance is free text: every write path stores it as written. Against a real Postgres (HISTMERSION_TEST_DB_URL);
   * skipped otherwise.

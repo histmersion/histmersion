@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.agents
 
-import com.histmersion.db.AgentRepo
+import com.histmersion.domain.automation.agents.AgentRepo
 
 import java.time.Instant
 

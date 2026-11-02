@@ -12,6 +12,7 @@ import com.histmersion.domain.*
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
+import com.histmersion.util.database.Sql
 
 /** The SQL the filter's builders generate, recorded for every combination the search exercises: each criterion alone
   * (text, tags, authors, places by name and by gazetteer id, topics, statuses, publication years, deep time, a box and

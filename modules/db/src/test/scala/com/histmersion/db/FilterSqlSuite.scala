@@ -8,8 +8,9 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.Param.*
+import com.histmersion.util.database.Param.*
 import com.histmersion.values.SourceStatus
+import com.histmersion.util.database.Sql
 
 /** `Filter → SQL` is a pure function (plan §1.0), so it is tested WITHOUT a database: the SQL text and the bound
   * parameters are asserted directly.
