@@ -1,6 +1,6 @@
 # Domain model, package by feature, first-party plugins out of the server (refactor step 3, design)
 
-Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18; slice 7 part 2 built — §19; slice 7 part 3 built — §20; slice 8 part 1 built — §21; slice 8 part 2 built (events, evidence, map tiles) — §21; slice 8 part 3 built (places, the catalogue's own data contribution but its carried kinds and merge rules, which are part 4) — §21; slice 8 part 4 built (the catalogue's carried kinds and merge rules) — §21: slice 8 is complete; slice 9 built (media) — §22; slice 10 part 1 built (sources, findings, citations, labels, search and query, `SourceReferrer`) — §23; slice 10 part 2 built (acquisition, ingest, the collections' running, the sources' licence; the workflows and data contributions are part 3) — §23; slice 10 part 3 built in part (the library's workflows, tools and kinds, its settings, its data contribution but the sources' merge rules in the planner, which with the automation's view of the library are left: §23, "Left after part 3") — §23; slice 10 part 4 built (the sources' and findings' rules of the merge plan, the automation's view of the library) — §23: slice 10 is complete; slice 11 part 1 built (research's articles: their services, controllers, routes, MCP tools and page; the workflows, the review manager kind and the data contribution are part 2) — §24.** Written 2026-10-30 on master
+Status: **approved (2026-10-31; every recommendation of §11 accepted). Slice 1 built — §12; slice 2 built — §13; slice 3 built — §14; slice 4 built — §15; slice 5 built — §16; slice 6 built — §17; slice 7 part 1 built — §18; slice 7 part 2 built — §19; slice 7 part 3 built — §20; slice 8 part 1 built — §21; slice 8 part 2 built (events, evidence, map tiles) — §21; slice 8 part 3 built (places, the catalogue's own data contribution but its carried kinds and merge rules, which are part 4) — §21; slice 8 part 4 built (the catalogue's carried kinds and merge rules) — §21: slice 8 is complete; slice 9 built (media) — §22; slice 10 part 1 built (sources, findings, citations, labels, search and query, `SourceReferrer`) — §23; slice 10 part 2 built (acquisition, ingest, the collections' running, the sources' licence; the workflows and data contributions are part 3) — §23; slice 10 part 3 built in part (the library's workflows, tools and kinds, its settings, its data contribution but the sources' merge rules in the planner, which with the automation's view of the library are left: §23, "Left after part 3") — §23; slice 10 part 4 built (the sources' and findings' rules of the merge plan, the automation's view of the library) — §23: slice 10 is complete; slice 11 part 1 built (research's articles: their services, controllers, routes, MCP tools and page; the workflows, the review manager kind and the data contribution are part 2) — §24; slice 11 part 2 built (research's workflows, its review manager kind, its settings and its data contribution) — §24: slice 11 is complete.** Written 2026-10-30 on master
 58de5489 (branch `domain-design`); revised after the user's reviews of §3: domains above features, measured;
 `personal` with its own interface; `library`, `research`, `catalogue`, `media` named; acquisition and OCR
 dissolved (2026-10-30); automation as a generic workflow engine fed by the domains, data management and file
@@ -3998,7 +3998,7 @@ pluginsGazetteers 58, pluginsAiHttp 26, pluginsCalibre 45, pluginResolver 23, ch
 failed on two new test files a cached `scalafmtAll` had replayed over; they were formatted into their commit and the
 clean run repeated.
 
-## 24. Slice 11 as built, part 1 (research: the articles, 2026-11-02)
+## 24. Slice 11 as built, parts 1 and 2 (research: the articles; the workflows and the data contribution, 2026-11-02)
 
 Branch `refactor-s11` from master 5384f1d4 (slices 1–10 deployed). Slice 11 is L (§9.2) and its review panel moves
 whole, so it runs in parts as slice 10 did, each deployed before the next; this is part 1: the articles with their
@@ -4165,3 +4165,196 @@ suites through `ArticleFixtures`), cli 232, web 639, server 1 560 (1 skipped, 1 
 the contract's five on both twins, the controllers' four). The move's commit had been formatted by a cached
 `scalafmtAll` that replayed; the clean build's compile reformatted six of its files (line breaks only) and the commit was
 amended with them before the clean run, which passed `fmt-check` on every commit as it is.
+
+### Part 2 as built (research's workflows, its settings, its data contribution, 2026-11-02)
+
+Branch `refactor-s11b` from master ca0fa96d (slices 1–10 and slice 11 part 1 deployed). Five commits: the oracles'
+new parts on the unchanged code, the workflows with research's settings, the data contribution, the native metadata,
+this section. **With this part slice 11 is complete.** Endpoints, MCP tools, CLI commands, agent definitions and their
+toolbox, every answer schema, search results, facets, `query`, bundle entries, merge plans, lint output and About's
+counts are unchanged: `ContractSnapshotSuite` (`toolbox.json` and `mcp-tools.json` included), `CliHelpSnapshotSuite`,
+`AutomationOracleSuite`, `DataOracleSuite`, `CatalogueOracleSuite`, `MediaOracleSuite`, `LibraryOracleSuite`,
+`AcquisitionOracleSuite`, `MergePlanOracleSuite`, `SearchSqlSnapshotSuite`, the Calibre transcript, `ArchiveTrafficSuite`,
+`ResearchOracleSuite` and the gated agent transcripts held byte for byte; no oracle or snapshot was re-recorded after
+the first commit, and no migration was added.
+
+**The oracles, extended first** (recorded on the unchanged code and stable twice in a row before anything moved):
+
+| oracle | what it records |
+|---|---|
+| `ResearchOracleSuite` (`oracle/research/links.txt`, new) | article links followed through a merge: a collection's bundle imported into another (a shared history); then a cited source renamed on one side (its articles' `[[links]]` rewritten there), a source and an article citing it added on one side and another work under the same citekey, with an article citing it and the renamed source's old name, on the other; the other's whole bundle merged in (the citekey collision answered with its suggested rename, so the merged article's link is pointed at the new citekey by the planner, and the rename followed here, so the local article's old link is rewritten): the crafted rounds, the bundle's research lines, every round of the plan, the apply, the merges, the merge, the ledger, the mirror's note of every article after the merge, and research's rows of both collections |
+| `ResearchOracleSuite` (`lint.txt`, extended) | the whole safe `lint --fix` (no rule named) and the report after it, beside each article rule's report and its named fix |
+| the gated transcripts (`ReviewArticleRunSuite`'s comparison) | the comparison of two review-article runs in the record: each run's totals, each step's models and attempts, the review's outputs (the last verdict, the rounds, round 1 per reviewer and by kind, its majors) and the major findings the runs share; a step's seconds are the wall clock's and stay out |
+
+The review panel and its ledger, compile, propose, infer-filter and the review manager's refill (the selection, the
+infer-filter item before a review, the stale and extension scans) were in the transcripts already (`ReviewArticleRunSuite`,
+`GoalAgentsRunSuite`, `ManagerPhase2Suite`, `ManagerRunSuite`, `ManagerPhase3Suite`, `ManagerAutopilotSuite`,
+`SchedulerDbSuite`: every step's output and every row they write), and the exchange's conflicting paragraph, renamed
+article and every article lint rule in `exchange.txt` and `lint.txt` (part 1).
+
+**`domain.research.workflows`** (server module; the pure rules in the core module):
+
+- **The workflows.** `ReviewArticlePipeline`, `CompileArticlePipeline`, `InferFilterPipeline`, `ProposeArticlesPipeline`
+  and `ResearchAnswers` moved from `server/agents`; `ResearchWorkflow` registers a pipeline with its step agents (as the
+  library's `LibraryWorkflow`); `ResearchWorkflows` is what research contributes (the four workflows, review-article's
+  with `ReviewComparison`, the review kind, `ArticleObjectives`, `ResearchAgentTools`), registered by
+  `TransitionWorkflows` in the engine's order beside the library's and the engine's own (`PipelineWorkflow` keeps
+  plan-goal and hint-effect). The workflows reach the composition through `ResearchSite` (the work lists, research's
+  articles and ledgers, the library's sources, citations, search and labels, a goal — implemented by
+  `server/ResearchWorkflowSite`) and the engine through its services: `GoalService` (a goal, its children, links and
+  refs, a link written), `ManagerService.items` (a manager's items, the most urgent first: new, with its in-memory twin)
+  and research's own `ArticleService` (`exists`, `latestVersion`: new). No pipeline names a repository or `Handlers`.
+- **The review ledger.** `ReviewLedgerService` (`get`, `put`, `passedReview`) over `ReviewLedgerRepo` (db module,
+  `private[workflows]`, the SQL unchanged, on the connection it is given), with `InMemory` over `ResearchState`, which
+  holds the ledgers now (renamed and deleted with their article, as the table's references do). `ResearchWiring` builds
+  it; the articles' review view reads it through the function part 1 handed in.
+- **The agent tools.** `ResearchAgentTools` holds `get_article`, `check_edits` and `article_coverage` (out of
+  `TransitionTools`, with the decoding configuration they had); `TransitionTools` now only lists every domain's tools in
+  the toolbox's order (the definitions' generator names them there), so `toolbox.json` is byte-identical.
+- **The review manager kind.** `ReviewManagerKind` and `ArticleObjectives` moved; the kind's pure rules are
+  `ReviewManagerPolicy` (core module: its settings over research's defaults, `ReviewFacts`, the stop rules —
+  `evaluateReview`, `noProgress`, `pairsStalled` —, the selection with its priorities, `staleWhy`), out of
+  `ManagerPolicy`, which keeps the engine's rules (the one-run items, the backoff, the cron, the dispatch order, the
+  holds, `waitsFor`). The engine asks a kind for a manager's settings in effect (`ManagerKindDefinition.settings`, by
+  default the run limits it knows; the review kind answers with its own), so `ManagerDefaults.review` is a run limit
+  (`ManagerRunDefaults`) like the other kinds'.
+- **The comparison.** `CompareRuns.compare` asks the workflow's `OutputComparison` for the review's outputs and shared
+  majors too (`review`, `overlaps`, new members defaulting to none); `ReviewComparison` (core module) is review-article's
+  (`sameMajor`, `overlap`, `ProblemSimilarity`, which the ledger's matching reads), offered by its workflow.
+- **What the engine no longer names.** `PlanGoal` checks a sub-goal's slug through `values.Slug.parse` (was
+  `Articles.slugOf`'s body, which now forwards to it, the message unchanged); the approvals read an article proposal's
+  payload through `ApprovalInfo.withArticleProposal` (api: the kind's filter or plan of articles, its rationale as the
+  evidence), the kinds told apart by `ApprovalKind.proposesFilter`/`proposesArticles`, so `AgentRepo` names no research
+  type and no research word.
+
+**Research's settings.** `config.ResearchAgentsConfig` (`review`, `compile`, `infer-filter`, `managers.review` —
+`ResearchManagersConfig`) is read from the same `agents` block (`AppConfig.researchAgents`, `@configKey("agents")`), as
+the library's; the engine's records no longer name research's: a review manager's run limit is read as any kind's
+(`AgentManagersConfig.review: SimpleManagerConfig`), the round cap through `EngineSite.roundsCap` (the run options and a
+manager's settings check it), and research's review defaults are converted by the kind
+(`ReviewManagerKind.defaultsOf`). Every key, default and environment variable is unchanged (`ConfigSuite`,
+`AgentsSettingsSuite`, `ManagerDefaultsViewsSuite`).
+
+**Research's data contribution** (`domain.research.ResearchData`, registered in `Deps.data` beside `CatalogueData`,
+`MediaData` and `LibraryData`): its six tables, its carried kinds and merge rules (`ResearchExchange`), the articles'
+notes in the mirror (rendered by the notes the composition hands it, as before), its count and its checks.
+
+- **Carried kinds** (`ArticlesCarried`, db module, over `ArticleBundleRepo`, `private[articles]`): the articles (each
+  line stamped), their versions (the bodies as blobs; the lines without them what a merge compares) and their old
+  slugs — the readers and rows (`BArticleRow`, `BVersionRow`, one a file) that left `BundleRepo`, and the steps that
+  left `BundleImport.Writer` (the renames the other side made, the rows, the old slugs, the versions a merge records, a
+  version's body as its blob arrives, the links), at the same stages and ranks. What the articles' steps share within
+  one import (the articles kept beside one here, the bundle's versions by uid) is research's per-import state
+  (`BundleImport.Once`); the Writer no longer has a blob sink of its own.
+- **Merge rules**: `ArticleMergeRules` and `ArticleVersionMergeRules` (the ledger label, referable) out of
+  `MergeRulesAdapter`. The planner points an article's `[[links]]` at the citekeys the merge gives the bundle's sources
+  through a hook of `PlanRun` (`relinked`, called where it called `ArticleLinks.retarget`), which research's
+  `ResearchPlan` (core module) answers; `ArticleMergeRules.planning` registers it.
+- **Checks** (`articles.ArticlesData` in server over `ArticleCheckRepo` in db, `private[articles]`, was `LintRepo`): the
+  six article rules with the pairing repair (when named), in the report's order; About's count of the articles.
+  `CheckRulesAdapter` keeps only the order every owner's rules report and fix in.
+- **The alias table**: `ArticleAliasTable` (db module); `Deps.aliasTables` hands it to `AliasTablesAdapter.withOwn`,
+  which keeps the kinds' order.
+- **`ArticleRepo` is `private[articles]`**; the db and server suites reach the ledgers through `ReviewLedgerFixtures`,
+  the article checks through `ArticleCheckFixtures`.
+- The adapters' research branches are gone (`TablesAdapter`, `FiguresAdapter`, `CheckRulesAdapter`, `MirrorAdapter` —
+  which keeps the source notes' records for `Handlers.exportSource` —, `CarriedKindsAdapter`, which keeps the goals,
+  the work lists and the tombstones, `MergeRulesAdapter`, `BundleRepo`, `BundleImport`).
+
+**The Handlers forwarders** part 1 left for the articles are gone: their callers (the pipelines, the review kind,
+`ArticleObjectives`, `TransitionHost`, `LibraryWorkflowSite`, `SeedManagerKind`, the agent suites) call
+`Handlers.research`'s controllers and services, or the site.
+
+**Services and their twins.** New operations are on both implementations, with contract tests run on both:
+`ReviewLedgerServiceContract` (new, in `ResearchStoreSuite`: a ledger written and read back, none for an article never
+reviewed, refused for one that does not exist, passed once no MAJOR is open, following its article's rename and gone
+with its delete), `ArticleServiceContract` +`latestVersion`, `ManagerServiceContract` +`items`. The carried kinds, the
+checks, the plan and the workflows are mechanisms over SQL and the engine; their answers are in the oracles, the
+transcripts and the db suites. The review manager's pure rules moved with their tests (`ReviewManagerPolicySuite`).
+
+**Equivalence.** The oracles and snapshots above identical after every commit. The gated transcripts
+(`HISTMERSION_ORACLE_RUNS=1 HISTMERSION_TEST_GROUPS_SERVER=1`, `server/testOnly com.histmersion.server.agents.*`, a new
+test database each run): 351 tests identical on the unchanged code twice (the recording and its check) and 352 on the
+branch after the workflows' move and after the last commit (`ManagerDefaultsViewsSuite`'s new test of the review
+defaults' conversion is the one more). No read path that `catalogue_live.py`, `library_live.py` or `research_live.py`
+covers changed: the article reads run the same services and SQL, and an article's review view reads its ledger with
+the same statement through the service (one connection, as before); so no live-volume run was made.
+
+**Architecture.** `exceptions.tsv` 224 → 193 rows, deletions only: direction 170 → 148 (`AgentsConfig` naming
+`AgentCompileConfig`, `AgentInferFilterConfig`, `AgentReviewConfig`; `AgentManagersConfig` naming `ReviewManagerConfig`;
+`ManagerDefaults` naming `ReviewManagerDefaults`; `ManagerPolicy` naming `ReviewArticle`, `ReviewLedger`,
+`ReviewManagerDefaults`; `CompareRuns` naming `ReviewArticle` and the library's `Finding`; `PlanGoal` naming `Articles`;
+`AgentRepo` naming `ArticleFilter`, `ArticlePlans`; `MergePlanner` naming `ArticleLinks`; `BundleImport` naming
+`ArticleRepo`; `LintRepo` naming `CoverageEdge`, `CritiquePairing` and the collision `Hit`; the four pipelines naming
+`Handlers`), repository 18 → 9 (`Handlers` naming `ReviewLedgerRepo`; `BundleImport` naming `ArticleRepo`;
+`CompileArticlePipeline` naming `AgentRepo`, `GoalLinkRepo`; `ProposeArticlesPipeline` naming `AgentRepo`,
+`GoalLinkRepo`, `GoalRepo`, `ManagerRepo`; `ReviewArticlePipeline` naming `AgentRepo`), filesystem (32) and process (4)
+unchanged. `places.tsv` 917 → 911 rows: the moved files' rows gone (`db/LintRepo`, `db/ReviewLedgerRepo` and seven of
+`server/agents`), `config/ResearchAgentsConfig` and `ResearchManagersConfig` placed in `research.workflows`,
+`server/ResearchWorkflowSite` in `server`.
+
+**Slice 11 is complete.** The research rows that remain, each with its owner:
+
+| rows | owner | why |
+|---|---|---|
+| `api/Agents`, `api/AgentsMarkdown` naming `ArticlePlans` (and `AgentsMarkdown` `ArticleFilter`); `api/GoalPlans` naming `CoverageReason`; `api/Managers` naming `ArticleFilter`; `api/Lint` naming `Articles`, `CoverageEdge`, `CritiquePairing`; `api/Markdown` naming `Backlink`; `api/ResolvedId` naming `ResolvedArticle`; `api/Wording` naming `ArticleFilter`, `CompileArticle`, `ReviewArticle` | slice 12 | wire records (`api.research.*`) and the format's vocabulary |
+| `files/BundleEntities` naming `ArticleVersion` | slice 12 | the bundle format's spelling (§20) |
+
+Two transition adapters still carry research's behaviour without a row: `SeedManagerKind` (the seeding manager kind,
+which proposes and compiles an area's articles) and `TransitionApprovalEffects` (what approving an article's inferred
+filter does, now `InferFilterPipeline.applyProposal` over research's controllers); both are registered by
+`TransitionWorkflows`/`TransitionSite` in the composition root, as the brief's scope left them.
+
+**Deviations.**
+
+- Research's settings are a second record over the same `agents` block (`@configKey`), as the library's: the keys are
+  unchanged.
+- `ManagerPolicy.ReviewSettings` keeps its name: it is the settings record every kind's items are evaluated and
+  dispatched under (the engine's), of which the review kind sets all the fields.
+- `TransitionTools` stays as the toolbox's order over every domain's tools: the definitions' generator and its suites
+  name the tools there.
+- The approvals' reading of an article proposal is a method of the api's `ApprovalInfo` (whose fields name the
+  proposals' records already, a slice 12 row), not an interface research implements: the approvals are read by the
+  engine's repository in every listing, and the records are the wire's.
+- `values.ApprovalKind.proposesFilter`/`proposesArticles` name the two kinds without their words, which collide with
+  research's top-level types in the direction rule.
+- `ResearchPlan` is in `domain.research` (core module), named for its owner as `LibraryPlan` and `CataloguePlan` are: an
+  `ArticlePlan` would collide with `ArticlePlans.ArticlePlan` and `ApprovalKind.ArticlePlan` in the direction rule.
+- `CarriedKindsAdapter` keeps naming the goals' and the work lists' kinds by their wire names (`kind("goal")`): the
+  word `Goal` is automation's type.
+- `ArticleCheckRepo`'s count of the articles is its own statement (`count(*)::int FROM articles`) where the figures
+  adapter read `StatsRepo.rows("articles")` (the same count, a quoted table name): `StatsRepo` is `util.data`'s
+  repository, which research may not name. About's figures are identical (`DataOracleSuite`).
+
+**Native image.** `reachability-metadata.json` (server), compared field by field with `javap -p` of the compiled
+classes of the unchanged build (ca0fa96d) and of the branch: the set of entries naming a class or a lazy field that
+does not exist is the same before and after. Renamed `server.agents.CompileArticlePipeline$Found$`, `$Snap$`,
+`$Written$`, `InferFilterPipeline$Loaded$`, `$Recorded$`, `ProposeArticlesPipeline$Existing$`, `$Loaded$`, `$Recorded$`
+→ `domain.research.workflows.*$` (their `derived$KindlingsCodecAsObject$lzyN` as compiled), `server.agents.TransitionTools$package$`
+→ `domain.research.workflows.ResearchAgentTools$package$` (`given_Configuration$lzy1`), `db.BArticleRow$`, `BVersionRow$`
+→ `domain.research.articles.*$` (`derived$DbCodec$lzy1` each); the rows left in `BundleRepo.scala` renumbered
+(`BGoalRow$` lzy1, `BGoalLinkRow$` lzy2, `BGoalScheduleRow$` lzy3, `BQueueRow$` lzy4, `BTombstoneRow$` lzy5); added
+`config.ResearchAgentsConfig$` and `ResearchManagersConfig$` (`derived$ConfigReader$lzy1`), `server.Handlers`'
+`researchSite$lzy1`. The new services, workflows, kinds, tools, carried kinds, checks and contribution hold eager values
+and anonymous classes only. No tracing-agent run, no native build. To check at the bundle: `--self-check`; `smoke.sh`;
+`config get agents.review.rounds-cap`, `agents.compile.max-sources`, `agents.infer-filter.min-hits`,
+`agents.managers.review.cooldown-minutes` (a setting written and read back); `agent run review-article <slug> --fix`
+(the ledger written, `article review` reading it), `agent run compile-article` (a new article and an extension),
+`agent run infer-filter`, a seeding manager's `propose-articles`, `agent compare` of two review-article runs; the review
+manager's tick (`agent manager enqueue`, its selection with an infer-filter item first, a stale article); `agent
+approvals` (an article-filter and an article-plan approval with their evidence; approving the filter); the agent tools
+`get_article`, `check_edits`, `article_coverage` on a CLI runtime (`/mcp/agent/<agent>` `tools/list`); `bundle
+export|verify|import` (whole and `--since`), `merge plan|apply` with a renamed article, a conflicting paragraph and a
+source renamed by the merge (its articles' links followed); `lint` (each article rule) and `lint --fix` with `--rule
+article-critique-pairing`; `histmersion export` of the mirror's article notes; About's counts; `goal show` (a goal's
+articles finished once reviewed).
+
+**Tests.** After `sbt clean`, with the sbt disk cache moved aside so nothing was replayed, the format check and every
+module's suites with the DB suites on a throwaway database (`just test-quick` with every module named): 5 273 tests,
+0 failed — values 25 (`SlugSuite`), valuesJS 25, api 825, apiJS 88, config 67, files 73, core 773
+(`ReviewManagerPolicySuite`, the review tests out of `ManagerPolicySuite`), pluginApi 45, upstreams 57, pluginHost 39,
+pluginTestkit 19, pluginVaults 29 (1 skipped), pluginsFetchers 15, pluginsEvents 18, pluginsMedia 52, pluginsGazetteers
+58, pluginsAiHttp 26, pluginsCalibre 45, pluginResolver 23, chimneyIronTests 10, db 522, cli 232, web 639, server 1 568
+(1 skipped, 1 ignored; `ResearchOracleSuite`'s new test, `ReviewLedgerServiceContract` on both twins, the review
+defaults' conversion). A cached `scalafmtAll` had replayed over four files of the workflows' commit and two of the data
+contribution's; the clean format check found them, and each was formatted into its own commit before the clean run.
