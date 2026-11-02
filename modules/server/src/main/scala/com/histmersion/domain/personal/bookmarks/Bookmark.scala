@@ -2,7 +2,7 @@ package com.histmersion.domain.personal.bookmarks
 
 import com.histmersion.api.personal.Bookmark as WireBookmark
 import com.histmersion.domain.personal.PersonalState.StoredBookmark
-import com.histmersion.domain.personal.{MarkTarget, MarkTime, SearchWords}
+import com.histmersion.domain.personal.{MarkTarget, MarkTime, PersonalUuid, SearchWords}
 import com.histmersion.domain.{Described, ItemRef}
 import com.histmersion.domain.library.Title
 import com.augustnagro.magnum.DbCodec
@@ -28,6 +28,11 @@ final case class Bookmark(
   def wire: WireBookmark = WireBookmark(id, target.wire, title.value, label, createdAt.iso, updatedAt.iso)
 
 object Bookmark:
+  /** The id a client sent, checked here, once: a bookmark's id is a lower-case UUID. */
+  def idOf(raw: String): Either[String, WireBookmark.Id] =
+    val id = Option(raw).fold("")(_.trim.toLowerCase)
+    Either.cond(PersonalUuid.matches(id), WireBookmark.Id(id), s"not a bookmark id: '$raw'")
+
   def of(stored: StoredBookmark, described: Map[ItemRef, Described]): Bookmark =
     val (target, title) = stored.target.shown(described, stored.targetLabel)
     Bookmark(stored.id, target, title, stored.label, stored.createdAt, stored.updatedAt)

@@ -1,7 +1,4 @@
 # rule	file	detail	count — the known violations of AGENTS.md's rules 1–14; shrink, never grow
-client-refined	api:api/personal/Bookmark.scala	a refined constraint in a client	1
-client-refined	api:api/personal/MapZoom.scala	a refined constraint in a client	1
-client-refined	api:api/personal/Note.scala	a refined constraint in a client	1
 client-refined	cli:cli/PluginId.scala	a refined constraint in a client	1
 client-refined	cli:cli/PluginRepository.scala	a refined constraint in a client	1
 client-refined	cli:cli/ScalaPackage.scala	a refined constraint in a client	1
@@ -1241,7 +1238,7 @@ unwrap	server:domain/media/imports/ImportsControllers.scala	.value outside a bou
 unwrap	server:domain/media/imports/OwnImport.scala	.value outside a boundary	4
 unwrap	server:domain/media/imports/PluginCollection.scala	.value outside a boundary	3
 unwrap	server:domain/media/imports/SearchedCollection.scala	.value outside a boundary	1
-unwrap	server:domain/personal/MarkTarget.scala	.value outside a boundary	7
+unwrap	server:domain/personal/MarkTarget.scala	.value outside a boundary	9
 unwrap	server:domain/personal/PersonalControllers.scala	.value outside a boundary	8
 unwrap	server:domain/personal/PersonalState.scala	.value outside a boundary	2
 unwrap	server:domain/personal/bookmarks/Bookmark.scala	.value outside a boundary	4

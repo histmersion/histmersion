@@ -47,7 +47,7 @@ object TargetFlags:
         .toRight(usage(s"kind '${r.kind}': one of ${ItemKind.values.map(_.wire).mkString(", ")}"))
       lat <- r.lat.traverse(v => Latitude.either(v).left.map(_ => usage(s"--lat $v: between -90 and 90")))
       lon <- r.lon.traverse(v => Longitude.either(v).left.map(_ => usage(s"--lon $v: between -180 and 180")))
-      zoom <- r.zoom.traverse(v => MapZoom.either(v).left.map(_ => usage(s"--zoom $v: between 0 and 24")))
+      zoom = r.zoom.map(MapZoom(_))
     yield
       val base = if kind.isItem then Target.item(kind, r.id.getOrElse("")) else Target(kind)
       base.copy(

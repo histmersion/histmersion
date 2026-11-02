@@ -17,7 +17,7 @@ class ShelfSuite extends munit.FunSuite:
     )
     assertEquals(LibraryAddress.search(None), "")
 
-  private val bid = Bookmark.Id.parse("0190f3c2-1111-7000-8000-000000000001").toOption.get
+  private val bid = Bookmark.Id("0190f3c2-1111-7000-8000-000000000001")
 
   test("a bookmark's row: its name, the item's title when renamed, a dot while a source is not read"):
     val b =

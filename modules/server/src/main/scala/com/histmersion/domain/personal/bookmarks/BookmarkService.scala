@@ -126,9 +126,7 @@ object BookmarkService:
         at: MarkTime
     ): Bookmark =
       val t = resolved(target, items)
-      val id = com.histmersion.api.personal.Bookmark.Id
-        .parse(newId().toString)
-        .fold(e => throw IllegalStateException(e), identity)
+      val id = com.histmersion.api.personal.Bookmark.Id(newId().toString)
       val after = state.updateAndGet { s =>
         live(s, user).find(b =>
           t.itemRef.isDefined && b.target.itemRef.map(r => (r.kind, r.key)) == t.itemRef.map(r => (r.kind, r.key))
