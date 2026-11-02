@@ -2,6 +2,8 @@
 package io.scalaland.chimney.histmersion
 
 import io.github.iltotore.iron.{Constraint, RefinedType}
+import io.github.iltotore.iron.constraint.any.Pure
+import io.scalaland.chimney.partial
 
 import scala.quoted.*
 
@@ -59,8 +61,28 @@ final class IronNewtypePairs(using val quotes: Quotes):
         )
       case _: ImplicitSearchFailure => None
 
+  /** A newtype that judges nothing (`Pure`): what a client layer's copy is. */
+  def judgesNothing(n: IronNewtype): Boolean = n.constraint =:= TypeRepr.of[Pure]
+
+  private def baseValue(from: IronNewtype, source: Expr[?]): Term =
+    Select.unique(Ref(from.companion), "value").appliedTo(source.asTerm)
+
+  /** Into a newtype that judges nothing: the base value, wrapped without a check. */
+  def unchecked[To: Type](from: IronNewtype, to: IronNewtype, source: Expr[?]): Expr[To] =
+    Select.unique(Ref(to.companion), "assume").appliedTo(baseValue(from, source)).asExprOf[To]
+
+  /** Into a newtype with a constraint of its own: the base value checked by the target's constraint, a failure the
+    * target's reason.
+    */
+  def checked[To: Type](from: IronNewtype, to: IronNewtype, source: Expr[?]): Expr[partial.Result[To]] =
+    val either =
+      Select.unique(Ref(to.companion), "either").appliedTo(baseValue(from, source)).asExprOf[Either[String, To]]
+    '{ partial.Result.fromEitherString($either) }
+
   def differentConstraintsMessage(from: IronNewtype, to: IronNewtype): String =
     s"""${from.fullName} and ${to.fullName} refine the same base type with different constraints:
        |  from: ${from.refinedTypeShown}
        |  to:   ${to.refinedTypeShown}
-       |Only newtypes with the same constraint convert without a check; give the pair a Transformer or PartialTransformer.""".stripMargin
+       |Only newtypes with the same constraint, or into one that judges nothing (Pure), convert without a check; into a
+       |constraint of its own, convert with transformIntoPartial (the target's constraint checks the value), or give the
+       |pair a Transformer.""".stripMargin

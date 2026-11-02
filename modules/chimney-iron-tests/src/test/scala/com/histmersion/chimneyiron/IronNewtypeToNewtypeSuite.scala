@@ -67,6 +67,36 @@ class IronNewtypeToNewtypeSuite extends munit.FunSuite:
     assert(nestedErrors.contains("MinLength[3]"), nestedErrors)
   }
 
+  private val clientView = client.SourceView(
+    citekey = client.Citekey("anthony2007"),
+    title = client.Title("The Horse, the Wheel, and Language"),
+    tags = List(client.Tag("steppe"), client.Tag("pie")),
+    period = Some(client.PeriodView(client.Year(-4500), client.Year(-2500))),
+    status = client.SourceStatusView.Contested(by = client.Citekey("heyd2017")),
+    citedBy = List(client.Citekey("reich2018"), client.Citekey("kristiansen2017")),
+    replication = Some(client.Citekey("haak2015"))
+  )
+
+  test("into a client's copy that judges nothing (Pure), every newtype converts without a check, total") {
+    val checksBefore = NonBlankCounted.checksRun.get()
+    assertEquals(source.transformInto[client.SourceView], clientView)
+    assertEquals(NonBlankCounted.checksRun.get(), checksBefore)
+  }
+
+  test("from a client's copy, the partial derivation checks each value with the target's constraint") {
+    assertEquals(clientView.transformIntoPartial[domain.Source].asOption, Some(source))
+    val bad = clientView.copy(citekey = client.Citekey("Not A Key"), tags = List(client.Tag(" ")))
+    val errors = bad.transformIntoPartial[domain.Source].asErrorPathMessageStrings.toList
+    assertEquals(errors.map(_._1), List("citekey", "tags(0)"))
+    assert(errors.head._2.contains("[a-z][a-z0-9_-]*"), errors.toString)
+    assertEquals(errors(1)._2, "must not be blank")
+  }
+
+  test("from a client's copy, the total derivation does not compile: a value that judged nothing must be checked") {
+    val errors = compileErrors("client.Citekey(\"x\").transformInto[domain.Citekey]")
+    assert(errors.contains("transformIntoPartial"), errors)
+  }
+
   test("newtypes of different names do not convert, even over the same constraint") {
     val sameConstraintErrors = compileErrors(
       "domain.Title.applyUnsafe(\"x\").transformInto[api.Heading]"
