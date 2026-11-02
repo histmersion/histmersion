@@ -19,6 +19,7 @@ trait EngineStores:
   def agentRuns: RunService
   def managers: ManagerService
   def focus: FocusService
+  def agentState: com.histmersion.domain.automation.agents.AgentStateService
   def article(slug: String, title: String): Unit
   def source(citekey: String, title: String): Unit
   def within[A](work: DbCon ?=> A): A

@@ -13,7 +13,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.db.{AgentRepo, Migrate}
-import com.histmersion.server.{Deps, Handlers}
+import com.histmersion.server.{Deps, ServerWiring}
 import org.ekrich.config.ConfigFactory
 
 import java.net.URLClassLoader
@@ -129,13 +129,15 @@ class PluginAiRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   override def afterEach(context: AfterEach): Unit = clean()
   override def afterSuite(): Unit = loader.close()
 
-  /** The server's own wiring (`AgentsHandlers(TransitionSite(deps, Handlers(deps)))`: no scripted factory) over `g`. */
-  private def handlers(g: Generation, cfg: AppConfig = baseCfg): (AgentsHandlers, Handlers) =
+  /** The server's own wiring (`AgentsHandlers(ServerEngineSite(deps, ServerWiring(deps)))`: no scripted factory) over
+    * `g`.
+    */
+  private def handlers(g: Generation, cfg: AppConfig = baseCfg): (AgentsHandlers, ServerWiring) =
     val deps = Deps(cfg, ds, ds, plugins = g)
-    val h = Handlers(deps)
+    val h = ServerWiring(deps)
     (h.agents, h)
 
-  private def startAndRun(a: AgentsHandlers, h: Handlers): RunInfo =
+  private def startAndRun(a: AgentsHandlers, h: ServerWiring): RunInfo =
     assert(h.library.sources.put(Ck, SourcePut(title = "Bronze Age tin", year = Some(2019), body = Some(Body))).isRight)
     val run = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
     a.engine.execute(run.id)

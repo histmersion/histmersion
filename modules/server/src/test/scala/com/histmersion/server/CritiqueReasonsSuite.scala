@@ -22,7 +22,7 @@ class CritiqueReasonsSuite extends com.histmersion.db.DbSuite:
     val b = AppConfig.load()
     b.copy(db = b.db.copy(url = testDb.get))
   private lazy val ds = testPool(cfg.db)
-  private lazy val h = Handlers(Deps(cfg, ds))
+  private lazy val h = ServerWiring(Deps(cfg, ds))
 
   private val Slug = "zzcrit_bough"
   private val Frazer = "zzcrit1922_golden"
@@ -130,7 +130,7 @@ class CritiqueReasonsSuite extends com.histmersion.db.DbSuite:
     assert(patch(CritiqueReason(Brown, Frazer, "Renamed, still the same.")).isRight)
     assertEquals(stored.map(r => (r._1, r._3)), List(("zzcrit1999_ritesb", "Renamed, still the same.")))
     // the article's rename carries it
-    assert(h.renameArticle(Slug, LabelRename("zzcrit_bough2")).isRight)
+    assert(h.research.articles.rename(Slug, LabelRename("zzcrit_bough2")).isRight)
     assertEquals(ArticleFixtures.critiques(ds, "zzcrit_bough2").size, 1)
     assertEquals(h.research.articles.openCritiques("zzcrit_bough2"), Some(0))
     // the source's delete drops it

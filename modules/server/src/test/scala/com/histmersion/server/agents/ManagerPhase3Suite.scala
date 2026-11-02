@@ -11,7 +11,7 @@ import com.histmersion.api.Agents.*
 import com.histmersion.api.GoalPlans.*
 import com.histmersion.api.Managers.*
 import com.histmersion.db.{AgentRepo, Db, GoalLinkRepo, ManagerRepo, Migrate}
-import com.histmersion.server.{Deps, Handlers}
+import com.histmersion.server.{Deps, ServerWiring}
 import sttp.ai.core.agent.*
 
 import java.time.Instant
@@ -51,10 +51,10 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
 
-  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, Handlers, StubUpstream) =
+  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, ServerWiring, StubUpstream) =
     val deps = Deps(cfg, ds)
-    val h = Handlers(deps)
-    val a = AgentsHandlers(TransitionSite(deps, h), (_, _) => Right(c))
+    val h = ServerWiring(deps)
+    val a = AgentsHandlers(ServerEngineSite(deps, h), (_, _) => Right(c))
     val up = StubUpstream()
     a.attach(up)
     (a, h, up)
@@ -75,15 +75,15 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
   override def beforeEach(context: BeforeEach): Unit = clean()
   override def afterEach(context: AfterEach): Unit = clean()
 
-  private def seed(a: AgentsHandlers, h: Handlers): Unit =
-    assert(h.putGoal(Goal, GoalPut("Zz tin watched", notes = Some("where the tin came from"))).isRight)
+  private def seed(a: AgentsHandlers, h: ServerWiring): Unit =
+    assert(h.goals.put(Goal, GoalPut("Zz tin watched", notes = Some("where the tin came from"))).isRight)
     assert(a.addGoalLink(Goal, LinkAdd(LinkKind.Query, Query)).isRight)
 
   private def work(doi: String, title: String, oa: Boolean) =
     WorkRef(doi = Some(doi), title = Some(title), year = Some(2023), authors = List("Zz"), isOa = oa)
 
   /** The fixture's legal ingest: stores the source (as an ingest would) unless the DOI has no legal copy. */
-  private def legalIngest(h: Handlers, noCopy: Set[String])(doi: String): Either[String, IngestReport] =
+  private def legalIngest(h: ServerWiring, noCopy: Set[String])(doi: String): Either[String, IngestReport] =
     if noCopy.contains(doi) then Left(s"no legal open-access copy of $doi")
     else
       val ck = "zzagent" + doi.replaceAll("[^a-z0-9]", "")
@@ -106,8 +106,8 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def events(mid: String, kind: String): List[ManagerEvent] =
     connect(ds)(ManagerRepo.events(mid, None, 200)).filter(_.kind == kind)
 
-  private def acquire(h: Handlers): List[Queue.QueueItem] =
-    h.ops.queueList("acquire", all = true).toOption.get.items.filter(_.text.contains("zzagent"))
+  private def acquire(h: ServerWiring): List[Queue.QueueItem] =
+    h.workListView.list("acquire", all = true).toOption.get.items.filter(_.text.contains("zzagent"))
 
   test("watch: created paused with its cron and one item per sweep; nothing starts before it is resumed"):
     val (a, h, _) = handlers(ScriptedClient(Model)); seed(a, h)
@@ -343,7 +343,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
   private val CkB = "zzagent2021_hintb"
 
   /** The (paused) enrich manager with two source items. */
-  private def enrichItems(a: AgentsHandlers, h: Handlers): Unit =
+  private def enrichItems(a: AgentsHandlers, h: ServerWiring): Unit =
     assert(h.library.sources.put(CkA, SourcePut(title = "Hint A", year = Some(2020))).isRight)
     assert(h.library.sources.put(CkB, SourcePut(title = "Hint B", year = Some(2021))).isRight)
     a.managers.ensureDefaults()

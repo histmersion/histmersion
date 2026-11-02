@@ -3,7 +3,7 @@ package com.histmersion.server
 import com.histmersion.api.{Api, ConfigEdit, PluginsReport}
 import com.histmersion.config.{AppConfig, LoadedConfig}
 import com.histmersion.util.settings.{SettingsService, SettingsViews}
-import com.histmersion.server.agents.{Generated, PromptBudget, TransitionTools}
+import com.histmersion.server.agents.{Generated, PromptBudget, ToolboxOrder}
 import io.circe.Json
 import io.circe.syntax.*
 import org.ekrich.config.ConfigFactory
@@ -56,7 +56,7 @@ class ContractSnapshotSuite extends munit.FunSuite:
 
   test("mcp-tools.json: the MCP tools/list"):
     val deps = Deps(loaded.config, RefusingDataSource)
-    val h = Handlers(deps, OfflineConverter())
+    val h = ServerWiring(deps, OfflineConverter())
     val acq = AcquisitionTesting.controllers(
       deps,
       discovery = ???,
@@ -93,7 +93,7 @@ class ContractSnapshotSuite extends munit.FunSuite:
 
   test("toolbox.json: every agent tool, and each agent role's tools and answer schema"):
     val defs = Generated.defs()
-    val tools = Json.obj(TransitionTools.names.map(t => t.value -> PromptBudget.toolJson(t))*)
+    val tools = Json.obj(ToolboxOrder.names.map(t => t.value -> PromptBudget.toolJson(t))*)
     val roles = Json.obj(defs.agents.sortBy(_.name).map { a =>
       a.name -> Json.obj(
         "tools" -> a.tools.map(t => t.value: String).asJson,

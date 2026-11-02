@@ -52,7 +52,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     Migrate.run(ds)
     Deps(cfg, ds, testQueryPool(cfg.db, cfg.query))
   private lazy val ds = deps.ds
-  private lazy val h = Handlers(deps, NoConverter)
+  private lazy val h = ServerWiring(deps, NoConverter)
 
   private object NoConverter extends ConverterClient:
     def health: Either[String, String] = Right("ok")

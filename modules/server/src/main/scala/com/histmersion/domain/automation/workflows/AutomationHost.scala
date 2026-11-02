@@ -6,9 +6,9 @@ import com.histmersion.api.GoalPlans.LinkKind
 import com.histmersion.api.Lint.LintFixResult
 import com.histmersion.domain.PlanGoal
 
-/** What the engine asks of the rest of the server while the domains still keep it in the composition's handlers: the
-  * composition root implements it over them (`server/agents/TransitionHost`), and each operation moves to the owning
-  * service as its slice comes.
+/** What the engine asks of the rest of the server (a port the engine owns): its goals, a run's target and options, a
+  * link's reference and the probe's subject in the domains' terms, the plan's works and vocabulary, and the
+  * housekeeping. The composition root implements it over its wiring (`server/agents/ServerAutomationHost`).
   */
 trait AutomationHost:
   /** Is there an article with this slug? */

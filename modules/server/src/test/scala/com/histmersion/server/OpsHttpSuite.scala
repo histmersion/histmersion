@@ -247,7 +247,7 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
         .known(
           com.histmersion.domain.automation.agents.AgentDefinitions(
             com.histmersion.domain.automation.agents.Prompts(""),
-            com.histmersion.server.agents.TransitionWorkflows.roster
+            com.histmersion.server.agents.EngineContributions.roster
           )
         )
       assertEquals(named.filterNot(tools.toSet).toList.sorted, Nil, "placeholders naming no MCP tool")

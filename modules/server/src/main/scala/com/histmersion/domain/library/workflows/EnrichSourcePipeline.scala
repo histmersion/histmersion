@@ -139,7 +139,7 @@ final class EnrichSourcePipeline(
       }
     }
 
-  /** Places through the gazetteer ([[Handlers.geocode]], #981), never the model's coordinates: the model's place kind
+  /** Places through the gazetteer (the catalogue's places, #981), never the model's coordinates: the model's place kind
     * and the finding's period steer the choice. The finding keeps the name that was ASKED as its `region` (the chosen
     * place's label can be a Pleiades string of five names); the choice — place id and label — goes into the checkpoint,
     * so a person can audit it. An unknown place keeps its name with no point, and an approximate choice (a qualifier

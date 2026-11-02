@@ -30,8 +30,12 @@ object GoalRepo:
       s"${RangeSql.cols("g.period")}, g.parent_slug, g.updated_at::text"
 
   def list(ds: DataSource, status: Option[String], limit: Int, offset: Int): GoalList =
+    connect(ds)(listIn(status, limit, offset))
+
+  /** One page of the goals (of one status), by slug, on the caller's connection. */
+  def listIn(status: Option[String], limit: Int, offset: Int)(using DbCon): GoalList =
     val st = status.map(_.trim.toLowerCase).filter(_.nonEmpty)
-    connect(ds):
+    locally:
       val total = sql"""SELECT count(*)::int FROM goals g
             WHERE ($st::text IS NULL OR g.status = $st)""".query[Int].run().head
       val rows = sql"""SELECT ${SqlLiteral(cols)} FROM goals g
@@ -82,8 +86,11 @@ object GoalRepo:
             tags = EXCLUDED.tags, regions = EXCLUDED.regions, period = EXCLUDED.period,
             parent_slug = EXCLUDED.parent_slug, updated_at = now()""".update.run()
 
-  def patch(ds: DataSource, slug: String, p: GoalPatch): Either[ApiError, Unit] =
-    transact(ds):
+  def patch(ds: DataSource, slug: String, p: GoalPatch): Either[ApiError, Unit] = transact(ds)(patchIn(slug, p))
+
+  /** A goal's fields changed as given, in the caller's transaction. */
+  def patchIn(slug: String, p: GoalPatch)(using DbCon): Either[ApiError, Unit] =
+    locally:
       val exists = sql"SELECT 1 FROM goals WHERE slug = $slug".query[Int].run().nonEmpty
       if !exists then Left(ApiError(s"No goal '$slug'", Some(Write.CodeNotFound)))
       else
@@ -148,10 +155,8 @@ object GoalRepo:
   def renamedTo(ds: DataSource, slug: String): Option[String] =
     com.histmersion.domain.automation.goals.GoalAliasTable.table.renamedTo(ds, slug)
 
-  def delete(ds: DataSource, slug: String): Boolean =
-    transact(ds):
-      sql"DELETE FROM goals WHERE slug = $slug".update.run() > 0
+  def delete(ds: DataSource, slug: String): Boolean = transact(ds)(deleteIn(slug))
 
-// ── agent state ────────────────────────────────────────────────────────────────────────────────
-
-given DbCodec[AgentStateEntry] = DbCodec.derived
+  /** A goal removed in the caller's transaction; false when there was none. */
+  def deleteIn(slug: String)(using DbCon): Boolean =
+    sql"DELETE FROM goals WHERE slug = $slug".update.run() > 0

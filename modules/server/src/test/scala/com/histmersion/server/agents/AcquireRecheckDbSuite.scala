@@ -17,7 +17,7 @@ import com.histmersion.db.{AutopilotRepo, Migrate}
 import com.histmersion.util.jobs.JobRepo
 import com.histmersion.plugin.{Access, Fetch, FetchContext, FetchedFile, SourceFetcher, WorkKey}
 import com.histmersion.pluginhost.FetchChain
-import com.histmersion.server.{Deps, Handlers}
+import com.histmersion.server.{Deps, ServerWiring}
 import com.histmersion.domain.library.acquisition.*
 
 import java.time.Instant
@@ -76,18 +76,18 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     override def ingestLegalInto(doi: String, into: Option[String]) = { asked.add(doi -> into); answer(doi, into) }
     override def fetcherGeneration = generation
 
-  private def setup(cfg: AppConfig = baseCfg): (AgentsHandlers, Handlers, RecheckUpstream) =
+  private def setup(cfg: AppConfig = baseCfg): (AgentsHandlers, ServerWiring, RecheckUpstream) =
     val deps = Deps(cfg, ds)
-    val h = Handlers(deps)
-    val a = AgentsHandlers(TransitionSite(deps, h), (_, _) => Right(ScriptedClient(Model)))
+    val h = ServerWiring(deps)
+    val a = AgentsHandlers(ServerEngineSite(deps, h), (_, _) => Right(ScriptedClient(Model)))
     val up = RecheckUpstream()
     a.attach(up)
     (a, h, up)
 
   private def doi(n: String) = s"10.5555/zzrecheck.$n"
-  private def item(h: Handlers, n: String): Int =
-    h.ops
-      .queueAdd("acquire", QueueAdd(s"Zzrecheck $n, A work — https://doi.org/${doi(n)}", topic = Some("zzrecheck")))
+  private def item(h: ServerWiring, n: String): Int =
+    h.workLists
+      .add("acquire", QueueAdd(s"Zzrecheck $n, A work — https://doi.org/${doi(n)}", topic = Some("zzrecheck")))
       .toOption
       .get
       .id
@@ -111,8 +111,8 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
   /** A pass at once, as the managers' tick runs it (a person's pass of more than one item is a job). */
   private def passNow(a: AgentsHandlers, in: RecheckRequest): Either[ApiError, RecheckResult] =
     a.acquireRecheck.pass(in, Instant.now()).toRight(ApiError("a pass is running"))
-  private def status(h: Handlers, id: Int): String =
-    h.ops.queueList("acquire", all = true).toOption.get.items.find(_.id == id).get.status
+  private def status(h: ServerWiring, id: Int): String =
+    h.workListView.list("acquire", all = true).toOption.get.items.find(_.id == id).get.status
 
   test(
     "a pass: the item the corpus holds with its text closes, a metadata-only source is fetched into, the rest is tried and keeps why"
@@ -129,7 +129,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
         .isRight
     )
     val full = item(h, "full"); val meta = item(h, "meta"); val none = item(h, "none")
-    val noDoi = h.ops.queueAdd("acquire", QueueAdd("Zzrecheck, a book with no DOI")).toOption.get.id
+    val noDoi = h.workLists.add("acquire", QueueAdd("Zzrecheck, a book with no DOI")).toOption.get.id
     up.answer = (d, into) =>
       if d == doi("meta") then found(d, into.get)
       else
@@ -145,8 +145,8 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     )
     assertEquals(status(h, full), Queue.Done)
     assert(
-      h.ops
-        .queueList("acquire", all = true)
+      h.workListView
+        .list("acquire", all = true)
         .toOption
         .get
         .items
@@ -162,7 +162,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     )
     assertEquals(SourceFixtures.load(ds, "zzrecheck_meta").flatMap(_.notes), Some("Compiled."))
     // what each check found is kept, and shown with the item
-    val listing = h.ops.queueList("acquire", all = false).toOption.get
+    val listing = h.workListView.list("acquire", all = false).toOption.get
     val day = java.time.LocalDate.now(java.time.ZoneOffset.UTC)
     assertEquals(
       listing.checks.find(_.item == none).map(_.reason),
@@ -171,7 +171,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(listing.checks.find(_.item == meta).map(_.outcome), Some(Fetched))
     assert(Queue.markdown(Queue.Kind.Acquire, listing.items, listing.checks).contains(s"_checked $day: no legal copy"))
     assert(
-      h.ops.queueList("log", all = true).toOption.get.items.exists(_.text.startsWith("acquire re-check: 1 closed"))
+      h.workListView.list("log", all = true).toOption.get.items.exists(_.text.startsWith("acquire re-check: 1 closed"))
     )
     // again at once: nothing is due (checked within every-days), nothing is asked
     val again = passNow(a, RecheckRequest(limit = Some(10))).fold(e => fail(e.message), identity)
@@ -303,8 +303,8 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val chain = FetchChain(List("unpaywall" -> open, "stub-unauthorised" -> unauthorised), allowUnauthorised = true)
     val cfg = baseCfg.copy(acquire = baseCfg.acquire.copy(allowUnauthorised = true))
     val deps = Deps(cfg, ds)
-    val h = Handlers(deps)
-    val a = AgentsHandlers(TransitionSite(deps, h), (_, _) => Right(ScriptedClient(Model)))
+    val h = ServerWiring(deps)
+    val a = AgentsHandlers(ServerEngineSite(deps, h), (_, _) => Right(ScriptedClient(Model)))
     val acq = com.histmersion.server.AcquisitionTesting.controllers(
       deps,
       Discovery,
@@ -384,7 +384,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val (a, h, up) = setup(tightCfg)
     connect(ds)(sql"UPDATE agent_autopilot SET enabled = true".update.run())
     val ids = (1 to 6).toList.map(i => item(h, s"a$i"))
-    val _ = h.ops.queueAdd("acquire", QueueAdd("Zzrecheck, a book with no DOI")).toOption.get.id
+    val _ = h.workLists.add("acquire", QueueAdd("Zzrecheck, a book with no DOI")).toOption.get.id
     // two of them were checked an hour ago: not due, still tried
     ids
       .take(2)
@@ -444,7 +444,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
       "the job's find counts in the shared ingest counter"
     )
     val log =
-      h.ops.queueList("log", all = true).toOption.get.items.map(_.text).filter(_.startsWith("acquire re-check:"))
+      h.workListView.list("log", all = true).toOption.get.items.map(_.text).filter(_.startsWith("acquire re-check:"))
     assert(log.exists(l => l.contains("1 closed") && l.contains(s"(by test, job ${job.id})")), log.toString)
     // a rate-limited check stays due for the schedule: retry-hours later, not every-days
     val later = Instant.now().plusSeconds(7L * 3600L)
@@ -535,7 +535,12 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
       resumed.exists(_.contains(s"job ${job.id} (${AcquireRecheck.StoppedDraining}) resumed as job")),
       resumed.toString
     )
-    val next = JobRepo.page(ds, JobRepo.JobQuery(kinds = List(RecheckJob.JobKind)), 1, None, None).toOption.get._1.head
+    val next = JobRepo
+      .page(ds, com.histmersion.util.jobs.JobQuery(kinds = List(RecheckJob.JobKind)), 1, None, None)
+      .toOption
+      .get
+      ._1
+      .head
     assertEquals(next.detail.flatMap(_.recheck).flatMap(_.resumes), Some(job.id))
     assertEquals(
       next.detail.flatMap(_.recheck).map(_.since),
@@ -619,8 +624,8 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val chain = FetchChain(List("unpaywall" -> open, "stub-unauthorised" -> unauthorised), allowUnauthorised = true)
     val cfg = baseCfg.copy(acquire = baseCfg.acquire.copy(allowUnauthorised = true))
     val deps = Deps(cfg, ds)
-    val h = Handlers(deps)
-    val a = AgentsHandlers(TransitionSite(deps, h), (_, _) => Right(ScriptedClient(Model)))
+    val h = ServerWiring(deps)
+    val a = AgentsHandlers(ServerEngineSite(deps, h), (_, _) => Right(ScriptedClient(Model)))
     a.attach(
       AgentUpstream.of(
         com.histmersion.server.AcquisitionTesting.controllers(

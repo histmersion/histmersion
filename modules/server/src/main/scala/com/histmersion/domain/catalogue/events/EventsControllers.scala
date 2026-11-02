@@ -1,5 +1,9 @@
 package com.histmersion.domain.catalogue.events
 
+import com.histmersion.api.LabelRename
+import com.histmersion.api.LabelRenames
+import com.histmersion.api.LabelRenamed
+import com.histmersion.values.BundleKind
 import com.histmersion.util.identity.AliasKinds
 
 import com.histmersion.domain.catalogue.places.PlaceScope
@@ -117,6 +121,11 @@ final class EventsControllers(
   /** `POST /api/events/{id}/rename` — a new id (`to` checks the one asked for against the current one); the old one
     * keeps resolving. Answers the event's id before and after.
     */
+  /** `POST /api/events/{id}/rename` — a new id; the old one keeps resolving (V053). */
+  def renamed(id: String, req: LabelRename): Either[ApiError, LabelRenamed] =
+    rename(Caller.Local, id, from => LabelRenames.validate(BundleKind.Event, from, req.to))
+      .map((from, to) => LabelRenamed(BundleKind.Event, from, to))
+
   def rename(caller: Caller, id: String, to: String => Either[ApiError, String]): Either[ApiError, (String, String)] =
     maintenance.guard("rename_event"):
       val from = now(id)

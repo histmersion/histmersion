@@ -14,7 +14,7 @@ import com.histmersion.api.Managers.*
 import com.histmersion.domain.ReviewLedger.{absorb, Ledger}
 import com.histmersion.db.{AgentRepo, AutopilotRepo, GoalLinkRepo, GoalRepo, ManagerRepo, Migrate, QueueRows}
 import com.histmersion.domain.research.workflows.ReviewLedgerFixtures
-import com.histmersion.server.{Deps, Handlers}
+import com.histmersion.server.{Deps, ServerWiring}
 import io.circe.Json
 import sttp.ai.core.agent.*
 
@@ -84,10 +84,10 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
   private def str(s: String) = Json.fromString(s).noSpaces
 
-  private def handlers(c: LlmClient, cfg: AppConfig = autoCfg): (AgentsHandlers, Handlers) =
+  private def handlers(c: LlmClient, cfg: AppConfig = autoCfg): (AgentsHandlers, ServerWiring) =
     val deps = Deps(cfg, ds, ds, clock = suiteClock)
-    val h = Handlers(deps)
-    (AgentsHandlers(TransitionSite(deps, h), (_, _) => Right(c)), h)
+    val h = ServerWiring(deps)
+    (AgentsHandlers(ServerEngineSite(deps, h), (_, _) => Right(c)), h)
 
   private def clean(): Unit =
     Migrate.run(ds)
@@ -108,7 +108,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
   override def beforeEach(context: BeforeEach): Unit = clean()
   override def afterEach(context: AfterEach): Unit = clean()
 
-  private def seed(h: Handlers): Unit =
+  private def seed(h: ServerWiring): Unit =
     assert(
       h.library.sources
         .put(
@@ -144,7 +144,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
         .patch(Ck2, SourcePatch(metadata = Some(MetadataPatch(status = Some(SourceStatus.Contested)))))
         .isRight
     )
-    assert(h.putGoal(Goal, GoalPut("Zz tin in the Bronze Age", notes = Some("where the tin came from"))).isRight)
+    assert(h.goals.put(Goal, GoalPut("Zz tin in the Bronze Age", notes = Some("where the tin came from"))).isRight)
 
   private val articleBody =
     s"""Tin reached the Aegean by sea [[$Ck]].
@@ -380,8 +380,8 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     "sub-goals get their managers; no sub-goals at the depth limit; off pauses what it runs, on resumes exactly that"
   ):
     val (a, h) = handlers(ScriptedClient(Model)); seed(h)
-    assert(h.putGoal("zzagent-apchild", GoalPut("Zz child", parentSlug = Some(Goal))).isRight)
-    assert(h.putGoal("zzagent-apgrand", GoalPut("Zz grandchild", parentSlug = Some("zzagent-apchild"))).isRight)
+    assert(h.goals.put("zzagent-apchild", GoalPut("Zz child", parentSlug = Some(Goal))).isRight)
+    assert(h.goals.put("zzagent-apgrand", GoalPut("Zz grandchild", parentSlug = Some("zzagent-apchild"))).isRight)
     a.managers.ensureDefaults()
     a.managing.setAutopilot(AutopilotSet(on = true)).fold(e => fail(e.message), identity)
     List(Goal, "zzagent-apchild", "zzagent-apgrand").foreach { g =>
@@ -422,11 +422,11 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
     )
     assertEquals(transact(ds)(AutopilotRepo.get()).paused, Nil)
     // a goal added while it is on gets its managers at the next ensure
-    assert(h.putGoal("zzagent-aplate", GoalPut("Zz later")).isRight)
+    assert(h.goals.put("zzagent-aplate", GoalPut("Zz later")).isRight)
     Clock(Instant.now(suiteClock).plusSeconds(3600)).tick(a)
     assertEquals(connect(ds)(ManagerRepo.get(seedId("zzagent-aplate"))).map(_.state), Some("active"))
     // the New research area form's watcher, asked for while it is on, is created active (paused only when asked)
-    assert(h.putGoal("zzagent-apform", GoalPut("Zz form")).isRight)
+    assert(h.goals.put("zzagent-apform", GoalPut("Zz form")).isRight)
     assertEquals(a.managing.create(ManagerCreate("watch", Some("zzagent-apform"))).map(_.state), Right("active"))
     assertEquals(
       a.managing.create(ManagerCreate("seed", Some("zzagent-apform"), paused = Some(true))).map(_.state),
@@ -435,7 +435,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
 
   test("a reviewed goal gets a watcher on the slow cron and no seeding manager"):
     val (a, h) = handlers(ScriptedClient(Model)); seed(h)
-    assert(h.patchGoal(Goal, GoalPatch(status = Some(GoalStatus.Reviewed))).isRight)
+    assert(h.goals.patch(Goal, GoalPatch(status = Some(GoalStatus.Reviewed))).isRight)
     a.managing.setAutopilot(AutopilotSet(on = true)).fold(e => fail(e.message), identity)
     assertEquals(connect(ds)(ManagerRepo.get(seedId(Goal))), None)
     assertEquals(

@@ -107,7 +107,7 @@ object TestRuns:
   /** The library's routing of a source's proposals, as the composition builds it for engine `a`. */
   def proposals(
       a: com.histmersion.domain.automation.agents.AgentsHandlers,
-      h: com.histmersion.server.Handlers
+      h: com.histmersion.server.ServerWiring
   ): SourceProposals =
     SourceProposals(
       a.approvals,

@@ -14,7 +14,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.GoalPlans.*
 import com.histmersion.db.{AgentRepo, Db, GoalLinkRepo, GoalRepo, Migrate}
-import com.histmersion.server.{Deps, Handlers}
+import com.histmersion.server.{Deps, ServerWiring}
 import io.circe.Json
 import sttp.ai.core.agent.*
 import com.histmersion.values.SourceStatus
@@ -105,10 +105,10 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     AgentResponse("", Seq(ToolCall("call_1", name, args)), StopReason.ToolUse, Usage1, Some("scripted"))
   private def str(s: String) = Json.fromString(s).noSpaces
 
-  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, Handlers, StubUpstream) =
+  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, ServerWiring, StubUpstream) =
     val deps = Deps(cfg, ds)
-    val h = Handlers(deps)
-    val a = AgentsHandlers(TransitionSite(deps, h), (_, _) => Right(c))
+    val h = ServerWiring(deps)
+    val a = AgentsHandlers(ServerEngineSite(deps, h), (_, _) => Right(c))
     val up = StubUpstream()
     a.attach(up)
     (a, h, up)
@@ -127,7 +127,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
   override def beforeEach(context: BeforeEach): Unit = clean()
   override def afterEach(context: AfterEach): Unit = clean()
 
-  private def seed(h: Handlers): Unit =
+  private def seed(h: ServerWiring): Unit =
     assert(
       h.library.sources
         .put(
@@ -163,7 +163,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
         .patch(Ck2, SourcePatch(metadata = Some(MetadataPatch(status = Some(SourceStatus.Contested)))))
         .isRight
     )
-    assert(h.putGoal(Goal, GoalPut("Zz tin in the Bronze Age", notes = Some("where the tin came from"))).isRight)
+    assert(h.goals.put(Goal, GoalPut("Zz tin in the Bronze Age", notes = Some("where the tin came from"))).isRight)
 
   private def start(a: AgentsHandlers, req: RunRequest): RunInfo =
     val run = a.startRun(req).fold(e => fail(e.message), identity)
@@ -244,7 +244,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
       links.map(l => (l.kind, l.ref)).filter(_._1 != LinkKind.QueueItem),
       List((LinkKind.Source, Ck), (LinkKind.Query, "Bronze Age tin isotopes"))
     )
-    val items = h.ops.queueList("acquire", all = false).toOption.get.items.filter(_.text.contains("zzagent.out"))
+    val items = h.workListView.list("acquire", all = false).toOption.get.items.filter(_.text.contains("zzagent.out"))
     assertEquals(items.size, 1)
     assert(items.head.text.contains("https://doi.org/10.5555/zzagent.out — for goal zzagent-goal"), items.head.text)
     assert(links.exists(l => l.kind == LinkKind.QueueItem && l.ref == items.head.id.toString))
@@ -269,7 +269,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     assert(done.progress.exists(_.contains("rejected")), done.progress)
     assert(!GoalRepo.exists(ds, "zzagent-tin-mines"))
     assertEquals(connect(ds)(GoalLinkRepo.links(Goal)), Nil)
-    assert(h.ops.queueList("acquire", all = true).toOption.get.items.forall(!_.text.contains("zzagent.out")))
+    assert(h.workListView.list("acquire", all = true).toOption.get.items.forall(!_.text.contains("zzagent.out")))
 
     val second = start(a, RunRequest("plan-goal", Goal))
     assertEquals(second.status, "waiting")
@@ -358,7 +358,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
       ("review-article", Slug, true, Some("run"), Some(Goal))
     )
     assert(connect(ds)(GoalLinkRepo.links(Goal)).exists(l => l.kind == LinkKind.Article && l.ref == Slug))
-    val log = h.ops.queueList("log", all = true).toOption.get.items.map(_.text).filter(_.contains(Slug))
+    val log = h.workListView.list("log", all = true).toOption.get.items.map(_.text).filter(_.contains(Slug))
     assert(log.exists(_.contains("compiled a new article from 2 source(s)")), log)
     // #958: the article records the run's filter, so its Not used list and Method note are generated
     assertEquals(
@@ -441,7 +441,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     assertEquals(done.status, "done", done.error)
     assertEquals(h.research.articles.get(Slug).toOption.get.article.body.trim, theirs.trim, "their text stands")
     assert(done.warnings.exists(_.contains("NOT appended")), done.warnings)
-    assert(h.ops.queueList("tasks", all = false).toOption.get.items.exists(_.text.contains(s"[[$Slug]]")))
+    assert(h.workListView.list("tasks", all = false).toOption.get.items.exists(_.text.contains(s"[[$Slug]]")))
     assert(
       connect(ds)(AgentRepo.list(None, 50)).forall(r => !r.parent.contains(run.id)),
       "no review of an unwritten article"

@@ -44,10 +44,13 @@ object GoalLinkRepo:
   /** The goals that link each of these queue items, by item: (item id, goal slug, goal title), the goals of an item by
     * title.
     */
-  def goalsOfItems(ds: DataSource, items: List[Int]): List[(Int, String, String)] =
+  def goalsOfItems(ds: DataSource, items: List[Int]): List[(Int, String, String)] = connect(ds)(goalsOfItemsIn(items))
+
+  /** [[goalsOfItems]] on the caller's connection. */
+  def goalsOfItemsIn(items: List[Int])(using DbCon): List[(Int, String, String)] =
     if items.isEmpty then Nil
     else
-      connect(ds):
+      locally:
         val refs = items.map(_.toString)
         sql"""SELECT l.ref, g.slug, g.title FROM goal_links l JOIN goals g ON g.slug = l.goal_slug
             WHERE l.kind = ${LinkKind.QueueItem.wire} AND l.ref = ANY($refs::text[])

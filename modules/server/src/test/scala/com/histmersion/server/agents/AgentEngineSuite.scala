@@ -14,7 +14,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.db.{AgentRepo, Db, Migrate, QueueRows}
 import com.histmersion.util.jobs.JobRepo
-import com.histmersion.server.{Deps, Handlers}
+import com.histmersion.server.{Deps, ServerWiring}
 import sttp.ai.core.agent.*
 import io.circe.syntax.*
 import sttp.ai.core.agent.testing.{RecordedRequest, ScriptedAgent}
@@ -101,10 +101,10 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       Seq(text(notesJson))
     )
 
-  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, Handlers) =
+  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, ServerWiring) =
     val deps = Deps(cfg, ds)
-    val h = Handlers(deps)
-    (AgentsHandlers(TransitionSite(deps, h), (_, _) => Right(c)), h)
+    val h = ServerWiring(deps)
+    (AgentsHandlers(ServerEngineSite(deps, h), (_, _) => Right(c)), h)
 
   private def clean(): Unit =
     Migrate.run(ds)
@@ -123,7 +123,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   override def afterEach(context: AfterEach): Unit = clean()
 
-  private def seed(h: Handlers, body: String = Body): Unit =
+  private def seed(h: ServerWiring, body: String = Body): Unit =
     val r = h.library.sources.put(Ck, SourcePut(title = "Bronze Age tin", year = Some(2019), body = Some(body)))
     assert(r.isRight, r)
 
@@ -187,7 +187,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val msgs = connect(ds)(AgentRepo.messages(run.id))
     assert(msgs.exists(m => m.toolName.contains("facets") && m.role == "tool"))
     // bookkeeping: one log line
-    val log = h.ops.queueList("log", all = true).toOption.get.items.filter(_.text.contains(Ck))
+    val log = h.workListView.list("log", all = true).toOption.get.items.filter(_.text.contains(Ck))
     assertEquals(log.size, 1, log)
 
   test("#1424 enrich-source: findings whose places the gazetteer does not know are asked again, naming them"):
@@ -279,7 +279,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       open.map(a => (a.kind, a.status, a.current, a.runId)),
       List(("status-change", Some("retracted"), Some("unassessed"), Some(run.id)))
     )
-    assertEquals(h.ops.queueList("tasks", all = false).toOption.get.items.filter(_.text.contains(Ck)), Nil)
+    assertEquals(h.workListView.list("tasks", all = false).toOption.get.items.filter(_.text.contains(Ck)), Nil)
 
   test("a run that reaches its budget is paused, not failed, and can resume with a higher one"):
     val c = ScriptedClient(Model)
@@ -395,7 +395,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val up =
       FakeUpstream(WorkRef(doi = Some("10.1/zz"), title = Some("Bronze Age tin"), year = Some(2020)), retracted = false)
     a.attach(up)
-    val item = h.ops.queueAdd("acquire", Queue.QueueAdd("zzagent: buy the tin book")).toOption.get
+    val item = h.workLists.add("acquire", Queue.QueueAdd("zzagent: buy the tin book")).toOption.get
     val run = startAndRun(a, RunRequest("enrich-source", Ck, acquireItem = Some(item.id)))
     assertEquals(run.status, "done", run.error)
     assertEquals(run.acquireItem, Some(item.id))
@@ -405,7 +405,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val done = QueueRows.get(ds, item.id).get
     assertEquals(done.status, Queue.Done)
     assert(done.reason.exists(_.contains(Ck)), done)
-    val log = h.ops.queueList("log", all = true).toOption.get.items.filter(_.text.contains(Ck))
+    val log = h.workListView.list("log", all = true).toOption.get.items.filter(_.text.contains(Ck))
     assert(log.exists(_.text.contains(s"ticked off acquisition item ${item.id}")), log)
 
   test("enrich-source P2: a retraction found by assess outranks the model's status proposal"):
@@ -579,10 +579,10 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def byModel(cs: ScriptedClient*): LlmClient.Factory =
     (_, ref) => cs.find(_.model == ref).toRight(s"no scripted client for ${ref.wire}")
 
-  private def handlersFor(f: LlmClient.Factory, cfg: AppConfig = evalCfg): (AgentsHandlers, Handlers) =
+  private def handlersFor(f: LlmClient.Factory, cfg: AppConfig = evalCfg): (AgentsHandlers, ServerWiring) =
     val deps = Deps(cfg, ds)
-    val h = Handlers(deps)
-    (AgentsHandlers(TransitionSite(deps, h), f), h)
+    val h = ServerWiring(deps)
+    (AgentsHandlers(ServerEngineSite(deps, h), f), h)
 
   test("enrich-source dry run: every read and model step runs, nothing is written, each write is recorded on its step"):
     val c = ScriptedClient(Model)
@@ -603,7 +603,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val up =
       FakeUpstream(WorkRef(doi = Some("10.1/zz"), title = Some("Bronze Age tin"), year = Some(2019)), retracted = false)
     a.attach(up)
-    val item = h.ops.queueAdd("acquire", Queue.QueueAdd("zzagent: buy the tin book")).toOption.get
+    val item = h.workLists.add("acquire", Queue.QueueAdd("zzagent: buy the tin book")).toOption.get
     val before = CorpusSnapshot.of(ds)
     val run = startAndRun(a, RunRequest("enrich-source", Ck, acquireItem = Some(item.id), dryRun = Some(true)))
     assertEquals(run.status, "done", run.error)
@@ -687,7 +687,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         """"usage":{"input_tokens":100,"output_tokens":20},"modelUsage":{"claude-haiku-4-5-20251001":{"inputTokens":10,"outputTokens":2},""" +
         """"claude-haiku-5-5":{"inputTokens":90,"outputTokens":18}}}"""
     val fake = FakeCli("claude", List(ClaudeStreams.Init, result))
-    val rt = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")), TransitionWorkflows.roster)
+    val rt = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")), EngineContributions.roster)
     val Plan = ModelRef(ProviderKind.ClaudeCode, "haiku")
     val client = ClaudeCodeClient(Plan, baseCfg.agents.providers.claudeCode.copy(command = fake.script.toString), rt)
     val cfg = evalCfg.copy(agents = evalCfg.agents.copy(roles = evalCfg.agents.roles.copy(extractor = Plan.wire)))
@@ -734,7 +734,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         )
       )
     )
-    val rt = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")), TransitionWorkflows.roster)
+    val rt = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")), EngineContributions.roster)
     val Plan = ModelRef(ProviderKind.ClaudeCode, "sonnet")
     val client = ClaudeCodeClient(Plan, baseCfg.agents.providers.claudeCode.copy(command = fake.script.toString), rt)
     val cfg = evalCfg.copy(agents = evalCfg.agents.copy(roles = evalCfg.agents.roles.copy(extractor = Plan.wire)))
@@ -878,7 +878,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   /** A run of `pipeline` on the fake `claude`, configured with `agents.step.max-tokens = stepCap`. */
   private def claudeRun(fake: FakeCli.Fake, stepCap: Int, pipeline: PipelineDef): (AgentsHandlers, String) =
-    val rt = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")), TransitionWorkflows.roster)
+    val rt = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")), EngineContributions.roster)
     val Plan = ModelRef(ProviderKind.ClaudeCode, "haiku")
     val client = ClaudeCodeClient(Plan, baseCfg.agents.providers.claudeCode.copy(command = fake.script.toString), rt)
     val cfg = evalCfg.copy(agents =

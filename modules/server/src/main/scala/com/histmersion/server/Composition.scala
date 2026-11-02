@@ -19,9 +19,9 @@ import com.histmersion.domain.library.acquisition.*
 import com.histmersion.server.hot.{Hot, PinRequests}
 import ox.{releaseAfterScope, Ox}
 
-/** The server's wiring: the hot component graph (pools, migrations, plugins) → Handlers → HTTP (REST + pages + static)
-  * and MCP endpoints → bind. The entry point ([[histmersionServer]]) loads the config and calls it; a test builds a
-  * server with [[server]].
+/** The server's wiring: the hot component graph (pools, migrations, plugins) → ServerWiring → HTTP (REST + pages +
+  * static) and MCP endpoints → bind. The entry point ([[histmersionServer]]) loads the config and calls it; a test
+  * builds a server with [[server]].
   */
 object Composition:
 
@@ -42,7 +42,7 @@ object Composition:
       port: Int,
       converter: ConverterClient,
       autoInit: Boolean = false,
-      onHandlers: Handlers => Unit = _ => (),
+      onWiring: ServerWiring => Unit = _ => (),
       configFile: ConfigFileInfo = ConfigFileInfo(),
       plugins: Generation = ServerPlugins.offline,
       source: Option[(LoadedConfig, ConfigSource)] = None,
@@ -56,7 +56,7 @@ object Composition:
       port,
       Some(converter),
       autoInit,
-      onHandlers,
+      onWiring,
       plugins,
       core,
       system = system
@@ -89,7 +89,7 @@ object Composition:
       .eventLoopConfig(nc.eventLoopConfig.copy(initEventLoopGroup = () => loops))
       .withDontShutdownEventLoopGroupOnClose
 
-  /** The composition root proper: the hot component graph first, then the handlers over it, then the listener.
+  /** The composition root proper: the hot component graph first, then the wiring over it, then the listener.
     * `converter` `None` = the sidecar client from the config, read at each call (a reload may move it).
     */
   private[server] def build(
@@ -99,7 +99,7 @@ object Composition:
       port: Int,
       converter: Option[ConverterClient],
       autoInit: Boolean = false,
-      onHandlers: Handlers => Unit = _ => (),
+      onWiring: ServerWiring => Unit = _ => (),
       plugins: Generation = ServerPlugins.offline,
       core: CoreBudget = CoreBudget(),
       restart: Option[() => Unit] = None,
@@ -114,14 +114,14 @@ object Composition:
     )
     val deps = sg.deps(WriteGate(), restart, system)
     val cfg = hc.app // the listener's settings: restart-only (ConfigReload.RestartOnly)
-    val h = Handlers(deps, converter.getOrElse(ConverterWiring.client(deps.cfg.converter)))
-    onHandlers(h) // a test's handle on this server's handlers (its run tokens); nothing in production
+    val h = ServerWiring(deps, converter.getOrElse(ConverterWiring.client(deps.cfg.converter)))
+    onWiring(h) // a test's handle on this server's wiring (its run tokens); nothing in production
     val _ = h.ingest.queue.start() // reconcile interrupted jobs, then start the bounded worker pool
     val acq = acquisition(sg, deps, h)
     // embedded agents: the acquisition toolset first (enrich-source checks metadata, refs, assess;
     // the skeptic reads followups); then an interrupted run is PAUSED (resumable), queued ones
     // re-enqueued; no pool at all unless agents.enabled
-    com.histmersion.server.agents.TransitionWorkflows
+    com.histmersion.server.agents.EngineContributions
       .work(h.agents)
       .attach(com.histmersion.domain.library.workflows.AgentUpstream.of(acq.controllers))
     val collections = collectionsControllers(sg, deps, h, acq.controllers)
@@ -193,7 +193,7 @@ object Composition:
     * (and released on the old one when its generation closes); once published, the new database's interrupted jobs are
     * failed and its runs reconciled, as a start does.
     */
-  private def leases(sg: ServerGraph, h: Handlers): Either[String, Hot[Boolean]] =
+  private def leases(sg: ServerGraph, h: ServerWiring): Either[String, Hot[Boolean]] =
     val lease = h.agents.lease
     sg.graph.node[Boolean](
       ServerGraph.Leases,
@@ -217,7 +217,7 @@ object Composition:
   /** The library's acquisition: the clients (a hot node: rebuilt when `acquire.*` or the plugins change) and the ingest
     * the fetched copy is handed to, which writes the metadata straight away and hands the file to the OCR queue.
     */
-  private def acquisition(sg: ServerGraph, deps: Deps, h: Handlers): AcquisitionWiring =
+  private def acquisition(sg: ServerGraph, deps: Deps, h: ServerWiring): AcquisitionWiring =
     val clients = sg.graph
       .node[AcquireClients](
         ServerGraph.Acquisition,
@@ -235,7 +235,7 @@ object Composition:
   private def collectionsControllers(
       sg: ServerGraph,
       deps: Deps,
-      h: Handlers,
+      h: ServerWiring,
       acq: AcquisitionControllers
   ): com.histmersion.domain.library.collections.CollectionsControllers =
     import com.histmersion.api.*
@@ -256,7 +256,7 @@ object Composition:
             .map(e => ApiError(s"cannot read the original of '$citekey': ${e.getMessage}"))
             .map(StoredOriginal(_, disposition))
         }
-      def queueItem(id: Int) = h.ops.queueList(Queue.Kind.Acquire.label, all = true).map(_.items.find(_.id == id))
+      def queueItem(id: Int) = h.workListView.list(Queue.Kind.Acquire.label, all = true).map(_.items.find(_.id == id))
       def ingest(params: IngestParams, bytes: Array[Byte]) =
         h.ingest.controllers.ingest(
           params,

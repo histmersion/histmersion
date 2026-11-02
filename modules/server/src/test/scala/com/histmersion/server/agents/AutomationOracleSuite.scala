@@ -37,7 +37,7 @@ class AutomationOracleSuite extends munit.FunSuite:
     MessageDigest.getInstance("SHA-256").digest(bytes).map(b => f"${b & 0xff}%02x").mkString
 
   test("agent-trees.txt: every generated file of every runtime, the definitions' fingerprint, the answer"):
-    val defs = AgentDefinitions(Prompts(""), TransitionWorkflows.roster)
+    val defs = AgentDefinitions(Prompts(""), EngineContributions.roster)
     val out = Files.createTempDirectory("histmersion-agent-trees")
     val trees = AgentTrees(loaded.config, defs)
     val known = Generated.known(defs)
@@ -69,5 +69,5 @@ class AutomationOracleSuite extends munit.FunSuite:
     val pipelines = com.histmersion.values.Pipeline.values.toList.map { p =>
       s"workflow ${p.wire}\tv${p.version}\t${p.targetKind.wire}\troles=${p.roles.map(_.wire).mkString(",")}\n  ${p.describe}"
     }
-    val tools = TransitionTools.names.map(t => s"tool ${t.value}")
+    val tools = ToolboxOrder.names.map(t => s"tool ${t.value}")
     check("workflows.txt", (pipelines ++ agents ++ tools).mkString("", "\n", "\n"))

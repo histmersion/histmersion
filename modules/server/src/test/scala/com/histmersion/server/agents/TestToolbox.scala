@@ -7,16 +7,16 @@ import com.histmersion.domain.library.workflows.*
 import com.histmersion.domain.automation.agents.Toolbox
 
 import com.histmersion.config.AgentToolsConfig
-import com.histmersion.server.Handlers
+import com.histmersion.server.ServerWiring
 
-/** The toolbox of today's transition tools over `h` (no upstream attached), as the engine holds it. */
+/** The toolbox of the domains' agent tools over `h` (no upstream attached), in the toolbox's order, as the engine holds
+  * it.
+  */
 object TestToolbox:
-  def apply(h: Handlers, caps: AgentToolsConfig = AgentToolsConfig.Off): Toolbox =
+  def apply(h: ServerWiring, caps: AgentToolsConfig = AgentToolsConfig.Off): Toolbox =
     Toolbox(
-      TransitionTools(
-        h.librarySite,
-        () => AgentUpstream.Offline,
-        ResearchAgentTools(h.research.articles, caps).contributions,
-        caps
-      ).contributions
+      ToolboxOrder.ordered(
+        LibraryAgentTools(h.librarySite, () => AgentUpstream.Offline, caps).contributions ++
+          ResearchAgentTools(h.research.articles, caps).contributions
+      )
     )

@@ -15,7 +15,7 @@ import com.histmersion.domain.ReviewArticle.{Finding, Reviewer, Severity}
 import com.histmersion.domain.ReviewLedger.*
 import com.histmersion.db.{AgentRepo, Db, ManagerRepo, Migrate, QueueRows}
 import com.histmersion.domain.research.workflows.ReviewLedgerFixtures
-import com.histmersion.server.{Deps, Handlers}
+import com.histmersion.server.{Deps, ServerWiring}
 import sttp.ai.core.agent.*
 
 import java.time.Instant
@@ -77,10 +77,10 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private lazy val ds = testPool(baseCfg.db)
   protected def transcriptDs: javax.sql.DataSource = ds
 
-  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, Handlers) =
+  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, ServerWiring) =
     val deps = Deps(cfg, ds)
-    val h = Handlers(deps)
-    (AgentsHandlers(TransitionSite(deps, h), (_, _) => Right(c)), h)
+    val h = ServerWiring(deps)
+    (AgentsHandlers(ServerEngineSite(deps, h), (_, _) => Right(c)), h)
 
   private def clean(): Unit =
     Migrate.run(ds)
@@ -100,7 +100,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   override def beforeEach(context: BeforeEach): Unit = clean()
   override def afterEach(context: AfterEach): Unit = clean()
 
-  private def seed(h: Handlers, slugs: String*): Unit =
+  private def seed(h: ServerWiring, slugs: String*): Unit =
     assert(
       h.library.sources
         .put(

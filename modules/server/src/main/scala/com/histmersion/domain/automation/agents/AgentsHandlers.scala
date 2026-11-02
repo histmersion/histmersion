@@ -24,7 +24,7 @@ import com.histmersion.db.ModelSettingsRepo
 
 /** The ONE implementation of the embedded-agent operations (docs/research-embedded-agents.md): the model check, the
   * probe and (through [[Engine]]) pipeline runs. REST ([[AgentsRoutes]]) and the CLI reach it; it is held as
-  * `Handlers.agents`.
+  * `ServerWiring.agents`.
   *
   * `clientFor` is the seam a test uses to put sttp-ai's scripted model in place of a provider; `planSeams` how the plan
   * pools are read on purpose ([[PlanPools.Seams]]).

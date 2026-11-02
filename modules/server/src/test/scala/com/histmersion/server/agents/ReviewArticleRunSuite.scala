@@ -12,7 +12,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.Queue.QueueAdd
 import com.histmersion.db.{AgentRepo, Db, Migrate}
-import com.histmersion.server.{Deps, Handlers}
+import com.histmersion.server.{Deps, ServerWiring}
 import sttp.ai.core.agent.*
 import sttp.ai.core.agent.testing.{RecordedRequest, ScriptedAgent}
 import sttp.client4.testing.SyncBackendStub
@@ -215,13 +215,13 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
   private val glossFixed = recheck(
     List(check("R1", fixed = true, "Tin, the scarce half of bronze, reached the Aegean by sea"))
   )
-  private def ledgerOf(h: Handlers): Option[ReviewLedger.Ledger] =
+  private def ledgerOf(h: ServerWiring): Option[ReviewLedger.Ledger] =
     com.histmersion.domain.research.workflows.ReviewLedgerFixtures.get(ds, Slug).toOption.flatten
 
-  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, Handlers) =
+  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, ServerWiring) =
     val deps = Deps(cfg, ds)
-    val h = Handlers(deps)
-    (AgentsHandlers(TransitionSite(deps, h), (_, _) => Right(c)), h)
+    val h = ServerWiring(deps)
+    (AgentsHandlers(ServerEngineSite(deps, h), (_, _) => Right(c)), h)
 
   private def clean(): Unit =
     Migrate.run(ds)
@@ -237,7 +237,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
   override def beforeEach(context: BeforeEach): Unit = clean()
   override def afterEach(context: AfterEach): Unit = clean()
 
-  private def seed(h: Handlers): Unit =
+  private def seed(h: ServerWiring): Unit =
     assert(
       h.library.sources
         .put(
@@ -326,7 +326,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val open = TestRuns.approvals(ds).approvals(Some(ApprovalState.Open), 50).filter(_.citekey == Ck)
     assertEquals(open.map(x => (x.kind, x.edgeKind, x.target)), List(("edge", Some("refutes"), Some(Ck2))))
     assertEquals(h.library.citations.neighbors(Ck, List("refutes")), Nil, "nothing is applied before approval")
-    val log = h.ops.queueList("log", all = true).toOption.get.items.filter(_.text.contains(Slug))
+    val log = h.workListView.list("log", all = true).toOption.get.items.filter(_.text.contains(Slug))
     assertEquals(
       log.map(_.text),
       List(
@@ -398,14 +398,14 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
         "record"
       )
     )
-    val tasks = h.ops.queueList("tasks", all = false).toOption.get.items.filter(_.text.contains(Slug))
+    val tasks = h.workListView.list("tasks", all = false).toOption.get.items.filter(_.text.contains(Slug))
     assertEquals(tasks.size, 1, tasks)
     assert(
       tasks.head.text
         .contains("S1 (Disagreements): the date has no support in the record [raised again after a rejection]"),
       tasks.head.text
     )
-    val log = h.ops.queueList("log", all = true).toOption.get.items.filter(_.text.contains(Slug)).map(_.text)
+    val log = h.workListView.list("log", all = true).toOption.get.items.filter(_.text.contains(Slug)).map(_.text)
     assert(
       log.exists(l =>
         l.contains("round 3 → MAJOR") && l.contains("fixer applied 1 / rejected 1") &&
@@ -926,7 +926,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assertEquals(led.entry("S2").map(_.finding.severity), Some(ReviewArticle.Severity.Minor))
     assertEquals(led.lessons.map(l => (l.text, l.source)), List((lesson, ReviewLedger.LessonSource.Recheck)))
     assert(h.research.articles.get(Slug).toOption.get.article.body.contains("The cargo dates to about 1320 BCE"))
-    val log = h.ops.queueList("log", all = true).toOption.get.items.filter(_.text.contains(Slug)).map(_.text)
+    val log = h.workListView.list("log", all = true).toOption.get.items.filter(_.text.contains(Slug)).map(_.text)
     assert(
       log.exists(l =>
         l.contains("round 4 → PASS") && l.contains("confirmed by a full panel") &&
@@ -934,7 +934,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       ),
       log
     )
-    assertEquals(h.ops.queueList("tasks", all = false).toOption.get.items.filter(_.text.contains(Slug)), Nil)
+    assertEquals(h.workListView.list("tasks", all = false).toOption.get.items.filter(_.text.contains(Slug)), Nil)
 
   test("fix: the confirming panel is skipped while a MAJOR is open (final-panel = clear), and runs with always"):
     def go(mode: String): (RunInfo, PanelClient) =
@@ -980,8 +980,8 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     "#934: one backlog item per article listing its open MAJORs — rewritten by the next run, closed when none is open"
   ):
     val (_, h) = handlers(PanelClient(Model)); seed(h)
-    val legacy = h.ops
-      .queueAdd("tasks", QueueAdd(s"review-article [[$Slug]]: MAJOR open — R9 major (x): an old finding"))
+    val legacy = h.workLists
+      .add("tasks", QueueAdd(s"review-article [[$Slug]]: MAJOR open — R9 major (x): an old finding"))
       .toOption
       .get
     def runWith(rulesAnswers: Seq[AgentResponse]*): RunInfo =
@@ -993,7 +993,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       val r = start(a2, RunRequest("review-article", Slug))
       assertEquals(r.status, "done", r.error)
       r
-    def items = h.ops.queueList("tasks", all = true).toOption.get.items.filter(_.text.contains(Slug))
+    def items = h.workListView.list("tasks", all = true).toOption.get.items.filter(_.text.contains(Slug))
 
     // run 1: two MAJORs → ONE item; the per-finding item of an older run is superseded
     val r1 = runWith(
@@ -1090,9 +1090,12 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
   ):
     val (_, h) = handlers(PanelClient(Model)); seed(h)
     val mine =
-      h.ops.queueAdd("tasks", QueueAdd(s"review-article $Slug: 1 open MAJOR — R4 (Intro): an old finding")).toOption.get
-    val twice = h.ops
-      .queueAdd("tasks", QueueAdd(s"review-article [[$Slug]]: 3 open MAJORs — a, b, c (agent run deadbeef)"))
+      h.workLists
+        .add("tasks", QueueAdd(s"review-article $Slug: 1 open MAJOR — R4 (Intro): an old finding"))
+        .toOption
+        .get
+    val twice = h.workLists
+      .add("tasks", QueueAdd(s"review-article [[$Slug]]: 3 open MAJORs — a, b, c (agent run deadbeef)"))
       .toOption
       .get
     val c = PanelClient(Model)
@@ -1105,7 +1108,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val (a2, _) = handlers(c)
     val r = start(a2, RunRequest("review-article", Slug))
     assertEquals(r.status, "done", r.error)
-    val items = h.ops.queueList("tasks", all = true).toOption.get.items.filter(_.text.contains(Slug))
+    val items = h.workListView.list("tasks", all = true).toOption.get.items.filter(_.text.contains(Slug))
     assertEquals(items.filter(_.status == "open").map(_.id), List(mine.id), "the existing item, rewritten")
     assert(
       items.find(_.id == mine.id).exists(_.text.startsWith(s"review-article [[$Slug]]: 1 open MAJOR — R1 (Intro)"))
@@ -1171,7 +1174,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       )
     )
     assertEquals(led.task, None)
-    assert(!h.ops.queueList("tasks", all = true).toOption.get.items.exists(_.text.contains(Slug)))
+    assert(!h.workListView.list("tasks", all = true).toOption.get.items.exists(_.text.contains(Slug)))
 
   test("the ledger is the article's: it follows a rename and goes with the article"):
     val (_, h) = handlers(PanelClient(Model)); seed(h)
@@ -1197,7 +1200,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     com.histmersion.domain.research.workflows.ReviewLedgerFixtures.put(ds, l)
     assertEquals(com.histmersion.domain.research.workflows.ReviewLedgerFixtures.get(ds, Slug), Right(Some(l)))
     val moved = Slug + "_moved"
-    assert(h.renameArticle(Slug, LabelRename(moved)).isRight)
+    assert(h.research.articles.rename(Slug, LabelRename(moved)).isRight)
     assertEquals(
       com.histmersion.domain.research.workflows.ReviewLedgerFixtures.get(ds, moved).map(_.map(_.entries)),
       Right(Some(l.entries))
@@ -1210,10 +1213,10 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
   private val Haiku = ModelRef(ProviderKind.Local, "haiku-sim")
   private lazy val evalCfg = baseCfg.copy(agents = baseCfg.agents.copy(prices = "scripted=1/2; haiku-sim=3/4"))
 
-  private def handlersWith(f: LlmClient.Factory, cfg: AppConfig = evalCfg): (AgentsHandlers, Handlers) =
+  private def handlersWith(f: LlmClient.Factory, cfg: AppConfig = evalCfg): (AgentsHandlers, ServerWiring) =
     val deps = Deps(cfg, ds)
-    val h = Handlers(deps)
-    (AgentsHandlers(TransitionSite(deps, h), f), h)
+    val h = ServerWiring(deps)
+    (AgentsHandlers(ServerEngineSite(deps, h), f), h)
 
   test("fix dry run: nothing is written, yet round 2 reviews the fixer's unwritten revision"):
     val c = PanelClient(Model)
@@ -1485,7 +1488,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
   private val Ck3 = "zzagent2021_tin"
 
   /** Two critics of the cited source: Ck2 refutes it, Ck3 challenges it — two open pairs. */
-  private def critics(h: Handlers): Unit =
+  private def critics(h: ServerWiring): Unit =
     assert(
       h.library.sources
         .put(
@@ -1517,7 +1520,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       baseCfg.researchAgents.copy(review = baseCfg.researchAgents.review.copy(spotChecks = 1))
     )
 
-  private def states(h: Handlers): List[(String, String)] =
+  private def states(h: ServerWiring): List[(String, String)] =
     h.research.articles
       .critiques(Slug, h.research.articles.get(Slug).toOption.get.article.body)
       .map(p => (p.ref.wire, p.state.wire))
@@ -1582,7 +1585,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       List(("S1", ReviewLedger.Status.Fixed, Some(s"$Ck2>$Ck")))
     )
     assertEquals(ledger.openMajors, Nil)
-    val log = h.ops.queueList("log", all = true).toOption.get.items.filter(_.text.contains(Slug)).map(_.text)
+    val log = h.workListView.list("log", all = true).toOption.get.items.filter(_.text.contains(Slug)).map(_.text)
     assert(
       log.exists(l =>
         l.contains("round 3 → PASS") && l.contains("critiques 2 pairs — 1 addressed, 1 reasoned, 0 open")
@@ -1699,17 +1702,17 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
   // ── convergence (docs/research-review-convergence.md §6.9): the three failure modes of 2026-10-19 ───────
 
   /** Ck2 refutes Ck: one open pair, on a work the article cites. */
-  private def refuted(h: Handlers): Unit =
+  private def refuted(h: ServerWiring): Unit =
     assert(
       h.library.sources
         .patch(Ck2, SourcePatch(edges = Some(EdgesPatch(add = List(EdgeInput(Ck, EdgeKind.Refutes))))))
         .isRight
     )
 
-  private def logOf(h: Handlers) =
-    h.ops.queueList("log", all = true).toOption.get.items.filter(_.text.contains(Slug)).map(_.text)
-  private def tasksOf(h: Handlers) =
-    h.ops.queueList("tasks", all = false).toOption.get.items.filter(_.text.contains(Slug)).map(_.text)
+  private def logOf(h: ServerWiring) =
+    h.workListView.list("log", all = true).toOption.get.items.filter(_.text.contains(Slug)).map(_.text)
+  private def tasksOf(h: ServerWiring) =
+    h.workListView.list("tasks", all = false).toOption.get.items.filter(_.text.contains(Slug)).map(_.text)
   private val coCite = edit(
     "replace",
     s"Tin reached the Aegean by sea [[$Ck]].",

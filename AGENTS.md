@@ -116,9 +116,11 @@ implementation; the CLI reaches it over HTTP. This is what makes "the CLI and th
 fact rather than a promise.
 
 A feature in its own package (`domain.<domain>.<feature>`; `domain.personal` and `util.settings` are the
-models) implements it in a service its controllers call. A feature not moved yet still implements it in
-`Handlers`; follow the shape the feature has, and move it only as its slice of the refactor does
-(`docs/research-domain-model.md` §9).
+models) implements it in a service its controllers call. A response that joins several domains is a view in
+`server.views` (an event's or a place's page, a work list with its goals and checks, the jobs' page, the formatting
+check of unsaved text, the resolve endpoint); this server's own operations (version, health, About, the web page's
+settings and counters, backups, restore, vacuum, reindex, the seed) are `server.instance`'s controllers.
+`server/ServerWiring` is the composition's object graph: it builds every controller and implements none.
 
 Adding an operation to a feature in its own package:
 
@@ -160,7 +162,7 @@ is a written reason.
   turns an `Either` into an exit code at the very edge (1 = usage, 2 = the server said no,
   3 = unreachable/startup failure).
 - **No side effects in object initialisers.** `Main` is the composition root: it builds
-  config → `DataSource` → migrate → `Deps` → `Handlers` → endpoints → bind, in that order, explicitly.
+  config → `DataSource` → migrate → `Deps` → `ServerWiring` → endpoints → bind, in that order, explicitly.
   A `private val ds = Db.fromConfig()` at the top of an `object` is exactly the pattern this replaced.
 
 ## Coding practices
@@ -354,19 +356,21 @@ A lower domain reaches a higher one only through an interface the lower one owns
 agent tool is a `ToolContribution` and a workflow a `WorkflowDefinition` registered into the engine's `Workflows`;
 a workflow names the tools each of its roles may use, and the engine offers an agent nothing else. A kind of manager
 is a `ManagerKindDefinition` (the supervisor's loop, holds, retries, cron and approvals stay the engine's), a domain's
-measure of a goal an `ObjectiveProgress`, what approving its proposals does an `ApprovalEffects`; runs are recorded
+measure of a goal an `ObjectiveProgress`, what approving its proposals does a `ProposalEffect` (a source's, the
+library's) or a `SubjectEffect` (an article's filter, research's), composed by `ApprovalEffects.of`; runs are recorded
 through `util.jobs.JobRuns`. The engine is built from an `EngineSite` the composition gives it (its clock among
 them). Inside the engine, a feature reaches another's data only through that feature's service — `agents.RunService`
 (runs and their steps) and `agents.ApprovalService`, `managers.ManagerService`, `goals.GoalService` and
 `goals.FocusService`, `autopilot.AutopilotRowService` — each with an `InMemory` over the shared
-`domain.automation.AutomationState` and one contract suite (`EngineStoreSuite`) run on both. Today's pipelines,
-tools, manager kinds and effects not yet their domains' are registered by transition adapters in the composition root
-(`server/agents`: `PipelineWorkflow` for the engine's own plan-goal and hint-effect, `TransitionTools`, which lists every
-domain's agent tools in the toolbox's order, `TransitionWorkflows`, `TransitionSite`, `TransitionHost`, `SeedManagerKind`,
-`TransitionApprovalEffects`) until their owners define their own; `server/agents` also keeps the command-line AI runtimes
-until their slice; the library and research register their own (`domain.library.workflows.LibraryWorkflows` and
-`domain.research.workflows.ResearchWorkflows`, over the engine's services and the `LibrarySite` and `ResearchSite` the
-composition implements in `server/LibraryWorkflowSite` and `server/ResearchWorkflowSite`).
+`domain.automation.AutomationState` and one contract suite (`EngineStoreSuite`) run on both (the goals' controllers
+`goals.GoalsControllers`, the agents' scratch state `agents.AgentStateService` and its controllers). The library and
+research register their workflows, kinds, tools and effects themselves (`domain.library.workflows.LibraryWorkflows`,
+`domain.research.workflows.ResearchWorkflows` — the seeding kind `SeedManagerKind` and the article-filter effect
+`ArticleFilterApproval` among them — over the engine's services and the `LibrarySite` and `ResearchSite` the composition
+implements in `server/LibraryWorkflowSite` and `server/ResearchWorkflowSite`); the composition lists them in the
+engine's order (`server/agents/EngineContributions`, with `PipelineWorkflow` for the engine's own plan-goal and
+hint-effect, and `ToolboxOrder`, the order the toolbox lists every domain's tools in) and implements the engine's ports
+(`ServerEngineSite`, `ServerAutomationHost`); `server/agents` also keeps the command-line AI runtimes until their slice.
 The catalogue's moved features follow the same shape: their repositories (db module, the feature's package) take the
 connection, a service per feature with an `InMemory` over `domain.catalogue.CatalogueState` and one contract suite
 (`CatalogueStoreSuite`) run on both; the int8range spelling of a deep-time column is `util.database.RangeSql`, a
@@ -384,17 +388,19 @@ citekeys through `CitekeyResolver`); and so do research's articles (`domain.rese
 `ResearchStoreSuite`, built in `server/ResearchWiring`; the db suites read them through `ArticleFixtures`,
 `ReviewLedgerFixtures` and `ArticleCheckFixtures`; `ArticleRepo` is private to the articles). The jobs that run as one piece (an OCR) are recorded through `util.jobs.JobRecords` and run on
 `util.jobs.JobPool`; a fetched copy waits in `util.ocr.Spool`.
-An owner that registers its own data contribution (the catalogue's `CatalogueData`, the media's `MediaData`, the library's
-`LibraryData`, research's `ResearchData`) is handed to
-`TransitionContributions.withOwn` in `Deps.data`, and an owner's own alias table to `AliasTablesAdapter.withOwn` in
-`Deps.aliasTables`; the other owners keep their adapters until their slices. A carried kind
+Every owner registers its own data contribution (`AutomationData`, `CatalogueData`, `MediaData`, `LibraryData`,
+`ResearchData`, `PersonalData`, and the supporting areas' `DataManagementData`, `JobsData`, `IdentityData`,
+`DatabaseData`), listed in `Deps.data` in the owners' order, its alias table (`<Kind>AliasTable`, the kinds being the
+identity area's `util.identity.AliasKinds`) in `Deps.aliasTables`, its job kinds (`<Feature>JobKinds`, listed in today's
+order by `api.RegisteredJobKinds`), its safe fixes with their `FixRank`, and the notes it renders in the mirror (a
+`MirrorNote`); a merge's follow-ups on the work lists are the automation's `WorkListMergeFollowUps`. A carried kind
 writes its rows through the steps it registers, given the import's `BundleImport.Writer`; a kind's merge rules add what
 a plan must know (`MergeRules.gather`) and the planner's rules (`MergeRules.planning`, a `util.data.exchange.PlanRules`
 whose run `MergePlanner.plan` calls at each stage; the sources' stages have hooks of their own — `matchSources`,
 `sourceQuestions`, `pairFirst`, `labelsTakenFirst`, `citekeyArgument`, `foldSources`, `renamed`, `relabelFirst`, `planned` —,
 an article's links follow the merged sources' citekeys through `relinked`, and the planner knows a bundle's source only by
 its `SourceFate` and `SourcePair`). Nothing has a default registry: a caller of the bundle and merge
-mechanism passes the registry's `CarriedKinds` and `MergeRuleSet` (the db suites `TestExchange`).
+mechanism passes the registry's `CarriedKinds` and `MergeRuleSet`, and a merge apply the `MergeFollowUps` (the db suites `TestExchange`).
 Files and directories are reached through `util.storage`, processes launched through `util.process`, and a
 repository is used only inside its feature. `ArchitectureSuite` (server tests) enforces the table, the file and
 process rule and the repository rule. A file not in its feature package yet has its destination in

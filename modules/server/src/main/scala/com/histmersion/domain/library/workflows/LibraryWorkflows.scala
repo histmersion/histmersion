@@ -3,14 +3,14 @@ package com.histmersion.domain.library.workflows
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.automation.agents.{AgentsHandlers, StepAgent}
 import com.histmersion.domain.automation.managers.ManagerKindDefinition
-import com.histmersion.domain.automation.workflows.WorkflowDefinition
+import com.histmersion.domain.automation.workflows.{ToolContribution, WorkflowDefinition}
 import com.histmersion.util.database.Transactor
 
 import javax.sql.DataSource
 
 /** What the library contributes to the workflow engine: its three pipelines as workflows (enrich-source,
-  * currency-check, acquisition-sweep), the enrich and watch manager kinds, and the acquisition work and source
-  * proposals they and research's workflows share.
+  * currency-check, acquisition-sweep), the enrich and watch manager kinds, its agent tools, and the acquisition work
+  * and source proposals they and research's workflows share.
   */
 final class LibraryWorkflows(
     cfg: () => AppConfig,
@@ -55,3 +55,8 @@ final class LibraryWorkflows(
   val watchKind: WatchManagerKind = WatchManagerKind(site, work, cfg().libraryAgents)
 
   val managerKinds: List[ManagerKindDefinition] = List(enrichKind, watchKind)
+
+  /** A source, its passages, the search, the facets, the citation graph, the read-only query and the follow-ups, as an
+    * agent reads them.
+    */
+  val tools: List[ToolContribution] = LibraryAgentTools(site, upstream, cfg().agents.tools).contributions

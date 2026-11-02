@@ -10,7 +10,7 @@ import java.time.temporal.ChronoUnit
 
 /** The engine's rows held in memory, one record the `InMemory` services of its features share (each reads and changes
   * its own part, through lenses): the autopilot's row; the goals, their links, the schedules not moved yet and what the
-  * focus recorded; the approvals.
+  * focus recorded, the goals' old slugs; the approvals; the agents' scratch state.
   */
 final case class AutomationState(
     autopilot: Option[AutopilotRowState],
@@ -26,7 +26,9 @@ final case class AutomationState(
     items: Vector[ManagerItemRecord],
     lastItemId: Long,
     events: Vector[ManagerEventRecord],
-    lastEventId: Long
+    lastEventId: Long,
+    goalAliases: Map[String, String] = Map.empty,
+    agentState: Map[String, com.histmersion.domain.automation.agents.AgentStateRecord] = Map.empty
 )
 
 object AutomationState:

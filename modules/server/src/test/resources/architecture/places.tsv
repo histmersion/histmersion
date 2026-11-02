@@ -333,9 +333,9 @@ api:api/JobDetail.scala	util.jobs
 api:api/JobInfo.scala	util.jobs
 api:api/JobState.scala	util.jobs
 api:api/Label.scala	library.search
-api:api/LabelRename.scala	library.search
+api:api/LabelRename.scala	util.identity
 api:api/LabelRenamed.scala	util.identity
-api:api/LabelRenames.scala	library.search
+api:api/LabelRenames.scala	util.identity
 api:api/LatinFold.scala	util.common
 api:api/LeadFacts.scala	catalogue.evidence
 api:api/LedgerRow.scala	research.workflows
@@ -791,7 +791,6 @@ core:domain/activity/ActivityCursor.scala	automation.activity
 core:domain/activity/ActivityQuery.scala	automation.activity
 core:domain/activity/ActivityRules.scala	automation.activity
 db:db/AgentRepo.scala	automation.agents
-db:db/AgentStateRepo.scala	automation.agents
 db:db/AutopilotRepo.scala	automation.autopilot
 db:db/BundleImport.scala	util.data.exchange
 db:db/BundleRepo.scala	util.data.exchange
@@ -810,7 +809,6 @@ db:db/ModelSettingsRepo.scala	automation.agents
 db:db/Param.scala	util.common
 db:db/PlanQuotaRepo.scala	automation.agents
 db:db/Sql.scala	util.common
-db:db/UiRepo.scala	server.instance
 db:db/Vocab.scala	util.common
 files:files/ArticleNote.scala	research.articles
 files:files/BundleEntities.scala	util.data.exchange
@@ -837,7 +835,6 @@ server:server/ConverterWiring.scala	server
 server:server/Deps.scala	server
 server:server/FullText.scala	library.sources
 server:server/GazetteerPaths.scala	server
-server:server/Handlers.scala	split
 server:server/HtmlRender.scala	research.articles
 server:server/HttpApi.scala	server
 server:server/HttpDownload.scala	server
@@ -851,7 +848,6 @@ server:server/MarkdownHtml.scala	util.common
 server:server/MarkdownLint.scala	research.articles.lint
 server:server/McpTools.scala	server
 server:server/MediaWiring.scala	server
-server:server/OpsHandlers.scala	split
 server:server/OpsRoutes.scala	server
 server:server/OpsTools.scala	split
 server:server/PageKind.scala	research.articles
@@ -864,6 +860,7 @@ server:server/ServerGraph.scala	server
 server:server/ServerMode.scala	server
 server:server/ServerPlugins.scala	server
 server:server/ServerToolFiles.scala	server
+server:server/ServerWiring.scala	server
 server:server/SourcePage.scala	research.articles
 server:server/Static.scala	server
 server:server/StorageLocations.scala	server
@@ -883,6 +880,7 @@ server:server/agents/CliRuntime.scala	automation.agents
 server:server/agents/Codex.scala	automation.agents
 server:server/agents/CodexExecClient.scala	automation.agents
 server:server/agents/CodexHome.scala	automation.agents
+server:server/agents/EngineContributions.scala	server
 server:server/agents/GeneratePluginMain.scala	server
 server:server/agents/HostAiProvider.scala	automation.agents
 server:server/agents/Opencode.scala	automation.agents
@@ -892,14 +890,9 @@ server:server/agents/PlanPools.scala	automation.agents
 server:server/agents/QuotaGuard.scala	automation.agents
 server:server/agents/RefreshGate.scala	automation.agents
 server:server/agents/Refreshed.scala	automation.agents
-server:server/agents/SeedManagerKind.scala	server
-server:server/agents/TransitionApprovalEffects.scala	server
-server:server/agents/TransitionHost.scala	server
-server:server/agents/TransitionRoutes.scala	server
-server:server/agents/TransitionSettings.scala	server
-server:server/agents/TransitionSite.scala	server
-server:server/agents/TransitionTools.scala	server
-server:server/agents/TransitionWorkflows.scala	server
+server:server/agents/ServerAutomationHost.scala	server
+server:server/agents/ServerEngineSite.scala	server
+server:server/agents/ToolboxOrder.scala	server
 server:server/hot/Hot.scala	server
 server:server/hot/HotDataSource.scala	server
 server:server/hot/HotGraph.scala	server

@@ -9,7 +9,8 @@ import com.histmersion.domain.library.workflows.SourceProposals
 
 /** What research contributes to the workflow engine: its four pipelines as workflows (review-article with its review
   * comparison, compile-article, infer-filter, propose-articles), the review manager kind, its measure of a goal's
-  * progress and its agent tools. The review proposes source statuses and edges through the library's `proposals`.
+  * progress, the seeding manager kind and its agent tools. The review proposes source statuses and edges through the
+  * library's `proposals`.
   */
 final class ResearchWorkflows(cfg: () => AppConfig, site: ResearchSite, a: AgentsHandlers, proposals: SourceProposals):
 
@@ -44,6 +45,9 @@ final class ResearchWorkflows(cfg: () => AppConfig, site: ResearchSite, a: Agent
     List(StepAgent.ArticlePlanner),
     a.definitions
   )
+
+  /** A goal's seeding manager: its articles proposed, then compiled once a person approved them. */
+  val seedKind: SeedManagerKind = SeedManagerKind(site, cfg().libraryAgents)
 
   /** The library-wide review manager. */
   val reviewKind: ReviewManagerKind = ReviewManagerKind(site, site.ledgers, cfg().researchAgents)

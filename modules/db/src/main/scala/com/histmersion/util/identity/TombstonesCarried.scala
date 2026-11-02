@@ -16,4 +16,7 @@ object TombstonesCarried:
       DataOwner("util.identity"),
       BundleEntry("entities/tombstones.ndjson"),
       List(RowsIn(ImportStage.Rows, ImportRank(0), _.tombstones()))
-    )(scope => TombstoneBundleRepo.tombstones(scope).toList)(t => Some(t.deletedAt), (es, ls) => es.modify(_.tombstones).setTo(ls))
+    )(scope => TombstoneBundleRepo.tombstones(scope).toList)(
+      t => Some(t.deletedAt),
+      (es, ls) => es.modify(_.tombstones).setTo(ls)
+    )

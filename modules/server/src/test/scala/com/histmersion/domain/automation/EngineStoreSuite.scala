@@ -74,6 +74,7 @@ object EngineStoreSuite:
         val agentRuns = RunService.InMemory(state, jobs, clock)
         val managers = ManagerService.InMemory(state, jobs, clock)
         val focus = FocusService.InMemory(state, clock)
+        val agentState = com.histmersion.domain.automation.agents.AgentStateService.InMemory(state, clock)
         def article(slug: String, title: String): Unit = titles.update((GoalLinkKind.Article, slug), title)
         def source(citekey: String, title: String): Unit = titles.update((GoalLinkKind.Source, citekey), title)
         def within[A](work: DbCon ?=> A): A = connect(NoDatabase)(work))
@@ -101,6 +102,7 @@ object EngineStoreSuite:
           val agentRuns = RunService(db)
           val managers = ManagerService(db)
           val focus = FocusService(db)
+          val agentState = com.histmersion.domain.automation.agents.AgentStateService(db)
           def article(slug: String, title: String): Unit =
             connect(ds)(
               sql"INSERT INTO articles (slug, title, kind, body) VALUES ($slug, $title, 'concept', '')".update.run()

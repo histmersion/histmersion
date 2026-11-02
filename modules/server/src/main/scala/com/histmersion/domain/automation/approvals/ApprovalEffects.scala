@@ -18,3 +18,13 @@ trait ApprovalEffects:
 
   /** Apply an approved proposal of one of [[subjectKinds]]: what it did, or why it failed. */
   def applySubject(a: ApprovalInfo): Either[String, String]
+
+object ApprovalEffects:
+  /** The effects the domains contribute, as one: the library's source proposals and each subject kind's own. */
+  def of(proposals: ProposalEffect, subjects: List[SubjectEffect]): ApprovalEffects = new ApprovalEffects:
+    def proposal(payload: String): Option[() => Either[String, String]] = proposals.proposal(payload)
+    val subjectKinds: Set[ApprovalKind] = subjects.map(_.kind).toSet
+    def applySubject(a: ApprovalInfo): Either[String, String] =
+      subjects.find(s => ApprovalKind.parse(a.kind).contains(s.kind)) match
+        case Some(s) => s.apply(a)
+        case None    => Left(s"no domain applies a ${a.kind} approval")

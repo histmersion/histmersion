@@ -14,7 +14,7 @@ import com.histmersion.api.Agents.*
 import com.histmersion.api.GoalPlans.LinkKind
 import com.histmersion.api.Managers.*
 import com.histmersion.db.{AgentRepo, Db, GoalLinkRepo, ManagerRepo, Migrate}
-import com.histmersion.server.{Deps, Handlers}
+import com.histmersion.server.{Deps, ServerWiring}
 import io.circe.Json
 import sttp.ai.core.agent.*
 
@@ -66,10 +66,10 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
   private def str(s: String) = Json.fromString(s).noSpaces
 
-  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, Handlers) =
+  private def handlers(c: LlmClient, cfg: AppConfig = baseCfg): (AgentsHandlers, ServerWiring) =
     val deps = Deps(cfg, ds)
-    val h = Handlers(deps)
-    (AgentsHandlers(TransitionSite(deps, h, Some(TestRuns.noonClock())), (_, _) => Right(c)), h)
+    val h = ServerWiring(deps)
+    (AgentsHandlers(ServerEngineSite(deps, h, Some(TestRuns.noonClock())), (_, _) => Right(c)), h)
 
   private def clean(): Unit =
     Migrate.run(ds)
@@ -89,7 +89,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
   override def beforeEach(context: BeforeEach): Unit = clean()
   override def afterEach(context: AfterEach): Unit = clean()
 
-  private def seed(h: Handlers): Unit =
+  private def seed(h: ServerWiring): Unit =
     assert(
       h.library.sources
         .put(
@@ -125,7 +125,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
         .patch(Ck2, SourcePatch(metadata = Some(MetadataPatch(status = Some(SourceStatus.Contested)))))
         .isRight
     )
-    assert(h.putGoal(Goal, GoalPut("Zz tin in the Bronze Age", notes = Some("where the tin came from"))).isRight)
+    assert(h.goals.put(Goal, GoalPut("Zz tin in the Bronze Age", notes = Some("where the tin came from"))).isRight)
 
   private val articleBody =
     s"""Tin reached the Aegean by sea [[$Ck]].

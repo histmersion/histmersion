@@ -1,4 +1,4 @@
-package com.histmersion.server.agents
+package com.histmersion.domain.research.workflows
 
 import com.histmersion.domain.automation.approvals.ApprovalChecks
 import com.histmersion.domain.automation.managers.{ManagerContext, ManagerKindDefinition}
@@ -10,23 +10,22 @@ import com.histmersion.domain.{AutopilotPolicy, ManagerPolicy}
 import com.histmersion.domain.AutopilotPolicy.{DraftFacts, PlannedFacts, Verdict}
 import com.histmersion.api.GoalPlans.DraftMode
 import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts}
-import com.histmersion.config.{AgentsConfig, LibraryAgentsConfig}
-import com.histmersion.domain.ManagerDefaults
-import com.histmersion.domain.research.workflows.CompileArticlePipeline
-import com.histmersion.server.Handlers
+import com.histmersion.config.{AgentsConfig, AgentSeedConfig, LibraryAgentsConfig}
+import com.histmersion.domain.{ManagerDefaults, SeedPlanDefaults}
+import io.scalaland.chimney.dsl.*
 
 import java.time.Instant
 import scala.collection.mutable.Builder
 
 /** The `seed:<goal>` manager kind (propose-articles, then one article-compile item per article a person approved — a
-  * compiled article is queued for the review manager — and the goal's plan), registered by this transition adapter
-  * until research contributes it.
+  * compiled article is queued for the review manager — and the goal's plan), as research contributes it: over its
+  * articles and the goals its site reads; the seeding settings are `agents.seed`.
   */
-final class SeedManagerKind(h: Handlers, lib: => LibraryAgentsConfig) extends ManagerKindDefinition:
+final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) extends ManagerKindDefinition:
   val kind: Kind = Kind.Seed
 
   def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig =
-    lib.seed.seedPlan.managerDefaults(m)
+    SeedManagerKind.plan(lib.seed).managerDefaults(m)
 
   def pipelineOf(itemKind: String): Pipeline = itemKind match
     case ProposeArticles => Pipeline.ProposeArticles
@@ -83,7 +82,7 @@ final class SeedManagerKind(h: Handlers, lib: => LibraryAgentsConfig) extends Ma
       out: Builder[String, List[String]]
   ): Unit =
     item.kind match
-      case ArticleCompile if h.research.articles.get(item.target).isRight =>
+      case ArticleCompile if site.articles.get(item.target).isRight =>
         m.goal.foreach(g => c.linkGoal(g, GoalPlans.LinkKind.Article, item.target, Some(s"compiled by ${m.id}")))
         val _ = c.ensure(Kind.Review, ReviewId, None)
         c.chainReview(ReviewId, item.target, s"compiled by ${m.id}", out)
@@ -105,7 +104,8 @@ final class SeedManagerKind(h: Handlers, lib: => LibraryAgentsConfig) extends Ma
     itemKind match
       case ProposeArticles | PlanGoalItem =>
         val g = Option(raw.trim).filter(_.nonEmpty).orElse(m.goal).getOrElse("")
-        h.getGoal(g)
+        site
+          .goal(g)
           .map(_.slug)
           .flatMap(s =>
             Either.cond(
@@ -144,8 +144,8 @@ final class SeedManagerKind(h: Handlers, lib: => LibraryAgentsConfig) extends Ma
                   .orElse(run.flatMap(_.params.minSources))
                   .getOrElse(lib.seed.minSources)
               val facts = plan.articles.map { p =>
-                val free = !c.slugExists(p.slug) && h.research.articles.get(p.slug).isLeft
-                PlannedFacts(p.slug, free, h.research.articles.filterReach(p.filter, Nil, 0)._1)
+                val free = !c.slugExists(p.slug) && site.articles.get(p.slug).isLeft
+                PlannedFacts(p.slug, free, site.articles.filterReach(p.filter, Nil, 0)._1)
               }
               val today = c
                 .autoApprovedSince(ApprovalKind.ArticlePlan, day)
@@ -192,7 +192,7 @@ final class SeedManagerKind(h: Handlers, lib: => LibraryAgentsConfig) extends Ma
   ): Option[String] =
     item.kind match
       case ProposeArticles =>
-        h.getGoal(item.target) match
+        site.goal(item.target) match
           case Left(_)  => c.settleNow(m, item, ItemStatus.Cancelled, "the goal no longer exists")
           case Right(g) =>
             c.start(
@@ -230,7 +230,7 @@ final class SeedManagerKind(h: Handlers, lib: => LibraryAgentsConfig) extends Ma
               out
             )
       case PlanGoalItem =>
-        h.getGoal(item.target) match
+        site.goal(item.target) match
           case Left(_)  => c.settleNow(m, item, ItemStatus.Cancelled, "the goal no longer exists")
           case Right(g) =>
             // sub-goals only above the depth limit (a goal there gets queries and works, no children)
@@ -247,3 +247,7 @@ final class SeedManagerKind(h: Handlers, lib: => LibraryAgentsConfig) extends Ma
             )
       case other =>
         c.settleNow(m, item, ItemStatus.Cancelled, s"'$other' items are not driven by a ${m.kind} manager")
+
+object SeedManagerKind:
+  /** The seeding defaults a seed manager's plan is held to. */
+  def plan(seed: AgentSeedConfig): SeedPlanDefaults = seed.transformInto[SeedPlanDefaults]

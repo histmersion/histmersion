@@ -13680,9 +13680,6 @@
       "type": "com.histmersion.db.GoalRepo$package$",
       "fields": [
         {
-          "name": "given_DbCodec_AgentStateEntry$lzy1"
-        },
-        {
           "name": "given_DbCodec_GoalRow$lzy1"
         }
       ]
@@ -15575,8 +15572,11 @@
       ]
     },
     {
-      "type": "com.histmersion.server.Handlers",
+      "type": "com.histmersion.server.ServerWiring",
       "fields": [
+        {
+          "name": "agentState$lzy1"
+        },
         {
           "name": "attestations$lzy1"
         },
@@ -15584,13 +15584,28 @@
           "name": "calibreGaps$lzy1"
         },
         {
+          "name": "checks$lzy1"
+        },
+        {
           "name": "events$lzy1"
+        },
+        {
+          "name": "formats$lzy1"
+        },
+        {
+          "name": "goals$lzy1"
         },
         {
           "name": "ingest$lzy1"
         },
         {
+          "name": "instance$lzy1"
+        },
+        {
           "name": "jobControl$lzy1"
+        },
+        {
+          "name": "jobList$lzy1"
         },
         {
           "name": "library$lzy1"
@@ -15599,7 +15614,13 @@
           "name": "librarySite$lzy1"
         },
         {
+          "name": "mirror$lzy1"
+        },
+        {
           "name": "personal$lzy1"
+        },
+        {
+          "name": "placeCard$lzy1"
         },
         {
           "name": "referables$lzy1"
@@ -15614,6 +15635,9 @@
           "name": "resolveView$lzy1"
         },
         {
+          "name": "seeding$lzy1"
+        },
+        {
           "name": "seenMarks$lzy1"
         },
         {
@@ -15621,6 +15645,12 @@
         },
         {
           "name": "storedOriginals$lzy1"
+        },
+        {
+          "name": "upkeep$lzy1"
+        },
+        {
+          "name": "workListView$lzy1"
         }
       ]
     },
@@ -19562,6 +19592,14 @@
     },
     {
       "type": "tools.jackson.databind.ObjectMapper"
+    },
+    {
+      "type": "com.histmersion.domain.automation.agents.AgentStateRepo$",
+      "fields": [
+        {
+          "name": "given_DbCodec_AgentStateEntry$lzy1"
+        }
+      ]
     },
     {
       "type": {

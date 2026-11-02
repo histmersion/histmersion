@@ -13,7 +13,7 @@ import com.histmersion.api.GoalPlans.*
 import com.histmersion.api.Managers.*
 import com.histmersion.db.{AgentRepo, FocusRepo, GoalLinkRepo, ManagerRepo, Migrate}
 import com.histmersion.domain.research.workflows.ReviewLedgerFixtures
-import com.histmersion.server.{Deps, Handlers}
+import com.histmersion.server.{Deps, ServerWiring}
 import io.circe.syntax.*
 
 import java.time.Instant
@@ -63,10 +63,10 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def handlers(
       c: AppConfig = cfg,
       digestClock: java.time.Clock = TestRuns.noonClock()
-  ): (AgentsHandlers, Handlers, StubUpstream) =
+  ): (AgentsHandlers, ServerWiring, StubUpstream) =
     val deps = Deps(c, ds)
-    val h = Handlers(deps)
-    val a = AgentsHandlers(TransitionSite(deps, h, Some(digestClock)), (_, _) => Right(ScriptedClient(Model)))
+    val h = ServerWiring(deps)
+    val a = AgentsHandlers(ServerEngineSite(deps, h, Some(digestClock)), (_, _) => Right(ScriptedClient(Model)))
     val up = StubUpstream()
     a.attach(up)
     (a, h, up)
@@ -97,9 +97,9 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def ck(d: String) = "zzfocus" + d.replaceAll("[^a-z0-9]", "")
 
   /** 20 goals with a query each (no plan needed): g05 has an article to review, g10 enough sources. */
-  private def seed(a: AgentsHandlers, h: Handlers, up: StubUpstream): Unit =
+  private def seed(a: AgentsHandlers, h: ServerWiring, up: StubUpstream): Unit =
     goals.foreach { s =>
-      assert(h.putGoal(s, GoalPut(s"Zz $s")).isRight)
+      assert(h.goals.put(s, GoalPut(s"Zz $s")).isRight)
       assert(a.addGoalLink(s, LinkAdd(LinkKind.Query, s"zzfocus query $s")).isRight)
     }
     List("zzfocus_s1", "zzfocus_s2").foreach { c =>
@@ -246,7 +246,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val one = cfg.copy(agents = cfg.agents.copy(maxConcurrentRuns = 1))
     val (a, h, up) = handlers(one); seed(a, h, up)
     val planned = "zzfocus-plan"
-    assert(h.putGoal(planned, GoalPut("Zz a goal with no plan")).isRight)
+    assert(h.goals.put(planned, GoalPut("Zz a goal with no plan")).isRight)
     on(a)
     a.focus.set(FocusSet("pin", Some(planned))).fold(e => fail(e.message), identity)
     val clock = Clock()
@@ -314,7 +314,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     val (a, h, up) = handlers(auto); seed(a, h, up)
     val unplanned = "zzfocus-plan"
-    assert(h.putGoal(unplanned, GoalPut("Zz a goal with no plan")).isRight)
+    assert(h.goals.put(unplanned, GoalPut("Zz a goal with no plan")).isRight)
     // three goals with an approved plan, none reviewed: one more than the limit
     List(g(1), g(2), g(3)).foreach(s =>
       connect(ds)(sql"UPDATE goals SET plan = '{}'::jsonb WHERE slug = $s".update.run())
