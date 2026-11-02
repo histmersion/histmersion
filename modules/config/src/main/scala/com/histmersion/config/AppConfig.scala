@@ -2,6 +2,7 @@ package com.histmersion.config
 
 import org.ekrich.config.ConfigFactory
 import hearth.kindlings.sconfigderivation.ConfigReader
+import hearth.kindlings.sconfigderivation.annotations.configKey
 
 final case class AppConfig(
     server: ServerConfig,
@@ -25,6 +26,8 @@ final case class AppConfig(
     auth: AuthConfig,
     runtime: RuntimeConfig,
     agents: AgentsConfig,
+    /** The library's part of the same `agents` block. */
+    @configKey("agents") libraryAgents: LibraryAgentsConfig,
     media: MediaConfig,
     events: EventsConfig,
     config: ConfigReloadConfig,

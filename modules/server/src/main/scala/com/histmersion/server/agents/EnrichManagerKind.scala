@@ -23,7 +23,7 @@ final class EnrichManagerKind(h: Handlers, a: AgentsHandlers) extends ManagerKin
   val kind: Kind = Kind.Enrich
 
   def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig =
-    ReviewSettings.defaultsFor(kind, m, cfg.seed.seedPlan)
+    ReviewSettings.defaultsFor(kind, m)
 
   def pipelineOf(itemKind: String): Pipeline = itemKind match
     case SourceEnrich => Pipeline.EnrichSource

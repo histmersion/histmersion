@@ -45,7 +45,7 @@ class ManagerDefaultsViewsSuite extends munit.FunSuite:
     ),
     enrich = SimpleManagerConfig(11),
     seed = SimpleManagerConfig(12),
-    watch = WatchManagerConfig(maxRuns = 13, cron = "@daily", autoIngestPerDay = 14, drainPerTick = 2),
+    watch = SimpleManagerConfig(13),
     dailyUsd = 2.5
   )
 
@@ -74,7 +74,7 @@ class ManagerDefaultsViewsSuite extends munit.FunSuite:
         ),
         enrich = ManagerRunDefaults(11),
         seed = ManagerRunDefaults(12),
-        watch = WatchManagerDefaults(maxRuns = 13, autoIngestPerDay = 14)
+        watch = ManagerRunDefaults(13)
       )
     )
 
@@ -88,8 +88,8 @@ class ManagerDefaultsViewsSuite extends munit.FunSuite:
     val agents = com.histmersion.config.AppConfig.load().agents
     val d = ManagerDefaultsViews.defaults(agents.managers)
     assertEquals(
-      (d.maxFailures, d.review.maxRuns, d.watch.autoIngestPerDay),
-      (agents.managers.maxFailures, agents.managers.review.maxRuns, agents.managers.watch.autoIngestPerDay)
+      (d.maxFailures, d.review.maxRuns, d.watch.maxRuns),
+      (agents.managers.maxFailures, agents.managers.review.maxRuns, agents.managers.watch.maxRuns)
     )
 
   test("the scheduler's configured settings reach the policy with the built-in weights and priorities beneath them"):

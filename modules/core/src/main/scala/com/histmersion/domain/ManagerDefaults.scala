@@ -8,5 +8,5 @@ final case class ManagerDefaults(
     review: ReviewManagerDefaults,
     enrich: ManagerRunDefaults,
     seed: ManagerRunDefaults,
-    watch: WatchManagerDefaults
+    watch: ManagerRunDefaults
 )

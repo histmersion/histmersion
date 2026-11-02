@@ -38,6 +38,7 @@ final class EnrichSourcePipeline(
     h: Handlers,
     ds: DataSource,
     cfg: => AgentsConfig,
+    lib: => LibraryAgentsConfig,
     upstream: () => AgentUpstream,
     approvals: SourceProposals
 ) extends PipelineDef:
@@ -54,7 +55,7 @@ final class EnrichSourcePipeline(
         StepAgent.EnrichClassify,
         classifyInput(loaded),
         LibraryAnswers.classification
-      )((c, last) => checkClassification(c, cfg.verify.maxAbsYear, last).map(Checked(_, _)))
+      )((c, last) => checkClassification(c, lib.verify.maxAbsYear, last).map(Checked(_, _)))
       verified <- findings(ctx, loaded, classified)
       geocoded <- ctx.code[Geocoded]("geocode")(Right(geocode(ctx, verified)))
       notes <- ctx.llm[Notes, String](
@@ -94,8 +95,8 @@ final class EnrichSourcePipeline(
             regions = s.regions,
             existingClaims = sw.findings.map(_.claim),
             updatedAt = s.updatedAt,
-            head = body.take(cfg.enrich.headChars),
-            windows = windows(body, cfg.enrich.windowChars, cfg.enrich.maxWindows),
+            head = body.take(lib.enrich.headChars),
+            windows = windows(body, lib.enrich.windowChars, lib.enrich.maxWindows),
             tags = s.tags,
             doi = s.doi
           )
@@ -115,7 +116,7 @@ final class EnrichSourcePipeline(
     */
   private def findings(ctx: RunCtx, l: Loaded, c: Classified): Either[Halt, List[VerifiedFinding]] =
     val existing = l.existingClaims.toSet
-    val guards = cfg.enrich.guards.guards((name, kind, at) => h.geocode(name, kind, at).isDefined)
+    val guards = lib.enrich.guards.guards((name, kind, at) => h.geocode(name, kind, at).isDefined)
     l.windows.foldLeft[Either[Halt, List[VerifiedFinding]]](Right(Nil)) { (acc, w) =>
       acc.flatMap { sofar =>
         val user = s"Extract the findings of this stretch of the source.\n\n${meta(l)}\n" +
@@ -132,8 +133,8 @@ final class EnrichSourcePipeline(
             checkFindings(
               f,
               w,
-              cfg.verify.quoteMinRatio,
-              cfg.verify.maxAbsYear,
+              lib.verify.quoteMinRatio,
+              lib.verify.maxAbsYear,
               l.period.orElse(c.period),
               existing ++ sofar.map(_.claim),
               guards,
@@ -228,7 +229,7 @@ final class EnrichSourcePipeline(
 
   /** Why an upstream step cannot run, if it cannot: switched off, or no DOI to ask about. */
   private def upstreamBlocked(l: Loaded): Option[String] =
-    if !cfg.enrich.upstream then Some("upstream checks are off (agents.enrich.upstream)")
+    if !lib.enrich.upstream then Some("upstream checks are off (agents.enrich.upstream)")
     else if l.doi.forall(_.trim.isEmpty) then Some("the source has no DOI")
     else None
 

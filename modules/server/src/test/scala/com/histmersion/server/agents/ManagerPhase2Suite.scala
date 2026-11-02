@@ -49,10 +49,10 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
         roles = b.agents.roles
           .copy(extractor = m, reviewer = m, coldReader = m, skeptic = m, fixer = m, planner = m, writer = m),
         inferFilter = b.agents.inferFilter.copy(minHits = 1),
-        seed = b.agents.seed.copy(minSources = 2),
         approvals = b.agents.approvals.copy(articlePublish = "auto"),
         review = b.agents.review.copy(spotChecks = 0)
-      )
+      ),
+      libraryAgents = b.libraryAgents.copy(seed = b.libraryAgents.seed.copy(minSources = 2))
     )
 
   private lazy val ds = testPool(baseCfg.db)

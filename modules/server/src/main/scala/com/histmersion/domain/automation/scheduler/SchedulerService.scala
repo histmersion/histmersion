@@ -60,7 +60,7 @@ final class SchedulerService(
         f.slug -> GoalInfo(
           f.priority + (if f.pinned then PinBoost else 0),
           ManagerPolicy.parseInstant(f.createdAt),
-          !GoalFocus.finished(f.status) && GoalFocus.stage(f, cfg.seed.minSources) == GoalFocus.Stage.Gathering,
+          !GoalFocus.finished(f.status) && GoalFocus.stage(f, agents.sourcesToPlan) == GoalFocus.Stage.Gathering,
           AutopilotPolicy.articlesInProgress(f.unreviewed, f.compileOpen)
         )
       )

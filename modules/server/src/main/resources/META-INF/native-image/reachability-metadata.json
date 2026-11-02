@@ -12114,6 +12114,22 @@
       ]
     },
     {
+      "type": "com.histmersion.config.LibraryAgentsConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.config.LibraryManagersConfig$",
+      "fields": [
+        {
+          "name": "derived$ConfigReader$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.config.Limits$",
       "fields": [
         {

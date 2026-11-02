@@ -5,7 +5,7 @@ import com.histmersion.files.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.MergePlanner.{Input, Labels, LedgerEntry}
-import com.histmersion.domain.MergeText.MinHash
+import com.histmersion.util.text.MinHash
 
 import com.augustnagro.magnum.*
 import java.io.InputStream
@@ -199,7 +199,7 @@ object MergeState:
             .run()
             .headOption
             .flatten
-            .map(b => s.bodySha256.get -> MergeText.minHash(b, size))
+            .map(b => s.bodySha256.get -> MinHash.of(b, size))
         }
         .toMap
       val there = wanted -- here.keySet
@@ -255,7 +255,7 @@ object MergeState:
             case Left(_) | Right(None) => acc
             case Right(Some(e))        =>
               Bundle.blobSha(e.name).filter(wanted) match
-                case Some(sha) => loop(acc + (sha -> MergeText.minHash(String(tar.readAll(), UTF_8), size)))
+                case Some(sha) => loop(acc + (sha -> MinHash.of(String(tar.readAll(), UTF_8), size)))
                 case None      => loop(acc)
       loop(Map.empty)
     }

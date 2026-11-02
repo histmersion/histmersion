@@ -50,7 +50,7 @@ class AgentsSettingsSuite extends munit.FunSuite:
     assertEquals(cfg.agents.review.maxRounds, 3)
     assertEquals(cfg.agents.trace.keepMessagesDays, 30)
     assertEquals(cfg.agents.promptsDir, "")
-    assert(cfg.agents.enrich.upstream)
+    assert(cfg.libraryAgents.enrich.upstream)
     val on = AppConfig.load(
       org.ekrich.config.ConfigFactory.parseMap(
         java.util.Map.of(
@@ -154,7 +154,7 @@ class AgentsSettingsSuite extends munit.FunSuite:
     )
 
   test("config: the guards' defaults and env overrides"):
-    val cfg = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of())).agents.enrich.guards
+    val cfg = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of())).libraryAgents.enrich.guards
     assertEquals(cfg.minPlacedShare, 0.5)
     assertEquals(cfg.centuryGapYears, 500)
     assertEquals(
@@ -182,7 +182,7 @@ class AgentsSettingsSuite extends munit.FunSuite:
           )
         )
       )
-      .agents
+      .libraryAgents
       .enrich
       .guards
     assertEquals((on.minPlacedShare, on.centuryGapYears, on.phrases), (0.75, 300, List("see table 2", "ibid")))

@@ -102,7 +102,11 @@ class ConfigSuite extends munit.FunSuite:
     val c = loaded(env(), f).config
     assertEquals(c.agents.scheduler.minIntervalMinutes, 90)
     assertEquals(
-      (c.agents.managers.watch.cron, c.agents.managers.watch.autoIngestPerDay, c.agents.managers.watch.maxRuns),
+      (
+        c.libraryAgents.managers.watch.cron,
+        c.libraryAgents.managers.watch.autoIngestPerDay,
+        c.libraryAgents.managers.watch.maxRuns
+      ),
       ("@weekly", 5, 1)
     )
 

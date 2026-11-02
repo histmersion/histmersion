@@ -26,7 +26,7 @@ final class ReviewManagerKind(h: Handlers) extends ManagerKindDefinition:
   val kind: Kind = Kind.Review
 
   def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig =
-    ReviewSettings.defaultsFor(kind, m, cfg.seed.seedPlan)
+    ReviewSettings.defaultsFor(kind, m)
 
   def pipelineOf(itemKind: String): Pipeline = itemKind match
     case InferFilter   => Pipeline.InferFilter

@@ -124,11 +124,7 @@ direction	api:api/Write.scala	util.common -> library: SourcePut	1
 direction	api:api/YearFmt.scala	util.common -> catalogue: EventGeo	1
 direction	api:api/personal/ItemKind.scala	personal -> automation: Goal	1
 direction	api:api/personal/ItemKind.scala	personal -> catalogue: Place	1
-direction	config:config/AgentManagersConfig.scala	automation -> library: WatchManagerConfig	1
 direction	config:config/AgentManagersConfig.scala	automation -> research: ReviewManagerConfig	1
-direction	config:config/AgentsConfig.scala	automation -> library: AgentEnrichConfig	1
-direction	config:config/AgentsConfig.scala	automation -> library: AgentSeedConfig	1
-direction	config:config/AgentsConfig.scala	automation -> library: AgentVerifyConfig	1
 direction	config:config/AgentsConfig.scala	automation -> research: AgentCompileConfig	1
 direction	config:config/AgentsConfig.scala	automation -> research: AgentInferFilterConfig	1
 direction	config:config/AgentsConfig.scala	automation -> research: AgentReviewConfig	1
@@ -137,9 +133,7 @@ direction	core:domain/CompareRuns.scala	automation -> library: AgentVerify	1
 direction	core:domain/CompareRuns.scala	automation -> library: EnrichSource	1
 direction	core:domain/CompareRuns.scala	automation -> library: Finding	1
 direction	core:domain/CompareRuns.scala	automation -> research: ReviewArticle	1
-direction	core:domain/ManagerDefaults.scala	automation -> library: WatchManagerDefaults	1
 direction	core:domain/ManagerDefaults.scala	automation -> research: ReviewManagerDefaults	1
-direction	core:domain/ManagerPolicy.scala	automation -> library: SeedPlanDefaults	1
 direction	core:domain/ManagerPolicy.scala	automation -> research: ReviewArticle	1
 direction	core:domain/ManagerPolicy.scala	automation -> research: ReviewLedger	1
 direction	core:domain/ManagerPolicy.scala	automation -> research: ReviewManagerDefaults	1
@@ -178,7 +172,6 @@ direction	db:db/LintRepo.scala	util.data -> library: Hit	1
 direction	db:db/LintRepo.scala	util.data -> research: CoverageEdge	1
 direction	db:db/LintRepo.scala	util.data -> research: CritiquePairing	1
 direction	db:db/ListSql.scala	util.database -> automation: ListFilters	1
-direction	db:db/MergeState.scala	util.data -> library: MergeText	1
 direction	files:files/BundleEntities.scala	util.data -> automation: Goal	1
 direction	files:files/BundleEntities.scala	util.data -> catalogue: Attestation	1
 direction	files:files/BundleEntities.scala	util.data -> catalogue: Corrections	1

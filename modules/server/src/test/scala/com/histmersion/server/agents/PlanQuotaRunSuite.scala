@@ -41,10 +41,10 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       agents = b.agents.copy(
         enabled = true,
         prices = "sonnet=0/0; zzPaid=3/15; zzFree=0/0",
-        enrich = b.agents.enrich.copy(upstream = false),
         roles = b.agents.roles.copy(extractor = s"${Plan.wire} > ${Paid.wire}"),
         providers = b.agents.providers.copy(codex = b.agents.providers.codex.copy(appServer = false))
-      )
+      ),
+      libraryAgents = b.libraryAgents.copy(enrich = b.libraryAgents.enrich.copy(upstream = false))
     )
 
   private lazy val ds = testPool(baseCfg.db)

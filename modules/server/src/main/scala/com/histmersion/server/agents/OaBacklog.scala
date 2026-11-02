@@ -34,13 +34,15 @@ import javax.sql.DataSource
 final class OaBacklog(
     ds: DataSource,
     cfg: => AgentsConfig,
+    lib: => LibraryAgentsConfig,
     h: com.histmersion.server.Handlers,
     upstream: () => AgentUpstream,
     agents: AgentsHandlers
 ):
 
-  private def mcfg = cfg.managers
+  private def watch = lib.managers.watch
   private def managerDefaults = ManagerDefaultsViews.defaults(cfg.managers)
+  private def watchDefaults = WatchManagerDefaults(watch.maxRuns, watch.autoIngestPerDay)
 
   // ── adding ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -112,7 +114,7 @@ final class OaBacklog(
     val today = ManagerRepo.countEventsBy(ds, Feed.Ingested, ManagerPolicy.dayStart(now))
     connect(ds)(ManagerRepo.light())
       .filter(m => m.kind == Kind.Watch.wire && m.state == State.Active.wire && m.config.autoIngest.contains(true))
-      .map(m => m.id -> ManagerPolicy.ingestAllowance(m.config, managerDefaults, today.getOrElse(m.id, 0)))
+      .map(m => m.id -> watchDefaults.ingestAllowance(m.config, today.getOrElse(m.id, 0)))
       .toMap
 
   /** What a sweep of watcher `managerId` reserves for the backlog: its own pending backlog items, and every pending
@@ -147,7 +149,7 @@ final class OaBacklog(
         val perDay = light
           .get(id)
           .filter(_ => left.contains(id))
-          .map(m => math.max(0, m.config.autoIngestPerDay.getOrElse(mcfg.watch.autoIngestPerDay)))
+          .map(m => math.max(0, m.config.autoIngestPerDay.getOrElse(watch.autoIngestPerDay)))
           .getOrElse(0)
         Lane(pending, perDay, left.getOrElse(id, 0))
       val per = counts.map { case (id, (p, held)) =>
@@ -183,7 +185,7 @@ final class OaBacklog(
         left,
         agents.autopilot.sharedIngestLeft(now),
         now,
-        mcfg.watch.drainPerTick
+        watch.drainPerTick
       )
       if picks.isEmpty then Nil
       else

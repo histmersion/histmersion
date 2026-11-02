@@ -10,7 +10,7 @@ import com.histmersion.domain.{AutopilotPolicy, ManagerPolicy}
 import com.histmersion.domain.AutopilotPolicy.{DraftFacts, PlannedFacts, Verdict}
 import com.histmersion.api.GoalPlans.DraftMode
 import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts}
-import com.histmersion.config.AgentsConfig
+import com.histmersion.config.{AgentsConfig, LibraryAgentsConfig}
 import com.histmersion.domain.ManagerDefaults
 import com.histmersion.server.Handlers
 
@@ -21,11 +21,11 @@ import scala.collection.mutable.Builder
   * compiled article is queued for the review manager — and the goal's plan), registered by this transition adapter
   * until research contributes it.
   */
-final class SeedManagerKind(h: Handlers) extends ManagerKindDefinition:
+final class SeedManagerKind(h: Handlers, lib: => LibraryAgentsConfig) extends ManagerKindDefinition:
   val kind: Kind = Kind.Seed
 
   def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig =
-    ReviewSettings.defaultsFor(kind, m, cfg.seed.seedPlan)
+    lib.seed.seedPlan.managerDefaults(m)
 
   def pipelineOf(itemKind: String): Pipeline = itemKind match
     case ProposeArticles => Pipeline.ProposeArticles
@@ -141,7 +141,7 @@ final class SeedManagerKind(h: Handlers) extends ManagerKindDefinition:
                 mgr
                   .flatMap(_.config.minSources)
                   .orElse(run.flatMap(_.params.minSources))
-                  .getOrElse(c.config.seed.minSources)
+                  .getOrElse(lib.seed.minSources)
               val facts = plan.articles.map { p =>
                 val free = !c.slugExists(p.slug) && h.getArticle(p.slug).isLeft
                 PlannedFacts(p.slug, free, h.filterReach(p.filter, Nil, 0)._1)

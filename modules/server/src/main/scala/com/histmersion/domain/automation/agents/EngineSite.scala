@@ -35,6 +35,9 @@ trait EngineSite:
   /** The AI providers of the pinned plugin generation, by name. */
   def aiProviders: () => ListMap[String, AiProvider]
 
+  /** How many sources a goal gathers before its articles are planned (`agents.seed.min-sources`). */
+  def sourcesToPlan: Int = config.libraryAgents.seed.minSources
+
   /** What the definitions are held to: the contributed tools and roles. */
   def roster: AgentRoster
 

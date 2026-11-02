@@ -16,6 +16,7 @@ import com.histmersion.server.{Deps, Handlers}
 object TransitionWorkflows:
   def contributions(deps: Deps, h: Handlers, a: AgentsHandlers): Contributions =
     def cfg = deps.cfg.agents
+    def lib = deps.cfg.libraryAgents
     val ds = deps.ds
     val work = AcquisitionWork(deps, h, a)
     val upstream = () => work.acquisition
@@ -26,20 +27,20 @@ object TransitionWorkflows:
       p => h.library.sources.patch(p.citekey, p.patch).left.map(_.message).map(_ => p.describe)
     )
     val pipelines: List[PipelineDef] = List(
-      EnrichSourcePipeline(h, ds, cfg, upstream, proposals),
-      ReviewArticlePipeline(h, ds, cfg, proposals, a.definitions),
+      EnrichSourcePipeline(h, ds, cfg, lib, upstream, proposals),
+      ReviewArticlePipeline(h, ds, cfg, lib, proposals, a.definitions),
       PlanGoalPipeline(a.host, deps.queues, deps.workLists, a.goals, ds, cfg),
-      CompileArticlePipeline(h, ds, cfg, (req, parent) => a.startRunAs(req, Origin.Run, Some(parent))),
+      CompileArticlePipeline(h, ds, cfg, lib, (req, parent) => a.startRunAs(req, Origin.Run, Some(parent))),
       CurrencyCheckPipeline(h, ds, cfg, upstream, proposals),
       AcquisitionSweepPipeline(h, ds, cfg, upstream, work.oaBacklog),
       InferFilterPipeline(h, ds, cfg),
-      ProposeArticlesPipeline(h, ds, cfg),
+      ProposeArticlesPipeline(h, ds, cfg, lib),
       HintEffectPipeline(deps.workLists, a.approvalStore, ds, cfg)
     )
     Contributions(
       pipelines.map(PipelineWorkflow.of(_, a.definitions)),
       TransitionTools(h, upstream, cfg.tools).contributions,
-      List(ReviewManagerKind(h), EnrichManagerKind(h, a), SeedManagerKind(h), WatchManagerKind(h, work)),
+      List(ReviewManagerKind(h), EnrichManagerKind(h, a), SeedManagerKind(h, lib), WatchManagerKind(h, work, lib)),
       List(ArticleObjectives(h))
     )
 

@@ -113,10 +113,19 @@ class MergeTextSuite extends munit.FunSuite with Bounded:
     val base = (1 to 2000).map(_ => rnd.alphanumeric.take(3 + rnd.nextInt(6)).mkString).mkString(" ")
     val ocr = base.split(" ").zipWithIndex.map((w, i) => if i % 97 == 0 then w.reverse else w).mkString(" ")
     val other = (1 to 2000).map(_ => rnd.alphanumeric.take(3 + rnd.nextInt(6)).mkString).mkString(" ")
-    val (a, b, c) = (MergeText.minHash(base), MergeText.minHash(ocr), MergeText.minHash(other))
-    assertEquals(a.similarity(MergeText.minHash(base)), 1.0)
+    val (a, b, c) = (
+      com.histmersion.util.text.MinHash.of(base),
+      com.histmersion.util.text.MinHash.of(ocr),
+      com.histmersion.util.text.MinHash.of(other)
+    )
+    assertEquals(a.similarity(com.histmersion.util.text.MinHash.of(base)), 1.0)
     assert(a.similarity(b) >= 0.8, a.similarity(b).toString)
     assert(a.similarity(c) < 0.1, a.similarity(c).toString)
-    assertEquals(MergeText.minHash(base), a)
+    assertEquals(com.histmersion.util.text.MinHash.of(base), a)
     // a text shorter than a shingle is still a signature
-    assertEquals(MergeText.minHash("short text").similarity(MergeText.minHash("Short, text!")), 1.0)
+    assertEquals(
+      com.histmersion.util.text.MinHash
+        .of("short text")
+        .similarity(com.histmersion.util.text.MinHash.of("Short, text!")),
+      1.0
+    )

@@ -13,9 +13,9 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
 
 /** The sources as a bundle carries them (docs/research-merge-import.md §4): each source with its findings, its edges in
-  * and out, its parked edges, its old citekeys and its assessment, read out in a deterministic order (by uid; owned sets
-  * by their source's uid, then their own key, in the "C" collation); and written in by an import, a source's body and
-  * stored original as their blobs arrive.
+  * and out, its parked edges, its old citekeys and its assessment, read out in a deterministic order (by uid; owned
+  * sets by their source's uid, then their own key, in the "C" collation); and written in by an import, a source's body
+  * and stored original as their blobs arrive.
   */
 private[sources] object SourceBundleRepo:
 
@@ -128,12 +128,12 @@ private[sources] object SourceBundleRepo:
       isbns = Option.when(r.isbns.nonEmpty)(r.isbns)
     )
 
-
   // ── in ───────────────────────────────────────────────────────────────────────────────────────
 
   /** The sources whose body an import wrote or changed: their search chunks are rebuilt in the derived step. */
   private val changedBodies = BundleImport.Once(_ => scala.collection.mutable.LinkedHashSet.empty[UUID])
-  private def bodiesChanged(w: BundleImport.Writer): scala.collection.mutable.LinkedHashSet[UUID] = w.once(changedBodies)
+  private def bodiesChanged(w: BundleImport.Writer): scala.collection.mutable.LinkedHashSet[UUID] =
+    w.once(changedBodies)
 
   def sourcesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
@@ -197,7 +197,6 @@ private[sources] object SourceBundleRepo:
               ON CONFLICT DO NOTHING""".update.run())
     }
 
-
   /** A source's whole edge set travels with it: both sets are emptied for every source written, then its edges. */
   def edgesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
@@ -250,7 +249,6 @@ private[sources] object SourceBundleRepo:
               updated_at = EXCLUDED.updated_at""".update.run()
     }
 
-
   /** The newer verdict wins (§4); a source that is not here (deleted, skipped) has none. */
   def assessmentsIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
@@ -267,7 +265,6 @@ private[sources] object SourceBundleRepo:
             WHERE assessments.checked_at < EXCLUDED.checked_at""".update.run()
     }
 
-
   /** What a merge changes in a body it took from the bundle: the figures it renamed. */
   def bodyRenamesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
@@ -278,7 +275,6 @@ private[sources] object SourceBundleRepo:
       }
       bodiesChanged(w) += u
     }
-
 
   /** The search chunks of a changed body, the finding places of a touched source, a new source's parked edges. */
   def derivedIn(w: BundleImport.Writer): Unit =
@@ -292,7 +288,6 @@ private[sources] object SourceBundleRepo:
       val _ = SourceRepo.placeFindingsIn(w.citekeyOf(u), w.opts.toleranceKm)
     }
     w.insertedSources.foreach(u => SourceRepo.promote(w.citekeyOf(u)))
-
 
   /** A source's body into its row; a stored original into `files`. */
   def blobIn(use: BlobUse, sha: String, w: BundleImport.Writer, files: ContentStore): Option[BlobSink] =

@@ -669,6 +669,8 @@ config:config/InitConfig.scala	config
 config:config/ItemCount.scala	values
 config:config/KeyedServiceConfig.scala	library.acquisition
 config:config/LandingConfig.scala	library.acquisition
+config:config/LibraryAgentsConfig.scala	library.workflows
+config:config/LibraryManagersConfig.scala	library.workflows
 config:config/Limits.scala	config
 config:config/LintConfig.scala	util.data.checks
 config:config/LoadedConfig.scala	config

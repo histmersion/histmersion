@@ -47,11 +47,11 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         enabled = true,
         autoEnrich = true,
         prices = "zzautoenrich=0/0",
-        enrich = b.agents.enrich.copy(upstream = false),
         roles = b.agents.roles.copy(extractor = "local:zzautoenrich"),
         // the direct run: auto-enrich as it was before the managers' phase 2 (still what managers off does)
         managers = b.agents.managers.copy(enabled = false)
-      )
+      ),
+      libraryAgents = b.libraryAgents.copy(enrich = b.libraryAgents.enrich.copy(upstream = false))
     )
 
   private lazy val ds = testPool(baseCfg.db)

@@ -74,6 +74,7 @@ final class ReviewArticlePipeline(
     h: Handlers,
     ds: DataSource,
     cfg: => AgentsConfig,
+    lib: => LibraryAgentsConfig,
     approvals: SourceProposals,
     definitions: AgentDefinitions
 ) extends PipelineDef:
@@ -201,7 +202,7 @@ final class ReviewArticlePipeline(
             carry.ledger,
             absorbed,
             ctx.run.id,
-            f => finalRegression(f, start.critiques, snap.critiques, edited, cfg.verify.quoteMinRatio)
+            f => finalRegression(f, start.critiques, snap.critiques, edited, lib.verify.quoteMinRatio)
           )
           if ids.nonEmpty then
             ctx.warn(
@@ -505,10 +506,10 @@ final class ReviewArticlePipeline(
     val (checklist, shown) = checklistText(s, confirming)
     // the final pass owes no rulings: it verifies the checklist, it does not work through it (§6.9)
     val critique =
-      CritiqueRule(s.critiques, if confirming then Nil else shown, full = true, s.body, cfg.verify.quoteMinRatio)
+      CritiqueRule(s.critiques, if confirming then Nil else shown, full = true, s.body, lib.verify.quoteMinRatio)
     val seqs = ctx.reserve(3)
     def prior(rv: Reviewer) = Some(
-      Prior(l.open.filter(_.reviewer == rv).map(_.finding), s.body, cfg.verify.quoteMinRatio)
+      Prior(l.open.filter(_.reviewer == rv).map(_.finding), s.body, lib.verify.quoteMinRatio)
     )
     ctx.parallel(
       List(
@@ -523,7 +524,7 @@ final class ReviewArticlePipeline(
             checkRules(
               a,
               last,
-              evidenceCheck(isCitekey, records(), cfg.verify.quoteMinRatio),
+              evidenceCheck(isCitekey, records(), lib.verify.quoteMinRatio),
               prior(Reviewer.Rules),
               spotRule(s, calls),
               Some(critique)
@@ -551,7 +552,7 @@ final class ReviewArticlePipeline(
               last,
               isCitekey,
               records(),
-              cfg.verify.quoteMinRatio,
+              lib.verify.quoteMinRatio,
               prior(Reviewer.Skeptic),
               Some(critique)
             )
@@ -567,7 +568,7 @@ final class ReviewArticlePipeline(
   private def spotRule(s: Snapshot, calls: List[AgentVerify.ToolUse]): Option[SpotRule] =
     val inCorpus = s.cited.filter(_.title.isDefined).map(_.citekey).distinct
     val required = spotChecksRequired(cfg.review.spotChecks, inCorpus.size)
-    Option.when(required > 0)(SpotRule(required, s.cited.map(_.citekey).toSet, s.body, calls, cfg.verify.quoteMinRatio))
+    Option.when(required > 0)(SpotRule(required, s.cited.map(_.citekey).toSet, s.body, calls, lib.verify.quoteMinRatio))
 
   private def agentOf(rv: Reviewer): StepAgent = rv match
     case Reviewer.ColdReader => StepAgent.ColdReader
@@ -595,8 +596,8 @@ final class ReviewArticlePipeline(
         .toOption
         .map(d => math.max(1, math.min(d.maxTurns, cfg.review.recheckTurns + asked.size)))
       val ev =
-        if rv == Reviewer.ColdReader then NoEvidence else evidenceCheck(isCitekey, records(), cfg.verify.quoteMinRatio)
-      val prior = Prior(asked.map(_.finding), s.body, cfg.verify.quoteMinRatio)
+        if rv == Reviewer.ColdReader then NoEvidence else evidenceCheck(isCitekey, records(), lib.verify.quoteMinRatio)
+      val prior = Prior(asked.map(_.finding), s.body, lib.verify.quoteMinRatio)
       // the person's notes reach the skeptic (and the fixer), never the other reviewers
       val notes = if rv == Reviewer.Skeptic then ctx.notes else ""
       () =>
@@ -688,7 +689,7 @@ final class ReviewArticlePipeline(
     def answered(b: String, ref: CritiqueRef) = Critiques.find(pairsOf(b), ref).exists(!_.open)
     val guards = FixGuards(
       pairsOf,
-      (b0, b1) => ReviewLedger.guard(l, b0, b1, answered, cites, cfg.verify.quoteMinRatio),
+      (b0, b1) => ReviewLedger.guard(l, b0, b1, answered, cites, lib.verify.quoteMinRatio),
       b => h.repairPairing(b)
     )
     ctx.llm[FixerAnswer, Fix](
@@ -710,7 +711,7 @@ final class ReviewArticlePipeline(
         corpus,
         isCitekey,
         records(),
-        cfg.verify.quoteMinRatio,
+        lib.verify.quoteMinRatio,
         last,
         s.coverage,
         s.critiques,
@@ -730,7 +731,7 @@ final class ReviewArticlePipeline(
     def near(f: Finding) =
       Option(
         units.indexWhere(u =>
-          f.quote.trim.nonEmpty && AgentVerify.findQuote(f.quote, u.text, cfg.verify.quoteMinRatio).accepted
+          f.quote.trim.nonEmpty && AgentVerify.findQuote(f.quote, u.text, lib.verify.quoteMinRatio).accepted
         )
       )
         .filter(_ >= 0)

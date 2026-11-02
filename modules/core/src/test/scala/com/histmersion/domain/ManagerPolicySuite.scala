@@ -251,7 +251,8 @@ class ManagerPolicySuite extends munit.FunSuite:
     assert(ManagerConfig.parse(List("maxRun=3")).isLeft)
     assert(ManagerConfig.parse(List("max-runs=x")).isLeft)
     val d = ReviewManagerDefaults(2, 3, 3, 2, 2, 30, 2, 10, 90, inferFilter = true, extendMinNew = 0)
-    val m = ManagerDefaults(3, 15, 360, 0, d, ManagerRunDefaults(4), ManagerRunDefaults(1), watch)
+    val m =
+      ManagerDefaults(3, 15, 360, 0, d, ManagerRunDefaults(4), ManagerRunDefaults(1), ManagerRunDefaults(watch.maxRuns))
     val rs = ReviewSettings.of(ManagerConfig(maxRuns = Some(3)), d, m)
     assertEquals((rs.maxRuns, rs.maxOpen, rs.rounds, rs.maxFailures), (3, 6, 3, 3))
     assertEquals(ReviewSettings.defaults(d, m).merge(ManagerConfig(rounds = Some(5))).rounds, Some(5))
@@ -319,11 +320,11 @@ class ManagerPolicySuite extends munit.FunSuite:
 
   test("settings by kind: enrich and seed take their own max-runs; seed's defaults show the plan's checks"):
     val d = ReviewManagerDefaults(2, 3, 3, 2, 2, 30, 2, 10, 90, inferFilter = true, extendMinNew = 0)
-    val m = ManagerDefaults(3, 15, 360, 0, d, ManagerRunDefaults(4), ManagerRunDefaults(1), watch)
+    val m = ManagerDefaults(3, 15, 360, 0, d, ManagerRunDefaults(4), ManagerRunDefaults(1), ManagerRunDefaults(1))
     assertEquals(ReviewSettings.forKind(Kind.Enrich, ManagerConfig(), m).maxRuns, 4)
     assertEquals(ReviewSettings.forKind(Kind.Seed, ManagerConfig(maxRuns = Some(2)), m).maxRuns, 2)
     assertEquals(ReviewSettings.forKind(Kind.Review, ManagerConfig(), m).staleAfterDays, 90)
-    val sd = ReviewSettings.defaultsFor(Kind.Seed, m, SeedPlanDefaults(maxArticles = 6, minSources = 5))
+    val sd = SeedPlanDefaults(maxArticles = 6, minSources = 5).managerDefaults(m)
     assertEquals((sd.maxRuns, sd.minSources, sd.maxArticles), (Some(1), Some(5), Some(6)))
     val c = ManagerConfig.parse(List("stale-after-days=30", "infer-filter=off", "min-sources=3", "max-articles=4"))
     assertEquals(
@@ -352,7 +353,7 @@ class ManagerPolicySuite extends munit.FunSuite:
     ReviewManagerDefaults(2, 3, 3, 2, 2, 30, 2, 10, 90, inferFilter = true, extendMinNew = 0),
     ManagerRunDefaults(4),
     ManagerRunDefaults(1),
-    watch
+    ManagerRunDefaults(watch.maxRuns)
   )
 
   test("watcher: its item kinds and words, its sweeps (none named = both), its settings and defaults"):
@@ -367,7 +368,7 @@ class ManagerPolicySuite extends munit.FunSuite:
     assertEquals(Sweep.of(ManagerConfig(sweeps = Some(List("currency")))), List(Sweep.Currency))
     assertEquals(Sweep.of(ManagerConfig(sweeps = Some(Nil))), Nil)
     assertEquals(ReviewSettings.forKind(Kind.Watch, ManagerConfig(), mcfg).maxRuns, 1)
-    val d = ReviewSettings.defaultsFor(Kind.Watch, mcfg, SeedPlanDefaults(maxArticles = 6, minSources = 5))
+    val d = watch.managerDefaults(mcfg)
     assertEquals(
       (d.autoIngest, d.autoIngestPerDay, d.sweeps),
       (Some(false), Some(5), Some(List("acquisition", "currency")))
@@ -381,12 +382,12 @@ class ManagerPolicySuite extends munit.FunSuite:
     assert(ManagerConfig.parse(List("auto-ingest=perhaps")).isLeft)
 
   test("auto-ingest is opt-in: off by default; on, what is left of the daily cap (the watcher's own cap wins)"):
-    assertEquals(ingestAllowance(ManagerConfig(), mcfg, 0), 0)
-    assertEquals(ingestAllowance(ManagerConfig(autoIngest = Some(false)), mcfg, 0), 0)
-    assertEquals(ingestAllowance(ManagerConfig(autoIngest = Some(true)), mcfg, 0), 5)
-    assertEquals(ingestAllowance(ManagerConfig(autoIngest = Some(true)), mcfg, 4), 1)
-    assertEquals(ingestAllowance(ManagerConfig(autoIngest = Some(true)), mcfg, 9), 0)
-    assertEquals(ingestAllowance(ManagerConfig(autoIngest = Some(true), autoIngestPerDay = Some(2)), mcfg, 1), 1)
+    assertEquals(watch.ingestAllowance(ManagerConfig(), 0), 0)
+    assertEquals(watch.ingestAllowance(ManagerConfig(autoIngest = Some(false)), 0), 0)
+    assertEquals(watch.ingestAllowance(ManagerConfig(autoIngest = Some(true)), 0), 5)
+    assertEquals(watch.ingestAllowance(ManagerConfig(autoIngest = Some(true)), 4), 1)
+    assertEquals(watch.ingestAllowance(ManagerConfig(autoIngest = Some(true)), 9), 0)
+    assertEquals(watch.ingestAllowance(ManagerConfig(autoIngest = Some(true), autoIngestPerDay = Some(2)), 1), 1)
     assertEquals(dayStart(Instant.parse("2026-10-17T23:59:00Z")), Instant.parse("2026-10-17T00:00:00Z"))
 
   test("cron: not scheduled → its first firing recorded; due → fire once and move on; a missed firing fires once"):
@@ -425,7 +426,7 @@ class ManagerPolicySuite extends munit.FunSuite:
     )
     assertEquals(
       ReviewSettings
-        .defaultsFor(Kind.Enrich, mcfg.copy(dailyUsd = 5), SeedPlanDefaults(maxArticles = 6, minSources = 5))
+        .defaultsFor(Kind.Enrich, mcfg.copy(dailyUsd = 5))
         .dailyUsd,
       Some(5.0)
     )

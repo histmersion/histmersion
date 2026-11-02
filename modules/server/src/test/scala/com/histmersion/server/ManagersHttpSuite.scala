@@ -64,7 +64,7 @@ class ManagersHttpSuite extends com.histmersion.db.DbSuite:
         assertEquals(cs, 200, cb)
         val m = decode[Managers.ManagerInfo](cb).fold(e => fail(s"$e: $cb"), identity)
         assertEquals((m.id, m.state, m.counts.pending), (s"seed:$Goal", "paused", 1))
-        assertEquals(m.effective.minSources, Some(cfg.agents.seed.minSources))
+        assertEquals(m.effective.minSources, Some(cfg.libraryAgents.seed.minSources))
         assertEquals(post(s"$url/api/agents/managers", """{"kind":"seed"}""")._1, 400, "a seed needs its goal")
         assertEquals(post(s"$url/api/agents/managers", s"""{"kind":"seed","goal":"$Goal"}""")._1, 409)
 

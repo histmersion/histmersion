@@ -34,7 +34,8 @@ import javax.sql.DataSource
   * read only; a plan with nothing left after the checks goes back with why) · record (the approval) · close (the
   * worklog line). A DRY run records the approval it would open on its step.
   */
-final class ProposeArticlesPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfig) extends PipelineDef:
+final class ProposeArticlesPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfig, lib: => LibraryAgentsConfig)
+    extends PipelineDef:
   val pipeline: Pipeline = Pipeline.ProposeArticles
   import ProposeArticlesPipeline.*
 
@@ -57,9 +58,9 @@ final class ProposeArticlesPipeline(h: Handlers, ds: DataSource, cfg: => AgentsC
   private def limits(ctx: RunCtx): PlanArticles.Limits =
     val p = ctx.run.params
     PlanArticles.Limits(
-      math.max(1, p.minSources.getOrElse(cfg.seed.minSources)),
-      math.min(1.0, math.max(0.0, cfg.seed.maxOverlap)),
-      math.max(1, p.maxArticles.getOrElse(cfg.seed.maxArticles))
+      math.max(1, p.minSources.getOrElse(lib.seed.minSources)),
+      math.min(1.0, math.max(0.0, lib.seed.maxOverlap)),
+      math.max(1, p.maxArticles.getOrElse(lib.seed.maxArticles))
     )
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
