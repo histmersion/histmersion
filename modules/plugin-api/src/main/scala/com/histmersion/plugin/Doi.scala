@@ -1,9 +1,11 @@
 package com.histmersion.plugin
 
 import io.github.iltotore.iron.*
-import io.github.iltotore.iron.constraint.string.Match
+import io.github.iltotore.iron.constraint.any.Pure
 
-/** A DOI as the registry writes it after `https://doi.org/`: `10.<registrant>/<suffix>` (`10.1234/abc`). */
+/** A DOI as a plugin states it, the part after `https://doi.org/` (`10.1234/abc`). Unrefined: the host checks it where
+  * it becomes the model's DOI and leaves out one that is none (with a warning), keeping the rest of the record.
+  */
 type Doi = Doi.T
 
-object Doi extends RefinedType[String, Match["10\\.[0-9]+/\\S+"]]
+object Doi extends RefinedType[String, Pure]

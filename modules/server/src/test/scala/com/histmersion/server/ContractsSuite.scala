@@ -28,7 +28,8 @@ import com.histmersion.server.ArchitectureSuite.{SourceFile, Violation}
   *     the web's own, or an api file outside `com.histmersion.api`; a domain package (`com.histmersion.domain…`) naming
   *     the api outside a boundary file (routes, endpoints, tools, transformers, controllers);
   *   - `client-refined` (rule 2): a refined (not `Pure`) constraint in a client module (api, web, cli, plugin-api) —
-  *     the server validates, once, where an api value becomes a domain value;
+  *     the server validates, once, where an api value becomes a domain value; the CLI's local plugin management, where
+  *     the CLI is the only judge, is allowed by name (`ClientAuthorities`);
   *   - `prefix` (rule 5): a type `<Entity><Property>` while a type `<Entity>` exists in the same layer and package —
   *     the property belongs on the entity's companion (`Approval.Kind`); a component that works on the entity
   *     (`…Service`, `…Routes`, …, `Components`), a newtype's constraint `<Name>Rule` and the web page's own components
@@ -395,10 +396,17 @@ object ContractsSuite:
       else Nil
 
     private val RefinedModules = Set("api", "web", "cli", "plugin-api")
+
+    /** The client types that judge validity because their client is the authority: the CLI manages the local plugins
+      * (`histmersion plugin …`) with no server to ask, so it alone checks a plugin's id, its repository and the Scala
+      * package its scaffold writes.
+      */
+    val ClientAuthorities: Set[String] =
+      Set("cli:cli/PluginId.scala", "cli:cli/PluginRepository.scala", "cli:cli/ScalaPackage.scala")
     private val Refinement = "\\bRefined(?:Sub)?Type\\s*\\[[^,]+,\\s*(\\w+)|:\\|\\s*(\\w+)".r
 
     private def clientRefined(s: SourceFile): List[Violation] =
-      if !RefinedModules(module(s)) then Nil
+      if !RefinedModules(module(s)) || ClientAuthorities(s.key) then Nil
       else
         val hits = Refinement
           .findAllMatchIn(s.code)

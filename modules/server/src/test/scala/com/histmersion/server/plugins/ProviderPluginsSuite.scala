@@ -442,15 +442,15 @@ class ProviderPluginsSuite extends munit.FunSuite:
       wikidata = Some(WikidataId("Q42")),
       names = List("Zq Earthquake", "Zq quake")
     )
-    val r = PluginEvents.record("zq-quakes", ok).fold(fail(_), identity)
+    val r = PluginEvents.record("zq-quakes", ok).fold(fail(_), _.record)
     assertEquals(
       (r.provider, r.providerId, r.kind, r.wikidata, r.names),
       ("zq-quakes", "q-1", "earthquake", Some("Q42"), List("Zq quake"))
     )
     assertEquals(r.timeSpan, com.histmersion.api.TimeSpan(Some(-1200L), None, None, Some(-1200L)))
     assertEquals(
-      PluginEvents.record("x", ok.copy(wikidata = Some(WikidataId.assume("not-an-item")))),
-      Left("q-1: catalogue 'x': Wikidata id 'not-an-item' is not a Wikidata item (Q and its number)")
+      PluginEvents.record("x", ok.copy(wikidata = Some(WikidataId("not-an-item")))).map(_.warnings),
+      Right(List("q-1: catalogue 'x': Wikidata id 'not-an-item' is not a Wikidata item (Q and its number), left out"))
     )
     assertEquals(PluginEvents.record("x", ok.copy(id = " ")), Left("a record without an id"))
     assertEquals(PluginEvents.record("x", ok.copy(label = "")), Left("q-1: no label"))
@@ -460,12 +460,12 @@ class ProviderPluginsSuite extends munit.FunSuite:
       Left("q-1: its dating runs backwards")
     )
     assertEquals(
-      PluginEvents.record("x", ok.copy(lat = Some(Latitude.assume(95.0)))),
-      Left("q-1: catalogue 'x': latitude 95.0 is not between -90 and 90")
+      PluginEvents.record("x", ok.copy(lat = Some(Latitude(95.0)))).map(c => (c.record.lat, c.warnings.head)),
+      Right((None, "q-1: catalogue 'x': latitude 95.0 is not between -90 and 90, left out"))
     )
     assertEquals(
-      PluginEvents.record("x", ok.copy(lon = None)),
-      Left("q-1: a position needs both latitude and longitude")
+      PluginEvents.record("x", ok.copy(lon = None)).map(c => (c.record.lat, c.record.lon, c.warnings)),
+      Right((None, None, List("q-1: catalogue 'x': a position needs both latitude and longitude, left out")))
     )
 
   test(
@@ -489,7 +489,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
           plusMinus = Some(50L)
         )
       )
-      .fold(fail(_), identity)
+      .fold(fail(_), _.record)
     val now = CatalogDating.Limits(2026)
     // the span the record does not give, from its stated year and ±; the statement itself kept
     val d = PluginEvents.derive(base, now)

@@ -13,6 +13,7 @@ import com.histmersion.pluginhost.{
   HostLog,
   HostServices,
   JavaHttpTransport,
+  Kept,
   PluginAi,
   PluginEvents,
   PluginGazetteers,
@@ -212,11 +213,21 @@ final class PluginHarness private (
   def readCatalogue(catalogue: String, query: CatalogueQuery): CatalogueReport =
     registries.eventCatalogues.get(catalogue) match
       case None =>
-        CatalogueReport(Nil, Nil, Nil, Nil, Some(s"the plugin registered no event catalogue '$catalogue'"), Nil, Nil)
+        CatalogueReport(
+          Nil,
+          Nil,
+          Nil,
+          Nil,
+          Nil,
+          Some(s"the plugin registered no event catalogue '$catalogue'"),
+          Nil,
+          Nil
+        )
       case Some(cat) =>
         val pages = List.newBuilder[(String, Either[String, Int])]
         val accepted = List.newBuilder[AcceptedEvent]
         val refused = List.newBuilder[String]
+        val leftOut = List.newBuilder[String]
         val ((parts, failure), logged, asked) = run {
           val interval = PluginEvents.safe(cat.requestIntervalMs).getOrElse(1000)
           val polite = PluginEvents.polite(
@@ -241,8 +252,9 @@ final class PluginHarness private (
                     .flatMap(_.events)
                     .foreach(e =>
                       PluginEvents.record(catalogue, e) match
-                        case Left(why) => refused += s"$part: $why"
-                        case Right(r)  =>
+                        case Left(why)                => refused += s"$part: $why"
+                        case Right(Kept(r, warnings)) =>
+                          leftOut ++= warnings.map(w => s"$part: $w")
                           val d = PluginEvents.derive(r, limits)
                           val ts = d.timeSpan
                           accepted += AcceptedEvent(
@@ -258,7 +270,16 @@ final class PluginHarness private (
               }
               (parts.distinct, None)
         }
-        CatalogueReport(parts, pages.result(), accepted.result(), refused.result(), failure, logged, asked)
+        CatalogueReport(
+          parts,
+          pages.result(),
+          accepted.result(),
+          refused.result(),
+          leftOut.result(),
+          failure,
+          logged,
+          asked
+        )
 
   /** One import of the plugin's gazetteer source `name`, as `places fetch` runs it: the download through the server's
     * gazetteer client (its User-Agent and `places.fetch-*` timeouts), each place checked and converted as the server

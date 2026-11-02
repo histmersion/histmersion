@@ -89,7 +89,9 @@ object PluginEvents:
     * stores a record ([[record]]), or `None` when the catalogue does not re-read (or not this record).
     */
   def reread(catalogue: EventCatalogue, provider: String, r: CatalogRecord): Option[CatalogRecord] =
-    event(r).flatMap(e => guard(Right(catalogue.reread(e))).toOption.flatten).flatMap(record(provider, _).toOption)
+    event(r)
+      .flatMap(e => guard(Right(catalogue.reread(e))).toOption.flatten)
+      .flatMap(record(provider, _).toOption.map(_.record))
 
   /** The query a plugin catalogue is asked: the import's years (held at what a `Year` holds) and its area (left out
     * when a corner is off the globe: the host applies the area itself anyway).
@@ -153,11 +155,12 @@ object PluginEvents:
       case NonFatal(e)             => Left(s"the plugin failed: ${e.getClass.getSimpleName}: ${e.getMessage}")
 
   /** Pure: the record a plugin's event becomes under catalogue `provider`, or why it is refused: no id or label, a
-    * historicity that is none of the host's, a dating that runs backwards, a position off the globe, a value its type
-    * would refuse (named with the catalogue and the value), or a record the host cannot read at all (a plugin built
-    * against another SPI). Its kind is the host's spelling of it ([[EventTaxonomy.refine]]).
+    * historicity that is none of the host's, a year a `Year` refuses or a dating that runs backwards (named with the
+    * catalogue and the value), or a record the host cannot read at all (a plugin built against another SPI). A position
+    * off the globe (or half a position) and a Wikidata id that is no item are left out of the record, each with a
+    * warning. Its kind is the host's spelling of it ([[EventTaxonomy.refine]]).
     */
-  def record(provider: String, e: CatalogueEvent): Either[String, CatalogRecord] =
+  def record(provider: String, e: CatalogueEvent): Either[String, Kept[CatalogRecord]] =
     try checked(provider, e)
     catch
       case NonFatal(x) =>
@@ -166,11 +169,18 @@ object PluginEvents:
             s"(${x.getClass.getSimpleName}: ${x.getMessage}) — is the plugin built against plugin SPI ${Spi.Version}?"
         )
 
-  private def checked(provider: String, e: CatalogueEvent): Either[String, CatalogRecord] =
+  private def checked(provider: String, e: CatalogueEvent): Either[String, Kept[CatalogRecord]] =
     val id = Option(e.id).getOrElse("").trim
     val label = Option(e.label).getOrElse("").trim
     def stated[A, B](a: Option[A])(f: A => Either[String, B]): Either[String, Option[B]] =
       SpiValues.optional(a)(f).left.map(why => s"$id: catalogue '$provider': $why")
+    def left(why: String) = s"$id: catalogue '$provider': $why, left out"
+    val (lat0, latWhy) = SpiValues.kept(e.lat)(SpiValues.latitudeOf)
+    val (lon0, lonWhy) = SpiValues.kept(e.lon)(SpiValues.longitudeOf)
+    val (wikidata, wikidataWhy) = SpiValues.kept(e.wikidata)(SpiValues.wikidataOf)
+    val half = Option.when(lat0.isDefined != lon0.isDefined)("a position needs both latitude and longitude")
+    val (lat, lon) = if half.isDefined then (None, None) else (lat0, lon0)
+    val warnings = List(latWhy, lonWhy, half, wikidataWhy).flatten.map(left)
     if id.isEmpty then Left("a record without an id")
     else if label.isEmpty then Left(s"$id: no label")
     else if !Historicity.all.contains(e.historicity) then
@@ -182,15 +192,11 @@ object PluginEvents:
         endFrom <- stated(e.endFrom)(SpiValues.yearOf)
         notAfter <- stated(e.notAfter)(SpiValues.yearOf)
         central <- stated(e.central)(SpiValues.yearOf)
-        lat <- stated(e.lat)(SpiValues.latitudeOf)
-        lon <- stated(e.lon)(SpiValues.longitudeOf)
-        wikidata <- stated(e.wikidata)(SpiValues.wikidataOf)
         points = List(notBefore, beginBy, endFrom, notAfter).flatten.map(_.value)
         _ <- Either.cond(!points.zip(points.drop(1)).exists((a, b) => a > b), (), s"$id: its dating runs backwards")
-        _ <- Either.cond(lat.isDefined == lon.isDefined, (), s"$id: a position needs both latitude and longitude")
       yield
         def long(y: Option[com.histmersion.Year]) = y.map(_.value.toLong)
-        CatalogRecord(
+        val record = CatalogRecord(
           provider,
           id,
           Option(e.url).getOrElse("").trim,
@@ -212,3 +218,4 @@ object PluginEvents:
           e.datingMethod,
           e.raw
         )
+        Kept(record, warnings)
