@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.api.automation.goals.GoalsMarkdown
+
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.*
@@ -19,7 +21,7 @@ object GoalsCmd:
     )
       .mapN { (status, limit, offset, json) => (c: Client) =>
         c.listGoals(Api.GoalQuery(status, limit, offset))
-          .map(r => Output.emit(json, r)(Markdown.goalList))
+          .map(r => Output.emit(json, r)(GoalsMarkdown.goalList))
       }
   }
 
@@ -55,7 +57,7 @@ object GoalsCmd:
             periodStart = from,
             periodEnd = to
           )
-        ).map(g => println(Markdown.goal(g)))
+        ).map(g => println(GoalsMarkdown.goal(g)))
       }
   }
 

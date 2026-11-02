@@ -1,5 +1,8 @@
 package com.histmersion.cli
 
+import com.histmersion.api.library.search.SearchMarkdown
+import com.histmersion.api.library.sources.SourcesMarkdown
+
 import scala.annotation.tailrec
 import hearth.kindlings.optics.syntax.*
 import cats.syntax.all.*
@@ -288,7 +291,9 @@ object Cli:
           )
           .flatMap(p =>
             c.patchSource(ck, p, strict).map { sw =>
-              println(Markdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting))
+              println(
+                SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)
+              )
               sw.source.updatedAt.foreach(u => println(s"\nupdatedAt: $u"))
             }
           )
@@ -328,7 +333,7 @@ object Cli:
         case None =>
           c.sources(f).map { r =>
             // the result says where its page starts, so the footer's `next: offset=` is right on every page
-            Output.emit(json, r)(r => if brief then Markdown.briefResults(r) else Markdown.searchResults(r))
+            Output.emit(json, r)(r => if brief then SearchMarkdown.briefResults(r) else SearchMarkdown.searchResults(r))
           }
         case Some(by) =>
           Tree.parseBy(by) match
@@ -336,7 +341,7 @@ object Cli:
               Left(CliError(s"unknown --group '$by' (${GroupAxes.mkString(" | ")})", exitCode = ExitCode.Usage))
             case Some(axes) =>
               c.aggregate(Api.AggregateQuery.tree(axes.mkString(","), f, unit, depth, asOf, samples))
-                .map(h => Output.emit(json, h)(Markdown.tree(_, unit.getOrElse("sources"))))
+                .map(h => Output.emit(json, h)(SearchMarkdown.tree(_, unit.getOrElse("sources"))))
     }
   }
 
@@ -353,7 +358,7 @@ object Cli:
       Output.jsonFlag
     ).mapN { (field, prefix, q, f, json) => (c: Client) =>
       c.facets(field, prefix, f.copy(q = q.map(_.trim).filter(_.nonEmpty)))
-        .map(rows => Output.emit(json, rows)(rs => Markdown.facets(field, rs.toVector)))
+        .map(rows => Output.emit(json, rows)(rs => SearchMarkdown.facets(field, rs.toVector)))
     }
   }
 
@@ -407,7 +412,7 @@ object Cli:
           c.getSource(ck)
             .map(sw =>
               Output.emit(json, if full then sw else sw.modify(_.source.ocrMarkdown).setTo(None))(sw =>
-                Markdown.source(sw.source, sw.findings.toVector, full)
+                SourcesMarkdown.source(sw.source, sw.findings.toVector, full)
               )
             )
       }
@@ -444,7 +449,7 @@ object Cli:
         Output.jsonFlag
       )
         .mapN { (region, f, json) => (c: Client) =>
-          c.findingsPage(Api.FindingsQuery(f, region)).map(p => Output.emit(json, p)(Markdown.geoPage))
+          c.findingsPage(Api.FindingsQuery(f, region)).map(p => Output.emit(json, p)(SearchMarkdown.geoPage))
         }
     }
 
@@ -461,7 +466,7 @@ object Cli:
     ).mapN { (q, region, unit, f0, json) => (c: Client) =>
       val f = f0.copy(q = q.map(_.trim).filter(_.nonEmpty), places = f0.places ++ region.toList)
       c.aggregate(Api.AggregateQuery.time(f, unit))
-        .map(h => Output.emit(json, h)(Markdown.histogram(_, unit.getOrElse("sources"))))
+        .map(h => Output.emit(json, h)(SearchMarkdown.histogram(_, unit.getOrElse("sources"))))
     }
   }
 
@@ -534,7 +539,7 @@ object Cli:
       Opts.options[String]("kind", "Filter by edge kind (repeatable)").orEmpty,
       Output.jsonFlag
     ).mapN { (ck, kinds, json) => (c: Client) =>
-      c.neighbors(ck, kinds).map(rows => Output.emit(json, rows)(rs => Markdown.neighbors(ck, rs.toVector)))
+      c.neighbors(ck, kinds).map(rows => Output.emit(json, rows)(rs => SourcesMarkdown.neighbors(ck, rs.toVector)))
     }
   }
 
@@ -545,7 +550,7 @@ object Cli:
         Opts.option[Int]("depth", "BFS depth 0–4 (default 2)").orNone,
         Output.jsonFlag
       ).mapN { (ck, depth, json) => (c: Client) =>
-        c.graph(ck, depth).map(g => Output.emit(json, g)(Markdown.graph))
+        c.graph(ck, depth).map(g => Output.emit(json, g)(SourcesMarkdown.graph))
       }
     }
 
@@ -558,7 +563,7 @@ object Cli:
       Opts.option[Long]("since", "Only show contradictions from citing papers published from this year on").orNone,
       Output.jsonFlag
     ).mapN { (ck, since, json) => (c: Client) =>
-      c.contradictions(ck, since).map(r => Output.emit(json, r)(Markdown.contradictions(_, ck)))
+      c.contradictions(ck, since).map(r => Output.emit(json, r)(SourcesMarkdown.contradictions(_, ck)))
     }
   }
 

@@ -1,5 +1,8 @@
 package com.histmersion.api
 
+import com.histmersion.api.catalogue.places.PlacesMarkdown
+import com.histmersion.api.library.search.SearchMarkdown
+
 import com.histmersion.values.PlaceKind
 
 /** Pure tests for the gazetteer's Linked-Places / GeoJSON reader-writer (plan §1.6a). No database. */
@@ -200,7 +203,7 @@ class PlacesSuite extends munit.FunSuite:
     )
 
   test("places search output carries the id (that is what --place wants) and the period"):
-    val md = Markdown.places(
+    val md = PlacesMarkdown.places(
       Vector(
         PlaceHit(turkey.id, turkey.label, turkey.kind, None, None, turkey.source, turkey.names, Some("Türkiye"), 122),
         PlaceHit(
@@ -222,10 +225,10 @@ class PlacesSuite extends munit.FunSuite:
     assert(md.contains("122 finding(s)"), md)
     assert(md.contains("**Hatti** (contested)"), md)
     assert(md.contains("1400 BCE–1180 BCE"), md)
-    assertEquals(Markdown.places(Vector.empty), "_No matching places._")
+    assertEquals(PlacesMarkdown.places(Vector.empty), "_No matching places._")
 
   test("the hierarchy renders as an indented list, one level of indent per depth"):
-    val md = Markdown.placeTree(
+    val md = PlacesMarkdown.placeTree(
       Vector(
         PlaceTreeRow("continent_asia", "Asia", PlaceKind.Region, 0, 400),
         PlaceTreeRow("ne_country_tur", "Turkey", PlaceKind.Region, 1, 122),
@@ -234,10 +237,10 @@ class PlacesSuite extends munit.FunSuite:
     )
     assertEquals(md.linesIterator.map(_.takeWhile(_ == ' ').length).toList, List(0, 2, 4))
     assert(md.contains("**Hatti** (contested)"), md)
-    assertEquals(Markdown.placeTree(Vector.empty), "_No hierarchy._")
+    assertEquals(PlacesMarkdown.placeTree(Vector.empty), "_No hierarchy._")
 
   test("place detail names its validity, its parents and what it contains"):
-    val md = Markdown.place(
+    val md = PlacesMarkdown.place(
       PlaceDetail(
         disputed,
         Some("""{"type":"Polygon","coordinates":[]}"""),
@@ -257,7 +260,7 @@ class PlacesSuite extends munit.FunSuite:
     assert(md.contains("## Hierarchy"), md)
 
   test("place detail renders footprints, links and types when present"):
-    val md = Markdown.place(
+    val md = PlacesMarkdown.place(
       PlaceDetail(
         hatti,
         Some("""{"type":"Polygon","coordinates":[]}"""),
@@ -288,7 +291,7 @@ class PlacesSuite extends munit.FunSuite:
     assert(md.contains("core · 1400 BCE–1200 BCE · _approximate_"), md)
     assert(md.contains("pleiades: [550595](https://pleiades.stoa.org/places/550595) (close_match)"), md)
     assert(!md.contains(PlaceShape.NoBoundaryNote), "a polygon has its boundary")
-    val point = Markdown.place(
+    val point = PlacesMarkdown.place(
       PlaceDetail(
         hatti.copy(dating = PlaceDating.EndOnly, periodStart = None),
         Some("""{"type":"Point","coordinates":[34,40]}"""),
@@ -306,19 +309,22 @@ class PlacesSuite extends munit.FunSuite:
 
   test("the places facet prints the gazetteer id so a chip can filter by it"):
     assertEquals(
-      Markdown.facets("places", Vector(Facet("Anatolia", 110, Some("anatolia")), Facet("Aegean", 112))),
+      SearchMarkdown.facets("places", Vector(Facet("Anatolia", 110, Some("anatolia")), Facet("Aegean", 112))),
       "### places (2)\n\n- Anatolia (110) · `anatolia`\n- Aegean (112)"
     )
 
   test("import and rebuild report what they did"):
-    assertEquals(Markdown.placeImport(PlaceImportResult(3, 7, 2)), "imported 3 place(s), 7 name(s), 2 relation(s)")
+    assertEquals(
+      PlacesMarkdown.placeImport(PlaceImportResult(3, 7, 2)),
+      "imported 3 place(s), 7 name(s), 2 relation(s)"
+    )
     assert(
-      Markdown
+      PlacesMarkdown
         .placeImport(PlaceImportResult(1, 1, 0, List("x: no such parent 'y'")))
         .contains("no such parent")
     )
     assert(
-      Markdown
+      PlacesMarkdown
         .placeRebuild(PlaceRebuildResult(9199, 9199, 0, 938, 26, 16779))
         .contains("938 finding(s) located, 26 unlocated")
     )

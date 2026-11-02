@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.api.media.assets.MediaMarkdown
+
 import com.histmersion.domain.catalogue.places.Wikidata
 
 import com.histmersion.api.*
@@ -112,7 +114,7 @@ class MediaProvidersSuite extends munit.FunSuite:
       rejected = List(MediaCount("licence cc-by-nc not allowed for wikimedia-commons", 1)),
       failed = List("x: y")
     )
-    val md = Markdown.mediaImportReport(r)
+    val md = MediaMarkdown.mediaImportReport(r)
     assert(md.startsWith("# Media import · Wikimedia Commons (dry run — nothing stored)"), md)
     assert(md.contains("**By provider:** Wikimedia Commons 10"), md)
     assert(
@@ -124,4 +126,4 @@ class MediaProvidersSuite extends munit.FunSuite:
     assert(md.contains("**Not stored**\n- licence cc-by-nc not allowed for wikimedia-commons: 1"), md)
     assert(md.contains("**Failed**\n- x: y"), md)
     assert(!md.contains("**Stored:**"), "a dry run stores nothing")
-    assert(Markdown.mediaImportReport(r.copy(dryRun = false, stored = 2)).contains("**Stored:** 2 new"))
+    assert(MediaMarkdown.mediaImportReport(r.copy(dryRun = false, stored = 2)).contains("**Stored:** 2 new"))

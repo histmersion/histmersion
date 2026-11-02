@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.api.automation.goals.GoalsMarkdown
+
 object AgentsMarkdown:
   import Agents.*
 
@@ -395,7 +397,7 @@ object AgentsMarkdown:
         v.schedules.map(s => s"- ${scheduleLine(s)}").mkString("\n")
     val budget = v.budgetUsd.fold("")(b => s"\n\nRun cap: ${usd(b)} USD")
     val plan = v.plan.fold("")(p => s"\n\n## Approved plan\n\n${planBlock(p)}")
-    Markdown.goal(v.goal) + budget + children + links + sch + plan
+    GoalsMarkdown.goal(v.goal) + budget + children + links + sch + plan
 
   private def cell(s: String): String = s.replace("|", "\\|").replace("\n", " ")
 

@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.api.library.search.SearchMarkdown
+
 import com.histmersion.api.Tree.{RegionNode, TreeRow}
 import com.histmersion.values.PlaceKind
 
@@ -278,10 +280,13 @@ class TreeSuite extends munit.FunSuite:
     assertEquals(io.circe.parser.decode[Bucket](js), Right(b))
     assert(Bucket.schema.toString.nonEmpty)
 
-  test("Markdown.tree renders the indented tree with the non-additive caveat"):
+  test("SearchMarkdown.tree renders the indented tree with the non-additive caveat"):
     val t = Tree.regionTree(List(dig, frontier, floating), nodes, relations, Some(-1400), 3, 1)
     val md =
-      Markdown.tree(TimeHistogram(-1600, -1200, 100, Nil, by = "region", total = 3, depth = 3, tree = t), "sources")
+      SearchMarkdown.tree(
+        TimeHistogram(-1600, -1200, 100, Nil, by = "region", total = 3, depth = 3, tree = t),
+        "sources"
+      )
     assert(md.contains("### sources by region"), md)
     assert(md.contains("- **Asia** `asia` — 2 sources · 1 in more than one subregion"), md)
     assert(md.contains("    - **Hittite Empire** `hatti` — 2 sources"), md)
@@ -289,9 +294,9 @@ class TreeSuite extends munit.FunSuite:
     assert(md.contains("- **unlocated** — 1 sources"), md)
     assert(md.contains("non-additive"), md)
 
-  test("Markdown.tree says so when there is nothing to group"):
+  test("SearchMarkdown.tree says so when there is nothing to group"):
     assert(
-      Markdown
+      SearchMarkdown
         .tree(TimeHistogram(-1600, -1200, 100, Nil, by = "region"), "sources")
         .contains("No sources to group")
     )

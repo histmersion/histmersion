@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.api.media.assets.MediaMarkdown
+
 import com.histmersion.domain.media.figures.FigurePick
 
 import com.histmersion.api.*
@@ -102,7 +104,7 @@ class SourcePicturesSuite extends munit.FunSuite:
     val c = MediaImportReport.combine(a, b)
     assertEquals((c.targets, c.stored, c.batches, c.pending, c.failed), (70, 5, 2, 880, List("x")))
     assertEquals(c.byLicence, List(MediaCount("CC0-1.0", 3), MediaCount("CC-BY-4.0", 1)))
-    assert(Markdown.mediaImportReport(c).contains("**Not asked yet:** 880 places/events · 2 batches run"))
+    assert(MediaMarkdown.mediaImportReport(c).contains("**Not asked yet:** 880 places/events · 2 batches run"))
     val r = MediaCoversReport(
       dryRun = true,
       sources = 3,
@@ -111,7 +113,7 @@ class SourcePicturesSuite extends munit.FunSuite:
       lines = List(MediaSourceLine("anthony2007", "cover", MediaProvider.Calibre, "Calibre id 12")),
       skipped = List(MediaCount("illustration: no figures", 1))
     )
-    val md = Markdown.mediaCoversReport(r)
+    val md = MediaMarkdown.mediaCoversReport(r)
     assert(md.contains("3 sources looked at · would link 1 cover and 1 illustration"), md)
     assert(md.contains("[[anthony2007]] — cover from Calibre library: `Calibre id 12`"), md)
     assert(md.contains("- illustration: no figures: 1"), md)

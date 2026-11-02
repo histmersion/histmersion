@@ -1,5 +1,7 @@
 package com.histmersion.domain.research.articles
 
+import com.histmersion.api.research.articles.BacklinksMarkdown
+
 import com.histmersion.api.*
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.{ArticleReviewStatus, Caller, ReviewArticle, ReviewLedger}
@@ -372,7 +374,7 @@ final class ArticlesControllers(
 
   /** "Mentioned in articles", the part a source's default and full views carry. */
   def mentionedIn(citekey: String): String =
-    Markdown.sourceArticles(store.backlinksForSource(citekey).toVector)
+    BacklinksMarkdown.sourceArticles(store.backlinksForSource(citekey).toVector)
 
   /** `GET /api/resolve/{id}`: a stored source, else an article, else nothing — never an error. */
   def resolveId(id: String): Either[ApiError, ResolvedId] =

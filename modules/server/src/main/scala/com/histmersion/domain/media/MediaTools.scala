@@ -1,5 +1,7 @@
 package com.histmersion.domain.media
 
+import com.histmersion.api.media.assets.MediaMarkdown
+
 import chimp.server.*
 import com.histmersion.api.{AssetLinkPut, AssetPatch, AssetsMarkdown, Markdown}
 import com.histmersion.domain.media.assets.AssetsControllers
@@ -103,7 +105,7 @@ object MediaTools:
               periodEnd = in.periodEnd
             )
           ) match
-            case Right(d) => ToolResult.text(Markdown.assetDetail(in.citekey, d))
+            case Right(d) => ToolResult.text(MediaMarkdown.assetDetail(in.citekey, d))
             case Left(e)  => McpOut.error(e)
         },
       tool("asset_links")
@@ -126,10 +128,10 @@ object MediaTools:
                 notes = in.notes
               )
               links.create(put) match
-                case Right(l) => ToolResult.text(Markdown.assetLink(l))
+                case Right(l) => ToolResult.text(MediaMarkdown.assetLink(l))
                 case Left(e)  => McpOut.error(e)
             case None =>
-              ToolResult.text(Markdown.assetLinkList(links.list(in.citekey, in.asset, in.targetType, in.targetId)))
+              ToolResult.text(MediaMarkdown.assetLinkList(links.list(in.citekey, in.asset, in.targetType, in.targetId)))
         },
       tool("delete_asset_link")
         .description("Delete an asset link by id.")

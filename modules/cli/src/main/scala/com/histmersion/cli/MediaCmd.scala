@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.api.media.assets.MediaMarkdown
+
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.*
@@ -10,7 +12,7 @@ object MediaCmd:
   private val detail = Opts.subcommand("detail", "Show asset metadata including spatial/temporal") {
     (Opts.argument[String]("citekey"), Opts.argument[String]("name"))
       .mapN { (ck, name) => (c: Client) =>
-        c.assetDetail(ck, name).map(d => println(Markdown.assetDetail(ck, d)))
+        c.assetDetail(ck, name).map(d => println(MediaMarkdown.assetDetail(ck, d)))
       }
   }
 
@@ -28,7 +30,7 @@ object MediaCmd:
     )
       .mapN { (ck, name, kind, caption, license, lat, lon, ps, pe) => (c: Client) =>
         c.patchAsset(ck, name, AssetPatch(kind, caption, license, lat, lon, ps, pe))
-          .map(d => println(Markdown.assetDetail(ck, d)))
+          .map(d => println(MediaMarkdown.assetDetail(ck, d)))
       }
   }
 
@@ -64,7 +66,7 @@ object MediaCmd:
     )
       .mapN { (name, dry, limit, place, event, refresh, noWait) => (c: Client) =>
         val req = MediaImportRequest(name, dry, limit, place, event, refresh)
-        if dry then c.mediaImport(req).map(r => println(Markdown.mediaImportReport(r)))
+        if dry then c.mediaImport(req).map(r => println(MediaMarkdown.mediaImportReport(r)))
         else
           c.mediaImportJob(req).flatMap { j =>
             println(
@@ -81,7 +83,7 @@ object MediaCmd:
     "The providers `media import` can run on this server: the built-in ones and any a plugin registered, " +
       "with what each asks about, the plugin that provides it and the licences it may store"
   ) {
-    Opts.unit.map(_ => (c: Client) => c.mediaProviders.map(ps => println(Markdown.mediaProviders(ps))))
+    Opts.unit.map(_ => (c: Client) => c.mediaProviders.map(ps => println(MediaMarkdown.mediaProviders(ps))))
   }
 
   private val listCmd =
@@ -97,16 +99,16 @@ object MediaCmd:
         Opts.flag("facets", "Only the counts per provider and licence").orFalse
       )
         .mapN { (provider, licence, place, event, q, limit, offset, facets) => (c: Client) =>
-          if facets then c.mediaFacets.map(f => println(Markdown.mediaFacets(f)))
+          if facets then c.mediaFacets.map(f => println(MediaMarkdown.mediaFacets(f)))
           else
             c.mediaList(Api.MediaQuery(provider, licence, place, event, q, limit, offset))
-              .map(l => println(Markdown.mediaList(l)))
+              .map(l => println(MediaMarkdown.mediaList(l)))
         }
     }
 
   private val showCmd = Opts.subcommand("show", "One picture: origin, licence, credit, and what it shows") {
     Opts.argument[String]("uid").map { uid => (c: Client) =>
-      c.mediaShow(uid.stripPrefix("media:")).map(m => println(Markdown.mediaItem(m)))
+      c.mediaShow(uid.stripPrefix("media:")).map(m => println(MediaMarkdown.mediaItem(m)))
     }
   }
 
@@ -115,7 +117,7 @@ object MediaCmd:
     "Give a source's figures the licence the source records (only figures with none); counts unless --apply"
   ) {
     Opts.flag("apply", "Write the licences").orFalse.map { apply => (c: Client) =>
-      c.fillFigureLicences(apply).map(f => println(Markdown.figureLicenceFill(f)))
+      c.fillFigureLicences(apply).map(f => println(MediaMarkdown.figureLicenceFill(f)))
     }
   }
 
@@ -162,12 +164,12 @@ object MediaCmd:
                 )
               )
           _ = if !noCalibre then
-            println(Markdown.mediaCoversReport(olReports.foldLeft(calReport)(MediaCoversReport.combine)))
+            println(MediaMarkdown.mediaCoversReport(olReports.foldLeft(calReport)(MediaCoversReport.combine)))
           // 3. the rest is the server's: Open Library by the records' ISBNs, and the illustrations
           req = MediaCoversRequest(dry, limit, only, refresh, covers = !noOl, illustrations = !noIll)
           _ <-
             if !req.covers && !req.illustrations then Right(())
-            else if dry || only.isDefined then c.mediaCovers(req).map(r => println(Markdown.mediaCoversReport(r)))
+            else if dry || only.isDefined then c.mediaCovers(req).map(r => println(MediaMarkdown.mediaCoversReport(r)))
             else
               c.mediaCoversJob(req).flatMap { j =>
                 println(

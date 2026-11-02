@@ -1,5 +1,14 @@
 package com.histmersion.api
 
+import com.histmersion.api.catalogue.events.EventsMarkdown
+
+import com.histmersion.api.automation.agents.AgentStateMarkdown
+import com.histmersion.api.catalogue.evidence.AttestationsMarkdown
+import com.histmersion.api.catalogue.places.PlacesMarkdown
+import com.histmersion.api.library.search.SearchMarkdown
+import com.histmersion.api.library.sources.SourcesMarkdown
+import com.histmersion.api.media.assets.MediaMarkdown
+
 import com.histmersion.values.{Confidence, LocationPrecision, SourceStatus}
 import hearth.kindlings.optics.syntax.*
 import io.circe.syntax.*
@@ -174,26 +183,28 @@ class WireSnapshotSuite extends munit.FunSuite:
 
   private def rendered: String =
     val parts: List[(String, String)] = List(
-      "briefResults" -> Markdown.briefResults(result),
-      "briefResults empty" -> Markdown.briefResults(SearchResult(0, Nil)),
-      "sourceFindingsOnly" -> Markdown.sourceFindingsOnly(
+      "briefResults" -> SearchMarkdown.briefResults(result),
+      "briefResults empty" -> SearchMarkdown.briefResults(SearchResult(0, Nil)),
+      "sourceFindingsOnly" -> SourcesMarkdown.sourceFindingsOnly(
         Vector(finding, finding.modify(_.claim).setTo("Zq claim two."))
       ),
-      "sourceFindingsOnly empty" -> Markdown.sourceFindingsOnly(Vector.empty),
-      "graph" -> Markdown.graph(graph),
-      "contradictions" -> Markdown.contradictions(contradictions, Some("zq_alpha_2001")),
-      "contradictions all" -> Markdown.contradictions(contradictions, None),
-      "geoPage" -> Markdown.geoPage(
+      "sourceFindingsOnly empty" -> SourcesMarkdown.sourceFindingsOnly(Vector.empty),
+      "graph" -> SourcesMarkdown.graph(graph),
+      "contradictions" -> SourcesMarkdown.contradictions(contradictions, Some("zq_alpha_2001")),
+      "contradictions all" -> SourcesMarkdown.contradictions(contradictions, None),
+      "geoPage" -> SearchMarkdown.geoPage(
         GeoHitPage(2, List(geo, geo.modify(_.lat).setTo(None).modify(_.lon).setTo(None)), next = None)
       ),
-      "geoResults empty" -> Markdown.geoResults(Vector.empty),
+      "geoResults empty" -> SearchMarkdown.geoResults(Vector.empty),
       "bodySlice" -> Markdown.bodySlice("Zq body text.", 10, 40),
-      "gazetteerSources" -> Markdown.gazetteerSources(gazetteers),
-      "placeGone" -> Markdown.placeGone(PlaceGone("zq_tell", "Zq Tell", Some("zq_land"), Some("Zqland"), 3, 2, 1)),
-      "placeGone none" -> Markdown.placeGone(PlaceGone("zq_tell", "Zq Tell", None, None, 0, 0, 0)),
-      "placeAdded" -> Markdown.placeAdded(summary),
-      "placeRebuild" -> Markdown.placeRebuild(PlaceRebuildResult(10, 4, 5, 9, 1, 7)),
-      "attestation" -> Markdown.attestation(
+      "gazetteerSources" -> PlacesMarkdown.gazetteerSources(gazetteers),
+      "placeGone" -> PlacesMarkdown.placeGone(
+        PlaceGone("zq_tell", "Zq Tell", Some("zq_land"), Some("Zqland"), 3, 2, 1)
+      ),
+      "placeGone none" -> PlacesMarkdown.placeGone(PlaceGone("zq_tell", "Zq Tell", None, None, 0, 0, 0)),
+      "placeAdded" -> PlacesMarkdown.placeAdded(summary),
+      "placeRebuild" -> PlacesMarkdown.placeRebuild(PlaceRebuildResult(10, 4, 5, 9, 1, 7)),
+      "attestation" -> AttestationsMarkdown.attestation(
         Attestation(
           7,
           "zq_alpha_2001",
@@ -208,12 +219,12 @@ class WireSnapshotSuite extends munit.FunSuite:
           note = Some("a zq note")
         )
       ),
-      "agentStateList" -> Markdown.agentStateList(
+      "agentStateList" -> AgentStateMarkdown.agentStateList(
         List(AgentStateEntry("zq-key", "zq value", Some("2026-01-02T03:04:05Z")), AgentStateEntry("zq-other", "x"))
       ),
-      "agentStateList empty" -> Markdown.agentStateList(Nil),
-      "agentState" -> Markdown.agentState(AgentStateEntry("zq-key", "zq value")),
-      "assetDetail" -> Markdown.assetDetail(
+      "agentStateList empty" -> AgentStateMarkdown.agentStateList(Nil),
+      "agentState" -> AgentStateMarkdown.agentState(AgentStateEntry("zq-key", "zq value")),
+      "assetDetail" -> MediaMarkdown.assetDetail(
         "zq_alpha_2001",
         AssetDetail(
           "zq.png",
@@ -231,26 +242,28 @@ class WireSnapshotSuite extends munit.FunSuite:
           periodEnd = Some(-1400)
         )
       ),
-      "mediaThumbLine" -> Markdown.mediaThumbLine(thumb),
-      "mediaList" -> Markdown.mediaList(
+      "mediaThumbLine" -> thumb.markdownLine,
+      "mediaList" -> MediaMarkdown.mediaList(
         MediaList(2, List(item, item.modify(_.license).setTo(None).modify(_.targets).setTo(Nil)), next = Some(2))
       ),
-      "mediaFacets" -> Markdown.mediaFacets(
+      "mediaFacets" -> MediaMarkdown.mediaFacets(
         MediaFacets(List(MediaCount("zq-provider", 3)), List(MediaCount("CC0-1.0", 2), MediaCount("zq", 1, false)))
       ),
-      "figureLicenceFill" -> Markdown.figureLicenceFill(
+      "figureLicenceFill" -> MediaMarkdown.figureLicenceFill(
         FigureLicenceFill(5, 3, applied = false, List(MediaCount("zq_alpha_2001", 3)))
       ),
-      "assetLink" -> Markdown.assetLink(
+      "assetLink" -> MediaMarkdown.assetLink(
         AssetLink(3, "zq_alpha_2001", "zq.png", "depicts", "place", "zq_tell", Some("0,0,10,10"), Some("zq notes"))
       ),
-      "assetLinkLine" -> Markdown.assetLinkLine(AssetLink(4, "zq_alpha_2001", "zq.png", "shows", "event", "zq-event")),
+      "assetLinkLine" -> MediaMarkdown.assetLinkLine(
+        AssetLink(4, "zq_alpha_2001", "zq.png", "shows", "event", "zq-event")
+      ),
       "backupStatus" -> Markdown.backupStatus(
         BackupStatus("zq.dump", "done", 1500, Some(4096), Some("cd" * 32), None, List("old.dump"))
       ),
       "backupStatus failed" -> Markdown.backupStatus(BackupStatus("zq.dump", "failed", 10, error = Some("zq error"))),
-      "event" -> Markdown.event(event),
-      "place" -> Markdown.place(place),
+      "event" -> EventsMarkdown.event(event),
+      "place" -> PlacesMarkdown.place(place),
       "event json" -> event.asJson.spaces2,
       "place json" -> place.asJson.spaces2,
       "resolved source json" -> ResolvedId(

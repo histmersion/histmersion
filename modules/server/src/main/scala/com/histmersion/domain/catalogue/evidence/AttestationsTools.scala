@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.evidence
 
+import com.histmersion.api.catalogue.evidence.AttestationsMarkdown
+
 import chimp.server.*
 import com.histmersion.api.{AttestationPut, Markdown, StrictJson}
 import com.histmersion.domain.Caller
@@ -88,11 +90,12 @@ object AttestationsTools:
           in.id match
             case Some(id) =>
               attestations.get(id) match
-                case Right(a) => ToolResult.text(Markdown.attestation(a))
+                case Right(a) => ToolResult.text(AttestationsMarkdown.attestation(a))
                 case Left(e)  => McpOut.error(e)
             case None =>
               ToolResult.text(
-                Markdown.attestationList(attestations.list(in.citekey, in.targetType, in.targetId, in.limit, in.offset))
+                AttestationsMarkdown
+                  .attestationList(attestations.list(in.citekey, in.targetType, in.targetId, in.limit, in.offset))
               )
         }
 
@@ -121,7 +124,7 @@ object AttestationsTools:
             in.note
           )
           attestations.create(Caller.Local, put) match
-            case Right(a) => ToolResult.text(Markdown.attestation(a))
+            case Right(a) => ToolResult.text(AttestationsMarkdown.attestation(a))
             case Left(e)  => McpOut.error(e)
         }
 

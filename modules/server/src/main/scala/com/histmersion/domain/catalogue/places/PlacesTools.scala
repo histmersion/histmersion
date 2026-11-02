@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
+import com.histmersion.api.catalogue.places.PlacesMarkdown
+
 import chimp.server.*
 import com.histmersion.api.*
 import com.histmersion.domain.Caller
@@ -109,11 +111,11 @@ object PlacesTools:
               places.get(id, in.asOf) match
                 case Right(d) =>
                   val tree = places.tree(id, in.asOf, None).getOrElse(Nil)
-                  ToolResult.text(Markdown.place(d, tree.toVector))
+                  ToolResult.text(PlacesMarkdown.place(d, tree.toVector))
                 case Left(e) => McpOut.error(e)
             case None =>
               ToolResult.text(
-                Markdown.places(places.search(in.name.orElse(in.query), in.asOf, in.limit).toVector, in.asOf)
+                PlacesMarkdown.places(places.search(in.name.orElse(in.query), in.asOf, in.limit).toVector, in.asOf)
               )
         },
       /** A person's names for a place (#987): list, add or remove — the names a re-seed never deletes. */
@@ -131,14 +133,14 @@ object PlacesTools:
         .handle { in =>
           val id = in.placeId.map(_.trim).filter(_.nonEmpty)
           (id, in.name.map(_.trim).filter(_.nonEmpty)) match
-            case (_, None)       => ToolResult.text(Markdown.manualPlaceNames(places.manualNames(id)))
+            case (_, None)       => ToolResult.text(PlacesMarkdown.manualPlaceNames(places.manualNames(id)))
             case (None, Some(_)) =>
               ToolResult.text("_`placeId` is required to add or remove a name — find it with `places`_")
             case (Some(pid), Some(n)) =>
               val r =
                 if in.remove.getOrElse(false) then places.removeName(me, pid, PlaceNameRemove(n, in.lang))
                 else places.addName(me, pid, PlaceNameAdd(n, in.lang))
-              r.fold(McpOut.error, x => ToolResult.text(Markdown.placeNameChanged(x)))
+              r.fold(McpOut.error, x => ToolResult.text(PlacesMarkdown.placeNameChanged(x)))
         },
       /** A person's kind and period for a place (V080): list, set or reset — kept by every re-import. */
       tool("place_override")
@@ -167,15 +169,17 @@ object PlacesTools:
             in.pointLat.isDefined || in.pointLon.isDefined || in.reset.getOrElse(false)
           def text(r: Either[ApiError, String]) = ToolResult.text(r.fold(McpOut.refusal, identity))
           (id, ask) match
-            case (_, false)   => ToolResult.text(Markdown.placeOverrides(places.overrides(id)))
+            case (_, false)   => ToolResult.text(PlacesMarkdown.placeOverrides(places.overrides(id)))
             case (None, true) =>
               ToolResult.text("_`placeId` is required to set, reset, merge or remove — find it with `places`_")
             case (Some(pid), true) =>
               (into, in.remove.getOrElse(false)) match
                 case (Some(_), true)  => ToolResult.text("_`mergeInto` and `remove` exclude each other_")
-                case (Some(t), false) => text(places.merge(me, pid, PlaceMergeIn(t, in.reason)).map(Markdown.placeGone))
-                case (None, true)     => text(places.remove(me, pid, PlaceRemoveIn(in.reason)).map(Markdown.placeGone))
-                case (None, false)    =>
+                case (Some(t), false) =>
+                  text(places.merge(me, pid, PlaceMergeIn(t, in.reason)).map(PlacesMarkdown.placeGone))
+                case (None, true) =>
+                  text(places.remove(me, pid, PlaceRemoveIn(in.reason)).map(PlacesMarkdown.placeGone))
+                case (None, false) =>
                   text(
                     places
                       .setOverride(
@@ -191,7 +195,7 @@ object PlacesTools:
                           in.pointLon
                         )
                       )
-                      .map(Markdown.placeOverrideChanged)
+                      .map(PlacesMarkdown.placeOverrideChanged)
                   )
         },
       /** A place of a person's own (#987). */
@@ -206,5 +210,5 @@ object PlacesTools:
             "given), carried in a bundle and never touched by a re-seed. Refused when the id is taken."
         )
         .input[PlaceAdd]
-        .handle(in => places.add(me, in).fold(McpOut.error, p => ToolResult.text(Markdown.placeAdded(p))))
+        .handle(in => places.add(me, in).fold(McpOut.error, p => ToolResult.text(PlacesMarkdown.placeAdded(p))))
     )

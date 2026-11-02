@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.api.media.assets.MediaMarkdown
+
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.*
@@ -15,7 +17,7 @@ object AssetLinksCmd:
       Opts.option[String]("target-id", "Filter by target id").orNone
     )
       .mapN { (ck, asset, tt, ti) => (c: Client) =>
-        c.assetLinks(ck, asset, tt, ti).map(r => println(Markdown.assetLinkList(r)))
+        c.assetLinks(ck, asset, tt, ti).map(r => println(MediaMarkdown.assetLinkList(r)))
       }
   }
 
@@ -31,7 +33,7 @@ object AssetLinksCmd:
     )
       .mapN { (ck, asset, rel, tt, ti, xywh, notes) => (c: Client) =>
         c.createAssetLink(AssetLinkPut(ck, asset, rel, tt, ti, xywh, notes))
-          .map(l => println(Markdown.assetLink(l)))
+          .map(l => println(MediaMarkdown.assetLink(l)))
       }
   }
 

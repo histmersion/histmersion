@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.api.library.sources.SourcesMarkdown
+
 import com.histmersion.values.SourceStatus
 
 /** The pure half of a citekey rename: which new keys are acceptable, which short forms pointed at the old key, how
@@ -87,7 +89,8 @@ class RenameSuite extends munit.FunSuite:
       None
     )
     val counts = RenameCounts(3, List("troy"), List("x2020_y"), 5, List(RenameCount("jobs.citekey", 1)), 0)
-    val pushed = Markdown.sourceRenamed(SourceRenamed("page2024_history", "page1959_history", src, counts, Some("12")))
+    val pushed =
+      SourcesMarkdown.sourceRenamed(SourceRenamed("page2024_history", "page1959_history", src, counts, Some("12")))
     List(
       "`page2024_history` → `page1959_history`",
       "findings renumbered: 3",
@@ -98,6 +101,7 @@ class RenameSuite extends munit.FunSuite:
       "sources/page2024_history.md"
     )
       .foreach(s => assert(pushed.contains(s), s"missing '$s' in\n$pushed"))
-    val notPushed = Markdown.sourceRenamed(SourceRenamed("page2024_history", "page1959_history", src, counts, None))
+    val notPushed =
+      SourcesMarkdown.sourceRenamed(SourceRenamed("page2024_history", "page1959_history", src, counts, None))
     assert(notPushed.contains("calibre push page1959_history"), notPushed)
     assert(notPushed.contains("`page2024_history` directory"), notPushed)

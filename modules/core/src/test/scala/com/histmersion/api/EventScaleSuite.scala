@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.api.catalogue.events.EventsMarkdown
+
 import com.histmersion.config.*
 import com.histmersion.files.*
 import com.histmersion.domain.*
@@ -147,10 +149,10 @@ class EventScaleSuite extends munit.FunSuite:
       scale = "local",
       scaleStated = false
     )
-    assert(Markdown.eventList(EventList(1, List(e))).contains("_(battle · local · attested ·"))
-    assert(Markdown.event(EventDetail(e)).contains("**Scale:** local (derived)"))
+    assert(EventsMarkdown.eventList(EventList(1, List(e))).contains("_(battle · local · attested ·"))
+    assert(EventsMarkdown.event(EventDetail(e)).contains("**Scale:** local (derived)"))
     assert(
-      Markdown
+      EventsMarkdown
         .event(EventDetail(e.copy(scale = "regional", scaleStated = true)))
         .contains("**Scale:** regional (stated)")
     )

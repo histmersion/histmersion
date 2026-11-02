@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.api.catalogue.events.EventsMarkdown
+
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.*
@@ -35,13 +37,13 @@ object EventsCmd:
       .mapN { (q, kind, hist, place, tier, ctx, f, json) => (c: Client) =>
         c.listEvents(
           Api.EventQuery(f, q.map(_.trim).filter(_.nonEmpty), kind, hist, place, tier, Option.when(ctx)(true))
-        ).map(r => Output.emit(json, r)(Markdown.eventList))
+        ).map(r => Output.emit(json, r)(EventsMarkdown.eventList))
       }
   }
 
   private val showCmd = Opts.subcommand("show", "One event: datings, edges, participants") {
     (Opts.argument[String]("id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
-      c.getEvent(id).map(d => Output.emit(json, d)(Markdown.event))
+      c.getEvent(id).map(d => Output.emit(json, d)(EventsMarkdown.event))
     }
   }
 
@@ -111,7 +113,7 @@ object EventsCmd:
       for
         p <- patch
         d <- c.patchEvent(id, p)
-      yield println(Markdown.event(d))
+      yield println(EventsMarkdown.event(d))
     }
   }
 

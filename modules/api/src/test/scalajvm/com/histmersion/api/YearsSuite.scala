@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.api.automation.goals.GoalsMarkdown
+
 /** The one year module (#1798 item 4): parsing what a person types, the astronomical conversion, and every formatter
   * agreeing on BCE/CE and on year 0 (shown as 1 BCE, never "0 CE").
   */
@@ -102,13 +104,13 @@ class YearsSuite extends munit.FunSuite:
   test("goal periods print in BCE/CE, not as raw signed years (#1798)"):
     val g = Goal("g", "A goal", "active", None, Nil, Nil, Some(-1200), Some(-1000), None, None)
     assert(
-      Markdown.goalList(GoalList(1, List(g))).contains("(1200 BCE–1000 BCE)"),
-      Markdown.goalList(GoalList(1, List(g)))
+      GoalsMarkdown.goalList(GoalList(1, List(g))).contains("(1200 BCE–1000 BCE)"),
+      GoalsMarkdown.goalList(GoalList(1, List(g)))
     )
-    assert(Markdown.goal(g).contains("**Period:** 1200 BCE–1000 BCE"), Markdown.goal(g))
-    assert(!Markdown.goal(g).contains("-1200"))
+    assert(GoalsMarkdown.goal(g).contains("**Period:** 1200 BCE–1000 BCE"), GoalsMarkdown.goal(g))
+    assert(!GoalsMarkdown.goal(g).contains("-1200"))
     val open = g.copy(periodEnd = None)
-    assert(Markdown.goal(open).contains("**Period:** from 1200 BCE"), Markdown.goal(open))
+    assert(GoalsMarkdown.goal(open).contains("**Period:** from 1200 BCE"), GoalsMarkdown.goal(open))
 
   test("the places and periods views use the same formatter"):
     assertEquals(PlaceOverrides.periodText(Some(0), Some(5)), "1 BCE–5 CE")

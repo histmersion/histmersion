@@ -1,5 +1,8 @@
 package com.histmersion.domain.library
 
+import com.histmersion.api.library.search.SearchMarkdown
+import com.histmersion.api.library.sources.SourcesMarkdown
+
 import chimp.server.*
 import com.histmersion.api.*
 import com.histmersion.api.VocabularyCodecs.given
@@ -67,14 +70,14 @@ object LibraryTools:
             case None =>
               val f = in.toFilter
               val r = search.sources(f)
-              ToolResult.text(if in.verbose then Markdown.searchResults(r)
-              else Markdown.briefResults(r))
+              ToolResult.text(if in.verbose then SearchMarkdown.searchResults(r)
+              else SearchMarkdown.briefResults(r))
             case Some(by) =>
               // A5/A26: MCP defaults depth:1, samples:0 unless asked, so a bare groupBy never overwhelms
               val depth = in.depth.orElse(Some(1))
               val samp = in.samples.orElse(Some(0))
               search.aggregate(Api.AggregateQuery.tree(by, in.toFilter, None, depth, in.asOf, samp)) match
-                case Right(t) => ToolResult.text(Markdown.tree(t, "sources"))
+                case Right(t) => ToolResult.text(SearchMarkdown.tree(t, "sources"))
                 case Left(e)  => McpOut.error(e)
         }
 
@@ -90,7 +93,7 @@ object LibraryTools:
         .input[FacetsInput]
         .handle { in =>
           labels.facets(in.field, in.prefix, in.toFilter) match
-            case Right(fs) => ToolResult.text(Markdown.facets(in.field, fs.toVector))
+            case Right(fs) => ToolResult.text(SearchMarkdown.facets(in.field, fs.toVector))
             case Left(e)   => McpOut.error(e)
         }
 
@@ -134,7 +137,7 @@ object LibraryTools:
             "not when a source list with `search` would suffice."
         )
         .input[GeoWhenInput]
-        .handle(in => ToolResult.text(Markdown.geoPage(findings.page(in.toQuery))))
+        .handle(in => ToolResult.text(SearchMarkdown.geoPage(findings.page(in.toQuery))))
 
     val histogram =
       tool("histogram")
@@ -152,7 +155,7 @@ object LibraryTools:
         .handle { in =>
           val unit = in.unit.getOrElse("sources")
           search.aggregate(Api.AggregateQuery.time(in.toFilter, Some(unit))) match
-            case Right(hist) => ToolResult.text(Markdown.histogram(hist, unit))
+            case Right(hist) => ToolResult.text(SearchMarkdown.histogram(hist, unit))
             case Left(e)     => McpOut.error(e)
         }
 
@@ -174,7 +177,7 @@ object LibraryTools:
               s"_No references recorded for **${in.citekey}**._ " +
                 "An empty result is not evidence of agreement — disagreement edges are sparse."
             )
-          else ToolResult.text(Markdown.neighbors(in.citekey, rows.toVector))
+          else ToolResult.text(SourcesMarkdown.neighbors(in.citekey, rows.toVector))
         }
 
     val sourceGraph =
@@ -190,7 +193,7 @@ object LibraryTools:
         .input[GraphInput]
         .handle { in =>
           val g = citations.graph(in.citekey, in.depth)
-          ToolResult.text(Markdown.graph(g))
+          ToolResult.text(SourcesMarkdown.graph(g))
         }
 
     val contradictions =
@@ -206,7 +209,7 @@ object LibraryTools:
         .input[ContradictionsInput]
         .handle { in =>
           val result = citations.contradictions(in.citekey, in.since)
-          ToolResult.text(Markdown.contradictions(result, in.citekey))
+          ToolResult.text(SourcesMarkdown.contradictions(result, in.citekey))
         }
 
     // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
@@ -230,7 +233,7 @@ object LibraryTools:
             case Right(sw) =>
               ToolResult.text(
                 Aliases.note(AliasKindsAdapter.SourceRecords, in.citekey, sw.source.citekey)(
-                  Markdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)
+                  SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)
                 )
               )
             case Left(e) => McpOut.error(e)
@@ -258,7 +261,7 @@ object LibraryTools:
             case Right(sw) =>
               ToolResult.text(
                 Aliases.note(AliasKindsAdapter.SourceRecords, in.citekey, sw.source.citekey)(
-                  Markdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)
+                  SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)
                 )
               )
             case Left(e) => McpOut.error(e)
@@ -281,7 +284,7 @@ object LibraryTools:
         .input[RenameSourceInput]
         .handle { in =>
           sources.rename(in.citekey, RenameRequest(in.newCitekey)) match
-            case Right(r) => ToolResult.text(Markdown.sourceRenamed(r))
+            case Right(r) => ToolResult.text(SourcesMarkdown.sourceRenamed(r))
             case Left(e)  => McpOut.error(e)
         }
 

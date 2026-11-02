@@ -1,5 +1,7 @@
 package com.histmersion.cli
 
+import com.histmersion.api.library.sources.SourcesMarkdown
+
 import com.histmersion.values.Citekey
 
 import cats.syntax.all.*
@@ -37,7 +39,7 @@ object RenameCmd:
       s"Give a source a new citekey — findings, links in articles/notes and every table follow. ${Aliases.rule(AliasKindsAdapter.SourceRecords)}"
     ) {
       args.map { a => (c: Client) =>
-        c.renameSource(a.oldCitekey, a.newCitekey).map(r => Output.emit(a.json, r)(Markdown.sourceRenamed))
+        c.renameSource(a.oldCitekey, a.newCitekey).map(r => Output.emit(a.json, r)(SourcesMarkdown.sourceRenamed))
       }
     }
 

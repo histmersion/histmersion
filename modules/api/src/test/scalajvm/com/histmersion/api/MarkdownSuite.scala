@@ -1,8 +1,12 @@
 package com.histmersion.api
 
+import com.histmersion.api.library.search.SearchMarkdown
+import com.histmersion.api.library.sources.SourcesMarkdown
+import com.histmersion.api.research.articles.BacklinksMarkdown
+
 import com.histmersion.values.{Confidence, SourceStatus}
 
-/** [[Markdown.source]] — what MCP `get_source` returns and what the HTML article page renders. Pure. */
+/** [[SourcesMarkdown.source]] — what MCP `get_source` returns and what the HTML article page renders. Pure. */
 class MarkdownSuite extends munit.FunSuite:
 
   private val detail = SourceDetail(
@@ -35,22 +39,23 @@ class MarkdownSuite extends munit.FunSuite:
   )
 
   test("notes are rendered under a Notes heading, after the summary and before the findings"):
-    val md = Markdown.source(detail.copy(notes = Some("  Our article about it.  ")), Vector(finding), fullText = false)
+    val md =
+      SourcesMarkdown.source(detail.copy(notes = Some("  Our article about it.  ")), Vector(finding), fullText = false)
     assert(md.contains("## Notes\n\nOur article about it."), md)
     assert(md.indexOf("Systems collapse.") < md.indexOf("## Notes"), md)
     assert(md.indexOf("## Notes") < md.indexOf("## Findings (1)"), md)
 
   test("no notes column, no heading"):
-    val md = Markdown.source(detail, Vector(finding), fullText = false)
+    val md = SourcesMarkdown.source(detail, Vector(finding), fullText = false)
     assert(!md.contains("## Notes"), md)
-    assertEquals(Markdown.source(detail.copy(notes = Some("   ")), Vector.empty, false).contains("Notes"), false)
+    assertEquals(SourcesMarkdown.source(detail.copy(notes = Some("   ")), Vector.empty, false).contains("Notes"), false)
 
   test("notes come before the full text, which stays last"):
-    val md = Markdown.source(detail.copy(notes = Some("N")), Vector.empty, fullText = true)
+    val md = SourcesMarkdown.source(detail.copy(notes = Some("N")), Vector.empty, fullText = true)
     assert(md.indexOf("## Notes") < md.indexOf("BODY TEXT"), md)
 
   test("the header still carries the metadata, topics, regions and DOI"):
-    val md = Markdown.source(detail.copy(notes = Some("N")), Vector.empty, fullText = false)
+    val md = SourcesMarkdown.source(detail.copy(notes = Some("N")), Vector.empty, fullText = false)
     assert(md.contains("# 1177 BC"), md)
     assert(md.contains("[Eric H. Cline](/#author=Eric%20H.%20Cline)"), md)
     assert(md.contains("2014 · PUP · current · 1300 BCE–1100 BCE"), md)
@@ -72,7 +77,7 @@ class MarkdownSuite extends munit.FunSuite:
       snippet = Some("…the **Uluburun** wreck…"),
       matchedHeading = Some("CHAPTER 3")
     )
-    val md = Markdown.searchResults(SearchResult(1, List(Hit(hit, Nil, List("full text matches 'x'")))))
+    val md = SearchMarkdown.searchResults(SearchResult(1, List(Hit(hit, Nil, List("full text matches 'x'")))))
     assert(md.contains("> _CHAPTER 3_ — …the **Uluburun** wreck…"), md)
 
   // ── paging footer (A6) ────────────────────────────────────────────────────────────────────────
@@ -96,7 +101,7 @@ class MarkdownSuite extends munit.FunSuite:
       val sh = SearchHit(s"k$i", s"T$i", Some(2020), SourceStatus.Current, Nil, Nil, None, None, None)
       Hit(sh, Nil, Nil)
     }.toList
-    val md = Markdown.searchResults(SearchResult(50, hits))
+    val md = SearchMarkdown.searchResults(SearchResult(50, hits))
     assert(md.contains("showing 1–3 of 50"), md)
     assert(md.contains("next: offset=3"), md)
 
@@ -104,7 +109,7 @@ class MarkdownSuite extends munit.FunSuite:
     val hits = (1 to 3).map { i =>
       Hit(SearchHit(s"k$i", s"T$i", Some(2020), SourceStatus.Current, Nil, Nil, None, None, None), Nil, Nil)
     }.toList
-    val md = Markdown.searchResults(SearchResult.of(50, hits, 20))
+    val md = SearchMarkdown.searchResults(SearchResult.of(50, hits, 20))
     assert(md.startsWith("### 3 of 50 source(s)"), md)
     assert(md.contains("showing 21–23 of 50 — next: offset=23"), md)
     assertEquals(SearchResult.of(50, hits, 20).next, Some(23))
@@ -115,11 +120,11 @@ class MarkdownSuite extends munit.FunSuite:
       val sh = SearchHit(s"k$i", s"T$i", Some(2020), SourceStatus.Current, Nil, Nil, None, None, None)
       Hit(sh, Nil, Nil)
     }.toList
-    val md = Markdown.searchResults(SearchResult(3, hits))
+    val md = SearchMarkdown.searchResults(SearchResult(3, hits))
     assert(!md.contains("showing"), md)
 
   test("missing year is rendered as n.d."):
-    val md = Markdown.source(detail.copy(year = None), Vector.empty, false)
+    val md = SourcesMarkdown.source(detail.copy(year = None), Vector.empty, false)
     assert(md.contains("n.d."), md)
     assert(!md.contains("?"), md)
 
@@ -127,13 +132,13 @@ class MarkdownSuite extends munit.FunSuite:
 
   test("collapseHistogram leaves short histograms unchanged"):
     val buckets = (1 to 5).map(i => TimeBucket(i * 100L, i * 100 + 99, i)).toList
-    val result = Markdown.collapseHistogram(buckets)
+    val result = SearchMarkdown.collapseHistogram(buckets)
     assertEquals(result.size, 5)
     assert(result.forall(_.merged == 1))
 
   test("collapseHistogram collapses runs of identical counts when > 12 rows"):
     val buckets = (1 to 20).map(i => TimeBucket(i * 100L, i * 100 + 99, if i <= 10 then 2 else 5)).toList
-    val result = Markdown.collapseHistogram(buckets)
+    val result = SearchMarkdown.collapseHistogram(buckets)
     assert(result.sizeIs < 20, s"expected fewer rows, got ${result.size}")
     assertEquals(result.head.count, 2)
     assertEquals(result.head.merged, 10)
@@ -170,16 +175,16 @@ class MarkdownHopsSuite extends munit.FunSuite:
     assert(Markdown.chipLinks("near east", "tag").contains("(/#tag=near%20east)"))
 
   test("topics, regions AND tags are all rendered, each as its own chip key"):
-    val md = Markdown.source(src, Vector.empty, fullText = false)
+    val md = SourcesMarkdown.source(src, Vector.empty, fullText = false)
     assert(md.contains("**Topics:** [steppe](/#topic=steppe)"), md)
     assert(md.contains("**Regions:** [anatolia](/#place=anatolia)"), md)
     assert(md.contains("**Tags:** [sea peoples](/#tag=sea_peoples)"), md)
 
   test("Mentioned in articles lists the wiki pages that cite the source"):
-    val out = Markdown.sourceArticles(Vector(Backlink("article", "sea_peoples", Some("The Sea Peoples"))))
+    val out = BacklinksMarkdown.sourceArticles(Vector(Backlink("article", "sea_peoples", Some("The Sea Peoples"))))
     assert(out.contains("## Mentioned in articles (1)"), out)
     assert(out.contains("[The Sea Peoples](/article/sea_peoples)"), out)
-    assertEquals(Markdown.sourceArticles(Vector.empty), "")
+    assertEquals(BacklinksMarkdown.sourceArticles(Vector.empty), "")
 
   test("neighbors renders each row by its classified target: source, article, unresolved"):
     val rows = Vector(
@@ -194,7 +199,7 @@ class MarkdownHopsSuite extends munit.FunSuite:
       ),
       NeighborRow("out", "refutes", "ghost2019_absent", None, target = NeighborTarget.Unresolved)
     )
-    val out = Markdown.neighbors("x2020_y", rows)
+    val out = SourcesMarkdown.neighbors("x2020_y", rows)
     assert(out.contains("**Outgoing (this → other)**\n- _challenges_ → [[cline2014_year]] — 1177 BC _(current)_"), out)
     assert(out.contains("**Incoming (other → this)**\n- _references_ → [[drews1993_end]]"), out)
     assert(out.contains("[Bronze Age collapse](/article/bronze_age_collapse)"), out)

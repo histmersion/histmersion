@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.events
 
+import com.histmersion.api.catalogue.events.EventsMarkdown
+
 import chimp.server.*
 import com.histmersion.api.{Aliases, AliasKindsAdapter, Api, EventGeometry, EventPatch, Filter, Markdown, StrictJson}
 import com.histmersion.domain.Caller
@@ -90,7 +92,7 @@ object EventsTools:
           in.id.map(_.trim).filter(_.nonEmpty) match
             case Some(id) =>
               events.get(id) match
-                case Right(d) => ToolResult.text(Markdown.event(d))
+                case Right(d) => ToolResult.text(EventsMarkdown.event(d))
                 case Left(e)  => McpOut.error(e)
             case None =>
               val q = Api.EventQuery(
@@ -100,7 +102,7 @@ object EventsTools:
                 in.historicity,
                 in.placeId
               )
-              ToolResult.text(Markdown.eventList(events.list(q)))
+              ToolResult.text(EventsMarkdown.eventList(events.list(q)))
         }
 
     val patchTool =
@@ -138,7 +140,9 @@ object EventsTools:
               )
               events.patch(Caller.Local, in.id, p) match
                 case Right(d) =>
-                  ToolResult.text(Aliases.note(AliasKindsAdapter.EventRecords, in.id, d.event.id)(Markdown.event(d)))
+                  ToolResult.text(
+                    Aliases.note(AliasKindsAdapter.EventRecords, in.id, d.event.id)(EventsMarkdown.event(d))
+                  )
                 case Left(e) => McpOut.error(e)
         }
     List(listTool, patchTool)
