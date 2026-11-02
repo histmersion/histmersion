@@ -1,0 +1,5877 @@
+== put alpha
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zrauthor, Ann",
+      "Zrwriter, Bo"
+    ],
+    "citekey" : "zralpha1990_walls",
+    "doi" : null,
+    "notes" : null,
+    "ocrMarkdown" : "# The Walls of Zrtown\n\nThe walls of Zrtown and its harbour, as The Walls of Zrtown tells it.\n",
+    "origin" : "instance",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : null,
+    "regions" : [
+      "Zrland"
+    ],
+    "status" : "current",
+    "summary" : "A study of The Walls of Zrtown.",
+    "tags" : [
+      "zr-walls",
+      "zr-oracle"
+    ],
+    "title" : "The Walls of Zrtown",
+    "topics" : [
+      "bronze age",
+      "fortification"
+    ],
+    "uid" : "source:zralpha1991_walls",
+    "updatedAt" : "TS",
+    "venue" : "Journal of Zr Studies",
+    "year" : 1990
+  }
+}
+== put beta (challenges alpha)
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zrwriter, Bo"
+    ],
+    "citekey" : "zrbeta2001_harbour",
+    "doi" : null,
+    "notes" : null,
+    "ocrMarkdown" : "# The Harbour of Zrtown\n\nThe walls of Zrtown and its harbour, as The Harbour of Zrtown tells it.\n",
+    "origin" : "instance",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : null,
+    "regions" : [
+      "Zrland"
+    ],
+    "status" : "contested",
+    "summary" : "A study of The Harbour of Zrtown.",
+    "tags" : [
+      "zr-trade",
+      "zr-oracle"
+    ],
+    "title" : "The Harbour of Zrtown",
+    "topics" : [
+      "bronze age",
+      "trade"
+    ],
+    "uid" : "source:zrbeta2001_harbour",
+    "updatedAt" : "TS",
+    "venue" : "Journal of Zr Studies",
+    "year" : 2001
+  }
+}
+== put gamma (superseded by alpha, refutes beta)
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zrauthor, Ann"
+    ],
+    "citekey" : "zrgamma1975_kings",
+    "doi" : null,
+    "notes" : null,
+    "ocrMarkdown" : "# Kings of Zrland\n\nThe walls of Zrtown and its harbour, as Kings of Zrland tells it.\n",
+    "origin" : "instance",
+    "periodEnd" : -1600,
+    "periodStart" : -2000,
+    "provenance" : null,
+    "regions" : [
+      "Zrland"
+    ],
+    "status" : "superseded",
+    "summary" : "A study of Kings of Zrland.",
+    "tags" : [
+      "zr-kings",
+      "zr-oracle"
+    ],
+    "title" : "Kings of Zrland",
+    "topics" : [
+      "kingship"
+    ],
+    "uid" : "source:zrgamma1975_kings",
+    "updatedAt" : "TS",
+    "venue" : "Journal of Zr Studies",
+    "year" : 1975
+  }
+}
+== put delta (a filter returns it, nobody cites it)
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zrother, Cy"
+    ],
+    "citekey" : "zrdelta2010_survey",
+    "doi" : null,
+    "notes" : null,
+    "ocrMarkdown" : "# A Survey of Zrland\n\nThe walls of Zrtown and its harbour, as A Survey of Zrland tells it.\n",
+    "origin" : "instance",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : null,
+    "regions" : [
+      "Zrland"
+    ],
+    "status" : "current",
+    "summary" : "A study of A Survey of Zrland.",
+    "tags" : [
+      "zr-oracle"
+    ],
+    "title" : "A Survey of Zrland",
+    "topics" : [
+      "bronze age",
+      "survey"
+    ],
+    "uid" : "source:zrdelta2010_survey",
+    "updatedAt" : "TS",
+    "venue" : "Journal of Zr Studies",
+    "year" : 2010
+  }
+}
+== put eps (to be deleted)
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zrother, Cy"
+    ],
+    "citekey" : "zreps1999_lost",
+    "doi" : null,
+    "notes" : null,
+    "ocrMarkdown" : "# A Lost Report\n\nThe walls of Zrtown and its harbour, as A Lost Report tells it.\n",
+    "origin" : "instance",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : null,
+    "regions" : [
+      "Zrland"
+    ],
+    "status" : "current",
+    "summary" : "A study of A Lost Report.",
+    "tags" : [
+      "zr-lost"
+    ],
+    "title" : "A Lost Report",
+    "topics" : [
+      "archive"
+    ],
+    "uid" : "tombstone:source",
+    "updatedAt" : "TS",
+    "venue" : "Journal of Zr Studies",
+    "year" : 1999
+  }
+}
+== put walls (a concept with a filter, extra queries, a reason)
+200 {
+  "article" : {
+    "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",
+    "kind" : "concept",
+    "periodEnd" : -1400,
+    "periodStart" : -1600,
+    "regions" : [
+      "Zrland"
+    ],
+    "slug" : "zr_walls",
+    "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]].",
+    "tags" : [
+      "zr-art",
+      "walls"
+    ],
+    "title" : "The walls of Zrtown",
+    "uid" : "article:zr_city_walls",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+  ],
+  "coverage" : {
+    "checked" : 4,
+    "cited" : [
+      {
+        "authors" : [
+          "Zrauthor, Ann",
+          "Zrwriter, Bo"
+        ],
+        "citekey" : "zralpha1990_walls",
+        "status" : "current",
+        "title" : "The Walls of Zrtown",
+        "year" : 1990
+      },
+      {
+        "authors" : [
+          "Zrwriter, Bo"
+        ],
+        "citekey" : "zrbeta2001_harbour",
+        "status" : "contested",
+        "title" : "The Harbour of Zrtown",
+        "year" : 2001
+      },
+      {
+        "authors" : [
+          "Zrauthor, Ann"
+        ],
+        "citekey" : "zrgamma1975_kings",
+        "status" : "superseded",
+        "title" : "Kings of Zrland",
+        "year" : 1975
+      }
+    ],
+    "citedOutside" : [
+    ],
+    "critiques" : [
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zralpha1990_walls",
+          "mentions" : 2,
+          "title" : "The Walls of Zrtown",
+          "year" : 1990
+        },
+        "kinds" : [
+          "challenges"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrbeta2001_harbour",
+          "mentions" : 1,
+          "title" : "The Harbour of Zrtown",
+          "year" : 2001
+        },
+        "state" : "addressed"
+      },
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zralpha1990_walls",
+          "mentions" : 2,
+          "title" : "The Walls of Zrtown",
+          "year" : 1990
+        },
+        "kinds" : [
+          "superseded_by"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrgamma1975_kings",
+          "mentions" : 1,
+          "title" : "Kings of Zrland",
+          "year" : 1975
+        },
+        "state" : "open"
+      },
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zrbeta2001_harbour",
+          "mentions" : 1,
+          "title" : "The Harbour of Zrtown",
+          "year" : 2001
+        },
+        "kinds" : [
+          "refutes"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrgamma1975_kings",
+          "mentions" : 1,
+          "title" : "Kings of Zrland",
+          "year" : 1975
+        },
+        "state" : "open"
+      }
+    ],
+    "drift" : [
+    ],
+    "edges" : [
+      {
+        "from" : "zrbeta2001_harbour",
+        "kind" : "challenges",
+        "to" : "zralpha1990_walls"
+      },
+      {
+        "from" : "zrgamma1975_kings",
+        "kind" : "refutes",
+        "to" : "zrbeta2001_harbour"
+      },
+      {
+        "from" : "zrgamma1975_kings",
+        "kind" : "superseded_by",
+        "to" : "zralpha1990_walls"
+      }
+    ],
+    "eventLeads" : [
+    ],
+    "filter" : {
+      "authors" : [
+      ],
+      "extraQueries" : [
+        "harbour",
+        "kings of zrland"
+      ],
+      "from" : null,
+      "places" : [
+      ],
+      "query" : null,
+      "status" : [
+      ],
+      "tags" : [
+        "zr-oracle"
+      ],
+      "to" : null,
+      "topics" : [
+      ]
+    },
+    "filterLine" : "search {tags: [\"zr-oracle\"]}",
+    "notUsed" : [
+      {
+        "reason" : "A survey of the whole region, no finding on the walls.",
+        "source" : {
+          "authors" : [
+            "Zrother, Cy"
+          ],
+          "citekey" : "zrdelta2010_survey",
+          "status" : "current",
+          "title" : "A Survey of Zrland",
+          "year" : 2010
+        }
+      }
+    ],
+    "reasons" : [
+      {
+        "citekey" : "zrdelta2010_survey",
+        "reason" : "A survey of the whole region, no finding on the walls."
+      }
+    ],
+    "searches" : [
+      {
+        "cited" : [
+          "zralpha1990_walls",
+          "zrbeta2001_harbour",
+          "zrgamma1975_kings"
+        ],
+        "query" : "harbour",
+        "total" : 5
+      },
+      {
+        "cited" : [
+          "zrgamma1975_kings"
+        ],
+        "query" : "kings of zrland",
+        "total" : 1
+      }
+    ],
+    "slug" : "zr_walls",
+    "statuses" : [
+      {
+        "count" : 2,
+        "status" : "current"
+      },
+      {
+        "count" : 1,
+        "status" : "contested"
+      },
+      {
+        "count" : 1,
+        "status" : "superseded"
+      }
+    ],
+    "total" : 4
+  },
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrauthor, Ann",
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zralpha1990_walls",
+      "doi" : null,
+      "status" : "current",
+      "title" : "The Walls of Zrtown",
+      "year" : 1990
+    },
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    },
+    {
+      "authors" : [
+        "Zrauthor, Ann"
+      ],
+      "citekey" : "zrgamma1975_kings",
+      "doi" : null,
+      "status" : "superseded",
+      "title" : "Kings of Zrland",
+      "year" : 1975
+    }
+  ]
+}
+== put harbour (a myth linking walls)
+200 {
+  "article" : {
+    "body" : "## The story\n\nThe harbour was founded by a hero [[zrbeta2001_harbour]]. See [[zr_walls]] for the walls.\n",
+    "kind" : "myth",
+    "periodEnd" : -1200,
+    "periodStart" : -1300,
+    "regions" : [
+    ],
+    "slug" : "zr_harbour",
+    "summary" : "A founding myth [[zrbeta2001_harbour]].",
+    "tags" : [
+      "zr-art",
+      "myth"
+    ],
+    "title" : "The harbour myth",
+    "uid" : "article:zr_harbour",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    }
+  ]
+}
+== put index (links both)
+200 {
+  "article" : {
+    "body" : "- [[zr_walls]]\n- [[zr_harbour]]\n- [[zr_missing]]\n",
+    "kind" : "index",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "regions" : [
+    ],
+    "slug" : "zr_index",
+    "summary" : "- [[zr_walls]] - [[zr_harbour]] - [[zr_missing]]",
+    "tags" : [
+      "zr-art"
+    ],
+    "title" : "Zr index",
+    "uid" : "article:zr_index",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+  ],
+  "coverage" : null,
+  "formatting" : [
+    {
+      "column" : 3,
+      "excerpt" : "- [[zr_missing]]",
+      "field" : "body",
+      "fix" : null,
+      "line" : 3,
+      "message" : "[[zr_missing]] names no source and no article — it renders as plain text; check the citekey (`histmersion search`) or the slug",
+      "rule" : "wikilink-unresolved",
+      "severity" : "warning"
+    },
+    {
+      "column" : 35,
+      "excerpt" : "…- [[zr_harbour]] - [[zr_missing]]",
+      "field" : "summary",
+      "fix" : null,
+      "line" : 1,
+      "message" : "[[zr_missing]] names no source and no article — it renders as plain text; check the citekey (`histmersion search`) or the slug",
+      "rule" : "wikilink-unresolved",
+      "severity" : "warning"
+    }
+  ],
+  "sourcesCited" : [
+  ]
+}
+== put kings (a timeline citing the superseded source)
+200 {
+  "article" : {
+    "body" : "## Timeline\n\nThe kings ruled from Zrtown from 2000 BC [[zrgamma1975_kings]].\n",
+    "kind" : "timeline",
+    "periodEnd" : -1600,
+    "periodStart" : -2000,
+    "regions" : [
+    ],
+    "slug" : "zr_kings",
+    "summary" : "The kings [[zrgamma1975_kings]].",
+    "tags" : [
+    ],
+    "title" : "Kings of Zrland, a timeline",
+    "uid" : "article:zr_kings",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrauthor, Ann"
+      ],
+      "citekey" : "zrgamma1975_kings",
+      "doi" : null,
+      "status" : "superseded",
+      "title" : "Kings of Zrland",
+      "year" : 1975
+    }
+  ]
+}
+== put lost (cites the source to be deleted)
+200 {
+  "article" : {
+    "body" : "## Report\n\nThe report is lost [[zreps1999_lost]].\n",
+    "kind" : "report",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "regions" : [
+    ],
+    "slug" : "zr_lost",
+    "summary" : null,
+    "tags" : [
+    ],
+    "title" : "A lost report",
+    "uid" : "tombstone:article",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrother, Cy"
+      ],
+      "citekey" : "zreps1999_lost",
+      "doi" : null,
+      "status" : "current",
+      "title" : "A Lost Report",
+      "year" : 1999
+    }
+  ]
+}
+== put refused: a bad slug
+400 {
+  "code" : "invalid",
+  "message" : "invalid slug 'Bad Slug' — use lower-case letters, digits, '_', '-' or '.' (e.g. sea_peoples)"
+}
+== put refused: a bad kind
+400 {
+  "code" : "invalid",
+  "message" : "invalid kind 'Not A Kind!' — one of concept, myth, culture, region, timeline, report, index (or another lower-case word)"
+}
+== put refused: an unknown key
+400 Invalid value for: body (unknown key 'nope'; expected only: title, kind, body, summary, tags, regions, periodStart, periodEnd, filter, reasons)
+== put refused: a reason for no citekey
+400 {
+  "code" : "invalid",
+  "message" : "reason for 'not a key!': not a citekey"
+}
+== put refused: an overlong reason
+400 {
+  "code" : "invalid",
+  "message" : "reason for zralpha1990_walls: 501 characters (at most 500 — one sentence)"
+}
+== put refused: strict, a formatting error
+400 {
+  "code" : "invalid",
+  "message" : "refused (strict): 2 formatting errors — body L1:1 error html-tag — `<div>` is never closed — everything after it is inside it · `<div> never closed`; summary L1:1 error html-tag — `<div>` is never closed — everything after it is inside it · `<div> never closed`"
+}
+== tool put_article (a culture)
+# The Zr culture
+
+_culture · [zr-art](/#tag=zr-art)_
+
+## Overview
+
+The Zr culture built walls [[zralpha1990_walls]].
+
+## Sources cited (1)
+
+- [[zralpha1990_walls]] — Zrauthor & Zrwriter 1990 · _The Walls of Zrtown_ · **current**
+== tool put_article refused (an unknown key)
+200 {
+  "error" : {
+    "code" : -32602,
+    "message" : "Invalid arguments: DecodingFailure at .article: article: unknown key 'nope'; expected only: title, kind, body, summary, tags, regions, periodStart, periodEnd, filter, reasons. Input: {\"slug\":\"zr_x\",\"article\":{\"title\":\"x\",\"nope\":1}}"
+  },
+  "id" : 1,
+  "jsonrpc" : "2.0"
+}
+== GET /api/articles/zr_walls
+200 {
+  "article" : {
+    "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",
+    "kind" : "concept",
+    "periodEnd" : -1400,
+    "periodStart" : -1600,
+    "regions" : [
+      "Zrland"
+    ],
+    "slug" : "zr_walls",
+    "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]].",
+    "tags" : [
+      "zr-art",
+      "walls"
+    ],
+    "title" : "The walls of Zrtown",
+    "uid" : "article:zr_city_walls",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_harbour",
+      "kind" : "article",
+      "title" : "The harbour myth"
+    },
+    {
+      "id" : "zr_index",
+      "kind" : "article",
+      "title" : "Zr index"
+    }
+  ],
+  "coverage" : {
+    "checked" : 4,
+    "cited" : [
+      {
+        "authors" : [
+          "Zrauthor, Ann",
+          "Zrwriter, Bo"
+        ],
+        "citekey" : "zralpha1990_walls",
+        "status" : "current",
+        "title" : "The Walls of Zrtown",
+        "year" : 1990
+      },
+      {
+        "authors" : [
+          "Zrwriter, Bo"
+        ],
+        "citekey" : "zrbeta2001_harbour",
+        "status" : "contested",
+        "title" : "The Harbour of Zrtown",
+        "year" : 2001
+      },
+      {
+        "authors" : [
+          "Zrauthor, Ann"
+        ],
+        "citekey" : "zrgamma1975_kings",
+        "status" : "superseded",
+        "title" : "Kings of Zrland",
+        "year" : 1975
+      }
+    ],
+    "citedOutside" : [
+    ],
+    "critiques" : [
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zralpha1990_walls",
+          "mentions" : 2,
+          "title" : "The Walls of Zrtown",
+          "year" : 1990
+        },
+        "kinds" : [
+          "challenges"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrbeta2001_harbour",
+          "mentions" : 1,
+          "title" : "The Harbour of Zrtown",
+          "year" : 2001
+        },
+        "state" : "addressed"
+      },
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zralpha1990_walls",
+          "mentions" : 2,
+          "title" : "The Walls of Zrtown",
+          "year" : 1990
+        },
+        "kinds" : [
+          "superseded_by"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrgamma1975_kings",
+          "mentions" : 1,
+          "title" : "Kings of Zrland",
+          "year" : 1975
+        },
+        "state" : "open"
+      },
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zrbeta2001_harbour",
+          "mentions" : 1,
+          "title" : "The Harbour of Zrtown",
+          "year" : 2001
+        },
+        "kinds" : [
+          "refutes"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrgamma1975_kings",
+          "mentions" : 1,
+          "title" : "Kings of Zrland",
+          "year" : 1975
+        },
+        "state" : "open"
+      }
+    ],
+    "drift" : [
+    ],
+    "edges" : [
+      {
+        "from" : "zrbeta2001_harbour",
+        "kind" : "challenges",
+        "to" : "zralpha1990_walls"
+      },
+      {
+        "from" : "zrgamma1975_kings",
+        "kind" : "refutes",
+        "to" : "zrbeta2001_harbour"
+      },
+      {
+        "from" : "zrgamma1975_kings",
+        "kind" : "superseded_by",
+        "to" : "zralpha1990_walls"
+      }
+    ],
+    "eventLeads" : [
+    ],
+    "filter" : {
+      "authors" : [
+      ],
+      "extraQueries" : [
+        "harbour",
+        "kings of zrland"
+      ],
+      "from" : null,
+      "places" : [
+      ],
+      "query" : null,
+      "status" : [
+      ],
+      "tags" : [
+        "zr-oracle"
+      ],
+      "to" : null,
+      "topics" : [
+      ]
+    },
+    "filterLine" : "search {tags: [\"zr-oracle\"]}",
+    "notUsed" : [
+      {
+        "reason" : "A survey of the whole region, no finding on the walls.",
+        "source" : {
+          "authors" : [
+            "Zrother, Cy"
+          ],
+          "citekey" : "zrdelta2010_survey",
+          "status" : "current",
+          "title" : "A Survey of Zrland",
+          "year" : 2010
+        }
+      }
+    ],
+    "reasons" : [
+      {
+        "citekey" : "zrdelta2010_survey",
+        "reason" : "A survey of the whole region, no finding on the walls."
+      }
+    ],
+    "searches" : [
+      {
+        "cited" : [
+          "zralpha1990_walls",
+          "zrbeta2001_harbour",
+          "zrgamma1975_kings"
+        ],
+        "query" : "harbour",
+        "total" : 5
+      },
+      {
+        "cited" : [
+          "zrgamma1975_kings"
+        ],
+        "query" : "kings of zrland",
+        "total" : 1
+      }
+    ],
+    "slug" : "zr_walls",
+    "statuses" : [
+      {
+        "count" : 2,
+        "status" : "current"
+      },
+      {
+        "count" : 1,
+        "status" : "contested"
+      },
+      {
+        "count" : 1,
+        "status" : "superseded"
+      }
+    ],
+    "total" : 4
+  },
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrauthor, Ann",
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zralpha1990_walls",
+      "doi" : null,
+      "status" : "current",
+      "title" : "The Walls of Zrtown",
+      "year" : 1990
+    },
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    },
+    {
+      "authors" : [
+        "Zrauthor, Ann"
+      ],
+      "citekey" : "zrgamma1975_kings",
+      "doi" : null,
+      "status" : "superseded",
+      "title" : "Kings of Zrland",
+      "year" : 1975
+    }
+  ]
+}
+== GET /api/articles/zr_walls?brief=true
+200 {
+  "article" : {
+    "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",
+    "kind" : "concept",
+    "periodEnd" : -1400,
+    "periodStart" : -1600,
+    "regions" : [
+      "Zrland"
+    ],
+    "slug" : "zr_walls",
+    "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]].",
+    "tags" : [
+      "zr-art",
+      "walls"
+    ],
+    "title" : "The walls of Zrtown",
+    "uid" : "article:zr_city_walls",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_harbour",
+      "kind" : "article",
+      "title" : "The harbour myth"
+    },
+    {
+      "id" : "zr_index",
+      "kind" : "article",
+      "title" : "Zr index"
+    }
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrauthor, Ann",
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zralpha1990_walls",
+      "doi" : null,
+      "status" : "current",
+      "title" : "The Walls of Zrtown",
+      "year" : 1990
+    },
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    },
+    {
+      "authors" : [
+        "Zrauthor, Ann"
+      ],
+      "citekey" : "zrgamma1975_kings",
+      "doi" : null,
+      "status" : "superseded",
+      "title" : "Kings of Zrland",
+      "year" : 1975
+    }
+  ]
+}
+== GET /api/articles/zr_harbour
+200 {
+  "article" : {
+    "body" : "## The story\n\nThe harbour was founded by a hero [[zrbeta2001_harbour]]. See [[zr_walls]] for the walls.\n",
+    "kind" : "myth",
+    "periodEnd" : -1200,
+    "periodStart" : -1300,
+    "regions" : [
+    ],
+    "slug" : "zr_harbour",
+    "summary" : "A founding myth [[zrbeta2001_harbour]].",
+    "tags" : [
+      "zr-art",
+      "myth"
+    ],
+    "title" : "The harbour myth",
+    "uid" : "article:zr_harbour",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_index",
+      "kind" : "article",
+      "title" : "Zr index"
+    }
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    }
+  ]
+}
+== GET /api/articles/zr_index
+200 {
+  "article" : {
+    "body" : "- [[zr_walls]]\n- [[zr_harbour]]\n- [[zr_missing]]\n",
+    "kind" : "index",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "regions" : [
+    ],
+    "slug" : "zr_index",
+    "summary" : "- [[zr_walls]] - [[zr_harbour]] - [[zr_missing]]",
+    "tags" : [
+      "zr-art"
+    ],
+    "title" : "Zr index",
+    "uid" : "article:zr_index",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+  ],
+  "coverage" : null,
+  "formatting" : [
+    {
+      "column" : 3,
+      "excerpt" : "- [[zr_missing]]",
+      "field" : "body",
+      "fix" : null,
+      "line" : 3,
+      "message" : "[[zr_missing]] names no source and no article — it renders as plain text; check the citekey (`histmersion search`) or the slug",
+      "rule" : "wikilink-unresolved",
+      "severity" : "warning"
+    },
+    {
+      "column" : 35,
+      "excerpt" : "…- [[zr_harbour]] - [[zr_missing]]",
+      "field" : "summary",
+      "fix" : null,
+      "line" : 1,
+      "message" : "[[zr_missing]] names no source and no article — it renders as plain text; check the citekey (`histmersion search`) or the slug",
+      "rule" : "wikilink-unresolved",
+      "severity" : "warning"
+    }
+  ],
+  "sourcesCited" : [
+  ]
+}
+== GET /api/articles/ZR_WALLS
+200 {
+  "article" : {
+    "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",
+    "kind" : "concept",
+    "periodEnd" : -1400,
+    "periodStart" : -1600,
+    "regions" : [
+      "Zrland"
+    ],
+    "slug" : "zr_walls",
+    "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]].",
+    "tags" : [
+      "zr-art",
+      "walls"
+    ],
+    "title" : "The walls of Zrtown",
+    "uid" : "article:zr_city_walls",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_harbour",
+      "kind" : "article",
+      "title" : "The harbour myth"
+    },
+    {
+      "id" : "zr_index",
+      "kind" : "article",
+      "title" : "Zr index"
+    }
+  ],
+  "coverage" : {
+    "checked" : 4,
+    "cited" : [
+      {
+        "authors" : [
+          "Zrauthor, Ann",
+          "Zrwriter, Bo"
+        ],
+        "citekey" : "zralpha1990_walls",
+        "status" : "current",
+        "title" : "The Walls of Zrtown",
+        "year" : 1990
+      },
+      {
+        "authors" : [
+          "Zrwriter, Bo"
+        ],
+        "citekey" : "zrbeta2001_harbour",
+        "status" : "contested",
+        "title" : "The Harbour of Zrtown",
+        "year" : 2001
+      },
+      {
+        "authors" : [
+          "Zrauthor, Ann"
+        ],
+        "citekey" : "zrgamma1975_kings",
+        "status" : "superseded",
+        "title" : "Kings of Zrland",
+        "year" : 1975
+      }
+    ],
+    "citedOutside" : [
+    ],
+    "critiques" : [
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zralpha1990_walls",
+          "mentions" : 2,
+          "title" : "The Walls of Zrtown",
+          "year" : 1990
+        },
+        "kinds" : [
+          "challenges"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrbeta2001_harbour",
+          "mentions" : 1,
+          "title" : "The Harbour of Zrtown",
+          "year" : 2001
+        },
+        "state" : "addressed"
+      },
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zralpha1990_walls",
+          "mentions" : 2,
+          "title" : "The Walls of Zrtown",
+          "year" : 1990
+        },
+        "kinds" : [
+          "superseded_by"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrgamma1975_kings",
+          "mentions" : 1,
+          "title" : "Kings of Zrland",
+          "year" : 1975
+        },
+        "state" : "open"
+      },
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zrbeta2001_harbour",
+          "mentions" : 1,
+          "title" : "The Harbour of Zrtown",
+          "year" : 2001
+        },
+        "kinds" : [
+          "refutes"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrgamma1975_kings",
+          "mentions" : 1,
+          "title" : "Kings of Zrland",
+          "year" : 1975
+        },
+        "state" : "open"
+      }
+    ],
+    "drift" : [
+    ],
+    "edges" : [
+      {
+        "from" : "zrbeta2001_harbour",
+        "kind" : "challenges",
+        "to" : "zralpha1990_walls"
+      },
+      {
+        "from" : "zrgamma1975_kings",
+        "kind" : "refutes",
+        "to" : "zrbeta2001_harbour"
+      },
+      {
+        "from" : "zrgamma1975_kings",
+        "kind" : "superseded_by",
+        "to" : "zralpha1990_walls"
+      }
+    ],
+    "eventLeads" : [
+    ],
+    "filter" : {
+      "authors" : [
+      ],
+      "extraQueries" : [
+        "harbour",
+        "kings of zrland"
+      ],
+      "from" : null,
+      "places" : [
+      ],
+      "query" : null,
+      "status" : [
+      ],
+      "tags" : [
+        "zr-oracle"
+      ],
+      "to" : null,
+      "topics" : [
+      ]
+    },
+    "filterLine" : "search {tags: [\"zr-oracle\"]}",
+    "notUsed" : [
+      {
+        "reason" : "A survey of the whole region, no finding on the walls.",
+        "source" : {
+          "authors" : [
+            "Zrother, Cy"
+          ],
+          "citekey" : "zrdelta2010_survey",
+          "status" : "current",
+          "title" : "A Survey of Zrland",
+          "year" : 2010
+        }
+      }
+    ],
+    "reasons" : [
+      {
+        "citekey" : "zrdelta2010_survey",
+        "reason" : "A survey of the whole region, no finding on the walls."
+      }
+    ],
+    "searches" : [
+      {
+        "cited" : [
+          "zralpha1990_walls",
+          "zrbeta2001_harbour",
+          "zrgamma1975_kings"
+        ],
+        "query" : "harbour",
+        "total" : 5
+      },
+      {
+        "cited" : [
+          "zrgamma1975_kings"
+        ],
+        "query" : "kings of zrland",
+        "total" : 1
+      }
+    ],
+    "slug" : "zr_walls",
+    "statuses" : [
+      {
+        "count" : 2,
+        "status" : "current"
+      },
+      {
+        "count" : 1,
+        "status" : "contested"
+      },
+      {
+        "count" : 1,
+        "status" : "superseded"
+      }
+    ],
+    "total" : 4
+  },
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrauthor, Ann",
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zralpha1990_walls",
+      "doi" : null,
+      "status" : "current",
+      "title" : "The Walls of Zrtown",
+      "year" : 1990
+    },
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    },
+    {
+      "authors" : [
+        "Zrauthor, Ann"
+      ],
+      "citekey" : "zrgamma1975_kings",
+      "doi" : null,
+      "status" : "superseded",
+      "title" : "Kings of Zrland",
+      "year" : 1975
+    }
+  ]
+}
+== GET /api/articles/zr_nothing
+404 {
+  "code" : "not_found",
+  "message" : "No article 'zr_nothing'"
+}
+== tool get_article (all)
+# The walls of Zrtown
+
+_concept · [Zrland](/#place=Zrland) · 1600 BCE–1400 BCE · [zr-art](/#tag=zr-art), [walls](/#tag=walls)_
+
+## The question
+
+When were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour
+trade paid for them [[zrbeta2001_harbour]].
+
+## What the sources say
+
+An older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].
+
+## Unresolved
+
+Whether the gate is older than the walls [[zralpha1990_walls]].
+
+## Not used
+
+The filter returns 4 sources. 3 of them are cited above; the other one is listed here with the reason it is left out:
+
+- [[zrdelta2010_survey]] — A survey of the whole region, no finding on the walls.
+
+_Method: search {tags: ["zr-oracle"]} → 4; statuses: 2 current, 1 contested, 1 superseded; none debunked or retracted; further search "harbour" → 5 (cited: [[zralpha1990_walls]], [[zrbeta2001_harbour]], [[zrgamma1975_kings]]); further search "kings of zrland" → 1 (cited: [[zrgamma1975_kings]]); disagreement edges touching the cited sources: [[zrbeta2001_harbour]] challenges [[zralpha1990_walls]]; [[zrgamma1975_kings]] refutes [[zrbeta2001_harbour]]; [[zrgamma1975_kings]] superseded_by [[zralpha1990_walls]]; disagreements checked: 3 pairs — 1 addressed, 0 reasoned, 2 open._
+
+## Backlinks (2)
+
+- [[zr_harbour]] — The harbour myth
+- [[zr_index]] — Zr index
+
+## Sources cited (3)
+
+- [[zralpha1990_walls]] — Zrauthor & Zrwriter 1990 · _The Walls of Zrtown_ · **current**
+- [[zrbeta2001_harbour]] — Zrwriter 2001 · _The Harbour of Zrtown_ · **contested**
+- [[zrgamma1975_kings]] — Zrauthor 1975 · _Kings of Zrland_ · **superseded**
+== tool get_article body
+# The walls of Zrtown
+
+_concept · [Zrland](/#place=Zrland) · 1600 BCE–1400 BCE · [zr-art](/#tag=zr-art), [walls](/#tag=walls)_
+
+## The question
+
+When were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour
+trade paid for them [[zrbeta2001_harbour]].
+
+## What the sources say
+
+An older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].
+
+## Unresolved
+
+Whether the gate is older than the walls [[zralpha1990_walls]].
+== tool get_article summary
+_When the walls of Zrtown rose zralpha1990walls._
+== tool get_article coverage
+## Not used
+
+The filter returns 4 sources. 3 of them are cited above; the other one is listed here with the reason it is left out:
+
+- [[zrdelta2010_survey]] — A survey of the whole region, no finding on the walls.
+
+_Method: search {tags: ["zr-oracle"]} → 4; statuses: 2 current, 1 contested, 1 superseded; none debunked or retracted; further search "harbour" → 5 (cited: [[zralpha1990_walls]], [[zrbeta2001_harbour]], [[zrgamma1975_kings]]); further search "kings of zrland" → 1 (cited: [[zrgamma1975_kings]]); disagreement edges touching the cited sources: [[zrbeta2001_harbour]] challenges [[zralpha1990_walls]]; [[zrgamma1975_kings]] refutes [[zrbeta2001_harbour]]; [[zrgamma1975_kings]] superseded_by [[zralpha1990_walls]]; disagreements checked: 3 pairs — 1 addressed, 0 reasoned, 2 open._
+== tool get_article cited
+
+
+## Sources cited (3)
+
+- [[zralpha1990_walls]] — Zrauthor & Zrwriter 1990 · _The Walls of Zrtown_ · **current**
+- [[zrbeta2001_harbour]] — Zrwriter 2001 · _The Harbour of Zrtown_ · **contested**
+- [[zrgamma1975_kings]] — Zrauthor 1975 · _Kings of Zrland_ · **superseded**
+== tool get_article backlinks
+
+
+## Backlinks (2)
+
+- [[zr_harbour]] — The harbour myth
+- [[zr_index]] — Zr index
+== tool get_article body,cited
+# The walls of Zrtown
+
+_concept · [Zrland](/#place=Zrland) · 1600 BCE–1400 BCE · [zr-art](/#tag=zr-art), [walls](/#tag=walls)_
+
+## The question
+
+When were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour
+trade paid for them [[zrbeta2001_harbour]].
+
+## What the sources say
+
+An older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].
+
+## Unresolved
+
+Whether the gate is older than the walls [[zralpha1990_walls]].
+
+
+
+## Sources cited (3)
+
+- [[zralpha1990_walls]] — Zrauthor & Zrwriter 1990 · _The Walls of Zrtown_ · **current**
+- [[zrbeta2001_harbour]] — Zrwriter 2001 · _The Harbour of Zrtown_ · **contested**
+- [[zrgamma1975_kings]] — Zrauthor 1975 · _Kings of Zrland_ · **superseded**
+== tool get_article unknown
+_No article 'zr_nothing' — find a slug with list_articles._
+== GET /api/articles
+200 {
+  "articles" : [
+    {
+      "kind" : "concept",
+      "periodEnd" : -1400,
+      "periodStart" : -1600,
+      "regions" : [
+        "Zrland"
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_walls",
+      "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]].",
+      "tags" : [
+        "zr-art",
+        "walls"
+      ],
+      "title" : "The walls of Zrtown",
+      "updatedAt" : "TS"
+    },
+    {
+      "kind" : "culture",
+      "periodEnd" : null,
+      "periodStart" : null,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_culture",
+      "summary" : null,
+      "tags" : [
+        "zr-art"
+      ],
+      "title" : "The Zr culture",
+      "updatedAt" : "TS"
+    },
+    {
+      "kind" : "index",
+      "periodEnd" : null,
+      "periodStart" : null,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_index",
+      "summary" : "- [[zr_walls]] - [[zr_harbour]] - [[zr_missing]]",
+      "tags" : [
+        "zr-art"
+      ],
+      "title" : "Zr index",
+      "updatedAt" : "TS"
+    },
+    {
+      "kind" : "myth",
+      "periodEnd" : -1200,
+      "periodStart" : -1300,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_harbour",
+      "summary" : "A founding myth [[zrbeta2001_harbour]].",
+      "tags" : [
+        "zr-art",
+        "myth"
+      ],
+      "title" : "The harbour myth",
+      "updatedAt" : "TS"
+    },
+    {
+      "kind" : "report",
+      "periodEnd" : null,
+      "periodStart" : null,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_lost",
+      "summary" : null,
+      "tags" : [
+      ],
+      "title" : "A lost report",
+      "updatedAt" : "TS"
+    },
+    {
+      "kind" : "timeline",
+      "periodEnd" : -1600,
+      "periodStart" : -2000,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_kings",
+      "summary" : "The kings [[zrgamma1975_kings]].",
+      "tags" : [
+      ],
+      "title" : "Kings of Zrland, a timeline",
+      "updatedAt" : "TS"
+    }
+  ],
+  "kinds" : [
+    {
+      "count" : 1,
+      "kind" : "concept"
+    },
+    {
+      "count" : 1,
+      "kind" : "culture"
+    },
+    {
+      "count" : 1,
+      "kind" : "index"
+    },
+    {
+      "count" : 1,
+      "kind" : "myth"
+    },
+    {
+      "count" : 1,
+      "kind" : "report"
+    },
+    {
+      "count" : 1,
+      "kind" : "timeline"
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 6
+}
+== GET /api/articles?kind=myth
+200 {
+  "articles" : [
+    {
+      "kind" : "myth",
+      "periodEnd" : -1200,
+      "periodStart" : -1300,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_harbour",
+      "summary" : "A founding myth [[zrbeta2001_harbour]].",
+      "tags" : [
+        "zr-art",
+        "myth"
+      ],
+      "title" : "The harbour myth",
+      "updatedAt" : "TS"
+    }
+  ],
+  "kinds" : [
+    {
+      "count" : 1,
+      "kind" : "myth"
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 1
+}
+== GET /api/articles?kind=concept
+200 {
+  "articles" : [
+    {
+      "kind" : "concept",
+      "periodEnd" : -1400,
+      "periodStart" : -1600,
+      "regions" : [
+        "Zrland"
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_walls",
+      "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]].",
+      "tags" : [
+        "zr-art",
+        "walls"
+      ],
+      "title" : "The walls of Zrtown",
+      "updatedAt" : "TS"
+    }
+  ],
+  "kinds" : [
+    {
+      "count" : 1,
+      "kind" : "concept"
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 1
+}
+== GET /api/articles?text=walls
+200 {
+  "articles" : [
+    {
+      "kind" : "concept",
+      "periodEnd" : -1400,
+      "periodStart" : -1600,
+      "regions" : [
+        "Zrland"
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_walls",
+      "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]].",
+      "tags" : [
+        "zr-art",
+        "walls"
+      ],
+      "title" : "The walls of Zrtown",
+      "updatedAt" : "TS"
+    },
+    {
+      "kind" : "index",
+      "periodEnd" : null,
+      "periodStart" : null,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_index",
+      "summary" : "- [[zr_walls]] - [[zr_harbour]] - [[zr_missing]]",
+      "tags" : [
+        "zr-art"
+      ],
+      "title" : "Zr index",
+      "updatedAt" : "TS"
+    },
+    {
+      "kind" : "culture",
+      "periodEnd" : null,
+      "periodStart" : null,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_culture",
+      "summary" : null,
+      "tags" : [
+        "zr-art"
+      ],
+      "title" : "The Zr culture",
+      "updatedAt" : "TS"
+    },
+    {
+      "kind" : "myth",
+      "periodEnd" : -1200,
+      "periodStart" : -1300,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_harbour",
+      "summary" : "A founding myth [[zrbeta2001_harbour]].",
+      "tags" : [
+        "zr-art",
+        "myth"
+      ],
+      "title" : "The harbour myth",
+      "updatedAt" : "TS"
+    }
+  ],
+  "kinds" : [
+    {
+      "count" : 1,
+      "kind" : "concept"
+    },
+    {
+      "count" : 1,
+      "kind" : "culture"
+    },
+    {
+      "count" : 1,
+      "kind" : "index"
+    },
+    {
+      "count" : 1,
+      "kind" : "myth"
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 4
+}
+== GET /api/articles?text=hero
+200 {
+  "articles" : [
+    {
+      "kind" : "myth",
+      "periodEnd" : -1200,
+      "periodStart" : -1300,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_harbour",
+      "summary" : "A founding myth [[zrbeta2001_harbour]].",
+      "tags" : [
+        "zr-art",
+        "myth"
+      ],
+      "title" : "The harbour myth",
+      "updatedAt" : "TS"
+    }
+  ],
+  "kinds" : [
+    {
+      "count" : 1,
+      "kind" : "myth"
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 1
+}
+== GET /api/articles?tag=zr-trade
+200 {
+  "articles" : [
+    {
+      "kind" : "concept",
+      "periodEnd" : -1400,
+      "periodStart" : -1600,
+      "regions" : [
+        "Zrland"
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_walls",
+      "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]].",
+      "tags" : [
+        "zr-art",
+        "walls"
+      ],
+      "title" : "The walls of Zrtown",
+      "updatedAt" : "TS"
+    },
+    {
+      "kind" : "myth",
+      "periodEnd" : -1200,
+      "periodStart" : -1300,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_harbour",
+      "summary" : "A founding myth [[zrbeta2001_harbour]].",
+      "tags" : [
+        "zr-art",
+        "myth"
+      ],
+      "title" : "The harbour myth",
+      "updatedAt" : "TS"
+    }
+  ],
+  "kinds" : [
+    {
+      "count" : 1,
+      "kind" : "concept"
+    },
+    {
+      "count" : 1,
+      "kind" : "myth"
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 2
+}
+== GET /api/articles?tag=zr-kings
+200 {
+  "articles" : [
+    {
+      "kind" : "concept",
+      "periodEnd" : -1400,
+      "periodStart" : -1600,
+      "regions" : [
+        "Zrland"
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_walls",
+      "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]].",
+      "tags" : [
+        "zr-art",
+        "walls"
+      ],
+      "title" : "The walls of Zrtown",
+      "updatedAt" : "TS"
+    },
+    {
+      "kind" : "timeline",
+      "periodEnd" : -1600,
+      "periodStart" : -2000,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_kings",
+      "summary" : "The kings [[zrgamma1975_kings]].",
+      "tags" : [
+      ],
+      "title" : "Kings of Zrland, a timeline",
+      "updatedAt" : "TS"
+    }
+  ],
+  "kinds" : [
+    {
+      "count" : 1,
+      "kind" : "concept"
+    },
+    {
+      "count" : 1,
+      "kind" : "timeline"
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 2
+}
+== GET /api/articles?title=harbour
+200 {
+  "articles" : [
+    {
+      "kind" : "myth",
+      "periodEnd" : -1200,
+      "periodStart" : -1300,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_harbour",
+      "summary" : "A founding myth [[zrbeta2001_harbour]].",
+      "tags" : [
+        "zr-art",
+        "myth"
+      ],
+      "title" : "The harbour myth",
+      "updatedAt" : "TS"
+    }
+  ],
+  "kinds" : [
+    {
+      "count" : 1,
+      "kind" : "myth"
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 1
+}
+== GET /api/articles?status=superseded
+200 {
+  "articles" : [
+    {
+      "kind" : "concept",
+      "periodEnd" : -1400,
+      "periodStart" : -1600,
+      "regions" : [
+        "Zrland"
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_walls",
+      "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]].",
+      "tags" : [
+        "zr-art",
+        "walls"
+      ],
+      "title" : "The walls of Zrtown",
+      "updatedAt" : "TS"
+    },
+    {
+      "kind" : "timeline",
+      "periodEnd" : -1600,
+      "periodStart" : -2000,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_kings",
+      "summary" : "The kings [[zrgamma1975_kings]].",
+      "tags" : [
+      ],
+      "title" : "Kings of Zrland, a timeline",
+      "updatedAt" : "TS"
+    }
+  ],
+  "kinds" : [
+    {
+      "count" : 1,
+      "kind" : "concept"
+    },
+    {
+      "count" : 1,
+      "kind" : "timeline"
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 2
+}
+== GET /api/articles?q=walls
+200 {
+  "articles" : [
+    {
+      "kind" : "concept",
+      "periodEnd" : -1400,
+      "periodStart" : -1600,
+      "regions" : [
+        "Zrland"
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_walls",
+      "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]].",
+      "tags" : [
+        "zr-art",
+        "walls"
+      ],
+      "title" : "The walls of Zrtown",
+      "updatedAt" : "TS"
+    },
+    {
+      "kind" : "culture",
+      "periodEnd" : null,
+      "periodStart" : null,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_culture",
+      "summary" : null,
+      "tags" : [
+        "zr-art"
+      ],
+      "title" : "The Zr culture",
+      "updatedAt" : "TS"
+    },
+    {
+      "kind" : "myth",
+      "periodEnd" : -1200,
+      "periodStart" : -1300,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_harbour",
+      "summary" : "A founding myth [[zrbeta2001_harbour]].",
+      "tags" : [
+        "zr-art",
+        "myth"
+      ],
+      "title" : "The harbour myth",
+      "updatedAt" : "TS"
+    },
+    {
+      "kind" : "report",
+      "periodEnd" : null,
+      "periodStart" : null,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_lost",
+      "summary" : null,
+      "tags" : [
+      ],
+      "title" : "A lost report",
+      "updatedAt" : "TS"
+    },
+    {
+      "kind" : "timeline",
+      "periodEnd" : -1600,
+      "periodStart" : -2000,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_kings",
+      "summary" : "The kings [[zrgamma1975_kings]].",
+      "tags" : [
+      ],
+      "title" : "Kings of Zrland, a timeline",
+      "updatedAt" : "TS"
+    }
+  ],
+  "kinds" : [
+    {
+      "count" : 1,
+      "kind" : "concept"
+    },
+    {
+      "count" : 1,
+      "kind" : "culture"
+    },
+    {
+      "count" : 1,
+      "kind" : "myth"
+    },
+    {
+      "count" : 1,
+      "kind" : "report"
+    },
+    {
+      "count" : 1,
+      "kind" : "timeline"
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 5
+}
+== GET /api/articles?from=-2000&to=-1700
+200 {
+  "articles" : [
+    {
+      "kind" : "concept",
+      "periodEnd" : -1400,
+      "periodStart" : -1600,
+      "regions" : [
+        "Zrland"
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_walls",
+      "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]].",
+      "tags" : [
+        "zr-art",
+        "walls"
+      ],
+      "title" : "The walls of Zrtown",
+      "updatedAt" : "TS"
+    },
+    {
+      "kind" : "culture",
+      "periodEnd" : null,
+      "periodStart" : null,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_culture",
+      "summary" : null,
+      "tags" : [
+        "zr-art"
+      ],
+      "title" : "The Zr culture",
+      "updatedAt" : "TS"
+    },
+    {
+      "kind" : "myth",
+      "periodEnd" : -1200,
+      "periodStart" : -1300,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_harbour",
+      "summary" : "A founding myth [[zrbeta2001_harbour]].",
+      "tags" : [
+        "zr-art",
+        "myth"
+      ],
+      "title" : "The harbour myth",
+      "updatedAt" : "TS"
+    },
+    {
+      "kind" : "report",
+      "periodEnd" : null,
+      "periodStart" : null,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_lost",
+      "summary" : null,
+      "tags" : [
+      ],
+      "title" : "A lost report",
+      "updatedAt" : "TS"
+    },
+    {
+      "kind" : "timeline",
+      "periodEnd" : -1600,
+      "periodStart" : -2000,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_kings",
+      "summary" : "The kings [[zrgamma1975_kings]].",
+      "tags" : [
+      ],
+      "title" : "Kings of Zrland, a timeline",
+      "updatedAt" : "TS"
+    }
+  ],
+  "kinds" : [
+    {
+      "count" : 1,
+      "kind" : "concept"
+    },
+    {
+      "count" : 1,
+      "kind" : "culture"
+    },
+    {
+      "count" : 1,
+      "kind" : "myth"
+    },
+    {
+      "count" : 1,
+      "kind" : "report"
+    },
+    {
+      "count" : 1,
+      "kind" : "timeline"
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 5
+}
+== GET /api/articles?topic=trade
+200 {
+  "articles" : [
+    {
+      "kind" : "concept",
+      "periodEnd" : -1400,
+      "periodStart" : -1600,
+      "regions" : [
+        "Zrland"
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_walls",
+      "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]].",
+      "tags" : [
+        "zr-art",
+        "walls"
+      ],
+      "title" : "The walls of Zrtown",
+      "updatedAt" : "TS"
+    },
+    {
+      "kind" : "myth",
+      "periodEnd" : -1200,
+      "periodStart" : -1300,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_harbour",
+      "summary" : "A founding myth [[zrbeta2001_harbour]].",
+      "tags" : [
+        "zr-art",
+        "myth"
+      ],
+      "title" : "The harbour myth",
+      "updatedAt" : "TS"
+    }
+  ],
+  "kinds" : [
+    {
+      "count" : 1,
+      "kind" : "concept"
+    },
+    {
+      "count" : 1,
+      "kind" : "myth"
+    }
+  ],
+  "next" : null,
+  "offset" : 0,
+  "total" : 2
+}
+== GET /api/articles?limit=2
+200 {
+  "articles" : [
+    {
+      "kind" : "concept",
+      "periodEnd" : -1400,
+      "periodStart" : -1600,
+      "regions" : [
+        "Zrland"
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_walls",
+      "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]].",
+      "tags" : [
+        "zr-art",
+        "walls"
+      ],
+      "title" : "The walls of Zrtown",
+      "updatedAt" : "TS"
+    },
+    {
+      "kind" : "culture",
+      "periodEnd" : null,
+      "periodStart" : null,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_culture",
+      "summary" : null,
+      "tags" : [
+        "zr-art"
+      ],
+      "title" : "The Zr culture",
+      "updatedAt" : "TS"
+    }
+  ],
+  "kinds" : [
+    {
+      "count" : 1,
+      "kind" : "concept"
+    },
+    {
+      "count" : 1,
+      "kind" : "culture"
+    },
+    {
+      "count" : 1,
+      "kind" : "index"
+    },
+    {
+      "count" : 1,
+      "kind" : "myth"
+    },
+    {
+      "count" : 1,
+      "kind" : "report"
+    },
+    {
+      "count" : 1,
+      "kind" : "timeline"
+    }
+  ],
+  "next" : 2,
+  "offset" : 0,
+  "total" : 6
+}
+== GET /api/articles?limit=2&offset=2
+200 {
+  "articles" : [
+    {
+      "kind" : "index",
+      "periodEnd" : null,
+      "periodStart" : null,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_index",
+      "summary" : "- [[zr_walls]] - [[zr_harbour]] - [[zr_missing]]",
+      "tags" : [
+        "zr-art"
+      ],
+      "title" : "Zr index",
+      "updatedAt" : "TS"
+    },
+    {
+      "kind" : "myth",
+      "periodEnd" : -1200,
+      "periodStart" : -1300,
+      "regions" : [
+      ],
+      "review" : {
+        "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+        "findings" : 0,
+        "label" : "not reviewed",
+        "openMajors" : 0,
+        "openMinors" : 0,
+        "round" : null,
+        "runs" : 0,
+        "state" : "unreviewed"
+      },
+      "slug" : "zr_harbour",
+      "summary" : "A founding myth [[zrbeta2001_harbour]].",
+      "tags" : [
+        "zr-art",
+        "myth"
+      ],
+      "title" : "The harbour myth",
+      "updatedAt" : "TS"
+    }
+  ],
+  "kinds" : [
+    {
+      "count" : 1,
+      "kind" : "concept"
+    },
+    {
+      "count" : 1,
+      "kind" : "culture"
+    },
+    {
+      "count" : 1,
+      "kind" : "index"
+    },
+    {
+      "count" : 1,
+      "kind" : "myth"
+    },
+    {
+      "count" : 1,
+      "kind" : "report"
+    },
+    {
+      "count" : 1,
+      "kind" : "timeline"
+    }
+  ],
+  "next" : 4,
+  "offset" : 2,
+  "total" : 6
+}
+== tool list_articles {}
+### 6 article(s)
+
+- **zr_walls** — The walls of Zrtown
+  _concept · 1600 BCE–1400 BCE · zr-art, walls_
+  When the walls of Zrtown rose [[zralpha1990_walls]].
+- **zr_culture** — The Zr culture
+  _culture · zr-art_
+- **zr_index** — Zr index
+  _index · zr-art_
+  - [[zr_walls]] - [[zr_harbour]] - [[zr_missing]]
+- **zr_harbour** — The harbour myth
+  _myth · 1300 BCE–1200 BCE · zr-art, myth_
+  A founding myth [[zrbeta2001_harbour]].
+- **zr_lost** — A lost report
+  _report_
+- **zr_kings** — Kings of Zrland, a timeline
+  _timeline · 2000 BCE–1600 BCE_
+  The kings [[zrgamma1975_kings]].
+== tool list_articles {"kind":"myth"}
+### 1 article(s)
+
+- **zr_harbour** — The harbour myth
+  _myth · 1300 BCE–1200 BCE · zr-art, myth_
+  A founding myth [[zrbeta2001_harbour]].
+== tool list_articles {"query":"walls"}
+### 4 article(s)
+
+- **zr_walls** — The walls of Zrtown
+  _concept · 1600 BCE–1400 BCE · zr-art, walls_
+  When the walls of Zrtown rose [[zralpha1990_walls]].
+- **zr_index** — Zr index
+  _index · zr-art_
+  - [[zr_walls]] - [[zr_harbour]] - [[zr_missing]]
+- **zr_culture** — The Zr culture
+  _culture · zr-art_
+- **zr_harbour** — The harbour myth
+  _myth · 1300 BCE–1200 BCE · zr-art, myth_
+  A founding myth [[zrbeta2001_harbour]].
+== tool list_articles {"tag":"zr-trade"}
+### 2 article(s)
+
+- **zr_walls** — The walls of Zrtown
+  _concept · 1600 BCE–1400 BCE · zr-art, walls_
+  When the walls of Zrtown rose [[zralpha1990_walls]].
+- **zr_harbour** — The harbour myth
+  _myth · 1300 BCE–1200 BCE · zr-art, myth_
+  A founding myth [[zrbeta2001_harbour]].
+== tool list_articles {"title":"harbour"}
+### 1 article(s)
+
+- **zr_harbour** — The harbour myth
+  _myth · 1300 BCE–1200 BCE · zr-art, myth_
+  A founding myth [[zrbeta2001_harbour]].
+== tool list_articles {"limit":2,"offset":1}
+### 2 of 6 article(s)
+
+- **zr_culture** — The Zr culture
+  _culture · zr-art_
+- **zr_index** — Zr index
+  _index · zr-art_
+  - [[zr_walls]] - [[zr_harbour]] - [[zr_missing]]
+
+_showing 2–3 of 6 — next: offset=3 — full set: limit=6_
+== patch zr_harbour: title
+200 {
+  "article" : {
+    "body" : "## The story\n\nThe harbour was founded by a hero [[zrbeta2001_harbour]]. See [[zr_walls]] for the walls.\n",
+    "kind" : "myth",
+    "periodEnd" : -1200,
+    "periodStart" : -1300,
+    "regions" : [
+    ],
+    "slug" : "zr_harbour",
+    "summary" : "A founding myth [[zrbeta2001_harbour]].",
+    "tags" : [
+      "zr-art",
+      "myth"
+    ],
+    "title" : "The harbour myth of Zrtown",
+    "uid" : "article:zr_harbour",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_index",
+      "kind" : "article",
+      "title" : "Zr index"
+    }
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    }
+  ]
+}
+== patch zr_harbour: summary
+200 {
+  "article" : {
+    "body" : "## The story\n\nThe harbour was founded by a hero [[zrbeta2001_harbour]]. See [[zr_walls]] for the walls.\n",
+    "kind" : "myth",
+    "periodEnd" : -1200,
+    "periodStart" : -1300,
+    "regions" : [
+    ],
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "tags" : [
+      "zr-art",
+      "myth"
+    ],
+    "title" : "The harbour myth of Zrtown",
+    "uid" : "article:zr_harbour",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_index",
+      "kind" : "article",
+      "title" : "Zr index"
+    }
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    }
+  ]
+}
+== patch zr_harbour: body
+200 {
+  "article" : {
+    "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n",
+    "kind" : "myth",
+    "periodEnd" : -1200,
+    "periodStart" : -1300,
+    "regions" : [
+    ],
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "tags" : [
+      "zr-art",
+      "myth"
+    ],
+    "title" : "The harbour myth of Zrtown",
+    "uid" : "article:zr_harbour",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_index",
+      "kind" : "article",
+      "title" : "Zr index"
+    }
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    }
+  ]
+}
+== patch zr_harbour: append
+200 {
+  "article" : {
+    "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].",
+    "kind" : "myth",
+    "periodEnd" : -1200,
+    "periodStart" : -1300,
+    "regions" : [
+    ],
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "tags" : [
+      "zr-art",
+      "myth"
+    ],
+    "title" : "The harbour myth of Zrtown",
+    "uid" : "article:zr_harbour",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_index",
+      "kind" : "article",
+      "title" : "Zr index"
+    }
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    }
+  ]
+}
+== patch zr_harbour: append to a section
+200 {
+  "article" : {
+    "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].",
+    "kind" : "myth",
+    "periodEnd" : -1200,
+    "periodStart" : -1300,
+    "regions" : [
+    ],
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "tags" : [
+      "zr-art",
+      "myth"
+    ],
+    "title" : "The harbour myth of Zrtown",
+    "uid" : "article:zr_harbour",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_index",
+      "kind" : "article",
+      "title" : "Zr index"
+    }
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    }
+  ]
+}
+== patch zr_harbour: append to a missing section
+400 {
+  "code" : "invalid",
+  "message" : "no heading matching 'No such' in the article body"
+}
+== patch zr_harbour: tags add
+200 {
+  "article" : {
+    "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].",
+    "kind" : "myth",
+    "periodEnd" : -1200,
+    "periodStart" : -1300,
+    "regions" : [
+    ],
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "tags" : [
+      "zr-art",
+      "myth",
+      "founding"
+    ],
+    "title" : "The harbour myth of Zrtown",
+    "uid" : "article:zr_harbour",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_index",
+      "kind" : "article",
+      "title" : "Zr index"
+    }
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    }
+  ]
+}
+== patch zr_harbour: tags remove
+200 {
+  "article" : {
+    "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].",
+    "kind" : "myth",
+    "periodEnd" : -1200,
+    "periodStart" : -1300,
+    "regions" : [
+    ],
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "tags" : [
+      "zr-art",
+      "founding"
+    ],
+    "title" : "The harbour myth of Zrtown",
+    "uid" : "article:zr_harbour",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_index",
+      "kind" : "article",
+      "title" : "Zr index"
+    }
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    }
+  ]
+}
+== patch zr_harbour: tags replace
+200 {
+  "article" : {
+    "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].",
+    "kind" : "myth",
+    "periodEnd" : -1200,
+    "periodStart" : -1300,
+    "regions" : [
+    ],
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "tags" : [
+      "zr-art",
+      "founding",
+      "harbour"
+    ],
+    "title" : "The harbour myth of Zrtown",
+    "uid" : "article:zr_harbour",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_index",
+      "kind" : "article",
+      "title" : "Zr index"
+    }
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    }
+  ]
+}
+== patch zr_harbour: regions
+200 {
+  "article" : {
+    "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].",
+    "kind" : "myth",
+    "periodEnd" : -1200,
+    "periodStart" : -1300,
+    "regions" : [
+      "Zrland",
+      "Zrcoast"
+    ],
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "tags" : [
+      "zr-art",
+      "founding",
+      "harbour"
+    ],
+    "title" : "The harbour myth of Zrtown",
+    "uid" : "article:zr_harbour",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_index",
+      "kind" : "article",
+      "title" : "Zr index"
+    }
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    }
+  ]
+}
+== patch zr_harbour: period
+200 {
+  "article" : {
+    "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].",
+    "kind" : "myth",
+    "periodEnd" : -1150,
+    "periodStart" : -1350,
+    "regions" : [
+      "Zrland",
+      "Zrcoast"
+    ],
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "tags" : [
+      "zr-art",
+      "founding",
+      "harbour"
+    ],
+    "title" : "The harbour myth of Zrtown",
+    "uid" : "article:zr_harbour",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_index",
+      "kind" : "article",
+      "title" : "Zr index"
+    }
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    }
+  ]
+}
+== patch zr_harbour: kind
+200 {
+  "article" : {
+    "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].",
+    "kind" : "concept",
+    "periodEnd" : -1150,
+    "periodStart" : -1350,
+    "regions" : [
+      "Zrland",
+      "Zrcoast"
+    ],
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "tags" : [
+      "zr-art",
+      "founding",
+      "harbour"
+    ],
+    "title" : "The harbour myth of Zrtown",
+    "uid" : "article:zr_harbour",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_index",
+      "kind" : "article",
+      "title" : "Zr index"
+    }
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    }
+  ]
+}
+== patch zr_harbour: kind back
+200 {
+  "article" : {
+    "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].",
+    "kind" : "myths",
+    "periodEnd" : -1150,
+    "periodStart" : -1350,
+    "regions" : [
+      "Zrland",
+      "Zrcoast"
+    ],
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "tags" : [
+      "zr-art",
+      "founding",
+      "harbour"
+    ],
+    "title" : "The harbour myth of Zrtown",
+    "uid" : "article:zr_harbour",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_index",
+      "kind" : "article",
+      "title" : "Zr index"
+    }
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    }
+  ]
+}
+== patch zr_harbour: filter
+200 {
+  "article" : {
+    "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].",
+    "kind" : "myths",
+    "periodEnd" : -1150,
+    "periodStart" : -1350,
+    "regions" : [
+      "Zrland",
+      "Zrcoast"
+    ],
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "tags" : [
+      "zr-art",
+      "founding",
+      "harbour"
+    ],
+    "title" : "The harbour myth of Zrtown",
+    "uid" : "article:zr_harbour",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_index",
+      "kind" : "article",
+      "title" : "Zr index"
+    }
+  ],
+  "coverage" : {
+    "checked" : 1,
+    "cited" : [
+      {
+        "authors" : [
+          "Zrwriter, Bo"
+        ],
+        "citekey" : "zrbeta2001_harbour",
+        "status" : "contested",
+        "title" : "The Harbour of Zrtown",
+        "year" : 2001
+      }
+    ],
+    "citedOutside" : [
+    ],
+    "critiques" : [
+      {
+        "dst" : {
+          "cited" : false,
+          "citekey" : "zralpha1990_walls",
+          "mentions" : 0,
+          "title" : "The Walls of Zrtown",
+          "year" : 1990
+        },
+        "kinds" : [
+          "challenges"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrbeta2001_harbour",
+          "mentions" : 3,
+          "title" : "The Harbour of Zrtown",
+          "year" : 2001
+        },
+        "state" : "open"
+      },
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zrbeta2001_harbour",
+          "mentions" : 3,
+          "title" : "The Harbour of Zrtown",
+          "year" : 2001
+        },
+        "kinds" : [
+          "refutes"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : false,
+          "citekey" : "zrgamma1975_kings",
+          "mentions" : 0,
+          "title" : "Kings of Zrland",
+          "year" : 1975
+        },
+        "state" : "open"
+      }
+    ],
+    "drift" : [
+    ],
+    "edges" : [
+      {
+        "from" : "zrbeta2001_harbour",
+        "kind" : "challenges",
+        "to" : "zralpha1990_walls"
+      },
+      {
+        "from" : "zrgamma1975_kings",
+        "kind" : "refutes",
+        "to" : "zrbeta2001_harbour"
+      }
+    ],
+    "eventLeads" : [
+    ],
+    "filter" : {
+      "authors" : [
+      ],
+      "extraQueries" : [
+      ],
+      "from" : -1500,
+      "places" : [
+      ],
+      "query" : null,
+      "status" : [
+      ],
+      "tags" : [
+        "zr-trade"
+      ],
+      "to" : -1000,
+      "topics" : [
+      ]
+    },
+    "filterLine" : "search {tags: [\"zr-trade\"], from: -1500, to: -1000}",
+    "notUsed" : [
+    ],
+    "reasons" : [
+    ],
+    "searches" : [
+    ],
+    "slug" : "zr_harbour",
+    "statuses" : [
+      {
+        "count" : 1,
+        "status" : "contested"
+      }
+    ],
+    "total" : 1
+  },
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    }
+  ]
+}
+== patch zr_walls: reasons
+200 {
+  "article" : {
+    "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",
+    "kind" : "concept",
+    "periodEnd" : -1400,
+    "periodStart" : -1600,
+    "regions" : [
+      "Zrland"
+    ],
+    "slug" : "zr_walls",
+    "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]].",
+    "tags" : [
+      "zr-art",
+      "walls"
+    ],
+    "title" : "The walls of Zrtown",
+    "uid" : "article:zr_city_walls",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_harbour",
+      "kind" : "article",
+      "title" : "The harbour myth of Zrtown"
+    },
+    {
+      "id" : "zr_index",
+      "kind" : "article",
+      "title" : "Zr index"
+    }
+  ],
+  "coverage" : {
+    "checked" : 4,
+    "cited" : [
+      {
+        "authors" : [
+          "Zrauthor, Ann",
+          "Zrwriter, Bo"
+        ],
+        "citekey" : "zralpha1990_walls",
+        "status" : "current",
+        "title" : "The Walls of Zrtown",
+        "year" : 1990
+      },
+      {
+        "authors" : [
+          "Zrwriter, Bo"
+        ],
+        "citekey" : "zrbeta2001_harbour",
+        "status" : "contested",
+        "title" : "The Harbour of Zrtown",
+        "year" : 2001
+      },
+      {
+        "authors" : [
+          "Zrauthor, Ann"
+        ],
+        "citekey" : "zrgamma1975_kings",
+        "status" : "superseded",
+        "title" : "Kings of Zrland",
+        "year" : 1975
+      }
+    ],
+    "citedOutside" : [
+    ],
+    "critiques" : [
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zralpha1990_walls",
+          "mentions" : 2,
+          "title" : "The Walls of Zrtown",
+          "year" : 1990
+        },
+        "kinds" : [
+          "challenges"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrbeta2001_harbour",
+          "mentions" : 1,
+          "title" : "The Harbour of Zrtown",
+          "year" : 2001
+        },
+        "state" : "addressed"
+      },
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zralpha1990_walls",
+          "mentions" : 2,
+          "title" : "The Walls of Zrtown",
+          "year" : 1990
+        },
+        "kinds" : [
+          "superseded_by"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrgamma1975_kings",
+          "mentions" : 1,
+          "title" : "Kings of Zrland",
+          "year" : 1975
+        },
+        "state" : "open"
+      },
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zrbeta2001_harbour",
+          "mentions" : 1,
+          "title" : "The Harbour of Zrtown",
+          "year" : 2001
+        },
+        "kinds" : [
+          "refutes"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrgamma1975_kings",
+          "mentions" : 1,
+          "title" : "Kings of Zrland",
+          "year" : 1975
+        },
+        "state" : "open"
+      }
+    ],
+    "drift" : [
+    ],
+    "edges" : [
+      {
+        "from" : "zrbeta2001_harbour",
+        "kind" : "challenges",
+        "to" : "zralpha1990_walls"
+      },
+      {
+        "from" : "zrgamma1975_kings",
+        "kind" : "refutes",
+        "to" : "zrbeta2001_harbour"
+      },
+      {
+        "from" : "zrgamma1975_kings",
+        "kind" : "superseded_by",
+        "to" : "zralpha1990_walls"
+      }
+    ],
+    "eventLeads" : [
+    ],
+    "filter" : {
+      "authors" : [
+      ],
+      "extraQueries" : [
+        "harbour",
+        "kings of zrland"
+      ],
+      "from" : null,
+      "places" : [
+      ],
+      "query" : null,
+      "status" : [
+      ],
+      "tags" : [
+        "zr-oracle"
+      ],
+      "to" : null,
+      "topics" : [
+      ]
+    },
+    "filterLine" : "search {tags: [\"zr-oracle\"]}",
+    "notUsed" : [
+      {
+        "reason" : "Region-wide; no walls.",
+        "source" : {
+          "authors" : [
+            "Zrother, Cy"
+          ],
+          "citekey" : "zrdelta2010_survey",
+          "status" : "current",
+          "title" : "A Survey of Zrland",
+          "year" : 2010
+        }
+      }
+    ],
+    "reasons" : [
+      {
+        "citekey" : "zrdelta2010_survey",
+        "reason" : "Region-wide; no walls."
+      }
+    ],
+    "searches" : [
+      {
+        "cited" : [
+          "zralpha1990_walls",
+          "zrbeta2001_harbour",
+          "zrgamma1975_kings"
+        ],
+        "query" : "harbour",
+        "total" : 5
+      },
+      {
+        "cited" : [
+          "zrgamma1975_kings"
+        ],
+        "query" : "kings of zrland",
+        "total" : 1
+      }
+    ],
+    "slug" : "zr_walls",
+    "statuses" : [
+      {
+        "count" : 2,
+        "status" : "current"
+      },
+      {
+        "count" : 1,
+        "status" : "contested"
+      },
+      {
+        "count" : 1,
+        "status" : "superseded"
+      }
+    ],
+    "total" : 4
+  },
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrauthor, Ann",
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zralpha1990_walls",
+      "doi" : null,
+      "status" : "current",
+      "title" : "The Walls of Zrtown",
+      "year" : 1990
+    },
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    },
+    {
+      "authors" : [
+        "Zrauthor, Ann"
+      ],
+      "citekey" : "zrgamma1975_kings",
+      "doi" : null,
+      "status" : "superseded",
+      "title" : "Kings of Zrland",
+      "year" : 1975
+    }
+  ]
+}
+== patch zr_walls: critique reasons
+200 {
+  "article" : {
+    "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",
+    "kind" : "concept",
+    "periodEnd" : -1400,
+    "periodStart" : -1600,
+    "regions" : [
+      "Zrland"
+    ],
+    "slug" : "zr_walls",
+    "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]].",
+    "tags" : [
+      "zr-art",
+      "walls"
+    ],
+    "title" : "The walls of Zrtown",
+    "uid" : "article:zr_city_walls",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_harbour",
+      "kind" : "article",
+      "title" : "The harbour myth of Zrtown"
+    },
+    {
+      "id" : "zr_index",
+      "kind" : "article",
+      "title" : "Zr index"
+    }
+  ],
+  "coverage" : {
+    "checked" : 4,
+    "cited" : [
+      {
+        "authors" : [
+          "Zrauthor, Ann",
+          "Zrwriter, Bo"
+        ],
+        "citekey" : "zralpha1990_walls",
+        "status" : "current",
+        "title" : "The Walls of Zrtown",
+        "year" : 1990
+      },
+      {
+        "authors" : [
+          "Zrwriter, Bo"
+        ],
+        "citekey" : "zrbeta2001_harbour",
+        "status" : "contested",
+        "title" : "The Harbour of Zrtown",
+        "year" : 2001
+      },
+      {
+        "authors" : [
+          "Zrauthor, Ann"
+        ],
+        "citekey" : "zrgamma1975_kings",
+        "status" : "superseded",
+        "title" : "Kings of Zrland",
+        "year" : 1975
+      }
+    ],
+    "citedOutside" : [
+    ],
+    "critiques" : [
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zralpha1990_walls",
+          "mentions" : 2,
+          "title" : "The Walls of Zrtown",
+          "year" : 1990
+        },
+        "kinds" : [
+          "challenges"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrbeta2001_harbour",
+          "mentions" : 1,
+          "title" : "The Harbour of Zrtown",
+          "year" : 2001
+        },
+        "state" : "addressed"
+      },
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zralpha1990_walls",
+          "mentions" : 2,
+          "title" : "The Walls of Zrtown",
+          "year" : 1990
+        },
+        "kinds" : [
+          "superseded_by"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrgamma1975_kings",
+          "mentions" : 1,
+          "title" : "Kings of Zrland",
+          "year" : 1975
+        },
+        "state" : "open"
+      },
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zrbeta2001_harbour",
+          "mentions" : 1,
+          "title" : "The Harbour of Zrtown",
+          "year" : 2001
+        },
+        "kinds" : [
+          "refutes"
+        ],
+        "reason" : "The refutation is about trade, not the walls.",
+        "reasonBy" : "person",
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrgamma1975_kings",
+          "mentions" : 1,
+          "title" : "Kings of Zrland",
+          "year" : 1975
+        },
+        "state" : "reasoned"
+      }
+    ],
+    "drift" : [
+    ],
+    "edges" : [
+      {
+        "from" : "zrbeta2001_harbour",
+        "kind" : "challenges",
+        "to" : "zralpha1990_walls"
+      },
+      {
+        "from" : "zrgamma1975_kings",
+        "kind" : "refutes",
+        "to" : "zrbeta2001_harbour"
+      },
+      {
+        "from" : "zrgamma1975_kings",
+        "kind" : "superseded_by",
+        "to" : "zralpha1990_walls"
+      }
+    ],
+    "eventLeads" : [
+    ],
+    "filter" : {
+      "authors" : [
+      ],
+      "extraQueries" : [
+        "harbour",
+        "kings of zrland"
+      ],
+      "from" : null,
+      "places" : [
+      ],
+      "query" : null,
+      "status" : [
+      ],
+      "tags" : [
+        "zr-oracle"
+      ],
+      "to" : null,
+      "topics" : [
+      ]
+    },
+    "filterLine" : "search {tags: [\"zr-oracle\"]}",
+    "notUsed" : [
+      {
+        "reason" : "Region-wide; no walls.",
+        "source" : {
+          "authors" : [
+            "Zrother, Cy"
+          ],
+          "citekey" : "zrdelta2010_survey",
+          "status" : "current",
+          "title" : "A Survey of Zrland",
+          "year" : 2010
+        }
+      }
+    ],
+    "reasons" : [
+      {
+        "citekey" : "zrdelta2010_survey",
+        "reason" : "Region-wide; no walls."
+      }
+    ],
+    "searches" : [
+      {
+        "cited" : [
+          "zralpha1990_walls",
+          "zrbeta2001_harbour",
+          "zrgamma1975_kings"
+        ],
+        "query" : "harbour",
+        "total" : 5
+      },
+      {
+        "cited" : [
+          "zrgamma1975_kings"
+        ],
+        "query" : "kings of zrland",
+        "total" : 1
+      }
+    ],
+    "slug" : "zr_walls",
+    "statuses" : [
+      {
+        "count" : 2,
+        "status" : "current"
+      },
+      {
+        "count" : 1,
+        "status" : "contested"
+      },
+      {
+        "count" : 1,
+        "status" : "superseded"
+      }
+    ],
+    "total" : 4
+  },
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrauthor, Ann",
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zralpha1990_walls",
+      "doi" : null,
+      "status" : "current",
+      "title" : "The Walls of Zrtown",
+      "year" : 1990
+    },
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    },
+    {
+      "authors" : [
+        "Zrauthor, Ann"
+      ],
+      "citekey" : "zrgamma1975_kings",
+      "doi" : null,
+      "status" : "superseded",
+      "title" : "Kings of Zrland",
+      "year" : 1975
+    }
+  ]
+}
+== patch zr_harbour: refused: a stale ifUpdatedAt
+412 {
+  "code" : "precondition_failed",
+  "message" : "'zr_harbour' has moved on: you sent ifUpdatedAt='TS' but the stored updatedAt is 'TS'. Re-read the article and re-apply your patch."
+}
+== patch zr_harbour: refused: a malformed ifUpdatedAt
+412 {
+  "code" : "precondition_failed",
+  "message" : "'zr_harbour' has moved on: you sent ifUpdatedAt='yesterday' but the stored updatedAt is 'TS'. Re-read the article and re-apply your patch."
+}
+== patch zr_harbour: with the current ifUpdatedAt
+200 {
+  "article" : {
+    "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].",
+    "kind" : "myths",
+    "periodEnd" : -1150,
+    "periodStart" : -1350,
+    "regions" : [
+      "Zrland",
+      "Zrcoast"
+    ],
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "tags" : [
+      "zr-art",
+      "founding",
+      "harbour"
+    ],
+    "title" : "The harbour myth",
+    "uid" : "article:zr_harbour",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_index",
+      "kind" : "article",
+      "title" : "Zr index"
+    }
+  ],
+  "coverage" : {
+    "checked" : 1,
+    "cited" : [
+      {
+        "authors" : [
+          "Zrwriter, Bo"
+        ],
+        "citekey" : "zrbeta2001_harbour",
+        "status" : "contested",
+        "title" : "The Harbour of Zrtown",
+        "year" : 2001
+      }
+    ],
+    "citedOutside" : [
+    ],
+    "critiques" : [
+      {
+        "dst" : {
+          "cited" : false,
+          "citekey" : "zralpha1990_walls",
+          "mentions" : 0,
+          "title" : "The Walls of Zrtown",
+          "year" : 1990
+        },
+        "kinds" : [
+          "challenges"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrbeta2001_harbour",
+          "mentions" : 3,
+          "title" : "The Harbour of Zrtown",
+          "year" : 2001
+        },
+        "state" : "open"
+      },
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zrbeta2001_harbour",
+          "mentions" : 3,
+          "title" : "The Harbour of Zrtown",
+          "year" : 2001
+        },
+        "kinds" : [
+          "refutes"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : false,
+          "citekey" : "zrgamma1975_kings",
+          "mentions" : 0,
+          "title" : "Kings of Zrland",
+          "year" : 1975
+        },
+        "state" : "open"
+      }
+    ],
+    "drift" : [
+    ],
+    "edges" : [
+      {
+        "from" : "zrbeta2001_harbour",
+        "kind" : "challenges",
+        "to" : "zralpha1990_walls"
+      },
+      {
+        "from" : "zrgamma1975_kings",
+        "kind" : "refutes",
+        "to" : "zrbeta2001_harbour"
+      }
+    ],
+    "eventLeads" : [
+    ],
+    "filter" : {
+      "authors" : [
+      ],
+      "extraQueries" : [
+      ],
+      "from" : -1500,
+      "places" : [
+      ],
+      "query" : null,
+      "status" : [
+      ],
+      "tags" : [
+        "zr-trade"
+      ],
+      "to" : -1000,
+      "topics" : [
+      ]
+    },
+    "filterLine" : "search {tags: [\"zr-trade\"], from: -1500, to: -1000}",
+    "notUsed" : [
+    ],
+    "reasons" : [
+    ],
+    "searches" : [
+    ],
+    "slug" : "zr_harbour",
+    "statuses" : [
+      {
+        "count" : 1,
+        "status" : "contested"
+      }
+    ],
+    "total" : 1
+  },
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    }
+  ]
+}
+== patch zr_harbour: refused: strict, a formatting error
+400 {
+  "code" : "invalid",
+  "message" : "refused (strict): 1 formatting error — body L11:1 error html-tag — `<div>` is never closed — everything after it is inside it · `<div> never closed`"
+}
+== patch zr_harbour: refused: an unknown key
+400 Invalid value for: body (unknown key 'nope'; expected only: title, summary, body, append, section, tags, regions, period, kind, ifUpdatedAt, filter, reasons, critiqueReasons)
+== patch zr_harbour: refused: a bad kind
+400 {
+  "code" : "invalid",
+  "message" : "invalid kind 'Not A Kind!' — one of concept, myth, culture, region, timeline, report, index (or another lower-case word)"
+}
+== patch zr_nothing: unknown article
+404 {
+  "code" : "not_found",
+  "message" : "No article 'zr_nothing'"
+}
+== patch zr_harbour: filter cleared
+200 {
+  "article" : {
+    "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].",
+    "kind" : "myths",
+    "periodEnd" : -1150,
+    "periodStart" : -1350,
+    "regions" : [
+      "Zrland",
+      "Zrcoast"
+    ],
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "tags" : [
+      "zr-art",
+      "founding",
+      "harbour"
+    ],
+    "title" : "The harbour myth",
+    "uid" : "article:zr_harbour",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_index",
+      "kind" : "article",
+      "title" : "Zr index"
+    }
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    }
+  ]
+}
+== tool patch_article (append)
+# Kings of Zrland, a timeline
+
+_timeline · 2000 BCE–1600 BCE_
+
+## Timeline
+
+The kings ruled from Zrtown from 2000 BC [[zrgamma1975_kings]].
+
+## Unresolved
+
+The end of the dynasty [[zrgamma1975_kings]].
+
+## Sources cited (1)
+
+- [[zrgamma1975_kings]] — Zrauthor 1975 · _Kings of Zrland_ · **superseded**
+== tool patch_article refused (stale)
+_'zr_kings' has moved on: you sent ifUpdatedAt='TS' but the stored updatedAt is 'TS'. Re-read the article and re-apply your patch._
+== GET versions of harbour
+200 [
+  {
+    "createdAt" : "TS",
+    "id" : 16,
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "updatedAt" : "TS",
+    "wordCount" : 25
+  },
+  {
+    "createdAt" : "TS",
+    "id" : 15,
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "updatedAt" : "TS",
+    "wordCount" : 25
+  },
+  {
+    "createdAt" : "TS",
+    "id" : 13,
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "updatedAt" : "TS",
+    "wordCount" : 25
+  },
+  {
+    "createdAt" : "TS",
+    "id" : 12,
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "updatedAt" : "TS",
+    "wordCount" : 25
+  },
+  {
+    "createdAt" : "TS",
+    "id" : 11,
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "updatedAt" : "TS",
+    "wordCount" : 25
+  },
+  {
+    "createdAt" : "TS",
+    "id" : 10,
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "updatedAt" : "TS",
+    "wordCount" : 25
+  },
+  {
+    "createdAt" : "TS",
+    "id" : 9,
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "updatedAt" : "TS",
+    "wordCount" : 25
+  },
+  {
+    "createdAt" : "TS",
+    "id" : 8,
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "updatedAt" : "TS",
+    "wordCount" : 25
+  },
+  {
+    "createdAt" : "TS",
+    "id" : 7,
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "updatedAt" : "TS",
+    "wordCount" : 25
+  },
+  {
+    "createdAt" : "TS",
+    "id" : 6,
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "updatedAt" : "TS",
+    "wordCount" : 25
+  },
+  {
+    "createdAt" : "TS",
+    "id" : 5,
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "updatedAt" : "TS",
+    "wordCount" : 18
+  },
+  {
+    "createdAt" : "TS",
+    "id" : 4,
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "updatedAt" : "TS",
+    "wordCount" : 12
+  },
+  {
+    "createdAt" : "TS",
+    "id" : 3,
+    "slug" : "zr_harbour",
+    "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].",
+    "updatedAt" : "TS",
+    "wordCount" : 17
+  },
+  {
+    "createdAt" : "TS",
+    "id" : 2,
+    "slug" : "zr_harbour",
+    "summary" : "A founding myth [[zrbeta2001_harbour]].",
+    "updatedAt" : "TS",
+    "wordCount" : 17
+  },
+  {
+    "createdAt" : "TS",
+    "id" : 1,
+    "slug" : "zr_harbour",
+    "summary" : "A founding myth [[zrbeta2001_harbour]].",
+    "updatedAt" : "TS",
+    "wordCount" : 17
+  }
+]
+== GET the first version
+200 {
+  "body" : "## The story\n\nThe harbour was founded by a hero [[zrbeta2001_harbour]]. See [[zr_walls]] for the walls.\n",
+  "createdAt" : "TS",
+  "id" : 1,
+  "slug" : "zr_harbour",
+  "summary" : "A founding myth [[zrbeta2001_harbour]].",
+  "updatedAt" : "TS"
+}
+== GET an unknown version
+400 {
+  "code" : "not_found",
+  "message" : "No version 999999 for article 'zr_harbour'"
+}
+== GET versions of an unknown article
+400 {
+  "code" : "not_found",
+  "message" : "No article 'zr_nothing'"
+}
+== tool article_versions
+### 15 version(s) of zr_harbour
+
+- **16** · TS · 25 words — The founding myth of the harbour [[zrbeta2001_harbour]].
+- **15** · TS · 25 words — The founding myth of the harbour [[zrbeta2001_harbour]].
+- **13** · TS · 25 words — The founding myth of the harbour [[zrbeta2001_harbour]].
+- **12** · TS · 25 words — The founding myth of the harbour [[zrbeta2001_harbour]].
+- **11** · TS · 25 words — The founding myth of the harbour [[zrbeta2001_harbour]].
+- **10** · TS · 25 words — The founding myth of the harbour [[zrbeta2001_harbour]].
+- **9** · TS · 25 words — The founding myth of the harbour [[zrbeta2001_harbour]].
+- **8** · TS · 25 words — The founding myth of the harbour [[zrbeta2001_harbour]].
+- **7** · TS · 25 words — The founding myth of the harbour [[zrbeta2001_harbour]].
+- **6** · TS · 25 words — The founding myth of the harbour [[zrbeta2001_harbour]].
+- **5** · TS · 18 words — The founding myth of the harbour [[zrbeta2001_harbour]].
+- **4** · TS · 12 words — The founding myth of the harbour [[zrbeta2001_harbour]].
+- **3** · TS · 17 words — The founding myth of the harbour [[zrbeta2001_harbour]].
+- **2** · TS · 17 words — A founding myth [[zrbeta2001_harbour]].
+- **1** · TS · 17 words — A founding myth [[zrbeta2001_harbour]].
+== tool article_version
+### Version 1 of zr_harbour
+
+_saved TS, archived TS_
+
+_A founding myth [[zrbeta2001_harbour]]._
+
+---
+
+## The story
+
+The harbour was founded by a hero [[zrbeta2001_harbour]]. See [[zr_walls]] for the walls.
+
+== GET coverage of zr_walls
+200 {
+  "checked" : 4,
+  "cited" : [
+    {
+      "authors" : [
+        "Zrauthor, Ann",
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zralpha1990_walls",
+      "status" : "current",
+      "title" : "The Walls of Zrtown",
+      "year" : 1990
+    },
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    },
+    {
+      "authors" : [
+        "Zrauthor, Ann"
+      ],
+      "citekey" : "zrgamma1975_kings",
+      "status" : "superseded",
+      "title" : "Kings of Zrland",
+      "year" : 1975
+    }
+  ],
+  "citedOutside" : [
+  ],
+  "critiques" : [
+    {
+      "dst" : {
+        "cited" : true,
+        "citekey" : "zralpha1990_walls",
+        "mentions" : 2,
+        "title" : "The Walls of Zrtown",
+        "year" : 1990
+      },
+      "kinds" : [
+        "challenges"
+      ],
+      "reason" : null,
+      "reasonBy" : null,
+      "src" : {
+        "cited" : true,
+        "citekey" : "zrbeta2001_harbour",
+        "mentions" : 1,
+        "title" : "The Harbour of Zrtown",
+        "year" : 2001
+      },
+      "state" : "addressed"
+    },
+    {
+      "dst" : {
+        "cited" : true,
+        "citekey" : "zralpha1990_walls",
+        "mentions" : 2,
+        "title" : "The Walls of Zrtown",
+        "year" : 1990
+      },
+      "kinds" : [
+        "superseded_by"
+      ],
+      "reason" : null,
+      "reasonBy" : null,
+      "src" : {
+        "cited" : true,
+        "citekey" : "zrgamma1975_kings",
+        "mentions" : 1,
+        "title" : "Kings of Zrland",
+        "year" : 1975
+      },
+      "state" : "open"
+    },
+    {
+      "dst" : {
+        "cited" : true,
+        "citekey" : "zrbeta2001_harbour",
+        "mentions" : 1,
+        "title" : "The Harbour of Zrtown",
+        "year" : 2001
+      },
+      "kinds" : [
+        "refutes"
+      ],
+      "reason" : "The refutation is about trade, not the walls.",
+      "reasonBy" : "person",
+      "src" : {
+        "cited" : true,
+        "citekey" : "zrgamma1975_kings",
+        "mentions" : 1,
+        "title" : "Kings of Zrland",
+        "year" : 1975
+      },
+      "state" : "reasoned"
+    }
+  ],
+  "drift" : [
+  ],
+  "edges" : [
+    {
+      "from" : "zrbeta2001_harbour",
+      "kind" : "challenges",
+      "to" : "zralpha1990_walls"
+    },
+    {
+      "from" : "zrgamma1975_kings",
+      "kind" : "refutes",
+      "to" : "zrbeta2001_harbour"
+    },
+    {
+      "from" : "zrgamma1975_kings",
+      "kind" : "superseded_by",
+      "to" : "zralpha1990_walls"
+    }
+  ],
+  "eventLeads" : [
+  ],
+  "filter" : {
+    "authors" : [
+    ],
+    "extraQueries" : [
+      "harbour",
+      "kings of zrland"
+    ],
+    "from" : null,
+    "places" : [
+    ],
+    "query" : null,
+    "status" : [
+    ],
+    "tags" : [
+      "zr-oracle"
+    ],
+    "to" : null,
+    "topics" : [
+    ]
+  },
+  "filterLine" : "search {tags: [\"zr-oracle\"]}",
+  "notUsed" : [
+    {
+      "reason" : "Region-wide; no walls.",
+      "source" : {
+        "authors" : [
+          "Zrother, Cy"
+        ],
+        "citekey" : "zrdelta2010_survey",
+        "status" : "current",
+        "title" : "A Survey of Zrland",
+        "year" : 2010
+      }
+    }
+  ],
+  "reasons" : [
+    {
+      "citekey" : "zrdelta2010_survey",
+      "reason" : "Region-wide; no walls."
+    }
+  ],
+  "searches" : [
+    {
+      "cited" : [
+        "zralpha1990_walls",
+        "zrbeta2001_harbour",
+        "zrgamma1975_kings"
+      ],
+      "query" : "harbour",
+      "total" : 5
+    },
+    {
+      "cited" : [
+        "zrgamma1975_kings"
+      ],
+      "query" : "kings of zrland",
+      "total" : 1
+    }
+  ],
+  "slug" : "zr_walls",
+  "statuses" : [
+    {
+      "count" : 2,
+      "status" : "current"
+    },
+    {
+      "count" : 1,
+      "status" : "contested"
+    },
+    {
+      "count" : 1,
+      "status" : "superseded"
+    }
+  ],
+  "total" : 4
+}
+== GET coverage of zr_harbour
+404 {
+  "code" : "not_found",
+  "message" : "article 'zr_harbour' records no filter, so it has no generated coverage — set the filter it is compiled from: histmersion article patch zr_harbour --filter-query … (or --filter-topics/--filter-tags), or patch_article with `filter`"
+}
+== GET coverage of zr_kings
+404 {
+  "code" : "not_found",
+  "message" : "article 'zr_kings' records no filter, so it has no generated coverage — set the filter it is compiled from: histmersion article patch zr_kings --filter-query … (or --filter-topics/--filter-tags), or patch_article with `filter`"
+}
+== GET coverage of zr_nothing
+404 {
+  "code" : "not_found",
+  "message" : "No article 'zr_nothing'"
+}
+== tool article_coverage
+## Coverage of [[zr_walls]]
+
+`search {tags: ["zr-oracle"]}` → 4 (3 cited, 1 not used)
+
+### Drift
+
+No drift: every source the filter returns is cited or has a reason.
+
+### Disagreements checked
+
+3 pairs — 1 addressed, 1 reasoned, 1 open (a pair is addressed when both sources are cited in one paragraph).
+
+Open (neither discussed in one paragraph nor given a reason):
+
+- zrgamma1975_kings>zralpha1990_walls: [[zrgamma1975_kings]] (1975, "Kings of Zrland", cited) superseded_by [[zralpha1990_walls]] (1990, "The Walls of Zrtown", cited)
+
+Set aside with a reason:
+
+- [[zrgamma1975_kings]] refutes [[zrbeta2001_harbour]] — The refutation is about trade, not the walls. _(by person)_
+
+### Generated sections
+
+## Not used
+
+The filter returns 4 sources. 3 of them are cited above; the other one is listed here with the reason it is left out:
+
+- [[zrdelta2010_survey]] — Region-wide; no walls.
+
+_Method: search {tags: ["zr-oracle"]} → 4; statuses: 2 current, 1 contested, 1 superseded; none debunked or retracted; further search "harbour" → 5 (cited: [[zralpha1990_walls]], [[zrbeta2001_harbour]], [[zrgamma1975_kings]]); further search "kings of zrland" → 1 (cited: [[zrgamma1975_kings]]); disagreement edges touching the cited sources: [[zrbeta2001_harbour]] challenges [[zralpha1990_walls]]; [[zrgamma1975_kings]] refutes [[zrbeta2001_harbour]]; [[zrgamma1975_kings]] superseded_by [[zralpha1990_walls]]; disagreements checked: 3 pairs — 1 addressed, 1 reasoned, 1 open._
+== tool article_coverage (no filter)
+_article 'zr_kings' records no filter, so it has no generated coverage — set the filter it is compiled from: histmersion article patch zr_kings --filter-query … (or --filter-topics/--filter-tags), or patch_article with `filter`_
+== GET review of zr_walls
+200 {
+  "approvals" : [
+  ],
+  "badge" : {
+    "detail" : "Not reviewed yet: no review of this article is recorded and none is queued.",
+    "findings" : 0,
+    "label" : "not reviewed",
+    "openMajors" : 0,
+    "openMinors" : 0,
+    "round" : null,
+    "runs" : 0,
+    "state" : "unreviewed"
+  },
+  "goals" : [
+  ],
+  "outcome" : null,
+  "rounds" : [
+  ],
+  "slug" : "zr_walls",
+  "updatedAt" : null
+}
+== GET review of zr_nothing
+404 {
+  "code" : "not_found",
+  "message" : "No article 'zr_nothing'"
+}
+== tool article_review
+## Review of [[zr_walls]]
+
+**not reviewed** — Not reviewed yet: no review of this article is recorded and none is queued.
+
+### Review history
+
+No finding recorded.
+== check walls: edits
+200 {
+  "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1490 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",
+  "edits" : [
+    {
+      "anchor" : "around 1500 BC",
+      "index" : 1,
+      "op" : "replace",
+      "problem" : null,
+      "text" : "around 1490 BC"
+    }
+  ],
+  "fatal" : false,
+  "kind" : "concept",
+  "problems" : [
+  ],
+  "slug" : "zr_walls",
+  "wordsAfter" : 52,
+  "wordsBefore" : 52
+}
+== check walls: an anchor not found
+200 {
+  "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",
+  "edits" : [
+    {
+      "anchor" : "no such passage",
+      "index" : 1,
+      "op" : "delete",
+      "problem" : "the anchor is not in the article — copy it exactly from the current body (earlier edits included)",
+      "text" : ""
+    }
+  ],
+  "fatal" : false,
+  "kind" : "concept",
+  "problems" : [
+    "edit 1 (delete \"no such passage\"): the anchor is not in the article — copy it exactly from the current body (earlier edits included)"
+  ],
+  "slug" : "zr_walls",
+  "wordsAfter" : 52,
+  "wordsBefore" : 52
+}
+== check walls: a whole draft
+200 {
+  "body" : "## Overview\n\nThe walls [[zralpha1990_walls]]. Filler: it is important to note.",
+  "edits" : [
+  ],
+  "fatal" : false,
+  "kind" : "concept",
+  "problems" : [
+    "banned filler — it is important to note"
+  ],
+  "slug" : "zr_walls",
+  "wordsAfter" : 11,
+  "wordsBefore" : 52
+}
+== check walls: a draft as an index
+200 {
+  "body" : "- [[zr_walls]]",
+  "edits" : [
+  ],
+  "fatal" : false,
+  "kind" : "index",
+  "problems" : [
+  ],
+  "slug" : "zr_walls",
+  "wordsAfter" : 2,
+  "wordsBefore" : 52
+}
+== check walls: refused: both
+400 {
+  "code" : "invalid",
+  "message" : "give `edits` or `body`, not both"
+}
+== check walls: refused: neither
+400 {
+  "code" : "invalid",
+  "message" : "give `edits` (against the stored body) or `body` (a whole draft)"
+}
+== check a new article's draft
+200 {
+  "body" : "## Overview\n\nNew [[zralpha1990_walls]].",
+  "edits" : [
+  ],
+  "fatal" : false,
+  "kind" : "concept",
+  "problems" : [
+  ],
+  "slug" : "zr_new",
+  "wordsAfter" : 4,
+  "wordsBefore" : 0
+}
+== check an unknown article's edits
+404 {
+  "code" : "not_found",
+  "message" : "No article 'zr_new'"
+}
+== tool check_edits
+## Check of [[zr_walls]] (concept)
+
+52 → 50 words.
+
+### Edits
+
+- edit 1 (delete "## Unresolved"): applies
+
+### Result
+
+No problems: these are the checks code runs on the answer, and it would pass them.
+== put messy (formatting to repair)
+200 {
+  "article" : {
+    "body" : "## Overview\n\nA list:\n* one [[zralpha1990_walls]]\n* two\n\n\n\nEnd \\[\\[zralpha1990_walls\\]\\].   \n",
+    "kind" : "concept",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "regions" : [
+    ],
+    "slug" : "zr_messy",
+    "summary" : null,
+    "tags" : [
+    ],
+    "title" : "Messy",
+    "uid" : "article:zr_messy",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+  ],
+  "coverage" : null,
+  "formatting" : [
+    {
+      "column" : 5,
+      "excerpt" : "End \\[\\[zralpha1990_walls\\]\\].",
+      "field" : "body",
+      "fix" : "remove the backslashes",
+      "line" : 9,
+      "message" : "an escaped wikilink `\\[\\[…\\]\\]` — the page un-escapes it, but every other reader (Obsidian, the exported wiki) shows the brackets as text",
+      "rule" : "wikilink",
+      "severity" : "warning"
+    }
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrauthor, Ann",
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zralpha1990_walls",
+      "doi" : null,
+      "status" : "current",
+      "title" : "The Walls of Zrtown",
+      "year" : 1990
+    }
+  ]
+}
+== lint messy
+200 {
+  "fixed" : [
+  ],
+  "issues" : [
+    {
+      "column" : 5,
+      "excerpt" : "End \\[\\[zralpha1990_walls\\]\\].",
+      "field" : "body",
+      "fix" : "remove the backslashes",
+      "line" : 9,
+      "message" : "an escaped wikilink `\\[\\[…\\]\\]` — the page un-escapes it, but every other reader (Obsidian, the exported wiki) shows the brackets as text",
+      "rule" : "wikilink",
+      "severity" : "warning"
+    }
+  ],
+  "subject" : "zr_messy",
+  "text" : null
+}
+== lint/fix messy
+200 {
+  "fixed" : [
+    "body: wikilink at line 9: remove the backslashes"
+  ],
+  "issues" : [
+  ],
+  "subject" : "zr_messy",
+  "text" : null
+}
+== lint messy after
+200 {
+  "fixed" : [
+  ],
+  "issues" : [
+  ],
+  "subject" : "zr_messy",
+  "text" : null
+}
+== lint unknown
+404 {
+  "code" : "not_found",
+  "message" : "No article 'zr_nothing'"
+}
+== export zr_walls
+200 ---
+type: concept
+slug: zr_walls
+title: The walls of Zrtown
+summary: When the walls of Zrtown rose [[zralpha1990_walls]].
+regions:
+- Zrland
+tags:
+- zr-art
+- walls
+period_start: -1600
+period_end: -1400
+filter:
+  tags:
+  - zr-oracle
+  extra_queries:
+  - harbour
+  - kings of zrland
+reasons:
+  zrdelta2010_survey: Region-wide; no walls.
+---
+
+## The question
+
+When were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour
+trade paid for them [[zrbeta2001_harbour]].
+
+## What the sources say
+
+An older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].
+
+## Unresolved
+
+Whether the gate is older than the walls [[zralpha1990_walls]].
+
+<!-- generated from the article's filter: edits here are not kept -->
+
+## Not used
+
+The filter returns 4 sources. 3 of them are cited above; the other one is listed here with the reason it is left out:
+
+- [[zrdelta2010_survey]] — Region-wide; no walls.
+
+_Method: search {tags: ["zr-oracle"]} → 4; statuses: 2 current, 1 contested, 1 superseded; none debunked or retracted; further search "harbour" → 5 (cited: [[zralpha1990_walls]], [[zrbeta2001_harbour]], [[zrgamma1975_kings]]); further search "kings of zrland" → 1 (cited: [[zrgamma1975_kings]]); disagreement edges touching the cited sources: [[zrbeta2001_harbour]] challenges [[zralpha1990_walls]]; [[zrgamma1975_kings]] refutes [[zrbeta2001_harbour]]; [[zrgamma1975_kings]] superseded_by [[zralpha1990_walls]]; disagreements checked: 3 pairs — 1 addressed, 1 reasoned, 1 open._
+
+<!-- end of generated sections -->
+
+== export zr_index
+200 ---
+type: index
+slug: zr_index
+title: Zr index
+summary: '- [[zr_walls]] - [[zr_harbour]] - [[zr_missing]]'
+regions: []
+tags:
+- zr-art
+period_start: null
+period_end: null
+---
+
+- [[zr_walls]]
+- [[zr_harbour]]
+- [[zr_missing]]
+
+== export zr_nothing
+404 {
+  "code" : "not_found",
+  "message" : "No article 'zr_nothing'"
+}
+== tool export_article
+---
+type: concept
+slug: zr_walls
+title: The walls of Zrtown
+summary: When the walls of Zrtown rose [[zralpha1990_walls]].
+regions:
+- Zrland
+tags:
+- zr-art
+- walls
+period_start: -1600
+period_end: -1400
+filter:
+  tags:
+  - zr-oracle
+  extra_queries:
+  - harbour
+  - kings of zrland
+reasons:
+  zrdelta2010_survey: Region-wide; no walls.
+---
+
+## The question
+
+When were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour
+trade paid for them [[zrbeta2001_harbour]].
+
+## What the sources say
+
+An older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].
+
+## Unresolved
+
+Whether the gate is older than the walls [[zralpha1990_walls]].
+
+<!-- generated from the article's filter: edits here are not kept -->
+
+## Not used
+
+The filter returns 4 sources. 3 of them are cited above; the other one is listed here with the reason it is left out:
+
+- [[zrdelta2010_survey]] — Region-wide; no walls.
+
+_Method: search {tags: ["zr-oracle"]} → 4; statuses: 2 current, 1 contested, 1 superseded; none debunked or retracted; further search "harbour" → 5 (cited: [[zralpha1990_walls]], [[zrbeta2001_harbour]], [[zrgamma1975_kings]]); further search "kings of zrland" → 1 (cited: [[zrgamma1975_kings]]); disagreement edges touching the cited sources: [[zrbeta2001_harbour]] challenges [[zralpha1990_walls]]; [[zrgamma1975_kings]] refutes [[zrbeta2001_harbour]]; [[zrgamma1975_kings]] superseded_by [[zralpha1990_walls]]; disagreements checked: 3 pairs — 1 addressed, 1 reasoned, 1 open._
+
+<!-- end of generated sections -->
+
+== article slugs
+200 [
+  "zr_culture",
+  "zr_harbour",
+  "zr_index",
+  "zr_kings",
+  "zr_lost",
+  "zr_messy",
+  "zr_walls"
+]
+== backlinks of zralpha1990_walls
+200 [
+  {
+    "id" : "zr_messy",
+    "kind" : "article",
+    "title" : "Messy"
+  },
+  {
+    "id" : "zr_culture",
+    "kind" : "article",
+    "title" : "The Zr culture"
+  },
+  {
+    "id" : "zr_walls",
+    "kind" : "article",
+    "title" : "The walls of Zrtown"
+  }
+]
+== backlinks of zrdelta2010_survey
+200 [
+]
+== backlinks of zrnone2000_x
+404 {
+  "code" : null,
+  "message" : "No source 'zrnone2000_x'"
+}
+== resolve zr_walls
+200 {
+  "article" : {
+    "slug" : "zr_walls",
+    "title" : "The walls of Zrtown"
+  },
+  "id" : "zr_walls",
+  "source" : null
+}
+== resolve zralpha1990_walls
+200 {
+  "article" : null,
+  "id" : "zralpha1990_walls",
+  "source" : {
+    "authors" : [
+      "Zrauthor, Ann",
+      "Zrwriter, Bo"
+    ],
+    "citekey" : "zralpha1990_walls",
+    "doi" : null,
+    "status" : "current",
+    "title" : "The Walls of Zrtown",
+    "year" : 1990
+  }
+}
+== resolve zr_nothing
+200 {
+  "article" : null,
+  "id" : "zr_nothing",
+  "source" : null
+}
+== import a note: stale (an mtime older than the row)
+200 {
+  "edgesResolved" : 0,
+  "failed" : [
+  ],
+  "imported" : 0,
+  "skipped" : [
+    "zr_kings"
+  ]
+}
+== import a note: forced
+200 {
+  "edgesResolved" : 0,
+  "failed" : [
+  ],
+  "imported" : 1,
+  "skipped" : [
+  ]
+}
+== import a note: new, no frontmatter
+400 {
+  "code" : null,
+  "message" : "no YAML frontmatter in the article note"
+}
+== import a note: a new article
+200 {
+  "edgesResolved" : 0,
+  "failed" : [
+  ],
+  "imported" : 1,
+  "skipped" : [
+  ]
+}
+== rows before the renames
+## articles 8 rows
+{ "body" : "## Overview\n\nA list:\n* one [[zralpha1990_walls]]\n* two\n\n\n\nEnd [[zralpha1990_walls]].   \n", "coverage_reasons" : {  }, "kind" : "concept", "period" : null, "regions" : [ ], "slug" : "zr_messy", "summary" : null, "tags" : [ ], "title" : "Messy", "uid" : "article:zr_messy" }
+{ "body" : "## Overview\n\nImported [[zralpha1990_walls]].", "coverage_reasons" : {  }, "kind" : "concept", "period" : null, "regions" : [ ], "slug" : "zr_imported", "summary" : null, "tags" : [ ], "title" : "Imported", "uid" : "article:zr_imported" }
+{ "body" : "## Overview\n\nThe Zr culture built walls [[zralpha1990_walls]].\n", "coverage_reasons" : {  }, "kind" : "culture", "period" : null, "regions" : [ ], "slug" : "zr_culture", "summary" : null, "tags" : [ "zr-art" ], "title" : "The Zr culture", "uid" : "article:zr_culture" }
+{ "body" : "## Report\n\nThe report is lost [[zreps1999_lost]].\n", "coverage_reasons" : {  }, "kind" : "report", "period" : null, "regions" : [ ], "slug" : "zr_lost", "summary" : null, "tags" : [ ], "title" : "A lost report", "uid" : "article:zr_lost" }
+{ "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n", "coverage_reasons" : { "zrdelta2010_survey" : "Region-wide; no walls." }, "kind" : "concept", "period" : "[-1600,-1399)", "regions" : [ "Zrland" ], "slug" : "zr_walls", "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]].", "tags" : [ "zr-art", "walls" ], "title" : "The walls of Zrtown", "uid" : "article:zr_walls" }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "coverage_reasons" : {  }, "kind" : "myths", "period" : "[-1350,-1149)", "regions" : [ "Zrland", "Zrcoast" ], "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].", "tags" : [ "zr-art", "founding", "harbour" ], "title" : "The harbour myth", "uid" : "article:zr_harbour" }
+{ "body" : "## Timeline\n\nThe kings reigned from Zrtown from 2000 BC [[zrgamma1975_kings]].\n\n## Unresolved\n\nThe end of the dynasty [[zrgamma1975_kings]].", "coverage_reasons" : {  }, "kind" : "timeline", "period" : "[-2000,-1599)", "regions" : [ ], "slug" : "zr_kings", "summary" : "The kings [[zrgamma1975_kings]].", "tags" : [ ], "title" : "Kings of Zrland, a timeline", "uid" : "article:zr_kings" }
+{ "body" : "- [[zr_walls]]\n- [[zr_harbour]]\n- [[zr_missing]]\n", "coverage_reasons" : {  }, "kind" : "index", "period" : null, "regions" : [ ], "slug" : "zr_index", "summary" : "- [[zr_walls]] - [[zr_harbour]] - [[zr_missing]]", "tags" : [ "zr-art" ], "title" : "Zr index", "uid" : "article:zr_index" }
+## article_versions 19 rows
+{ "body" : "## Overview\n\nA list:\n* one [[zralpha1990_walls]]\n* two\n\n\n\nEnd \\[\\[zralpha1990_walls\\]\\].   \n", "slug" : "zr_messy", "summary" : null }
+{ "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n", "slug" : "zr_walls", "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nThe harbour was founded by a hero [[zrbeta2001_harbour]]. See [[zr_walls]] for the walls.\n", "slug" : "zr_harbour", "summary" : "A founding myth [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nThe harbour was founded by a hero [[zrbeta2001_harbour]]. See [[zr_walls]] for the walls.\n", "slug" : "zr_harbour", "summary" : "A founding myth [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nThe harbour was founded by a hero [[zrbeta2001_harbour]]. See [[zr_walls]] for the walls.\n", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## Timeline\n\nThe kings ruled from Zrtown from 2000 BC [[zrgamma1975_kings]].\n", "slug" : "zr_kings", "summary" : "The kings [[zrgamma1975_kings]]." }
+{ "body" : "## Timeline\n\nThe kings ruled from Zrtown from 2000 BC [[zrgamma1975_kings]].\n\n## Unresolved\n\nThe end of the dynasty [[zrgamma1975_kings]].", "slug" : "zr_kings", "summary" : "The kings [[zrgamma1975_kings]]." }
+## article_links 13 rows
+{ "src_slug" : "zr_culture", "target" : "zralpha1990_walls", "target_kind" : "source" }
+{ "src_slug" : "zr_harbour", "target" : "zr_walls", "target_kind" : "article" }
+{ "src_slug" : "zr_harbour", "target" : "zrbeta2001_harbour", "target_kind" : "source" }
+{ "src_slug" : "zr_imported", "target" : "zralpha1990_walls", "target_kind" : "source" }
+{ "src_slug" : "zr_index", "target" : "zr_harbour", "target_kind" : "article" }
+{ "src_slug" : "zr_index", "target" : "zr_missing", "target_kind" : "article" }
+{ "src_slug" : "zr_index", "target" : "zr_walls", "target_kind" : "article" }
+{ "src_slug" : "zr_kings", "target" : "zrgamma1975_kings", "target_kind" : "source" }
+{ "src_slug" : "zr_lost", "target" : "zreps1999_lost", "target_kind" : "source" }
+{ "src_slug" : "zr_messy", "target" : "zralpha1990_walls", "target_kind" : "source" }
+{ "src_slug" : "zr_walls", "target" : "zralpha1990_walls", "target_kind" : "source" }
+{ "src_slug" : "zr_walls", "target" : "zrbeta2001_harbour", "target_kind" : "source" }
+{ "src_slug" : "zr_walls", "target" : "zrgamma1975_kings", "target_kind" : "source" }
+## article_aliases 0 rows
+## article_critique_reasons 1 rows
+{ "dst" : "zrbeta2001_harbour", "reason" : "The refutation is about trade, not the walls.", "set_by" : "person", "slug" : "zr_walls", "src" : "zrgamma1975_kings" }
+## review_ledgers 0 rows
+## alias_tombstones 0 rows
+## tombstones 0 rows
+## uid_aliases 0 rows
+## sources 5 rows
+{ "citekey" : "zralpha1990_walls" }
+{ "citekey" : "zrbeta2001_harbour" }
+{ "citekey" : "zrdelta2010_survey" }
+{ "citekey" : "zreps1999_lost" }
+{ "citekey" : "zrgamma1975_kings" }
+## source_aliases 0 rows
+== rename walls
+200 {
+  "entity" : "article",
+  "from" : "zr_walls",
+  "rewritten" : [
+    "zr_harbour",
+    "zr_index"
+  ],
+  "to" : "zr_city_walls"
+}
+== rename refused: taken
+400 {
+  "code" : "invalid",
+  "message" : "'zr_harbour' is already the slug of another article"
+}
+== rename refused: invalid
+400 {
+  "code" : "invalid",
+  "message" : "'Bad Slug' is not an article slug (lower-case letters, digits, '_', '.' and '-')"
+}
+== rename refused: unknown
+404 {
+  "code" : "not_found",
+  "message" : "No article 'zr_nothing'"
+}
+== GET by the old slug
+200 {
+  "article" : {
+    "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",
+    "kind" : "concept",
+    "periodEnd" : -1400,
+    "periodStart" : -1600,
+    "regions" : [
+      "Zrland"
+    ],
+    "slug" : "zr_city_walls",
+    "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]].",
+    "tags" : [
+      "zr-art",
+      "walls"
+    ],
+    "title" : "The walls of Zrtown",
+    "uid" : "article:zr_city_walls",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_harbour",
+      "kind" : "article",
+      "title" : "The harbour myth"
+    },
+    {
+      "id" : "zr_index",
+      "kind" : "article",
+      "title" : "Zr index"
+    }
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrauthor, Ann",
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zralpha1990_walls",
+      "doi" : null,
+      "status" : "current",
+      "title" : "The Walls of Zrtown",
+      "year" : 1990
+    },
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    },
+    {
+      "authors" : [
+        "Zrauthor, Ann"
+      ],
+      "citekey" : "zrgamma1975_kings",
+      "doi" : null,
+      "status" : "superseded",
+      "title" : "Kings of Zrland",
+      "year" : 1975
+    }
+  ]
+}
+== patch zr_walls: by the old slug
+200 {
+  "article" : {
+    "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",
+    "kind" : "concept",
+    "periodEnd" : -1400,
+    "periodStart" : -1600,
+    "regions" : [
+      "Zrland"
+    ],
+    "slug" : "zr_city_walls",
+    "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]].",
+    "tags" : [
+      "zr-art",
+      "walls",
+      "renamed"
+    ],
+    "title" : "The walls of Zrtown",
+    "uid" : "article:zr_city_walls",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_harbour",
+      "kind" : "article",
+      "title" : "The harbour myth"
+    },
+    {
+      "id" : "zr_index",
+      "kind" : "article",
+      "title" : "Zr index"
+    }
+  ],
+  "coverage" : {
+    "checked" : 4,
+    "cited" : [
+      {
+        "authors" : [
+          "Zrauthor, Ann",
+          "Zrwriter, Bo"
+        ],
+        "citekey" : "zralpha1990_walls",
+        "status" : "current",
+        "title" : "The Walls of Zrtown",
+        "year" : 1990
+      },
+      {
+        "authors" : [
+          "Zrwriter, Bo"
+        ],
+        "citekey" : "zrbeta2001_harbour",
+        "status" : "contested",
+        "title" : "The Harbour of Zrtown",
+        "year" : 2001
+      },
+      {
+        "authors" : [
+          "Zrauthor, Ann"
+        ],
+        "citekey" : "zrgamma1975_kings",
+        "status" : "superseded",
+        "title" : "Kings of Zrland",
+        "year" : 1975
+      }
+    ],
+    "citedOutside" : [
+    ],
+    "critiques" : [
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zralpha1990_walls",
+          "mentions" : 2,
+          "title" : "The Walls of Zrtown",
+          "year" : 1990
+        },
+        "kinds" : [
+          "challenges"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrbeta2001_harbour",
+          "mentions" : 1,
+          "title" : "The Harbour of Zrtown",
+          "year" : 2001
+        },
+        "state" : "addressed"
+      },
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zralpha1990_walls",
+          "mentions" : 2,
+          "title" : "The Walls of Zrtown",
+          "year" : 1990
+        },
+        "kinds" : [
+          "superseded_by"
+        ],
+        "reason" : null,
+        "reasonBy" : null,
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrgamma1975_kings",
+          "mentions" : 1,
+          "title" : "Kings of Zrland",
+          "year" : 1975
+        },
+        "state" : "open"
+      },
+      {
+        "dst" : {
+          "cited" : true,
+          "citekey" : "zrbeta2001_harbour",
+          "mentions" : 1,
+          "title" : "The Harbour of Zrtown",
+          "year" : 2001
+        },
+        "kinds" : [
+          "refutes"
+        ],
+        "reason" : "The refutation is about trade, not the walls.",
+        "reasonBy" : "person",
+        "src" : {
+          "cited" : true,
+          "citekey" : "zrgamma1975_kings",
+          "mentions" : 1,
+          "title" : "Kings of Zrland",
+          "year" : 1975
+        },
+        "state" : "reasoned"
+      }
+    ],
+    "drift" : [
+    ],
+    "edges" : [
+      {
+        "from" : "zrbeta2001_harbour",
+        "kind" : "challenges",
+        "to" : "zralpha1990_walls"
+      },
+      {
+        "from" : "zrgamma1975_kings",
+        "kind" : "refutes",
+        "to" : "zrbeta2001_harbour"
+      },
+      {
+        "from" : "zrgamma1975_kings",
+        "kind" : "superseded_by",
+        "to" : "zralpha1990_walls"
+      }
+    ],
+    "eventLeads" : [
+    ],
+    "filter" : {
+      "authors" : [
+      ],
+      "extraQueries" : [
+        "harbour",
+        "kings of zrland"
+      ],
+      "from" : null,
+      "places" : [
+      ],
+      "query" : null,
+      "status" : [
+      ],
+      "tags" : [
+        "zr-oracle"
+      ],
+      "to" : null,
+      "topics" : [
+      ]
+    },
+    "filterLine" : "search {tags: [\"zr-oracle\"]}",
+    "notUsed" : [
+      {
+        "reason" : "Region-wide; no walls.",
+        "source" : {
+          "authors" : [
+            "Zrother, Cy"
+          ],
+          "citekey" : "zrdelta2010_survey",
+          "status" : "current",
+          "title" : "A Survey of Zrland",
+          "year" : 2010
+        }
+      }
+    ],
+    "reasons" : [
+      {
+        "citekey" : "zrdelta2010_survey",
+        "reason" : "Region-wide; no walls."
+      }
+    ],
+    "searches" : [
+      {
+        "cited" : [
+          "zralpha1990_walls",
+          "zrbeta2001_harbour",
+          "zrgamma1975_kings"
+        ],
+        "query" : "harbour",
+        "total" : 5
+      },
+      {
+        "cited" : [
+          "zrgamma1975_kings"
+        ],
+        "query" : "kings of zrland",
+        "total" : 1
+      }
+    ],
+    "slug" : "zr_city_walls",
+    "statuses" : [
+      {
+        "count" : 2,
+        "status" : "current"
+      },
+      {
+        "count" : 1,
+        "status" : "contested"
+      },
+      {
+        "count" : 1,
+        "status" : "superseded"
+      }
+    ],
+    "total" : 4
+  },
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrauthor, Ann",
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zralpha1990_walls",
+      "doi" : null,
+      "status" : "current",
+      "title" : "The Walls of Zrtown",
+      "year" : 1990
+    },
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    },
+    {
+      "authors" : [
+        "Zrauthor, Ann"
+      ],
+      "citekey" : "zrgamma1975_kings",
+      "doi" : null,
+      "status" : "superseded",
+      "title" : "Kings of Zrland",
+      "year" : 1975
+    }
+  ]
+}
+== GET the index after the rename
+200 {
+  "article" : {
+    "body" : "- [[zr_city_walls]]\n- [[zr_harbour]]\n- [[zr_missing]]\n",
+    "kind" : "index",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "regions" : [
+    ],
+    "slug" : "zr_index",
+    "summary" : "- [[zr_city_walls]] - [[zr_harbour]] - [[zr_missing]]",
+    "tags" : [
+      "zr-art"
+    ],
+    "title" : "Zr index",
+    "uid" : "article:zr_index",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+  ]
+}
+== rename alpha (cited)
+200 {
+  "calibreId" : null,
+  "counts" : {
+    "articles" : [
+      "zr_city_walls",
+      "zr_culture",
+      "zr_imported",
+      "zr_messy"
+    ],
+    "columns" : [
+      {
+        "rows" : 4,
+        "table" : "article_links.target"
+      }
+    ],
+    "edgesPromoted" : 0,
+    "findings" : 0,
+    "links" : 7,
+    "sources" : [
+    ]
+  },
+  "newCitekey" : "zralpha1991_walls",
+  "oldCitekey" : "zralpha1990_walls",
+  "source" : {
+    "authors" : [
+      "Zrauthor, Ann",
+      "Zrwriter, Bo"
+    ],
+    "citekey" : "zralpha1991_walls",
+    "doi" : null,
+    "notes" : null,
+    "ocrMarkdown" : null,
+    "origin" : "instance",
+    "periodEnd" : -1100,
+    "periodStart" : -1700,
+    "provenance" : null,
+    "regions" : [
+      "Zrland"
+    ],
+    "status" : "current",
+    "summary" : "A study of The Walls of Zrtown.",
+    "tags" : [
+      "zr-walls",
+      "zr-oracle"
+    ],
+    "title" : "The Walls of Zrtown",
+    "topics" : [
+      "bronze age",
+      "fortification"
+    ],
+    "uid" : "source:zralpha1991_walls",
+    "updatedAt" : "TS",
+    "venue" : "Journal of Zr Studies",
+    "year" : 1990
+  }
+}
+== GET walls after the source's rename
+200 {
+  "article" : {
+    "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1991_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1991_walls]].\n",
+    "kind" : "concept",
+    "periodEnd" : -1400,
+    "periodStart" : -1600,
+    "regions" : [
+      "Zrland"
+    ],
+    "slug" : "zr_city_walls",
+    "summary" : "When the walls of Zrtown rose [[zralpha1991_walls]].",
+    "tags" : [
+      "zr-art",
+      "walls",
+      "renamed"
+    ],
+    "title" : "The walls of Zrtown",
+    "uid" : "article:zr_city_walls",
+    "updatedAt" : "TS"
+  },
+  "backlinks" : [
+    {
+      "id" : "zr_harbour",
+      "kind" : "article",
+      "title" : "The harbour myth"
+    },
+    {
+      "id" : "zr_index",
+      "kind" : "article",
+      "title" : "Zr index"
+    }
+  ],
+  "coverage" : null,
+  "formatting" : [
+  ],
+  "sourcesCited" : [
+    {
+      "authors" : [
+        "Zrauthor, Ann",
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zralpha1991_walls",
+      "doi" : null,
+      "status" : "current",
+      "title" : "The Walls of Zrtown",
+      "year" : 1990
+    },
+    {
+      "authors" : [
+        "Zrwriter, Bo"
+      ],
+      "citekey" : "zrbeta2001_harbour",
+      "doi" : null,
+      "status" : "contested",
+      "title" : "The Harbour of Zrtown",
+      "year" : 2001
+    },
+    {
+      "authors" : [
+        "Zrauthor, Ann"
+      ],
+      "citekey" : "zrgamma1975_kings",
+      "doi" : null,
+      "status" : "superseded",
+      "title" : "Kings of Zrland",
+      "year" : 1975
+    }
+  ]
+}
+== delete eps refused (cited)
+400 {
+  "code" : "invalid",
+  "message" : "'zreps1999_lost' cannot be deleted — cited by article zr_lost (A lost report). Fix those first (remove the citation from each article, re-source the events, let the job finish); there is no override"
+}
+== delete the citing article
+200 {
+  "deleted" : true,
+  "slug" : "zr_lost"
+}
+== delete it again
+404 {
+  "code" : "not_found",
+  "message" : "No article 'zr_lost'"
+}
+== delete eps
+200 {
+  "aliases" : [
+  ],
+  "applied" : true,
+  "blockers" : [
+  ],
+  "calibreId" : null,
+  "citekey" : "zreps1999_lost",
+  "counts" : [
+    {
+      "part" : "chunks",
+      "rows" : 1
+    }
+  ],
+  "coverage" : [
+  ],
+  "edgesIn" : [
+  ],
+  "files" : [
+  ],
+  "filesFailed" : [
+  ],
+  "logEntry" : 1,
+  "mentions" : [
+  ],
+  "title" : "A Lost Report"
+}
+== rows after the renames and deletes
+## articles 7 rows
+{ "body" : "## Overview\n\nA list:\n* one [[zralpha1991_walls]]\n* two\n\n\n\nEnd [[zralpha1991_walls]].   \n", "coverage_reasons" : {  }, "kind" : "concept", "period" : null, "regions" : [ ], "slug" : "zr_messy", "summary" : null, "tags" : [ ], "title" : "Messy", "uid" : "article:zr_messy" }
+{ "body" : "## Overview\n\nImported [[zralpha1991_walls]].", "coverage_reasons" : {  }, "kind" : "concept", "period" : null, "regions" : [ ], "slug" : "zr_imported", "summary" : null, "tags" : [ ], "title" : "Imported", "uid" : "article:zr_imported" }
+{ "body" : "## Overview\n\nThe Zr culture built walls [[zralpha1991_walls]].\n", "coverage_reasons" : {  }, "kind" : "culture", "period" : null, "regions" : [ ], "slug" : "zr_culture", "summary" : null, "tags" : [ "zr-art" ], "title" : "The Zr culture", "uid" : "article:zr_culture" }
+{ "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1991_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1991_walls]].\n", "coverage_reasons" : { "zrdelta2010_survey" : "Region-wide; no walls." }, "kind" : "concept", "period" : "[-1600,-1399)", "regions" : [ "Zrland" ], "slug" : "zr_city_walls", "summary" : "When the walls of Zrtown rose [[zralpha1991_walls]].", "tags" : [ "zr-art", "walls", "renamed" ], "title" : "The walls of Zrtown", "uid" : "article:zr_city_walls" }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_city_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "coverage_reasons" : {  }, "kind" : "myths", "period" : "[-1350,-1149)", "regions" : [ "Zrland", "Zrcoast" ], "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].", "tags" : [ "zr-art", "founding", "harbour" ], "title" : "The harbour myth", "uid" : "article:zr_harbour" }
+{ "body" : "## Timeline\n\nThe kings reigned from Zrtown from 2000 BC [[zrgamma1975_kings]].\n\n## Unresolved\n\nThe end of the dynasty [[zrgamma1975_kings]].", "coverage_reasons" : {  }, "kind" : "timeline", "period" : "[-2000,-1599)", "regions" : [ ], "slug" : "zr_kings", "summary" : "The kings [[zrgamma1975_kings]].", "tags" : [ ], "title" : "Kings of Zrland, a timeline", "uid" : "article:zr_kings" }
+{ "body" : "- [[zr_city_walls]]\n- [[zr_harbour]]\n- [[zr_missing]]\n", "coverage_reasons" : {  }, "kind" : "index", "period" : null, "regions" : [ ], "slug" : "zr_index", "summary" : "- [[zr_city_walls]] - [[zr_harbour]] - [[zr_missing]]", "tags" : [ "zr-art" ], "title" : "Zr index", "uid" : "article:zr_index" }
+## article_versions 26 rows
+{ "body" : "## Overview\n\nA list:\n* one [[zralpha1990_walls]]\n* two\n\n\n\nEnd [[zralpha1990_walls]].   \n", "slug" : "zr_messy", "summary" : null }
+{ "body" : "## Overview\n\nA list:\n* one [[zralpha1990_walls]]\n* two\n\n\n\nEnd \\[\\[zralpha1990_walls\\]\\].   \n", "slug" : "zr_messy", "summary" : null }
+{ "body" : "## Overview\n\nImported [[zralpha1990_walls]].", "slug" : "zr_imported", "summary" : null }
+{ "body" : "## Overview\n\nThe Zr culture built walls [[zralpha1990_walls]].\n", "slug" : "zr_culture", "summary" : null }
+{ "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n", "slug" : "zr_city_walls", "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]]." }
+{ "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n", "slug" : "zr_city_walls", "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]]." }
+{ "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n", "slug" : "zr_city_walls", "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nThe harbour was founded by a hero [[zrbeta2001_harbour]]. See [[zr_walls]] for the walls.\n", "slug" : "zr_harbour", "summary" : "A founding myth [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nThe harbour was founded by a hero [[zrbeta2001_harbour]]. See [[zr_walls]] for the walls.\n", "slug" : "zr_harbour", "summary" : "A founding myth [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nThe harbour was founded by a hero [[zrbeta2001_harbour]]. See [[zr_walls]] for the walls.\n", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## Timeline\n\nThe kings ruled from Zrtown from 2000 BC [[zrgamma1975_kings]].\n", "slug" : "zr_kings", "summary" : "The kings [[zrgamma1975_kings]]." }
+{ "body" : "## Timeline\n\nThe kings ruled from Zrtown from 2000 BC [[zrgamma1975_kings]].\n\n## Unresolved\n\nThe end of the dynasty [[zrgamma1975_kings]].", "slug" : "zr_kings", "summary" : "The kings [[zrgamma1975_kings]]." }
+{ "body" : "- [[zr_walls]]\n- [[zr_harbour]]\n- [[zr_missing]]\n", "slug" : "zr_index", "summary" : "- [[zr_walls]] - [[zr_harbour]] - [[zr_missing]]" }
+## article_links 12 rows
+{ "src_slug" : "zr_city_walls", "target" : "zralpha1991_walls", "target_kind" : "source" }
+{ "src_slug" : "zr_city_walls", "target" : "zrbeta2001_harbour", "target_kind" : "source" }
+{ "src_slug" : "zr_city_walls", "target" : "zrgamma1975_kings", "target_kind" : "source" }
+{ "src_slug" : "zr_culture", "target" : "zralpha1991_walls", "target_kind" : "source" }
+{ "src_slug" : "zr_harbour", "target" : "zr_city_walls", "target_kind" : "article" }
+{ "src_slug" : "zr_harbour", "target" : "zrbeta2001_harbour", "target_kind" : "source" }
+{ "src_slug" : "zr_imported", "target" : "zralpha1991_walls", "target_kind" : "source" }
+{ "src_slug" : "zr_index", "target" : "zr_city_walls", "target_kind" : "article" }
+{ "src_slug" : "zr_index", "target" : "zr_harbour", "target_kind" : "article" }
+{ "src_slug" : "zr_index", "target" : "zr_missing", "target_kind" : "article" }
+{ "src_slug" : "zr_kings", "target" : "zrgamma1975_kings", "target_kind" : "source" }
+{ "src_slug" : "zr_messy", "target" : "zralpha1991_walls", "target_kind" : "source" }
+## article_aliases 1 rows
+{ "alias" : "zr_walls", "created_at" : "TS", "slug" : "zr_city_walls" }
+## article_critique_reasons 1 rows
+{ "dst" : "zrbeta2001_harbour", "reason" : "The refutation is about trade, not the walls.", "set_by" : "person", "slug" : "zr_city_walls", "src" : "zrgamma1975_kings" }
+## review_ledgers 0 rows
+## alias_tombstones 0 rows
+## tombstones 2 rows
+{ "kind" : "article", "uid" : "tombstone:article" }
+{ "kind" : "source", "uid" : "tombstone:source" }
+## uid_aliases 0 rows
+## sources 4 rows
+{ "citekey" : "zralpha1991_walls" }
+{ "citekey" : "zrbeta2001_harbour" }
+{ "citekey" : "zrdelta2010_survey" }
+{ "citekey" : "zrgamma1975_kings" }
+## source_aliases 1 rows
+{ "alias" : "zralpha1990_walls", "citekey" : "zralpha1991_walls" }
+== page article/zr_city_walls
+200 <!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>The walls of Zrtown · Histmersion</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2214%22 fill=%22%231f2433%22/%3E%3Cpath d=%22M6 20c5-7 15-7 20 0%22 stroke=%22%236aa3ff%22 stroke-width=%223%22 fill=%22none%22/%3E%3Ccircle cx=%2216%22 cy=%2212%22 r=%223%22 fill=%22%23f2c14e%22/%3E%3C/svg%3E">
+<script>try{var t=localStorage.getItem("histmersion.theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script><link rel="stylesheet" href="/web/style.css"></head><body class="article-page" data-page="article">
+<div class="nav"><a href="/">← Histmersion</a></div>
+<main id="page-content"><h1>The walls of Zrtown</h1><p class="article-meta-line">concept · <a class="chip chip-place" data-field="place" data-value="Zrland" href="/#place=Zrland">Zrland</a> · 1600 BCE–1400 BCE · <a class="chip chip-tag" data-field="tag" data-value="zr-art" href="/#tag=zr-art">zr-art</a> <a class="chip chip-tag" data-field="tag" data-value="walls" href="/#tag=walls">walls</a> <a class="chip chip-tag" data-field="tag" data-value="renamed" href="/#tag=renamed">renamed</a></p><p class="article-review-line"><span class="muted">review:</span> <span class="job-state review-state state-unreviewed" title="Not reviewed yet: no review of this article is recorded and none is queued.">Not reviewed</span></p><div class="reading article-body"><h2>The question</h2>
+<p>When were the walls of Zrtown raised? The walls rose around 1500 BC <a class="src-ref" data-ck="zralpha1991_walls" href="/source/zralpha1991_walls">Zrauthor &amp; Zrwriter 1990</a><sup class="cite-num"><a class="cite-jump" href="#cite-1">[1]</a></sup>; the harbour
+trade paid for them <a class="src-ref" data-ck="zrbeta2001_harbour" href="/source/zrbeta2001_harbour">Zrwriter 2001</a><sup class="cite-num"><a class="cite-jump" href="#cite-2">[2]</a></sup>.</p>
+<h2>What the sources say</h2>
+<p>An older reading put the walls under the kings of Zrland <a class="src-ref" data-ck="zrgamma1975_kings" href="/source/zrgamma1975_kings">Zrauthor 1975</a><sup class="cite-num"><a class="cite-jump" href="#cite-3">[3]</a></sup>.</p>
+<h2>Unresolved</h2>
+<p>Whether the gate is older than the walls <a class="src-ref" data-ck="zralpha1991_walls" href="/source/zralpha1991_walls">Zrauthor &amp; Zrwriter 1990</a><sup class="cite-num"><a class="cite-jump" href="#cite-1">[1]</a></sup>.</p>
+<h2>Not used</h2>
+<p>The filter returns 4 sources. 3 of them are cited above; the other one is listed here with the reason it is left out:</p>
+<ul>
+<li><a class="src-ref" data-ck="zrdelta2010_survey" href="/source/zrdelta2010_survey">Zrother 2010</a> — Region-wide; no walls.</li>
+</ul>
+<p><em>Method: search {tags: [&quot;zr-oracle&quot;]} → 4; statuses: 2 current, 1 contested, 1 superseded; none debunked or retracted; further search &quot;harbour&quot; → 4 (cited: <a class="src-ref" data-ck="zralpha1991_walls" href="/source/zralpha1991_walls">Zrauthor &amp; Zrwriter 1990</a>, <a class="src-ref" data-ck="zrbeta2001_harbour" href="/source/zrbeta2001_harbour">Zrwriter 2001</a>, <a class="src-ref" data-ck="zrgamma1975_kings" href="/source/zrgamma1975_kings">Zrauthor 1975</a>); further search &quot;kings of zrland&quot; → 1 (cited: <a class="src-ref" data-ck="zrgamma1975_kings" href="/source/zrgamma1975_kings">Zrauthor 1975</a>); disagreement edges touching the cited sources: <a class="src-ref" data-ck="zrbeta2001_harbour" href="/source/zrbeta2001_harbour">Zrwriter 2001</a> challenges <a class="src-ref" data-ck="zralpha1991_walls" href="/source/zralpha1991_walls">Zrauthor &amp; Zrwriter 1990</a>; <a class="src-ref" data-ck="zrgamma1975_kings" href="/source/zrgamma1975_kings">Zrauthor 1975</a> refutes <a class="src-ref" data-ck="zrbeta2001_harbour" href="/source/zrbeta2001_harbour">Zrwriter 2001</a>; <a class="src-ref" data-ck="zrgamma1975_kings" href="/source/zrgamma1975_kings">Zrauthor 1975</a> superseded_by <a class="src-ref" data-ck="zralpha1991_walls" href="/source/zralpha1991_walls">Zrauthor &amp; Zrwriter 1990</a>; disagreements checked: 3 pairs — 1 addressed, 1 reasoned, 1 open.</em></p>
+</div><h2>Backlinks (2)</h2><ul class="backlinks"><li><a class="art-ref" data-slug="zr_harbour" href="/article/zr_harbour">The harbour myth</a></li><li><a class="art-ref" data-slug="zr_index" href="/article/zr_index">Zr index</a></li></ul><h2 id="sources-cited">Sources cited (3)</h2><ol class="sources-cited"><li id="cite-1"><a class="src-ref" data-ck="zralpha1991_walls" href="/source/zralpha1991_walls">Zrauthor &amp; Zrwriter 1990</a> <i>The Walls of Zrtown</i> <span class="status-badge st-current" title="Status: Current (current)">Current</span> <span class="ident"><code class="citekey">zralpha1991_walls</code></span></li><li id="cite-2"><a class="src-ref" data-ck="zrbeta2001_harbour" href="/source/zrbeta2001_harbour">Zrwriter 2001</a> <i>The Harbour of Zrtown</i> <span class="status-badge st-contested" title="Status: Contested (contested)">Contested</span> <span class="ident"><code class="citekey">zrbeta2001_harbour</code></span></li><li id="cite-3"><a class="src-ref" data-ck="zrgamma1975_kings" href="/source/zrgamma1975_kings">Zrauthor 1975</a> <i>Kings of Zrland</i> <span class="status-badge st-superseded" title="Status: Superseded (superseded)">Superseded</span> <span class="ident"><code class="citekey">zrgamma1975_kings</code></span></li></ol></main>
+<script src="/web/app.bundle.js?v=2"></script>
+</body></html>
+== page article/zr_city_walls?fragment=true
+200 <h1>The walls of Zrtown</h1><p class="article-meta-line">concept · <a class="chip chip-place" data-field="place" data-value="Zrland" href="/#place=Zrland">Zrland</a> · 1600 BCE–1400 BCE · <a class="chip chip-tag" data-field="tag" data-value="zr-art" href="/#tag=zr-art">zr-art</a> <a class="chip chip-tag" data-field="tag" data-value="walls" href="/#tag=walls">walls</a> <a class="chip chip-tag" data-field="tag" data-value="renamed" href="/#tag=renamed">renamed</a></p><p class="article-review-line"><span class="muted">review:</span> <span class="job-state review-state state-unreviewed" title="Not reviewed yet: no review of this article is recorded and none is queued.">Not reviewed</span></p><div class="reading article-body"><h2>The question</h2>
+<p>When were the walls of Zrtown raised? The walls rose around 1500 BC <a class="src-ref" data-ck="zralpha1991_walls" href="/source/zralpha1991_walls">Zrauthor &amp; Zrwriter 1990</a><sup class="cite-num"><a class="cite-jump" href="#cite-1">[1]</a></sup>; the harbour
+trade paid for them <a class="src-ref" data-ck="zrbeta2001_harbour" href="/source/zrbeta2001_harbour">Zrwriter 2001</a><sup class="cite-num"><a class="cite-jump" href="#cite-2">[2]</a></sup>.</p>
+<h2>What the sources say</h2>
+<p>An older reading put the walls under the kings of Zrland <a class="src-ref" data-ck="zrgamma1975_kings" href="/source/zrgamma1975_kings">Zrauthor 1975</a><sup class="cite-num"><a class="cite-jump" href="#cite-3">[3]</a></sup>.</p>
+<h2>Unresolved</h2>
+<p>Whether the gate is older than the walls <a class="src-ref" data-ck="zralpha1991_walls" href="/source/zralpha1991_walls">Zrauthor &amp; Zrwriter 1990</a><sup class="cite-num"><a class="cite-jump" href="#cite-1">[1]</a></sup>.</p>
+<h2>Not used</h2>
+<p>The filter returns 4 sources. 3 of them are cited above; the other one is listed here with the reason it is left out:</p>
+<ul>
+<li><a class="src-ref" data-ck="zrdelta2010_survey" href="/source/zrdelta2010_survey">Zrother 2010</a> — Region-wide; no walls.</li>
+</ul>
+<p><em>Method: search {tags: [&quot;zr-oracle&quot;]} → 4; statuses: 2 current, 1 contested, 1 superseded; none debunked or retracted; further search &quot;harbour&quot; → 4 (cited: <a class="src-ref" data-ck="zralpha1991_walls" href="/source/zralpha1991_walls">Zrauthor &amp; Zrwriter 1990</a>, <a class="src-ref" data-ck="zrbeta2001_harbour" href="/source/zrbeta2001_harbour">Zrwriter 2001</a>, <a class="src-ref" data-ck="zrgamma1975_kings" href="/source/zrgamma1975_kings">Zrauthor 1975</a>); further search &quot;kings of zrland&quot; → 1 (cited: <a class="src-ref" data-ck="zrgamma1975_kings" href="/source/zrgamma1975_kings">Zrauthor 1975</a>); disagreement edges touching the cited sources: <a class="src-ref" data-ck="zrbeta2001_harbour" href="/source/zrbeta2001_harbour">Zrwriter 2001</a> challenges <a class="src-ref" data-ck="zralpha1991_walls" href="/source/zralpha1991_walls">Zrauthor &amp; Zrwriter 1990</a>; <a class="src-ref" data-ck="zrgamma1975_kings" href="/source/zrgamma1975_kings">Zrauthor 1975</a> refutes <a class="src-ref" data-ck="zrbeta2001_harbour" href="/source/zrbeta2001_harbour">Zrwriter 2001</a>; <a class="src-ref" data-ck="zrgamma1975_kings" href="/source/zrgamma1975_kings">Zrauthor 1975</a> superseded_by <a class="src-ref" data-ck="zralpha1991_walls" href="/source/zralpha1991_walls">Zrauthor &amp; Zrwriter 1990</a>; disagreements checked: 3 pairs — 1 addressed, 1 reasoned, 1 open.</em></p>
+</div><h2>Backlinks (2)</h2><ul class="backlinks"><li><a class="art-ref" data-slug="zr_harbour" href="/article/zr_harbour">The harbour myth</a></li><li><a class="art-ref" data-slug="zr_index" href="/article/zr_index">Zr index</a></li></ul><h2 id="sources-cited">Sources cited (3)</h2><ol class="sources-cited"><li id="cite-1"><a class="src-ref" data-ck="zralpha1991_walls" href="/source/zralpha1991_walls">Zrauthor &amp; Zrwriter 1990</a> <i>The Walls of Zrtown</i> <span class="status-badge st-current" title="Status: Current (current)">Current</span> <span class="ident"><code class="citekey">zralpha1991_walls</code></span></li><li id="cite-2"><a class="src-ref" data-ck="zrbeta2001_harbour" href="/source/zrbeta2001_harbour">Zrwriter 2001</a> <i>The Harbour of Zrtown</i> <span class="status-badge st-contested" title="Status: Contested (contested)">Contested</span> <span class="ident"><code class="citekey">zrbeta2001_harbour</code></span></li><li id="cite-3"><a class="src-ref" data-ck="zrgamma1975_kings" href="/source/zrgamma1975_kings">Zrauthor 1975</a> <i>Kings of Zrland</i> <span class="status-badge st-superseded" title="Status: Superseded (superseded)">Superseded</span> <span class="ident"><code class="citekey">zrgamma1975_kings</code></span></li></ol>
+== page article/zr_city_walls?fragment=true&q=walls
+200 <p class="toggle match-nav" data-matches="8">8 matches · <a href="#hl1" class="next-match">next ▼</a> <span class="kbd-hint">(n)</span></p><h1>The <mark id="hl1">walls</mark> of Zrtown</h1><p class="article-meta-line">concept · <a class="chip chip-place" data-field="place" data-value="Zrland" href="/#place=Zrland">Zrland</a> · 1600 BCE–1400 BCE · <a class="chip chip-tag" data-field="tag" data-value="zr-art" href="/#tag=zr-art">zr-art</a> <a class="chip chip-tag" data-field="tag" data-value="walls" href="/#tag=walls"><mark id="hl2">walls</mark></a> <a class="chip chip-tag" data-field="tag" data-value="renamed" href="/#tag=renamed">renamed</a></p><p class="article-review-line"><span class="muted">review:</span> <span class="job-state review-state state-unreviewed" title="Not reviewed yet: no review of this article is recorded and none is queued.">Not reviewed</span></p><div class="reading article-body"><h2>The question</h2>
+<p>When were the <mark id="hl3">walls</mark> of Zrtown raised? The <mark id="hl4">walls</mark> rose around 1500 BC <a class="src-ref" data-ck="zralpha1991_walls" href="/source/zralpha1991_walls">Zrauthor &amp; Zrwriter 1990</a><sup class="cite-num"><a class="cite-jump" href="#cite-1">[1]</a></sup>; the harbour
+trade paid for them <a class="src-ref" data-ck="zrbeta2001_harbour" href="/source/zrbeta2001_harbour">Zrwriter 2001</a><sup class="cite-num"><a class="cite-jump" href="#cite-2">[2]</a></sup>.</p>
+<h2>What the sources say</h2>
+<p>An older reading put the <mark id="hl5">walls</mark> under the kings of Zrland <a class="src-ref" data-ck="zrgamma1975_kings" href="/source/zrgamma1975_kings">Zrauthor 1975</a><sup class="cite-num"><a class="cite-jump" href="#cite-3">[3]</a></sup>.</p>
+<h2>Unresolved</h2>
+<p>Whether the gate is older than the <mark id="hl6">walls</mark> <a class="src-ref" data-ck="zralpha1991_walls" href="/source/zralpha1991_walls">Zrauthor &amp; Zrwriter 1990</a><sup class="cite-num"><a class="cite-jump" href="#cite-1">[1]</a></sup>.</p>
+<h2>Not used</h2>
+<p>The filter returns 4 sources. 3 of them are cited above; the other one is listed here with the reason it is left out:</p>
+<ul>
+<li><a class="src-ref" data-ck="zrdelta2010_survey" href="/source/zrdelta2010_survey">Zrother 2010</a> — Region-wide; no <mark id="hl7">walls</mark>.</li>
+</ul>
+<p><em>Method: search {tags: [&quot;zr-oracle&quot;]} → 4; statuses: 2 current, 1 contested, 1 superseded; none debunked or retracted; further search &quot;harbour&quot; → 4 (cited: <a class="src-ref" data-ck="zralpha1991_walls" href="/source/zralpha1991_walls">Zrauthor &amp; Zrwriter 1990</a>, <a class="src-ref" data-ck="zrbeta2001_harbour" href="/source/zrbeta2001_harbour">Zrwriter 2001</a>, <a class="src-ref" data-ck="zrgamma1975_kings" href="/source/zrgamma1975_kings">Zrauthor 1975</a>); further search &quot;kings of zrland&quot; → 1 (cited: <a class="src-ref" data-ck="zrgamma1975_kings" href="/source/zrgamma1975_kings">Zrauthor 1975</a>); disagreement edges touching the cited sources: <a class="src-ref" data-ck="zrbeta2001_harbour" href="/source/zrbeta2001_harbour">Zrwriter 2001</a> challenges <a class="src-ref" data-ck="zralpha1991_walls" href="/source/zralpha1991_walls">Zrauthor &amp; Zrwriter 1990</a>; <a class="src-ref" data-ck="zrgamma1975_kings" href="/source/zrgamma1975_kings">Zrauthor 1975</a> refutes <a class="src-ref" data-ck="zrbeta2001_harbour" href="/source/zrbeta2001_harbour">Zrwriter 2001</a>; <a class="src-ref" data-ck="zrgamma1975_kings" href="/source/zrgamma1975_kings">Zrauthor 1975</a> superseded_by <a class="src-ref" data-ck="zralpha1991_walls" href="/source/zralpha1991_walls">Zrauthor &amp; Zrwriter 1990</a>; disagreements checked: 3 pairs — 1 addressed, 1 reasoned, 1 open.</em></p>
+</div><h2>Backlinks (2)</h2><ul class="backlinks"><li><a class="art-ref" data-slug="zr_harbour" href="/article/zr_harbour">The harbour myth</a></li><li><a class="art-ref" data-slug="zr_index" href="/article/zr_index">Zr index</a></li></ul><h2 id="sources-cited">Sources cited (3)</h2><ol class="sources-cited"><li id="cite-1"><a class="src-ref" data-ck="zralpha1991_walls" href="/source/zralpha1991_walls">Zrauthor &amp; Zrwriter 1990</a> <i>The <mark id="hl8">Walls</mark> of Zrtown</i> <span class="status-badge st-current" title="Status: Current (current)">Current</span> <span class="ident"><code class="citekey">zralpha1991_walls</code></span></li><li id="cite-2"><a class="src-ref" data-ck="zrbeta2001_harbour" href="/source/zrbeta2001_harbour">Zrwriter 2001</a> <i>The Harbour of Zrtown</i> <span class="status-badge st-contested" title="Status: Contested (contested)">Contested</span> <span class="ident"><code class="citekey">zrbeta2001_harbour</code></span></li><li id="cite-3"><a class="src-ref" data-ck="zrgamma1975_kings" href="/source/zrgamma1975_kings">Zrauthor 1975</a> <i>Kings of Zrland</i> <span class="status-badge st-superseded" title="Status: Superseded (superseded)">Superseded</span> <span class="ident"><code class="citekey">zrgamma1975_kings</code></span></li></ol>
+== page article/zr_walls?fragment=true
+200 <h1>The walls of Zrtown</h1><p class="article-meta-line">concept · <a class="chip chip-place" data-field="place" data-value="Zrland" href="/#place=Zrland">Zrland</a> · 1600 BCE–1400 BCE · <a class="chip chip-tag" data-field="tag" data-value="zr-art" href="/#tag=zr-art">zr-art</a> <a class="chip chip-tag" data-field="tag" data-value="walls" href="/#tag=walls">walls</a> <a class="chip chip-tag" data-field="tag" data-value="renamed" href="/#tag=renamed">renamed</a></p><p class="article-review-line"><span class="muted">review:</span> <span class="job-state review-state state-unreviewed" title="Not reviewed yet: no review of this article is recorded and none is queued.">Not reviewed</span></p><div class="reading article-body"><h2>The question</h2>
+<p>When were the walls of Zrtown raised? The walls rose around 1500 BC <a class="src-ref" data-ck="zralpha1991_walls" href="/source/zralpha1991_walls">Zrauthor &amp; Zrwriter 1990</a><sup class="cite-num"><a class="cite-jump" href="#cite-1">[1]</a></sup>; the harbour
+trade paid for them <a class="src-ref" data-ck="zrbeta2001_harbour" href="/source/zrbeta2001_harbour">Zrwriter 2001</a><sup class="cite-num"><a class="cite-jump" href="#cite-2">[2]</a></sup>.</p>
+<h2>What the sources say</h2>
+<p>An older reading put the walls under the kings of Zrland <a class="src-ref" data-ck="zrgamma1975_kings" href="/source/zrgamma1975_kings">Zrauthor 1975</a><sup class="cite-num"><a class="cite-jump" href="#cite-3">[3]</a></sup>.</p>
+<h2>Unresolved</h2>
+<p>Whether the gate is older than the walls <a class="src-ref" data-ck="zralpha1991_walls" href="/source/zralpha1991_walls">Zrauthor &amp; Zrwriter 1990</a><sup class="cite-num"><a class="cite-jump" href="#cite-1">[1]</a></sup>.</p>
+<h2>Not used</h2>
+<p>The filter returns 4 sources. 3 of them are cited above; the other one is listed here with the reason it is left out:</p>
+<ul>
+<li><a class="src-ref" data-ck="zrdelta2010_survey" href="/source/zrdelta2010_survey">Zrother 2010</a> — Region-wide; no walls.</li>
+</ul>
+<p><em>Method: search {tags: [&quot;zr-oracle&quot;]} → 4; statuses: 2 current, 1 contested, 1 superseded; none debunked or retracted; further search &quot;harbour&quot; → 4 (cited: <a class="src-ref" data-ck="zralpha1991_walls" href="/source/zralpha1991_walls">Zrauthor &amp; Zrwriter 1990</a>, <a class="src-ref" data-ck="zrbeta2001_harbour" href="/source/zrbeta2001_harbour">Zrwriter 2001</a>, <a class="src-ref" data-ck="zrgamma1975_kings" href="/source/zrgamma1975_kings">Zrauthor 1975</a>); further search &quot;kings of zrland&quot; → 1 (cited: <a class="src-ref" data-ck="zrgamma1975_kings" href="/source/zrgamma1975_kings">Zrauthor 1975</a>); disagreement edges touching the cited sources: <a class="src-ref" data-ck="zrbeta2001_harbour" href="/source/zrbeta2001_harbour">Zrwriter 2001</a> challenges <a class="src-ref" data-ck="zralpha1991_walls" href="/source/zralpha1991_walls">Zrauthor &amp; Zrwriter 1990</a>; <a class="src-ref" data-ck="zrgamma1975_kings" href="/source/zrgamma1975_kings">Zrauthor 1975</a> refutes <a class="src-ref" data-ck="zrbeta2001_harbour" href="/source/zrbeta2001_harbour">Zrwriter 2001</a>; <a class="src-ref" data-ck="zrgamma1975_kings" href="/source/zrgamma1975_kings">Zrauthor 1975</a> superseded_by <a class="src-ref" data-ck="zralpha1991_walls" href="/source/zralpha1991_walls">Zrauthor &amp; Zrwriter 1990</a>; disagreements checked: 3 pairs — 1 addressed, 1 reasoned, 1 open.</em></p>
+</div><h2>Backlinks (2)</h2><ul class="backlinks"><li><a class="art-ref" data-slug="zr_harbour" href="/article/zr_harbour">The harbour myth</a></li><li><a class="art-ref" data-slug="zr_index" href="/article/zr_index">Zr index</a></li></ul><h2 id="sources-cited">Sources cited (3)</h2><ol class="sources-cited"><li id="cite-1"><a class="src-ref" data-ck="zralpha1991_walls" href="/source/zralpha1991_walls">Zrauthor &amp; Zrwriter 1990</a> <i>The Walls of Zrtown</i> <span class="status-badge st-current" title="Status: Current (current)">Current</span> <span class="ident"><code class="citekey">zralpha1991_walls</code></span></li><li id="cite-2"><a class="src-ref" data-ck="zrbeta2001_harbour" href="/source/zrbeta2001_harbour">Zrwriter 2001</a> <i>The Harbour of Zrtown</i> <span class="status-badge st-contested" title="Status: Contested (contested)">Contested</span> <span class="ident"><code class="citekey">zrbeta2001_harbour</code></span></li><li id="cite-3"><a class="src-ref" data-ck="zrgamma1975_kings" href="/source/zrgamma1975_kings">Zrauthor 1975</a> <i>Kings of Zrland</i> <span class="status-badge st-superseded" title="Status: Superseded (superseded)">Superseded</span> <span class="ident"><code class="citekey">zrgamma1975_kings</code></span></li></ol>
+== page article/zr_index?fragment=true
+200 <h1>Zr index</h1><p class="article-meta-line">index · <a class="chip chip-tag" data-field="tag" data-value="zr-art" href="/#tag=zr-art">zr-art</a></p><p class="article-review-line"><span class="muted">review:</span> <span class="job-state review-state state-unreviewed" title="Not reviewed yet: no review of this article is recorded and none is queued.">Not reviewed</span></p><details class="format-notice has-warnings"><summary>This article may not display correctly: 2 formatting problems</summary><ul class="format-issues"><li class="fi fi-warning"><span class="fi-where">line 3</span> <span class="fi-rule">wikilink unresolved</span> — [[zr_missing]] names no source and no article — it renders as plain text; check the citekey (`histmersion search`) or the slug <code class="fi-excerpt">- [[zr_missing]]</code></li><li class="fi fi-warning"><span class="fi-where">summary, line 1</span> <span class="fi-rule">wikilink unresolved</span> — [[zr_missing]] names no source and no article — it renders as plain text; check the citekey (`histmersion search`) or the slug <code class="fi-excerpt">…- [[zr_harbour]] - [[zr_missing]]</code></li></ul></details><div class="reading article-body"><ul>
+<li><a class="art-ref" data-slug="zr_city_walls" href="/article/zr_city_walls">The walls of Zrtown</a></li>
+<li><a class="art-ref" data-slug="zr_harbour" href="/article/zr_harbour">The harbour myth</a></li>
+<li><span class="dangling" title="unresolved link">zr missing</span></li>
+</ul>
+</div>
+== page article/zr_nothing
+404 <!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Not found · Histmersion</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2214%22 fill=%22%231f2433%22/%3E%3Cpath d=%22M6 20c5-7 15-7 20 0%22 stroke=%22%236aa3ff%22 stroke-width=%223%22 fill=%22none%22/%3E%3Ccircle cx=%2216%22 cy=%2212%22 r=%223%22 fill=%22%23f2c14e%22/%3E%3C/svg%3E">
+<script>try{var t=localStorage.getItem("histmersion.theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}</script><link rel="stylesheet" href="/web/style.css"></head><body class="article-page" data-page="article">
+<div class="nav"><a href="/">← Histmersion</a></div>
+<main id="page-content"><p>No article <code>zr_nothing</code>.</p></main>
+<script src="/web/app.bundle.js?v=2"></script>
+</body></html>
+== page article/zr_nothing?fragment=true
+404 <p>No article <code>zr_nothing</code>.</p>
+== page articles (the redirect)
+302 /article/index
+# the rows
+## articles 7 rows
+{ "body" : "## Overview\n\nA list:\n* one [[zralpha1991_walls]]\n* two\n\n\n\nEnd [[zralpha1991_walls]].   \n", "coverage_reasons" : {  }, "kind" : "concept", "period" : null, "regions" : [ ], "slug" : "zr_messy", "summary" : null, "tags" : [ ], "title" : "Messy", "uid" : "article:zr_messy" }
+{ "body" : "## Overview\n\nImported [[zralpha1991_walls]].", "coverage_reasons" : {  }, "kind" : "concept", "period" : null, "regions" : [ ], "slug" : "zr_imported", "summary" : null, "tags" : [ ], "title" : "Imported", "uid" : "article:zr_imported" }
+{ "body" : "## Overview\n\nThe Zr culture built walls [[zralpha1991_walls]].\n", "coverage_reasons" : {  }, "kind" : "culture", "period" : null, "regions" : [ ], "slug" : "zr_culture", "summary" : null, "tags" : [ "zr-art" ], "title" : "The Zr culture", "uid" : "article:zr_culture" }
+{ "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1991_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1991_walls]].\n", "coverage_reasons" : { "zrdelta2010_survey" : "Region-wide; no walls." }, "kind" : "concept", "period" : "[-1600,-1399)", "regions" : [ "Zrland" ], "slug" : "zr_city_walls", "summary" : "When the walls of Zrtown rose [[zralpha1991_walls]].", "tags" : [ "zr-art", "walls", "renamed" ], "title" : "The walls of Zrtown", "uid" : "article:zr_city_walls" }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_city_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "coverage_reasons" : {  }, "kind" : "myths", "period" : "[-1350,-1149)", "regions" : [ "Zrland", "Zrcoast" ], "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]].", "tags" : [ "zr-art", "founding", "harbour" ], "title" : "The harbour myth", "uid" : "article:zr_harbour" }
+{ "body" : "## Timeline\n\nThe kings reigned from Zrtown from 2000 BC [[zrgamma1975_kings]].\n\n## Unresolved\n\nThe end of the dynasty [[zrgamma1975_kings]].", "coverage_reasons" : {  }, "kind" : "timeline", "period" : "[-2000,-1599)", "regions" : [ ], "slug" : "zr_kings", "summary" : "The kings [[zrgamma1975_kings]].", "tags" : [ ], "title" : "Kings of Zrland, a timeline", "uid" : "article:zr_kings" }
+{ "body" : "- [[zr_city_walls]]\n- [[zr_harbour]]\n- [[zr_missing]]\n", "coverage_reasons" : {  }, "kind" : "index", "period" : null, "regions" : [ ], "slug" : "zr_index", "summary" : "- [[zr_city_walls]] - [[zr_harbour]] - [[zr_missing]]", "tags" : [ "zr-art" ], "title" : "Zr index", "uid" : "article:zr_index" }
+## article_versions 26 rows
+{ "body" : "## Overview\n\nA list:\n* one [[zralpha1990_walls]]\n* two\n\n\n\nEnd [[zralpha1990_walls]].   \n", "slug" : "zr_messy", "summary" : null }
+{ "body" : "## Overview\n\nA list:\n* one [[zralpha1990_walls]]\n* two\n\n\n\nEnd \\[\\[zralpha1990_walls\\]\\].   \n", "slug" : "zr_messy", "summary" : null }
+{ "body" : "## Overview\n\nImported [[zralpha1990_walls]].", "slug" : "zr_imported", "summary" : null }
+{ "body" : "## Overview\n\nThe Zr culture built walls [[zralpha1990_walls]].\n", "slug" : "zr_culture", "summary" : null }
+{ "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n", "slug" : "zr_city_walls", "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]]." }
+{ "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n", "slug" : "zr_city_walls", "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]]." }
+{ "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n", "slug" : "zr_city_walls", "summary" : "When the walls of Zrtown rose [[zralpha1990_walls]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nA hero founded the harbour [[zrbeta2001_harbour]]. See [[zr_walls]].\n\nA second version names no hero [[zrbeta2001_harbour]].\n\n## Unresolved\n\nWho the hero was [[zrbeta2001_harbour]].", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nThe harbour was founded by a hero [[zrbeta2001_harbour]]. See [[zr_walls]] for the walls.\n", "slug" : "zr_harbour", "summary" : "A founding myth [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nThe harbour was founded by a hero [[zrbeta2001_harbour]]. See [[zr_walls]] for the walls.\n", "slug" : "zr_harbour", "summary" : "A founding myth [[zrbeta2001_harbour]]." }
+{ "body" : "## The story\n\nThe harbour was founded by a hero [[zrbeta2001_harbour]]. See [[zr_walls]] for the walls.\n", "slug" : "zr_harbour", "summary" : "The founding myth of the harbour [[zrbeta2001_harbour]]." }
+{ "body" : "## Timeline\n\nThe kings ruled from Zrtown from 2000 BC [[zrgamma1975_kings]].\n", "slug" : "zr_kings", "summary" : "The kings [[zrgamma1975_kings]]." }
+{ "body" : "## Timeline\n\nThe kings ruled from Zrtown from 2000 BC [[zrgamma1975_kings]].\n\n## Unresolved\n\nThe end of the dynasty [[zrgamma1975_kings]].", "slug" : "zr_kings", "summary" : "The kings [[zrgamma1975_kings]]." }
+{ "body" : "- [[zr_walls]]\n- [[zr_harbour]]\n- [[zr_missing]]\n", "slug" : "zr_index", "summary" : "- [[zr_walls]] - [[zr_harbour]] - [[zr_missing]]" }
+## article_links 12 rows
+{ "src_slug" : "zr_city_walls", "target" : "zralpha1991_walls", "target_kind" : "source" }
+{ "src_slug" : "zr_city_walls", "target" : "zrbeta2001_harbour", "target_kind" : "source" }
+{ "src_slug" : "zr_city_walls", "target" : "zrgamma1975_kings", "target_kind" : "source" }
+{ "src_slug" : "zr_culture", "target" : "zralpha1991_walls", "target_kind" : "source" }
+{ "src_slug" : "zr_harbour", "target" : "zr_city_walls", "target_kind" : "article" }
+{ "src_slug" : "zr_harbour", "target" : "zrbeta2001_harbour", "target_kind" : "source" }
+{ "src_slug" : "zr_imported", "target" : "zralpha1991_walls", "target_kind" : "source" }
+{ "src_slug" : "zr_index", "target" : "zr_city_walls", "target_kind" : "article" }
+{ "src_slug" : "zr_index", "target" : "zr_harbour", "target_kind" : "article" }
+{ "src_slug" : "zr_index", "target" : "zr_missing", "target_kind" : "article" }
+{ "src_slug" : "zr_kings", "target" : "zrgamma1975_kings", "target_kind" : "source" }
+{ "src_slug" : "zr_messy", "target" : "zralpha1991_walls", "target_kind" : "source" }
+## article_aliases 1 rows
+{ "alias" : "zr_walls", "created_at" : "TS", "slug" : "zr_city_walls" }
+## article_critique_reasons 1 rows
+{ "dst" : "zrbeta2001_harbour", "reason" : "The refutation is about trade, not the walls.", "set_by" : "person", "slug" : "zr_city_walls", "src" : "zrgamma1975_kings" }
+## review_ledgers 0 rows
+## alias_tombstones 0 rows
+## tombstones 2 rows
+{ "kind" : "article", "uid" : "tombstone:article" }
+{ "kind" : "source", "uid" : "tombstone:source" }
+## uid_aliases 0 rows
+## sources 4 rows
+{ "citekey" : "zralpha1991_walls" }
+{ "citekey" : "zrbeta2001_harbour" }
+{ "citekey" : "zrdelta2010_survey" }
+{ "citekey" : "zrgamma1975_kings" }
+## source_aliases 1 rows
+{ "alias" : "zralpha1990_walls", "citekey" : "zralpha1991_walls" }
