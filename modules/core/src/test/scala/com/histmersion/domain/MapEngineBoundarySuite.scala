@@ -63,4 +63,7 @@ class MapEngineBoundarySuite extends munit.FunSuite:
 
   test("the adapter is the only code importing the library's facade"):
     val facade = sources(adapter).filter(p => Files.readString(p).contains("@JSGlobal(\"maplibregl"))
-    assertEquals(facade.map(_.getFileName.toString), List("MapLibre.scala"))
+    assertEquals(
+      facade.map(_.getFileName.toString).sorted,
+      List("GlMap.scala", "GlPopup.scala", "MapLibre.scala", "NavigationControl.scala")
+    )
