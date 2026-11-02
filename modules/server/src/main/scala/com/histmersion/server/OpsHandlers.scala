@@ -9,7 +9,7 @@ import com.histmersion.api.Lint.*
 import com.histmersion.api.Query.*
 import com.histmersion.api.Queue.*
 import com.histmersion.api.GoalPlans.{GoalView, LinkKind, Plan}
-import com.histmersion.db.{ArticleRepo, GoalLinkRepo, GoalRepo}
+import com.histmersion.db.{GoalLinkRepo, GoalRepo}
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope}
 import com.histmersion.util.data.checks.{CheckContext, CheckRulesAdapter, CheckRunner, GuardedWrite}
 
@@ -19,7 +19,7 @@ import com.histmersion.util.data.checks.{CheckContext, CheckRulesAdapter, CheckR
   *
   * Held as `Handlers.ops` so the composition root still builds exactly one object graph.
   */
-final class OpsHandlers(deps: Deps):
+final class OpsHandlers(deps: Deps, articleWrite: GuardedWrite):
   private val ds = deps.ds
   private def cfg = deps.cfg
   private val maintenance = deps.maintenance
@@ -52,10 +52,6 @@ final class OpsHandlers(deps: Deps):
   private def formatChecker(isCitekey: String => Boolean): FormatChecker =
     (text, field, article) =>
       MarkdownLint.issues(text, field, MarkdownLint.Context(article = article, isCitekey = Some(isCitekey)))
-
-  /** `article-critique-pairing`'s repair writes each article through the article patch, guarded by its token. */
-  private val articleWrite: GuardedWrite = (slug, body, token) =>
-    ArticleRepo.patch(ds, slug, ArticlePatch(body = Some(body), ifUpdatedAt = token)).isRight
 
   /** `POST /api/lint/fix` — the two repairs that are safe to make without a human: unify unambiguous short edge
     * targets, and re-chunk sources whose full-text index is missing. Both are bounded per call; `remaining > 0` means

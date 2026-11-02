@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.domain.research.articles.ArticleFixtures
+
 import com.histmersion.domain.library.citations.CitationFixtures
 import com.histmersion.domain.library.sources.SourceFixtures
 
@@ -8,7 +10,7 @@ import com.histmersion.util.ocr.ConverterClient
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{ArticleRepo, Db, Migrate}
+import com.histmersion.db.{Db, Migrate}
 
 import com.augustnagro.magnum.*
 import java.nio.file.{Files, Path}
@@ -153,7 +155,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
       sql"""INSERT INTO queue_items (list, text, status, reason)
             VALUES ('acquire', 'zzdel the book', 'done', ${s"ingested as [[$Del]]"})""".update.run()
     // an article that leaves it out, with a reason — and cites Other only
-    val _ = ArticleRepo.put(
+    val _ = ArticleFixtures.put(
       ds,
       Article(
         Slug,
@@ -232,7 +234,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     seed()
     List(s"See [[$Del]].", s"See [[$Old|the book]].", s"See [[zzdel2020]] (short).").zipWithIndex.foreach { (body, i) =>
       val slug = s"${Slug}_cites$i"
-      val _ = ArticleRepo.put(ds, Article(slug, s"Cites $i", "concept", s"# C\n\n$body", None, Nil, Nil, None))
+      val _ = ArticleFixtures.put(ds, Article(slug, s"Cites $i", "concept", s"# C\n\n$body", None, Nil, Nil, None))
       val dry = h.library.sources.delete(Del, SourceDeleteRequest()).fold(e => fail(e.message), identity)
       assertEquals(dry.blockers.map(b => (b.kind, b.id)), List((DeleteBlockerKind.Article, slug)), body)
       val e = h.library.sources
@@ -241,7 +243,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
         .getOrElse(fail("the delete was not refused"))
       assert(e.message.contains(s"cited by article $slug") && e.message.contains("no override"), e.message)
       assert(SourceFixtures.load(ds, Del).isDefined, "a refused delete deleted")
-      ArticleRepo.delete(ds, slug): Unit
+      ArticleFixtures.delete(ds, slug): Unit
     }
 
   test("refused while an event is sourced to it, or a job is still writing it"):
@@ -306,7 +308,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
     )
     assertEquals(count(sql"SELECT count(*)::int FROM assets WHERE citekey = $Other"), 1)
     // the article stays; only the reason keyed by the deleted source went
-    assertEquals(ArticleRepo.load(ds, Slug).map(_.reasons), Some(Map(Other -> "kept")))
+    assertEquals(ArticleFixtures.load(ds, Slug).map(_.reasons), Some(Map(Other -> "kept")))
     // the queue item that mentions it is left as it is
     assertEquals(count(sql"SELECT count(*)::int FROM queue_items WHERE reason = ${s"ingested as [[$Del]]"}"), 1)
 

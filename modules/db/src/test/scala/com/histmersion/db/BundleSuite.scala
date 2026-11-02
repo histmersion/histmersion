@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.research.articles.ArticleFixtures
+
 import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.media.assets.AssetFixtures
@@ -225,8 +227,9 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     val sha = BundleFormat.sha256Hex(OriginalBytes)
     SourceFixtures.setSha256(ds, A1, sha)
     Files.write(Files.createDirectories(originals).resolve(s"$sha.pdf"), OriginalBytes)
-    val _ = ArticleRepo.put(ds, Article("zzb_topic", "Topic", "concept", s"First draft citing [[$A1]].", Some("v1")))
-    val _ = ArticleRepo.put(
+    val _ =
+      ArticleFixtures.put(ds, Article("zzb_topic", "Topic", "concept", s"First draft citing [[$A1]].", Some("v1")))
+    val _ = ArticleFixtures.put(
       ds,
       Article(
         "zzb_topic",
@@ -239,9 +242,9 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
         Some(Period(-1500, -1100))
       )
     )
-    val _ = ArticleRepo.put(ds, Article("zzb_gone", "Gone", "report", "to be deleted"))
-    val _ = ArticleRepo.put(ds, Article("zzb_gone", "Gone", "report", "to be deleted, v2"))
-    val _ = ArticleRepo.delete(ds, "zzb_gone")
+    val _ = ArticleFixtures.put(ds, Article("zzb_gone", "Gone", "report", "to be deleted"))
+    val _ = ArticleFixtures.put(ds, Article("zzb_gone", "Gone", "report", "to be deleted, v2"))
+    val _ = ArticleFixtures.delete(ds, "zzb_gone")
     EventFixtures.put(
       ds,
       "zzb_e1",
@@ -376,7 +379,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(detail.uid, Some(after))
     assertEquals(detail.origin, Some(instanceId(ds)))
     assert(fs.nonEmpty && fs.forall(_.uid.isDefined), fs.toString)
-    assert(ArticleRepo.get(ds, "zzb_topic").flatMap(_.uid).isDefined)
+    assert(ArticleFixtures.get(ds, "zzb_topic").flatMap(_.uid).isDefined)
     val inst = instanceId(ds)
     List(
       "sources",
@@ -725,7 +728,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     val (sa, sc) = (spool("cla"), spool("clc"))
     populate(a, sa)
     put(c, source(A1, None, 1))
-    val _ = ArticleRepo.put(c, Article("zzb_topic", "Other topic", "concept", "other"))
+    val _ = ArticleFixtures.put(c, Article("zzb_topic", "Other topic", "concept", "other"))
     val before = exportOf(c, sc)
     val r = importInto(c, exportOf(a, sa), sc)
     assert(!r.applied)
@@ -799,7 +802,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
       }
       (0 until rnd.nextInt(4)).foreach { k =>
         (0 to rnd.nextInt(3)).foreach { v =>
-          val _ = ArticleRepo.put(
+          val _ = ArticleFixtures.put(
             a,
             Article(
               s"zzp_art$k",

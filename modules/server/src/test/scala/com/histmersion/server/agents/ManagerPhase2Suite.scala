@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.research.articles.ArticleFixtures
+
 import com.histmersion.domain.automation.agents.{AgentsHandlers, LlmClient}
 import com.histmersion.domain.automation.managers.Zero
 
@@ -10,7 +12,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.*
 import com.histmersion.api.GoalPlans.LinkKind
 import com.histmersion.api.Managers.*
-import com.histmersion.db.{AgentRepo, ArticleRepo, Db, GoalLinkRepo, ManagerRepo, Migrate}
+import com.histmersion.db.{AgentRepo, Db, GoalLinkRepo, ManagerRepo, Migrate}
 import com.histmersion.server.{Deps, Handlers}
 import io.circe.Json
 import sttp.ai.core.agent.*
@@ -188,11 +190,11 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(item(ReviewId, InferFilter, "zzagent_f1").status, "held")
     assertEquals(item(ReviewId, InferFilter, "zzagent_f1").hold.flatMap(_.untilApproval), Some(appr.id))
     assertEquals(item(ReviewId, ArticleReview, "zzagent_f1").status, "pending", "the review waits for the filter")
-    assertEquals(ArticleRepo.load(ds, "zzagent_f1").flatMap(_.filter), None, "nothing recorded before approval")
+    assertEquals(ArticleFixtures.load(ds, "zzagent_f1").flatMap(_.filter), None, "nothing recorded before approval")
     // approve: the filter is recorded, the item done, the review dispatched
     assertEquals(a.decide(appr.id, "approve", DecisionRequest()).map(_.state), Right("approved"))
     assertEquals(
-      ArticleRepo.load(ds, "zzagent_f1").flatMap(_.filter),
+      ArticleFixtures.load(ds, "zzagent_f1").flatMap(_.filter),
       Some(ArticleFilter(topics = List("zzagent_tin")))
     )
     a.managers.tick(t0)
@@ -219,7 +221,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     a.managers.tick(t0)
     val run = item(ReviewId, InferFilter, "zzagent_f2").runId.get
     a.engine.execute(run)
-    assertEquals(ArticleRepo.load(ds, "zzagent_f2").flatMap(_.filter).map(_.topics), Some(List("zzagent_tin")))
+    assertEquals(ArticleFixtures.load(ds, "zzagent_f2").flatMap(_.filter).map(_.topics), Some(List("zzagent_tin")))
     a.managers.tick(t0)
     assertEquals(item(ReviewId, InferFilter, "zzagent_f2").status, "done")
     assertEquals(item(ReviewId, ArticleReview, "zzagent_f2").status, "active")

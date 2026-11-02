@@ -8,6 +8,7 @@ import com.histmersion.files.BundleEntities.BlobUse
 
 import com.augustnagro.magnum.*
 import com.histmersion.domain.automation.worklists.QueueRepo
+import com.histmersion.domain.research.articles.ArticleRepo
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Path
 import java.util.UUID

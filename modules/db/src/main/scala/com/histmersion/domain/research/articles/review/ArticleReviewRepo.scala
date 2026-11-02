@@ -1,17 +1,18 @@
-package com.histmersion.db
+package com.histmersion.domain.research.articles.review
 
 import com.histmersion.api.{ReviewApproval, ReviewGoal}
 import com.histmersion.domain.ArticleReviewStatus.{Facts, ItemFacts, LedgerFacts}
 import com.histmersion.values.ItemStatus
 
+import com.histmersion.db.given
+
 import com.augustnagro.magnum.*
-import javax.sql.DataSource
 
 /** What the review manager and the review ledgers record about articles, read for their review state: per article the
   * newest `article-review` item, the ledger's findings COUNTED in SQL (a ledger runs to hundreds of KB; a list page
   * never decodes one), the pass a running review is in, and the approvals about it that wait for a person.
   */
-object ArticleReviewRepo:
+private[review] object ArticleReviewRepo:
 
   final private case class FactsRow(
       slug: String,
@@ -38,11 +39,10 @@ object ArticleReviewRepo:
   /** The review facts of each of `slugs`, and the time of its item's last change (UTC). A slug the manager and the
     * ledgers know nothing of maps to empty facts.
     */
-  def facts(ds: DataSource, slugs: List[String]): Map[String, (Facts, Option[String])] =
+  def facts(slugs: List[String])(using DbCon): Map[String, (Facts, Option[String])] =
     if slugs.isEmpty then Map.empty
     else
-      connect(ds):
-        val rows = sql"""
+      val rows = sql"""
           SELECT a.slug, mi.status, mi.outcome, mi.attempts,
                  to_char(mi.updated_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}),
                  rl.findings, rl.open_majors, rl.open_minors, rl.runs, st.round
@@ -64,16 +64,16 @@ object ArticleReviewRepo:
           LEFT JOIN LATERAL (
             SELECT max(split_part(s.name, '-', 2)::int) AS round FROM agent_steps s
             WHERE mi.status = 'active' AND s.job_id = mi.run_id AND s.name ~ '^snapshot-[0-9]+') st ON true"""
-          .query[FactsRow]
-          .run()
-        val waiting = approvals(slugs)
-        rows.map { r =>
-          val item = r.itemStatus.flatMap(ItemStatus.parse).map(s => ItemFacts(s, r.outcome, r.attempts.getOrElse(0)))
-          val ledger = r.findings
-            .filter(_ > 0)
-            .map(n => LedgerFacts(r.openMajors.getOrElse(0), r.openMinors.getOrElse(0), n, r.runs.getOrElse(0)))
-          r.slug -> (Facts(item, ledger, r.round, waiting.getOrElse(r.slug, Nil)), r.updatedAt)
-        }.toMap
+        .query[FactsRow]
+        .run()
+      val waiting = approvals(slugs)
+      rows.map { r =>
+        val item = r.itemStatus.flatMap(ItemStatus.parse).map(s => ItemFacts(s, r.outcome, r.attempts.getOrElse(0)))
+        val ledger = r.findings
+          .filter(_ > 0)
+          .map(n => LedgerFacts(r.openMajors.getOrElse(0), r.openMinors.getOrElse(0), n, r.runs.getOrElse(0)))
+        r.slug -> (Facts(item, ledger, r.round, waiting.getOrElse(r.slug, Nil)), r.updatedAt)
+      }.toMap
 
   private def approvals(slugs: List[String])(using DbCon): Map[String, List[ReviewApproval]] =
     sql"""SELECT subject, id, kind FROM approvals
@@ -81,19 +81,16 @@ object ArticleReviewRepo:
           ORDER BY id""".query[ApprovalRow].run().toList.groupMap(_.subject)(r => ReviewApproval(r.id, r.kind))
 
   /** When each of `runs` started (UTC), for the runs still recorded. */
-  def runStarts(ds: DataSource, runs: List[String]): Map[String, String] =
+  def runStarts(runs: List[String])(using DbCon): Map[String, String] =
     if runs.isEmpty then Map.empty
-    else
-      connect(ds):
-        sql"""SELECT id, to_char(created_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}) FROM jobs
+    else sql"""SELECT id, to_char(created_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}) FROM jobs
               WHERE id = ANY(${runs.distinct}::text[])""".query[(String, String)].run().toMap
 
   /** The research goals that link the article (`goal_links` of kind `article`), by slug. */
-  def goals(ds: DataSource, slug: String): List[ReviewGoal] =
-    connect(ds):
-      sql"""SELECT g.slug, g.title, g.status FROM goal_links l JOIN goals g ON g.slug = l.goal_slug
+  def goals(slug: String)(using DbCon): List[ReviewGoal] =
+    sql"""SELECT g.slug, g.title, g.status FROM goal_links l JOIN goals g ON g.slug = l.goal_slug
             WHERE l.kind = 'article' AND l.ref = $slug ORDER BY g.slug"""
-        .query[GoalRow]
-        .run()
-        .toList
-        .map(r => ReviewGoal(r.slug, r.title, r.status))
+      .query[GoalRow]
+      .run()
+      .toList
+      .map(r => ReviewGoal(r.slug, r.title, r.status))

@@ -87,7 +87,7 @@ final class ProposeArticlesPipeline(h: Handlers, ds: DataSource, cfg: => AgentsC
       val area = g.slug :: family(g.slug)
       val articles = area.flatMap(a => GoalLinkRepo.refs(ds, a, LinkKind.Article)).distinct.flatMap { ref =>
         h.getArticle(ref).toOption.map { v =>
-          val f = com.histmersion.db.ArticleRepo.load(ds, v.article.slug).flatMap(_.filter)
+          val f = h.research.articleStore.load(v.article.slug).flatMap(_.filter)
           Existing(v.article.slug, v.article.title, f, h.citedSources(v.article.body))
         }
       }

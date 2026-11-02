@@ -63,7 +63,9 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
       store,
       com.histmersion.server.AcquisitionTesting.sources(deps),
       com.histmersion.domain.automation.goals.GoalService(db),
-      com.histmersion.domain.research.articles.ArticleCitedSources(() => ds),
+      com.histmersion.domain.research.articles.ArticleCitedSources(
+        com.histmersion.domain.research.articles.ArticleService(db)
+      ),
       com.histmersion.domain.automation.worklists.QueueService(db),
       cfg.acquire.candidates,
       idx,

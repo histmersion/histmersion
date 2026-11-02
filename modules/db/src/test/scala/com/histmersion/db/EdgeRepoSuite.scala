@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.research.articles.ArticleFixtures
+
 import com.histmersion.domain.library.citations.CitationFixtures
 import com.histmersion.domain.library.sources.SourceFixtures
 
@@ -113,7 +115,7 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
   test("a parked edge naming a compiled article is classified as an article"):
     val a = s"${Prefix}a2020_x"
     val slug = s"${Prefix}_topic"
-    val _ = ArticleRepo.put(ds, Article(slug, "A topic", "concept", "# A topic", None, Nil, Nil, None))
+    val _ = ArticleFixtures.put(ds, Article(slug, "A topic", "concept", "# A topic", None, Nil, Nil, None))
     put(source(a, edges = List(Edge(a, slug, "updates"))))
     assertEquals(
       CitationFixtures.neighbors(ds, a).map(n => (n.citekey, n.target, n.title)),

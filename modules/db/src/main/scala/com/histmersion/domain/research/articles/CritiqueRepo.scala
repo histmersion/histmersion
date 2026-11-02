@@ -1,23 +1,20 @@
-package com.histmersion.db
+package com.histmersion.domain.research.articles
 
 import com.histmersion.domain.library.sources.CitekeyResolver
 
 import com.histmersion.api.*
-import com.histmersion.config.*
-import com.histmersion.domain.*
+import com.histmersion.db.given
 
 import com.augustnagro.magnum.*
-import javax.sql.DataSource
 
 /** The critique checklist's stored reasons (V091): why one disagreement between two sources does not bear on an
-  * article. The checklist itself is computed (`core.Critiques`); only the reasons are stored. Stateless.
+  * article. The checklist itself is computed (`core.Critiques`); only the reasons are stored. Every method runs on the
+  * connection it is given.
   */
-object CritiqueRepo:
+private[articles] object CritiqueRepo:
 
   /** The article's reasons, by pair. */
-  def list(ds: DataSource, slug: String): List[CritiqueReason] = connect(ds)(list(slug))
-
-  private[db] def list(slug: String)(using DbCon): List[CritiqueReason] =
+  def list(slug: String)(using DbCon): List[CritiqueReason] =
     sql"""SELECT src, dst, reason, set_by FROM article_critique_reasons WHERE slug = $slug ORDER BY src, dst"""
       .query[(String, String, String, String)]
       .run()
@@ -78,7 +75,7 @@ object CritiqueRepo:
     * (the article's own write, if any) runs between the two, so a refused reason leaves nothing written. Returns how
     * many pairs changed.
     */
-  private[db] def applyIn(slug: String, reasons: List[CritiqueReason], by: String)(
+  def applyIn(slug: String, reasons: List[CritiqueReason], by: String)(
       write: => Unit
   )(using DbCon): Either[ApiError, Int] =
     check(reasons, by).map { changes =>

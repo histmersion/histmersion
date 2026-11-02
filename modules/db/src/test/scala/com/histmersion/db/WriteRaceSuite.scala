@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.research.articles.ArticleFixtures
+
 import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.api.*
@@ -97,7 +99,7 @@ class WriteRaceSuite extends com.histmersion.db.DbSuite:
   private val slug = "zzrace_article"
 
   private def seedArticle(): String =
-    ArticleRepo.put(
+    ArticleFixtures.put(
       ds,
       Article(
         slug = slug,
@@ -115,10 +117,10 @@ class WriteRaceSuite extends com.histmersion.db.DbSuite:
     (1 to Rounds).foreach { round =>
       val token = seedArticle()
       val (a, b) = race(
-        ArticleRepo.patch(ds, slug, ArticlePatch(body = Some("A"), ifUpdatedAt = Some(token))),
-        ArticleRepo.patch(ds, slug, ArticlePatch(body = Some("B"), ifUpdatedAt = Some(token)))
+        ArticleFixtures.patch(ds, slug, ArticlePatch(body = Some("A"), ifUpdatedAt = Some(token))),
+        ArticleFixtures.patch(ds, slug, ArticlePatch(body = Some("B"), ifUpdatedAt = Some(token)))
       )
       assertEquals(List(a, b).count(_.isRight), 1, s"round $round: a=$a b=$b — a lost update slipped through")
       assertEquals(List(a, b).collectFirst { case Left(e) => e }.get.code, Some(Write.CodePrecondition))
-      assert(Set("A", "B").contains(ArticleRepo.load(ds, slug).get.body))
+      assert(Set("A", "B").contains(ArticleFixtures.load(ds, slug).get.body))
     }

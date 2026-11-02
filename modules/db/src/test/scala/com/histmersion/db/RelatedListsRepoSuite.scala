@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.research.articles.ArticleFixtures
+
 import com.histmersion.domain.library.search.SearchFixtures
 import com.histmersion.domain.library.sources.SourceFixtures
 
@@ -53,7 +55,7 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
     )
 
   private def article(slug: String, title: String, body: String) =
-    ArticleRepo.put(
+    ArticleFixtures.put(
       ds,
       Article(
         slug = slug,
@@ -88,13 +90,13 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
 
   override def afterSuite(): Unit =
     if testDb.isDefined then
-      List("zz_rel_cites_match", "zz_rel_cites_other", "zz_rel_cites_none").foreach(s => ArticleRepo.delete(ds, s))
+      List("zz_rel_cites_match", "zz_rel_cites_other", "zz_rel_cites_none").foreach(s => ArticleFixtures.delete(ds, s))
       List("zz_rel_ev_match", "zz_rel_ev_late", "zz_rel_ev_other", "zz_rel_ev_nosrc").foreach(e =>
         EventFixtures.delete(ds, e)
       )
 
   private def articles(f: Filter): Set[String] =
-    ArticleRepo
+    ArticleFixtures
       .list(ds, f, PlaceScope.empty, None, None, 500, 0)
       .articles
       .map(_.slug)

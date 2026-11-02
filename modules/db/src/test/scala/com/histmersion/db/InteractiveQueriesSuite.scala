@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.research.articles.ArticleFixtures
+
 import com.histmersion.domain.library.findings.FindingFixtures
 import com.histmersion.domain.library.search.FilterSql
 import com.histmersion.domain.library.search.SearchFixtures
@@ -123,7 +125,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
         ),
         cfg.limits.chunkChars
       )
-      val _ = ArticleRepo.put(
+      val _ = ArticleFixtures.put(
         ds,
         Article(
           slug = "zzi_art_a",
@@ -136,7 +138,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
           period = None
         )
       )
-      val _ = ArticleRepo.put(
+      val _ = ArticleFixtures.put(
         ds,
         Article(
           slug = "zzi_art_b",
@@ -160,7 +162,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
 
   override def afterSuite(): Unit =
     if testDb.isDefined then
-      List("zzi_art_a", "zzi_art_b").foreach(s => ArticleRepo.delete(ds, s))
+      List("zzi_art_a", "zzi_art_b").foreach(s => ArticleFixtures.delete(ds, s))
       List("zzi_ev_a", "zzi_ev_b", "zzi_ev_none").foreach(e => EventFixtures.delete(ds, e))
 
   // ── the filters a reader builds: place ids (one, two), id + name, name, + tag, ± a period ──────
@@ -227,7 +229,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
           .run()
           .toSet
       )
-      val got = ArticleRepo.list(ds, f, sc, None, None, 500, 0)
+      val got = ArticleFixtures.list(ds, f, sc, None, None, 500, 0)
       assertEquals(got.articles.map(_.slug).toSet, wantArticles, f.toString)
       assertEquals(got.total, wantArticles.size, f.toString)
       val eventKeys = citekeys(FilterSql.sourceKeys(f.sourceSet.copy(period = None), sc)).toList
@@ -255,7 +257,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
         PlaceCounts(
           sources = SearchFixtures.count(ds, f, sc),
           findings = FindingFixtures.findingsCount(ds, f, sc),
-          articles = ArticleRepo.list(ds, f, sc, None, None, 1, 0).total,
+          articles = ArticleFixtures.list(ds, f, sc, None, None, 1, 0).total,
           events = EventFixtures.list(ds, f, sc, None, None, None, None, 1, 0).total
         ),
         id

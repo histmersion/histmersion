@@ -102,7 +102,7 @@ final class CompileArticlePipeline(
     h.getArticle(slug) match
       case Right(v) =>
         val a = v.article
-        val stored = com.histmersion.db.ArticleRepo.load(ds, a.slug)
+        val stored = h.research.articleStore.load(a.slug)
         val f = CompileArticle.runFilter(
           p.query,
           p.topics.getOrElse(Nil),

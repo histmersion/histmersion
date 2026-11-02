@@ -7,8 +7,8 @@ import com.histmersion.config.AgentToolsConfig
 import com.histmersion.domain.automation.workflows.{ToolContribution, ToolName}
 import com.histmersion.domain.library.workflows.{AgentUpstream, LibraryAgentTools}
 import com.histmersion.server.Handlers
-import com.histmersion.server.McpTools
-import com.histmersion.server.McpTools.{ArticleCoverageInput, CheckEditsInput, GetArticleInput}
+import com.histmersion.domain.research.articles.ArticleTools
+import com.histmersion.domain.research.articles.ArticleTools.{ArticleCoverageInput, CheckEditsInput, GetArticleInput}
 import com.histmersion.api.VocabularyCodecs.given
 import sttp.ai.core.agent.AgentTool
 import sttp.shared.Identity
@@ -34,7 +34,8 @@ final class TransitionTools(h: Handlers, upstream: () => AgentUpstream, caps: =>
         "One compiled article by slug: body, summary, the generated coverage sections, the sources it cites " +
           "(title, year, status), backlinks. `parts` = comma-separated body,summary,coverage,cited,backlinks."
       ) { in =>
-        h.getArticle(in.slug)
+        h.research.articles
+          .get(in.slug)
           .fold(
             e => s"No article '${in.slug}': ${e.message}",
             v =>
@@ -52,7 +53,7 @@ final class TransitionTools(h: Handlers, upstream: () => AgentUpstream, caps: =>
         TransitionTools.CheckEdits.value,
         "Dry-run edits (or a whole draft `body`) against the stored article: which edits apply, and what the " +
           "review checks find in the result. Nothing is written."
-      )(in => cap(McpTools.checkEdits(h, in), max, "dry-run fewer edits at once"))
+      )(in => cap(ArticleTools.checkEdits(h.research.articles, in), max, "dry-run fewer edits at once"))
     },
 
     contribution(TransitionTools.ArticleCoverage) {
@@ -60,7 +61,13 @@ final class TransitionTools(h: Handlers, upstream: () => AgentUpstream, caps: =>
         TransitionTools.ArticleCoverage.value,
         "An article's recorded filter: its sources, which are cited, each other one's stored reason, the " +
           "drift (sources with no reason), and the generated Not used list and Method note."
-      )(in => cap(McpTools.articleCoverageMarkdown(h, in), max, "read one source's record with get_source"))
+      )(in =>
+        cap(
+          ArticleTools.articleCoverageMarkdown(h.research.articles, in),
+          max,
+          "read one source's record with get_source"
+        )
+      )
     }
   )
 

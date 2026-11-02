@@ -1,7 +1,6 @@
 package com.histmersion.domain.research.articles
 
 import com.histmersion.api.{DeleteBlocker, DeleteBlockerKind, DeleteCount, DeletePart, RenameCount}
-import com.histmersion.db.ArticleRepo
 import com.histmersion.domain.library.sources.referrers.*
 
 import com.histmersion.db.given

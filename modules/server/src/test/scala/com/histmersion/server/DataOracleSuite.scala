@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.domain.research.articles.ArticleFixtures
+
 import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.media.assets.AssetFixtures
@@ -214,15 +216,15 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
     )
     SourceFixtures.upsert(ds, src("zzgamma1903_old", "An Old Book", 1903), chunk)
     val _ = SourceFixtures.rename(ds, "zzgamma1903_old", "zzgamma1903_prolegomena")
-    val _ = ArticleRepo.put(
+    val _ = ArticleFixtures.put(
       ds,
       Article("zz_storm", "Storm gods", "concept", "Intro [[zzalpha2001_storm]].\n\nMiddle.\n\nEnd.")
     )
-    val _ = ArticleRepo.put(
+    val _ = ArticleFixtures.put(
       ds,
       Article("zz_storm", "Storm gods", "concept", "Intro [[zzalpha2001_storm]].\n\nMiddle part.\n\nEnd.")
     )
-    val _ = ArticleRepo.put(ds, Article("zz_kingdom", "Kingdoms", "culture", "One [[zzbeta2005_kingdom]].\n\nTwo."))
+    val _ = ArticleFixtures.put(ds, Article("zz_kingdom", "Kingdoms", "culture", "One [[zzbeta2005_kingdom]].\n\nTwo."))
     val _ = transact(ds)(GoalRepo.put("zz_goal", GoalPut("Know the storm gods")))
     val _ = transact(ds)(GoalRepo.put("zz_goal_gone", GoalPut("A goal deleted later")))
     val _ = PlaceFixtures.upsertPlaces(ds, List(site("zz_site", "Storm hill", 34.6, 40.0)), Dataset.Local)
@@ -293,19 +295,25 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
     // a renamed citekey at work
     val _ = SourceFixtures.rename(work, "zzbeta2005_kingdom", "zzbeta2005_hittites")
     // one paragraph both edited
-    val _ = ArticleRepo.put(
+    val _ = ArticleFixtures.put(
       work,
       Article("zz_storm", "Storm gods", "concept", "Intro [[zzalpha2001_storm]].\n\nMiddle part, at work.\n\nEnd.")
     )
-    val _ = ArticleRepo.put(
+    val _ = ArticleFixtures.put(
       home,
       Article("zz_storm", "Storm gods", "concept", "Intro [[zzalpha2001_storm]].\n\nMiddle part, at home.\n\nEnd.")
     )
     // edits in different places of the other article: a clean three-way merge
     val _ =
-      ArticleRepo.put(work, Article("zz_kingdom", "Kingdoms", "culture", "One (work) [[zzbeta2005_kingdom]].\n\nTwo."))
+      ArticleFixtures.put(
+        work,
+        Article("zz_kingdom", "Kingdoms", "culture", "One (work) [[zzbeta2005_kingdom]].\n\nTwo.")
+      )
     val _ =
-      ArticleRepo.put(home, Article("zz_kingdom", "Kingdoms", "culture", "One [[zzbeta2005_kingdom]].\n\nTwo (home)."))
+      ArticleFixtures.put(
+        home,
+        Article("zz_kingdom", "Kingdoms", "culture", "One [[zzbeta2005_kingdom]].\n\nTwo (home).")
+      )
     // a deleted event and a deleted goal at work
     val _ = EventFixtures.delete(work, "zz_event_gone")
     val _ = GoalRepo.delete(work, "zz_goal_gone")

@@ -162,7 +162,6 @@ direction	files:files/BundleEntities.scala	util.data -> catalogue: SiteTypes	1
 direction	files:files/BundleEntities.scala	util.data -> library: Finding	1
 direction	files:files/BundleEntities.scala	util.data -> media: AssetLink	1
 direction	files:files/BundleEntities.scala	util.data -> research: ArticleVersion	1
-direction	server:server/PageBuilder.scala	research -> split: Handlers	1
 direction	server:server/agents/AgentDoctor.scala	automation -> server: Version	1
 direction	server:server/agents/CliProcess.scala	automation -> catalogue: Tree	1
 direction	server:server/agents/CompileArticlePipeline.scala	research -> split: Handlers	1
@@ -211,23 +210,15 @@ repository	db:db/BundleImport.scala	GoalRepo of automation.goals	1
 repository	db:db/BundleImport.scala	QueueRepo of automation.worklists	1
 repository	server:server/Bootstrap.scala	JobRepo of util.jobs	1
 repository	server:server/Handlers.scala	AgentStateRepo of automation.agents	1
-repository	server:server/Handlers.scala	ArticleRepo of research.articles	1
-repository	server:server/Handlers.scala	ArticleReviewRepo of research.articles.review	1
-repository	server:server/Handlers.scala	CoverageRepo of research.articles	1
-repository	server:server/Handlers.scala	CritiqueRepo of research.articles	1
 repository	server:server/Handlers.scala	GoalRepo of automation.goals	1
 repository	server:server/Handlers.scala	ReviewLedgerRepo of research.workflows	1
 repository	server:server/Handlers.scala	UiRepo of server.instance	1
 repository	server:server/ListQueries.scala	JobRepo of util.jobs	1
-repository	server:server/OpsHandlers.scala	ArticleRepo of research.articles	1
 repository	server:server/OpsHandlers.scala	GoalLinkRepo of automation.goals	1
 repository	server:server/OpsHandlers.scala	GoalRepo of automation.goals	1
 repository	server:server/agents/CompileArticlePipeline.scala	AgentRepo of automation.agents	1
-repository	server:server/agents/CompileArticlePipeline.scala	ArticleRepo of research.articles	1
 repository	server:server/agents/CompileArticlePipeline.scala	GoalLinkRepo of automation.goals	1
-repository	server:server/agents/InferFilterPipeline.scala	ArticleRepo of research.articles	1
 repository	server:server/agents/ProposeArticlesPipeline.scala	AgentRepo of automation.agents	1
-repository	server:server/agents/ProposeArticlesPipeline.scala	ArticleRepo of research.articles	1
 repository	server:server/agents/ProposeArticlesPipeline.scala	GoalLinkRepo of automation.goals	1
 repository	server:server/agents/ProposeArticlesPipeline.scala	GoalRepo of automation.goals	1
 repository	server:server/agents/ProposeArticlesPipeline.scala	ManagerRepo of automation.managers	1
