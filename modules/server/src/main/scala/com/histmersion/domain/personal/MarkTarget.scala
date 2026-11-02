@@ -68,8 +68,8 @@ object MarkTarget:
 
   /** The target, when its zoom (if any) is one the map has. */
   def zoomChecked(t: Target): Either[String, Target] =
-    t.zoom.filterNot(z => z.value >= 0.0 && z.value <= MaxZoom) match
-      case Some(z) => Left(s"zoom ${z.value}: between 0 and ${MaxZoom.toInt}")
+    t.zoom.map(_.value).filterNot(z => z >= 0.0 && z <= MaxZoom) match
+      case Some(z) => Left(s"zoom $z: between 0 and ${MaxZoom.toInt}")
       case None    => Right(t)
 
   /** The kind of record an item kind of the wire names. */
