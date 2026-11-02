@@ -1,10 +1,12 @@
 package com.histmersion.server
 
+import com.histmersion.domain.research.articles.ArticleFixtures
+
 import com.augustnagro.magnum.*
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{CritiqueRepo, Db, Migrate}
+import com.histmersion.db.{Db, Migrate}
 import com.histmersion.values.EdgeKind
 
 /** V091 — the critique checklist's stored reasons (docs/research-review-convergence.md §6.8) against a `*_test`
@@ -64,7 +66,7 @@ class CritiqueReasonsSuite extends com.histmersion.db.DbSuite:
     assert(h.putArticle(Slug, ArticlePut("The golden bough", "concept", body)).isRight)
 
   private def patch(rs: CritiqueReason*) = h.patchArticle(Slug, ArticlePatch(critiqueReasons = rs.toList))
-  private def stored = CritiqueRepo.list(ds, Slug).map(r => (r.src, r.dst, r.reason, r.by))
+  private def stored = ArticleFixtures.critiques(ds, Slug).map(r => (r.src, r.dst, r.reason, r.by))
 
   test("set, read, refuse, normalise the direction, remove; the article's row is not touched"):
     seed()
@@ -123,11 +125,11 @@ class CritiqueReasonsSuite extends com.histmersion.db.DbSuite:
     assertEquals(stored.map(r => (r._1, r._3)), List(("zzcrit1999_ritesb", "Renamed, still the same.")))
     // the article's rename carries it
     assert(h.renameArticle(Slug, LabelRename("zzcrit_bough2")).isRight)
-    assertEquals(CritiqueRepo.list(ds, "zzcrit_bough2").size, 1)
+    assertEquals(ArticleFixtures.critiques(ds, "zzcrit_bough2").size, 1)
     assertEquals(h.openCritiques("zzcrit_bough2"), Some(0))
     // the source's delete drops it
     assert(h.library.sources.delete("zzcrit1999_ritesb", SourceDeleteRequest(apply = true)).isRight)
-    assertEquals(CritiqueRepo.list(ds, "zzcrit_bough2"), Nil)
+    assertEquals(ArticleFixtures.critiques(ds, "zzcrit_bough2"), Nil)
     // and the article's delete drops the rest
     assert(
       h.patchArticle("zzcrit_bough2", ArticlePatch(critiqueReasons = List(CritiqueReason(Smith, Frazer, "x")))).isRight

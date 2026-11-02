@@ -46,7 +46,7 @@ object AcquisitionTesting:
       deps.maintenance,
       deps.pins,
       GoalService(deps.transactor),
-      ArticleCitedSources(() => deps.ds),
+      ArticleCitedSources(com.histmersion.domain.research.articles.ArticleService(deps.transactor)),
       discovery,
       citations,
       oa,

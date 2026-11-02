@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.research.articles.ArticleFixtures
+
 import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
@@ -298,8 +300,8 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
   test("old article slugs travel; events under two ids that are one fold; merge list/show/ledger read it back"):
     val (work, home) = (fresh("aw"), fresh("ah"))
     val (sw, sh) = (spool("aw"), spool("ah"))
-    val _ = ArticleRepo.put(work, Article("zz_first_slug", "An article", "concept", "Text."))
-    val _ = ArticleRepo.rename(work, "zz_first_slug", "zz_second_slug").fold(e => fail(e.message), identity)
+    val _ = ArticleFixtures.put(work, Article("zz_first_slug", "An article", "concept", "Text."))
+    val _ = ArticleFixtures.rename(work, "zz_first_slug", "zz_second_slug").fold(e => fail(e.message), identity)
     val _ = PlaceFixtures.upsertPlaces(work, List(site("zz_kadesh", "Kadesh", 36.51, 34.56)), Dataset.Seed)
     val _ = PlaceFixtures.upsertPlaces(home, List(site("zz_kadesh", "Kadesh", 36.51, 34.56)), Dataset.Seed)
     EventFixtures.put(
@@ -330,7 +332,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(a.tally.eventsMerged, 1)
     assertEquals(count(home, "SELECT count(*)::int FROM events"), 1)
     assertEquals(text(home, "SELECT description FROM events WHERE id = 'kadesh_1274'"), Some("work's account"))
-    assertEquals(ArticleRepo.view(home, "zz_first_slug").map(_.article.slug), Some("zz_second_slug"))
+    assertEquals(ArticleFixtures.view(home, "zz_first_slug").map(_.article.slug), Some("zz_second_slug"))
     assertEquals(a.replanChanges, Some(0))
     // what the merge left, read back
     val list = MergeRepo.list(home, 10)

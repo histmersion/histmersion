@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.research.articles.ArticleFixtures
+
 import com.histmersion.domain.automation.agents.{AgentsHandlers, LlmCall, LlmClient}
 import com.histmersion.domain.automation.managers.Zero
 
@@ -1523,7 +1525,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assert(userPrompt(c.requests.get("fixer").peek().head).contains(s"pair: $Ck2>$Ck"))
     // one addressed by the fix, one reasoned by the skeptic's ruling (stored, with who set it)
     assertEquals(states(h), List(s"$Ck3>$Ck" -> "reasoned", s"$Ck2>$Ck" -> "addressed"))
-    val stored = com.histmersion.db.CritiqueRepo.list(ds, Slug)
+    val stored = ArticleFixtures.critiques(ds, Slug)
     assertEquals(
       stored.map(r => (r.src, r.dst, r.by.exists(_.startsWith("skeptic (agent run")))),
       List((Ck3, Ck, true))
@@ -1600,7 +1602,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assert(ReviewLedger.closedLine(s1).contains("set aside as not material"), ReviewLedger.closedLine(s1))
     assertEquals(states(h), List(s"$Ck3>$Ck" -> "reasoned", s"$Ck2>$Ck" -> "reasoned"))
     assertEquals(
-      com.histmersion.db.CritiqueRepo.list(ds, Slug).map(r => (r.src, r.by.exists(_.startsWith("fixer")))),
+      ArticleFixtures.critiques(ds, Slug).map(r => (r.src, r.by.exists(_.startsWith("fixer")))),
       List((Ck3, false), (Ck2, true))
     )
     // a set-aside alone writes no version and leaves the article's token as it was

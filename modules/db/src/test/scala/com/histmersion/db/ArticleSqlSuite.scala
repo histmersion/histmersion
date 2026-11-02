@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.research.articles.ArticleFixtures
+
 import com.histmersion.domain.library.search.FilterSql
 
 import com.histmersion.domain.catalogue.places.PlaceScope
@@ -8,13 +10,13 @@ import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
-/** `ArticleRepo.listWhere` is a pure function of the query parameters — asserted here without a database, like
+/** `ArticleFixtures.listWhere` is a pure function of the query parameters — asserted here without a database, like
   * `FilterSql` on the source side.
   */
 class ArticleSqlSuite extends munit.FunSuite:
 
   private def where(kind: Option[String] = None, text: Option[String] = None, f: Filter = Filter()) =
-    ArticleRepo.listWhere(f, PlaceScope.empty, kind, text)
+    ArticleFixtures.listWhere(f, PlaceScope.empty, kind, text)
 
   test("no parameters selects everything"):
     assertEquals(where().text, "TRUE")

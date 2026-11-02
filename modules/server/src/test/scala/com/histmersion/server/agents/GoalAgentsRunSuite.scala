@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.research.articles.ArticleFixtures
+
 import com.histmersion.domain.library.workflows.*
 
 import com.histmersion.domain.automation.agents.{AgentsHandlers, Engine, LlmClient}
@@ -360,7 +362,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     assert(log.exists(_.contains("compiled a new article from 2 source(s)")), log)
     // #958: the article records the run's filter, so its Not used list and Method note are generated
     assertEquals(
-      com.histmersion.db.ArticleRepo.load(ds, Slug).flatMap(_.filter),
+      ArticleFixtures.load(ds, Slug).flatMap(_.filter),
       Some(ArticleFilter(topics = List("zzagent_tin")))
     )
     val cov = h.articleCoverage(Slug).fold(e => fail(e.message), identity)
@@ -472,7 +474,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     assert(h.articleVersions(Slug).toOption.get.nonEmpty, "the previous text is kept")
     // #958: an article that recorded no filter records the run's
     assertEquals(
-      com.histmersion.db.ArticleRepo.load(ds, Slug).flatMap(_.filter),
+      ArticleFixtures.load(ds, Slug).flatMap(_.filter),
       Some(ArticleFilter(topics = List("zzagent_tin")))
     )
 

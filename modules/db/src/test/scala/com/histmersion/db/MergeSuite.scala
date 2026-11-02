@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.research.articles.ArticleFixtures
+
 import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.media.assets.AssetFixtures
@@ -185,8 +187,8 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     put(work, src("zzshared2001_alpha", "Alpha", List("Doe, John"), 2001, summary = Some("as imported")))
     transact(work)(GoalRepo.put("zz_shared_goal", GoalPut("Shared goal")))
     // two articles both sides will edit: in different places (a clean three-way merge), in one place
-    val _ = ArticleRepo.put(work, Article("zz_shared_art", "Shared", "concept", "Intro.\n\nMiddle.\n\nEnd."))
-    val _ = ArticleRepo.put(work, Article("zz_shared_conf", "Conflict", "concept", "One.\n\nTwo.\n\nThree."))
+    val _ = ArticleFixtures.put(work, Article("zz_shared_art", "Shared", "concept", "Intro.\n\nMiddle.\n\nEnd."))
+    val _ = ArticleFixtures.put(work, Article("zz_shared_conf", "Conflict", "concept", "One.\n\nTwo.\n\nThree."))
     val first = importInto(home, exportOf(work, sw), sh)
     assert(first.applied, first.problems.mkString("\n"))
     // …then both sides go on
@@ -206,10 +208,12 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       )
     val _ = GoalRepo.delete(work, "zz_shared_goal")
     val _ = GoalRepo.patch(home, "zz_shared_goal", GoalPatch(notes = Some("edited at home")))
-    val _ = ArticleRepo.put(work, Article("zz_shared_art", "Shared", "concept", "Intro (work).\n\nMiddle.\n\nEnd."))
-    val _ = ArticleRepo.put(home, Article("zz_shared_art", "Shared", "concept", "Intro.\n\nMiddle.\n\nEnd (home)."))
-    val _ = ArticleRepo.put(work, Article("zz_shared_conf", "Conflict", "concept", "One.\n\nTwo at work.\n\nThree."))
-    val _ = ArticleRepo.put(home, Article("zz_shared_conf", "Conflict", "concept", "One.\n\nTwo at home.\n\nThree."))
+    val _ = ArticleFixtures.put(work, Article("zz_shared_art", "Shared", "concept", "Intro (work).\n\nMiddle.\n\nEnd."))
+    val _ = ArticleFixtures.put(home, Article("zz_shared_art", "Shared", "concept", "Intro.\n\nMiddle.\n\nEnd (home)."))
+    val _ =
+      ArticleFixtures.put(work, Article("zz_shared_conf", "Conflict", "concept", "One.\n\nTwo at work.\n\nThree."))
+    val _ =
+      ArticleFixtures.put(home, Article("zz_shared_conf", "Conflict", "concept", "One.\n\nTwo at home.\n\nThree."))
 
     // ── work ──
     put(
@@ -296,7 +300,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       work,
       s"INSERT INTO source_identifiers (source_uid, scheme, value) SELECT uid, 'isbn', '$Isbn' FROM sources WHERE citekey = 'west1997_east'"
     )
-    val _ = ArticleRepo.put(
+    val _ = ArticleFixtures.put(
       work,
       Article(
         "bronze_age_collapse",
@@ -305,7 +309,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         "Work's account of the collapse, citing [[kuhrt1995_near]]."
       )
     )
-    val _ = ArticleRepo.put(work, Article("zz_same_text", "Same", "concept", "Identical on both sides."))
+    val _ = ArticleFixtures.put(work, Article("zz_same_text", "Same", "concept", "Identical on both sides."))
     EventFixtures.put(
       work,
       "zz_siege",
@@ -394,11 +398,11 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       home,
       s"INSERT INTO source_identifiers (source_uid, scheme, value) SELECT uid, 'isbn', '$Isbn' FROM sources WHERE citekey = 'west1997_face'"
     )
-    val _ = ArticleRepo.put(
+    val _ = ArticleFixtures.put(
       home,
       Article("bronze_age_collapse", "Bronze Age collapse", "concept", "Home's account of the collapse.")
     )
-    val _ = ArticleRepo.put(home, Article("zz_same_text", "Same", "concept", "Identical on both sides."))
+    val _ = ArticleFixtures.put(home, Article("zz_same_text", "Same", "concept", "Identical on both sides."))
     EventFixtures.put(
       home,
       "zz_siege",
@@ -737,12 +741,15 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(count(home, s"SELECT count(*)::int FROM tombstones WHERE uid = '$lost'"), 1)
 
     // articles: the clean three-way merge, the merged text sent as a file, the other side's beside ours
-    assertEquals(ArticleRepo.load(home, "zz_shared_art").map(_.body), Some("Intro (work).\n\nMiddle.\n\nEnd (home)."))
-    assertEquals(ArticleRepo.load(home, "zz_shared_conf").map(_.body), Some(confText))
-    val copy = ArticleRepo.load(home, "bronze_age_collapse-work").getOrElse(fail("no bronze_age_collapse-work"))
+    assertEquals(
+      ArticleFixtures.load(home, "zz_shared_art").map(_.body),
+      Some("Intro (work).\n\nMiddle.\n\nEnd (home).")
+    )
+    assertEquals(ArticleFixtures.load(home, "zz_shared_conf").map(_.body), Some(confText))
+    val copy = ArticleFixtures.load(home, "bronze_age_collapse-work").getOrElse(fail("no bronze_age_collapse-work"))
     // its `[[citekey]]` follows the merge: work's kuhrt1995_near is home's kuhrt1995_ancient
     assertEquals(copy.body, "Work's account of the collapse, citing [[kuhrt1995_ancient]].")
-    assertEquals(ArticleRepo.load(home, "bronze_age_collapse").map(_.body), Some("Home's account of the collapse."))
+    assertEquals(ArticleFixtures.load(home, "bronze_age_collapse").map(_.body), Some("Home's account of the collapse."))
     // the texts the merge replaced are versions now
     assert(
       count(
@@ -906,24 +913,24 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
   test("renames over there are followed: an article slug (its old one kept as an alias), an event id, a goal slug"):
     val (a, b) = (fresh("rna"), fresh("rnb"))
     val (sa, sb) = (spool("rna"), spool("rnb"))
-    val _ = ArticleRepo.put(a, Article("zz_old_slug", "Old", "concept", "Text."))
-    val _ = ArticleRepo.put(a, Article("zz_linker", "Linker", "concept", "See [[zz_old_slug]]."))
+    val _ = ArticleFixtures.put(a, Article("zz_old_slug", "Old", "concept", "Text."))
+    val _ = ArticleFixtures.put(a, Article("zz_linker", "Linker", "concept", "See [[zz_old_slug]]."))
     EventFixtures.put(a, "zz_old_event", EventPut("An event", "battle", TimeSpan(Some(-1200), None, None, Some(-1190))))
     transact(a)(GoalRepo.put("zz_old_goal", GoalPut("A goal")))
     val first = importInto(b, exportOf(a, sa), sb)
     assert(first.applied, first.problems.mkString("\n"))
     transact(a) {
-      ArticleRepo.renameIn("zz_old_slug", "zz_new_slug").fold(e => fail(e.message), identity)
+      ArticleFixtures.renameIn("zz_old_slug", "zz_new_slug").fold(e => fail(e.message), identity)
       EventFixtures.renameIn("zz_old_event", "zz_new_event").fold(e => fail(e.message), identity)
       GoalRepo.renameIn("zz_old_goal", "zz_new_goal").fold(e => fail(e.message), identity)
     }
     // the rename rewrote the link in the other article over there
-    assertEquals(ArticleRepo.load(a, "zz_linker").map(_.body), Some("See [[zz_new_slug]]."))
+    assertEquals(ArticleFixtures.load(a, "zz_linker").map(_.body), Some("See [[zz_new_slug]]."))
     val r = importInto(b, exportOf(a, sa), sb)
     assert(r.applied, r.problems.mkString("\n"))
-    assertEquals(ArticleRepo.load(b, "zz_new_slug").map(_.body), Some("Text."))
-    assertEquals(ArticleRepo.view(b, "zz_old_slug").map(_.article.slug), Some("zz_new_slug"))
-    assertEquals(ArticleRepo.load(b, "zz_linker").map(_.body), Some("See [[zz_new_slug]]."))
+    assertEquals(ArticleFixtures.load(b, "zz_new_slug").map(_.body), Some("Text."))
+    assertEquals(ArticleFixtures.view(b, "zz_old_slug").map(_.article.slug), Some("zz_new_slug"))
+    assertEquals(ArticleFixtures.load(b, "zz_linker").map(_.body), Some("See [[zz_new_slug]]."))
     assertEquals(count(b, "SELECT count(*)::int FROM events WHERE id = 'zz_new_event'"), 1)
     assertEquals(count(b, "SELECT count(*)::int FROM goals WHERE slug = 'zz_new_goal'"), 1)
     assertEquals(count(b, "SELECT count(*)::int FROM events WHERE id = 'zz_old_event'"), 0)

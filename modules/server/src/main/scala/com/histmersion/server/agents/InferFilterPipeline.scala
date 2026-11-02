@@ -59,7 +59,7 @@ final class InferFilterPipeline(h: Handlers, ds: DataSource, cfg: => AgentsConfi
   private def load(slug: String): Either[String, Loaded] =
     h.getArticle(slug).left.map(_.message).map { v =>
       val a = v.article
-      val stored = com.histmersion.db.ArticleRepo.load(ds, a.slug)
+      val stored = h.research.articleStore.load(a.slug)
       val cited = h.citedSources(a.body)
       val refs =
         h.sourceRefs(cited.take(CitedShown)).map(r => s"[[${r.citekey}]] — ${r.title}${r.year.fold("")(y => s" ($y)")}")
@@ -176,7 +176,7 @@ object InferFilterPipeline:
     */
   def applyProposal(h: Handlers, ds: DataSource, p: FilterProposal): Either[String, String] =
     h.getArticle(p.slug).left.map(_.message).flatMap { v =>
-      val has = com.histmersion.db.ArticleRepo.load(ds, v.article.slug).flatMap(_.filter)
+      val has = h.research.articleStore.load(v.article.slug).flatMap(_.filter)
       if has.isDefined then
         Left(s"[[${v.article.slug}]] records a filter already (${has.get.line}); the proposal was not applied")
       else

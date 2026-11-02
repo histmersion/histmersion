@@ -8,7 +8,7 @@ import com.histmersion.domain.library.acquisition.{
   CandidateService
 }
 import com.histmersion.domain.library.sources.SourceService
-import com.histmersion.domain.research.articles.ArticleCitedSources
+import com.histmersion.domain.research.articles.{ArticleCitedSources, ArticleService}
 import com.histmersion.server.hot.Hot
 
 /** The library's acquisition over one server's `deps`: its stores, and the operations over the acquisition node's
@@ -30,7 +30,7 @@ final class AcquisitionWiring(deps: Deps, sources: SourceService, ingest: Ingest
     deps.maintenance,
     deps.pins,
     GoalService(deps.transactor),
-    ArticleCitedSources(() => deps.ds),
+    ArticleCitedSources(ArticleService(deps.transactor)),
     discovery = clients.peek.discovery,
     citations = clients.peek.citations,
     oa = clients.peek.oa,

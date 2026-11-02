@@ -131,7 +131,7 @@ final class HttpApi(
   )
 
   // ── the HTML source page (typed page model → HtmlRender; the Markdown in core is for MCP/CLI) ──
-  private val pages = PageBuilder(h)
+  private val pages = h.research.pages
 
   /** `/source/{citekey}`. An unknown citekey answers **404** with the same readable body it always had (item 21): a
     * page that says "no such source" under a 200 lies to every cache, crawler and `curl -f` that asks. The status is an
@@ -213,9 +213,8 @@ final class HttpApi(
   val endpoints: List[ServerEndpoint[Any, Identity]] =
     com.histmersion.domain.catalogue.events.EventImportsRoutes(h.eventImports) ++
       com.histmersion.domain.catalogue.evidence.EventLinksRoutes(h.eventLinks) ++
-      com.histmersion.domain.catalogue.places.SiteTypesRoutes(h.siteTypes) ++ rest ++ ArticlesApi(
-        h
-      ).endpoints ++ OpsRoutes(
+      com.histmersion.domain.catalogue.places.SiteTypesRoutes(h.siteTypes) ++ rest ++
+      com.histmersion.domain.research.articles.ArticleRoutes(h.research.articles, h.research.pages) ++ OpsRoutes(
         h.ops
       ) ++ com.histmersion.domain.library.search.QueryRoutes(
         h.library.query

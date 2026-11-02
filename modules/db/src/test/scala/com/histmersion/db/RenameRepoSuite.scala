@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.research.articles.ArticleFixtures
+
 import com.histmersion.domain.library.citations.CitationFixtures
 import com.histmersion.domain.library.sources.SourceFixtures
 
@@ -180,8 +182,8 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
          |
          |Exact [[$Old]], labelled [[$Old|the book]], anchored [[$Old#ch-1]], short [[zzrn2025]],
          |escaped \\[\\[$Old\\]\\], embedded ![[$Old]] and unrelated [[$Other]].""".stripMargin
-    val _ = ArticleRepo.put(ds, Article(Slug, "Zz", "concept", body, Some(s"About [[$Old]]."), Nil, Nil, None))
-    val versionsBefore = ArticleRepo.listVersions(ds, Slug).size
+    val _ = ArticleFixtures.put(ds, Article(Slug, "Zz", "concept", body, Some(s"About [[$Old]]."), Nil, Nil, None))
+    val versionsBefore = ArticleFixtures.listVersions(ds, Slug).size
     connect(ds):
       sql"""INSERT INTO places (id, label, kind, source) VALUES ($Place, 'Zz place', 'site', $Old)""".update.run()
       sql"INSERT INTO finding_places (finding_id, place_id) VALUES (${Old + "#0"}, $Place)".update.run()
@@ -288,7 +290,7 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(count(sql"SELECT count(*)::int FROM unresolved_edges WHERE src = $Waiter"), 0)
 
     // the article: rewritten through the write path (a version recorded), labels/anchors/escapes kept
-    val art = ArticleRepo.load(ds, Slug).get
+    val art = ArticleFixtures.load(ds, Slug).get
     assertEquals(
       art.body,
       s"""# Article
@@ -297,10 +299,13 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
          |escaped \\[\\[$New\\]\\], embedded ![[$Old]] and unrelated [[$Other]].""".stripMargin
     )
     assertEquals(art.summary, Some(s"About [[$New]]."))
-    assertEquals(ArticleRepo.listVersions(ds, Slug).size, versionsBefore + 1)
-    assertEquals(ArticleRepo.getVersion(ds, Slug, ArticleRepo.listVersions(ds, Slug).head.id).map(_.body), Some(body))
-    assertEquals(ArticleRepo.backlinksForSource(ds, New).map(_.id), List(Slug))
-    assertEquals(ArticleRepo.sourcesCited(ds, Slug).map(_.citekey).toSet, Set(New, Other))
+    assertEquals(ArticleFixtures.listVersions(ds, Slug).size, versionsBefore + 1)
+    assertEquals(
+      ArticleFixtures.getVersion(ds, Slug, ArticleFixtures.listVersions(ds, Slug).head.id).map(_.body),
+      Some(body)
+    )
+    assertEquals(ArticleFixtures.backlinksForSource(ds, New).map(_.id), List(Slug))
+    assertEquals(ArticleFixtures.sourcesCited(ds, Slug).map(_.citekey).toSet, Set(New, Other))
     assertEquals(counts.articles, List(Slug))
 
     // source notes and summaries, the renamed source's own included; a longer key is left alone
@@ -325,8 +330,8 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
     put(source(Old)); put(source(Other))
     val _ = SourceFixtures.rename(ds, Old, New).fold(e => fail(e.message), identity)
     // an article written LATER with the old key links the source, recorded under the new key
-    val _ = ArticleRepo.put(ds, Article(Slug, "Zz", "concept", s"Late [[$Old]].", None, Nil, Nil, None))
-    assertEquals(ArticleRepo.backlinksForSource(ds, New).map(_.id), List(Slug))
+    val _ = ArticleFixtures.put(ds, Article(Slug, "Zz", "concept", s"Late [[$Old]].", None, Nil, Nil, None))
+    assertEquals(ArticleFixtures.backlinksForSource(ds, New).map(_.id), List(Slug))
     // an edge written later to the old key is a real edge to the new one, not a parked one
     put(source(Other, edges = List(Edge(Other, Old, "challenges"))))
     assertEquals(

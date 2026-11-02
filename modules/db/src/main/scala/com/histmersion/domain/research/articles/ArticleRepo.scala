@@ -1,4 +1,4 @@
-package com.histmersion.db
+package com.histmersion.domain.research.articles
 
 import com.histmersion.domain.library.sources.CitekeyResolver
 import com.histmersion.domain.library.search.FilterSql
@@ -9,56 +9,15 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.util.database.RangeSql
 
 import com.histmersion.api.*
-import com.histmersion.config.*
-import com.histmersion.domain.*
+import com.histmersion.db.{Jsonb, Param, Sql}
+import com.histmersion.db.given
 
 import com.augustnagro.magnum.*
-import javax.sql.DataSource
 
 /** Magnum codecs for the article wire DTOs (the types live in `core`, which knows nothing about JDBC). */
 given DbCodec[Backlink] = DbCodec.derived
 given DbCodec[ArticleVersion] = DbCodec.derived
 given DbCodec[ArticleVersionFull] = DbCodec.derived
-
-/** `text[]` columns decode straight into `List[String]` through [[Codecs]], so the wire DTOs are read directly — no
-  * joined-string intermediate.
-  */
-/** A list row as the database has it: [[ArticleSummary]] without the review state, which the server derives from other
-  * tables.
-  */
-final private case class ArticleSummaryRow(
-    slug: String,
-    title: String,
-    kind: String,
-    summary: Option[String],
-    tags: List[String],
-    regions: List[String],
-    periodStart: Option[Long],
-    periodEnd: Option[Long],
-    updatedAt: Option[String]
-) derives DbCodec:
-  def summaryRow: ArticleSummary =
-    ArticleSummary(slug, title, kind, summary, tags, regions, periodStart, periodEnd, updatedAt)
-given DbCodec[ArticleRow] = DbCodec.derived
-given DbCodec[CitedSource] = DbCodec.derived
-given DbCodec[ArticleRef] = DbCodec.derived
-
-/** Flat projection of the whole article row, for the domain read (`load`). */
-final private[db] case class FullArticleRow(
-    slug: String,
-    title: String,
-    kind: String,
-    body: String,
-    summary: Option[String],
-    tags: List[String],
-    regions: List[String],
-    periodStart: Option[Long],
-    periodEnd: Option[Long],
-    updatedAt: String,
-    filter: Option[String],
-    reasons: String
-) derives DbCodec
-final private[db] case class SlugMillis(slug: String, millis: Long) derives DbCodec
 
 /** The ARTICLES store (plan §5.2 stream 2.7) — the compiled wiki.
   *
@@ -67,9 +26,17 @@ final private[db] case class SlugMillis(slug: String, millis: Long) derives DbCo
   * citekey-shaped targets actually exist. That is what makes `backlinks` and `sourcesCited` index lookups rather than a
   * LIKE scan of every article.
   *
-  * Stateless, like every repo here: the `DataSource` is a parameter.
+  * Every method runs on the connection it is given; the service opens the transaction. Private to research but for the
+  * bundle import's rename and link rewrite (`BundleImport`), which research's carried kinds take over.
   */
-object ArticleRepo:
+private[histmersion] object ArticleRepo:
+
+  private given DbCodec[Backlink] = DbCodec.derived
+  private given DbCodec[ArticleVersion] = DbCodec.derived
+  private given DbCodec[ArticleVersionFull] = DbCodec.derived
+  private given DbCodec[ArticleRow] = DbCodec.derived
+  private given DbCodec[CitedSource] = DbCodec.derived
+  private given DbCodec[ArticleRef] = DbCodec.derived
 
   import Param.*
 
@@ -101,45 +68,43 @@ object ArticleRepo:
     io.circe.Json.obj(a.reasons.toList.sortBy(_._1).map((k, v) => k -> io.circe.Json.fromString(v))*).noSpaces
 
   /** The stored JSON back; a value that no longer decodes (an older shape) reads as none, never fails the read. */
-  private[db] def filterOf(json: Option[String]): Option[ArticleFilter] =
+  private[articles] def filterOf(json: Option[String]): Option[ArticleFilter] =
     json.flatMap(Jsonb.read[ArticleFilter])
-  private[db] def reasonsOf(json: String): Map[String, String] =
+  private[articles] def reasonsOf(json: String): Map[String, String] =
     Jsonb.read[Map[String, String]](json).getOrElse(Map.empty)
 
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
   /** Full replace (`put_article`). Returns the fresh `updatedAt` concurrency token. */
-  def put(ds: DataSource, a: Article): String =
-    transact(ds):
-      write(a)
-      token(a.slug).getOrElse("")
+  def put(a: Article)(using DbCon): String =
+    write(a)
+    token(a.slug).getOrElse("")
 
   /** Selective merge (`patch_article`): read → [[Articles.applyPatch]] → write, all in ONE transaction, so two
     * concurrent patches cannot interleave and `ifUpdatedAt` means something.
     */
-  def patch(ds: DataSource, slug: String, p: ArticlePatch, by: String = "person"): Either[ApiError, String] =
-    transact(ds):
-      // FOR UPDATE before the read: `ifUpdatedAt` is a compare-and-swap, and without the row lock
-      // two concurrent patches both saw the token they were given and both "succeeded", the second
-      // discarding the first. See the twin comment in `SourceRepo.patch`.
-      val _ = sql"SELECT slug FROM articles WHERE slug = $slug FOR UPDATE".query[String].run()
-      load(slug) match
-        case None           => Left(Articles.notFound(slug))
-        case Some(existing) =>
-          Articles.precondition(existing, p) match
-            case Left(msg) => Left(ApiError(msg, Some(Write.CodePrecondition)))
-            case Right(_)  =>
-              Articles.applyPatch(existing, p) match
-                case Left(msg) => Left(ApiError(msg, Some(Write.CodeInvalid)))
-                // the critique reasons (V091) sit beside the row: checked first, so a refused one
-                // writes nothing; a patch of them alone leaves the article, its versions and its
-                // token as they are (`by`: who set them, when a reason does not say)
-                case Right(updated) =>
-                  CritiqueRepo
-                    .applyIn(slug, p.critiqueReasons, by)(if !p.onlyCritiques then write(updated))
-                    .map(_ => token(slug).getOrElse(""))
+  def patch(slug: String, p: ArticlePatch, by: String = "person")(using DbCon): Either[ApiError, String] =
+    // FOR UPDATE before the read: `ifUpdatedAt` is a compare-and-swap, and without the row lock
+    // two concurrent patches both saw the token they were given and both "succeeded", the second
+    // discarding the first. See the twin comment in `SourceRepo.patch`.
+    val _ = sql"SELECT slug FROM articles WHERE slug = $slug FOR UPDATE".query[String].run()
+    load(slug) match
+      case None           => Left(Articles.notFound(slug))
+      case Some(existing) =>
+        Articles.precondition(existing, p) match
+          case Left(msg) => Left(ApiError(msg, Some(Write.CodePrecondition)))
+          case Right(_)  =>
+            Articles.applyPatch(existing, p) match
+              case Left(msg) => Left(ApiError(msg, Some(Write.CodeInvalid)))
+              // the critique reasons (V091) sit beside the row: checked first, so a refused one
+              // writes nothing; a patch of them alone leaves the article, its versions and its
+              // token as they are (`by`: who set them, when a reason does not say)
+              case Right(updated) =>
+                CritiqueRepo
+                  .applyIn(slug, p.critiqueReasons, by)(if !p.onlyCritiques then write(updated))
+                  .map(_ => token(slug).getOrElse(""))
 
-  def delete(ds: DataSource, slug: String): Boolean =
-    transact(ds)(sql"DELETE FROM articles WHERE slug = $slug".update.run() > 0)
+  def delete(slug: String)(using DbCon): Boolean =
+    sql"DELETE FROM articles WHERE slug = $slug".update.run() > 0
 
   /** The write itself, inside the caller's transaction: snapshot the previous body into `article_versions` (when the
     * article already exists), then upsert the row and its link graph.
@@ -164,7 +129,7 @@ object ArticleRepo:
   /** Rewrite one article's outgoing links. A `[[x]]` is a SOURCE link iff x is citekey-shaped AND a source with that
     * citekey exists — resolved with one query over the citekey-shaped candidates.
     */
-  private[db] def writeLinks(slug: String, body: String)(using DbCon): Unit =
+  private[histmersion] def writeLinks(slug: String, body: String)(using DbCon): Unit =
     sql"DELETE FROM article_links WHERE src_slug = $slug".update.run()
     val written = ArticleLinks.targets(body).filter(_ != slug) // an article does not link to itself
     if written.nonEmpty then
@@ -207,7 +172,7 @@ object ArticleRepo:
     * when an article was renamed on the other side, and what `merge apply` does to keep two articles apart. Returns the
     * articles whose links moved.
     */
-  private[db] def renameIn(oldSlug: String, newSlug: String)(using DbCon): Either[ApiError, List[String]] =
+  private[histmersion] def renameIn(oldSlug: String, newSlug: String)(using DbCon): Either[ApiError, List[String]] =
     def exists(s: String) = sql"SELECT 1 FROM articles WHERE slug = $s".query[Int].run().nonEmpty
     val aliasOf = sql"SELECT slug FROM article_aliases WHERE alias = $newSlug".query[String].run().headOption
     if !exists(oldSlug) then Left(Articles.notFound(oldSlug))
@@ -238,13 +203,11 @@ object ArticleRepo:
   /** `histmersion articles rename`: a new slug, the old one kept as an alias (V042); every `[[old]]` in other articles
     * is rewritten through the write path. One transaction; returns the articles rewritten.
     */
-  def rename(ds: DataSource, oldSlug: String, newSlug: String): Either[ApiError, List[String]] =
-    transact(ds)(renameIn(oldSlug.trim, newSlug.trim))
+  def rename(oldSlug: String, newSlug: String)(using DbCon): Either[ApiError, List[String]] =
+    renameIn(oldSlug.trim, newSlug.trim)
 
   /** The slug an old slug was renamed to (`article_aliases`), or the slug itself. */
-  def canonical(ds: DataSource, slug: String): String = connect(ds)(canonical(slug))
-
-  private def canonical(slug: String)(using DbCon): String =
+  def canonical(slug: String)(using DbCon): String =
     sql"SELECT slug FROM article_aliases WHERE alias = $slug AND NOT EXISTS (SELECT 1 FROM articles WHERE slug = $slug)"
       .query[String]
       .run()
@@ -256,9 +219,7 @@ object ArticleRepo:
 
   // ── reads ──────────────────────────────────────────────────────────────────────────────────
   /** The whole article as the DOMAIN model — the input side of a patch, and what `export` renders. */
-  def load(ds: DataSource, slug: String): Option[Article] = connect(ds)(load(slug))
-
-  private def load(slug: String)(using DbCon): Option[Article] =
+  def load(slug: String)(using DbCon): Option[Article] =
     Sql
       .of(s"SELECT $LoadCols FROM articles a WHERE a.slug = ?", S(slug))
       .frag
@@ -283,35 +244,30 @@ object ArticleRepo:
         )
       }
 
-  def get(ds: DataSource, slug: String): Option[ArticleRow] =
-    connect(ds)(
-      Sql
-        .of(s"SELECT $ViewCols FROM articles a WHERE a.slug = ?", S(canonical(slug)))
-        .frag
-        .query[ArticleRow]
-        .run()
-        .headOption
-    )
+  def get(slug: String)(using DbCon): Option[ArticleRow] =
+    Sql
+      .of(s"SELECT $ViewCols FROM articles a WHERE a.slug = ?", S(canonical(slug)))
+      .frag
+      .query[ArticleRow]
+      .run()
+      .headOption
 
   /** The article plus both directions of its link graph — one connection, three queries. */
-  def view(ds: DataSource, requested: String): Option[ArticleView] =
-    connect(ds):
-      val slug = canonical(requested) // an old slug (V042) shows the article it was renamed to
-      Sql
-        .of(s"SELECT $ViewCols FROM articles a WHERE a.slug = ?", S(slug))
-        .frag
-        .query[ArticleRow]
-        .run()
-        .headOption
-        .map(row => ArticleView(row, backlinks(slug), sourcesCited(slug)))
+  def view(requested: String)(using DbCon): Option[ArticleView] =
+    val slug = canonical(requested) // an old slug (V042) shows the article it was renamed to
+    Sql
+      .of(s"SELECT $ViewCols FROM articles a WHERE a.slug = ?", S(slug))
+      .frag
+      .query[ArticleRow]
+      .run()
+      .headOption
+      .map(row => ArticleView(row, backlinks(slug), sourcesCited(slug)))
 
   /** What points HERE: other articles through `article_links`, and sources whose agent-written `notes` contain a
     * `[[slug]]` (the source notes are Markdown, not a link table). `strpos` rather than `LIKE` so an underscore in a
     * slug stays a literal underscore.
     */
-  def backlinks(ds: DataSource, slug: String): List[Backlink] = connect(ds)(backlinks(slug))
-
-  private def backlinks(slug: String)(using DbCon): List[Backlink] =
+  def backlinks(slug: String)(using DbCon): List[Backlink] =
     sql"""SELECT 'article' AS kind, a.slug AS id, a.title
           FROM article_links l JOIN articles a ON a.slug = l.src_slug
           WHERE l.target_kind = 'article' AND l.target = $slug AND a.slug <> $slug
@@ -325,11 +281,9 @@ object ArticleRepo:
   /** The articles citing any of `citekeys` (one row per article, its first cited key), at most `limit` — an event's
     * card lists those citing the sources that attest it.
     */
-  def citing(ds: DataSource, citekeys: List[String], limit: Int): List[EventArticleRef] =
+  def citing(citekeys: List[String], limit: Int)(using DbCon): List[EventArticleRef] =
     if citekeys.isEmpty then Nil
-    else
-      connect(ds):
-        sql"""SELECT DISTINCT ON (a.slug) a.slug, a.title, l.target
+    else sql"""SELECT DISTINCT ON (a.slug) a.slug, a.title, l.target
             FROM article_links l JOIN articles a ON a.slug = l.src_slug
             WHERE l.target_kind = 'source' AND l.target = ANY($citekeys::text[])
             ORDER BY a.slug, l.target LIMIT $limit""".query[EventArticleRef].run().toList
@@ -341,9 +295,8 @@ object ArticleRepo:
     * Reuses [[Backlink]] deliberately: "something that points at me, with a kind, an id and a title" is the same shape
     * whichever end you stand at, and a second near-identical DTO would only give the two sides a way to drift.
     */
-  def backlinksForSource(ds: DataSource, citekey: String): List[Backlink] =
-    connect(ds):
-      sql"""SELECT 'article' AS kind, a.slug AS id, a.title
+  def backlinksForSource(citekey: String)(using DbCon): List[Backlink] =
+    sql"""SELECT 'article' AS kind, a.slug AS id, a.title
             FROM article_links l JOIN articles a ON a.slug = l.src_slug
             WHERE l.target_kind = 'source' AND l.target = $citekey
             ORDER BY a.title, a.slug""".query[Backlink].run().toList
@@ -351,33 +304,29 @@ object ArticleRepo:
   /** Which of `slugs` actually exist — the article half of resolving a `[[wikilink]]`. One query for the whole body, so
     * rendering an article is still three round trips.
     */
-  def existingSlugs(ds: DataSource, slugs: List[String]): Set[String] =
+  def existingSlugs(slugs: List[String])(using DbCon): Set[String] =
     val wanted = slugs.map(_.trim.toLowerCase).filter(_.nonEmpty).distinct
     if wanted.isEmpty then Set.empty
     else
-      connect(ds):
-        sql"SELECT slug FROM articles WHERE slug = ANY($wanted::text[])"
-          .query[String]
-          .run()
-          .toSet
+      sql"SELECT slug FROM articles WHERE slug = ANY($wanted::text[])"
+        .query[String]
+        .run()
+        .toSet
 
   /** The link view (slug, title, summary) of the given articles; unknown slugs are absent. */
-  def refs(ds: DataSource, slugs: List[String]): List[ArticleRef] =
+  def refs(slugs: List[String])(using DbCon): List[ArticleRef] =
     val wanted = slugs.map(_.trim.toLowerCase).filter(_.nonEmpty).distinct
     if wanted.isEmpty then Nil
     else
-      connect(ds):
-        sql"SELECT slug, title, summary FROM articles WHERE slug = ANY($wanted::text[]) ORDER BY slug"
-          .query[ArticleRef]
-          .run()
-          .toList
+      sql"SELECT slug, title, summary FROM articles WHERE slug = ANY($wanted::text[]) ORDER BY slug"
+        .query[ArticleRef]
+        .run()
+        .toList
 
   /** The sources this article cites, with the metadata the footer shows. A citekey that is not in the corpus still
     * appears (with a NULL title) — a dangling citation is a lint finding, not a reason to hide it.
     */
-  def sourcesCited(ds: DataSource, slug: String): List[CitedSource] = connect(ds)(sourcesCited(slug))
-
-  private def sourcesCited(slug: String)(using DbCon): List[CitedSource] =
+  def sourcesCited(slug: String)(using DbCon): List[CitedSource] =
     sql"""SELECT l.target AS citekey, s.title, s.year, s.status, s.authors, s.doi
           FROM article_links l LEFT JOIN sources s ON s.citekey = l.target
           WHERE l.src_slug = $slug AND l.target_kind = 'source'
@@ -391,27 +340,25 @@ object ArticleRepo:
     * is finished. `total` is the count for the filter, ignoring limit/offset.
     */
   def list(
-      ds: DataSource,
       filter: Filter,
       scope: PlaceScope,
       kind: Option[String],
       text: Option[String],
       limit: Int,
       offset: Int
-  ): ArticleList =
+  )(using DbCon): ArticleList =
     val where = listWhere(filter, scope, kind, text)
     val order = text.map(_.trim).filter(_.nonEmpty) match
       case Some(t) => Sql.raw("ORDER BY ts_rank_cd(a.tsv, ") ++ tsQuery(t) ++ Sql.raw(") DESC, a.title")
       case None    => Sql.raw("ORDER BY a.kind, a.title")
-    connect(ds):
-      val kinds = ArticleList.byKind(
-        (Sql.raw("SELECT a.kind, count(*)::int FROM articles a WHERE ") ++ where ++ Sql
-          .raw(" GROUP BY a.kind")).frag.query[(String, Int)].run().toList.map(ArticleKindCount(_, _))
-      )
-      val total = kinds.map(_.count).sum
-      val rows = (Sql.raw(s"SELECT $SummaryCols FROM articles a WHERE ") ++ where ++ Sql.raw(" ") ++
-        order ++ Sql.of(" LIMIT ? OFFSET ?", I(limit), I(offset.max(0)))).frag.query[ArticleSummaryRow].run()
-      ArticleList.of(total, rows.toList.map(_.summaryRow), offset.max(0), kinds)
+    val kinds = ArticleList.byKind(
+      (Sql.raw("SELECT a.kind, count(*)::int FROM articles a WHERE ") ++ where ++ Sql
+        .raw(" GROUP BY a.kind")).frag.query[(String, Int)].run().toList.map(ArticleKindCount(_, _))
+    )
+    val total = kinds.map(_.count).sum
+    val rows = (Sql.raw(s"SELECT $SummaryCols FROM articles a WHERE ") ++ where ++ Sql.raw(" ") ++
+      order ++ Sql.of(" LIMIT ? OFFSET ?", I(limit), I(offset.max(0)))).frag.query[ArticleSummaryRow].run()
+    ArticleList.of(total, rows.toList.map(_.summaryRow), offset.max(0), kinds)
 
   /** The WHERE of [[list]], as a value — pure, so it is unit-tested without a database. The filter's part is
     * [[FilterSql.articleWhere]] (the one rule relating articles to sources).
@@ -432,17 +379,16 @@ object ArticleRepo:
 
   private def tsQuery(q: String): Sql = Search.tsQuery(q)
 
-  def slugs(ds: DataSource): Vector[String] =
-    connect(ds)(sql"""SELECT slug FROM articles ORDER BY slug COLLATE "C"""".query[String].run())
+  def slugs(using DbCon): Vector[String] =
+    sql"""SELECT slug FROM articles ORDER BY slug COLLATE "C"""".query[String].run()
 
   /** `slug -> updated_at` in epoch millis, for the seed guard (one query for the whole wiki). */
-  def updatedAtMillis(ds: DataSource): Map[String, Long] =
-    connect(ds):
-      sql"SELECT slug, (extract(epoch from updated_at) * 1000)::bigint FROM articles"
-        .query[SlugMillis]
-        .run()
-        .map(r => r.slug -> r.millis)
-        .toMap
+  def updatedAtMillis(using DbCon): Map[String, Long] =
+    sql"SELECT slug, (extract(epoch from updated_at) * 1000)::bigint FROM articles"
+      .query[SlugMillis]
+      .run()
+      .map(r => r.slug -> r.millis)
+      .toMap
 
   // ── article versions (V013) ─────────────────────────────────────────────────────────────────
 
@@ -455,48 +401,45 @@ object ArticleRepo:
   /** List the version history of one article: id, slug, summary (first 200 chars), updatedAt, createdAt, and word count
     * (approximated as non-empty whitespace-split tokens). Newest first.
     */
-  def listVersions(ds: DataSource, slug: String, limit: Int = 20): List[ArticleVersion] =
-    connect(ds):
-      Sql
-        .of(
-          s"""SELECT v.id, v.slug, left(v.summary, 200),
+  def listVersions(slug: String, limit: Int = 20)(using DbCon): List[ArticleVersion] =
+    Sql
+      .of(
+        s"""SELECT v.id, v.slug, left(v.summary, 200),
             $VerToken, $VerCreated,
             array_length(regexp_split_to_array(trim(v.body), '\\s+'), 1)
             FROM article_versions v WHERE v.slug = ? ORDER BY v.created_at DESC LIMIT ?""",
-          Param.S(slug),
-          Param.I(limit)
-        )
-        .frag
-        .query[ArticleVersion]
-        .run()
-        .toList
+        Param.S(slug),
+        Param.I(limit)
+      )
+      .frag
+      .query[ArticleVersion]
+      .run()
+      .toList
 
   /** One historical version's full body. */
-  def getVersion(ds: DataSource, slug: String, versionId: Long): Option[ArticleVersionFull] =
-    connect(ds):
-      Sql
-        .of(
-          s"""SELECT v.id, v.slug, v.body, v.summary,
+  def getVersion(slug: String, versionId: Long)(using DbCon): Option[ArticleVersionFull] =
+    Sql
+      .of(
+        s"""SELECT v.id, v.slug, v.body, v.summary,
             $VerToken, $VerCreated
             FROM article_versions v WHERE v.slug = ? AND v.id = ?""",
-          Param.S(slug),
-          Param.L(versionId)
-        )
-        .frag
-        .query[ArticleVersionFull]
-        .run()
-        .headOption
+        Param.S(slug),
+        Param.L(versionId)
+      )
+      .frag
+      .query[ArticleVersionFull]
+      .run()
+      .headOption
 
   /** Every goal's linked articles that exist: goal → slugs. */
   /** Is there an article with this slug? */
-  def slugExists(ds: DataSource, slug: String): Boolean =
-    connect(ds)(sql"SELECT count(*) FROM articles WHERE slug = $slug".query[Long].run().head > 0)
+  def slugExists(slug: String)(using DbCon): Boolean =
+    sql"SELECT count(*) FROM articles WHERE slug = $slug".query[Long].run().head > 0
 
-  def articlesByGoal(ds: DataSource): Map[String, List[String]] =
-    connect(ds):
-      sql"""SELECT l.goal_slug, l.ref FROM goal_links l JOIN articles a ON a.slug = l.ref
+  def articlesByGoal(using DbCon): Map[String, List[String]] =
+    sql"""SELECT l.goal_slug, l.ref FROM goal_links l JOIN articles a ON a.slug = l.ref
             WHERE l.kind = 'article' ORDER BY l.goal_slug, l.ref"""
-        .query[(String, String)]
-        .run()
-        .toList
-        .groupMap(_._1)(_._2)
+      .query[(String, String)]
+      .run()
+      .toList
+      .groupMap(_._1)(_._2)

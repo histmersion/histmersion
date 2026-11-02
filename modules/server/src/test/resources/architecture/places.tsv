@@ -793,14 +793,10 @@ core:domain/activity/ActivityQuery.scala	automation.activity
 core:domain/activity/ActivityRules.scala	automation.activity
 db:db/AgentRepo.scala	automation.agents
 db:db/AgentStateRepo.scala	automation.agents
-db:db/ArticleRepo.scala	research.articles
-db:db/ArticleReviewRepo.scala	research.articles.review
 db:db/AutopilotRepo.scala	automation.autopilot
 db:db/BundleImport.scala	util.data.exchange
 db:db/BundleRepo.scala	util.data.exchange
 db:db/Codecs.scala	util.common
-db:db/CoverageRepo.scala	research.articles
-db:db/CritiqueRepo.scala	research.articles
 db:db/Db.scala	util.common
 db:db/FocusRepo.scala	automation.goals
 db:db/GoalLinkRepo.scala	automation.goals
@@ -831,7 +827,6 @@ server:domain/activity/ActivityRepo.scala	automation.activity
 server:domain/activity/ActivityService.scala	automation.activity
 server:server/AcquisitionWiring.scala	server
 server:server/ArticlePage.scala	research.articles
-server:server/ArticlesApi.scala	server
 server:server/AuthHandler.scala	server
 server:server/BackupWiring.scala	server
 server:server/BasemapWiring.scala	server
@@ -862,9 +857,9 @@ server:server/MediaWiring.scala	server
 server:server/OpsHandlers.scala	split
 server:server/OpsRoutes.scala	server
 server:server/OpsTools.scala	split
-server:server/PageBuilder.scala	research.articles
 server:server/PageKind.scala	research.articles
 server:server/Pages.scala	research.articles
+server:server/ResearchWiring.scala	server
 server:server/SeedNoteFiles.scala	server
 server:server/ServerArgs.scala	server
 server:server/ServerGraph.scala	server

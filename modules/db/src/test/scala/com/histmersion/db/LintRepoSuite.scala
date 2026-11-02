@@ -1,5 +1,7 @@
 package com.histmersion.db
 
+import com.histmersion.domain.research.articles.ArticleFixtures
+
 import com.histmersion.domain.library.sources.SourceCheckFixtures
 import com.histmersion.domain.library.sources.SourceFixtures
 
@@ -247,7 +249,7 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
   test("article-markdown and note-markdown check every article body and summary, every source's summary and notes"):
     val slug = Prefix + "fmt_article"
     connect(ds)(sql"DELETE FROM articles WHERE slug = $slug".update.run())
-    ArticleRepo.put(ds, Article(slug, "Fmt", "concept", "# Fmt\n\nA ** bad line.", Some("a fine summary")))
+    ArticleFixtures.put(ds, Article(slug, "Fmt", "concept", "# Fmt\n\nA ** bad line.", Some("a fine summary")))
     put(source(Prefix + "fmt_note", summary = Some("a **bad summary")).copy(notes = Some("fine notes")))
     put(source(Prefix + "fmt_clean", summary = Some("clean")).copy(notes = Some("clean")))
     try
