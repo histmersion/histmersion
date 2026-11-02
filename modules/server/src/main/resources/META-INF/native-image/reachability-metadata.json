@@ -13084,32 +13084,15 @@
       ]
     },
     {
-      "type": "com.histmersion.db.AcquireRepo$",
+      "type": "com.histmersion.domain.library.acquisition.AssessmentRepo$AssessmentRow$",
       "fields": [
         {
-          "name": "given_DbCodec_AssessmentRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_DoiKey$lzy1"
-        },
-        {
-          "name": "given_DbCodec_GapRow$lzy1"
-        },
-        {
-          "name": "given_DbCodec_RwRow$lzy1"
+          "name": "derived$DbCodec$lzy2"
         }
       ]
     },
     {
-      "type": "com.histmersion.db.AcquireRepo$AssessmentRow$",
-      "fields": [
-        {
-          "name": "derived$DbCodec$lzy4"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.db.AcquireRepo$DoiKey$",
+      "type": "com.histmersion.domain.library.sources.SourceRepo$DoiKey$",
       "fields": [
         {
           "name": "derived$DbCodec$lzy1"
@@ -13117,18 +13100,18 @@
       ]
     },
     {
-      "type": "com.histmersion.db.AcquireRepo$GapRow$",
+      "type": "com.histmersion.domain.library.sources.SourceRepo$GapRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy3"
+          "name": "derived$DbCodec$lzy2"
         }
       ]
     },
     {
-      "type": "com.histmersion.db.AcquireRepo$RwRow$",
+      "type": "com.histmersion.domain.library.acquisition.AssessmentRepo$RwRow$",
       "fields": [
         {
-          "name": "derived$DbCodec$lzy2"
+          "name": "derived$DbCodec$lzy1"
         }
       ]
     },
@@ -13503,18 +13486,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.CandidateRepo$",
-      "fields": [
-        {
-          "name": "given_DbCodec_Row$lzy1"
-        },
-        {
-          "name": "given_DbCodec_WatchRow$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.db.CandidateRepo$Row$",
+      "type": "com.histmersion.domain.library.acquisition.CandidateRepo$Row$",
       "fields": [
         {
           "name": "derived$DbCodec$lzy2"
@@ -13522,7 +13494,7 @@
       ]
     },
     {
-      "type": "com.histmersion.db.CandidateRepo$WatchRow$",
+      "type": "com.histmersion.domain.library.acquisition.CandidateRepo$WatchRow$",
       "fields": [
         {
           "name": "derived$DbCodec$lzy1"
@@ -15511,7 +15483,13 @@
           "name": "attestations$lzy1"
         },
         {
+          "name": "calibreGaps$lzy1"
+        },
+        {
           "name": "events$lzy1"
+        },
+        {
+          "name": "ingest$lzy1"
         },
         {
           "name": "jobControl$lzy1"
@@ -15530,6 +15508,9 @@
         },
         {
           "name": "settings$lzy1"
+        },
+        {
+          "name": "storedOriginals$lzy1"
         }
       ]
     },
@@ -16316,7 +16297,7 @@
       ]
     },
     {
-      "type": "com.histmersion.server.acquire.AcquireMcp$",
+      "type": "com.histmersion.domain.library.acquisition.AcquisitionTools$",
       "fields": [
         {
           "name": "given_Configuration$lzy1"
@@ -16324,11 +16305,8 @@
       ]
     },
     {
-      "type": "com.histmersion.server.acquire.AcquireMcp$ArchiveInput$",
+      "type": "com.histmersion.domain.library.acquisition.AcquisitionTools$ArchiveInput$",
       "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy6"
-        },
         {
           "name": "derived$KindlingsCodecAsObject$lzy7"
         },
@@ -16341,11 +16319,8 @@
       ]
     },
     {
-      "type": "com.histmersion.server.acquire.AcquireMcp$AssessInput$",
+      "type": "com.histmersion.domain.library.acquisition.AcquisitionTools$AssessInput$",
       "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy3"
-        },
         {
           "name": "derived$KindlingsCodecAsObject$lzy4"
         },
@@ -16358,7 +16333,7 @@
       ]
     },
     {
-      "type": "com.histmersion.server.acquire.AcquireMcp$CandidatesInput$",
+      "type": "com.histmersion.domain.library.acquisition.AcquisitionTools$CandidatesInput$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy2"
@@ -16372,7 +16347,7 @@
       ]
     },
     {
-      "type": "com.histmersion.server.acquire.AcquireMcp$DiscoverInput$",
+      "type": "com.histmersion.domain.library.acquisition.AcquisitionTools$DiscoverInput$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy1"
@@ -16386,11 +16361,8 @@
       ]
     },
     {
-      "type": "com.histmersion.server.acquire.AcquireMcp$FollowupsInput$",
+      "type": "com.histmersion.domain.library.acquisition.AcquisitionTools$FollowupsInput$",
       "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy4"
-        },
         {
           "name": "derived$KindlingsCodecAsObject$lzy5"
         },
@@ -16403,11 +16375,8 @@
       ]
     },
     {
-      "type": "com.histmersion.server.acquire.AcquireMcp$IngestInput$",
+      "type": "com.histmersion.domain.library.acquisition.AcquisitionTools$IngestInput$",
       "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy5"
-        },
         {
           "name": "derived$KindlingsCodecAsObject$lzy6"
         },
@@ -16417,11 +16386,8 @@
       ]
     },
     {
-      "type": "com.histmersion.server.acquire.AcquireMcp$RefsInput$",
+      "type": "com.histmersion.domain.library.acquisition.AcquisitionTools$RefsInput$",
       "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy2"
-        },
         {
           "name": "derived$KindlingsCodecAsObject$lzy3"
         },
