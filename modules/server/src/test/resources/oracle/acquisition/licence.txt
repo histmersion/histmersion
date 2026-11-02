@@ -1,0 +1,210 @@
+== query licences
+200 {
+  "columns" : [
+    "citekey",
+    "license"
+  ],
+  "elapsedMs" : N,
+  "rowCount" : 20,
+  "rows" : [
+    [
+      "zqa_byhand",
+      null
+    ],
+    [
+      "zqa_cited",
+      null
+    ],
+    [
+      "zqa_dup",
+      null
+    ],
+    [
+      "zqa_later",
+      null
+    ],
+    [
+      "zqa_ledger",
+      null
+    ],
+    [
+      "zqa_legal",
+      null
+    ],
+    [
+      "zqa_mcp",
+      null
+    ],
+    [
+      "zqa_nodoi",
+      null
+    ],
+    [
+      "zqa_ref",
+      null
+    ],
+    [
+      "zqa_retracted",
+      null
+    ],
+    [
+      "zqa_upload",
+      null
+    ],
+    [
+      "zqarx2021_preprint",
+      null
+    ],
+    [
+      "zqauthor2019_roads",
+      null
+    ],
+    [
+      "zqbook1911_book",
+      null
+    ],
+    [
+      "zqgold2022_gold",
+      null
+    ],
+    [
+      "zqlater2024_later",
+      null
+    ],
+    [
+      "zqlicence2020_licensed",
+      "CC BY 4.0"
+    ],
+    [
+      "zqmaker1995_copper",
+      null
+    ],
+    [
+      "zqreader2021_closed",
+      null
+    ],
+    [
+      "zqsecond2018_bronze",
+      null
+    ]
+  ],
+  "truncated" : false
+}
+== fill-licences (dry)
+200 {
+  "applied" : false,
+  "bySource" : [
+    {
+      "allowed" : true,
+      "key" : "zqlicence2020_licensed",
+      "n" : 1
+    }
+  ],
+  "candidates" : 1,
+  "updated" : 0
+}
+== export zqlicence2020_licensed
+200 ---
+citekey: zqlicence2020_licensed
+doi: 10.5555/zq.licensed
+title: A licensed Zq survey
+authors:
+- Qi Zqlicence
+year: 2020
+venue: Journal of Zq Studies
+source: zq-shelf
+calibre_id: null
+status: current
+superseded_by: null
+topics: []
+regions: []
+tags: []
+period_start: null
+period_end: null
+cited_by_count: 7
+influential_citations: null
+summary: Zq abstract.
+findings: []
+---
+
+== fill-licences --apply
+200 {
+  "applied" : true,
+  "bySource" : [
+    {
+      "allowed" : true,
+      "key" : "zqlicence2020_licensed",
+      "n" : 1
+    }
+  ],
+  "candidates" : 1,
+  "updated" : 1
+}
+== export zqauthor2019_roads
+200 ---
+citekey: zqauthor2019_roads
+doi: 10.5555/zq.open
+title: Tin roads of Zqland
+authors:
+- Ann Zqauthor
+- Bo Zqwriter
+year: 2019
+venue: Journal of Zq Studies
+source: unpaywall
+calibre_id: null
+status: current
+superseded_by: null
+topics: []
+regions: []
+tags: []
+period_start: null
+period_end: null
+cited_by_count: 120
+influential_citations: null
+summary: Zq abstract.
+findings: []
+---
+
+== mcp export_source
+---
+citekey: zqauthor2019_roads
+doi: 10.5555/zq.open
+title: Tin roads of Zqland
+authors:
+- Ann Zqauthor
+- Bo Zqwriter
+year: 2019
+venue: Journal of Zq Studies
+source: unpaywall
+calibre_id: null
+status: current
+superseded_by: null
+topics: []
+regions: []
+tags: []
+period_start: null
+period_end: null
+cited_by_count: 120
+influential_citations: null
+summary: Zq abstract.
+findings: []
+---
+
+== the datasets' credits
+OpenStreetMap | the base map (online tiles, and the Readable and Physical styles through Protomaps) | ODbL 1.0 | https://opendatacommons.org/licenses/odbl/1-0/ | © OpenStreetMap contributors | https://www.openstreetmap.org/copyright | true
+Protomaps basemap | the Readable and Physical styles; the extract kept here is an ODbL derivative of OpenStreetMap, filtered by basemap.vector.drop | BSD (code), ODbL (data) | https://opendatacommons.org/licenses/odbl/1-0/ | Protomaps | https://protomaps.com | true
+ESA WorldCover (via Daylight landcover) | the land cover drawn at low zoom | CC BY 4.0 | https://creativecommons.org/licenses/by/4.0/ | © ESA WorldCover project 2020 / Contains modified Copernicus Sentinel data (2020) processed by ESA WorldCover consortium | https://esa-worldcover.org/en/data-access | true
+Mapterhorn terrain (Copernicus GLO-30 and national elevation models) | relief and contours | per source (Copernicus; CC BY 4.0 and others) | - | Copernicus DEM © DLR e.V. 2010-2014, Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA | https://mapterhorn.com/attribution | true
+ETOPO1 via Mapzen Terrain Tiles | the sea floor | public domain (NOAA) | - | ETOPO1, U.S. National Oceanic and Atmospheric Administration | https://github.com/tilezen/joerd/blob/master/docs/attribution.md | true
+GEBCO_2026 Grid | the sea floor, when chosen | public domain (GEBCO terms of use) | - | GEBCO Compilation Group (2026) GEBCO_2026 Grid | https://www.gebco.net/data-products/gridded-bathymetry-data | true
+Natural Earth | physical names, bundled places, the land outline | public domain | - | Natural Earth | https://www.naturalearthdata.com | true
+Pleiades | ancient places: names, points and place cards | CC BY 3.0 | https://creativecommons.org/licenses/by/3.0/ | Pleiades: A Gazetteer of Past Places (pleiades.stoa.org) | https://pleiades.stoa.org/credits | true
+GeoNames | places (an extract built on this machine) | CC BY 4.0 | https://creativecommons.org/licenses/by/4.0/ | GeoNames (geonames.org) | https://www.geonames.org/about.html | true
+Getty Thesaurus of Geographic Names (TGN) | places (an extract built on this machine) | ODC-By 1.0 | https://opendatacommons.org/licenses/by/1-0/ | Contains information from the J. Paul Getty Trust, Getty Research Institute, the Getty Thesaurus of Geographic Names, which is made available under the ODC Attribution License | https://www.getty.edu/research/tools/vocabularies/tgn/ | true
+Seshat Cliopatria | polity boundaries by period | CC BY 4.0 | https://creativecommons.org/licenses/by/4.0/ | Cliopatria (Seshat Global History Databank), doi:10.1038/s41597-025-04516-9 | https://github.com/Seshat-Global-History-Databank/cliopatria | true
+Ancient World Mapping Center | classical-world region names | ODbL 1.0 | https://opendatacommons.org/licenses/odbl/1-0/ | Ancient World Mapping Center, University of North Carolina at Chapel Hill | https://github.com/AWMC/geodata | true
+OpenHistoricalMap | a few polity outlines | CC0 unless a feature says otherwise | https://creativecommons.org/publicdomain/zero/1.0/ | Map data courtesy of the OpenHistoricalMap project, in the public domain unless otherwise noted | https://www.openhistoricalmap.org/copyright | true
+Wikidata | places, heritage designations, events, picture lookups | CC0 | https://creativecommons.org/publicdomain/zero/1.0/ | Wikidata | https://www.wikidata.org/wiki/Wikidata:Licensing | true
+NOAA NCEI natural hazards | earthquakes, tsunamis and eruptions as events | public domain (U.S. Government work) | - | NOAA National Centers for Environmental Information, doi:10.7289/V5TD9V7K | https://www.ncei.noaa.gov/products/natural-hazards/tsunamis-earthquakes-volcanoes | true
+Smithsonian Global Volcanism Program | eruptions as events | Smithsonian terms of use | - | Global Volcanism Program, Smithsonian Institution | https://volcano.si.edu | true
+PeriodO | period presets | CC0 | https://creativecommons.org/publicdomain/zero/1.0/ | PeriodO | https://perio.do | false

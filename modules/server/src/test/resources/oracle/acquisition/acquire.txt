@@ -1,0 +1,1061 @@
+== acquire add (an open copy)
+200 {
+  "closedBy" : null,
+  "createdAt" : "TS",
+  "createdBy" : null,
+  "doneAt" : null,
+  "goal" : null,
+  "id" : 3,
+  "list" : "acquire",
+  "reason" : null,
+  "status" : "open",
+  "text" : "Get 10.5555/zq.open2",
+  "topic" : null
+}
+== acquire add (held already)
+200 {
+  "closedBy" : null,
+  "createdAt" : "TS",
+  "createdBy" : null,
+  "doneAt" : null,
+  "goal" : null,
+  "id" : 4,
+  "list" : "acquire",
+  "reason" : null,
+  "status" : "open",
+  "text" : "Have we 10.5555/zq.open?",
+  "topic" : null
+}
+== acquire add (no legal copy)
+200 {
+  "closedBy" : null,
+  "createdAt" : "TS",
+  "createdBy" : null,
+  "doneAt" : null,
+  "goal" : null,
+  "id" : 5,
+  "list" : "acquire",
+  "reason" : null,
+  "status" : "open",
+  "text" : "Get 10.5555/zq.ref1",
+  "topic" : null
+}
+== acquire add (no copy)
+200 {
+  "closedBy" : null,
+  "createdAt" : "TS",
+  "createdBy" : null,
+  "doneAt" : null,
+  "goal" : null,
+  "id" : 6,
+  "list" : "acquire",
+  "reason" : null,
+  "status" : "open",
+  "text" : "Wanted: doi:10.5555/zq.closed",
+  "topic" : "zq"
+}
+== acquire add (to remove)
+200 {
+  "closedBy" : null,
+  "createdAt" : "TS",
+  "createdBy" : null,
+  "doneAt" : null,
+  "goal" : null,
+  "id" : 7,
+  "list" : "acquire",
+  "reason" : null,
+  "status" : "open",
+  "text" : "Remove me (zq)",
+  "topic" : null
+}
+== acquire add (to close by hand)
+200 {
+  "closedBy" : null,
+  "createdAt" : "TS",
+  "createdBy" : null,
+  "doneAt" : null,
+  "goal" : null,
+  "id" : 8,
+  "list" : "acquire",
+  "reason" : null,
+  "status" : "open",
+  "text" : "A Zq atlas (buy)",
+  "topic" : null
+}
+== acquire add (blank)
+400 {
+  "code" : null,
+  "message" : "queue item text is empty"
+}
+== acquire done
+200 {
+  "closedBy" : null,
+  "createdAt" : "TS",
+  "createdBy" : null,
+  "doneAt" : "TS",
+  "goal" : null,
+  "id" : 8,
+  "list" : "acquire",
+  "reason" : "bought",
+  "status" : "done",
+  "text" : "A Zq atlas (buy)",
+  "topic" : null
+}
+== acquire rm
+200 {
+  "closedBy" : null,
+  "createdAt" : "TS",
+  "createdBy" : null,
+  "doneAt" : null,
+  "goal" : null,
+  "id" : 7,
+  "list" : "acquire",
+  "reason" : null,
+  "status" : "open",
+  "text" : "Remove me (zq)",
+  "topic" : null
+}
+== acquire rm (again)
+404 {
+  "code" : "not_found",
+  "message" : "No queue item #7"
+}
+== acquire list
+200 {
+  "checks" : [
+  ],
+  "goals" : [
+  ],
+  "items" : [
+    {
+      "closedBy" : null,
+      "createdAt" : "TS",
+      "createdBy" : null,
+      "doneAt" : null,
+      "goal" : null,
+      "id" : 1,
+      "list" : "acquire",
+      "reason" : null,
+      "status" : "open",
+      "text" : "Fay Zqgold (2022). Gold open access on a refusing host. https://doi.org/10.5555/zq.gold — gold open access, but no script may download it: download it in the browser, then histmersion ingest <file> --citekey zqgold2022_gold",
+      "topic" : "browser download"
+    },
+    {
+      "closedBy" : null,
+      "createdAt" : "TS",
+      "createdBy" : null,
+      "doneAt" : null,
+      "goal" : null,
+      "id" : 3,
+      "list" : "acquire",
+      "reason" : null,
+      "status" : "open",
+      "text" : "Get 10.5555/zq.open2",
+      "topic" : null
+    },
+    {
+      "closedBy" : null,
+      "createdAt" : "TS",
+      "createdBy" : null,
+      "doneAt" : null,
+      "goal" : null,
+      "id" : 4,
+      "list" : "acquire",
+      "reason" : null,
+      "status" : "open",
+      "text" : "Have we 10.5555/zq.open?",
+      "topic" : null
+    },
+    {
+      "closedBy" : null,
+      "createdAt" : "TS",
+      "createdBy" : null,
+      "doneAt" : null,
+      "goal" : null,
+      "id" : 5,
+      "list" : "acquire",
+      "reason" : null,
+      "status" : "open",
+      "text" : "Get 10.5555/zq.ref1",
+      "topic" : null
+    },
+    {
+      "closedBy" : null,
+      "createdAt" : "TS",
+      "createdBy" : null,
+      "doneAt" : null,
+      "goal" : null,
+      "id" : 6,
+      "list" : "acquire",
+      "reason" : null,
+      "status" : "open",
+      "text" : "Wanted: doi:10.5555/zq.closed",
+      "topic" : "zq"
+    }
+  ],
+  "list" : "acquire"
+}
+== recheck --dry-run
+200 {
+  "allowance" : 3,
+  "closed" : 0,
+  "dryRun" : true,
+  "due" : 4,
+  "failed" : 0,
+  "fetched" : 0,
+  "job" : null,
+  "noCopy" : 0,
+  "note" : "1 due item(s) wait for the next pass: at most 3 a pass, 40 a day (0 tried today)",
+  "open" : 5,
+  "rows" : [
+    {
+      "action" : "would-close",
+      "citekey" : "zqauthor2019_roads",
+      "detail" : "in the corpus with its original",
+      "doi" : "10.5555/zq.open",
+      "item" : 4
+    },
+    {
+      "action" : "would-try",
+      "citekey" : "zqgold2022_gold",
+      "detail" : "never checked",
+      "doi" : "10.5555/zq.gold",
+      "item" : 1
+    },
+    {
+      "action" : "would-try",
+      "citekey" : null,
+      "detail" : "never checked",
+      "doi" : "10.5555/zq.open2",
+      "item" : 3
+    },
+    {
+      "action" : "would-try",
+      "citekey" : "zqa_ref",
+      "detail" : "never checked",
+      "doi" : "10.5555/zq.ref1",
+      "item" : 5
+    },
+    {
+      "action" : "due",
+      "citekey" : "zqa_legal",
+      "detail" : "never checked",
+      "doi" : "10.5555/zq.closed",
+      "item" : 6
+    }
+  ],
+  "withDoi" : 5
+}
+== recheck --id (dry)
+200 {
+  "allowance" : 1,
+  "closed" : 0,
+  "dryRun" : true,
+  "due" : 1,
+  "failed" : 0,
+  "fetched" : 0,
+  "job" : null,
+  "noCopy" : 0,
+  "note" : null,
+  "open" : 1,
+  "rows" : [
+    {
+      "action" : "would-try",
+      "citekey" : "zqa_legal",
+      "detail" : "never checked",
+      "doi" : "10.5555/zq.closed",
+      "item" : 6
+    }
+  ],
+  "withDoi" : 1
+}
+== recheck
+200 {
+  "allowance" : 4,
+  "closed" : 0,
+  "dryRun" : false,
+  "due" : 4,
+  "failed" : 0,
+  "fetched" : 0,
+  "job" : {
+    "acquireItem" : null,
+    "citekey" : null,
+    "createdAt" : "TS",
+    "detail" : {
+      "about" : null,
+      "eventImport" : null,
+      "eventRederive" : null,
+      "events" : null,
+      "init" : null,
+      "media" : null,
+      "planHash" : null,
+      "recheck" : {
+        "all" : true,
+        "by" : "person",
+        "resumes" : null,
+        "since" : "TS",
+        "upTo" : 0
+      },
+      "skippedPeriodCount" : 0,
+      "skippedPeriods" : [
+      ],
+      "vacuum" : null
+    },
+    "error" : null,
+    "id" : "UUID",
+    "kind" : "acquire_recheck",
+    "progress" : null,
+    "sha256" : null,
+    "status" : "queued",
+    "updatedAt" : "TS"
+  },
+  "noCopy" : 0,
+  "note" : null,
+  "open" : 5,
+  "rows" : [
+  ],
+  "withDoi" : 5
+}
+job: 200 {"id":"UUID","kind":"acquire_recheck","status":"done","citekey":null,"progress":"4/4 items · 1 closed · 1 fetched · 3 no legal copy · 0 failed","error":null,"sha256":null,"createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":{"init":null,"skippedPeriods":[],"skippedPeriodCount":0,"planHash":null,"vacuum":null,"media":null,"events":null,"eventImport":null,"eventRederive":null,"about":null,"recheck":{"all":true,"upTo":0,"since":"TS","by":"person","resumes":null}}}
+  > GET /openalex/works/https://doi.org/10.5555/zq.gold?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /unpaywall/10.5555/zq.gold?email=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.gold?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /europepmc/search?query=DOI:%2210.5555/zq.gold%22&resultType=core&format=json&pageSize=5
+  > GET /datacite/dois/10.5555/zq.gold
+  > GET /openalex/works/https://doi.org/10.5555/zq.open2?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /unpaywall/10.5555/zq.open2?email=oracle@example.org
+  > GET /files/zq-open2.pdf
+  > GET /crossref/works/10.5555/zq.open2?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.open2?select=referenced_works&mailto=oracle@example.org
+  > GET /crossref/works/10.5555/zq.open2?mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.open2?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.ref1?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /unpaywall/10.5555/zq.ref1?email=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.ref1?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /europepmc/search?query=DOI:%2210.5555/zq.ref1%22&resultType=core&format=json&pageSize=5
+  > GET /datacite/dois/10.5555/zq.ref1
+  > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /unpaywall/10.5555/zq.closed?email=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /europepmc/search?query=DOI:%2210.5555/zq.closed%22&resultType=core&format=json&pageSize=5
+  > GET /datacite/dois/10.5555/zq.closed
+== recheck again (nothing due)
+200 {
+  "allowance" : 3,
+  "closed" : 0,
+  "dryRun" : true,
+  "due" : 0,
+  "failed" : 0,
+  "fetched" : 0,
+  "job" : null,
+  "noCopy" : 0,
+  "note" : null,
+  "open" : 3,
+  "rows" : [
+  ],
+  "withDoi" : 3
+}
+== acquire list --all (with the checks)
+200 {
+  "checks" : [
+    {
+      "checkedAt" : "TS",
+      "checks" : 1,
+      "item" : 1,
+      "outcome" : "no-copy",
+      "reason" : "checked DAY: no legal copy (archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.gold; core: no copy — CORE not asked: CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — openalex has no copy of 10.5555/zq.gold; pmc: no copy — pmc has no copy of 10.5555/zq.gold; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of 10.555"
+    },
+    {
+      "checkedAt" : "TS",
+      "checks" : 1,
+      "item" : 3,
+      "outcome" : "fetched",
+      "reason" : "checked DAY: a legal copy found (unpaywall) — converting; the item closes once it is stored"
+    },
+    {
+      "checkedAt" : "TS",
+      "checks" : 1,
+      "item" : 4,
+      "outcome" : "closed",
+      "reason" : "checked DAY: in the corpus with its original as [[zqauthor2019_roads]] — closed"
+    },
+    {
+      "checkedAt" : "TS",
+      "checks" : 1,
+      "item" : 5,
+      "outcome" : "no-copy",
+      "reason" : "checked DAY: no legal copy (archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.ref1; core: no copy — CORE not asked: CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — openalex has no copy of 10.5555/zq.ref1; pmc: no copy — pmc has no copy of 10.5555/zq.ref1; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of 10.555"
+    },
+    {
+      "checkedAt" : "TS",
+      "checks" : 1,
+      "item" : 6,
+      "outcome" : "no-copy",
+      "reason" : "checked DAY: no legal copy (archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.closed; core: no copy — CORE not asked: CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — openalex has no copy of 10.5555/zq.closed; pmc: no copy — pmc has no copy of 10.5555/zq.closed; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of "
+    }
+  ],
+  "goals" : [
+  ],
+  "items" : [
+    {
+      "closedBy" : null,
+      "createdAt" : "TS",
+      "createdBy" : null,
+      "doneAt" : null,
+      "goal" : null,
+      "id" : 1,
+      "list" : "acquire",
+      "reason" : null,
+      "status" : "open",
+      "text" : "Fay Zqgold (2022). Gold open access on a refusing host. https://doi.org/10.5555/zq.gold — gold open access, but no script may download it: download it in the browser, then histmersion ingest <file> --citekey zqgold2022_gold",
+      "topic" : "browser download"
+    },
+    {
+      "closedBy" : "UUID",
+      "createdAt" : "TS",
+      "createdBy" : null,
+      "doneAt" : "TS",
+      "goal" : null,
+      "id" : 2,
+      "list" : "acquire",
+      "reason" : "ingested as [[zqa_ledger]]",
+      "status" : "done",
+      "text" : "Find the Zq ledger (no DOI)",
+      "topic" : null
+    },
+    {
+      "closedBy" : "UUID",
+      "createdAt" : "TS",
+      "createdBy" : null,
+      "doneAt" : "TS",
+      "goal" : null,
+      "id" : 3,
+      "list" : "acquire",
+      "reason" : "ingested as [[zqsecond2018_bronze]]",
+      "status" : "done",
+      "text" : "Get 10.5555/zq.open2",
+      "topic" : null
+    },
+    {
+      "closedBy" : "UUID",
+      "createdAt" : "TS",
+      "createdBy" : null,
+      "doneAt" : "TS",
+      "goal" : null,
+      "id" : 4,
+      "list" : "acquire",
+      "reason" : "ingested as [[zqauthor2019_roads]]",
+      "status" : "done",
+      "text" : "Have we 10.5555/zq.open?",
+      "topic" : null
+    },
+    {
+      "closedBy" : null,
+      "createdAt" : "TS",
+      "createdBy" : null,
+      "doneAt" : null,
+      "goal" : null,
+      "id" : 5,
+      "list" : "acquire",
+      "reason" : null,
+      "status" : "open",
+      "text" : "Get 10.5555/zq.ref1",
+      "topic" : null
+    },
+    {
+      "closedBy" : null,
+      "createdAt" : "TS",
+      "createdBy" : null,
+      "doneAt" : null,
+      "goal" : null,
+      "id" : 6,
+      "list" : "acquire",
+      "reason" : null,
+      "status" : "open",
+      "text" : "Wanted: doi:10.5555/zq.closed",
+      "topic" : "zq"
+    },
+    {
+      "closedBy" : null,
+      "createdAt" : "TS",
+      "createdBy" : null,
+      "doneAt" : "TS",
+      "goal" : null,
+      "id" : 8,
+      "list" : "acquire",
+      "reason" : "bought",
+      "status" : "done",
+      "text" : "A Zq atlas (buy)",
+      "topic" : null
+    }
+  ],
+  "list" : "acquire"
+}
+== acquire export
+200 Find the Zq ledger (no DOI)
+
+Get 10.5555/zq.open2
+
+Have we 10.5555/zq.open?
+
+Get 10.5555/zq.ref1
+
+A Zq atlas (buy)
+
+## browser download
+- [ ] Fay Zqgold (2022). Gold open access on a refusing host. https://doi.org/10.5555/zq.gold — gold open access, but no script may download it: download it in the browser, then histmersion ingest <file> --citekey zqgold2022_gold
+
+## zq
+- [ ] Wanted: doi:10.5555/zq.closed
+
+== about: the re-check
+200 {
+  "closedWeek" : 1,
+  "due" : 0,
+  "enabled" : true,
+  "everyDays" : 7,
+  "fetchedToday" : 1,
+  "fetchedWeek" : 1,
+  "job" : null,
+  "nextPass" : "when the next item falls due, TS",
+  "note" : "it runs on the managers' tick, which is not running on this server",
+  "perDay" : 40,
+  "triedToday" : 4,
+  "withDoi" : 3
+}
+== mcp queue acquire
+### acquire (7 item(s))
+
+**browser download**
+- [ ] Fay Zqgold (2022). Gold open access on a refusing host. https://doi.org/10.5555/zq.gold — gold open access, but no script may download it: download it in the browser, then histmersion ingest <file> --citekey zqgold2022_gold  `#1`
+  - _checked DAY: no legal copy (archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.gold; core: no copy — CORE not asked: CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — openalex has no copy of 10.5555/zq.gold; pmc: no copy — pmc has no copy of 10.5555/zq.gold; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of 10.555_
+
+**(no topic)**
+- [x] Find the Zq ledger (no DOI) — _ingested as [[zqa_ledger]]_  `#2`
+- [x] Get 10.5555/zq.open2 — _ingested as [[zqsecond2018_bronze]]_  `#3`
+  - _checked DAY: a legal copy found (unpaywall) — converting; the item closes once it is stored_
+- [x] Have we 10.5555/zq.open? — _ingested as [[zqauthor2019_roads]]_  `#4`
+  - _checked DAY: in the corpus with its original as [[zqauthor2019_roads]] — closed_
+- [ ] Get 10.5555/zq.ref1  `#5`
+  - _checked DAY: no legal copy (archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.ref1; core: no copy — CORE not asked: CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — openalex has no copy of 10.5555/zq.ref1; pmc: no copy — pmc has no copy of 10.5555/zq.ref1; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of 10.555_
+- [x] A Zq atlas (buy) — _bought_  `#8`
+
+**zq**
+- [ ] Wanted: doi:10.5555/zq.closed  `#6`
+  - _checked DAY: no legal copy (archive-org: no copy — archive-org needs an archive.org identifier; unpaywall: no copy — unpaywall has no copy of 10.5555/zq.closed; core: no copy — CORE not asked: CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — openalex has no copy of 10.5555/zq.closed; pmc: no copy — pmc has no copy of 10.5555/zq.closed; arxiv: no copy — arxiv needs an arXiv id; landing: no copy — landing has no copy of _
+== put goal zqa-goal
+200 {
+  "notes" : null,
+  "parentSlug" : null,
+  "periodEnd" : null,
+  "periodStart" : null,
+  "regions" : [
+  ],
+  "slug" : "zqa-goal",
+  "status" : "active",
+  "tags" : [
+  ],
+  "title" : "Zq tin trade",
+  "updatedAt" : "TS"
+}
+== link a query
+200 {
+  "createdAt" : "TS",
+  "kind" : "query",
+  "note" : null,
+  "queue" : null,
+  "ref" : "zq tin trade",
+  "title" : null
+}
+== link a source
+200 {
+  "createdAt" : "TS",
+  "kind" : "source",
+  "note" : null,
+  "queue" : null,
+  "ref" : "zqa_cited",
+  "title" : "The harbour at Zqcove"
+}
+== candidates (none yet)
+200 {
+  "candidates" : [
+  ],
+  "counts" : [
+  ],
+  "goal" : "zqa-goal",
+  "next" : null,
+  "offset" : 0,
+  "state" : "new"
+}
+== sweep --dry-run
+200 {
+  "added" : 3,
+  "again" : 0,
+  "dryRun" : true,
+  "found" : 8,
+  "goal" : "zqa-goal",
+  "notes" : [
+    "core not asked this sweep: CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens) — 1 watch left unread, which keep their watermarks and are read next sweep"
+  ],
+  "skipped" : {
+    "in the corpus or queued" : 4
+  },
+  "unseen" : 0,
+  "watches" : [
+    {
+      "goal" : "zqa-goal",
+      "index" : "openalex",
+      "kind" : "query",
+      "lastError" : null,
+      "lastFound" : 5,
+      "lastRun" : null,
+      "subject" : "zq tin trade",
+      "watermark" : null
+    },
+    {
+      "goal" : "zqa-goal",
+      "index" : "crossref",
+      "kind" : "query",
+      "lastError" : null,
+      "lastFound" : 2,
+      "lastRun" : null,
+      "subject" : "zq tin trade",
+      "watermark" : null
+    },
+    {
+      "goal" : "zqa-goal",
+      "index" : "europepmc",
+      "kind" : "query",
+      "lastError" : null,
+      "lastFound" : 0,
+      "lastRun" : null,
+      "subject" : "zq tin trade",
+      "watermark" : null
+    },
+    {
+      "goal" : "zqa-goal",
+      "index" : "arxiv",
+      "kind" : "query",
+      "lastError" : null,
+      "lastFound" : 0,
+      "lastRun" : null,
+      "subject" : "zq tin trade",
+      "watermark" : null
+    },
+    {
+      "goal" : "zqa-goal",
+      "index" : "core",
+      "kind" : "query",
+      "lastError" : "not asked this sweep — CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)",
+      "lastFound" : 0,
+      "lastRun" : null,
+      "subject" : "zq tin trade",
+      "watermark" : null
+    },
+    {
+      "goal" : "zqa-goal",
+      "index" : "openalex",
+      "kind" : "citing",
+      "lastError" : null,
+      "lastFound" : 1,
+      "lastRun" : null,
+      "subject" : "10.5555/zq.cited",
+      "watermark" : null
+    }
+  ]
+}
+  > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,authorships&mailto=oracle@example.org
+  > GET /openalex/works?search=zq+tin+trade&filter=from_publication_date:DAY,type:article%7Cbook%7Cbook-chapter&per-page=25&sort=publication_date:desc&select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index&mailto=oracle@example.org
+  > GET /crossref/works?query=zq+tin+trade&rows=25&sort=created&order=desc&filter=from-created-date:DAY,type:journal-article,type:book,type:book-chapter,type:monograph,type:edited-book&select=DOI,title,author,issued,type,container-title,is-referenced-by-count,abstract&mailto=oracle@example.org
+  > GET /europepmc/search?query=(zq+tin+trade)+AND+FIRST_PDATE:%5BDAY+TO+DAY%5D&format=json&resultType=core&pageSize=25&sort=FIRST_PDATE+desc
+  > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,authorships&mailto=oracle@example.org
+  > GET /openalex/works?filter=cites:W1661078230,from_publication_date:DAY&per-page=25&sort=publication_date:desc&select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index&mailto=oracle@example.org
+== sweep
+200 {
+  "added" : 3,
+  "again" : 0,
+  "dryRun" : false,
+  "found" : 8,
+  "goal" : "zqa-goal",
+  "notes" : [
+    "core not asked this sweep: CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens) — 1 watch left unread, which keep their watermarks and are read next sweep"
+  ],
+  "skipped" : {
+    "in the corpus or queued" : 4
+  },
+  "unseen" : 3,
+  "watches" : [
+    {
+      "goal" : "zqa-goal",
+      "index" : "openalex",
+      "kind" : "query",
+      "lastError" : null,
+      "lastFound" : 5,
+      "lastRun" : null,
+      "subject" : "zq tin trade",
+      "watermark" : "DAY"
+    },
+    {
+      "goal" : "zqa-goal",
+      "index" : "crossref",
+      "kind" : "query",
+      "lastError" : null,
+      "lastFound" : 2,
+      "lastRun" : null,
+      "subject" : "zq tin trade",
+      "watermark" : "DAY"
+    },
+    {
+      "goal" : "zqa-goal",
+      "index" : "europepmc",
+      "kind" : "query",
+      "lastError" : null,
+      "lastFound" : 0,
+      "lastRun" : null,
+      "subject" : "zq tin trade",
+      "watermark" : "DAY"
+    },
+    {
+      "goal" : "zqa-goal",
+      "index" : "arxiv",
+      "kind" : "query",
+      "lastError" : null,
+      "lastFound" : 0,
+      "lastRun" : null,
+      "subject" : "zq tin trade",
+      "watermark" : "DAY"
+    },
+    {
+      "goal" : "zqa-goal",
+      "index" : "core",
+      "kind" : "query",
+      "lastError" : "not asked this sweep — CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)",
+      "lastFound" : 0,
+      "lastRun" : null,
+      "subject" : "zq tin trade",
+      "watermark" : null
+    },
+    {
+      "goal" : "zqa-goal",
+      "index" : "openalex",
+      "kind" : "citing",
+      "lastError" : null,
+      "lastFound" : 1,
+      "lastRun" : null,
+      "subject" : "10.5555/zq.cited",
+      "watermark" : "DAY"
+    }
+  ]
+}
+  > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,authorships&mailto=oracle@example.org
+  > GET /openalex/works?search=zq+tin+trade&filter=from_publication_date:DAY,type:article%7Cbook%7Cbook-chapter&per-page=25&sort=publication_date:desc&select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index&mailto=oracle@example.org
+  > GET /crossref/works?query=zq+tin+trade&rows=25&sort=created&order=desc&filter=from-created-date:DAY,type:journal-article,type:book,type:book-chapter,type:monograph,type:edited-book&select=DOI,title,author,issued,type,container-title,is-referenced-by-count,abstract&mailto=oracle@example.org
+  > GET /europepmc/search?query=(zq+tin+trade)+AND+FIRST_PDATE:%5BDAY+TO+DAY%5D&format=json&resultType=core&pageSize=25&sort=FIRST_PDATE+desc
+  > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,authorships&mailto=oracle@example.org
+  > GET /openalex/works?filter=cites:W1661078230,from_publication_date:DAY&per-page=25&sort=publication_date:desc&select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index&mailto=oracle@example.org
+== sweep (no such goal)
+400 {
+  "code" : "not_found",
+  "message" : "no goal 'zqa-none'"
+}
+== candidates
+200 {
+  "candidates" : [
+    {
+      "abstractText" : "Zq abstract.",
+      "arxivId" : null,
+      "authors" : [
+        "Mo Zqnew",
+        "Ni Zqnew"
+      ],
+      "doi" : "10.5555/zq.fresh1",
+      "firstSeen" : "TS",
+      "foundBy" : [
+        "openalex query \"zq tin trade\""
+      ],
+      "goal" : "zqa-goal",
+      "id" : 1,
+      "isOa" : false,
+      "lastSeen" : "TS",
+      "state" : "new",
+      "title" : "New finds at Zqtell",
+      "venue" : "Journal of Zq Studies",
+      "year" : 2025
+    },
+    {
+      "abstractText" : "Zq abstract.",
+      "arxivId" : null,
+      "authors" : [
+        "Ox Zqiso"
+      ],
+      "doi" : "10.5555/zq.fresh2",
+      "firstSeen" : "TS",
+      "foundBy" : [
+        "openalex query \"zq tin trade\"",
+        "crossref query \"zq tin trade\""
+      ],
+      "goal" : "zqa-goal",
+      "id" : 2,
+      "isOa" : false,
+      "lastSeen" : "TS",
+      "state" : "new",
+      "title" : "Tin isotopes of Zqland",
+      "venue" : "Journal of Zq Studies",
+      "year" : 2025
+    },
+    {
+      "abstractText" : null,
+      "arxivId" : null,
+      "authors" : [
+        "Pi Zqslag"
+      ],
+      "doi" : "10.5555/zq.fresh3",
+      "firstSeen" : "TS",
+      "foundBy" : [
+        "crossref query \"zq tin trade\""
+      ],
+      "goal" : "zqa-goal",
+      "id" : 3,
+      "isOa" : false,
+      "lastSeen" : "TS",
+      "state" : "new",
+      "title" : "Zq slag heaps",
+      "venue" : "Zq Notes",
+      "year" : 2025
+    }
+  ],
+  "counts" : [
+    {
+      "count" : 3,
+      "state" : "new"
+    }
+  ],
+  "goal" : "zqa-goal",
+  "next" : null,
+  "offset" : 0,
+  "state" : "new"
+}
+== candidates --limit 1 --offset 1
+200 {
+  "candidates" : [
+    {
+      "abstractText" : "Zq abstract.",
+      "arxivId" : null,
+      "authors" : [
+        "Ox Zqiso"
+      ],
+      "doi" : "10.5555/zq.fresh2",
+      "firstSeen" : "TS",
+      "foundBy" : [
+        "openalex query \"zq tin trade\"",
+        "crossref query \"zq tin trade\""
+      ],
+      "goal" : "zqa-goal",
+      "id" : 2,
+      "isOa" : false,
+      "lastSeen" : "TS",
+      "state" : "new",
+      "title" : "Tin isotopes of Zqland",
+      "venue" : "Journal of Zq Studies",
+      "year" : 2025
+    }
+  ],
+  "counts" : [
+    {
+      "count" : 3,
+      "state" : "new"
+    }
+  ],
+  "goal" : "zqa-goal",
+  "next" : 2,
+  "offset" : 1,
+  "state" : "new"
+}
+== mark seen
+200 {
+  "state" : "seen",
+  "updated" : 1
+}
+== mark (bad state)
+400 {
+  "code" : "invalid",
+  "message" : "unknown state 'maybe' (new, seen, queued, dismissed)"
+}
+== candidates --state seen
+200 {
+  "candidates" : [
+    {
+      "abstractText" : "Zq abstract.",
+      "arxivId" : null,
+      "authors" : [
+        "Mo Zqnew",
+        "Ni Zqnew"
+      ],
+      "doi" : "10.5555/zq.fresh1",
+      "firstSeen" : "TS",
+      "foundBy" : [
+        "openalex query \"zq tin trade\""
+      ],
+      "goal" : "zqa-goal",
+      "id" : 1,
+      "isOa" : false,
+      "lastSeen" : "TS",
+      "state" : "seen",
+      "title" : "New finds at Zqtell",
+      "venue" : "Journal of Zq Studies",
+      "year" : 2025
+    }
+  ],
+  "counts" : [
+    {
+      "count" : 2,
+      "state" : "new"
+    },
+    {
+      "count" : 1,
+      "state" : "seen"
+    }
+  ],
+  "goal" : null,
+  "next" : null,
+  "offset" : 0,
+  "state" : "seen"
+}
+== candidates --state wrong
+400 {
+  "code" : "invalid",
+  "message" : "unknown state 'wrong' (new, seen, queued, dismissed)"
+}
+== sweep again (CORE's budget spent)
+200 {
+  "added" : 0,
+  "again" : 3,
+  "dryRun" : false,
+  "found" : 8,
+  "goal" : "zqa-goal",
+  "notes" : [
+    "core not asked this sweep: CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens) — 1 watch left unread, which keep their watermarks and are read next sweep"
+  ],
+  "skipped" : {
+    "in the corpus or queued" : 4
+  },
+  "unseen" : 2,
+  "watches" : [
+    {
+      "goal" : "zqa-goal",
+      "index" : "openalex",
+      "kind" : "query",
+      "lastError" : null,
+      "lastFound" : 5,
+      "lastRun" : null,
+      "subject" : "zq tin trade",
+      "watermark" : "DAY"
+    },
+    {
+      "goal" : "zqa-goal",
+      "index" : "crossref",
+      "kind" : "query",
+      "lastError" : null,
+      "lastFound" : 2,
+      "lastRun" : null,
+      "subject" : "zq tin trade",
+      "watermark" : "DAY"
+    },
+    {
+      "goal" : "zqa-goal",
+      "index" : "europepmc",
+      "kind" : "query",
+      "lastError" : null,
+      "lastFound" : 0,
+      "lastRun" : null,
+      "subject" : "zq tin trade",
+      "watermark" : "DAY"
+    },
+    {
+      "goal" : "zqa-goal",
+      "index" : "arxiv",
+      "kind" : "query",
+      "lastError" : null,
+      "lastFound" : 0,
+      "lastRun" : null,
+      "subject" : "zq tin trade",
+      "watermark" : "DAY"
+    },
+    {
+      "goal" : "zqa-goal",
+      "index" : "core",
+      "kind" : "query",
+      "lastError" : "not asked this sweep — CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)",
+      "lastFound" : 0,
+      "lastRun" : null,
+      "subject" : "zq tin trade",
+      "watermark" : null
+    },
+    {
+      "goal" : "zqa-goal",
+      "index" : "openalex",
+      "kind" : "citing",
+      "lastError" : null,
+      "lastFound" : 1,
+      "lastRun" : null,
+      "subject" : "10.5555/zq.cited",
+      "watermark" : "DAY"
+    }
+  ]
+}
+  > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,authorships&mailto=oracle@example.org
+  > GET /openalex/works?search=zq+tin+trade&filter=from_publication_date:DAY,type:article%7Cbook%7Cbook-chapter&per-page=25&sort=publication_date:desc&select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index&mailto=oracle@example.org
+  > GET /crossref/works?query=zq+tin+trade&rows=25&sort=created&order=desc&filter=from-created-date:DAY,type:journal-article,type:book,type:book-chapter,type:monograph,type:edited-book&select=DOI,title,author,issued,type,container-title,is-referenced-by-count,abstract&mailto=oracle@example.org
+  > GET /europepmc/search?query=(zq+tin+trade)+AND+FIRST_PDATE:%5BDAY+TO+DAY%5D&format=json&resultType=core&pageSize=25&sort=FIRST_PDATE+desc
+  > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,authorships&mailto=oracle@example.org
+  > GET /openalex/works?filter=cites:W1661078230,from_publication_date:DAY&per-page=25&sort=publication_date:desc&select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index&mailto=oracle@example.org
+== about: the upstream quotas
+200 [
+  {
+    "blockedUntil" : null,
+    "blockedWhy" : null,
+    "dailyTokens" : 6,
+    "day" : "DAY",
+    "lookupTokens" : 6,
+    "observedAt" : null,
+    "perMinute" : 20,
+    "rateLimit" : null,
+    "rateRemaining" : null,
+    "searchDailyTokens" : 2,
+    "searchTokens" : 0,
+    "upstream" : "core"
+  }
+]
+== mcp candidates
+# Candidates for goal `zqa-goal` — new
+
+Counts: 2 new, 1 seen.
+
+- **#2** `10.5555/zq.fresh2` — Tin isotopes of Zqland (Ox Zqiso, 2025, Journal of Zq Studies)
+  found by crossref query "zq tin trade"; openalex query "zq tin trade" · first seen DAY
+  Zq abstract.
+- **#3** `10.5555/zq.fresh3` — Zq slag heaps (Pi Zqslag, 2025, Zq Notes)
+  found by crossref query "zq tin trade" · first seen DAY
+== mcp candidates sweep dry
+# Candidate sweep of goal `zqa-goal` (dry run: nothing stored)
+
+8 work(s) found by 6 watch(es): 0 new candidate(s), 3 found again. Left out: 4 in the corpus or queued. 2 unseen candidate(s) wait for a decision (`histmersion candidates --goal zqa-goal`).
+
+- **core not asked this sweep: CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens) — 1 watch left unread, which keep their watermarks and are read next sweep**
+
+- openalex query `zq tin trade`: 5 found (reads from DAY next)
+- crossref query `zq tin trade`: 2 found (reads from DAY next)
+- europepmc query `zq tin trade`: 0 found (reads from DAY next)
+- arxiv query `zq tin trade`: 0 found (reads from DAY next)
+- core query `zq tin trade`: not read — not asked this sweep — CORE's daily budget for searches is spent (6 of 6 tokens today, UTC; acquire.core.search-daily-tokens)
+- openalex citing `10.5555/zq.cited`: 1 found (reads from DAY next)
+  > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,authorships&mailto=oracle@example.org
+  > GET /openalex/works?search=zq+tin+trade&filter=from_publication_date:DAY,type:article%7Cbook%7Cbook-chapter&per-page=25&sort=publication_date:desc&select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index&mailto=oracle@example.org
+  > GET /crossref/works?query=zq+tin+trade&rows=25&sort=created&order=desc&filter=from-created-date:DAY,type:journal-article,type:book,type:book-chapter,type:monograph,type:edited-book&select=DOI,title,author,issued,type,container-title,is-referenced-by-count,abstract&mailto=oracle@example.org
+  > GET /europepmc/search?query=(zq+tin+trade)+AND+FIRST_PDATE:%5BDAY+TO+DAY%5D&format=json&resultType=core&pageSize=25&sort=FIRST_PDATE+desc
+  > GET /openalex/works/https://doi.org/10.5555/zq.cited?select=id,authorships&mailto=oracle@example.org
+  > GET /openalex/works?filter=cites:W1661078230,from_publication_date:DAY&per-page=25&sort=publication_date:desc&select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index&mailto=oracle@example.org
+== mcp candidates sweep (no goal)
+_give `goal` to sweep_
+== mcp candidates mark
+1 candidate(s) marked dismissed.
