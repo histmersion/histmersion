@@ -35,7 +35,15 @@ import javax.sql.DataSource
   *   - referrers: a source renamed (an old citekey kept as an alias, a rename back) and one deleted (a dry run, the
   *     refusals, the delete), with every row research, media, automation and the catalogue hold of them before and
   *     after — article texts and links, coverage reasons, figures' links, attestations, events, goal links, the work
-  *     lists.
+  *     lists;
+  *   - the exchange (`exchange.txt`, recorded on the code before the library's carried kinds and merge rules moved): a
+  *     collection's whole bundle and the part since a shared history, imported into an empty collection and into one
+  *     that holds that history, and merged into one that went on too — findings and a body changed on both sides, edges
+  *     added on both, a citekey renamed on one and edited under its old name on the other, works matched by DOI and by
+  *     their fingerprint, a citekey taken by two works, a source deleted —, every round of the plan, the resolution
+  *     file, the apply, the merges, the ledger and the library's rows;
+  *   - the checks (`lint.txt`): a collection on which every library rule finds something, the place rules included, the
+  *     report, the safe fixes, the place rules' repairs named, and the rows after.
   *
   * Uids are written as the record they name, timestamps as `TS`, durations as `N`, today's date as `DAY`.
   * `HISTMERSION_UPDATE_ORACLE=1` rewrites the files. Skipped without HISTMERSION_TEST_DB_URL.
@@ -974,6 +982,599 @@ class LibraryOracleSuite extends DbSuite:
     else
       assert(Files.exists(file), s"$file is missing; write it with HISTMERSION_UPDATE_ORACLE=1")
       assertNoDiff(actual, Files.readString(file, UTF_8))
+
+  // ── the exchange and the checks ────────────────────────────────────────────────────────────
+
+  /** A source as the exchange test writes it: every field the bundle carries, `fields` over the defaults. */
+  private def xput(title: String, year: Option[Int], fields: (String, Json)*): String =
+    val defaults = List(
+      "title" -> title.asJson,
+      "authors" -> List("Zxauthor, Ann").asJson,
+      "venue" -> "Zx Review".asJson,
+      "status" -> "current".asJson,
+      "topics" -> List("bronze age").asJson,
+      "regions" -> List("Zxland").asJson,
+      "tags" -> List("zx-oracle").asJson,
+      "periodStart" -> (-1500).asJson,
+      "periodEnd" -> (-1200).asJson,
+      "summary" -> s"On $title.".asJson,
+      "notes" -> s"Notes on $title.".asJson
+    ) ++ year.map("year" -> _.asJson)
+    val named = fields.map(_._1).toSet
+    Json.fromFields(defaults.filterNot(f => named(f._1)) ++ fields).noSpaces
+
+  private def xfinding(
+      claim: String,
+      at: Option[(Double, Double)],
+      period: Option[(Long, Long)],
+      region: String = "Zxland"
+  ): Json =
+    Json.fromFields(
+      List("claim" -> claim.asJson, "tags" -> List("zx-claim").asJson, "confidence" -> "high".asJson) ++
+        Option.when(region.nonEmpty)("region" -> region.asJson) ++
+        at.toList.flatMap((lon, lat) => List("lon" -> lon.asJson, "lat" -> lat.asJson)) ++
+        period.toList.flatMap((a, b) =>
+          List("periodStart" -> a.asJson, "periodEnd" -> b.asJson, "periodName" -> "Zx".asJson)
+        )
+    )
+
+  private def findingsOf(fs: Json*): (String, Json) = "findings" -> Json.fromValues(fs)
+  private def edgesOf(es: (String, String)*): (String, Json) = "edges" -> Json.fromValues(es.map(edge(_, _)))
+
+  private val ZxBody =
+    "# Zxtown\n\n## The walls\n\nThe walls of Zxtown were raised in the Zx period.\n\n## The gate\n\nThe gate faced the sea.\n"
+
+  /** The collection the exchange test starts from: sources with findings and edges (one to a work not stored), a body,
+    * a renamed citekey.
+    */
+  private def craftExchange(url: String): String =
+    val log = StringBuilder()
+    def step(name: String, answer: String): Unit = log ++= s"== $name\n$answer\n"
+    step("label", send("PUT", s"$url/api/instance", """{"label":"zxlib"}"""))
+    step(
+      "put one",
+      send(
+        "PUT",
+        s"$url/api/sources/zxone2001_storm",
+        xput(
+          "The Storm of Zxtown",
+          Some(2001),
+          "doi" -> "10.9999/zx.one".asJson,
+          "body" -> ZxBody.asJson,
+          findingsOf(
+            xfinding("the walls of Zxtown were raised around 1500 BC", Some((34.6, 40.0)), Some((-1520L, -1480L))),
+            xfinding("the gate of Zxtown faced the sea", Some((34.61, 40.01)), Some((-1400L, -1300L)))
+          ),
+          edgesOf("zxtwo2005_kingdom" -> "references", "zxlost1900_gone" -> "references")
+        )
+      )
+    )
+    step(
+      "put two",
+      send(
+        "PUT",
+        s"$url/api/sources/zxtwo2005_kingdom",
+        xput(
+          "The Kingdom of Zxland",
+          Some(2005),
+          "status" -> "contested".asJson,
+          findingsOf(xfinding("a kingdom ruled Zxland", Some((35.0, 39.5)), Some((-1450L, -1250L))))
+        )
+      )
+    )
+    step("put three", send("PUT", s"$url/api/sources/zxthree1903_old", xput("An Old Book on Zxland", Some(1903))))
+    step(
+      "rename three",
+      post(s"$url/api/sources/zxthree1903_old/rename", """{"newCitekey":"zxthree1903_prolegomena"}""")
+    )
+    log.result()
+
+  /** After the shared history both collections go on. */
+  private def editExchange(lib: String, home: String): String =
+    val log = StringBuilder()
+    def step(name: String, answer: String): Unit = log ++= s"== $name\n$answer\n"
+    // findings changed on both sides, the body edited on both (a conflict), edges added on both
+    step(
+      "lib: one's findings, body and edges",
+      send(
+        "PUT",
+        s"$lib/api/sources/zxone2001_storm",
+        xput(
+          "The Storm of Zxtown",
+          Some(2001),
+          "doi" -> "10.9999/zx.one".asJson,
+          "body" -> ZxBody.replace("sea.", "sea, as lib reads it.").asJson,
+          findingsOf(
+            xfinding("the walls of Zxtown were raised around 1490 BC", Some((34.6, 40.0)), Some((-1500L, -1480L))),
+            xfinding("the gate of Zxtown faced the sea", Some((34.61, 40.01)), Some((-1400L, -1300L))),
+            xfinding("a third claim, lib's", Some((34.62, 40.02)), Some((-1300L, -1200L)))
+          ),
+          edgesOf(
+            "zxtwo2005_kingdom" -> "references",
+            "zxlost1900_gone" -> "references",
+            "zxthree1903_prolegomena" -> "challenges"
+          )
+        )
+      )
+    )
+    step(
+      "home: one's findings, body and edges",
+      send(
+        "PUT",
+        s"$home/api/sources/zxone2001_storm",
+        xput(
+          "The Storm of Zxtown",
+          Some(2001),
+          "doi" -> "10.9999/zx.one".asJson,
+          "body" -> ZxBody.replace("sea.", "sea, as home reads it.").asJson,
+          "summary" -> "On The Storm of Zxtown, at home.".asJson,
+          findingsOf(
+            xfinding("the walls of Zxtown were raised around 1500 BC", Some((34.6, 40.0)), Some((-1520L, -1480L))),
+            xfinding("the gate of Zxtown faced the harbour", Some((34.61, 40.01)), Some((-1400L, -1300L))),
+            xfinding("a claim of home's", Some((34.63, 40.03)), Some((-1350L, -1250L)))
+          ),
+          edgesOf(
+            "zxtwo2005_kingdom" -> "references",
+            "zxlost1900_gone" -> "references",
+            "zxthree1903_prolegomena" -> "cites"
+          )
+        )
+      )
+    )
+    // a renamed citekey at lib, the old one at home followed by an edit there
+    step(
+      "lib: rename two",
+      post(s"$lib/api/sources/zxtwo2005_kingdom/rename", """{"newCitekey":"zxtwo2005_hittites"}""")
+    )
+    step("home: patch two", send("PATCH", s"$home/api/sources/zxtwo2005_kingdom", """{"tags":{"add":["zx-home"]}}"""))
+    // one work under two citekeys with one DOI; one under two citekeys with no DOI and the same title, authors, year
+    step(
+      "lib: a work by DOI",
+      send(
+        "PUT",
+        s"$lib/api/sources/zxdoi2010_lib",
+        xput("A Work Both Hold", Some(2010), "doi" -> "10.9999/ZX.Both".asJson)
+      )
+    )
+    step(
+      "home: the same work by DOI",
+      send(
+        "PUT",
+        s"$home/api/sources/zxdoi2010_home",
+        xput(
+          "A Work Both Hold",
+          Some(2010),
+          "doi" -> "https://doi.org/10.9999/zx.both".asJson,
+          "summary" -> "home's".asJson
+        )
+      )
+    )
+    step(
+      "lib: a work by its fingerprint",
+      send(
+        "PUT",
+        s"$lib/api/sources/zxfp1950_lib",
+        xput(
+          "On the Zxtown Hoard",
+          Some(1950),
+          "authors" -> List("Zxwriter, Bo").asJson,
+          "body" -> "# Hoard\n\nCoins.\n".asJson
+        )
+      )
+    )
+    step(
+      "home: the same work by its fingerprint",
+      send(
+        "PUT",
+        s"$home/api/sources/zxfp1950_home",
+        xput(
+          "On the Zxtown hoard.",
+          Some(1950),
+          "authors" -> List("Zxwriter, B.").asJson,
+          "body" -> "# Hoard\n\nCoins and rings.\n".asJson
+        )
+      )
+    )
+    // a citekey taken on both sides by different works
+    step("lib: a taken citekey", send("PUT", s"$lib/api/sources/zxtaken2020_x", xput("Lib's Work", Some(2020))))
+    step(
+      "home: the same citekey",
+      send("PUT", s"$home/api/sources/zxtaken2020_x", xput("Home's Other Work", Some(2020)))
+    )
+    // a source deleted at lib
+    step("lib: delete three", post(s"$lib/api/sources/zxthree1903_prolegomena/delete", """{"apply":true}"""))
+    log.result()
+
+  /** A collection where every library rule finds something: the gazetteer the place rules ask, then a source for each
+    * rule.
+    */
+  private def craftChecks(url: String, ds: DataSource): String =
+    val log = StringBuilder()
+    def step(name: String, answer: String): Unit = log ++= s"== $name\n$answer\n"
+    // four sites on one point make it a placeholder; a region of the same name lies far away
+    val sites = (1 to 4)
+      .map(i =>
+        s"""{"@id":"zx_pt$i","type":"Feature","properties":{"title":"${if i == 1 then "Zxville" else s"Zxpoint $i"}"},
+           | "geometry":{"type":"Point","coordinates":[30.0,30.0]}}""".stripMargin
+      )
+      .mkString(",")
+    step(
+      "places import sites",
+      post(
+        s"$url/api/places/import?kind=site",
+        s"""{"type":"FeatureCollection","features":[$sites,
+      |{"@id":"zx_fort","type":"Feature","properties":{"title":"Zxfort"},"geometry":{"type":"Point","coordinates":[33.0,36.0]}}]}""".stripMargin,
+        "text/plain"
+      )
+    )
+    step(
+      "places import regions",
+      post(
+        s"$url/api/places/import?kind=region",
+        s"""{"type":"FeatureCollection","features":[{"@id":"zx_ville","type":"Feature","properties":{"title":"Zxville"},
+           | "geometry":${polygon(40, 40, 42, 42)}}]}""".stripMargin,
+        "text/plain"
+      )
+    )
+    def put(ck: String, body: String): Unit = step(s"put $ck", send("PUT", s"$url/api/sources/$ck", body))
+    val one = findingsOf(xfinding("a claim", Some((34.6, 40.0)), Some((-1500L, -1400L))))
+    put(
+      "zxa2001_edges",
+      xput("Edges", Some(2001), one, edgesOf("zxnobody1900_lost" -> "references", "zxb2002" -> "cites"))
+    )
+    put("zxb2002_nofindings", xput("No findings", Some(2002)))
+    put("zxc2003_noperiod", xput("No period", Some(2003), one, "periodStart" -> Json.Null, "periodEnd" -> Json.Null))
+    put("zxd2004_noregions", xput("No regions", Some(2004), one, "regions" -> Json.arr()))
+    put("zxe2005_nosummary", xput("No summary", Some(2005), one, "summary" -> "  ".asJson))
+    put("zxf2006_unassessed", xput("Unassessed", Some(2006), one, "status" -> "unassessed".asJson))
+    put("zxg2007_doia", xput("Doi A", Some(2007), one, "doi" -> "10.9999/zx.dup".asJson))
+    put("zxh2008_doib", xput("Doi B", Some(2008), one, "doi" -> "10.9999/ZX.DUP".asJson))
+    put("zxi2009_stale", xput("Stale chunks", Some(2009), one, "body" -> ZxBody.asJson))
+    put(
+      "zxj2010_findings",
+      xput(
+        "Undated and unlocated",
+        Some(2010),
+        findingsOf(
+          xfinding("an undated claim", Some((34.6, 40.0)), None),
+          xfinding("an unlocated claim", None, Some((-1500L, -1400L)), region = "")
+        )
+      )
+    )
+    put(
+      "zxk2011_figures",
+      xput("Legacy figures", Some(2011), one, "body" -> "# F\n\n![a figure](md/zxk/figures/fig1.png)\n".asJson)
+    )
+    put("zxl2012_tags", xput("Tags", Some(2012), one, "tags" -> List("Zx Oracle", "zx_tag").asJson))
+    put("zxm2013_noyear", xput("No year", None, one))
+    put("zxn2014_mismatch", xput("Year mismatch", Some(2016), one))
+    put("zxo2015_pipe", xput("Author pipe", Some(2015), one, "authors" -> List("Zxauthor, Ann | Zxwriter, Bo").asJson))
+    put("zxp2016_superseded", xput("Superseded", Some(2016), one, "status" -> "superseded".asJson))
+    put("zxq2017_notes", xput("Note format", Some(2017), one, "notes" -> "<div> never closed".asJson))
+    put("zxr2018_orphan", xput("Orphan", Some(2018), one))
+    // the place rules: a finding on the old geocoder's point (the site; the current one takes the region), one with
+    // a name and no point, one on the placeholder point whose name nothing resolves
+    put(
+      "zxs2019_places",
+      xput(
+        "Places",
+        Some(2019),
+        findingsOf(
+          xfinding(
+            "at Zxville, as the old geocoder placed it",
+            Some((30.0, 30.0)),
+            Some((-1500L, -1400L)),
+            region = "Zxville"
+          ),
+          xfinding("at Zxfort, with no point", None, Some((-1500L, -1400L)), region = "Zxfort"),
+          xfinding(
+            "on a grid square's centre, named nowhere",
+            Some((22.5, 37.5)),
+            Some((-1500L, -1400L)),
+            region = "Zxnowhere"
+          )
+        )
+      )
+    )
+    // what the tables hold besides the writes: a stored original's digest twice, a body's chunks gone
+    exec(ds, "UPDATE sources SET sha256 = 'aa' || repeat('0', 62) WHERE citekey IN ('zxg2007_doia', 'zxh2008_doib')")
+    exec(ds, "DELETE FROM source_chunks WHERE citekey = 'zxi2009_stale'")
+    log.result()
+
+  /** Every entry of a bundle: its name and size; a line file's lines; a blob by its length; the manifest without the
+    * moment it was made, its id and its digests.
+    */
+  private def bundleText(bundle: Array[Byte], names: Map[String, String]): String =
+    val in = java.util.zip.GZIPInputStream(java.io.ByteArrayInputStream(bundle))
+    val out = StringBuilder()
+    @scala.annotation.tailrec
+    def loop(): Unit =
+      val header = in.readNBytes(512)
+      if header.length == 512 && header.exists(_ != 0) then
+        val name = String(header.take(100), UTF_8).takeWhile(_ != 0)
+        val prefix = String(header.slice(345, 500), UTF_8).takeWhile(_ != 0)
+        val size = java.lang.Long.parseLong(String(header.slice(124, 136), UTF_8).trim.takeWhile(_ != 0), 8)
+        val data = in.readNBytes(size.toInt)
+        val _ = in.skip((512 - size % 512) % 512)
+        val path = if prefix.isEmpty then name else s"$prefix/$name"
+        if path == "manifest.json" then
+          val m = parser.parse(String(data, UTF_8)).fold(e => fail(e.toString), identity)
+          val kept = m
+            .mapObject(_.remove("createdAt").remove("bundleId"))
+            .hcursor
+            .downField("files")
+            .withFocus(_.mapArray(_.map(_.mapObject(_.remove("sha256")))))
+            .top
+            .getOrElse(m)
+          out ++= s"== $path\n${xjson(kept.noSpaces, names)}\n"
+        else if path.endsWith(".ndjson") then
+          val lines = String(data, UTF_8).linesIterator.toList
+          out ++= s"== $path (${lines.size} lines)\n"
+          lines.foreach(l => out ++= xjson(l, names).linesIterator.mkString(" ") + "\n")
+        else out ++= s"== blob ${data.length} bytes\n"
+        loop()
+    loop()
+    out.toString
+
+  /** uid → the record it names, over every database the exchange test made. */
+  private def xnames(dss: List[(String, DataSource)]): Map[String, String] =
+    val queries = List(
+      "SELECT uid::text, 'source:' || citekey FROM sources",
+      "SELECT origin::text, 'origin-of:' || citekey FROM sources WHERE origin IS NOT NULL",
+      "SELECT uid::text, 'finding:' || id FROM findings",
+      "SELECT uid::text, 'tombstone:' || kind FROM tombstones",
+      "SELECT alias_uid::text, 'alias-of:' || uid::text FROM uid_aliases"
+    )
+    def run(ds: DataSource, q: String): List[(String, String)] =
+      scala.util.Try(connect(ds)(Sql.raw(q).frag.query[(String, String)].run().toList)).getOrElse(Nil)
+    val records = dss.flatMap((_, ds) => queries.flatMap(run(ds, _)))
+    val instances =
+      dss.flatMap((n, ds) => run(ds, "SELECT id::text, 'x' FROM instance").map((id, _) => id -> s"instance:$n"))
+    val merges = dss.flatMap((n, ds) =>
+      run(ds, "SELECT id::text, 'x' FROM merges ORDER BY created_at").zipWithIndex.map { case ((id, _), i) =>
+        id -> s"merge:$n#${i + 1}"
+      }
+    )
+    (instances ++ records ++ merges).distinctBy(_._1).toMap
+
+  private val PlanRe = "plan [0-9a-f]{8}\\b".r
+  private val ShortRe = "(?<![-\\w])[0-9a-f]{8}(?![-\\w])".r
+  private val Measured = Set("bytes", "files", "durationMs", "elapsedMs", "tookMillis", "ageSeconds", "totalBytes")
+  private def digest(key: String): Boolean = key.toLowerCase.matches(".*(rev|hash|sha256)(_?(after|before))?")
+
+  private def xjson(text: String, names: Map[String, String]): String =
+    def walk(j: Json): Json =
+      j.arrayOrObject(
+        j,
+        a => Json.fromValues(a.map(walk)),
+        o =>
+          Json.fromFields(o.toList.map { (k, v) =>
+            if Measured(k) && v.isNumber then k -> Json.fromString("N")
+            else if digest(k) && v.isString then k -> Json.fromString("DIGEST")
+            else k -> walk(v)
+          })
+      )
+    // the arrays a plan orders by its issue ids, which hash random uids: sorted by their normalised text
+    def sortIssues(j: Json): Json =
+      j.arrayOrObject(
+        j,
+        a => Json.fromValues(a.map(sortIssues)),
+        o =>
+          Json.fromFields(o.toList.map { (k, v) =>
+            val inner = sortIssues(v)
+            if IssueArrays(k) then k -> inner.mapArray(_.sortBy(_.spaces2SortKeys)) else k -> inner
+          })
+      )
+    val t = parser.parse(text) match
+      case Right(j) =>
+        val n = normalise(walk(j).spaces2SortKeys, names)
+        parser.parse(n).fold(_ => n, sortIssues(_).spaces2SortKeys)
+      case Left(_) => normalise(text, names)
+    stamps(t)
+
+  /** A plan's short hash, a dump's moment, a short id. */
+  private def stamps(t: String): String =
+    ShortRe.replaceAllIn(PlanRe.replaceAllIn(StampRe.replaceAllIn(t, "STAMP"), "plan PLAN"), "SHORT")
+  private val StampRe = "\\d{8}T\\d{6}Z(?:-\\d+)?".r
+
+  private val IssueArrays =
+    Set("issues", "resolve", "resolutions", "resolutionErrors", "problems", "decisions", "remembered")
+
+  /** An issue id → `<letter>-issue:<kind>:<label>`, the label being the record's on either side (a second issue of the
+    * same kind and label numbered by its text).
+    */
+  private def issueNames(plans: List[String]): Map[String, String] =
+    val issues = plans
+      .flatMap(p => parser.parse(p.dropWhile(_ != '{')).toOption)
+      .flatMap(_.hcursor.downField("issues").focus.flatMap(_.asArray).getOrElse(Vector.empty))
+      .flatMap { i =>
+        val c = i.hcursor
+        for
+          id <- c.downField("id").as[String].toOption
+          kind = c.downField("kind").as[String].getOrElse("?")
+          label = c
+            .downField("right")
+            .downField("label")
+            .as[String]
+            .toOption
+            .orElse(c.downField("left").downField("label").as[String].toOption)
+            .getOrElse("?")
+        yield (id, s"${id.take(1)}-issue:$kind:$label", i.hcursor.downField("title").as[String].getOrElse(""))
+      }
+      .distinctBy(_._1)
+    issues
+      .groupBy(_._2)
+      .toList
+      .flatMap((name, same) =>
+        if same.size == 1 then same.map(i => i._1 -> name)
+        else same.sortBy(_._3).zipWithIndex.map((i, n) => i._1 -> s"$name#${n + 1}")
+      )
+      .toMap
+
+  /** The library's tables and the identity rows that name its records, every row, normalised. */
+  private val LibraryTables = List(
+    "sources" -> "citekey, title, authors, doi, year, venue, status, topics, regions, tags, summary, notes, period::text, ocr_markdown, sha256, origin",
+    "source_aliases" -> "alias, citekey",
+    "source_chunks" -> "citekey, ord, heading",
+    "source_identifiers" -> "*",
+    "findings" -> "id, citekey, claim, region_name, ST_AsText(geom) AS geom, period::text, period_name, tags, confidence",
+    "finding_places" -> "*",
+    "edges" -> "*",
+    "unresolved_edges" -> "*",
+    "assessments" -> "*",
+    "tombstones" -> "kind, uid",
+    "uid_aliases" -> "*",
+    "queue_items" -> "list, text, topic, status"
+  )
+
+  private def libraryRows(ds: DataSource, names: Map[String, String]): String =
+    LibraryTables
+      .map { (t, cols) =>
+        val rs = connect(ds)(
+          Sql.raw(s"""SELECT to_jsonb(x)::text FROM (SELECT $cols FROM "$t") x""").frag.query[String].run().toList
+        )
+        val normed = rs.map(r => xjson(r, names).linesIterator.map(_.trim).mkString(" ")).sorted
+        (s"## $t ${normed.size} rows" :: normed).mkString("\n")
+      }
+      .mkString("", "\n", "\n")
+
+  private def postBytes(url: String, body: Array[Byte]): String =
+    val r = raw(
+      HttpRequest
+        .newBuilder(URI.create(url))
+        .header("content-type", "application/octet-stream")
+        .POST(HttpRequest.BodyPublishers.ofByteArray(body))
+    )
+    s"${r.statusCode} ${String(r.body, UTF_8)}"
+
+  private def bytes(url: String): Array[Byte] =
+    val r = raw(HttpRequest.newBuilder(URI.create(url)))
+    assertEquals(r.statusCode, 200, String(r.body, UTF_8).take(500))
+    r.body
+
+  private def awaitApply(url: String, job: String, left: Int = 600): String =
+    val j = get(s"$url/api/merge/apply/$job")
+    if j.contains("\"done\"") || j.contains("\"failed\"") || left == 0 then j
+    else { Thread.sleep(100); awaitApply(url, job, left - 1) }
+
+  /** A merge of `bundle` into the collection at `url`: the first plan, every open issue answered keep-right, the plan
+    * again, the resolution file, the apply, the merges, the merge and the ledger.
+    */
+  private def mergeInto(url: String, bundle: Array[Byte]): List[(String, String)] =
+    val up = ok(postBytes(s"$url/api/bundle/upload", bundle))
+    val sha = field(up, "sha256")
+    val p0 = ok(post(s"$url/api/merge/plan", s"""{"bundle":"$sha"}"""))
+    val open = parser
+      .parse(p0)
+      .toOption
+      .flatMap(_.hcursor.downField("issues").focus)
+      .flatMap(_.asArray)
+      .getOrElse(Vector.empty)
+      .flatMap { i =>
+        val options = i.hcursor.downField("options").as[List[String]].getOrElse(Nil)
+        val suggested = i.hcursor.downField("suggested").as[String].toOption
+        val choice =
+          if options.isEmpty || options.contains("keep-right") then "keep-right" else suggested.getOrElse(options.head)
+        i.hcursor
+          .downField("id")
+          .as[String]
+          .toOption
+          .filter(_ => i.hcursor.downField("decision").focus.forall(_.isNull))
+          .map(_ -> choice)
+      }
+      .sorted
+    val resolutions =
+      s"""{"resolve":[${open.map((id, d) => s"""{"issue":"$id","decision":"$d"}""").mkString(",")}]}"""
+    val p1 = ok(post(s"$url/api/merge/plan", s"""{"bundle":"$sha","resolutions":$resolutions}"""))
+    val decided = parser.decode[MergeResolutions](resolutions).fold(e => fail(e.toString), identity)
+    val template =
+      MergeResolutionsText.template(parser.decode[MergePlan](p1).fold(e => fail(e.toString), identity), decided)
+    val read = ok(post(s"$url/api/merge/resolutions", template, "text/plain"))
+    val hash = field(p1, "planHash")
+    val job = ok(post(s"$url/api/merge/apply", s"""{"bundle":"$sha","planHash":"$hash","resolutions":$resolutions}"""))
+    val done = awaitApply(url, field(job, "job"))
+    val ml = get(s"$url/api/merges")
+    val id = field(ml, "id")
+    List(
+      "the first plan" -> p0,
+      "the plan, every issue answered" -> p1,
+      "the resolution file" -> template,
+      "the resolution file read back" -> read,
+      "applied" -> done,
+      "merges" -> ml,
+      "the merge" -> get(s"$url/api/merges/$id"),
+      "the ledger" -> get(s"$url/api/merges/ledger?limit=1000")
+    )
+
+  test("the library's kinds through the exchange and its checks, as recorded"):
+    val lib = scratch("xlib")
+    val home = scratch("xhome")
+    val copy = scratch("xcopy")
+    val inc = scratch("xinc")
+    val checks = scratch("xchecks")
+    val fixed = scratch("xfixed")
+    val all =
+      List("lib" -> lib, "home" -> home, "copy" -> copy, "inc" -> inc, "checks" -> checks, "fixed" -> fixed)
+    val crafted = withServer("xlib")(craftExchange)
+    // home and inc import lib once: the shared history
+    val first = withServer("xlib")(url => bytes(s"$url/api/bundle"))
+    val homeFirst = withServer("xhome")(url => ok(postBytes(s"$url/api/bundle/import", first)))
+    val incFirst = withServer("xinc")(url => ok(postBytes(s"$url/api/bundle/import", first)))
+    val since = connect(lib)(
+      sql"SELECT to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"')".query[String].run().head
+    )
+    Thread.sleep(20)
+    val edited = withServer("xlib")(l => withServer("xhome")(h => editExchange(l, h)))
+    val (whole, part) = withServer("xlib")(url => (bytes(s"$url/api/bundle"), bytes(s"$url/api/bundle?since=$since")))
+    val imported = withServer("xcopy")(url => ok(postBytes(s"$url/api/bundle/import", whole)))
+    val incremental = withServer("xinc")(url => ok(postBytes(s"$url/api/bundle/import", part)))
+    val merged = withServer("xhome")(url => mergeInto(url, whole))
+    // the checks: every rule, the safe fixes, the place rules' repairs named
+    val (checked, fixes, named, after) = withServer("xchecks") { url =>
+      val w = craftChecks(url, checks)
+      val report = get(s"$url/api/lint")
+      val fix = post(s"$url/api/lint/fix")
+      val byName = List("finding-geocode", "finding-unplaced", "finding-placeholder").map(r =>
+        r -> (get(s"$url/api/lint?rule=$r") + "\n" + post(s"$url/api/lint/fix?rule=$r") + "\n" + get(
+          s"$url/api/lint?rule=$r"
+        ))
+      )
+      (w + "== every rule\n" + report + "\n", fix, byName, get(s"$url/api/lint"))
+    }
+    val n = xnames(all)
+    def shaOf(b: Array[Byte]) = com.histmersion.util.data.exchange.BundleFormat.sha256Hex(b)
+    val names2 = issueNames(merged.map(_._2)) ++ n ++
+      Map(shaOf(whole) -> "BUNDLE-WHOLE", shaOf(first) -> "BUNDLE-FIRST", shaOf(part) -> "BUNDLE-PART")
+    // the resolution file lists its issues in the order of their ids
+    def template(text: String): String =
+      val (head, rest) = stamps(normalise(text, names2)).linesIterator.toList.span(_ != "resolve:")
+      (head ++ rest.take(1) ++ rest.drop(1).sorted).mkString("", "\n", "\n")
+    def lines(text: String): String =
+      text.linesIterator
+        .map { l =>
+          "^(\\d{3}) (.*)$".r
+            .findFirstMatchIn(l)
+            .fold(xjson(l, names2))(m => s"${m.group(1)} ${xjson(m.group(2), names2)}")
+        }
+        .mkString("", "\n", "\n")
+    compare(
+      "exchange.txt",
+      s"# lib, crafted\n${lines(crafted)}# home and inc imported lib\n${xjson(homeFirst, names2)}\n${xjson(incFirst, names2)}\n" +
+        s"# both went on\n${lines(edited)}" +
+        s"# lib, whole\n${bundleText(whole, names2)}# lib, since the shared history\n${bundleText(part, names2)}" +
+        s"# the whole bundle imported into an empty collection\n${xjson(imported, names2)}\n${libraryRows(copy, names2)}" +
+        s"# the part since imported into inc\n${xjson(incremental, names2)}\n${libraryRows(inc, names2)}" +
+        merged
+          .map((k, v) => s"# home merges lib: $k\n${if k == "the resolution file" then template(v) else lines(v)}")
+          .mkString +
+        s"# home's rows\n${libraryRows(home, names2)}"
+    )
+    compare(
+      "lint.txt",
+      s"# the collection\n${lines(checked)}# the safe fixes\n${lines(fixes)}" +
+        named.map((r, t) => s"# $r: the report, the fix named, the report again\n${lines(t)}").mkString +
+        s"# every rule after\n${lines(after)}# the rows\n${libraryRows(checks, names2)}"
+    )
 
   test("sources, findings, citations, labels, search, query and what refers to a source, as recorded"):
     val ds = scratch("lib")

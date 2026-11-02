@@ -1,0 +1,2233 @@
+# the collection
+== places import sites
+200 {
+  "failed" : [
+  ],
+  "job" : null,
+  "names" : 5,
+  "places" : 5,
+  "relations" : 0
+}
+== places import regions
+200 {
+  "failed" : [
+  ],
+  "job" : null,
+  "names" : 1,
+  "places" : 1,
+  "relations" : 0
+}
+== put zxa2001_edges
+200 {
+  "findings" : [
+    {
+      "claim" : "a claim",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zx",
+      "periodStart" : -1500,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxa2001_edges#0"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxa2001_edges",
+    "doi" : null,
+    "notes" : "Notes on Edges.",
+    "ocrMarkdown" : null,
+    "origin" : "instance:checks",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "On Edges.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "Edges",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxa2001_edges",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2001
+  }
+}
+== put zxb2002_nofindings
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxb2002_nofindings",
+    "doi" : null,
+    "notes" : "Notes on No findings.",
+    "ocrMarkdown" : null,
+    "origin" : "instance:checks",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "On No findings.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "No findings",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxb2002_nofindings",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2002
+  }
+}
+== put zxc2003_noperiod
+200 {
+  "findings" : [
+    {
+      "claim" : "a claim",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zx",
+      "periodStart" : -1500,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxc2003_noperiod#0"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxc2003_noperiod",
+    "doi" : null,
+    "notes" : "Notes on No period.",
+    "ocrMarkdown" : null,
+    "origin" : "instance:checks",
+    "periodEnd" : null,
+    "periodStart" : null,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "On No period.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "No period",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxc2003_noperiod",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2003
+  }
+}
+== put zxd2004_noregions
+200 {
+  "findings" : [
+    {
+      "claim" : "a claim",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zx",
+      "periodStart" : -1500,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxd2004_noregions#0"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxd2004_noregions",
+    "doi" : null,
+    "notes" : "Notes on No regions.",
+    "ocrMarkdown" : null,
+    "origin" : "instance:checks",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+    ],
+    "status" : "current",
+    "summary" : "On No regions.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "No regions",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxd2004_noregions",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2004
+  }
+}
+== put zxe2005_nosummary
+200 {
+  "findings" : [
+    {
+      "claim" : "a claim",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zx",
+      "periodStart" : -1500,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxe2005_nosummary#0"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxe2005_nosummary",
+    "doi" : null,
+    "notes" : "Notes on No summary.",
+    "ocrMarkdown" : null,
+    "origin" : "instance:checks",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "  ",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "No summary",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxe2005_nosummary",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2005
+  }
+}
+== put zxf2006_unassessed
+200 {
+  "findings" : [
+    {
+      "claim" : "a claim",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zx",
+      "periodStart" : -1500,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxf2006_unassessed#0"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxf2006_unassessed",
+    "doi" : null,
+    "notes" : "Notes on Unassessed.",
+    "ocrMarkdown" : null,
+    "origin" : "instance:checks",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "unassessed",
+    "summary" : "On Unassessed.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "Unassessed",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxf2006_unassessed",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2006
+  }
+}
+== put zxg2007_doia
+200 {
+  "findings" : [
+    {
+      "claim" : "a claim",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zx",
+      "periodStart" : -1500,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxg2007_doia#0"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxg2007_doia",
+    "doi" : "10.9999/zx.dup",
+    "notes" : "Notes on Doi A.",
+    "ocrMarkdown" : null,
+    "origin" : "instance:checks",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "On Doi A.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "Doi A",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxg2007_doia",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2007
+  }
+}
+== put zxh2008_doib
+200 {
+  "findings" : [
+    {
+      "claim" : "a claim",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zx",
+      "periodStart" : -1500,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxh2008_doib#0"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxh2008_doib",
+    "doi" : "10.9999/ZX.DUP",
+    "notes" : "Notes on Doi B.",
+    "ocrMarkdown" : null,
+    "origin" : "instance:checks",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "On Doi B.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "Doi B",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxh2008_doib",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2008
+  }
+}
+== put zxi2009_stale
+200 {
+  "findings" : [
+    {
+      "claim" : "a claim",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zx",
+      "periodStart" : -1500,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxi2009_stale#0"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxi2009_stale",
+    "doi" : null,
+    "notes" : "Notes on Stale chunks.",
+    "ocrMarkdown" : "# Zxtown\n\n## The walls\n\nThe walls of Zxtown were raised in the Zx period.\n\n## The gate\n\nThe gate faced the sea.\n",
+    "origin" : "instance:checks",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "On Stale chunks.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "Stale chunks",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxi2009_stale",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2009
+  }
+}
+== put zxj2010_findings
+200 {
+  "findings" : [
+    {
+      "claim" : "an undated claim",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : null,
+      "periodName" : null,
+      "periodStart" : null,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxj2010_findings#0"
+    },
+    {
+      "claim" : "an unlocated claim",
+      "confidence" : "high",
+      "lat" : null,
+      "lon" : null,
+      "periodEnd" : -1400,
+      "periodName" : "Zx",
+      "periodStart" : -1500,
+      "regionName" : null,
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxj2010_findings#1"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxj2010_findings",
+    "doi" : null,
+    "notes" : "Notes on Undated and unlocated.",
+    "ocrMarkdown" : null,
+    "origin" : "instance:checks",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "On Undated and unlocated.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "Undated and unlocated",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxj2010_findings",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2010
+  }
+}
+== put zxk2011_figures
+200 {
+  "findings" : [
+    {
+      "claim" : "a claim",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zx",
+      "periodStart" : -1500,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxk2011_figures#0"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxk2011_figures",
+    "doi" : null,
+    "notes" : "Notes on Legacy figures.",
+    "ocrMarkdown" : "# F\n\n![a figure](md/zxk/figures/fig1.png)\n",
+    "origin" : "instance:checks",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "On Legacy figures.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "Legacy figures",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxk2011_figures",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2011
+  }
+}
+== put zxl2012_tags
+200 {
+  "findings" : [
+    {
+      "claim" : "a claim",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zx",
+      "periodStart" : -1500,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxl2012_tags#0"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxl2012_tags",
+    "doi" : null,
+    "notes" : "Notes on Tags.",
+    "ocrMarkdown" : null,
+    "origin" : "instance:checks",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "On Tags.",
+    "tags" : [
+      "Zx Oracle",
+      "zx_tag"
+    ],
+    "title" : "Tags",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxl2012_tags",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2012
+  }
+}
+== put zxm2013_noyear
+200 {
+  "findings" : [
+    {
+      "claim" : "a claim",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zx",
+      "periodStart" : -1500,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxm2013_noyear#0"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxm2013_noyear",
+    "doi" : null,
+    "notes" : "Notes on No year.",
+    "ocrMarkdown" : null,
+    "origin" : "instance:checks",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "On No year.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "No year",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxm2013_noyear",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : null
+  }
+}
+== put zxn2014_mismatch
+200 {
+  "findings" : [
+    {
+      "claim" : "a claim",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zx",
+      "periodStart" : -1500,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxn2014_mismatch#0"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxn2014_mismatch",
+    "doi" : null,
+    "notes" : "Notes on Year mismatch.",
+    "ocrMarkdown" : null,
+    "origin" : "instance:checks",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "On Year mismatch.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "Year mismatch",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxn2014_mismatch",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2016
+  }
+}
+== put zxo2015_pipe
+200 {
+  "findings" : [
+    {
+      "claim" : "a claim",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zx",
+      "periodStart" : -1500,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxo2015_pipe#0"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann | Zxwriter, Bo"
+    ],
+    "citekey" : "zxo2015_pipe",
+    "doi" : null,
+    "notes" : "Notes on Author pipe.",
+    "ocrMarkdown" : null,
+    "origin" : "instance:checks",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "On Author pipe.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "Author pipe",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxo2015_pipe",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2015
+  }
+}
+== put zxp2016_superseded
+200 {
+  "findings" : [
+    {
+      "claim" : "a claim",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zx",
+      "periodStart" : -1500,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxp2016_superseded#0"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxp2016_superseded",
+    "doi" : null,
+    "notes" : "Notes on Superseded.",
+    "ocrMarkdown" : null,
+    "origin" : "instance:checks",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "superseded",
+    "summary" : "On Superseded.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "Superseded",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxp2016_superseded",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2016
+  }
+}
+== put zxq2017_notes
+200 {
+  "findings" : [
+    {
+      "claim" : "a claim",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zx",
+      "periodStart" : -1500,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxq2017_notes#0"
+    }
+  ],
+  "formatting" : [
+    {
+      "column" : 1,
+      "excerpt" : "<div> never closed",
+      "field" : "notes",
+      "fix" : null,
+      "line" : 1,
+      "message" : "`<div>` is never closed — everything after it is inside it",
+      "rule" : "html-tag",
+      "severity" : "error"
+    }
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxq2017_notes",
+    "doi" : null,
+    "notes" : "<div> never closed",
+    "ocrMarkdown" : null,
+    "origin" : "instance:checks",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "On Note format.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "Note format",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxq2017_notes",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2017
+  }
+}
+== put zxr2018_orphan
+200 {
+  "findings" : [
+    {
+      "claim" : "a claim",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1400,
+      "periodName" : "Zx",
+      "periodStart" : -1500,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxr2018_orphan#0"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxr2018_orphan",
+    "doi" : null,
+    "notes" : "Notes on Orphan.",
+    "ocrMarkdown" : null,
+    "origin" : "instance:checks",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "On Orphan.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "Orphan",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxr2018_orphan",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2018
+  }
+}
+== put zxs2019_places
+200 {
+  "findings" : [
+    {
+      "claim" : "at Zxville, as the old geocoder placed it",
+      "confidence" : "high",
+      "lat" : 30.0,
+      "lon" : 30.0,
+      "periodEnd" : -1400,
+      "periodName" : "Zx",
+      "periodStart" : -1500,
+      "regionName" : "Zxville",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxs2019_places#0"
+    },
+    {
+      "claim" : "at Zxfort, with no point",
+      "confidence" : "high",
+      "lat" : null,
+      "lon" : null,
+      "periodEnd" : -1400,
+      "periodName" : "Zx",
+      "periodStart" : -1500,
+      "regionName" : "Zxfort",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxs2019_places#1"
+    },
+    {
+      "claim" : "on a grid square's centre, named nowhere",
+      "confidence" : "high",
+      "lat" : 37.5,
+      "lon" : 22.5,
+      "periodEnd" : -1400,
+      "periodName" : "Zx",
+      "periodStart" : -1500,
+      "regionName" : "Zxnowhere",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxs2019_places#2"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxs2019_places",
+    "doi" : null,
+    "notes" : "Notes on Places.",
+    "ocrMarkdown" : null,
+    "origin" : "instance:checks",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "On Places.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "Places",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxs2019_places",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2019
+  }
+}
+== every rule
+200 {
+  "fixed" : [
+  ],
+  "rules" : [
+    {
+      "count" : 2,
+      "description" : "edge targets that are not citekeys — dead references and unresolved [[wikilinks]]; the ones SHAPED like a citekey (a four-digit year) are listed first, because the rest are links to concept articles",
+      "items" : [
+        {
+          "citekey" : "zxa2001_edges",
+          "detail" : "cites → zxb2002 (no such source) — closest: zxb2002_nofindings"
+        },
+        {
+          "citekey" : "zxa2001_edges",
+          "detail" : "references → zxnobody1900_lost (no such source)"
+        }
+      ],
+      "rule" : "dangling-edges"
+    },
+    {
+      "count" : 1,
+      "description" : "dangling edge targets that ARE a prefix of one or more real citekeys — `lint --fix` rewrites the unambiguous ones",
+      "items" : [
+        {
+          "citekey" : "zxa2001_edges",
+          "detail" : "cites → zxb2002 resolves to zxb2002_nofindings (fixable: lint --fix)"
+        }
+      ],
+      "rule" : "unresolved-short-citekeys"
+    },
+    {
+      "count" : 1,
+      "description" : "sources with no findings mined out of them yet (un-enriched)",
+      "items" : [
+        {
+          "citekey" : "zxb2002_nofindings",
+          "detail" : "No findings"
+        }
+      ],
+      "rule" : "no-findings"
+    },
+    {
+      "count" : 1,
+      "description" : "sources with no deep-time period, so they appear on no timeline",
+      "items" : [
+        {
+          "citekey" : "zxc2003_noperiod",
+          "detail" : "No period"
+        }
+      ],
+      "rule" : "no-period"
+    },
+    {
+      "count" : 1,
+      "description" : "sources with no regions, so they appear in no region tree",
+      "items" : [
+        {
+          "citekey" : "zxd2004_noregions",
+          "detail" : "No regions"
+        }
+      ],
+      "rule" : "no-regions"
+    },
+    {
+      "count" : 1,
+      "description" : "sources whose summary is missing or blank",
+      "items" : [
+        {
+          "citekey" : "zxe2005_nosummary",
+          "detail" : "No summary"
+        }
+      ],
+      "rule" : "empty-summary"
+    },
+    {
+      "count" : 1,
+      "description" : "sources still at status=unassessed",
+      "items" : [
+        {
+          "citekey" : "zxf2006_unassessed",
+          "detail" : "Unassessed"
+        }
+      ],
+      "rule" : "unassessed-status"
+    },
+    {
+      "count" : 2,
+      "description" : "the same DOI stored under more than one citekey",
+      "items" : [
+        {
+          "citekey" : "zxg2007_doia",
+          "detail" : "doi 10.9999/zx.dup — also on zxh2008_doib"
+        },
+        {
+          "citekey" : "zxh2008_doib",
+          "detail" : "doi 10.9999/zx.dup — also on zxg2007_doia"
+        }
+      ],
+      "rule" : "duplicate-doi"
+    },
+    {
+      "count" : 2,
+      "description" : "the same file hash stored under more than one citekey (skipped while the column is unpopulated)",
+      "items" : [
+        {
+          "citekey" : "zxg2007_doia",
+          "detail" : "sha256 aa00000000000000000000000000000000000000000000000000000000000000 — also on zxh2008_doib"
+        },
+        {
+          "citekey" : "zxh2008_doib",
+          "detail" : "sha256 aa00000000000000000000000000000000000000000000000000000000000000 — also on zxg2007_doia"
+        }
+      ],
+      "rule" : "duplicate-sha256"
+    },
+    {
+      "count" : 18,
+      "description" : "sources with no incoming and no outgoing edges — cited by nothing, citing nothing",
+      "items" : [
+        {
+          "citekey" : "zxb2002_nofindings",
+          "detail" : "No findings"
+        },
+        {
+          "citekey" : "zxc2003_noperiod",
+          "detail" : "No period"
+        },
+        {
+          "citekey" : "zxd2004_noregions",
+          "detail" : "No regions"
+        },
+        {
+          "citekey" : "zxe2005_nosummary",
+          "detail" : "No summary"
+        },
+        {
+          "citekey" : "zxf2006_unassessed",
+          "detail" : "Unassessed"
+        },
+        {
+          "citekey" : "zxg2007_doia",
+          "detail" : "Doi A"
+        },
+        {
+          "citekey" : "zxh2008_doib",
+          "detail" : "Doi B"
+        },
+        {
+          "citekey" : "zxi2009_stale",
+          "detail" : "Stale chunks"
+        },
+        {
+          "citekey" : "zxj2010_findings",
+          "detail" : "Undated and unlocated"
+        },
+        {
+          "citekey" : "zxk2011_figures",
+          "detail" : "Legacy figures"
+        },
+        {
+          "citekey" : "zxl2012_tags",
+          "detail" : "Tags"
+        },
+        {
+          "citekey" : "zxm2013_noyear",
+          "detail" : "No year"
+        },
+        {
+          "citekey" : "zxn2014_mismatch",
+          "detail" : "Year mismatch"
+        },
+        {
+          "citekey" : "zxo2015_pipe",
+          "detail" : "Author pipe"
+        },
+        {
+          "citekey" : "zxp2016_superseded",
+          "detail" : "Superseded"
+        },
+        {
+          "citekey" : "zxq2017_notes",
+          "detail" : "Note format"
+        },
+        {
+          "citekey" : "zxr2018_orphan",
+          "detail" : "Orphan"
+        },
+        {
+          "citekey" : "zxs2019_places",
+          "detail" : "Places"
+        }
+      ],
+      "rule" : "orphan-sources"
+    },
+    {
+      "count" : 1,
+      "description" : "sources that have a body but no full-text chunks — `lint --fix` reindexes them",
+      "items" : [
+        {
+          "citekey" : "zxi2009_stale",
+          "detail" : "body of 112 chars, 0 chunks"
+        }
+      ],
+      "rule" : "stale-chunks"
+    },
+    {
+      "count" : 1,
+      "description" : "findings with no period, so they are invisible to every time filter",
+      "items" : [
+        {
+          "citekey" : "zxj2010_findings",
+          "detail" : "zxj2010_findings#0 — an undated claim"
+        }
+      ],
+      "rule" : "undated-findings"
+    },
+    {
+      "count" : 1,
+      "description" : "findings with neither coordinates nor a region — invisible on the map",
+      "items" : [
+        {
+          "citekey" : "zxj2010_findings",
+          "detail" : "zxj2010_findings#1 — an unlocated claim"
+        }
+      ],
+      "rule" : "unlocated-findings"
+    },
+    {
+      "count" : 1,
+      "description" : "bodies whose figures still point at a `figures/…` path (usually the converter's own absolute path) instead of the canonical `assets/…` — they render as 0×0 images; re-import the note (`histmersion seed --force`) to rewrite them",
+      "items" : [
+        {
+          "citekey" : "zxk2011_figures",
+          "detail" : "1 figure link(s) still on a figures/ path"
+        }
+      ],
+      "rule" : "legacy-figure-links"
+    },
+    {
+      "count" : 0,
+      "description" : "`[[wikilinks]]` in an ARTICLE that resolve to nothing — neither a compiled article slug nor a source citekey (nor a unique short form of one); they render as plain text, so the reader sees a name with no page behind it",
+      "items" : [
+      ],
+      "rule" : "dangling-article-links"
+    },
+    {
+      "count" : 19,
+      "description" : "tags not in lowercase_snake_case (the canonical form)",
+      "items" : [
+        {
+          "citekey" : "zxa2001_edges",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxb2002_nofindings",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxc2003_noperiod",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxd2004_noregions",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxe2005_nosummary",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxf2006_unassessed",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxg2007_doia",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxh2008_doib",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxi2009_stale",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxj2010_findings",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxk2011_figures",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxl2012_tags",
+          "detail" : "tag 'Zx Oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxm2013_noyear",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxn2014_mismatch",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxo2015_pipe",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxp2016_superseded",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxq2017_notes",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxr2018_orphan",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxs2019_places",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        }
+      ],
+      "rule" : "non-canonical-tag"
+    },
+    {
+      "count" : 1,
+      "description" : "sources with no publication year — rendered as n.d.",
+      "items" : [
+        {
+          "citekey" : "zxm2013_noyear",
+          "detail" : "No year"
+        }
+      ],
+      "rule" : "missing-year"
+    },
+    {
+      "count" : 1,
+      "description" : "the four-digit year in the citekey does not match the stored publication year",
+      "items" : [
+        {
+          "citekey" : "zxn2014_mismatch",
+          "detail" : "citekey has 2014 but stored year is 2016"
+        }
+      ],
+      "rule" : "year-citekey-mismatch"
+    },
+    {
+      "count" : 1,
+      "description" : "author names containing a pipe '|' — likely a parse artifact (\"Cline| Eric H.\")",
+      "items" : [
+        {
+          "citekey" : "zxo2015_pipe",
+          "detail" : "author 'Zxauthor, Ann | Zxwriter, Bo'"
+        }
+      ],
+      "rule" : "author-pipe"
+    },
+    {
+      "count" : 0,
+      "description" : "articles whose body contains banned filler phrases from the writing guide",
+      "items" : [
+      ],
+      "rule" : "article-filler"
+    },
+    {
+      "count" : 0,
+      "description" : "article body paragraphs with no [[citekey]] citation",
+      "items" : [
+      ],
+      "rule" : "article-uncited-paragraph"
+    },
+    {
+      "count" : 0,
+      "description" : "article summaries that are missing, a stand-in (\"placeholder\", TODO…) or shorter than 0 characters — the card and the search hit show nothing useful",
+      "items" : [
+      ],
+      "rule" : "article-thin-summary"
+    },
+    {
+      "count" : 0,
+      "description" : "article paragraphs that cite one side of a disagreement edge (challenges, refutes, updates, superseded_by) and name the other side's author without citing it — the critique is written but the pair stays open; `lint --rule article-critique-pairing --fix` appends the missing citekey where the name points at exactly one work",
+      "items" : [
+      ],
+      "rule" : "article-critique-pairing"
+    },
+    {
+      "count" : 1,
+      "description" : "sources with status=superseded but no superseded_by edge — set the edge or change the status",
+      "items" : [
+        {
+          "citekey" : "zxp2016_superseded",
+          "detail" : "Superseded"
+        }
+      ],
+      "rule" : "superseded-without-edge"
+    },
+    {
+      "count" : 0,
+      "description" : "article bodies and summaries whose Markdown will not display as written — tables shown as pipes, unpaired ** or `, links that are not links, malformed [[wikilinks]], pasted frontmatter, headings without a space, chatter and placeholders; one line per problem (`histmersion article lint <slug> --fix` repairs the safe ones)",
+      "items" : [
+      ],
+      "rule" : "article-markdown"
+    },
+    {
+      "count" : 1,
+      "description" : "the same formatting check over each source's summary and notes (`histmersion lint --source <citekey> --fix`)",
+      "items" : [
+        {
+          "citekey" : "zxq2017_notes",
+          "detail" : "notes L1:1 error html-tag — `<div>` is never closed — everything after it is inside it · `<div> never closed`"
+        }
+      ],
+      "rule" : "note-markdown"
+    },
+    {
+      "count" : 1,
+      "description" : "findings whose point the OLD geocoder chose for their place name (before #981 it let an alias, a placeholder point or the wrong dated snapshot win) and that the current ranking puts elsewhere; hand-placed points are never listed — `lint --rule finding-geocode --fix` moves them",
+      "items" : [
+        {
+          "citekey" : "zxs2019_places",
+          "detail" : "zxs2019_places#0: 'Zxville' at 30.00 N 30.00 E → Zxville [zx_ville] at 41.00 N 41.00 E, 1574 km"
+        }
+      ],
+      "rule" : "finding-geocode"
+    },
+    {
+      "count" : 1,
+      "description" : "findings that name a place but have no point, where the gazetteer now knows that name (a re-seed added the English names: Dead Sea, Balkans, Kraków…) — `lint --rule finding-unplaced --fix` gives them the geocoder's point; a finding that has a point is never touched",
+      "items" : [
+        {
+          "citekey" : "zxs2019_places",
+          "detail" : "zxs2019_places#1: 'Zxfort' → Zxfort [zx_fort] at 36.00 N 33.00 E"
+        }
+      ],
+      "rule" : "finding-unplaced"
+    },
+    {
+      "count" : 0,
+      "description" : "point-only seed regions that are something else, by their Pleiades types and linked Wikidata item: a people or civic tribe (→ people), a province or diocese (→ polity, with a period), a settlement (→ site), a place Pleiades withdrew as a duplicate (→ merged into its replacement); one line each: id, label, current → proposed kind, why, evidence — `lint --rule place-kind --fix` applies them and re-matches findings to places",
+      "items" : [
+      ],
+      "rule" : "place-kind"
+    },
+    {
+      "count" : 0,
+      "description" : "Pleiades places whose point is only the centre of an atlas grid square, where a linked record (Wikidata's coordinate) gives a real point — `lint --rule place-grid-point --fix` moves them there and re-matches findings to places",
+      "items" : [
+      ],
+      "rule" : "place-grid-point"
+    },
+    {
+      "count" : 0,
+      "description" : "GeoNames and Wikidata places of an area kind (region, polity, people: `places.sources.point-area-kinds`) stored with only a point — no shape, so no region; the importer no longer keeps them. Listed: the counts by source, kind and dating, every one that holds a finding (and how many of those findings it is the only place of), then a sample — `lint --rule place-imported-point-area --fix` removes them with their names, links and finding matches, in batches, and matches the affected sources' findings again",
+      "items" : [
+      ],
+      "rule" : "place-imported-point-area"
+    },
+    {
+      "count" : 1,
+      "description" : "findings whose point is a placeholder (an atlas grid square's centre, or the point the geocoder gives a region) and whose place name the gazetteer cannot resolve, or that have none — no site takes them, and the areas that do are only those covering the point; give the finding a place name the gazetteer knows (or the place a name with `places name add`), or a real point",
+      "items" : [
+        {
+          "citekey" : "zxs2019_places",
+          "detail" : "zxs2019_places#2: 'Zxnowhere' names no gazetteer place; placeholder point at 37.5000 N 22.5000 E"
+        }
+      ],
+      "rule" : "finding-placeholder"
+    },
+    {
+      "count" : 0,
+      "description" : "stored pictures with no licence, or a provider's picture with no credit line — they cannot be shown as their licence requires; a source's figure is listed as `<citekey>/<name>` (it takes its source's licence with `histmersion media fill-licences` once the source records one), a provider's as `media:<uid>` (re-import it with `histmersion media import wikidata --refresh`); a book cover (Calibre, Open Library) needs a credit line only — it is the publisher's picture of the user's own copy, shown locally and never exported",
+      "items" : [
+      ],
+      "rule" : "media-licence"
+    },
+    {
+      "count" : 0,
+      "description" : "catalogue events a person corrected by hand whose catalogue has since changed the same field to something else — the person's value is still applied; review each (`histmersion events corrections --status conflict`) and either keep it (patch it again) or take the catalogue's (patch the field to the catalogue's value, which retires the correction)",
+      "items" : [
+      ],
+      "rule" : "event-correction-conflict"
+    }
+  ]
+}
+# the safe fixes
+200 {
+  "applied" : [
+    "resolve-edges: 1 edge target(s) rewritten",
+    "reindex: 1 source(s) → 2 chunk(s)"
+  ],
+  "chunksWritten" : 2,
+  "edgesResolved" : 1,
+  "findingsPlaced" : 0,
+  "findingsRegeocoded" : 0,
+  "placesMerged" : 0,
+  "placesReclassified" : 0,
+  "placesRelocated" : 0,
+  "pointAreasRemaining" : 0,
+  "pointAreasRemoved" : 0,
+  "remaining" : 0,
+  "sourcesReindexed" : 1
+}
+# finding-geocode: the report, the fix named, the report again
+200 {
+  "fixed" : [
+  ],
+  "rules" : [
+    {
+      "count" : 1,
+      "description" : "findings whose point the OLD geocoder chose for their place name (before #981 it let an alias, a placeholder point or the wrong dated snapshot win) and that the current ranking puts elsewhere; hand-placed points are never listed — `lint --rule finding-geocode --fix` moves them",
+      "items" : [
+        {
+          "citekey" : "zxs2019_places",
+          "detail" : "zxs2019_places#0: 'Zxville' at 30.00 N 30.00 E → Zxville [zx_ville] at 41.00 N 41.00 E, 1574 km"
+        }
+      ],
+      "rule" : "finding-geocode"
+    }
+  ]
+}
+200 {
+  "applied" : [
+    "resolve-edges: 0 edge target(s) rewritten",
+    "reindex: 0 source(s) → 0 chunk(s)",
+    "finding-geocode: 1 finding(s) moved to the place the current geocoder chooses"
+  ],
+  "chunksWritten" : 0,
+  "edgesResolved" : 0,
+  "findingsPlaced" : 0,
+  "findingsRegeocoded" : 1,
+  "placesMerged" : 0,
+  "placesReclassified" : 0,
+  "placesRelocated" : 0,
+  "pointAreasRemaining" : 0,
+  "pointAreasRemoved" : 0,
+  "remaining" : 0,
+  "sourcesReindexed" : 0
+}
+200 {
+  "fixed" : [
+  ],
+  "rules" : [
+    {
+      "count" : 0,
+      "description" : "findings whose point the OLD geocoder chose for their place name (before #981 it let an alias, a placeholder point or the wrong dated snapshot win) and that the current ranking puts elsewhere; hand-placed points are never listed — `lint --rule finding-geocode --fix` moves them",
+      "items" : [
+      ],
+      "rule" : "finding-geocode"
+    }
+  ]
+}
+# finding-unplaced: the report, the fix named, the report again
+200 {
+  "fixed" : [
+  ],
+  "rules" : [
+    {
+      "count" : 1,
+      "description" : "findings that name a place but have no point, where the gazetteer now knows that name (a re-seed added the English names: Dead Sea, Balkans, Kraków…) — `lint --rule finding-unplaced --fix` gives them the geocoder's point; a finding that has a point is never touched",
+      "items" : [
+        {
+          "citekey" : "zxs2019_places",
+          "detail" : "zxs2019_places#1: 'Zxfort' → Zxfort [zx_fort] at 36.00 N 33.00 E"
+        }
+      ],
+      "rule" : "finding-unplaced"
+    }
+  ]
+}
+200 {
+  "applied" : [
+    "resolve-edges: 0 edge target(s) rewritten",
+    "reindex: 0 source(s) → 0 chunk(s)",
+    "finding-unplaced: 1 finding(s) given the point of the place they name"
+  ],
+  "chunksWritten" : 0,
+  "edgesResolved" : 0,
+  "findingsPlaced" : 1,
+  "findingsRegeocoded" : 0,
+  "placesMerged" : 0,
+  "placesReclassified" : 0,
+  "placesRelocated" : 0,
+  "pointAreasRemaining" : 0,
+  "pointAreasRemoved" : 0,
+  "remaining" : 0,
+  "sourcesReindexed" : 0
+}
+200 {
+  "fixed" : [
+  ],
+  "rules" : [
+    {
+      "count" : 0,
+      "description" : "findings that name a place but have no point, where the gazetteer now knows that name (a re-seed added the English names: Dead Sea, Balkans, Kraków…) — `lint --rule finding-unplaced --fix` gives them the geocoder's point; a finding that has a point is never touched",
+      "items" : [
+      ],
+      "rule" : "finding-unplaced"
+    }
+  ]
+}
+# finding-placeholder: the report, the fix named, the report again
+200 {
+  "fixed" : [
+  ],
+  "rules" : [
+    {
+      "count" : 1,
+      "description" : "findings whose point is a placeholder (an atlas grid square's centre, or the point the geocoder gives a region) and whose place name the gazetteer cannot resolve, or that have none — no site takes them, and the areas that do are only those covering the point; give the finding a place name the gazetteer knows (or the place a name with `places name add`), or a real point",
+      "items" : [
+        {
+          "citekey" : "zxs2019_places",
+          "detail" : "zxs2019_places#2: 'Zxnowhere' names no gazetteer place; placeholder point at 37.5000 N 22.5000 E"
+        }
+      ],
+      "rule" : "finding-placeholder"
+    }
+  ]
+}
+200 {
+  "applied" : [
+    "resolve-edges: 0 edge target(s) rewritten",
+    "reindex: 0 source(s) → 0 chunk(s)"
+  ],
+  "chunksWritten" : 0,
+  "edgesResolved" : 0,
+  "findingsPlaced" : 0,
+  "findingsRegeocoded" : 0,
+  "placesMerged" : 0,
+  "placesReclassified" : 0,
+  "placesRelocated" : 0,
+  "pointAreasRemaining" : 0,
+  "pointAreasRemoved" : 0,
+  "remaining" : 0,
+  "sourcesReindexed" : 0
+}
+200 {
+  "fixed" : [
+  ],
+  "rules" : [
+    {
+      "count" : 1,
+      "description" : "findings whose point is a placeholder (an atlas grid square's centre, or the point the geocoder gives a region) and whose place name the gazetteer cannot resolve, or that have none — no site takes them, and the areas that do are only those covering the point; give the finding a place name the gazetteer knows (or the place a name with `places name add`), or a real point",
+      "items" : [
+        {
+          "citekey" : "zxs2019_places",
+          "detail" : "zxs2019_places#2: 'Zxnowhere' names no gazetteer place; placeholder point at 37.5000 N 22.5000 E"
+        }
+      ],
+      "rule" : "finding-placeholder"
+    }
+  ]
+}
+# every rule after
+200 {
+  "fixed" : [
+  ],
+  "rules" : [
+    {
+      "count" : 1,
+      "description" : "edge targets that are not citekeys — dead references and unresolved [[wikilinks]]; the ones SHAPED like a citekey (a four-digit year) are listed first, because the rest are links to concept articles",
+      "items" : [
+        {
+          "citekey" : "zxa2001_edges",
+          "detail" : "references → zxnobody1900_lost (no such source)"
+        }
+      ],
+      "rule" : "dangling-edges"
+    },
+    {
+      "count" : 0,
+      "description" : "dangling edge targets that ARE a prefix of one or more real citekeys — `lint --fix` rewrites the unambiguous ones",
+      "items" : [
+      ],
+      "rule" : "unresolved-short-citekeys"
+    },
+    {
+      "count" : 1,
+      "description" : "sources with no findings mined out of them yet (un-enriched)",
+      "items" : [
+        {
+          "citekey" : "zxb2002_nofindings",
+          "detail" : "No findings"
+        }
+      ],
+      "rule" : "no-findings"
+    },
+    {
+      "count" : 1,
+      "description" : "sources with no deep-time period, so they appear on no timeline",
+      "items" : [
+        {
+          "citekey" : "zxc2003_noperiod",
+          "detail" : "No period"
+        }
+      ],
+      "rule" : "no-period"
+    },
+    {
+      "count" : 1,
+      "description" : "sources with no regions, so they appear in no region tree",
+      "items" : [
+        {
+          "citekey" : "zxd2004_noregions",
+          "detail" : "No regions"
+        }
+      ],
+      "rule" : "no-regions"
+    },
+    {
+      "count" : 1,
+      "description" : "sources whose summary is missing or blank",
+      "items" : [
+        {
+          "citekey" : "zxe2005_nosummary",
+          "detail" : "No summary"
+        }
+      ],
+      "rule" : "empty-summary"
+    },
+    {
+      "count" : 1,
+      "description" : "sources still at status=unassessed",
+      "items" : [
+        {
+          "citekey" : "zxf2006_unassessed",
+          "detail" : "Unassessed"
+        }
+      ],
+      "rule" : "unassessed-status"
+    },
+    {
+      "count" : 2,
+      "description" : "the same DOI stored under more than one citekey",
+      "items" : [
+        {
+          "citekey" : "zxg2007_doia",
+          "detail" : "doi 10.9999/zx.dup — also on zxh2008_doib"
+        },
+        {
+          "citekey" : "zxh2008_doib",
+          "detail" : "doi 10.9999/zx.dup — also on zxg2007_doia"
+        }
+      ],
+      "rule" : "duplicate-doi"
+    },
+    {
+      "count" : 2,
+      "description" : "the same file hash stored under more than one citekey (skipped while the column is unpopulated)",
+      "items" : [
+        {
+          "citekey" : "zxg2007_doia",
+          "detail" : "sha256 aa00000000000000000000000000000000000000000000000000000000000000 — also on zxh2008_doib"
+        },
+        {
+          "citekey" : "zxh2008_doib",
+          "detail" : "sha256 aa00000000000000000000000000000000000000000000000000000000000000 — also on zxg2007_doia"
+        }
+      ],
+      "rule" : "duplicate-sha256"
+    },
+    {
+      "count" : 17,
+      "description" : "sources with no incoming and no outgoing edges — cited by nothing, citing nothing",
+      "items" : [
+        {
+          "citekey" : "zxc2003_noperiod",
+          "detail" : "No period"
+        },
+        {
+          "citekey" : "zxd2004_noregions",
+          "detail" : "No regions"
+        },
+        {
+          "citekey" : "zxe2005_nosummary",
+          "detail" : "No summary"
+        },
+        {
+          "citekey" : "zxf2006_unassessed",
+          "detail" : "Unassessed"
+        },
+        {
+          "citekey" : "zxg2007_doia",
+          "detail" : "Doi A"
+        },
+        {
+          "citekey" : "zxh2008_doib",
+          "detail" : "Doi B"
+        },
+        {
+          "citekey" : "zxi2009_stale",
+          "detail" : "Stale chunks"
+        },
+        {
+          "citekey" : "zxj2010_findings",
+          "detail" : "Undated and unlocated"
+        },
+        {
+          "citekey" : "zxk2011_figures",
+          "detail" : "Legacy figures"
+        },
+        {
+          "citekey" : "zxl2012_tags",
+          "detail" : "Tags"
+        },
+        {
+          "citekey" : "zxm2013_noyear",
+          "detail" : "No year"
+        },
+        {
+          "citekey" : "zxn2014_mismatch",
+          "detail" : "Year mismatch"
+        },
+        {
+          "citekey" : "zxo2015_pipe",
+          "detail" : "Author pipe"
+        },
+        {
+          "citekey" : "zxp2016_superseded",
+          "detail" : "Superseded"
+        },
+        {
+          "citekey" : "zxq2017_notes",
+          "detail" : "Note format"
+        },
+        {
+          "citekey" : "zxr2018_orphan",
+          "detail" : "Orphan"
+        },
+        {
+          "citekey" : "zxs2019_places",
+          "detail" : "Places"
+        }
+      ],
+      "rule" : "orphan-sources"
+    },
+    {
+      "count" : 0,
+      "description" : "sources that have a body but no full-text chunks — `lint --fix` reindexes them",
+      "items" : [
+      ],
+      "rule" : "stale-chunks"
+    },
+    {
+      "count" : 1,
+      "description" : "findings with no period, so they are invisible to every time filter",
+      "items" : [
+        {
+          "citekey" : "zxj2010_findings",
+          "detail" : "zxj2010_findings#0 — an undated claim"
+        }
+      ],
+      "rule" : "undated-findings"
+    },
+    {
+      "count" : 1,
+      "description" : "findings with neither coordinates nor a region — invisible on the map",
+      "items" : [
+        {
+          "citekey" : "zxj2010_findings",
+          "detail" : "zxj2010_findings#1 — an unlocated claim"
+        }
+      ],
+      "rule" : "unlocated-findings"
+    },
+    {
+      "count" : 1,
+      "description" : "bodies whose figures still point at a `figures/…` path (usually the converter's own absolute path) instead of the canonical `assets/…` — they render as 0×0 images; re-import the note (`histmersion seed --force`) to rewrite them",
+      "items" : [
+        {
+          "citekey" : "zxk2011_figures",
+          "detail" : "1 figure link(s) still on a figures/ path"
+        }
+      ],
+      "rule" : "legacy-figure-links"
+    },
+    {
+      "count" : 0,
+      "description" : "`[[wikilinks]]` in an ARTICLE that resolve to nothing — neither a compiled article slug nor a source citekey (nor a unique short form of one); they render as plain text, so the reader sees a name with no page behind it",
+      "items" : [
+      ],
+      "rule" : "dangling-article-links"
+    },
+    {
+      "count" : 19,
+      "description" : "tags not in lowercase_snake_case (the canonical form)",
+      "items" : [
+        {
+          "citekey" : "zxa2001_edges",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxb2002_nofindings",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxc2003_noperiod",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxd2004_noregions",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxe2005_nosummary",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxf2006_unassessed",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxg2007_doia",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxh2008_doib",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxi2009_stale",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxj2010_findings",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxk2011_figures",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxl2012_tags",
+          "detail" : "tag 'Zx Oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxm2013_noyear",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxn2014_mismatch",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxo2015_pipe",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxp2016_superseded",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxq2017_notes",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxr2018_orphan",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        },
+        {
+          "citekey" : "zxs2019_places",
+          "detail" : "tag 'zx-oracle' → 'zx_oracle'"
+        }
+      ],
+      "rule" : "non-canonical-tag"
+    },
+    {
+      "count" : 1,
+      "description" : "sources with no publication year — rendered as n.d.",
+      "items" : [
+        {
+          "citekey" : "zxm2013_noyear",
+          "detail" : "No year"
+        }
+      ],
+      "rule" : "missing-year"
+    },
+    {
+      "count" : 1,
+      "description" : "the four-digit year in the citekey does not match the stored publication year",
+      "items" : [
+        {
+          "citekey" : "zxn2014_mismatch",
+          "detail" : "citekey has 2014 but stored year is 2016"
+        }
+      ],
+      "rule" : "year-citekey-mismatch"
+    },
+    {
+      "count" : 1,
+      "description" : "author names containing a pipe '|' — likely a parse artifact (\"Cline| Eric H.\")",
+      "items" : [
+        {
+          "citekey" : "zxo2015_pipe",
+          "detail" : "author 'Zxauthor, Ann | Zxwriter, Bo'"
+        }
+      ],
+      "rule" : "author-pipe"
+    },
+    {
+      "count" : 0,
+      "description" : "articles whose body contains banned filler phrases from the writing guide",
+      "items" : [
+      ],
+      "rule" : "article-filler"
+    },
+    {
+      "count" : 0,
+      "description" : "article body paragraphs with no [[citekey]] citation",
+      "items" : [
+      ],
+      "rule" : "article-uncited-paragraph"
+    },
+    {
+      "count" : 0,
+      "description" : "article summaries that are missing, a stand-in (\"placeholder\", TODO…) or shorter than 0 characters — the card and the search hit show nothing useful",
+      "items" : [
+      ],
+      "rule" : "article-thin-summary"
+    },
+    {
+      "count" : 0,
+      "description" : "article paragraphs that cite one side of a disagreement edge (challenges, refutes, updates, superseded_by) and name the other side's author without citing it — the critique is written but the pair stays open; `lint --rule article-critique-pairing --fix` appends the missing citekey where the name points at exactly one work",
+      "items" : [
+      ],
+      "rule" : "article-critique-pairing"
+    },
+    {
+      "count" : 1,
+      "description" : "sources with status=superseded but no superseded_by edge — set the edge or change the status",
+      "items" : [
+        {
+          "citekey" : "zxp2016_superseded",
+          "detail" : "Superseded"
+        }
+      ],
+      "rule" : "superseded-without-edge"
+    },
+    {
+      "count" : 0,
+      "description" : "article bodies and summaries whose Markdown will not display as written — tables shown as pipes, unpaired ** or `, links that are not links, malformed [[wikilinks]], pasted frontmatter, headings without a space, chatter and placeholders; one line per problem (`histmersion article lint <slug> --fix` repairs the safe ones)",
+      "items" : [
+      ],
+      "rule" : "article-markdown"
+    },
+    {
+      "count" : 1,
+      "description" : "the same formatting check over each source's summary and notes (`histmersion lint --source <citekey> --fix`)",
+      "items" : [
+        {
+          "citekey" : "zxq2017_notes",
+          "detail" : "notes L1:1 error html-tag — `<div>` is never closed — everything after it is inside it · `<div> never closed`"
+        }
+      ],
+      "rule" : "note-markdown"
+    },
+    {
+      "count" : 0,
+      "description" : "findings whose point the OLD geocoder chose for their place name (before #981 it let an alias, a placeholder point or the wrong dated snapshot win) and that the current ranking puts elsewhere; hand-placed points are never listed — `lint --rule finding-geocode --fix` moves them",
+      "items" : [
+      ],
+      "rule" : "finding-geocode"
+    },
+    {
+      "count" : 0,
+      "description" : "findings that name a place but have no point, where the gazetteer now knows that name (a re-seed added the English names: Dead Sea, Balkans, Kraków…) — `lint --rule finding-unplaced --fix` gives them the geocoder's point; a finding that has a point is never touched",
+      "items" : [
+      ],
+      "rule" : "finding-unplaced"
+    },
+    {
+      "count" : 0,
+      "description" : "point-only seed regions that are something else, by their Pleiades types and linked Wikidata item: a people or civic tribe (→ people), a province or diocese (→ polity, with a period), a settlement (→ site), a place Pleiades withdrew as a duplicate (→ merged into its replacement); one line each: id, label, current → proposed kind, why, evidence — `lint --rule place-kind --fix` applies them and re-matches findings to places",
+      "items" : [
+      ],
+      "rule" : "place-kind"
+    },
+    {
+      "count" : 0,
+      "description" : "Pleiades places whose point is only the centre of an atlas grid square, where a linked record (Wikidata's coordinate) gives a real point — `lint --rule place-grid-point --fix` moves them there and re-matches findings to places",
+      "items" : [
+      ],
+      "rule" : "place-grid-point"
+    },
+    {
+      "count" : 0,
+      "description" : "GeoNames and Wikidata places of an area kind (region, polity, people: `places.sources.point-area-kinds`) stored with only a point — no shape, so no region; the importer no longer keeps them. Listed: the counts by source, kind and dating, every one that holds a finding (and how many of those findings it is the only place of), then a sample — `lint --rule place-imported-point-area --fix` removes them with their names, links and finding matches, in batches, and matches the affected sources' findings again",
+      "items" : [
+      ],
+      "rule" : "place-imported-point-area"
+    },
+    {
+      "count" : 1,
+      "description" : "findings whose point is a placeholder (an atlas grid square's centre, or the point the geocoder gives a region) and whose place name the gazetteer cannot resolve, or that have none — no site takes them, and the areas that do are only those covering the point; give the finding a place name the gazetteer knows (or the place a name with `places name add`), or a real point",
+      "items" : [
+        {
+          "citekey" : "zxs2019_places",
+          "detail" : "zxs2019_places#2: 'Zxnowhere' names no gazetteer place; placeholder point at 37.5000 N 22.5000 E"
+        }
+      ],
+      "rule" : "finding-placeholder"
+    },
+    {
+      "count" : 0,
+      "description" : "stored pictures with no licence, or a provider's picture with no credit line — they cannot be shown as their licence requires; a source's figure is listed as `<citekey>/<name>` (it takes its source's licence with `histmersion media fill-licences` once the source records one), a provider's as `media:<uid>` (re-import it with `histmersion media import wikidata --refresh`); a book cover (Calibre, Open Library) needs a credit line only — it is the publisher's picture of the user's own copy, shown locally and never exported",
+      "items" : [
+      ],
+      "rule" : "media-licence"
+    },
+    {
+      "count" : 0,
+      "description" : "catalogue events a person corrected by hand whose catalogue has since changed the same field to something else — the person's value is still applied; review each (`histmersion events corrections --status conflict`) and either keep it (patch it again) or take the catalogue's (patch the field to the catalogue's value, which retires the correction)",
+      "items" : [
+      ],
+      "rule" : "event-correction-conflict"
+    }
+  ]
+}
+# the rows
+## sources 19 rows
+{ "authors" : [ "Zxauthor, Ann | Zxwriter, Bo" ], "citekey" : "zxo2015_pipe", "doi" : null, "notes" : "Notes on Author pipe.", "ocr_markdown" : null, "origin" : "instance:checks", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On Author pipe.", "tags" : [ "zx-oracle" ], "title" : "Author pipe", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2015 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxa2001_edges", "doi" : null, "notes" : "Notes on Edges.", "ocr_markdown" : null, "origin" : "instance:checks", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On Edges.", "tags" : [ "zx-oracle" ], "title" : "Edges", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2001 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxb2002_nofindings", "doi" : null, "notes" : "Notes on No findings.", "ocr_markdown" : null, "origin" : "instance:checks", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On No findings.", "tags" : [ "zx-oracle" ], "title" : "No findings", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2002 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxc2003_noperiod", "doi" : null, "notes" : "Notes on No period.", "ocr_markdown" : null, "origin" : "instance:checks", "period" : null, "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On No period.", "tags" : [ "zx-oracle" ], "title" : "No period", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2003 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxd2004_noregions", "doi" : null, "notes" : "Notes on No regions.", "ocr_markdown" : null, "origin" : "instance:checks", "period" : "[-1500,-1199)", "regions" : [ ], "sha256" : null, "status" : "current", "summary" : "On No regions.", "tags" : [ "zx-oracle" ], "title" : "No regions", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2004 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxe2005_nosummary", "doi" : null, "notes" : "Notes on No summary.", "ocr_markdown" : null, "origin" : "instance:checks", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "  ", "tags" : [ "zx-oracle" ], "title" : "No summary", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2005 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxf2006_unassessed", "doi" : null, "notes" : "Notes on Unassessed.", "ocr_markdown" : null, "origin" : "instance:checks", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "unassessed", "summary" : "On Unassessed.", "tags" : [ "zx-oracle" ], "title" : "Unassessed", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2006 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxg2007_doia", "doi" : "10.9999/zx.dup", "notes" : "Notes on Doi A.", "ocr_markdown" : null, "origin" : "instance:checks", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : "DIGEST", "status" : "current", "summary" : "On Doi A.", "tags" : [ "zx-oracle" ], "title" : "Doi A", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2007 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxh2008_doib", "doi" : "10.9999/ZX.DUP", "notes" : "Notes on Doi B.", "ocr_markdown" : null, "origin" : "instance:checks", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : "DIGEST", "status" : "current", "summary" : "On Doi B.", "tags" : [ "zx-oracle" ], "title" : "Doi B", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2008 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxi2009_stale", "doi" : null, "notes" : "Notes on Stale chunks.", "ocr_markdown" : "# Zxtown\n\n## The walls\n\nThe walls of Zxtown were raised in the Zx period.\n\n## The gate\n\nThe gate faced the sea.\n", "origin" : "instance:checks", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On Stale chunks.", "tags" : [ "zx-oracle" ], "title" : "Stale chunks", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2009 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxj2010_findings", "doi" : null, "notes" : "Notes on Undated and unlocated.", "ocr_markdown" : null, "origin" : "instance:checks", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On Undated and unlocated.", "tags" : [ "zx-oracle" ], "title" : "Undated and unlocated", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2010 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxk2011_figures", "doi" : null, "notes" : "Notes on Legacy figures.", "ocr_markdown" : "# F\n\n![a figure](md/zxk/figures/fig1.png)\n", "origin" : "instance:checks", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On Legacy figures.", "tags" : [ "zx-oracle" ], "title" : "Legacy figures", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2011 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxl2012_tags", "doi" : null, "notes" : "Notes on Tags.", "ocr_markdown" : null, "origin" : "instance:checks", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On Tags.", "tags" : [ "Zx Oracle", "zx_tag" ], "title" : "Tags", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2012 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxm2013_noyear", "doi" : null, "notes" : "Notes on No year.", "ocr_markdown" : null, "origin" : "instance:checks", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On No year.", "tags" : [ "zx-oracle" ], "title" : "No year", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : null }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxn2014_mismatch", "doi" : null, "notes" : "Notes on Year mismatch.", "ocr_markdown" : null, "origin" : "instance:checks", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On Year mismatch.", "tags" : [ "zx-oracle" ], "title" : "Year mismatch", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2016 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxp2016_superseded", "doi" : null, "notes" : "Notes on Superseded.", "ocr_markdown" : null, "origin" : "instance:checks", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "superseded", "summary" : "On Superseded.", "tags" : [ "zx-oracle" ], "title" : "Superseded", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2016 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxq2017_notes", "doi" : null, "notes" : "<div> never closed", "ocr_markdown" : null, "origin" : "instance:checks", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On Note format.", "tags" : [ "zx-oracle" ], "title" : "Note format", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2017 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxr2018_orphan", "doi" : null, "notes" : "Notes on Orphan.", "ocr_markdown" : null, "origin" : "instance:checks", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On Orphan.", "tags" : [ "zx-oracle" ], "title" : "Orphan", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2018 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxs2019_places", "doi" : null, "notes" : "Notes on Places.", "ocr_markdown" : null, "origin" : "instance:checks", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On Places.", "tags" : [ "zx-oracle" ], "title" : "Places", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2019 }
+## source_aliases 0 rows
+## source_chunks 3 rows
+{ "citekey" : "zxi2009_stale", "heading" : "Zxtown > The gate", "ord" : 1 }
+{ "citekey" : "zxi2009_stale", "heading" : "Zxtown > The walls", "ord" : 0 }
+{ "citekey" : "zxk2011_figures", "heading" : "F", "ord" : 0 }
+## source_identifiers 4 rows
+{ "scheme" : "doi", "source_uid" : "source:zxg2007_doia", "value" : "10.9999/zx.dup" }
+{ "scheme" : "doi", "source_uid" : "source:zxh2008_doib", "value" : "10.9999/zx.dup" }
+{ "scheme" : "sha256", "source_uid" : "source:zxg2007_doia", "value" : "aa00000000000000000000000000000000000000000000000000000000000000" }
+{ "scheme" : "sha256", "source_uid" : "source:zxh2008_doib", "value" : "aa00000000000000000000000000000000000000000000000000000000000000" }
+## findings 21 rows
+{ "citekey" : "zxa2001_edges", "claim" : "a claim", "confidence" : "high", "geom" : "POINT(34.6 40)", "id" : "zxa2001_edges#0", "period" : "[-1500,-1399)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxc2003_noperiod", "claim" : "a claim", "confidence" : "high", "geom" : "POINT(34.6 40)", "id" : "zxc2003_noperiod#0", "period" : "[-1500,-1399)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxd2004_noregions", "claim" : "a claim", "confidence" : "high", "geom" : "POINT(34.6 40)", "id" : "zxd2004_noregions#0", "period" : "[-1500,-1399)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxe2005_nosummary", "claim" : "a claim", "confidence" : "high", "geom" : "POINT(34.6 40)", "id" : "zxe2005_nosummary#0", "period" : "[-1500,-1399)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxf2006_unassessed", "claim" : "a claim", "confidence" : "high", "geom" : "POINT(34.6 40)", "id" : "zxf2006_unassessed#0", "period" : "[-1500,-1399)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxg2007_doia", "claim" : "a claim", "confidence" : "high", "geom" : "POINT(34.6 40)", "id" : "zxg2007_doia#0", "period" : "[-1500,-1399)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxh2008_doib", "claim" : "a claim", "confidence" : "high", "geom" : "POINT(34.6 40)", "id" : "zxh2008_doib#0", "period" : "[-1500,-1399)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxi2009_stale", "claim" : "a claim", "confidence" : "high", "geom" : "POINT(34.6 40)", "id" : "zxi2009_stale#0", "period" : "[-1500,-1399)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxj2010_findings", "claim" : "an undated claim", "confidence" : "high", "geom" : "POINT(34.6 40)", "id" : "zxj2010_findings#0", "period" : null, "period_name" : null, "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxj2010_findings", "claim" : "an unlocated claim", "confidence" : "high", "geom" : null, "id" : "zxj2010_findings#1", "period" : "[-1500,-1399)", "period_name" : "Zx", "region_name" : null, "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxk2011_figures", "claim" : "a claim", "confidence" : "high", "geom" : "POINT(34.6 40)", "id" : "zxk2011_figures#0", "period" : "[-1500,-1399)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxl2012_tags", "claim" : "a claim", "confidence" : "high", "geom" : "POINT(34.6 40)", "id" : "zxl2012_tags#0", "period" : "[-1500,-1399)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxm2013_noyear", "claim" : "a claim", "confidence" : "high", "geom" : "POINT(34.6 40)", "id" : "zxm2013_noyear#0", "period" : "[-1500,-1399)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxn2014_mismatch", "claim" : "a claim", "confidence" : "high", "geom" : "POINT(34.6 40)", "id" : "zxn2014_mismatch#0", "period" : "[-1500,-1399)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxo2015_pipe", "claim" : "a claim", "confidence" : "high", "geom" : "POINT(34.6 40)", "id" : "zxo2015_pipe#0", "period" : "[-1500,-1399)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxp2016_superseded", "claim" : "a claim", "confidence" : "high", "geom" : "POINT(34.6 40)", "id" : "zxp2016_superseded#0", "period" : "[-1500,-1399)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxq2017_notes", "claim" : "a claim", "confidence" : "high", "geom" : "POINT(34.6 40)", "id" : "zxq2017_notes#0", "period" : "[-1500,-1399)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxr2018_orphan", "claim" : "a claim", "confidence" : "high", "geom" : "POINT(34.6 40)", "id" : "zxr2018_orphan#0", "period" : "[-1500,-1399)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxs2019_places", "claim" : "at Zxfort, with no point", "confidence" : "high", "geom" : "POINT(33 36)", "id" : "zxs2019_places#1", "period" : "[-1500,-1399)", "period_name" : "Zx", "region_name" : "Zxfort", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxs2019_places", "claim" : "at Zxville, as the old geocoder placed it", "confidence" : "high", "geom" : "POINT(41 41)", "id" : "zxs2019_places#0", "period" : "[-1500,-1399)", "period_name" : "Zx", "region_name" : "Zxville", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxs2019_places", "claim" : "on a grid square's centre, named nowhere", "confidence" : "high", "geom" : "POINT(22.5 37.5)", "id" : "zxs2019_places#2", "period" : "[-1500,-1399)", "period_name" : "Zx", "region_name" : "Zxnowhere", "tags" : [ "zx-claim" ] }
+## finding_places 2 rows
+{ "finding_id" : "zxs2019_places#0", "place_id" : "zx_ville" }
+{ "finding_id" : "zxs2019_places#1", "place_id" : "zx_fort" }
+## edges 1 rows
+{ "dst" : "zxb2002_nofindings", "kind" : "cites", "src" : "zxa2001_edges" }
+## unresolved_edges 1 rows
+{ "dst" : "zxnobody1900_lost", "kind" : "references", "src" : "zxa2001_edges" }
+## assessments 0 rows
+## tombstones 0 rows
+## uid_aliases 0 rows
+## queue_items 0 rows

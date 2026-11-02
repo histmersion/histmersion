@@ -1,0 +1,3446 @@
+# lib, crafted
+== label
+200 {
+  "createdAt" : "TS",
+  "id" : "instance:lib",
+  "label" : "zxlib"
+}
+== put one
+200 {
+  "findings" : [
+    {
+      "claim" : "the walls of Zxtown were raised around 1500 BC",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1480,
+      "periodName" : "Zx",
+      "periodStart" : -1520,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxone2001_storm#0"
+    },
+    {
+      "claim" : "the gate of Zxtown faced the sea",
+      "confidence" : "high",
+      "lat" : 40.01,
+      "lon" : 34.61,
+      "periodEnd" : -1300,
+      "periodName" : "Zx",
+      "periodStart" : -1400,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxone2001_storm#1"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxone2001_storm",
+    "doi" : "10.9999/zx.one",
+    "notes" : "Notes on The Storm of Zxtown.",
+    "ocrMarkdown" : "# Zxtown\n\n## The walls\n\nThe walls of Zxtown were raised in the Zx period.\n\n## The gate\n\nThe gate faced the sea.\n",
+    "origin" : "instance:lib",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "On The Storm of Zxtown.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "The Storm of Zxtown",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxone2001_storm",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2001
+  }
+}
+== put two
+200 {
+  "findings" : [
+    {
+      "claim" : "a kingdom ruled Zxland",
+      "confidence" : "high",
+      "lat" : 39.5,
+      "lon" : 35.0,
+      "periodEnd" : -1250,
+      "periodName" : "Zx",
+      "periodStart" : -1450,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxtwo2005_hittites#0"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxtwo2005_kingdom",
+    "doi" : null,
+    "notes" : "Notes on The Kingdom of Zxland.",
+    "ocrMarkdown" : null,
+    "origin" : "instance:lib",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "contested",
+    "summary" : "On The Kingdom of Zxland.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "The Kingdom of Zxland",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxtwo2005_hittites",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2005
+  }
+}
+== put three
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxthree1903_old",
+    "doi" : null,
+    "notes" : "Notes on An Old Book on Zxland.",
+    "ocrMarkdown" : null,
+    "origin" : "instance:lib",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "On An Old Book on Zxland.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "An Old Book on Zxland",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "tombstone:source",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 1903
+  }
+}
+== rename three
+200 {
+  "calibreId" : null,
+  "counts" : {
+    "articles" : [
+    ],
+    "columns" : [
+    ],
+    "edgesPromoted" : 0,
+    "findings" : 0,
+    "links" : 0,
+    "sources" : [
+    ]
+  },
+  "newCitekey" : "zxthree1903_prolegomena",
+  "oldCitekey" : "zxthree1903_old",
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxthree1903_prolegomena",
+    "doi" : null,
+    "notes" : "Notes on An Old Book on Zxland.",
+    "ocrMarkdown" : null,
+    "origin" : "instance:lib",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "On An Old Book on Zxland.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "An Old Book on Zxland",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "tombstone:source",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 1903
+  }
+}
+# home and inc imported lib
+{
+  "applied" : true,
+  "blobs" : 1,
+  "bundleId" : "UUID",
+  "conflicts" : [
+  ],
+  "counts" : [
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 3,
+      "keptLocal" : 0,
+      "kind" : "source",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 3,
+      "keptLocal" : 0,
+      "kind" : "finding",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    }
+  ],
+  "dryRun" : false,
+  "from" : {
+    "id" : "instance:lib",
+    "label" : "zxlib"
+  },
+  "issues" : [
+  ],
+  "mergeId" : "UUID",
+  "notes" : [
+  ],
+  "planHash" : "DIGEST",
+  "problems" : [
+  ]
+}
+{
+  "applied" : true,
+  "blobs" : 1,
+  "bundleId" : "UUID",
+  "conflicts" : [
+  ],
+  "counts" : [
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 3,
+      "keptLocal" : 0,
+      "kind" : "source",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 3,
+      "keptLocal" : 0,
+      "kind" : "finding",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    }
+  ],
+  "dryRun" : false,
+  "from" : {
+    "id" : "instance:lib",
+    "label" : "zxlib"
+  },
+  "issues" : [
+  ],
+  "mergeId" : "UUID",
+  "notes" : [
+  ],
+  "planHash" : "DIGEST",
+  "problems" : [
+  ]
+}
+# both went on
+== lib: one's findings, body and edges
+200 {
+  "findings" : [
+    {
+      "claim" : "the walls of Zxtown were raised around 1490 BC",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1480,
+      "periodName" : "Zx",
+      "periodStart" : -1500,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxone2001_storm#0"
+    },
+    {
+      "claim" : "the gate of Zxtown faced the sea",
+      "confidence" : "high",
+      "lat" : 40.01,
+      "lon" : 34.61,
+      "periodEnd" : -1300,
+      "periodName" : "Zx",
+      "periodStart" : -1400,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxone2001_storm#1"
+    },
+    {
+      "claim" : "a third claim, lib's",
+      "confidence" : "high",
+      "lat" : 40.02,
+      "lon" : 34.62,
+      "periodEnd" : -1200,
+      "periodName" : "Zx",
+      "periodStart" : -1300,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxone2001_storm#2"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxone2001_storm",
+    "doi" : "10.9999/zx.one",
+    "notes" : "Notes on The Storm of Zxtown.",
+    "ocrMarkdown" : "# Zxtown\n\n## The walls\n\nThe walls of Zxtown were raised in the Zx period.\n\n## The gate\n\nThe gate faced the sea, as lib reads it.\n",
+    "origin" : "instance:lib",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "On The Storm of Zxtown.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "The Storm of Zxtown",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxone2001_storm",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2001
+  }
+}
+== home: one's findings, body and edges
+200 {
+  "findings" : [
+    {
+      "claim" : "the walls of Zxtown were raised around 1500 BC",
+      "confidence" : "high",
+      "lat" : 40.0,
+      "lon" : 34.6,
+      "periodEnd" : -1480,
+      "periodName" : "Zx",
+      "periodStart" : -1520,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxone2001_storm#0"
+    },
+    {
+      "claim" : "the gate of Zxtown faced the harbour",
+      "confidence" : "high",
+      "lat" : 40.01,
+      "lon" : 34.61,
+      "periodEnd" : -1300,
+      "periodName" : "Zx",
+      "periodStart" : -1400,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxone2001_storm#1"
+    },
+    {
+      "claim" : "a claim of home's",
+      "confidence" : "high",
+      "lat" : 40.03,
+      "lon" : 34.63,
+      "periodEnd" : -1250,
+      "periodName" : "Zx",
+      "periodStart" : -1350,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxone2001_storm#2"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxone2001_storm",
+    "doi" : "10.9999/zx.one",
+    "notes" : "Notes on The Storm of Zxtown.",
+    "ocrMarkdown" : "# Zxtown\n\n## The walls\n\nThe walls of Zxtown were raised in the Zx period.\n\n## The gate\n\nThe gate faced the sea, as home reads it.\n",
+    "origin" : "instance:lib",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "On The Storm of Zxtown, at home.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "The Storm of Zxtown",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxone2001_storm",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2001
+  }
+}
+== lib: rename two
+200 {
+  "calibreId" : null,
+  "counts" : {
+    "articles" : [
+    ],
+    "columns" : [
+    ],
+    "edgesPromoted" : 0,
+    "findings" : 1,
+    "links" : 0,
+    "sources" : [
+    ]
+  },
+  "newCitekey" : "zxtwo2005_hittites",
+  "oldCitekey" : "zxtwo2005_kingdom",
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxtwo2005_hittites",
+    "doi" : null,
+    "notes" : "Notes on The Kingdom of Zxland.",
+    "ocrMarkdown" : null,
+    "origin" : "instance:lib",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "contested",
+    "summary" : "On The Kingdom of Zxland.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "The Kingdom of Zxland",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxtwo2005_hittites",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2005
+  }
+}
+== home: patch two
+200 {
+  "findings" : [
+    {
+      "claim" : "a kingdom ruled Zxland",
+      "confidence" : "high",
+      "lat" : 39.5,
+      "lon" : 35.0,
+      "periodEnd" : -1250,
+      "periodName" : "Zx",
+      "periodStart" : -1450,
+      "regionName" : "Zxland",
+      "significance" : null,
+      "tags" : [
+        "zx-claim"
+      ],
+      "uid" : "finding:zxtwo2005_hittites#0"
+    }
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxtwo2005_kingdom",
+    "doi" : null,
+    "notes" : "Notes on The Kingdom of Zxland.",
+    "ocrMarkdown" : null,
+    "origin" : "instance:lib",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "contested",
+    "summary" : "On The Kingdom of Zxland.",
+    "tags" : [
+      "zx-oracle",
+      "zx-home"
+    ],
+    "title" : "The Kingdom of Zxland",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxtwo2005_hittites",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2005
+  }
+}
+== lib: a work by DOI
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxdoi2010_lib",
+    "doi" : "10.9999/ZX.Both",
+    "notes" : "Notes on A Work Both Hold.",
+    "ocrMarkdown" : null,
+    "origin" : "instance:lib",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "On A Work Both Hold.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "A Work Both Hold",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxdoi2010_lib",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2010
+  }
+}
+== home: the same work by DOI
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxdoi2010_home",
+    "doi" : "https://doi.org/10.9999/zx.both",
+    "notes" : "Notes on A Work Both Hold.",
+    "ocrMarkdown" : null,
+    "origin" : "instance:home",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "home's",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "A Work Both Hold",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxdoi2010_home",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2010
+  }
+}
+== lib: a work by its fingerprint
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxwriter, Bo"
+    ],
+    "citekey" : "zxfp1950_lib",
+    "doi" : null,
+    "notes" : "Notes on On the Zxtown Hoard.",
+    "ocrMarkdown" : "# Hoard\n\nCoins.\n",
+    "origin" : "instance:lib",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "On On the Zxtown Hoard.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "On the Zxtown Hoard",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxfp1950_lib",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 1950
+  }
+}
+== home: the same work by its fingerprint
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxwriter, B."
+    ],
+    "citekey" : "zxfp1950_home",
+    "doi" : null,
+    "notes" : "Notes on On the Zxtown hoard..",
+    "ocrMarkdown" : "# Hoard\n\nCoins and rings.\n",
+    "origin" : "instance:home",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "On On the Zxtown hoard..",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "On the Zxtown hoard.",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxfp1950_home",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 1950
+  }
+}
+== lib: a taken citekey
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxtaken2020_x",
+    "doi" : null,
+    "notes" : "Notes on Lib's Work.",
+    "ocrMarkdown" : null,
+    "origin" : "instance:lib",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "On Lib's Work.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "Lib's Work",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxtaken2020_x",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2020
+  }
+}
+== home: the same citekey
+200 {
+  "findings" : [
+  ],
+  "formatting" : [
+  ],
+  "illustration" : null,
+  "source" : {
+    "authors" : [
+      "Zxauthor, Ann"
+    ],
+    "citekey" : "zxtaken2020_x",
+    "doi" : null,
+    "notes" : "Notes on Home's Other Work.",
+    "ocrMarkdown" : null,
+    "origin" : "instance:home",
+    "periodEnd" : -1200,
+    "periodStart" : -1500,
+    "provenance" : null,
+    "regions" : [
+      "Zxland"
+    ],
+    "status" : "current",
+    "summary" : "On Home's Other Work.",
+    "tags" : [
+      "zx-oracle"
+    ],
+    "title" : "Home's Other Work",
+    "topics" : [
+      "bronze age"
+    ],
+    "uid" : "source:zxtaken2020_x",
+    "updatedAt" : "TS",
+    "venue" : "Zx Review",
+    "year" : 2020
+  }
+}
+== lib: delete three
+200 {
+  "aliases" : [
+    "zxthree1903_old"
+  ],
+  "applied" : true,
+  "blockers" : [
+  ],
+  "calibreId" : null,
+  "citekey" : "zxthree1903_prolegomena",
+  "counts" : [
+    {
+      "part" : "edges-in",
+      "rows" : 1
+    },
+    {
+      "part" : "aliases",
+      "rows" : 1
+    }
+  ],
+  "coverage" : [
+  ],
+  "edgesIn" : [
+    {
+      "dst" : "zxthree1903_prolegomena",
+      "kind" : "challenges",
+      "src" : "zxone2001_storm"
+    }
+  ],
+  "files" : [
+  ],
+  "filesFailed" : [
+  ],
+  "logEntry" : 1,
+  "mentions" : [
+  ],
+  "title" : "An Old Book on Zxland"
+}
+# lib, whole
+== manifest.json
+{
+  "asOf" : "TS",
+  "blobs" : {
+    "bytes" : "N",
+    "count" : 2
+  },
+  "files" : [
+    {
+      "bytes" : "N",
+      "lines" : 5,
+      "path" : "entities/sources.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 4,
+      "path" : "entities/findings.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/articles.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/article-versions.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/assets.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/asset-links.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/attestations.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/events.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/goals.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 1,
+      "path" : "entities/queue.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/places.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/periods.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 1,
+      "path" : "entities/edges.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 2,
+      "path" : "entities/unresolved-edges.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/assessments.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 1,
+      "path" : "entities/aliases.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/article-aliases.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/event-aliases.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/goal-aliases.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/place-aliases.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/event-catalogue.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/event-candidates.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/event-checks.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/corrections.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/site-types.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 1,
+      "path" : "entities/tombstones.ndjson"
+    }
+  ],
+  "format" : "histmersion-bundle",
+  "formatVersion" : 1,
+  "instance" : {
+    "id" : "instance:lib",
+    "label" : "zxlib"
+  },
+  "reference" : {
+    "periods" : 0,
+    "periodsDigest" : "",
+    "places" : 0,
+    "placesDigest" : ""
+  },
+  "schemaVersion" : "109"
+}
+== entities/sources.ndjson (5 lines)
+{   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "bodySha256" : "DIGEST",   "citekey" : "zxone2001_storm",   "doi" : "10.9999/zx.one",   "notes" : "Notes on The Storm of Zxtown.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On The Storm of Zxtown.",   "tags" : [     "zx-oracle"   ],   "title" : "The Storm of Zxtown",   "topics" : [     "bronze age"   ],   "uid" : "source:zxone2001_storm",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2001 }
+{   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "citekey" : "zxtwo2005_hittites",   "notes" : "Notes on The Kingdom of Zxland.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "contested",   "summary" : "On The Kingdom of Zxland.",   "tags" : [     "zx-oracle"   ],   "title" : "The Kingdom of Zxland",   "topics" : [     "bronze age"   ],   "uid" : "source:zxtwo2005_hittites",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2005 }
+{   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "citekey" : "zxdoi2010_lib",   "doi" : "10.9999/ZX.Both",   "notes" : "Notes on A Work Both Hold.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On A Work Both Hold.",   "tags" : [     "zx-oracle"   ],   "title" : "A Work Both Hold",   "topics" : [     "bronze age"   ],   "uid" : "source:zxdoi2010_lib",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2010 }
+{   "addedDate" : "DAY",   "authors" : [     "Zxwriter, Bo"   ],   "bodySha256" : "DIGEST",   "citekey" : "zxfp1950_lib",   "notes" : "Notes on On the Zxtown Hoard.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On On the Zxtown Hoard.",   "tags" : [     "zx-oracle"   ],   "title" : "On the Zxtown Hoard",   "topics" : [     "bronze age"   ],   "uid" : "source:zxfp1950_lib",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 1950 }
+{   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "citekey" : "zxtaken2020_x",   "notes" : "Notes on Lib's Work.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On Lib's Work.",   "tags" : [     "zx-oracle"   ],   "title" : "Lib's Work",   "topics" : [     "bronze age"   ],   "uid" : "source:zxtaken2020_x",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2020 }
+== entities/findings.ndjson (4 lines)
+{   "claim" : "the walls of Zxtown were raised around 1490 BC",   "confidence" : "high",   "id" : "zxone2001_storm#0",   "lat" : 40.0,   "lon" : 34.6,   "origin" : "instance:lib",   "period" : {     "end" : -1480,     "start" : -1500   },   "periodName" : "Zx",   "region" : "Zxland",   "rev" : "DIGEST",   "sourceUid" : "source:zxone2001_storm",   "tags" : [     "zx-claim"   ],   "uid" : "finding:zxone2001_storm#0",   "updatedAt" : "TS" }
+{   "claim" : "the gate of Zxtown faced the sea",   "confidence" : "high",   "id" : "zxone2001_storm#1",   "lat" : 40.01,   "lon" : 34.61,   "origin" : "instance:lib",   "period" : {     "end" : -1300,     "start" : -1400   },   "periodName" : "Zx",   "region" : "Zxland",   "rev" : "DIGEST",   "sourceUid" : "source:zxone2001_storm",   "tags" : [     "zx-claim"   ],   "uid" : "finding:zxone2001_storm#1",   "updatedAt" : "TS" }
+{   "claim" : "a kingdom ruled Zxland",   "confidence" : "high",   "id" : "zxtwo2005_hittites#0",   "lat" : 39.5,   "lon" : 35.0,   "origin" : "instance:lib",   "period" : {     "end" : -1250,     "start" : -1450   },   "periodName" : "Zx",   "region" : "Zxland",   "rev" : "DIGEST",   "sourceUid" : "source:zxtwo2005_hittites",   "tags" : [     "zx-claim"   ],   "uid" : "finding:zxtwo2005_hittites#0",   "updatedAt" : "TS" }
+{   "claim" : "a third claim, lib's",   "confidence" : "high",   "id" : "zxone2001_storm#2",   "lat" : 40.02,   "lon" : 34.62,   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1300   },   "periodName" : "Zx",   "region" : "Zxland",   "rev" : "DIGEST",   "sourceUid" : "source:zxone2001_storm",   "tags" : [     "zx-claim"   ],   "uid" : "finding:zxone2001_storm#2",   "updatedAt" : "TS" }
+== entities/articles.ndjson (0 lines)
+== entities/article-versions.ndjson (0 lines)
+== entities/assets.ndjson (0 lines)
+== entities/asset-links.ndjson (0 lines)
+== entities/attestations.ndjson (0 lines)
+== entities/events.ndjson (0 lines)
+== entities/goals.ndjson (0 lines)
+== entities/queue.ndjson (1 lines)
+{   "createdAt" : "TS",   "list" : "log",   "origin" : "instance:lib",   "rev" : "DIGEST",   "status" : "open",   "text" : "deleted zxthree1903_prolegomena (An Old Book on Zxland): 1 edges in (parked), 1 aliases",   "topic" : "DAY",   "uid" : "UUID",   "updatedAt" : "TS" }
+== entities/places.ndjson (0 lines)
+== entities/periods.ndjson (0 lines)
+== entities/edges.ndjson (1 lines)
+{   "dstUid" : "source:zxtwo2005_hittites",   "kind" : "references",   "srcUid" : "source:zxone2001_storm" }
+== entities/unresolved-edges.ndjson (2 lines)
+{   "dst" : "zxlost1900_gone",   "kind" : "references",   "srcUid" : "source:zxone2001_storm" }
+{   "dst" : "zxthree1903_prolegomena",   "kind" : "challenges",   "srcUid" : "source:zxone2001_storm" }
+== entities/assessments.ndjson (0 lines)
+== entities/aliases.ndjson (1 lines)
+{   "alias" : "zxtwo2005_kingdom",   "createdAt" : "TS",   "sourceUid" : "source:zxtwo2005_hittites" }
+== entities/article-aliases.ndjson (0 lines)
+== entities/event-aliases.ndjson (0 lines)
+== entities/goal-aliases.ndjson (0 lines)
+== entities/place-aliases.ndjson (0 lines)
+== entities/event-catalogue.ndjson (0 lines)
+== entities/event-candidates.ndjson (0 lines)
+== entities/event-checks.ndjson (0 lines)
+== entities/corrections.ndjson (0 lines)
+== entities/site-types.ndjson (0 lines)
+== entities/tombstones.ndjson (1 lines)
+{   "deletedAt" : "TS",   "kind" : "source",   "origin" : "instance:lib",   "uid" : "tombstone:source" }
+== blob 129 bytes
+== blob 16 bytes
+# lib, since the shared history
+== manifest.json
+{
+  "asOf" : "TS",
+  "blobs" : {
+    "bytes" : "N",
+    "count" : 2
+  },
+  "files" : [
+    {
+      "bytes" : "N",
+      "lines" : 5,
+      "path" : "entities/sources.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 4,
+      "path" : "entities/findings.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/articles.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/article-versions.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/assets.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/asset-links.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/attestations.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/events.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/goals.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 1,
+      "path" : "entities/queue.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/places.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/periods.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 1,
+      "path" : "entities/edges.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 2,
+      "path" : "entities/unresolved-edges.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/assessments.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 1,
+      "path" : "entities/aliases.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/article-aliases.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/event-aliases.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/goal-aliases.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/place-aliases.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/event-catalogue.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/event-candidates.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/event-checks.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/corrections.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 0,
+      "path" : "entities/site-types.ndjson"
+    },
+    {
+      "bytes" : "N",
+      "lines" : 1,
+      "path" : "entities/tombstones.ndjson"
+    }
+  ],
+  "format" : "histmersion-bundle",
+  "formatVersion" : 1,
+  "instance" : {
+    "id" : "instance:lib",
+    "label" : "zxlib"
+  },
+  "reference" : {
+    "periods" : 0,
+    "periodsDigest" : "",
+    "places" : 0,
+    "placesDigest" : ""
+  },
+  "schemaVersion" : "109",
+  "since" : "TS"
+}
+== entities/sources.ndjson (5 lines)
+{   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "bodySha256" : "DIGEST",   "citekey" : "zxone2001_storm",   "doi" : "10.9999/zx.one",   "notes" : "Notes on The Storm of Zxtown.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On The Storm of Zxtown.",   "tags" : [     "zx-oracle"   ],   "title" : "The Storm of Zxtown",   "topics" : [     "bronze age"   ],   "uid" : "source:zxone2001_storm",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2001 }
+{   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "citekey" : "zxtwo2005_hittites",   "notes" : "Notes on The Kingdom of Zxland.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "contested",   "summary" : "On The Kingdom of Zxland.",   "tags" : [     "zx-oracle"   ],   "title" : "The Kingdom of Zxland",   "topics" : [     "bronze age"   ],   "uid" : "source:zxtwo2005_hittites",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2005 }
+{   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "citekey" : "zxdoi2010_lib",   "doi" : "10.9999/ZX.Both",   "notes" : "Notes on A Work Both Hold.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On A Work Both Hold.",   "tags" : [     "zx-oracle"   ],   "title" : "A Work Both Hold",   "topics" : [     "bronze age"   ],   "uid" : "source:zxdoi2010_lib",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2010 }
+{   "addedDate" : "DAY",   "authors" : [     "Zxwriter, Bo"   ],   "bodySha256" : "DIGEST",   "citekey" : "zxfp1950_lib",   "notes" : "Notes on On the Zxtown Hoard.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On On the Zxtown Hoard.",   "tags" : [     "zx-oracle"   ],   "title" : "On the Zxtown Hoard",   "topics" : [     "bronze age"   ],   "uid" : "source:zxfp1950_lib",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 1950 }
+{   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "citekey" : "zxtaken2020_x",   "notes" : "Notes on Lib's Work.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On Lib's Work.",   "tags" : [     "zx-oracle"   ],   "title" : "Lib's Work",   "topics" : [     "bronze age"   ],   "uid" : "source:zxtaken2020_x",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2020 }
+== entities/findings.ndjson (4 lines)
+{   "claim" : "the walls of Zxtown were raised around 1490 BC",   "confidence" : "high",   "id" : "zxone2001_storm#0",   "lat" : 40.0,   "lon" : 34.6,   "origin" : "instance:lib",   "period" : {     "end" : -1480,     "start" : -1500   },   "periodName" : "Zx",   "region" : "Zxland",   "rev" : "DIGEST",   "sourceUid" : "source:zxone2001_storm",   "tags" : [     "zx-claim"   ],   "uid" : "finding:zxone2001_storm#0",   "updatedAt" : "TS" }
+{   "claim" : "the gate of Zxtown faced the sea",   "confidence" : "high",   "id" : "zxone2001_storm#1",   "lat" : 40.01,   "lon" : 34.61,   "origin" : "instance:lib",   "period" : {     "end" : -1300,     "start" : -1400   },   "periodName" : "Zx",   "region" : "Zxland",   "rev" : "DIGEST",   "sourceUid" : "source:zxone2001_storm",   "tags" : [     "zx-claim"   ],   "uid" : "finding:zxone2001_storm#1",   "updatedAt" : "TS" }
+{   "claim" : "a kingdom ruled Zxland",   "confidence" : "high",   "id" : "zxtwo2005_hittites#0",   "lat" : 39.5,   "lon" : 35.0,   "origin" : "instance:lib",   "period" : {     "end" : -1250,     "start" : -1450   },   "periodName" : "Zx",   "region" : "Zxland",   "rev" : "DIGEST",   "sourceUid" : "source:zxtwo2005_hittites",   "tags" : [     "zx-claim"   ],   "uid" : "finding:zxtwo2005_hittites#0",   "updatedAt" : "TS" }
+{   "claim" : "a third claim, lib's",   "confidence" : "high",   "id" : "zxone2001_storm#2",   "lat" : 40.02,   "lon" : 34.62,   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1300   },   "periodName" : "Zx",   "region" : "Zxland",   "rev" : "DIGEST",   "sourceUid" : "source:zxone2001_storm",   "tags" : [     "zx-claim"   ],   "uid" : "finding:zxone2001_storm#2",   "updatedAt" : "TS" }
+== entities/articles.ndjson (0 lines)
+== entities/article-versions.ndjson (0 lines)
+== entities/assets.ndjson (0 lines)
+== entities/asset-links.ndjson (0 lines)
+== entities/attestations.ndjson (0 lines)
+== entities/events.ndjson (0 lines)
+== entities/goals.ndjson (0 lines)
+== entities/queue.ndjson (1 lines)
+{   "createdAt" : "TS",   "list" : "log",   "origin" : "instance:lib",   "rev" : "DIGEST",   "status" : "open",   "text" : "deleted zxthree1903_prolegomena (An Old Book on Zxland): 1 edges in (parked), 1 aliases",   "topic" : "DAY",   "uid" : "UUID",   "updatedAt" : "TS" }
+== entities/places.ndjson (0 lines)
+== entities/periods.ndjson (0 lines)
+== entities/edges.ndjson (1 lines)
+{   "dstUid" : "source:zxtwo2005_hittites",   "kind" : "references",   "srcUid" : "source:zxone2001_storm" }
+== entities/unresolved-edges.ndjson (2 lines)
+{   "dst" : "zxlost1900_gone",   "kind" : "references",   "srcUid" : "source:zxone2001_storm" }
+{   "dst" : "zxthree1903_prolegomena",   "kind" : "challenges",   "srcUid" : "source:zxone2001_storm" }
+== entities/assessments.ndjson (0 lines)
+== entities/aliases.ndjson (1 lines)
+{   "alias" : "zxtwo2005_kingdom",   "createdAt" : "TS",   "sourceUid" : "source:zxtwo2005_hittites" }
+== entities/article-aliases.ndjson (0 lines)
+== entities/event-aliases.ndjson (0 lines)
+== entities/goal-aliases.ndjson (0 lines)
+== entities/place-aliases.ndjson (0 lines)
+== entities/event-catalogue.ndjson (0 lines)
+== entities/event-candidates.ndjson (0 lines)
+== entities/event-checks.ndjson (0 lines)
+== entities/corrections.ndjson (0 lines)
+== entities/site-types.ndjson (0 lines)
+== entities/tombstones.ndjson (1 lines)
+{   "deletedAt" : "TS",   "kind" : "source",   "origin" : "instance:lib",   "uid" : "tombstone:source" }
+== blob 129 bytes
+== blob 16 bytes
+# the whole bundle imported into an empty collection
+{
+  "applied" : true,
+  "blobs" : 2,
+  "bundleId" : "UUID",
+  "conflicts" : [
+  ],
+  "counts" : [
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 5,
+      "keptLocal" : 0,
+      "kind" : "source",
+      "skippedDeleted" : 0,
+      "unchanged" : 1,
+      "updated" : 0
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 4,
+      "keptLocal" : 0,
+      "kind" : "finding",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 1,
+      "keptLocal" : 0,
+      "kind" : "queue-item",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    }
+  ],
+  "dryRun" : false,
+  "from" : {
+    "id" : "instance:lib",
+    "label" : "zxlib"
+  },
+  "issues" : [
+  ],
+  "mergeId" : "UUID",
+  "notes" : [
+  ],
+  "planHash" : "DIGEST",
+  "problems" : [
+  ]
+}
+## sources 5 rows
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxdoi2010_lib", "doi" : "10.9999/ZX.Both", "notes" : "Notes on A Work Both Hold.", "ocr_markdown" : null, "origin" : "instance:lib", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On A Work Both Hold.", "tags" : [ "zx-oracle" ], "title" : "A Work Both Hold", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2010 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxone2001_storm", "doi" : "10.9999/zx.one", "notes" : "Notes on The Storm of Zxtown.", "ocr_markdown" : "# Zxtown\n\n## The walls\n\nThe walls of Zxtown were raised in the Zx period.\n\n## The gate\n\nThe gate faced the sea, as lib reads it.\n", "origin" : "instance:lib", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On The Storm of Zxtown.", "tags" : [ "zx-oracle" ], "title" : "The Storm of Zxtown", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2001 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxtaken2020_x", "doi" : null, "notes" : "Notes on Lib's Work.", "ocr_markdown" : null, "origin" : "instance:lib", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On Lib's Work.", "tags" : [ "zx-oracle" ], "title" : "Lib's Work", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2020 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxtwo2005_hittites", "doi" : null, "notes" : "Notes on The Kingdom of Zxland.", "ocr_markdown" : null, "origin" : "instance:lib", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "contested", "summary" : "On The Kingdom of Zxland.", "tags" : [ "zx-oracle" ], "title" : "The Kingdom of Zxland", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2005 }
+{ "authors" : [ "Zxwriter, Bo" ], "citekey" : "zxfp1950_lib", "doi" : null, "notes" : "Notes on On the Zxtown Hoard.", "ocr_markdown" : "# Hoard\n\nCoins.\n", "origin" : "instance:lib", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On On the Zxtown Hoard.", "tags" : [ "zx-oracle" ], "title" : "On the Zxtown Hoard", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 1950 }
+## source_aliases 1 rows
+{ "alias" : "zxtwo2005_kingdom", "citekey" : "zxtwo2005_hittites" }
+## source_chunks 3 rows
+{ "citekey" : "zxfp1950_lib", "heading" : "Hoard", "ord" : 0 }
+{ "citekey" : "zxone2001_storm", "heading" : "Zxtown > The gate", "ord" : 1 }
+{ "citekey" : "zxone2001_storm", "heading" : "Zxtown > The walls", "ord" : 0 }
+## source_identifiers 2 rows
+{ "scheme" : "doi", "source_uid" : "source:zxdoi2010_lib", "value" : "10.9999/zx.both" }
+{ "scheme" : "doi", "source_uid" : "source:zxone2001_storm", "value" : "10.9999/zx.one" }
+## findings 4 rows
+{ "citekey" : "zxone2001_storm", "claim" : "a third claim, lib's", "confidence" : "high", "geom" : "POINT(34.62 40.02)", "id" : "zxone2001_storm#2", "period" : "[-1300,-1199)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxone2001_storm", "claim" : "the gate of Zxtown faced the sea", "confidence" : "high", "geom" : "POINT(34.61 40.01)", "id" : "zxone2001_storm#1", "period" : "[-1400,-1299)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxone2001_storm", "claim" : "the walls of Zxtown were raised around 1490 BC", "confidence" : "high", "geom" : "POINT(34.6 40)", "id" : "zxone2001_storm#0", "period" : "[-1500,-1479)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxtwo2005_hittites", "claim" : "a kingdom ruled Zxland", "confidence" : "high", "geom" : "POINT(35 39.5)", "id" : "zxtwo2005_hittites#0", "period" : "[-1450,-1249)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+## finding_places 0 rows
+## edges 1 rows
+{ "dst" : "zxtwo2005_hittites", "kind" : "references", "src" : "zxone2001_storm" }
+## unresolved_edges 2 rows
+{ "dst" : "zxlost1900_gone", "kind" : "references", "src" : "zxone2001_storm" }
+{ "dst" : "zxthree1903_prolegomena", "kind" : "challenges", "src" : "zxone2001_storm" }
+## assessments 0 rows
+## tombstones 1 rows
+{ "kind" : "source", "uid" : "tombstone:source" }
+## uid_aliases 0 rows
+## queue_items 1 rows
+{ "list" : "log", "status" : "open", "text" : "deleted zxthree1903_prolegomena (An Old Book on Zxland): 1 edges in (parked), 1 aliases", "topic" : "DAY" }
+# the part since imported into inc
+{
+  "applied" : true,
+  "blobs" : 2,
+  "bundleId" : "UUID",
+  "conflicts" : [
+  ],
+  "counts" : [
+    {
+      "conflicts" : 0,
+      "deleted" : 1,
+      "held" : 0,
+      "inserted" : 3,
+      "keptLocal" : 0,
+      "kind" : "source",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 2
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 1,
+      "keptLocal" : 0,
+      "kind" : "finding",
+      "skippedDeleted" : 0,
+      "unchanged" : 1,
+      "updated" : 2
+    },
+    {
+      "conflicts" : 0,
+      "deleted" : 0,
+      "held" : 0,
+      "inserted" : 1,
+      "keptLocal" : 0,
+      "kind" : "queue-item",
+      "skippedDeleted" : 0,
+      "unchanged" : 0,
+      "updated" : 0
+    }
+  ],
+  "dryRun" : false,
+  "from" : {
+    "id" : "instance:lib",
+    "label" : "zxlib"
+  },
+  "issues" : [
+  ],
+  "mergeId" : "UUID",
+  "notes" : [
+  ],
+  "planHash" : "DIGEST",
+  "problems" : [
+  ]
+}
+## sources 5 rows
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxdoi2010_lib", "doi" : "10.9999/ZX.Both", "notes" : "Notes on A Work Both Hold.", "ocr_markdown" : null, "origin" : "instance:lib", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On A Work Both Hold.", "tags" : [ "zx-oracle" ], "title" : "A Work Both Hold", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2010 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxone2001_storm", "doi" : "10.9999/zx.one", "notes" : "Notes on The Storm of Zxtown.", "ocr_markdown" : "# Zxtown\n\n## The walls\n\nThe walls of Zxtown were raised in the Zx period.\n\n## The gate\n\nThe gate faced the sea, as lib reads it.\n", "origin" : "instance:lib", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On The Storm of Zxtown.", "tags" : [ "zx-oracle" ], "title" : "The Storm of Zxtown", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2001 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxtaken2020_x", "doi" : null, "notes" : "Notes on Lib's Work.", "ocr_markdown" : null, "origin" : "instance:lib", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On Lib's Work.", "tags" : [ "zx-oracle" ], "title" : "Lib's Work", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2020 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxtwo2005_hittites", "doi" : null, "notes" : "Notes on The Kingdom of Zxland.", "ocr_markdown" : null, "origin" : "instance:lib", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "contested", "summary" : "On The Kingdom of Zxland.", "tags" : [ "zx-oracle" ], "title" : "The Kingdom of Zxland", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2005 }
+{ "authors" : [ "Zxwriter, Bo" ], "citekey" : "zxfp1950_lib", "doi" : null, "notes" : "Notes on On the Zxtown Hoard.", "ocr_markdown" : "# Hoard\n\nCoins.\n", "origin" : "instance:lib", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On On the Zxtown Hoard.", "tags" : [ "zx-oracle" ], "title" : "On the Zxtown Hoard", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 1950 }
+## source_aliases 1 rows
+{ "alias" : "zxtwo2005_kingdom", "citekey" : "zxtwo2005_hittites" }
+## source_chunks 3 rows
+{ "citekey" : "zxfp1950_lib", "heading" : "Hoard", "ord" : 0 }
+{ "citekey" : "zxone2001_storm", "heading" : "Zxtown > The gate", "ord" : 1 }
+{ "citekey" : "zxone2001_storm", "heading" : "Zxtown > The walls", "ord" : 0 }
+## source_identifiers 2 rows
+{ "scheme" : "doi", "source_uid" : "source:zxdoi2010_lib", "value" : "10.9999/zx.both" }
+{ "scheme" : "doi", "source_uid" : "source:zxone2001_storm", "value" : "10.9999/zx.one" }
+## findings 4 rows
+{ "citekey" : "zxone2001_storm", "claim" : "a third claim, lib's", "confidence" : "high", "geom" : "POINT(34.62 40.02)", "id" : "zxone2001_storm#2", "period" : "[-1300,-1199)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxone2001_storm", "claim" : "the gate of Zxtown faced the sea", "confidence" : "high", "geom" : "POINT(34.61 40.01)", "id" : "zxone2001_storm#1", "period" : "[-1400,-1299)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxone2001_storm", "claim" : "the walls of Zxtown were raised around 1490 BC", "confidence" : "high", "geom" : "POINT(34.6 40)", "id" : "zxone2001_storm#0", "period" : "[-1500,-1479)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxtwo2005_hittites", "claim" : "a kingdom ruled Zxland", "confidence" : "high", "geom" : "POINT(35 39.5)", "id" : "zxtwo2005_hittites#0", "period" : "[-1450,-1249)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+## finding_places 0 rows
+## edges 1 rows
+{ "dst" : "zxtwo2005_hittites", "kind" : "references", "src" : "zxone2001_storm" }
+## unresolved_edges 2 rows
+{ "dst" : "zxlost1900_gone", "kind" : "references", "src" : "zxone2001_storm" }
+{ "dst" : "zxthree1903_prolegomena", "kind" : "challenges", "src" : "zxone2001_storm" }
+## assessments 0 rows
+## tombstones 1 rows
+{ "kind" : "source", "uid" : "tombstone:source" }
+## uid_aliases 0 rows
+## queue_items 1 rows
+{ "list" : "log", "status" : "open", "text" : "deleted zxthree1903_prolegomena (An Old Book on Zxland): 1 edges in (parked), 1 aliases", "topic" : "DAY" }
+# home merges lib: the first plan
+{
+  "asOf" : "TS",
+  "bundleId" : "UUID",
+  "changes" : 9,
+  "formatVersion" : 1,
+  "from" : {
+    "id" : "instance:lib",
+    "label" : "zxlib"
+  },
+  "info" : [
+    "finding zxone2001_storm#2: that id is another finding's here — the bundle's arrives as zxone2001_storm#3"
+  ],
+  "into" : {
+    "id" : "instance:home",
+    "label" : null
+  },
+  "issues" : [
+    {
+      "condition" : null,
+      "decidedBy" : "default",
+      "decision" : "keep-left",
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "citekey",
+            "left" : "zxfp1950_home",
+            "right" : "zxfp1950_lib"
+          },
+          {
+            "field" : "title",
+            "left" : "On the Zxtown hoard.",
+            "right" : "On the Zxtown Hoard"
+          },
+          {
+            "field" : "authors",
+            "left" : "Zxwriter, B.",
+            "right" : "Zxwriter, Bo"
+          },
+          {
+            "field" : "year",
+            "left" : "1950",
+            "right" : "1950"
+          },
+          {
+            "field" : "DOI",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "venue",
+            "left" : "Zx Review",
+            "right" : "Zx Review"
+          },
+          {
+            "field" : "status",
+            "left" : "current",
+            "right" : "current"
+          },
+          {
+            "field" : "period",
+            "left" : "-1500..-1200",
+            "right" : "-1500..-1200"
+          },
+          {
+            "field" : "tags",
+            "left" : "zx-oracle",
+            "right" : "zx-oracle"
+          },
+          {
+            "field" : "summary",
+            "left" : "On On the Zxtown hoard..",
+            "right" : "On On the Zxtown Hoard."
+          },
+          {
+            "field" : "notes",
+            "left" : "Notes on On the Zxtown hoard..",
+            "right" : "Notes on On the Zxtown Hoard."
+          },
+          {
+            "field" : "OCR body",
+            "left" : "sha256 b72022395b0e…",
+            "right" : "sha256 ba8329e093f1…"
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "source",
+      "id" : "O-issue:body-differs:zxfp1950_lib",
+      "kind" : "body-differs",
+      "left" : {
+        "label" : "zxfp1950_home",
+        "lines" : [
+          "\"On the Zxtown hoard.\"",
+          "Zxwriter, B. · 1950 · no DOI · current"
+        ],
+        "uid" : "source:zxfp1950_home"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right"
+      ],
+      "right" : {
+        "label" : "zxfp1950_lib",
+        "lines" : [
+          "\"On the Zxtown Hoard\"",
+          "Zxwriter, Bo · 1950 · no DOI · current"
+        ],
+        "uid" : "source:zxfp1950_lib"
+      },
+      "severity" : "default",
+      "suggested" : "keep-left",
+      "title" : "OCR bodies differ (MinHash 0.00)",
+      "why" : [
+        "by default this collection's body stays; keep-right takes the bundle's (and its figures)"
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : null,
+      "decision" : null,
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "citekey",
+            "left" : "zxdoi2010_home",
+            "right" : "zxdoi2010_lib"
+          },
+          {
+            "field" : "title",
+            "left" : "A Work Both Hold",
+            "right" : "A Work Both Hold"
+          },
+          {
+            "field" : "authors",
+            "left" : "Zxauthor, Ann",
+            "right" : "Zxauthor, Ann"
+          },
+          {
+            "field" : "year",
+            "left" : "2010",
+            "right" : "2010"
+          },
+          {
+            "field" : "DOI",
+            "left" : "https://doi.org/10.9999/zx.both",
+            "right" : "10.9999/ZX.Both"
+          },
+          {
+            "field" : "venue",
+            "left" : "Zx Review",
+            "right" : "Zx Review"
+          },
+          {
+            "field" : "status",
+            "left" : "current",
+            "right" : "current"
+          },
+          {
+            "field" : "period",
+            "left" : "-1500..-1200",
+            "right" : "-1500..-1200"
+          },
+          {
+            "field" : "tags",
+            "left" : "zx-oracle",
+            "right" : "zx-oracle"
+          },
+          {
+            "field" : "summary",
+            "left" : "home's",
+            "right" : "On A Work Both Hold."
+          },
+          {
+            "field" : "notes",
+            "left" : "Notes on A Work Both Hold.",
+            "right" : "Notes on A Work Both Hold."
+          },
+          {
+            "field" : "OCR body",
+            "left" : null,
+            "right" : null
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "source",
+      "id" : "S-issue:summary-differs:zxdoi2010_lib",
+      "kind" : "summary-differs",
+      "left" : {
+        "label" : "zxdoi2010_home",
+        "lines" : [
+          "\"A Work Both Hold\"",
+          "Zxauthor, Ann · 2010 · DOI https://doi.org/10.9999/zx.both · current"
+        ],
+        "uid" : "source:zxdoi2010_home"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right",
+        "concat"
+      ],
+      "right" : {
+        "label" : "zxdoi2010_lib",
+        "lines" : [
+          "\"A Work Both Hold\"",
+          "Zxauthor, Ann · 2010 · DOI 10.9999/ZX.Both · current"
+        ],
+        "uid" : "source:zxdoi2010_lib"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "summary differs",
+      "why" : [
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : null,
+      "decision" : null,
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "citekey",
+            "left" : "zxfp1950_home",
+            "right" : "zxfp1950_lib"
+          },
+          {
+            "field" : "title",
+            "left" : "On the Zxtown hoard.",
+            "right" : "On the Zxtown Hoard"
+          },
+          {
+            "field" : "authors",
+            "left" : "Zxwriter, B.",
+            "right" : "Zxwriter, Bo"
+          },
+          {
+            "field" : "year",
+            "left" : "1950",
+            "right" : "1950"
+          },
+          {
+            "field" : "DOI",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "venue",
+            "left" : "Zx Review",
+            "right" : "Zx Review"
+          },
+          {
+            "field" : "status",
+            "left" : "current",
+            "right" : "current"
+          },
+          {
+            "field" : "period",
+            "left" : "-1500..-1200",
+            "right" : "-1500..-1200"
+          },
+          {
+            "field" : "tags",
+            "left" : "zx-oracle",
+            "right" : "zx-oracle"
+          },
+          {
+            "field" : "summary",
+            "left" : "On On the Zxtown hoard..",
+            "right" : "On On the Zxtown Hoard."
+          },
+          {
+            "field" : "notes",
+            "left" : "Notes on On the Zxtown hoard..",
+            "right" : "Notes on On the Zxtown Hoard."
+          },
+          {
+            "field" : "OCR body",
+            "left" : "sha256 b72022395b0e…",
+            "right" : "sha256 ba8329e093f1…"
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "source",
+      "id" : "S-issue:notes-differs:zxfp1950_lib",
+      "kind" : "notes-differs",
+      "left" : {
+        "label" : "zxfp1950_home",
+        "lines" : [
+          "\"On the Zxtown hoard.\"",
+          "Zxwriter, B. · 1950 · no DOI · current"
+        ],
+        "uid" : "source:zxfp1950_home"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right",
+        "concat"
+      ],
+      "right" : {
+        "label" : "zxfp1950_lib",
+        "lines" : [
+          "\"On the Zxtown Hoard\"",
+          "Zxwriter, Bo · 1950 · no DOI · current"
+        ],
+        "uid" : "source:zxfp1950_lib"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "notes differ",
+      "why" : [
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : null,
+      "decision" : null,
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "citekey",
+            "left" : "zxfp1950_home",
+            "right" : "zxfp1950_lib"
+          },
+          {
+            "field" : "title",
+            "left" : "On the Zxtown hoard.",
+            "right" : "On the Zxtown Hoard"
+          },
+          {
+            "field" : "authors",
+            "left" : "Zxwriter, B.",
+            "right" : "Zxwriter, Bo"
+          },
+          {
+            "field" : "year",
+            "left" : "1950",
+            "right" : "1950"
+          },
+          {
+            "field" : "DOI",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "venue",
+            "left" : "Zx Review",
+            "right" : "Zx Review"
+          },
+          {
+            "field" : "status",
+            "left" : "current",
+            "right" : "current"
+          },
+          {
+            "field" : "period",
+            "left" : "-1500..-1200",
+            "right" : "-1500..-1200"
+          },
+          {
+            "field" : "tags",
+            "left" : "zx-oracle",
+            "right" : "zx-oracle"
+          },
+          {
+            "field" : "summary",
+            "left" : "On On the Zxtown hoard..",
+            "right" : "On On the Zxtown Hoard."
+          },
+          {
+            "field" : "notes",
+            "left" : "Notes on On the Zxtown hoard..",
+            "right" : "Notes on On the Zxtown Hoard."
+          },
+          {
+            "field" : "OCR body",
+            "left" : "sha256 b72022395b0e…",
+            "right" : "sha256 ba8329e093f1…"
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "source",
+      "id" : "S-issue:summary-differs:zxfp1950_lib",
+      "kind" : "summary-differs",
+      "left" : {
+        "label" : "zxfp1950_home",
+        "lines" : [
+          "\"On the Zxtown hoard.\"",
+          "Zxwriter, B. · 1950 · no DOI · current"
+        ],
+        "uid" : "source:zxfp1950_home"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right",
+        "concat"
+      ],
+      "right" : {
+        "label" : "zxfp1950_lib",
+        "lines" : [
+          "\"On the Zxtown Hoard\"",
+          "Zxwriter, Bo · 1950 · no DOI · current"
+        ],
+        "uid" : "source:zxfp1950_lib"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "summary differs",
+      "why" : [
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : null,
+      "decision" : null,
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "citekey",
+            "left" : "zxone2001_storm",
+            "right" : "zxone2001_storm"
+          },
+          {
+            "field" : "title",
+            "left" : "The Storm of Zxtown",
+            "right" : "The Storm of Zxtown"
+          },
+          {
+            "field" : "authors",
+            "left" : "Zxauthor, Ann",
+            "right" : "Zxauthor, Ann"
+          },
+          {
+            "field" : "year",
+            "left" : "2001",
+            "right" : "2001"
+          },
+          {
+            "field" : "DOI",
+            "left" : "10.9999/zx.one",
+            "right" : "10.9999/zx.one"
+          },
+          {
+            "field" : "venue",
+            "left" : "Zx Review",
+            "right" : "Zx Review"
+          },
+          {
+            "field" : "status",
+            "left" : "current",
+            "right" : "current"
+          },
+          {
+            "field" : "period",
+            "left" : "-1500..-1200",
+            "right" : "-1500..-1200"
+          },
+          {
+            "field" : "tags",
+            "left" : "zx-oracle",
+            "right" : "zx-oracle"
+          },
+          {
+            "field" : "summary",
+            "left" : "On The Storm of Zxtown, at home.",
+            "right" : "On The Storm of Zxtown."
+          },
+          {
+            "field" : "notes",
+            "left" : "Notes on The Storm of Zxtown.",
+            "right" : "Notes on The Storm of Zxtown."
+          },
+          {
+            "field" : "OCR body",
+            "left" : "sha256 8cc2f131f23a…",
+            "right" : "sha256 11b4519eb48d…"
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "source",
+      "id" : "S-issue:changed-both-sides:zxone2001_storm",
+      "kind" : "changed-both-sides",
+      "left" : {
+        "label" : "zxone2001_storm",
+        "lines" : [
+        ],
+        "uid" : "source:zxone2001_storm"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right"
+      ],
+      "right" : {
+        "label" : "zxone2001_storm",
+        "lines" : [
+        ],
+        "uid" : "source:zxone2001_storm"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "changed on both sides since the last import",
+      "why" : [
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : null,
+      "decision" : null,
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "citekey",
+            "left" : "zxtaken2020_x",
+            "right" : "zxtaken2020_x"
+          },
+          {
+            "field" : "title",
+            "left" : "Home's Other Work",
+            "right" : "Lib's Work"
+          },
+          {
+            "field" : "authors",
+            "left" : "Zxauthor, Ann",
+            "right" : "Zxauthor, Ann"
+          },
+          {
+            "field" : "year",
+            "left" : "2020",
+            "right" : "2020"
+          },
+          {
+            "field" : "DOI",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "venue",
+            "left" : "Zx Review",
+            "right" : "Zx Review"
+          },
+          {
+            "field" : "status",
+            "left" : "current",
+            "right" : "current"
+          },
+          {
+            "field" : "period",
+            "left" : "-1500..-1200",
+            "right" : "-1500..-1200"
+          },
+          {
+            "field" : "tags",
+            "left" : "zx-oracle",
+            "right" : "zx-oracle"
+          },
+          {
+            "field" : "summary",
+            "left" : "On Home's Other Work.",
+            "right" : "On Lib's Work."
+          },
+          {
+            "field" : "notes",
+            "left" : "Notes on Home's Other Work.",
+            "right" : "Notes on Lib's Work."
+          },
+          {
+            "field" : "OCR body",
+            "left" : null,
+            "right" : null
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "source",
+      "id" : "S-issue:citekey-collision:zxtaken2020_x",
+      "kind" : "citekey-collision",
+      "left" : {
+        "label" : "zxtaken2020_x",
+        "lines" : [
+          "\"Home's Other Work\"",
+          "Zxauthor, Ann · 2020 · no DOI · current"
+        ],
+        "uid" : "source:zxtaken2020_x"
+      },
+      "options" : [
+        "rename-right",
+        "rename-left"
+      ],
+      "right" : {
+        "label" : "zxtaken2020_x",
+        "lines" : [
+          "\"Lib's Work\"",
+          "Zxauthor, Ann · 2020 · no DOI · current"
+        ],
+        "uid" : "source:zxtaken2020_x"
+      },
+      "severity" : "blocking",
+      "suggested" : "rename-right:zxtaken2020_xlib",
+      "title" : "same citekey, different works (score +4)",
+      "why" : [
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : null,
+      "decision" : null,
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "citekey",
+            "left" : "zxtwo2005_kingdom",
+            "right" : "zxtwo2005_hittites"
+          },
+          {
+            "field" : "title",
+            "left" : "The Kingdom of Zxland",
+            "right" : "The Kingdom of Zxland"
+          },
+          {
+            "field" : "authors",
+            "left" : "Zxauthor, Ann",
+            "right" : "Zxauthor, Ann"
+          },
+          {
+            "field" : "year",
+            "left" : "2005",
+            "right" : "2005"
+          },
+          {
+            "field" : "DOI",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "venue",
+            "left" : "Zx Review",
+            "right" : "Zx Review"
+          },
+          {
+            "field" : "status",
+            "left" : "contested",
+            "right" : "contested"
+          },
+          {
+            "field" : "period",
+            "left" : "-1500..-1200",
+            "right" : "-1500..-1200"
+          },
+          {
+            "field" : "tags",
+            "left" : "zx-oracle; zx-home",
+            "right" : "zx-oracle"
+          },
+          {
+            "field" : "summary",
+            "left" : "On The Kingdom of Zxland.",
+            "right" : "On The Kingdom of Zxland."
+          },
+          {
+            "field" : "notes",
+            "left" : "Notes on The Kingdom of Zxland.",
+            "right" : "Notes on The Kingdom of Zxland."
+          },
+          {
+            "field" : "OCR body",
+            "left" : null,
+            "right" : null
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "source",
+      "id" : "S-issue:changed-both-sides:zxtwo2005_hittites",
+      "kind" : "changed-both-sides",
+      "left" : {
+        "label" : "zxtwo2005_hittites",
+        "lines" : [
+        ],
+        "uid" : "source:zxtwo2005_hittites"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right"
+      ],
+      "right" : {
+        "label" : "zxtwo2005_hittites",
+        "lines" : [
+        ],
+        "uid" : "source:zxtwo2005_hittites"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "changed on both sides since the last import",
+      "why" : [
+      ]
+    }
+  ],
+  "matches" : {
+    "byLedger" : 0,
+    "byScore" : 1,
+    "byStrongKey" : 1,
+    "byUid" : 2,
+    "deletedHere" : 0,
+    "sources" : 5,
+    "undecided" : 0,
+    "unmatched" : 1
+  },
+  "planHash" : "DIGEST",
+  "problems" : [
+  ],
+  "resolutionErrors" : [
+  ],
+  "resolved" : 0,
+  "schemaVersion" : "109",
+  "sources" : [
+    {
+      "issue" : null,
+      "leftCitekey" : "zxdoi2010_home",
+      "leftUid" : "source:zxdoi2010_home",
+      "method" : "strongkey",
+      "outcome" : "auto-merge",
+      "rightCitekey" : "zxdoi2010_lib",
+      "rightUid" : "source:zxdoi2010_lib",
+      "score" : 19.0,
+      "why" : [
+        "DOI equal (strong key)",
+        "title the same (+9)",
+        "authors the same (+6)",
+        "year the same (+3)",
+        "venue the same (+1)"
+      ]
+    },
+    {
+      "issue" : null,
+      "leftCitekey" : "zxfp1950_home",
+      "leftUid" : "source:zxfp1950_home",
+      "method" : "score",
+      "outcome" : "auto-merge",
+      "rightCitekey" : "zxfp1950_lib",
+      "rightUid" : "source:zxfp1950_lib",
+      "score" : 15.0,
+      "why" : [
+        "title the same (+9)",
+        "authors the same (+6)",
+        "year the same (+3)",
+        "venue the same (+1)",
+        "OCR bodies differ (MinHash 0.00) (-4)"
+      ]
+    },
+    {
+      "issue" : null,
+      "leftCitekey" : null,
+      "leftUid" : null,
+      "method" : "unmatched",
+      "outcome" : "new",
+      "rightCitekey" : "zxtaken2020_x",
+      "rightUid" : "source:zxtaken2020_x",
+      "score" : null,
+      "why" : [
+      ]
+    }
+  ]
+}
+# home merges lib: the plan, every issue answered
+{
+  "asOf" : "TS",
+  "bundleId" : "UUID",
+  "changes" : 12,
+  "formatVersion" : 1,
+  "from" : {
+    "id" : "instance:lib",
+    "label" : "zxlib"
+  },
+  "info" : [
+    "finding zxone2001_storm#2: that id is another finding's here — the bundle's arrives as zxone2001_storm#3"
+  ],
+  "into" : {
+    "id" : "instance:home",
+    "label" : null
+  },
+  "issues" : [
+    {
+      "condition" : null,
+      "decidedBy" : "default",
+      "decision" : "keep-left",
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "citekey",
+            "left" : "zxfp1950_home",
+            "right" : "zxfp1950_lib"
+          },
+          {
+            "field" : "title",
+            "left" : "On the Zxtown hoard.",
+            "right" : "On the Zxtown Hoard"
+          },
+          {
+            "field" : "authors",
+            "left" : "Zxwriter, B.",
+            "right" : "Zxwriter, Bo"
+          },
+          {
+            "field" : "year",
+            "left" : "1950",
+            "right" : "1950"
+          },
+          {
+            "field" : "DOI",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "venue",
+            "left" : "Zx Review",
+            "right" : "Zx Review"
+          },
+          {
+            "field" : "status",
+            "left" : "current",
+            "right" : "current"
+          },
+          {
+            "field" : "period",
+            "left" : "-1500..-1200",
+            "right" : "-1500..-1200"
+          },
+          {
+            "field" : "tags",
+            "left" : "zx-oracle",
+            "right" : "zx-oracle"
+          },
+          {
+            "field" : "summary",
+            "left" : "On On the Zxtown hoard..",
+            "right" : "On On the Zxtown Hoard."
+          },
+          {
+            "field" : "notes",
+            "left" : "Notes on On the Zxtown hoard..",
+            "right" : "Notes on On the Zxtown Hoard."
+          },
+          {
+            "field" : "OCR body",
+            "left" : "sha256 b72022395b0e…",
+            "right" : "sha256 ba8329e093f1…"
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "source",
+      "id" : "O-issue:body-differs:zxfp1950_lib",
+      "kind" : "body-differs",
+      "left" : {
+        "label" : "zxfp1950_home",
+        "lines" : [
+          "\"On the Zxtown hoard.\"",
+          "Zxwriter, B. · 1950 · no DOI · current"
+        ],
+        "uid" : "source:zxfp1950_home"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right"
+      ],
+      "right" : {
+        "label" : "zxfp1950_lib",
+        "lines" : [
+          "\"On the Zxtown Hoard\"",
+          "Zxwriter, Bo · 1950 · no DOI · current"
+        ],
+        "uid" : "source:zxfp1950_lib"
+      },
+      "severity" : "default",
+      "suggested" : "keep-left",
+      "title" : "OCR bodies differ (MinHash 0.00)",
+      "why" : [
+        "by default this collection's body stays; keep-right takes the bundle's (and its figures)"
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : "resolution",
+      "decision" : "keep-right",
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "citekey",
+            "left" : "zxdoi2010_home",
+            "right" : "zxdoi2010_lib"
+          },
+          {
+            "field" : "title",
+            "left" : "A Work Both Hold",
+            "right" : "A Work Both Hold"
+          },
+          {
+            "field" : "authors",
+            "left" : "Zxauthor, Ann",
+            "right" : "Zxauthor, Ann"
+          },
+          {
+            "field" : "year",
+            "left" : "2010",
+            "right" : "2010"
+          },
+          {
+            "field" : "DOI",
+            "left" : "https://doi.org/10.9999/zx.both",
+            "right" : "10.9999/ZX.Both"
+          },
+          {
+            "field" : "venue",
+            "left" : "Zx Review",
+            "right" : "Zx Review"
+          },
+          {
+            "field" : "status",
+            "left" : "current",
+            "right" : "current"
+          },
+          {
+            "field" : "period",
+            "left" : "-1500..-1200",
+            "right" : "-1500..-1200"
+          },
+          {
+            "field" : "tags",
+            "left" : "zx-oracle",
+            "right" : "zx-oracle"
+          },
+          {
+            "field" : "summary",
+            "left" : "home's",
+            "right" : "On A Work Both Hold."
+          },
+          {
+            "field" : "notes",
+            "left" : "Notes on A Work Both Hold.",
+            "right" : "Notes on A Work Both Hold."
+          },
+          {
+            "field" : "OCR body",
+            "left" : null,
+            "right" : null
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "source",
+      "id" : "S-issue:summary-differs:zxdoi2010_lib",
+      "kind" : "summary-differs",
+      "left" : {
+        "label" : "zxdoi2010_home",
+        "lines" : [
+          "\"A Work Both Hold\"",
+          "Zxauthor, Ann · 2010 · DOI https://doi.org/10.9999/zx.both · current"
+        ],
+        "uid" : "source:zxdoi2010_home"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right",
+        "concat"
+      ],
+      "right" : {
+        "label" : "zxdoi2010_lib",
+        "lines" : [
+          "\"A Work Both Hold\"",
+          "Zxauthor, Ann · 2010 · DOI 10.9999/ZX.Both · current"
+        ],
+        "uid" : "source:zxdoi2010_lib"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "summary differs",
+      "why" : [
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : "resolution",
+      "decision" : "keep-right",
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "citekey",
+            "left" : "zxfp1950_home",
+            "right" : "zxfp1950_lib"
+          },
+          {
+            "field" : "title",
+            "left" : "On the Zxtown hoard.",
+            "right" : "On the Zxtown Hoard"
+          },
+          {
+            "field" : "authors",
+            "left" : "Zxwriter, B.",
+            "right" : "Zxwriter, Bo"
+          },
+          {
+            "field" : "year",
+            "left" : "1950",
+            "right" : "1950"
+          },
+          {
+            "field" : "DOI",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "venue",
+            "left" : "Zx Review",
+            "right" : "Zx Review"
+          },
+          {
+            "field" : "status",
+            "left" : "current",
+            "right" : "current"
+          },
+          {
+            "field" : "period",
+            "left" : "-1500..-1200",
+            "right" : "-1500..-1200"
+          },
+          {
+            "field" : "tags",
+            "left" : "zx-oracle",
+            "right" : "zx-oracle"
+          },
+          {
+            "field" : "summary",
+            "left" : "On On the Zxtown hoard..",
+            "right" : "On On the Zxtown Hoard."
+          },
+          {
+            "field" : "notes",
+            "left" : "Notes on On the Zxtown hoard..",
+            "right" : "Notes on On the Zxtown Hoard."
+          },
+          {
+            "field" : "OCR body",
+            "left" : "sha256 b72022395b0e…",
+            "right" : "sha256 ba8329e093f1…"
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "source",
+      "id" : "S-issue:notes-differs:zxfp1950_lib",
+      "kind" : "notes-differs",
+      "left" : {
+        "label" : "zxfp1950_home",
+        "lines" : [
+          "\"On the Zxtown hoard.\"",
+          "Zxwriter, B. · 1950 · no DOI · current"
+        ],
+        "uid" : "source:zxfp1950_home"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right",
+        "concat"
+      ],
+      "right" : {
+        "label" : "zxfp1950_lib",
+        "lines" : [
+          "\"On the Zxtown Hoard\"",
+          "Zxwriter, Bo · 1950 · no DOI · current"
+        ],
+        "uid" : "source:zxfp1950_lib"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "notes differ",
+      "why" : [
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : "resolution",
+      "decision" : "keep-right",
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "citekey",
+            "left" : "zxfp1950_home",
+            "right" : "zxfp1950_lib"
+          },
+          {
+            "field" : "title",
+            "left" : "On the Zxtown hoard.",
+            "right" : "On the Zxtown Hoard"
+          },
+          {
+            "field" : "authors",
+            "left" : "Zxwriter, B.",
+            "right" : "Zxwriter, Bo"
+          },
+          {
+            "field" : "year",
+            "left" : "1950",
+            "right" : "1950"
+          },
+          {
+            "field" : "DOI",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "venue",
+            "left" : "Zx Review",
+            "right" : "Zx Review"
+          },
+          {
+            "field" : "status",
+            "left" : "current",
+            "right" : "current"
+          },
+          {
+            "field" : "period",
+            "left" : "-1500..-1200",
+            "right" : "-1500..-1200"
+          },
+          {
+            "field" : "tags",
+            "left" : "zx-oracle",
+            "right" : "zx-oracle"
+          },
+          {
+            "field" : "summary",
+            "left" : "On On the Zxtown hoard..",
+            "right" : "On On the Zxtown Hoard."
+          },
+          {
+            "field" : "notes",
+            "left" : "Notes on On the Zxtown hoard..",
+            "right" : "Notes on On the Zxtown Hoard."
+          },
+          {
+            "field" : "OCR body",
+            "left" : "sha256 b72022395b0e…",
+            "right" : "sha256 ba8329e093f1…"
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "source",
+      "id" : "S-issue:summary-differs:zxfp1950_lib",
+      "kind" : "summary-differs",
+      "left" : {
+        "label" : "zxfp1950_home",
+        "lines" : [
+          "\"On the Zxtown hoard.\"",
+          "Zxwriter, B. · 1950 · no DOI · current"
+        ],
+        "uid" : "source:zxfp1950_home"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right",
+        "concat"
+      ],
+      "right" : {
+        "label" : "zxfp1950_lib",
+        "lines" : [
+          "\"On the Zxtown Hoard\"",
+          "Zxwriter, Bo · 1950 · no DOI · current"
+        ],
+        "uid" : "source:zxfp1950_lib"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "summary differs",
+      "why" : [
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : "resolution",
+      "decision" : "keep-right",
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "citekey",
+            "left" : "zxone2001_storm",
+            "right" : "zxone2001_storm"
+          },
+          {
+            "field" : "title",
+            "left" : "The Storm of Zxtown",
+            "right" : "The Storm of Zxtown"
+          },
+          {
+            "field" : "authors",
+            "left" : "Zxauthor, Ann",
+            "right" : "Zxauthor, Ann"
+          },
+          {
+            "field" : "year",
+            "left" : "2001",
+            "right" : "2001"
+          },
+          {
+            "field" : "DOI",
+            "left" : "10.9999/zx.one",
+            "right" : "10.9999/zx.one"
+          },
+          {
+            "field" : "venue",
+            "left" : "Zx Review",
+            "right" : "Zx Review"
+          },
+          {
+            "field" : "status",
+            "left" : "current",
+            "right" : "current"
+          },
+          {
+            "field" : "period",
+            "left" : "-1500..-1200",
+            "right" : "-1500..-1200"
+          },
+          {
+            "field" : "tags",
+            "left" : "zx-oracle",
+            "right" : "zx-oracle"
+          },
+          {
+            "field" : "summary",
+            "left" : "On The Storm of Zxtown, at home.",
+            "right" : "On The Storm of Zxtown."
+          },
+          {
+            "field" : "notes",
+            "left" : "Notes on The Storm of Zxtown.",
+            "right" : "Notes on The Storm of Zxtown."
+          },
+          {
+            "field" : "OCR body",
+            "left" : "sha256 8cc2f131f23a…",
+            "right" : "sha256 11b4519eb48d…"
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "source",
+      "id" : "S-issue:changed-both-sides:zxone2001_storm",
+      "kind" : "changed-both-sides",
+      "left" : {
+        "label" : "zxone2001_storm",
+        "lines" : [
+        ],
+        "uid" : "source:zxone2001_storm"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right"
+      ],
+      "right" : {
+        "label" : "zxone2001_storm",
+        "lines" : [
+        ],
+        "uid" : "source:zxone2001_storm"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "changed on both sides since the last import",
+      "why" : [
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : "resolution",
+      "decision" : "keep-right",
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "citekey",
+            "left" : "zxtwo2005_kingdom",
+            "right" : "zxtwo2005_hittites"
+          },
+          {
+            "field" : "title",
+            "left" : "The Kingdom of Zxland",
+            "right" : "The Kingdom of Zxland"
+          },
+          {
+            "field" : "authors",
+            "left" : "Zxauthor, Ann",
+            "right" : "Zxauthor, Ann"
+          },
+          {
+            "field" : "year",
+            "left" : "2005",
+            "right" : "2005"
+          },
+          {
+            "field" : "DOI",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "venue",
+            "left" : "Zx Review",
+            "right" : "Zx Review"
+          },
+          {
+            "field" : "status",
+            "left" : "contested",
+            "right" : "contested"
+          },
+          {
+            "field" : "period",
+            "left" : "-1500..-1200",
+            "right" : "-1500..-1200"
+          },
+          {
+            "field" : "tags",
+            "left" : "zx-oracle; zx-home",
+            "right" : "zx-oracle"
+          },
+          {
+            "field" : "summary",
+            "left" : "On The Kingdom of Zxland.",
+            "right" : "On The Kingdom of Zxland."
+          },
+          {
+            "field" : "notes",
+            "left" : "Notes on The Kingdom of Zxland.",
+            "right" : "Notes on The Kingdom of Zxland."
+          },
+          {
+            "field" : "OCR body",
+            "left" : null,
+            "right" : null
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "source",
+      "id" : "S-issue:changed-both-sides:zxtwo2005_hittites",
+      "kind" : "changed-both-sides",
+      "left" : {
+        "label" : "zxtwo2005_hittites",
+        "lines" : [
+        ],
+        "uid" : "source:zxtwo2005_hittites"
+      },
+      "options" : [
+        "keep-left",
+        "keep-right"
+      ],
+      "right" : {
+        "label" : "zxtwo2005_hittites",
+        "lines" : [
+        ],
+        "uid" : "source:zxtwo2005_hittites"
+      },
+      "severity" : "blocking",
+      "suggested" : null,
+      "title" : "changed on both sides since the last import",
+      "why" : [
+      ]
+    },
+    {
+      "condition" : null,
+      "decidedBy" : "resolution",
+      "decision" : "rename-right:zxtaken2020_xlib",
+      "detail" : {
+        "fields" : [
+          {
+            "field" : "citekey",
+            "left" : "zxtaken2020_x",
+            "right" : "zxtaken2020_x"
+          },
+          {
+            "field" : "title",
+            "left" : "Home's Other Work",
+            "right" : "Lib's Work"
+          },
+          {
+            "field" : "authors",
+            "left" : "Zxauthor, Ann",
+            "right" : "Zxauthor, Ann"
+          },
+          {
+            "field" : "year",
+            "left" : "2020",
+            "right" : "2020"
+          },
+          {
+            "field" : "DOI",
+            "left" : null,
+            "right" : null
+          },
+          {
+            "field" : "venue",
+            "left" : "Zx Review",
+            "right" : "Zx Review"
+          },
+          {
+            "field" : "status",
+            "left" : "current",
+            "right" : "current"
+          },
+          {
+            "field" : "period",
+            "left" : "-1500..-1200",
+            "right" : "-1500..-1200"
+          },
+          {
+            "field" : "tags",
+            "left" : "zx-oracle",
+            "right" : "zx-oracle"
+          },
+          {
+            "field" : "summary",
+            "left" : "On Home's Other Work.",
+            "right" : "On Lib's Work."
+          },
+          {
+            "field" : "notes",
+            "left" : "Notes on Home's Other Work.",
+            "right" : "Notes on Lib's Work."
+          },
+          {
+            "field" : "OCR body",
+            "left" : null,
+            "right" : null
+          }
+        ],
+        "place" : null,
+        "text" : null
+      },
+      "entity" : "source",
+      "id" : "S-issue:citekey-collision:zxtaken2020_x",
+      "kind" : "citekey-collision",
+      "left" : {
+        "label" : "zxtaken2020_x",
+        "lines" : [
+          "\"Home's Other Work\"",
+          "Zxauthor, Ann · 2020 · no DOI · current"
+        ],
+        "uid" : "source:zxtaken2020_x"
+      },
+      "options" : [
+        "rename-right",
+        "rename-left"
+      ],
+      "right" : {
+        "label" : "zxtaken2020_x",
+        "lines" : [
+          "\"Lib's Work\"",
+          "Zxauthor, Ann · 2020 · no DOI · current"
+        ],
+        "uid" : "source:zxtaken2020_x"
+      },
+      "severity" : "blocking",
+      "suggested" : "rename-right:zxtaken2020_xlib",
+      "title" : "same citekey, different works (score +4)",
+      "why" : [
+      ]
+    }
+  ],
+  "matches" : {
+    "byLedger" : 0,
+    "byScore" : 1,
+    "byStrongKey" : 1,
+    "byUid" : 2,
+    "deletedHere" : 0,
+    "sources" : 5,
+    "undecided" : 0,
+    "unmatched" : 1
+  },
+  "planHash" : "DIGEST",
+  "problems" : [
+  ],
+  "resolutionErrors" : [
+  ],
+  "resolved" : 6,
+  "schemaVersion" : "109",
+  "sources" : [
+    {
+      "issue" : null,
+      "leftCitekey" : "zxdoi2010_home",
+      "leftUid" : "source:zxdoi2010_home",
+      "method" : "strongkey",
+      "outcome" : "auto-merge",
+      "rightCitekey" : "zxdoi2010_lib",
+      "rightUid" : "source:zxdoi2010_lib",
+      "score" : 19.0,
+      "why" : [
+        "DOI equal (strong key)",
+        "title the same (+9)",
+        "authors the same (+6)",
+        "year the same (+3)",
+        "venue the same (+1)"
+      ]
+    },
+    {
+      "issue" : null,
+      "leftCitekey" : "zxfp1950_home",
+      "leftUid" : "source:zxfp1950_home",
+      "method" : "score",
+      "outcome" : "auto-merge",
+      "rightCitekey" : "zxfp1950_lib",
+      "rightUid" : "source:zxfp1950_lib",
+      "score" : 15.0,
+      "why" : [
+        "title the same (+9)",
+        "authors the same (+6)",
+        "year the same (+3)",
+        "venue the same (+1)",
+        "OCR bodies differ (MinHash 0.00) (-4)"
+      ]
+    },
+    {
+      "issue" : null,
+      "leftCitekey" : null,
+      "leftUid" : null,
+      "method" : "unmatched",
+      "outcome" : "new",
+      "rightCitekey" : "zxtaken2020_x",
+      "rightUid" : "source:zxtaken2020_x",
+      "score" : null,
+      "why" : [
+      ]
+    }
+  ]
+}
+# home merges lib: the resolution file
+# resolutions for bundle UUID from zxlib — plan PLAN
+# left = this collection (here), right = the bundle. An id with no value is still open.
+# Use with: histmersion merge plan <bundle> --resolutions <this file>
+bundle: UUID
+policy:
+  # editions: merge        # every year-gap question at once: merge | separate
+resolve:
+  # O-issue:body-differs:zxfp1950_lib: keep-left    # default — source — OCR bodies differ (MinHash 0.00); decide keep-left | keep-right
+  S-issue:changed-both-sides:zxone2001_storm: keep-right    # source — changed on both sides since the last import
+  S-issue:changed-both-sides:zxtwo2005_hittites: keep-right    # source — changed on both sides since the last import
+  S-issue:citekey-collision:zxtaken2020_x: rename-right:zxtaken2020_xlib    # source — same citekey, different works (score +4)
+  S-issue:notes-differs:zxfp1950_lib: keep-right    # source — notes differ
+  S-issue:summary-differs:zxdoi2010_lib: keep-right    # source — summary differs
+  S-issue:summary-differs:zxfp1950_lib: keep-right    # source — summary differs
+# home merges lib: the resolution file read back
+{
+  "bundle" : "UUID",
+  "policy" : {
+    "editions" : null
+  },
+  "resolve" : [
+    {
+      "decision" : "keep-right",
+      "issue" : "S-issue:changed-both-sides:zxone2001_storm",
+      "text" : null
+    },
+    {
+      "decision" : "keep-right",
+      "issue" : "S-issue:changed-both-sides:zxtwo2005_hittites",
+      "text" : null
+    },
+    {
+      "decision" : "keep-right",
+      "issue" : "S-issue:notes-differs:zxfp1950_lib",
+      "text" : null
+    },
+    {
+      "decision" : "keep-right",
+      "issue" : "S-issue:summary-differs:zxdoi2010_lib",
+      "text" : null
+    },
+    {
+      "decision" : "keep-right",
+      "issue" : "S-issue:summary-differs:zxfp1950_lib",
+      "text" : null
+    },
+    {
+      "decision" : "rename-right:zxtaken2020_xlib",
+      "issue" : "S-issue:citekey-collision:zxtaken2020_x",
+      "text" : null
+    }
+  ]
+}
+# home merges lib: applied
+200 {
+  "bundle" : "BUNDLE-WHOLE",
+  "elapsedMs" : "N",
+  "error" : null,
+  "job" : "UUID",
+  "planHash" : "DIGEST",
+  "result" : {
+    "applied" : true,
+    "backup" : "histmersion-STAMP.dump",
+    "bundleId" : "UUID",
+    "counts" : [
+      {
+        "conflicts" : 0,
+        "deleted" : 1,
+        "held" : 0,
+        "inserted" : 1,
+        "keptLocal" : 0,
+        "kind" : "source",
+        "skippedDeleted" : 0,
+        "unchanged" : 0,
+        "updated" : 4
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 1,
+        "keptLocal" : 1,
+        "kind" : "finding",
+        "skippedDeleted" : 0,
+        "unchanged" : 0,
+        "updated" : 2
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 1,
+        "keptLocal" : 0,
+        "kind" : "queue-item",
+        "skippedDeleted" : 0,
+        "unchanged" : 0,
+        "updated" : 0
+      }
+    ],
+    "from" : {
+      "id" : "instance:lib",
+      "label" : "zxlib"
+    },
+    "issues" : [
+    ],
+    "logEntry" : 2,
+    "mergeId" : "UUID",
+    "notes" : [
+    ],
+    "planHash" : "DIGEST",
+    "problems" : [
+    ],
+    "replanChanges" : 0,
+    "reviews" : [
+    ],
+    "tally" : {
+      "aliases" : 2,
+      "articlesBoth" : 0,
+      "articlesFastForward" : 0,
+      "articlesFromFile" : 0,
+      "articlesThreeWay" : 0,
+      "assetsMerged" : 0,
+      "attestationsDropped" : 0,
+      "attestationsReanchored" : 0,
+      "eventsMerged" : 0,
+      "findingsMerged" : 0,
+      "goalsMerged" : 0,
+      "periodsMerged" : 0,
+      "placesMerged" : 0,
+      "queueMerged" : 0,
+      "redirects" : 2,
+      "selfLoopsDropped" : 0,
+      "sourcesByScore" : 1,
+      "sourcesMerged" : 2,
+      "sourcesRenamed" : 1
+    }
+  },
+  "state" : "done"
+}
+# home merges lib: merges
+200 [
+  {
+    "appliedAt" : "TS",
+    "backup" : "histmersion-STAMP.dump",
+    "bundleId" : "UUID",
+    "bundleSha256" : "DIGEST",
+    "from" : {
+      "id" : "instance:lib",
+      "label" : "zxlib"
+    },
+    "id" : "UUID",
+    "ledgerRows" : 10,
+    "planHash" : "DIGEST",
+    "redirects" : 2
+  },
+  {
+    "appliedAt" : "TS",
+    "backup" : null,
+    "bundleId" : "UUID",
+    "bundleSha256" : "DIGEST",
+    "from" : {
+      "id" : "instance:lib",
+      "label" : "zxlib"
+    },
+    "id" : "UUID",
+    "ledgerRows" : 1,
+    "planHash" : null,
+    "redirects" : 0
+  }
+]
+# home merges lib: the merge
+200 {
+  "applied" : {
+    "applied" : true,
+    "backup" : "histmersion-STAMP.dump",
+    "bundleId" : "UUID",
+    "counts" : [
+      {
+        "conflicts" : 0,
+        "deleted" : 1,
+        "held" : 0,
+        "inserted" : 1,
+        "keptLocal" : 0,
+        "kind" : "source",
+        "skippedDeleted" : 0,
+        "unchanged" : 0,
+        "updated" : 4
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 1,
+        "keptLocal" : 1,
+        "kind" : "finding",
+        "skippedDeleted" : 0,
+        "unchanged" : 0,
+        "updated" : 2
+      },
+      {
+        "conflicts" : 0,
+        "deleted" : 0,
+        "held" : 0,
+        "inserted" : 1,
+        "keptLocal" : 0,
+        "kind" : "queue-item",
+        "skippedDeleted" : 0,
+        "unchanged" : 0,
+        "updated" : 0
+      }
+    ],
+    "from" : {
+      "id" : "instance:lib",
+      "label" : "zxlib"
+    },
+    "issues" : [
+    ],
+    "logEntry" : null,
+    "mergeId" : null,
+    "notes" : [
+    ],
+    "planHash" : "DIGEST",
+    "problems" : [
+    ],
+    "replanChanges" : null,
+    "reviews" : [
+    ],
+    "tally" : {
+      "aliases" : 2,
+      "articlesBoth" : 0,
+      "articlesFastForward" : 0,
+      "articlesFromFile" : 0,
+      "articlesThreeWay" : 0,
+      "assetsMerged" : 0,
+      "attestationsDropped" : 0,
+      "attestationsReanchored" : 0,
+      "eventsMerged" : 0,
+      "findingsMerged" : 0,
+      "goalsMerged" : 0,
+      "periodsMerged" : 0,
+      "placesMerged" : 0,
+      "queueMerged" : 0,
+      "redirects" : 2,
+      "selfLoopsDropped" : 0,
+      "sourcesByScore" : 1,
+      "sourcesMerged" : 2,
+      "sourcesRenamed" : 1
+    }
+  },
+  "imported" : null,
+  "merge" : {
+    "appliedAt" : "TS",
+    "backup" : "histmersion-STAMP.dump",
+    "bundleId" : "UUID",
+    "bundleSha256" : "DIGEST",
+    "from" : {
+      "id" : "instance:lib",
+      "label" : "zxlib"
+    },
+    "id" : "UUID",
+    "ledgerRows" : 10,
+    "planHash" : "DIGEST",
+    "redirects" : 2
+  },
+  "remembered" : [
+    {
+      "decision" : "keep-right",
+      "issue" : "S-issue:changed-both-sides:zxone2001_storm",
+      "text" : null
+    },
+    {
+      "decision" : "keep-right",
+      "issue" : "S-issue:changed-both-sides:zxtwo2005_hittites",
+      "text" : null
+    },
+    {
+      "decision" : "keep-right",
+      "issue" : "S-issue:notes-differs:zxfp1950_lib",
+      "text" : null
+    },
+    {
+      "decision" : "keep-right",
+      "issue" : "S-issue:summary-differs:zxdoi2010_lib",
+      "text" : null
+    },
+    {
+      "decision" : "keep-right",
+      "issue" : "S-issue:summary-differs:zxfp1950_lib",
+      "text" : null
+    },
+    {
+      "decision" : "rename-right:zxtaken2020_xlib",
+      "issue" : "S-issue:citekey-collision:zxtaken2020_x",
+      "text" : null
+    }
+  ],
+  "resolutions" : {
+    "bundle" : null,
+    "policy" : {
+      "editions" : null
+    },
+    "resolve" : [
+      {
+        "decision" : "keep-right",
+        "issue" : "S-issue:changed-both-sides:zxone2001_storm",
+        "text" : null
+      },
+      {
+        "decision" : "keep-right",
+        "issue" : "S-issue:changed-both-sides:zxtwo2005_hittites",
+        "text" : null
+      },
+      {
+        "decision" : "keep-right",
+        "issue" : "S-issue:notes-differs:zxfp1950_lib",
+        "text" : null
+      },
+      {
+        "decision" : "keep-right",
+        "issue" : "S-issue:summary-differs:zxdoi2010_lib",
+        "text" : null
+      },
+      {
+        "decision" : "keep-right",
+        "issue" : "S-issue:summary-differs:zxfp1950_lib",
+        "text" : null
+      },
+      {
+        "decision" : "rename-right:zxtaken2020_xlib",
+        "issue" : "S-issue:citekey-collision:zxtaken2020_x",
+        "text" : null
+      }
+    ]
+  }
+}
+# home merges lib: the ledger
+200 {
+  "entries" : [
+    {
+      "decision" : "FastForward",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "source:zxone2001_storm",
+      "kind" : "source",
+      "label" : "zxone2001_storm",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "source:zxone2001_storm",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "FastForward",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "finding:zxone2001_storm#0",
+      "kind" : "finding",
+      "label" : "zxone2001_storm#0",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "finding:zxone2001_storm#0",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "FastForward",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "source:zxtwo2005_hittites",
+      "kind" : "source",
+      "label" : "zxtwo2005_hittites",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "source:zxtwo2005_hittites",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "FastForward",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "finding:zxtwo2005_hittites#0",
+      "kind" : "finding",
+      "label" : "zxtwo2005_hittites#0",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "finding:zxtwo2005_hittites#0",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Delete",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "tombstone:source",
+      "kind" : "source",
+      "label" : null,
+      "localRevAfter" : null,
+      "localUid" : "tombstone:source",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "finding:zxone2001_storm#2",
+      "kind" : "finding",
+      "label" : "zxone2001_storm#3",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "finding:zxone2001_storm#2",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "FastForward",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "source:zxdoi2010_lib",
+      "kind" : "source",
+      "label" : "zxdoi2010_home",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "source:zxdoi2010_home",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "FastForward",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "source:zxfp1950_lib",
+      "kind" : "source",
+      "label" : "zxfp1950_home",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "source:zxfp1950_home",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "source:zxtaken2020_x",
+      "kind" : "source",
+      "label" : "zxtaken2020_xlib",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "source:zxtaken2020_x",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "UUID",
+      "kind" : "queue-item",
+      "label" : "deleted zxthree1903_prolegomena (An Old Book on Zxland): 1 e",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "UUID",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    },
+    {
+      "decision" : "Insert",
+      "foreignRev" : "DIGEST",
+      "foreignUid" : "finding:zxone2001_storm#1",
+      "kind" : "finding",
+      "label" : "zxone2001_storm#1",
+      "localRevAfter" : "DIGEST",
+      "localUid" : "finding:zxone2001_storm#1",
+      "mergeId" : "UUID",
+      "recordedAt" : "TS"
+    }
+  ],
+  "query" : null,
+  "redirects" : [
+  ]
+}
+# home's rows
+## sources 6 rows
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxdoi2010_home", "doi" : "https://doi.org/10.9999/zx.both", "notes" : "Notes on A Work Both Hold.", "ocr_markdown" : null, "origin" : "instance:home", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On A Work Both Hold.", "tags" : [ "zx-oracle" ], "title" : "A Work Both Hold", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2010 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxone2001_storm", "doi" : "10.9999/zx.one", "notes" : "Notes on The Storm of Zxtown.", "ocr_markdown" : "# Zxtown\n\n## The walls\n\nThe walls of Zxtown were raised in the Zx period.\n\n## The gate\n\nThe gate faced the sea, as lib reads it.\n", "origin" : "instance:lib", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On The Storm of Zxtown.", "tags" : [ "zx-oracle" ], "title" : "The Storm of Zxtown", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2001 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxtaken2020_x", "doi" : null, "notes" : "Notes on Home's Other Work.", "ocr_markdown" : null, "origin" : "instance:home", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On Home's Other Work.", "tags" : [ "zx-oracle" ], "title" : "Home's Other Work", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2020 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxtaken2020_xlib", "doi" : null, "notes" : "Notes on Lib's Work.", "ocr_markdown" : null, "origin" : "instance:lib", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On Lib's Work.", "tags" : [ "zx-oracle" ], "title" : "Lib's Work", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2020 }
+{ "authors" : [ "Zxauthor, Ann" ], "citekey" : "zxtwo2005_hittites", "doi" : null, "notes" : "Notes on The Kingdom of Zxland.", "ocr_markdown" : null, "origin" : "instance:lib", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "contested", "summary" : "On The Kingdom of Zxland.", "tags" : [ "zx-oracle" ], "title" : "The Kingdom of Zxland", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 2005 }
+{ "authors" : [ "Zxwriter, Bo" ], "citekey" : "zxfp1950_home", "doi" : null, "notes" : "Notes on On the Zxtown Hoard.", "ocr_markdown" : "# Hoard\n\nCoins and rings.\n", "origin" : "instance:home", "period" : "[-1500,-1199)", "regions" : [ "Zxland" ], "sha256" : null, "status" : "current", "summary" : "On On the Zxtown Hoard.", "tags" : [ "zx-oracle" ], "title" : "On the Zxtown Hoard", "topics" : [ "bronze age" ], "venue" : "Zx Review", "year" : 1950 }
+## source_aliases 3 rows
+{ "alias" : "zxdoi2010_lib", "citekey" : "zxdoi2010_home" }
+{ "alias" : "zxfp1950_lib", "citekey" : "zxfp1950_home" }
+{ "alias" : "zxtwo2005_kingdom", "citekey" : "zxtwo2005_hittites" }
+## source_chunks 3 rows
+{ "citekey" : "zxfp1950_home", "heading" : "Hoard", "ord" : 0 }
+{ "citekey" : "zxone2001_storm", "heading" : "Zxtown > The gate", "ord" : 1 }
+{ "citekey" : "zxone2001_storm", "heading" : "Zxtown > The walls", "ord" : 0 }
+## source_identifiers 2 rows
+{ "scheme" : "doi", "source_uid" : "source:zxdoi2010_home", "value" : "10.9999/zx.both" }
+{ "scheme" : "doi", "source_uid" : "source:zxone2001_storm", "value" : "10.9999/zx.one" }
+## findings 5 rows
+{ "citekey" : "zxone2001_storm", "claim" : "a claim of home's", "confidence" : "high", "geom" : "POINT(34.63 40.03)", "id" : "zxone2001_storm#2", "period" : "[-1350,-1249)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxone2001_storm", "claim" : "a third claim, lib's", "confidence" : "high", "geom" : "POINT(34.62 40.02)", "id" : "zxone2001_storm#3", "period" : "[-1300,-1199)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxone2001_storm", "claim" : "the gate of Zxtown faced the harbour", "confidence" : "high", "geom" : "POINT(34.61 40.01)", "id" : "zxone2001_storm#1", "period" : "[-1400,-1299)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxone2001_storm", "claim" : "the walls of Zxtown were raised around 1490 BC", "confidence" : "high", "geom" : "POINT(34.6 40)", "id" : "zxone2001_storm#0", "period" : "[-1500,-1479)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+{ "citekey" : "zxtwo2005_hittites", "claim" : "a kingdom ruled Zxland", "confidence" : "high", "geom" : "POINT(35 39.5)", "id" : "zxtwo2005_hittites#0", "period" : "[-1450,-1249)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
+## finding_places 0 rows
+## edges 1 rows
+{ "dst" : "zxtwo2005_hittites", "kind" : "references", "src" : "zxone2001_storm" }
+## unresolved_edges 2 rows
+{ "dst" : "zxlost1900_gone", "kind" : "references", "src" : "zxone2001_storm" }
+{ "dst" : "zxthree1903_prolegomena", "kind" : "challenges", "src" : "zxone2001_storm" }
+## assessments 0 rows
+## tombstones 1 rows
+{ "kind" : "source", "uid" : "tombstone:source" }
+## uid_aliases 2 rows
+{ "alias_uid" : "source:zxdoi2010_lib", "created_at" : "TS", "kind" : "source", "merge_id" : "UUID", "uid" : "source:zxdoi2010_home" }
+{ "alias_uid" : "source:zxfp1950_lib", "created_at" : "TS", "kind" : "source", "merge_id" : "UUID", "uid" : "source:zxfp1950_home" }
+## queue_items 2 rows
+{ "list" : "log", "status" : "open", "text" : "Merged the bundle of zxlib (SHORT…) as merge SHORT: 2 sources merged, 1 new, 0 articles to review; backup histmersion-STAMP.dump", "topic" : "merge" }
+{ "list" : "log", "status" : "open", "text" : "deleted zxthree1903_prolegomena (An Old Book on Zxland): 1 edges in (parked), 1 aliases", "topic" : "DAY" }
