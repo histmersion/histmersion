@@ -1,5 +1,4 @@
-package com.histmersion.files
-
+package com.histmersion.domain.catalogue.places
 import com.histmersion.values.PlaceKind
 
 /** The committed gazetteer seed set (`db/places`) as a list of files in IMPORT ORDER — shared by the CLI's

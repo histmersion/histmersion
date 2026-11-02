@@ -3,13 +3,13 @@ package com.histmersion.db
 import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.api.*
-import com.histmersion.files.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import java.nio.file.Files
 import com.histmersion.values.{Confidence, SourceStatus}
 import com.histmersion.util.database.Migrate
+import com.histmersion.domain.library.sources.SourceNote
 
 /** The write paths against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise. Covers the acceptance
   * lines of plan §1.9a that need a database: put→get, patch semantics, id allocation, the `ifUpdatedAt` precondition,
@@ -164,8 +164,8 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
   test("export → parseNote round trip: frontmatter and notes survive the database"):
     val _ = fresh()
     val stored = SourceFixtures.load(ds, ck).get
-    val exported = Export.note(stored)
-    val back = Frontmatter.parseNote(exported, "fallback").get
+    val exported = SourceNote.note(stored)
+    val back = SourceNote.parseNote(exported, "fallback").get
     assertEquals(back.citekey, stored.citekey)
     assertEquals(back.title, stored.title)
     assertEquals(back.authors, stored.authors)

@@ -2,7 +2,7 @@ package com.histmersion.domain.catalogue.places
 
 import com.histmersion.api.{BundlePlace, IssueDetail, IssueSide, MergeIssue, MergeIssueDetail}
 import com.histmersion.domain.MergePlanner
-import com.histmersion.files.BundleEntities
+import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.{PlanFolds, PlanMerge, PlanQuestions, PlanRun}
 import com.histmersion.values.{BundleKind, DecisionKind, IssueKind, IssueSeverity}
 

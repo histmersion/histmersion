@@ -15469,7 +15469,7 @@
       ]
     },
     {
-      "type": "com.histmersion.files.PluginKit$Index$",
+      "type": "com.histmersion.util.plugins.PluginKit$Index$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy2"
@@ -15477,7 +15477,7 @@
       ]
     },
     {
-      "type": "com.histmersion.files.PluginKit$Installed$",
+      "type": "com.histmersion.util.plugins.PluginKit$Installed$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy1"
@@ -15485,7 +15485,7 @@
       ]
     },
     {
-      "type": "com.histmersion.files.PluginKit$KitFile$",
+      "type": "com.histmersion.util.plugins.PluginKit$KitFile$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy3"
@@ -15493,7 +15493,7 @@
       ]
     },
     {
-      "type": "com.histmersion.files.PluginKit$KitManifest$",
+      "type": "com.histmersion.util.plugins.PluginKit$KitManifest$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy4"

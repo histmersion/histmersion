@@ -42,7 +42,6 @@ import com.histmersion.api.{
   Plural,
   Queue
 }
-import com.histmersion.files.*
 import com.histmersion.api.given
 
 import BundlePlan.{Decision, Ledger, Local}
@@ -60,6 +59,7 @@ import com.histmersion.values.{
   IssueSeverity,
   MatchOutcome
 }
+import com.histmersion.util.data.exchange.BundleEntities
 
 /** `merge plan` as a pure function (docs/research-merge-import.md §5–§6, milestones M3–M5): of the bundle's entities,
   * what this collection knows (its rows, labels, ledger, redirects, tombstones, article histories and remembered

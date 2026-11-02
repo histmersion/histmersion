@@ -1,5 +1,4 @@
-package com.histmersion.files
-
+package com.histmersion.domain.library.sources
 import com.histmersion.api.*
 import com.histmersion.api.given
 
@@ -7,10 +6,64 @@ import org.yaml.snakeyaml.Yaml
 import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
 import java.nio.file.{Files, Path}
+import com.histmersion.util.data.mirror.Frontmatter
 import com.histmersion.values.{Confidence, SourceStatus}
+import com.histmersion.util.storage.SafePath
 
-/** Parse a `wiki/sources/<citekey>.md` note's YAML frontmatter into a [[Source]] with its findings. */
-object Frontmatter:
+/** A source's note in the Markdown mirror (`wiki/sources/<citekey>.md`): its YAML frontmatter carries the catalog
+  * fields and findings, its body [[Source.notes]], the agent-written article about the source. [[note]] renders a
+  * stored [[Source]] and [[parseNote]] reads one back, with the same key names and shapes as the research wiki's
+  * schema, so `export` then `seed --force` round-trips. `ocrMarkdown` (the paper's converted text, often megabytes) is
+  * not in the note: it lives in `md/<citekey>/paper.md`, referenced by `md_path`.
+  */
+object SourceNote:
+
+  /** Frontmatter key order — matches the notes the research wiki already writes. */
+  def note(s: Source): String =
+    frontmatterOf(s).note(s.notes.map(_.trim).filter(_.nonEmpty))
+
+  /** The YAML block between the `---` fences (with a trailing newline). */
+  def frontmatter(s: Source): String = frontmatterOf(s).yaml
+
+  private def frontmatterOf(s: Source): Frontmatter =
+    Frontmatter(
+      List(
+        "citekey" -> s.citekey,
+        "doi" -> s.doi.orNull,
+        "title" -> s.title,
+        "authors" -> s.authors.asJava,
+        "year" -> s.year.map(Int.box).orNull,
+        "venue" -> s.venue.orNull,
+        "source" -> s.provenance.orNull,
+        "calibre_id" -> s.calibreId.orNull,
+        "status" -> s.status.toString.toLowerCase,
+        // `superseded_by` is stored as an edge; Frontmatter turns this key back into that edge.
+        "superseded_by" -> s.edges.find(_.kind == "superseded_by").map(_.dst).orNull,
+        "topics" -> s.topics.asJava,
+        "regions" -> s.regions.asJava,
+        "tags" -> s.tags.asJava,
+        "period_start" -> s.period.map(p => Long.box(p.start)).orNull,
+        "period_end" -> s.period.map(p => Long.box(p.end)).orNull,
+        "cited_by_count" -> s.citedByCount.map(Int.box).orNull,
+        "influential_citations" -> s.influentialCitations.map(Int.box).orNull,
+        "summary" -> s.summary.orNull,
+        "findings" -> s.findings.map(finding).asJava
+      )
+    )
+
+  private def finding(f: Finding): java.util.Map[String, Any] =
+    val m = new java.util.LinkedHashMap[String, Any]()
+    m.put("claim", f.claim)
+    m.put("region", f.region.orNull)
+    m.put("lat", f.geo.map(g => Double.box(g.lat)).orNull)
+    m.put("lon", f.geo.map(g => Double.box(g.lon)).orNull)
+    m.put("period_start", f.period.map(p => Long.box(p.start)).orNull)
+    m.put("period_end", f.period.map(p => Long.box(p.end)).orNull)
+    m.put("period_name", f.periodName.orNull)
+    m.put("tags", f.tags.asJava)
+    m.put("confidence", f.confidence.map(_.toString.toLowerCase).orNull)
+    m.put("significance", f.significance.orNull)
+    m
 
   def parseFile(p: Path): Option[Source] = parseFile(p, None)
 
@@ -24,8 +77,8 @@ object Frontmatter:
     parseNote(text, fallbackCitekey).map(src => src.copy(ocrMarkdown = fullText(p, yamlMap(text), confineTo)))
 
   /** Parse a note's text (frontmatter + body). Pure: no file access, `ocrMarkdown` left empty. The BODY becomes
-    * [[Source.notes]] — the agent-written article about the source — which is what makes [[Export.note]] a true inverse
-    * of this function.
+    * [[Source.notes]] — the agent-written article about the source — which is what makes [[note]] a true inverse of
+    * this function.
     */
   def parseNote(text: String, fallbackCitekey: String): Option[Source] =
     extractYaml(text).map { y =>

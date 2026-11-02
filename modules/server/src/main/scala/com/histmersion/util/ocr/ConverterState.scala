@@ -1,7 +1,5 @@
 package com.histmersion.util.ocr
 
-import com.histmersion.files.*
-
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*

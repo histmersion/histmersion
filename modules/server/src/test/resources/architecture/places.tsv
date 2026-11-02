@@ -796,13 +796,6 @@ core:domain/WatchSchedules.scala	automation.scheduler
 core:domain/activity/ActivityCursor.scala	automation.activity
 core:domain/activity/ActivityQuery.scala	automation.activity
 core:domain/activity/ActivityRules.scala	automation.activity
-files:files/ArticleNote.scala	research.articles
-files:files/BundleEntities.scala	util.data.exchange
-files:files/Export.scala	library.sources
-files:files/Frontmatter.scala	library.sources
-files:files/PlaceSeed.scala	catalogue.places
-files:files/PluginKit.scala	util.plugins
-files:files/SafePath.scala	util.files
 server:domain/activity/ActivityControllers.scala	automation.activity
 server:domain/activity/ActivityRepo.scala	automation.activity
 server:domain/activity/ActivityRow.scala	automation.activity

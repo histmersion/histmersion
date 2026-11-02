@@ -1,7 +1,6 @@
 package com.histmersion.pluginhost
 
 import com.histmersion.config.EnvOverrides
-import com.histmersion.files.*
 import com.histmersion.api.{PluginSetting, PluginsReport, PluginState, PluginStatus}
 import com.histmersion.plugin.*
 import hearth.kindlings.sconfigderivation.ConfigDecodingError
@@ -157,7 +156,7 @@ object PluginHost:
     * in the image and `histmersion plugin status` recomputes over the plugins directory (docs/research-plugins.md §7.3;
     * the one implementation is files' `PluginKit.digest`).
     */
-  def digest(entries: List[(String, String)]): String = com.histmersion.files.PluginKit.digest(entries)
+  def digest(entries: List[(String, String)]): String = com.histmersion.util.plugins.PluginKit.digest(entries)
 
   /** Pure: `histmersion.plugins.order` of the user's file, or why it cannot be read. */
   def configuredOrder(user: Config, env: Config): Either[String, List[String]] =

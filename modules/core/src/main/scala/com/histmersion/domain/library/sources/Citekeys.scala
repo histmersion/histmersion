@@ -1,7 +1,6 @@
 package com.histmersion.domain.library.sources
 
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.files.*
 import com.histmersion.api.given
 
 /** Citekey shape for a rename. */

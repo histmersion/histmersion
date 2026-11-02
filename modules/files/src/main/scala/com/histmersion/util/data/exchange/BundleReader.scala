@@ -2,7 +2,7 @@ package com.histmersion.util.data.exchange
 
 import com.histmersion.api.*
 import com.histmersion.api.given
-import com.histmersion.files.BundleEntities
+import com.histmersion.util.data.exchange.BundleEntities
 
 import java.io.InputStream
 import java.security.{DigestInputStream, MessageDigest}

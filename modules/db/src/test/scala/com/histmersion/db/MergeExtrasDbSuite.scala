@@ -14,7 +14,6 @@ import com.histmersion.domain.catalogue.evidence.*
 import com.histmersion.util.jobs.JobRepo
 
 import com.histmersion.api.*
-import com.histmersion.files.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.GoalPlans.{LinkKind, ScheduleKind}
@@ -31,6 +30,7 @@ import com.histmersion.domain.automation.goals.{GoalLinkRepo, GoalRepo}
 import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.util.data.exchange.{BundleImport, MergeState}
 import com.histmersion.util.database.Sql
+import com.histmersion.util.data.exchange.BundleEntities
 
 /** What a bundle carries and a merge decides beyond M5, against real Postgres (docs/research-merge-import.md §7.8): a
   * collection's own places and named periods (V052) and not its seeds, a goal's plan, links and schedules (#881, V054),

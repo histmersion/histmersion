@@ -1,7 +1,7 @@
 package com.histmersion.util.data.exchange
 
 import com.histmersion.domain.MergePlanner
-import com.histmersion.files.BundleEntities
+import com.histmersion.util.data.exchange.BundleEntities
 
 import java.util.UUID
 

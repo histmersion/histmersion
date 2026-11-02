@@ -8,7 +8,6 @@ import com.histmersion.domain.research.ResearchPlan
 
 import com.histmersion.util.data.exchange.{BundlePlan, MergeResolutionsFile}
 import com.histmersion.config.*
-import com.histmersion.files.*
 import com.histmersion.api.*
 import com.histmersion.config.given
 import com.histmersion.api.given
@@ -17,6 +16,7 @@ import BundlePlan.Decision
 import MergeFixture.*
 import io.circe.Json
 import com.histmersion.values.{BundleKind, IssueKind, IssueSeverity}
+import com.histmersion.util.data.exchange.BundleEntities
 
 /** What the merge carries and decides beyond M4–M5 (docs/research-merge-import.md §7.8): places and named periods of a
   * collection's own, events matched across two ids, a goal's plan, links and schedules (#881), old article slugs, and

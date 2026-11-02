@@ -12,7 +12,7 @@ import com.histmersion.domain.library.ingest.SeedImport
 import com.histmersion.domain.Caller
 import com.histmersion.domain.PassageFinder
 import com.histmersion.domain.media.assets.AssetsControllers
-import com.histmersion.files.{Export, Frontmatter}
+import com.histmersion.domain.library.sources.SourceNote
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.identity.AliasKind
 import com.histmersion.values.Citekey
@@ -64,7 +64,7 @@ final class SourcesControllers(
 
   /** The note as it would live on disk — frontmatter YAML + the `notes` body. */
   def note(citekey: String): Either[ApiError, String] =
-    sources.load(canonical(citekey)).map(Export.note).toRight(Write.notFound(citekey))
+    sources.load(canonical(citekey)).map(SourceNote.note).toRight(Write.notFound(citekey))
 
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
 
@@ -136,7 +136,7 @@ final class SourcesControllers(
     * Applies the seed's "stored row is newer than the file" guard whenever the client sends the file's mtime.
     */
   def importNote(req: NoteImport): Either[ApiError, SeedResult] = maintenance.guard("import"):
-    Frontmatter.parseNote(req.text, req.citekey.getOrElse("")) match
+    SourceNote.parseNote(req.text, req.citekey.getOrElse("")) match
       case None         => Left(ApiError("no YAML frontmatter in the note"))
       case Some(parsed) =>
         val ck = parsed.citekey

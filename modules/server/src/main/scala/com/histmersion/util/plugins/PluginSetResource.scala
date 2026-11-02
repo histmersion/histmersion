@@ -1,7 +1,6 @@
 package com.histmersion.util.plugins
 
-import com.histmersion.files.PluginKit
-import com.histmersion.files.*
+import com.histmersion.util.plugins.PluginKit
 import com.histmersion.api.PluginSet
 
 import java.io.OutputStream

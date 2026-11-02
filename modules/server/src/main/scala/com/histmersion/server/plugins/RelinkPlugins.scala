@@ -2,11 +2,10 @@ package com.histmersion.server.plugins
 
 import scala.annotation.tailrec
 import com.histmersion.pluginhost.{HostServices, PluginHost}
-import com.histmersion.files.*
 
 import com.histmersion.config.AppConfig
 import com.histmersion.api.{PluginDescription, PluginJar, PluginSet, PluginState}
-import com.histmersion.files.PluginKit
+import com.histmersion.util.plugins.PluginKit
 import com.histmersion.plugin.{Plugin, PluginHttp, Spi}
 import com.histmersion.util.plugins.{HostProvided, LegacyPlugins, PluginSetResource}
 import org.ekrich.config.{ConfigFactory, ConfigUtil}

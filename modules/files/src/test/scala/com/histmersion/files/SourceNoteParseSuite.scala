@@ -3,8 +3,9 @@ package com.histmersion.files
 import com.histmersion.api.*
 import com.histmersion.api.given
 import com.histmersion.values.SourceStatus
+import com.histmersion.domain.library.sources.SourceNote
 
-class FrontmatterSuite extends munit.FunSuite:
+class SourceNoteParseSuite extends munit.FunSuite:
   val note =
     """---
       |citekey: heggarty2023_language
@@ -35,7 +36,7 @@ class FrontmatterSuite extends munit.FunSuite:
       |""".stripMargin
 
   test("parses frontmatter with null values safely"):
-    val s = Frontmatter.parseNote(note, "fallback").get
+    val s = SourceNote.parseNote(note, "fallback").get
     assertEquals(s.citekey, "heggarty2023_language")
     assertEquals(s.venue, None)
     assertEquals(s.year, Some(2023))
@@ -43,14 +44,14 @@ class FrontmatterSuite extends munit.FunSuite:
     assertEquals(s.status, SourceStatus.Current)
 
   test("findings: geo + period, and null geo → None"):
-    val fs = Frontmatter.parseNote(note, "x").get.findings
+    val fs = SourceNote.parseNote(note, "x").get.findings
     assertEquals(fs.map(_.id), List("heggarty2023_language#0", "heggarty2023_language#1"))
     assertEquals(fs.head.geo, Some(GeoPoint(44.0, 42.5)))
     assertEquals(fs(1).geo, None)
     assertEquals(fs(1).period, None)
 
   test("edges: relation tags and wikilinks (aliased or not), never self"):
-    val es = Frontmatter.parseNote(note, "x").get.edges.toSet
+    val es = SourceNote.parseNote(note, "x").get.edges.toSet
     assertEquals(
       es,
       Set(
@@ -65,7 +66,7 @@ class FrontmatterSuite extends munit.FunSuite:
       "and [[bouckaert2012_mapping]].",
       "and [[bouckaert2012_mapping]], see [[bronze_age_collapse]] and [[Indo_European]]."
     )
-    val s = Frontmatter.parseNote(withTopic, "x").get
+    val s = SourceNote.parseNote(withTopic, "x").get
     assertEquals(
       s.edges.filter(_.kind == "references").map(_.dst).toSet,
       Set("anthony2007_horse", "bouckaert2012_mapping")
@@ -75,11 +76,11 @@ class FrontmatterSuite extends munit.FunSuite:
     assertEquals(s.topics, List("indo-european", "refutes_anthony2007", "bronze_age_collapse"))
     // an already-declared topic is not duplicated
     val dup = withTopic.replace("topics: [indo-european,", "topics: [Bronze_Age_Collapse, indo-european,")
-    assertEquals(Frontmatter.parseNote(dup, "x").get.topics.count(_.equalsIgnoreCase("bronze_age_collapse")), 1)
+    assertEquals(SourceNote.parseNote(dup, "x").get.topics.count(_.equalsIgnoreCase("bronze_age_collapse")), 1)
 
   test("no frontmatter → None; fallback citekey from filename"):
-    assertEquals(Frontmatter.parseNote("just text", "x"), None)
-    assertEquals(Frontmatter.parseNote("---\ntitle: T\n---\n", "fromfile").get.citekey, "fromfile")
+    assertEquals(SourceNote.parseNote("just text", "x"), None)
+    assertEquals(SourceNote.parseNote("---\ntitle: T\n---\n", "fromfile").get.citekey, "fromfile")
 
   // ── a note whose deep-time bounds are the wrong way round ────────────────────────────────────
 
@@ -99,7 +100,7 @@ class FrontmatterSuite extends munit.FunSuite:
         |---
         |body
         |""".stripMargin
-    val s = Frontmatter.parseNote(note, "zz_inverted").get
+    val s = SourceNote.parseNote(note, "zz_inverted").get
     assertEquals(s.period, Some(Period(-1400, -1200)))
     assertEquals(s.findings.head.period, Some(Period(-1100, -900)))
 
@@ -111,4 +112,4 @@ class FrontmatterSuite extends munit.FunSuite:
         |period_end: -1200
         |---
         |""".stripMargin
-    assertEquals(Frontmatter.parseNote(note, "zz_ordered").get.period, Some(Period(-1400, -1200)))
+    assertEquals(SourceNote.parseNote(note, "zz_ordered").get.period, Some(Period(-1400, -1200)))

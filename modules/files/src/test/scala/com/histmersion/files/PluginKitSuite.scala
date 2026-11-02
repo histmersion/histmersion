@@ -3,7 +3,7 @@ package com.histmersion.files
 import com.histmersion.api.*
 import com.histmersion.api.given
 
-import com.histmersion.files.PluginKit.*
+import com.histmersion.util.plugins.PluginKit.*
 
 class PluginKitSuite extends munit.FunSuite:
 

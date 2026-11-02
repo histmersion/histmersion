@@ -5,11 +5,11 @@ import com.histmersion.api.catalogue.places.PlacesMarkdown
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.*
-import com.histmersion.files.*
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
 import com.histmersion.values.{BundleKind, PlaceKind}
+import com.histmersion.domain.catalogue.places.PlaceSeed
 
 /** `histmersion places …` — the gazetteer subcommands (plan §1.6a). Kept in its own file so the shared `Cli` only gains
   * one line.

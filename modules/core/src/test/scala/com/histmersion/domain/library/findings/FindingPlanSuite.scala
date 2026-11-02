@@ -1,7 +1,6 @@
 package com.histmersion.domain.library.findings
 
 import com.histmersion.api.*
-import com.histmersion.files.*
 import com.histmersion.api.given
 
 import MergeFixture.{uid, work}

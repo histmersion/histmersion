@@ -1,7 +1,7 @@
 package com.histmersion.domain.catalogue.periods
 
 import com.histmersion.api.{BundlePeriod, BundleRange}
-import com.histmersion.files.BundleEntities
+import com.histmersion.util.data.exchange.BundleEntities
 
 import java.util.UUID
 

@@ -3,7 +3,7 @@ package com.histmersion.server
 import com.histmersion.domain.library.ingest.{SeedFolder, SeedNote}
 import com.histmersion.domain.media.assets.NewFigure
 import com.histmersion.domain.media.figures.Figures
-import com.histmersion.files.Frontmatter
+import com.histmersion.domain.library.sources.SourceNote
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -22,7 +22,7 @@ final class SeedNoteFiles(dir: Path, confineTo: Option[String]) extends SeedFold
 
   def read(name: String): Option[SeedNote] =
     val f = dir.resolve(name)
-    Frontmatter.parseFile(f, confineTo).map(s => SeedNote(s, Files.getLastModifiedTime(f).toMillis))
+    SourceNote.parseFile(f, confineTo).map(s => SeedNote(s, Files.getLastModifiedTime(f).toMillis))
 
   def figures(name: String, citekey: String, maxBytes: Long): List[NewFigure] =
     val note = dir.resolve(name)

@@ -1,7 +1,6 @@
 package com.histmersion.domain.library.sources
 
 import com.histmersion.api.*
-import com.histmersion.files.*
 import com.histmersion.api.given
 
 import MergeFixture.{home, src, uid, work}

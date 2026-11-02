@@ -8,11 +8,9 @@ direction	core:domain/MergeFold.scala	util.data -> automation: Queue	1
 direction	core:domain/MergePlanner.scala	util.data -> automation: Queue	1
 filesystem	config:config/UserConfigFile.scala	java.nio.file	1
 filesystem	db:util/data/exchange/MergeState.scala	java.nio.file	1
-filesystem	files:files/Frontmatter.scala	Files.*	3
-filesystem	files:files/Frontmatter.scala	java.nio.file	1
-filesystem	files:files/PluginKit.scala	File(	1
-filesystem	files:files/SafePath.scala	Paths.get	4
-filesystem	files:files/SafePath.scala	java.nio.file	1
+filesystem	files:domain/library/sources/SourceNote.scala	Files.*	3
+filesystem	files:domain/library/sources/SourceNote.scala	java.nio.file	1
+filesystem	files:util/plugins/PluginKit.scala	File(	1
 filesystem	server:domain/automation/agents/AgentTrees.scala	Files.*	14
 filesystem	server:domain/automation/agents/AgentTrees.scala	Path.of	3
 filesystem	server:domain/automation/agents/AgentTrees.scala	StandardCopyOption	3

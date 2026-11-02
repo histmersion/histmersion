@@ -3,15 +3,15 @@ package com.histmersion.cli
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.*
-import com.histmersion.files.*
 import com.histmersion.config.*
-import com.histmersion.files.PluginKit.{Coordinates, Index, Installed, Origin}
+import com.histmersion.util.plugins.PluginKit.{Coordinates, Index, Installed, Origin}
 
 import java.nio.file.{Files, Path, StandardCopyOption}
 import java.security.MessageDigest
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import scala.jdk.CollectionConverters.*
+import com.histmersion.util.plugins.PluginKit
 
 /** `histmersion plugin …` — the plugins of the LOCAL install (docs/research-plugins.md §7). These commands manage files
   * in the data directory and run the bundle's `histmersion-relink`; they never touch the database, and they refuse when

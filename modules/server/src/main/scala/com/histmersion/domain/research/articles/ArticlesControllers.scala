@@ -12,7 +12,7 @@ import com.histmersion.domain.library.ingest.SeedImport
 import com.histmersion.domain.library.search.SearchFilters
 import com.histmersion.domain.library.sources.{SourcesControllers, SourceService}
 import com.histmersion.domain.research.articles.review.ReviewStateService
-import com.histmersion.files.ArticleNote
+import com.histmersion.domain.research.articles.ArticleNote
 import com.histmersion.server.{LinkTarget, MarkdownLint}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.identity.AliasKind

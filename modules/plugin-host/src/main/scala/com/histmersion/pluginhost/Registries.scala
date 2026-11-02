@@ -1,6 +1,5 @@
 package com.histmersion.pluginhost
 
-import com.histmersion.files.*
 import com.histmersion.plugin.*
 
 import scala.collection.immutable.ListMap
