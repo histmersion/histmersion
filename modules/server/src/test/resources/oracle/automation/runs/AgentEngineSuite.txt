@@ -429,6 +429,25 @@ agent_steps {"actual_model":null,"attempt":1,"cost_usd":0.000000,"error":null,"f
 jobs {"acquire_item":null,"budget_tokens":400000,"budget_usd":2.000000,"citekey":"zzagent2019_tin","created_at":"TS","detail":null,"dry_run":true,"error":null,"goal_slug":null,"heartbeat_at":"TS","id":"UUID","kind":"agent","manager_id":null,"manager_item":null,"model":null,"origin":"person","params":{"modelFor":[{"model":"local:haiku-sim","role":"extractor"}]},"parent_job":null,"pipeline":"enrich-source","pipeline_version":2,"progress":"enrich-source [[zzagent2019_tin]] (agent run RUN): status, summary, notes, topics, regions, period, tags, 2 finding(s)","result":null,"resume_at":null,"sha256":null,"status":"done","target_id":"zzagent2019_tin","target_kind":"source","updated_at":"TS","warnings":["geocode: no gazetteer place named 'Nowhereville' (finding kept without a point)"]}
 jobs {"acquire_item":null,"budget_tokens":400000,"budget_usd":2.000000,"citekey":"zzagent2019_tin","created_at":"TS","detail":null,"dry_run":true,"error":null,"goal_slug":null,"heartbeat_at":"TS","id":"UUID","kind":"agent","manager_id":null,"manager_item":null,"model":null,"origin":"person","params":{},"parent_job":null,"pipeline":"enrich-source","pipeline_version":2,"progress":"enrich-source [[zzagent2019_tin]] (agent run RUN): status, summary, notes, topics, regions, period, tags, 1 finding(s)","result":null,"resume_at":null,"sha256":null,"status":"done","target_id":"zzagent2019_tin","target_kind":"source","updated_at":"TS","warnings":[]}
 sources {"added_date":"DAY","authors":[],"calibre_id":null,"cited_by_count":null,"citekey":"zzagent2019_tin","doi":null,"influential_citations":null,"license":null,"notes":null,"ocr_markdown":"# Introduction\n\nTin was essential for bronze. The Uluburun ship carried ten tons of copper and one ton of tin.\nIts cargo dates to about 1320 BCE.\n","origin":"UUID","period":null,"regions":[],"sha256":null,"source":null,"status":"unassessed","summary":null,"tags":[],"title":"Bronze Age tin","topics":[],"tsv":"'age':2A 'bronz':1A 'tin':3A","uid":"UUID","updated_at":"TS","venue":null,"year":2019}
+## the runs compared
+(done,true,None,List(),Usage(5000,500,0,0),0.005999999999999999,12,1)
+(done,true,None,List(ModelOverride(extractor,local:haiku-sim)),Usage(3000,300,0,0),0.010199999999999999,11,0)
+## the steps compared
+load: Some((List(),List(),List(),Usage(0,0,0,0),0.0,1,0,None)) | Some((List(),List(),List(),Usage(0,0,0,0),0.0,1,0,None))
+metadata: Some((List(),List(),List(),Usage(0,0,0,0),0.0,1,0,None)) | Some((List(),List(),List(),Usage(0,0,0,0),0.0,1,0,None))
+classify: Some((List(local:scripted),List(scripted),List(price: 1/2 USD per million tokens),Usage(2000,200,0,0),0.0024,1,0,Some(2))) | Some((List(local:haiku-sim),List(scripted),List(price: 3/4 USD per million tokens),Usage(1000,100,0,0),0.0034,1,0,Some(1)))
+findings-1: Some((List(local:scripted),List(scripted),List(price: 1/2 USD per million tokens),Usage(2000,200,0,0),0.0024,2,1,Some(2))) | Some((List(local:haiku-sim),List(scripted),List(price: 3/4 USD per million tokens),Usage(1000,100,0,0),0.0034,1,0,Some(1)))
+geocode: Some((List(),List(),List(),Usage(0,0,0,0),0.0,1,0,None)) | Some((List(),List(),List(),Usage(0,0,0,0),0.0,1,0,None))
+notes: Some((List(local:scripted),List(scripted),List(price: 1/2 USD per million tokens),Usage(1000,100,0,0),0.0012,1,0,Some(1))) | Some((List(local:haiku-sim),List(scripted),List(price: 3/4 USD per million tokens),Usage(1000,100,0,0),0.0034,1,0,Some(1)))
+patch: Some((List(),List(),List(),Usage(0,0,0,0),0.0,1,0,None)) | Some((List(),List(),List(),Usage(0,0,0,0),0.0,1,0,None))
+refs: Some((List(),List(),List(),Usage(0,0,0,0),0.0,1,0,None)) | Some((List(),List(),List(),Usage(0,0,0,0),0.0,1,0,None))
+assess: Some((List(),List(),List(),Usage(0,0,0,0),0.0,1,0,None)) | Some((List(),List(),List(),Usage(0,0,0,0),0.0,1,0,None))
+status: Some((List(),List(),List(),Usage(0,0,0,0),0.0,1,0,None)) | Some((List(),List(),List(),Usage(0,0,0,0),0.0,1,0,None))
+close: Some((List(),List(),List(),Usage(0,0,0,0),0.0,1,0,None)) | Some((List(),List(),List(),Usage(0,0,0,0),0.0,1,0,None))
+## the outputs compared
+{"findings":1,"quotesChecked":3,"quotesPassed":2,"placesAsked":1,"placesResolved":1,"datedFindings":1,"periodStart":-1600,"periodEnd":-1200,"summaryChars":30,"notesChars":49,"uniqueClaims":[]}
+{"findings":2,"quotesChecked":2,"quotesPassed":2,"placesAsked":2,"placesResolved":1,"datedFindings":2,"periodStart":-1600,"periodEnd":-1200,"summaryChars":30,"notesChars":24,"uniqueClaims":["The cargo dates to about 1320 BCE."]}
+## the notes
 
 === #1450 agents.step.max-tokens reaches claude -p as CLAUDE_CODE_MAX_OUTPUT_TOKENS; a step's own cap wins
 agent_messages {"attempt":1,"content":"Write the notes.","created_at":"TS","job_id":"UUID","latency_ms":null,"n":1,"role":"user","seq":1,"tool_input":null,"tool_name":null,"tool_result":null}
