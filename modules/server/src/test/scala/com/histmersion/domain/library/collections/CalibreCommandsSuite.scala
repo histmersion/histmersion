@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.collections
 
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -57,7 +57,7 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
   /** The sources the commands act on; `stored` ones get an original in the spool. */
   private def seed(ds: javax.sql.DataSource, spool: Path, chunk: Int): Unit =
     def put(s: Source, stored: Boolean = false): Unit =
-      SourceRepo.upsert(ds, s, chunk)
+      SourceFixtures.upsert(ds, s, chunk)
       if stored then
         val sha = (s.citekey.hashCode.abs.toString * 8).take(64).padTo(64, '0')
         Files.writeString(spool.resolve(s"$sha.pdf"), s"%PDF-1.4 original of ${s.citekey} ${"o" * 2048}")

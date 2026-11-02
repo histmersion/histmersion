@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
@@ -70,7 +70,7 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
       connect(ds)(sql"UPDATE places SET start_unknown = true WHERE id = 'zqtv_su'".update.run())
       def f(i: Int, at: Int, p: Option[Period]) =
         Finding(s"zqtv_src#$i", "zqtv_src", s"claim $i", None, Some(GeoPoint(100.0 + at, Lat)), p, None, Nil, None)
-      SourceRepo.upsert(
+      SourceFixtures.upsert(
         ds,
         Source(
           citekey = "zqtv_src",

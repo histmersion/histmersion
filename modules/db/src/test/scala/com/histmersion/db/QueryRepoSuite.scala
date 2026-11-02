@@ -1,7 +1,7 @@
 package com.histmersion.db
 
 import com.histmersion.domain.library.search.SearchFixtures
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -50,7 +50,7 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
 
   override def beforeEach(context: BeforeEach): Unit =
     connect(ds)(sql"DELETE FROM sources WHERE citekey = $ck".update.run())
-    SourceRepo.upsert(
+    SourceFixtures.upsert(
       ds,
       Source(
         citekey = ck,

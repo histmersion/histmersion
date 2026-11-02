@@ -1,7 +1,7 @@
 package com.histmersion.db
 
 import com.histmersion.domain.library.citations.CitationFixtures
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -44,7 +44,7 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
     edges = edges
   )
 
-  private def put(s: Source): Unit = SourceRepo.upsert(ds, s, cfg.limits.chunkChars)
+  private def put(s: Source): Unit = SourceFixtures.upsert(ds, s, cfg.limits.chunkChars)
 
   override def beforeEach(context: BeforeEach): Unit =
     connect(ds):
@@ -96,7 +96,7 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
     val a = s"${Prefix}a2020_x"; val b = s"${Prefix}b2021_y"
     put(source(a, edges = List(Edge(a, b, "challenges"))))
     // the domain read still carries it — a patch or an export must not lose it
-    assertEquals(SourceRepo.load(ds, a).get.edges, List(Edge(a, b, "challenges")))
+    assertEquals(SourceFixtures.load(ds, a).get.edges, List(Edge(a, b, "challenges")))
     assertEquals(
       CitationFixtures.neighbors(ds, a).map(n => (n.citekey, n.target)),
       Vector(b -> NeighborTarget.Unresolved)
@@ -127,7 +127,7 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
     put(source(s"${Prefix}c2019_full"))
     put(source(s"${Prefix}d2018_one")); put(source(s"${Prefix}d2018_two"))
     put(source(a, edges = List(Edge(a, s"${Prefix}c2019", "references"), Edge(a, s"${Prefix}d2018", "references"))))
-    assert(SourceRepo.resolveEdges(ds) >= 1)
+    assert(SourceFixtures.resolveEdges(ds) >= 1)
     assertEquals(
       CitationFixtures.neighbors(ds, a).map(n => (n.citekey, n.target)),
       Vector(s"${Prefix}c2019_full" -> NeighborTarget.Source, s"${Prefix}d2018" -> NeighborTarget.Unresolved)

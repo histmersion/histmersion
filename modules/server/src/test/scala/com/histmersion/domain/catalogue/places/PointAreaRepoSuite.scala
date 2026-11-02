@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.db.*
 import com.histmersion.db.given
@@ -94,7 +94,7 @@ class PointAreaRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
         sql"""INSERT INTO place_relations (child_id, parent_id, kind) VALUES ($Site, $GnArea, 'part_of')""".update.run()
     def f(n: Int, at: GeoPoint, name: String = "somewhere") =
       Finding(s"zzpa_src#$n", "zzpa_src", s"claim $n", Some(name), Some(at), None, None, Nil, None)
-    SourceRepo.upsert(
+    SourceFixtures.upsert(
       ds,
       Source(
         citekey = "zzpa_src",

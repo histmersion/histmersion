@@ -13,6 +13,7 @@ object PlaceFixtures:
   export PlaceSql.*
   export PlaceRepo.{geoJsonQuery, geoJsonTimeQuery, rangeShadowedSql, rangeShadowTestSql}
   export FindingPlaceRepo.{placeholderSql, DefaultPlaceholderAreaShare, DefaultPlaceholderMin}
+  export Geocoder.{apply as applyMoves, candidates, moves, place, placements, resolve, tierSql}
 
   def upsertPlaces(ds: DataSource, batch: List[PlaceInput], dataset: Dataset = Dataset.Seed): PlaceImportResult =
     if batch.isEmpty then PlaceImportResult(0, 0, 0, Nil) else transact(ds)(PlaceRepo.upsertPlaces(batch, dataset))

@@ -32,7 +32,7 @@ object CheckRulesAdapter:
     val rule: Rule = Lint.rule(name).getOrElse(Rule(name, name))
 
     def report(context: CheckContext, maxItems: Int)(using CheckRun)(using DbCon): LintRuleReport =
-      LintRepo.report(rule, LintRepo.Context.of(context.config, context.format(LintRepo.storedCitekey)), maxItems)
+      LintRepo.report(rule, context.format(LintRepo.storedCitekey), maxItems)
 
   private def listed(owner: DataOwner, names: String*): List[CheckRule] = names.toList.map(Today(owner, _, None))
 
@@ -56,38 +56,6 @@ object CheckRulesAdapter:
     )
 
   def of(owner: DataOwner): List[CheckRule] = owner match
-    case TablesAdapter.LibraryOwner =>
-      listed(owner, DanglingEdges) ++
-        List(fixed(owner, UnresolvedShortCitekeys, FixWhen.EveryFix)(c => LintRepo.resolveEdgesFix(c.dataSource))) ++
-        listed(
-          owner,
-          NoFindings,
-          NoPeriod,
-          NoRegions,
-          EmptySummary,
-          UnassessedStatus,
-          DuplicateDoi,
-          DuplicateSha256,
-          OrphanSources
-        ) ++
-        List(fixed(owner, StaleChunks, FixWhen.EveryFix)(c => LintRepo.reindexFix(c.dataSource, c.config))) ++
-        listed(
-          owner,
-          UndatedFindings,
-          UnlocatedFindings,
-          LegacyFigureLinks,
-          NonCanonicalTag,
-          MissingYear,
-          YearCitekeyMismatch,
-          AuthorPipe,
-          SupersededWithoutEdge,
-          NoteFormat
-        ) ++
-        List(
-          fixed(owner, FindingGeocode, FixWhen.WhenNamed)(c => LintRepo.regeocodeFix(c.dataSource, c.config)),
-          fixed(owner, FindingUnplaced, FixWhen.WhenNamed)(c => LintRepo.placeFix(c.dataSource, c.config))
-        ) ++
-        listed(owner, FindingPlaceholder)
     case TablesAdapter.ResearchOwner =>
       listed(owner, DanglingArticleLinks, ArticleFiller, ArticleUncitedParagraph, ArticleThinSummary) ++
         List(fixed(owner, ArticleCritiquePairing, FixWhen.WhenNamed)(pairCritiques)) ++

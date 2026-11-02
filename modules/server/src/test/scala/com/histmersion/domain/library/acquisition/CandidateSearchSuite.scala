@@ -1,6 +1,6 @@
 package com.histmersion.domain.library.acquisition
 
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.augustnagro.magnum.transact
 
@@ -71,7 +71,7 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
 
   test("a sweep stores what is new, deduplicated across indexes and against the corpus and the acquisition list"):
     fresh()
-    SourceRepo.upsert(
+    SourceFixtures.upsert(
       ds,
       Source(
         "zzcand_have",
@@ -165,7 +165,7 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
 
   test("the goal's sources: the works citing them and their first and last authors' newer works"):
     fresh()
-    SourceRepo.upsert(
+    SourceFixtures.upsert(
       ds,
       Source(
         "zzcand_src",

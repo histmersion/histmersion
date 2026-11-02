@@ -2,8 +2,6 @@ package com.histmersion.db
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
-import com.histmersion.domain.catalogue.places.Geocoder
-
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -58,10 +56,14 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
       Place("pleiades_999100010", "Zzrc Thessalia", PlaceKind.Region, pt(141.9, -47.1), properties = types("region"))
     val _ = PlaceFixtures.upsertPlaces(ds, List(PlaceInput(precise, List(PlaceName(precise.label)))))
     val r =
-      connect(ds)(Geocoder.resolve("Zzrc Thessalia", Geocode.KindHint.Unknown, None, cfg.places.geocodePlaceholderMin))
+      connect(ds)(
+        PlaceFixtures.resolve("Zzrc Thessalia", Geocode.KindHint.Unknown, None, cfg.places.geocodePlaceholderMin)
+      )
     assertEquals(r.map(_.placeId), Some("pleiades_999100010"))
     val alone =
-      connect(ds)(Geocoder.resolve("Zzrc Achaia", Geocode.KindHint.Unknown, None, cfg.places.geocodePlaceholderMin))
+      connect(ds)(
+        PlaceFixtures.resolve("Zzrc Achaia", Geocode.KindHint.Unknown, None, cfg.places.geocodePlaceholderMin)
+      )
     assertEquals(alone.map(r => (r.placeId, r.approximate)), Some((Achaia, List(Geocode.Approximation.GridSquare))))
     assertEquals(PlaceFixtures.get(ds, Thess).map(_.locationPrecision), Some(LocationPrecision.GridCell))
     assertEquals(PlaceFixtures.get(ds, Regio1).map(_.locationPrecision), Some(LocationPrecision.Stated))

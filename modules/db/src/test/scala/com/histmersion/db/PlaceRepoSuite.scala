@@ -3,7 +3,7 @@ package com.histmersion.db
 import com.histmersion.domain.library.labels.LabelFixtures
 import com.histmersion.domain.library.search.FilterSql
 import com.histmersion.domain.library.search.SearchFixtures
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
@@ -136,7 +136,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
 
   private def seed(): Unit =
     val _ = PlaceFixtures.upsertPlaces(ds, batch)
-    SourceRepo.upsert(ds, src, cfg.limits.chunkChars)
+    SourceFixtures.upsert(ds, src, cfg.limits.chunkChars)
     val _ = PlaceFixtures.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm)
 
   test("upsert is idempotent and reports a dangling parent instead of failing"):
@@ -193,7 +193,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
         )
       )
     )
-    SourceRepo.upsert(ds, border, cfg.limits.chunkChars)
+    SourceFixtures.upsert(ds, border, cfg.limits.chunkChars)
     val _ = PlaceFixtures.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm)
     assertEquals(PlaceFixtures.placesOf(ds, "zzp_border#0").map(_.id).toSet, Set("zzp_west", "zzp_east"))
 
@@ -305,7 +305,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
     // a patch that touches NOTHING spatial. This used to DELETE FROM findings, and
     // finding_places cascades off findings(id), so every assignment vanished.
     assert(
-      SourceRepo
+      SourceFixtures
         .patch(
           ds,
           "zzp_src",
@@ -324,21 +324,21 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
       case f if f.id == "zzp_src#0" => f.copy(geo = Some(GeoPoint(-30.0, 45.0))) // out to the Atlantic
       case f                        => f
     })
-    val _ = SourceRepo.put(ds, moved, cfg.limits.chunkChars, cfg.places.pointToleranceKm)
+    val _ = SourceFixtures.put(ds, moved, cfg.limits.chunkChars, cfg.places.pointToleranceKm)
     assertEquals(
       PlaceFixtures.placesOf(ds, "zzp_src#0").map(_.id).toSet,
       Set.empty[String],
       "it is no longer inside anything"
     )
     // …and moving it back puts it back
-    val _ = SourceRepo.put(ds, src, cfg.limits.chunkChars, cfg.places.pointToleranceKm)
+    val _ = SourceFixtures.put(ds, src, cfg.limits.chunkChars, cfg.places.pointToleranceKm)
     assert(PlaceFixtures.placesOf(ds, "zzp_src#0").map(_.id).toSet.contains("zzp_hattusa"))
 
   test("a finding dropped from the source is deleted; the others keep their places"):
     seed()
     val fewer = src.copy(findings = src.findings.filter(_.id != "zzp_src#1"))
-    val _ = SourceRepo.put(ds, fewer, cfg.limits.chunkChars, cfg.places.pointToleranceKm)
-    assertEquals(SourceRepo.load(ds, "zzp_src").get.findings.map(_.id), List("zzp_src#0", "zzp_src#2", "zzp_src#3"))
+    val _ = SourceFixtures.put(ds, fewer, cfg.limits.chunkChars, cfg.places.pointToleranceKm)
+    assertEquals(SourceFixtures.load(ds, "zzp_src").get.findings.map(_.id), List("zzp_src#0", "zzp_src#2", "zzp_src#3"))
     assert(PlaceFixtures.placesOf(ds, "zzp_src#0").nonEmpty)
 
   test("the fallback tolerance matches the configured one, so they cannot drift"):

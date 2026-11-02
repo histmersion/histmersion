@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.db.*
 import com.histmersion.db.given
@@ -90,7 +90,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
 
   /** A source whose findings sit ON the fixtures' point, one per period (materialised on write). */
   private def findingsAt(ck: String, periods: Period*): Unit =
-    SourceRepo.upsert(
+    SourceFixtures.upsert(
       ds,
       Source(
         citekey = ck,
@@ -164,12 +164,12 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
     )
     def at(p: Period) =
       connect(ds)(
-        Geocoder.resolve("Zzpt Kingdom of Patones", KindHint.Unknown, Some(p), cfg.places.geocodePlaceholderMin)
+        PlaceFixtures.resolve("Zzpt Kingdom of Patones", KindHint.Unknown, Some(p), cfg.places.geocodePlaceholderMin)
       )
         .map(_.placeId)
     // the candidate carries the WINDOW, so the time rule reads it; who brought a place in (the tier)
     // still ranks before time, so the time rule is compared at one tier
-    val cands = connect(ds)(Geocoder.candidates(Geocode.key("Zzpt Kingdom of Patones"), None))
+    val cands = connect(ds)(PlaceFixtures.candidates(Geocode.key("Zzpt Kingdom of Patones"), None))
     assertEquals(cands.find(_.id == PatonesId).map(c => (c.from, c.to)), Some((Some(1469L), Some(1769L))))
     val ranked = Geocode.rank(cands.map(_.copy(tier = 0)), KindHint.Unknown, Some(Period(-4664, -3153)), 4)
     assertEquals(ranked.head.id, "geonames_999500002", "outside its window the dated place ranks after the undated one")

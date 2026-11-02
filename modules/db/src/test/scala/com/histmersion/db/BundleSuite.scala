@@ -1,7 +1,6 @@
 package com.histmersion.db
 
 import com.histmersion.domain.library.sources.SourceFixtures
-import com.histmersion.domain.library.sources.SourceRepo
 
 import com.histmersion.domain.media.assets.AssetFixtures
 import com.histmersion.domain.media.links.AssetLinkFixtures
@@ -158,7 +157,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     notes = Some(s"notes on $ck with [[zzb_topic]]")
   )
 
-  private def put(ds: DataSource, s: Source): Unit = SourceRepo.upsert(ds, s, cfg.limits.chunkChars)
+  private def put(ds: DataSource, s: Source): Unit = SourceFixtures.upsert(ds, s, cfg.limits.chunkChars)
 
   /** A corpus with one of everything a bundle carries, and every tricky shape: unicode, a rename (alias), an unresolved
     * edge, an article with versions, a deleted article and finding and queue item (tombstones), assets with geometry, a
@@ -180,7 +179,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     put(ds, source(G1, Some("# Gamma\n\nshort"), 0, List(Edge(G1, A1, "superseded_by"))))
     val _ = SourceFixtures.rename(ds, B0, B1)
     // a finding dropped by a later write leaves a tombstone
-    SourceRepo.load(ds, A1).foreach(s => put(ds, s.copy(findings = s.findings.filterNot(_.id == s"$A1#3"))))
+    SourceFixtures.load(ds, A1).foreach(s => put(ds, s.copy(findings = s.findings.filterNot(_.id == s"$A1#3"))))
     val _ =
       com.histmersion.domain.library.acquisition.AcquisitionFixtures.putAssessment(
         ds,
@@ -224,7 +223,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
       )
     )
     val sha = BundleFormat.sha256Hex(OriginalBytes)
-    SourceRepo.setSha256(ds, A1, sha)
+    SourceFixtures.setSha256(ds, A1, sha)
     Files.write(Files.createDirectories(originals).resolve(s"$sha.pdf"), OriginalBytes)
     val _ = ArticleRepo.put(ds, Article("zzb_topic", "Topic", "concept", s"First draft citing [[$A1]].", Some("v1")))
     val _ = ArticleRepo.put(
@@ -465,7 +464,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     val asOf = full.asOf.getOrElse(fail("no asOf"))
     Thread.sleep(5)
     exec(ds, "DELETE FROM asset_links")
-    val _ = SourceRepo.patch(ds, G1, SourcePatch(summary = Some("changed")), cfg.limits.chunkChars)
+    val _ = SourceFixtures.patch(ds, G1, SourcePatch(summary = Some("changed")), cfg.limits.chunkChars)
     val inc = exportOf(ds, sp, Some(asOf))
     val es = entries(inc)
     val m = manifestOf(inc)
@@ -637,11 +636,11 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(count(a, "SELECT count(*)::int FROM merge_ledger"), 0)
     assert(java.util.Arrays.equals(exportOf(a, sa), before), "importing its own bundle changed the export")
     // …and after a local change, an OLD own bundle never wins over it
-    val _ = SourceRepo.patch(a, A1, SourcePatch(summary = Some("newer here")), cfg.limits.chunkChars)
+    val _ = SourceFixtures.patch(a, A1, SourcePatch(summary = Some("newer here")), cfg.limits.chunkChars)
     val r2 = importInto(a, before, sa)
     assertEquals(r2.changed, 0)
     assertEquals(r2.counts.find(_.kind == BundleKind.Source).map(_.keptLocal), Some(1))
-    assertEquals(SourceRepo.load(a, A1).flatMap(_.summary), Some("newer here"))
+    assertEquals(SourceFixtures.load(a, A1).flatMap(_.summary), Some("newer here"))
 
   test("M2: the ledger fast-forwards what changed there only, keeps what changed here only, and reports both"):
     val (a, b) = (fresh("lga"), fresh("lgb"))
@@ -649,17 +648,17 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     populate(a, sa)
     val _ = importInto(b, exportOf(a, sa), sb)
     // changed over there only → fast-forward
-    val _ = SourceRepo.patch(a, A1, SourcePatch(summary = Some("work edit")), cfg.limits.chunkChars)
+    val _ = SourceFixtures.patch(a, A1, SourcePatch(summary = Some("work edit")), cfg.limits.chunkChars)
     val r1 = importInto(b, exportOf(a, sa), sb)
     assertEquals(r1.counts.find(_.kind == BundleKind.Source).map(_.updated), Some(1), r1.toString)
-    assertEquals(SourceRepo.load(b, A1).flatMap(_.summary), Some("work edit"))
+    assertEquals(SourceFixtures.load(b, A1).flatMap(_.summary), Some("work edit"))
     // changed here only → kept
-    val _ = SourceRepo.patch(b, A1, SourcePatch(notes = Some("home edit")), cfg.limits.chunkChars)
+    val _ = SourceFixtures.patch(b, A1, SourcePatch(notes = Some("home edit")), cfg.limits.chunkChars)
     val r2 = importInto(b, exportOf(a, sa), sb)
     assertEquals(r2.counts.find(_.kind == BundleKind.Source).map(_.keptLocal), Some(1), r2.toString)
-    assertEquals(SourceRepo.load(b, A1).flatMap(_.notes), Some("home edit"))
+    assertEquals(SourceFixtures.load(b, A1).flatMap(_.notes), Some("home edit"))
     // changed on both sides → an open issue: the import is refused, nothing written (M3)…
-    val _ = SourceRepo.patch(a, A1, SourcePatch(summary = Some("work again")), cfg.limits.chunkChars)
+    val _ = SourceFixtures.patch(a, A1, SourcePatch(summary = Some("work again")), cfg.limits.chunkChars)
     val third = exportOf(a, sa)
     val r3 = importInto(b, third, sb)
     assert(!r3.applied)
@@ -667,13 +666,13 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(r3.conflicts.exists(_.contains(A1)), r3.conflicts.toString)
     val conflict = r3.issues.find(_.kind == IssueKind.ChangedBothSides).getOrElse(fail(r3.toString))
     assert(r3.problems.exists(_.startsWith(conflict.id)), r3.problems.toString)
-    assertEquals(SourceRepo.load(b, A1).flatMap(_.summary), Some("work edit"))
+    assertEquals(SourceFixtures.load(b, A1).flatMap(_.summary), Some("work edit"))
     // …until it is decided: keep-left keeps ours and records that it was decided
     val keep = MergeResolutions(List(MergeResolution(conflict.id, "keep-left")))
     val r3b = importInto(b, third, sb, resolutions = keep)
     assert(r3b.applied, r3b.problems.mkString("\n"))
-    assertEquals(SourceRepo.load(b, A1).flatMap(_.summary), Some("work edit"))
-    assertEquals(SourceRepo.load(b, A1).flatMap(_.notes), Some("home edit"))
+    assertEquals(SourceFixtures.load(b, A1).flatMap(_.summary), Some("work edit"))
+    assertEquals(SourceFixtures.load(b, A1).flatMap(_.notes), Some("home edit"))
     // the same foreign version does not ask again, with or without the resolution
     val r3c = importInto(b, third, sb)
     assert(r3c.applied, r3c.problems.mkString("\n"))

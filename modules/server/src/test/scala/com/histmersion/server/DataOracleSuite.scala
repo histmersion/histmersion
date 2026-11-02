@@ -1,7 +1,6 @@
 package com.histmersion.server
 
 import com.histmersion.domain.library.sources.SourceFixtures
-import com.histmersion.domain.library.sources.SourceRepo
 
 import com.histmersion.domain.media.assets.AssetFixtures
 import com.histmersion.domain.media.assets.NewFigure
@@ -174,7 +173,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
     */
   private def craftWork(ds: DataSource): Unit =
     BundleRepo.setLabel(ds, Some("work"))
-    SourceRepo.upsert(
+    SourceFixtures.upsert(
       ds,
       src(
         "zzalpha2001_storm",
@@ -187,7 +186,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       ),
       chunk
     )
-    SourceRepo.upsert(
+    SourceFixtures.upsert(
       ds,
       src(
         "zzbeta2005_kingdom",
@@ -198,7 +197,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       ),
       chunk
     )
-    SourceRepo.upsert(ds, src("zzgamma1903_old", "An Old Book", 1903), chunk)
+    SourceFixtures.upsert(ds, src("zzgamma1903_old", "An Old Book", 1903), chunk)
     val _ = SourceFixtures.rename(ds, "zzgamma1903_old", "zzgamma1903_prolegomena")
     val _ = ArticleRepo.put(
       ds,
@@ -257,7 +256,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
   /** After home imported work once, both go on. */
   private def editBoth(work: DataSource, home: DataSource): Unit =
     // changed findings at work: one claim rewritten, one added
-    SourceRepo.upsert(
+    SourceFixtures.upsert(
       work,
       src(
         "zzalpha2001_storm",
@@ -275,7 +274,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       chunk
     )
     // the same summary edited at home: a conflict
-    val _ = SourceRepo.patch(home, "zzalpha2001_storm", SourcePatch(summary = Some("edited at home")), chunk)
+    val _ = SourceFixtures.patch(home, "zzalpha2001_storm", SourcePatch(summary = Some("edited at home")), chunk)
     // a renamed citekey at work
     val _ = SourceFixtures.rename(work, "zzbeta2005_kingdom", "zzbeta2005_hittites")
     // one paragraph both edited
@@ -296,7 +295,7 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
     val _ = EventFixtures.delete(work, "zz_event_gone")
     val _ = GoalRepo.delete(work, "zz_goal_gone")
     // something new at work
-    SourceRepo.upsert(work, src("zzdelta2020_new", "A New Book", 2020, findings = List("new at work")), chunk)
+    SourceFixtures.upsert(work, src("zzdelta2020_new", "A New Book", 2020, findings = List("new at work")), chunk)
     val _ = QueueRows.add(work, Queue.Kind.Tasks, Queue.QueueAdd("a task work added", topic = Some("oracle")))
 
   // ── normalisation ──────────────────────────────────────────────────────────────────────────

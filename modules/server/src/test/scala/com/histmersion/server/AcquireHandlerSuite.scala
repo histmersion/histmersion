@@ -1,7 +1,7 @@
 package com.histmersion.server
 
 import com.histmersion.domain.library.citations.CitationFixtures
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.pluginhost.{FetchChain, OaFetcher}
 
@@ -173,11 +173,11 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
 
   test("refs resolves by DOI, by exact citekey and by unique citekey prefix — and --apply writes edges"):
     wipe("zzacq_target", "zzacq_bydoi", "zzacqreich2018_who")
-    SourceRepo.upsert(ds, source("zzacq_target", Some("10.1038/zztest001")), cfg.limits.chunkChars)
-    SourceRepo.upsert(ds, source("zzacq_bydoi", Some("10.1038/zzref001")), cfg.limits.chunkChars)
+    SourceFixtures.upsert(ds, source("zzacq_target", Some("10.1038/zztest001")), cfg.limits.chunkChars)
+    SourceFixtures.upsert(ds, source("zzacq_bydoi", Some("10.1038/zzref001")), cfg.limits.chunkChars)
     // a reference whose generated citekey (`zzacqreich2018_here`) shares its `<surname><year>` stem
     // with the stored `zzacqreich2018_who` — the prefix widening `resolveEdges` does for short targets
-    SourceRepo.upsert(
+    SourceFixtures.upsert(
       ds,
       source("zzacqreich2018_who", None, "Who We Are and How We Got Here", List("Someone Zzacqreich"), Some(2018)),
       cfg.limits.chunkChars
@@ -201,8 +201,8 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
 
   test("refs without --apply writes nothing"):
     wipe("zzacq_target", "zzacq_bydoi")
-    SourceRepo.upsert(ds, source("zzacq_target", Some("10.1038/zztest001")), cfg.limits.chunkChars)
-    SourceRepo.upsert(ds, source("zzacq_bydoi", Some("10.1038/zzref001")), cfg.limits.chunkChars)
+    SourceFixtures.upsert(ds, source("zzacq_target", Some("10.1038/zztest001")), cfg.limits.chunkChars)
+    SourceFixtures.upsert(ds, source("zzacq_bydoi", Some("10.1038/zzref001")), cfg.limits.chunkChars)
     val h = handlers(FakeDiscovery(refs = List(RefRow(doi = Some("10.1038/zzref001")))))
     val r = h.refs(RefsRequest("zzacq_target")).fold(e => fail(e.message), identity)
     assertEquals(r.resolved, 1)
@@ -213,7 +213,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
 
   test("a Retraction Watch hit yields verdict=retracted and --apply writes status=retracted"):
     wipe("zzacq_retr")
-    SourceRepo.upsert(ds, source("zzacq_retr", Some("10.1177/zzretracted")), cfg.limits.chunkChars)
+    SourceFixtures.upsert(ds, source("zzacq_retr", Some("10.1177/zzretracted")), cfg.limits.chunkChars)
     AcquisitionTesting
       .assessments(ds)
       .replaceRetractionWatch(
@@ -233,13 +233,13 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assert(a.flagged)
     assertEquals(a.retractionWatch.head.date, Some("2021-12-15"))
     assertEquals(a.applied, Some("retracted"))
-    assertEquals(SourceRepo.load(ds, "zzacq_retr").map(_.status), Some(SourceStatus.Retracted))
+    assertEquals(SourceFixtures.load(ds, "zzacq_retr").map(_.status), Some(SourceStatus.Retracted))
     // and the verdict is STORED, so a later lint does not need the network
     assertEquals(AcquisitionTesting.assessments(ds).lastFor("zzacq_retr").map(_._1), Some("retracted"))
 
   test("a clean, well-cited paper is `current` and the mirror refresh replaces every row"):
     wipe("zzacq_ok")
-    SourceRepo.upsert(ds, source("zzacq_ok", Some("10.1038/zzclean")), cfg.limits.chunkChars)
+    SourceFixtures.upsert(ds, source("zzacq_ok", Some("10.1038/zzclean")), cfg.limits.chunkChars)
     val csv =
       "OriginalPaperDOI,RetractionNature,Reason,RetractionDate\n" +
         "10.1000/other,Retraction,\"+Fabrication, of data\",1/2/2020 0:00\n"
@@ -249,12 +249,12 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assertEquals(a.verdict, Acquire.Verdicts.Current)
     assertEquals(a.retractionWatch, Nil)
     assertEquals(a.applied, None) // no --apply
-    assertEquals(SourceRepo.load(ds, "zzacq_ok").map(_.status), Some(SourceStatus.Current))
+    assertEquals(SourceFixtures.load(ds, "zzacq_ok").map(_.status), Some(SourceStatus.Current))
 
   // #699: assess --apply overwrote contested (with a challenges edge behind it) with current
   test("assess --apply keeps a status already set, unless --force-status; a retraction always applies"):
     wipe("zzacq_kept", "zzacq_retr2")
-    SourceRepo.upsert(
+    SourceFixtures.upsert(
       ds,
       source("zzacq_kept", Some("10.1038/zzkept")).copy(status = SourceStatus.Contested),
       cfg.limits.chunkChars
@@ -264,13 +264,13 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assertEquals(a.verdict, Acquire.Verdicts.Current)
     assertEquals((a.applied, a.kept), (None, Some(SourceStatus.Contested)))
     assert(AcquireMarkdown.assessment(a).contains("Kept **contested** (set by hand)"))
-    assertEquals(SourceRepo.load(ds, "zzacq_kept").map(_.status), Some(SourceStatus.Contested))
+    assertEquals(SourceFixtures.load(ds, "zzacq_kept").map(_.status), Some(SourceStatus.Contested))
 
     val f = h.assess(AssessRequest("zzacq_kept", apply = true, forceStatus = true)).fold(e => fail(e.message), identity)
     assertEquals((f.applied, f.kept), (Some("current"), None))
-    assertEquals(SourceRepo.load(ds, "zzacq_kept").map(_.status), Some(SourceStatus.Current))
+    assertEquals(SourceFixtures.load(ds, "zzacq_kept").map(_.status), Some(SourceStatus.Current))
 
-    SourceRepo.upsert(
+    SourceFixtures.upsert(
       ds,
       source("zzacq_retr2", Some("10.1177/zzretracted2")).copy(status = SourceStatus.Foundational),
       cfg.limits.chunkChars
@@ -285,14 +285,14 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       )
     val r = h.assess(AssessRequest("zzacq_retr2", apply = true)).fold(e => fail(e.message), identity)
     assertEquals(r.applied, Some("retracted"))
-    assertEquals(SourceRepo.load(ds, "zzacq_retr2").map(_.status), Some(SourceStatus.Retracted))
+    assertEquals(SourceFixtures.load(ds, "zzacq_retr2").map(_.status), Some(SourceStatus.Retracted))
 
   // ── followups ───────────────────────────────────────────────────────────────────────────────
 
   test("followups classify citing papers and --apply adds one typed edge per stored citing source"):
     wipe("zzacq_target", "zzacq_critic")
-    SourceRepo.upsert(ds, source("zzacq_target", Some("10.1038/zztest001")), cfg.limits.chunkChars)
-    SourceRepo.upsert(ds, source("zzacq_critic", Some("10.1038/zzcritic")), cfg.limits.chunkChars)
+    SourceFixtures.upsert(ds, source("zzacq_target", Some("10.1038/zztest001")), cfg.limits.chunkChars)
+    SourceFixtures.upsert(ds, source("zzacq_critic", Some("10.1038/zzcritic")), cfg.limits.chunkChars)
     val rows = List(
       FollowupRow(
         title = Some("A critique"),
@@ -322,7 +322,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
 
   test("discover marks what the corpus already has, and --not-in-db removes it"):
     wipe("zzacq_known")
-    SourceRepo.upsert(ds, source("zzacq_known", Some("10.1038/zzknown")), cfg.limits.chunkChars)
+    SourceFixtures.upsert(ds, source("zzacq_known", Some("10.1038/zzknown")), cfg.limits.chunkChars)
     val hits = List(
       WorkRef(doi = Some("10.1038/zzknown"), title = Some("Known"), citekey = Some("x2000_known")),
       WorkRef(doi = Some("10.1038/zzbrandnew"), title = Some("New"), citekey = Some("y2001_new"))
@@ -341,7 +341,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     // `zzacq_ref` fixture below; with two sources on one DOI the reference resolves to whichever
     // Postgres returns first, which made this test fail about half the time. Wipe it too.
     wipe("zzacq_ingested", "zzacq_ref", "zzacq_bydoi")
-    SourceRepo.upsert(ds, source("zzacq_ref", Some("10.1038/zzref001")), cfg.limits.chunkChars)
+    SourceFixtures.upsert(ds, source("zzacq_ref", Some("10.1038/zzref001")), cfg.limits.chunkChars)
     val h = handlers(FakeDiscovery(refs = List(RefRow(doi = Some("10.1038/zzref001")))), oa = SomePdf())
     val r = h.ingest(IngestRequest("10.1038/zztest001")).fold(e => fail(e.message), identity)
 
@@ -357,7 +357,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assertEquals(r.steps.map(_.step), List("metadata", "fetch", "references", "store", "assess"))
     assert(r.steps.forall(_.ok), r.steps.toString)
 
-    val stored = SourceRepo.load(ds, "zzacq_ingested").getOrElse(fail("source was not created"))
+    val stored = SourceFixtures.load(ds, "zzacq_ingested").getOrElse(fail("source was not created"))
     assertEquals(stored.title, "Massive migration test")
     assertEquals(stored.doi, Some("10.1038/zztest001"))
     assertEquals(stored.provenance, Some("unpaywall"))
@@ -475,7 +475,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       ).forall(text.contains),
       text
     )
-    assert(SourceRepo.load(ds, "zzacq_ingested").isEmpty, "the legal path creates no metadata-only source")
+    assert(SourceFixtures.load(ds, "zzacq_ingested").isEmpty, "the legal path creates no metadata-only source")
     // a person's ingest of the same work: the item is reported, not doubled
     val r = handlers(FakeDiscovery(gold), oa = NoPdf)
       .ingest(IngestRequest("10.1038/zztest001"))
@@ -536,7 +536,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assertEquals(asked.get, 0, "no fetcher the config marks unauthorised is asked")
     assert(r.steps.exists(_.step == "legal-only"), r.steps.toString)
     assert(r.dropIn.isDefined, "with no legal copy it is a person's ingest as usual: the drop-in is explained")
-    assert(SourceRepo.load(ds, "zzacq_ingested").isDefined, "the metadata-only source is created")
+    assert(SourceFixtures.load(ds, "zzacq_ingested").isDefined, "the metadata-only source is created")
     // without the flag the person's path asks it (the switch is on), and the watcher's never does
     wipe("zzacq_ingested")
     val _ = handlers(oa = chain, app = allowing).ingest(IngestRequest("10.1038/zztest001"))
@@ -555,7 +555,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assertEquals(r.pdf, None)
     assert(r.dropIn.exists(_.contains("--citekey zzacq_ingested")), r.dropIn.toString)
     assert(r.steps.exists(s => s.step == "fetch" && !s.ok))
-    assert(SourceRepo.load(ds, "zzacq_ingested").isDefined, "metadata-only source must still exist")
+    assert(SourceFixtures.load(ds, "zzacq_ingested").isDefined, "metadata-only source must still exist")
     wipe("zzacq_ingested")
 
   test("re-ingesting an ENRICHED source updates metadata and never wipes the enrichment"):
@@ -569,13 +569,13 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       tags = Some(ListPatch(add = List("steppe"))),
       findings = Some(FindingsPatch(add = List(FindingInput("a claim", region = Some("Pontic steppe")))))
     )
-    SourceRepo
+    SourceFixtures
       .patch(ds, "zzacq_ingested", enriched, cfg.limits.chunkChars)
       .fold(e => fail(e.message), identity)
 
     val again = h.ingest(IngestRequest("10.1038/zztest001")).fold(e => fail(e.message), identity)
     assert(!again.created, "an existing citekey must be updated, not recreated")
-    val after = SourceRepo.load(ds, "zzacq_ingested").getOrElse(fail("gone"))
+    val after = SourceFixtures.load(ds, "zzacq_ingested").getOrElse(fail("gone"))
     assertEquals(after.notes, Some("The compiled article."))
     assertEquals(after.topics, List("indo-european"))
     assertEquals(after.tags, List("steppe"))
@@ -587,7 +587,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
   ):
     wipe("zzacq_ingested")
     val _ = handlers(oa = NoPdf).ingest(IngestRequest("10.1038/zztest001")).fold(e => fail(e.message), identity)
-    SourceRepo
+    SourceFixtures
       .patch(ds, "zzacq_ingested", SourcePatch(notes = Some("Compiled.")), cfg.limits.chunkChars)
       .fold(e => fail(e.message), identity)
     val jobs = RecordingJobs(); val pdf = CountingPdf()
@@ -601,13 +601,13 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     )
     assert(r.steps.exists(s => s.step == "fetch" && s.ok && !s.detail.contains("skipped")), r.steps.toString)
     assertEquals(r.dropIn, None)
-    assertEquals(SourceRepo.load(ds, "zzacq_ingested").flatMap(_.notes), Some("Compiled."))
+    assertEquals(SourceFixtures.load(ds, "zzacq_ingested").flatMap(_.notes), Some("Compiled."))
     wipe("zzacq_ingested")
 
   test("re-ingesting a source that HAS its original fetches nothing and leaves the body; --refetch converts again"):
     wipe("zzacq_ingested")
     val _ = handlers(oa = NoPdf).ingest(IngestRequest("10.1038/zztest001")).fold(e => fail(e.message), identity)
-    SourceRepo
+    SourceFixtures
       .patch(ds, "zzacq_ingested", SourcePatch(body = Some("# The converted text")), cfg.limits.chunkChars)
       .fold(e => fail(e.message), identity)
     val jobs = RecordingJobs(); val pdf = CountingPdf()
@@ -622,7 +622,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     )
     assertEquals(r.dropIn, None, "no 'get the file by hand' advice for a source that has it")
     assert(AcquireMarkdown.ingest(r).contains("not fetched — the source already has its original"))
-    assertEquals(SourceRepo.load(ds, "zzacq_ingested").flatMap(_.ocrMarkdown), Some("# The converted text"))
+    assertEquals(SourceFixtures.load(ds, "zzacq_ingested").flatMap(_.ocrMarkdown), Some("# The converted text"))
     // asked for: fetched and handed to the job, which replaces the body
     val again = handlers(oa = pdf, jobs = jobs)
       .ingest(IngestRequest("10.1038/zztest001", refetch = true))
@@ -658,7 +658,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     val r = archiveService(item, handlers()).archiveImport(Caller.Local, ArchiveImportRequest("blackathena"))
     assert(r.isLeft)
     assert(r.left.exists(_.message.contains("lending-only")), r.toString)
-    assert(SourceRepo.load(ds, "zzacqbernal1987_black").isEmpty)
+    assert(SourceFixtures.load(ds, "zzacqbernal1987_black").isEmpty)
 
   test("a public archive.org item is imported with provenance archive_org"):
     wipe("zzacqcoon1939_races")
@@ -687,15 +687,15 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       .archiveImport(Caller.Local, ArchiveImportRequest("racesofeurope"))
       .fold(e => fail(e.message), identity)
     assertEquals(r.citekey, "zzacqcoon1939_races")
-    assertEquals(SourceRepo.load(ds, "zzacqcoon1939_races").flatMap(_.provenance), Some("archive_org"))
+    assertEquals(SourceFixtures.load(ds, "zzacqcoon1939_races").flatMap(_.provenance), Some("archive_org"))
     wipe("zzacqcoon1939_races")
 
   // ── calibre gaps ────────────────────────────────────────────────────────────────────────────
 
   test("calibre gaps lists sources with no calibre_id and non-calibre provenance"):
     wipe("zzacq_gap", "zzacq_incalibre")
-    SourceRepo.upsert(ds, source("zzacq_gap").copy(provenance = Some("unpaywall")), cfg.limits.chunkChars)
-    SourceRepo.upsert(
+    SourceFixtures.upsert(ds, source("zzacq_gap").copy(provenance = Some("unpaywall")), cfg.limits.chunkChars)
+    SourceFixtures.upsert(
       ds,
       source("zzacq_incalibre").copy(provenance = Some("calibre"), calibreId = Some("1691")),
       cfg.limits.chunkChars
@@ -715,7 +715,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     val spool = java.nio.file.Files.createTempDirectory("zz-spool-")
     val app = cfg.copy(converter = cfg.converter.copy(spoolDir = spool.toString))
     List("zzacq_stored", "zzacq_nofile", "zzacq_nohash").foreach(ck =>
-      SourceRepo.upsert(ds, source(ck).copy(provenance = Some("unpaywall")), cfg.limits.chunkChars)
+      SourceFixtures.upsert(ds, source(ck).copy(provenance = Some("unpaywall")), cfg.limits.chunkChars)
     )
     val (stored, gone) = ("a" * 64, "b" * 64)
     com.augustnagro.magnum.connect(ds):
@@ -752,7 +752,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     val h = handlers(blind)
     val r = h.ingest(IngestRequest("10.1017/zzdoesnotexist"))
     assert(r.left.exists(_.message.contains("no upstream record")), r.toString)
-    assert(SourceRepo.load(ds, "anonnd").isEmpty, "no junk source may be created")
+    assert(SourceFixtures.load(ds, "anonnd").isEmpty, "no junk source may be created")
 
     // …but an explicit citekey is a deliberate act, so that DOES create the source
     wipe("zzacq_manual")
@@ -760,5 +760,5 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       .ingest(IngestRequest("10.1017/zzdoesnotexist", citekey = Some("zzacq_manual")))
       .fold(e => fail(e.message), identity)
     assertEquals(forced.citekey, "zzacq_manual")
-    assert(SourceRepo.load(ds, "zzacq_manual").isDefined)
+    assert(SourceFixtures.load(ds, "zzacq_manual").isDefined)
     wipe("zzacq_manual")

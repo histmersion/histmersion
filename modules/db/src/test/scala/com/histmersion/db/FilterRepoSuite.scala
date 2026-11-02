@@ -3,7 +3,7 @@ package com.histmersion.db
 import com.histmersion.domain.library.findings.FindingFixtures
 import com.histmersion.domain.library.labels.LabelFixtures
 import com.histmersion.domain.library.search.SearchFixtures
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -172,7 +172,7 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
     )
 
   private def seed(d: javax.sql.DataSource): Unit =
-    (List(alpha, beta, gamma) ++ cases).foreach(SourceRepo.upsert(d, _, 4000))
+    (List(alpha, beta, gamma) ++ cases).foreach(SourceFixtures.upsert(d, _, 4000))
 
   /** Only ever look at the synthetic rows — the test DB may hold other streams' fixtures. */
   private def mine(r: SearchResult): List[Hit] = r.hits.filter(_.source.citekey.startsWith("zzf_"))

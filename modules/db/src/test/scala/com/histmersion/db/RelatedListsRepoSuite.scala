@@ -1,7 +1,7 @@
 package com.histmersion.db
 
 import com.histmersion.domain.library.search.SearchFixtures
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
@@ -29,7 +29,7 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
   private val Tag = "zz-rel-tag"
 
   private def source(ck: String, tags: List[String], status: SourceStatus, period: Period, author: String) =
-    SourceRepo.put(
+    SourceFixtures.put(
       ds,
       Source(
         citekey = ck,

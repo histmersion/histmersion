@@ -1,5 +1,6 @@
 package com.histmersion.domain.catalogue.places
 
+import com.histmersion.api.Geocode
 import com.augustnagro.magnum.DbCon
 
 /** What the places decide for the library: which places a source's findings belong to (`finding_places`), placed again
@@ -31,6 +32,30 @@ object FindingPlacement:
     * line), by citekey and finding id.
     */
   def unresolvedPlaceholdersIn()(using DbCon): List[(String, String)] = FindingPlaceRepo.unresolvedPlaceholdersIn()
+
+  /** The findings whose stored point is the one the old geocoder chose for their place name, as
+    * `lint --rule finding-geocode` reads them.
+    */
+  def legacyPointsSql: String = Geocoder.legacySql
+
+  /** The findings with a place name and no point, as `lint --rule finding-unplaced` reads them. */
+  def unplacedSql: String = Geocoder.unplacedSql
+
+  /** The moves `finding-geocode`'s repair would make: every old-geocoder point the current ranking puts more than
+    * `repairKm` away. Read-only.
+    */
+  def movesIn(s: GeocodeSettings)(using DbCon): List[Geocode.Move] = Geocoder.movesIn(s)
+
+  /** The points `finding-unplaced`'s repair would give: every unplaced finding whose name the gazetteer resolves now.
+    * Read-only.
+    */
+  def placementsIn(s: GeocodeSettings)(using DbCon): List[Geocode.Placement] = Geocoder.placementsIn(s)
+
+  /** The moves applied (compare-and-set), the touched sources' findings placed again; the findings moved. */
+  def move(ms: List[Geocode.Move], toleranceKm: Double)(using DbCon): Int = Geocoder.apply(ms, toleranceKm)
+
+  /** The points given (compare-and-set), the touched sources' findings placed again; the findings placed. */
+  def place(ps: List[Geocode.Placement], toleranceKm: Double)(using DbCon): Int = Geocoder.place(ps, toleranceKm)
 
   final private class Implementation(val toleranceKm: Double) extends FindingPlacement:
     def placeSource(citekey: String)(using DbCon): Int = FindingPlaceRepo.materialiseFor(citekey, toleranceKm)

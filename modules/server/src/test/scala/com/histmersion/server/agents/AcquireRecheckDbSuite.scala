@@ -1,6 +1,6 @@
 package com.histmersion.server.agents
 
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.automation.agents.*
 
@@ -158,7 +158,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
       (Queue.Open, Queue.Open, Queue.Open),
       "a found copy is closed by its conversion, not here"
     )
-    assertEquals(SourceRepo.load(ds, "zzrecheck_meta").flatMap(_.notes), Some("Compiled."))
+    assertEquals(SourceFixtures.load(ds, "zzrecheck_meta").flatMap(_.notes), Some("Compiled."))
     // what each check found is kept, and shown with the item
     val listing = h.ops.queueList("acquire", all = false).toOption.get
     val day = java.time.LocalDate.now(java.time.ZoneOffset.UTC)
@@ -328,9 +328,9 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
       Some("zzrecheck_kept"),
       "fetched into the metadata-only source"
     )
-    assertEquals(SourceRepo.load(ds, "zzrecheck_kept").flatMap(_.notes), Some("Compiled."), "its enrichment stays")
+    assertEquals(SourceFixtures.load(ds, "zzrecheck_kept").flatMap(_.notes), Some("Compiled."), "its enrichment stays")
     assert(
-      SourceRepo.load(ds, "zzrecheck2020_" + doi("closed").replaceAll("[^a-z0-9]", "").takeRight(6)).isEmpty,
+      SourceFixtures.load(ds, "zzrecheck2020_" + doi("closed").replaceAll("[^a-z0-9]", "").takeRight(6)).isEmpty,
       "no legal copy: no metadata-only source is created"
     )
     val why =

@@ -12,6 +12,18 @@ import javax.sql.DataSource
   * registers.
   */
 object SourceFixtures:
+  export SourceRepo.{
+    citekeyOfSha256,
+    citekeys,
+    load,
+    patch,
+    put,
+    reindexChunks,
+    resolveEdges,
+    setSha256,
+    sha256Of,
+    upsert
+  }
 
   /** The server's referrers, in its order (`Deps.sourceReferrers`). */
   val referrers: SourceReferrers = SourceReferrers(

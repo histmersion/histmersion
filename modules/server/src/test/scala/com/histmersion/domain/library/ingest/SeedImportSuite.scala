@@ -3,7 +3,7 @@ package com.histmersion.domain.library.ingest
 import com.histmersion.api.*
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.Caller
-import com.histmersion.domain.library.sources.{SourceRepo, SourceService, SourceSettings}
+import com.histmersion.domain.library.sources.{SourceFixtures, SourceService, SourceSettings}
 import com.histmersion.domain.library.sources.referrers.SourceReferrers
 import com.histmersion.db.{Migrate, TestDb}
 import com.histmersion.files.Export
@@ -75,9 +75,9 @@ class SeedImportSuite extends com.histmersion.db.DbSuite:
       s"---\ncitekey: $ck\ntitle: Round trip\nauthors: [A, B]\nyear: 2020\ntopics: [t]\ntags: [x]\n---\nThe notes.\n"
     )
     val _ = run(dir0, force = true)
-    val one = Export.note(SourceRepo.load(ds, ck).get)
+    val one = Export.note(SourceFixtures.load(ds, ck).get)
     val dir = Files.createTempDirectory("histmersion-export")
     val _ = Files.writeString(dir.resolve(s"$ck.md"), one)
     assertEquals(run(dir, force = true).imported, 1)
-    val two = Export.note(SourceRepo.load(ds, ck).get)
+    val two = Export.note(SourceFixtures.load(ds, ck).get)
     assertEquals(two, one)

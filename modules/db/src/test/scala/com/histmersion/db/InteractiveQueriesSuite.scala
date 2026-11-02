@@ -3,11 +3,9 @@ package com.histmersion.db
 import com.histmersion.domain.library.findings.FindingFixtures
 import com.histmersion.domain.library.search.FilterSql
 import com.histmersion.domain.library.search.SearchFixtures
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
-
-import com.histmersion.domain.catalogue.places.Geocoder
 
 import com.histmersion.domain.catalogue.events.*
 import com.histmersion.domain.catalogue.evidence.*
@@ -99,7 +97,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
       val _ = connect(ds)(sql"""UPDATE places SET import_source = 'wikidata',
                           properties = coalesce(properties, '{}'::jsonb) || '{"modern":true}'::jsonb
                         WHERE id = 'zzi_wd_now'""".update.run())
-      SourceRepo.upsert(
+      SourceFixtures.upsert(
         ds,
         source(
           "zzi_a",
@@ -111,12 +109,12 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
         ),
         cfg.limits.chunkChars
       )
-      SourceRepo.upsert(
+      SourceFixtures.upsert(
         ds,
         source("zzi_b", Nil, List(("by name only", None, Some("Zzialand"), Period(-1300, -1250)))),
         cfg.limits.chunkChars
       )
-      SourceRepo.upsert(
+      SourceFixtures.upsert(
         ds,
         source(
           "zzi_c",
@@ -320,7 +318,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
               AND ${SqlLiteral(PlaceFixtures.inTimeSql("p", asOf))}
             ORDER BY (lower(p.label) = lower($exact)) DESC,
                      (p.label ILIKE $pre ESCAPE '\\') DESC,
-                     ${SqlLiteral(Geocoder.tierSql)},
+                     ${SqlLiteral(PlaceFixtures.tierSql)},
                      fc.n DESC, length(p.label), p.id
             LIMIT ${limit.max(1)}""").query[PlaceHit].run()
 

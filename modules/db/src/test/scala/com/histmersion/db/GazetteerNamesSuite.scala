@@ -1,10 +1,11 @@
 package com.histmersion.db
 
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceCheckFixtures
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
-import com.histmersion.domain.catalogue.places.Geocoder
+import com.histmersion.domain.catalogue.places.GeocodeSettings
 
 import com.histmersion.api.*
 import com.histmersion.files.*
@@ -35,7 +36,7 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
     Migrate.run(d)
     d
   private lazy val settings =
-    Geocoder.Settings(cfg.places.geocodePlaceholderMin, cfg.places.geocodeRepairKm, cfg.places.pointToleranceKm)
+    GeocodeSettings(cfg.places.geocodePlaceholderMin, cfg.places.geocodeRepairKm, cfg.places.pointToleranceKm)
 
   private val DeadSea = Set("ne_lake_1159126747", "ne_lake_1159126865")
   private val Galilee = "ne_lake_1159114879"
@@ -113,7 +114,7 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private def resolve(name: String, at: Option[Period] = None) =
-    connect(ds)(Geocoder.resolve(name, KindHint.Unknown, at, cfg.places.geocodePlaceholderMin))
+    connect(ds)(PlaceFixtures.resolve(name, KindHint.Unknown, at, cfg.places.geocodePlaceholderMin))
 
   private def resolvesTo(name: String, ids: Set[String]): Geocode.Resolution =
     val r = resolve(name).getOrElse(fail(s"'$name' resolves to nothing"))
@@ -277,21 +278,21 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
         finding(4, "Kraków", None)
       )
     )
-    SourceRepo.upsert(ds, src, cfg.limits.chunkChars)
+    SourceFixtures.upsert(ds, src, cfg.limits.chunkChars)
 
-    val ps = connect(ds)(Geocoder.placements(settings)).filter(_.citekey == Ck)
+    val ps = connect(ds)(PlaceFixtures.placements(settings)).filter(_.citekey == Ck)
     assertEquals(
       ps.map(p => (p.findingId, p.region)).sorted,
       List((s"$Ck#0", "Dead Sea"), (s"$Ck#3", "northern Levant"), (s"$Ck#4", "Kraków"))
     )
     assert(ps.find(_.region == "northern Levant").exists(_.to.isApproximate))
 
-    val rep = LintRepo.run(ds, List(Lint.rule(Lint.FindingUnplaced).get), 500, 3, (_, _, _) => Nil, settings)
+    val rep = SourceCheckFixtures.run(ds, List(Lint.rule(Lint.FindingUnplaced).get), 500, 3, (_, _, _) => Nil, settings)
     val items = rep.rules.head.items.filter(_.citekey == Ck)
     assertEquals(items.size, 3, items)
     assert(items.exists(_.detail.startsWith(s"$Ck#4: 'Kraków' → Kraków [$Krakow]")), items)
 
-    assertEquals(transact(ds)(Geocoder.place(ps, settings.toleranceKm)), 3)
+    assertEquals(transact(ds)(PlaceFixtures.place(ps, settings.toleranceKm)), 3)
     val (lon0, lat0) = pointOf(0).getOrElse(fail("#0 has no point"))
     assert(lon0 > 35.2 && lon0 < 35.7 && lat0 > 30.9 && lat0 < 31.9, (lon0, lat0))
     assertEquals(pointOf(1), Some((-40.0, 10.0)), "a finding that had a point is never touched")
@@ -310,5 +311,5 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(inKrakow, 1L)
 
     // idempotent: nothing left to place, and a stale placement is not applied over a newer point
-    assertEquals(connect(ds)(Geocoder.placements(settings)).filter(_.citekey == Ck), Nil)
-    assertEquals(transact(ds)(Geocoder.place(ps, settings.toleranceKm)), 0)
+    assertEquals(connect(ds)(PlaceFixtures.placements(settings)).filter(_.citekey == Ck), Nil)
+    assertEquals(transact(ds)(PlaceFixtures.place(ps, settings.toleranceKm)), 0)

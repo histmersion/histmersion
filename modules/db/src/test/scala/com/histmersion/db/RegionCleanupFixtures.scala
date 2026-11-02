@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
@@ -96,7 +96,7 @@ trait RegionCleanupFixtures extends com.histmersion.db.DbSuite with Bounded:
 
   protected def seed(): Unit =
     val _ = PlaceFixtures.upsertPlaces(ds, places.map(p => PlaceInput(p, List(PlaceName(p.label)))))
-    SourceRepo.upsert(
+    SourceFixtures.upsert(
       ds,
       Source(
         citekey = "zzrc_src",

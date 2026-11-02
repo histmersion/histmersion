@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -41,7 +41,7 @@ class WriteRaceSuite extends com.histmersion.db.DbSuite:
   private val ck = "zzrace_src"
 
   private def seedSource(): String =
-    SourceRepo.put(
+    SourceFixtures.put(
       ds,
       Source(
         citekey = ck,
@@ -73,14 +73,14 @@ class WriteRaceSuite extends com.histmersion.db.DbSuite:
     (1 to Rounds).foreach { round =>
       val token = seedSource()
       val (a, b) = race(
-        SourceRepo.patch(
+        SourceFixtures.patch(
           ds,
           ck,
           SourcePatch(summary = Some("A"), ifUpdatedAt = Some(token)),
           cfg.limits.chunkChars,
           cfg.places.pointToleranceKm
         ),
-        SourceRepo.patch(
+        SourceFixtures.patch(
           ds,
           ck,
           SourcePatch(summary = Some("B"), ifUpdatedAt = Some(token)),
@@ -91,7 +91,7 @@ class WriteRaceSuite extends com.histmersion.db.DbSuite:
       assertEquals(List(a, b).count(_.isRight), 1, s"round $round: a=$a b=$b — a lost update slipped through")
       assertEquals(List(a, b).collectFirst { case Left(e) => e }.get.code, Some(Write.CodePrecondition))
       // …and the stored row is whichever one won, never a mixture
-      assert(Set(Some("A"), Some("B")).contains(SourceRepo.load(ds, ck).get.summary))
+      assert(Set(Some("A"), Some("B")).contains(SourceFixtures.load(ds, ck).get.summary))
     }
 
   private val slug = "zzrace_article"

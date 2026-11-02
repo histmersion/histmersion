@@ -2,7 +2,6 @@ package com.histmersion.db
 
 import com.histmersion.domain.library.citations.CitationFixtures
 import com.histmersion.domain.library.sources.SourceFixtures
-import com.histmersion.domain.library.sources.SourceRepo
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -73,7 +72,7 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
     notes = notes
   )
 
-  private def put(s: Source): Unit = SourceRepo.upsert(ds, s, cfg.limits.chunkChars)
+  private def put(s: Source): Unit = SourceFixtures.upsert(ds, s, cfg.limits.chunkChars)
 
   private def clean(): Unit =
     connect(ds):
@@ -306,11 +305,11 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
 
     // source notes and summaries, the renamed source's own included; a longer key is left alone
     assertEquals(
-      SourceRepo.load(ds, Other).flatMap(_.notes),
+      SourceFixtures.load(ds, Other).flatMap(_.notes),
       Some(s"See [[$New|Beckman]] and the short form [[$New]], not [[${Old}x]].")
     )
-    assertEquals(SourceRepo.load(ds, Other).flatMap(_.summary), Some(s"Cites [[$New#ch-2]]."))
-    assertEquals(SourceRepo.load(ds, New).flatMap(_.notes), Some(s"Self link [[$New]]."))
+    assertEquals(SourceFixtures.load(ds, Other).flatMap(_.summary), Some(s"Cites [[$New#ch-2]]."))
+    assertEquals(SourceFixtures.load(ds, New).flatMap(_.notes), Some(s"Self link [[$New]]."))
     assertEquals(counts.sources.toSet, Set(New, Other))
     // 5 in the article body (not the embed) + 1 in its summary + 3 in Other + 1 in New
     assertEquals(counts.links, 10)
@@ -335,8 +334,8 @@ class RenameRepoSuite extends com.histmersion.db.DbSuite:
       Vector(("in", Other, NeighborTarget.Source))
     )
     // a patch by the old key patches the renamed source
-    assert(SourceRepo.patch(ds, Old, SourcePatch(summary = Some("patched")), cfg.limits.chunkChars).isRight)
-    assertEquals(SourceRepo.load(ds, New).flatMap(_.summary), Some("patched"))
+    assert(SourceFixtures.patch(ds, Old, SourcePatch(summary = Some("patched")), cfg.limits.chunkChars).isRight)
+    assertEquals(SourceFixtures.load(ds, New).flatMap(_.summary), Some("patched"))
     // …but creating a source under the old key is refused rather than shadowing the alias
     val e = intercept[IllegalStateException](put(source(Old)))
     assert(e.getMessage.contains(s"renamed to '$New'"), e.getMessage)

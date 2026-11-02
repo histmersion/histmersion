@@ -13,8 +13,8 @@ import com.augustnagro.magnum.*
 import hearth.kindlings.optics.syntax.*
 import io.circe.Encoder
 
-/** Today's carried kinds of the owners that do not register their own yet (the catalogue and the media do), by owner:
-  * the lines through `BundleRepo`'s reads, the rows in through the steps of `BundleImport.Writer`.
+/** Today's carried kinds of the owners that do not register their own yet (the catalogue, the media and the library
+  * do), by owner: the lines through `BundleRepo`'s reads, the rows in through the steps of `BundleImport.Writer`.
   *
   * The ranks are the import's dependency order: tombstones first (a deleted row makes room for one created in its
   * place); a source's rows, then what hangs off it; places and periods before the events that point at them; every
@@ -23,7 +23,6 @@ import io.circe.Encoder
   */
 object CarriedKindsAdapter:
 
-  private val Library = DataOwner("library")
   private val Research = DataOwner("research")
   private val Automation = DataOwner("automation")
   private val Identity = DataOwner("util.identity")
@@ -119,46 +118,6 @@ object CarriedKindsAdapter:
   private def column(select: String, uid: java.util.UUID)(using DbCon): java.io.OutputStream => Unit =
     out => out.write(Sql.of(select, Param.S(uid.toString)).frag.query[Array[Byte]].run().head)
 
-  private val sources = records[BundleSource](
-    Library,
-    kind("source"),
-    "sources",
-    List(rows(10)(_.sources()), afterBlobs(100)(_.bodyRenames()), derived(200)(_.sourcesDerived())),
-    {
-      case _: BlobUse.Body | _: BlobUse.Original => true
-      case _                                     => false
-    },
-    Some((scope, files) => BundleRepo.sources(scope).toList.map(BundleRepo.sourceLine(_, files)))
-  ) { (scope, files) =>
-    val rs = BundleRepo.sources(scope).toList
-    val bodies = rs.flatMap(r =>
-      r.bodySha
-        .zip(r.bodyBytes)
-        .map((sha, n) =>
-          BlobOut(sha, n, column("SELECT convert_to(ocr_markdown, 'UTF8') FROM sources WHERE uid = ?::uuid", r.uid))
-        )
-    )
-    val stored = rs.flatMap(r =>
-      r.originalSha.flatMap(sha =>
-        files.find(sha).map { (file, _) =>
-          BlobOut(
-            sha,
-            file.size,
-            out =>
-              val in = file.open()
-              try { val _ = in.transferTo(out) }
-              finally in.close()
-          )
-        }
-      )
-    )
-    (rs.map(BundleRepo.sourceLine(_, files)), bodies ++ stored)
-  }(_.updatedAt, (es, ls) => es.modify(_.sources).setTo(ls))
-
-  private val findings = records[BundleFinding](Library, kind("finding"), "findings", List(rows(23)(_.findings()))) {
-    (scope, _) => (BundleRepo.findings(scope).toList, Nil)
-  }(_.updatedAt, (es, ls) => es.modify(_.findings).setTo(ls))
-
   private val articles = records[BundleArticle](
     Research,
     kind("article"),
@@ -199,24 +158,6 @@ object CarriedKindsAdapter:
       (scope, _) => (BundleRepo.queue(scope).toList, Nil)
     }(_.updatedAt, (es, ls) => es.modify(_.queue).setTo(ls))
 
-  private val edges =
-    owned[BundleEdge](Library, set("edges"), List(rows(20)(_.edges())))(BundleRepo.edges(_))(
-      _ => None,
-      (es, ls) => es.modify(_.edges).setTo(ls)
-    )
-  private val unresolvedEdges =
-    owned[BundleUnresolvedEdge](Library, set("unresolved-edges"), List(rows(21)(_.unresolvedEdges())))(
-      BundleRepo.unresolvedEdges(_)
-    )(_ => None, (es, ls) => es.modify(_.unresolvedEdges).setTo(ls))
-  private val assessments =
-    owned[BundleAssessment](Library, set("assessments"), List(rows(24)(_.assessments())))(
-      BundleRepo.assessments(_)
-    )(a => Some(a.checkedAt), (es, ls) => es.modify(_.assessments).setTo(ls))
-  private val aliases =
-    owned[BundleAlias](Library, set("aliases"), List(rows(22)(_.aliases())))(BundleRepo.aliases(_))(
-      a => Some(a.createdAt),
-      (es, ls) => es.modify(_.aliases).setTo(ls)
-    )
   private val articleAliases =
     owned[BundleArticleAlias](Research, set("article-aliases"), List(rows(44)(_.articleAliases())))(
       BundleRepo.articleAliases(_)
@@ -236,12 +177,6 @@ object CarriedKindsAdapter:
     goals,
     queue,
     goalAliases,
-    sources,
-    findings,
-    edges,
-    unresolvedEdges,
-    assessments,
-    aliases,
     articles,
     versions,
     articleAliases,

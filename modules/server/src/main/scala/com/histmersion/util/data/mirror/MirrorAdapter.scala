@@ -20,6 +20,5 @@ object MirrorAdapter:
     def note(id: String)(using notes: TransitionNotes): Either[ApiError, String] = render(notes)(id)
 
   def of(owner: DataOwner): List[MirrorExport] = owner match
-    case TablesAdapter.LibraryOwner  => List(Today(owner, SourceNotes, MirrorPlacement.SourceFiles, _.sourceNote))
     case TablesAdapter.ResearchOwner => List(Today(owner, ArticleNotes, MirrorPlacement.ArticleFiles, _.articleNote))
     case _                           => Nil

@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.CitekeyResolver
 import com.histmersion.domain.library.search.FilterSql
 import com.histmersion.domain.library.search.Search
 
@@ -170,7 +170,7 @@ object ArticleRepo:
     if written.nonEmpty then
       // an OLD citekey (V027) links the source it was renamed to, and is recorded under the new one
       // so `backlinksForSource` finds it
-      val known = SourceRepo.canonicalAll(written.filter(ArticleLinks.isCitekeyShaped))
+      val known = CitekeyResolver.stored.canonical(written.filter(ArticleLinks.isCitekeyShaped))
       val targets = written.map(t => known.getOrElse(t, t)).distinct
       val links = ArticleLinks.classify(targets, known.values.toSet.contains)
       val _ = batchUpdate(links)(l => sql"""INSERT INTO article_links (src_slug, target_kind, target)

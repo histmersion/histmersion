@@ -1,6 +1,6 @@
 package com.histmersion.db
 
-import com.histmersion.domain.library.sources.SourceRepo
+import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
 
@@ -74,7 +74,7 @@ class PlaceOverrideSuite extends com.histmersion.db.DbSuite with Bounded:
       ),
       Dataset.Seed
     )
-    SourceRepo.upsert(
+    SourceFixtures.upsert(
       ds,
       Source(
         citekey = "zzpo_src",
