@@ -16,6 +16,7 @@ import com.histmersion.server.{Deps, Handlers}
 import sttp.ai.core.agent.*
 import sttp.ai.core.agent.testing.{RecordedRequest, ScriptedAgent}
 import sttp.client4.testing.SyncBackendStub
+import io.circe.syntax.*
 
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 import scala.jdk.CollectionConverters.*
@@ -1377,6 +1378,23 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       )
     )
     assertEquals(cmp.overlaps, List(RunCompare.MajorOverlap(r1.id, r2.id, 2, 1, 1, List("R1 ↔ R1"))))
+    // the comparison in the record: the runs, each step's models and attempts, the review's outputs and the shared
+    // majors (a step's seconds are the wall clock's and stay out)
+    note(
+      "the runs compared",
+      cmp.runs.map(r => (r.status, r.dryRun, r.model, r.modelFor, r.attempts, r.failures).toString).mkString("\n")
+    )
+    note(
+      "the steps compared",
+      cmp.steps
+        .map(row => s"${row.name}: " + row.runs.map(_.map(s => (s.models, s.attempts, s.failures))).mkString(" | "))
+        .mkString("\n")
+    )
+    note(
+      "the outputs compared",
+      (cmp.enrich.map(_.asJson.noSpaces) ++ cmp.review.map(_.asJson.noSpaces)).mkString("\n")
+    )
+    note("the notes", (cmp.overlaps.map(_.asJson.noSpaces) ++ cmp.notes).mkString("\n"))
     val md = AgentsMarkdown.compare(cmp)
     assert(
       md.contains("| verdict (last round) | MAJOR | MAJOR |") && md.contains("1 shared of 2 and 1 (R1 ↔ R1)") &&

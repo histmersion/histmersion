@@ -928,6 +928,25 @@ jobs {"acquire_item":null,"budget_tokens":1200000,"budget_usd":2.000000,"citekey
 jobs {"acquire_item":null,"budget_tokens":1200000,"budget_usd":2.000000,"citekey":null,"created_at":"TS","detail":null,"dry_run":true,"error":null,"goal_slug":null,"heartbeat_at":"TS","id":"UUID","kind":"agent","manager_id":null,"manager_item":null,"model":null,"origin":"person","params":{},"parent_job":null,"pipeline":"review-article","pipeline_version":6,"progress":"review-article [[zzagent_review]]: round 1 → MAJOR (R:1 C:0 S:1 M:0) (agent run RUN); ledger 0 fixed, 2 open","result":null,"resume_at":null,"sha256":null,"status":"done","target_id":"zzagent_review","target_kind":"article","updated_at":"TS","warnings":["<a3ed8dab7188:189>","review-article [[zzagent_review]]: 2 open MAJORs — R1 (Intro): tin is not defined; S1 (Disagreements): the date has no support in the record (agent run RUN)"]}
 sources {"added_date":"DAY","authors":["Ann Tinley"],"calibre_id":null,"cited_by_count":null,"citekey":"zzagent2019_tin","doi":null,"influential_citations":null,"license":null,"notes":null,"ocr_markdown":"The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE.","origin":"UUID","period":null,"regions":[],"sha256":null,"source":null,"status":"unassessed","summary":null,"tags":[],"title":"Bronze Age tin","topics":[],"tsv":"'age':2A 'bronz':1A 'tin':3A","uid":"UUID","updated_at":"TS","venue":null,"year":2019}
 sources {"added_date":"DAY","authors":[],"calibre_id":null,"cited_by_count":null,"citekey":"zzagent2024_tin","doi":null,"influential_citations":null,"license":null,"notes":null,"ocr_markdown":"We show that the tin of the Uluburun cargo came from Central Asia, not Anatolia.","origin":"UUID","period":null,"regions":[],"sha256":null,"source":null,"status":"unassessed","summary":null,"tags":[],"title":"Tin isotopes","topics":[],"tsv":"'isotop':2A 'tin':1A","uid":"UUID","updated_at":"TS","venue":null,"year":2024}
+## the runs compared
+(done,true,None,List(),10,0)
+(done,true,None,List(ModelOverride(reviewer,local:haiku-sim)),10,0)
+## the steps compared
+ledger: Some((List(),1,0)) | Some((List(),1,0))
+snapshot-1: Some((List(),1,0)) | Some((List(),1,0))
+mechanical-1: Some((List(),1,0)) | Some((List(),1,0))
+rules-1: Some((List(local:scripted),1,0)) | Some((List(local:haiku-sim),1,0))
+cold-reader-1: Some((List(local:scripted),1,0)) | Some((List(local:scripted),1,0))
+skeptic-1: Some((List(local:scripted),1,0)) | Some((List(local:scripted),1,0))
+ledger-1: Some((List(),1,0)) | Some((List(),1,0))
+merge-1: Some((List(),1,0)) | Some((List(),1,0))
+proposals-1: Some((List(),1,0)) | Some((List(),1,0))
+record: Some((List(),1,0)) | Some((List(),1,0))
+## the outputs compared
+{"verdict":"MAJOR","rounds":1,"reviewers":[{"reviewer":"rules","verdict":"MAJOR","majors":1,"minors":0},{"reviewer":"cold-reader","verdict":"PASS","majors":0,"minors":0},{"reviewer":"skeptic","verdict":"MAJOR","majors":1,"minors":0},{"reviewer":"mechanical","verdict":null,"majors":0,"minors":0}],"kinds":[{"kind":"date","count":2}],"majors":["R1 major (Intro): tin is not defined","S1 major (Disagreements): the date has no support in the record"]}
+{"verdict":"MAJOR","rounds":1,"reviewers":[{"reviewer":"rules","verdict":"MAJOR","majors":1,"minors":0},{"reviewer":"cold-reader","verdict":"PASS","majors":0,"minors":0},{"reviewer":"skeptic","verdict":"MINOR","majors":0,"minors":1},{"reviewer":"mechanical","verdict":null,"majors":0,"minors":0}],"kinds":[{"kind":"date","count":2}],"majors":["R1 major (Intro): tin is not defined at all"]}
+## the notes
+{"a":"UUID","b":"UUID","aMajors":2,"bMajors":1,"shared":1,"pairs":["R1 ↔ R1"]}
 
 === #1840: a rules answer that reports spot-checks with no lookup is sent back; the retry that reads the record stands
 agent_messages {"attempt":1,"content":"<2717eeacbd15:510>","created_at":"TS","job_id":"UUID","latency_ms":null,"n":1,"role":"user","seq":4,"tool_input":null,"tool_name":null,"tool_result":null}

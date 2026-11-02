@@ -842,6 +842,59 @@ class ResearchOracleSuite extends DbSuite:
     )
     log.result()
 
+  /** Both sides after the shared history, for the links' merge: lib renames a cited source and adds a source and an
+    * article citing it; home adds another work under the same citekey and an article citing it and the old name.
+    */
+  private def editLinks(lib: String, home: String): String =
+    val log = StringBuilder()
+    def step(name: String, answer: String): Unit = log ++= s"== $name\n$answer\n"
+    step(
+      "lib: rename delta (cited by walls' reasons)",
+      post(s"$lib/api/sources/zrdelta2010_survey/rename", """{"newCitekey":"zrdelta2011_survey"}""")
+    )
+    step(
+      "lib: put zeta",
+      send(
+        "PUT",
+        s"$lib/api/sources/zrzeta2020_tin",
+        source("Tin of Zrland", 2020, List("Zrlib, Lu"), List("zr-tin"), List("trade"))
+      )
+    )
+    step(
+      "lib: an article citing zeta and the renamed delta",
+      send(
+        "PUT",
+        s"$lib/api/articles/zr_tin",
+        article(
+          "Tin",
+          "concept",
+          "## Overview\n\nTin came by sea [[zrzeta2020_tin]], as the survey shows [[zrdelta2011_survey]].\n\n" +
+            "## Elsewhere\n\nSee [[zr_walls]] and [[zr_kings]].\n"
+        )
+      )
+    )
+    step(
+      "home: put another zeta (another work, the same citekey)",
+      send(
+        "PUT",
+        s"$home/api/sources/zrzeta2020_tin",
+        source("Copper of Zrland", 2020, List("Zrhome, Mo"), List("zr-copper"), List("mining"))
+      )
+    )
+    step(
+      "home: an article citing its zeta and delta's old name",
+      send(
+        "PUT",
+        s"$home/api/articles/zr_copper",
+        article(
+          "Copper",
+          "concept",
+          "## Overview\n\nCopper was mined inland [[zrzeta2020_tin]] [[zrdelta2010_survey]].\n"
+        )
+      )
+    )
+    log.result()
+
   private def bundleText(bundle: Array[Byte], names: Map[String, String]): String =
     val in = java.util.zip.GZIPInputStream(java.io.ByteArrayInputStream(bundle))
     val out = StringBuilder()
@@ -1139,7 +1192,9 @@ class ResearchOracleSuite extends DbSuite:
           s"== lint fix $r\n${post(s"$url/api/lint/fix?rule=${enc(r)}")}\n== lint $r after\n${get(s"$url/api/lint?rule=${enc(r)}")}\n"
         )
         .mkString
-      crafted + each + all + fixes
+      val fixAll =
+        s"== lint fix (every safe rule)\n${post(s"$url/api/lint/fix")}\n== lint after\n${get(s"$url/api/lint")}\n"
+      crafted + each + all + fixes + fixAll
     }
     val n = names(ds)
     compare("lint.txt", answers(text, n) + s"# the rows\n${rows(ds, n)}")
@@ -1184,4 +1239,37 @@ class ResearchOracleSuite extends DbSuite:
         s"# the part since imported into inc\n${xjson(incremental, n)}\n${researchRows(inc)}" +
         merged.map((k, v) => s"# home merges lib: $k\n${lines(v)}").mkString +
         s"# home's rows\n${researchRows(home)}# lib's rows\n${researchRows(lib)}"
+    )
+
+  test("article links followed through a merge: a cited source renamed on one side, a citekey taken on both"):
+    val lib = scratch("llib")
+    val home = scratch("lhome")
+    val all = List("lib" -> lib, "home" -> home)
+    val crafted = withServer("llib")(craftExchange)
+    val first = withServer("llib")(url => bytes(s"$url/api/bundle"))
+    val homeFirst = withServer("lhome")(url => ok(postBytes(s"$url/api/bundle/import", first)))
+    val edited = withServer("llib")(l => withServer("lhome")(h => editLinks(l, h)))
+    val whole = withServer("llib")(url => bytes(s"$url/api/bundle"))
+    val merged = withServer("lhome")(url => mergeInto(url, whole))
+    val notes = withServer("lhome") { url =>
+      val slugs = connect(home)(sql"SELECT slug FROM articles ORDER BY slug".query[String].run().toList)
+      slugs.map(s => s"== the mirror's note of $s\n${get(s"$url/api/articles/$s/export")}\n").mkString
+    }
+    def shaOf(b: Array[Byte]) = com.histmersion.util.data.exchange.BundleFormat.sha256Hex(b)
+    val n = issueNames(merged.map(_._2)) ++ xnames(all) ++
+      Map(shaOf(whole) -> "BUNDLE-WHOLE", shaOf(first) -> "BUNDLE-FIRST")
+    def lines(text: String): String =
+      text.linesIterator
+        .map { l =>
+          "^(\\d{3}) (.*)$".r
+            .findFirstMatchIn(l)
+            .fold(xjson(l, n))(m => s"${m.group(1)} ${xjson(m.group(2), n)}")
+        }
+        .mkString("", "\n", "\n")
+    compare(
+      "links.txt",
+      s"# lib, crafted\n${lines(crafted)}# home imported lib\n${xjson(homeFirst, n)}\n" +
+        s"# both went on\n${lines(edited)}# lib, whole\n${bundleText(whole, n)}" +
+        merged.map((k, v) => s"# home merges lib: $k\n${lines(v)}").mkString +
+        s"# home's notes\n${normalise(notes, n)}# home's rows\n${rows(home, n, xjson)}# lib's rows\n${rows(lib, n, xjson)}"
     )
