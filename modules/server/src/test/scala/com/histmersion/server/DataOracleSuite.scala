@@ -74,9 +74,24 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       basemap = base.basemap.copy(dir = tmp.resolve(s"$name-basemap").toString)
     )
 
+  /** The servers' environment: a home and a cache directory of the suite's own (the cache holding a gazetteer folder),
+    * so nothing of the machine's own directories reaches the record.
+    */
+  private val system: SystemContext =
+    val home = tmp.resolve("home")
+    val cache = tmp.resolve("cache")
+    Files.createDirectories(home)
+    val _ = Files.writeString(
+      Files.createDirectories(cache.resolve("histmersion").resolve("gazetteer")).resolve("extract.ndjson"),
+      "{}\n",
+      UTF_8
+    )
+    val env = com.histmersion.config.Environment(Map("HOME" -> home.toString, "XDG_CACHE_HOME" -> cache.toString))
+    SystemContext(java.time.Clock.systemUTC(), env, UserPaths(env, ""))
+
   private def withServer[A](name: String)(body: String => A): A =
     supervised {
-      val b = Composition.server(cfgFor(name), "127.0.0.1", 0, OfflineConverter()).start()
+      val b = Composition.server(cfgFor(name), "127.0.0.1", 0, OfflineConverter(), system = system).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }

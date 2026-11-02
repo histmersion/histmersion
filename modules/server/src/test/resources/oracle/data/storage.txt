@@ -110,7 +110,7 @@
         "key" : "gazetteer",
         "label" : "gazetteer extracts (cache)",
         "partial" : false,
-        "path" : "HOME/.cache/histmersion/gazetteer",
+        "path" : "TMP/cache/histmersion/gazetteer",
         "shrink" : "delete the cached extracts — histmersion places load fetches them again",
         "volume" : "/System/Volumes/Data (/dev/disk3s5)",
         "within" : null
@@ -232,21 +232,6 @@
         "partial" : false,
         "path" : "TMP/work-data/logs",
         "shrink" : "delete old log files (the server reopens them)",
-        "volume" : "/System/Volumes/Data (/dev/disk3s5)",
-        "within" : null
-      },
-      {
-        "bytes" : "N",
-        "detail" : null,
-        "exists" : true,
-        "files" : "N",
-        "group" : "caches",
-        "host" : "server",
-        "key" : "cache:basemap",
-        "label" : "cache: basemap",
-        "partial" : false,
-        "path" : "HOME/.cache/histmersion/basemap",
-        "shrink" : "a cache: safe to delete, it is fetched or rebuilt again",
         "volume" : "/System/Volumes/Data (/dev/disk3s5)",
         "within" : null
       }

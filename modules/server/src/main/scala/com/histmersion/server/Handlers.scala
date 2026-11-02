@@ -240,7 +240,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   private val storage = StorageCache(
     prepare = () => {
       val c = cfg
-      val env = (k: String) => sys.env.get(k)
+      val env = deps.environment.lookup
       val measured =
         StorageLocations.measured(c, env, System.getProperty("os.name", ""), Supervisor.currentExecutable)
       val run = deps.pins.carry(

@@ -46,7 +46,8 @@ object Composition:
       configFile: ConfigFileInfo = ConfigFileInfo(),
       plugins: Generation = ServerPlugins.offline,
       source: Option[(LoadedConfig, ConfigSource)] = None,
-      core: CoreBudget = CoreBudget()
+      core: CoreBudget = CoreBudget(),
+      system: SystemContext = SystemContext.isolated
   )(using Ox): NettySyncServer =
     build(
       hotConfig(cfg, configFile, source.map(_._1)),
@@ -57,7 +58,8 @@ object Composition:
       autoInit,
       onHandlers,
       plugins,
-      core
+      core,
+      system = system
     )
 
   private[server] def hotConfig(cfg: AppConfig, configFile: ConfigFileInfo, loaded: Option[LoadedConfig]): HotConfig =
