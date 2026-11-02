@@ -1,5 +1,15 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.library.workflows.{
+  AcquisitionSweepPipeline,
+  AcquisitionWork,
+  CurrencyCheckPipeline,
+  EnrichManagerKind,
+  EnrichSourcePipeline,
+  SourceProposals,
+  WatchManagerKind
+}
+
 import com.histmersion.domain.automation.agents.{AgentRoster, AgentsHandlers}
 import com.histmersion.domain.automation.goals.PlanGoalPipeline
 import com.histmersion.domain.automation.managers.HintEffectPipeline
@@ -18,7 +28,7 @@ object TransitionWorkflows:
     def cfg = deps.cfg.agents
     def lib = deps.cfg.libraryAgents
     val ds = deps.ds
-    val work = AcquisitionWork(deps, h, a)
+    val work = AcquisitionWork(() => deps.cfg, deps.ds, deps.transactor, h.librarySite, a)
     val upstream = () => work.acquisition
     val proposals = SourceProposals(
       a.approvals,
@@ -27,12 +37,12 @@ object TransitionWorkflows:
       p => h.library.sources.patch(p.citekey, p.patch).left.map(_.message).map(_ => p.describe)
     )
     val pipelines: List[PipelineDef] = List(
-      EnrichSourcePipeline(h, ds, cfg, lib, upstream, proposals),
+      EnrichSourcePipeline(h.librarySite, cfg, lib, upstream, proposals),
       ReviewArticlePipeline(h, ds, cfg, lib, proposals, a.definitions),
       PlanGoalPipeline(a.host, deps.queues, deps.workLists, a.goals, ds, cfg),
       CompileArticlePipeline(h, ds, cfg, lib, (req, parent) => a.startRunAs(req, Origin.Run, Some(parent))),
-      CurrencyCheckPipeline(h, ds, cfg, upstream, proposals),
-      AcquisitionSweepPipeline(h, ds, cfg, upstream, work.oaBacklog),
+      CurrencyCheckPipeline(h.librarySite, a.goals, cfg, upstream, proposals),
+      AcquisitionSweepPipeline(h.librarySite, a, cfg, upstream, work.oaBacklog),
       InferFilterPipeline(h, ds, cfg),
       ProposeArticlesPipeline(h, ds, cfg, lib),
       HintEffectPipeline(deps.workLists, a.approvalStore, ds, cfg)
@@ -40,7 +50,12 @@ object TransitionWorkflows:
     Contributions(
       pipelines.map(PipelineWorkflow.of(_, a.definitions)),
       TransitionTools(h, upstream, cfg.tools).contributions,
-      List(ReviewManagerKind(h), EnrichManagerKind(h, a), SeedManagerKind(h, lib), WatchManagerKind(h, work, lib)),
+      List(
+        ReviewManagerKind(h),
+        EnrichManagerKind(h.librarySite, a),
+        SeedManagerKind(h, lib),
+        WatchManagerKind(h.librarySite, work, lib)
+      ),
       List(ArticleObjectives(h))
     )
 

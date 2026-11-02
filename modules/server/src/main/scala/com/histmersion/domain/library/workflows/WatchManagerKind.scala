@@ -1,4 +1,4 @@
-package com.histmersion.server.agents
+package com.histmersion.domain.library.workflows
 
 import com.histmersion.domain.automation.managers.{ManagerContext, ManagerDefaultsViews, ManagerKindDefinition}
 
@@ -9,7 +9,6 @@ import com.histmersion.domain.{IngestBacklog, ManagerPolicy, WatchManagerDefault
 import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts}
 import com.histmersion.config.{AgentsConfig, LibraryAgentsConfig}
 import com.histmersion.domain.ManagerDefaults
-import com.histmersion.server.Handlers
 
 import hearth.kindlings.optics.syntax.*
 
@@ -21,7 +20,7 @@ import scala.collection.mutable.Builder
   * the library contributes it. Its housework at every tick: the goals with no source gather candidates (no model), the
   * ingest backlog drains, and the acquisition list's legal re-check runs.
   */
-final class WatchManagerKind(h: Handlers, val work: AcquisitionWork, lib: => LibraryAgentsConfig)
+final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: => LibraryAgentsConfig)
     extends ManagerKindDefinition:
   val kind: Kind = Kind.Watch
 
@@ -35,7 +34,7 @@ final class WatchManagerKind(h: Handlers, val work: AcquisitionWork, lib: => Lib
   def pipelineOf(itemKind: String): Pipeline = itemKind match
     case AcquisitionSweep => Pipeline.AcquisitionSweep
     case CurrencyCheck    => Pipeline.CurrencyCheck
-    case _                => Pipeline.ReviewArticle
+    case _                => Pipeline.Fallback
 
   /** A firing re-opens each of the goal's sweeps that has settled (one still open is left to finish). */
   def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[String] =
@@ -108,7 +107,8 @@ final class WatchManagerKind(h: Handlers, val work: AcquisitionWork, lib: => Lib
           .toRight(ApiError(s"'$raw' is not a DOI (an ingest-backlog item is one legal open-access work)"))
       case AcquisitionSweep | CurrencyCheck =>
         val g = Option(raw.trim).filter(_.nonEmpty).orElse(m.goal).getOrElse("")
-        h.getGoal(g)
+        work.agents.host
+          .goal(g)
           .map(_.slug)
           .flatMap(s =>
             Either.cond(m.goal.forall(_ == s), s, ApiError(s"manager ${m.id} watches ${m.goal.getOrElse("?")}, not $s"))
@@ -126,7 +126,7 @@ final class WatchManagerKind(h: Handlers, val work: AcquisitionWork, lib: => Lib
       .modify(_.backlogDays)
       .setTo(backlog.totalDays)
       .modify(_.upstreams)
-      .setTo(h.upstreamQuotas(now))
+      .setTo(site.upstreamQuotas(now))
       .modify(_.acquireRecheck)
       .setTo(Some(work.acquireRecheck.status(now)))
 
@@ -145,7 +145,7 @@ final class WatchManagerKind(h: Handlers, val work: AcquisitionWork, lib: => Lib
   ): Option[String] =
     item.kind match
       case AcquisitionSweep | CurrencyCheck =>
-        h.getGoal(item.target) match
+        work.agents.host.goal(item.target) match
           case Left(_)  => c.settleNow(m, item, ItemStatus.Cancelled, "the goal no longer exists")
           case Right(g) =>
             // the deterministic search first (#3761, no model): no new candidate, no agent run — the schedule

@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.domain.library.workflows.*
+
 import com.histmersion.domain.automation.agents.Toolbox
 
 import com.histmersion.config.AgentToolsConfig

@@ -1,4 +1,4 @@
-package com.histmersion.server.agents
+package com.histmersion.domain.library.workflows
 
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.workflows.PipelineDef
@@ -8,11 +8,9 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Agents.Pipeline
 import com.histmersion.domain.Scheduling.CurrencyAction
-import com.histmersion.server.Handlers
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
 
-import javax.sql.DataSource
 import com.histmersion.values.EdgeKind
 import com.histmersion.api.VocabularyCodecs.given
 
@@ -27,8 +25,8 @@ import com.histmersion.api.VocabularyCodecs.given
   * Steps: load · assess · followups · close.
   */
 final class CurrencyCheckPipeline(
-    protected val h: Handlers,
-    protected val ds: DataSource,
+    protected val site: LibrarySite,
+    protected val goals: com.histmersion.domain.automation.goals.GoalService,
     cfg: => AgentsConfig,
     upstream: () => AgentUpstream,
     approvals: SourceProposals
@@ -57,7 +55,7 @@ final class CurrencyCheckPipeline(
 
   private def load(goal: String): List[Target] =
     goalSources(goal, cfg.scheduler.currencySources)
-      .flatMap(ck => h.library.sources.get(ck, body = false).toOption)
+      .flatMap(ck => site.sources.get(ck, body = false).toOption)
       .map(s => Target(s.source.citekey, s.source.doi.filter(_.trim.nonEmpty)))
 
   private def assess(ctx: RunCtx, ts: List[Target]): Assessed =
@@ -80,7 +78,7 @@ final class CurrencyCheckPipeline(
           val acts = r.followups.map(Scheduling.currencyAction(t.citekey, _))
           val proposed = acts.collect { case CurrencyAction.Propose(p) => p }.count { p =>
             val known = ctx.approvalStore.proposedBefore(p.kind, p.citekey, p.status, p.edgeKind, p.target) ||
-              h.library.citations
+              site.citations
                 .neighbors(p.citekey, p.edgeKind.map(EdgeKind.wireOf).toList)
                 .exists(n => n.direction == "out" && p.target.contains(n.citekey))
             !known && (approvals.propose(ctx, p) match

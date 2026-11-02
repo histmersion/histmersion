@@ -85,6 +85,44 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     assertEquals(m(s).list().map(_.id), List("review", "enrich"), "the oldest first")
   }
 
+  stest("the ingest backlog: an active watcher's pending ones by urgency, every open one, one by its DOI; retried") {
+    s =>
+      assert(m(s).create("watch:zz-a", Kind.Watch, None, State.Active, ManagerConfig()))
+      assert(m(s).create("watch:zz-b", Kind.Watch, None, State.Paused, ManagerConfig()))
+      val (a1, _) = m(s).upsert("watch:zz-a", OaIngest, "10.5555/zz.1", ItemOrigin.Selection, 0, reopen = false)
+      val (a2, _) = m(s).upsert("watch:zz-a", OaIngest, "10.5555/zz.2", ItemOrigin.Selection, 3, reopen = false)
+      val (b1, _) = m(s).upsert("watch:zz-b", OaIngest, "10.5555/zz.1", ItemOrigin.Selection, 0, reopen = false)
+      val (other, _) = m(s).upsert("watch:zz-a", AcquisitionSweep, "zz-a", ItemOrigin.Selection, 9, reopen = false)
+      assertEquals(m(s).backlogPending().map(_.id), List(a2, a1), "an active watcher's, the most urgent first")
+      assertEquals(m(s).backlogOpen().map(_.id), List(a1, a2, b1), "every watcher's open ones, the oldest first")
+      assertEquals(m(s).backlogOpenFor("10.5555/zz.1").map(_.id), Some(a1))
+      assertEquals(m(s).backlogOpenFor("10.5555/zz.9"), None)
+      assert(m(s).backlogRetry(a1, 2, t, "again later"))
+      assertEquals(
+        m(s).item(a1).map(i => (i.failures, i.attempts, i.notBefore, i.outcome)),
+        Some((2, 1, Some("2026-11-03T06:00:00Z"), Some("again later")))
+      )
+      assert(m(s).settle(a2, ItemStatus.Done, "ingested", List(ItemStatus.Pending)))
+      assert(!m(s).backlogRetry(a2, 1, t, "x"), "not pending")
+      assertEquals(m(s).backlogOpen().map(_.id), List(a1, b1))
+      assert(m(s).setItemState(b1, ItemState(before = Some(4)), List(ItemStatus.Pending)))
+      assert(!m(s).setItemState(a2, ItemState(), List(ItemStatus.Pending)), "not in the statuses named")
+      assertEquals(m(s).item(b1).map(_.state.before), Some(Some(4)))
+      assertEquals(m(s).item(other).map(_.kind), Some(AcquisitionSweep))
+      assertEquals(m(s).sweepAcquireItems(), Nil, "no sweep queued an acquisition item")
+  }
+
+  stest("events counted by manager since a moment") { s =>
+    assert(m(s).create("watch:zz-a", Kind.Watch, None, State.Active, ManagerConfig()))
+    assert(m(s).create("watch:zz-b", Kind.Watch, None, State.Active, ManagerConfig()))
+    m(s).event("watch:zz-a", None, None, Feed.Ingested, "one")
+    m(s).event("watch:zz-a", None, None, Feed.Ingested, "two")
+    m(s).event("watch:zz-b", None, None, Feed.Ingested, "three")
+    m(s).event("watch:zz-b", None, None, Feed.Evaluated, "not counted")
+    assertEquals(m(s).countEventsBy(Feed.Ingested, Instant.EPOCH), Map("watch:zz-a" -> 2, "watch:zz-b" -> 1))
+    assertEquals(m(s).countEventsBy(Feed.Ingested, Instant.parse("2999-01-01T00:00:00Z")), Map.empty)
+  }
+
   stest("the focus holds pending items only, and releases only its own holds") { s =>
     assert(m(s).create("watch:zz", Kind.Watch, None, State.Active, ManagerConfig()))
     val ids = (1 to 3).toList.map(i =>

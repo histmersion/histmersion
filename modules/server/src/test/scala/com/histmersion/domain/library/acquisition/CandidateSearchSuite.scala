@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.acquisition
 
+import com.histmersion.domain.library.workflows.*
+
 import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.augustnagro.magnum.transact
@@ -9,7 +11,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.GoalPlans.LinkKind
 import com.histmersion.db.{GoalLinkRepo, GoalRepo, Migrate, QueueRows}
-import com.histmersion.server.agents.WatchManagerKind
+import com.histmersion.domain.library.workflows.WatchManagerKind
 
 import java.time.LocalDate
 import java.util.concurrent.ConcurrentLinkedQueue

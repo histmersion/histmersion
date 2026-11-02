@@ -1,4 +1,4 @@
-package com.histmersion.server.agents
+package com.histmersion.domain.library.workflows
 
 import com.histmersion.api.Agents.ApprovalState
 import com.histmersion.api.ListFilters

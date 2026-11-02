@@ -1,6 +1,4 @@
-package com.histmersion.server.agents
-
-import com.augustnagro.magnum.connect
+package com.histmersion.domain.library.workflows
 
 import com.histmersion.domain.automation.agents.AgentsHandlers
 
@@ -14,9 +12,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.AcquireChecks.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.ManagerRepo
 import com.histmersion.domain.library.acquisition.{AcquireCheckRow, AcquireCheckService}
-import com.histmersion.util.jobs.JobRepo
 import com.histmersion.domain.AcquireRecheck.{Action, Candidate, Held, JobPlan, Outcome, Settings, Shared, Tally}
 
 import java.time.Instant
@@ -48,7 +44,7 @@ final class AcquireRecheckService(
     ds: DataSource,
     checks: AcquireCheckService,
     rcfg: => RecheckConfig,
-    h: com.histmersion.server.Handlers,
+    site: LibrarySite,
     upstream: () => AgentUpstream,
     agents: AgentsHandlers
 ):
@@ -86,7 +82,7 @@ final class AcquireRecheckService(
   final private case class Facts(item: Queue.QueueItem, action: Action, last: Option[AcquireCheckRow])
 
   private def facts(only: Option[Int]): List[Facts] =
-    val items = h.queues.list(Queue.Kind.Acquire, QueueScope.Open).toList.filter(i => only.forall(_ == i.id))
+    val items = site.queues.list(Queue.Kind.Acquire, QueueScope.Open).toList.filter(i => only.forall(_ == i.id))
     val dois = items.map(i => i.id -> orderedDois(i.text)).toMap
     val held = checks.heldByDoi(dois.values.flatMap(_.headOption).toList)
     val last = checks.of(items.map(_.id))
@@ -111,7 +107,7 @@ final class AcquireRecheckService(
         Shared(
           left,
           agents.autopilot.ingestCap,
-          connect(ds)(ManagerRepo.backlogCounts()).values.map(_._1).sum,
+          agents.managerStore.backlogCounts().values.map(_._1).sum,
           fetchedToday
         )
       )
@@ -165,7 +161,7 @@ final class AcquireRecheckService(
     */
   def run(in: RecheckRequest, now: Instant = Instant.now()): Either[ApiError, RecheckResult] =
     in.id.filter(id =>
-      !h.queues.get(QueueItemId(id)).exists(i => i.list == Queue.Kind.Acquire.label && i.status == Queue.Open)
+      !site.queues.get(QueueItemId(id)).exists(i => i.list == Queue.Kind.Acquire.label && i.status == Queue.Open)
     ) match
       case Some(id)                       => Left(ApiError(s"no open acquisition item #$id", Some(Write.CodeNotFound)))
       case None if in.limit.exists(_ < 0) => Left(ApiError("--limit is 0 or more", Some(Write.CodeInvalid)))
@@ -191,7 +187,7 @@ final class AcquireRecheckService(
             )
           )
         else if in.dryRun || in.id.isDefined then pass(in, now).toRight(passBusy)
-        else h.maintenance.guard("queue/acquire/recheck")(byHand(in, now))
+        else site.maintenance.guard("queue/acquire/recheck")(byHand(in, now))
 
   private def busy: ApiError =
     BackgroundJob.busy("an acquisition list re-check job", jobSlot.current, Some(AgentsApi.CodeConflict))
@@ -244,10 +240,7 @@ final class AcquireRecheckService(
 
   /** The newest re-check job. */
   private def latestJob(): Option[JobInfo] =
-    JobRepo
-      .page(ds, JobRepo.JobQuery(kinds = List(RecheckJob.JobKind)), 1, None, None)
-      .toOption
-      .flatMap(_._1.headOption)
+    site.jobs.newest(RecheckJob.JobKind)
 
   private def planOf(d: RecheckJob): Option[JobPlan] =
     scala.util.Try(Instant.parse(d.since)).toOption.map(JobPlan(d.all, d.upTo, _))
@@ -319,12 +312,12 @@ final class AcquireRecheckService(
         @annotation.tailrec
         def loop(left: List[Facts], t: Tally, rows: List[RecheckRow]): (Tally, List[RecheckRow], Option[String]) =
           left match
-            case Nil                        => (t, rows, None)
-            case _ if agents.drain.draining => (t, rows, Some(AcquireRecheck.StoppedDraining))
-            case _ if h.maintenance.active  => (t, rows, Some("a restore started; stopped"))
-            case f :: rest                  =>
+            case Nil                          => (t, rows, None)
+            case _ if agents.drain.draining   => (t, rows, Some(AcquireRecheck.StoppedDraining))
+            case _ if site.maintenance.active => (t, rows, Some("a restore started; stopped"))
+            case f :: rest                    =>
               if Thread.interrupted() then throw InterruptedException()
-              if !h.queues.get(QueueItemId(f.item.id)).exists(_.status == Queue.Open) then
+              if !site.queues.get(QueueItemId(f.item.id)).exists(_.status == Queue.Open) then
                 loop(rest, t.modify(_.total).using(_ - 1), rows)
               else
                 val tried = attempt(f, gen, Instant.now())
@@ -343,7 +336,7 @@ final class AcquireRecheckService(
           rows = closed ++ rows.reverse.filter(_.action == Fetched)
         )
         if r.closed + r.fetched + r.noCopy + r.failed > 0 || stop.isDefined then
-          val _ = h.ops.queueAdd(
+          val _ = site.workLists.add(
             "log",
             QueueAdd(
               (s"${summary(r)} (by $by, job $jobId" +
@@ -355,7 +348,7 @@ final class AcquireRecheckService(
     finally passing.unlock()
 
   /** One pass at once (None: another is running). */
-  private[agents] def pass(in: RecheckRequest, now: Instant): Option[RecheckResult] =
+  private[histmersion] def pass(in: RecheckRequest, now: Instant): Option[RecheckResult] =
     if !passing.tryLock() then None
     else
       try Some(passNow(in, now))
@@ -419,7 +412,7 @@ final class AcquireRecheckService(
       )
       if r.closed + r.fetched + r.noCopy + r.failed > 0 then
         val by = in.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")
-        val _ = h.ops.queueAdd("log", QueueAdd(s"${summary(r)} (by $by)".take(1000)))
+        val _ = site.workLists.add("log", QueueAdd(s"${summary(r)} (by $by)".take(1000)))
       r
 
   /** The item ticked off as fulfilled by `citekey` (the one write every import makes), and its check. */
@@ -430,7 +423,7 @@ final class AcquireRecheckService(
       now: Instant,
       job: Option[String] = None
   ): Option[RecheckRow] =
-    h.ops.queuePatch(f.item.id, Queue.fulfil(f.item, citekey, job)) match
+    site.workLists.patch(f.item.id, Queue.fulfil(f.item, citekey, job)) match
       case Left(e) =>
         scribe.warn(s"acquire re-check: item #${f.item.id} could not be closed: ${e.message}")
         None

@@ -121,7 +121,7 @@ object Composition:
     // re-enqueued; no pool at all unless agents.enabled
     com.histmersion.server.agents.TransitionWorkflows
       .work(h.agents)
-      .attach(com.histmersion.server.agents.AgentUpstream.of(acq.controllers))
+      .attach(com.histmersion.domain.library.workflows.AgentUpstream.of(acq.controllers))
     val collections = collectionsControllers(sg, deps, h, acq.controllers)
     val mcp = McpTools(h, acq.controllers, collections)
     h.agents.attachTools(mcp.toolNames) // what the generated definitions' placeholders may name

@@ -1,4 +1,4 @@
-package com.histmersion.server.agents
+package com.histmersion.domain.library.workflows
 
 import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject

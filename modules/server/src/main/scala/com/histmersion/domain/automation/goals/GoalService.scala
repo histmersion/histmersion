@@ -35,6 +35,9 @@ trait GoalService:
   def link(goal: String, kind: GoalLinkKind, ref: String, note: Option[String]): Boolean
   def unlink(goal: String, kind: GoalLinkKind, ref: String): Boolean
 
+  /** The refs of a goal's links of one kind (a sweep's queries, a currency check's sources), oldest first. */
+  def refs(goal: String, kind: GoalLinkKind): List[String]
+
   /** Every goal's links counted by kind; an article link counts only while the article exists. */
   def linkCounts(): Map[(String, String), Int]
 
@@ -77,6 +80,7 @@ object GoalService:
       db.transact(GoalLinkRepo.link(goal, kind, ref, note))
     def unlink(goal: String, kind: GoalLinkKind, ref: String): Boolean =
       db.transact(GoalLinkRepo.unlink(goal, kind, ref))
+    def refs(goal: String, kind: GoalLinkKind): List[String] = db.read(GoalLinkRepo.refsIn(goal, kind))
     def linkCounts(): Map[(String, String), Int] = db.read(GoalLinkRepo.linkCounts())
     def planned(): Set[String] = db.read(GoalLinkRepo.planned())
     def planAndBudget(goal: String): Option[(Option[String], Option[BigDecimal])] =
@@ -172,6 +176,9 @@ object GoalService:
         )
         true
       }
+    def refs(goal: String, kind: GoalLinkKind): List[String] =
+      state.get.links.filter(l => l.goal == goal && l.kind == kind).sortBy(l => (l.createdAt, l.ref)).map(_.ref).toList
+
     def unlink(goal: String, kind: GoalLinkKind, ref: String): Boolean =
       val before =
         state.getAndUpdate(_.modify(_.links).using(_.filterNot(l => l.goal == goal && l.kind == kind && l.ref == ref)))

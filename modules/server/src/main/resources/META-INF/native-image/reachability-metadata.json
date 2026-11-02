@@ -13951,6 +13951,130 @@
       ]
     },
     {
+      "type": "com.histmersion.domain.library.workflows.AcquisitionSweepPipeline$Failed$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy4"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.library.workflows.AcquisitionSweepPipeline$Found$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.library.workflows.AcquisitionSweepPipeline$Ingested$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.library.workflows.AcquisitionSweepPipeline$Parked$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy6"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.library.workflows.AcquisitionSweepPipeline$Picked$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.library.workflows.AcquisitionSweepPipeline$Tried$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy5"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.library.workflows.AgentFacetsInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_AgentFacetsInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.library.workflows.AgentGetSourceInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_AgentGetSourceInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.library.workflows.AgentSearchInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_AgentSearchInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.library.workflows.CurrencyCheckPipeline$Assessed$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy2"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.library.workflows.CurrencyCheckPipeline$Followed$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy3"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.library.workflows.CurrencyCheckPipeline$Target$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.library.workflows.FollowupsInput$",
+      "fields": [
+        {
+          "name": "derived$KindlingsCodecAsObject$lzy1"
+        },
+        {
+          "name": "given_Schema_FollowupsInput$lzy1"
+        }
+      ]
+    },
+    {
+      "type": "com.histmersion.domain.library.workflows.LibraryAgentTools$package$",
+      "fields": [
+        {
+          "name": "given_Configuration$lzy1"
+        }
+      ]
+    },
+    {
       "type": "com.histmersion.domain.media.MediaTools$AssetLinksInput$",
       "fields": [
         {
@@ -15469,6 +15593,9 @@
           "name": "library$lzy1"
         },
         {
+          "name": "librarySite$lzy1"
+        },
+        {
           "name": "personal$lzy1"
         },
         {
@@ -16371,103 +16498,10 @@
       ]
     },
     {
-      "type": "com.histmersion.server.agents.AcquisitionSweepPipeline$Failed$",
-      "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy4"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.server.agents.AcquisitionSweepPipeline$Found$",
-      "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy1"
-        },
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy4"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.server.agents.AcquisitionSweepPipeline$Ingested$",
-      "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy3"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.server.agents.AcquisitionSweepPipeline$Parked$",
-      "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy6"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.server.agents.AcquisitionSweepPipeline$Picked$",
-      "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy2"
-        },
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy5"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.server.agents.AcquisitionSweepPipeline$Tried$",
-      "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy5"
-        }
-      ]
-    },
-    {
       "type": "com.histmersion.server.agents.AgentDoctor$",
       "fields": [
         {
           "name": "client$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.server.agents.AgentFacetsInput$",
-      "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy1"
-        },
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy3"
-        },
-        {
-          "name": "given_Schema_AgentFacetsInput$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.server.agents.AgentGetSourceInput$",
-      "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy1"
-        },
-        {
-          "name": "given_Schema_AgentGetSourceInput$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.server.agents.AgentSearchInput$",
-      "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy1"
-        },
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy2"
-        },
-        {
-          "name": "given_Schema_AgentSearchInput$lzy1"
         }
       ]
     },
@@ -16641,48 +16675,10 @@
       ]
     },
     {
-      "type": "com.histmersion.server.agents.CurrencyCheckPipeline$Assessed$",
-      "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy2"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.server.agents.CurrencyCheckPipeline$Followed$",
-      "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy3"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.server.agents.CurrencyCheckPipeline$Target$",
-      "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy1"
-        }
-      ]
-    },
-    {
       "type": "com.histmersion.domain.automation.approvals.Decided$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy1"
-        }
-      ]
-    },
-    {
-      "type": "com.histmersion.server.agents.FollowupsInput$",
-      "fields": [
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy1"
-        },
-        {
-          "name": "derived$KindlingsCodecAsObject$lzy4"
-        },
-        {
-          "name": "given_Schema_FollowupsInput$lzy1"
         }
       ]
     },

@@ -1,6 +1,4 @@
-package com.histmersion.server.agents
-
-import com.augustnagro.magnum.transact
+package com.histmersion.domain.library.workflows
 
 import com.histmersion.domain.automation.agents.{AnswerSchemas, Checked, Halt, Prompt, RunCtx, StepAgent}
 import com.histmersion.domain.automation.workflows.PipelineDef
@@ -11,12 +9,9 @@ import com.histmersion.domain.*
 import com.histmersion.api.Agents.Pipeline
 import com.histmersion.api.GoalPlans.LinkKind
 import com.histmersion.domain.Scheduling.{Candidate, Ranking}
-import com.histmersion.db.{GoalLinkRepo, ManagerRepo}
-import com.histmersion.server.Handlers
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
 
-import javax.sql.DataSource
 import com.histmersion.api.VocabularyCodecs.given
 
 /** `acquisition-sweep <goal>` (docs/research-embedded-agents.md §4.5, §14): code searches OpenAlex with the goal's
@@ -39,14 +34,15 @@ import com.histmersion.api.VocabularyCodecs.given
   * file.
   */
 final class AcquisitionSweepPipeline(
-    protected val h: Handlers,
-    protected val ds: DataSource,
+    protected val site: LibrarySite,
+    agents: com.histmersion.domain.automation.agents.AgentsHandlers,
     cfg: => AgentsConfig,
     upstream: () => AgentUpstream,
     backlog: OaBacklog
 ) extends PipelineDef
     with GoalSweep:
   val pipeline: Pipeline = Pipeline.AcquisitionSweep
+  protected def goals: com.histmersion.domain.automation.goals.GoalService = agents.goals
   import AcquisitionSweepPipeline.*
 
   def run(ctx: RunCtx): Either[Halt, String] =
@@ -156,8 +152,8 @@ final class AcquisitionSweepPipeline(
     * so it is offered to this goal's ranking too).
     */
   private def backlogged(goal: String): Set[String] =
-    ManagerRepo
-      .backlogOpen(ds)
+    agents.managerStore
+      .backlogOpen()
       .filter(i => i.state.oa.exists(_.goals.contains(goal)) || i.managerId == Managers.watchId(goal))
       .map(_.target)
       .toSet
@@ -175,7 +171,7 @@ final class AcquisitionSweepPipeline(
             ctx.warn(s"candidates: ${w.index} ${w.kind} '${w.subject}' not read — ${w.lastError.getOrElse("")}")
           )
         for
-          g <- h.getGoal(goal).left.map(_.message)
+          g <- agents.host.goal(goal).left.map(_.message)
           rows <- upstream().candidates(goal, Candidates.State.New.wire, cfg.scheduler.sweepCandidates)
         yield
           val queued = queuedDois().keySet ++ backlogged(goal)
@@ -216,8 +212,8 @@ final class AcquisitionSweepPipeline(
 
   /** OpenAlex searched live with the goal's queries (the sweep as it was before the candidate search). */
   private def liveDiscover(ctx: RunCtx, goal: String): Either[String, Found] =
-    h.getGoal(goal).left.map(_.message).map { g =>
-      val queries = Some(GoalLinkRepo.refs(ds, goal, LinkKind.Query)).filter(_.nonEmpty).getOrElse(List(g.title))
+    agents.host.goal(goal).left.map(_.message).map { g =>
+      val queries = Some(goals.refs(goal, LinkKind.Query)).filter(_.nonEmpty).getOrElse(List(g.title))
       val found = queries.flatMap { q =>
         upstream().discover(q, cfg.scheduler.discoverPerQuery) match
           case Left(m)  => ctx.warn(s"discover '$q': $m"); Nil
@@ -264,18 +260,15 @@ final class AcquisitionSweepPipeline(
       s"ingest $doi (legal open access only) for goal $goal",
       io.circe.Json.obj("doi" -> doi.asJson, "title" -> p.candidate.title.asJson, "why" -> p.why.asJson)
     )(upstream().ingestLegal(doi).map { r =>
-      val _ = transact(ds)(
-        GoalLinkRepo.link(goal, LinkKind.Source, r.citekey, Some(s"ingested by a watcher sweep: ${p.why}".take(500)))
-      )
+      val _ =
+        goals.link(goal, LinkKind.Source, r.citekey, Some(s"ingested by a watcher sweep: ${p.why}".take(500)))
       ctx.run.managerId.foreach(mid =>
-        transact(ds)(
-          ManagerRepo.event(
-            mid,
-            ctx.run.managerItem,
-            Some(ctx.run.id),
-            Managers.Feed.Ingested,
-            s"[[${r.citekey}]] ingested (legal open access, ${r.pdf.fold("no file")(_.source)}): ${p.candidate.title} — https://doi.org/$doi"
-          )
+        agents.managerStore.event(
+          mid,
+          ctx.run.managerItem,
+          Some(ctx.run.id),
+          Managers.Feed.Ingested,
+          s"[[${r.citekey}]] ingested (legal open access, ${r.pdf.fold("no file")(_.source)}): ${p.candidate.title} — https://doi.org/$doi"
         )
       )
       Ingested(doi, r.citekey)

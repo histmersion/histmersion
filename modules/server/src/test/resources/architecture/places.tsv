@@ -854,6 +854,7 @@ server:server/HttpApi.scala	server
 server:server/HttpDownload.scala	server
 server:server/IngestWiring.scala	server
 server:server/LibraryWiring.scala	server
+server:server/LibraryWorkflowSite.scala	server
 server:server/ListQueries.scala	automation.approvals
 server:server/Main.scala	server
 server:server/MarkdownFlavor.scala	util.common
@@ -880,14 +881,7 @@ server:server/Supervisor.scala	server
 server:server/SystemContext.scala	server
 server:server/TimeZoneCheck.scala	server.instance
 server:server/UiConfigViews.scala	server.instance
-server:server/agents/AcquireRecheckService.scala	library.acquisition
-server:server/agents/AcquisitionSweepPipeline.scala	library.workflows
-server:server/agents/AcquisitionWork.scala	server
 server:server/agents/AgentDoctor.scala	automation.agents
-server:server/agents/AgentFacetsInput.scala	library.workflows
-server:server/agents/AgentGetSourceInput.scala	library.workflows
-server:server/agents/AgentSearchInput.scala	library.workflows
-server:server/agents/AgentUpstream.scala	library.workflows
 server:server/agents/ArticleObjectives.scala	server
 server:server/agents/BuiltinAi.scala	automation.agents
 server:server/agents/ClaudeCode.scala	automation.agents
@@ -901,16 +895,9 @@ server:server/agents/Codex.scala	automation.agents
 server:server/agents/CodexExecClient.scala	automation.agents
 server:server/agents/CodexHome.scala	automation.agents
 server:server/agents/CompileArticlePipeline.scala	research.workflows
-server:server/agents/CurrencyCheckPipeline.scala	library.workflows
-server:server/agents/EnrichManagerKind.scala	server
-server:server/agents/EnrichSourcePipeline.scala	library.workflows
-server:server/agents/FollowupsInput.scala	library.workflows
 server:server/agents/GeneratePluginMain.scala	server
-server:server/agents/GoalSweep.scala	automation.goals
 server:server/agents/HostAiProvider.scala	automation.agents
 server:server/agents/InferFilterPipeline.scala	research.workflows
-server:server/agents/LibraryAnswers.scala	library.workflows
-server:server/agents/OaBacklog.scala	library.workflows
 server:server/agents/Opencode.scala	automation.agents
 server:server/agents/OpencodeRunClient.scala	automation.agents
 server:server/agents/PipelineWorkflow.scala	server
@@ -923,8 +910,6 @@ server:server/agents/ResearchAnswers.scala	research.workflows
 server:server/agents/ReviewArticlePipeline.scala	research.workflows
 server:server/agents/ReviewManagerKind.scala	server
 server:server/agents/SeedManagerKind.scala	server
-server:server/agents/SeedService.scala	library.workflows
-server:server/agents/SourceProposals.scala	library.workflows
 server:server/agents/TransitionApprovalEffects.scala	server
 server:server/agents/TransitionHost.scala	server
 server:server/agents/TransitionRoutes.scala	server
@@ -932,7 +917,6 @@ server:server/agents/TransitionSettings.scala	server
 server:server/agents/TransitionSite.scala	server
 server:server/agents/TransitionTools.scala	server
 server:server/agents/TransitionWorkflows.scala	server
-server:server/agents/WatchManagerKind.scala	server
 server:server/hot/Hot.scala	server
 server:server/hot/HotDataSource.scala	server
 server:server/hot/HotGraph.scala	server
