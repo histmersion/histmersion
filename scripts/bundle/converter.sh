@@ -42,7 +42,35 @@ cp "$here/app.py" "$out/"
 # only what the pipeline in app.py loads: layout (heron), the table model, RapidOCR (~570 MB);
 # the default set adds CodeFormula (610 MB), an ONNX layout copy and the figure classifier (unused)
 echo "→ docling models (layout, tableformer, rapidocr)"
-"$py" -m docling.cli.tools models download -q -o "$out/models" layout tableformer rapidocr >/dev/null 2>&1
+# a model host that fails can answer 200 with a JSON error, which the download stores as the model
+# (ModelScope did, 2026-11-02): check every file and retry, so a broken bundle never gets built
+models_ok() {
+  "$py" - "$out/models" <<'PY'
+import os, sys
+bad = []
+for root, _, files in os.walk(sys.argv[1]):
+    for f in files:
+        p = os.path.join(root, f)
+        size = os.path.getsize(p)
+        with open(p, "rb") as fh:
+            head = fh.read(256)
+        if head.lstrip().startswith(b"{") and b'"Success":false' in head.replace(b" ", b""):
+            bad.append(f"{p}: an error answer ({head[:120].decode('utf-8', 'replace')})")
+        elif f.endswith((".onnx", ".pth", ".safetensors", ".bin")) and size < 64 * 1024:
+            bad.append(f"{p}: {size} bytes")
+for b in bad:
+    print(f"  bad model file: {b}", file=sys.stderr)
+sys.exit(1 if bad else 0)
+PY
+}
+for attempt in 1 2 3; do
+  rm -rf "$out/models"
+  "$py" -m docling.cli.tools models download -q -o "$out/models" layout tableformer rapidocr >/dev/null 2>&1
+  models_ok && break
+  [ "$attempt" -eq 3 ] && { echo "::error::the docling models did not download (a host answered with errors); try again later" >&2; exit 1; }
+  echo "  the models did not download whole, trying again in 30 s ($attempt/3)"
+  sleep 30
+done
 "$py" - <<'PY'
 import sys, torch, docling, pymupdf
 print(f"  python {sys.version.split()[0]} · torch {torch.__version__} (mps: {torch.backends.mps.is_available()}) · pymupdf {pymupdf.__version__}")
