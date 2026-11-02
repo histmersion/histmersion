@@ -21,12 +21,14 @@ object LibraryState:
   val empty: LibraryState = LibraryState(Map.empty, Map.empty, Set.empty, Set.empty, Set.empty)
 
   /** One stored source: the record without its edges (they are the state's), its uid, its findings' uids, its chunks
-    * and its last write.
+    * and its last write; the digest of its stored original and the licence it is published under, as stored.
     */
   final case class Stored(
       source: Source,
       uid: UUID,
       findingUids: Map[String, UUID],
       chunks: List[Chunk],
-      updatedAt: Instant
+      updatedAt: Instant,
+      sha256: Option[String] = None,
+      licence: Option[String] = None
   )

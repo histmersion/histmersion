@@ -8,10 +8,10 @@ import com.histmersion.pluginhost.{FetchChain, OaFetcher}
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.{AcquireRepo, Db, Migrate, QueueRows}
-import com.histmersion.server.acquire.*
+import com.histmersion.db.{Db, Migrate, QueueRows}
+import com.histmersion.domain.library.ingest.{FetchedCopy, IngestJobs, IngestMeta}
+import com.histmersion.domain.library.acquisition.*
 
-import java.nio.file.Path
 import com.histmersion.values.SourceStatus
 
 /** The acquisition handlers against a real Postgres (`HISTMERSION_TEST_DB_URL`), with every upstream replaced by a
@@ -81,7 +81,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     def refs(url: String) = Left("not used here")
 
   /** archive.org as the library's collection, answering `item` alone, its import run by `h`. */
-  private def archiveService(archived: ArchiveItem, h: AcquireHandlers) =
+  private def archiveService(archived: ArchiveItem, h: AcquisitionControllers) =
     import com.histmersion.plugin.{CollectionFile, CollectionId, CollectionItem, CollectionQuery}
     val collection = new com.histmersion.plugin.SourceCollection:
       def title = "archive.org"
@@ -117,15 +117,28 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       oa: OaFetcher = NoPdf,
       rw: RetractionWatchClient = FakeRw(""),
       app: AppConfig = cfg,
-      jobs: IngestJobs = SkeletonIngest(ds, cfg.limits.chunkChars)
-  ) = AcquireHandlers(Deps(app, ds), discovery, citations, oa, NoWiki, rw, jobs)
+      jobs: IngestJobs = AcquisitionTesting.skeleton(Deps(cfg, ds))
+  ) = AcquisitionTesting.controllers(Deps(app, ds), discovery, citations, oa, NoWiki, rw, jobs)
+
+  /** The Calibre gaps over `app`'s stores. */
+  private def gaps(app: AppConfig = cfg) =
+    val deps = Deps(app, ds)
+    com.histmersion.domain.library.collections.CalibreGapControllers(
+      AcquisitionTesting.sources(deps),
+      com.histmersion.domain.library.ingest.StoredOriginals(
+        () => deps.storage.store(com.histmersion.util.storage.Location.IngestOriginals),
+        () => deps.storage.store(com.histmersion.util.storage.Location.Spool)
+      ),
+      () => app,
+      deps.maintenance
+    )
 
   /** The skeleton store, recording whether each ingest handed it a file to convert (the OCR job). */
   final private class RecordingJobs extends IngestJobs:
-    private val skeleton = SkeletonIngest(ds, cfg.limits.chunkChars)
-    val files = java.util.concurrent.ConcurrentLinkedQueue[Option[Path]]()
-    def enqueue(pdfPath: Option[Path], citekey: String, meta: IngestMeta) =
-      files.add(pdfPath); skeleton.enqueue(pdfPath, citekey, meta)
+    private val skeleton = AcquisitionTesting.skeleton(Deps(cfg, ds))
+    val files = java.util.concurrent.ConcurrentLinkedQueue[Option[FetchedCopy]]()
+    def enqueue(copy: Option[FetchedCopy], citekey: String, meta: IngestMeta) =
+      files.add(copy); skeleton.enqueue(copy, citekey, meta)
 
   /** A PDF fetcher that counts its calls. */
   final private class CountingPdf extends OaFetcher:
@@ -201,17 +214,18 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
   test("a Retraction Watch hit yields verdict=retracted and --apply writes status=retracted"):
     wipe("zzacq_retr")
     SourceRepo.upsert(ds, source("zzacq_retr", Some("10.1177/zzretracted")), cfg.limits.chunkChars)
-    AcquireRepo.replaceRetractionWatch(
-      ds,
-      List(
-        Acquire.RetractionRow(
-          "10.1177/zzretracted",
-          Some("+Duplication of Image"),
-          Some("12/15/2021 0:00"),
-          Some("Retraction")
+    AcquisitionTesting
+      .assessments(ds)
+      .replaceRetractionWatch(
+        List(
+          Acquire.RetractionRow(
+            "10.1177/zzretracted",
+            Some("+Duplication of Image"),
+            Some("12/15/2021 0:00"),
+            Some("Retraction")
+          )
         )
       )
-    )
 
     val h = handlers()
     val a = h.assess(AssessRequest("zzacq_retr", apply = true)).fold(e => fail(e.message), identity)
@@ -221,7 +235,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assertEquals(a.applied, Some("retracted"))
     assertEquals(SourceRepo.load(ds, "zzacq_retr").map(_.status), Some(SourceStatus.Retracted))
     // and the verdict is STORED, so a later lint does not need the network
-    assertEquals(AcquireRepo.assessmentFor(ds, "zzacq_retr").map(_._1), Some("retracted"))
+    assertEquals(AcquisitionTesting.assessments(ds).lastFor("zzacq_retr").map(_._1), Some("retracted"))
 
   test("a clean, well-cited paper is `current` and the mirror refresh replaces every row"):
     wipe("zzacq_ok")
@@ -261,12 +275,14 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       source("zzacq_retr2", Some("10.1177/zzretracted2")).copy(status = SourceStatus.Foundational),
       cfg.limits.chunkChars
     )
-    AcquireRepo.replaceRetractionWatch(
-      ds,
-      List(
-        Acquire.RetractionRow("10.1177/zzretracted2", Some("+Duplication"), Some("12/15/2021 0:00"), Some("Retraction"))
+    AcquisitionTesting
+      .assessments(ds)
+      .replaceRetractionWatch(
+        List(
+          Acquire
+            .RetractionRow("10.1177/zzretracted2", Some("+Duplication"), Some("12/15/2021 0:00"), Some("Retraction"))
+        )
       )
-    )
     val r = h.assess(AssessRequest("zzacq_retr2", apply = true)).fold(e => fail(e.message), identity)
     assertEquals(r.applied, Some("retracted"))
     assertEquals(SourceRepo.load(ds, "zzacq_retr2").map(_.status), Some(SourceStatus.Retracted))
@@ -333,7 +349,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     assert(r.created)
     assertEquals(r.pdf.map(_.source), Some("unpaywall"))
     assert(
-      r.pdf.flatMap(_.spoolPath).exists(p => java.nio.file.Files.isRegularFile(Path.of(p))),
+      r.pdf.flatMap(_.spoolPath).exists(p => java.nio.file.Files.isRegularFile(java.nio.file.Path.of(p))),
       "the fetched PDF must be spooled for the converter"
     )
     assertEquals(r.edgesAdded, 1)
@@ -369,7 +385,12 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       .fold(e => fail(e.message), identity)
     assert(!again.steps.exists(_.step == "licence"), again.steps.toString)
     assertEquals(license, Some("CC-BY-4.0"))
-    assert(!AcquireRepo.recordLicense(ds, "zzacq_ingested", "  "), "a blank licence is never written")
+    assert(
+      !AcquisitionTesting
+        .sources(Deps(cfg, ds))
+        .recordLicence("zzacq_ingested", com.histmersion.values.LicenceId("  "), Caller.Local),
+      "a blank licence is never written"
+    )
     wipe("zzacq_ingested")
 
   test("an open-access work no script may fetch goes to the acquisition list once, as a browser download (#1581)"):
@@ -574,7 +595,10 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       .ingest(IngestRequest("10.16993/zzbay", citekey = Some("zzacq_ingested")))
       .fold(e => fail(e.message), identity)
     assertEquals(pdf.calls.get, 1)
-    assert(jobs.files.peek().exists(java.nio.file.Files.isRegularFile(_)), "the fetched file goes to the OCR job")
+    assert(
+      jobs.files.peek().exists(c => java.nio.file.Files.isRegularFile(java.nio.file.Path.of(c.where))),
+      "the fetched file goes to the OCR job"
+    )
     assert(r.steps.exists(s => s.step == "fetch" && s.ok && !s.detail.contains("skipped")), r.steps.toString)
     assertEquals(r.dropIn, None)
     assertEquals(SourceRepo.load(ds, "zzacq_ingested").flatMap(_.notes), Some("Compiled."))
@@ -604,7 +628,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       .ingest(IngestRequest("10.1038/zztest001", refetch = true))
       .fold(e => fail(e.message), identity)
     assertEquals(pdf.calls.get, 1)
-    assert(jobs.files.toArray.toList.last.asInstanceOf[Option[Path]].isDefined)
+    assert(jobs.files.toArray.toList.last.asInstanceOf[Option[FetchedCopy]].isDefined)
     assert(
       again.steps.exists(s => s.step == "fetch" && s.detail.contains("replacing a converted body")),
       again.steps.toString
@@ -612,13 +636,13 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     wipe("zzacq_ingested")
 
   test("what original a source has: a body, else a stored file; nothing for a metadata-only or missing source"):
-    assertEquals(AcquireHandlers.originalOf(Some(Some("text")), None), Some("a converted body"))
+    assertEquals(AcquisitionControllers.originalOf(Some(Some("text")), None), Some("a converted body"))
     assertEquals(
-      AcquireHandlers.originalOf(Some(Some("  ")), Some("ab" * 32)),
+      AcquisitionControllers.originalOf(Some(Some("  ")), Some("ab" * 32)),
       Some("a stored original (sha256 abababababab…)")
     )
-    assertEquals(AcquireHandlers.originalOf(Some(None), None), None)
-    assertEquals(AcquireHandlers.originalOf(None, Some("ab" * 32)), None)
+    assertEquals(AcquisitionControllers.originalOf(Some(None), None), None)
+    assertEquals(AcquisitionControllers.originalOf(None, Some("ab" * 32)), None)
 
   // ── archive.org ─────────────────────────────────────────────────────────────────────────────
 
@@ -676,14 +700,14 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       source("zzacq_incalibre").copy(provenance = Some("calibre"), calibreId = Some("1691")),
       cfg.limits.chunkChars
     )
-    val g = handlers().calibreGaps(None)
+    val g = gaps().gaps(None)
     assert(g.gaps.exists(_.citekey == "zzacq_gap"))
     assert(!g.gaps.exists(_.citekey == "zzacq_incalibre"))
     // recording the push removes it from the gap list
-    handlers().calibrePushed(CalibrePushRequest("zzacq_gap", "9999")).fold(e => fail(e.message), identity)
-    assert(!handlers().calibreGaps(None).gaps.exists(_.citekey == "zzacq_gap"))
+    gaps().pushed(CalibrePushRequest("zzacq_gap", "9999")).fold(e => fail(e.message), identity)
+    assert(!gaps().gaps(None).gaps.exists(_.citekey == "zzacq_gap"))
     // … and the push metadata now names the entry, which is what `calibre update` rewrites
-    assertEquals(handlers().calibreMeta("zzacq_gap").map(_.calibreId), Right(Some("9999")))
+    assertEquals(gaps().pushMeta("zzacq_gap").map(_.calibreId), Right(Some("9999")))
     wipe("zzacq_gap", "zzacq_incalibre")
 
   test("calibre gaps say which originals the server stores — what `calibre sync` downloads for the push"):
@@ -700,14 +724,14 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       sql"UPDATE sources SET sha256 = $gone WHERE citekey = 'zzacq_nofile'".update.run()
     java.nio.file.Files.writeString(spool.resolve(s"$stored.pdf"), "%PDF")
     val mine = Set("zzacq_stored", "zzacq_nofile", "zzacq_nohash")
-    val marks = handlers(app = app)
-      .calibreGaps(Some(1000))
+    val marks = gaps(app)
+      .gaps(Some(1000))
       .gaps
       .filter(g => mine(g.citekey))
       .map(g => g.citekey -> g.storedOriginal)
       .toMap
     assertEquals(marks, Map("zzacq_stored" -> Some(true), "zzacq_nofile" -> Some(false), "zzacq_nohash" -> Some(false)))
-    assert(AcquireMarkdown.calibreGaps(handlers(app = app).calibreGaps(Some(1000))).contains("| stored |"))
+    assert(AcquireMarkdown.calibreGaps(gaps(app).gaps(Some(1000))).contains("| stored |"))
     wipe("zzacq_stored", "zzacq_nofile", "zzacq_nohash")
 
   // ── error paths ─────────────────────────────────────────────────────────────────────────────

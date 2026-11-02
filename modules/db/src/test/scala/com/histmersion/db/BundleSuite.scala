@@ -182,7 +182,11 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     // a finding dropped by a later write leaves a tombstone
     SourceRepo.load(ds, A1).foreach(s => put(ds, s.copy(findings = s.findings.filterNot(_.id == s"$A1#3"))))
     val _ =
-      AcquireRepo.putAssessment(ds, A1, "current", false, """{"notices":[{"kind":"x","n":1}]}""", Some(12), Some(3))
+      com.histmersion.domain.library.acquisition.AcquisitionFixtures.putAssessment(
+        ds,
+        com.histmersion.domain.library.acquisition
+          .AssessmentRecord(A1, "current", false, """{"notices":[{"kind":"x","n":1}]}""", Some(12), Some(3))
+      )
     val _ = AssetFixtures.add(
       ds,
       A1,
@@ -311,7 +315,9 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private def exportOf(ds: DataSource, originals: Path, since: Option[String] = None): Array[Byte] =
     val out = java.io.ByteArrayOutputStream()
-    BundleExport.write(ds, out, since, Originals.inDir(originals), TestExchange.kinds).fold(e => fail(e), identity)
+    BundleExport
+      .write(ds, out, since, com.histmersion.util.storage.ContentDirectory(originals), TestExchange.kinds)
+      .fold(e => fail(e), identity)
     out.toByteArray
 
   private def entries(bundle: Array[Byte]): List[(String, Array[Byte])] =
@@ -341,7 +347,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
         f,
         BundleFormat.sha256Hex(bundle),
         BundleImport.Options(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm, SourceFixtures.referrers),
-        Originals.inDir(originals),
+        com.histmersion.util.storage.ContentDirectory(originals),
         resolutions,
         merge,
         TestExchange.kinds,
@@ -419,7 +425,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(kinds.get("queue-item"), Some(1))
     // V030: a change to an owned set moves its owner
     val t0 = connect(ds)(sql"SELECT updated_at::text FROM sources WHERE citekey = $G1".query[String].run().head)
-    val _ = AcquireRepo.addEdges(ds, List(Edge(G1, B1, "challenges")))
+    val _ = SourceFixtures.addEdges(ds, List(Edge(G1, B1, "challenges")))
     val t1 = connect(ds)(sql"SELECT updated_at::text FROM sources WHERE citekey = $G1".query[String].run().head)
     assertNotEquals(t1, t0)
 

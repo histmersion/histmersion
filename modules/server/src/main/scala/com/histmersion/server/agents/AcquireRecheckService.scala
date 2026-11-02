@@ -14,7 +14,8 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.AcquireChecks.*
 import com.histmersion.api.Queue.QueueAdd
-import com.histmersion.db.{AcquireCheckRepo, ManagerRepo}
+import com.histmersion.db.ManagerRepo
+import com.histmersion.domain.library.acquisition.{AcquireCheckRow, AcquireCheckService}
 import com.histmersion.util.jobs.JobRepo
 import com.histmersion.domain.AcquireRecheck.{Action, Candidate, Held, JobPlan, Outcome, Settings, Shared, Tally}
 
@@ -45,6 +46,7 @@ import javax.sql.DataSource
   */
 final class AcquireRecheckService(
     ds: DataSource,
+    checks: AcquireCheckService,
     rcfg: => RecheckConfig,
     h: com.histmersion.server.Handlers,
     upstream: () => AgentUpstream,
@@ -81,13 +83,13 @@ final class AcquireRecheckService(
 
   /** One open item with what the rules need: its DOIs (in the order its text names them), the action, its last check.
     */
-  final private case class Facts(item: Queue.QueueItem, action: Action, last: Option[AcquireCheckRepo.Row])
+  final private case class Facts(item: Queue.QueueItem, action: Action, last: Option[AcquireCheckRow])
 
   private def facts(only: Option[Int]): List[Facts] =
     val items = h.queues.list(Queue.Kind.Acquire, QueueScope.Open).toList.filter(i => only.forall(_ == i.id))
     val dois = items.map(i => i.id -> orderedDois(i.text)).toMap
-    val held = AcquireCheckRepo.heldByDoi(ds, dois.values.flatMap(_.headOption).toList)
-    val last = AcquireCheckRepo.of(ds, items.map(_.id))
+    val held = checks.heldByDoi(dois.values.flatMap(_.headOption).toList)
+    val last = checks.of(items.map(_.id))
     items.map(i => Facts(i, AcquireRecheck.action(dois.getOrElse(i.id, Nil), held.get), last.get(i.id)))
 
   private def orderedDois(text: String): List[String] =
@@ -95,7 +97,7 @@ final class AcquireRecheckService(
     Scheduling.dois(text).toList.sortBy(d => (lower.indexOf(d) match { case -1 => Int.MaxValue; case i => i }, d))
 
   private def triedToday(now: Instant): (Int, Int) =
-    val c = AcquireCheckRepo.countSince(ds, ManagerPolicy.dayStart(now))
+    val c = checks.countSince(ManagerPolicy.dayStart(now))
     (
       c.getOrElse(Outcome.Fetched.wire, 0) + c.getOrElse(Outcome.NoCopy.wire, 0) + c.getOrElse(Outcome.Failed.wire, 0),
       c.getOrElse(Outcome.Fetched.wire, 0)
@@ -297,7 +299,7 @@ final class AcquireRecheckService(
         val closed = fs
           .collect { case f @ Facts(_, Action.Close(ck), _) => f -> ck }
           .flatMap((f, ck) => close(f, ck, gen, Instant.now(), Some(jobId)))
-        val before = AcquireCheckRepo.countSince(ds, plan.since)
+        val before = checks.countSince(plan.since)
         def n(o: Outcome) = before.getOrElse(o.wire, 0)
         val triedByJob = n(Outcome.Fetched) + n(Outcome.NoCopy) + n(Outcome.Failed)
         val byId = fs.map(f => f.item.id -> f).toMap
@@ -433,8 +435,7 @@ final class AcquireRecheckService(
         scribe.warn(s"acquire re-check: item #${f.item.id} could not be closed: ${e.message}")
         None
       case Right(_) =>
-        AcquireCheckRepo.record(
-          ds,
+        checks.record(
           f.item.id,
           now,
           generation,
@@ -460,7 +461,7 @@ final class AcquireRecheckService(
         case e: InterruptedException => throw e
         case e: Exception            => (Outcome.Failed, s"${e.getClass.getSimpleName}: ${e.getMessage}", into)
     val why = AcquireRecheck.reason(now, outcome, detail)
-    AcquireCheckRepo.record(ds, f.item.id, now, generation, outcome, why)
+    checks.record(f.item.id, now, generation, outcome, why)
     Tried(RecheckRow(f.item.id, Some(doi), outcome.wire, why, ck), outcome, detail)
 
   private def summary(r: RecheckResult): String =
@@ -487,7 +488,7 @@ final class AcquireRecheckService(
       val fs = facts(None)
       val dueNow = due(fs, gen, now)
       val (tried, fetchedToday) = triedToday(now)
-      val week = AcquireCheckRepo.countSince(ds, now.minusSeconds(7L * 86400L))
+      val week = checks.countSince(now.minusSeconds(7L * 86400L))
       val room = AcquireRecheck.allowance(s, tried, shared(now, fetchedToday))
       val next: Option[String] =
         if dueNow.isEmpty then

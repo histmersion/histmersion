@@ -15,7 +15,7 @@ import sttp.tapir.server.netty.NettyConfig
 import scala.concurrent.duration.*
 import com.histmersion.config.{AppConfig, LoadedConfig, UserConfigFile}
 import com.histmersion.api.ConfigFileInfo
-import com.histmersion.server.acquire.*
+import com.histmersion.domain.library.acquisition.*
 import com.histmersion.server.hot.{Hot, PinRequests}
 import ox.{releaseAfterScope, Ox}
 
@@ -107,27 +107,29 @@ object Composition:
     releaseAfterScope(sg.close())
     // the CORE budget, built before the database (the first plugin generation spends from it), kept in it
     // from here on: a restart does not hand the day's tokens out again
-    core.persistTo(CoreQuotaStore.db(sg.ds))
+    core.persistTo(
+      CoreQuotaStore.of(UpstreamQuotaService(com.histmersion.util.database.Transactor(sg.ds)))
+    )
     val deps = sg.deps(WriteGate(), restart, system)
     val cfg = hc.app // the listener's settings: restart-only (ConfigReload.RestartOnly)
     val h = Handlers(deps, converter.getOrElse(ConverterWiring.client(deps.cfg.converter)))
     onHandlers(h) // a test's handle on this server's handlers (its run tokens); nothing in production
-    val _ = h.ingest.start() // reconcile interrupted jobs, then start the bounded worker pool
-    val acq = acquireHandlers(sg, deps, h)
+    val _ = h.ingest.queue.start() // reconcile interrupted jobs, then start the bounded worker pool
+    val acq = acquisition(sg, deps, h)
     // embedded agents: the acquisition toolset first (enrich-source checks metadata, refs, assess;
     // the skeptic reads followups); then an interrupted run is PAUSED (resumable), queued ones
     // re-enqueued; no pool at all unless agents.enabled
     com.histmersion.server.agents.TransitionWorkflows
       .work(h.agents)
-      .attach(com.histmersion.server.agents.AgentUpstream.of(acq))
-    val collections = collectionsControllers(sg, deps, h, acq)
-    val mcp = McpTools(h, acq, collections)
+      .attach(com.histmersion.server.agents.AgentUpstream.of(acq.controllers))
+    val collections = collectionsControllers(sg, deps, h, acq.controllers)
+    val mcp = McpTools(h, acq.controllers, collections)
     h.agents.attachTools(mcp.toolNames) // what the generated definitions' placeholders may name
     val paused = h.agents.start()
     if paused > 0 then
       scribe.info(s"$paused interrupted agent run(s) paused; resume them with histmersion agent resume")
     // the worker pools stop with the server, before its pools close (released in reverse order)
-    releaseAfterScope { h.agents.stop(); h.ingest.stop() }
+    releaseAfterScope { h.agents.stop(); h.ingest.queue.stop() }
     // a swapped database: the agent lease re-acquired on it (and given up on the old one when that
     // generation closes), its interrupted jobs and runs reconciled as at a start
     leases(sg, h).left.foreach(e => throw IllegalStateException(e))
@@ -157,7 +159,7 @@ object Composition:
       .addEndpoints(
         com.histmersion.domain.automation.agents.AgentsTools.agentEndpoints(h.agents)
       ) // one per agent definition, behind run tokens
-      .addEndpoints(HttpApi(deps, h, acq, collections).endpoints)
+      .addEndpoints(HttpApi(deps, h, acq.controllers, collections).endpoints)
     if cfg.auth.apiKey.nonEmpty then
       scribe.info("API key authentication enabled — write methods require Authorization: Bearer <key>")
     srv.modifyConfig { nc =>
@@ -195,7 +197,7 @@ object Composition:
       ServerGraph.Leases,
       deps = List(sg.migrations, sg.pool),
       onPublish = held => {
-        val failed = h.ingest.start()
+        val failed = h.ingest.queue.start()
         if failed > 0 then scribe.info(s"the new database had $failed interrupted job(s): failed them")
         if held then h.agents.adoptDatabase()
         else if lease.started then
@@ -210,11 +212,10 @@ object Composition:
       Right(if ctx.previous.isEmpty then lease.isHeld else lease.claimOn(p))
     }
 
-  /** Stream 2.6's acquisition toolset: the clients (a hot node: rebuilt when `acquire.*` or the plugins change) and the
-    * ingest job the fetched PDF is handed to — [[QueuedIngest]], which writes the metadata straight away and hands the
-    * file to stream 2.4's OCR queue (§1.8).
+  /** The library's acquisition: the clients (a hot node: rebuilt when `acquire.*` or the plugins change) and the ingest
+    * the fetched copy is handed to, which writes the metadata straight away and hands the file to the OCR queue.
     */
-  private def acquireHandlers(sg: ServerGraph, deps: Deps, h: Handlers): AcquireHandlers =
+  private def acquisition(sg: ServerGraph, deps: Deps, h: Handlers): AcquisitionWiring =
     val clients = sg.graph
       .node[AcquireClients](
         ServerGraph.Acquisition,
@@ -224,18 +225,7 @@ object Composition:
         Right(acquireClients(ctx.config.app, ctx(sg.plugins), sg.core))
       }
       .fold(e => throw IllegalStateException(e), identity)
-    AcquireHandlers(
-      deps,
-      discovery = clients.peek.discovery,
-      citations = clients.peek.citations,
-      oa = clients.peek.oa,
-      wiki = clients.peek.wiki,
-      retractionWatch = clients.peek.retractionWatch,
-      jobs = QueuedIngest(h.ingest, deps.ds, deps.cfg.limits.chunkChars, deps.cfg.places.pointToleranceKm),
-      indexes = clients.peek.indexes,
-      alerts = clients.peek.alerts,
-      generation = clients.peek.generation
-    )
+    AcquisitionWiring(deps, h.library.sourceStore, h.ingest, clients)
 
   /** The library's source collections (the Calibre library, archive.org): the service over the plugin generation's
     * collections, read at each call, and the library it writes through — the same handlers the endpoints run.
@@ -244,7 +234,7 @@ object Composition:
       sg: ServerGraph,
       deps: Deps,
       h: Handlers,
-      acq: AcquireHandlers
+      acq: AcquisitionControllers
   ): com.histmersion.domain.library.collections.CollectionsControllers =
     import com.histmersion.api.*
     import com.histmersion.domain.library.collections.*
@@ -252,13 +242,13 @@ object Composition:
       def source(citekey: String) = h.library.sources.get(citekey, body = false)
       def create(citekey: String, put: SourcePut) = h.library.sources.put(citekey, put)
       def patch(citekey: String, patch: SourcePatch) = h.library.sources.patch(citekey, patch)
-      def pushMeta(citekey: String) = acq.calibreMeta(citekey)
-      def pushed(req: CalibrePushRequest) = acq.calibrePushed(req)
-      def gaps(limit: Option[Int]) = acq.calibreGaps(limit)
+      def pushMeta(citekey: String) = h.calibreGaps.pushMeta(citekey)
+      def pushed(req: CalibrePushRequest) = h.calibreGaps.pushed(req)
+      def gaps(limit: Option[Int]) = h.calibreGaps.gaps(limit)
       def original(citekey: String) =
-        h.ingest.original(citekey).flatMap { (file, disposition) =>
+        h.ingest.controllers.original(citekey).flatMap { (file, disposition) =>
           scala.util
-            .Try(java.nio.file.Files.readAllBytes(file.toPath))
+            .Try(file.bytes())
             .toEither
             .left
             .map(e => ApiError(s"cannot read the original of '$citekey': ${e.getMessage}"))
@@ -266,16 +256,10 @@ object Composition:
         }
       def queueItem(id: Int) = h.ops.queueList(Queue.Kind.Acquire.label, all = true).map(_.items.find(_.id == id))
       def ingest(params: IngestParams, bytes: Array[Byte]) =
-        val dir = java.nio.file.Files.createTempDirectory("histmersion-collection-")
-        try
-          val f = dir.resolve(params.filename.getOrElse("original"))
-          java.nio.file.Files.write(f, bytes)
-          h.ingest.ingest(params, f.toFile)
-        finally
-          val s = java.nio.file.Files.list(dir)
-          try s.forEach(p => java.nio.file.Files.deleteIfExists(p): Unit)
-          finally s.close()
-          java.nio.file.Files.deleteIfExists(dir): Unit
+        h.ingest.controllers.ingest(
+          params,
+          com.histmersion.domain.library.ingest.Upload.inline(params.filename.getOrElse("original"), bytes)
+        )
       def putCover(params: SourceCoverParams, bytes: Array[Byte]) = h.media.covers.putCover(params, bytes)
       def openLibraryCover(req: MediaCoversRequest) = h.media.covers.covers(req)
       def archiveImport(item: ArchiveItem, file: ArchiveFile, req: ArchiveImportRequest) =

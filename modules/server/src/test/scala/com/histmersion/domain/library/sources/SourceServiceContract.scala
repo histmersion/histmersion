@@ -225,5 +225,57 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
     )
   }
 
+  stest("what acquisition reads of the sources: existence, the DOI index, edges routed and counted") { s =>
+    val _ = s.sources.put(source(A, "Walls").copy(doi = Some("10.5555/ZQ.Walls")), Me)
+    val _ = s.sources.put(source(B, "Cove"), Me)
+    assert(s.sources.exists(A))
+    assert(!s.sources.exists("zqnone"))
+    assertEquals(s.sources.doiIndex, Map("10.5555/zq.walls" -> A))
+    val edges = List(Edge(A, B, "references"), Edge(A, "zq_not_yet", "references"), Edge(A, B, "references"))
+    assertEquals(s.sources.addEdges(edges, Me), 2)
+    assertEquals(s.sources.addEdges(edges, Me), 0, "an edge stored already is not new")
+    assertEquals(s.sources.addEdges(Nil, Me), 0)
+    assertEquals(s.sources.load(A).map(_.edges.map(_.dst).sorted), Some(List("zq_not_yet", B)))
+  }
+
+  stest("a source's stored original: its digest, who holds one, set once a conversion is written") { s =>
+    val _ = s.sources.put(source(A, "Walls"), Me)
+    val _ = s.sources.put(source(B, "Cove"), Me)
+    assertEquals(s.sources.original(A), None)
+    s.sources.setOriginal(A, "a" * 64, Me)
+    s.sources.setOriginal("zqnone", "b" * 64, Me)
+    assertEquals(s.sources.original(A), Some("a" * 64))
+    assertEquals(s.sources.holderOf("a" * 64), Some(A))
+    assertEquals(s.sources.holderOf("b" * 64), None)
+    assertEquals(s.sources.originals(List(A, B, "zqnone")), Map(A -> "a" * 64))
+    assertEquals(s.sources.originals(Nil), Map.empty)
+    val _ = s.sources.put(source(A, "Walls again"), Me)
+    assertEquals(s.sources.original(A), Some("a" * 64), "a put keeps the original")
+  }
+
+  stest("a source's licence: recorded when it has none, classified as it is read") { s =>
+    val _ = s.sources.put(source(A, "Walls"), Me)
+    assertEquals(s.sources.licence(A), None)
+    assert(!s.sources.recordLicence(A, com.histmersion.values.LicenceId("  "), Me), "a blank licence is never written")
+    assert(s.sources.recordLicence(A, com.histmersion.values.LicenceId(" CC BY 4.0 "), Me))
+    assert(!s.sources.recordLicence(A, com.histmersion.values.LicenceId("CC0-1.0"), Me), "the first one is kept")
+    assertEquals(s.sources.licence(A), Some(com.histmersion.domain.Licence.classify("CC BY 4.0")))
+    assert(!s.sources.recordLicence("zqnone", com.histmersion.values.LicenceId("CC0-1.0"), Me))
+  }
+
+  stest("the sources not in Calibre yet, a push's metadata, the Calibre id written back") { s =>
+    val _ = s.sources.put(source(A, "Walls").copy(provenance = Some("unpaywall")), Me)
+    val _ = s.sources.put(source(B, "Cove").copy(provenance = Some("calibre")), Me)
+    val _ = s.sources.put(source(C, "Kings"), Me)
+    assertEquals(s.sources.calibreGaps(None).map(_.citekey), List(A, C))
+    assertEquals(s.sources.calibreGaps(Some(1)).map(_.citekey), List(A))
+    assertEquals(s.sources.calibrePushMeta(B).map(g => (g.citekey, g.provenance)), Some((B, Some("calibre"))))
+    assertEquals(s.sources.calibrePushMeta("zqnone"), None)
+    assertEquals(s.sources.setCalibreId(A, "17", Me), Right(()))
+    assert(s.sources.setCalibreId("zqnone", "18", Me).isLeft)
+    assertEquals(s.sources.calibreGaps(None).map(_.citekey), List(C))
+    assertEquals(s.sources.calibrePushMeta(A).flatMap(_.calibreId), Some("17"))
+  }
+
 class SourceServiceInMemorySuite extends SourceServiceContract with LibraryStoreSuite.InMemory
 class SourceServiceDbSuite extends SourceServiceContract with LibraryStoreSuite.OnDatabase

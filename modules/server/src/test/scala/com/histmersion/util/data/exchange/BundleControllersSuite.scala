@@ -4,7 +4,7 @@ import com.histmersion.api.*
 import com.histmersion.files.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.db.Originals
+import com.histmersion.util.storage.{ContentDirectory, ContentStore}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Files
 import java.util.UUID
@@ -51,7 +51,7 @@ class BundleControllersSuite extends munit.FunSuite:
 
   test("originals: content-addressed — stored only when the content is its name, found by digest"):
     val dir = Files.createTempDirectory("histmersion-originals")
-    val o = Originals.inDir(dir)
+    val o = ContentDirectory(dir)
     val data = "an original".getBytes(UTF_8)
     val sha = BundleFormat.sha256Hex(data)
     assertEquals(o.find(sha), None)
@@ -61,4 +61,4 @@ class BundleControllersSuite extends munit.FunSuite:
     assertEquals(o.find(sha).map(_._2), Some("bin")) // an unsafe extension is not used
     assertEquals(o.store(sha, "pdf", java.io.ByteArrayInputStream(data)), Right(())) // already there
     assertEquals(Files.list(dir).count(), 1L)
-    assertEquals(Originals.safeExt("PDF"), "pdf")
+    assertEquals(ContentStore.safeExt("PDF"), "pdf")

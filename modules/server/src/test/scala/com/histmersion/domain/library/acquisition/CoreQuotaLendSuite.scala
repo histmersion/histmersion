@@ -2,7 +2,7 @@ package com.histmersion.domain.library.acquisition
 
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.CoreQuota
-import com.histmersion.server.acquire.CoreBudget
+import com.histmersion.domain.library.acquisition.CoreBudget
 
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference

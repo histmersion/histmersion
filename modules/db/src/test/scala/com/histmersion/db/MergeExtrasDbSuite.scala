@@ -62,7 +62,9 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private def exportOf(ds: DataSource, originals: Path): Path =
     val out = java.io.ByteArrayOutputStream()
-    BundleExport.write(ds, out, None, Originals.inDir(originals), TestExchange.kinds).fold(e => fail(e), identity)
+    BundleExport
+      .write(ds, out, None, com.histmersion.util.storage.ContentDirectory(originals), TestExchange.kinds)
+      .fold(e => fail(e), identity)
     val f = Files.createTempFile(tmp, "bundle-", ".hmx")
     Files.write(f, out.toByteArray)
 
@@ -81,7 +83,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
         bundle,
         res,
         merge,
-        Originals.inDir(originals),
+        com.histmersion.util.storage.ContentDirectory(originals),
         cfg.limits.chunkChars,
         TestExchange.kinds,
         TestExchange.rules
@@ -95,7 +97,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
         bundle,
         BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
         BundleImport.Options(false, cfg.limits.chunkChars, cfg.places.pointToleranceKm, SourceFixtures.referrers),
-        Originals.inDir(originals),
+        com.histmersion.util.storage.ContentDirectory(originals),
         MergeResolutions(),
         merge,
         TestExchange.kinds,
@@ -117,7 +119,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
         BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
         BundleImport
           .Options(dryRun = false, cfg.limits.chunkChars, cfg.places.pointToleranceKm, SourceFixtures.referrers),
-        Originals.inDir(originals),
+        com.histmersion.util.storage.ContentDirectory(originals),
         res,
         merge,
         hash,

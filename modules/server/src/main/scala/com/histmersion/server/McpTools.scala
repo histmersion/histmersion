@@ -15,7 +15,7 @@ import com.histmersion.util.mcp.McpOut
 /** MCP tools (Chimp). Every tool returns Markdown and delegates to the same [[Handlers]] as REST. */
 final class McpTools(
     h: Handlers,
-    acquire: com.histmersion.server.acquire.AcquireHandlers,
+    acquire: com.histmersion.domain.library.acquisition.AcquisitionControllers,
     collections: com.histmersion.domain.library.collections.CollectionsControllers
 ):
   import McpTools.*
@@ -45,7 +45,7 @@ final class McpTools(
       )
       .input[IngestInput]
       .handle { in =>
-        h.ingest.fromTool(
+        h.ingest.controllers.fromTool(
           in.citekey,
           in.path,
           in.base64,
@@ -76,13 +76,13 @@ final class McpTools(
       .handle { in =>
         in.id.map(_.trim).filter(_.nonEmpty) match
           case Some(id) =>
-            h.ingest.job(id) match
+            h.jobs.job(id) match
               case Right(j) => ToolResult.text(IngestMarkdown.job(j))
               case Left(e)  => McpOut.error(e)
           case None =>
             val f = in.filter
             ToolResult.text(
-              h.ingest
+              h
                 .jobsPage(f, in.limit, in.before, None)
                 .fold(
                   McpOut.refusal,
@@ -627,7 +627,7 @@ final class McpTools(
           )
       )
       // stream 2.6: discover / refs / assess / followups / ingest_doi / archive
-      ++ com.histmersion.server.acquire.AcquireMcp(acquire, collections).tools
+      ++ com.histmersion.domain.library.acquisition.AcquisitionTools(acquire, collections).tools
       ++ com.histmersion.domain.library.collections.CollectionsTools(collections) // the Calibre library, archive.org
   )
 

@@ -4,7 +4,7 @@ import com.histmersion.util.settings.{info, ConfigSource}
 
 import com.histmersion.api.PluginsMarkdown
 import com.histmersion.config.{AppConfig, Environment, UserPaths}
-import com.histmersion.server.acquire.CoreBudget
+import com.histmersion.domain.library.acquisition.CoreBudget
 import ox.{never, supervised}
 
 /** The server binary: the command line, the config and the plugins on the main thread, the bundled runtime when there

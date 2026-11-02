@@ -15,6 +15,12 @@ trait ContentStore:
   def store(sha256: String, ext: String, in: InputStream): Either[String, Unit]
 
 object ContentStore:
+  /** A server that stores no originals. */
+  val none: ContentStore = new ContentStore:
+    def find(sha256: String): Option[(ByteSource, String)] = None
+    def store(sha256: String, ext: String, in: InputStream): Either[String, Unit] =
+      Left("this server stores no originals")
+
   /** An extension safe in a file name: short and alphanumeric, else `bin`. Pure. */
   def safeExt(ext: String): String =
     val e = ext.trim.toLowerCase(java.util.Locale.ROOT)

@@ -2,7 +2,7 @@ package com.histmersion.server
 
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.CoreQuota
-import com.histmersion.server.acquire.CoreBudget
+import com.histmersion.domain.library.acquisition.CoreBudget
 import ox.supervised
 
 import java.net.URI

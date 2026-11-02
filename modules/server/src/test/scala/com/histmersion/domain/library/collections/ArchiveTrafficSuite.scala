@@ -6,7 +6,7 @@ import com.histmersion.api.*
 import com.histmersion.config.{AcquireConfig, AppConfig, LoadedConfig}
 import com.histmersion.pluginhost.{FetchChain, Generation, HttpAnswer, HttpTransport, PolicyHttp}
 import com.histmersion.server.Deps
-import com.histmersion.server.acquire.*
+import com.histmersion.domain.library.acquisition.*
 import io.circe.syntax.*
 import org.ekrich.config.ConfigFactory
 
@@ -150,14 +150,15 @@ object ArchiveTrafficSuite:
       def meta(doi: String) = Left("not used")
       def references(doi: String) = Left("not used")
       def updates(doi: String) = Left("not used")
-    val h = AcquireHandlers(
-      Deps(app, ds),
+    val deps = Deps(app, ds)
+    val h = com.histmersion.server.AcquisitionTesting.controllers(
+      deps,
       none,
       new CitationsClient { def citing(w: WorkRef, s: Option[Int], l: Int) = Left("not used") },
       chain,
       new WikiClient { def refs(url: String) = Left("not used") },
       new RetractionWatchClient { def csv() = Left("not used") },
-      SkeletonIngest(ds, app.limits.chunkChars)
+      com.histmersion.server.AcquisitionTesting.skeleton(deps)
     )
     val library = new RefusingCollectionLibrary:
       override def archiveImport(item: ArchiveItem, file: ArchiveFile, req: ArchiveImportRequest) =

@@ -28,12 +28,15 @@ class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
       def health = Right("ok")
       def convert(file: com.histmersion.util.storage.Blob, filename: String, quality: Boolean) =
         Right(ConvertedDoc(markdown = "# Fixture\n\nOCR succeeded.", pages = 1, images = Nil))
-    val handler =
-      IngestHandlers(
-        Deps(cfg, ds),
-        converter,
-        com.histmersion.domain.media.assets.AssetService(Deps(cfg, ds).transactor)
-      )
+    val deps = Deps(cfg, ds)
+    val handler = IngestWiring(
+      deps,
+      converter,
+      AcquisitionTesting.sources(deps),
+      com.histmersion.domain.media.assets.AssetService(deps.transactor),
+      _ => None
+    )
+    val jobs = com.histmersion.util.jobs.JobListing(ds, () => cfg)
     val key = "zz_ingest_queue_failure"
     val item = QueueRows.add(ds, Queue.Kind.Acquire, Queue.QueueAdd(text = key))
     val pdf = Files.createTempFile("ingest-queue-upload", ".pdf")
@@ -51,16 +54,19 @@ class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
       sql("""CREATE TRIGGER zz_ingest_reject_done BEFORE UPDATE ON queue_items
         FOR EACH ROW WHEN (NEW.text = 'zz_ingest_queue_failure')
         EXECUTE FUNCTION zz_ingest_reject_done()""")
-      handler.start()
-      val accepted = handler
-        .ingest(IngestParams(key, Some("fixture.pdf"), force = true, acquireItem = Some(item.id)), pdf.toFile)
+      handler.queue.start()
+      val accepted = handler.controllers
+        .ingest(
+          IngestParams(key, Some("fixture.pdf"), force = true, acquireItem = Some(item.id)),
+          com.histmersion.domain.library.ingest.Upload.handed(pdf.toFile)
+        )
         .toOption
         .get
-      var job = handler.job(accepted.jobId).toOption.get
+      var job = jobs.job(accepted.jobId).toOption.get
       var attempts = 0
       while !job.isTerminal && attempts < 500 do
         Thread.sleep(10)
-        job = handler.job(accepted.jobId).toOption.get
+        job = jobs.job(accepted.jobId).toOption.get
         attempts += 1
       assert(SourceRepo.load(ds, key).isDefined, "source must have been stored")
       assertEquals(QueueRows.get(ds, item.id).map(_.status), Some(Queue.Open))
@@ -68,7 +74,7 @@ class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
       assertEquals(job.error, None)
       assert(job.progress.exists(_.contains(s"acquisition item ${item.id} NOT ticked off")), job.toString)
     finally
-      handler.stop()
+      handler.queue.stop()
       sql("DROP TRIGGER IF EXISTS zz_ingest_reject_done ON queue_items")
       sql("DROP FUNCTION IF EXISTS zz_ingest_reject_done()")
       QueueRows.delete(ds, item.id)

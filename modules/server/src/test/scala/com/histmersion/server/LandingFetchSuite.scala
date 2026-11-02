@@ -5,7 +5,7 @@ import com.histmersion.pluginhost.Challenge
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.server.acquire.*
+import com.histmersion.domain.library.acquisition.*
 import io.circe.Json
 
 /** Repository landing pages in the OA chain (#1580), against a fake upstream answering from records and pages captured

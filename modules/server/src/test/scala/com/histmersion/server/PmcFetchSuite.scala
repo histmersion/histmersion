@@ -5,7 +5,7 @@ import com.histmersion.util.ocr.{ConverterClient, JatsConverter}
 import com.histmersion.api.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.server.acquire.*
+import com.histmersion.domain.library.acquisition.*
 import io.circe.Json
 
 import java.nio.file.Files
@@ -175,11 +175,11 @@ class PmcFetchSuite extends munit.FunSuite:
 
   test("the fetch step names the host a copy came from"):
     assertEquals(
-      AcquireHandlers.hostOf(Some("https://pmc-oa-opendata.s3.amazonaws.com/PMC1.1/PMC1.1.pdf")),
+      AcquisitionControllers.hostOf(Some("https://pmc-oa-opendata.s3.amazonaws.com/PMC1.1/PMC1.1.pdf")),
       Some("pmc-oa-opendata.s3.amazonaws.com")
     )
-    assertEquals(AcquireHandlers.hostOf(None), None)
-    assertEquals(AcquireHandlers.hostOf(Some("not a url")), None)
+    assertEquals(AcquisitionControllers.hostOf(None), None)
+    assertEquals(AcquisitionControllers.hostOf(Some("not a url")), None)
 
   // ── the JATS original in the ingest job ───────────────────────────────────────────────────────
 

@@ -4,7 +4,7 @@ import com.histmersion.config.{AppConfig, LoadedConfig}
 import com.histmersion.api.PluginStatus
 import com.histmersion.plugin.{Plugin, PluginHttp}
 import com.histmersion.pluginhost.{Generation, HostServices, HttpTransport, PolicyHttp, Registries}
-import com.histmersion.server.acquire.{CoreBudget, HttpPlugin, SttpHttp}
+import com.histmersion.domain.library.acquisition.{CoreBudget, HttpPlugin, SttpHttp}
 import com.histmersion.server.agents.BuiltinAi
 import com.histmersion.util.plugins.Plugins
 import org.ekrich.config.ConfigFactory

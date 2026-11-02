@@ -37,7 +37,6 @@ import com.histmersion.db.{
   CoverageRepo,
   CritiqueRepo,
   GoalRepo,
-  Importer,
   Migrate,
   ReviewLedgerRepo
 }
@@ -89,17 +88,16 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def acquisitionItemNaming(doi: String): Option[Int] =
     queues.naming(com.histmersion.api.Queue.Kind.Acquire, doi).headOption.map(_.id)
 
-  /** The ingest/jobs/assets surface (plan §1.8), in its own file but reached only through here — so "one implementation
-    * per operation" still holds for REST, MCP and the CLI alike.
-    */
   /** Media's pictures, their links, the imports from outside providers (#1446), the sources' covers and illustrations.
     * Thumbnails come from the converter.
     */
   val media: MediaWiring = MediaWiring(deps, converter)
 
-  val ingest: IngestHandlers = IngestHandlers(
+  /** The library's ingest: the OCR job queue, the ingest surface, the hand-over of a fetched copy, the seed. */
+  lazy val ingest: IngestWiring = IngestWiring(
     deps,
     converter,
+    library.sourceStore,
     media.assetStore,
     ck =>
       // a stored conversion: the source's illustration (and Open Library cover) first, then enrichment
@@ -265,7 +263,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
   def configReload(): ReloadReport = deps.reloader()
 
   def health: Health =
-    val conv = ingest.converterHealth
+    val conv = ingest.queue.converterHealth
     scala.util.Try(Migrate.current(ds)) match
       case scala.util.Success(v) => Health(if conv.healthy then "ok" else "degraded", "ok", v, Some(conv.render))
       case scala.util.Failure(e) => Health("degraded", s"error: ${e.getMessage}", None, Some(conv.render))
@@ -331,12 +329,16 @@ final class Handlers(deps: Deps, converter: ConverterClient):
     */
   def upstreamQuotas(now: Instant = Instant.now()): List[UpstreamQuota] =
     scala.util
-      .Try(com.histmersion.db.UpstreamQuotaRepo.load(ds, com.histmersion.server.acquire.CoreBudget.Upstream))
+      .Try(
+        com.histmersion.domain.library.acquisition
+          .UpstreamQuotaService(deps.transactor)
+          .load(com.histmersion.domain.library.acquisition.CoreBudget.Upstream)
+      )
       .toOption
       .flatten
       .map(s =>
         com.histmersion.domain.CoreQuota
-          .view(s, com.histmersion.server.acquire.CoreBudget.limits(cfg.acquire.core), now)
+          .view(s, com.histmersion.domain.library.acquisition.CoreBudget.limits(cfg.acquire.core), now)
       )
       .toList
 
@@ -446,19 +448,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
         )
       SafePath.confine(corpusRoot, asked).left.map(ApiError(_)).flatMap { dir =>
         if !Files.isDirectory(dir) then Left(ApiError(s"not a directory on the server: $dir"))
-        else
-          Right(
-            Importer.importDir(
-              ds,
-              dir,
-              cfg.limits.chunkChars,
-              req.force,
-              SeedFigureFiles(media.assetStore),
-              cfg.limits.assetBytes,
-              tolKm,
-              corpusRoot
-            )
-          )
+        else Right(ingest.seed.run(SeedNoteFiles(dir, corpusRoot), req.force, cfg.limits.assetBytes))
       }
 
   /** `corpus.dir` as an `Option`: empty string = not configured. */
@@ -610,19 +600,38 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       catalogue.placeStore,
       com.histmersion.domain.research.articles.lint.SourceTextFormatting(pageLinks),
       mentionedIn,
-      new com.histmersion.domain.library.sources.SourceOriginals:
-        def find(plan: com.histmersion.domain.library.sources.SourceDeletePlan): List[String] =
-          StoredOriginals
-            .find(
-              Path.of(cfg.converter.spoolDir),
-              acquire.Spool.base(cfg.acquire.spoolDir),
-              plan.sha256,
-              plan.shaShared,
-              plan.keys
-            )
-            .map(_.toString)
-        def remove(files: List[String]): List[String] = StoredOriginals.remove(files.map(Path.of(_)))
+      storedOriginals
     )
+
+  /** The files the server keeps of the sources' originals: the uploads and the acquisition spool. */
+  lazy val storedOriginals: com.histmersion.domain.library.ingest.StoredOriginals =
+    com.histmersion.domain.library.ingest.StoredOriginals(
+      () => deps.storage.store(com.histmersion.util.storage.Location.IngestOriginals),
+      () => deps.storage.store(com.histmersion.util.storage.Location.Spool)
+    )
+
+  /** The sources not in Calibre yet, a push's metadata, the Calibre id written back. */
+  lazy val calibreGaps: com.histmersion.domain.library.collections.CalibreGapControllers =
+    com.histmersion.domain.library.collections.CalibreGapControllers(
+      library.sourceStore,
+      storedOriginals,
+      () => deps.cfg,
+      deps.maintenance
+    )
+
+  /** The background jobs as they are listed. */
+  val jobs: com.histmersion.util.jobs.JobListing = com.histmersion.util.jobs.JobListing(ds, () => deps.cfg)
+
+  /** `GET /api/jobs` filtered ([[ListFilters.JobFilter]]): one page, newest first, with the per-state and the kind
+    * counts under the same filter.
+    */
+  def jobsPage(
+      f: ListFilters.JobFilter,
+      limit: Option[Int],
+      before: Option[String],
+      upTo: Option[String]
+  ): Either[ApiError, (List[JobInfo], Paging.Page)] =
+    ListQueries.jobs(f, Instant.now(deps.clock)).flatMap(q => jobs.page(q, limit, before, upTo))
 
   /** The events' store. */
   def eventStore: com.histmersion.domain.catalogue.events.EventService = catalogue.eventStore
@@ -865,9 +874,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       maintenance.exclusively("restore"):
         // The OCR workers hold long transactions and write sources; a job landing mid-restore writes
         // into a schema that is being replaced. Paused for the duration, resumed whatever happens.
-        ingest.pause()
+        ingest.queue.pause()
         try restoreNow(req)
-        finally ingest.resume()
+        finally ingest.queue.resume()
 
   private def restoreNow(req: RestoreRequest): Either[ApiError, RestoreResult] =
     val before = backups.guardedRows
@@ -1257,7 +1266,9 @@ final class Handlers(deps: Deps, converter: ConverterClient):
               )
           }
           .flatMap { s =>
-            if !req.force && req.mtime.exists(m => Importer.isStale(ArticleRepo.updatedAtMillis(ds), s, m))
+            if !req.force && req.mtime.exists(m =>
+                com.histmersion.domain.library.ingest.SeedImport.isStale(ArticleRepo.updatedAtMillis(ds), s, m)
+              )
             then Right(SeedResult(0, Nil, 0, List(s)))
             else
               Articles

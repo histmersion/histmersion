@@ -633,16 +633,98 @@ private[histmersion] object SourceRepo:
   /** The citekey that already holds this upload, if any — `POST /api/ingest` refuses a duplicate with it unless `force`
     * (plan §1.8).
     */
-  def citekeyOfSha256(ds: DataSource, sha: String): Option[String] =
-    connect(ds):
-      sql"SELECT citekey FROM sources WHERE sha256 = $sha ORDER BY citekey LIMIT 1".query[String].run().headOption
+  def citekeyOfSha256(ds: DataSource, sha: String): Option[String] = connect(ds)(citekeyOfSha256(sha))
+  def setSha256(ds: DataSource, citekey: String, sha: String): Unit = transact(ds)(setSha256(citekey, sha))
+  def sha256Of(ds: DataSource, citekey: String): Option[String] = connect(ds)(sha256Of(citekey))
 
-  def setSha256(ds: DataSource, citekey: String, sha: String): Unit =
-    val _ = transact(ds)(sql"UPDATE sources SET sha256 = $sha WHERE citekey = $citekey".update.run())
+  def citekeyOfSha256(sha: String)(using DbCon): Option[String] =
+    sql"SELECT citekey FROM sources WHERE sha256 = $sha ORDER BY citekey LIMIT 1".query[String].run().headOption
 
-  def sha256Of(ds: DataSource, citekey: String): Option[String] =
-    connect(ds):
-      sql"SELECT sha256 FROM sources WHERE citekey = $citekey".query[Option[String]].run().headOption.flatten
+  def setSha256(citekey: String, sha: String)(using DbCon): Unit =
+    val _ = sql"UPDATE sources SET sha256 = $sha WHERE citekey = $citekey".update.run()
+
+  def sha256Of(citekey: String)(using DbCon): Option[String] =
+    sql"SELECT sha256 FROM sources WHERE citekey = $citekey".query[Option[String]].run().headOption.flatten
+
+  /** The content hash (`sources.sha256`, the stored original's name) of each of `citekeys` that has one, in one query.
+    */
+  def sha256s(citekeys: List[String])(using DbCon): Map[String, String] =
+    if citekeys.isEmpty then Map.empty
+    else
+      sql"""SELECT citekey, sha256 FROM sources WHERE citekey = ANY($citekeys::text[]) AND sha256 IS NOT NULL"""
+        .query[(String, String)]
+        .run()
+        .toMap
+
+  // ── the identifiers acquisition resolves a work's references and its own copy by ────────────
+
+  /** `lower(doi) -> citekey` for the whole corpus, in one query. */
+  def doiIndex()(using DbCon): Map[String, String] =
+    sql"SELECT lower(doi), citekey FROM sources WHERE doi IS NOT NULL AND doi <> ''"
+      .query[DoiKey]
+      .run()
+      .map(r => r.doi -> r.citekey)
+      .toMap
+
+  final private case class DoiKey(doi: String, citekey: String) derives DbCodec
+
+  def exists(citekey: String)(using DbCon): Boolean =
+    sql"SELECT count(*)::int FROM sources WHERE citekey = $citekey".query[Int].run().headOption.exists(_ > 0)
+
+  // ── the licence a source is published under, as stored (classified on read by the service) ──
+
+  def licenceOf(citekey: String)(using DbCon): Option[String] =
+    sql"SELECT license FROM sources WHERE citekey = $citekey".query[Option[String]].run().headOption.flatten
+
+  /** The licence a fetched copy came with, recorded as the source's when it has none — one set by hand or an earlier
+    * copy is kept. `true` when it was written.
+    */
+  def recordLicence(citekey: String, licence: String)(using DbCon): Boolean =
+    sql"""UPDATE sources SET license = $licence, updated_at = now()
+          WHERE citekey = $citekey AND (license IS NULL OR btrim(license) = '')""".update.run() > 0
+
+  // ── Calibre: the sources not in it yet, and the id written back after a push ────────────────
+
+  final private case class GapRow(
+      citekey: String,
+      title: String,
+      authors: List[String],
+      doi: Option[String],
+      year: Option[Int],
+      venue: Option[String],
+      summary: Option[String],
+      topics: List[String],
+      provenance: Option[String],
+      calibreId: Option[String],
+      isbn: Option[String]
+  ) derives DbCodec:
+    def gap: CalibreGap =
+      CalibreGap(citekey, title, authors, doi, year, venue, summary, topics, provenance, calibreId, isbn)
+
+  /** Sources that are NOT in Calibre yet: provenance is something other than `calibre` (or missing) and no `calibre_id`
+    * has been written back, in citekey order, at most `limit`.
+    */
+  def calibreGaps(limit: Option[Int])(using DbCon): List[CalibreGap] =
+    val cap = limit.filter(_ > 0).getOrElse(Int.MaxValue)
+    sql"""SELECT citekey, title, authors, doi, year, venue, summary, topics, source, NULLIF(calibre_id, ''),
+            (SELECT min(i.value) FROM source_identifiers i WHERE i.source_uid = sources.uid AND i.scheme = 'isbn')
+          FROM sources
+          WHERE (calibre_id IS NULL OR calibre_id = '')
+            AND (source IS NULL OR source <> 'calibre')
+          ORDER BY citekey
+          LIMIT $cap""".query[GapRow].run().toList.map(_.gap)
+
+  /** The push metadata for ONE source, whether or not it currently counts as a gap — `calibre push <citekey>` needs the
+    * authors as a LIST, which the comma-joined `SourceDetail.authors` cannot give back unambiguously.
+    */
+  def calibrePushMeta(citekey: String)(using DbCon): Option[CalibreGap] =
+    sql"""SELECT citekey, title, authors, doi, year, venue, summary, topics, source, NULLIF(calibre_id, ''),
+            (SELECT min(i.value) FROM source_identifiers i WHERE i.source_uid = sources.uid AND i.scheme = 'isbn')
+          FROM sources WHERE citekey = $citekey""".query[GapRow].run().headOption.map(_.gap)
+
+  /** Write the Calibre id back after a push; how many sources it named (0 or 1). */
+  def setCalibreId(citekey: String, calibreId: String)(using DbCon): Int =
+    sql"UPDATE sources SET calibre_id = $calibreId, updated_at = now() WHERE citekey = $citekey".update.run()
 
   def bodyText(citekey: String)(using DbCon): String =
     val chunks = sql"""SELECT body FROM source_chunks

@@ -60,7 +60,9 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private def exportOf(ds: DataSource, originals: Path): Path =
     val out = java.io.ByteArrayOutputStream()
-    BundleExport.write(ds, out, None, Originals.inDir(originals), TestExchange.kinds).fold(e => fail(e), identity)
+    BundleExport
+      .write(ds, out, None, com.histmersion.util.storage.ContentDirectory(originals), TestExchange.kinds)
+      .fold(e => fail(e), identity)
     val f = Files.createTempFile(tmp, "bundle-", ".hmx")
     Files.write(f, out.toByteArray)
 
@@ -76,7 +78,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         bundle,
         res,
         merge,
-        Originals.inDir(originals),
+        com.histmersion.util.storage.ContentDirectory(originals),
         cfg.limits.chunkChars,
         TestExchange.kinds,
         TestExchange.rules
@@ -96,7 +98,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         bundle,
         BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
         BundleImport.Options(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm, SourceFixtures.referrers),
-        Originals.inDir(originals),
+        com.histmersion.util.storage.ContentDirectory(originals),
         res,
         merge,
         TestExchange.kinds,
@@ -508,7 +510,12 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
     val uidHere = connect(b)(sql"SELECT uid FROM sources WHERE citekey = 'zzx2001_here'".query[UUID].run().head)
     // what merge apply (M5) will leave behind: a redirect, and a ledger row whose local rev is ours now
     val localRev =
-      connect(b)(TestExchange.kinds.entities(BundleScope.Uids(List(uidHere)), Originals.none).revs(uidHere).rev)
+      connect(b)(
+        TestExchange.kinds
+          .entities(BundleScope.Uids(List(uidHere)), com.histmersion.util.storage.ContentStore.none)
+          .revs(uidHere)
+          .rev
+      )
     exec(
       b,
       s"INSERT INTO merges (id, bundle_id, bundle_sha256, from_instance) VALUES ('$uidHere', '$uidHere', 'x', '$uidThere')"
@@ -577,7 +584,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
         BundleFormat.sha256Hex(Files.readAllBytes(bundle)),
         BundleImport
           .Options(dryRun = false, cfg.limits.chunkChars, cfg.places.pointToleranceKm, SourceFixtures.referrers),
-        Originals.inDir(originals),
+        com.histmersion.util.storage.ContentDirectory(originals),
         res,
         merge,
         hash,
