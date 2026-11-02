@@ -4,7 +4,7 @@ object EventLinksMarkdown:
 
   private def km(d: Double): String = s"${math.round(d)} km"
 
-  def context(d: EventDetail): String =
+  def context(d: com.histmersion.api.catalogue.events.EventCard): String =
     val tier = s"\n\n**Tier:** ${d.tier}" + (if d.tier == EventTier.Catalogue then
                                                " — known from a catalogue only: a research lead, not evidence"
                                              else "")

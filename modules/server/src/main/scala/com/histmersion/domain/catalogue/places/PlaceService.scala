@@ -1,11 +1,12 @@
 package com.histmersion.domain.catalogue.places
 
+import com.histmersion.api.catalogue.places.PlaceEntry
+
 import com.histmersion.api.{
   ApiError,
   Dataset,
   ManualPlaceName,
   Period,
-  PlaceDetail,
   PlaceFootprint,
   PlaceGone,
   PlaceHit,
@@ -46,7 +47,7 @@ trait PlaceService:
   def search(q: Option[String], asOf: Option[Long], limit: Int, modernFrom: Long = DefaultModernFrom): List[PlaceHit]
 
   /** One place with the hierarchy around it at `asOf`. */
-  def get(id: String, asOf: Option[Long] = None, modernFrom: Long = DefaultModernFrom): Option[PlaceDetail]
+  def get(id: String, asOf: Option[Long] = None, modernFrom: Long = DefaultModernFrom): Option[PlaceEntry]
 
   def children(id: String, asOf: Option[Long], limit: Int, modernFrom: Long = DefaultModernFrom): List[PlaceSummary]
 
@@ -102,7 +103,7 @@ object PlaceService:
       if batch.isEmpty then PlaceImportResult(0, 0, 0, Nil) else db.transact(PlaceRepo.upsertPlaces(batch, dataset))
     def search(q: Option[String], asOf: Option[Long], limit: Int, modernFrom: Long): List[PlaceHit] =
       db.read(PlaceRepo.search(q, asOf, limit, modernFrom)).toList
-    def get(id: String, asOf: Option[Long], modernFrom: Long): Option[PlaceDetail] =
+    def get(id: String, asOf: Option[Long], modernFrom: Long): Option[PlaceEntry] =
       db.read(PlaceRepo.get(id, asOf, modernFrom))
     def children(id: String, asOf: Option[Long], limit: Int, modernFrom: Long): List[PlaceSummary] =
       db.read(PlaceRepo.children(id, asOf, limit, modernFrom)).toList
@@ -261,9 +262,9 @@ object PlaceService:
         .filter(c => c.parents.exists(r => r.parentId == id && HeldPlace.covers(r.period, asOf)) && c.validAt(asOf))
         .sortBy(c => (c.place.label, c.id))
 
-    def get(id: String, asOf: Option[Long], modernFrom: Long): Option[PlaceDetail] =
+    def get(id: String, asOf: Option[Long], modernFrom: Long): Option[PlaceEntry] =
       find(id).map { p =>
-        PlaceDetail(
+        PlaceEntry(
           p.summary,
           p.place.geometry,
           parentsOf(p, asOf),

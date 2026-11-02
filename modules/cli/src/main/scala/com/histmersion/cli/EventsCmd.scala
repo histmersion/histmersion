@@ -43,7 +43,7 @@ object EventsCmd:
 
   private val showCmd = Opts.subcommand("show", "One event: datings, edges, participants") {
     (Opts.argument[String]("id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
-      c.getEvent(id).map(d => Output.emit(json, d)(EventsMarkdown.event))
+      c.getEvent(id).map(d => Output.emit(json, d)(_.markdown))
     }
   }
 
@@ -113,7 +113,7 @@ object EventsCmd:
       for
         p <- patch
         d <- c.patchEvent(id, p)
-      yield println(EventsMarkdown.event(d))
+      yield println(d.markdown)
     }
   }
 

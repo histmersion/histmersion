@@ -413,7 +413,7 @@ final class McpTools(
     ) ++ com.histmersion.domain.research.articles.ArticleTools(h.research.articles) ++
       com.histmersion.domain.catalogue.places.PlacesTools(h.places) ++
       com.histmersion.domain.catalogue.periods.PeriodsTools(h.periods) ++
-      com.histmersion.domain.catalogue.events.EventsTools(h.events) ++
+      com.histmersion.server.views.EventCardTools(h.events, h.eventCard) ++
       com.histmersion.domain.catalogue.evidence.AttestationsTools(h.attestations) ++ List(
         goalsToolRead,
         putGoalTool,

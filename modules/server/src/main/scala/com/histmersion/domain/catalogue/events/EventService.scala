@@ -1,10 +1,11 @@
 package com.histmersion.domain.catalogue.events
 
+import com.histmersion.api.catalogue.events.EventEntry
+
 import com.histmersion.api.{
   ApiError,
   CorrectionTarget,
   EventCatalogueRef,
-  EventDetail,
   EventFields,
   EventGeo,
   EventGeoList,
@@ -43,7 +44,7 @@ trait EventService:
   def geoOf(ids: List[String]): Map[String, EventGeo]
 
   /** One event with its parent, parts, datings, edges, participants, Wikidata item and corrections by hand. */
-  def get(id: String): Option[EventDetail]
+  def get(id: String): Option[EventEntry]
 
   /** Its tier, its other names and the catalogue it was imported from. */
   def tierAndNames(id: String): Option[(String, List[String], Option[String])]
@@ -81,7 +82,7 @@ object EventService:
     def geo(selection: EventSelection, limit: Int, tolerance: Double): EventGeoList =
       db.read(EventRepo.geo(selection.sql(related), limit, tolerance))
     def geoOf(ids: List[String]): Map[String, EventGeo] = db.read(EventRepo.geoOf(ids))
-    def get(id: String): Option[EventDetail] = db.read(EventRepo.get(id))
+    def get(id: String): Option[EventEntry] = db.read(EventRepo.get(id))
     def tierAndNames(id: String): Option[(String, List[String], Option[String])] = db.read(EventRepo.tierAndNames(id))
     def catalogueRefs(id: String): List[EventCatalogueRef] = db.read(EventImportRepo.catalogueRefs(id))
     def geometryError(geojson: String): Option[String] = db.read(EventRepo.geometryError(geojson))
@@ -191,11 +192,11 @@ object EventService:
       val s = state.get
       s.events.filter(e => ids.contains(e.id) && preciseEnough(e)).flatMap(e => drawn(s, e).map(e.id -> _)).toMap
 
-    def get(id: String): Option[EventDetail] =
+    def get(id: String): Option[EventEntry] =
       val s = state.get
       s.events.find(_.id == id).map { e =>
         val sum = summaryOf(s, e)
-        EventDetail(
+        EventEntry(
           sum,
           e.geometry,
           e.parentId.flatMap(p => s.events.find(_.id == p)).map(summaryOf(s, _)),

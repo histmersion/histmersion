@@ -4,6 +4,7 @@ import com.histmersion.db.*
 import com.histmersion.db.given
 
 import com.histmersion.util.database.{LikePattern, RangeSql}
+import com.histmersion.api.catalogue.places.PlaceEntry
 
 import com.histmersion.api.*
 import com.histmersion.config.*
@@ -269,7 +270,7 @@ private[places] object PlaceRepo:
       id: String,
       asOf: Option[Long] = None,
       modernFrom: Long = DefaultModernFrom
-  )(using DbCon): Option[PlaceDetail] =
+  )(using DbCon): Option[PlaceEntry] =
     sql"""WITH g AS (
             SELECT COALESCE(p.geom, (
               SELECT ST_Union(c.geom) FROM place_relations r JOIN places c ON c.id = r.child_id
@@ -286,7 +287,7 @@ private[places] object PlaceRepo:
       val lks = sql"""SELECT place_id, scheme, external_id, relation FROM place_links
                       WHERE place_id = $id ORDER BY scheme, external_id""".query[PlaceLink].run().toList
       val tps = typesIn(id, asOf)
-      PlaceDetail(
+      PlaceEntry(
         r.toSummary,
         r.geometry,
         parents(id, asOf).toList,

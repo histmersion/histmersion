@@ -64,7 +64,8 @@ object EventFixtures:
     connect(ds)(EventRepo.geo(listWhere(filter, scope, text, kind, historicity, placeId, more), limit, tolerance))
 
   def geoOf(ds: DataSource, ids: List[String]): Map[String, EventGeo] = connect(ds)(EventRepo.geoOf(ids))
-  def get(ds: DataSource, id: String): Option[EventDetail] = connect(ds)(EventRepo.get(id))
+  def get(ds: DataSource, id: String): Option[com.histmersion.api.catalogue.events.EventEntry] =
+    connect(ds)(EventRepo.get(id))
   def put(ds: DataSource, id: String, in: EventPut): Unit = transact(ds)(EventRepo.put(id, in))
   def patch(ds: DataSource, id: String, p: EventPatch): Either[ApiError, Unit] = transact(ds)(EventRepo.patch(id, p))
   def rename(ds: DataSource, from: String, to: String): Either[ApiError, Unit] =

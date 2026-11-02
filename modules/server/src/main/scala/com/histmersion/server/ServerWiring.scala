@@ -309,17 +309,14 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   /** The refinement of the Wikidata sites' types. */
   def siteTypes: com.histmersion.domain.catalogue.places.SiteTypesControllers = catalogue.siteTypes
 
-  /** The events' operations; an event's page joins its pictures and the articles citing its sources. */
+  /** The events' operations; an event's card joins the articles citing its sources. */
   lazy val events: com.histmersion.domain.catalogue.events.EventsControllers =
     com.histmersion.domain.catalogue.events.EventsControllers(
       eventStore,
-      com.histmersion.server.views
-        .EventCardView(
-          eventLinks.context,
-          media.assets.eventThumbs,
-          (citekeys, limit) => research.articles.store.citing(citekeys, limit)
-        )
-        .apply,
+      com.histmersion.server.views.EventCardView.cited(
+        eventLinks.context,
+        (citekeys, limit) => research.articles.store.citing(citekeys, limit)
+      ),
       current,
       resolve,
       scopeOf,
@@ -373,6 +370,10 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   /** `GET /api/places/{id}` — the row, its GeoJSON geometry and the hierarchy around it at `asOf`; with `counts`, also
     * what the corpus holds for it and its pictures (the web UI's map hover card).
     */
+  /** An event's page: the catalogue's event with its pictures. */
+  lazy val eventCard: com.histmersion.server.views.EventCardView =
+    com.histmersion.server.views.EventCardView(events, media.assets.eventThumbs)
+
   lazy val placeCard: com.histmersion.server.views.PlaceCardView =
     com.histmersion.server.views.PlaceCardView(places.get, places.placeId, placeCounts, media.assets.placeThumbs)
 

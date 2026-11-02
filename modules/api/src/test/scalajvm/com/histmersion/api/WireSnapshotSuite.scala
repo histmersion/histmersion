@@ -262,7 +262,7 @@ class WireSnapshotSuite extends munit.FunSuite:
         BackupStatus("zq.dump", "done", 1500, Some(4096), Some("cd" * 32), None, List("old.dump"))
       ),
       "backupStatus failed" -> Markdown.backupStatus(BackupStatus("zq.dump", "failed", 10, error = Some("zq error"))),
-      "event" -> EventsMarkdown.event(event),
+      "event" -> event.markdown,
       "place" -> PlacesMarkdown.place(place),
       "event json" -> event.asJson.spaces2,
       "place json" -> place.asJson.spaces2,

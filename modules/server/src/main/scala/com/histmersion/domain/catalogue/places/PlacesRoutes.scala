@@ -1,19 +1,20 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.{Api, ApiError, GazetteerSourceInfo, JobInfo, PlaceDetail}
+import com.histmersion.api.{Api, ApiError, GazetteerSourceInfo, JobInfo}
 import com.histmersion.domain.Caller
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
 
 /** The gazetteer's endpoints bound to their controllers, in the order route matching needs: the `/{id}` route is a
-  * prefix of `/{id}/children` and `/{id}/tree`, so the longer paths come first. `card` is a place's page with what the
-  * corpus holds for it; `sources` and `load` are the init job's (the pinned extracts and the drop folder).
+  * prefix of `/{id}/children` and `/{id}/tree`, so the longer paths come first. `card` is a place's page (`GET
+  * /api/places/{id}`) with what the corpus holds for it and its pictures; `sources` and `load` are the init job's (the
+  * pinned extracts and the drop folder).
   */
 object PlacesRoutes:
   def apply(
       places: PlacesControllers,
       gazetteer: GazetteerControllers,
-      card: (String, Option[Long], Boolean) => Either[ApiError, PlaceDetail],
+      card: ServerEndpoint[Any, Identity],
       sources: () => List[GazetteerSourceInfo],
       load: (String, Boolean) => Either[ApiError, JobInfo]
   ): List[ServerEndpoint[Any, Identity]] =
@@ -28,7 +29,7 @@ object PlacesRoutes:
       Api.placeTree.serverLogic[Identity]((id, asOf, depth) => places.tree(id, asOf, depth)),
       Api.placeFootprints.serverLogic[Identity]((id, asOf) => places.footprints(id, asOf)),
       Api.placeLinks.serverLogic[Identity](id => places.links(id)),
-      Api.place.serverLogic[Identity]((id, asOf, counts) => card(id, asOf, counts.getOrElse(false))),
+      card,
       Api.addPlaceName.serverLogic[Identity]((id, in) => places.addName(me, id, in)),
       Api.removePlaceName.serverLogic[Identity]((id, in) => places.removeName(me, id, in)),
       Api.setPlaceOverride.serverLogic[Identity]((id, in) => places.setOverride(me, id, in)),

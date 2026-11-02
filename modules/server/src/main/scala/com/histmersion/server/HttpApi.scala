@@ -86,13 +86,20 @@ final class HttpApi(
   ) ++ com.histmersion.domain.catalogue.places.PlacesRoutes(
     h.places,
     h.gazetteer,
-    (id, asOf, counts) => h.placeCard(id, asOf, counts),
+    Api.place.serverLogic[Identity]((id, asOf, counts) => h.placeCard(id, asOf, counts.getOrElse(false))),
     () => h.bootstrap.gazetteerSources,
     (source, apply) => h.bootstrap.loadGazetteer(source, apply)
   ) ++ com.histmersion.domain.catalogue.periods.PeriodsRoutes(h.periods) ++ List[ServerEndpoint[Any, Identity]](
     Api.init.serverLogic[Identity](fetch => h.bootstrap.init(fetch))
     // ── events (plan §1.2) and attestations (plan §1.3) ──────────────────────────────────────
-  ) ++ com.histmersion.domain.catalogue.events.EventsRoutes(h.events) ++ com.histmersion.domain.catalogue.evidence
+  ) ++ com.histmersion.domain.catalogue.events.EventsRoutes(
+    h.events,
+    List(
+      Api.getEvent.serverLogic[Identity](id => h.eventCard.get(id)),
+      Api.putEvent.serverLogic[Identity]((id, in) => h.eventCard.put(Caller.Local, id, in)),
+      Api.patchEvent.serverLogic[Identity]((id, p) => h.eventCard.patch(Caller.Local, id, p))
+    )
+  ) ++ com.histmersion.domain.catalogue.evidence
     .AttestationsRoutes(h.attestations) ++ List[ServerEndpoint[Any, Identity]](
     // ── goals (plan §1.5) ─────────────────────────────────────────────────────────────────────
     Api.goals.serverLogicSuccess[Identity](q => h.goals.list(q)),
