@@ -16,6 +16,7 @@ import com.histmersion.db.{AgentRepo, Db, Migrate, QueueRows}
 import com.histmersion.util.jobs.JobRepo
 import com.histmersion.server.{Deps, Handlers}
 import sttp.ai.core.agent.*
+import io.circe.syntax.*
 import sttp.ai.core.agent.testing.{RecordedRequest, ScriptedAgent}
 import sttp.client4.testing.SyncBackendStub
 
@@ -827,6 +828,29 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       List(s"The source traces tin by sea [[$Ck]].".length, s"Tin [[$Ck]].".length)
     )
     assertEquals(cmp.enrich.map(_.uniqueClaims), List(Nil, List("The cargo dates to about 1320 BCE.")))
+    // the comparison in the record: each run's totals, each step's models, billing, tokens and attempts, the outputs
+    // (the seconds a step took are the wall clock's and stay out)
+    note(
+      "the runs compared",
+      cmp.runs
+        .map(r => (r.status, r.dryRun, r.model, r.modelFor, r.usage, r.costUsd, r.attempts, r.failures).toString)
+        .mkString("\n")
+    )
+    note(
+      "the steps compared",
+      cmp.steps
+        .map(row =>
+          s"${row.name}: " + row.runs
+            .map(_.map(s => (s.models, s.actual, s.billing, s.usage, s.costUsd, s.attempts, s.failures, s.turns)))
+            .mkString(" | ")
+        )
+        .mkString("\n")
+    )
+    note(
+      "the outputs compared",
+      (cmp.enrich.map(_.asJson.noSpaces) ++ cmp.review.map(_.asJson.noSpaces)).mkString("\n")
+    )
+    note("the notes", (cmp.overlaps.map(_.asJson.noSpaces) ++ cmp.notes).mkString("\n"))
     val md = AgentsMarkdown.compare(cmp)
     assert(
       md.contains("# enrich-source on zzagent2019_tin: 2 runs") && md.contains("local:haiku-sim") &&
