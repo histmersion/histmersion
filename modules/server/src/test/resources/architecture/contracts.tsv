@@ -1,4 +1,148 @@
 # rule	file	detail	count — the known violations of AGENTS.md's rules 1–14; shrink, never grow
+bucket	db:db/AgentRepo.scala	package com.histmersion.db	1
+bucket	db:db/AutopilotRepo.scala	package com.histmersion.db	1
+bucket	db:db/BundleImport.scala	package com.histmersion.db	1
+bucket	db:db/BundleRepo.scala	package com.histmersion.db	1
+bucket	db:db/Codecs.scala	package com.histmersion.db	1
+bucket	db:db/Db.scala	package com.histmersion.db	1
+bucket	db:db/FocusRepo.scala	package com.histmersion.db	1
+bucket	db:db/GoalLinkRepo.scala	package com.histmersion.db	1
+bucket	db:db/GoalRepo.scala	package com.histmersion.db	1
+bucket	db:db/GoalRow.scala	package com.histmersion.db	1
+bucket	db:db/Jsonb.scala	package com.histmersion.db	1
+bucket	db:db/Keyset.scala	package com.histmersion.db	1
+bucket	db:db/ListSql.scala	package com.histmersion.db	1
+bucket	db:db/ManagerRepo.scala	package com.histmersion.db	1
+bucket	db:db/MergeState.scala	package com.histmersion.db	1
+bucket	db:db/Migrate.scala	package com.histmersion.db	1
+bucket	db:db/ModelSettingsRepo.scala	package com.histmersion.db	1
+bucket	db:db/Param.scala	package com.histmersion.db	1
+bucket	db:db/PlanQuotaRepo.scala	package com.histmersion.db	1
+bucket	db:db/Sql.scala	package com.histmersion.db	1
+bucket	db:db/Vocab.scala	package com.histmersion.db	1
+bucket	files:files/ArticleNote.scala	package com.histmersion.files	1
+bucket	files:files/BundleEntities.scala	package com.histmersion.files	1
+bucket	files:files/Export.scala	package com.histmersion.files	1
+bucket	files:files/Frontmatter.scala	package com.histmersion.files	1
+bucket	files:files/PlaceSeed.scala	package com.histmersion.files	1
+bucket	files:files/PluginKit.scala	package com.histmersion.files	1
+bucket	files:files/SafePath.scala	package com.histmersion.files	1
+bucket	upstreams:upstreams/AcquireParse.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/ArchiveFile.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/ArchiveItem.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/ArchiveOrg.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/CatalogDating.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/CoreApi.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/CoreEndpoint.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/CoreFailure.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/Endpoint.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/EuropePmcHit.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/FollowupRow.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/Identifiers.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/Jats.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/LandingSettings.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/MediaText.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/OaAccess.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/OpenAlexCrossref.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/PmcObject.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/PmcRecord.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/RefRow.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/RepositoryLanding.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/SearchDefaults.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/UpdateNotice.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/UpstreamHttp.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/UpstreamSettings.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/Url.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/WikidataClasses.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/WikidataEntities.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/WikidataItem.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/WikidataStatement.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/WorkLookup.scala	package com.histmersion.upstreams	1
+bucket	upstreams:upstreams/WorkRef.scala	package com.histmersion.upstreams	1
+bucket	values:values/AgentRole.scala	package com.histmersion.values	1
+bucket	values:values/ApprovalDecidedBy.scala	package com.histmersion.values	1
+bucket	values:values/ApprovalKind.scala	package com.histmersion.values	1
+bucket	values:values/ApprovalMode.scala	package com.histmersion.values	1
+bucket	values:values/ApprovalState.scala	package com.histmersion.values	1
+bucket	values:values/ArchiveId.scala	package com.histmersion.values	1
+bucket	values:values/ArticleUid.scala	package com.histmersion.values	1
+bucket	values:values/ArxivId.scala	package com.histmersion.values	1
+bucket	values:values/Ascii.scala	package com.histmersion.values	1
+bucket	values:values/AssetLinkTarget.scala	package com.histmersion.values	1
+bucket	values:values/AssetUid.scala	package com.histmersion.values	1
+bucket	values:values/AttestationTarget.scala	package com.histmersion.values	1
+bucket	values:values/AuthorName.scala	package com.histmersion.values	1
+bucket	values:values/BundleKind.scala	package com.histmersion.values	1
+bucket	values:values/ByteCount.scala	package com.histmersion.values	1
+bucket	values:values/ByteOffset.scala	package com.histmersion.values	1
+bucket	values:values/Citekey.scala	package com.histmersion.values	1
+bucket	values:values/Confidence.scala	package com.histmersion.values	1
+bucket	values:values/DecidedBy.scala	package com.histmersion.values	1
+bucket	values:values/DecisionKind.scala	package com.histmersion.values	1
+bucket	values:values/Doi.scala	package com.histmersion.values	1
+bucket	values:values/DraftMode.scala	package com.histmersion.values	1
+bucket	values:values/EdgeKind.scala	package com.histmersion.values	1
+bucket	values:values/EditionsPolicy.scala	package com.histmersion.values	1
+bucket	values:values/EventEdgeKind.scala	package com.histmersion.values	1
+bucket	values:values/EventId.scala	package com.histmersion.values	1
+bucket	values:values/EventLinkStatus.scala	package com.histmersion.values	1
+bucket	values:values/EventUid.scala	package com.histmersion.values	1
+bucket	values:values/GoalLinkKind.scala	package com.histmersion.values	1
+bucket	values:values/GoalSlug.scala	package com.histmersion.values	1
+bucket	values:values/GoalStatus.scala	package com.histmersion.values	1
+bucket	values:values/GoalUid.scala	package com.histmersion.values	1
+bucket	values:values/Historicity.scala	package com.histmersion.values	1
+bucket	values:values/Isbn.scala	package com.histmersion.values	1
+bucket	values:values/IssueKind.scala	package com.histmersion.values	1
+bucket	values:values/IssueSeverity.scala	package com.histmersion.values	1
+bucket	values:values/ItemStatus.scala	package com.histmersion.values	1
+bucket	values:values/JobId.scala	package com.histmersion.values	1
+bucket	values:values/JobKind.scala	package com.histmersion.values	1
+bucket	values:values/LatLon.scala	package com.histmersion.values	1
+bucket	values:values/Latitude.scala	package com.histmersion.values	1
+bucket	values:values/LicenceId.scala	package com.histmersion.values	1
+bucket	values:values/LocationPrecision.scala	package com.histmersion.values	1
+bucket	values:values/Longitude.scala	package com.histmersion.values	1
+bucket	values:values/ManagerKind.scala	package com.histmersion.values	1
+bucket	values:values/ManagerState.scala	package com.histmersion.values	1
+bucket	values:values/MatchMethod.scala	package com.histmersion.values	1
+bucket	values:values/MatchOutcome.scala	package com.histmersion.values	1
+bucket	values:values/MediaRole.scala	package com.histmersion.values	1
+bucket	values:values/Offset.scala	package com.histmersion.values	1
+bucket	values:values/PageSize.scala	package com.histmersion.values	1
+bucket	values:values/Period.scala	package com.histmersion.values	1
+bucket	values:values/PeriodError.scala	package com.histmersion.values	1
+bucket	values:values/Pipeline.scala	package com.histmersion.values	1
+bucket	values:values/PlaceId.scala	package com.histmersion.values	1
+bucket	values:values/PlaceKind.scala	package com.histmersion.values	1
+bucket	values:values/PluginId.scala	package com.histmersion.values	1
+bucket	values:values/Pmcid.scala	package com.histmersion.values	1
+bucket	values:values/Pmid.scala	package com.histmersion.values	1
+bucket	values:values/ProviderKind.scala	package com.histmersion.values	1
+bucket	values:values/RunId.scala	package com.histmersion.values	1
+bucket	values:values/RunState.scala	package com.histmersion.values	1
+bucket	values:values/ScheduleKind.scala	package com.histmersion.values	1
+bucket	values:values/Sha256.scala	package com.histmersion.values	1
+bucket	values:values/Slug.scala	package com.histmersion.values	1
+bucket	values:values/SourceStatus.scala	package com.histmersion.values	1
+bucket	values:values/SourceUid.scala	package com.histmersion.values	1
+bucket	values:values/StepStatus.scala	package com.histmersion.values	1
+bucket	values:values/TargetKind.scala	package com.histmersion.values	1
+bucket	values:values/Title.scala	package com.histmersion.values	1
+bucket	values:values/UserId.scala	package com.histmersion.values	1
+bucket	values:values/WikidataId.scala	package com.histmersion.values	1
+bucket	values:values/WireEnumValues.scala	package com.histmersion.values	1
+bucket	values:values/Year.scala	package com.histmersion.values	1
+client-refined	api:api/personal/BookmarkId.scala	a refined constraint in a client	1
+client-refined	api:api/personal/MapZoom.scala	a refined constraint in a client	1
+client-refined	api:api/personal/NoteId.scala	a refined constraint in a client	1
+client-refined	cli:cli/PluginId.scala	a refined constraint in a client	1
+client-refined	cli:cli/PluginRepository.scala	a refined constraint in a client	1
+client-refined	cli:cli/ScalaPackage.scala	a refined constraint in a client	1
+client-refined	plugin-api:plugin/Doi.scala	a refined constraint in a client	1
+client-refined	plugin-api:plugin/Latitude.scala	a refined constraint in a client	1
+client-refined	plugin-api:plugin/Longitude.scala	a refined constraint in a client	1
+client-refined	plugin-api:plugin/WikidataId.scala	a refined constraint in a client	1
 concept	layer api	ArticleLink in api:api/ArticleLink.scala web:web/ArticleLink.scala	2
 concept	layer core	Frontmatter in files:files/Frontmatter.scala files:util/data/mirror/Frontmatter.scala	2
 concept	layer core	Seconds in config:config/Seconds.scala server:util/ocr/Seconds.scala	2
@@ -721,6 +865,885 @@ helper	web:web/BaseMaps.scala	BaseMaps about BaseMap	1
 helper	web:web/PointKinds.scala	PointKinds about PointKind	1
 helper	web:web/map/Engines.scala	Engines about Engine	1
 helper	web:web/map/ShapeHits.scala	ShapeHits about ShapeHit	1
+layer	api:api/Acquire.scala	the client names a package outside api	2
+layer	api:api/AcquireChecks.scala	the client names a package outside api	2
+layer	api:api/Agents.scala	the client names a package outside api	2
+layer	api:api/Aliases.scala	the client names a package outside api	1
+layer	api:api/ArticleCoverage.scala	the client names a package outside api	1
+layer	api:api/ArticleEdits.scala	the client names a package outside api	1
+layer	api:api/ArticleFilter.scala	the client names a package outside api	1
+layer	api:api/ArticleKind.scala	the client names a package outside api	1
+layer	api:api/ArticleLinks.scala	the client names a package outside api	2
+layer	api:api/Articles.scala	the client names a package outside api	1
+layer	api:api/Assessment.scala	the client names a package outside api	1
+layer	api:api/AssetLinks.scala	the client names a package outside api	1
+layer	api:api/BundleFiles.scala	the client names a package outside api	1
+layer	api:api/BundleFinding.scala	the client names a package outside api	1
+layer	api:api/BundleKindCounts.scala	the client names a package outside api	1
+layer	api:api/BundleSource.scala	the client names a package outside api	1
+layer	api:api/BundleTombstone.scala	the client names a package outside api	1
+layer	api:api/CatalogRecord.scala	the client names a package outside api	1
+layer	api:api/CitedSource.scala	the client names a package outside api	1
+layer	api:api/CitekeyInput.scala	the client names a package outside api	1
+layer	api:api/ConfidenceStyle.scala	the client names a package outside api	1
+layer	api:api/ContradictionRow.scala	the client names a package outside api	1
+layer	api:api/CoverageSource.scala	the client names a package outside api	1
+layer	api:api/CritiqueState.scala	the client names a package outside api	1
+layer	api:api/DeleteBlockerKind.scala	the client names a package outside api	1
+layer	api:api/DeletePart.scala	the client names a package outside api	1
+layer	api:api/DriftKind.scala	the client names a package outside api	1
+layer	api:api/EdgeInput.scala	the client names a package outside api	1
+layer	api:api/EventFields.scala	the client names a package outside api	1
+layer	api:api/EventImportReport.scala	the client names a package outside api	2
+layer	api:api/EventLinkCandidate.scala	the client names a package outside api	1
+layer	api:api/EventRederiveReport.scala	the client names a package outside api	2
+layer	api:api/EventScale.scala	the client names a package outside api	1
+layer	api:api/FilterDocs.scala	the client names a package outside api	1
+layer	api:api/Finding.scala	the client names a package outside api	1
+layer	api:api/FindingRow.scala	the client names a package outside api	1
+layer	api:api/FormatField.scala	the client names a package outside api	1
+layer	api:api/FormatMarkdown.scala	the client names a package outside api	1
+layer	api:api/FormatRule.scala	the client names a package outside api	1
+layer	api:api/FormatSeverity.scala	the client names a package outside api	1
+layer	api:api/Gazetteer.scala	the client names a package outside api	1
+layer	api:api/GazetteerKind.scala	the client names a package outside api	1
+layer	api:api/GeoHit.scala	the client names a package outside api	1
+layer	api:api/GeoPick.scala	the client names a package outside api	1
+layer	api:api/Geocode.scala	the client names a package outside api	1
+layer	api:api/GoalPlans.scala	the client names a package outside api	2
+layer	api:api/GoalStages.scala	the client names a package outside api	1
+layer	api:api/GoalsExport.scala	the client names a package outside api	1
+layer	api:api/GraphNode.scala	the client names a package outside api	1
+layer	api:api/HtmlAtoms.scala	the client names a package outside api	1
+layer	api:api/InitPlan.scala	the client names a package outside api	3
+layer	api:api/IssueCondition.scala	the client names a package outside api	1
+layer	api:api/JobDetail.scala	the client names a package outside api	1
+layer	api:api/LabelRenamed.scala	the client names a package outside api	1
+layer	api:api/LabelRenames.scala	the client names a package outside api	1
+layer	api:api/ListFilters.scala	the client names a package outside api	2
+layer	api:api/Lpf.scala	the client names a package outside api	1
+layer	api:api/Managers.scala	the client names a package outside api	1
+layer	api:api/MergeApplyJob.scala	the client names a package outside api	1
+layer	api:api/MergeDecision.scala	the client names a package outside api	1
+layer	api:api/MergeIssue.scala	the client names a package outside api	1
+layer	api:api/MergeJobState.scala	the client names a package outside api	1
+layer	api:api/MergeMarkdown.scala	the client names a package outside api	1
+layer	api:api/MergePlan.scala	the client names a package outside api	2
+layer	api:api/MergePolicy.scala	the client names a package outside api	1
+layer	api:api/MergeResolutionsText.scala	the client names a package outside api	1
+layer	api:api/MetadataField.scala	the client names a package outside api	1
+layer	api:api/MetadataPatch.scala	the client names a package outside api	1
+layer	api:api/ModelChains.scala	the client names a package outside api	1
+layer	api:api/NeighborRow.scala	the client names a package outside api	1
+layer	api:api/NeighborTarget.scala	the client names a package outside api	1
+layer	api:api/Palette.scala	the client names a package outside api	1
+layer	api:api/PeriodSkip.scala	the client names a package outside api	1
+layer	api:api/PlaceAdd.scala	the client names a package outside api	1
+layer	api:api/PlaceDating.scala	the client names a package outside api	1
+layer	api:api/PlaceDetail.scala	the client names a package outside api	1
+layer	api:api/PlaceEdits.scala	the client names a package outside api	1
+layer	api:api/PlaceOverrideSet.scala	the client names a package outside api	1
+layer	api:api/PlaceOverrides.scala	the client names a package outside api	1
+layer	api:api/PlaceShape.scala	the client names a package outside api	1
+layer	api:api/PlaceTimeBasis.scala	the client names a package outside api	1
+layer	api:api/PresetRegion.scala	the client names a package outside api	1
+layer	api:api/RegisteredJobKinds.scala	the client names a package outside api	4
+layer	api:api/RegisteredPlanMatches.scala	the client names a package outside api	1
+layer	api:api/Rename.scala	the client names a package outside api	2
+layer	api:api/ResolvedSource.scala	the client names a package outside api	1
+layer	api:api/ReviewState.scala	the client names a package outside api	1
+layer	api:api/SearchHit.scala	the client names a package outside api	1
+layer	api:api/SiteTypes.scala	the client names a package outside api	1
+layer	api:api/SkippedPeriod.scala	the client names a package outside api	4
+layer	api:api/Source.scala	the client names a package outside api	1
+layer	api:api/SourceDetail.scala	the client names a package outside api	1
+layer	api:api/SourceMatch.scala	the client names a package outside api	3
+layer	api:api/SourcePut.scala	the client names a package outside api	1
+layer	api:api/SourceRef.scala	the client names a package outside api	1
+layer	api:api/StatusCount.scala	the client names a package outside api	1
+layer	api:api/UiLabels.scala	the client names a package outside api	1
+layer	api:api/Vacuum.scala	the client names a package outside api	1
+layer	api:api/VacuumPlan.scala	the client names a package outside api	2
+layer	api:api/ValueCodecs.scala	the client names a package outside api	1
+layer	api:api/VocabularyCodecs.scala	the client names a package outside api	1
+layer	api:api/WireEnum.scala	the client names a package outside api	1
+layer	api:api/Wording.scala	the client names a package outside api	1
+layer	api:api/automation/agents/AgentJobKinds.scala	the client names a package outside api	2
+layer	api:api/catalogue/events/EventsJobKinds.scala	the client names a package outside api	2
+layer	api:api/catalogue/evidence/EvidenceJobKinds.scala	the client names a package outside api	2
+layer	api:api/catalogue/places/PlaceCard.scala	the client names a package outside api	1
+layer	api:api/catalogue/places/PlaceEntry.scala	the client names a package outside api	1
+layer	api:api/catalogue/places/PlacesJobKinds.scala	the client names a package outside api	2
+layer	api:api/catalogue/places/RegionNode.scala	the client names a package outside api	1
+layer	api:api/library/acquisition/AcquisitionJobKinds.scala	the client names a package outside api	2
+layer	api:api/library/ingest/IngestJobKinds.scala	the client names a package outside api	2
+layer	api:api/library/sources/SourceWrite.scala	the client names a package outside api	1
+layer	api:api/media/covers/CoversJobKinds.scala	the client names a package outside api	2
+layer	api:api/media/imports/ImportJobKinds.scala	the client names a package outside api	2
+layer	api:api/personal/ItemKind.scala	the client names a package outside api	1
+layer	api:api/personal/Target.scala	the client names a package outside api	1
+layer	api:util/basemap/BasemapJobKinds.scala	an api file outside com.histmersion.api	1
+layer	api:util/basemap/BasemapJobKinds.scala	the client names a package outside api	3
+layer	api:util/data/exchange/ExchangeJobKinds.scala	an api file outside com.histmersion.api	1
+layer	api:util/data/exchange/ExchangeJobKinds.scala	the client names a package outside api	3
+layer	api:util/data/exchange/PlanMatchKind.scala	an api file outside com.histmersion.api	1
+layer	api:util/data/exchange/PlanMatchKind.scala	the client names a package outside api	1
+layer	api:util/data/exchange/PlanMatches.scala	an api file outside com.histmersion.api	1
+layer	api:util/data/exchange/PlanMatches.scala	the client names a package outside api	1
+layer	api:util/data/maintenance/MaintenanceJobKinds.scala	an api file outside com.histmersion.api	1
+layer	api:util/data/maintenance/MaintenanceJobKinds.scala	the client names a package outside api	3
+layer	api:util/identity/AliasKind.scala	an api file outside com.histmersion.api	1
+layer	api:util/identity/AliasKind.scala	the client names a package outside api	1
+layer	api:util/identity/AliasKinds.scala	an api file outside com.histmersion.api	1
+layer	api:util/identity/AliasKinds.scala	the client names a package outside api	2
+layer	api:util/identity/KeyWord.scala	an api file outside com.histmersion.api	1
+layer	api:util/identity/KeyWord.scala	the client names a package outside api	1
+layer	api:util/identity/RecordNoun.scala	an api file outside com.histmersion.api	1
+layer	api:util/identity/RecordNoun.scala	the client names a package outside api	1
+layer	api:util/jobs/JobDetailField.scala	an api file outside com.histmersion.api	1
+layer	api:util/jobs/JobDetailField.scala	the client names a package outside api	1
+layer	api:util/jobs/JobKindEntry.scala	an api file outside com.histmersion.api	1
+layer	api:util/jobs/JobKindEntry.scala	the client names a package outside api	2
+layer	api:util/jobs/JobKindMeaning.scala	an api file outside com.histmersion.api	1
+layer	api:util/jobs/JobKindMeaning.scala	the client names a package outside api	1
+layer	api:util/jobs/JobKindName.scala	an api file outside com.histmersion.api	1
+layer	api:util/jobs/JobKindName.scala	the client names a package outside api	1
+layer	api:util/jobs/JobKinds.scala	an api file outside com.histmersion.api	1
+layer	api:util/jobs/JobKinds.scala	the client names a package outside api	2
+layer	api:util/json/NewtypeCodecs.scala	an api file outside com.histmersion.api	1
+layer	api:util/json/NewtypeCodecs.scala	the client names a package outside api	1
+layer	api:util/text/SafeName.scala	an api file outside com.histmersion.api	1
+layer	api:util/text/SafeName.scala	the client names a package outside api	1
+layer	api:util/text/WikiLinks.scala	an api file outside com.histmersion.api	1
+layer	api:util/text/WikiLinks.scala	the client names a package outside api	1
+layer	core:domain/AcquireMatch.scala	a domain file names the api outside a boundary	2
+layer	core:domain/AcquireRecheck.scala	a domain file names the api outside a boundary	1
+layer	core:domain/AgentProposals.scala	a domain file names the api outside a boundary	2
+layer	core:domain/AgentVerify.scala	a domain file names the api outside a boundary	1
+layer	core:domain/ArticleReviewStatus.scala	a domain file names the api outside a boundary	1
+layer	core:domain/Attribution.scala	a domain file names the api outside a boundary	1
+layer	core:domain/AutoEnrich.scala	a domain file names the api outside a boundary	2
+layer	core:domain/AutopilotPolicy.scala	a domain file names the api outside a boundary	2
+layer	core:domain/BrowserDownload.scala	a domain file names the api outside a boundary	1
+layer	core:domain/CompileArticle.scala	a domain file names the api outside a boundary	3
+layer	core:domain/CoreQuota.scala	a domain file names the api outside a boundary	1
+layer	core:domain/EnrichSource.scala	a domain file names the api outside a boundary	2
+layer	core:domain/FilterInference.scala	a domain file names the api outside a boundary	3
+layer	core:domain/GoalFocus.scala	a domain file names the api outside a boundary	2
+layer	core:domain/HintProposals.scala	a domain file names the api outside a boundary	2
+layer	core:domain/IngestBacklog.scala	a domain file names the api outside a boundary	2
+layer	core:domain/ManagerPolicy.scala	a domain file names the api outside a boundary	3
+layer	core:domain/MergeFold.scala	a domain file names the api outside a boundary	2
+layer	core:domain/MergePlanner.scala	a domain file names the api outside a boundary	2
+layer	core:domain/PassageFinder.scala	a domain file names the api outside a boundary	2
+layer	core:domain/PlanArticles.scala	a domain file names the api outside a boundary	3
+layer	core:domain/PlanGoal.scala	a domain file names the api outside a boundary	2
+layer	core:domain/ReviewArticle.scala	a domain file names the api outside a boundary	3
+layer	core:domain/ReviewLedger.scala	a domain file names the api outside a boundary	2
+layer	core:domain/SchedulerPolicy.scala	a domain file names the api outside a boundary	1
+layer	core:domain/Scheduling.scala	a domain file names the api outside a boundary	2
+layer	core:domain/SeedPlanDefaults.scala	a domain file names the api outside a boundary	1
+layer	core:domain/WatchManagerDefaults.scala	a domain file names the api outside a boundary	1
+layer	core:domain/WatchSchedules.scala	a domain file names the api outside a boundary	2
+layer	core:domain/activity/ActivityQuery.scala	a domain file names the api outside a boundary	1
+layer	core:domain/activity/ActivityRules.scala	a domain file names the api outside a boundary	2
+layer	core:domain/catalogue/events/CatalogMerge.scala	a domain file names the api outside a boundary	1
+layer	core:domain/catalogue/events/CatalogProvider.scala	a domain file names the api outside a boundary	1
+layer	core:domain/catalogue/events/EventPlan.scala	a domain file names the api outside a boundary	1
+layer	core:domain/catalogue/events/EventProviders.scala	a domain file names the api outside a boundary	1
+layer	core:domain/catalogue/events/StoredEvent.scala	a domain file names the api outside a boundary	1
+layer	core:domain/catalogue/evidence/AttestationPlan.scala	a domain file names the api outside a boundary	1
+layer	core:domain/catalogue/evidence/EventMatcher.scala	a domain file names the api outside a boundary	1
+layer	core:domain/catalogue/maptiles/TileFeatures.scala	a domain file names the api outside a boundary	1
+layer	core:domain/catalogue/periods/PeriodPlan.scala	a domain file names the api outside a boundary	1
+layer	core:domain/catalogue/places/PlacePlan.scala	a domain file names the api outside a boundary	1
+layer	core:domain/catalogue/places/PlaceReview.scala	a domain file names the api outside a boundary	1
+layer	core:domain/catalogue/places/PointAreas.scala	a domain file names the api outside a boundary	3
+layer	core:domain/library/findings/FindingPlan.scala	a domain file names the api outside a boundary	2
+layer	core:domain/library/sources/Citekeys.scala	a domain file names the api outside a boundary	1
+layer	core:domain/library/sources/MergeText.scala	a domain file names the api outside a boundary	1
+layer	core:domain/library/sources/SourceMatcher.scala	a domain file names the api outside a boundary	2
+layer	core:domain/library/sources/SourcePlan.scala	a domain file names the api outside a boundary	1
+layer	core:domain/library/workflows/AcquisitionSweepRules.scala	a domain file names the api outside a boundary	2
+layer	core:domain/library/workflows/CurrencyCheckRules.scala	a domain file names the api outside a boundary	2
+layer	core:domain/media/assets/AssetPlan.scala	a domain file names the api outside a boundary	1
+layer	core:domain/media/assets/NewFigure.scala	a domain file names the api outside a boundary	1
+layer	core:domain/media/figures/Figures.scala	a domain file names the api outside a boundary	1
+layer	core:domain/media/imports/MediaMatch.scala	a domain file names the api outside a boundary	1
+layer	core:domain/research/ResearchPlan.scala	a domain file names the api outside a boundary	1
+layer	core:domain/research/workflows/ReviewManagerPolicy.scala	a domain file names the api outside a boundary	2
+layer	db:domain/automation/agents/AgentStateRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/automation/approvals/ApprovalQuery.scala	a domain file names the api outside a boundary	2
+layer	db:domain/automation/goals/GoalBundleRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/automation/goals/GoalSourceReferrer.scala	a domain file names the api outside a boundary	1
+layer	db:domain/automation/goals/GoalsCarried.scala	a domain file names the api outside a boundary	2
+layer	db:domain/automation/managers/ManagerLight.scala	a domain file names the api outside a boundary	1
+layer	db:domain/automation/worklists/QueueBundleRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/automation/worklists/QueueCarried.scala	a domain file names the api outside a boundary	2
+layer	db:domain/automation/worklists/QueueRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/automation/worklists/WorkListMergeFollowUps.scala	a domain file names the api outside a boundary	1
+layer	db:domain/automation/worklists/WorkListSourceReferrer.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/events/CorrectionRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/events/CorrectionRow.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/events/EventBundleRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/events/EventDatingRow.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/events/EventDetailRow.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/events/EventGeoRow.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/events/EventImportRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/events/EventRepo.scala	a domain file names the api outside a boundary	3
+layer	db:domain/catalogue/events/EventRow.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/events/EventSaved.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/events/EventSelection.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/events/EventSourceFilter.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/events/EventSourceReferrer.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/events/EventSql.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/events/EventsCarried.scala	a domain file names the api outside a boundary	2
+layer	db:domain/catalogue/evidence/AttestationRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/evidence/AttestationSourceReferrer.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/evidence/EventLinkRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/evidence/EvidenceBundleRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/evidence/EvidenceCarried.scala	a domain file names the api outside a boundary	2
+layer	db:domain/catalogue/evidence/LeadRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/maptiles/TileRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/periods/PeriodBundleRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/periods/PeriodRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/periods/PeriodRow.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/periods/PeriodsCarried.scala	a domain file names the api outside a boundary	2
+layer	db:domain/catalogue/places/FindingPlaceRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/places/FindingPlacement.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/places/FootprintRow.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/places/GazetteerRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/places/GazetteerSourceRow.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/places/Geocoder.scala	a domain file names the api outside a boundary	2
+layer	db:domain/catalogue/places/PlaceBundleRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/places/PlaceDetailRow.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/places/PlaceOverrideRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/places/PlaceRepo.scala	a domain file names the api outside a boundary	2
+layer	db:domain/catalogue/places/PlaceReviewRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/places/PlaceScope.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/places/PlaceSourceReferrer.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/places/PlaceSql.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/places/PlaceTypeRow.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/places/PlaceVocabularyCodecs.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/places/PlacesCarried.scala	a domain file names the api outside a boundary	2
+layer	db:domain/catalogue/places/PointAreaRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/places/SiteTypesSql.scala	a domain file names the api outside a boundary	1
+layer	db:domain/catalogue/places/TreeRepo.scala	a domain file names the api outside a boundary	2
+layer	db:domain/library/acquisition/AssessmentRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/library/acquisition/CandidateRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/library/citations/CitationRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/library/findings/FindingRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/library/findings/GeoFeedRow.scala	a domain file names the api outside a boundary	1
+layer	db:domain/library/labels/LabelRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/library/search/AggregateRepo.scala	a domain file names the api outside a boundary	2
+layer	db:domain/library/search/FilterEventSources.scala	a domain file names the api outside a boundary	1
+layer	db:domain/library/search/FilterSql.scala	a domain file names the api outside a boundary	1
+layer	db:domain/library/search/FindingHitRow.scala	a domain file names the api outside a boundary	1
+layer	db:domain/library/search/QueryRepo.scala	a domain file names the api outside a boundary	2
+layer	db:domain/library/search/SearchRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/library/sources/SourceBundleRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/library/sources/SourceCheckRepo.scala	a domain file names the api outside a boundary	3
+layer	db:domain/library/sources/SourceDeletePlan.scala	a domain file names the api outside a boundary	1
+layer	db:domain/library/sources/SourceDeleteRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/library/sources/SourceRepairs.scala	a domain file names the api outside a boundary	2
+layer	db:domain/library/sources/SourceRepo.scala	a domain file names the api outside a boundary	2
+layer	db:domain/library/sources/SourcesCarried.scala	a domain file names the api outside a boundary	2
+layer	db:domain/library/sources/referrers/DeleteReport.scala	a domain file names the api outside a boundary	1
+layer	db:domain/library/sources/referrers/RenamedReferences.scala	a domain file names the api outside a boundary	1
+layer	db:domain/library/sources/referrers/SourceKeys.scala	a domain file names the api outside a boundary	1
+layer	db:domain/library/sources/referrers/SourceRename.scala	a domain file names the api outside a boundary	1
+layer	db:domain/media/assets/AssetBundleRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/media/assets/AssetRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/media/assets/AssetsCarried.scala	a domain file names the api outside a boundary	1
+layer	db:domain/media/assets/MediaRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/media/assets/ProviderAsset.scala	a domain file names the api outside a boundary	1
+layer	db:domain/media/covers/CoverRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/media/figures/FigureRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/media/links/AssetLinkBundleRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/media/links/AssetLinkRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/media/links/AssetLinkSourceReferrer.scala	a domain file names the api outside a boundary	1
+layer	db:domain/media/links/AssetLinksCarried.scala	a domain file names the api outside a boundary	2
+layer	db:domain/research/articles/ArticleBundleRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/research/articles/ArticleCheckRepo.scala	a domain file names the api outside a boundary	3
+layer	db:domain/research/articles/ArticleRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/research/articles/ArticleSourceReferrer.scala	a domain file names the api outside a boundary	1
+layer	db:domain/research/articles/ArticleSummaryRow.scala	a domain file names the api outside a boundary	1
+layer	db:domain/research/articles/ArticlesCarried.scala	a domain file names the api outside a boundary	2
+layer	db:domain/research/articles/CoverageRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/research/articles/CritiqueRepo.scala	a domain file names the api outside a boundary	1
+layer	db:domain/research/articles/review/ArticleReviewRepo.scala	a domain file names the api outside a boundary	1
+layer	server:domain/activity/ActivityRepo.scala	a domain file names the api outside a boundary	2
+layer	server:domain/activity/ActivityRow.scala	a domain file names the api outside a boundary	2
+layer	server:domain/activity/ActivityService.scala	a domain file names the api outside a boundary	1
+layer	server:domain/automation/agents/AgentDef.scala	a domain file names the api outside a boundary	1
+layer	server:domain/automation/agents/AgentDefinitions.scala	a domain file names the api outside a boundary	1
+layer	server:domain/automation/agents/AgentStateService.scala	a domain file names the api outside a boundary	1
+layer	server:domain/automation/agents/AgentTrees.scala	a domain file names the api outside a boundary	1
+layer	server:domain/automation/agents/AgentsHandlers.scala	a domain file names the api outside a boundary	3
+layer	server:domain/automation/agents/AgentsSettings.scala	a domain file names the api outside a boundary	1
+layer	server:domain/automation/agents/AllowanceGuard.scala	a domain file names the api outside a boundary	3
+layer	server:domain/automation/agents/AnswerSchemas.scala	a domain file names the api outside a boundary	2
+layer	server:domain/automation/agents/ApprovalService.scala	a domain file names the api outside a boundary	2
+layer	server:domain/automation/agents/Checked.scala	a domain file names the api outside a boundary	3
+layer	server:domain/automation/agents/CompareRunsViews.scala	a domain file names the api outside a boundary	2
+layer	server:domain/automation/agents/Engine.scala	a domain file names the api outside a boundary	5
+layer	server:domain/automation/agents/Halt.scala	a domain file names the api outside a boundary	3
+layer	server:domain/automation/agents/LatencyInterceptor.scala	a domain file names the api outside a boundary	3
+layer	server:domain/automation/agents/LlmClient.scala	a domain file names the api outside a boundary	2
+layer	server:domain/automation/agents/ModelLimitReached.scala	a domain file names the api outside a boundary	1
+layer	server:domain/automation/agents/ModelPicker.scala	a domain file names the api outside a boundary	3
+layer	server:domain/automation/agents/PickFailure.scala	a domain file names the api outside a boundary	3
+layer	server:domain/automation/agents/Picked.scala	a domain file names the api outside a boundary	3
+layer	server:domain/automation/agents/PluginAiClient.scala	a domain file names the api outside a boundary	1
+layer	server:domain/automation/agents/PluginModel.scala	a domain file names the api outside a boundary	1
+layer	server:domain/automation/agents/PoolSink.scala	a domain file names the api outside a boundary	1
+layer	server:domain/automation/agents/RunBudget.scala	a domain file names the api outside a boundary	3
+layer	server:domain/automation/agents/RunCtx.scala	a domain file names the api outside a boundary	3
+layer	server:domain/automation/agents/RunService.scala	a domain file names the api outside a boundary	2
+layer	server:domain/automation/agents/StrictJsonSchema.scala	a domain file names the api outside a boundary	1
+layer	server:domain/automation/agents/Trace.scala	a domain file names the api outside a boundary	3
+layer	server:domain/automation/approvals/ApprovalChecks.scala	a domain file names the api outside a boundary	1
+layer	server:domain/automation/approvals/ApprovalDigestService.scala	a domain file names the api outside a boundary	4
+layer	server:domain/automation/approvals/ApprovalEffects.scala	a domain file names the api outside a boundary	1
+layer	server:domain/automation/approvals/Approvals.scala	a domain file names the api outside a boundary	2
+layer	server:domain/automation/approvals/AutoApprovals.scala	a domain file names the api outside a boundary	5
+layer	server:domain/automation/approvals/Decided.scala	a domain file names the api outside a boundary	3
+layer	server:domain/automation/approvals/SubjectEffect.scala	a domain file names the api outside a boundary	1
+layer	server:domain/automation/autopilot/AutopilotService.scala	a domain file names the api outside a boundary	5
+layer	server:domain/automation/goals/GoalFocusService.scala	a domain file names the api outside a boundary	5
+layer	server:domain/automation/goals/GoalRecord.scala	a domain file names the api outside a boundary	1
+layer	server:domain/automation/goals/GoalService.scala	a domain file names the api outside a boundary	2
+layer	server:domain/automation/goals/PlanGoalPipeline.scala	a domain file names the api outside a boundary	5
+layer	server:domain/automation/managers/DrainService.scala	a domain file names the api outside a boundary	3
+layer	server:domain/automation/managers/HintEffectPipeline.scala	a domain file names the api outside a boundary	4
+layer	server:domain/automation/managers/ManagerContext.scala	a domain file names the api outside a boundary	3
+layer	server:domain/automation/managers/ManagerItemRecord.scala	a domain file names the api outside a boundary	1
+layer	server:domain/automation/managers/ManagerKindDefinition.scala	a domain file names the api outside a boundary	5
+layer	server:domain/automation/managers/ManagerRecord.scala	a domain file names the api outside a boundary	1
+layer	server:domain/automation/managers/ManagerService.scala	a domain file names the api outside a boundary	2
+layer	server:domain/automation/managers/ManagerSupervisor.scala	a domain file names the api outside a boundary	4
+layer	server:domain/automation/managers/ManagersHandlers.scala	a domain file names the api outside a boundary	4
+layer	server:domain/automation/managers/Zero.scala	a domain file names the api outside a boundary	4
+layer	server:domain/automation/scheduler/SchedulerService.scala	a domain file names the api outside a boundary	5
+layer	server:domain/automation/workflows/AutomationHost.scala	a domain file names the api outside a boundary	4
+layer	server:domain/automation/workflows/PipelineDef.scala	a domain file names the api outside a boundary	3
+layer	server:domain/automation/workflows/Pipelines.scala	a domain file names the api outside a boundary	2
+layer	server:domain/automation/worklists/QueueService.scala	a domain file names the api outside a boundary	2
+layer	server:domain/automation/worklists/WorkListState.scala	a domain file names the api outside a boundary	2
+layer	server:domain/catalogue/CatalogueJobs.scala	a domain file names the api outside a boundary	2
+layer	server:domain/catalogue/CatalogueState.scala	a domain file names the api outside a boundary	1
+layer	server:domain/catalogue/events/BuiltinCatalogues.scala	a domain file names the api outside a boundary	1
+layer	server:domain/catalogue/events/CorrectionService.scala	a domain file names the api outside a boundary	1
+layer	server:domain/catalogue/events/EventImportService.scala	a domain file names the api outside a boundary	1
+layer	server:domain/catalogue/events/EventImports.scala	a domain file names the api outside a boundary	1
+layer	server:domain/catalogue/events/EventService.scala	a domain file names the api outside a boundary	8
+layer	server:domain/catalogue/events/EventsData.scala	a domain file names the api outside a boundary	2
+layer	server:domain/catalogue/events/EventsSettings.scala	a domain file names the api outside a boundary	2
+layer	server:domain/catalogue/events/HeldEvent.scala	a domain file names the api outside a boundary	1
+layer	server:domain/catalogue/evidence/AttestationService.scala	a domain file names the api outside a boundary	1
+layer	server:domain/catalogue/evidence/EventLinkService.scala	a domain file names the api outside a boundary	1
+layer	server:domain/catalogue/evidence/LeadService.scala	a domain file names the api outside a boundary	1
+layer	server:domain/catalogue/evidence/passages/Passage.scala	a domain file names the api outside a boundary	1
+layer	server:domain/catalogue/maptiles/MapTileService.scala	a domain file names the api outside a boundary	1
+layer	server:domain/catalogue/maptiles/MapTiles.scala	a domain file names the api outside a boundary	1
+layer	server:domain/catalogue/maptiles/layers/MapLayer.scala	a domain file names the api outside a boundary	1
+layer	server:domain/catalogue/periods/PeriodImports.scala	a domain file names the api outside a boundary	1
+layer	server:domain/catalogue/periods/PeriodService.scala	a domain file names the api outside a boundary	1
+layer	server:domain/catalogue/periods/StoredPeriod.scala	a domain file names the api outside a boundary	1
+layer	server:domain/catalogue/places/BuiltinGazetteers.scala	a domain file names the api outside a boundary	1
+layer	server:domain/catalogue/places/GazetteerImports.scala	a domain file names the api outside a boundary	1
+layer	server:domain/catalogue/places/GazetteerLoad.scala	a domain file names the api outside a boundary	1
+layer	server:domain/catalogue/places/Geocoding.scala	a domain file names the api outside a boundary	1
+layer	server:domain/catalogue/places/HeldOverride.scala	a domain file names the api outside a boundary	1
+layer	server:domain/catalogue/places/HeldPlace.scala	a domain file names the api outside a boundary	3
+layer	server:domain/catalogue/places/ImportRunner.scala	a domain file names the api outside a boundary	1
+layer	server:domain/catalogue/places/NaturalEarthLand.scala	a domain file names the api outside a boundary	1
+layer	server:domain/catalogue/places/PlaceGeometry.scala	a domain file names the api outside a boundary	1
+layer	server:domain/catalogue/places/PlaceMap.scala	a domain file names the api outside a boundary	1
+layer	server:domain/catalogue/places/PlaceService.scala	a domain file names the api outside a boundary	3
+layer	server:domain/catalogue/places/PlacesData.scala	a domain file names the api outside a boundary	2
+layer	server:domain/library/LibraryState.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/acquisition/AcquireCheckService.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/acquisition/AcquireClients.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/acquisition/AcquisitionState.scala	a domain file names the api outside a boundary	2
+layer	server:domain/library/acquisition/ArxivIndex.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/acquisition/AssessmentService.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/acquisition/CandidateSearch.scala	a domain file names the api outside a boundary	2
+layer	server:domain/library/acquisition/CandidateService.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/acquisition/CitationAlerts.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/acquisition/CitationsClient.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/acquisition/Clients.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/acquisition/CoreIndex.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/acquisition/CrossrefIndex.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/acquisition/DiscoveryClient.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/acquisition/EuropePmcIndex.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/acquisition/FetcherGeneration.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/acquisition/Indexes.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/acquisition/NoAlerts.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/acquisition/OpenAlexDiscovery.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/acquisition/OpenAlexIndex.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/acquisition/RetractionWatch.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/acquisition/RetractionWatchClient.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/acquisition/ScholarlyIndex.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/acquisition/SemanticScholar.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/acquisition/UpstreamRecords.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/acquisition/WikiClient.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/acquisition/Wikipedia.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/citations/CitationService.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/collections/CollectionLibrary.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/collections/CollectionsService.scala	a domain file names the api outside a boundary	2
+layer	server:domain/library/collections/GapOriginal.scala	a domain file names the api outside a boundary	2
+layer	server:domain/library/collections/ImportTarget.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/findings/FindingService.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/ingest/IngestMeta.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/ingest/IngestPending.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/ingest/IngestQueue.scala	a domain file names the api outside a boundary	2
+layer	server:domain/library/ingest/QueuedIngest.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/ingest/SeedImport.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/ingest/SeedNote.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/ingest/SkeletonIngest.scala	a domain file names the api outside a boundary	2
+layer	server:domain/library/labels/LabelService.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/search/QueryService.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/search/SearchFilters.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/search/SearchService.scala	a domain file names the api outside a boundary	2
+layer	server:domain/library/sources/SourceFormatting.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/sources/SourceMirrorNote.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/sources/SourceService.scala	a domain file names the api outside a boundary	2
+layer	server:domain/library/sources/SourcesData.scala	a domain file names the api outside a boundary	3
+layer	server:domain/library/workflows/AcquireRecheckService.scala	a domain file names the api outside a boundary	3
+layer	server:domain/library/workflows/AcquisitionSweepPipeline.scala	a domain file names the api outside a boundary	4
+layer	server:domain/library/workflows/AgentFacetsInput.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/workflows/AgentGetSourceInput.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/workflows/AgentSearchInput.scala	a domain file names the api outside a boundary	2
+layer	server:domain/library/workflows/AgentUpstream.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/workflows/CurrencyCheckPipeline.scala	a domain file names the api outside a boundary	3
+layer	server:domain/library/workflows/EnrichGuards.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/workflows/EnrichManagerKind.scala	a domain file names the api outside a boundary	3
+layer	server:domain/library/workflows/EnrichSourcePipeline.scala	a domain file names the api outside a boundary	2
+layer	server:domain/library/workflows/FollowupsInput.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/workflows/GoalSweep.scala	a domain file names the api outside a boundary	4
+layer	server:domain/library/workflows/LibraryAnswers.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/workflows/LibrarySite.scala	a domain file names the api outside a boundary	1
+layer	server:domain/library/workflows/OaBacklog.scala	a domain file names the api outside a boundary	5
+layer	server:domain/library/workflows/SeedService.scala	a domain file names the api outside a boundary	3
+layer	server:domain/library/workflows/SourceProposals.scala	a domain file names the api outside a boundary	2
+layer	server:domain/library/workflows/WatchManagerKind.scala	a domain file names the api outside a boundary	4
+layer	server:domain/media/MediaJobs.scala	a domain file names the api outside a boundary	2
+layer	server:domain/media/MediaState.scala	a domain file names the api outside a boundary	1
+layer	server:domain/media/assets/AssetService.scala	a domain file names the api outside a boundary	1
+layer	server:domain/media/assets/AssetsData.scala	a domain file names the api outside a boundary	2
+layer	server:domain/media/assets/MediaMapLayer.scala	a domain file names the api outside a boundary	1
+layer	server:domain/media/covers/SourcePictures.scala	a domain file names the api outside a boundary	1
+layer	server:domain/media/figures/FigureService.scala	a domain file names the api outside a boundary	1
+layer	server:domain/media/imports/BuiltinMedia.scala	a domain file names the api outside a boundary	1
+layer	server:domain/media/imports/CollectionImport.scala	a domain file names the api outside a boundary	1
+layer	server:domain/media/imports/MediaImporter.scala	a domain file names the api outside a boundary	1
+layer	server:domain/media/imports/MediaImporters.scala	a domain file names the api outside a boundary	1
+layer	server:domain/media/imports/OwnImport.scala	a domain file names the api outside a boundary	1
+layer	server:domain/media/links/AssetLinkService.scala	a domain file names the api outside a boundary	1
+layer	server:domain/personal/MarkTarget.scala	a domain file names the api outside a boundary	1
+layer	server:domain/personal/PersonalState.scala	a domain file names the api outside a boundary	1
+layer	server:domain/personal/TargetColumns.scala	a domain file names the api outside a boundary	1
+layer	server:domain/personal/bookmarks/Bookmark.scala	a domain file names the api outside a boundary	1
+layer	server:domain/personal/bookmarks/BookmarkRepo.scala	a domain file names the api outside a boundary	1
+layer	server:domain/personal/bookmarks/BookmarkRow.scala	a domain file names the api outside a boundary	1
+layer	server:domain/personal/bookmarks/BookmarkService.scala	a domain file names the api outside a boundary	1
+layer	server:domain/personal/notes/Note.scala	a domain file names the api outside a boundary	1
+layer	server:domain/personal/notes/NoteRepo.scala	a domain file names the api outside a boundary	1
+layer	server:domain/personal/notes/NoteRow.scala	a domain file names the api outside a boundary	1
+layer	server:domain/personal/notes/NoteService.scala	a domain file names the api outside a boundary	1
+layer	server:domain/personal/reading/ReadMark.scala	a domain file names the api outside a boundary	1
+layer	server:domain/research/ResearchState.scala	a domain file names the api outside a boundary	1
+layer	server:domain/research/articles/ArticleMirrorNote.scala	a domain file names the api outside a boundary	1
+layer	server:domain/research/articles/ArticleSearch.scala	a domain file names the api outside a boundary	1
+layer	server:domain/research/articles/ArticleService.scala	a domain file names the api outside a boundary	1
+layer	server:domain/research/articles/ArticlesData.scala	a domain file names the api outside a boundary	2
+layer	server:domain/research/articles/CoverageService.scala	a domain file names the api outside a boundary	1
+layer	server:domain/research/articles/PageBuilder.scala	a domain file names the api outside a boundary	1
+layer	server:domain/research/articles/lint/SourceTextFormatting.scala	a domain file names the api outside a boundary	1
+layer	server:domain/research/articles/review/ReviewStateService.scala	a domain file names the api outside a boundary	1
+layer	server:domain/research/workflows/ArticleFilterApproval.scala	a domain file names the api outside a boundary	1
+layer	server:domain/research/workflows/ArticleObjectives.scala	a domain file names the api outside a boundary	1
+layer	server:domain/research/workflows/CompileArticlePipeline.scala	a domain file names the api outside a boundary	5
+layer	server:domain/research/workflows/InferFilterPipeline.scala	a domain file names the api outside a boundary	4
+layer	server:domain/research/workflows/ProposeArticlesPipeline.scala	a domain file names the api outside a boundary	5
+layer	server:domain/research/workflows/ResearchAnswers.scala	a domain file names the api outside a boundary	1
+layer	server:domain/research/workflows/ResearchSite.scala	a domain file names the api outside a boundary	1
+layer	server:domain/research/workflows/ResearchWorkflows.scala	a domain file names the api outside a boundary	1
+layer	server:domain/research/workflows/ReviewArticlePipeline.scala	a domain file names the api outside a boundary	4
+layer	server:domain/research/workflows/ReviewManagerKind.scala	a domain file names the api outside a boundary	4
+layer	server:domain/research/workflows/SeedManagerKind.scala	a domain file names the api outside a boundary	4
+layer	web:web/CardIcons.scala	the client names a package outside api	1
+layer	web:web/Certainty.scala	the client names a package outside api	1
+layer	web:web/ConfidenceBadge.scala	the client names a package outside api	1
+layer	web:web/Fmt.scala	the client names a package outside api	1
+layer	web:web/GoalsView.scala	the client names a package outside api	1
+layer	web:web/GraphPanel.scala	the client names a package outside api	1
+layer	web:web/ManagersView.scala	the client names a package outside api	1
+layer	web:web/MapView.scala	the client names a package outside api	1
+layer	web:web/MergeView.scala	the client names a package outside api	1
+layer	web:web/PlaceGlyph.scala	the client names a package outside api	2
+layer	web:web/Preview.scala	the client names a package outside api	1
+layer	web:web/SitePoint.scala	the client names a package outside api	1
+layer	web:web/SourceEditor.scala	the client names a package outside api	1
+layer	web:web/StatusBadge.scala	the client names a package outside api	1
+layer	web:web/TileDecode.scala	the client names a package outside api	1
+layer	web:web/UploadView.scala	the client names a package outside api	1
+layer	web:web/library/ReadingHead.scala	the client names a package outside api	1
+layer	web:web/library/TableRow.scala	the client names a package outside api	1
+layer	web:web/marks/MapMenu.scala	the client names a package outside api	1
+layer	web:web/marks/PeriodMarks.scala	the client names a package outside api	1
+layer	web:web/marks/SavedViews.scala	the client names a package outside api	1
+layer	web:web/settings/DownloadJobs.scala	the client names a package outside api	3
+prefix	api:api/AcquireChecks.scala	AcquireChecks → Acquire.Checks	1
+prefix	api:api/ApiError.scala	ApiError → Api.Error	1
+prefix	api:api/ApiIndex.scala	ApiIndex → Api.Index	1
+prefix	api:api/ArticleCoverage.scala	ArticleCoverage → Article.Coverage	1
+prefix	api:api/ArticleDeleted.scala	ArticleDeleted → Article.Deleted	1
+prefix	api:api/ArticleEdits.scala	ArticleEdits → Article.Edits	1
+prefix	api:api/ArticleEventLead.scala	ArticleEventLead → Article.EventLead	1
+prefix	api:api/ArticleFilter.scala	ArticleFilter → Article.Filter	1
+prefix	api:api/ArticleImport.scala	ArticleImport → Article.Import	1
+prefix	api:api/ArticleKind.scala	ArticleKind → Article.Kind	1
+prefix	api:api/ArticleKindCount.scala	ArticleKindCount → Article.KindCount	1
+prefix	api:api/ArticleLink.scala	ArticleLink → Article.Link	1
+prefix	api:api/ArticleLinks.scala	ArticleLinks → Article.Links	1
+prefix	api:api/ArticleList.scala	ArticleList → Article.List	1
+prefix	api:api/ArticlePatch.scala	ArticlePatch → Article.Patch	1
+prefix	api:api/ArticlePlans.scala	ArticlePlans → Article.Plans	1
+prefix	api:api/ArticlePut.scala	ArticlePut → Article.Put	1
+prefix	api:api/ArticleRef.scala	ArticleRef → Article.Ref	1
+prefix	api:api/ArticleReviewView.scala	ArticleReviewView → Article.ReviewView	1
+prefix	api:api/ArticleRow.scala	ArticleRow → Article.Row	1
+prefix	api:api/ArticleSummary.scala	ArticleSummary → Article.Summary	1
+prefix	api:api/ArticleVersion.scala	ArticleVersion → Article.Version	1
+prefix	api:api/ArticleVersionFull.scala	ArticleVersionFull → Article.VersionFull	1
+prefix	api:api/ArticleView.scala	ArticleView → Article.View	1
+prefix	api:api/AssetLinkDeleted.scala	AssetLinkDeleted → AssetLink.Deleted	1
+prefix	api:api/AssetLinkList.scala	AssetLinkList → AssetLink.List	1
+prefix	api:api/AssetLinkPut.scala	AssetLinkPut → AssetLink.Put	1
+prefix	api:api/AttestationDeleted.scala	AttestationDeleted → Attestation.Deleted	1
+prefix	api:api/AttestationList.scala	AttestationList → Attestation.List	1
+prefix	api:api/AttestationPatch.scala	AttestationPatch → Attestation.Patch	1
+prefix	api:api/AttestationPut.scala	AttestationPut → Attestation.Put	1
+prefix	api:api/AutopilotStatus.scala	AutopilotStatus → Autopilot.Status	1
+prefix	api:api/BackupInfo.scala	BackupInfo → Backup.Info	1
+prefix	api:api/BackupResult.scala	BackupResult → Backup.Result	1
+prefix	api:api/BackupState.scala	BackupState → Backup.State	1
+prefix	api:api/BackupStatus.scala	BackupStatus → Backup.Status	1
+prefix	api:api/BaseMapSource.scala	BaseMapSource → BaseMap.Source	1
+prefix	api:api/BasemapFetchQuery.scala	BasemapFetchQuery → Basemap.FetchQuery	1
+prefix	api:api/BasemapFocus.scala	BasemapFocus → Basemap.Focus	1
+prefix	api:api/BasemapLayer.scala	BasemapLayer → Basemap.Layer	1
+prefix	api:api/BasemapLayerInfo.scala	BasemapLayerInfo → Basemap.LayerInfo	1
+prefix	api:api/BasemapOnDemand.scala	BasemapOnDemand → Basemap.OnDemand	1
+prefix	api:api/BasemapRegion.scala	BasemapRegion → Basemap.Region	1
+prefix	api:api/BasemapRemoveQuery.scala	BasemapRemoveQuery → Basemap.RemoveQuery	1
+prefix	api:api/BasemapRemoved.scala	BasemapRemoved → Basemap.Removed	1
+prefix	api:api/BasemapStatus.scala	BasemapStatus → Basemap.Status	1
+prefix	api:api/BasemapStyleState.scala	BasemapStyleState → Basemap.StyleState	1
+prefix	api:api/BucketSample.scala	BucketSample → Bucket.Sample	1
+prefix	api:api/BundleAlias.scala	BundleAlias → Bundle.Alias	1
+prefix	api:api/BundleArticle.scala	BundleArticle → Bundle.Article	1
+prefix	api:api/BundleArticleAlias.scala	BundleArticleAlias → Bundle.ArticleAlias	1
+prefix	api:api/BundleArticleVersion.scala	BundleArticleVersion → Bundle.ArticleVersion	1
+prefix	api:api/BundleAssessment.scala	BundleAssessment → Bundle.Assessment	1
+prefix	api:api/BundleAsset.scala	BundleAsset → Bundle.Asset	1
+prefix	api:api/BundleAssetLink.scala	BundleAssetLink → Bundle.AssetLink	1
+prefix	api:api/BundleAttestation.scala	BundleAttestation → Bundle.Attestation	1
+prefix	api:api/BundleBlobs.scala	BundleBlobs → Bundle.Blobs	1
+prefix	api:api/BundleCorrection.scala	BundleCorrection → Bundle.Correction	1
+prefix	api:api/BundleEdge.scala	BundleEdge → Bundle.Edge	1
+prefix	api:api/BundleEvent.scala	BundleEvent → Bundle.Event	1
+prefix	api:api/BundleEventAlias.scala	BundleEventAlias → Bundle.EventAlias	1
+prefix	api:api/BundleEventCandidate.scala	BundleEventCandidate → Bundle.EventCandidate	1
+prefix	api:api/BundleEventCatalogue.scala	BundleEventCatalogue → Bundle.EventCatalogue	1
+prefix	api:api/BundleEventCheck.scala	BundleEventCheck → Bundle.EventCheck	1
+prefix	api:api/BundleEventDating.scala	BundleEventDating → Bundle.EventDating	1
+prefix	api:api/BundleEventEdge.scala	BundleEventEdge → Bundle.EventEdge	1
+prefix	api:api/BundleEventParticipant.scala	BundleEventParticipant → Bundle.EventParticipant	1
+prefix	api:api/BundleEventSets.scala	BundleEventSets → Bundle.EventSets	1
+prefix	api:api/BundleFileInfo.scala	BundleFileInfo → Bundle.FileInfo	1
+prefix	api:api/BundleFiles.scala	BundleFiles → Bundle.Files	1
+prefix	api:api/BundleFinding.scala	BundleFinding → Bundle.Finding	1
+prefix	api:api/BundleGoal.scala	BundleGoal → Bundle.Goal	1
+prefix	api:api/BundleGoalAlias.scala	BundleGoalAlias → Bundle.GoalAlias	1
+prefix	api:api/BundleGoalLink.scala	BundleGoalLink → Bundle.GoalLink	1
+prefix	api:api/BundleGoalSchedule.scala	BundleGoalSchedule → Bundle.GoalSchedule	1
+prefix	api:api/BundleImportResult.scala	BundleImportResult → Bundle.ImportResult	1
+prefix	api:api/BundleInstance.scala	BundleInstance → Bundle.Instance	1
+prefix	api:api/BundleKindCounts.scala	BundleKindCounts → Bundle.KindCounts	1
+prefix	api:api/BundleManifest.scala	BundleManifest → Bundle.Manifest	1
+prefix	api:api/BundlePeriod.scala	BundlePeriod → Bundle.Period	1
+prefix	api:api/BundlePlace.scala	BundlePlace → Bundle.Place	1
+prefix	api:api/BundlePlaceAlias.scala	BundlePlaceAlias → Bundle.PlaceAlias	1
+prefix	api:api/BundlePlaceLink.scala	BundlePlaceLink → Bundle.PlaceLink	1
+prefix	api:api/BundlePlaceName.scala	BundlePlaceName → Bundle.PlaceName	1
+prefix	api:api/BundlePlaceRelation.scala	BundlePlaceRelation → Bundle.PlaceRelation	1
+prefix	api:api/BundlePlaceType.scala	BundlePlaceType → Bundle.PlaceType	1
+prefix	api:api/BundleQueueItem.scala	BundleQueueItem → Bundle.QueueItem	1
+prefix	api:api/BundleRange.scala	BundleRange → Bundle.Range	1
+prefix	api:api/BundleReference.scala	BundleReference → Bundle.Reference	1
+prefix	api:api/BundleSiteType.scala	BundleSiteType → Bundle.SiteType	1
+prefix	api:api/BundleSource.scala	BundleSource → Bundle.Source	1
+prefix	api:api/BundleTombstone.scala	BundleTombstone → Bundle.Tombstone	1
+prefix	api:api/BundleUnresolvedEdge.scala	BundleUnresolvedEdge → Bundle.UnresolvedEdge	1
+prefix	api:api/BundleUpload.scala	BundleUpload → Bundle.Upload	1
+prefix	api:api/BundleVerifyResult.scala	BundleVerifyResult → Bundle.VerifyResult	1
+prefix	api:api/CandidateSweepRequest.scala	CandidateSweepRequest → CandidateSweep.Request	1
+prefix	api:api/CorrectionCounts.scala	CorrectionCounts → Correction.Counts	1
+prefix	api:api/CorrectionList.scala	CorrectionList → Correction.List	1
+prefix	api:api/CorrectionStatus.scala	CorrectionStatus → Correction.Status	1
+prefix	api:api/CorrectionTarget.scala	CorrectionTarget → Correction.Target	1
+prefix	api:api/CoverageDrift.scala	CoverageDrift → Coverage.Drift	1
+prefix	api:api/CoverageEdge.scala	CoverageEdge → Coverage.Edge	1
+prefix	api:api/CoverageEntry.scala	CoverageEntry → Coverage.Entry	1
+prefix	api:api/CoverageReason.scala	CoverageReason → Coverage.Reason	1
+prefix	api:api/CoverageSource.scala	CoverageSource → Coverage.Source	1
+prefix	api:api/DebounceConfig.scala	DebounceConfig → Debounce.Config	1
+prefix	api:api/DeleteBlockerKind.scala	DeleteBlockerKind → DeleteBlocker.Kind	1
+prefix	api:api/EdgeInput.scala	EdgeInput → Edge.Input	1
+prefix	api:api/EventGeoList.scala	EventGeoList → EventGeo.List	1
+prefix	api:api/EventLeadAction.scala	EventLeadAction → EventLead.Action	1
+prefix	api:api/EventLeadList.scala	EventLeadList → EventLead.List	1
+prefix	api:api/FacetField.scala	FacetField → Facet.Field	1
+prefix	api:api/FilterDocs.scala	FilterDocs → Filter.Docs	1
+prefix	api:api/FilterQuery.scala	FilterQuery → Filter.Query	1
+prefix	api:api/FindingInput.scala	FindingInput → Finding.Input	1
+prefix	api:api/FindingMatch.scala	FindingMatch → Finding.Match	1
+prefix	api:api/FindingRow.scala	FindingRow → Finding.Row	1
+prefix	api:api/GazetteerExtract.scala	GazetteerExtract → Gazetteer.Extract	1
+prefix	api:api/GazetteerKind.scala	GazetteerKind → Gazetteer.Kind	1
+prefix	api:api/GazetteerLoadCounts.scala	GazetteerLoadCounts → Gazetteer.LoadCounts	1
+prefix	api:api/GazetteerManifest.scala	GazetteerManifest → Gazetteer.Manifest	1
+prefix	api:api/GazetteerSourceInfo.scala	GazetteerSourceInfo → Gazetteer.SourceInfo	1
+prefix	api:api/GeoHitPage.scala	GeoHitPage → GeoHit.Page	1
+prefix	api:api/GoalDeleted.scala	GoalDeleted → Goal.Deleted	1
+prefix	api:api/GoalList.scala	GoalList → Goal.List	1
+prefix	api:api/GoalPatch.scala	GoalPatch → Goal.Patch	1
+prefix	api:api/GoalPlans.scala	GoalPlans → Goal.Plans	1
+prefix	api:api/GoalPut.scala	GoalPut → Goal.Put	1
+prefix	api:api/GoalStages.scala	GoalStages → Goal.Stages	1
+prefix	api:api/IngestAccepted.scala	IngestAccepted → Ingest.Accepted	1
+prefix	api:api/IngestParams.scala	IngestParams → Ingest.Params	1
+prefix	api:api/IngestReport.scala	IngestReport → Ingest.Report	1
+prefix	api:api/IngestRequest.scala	IngestRequest → Ingest.Request	1
+prefix	api:api/IngestStep.scala	IngestStep → Ingest.Step	1
+prefix	api:api/LabelRename.scala	LabelRename → Label.Rename	1
+prefix	api:api/LabelRenamed.scala	LabelRenamed → Label.Renamed	1
+prefix	api:api/LabelRenames.scala	LabelRenames → Label.Renames	1
+prefix	api:api/LpfDataset.scala	LpfDataset → Lpf.Dataset	1
+prefix	api:api/MapStartConfig.scala	MapStartConfig → MapStart.Config	1
+prefix	api:api/MapStartMode.scala	MapStartMode → MapStart.Mode	1
+prefix	api:api/MediaProviderInfo.scala	MediaProviderInfo → MediaProvider.Info	1
+prefix	api:api/MergeIssueDetail.scala	MergeIssueDetail → MergeIssue.Detail	1
+prefix	api:api/MergePlanRequest.scala	MergePlanRequest → MergePlan.Request	1
+prefix	api:api/MergeResolutionsText.scala	MergeResolutionsText → MergeResolutions.Text	1
+prefix	api:api/NoteImport.scala	NoteImport → Note.Import	1
+prefix	api:api/PeriodDetail.scala	PeriodDetail → Period.Detail	1
+prefix	api:api/PeriodImportResult.scala	PeriodImportResult → Period.ImportResult	1
+prefix	api:api/PeriodInput.scala	PeriodInput → Period.Input	1
+prefix	api:api/PeriodOAuthority.scala	PeriodOAuthority → PeriodO.Authority	1
+prefix	api:api/PeriodODataset.scala	PeriodODataset → PeriodO.Dataset	1
+prefix	api:api/PeriodODefinition.scala	PeriodODefinition → PeriodO.Definition	1
+prefix	api:api/PeriodRow.scala	PeriodRow → Period.Row	1
+prefix	api:api/PeriodSkip.scala	PeriodSkip → Period.Skip	1
+prefix	api:api/PlaceAdd.scala	PlaceAdd → Place.Add	1
+prefix	api:api/PlaceCounts.scala	PlaceCounts → Place.Counts	1
+prefix	api:api/PlaceDating.scala	PlaceDating → Place.Dating	1
+prefix	api:api/PlaceDescription.scala	PlaceDescription → Place.Description	1
+prefix	api:api/PlaceDesignation.scala	PlaceDesignation → Place.Designation	1
+prefix	api:api/PlaceDetail.scala	PlaceDetail → Place.Detail	1
+prefix	api:api/PlaceEdits.scala	PlaceEdits → Place.Edits	1
+prefix	api:api/PlaceFootprint.scala	PlaceFootprint → Place.Footprint	1
+prefix	api:api/PlaceGone.scala	PlaceGone → Place.Gone	1
+prefix	api:api/PlaceHit.scala	PlaceHit → Place.Hit	1
+prefix	api:api/PlaceImportResult.scala	PlaceImportResult → Place.ImportResult	1
+prefix	api:api/PlaceInput.scala	PlaceInput → Place.Input	1
+prefix	api:api/PlaceLink.scala	PlaceLink → Place.Link	1
+prefix	api:api/PlaceMatch.scala	PlaceMatch → Place.Match	1
+prefix	api:api/PlaceMergeIn.scala	PlaceMergeIn → Place.MergeIn	1
+prefix	api:api/PlaceName.scala	PlaceName → Place.Name	1
+prefix	api:api/PlaceNameAdd.scala	PlaceNameAdd → Place.NameAdd	1
+prefix	api:api/PlaceNameChanged.scala	PlaceNameChanged → Place.NameChanged	1
+prefix	api:api/PlaceNameRemove.scala	PlaceNameRemove → Place.NameRemove	1
+prefix	api:api/PlaceOverride.scala	PlaceOverride → Place.Override	1
+prefix	api:api/PlaceOverrideChanged.scala	PlaceOverrideChanged → Place.OverrideChanged	1
+prefix	api:api/PlaceOverrideEdit.scala	PlaceOverrideEdit → Place.OverrideEdit	1
+prefix	api:api/PlaceOverrideSet.scala	PlaceOverrideSet → Place.OverrideSet	1
+prefix	api:api/PlaceOverrides.scala	PlaceOverrides → Place.Overrides	1
+prefix	api:api/PlaceRebuildResult.scala	PlaceRebuildResult → Place.RebuildResult	1
+prefix	api:api/PlaceRecord.scala	PlaceRecord → Place.Record	1
+prefix	api:api/PlaceRegister.scala	PlaceRegister → Place.Register	1
+prefix	api:api/PlaceRelation.scala	PlaceRelation → Place.Relation	1
+prefix	api:api/PlaceRemoveIn.scala	PlaceRemoveIn → Place.RemoveIn	1
+prefix	api:api/PlaceShape.scala	PlaceShape → Place.Shape	1
+prefix	api:api/PlaceSummary.scala	PlaceSummary → Place.Summary	1
+prefix	api:api/PlaceTimeBasis.scala	PlaceTimeBasis → Place.TimeBasis	1
+prefix	api:api/PlaceTreeRow.scala	PlaceTreeRow → Place.TreeRow	1
+prefix	api:api/PlaceType.scala	PlaceType → Place.Type	1
+prefix	api:api/QueueListing.scala	QueueListing → Queue.Listing	1
+prefix	api:api/RenameCount.scala	RenameCount → Rename.Count	1
+prefix	api:api/RenameCounts.scala	RenameCounts → Rename.Counts	1
+prefix	api:api/RenameRequest.scala	RenameRequest → Rename.Request	1
+prefix	api:api/SiteTypesReport.scala	SiteTypesReport → SiteTypes.Report	1
+prefix	api:api/SiteTypesRequest.scala	SiteTypesRequest → SiteTypes.Request	1
+prefix	api:api/SourceAlias.scala	SourceAlias → Source.Alias	1
+prefix	api:api/SourceCandidate.scala	SourceCandidate → Source.Candidate	1
+prefix	api:api/SourceCoverParams.scala	SourceCoverParams → Source.CoverParams	1
+prefix	api:api/SourceDelete.scala	SourceDelete → Source.Delete	1
+prefix	api:api/SourceDeleteRequest.scala	SourceDeleteRequest → Source.DeleteRequest	1
+prefix	api:api/SourceDeletion.scala	SourceDeletion → Source.Deletion	1
+prefix	api:api/SourceDetail.scala	SourceDetail → Source.Detail	1
+prefix	api:api/SourceGraph.scala	SourceGraph → Source.Graph	1
+prefix	api:api/SourceKinds.scala	SourceKinds → Source.Kinds	1
+prefix	api:api/SourceMatch.scala	SourceMatch → Source.Match	1
+prefix	api:api/SourcePatch.scala	SourcePatch → Source.Patch	1
+prefix	api:api/SourcePut.scala	SourcePut → Source.Put	1
+prefix	api:api/SourceRef.scala	SourceRef → Source.Ref	1
+prefix	api:api/SourceRenamed.scala	SourceRenamed → Source.Renamed	1
+prefix	api:api/SourceSection.scala	SourceSection → Source.Section	1
+prefix	api:api/SourceWithFindings.scala	SourceWithFindings → Source.WithFindings	1
+prefix	api:api/StorageAdvice.scala	StorageAdvice → Storage.Advice	1
+prefix	api:api/StorageEntry.scala	StorageEntry → Storage.Entry	1
+prefix	api:api/StorageReport.scala	StorageReport → Storage.Report	1
+prefix	api:api/StorageVolume.scala	StorageVolume → Storage.Volume	1
+prefix	api:api/VacuumRequest.scala	VacuumRequest → Vacuum.Request	1
+prefix	api:api/VersionInfo.scala	VersionInfo → Version.Info	1
+prefix	api:api/catalogue/places/PlaceCard.scala	PlaceCard → Place.Card	1
+prefix	api:api/catalogue/places/PlaceEntry.scala	PlaceEntry → Place.Entry	1
+prefix	api:api/library/collections/CollectionAuditRow.scala	CollectionAuditRow → CollectionAudit.Row	1
+prefix	api:api/library/collections/CollectionSyncPush.scala	CollectionSyncPush → CollectionSync.Push	1
+prefix	api:api/library/collections/CollectionSyncRequest.scala	CollectionSyncRequest → CollectionSync.Request	1
+prefix	api:api/library/collections/CollectionUpdateAllRequest.scala	CollectionUpdateAllRequest → CollectionUpdateAll.Request	1
+prefix	api:api/library/sources/SourceWrite.scala	SourceWrite → Source.Write	1
+prefix	api:api/personal/BookmarkEdit.scala	BookmarkEdit → Bookmark.Edit	1
+prefix	api:api/personal/BookmarkId.scala	BookmarkId → Bookmark.Id	1
+prefix	api:api/personal/BookmarkLabel.scala	BookmarkLabel → Bookmark.Label	1
+prefix	api:api/personal/BookmarkNew.scala	BookmarkNew → Bookmark.New	1
+prefix	api:api/personal/NoteEdit.scala	NoteEdit → Note.Edit	1
+prefix	api:api/personal/NoteId.scala	NoteId → Note.Id	1
+prefix	api:api/personal/NoteNew.scala	NoteNew → Note.New	1
+prefix	api:api/personal/NoteText.scala	NoteText → Note.Text	1
+prefix	api:api/personal/ReadMarkSet.scala	ReadMarkSet → ReadMark.Set	1
+prefix	api:api/personal/ViewState.scala	ViewState → View.State	1
+prefix	api:api/research/articles/ArticleLint.scala	ArticleLint → Article.Lint	1
+prefix	api:util/jobs/JobDetailField.scala	JobDetailField → JobDetail.Field	1
+prefix	cli:cli/CalibreAudit.scala	CalibreAudit → Calibre.Audit	1
+prefix	cli:cli/CalibreBook.scala	CalibreBook → Calibre.Book	1
+prefix	cli:cli/CalibreChange.scala	CalibreChange → Calibre.Change	1
+prefix	cli:cli/CalibreField.scala	CalibreField → Calibre.Field	1
+prefix	cli:cli/CalibreJson.scala	CalibreJson → Calibre.Json	1
+prefix	cli:cli/CalibrePush.scala	CalibrePush → Calibre.Push	1
+prefix	cli:cli/CliError.scala	CliError → Cli.Error	1
+prefix	config:config/AgentVerifyConfig.scala	AgentVerifyConfig → AgentVerify.Config	1
+prefix	config:config/AutoApprovalsConfig.scala	AutoApprovalsConfig → AutoApprovals.Config	1
+prefix	config:config/BasemapLabelsConfig.scala	BasemapLabelsConfig → BasemapLabels.Config	1
+prefix	config:config/CitationCount.scala	CitationCount → Citation.Count	1
+prefix	config:config/ClaudeCodeConfig.scala	ClaudeCodeConfig → ClaudeCode.Config	1
+prefix	config:config/CodexConfig.scala	CodexConfig → Codex.Config	1
+prefix	config:config/ConfigReloadConfig.scala	ConfigReloadConfig → ConfigReload.Config	1
+prefix	config:config/HotNode.scala	HotNode → Hot.Node	1
+prefix	config:config/OpencodeConfig.scala	OpencodeConfig → Opencode.Config	1
+prefix	config:config/PassageLimits.scala	PassageLimits → Passage.Limits	1
+prefix	config:config/RetractionWatchConfig.scala	RetractionWatchConfig → RetractionWatch.Config	1
+prefix	config:config/StorageConfig.scala	StorageConfig → Storage.Config	1
+prefix	core:domain/ArticleReviewStatus.scala	ArticleReviewStatus → Article.ReviewStatus	1
+prefix	core:domain/CodexRetention.scala	CodexRetention → Codex.Retention	1
+prefix	core:domain/LicenceFamily.scala	LicenceFamily → Licence.Family	1
+prefix	core:domain/ReadSchedule.scala	ReadSchedule → Read.Schedule	1
+prefix	core:domain/catalogue/events/StoredEvent.scala	StoredEvent → Stored.Event	1
+prefix	files:files/ArticleNote.scala	ArticleNote → Article.Note	1
+prefix	files:util/data/mirror/MirrorPlacement.scala	MirrorPlacement → Mirror.Placement	1
+prefix	plugin-api:plugin/AiHttpResponse.scala	AiHttpResponse → AiHttp.Response	1
+prefix	plugin-api:plugin/AiToolCall.scala	AiToolCall → AiTool.Call	1
+prefix	plugin-api:plugin/AiTurnRequest.scala	AiTurnRequest → AiTurn.Request	1
+prefix	plugin-api:plugin/FetchContext.scala	FetchContext → Fetch.Context	1
+prefix	plugin-api:plugin/LicenceRead.scala	LicenceRead → Licence.Read	1
+prefix	plugin-api:plugin/MediaTargetId.scala	MediaTargetId → MediaTarget.Id	1
+prefix	plugin-api:plugin/PluginConfig.scala	PluginConfig → Plugin.Config	1
+prefix	plugin-api:plugin/PluginContext.scala	PluginContext → Plugin.Context	1
+prefix	plugin-api:plugin/PluginHttp.scala	PluginHttp → Plugin.Http	1
+prefix	plugin-api:plugin/PluginHttpResponse.scala	PluginHttpResponse → Plugin.HttpResponse	1
+prefix	plugin-api:plugin/PluginInfo.scala	PluginInfo → Plugin.Info	1
+prefix	plugin-api:plugin/PluginLog.scala	PluginLog → Plugin.Log	1
+prefix	plugin-api:plugin/SecretRef.scala	SecretRef → Secret.Ref	1
+prefix	plugin-api:plugin/SecretVault.scala	SecretVault → Secret.Vault	1
+prefix	plugin-host:pluginhost/HttpAnswer.scala	HttpAnswer → Http.Answer	1
+prefix	plugins/calibre:plugins/calibre/CalibreAudit.scala	CalibreAudit → Calibre.Audit	1
+prefix	plugins/calibre:plugins/calibre/CalibreBook.scala	CalibreBook → Calibre.Book	1
+prefix	plugins/calibre:plugins/calibre/CalibreChange.scala	CalibreChange → Calibre.Change	1
+prefix	plugins/calibre:plugins/calibre/CalibreField.scala	CalibreField → Calibre.Field	1
+prefix	plugins/calibre:plugins/calibre/CalibreLibrary.scala	CalibreLibrary → Calibre.Library	1
+prefix	plugins/calibre:plugins/calibre/CalibrePush.scala	CalibrePush → Calibre.Push	1
+prefix	plugins/calibre:plugins/calibre/CalibreSettings.scala	CalibreSettings → Calibre.Settings	1
+prefix	plugins/media:plugins/media/CommonsDepictions.scala	CommonsDepictions → Commons.Depictions	1
+prefix	plugins/media:plugins/media/CommonsDepicts.scala	CommonsDepicts → Commons.Depicts	1
+prefix	plugins/media:plugins/media/CommonsFile.scala	CommonsFile → Commons.File	1
+prefix	plugins/media:plugins/media/CommonsFiles.scala	CommonsFiles → Commons.Files	1
+prefix	plugins/media:plugins/media/CommonsSettings.scala	CommonsSettings → Commons.Settings	1
+prefix	plugins/media:plugins/media/KeyedPluginConfig.scala	KeyedPluginConfig → KeyedPlugin.Config	1
+prefix	plugins/media:plugins/media/MediaPluginConfig.scala	MediaPluginConfig → MediaPlugin.Config	1
+prefix	server:domain/automation/managers/ManagerKindDefinition.scala	ManagerKindDefinition → ManagerKind.Definition	1
+prefix	server:domain/automation/workflows/PipelineDef.scala	PipelineDef → Pipeline.Def	1
+prefix	server:domain/catalogue/evidence/passages/PassageSource.scala	PassageSource → Passage.Source	1
+prefix	server:domain/catalogue/periods/PeriodSources.scala	PeriodSources → Period.Sources	1
+prefix	server:domain/catalogue/periods/StoredPeriod.scala	StoredPeriod → Stored.Period	1
+prefix	server:domain/library/acquisition/ArticleCitations.scala	ArticleCitations → Article.Citations	1
+prefix	server:domain/library/acquisition/CitationAlerts.scala	CitationAlerts → Citation.Alerts	1
+prefix	server:domain/library/acquisition/CoreQuotaLend.scala	CoreQuotaLend → CoreQuota.Lend	1
+prefix	server:domain/library/collections/StoredOriginal.scala	StoredOriginal → Stored.Original	1
+prefix	server:domain/library/ingest/StoredOriginals.scala	StoredOriginals → Stored.Originals	1
+prefix	server:domain/personal/bookmarks/BookmarkRow.scala	BookmarkRow → Bookmark.Row	1
+prefix	server:domain/personal/notes/NoteEditRefused.scala	NoteEditRefused → Note.EditRefused	1
+prefix	server:domain/personal/notes/NoteItem.scala	NoteItem → Note.Item	1
+prefix	server:domain/personal/notes/NoteRow.scala	NoteRow → Note.Row	1
+prefix	server:domain/personal/reading/ReadMark.scala	ReadMark → Read.Mark	1
+prefix	server:domain/research/articles/ArticleCitedSources.scala	ArticleCitedSources → Article.CitedSources	1
+prefix	server:domain/research/articles/ArticleMirrorNote.scala	ArticleMirrorNote → Article.MirrorNote	1
+prefix	server:domain/research/articles/ArticleReadable.scala	ArticleReadable → Article.Readable	1
+prefix	server:domain/research/articles/ArticleReferable.scala	ArticleReferable → Article.Referable	1
+prefix	server:domain/research/workflows/ArticleFilterApproval.scala	ArticleFilterApproval → Article.FilterApproval	1
+prefix	server:domain/research/workflows/ArticleObjectives.scala	ArticleObjectives → Article.Objectives	1
+prefix	server:server/ArticlePage.scala	ArticlePage → Article.Page	1
+prefix	server:server/HttpDownload.scala	HttpDownload → Http.Download	1
+prefix	server:server/SeedNoteFiles.scala	SeedNoteFiles → SeedNote.Files	1
+prefix	server:server/StorageLocations.scala	StorageLocations → Storage.Locations	1
+prefix	server:server/agents/ClaudeCodeEnv.scala	ClaudeCodeEnv → ClaudeCode.Env	1
+prefix	server:server/agents/CodexHome.scala	CodexHome → Codex.Home	1
+prefix	server:server/agents/ToolboxOrder.scala	ToolboxOrder → Toolbox.Order	1
+prefix	server:server/hot/HotDataSource.scala	HotDataSource → Hot.DataSource	1
+prefix	server:server/hot/HotGraph.scala	HotGraph → Hot.Graph	1
+prefix	server:server/hot/PinRequests.scala	PinRequests → Pin.Requests	1
+prefix	server:util/basemap/DegreesPerPixel.scala	DegreesPerPixel → Degrees.PerPixel	1
+prefix	server:util/basemap/PmTilesFile.scala	PmTilesFile → PmTiles.File	1
+prefix	server:util/data/diagnostics/StorageCache.scala	StorageCache → Storage.Cache	1
+prefix	server:util/data/diagnostics/StorageFigures.scala	StorageFigures → Storage.Figures	1
+prefix	server:util/data/diagnostics/StorageSpot.scala	StorageSpot → Storage.Spot	1
+prefix	server:util/data/maintenance/MaintenanceTaskName.scala	MaintenanceTaskName → MaintenanceTask.Name	1
+prefix	server:util/data/maintenance/ReadOnlyPool.scala	ReadOnlyPool → Read.OnlyPool	1
+prefix	server:util/data/mirror/MirrorExport.scala	MirrorExport → Mirror.Export	1
+prefix	server:util/data/mirror/MirrorNote.scala	MirrorNote → Mirror.Note	1
+prefix	server:util/data/mirror/MirrorRecords.scala	MirrorRecords → Mirror.Records	1
+prefix	server:util/settings/HotConfig.scala	HotConfig → Hot.Config	1
+prefix	server:util/settings/StoredSettingsFile.scala	StoredSettingsFile → Stored.SettingsFile	1
+prefix	server:util/storage/StoreContents.scala	StoreContents → Store.Contents	1
+prefix	server:util/storage/StoreError.scala	StoreError → Store.Error	1
+prefix	server:util/storage/StoreKey.scala	StoreKey → Store.Key	1
+prefix	server:util/storage/StoreKey.scala	StoreKeyRule → Store.KeyRule	1
+prefix	server:util/storage/StoreMeasure.scala	StoreMeasure → Store.Measure	1
+prefix	server:util/storage/StoreVolume.scala	StoreVolume → Store.Volume	1
+prefix	server:util/storage/StoredKind.scala	StoredKind → Stored.Kind	1
+prefix	upstreams:upstreams/WikidataClasses.scala	WikidataClasses → Wikidata.Classes	1
+prefix	upstreams:upstreams/WikidataEntities.scala	WikidataEntities → Wikidata.Entities	1
+prefix	upstreams:upstreams/WikidataItem.scala	WikidataItem → Wikidata.Item	1
+prefix	upstreams:upstreams/WikidataStatement.scala	WikidataStatement → Wikidata.Statement	1
+prefix	values:values/ArticleUid.scala	ArticleUid → Article.Uid	1
+prefix	values:values/DecidedBy.scala	DecidedBy → Decided.By	1
+prefix	values:values/LicenceId.scala	LicenceId → Licence.Id	1
+prefix	values:values/LocationPrecision.scala	LocationPrecision → Location.Precision	1
+prefix	values:values/PeriodError.scala	PeriodError → Period.Error	1
+prefix	values:values/WikidataId.scala	WikidataId → Wikidata.Id	1
 primitive	db:db/AgentRepo.scala	String/Int/Long for a concept with a newtype	15
 primitive	db:db/FocusRepo.scala	String/Int/Long for a concept with a newtype	4
 primitive	db:db/GoalRepo.scala	String/Int/Long for a concept with a newtype	8

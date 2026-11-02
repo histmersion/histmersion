@@ -23,7 +23,18 @@ import com.histmersion.server.ArchitectureSuite.{SourceFile, Violation}
   *     outside an entry point (`@main def`, `SystemContext`);
   *   - `service` (rule 13): a `…Service` trait whose file has no `Implementation` and no `InMemory`;
   *   - `helper` (rule 14): a top-level object without a type of its name whose name is another type's name plural or
-  *     with a helper suffix (`Ops`, `Utils`, `Helpers`, `Support`, `Syntax`, `Functions`).
+  *     with a helper suffix (`Ops`, `Utils`, `Helpers`, `Support`, `Syntax`, `Functions`);
+  *   - `layer` (rule 3): the client layer (the api and web modules) naming a package outside `com.histmersion.api` and
+  *     the web's own, or an api file outside `com.histmersion.api`; a domain package (`com.histmersion.domain…`) naming
+  *     the api outside a boundary file (routes, endpoints, tools, transformers, controllers);
+  *   - `client-refined` (rule 2): a refined (not `Pure`) constraint in a client module (api, web, cli, plugin-api) —
+  *     the server validates, once, where an api value becomes a domain value;
+  *   - `prefix` (rule 5): a type `<Entity><Property>` while a type `<Entity>` exists in the same layer — the property
+  *     belongs on the entity's companion (`Approval.Kind`); a component that works on the entity (`…Service`,
+  *     `…Routes`, …, `Components`), a newtype's constraint `<Name>Rule` and the web page's own components are not
+  *     properties;
+  *   - `bucket` (rule 10): a type in a layer bucket (`com.histmersion.db`, `com.histmersion.files`,
+  *     `com.histmersion.values`, the flat `com.histmersion.upstreams`) instead of its owner's package.
   *
   * The violations that exist today are listed in `architecture/contracts.tsv`, exact both ways (a new violation fails,
   * a row nothing violates any more fails, a count must match); each step of the refactor shrinks the list.
@@ -70,6 +81,14 @@ class ContractsSuite extends munit.FunSuite:
     assertEquals(Rules.conceptOf("goalSlug", concepts), Some("GoalSlug"))
     assertEquals(Rules.conceptOf("limit", concepts), None)
 
+  test("a type named for an entity and a property is the property, a component of the entity is not"):
+    val entities = Set("Approval", "Source", "PeriodO", "Citekey")
+    assertEquals(Rules.propertyOf("ApprovalKind", entities), Some("Approval"))
+    assertEquals(Rules.propertyOf("SourceService", entities), None)
+    assertEquals(Rules.propertyOf("CitekeyRule", entities), None)
+    assertEquals(Rules.propertyOf("PeriodODataset", entities), Some("PeriodO"))
+    assertEquals(Rules.propertyOf("Sources", entities), None)
+
 object ContractsSuite:
 
   val Modules: List[String] = List(
@@ -115,8 +134,8 @@ object ContractsSuite:
       val concepts = newtypes(sources)
       sources.flatMap(s =>
         primitive(s, concepts) ++ unwrap(s) ++ derives(s) ++ copies(s) ++ oneType(s) ++ transaction(s) ++
-          global(s) ++ service(s)
-      ) ++ concept(sources) ++ helper(sources)
+          global(s) ++ service(s) ++ layer(s) ++ clientRefined(s) ++ bucket(s)
+      ) ++ concept(sources) ++ helper(sources) ++ prefix(sources)
 
     private def module(s: SourceFile): String = s.key.takeWhile(_ != ':')
     private def baseName(s: SourceFile): String = s.key.split('/').last.stripSuffix(".scala")
@@ -336,3 +355,120 @@ object ContractsSuite:
             Violation("helper", s.key, s"$name about $stem", 1, s"${s.key}:${s.lineOf(at)}")
         }
       }
+
+    private val ClientModules = Set("api", "web")
+    private val DomainModules = Set("core", "db", "server", "files", "config", "plugin-host")
+    private val Boundary = "(?:Routes|Endpoints|Endpoint|Tools|Transformers|Transformer|Controllers|Controller)$".r
+    private val Named = "\\bcom\\.histmersion\\.(\\w+)".r
+
+    private def layer(s: SourceFile): List[Violation] =
+      val m = module(s)
+      if ClientModules(m) then
+        val outside = Named.findAllMatchIn(s.code).filterNot(n => n.group(1) == "api" || n.group(1) == "web")
+        val own = if m == "api" && !s.pkg.startsWith("com.histmersion.api") then List(0) else Nil
+        counted("layer", s, "the client names a package outside api", outside.map(_.start).toList) ++
+          counted("layer", s, "an api file outside com.histmersion.api", own)
+      else if DomainModules(m) && s.pkg.startsWith("com.histmersion.domain") &&
+        Boundary.findFirstIn(baseName(s)).isEmpty
+      then
+        counted(
+          "layer",
+          s,
+          "a domain file names the api outside a boundary",
+          "\\bcom\\.histmersion\\.api\\b".r.findAllMatchIn(s.code).map(_.start).toList
+        )
+      else Nil
+
+    private val RefinedModules = Set("api", "web", "cli", "plugin-api")
+    private val Refinement = "\\bRefined(?:Sub)?Type\\s*\\[[^,]+,\\s*(\\w+)|:\\|\\s*(\\w+)".r
+
+    private def clientRefined(s: SourceFile): List[Violation] =
+      if !RefinedModules(module(s)) then Nil
+      else
+        val hits = Refinement
+          .findAllMatchIn(s.code)
+          .filter(m => Option(m.group(1)).getOrElse(m.group(2)) != "Pure")
+          .map(_.start)
+          .toList
+        counted("client-refined", s, "a refined constraint in a client", hits)
+
+    private val Buckets = Set(
+      "com.histmersion.db",
+      "com.histmersion.files",
+      "com.histmersion.values",
+      "com.histmersion.upstreams"
+    )
+
+    private def bucket(s: SourceFile): List[Violation] =
+      if Buckets(s.pkg) then counted("bucket", s, s"package ${s.pkg}", List(0)) else Nil
+
+    /** What works on an entity rather than describing it: `SourceService` is no property of `Source`. */
+    val Components: List[String] = List(
+      "Service",
+      "Repo",
+      "Controllers",
+      "Controller",
+      "Routes",
+      "Tools",
+      "Endpoints",
+      "Endpoint",
+      "Api",
+      "Markdown",
+      "Wiring",
+      "Codecs",
+      "Codec",
+      "Client",
+      "Fixtures",
+      "JobKinds",
+      "Jobs",
+      "Data",
+      "MergeRules",
+      "Rules",
+      "Referrer",
+      "Carried",
+      "Exchange",
+      "Workflows",
+      "Workflow",
+      "Sql",
+      "Plan",
+      "Site",
+      "Plugin",
+      "Collection",
+      "Search",
+      "Imports",
+      "Importer",
+      "Importers",
+      "Policy",
+      "Pipeline",
+      "Contributions",
+      "Reader",
+      "Writer",
+      "Finder",
+      "Resolver",
+      "Converter",
+      "Transport",
+      "Store",
+      "Cmd",
+      "Views"
+    )
+    private val Word = "[A-Z][a-z0-9]".r
+
+    /** The entity a type's name starts with and the property it adds, when it is one (`ApprovalKind` → `Approval`). */
+    def propertyOf(name: String, entities: Set[String]): Option[String] =
+      (1 until name.length).iterator
+        .filter(i => Word.matches(name.substring(i, math.min(name.length, i + 2))))
+        .map(i => (name.take(i), name.drop(i)))
+        .find((entity, property) => entities(entity) && !Components.exists(property.endsWith) && property != "Rule")
+        .map(_._1)
+
+    private def prefix(sources: List[SourceFile]): List[Violation] =
+      val defs = sources.flatMap(s => topLevel(s).map((_, name, at) => (layerOf(module(s)), name, s, at)))
+      val byLayer = defs.groupBy(_._1).view.mapValues(_.map(_._2).toSet).toMap
+      defs
+        .filterNot(d => module(d._3) == "web")
+        .flatMap { (layer, name, s, at) =>
+          propertyOf(name, byLayer(layer)).map(entity =>
+            Violation("prefix", s.key, s"$name → $entity.${name.drop(entity.length)}", 1, s"${s.key}:${s.lineOf(at)}")
+          )
+        }
+        .distinctBy(_.row)
