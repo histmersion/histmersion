@@ -2,6 +2,9 @@ package com.histmersion.plugins.calibre
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
+import com.histmersion.plugin.Plugin.Config.given
+import hearth.kindlings.sconfigderivation.ConfigReader
+import java.text.Normalizer
 
 /** The Calibre library read and written through Calibre's own tools.
   *
@@ -14,7 +17,7 @@ import scala.jdk.CollectionConverters.*
   * library; the only writes are the explicit `calibredb add` / `set_metadata` / `add_format` of a push, an update or a
   * set, which additionally refuse to run while the GUI is open.
   */
-final class Calibre(cfg: CalibreLibrary, shell: Shell):
+final class Calibre(cfg: com.histmersion.plugins.calibre.Calibre.Library, shell: Shell):
 
   private def libArgs = List("--with-library", cfg.library)
 
@@ -25,19 +28,22 @@ final class Calibre(cfg: CalibreLibrary, shell: Shell):
 
   // ── reading ─────────────────────────────────────────────────────────────────────────────────
 
-  def search(query: String, limit: Int = 20): Either[String, List[CalibreBook]] =
+  def search(query: String, limit: Int = 20): Either[String, List[com.histmersion.plugins.calibre.Calibre.Book]] =
     viaCalibredb(Some(query), limit).orElse(viaSqlite(Some(query), None, limit))
 
   /** The whole library (read-only), for the audit: one listing instead of a call per entry. */
-  def all(limit: Int = 1000000): Either[String, List[CalibreBook]] =
+  def all(limit: Int = 1000000): Either[String, List[com.histmersion.plugins.calibre.Calibre.Book]] =
     viaCalibredb(None, limit).orElse(viaSqlite(None, None, limit))
 
-  def byId(id: Int): Either[String, Option[CalibreBook]] =
+  def byId(id: Int): Either[String, Option[com.histmersion.plugins.calibre.Calibre.Book]] =
     viaCalibredb(Some(s"id:$id"), 1)
       .map(_.find(_.id == id))
       .orElse(viaSqlite(None, Some(id), 1).map(_.headOption))
 
-  private def viaCalibredb(query: Option[String], limit: Int): Either[String, List[CalibreBook]] =
+  private def viaCalibredb(
+      query: Option[String],
+      limit: Int
+  ): Either[String, List[com.histmersion.plugins.calibre.Calibre.Book]] =
     val cmd = List(cfg.calibredb, "list") ++ libArgs ++
       List(
         "--for-machine",
@@ -48,7 +54,11 @@ final class Calibre(cfg: CalibreLibrary, shell: Shell):
       ) ++ query.toList.flatMap(q => List("--search", q))
     shell.run(cmd).flatMap(Calibre.parseMachineJson)
 
-  private def viaSqlite(query: Option[String], id: Option[Int], limit: Int): Either[String, List[CalibreBook]] =
+  private def viaSqlite(
+      query: Option[String],
+      id: Option[Int],
+      limit: Int
+  ): Either[String, List[com.histmersion.plugins.calibre.Calibre.Book]] =
     val where = id match
       case Some(n) => s"b.id = ${n.toInt}"
       case None    =>
@@ -67,7 +77,7 @@ final class Calibre(cfg: CalibreLibrary, shell: Shell):
     * the whole reason this pipeline pushes metadata at all is that Calibre's own metadata sources key on ISBN and
     * cannot identify a journal article.
     */
-  def add(file: Path, meta: CalibrePush): Either[String, Int] =
+  def add(file: Path, meta: com.histmersion.plugins.calibre.Calibre.Push): Either[String, Int] =
     for
       _ <- Calibre.guard(meta.title, meta.authors)
       _ <- Either.cond(
@@ -86,7 +96,10 @@ final class Calibre(cfg: CalibreLibrary, shell: Shell):
     * complete: identifiers merged, tags = the record's topics, the record's year. What is written is
     * [[Calibre.updatePlan]]; nothing is run when the entry already agrees. Returns what changed.
     */
-  def update(id: Int, meta: CalibrePush): Either[String, List[CalibreChange]] =
+  def update(
+      id: Int,
+      meta: com.histmersion.plugins.calibre.Calibre.Push
+  ): Either[String, List[com.histmersion.plugins.calibre.Calibre.Change]] =
     for
       _ <- Calibre.guard(meta.title, Calibre.normaliseAuthors(meta.authors))
       _ <- Either.cond(!guiRunning, (), GuiRunning)
@@ -111,7 +124,7 @@ final class Calibre(cfg: CalibreLibrary, shell: Shell):
     }
 
   /** One `set_metadata` with the planned fields; nothing at all when there are none. */
-  private def write(id: Int, changes: List[CalibreChange]): Either[String, Unit] =
+  private def write(id: Int, changes: List[com.histmersion.plugins.calibre.Calibre.Change]): Either[String, Unit] =
     if changes.isEmpty then Right(())
     else shell.run(Calibre.setMetadataCmd(cfg.calibredb, libArgs, id, changes)).map(_ => ())
 
@@ -149,7 +162,7 @@ final class Calibre(cfg: CalibreLibrary, shell: Shell):
       _ <- shell.run(Calibre.replaceFormatCmd(cfg.calibredb, libArgs, id, file))
     yield fmt
 
-  private def addCmd(file: Path, meta: CalibrePush): List[String] =
+  private def addCmd(file: Path, meta: com.histmersion.plugins.calibre.Calibre.Push): List[String] =
     List(cfg.calibredb, "add", file.toString) ++ libArgs ++
       List("--title", meta.title.trim, "--authors", meta.authors.mkString(" & "), "--duplicates") ++
       meta.doi.toList.flatMap(d => List("--identifier", s"doi:$d")) ++
@@ -157,7 +170,7 @@ final class Calibre(cfg: CalibreLibrary, shell: Shell):
       (if meta.tags.isEmpty then Nil else List("--tags", meta.tags.mkString(",")))
 
   /** The fields `calibredb add` cannot set. Best-effort: a failure here leaves a usable entry. */
-  private def setMetadata(id: Int, meta: CalibrePush): Either[String, Unit] =
+  private def setMetadata(id: Int, meta: com.histmersion.plugins.calibre.Calibre.Push): Either[String, Unit] =
     val fields = List(
       meta.publisher.map("publisher:" + _),
       meta.year.map(y => s"pubdate:$y-01-01"),
@@ -228,40 +241,72 @@ object Calibre:
     * Languages are not written: the corpus records no language for a source. `Left` when the record would put a blank
     * or Unknown title/author into Calibre.
     */
-  def updatePlan(meta: CalibrePush, current: CalibreBook): Either[String, List[CalibreChange]] =
+  def updatePlan(
+      meta: com.histmersion.plugins.calibre.Calibre.Push,
+      current: com.histmersion.plugins.calibre.Calibre.Book
+  ): Either[String, List[com.histmersion.plugins.calibre.Calibre.Change]] =
     val authors = normaliseAuthors(meta.authors)
     guard(meta.title, authors).map { _ =>
       def empty(v: Option[String]) = v.forall(s => isBlank(s) || s.trim == "-")
-      def change(f: CalibreField, from: String, to: String) = Option.when(from != to)(CalibreChange(f, from, to))
+      def change(f: com.histmersion.plugins.calibre.Calibre.Field, from: String, to: String) =
+        Option.when(from != to)(com.histmersion.plugins.calibre.Calibre.Change(f, from, to))
       val ids = mergeIdentifiers(current.identifiers, meta.doi, meta.isbn)
       List(
         // compared and written trimmed: a stray space is not a different title
         Option.when(current.title.trim != meta.title.trim)(
-          CalibreChange(CalibreField.Title, current.title, meta.title.trim)
+          com.histmersion.plugins.calibre.Calibre
+            .Change(com.histmersion.plugins.calibre.Calibre.Field.Title, current.title, meta.title.trim)
         ),
-        change(CalibreField.Authors, current.authors.mkString(" & "), authors.mkString(" & ")),
+        change(
+          com.histmersion.plugins.calibre.Calibre.Field.Authors,
+          current.authors.mkString(" & "),
+          authors.mkString(" & ")
+        ),
         meta.year.flatMap(y =>
-          Option.when(CalibreAudit.year(current) != Some(y))(
-            CalibreChange(CalibreField.Pubdate, CalibreAudit.year(current).fold("")(_.toString), s"$y-01-01")
+          Option.when(com.histmersion.plugins.calibre.Calibre.Audit.year(current) != Some(y))(
+            com.histmersion.plugins.calibre.Calibre.Change(
+              com.histmersion.plugins.calibre.Calibre.Field.Pubdate,
+              com.histmersion.plugins.calibre.Calibre.Audit.year(current).fold("")(_.toString),
+              s"$y-01-01"
+            )
           )
         ),
         Option.when(ids != current.identifiers)(
-          CalibreChange(CalibreField.Identifiers, identifiersValue(current.identifiers), identifiersValue(ids))
+          com.histmersion.plugins.calibre.Calibre.Change(
+            com.histmersion.plugins.calibre.Calibre.Field.Identifiers,
+            identifiersValue(current.identifiers),
+            identifiersValue(ids)
+          )
         ),
         Option.when(meta.tags.nonEmpty && meta.tags.distinct.sorted != current.tags.distinct.sorted)(
-          CalibreChange(CalibreField.Tags, current.tags.mkString(","), meta.tags.distinct.mkString(","))
+          com.histmersion.plugins.calibre.Calibre.Change(
+            com.histmersion.plugins.calibre.Calibre.Field.Tags,
+            current.tags.mkString(","),
+            meta.tags.distinct.mkString(",")
+          )
         ),
         meta.publisher
           .filter(p => empty(current.publisher) && !isBlank(p))
-          .map(CalibreChange(CalibreField.Publisher, current.publisher.getOrElse(""), _)),
+          .map(
+            com.histmersion.plugins.calibre.Calibre
+              .Change(com.histmersion.plugins.calibre.Calibre.Field.Publisher, current.publisher.getOrElse(""), _)
+          ),
         meta.summary
           .filter(d => empty(current.comments) && !isBlank(d))
-          .map(CalibreChange(CalibreField.Comments, current.comments.getOrElse(""), _))
+          .map(
+            com.histmersion.plugins.calibre.Calibre
+              .Change(com.histmersion.plugins.calibre.Calibre.Field.Comments, current.comments.getOrElse(""), _)
+          )
       ).flatten
     }
 
   /** `calibredb set_metadata` writing `changes` into entry `id`. */
-  def setMetadataCmd(calibredb: String, libArgs: List[String], id: Int, changes: List[CalibreChange]): List[String] =
+  def setMetadataCmd(
+      calibredb: String,
+      libArgs: List[String],
+      id: Int,
+      changes: List[com.histmersion.plugins.calibre.Calibre.Change]
+  ): List[String] =
     List(calibredb, "set_metadata") ++ libArgs ++ List(id.toString) ++
       changes.flatMap(c => List("--field", s"${c.field.name}:${c.to}"))
 
@@ -316,7 +361,10 @@ object Calibre:
     authors.map(normaliseAuthor).filter(_.nonEmpty).distinct
 
   /** Plan `update --all`: one [[UpdateEntry]] per linked Calibre id, in id order. */
-  def planAll(linked: List[LinkedRecord], books: Map[Int, CalibreBook]): List[UpdateEntry] =
+  def planAll(
+      linked: List[LinkedRecord],
+      books: Map[Int, com.histmersion.plugins.calibre.Calibre.Book]
+  ): List[UpdateEntry] =
     linked.groupBy(_.calibreId).toList.sortBy(_._1).map { (id, rs) =>
       val keys = rs.map(_.citekey).distinct.sorted
       val outcome =
@@ -367,7 +415,7 @@ object Calibre:
   /** `calibredb list --for-machine`: authors as `A & B`, tags/formats as arrays, identifiers as an object, formats as
     * ABSOLUTE paths.
     */
-  def parseMachineJson(out: String): Either[String, List[CalibreBook]] =
+  def parseMachineJson(out: String): Either[String, List[com.histmersion.plugins.calibre.Calibre.Book]] =
     if out.trim.isEmpty then Right(Nil) // no match: nothing is printed at all
     else
       io.circe.parser
@@ -377,7 +425,7 @@ object Calibre:
         .map(_.asArray.toList.flatten.flatMap { j =>
           val c = j.hcursor
           c.downField("id").as[Int].toOption.map { id =>
-            CalibreBook(
+            com.histmersion.plugins.calibre.Calibre.Book(
               id = id,
               title = c.downField("title").as[String].getOrElse(""),
               authors = splitAuthors(c.downField("authors").as[String].getOrElse("")),
@@ -395,7 +443,10 @@ object Calibre:
   /** `sqlite3 -json`: every column is a scalar, the multi-valued ones joined by [[sqliteQuery]], and `formats` relative
     * to the library root.
     */
-  def parseSqliteJson(out: String, libraryDir: String): Either[String, List[CalibreBook]] =
+  def parseSqliteJson(
+      out: String,
+      libraryDir: String
+  ): Either[String, List[com.histmersion.plugins.calibre.Calibre.Book]] =
     // `sqlite3 -json` prints NOTHING for an empty result, not `[]` — that was "exhausted input"
     if out.trim.isEmpty then Right(Nil)
     else
@@ -407,7 +458,7 @@ object Calibre:
           val c = j.hcursor
           def s(f: String) = c.downField(f).as[String].toOption.map(_.trim).filter(_.nonEmpty)
           c.downField("id").as[Int].toOption.map { id =>
-            CalibreBook(
+            com.histmersion.plugins.calibre.Calibre.Book(
               id = id,
               title = s("title").getOrElse(""),
               authors = splitAuthors(s("authors").getOrElse("")),
@@ -460,3 +511,189 @@ object Calibre:
        | CASE WHEN b.has_cover THEN b.path || '/cover.jpg' END AS cover
        |FROM books b WHERE $where ORDER BY b.id DESC LIMIT ${limit.max(1)}""".stripMargin
       .replace("\n", " ")
+
+  /** The PURE half of `histmersion calibre audit`: compare every linked entry with its record. */
+  object Audit:
+
+    /** Lower-case ASCII words: accents, punctuation and spacing are not disagreements. */
+    def norm(s: String): String =
+      Normalizer
+        .normalize(s, Normalizer.Form.NFD)
+        .replaceAll("\\p{M}", "")
+        .toLowerCase(java.util.Locale.ROOT)
+        .replaceAll("[^a-z0-9]+", " ")
+        .trim
+
+    /** Equal after [[norm]], or one extends the other: Calibre often keeps or drops a subtitle. */
+    def titleMatches(a: String, b: String): Boolean =
+      val (x, y) = (norm(a), norm(b))
+      x.nonEmpty && y.nonEmpty && (x.startsWith(y) || y.startsWith(x))
+
+    /** "Güterbock, Hans G." and "Hans G. Güterbock" are the same surname; a bracketed role or life span ("Ken Dowden
+      * (ed.)", "Gimbutienė, Marija (1921-1994)") is not part of the name.
+      */
+    def surname(author: String): String =
+      val name = author.replaceAll("\\([^)]*\\)", " ").trim
+      norm(if name.contains(",") then name.takeWhile(_ != ',') else name.split("\\s+").last)
+
+    def authorsMatch(a: List[String], b: List[String]): Boolean =
+      (a.map(surname).toSet & b.map(surname).toSet).exists(_.nonEmpty)
+
+    /** Calibre's placeholder year for "unknown" is 101; anything before 1000 is not a real pubdate. */
+    def year(b: Book): Option[Int] =
+      b.pubdate.flatMap(_.take(4).toIntOption).filter(_ >= 1000)
+
+    /** The metadata a scrape or a bad import leaves: blank/Unknown, or a title that is a web page. */
+    def junk(b: Book): Boolean =
+      Calibre.isBlank(b.title) || b.title.length > 300 || b.authors.isEmpty ||
+        b.authors.exists(a => Calibre.isBlank(a) || a.toLowerCase(java.util.Locale.ROOT).contains("unknown"))
+
+    def issues(r: AuditRecord, b: Book): List[AuditIssue] =
+      List(
+        Option.when(junk(b))(AuditIssue.Junk),
+        Option.when(!junk(b) && !titleMatches(r.title, b.title))(AuditIssue.Title),
+        Option.when(!junk(b) && !authorsMatch(r.authors, b.authors))(AuditIssue.Authors),
+        Option.when(r.year.isDefined && year(b).isDefined && r.year != year(b))(AuditIssue.Year)
+      ).flatten
+
+    def audit(records: List[AuditRecord], books: Map[Int, Book]): List[AuditFinding] =
+      records.groupBy(_.calibreId).toList.sortBy(_._1).flatMap { (id, rs) =>
+        val keys = rs.map(_.citekey).sorted
+        books.get(id) match
+          case None    => List(AuditFinding(id, keys, List(AuditIssue.Missing), None, rs.minBy(_.citekey)))
+          case Some(b) =>
+            val (best, found) = rs.map(r => r -> issues(r, b)).minBy((r, is) => (is.size, r.citekey))
+            if found.isEmpty then Nil else List(AuditFinding(id, keys, found, Some(b), best))
+      }
+
+  /** One book as Calibre holds it — the shape both readers below produce (`calibredb list --for-machine` and the
+    * `sqlite3 -readonly` fallback normalise to this same record).
+    */
+  final case class Book(
+      id: Int,
+      title: String,
+      authors: List[String],
+      pubdate: Option[String],
+      publisher: Option[String],
+      tags: List[String],
+      comments: Option[String],
+      identifiers: Map[String, String],
+      formats: List[String],
+      /** The cover Calibre keeps beside the book (`<book dir>/cover.jpg`), absolute — `None` when the entry has none.
+        * Read-only: `media covers` uploads a copy, the file stays as it is.
+        */
+      cover: Option[String] = None
+  ):
+    /** Calibre writes `0101-01-01` for "no date"; a year below [[CalibreBook.FirstYear]] is that placeholder, not a
+      * publication year.
+      */
+    def year: Option[Int] = pubdate
+      .map(_.take(4))
+      .filter(_.forall(_.isDigit))
+      .flatMap(_.toIntOption)
+      .filter(_ >= Book.FirstYear)
+    def doi: Option[String] = identifiers.get("doi")
+    def isbn: Option[String] = identifiers.get("isbn")
+
+    /** The file to import: the requested format, else PDF, else EPUB (both carry a text layer). */
+    def pick(format: Option[String]): Option[String] =
+      val wanted = format.map(_.toLowerCase).toList ++ List("pdf", "epub")
+      wanted.iterator.map(ext => formats.find(_.toLowerCase.endsWith("." + ext))).collectFirst { case Some(f) =>
+        f
+      }
+
+  object Book:
+    /** The first year a pubdate is taken as one: Calibre's "no date" is year 101, and the library cites nothing older
+      * by its printing (the host's citekeys use the same bound).
+      */
+    val FirstYear: Int = 1000
+
+  /** One field `calibre update` changes: what Calibre has now and what it writes. */
+  final case class Change(field: Field, from: String, to: String)
+
+  /** A field `calibre update` writes, by its `calibredb set_metadata --field` name. */
+  enum Field(val name: String):
+    case Title extends Field("title")
+    case Authors extends Field("authors")
+    case Pubdate extends Field("pubdate")
+    case Identifiers extends Field("identifiers")
+    case Tags extends Field("tags")
+    case Publisher extends Field("publisher")
+    case Comments extends Field("comments")
+
+  /** Where the library is and how it is reached, resolved from the plugin's settings: the library's folder (`~`
+    * expanded), the `calibredb` and `sqlite3` to run, and the process whose presence means the Calibre GUI holds the
+    * library.
+    */
+  final case class Library(library: String, calibredb: String, sqlite: String, guiProcess: String)
+
+  /** What `calibre push` sends into Calibre for one source. */
+  final case class Push(
+      title: String,
+      authors: List[String],
+      doi: Option[String] = None,
+      isbn: Option[String] = None,
+      year: Option[Int] = None,
+      publisher: Option[String] = None,
+      summary: Option[String] = None,
+      tags: List[String] = Nil
+  )
+
+  /** The `calibre` plugin's block (`histmersion.plugins.calibre`).
+    *
+    * @param libraryPath
+    *   the library's folder, the one holding `metadata.db` (`~` is the home directory)
+    * @param calibredb
+    *   Calibre's command-line tool: a bare name is looked up on the server's `PATH`, then where Calibre installs it
+    *   ([[CalibreSettings.InstallDirs]]), since a LaunchAgent's `PATH` holds only the system directories
+    * @param sqlite
+    *   the `sqlite3` the read-only fallback runs while the Calibre GUI holds the library
+    * @param writeBack
+    *   whether the server may write to the library (push, sync, update, set); off makes the collection read-only
+    * @param guiProcess
+    *   the process whose presence means the Calibre GUI holds the library
+    */
+  final case class Settings(
+      libraryPath: String,
+      calibredb: String,
+      sqlite: String,
+      writeBack: Boolean,
+      guiProcess: String
+  ) derives ConfigReader:
+    /** The settings as the library is reached, `~` read against `home`, a bare `calibredb` found on `searchPath` or in
+      * Calibre's install directories (kept bare when it is in none, so the failure names it as configured).
+      */
+    def library(
+        home: Option[String],
+        searchPath: Option[String] = None,
+        executable: Path => Boolean = Files.isExecutable(_)
+    ): Library =
+      val path = libraryPath.trim match
+        case "~"                                       => home.getOrElse("~")
+        case p if p.startsWith("~/") && home.isDefined => home.getOrElse("") + p.drop(1)
+        case p                                         => p
+      Library(path, Settings.locate(calibredb, home, searchPath, executable), sqlite, guiProcess)
+
+  object Settings:
+
+    /** Where Calibre's installers put `calibredb`: the macOS app (system-wide or the user's), Homebrew on Apple silicon
+      * and Intel, and the Linux installer's `/opt/calibre`.
+      */
+    val InstallDirs: List[String] = List(
+      "/Applications/calibre.app/Contents/MacOS",
+      "~/Applications/calibre.app/Contents/MacOS",
+      "/opt/homebrew/bin",
+      "/usr/local/bin",
+      "/opt/calibre",
+      "/usr/bin"
+    )
+
+    /** `name` as configured when it holds a `/`; otherwise the first executable `name` on `searchPath`, then in
+      * [[InstallDirs]].
+      */
+    def locate(name: String, home: Option[String], searchPath: Option[String], executable: Path => Boolean): String =
+      if name.contains('/') || name.isBlank then name
+      else
+        val dirs = searchPath.toList.flatMap(_.split(':').toList).filter(_.nonEmpty) ++
+          InstallDirs.flatMap(d => if d.startsWith("~/") then home.map(_ + d.drop(1)).toList else List(d))
+        dirs.iterator.map(d => Path.of(d, name)).find(executable).fold(name)(_.toString)

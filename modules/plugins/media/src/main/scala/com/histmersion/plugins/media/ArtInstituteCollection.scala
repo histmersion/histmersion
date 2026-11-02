@@ -14,7 +14,7 @@ final class ArtInstituteCollection(conf: CollectionSettings, thumbPx: Int)
   override val description = "The Art Institute of Chicago (CC0, is_public_domain; IIIF images)" + MetCollection.Museum
   val role = MediaCollection.Object
 
-  def search(place: MediaPlace, http: PluginHttp): Either[String, List[Either[String, MediaItem]]] =
+  def search(place: MediaPlace, http: Plugin.Http): Either[String, List[Either[String, MediaItem]]] =
     http
       .askJson(ArtInstituteCollection.searchUrl(conf.apiUrl, place.label, conf.candidates))
       .flatMap(ArtInstituteCollection.records(_, conf.imageUrl, conf.displayPx, thumbPx))

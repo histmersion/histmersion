@@ -43,7 +43,7 @@ trait NoteService:
       text: com.histmersion.api.personal.Note.Text,
       unchangedSince: Option[MarkTime],
       at: MarkTime
-  ): Either[NoteEditRefused, Note]
+  ): Either[Note.EditRefused, Note]
 
   /** The note as it was before it was removed. */
   def remove(user: UserId, id: com.histmersion.api.personal.Note.Id, at: MarkTime): Option[Note]
@@ -60,9 +60,9 @@ object NoteService:
     (if words.isEmpty then all else all.filter(_.matches(words))).take(size.value)
 
   /** The key, with the uids of the records of `kind` (of every kind when none) it names now. */
-  private def noteItem(key: ItemKey, kind: Option[MarkKind], items: Referables): NoteItem =
+  private def noteItem(key: ItemKey, kind: Option[MarkKind], items: Referables): Note.Item =
     val kinds = kind.filter(_.isItem).fold(items.kinds)(k => Set(MarkTarget.itemKind(k)))
-    NoteItem(key, kinds.flatMap(k => items.resolve(k, key).toOption.flatMap(_.uid)))
+    Note.Item(key, kinds.flatMap(k => items.resolve(k, key).toOption.flatMap(_.uid)))
 
   private def resolved(target: MarkTarget, items: Referables): MarkTarget =
     target.itemRef.fold(target)(r => target.resolved(items.resolve(r.kind, r.key).toOption.flatMap(_.uid))).withoutZoom
@@ -105,14 +105,14 @@ object NoteService:
         text: com.histmersion.api.personal.Note.Text,
         unchangedSince: Option[MarkTime],
         at: MarkTime
-    ): Either[NoteEditRefused, Note] =
+    ): Either[Note.EditRefused, Note] =
       db.transact {
         NoteRepo.live(user, id).flatMap(_.stored(user)) match
-          case None                                               => Left(NoteEditRefused.Missing)
-          case Some(n) if unchangedSince.exists(_ != n.updatedAt) => Left(NoteEditRefused.Changed(n.updatedAt))
+          case None                                               => Left(Note.EditRefused.Missing)
+          case Some(n) if unchangedSince.exists(_ != n.updatedAt) => Left(Note.EditRefused.Changed(n.updatedAt))
           case Some(_)                                            =>
             NoteRepo.rewrite(user, id, text, at): Unit
-            NoteRepo.live(user, id).flatMap(_.stored(user)).toRight(NoteEditRefused.Missing)
+            NoteRepo.live(user, id).flatMap(_.stored(user)).toRight(Note.EditRefused.Missing)
       }.map(s => shown(List(s), items).head)
 
     def remove(user: UserId, id: com.histmersion.api.personal.Note.Id, at: MarkTime): Option[Note] =
@@ -177,13 +177,13 @@ object NoteService:
         text: com.histmersion.api.personal.Note.Text,
         unchangedSince: Option[MarkTime],
         at: MarkTime
-    ): Either[NoteEditRefused, Note] =
+    ): Either[Note.EditRefused, Note] =
       stored(user, id) match
-        case None                                               => Left(NoteEditRefused.Missing)
-        case Some(n) if unchangedSince.exists(_ != n.updatedAt) => Left(NoteEditRefused.Changed(n.updatedAt))
+        case None                                               => Left(Note.EditRefused.Missing)
+        case Some(n) if unchangedSince.exists(_ != n.updatedAt) => Left(Note.EditRefused.Changed(n.updatedAt))
         case Some(_)                                            =>
           changed(user, id)(_.copy(text = text, updatedAt = at))
-          get(user, id).toRight(NoteEditRefused.Missing)
+          get(user, id).toRight(Note.EditRefused.Missing)
 
     def remove(user: UserId, id: com.histmersion.api.personal.Note.Id, at: MarkTime): Option[Note] =
       val found = get(user, id)

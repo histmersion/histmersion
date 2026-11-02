@@ -25,9 +25,9 @@ final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) exte
   override def check =
     Either.cond(conf.enabled, (), "Pleiades (linked Commons files) is switched off (media.pleiades.enabled = false)")
 
-  def search(place: MediaPlace, http: PluginHttp) = Left("the Pleiades pictures are found for a batch of places")
+  def search(place: MediaPlace, http: Plugin.Http) = Left("the Pleiades pictures are found for a batch of places")
 
-  override def searchTargets(places: List[MediaPlace], events: List[MediaEvent], http: PluginHttp): MediaFound =
+  override def searchTargets(places: List[MediaPlace], events: List[MediaEvent], http: Plugin.Http): MediaFound =
     // 1. each place's record(s): the picture links, in order
     val read = places.map { p =>
       val pids = p.ids.collect { case (PleiadesPictures.Scheme, id) => id }
@@ -46,14 +46,14 @@ final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) exte
         .zipWithIndex
         .map { case ((pid, l, f), i) => (p, f, i, s"Pleiades place $pid links it (${l.citation})") }
     }
-    val (files, judged) = CommonsFiles(http, media, licences).items(found.map(_._2).distinct)
+    val (files, judged) = Commons.Files(http, media, licences).items(found.map(_._2).distinct)
     MediaFound(
       uses = found.map((p, f, i, basis) =>
-        MediaUse(MediaTargetId(MediaTarget.Places, p.id), files(f), i, basis = Some(basis), note = Some(basis))
+        MediaUse(MediaTarget.Id(MediaTarget.Places, p.id), files(f), i, basis = Some(basis), note = Some(basis))
       ),
-      asked = places.map(p => MediaTargetId(MediaTarget.Places, p.id)),
+      asked = places.map(p => MediaTarget.Id(MediaTarget.Places, p.id)),
       unanswered =
-        read.collect { case (p, _, as) if as.exists(_._2.isLeft) => MediaTargetId(MediaTarget.Places, p.id) }.toSet,
+        read.collect { case (p, _, as) if as.exists(_._2.isLeft) => MediaTarget.Id(MediaTarget.Places, p.id) }.toSet,
       read = read.map(_._3.count(_._2.isRight)).sum,
       failed = read.flatMap { (p, pids, answers) =>
         (if pids.isEmpty then List(s"place ${p.id} (${p.label}): no Pleiades id") else Nil) ++
@@ -62,8 +62,8 @@ final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) exte
       notTaken = read.flatMap(_._3.flatMap(_._2.toOption.toList.flatten.flatMap(_.file.left.toOption)))
     )
 
-  override def completeAll(items: List[MediaItem], http: PluginHttp): MediaCompleted =
-    CommonsFiles(http, media, licences).thumbnails(items)
+  override def completeAll(items: List[MediaItem], http: Plugin.Http): MediaCompleted =
+    Commons.Files(http, media, licences).thumbnails(items)
 
 object PleiadesPictures:
   /** The gazetteer the places it asks about carry an id of. */

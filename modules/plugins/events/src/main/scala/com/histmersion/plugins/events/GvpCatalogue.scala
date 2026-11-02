@@ -30,7 +30,7 @@ final class GvpCatalogue(cfg: GvpEvents) extends EventCatalogue:
       .windows(query.from.fold(cfg.minYear)(_.value.toLong), query.to.value.toLong, cfg.gvp.windowYears)
       .map((a, b) => s"years:$a..$b")
 
-  def read(part: String, query: CatalogueQuery, http: PluginHttp): Either[String, CataloguePage] =
+  def read(part: String, query: CatalogueQuery, http: Plugin.Http): Either[String, CataloguePage] =
     part match
       case GvpCatalogue.Window(a, b) =>
         CatalogueJson(http)(GvpCatalogue.url(cfg.gvp.url, a.toLong, b.toLong, cfg.gvp.pageSize))

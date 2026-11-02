@@ -49,16 +49,16 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
     */
   final private class ZqPlugin extends spi.Plugin:
     type Config = ZqPluginConfig
-    val info = spi.PluginInfo("zq-plugin", "0.1.0", spi.Spi.Version)
+    val info = spi.Plugin.Info("zq-plugin", "0.1.0", spi.Spi.Version)
     override def defaultsResource = "zq-none.conf"
-    def register(c: ZqPluginConfig, ctx: spi.PluginContext) = ctx.mediaCollections.add(Collection, ZqCollection)
+    def register(c: ZqPluginConfig, ctx: spi.Plugin.Context) = ctx.mediaCollections.add(Collection, ZqCollection)
 
   private object ZqCollection extends spi.MediaCollection:
     val title = "Zq portal objects"
     override val description = "A test fixture's collection"
     val role = spi.MediaCollection.Object
     override val requestIntervalMs = 0
-    def search(place: spi.MediaPlace, http: spi.PluginHttp) =
+    def search(place: spi.MediaPlace, http: spi.Plugin.Http) =
       // the plugin asks with its own User-Agent: the host's replaces it
       http
         .get(

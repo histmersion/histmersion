@@ -9,7 +9,7 @@ class AnthropicWireSuite extends munit.FunSuite:
     AiTool("facets", "The values of one field", """{"type":"object","properties":{"field":{"type":"string"}}}""")
 
   private def request(messages: List[AiMessage], tools: List[AiTool] = Nil, maxTokens: Int = 50) =
-    AiTurnRequest("claude-x", "SYS", messages, tools, None, maxTokens, 1, 3)
+    AiTurn.Request("claude-x", "SYS", messages, tools, None, maxTokens, 1, 3)
 
   test("a turn's body: the conversation as content blocks, the system prompt, the cap, the tools, nulls dropped"):
     val body = AnthropicRequest
@@ -17,7 +17,7 @@ class AnthropicWireSuite extends munit.FunSuite:
         request(
           List(
             AiMessage.User("u"),
-            AiMessage.Assistant("", List(AiToolCall("t1", "facets", """{"field":"tags","prefix":null}"""))),
+            AiMessage.Assistant("", List(AiTool.Call("t1", "facets", """{"field":"tags","prefix":null}"""))),
             AiMessage.ToolResult("t1", "facets", "ok"),
             AiMessage.User("[Iteration 2 of 3]")
           ),
@@ -51,7 +51,7 @@ class AnthropicWireSuite extends munit.FunSuite:
     )
 
   test("a tool call whose input is not an object cannot be sent, and says why"):
-    val r = request(List(AiMessage.Assistant("", List(AiToolCall("t", "x", "[1]")))))
+    val r = request(List(AiMessage.Assistant("", List(AiTool.Call("t", "x", "[1]")))))
     assert(AnthropicRequest.of(r).left.exists(_.startsWith("DecodingFailure")), AnthropicRequest.of(r).toString)
 
   private val ok =

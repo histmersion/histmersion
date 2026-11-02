@@ -28,7 +28,7 @@ import java.nio.file.{Files, Path}
   val to = Path.of(out).toAbsolutePath
   val (tiles, bytes) = BasemapLabels.write(
     BasemapFixtures.store(to.getParent),
-    com.histmersion.util.storage.StoreKey.applyUnsafe(to.getFileName.toString),
+    com.histmersion.util.storage.Store.Key.applyUnsafe(to.getFileName.toString),
     kept,
     b,
     maxZoom.toInt,

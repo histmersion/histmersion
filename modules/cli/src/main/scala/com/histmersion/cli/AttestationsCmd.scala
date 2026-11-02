@@ -54,7 +54,7 @@ object AttestationsCmd:
     }
   }
 
-  val command: Opts[Client => Either[CliError, Unit]] =
+  val command: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("attestations", "Granular source references: search, show, add, rm") {
       search orElse showCmd orElse addCmd orElse rmCmd
     }

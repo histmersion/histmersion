@@ -29,11 +29,11 @@ object AgentStateCmd:
           case Right(_) =>
             c.agentStateSet(key, AgentStatePut(valueStr)).map(e => println(AgentStateMarkdown.agentState(e)))
           case Left(err) =>
-            Left(CliError(s"Invalid JSON: ${err.getMessage}", exitCode = ExitCode.Usage))
+            Left(Cli.Error(s"Invalid JSON: ${err.getMessage}", exitCode = ExitCode.Usage))
       }
   }
 
-  val command: Opts[Client => Either[CliError, Unit]] =
+  val command: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("agent-state", "Agent state key-value store: list, get, set") {
       list orElse get orElse set
     }

@@ -1,9 +1,8 @@
 package com.histmersion.plugins.media
 
-import com.histmersion.plugin.PluginContext
-
 /** `media-depicts`: `histmersion media import depicts` — Commons files that depict events. */
+import com.histmersion.plugin.Plugin
 final class DepictsPlugin extends MediaPlugin("media-depicts"):
-  type Config = MediaPluginConfig
-  def register(c: MediaPluginConfig, ctx: PluginContext): Either[String, Unit] =
-    ctx.mediaCollections.add("depicts", CommonsDepictions(c.media, ctx.licences))
+  type Config = MediaPlugin.Config
+  def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[String, Unit] =
+    ctx.mediaCollections.add("depicts", Commons.Depictions(c.media, ctx.licences))

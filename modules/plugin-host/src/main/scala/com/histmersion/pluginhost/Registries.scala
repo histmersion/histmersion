@@ -9,7 +9,7 @@ import scala.jdk.CollectionConverters.*
   * app; an immutable snapshot of one [[Generation]].
   */
 final case class Registries(
-    secretVaults: ListMap[String, SecretVault] = ListMap.empty,
+    secretVaults: ListMap[String, Secret.Vault] = ListMap.empty,
     sourceFetchers: ListMap[String, SourceFetcher] = ListMap.empty,
     mediaCollections: ListMap[String, MediaCollection] = ListMap.empty,
     eventCatalogues: ListMap[String, EventCatalogue] = ListMap.empty,

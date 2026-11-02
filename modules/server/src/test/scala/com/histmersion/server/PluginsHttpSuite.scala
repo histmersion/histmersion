@@ -4,13 +4,13 @@ import com.histmersion.pluginhost.{Generation, HostServices, PluginHost}
 
 import ox.supervised
 import com.histmersion.config.AppConfig
-import com.histmersion.plugin.PluginHttp
 import com.histmersion.server.plugins.*
 import org.ekrich.config.ConfigFactory
 
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import scala.jdk.CollectionConverters.*
+import com.histmersion.plugin.Plugin
 
 /** `/api/about` and `/api/config` report the plugins the server started with — their state and their settings, a secret
   * as its REFERENCE and never its value. Skipped without HISTMERSION_TEST_DB_URL.
@@ -34,7 +34,7 @@ class PluginsHttpSuite extends munit.FunSuite:
         |}""".stripMargin)
     val env = ConfigFactory.parseMap(Map("PLUGINS_HTTP_TOKEN" -> "env-secret-value").asJava)
     val services = HostServices(
-      () => new PluginHttp { def get(u: String, h: Map[String, String]) = Left("offline") },
+      () => new Plugin.Http { def get(u: String, h: Map[String, String]) = Left("offline") },
       env,
       (_, _, _) => ()
     )

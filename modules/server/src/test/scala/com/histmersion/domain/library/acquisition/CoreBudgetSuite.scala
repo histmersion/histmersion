@@ -4,7 +4,7 @@ import com.histmersion.server.ServerPlugins
 
 import com.histmersion.config.{AppConfig, LoadedConfig}
 import com.histmersion.domain.CoreQuota
-import com.histmersion.plugin.{Doi, Fetch, FetchContext, FetchedFile, PluginHttp, PluginLog, SourceFetcher, WorkKey}
+import com.histmersion.plugin.{Doi, Fetch, FetchedFile, SourceFetcher, WorkKey}
 import com.histmersion.pluginhost.{FetchChain, Generation, PluginHost}
 import com.histmersion.server.plugins.MakerPlugin
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
@@ -16,6 +16,7 @@ import java.time.{Instant, LocalDate}
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 import scala.jdk.CollectionConverters.*
+import com.histmersion.plugin.Plugin
 
 /** CORE's two uses — the acquisition chain's `core` step and the new-source search's `core` index — over ONE key and
   * ONE budget, against a stub CORE on a loopback port (never the real one): a 429 with its retry time,
@@ -102,10 +103,10 @@ class CoreBudgetSuite extends munit.FunSuite:
     def advance(seconds: Long): Unit = now.updateAndGet(_.plusSeconds(seconds))
     def budget(): CoreBudget = CoreBudget(() => now.get, ms => { slept.add(ms); now.updateAndGet(_.plusMillis(ms)) })
 
-  private val Ctx: FetchContext = new FetchContext:
+  private val Ctx: com.histmersion.plugin.Fetch.Context = new com.histmersion.plugin.Fetch.Context:
     private val m = scala.collection.mutable.Map.empty[String, Any] // one fetch's memo
     def memo[A](key: String)(compute: => A): A = m.getOrElseUpdate(key, compute).asInstanceOf[A]
-    val log: PluginLog = new PluginLog { def info(message: String) = (); def warn(message: String) = () }
+    val log: Plugin.Log = new Plugin.Log { def info(message: String) = (); def warn(message: String) = () }
 
   private def generation(
       cfg: LoadedConfig,
@@ -149,7 +150,7 @@ class CoreBudgetSuite extends munit.FunSuite:
       )
       val next = new SourceFetcher:
         val access = com.histmersion.plugin.Access.Open
-        def fetch(w: WorkKey, ctx: FetchContext) = Fetch.Miss("nothing here either")
+        def fetch(w: WorkKey, ctx: com.histmersion.plugin.Fetch.Context) = Fetch.Miss("nothing here either")
       val chain = FetchChain(List("core" -> g.registries.sourceFetchers("core"), "next" -> next))
       val out = chain.fetchWorkExplained(work, legalOnly = true)
       // the job's report says why core had nothing, and the next step was asked

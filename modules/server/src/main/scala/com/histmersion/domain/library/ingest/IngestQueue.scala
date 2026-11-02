@@ -8,7 +8,7 @@ import com.histmersion.domain.media.assets.{AssetService, NewFigure}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.jobs.{JobPool, JobRecords, Pinning}
 import com.histmersion.util.ocr.{ConverterClient, ConverterState}
-import com.histmersion.util.storage.{Store, StoreKey}
+import com.histmersion.util.storage.Store
 
 import hearth.kindlings.optics.syntax.*
 
@@ -74,7 +74,7 @@ final class IngestQueue(
   def paused: Boolean = pool.isPaused
 
   /** Queue the conversion of the stored original `file`; the job as the caller is told of it. */
-  def enqueue(kind: String, citekey: String, sha: String, file: StoreKey, params: Ingest.Params): Ingest.Accepted =
+  def enqueue(kind: String, citekey: String, sha: String, file: Store.Key, params: Ingest.Params): Ingest.Accepted =
     val job = jobs.create(kind, Some(citekey), Some(sha), params.acquireItem)
     val _ = pending.put(job.id, IngestPending(params, file, sha, kind))
     pool.submit(job.id)

@@ -10176,7 +10176,7 @@
       ]
     },
     {
-      "type": "com.histmersion.cli.CalibreJson$AuditRow$",
+      "type": "com.histmersion.cli.Calibre$Json$AuditRow$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy7"
@@ -10184,7 +10184,7 @@
       ]
     },
     {
-      "type": "com.histmersion.cli.CalibreJson$Book$",
+      "type": "com.histmersion.cli.Calibre$Json$Book$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy1"
@@ -10192,7 +10192,7 @@
       ]
     },
     {
-      "type": "com.histmersion.cli.CalibreJson$Change$",
+      "type": "com.histmersion.cli.Calibre$Json$Change$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy5"
@@ -10200,7 +10200,7 @@
       ]
     },
     {
-      "type": "com.histmersion.cli.CalibreJson$GapRow$",
+      "type": "com.histmersion.cli.Calibre$Json$GapRow$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy8"
@@ -10208,7 +10208,7 @@
       ]
     },
     {
-      "type": "com.histmersion.cli.CalibreJson$Gaps$",
+      "type": "com.histmersion.cli.Calibre$Json$Gaps$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy9"
@@ -10216,7 +10216,7 @@
       ]
     },
     {
-      "type": "com.histmersion.cli.CalibreJson$Linked$",
+      "type": "com.histmersion.cli.Calibre$Json$Linked$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy2"
@@ -10224,7 +10224,7 @@
       ]
     },
     {
-      "type": "com.histmersion.cli.CalibreJson$Replaced$",
+      "type": "com.histmersion.cli.Calibre$Json$Replaced$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy3"
@@ -10232,7 +10232,7 @@
       ]
     },
     {
-      "type": "com.histmersion.cli.CalibreJson$UpdateRow$",
+      "type": "com.histmersion.cli.Calibre$Json$UpdateRow$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy6"
@@ -10240,7 +10240,7 @@
       ]
     },
     {
-      "type": "com.histmersion.cli.CalibreJson$Updated$",
+      "type": "com.histmersion.cli.Calibre$Json$Updated$",
       "fields": [
         {
           "name": "derived$KindlingsCodecAsObject$lzy4"
@@ -11084,7 +11084,7 @@
       ]
     },
     {
-      "type": "com.histmersion.config.ConfigReloadConfig$",
+      "type": "com.histmersion.config.ConfigReload$Config$",
       "fields": [
         {
           "name": "derived$ConfigReader$lzy1"

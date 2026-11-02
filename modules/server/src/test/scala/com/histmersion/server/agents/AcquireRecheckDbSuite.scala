@@ -17,7 +17,7 @@ import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.automation.autopilot.AutopilotRepo
 import com.histmersion.util.database.Migrate
 import com.histmersion.util.jobs.JobRepo
-import com.histmersion.plugin.{Access, Fetch, FetchContext, FetchedFile, SourceFetcher, WorkKey}
+import com.histmersion.plugin.{Access, Fetch, FetchedFile, SourceFetcher, WorkKey}
 import com.histmersion.pluginhost.FetchChain
 import com.histmersion.server.{Deps, ServerWiring}
 import com.histmersion.domain.library.acquisition.*
@@ -294,12 +294,12 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val unauthorisedAsked = java.util.concurrent.atomic.AtomicInteger(0)
     val unauthorised = new SourceFetcher:
       val access = Access.Unauthorised
-      def fetch(w: WorkKey, c: FetchContext) =
+      def fetch(w: WorkKey, c: Fetch.Context) =
         unauthorisedAsked.incrementAndGet()
         Fetch.Found(FetchedFile("stub", None, ("%PDF-1.4\n" + "u" * 2000).getBytes("UTF-8"), "pdf"))
     val open = new SourceFetcher:
       val access = Access.Open
-      def fetch(w: WorkKey, c: FetchContext) =
+      def fetch(w: WorkKey, c: Fetch.Context) =
         if w.doi.exists(_.value == doi("oa")) then
           Fetch.Found(
             FetchedFile(
@@ -629,12 +629,12 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val unauthorisedAsked = java.util.concurrent.atomic.AtomicInteger(0)
     val unauthorised = new SourceFetcher:
       val access = Access.Unauthorised
-      def fetch(w: WorkKey, c: FetchContext) =
+      def fetch(w: WorkKey, c: Fetch.Context) =
         unauthorisedAsked.incrementAndGet()
         Fetch.Found(FetchedFile("stub", None, ("%PDF-1.4\n" + "u" * 2000).getBytes("UTF-8"), "pdf"))
     val open = new SourceFetcher:
       val access = Access.Open
-      def fetch(w: WorkKey, c: FetchContext) = Fetch.Miss("no open-access location")
+      def fetch(w: WorkKey, c: Fetch.Context) = Fetch.Miss("no open-access location")
     val chain = FetchChain(List("unpaywall" -> open, "stub-unauthorised" -> unauthorised), allowUnauthorised = true)
     val cfg = baseCfg.copy(acquire = baseCfg.acquire.copy(allowUnauthorised = true))
     val deps = Deps(cfg, ds)

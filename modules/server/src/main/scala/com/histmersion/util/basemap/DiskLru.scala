@@ -1,6 +1,6 @@
 package com.histmersion.util.basemap
 
-import com.histmersion.util.storage.{Store, StoreError, StoreKey}
+import com.histmersion.util.storage.Store
 
 import java.io.IOException
 import java.time.Instant
@@ -20,14 +20,14 @@ final class DiskLru(store: Store, maxBytes: () => Long, ext: String = "webp"):
   private var total = 0L
   private var loaded = false
 
-  private def file(key: String, absent: Boolean): StoreKey =
-    StoreKey.applyUnsafe(key + (if absent then ".none" else s".$ext"))
+  private def file(key: String, absent: Boolean): Store.Key =
+    Store.Key.applyUnsafe(key + (if absent then ".none" else s".$ext"))
 
-  private def done(written: Either[StoreError, ?]): Unit = written.left.foreach(e => throw IOException(e.message))
+  private def done(written: Either[Store.Error, ?]): Unit = written.left.foreach(e => throw IOException(e.message))
 
   private def load(): Unit = if !loaded then
     loaded = true
-    if store.isDirectory(StoreKey.Root) then
+    if store.isDirectory(Store.Key.Root) then
       val found = store.walk().flatMap { s =>
         val rel = s.key.value
         val key = rel.stripSuffix(s".$ext").stripSuffix(".none")
@@ -76,7 +76,7 @@ final class DiskLru(store: Store, maxBytes: () => Long, ext: String = "webp"):
 
   /** Everything removed; answers the bytes it held. */
   def clear(): Long = synchronized {
-    val was = store.deleteTree(StoreKey.Root).fold(0L)(_.value)
+    val was = store.deleteTree(Store.Key.Root).fold(0L)(_.value)
     index.clear(); total = 0; loaded = false
     was
   }

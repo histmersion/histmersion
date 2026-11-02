@@ -7,12 +7,12 @@ import com.histmersion.domain.catalogue.AttestationTarget
 import com.histmersion.api.Write
 import com.histmersion.api.catalogue.Attestation
 import com.histmersion.domain.Caller
-import com.histmersion.domain.catalogue.evidence.passages.PassageSource
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.aliases.AliasKind
 
 import java.util.Locale
 import com.histmersion.api.Api
+import com.histmersion.domain.catalogue.evidence.passages.Passage
 
 /** The attestations' operations as REST, MCP and the CLI reach them. A reference to a record of a renamed kind (an
   * event, a place, a source, an article) names it by its identifier now — `current` resolves an old one; a finding id
@@ -20,7 +20,7 @@ import com.histmersion.api.Api
   */
 final class AttestationsControllers(
     attestations: AttestationService,
-    sources: PassageSource,
+    sources: Passage.Source,
     current: (AliasKind, String) => String,
     page: Option[Int] => Int,
     maintenance: WriteGate

@@ -1,15 +1,6 @@
 package com.histmersion.plugins.fetchers
 
-import com.histmersion.plugin.{
-  Fetch,
-  FetchContext,
-  FetchedFile,
-  PluginHttp,
-  PluginLog,
-  SourceFetcher,
-  UpstreamQuota,
-  WorkKey
-}
+import com.histmersion.plugin.{Fetch, FetchedFile, SourceFetcher, UpstreamQuota, WorkKey}
 import com.histmersion.upstreams.http.json
 import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.core.{CoreApi, CoreFailure}
@@ -18,6 +9,7 @@ import com.histmersion.upstreams.landing.RepositoryLanding
 import com.histmersion.upstreams.settings.UpstreamSettings
 import com.histmersion.upstreams.http.Url
 import io.circe.Json
+import com.histmersion.plugin.Plugin
 
 /** The fetchers of the four open-access index plugins, all by DOI: Unpaywall's best OA location (`oa-unpaywall`),
   * CORE's download URLs with a key (`oa-core`), OpenAlex's OA locations (`oa-openalex`), and the repository landing
@@ -27,25 +19,25 @@ import io.circe.Json
   *
   * The landing step reads an index's record ON BEHALF OF that index's plugin: Unpaywall's only while `oa-unpaywall` is
   * registered in the generation the fetch runs in, asked with that plugin's contact; OpenAlex's only while
-  * `oa-openalex` is ([[FetchContext.registered]]). With neither it works from the DOI alone — a Zenodo DOI's record,
+  * `oa-openalex` is ([[Fetch.Context.registered]]). With neither it works from the DOI alone — a Zenodo DOI's record,
   * the page DataCite says the DOI resolves to.
   *
   * The HTTP client is asked for only when a fetch runs: registering opens nothing.
   */
-final class OpenAccess(cfg: UpstreamSettings, client: () => PluginHttp, log: PluginLog):
+final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Plugin.Log):
 
-  private def http: PluginHttp = client()
+  private def http: Plugin.Http = client()
   private def downloads = Downloads(http)
   private lazy val openalexClient = OpenAlexCrossref(cfg, http, log)
 
-  private def records(ctx: FetchContext, doi: String): OaRecords =
+  private def records(ctx: Fetch.Context, doi: String): OaRecords =
     ctx.memo(s"oa:records:$doi")(OaRecords(doi, cfg, http, openalexClient, ctx.log))
 
   /** Unpaywall's record of `doi`, asked with `email` at most once per fetch. Unpaywall answers 422 to a request without
     * an e-mail, so without one it is not asked. The `unpaywall` step and the landing step share it when they use the
     * same contact.
     */
-  private def unpaywallRecord(ctx: FetchContext, doi: String, email: Option[String]): Option[Json] =
+  private def unpaywallRecord(ctx: Fetch.Context, doi: String, email: Option[String]): Option[Json] =
     email.flatMap(e =>
       ctx.memo(s"oa:unpaywall:$e:$doi")(http.json(Url(cfg.unpaywall.url, s"/$doi", "email" -> e)).toOption)
     )
@@ -59,7 +51,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => PluginHttp, log: Plu
     */
   def core(key: Option[String], quota: UpstreamQuota): SourceFetcher = new SourceFetcher:
     val access = com.histmersion.plugin.Access.Open
-    def fetch(work: WorkKey, ctx: FetchContext): Fetch =
+    def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
       work.doi.map(_.value).fold[Fetch](Fetch.Miss("core needs a DOI"))(corePdf(ctx, _, key, quota))
 
   val openalex: SourceFetcher = ByDoi("openalex", (ctx, d) => openalexOa(ctx, records(ctx, d)))
@@ -78,14 +70,14 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => PluginHttp, log: Plu
       )
   )
 
-  private def unpaywallPdf(ctx: FetchContext, record: Option[Json]): Option[FetchedFile] =
+  private def unpaywallPdf(ctx: Fetch.Context, record: Option[Json]): Option[FetchedFile] =
     record.toList
       .map(AcquireParse.unpaywall)
       .flatMap(_._1)
       .flatMap(u => downloads.pdf(ctx.log, "unpaywall", u))
       .headOption
 
-  private def corePdf(ctx: FetchContext, doi: String, key: Option[String], quota: UpstreamQuota): Fetch =
+  private def corePdf(ctx: Fetch.Context, doi: String, key: Option[String], quota: UpstreamQuota): Fetch =
     key.fold[Fetch](Fetch.Miss("core needs CORE's API key (plugins.oa-core.api-key or acquire.core.api-key)")) { key =>
       CoreApi(cfg.core, http, quota).searchWorks(key, s"""doi:"$doi"""", 1, OpenAccess.Lookup) match
         case Left(skip @ CoreFailure.Skipped(_)) => Fetch.Miss(skip.message)
@@ -101,7 +93,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => PluginHttp, log: Plu
             .fold(Fetch.Miss(s"core has no copy of $doi"))(Fetch.Found(_))
     }
 
-  private def openalexOa(ctx: FetchContext, r: OaRecords): Option[FetchedFile] =
+  private def openalexOa(ctx: Fetch.Context, r: OaRecords): Option[FetchedFile] =
     r.openalex.toList
       .flatMap(AcquireParse.openalexPdfUrls)
       .flatMap(u => downloads.pdf(ctx.log, "openalex", u))
@@ -118,7 +110,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => PluginHttp, log: Plu
     * whether OpenAlex's record may be read (its plugin on).
     */
   private def landingPdf(
-      ctx: FetchContext,
+      ctx: Fetch.Context,
       r: OaRecords,
       unpaywall: => Option[Json],
       openalex: Boolean
@@ -163,7 +155,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => PluginHttp, log: Plu
     * open-access publisher's open location (`oa-publisher-hosts`).
     */
   private def publisherPage(
-      ctx: FetchContext,
+      ctx: Fetch.Context,
       c: RepositoryLanding.Candidate,
       rules: RepositoryLanding.Rules
   ): Boolean =
@@ -177,7 +169,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => PluginHttp, log: Plu
     * its `citation_pdf_url`s and OJS PDF galleys (provenance `publisher`).
     */
   private def resolvePage(
-      ctx: FetchContext,
+      ctx: Fetch.Context,
       c: RepositoryLanding.Candidate,
       rules: RepositoryLanding.Rules
   ): Option[FetchedFile] =
@@ -205,7 +197,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => PluginHttp, log: Plu
             pdfs.iterator.map(u => downloads.pdf(ctx.log, source, u)).collectFirst { case Some(f) => f }
 
   /** An open Zenodo record's PDF, by its REST API, checked against the record's MD5. */
-  private def zenodo(ctx: FetchContext, id: String): Option[FetchedFile] =
+  private def zenodo(ctx: Fetch.Context, id: String): Option[FetchedFile] =
     http.json(Url(cfg.zenodo.url, s"/api/records/$id")) match
       case Left(e) =>
         ctx.log.info(s"zenodo: record $id failed ($e)"); None

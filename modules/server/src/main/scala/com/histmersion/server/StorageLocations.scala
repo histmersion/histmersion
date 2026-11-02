@@ -4,7 +4,7 @@ import com.histmersion.config.{AppConfig, Environment, LoadedConfig, UserPaths}
 import com.histmersion.domain.automation.agents.AgentTrees
 import com.histmersion.config.edit.SettingsFile
 import com.histmersion.util.settings.StoredSettingsFile
-import com.histmersion.util.storage.{Location, Storage, Store, StoreKey}
+import com.histmersion.util.storage.{Location, Storage, Store}
 
 import java.nio.file.Path
 
@@ -112,7 +112,7 @@ object StorageLocations:
     */
   def settingsFile(loaded: LoadedConfig, storage: Storage): Option[SettingsFile] =
     loaded.file.path.flatMap(p =>
-      StoreKey
+      Store.Key
         .of(p.getFileName.toString)
         .toOption
         .map(StoredSettingsFile(storage.store(Location.UserConfig), _, p.toString))

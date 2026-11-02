@@ -90,12 +90,12 @@ object Ops:
   /** Write `ACQUIRE.md` / `TASKS.md` / `LOG.md` and `GOALS.md` into `dir`, rendered by the server from the rows. Used
     * by `queue export` and by `histmersion export`, so both produce identical files.
     */
-  def writeMeta(c: Client, dir: Path): Either[CliError, List[String]] =
+  def writeMeta(c: Client, dir: Path): Either[Cli.Error, List[String]] =
     val _ = Files.createDirectories(dir)
-    val files: List[(String, () => Either[CliError, String])] =
+    val files: List[(String, () => Either[Cli.Error, String])] =
       Queue.Kind.values.toList.map(k => k.file -> (() => c.queueExport(k.label))) :+
         (GoalsExport.File -> (() => c.goalsExport))
-    files.foldLeft[Either[CliError, List[String]]](Right(Nil)) { case (acc, (file, fetch)) =>
+    files.foldLeft[Either[Cli.Error, List[String]]](Right(Nil)) { case (acc, (file, fetch)) =>
       acc.flatMap { done =>
         fetch().map { text =>
           val _ = Files.writeString(dir.resolve(file), text)
@@ -107,10 +107,10 @@ object Ops:
   /** Read the three queue files back. A missing file is skipped, not an error: a workspace may only keep some of them.
     * `GOALS.md` is never read: it is an export only (see [[GoalsExport]]).
     */
-  def readMeta(c: Client, dir: Path, replace: Boolean): Either[CliError, List[String]] =
-    if !Files.isDirectory(dir) then Left(CliError(s"not a directory: $dir", exitCode = ExitCode.Usage))
+  def readMeta(c: Client, dir: Path, replace: Boolean): Either[Cli.Error, List[String]] =
+    if !Files.isDirectory(dir) then Left(Cli.Error(s"not a directory: $dir", exitCode = ExitCode.Usage))
     else
-      Queue.Kind.values.toList.foldLeft[Either[CliError, List[String]]](Right(Nil)) { (acc, kind) =>
+      Queue.Kind.values.toList.foldLeft[Either[Cli.Error, List[String]]](Right(Nil)) { (acc, kind) =>
         acc.flatMap { done =>
           val f = dir.resolve(kind.file)
           if !Files.isRegularFile(f) then Right(done :+ s"${kind.file}: absent, skipped")
@@ -136,7 +136,7 @@ object Ops:
       placed: Option[Int] = None,
       places: Option[List[String]] = None,
       areas: Int = 0
-  ): Either[CliError, List[String]] =
+  ): Either[Cli.Error, List[String]] =
     c.lintFix(rules) match
       case Left(e)  => Left(e)
       case Right(r) =>
@@ -182,8 +182,8 @@ object Ops:
   /** `lint --file x.md`: the server checks the text (it has the renderer); with `--fix` the repaired text is written
     * back over the file. A note file's frontmatter is the note's own and is not sent.
     */
-  private def lintFile(c: Client, p: java.nio.file.Path, fix: Boolean): Either[CliError, FormatReport] =
-    if !java.nio.file.Files.isRegularFile(p) then Left(CliError(s"no such file: $p", exitCode = ExitCode.Usage))
+  private def lintFile(c: Client, p: java.nio.file.Path, fix: Boolean): Either[Cli.Error, FormatReport] =
+    if !java.nio.file.Files.isRegularFile(p) then Left(Cli.Error(s"no such file: $p", exitCode = ExitCode.Usage))
     else
       val raw = java.nio.file.Files.readString(p)
       val (head, body) = FileFormat.splitFrontmatter(raw)
@@ -192,7 +192,7 @@ object Ops:
         r.copy(subject = p.getFileName.toString, text = None)
       }
 
-  val lint: Opts[Client => Either[CliError, Unit]] =
+  val lint: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("lint", s"Health-check the corpus (${Lint.all.size} rules: ${Lint.names.mkString(", ")})") {
       (
         Opts.options[String]("rule", "Run only this rule (repeatable)").orEmpty,
@@ -229,21 +229,21 @@ object Ops:
       }
     }
 
-  val query: Opts[Client => Either[CliError, Unit]] =
+  val query: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("query", "Run ONE read-only SQL statement (a write is refused by Postgres itself)") {
       (Opts.argument[String]("sql"), Output.jsonFlag).mapN { (sql, json) => (c: Client) =>
         c.query(sql).map(r => Output.emit(json, r)(Query.markdown))
       }
     }
 
-  val schema: Opts[Client => Either[CliError, Unit]] =
+  val schema: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("schema", "List the tables and columns `query` can read (from information_schema)") {
       Output.jsonFlag.map { json => (c: Client) =>
         c.schemaTables.map(s => Output.emit(json, s)(Query.schemaMarkdown))
       }
     }
 
-  val queue: Opts[Client => Either[CliError, Unit]] =
+  val queue: Opts[Client => Either[Cli.Error, Unit]] =
     // NB: no `|` in the description — `tools/gen-cli-docs.sh` pastes it into a Markdown TABLE cell.
     // The full grammar (which needs pipes to read well) is `QueueArgs.usage`, printed on a bad call.
     Opts.subcommand(
@@ -271,12 +271,12 @@ object Ops:
         Output.jsonFlag
       ).mapN { (args, topic, reason, all, dryRun, limit, item, noWait, json) => (c: Client) =>
         QueueArgs.parse(args, topic, reason, all, dryRun, limit, item, noWait) match
-          case Left(msg)  => Left(CliError(msg, exitCode = ExitCode.Usage))
+          case Left(msg)  => Left(Cli.Error(msg, exitCode = ExitCode.Usage))
           case Right(cmd) => run(c, cmd, json)
       }
     }
 
-  private def run(c: Client, cmd: QueueCmd, json: Boolean): Either[CliError, Unit] = cmd match
+  private def run(c: Client, cmd: QueueCmd, json: Boolean): Either[Cli.Error, Unit] = cmd match
     case QueueCmd.Show(list, all) =>
       c.queueList(list, all)
         .map(l => Output.emit(json, l)(l => l.markdown.getOrElse("")))

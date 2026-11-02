@@ -2,7 +2,6 @@ package com.histmersion.domain.personal
 
 import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.domain.ItemKey
-import com.histmersion.domain.personal.notes.NoteEditRefused
 import com.histmersion.api.personal.Note
 
 /** A person's notes, in memory and in the database. */
@@ -30,11 +29,14 @@ class NoteServiceContractSuite extends PersonalServiceContract("note"):
       assertEquals(edited.map(_.text.value.toString), Right("Changed."))
       assertEquals(
         w.notes.edit(me, n1.id, Note.Text("Stale."), Some(n1.updatedAt), at(6)),
-        Left(NoteEditRefused.Changed(edited.toOption.get.updatedAt))
+        Left(com.histmersion.domain.personal.notes.Note.EditRefused.Changed(edited.toOption.get.updatedAt))
       )
       assertEquals(w.notes.list(me, None, None, everything, all).map(_.id), List(n1.id, n2.id))
       assertEquals(w.notes.remove(me, n1.id, at(7)).map(_.text.value.toString), Some("Changed."))
       assertEquals(w.notes.get(me, n1.id), None)
-      assertEquals(w.notes.edit(me, n1.id, Note.Text("x"), None, at(8)), Left(NoteEditRefused.Missing))
+      assertEquals(
+        w.notes.edit(me, n1.id, Note.Text("x"), None, at(8)),
+        Left(com.histmersion.domain.personal.notes.Note.EditRefused.Missing)
+      )
       assertEquals(w.notes.get(other, n2.id), None)
   }

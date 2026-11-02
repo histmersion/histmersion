@@ -1,6 +1,6 @@
 package com.histmersion.plugins.events
 
-import com.histmersion.plugin.PluginConfig.given
+import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** `histmersion.events.wikidata`: the query service, the pace, the classes read (`Q178561:battle,…`, the most specific

@@ -4,7 +4,7 @@ import com.histmersion.api.{LpfDataset, Span}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.Transactor
-import com.histmersion.util.storage.{Blob, Reservation, Store, StoreKey}
+import com.histmersion.util.storage.{Blob, Reservation, Store}
 
 import io.circe.{Json, JsonObject}
 import java.io.{BufferedReader, InputStream, InputStreamReader}
@@ -47,8 +47,8 @@ object GazetteerLoad:
   )
 
   /** Where a pinned file is: in `extracts`, else at the legacy place, else `None`. */
-  def locate(p: Stores, file: String): Option[(Store, StoreKey)] =
-    StoreKey
+  def locate(p: Stores, file: String): Option[(Store, Store.Key)] =
+    Store.Key
       .of(file)
       .toOption
       .flatMap(k => (p.extracts :: p.legacy.toList).find(_.isFile(k)).map(_ -> k))
@@ -79,7 +79,7 @@ object GazetteerLoad:
   /** Is the file at `key` the pinned one? `Left` says why not — a missing file or a checksum mismatch, which is
     * REFUSED: an extract that is not the pinned one is never imported.
     */
-  def verify(store: Store, key: StoreKey, x: Gazetteer.Extract): Either[String, Blob] =
+  def verify(store: Store, key: Store.Key, x: Gazetteer.Extract): Either[String, Blob] =
     store.get(key) match
       case None    => Left(s"${store.where(key)} is missing")
       case Some(f) =>
@@ -105,7 +105,7 @@ object GazetteerLoad:
       s"${x.name} is not pinned yet (${p.manifestAt} names no built file or sha256 for it) — build it with " +
         s"db/gazetteer/build.py and pin it (db/gazetteer/README.md, \"Rebuilding and re-pinning\")"
     else
-      val f = StoreKey.of(x.file).toOption.fold(p.extracts.where())(p.extracts.where(_))
+      val f = Store.Key.of(x.file).toOption.fold(p.extracts.where())(p.extracts.where(_))
       s"${x.name} ${x.version}: ${x.file} is not at $f, and its pin has no download url (the extracts are not " +
         s"hosted). Put the file there — sha256 ${x.sha256}, ${Backup.humanBytes(x.bytes)} — copied from " +
         s"another install or rebuilt with db/gazetteer/build.py (db/gazetteer/README.md); the folder is " +
@@ -116,7 +116,7 @@ object GazetteerLoad:
     * that kept its extracts in `<data dir>/gazetteer` keeps them. When the move fails it is read where it is. Importing
     * is idempotent either way: what was imported stays imported.
     */
-  private def adopt(p: Stores, x: Gazetteer.Extract, old: Store, key: StoreKey): Either[String, Blob] =
+  private def adopt(p: Stores, x: Gazetteer.Extract, old: Store, key: Store.Key): Either[String, Blob] =
     verify(old, key, x).map { found =>
       val moved =
         for
@@ -147,7 +147,7 @@ object GazetteerLoad:
   def extract(p: Stores, x: Gazetteer.Extract, download: Download, timeoutSeconds: Int): Either[String, Blob] =
     if x.sha256.trim.isEmpty || x.file.trim.isEmpty then Left(missing(p, x))
     else
-      StoreKey.of(x.file) match
+      Store.Key.of(x.file) match
         case Left(e)                              => Left(s"${x.file}: $e")
         case Right(key) if p.extracts.isFile(key) => verify(p.extracts, key, x)
         case Right(key)                           =>
@@ -453,7 +453,7 @@ object GazetteerLoad:
       Gazetteer.Kind.parse(x.name).filter(_ != Gazetteer.Kind.Lpf).map { k =>
         val built = x.file.trim.nonEmpty && x.sha256.trim.nonEmpty // a pin not built yet names no file
         val at = Option.when(built)(locate(s.stores, x.file)).flatten
-        def expected = StoreKey.of(x.file).toOption.fold(s.stores.extracts.where())(s.stores.extracts.where(_))
+        def expected = Store.Key.of(x.file).toOption.fold(s.stores.extracts.where())(s.stores.extracts.where(_))
         Gazetteer.SourceInfo(
           Gazetteer.sourceKey(k),
           k,

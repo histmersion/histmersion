@@ -141,7 +141,7 @@ object GoalsCmd:
     Opts.unit.map(_ => (c: Client) => c.call(AgentsApi.schedules)(()).map(ss => println(AgentsMarkdown.schedules(ss))))
   }
 
-  val command: Opts[Client => Either[CliError, Unit]] =
+  val command: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("goals", "Research goals: list, get, update, plan, link, unlink, schedule, schedules, rename") {
       list orElse get orElse update orElse plan orElse link orElse unlink orElse schedule orElse schedules orElse
         LabelRenameCmd(Bundle.Kind.Goal)

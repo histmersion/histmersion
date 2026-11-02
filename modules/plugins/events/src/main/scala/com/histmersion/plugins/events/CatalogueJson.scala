@@ -1,12 +1,12 @@
 package com.histmersion.plugins.events
 
-import com.histmersion.plugin.PluginHttp
 import io.circe.Json
+import com.histmersion.plugin.Plugin
 
 /** One catalogue request answered as JSON, through the host's polite client: an answer that is no JSON says so, by the
   * catalogue's host, as the host's own client words it.
   */
-final class CatalogueJson(http: PluginHttp):
+final class CatalogueJson(http: Plugin.Http):
   def apply(url: String): Either[String, Json] =
     http
       .get(url)

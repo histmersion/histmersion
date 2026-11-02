@@ -41,7 +41,7 @@ object Storage:
       new Scratch:
         def store: Store = s
         def close(): Unit =
-          val _ = s.deleteTree(StoreKey.Root)
+          val _ = s.deleteTree(Store.Key.Root)
 
   /** Stores in memory, one per location, shared by everyone holding this instance; scratch stores are fresh. */
   final class InMemory extends Storage:
@@ -55,4 +55,4 @@ object Storage:
       new Scratch:
         def store: Store = s
         def close(): Unit =
-          val _ = s.deleteTree(StoreKey.Root)
+          val _ = s.deleteTree(Store.Key.Root)

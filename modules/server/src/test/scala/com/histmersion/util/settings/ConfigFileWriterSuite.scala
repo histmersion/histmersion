@@ -2,12 +2,13 @@ package com.histmersion.util.settings
 
 import com.histmersion.cli.LocalSettingsFile
 import com.histmersion.config.edit.*
-import com.histmersion.util.storage.{Location, Storage, StoreKey}
+import com.histmersion.util.storage.{Location, Storage}
 import org.ekrich.config.{Config, ConfigFactory}
 
 import java.nio.file.{Files, Path}
 import java.nio.file.attribute.PosixFilePermissions
 import scala.jdk.CollectionConverters.*
+import com.histmersion.util.storage.Store
 
 /** The settings editor over each place a settings file is kept: the command line's file on its own disk, the server's
   * in the store of its directory. Both must change a file exactly alike.
@@ -278,7 +279,7 @@ class StoredConfigFileWriterSuite
       StoredSettingsFile(
         Storage(l => Option.when(l == Location.UserConfig)(f.toAbsolutePath.getParent), () => f.getParent)
           .store(Location.UserConfig),
-        StoreKey.applyUnsafe(f.getFileName.toString),
+        Store.Key.applyUnsafe(f.getFileName.toString),
         f.toString
       )
     )

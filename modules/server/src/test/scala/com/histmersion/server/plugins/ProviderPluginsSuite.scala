@@ -27,7 +27,7 @@ import scala.collection.immutable.ListMap
   */
 class ProviderPluginsSuite extends munit.FunSuite:
 
-  private val offline = new PluginHttp { def get(u: String, h: Map[String, String]) = Left("offline") }
+  private val offline = new Plugin.Http { def get(u: String, h: Map[String, String]) = Left("offline") }
 
   /** The class path's plugins (the first-party media collections among them, supplied the host's settings) and `extra`,
     * under `user`.
@@ -39,9 +39,9 @@ class ProviderPluginsSuite extends munit.FunSuite:
   final private class Portal(collection: String = "zq-portal", catalogue: String = "zq-quakes", role: String = "object")
       extends Plugin:
     type Config = PortalConfig
-    val info = PluginInfo("zq-plugin", "0.1.0", Spi.Version)
+    val info = Plugin.Info("zq-plugin", "0.1.0", Spi.Version)
     override def defaultsResource = "zq-none.conf"
-    def register(c: PortalConfig, ctx: PluginContext) =
+    def register(c: PortalConfig, ctx: Plugin.Context) =
       for
         _ <- ctx.mediaCollections.add(collection, Collection(role))
         _ <- ctx.eventCatalogues.add(catalogue, Catalogue)
@@ -49,13 +49,13 @@ class ProviderPluginsSuite extends munit.FunSuite:
 
   final private class Collection(val role: String) extends MediaCollection:
     val title = "Zq portal objects"
-    def search(place: MediaPlace, http: PluginHttp) = Right(Nil)
+    def search(place: MediaPlace, http: Plugin.Http) = Right(Nil)
 
   private object Catalogue extends EventCatalogue:
     val title = "Zq quakes"; val licence = Licence("CC0-1.0"); val citation = "Zq (2026)";
     val home = "https://zq.example"
     def parts(q: CatalogueQuery) = List("all")
-    def read(part: String, q: CatalogueQuery, http: PluginHttp) = Right(CataloguePage(Nil))
+    def read(part: String, q: CatalogueQuery, http: Plugin.Http) = Right(CataloguePage(Nil))
 
   private val portalOn = "histmersion.plugins.zq-plugin.enabled = true"
 
@@ -312,9 +312,9 @@ class ProviderPluginsSuite extends munit.FunSuite:
     )
 
   test("a host whose context predates media and events refuses those additions (SPI version stays 1)"):
-    val ctx = new PluginContext:
+    val ctx = new Plugin.Context:
       def http = offline
-      val log = new PluginLog { def info(m: String) = (); def warn(m: String) = () }
+      val log = new Plugin.Log { def info(m: String) = (); def warn(m: String) = () }
       def env(n: String) = None
       def secret(s: Secret) = Left("none")
       def secretVaults = Registry.refusing("x")
@@ -521,12 +521,12 @@ class ProviderPluginsSuite extends munit.FunSuite:
       val title = "t"; val licence = Licence("l"); val citation = "c"; val home = "h"
       override def floorYear = Some(Year(-9700))
       def parts(q: CatalogueQuery) = Nil
-      def read(p: String, q: CatalogueQuery, h: PluginHttp) = Left("no")
+      def read(p: String, q: CatalogueQuery, h: Plugin.Http) = Left("no")
     val throws = new EventCatalogue:
       val title = "t"; val licence = Licence("l"); val citation = "c"; val home = "h"
       override def floorYear = throw IllegalStateException("boom")
       def parts(q: CatalogueQuery) = Nil
-      def read(p: String, q: CatalogueQuery, h: PluginHttp) = Left("no")
+      def read(p: String, q: CatalogueQuery, h: Plugin.Http) = Left("no")
     import com.histmersion.upstreams.dating.CatalogDating.Limits
     assertEquals(PluginEvents.limits(Some(floored), 2026), Limits(2026, Some(-9700L)))
     assertEquals(PluginEvents.limits(Some(throws), 2026), Limits(2026, None))

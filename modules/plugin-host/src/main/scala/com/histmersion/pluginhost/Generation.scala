@@ -28,7 +28,7 @@ final case class Generation(
     /** The effective block of each plugin this build registered (its own block over its defaults, as reported). */
     blocks: Map[String, Config] = Map.empty,
     /** The secrets each plugin this build registered was given, by reference, as this build resolved them. */
-    secretValues: Map[String, Map[SecretRef, String]] = Map.empty
+    secretValues: Map[String, Map[Secret.Ref, String]] = Map.empty
 ):
   /** A plugin's status and contributions, to carry into the next generation unchanged. */
   def carry(id: String): Option[(PluginStatus, Registries)] =
@@ -44,7 +44,7 @@ final case class Generation(
     for
       block <- blocks.get(pluginId)
       text <- Try(block.getString(key)).toOption
-      ref <- SecretRef.parse(text).toOption
+      ref <- Secret.Ref.parse(text).toOption
       value <- secretValues.get(pluginId).flatMap(_.get(ref))
     yield value
 

@@ -20,8 +20,8 @@ package com.histmersion.plugin
   */
 final case class MediaFound(
     uses: List[MediaUse],
-    asked: List[MediaTargetId],
-    unanswered: Set[MediaTargetId] = Set.empty,
+    asked: List[MediaTarget.Id],
+    unanswered: Set[MediaTarget.Id] = Set.empty,
     read: Int = 0,
     failed: List[String] = Nil,
     notTaken: List[String] = Nil,

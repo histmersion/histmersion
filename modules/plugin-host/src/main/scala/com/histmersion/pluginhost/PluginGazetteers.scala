@@ -27,7 +27,7 @@ object PluginGazetteers:
     * import's User-Agent over `transport`. Its `fetch` asks once and answers as it came; its `get` asks again after a
     * slow-down, as every plugin's.
     */
-  def http(transport: HttpTransport, log: HostLog = HostLog.scribe): PluginHttp =
+  def http(transport: HttpTransport, log: HostLog = HostLog.scribe): Plugin.Http =
     PolicyHttp(UserAgent, transport, log = log).plugin
 
   /** A plugin's answer, or what it threw as a failure of that call. */
@@ -36,7 +36,7 @@ object PluginGazetteers:
   /** Every place `source` answers, each checked and converted, in its order, and the ones refused with the reason.
     * `Left` when the source answered no dataset at all (its download failed, its body was not one).
     */
-  def places(source: GazetteerSource, http: PluginHttp): Either[String, (List[Place.Input], List[String])] =
+  def places(source: GazetteerSource, http: Plugin.Http): Either[String, (List[Place.Input], List[String])] =
     guard(source.fetch(http)).map { got =>
       val credit = guard(Right(source.rights)).toOption.flatMap(r => Option(r).flatMap(r => Option(r.credit)))
       val read = got.map(p => input(p, credit.getOrElse("")))

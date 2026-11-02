@@ -32,7 +32,7 @@ final case class AppConfig(
     @configKey("agents") researchAgents: ResearchAgentsConfig,
     media: MediaConfig,
     events: EventsConfig,
-    config: ConfigReloadConfig,
+    config: ConfigReload.Config,
     basemap: BasemapConfig,
     setup: SetupConfig = SetupConfig(completed = false)
 ) derives ConfigReader

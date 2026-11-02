@@ -1,6 +1,6 @@
 package com.histmersion.plugins.events
 
-import com.histmersion.plugin.PluginConfig.given
+import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** `histmersion.events.noaa`: NCEI's hazard service, its page size, the pace and the datasets read (comma-separated:

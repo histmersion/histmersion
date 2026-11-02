@@ -16,12 +16,12 @@ object PluginAuthoring:
   /** The install's Maven repository, when it has one (an install older than plugin dependencies has `plugin-api/`
     * instead).
     */
-  def localRepository(install: Either[CliError, LocalInstall]): Either[CliError, LocalInstall] =
+  def localRepository(install: Either[Cli.Error, LocalInstall]): Either[Cli.Error, LocalInstall] =
     install.flatMap { i =>
       Either.cond(
         Files.isRegularFile(i.apiPom),
         i,
-        CliError(
+        Cli.Error(
           s"the install at ${i.home} has no plugin Maven repository (${i.mavenRepo}): it predates plugin dependencies — " +
             s"download histmersion-maven-<version>.zip from the release, unzip it and pass its maven/ directory with --repo",
           exitCode = ExitCode.Usage
@@ -32,20 +32,20 @@ object PluginAuthoring:
   /** The local Maven repository, `$HOME/.m2/repository`: where Maven, Gradle, sbt (`Resolver.mavenLocal`) and scala-cli
     * (`m2Local`) look for artifacts installed on this machine.
     */
-  def mavenLocal(env: String => Option[String]): Either[CliError, Path] =
+  def mavenLocal(env: String => Option[String]): Either[Cli.Error, Path] =
     env("HOME")
       .map(_.trim)
       .filter(_.nonEmpty)
       .map(h => Path.of(h, ".m2", "repository"))
       .toRight(
-        CliError("HOME is unset: there is no local Maven repository (~/.m2/repository)", exitCode = ExitCode.Usage)
+        Cli.Error("HOME is unset: there is no local Maven repository (~/.m2/repository)", exitCode = ExitCode.Usage)
       )
 
   /** Copy the install's Maven repository into the local one, so that a build naming `m2Local` finds the plugin API, the
     * platform and the testkit: every file that is missing there or differs (a SNAPSHOT rebuilt by a newer install),
     * nothing else. The files copied, relative to the repository.
     */
-  def publishToMavenLocal(install: Either[CliError, LocalInstall], m2: Path): Either[CliError, List[Path]] =
+  def publishToMavenLocal(install: Either[Cli.Error, LocalInstall], m2: Path): Either[Cli.Error, List[Path]] =
     localRepository(install).flatMap { i =>
       scala.util
         .Try {
@@ -64,7 +64,7 @@ object PluginAuthoring:
         }
         .toEither
         .left
-        .map(e => CliError(s"could not copy ${i.mavenRepo} into $m2: ${e.getMessage}", exitCode = ExitCode.Refused))
+        .map(e => Cli.Error(s"could not copy ${i.mavenRepo} into $m2: ${e.getMessage}", exitCode = ExitCode.Refused))
     }
 
   /** The repository a new project resolves the plugin API, platform and testkit from: the one named with `--repo` (a
@@ -73,31 +73,31 @@ object PluginAuthoring:
     */
   def repository(
       named: Option[String],
-      install: => Either[CliError, LocalInstall],
-      m2: => Either[CliError, Path]
-  ): Either[CliError, (TemplateRepository, List[Path])] =
+      install: => Either[Cli.Error, LocalInstall],
+      m2: => Either[Cli.Error, Path]
+  ): Either[Cli.Error, (TemplateRepository, List[Path])] =
     named match
       case Some(raw) =>
         PluginRepository
           .parse(raw, Files.isDirectory(_))
           .left
-          .map(CliError(_, exitCode = ExitCode.Usage))
+          .map(Cli.Error(_, exitCode = ExitCode.Usage))
           .map(r => (TemplateRepository.Remote(r), Nil))
       case None =>
         m2.flatMap(dir => publishToMavenLocal(install, dir)).map(copied => (TemplateRepository.MavenLocal, copied))
 
   /** The plugin API jar in the install's repository, and its sources jar beside it. */
-  def apiJars(install: Either[CliError, LocalInstall]): Either[CliError, (Path, Path)] =
+  def apiJars(install: Either[Cli.Error, LocalInstall]): Either[Cli.Error, (Path, Path)] =
     localRepository(install).map(i => (i.apiJar, i.apiSources))
 
   /** Write a new project into `dir`, which must not exist or be empty; the paths written. */
-  def write(dir: Path, files: List[TemplateFile]): Either[CliError, List[Path]] =
+  def write(dir: Path, files: List[TemplateFile]): Either[Cli.Error, List[Path]] =
     val occupied = Files.exists(dir) && (!Files.isDirectory(dir) || {
       val s = Files.list(dir)
       try s.findAny().isPresent
       finally s.close()
     })
-    if occupied then Left(CliError(s"$dir exists and is not empty — choose another --dir", exitCode = ExitCode.Usage))
+    if occupied then Left(Cli.Error(s"$dir exists and is not empty — choose another --dir", exitCode = ExitCode.Usage))
     else
       Right(files.map { f =>
         val target = dir.resolve(f.path)

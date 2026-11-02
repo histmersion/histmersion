@@ -1,6 +1,6 @@
 package com.histmersion.util.basemap
 
-import com.histmersion.util.storage.{Location, Reservation, Storage, Store, StoreKey}
+import com.histmersion.util.storage.{Location, Reservation, Storage, Store}
 import io.circe.Json
 
 import java.nio.file.{Files, Path}
@@ -18,15 +18,15 @@ object BasemapFixtures:
   /** A writer of the archive at `out`. */
   def writer(out: Path): PmTilesWriter =
     val a = out.toAbsolutePath
-    PmTilesWriter(store(a.getParent), StoreKey.applyUnsafe(a.getFileName.toString))
+    PmTilesWriter(store(a.getParent), Store.Key.applyUnsafe(a.getFileName.toString))
 
   /** The archive at `p`, opened. */
-  def open(p: Path): Either[String, PmTilesFile] =
+  def open(p: Path): Either[String, PmTiles.File] =
     val a = p.toAbsolutePath
     store(a.getParent)
-      .get(StoreKey.applyUnsafe(a.getFileName.toString))
+      .get(Store.Key.applyUnsafe(a.getFileName.toString))
       .toRight(s"$p: no such file")
-      .flatMap(PmTilesFile.open(_))
+      .flatMap(PmTiles.File.open(_))
 
   /** A square ring over the whole tile (MVT commands: MoveTo, LineTo ×3, ClosePath). */
   private val square = Vector(9, 0, 0, 26, 8192, 0, 0, 8192, 8191, 0, 15)

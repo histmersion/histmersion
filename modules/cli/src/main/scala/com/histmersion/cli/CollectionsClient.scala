@@ -23,21 +23,21 @@ import com.histmersion.api.library.{
 
 /** The typed client for the library's source collections (`CollectionsApi`), over [[Client]]'s transport. */
 final class CollectionsClient(c: Client, name: String):
-  def info: Either[CliError, CollectionInfo] = c.call(CollectionsApi.collection)(name)
-  def search(q: Option[String], limit: Option[Int], unlinked: Boolean): Either[CliError, CollectionSearch] =
+  def info: Either[Cli.Error, CollectionInfo] = c.call(CollectionsApi.collection)(name)
+  def search(q: Option[String], limit: Option[Int], unlinked: Boolean): Either[Cli.Error, CollectionSearch] =
     c.call(CollectionsApi.search)((name, q, limit, unlinked))
-  def importItem(req: CollectionImportRequest): Either[CliError, CollectionImported] =
+  def importItem(req: CollectionImportRequest): Either[Cli.Error, CollectionImported] =
     c.call(CollectionsApi.importItem)((name, req))
-  def link(req: CollectionLinkRequest): Either[CliError, CollectionLinked] = c.call(CollectionsApi.link)((name, req))
-  def push(req: CollectionPushRequest): Either[CliError, CollectionPushed] = c.call(CollectionsApi.push)((name, req))
-  def updateOne(citekey: String): Either[CliError, CollectionUpdatedOne] =
+  def link(req: CollectionLinkRequest): Either[Cli.Error, CollectionLinked] = c.call(CollectionsApi.link)((name, req))
+  def push(req: CollectionPushRequest): Either[Cli.Error, CollectionPushed] = c.call(CollectionsApi.push)((name, req))
+  def updateOne(citekey: String): Either[Cli.Error, CollectionUpdatedOne] =
     c.call(CollectionsApi.updateOne)((name, CollectionUpdateOne(citekey)))
-  def updateAll(apply: Boolean): Either[CliError, CollectionUpdateAll] =
+  def updateAll(apply: Boolean): Either[Cli.Error, CollectionUpdateAll] =
     c.call(CollectionsApi.updateAll)((name, CollectionUpdateAll.Request(apply)))
-  def set(req: CollectionSetRequest): Either[CliError, CollectionSetDone] = c.call(CollectionsApi.set)((name, req))
-  def audit: Either[CliError, CollectionAudit] = c.call(CollectionsApi.audit)(name)
-  def gaps(limit: Option[Int]): Either[CliError, CollectionGaps] = c.call(CollectionsApi.gaps)((name, limit))
-  def sync(req: CollectionSync.Request): Either[CliError, CollectionSync] = c.call(CollectionsApi.sync)((name, req))
+  def set(req: CollectionSetRequest): Either[Cli.Error, CollectionSetDone] = c.call(CollectionsApi.set)((name, req))
+  def audit: Either[Cli.Error, CollectionAudit] = c.call(CollectionsApi.audit)(name)
+  def gaps(limit: Option[Int]): Either[Cli.Error, CollectionGaps] = c.call(CollectionsApi.gaps)((name, limit))
+  def sync(req: CollectionSync.Request): Either[Cli.Error, CollectionSync] = c.call(CollectionsApi.sync)((name, req))
 
   /** Whether the server runs this collection: it has the collection and reaches it now. Anything else — an older server
     * without collections, the plugin off, a library the server cannot read, no server at all — leaves the command to

@@ -47,7 +47,7 @@ object CandidatesCmd:
         }
     }
 
-  val command: Opts[Client => Either[CliError, Unit]] =
+  val command: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("candidates", "New sources found for the research goals without a model: list, sweep, mark") {
       sweepCmd orElse markCmd orElse listCmd
     }

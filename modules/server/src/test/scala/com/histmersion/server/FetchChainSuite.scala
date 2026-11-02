@@ -16,9 +16,9 @@ class FetchChainSuite extends munit.FunSuite:
   private val doi = WorkKey(doi = Some(Doi("10.1234/x")))
 
   /** A fake fetcher answering `answer`, counting its calls. */
-  final private class Fake(val access: Access, answer: (WorkKey, FetchContext) => Fetch) extends SourceFetcher:
+  final private class Fake(val access: Access, answer: (WorkKey, Fetch.Context) => Fetch) extends SourceFetcher:
     val calls = java.util.concurrent.atomic.AtomicInteger(0)
-    def fetch(work: WorkKey, ctx: FetchContext): Fetch =
+    def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
       calls.incrementAndGet(); answer(work, ctx)
 
   private def found(source: String, bytes: Array[Byte] = Pdf, ext: String = "pdf") =
@@ -149,7 +149,7 @@ class FetchChainSuite extends munit.FunSuite:
 
   test("the memo is shared by the fetchers of ONE fetch and computed once; the next fetch starts afresh"):
     val computed = java.util.concurrent.atomic.AtomicInteger(0)
-    def record(ctx: FetchContext) = ctx.memo("test:record:10.1234/x") { computed.incrementAndGet(); "rec" }
+    def record(ctx: Fetch.Context) = ctx.memo("test:record:10.1234/x") { computed.incrementAndGet(); "rec" }
     val a = Fake(Access.Open, (_, ctx) => { record(ctx); Fetch.Miss("a") })
     val b = Fake(Access.Open, (_, ctx) => Fetch.Miss(record(ctx)))
     val chain = FetchChain(List("a" -> a, "b" -> b))

@@ -1,6 +1,6 @@
 package com.histmersion.util.basemap
 
-import com.histmersion.util.storage.{Reservation, Store, StoreKey}
+import com.histmersion.util.storage.{Reservation, Store}
 import com.histmersion.ByteOffset
 import hearth.kindlings.optics.syntax.*
 import io.circe.Json
@@ -89,7 +89,7 @@ final class PmTilesWriter(out: Reservation):
 object PmTilesWriter:
 
   /** A writer of the archive `key` of `store`, written beside it until [[PmTilesWriter.finish]]. */
-  def apply(store: Store, key: StoreKey): PmTilesWriter =
+  def apply(store: Store, key: Store.Key): PmTilesWriter =
     new PmTilesWriter(store.reserve(key).fold(e => throw IOException(e.message), identity))
 
   /** The root directory and the leaf section for `entries`: one root when it fits in the first 16 KiB, else leaves of 4

@@ -34,14 +34,14 @@ object NotesCmd:
     }
   }
 
-  private def text(inline: Option[String], file: Option[String]): Either[CliError, Note.Text] =
+  private def text(inline: Option[String], file: Option[String]): Either[Cli.Error, Note.Text] =
     (inline, file) match
       case (Some(t), None) => Right(Note.Text(t))
       case (None, Some(f)) =>
         val p = Path.of(f)
         if Files.isRegularFile(p) then Right(Note.Text(Files.readString(p)))
-        else Left(CliError(s"no such file: $f", exitCode = ExitCode.Usage))
-      case _ => Left(CliError("give the note's text with --text or --file (one of them)", exitCode = ExitCode.Usage))
+        else Left(Cli.Error(s"no such file: $f", exitCode = ExitCode.Usage))
+      case _ => Left(Cli.Error("give the note's text with --text or --file (one of them)", exitCode = ExitCode.Usage))
 
   private val textOpts = (
     Opts.option[String]("text", "The note (Markdown)").orNone,
@@ -83,5 +83,5 @@ object NotesCmd:
     }
   }
 
-  val command: Opts[Client => Either[CliError, Unit]] =
+  val command: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("notes", "Your notes: list, show, add, edit, rm")(list orElse show orElse add orElse edit orElse rm)

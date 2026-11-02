@@ -72,7 +72,7 @@ object OpenContext:
         case None    => Left("no licence on the record")
         case Some(u) =>
           val lic = licences.readUrl(u)
-          if lic.family == LicenceRead.Unknown then Left(s"licence not readable ($u)")
+          if lic.family == Licence.Read.Unknown then Left(s"licence not readable ($u)")
           else
             Right(
               MediaRights(

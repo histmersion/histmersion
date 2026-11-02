@@ -25,7 +25,7 @@
       ]
     },
     {
-      "type": "com.histmersion.plugins.media.CommonsSettings$",
+      "type": "com.histmersion.plugins.media.Commons$Settings$",
       "fields": [
         {
           "name": "derived$ConfigReader$lzy1"
@@ -57,7 +57,7 @@
       ]
     },
     {
-      "type": "com.histmersion.plugins.media.KeyedPluginConfig$",
+      "type": "com.histmersion.plugins.media.KeyedPlugin$Config$",
       "fields": [
         {
           "name": "derived$ConfigReader$lzy1"
@@ -73,7 +73,7 @@
       ]
     },
     {
-      "type": "com.histmersion.plugins.media.MediaPluginConfig$",
+      "type": "com.histmersion.plugins.media.MediaPlugin$Config$",
       "fields": [
         {
           "name": "derived$ConfigReader$lzy1"

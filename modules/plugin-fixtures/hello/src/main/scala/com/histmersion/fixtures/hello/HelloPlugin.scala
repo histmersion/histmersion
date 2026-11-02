@@ -1,16 +1,16 @@
 package com.histmersion.fixtures.hello
 
 import com.histmersion.plugin.*
-import com.histmersion.plugin.PluginConfig.given
+import com.histmersion.plugin.Plugin.Config.given
 
 /** The provider (META-INF/services/com.histmersion.plugin.Plugin): one open-access source fetcher that has no copy of
   * anything.
   */
 final class HelloPlugin extends Plugin:
   type Config = HelloConfig
-  val info = PluginInfo("hello", "0.1.0", Spi.Version)
+  val info = Plugin.Info("hello", "0.1.0", Spi.Version)
 
-  def register(config: HelloConfig, ctx: PluginContext): Either[String, Unit] =
+  def register(config: HelloConfig, ctx: Plugin.Context): Either[String, Unit] =
     scala.util
       .Try(
         Class

@@ -153,7 +153,7 @@ class CataloguesSuite extends munit.FunSuite:
     assertEquals(noaa.parts(CatalogueQuery(None, Year(499))), List("earthquakes:1", "volcanoes:1", "tsunamis:1"))
     assert(noaa.everyPartEachImport)
     assertEquals(noaa.floorYear, None)
-    val http = new PluginHttp:
+    val http = new Plugin.Http:
       def get(url: String, headers: Map[String, String]) = Right("""{"items":[],"totalPages":2}""".getBytes("UTF-8"))
     assertEquals(
       noaa.read("earthquakes:1", CatalogueQuery(None, Year(499)), http).map(_.next),

@@ -1,7 +1,7 @@
 package com.histmersion.plugin
 
 /** A collection of sources — a local Calibre library, archive.org's texts, a folder of PDFs — that the host searches
-  * and imports from, and may write back to. A plugin adds one or more to [[PluginContext.sourceCollections]], each
+  * and imports from, and may write back to. A plugin adds one or more to [[Plugin.Context.sourceCollections]], each
   * under its own name; `histmersion calibre …` and `histmersion archive …` then run it.
   *
   * The host defines and runs every operation (the import into the library, the gaps check, the sync, the audit, their

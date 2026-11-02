@@ -23,19 +23,19 @@ final class WikidataPictures(media: MediaSettings, licences: LicenceReader) exte
   override def asks = Set(MediaTarget.Places, MediaTarget.Events)
   override def requestIntervalMs = media.requestIntervalMs
 
-  def search(place: MediaPlace, http: PluginHttp) =
+  def search(place: MediaPlace, http: Plugin.Http) =
     Left("the Wikidata pictures are found for a batch of targets at once")
 
   /** One target as the import asks it: what it is, its id and its Wikidata item. */
-  final private case class Asked(target: MediaTargetId, qid: String, roles: List[(String, String)])
+  final private case class Asked(target: MediaTarget.Id, qid: String, roles: List[(String, String)])
 
-  override def searchTargets(places: List[MediaPlace], events: List[MediaEvent], http: PluginHttp): MediaFound =
+  override def searchTargets(places: List[MediaPlace], events: List[MediaEvent], http: Plugin.Http): MediaFound =
     // the events first, then the places: the order the host lists them in
     val targets =
       events.flatMap(e =>
-        e.wikidata.map(q => Asked(MediaTargetId(MediaTarget.Events, e.id), q.value, media.wikidata.eventRoles))
+        e.wikidata.map(q => Asked(MediaTarget.Id(MediaTarget.Events, e.id), q.value, media.wikidata.eventRoles))
       ) ++ places.flatMap(p =>
-        p.wikidata.map(q => Asked(MediaTargetId(MediaTarget.Places, p.id), q.value, media.wikidata.placeRoles))
+        p.wikidata.map(q => Asked(MediaTarget.Id(MediaTarget.Places, p.id), q.value, media.wikidata.placeRoles))
       )
     val props = (media.wikidata.placeRoles ++ media.wikidata.eventRoles).map(_._1).toSet
     // the items whose batch Wikidata did not answer: their targets are NOT recorded as asked
@@ -55,7 +55,7 @@ final class WikidataPictures(media: MediaSettings, licences: LicenceReader) exte
         }
       }
     }
-    val (files, judged) = CommonsFiles(http, media, licences).items(found.map(_._4).distinct)
+    val (files, judged) = Commons.Files(http, media, licences).items(found.map(_._4).distinct)
     MediaFound(
       uses = found.map((t, r, prop, f, i) =>
         MediaUse(t.target, files(f).copy(role = Some(r)), i, Some(prop), WikidataId.option(t.qid))
@@ -69,5 +69,5 @@ final class WikidataPictures(media: MediaSettings, licences: LicenceReader) exte
         .flatMap(t => items.get(t.qid).flatMap(_.commonsCategory).map(t.target.id -> _))
     )
 
-  override def completeAll(items: List[MediaItem], http: PluginHttp): MediaCompleted =
-    CommonsFiles(http, media, licences).thumbnails(items)
+  override def completeAll(items: List[MediaItem], http: Plugin.Http): MediaCompleted =
+    Commons.Files(http, media, licences).thumbnails(items)

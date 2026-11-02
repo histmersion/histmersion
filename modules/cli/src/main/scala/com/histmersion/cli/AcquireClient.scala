@@ -35,21 +35,21 @@ final class AcquireClient(c: Client):
       sort: Option[String],
       limit: Option[Int],
       notInDb: Boolean
-  ): Either[CliError, DiscoverResult] = c.call(AcquireApi.discover)((q, since, sort, limit, notInDb))
-  def meta(id: String): Either[CliError, WorkRef] = c.call(AcquireApi.meta)(id)
-  def wikirefs(url: String): Either[CliError, WikirefsResult] = c.call(AcquireApi.wikirefs)(url)
-  def refs(req: RefsRequest): Either[CliError, RefsResult] = c.call(AcquireApi.refs)(req)
-  def assess(req: AssessRequest): Either[CliError, Assessment] = c.call(AcquireApi.assess)(req)
-  def updateRetractions: Either[CliError, RetractionsUpdate] = c.call(AcquireApi.updateRetractions)(())
-  def retractionsStatus: Either[CliError, RetractionsUpdate] = c.call(AcquireApi.retractionsStatus)(())
-  def followups(req: FollowupsRequest): Either[CliError, FollowupsResult] = c.call(AcquireApi.followups)(req)
-  def ingest(req: Ingest.Request): Either[CliError, Ingest.Report] = c.call(AcquireApi.ingest)(req)
-  def archiveSearch(q: String, rows: Option[Int]): Either[CliError, ArchiveSearchResult] =
+  ): Either[Cli.Error, DiscoverResult] = c.call(AcquireApi.discover)((q, since, sort, limit, notInDb))
+  def meta(id: String): Either[Cli.Error, WorkRef] = c.call(AcquireApi.meta)(id)
+  def wikirefs(url: String): Either[Cli.Error, WikirefsResult] = c.call(AcquireApi.wikirefs)(url)
+  def refs(req: RefsRequest): Either[Cli.Error, RefsResult] = c.call(AcquireApi.refs)(req)
+  def assess(req: AssessRequest): Either[Cli.Error, Assessment] = c.call(AcquireApi.assess)(req)
+  def updateRetractions: Either[Cli.Error, RetractionsUpdate] = c.call(AcquireApi.updateRetractions)(())
+  def retractionsStatus: Either[Cli.Error, RetractionsUpdate] = c.call(AcquireApi.retractionsStatus)(())
+  def followups(req: FollowupsRequest): Either[Cli.Error, FollowupsResult] = c.call(AcquireApi.followups)(req)
+  def ingest(req: Ingest.Request): Either[Cli.Error, Ingest.Report] = c.call(AcquireApi.ingest)(req)
+  def archiveSearch(q: String, rows: Option[Int]): Either[Cli.Error, ArchiveSearchResult] =
     c.call(AcquireApi.archiveSearch)((q, rows))
-  def archiveInfo(id: String): Either[CliError, ArchiveItem] = c.call(AcquireApi.archiveInfo)(id)
-  def archiveImport(req: ArchiveImportRequest): Either[CliError, Ingest.Report] =
+  def archiveInfo(id: String): Either[Cli.Error, ArchiveItem] = c.call(AcquireApi.archiveInfo)(id)
+  def archiveImport(req: ArchiveImportRequest): Either[Cli.Error, Ingest.Report] =
     c.call(AcquireApi.archiveImport)(req)
-  def calibreGaps(limit: Option[Int]): Either[CliError, CalibreGaps] = c.call(AcquireApi.calibreGaps)(limit)
-  def calibreMeta(citekey: String): Either[CliError, CalibreGap] = c.call(AcquireApi.calibreMeta)(citekey)
-  def calibrePushed(req: CalibrePushRequest): Either[CliError, CalibrePushResult] =
+  def calibreGaps(limit: Option[Int]): Either[Cli.Error, CalibreGaps] = c.call(AcquireApi.calibreGaps)(limit)
+  def calibreMeta(citekey: String): Either[Cli.Error, CalibreGap] = c.call(AcquireApi.calibreMeta)(citekey)
+  def calibrePushed(req: CalibrePushRequest): Either[Cli.Error, CalibrePushResult] =
     c.call(AcquireApi.calibrePushed)(req)

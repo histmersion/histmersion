@@ -4,7 +4,7 @@ import com.histmersion.api.{BBox, Plural}
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.basemap.Basemap
 import com.histmersion.config.BasemapGebcoConfig
-import com.histmersion.util.storage.{Store, StoreKey}
+import com.histmersion.util.storage.Store
 
 import java.io.IOException
 import java.nio.{ByteBuffer, ByteOrder}
@@ -109,7 +109,7 @@ final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: String, http: Range
     if etopoFailures > 0 then note(s"$etopoFailures edge tile(s) had no ETOPO1 tile: their outside is at sea level")
     Right(p.tiles.size.toLong)
 
-  private def map(work: Store, f: StoreKey): ByteBuffer =
+  private def map(work: Store, f: Store.Key): ByteBuffer =
     work.get(f).getOrElse(throw IOException(s"${work.where(f)}: no such file")).mapped().order(ByteOrder.LITTLE_ENDIAN)
 
 object GebcoSeaFloor:

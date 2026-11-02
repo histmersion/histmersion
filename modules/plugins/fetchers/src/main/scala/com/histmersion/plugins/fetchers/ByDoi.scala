@@ -1,13 +1,13 @@
 package com.histmersion.plugins.fetchers
 
-import com.histmersion.plugin.{Access, Fetch, FetchContext, FetchedFile, SourceFetcher, WorkKey}
+import com.histmersion.plugin.{Access, Fetch, FetchedFile, SourceFetcher, WorkKey}
 
 /** An open-access step that reads a work by its DOI: no DOI is a miss saying so, no copy a miss saying which step had
   * none.
   */
-final class ByDoi(step: String, copy: (FetchContext, String) => Option[FetchedFile]) extends SourceFetcher:
+final class ByDoi(step: String, copy: (Fetch.Context, String) => Option[FetchedFile]) extends SourceFetcher:
   val access: Access = Access.Open
-  def fetch(work: WorkKey, ctx: FetchContext): Fetch =
+  def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
     work.doi
       .map(_.value)
       .fold[Fetch](Fetch.Miss(s"$step needs a DOI"))(d =>

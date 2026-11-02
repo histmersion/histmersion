@@ -30,14 +30,14 @@ object SettingsCmd:
     .orFalse
 
   /** The server is down: the file on this machine instead (said once, on stderr). */
-  private def orLocal[A](viaServer: => Either[CliError, A], viaFile: => Either[CliError, A]): Either[CliError, A] =
+  private def orLocal[A](viaServer: => Either[Cli.Error, A], viaFile: => Either[Cli.Error, A]): Either[Cli.Error, A] =
     viaServer match
       case Left(e) if e.exitCode == ExitCode.Unreachable =>
         System.err.println(s"(${e.message.takeWhile(_ != '(').trim}: the settings file on this machine instead)")
         viaFile
       case other => other
 
-  val get: Opts[Client => Either[CliError, Unit]] = Opts.subcommand(
+  val get: Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "get",
     "A setting (or every setting, or those under --prefix): what the settings file says, what applies and from where, " +
       "its default and what it does — a credential only as set or not"
@@ -53,7 +53,7 @@ object SettingsCmd:
       page.flatMap { p =>
         key match
           case Some(k) =>
-            p.field(k).toRight(CliError(s"There is no setting called $k.", ExitCode.Usage)).map { f =>
+            p.field(k).toRight(Cli.Error(s"There is no setting called $k.", ExitCode.Usage)).map { f =>
               Output.emit(json, f)(ConfigEditMarkdown.field)
             }
           case None => Right(Output.emit(json, p)(ConfigEditMarkdown.page))
@@ -69,13 +69,13 @@ object SettingsCmd:
       consent: Boolean,
       json: Boolean,
       c: Client
-  ): Either[CliError, Unit] =
+  ): Either[Cli.Error, Unit] =
     val w = ConfigEdit.Write(List(ConfigEdit.Change(key, value)), literalConsent = consent, reload = reload)
     val viaFile = Local.write(w).map(out => if reload then out.copy(reload = c.configReload.toOption) else out)
     val done = if onlyLocal then viaFile else orLocal(c.writeSettings(w), viaFile)
     done.map(out => Output.emit(json, out)(ConfigEditMarkdown.written))
 
-  val set: Opts[Client => Either[CliError, Unit]] = Opts.subcommand(
+  val set: Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "set",
     "Change a setting in the settings file, in place (comments, order, includes and anything written by hand are kept, " +
       "the old file is kept as .bak), checked first; then the server applies it"
@@ -86,7 +86,7 @@ object SettingsCmd:
     }
   }
 
-  val unset: Opts[Client => Either[CliError, Unit]] = Opts.subcommand(
+  val unset: Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "unset",
     "Take a setting out of the settings file (back to its default), in place; then the server applies it"
   ) {
@@ -95,7 +95,7 @@ object SettingsCmd:
     }
   }
 
-  val restart: Opts[Client => Either[CliError, Unit]] = Opts.subcommand(
+  val restart: Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "restart",
     "Restart the server, for the settings only a restart applies (where it runs under its service: LaunchAgent, systemd)"
   ) {
@@ -108,21 +108,21 @@ object SettingsCmd:
   private object Local:
     private def env = ConfigFactory.systemEnvironment()
 
-    private def file: Either[CliError, LocalSettingsFile] =
+    private def file: Either[Cli.Error, LocalSettingsFile] =
       UserPaths
         .configFile(AppConfig.lookup(env))
-        .toRight(CliError(s"no settings file location: HOME is unset (set ${UserPaths.ConfigEnv})", ExitCode.Usage))
+        .toRight(Cli.Error(s"no settings file location: HOME is unset (set ${UserPaths.ConfigEnv})", ExitCode.Usage))
         .map(LocalSettingsFile(_))
 
-    private def writer: Either[CliError, ConfigFileWriter] =
+    private def writer: Either[Cli.Error, ConfigFileWriter] =
       file.map(ConfigFileWriter(_, env, ConfigSchema.reference))
 
-    private def failed(e: SettingError) = CliError(e.message, ExitCode.Refused)
+    private def failed(e: SettingError) = Cli.Error(e.message, ExitCode.Refused)
 
-    def page(prefix: Option[String]): Either[CliError, ConfigEdit.Page] =
+    def page(prefix: Option[String]): Either[Cli.Error, ConfigEdit.Page] =
       for
         f <- file
-        p <- prefix.fold(Right(None))(k => SettingKey.parse(k).map(Some(_))).left.map(CliError(_, ExitCode.Usage))
+        p <- prefix.fold(Right(None))(k => SettingKey.parse(k).map(Some(_))).left.map(Cli.Error(_, ExitCode.Usage))
         state <- f.read().left.map(failed)
       yield
         val loaded = AppConfig.loadWithUserFile(env, Some(f.path))
@@ -154,7 +154,7 @@ object SettingsCmd:
           loaded.fold(List(_), _.file.warnings)
         )
 
-    def write(w: ConfigEdit.Write): Either[CliError, ConfigEdit.Written] =
+    def write(w: ConfigEdit.Write): Either[Cli.Error, ConfigEdit.Written] =
       for
         fw <- writer
         edits <- SettingEdit.parseAll(w.changes.map(c => c.key -> c.value), ConfigSchema.reference).left.map(failed)

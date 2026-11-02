@@ -1,12 +1,12 @@
 package com.histmersion.plugins.media
 
-import com.histmersion.plugin.PluginHttp
 import io.circe.Json
 
 import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
+import com.histmersion.plugin.Plugin
 
-extension (http: PluginHttp)
+extension (http: Plugin.Http)
   /** One GET through the host's polite client answered as JSON; an answer that is not JSON names its host. `headers` as
     * the client sends them — a key-gated API's key travels in one, never in the URL.
     */

@@ -197,11 +197,11 @@ class ClaudeCodeSuite extends munit.FunSuite:
 
   test("loopback: 127.x, ::1 and localhost are; 0.0.0.0 and a LAN address are not — and claude-code is refused there"):
     assert(
-      ClaudeCodeEnv.isLoopback("127.0.0.1") && ClaudeCodeEnv.isLoopback("localhost") && ClaudeCodeEnv.isLoopback(
+      ClaudeCode.Env.isLoopback("127.0.0.1") && ClaudeCode.Env.isLoopback("localhost") && ClaudeCode.Env.isLoopback(
         "[::1]"
       )
     )
-    assert(!ClaudeCodeEnv.isLoopback("0.0.0.0") && !ClaudeCodeEnv.isLoopback("192.168.1.5"))
+    assert(!ClaudeCode.Env.isLoopback("0.0.0.0") && !ClaudeCode.Env.isLoopback("192.168.1.5"))
     val dir = Files.createTempDirectory("hm-rt-")
     val lan = CliRuntime(FakeCli.app(dir, "HISTMERSION_BIND" -> "0.0.0.0"), EngineContributions.roster)
     assert(ClaudeCode.client(Cfg, lan, Sonnet).left.exists(_.contains("beyond loopback")))

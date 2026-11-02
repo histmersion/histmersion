@@ -4,13 +4,14 @@ import com.histmersion.api.Dataset
 import com.histmersion.api.catalogue.Lpf
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.catalogue.places.PlaceSeed
-import com.histmersion.plugin.{GazetteerSource, PluginHttp}
+import com.histmersion.plugin.GazetteerSource
 import com.histmersion.util.database.Transactor
-import com.histmersion.util.storage.{Store, StoreKey}
+import com.histmersion.util.storage.Store
 
 import scala.collection.immutable.ListMap
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.catalogue.Gazetteer
+import com.histmersion.plugin.Plugin
 
 /** How the gazetteer comes in: the bundled seed, the pinned extracts and the drop folder ([[GazetteerLoad]]), a source
   * a plugin registers ([[ImportRunner]]) and the land ([[NaturalEarthLand]]). The composition root gives the stores,
@@ -26,7 +27,7 @@ final class GazetteerImports(
     download: GazetteerLoad.Download,
     text: String => Either[String, String],
     registered: () => ListMap[String, GazetteerSource],
-    http: () => PluginHttp
+    http: () => Plugin.Http
 ):
   private def settings: GazetteerLoad.Settings = GazetteerLoad.settings(cfg(), stores())
 
@@ -41,17 +42,17 @@ final class GazetteerImports(
     * over every file that reported a dangling parent, then `finding_places`.
     */
   def seed(seed: Store, note: String => Unit): Either[String, String] =
-    if !seed.isDirectory(StoreKey.Root) then Left(s"no gazetteer seed at ${seed.where()} (set init.data-dir)")
+    if !seed.isDirectory(Store.Key.Root) then Left(s"no gazetteer seed at ${seed.where()} (set init.data-dir)")
     else
-      def entries(dir: StoreKey): List[PlaceSeed.Entry[StoreKey]] =
+      def entries(dir: Store.Key): List[PlaceSeed.Entry[Store.Key]] =
         seed
           .list(dir)
           .filter(e => e.isFile || e.isDirectory)
           .map(e => PlaceSeed.Entry(e.key.name, e.isDirectory, e.key))
-      val files = PlaceSeed.files(entries(StoreKey.Root), entries)
+      val files = PlaceSeed.files(entries(Store.Key.Root), entries)
       val batch = math.max(1, cfg().places.importBatch)
       def importFile(
-          f: StoreKey,
+          f: Store.Key,
           kind: Option[String]
       ): Either[String, com.histmersion.api.catalogue.Place.ImportResult] =
         seed
@@ -67,8 +68,8 @@ final class GazetteerImports(
               (sum.failed ++ r.failed).take(20)
             )
           })
-      def pass(fs: List[(StoreKey, Option[String])]): Either[String, (Int, List[(StoreKey, Option[String])])] =
-        fs.zipWithIndex.foldLeft[Either[String, (Int, List[(StoreKey, Option[String])])]](Right((0, Nil))) {
+      def pass(fs: List[(Store.Key, Option[String])]): Either[String, (Int, List[(Store.Key, Option[String])])] =
+        fs.zipWithIndex.foldLeft[Either[String, (Int, List[(Store.Key, Option[String])])]](Right((0, Nil))) {
           case (acc, ((f, kind), i)) =>
             acc.flatMap { (n, retry) =>
               note(s"gazetteer: ${f.value} (${i + 1}/${fs.size})")

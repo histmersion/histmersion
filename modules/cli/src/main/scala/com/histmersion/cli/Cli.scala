@@ -22,6 +22,7 @@ import com.histmersion.api.maintenance.{Vacuum, VacuumPlan}
 import com.histmersion.domain.library.Edge
 import com.histmersion.domain.library.Source
 import com.histmersion.api.library.Facet
+import sttp.client4.*
 
 /** Histmersion CLI — a pure HTTP client of the server (no DB access on the host). Every command maps to one `Api`
   * endpoint and prints the shared Markdown rendering, so CLI and MCP output agree.
@@ -108,7 +109,7 @@ object Cli:
     * article directories) — see [[ArticleCli.WikiLayout]]. Whenever the layout has a root, the compiled articles beside
     * `sources/` are imported too (plan §5.2 stream 2.7).
     */
-  private def hostSeed(c: Client, dir: Path, force: Boolean): Either[CliError, Unit] =
+  private def hostSeed(c: Client, dir: Path, force: Boolean): Either[com.histmersion.cli.Cli.Error, Unit] =
     val layout = ArticleCli.WikiLayout.of(dir)
     val files = Notes.markdownFiles(layout.sources)
     val total = files.size
@@ -151,7 +152,8 @@ object Cli:
   private val put = Opts.subcommand("put", "Send ONE note file (frontmatter + body) as a full create/replace") {
     Opts.argument[String]("file.md").map { file => (c: Client) =>
       val p = Path.of(file)
-      if !Files.isRegularFile(p) then Left(CliError(s"no such file: $file", exitCode = ExitCode.Usage))
+      if !Files.isRegularFile(p) then
+        Left(com.histmersion.cli.Cli.Error(s"no such file: $file", exitCode = ExitCode.Usage))
       // an explicit `put` is always deliberate → force past the "newer in DB" guard
       else c.importNote(Notes.toImport(p, force = true)).map(report)
     }
@@ -196,7 +198,10 @@ object Cli:
               .map(fs => println(s"wrote ${fs.mkString(", ")}"))
         meta.flatMap { _ =>
           if failed.nonEmpty then
-            Left(CliError(s"${failed.size} of $total source(s) could not be exported", exitCode = ExitCode.Refused))
+            Left(
+              com.histmersion.cli.Cli
+                .Error(s"${failed.size} of $total source(s) could not be exported", exitCode = ExitCode.Refused)
+            )
           else if only.nonEmpty then Right(())
           else ArticleCli.exportAll(c, articles).map(_ => ())
         }
@@ -347,7 +352,10 @@ object Cli:
         case Some(by) =>
           Tree.parseBy(by) match
             case None =>
-              Left(CliError(s"unknown --group '$by' (${GroupAxes.mkString(" | ")})", exitCode = ExitCode.Usage))
+              Left(
+                com.histmersion.cli.Cli
+                  .Error(s"unknown --group '$by' (${GroupAxes.mkString(" | ")})", exitCode = ExitCode.Usage)
+              )
             case Some(axes) =>
               c.aggregate(Api.AggregateQuery.tree(axes.mkString(","), f, unit, depth, asOf, samples))
                 .map(h => Output.emit(json, h)(SearchMarkdown.tree(_, unit.getOrElse("sources"))))
@@ -375,7 +383,12 @@ object Cli:
     * the CLI drives the cursor and reports progress until nothing is left.
     */
   @annotation.tailrec
-  private def reindexLoop(c: Client, after: Option[String], sources: Int, chunks: Int): Either[CliError, Unit] =
+  private def reindexLoop(
+      c: Client,
+      after: Option[String],
+      sources: Int,
+      chunks: Int
+  ): Either[com.histmersion.cli.Cli.Error, Unit] =
     c.reindex(after, None) match
       case Left(e)  => Left(e)
       case Right(r) =>
@@ -411,7 +424,7 @@ object Cli:
         if section.isDefined || heading.isDefined || offset.isDefined || chars.isDefined then
           if json then
             Left(
-              CliError(
+              com.histmersion.cli.Cli.Error(
                 "--json prints the whole record; drop --section/--heading/--offset/--chars",
                 exitCode = ExitCode.Usage
               )
@@ -499,7 +512,9 @@ object Cli:
                 Backup
                   .safeName(r.file)
                   .left
-                  .map(m => CliError(s"server returned an odd file name: $m", exitCode = ExitCode.Refused))
+                  .map(m =>
+                    com.histmersion.cli.Cli.Error(s"server returned an odd file name: $m", exitCode = ExitCode.Refused)
+                  )
                   .flatMap { name =>
                     val dir = Path.of(d)
                     val _ = Files.createDirectories(dir)
@@ -526,7 +541,7 @@ object Cli:
       Opts.flag("yes", "Do not ask for confirmation").orFalse
     ).mapN { (file, force, yes) => (c: Client) =>
       if !yes && !confirm(s"Restore '$file' into the server's database? This DROPS what is there.")
-      then Left(CliError("aborted", exitCode = ExitCode.Usage))
+      then Left(com.histmersion.cli.Cli.Error("aborted", exitCode = ExitCode.Usage))
       else c.restore(RestoreRequest(file, force)).map(r => println(Markdown.restored(r)))
     }
   }
@@ -601,7 +616,8 @@ object Cli:
     }
   }
 
-  private[cli] val command: Command[(Option[String], Option[String], Client => Either[CliError, Unit])] =
+  private[cli] val command
+      : Command[(Option[String], Option[String], Client => Either[com.histmersion.cli.Cli.Error, Unit])] =
     Command(name = "histmersion", header = "Histmersion — CLI over the Histmersion server (MCP twin)") {
       (
         serverOpt,
@@ -656,3 +672,6 @@ object Cli:
           case Right(())                               => ()
           case Left(e) if WorkingDir.denied(e.message) => System.err.println(WorkingDir.message); sys.exit(3)
           case Left(e) => System.err.println(s"error: ${e.message}"); sys.exit(e.exitCode)
+
+  /** A user-facing failure: message + process exit code (1 = usage, 2 = server said no, 3 = unreachable). */
+  final case class Error(message: String, exitCode: Int = ExitCode.Unreachable)

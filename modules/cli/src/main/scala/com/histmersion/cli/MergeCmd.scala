@@ -46,7 +46,7 @@ object MergeCmd:
     ).mapN(ResolutionFlags.apply)
 
   /** The file, then the flags over it. Every bad line is reported at once. Reads the file; else pure. */
-  def resolutions(f: ResolutionFlags): Either[CliError, MergeResolutions] =
+  def resolutions(f: ResolutionFlags): Either[Cli.Error, MergeResolutions] =
     val fromFile: Either[List[String], MergeResolutions] = f.file match
       case None    => Right(MergeResolutions())
       case Some(p) =>
@@ -63,7 +63,7 @@ object MergeCmd:
           .toRight(s"--editions $e: expected merge or separate")
     val errors =
       fromFile.left.toOption.getOrElse(Nil) ++ flags.flatMap(_.left.toOption) ++ editions.left.toOption.toList
-    if errors.nonEmpty then Left(CliError(errors.mkString("\n"), exitCode = ExitCode.Usage))
+    if errors.nonEmpty then Left(Cli.Error(errors.mkString("\n"), exitCode = ExitCode.Usage))
     else
       Right(
         fromFile.toOption.get.overriddenBy(
@@ -74,7 +74,7 @@ object MergeCmd:
   /** The merged text of every `file:<path>` decision, read here and sent along: the server cannot read this machine's
     * files. A path that cannot be read is an error.
     */
-  def withTexts(r: MergeResolutions): Either[CliError, MergeResolutions] =
+  def withTexts(r: MergeResolutions): Either[Cli.Error, MergeResolutions] =
     val read = r.resolve.map { x =>
       MergeDecision.parse(x.decision).toOption.filter(_.kind == DecisionKind.File).flatMap(_.argument) match
         case None => Right(x)
@@ -92,15 +92,15 @@ object MergeCmd:
               .map(t => x.copy(text = Some(t)))
     }
     val errors = read.flatMap(_.left.toOption)
-    if errors.nonEmpty then Left(CliError(errors.mkString("\n"), exitCode = ExitCode.Usage))
+    if errors.nonEmpty then Left(Cli.Error(errors.mkString("\n"), exitCode = ExitCode.Usage))
     else Right(r.copy(resolve = read.flatMap(_.toOption)))
 
   /** Upload the bundle; refuse what is not one. */
-  def upload(c: Client, f: java.io.File): Either[CliError, Bundle.Upload] =
+  def upload(c: Client, f: java.io.File): Either[Cli.Error, Bundle.Upload] =
     c.uploadBundle(f).flatMap { u =>
       if u.manifest.isEmpty then
         Left(
-          CliError(s"${f.getPath} is not a readable bundle: ${u.problems.mkString("; ")}", exitCode = ExitCode.Refused)
+          Cli.Error(s"${f.getPath} is not a readable bundle: ${u.problems.mkString("; ")}", exitCode = ExitCode.Refused)
         )
       else Right(u)
     }
@@ -123,16 +123,16 @@ object MergeCmd:
     ).mapN { (file, flags, template, all, json) => (c: Client) =>
       val p = Path.of(file)
       for
-        _ <- Either.cond(Files.isRegularFile(p), (), CliError(s"no such file: $file", exitCode = ExitCode.Usage))
+        _ <- Either.cond(Files.isRegularFile(p), (), Cli.Error(s"no such file: $file", exitCode = ExitCode.Usage))
         res <- resolutions(flags)
         u <- upload(c, p.toFile)
         plan <- c.mergePlan(MergePlan.Request(u.sha256, res))
-        _ <- template.fold[Either[CliError, Unit]](Right(())) { t =>
+        _ <- template.fold[Either[Cli.Error, Unit]](Right(())) { t =>
           scala.util
             .Try(Files.writeString(Path.of(t), MergeResolutionsFile.template(plan, res)))
             .toEither
             .left
-            .map(e => CliError(s"could not write $t: ${e.getMessage}", exitCode = ExitCode.Usage))
+            .map(e => Cli.Error(s"could not write $t: ${e.getMessage}", exitCode = ExitCode.Usage))
             .map(_ => ())
         }
         _ = Output.emit(json, plan)(MergeMarkdown.plan(_, all))
@@ -140,7 +140,7 @@ object MergeCmd:
         _ <- Either.cond(
           plan.problems.isEmpty && plan.resolutionErrors.isEmpty,
           (),
-          CliError("the plan has problems or unusable resolutions (listed above)", exitCode = ExitCode.Refused)
+          Cli.Error("the plan has problems or unusable resolutions (listed above)", exitCode = ExitCode.Refused)
         )
       yield ()
     }
@@ -163,7 +163,7 @@ object MergeCmd:
     ).mapN { (file, flags, expected, yes) => (c: Client) =>
       val p = Path.of(file)
       for
-        _ <- Either.cond(Files.isRegularFile(p), (), CliError(s"no such file: $file", exitCode = ExitCode.Usage))
+        _ <- Either.cond(Files.isRegularFile(p), (), Cli.Error(s"no such file: $file", exitCode = ExitCode.Usage))
         res0 <- resolutions(flags)
         res <- withTexts(res0)
         u <- upload(c, p.toFile)
@@ -172,7 +172,7 @@ object MergeCmd:
           plan.problems.isEmpty && plan.resolutionErrors.isEmpty && plan.open.isEmpty,
           (), {
             println(MergeMarkdown.plan(plan))
-            CliError(
+            Cli.Error(
               "the merge cannot be applied yet: decide what is open (listed above), then apply again",
               exitCode = ExitCode.Refused
             )
@@ -186,12 +186,12 @@ object MergeCmd:
                 s"${Plural.count(plan.changes, "change")})? A backup is taken first."
             ),
           (),
-          CliError("aborted", exitCode = ExitCode.Usage)
+          Cli.Error("aborted", exitCode = ExitCode.Usage)
         )
         job <- c.mergeApply(MergeApplyRequest(u.sha256, hash, res))
         r <- follow(c, job)
         _ = println(MergeMarkdown.applied(r))
-        _ <- Either.cond(r.applied, (), CliError("the merge was not applied (see above)", exitCode = ExitCode.Refused))
+        _ <- Either.cond(r.applied, (), Cli.Error("the merge was not applied (see above)", exitCode = ExitCode.Refused))
       yield ()
     }
   }
@@ -201,16 +201,16 @@ object MergeCmd:
 
   /** Follow an apply job to its end: the apply takes a backup first, which can outlast the request. */
   @annotation.tailrec
-  def follow(c: Client, j: MergeApplyJob): Either[CliError, MergeApplyResult] =
+  def follow(c: Client, j: MergeApplyJob): Either[Cli.Error, MergeApplyResult] =
     j.state match
       case MergeJobState.Done =>
-        j.result.toRight(CliError(s"merge apply ${j.job}: done, but no result", exitCode = ExitCode.Refused))
+        j.result.toRight(Cli.Error(s"merge apply ${j.job}: done, but no result", exitCode = ExitCode.Refused))
       case MergeJobState.Failed =>
-        Left(CliError(j.error.getOrElse(s"merge apply ${j.job} failed"), exitCode = ExitCode.Refused))
+        Left(Cli.Error(j.error.getOrElse(s"merge apply ${j.job} failed"), exitCode = ExitCode.Refused))
       // the server restarted under it: nothing is half applied, but whether it committed is in `merge list`
       case MergeJobState.Interrupted =>
         Left(
-          CliError(
+          Cli.Error(
             s"merge apply ${j.job}: ${j.error.getOrElse(MergeApplyJob.InterruptedText)}",
             exitCode = ExitCode.Refused
           )
@@ -253,7 +253,7 @@ object MergeCmd:
     }
   }
 
-  val command: Opts[Client => Either[CliError, Unit]] =
+  val command: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "merge",
       "Merge another collection's bundle into this one: plan it (every issue in one run), apply it; list, show and trace past merges"

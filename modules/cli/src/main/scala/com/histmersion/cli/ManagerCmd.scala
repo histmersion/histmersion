@@ -24,7 +24,7 @@ import com.histmersion.api.views.{AutopilotApi, AutopilotStatus}
   */
 object ManagerCmd:
 
-  val managers: Opts[Client => Either[CliError, Unit]] = Opts.subcommand(
+  val managers: Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "managers",
     "The process managers: each one's state, items, runs in flight, status line and last event"
   ) {
@@ -33,8 +33,8 @@ object ManagerCmd:
     )
   }
 
-  private def config(kvs: List[String]): Either[CliError, ManagerConfig] =
-    ManagerConfig.parse(kvs).left.map(m => CliError(m, exitCode = ExitCode.Usage))
+  private def config(kvs: List[String]): Either[Cli.Error, ManagerConfig] =
+    ManagerConfig.parse(kvs).left.map(m => Cli.Error(m, exitCode = ExitCode.Usage))
 
   /** The settings `--config` and `config` take. */
   private val SettingKeys =
@@ -70,7 +70,7 @@ object ManagerCmd:
   }
 
   /** `histmersion agent enqueue <review|extend|enrich|seed> <target>` — what the page buttons do. */
-  val enqueue: Opts[Client => Either[CliError, Unit]] = Opts.subcommand(
+  val enqueue: Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "enqueue",
     "Hand a target to its manager, as the page buttons do: review|extend <article>, enrich <citekey|article|goal> " +
       "(the unenriched sources it cites or links), seed <goal> (propose its next articles); a missing manager is created paused"
@@ -88,7 +88,7 @@ object ManagerCmd:
   /** `histmersion agent autopilot [status|on|off]` — the one switch (docs/research-process-managers.md "As built: the
     * autopilot").
     */
-  val autopilot: Opts[Client => Either[CliError, Unit]] = Opts.subcommand(
+  val autopilot: Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "autopilot",
     "The autopilot: status (default) — per research goal its stage, managers, sources, articles, open approvals, last " +
       "activity and pace, and the watchers' ingest backlog; on — every goal gets an active seeding manager and watcher and " +
@@ -109,16 +109,16 @@ object ManagerCmd:
       Opts.flag("dry-run", "repair-acquire: list what it would do, change nothing").orFalse,
       Output.jsonFlag
     ).mapN { (verb, rest, dry, json) => (c: Client) =>
-      def status(call: Either[CliError, AutopilotStatus]) =
+      def status(call: Either[Cli.Error, AutopilotStatus]) =
         call.map(s => Output.emit(json, s)(_.markdown))
       verb.trim.toLowerCase match
         case "mode" =>
           rest match
             case List(m) => status(c.call(AutopilotApi.setMode)(AgentMode.ModeSet(m, Some("cli"))))
-            case _ => Left(CliError("autopilot mode takes one of: working, finish, pause", exitCode = ExitCode.Usage))
+            case _ => Left(Cli.Error("autopilot mode takes one of: working, finish, pause", exitCode = ExitCode.Usage))
         case _ if rest.nonEmpty && verb.trim.toLowerCase != "focus" =>
           Left(
-            CliError(s"autopilot $verb takes no further arguments (${rest.mkString(" ")})", exitCode = ExitCode.Usage)
+            Cli.Error(s"autopilot $verb takes no further arguments (${rest.mkString(" ")})", exitCode = ExitCode.Usage)
           )
         case "status"  => status(c.call(AutopilotApi.autopilot)(()))
         case "on"      => status(c.call(AutopilotApi.setAutopilot)(Autopilot.AutopilotSet(on = true, Some("cli"))))
@@ -138,7 +138,7 @@ object ManagerCmd:
             .map(f => Output.emit(json, f)(AutopilotMarkdown.focus))
         case other =>
           Left(
-            CliError(
+            Cli.Error(
               s"unknown autopilot verb '$other' (status, on, off, drain, undrain, repair-acquire, focus, mode)",
               exitCode = ExitCode.Usage
             )
@@ -149,7 +149,7 @@ object ManagerCmd:
   /** `histmersion agent scheduler [status|queue|why <item>|strategy <name|default>]` — the central scheduler
     * (docs/research-goal-advancement.md "As built").
     */
-  val scheduler: Opts[Client => Either[CliError, Unit]] = Opts.subcommand(
+  val scheduler: Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "scheduler",
     "The central scheduler that admits the managers' work across every job type: status (default) — the strategy, " +
       "the runs at once and plan pools, the job types' shares, what the last pass started and the queue with why each " +
@@ -163,7 +163,7 @@ object ManagerCmd:
       Opts.option[Int]("limit", "How many waiting items to show (status: 50, queue: 200)").orNone,
       Output.jsonFlag
     ).mapN { (verb, rest, limit, json) => (c: Client) =>
-      def usage(m: String) = Left(CliError(m, exitCode = ExitCode.Usage))
+      def usage(m: String) = Left(Cli.Error(m, exitCode = ExitCode.Usage))
       (verb.trim.toLowerCase, rest.map(_.trim).filter(_.nonEmpty)) match
         case ("status", Nil) =>
           c.call(ManagersApi.scheduler)(limit).map(s => Output.emit(json, s)(AgentSchedulerMarkdown.status))
@@ -190,7 +190,7 @@ object ManagerCmd:
   }
 
   /** `histmersion agent stalls [--days n]` — the goals with no progress, why, and what unblocks them. */
-  val stalls: Opts[Client => Either[CliError, Unit]] = Opts.subcommand(
+  val stalls: Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "stalls",
     "The unfinished research goals with no progress in N days (default agents.autopilot.stall-days), each with the " +
       "one reason it stands still — draining, waiting for a person, held, paused, a budget, quota, the scheduler's " +
@@ -203,7 +203,7 @@ object ManagerCmd:
   }
 
   /** `histmersion agent digest` — everything waiting for a person, by kind (#3762 proposal 3). */
-  val digest: Opts[Client => Either[CliError, Unit]] = Opts.subcommand(
+  val digest: Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "digest",
     "Everything waiting for a person in one view: the open approvals by kind (how many, the oldest, who decides them " +
       "now, the subjects with the most, the ids) and the manager items held for a person; once a day it is also " +
@@ -215,7 +215,7 @@ object ManagerCmd:
   }
 
   /** `histmersion agent decide-all <approve|reject> --kind k | --subject s | --id n…` — a group at once. */
-  val decideAll: Opts[Client => Either[CliError, Unit]] = Opts.subcommand(
+  val decideAll: Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "decide-all",
     "Approve or reject every OPEN approval that matches at once — of a kind, about a subject, or the ids given (they " +
       "narrow together; one is needed), the oldest first, each through the same decision a single one takes"
@@ -238,9 +238,9 @@ object ManagerCmd:
   /** `focus` [list | pin <goal> | unpin <goal> | priority <goal> <n> | max <n|default>] → the request (None: just show
     * it); a malformed one is a usage error before anything is sent.
     */
-  def focusRequest(args: List[String]): Either[CliError, Option[Autopilot.FocusSet]] =
-    def usage(m: String) = Left(CliError(m, exitCode = ExitCode.Usage))
-    def num(s: String) = s.trim.toIntOption.toRight(CliError(s"'$s' is not a whole number", exitCode = ExitCode.Usage))
+  def focusRequest(args: List[String]): Either[Cli.Error, Option[Autopilot.FocusSet]] =
+    def usage(m: String) = Left(Cli.Error(m, exitCode = ExitCode.Usage))
+    def num(s: String) = s.trim.toIntOption.toRight(Cli.Error(s"'$s' is not a whole number", exitCode = ExitCode.Usage))
     args.map(_.trim) match
       case Nil | List("list")             => Right(None)
       case List(v @ ("pin" | "unpin"), g) => Right(Some(Autopilot.FocusSet(v, Some(g), by = Some("cli"))))
@@ -258,7 +258,7 @@ object ManagerCmd:
         )
 
   /** The verbs of one manager; each takes the manager's id first. */
-  private def verb(name: String, help: String)(rest: Opts[(Client, String) => Either[CliError, Unit]]) =
+  private def verb(name: String, help: String)(rest: Opts[(Client, String) => Either[Cli.Error, Unit]]) =
     Opts.subcommand(name, help)(rest)
 
   private val target = Opts.argument[String]("target")
@@ -266,7 +266,7 @@ object ManagerCmd:
   private def itemPatch(c: Client, id: String, t: String, p: ItemPatch) =
     c.call(ManagersApi.patchItem)((id, t, p)).map(i => println(ManagersMarkdown.item(i)))
 
-  private val verbs: Opts[(Client, String) => Either[CliError, Unit]] =
+  private val verbs: Opts[(Client, String) => Either[Cli.Error, Unit]] =
     verb("status", "The manager: items in flight with their runs, hints, newest events")(
       Output.jsonFlag.map(json =>
         (c, id) => c.call(ManagersApi.get)(id).map(d => Output.emit(json, d)(ManagersMarkdown.detail))
@@ -389,7 +389,7 @@ object ManagerCmd:
           )
       )
 
-  val manager: Opts[Client => Either[CliError, Unit]] = Opts.subcommand(
+  val manager: Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "manager",
     "One process manager: new, or <id> status|items|events|pause|resume|stop|hint|enqueue|hold|release|skip|reopen|priority|cron|config"
   ) {

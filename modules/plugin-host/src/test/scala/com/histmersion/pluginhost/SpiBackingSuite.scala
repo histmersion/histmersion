@@ -4,7 +4,7 @@ import com.histmersion.plugin.*
 import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.{Config, ConfigFactory}
 
-import com.histmersion.plugin.PluginConfig.given
+import com.histmersion.plugin.Plugin.Config.given
 
 /** How the host backs the SPI members added within SPI 2: an answer with its status and headers sent once, the budget
   * of a metered upstream, the plugins a fetch is told of, the settings it supplies a first-party plugin from its own
@@ -16,7 +16,7 @@ class SpiBackingSuite extends munit.FunSuite:
 
   private def services(quota: String => UpstreamQuota = _ => UpstreamQuota.Unlimited): HostServices =
     HostServices(
-      () => new PluginHttp { def get(u: String, h: Map[String, String]) = Left("offline") },
+      () => new Plugin.Http { def get(u: String, h: Map[String, String]) = Left("offline") },
       ConfigFactory.empty,
       noLog,
       quota
@@ -40,7 +40,7 @@ class SpiBackingSuite extends munit.FunSuite:
       firstParty = firstParty
     )
 
-  // ── SPI-1: PluginHttp.fetch ─────────────────────────────────────────────────────────────────
+  // ── SPI-1: Plugin.Http.fetch ─────────────────────────────────────────────────────────────────
 
   test("the acquisition client's fetch is sent once, with the policy's User-Agent, and answers as it came"):
     val sent = scala.collection.mutable.ListBuffer.empty[(String, Map[String, String])]
@@ -61,17 +61,17 @@ class SpiBackingSuite extends munit.FunSuite:
     val retried = PolicyHttp("histmersion/0.1", wire, tries = 2, sleep = _ => ()).plugin.get("https://core.example/x")
     assert(retried.isLeft && sent.size == 2, sent.toString)
 
-  // ── SPI-2: PluginContext.quota ──────────────────────────────────────────────────────────────
+  // ── SPI-2: Plugin.Context.quota ──────────────────────────────────────────────────────────────
 
   final private case class NoSettings() derives ConfigReader
 
   /** A plugin that keeps the context's quota for `upstream`, as a fetcher does at registration. */
   final private class Metered(upstream: String) extends Plugin:
     type Config = NoSettings
-    val info = PluginInfo("zq-metered", "1.0.0", Spi.Version)
+    val info = Plugin.Info("zq-metered", "1.0.0", Spi.Version)
     // the registration's quota, kept for the plugin's fetches
     var quota: Option[UpstreamQuota] = None
-    def register(c: NoSettings, ctx: PluginContext) =
+    def register(c: NoSettings, ctx: Plugin.Context) =
       quota = Some(ctx.quota(upstream))
       Right(())
 
@@ -98,13 +98,13 @@ class SpiBackingSuite extends munit.FunSuite:
     )
     assertEquals(other.quota, Some(UpstreamQuota.Unlimited))
 
-  // ── SPI-3: FetchContext.registered ──────────────────────────────────────────────────────────
+  // ── SPI-3: Fetch.Context.registered ──────────────────────────────────────────────────────────
 
   test("a fetch is told which plugins its generation registered"):
     val asked = scala.collection.mutable.ListBuffer.empty[(String, Boolean)]
     val peerAware = new SourceFetcher:
       val access = Access.Open
-      def fetch(work: WorkKey, ctx: FetchContext) =
+      def fetch(work: WorkKey, ctx: Fetch.Context) =
         List("oa-unpaywall", "oa-openalex").foreach(id => asked += id -> ctx.registered(id))
         Fetch.Miss("nothing")
     val (chain, _) =
@@ -132,11 +132,11 @@ class SpiBackingSuite extends munit.FunSuite:
   /** A first-party plugin that reads a host key (`acquire.endpoint.url`) and has a setting of its own. */
   final private class FirstParty extends Plugin:
     type Config = Supplied
-    val info = PluginInfo("zq-first", "1.0.0", Spi.Version)
+    val info = Plugin.Info("zq-first", "1.0.0", Spi.Version)
     // what the plugin was given at registration
     var received: Option[Supplied] = None
     override def defaultsResource = "zq-first-defaults.conf"
-    def register(c: Supplied, ctx: PluginContext) = { received = Some(c); Right(()) }
+    def register(c: Supplied, ctx: Plugin.Context) = { received = Some(c); Right(()) }
 
   private val supplied: String => Config = id =>
     if id == "zq-first" then
@@ -181,8 +181,8 @@ class SpiBackingSuite extends munit.FunSuite:
 
   final private class Volcanoes(id: String) extends Plugin:
     type Config = NoSettings
-    val info = PluginInfo(id, "1.0.0", Spi.Version)
-    def register(c: NoSettings, ctx: PluginContext) = ctx.eventCatalogues.add("gvp", Catalogue)
+    val info = Plugin.Info(id, "1.0.0", Spi.Version)
+    def register(c: NoSettings, ctx: Plugin.Context) = ctx.eventCatalogues.add("gvp", Catalogue)
 
   private object Catalogue extends EventCatalogue:
     def title = "Volcanoes"
@@ -190,7 +190,7 @@ class SpiBackingSuite extends munit.FunSuite:
     def citation = "Volcanoes"
     def home = "https://volcanoes.example"
     def parts(query: CatalogueQuery) = Nil
-    def read(part: String, query: CatalogueQuery, http: PluginHttp) = Right(CataloguePage(Nil))
+    def read(part: String, query: CatalogueQuery, http: Plugin.Http) = Right(CataloguePage(Nil))
 
   test("a reserved catalogue name is kept for the first-party plugin; any other plugin is refused it"):
     val third = build(List(Volcanoes("zq-volcanoes")), "histmersion.plugins.zq-volcanoes.enabled = true")
@@ -213,9 +213,9 @@ class SpiBackingSuite extends munit.FunSuite:
 
   final private class KeyedPlugin extends Plugin:
     type Config = Keyed
-    val info = PluginInfo("zq-keyed", "1.0.0", Spi.Version)
+    val info = Plugin.Info("zq-keyed", "1.0.0", Spi.Version)
     override def defaultsResource = "zq-keyed-defaults.conf"
-    def register(c: Keyed, ctx: PluginContext) = c.apiKey.fold(Right(()))(ctx.secret(_).map(_ => ()))
+    def register(c: Keyed, ctx: Plugin.Context) = c.apiKey.fold(Right(()))(ctx.secret(_).map(_ => ()))
 
   test("a generation gives the host a plugin's secret by its setting, as it resolved it — never another's"):
     val g = build(

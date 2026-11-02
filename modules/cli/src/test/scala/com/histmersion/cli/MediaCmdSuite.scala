@@ -63,7 +63,7 @@ class MediaCmdSuite extends munit.FunSuite:
   private val cmd = Command("histmersion", "test")(MediaCmd.command)
 
   /** Run the command line against `url`; its result, stdout and stderr. */
-  private def run(url: String, args: String*): (Either[CliError, Unit], String, String) =
+  private def run(url: String, args: String*): (Either[Cli.Error, Unit], String, String) =
     val f = cmd.parse(args.toList, Map.empty).fold(h => fail(h.toString), identity)
     val (out, err) = (ByteArrayOutputStream(), ByteArrayOutputStream())
     val r = Console.withOut(out)(Console.withErr(err)(f(Client(url))))

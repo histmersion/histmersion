@@ -97,7 +97,7 @@ class PluginAiRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       u,
       env,
       Plugins.services(
-        () => new com.histmersion.plugin.PluginHttp { def get(u: String, h: Map[String, String]) = Left("offline") },
+        () => new com.histmersion.plugin.Plugin.Http { def get(u: String, h: Map[String, String]) = Left("offline") },
         env
       ),
       fallback = FirstPartySettings.fallback(_, host),

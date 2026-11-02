@@ -31,8 +31,8 @@ final class CodexExecClient(val model: ModelRef, cfg: CodexConfig, rt: CliRuntim
       throw java.io.IOException(s"codex: no profile for ${agent.name} in $home — run `histmersion agent generate`")
     // the home's shared lock for the whole step (a retention pass never runs under it, #2582); a pass
     // may follow once the step is done
-    try CodexHome.using(home)(runIn(call, agent, home))
-    finally CodexHome.maybeRetain(home, cfg)
+    try Codex.Home.using(home)(runIn(call, agent, home))
+    finally Codex.Home.maybeRetain(home, cfg)
 
   private def runIn[Out](
       call: LlmCall[Out],

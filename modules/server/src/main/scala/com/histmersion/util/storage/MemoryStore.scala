@@ -18,93 +18,93 @@ final class MemoryStore private (
     val location: Location,
     name: String,
     state: AtomicReference[MemoryStore.Files],
-    base: StoreKey
+    base: Store.Key
 ) extends Store:
   import MemoryStore.{Entry, Files}
 
   def this(location: Location, name: String) =
-    this(location, name, AtomicReference(MemoryStore.Files(Map.empty, Set.empty)), StoreKey.Root)
+    this(location, name, AtomicReference(MemoryStore.Files(Map.empty, Set.empty)), Store.Key.Root)
 
-  private def full(key: StoreKey): StoreKey =
+  private def full(key: Store.Key): Store.Key =
     if base.isRoot then key else if key.isRoot then base else base.child(key.value)
-  private def local(key: StoreKey): StoreKey = key.relativeTo(base)
+  private def local(key: Store.Key): Store.Key = key.relativeTo(base)
   private def now: Instant = Instant.EPOCH.plusMillis(MemoryStore.ticks.incrementAndGet())
 
-  private def files: Map[StoreKey, Entry] = state.get.files.filter((k, _) => k.within(base))
+  private def files: Map[Store.Key, Entry] = state.get.files.filter((k, _) => k.within(base))
 
-  private def directories(within: StoreKey): Set[StoreKey] =
+  private def directories(within: Store.Key): Set[Store.Key] =
     state.get.files.keySet.flatMap(k => ancestors(k)).filter(_.within(within)) ++
       state.get.directories.filter(_.within(within))
 
-  private def ancestors(k: StoreKey): List[StoreKey] =
-    k.segments.inits.toList.drop(1).filter(_.nonEmpty).map(s => StoreKey.applyUnsafe(s.mkString("/")))
+  private def ancestors(k: Store.Key): List[Store.Key] =
+    k.segments.inits.toList.drop(1).filter(_.nonEmpty).map(s => Store.Key.applyUnsafe(s.mkString("/")))
 
-  def where(key: StoreKey): String = s"$name/${full(key).value}"
+  def where(key: Store.Key): String = s"$name/${full(key).value}"
 
-  def sub(prefix: StoreKey): Store = MemoryStore(location, name, state, full(prefix))
+  def sub(prefix: Store.Key): Store = MemoryStore(location, name, state, full(prefix))
 
-  def exists(key: StoreKey): Boolean = isFile(key) || isDirectory(key)
-  def isFile(key: StoreKey): Boolean = state.get.files.contains(full(key))
-  def isDirectory(key: StoreKey): Boolean = full(key).isRoot || directories(StoreKey.Root).contains(full(key))
-  def isLink(key: StoreKey): Boolean = false
-  def isExecutable(key: StoreKey): Boolean = false
+  def exists(key: Store.Key): Boolean = isFile(key) || isDirectory(key)
+  def isFile(key: Store.Key): Boolean = state.get.files.contains(full(key))
+  def isDirectory(key: Store.Key): Boolean = full(key).isRoot || directories(Store.Key.Root).contains(full(key))
+  def isLink(key: Store.Key): Boolean = false
+  def isExecutable(key: Store.Key): Boolean = false
 
-  def stat(key: StoreKey): Option[Stored] =
+  def stat(key: Store.Key): Option[Stored] =
     state.get.files
       .get(full(key))
-      .map(e => Stored(key, StoredKind.File, e.size, e.modified))
-      .orElse(Option.when(isDirectory(key))(Stored(key, StoredKind.Directory, ByteCount.zero, Instant.EPOCH)))
+      .map(e => Stored(key, Stored.Kind.File, e.size, e.modified))
+      .orElse(Option.when(isDirectory(key))(Stored(key, Stored.Kind.Directory, ByteCount.zero, Instant.EPOCH)))
 
-  def get(key: StoreKey): Option[Blob] =
+  def get(key: Store.Key): Option[Blob] =
     state.get.files.get(full(key)).map(e => MemoryStore.MemoryBlob(key, where(key), e))
 
-  def list(prefix: StoreKey): List[Stored] =
+  def list(prefix: Store.Key): List[Stored] =
     val p = full(prefix)
     val depth = p.segments.size + 1
     val fs = files.toList.collect {
-      case (k, e) if k.within(p) && k.segments.size == depth => Stored(local(k), StoredKind.File, e.size, e.modified)
+      case (k, e) if k.within(p) && k.segments.size == depth => Stored(local(k), Stored.Kind.File, e.size, e.modified)
     }
     val ds = directories(p).toList.collect {
-      case d if d.segments.size == depth => Stored(local(d), StoredKind.Directory, ByteCount.zero, Instant.EPOCH)
+      case d if d.segments.size == depth => Stored(local(d), Stored.Kind.Directory, ByteCount.zero, Instant.EPOCH)
     }
     (fs ++ ds).sortBy(_.key.value)
 
-  def walk(prefix: StoreKey): List[Stored] =
+  def walk(prefix: Store.Key): List[Stored] =
     val p = full(prefix)
     files.toList
-      .collect { case (k, e) if k.within(p) => Stored(local(k), StoredKind.File, e.size, e.modified) }
+      .collect { case (k, e) if k.within(p) => Stored(local(k), Stored.Kind.File, e.size, e.modified) }
       .sortBy(_.key.value)
 
-  private def store(key: StoreKey, bytes: Array[Byte]): Stored =
+  private def store(key: Store.Key, bytes: Array[Byte]): Stored =
     val e = Entry(bytes.clone(), now)
     state.updateAndGet(_.modify(_.files).using(_.updated(full(key), e)))
-    Stored(key, StoredKind.File, e.size, e.modified)
+    Stored(key, Stored.Kind.File, e.size, e.modified)
 
-  def put(key: StoreKey, bytes: Array[Byte]): Either[StoreError, Stored] = Right(store(key, bytes))
-  def write(key: StoreKey, bytes: Array[Byte]): Either[StoreError, Stored] = Right(store(key, bytes))
+  def put(key: Store.Key, bytes: Array[Byte]): Either[Store.Error, Stored] = Right(store(key, bytes))
+  def write(key: Store.Key, bytes: Array[Byte]): Either[Store.Error, Stored] = Right(store(key, bytes))
 
-  def reserve(key: StoreKey, temp: TempName, throughLink: Boolean): Either[StoreError, Reservation] =
+  def reserve(key: Store.Key, temp: TempName, throughLink: Boolean): Either[Store.Error, Reservation] =
     Right(MemoryStore.MemoryReservation(key, where(key), (k, b) => store(k, b)))
 
-  def move(from: StoreKey, to: StoreKey): Either[StoreError, Unit] =
-    state.get.files.get(full(from)).toRight(StoreError.NotFound(where(from))).map { e =>
+  def move(from: Store.Key, to: Store.Key): Either[Store.Error, Unit] =
+    state.get.files.get(full(from)).toRight(Store.Error.NotFound(where(from))).map { e =>
       state.updateAndGet(_.modify(_.files).using(_.removed(full(from)).updated(full(to), e))): Unit
     }
 
-  def copy(from: StoreKey, to: StoreKey, keepAttributes: Boolean): Either[StoreError, Unit] =
-    state.get.files.get(full(from)).toRight(StoreError.NotFound(where(from))).map { e =>
+  def copy(from: Store.Key, to: Store.Key, keepAttributes: Boolean): Either[Store.Error, Unit] =
+    state.get.files.get(full(from)).toRight(Store.Error.NotFound(where(from))).map { e =>
       val copied = if keepAttributes then e else e.modify(_.modified).setTo(now)
       state.updateAndGet(_.modify(_.files).using(_.updated(full(to), copied))): Unit
     }
 
-  def makeDirectory(prefix: StoreKey): Either[StoreError, Unit] =
+  def makeDirectory(prefix: Store.Key): Either[Store.Error, Unit] =
     Right(state.updateAndGet(_.modify(_.directories).using(_ + full(prefix))): Unit)
 
-  def delete(key: StoreKey): Boolean =
+  def delete(key: Store.Key): Boolean =
     val k = full(key)
     state.getAndUpdate(_.modify(_.files).using(_.removed(k))).files.contains(k)
 
-  def deleteTree(prefix: StoreKey): Option[ByteCount] =
+  def deleteTree(prefix: Store.Key): Option[ByteCount] =
     val p = full(prefix)
     Option.when(exists(prefix)) {
       val before =
@@ -112,7 +112,7 @@ final class MemoryStore private (
       ByteCount.applyUnsafe(before.files.collect { case (k, e) if k.within(p) => e.size.value }.sum)
     }
 
-  def touch(key: StoreKey, at: Instant): Unit =
+  def touch(key: Store.Key, at: Instant): Unit =
     val _ = state.updateAndGet(f =>
       f.files.get(full(key)).fold(f)(e => f.modify(_.files).using(_.updated(full(key), e.modify(_.modified).setTo(at))))
     )
@@ -121,26 +121,26 @@ final class MemoryStore private (
 
   def usableSpace: ByteCount = ByteCount.applyUnsafe(Long.MaxValue)
 
-  def measure(budget: MeasureBudget): StoreMeasure =
-    if base.isRoot || exists(StoreKey.Root) then
+  def measure(budget: MeasureBudget): Store.Measure =
+    if base.isRoot || exists(Store.Key.Root) then
       val held = files.values.toList
       val counted = held.takeWhile(_ => budget.take())
-      StoreMeasure(
+      Store.Measure(
         ByteCount.applyUnsafe(counted.iterator.map(_.size.value).sum),
         counted.size.toLong,
         exists = true,
         partial = counted.size < held.size
       )
-    else StoreMeasure.absent
+    else Store.Measure.absent
 
-  def volume: Option[StoreVolume] = None
+  def volume: Option[Store.Volume] = None
 
-  def names(prefix: StoreKey): List[String] = list(prefix).map(_.key.name)
+  def names(prefix: Store.Key): List[String] = list(prefix).map(_.key.name)
 
   def prune(rule: PruneRule): PruneReport = PruneReport(DiskStore.pruned(walk(), rule).filter(s => delete(s.key)))
 
-  private[util] def onDisk(key: StoreKey): Either[StoreError, java.nio.file.Path] = Left(
-    StoreError.NotOnDisk(where(key))
+  private[util] def onDisk(key: Store.Key): Either[Store.Error, java.nio.file.Path] = Left(
+    Store.Error.NotOnDisk(where(key))
   )
 
 object MemoryStore:
@@ -150,9 +150,9 @@ object MemoryStore:
   final case class Entry(bytes: Array[Byte], modified: Instant):
     def size: ByteCount = ByteCount.applyUnsafe(bytes.length.toLong)
 
-  final case class Files(files: Map[StoreKey, Entry], directories: Set[StoreKey])
+  final case class Files(files: Map[Store.Key, Entry], directories: Set[Store.Key])
 
-  final class MemoryBlob(val key: StoreKey, val where: String, entry: Entry) extends Blob:
+  final class MemoryBlob(val key: Store.Key, val where: String, entry: Entry) extends Blob:
     def size: ByteCount = entry.size
     def modified: Instant = entry.modified
     def open(): InputStream = ByteArrayInputStream(entry.bytes)
@@ -174,7 +174,7 @@ object MemoryStore:
         java.util.Arrays.copyOfRange(entry.bytes, from, math.min(entry.bytes.length, from + length))
       def close(): Unit = ()
 
-  final class MemoryReservation(val key: StoreKey, val where: String, commitTo: (StoreKey, Array[Byte]) => Stored)
+  final class MemoryReservation(val key: Store.Key, val where: String, commitTo: (Store.Key, Array[Byte]) => Stored)
       extends Reservation:
     private val written = AtomicReference(Array.emptyByteArray)
     @volatile private var done = false
@@ -193,10 +193,10 @@ object MemoryStore:
 
     def size: ByteCount = ByteCount.applyUnsafe(written.get.length.toLong)
 
-    def commit(keepPermissions: Boolean): Either[StoreError, Stored] =
+    def commit(keepPermissions: Boolean): Either[Store.Error, Stored] =
       done = true
       Right(commitTo(key, written.get))
 
     def discard(): Unit = written.set(Array.emptyByteArray)
     def close(): Unit = if !done then discard()
-    private[util] def onDisk: Either[StoreError, java.nio.file.Path] = Left(StoreError.NotOnDisk(where))
+    private[util] def onDisk: Either[Store.Error, java.nio.file.Path] = Left(Store.Error.NotOnDisk(where))

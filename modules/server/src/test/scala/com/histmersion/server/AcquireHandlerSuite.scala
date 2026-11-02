@@ -471,14 +471,14 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
 
   test("a fetcher's refusal goes into the browser-download item: where to download it, under which licence"):
     import com.augustnagro.magnum.*
-    import com.histmersion.plugin.{Access, Fetch, FetchContext, SourceFetcher, WorkKey}
+    import com.histmersion.plugin.{Access, Fetch, SourceFetcher, WorkKey}
     def items = QueueRows.acquireNaming(ds, "10.1038/zztest001").filter(_.status == "open")
     def dropItems(): Unit =
       transact(ds)(items.foreach(i => sql"DELETE FROM queue_items WHERE id = ${i.id}".update.run()))
     wipe("zzacq_ingested"); dropItems()
     def answering(a: Fetch): SourceFetcher = new SourceFetcher:
       val access = Access.Open
-      def fetch(w: WorkKey, c: FetchContext) = a
+      def fetch(w: WorkKey, c: Fetch.Context) = a
     val why = "an openly licensed copy exists but could not be downloaded: 20.500.12657/23223 " +
       "(https://library.oapen.org/handle/20.500.12657/23223), licence CC BY 4.0"
     val chain = FetchChain(
@@ -550,10 +550,10 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
 
   test("no copy: the ingest report lists what each fetcher of the chain answered"):
     wipe("zzacq_ingested")
-    import com.histmersion.plugin.{Access, Fetch, FetchContext, SourceFetcher, WorkKey}
+    import com.histmersion.plugin.{Access, Fetch, SourceFetcher, WorkKey}
     def answering(a: Fetch): SourceFetcher = new SourceFetcher:
       val access = Access.Open
-      def fetch(w: WorkKey, c: FetchContext) = a
+      def fetch(w: WorkKey, c: Fetch.Context) = a
     val chain = FetchChain(
       List(
         "unpaywall" -> answering(Fetch.Miss("no open-access location")),
@@ -570,14 +570,14 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
 
   test("--legal-only: a person's ingest asks the legal chain alone, even with acquire.allow-unauthorised = true"):
     wipe("zzacq_ingested")
-    import com.histmersion.plugin.{Access, Fetch, FetchContext, SourceFetcher, WorkKey}
+    import com.histmersion.plugin.{Access, Fetch, SourceFetcher, WorkKey}
     val asked = java.util.concurrent.atomic.AtomicInteger(0)
     val unauthorised = new SourceFetcher:
       val access = Access.Unauthorised
-      def fetch(w: WorkKey, c: FetchContext) = { asked.incrementAndGet(); Fetch.Miss("stub") }
+      def fetch(w: WorkKey, c: Fetch.Context) = { asked.incrementAndGet(); Fetch.Miss("stub") }
     val open = new SourceFetcher:
       val access = Access.Open
-      def fetch(w: WorkKey, c: FetchContext) = Fetch.Miss("no open-access location")
+      def fetch(w: WorkKey, c: Fetch.Context) = Fetch.Miss("no open-access location")
     val chain = FetchChain(List("unpaywall" -> open, "stub-unauthorised" -> unauthorised), allowUnauthorised = true)
     val allowing = cfg.copy(acquire = cfg.acquire.copy(allowUnauthorised = true))
     val r = handlers(oa = chain, app = allowing)
@@ -726,7 +726,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     // the download is the acquisition chain's: here a fetcher over the same client, by the item's identifier
     val byIdentifier = new com.histmersion.plugin.SourceFetcher:
       val access = com.histmersion.plugin.Access.Open
-      def fetch(work: com.histmersion.plugin.WorkKey, ctx: com.histmersion.plugin.FetchContext) =
+      def fetch(work: com.histmersion.plugin.WorkKey, ctx: com.histmersion.plugin.Fetch.Context) =
         work.archive.fold(com.histmersion.plugin.Fetch.Miss("no identifier"))(_ =>
           com.histmersion.plugin.Fetch.Found(
             FetchedFile("archive_org", None, ("%PDF-1.4\n" + "y" * 20000).getBytes("UTF-8"), "pdf")

@@ -530,7 +530,7 @@ com.histmersion.plugin.testkit.MediaVerdict$ fromProduct(scala.Product): com.his
 com.histmersion.plugin.testkit.MediaVerdict$ toString(): java.lang.String
 com.histmersion.plugin.testkit.MediaVerdict$ unapply(com.histmersion.plugin.testkit.MediaVerdict): com.histmersion.plugin.testkit.MediaVerdict
 com.histmersion.plugin.testkit.PluginHarness TestVaultsId(): java.lang.String
-com.histmersion.plugin.testkit.PluginHarness aiTurn(java.lang.String, com.histmersion.plugin.AiTurnRequest, com.histmersion.plugin.AiHttp): com.histmersion.plugin.testkit.AiReport
+com.histmersion.plugin.testkit.PluginHarness aiTurn(java.lang.String, com.histmersion.plugin.AiTurn$Request, com.histmersion.plugin.AiHttp): com.histmersion.plugin.testkit.AiReport
 com.histmersion.plugin.testkit.PluginHarness class
 com.histmersion.plugin.testkit.PluginHarness contributions(): com.histmersion.plugin.testkit.Contributions
 com.histmersion.plugin.testkit.PluginHarness fetch(com.histmersion.plugin.WorkKey, scala.Option, boolean, boolean): com.histmersion.plugin.testkit.FetchReport

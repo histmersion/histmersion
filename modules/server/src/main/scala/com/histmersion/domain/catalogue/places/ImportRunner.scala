@@ -1,9 +1,10 @@
 package com.histmersion.domain.catalogue.places
 
 import com.histmersion.api.Dataset
-import com.histmersion.plugin.{GazetteerSource, PluginHttp}
+import com.histmersion.plugin.GazetteerSource
 import com.histmersion.pluginhost.PluginGazetteers
 import com.histmersion.api.catalogue.Place
+import com.histmersion.plugin.Plugin
 
 /** Imports a gazetteer source a plugin registered (Cliopatria, AWMC and ChronOntology are Histmersion's own): the
   * source downloads and reads its dataset through the client the host lends it, the host checks and converts each place
@@ -14,7 +15,7 @@ object ImportRunner:
   private val BatchSize = 1000
 
   /** The places a run of `source` stores, in order, and the ones refused with the reason. */
-  def places(source: GazetteerSource, http: PluginHttp): Either[String, (List[Place.Input], List[String])] =
+  def places(source: GazetteerSource, http: Plugin.Http): Either[String, (List[Place.Input], List[String])] =
     PluginGazetteers.places(source, http).map { (items, refused) =>
       refused.foreach(why => scribe.warn(s"[import] refused $why"))
       (items, refused)
@@ -22,7 +23,7 @@ object ImportRunner:
 
   def fetchAndImport(
       source: GazetteerSource,
-      http: PluginHttp,
+      http: Plugin.Http,
       places: PlaceService,
       geometry: PlaceGeometry,
       dryRun: Boolean,

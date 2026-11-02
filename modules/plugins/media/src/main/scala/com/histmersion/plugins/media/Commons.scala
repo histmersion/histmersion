@@ -2,6 +2,9 @@ package com.histmersion.plugins.media
 
 import com.histmersion.upstreams.media.MediaText
 import io.circe.Json
+import com.histmersion.plugin.*
+import com.histmersion.upstreams.wikidata.{WikidataEntities, WikidataStatement}
+import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** Wikimedia Commons, read through the action API's `prop=imageinfo` with `extmetadata`: URL building and parsing.
   * Pure.
@@ -45,7 +48,7 @@ object Commons:
     * title to its canonical one). A file Commons does not have is `Left("missing on Commons")`; an API error is `Left`
     * for the whole answer.
     */
-  def imageInfo(json: Json): Either[String, Map[String, Either[String, CommonsFile]]] =
+  def imageInfo(json: Json): Either[String, Map[String, Either[String, com.histmersion.plugins.media.Commons.File]]] =
     val c = json.hcursor
     c.downField("error").focus match
       case Some(err) =>
@@ -68,7 +71,7 @@ object Commons:
           val h = p.hcursor
           val title = h.get[String]("title").getOrElse("")
           val info = h.downField("imageinfo").downArray
-          val entry: Either[String, CommonsFile] =
+          val entry: Either[String, com.histmersion.plugins.media.Commons.File] =
             if h.downField("missing").focus.isDefined || h.downField("invalid").focus.isDefined || info.focus.isEmpty
             then Left("missing on Commons")
             else
@@ -94,7 +97,7 @@ object Commons:
               (for
                 url <- i.get[String]("url").toOption
                 page <- i.get[String]("descriptionurl").toOption
-              yield CommonsFile(
+              yield com.histmersion.plugins.media.Commons.File(
                 title,
                 page,
                 MediaText.stripTracking(url),
@@ -111,3 +114,279 @@ object Commons:
           (title :: normalized.getOrElse(title, Nil)).map(_ -> entry)
         }
         Right(pages.toMap)
+
+  /** `depicts`: pictures that DEPICT an event, from Wikimedia Commons: for each event with a Wikidata item,
+    *   1. the works its item lists as `P1299 depicted by` (a painting, a relief) — each work's own image (P18) — when
+    *      `media.depicts.depicted-by` is on; then
+    *   2. the Commons files whose structured data says `P180 depicts` the item ([[CommonsDepicts]]);
+    * at most `media.depicts.per-event`, in role `depiction`. Licence, author and credit come from Commons as for every
+    * Commons picture ([[CommonsFiles]]); the host judges them against `media.depicts.licences`.
+    */
+  final class Depictions(media: MediaSettings, licences: LicenceReader) extends MediaCollection:
+    val title = "Commons depictions"
+    override val description =
+      "Pictures that depict events: Wikimedia Commons files whose structured data says P180 'depicts' the event's " +
+        "Wikidata item, and the images of the works its item lists as P1299 'depicted by'; licence read from Commons"
+    val role = MediaCollection.Depiction
+    override def matchRule = MediaMatchRule.Own
+    override def asks = Set(MediaTarget.Events)
+    override def requestIntervalMs = media.requestIntervalMs
+
+    def search(place: MediaPlace, http: Plugin.Http) = Left("the depictions are about events")
+
+    override def searchTargets(places: List[MediaPlace], events: List[MediaEvent], http: Plugin.Http): MediaFound =
+      val asked = events.flatMap(e => e.wikidata.map(q => (e, q.value)))
+      val wikidata = media.wikidata
+      val qids = asked.map(_._2).distinct
+
+      // 1. P1299 on the events' items, then P18 of the works named
+      val byItem =
+        if !media.depicts.depictedBy || asked.isEmpty then Nil
+        else
+          qids.grouped(wikidata.batch.max(1)).toList.map { ids =>
+            ids -> http.askJson(WikidataEntities.url(wikidata.apiUrl, ids, wikidata.maxlag)).flatMap { j =>
+              j.hcursor.downField("error").focus.fold(Right(j))(_ => Left("Wikidata error"))
+            }
+          }
+      val depictedBy = byItem.flatMap(_._2.toOption).map(Depicts.depictedBy).flatMap(_.toList).toMap
+      val works = depictedBy.values.flatten.toList.distinct
+      val workAnswers = works.grouped(wikidata.batch.max(1)).toList.map { ids =>
+        ids -> http
+          .askJson(WikidataEntities.url(wikidata.apiUrl, ids, wikidata.maxlag))
+          .flatMap(WikidataEntities.items(_, Set("P18")))
+      }
+      val workImage: Map[String, String] = workAnswers
+        .flatMap(_._2.toOption)
+        .flatMap(_.toList)
+        .flatMap((q, item) =>
+          WikidataStatement.best(item.statements, 1).headOption.map(st => q -> Commons.fileTitle(st.file))
+        )
+        .toMap
+
+      // 2. Commons' P180 depicts, one search per event
+      val searches = asked.map { (e, q) =>
+        (
+          e,
+          q,
+          http
+            .askJson(Depicts.searchUrl(media.commons.apiUrl, q, media.depicts.searchLimit, media.commons.maxlag))
+            .flatMap(Depicts.titles)
+        )
+      }
+      val depicts = searches.collect { case (e, _, Right(ts)) => e.id -> ts }.toMap
+
+      val found = asked.flatMap { (e, q) =>
+        val fromWorks = depictedBy
+          .getOrElse(q, Nil)
+          .flatMap(workImage.get)
+          .filter(_.nonEmpty)
+          .map(f => (Depicts.DepictedBy, f))
+        val fromFiles = depicts.getOrElse(e.id, Nil).map(f => (Depicts.Depicts, Commons.fileTitle(f)))
+        (fromWorks ++ fromFiles).distinctBy(_._2).take(media.depicts.perEvent.max(0)).zipWithIndex.map {
+          case ((p, f), i) => (e, q, p, f, i)
+        }
+      }
+      val (files, judged) = Files(http, media, licences).items(found.map(_._4).distinct)
+      val unanswered = byItem.collect { case (ids, Left(_)) => ids }.flatten.toSet ++
+        searches.collect { case (_, q, Left(_)) => q }
+      MediaFound(
+        uses = found.map((e, q, p, f, i) =>
+          MediaUse(
+            MediaTarget.Id(MediaTarget.Events, e.id),
+            files(f),
+            i,
+            Some(p),
+            WikidataId.option(q),
+            note = Some(s"$p ${if p == Depicts.Depicts then "depicts" else "depicted by"} $q")
+          )
+        ),
+        asked = asked.map((e, _) => MediaTarget.Id(MediaTarget.Events, e.id)),
+        unanswered =
+          asked.filter((_, q) => unanswered(q)).map((e, _) => MediaTarget.Id(MediaTarget.Events, e.id)).toSet,
+        read = depictedBy.size + workImage.size,
+        failed = byItem.collect { case (ids, Left(err)) => s"Wikidata ${ids.head}…: $err" } ++
+          workAnswers.collect { case (ids, Left(err)) => s"Wikidata works ${ids.head}…: $err" } ++
+          searches.collect { case (e, q, Left(err)) => s"Commons search for ${e.id} ($q): $err" } ++ judged
+      )
+
+    override def completeAll(items: List[MediaItem], http: Plugin.Http): MediaCompleted =
+      Files(http, media, licences).thumbnails(items)
+
+  /** Wikimedia Commons files that DEPICT an event: structured data's `P180 depicts` searched by CirrusSearch's
+    * documented `haswbstatement` keyword through the action API (no login), and Wikidata's `P1299 depicted by` on the
+    * event's own item (a work whose own image, P18, is the picture). URL building and parsing. Pure.
+    */
+  object Depicts:
+
+    val Depicts = "P180"
+    val DepictedBy = "P1299"
+
+    def searchUrl(api: String, qid: String, limit: Int, maxlag: Int): String =
+      val lag = if maxlag > 0 then s"&maxlag=$maxlag" else ""
+      s"$api?action=query&format=json&formatversion=2&list=search&srnamespace=6&srlimit=${limit.max(1)}" +
+        s"&srsearch=${s"haswbstatement:$Depicts=$qid".enc}$lag"
+
+    /** Pure: the file titles of a search answer, in its order; an API error is a `Left`. */
+    def titles(json: Json): Either[String, List[String]] =
+      val c = json.hcursor
+      c.downField("error").focus match
+        case Some(err) =>
+          Left(
+            s"${err.hcursor.get[String]("code").getOrElse("error")}: ${err.hcursor.get[String]("info").getOrElse("")}".trim
+          )
+        case None =>
+          Right(
+            c.downField("query")
+              .downField("search")
+              .focus
+              .flatMap(_.asArray)
+              .toList
+              .flatten
+              .flatMap(_.hcursor.get[String]("title").toOption)
+              .filter(_.startsWith("File:"))
+          )
+
+    /** Pure: the items an entity names under `P1299 depicted by`, per entity asked, best rank first. */
+    def depictedBy(json: Json): Map[String, List[String]] =
+      json.hcursor
+        .downField("entities")
+        .focus
+        .flatMap(_.asObject)
+        .toList
+        .flatMap(_.toList)
+        .map { (key, ent) =>
+          val sts = ent.hcursor.downField("claims").downField(DepictedBy).focus.flatMap(_.asArray).toList.flatten
+          val ids = sts.flatMap { st =>
+            val s = st.hcursor
+            val rank = s.get[String]("rank").getOrElse("normal")
+            Option
+              .when(rank != "deprecated")(
+                s.downField("mainsnak")
+                  .downField("datavalue")
+                  .downField("value")
+                  .get[String]("id")
+                  .toOption
+              )
+              .flatten
+              .filter(_.matches("Q[1-9][0-9]*"))
+              .map(id => (if rank == "preferred" then 0 else 1, id))
+          }
+          key -> ids.sortBy(_._1).map(_._2).distinct
+        }
+        .toMap
+
+  /** One file as Commons' `imageinfo` describes it. `rendition*` is the provider's resized copy at the width asked
+    * (`thumburl`; the original itself when that is smaller). `meta` is `extmetadata`, by name.
+    */
+  final case class File(
+      title: String,
+      pageUrl: String,
+      originalUrl: String,
+      renditionUrl: Option[String],
+      renditionWidth: Option[Int],
+      renditionHeight: Option[Int],
+      mime: String,
+      width: Option[Int],
+      height: Option[Int],
+      size: Option[Long],
+      meta: Map[String, String]
+  )
+
+  /** The Commons half every Commons-backed collection shares: what Commons says about each file — licence, author and
+    * credit from `imageinfo` + `extmetadata`, read and never assumed, as the item to state — and, for the files to
+    * store, their thumbnails in one batch.
+    */
+  final class Files(http: Plugin.Http, media: MediaSettings, licences: LicenceReader):
+
+    /** `imageinfo` for the titles, in batches; a failed batch is a line in `failed`, and its titles get no answer. */
+    def imageInfo(
+        titles: List[String],
+        width: Int,
+        meta: Boolean
+    ): (Map[String, Either[String, File]], List[String]) =
+      val answers = titles
+        .grouped(media.commons.batch.max(1))
+        .toList
+        .map { batch =>
+          http
+            .askJson(Commons.imageInfoUrl(media.commons.apiUrl, batch, width, media.commons.maxlag, meta))
+            .flatMap(Commons.imageInfo)
+            .left
+            .map(e => s"Commons ${batch.head}…: $e")
+        }
+      (answers.flatMap(_.toOption).flatMap(_.toList).toMap, answers.flatMap(_.left.toOption))
+
+    /** Each title as the item to state — its licence as Commons states it (the machine id, else the short name, read as
+      * the host reads them), the credit line in Commons' own form — and the lines of the batches that failed. A file
+      * Commons marks non-free, whose licence is unreadable or all rights reserved, or whose licence requires an author
+      * it does not name, is withheld with that reason.
+      */
+    def items(titles: List[String]): (Map[String, MediaItem], List[String]) =
+      val (infos, failed) = imageInfo(titles, media.displayPx, meta = true)
+      (titles.map(t => t -> item(t, infos.get(t))).toMap, failed)
+
+    private def item(title: String, answer: Option[Either[String, File]]): MediaItem =
+      val bare = MediaItem(title, title.stripPrefix("File:"), "", None, Left("no answer from Commons"))
+      answer match
+        case None              => bare
+        case Some(Left(why))   => bare.copy(rights = Left(why))
+        case Some(Right(info)) =>
+          def field(k: String) = info.meta.get(k).map(MediaText.plain(_)).filter(_.nonEmpty)
+          val licence = licences.readFirst(info.meta.get("License").toList ++ field("LicenseShortName").toList)
+          val required = info.meta.get("AttributionRequired").exists(_.trim.equalsIgnoreCase("true")) ||
+            licence.needsAttribution
+          val author = field("Attribution").orElse(field("Artist"))
+          val refused =
+            if info.meta.get("NonFree").exists(_.trim.equalsIgnoreCase("true")) then Some("marked non-free on Commons")
+            else if licence.family == Licence.Read.Unknown then
+              Some(if licence.id.isEmpty then "no licence stated" else s"licence not recognised (${licence.id})")
+            else if licence.family == Licence.Read.AllRights then Some("all rights reserved")
+            else if required && author.isEmpty then Some("no author to credit")
+            else None
+          val name = field("LicenseShortName").getOrElse(licence.id)
+          val rights =
+            if refused.isDefined then MediaRights(Licence(licence.id))
+            else
+              MediaRights(
+                Licence(licence.id),
+                info.meta
+                  .get("LicenseUrl")
+                  .map(_.trim)
+                  .filter(_.nonEmpty)
+                  .map(u => if u.startsWith("//") then "https:" + u else u),
+                author,
+                (author.toList :+ name :+ "via Wikimedia Commons").mkString(", ")
+              )
+          bare.copy(
+            pageUrl = info.pageUrl,
+            imageUrl = Some(info.renditionUrl.getOrElse(info.originalUrl)),
+            rights = Right(rights),
+            originalUrl = Some(info.originalUrl),
+            withheld = refused,
+            rendition = Some(
+              MediaRendition(
+                info.mime,
+                info.renditionWidth.orElse(info.width),
+                info.renditionHeight.orElse(info.height),
+                bytes = if info.renditionUrl.isEmpty then info.size else None
+              )
+            )
+          )
+
+    /** The items to store with their thumbnails — Commons' own `thumb-px` renditions, asked in batches. */
+    def thumbnails(items: List[MediaItem]): MediaCompleted =
+      val (infos, failed) = imageInfo(items.map(_.key), media.thumbPx, meta = false)
+      MediaCompleted(
+        items.flatMap { it =>
+          infos.get(it.key).flatMap(_.toOption).map { i =>
+            it.key -> it.copy(
+              thumbUrl = i.renditionUrl,
+              rendition = it.rendition.map(_.copy(thumbWidth = i.renditionWidth, thumbHeight = i.renditionHeight))
+            )
+          }
+        }.toMap,
+        failed
+      )
+
+  /** `histmersion.media.commons`: the action API, titles per `imageinfo` call, and `maxlag`. */
+  final case class Settings(apiUrl: String, batch: Int, maxlag: Int) derives ConfigReader

@@ -6,7 +6,7 @@ import com.histmersion.api.maintenance.Storage as StorageReports
 import com.histmersion.config.AppConfig
 import com.histmersion.util.data.DataContributions
 import com.histmersion.util.data.maintenance.{CacheHolding, CacheSpec}
-import com.histmersion.util.storage.{Location, MeasureBudget, Storage, Store, StoreKey}
+import com.histmersion.util.storage.{Location, MeasureBudget, Storage, Store}
 
 import java.time.Instant
 import com.histmersion.api.basemap.Basemap
@@ -35,7 +35,7 @@ final class StorageFigures(registry: DataContributions):
       storage.find(location).toList.flatMap { dir =>
         dir
           .names()
-          .flatMap(n => StoreKey.of(n).toOption.map(k => n -> dir.sub(k)))
+          .flatMap(n => Store.Key.of(n).toOption.map(k => n -> dir.sub(k)))
           .filterNot((_, s) => covered(s.where()))
       }
     val caches = children(Location.CacheDirectory).map((n, s) =>
@@ -69,8 +69,8 @@ final class StorageFigures(registry: DataContributions):
   /** The base-map files, one by one, an unfinished download (`.<layer>.part`), and the registered caches it holds. */
   private def basemapDetail(store: Store, budget: MeasureBudget): Option[String] =
     val parts = Basemap.Layer.values.toList.flatMap { l =>
-      val file = StoreKey.applyUnsafe(l.file)
-      val part = StoreKey.applyUnsafe(s".${l.wire}.part")
+      val file = Store.Key.applyUnsafe(l.file)
+      val part = Store.Key.applyUnsafe(s".${l.wire}.part")
       Option.when(store.isFile(file))(
         s"${l.wire} ${Backup.humanBytes(scala.util.Try(store.get(file).fold(0L)(_.size.value)).getOrElse(0L))}"
       ) ++

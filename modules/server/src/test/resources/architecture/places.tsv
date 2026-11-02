@@ -89,7 +89,6 @@ config:config/CommaList.scala	values
 config:config/Config.scala	config
 config:config/ConfigLayers.scala	config
 config:config/ConfigReload.scala	util.settings
-config:config/ConfigReloadConfig.scala	util.settings
 config:config/ConverterConfig.scala	library.ingest
 config:config/CoreServiceConfig.scala	library.acquisition
 config:config/CorpusConfig.scala	config
@@ -295,14 +294,12 @@ server:server/agents/AgentDoctor.scala	automation.agents
 server:server/agents/BuiltinAi.scala	automation.agents
 server:server/agents/ClaudeCode.scala	automation.agents
 server:server/agents/ClaudeCodeClient.scala	automation.agents
-server:server/agents/ClaudeCodeEnv.scala	automation.agents
 server:server/agents/CliOutcome.scala	automation.agents
 server:server/agents/CliOutcomes.scala	automation.agents
 server:server/agents/CliProcess.scala	automation.agents
 server:server/agents/CliRuntime.scala	automation.agents
 server:server/agents/Codex.scala	automation.agents
 server:server/agents/CodexExecClient.scala	automation.agents
-server:server/agents/CodexHome.scala	automation.agents
 server:server/agents/EngineContributions.scala	server
 server:server/agents/GeneratePluginMain.scala	server
 server:server/agents/HostAiProvider.scala	automation.agents
@@ -318,8 +315,5 @@ server:server/agents/ServerEngineSite.scala	server
 server:server/agents/ToolboxOrder.scala	server
 server:server/hot/BuildCtx.scala	server
 server:server/hot/Hot.scala	server
-server:server/hot/HotDataSource.scala	server
-server:server/hot/HotGraph.scala	server
 server:server/hot/Pin.scala	server
-server:server/hot/PinRequests.scala	server
 server:server/plugins/RelinkPlugins.scala	util.plugins

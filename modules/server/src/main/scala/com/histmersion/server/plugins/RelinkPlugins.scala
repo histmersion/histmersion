@@ -6,7 +6,7 @@ import com.histmersion.pluginhost.{HostServices, PluginHost}
 import com.histmersion.config.AppConfig
 import com.histmersion.api.plugins.{PluginDescription, PluginJar, PluginSet, PluginState}
 import com.histmersion.util.plugins.PluginKit
-import com.histmersion.plugin.{Plugin, PluginHttp, Spi}
+import com.histmersion.plugin.{Plugin, Spi}
 import com.histmersion.util.plugins.{HostProvided, LegacyPlugins, PluginSetResource}
 import org.ekrich.config.{ConfigFactory, ConfigUtil}
 
@@ -169,7 +169,7 @@ object RelinkPlugins:
   private def fromJar(c: Class[?], jar: Path): Boolean =
     Try(Path.of(c.getProtectionDomain.getCodeSource.getLocation.toURI).toAbsolutePath.normalize == jar).getOrElse(false)
 
-  private val NoHttp: PluginHttp = new PluginHttp:
+  private val NoHttp: Plugin.Http = new Plugin.Http:
     def get(url: String, headers: Map[String, String]) = Left("no HTTP while a plugin is being described")
 
   /** Register `p` alone, enabled, with its defaults, into throw-away registries: what it provides and the access its

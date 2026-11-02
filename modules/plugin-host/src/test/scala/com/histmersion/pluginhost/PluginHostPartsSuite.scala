@@ -43,9 +43,9 @@ class PluginHostPartsSuite extends munit.FunSuite:
   final private class Paged(pages: Map[String, Either[String, CataloguePage]]) extends EventCatalogue:
     val title = "t"; val licence = Licence("l"); val citation = "c"; val home = "h"
     def parts(q: CatalogueQuery) = pages.keys.toList
-    def read(part: String, q: CatalogueQuery, http: PluginHttp) = pages(part)
+    def read(part: String, q: CatalogueQuery, http: Plugin.Http) = pages(part)
 
-  private val offline = new PluginHttp:
+  private val offline = new Plugin.Http:
     def get(url: String, headers: Map[String, String]) = Left("offline")
 
   test("a part is read page by page until no next page, a repeat, a part done or a full run"):
@@ -69,16 +69,16 @@ class PluginHostPartsSuite extends munit.FunSuite:
     assertEquals(read("a", done = _ == "a"), Nil)
     assertEquals(read("a", full = true), Nil)
 
-  private val request = AiTurnRequest("m", "s", List(AiMessage.User("hi")), Nil, None, 10, 1, 1)
+  private val request = AiTurn.Request("m", "s", List(AiMessage.User("hi")), Nil, None, 10, 1, 1)
 
   test("an AI provider's exception or null is its failure"):
     val throwing = new AiProvider:
       val title = "t"
       override def check(model: String) = throw IllegalStateException("no")
-      def turn(r: AiTurnRequest, http: AiHttp) = throw IllegalStateException("boom")
+      def turn(r: AiTurn.Request, http: AiHttp) = throw IllegalStateException("boom")
     val nulls = new AiProvider:
       val title = "t"
-      def turn(r: AiTurnRequest, http: AiHttp) = Right(null)
+      def turn(r: AiTurn.Request, http: AiHttp) = Right(null)
     assertEquals(PluginAi.check(throwing, "m"), Left("its check threw IllegalStateException"))
     assertEquals(PluginAi.turn(throwing, request, AiHttp.Offline), Left(AiFailure.Error("IllegalStateException: boom")))
     assertEquals(PluginAi.turn(nulls, request, AiHttp.Offline), Left(AiFailure.Error("the provider answered null")))
@@ -125,7 +125,7 @@ class PluginHostPartsSuite extends munit.FunSuite:
 
   // ── a plugin built against another SPI generation ─────────────────────────────────────────────
 
-  /** What linking an SPI-1 plugin against SPI 2 throws: its PluginInfo read `Spi.Version` at run time. */
+  /** What linking an SPI-1 plugin against SPI 2 throws: its Plugin.Info read `Spi.Version` at run time. */
   private val spi1 = NoSuchMethodError("'int com.histmersion.plugin.Spi$.Version()'")
 
   test("a plugin built against SPI 1 is recognised by the member it reads, and told to rebuild"):
@@ -156,5 +156,5 @@ class PluginHostPartsSuite extends munit.FunSuite:
       type Config = Unit
       def info = throw spi1
       override given configReader: hearth.kindlings.sconfigderivation.ConfigReader[Unit] = null
-      def register(config: Unit, ctx: PluginContext) = Right(())
+      def register(config: Unit, ctx: Plugin.Context) = Right(())
     assert(PluginHost.described(old).left.exists(_ eq spi1))

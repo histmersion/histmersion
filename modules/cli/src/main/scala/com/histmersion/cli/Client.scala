@@ -103,7 +103,7 @@ final class Client(val serverUrl: String, token: Option[String] = None):
 
   // `private[cli]` so the acquisition client (stream 2.6) reuses this one transport rather than
   // opening a second backend with its own error handling.
-  private[cli] def call[I, O](ep: PublicEndpoint[I, Api.Error, O, Any])(in: I): Either[CliError, O] =
+  private[cli] def call[I, O](ep: PublicEndpoint[I, Api.Error, O, Any])(in: I): Either[Cli.Error, O] =
     // No client-side read timeout: the server bounds every request itself
     // (`server.request-timeout-seconds`), and sttp's 1-minute default is shorter than a backup.
     send(authed(interp.toRequest(ep, Some(base)).apply(in).readTimeout(scala.concurrent.duration.Duration.Inf)))
@@ -118,11 +118,11 @@ final class Client(val serverUrl: String, token: Option[String] = None):
     * "cannot reach … is the server running?". Only a failure to TALK to the server is that; everything else says what
     * the server answered.
     */
-  private def send[O](req: Request[sttp.tapir.DecodeResult[Either[Api.Error, O]]]): Either[CliError, O] =
+  private def send[O](req: Request[sttp.tapir.DecodeResult[Either[Api.Error, O]]]): Either[Cli.Error, O] =
     scala.util.Try(req.send(backend)) match
       case scala.util.Failure(e) =>
         Left(
-          CliError(
+          Cli.Error(
             s"cannot reach Histmersion at $serverUrl (${e.getClass.getSimpleName}: ${e.getMessage}) — is the server running?"
           )
         )
@@ -134,273 +134,275 @@ final class Client(val serverUrl: String, token: Option[String] = None):
             val code =
               if e.code.contains(com.histmersion.api.library.CollectionsApi.Usage) then ExitCode.Usage
               else ExitCode.Refused
-            Left(CliError(e.message, exitCode = code))
+            Left(Cli.Error(e.message, exitCode = code))
           case _ =>
             Left(
-              CliError(
+              Cli.Error(
                 Client.unexpected(resp.code.code, serverUrl, Client.isWrite(req.method)),
                 exitCode = ExitCode.Refused
               )
             )
 
-  def version: Either[CliError, Version.Info] = call(Api.version)(())
-  def health: Either[CliError, Health] = call(Api.health)(())
-  def about: Either[CliError, About] = call(Api.about)(())
-  def search(q: Option[String], limit: Option[Int]): Either[CliError, List[SearchHit]] =
+  def version: Either[Cli.Error, Version.Info] = call(Api.version)(())
+  def health: Either[Cli.Error, Health] = call(Api.health)(())
+  def about: Either[Cli.Error, About] = call(Api.about)(())
+  def search(q: Option[String], limit: Option[Int]): Either[Cli.Error, List[SearchHit]] =
     call(Api.search)((q, limit))
-  def sources(f: Filter): Either[CliError, SearchResult] = call(Api.sources)(f)
-  def facets(field: String, prefix: Option[String], f: Filter): Either[CliError, List[Facet]] =
+  def sources(f: Filter): Either[Cli.Error, SearchResult] = call(Api.sources)(f)
+  def facets(field: String, prefix: Option[String], f: Filter): Either[Cli.Error, List[Facet]] =
     call(Api.facets)((field, prefix, f))
-  def getSource(ck: String): Either[CliError, Source.WithFindings] = call(Api.getSource)((ck, true))
-  def findings(q: Api.FindingsQuery): Either[CliError, List[GeoHit]] = call(Api.findings)(q)
-  def findingsPage(q: Api.FindingsQuery): Either[CliError, GeoHitPage] = call(Api.findingsPage)(q)
-  def aggregate(q: Api.AggregateQuery): Either[CliError, TimeHistogram] = call(Api.aggregate)(q)
-  def neighbors(ck: String, kinds: List[String] = Nil): Either[CliError, List[NeighborRow]] =
+  def getSource(ck: String): Either[Cli.Error, Source.WithFindings] = call(Api.getSource)((ck, true))
+  def findings(q: Api.FindingsQuery): Either[Cli.Error, List[GeoHit]] = call(Api.findings)(q)
+  def findingsPage(q: Api.FindingsQuery): Either[Cli.Error, GeoHitPage] = call(Api.findingsPage)(q)
+  def aggregate(q: Api.AggregateQuery): Either[Cli.Error, TimeHistogram] = call(Api.aggregate)(q)
+  def neighbors(ck: String, kinds: List[String] = Nil): Either[Cli.Error, List[NeighborRow]] =
     call(Api.neighbors)((ck, kinds))
-  def graph(ck: String, depth: Option[Int]): Either[CliError, Source.Graph] =
+  def graph(ck: String, depth: Option[Int]): Either[Cli.Error, Source.Graph] =
     call(Api.graph)((ck, depth))
-  def contradictions(ck: Option[String], since: Option[Long]): Either[CliError, ContradictionsResult] =
+  def contradictions(ck: Option[String], since: Option[Long]): Either[Cli.Error, ContradictionsResult] =
     call(Api.contradictions)((ck, since))
-  def seed(req: SeedRequest): Either[CliError, SeedResult] = call(Api.seed)(req)
-  def reindex(after: Option[String], limit: Option[Int]): Either[CliError, ReindexResult] =
+  def seed(req: SeedRequest): Either[Cli.Error, SeedResult] = call(Api.seed)(req)
+  def reindex(after: Option[String], limit: Option[Int]): Either[Cli.Error, ReindexResult] =
     call(Api.reindex)((after, limit))
 
   // ── backup / restore (plan §1.10): the DUMP is taken server-side; the host only copies it off ──
-  def configReload: Either[CliError, ReloadReport] = call(Api.configReload)(())
-  def settings(prefix: Option[String]): Either[CliError, ConfigEdit.Page] = call(ConfigEditApi.get)(prefix)
-  def writeSettings(w: ConfigEdit.Write): Either[CliError, ConfigEdit.Written] = call(ConfigEditApi.write)(w)
-  def restartServer: Either[CliError, ConfigEdit.Restart] = call(ConfigEditApi.restart)(())
-  def backup: Either[CliError, Backup.Status] = call(Api.backup)(())
-  def backupStatus: Either[CliError, Backup.Status] = call(Api.backupStatus)(())
-  def vacuum(in: Vacuum.Request): Either[CliError, JobInfo] = call(Api.maintenanceVacuum)(in)
-  def backups: Either[CliError, List[Backup.Info]] = call(Api.backups)(())
-  def restore(req: RestoreRequest): Either[CliError, RestoreResult] = call(Api.restore)(req)
+  def configReload: Either[Cli.Error, ReloadReport] = call(Api.configReload)(())
+  def settings(prefix: Option[String]): Either[Cli.Error, ConfigEdit.Page] = call(ConfigEditApi.get)(prefix)
+  def writeSettings(w: ConfigEdit.Write): Either[Cli.Error, ConfigEdit.Written] = call(ConfigEditApi.write)(w)
+  def restartServer: Either[Cli.Error, ConfigEdit.Restart] = call(ConfigEditApi.restart)(())
+  def backup: Either[Cli.Error, Backup.Status] = call(Api.backup)(())
+  def backupStatus: Either[Cli.Error, Backup.Status] = call(Api.backupStatus)(())
+  def vacuum(in: Vacuum.Request): Either[Cli.Error, JobInfo] = call(Api.maintenanceVacuum)(in)
+  def backups: Either[Cli.Error, List[Backup.Info]] = call(Api.backups)(())
+  def restore(req: RestoreRequest): Either[Cli.Error, RestoreResult] = call(Api.restore)(req)
 
   /** Stream one archive into `dest`. Tapir's `fileBody` is interpreted by sttp as `asFileAlways` against the file
     * `SttpClientOptions.createFile` hands it, so the response is written straight to disk — a multi-GB dump never
     * becomes a byte array.
     */
-  def downloadBackup(file: String, dest: java.io.File): Either[CliError, java.io.File] =
+  def downloadBackup(file: String, dest: java.io.File): Either[Cli.Error, java.io.File] =
     val toFile = SttpClientInterpreter(SttpClientOptions(() => dest))
     send(authed(toFile.toRequest(Api.downloadBackup, Some(base)).apply(file)))
 
   /** Stream a source's stored original into `dest`; returns it with its `Content-Disposition`, which names the format
     * ([[Ingest.dispositionExtension]]).
     */
-  def original(ck: String, dest: java.io.File): Either[CliError, (java.io.File, String)] =
+  def original(ck: String, dest: java.io.File): Either[Cli.Error, (java.io.File, String)] =
     val toFile = SttpClientInterpreter(SttpClientOptions(() => dest))
     send(authed(toFile.toRequest(Api.original, Some(base)).apply(ck)))
 
-  def sourceView(q: Api.SourceViewQuery): Either[CliError, String] = call(Api.sourceView)(q)
-  def passages(q: Api.PassagesQuery): Either[CliError, PassageResult] = call(Api.passages)(q)
+  def sourceView(q: Api.SourceViewQuery): Either[Cli.Error, String] = call(Api.sourceView)(q)
+  def passages(q: Api.PassagesQuery): Either[Cli.Error, PassageResult] = call(Api.passages)(q)
 
   // ── portable bundles (docs/research-merge-import.md) ────────────────────────────────────────
-  def instance: Either[CliError, InstanceInfo] = call(Api.instance)(())
-  def setInstance(label: Option[String]): Either[CliError, InstanceInfo] = call(Api.setInstance)(InstanceLabel(label))
+  def instance: Either[Cli.Error, InstanceInfo] = call(Api.instance)(())
+  def setInstance(label: Option[String]): Either[Cli.Error, InstanceInfo] = call(Api.setInstance)(InstanceLabel(label))
 
   /** Stream a bundle into `dest` (as [[downloadBackup]]: written to disk, never a byte array). */
-  def exportBundle(since: Option[String], dest: java.io.File): Either[CliError, (java.io.File, String)] =
+  def exportBundle(since: Option[String], dest: java.io.File): Either[Cli.Error, (java.io.File, String)] =
     val toFile = SttpClientInterpreter(SttpClientOptions(() => dest))
     send(authed(toFile.toRequest(Api.exportBundle, Some(base)).apply(since)))
 
   /** The bundle file is the request body, streamed from disk. */
-  def verifyBundle(file: java.io.File): Either[CliError, Bundle.VerifyResult] = call(Api.verifyBundle)(file)
-  def importBundle(dryRun: Boolean, file: java.io.File): Either[CliError, Bundle.ImportResult] =
+  def verifyBundle(file: java.io.File): Either[Cli.Error, Bundle.VerifyResult] = call(Api.verifyBundle)(file)
+  def importBundle(dryRun: Boolean, file: java.io.File): Either[Cli.Error, Bundle.ImportResult] =
     call(Api.importBundle)((dryRun, file))
   // the merge plan (M3): the bundle is uploaded once, then planned and imported by its sha256
-  def uploadBundle(file: java.io.File): Either[CliError, Bundle.Upload] = call(Api.uploadBundle)(file)
-  def mergePlan(req: MergePlan.Request): Either[CliError, MergePlan] = call(Api.mergePlan)(req)
-  def mergeImport(req: MergeImportRequest): Either[CliError, Bundle.ImportResult] = call(Api.mergeImport)(req)
-  def mergeApply(req: MergeApplyRequest): Either[CliError, MergeApplyJob] = call(Api.mergeApply)(req)
-  def mergeApplyStatus(job: String): Either[CliError, MergeApplyJob] = call(Api.mergeApplyStatus)(job)
-  def merges(limit: Option[Int]): Either[CliError, List[MergeInfo]] = call(Api.merges)(limit)
-  def mergeDetail(id: String): Either[CliError, MergeDetail] = call(Api.mergeDetail)(id)
-  def mergeLedger(uid: Option[String], merge: Option[String], limit: Option[Int]): Either[CliError, MergeLedger] =
+  def uploadBundle(file: java.io.File): Either[Cli.Error, Bundle.Upload] = call(Api.uploadBundle)(file)
+  def mergePlan(req: MergePlan.Request): Either[Cli.Error, MergePlan] = call(Api.mergePlan)(req)
+  def mergeImport(req: MergeImportRequest): Either[Cli.Error, Bundle.ImportResult] = call(Api.mergeImport)(req)
+  def mergeApply(req: MergeApplyRequest): Either[Cli.Error, MergeApplyJob] = call(Api.mergeApply)(req)
+  def mergeApplyStatus(job: String): Either[Cli.Error, MergeApplyJob] = call(Api.mergeApplyStatus)(job)
+  def merges(limit: Option[Int]): Either[Cli.Error, List[MergeInfo]] = call(Api.merges)(limit)
+  def mergeDetail(id: String): Either[Cli.Error, MergeDetail] = call(Api.mergeDetail)(id)
+  def mergeLedger(uid: Option[String], merge: Option[String], limit: Option[Int]): Either[Cli.Error, MergeLedger] =
     call(Api.mergeLedger)((uid, merge, limit))
   // label renames (V042, V053)
-  def renameArticle(slug: String, to: String): Either[CliError, LabelRenamed] =
+  def renameArticle(slug: String, to: String): Either[Cli.Error, LabelRenamed] =
     call(Api.renameArticle)((slug, LabelRename(to)))
-  def renameEvent(id: String, to: String): Either[CliError, LabelRenamed] = call(Api.renameEvent)((id, LabelRename(to)))
-  def renameGoal(slug: String, to: String): Either[CliError, LabelRenamed] =
+  def renameEvent(id: String, to: String): Either[Cli.Error, LabelRenamed] =
+    call(Api.renameEvent)((id, LabelRename(to)))
+  def renameGoal(slug: String, to: String): Either[Cli.Error, LabelRenamed] =
     call(Api.renameGoal)((slug, LabelRename(to)))
-  def renamePlace(id: String, to: String): Either[CliError, LabelRenamed] = call(Api.renamePlace)((id, LabelRename(to)))
+  def renamePlace(id: String, to: String): Either[Cli.Error, LabelRenamed] =
+    call(Api.renamePlace)((id, LabelRename(to)))
 
   // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
-  def putSource(ck: String, in: Source.Put, strict: Boolean = false): Either[CliError, Source.WithFindings] =
+  def putSource(ck: String, in: Source.Put, strict: Boolean = false): Either[Cli.Error, Source.WithFindings] =
     call(Api.putSource)((ck, in, strict))
-  def patchSource(ck: String, p: Source.Patch, strict: Boolean = false): Either[CliError, Source.WithFindings] =
+  def patchSource(ck: String, p: Source.Patch, strict: Boolean = false): Either[Cli.Error, Source.WithFindings] =
     call(Api.patchSource)((ck, p, strict))
   // the formatting lint of agent-written Markdown
-  def lintSource(ck: String): Either[CliError, FormatReport] = call(Api.lintSource)(ck)
-  def fixSourceFormat(ck: String): Either[CliError, FormatReport] = call(Api.fixSourceFormat)(ck)
-  def lintArticle(slug: String): Either[CliError, FormatReport] = call(Api.lintArticle)(slug)
-  def fixArticleFormat(slug: String): Either[CliError, FormatReport] = call(Api.fixArticleFormat)(slug)
-  def checkArticle(slug: String, in: Article.Edits.ArticleCheckRequest): Either[CliError, Article.Edits.ArticleCheck] =
+  def lintSource(ck: String): Either[Cli.Error, FormatReport] = call(Api.lintSource)(ck)
+  def fixSourceFormat(ck: String): Either[Cli.Error, FormatReport] = call(Api.fixSourceFormat)(ck)
+  def lintArticle(slug: String): Either[Cli.Error, FormatReport] = call(Api.lintArticle)(slug)
+  def fixArticleFormat(slug: String): Either[Cli.Error, FormatReport] = call(Api.fixArticleFormat)(slug)
+  def checkArticle(slug: String, in: Article.Edits.ArticleCheckRequest): Either[Cli.Error, Article.Edits.ArticleCheck] =
     call(Api.checkArticle)((slug, in))
-  def lintMarkdown(in: FormatCheck): Either[CliError, FormatReport] = call(OpsApi.lintMarkdown)(in)
-  def importNote(req: NoteImport): Either[CliError, SeedResult] = call(Api.importNote)(req)
-  def renameSource(ck: String, newCk: String): Either[CliError, Source.Renamed] =
+  def lintMarkdown(in: FormatCheck): Either[Cli.Error, FormatReport] = call(OpsApi.lintMarkdown)(in)
+  def importNote(req: NoteImport): Either[Cli.Error, SeedResult] = call(Api.importNote)(req)
+  def renameSource(ck: String, newCk: String): Either[Cli.Error, Source.Renamed] =
     call(Api.renameSource)((ck, Rename.Request(newCk)))
-  def sourceAliases: Either[CliError, List[Source.Alias]] = call(Api.sourceAliases)(())
-  def deleteSource(ck: String, apply: Boolean): Either[CliError, Source.Deletion] =
+  def sourceAliases: Either[Cli.Error, List[Source.Alias]] = call(Api.sourceAliases)(())
+  def deleteSource(ck: String, apply: Boolean): Either[Cli.Error, Source.Deletion] =
     call(Api.deleteSource)((ck, Source.DeleteRequest(apply)))
 
   // ── the gazetteer (plan §1.6a) ──────────────────────────────────────────────────────────────
-  def places(q: Option[String], asOf: Option[Long], limit: Option[Int]): Either[CliError, List[Place.Hit]] =
+  def places(q: Option[String], asOf: Option[Long], limit: Option[Int]): Either[Cli.Error, List[Place.Hit]] =
     call(Api.places)((q, asOf, limit))
-  def place(id: String, asOf: Option[Long]): Either[CliError, PlaceDetail] = call(Api.place)((id, asOf, None))
-  def placeChildren(id: String, asOf: Option[Long]): Either[CliError, List[Place.Summary]] =
+  def place(id: String, asOf: Option[Long]): Either[Cli.Error, PlaceDetail] = call(Api.place)((id, asOf, None))
+  def placeChildren(id: String, asOf: Option[Long]): Either[Cli.Error, List[Place.Summary]] =
     call(Api.placeChildren)((id, asOf))
-  def placeTree(id: String, asOf: Option[Long], depth: Option[Int]): Either[CliError, List[Place.TreeRow]] =
+  def placeTree(id: String, asOf: Option[Long], depth: Option[Int]): Either[Cli.Error, List[Place.TreeRow]] =
     call(Api.placeTree)((id, asOf, depth))
   def importPlaces(
       kind: Option[String],
       body: String,
       dataset: Dataset = Dataset.Local
-  ): Either[CliError, Place.ImportResult] =
+  ): Either[Cli.Error, Place.ImportResult] =
     call(Api.importPlaces)((kind, Some(dataset.wire), body))
-  def placeNames(place: Option[String]): Either[CliError, List[ManualPlaceName]] = call(Api.placeNames)(place)
-  def addPlaceName(id: String, in: Place.NameAdd): Either[CliError, Place.NameChanged] =
+  def placeNames(place: Option[String]): Either[Cli.Error, List[ManualPlaceName]] = call(Api.placeNames)(place)
+  def addPlaceName(id: String, in: Place.NameAdd): Either[Cli.Error, Place.NameChanged] =
     call(Api.addPlaceName)((id, in))
-  def removePlaceName(id: String, in: Place.NameRemove): Either[CliError, Place.NameChanged] =
+  def removePlaceName(id: String, in: Place.NameRemove): Either[Cli.Error, Place.NameChanged] =
     call(Api.removePlaceName)((id, in))
-  def addPlace(in: Place.Add): Either[CliError, Place.Summary] = call(Api.addPlace)(in)
-  def placeOverrides(place: Option[String]): Either[CliError, List[Place.Override]] = call(Api.placeOverrides)(place)
-  def setPlaceOverride(id: String, in: Place.OverrideSet): Either[CliError, Place.OverrideChanged] =
+  def addPlace(in: Place.Add): Either[Cli.Error, Place.Summary] = call(Api.addPlace)(in)
+  def placeOverrides(place: Option[String]): Either[Cli.Error, List[Place.Override]] = call(Api.placeOverrides)(place)
+  def setPlaceOverride(id: String, in: Place.OverrideSet): Either[Cli.Error, Place.OverrideChanged] =
     call(Api.setPlaceOverride)((id, in))
-  def mergePlace(id: String, in: Place.MergeIn): Either[CliError, Place.Gone] = call(Api.mergePlace)((id, in))
-  def removePlace(id: String, in: Place.RemoveIn): Either[CliError, Place.Gone] = call(Api.removePlace)((id, in))
-  def rebuildPlaces: Either[CliError, Place.RebuildResult] = call(Api.rebuildPlaces)(())
-  def fetchExternalPlaces(source: String, dryRun: Boolean): Either[CliError, Place.ImportResult] =
+  def mergePlace(id: String, in: Place.MergeIn): Either[Cli.Error, Place.Gone] = call(Api.mergePlace)((id, in))
+  def removePlace(id: String, in: Place.RemoveIn): Either[Cli.Error, Place.Gone] = call(Api.removePlace)((id, in))
+  def rebuildPlaces: Either[Cli.Error, Place.RebuildResult] = call(Api.rebuildPlaces)(())
+  def fetchExternalPlaces(source: String, dryRun: Boolean): Either[Cli.Error, Place.ImportResult] =
     call(Api.fetchExternalPlaces)((source, dryRun))
-  def placeSources: Either[CliError, List[Gazetteer.SourceInfo]] = call(Api.placeSources)(())
-  def loadPlaces(source: String, apply: Boolean): Either[CliError, JobInfo] = call(Api.loadPlaces)((source, apply))
-  def buildHierarchy: Either[CliError, SpatialHierarchyResult] = call(Api.buildHierarchy)(())
+  def placeSources: Either[Cli.Error, List[Gazetteer.SourceInfo]] = call(Api.placeSources)(())
+  def loadPlaces(source: String, apply: Boolean): Either[Cli.Error, JobInfo] = call(Api.loadPlaces)((source, apply))
+  def buildHierarchy: Either[Cli.Error, SpatialHierarchyResult] = call(Api.buildHierarchy)(())
   // ── named periods (#719) and first-run data (#720) ──────────────────────────────────────────
   def periods(
       q: Option[String],
       region: Option[String],
       from: Option[Long],
       to: Option[Long]
-  ): Either[CliError, List[HistoricalPeriod]] = call(Api.periods)((q, region, from, to))
-  def period(id: String): Either[CliError, Period.Detail] = call(Api.period)(id)
-  def seedPeriods(replace: Boolean = false): Either[CliError, Period.ImportResult] = call(Api.seedPeriods)(replace)
+  ): Either[Cli.Error, List[HistoricalPeriod]] = call(Api.periods)((q, region, from, to))
+  def period(id: String): Either[Cli.Error, Period.Detail] = call(Api.period)(id)
+  def seedPeriods(replace: Boolean = false): Either[Cli.Error, Period.ImportResult] = call(Api.seedPeriods)(replace)
   def importPeriods(
       collections: List[String],
       body: String,
       dataset: Dataset = Dataset.Local
-  ): Either[CliError, Period.ImportResult] =
+  ): Either[Cli.Error, Period.ImportResult] =
     call(Api.importPeriods)((collections, Some(dataset.wire), body))
-  def fetchPeriods(source: String, collections: List[String]): Either[CliError, Period.ImportResult] =
+  def fetchPeriods(source: String, collections: List[String]): Either[Cli.Error, Period.ImportResult] =
     call(Api.fetchPeriods)((source, collections))
-  def init(fetch: Boolean): Either[CliError, JobInfo] = call(Api.init)(fetch)
+  def init(fetch: Boolean): Either[Cli.Error, JobInfo] = call(Api.init)(fetch)
   // ── events (plan §1.2) ──────────────────────────────────────────────────────────────────────
-  def listEvents(q: Api.EventQuery): Either[CliError, EventList] = call(Api.events)(q)
-  def getEvent(id: String): Either[CliError, EventDetail] = call(Api.getEvent)(id)
-  def putEvent(id: String, in: EventPut): Either[CliError, EventDetail] = call(Api.putEvent)((id, in))
-  def patchEvent(id: String, p: EventPatch): Either[CliError, EventDetail] = call(Api.patchEvent)((id, p))
-  def deleteEvent(id: String): Either[CliError, EventDeleted] = call(Api.deleteEvent)(id)
+  def listEvents(q: Api.EventQuery): Either[Cli.Error, EventList] = call(Api.events)(q)
+  def getEvent(id: String): Either[Cli.Error, EventDetail] = call(Api.getEvent)(id)
+  def putEvent(id: String, in: EventPut): Either[Cli.Error, EventDetail] = call(Api.putEvent)((id, in))
+  def patchEvent(id: String, p: EventPatch): Either[Cli.Error, EventDetail] = call(Api.patchEvent)((id, p))
+  def deleteEvent(id: String): Either[Cli.Error, EventDeleted] = call(Api.deleteEvent)(id)
   // ── goals (plan §1.5) ──────────────────────────────────────────────────────────────────────
-  def listGoals(q: Api.GoalQuery): Either[CliError, Goal.List] = call(Api.goals)(q)
-  def getGoal(slug: String): Either[CliError, Goal] = call(Api.getGoal)(slug)
-  def putGoal(slug: String, in: Goal.Put): Either[CliError, Goal] = call(Api.putGoal)((slug, in))
-  def patchGoal(slug: String, p: Goal.Patch): Either[CliError, Goal] = call(Api.patchGoal)((slug, p))
-  def deleteGoal(slug: String): Either[CliError, Goal.Deleted] = call(Api.deleteGoal)(slug)
+  def listGoals(q: Api.GoalQuery): Either[Cli.Error, Goal.List] = call(Api.goals)(q)
+  def getGoal(slug: String): Either[Cli.Error, Goal] = call(Api.getGoal)(slug)
+  def putGoal(slug: String, in: Goal.Put): Either[Cli.Error, Goal] = call(Api.putGoal)((slug, in))
+  def patchGoal(slug: String, p: Goal.Patch): Either[Cli.Error, Goal] = call(Api.patchGoal)((slug, p))
+  def deleteGoal(slug: String): Either[Cli.Error, Goal.Deleted] = call(Api.deleteGoal)(slug)
   // ── agent state (plan §1.5) ───────────────────────────────────────────────────────────────
-  def agentStateList(): Either[CliError, List[AgentStateEntry]] = call(Api.agentStateList)(())
-  def agentStateGet(key: String): Either[CliError, AgentStateEntry] = call(Api.agentStateGet)(key)
-  def agentStateSet(key: String, in: AgentStatePut): Either[CliError, AgentStateEntry] =
+  def agentStateList(): Either[Cli.Error, List[AgentStateEntry]] = call(Api.agentStateList)(())
+  def agentStateGet(key: String): Either[Cli.Error, AgentStateEntry] = call(Api.agentStateGet)(key)
+  def agentStateSet(key: String, in: AgentStatePut): Either[Cli.Error, AgentStateEntry] =
     call(Api.agentStateSet)((key, in))
-  def agentStateDelete(key: String): Either[CliError, AgentStateDeleted] = call(Api.agentStateDelete)(key)
+  def agentStateDelete(key: String): Either[Cli.Error, AgentStateDeleted] = call(Api.agentStateDelete)(key)
   // ── attestations (plan §1.3) ───────────────────────────────────────────────────────────────
-  def listAttestations(q: Api.AttestationQuery): Either[CliError, Attestation.List] = call(Api.attestations)(q)
-  def getAttestation(id: Long): Either[CliError, Attestation] = call(Api.getAttestation)(id)
-  def createAttestation(in: Attestation.Put): Either[CliError, Attestation] = call(Api.createAttestation)(in)
-  def patchAttestation(id: Long, p: Attestation.Patch): Either[CliError, Attestation] =
+  def listAttestations(q: Api.AttestationQuery): Either[Cli.Error, Attestation.List] = call(Api.attestations)(q)
+  def getAttestation(id: Long): Either[Cli.Error, Attestation] = call(Api.getAttestation)(id)
+  def createAttestation(in: Attestation.Put): Either[Cli.Error, Attestation] = call(Api.createAttestation)(in)
+  def patchAttestation(id: Long, p: Attestation.Patch): Either[Cli.Error, Attestation] =
     call(Api.patchAttestation)((id, p))
-  def deleteAttestation(id: Long): Either[CliError, Attestation.Deleted] = call(Api.deleteAttestation)(id)
+  def deleteAttestation(id: Long): Either[Cli.Error, Attestation.Deleted] = call(Api.deleteAttestation)(id)
 
-  def exportSource(ck: String): Either[CliError, String] = call(Api.exportSource)(ck)
-  def citekeys: Either[CliError, List[String]] = call(Api.citekeys)(())
-  def resolveEdges: Either[CliError, EdgesResolved] = call(Api.resolveEdges)(())
+  def exportSource(ck: String): Either[Cli.Error, String] = call(Api.exportSource)(ck)
+  def citekeys: Either[Cli.Error, List[String]] = call(Api.citekeys)(())
+  def resolveEdges: Either[Cli.Error, EdgesResolved] = call(Api.resolveEdges)(())
 
   // ── articles: the compiled wiki (plan §5.2 stream 2.7) ──────────────────────────────────────
-  def listArticles(q: Api.ArticleQuery): Either[CliError, Article.List] = call(Api.articles)(q)
-  def getArticle(slug: String): Either[CliError, Article.View] = call(Api.getArticle)((slug, false))
-  def putArticle(slug: String, in: Article.Put, strict: Boolean = false): Either[CliError, Article.View] =
+  def listArticles(q: Api.ArticleQuery): Either[Cli.Error, Article.List] = call(Api.articles)(q)
+  def getArticle(slug: String): Either[Cli.Error, Article.View] = call(Api.getArticle)((slug, false))
+  def putArticle(slug: String, in: Article.Put, strict: Boolean = false): Either[Cli.Error, Article.View] =
     call(Api.putArticle)((slug, in, strict))
-  def patchArticle(slug: String, p: Article.Patch, strict: Boolean = false): Either[CliError, Article.View] =
+  def patchArticle(slug: String, p: Article.Patch, strict: Boolean = false): Either[Cli.Error, Article.View] =
     call(Api.patchArticle)((slug, p, strict))
-  def deleteArticle(slug: String): Either[CliError, Article.Deleted] = call(Api.deleteArticle)(slug)
-  def articleCoverage(slug: String): Either[CliError, Coverage] = call(Api.articleCoverage)(slug)
-  def articleReview(slug: String): Either[CliError, Article.ReviewView] = call(Api.articleReview)(slug)
-  def exportArticle(slug: String): Either[CliError, String] = call(Api.exportArticle)(slug)
-  def importArticle(req: Article.Import): Either[CliError, SeedResult] = call(Api.importArticle)(req)
-  def articleSlugs: Either[CliError, List[String]] = call(Api.articleSlugs)(())
-  def articleVersions(slug: String): Either[CliError, List[Article.Version]] =
+  def deleteArticle(slug: String): Either[Cli.Error, Article.Deleted] = call(Api.deleteArticle)(slug)
+  def articleCoverage(slug: String): Either[Cli.Error, Coverage] = call(Api.articleCoverage)(slug)
+  def articleReview(slug: String): Either[Cli.Error, Article.ReviewView] = call(Api.articleReview)(slug)
+  def exportArticle(slug: String): Either[Cli.Error, String] = call(Api.exportArticle)(slug)
+  def importArticle(req: Article.Import): Either[Cli.Error, SeedResult] = call(Api.importArticle)(req)
+  def articleSlugs: Either[Cli.Error, List[String]] = call(Api.articleSlugs)(())
+  def articleVersions(slug: String): Either[Cli.Error, List[Article.Version]] =
     call(Api.articleVersions)(slug)
-  def articleVersion(slug: String, versionId: Long): Either[CliError, Article.VersionFull] =
+  def articleVersion(slug: String, versionId: Long): Either[Cli.Error, Article.VersionFull] =
     call(Api.articleVersion)((slug, versionId))
   // ── lint · queue · read-only query (plan §5.2 stream 2.8) ───────────────────────────────────
-  def lint(rules: List[String]): Either[CliError, Lint.LintReport] = call(OpsApi.lint)(rules)
-  def lintFix(rules: List[String]): Either[CliError, Lint.LintFixResult] = call(OpsApi.lintFix)(rules)
-  def queueList(list: String, all: Boolean): Either[CliError, QueueListing] =
+  def lint(rules: List[String]): Either[Cli.Error, Lint.LintReport] = call(OpsApi.lint)(rules)
+  def lintFix(rules: List[String]): Either[Cli.Error, Lint.LintFixResult] = call(OpsApi.lintFix)(rules)
+  def queueList(list: String, all: Boolean): Either[Cli.Error, QueueListing] =
     call(OpsApi.queueList)((list, all, None, None))
-  def queueAdd(list: String, in: Queue.QueueAdd): Either[CliError, Queue.QueueItem] =
+  def queueAdd(list: String, in: Queue.QueueAdd): Either[Cli.Error, Queue.QueueItem] =
     call(OpsApi.queueAdd)((list, in))
-  def queuePatch(id: Int, p: Queue.QueuePatch): Either[CliError, Queue.QueueItem] =
+  def queuePatch(id: Int, p: Queue.QueuePatch): Either[Cli.Error, Queue.QueueItem] =
     call(OpsApi.queuePatch)((id, p))
-  def queueDelete(id: Int): Either[CliError, Queue.QueueItem] = call(OpsApi.queueDelete)(id)
-  def queueExport(list: String): Either[CliError, String] = call(OpsApi.queueExport)(list)
-  def goalsExport: Either[CliError, String] = call(OpsApi.goalsExport)(())
-  def queueImport(list: String, req: Queue.QueueImport): Either[CliError, Queue.QueueImported] =
+  def queueDelete(id: Int): Either[Cli.Error, Queue.QueueItem] = call(OpsApi.queueDelete)(id)
+  def queueExport(list: String): Either[Cli.Error, String] = call(OpsApi.queueExport)(list)
+  def goalsExport: Either[Cli.Error, String] = call(OpsApi.goalsExport)(())
+  def queueImport(list: String, req: Queue.QueueImport): Either[Cli.Error, Queue.QueueImported] =
     call(OpsApi.queueImport)((list, req))
-  def query(sql: String): Either[CliError, Query.QueryResult] = call(OpsApi.query)(Query.QueryRequest(sql))
-  def schemaTables: Either[CliError, Query.SchemaTables] = call(OpsApi.schemaTables)(())
+  def query(sql: String): Either[Cli.Error, Query.QueryResult] = call(OpsApi.query)(Query.QueryRequest(sql))
+  def schemaTables: Either[Cli.Error, Query.SchemaTables] = call(OpsApi.schemaTables)(())
   // ── ingest, jobs and assets (plan §1.8) ─────────────────────────────────────────────────────
   /** Upload one document. The body is the FILE itself (tapir `fileBody`), so a 200 MB scan is streamed rather than held
     * in memory, and every other parameter travels as a query parameter.
     */
-  def ingest(p: Ingest.Params, file: java.io.File): Either[CliError, Ingest.Accepted] =
+  def ingest(p: Ingest.Params, file: java.io.File): Either[Cli.Error, Ingest.Accepted] =
     call(Api.ingest)((p, file))
-  def reocr(ck: String, quality: Boolean): Either[CliError, Ingest.Accepted] = call(Api.reocr)((ck, quality))
-  def job(id: String): Either[CliError, JobInfo] = call(Api.job)(id)
-  def basemapStatus(): Either[CliError, Basemap.Status] = call(BasemapApi.status)(())
-  def basemapFetch(q: Basemap.FetchQuery): Either[CliError, JobInfo] = call(BasemapApi.fetch)(q)
-  def basemapRemove(q: Basemap.RemoveQuery): Either[CliError, Basemap.Removed] = call(BasemapApi.remove)(q)
+  def reocr(ck: String, quality: Boolean): Either[Cli.Error, Ingest.Accepted] = call(Api.reocr)((ck, quality))
+  def job(id: String): Either[Cli.Error, JobInfo] = call(Api.job)(id)
+  def basemapStatus(): Either[Cli.Error, Basemap.Status] = call(BasemapApi.status)(())
+  def basemapFetch(q: Basemap.FetchQuery): Either[Cli.Error, JobInfo] = call(BasemapApi.fetch)(q)
+  def basemapRemove(q: Basemap.RemoveQuery): Either[Cli.Error, Basemap.Removed] = call(BasemapApi.remove)(q)
   def jobs(
       f: ListFilters.JobFilter,
       limit: Option[Int],
       before: Option[String] = None
-  ): Either[CliError, (List[JobInfo], Paging.Page)] =
+  ): Either[Cli.Error, (List[JobInfo], Paging.Page)] =
     call(Api.jobs)((f, limit, before, None))
-  def assets(ck: String): Either[CliError, List[AssetInfo]] = call(Api.assets)(ck)
-  def putAssets(ck: String, in: List[AssetInput]): Either[CliError, AssetsStored] =
+  def assets(ck: String): Either[Cli.Error, List[AssetInfo]] = call(Api.assets)(ck)
+  def putAssets(ck: String, in: List[AssetInput]): Either[Cli.Error, AssetsStored] =
     call(Api.putAssets)((ck, in))
-  def assetDetail(ck: String, name: String): Either[CliError, AssetDetail] = call(Api.assetDetail)((ck, name))
-  def patchAsset(ck: String, name: String, p: AssetPatch): Either[CliError, AssetDetail] =
+  def assetDetail(ck: String, name: String): Either[Cli.Error, AssetDetail] = call(Api.assetDetail)((ck, name))
+  def patchAsset(ck: String, name: String, p: AssetPatch): Either[Cli.Error, AssetDetail] =
     call(Api.patchAsset)((ck, name, p))
   def assetLinks(
       ck: Option[String],
       asset: Option[String],
       tt: Option[String],
       ti: Option[String]
-  ): Either[CliError, AssetLink.List] =
+  ): Either[Cli.Error, AssetLink.List] =
     call(Api.assetLinks)((ck, asset, tt, ti))
-  def createAssetLink(in: AssetLink.Put): Either[CliError, AssetLink] = call(Api.createAssetLink)(in)
-  def deleteAssetLink(id: Long): Either[CliError, AssetLink.Deleted] = call(Api.deleteAssetLink)(id)
+  def createAssetLink(in: AssetLink.Put): Either[Cli.Error, AssetLink] = call(Api.createAssetLink)(in)
+  def deleteAssetLink(id: Long): Either[Cli.Error, AssetLink.Deleted] = call(Api.deleteAssetLink)(id)
   // ── media from outside providers (#1446) ──
-  def mediaImport(req: MediaImportRequest): Either[CliError, MediaImportReport] = call(Api.mediaImport)(req)
-  def mediaImportJob(req: MediaImportRequest): Either[CliError, JobInfo] = call(Api.mediaImportJob)(req)
-  def mediaCovers(req: MediaCoversRequest): Either[CliError, MediaCoversReport] = call(Api.mediaCovers)(req)
-  def mediaCoversJob(req: MediaCoversRequest): Either[CliError, JobInfo] = call(Api.mediaCoversJob)(req)
-  def putSourceCover(p: SourceCoverParams, bytes: Array[Byte]): Either[CliError, MediaItem] =
+  def mediaImport(req: MediaImportRequest): Either[Cli.Error, MediaImportReport] = call(Api.mediaImport)(req)
+  def mediaImportJob(req: MediaImportRequest): Either[Cli.Error, JobInfo] = call(Api.mediaImportJob)(req)
+  def mediaCovers(req: MediaCoversRequest): Either[Cli.Error, MediaCoversReport] = call(Api.mediaCovers)(req)
+  def mediaCoversJob(req: MediaCoversRequest): Either[Cli.Error, JobInfo] = call(Api.mediaCoversJob)(req)
+  def putSourceCover(p: SourceCoverParams, bytes: Array[Byte]): Either[Cli.Error, MediaItem] =
     call(Api.putSourceCover)((p, bytes))
-  def mediaList(q: Api.MediaQuery): Either[CliError, MediaList] = call(Api.mediaList)(q)
-  def mediaShow(uid: String): Either[CliError, MediaItem] = call(Api.mediaShow)(uid)
-  def mediaFacets: Either[CliError, MediaFacets] = call(Api.mediaFacets)(())
-  def mediaProviders: Either[CliError, List[MediaProvider.Info]] = call(Api.mediaProviders)(())
-  def fillFigureLicences(apply: Boolean): Either[CliError, FigureLicenceFill] = call(Api.fillFigureLicences)(apply)
+  def mediaList(q: Api.MediaQuery): Either[Cli.Error, MediaList] = call(Api.mediaList)(q)
+  def mediaShow(uid: String): Either[Cli.Error, MediaItem] = call(Api.mediaShow)(uid)
+  def mediaFacets: Either[Cli.Error, MediaFacets] = call(Api.mediaFacets)(())
+  def mediaProviders: Either[Cli.Error, List[MediaProvider.Info]] = call(Api.mediaProviders)(())
+  def fillFigureLicences(apply: Boolean): Either[Cli.Error, FigureLicenceFill] = call(Api.fillFigureLicences)(apply)
 
 object Client:
   /** POST/PUT/PATCH/DELETE change the corpus; anything else (a GET download) only reads it. */

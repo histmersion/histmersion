@@ -31,7 +31,7 @@ class DeleteCmdSuite extends munit.FunSuite:
     assert(top.parse(List("delete", "--help"), Map.empty).left.exists(_.toString.contains("dry run")))
 
   test("the linked Calibre entry is looked up in the library before the answer says it is there (#1776)"):
-    val book = CalibreBook(1885, "T", List("A"), None, None, Nil, None, Map.empty, Nil)
+    val book = Calibre.Book(1885, "T", List("A"), None, None, Nil, None, Map.empty, Nil)
     assertEquals(DeleteCmd.calibreCheck("1885", true, "/lib", _ => Right(Some(book))), CalibreEntryCheck.Present)
     assertEquals(DeleteCmd.calibreCheck("1885", true, "/lib", _ => Right(None)), CalibreEntryCheck.Missing)
     assertEquals(

@@ -28,49 +28,49 @@ import scala.util.Using
 /** A store over a directory on disk: a key is a path below `root`. */
 final private[storage] class DiskStore(val location: Location, root: Path) extends Store:
 
-  private def path(key: StoreKey): Path = if key.isRoot then root else root.resolve(key.value)
+  private def path(key: Store.Key): Path = if key.isRoot then root else root.resolve(key.value)
 
-  private def keyOf(p: Path): StoreKey = StoreKey.applyUnsafe(root.relativize(p).toString.replace('\\', '/'))
+  private def keyOf(p: Path): Store.Key = Store.Key.applyUnsafe(root.relativize(p).toString.replace('\\', '/'))
 
   private def stored(p: Path): Stored =
     val dir = Files.isDirectory(p)
     Stored(
       keyOf(p),
-      if dir then StoredKind.Directory else StoredKind.File,
+      if dir then Stored.Kind.Directory else Stored.Kind.File,
       ByteCount.applyUnsafe(if dir then 0L else Files.size(p)),
       Files.getLastModifiedTime(p).toInstant
     )
 
-  private def io[A](body: => A): Either[StoreError, A] =
+  private def io[A](body: => A): Either[Store.Error, A] =
     try Right(body)
     catch
-      case e: NoSuchFileException => Left(StoreError.NotFound(e.getMessage))
-      case e: IOException         => Left(StoreError.Failed(e.getMessage))
+      case e: NoSuchFileException => Left(Store.Error.NotFound(e.getMessage))
+      case e: IOException         => Left(Store.Error.Failed(e.getMessage))
 
-  def where(key: StoreKey): String = path(key).toString
+  def where(key: Store.Key): String = path(key).toString
 
-  def sub(prefix: StoreKey): Store = DiskStore(location, path(prefix))
+  def sub(prefix: Store.Key): Store = DiskStore(location, path(prefix))
 
-  def exists(key: StoreKey): Boolean = Files.exists(path(key))
-  def isFile(key: StoreKey): Boolean = Files.isRegularFile(path(key))
-  def isDirectory(key: StoreKey): Boolean = Files.isDirectory(path(key))
-  def isLink(key: StoreKey): Boolean = Files.isSymbolicLink(path(key))
-  def isExecutable(key: StoreKey): Boolean = Files.isRegularFile(path(key)) && Files.isExecutable(path(key))
+  def exists(key: Store.Key): Boolean = Files.exists(path(key))
+  def isFile(key: Store.Key): Boolean = Files.isRegularFile(path(key))
+  def isDirectory(key: Store.Key): Boolean = Files.isDirectory(path(key))
+  def isLink(key: Store.Key): Boolean = Files.isSymbolicLink(path(key))
+  def isExecutable(key: Store.Key): Boolean = Files.isRegularFile(path(key)) && Files.isExecutable(path(key))
 
-  def stat(key: StoreKey): Option[Stored] =
+  def stat(key: Store.Key): Option[Stored] =
     val p = path(key)
     Option.when(Files.exists(p))(stored(p))
 
-  def get(key: StoreKey): Option[Blob] =
+  def get(key: Store.Key): Option[Blob] =
     val p = path(key)
     Option.when(Files.isRegularFile(p))(DiskStore.FileBlob(key, p))
 
-  def list(prefix: StoreKey): List[Stored] =
+  def list(prefix: Store.Key): List[Stored] =
     val dir = path(prefix)
     if !Files.isDirectory(dir) then Nil
     else Using.resource(Files.list(dir))(_.iterator.asScala.toList).map(stored).sortBy(_.key.value)
 
-  def walk(prefix: StoreKey): List[Stored] =
+  def walk(prefix: Store.Key): List[Stored] =
     val dir = path(prefix)
     if !Files.isDirectory(dir) then Nil
     else
@@ -79,7 +79,7 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
         .map(stored)
         .sortBy(_.key.value)
 
-  def put(key: StoreKey, bytes: Array[Byte]): Either[StoreError, Stored] =
+  def put(key: Store.Key, bytes: Array[Byte]): Either[Store.Error, Stored] =
     reserve(key).flatMap { r =>
       try
         Using.resource(r.output())(_.write(bytes))
@@ -87,14 +87,14 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
       finally r.close()
     }
 
-  def write(key: StoreKey, bytes: Array[Byte]): Either[StoreError, Stored] = io {
+  def write(key: Store.Key, bytes: Array[Byte]): Either[Store.Error, Stored] = io {
     val p = path(key)
     Option(p.getParent).foreach(Files.createDirectories(_))
     Files.write(p, bytes, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)
     stored(p)
   }
 
-  def reserve(key: StoreKey, temp: TempName, throughLink: Boolean): Either[StoreError, Reservation] = io {
+  def reserve(key: Store.Key, temp: TempName, throughLink: Boolean): Either[Store.Error, Reservation] = io {
     val asked = path(key)
     val target = if throughLink && Files.isSymbolicLink(asked) then asked.toRealPath() else asked
     val dir = target.toAbsolutePath.getParent
@@ -107,24 +107,24 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
     DiskStore.FileReservation(key, file, target, asked)
   }
 
-  def move(from: StoreKey, to: StoreKey): Either[StoreError, Unit] = io {
+  def move(from: Store.Key, to: Store.Key): Either[Store.Error, Unit] = io {
     val t = path(to)
     Option(t.getParent).foreach(Files.createDirectories(_))
     Files.move(path(from), t, StandardCopyOption.REPLACE_EXISTING): Unit
   }
 
-  def copy(from: StoreKey, to: StoreKey, keepAttributes: Boolean): Either[StoreError, Unit] = io {
+  def copy(from: Store.Key, to: Store.Key, keepAttributes: Boolean): Either[Store.Error, Unit] = io {
     val options =
       if keepAttributes then List(StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
       else List(StandardCopyOption.REPLACE_EXISTING)
     Files.copy(path(from), path(to), options*): Unit
   }
 
-  def makeDirectory(prefix: StoreKey): Either[StoreError, Unit] = io(Files.createDirectories(path(prefix)): Unit)
+  def makeDirectory(prefix: Store.Key): Either[Store.Error, Unit] = io(Files.createDirectories(path(prefix)): Unit)
 
-  def delete(key: StoreKey): Boolean = Files.deleteIfExists(path(key))
+  def delete(key: Store.Key): Boolean = Files.deleteIfExists(path(key))
 
-  def deleteTree(prefix: StoreKey): Option[ByteCount] =
+  def deleteTree(prefix: Store.Key): Option[ByteCount] =
     val p = path(prefix)
     if !Files.exists(p) then None
     else
@@ -137,7 +137,7 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
       }
       Some(ByteCount.applyUnsafe(bytes))
 
-  def touch(key: StoreKey, at: Instant): Unit =
+  def touch(key: Store.Key, at: Instant): Unit =
     val _ = scala.util.Try(Files.setLastModifiedTime(path(key), FileTime.from(at)))
 
   def size: ByteCount = ByteCount.applyUnsafe(walk().iterator.map(_.size.value).sum)
@@ -151,12 +151,12 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
         .getOrElse(0L)
     )
 
-  def measure(budget: MeasureBudget): StoreMeasure =
-    if !Files.exists(root) then StoreMeasure.absent
+  def measure(budget: MeasureBudget): Store.Measure =
+    if !Files.exists(root) then Store.Measure.absent
     else if Files.isRegularFile(root) then
       val _ = budget.take()
-      StoreMeasure(ByteCount.applyUnsafe(scala.util.Try(Files.size(root)).getOrElse(0L)), 1L, exists = true)
-    else if budget.exhausted then StoreMeasure(ByteCount.zero, 0L, exists = true, partial = true)
+      Store.Measure(ByteCount.applyUnsafe(scala.util.Try(Files.size(root)).getOrElse(0L)), 1L, exists = true)
+    else if budget.exhausted then Store.Measure(ByteCount.zero, 0L, exists = true, partial = true)
     else
       // the walk's running sums: a visitor is callback-shaped, so it accumulates into locals
       var bytes = 0L
@@ -181,19 +181,19 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
       try
         val _ = Files.walkFileTree(start, java.util.EnumSet.noneOf(classOf[FileVisitOption]), Int.MaxValue, visitor)
       catch case _: IOException => unreadable += 1
-      StoreMeasure(ByteCount.applyUnsafe(bytes), files, exists = true, partial, unreadable)
+      Store.Measure(ByteCount.applyUnsafe(bytes), files, exists = true, partial, unreadable)
 
-  def volume: Option[StoreVolume] =
+  def volume: Option[Store.Volume] =
     @tailrec def existing(p: Path): Option[Path] =
       if p == null then None else if Files.exists(p) then Some(p) else existing(p.getParent)
     existing(root.toAbsolutePath).flatMap { e =>
       scala.util.Try {
         val s = Files.getFileStore(e)
-        StoreVolume(s.toString, ByteCount.applyUnsafe(s.getTotalSpace), ByteCount.applyUnsafe(s.getUsableSpace))
+        Store.Volume(s.toString, ByteCount.applyUnsafe(s.getTotalSpace), ByteCount.applyUnsafe(s.getUsableSpace))
       }.toOption
     }
 
-  def names(prefix: StoreKey): List[String] =
+  def names(prefix: Store.Key): List[String] =
     val dir = path(prefix)
     if !Files.isDirectory(dir) then Nil
     else
@@ -203,7 +203,7 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
 
   def prune(rule: PruneRule): PruneReport = PruneReport(DiskStore.pruned(walk(), rule).filter(s => delete(s.key)))
 
-  private[util] def onDisk(key: StoreKey): Either[StoreError, Path] = Right(path(key))
+  private[util] def onDisk(key: Store.Key): Either[Store.Error, Path] = Right(path(key))
 
 private[storage] object DiskStore:
 
@@ -218,7 +218,7 @@ private[storage] object DiskStore:
           case _                               => out.reverse
         loop(oldest, files.iterator.map(_.size.value).sum, Nil)
 
-  final class FileBlob(val key: StoreKey, file: Path) extends Blob:
+  final class FileBlob(val key: Store.Key, file: Path) extends Blob:
     def where: String = file.toString
     def size: ByteCount = ByteCount.applyUnsafe(Files.size(file))
     def modified: Instant = Files.getLastModifiedTime(file).toInstant
@@ -293,7 +293,7 @@ private[storage] object DiskStore:
     def close(): Unit = synchronized { closed = true; ch.close() }
 
   final class FileReservation(
-      val key: StoreKey,
+      val key: Store.Key,
       file: Path,
       target: Path,
       asked: Path
@@ -313,7 +313,7 @@ private[storage] object DiskStore:
 
     def size: ByteCount = ByteCount.applyUnsafe(if Files.exists(file) then Files.size(file) else 0L)
 
-    def commit(keepPermissions: Boolean): Either[StoreError, Stored] =
+    def commit(keepPermissions: Boolean): Either[Store.Error, Stored] =
       try
         if keepPermissions && Files.exists(asked) then
           Option(Files.getFileAttributeView(asked, classOf[PosixFileAttributeView], LinkOption.NOFOLLOW_LINKS))
@@ -324,16 +324,16 @@ private[storage] object DiskStore:
         Right(
           Stored(
             key,
-            StoredKind.File,
+            Stored.Kind.File,
             ByteCount.applyUnsafe(Files.size(target)),
             Files.getLastModifiedTime(target).toInstant
           )
         )
-      catch case e: IOException => Left(StoreError.Failed(e.getMessage))
+      catch case e: IOException => Left(Store.Error.Failed(e.getMessage))
 
     def discard(): Unit =
       val _ = Files.deleteIfExists(file)
 
     def close(): Unit = if !committed then discard()
 
-    private[util] def onDisk: Either[StoreError, Path] = Right(file)
+    private[util] def onDisk: Either[Store.Error, Path] = Right(file)

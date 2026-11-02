@@ -1,5 +1,5 @@
 package com.histmersion.domain.library.acquisition
-import com.histmersion.plugin.PluginConfig.given
+import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import com.histmersion.upstreams.landing.RepositoryLanding
 

@@ -2,7 +2,7 @@ package com.histmersion.plugin
 
 /** Media collections, the second part of the app that plugins extend: an open-access collection of pictures — a
   * museum's objects, a library's maps, an excavation archive's photographs — searched for the places on the map. A
-  * plugin adds one or more [[MediaCollection]]s to [[PluginContext.mediaCollections]]; `histmersion media import <id>`
+  * plugin adds one or more [[MediaCollection]]s to [[Plugin.Context.mediaCollections]]; `histmersion media import <id>`
   * then runs it.
   *
   * The plugin only SEARCHES and DESCRIBES: it returns [[MediaItem]]s with the licence AS ITS PROVIDER STATES IT.
@@ -40,12 +40,12 @@ trait MediaCollection:
     * host's polite client of this import (its pace, the User-Agent, Retry-After; a bot challenge stops the request) —
     * never open a socket of your own.
     */
-  def search(place: MediaPlace, http: PluginHttp): Either[String, List[Either[String, MediaItem]]]
+  def search(place: MediaPlace, http: Plugin.Http): Either[String, List[Either[String, MediaItem]]]
 
   /** An item about to be stored, completed by what a search does not answer (its files, the licence read again from the
     * full record). Only items the host decided to store pay for it; the host judges the completed item's licence again.
     */
-  def complete(item: MediaItem, http: PluginHttp): Either[String, MediaItem] = Right(item)
+  def complete(item: MediaItem, http: Plugin.Http): Either[String, MediaItem] = Right(item)
 
   /** The roles its pictures may play — [[role]] alone, unless its items name others ([[MediaItem.role]]): a Wikidata
     * item's image, locator map and plan are one collection's.
@@ -58,7 +58,7 @@ trait MediaCollection:
   def asks: Set[MediaTarget] = Set(MediaTarget.Places)
 
   /** The records a search for `event` answers ([[asks]] must name events); none by default. */
-  def searchEvent(event: MediaEvent, http: PluginHttp): Either[String, List[Either[String, MediaItem]]] = Right(Nil)
+  def searchEvent(event: MediaEvent, http: Plugin.Http): Either[String, List[Either[String, MediaItem]]] = Right(Nil)
 
   /** Whether it can be asked now — a key configured, its own switch on — asked before an import: its refusal is the
     * import's ("Europeana images needs a key …"), and nothing is sent.
@@ -81,9 +81,9 @@ trait MediaCollection:
   /** A collection of its targets' own pictures ([[MediaMatchRule.Own]]) is asked about a batch at once: what it found
     * for each. By default, [[search]] for each place and [[searchEvent]] for each event, in order.
     */
-  def searchTargets(places: List[MediaPlace], events: List[MediaEvent], http: PluginHttp): MediaFound =
-    val asked = places.map(p => MediaTargetId(MediaTarget.Places, p.id) -> search(p, http)) ++
-      events.map(e => MediaTargetId(MediaTarget.Events, e.id) -> searchEvent(e, http))
+  def searchTargets(places: List[MediaPlace], events: List[MediaEvent], http: Plugin.Http): MediaFound =
+    val asked = places.map(p => MediaTarget.Id(MediaTarget.Places, p.id) -> search(p, http)) ++
+      events.map(e => MediaTarget.Id(MediaTarget.Events, e.id) -> searchEvent(e, http))
     MediaFound(
       uses = asked.flatMap((t, r) =>
         r.toOption.toList.flatMap(_.collect { case Right(it) => it }.zipWithIndex.map((it, i) => MediaUse(t, it, i)))
@@ -99,7 +99,7 @@ trait MediaCollection:
   /** The items about to be stored of a collection of its targets' own pictures, completed in one batch: by default
     * [[complete]] for each.
     */
-  def completeAll(items: List[MediaItem], http: PluginHttp): MediaCompleted =
+  def completeAll(items: List[MediaItem], http: Plugin.Http): MediaCompleted =
     val done = items.map(it => it.key -> complete(it, http))
     MediaCompleted(
       done.collect { case (k, Right(it)) => k -> it }.toMap,

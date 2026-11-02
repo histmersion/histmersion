@@ -39,8 +39,8 @@ object TargetFlags:
       .mapN(Raw.apply)
 
   /** The target the flags name, or why they name none. Pure. */
-  def target(r: Raw): Either[CliError, Target] =
-    def usage(why: String) = CliError(why, exitCode = ExitCode.Usage)
+  def target(r: Raw): Either[Cli.Error, Target] =
+    def usage(why: String) = Cli.Error(why, exitCode = ExitCode.Usage)
     for
       kind <- ItemKind
         .parse(r.kind)

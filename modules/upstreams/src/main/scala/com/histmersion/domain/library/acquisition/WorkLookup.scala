@@ -1,9 +1,10 @@
 package com.histmersion.domain.library.acquisition
-import com.histmersion.plugin.{Doi, PluginLog, WorkKey, Year}
+import com.histmersion.plugin.{Doi, WorkKey, Year}
 import io.circe.Json
 import com.histmersion.upstreams.http.Url
 import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.settings.UpstreamSettings
+import com.histmersion.plugin.Plugin
 
 /** A work's metadata by its DOI, as an ingest looks it up before asking the acquisition chain: OpenAlex first (richer,
   * keyless), Crossref as the fallback, with Unpaywall's open-access status when Crossref answered. `json` is the
@@ -24,7 +25,7 @@ object WorkLookup:
   def crossrefUrl(cfg: UpstreamSettings, doi: String): String =
     Url(cfg.crossref.url, s"/works/$doi", "mailto" -> cfg.mailto)
 
-  def meta(cfg: UpstreamSettings, json: String => Either[String, Json], log: PluginLog)(
+  def meta(cfg: UpstreamSettings, json: String => Either[String, Json], log: Plugin.Log)(
       doi: String
   ): Either[String, WorkRef] =
     json(Url(workUrl(cfg, doi), "", "select" -> WorkFields, "mailto" -> cfg.mailto))

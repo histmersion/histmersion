@@ -15,7 +15,7 @@ final class ClevelandCollection(conf: CollectionSettings)
   override val description = "The Cleveland Museum of Art (CC0, share_license_status)" + MetCollection.Museum
   val role = MediaCollection.Object
 
-  def search(place: MediaPlace, http: PluginHttp): Either[String, List[Either[String, MediaItem]]] =
+  def search(place: MediaPlace, http: Plugin.Http): Either[String, List[Either[String, MediaItem]]] =
     http
       .askJson(ClevelandCollection.searchUrl(conf.apiUrl, place.label, conf.candidates))
       .flatMap(ClevelandCollection.records)

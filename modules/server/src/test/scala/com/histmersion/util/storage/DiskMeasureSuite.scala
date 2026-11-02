@@ -34,7 +34,7 @@ class DiskMeasureSuite extends munit.FunSuite:
     assertEquals(measured(d), (600L, 3L, true, false, 0))
 
   tmp.test("a missing directory is not there — zero, never an error"): d =>
-    assertEquals(at(d.resolve("nope")).measure(MeasureBudget.unlimited), StoreMeasure.absent)
+    assertEquals(at(d.resolve("nope")).measure(MeasureBudget.unlimited), Store.Measure.absent)
 
   tmp.test("a regular file as the root is its own size"): d =>
     assertEquals(measured(file(d.resolve("one.pmtiles"), 1234)), (1234L, 1L, true, false, 0))
@@ -47,7 +47,7 @@ class DiskMeasureSuite extends munit.FunSuite:
     Files.createSymbolicLink(root.resolve("to-file"), big.resolve("big.bin"))
     Files.createSymbolicLink(root.resolve("loop"), root)
     assertEquals(measured(root), (10L, 1L, true, false, 0))
-    assert(at(root).isLink(StoreKey.applyUnsafe("to-file")))
+    assert(at(root).isLink(Store.Key.applyUnsafe("to-file")))
 
   tmp.test("the root itself may be a link (a configured directory moved to another disk) and is followed"): d =>
     file(d.resolve("real/a.bin"), 50)
@@ -80,7 +80,7 @@ class DiskMeasureSuite extends munit.FunSuite:
 
   tmp.test("an executable is a file this process may run"): d =>
     val f = file(d.resolve("pg_dump"), 1)
-    assert(!at(d).isExecutable(StoreKey.applyUnsafe("pg_dump")))
+    assert(!at(d).isExecutable(Store.Key.applyUnsafe("pg_dump")))
     val _ = f.toFile.setExecutable(true)
-    assert(at(d).isExecutable(StoreKey.applyUnsafe("pg_dump")))
-    assert(!at(d).isExecutable(StoreKey.applyUnsafe("absent")))
+    assert(at(d).isExecutable(Store.Key.applyUnsafe("pg_dump")))
+    assert(!at(d).isExecutable(Store.Key.applyUnsafe("absent")))

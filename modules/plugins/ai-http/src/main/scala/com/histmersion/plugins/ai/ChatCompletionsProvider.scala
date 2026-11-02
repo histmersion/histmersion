@@ -34,7 +34,7 @@ final class ChatCompletionsProvider(
 
   private def key: String = if settings.apiKey.isEmpty then "none" else settings.apiKey
 
-  def turn(request: AiTurnRequest, http: AiHttp): Either[AiFailure, AiTurn] =
+  def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn] =
     val sent = for
       url <- base.map(_.endpoint("chat", "completions"))
       body = ChatRequest.of(request, settings.strictTools).body

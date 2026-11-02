@@ -20,7 +20,7 @@ import com.histmersion.config.AppConfig
 import com.histmersion.util.data.exchange.BundleRepo
 import com.histmersion.util.database.Migrate
 import com.histmersion.util.settings.MergeSettingsViews
-import com.histmersion.util.storage.{ByteSource, HandedFile, Location, Storage, Store, StoreContents, StoreKey}
+import com.histmersion.util.storage.{ByteSource, HandedFile, Location, Storage, Store}
 
 import java.time.Clock
 import java.util.UUID
@@ -78,7 +78,7 @@ object BundleService:
     private def bundles: Store = w.storage.store(Location.Bundles)
 
     /** The server's stored originals: the converter's spool, `<sha256>.<ext>`. */
-    private def originals: StoreContents = StoreContents(w.storage.store(Location.IngestOriginals))
+    private def originals: Store.Contents = Store.Contents(w.storage.store(Location.IngestOriginals))
 
     private def options(dryRun: Boolean): ImportOptions =
       ImportOptions(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm, w.sourceReferrers)
@@ -92,7 +92,7 @@ object BundleService:
       for
         _ <- usable(store)
         _ = pruneStale(store)
-        key = StoreKey.applyUnsafe(s"export-${UUID.randomUUID()}${Bundle.Extension}")
+        key = Store.Key.applyUnsafe(s"export-${UUID.randomUUID()}${Bundle.Extension}")
         part <- store.reserve(key).left.map(e => Api.Error(s"bundle export failed: ${e.message}"))
         m <- write(part, since)
         _ <- part.commit().left.map(e => Api.Error(s"could not finish ${store.where(key)}: ${e.message}"))
@@ -161,7 +161,7 @@ object BundleService:
         .map(e => Api.Error(s"bundle import failed: $e"))
 
     /** Where an uploaded bundle is kept: `upload-<sha256>.hmx`, content-addressed. */
-    private def keyOf(sha: String): StoreKey = StoreKey.applyUnsafe(s"upload-$sha${Bundle.Extension}")
+    private def keyOf(sha: String): Store.Key = Store.Key.applyUnsafe(s"upload-$sha${Bundle.Extension}")
 
     /** A kept bundle, touched: a planned bundle stays as long as it is being worked on. */
     private def kept(sha: String): Either[Api.Error, ByteSource] =
@@ -192,7 +192,7 @@ object BundleService:
         val loaded = blob.asSource.read(BundleReader.read(_, hashBlobs = false))
         Bundle.Upload(sha, blob.size.value, loaded.manifest, loaded.problems)
 
-    private def copyIn(store: Store, key: StoreKey, upload: ByteSource): Either[String, Unit] =
+    private def copyIn(store: Store, key: Store.Key, upload: ByteSource): Either[String, Unit] =
       store.reserve(key).left.map(_.message).flatMap { part =>
         try
           scala.util

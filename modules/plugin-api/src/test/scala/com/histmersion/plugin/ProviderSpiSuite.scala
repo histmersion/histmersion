@@ -3,18 +3,18 @@ package com.histmersion.plugin
 /** The media-collection and event-catalogue parts of the SPI (docs/research-plugins.md §6). */
 class ProviderSpiSuite extends munit.FunSuite:
 
-  private val offline = new PluginHttp { def get(url: String, headers: Map[String, String]) = Left("offline") }
+  private val offline = new Plugin.Http { def get(url: String, headers: Map[String, String]) = Left("offline") }
 
   private object Portal extends MediaCollection:
     val title = "Portal objects"
     val role = MediaCollection.Object
-    def search(place: MediaPlace, http: PluginHttp) =
+    def search(place: MediaPlace, http: Plugin.Http) =
       Right(List(Right(MediaItem("k", place.label, "https://portal.example/k", None, Left("not open access")))))
 
   private object Quakes extends EventCatalogue:
     val title = "Quakes"; val licence = Licence("CC0-1.0"); val citation = "Q"; val home = "https://q.example"
     def parts(q: CatalogueQuery) = List(s"to:${q.to}")
-    def read(part: String, q: CatalogueQuery, http: PluginHttp) = Right(CataloguePage(Nil))
+    def read(part: String, q: CatalogueQuery, http: Plugin.Http) = Right(CataloguePage(Nil))
 
   test("a collection's defaults: the museum rule, three per place, a second between requests, complete = as is"):
     assertEquals(
@@ -37,9 +37,9 @@ class ProviderSpiSuite extends munit.FunSuite:
     assertEquals((e.historicity, e.beginBy, e.endFrom), ("attested", None, None))
 
   test("a context written before media and events existed still compiles and refuses both"):
-    val ctx = new PluginContext:
+    val ctx = new Plugin.Context:
       def http = offline
-      def log = new PluginLog { def info(m: String) = (); def warn(m: String) = () }
+      def log = new Plugin.Log { def info(m: String) = (); def warn(m: String) = () }
       def env(name: String) = None
       def secret(s: Secret) = Left("none")
       def secretVaults = Registry.refusing("no vaults")

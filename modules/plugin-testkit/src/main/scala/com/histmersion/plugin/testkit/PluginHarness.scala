@@ -185,7 +185,7 @@ final class PluginHarness private (
         }
         MediaReport(verdicts, failure, logged, asked)
 
-  private def judge(name: String, col: MediaCollection, http: PluginHttp, allow: LicencePolicy)(
+  private def judge(name: String, col: MediaCollection, http: Plugin.Http, allow: LicencePolicy)(
       answered: Either[String, MediaItem]
   ): MediaVerdict =
     answered match
@@ -291,7 +291,7 @@ final class PluginHarness private (
     * [[PluginHarness.liveAiHttp]] (the server's own client) to reach the real provider. (The server also refuses a
     * provider that spends the person's own plan while it listens beyond loopback; a test is on loopback.)
     */
-  def aiTurn(provider: String, request: AiTurnRequest, http: AiHttp = ScriptedAiHttp()): AiReport =
+  def aiTurn(provider: String, request: AiTurn.Request, http: AiHttp = ScriptedAiHttp()): AiReport =
     registries.aiProviders.get(provider) match
       case None    => AiReport(Left(s"the plugin registered no AI provider '$provider'"), None, Nil)
       case Some(p) =>
@@ -305,7 +305,7 @@ final class PluginHarness private (
     * plugin's config.
     */
   def resolveSecret(vault: String, ref: String): Either[String, String] =
-    PluginHost.resolve(SecretRef.Vault(vault, ref), env, registries.secretVaults)
+    PluginHost.resolve(Secret.Ref.Vault(vault, ref), env, registries.secretVaults)
 
 object PluginHarness:
 
@@ -346,7 +346,7 @@ object PluginHarness:
       histmersionConf: Option[Path] = None
   ): Either[String, PluginHarness] =
     val loader = Option(Thread.currentThread.getContextClassLoader).getOrElse(getClass.getClassLoader)
-    val envSecrets = secrets.collect { case (k, v) if k.startsWith(s"${SecretRef.EnvScheme}:") => k.drop(4).trim -> v }
+    val envSecrets = secrets.collect { case (k, v) if k.startsWith(s"${Secret.Ref.EnvScheme}:") => k.drop(4).trim -> v }
     val environment = env ++ envSecrets
     val envConfig = ConfigValueFactory.fromMap(environment.asJava).toConfig
     for
@@ -415,13 +415,13 @@ object PluginHarness:
   /** The stand-in vaults that serve the test's `<vault>:<ref>` secrets, if it has any. */
   private def testVaults(secrets: Map[String, String]): Either[String, Option[Plugin]] =
     val refs = secrets.toList
-      .filterNot(_._1.startsWith(s"${SecretRef.EnvScheme}:"))
-      .map((k, v) => SecretRef.parse(k).map(_ -> v))
+      .filterNot(_._1.startsWith(s"${Secret.Ref.EnvScheme}:"))
+      .map((k, v) => Secret.Ref.parse(k).map(_ -> v))
     refs.collectFirst { case Left(e) => e } match
       case Some(e) => Left(s"secrets: $e")
       case None    =>
         val byVault = refs
-          .collect { case Right((SecretRef.Vault(vault, ref), v)) => (vault, ref, v) }
+          .collect { case Right((Secret.Ref.Vault(vault, ref), v)) => (vault, ref, v) }
           .groupBy(_._1)
           .view
           .mapValues(_.map(t => t._2 -> t._3).toMap)

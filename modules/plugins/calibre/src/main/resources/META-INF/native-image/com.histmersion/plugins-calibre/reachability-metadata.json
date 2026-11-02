@@ -9,7 +9,7 @@
       ]
     },
     {
-      "type": "com.histmersion.plugins.calibre.CalibreSettings$",
+      "type": "com.histmersion.plugins.calibre.Calibre$Settings$",
       "fields": [
         {
           "name": "derived$ConfigReader$lzy1"

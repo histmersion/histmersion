@@ -34,5 +34,5 @@ object OfflineConverter:
   def blob(p: Path): com.histmersion.util.storage.Blob =
     com.histmersion.util.storage.Storage
       .at(com.histmersion.util.storage.Location.Scratch, p.toAbsolutePath.getParent)
-      .get(com.histmersion.util.storage.StoreKey.applyUnsafe(p.getFileName.toString))
+      .get(com.histmersion.util.storage.Store.Key.applyUnsafe(p.getFileName.toString))
       .getOrElse(throw AssertionError(s"$p is not a file"))

@@ -2,7 +2,7 @@ package com.histmersion.server
 
 import com.histmersion.config.{AppConfig, LoadedConfig}
 import com.histmersion.api.plugins.PluginStatus
-import com.histmersion.plugin.{Plugin, PluginHttp}
+import com.histmersion.plugin.Plugin
 import com.histmersion.pluginhost.{Generation, HostServices, HttpTransport, PolicyHttp, Registries}
 import com.histmersion.domain.library.acquisition.{CoreBudget, HttpPlugin, SttpHttp}
 import com.histmersion.server.agents.BuiltinAi
@@ -32,7 +32,7 @@ object ServerPlugins:
   /** The first-party source fetchers alone (and `extra`, a test's) over `http` ([[Plugins.fetchers]]). */
   def fetchers(
       loaded: LoadedConfig,
-      http: () => PluginHttp,
+      http: () => Plugin.Http,
       core: CoreBudget = CoreBudget(),
       extra: List[Plugin] = Nil
   ): Generation =

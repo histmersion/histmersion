@@ -4,10 +4,9 @@ import com.histmersion.api.BBox
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
-import com.histmersion.util.storage.StoreKey
-
 import java.nio.file.{Files, Path}
 import com.histmersion.api.basemap.Basemap
+import com.histmersion.util.storage.Store
 
 /** The base-map extract (plan → download → assemble) against a local archive behind a fake range server — no network —
   * and its pure parts.
@@ -178,7 +177,7 @@ class BasemapFetchSuite extends munit.FunSuite:
         plan,
         work,
         BasemapFixtures.store(dir),
-        StoreKey.applyUnsafe("vector.pmtiles"),
+        Store.Key.applyUnsafe("vector.pmtiles"),
         b => BasemapService.thin(b, PmTiles.Compression.Gzip, keep),
         BasemapFetch.localHeader(plan),
         BasemapFetch.localMetadata(

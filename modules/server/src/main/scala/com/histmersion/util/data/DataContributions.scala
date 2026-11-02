@@ -3,9 +3,9 @@ package com.histmersion.util.data
 import com.histmersion.util.data.backup.BackupShare
 import com.histmersion.util.data.checks.CheckRule
 import com.histmersion.util.data.exchange.{CarriedKind, MergeRules}
-import com.histmersion.util.data.mirror.MirrorExport
-import com.histmersion.util.data.maintenance.{CacheSpec, MaintenanceTask, MaintenanceTaskName}
+import com.histmersion.util.data.maintenance.{CacheSpec, MaintenanceTask}
 import com.histmersion.util.storage.Location
+import com.histmersion.util.data.mirror.Mirror
 
 /** The registry: every owner's contribution, in the order they were registered, which is the order every operation runs
   * them in. An owner contributes once and a table has one owner.
@@ -16,14 +16,14 @@ final class DataContributions private (val all: List[DataContribution]):
   def stores: List[(DataOwner, Location)] = all.flatMap(c => c.stores.map(c.owner -> _))
   def carried: List[CarriedKind] = all.flatMap(_.carried)
   def mergeRules: List[MergeRules] = all.flatMap(_.mergeRules)
-  def mirror: List[MirrorExport] = all.flatMap(_.mirror)
+  def mirror: List[Mirror.Export] = all.flatMap(_.mirror)
   def caches: List[CacheSpec] = all.flatMap(_.caches)
   def maintenance: List[MaintenanceTask] = all.flatMap(_.maintenance)
   def checks: List[CheckRule] = all.flatMap(_.checks)
   def backups: List[(DataOwner, BackupShare)] = all.map(c => c.owner -> c.backup)
 
   /** The registered piece of upkeep called `name`. */
-  def task(name: MaintenanceTaskName): Option[MaintenanceTask] = maintenance.find(_.name == name)
+  def task(name: MaintenanceTask.Name): Option[MaintenanceTask] = maintenance.find(_.name == name)
 
   /** The owner of a table, when one registered it. */
   def ownerOf(table: TableName): Option[DataOwner] = tables.collectFirst { case (o, t) if t.name == table => o }

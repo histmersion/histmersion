@@ -1,9 +1,10 @@
 package com.histmersion.plugins.ai
 
-import com.histmersion.plugin.{AiStop, AiToolCall, AiTurn, AiUsage}
+import com.histmersion.plugin.{AiStop, AiTurn, AiUsage}
 import io.circe.{ACursor, Decoder, DecodingFailure, HCursor, Json}
 import io.circe.DecodingFailure.Reason.WrongTypeExpectation
 import io.circe.parser.parse
+import com.histmersion.plugin.AiTool
 
 /** What the Anthropic Messages API answered, read as these providers have always read it: a message (its first text
   * block the answer's text, its `tool_use` blocks the tool calls, its usage with the cache reads and writes counted in
@@ -49,7 +50,7 @@ object AnthropicAnswer:
     */
   private enum Block:
     case Text(text: String)
-    case ToolUse(call: AiToolCall)
+    case ToolUse(call: AiTool.Call)
     case Other
 
   private val Known = Set("image", "tool_result", "document", "web_search_tool_result")
@@ -65,7 +66,7 @@ object AnthropicAnswer:
           name <- c.downField("name").as[String]
           input <- c.downField("input").as[Map[String, Json]]
         yield
-          if t == "tool_use" then Block.ToolUse(AiToolCall(id, name, Json.fromFields(input).noSpaces)) else Block.Other
+          if t == "tool_use" then Block.ToolUse(AiTool.Call(id, name, Json.fromFields(input).noSpaces)) else Block.Other
       case Some(t) if Known(t) => Right(Block.Other)
       case other               => Left(DecodingFailure(s"no content block of type $other", c.history))
     }

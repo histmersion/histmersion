@@ -52,8 +52,8 @@ object PeriodsCmd:
           val r = file.map(Path.of(_)) match
             case None               => c.seedPeriods(replace)
             case Some(_) if replace =>
-              Left(CliError("--replace applies to the bundled seed, not to --file", exitCode = ExitCode.Usage))
-            case Some(f) if !Files.isRegularFile(f) => Left(CliError(s"no such file: $f", exitCode = ExitCode.Usage))
+              Left(Cli.Error("--replace applies to the bundled seed, not to --file", exitCode = ExitCode.Usage))
+            case Some(f) if !Files.isRegularFile(f) => Left(Cli.Error(s"no such file: $f", exitCode = ExitCode.Usage))
             case Some(f)                            => c.importPeriods(Nil, Files.readString(f), Dataset.Seed)
           r.map(x => println(PeriodsMarkdown.imported(x)))
         }
@@ -70,7 +70,7 @@ object PeriodsCmd:
     )
       .mapN { (file, cols, dataset) => (c: Client) =>
         val f = Path.of(file)
-        if !Files.isRegularFile(f) then Left(CliError(s"no such file: $file", exitCode = ExitCode.Usage))
+        if !Files.isRegularFile(f) then Left(Cli.Error(s"no such file: $file", exitCode = ExitCode.Usage))
         else c.importPeriods(cols, Files.readString(f), dataset).map(x => println(PeriodsMarkdown.imported(x)))
       }
   }
@@ -93,13 +93,13 @@ object PeriodsCmd:
       }
   }
 
-  val command: Opts[Client => Either[CliError, Unit]] =
+  val command: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("periods", "Named periods (the timeline presets): search, show, seed and fetch from PeriodO") {
       search orElse showCmd orElse seed orElse importCmd orElse fetch
     }
 
   /** `histmersion init` — what a server does by itself on its first start, on demand. */
-  val init: Opts[Client => Either[CliError, Unit]] =
+  val init: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "init",
       "Import the bundled gazetteer and period presets (a server job); --fetch adds the network sources"

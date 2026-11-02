@@ -45,7 +45,7 @@ class JobFollowSuite extends munit.FunSuite:
 
   test("an unreachable server keeps its own exit code"):
     val r =
-      JobFollow.job(_ => Left(CliError("cannot reach")), "j1", sleep = _ => (), progress = quiet, clear = () => ())
+      JobFollow.job(_ => Left(Cli.Error("cannot reach")), "j1", sleep = _ => (), progress = quiet, clear = () => ())
     assertEquals(r.left.map(_.exitCode), Left(ExitCode.Unreachable))
 
   private def backup(state: String, error: Option[String] = None, sha: Option[String] = None) =

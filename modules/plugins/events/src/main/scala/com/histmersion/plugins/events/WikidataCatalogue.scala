@@ -22,7 +22,7 @@ final class WikidataCatalogue(cfg: WikidataSettings) extends EventCatalogue:
 
   def parts(query: CatalogueQuery): List[String] = classes.map((qid, _) => s"class:$qid")
 
-  def read(part: String, query: CatalogueQuery, http: PluginHttp): Either[String, CataloguePage] =
+  def read(part: String, query: CatalogueQuery, http: Plugin.Http): Either[String, CataloguePage] =
     classes.find((qid, _) => part == s"class:$qid") match
       case None              => Left(s"'$part' is no class of the configured events.wikidata.classes")
       case Some((qid, kind)) =>

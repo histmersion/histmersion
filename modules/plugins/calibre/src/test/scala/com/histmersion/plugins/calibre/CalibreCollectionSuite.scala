@@ -17,7 +17,7 @@ class CalibreCollectionSuite extends munit.FunSuite:
     Files.createTempDirectory(Files.createDirectories(Path.of("target/calibre-plugin").toAbsolutePath), "lib-")
 
   private def library(f: CalibreFixture) =
-    CalibreLibrary(f.dir.toString, f.calibredb.toString, f.sqlite3.toString, "/no/such/calibre-gui-process")
+    Calibre.Library(f.dir.toString, f.calibredb.toString, f.sqlite3.toString, "/no/such/calibre-gui-process")
 
   private def collection(f: CalibreFixture, writeBack: Boolean = true) =
     CalibreFixture.refuseRealLibrary(f.dir)
@@ -147,15 +147,15 @@ class CalibreCollectionSuite extends munit.FunSuite:
       .fold(e => fail(e), identity)
     assert(h.log.forall(!_.toString.contains("unknown")), h.log)
     val added = List.newBuilder[(String, SourceCollection)]
-    val ctx = new PluginContext:
-      def http = new PluginHttp { def get(u: String, hs: Map[String, String]) = Left("offline") }
-      def log = new PluginLog { def info(m: String) = (); def warn(m: String) = () }
+    val ctx = new Plugin.Context:
+      def http = new Plugin.Http { def get(u: String, hs: Map[String, String]) = Left("offline") }
+      def log = new Plugin.Log { def info(m: String) = (); def warn(m: String) = () }
       def env(name: String) = Option.when(name == "HOME")("/home/someone")
       def secret(s: Secret) = Left("none")
       def secretVaults = Registry.refusing("no vaults")
       override def sourceCollections = new Registry[SourceCollection]:
         def add(id: String, a: SourceCollection) = Right(added += id -> a)
-    val settings = CalibreSettings("~/Calibre Library", "calibredb", "sqlite3", writeBack = true, "gui")
+    val settings = Calibre.Settings("~/Calibre Library", "calibredb", "sqlite3", writeBack = true, "gui")
     assertEquals(CalibrePlugin().register(settings, ctx), Right(()))
     val (id, c) = added.result().headOption.getOrElse(fail("nothing registered"))
     assertEquals((id, c.title, c.capabilities.size), ("calibre", "Calibre", 3))

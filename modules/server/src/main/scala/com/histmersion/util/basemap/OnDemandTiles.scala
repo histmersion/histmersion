@@ -1,7 +1,7 @@
 package com.histmersion.util.basemap
 
 import com.histmersion.config.BasemapOnDemandConfig
-import com.histmersion.util.storage.{Store, StoreError, StoreKey}
+import com.histmersion.util.storage.Store
 
 import io.circe.Json
 
@@ -44,7 +44,7 @@ final class OnDemandTiles(
   val cache: DiskLru = DiskLru(store.sub(OnDemandTiles.Tiles), () => (cfg().cacheGb * 1e9).toLong, ext)
   private val remoteFiles = store.sub(OnDemandTiles.Remote)
 
-  private def done(written: Either[StoreError, ?]): Unit = written.left.foreach(e => throw IOException(e.message))
+  private def done(written: Either[Store.Error, ?]): Unit = written.left.foreach(e => throw IOException(e.message))
 
   /** What the planet file is: its header and root, the leaves read, its size and ETag. */
   final private case class Remote(url: String, header: PmTiles.Header, root: Vector[PmTiles.Entry], file: RemoteFile)
@@ -121,7 +121,7 @@ final class OnDemandTiles(
           val head: Either[String, (Array[Byte], RemoteFile)] = fromDisk match
             case Some((_, size, etag, h)) => Right((h, RemoteFile(size, etag)))
             case None                     =>
-              val _ = remoteFiles.deleteTree(StoreKey.Root)
+              val _ = remoteFiles.deleteTree(Store.Key.Root)
               leaves.clear()
               request(http().bytes(u, 0, PmTiles.RootBytes)).map { (b, f) =>
                 done(remoteFiles.write(OnDemandTiles.Head, b))
@@ -148,12 +148,12 @@ final class OnDemandTiles(
   private def forget(): Unit = synchronized {
     remote = None
     leaves.clear()
-    val _ = remoteFiles.deleteTree(StoreKey.Root)
+    val _ = remoteFiles.deleteTree(Store.Key.Root)
   }
 
   private def leaf(r: Remote, e: PmTiles.Entry): Either[String, Vector[PmTiles.Entry]] =
     Option(leaves.get(e.offset)).map(Right(_)).getOrElse {
-      val f = StoreKey.applyUnsafe(s"leaf-${e.offset}-${e.length}.bin")
+      val f = Store.Key.applyUnsafe(s"leaf-${e.offset}-${e.length}.bin")
       val raw = remoteFiles.get(f).filter(_.size.value == e.length) match
         case Some(kept) => Right(kept.bytes())
         case None       =>
@@ -241,10 +241,10 @@ final class OnDemandTiles(
               finally { val _ = inflight.remove(key, mine) }
 
 object OnDemandTiles:
-  private val Tiles = StoreKey.applyUnsafe("tiles")
-  private val Remote = StoreKey.applyUnsafe("remote")
-  private val RemoteJson = StoreKey.applyUnsafe("remote.json")
-  private val Head = StoreKey.applyUnsafe("head.bin")
+  private val Tiles = Store.Key.applyUnsafe("tiles")
+  private val Remote = Store.Key.applyUnsafe("remote")
+  private val RemoteJson = Store.Key.applyUnsafe("remote.json")
+  private val Head = Store.Key.applyUnsafe("head.bin")
 
   /** The provider's file changed under a read (another ETag or size). */
   val Changed = "the provider's file changed"

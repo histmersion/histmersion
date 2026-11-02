@@ -1,12 +1,12 @@
 package com.histmersion.plugins.fetchers
 
-import com.histmersion.plugin.{PluginHttp, PluginLog}
 import com.histmersion.upstreams.http.json
 import com.histmersion.upstreams.openalex.OpenAlexCrossref
 import com.histmersion.upstreams.landing.RepositoryLanding
 import com.histmersion.upstreams.settings.UpstreamSettings
 import com.histmersion.upstreams.http.Url
 import io.circe.Json
+import com.histmersion.plugin.Plugin
 
 /** The open-access indexes' records of one DOI, asked lazily and at most once per fetch, shared through the fetch's
   * memo by the index steps and the landing step of every open-access index plugin.
@@ -14,9 +14,9 @@ import io.circe.Json
 final class OaRecords(
     val doi: String,
     cfg: UpstreamSettings,
-    http: PluginHttp,
+    http: Plugin.Http,
     openalexClient: OpenAlexCrossref,
-    log: PluginLog
+    log: Plugin.Log
 ):
   lazy val openalex: Option[Json] = openalexClient.raw(doi).toOption
 
@@ -29,13 +29,13 @@ final class OaRecords(
   lazy val handle: Option[String] = OaRecords.handleUrl(cfg, http, log, doi)
 
 object OaRecords:
-  def handleUrl(cfg: UpstreamSettings, http: PluginHttp, log: PluginLog, doi: String): Option[String] =
+  def handleUrl(cfg: UpstreamSettings, http: Plugin.Http, log: Plugin.Log, doi: String): Option[String] =
     http.json(Url(cfg.doiHandles.url, s"/$doi", "type" -> "URL")) match
       case Right(j) => RepositoryLanding.handleUrl(j)
       case Left(e)  =>
         log.info(s"doi handles: no URL for $doi ($e)"); None
 
-  def dataciteUrl(cfg: UpstreamSettings, http: PluginHttp, log: PluginLog, doi: String): Option[String] =
+  def dataciteUrl(cfg: UpstreamSettings, http: Plugin.Http, log: Plugin.Log, doi: String): Option[String] =
     http.json(Url(cfg.datacite.url, s"/dois/$doi")) match
       case Right(j) => RepositoryLanding.dataciteUrl(j)
       case Left(e)  =>

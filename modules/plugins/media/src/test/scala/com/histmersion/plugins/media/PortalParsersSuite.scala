@@ -68,7 +68,7 @@ class PortalParsersSuite extends munit.FunSuite:
     assertEquals(r.licence, Licence("https://creativecommons.org/licenses/by/4.0"), "stated as the record states it")
     assertEquals(
       licences.readUrl(r.licence.value),
-      LicenceRead("CC-BY-4.0", "cc-by", needsAttribution = true),
+      Licence.Read("CC-BY-4.0", "cc-by", needsAttribution = true),
       "the host reads it as CC BY 4.0"
     )
     assertEquals(r.licenceUrl, Some("https://creativecommons.org/licenses/by/4.0"))

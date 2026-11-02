@@ -203,7 +203,7 @@ them again (after an update, say). From the plugin's directory:
 6. **Check** with `histmersion plugin status`: the running server lists the plugin's jar
    (`… 1 jar (native): <name>-<version>.jar`). The server log names the plugin as it registers it.
 
-**Updating.** Raise `publish.version` in `project.scala` (and the version in the plugin's `PluginInfo`), then
+**Updating.** Raise `publish.version` in `project.scala` (and the version in the plugin's `Plugin.Info`), then
 repeat steps 1–3 with that version, and step 5. `histmersion plugin status` says REBUILD NEEDED whenever the
 plugins directory differs from what the running server was linked with.
 

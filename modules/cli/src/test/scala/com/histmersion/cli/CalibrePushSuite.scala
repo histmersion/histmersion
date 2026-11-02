@@ -199,7 +199,7 @@ class CalibrePushSuite extends munit.FunSuite:
     assert(onlyNone.startsWith("_Every source with a fetched file is in Calibre._"), onlyNone)
     assertEquals(Calibre.markdownGaps(Nil), "_Every source with a fetched file is in Calibre._")
 
-  private def captured(f: => Either[CliError, Unit]): (Either[CliError, Unit], String) =
+  private def captured(f: => Either[Cli.Error, Unit]): (Either[Cli.Error, Unit], String) =
     val out = java.io.ByteArrayOutputStream()
     val r = Console.withOut(out)(f)
     (r, out.toString("UTF-8"))

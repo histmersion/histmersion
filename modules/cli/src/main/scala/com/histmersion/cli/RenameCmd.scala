@@ -37,7 +37,7 @@ object RenameCmd:
           .map(ck => a.copy(oldCitekey = a.oldCitekey.trim, newCitekey = ck.value))
       )
 
-  val command: Opts[Client => Either[CliError, Unit]] =
+  val command: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "rename",
       s"Give a source a new citekey — findings, links in articles/notes and every table follow. ${Aliases.rule(AliasKinds.SourceRecords)}"

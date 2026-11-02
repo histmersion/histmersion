@@ -1,11 +1,12 @@
 package com.histmersion.plugins.fetchers
 
-import com.histmersion.plugin.{FetchedFile, PluginHttp, PluginLog}
+import com.histmersion.plugin.FetchedFile
+import com.histmersion.plugin.Plugin
 
 /** One download the fetchers make, checked: a copy only when it is a PDF. Any other answer is logged and is no copy. */
-final class Downloads(http: PluginHttp):
+final class Downloads(http: Plugin.Http):
 
-  def pdf(log: PluginLog, source: String, url: String, headers: Map[String, String] = Map.empty): Option[FetchedFile] =
+  def pdf(log: Plugin.Log, source: String, url: String, headers: Map[String, String] = Map.empty): Option[FetchedFile] =
     http.get(url, headers) match
       case Right(b) if Downloads.looksLikePdf(b) => Some(FetchedFile(source, Some(url), b, "pdf"))
       case Right(b)                              =>

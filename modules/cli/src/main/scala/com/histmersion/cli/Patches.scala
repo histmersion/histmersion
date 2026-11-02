@@ -37,19 +37,21 @@ object Patches:
       ifUpdatedAt: Option[String],
       addEdges: List[String] = Nil,
       removeEdges: List[String] = Nil
-  ): Either[CliError, com.histmersion.api.library.Source.Patch] =
+  ): Either[Cli.Error, com.histmersion.api.library.Source.Patch] =
     for
-      base <- json.fold[Either[CliError, com.histmersion.api.library.Source.Patch]](
+      base <- json.fold[Either[Cli.Error, com.histmersion.api.library.Source.Patch]](
         Right(com.histmersion.api.library.Source.Patch())
       )(parse[com.histmersion.api.library.Source.Patch]("--json", _))
       adds <- traverse(addFindings)(parse[Finding.Input]("--add-finding", _))
       eAdd <- traverse(addEdges)(parseEdge("--add-edge", _))
       eRem <- traverse(removeEdges)(parseEdge("--remove-edge", _))
-      p <- period.fold[Either[CliError, Option[Period.Input]]](Right(base.period))(parsePeriod(_).map(Some(_)))
-      notes <- notesFile.fold[Either[CliError, Option[String]]](Right(base.notes))(
+      p <- period.fold[Either[Cli.Error, Option[Period.Input]]](Right(base.period))(parsePeriod(_).map(Some(_)))
+      notes <- notesFile.fold[Either[Cli.Error, Option[String]]](Right(base.notes))(
         readFile("--notes-file", _).map(Some(_))
       )
-      body <- bodyFile.fold[Either[CliError, Option[String]]](Right(base.body))(readFile("--body-file", _).map(Some(_)))
+      body <- bodyFile.fold[Either[Cli.Error, Option[String]]](Right(base.body))(
+        readFile("--body-file", _).map(Some(_))
+      )
       meta = mergeMetadata(base.metadata, title, status)
       tags = mergeTags(base.tags, tagsAdd, tagsRemove, tagsReplace)
       finds = mergeFindings(base.findings, adds, removeFindings)
@@ -111,44 +113,44 @@ object Patches:
   // ── parsing ──────────────────────────────────────────────────────────────────────────────────
   private def csv(s: String): List[String] = s.split(",").map(_.trim).filter(_.nonEmpty).toList
 
-  private def parse[A: io.circe.Decoder](flag: String, s: String): Either[CliError, A] =
+  private def parse[A: io.circe.Decoder](flag: String, s: String): Either[Cli.Error, A] =
     decode[A](s).left.map(e =>
-      CliError(s"$flag: not valid JSON for this option (${e.getMessage})", exitCode = ExitCode.Usage)
+      Cli.Error(s"$flag: not valid JSON for this option (${e.getMessage})", exitCode = ExitCode.Usage)
     )
 
   /** `--add-edge refutes:heggarty2023_language` — an edge FROM the patched source, so only the kind and the target are
     * given.
     */
-  private[cli] def parseEdge(flag: String, s: String): Either[CliError, com.histmersion.api.library.Edge.Input] =
+  private[cli] def parseEdge(flag: String, s: String): Either[Cli.Error, com.histmersion.api.library.Edge.Input] =
     s.split(":", 2).map(_.trim) match
       case Array(k, dst) if dst.nonEmpty =>
         Edge.Kind
           .fromWire(k)
           .map(com.histmersion.api.library.Edge.Input(dst, _))
           .toRight(
-            CliError(
+            Cli.Error(
               s"$flag: unknown edge kind '$k' (one of: ${Edge.Kind.allWire.mkString(", ")})",
               exitCode = ExitCode.Usage
             )
           )
       case _ =>
         Left(
-          CliError(
+          Cli.Error(
             s"$flag: expected '<kind>:<citekey>', e.g. 'challenges:lord1968_oralpoet', got '$s'",
             exitCode = ExitCode.Usage
           )
         )
 
-  private def parsePeriod(s: String): Either[CliError, Period.Input] =
+  private def parsePeriod(s: String): Either[Cli.Error, Period.Input] =
     csv(s).map(_.toLongOption) match
       case List(Some(a), Some(b)) => Right(Period.Input(a, b))
-      case _ => Left(CliError(s"--period: expected 'start,end' as signed years, got '$s'", exitCode = ExitCode.Usage))
+      case _ => Left(Cli.Error(s"--period: expected 'start,end' as signed years, got '$s'", exitCode = ExitCode.Usage))
 
   /** A file a flag names, read whole — a large body (a book's OCR) cannot travel through `--json`. */
-  private def readFile(flag: String, file: String): Either[CliError, String] =
+  private def readFile(flag: String, file: String): Either[Cli.Error, String] =
     val p = Path.of(file)
     if Files.isRegularFile(p) then Right(Files.readString(p))
-    else Left(CliError(s"$flag: no such file: $file", exitCode = ExitCode.Usage))
+    else Left(Cli.Error(s"$flag: no such file: $file", exitCode = ExitCode.Usage))
 
-  private def traverse[A, B](as: List[A])(f: A => Either[CliError, B]): Either[CliError, List[B]] =
-    as.foldLeft[Either[CliError, List[B]]](Right(Nil))((acc, a) => acc.flatMap(bs => f(a).map(bs :+ _)))
+  private def traverse[A, B](as: List[A])(f: A => Either[Cli.Error, B]): Either[Cli.Error, List[B]] =
+    as.foldLeft[Either[Cli.Error, List[B]]](Right(Nil))((acc, a) => acc.flatMap(bs => f(a).map(bs :+ _)))

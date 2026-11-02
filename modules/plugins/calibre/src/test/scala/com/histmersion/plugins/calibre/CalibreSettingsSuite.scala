@@ -7,7 +7,7 @@ import java.nio.file.Path
   */
 class CalibreSettingsSuite extends munit.FunSuite:
 
-  private val settings = CalibreSettings("~/Calibre Library", "calibredb", "sqlite3", writeBack = true, "gui")
+  private val settings = Calibre.Settings("~/Calibre Library", "calibredb", "sqlite3", writeBack = true, "gui")
   private def only(paths: String*): Path => Boolean = p => paths.contains(p.toString)
 
   test("a bare name on the search path wins over the install directories"):
@@ -39,6 +39,7 @@ class CalibreSettingsSuite extends munit.FunSuite:
     assertEquals(settings.library(Some("/home/someone"), Some("/usr/bin"), only()).calibredb, "calibredb")
 
   test("a configured path is used as it is"):
-    val lib = CalibreSettings("~/Calibre Library", "/somewhere/calibredb", "sqlite3", writeBack = true, "gui")
+    val lib = Calibre
+      .Settings("~/Calibre Library", "/somewhere/calibredb", "sqlite3", writeBack = true, "gui")
       .library(None, Some("/usr/bin"), _ => true)
     assertEquals(lib.calibredb, "/somewhere/calibredb")

@@ -1,6 +1,6 @@
 package com.histmersion.plugins.events
 
-import com.histmersion.plugin.PluginConfig.given
+import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** `histmersion.events.gvp`: the WFS, the most eruptions one window may hold, a window's years, the pace, and the

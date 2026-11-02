@@ -134,11 +134,11 @@ class CliopatriaSuite extends munit.FunSuite:
       z.close()
       out.toByteArray
     val asked = scala.collection.mutable.ListBuffer.empty[String]
-    val http = new PluginHttp:
+    val http = new Plugin.Http:
       def get(url: String, headers: Map[String, String]) = Left("get is not used")
       override def fetch(url: String, headers: Map[String, String]) =
         asked += url
-        Right(PluginHttpResponse(200, Map.empty, zip))
+        Right(Plugin.HttpResponse(200, Map.empty, zip))
     val all = Cliopatria.fetch(http).fold(e => fail(e), identity)
     assertEquals(asked.toList, List(Cliopatria.url))
     assertEquals(
@@ -152,9 +152,10 @@ class CliopatriaSuite extends munit.FunSuite:
     )
 
   test("an error answer, a zip without a usable file: the download says which"):
-    def answering(status: Int, body: Array[Byte]) = new PluginHttp:
+    def answering(status: Int, body: Array[Byte]) = new Plugin.Http:
       def get(url: String, headers: Map[String, String]) = Left("get is not used")
-      override def fetch(url: String, headers: Map[String, String]) = Right(PluginHttpResponse(status, Map.empty, body))
+      override def fetch(url: String, headers: Map[String, String]) =
+        Right(Plugin.HttpResponse(status, Map.empty, body))
     assertEquals(Cliopatria.fetch(answering(404, Array.emptyByteArray)), Left(s"HTTP 404 from ${Cliopatria.url}"))
     val empty =
       val out = java.io.ByteArrayOutputStream()

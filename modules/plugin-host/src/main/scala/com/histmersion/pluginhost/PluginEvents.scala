@@ -125,7 +125,7 @@ object PluginEvents:
       cat: EventCatalogue,
       first: String,
       query: CatalogueQuery,
-      http: PluginHttp,
+      http: Plugin.Http,
       done: String => Boolean,
       full: => Boolean
   )(each: (String, Either[String, CataloguePage]) => Unit): Unit =
@@ -138,7 +138,7 @@ object PluginEvents:
       case _ => ()
     from(Option(first).filter(p => !done(p)))
 
-  def http(polite: Polite): PluginHttp = new PluginHttp:
+  def http(polite: Polite): Plugin.Http = new Plugin.Http:
     def get(url: String, headers: Map[String, String]) = polite.get(url, headers).map(_.body)
 
   def safe[A](a: => A): Option[A] =

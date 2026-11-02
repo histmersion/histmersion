@@ -86,7 +86,7 @@ copy	plugins/calibre:plugins/calibre/Calibre.scala	.copy(	1
 copy	plugins/events:plugins/events/GvpCatalogue.scala	.copy(	2
 copy	plugins/events:plugins/events/NoaaCatalogue.scala	.copy(	1
 copy	plugins/events:plugins/events/WikidataCatalogue.scala	.copy(	1
-copy	plugins/media:plugins/media/CommonsFiles.scala	.copy(	4
+copy	plugins/media:plugins/media/Commons.scala	.copy(	4
 copy	plugins/media:plugins/media/Europeana.scala	.copy(	1
 copy	plugins/media:plugins/media/FreeTextDates.scala	.copy(	1
 copy	plugins/media:plugins/media/OpenContext.scala	.copy(	1
@@ -517,8 +517,7 @@ derives	db:domain/research/articles/ArticleRepo.scala	codec given written by han
 derives	db:domain/research/articles/CoverageRepo.scala	codec given written by hand	2
 derives	db:util/data/exchange/BundleRepo.scala	codec given written by hand	2
 derives	db:util/database/Codecs.scala	codec given written by hand	5
-derives	plugin-api:plugin/Plugin.scala	codec given written by hand	1
-derives	plugin-api:plugin/PluginConfig.scala	codec given written by hand	4
+derives	plugin-api:plugin/Plugin.scala	codec given written by hand	5
 derives	plugin-api:plugin/Secret.scala	codec given written by hand	1
 derives	plugin-vaults:plugins/vaults/YubiKey.scala	codec given written by hand	1
 derives	plugins/ai-http:plugins/ai/ChatAnswer.scala	codec given written by hand	2
@@ -576,8 +575,8 @@ global	server:server/Deps.scala	wall clock	2
 global	server:server/ServerWiring.scala	wall clock	3
 global	server:server/StorageLocations.scala	system property	1
 global	server:server/agents/ClaudeCode.scala	wall clock	2
+global	server:server/agents/Codex.scala	wall clock	2
 global	server:server/agents/CodexExecClient.scala	wall clock	1
-global	server:server/agents/CodexHome.scala	wall clock	2
 global	server:server/agents/PlanPools.scala	wall clock	9
 global	server:server/instance/InstanceControllers.scala	wall clock	1
 global	server:server/instance/MaintenanceControllers.scala	wall clock	1
@@ -1029,11 +1028,9 @@ layer	server:domain/personal/PersonalState.scala	a domain file names the api out
 layer	server:domain/personal/TargetColumns.scala	a domain file names the api outside a boundary	1
 layer	server:domain/personal/bookmarks/Bookmark.scala	a domain file names the api outside a boundary	1
 layer	server:domain/personal/bookmarks/BookmarkRepo.scala	a domain file names the api outside a boundary	1
-layer	server:domain/personal/bookmarks/BookmarkRow.scala	a domain file names the api outside a boundary	1
 layer	server:domain/personal/bookmarks/BookmarkService.scala	a domain file names the api outside a boundary	1
 layer	server:domain/personal/notes/Note.scala	a domain file names the api outside a boundary	1
 layer	server:domain/personal/notes/NoteRepo.scala	a domain file names the api outside a boundary	1
-layer	server:domain/personal/notes/NoteRow.scala	a domain file names the api outside a boundary	1
 layer	server:domain/personal/notes/NoteService.scala	a domain file names the api outside a boundary	1
 layer	server:domain/personal/reading/ReadMark.scala	a domain file names the api outside a boundary	1
 layer	server:domain/research/ResearchState.scala	a domain file names the api outside a boundary	1
@@ -1076,15 +1073,6 @@ layer	web:web/library/ReadingHead.scala	the client names a package outside api	1
 layer	web:web/library/TableRow.scala	the client names a package outside api	1
 layer	web:web/marks/PeriodMarks.scala	the client names a package outside api	1
 layer	web:web/settings/DownloadJobs.scala	the client names a package outside api	1
-prefix	cli:cli/CalibreAudit.scala	CalibreAudit → Calibre.Audit	1
-prefix	cli:cli/CalibreBook.scala	CalibreBook → Calibre.Book	1
-prefix	cli:cli/CalibreChange.scala	CalibreChange → Calibre.Change	1
-prefix	cli:cli/CalibreField.scala	CalibreField → Calibre.Field	1
-prefix	cli:cli/CalibreJson.scala	CalibreJson → Calibre.Json	1
-prefix	cli:cli/CalibrePush.scala	CalibrePush → Calibre.Push	1
-prefix	cli:cli/CliError.scala	CliError → Cli.Error	1
-prefix	config:config/ConfigReloadConfig.scala	ConfigReloadConfig → ConfigReload.Config	1
-prefix	core:domain/ReadSchedule.scala	ReadSchedule → Read.Schedule	1
 prefix	core:util/jobs/JobAction.scala	JobAction → Job.Action	1
 prefix	core:util/jobs/JobControlStep.scala	JobControlStep → Job.ControlStep	1
 prefix	core:util/jobs/JobStop.scala	JobStop → Job.Stop	1
@@ -1093,50 +1081,6 @@ prefix	files:util/data/exchange/BundleFormat.scala	BundleFormat → Bundle.Forma
 prefix	files:util/data/exchange/BundleTar.scala	BundleTar → Bundle.Tar	1
 prefix	files:util/data/mirror/MirrorPlacement.scala	MirrorPlacement → Mirror.Placement	1
 prefix	files:util/plugins/PluginKit.scala	PluginKit → Plugin.Kit	1
-prefix	plugin-api:plugin/AiHttpResponse.scala	AiHttpResponse → AiHttp.Response	1
-prefix	plugin-api:plugin/AiToolCall.scala	AiToolCall → AiTool.Call	1
-prefix	plugin-api:plugin/AiTurnRequest.scala	AiTurnRequest → AiTurn.Request	1
-prefix	plugin-api:plugin/FetchContext.scala	FetchContext → Fetch.Context	1
-prefix	plugin-api:plugin/LicenceRead.scala	LicenceRead → Licence.Read	1
-prefix	plugin-api:plugin/MediaTargetId.scala	MediaTargetId → MediaTarget.Id	1
-prefix	plugin-api:plugin/PluginConfig.scala	PluginConfig → Plugin.Config	1
-prefix	plugin-api:plugin/PluginContext.scala	PluginContext → Plugin.Context	1
-prefix	plugin-api:plugin/PluginHttp.scala	PluginHttp → Plugin.Http	1
-prefix	plugin-api:plugin/PluginHttpResponse.scala	PluginHttpResponse → Plugin.HttpResponse	1
-prefix	plugin-api:plugin/PluginInfo.scala	PluginInfo → Plugin.Info	1
-prefix	plugin-api:plugin/PluginLog.scala	PluginLog → Plugin.Log	1
-prefix	plugin-api:plugin/SecretRef.scala	SecretRef → Secret.Ref	1
-prefix	plugin-api:plugin/SecretVault.scala	SecretVault → Secret.Vault	1
-prefix	plugins/calibre:plugins/calibre/CalibreAudit.scala	CalibreAudit → Calibre.Audit	1
-prefix	plugins/calibre:plugins/calibre/CalibreBook.scala	CalibreBook → Calibre.Book	1
-prefix	plugins/calibre:plugins/calibre/CalibreChange.scala	CalibreChange → Calibre.Change	1
-prefix	plugins/calibre:plugins/calibre/CalibreField.scala	CalibreField → Calibre.Field	1
-prefix	plugins/calibre:plugins/calibre/CalibreLibrary.scala	CalibreLibrary → Calibre.Library	1
-prefix	plugins/calibre:plugins/calibre/CalibrePush.scala	CalibrePush → Calibre.Push	1
-prefix	plugins/calibre:plugins/calibre/CalibreSettings.scala	CalibreSettings → Calibre.Settings	1
-prefix	plugins/media:plugins/media/CommonsDepictions.scala	CommonsDepictions → Commons.Depictions	1
-prefix	plugins/media:plugins/media/CommonsDepicts.scala	CommonsDepicts → Commons.Depicts	1
-prefix	plugins/media:plugins/media/CommonsFile.scala	CommonsFile → Commons.File	1
-prefix	plugins/media:plugins/media/CommonsFiles.scala	CommonsFiles → Commons.Files	1
-prefix	plugins/media:plugins/media/CommonsSettings.scala	CommonsSettings → Commons.Settings	1
-prefix	plugins/media:plugins/media/KeyedPluginConfig.scala	KeyedPluginConfig → KeyedPlugin.Config	1
-prefix	plugins/media:plugins/media/MediaPluginConfig.scala	MediaPluginConfig → MediaPlugin.Config	1
-prefix	server:domain/catalogue/evidence/passages/PassageSource.scala	PassageSource → Passage.Source	1
-prefix	server:domain/personal/bookmarks/BookmarkRow.scala	BookmarkRow → Bookmark.Row	1
-prefix	server:domain/personal/notes/NoteEditRefused.scala	NoteEditRefused → Note.EditRefused	1
-prefix	server:domain/personal/notes/NoteItem.scala	NoteItem → Note.Item	1
-prefix	server:domain/personal/notes/NoteRow.scala	NoteRow → Note.Row	1
-prefix	server:server/agents/ClaudeCodeEnv.scala	ClaudeCodeEnv → ClaudeCode.Env	1
-prefix	server:server/agents/CodexHome.scala	CodexHome → Codex.Home	1
-prefix	server:server/hot/HotDataSource.scala	HotDataSource → Hot.DataSource	1
-prefix	server:server/hot/HotGraph.scala	HotGraph → Hot.Graph	1
-prefix	server:server/hot/PinRequests.scala	PinRequests → Pin.Requests	1
-prefix	server:util/basemap/DegreesPerPixel.scala	DegreesPerPixel → Degrees.PerPixel	1
-prefix	server:util/basemap/PmTilesFile.scala	PmTilesFile → PmTiles.File	1
-prefix	server:util/data/maintenance/MaintenanceTaskName.scala	MaintenanceTaskName → MaintenanceTask.Name	1
-prefix	server:util/data/mirror/MirrorExport.scala	MirrorExport → Mirror.Export	1
-prefix	server:util/data/mirror/MirrorNote.scala	MirrorNote → Mirror.Note	1
-prefix	server:util/data/mirror/MirrorRecords.scala	MirrorRecords → Mirror.Records	1
 prefix	server:util/jobs/JobListing.scala	JobListing → Job.Listing	1
 prefix	server:util/jobs/JobPool.scala	JobPool → Job.Pool	1
 prefix	server:util/jobs/JobRecords.scala	JobRecords → Job.Records	1
@@ -1145,13 +1089,6 @@ prefix	server:util/jobs/JobRuns.scala	JobRuns → Job.Runs	1
 prefix	server:util/jobs/JobStopped.scala	JobStopped → Job.Stopped	1
 prefix	server:util/jobs/JobStops.scala	JobStops → Job.Stops	1
 prefix	server:util/plugins/PluginSetResource.scala	PluginSetResource → Plugin.SetResource	1
-prefix	server:util/storage/StoreContents.scala	StoreContents → Store.Contents	1
-prefix	server:util/storage/StoreError.scala	StoreError → Store.Error	1
-prefix	server:util/storage/StoreKey.scala	StoreKey → Store.Key	1
-prefix	server:util/storage/StoreKey.scala	StoreKeyRule → Store.KeyRule	1
-prefix	server:util/storage/StoreMeasure.scala	StoreMeasure → Store.Measure	1
-prefix	server:util/storage/StoreVolume.scala	StoreVolume → Store.Volume	1
-prefix	server:util/storage/StoredKind.scala	StoredKind → Stored.Kind	1
 primitive	db:domain/automation/agents/AgentRepo.scala	String/Int/Long for a concept with a newtype	15
 primitive	db:domain/automation/agents/LeaseRepo.scala	String/Int/Long for a concept with a newtype	1
 primitive	db:domain/automation/agents/ModelSettingsRepo.scala	String/Int/Long for a concept with a newtype	1
@@ -1322,7 +1259,7 @@ unwrap	server:server/Composition.scala	.value outside a boundary	1
 unwrap	server:server/agents/ClaudeCode.scala	.value outside a boundary	1
 unwrap	server:server/agents/ClaudeCodeClient.scala	.value outside a boundary	1
 unwrap	server:server/agents/ServerAutomationHost.scala	.value outside a boundary	1
-unwrap	server:server/hot/HotGraph.scala	.value outside a boundary	8
+unwrap	server:server/hot/Hot.scala	.value outside a boundary	8
 unwrap	server:server/instance/InstanceControllers.scala	.value outside a boundary	1
 unwrap	server:util/basemap/BasemapFetch.scala	.value outside a boundary	1
 unwrap	server:util/basemap/BasemapService.scala	.value outside a boundary	6
@@ -1330,7 +1267,7 @@ unwrap	server:util/basemap/DiskLru.scala	.value outside a boundary	3
 unwrap	server:util/basemap/GebcoSeaFloor.scala	.value outside a boundary	4
 unwrap	server:util/basemap/GeoTiffGrid.scala	.value outside a boundary	23
 unwrap	server:util/basemap/OnDemandTiles.scala	.value outside a boundary	1
-unwrap	server:util/basemap/PmTilesFile.scala	.value outside a boundary	1
+unwrap	server:util/basemap/PmTiles.scala	.value outside a boundary	1
 unwrap	server:util/basemap/PmTilesWriter.scala	.value outside a boundary	1
 unwrap	server:util/data/DataContributions.scala	.value outside a boundary	3
 unwrap	server:util/data/backup/BackupService.scala	.value outside a boundary	7

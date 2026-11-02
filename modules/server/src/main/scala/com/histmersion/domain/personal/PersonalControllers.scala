@@ -15,7 +15,7 @@ import com.histmersion.api.personal.{
 import com.histmersion.api.ItemKind as MarkKind
 import com.histmersion.domain.{Caller, ItemKey}
 import com.histmersion.domain.personal.bookmarks.BookmarkService
-import com.histmersion.domain.personal.notes.{NoteEditRefused, NoteService}
+import com.histmersion.domain.personal.notes.NoteService
 import com.histmersion.domain.personal.reading.{ReadingService, ReadingShow}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.{Offset, PageSize, UserId}
@@ -142,8 +142,8 @@ final class PersonalControllers(
         nid <- com.histmersion.api.personal.Note.Id.parse(id).left.map(bad)
         text <- com.histmersion.api.personal.Note.Text.tidy(in.text).left.map(bad)
         n <- edited(user, nid, text, in.ifUpdatedAt.map(_.trim).filter(_.nonEmpty)).left.map {
-          case NoteEditRefused.Missing      => missing(s"note $id")
-          case NoteEditRefused.Changed(was) =>
+          case com.histmersion.domain.personal.notes.Note.EditRefused.Missing      => missing(s"note $id")
+          case com.histmersion.domain.personal.notes.Note.EditRefused.Changed(was) =>
             Api.Error(
               s"the note changed since it was opened (now ${was.iso}); open it again",
               Some(Write.CodePrecondition)
@@ -160,7 +160,10 @@ final class PersonalControllers(
   ) =
     seen.map(s => Try(MarkTime.parse(s)).toOption) match
       case Some(None) =>
-        notes.get(user, id).toRight(NoteEditRefused.Missing).flatMap(n => Left(NoteEditRefused.Changed(n.updatedAt)))
+        notes
+          .get(user, id)
+          .toRight(com.histmersion.domain.personal.notes.Note.EditRefused.Missing)
+          .flatMap(n => Left(com.histmersion.domain.personal.notes.Note.EditRefused.Changed(n.updatedAt)))
       case asked => notes.edit(user, id, text, asked.flatten, now())
 
   def removeNote(caller: Caller, id: String): Either[Api.Error, WireNote] =

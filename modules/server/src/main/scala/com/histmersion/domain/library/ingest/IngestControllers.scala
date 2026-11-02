@@ -5,7 +5,7 @@ import com.histmersion.config.AppConfig
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueService}
 import com.histmersion.domain.library.sources.SourceService
 import com.histmersion.util.data.maintenance.WriteGate
-import com.histmersion.util.storage.{Blob, Store, StoreKey}
+import com.histmersion.util.storage.{Blob, Store}
 import com.histmersion.domain.library.Citekey
 
 import hearth.kindlings.optics.syntax.*
@@ -180,11 +180,11 @@ final class IngestControllers(
   /** `<sha256>.<ext>` — content-addressed, so the same file uploaded twice is stored once and `reocr` can find the
     * original from `sources.sha256` alone.
     */
-  private def store(upload: Upload, sha: String, filename: String): Either[Api.Error, StoreKey] =
+  private def store(upload: Upload, sha: String, filename: String): Either[Api.Error, Store.Key] =
     val ext = AssetLinks.safeName(filename).reverse.takeWhile(_ != '.').reverse match
       case e if e.nonEmpty && e.length <= 8 && e.forall(_.isLetterOrDigit) => e.toLowerCase
       case _                                                               => "bin"
-    val key = StoreKey.applyUnsafe(s"$sha.$ext")
+    val key = Store.Key.applyUnsafe(s"$sha.$ext")
     def failed(why: String) = Api.Error(s"cannot spool the upload into ${cfg().converter.spoolDir}: $why")
     val store = originals()
     if store.exists(key) then Right(key)
@@ -197,7 +197,7 @@ final class IngestControllers(
               .Try(upload.bytes.read(in => Using.resource(r.output())(out => in.transferTo(out))))
               .toEither
               .left
-              .map(e => com.histmersion.util.storage.StoreError.Failed(e.getMessage))
+              .map(e => com.histmersion.util.storage.Store.Error.Failed(e.getMessage))
               .flatMap(_ => r.commit())
           }
         }
@@ -206,8 +206,8 @@ final class IngestControllers(
         .map(_ => key)
 
   /** The stored original of content hash `sha`: `<sha>.<ext>`, if it is there. */
-  private def storedFor(sha: String): Option[StoreKey] =
-    originals().names().find(_.startsWith(sha + ".")).map(StoreKey.applyUnsafe)
+  private def storedFor(sha: String): Option[Store.Key] =
+    originals().names().find(_.startsWith(sha + ".")).map(Store.Key.applyUnsafe)
 
   private def digest(upload: Upload): Either[Api.Error, String] =
     scala.util

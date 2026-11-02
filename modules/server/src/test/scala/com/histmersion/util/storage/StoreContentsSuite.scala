@@ -13,7 +13,7 @@ class StoreContentsSuite extends munit.FunSuite:
   private def cases(name: String, store: () => Store): Unit =
     test(s"$name: content-addressed — stored only when the content is its name, found by digest"):
       val s = store()
-      val contents = StoreContents(s)
+      val contents = Store.Contents(s)
       val data = "an original".getBytes(UTF_8)
       assertEquals(contents.find(sha(data)), None)
       assert(contents.store(sha(data), "pdf", java.io.ByteArrayInputStream("not it".getBytes(UTF_8))).isLeft)

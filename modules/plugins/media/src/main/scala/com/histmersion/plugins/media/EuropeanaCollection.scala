@@ -26,14 +26,14 @@ final class EuropeanaCollection(conf: CollectionSettings, key: Option[String], l
   )
   private def headers = Map(Europeana.KeyHeader -> apiKey)
 
-  def search(place: MediaPlace, http: PluginHttp): Either[String, List[Either[String, MediaItem]]] =
+  def search(place: MediaPlace, http: Plugin.Http): Either[String, List[Either[String, MediaItem]]] =
     http
       .askJson(Europeana.searchUrl(conf.apiUrl, place.label, conf.candidates, exclusions), headers)
       .flatMap(Europeana.records(_, conf.apiUrl, licences, exclusions))
       .left
       .map(explain)
 
-  override def complete(item: MediaItem, http: PluginHttp): Either[String, MediaItem] =
+  override def complete(item: MediaItem, http: Plugin.Http): Either[String, MediaItem] =
     http
       .askJson(Europeana.recordUrl(conf.apiUrl, "/" + item.key), headers)
       .flatMap(Europeana.item(_, item, licences, exclusions))

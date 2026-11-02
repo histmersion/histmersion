@@ -19,7 +19,7 @@ package com.histmersion.plugin
   *   what a dry run lists beside it for a person to judge; `None`: it is not listed
   */
 final case class MediaUse(
-    target: MediaTargetId,
+    target: MediaTarget.Id,
     item: MediaItem,
     rank: Int,
     statement: Option[String] = None,

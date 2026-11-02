@@ -113,7 +113,7 @@ object ArticleCli:
     loop(fs, 1, 0, Nil, Nil)
 
   /** Write every article to `<dir>/<kind>/<slug>.md`. Returns how many were written. */
-  def exportAll(c: Client, out: Path): Either[CliError, Int] =
+  def exportAll(c: Client, out: Path): Either[Cli.Error, Int] =
     c.articleSlugs.flatMap { slugs =>
       val total = slugs.size
       val failed = slugs.zipWithIndex.flatMap { (slug, i) =>
@@ -129,7 +129,7 @@ object ArticleCli:
       println(s"exported ${total - failed.size} article(s) to $out, failed ${failed.size}")
       failed.take(10).foreach(f => Console.err.println(s"  ! $f"))
       if failed.isEmpty then Right(total)
-      else Left(CliError(s"${failed.size} of $total article(s) could not be exported", exitCode = ExitCode.Refused))
+      else Left(Cli.Error(s"${failed.size} of $total article(s) could not be exported", exitCode = ExitCode.Refused))
     }
 
   /** The `type:` of an exported note — which subdirectory it belongs in. `ArticleNote.render` always writes the key, so
@@ -201,7 +201,7 @@ object ArticleCli:
     )
       .mapN { (file, kind, strict) => (c: Client) =>
         val p = Path.of(file)
-        if !Files.isRegularFile(p) then Left(CliError(s"no such file: $file", exitCode = ExitCode.Usage))
+        if !Files.isRegularFile(p) then Left(Cli.Error(s"no such file: $file", exitCode = ExitCode.Usage))
         else
           // an explicit `put` is always deliberate → force past the "newer in DB" guard
           val fallback = kind.getOrElse(kindOf(p.toAbsolutePath.getParent))
@@ -259,7 +259,7 @@ object ArticleCli:
       def read(f: String) =
         val p = Path.of(f)
         if Files.isRegularFile(p) then Right(Files.readString(p))
-        else Left(CliError(s"no such file: $f", exitCode = ExitCode.Usage))
+        else Left(Cli.Error(s"no such file: $f", exitCode = ExitCode.Usage))
       val req = (editsFile, bodyFile) match
         case (Some(e), None) =>
           read(e)
@@ -267,14 +267,14 @@ object ArticleCli:
               io.circe.parser
                 .decode[List[Article.Edits.EditAnswer]](t)
                 .left
-                .map(err => CliError(s"$e: not a JSON list of edits (${err.getMessage})", exitCode = ExitCode.Usage))
+                .map(err => Cli.Error(s"$e: not a JSON list of edits (${err.getMessage})", exitCode = ExitCode.Usage))
             )
             .map(es => Article.Edits.ArticleCheckRequest(edits = es, kind = kind))
         case (None, Some(b)) =>
           read(b).map(t =>
             Article.Edits.ArticleCheckRequest(body = Some(FileFormat.splitFrontmatter(t)._2), kind = kind)
           )
-        case _ => Left(CliError("give --edits-file or --body-file (one of them)", exitCode = ExitCode.Usage))
+        case _ => Left(Cli.Error("give --edits-file or --body-file (one of them)", exitCode = ExitCode.Usage))
       req.flatMap(c.checkArticle(slug, _)).map(r => Output.emit(json, r)(Article.Edits.markdown))
     }
   }
@@ -297,7 +297,7 @@ object ArticleCli:
     (Opts.argument[String]("dir"), Opts.flag("force", "Overwrite articles newer than the files").orFalse)
       .mapN { (dir, force) => (c: Client) =>
         val p = Path.of(dir)
-        if !Files.isDirectory(p) then Left(CliError(s"not a directory: $dir", exitCode = ExitCode.Usage))
+        if !Files.isDirectory(p) then Left(Cli.Error(s"not a directory: $dir", exitCode = ExitCode.Usage))
         else Right(report(importAll(c, p, force, Set(WikiLayout.SourcesDir))))
       }
   }
@@ -428,7 +428,7 @@ object ArticleCli:
   }
 
   /** The `article` command group, added to `histmersion`'s subcommands by [[Cli]]. */
-  val command: Opts[Client => Either[CliError, Unit]] =
+  val command: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "article",
       "The compiled wiki: list/get/put/patch/lint/check/coverage/review/rename/export/import/versions articles"

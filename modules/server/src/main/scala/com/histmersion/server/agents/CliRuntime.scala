@@ -33,7 +33,7 @@ final class CliRuntime(
   @volatile var pools: Option[PoolSink] = None
 
   /** `127.x`, `::1`, `localhost`: nobody else can reach the server, so nobody else can spend a plan. */
-  def loopback: Boolean = ClaudeCodeEnv.isLoopback(app.server.host)
+  def loopback: Boolean = ClaudeCode.Env.isLoopback(app.server.host)
 
   /** The agent MCP endpoint as a CLI reaches it (one URL; the run token decides the tools). */
   def agentMcpUrl: String = trees.settings("").agentMcpUrl

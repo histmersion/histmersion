@@ -18,7 +18,7 @@ object PluginTemplate:
       agentNotes: Boolean
   )
 
-  /** The version a new plugin is published under, as its `PluginInfo` states it too. */
+  /** The version a new plugin is published under, as its `Plugin.Info` states it too. */
   val FirstVersion = "0.1.0"
 
   /** The repository `scala-cli publish` writes the plugin to, relative to the project. */
@@ -268,7 +268,7 @@ object PluginTemplate:
       |6. **Check** with `histmersion plugin status` (the running server lists the plugin's jar), and in the server
       |   log, which names the plugin as it registers.
       |
-      |**Updating.** Raise `publish.version` in `project.scala` and the version in `PluginInfo` together, then repeat
+      |**Updating.** Raise `publish.version` in `project.scala` and the version in `Plugin.Info` together, then repeat
       |steps 1–3 with that version, and step 5. `histmersion plugin status` says REBUILD NEEDED whenever the plugins
       |directory differs from what the running server was linked with.
       |
@@ -381,7 +381,7 @@ object PluginTemplate:
       |  `histmersion plugin repo --m2`; `histmersion plugin repo` prints the install's own), as compile-only
       |  dependencies:
       |  - `@api@`: everything is in the package `com.histmersion.plugin`. Start at `Plugin` and
-      |    `PluginContext`. The values it exchanges have types of their own (`Year`, `Period`, `Latitude`,
+      |    `Plugin.Context`. The values it exchanges have types of their own (`Year`, `Period`, `Latitude`,
       |    `Longitude`, `Doi`, `WikidataId`, `Licence`; Iron newtypes): a literal is checked when it compiles
       |    (`Doi("10.1234/abc")`, `Year(-1600)`), a value read at run time is parsed (`Doi.option(raw)`,
       |    `Latitude.either(raw)`), and `.value` takes the plain value out.
@@ -391,7 +391,7 @@ object PluginTemplate:
       |- Sources, with the Scaladoc that documents every type: `@apiSources@` in that repository
       |  (`histmersion plugin api-jar --sources` prints the full path). Read one with
       |  `unzip -p "<sources jar>" com/histmersion/plugin/Plugin.scala`; list them with `unzip -l`.
-      |- cellar's project mode (`cellar get com.histmersion.plugin.PluginContext`, run here) works once your
+      |- cellar's project mode (`cellar get com.histmersion.plugin.Plugin$Context`, run here) works once your
       |  cellar reads Scala 3.10 TASTy; older releases stop with "TASTy signature has wrong version".
       |
       |## Other libraries
@@ -409,7 +409,7 @@ object PluginTemplate:
       |
       |- One service type, `Plugin`: a public class with a no-argument constructor that does nothing. The
       |  work starts in `register`, which the server calls only when the plugin is enabled.
-      |- `PluginInfo(id, version, Spi.Version)`: the id is the settings key; keep it equal to the defaults
+      |- `Plugin.Info(id, version, Spi.Version)`: the id is the settings key; keep it equal to the defaults
       |  file's name.
       |- `register` adds to the context's registries and returns `Right(())`, or `Left(why)`. A `Left` or an
       |  exception discards everything it added.
@@ -429,7 +429,7 @@ object PluginTemplate:
       |histmersion plugin rebuild             # relink the server with it (or: plugin rebuild --jvm)
       |```
       |
-      |Bump `//> using publish.version` and the version in `PluginInfo` together for a new release. A native
+      |Bump `//> using publish.version` and the version in `Plugin.Info` together for a new release. A native
       |server needs `plugin rebuild` after every `plugin add` or `plugin rm` (README.md, "Install it").
       |
       |Turn it on in the user's `histmersion.conf`: `histmersion.plugins.@id@ { enabled = true }`. Check it

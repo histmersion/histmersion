@@ -32,7 +32,7 @@ object ArticlePatches:
       regions: Option[String],
       period: Option[String],
       ifUpdatedAt: Option[String]
-  ): Either[CliError, Article.Patch] =
+  ): Either[Cli.Error, Article.Patch] =
     for
       base <- parse(json)
       body <- read(bodyFile)
@@ -72,18 +72,18 @@ object ArticlePatches:
     * spell (the server validates it); `--clear-filter` sends the empty filter that clears it; each `--reason ck=text`
     * sets one reason, `ck=` removes it. Both override `--json`.
     */
-  def withCoverage(p: Article.Patch, f: FilterFlags, reasons: List[String]): Either[CliError, Article.Patch] =
+  def withCoverage(p: Article.Patch, f: FilterFlags, reasons: List[String]): Either[Cli.Error, Article.Patch] =
     for
       period <- periodOf(f.period)
       _ <- Either.cond(
         !(f.clear && f.anyGiven),
         (),
-        CliError("--clear-filter with --filter-* flags: give one or the other", exitCode = ExitCode.Usage)
+        Cli.Error("--clear-filter with --filter-* flags: give one or the other", exitCode = ExitCode.Usage)
       )
       rs <- reasons.traverse { r =>
         r.indexOf('=') match
           case i if i > 0 => Right(Coverage.Reason(r.take(i).trim, r.drop(i + 1).trim))
-          case _          => Left(CliError(s"--reason: '$r' is not <citekey>=<reason>", exitCode = ExitCode.Usage))
+          case _          => Left(Cli.Error(s"--reason: '$r' is not <citekey>=<reason>", exitCode = ExitCode.Usage))
       }
     yield
       val filter =
@@ -108,37 +108,37 @@ object ArticlePatches:
   /** Each `--critique-reason src>dst=text` sets the reason of one critique-checklist pair, `src>dst=` removes it; added
     * to those of `--json`.
     */
-  def withCritiques(p: Article.Patch, reasons: List[String]): Either[CliError, Article.Patch] =
+  def withCritiques(p: Article.Patch, reasons: List[String]): Either[Cli.Error, Article.Patch] =
     reasons
       .traverse(r =>
-        CritiqueReason.parse(r).left.map(m => CliError(s"--critique-reason: $m", exitCode = ExitCode.Usage))
+        CritiqueReason.parse(r).left.map(m => Cli.Error(s"--critique-reason: $m", exitCode = ExitCode.Usage))
       )
       .map(rs => if rs.isEmpty then p else p.copy(critiqueReasons = p.critiqueReasons ++ rs))
 
-  private def parse(json: Option[String]): Either[CliError, Article.Patch] = json match
+  private def parse(json: Option[String]): Either[Cli.Error, Article.Patch] = json match
     case None    => Right(Article.Patch())
     case Some(s) =>
       io.circe.parser
         .decode[Article.Patch](s)
         .left
-        .map(e => CliError(s"--json: ${e.getMessage}", exitCode = ExitCode.Usage))
+        .map(e => Cli.Error(s"--json: ${e.getMessage}", exitCode = ExitCode.Usage))
 
-  private def read(file: Option[String]): Either[CliError, Option[String]] = file match
+  private def read(file: Option[String]): Either[Cli.Error, Option[String]] = file match
     case None    => Right(None)
     case Some(f) =>
       val p = java.nio.file.Path.of(f)
       if java.nio.file.Files.isRegularFile(p) then Right(Some(java.nio.file.Files.readString(p)))
-      else Left(CliError(s"no such file: $f", exitCode = ExitCode.Usage))
+      else Left(Cli.Error(s"no such file: $f", exitCode = ExitCode.Usage))
 
-  private def periodOf(s: Option[String]): Either[CliError, Option[Period.Input]] = s match
+  private def periodOf(s: Option[String]): Either[Cli.Error, Option[Period.Input]] = s match
     case None    => Right(None)
     case Some(v) =>
       v.split(",").map(_.trim).toList match
         case a :: b :: Nil =>
           (a.toLongOption, b.toLongOption) match
             case (Some(x), Some(y)) => Right(Some(Period.Input(x, y)))
-            case _                  => Left(CliError(s"--period: '$v' is not start,end", exitCode = ExitCode.Usage))
-        case _ => Left(CliError(s"--period: '$v' is not start,end", exitCode = ExitCode.Usage))
+            case _                  => Left(Cli.Error(s"--period: '$v' is not start,end", exitCode = ExitCode.Usage))
+        case _ => Left(Cli.Error(s"--period: '$v' is not start,end", exitCode = ExitCode.Usage))
 
   private def csv(s: Option[String]): List[String] = s.map(csv1).getOrElse(Nil)
   private def csv1(s: String): List[String] = s.split(",").toList.map(_.trim).filter(_.nonEmpty)

@@ -96,10 +96,10 @@ object Europeana:
       .filter(_.nonEmpty)
 
   /** Pure: a licence's short name for the credit line (`CC-BY-SA-4.0` → `CC BY-SA 4.0`). */
-  def shortName(l: LicenceRead): String = l.family match
-    case LicenceRead.Cc0          => "CC0"
-    case LicenceRead.PublicDomain => "Public Domain Mark"
-    case _                        =>
+  def shortName(l: Licence.Read): String = l.family match
+    case Licence.Read.Cc0          => "CC0"
+    case Licence.Read.PublicDomain => "Public Domain Mark"
+    case _                         =>
       val parts = l.id.split("-").toList
       val (name, rest) = parts.span(p => !p.headOption.exists(_.isDigit))
       (name match
@@ -157,7 +157,7 @@ object Europeana:
         case None    => Left("no rights statement on the record")
         case Some(u) =>
           val lic = licences.readUrl(u)
-          if lic.family == LicenceRead.Unknown then Left(s"not an open licence ($u)")
+          if lic.family == Licence.Read.Unknown then Left(s"not an open licence ($u)")
           else
             Right(
               MediaRights(

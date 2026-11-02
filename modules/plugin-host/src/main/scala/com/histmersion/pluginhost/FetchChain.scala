@@ -1,9 +1,10 @@
 package com.histmersion.pluginhost
 
-import com.histmersion.plugin.{Access, Fetch, FetchContext, FetchedFile, PluginLog, SourceFetcher, WorkKey}
+import com.histmersion.plugin.{Access, Fetch, FetchedFile, SourceFetcher, WorkKey}
 
 import scala.collection.immutable.ListMap
 import scala.util.control.NonFatal
+import com.histmersion.plugin.Plugin
 
 /** The host side of source fetching (docs/research-plugins.md §5.1): the [[SourceFetcher]]s the plugins registered, run
   * as ONE chain until one finds a copy. The fetchers know how to ask their upstream; everything around them is decided
@@ -15,7 +16,7 @@ import scala.util.control.NonFatal
   *     `acquire.allow-unauthorised = true`, and NEVER on the legal path (`fetchLegal`, a watcher's auto-ingest, an
   *     archive.org import), whatever that switch says;
   *   - **the PDF check** — a copy that calls itself a PDF and is not one is no copy;
-  *   - **the memo** — one per fetch of one work, shared by every fetcher ([[FetchContext.memo]]);
+  *   - **the memo** — one per fetch of one work, shared by every fetcher ([[Fetch.Context.memo]]);
   *   - **the log** — every answer but a copy is logged with its reason, one line per fetcher (a miss as
   *     `acquire: <id>: no copy — <why>`), so a fetch that found nothing says which steps ran and why each missed; a
   *     refusal is not asked again; an exception is a miss.
@@ -65,9 +66,9 @@ final class FetchChain(
         s"acquire: ${s.id} obtains copies WITHOUT the rights holder's authorisation; asked for " +
           s"${FetchChain.describe(work)} only because acquire.allow-unauthorised = true"
       )
-    val ctx = new FetchContext:
+    val ctx = new com.histmersion.plugin.Fetch.Context:
       def memo[A](key: String)(compute: => A): A = shared.get(key)(compute)
-      val log: PluginLog = new PluginLog:
+      val log: Plugin.Log = new Plugin.Log:
         def info(message: String) = FetchChain.this.log.info(s"acquire: ${s.id}: $message")
         def warn(message: String) = FetchChain.this.log.warn(s"acquire: ${s.id}: $message")
       override def registered(pluginId: String): Boolean = FetchChain.this.registered(pluginId)
@@ -110,7 +111,7 @@ object FetchChain:
     */
   final case class Outcome(file: Either[String, FetchedFile], answers: List[Answer], foundBy: Option[String] = None)
 
-  /** A chain over these fetchers, in this order. `registered` answers [[FetchContext.registered]]: the plugins of the
+  /** A chain over these fetchers, in this order. `registered` answers [[Fetch.Context.registered]]: the plugins of the
     * generation the fetch runs in.
     */
   def apply(
@@ -123,7 +124,7 @@ object FetchChain:
 
   /** The chain over a generation's registered fetchers, in `acquire.chain` order — with the log lines saying what will
     * run (a chain entry no enabled plugin registered, an unauthorised fetcher that stays off). `plugins`: the plugins
-    * registered in that generation, which each fetch is told of ([[FetchContext.registered]]).
+    * registered in that generation, which each fetch is told of ([[Fetch.Context.registered]]).
     */
   def of(
       registered: ListMap[String, SourceFetcher],

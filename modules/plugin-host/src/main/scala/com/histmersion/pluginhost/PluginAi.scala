@@ -18,7 +18,7 @@ object PluginAi:
       case NonFatal(e)             => Left(s"its check threw ${e.getClass.getSimpleName}")
 
   /** One model call: the provider's answer, or its failure — an exception or a `null` being an error. */
-  def turn(provider: AiProvider, request: AiTurnRequest, http: AiHttp): Either[AiFailure, AiTurn] =
+  def turn(provider: AiProvider, request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn] =
     val answer =
       try Option(provider.turn(request, http)).getOrElse(Left(AiFailure.Error("the provider answered null")))
       catch

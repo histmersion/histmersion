@@ -189,7 +189,7 @@ object MediaCmd:
       }
   }
 
-  val command: Opts[Client => Either[CliError, Unit]] =
+  val command: Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "media",
       "Pictures: import from providers, covers and illustrations of sources, list, show, fill-licences; a figure's detail, patch"

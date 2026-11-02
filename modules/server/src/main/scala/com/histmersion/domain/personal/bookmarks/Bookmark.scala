@@ -5,6 +5,12 @@ import com.histmersion.domain.personal.PersonalState.StoredBookmark
 import com.histmersion.domain.personal.{MarkTarget, MarkTime, SearchWords}
 import com.histmersion.domain.{Described, ItemRef}
 import com.histmersion.domain.library.Title
+import com.augustnagro.magnum.DbCodec
+import com.histmersion.api.personal.{MapZoom, ViewState}
+import com.histmersion.domain.personal.{MarkTarget, MarkTime, TargetLabel}
+import com.histmersion.domain.{ItemKey, ItemUid}
+import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.{Latitude, Longitude, UserId, Year}
 
 /** A bookmark as the person sees it: its target as it shows now and what that is called. */
 final case class Bookmark(
@@ -25,3 +31,25 @@ object Bookmark:
   def of(stored: StoredBookmark, described: Map[ItemRef, Described]): Bookmark =
     val (target, title) = stored.target.shown(described, stored.targetLabel)
     Bookmark(stored.id, target, title, stored.label, stored.createdAt, stored.updatedAt)
+
+  /** A live bookmark as the table answers it. */
+  final private[bookmarks] case class Row(
+      id: com.histmersion.api.personal.Bookmark.Id,
+      kind: String,
+      key: Option[ItemKey],
+      uid: Option[ItemUid],
+      lat: Option[Latitude],
+      lon: Option[Longitude],
+      zoom: Option[MapZoom],
+      from: Option[Year],
+      to: Option[Year],
+      view: Option[ViewState],
+      label: Option[com.histmersion.api.personal.Bookmark.Label],
+      targetLabel: Option[TargetLabel],
+      createdAt: String,
+      updatedAt: String
+  ) derives DbCodec:
+    def stored(user: UserId): Option[StoredBookmark] =
+      MarkTarget
+        .ofColumns(kind, key, uid, lat, lon, zoom, from, to, view)
+        .map(t => StoredBookmark(user, id, t, label, targetLabel, MarkTime.parse(createdAt), MarkTime.parse(updatedAt)))
