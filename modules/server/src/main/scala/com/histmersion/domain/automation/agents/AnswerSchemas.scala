@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.agents
 
-import com.histmersion.domain.{HintProposals, PlanGoal, Scheduling}
+import com.histmersion.domain.{HintProposals, PlanGoal}
 import com.histmersion.api.Agents.ProbeAnswer
 import com.histmersion.api.VocabularyCodecs.given
 import sttp.ai.core.agent.ResponseSchema
@@ -14,13 +14,11 @@ import sttp.ai.core.agent.ResponseSchema
 object AnswerSchemas:
   val probe: ResponseSchema[ProbeAnswer] = ResponseSchema.derived[ProbeAnswer]()
   val plan: ResponseSchema[PlanGoal.PlanAnswer] = ResponseSchema.derived[PlanGoal.PlanAnswer]()
-  val ranking: ResponseSchema[Scheduling.Ranking] = ResponseSchema.derived[Scheduling.Ranking]()
   val hintEffect: ResponseSchema[HintProposals.HintAnswer] = ResponseSchema.derived[HintProposals.HintAnswer]()
 
   /** The engine's step schemas, by name. */
   val all: List[(String, ResponseSchema[?])] = List(
     "probe" -> probe,
     "plan" -> plan,
-    "ranking" -> ranking,
     "hint-effect" -> hintEffect
   )

@@ -12,6 +12,7 @@ import com.histmersion.api.Lint.LintFixResult
 import com.histmersion.domain.PlanGoal
 import com.histmersion.domain.automation.workflows.AutomationHost
 import com.histmersion.server.Handlers
+import io.scalaland.chimney.dsl.*
 
 /** The engine's [[AutomationHost]] over today's handlers, until each operation's owner offers its own service. */
 final class TransitionHost(h: Handlers, upstream: () => AgentUpstream) extends AutomationHost:
@@ -77,7 +78,7 @@ final class TransitionHost(h: Handlers, upstream: () => AgentUpstream) extends A
 
   def sameTitle(answered: String, record: String): Boolean = AgentVerify.sameTitle(answered, record)
 
-  def workLookup: PlanGoal.Lookup = doi => upstream().meta(doi)
+  def workLookup: PlanGoal.Lookup = doi => upstream().meta(doi).map(_.transformInto[PlanGoal.Work])
   def vocabulary(field: String): List[String] =
     h.library.labels.facets(field, None, Filter()).toOption.toList.flatten.sortBy(-_.count).map(_.value)
   def housekeepingBlock: Option[String] = h.housekeepingBlock

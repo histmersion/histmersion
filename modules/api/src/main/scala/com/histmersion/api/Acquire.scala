@@ -11,29 +11,11 @@ object Acquire:
 
     case Citekey(value: String)
 
-  private val DoiCore = """10\.\d{4,9}/[-._;()/:A-Za-z0-9<>\[\]]+""".r
   private val ArxivNew = """^(?:arxiv:)?(\d{4}\.\d{4,5})(?:v\d+)?$""".r
   private val ArxivOld = """^(?:arxiv:)?([a-z-]+(?:\.[A-Z]{2})?/\d{7})(?:v\d+)?$""".r
 
-  /** DOIs are case-insensitive, so they are stored lower-case. */
-  def normalizeDoi(raw: String): Option[String] =
-    val s = Option(raw)
-      .getOrElse("")
-      .trim
-      .replaceFirst("(?i)^https?://(dx\\.)?doi\\.org/", "")
-      .replaceFirst("(?i)^doi:\\s*", "")
-      .trim
-    DoiCore
-      .findFirstIn(s)
-      .map(
-        _.stripSuffix(".")
-          .stripSuffix(",")
-          .stripSuffix(";")
-          .stripSuffix(")")
-          .stripSuffix("}")
-          .stripSuffix("|")
-          .toLowerCase
-      )
+  /** DOIs are case-insensitive, so they are stored lower-case ([[com.histmersion.values.Doi.normalize]]). */
+  def normalizeDoi(raw: String): Option[String] = com.histmersion.values.Doi.normalize(raw)
 
   def normalizeArxiv(raw: String): Option[String] =
     Option(raw).map(_.trim).filter(_.nonEmpty).flatMap { s =>

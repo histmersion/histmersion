@@ -6,4 +6,10 @@ import com.histmersion.api.BundleSource
   * work: `gate` is the question that decides it when a person must, `byKey` whether a strong key (a DOI, the original
   * file, an ISBN) made them one, `basis` how they were matched as the plan says it (the keys, or the score).
   */
-final case class SourcePair(right: BundleSource, left: BundleSource, gate: Option[String], byKey: Boolean, basis: String)
+final case class SourcePair(
+    right: BundleSource,
+    left: BundleSource,
+    gate: Option[String],
+    byKey: Boolean,
+    basis: String
+)

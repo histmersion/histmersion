@@ -702,7 +702,12 @@ final class AgentsHandlers(
             .map(r => rs :+ RunDetail(r, runs.steps(r.id, Int.MaxValue), Nil))
         )
       }
-      cmp <- CompareRuns.compare(runs.map(CompareRunsViews.run), billingOf).left.map(ApiError(_))
+      compared = runs.map(CompareRunsViews.run)
+      // what the runs' workflow produced is compared as its owner says
+      outputs = compared.headOption
+        .flatMap(r => workflows.parse(r.run.pipeline))
+        .fold(OutputComparison.none)(_.outputs)
+      cmp <- CompareRuns.compare(compared, billingOf, outputs).left.map(ApiError(_))
     yield CompareRunsViews.comparison(cmp)
 
   /** How a configured model is paid for, as `agent models` words it (None: it cannot be read). */

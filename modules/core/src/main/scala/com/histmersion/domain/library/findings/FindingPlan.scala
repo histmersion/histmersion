@@ -23,9 +23,9 @@ import scala.collection.mutable
 
 /** How a merge plan treats findings (docs/research-merge-import.md §5.4): a finding belongs to its source; inside a
   * pair of sources that are (or may be) one, each of the bundle's findings is matched with at most one here — the same
-  * claim folds, a near duplicate is a question (kept apart by default) —, the rest arrive under the survivor's
-  * citekey, numbered after its last; a source renamed takes its findings along; a finding added under an id another
-  * finding has here arrives under the next free one.
+  * claim folds, a near duplicate is a question (kept apart by default) —, the rest arrive under the survivor's citekey,
+  * numbered after its last; a source renamed takes its findings along; a finding added under an id another finding has
+  * here arrives under the next free one.
   */
 final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
   import FindingPlan.*
@@ -81,24 +81,25 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
             List(km.Both, km.Merge),
             Some(com.histmersion.api.MergeDecision.of(km.Both)),
             cond,
-            detail = Some(
-              IssueDetail(
-                List(
-                  IssueField("claim", Some(lf.claim), Some(rf.claim)),
-                  IssueField(
-                    "period",
-                    lf.period.map(x => MergeIssueDetail.rangeText(Some(x))),
-                    rf.period.map(x => MergeIssueDetail.rangeText(Some(x)))
-                  ),
-                  IssueField("region", lf.region, rf.region),
-                  IssueField(
-                    "confidence",
-                    lf.confidence.map(_.toString.toLowerCase),
-                    rf.confidence.map(_.toString.toLowerCase)
+            detail =
+              Some(
+                IssueDetail(
+                  List(
+                    IssueField("claim", Some(lf.claim), Some(rf.claim)),
+                    IssueField(
+                      "period",
+                      lf.period.map(x => MergeIssueDetail.rangeText(Some(x))),
+                      rf.period.map(x => MergeIssueDetail.rangeText(Some(x)))
+                    ),
+                    IssueField("region", lf.region, rf.region),
+                    IssueField(
+                      "confidence",
+                      lf.confidence.map(_.toString.toLowerCase),
+                      rf.confidence.map(_.toString.toLowerCase)
+                    )
                   )
                 )
               )
-            )
           ),
           Set.empty
         )

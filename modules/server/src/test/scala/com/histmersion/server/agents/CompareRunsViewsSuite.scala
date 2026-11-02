@@ -1,6 +1,7 @@
 package com.histmersion.server.agents
 
-import com.histmersion.domain.automation.agents.CompareRunsViews
+import com.histmersion.domain.automation.agents.{CompareRunsViews, OutputComparison}
+import com.histmersion.domain.library.workflows.EnrichComparison
 import com.histmersion.domain.automation.managers.Zero
 
 import com.histmersion.api.*
@@ -70,7 +71,11 @@ class CompareRunsViewsSuite extends munit.FunSuite:
 
   private def compare(runs: RunDetail*): RunCompare.Comparison =
     CompareRuns
-      .compare(runs.toList.map(CompareRunsViews.run), _ => None)
+      .compare(
+        runs.toList.map(CompareRunsViews.run),
+        _ => None,
+        if runs.headOption.exists(_.run.pipeline == "enrich-source") then EnrichComparison else OutputComparison.none
+      )
       .map(CompareRunsViews.comparison)
       .fold(fail(_), identity)
 

@@ -1,6 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.api.{Acquire, Articles, WorkRef}
+import com.histmersion.api.Articles
 import com.histmersion.api.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -8,6 +8,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
 import com.histmersion.api.GoalPlans.{Plan, PlannedGoal, PlannedWork}
+import com.histmersion.values.Doi
 
 /** The `plan-goal` pipeline's typed answer and its pure checks (docs/research-embedded-agents.md §14): the planner
   * proposes sub-goals, search queries and candidate works (DOIs) for one goal; code validates the vocabulary (slugs,
@@ -116,7 +117,7 @@ object PlanGoal:
 
     val works = a.works
       .foldLeft(Vector.empty[ProposedWork]) { (acc, w) =>
-        Acquire.normalizeDoi(Option(w.doi).getOrElse("")) match
+        Doi.normalize(Option(w.doi).getOrElse("")) match
           case None                              => problems += s"'${w.doi}' is not a DOI (10.xxxx/…)"; acc
           case Some(d) if acc.exists(_.doi == d) => acc
           case Some(d)                           => acc :+ ProposedWork(d, Option(w.why).map(_.trim).getOrElse(""))
@@ -149,8 +150,21 @@ object PlanGoal:
   /** Look each proposed DOI up (OpenAlex/Crossref through the discover path). A DOI that does not resolve, or a
     * retracted work, is dropped with why — a person never sees an unverified work.
     */
-  /** A work looked up by its DOI. */
-  type Lookup = String => Either[String, WorkRef]
+  /** A work as the lookup found it: its metadata, whether the corpus holds it (and under which citekey), whether it is
+    * open access or retracted.
+    */
+  final case class Work(
+      title: Option[String],
+      year: Option[Int],
+      authors: List[String],
+      citekey: Option[String],
+      inDb: Boolean,
+      isOa: Boolean,
+      isRetracted: Boolean
+  )
+
+  /** A work looked up by its DOI (the library's metadata, lent by the composition). */
+  type Lookup = String => Either[String, Work]
 
   def verify(p: Proposed, goal: String, lookup: Lookup): Plan =
     val looked = p.works.map(w => (w, lookup(w.doi)))

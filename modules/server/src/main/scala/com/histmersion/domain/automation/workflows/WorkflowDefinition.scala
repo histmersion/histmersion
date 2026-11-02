@@ -1,6 +1,6 @@
 package com.histmersion.domain.automation.workflows
 
-import com.histmersion.domain.automation.agents.{Halt, RunCtx}
+import com.histmersion.domain.automation.agents.{Halt, OutputComparison, RunCtx}
 import com.histmersion.values.{AgentRole, TargetKind}
 
 /** A kind of workflow a domain defines and the engine runs: what it is called and works on, the roles its agents take,
@@ -21,3 +21,6 @@ trait WorkflowDefinition:
 
   /** One run to its next resting state: a one-line summary for the run's log entry, or why it halted. */
   def run(run: RunCtx): Either[Halt, String]
+
+  /** How its runs' outputs compare (`agent compare`); none by default. */
+  def outputs: OutputComparison = OutputComparison.none
