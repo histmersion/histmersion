@@ -1,61 +1,46 @@
 package com.histmersion.server.agents
 
-import com.histmersion.domain.library.workflows.{
-  AcquisitionSweepPipeline,
-  AcquisitionWork,
-  CurrencyCheckPipeline,
-  EnrichManagerKind,
-  EnrichSourcePipeline,
-  SourceProposals,
-  WatchManagerKind
-}
+import com.histmersion.domain.library.workflows.{AcquisitionWork, EnrichManagerKind, LibraryWorkflows, WatchManagerKind}
 
 import com.histmersion.domain.automation.agents.{AgentRoster, AgentsHandlers}
 import com.histmersion.domain.automation.goals.PlanGoalPipeline
 import com.histmersion.domain.automation.managers.HintEffectPipeline
-import com.histmersion.domain.automation.workflows.PipelineDef
+import com.histmersion.domain.automation.workflows.{PipelineDef, WorkflowDefinition}
 
 import com.histmersion.api.Agents.{Origin, Pipeline}
 import com.histmersion.values.AgentRole
 import com.histmersion.domain.automation.workflows.Contributions
 import com.histmersion.server.{Deps, Handlers}
 
-/** What today's library and research code registers into the engine until those domains contribute their own: the nine
-  * pipelines as workflows ([[PipelineWorkflow]]), the read tools ([[TransitionTools]]) and the four manager kinds.
+/** What the domains register into the engine: the library's own contribution ([[LibraryWorkflows]]: its three workflows
+  * and the enrich and watch kinds), and today's research code until research contributes its own (its pipelines as
+  * workflows through [[PipelineWorkflow]], the review and seed kinds), with the read tools ([[TransitionTools]]) — in
+  * the order the engine has always listed them.
   */
 object TransitionWorkflows:
   def contributions(deps: Deps, h: Handlers, a: AgentsHandlers): Contributions =
     def cfg = deps.cfg.agents
     def lib = deps.cfg.libraryAgents
     val ds = deps.ds
-    val work = AcquisitionWork(() => deps.cfg, deps.ds, deps.transactor, h.librarySite, a)
-    val upstream = () => work.acquisition
-    val proposals = SourceProposals(
-      a.approvals,
-      cfg,
-      ck => h.library.sources.get(ck, body = false).toOption.map(_.source.status),
-      p => h.library.sources.patch(p.citekey, p.patch).left.map(_.message).map(_ => p.describe)
-    )
-    val pipelines: List[PipelineDef] = List(
-      EnrichSourcePipeline(h.librarySite, cfg, lib, upstream, proposals),
-      ReviewArticlePipeline(h, ds, cfg, lib, proposals, a.definitions),
-      PlanGoalPipeline(a.host, deps.queues, deps.workLists, a.goals, ds, cfg),
-      CompileArticlePipeline(h, ds, cfg, lib, (req, parent) => a.startRunAs(req, Origin.Run, Some(parent))),
-      CurrencyCheckPipeline(h.librarySite, a.goals, cfg, upstream, proposals),
-      AcquisitionSweepPipeline(h.librarySite, a, cfg, upstream, work.oaBacklog),
-      InferFilterPipeline(h, ds, cfg),
-      ProposeArticlesPipeline(h, ds, cfg, lib),
-      HintEffectPipeline(deps.workLists, a.approvalStore, ds, cfg)
+    val library = LibraryWorkflows(() => deps.cfg, ds, deps.transactor, h.librarySite, a)
+    val upstream = () => library.work.acquisition
+    val proposals = library.proposals
+    def research(impl: PipelineDef): WorkflowDefinition = PipelineWorkflow.of(impl, a.definitions)
+    val workflows: List[WorkflowDefinition] = List(
+      library.enrichSource,
+      research(ReviewArticlePipeline(h, ds, cfg, lib, proposals, a.definitions)),
+      research(PlanGoalPipeline(a.host, deps.queues, deps.workLists, a.goals, ds, cfg)),
+      research(CompileArticlePipeline(h, ds, cfg, lib, (req, parent) => a.startRunAs(req, Origin.Run, Some(parent)))),
+      library.currencyCheck,
+      library.acquisitionSweep,
+      research(InferFilterPipeline(h, ds, cfg)),
+      research(ProposeArticlesPipeline(h, ds, cfg, lib)),
+      research(HintEffectPipeline(deps.workLists, a.approvalStore, ds, cfg))
     )
     Contributions(
-      pipelines.map(PipelineWorkflow.of(_, a.definitions)),
+      workflows,
       TransitionTools(h, upstream, cfg.tools).contributions,
-      List(
-        ReviewManagerKind(h),
-        EnrichManagerKind(h.librarySite, a),
-        SeedManagerKind(h, lib),
-        WatchManagerKind(h.librarySite, work, lib)
-      ),
+      List(ReviewManagerKind(h), library.enrichKind, SeedManagerKind(h, lib), library.watchKind),
       List(ArticleObjectives(h))
     )
 
