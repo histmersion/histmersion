@@ -5,7 +5,7 @@ import com.histmersion.api.AliasKindsAdapter
 class AliasTablesSuite extends munit.FunSuite:
 
   test("each renamed kind has one alias table, found by its kind"):
-    val all = AliasTablesAdapter.all
+    val all = AliasTablesAdapter.withOwn(List(com.histmersion.domain.research.articles.ArticleAliasTable.table))
     assertEquals(all.tables.map(_.kind), AliasKindsAdapter.all)
     assertEquals(all.get(AliasKindsAdapter.GoalRecords).map(_.aliasTable), Some("goal_aliases"))
     assertEquals(all.tables.map(_.kind).distinct.size, all.tables.size)

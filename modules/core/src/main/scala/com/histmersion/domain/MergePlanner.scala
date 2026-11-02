@@ -16,7 +16,6 @@ import com.histmersion.util.data.exchange.{
 }
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.{
-  ArticleLinks,
   BundleAlias,
   BundleArticle,
   BundleEdge,
@@ -1139,7 +1138,7 @@ object MergePlanner:
     run.relabel(relabels)
     val ckMap: Map[String, String] =
       fes.sources.flatMap(s => finalCitekey.get(s.uid).filter(_ != s.citekey).map(s.citekey -> _)).toMap
-    def rewrite(body: String): String = if ckMap.isEmpty then body else ArticleLinks.retarget(body, ckMap.get)._1
+    def rewrite(body: String): String = if ckMap.isEmpty then body else run.relinked(body, ckMap)
 
     // articles, goals, queue items and events M4 merges by itself, and the decisions about the rest
     def articleFold(f: UUID, o: UUID, body: Option[String], theirsWins: Boolean, review: Boolean): Unit =

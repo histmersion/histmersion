@@ -1,23 +1,22 @@
-package com.histmersion.db
+package com.histmersion.domain.research.articles
 
 import com.histmersion.api.*
-import com.histmersion.config.*
-import com.histmersion.domain.*
 import com.histmersion.api.Lint.*
+import com.histmersion.db.Sql
 
 import com.histmersion.util.data.checks.{CheckInput, CheckRun}
 
+import com.histmersion.db.given
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
 
-/** The SQL half of the articles' lint rules, until research registers its own (the library's are its sources'
-  * `SourceCheckRepo`).
+/** The SQL half of the articles' lint rules (the library's are its sources' `SourceCheckRepo`).
   *
   * Every rule is either a **projection** (one SQL statement yielding `(slug, detail)`, in [[projections]]) or a **fetch
   * + pure classifier** (`Lint.articleFiller`, `Lint.articleCritiquePairing`, …, pure and unit-tested without a
   * database). No rule takes a parameter; the statements are constants, spliced through [[Sql.raw]].
   */
-object LintRepo:
+private[articles] object ArticleCheckRepo:
 
   /** Rules that are one SQL statement. Ordered so the report is stable. */
   val projections: Map[String, String] = Map(

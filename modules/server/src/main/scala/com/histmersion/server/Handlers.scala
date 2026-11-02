@@ -818,7 +818,7 @@ final class Handlers(deps: Deps, converter: ConverterClient):
       deps,
       library,
       (body, citekeys, period) => eventLinks.articleLeads(body, citekeys, period),
-      slug => mirror.note(MirrorAdapter.ArticleNotes, slug)(using transitionNotes)
+      slug => mirror.note(com.histmersion.domain.research.ResearchData.ArticleNotes, slug)(using transitionNotes)
     )
 
 object Handlers:

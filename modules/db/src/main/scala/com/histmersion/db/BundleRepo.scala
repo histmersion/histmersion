@@ -17,31 +17,6 @@ import com.histmersion.util.storage.ContentStore
 
 // ── flat rows (Magnum maps a SELECT's columns positionally) ─────────────────────────────────────────
 
-final private[histmersion] case class BArticleRow(
-    uid: UUID,
-    origin: UUID,
-    slug: String,
-    title: String,
-    kind: String,
-    body: String,
-    summary: Option[String],
-    tags: List[String],
-    regions: List[String],
-    pNull: Boolean,
-    pLo: Option[Long],
-    pHi: Option[Long],
-    updatedAt: String
-) derives DbCodec
-final private[histmersion] case class BVersionRow(
-    uid: UUID,
-    origin: UUID,
-    articleUid: UUID,
-    bodySha: String,
-    bodyBytes: Long,
-    summary: Option[String],
-    versionOf: String,
-    createdAt: String
-) derives DbCodec
 final private[histmersion] case class BGoalRow(
     uid: UUID,
     origin: UUID,
@@ -95,9 +70,9 @@ final private[histmersion] case class BTombstoneRow(uid: UUID, kind: String, ori
 given DbCodec[InstanceInfo] = DbCodec.derived
 
 /** The bundle's view of the database (docs/research-merge-import.md §4): the tables a bundle carries for the owners
-  * that do not read their own lines yet (the catalogue's are its features'), read as the [[Bundle]] line types, in a
-  * deterministic order (by uid; owned sets by their owner's uid, then their own key, in the "C" collation). One read
-  * per kind; `scope` selects the rows.
+  * that do not read their own lines yet (automation's goals and work lists, the tombstones), read as the [[Bundle]]
+  * line types, in a deterministic order (by uid; owned sets by their owner's uid, then their own key, in the "C"
+  * collation). One read per kind; `scope` selects the rows.
   *
   * Shared by the export (`BundleExport`) and the import (`BundleImport`), which reads the LOCAL rows with the uids a
   * bundle carries through the very same code — so "the same content" means the same line, and the same rev, on both
@@ -120,35 +95,6 @@ object BundleRepo:
       instance
 
   // ── reads, one per file ────────────────────────────────────────────────────────────────────
-
-  private[histmersion] def articles(scope: BundleScope)(using DbCon): Vector[BundleArticle] =
-    (Sql.raw(s"""SELECT a.uid, a.origin, a.slug, a.title, a.kind, a.body, a.summary, a.tags, a.regions,
-                       ${rangeCols("a.period")}, ${ts("a.updated_at")}
-                FROM articles a WHERE """) ++ where(scope, "a.uid", "a.updated_at") ++ " ORDER BY a.uid").frag
-      .query[BArticleRow]
-      .run()
-      .map { r =>
-        BundleArticle(
-          r.uid,
-          r.origin,
-          r.slug,
-          r.title,
-          r.kind,
-          r.body,
-          r.summary,
-          r.tags,
-          r.regions,
-          range(r.pNull, r.pLo, r.pHi),
-          r.updatedAt
-        )
-      }
-
-  private[histmersion] def versions(scope: BundleScope)(using DbCon): Vector[BVersionRow] =
-    (Sql.raw(s"""SELECT v.uid, v.origin, a.uid, encode(sha256(convert_to(v.body, 'UTF8')), 'hex'),
-                       octet_length(convert_to(v.body, 'UTF8'))::bigint, v.summary,
-                       ${ts("v.updated_at")}, ${ts("v.created_at")}
-                FROM article_versions v JOIN articles a ON a.slug = v.slug WHERE """) ++
-      where(scope, "v.uid", "v.created_at") ++ " ORDER BY v.uid").frag.query[BVersionRow].run()
 
   private[histmersion] def goals(scope: BundleScope)(using DbCon): Vector[BundleGoal] =
     val w = where(scope, "g.uid", "g.updated_at")
@@ -213,15 +159,6 @@ object BundleRepo:
       )
     }
 
-  /** Old article slugs (V042) of the articles in scope. */
-  private[histmersion] def articleAliases(scope: BundleScope)(using DbCon): Vector[BundleArticleAlias] =
-    (Sql.raw(s"""SELECT x.alias, a.uid, ${ts("x.created_at")}
-                FROM article_aliases x JOIN articles a ON a.slug = x.slug WHERE """) ++
-      where(scope, "a.uid", "x.created_at") ++ """ ORDER BY x.alias COLLATE "C"""").frag
-      .query[(String, UUID, String)]
-      .run()
-      .map(BundleArticleAlias.apply)
-
   private[histmersion] def goalAliases(scope: BundleScope)(using DbCon): Vector[BundleGoalAlias] =
     (Sql.raw(s"""SELECT x.alias, g.uid, ${ts("x.created_at")}
                 FROM goal_aliases x JOIN goals g ON g.slug = x.goal_slug WHERE """) ++
@@ -272,10 +209,7 @@ object BundleRepo:
     val (nq, dq) = digest("periods")
     BundleReference(np, dp, nq, dq)
 
-  // ── as line types ──────────────────────────────────────────────────────────────────────────
-
-  private[histmersion] def versionLine(r: BVersionRow): BundleArticleVersion =
-    BundleArticleVersion(r.uid, r.origin, r.articleUid, r.bodySha, r.summary, r.versionOf, r.createdAt)
+  // ── the schema ─────────────────────────────────────────────────────────────────────────────
 
   /** The Flyway version of this database, read in the caller's transaction ("33"). */
   private[histmersion] def schemaVersion(using DbCon): Option[String] =

@@ -1,8 +1,8 @@
 package com.histmersion.util.data
 
-/** Today's owners and their tables, in one table until each owner registers its own (the catalogue, the media and the
-  * library register their own: `domain.catalogue.CatalogueData`, `domain.media.MediaData`,
-  * `domain.library.LibraryData`).
+/** Today's owners and their tables, in one table until each owner registers its own (the catalogue, the media, the
+  * library and research register their own: `domain.catalogue.CatalogueData`, `domain.media.MediaData`,
+  * `domain.library.LibraryData`, `domain.research.ResearchData`).
   */
 object TablesAdapter:
   val AutomationOwner: DataOwner = DataOwner("automation")
@@ -56,15 +56,6 @@ object TablesAdapter:
         "goal_links",
         "goal_schedules",
         "queue_items"
-      )
-    case ResearchOwner =>
-      OwnedTable.all(
-        "articles",
-        "article_aliases",
-        "article_critique_reasons",
-        "article_links",
-        "article_versions",
-        "review_ledgers"
       )
     case PersonalOwner => OwnedTable.all("bookmarks", "notes", "read_marks", "ui_seen")
     case DataArea      => OwnedTable.all("merges", "merge_decisions", "merge_ledger", "merge_sessions")

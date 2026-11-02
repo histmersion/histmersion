@@ -121,7 +121,8 @@ object Deps:
           List(
             com.histmersion.domain.catalogue.CatalogueData,
             com.histmersion.domain.media.MediaData,
-            com.histmersion.domain.library.LibraryData
+            com.histmersion.domain.library.LibraryData,
+            com.histmersion.domain.research.ResearchData
           ),
           Nil
         )
@@ -146,7 +147,10 @@ object Deps:
     )
 
   /** Every alias table: how an old identifier of each renamed kind is followed. */
-  val aliasTables: com.histmersion.util.identity.AliasTables = com.histmersion.util.identity.AliasTablesAdapter.all
+  val aliasTables: com.histmersion.util.identity.AliasTables =
+    com.histmersion.util.identity.AliasTablesAdapter.withOwn(
+      List(com.histmersion.domain.research.articles.ArticleAliasTable.table)
+    )
 
   /** The reload of a server that was started without a config file to read again. */
   val NoReload: () => ReloadReport = () =>

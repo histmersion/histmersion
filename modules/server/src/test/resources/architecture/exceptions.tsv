@@ -128,18 +128,13 @@ direction	config:config/BasemapBathymetryConfig.scala	util.basemap -> library: S
 direction	core:domain/MergeFold.scala	util.data -> automation: Queue	1
 direction	core:domain/MergePlanner.scala	util.data -> automation: Goal	1
 direction	core:domain/MergePlanner.scala	util.data -> automation: Queue	1
-direction	core:domain/MergePlanner.scala	util.data -> research: ArticleLinks	1
 direction	db:db/BundleImport.scala	util.data -> automation: GoalRepo	1
 direction	db:db/BundleImport.scala	util.data -> automation: Queue	1
 direction	db:db/BundleImport.scala	util.data -> automation: QueueRepo	1
-direction	db:db/BundleImport.scala	util.data -> research: ArticleRepo	1
 direction	db:db/Codecs.scala	util.common -> catalogue: GridCell	1
 direction	db:db/Codecs.scala	util.common -> catalogue: PlaceDating	1
 direction	db:db/Codecs.scala	util.common -> catalogue: PlaceTimeBasis	1
 direction	db:db/Db.scala	util.common -> library: QueryConfig	1
-direction	db:db/LintRepo.scala	util.data -> library: Hit	1
-direction	db:db/LintRepo.scala	util.data -> research: CoverageEdge	1
-direction	db:db/LintRepo.scala	util.data -> research: CritiquePairing	1
 direction	db:db/ListSql.scala	util.database -> automation: ListFilters	1
 direction	files:files/BundleEntities.scala	util.data -> automation: Goal	1
 direction	files:files/BundleEntities.scala	util.data -> catalogue: Attestation	1
@@ -188,7 +183,6 @@ process	server:server/agents/AgentDoctor.scala	ProcessBuilder	1
 process	server:server/agents/CliProcess.scala	ProcessBuilder	2
 process	server:server/agents/CodexHome.scala	ProcessBuilder	2
 process	server:server/agents/PlanPools.scala	ProcessBuilder	2
-repository	db:db/BundleImport.scala	ArticleRepo of research.articles	1
 repository	db:db/BundleImport.scala	GoalRepo of automation.goals	1
 repository	db:db/BundleImport.scala	QueueRepo of automation.worklists	1
 repository	server:server/Bootstrap.scala	JobRepo of util.jobs	1

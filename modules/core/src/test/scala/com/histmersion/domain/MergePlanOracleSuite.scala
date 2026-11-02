@@ -2,6 +2,7 @@ package com.histmersion.domain
 
 import com.histmersion.domain.catalogue.CataloguePlan
 import com.histmersion.domain.library.LibraryPlan
+import com.histmersion.domain.research.ResearchPlan
 import com.histmersion.domain.media.assets.AssetPlan
 
 import com.histmersion.util.data.exchange.{BundleFormat, PlanRules}
@@ -30,7 +31,7 @@ import com.histmersion.values.{Confidence, EditionsPolicy, IssueKind}
   */
 class MergePlanOracleSuite extends munit.FunSuite with Bounded:
 
-  private val rules: List[PlanRules] = List(CataloguePlan, AssetPlan, LibraryPlan)
+  private val rules: List[PlanRules] = List(CataloguePlan, AssetPlan, LibraryPlan, ResearchPlan)
 
   private val update = sys.env.get("HISTMERSION_UPDATE_ORACLE").contains("1")
 
