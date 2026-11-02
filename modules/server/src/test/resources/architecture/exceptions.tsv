@@ -1,9 +1,6 @@
 # rule	file	detail	count — the known violations; a slice removes rows and adds none
 direction	api:api/Agents.scala	automation -> library: Ingest	1
 direction	api:api/Agents.scala	automation -> research: ArticlePlans	1
-direction	api:api/AgentsMarkdown.scala	automation -> library: Edge	1
-direction	api:api/AgentsMarkdown.scala	automation -> library: Query	1
-direction	api:api/AgentsMarkdown.scala	automation -> research: ArticleFilter	1
 direction	api:api/AgentsMarkdown.scala	automation -> research: ArticlePlans	1
 direction	api:api/AssetLinkTarget.scala	media -> library: Finding	1
 direction	api:api/AttestationTarget.scala	catalogue -> library: Edge	1
@@ -14,7 +11,6 @@ direction	api:api/BundleFiles.scala	util.data -> catalogue: Corrections	1
 direction	api:api/BundleFiles.scala	util.data -> catalogue: SiteTypes	1
 direction	api:api/EventDetail.scala	catalogue -> media: MediaThumb	1
 direction	api:api/GoalPlans.scala	automation -> research: CoverageReason	1
-direction	api:api/GoalsExport.scala	automation -> library: Query	1
 direction	api:api/JobDetail.scala	util.jobs -> catalogue: EventImportReport	1
 direction	api:api/JobDetail.scala	util.jobs -> catalogue: EventRederiveReport	1
 direction	api:api/JobDetail.scala	util.jobs -> catalogue: SkippedPeriod	1
@@ -87,7 +83,6 @@ direction	api:api/Markdown.scala	util.common -> media: MediaSample	1
 direction	api:api/Markdown.scala	util.common -> media: MediaThumb	1
 direction	api:api/Markdown.scala	util.common -> research: Backlink	1
 direction	api:api/MergeIssueDetail.scala	util.data -> automation: GoalPlans	1
-direction	api:api/MergeMarkdown.scala	util.data -> catalogue: Place	1
 direction	api:api/MergeMarkdown.scala	util.data -> library: LabelRenamed	1
 direction	api:api/MergeMarkdown.scala	util.data -> library: SourceMatch	1
 direction	api:api/MergePlan.scala	util.data -> library: SourceMatch	1
@@ -103,12 +98,6 @@ direction	api:api/VacuumRequest.scala	util.data -> automation: StrictJson	1
 direction	api:api/Wording.scala	util.common -> automation: Activity	1
 direction	api:api/Wording.scala	util.common -> automation: AgentMode	1
 direction	api:api/Wording.scala	util.common -> automation: AgentScheduler	1
-direction	api:api/Wording.scala	util.common -> automation: PlanGoal	1
-direction	api:api/Wording.scala	util.common -> library: Edge	1
-direction	api:api/Wording.scala	util.common -> library: EnrichSource	1
-direction	api:api/Wording.scala	util.common -> research: ArticleFilter	1
-direction	api:api/Wording.scala	util.common -> research: CompileArticle	1
-direction	api:api/Wording.scala	util.common -> research: ReviewArticle	1
 direction	api:api/Wording.scala	util.common -> server: UiNotices	1
 direction	api:api/Write.scala	util.common -> library: Edge	1
 direction	api:api/Write.scala	util.common -> library: EdgeInput	1
@@ -118,7 +107,6 @@ direction	api:api/Write.scala	util.common -> library: FindingInput	1
 direction	api:api/Write.scala	util.common -> library: FindingsPatch	1
 direction	api:api/Write.scala	util.common -> library: MetadataField	1
 direction	api:api/Write.scala	util.common -> library: MetadataPatch	1
-direction	api:api/Write.scala	util.common -> library: Provenance	1
 direction	api:api/Write.scala	util.common -> library: SourcePatch	1
 direction	api:api/Write.scala	util.common -> library: SourcePut	1
 direction	api:api/YearFmt.scala	util.common -> catalogue: EventGeo	1
@@ -126,27 +114,15 @@ direction	api:api/personal/ItemKind.scala	personal -> automation: Goal	1
 direction	api:api/personal/ItemKind.scala	personal -> catalogue: Place	1
 direction	config:config/BasemapBathymetryConfig.scala	util.basemap -> library: SeaFloorSource	1
 direction	core:domain/MergeFold.scala	util.data -> automation: Queue	1
-direction	core:domain/MergePlanner.scala	util.data -> automation: Goal	1
 direction	core:domain/MergePlanner.scala	util.data -> automation: Queue	1
 direction	db:db/BundleImport.scala	util.data -> automation: GoalRepo	1
 direction	db:db/BundleImport.scala	util.data -> automation: Queue	1
 direction	db:db/BundleImport.scala	util.data -> automation: QueueRepo	1
-direction	db:db/Codecs.scala	util.common -> catalogue: GridCell	1
 direction	db:db/Codecs.scala	util.common -> catalogue: PlaceDating	1
 direction	db:db/Codecs.scala	util.common -> catalogue: PlaceTimeBasis	1
 direction	db:db/Db.scala	util.common -> library: QueryConfig	1
 direction	db:db/ListSql.scala	util.database -> automation: ListFilters	1
-direction	files:files/BundleEntities.scala	util.data -> automation: Goal	1
-direction	files:files/BundleEntities.scala	util.data -> catalogue: Attestation	1
-direction	files:files/BundleEntities.scala	util.data -> catalogue: Corrections	1
-direction	files:files/BundleEntities.scala	util.data -> catalogue: Place	1
-direction	files:files/BundleEntities.scala	util.data -> catalogue: SiteTypes	1
-direction	files:files/BundleEntities.scala	util.data -> library: Finding	1
-direction	files:files/BundleEntities.scala	util.data -> media: AssetLink	1
-direction	files:files/BundleEntities.scala	util.data -> research: ArticleVersion	1
-direction	server:server/agents/AgentDoctor.scala	automation -> server: Version	1
 direction	server:server/agents/CliProcess.scala	automation -> catalogue: Tree	1
-direction	server:server/plugins/RelinkPlugins.scala	util.plugins -> server: Version	1
 filesystem	config:config/UserConfigFile.scala	java.nio.file	1
 filesystem	db:db/BundleImport.scala	java.nio.file	1
 filesystem	db:db/MergeState.scala	java.nio.file	1
